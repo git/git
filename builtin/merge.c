@@ -48,7 +48,7 @@ static const char * const builtin_merge_usage[] = {
 
 static int show_diffstat = 1, shortlog_len = -1, squash;
 static int option_commit = 1, allow_fast_forward = 1;
-static int fast_forward_only, option_edit;
+static int fast_forward_only, option_edit = -1;
 static int allow_trivial = 1, have_message;
 static int overwrite_ignore = 1;
 static struct strbuf merge_msg = STRBUF_INIT;
@@ -193,7 +193,7 @@ static struct option builtin_merge_options[] = {
 		"create a single commit instead of doing a merge"),
 	OPT_BOOLEAN(0, "commit", &option_commit,
 		"perform a commit if the merge succeeds (default)"),
-	OPT_BOOLEAN('e', "edit", &option_edit,
+	OPT_BOOL('e', "edit", &option_edit,
 		"edit message before committing"),
 	OPT_BOOLEAN(0, "ff", &allow_fast_forward,
 		"allow fast-forward (default)"),
@@ -893,12 +893,12 @@ static void prepare_to_commit(void)
 	write_merge_msg(&msg);
 	run_hook(get_index_file(), "prepare-commit-msg",
 		 git_path("MERGE_MSG"), "merge", NULL, NULL);
-	if (option_edit) {
+	if (0 < option_edit) {
 		if (launch_editor(git_path("MERGE_MSG"), NULL, NULL))
 			abort_commit(NULL);
 	}
 	read_merge_msg(&msg);
-	stripspace(&msg, option_edit);
+	stripspace(&msg, 0 < option_edit);
 	if (!msg.len)
 		abort_commit(_("Empty commit message."));
 	strbuf_release(&merge_msg);
@@ -1099,6 +1099,33 @@ static void write_merge_state(void)
 	close(fd);
 }
 
+static int default_edit_option(void)
+{
+	static const char name[] = "GIT_MERGE_AUTOEDIT";
+	const char *e = getenv(name);
+	struct stat st_stdin, st_stdout;
+
+	if (have_message)
+		/* an explicit -m msg without --[no-]edit */
+		return 0;
+
+	if (e) {
+		int v = git_config_maybe_bool(name, e);
+		if (v < 0)
+			die("Bad value '%s' in environment '%s'", e, name);
+		return v;
+	}
+
+	/* Use editor if stdin and stdout are the same and is a tty */
+	return (!fstat(0, &st_stdin) &&
+		!fstat(1, &st_stdout) &&
+		isatty(0) &&
+		st_stdin.st_dev == st_stdout.st_dev &&
+		st_stdin.st_ino == st_stdout.st_ino &&
+		st_stdin.st_mode == st_stdout.st_mode);
+}
+
+
 int cmd_merge(int argc, const char **argv, const char *prefix)
 {
 	unsigned char result_tree[20];
@@ -1290,6 +1317,9 @@ int cmd_merge(int argc, const char **argv, const char *prefix)
 			allow_fast_forward = 0;
 		}
 	}
+
+	if (option_edit < 0)
+		option_edit = default_edit_option();
 
 	if (!use_strategies) {
 		if (!remoteheads->next)
