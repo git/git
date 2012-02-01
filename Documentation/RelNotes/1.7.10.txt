@@ -14,9 +14,17 @@ UI, Workflows & Features
  * "git clone" learned "--single-branch" option to limit cloning to a
    single branch (surprise!).
 
+ * "git clone" learned to detach the HEAD in the resulting repository
+   when the source repository's HEAD does not point to a branch.
+
  * When showing a patch while ignoring whitespace changes, the context
    lines are taken from the postimage, in order to make it easier to
    view the output.
+
+ * "git merge" in an interactive session learned to spawn the editor
+   by default to let the user edit the auto-generated merge message,
+   to encourage people to explain their merges better. Legacy scripts
+   can export MERGE_AUTOEDIT=no to retain the historical behaviour.
 
 Performance
 
@@ -33,6 +41,9 @@ Internal Implementation
    possible to cleanly restructure the overall refs API.
 
  * The test suite supports the new "test_pause" helper function.
+
+ * t/Makefile is adjusted to prevent newer versions of GNU make from
+   running tests in seemingly random order.
 
 Also contains minor documentation updates and code clean-ups.
 
@@ -60,9 +71,25 @@ details).
    to completion even when the top-level process was killed.
    (merge 10c6cdd cb/maint-kill-subprocess-upon-signal later to maint).
 
+ * "git mergetool" now gives an empty file as the common base version
+   to the backend when dealing with the "both sides added, differently"
+   case.
+   (merge ec245ba da/maint-mergetool-twoway later to maint).
+
+ * "git submodule add $path" forgot to recompute the name to be stored
+    in .gitmodules when the submodule at $path was once added to the
+    superproject and already initialized.
+   (merge 1017c1a jl/submodule-re-add later to maint).
+
+ * Using "git grep -l/-L" together with options -W or --break may not
+   make much sense as the output is to only count the number of hits
+   and there is no place for file breaks, but the latter options made
+   "-l/-L" to miscount the hits.
+   (merge 50dd0f2 tr/grep-l-with-decoration later to maint).
+
 ---
 exec >/var/tmp/1
-O=v1.7.9
+O=v1.7.9-110-g873ce7c
 echo O=$(git describe)
 git log --first-parent --oneline ^maint $O..
 echo
