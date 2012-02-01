@@ -54,6 +54,8 @@ static struct cached_object empty_tree = {
 	0
 };
 
+static struct packed_git *last_found_pack;
+
 static struct cached_object *find_cached_object(const unsigned char *sha1)
 {
 	int i;
@@ -720,6 +722,8 @@ void free_pack_by_name(const char *pack_name)
 			close_pack_index(p);
 			free(p->bad_object_sha1);
 			*pp = p->next;
+			if (last_found_pack == p)
+				last_found_pack = NULL;
 			free(p);
 			return;
 		}
@@ -2046,27 +2050,22 @@ static int fill_pack_entry(const unsigned char *sha1,
 
 static int find_pack_entry(const unsigned char *sha1, struct pack_entry *e)
 {
-	static struct packed_git *last_found = (void *)1;
 	struct packed_git *p;
 
 	prepare_packed_git();
 	if (!packed_git)
 		return 0;
-	p = (last_found == (void *)1) ? packed_git : last_found;
 
-	do {
-		if (fill_pack_entry(sha1, e, p)) {
-			last_found = p;
-			return 1;
-		}
+	if (last_found_pack && fill_pack_entry(sha1, e, last_found_pack))
+		return 1;
 
-		if (p == last_found)
-			p = packed_git;
-		else
-			p = p->next;
-		if (p == last_found)
-			p = p->next;
-	} while (p);
+	for (p = packed_git; p; p = p->next) {
+		if (p == last_found_pack || !fill_pack_entry(sha1, e, p))
+			continue;
+
+		last_found_pack = p;
+		return 1;
+	}
 	return 0;
 }
 
