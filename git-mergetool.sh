@@ -181,10 +181,14 @@ stage_submodule () {
 }
 
 checkout_staged_file () {
-    tmpfile=$(expr "$(git checkout-index --temp --stage="$1" "$2")" : '\([^	]*\)	')
+    tmpfile=$(expr \
+	    "$(git checkout-index --temp --stage="$1" "$2" 2>/dev/null)" \
+	    : '\([^	]*\)	')
 
     if test $? -eq 0 -a -n "$tmpfile" ; then
 	mv -- "$(git rev-parse --show-cdup)$tmpfile" "$3"
+    else
+	>"$3"
     fi
 }
 
@@ -224,9 +228,9 @@ merge_file () {
     mv -- "$MERGED" "$BACKUP"
     cp -- "$BACKUP" "$MERGED"
 
-    base_present   && checkout_staged_file 1 "$MERGED" "$BASE"
-    local_present  && checkout_staged_file 2 "$MERGED" "$LOCAL"
-    remote_present && checkout_staged_file 3 "$MERGED" "$REMOTE"
+    checkout_staged_file 1 "$MERGED" "$BASE"
+    checkout_staged_file 2 "$MERGED" "$LOCAL"
+    checkout_staged_file 3 "$MERGED" "$REMOTE"
 
     if test -z "$local_mode" -o -z "$remote_mode"; then
 	echo "Deleted merge conflict for '$MERGED':"
