@@ -1,9 +1,9 @@
 To: git@vger.kernel.org
-Subject: What's cooking in git.git (Jan 2012, #07; Sun, 29)
-X-master-at: 85da4d459bd6fe11189a2ccf560c952b31ed67b2
-X-next-at: 001a395be8dff147088b94dda0892c87a949c033
+Subject: What's cooking in git.git (Jan 2012, #08; Tue, 31)
+X-master-at: 2a2aa8e5561d4cfc00c8e021b1231958f6d4d2fa
+X-next-at: a0195c8c59b10d7dd4bf7ef9fcfd8e43f04a6777
 
-What's cooking in git.git (Jan 2012, #07; Sun, 29)
+What's cooking in git.git (Jan 2012, #08; Tue, 31)
 --------------------------------------------------
 
 Here are the topics that have been cooking.  Commits prefixed with '-' are
@@ -43,95 +43,132 @@ The preformatted documentation in HTML and man format are found in:
 --------------------------------------------------
 [New Topics]
 
-* bl/gitweb-project-filter (2012-01-29) 2 commits
- - gitweb: place links to parent directories in page header
- - gitweb: add project_filter to limit project list to a subdirectory
+* fc/zsh-completion (2012-01-30) 4 commits
+ - (squash to previous?) completion: remove unused code
+ - completion: simplify __git_remotes
+ - (squash) completion-style
+ - completion: be nicer with zsh
 
-* rt/completion-branch-edit-desc (2012-01-29) 1 commit
- - completion: --edit-description option for git-branch
+Somehow only 2 out of 4-part series seem to have reached the list, missing
+the other 2.
+
+* jc/maint-request-pull-for-tag (2012-01-31) 1 commit
+ - request-pull: explicitly ask tags/$name to be pulled
+
+Usability improvement.
+Will merge to 'next'.
+
+* nd/find-pack-entry-recent-cache-invalidation (2012-01-31) 1 commit
+ - find_pack_entry(): do not keep packed_git pointer locally
+
+Review comments sent.
+
+* nd/pack-objects-parseopt (2012-01-31) 1 commit
+ - pack-objects: convert to use parse_options()
+
+Review comments sent.
+
+* tr/merge-edit-guidance (2012-01-31) 1 commit
+  (merged to 'next' on 2012-01-31 at bb678f7)
+ + merge: add instructions to the commit message when editing
+
+Will merge to 'master' in the second batch.
 
 --------------------------------------------------
 [Graduated to "master"]
 
-* cb/git-daemon-tests (2012-01-08) 5 commits
-  (merged to 'next' on 2012-01-08 at 1db8351)
- + git-daemon tests: wait until daemon is ready
- + git-daemon: produce output when ready
- + git-daemon: add tests
- + dashed externals: kill children on exit
- + run-command: optionally kill children on exit
+* ar/i18n-no-gettext (2012-01-27) 4 commits
+  (merged to 'next' on 2012-01-27 at 0ecf258)
+ + i18n: Do not force USE_GETTEXT_SCHEME=fallthrough on NO_GETTEXT
+  (merged to 'next' on 2012-01-23 at 694a94e)
+ + i18n: Make NO_GETTEXT imply fallthrough scheme in shell l10n
+ + add a Makefile switch to avoid gettext translation in shell scripts
+ + git-sh-i18n: restructure the logic to compute gettext.sh scheme
 
-* cb/push-quiet (2012-01-08) 3 commits
-  (merged to 'next' on 2012-01-20 at 4326dda)
- + t5541: avoid TAP test miscounting
- + fix push --quiet: add 'quiet' capability to receive-pack
- + server_supports(): parse feature list more carefully
+* da/maint-mergetool-twoway (2012-01-23) 1 commit
+  (merged to 'next' on 2012-01-23 at f927323)
+ + mergetool: Provide an empty file when needed
 
-* jc/maint-log-first-parent-pathspec (2012-01-19) 1 commit
-  (merged to 'next' on 2012-01-20 at fb2b35f)
- + Making pathspec limited log play nicer with --first-parent
+Caters to GUI merge backends that cannot merge two files without
+a base by giving them an empty file as a "pretend" common ancestor.
 
-* jk/parse-object-cached (2012-01-06) 3 commits
-  (merged to 'next' on 2012-01-08 at 8c6fa4a)
- + upload-pack: avoid parsing tag destinations
- + upload-pack: avoid parsing objects during ref advertisement
- + parse_object: try internal cache before reading object db
+* jc/advise-i18n (2011-12-22) 1 commit
+  (merged to 'next' on 2012-01-23 at 6447013)
+ + i18n of multi-line advice messages
 
-These are a bit scary changes, but I do think they are worth doing.
+Allow localization of advice messages that tend to be longer and
+multi-line formatted. For now this is deliberately limited to advise()
+interface and not vreportf() in general as touching the latter has
+interactions with error() that has plumbing callers whose prefix "error: "
+should never be translated.
 
-* jl/test-pause (2012-01-17) 1 commit
-  (merged to 'next' on 2012-01-20 at ee56335)
- + test-lib: add the test_pause convenience function
+* jl/submodule-re-add (2012-01-24) 1 commit
+  (merged to 'next' on 2012-01-26 at 482553e)
+ + submodule add: fix breakage when re-adding a deep submodule
 
-* jn/gitweb-unspecified-action (2012-01-09) 1 commit
-  (merged to 'next' on 2012-01-20 at 2b31714)
- + gitweb: Fix actionless dispatch for non-existent objects
+"git submodule add" forgot to recompute the name to be stored in .gitmodules
+when the module was once added to the superproject and already initialized.
 
-* mh/ref-clone-without-extra-refs (2012-01-17) 4 commits
-  (merged to 'next' on 2012-01-20 at 2e9645e)
- + write_remote_refs(): create packed (rather than extra) refs
- + add_packed_ref(): new function in the refs API.
- + ref_array: keep track of whether references are sorted
- + pack_refs(): remove redundant check
+* ks/sort-wildcard-in-makefile (2012-01-22) 1 commit
+  (merged to 'next' on 2012-01-23 at e2e0c1d)
+ + t/Makefile: Use $(sort ...) explicitly where needed
 
-Looked reasonable; will hopefully help making mh/ref-api-rest simpler and
-cleaner.
+t/Makefile is adjusted to prevent newer versions of GNU make from running
+tests in seemingly random order.
 
-* nd/clone-single-branch (2012-01-08) 1 commit
-  (merged to 'next' on 2012-01-09 at 6c3c759)
- + clone: add --single-branch to fetch only one branch
- (this branch is used by nd/clone-detached.)
+* ld/git-p4-branches-and-labels (2012-01-20) 5 commits
+  (merged to 'next' on 2012-01-23 at 9020ec4)
+ + git-p4: label import fails with multiple labels at the same changelist
+ + git-p4: add test for p4 labels
+ + git-p4: importing labels should cope with missing owner
+ + git-p4: cope with labels with empty descriptions
+ + git-p4: handle p4 branches and labels containing shell chars
+ (this branch is used by va/git-p4-branch.)
 
-* nd/index-pack-no-recurse (2012-01-16) 3 commits
-  (merged to 'next' on 2012-01-20 at d1e964e)
- + index-pack: eliminate unlimited recursion in get_base_data()
- + index-pack: eliminate recursion in find_unresolved_deltas
- + Eliminate recursion in setting/clearing marks in commit list
+* nd/clone-detached (2012-01-24) 12 commits
+  (merged to 'next' on 2012-01-26 at 7b0cc8a)
+ + clone: fix up delay cloning conditions
+  (merged to 'next' on 2012-01-23 at bee31c6)
+ + push: do not let configured foreign-vcs permanently clobbered
+  (merged to 'next' on 2012-01-23 at 9cab64e)
+ + clone: print advice on checking out detached HEAD
+ + clone: allow --branch to take a tag
+ + clone: refuse to clone if --branch points to bogus ref
+ + clone: --branch=<branch> always means refs/heads/<branch>
+ + clone: delay cloning until after remote HEAD checking
+ + clone: factor out remote ref writing
+ + clone: factor out HEAD update code
+ + clone: factor out checkout code
+ + clone: write detached HEAD in bare repositories
+ + t5601: add missing && cascade
 
-* nd/maint-refname-in-hierarchy-check (2012-01-11) 1 commit
-  (merged to 'next' on 2012-01-20 at acb5611)
- + Fix incorrect ref namespace check
+"git clone" learned to detach the HEAD in the resulting repository when
+the source repository's HEAD does not point to a branch.
 
-* pw/p4-view-updates (2012-01-11) 5 commits
-  (merged to 'next' on 2012-01-20 at 8ca2c7b)
- + git-p4: add tests demonstrating spec overlay ambiguities
- + git-p4: adjust test to adhere to stricter useClientSpec
- + git-p4: clarify comment
- + git-p4: fix verbose comment typo
- + git-p4: only a single ... wildcard is supported
+* rr/sequencer (2012-01-11) 2 commits
+  (merged to 'next' on 2012-01-23 at f349b56)
+ + sequencer: factor code out of revert builtin
+ + revert: prepare to move replay_action to header
 
-* rs/diff-postimage-in-context (2012-01-06) 1 commit
-  (merged to 'next' on 2012-01-09 at 9635032)
- + xdiff: print post-image for common records instead of pre-image
+Moving large chunk of code out of cherry-pick/revert for later reuse,
+primarily to prepare for the next cycle.
 
-* sp/smart-http-failure-to-push (2012-01-20) 1 commit
-  (merged to 'next' on 2012-01-20 at a892434)
- + remote-curl: Fix push status report when all branches fail
+* tr/grep-l-with-decoration (2012-01-23) 1 commit
+  (merged to 'next' on 2012-01-23 at 42b8795)
+ + grep: fix -l/-L interaction with decoration lines
 
-* tr/maint-mailinfo (2012-01-16) 2 commits
-  (merged to 'next' on 2012-01-20 at 278fae1)
- + mailinfo: with -b, keep space after [foo]
- + am: learn passing -b to mailinfo
+Using "git grep -l/-L" together with options -W or --break may not make
+much sense as the output is to only count the number of hits and there is
+no place for file breaks, but the latter options made "-l/-L" to miscount
+the hits.
+
+* va/git-p4-branch (2012-01-26) 4 commits
+  (merged to 'next' on 2012-01-26 at e67c52a)
+ + t9801: do not overuse test_must_fail
+ + git-p4: Change p4 command invocation
+ + git-p4: Add test case for complex branch import
+ + git-p4: Search for parent commit on branch creation
+ (this branch uses ld/git-p4-branches-and-labels.)
 
 --------------------------------------------------
 [Stalled]
@@ -169,14 +206,21 @@ Will defer till the next cycle.
 --------------------------------------------------
 [Cooking]
 
-* jl/submodule-re-add (2012-01-24) 1 commit
-  (merged to 'next' on 2012-01-26 at 482553e)
- + submodule add: fix breakage when re-adding a deep submodule
+* bl/gitweb-project-filter (2012-01-31) 8 commits
+ - gitweb: Make project search respect project_filter
+ - gitweb: improve usability of projects search form
+ - gitweb: place links to parent directories in page header
+ - gitweb: show active project_filter in project_list page header
+ - gitweb: limit links to alternate forms of project_list to active project_filter
+ - gitweb: add project_filter to limit project list to a subdirectory
+ - gitweb: prepare git_get_projects_list for use outside 'forks'.
+ - gitweb: move hard coded .git suffix out of git_get_projects_list
 
-"git submodule add" forgot to recompute the name to be stored in .gitmodules
-when the module was once added to the superproject and already initialized.
+Seems to break test 9502.
 
-Will merge to 'master' in the second batch.
+* rt/completion-branch-edit-desc (2012-01-29) 1 commit
+  (merged to 'next' on 2012-01-31 at a0195c8)
+ + completion: --edit-description option for git-branch
 
 * jn/svn-fe (2012-01-27) 44 commits
   (merged to 'next' on 2012-01-29 at 001a395)
@@ -258,132 +302,17 @@ the "bup" fanboys, to come up with a better logic, thinking that giving
 people an easy target to shoot for, they may be encouraged to help
 out. The plan is not working :-(.
 
-* ar/i18n-no-gettext (2012-01-27) 4 commits
-  (merged to 'next' on 2012-01-27 at 0ecf258)
- + i18n: Do not force USE_GETTEXT_SCHEME=fallthrough on NO_GETTEXT
-  (merged to 'next' on 2012-01-23 at 694a94e)
- + i18n: Make NO_GETTEXT imply fallthrough scheme in shell l10n
- + add a Makefile switch to avoid gettext translation in shell scripts
- + git-sh-i18n: restructure the logic to compute gettext.sh scheme
-
-Will merge to 'master' in the second batch and deal with any fallout in 'master'.
-
-* da/maint-mergetool-twoway (2012-01-23) 1 commit
-  (merged to 'next' on 2012-01-23 at f927323)
- + mergetool: Provide an empty file when needed
-
-Caters to GUI merge backends that cannot merge two files without
-a base by giving them an empty file as a "pretend" common ancestor.
-
-Will merge to 'master' in the second batch and deal with any fallout in 'master'.
-
-* ld/git-p4-branches-and-labels (2012-01-20) 5 commits
-  (merged to 'next' on 2012-01-23 at 9020ec4)
- + git-p4: label import fails with multiple labels at the same changelist
- + git-p4: add test for p4 labels
- + git-p4: importing labels should cope with missing owner
- + git-p4: cope with labels with empty descriptions
- + git-p4: handle p4 branches and labels containing shell chars
- (this branch is used by va/git-p4-branch.)
-
-Will merge to 'master' in the second batch.
-
-* va/git-p4-branch (2012-01-26) 4 commits
-  (merged to 'next' on 2012-01-26 at e67c52a)
- + t9801: do not overuse test_must_fail
- + git-p4: Change p4 command invocation
- + git-p4: Add test case for complex branch import
- + git-p4: Search for parent commit on branch creation
- (this branch uses ld/git-p4-branches-and-labels.)
-
-Rerolled and Acked.
-Will merge to 'master' in the second batch.
-
-* ks/sort-wildcard-in-makefile (2012-01-22) 1 commit
-  (merged to 'next' on 2012-01-23 at e2e0c1d)
- + t/Makefile: Use $(sort ...) explicitly where needed
-
-t/Makefile is adjusted to prevent newer versions of GNU make from running
-tests in seemingly random order.
-
-Will merge to 'master' in the second batch.
-
-* tr/grep-l-with-decoration (2012-01-23) 1 commit
-  (merged to 'next' on 2012-01-23 at 42b8795)
- + grep: fix -l/-L interaction with decoration lines
-
-Using "git grep -l/-L" together with options -W or --break may not make
-much sense as the output is to only count the number of hits and there is
-no place for file breaks, but the latter options made "-l/-L" to miscount
-the hits.
-
-Will merge to 'master' in the second batch.
-
 * jc/pull-signed-tag (2012-01-23) 1 commit
   (merged to 'next' on 2012-01-23 at 4257553)
  + merge: use editor by default in interactive sessions
 
-Per Linus's strong suggestion, sugarcoated (aka "taking blame for the
-original UI screw-ups") so that it is easier for me to swallow and accept
-a potentially huge backward incompatibility issue, "git merge" is made to
-launch an editor to explain the merge in the merge commit by default in
-interactive sessions.
-
-I've updated the special-case environment variable to MERGE_AUTOEDIT that
-scripts can set to "no" when they start. There is no plan to encourage
-humans to keep using the historical behaviour, hence there is no support
-for configuration variable (e.g. merge.autoedit) that can be set to 'no'.
-Oh, also I updated the documentation a bit.
-
 "git merge" in an interactive session learned to spawn the editor by
 default to let the user edit the auto-generated merge message, to
-encourage people to explain their merges better.
+encourage people to explain their merges better. Legacy scripts can
+export MERGE_AUTOEDIT=no to retain the historical behaviour.
 
-Will merge to 'master' in the second batch and deal with any fallout in 'master'.
-
-* jc/advise-i18n (2011-12-22) 1 commit
-  (merged to 'next' on 2012-01-23 at 6447013)
- + i18n of multi-line advice messages
-
-Allow localization of advice messages that tend to be longer and
-multi-line formatted. For now this is deliberately limited to advise()
-interface and not vreportf() in general as touching the latter has
-interactions with error() that has plumbing callers whose prefix "error: "
-should never be translated.
-
-Will merge to 'master' in the second batch.
-
-* rr/sequencer (2012-01-11) 2 commits
-  (merged to 'next' on 2012-01-23 at f349b56)
- + sequencer: factor code out of revert builtin
- + revert: prepare to move replay_action to header
-
-Moving large chunk of code out of cherry-pick/revert for later reuse,
-primarily to prepare for the next cycle.
-
-Will merge to 'master' in the second batch.
-
-* nd/clone-detached (2012-01-24) 12 commits
-  (merged to 'next' on 2012-01-26 at 7b0cc8a)
- + clone: fix up delay cloning conditions
-  (merged to 'next' on 2012-01-23 at bee31c6)
- + push: do not let configured foreign-vcs permanently clobbered
-  (merged to 'next' on 2012-01-23 at 9cab64e)
- + clone: print advice on checking out detached HEAD
- + clone: allow --branch to take a tag
- + clone: refuse to clone if --branch points to bogus ref
- + clone: --branch=<branch> always means refs/heads/<branch>
- + clone: delay cloning until after remote HEAD checking
- + clone: factor out remote ref writing
- + clone: factor out HEAD update code
- + clone: factor out checkout code
- + clone: write detached HEAD in bare repositories
- + t5601: add missing && cascade
-
-"git clone" learned to detach the HEAD in the resulting repository when
-the source repository's HEAD does not point to a branch.
-
-Will merge to 'master' in the second batch and deal with any fallout in 'master'.
+Will merge to 'master' in the second batch and deal with any fallout in
+'master'.
 
 --------------------------------------------------
 [Discarded]
