@@ -2471,7 +2471,7 @@ int cmd_pack_objects(int argc, const char **argv, const char *prefix)
 			pack_idx_opts.version = strtoul(arg + 16, &c, 10);
 			if (pack_idx_opts.version > 2)
 				die("bad %s", arg);
-			if (*c == ',')
+			if (*c == ',' && c[1])
 				pack_idx_opts.off32_limit = strtoul(c+1, &c, 0);
 			if (*c || pack_idx_opts.off32_limit & 0x80000000)
 				die("bad %s", arg);
