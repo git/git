@@ -75,7 +75,7 @@ Content-Transfer-Encoding: 8bit
 ---
  dir/sub |    2 ++
  file1   |    3 +++
- 2 files changed, 5 insertions(+), 0 deletions(-)
+ 2 files changed, 5 insertions(+)
  create mode 100644 file1
 
 

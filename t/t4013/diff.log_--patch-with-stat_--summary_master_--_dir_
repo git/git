@@ -13,7 +13,7 @@ Date:   Mon Jun 26 00:03:00 2006 +0000
     Side
 ---
  dir/sub |    2 ++
- 1 files changed, 2 insertions(+), 0 deletions(-)
+ 1 file changed, 2 insertions(+)
 
 diff --git a/dir/sub b/dir/sub
 index 35d242b..7289e35 100644
@@ -32,7 +32,7 @@ Date:   Mon Jun 26 00:02:00 2006 +0000
     Third
 ---
  dir/sub |    2 ++
- 1 files changed, 2 insertions(+), 0 deletions(-)
+ 1 file changed, 2 insertions(+)
 
 diff --git a/dir/sub b/dir/sub
 index 8422d40..cead32e 100644
@@ -54,7 +54,7 @@ Date:   Mon Jun 26 00:01:00 2006 +0000
     This is the second commit.
 ---
  dir/sub |    2 ++
- 1 files changed, 2 insertions(+), 0 deletions(-)
+ 1 file changed, 2 insertions(+)
 
 diff --git a/dir/sub b/dir/sub
 index 35d242b..8422d40 100644

@@ -8,7 +8,7 @@ Date:   Mon Jun 26 00:03:00 2006 +0000
  dir/sub |    2 ++
  file0   |    3 +++
  file3   |    4 ++++
- 3 files changed, 9 insertions(+), 0 deletions(-)
+ 3 files changed, 9 insertions(+)
 
 diff --git a/dir/sub b/dir/sub
 index 35d242b..7289e35 100644
