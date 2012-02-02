@@ -495,11 +495,8 @@ fi
 # 4: A suffix to be appended to each possible completion word (optional).
 __gitcomp ()
 {
-	local cur_="$cur"
+	local cur_="${3-$cur}"
 
-	if [ $# -gt 2 ]; then
-		cur_="$3"
-	fi
 	case "$cur_" in
 	--*=)
 		COMPREPLY=()
@@ -524,18 +521,8 @@ __gitcomp ()
 #    appended.
 __gitcomp_nl ()
 {
-	local s=$'\n' IFS=' '$'\t'$'\n'
-	local cur_="$cur" suffix=" "
-
-	if [ $# -gt 2 ]; then
-		cur_="$3"
-		if [ $# -gt 3 ]; then
-			suffix="$4"
-		fi
-	fi
-
-	IFS=$s
-	COMPREPLY=($(compgen -P "${2-}" -S "$suffix" -W "$1" -- "$cur_"))
+	local IFS=$'\n'
+	COMPREPLY=($(compgen -P "${2-}" -S "${4- }" -W "$1" -- "${3-$cur}"))
 }
 
 __git_heads ()
