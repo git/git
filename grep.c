@@ -1024,11 +1024,11 @@ static int grep_source_1(struct grep_opt *opt, struct grep_source *gs, int colle
 
 	switch (opt->binary) {
 	case GREP_BINARY_DEFAULT:
-		if (buffer_is_binary(gs->buf, gs->size))
+		if (grep_source_is_binary(gs))
 			binary_match_only = 1;
 		break;
 	case GREP_BINARY_NOMATCH:
-		if (buffer_is_binary(gs->buf, gs->size))
+		if (grep_source_is_binary(gs))
 			return 0; /* Assume unmatch */
 		break;
 	case GREP_BINARY_TEXT:
@@ -1349,4 +1349,16 @@ void grep_source_load_driver(struct grep_source *gs)
 	if (!gs->driver)
 		gs->driver = userdiff_find_by_name("default");
 	grep_attr_unlock();
+}
+
+int grep_source_is_binary(struct grep_source *gs)
+{
+	grep_source_load_driver(gs);
+	if (gs->driver->binary != -1)
+		return gs->driver->binary;
+
+	if (!grep_source_load(gs))
+		return buffer_is_binary(gs->buf, gs->size);
+
+	return 0;
 }

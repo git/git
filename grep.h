@@ -152,6 +152,7 @@ int grep_source_load(struct grep_source *gs);
 void grep_source_clear_data(struct grep_source *gs);
 void grep_source_clear(struct grep_source *gs);
 void grep_source_load_driver(struct grep_source *gs);
+int grep_source_is_binary(struct grep_source *gs);
 
 int grep_source(struct grep_opt *opt, struct grep_source *gs);
 
