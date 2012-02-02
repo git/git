@@ -129,6 +129,28 @@ extern void compile_grep_patterns(struct grep_opt *opt);
 extern void free_grep_patterns(struct grep_opt *opt);
 extern int grep_buffer(struct grep_opt *opt, const char *name, char *buf, unsigned long size);
 
+struct grep_source {
+	char *name;
+
+	enum grep_source_type {
+		GREP_SOURCE_SHA1,
+		GREP_SOURCE_FILE,
+		GREP_SOURCE_BUF,
+	} type;
+	void *identifier;
+
+	char *buf;
+	unsigned long size;
+};
+
+void grep_source_init(struct grep_source *gs, enum grep_source_type type,
+		      const char *name, const void *identifier);
+int grep_source_load(struct grep_source *gs);
+void grep_source_clear_data(struct grep_source *gs);
+void grep_source_clear(struct grep_source *gs);
+
+int grep_source(struct grep_opt *opt, struct grep_source *gs);
+
 extern struct grep_opt *grep_opt_dup(const struct grep_opt *opt);
 extern int grep_threads_ok(const struct grep_opt *opt);
 
