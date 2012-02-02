@@ -218,4 +218,27 @@ test_expect_success 'rebase -m can copy notes' '
 	test "a note" = "$(git notes show HEAD)"
 '
 
+test_expect_success 'rebase commit with an ancient timestamp' '
+	git reset --hard &&
+
+	>old.one && git add old.one && test_tick &&
+	git commit --date="@12345 +0400" -m "Old one" &&
+	>old.two && git add old.two && test_tick &&
+	git commit --date="@23456 +0500" -m "Old two" &&
+	>old.three && git add old.three && test_tick &&
+	git commit --date="@34567 +0600" -m "Old three" &&
+
+	git cat-file commit HEAD^^ >actual &&
+	grep "author .* 12345 +0400$" actual &&
+	git cat-file commit HEAD^ >actual &&
+	grep "author .* 23456 +0500$" actual &&
+	git cat-file commit HEAD >actual &&
+	grep "author .* 34567 +0600$" actual &&
+
+	git rebase --onto HEAD^^ HEAD^ &&
+
+	git cat-file commit HEAD >actual &&
+	grep "author .* 34567 +0600$" actual
+'
+
 test_done
