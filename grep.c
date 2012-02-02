@@ -826,6 +826,12 @@ static inline void grep_attr_unlock(void)
 	if (grep_use_locks)
 		pthread_mutex_unlock(&grep_attr_mutex);
 }
+
+/*
+ * Same as git_attr_mutex, but protecting the thread-unsafe object db access.
+ */
+pthread_mutex_t grep_read_mutex;
+
 #else
 #define grep_attr_lock()
 #define grep_attr_unlock()

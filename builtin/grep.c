@@ -85,21 +85,6 @@ static inline void grep_unlock(void)
 		pthread_mutex_unlock(&grep_mutex);
 }
 
-/* Used to serialize calls to read_sha1_file. */
-static pthread_mutex_t read_sha1_mutex;
-
-static inline void read_sha1_lock(void)
-{
-	if (use_threads)
-		pthread_mutex_lock(&read_sha1_mutex);
-}
-
-static inline void read_sha1_unlock(void)
-{
-	if (use_threads)
-		pthread_mutex_unlock(&read_sha1_mutex);
-}
-
 /* Signalled when a new work_item is added to todo. */
 static pthread_cond_t cond_add;
 
@@ -254,7 +239,7 @@ static void start_threads(struct grep_opt *opt)
 	int i;
 
 	pthread_mutex_init(&grep_mutex, NULL);
-	pthread_mutex_init(&read_sha1_mutex, NULL);
+	pthread_mutex_init(&grep_read_mutex, NULL);
 	pthread_mutex_init(&grep_attr_mutex, NULL);
 	pthread_cond_init(&cond_add, NULL);
 	pthread_cond_init(&cond_write, NULL);
@@ -303,7 +288,7 @@ static int wait_all(void)
 	}
 
 	pthread_mutex_destroy(&grep_mutex);
-	pthread_mutex_destroy(&read_sha1_mutex);
+	pthread_mutex_destroy(&grep_read_mutex);
 	pthread_mutex_destroy(&grep_attr_mutex);
 	pthread_cond_destroy(&cond_add);
 	pthread_cond_destroy(&cond_write);
@@ -313,8 +298,6 @@ static int wait_all(void)
 	return hit;
 }
 #else /* !NO_PTHREADS */
-#define read_sha1_lock()
-#define read_sha1_unlock()
 
 static int wait_all(void)
 {
@@ -376,9 +359,9 @@ static void *lock_and_read_sha1_file(const unsigned char *sha1, enum object_type
 {
 	void *data;
 
-	read_sha1_lock();
+	grep_read_lock();
 	data = read_sha1_file(sha1, type, size);
-	read_sha1_unlock();
+	grep_read_unlock();
 	return data;
 }
 
@@ -617,10 +600,10 @@ static int grep_object(struct grep_opt *opt, const struct pathspec *pathspec,
 		struct strbuf base;
 		int hit, len;
 
-		read_sha1_lock();
+		grep_read_lock();
 		data = read_object_with_reference(obj->sha1, tree_type,
 						  &size, NULL);
-		read_sha1_unlock();
+		grep_read_unlock();
 
 		if (!data)
 			die(_("unable to read tree (%s)"), sha1_to_hex(obj->sha1));
