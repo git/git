@@ -520,8 +520,13 @@ div.search {
 	right: 12px
 }
 
-p.projsearch {
+div.projsearch {
 	text-align: center;
+	margin: 20px 0px;
+}
+
+div.projsearch form {
+	margin-bottom: 2px;
 }
 
 td.linenr {
