@@ -1892,7 +1892,7 @@ msgstr "选项 \"%s\" 对于 %s 被忽略\n"
 #: builtin/fetch.c:879
 #, c-format
 msgid "Fetching %s\n"
-msgstr "正获取 %s\n"
+msgstr "正在获取 %s\n"
 
 #: builtin/fetch.c:881
 #, c-format
