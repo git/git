@@ -132,7 +132,7 @@ msgstr[0] "您的分支领先 '%s' 共 %d 个提交。\n"
 msgid "Your branch is behind '%s' by %d commit, and can be fast-forwarded.\n"
 msgid_plural ""
 "Your branch is behind '%s' by %d commits, and can be fast-forwarded.\n"
-msgstr[0] "您的分支落后 '%s' 共 %d 个提交，且可以快进式推送。\n"
+msgstr[0] "您的分支落后 '%s' 共 %d 个提交，且可以快进。\n"
 
 #: remote.c:1590
 #, c-format
