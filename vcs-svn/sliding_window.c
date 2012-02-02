@@ -31,15 +31,15 @@ static int read_to_fill_or_whine(struct line_buffer *file,
 	return 0;
 }
 
-static int check_overflow(off_t a, size_t b)
+static int check_offset_overflow(off_t offset, size_t len)
 {
-	if (b > maximum_signed_value_of_type(off_t))
+	if (len > maximum_signed_value_of_type(off_t))
 		return error("unrepresentable length in delta: "
-				"%"PRIuMAX" > OFF_MAX", (uintmax_t) b);
-	if (signed_add_overflows(a, (off_t) b))
+				"%"PRIuMAX" > OFF_MAX", (uintmax_t) len);
+	if (signed_add_overflows(offset, (off_t) len))
 		return error("unrepresentable offset in delta: "
 				"%"PRIuMAX" + %"PRIuMAX" > OFF_MAX",
-				(uintmax_t) a, (uintmax_t) b);
+				(uintmax_t) offset, (uintmax_t) len);
 	return 0;
 }
 
@@ -48,9 +48,9 @@ int move_window(struct sliding_view *view, off_t off, size_t width)
 	off_t file_offset;
 	assert(view);
 	assert(view->width <= view->buf.len);
-	assert(!check_overflow(view->off, view->buf.len));
+	assert(!check_offset_overflow(view->off, view->buf.len));
 
-	if (check_overflow(off, width))
+	if (check_offset_overflow(off, width))
 		return -1;
 	if (off < view->off || off + width < view->off + view->width)
 		return error("invalid delta: window slides left");
