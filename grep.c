@@ -1215,12 +1215,12 @@ int grep_source(struct grep_opt *opt, struct grep_source *gs)
 	return grep_source_1(opt, gs, 0);
 }
 
-int grep_buffer(struct grep_opt *opt, const char *name, char *buf, unsigned long size)
+int grep_buffer(struct grep_opt *opt, char *buf, unsigned long size)
 {
 	struct grep_source gs;
 	int r;
 
-	grep_source_init(&gs, GREP_SOURCE_BUF, name, NULL);
+	grep_source_init(&gs, GREP_SOURCE_BUF, NULL, NULL);
 	gs.buf = buf;
 	gs.size = size;
 
