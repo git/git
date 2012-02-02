@@ -9,6 +9,7 @@ typedef int pcre_extra;
 #endif
 #include "kwset.h"
 #include "thread-utils.h"
+#include "userdiff.h"
 
 enum grep_pat_token {
 	GREP_PATTERN,
@@ -141,6 +142,8 @@ struct grep_source {
 
 	char *buf;
 	unsigned long size;
+
+	struct userdiff_driver *driver;
 };
 
 void grep_source_init(struct grep_source *gs, enum grep_source_type type,
@@ -148,6 +151,7 @@ void grep_source_init(struct grep_source *gs, enum grep_source_type type,
 int grep_source_load(struct grep_source *gs);
 void grep_source_clear_data(struct grep_source *gs);
 void grep_source_clear(struct grep_source *gs);
+void grep_source_load_driver(struct grep_source *gs);
 
 int grep_source(struct grep_opt *opt, struct grep_source *gs);
 

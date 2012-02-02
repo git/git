@@ -841,12 +841,9 @@ static int match_funcname(struct grep_opt *opt, struct grep_source *gs, char *bo
 {
 	xdemitconf_t *xecfg = opt->priv;
 	if (xecfg && !xecfg->find_func) {
-		struct userdiff_driver *drv;
-		grep_attr_lock();
-		drv = userdiff_find_by_path(gs->name);
-		grep_attr_unlock();
-		if (drv && drv->funcname.pattern) {
-			const struct userdiff_funcname *pe = &drv->funcname;
+		grep_source_load_driver(gs);
+		if (gs->driver->funcname.pattern) {
+			const struct userdiff_funcname *pe = &gs->driver->funcname;
 			xdiff_set_find_func(xecfg, pe->pattern, pe->cflags);
 		} else {
 			xecfg = opt->priv = NULL;
@@ -1237,6 +1234,7 @@ void grep_source_init(struct grep_source *gs, enum grep_source_type type,
 	gs->name = name ? xstrdup(name) : NULL;
 	gs->buf = NULL;
 	gs->size = 0;
+	gs->driver = NULL;
 
 	switch (type) {
 	case GREP_SOURCE_FILE:
@@ -1339,4 +1337,16 @@ int grep_source_load(struct grep_source *gs)
 		return gs->buf ? 0 : -1;
 	}
 	die("BUG: invalid grep_source type");
+}
+
+void grep_source_load_driver(struct grep_source *gs)
+{
+	if (gs->driver)
+		return;
+
+	grep_attr_lock();
+	gs->driver = userdiff_find_by_path(gs->name);
+	if (!gs->driver)
+		gs->driver = userdiff_find_by_name("default");
+	grep_attr_unlock();
 }
