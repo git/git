@@ -85,8 +85,8 @@ static pthread_cond_t cond_result;
 
 static int skip_first_line;
 
-static void add_work(enum grep_source_type type, const char *name,
-		     const void *id)
+static void add_work(struct grep_opt *opt, enum grep_source_type type,
+		     const char *name, const void *id)
 {
 	grep_lock();
 
@@ -95,6 +95,8 @@ static void add_work(enum grep_source_type type, const char *name,
 	}
 
 	grep_source_init(&todo[todo_end].source, type, name, id);
+	if (opt->binary != GREP_BINARY_TEXT)
+		grep_source_load_driver(&todo[todo_end].source);
 	todo[todo_end].done = 0;
 	strbuf_reset(&todo[todo_end].out);
 	todo_end = (todo_end + 1) % ARRAY_SIZE(todo);
@@ -333,7 +335,7 @@ static int grep_sha1(struct grep_opt *opt, const unsigned char *sha1,
 
 #ifndef NO_PTHREADS
 	if (use_threads) {
-		add_work(GREP_SOURCE_SHA1, pathbuf.buf, sha1);
+		add_work(opt, GREP_SOURCE_SHA1, pathbuf.buf, sha1);
 		strbuf_release(&pathbuf);
 		return 0;
 	} else
@@ -362,7 +364,7 @@ static int grep_file(struct grep_opt *opt, const char *filename)
 
 #ifndef NO_PTHREADS
 	if (use_threads) {
-		add_work(GREP_SOURCE_FILE, buf.buf, filename);
+		add_work(opt, GREP_SOURCE_FILE, buf.buf, filename);
 		strbuf_release(&buf);
 		return 0;
 	} else
