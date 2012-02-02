@@ -1019,9 +1019,6 @@ static int grep_source_1(struct grep_opt *opt, struct grep_source *gs, int colle
 	}
 	opt->last_shown = 0;
 
-	if (grep_source_load(gs) < 0)
-		return 0;
-
 	switch (opt->binary) {
 	case GREP_BINARY_DEFAULT:
 		if (grep_source_is_binary(gs))
@@ -1041,6 +1038,9 @@ static int grep_source_1(struct grep_opt *opt, struct grep_source *gs, int colle
 	opt->priv = &xecfg;
 
 	try_lookahead = should_lookahead(opt);
+
+	if (grep_source_load(gs) < 0)
+		return 0;
 
 	bol = gs->buf;
 	left = gs->size;
