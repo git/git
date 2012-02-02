@@ -807,26 +807,28 @@ static void show_line(struct grep_opt *opt, char *bol, char *eol,
 }
 
 #ifndef NO_PTHREADS
+int grep_use_locks;
+
 /*
  * This lock protects access to the gitattributes machinery, which is
  * not thread-safe.
  */
 pthread_mutex_t grep_attr_mutex;
 
-static inline void grep_attr_lock(struct grep_opt *opt)
+static inline void grep_attr_lock(void)
 {
-	if (opt->use_threads)
+	if (grep_use_locks)
 		pthread_mutex_lock(&grep_attr_mutex);
 }
 
-static inline void grep_attr_unlock(struct grep_opt *opt)
+static inline void grep_attr_unlock(void)
 {
-	if (opt->use_threads)
+	if (grep_use_locks)
 		pthread_mutex_unlock(&grep_attr_mutex);
 }
 #else
-#define grep_attr_lock(opt)
-#define grep_attr_unlock(opt)
+#define grep_attr_lock()
+#define grep_attr_unlock()
 #endif
 
 static int match_funcname(struct grep_opt *opt, const char *name, char *bol, char *eol)
@@ -834,9 +836,9 @@ static int match_funcname(struct grep_opt *opt, const char *name, char *bol, cha
 	xdemitconf_t *xecfg = opt->priv;
 	if (xecfg && !xecfg->find_func) {
 		struct userdiff_driver *drv;
-		grep_attr_lock(opt);
+		grep_attr_lock();
 		drv = userdiff_find_by_path(name);
-		grep_attr_unlock(opt);
+		grep_attr_unlock();
 		if (drv && drv->funcname.pattern) {
 			const struct userdiff_funcname *pe = &drv->funcname;
 			xdiff_set_find_func(xecfg, pe->pattern, pe->cflags);

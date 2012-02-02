@@ -259,6 +259,7 @@ static void start_threads(struct grep_opt *opt)
 	pthread_cond_init(&cond_add, NULL);
 	pthread_cond_init(&cond_write, NULL);
 	pthread_cond_init(&cond_result, NULL);
+	grep_use_locks = 1;
 
 	for (i = 0; i < ARRAY_SIZE(todo); i++) {
 		strbuf_init(&todo[i].out, 0);
@@ -307,6 +308,7 @@ static int wait_all(void)
 	pthread_cond_destroy(&cond_add);
 	pthread_cond_destroy(&cond_write);
 	pthread_cond_destroy(&cond_result);
+	grep_use_locks = 0;
 
 	return hit;
 }
@@ -1029,8 +1031,6 @@ int cmd_grep(int argc, const char **argv, const char *prefix)
 #else
 	use_threads = 0;
 #endif
-
-	opt.use_threads = use_threads;
 
 #ifndef NO_PTHREADS
 	if (use_threads) {
