@@ -40,7 +40,8 @@
 static struct line_buffer input = LINE_BUFFER_INIT;
 
 static struct {
-	uint32_t action, propLength, textLength, srcRev, type;
+	uint32_t action, propLength, srcRev, type;
+	off_t text_length;
 	struct strbuf src, dst;
 	uint32_t text_delta, prop_delta;
 } node_ctx;
@@ -61,7 +62,7 @@ static void reset_node_ctx(char *fname)
 	node_ctx.type = 0;
 	node_ctx.action = NODEACT_UNKNOWN;
 	node_ctx.propLength = LENGTH_UNKNOWN;
-	node_ctx.textLength = LENGTH_UNKNOWN;
+	node_ctx.text_length = -1;
 	strbuf_reset(&node_ctx.src);
 	node_ctx.srcRev = 0;
 	strbuf_reset(&node_ctx.dst);
@@ -209,7 +210,7 @@ static void handle_node(void)
 {
 	const uint32_t type = node_ctx.type;
 	const int have_props = node_ctx.propLength != LENGTH_UNKNOWN;
-	const int have_text = node_ctx.textLength != LENGTH_UNKNOWN;
+	const int have_text = node_ctx.text_length != -1;
 	/*
 	 * Old text for this node:
 	 *  NULL	- directory or bug
@@ -291,12 +292,12 @@ static void handle_node(void)
 	}
 	if (!node_ctx.text_delta) {
 		fast_export_modify(node_ctx.dst.buf, node_ctx.type, "inline");
-		fast_export_data(node_ctx.type, node_ctx.textLength, &input);
+		fast_export_data(node_ctx.type, node_ctx.text_length, &input);
 		return;
 	}
 	fast_export_modify(node_ctx.dst.buf, node_ctx.type, "inline");
 	fast_export_blob_delta(node_ctx.type, old_mode, old_data,
-				node_ctx.textLength, &input);
+				node_ctx.text_length, &input);
 }
 
 static void begin_revision(void)
@@ -409,7 +410,15 @@ void svndump_read(const char *url)
 			break;
 		case sizeof("Text-content-length"):
 			if (!constcmp(t, "Text-content-length")) {
-				node_ctx.textLength = atoi(val);
+				char *end;
+				uintmax_t textlen;
+
+				textlen = strtoumax(val, &end, 10);
+				if (!isdigit(*val) || *end)
+					die("invalid dump: non-numeric length %s", val);
+				if (textlen > maximum_signed_value_of_type(off_t))
+					die("unrepresentable length in dump: %s", val);
+				node_ctx.text_length = (off_t) textlen;
 				break;
 			}
 			if (constcmp(t, "Prop-content-length"))
