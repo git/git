@@ -21,7 +21,6 @@ static char *do_askpass(const char *cmd, const char *prompt)
 	if (start_command(&pass))
 		exit(1);
 
-	strbuf_reset(&buffer);
 	if (strbuf_read(&buffer, pass.out, 20) < 0)
 		die("failed to get '%s' from %s\n", prompt, cmd);
 
@@ -32,7 +31,7 @@ static char *do_askpass(const char *cmd, const char *prompt)
 
 	strbuf_setlen(&buffer, strcspn(buffer.buf, "\r\n"));
 
-	return buffer.buf;
+	return strbuf_detach(&buffer, NULL);
 }
 
 char *git_prompt(const char *prompt, int flags)
