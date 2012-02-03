@@ -9,6 +9,7 @@ static char *do_askpass(const char *cmd, const char *prompt)
 	struct child_process pass;
 	const char *args[3];
 	static struct strbuf buffer = STRBUF_INIT;
+	int err = 0;
 
 	args[0] = cmd;
 	args[1]	= prompt;
@@ -19,15 +20,21 @@ static char *do_askpass(const char *cmd, const char *prompt)
 	pass.out = -1;
 
 	if (start_command(&pass))
-		exit(1);
+		return NULL;
 
 	if (strbuf_read(&buffer, pass.out, 20) < 0)
-		die("failed to get '%s' from %s\n", prompt, cmd);
+		err = 1;
 
 	close(pass.out);
 
 	if (finish_command(&pass))
-		exit(1);
+		err = 1;
+
+	if (err) {
+		error("unable to read askpass response from '%s'", cmd);
+		strbuf_release(&buffer);
+		return NULL;
+	}
 
 	strbuf_setlen(&buffer, strcspn(buffer.buf, "\r\n"));
 
@@ -36,7 +43,7 @@ static char *do_askpass(const char *cmd, const char *prompt)
 
 char *git_prompt(const char *prompt, int flags)
 {
-	char *r;
+	char *r = NULL;
 
 	if (flags & PROMPT_ASKPASS) {
 		const char *askpass;
@@ -47,12 +54,15 @@ char *git_prompt(const char *prompt, int flags)
 		if (!askpass)
 			askpass = getenv("SSH_ASKPASS");
 		if (askpass && *askpass)
-			return do_askpass(askpass, prompt);
+			r = do_askpass(askpass, prompt);
 	}
 
-	r = git_terminal_prompt(prompt, flags & PROMPT_ECHO);
 	if (!r)
-		die_errno("could not read '%s'", prompt);
+		r = git_terminal_prompt(prompt, flags & PROMPT_ECHO);
+	if (!r) {
+		/* prompts already contain ": " at the end */
+		die("could not read %s%s", prompt, strerror(errno));
+	}
 	return r;
 }
 
