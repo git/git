@@ -1,19 +1,14 @@
 To: git@vger.kernel.org
-Subject: What's cooking in git.git (Jan 2012, #08; Tue, 31)
-X-master-at: 2a2aa8e5561d4cfc00c8e021b1231958f6d4d2fa
-X-next-at: a0195c8c59b10d7dd4bf7ef9fcfd8e43f04a6777
+Subject: What's cooking in git.git (Feb 2012, #01; Fri, 3)
+X-master-at: f3fb07509c2e0b21b12a598fcd0a19a92fc38a9d
+X-next-at: e26aed0c97a6c884b5f569830384355d6afb16f1
 
-What's cooking in git.git (Jan 2012, #08; Tue, 31)
+What's cooking in git.git (Feb 2012, #01; Fri, 3)
 --------------------------------------------------
 
 Here are the topics that have been cooking.  Commits prefixed with '-' are
 only in 'pu' (proposed updates) while commits prefixed with '+' are in
 'next'.
-
-As promised in the recent couple of issues of "What's cooking", the first
-batch of topics that have been cooking in 'next' are now in 'master'. The
-tip of 'next' hasn't been rewound yet, but it soon will after the second
-batch of topics graduate.
 
 Here are the repositories that have my integration branches:
 
@@ -43,132 +38,100 @@ The preformatted documentation in HTML and man format are found in:
 --------------------------------------------------
 [New Topics]
 
-* fc/zsh-completion (2012-01-30) 4 commits
- - (squash to previous?) completion: remove unused code
- - completion: simplify __git_remotes
- - (squash) completion-style
- - completion: be nicer with zsh
+* nd/diffstat-gramnum (2012-02-03) 1 commit
+ - Use correct grammar in diffstat summary line
 
-Somehow only 2 out of 4-part series seem to have reached the list, missing
-the other 2.
+The commands in the "git diff" family and "git apply --stat" that count
+the number of files changed and the number of lines inserted/deleted have
+been updated to match the output from "diffstat".  This also opens the
+door to i18n this line.
 
-* jc/maint-request-pull-for-tag (2012-01-31) 1 commit
- - request-pull: explicitly ask tags/$name to be pulled
-
-Usability improvement.
 Will merge to 'next'.
 
-* nd/find-pack-entry-recent-cache-invalidation (2012-01-31) 1 commit
- - find_pack_entry(): do not keep packed_git pointer locally
+* jx/i18n-more-marking (2012-02-01) 2 commits
+ - i18n: format_tracking_info "Your branch is behind" message
+ - i18n: git-commit whence_s "merge/cherry-pick" message
 
-Review comments sent.
+Will merge to 'next'.
 
-* nd/pack-objects-parseopt (2012-01-31) 1 commit
- - pack-objects: convert to use parse_options()
+* jk/grep-binary-attribute (2012-02-02) 9 commits
+ - grep: pre-load userdiff drivers when threaded
+ - grep: load file data after checking binary-ness
+ - grep: respect diff attributes for binary-ness
+ - grep: cache userdiff_driver in grep_source
+ - grep: drop grep_buffer's "name" parameter
+ - convert git-grep to use grep_source interface
+ - grep: refactor the concept of "grep source" into an object
+ - grep: move sha1-reading mutex into low-level code
+ - grep: make locking flag global
 
-Review comments sent.
+Fixes a longstanding bug that there was no way to tell "git grep" that a
+path may look like text but it is not, which "git diff" can do using the
+attributes system. Now "git grep" honors the same "binary" (or "-diff")
+attribute.
+
+Will merge to 'next'.
+
+* jc/parse-date-raw (2012-02-03) 2 commits
+ - parse_date(): '@' prefix forces git-timestamp
+ - parse_date(): allow ancient git-timestamp
+
+"rebase" and "commit --amend" failed to work on commits with ancient
+timestamps near year 1970.
+
+Waiting for comments.
+
+* jk/git-dir-lookup (2012-02-02) 1 commit
+ - standardize and improve lookup rules for external local repos
+
+Will merge to 'next'.
+
+* jk/prompt-fallback-to-tty (2012-02-03) 2 commits
+ - prompt: fall back to terminal if askpass fails
+ - prompt: clean up strbuf usage
+
+The code to ask for password did not fall back to the terminal input when
+GIT_ASKPASS is set but does not work (e.g. lack of X with GUI askpass
+helper).
+
+* jk/tests-write-script (2012-02-03) 2 commits
+ - t0300: use write_script helper
+ - tests: add write_script helper function
+
+Will merge to 'next'.
+
+* jn/gitweb-search-utf-8 (2012-02-03) 1 commit
+ - gitweb: Allow UTF-8 encoded CGI query parameters and path_info
+
+Search box in "gitweb" did not accept non-ASCII characters correctly.
+Will merge to 'next'.
+
+* jn/rpm-spec (2012-02-03) 1 commit
+ - git.spec: Workaround localized messages not put in any RPM
+
+Fix breakage in v1.7.9 Makefile; rpmbuild notices an unpackaged but
+installed *.mo file and fails.
+
+Will merge to 'next'.
+
+--------------------------------------------------
+[Graduated to "master"]
+
+* jc/pull-signed-tag (2012-01-23) 1 commit
+  (merged to 'next' on 2012-01-23 at 4257553)
+ + merge: use editor by default in interactive sessions
+
+"git merge" in an interactive session learned to spawn the editor by
+default to let the user edit the auto-generated merge message, to
+encourage people to explain their merges better. Legacy scripts can
+export MERGE_AUTOEDIT=no to retain the historical behaviour.
 
 * tr/merge-edit-guidance (2012-01-31) 1 commit
   (merged to 'next' on 2012-01-31 at bb678f7)
  + merge: add instructions to the commit message when editing
 
-Will merge to 'master' in the second batch.
-
---------------------------------------------------
-[Graduated to "master"]
-
-* ar/i18n-no-gettext (2012-01-27) 4 commits
-  (merged to 'next' on 2012-01-27 at 0ecf258)
- + i18n: Do not force USE_GETTEXT_SCHEME=fallthrough on NO_GETTEXT
-  (merged to 'next' on 2012-01-23 at 694a94e)
- + i18n: Make NO_GETTEXT imply fallthrough scheme in shell l10n
- + add a Makefile switch to avoid gettext translation in shell scripts
- + git-sh-i18n: restructure the logic to compute gettext.sh scheme
-
-* da/maint-mergetool-twoway (2012-01-23) 1 commit
-  (merged to 'next' on 2012-01-23 at f927323)
- + mergetool: Provide an empty file when needed
-
-Caters to GUI merge backends that cannot merge two files without
-a base by giving them an empty file as a "pretend" common ancestor.
-
-* jc/advise-i18n (2011-12-22) 1 commit
-  (merged to 'next' on 2012-01-23 at 6447013)
- + i18n of multi-line advice messages
-
-Allow localization of advice messages that tend to be longer and
-multi-line formatted. For now this is deliberately limited to advise()
-interface and not vreportf() in general as touching the latter has
-interactions with error() that has plumbing callers whose prefix "error: "
-should never be translated.
-
-* jl/submodule-re-add (2012-01-24) 1 commit
-  (merged to 'next' on 2012-01-26 at 482553e)
- + submodule add: fix breakage when re-adding a deep submodule
-
-"git submodule add" forgot to recompute the name to be stored in .gitmodules
-when the module was once added to the superproject and already initialized.
-
-* ks/sort-wildcard-in-makefile (2012-01-22) 1 commit
-  (merged to 'next' on 2012-01-23 at e2e0c1d)
- + t/Makefile: Use $(sort ...) explicitly where needed
-
-t/Makefile is adjusted to prevent newer versions of GNU make from running
-tests in seemingly random order.
-
-* ld/git-p4-branches-and-labels (2012-01-20) 5 commits
-  (merged to 'next' on 2012-01-23 at 9020ec4)
- + git-p4: label import fails with multiple labels at the same changelist
- + git-p4: add test for p4 labels
- + git-p4: importing labels should cope with missing owner
- + git-p4: cope with labels with empty descriptions
- + git-p4: handle p4 branches and labels containing shell chars
- (this branch is used by va/git-p4-branch.)
-
-* nd/clone-detached (2012-01-24) 12 commits
-  (merged to 'next' on 2012-01-26 at 7b0cc8a)
- + clone: fix up delay cloning conditions
-  (merged to 'next' on 2012-01-23 at bee31c6)
- + push: do not let configured foreign-vcs permanently clobbered
-  (merged to 'next' on 2012-01-23 at 9cab64e)
- + clone: print advice on checking out detached HEAD
- + clone: allow --branch to take a tag
- + clone: refuse to clone if --branch points to bogus ref
- + clone: --branch=<branch> always means refs/heads/<branch>
- + clone: delay cloning until after remote HEAD checking
- + clone: factor out remote ref writing
- + clone: factor out HEAD update code
- + clone: factor out checkout code
- + clone: write detached HEAD in bare repositories
- + t5601: add missing && cascade
-
-"git clone" learned to detach the HEAD in the resulting repository when
-the source repository's HEAD does not point to a branch.
-
-* rr/sequencer (2012-01-11) 2 commits
-  (merged to 'next' on 2012-01-23 at f349b56)
- + sequencer: factor code out of revert builtin
- + revert: prepare to move replay_action to header
-
-Moving large chunk of code out of cherry-pick/revert for later reuse,
-primarily to prepare for the next cycle.
-
-* tr/grep-l-with-decoration (2012-01-23) 1 commit
-  (merged to 'next' on 2012-01-23 at 42b8795)
- + grep: fix -l/-L interaction with decoration lines
-
-Using "git grep -l/-L" together with options -W or --break may not make
-much sense as the output is to only count the number of hits and there is
-no place for file breaks, but the latter options made "-l/-L" to miscount
-the hits.
-
-* va/git-p4-branch (2012-01-26) 4 commits
-  (merged to 'next' on 2012-01-26 at e67c52a)
- + t9801: do not overuse test_must_fail
- + git-p4: Change p4 command invocation
- + git-p4: Add test case for complex branch import
- + git-p4: Search for parent commit on branch creation
- (this branch uses ld/git-p4-branches-and-labels.)
+"git merge" adds advice text to the commit log template when running
+interactively.
 
 --------------------------------------------------
 [Stalled]
@@ -185,14 +148,11 @@ Waiting for a reroll.
 * ss/git-svn-prompt-sans-terminal (2012-01-04) 3 commits
  - fixup! 15eaaf4
  - git-svn, perl/Git.pm: extend Git::prompt helper for querying users
-  (merged to 'next' on 2012-01-05 at 954f125)
- + perl/Git.pm: "prompt" helper to honor GIT_ASKPASS and SSH_ASKPASS
+ - perl/Git.pm: "prompt" helper to honor GIT_ASKPASS and SSH_ASKPASS
 
 The bottom one has been replaced with a rewrite based on comments from
 Ævar. The second one needs more work, both in perl/Git.pm and prompt.c, to
 give precedence to tty over SSH_ASKPASS when terminal is available.
-
-Will defer till the next cycle.
 
 * nd/commit-ignore-i-t-a (2012-01-16) 2 commits
  - commit, write-tree: allow to ignore CE_INTENT_TO_ADD while writing trees
@@ -201,29 +161,67 @@ Will defer till the next cycle.
 May want to consider this as fixing an earlier UI mistake, and not as a
 feature that devides the userbase.
 
-Will defer till the next cycle.
-
 --------------------------------------------------
 [Cooking]
 
-* bl/gitweb-project-filter (2012-01-31) 8 commits
- - gitweb: Make project search respect project_filter
- - gitweb: improve usability of projects search form
- - gitweb: place links to parent directories in page header
- - gitweb: show active project_filter in project_list page header
- - gitweb: limit links to alternate forms of project_list to active project_filter
- - gitweb: add project_filter to limit project list to a subdirectory
- - gitweb: prepare git_get_projects_list for use outside 'forks'.
- - gitweb: move hard coded .git suffix out of git_get_projects_list
+* fc/zsh-completion (2012-02-03) 3 commits
+ - completion: simplify __gitcomp and __gitcomp_nl implementations
+ - completion: use ls -1 instead of rolling a loop to do that ourselves
+ - completion: work around zsh option propagation bug
 
-Seems to break test 9502.
+Fix git subcommand completion for zsh (in contrib/completion).
+
+Will merge to 'next'.
+
+* jc/maint-request-pull-for-tag (2012-01-31) 1 commit
+  (merged to 'next' on 2012-02-01 at 7649f18)
+ + request-pull: explicitly ask tags/$name to be pulled
+
+When asking for a tag to be pulled, "request-pull" shows the name of the
+tag prefixed with "tags/"
+
+* nd/find-pack-entry-recent-cache-invalidation (2012-02-01) 2 commits
+  (merged to 'next' on 2012-02-01 at e26aed0)
+ + find_pack_entry(): do not keep packed_git pointer locally
+ + sha1_file.c: move the core logic of find_pack_entry() into fill_pack_entry()
+
+* nd/pack-objects-parseopt (2012-02-01) 3 commits
+ - pack-objects: convert to use parse_options()
+ - pack-objects: remove bogus comment
+ - pack-objects: do not accept "--index-version=version,"
+
+Will merge to 'next'.
+
+"pack-objects" learned use parse-options, losing custom command line
+parsing code.
+
+* bl/gitweb-project-filter (2012-02-01) 8 commits
+  (merged to 'next' on 2012-02-01 at 2c96ce7)
+ + gitweb: Make project search respect project_filter
+ + gitweb: improve usability of projects search form
+ + gitweb: place links to parent directories in page header
+ + gitweb: show active project_filter in project_list page header
+ + gitweb: limit links to alternate forms of project_list to active project_filter
+ + gitweb: add project_filter to limit project list to a subdirectory
+ + gitweb: prepare git_get_projects_list for use outside 'forks'.
+ + gitweb: move hard coded .git suffix out of git_get_projects_list
+
+"gitweb" allows intermediate entries in the directory hierarchy that leads
+to a projects to be clicked, which in turn shows the list of projects
+inside that directory.
 
 * rt/completion-branch-edit-desc (2012-01-29) 1 commit
-  (merged to 'next' on 2012-01-31 at a0195c8)
+  (merged to 'next' on 2012-02-01 at 0627ebf)
  + completion: --edit-description option for git-branch
 
-* jn/svn-fe (2012-01-27) 44 commits
-  (merged to 'next' on 2012-01-29 at 001a395)
+Originally merged to 'next' on 2012-01-31.
+Will merge to 'master'.
+
+* jn/svn-fe (2012-02-02) 47 commits
+ - vcs-svn: suppress a -Wtype-limits warning
+ - vcs-svn: allow import of > 4GiB files
+ - vcs-svn: rename check_overflow arguments for clarity
+  (merged to 'next' on 2012-02-01 at 9288c95)
  + vcs-svn/svndiff.c: squelch false "unused" warning from gcc
  + Merge branch 'svn-fe' of git://repo.or.cz/git/jrn into jn/svn-fe
  + vcs-svn: reset first_commit_done in fast_export_init
@@ -269,10 +267,12 @@ Seems to break test 9502.
  + vcs-svn: set up channel to read fast-import cat-blob response
  + Merge commit 'v1.7.5' into svn-fe
 
+Originally merged to 'next' on 2012-01-29.
+
 "vcs-svn"/"svn-fe" learned to read dumps with svn-deltas and support
 incremental imports.
 
-Will merge to 'master' in the second batch.
+Will merge to 'next' through the tip and then to 'master' soon after.
 
 * jc/split-blob (2012-01-24) 6 commits
  - chunked-object: streaming checkout
@@ -301,63 +301,3 @@ logic in the original patch extremely stupid to entice others, especially
 the "bup" fanboys, to come up with a better logic, thinking that giving
 people an easy target to shoot for, they may be encouraged to help
 out. The plan is not working :-(.
-
-* jc/pull-signed-tag (2012-01-23) 1 commit
-  (merged to 'next' on 2012-01-23 at 4257553)
- + merge: use editor by default in interactive sessions
-
-"git merge" in an interactive session learned to spawn the editor by
-default to let the user edit the auto-generated merge message, to
-encourage people to explain their merges better. Legacy scripts can
-export MERGE_AUTOEDIT=no to retain the historical behaviour.
-
-Will merge to 'master' in the second batch and deal with any fallout in
-'master'.
-
---------------------------------------------------
-[Discarded]
-
-* mh/ref-api-rest (2011-12-12) 35 commits
- . repack_without_ref(): call clear_packed_ref_cache()
- . read_packed_refs(): keep track of the directory being worked in
- . is_refname_available(): query only possibly-conflicting references
- . refs: read loose references lazily
- . read_loose_refs(): take a (ref_entry *) as argument
- . struct ref_dir: store a reference to the enclosing ref_cache
- . sort_ref_dir(): take (ref_entry *) instead of (ref_dir *)
- . do_for_each_ref_in_dir*(): take (ref_entry *) instead of (ref_dir *)
- . add_entry(): take (ref_entry *) instead of (ref_dir *)
- . search_ref_dir(): take (ref_entry *) instead of (ref_dir *)
- . find_containing_direntry(): use (ref_entry *) instead of (ref_dir *)
- . add_ref(): take (ref_entry *) instead of (ref_dir *)
- . read_packed_refs(): take (ref_entry *) instead of (ref_dir *)
- . find_ref(): take (ref_entry *) instead of (ref_dir *)
- . is_refname_available(): take (ref_entry *) instead of (ref_dir *)
- . get_loose_refs(): return (ref_entry *) instead of (ref_dir *)
- . get_packed_refs(): return (ref_entry *) instead of (ref_dir *)
- . refs: wrap top-level ref_dirs in ref_entries
- . get_ref_dir(): keep track of the current ref_dir
- . do_for_each_ref(): only iterate over the subtree that was requested
- . refs: sort ref_dirs lazily
- . sort_ref_dir(): do not sort if already sorted
- . refs: store references hierarchically
- . refs.c: rename ref_array -> ref_dir
- . struct ref_entry: nest the value part in a union
- . check_refname_component(): return 0 for zero-length components
- . free_ref_entry(): new function
- . refs.c: reorder definitions more logically
- . is_refname_available(): reimplement using do_for_each_ref_in_array()
- . names_conflict(): simplify implementation
- . names_conflict(): new function, extracted from is_refname_available()
- . repack_without_ref(): reimplement using do_for_each_ref_in_array()
- . do_for_each_ref_in_arrays(): new function
- . do_for_each_ref_in_array(): new function
- . do_for_each_ref(): correctly terminate while processesing extra_refs
-
-Will be re-rolled. Discarded without prejudice.
-
-* mm/zsh-completion-regression-fix (2012-01-17) 1 commit
-  (merged to 'next' on 2012-01-23 at 7bc2e0a)
- + bash-completion: don't add quoted space for ZSH (fix regression)
-
-Superseded by a better fix already in 'master'.
