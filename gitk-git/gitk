@@ -7671,7 +7671,7 @@ proc gettreeline {gtf id} {
 	if {[string index $fname 0] eq "\""} {
 	    set fname [lindex $fname 0]
 	}
-	set fname [encoding convertfrom $fname]
+	set fname [encoding convertfrom utf-8 $fname]
 	lappend treefilelist($id) $fname
     }
     if {![eof $gtf]} {
@@ -7933,7 +7933,7 @@ proc gettreediffline {gdtf ids} {
 	    if {[string index $file 0] eq "\""} {
 		set file [lindex $file 0]
 	    }
-	    set file [encoding convertfrom $file]
+	    set file [encoding convertfrom utf-8 $file]
 	    if {$file ne [lindex $treediff end]} {
 		lappend treediff $file
 		lappend sublist $file
@@ -8078,7 +8078,7 @@ proc makediffhdr {fname ids} {
     global ctext curdiffstart treediffs diffencoding
     global ctext_file_names jump_to_here targetline diffline
 
-    set fname [encoding convertfrom $fname]
+    set fname [encoding convertfrom utf-8 $fname]
     set diffencoding [get_path_encoding $fname]
     set i [lsearch -exact $treediffs($ids) $fname]
     if {$i >= 0} {
@@ -8140,7 +8140,7 @@ proc parseblobdiffline {ids line} {
 
     if {![string compare -length 5 "diff " $line]} {
 	if {![regexp {^diff (--cc|--git) } $line m type]} {
-	    set line [encoding convertfrom $line]
+	    set line [encoding convertfrom utf-8 $line]
 	    $ctext insert end "$line\n" hunksep
 	    continue
 	}
@@ -8187,7 +8187,7 @@ proc parseblobdiffline {ids line} {
 	makediffhdr $fname $ids
 
     } elseif {![string compare -length 16 "* Unmerged path " $line]} {
-	set fname [encoding convertfrom [string range $line 16 end]]
+	set fname [encoding convertfrom utf-8 [string range $line 16 end]]
 	$ctext insert end "\n"
 	set curdiffstart [$ctext index "end - 1c"]
 	lappend ctext_file_names $fname
@@ -8242,7 +8242,7 @@ proc parseblobdiffline {ids line} {
 	    if {[string index $fname 0] eq "\""} {
 		set fname [lindex $fname 0]
 	    }
-	    set fname [encoding convertfrom $fname]
+	    set fname [encoding convertfrom utf-8 $fname]
 	    set i [lsearch -exact $treediffs($ids) $fname]
 	    if {$i >= 0} {
 		setinlist difffilestart $i $curdiffstart
@@ -8261,6 +8261,7 @@ proc parseblobdiffline {ids line} {
 	    set diffinhdr 0
 	    return
 	}
+	set line [encoding convertfrom utf-8 $line]
 	$ctext insert end "$line\n" filesep
 
     } else {
@@ -12210,7 +12211,7 @@ proc cache_gitattr {attr pathlist} {
 	    foreach row [split $rlist "\n"] {
 		if {[regexp "(.*): $attr: (.*)" $row m path value]} {
 		    if {[string index $path 0] eq "\""} {
-			set path [encoding convertfrom [lindex $path 0]]
+			set path [encoding convertfrom utf-8 [lindex $path 0]]
 		    }
 		    set path_attr_cache($attr,$path) $value
 		}
