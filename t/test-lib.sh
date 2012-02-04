@@ -381,9 +381,18 @@ test_config () {
 	git config "$@"
 }
 
+
 test_config_global () {
 	test_when_finished "test_unconfig --global '$1'" &&
 	git config --global "$@"
+}
+
+write_script () {
+	{
+		echo "#!${2-"$SHELL_PATH"}" &&
+		cat
+	} >"$1" &&
+	chmod +x "$1"
 }
 
 # Use test_set_prereq to tell that a particular prerequisite is available.
