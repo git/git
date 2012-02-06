@@ -1,0 +1,19 @@
+Git v1.7.9.1 Release Notes
+==========================
+
+Fixes since v1.7.9
+------------------
+
+ * Subprocesses spawned from various git programs were often left running
+   to completion even when the top-level process was killed.
+
+ * "git log --first-parent $pathspec" did not stay on the first parent
+   chain and veered into side branch from which the whole change to the
+   specified paths came.
+
+ * "git push -q" was not sufficiently quiet.
+
+ * When "git push" fails to update any refs, the client side did not
+   report an error correctly to the end user.
+
+Also contains minor fixes and documentation updates.
