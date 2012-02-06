@@ -107,7 +107,7 @@ static const char *argv_submodule[] = {
 
 static char *get_repo_path(const char *repo, int *is_bundle)
 {
-	static char *suffix[] = { "/.git", ".git", "" };
+	static char *suffix[] = { "/.git", "", ".git/.git", ".git" };
 	static char *bundle_suffix[] = { ".bundle", "" };
 	struct stat st;
 	int i;
@@ -117,7 +117,7 @@ static char *get_repo_path(const char *repo, int *is_bundle)
 		path = mkpath("%s%s", repo, suffix[i]);
 		if (stat(path, &st))
 			continue;
-		if (S_ISDIR(st.st_mode)) {
+		if (S_ISDIR(st.st_mode) && is_git_directory(path)) {
 			*is_bundle = 0;
 			return xstrdup(absolute_path(path));
 		} else if (S_ISREG(st.st_mode) && st.st_size > 8) {

@@ -293,7 +293,7 @@ const char *enter_repo(const char *path, int strict)
 
 	if (!strict) {
 		static const char *suffix[] = {
-			".git/.git", "/.git", ".git", "", NULL,
+			"/.git", "", ".git/.git", ".git", NULL,
 		};
 		const char *gitfile;
 		int len = strlen(path);
@@ -324,8 +324,11 @@ const char *enter_repo(const char *path, int strict)
 			return NULL;
 		len = strlen(used_path);
 		for (i = 0; suffix[i]; i++) {
+			struct stat st;
 			strcpy(used_path + len, suffix[i]);
-			if (!access(used_path, F_OK)) {
+			if (!stat(used_path, &st) &&
+			    (S_ISREG(st.st_mode) ||
+			    (S_ISDIR(st.st_mode) && is_git_directory(used_path)))) {
 				strcat(validated_path, suffix[i]);
 				break;
 			}

@@ -247,7 +247,7 @@ const char **get_pathspec(const char *prefix, const char **pathspec)
  *    a proper "ref:", or a regular file HEAD that has a properly
  *    formatted sha1 object name.
  */
-static int is_git_directory(const char *suspect)
+int is_git_directory(const char *suspect)
 {
 	char path[PATH_MAX];
 	size_t len = strlen(suspect);
