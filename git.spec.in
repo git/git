@@ -134,6 +134,7 @@ find $RPM_BUILD_ROOT -type f -name perllocal.pod -exec rm -f {} ';'
 %else
 rm -rf $RPM_BUILD_ROOT%{_mandir}
 %endif
+rm -rf $RPM_BUILD_ROOT%{_datadir}/locale
 
 mkdir -p $RPM_BUILD_ROOT%{_sysconfdir}/bash_completion.d
 install -m 644 -T contrib/completion/git-completion.bash $RPM_BUILD_ROOT%{_sysconfdir}/bash_completion.d/git
