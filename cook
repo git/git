@@ -628,29 +628,49 @@ sub wildo_queue {
 	push @{$what->{$action}}, $topic;
 }
 
+sub section_action {
+	my ($section) = @_;
+	if ($section) {
+		for ($section) {
+			return if (/^Graduated to/ || /^Discarded$/);
+			return $_ if (/^Stalled$/);
+		}
+	}
+	return "Undecided";
+}
+
+sub wildo_flush_topic {
+	my ($in_section, $what, $topic) = @_;
+	if (defined $topic) {
+		my $action = section_action($in_section);
+		if ($action) {
+			wildo_queue($what, $action, $topic);
+		}
+	}
+}
+
 sub wildo {
-	my (%what, $topic, $last_merge_to_next, $in_stalled);
+	my (%what, $topic, $last_merge_to_next, $in_section);
 	my $too_recent = '9999-99-99';
 	while (<>) {
 		chomp;
 
-		next if (/^\[Graduated to/../^-{20,}$/);
-		next if (/^\[Discarded\]/../^-{20,}$/);
-
-		if (/^\[Stalled\]/../^-{20,}$/) {
-			$in_stalled = 1;
-		} else {
-			$in_stalled = 0;
+		if (/^\[(.*)\]$/) {
+			my $old_section = $in_section;
+			$in_section = $1;
+			wildo_flush_topic($old_section, \%what, $topic);
+			$topic = undef;
+			next;
 		}
 
 		if (/^\* (\S+) \(([-0-9]+)\) (\d+) commits?$/) {
-			if (defined $topic) {
-				wildo_queue(\%what, "Undecided", $topic);
-			}
+			wildo_flush_topic($in_section, \%what, $topic);
+
 			# tip-date, next-date, topic, count, pu-count
 			$topic = [$2, $too_recent, $1, $3, 0];
 			next;
 		}
+
 		if (defined $topic &&
 		    ($topic->[1] eq $too_recent) &&
 		    ($topic->[4] == 0) &&
@@ -663,10 +683,6 @@ sub wildo {
 		next if (/^ /);
 		next unless defined $topic;
 
-		if ($in_stalled) {
-			wildo_queue(\%what, "Stalled", $topic);
-			$topic = undef;
-		}
 		if (/^Will (?:\S+ ){0,2}(keep|merge|drop|discard|cook|kick|defer)[,. ]/ ||
 		    /^Not urgent/ || /^Not ready/ || /^Waiting for / ||
 		    /^Needs? / || /Expecting /) {
@@ -681,9 +697,8 @@ sub wildo {
 			$topic->[1] = $1;
 		}
 	}
-	if (defined $topic) {
-		wildo_queue(\%what, "Undecided", $topic);
-	}
+	wildo_flush_topic($in_section, \%what, $topic);
+
 	my $ipbl = "";
 	for my $what (sort keys %what) {
 		print "$ipbl$what\n";
