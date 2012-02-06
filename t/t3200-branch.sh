@@ -3,11 +3,8 @@
 # Copyright (c) 2005 Amos Waterland
 #
 
-test_description='git branch --foo should not create bogus branch
+test_description='git branch assorted tests'
 
-This test runs git branch --help and checks that the argument is properly
-handled.  Specifically, that a bogus branch is not created.
-'
 . ./test-lib.sh
 
 test_expect_success \
@@ -618,6 +615,42 @@ test_expect_success 'use set-upstream on the current branch' '
 	test "z$(git config branch.master.remote)" = "zorigin" &&
 	test "z$(git config branch.master.merge)" = "zrefs/heads/frotz"
 
+'
+
+test_expect_success 'use --edit-description' '
+	write_script editor <<-\EOF &&
+		echo "New contents" >"$1"
+	EOF
+	EDITOR=./editor git branch --edit-description &&
+		write_script editor <<-\EOF &&
+		git stripspace -s <"$1" >"EDITOR_OUTPUT"
+	EOF
+	EDITOR=./editor git branch --edit-description &&
+	echo "New contents" >expect &&
+	test_cmp EDITOR_OUTPUT expect
+'
+
+test_expect_success 'detect typo in branch name when using --edit-description' '
+	write_script editor <<-\EOF &&
+		echo "New contents" >"$1"
+	EOF
+	(
+		EDITOR=./editor &&
+		export EDITOR &&
+		test_must_fail git branch --edit-description no-such-branch
+	)
+'
+
+test_expect_success 'refuse --edit-description on unborn branch for now' '
+	write_script editor <<-\EOF &&
+		echo "New contents" >"$1"
+	EOF
+	git checkout --orphan unborn &&
+	(
+		EDITOR=./editor &&
+		export EDITOR &&
+		test_must_fail git branch --edit-description
+	)
 '
 
 test_done
