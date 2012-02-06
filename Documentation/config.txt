@@ -84,6 +84,17 @@ customary UNIX fashion.
 
 Some variables may require a special value format.
 
+Includes
+~~~~~~~~
+
+You can include one config file from another by setting the special
+`include.path` variable to the name of the file to be included. The
+included file is expanded immediately, as if its contents had been
+found at the location of the include directive. If the value of the
+`include.path` variable is a relative path, the path is considered to be
+relative to the configuration file in which the include directive was
+found. See below for examples.
+
 Example
 ~~~~~~~
 
@@ -105,6 +116,10 @@ Example
 	[core]
 		gitProxy="ssh" for "kernel.org"
 		gitProxy=default-proxy ; for the rest
+
+	[include]
+		path = /path/to/foo.inc ; include by absolute path
+		path = foo ; expand "foo" relative to the current file
 
 Variables
 ~~~~~~~~~
