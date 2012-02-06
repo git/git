@@ -95,7 +95,7 @@ test_expect_success 'setup: two scripts for reading pull requests' '
 	b
 	: diffstat
 	n
-	/ [0-9]* files changed/ {
+	/ [0-9]* files* changed/ {
 		a\\
 	DIFFSTAT
 		b

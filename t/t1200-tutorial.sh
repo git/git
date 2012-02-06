@@ -156,7 +156,7 @@ Updating VARIABLE..VARIABLE
 FASTFORWARD (no commit created; -m option ignored)
  example |    1 +
  hello   |    1 +
- 2 files changed, 2 insertions(+), 0 deletions(-)
+ 2 files changed, 2 insertions(+)
 EOF
 
 test_expect_success 'git resolve' '

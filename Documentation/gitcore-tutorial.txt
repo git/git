@@ -1004,7 +1004,7 @@ Updating from ae3a2da... to a80b4aa....
 Fast-forward (no commit created; -m option ignored)
  example |    1 +
  hello   |    1 +
- 2 files changed, 2 insertions(+), 0 deletions(-)
+ 2 files changed, 2 insertions(+)
 ----------------
 
 Because your branch did not contain anything more than what had

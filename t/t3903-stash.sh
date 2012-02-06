@@ -444,7 +444,7 @@ test_expect_success 'stash show - stashes on stack, stash-like argument' '
 	git reset --hard &&
 	cat >expected <<-EOF &&
 	 file |    1 +
-	 1 files changed, 1 insertions(+), 0 deletions(-)
+	 1 file changed, 1 insertion(+)
 	EOF
 	git stash show ${STASH_ID} >actual &&
 	test_cmp expected actual
@@ -482,7 +482,7 @@ test_expect_success 'stash show - no stashes on stack, stash-like argument' '
 	git reset --hard &&
 	cat >expected <<-EOF &&
 	 file |    1 +
-	 1 files changed, 1 insertions(+), 0 deletions(-)
+	 1 file changed, 1 insertion(+)
 	EOF
 	git stash show ${STASH_ID} >actual &&
 	test_cmp expected actual
