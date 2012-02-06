@@ -69,9 +69,10 @@ Documentation for older releases are available here:
   link:RelNotes/1.7.7.1.txt[1.7.7.1],
   link:RelNotes/1.7.7.txt[1.7.7].
 
-* link:v1.7.6.5/git.html[documentation for release 1.7.6.5]
+* link:v1.7.6.6/git.html[documentation for release 1.7.6.6]
 
 * release notes for
+  link:RelNotes/1.7.6.6.txt[1.7.6.6],
   link:RelNotes/1.7.6.5.txt[1.7.6.5],
   link:RelNotes/1.7.6.4.txt[1.7.6.4],
   link:RelNotes/1.7.6.3.txt[1.7.6.3],
