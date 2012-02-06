@@ -38,6 +38,7 @@ struct child_process {
 	unsigned silent_exec_failure:1;
 	unsigned stdout_to_stderr:1;
 	unsigned use_shell:1;
+	unsigned clean_on_exit:1;
 	void (*preexec_cb)(void);
 };
 
@@ -52,6 +53,7 @@ extern int run_hook(const char *index_file, const char *name, ...);
 #define RUN_COMMAND_STDOUT_TO_STDERR 4
 #define RUN_SILENT_EXEC_FAILURE 8
 #define RUN_USING_SHELL 16
+#define RUN_CLEAN_ON_EXIT 32
 int run_command_v_opt(const char **argv, int opt);
 
 /*
