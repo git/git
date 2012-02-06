@@ -1,14 +1,29 @@
 To: git@vger.kernel.org
-Subject: What's cooking in git.git (Feb 2012, #01; Fri, 3)
+Subject: What's cooking in git.git (Feb 2012, #02; Sun, 5)
 X-master-at: f3fb07509c2e0b21b12a598fcd0a19a92fc38a9d
-X-next-at: e26aed0c97a6c884b5f569830384355d6afb16f1
+X-next-at: 055e4466df114c65a2c210423938673373746f3e
 
-What's cooking in git.git (Feb 2012, #01; Fri, 3)
+What's cooking in git.git (Feb 2012, #02; Sun, 5)
 --------------------------------------------------
 
 Here are the topics that have been cooking.  Commits prefixed with '-' are
 only in 'pu' (proposed updates) while commits prefixed with '+' are in
 'next'.
+
+Compared to the recent activity level on discussions of new features on
+the list, some people may be wondering if the rate of advancement of the
+'master' and 'next' branches is getting throttled.
+
+That is because it is.
+
+Now the obviously good bits that have been cooking during the feature
+freeze are pushed out to 'master', I'd want to make sure we can have a
+timely release of v1.7.9.1 so that people can start benefiting from the
+features and fixes introduced in v1.7.9 more smoothly and sooner, and that
+is where my focus lies at this moment. I've been picking up new topics and
+adding them to 'pu' only "as time and attention permit" basis, and this
+mode of operation probably will continue throughout the second week of the
+post v1.7.9 cycle (cf. http://tinyurl.com/gitcal).
 
 Here are the repositories that have my integration branches:
 
@@ -38,100 +53,45 @@ The preformatted documentation in HTML and man format are found in:
 --------------------------------------------------
 [New Topics]
 
-* nd/diffstat-gramnum (2012-02-03) 1 commit
- - Use correct grammar in diffstat summary line
+* bw/inet-pton-ntop-compat (2012-02-05) 1 commit
+ - Drop system includes from inet_pton/inet_ntop compatibility wrappers
 
-The commands in the "git diff" family and "git apply --stat" that count
-the number of files changed and the number of lines inserted/deleted have
-been updated to match the output from "diffstat".  This also opens the
-door to i18n this line.
+The inclusion order of header files bites Solaris again and this fixes it.
 
 Will merge to 'next'.
 
-* jx/i18n-more-marking (2012-02-01) 2 commits
- - i18n: format_tracking_info "Your branch is behind" message
- - i18n: git-commit whence_s "merge/cherry-pick" message
+* jc/branch-desc-typoavoidance (2012-02-05) 2 commits
+ - branch --edit-description: protect against mistyped branch name
+ + tests: add write_script helper function
+ (this branch is tangled with jk/tests-write-script.)
+
+Typo in "git branch --edit-description my-tpoic" was not diagnosed.
 
 Will merge to 'next'.
 
-* jk/grep-binary-attribute (2012-02-02) 9 commits
- - grep: pre-load userdiff drivers when threaded
- - grep: load file data after checking binary-ness
- - grep: respect diff attributes for binary-ness
- - grep: cache userdiff_driver in grep_source
- - grep: drop grep_buffer's "name" parameter
- - convert git-grep to use grep_source interface
- - grep: refactor the concept of "grep source" into an object
- - grep: move sha1-reading mutex into low-level code
- - grep: make locking flag global
+* jc/checkout-out-of-unborn (2012-02-05) 1 commit
+ - git checkout -b: allow switching out of an unborn branch
 
-Fixes a longstanding bug that there was no way to tell "git grep" that a
-path may look like text but it is not, which "git diff" can do using the
-attributes system. Now "git grep" honors the same "binary" (or "-diff")
-attribute.
+I am fairly negative on this one, as I think it is just shifting the
+problem around.
 
-Will merge to 'next'.
+* jc/maint-mailmap-output (2012-02-05) 1 commit
+ - mailmap: do not leave '>' in the output when answering "we did something"
 
-* jc/parse-date-raw (2012-02-03) 2 commits
- - parse_date(): '@' prefix forces git-timestamp
- - parse_date(): allow ancient git-timestamp
+map_user() was not rewriting its output correctly, which resulted in the
+user visible symptom that "git blame -e" sometimes showed excess '>' at
+the end of email addresses.
 
-"rebase" and "commit --amend" failed to work on commits with ancient
-timestamps near year 1970.
+* jc/merge-ff-only-stronger-than-signed-merge (2012-02-05) 1 commit
+ - merge: do not create a signed tag merge under --ff-only option
 
-Waiting for comments.
+"git merge --ff-only $tag" failed because it cannot record the required
+mergetag without creating a merge, but this is so common operation for
+branch that is used _only_ to follow the upstream, so it is allowed to
+fast-forward without recording the mergetag.
 
-* jk/git-dir-lookup (2012-02-02) 1 commit
- - standardize and improve lookup rules for external local repos
-
-Will merge to 'next'.
-
-* jk/prompt-fallback-to-tty (2012-02-03) 2 commits
- - prompt: fall back to terminal if askpass fails
- - prompt: clean up strbuf usage
-
-The code to ask for password did not fall back to the terminal input when
-GIT_ASKPASS is set but does not work (e.g. lack of X with GUI askpass
-helper).
-
-* jk/tests-write-script (2012-02-03) 2 commits
- - t0300: use write_script helper
- - tests: add write_script helper function
-
-Will merge to 'next'.
-
-* jn/gitweb-search-utf-8 (2012-02-03) 1 commit
- - gitweb: Allow UTF-8 encoded CGI query parameters and path_info
-
-Search box in "gitweb" did not accept non-ASCII characters correctly.
-Will merge to 'next'.
-
-* jn/rpm-spec (2012-02-03) 1 commit
- - git.spec: Workaround localized messages not put in any RPM
-
-Fix breakage in v1.7.9 Makefile; rpmbuild notices an unpackaged but
-installed *.mo file and fails.
-
-Will merge to 'next'.
-
---------------------------------------------------
-[Graduated to "master"]
-
-* jc/pull-signed-tag (2012-01-23) 1 commit
-  (merged to 'next' on 2012-01-23 at 4257553)
- + merge: use editor by default in interactive sessions
-
-"git merge" in an interactive session learned to spawn the editor by
-default to let the user edit the auto-generated merge message, to
-encourage people to explain their merges better. Legacy scripts can
-export MERGE_AUTOEDIT=no to retain the historical behaviour.
-
-* tr/merge-edit-guidance (2012-01-31) 1 commit
-  (merged to 'next' on 2012-01-31 at bb678f7)
- + merge: add instructions to the commit message when editing
-
-"git merge" adds advice text to the commit log template when running
-interactively.
+* tt/profile-build-fix (2012-02-05) 1 commit
+ - Fix build problems related to profile-directed optimization
 
 --------------------------------------------------
 [Stalled]
@@ -142,8 +102,6 @@ interactively.
 Peff had a good suggestion outlining an updated code structure so that
 somebody new can try to dip his or her toes in the development. Any
 takers?
-
-Waiting for a reroll.
 
 * ss/git-svn-prompt-sans-terminal (2012-01-04) 3 commits
  - fixup! 15eaaf4
@@ -161,8 +119,114 @@ give precedence to tty over SSH_ASKPASS when terminal is available.
 May want to consider this as fixing an earlier UI mistake, and not as a
 feature that devides the userbase.
 
+* jc/split-blob (2012-01-24) 6 commits
+ - chunked-object: streaming checkout
+ - chunked-object: fallback checkout codepaths
+ - bulk-checkin: support chunked-object encoding
+ - bulk-checkin: allow the same data to be multiply hashed
+ - new representation types in the packstream
+ - varint-in-pack: refactor varint encoding/decoding
+
+Not ready.
+
+I finished the streaming checkout codepath, but as explained in 127b177
+(bulk-checkin: support chunked-object encoding, 2011-11-30), these are
+still early steps of a long and painful journey. At least pack-objects and
+fsck need to learn the new encoding for the series to be usable locally,
+and then index-pack/unpack-objects needs to learn it to be used remotely.
+
+Given that I heard a lot of noise that people want large files, and that I
+was asked by somebody at GitTogether'11 privately for an advice on how to
+pay developers (not me) to help adding necessary support, I am somewhat
+dissapointed that the original patch series that was sent almost two
+months ago still remains here without much comments and updates from the
+developer community. I even made the interface to the logic that decides
+where to split chunks easily replaceable, and I deliberately made the
+logic in the original patch extremely stupid to entice others, especially
+the "bup" fanboys, to come up with a better logic, thinking that giving
+people an easy target to shoot for, they may be encouraged to help
+out. The plan is not working :-(.
+
 --------------------------------------------------
 [Cooking]
+
+* nd/diffstat-gramnum (2012-02-03) 1 commit
+  (merged to 'next' on 2012-02-05 at 7335ecc)
+ + Use correct grammar in diffstat summary line
+
+The commands in the "git diff" family and "git apply --stat" that count
+the number of files changed and the number of lines inserted/deleted have
+been updated to match the output from "diffstat".  This also opens the
+door to i18n this line.
+
+* jx/i18n-more-marking (2012-02-01) 2 commits
+  (merged to 'next' on 2012-02-05 at 44e8cf6)
+ + i18n: format_tracking_info "Your branch is behind" message
+ + i18n: git-commit whence_s "merge/cherry-pick" message
+
+Marks a few more messages we forgot to mark for i18n.
+
+* jk/grep-binary-attribute (2012-02-02) 9 commits
+  (merged to 'next' on 2012-02-05 at 9dffa7e)
+ + grep: pre-load userdiff drivers when threaded
+ + grep: load file data after checking binary-ness
+ + grep: respect diff attributes for binary-ness
+ + grep: cache userdiff_driver in grep_source
+ + grep: drop grep_buffer's "name" parameter
+ + convert git-grep to use grep_source interface
+ + grep: refactor the concept of "grep source" into an object
+ + grep: move sha1-reading mutex into low-level code
+ + grep: make locking flag global
+
+Fixes a longstanding bug that there was no way to tell "git grep" that a
+path may look like text but it is not, which "git diff" can do using the
+attributes system. Now "git grep" honors the same "binary" (or "-diff")
+attribute.
+
+* jc/parse-date-raw (2012-02-03) 2 commits
+ - parse_date(): '@' prefix forces git-timestamp
+ - parse_date(): allow ancient git-timestamp
+
+"rebase" and "commit --amend" failed to work on commits with ancient
+timestamps near year 1970.
+
+Waiting for comments.
+
+* jk/git-dir-lookup (2012-02-02) 1 commit
+  (merged to 'next' on 2012-02-05 at 1856d74)
+ + standardize and improve lookup rules for external local repos
+
+When you have both .../foo and .../foo.git, "git clone .../foo" did not
+favor the former but the latter.
+
+* jk/prompt-fallback-to-tty (2012-02-03) 2 commits
+ - prompt: fall back to terminal if askpass fails
+ - prompt: clean up strbuf usage
+
+The code to ask for password did not fall back to the terminal input when
+GIT_ASKPASS is set but does not work (e.g. lack of X with GUI askpass
+helper).
+
+Will merge to 'next'.
+
+* jk/tests-write-script (2012-02-03) 2 commits
+  (merged to 'next' on 2012-02-05 at 4264ffa)
+ + t0300: use write_script helper
+ + tests: add write_script helper function
+ (this branch is tangled with jc/branch-desc-typoavoidance.)
+
+* jn/gitweb-search-utf-8 (2012-02-03) 1 commit
+  (merged to 'next' on 2012-02-05 at 055e446)
+ + gitweb: Allow UTF-8 encoded CGI query parameters and path_info
+
+Search box in "gitweb" did not accept non-ASCII characters correctly.
+
+* jn/rpm-spec (2012-02-03) 1 commit
+  (merged to 'next' on 2012-02-05 at dba940b)
+ + git.spec: Workaround localized messages not put in any RPM
+
+Fix breakage in v1.7.9 Makefile; rpmbuild notices an unpackaged but
+installed *.mo file and fails.
 
 * fc/zsh-completion (2012-02-03) 3 commits
  - completion: simplify __gitcomp and __gitcomp_nl implementations
@@ -186,11 +250,10 @@ tag prefixed with "tags/"
  + sha1_file.c: move the core logic of find_pack_entry() into fill_pack_entry()
 
 * nd/pack-objects-parseopt (2012-02-01) 3 commits
- - pack-objects: convert to use parse_options()
- - pack-objects: remove bogus comment
- - pack-objects: do not accept "--index-version=version,"
-
-Will merge to 'next'.
+  (merged to 'next' on 2012-02-05 at d0dc25d)
+ + pack-objects: convert to use parse_options()
+ + pack-objects: remove bogus comment
+ + pack-objects: do not accept "--index-version=version,"
 
 "pack-objects" learned use parse-options, losing custom command line
 parsing code.
@@ -218,9 +281,10 @@ Originally merged to 'next' on 2012-01-31.
 Will merge to 'master'.
 
 * jn/svn-fe (2012-02-02) 47 commits
- - vcs-svn: suppress a -Wtype-limits warning
- - vcs-svn: allow import of > 4GiB files
- - vcs-svn: rename check_overflow arguments for clarity
+  (merged to 'next' on 2012-02-05 at e9d3917)
+ + vcs-svn: suppress a -Wtype-limits warning
+ + vcs-svn: allow import of > 4GiB files
+ + vcs-svn: rename check_overflow arguments for clarity
   (merged to 'next' on 2012-02-01 at 9288c95)
  + vcs-svn/svndiff.c: squelch false "unused" warning from gcc
  + Merge branch 'svn-fe' of git://repo.or.cz/git/jrn into jn/svn-fe
@@ -272,32 +336,5 @@ Originally merged to 'next' on 2012-01-29.
 "vcs-svn"/"svn-fe" learned to read dumps with svn-deltas and support
 incremental imports.
 
-Will merge to 'next' through the tip and then to 'master' soon after.
+Will merge to 'master'.
 
-* jc/split-blob (2012-01-24) 6 commits
- - chunked-object: streaming checkout
- - chunked-object: fallback checkout codepaths
- - bulk-checkin: support chunked-object encoding
- - bulk-checkin: allow the same data to be multiply hashed
- - new representation types in the packstream
- - varint-in-pack: refactor varint encoding/decoding
-
-Not ready.
-
-I finished the streaming checkout codepath, but as explained in 127b177
-(bulk-checkin: support chunked-object encoding, 2011-11-30), these are
-still early steps of a long and painful journey. At least pack-objects and
-fsck need to learn the new encoding for the series to be usable locally,
-and then index-pack/unpack-objects needs to learn it to be used remotely.
-
-Given that I heard a lot of noise that people want large files, and that I
-was asked by somebody at GitTogether'11 privately for an advice on how to
-pay developers (not me) to help adding necessary support, I am somewhat
-dissapointed that the original patch series that was sent almost two
-months ago still remains here without much comments and updates from the
-developer community. I even made the interface to the logic that decides
-where to split chunks easily replaceable, and I deliberately made the
-logic in the original patch extremely stupid to entice others, especially
-the "bup" fanboys, to come up with a better logic, thinking that giving
-people an easy target to shoot for, they may be encouraged to help
-out. The plan is not working :-(.
