@@ -585,6 +585,19 @@ test_expect_success \
 	test_cmp expect actual
 '
 
+test_expect_success 'annotations for blobs are empty' '
+	blob=$(git hash-object -w --stdin <<-\EOF
+	Blob paragraph 1.
+
+	Blob paragraph 2.
+	EOF
+	) &&
+	git tag tag-blob $blob &&
+	echo "tag-blob        " >expect &&
+	git tag -n1 -l tag-blob >actual &&
+	test_cmp expect actual
+'
+
 # subsequent tests require gpg; check if it is available
 gpg --version >/dev/null 2>/dev/null
 if [ $? -eq 127 ]; then
