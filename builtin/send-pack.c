@@ -263,6 +263,8 @@ int send_pack(struct send_pack_args *args,
 		args->use_ofs_delta = 1;
 	if (server_supports("side-band-64k"))
 		use_sideband = 1;
+	if (!server_supports("quiet"))
+		args->quiet = 0;
 
 	if (!remote_refs) {
 		fprintf(stderr, "No refs in common and none specified; doing nothing.\n"
@@ -301,11 +303,12 @@ int send_pack(struct send_pack_args *args,
 			char *old_hex = sha1_to_hex(ref->old_sha1);
 			char *new_hex = sha1_to_hex(ref->new_sha1);
 
-			if (!cmds_sent && (status_report || use_sideband)) {
-				packet_buf_write(&req_buf, "%s %s %s%c%s%s",
+			if (!cmds_sent && (status_report || use_sideband || args->quiet)) {
+				packet_buf_write(&req_buf, "%s %s %s%c%s%s%s",
 					old_hex, new_hex, ref->name, 0,
 					status_report ? " report-status" : "",
-					use_sideband ? " side-band-64k" : "");
+					use_sideband ? " side-band-64k" : "",
+					args->quiet ? " quiet" : "");
 			}
 			else
 				packet_buf_write(&req_buf, "%s %s %s",
@@ -437,6 +440,10 @@ int cmd_send_pack(int argc, const char **argv, const char *prefix)
 			}
 			if (!strcmp(arg, "--force")) {
 				args.force_update = 1;
+				continue;
+			}
+			if (!strcmp(arg, "--quiet")) {
+				args.quiet = 1;
 				continue;
 			}
 			if (!strcmp(arg, "--verbose")) {

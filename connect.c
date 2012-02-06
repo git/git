@@ -101,8 +101,27 @@ struct ref **get_remote_heads(int in, struct ref **list,
 
 int server_supports(const char *feature)
 {
-	return server_capabilities &&
-		strstr(server_capabilities, feature) != NULL;
+	return !!parse_feature_request(server_capabilities, feature);
+}
+
+const char *parse_feature_request(const char *feature_list, const char *feature)
+{
+	int len;
+
+	if (!feature_list)
+		return NULL;
+
+	len = strlen(feature);
+	while (*feature_list) {
+		const char *found = strstr(feature_list, feature);
+		if (!found)
+			return NULL;
+		if ((feature_list == found || isspace(found[-1])) &&
+		    (!found[len] || isspace(found[len]) || found[len] == '='))
+			return found;
+		feature_list = found + 1;
+	}
+	return NULL;
 }
 
 enum protocol {

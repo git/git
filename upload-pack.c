@@ -585,6 +585,7 @@ static void receive_needs(void)
 		write_str_in_full(debug_fd, "#S\n");
 	for (;;) {
 		struct object *o;
+		const char *features;
 		unsigned char sha1_buf[20];
 		len = packet_read_line(0, line, sizeof(line));
 		reset_timeout();
@@ -616,23 +617,26 @@ static void receive_needs(void)
 		    get_sha1_hex(line+5, sha1_buf))
 			die("git upload-pack: protocol error, "
 			    "expected to get sha, not '%s'", line);
-		if (strstr(line+45, "multi_ack_detailed"))
+
+		features = line + 45;
+
+		if (parse_feature_request(features, "multi_ack_detailed"))
 			multi_ack = 2;
-		else if (strstr(line+45, "multi_ack"))
+		else if (parse_feature_request(features, "multi_ack"))
 			multi_ack = 1;
-		if (strstr(line+45, "no-done"))
+		if (parse_feature_request(features, "no-done"))
 			no_done = 1;
-		if (strstr(line+45, "thin-pack"))
+		if (parse_feature_request(features, "thin-pack"))
 			use_thin_pack = 1;
-		if (strstr(line+45, "ofs-delta"))
+		if (parse_feature_request(features, "ofs-delta"))
 			use_ofs_delta = 1;
-		if (strstr(line+45, "side-band-64k"))
+		if (parse_feature_request(features, "side-band-64k"))
 			use_sideband = LARGE_PACKET_MAX;
-		else if (strstr(line+45, "side-band"))
+		else if (parse_feature_request(features, "side-band"))
 			use_sideband = DEFAULT_PACKET_MAX;
-		if (strstr(line+45, "no-progress"))
+		if (parse_feature_request(features, "no-progress"))
 			no_progress = 1;
-		if (strstr(line+45, "include-tag"))
+		if (parse_feature_request(features, "include-tag"))
 			use_include_tag = 1;
 
 		o = lookup_object(sha1_buf);
