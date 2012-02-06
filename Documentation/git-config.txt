@@ -178,6 +178,11 @@ See also <<FILES>>.
 	Opens an editor to modify the specified config file; either
 	'--system', '--global', or repository (default).
 
+--includes::
+--no-includes::
+	Respect `include.*` directives in config files when looking up
+	values. Defaults to on.
+
 [[FILES]]
 FILES
 -----

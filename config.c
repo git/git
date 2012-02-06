@@ -26,6 +26,69 @@ static config_file *cf;
 
 static int zlib_compression_seen;
 
+#define MAX_INCLUDE_DEPTH 10
+static const char include_depth_advice[] =
+"exceeded maximum include depth (%d) while including\n"
+"	%s\n"
+"from\n"
+"	%s\n"
+"Do you have circular includes?";
+static int handle_path_include(const char *path, struct config_include_data *inc)
+{
+	int ret = 0;
+	struct strbuf buf = STRBUF_INIT;
+
+	/*
+	 * Use an absolute path as-is, but interpret relative paths
+	 * based on the including config file.
+	 */
+	if (!is_absolute_path(path)) {
+		char *slash;
+
+		if (!cf || !cf->name)
+			return error("relative config includes must come from files");
+
+		slash = find_last_dir_sep(cf->name);
+		if (slash)
+			strbuf_add(&buf, cf->name, slash - cf->name + 1);
+		strbuf_addstr(&buf, path);
+		path = buf.buf;
+	}
+
+	if (!access(path, R_OK)) {
+		if (++inc->depth > MAX_INCLUDE_DEPTH)
+			die(include_depth_advice, MAX_INCLUDE_DEPTH, path,
+			    cf && cf->name ? cf->name : "the command line");
+		ret = git_config_from_file(git_config_include, path, inc);
+		inc->depth--;
+	}
+	strbuf_release(&buf);
+	return ret;
+}
+
+int git_config_include(const char *var, const char *value, void *data)
+{
+	struct config_include_data *inc = data;
+	const char *type;
+	int ret;
+
+	/*
+	 * Pass along all values, including "include" directives; this makes it
+	 * possible to query information on the includes themselves.
+	 */
+	ret = inc->fn(var, value, inc->data);
+	if (ret < 0)
+		return ret;
+
+	type = skip_prefix(var, "include.");
+	if (!type)
+		return ret;
+
+	if (!strcmp(type, "path"))
+		ret = handle_path_include(value, inc);
+	return ret;
+}
+
 static void lowercase(char *p)
 {
 	for (; *p; p++)
@@ -913,10 +976,18 @@ int git_config_early(config_fn_t fn, void *data, const char *repo_config)
 }
 
 int git_config_with_options(config_fn_t fn, void *data,
-			    const char *filename)
+			    const char *filename, int respect_includes)
 {
 	char *repo_config = NULL;
 	int ret;
+	struct config_include_data inc = CONFIG_INCLUDE_INIT;
+
+	if (respect_includes) {
+		inc.fn = fn;
+		inc.data = data;
+		fn = git_config_include;
+		data = &inc;
+	}
 
 	/*
 	 * If we have a specific filename, use it. Otherwise, follow the
@@ -934,7 +1005,7 @@ int git_config_with_options(config_fn_t fn, void *data,
 
 int git_config(config_fn_t fn, void *data)
 {
-	return git_config_with_options(fn, data, NULL);
+	return git_config_with_options(fn, data, NULL, 1);
 }
 
 /*

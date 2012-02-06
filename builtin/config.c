@@ -25,6 +25,7 @@ static const char *given_config_file;
 static int actions, types;
 static const char *get_color_slot, *get_colorbool_slot;
 static int end_null;
+static int respect_includes = -1;
 
 #define ACTION_GET (1<<0)
 #define ACTION_GET_ALL (1<<1)
@@ -74,6 +75,7 @@ static struct option builtin_config_options[] = {
 	OPT_BIT(0, "path", &types, "value is a path (file or directory name)", TYPE_PATH),
 	OPT_GROUP("Other"),
 	OPT_BOOLEAN('z', "null", &end_null, "terminate values with NUL byte"),
+	OPT_BOOL(0, "includes", &respect_includes, "respect include directives on lookup"),
 	OPT_END(),
 };
 
@@ -161,6 +163,9 @@ static int get_value(const char *key_, const char *regex_)
 	int ret = -1;
 	char *global = NULL, *repo_config = NULL;
 	const char *system_wide = NULL, *local;
+	struct config_include_data inc = CONFIG_INCLUDE_INIT;
+	config_fn_t fn;
+	void *data;
 
 	local = given_config_file;
 	if (!local) {
@@ -213,19 +218,28 @@ static int get_value(const char *key_, const char *regex_)
 		}
 	}
 
+	fn = show_config;
+	data = NULL;
+	if (respect_includes) {
+		inc.fn = fn;
+		inc.data = data;
+		fn = git_config_include;
+		data = &inc;
+	}
+
 	if (do_all && system_wide)
-		git_config_from_file(show_config, system_wide, NULL);
+		git_config_from_file(fn, system_wide, data);
 	if (do_all && global)
-		git_config_from_file(show_config, global, NULL);
+		git_config_from_file(fn, global, data);
 	if (do_all)
-		git_config_from_file(show_config, local, NULL);
-	git_config_from_parameters(show_config, NULL);
+		git_config_from_file(fn, local, data);
+	git_config_from_parameters(fn, data);
 	if (!do_all && !seen)
-		git_config_from_file(show_config, local, NULL);
+		git_config_from_file(fn, local, data);
 	if (!do_all && !seen && global)
-		git_config_from_file(show_config, global, NULL);
+		git_config_from_file(fn, global, data);
 	if (!do_all && !seen && system_wide)
-		git_config_from_file(show_config, system_wide, NULL);
+		git_config_from_file(fn, system_wide, data);
 
 	free(key);
 	if (regexp) {
@@ -302,7 +316,7 @@ static void get_color(const char *def_color)
 	get_color_found = 0;
 	parsed_color[0] = '\0';
 	git_config_with_options(git_get_color_config, NULL,
-				given_config_file);
+				given_config_file, respect_includes);
 
 	if (!get_color_found && def_color)
 		color_parse(def_color, "command line", parsed_color);
@@ -330,7 +344,7 @@ static int get_colorbool(int print)
 	get_colorbool_found = -1;
 	get_diff_color_found = -1;
 	git_config_with_options(git_get_colorbool_config, NULL,
-				given_config_file);
+				given_config_file, respect_includes);
 
 	if (get_colorbool_found < 0) {
 		if (!strcmp(get_colorbool_slot, "color.diff"))
@@ -387,6 +401,9 @@ int cmd_config(int argc, const char **argv, const char *prefix)
 			given_config_file = given_config_file;
 	}
 
+	if (respect_includes == -1)
+		respect_includes = !given_config_file;
+
 	if (end_null) {
 		term = '\0';
 		delim = '\n';
@@ -424,7 +441,8 @@ int cmd_config(int argc, const char **argv, const char *prefix)
 	if (actions == ACTION_LIST) {
 		check_argc(argc, 0, 0);
 		if (git_config_with_options(show_all_config, NULL,
-					    given_config_file) < 0) {
+					    given_config_file,
+					    respect_includes) < 0) {
 			if (given_config_file)
 				die_errno("unable to read config file '%s'",
 					  given_config_file);
