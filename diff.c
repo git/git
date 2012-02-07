@@ -177,11 +177,8 @@ int git_diff_basic_config(const char *var, const char *value, void *cb)
 		return 0;
 	}
 
-	switch (userdiff_config(var, value)) {
-		case 0: break;
-		case -1: return -1;
-		default: return 0;
-	}
+	if (userdiff_config(var, value) < 0)
+		return -1;
 
 	if (!prefixcmp(var, "diff.color.") || !prefixcmp(var, "color.diff.")) {
 		int slot = parse_diff_color_slot(var, 11);

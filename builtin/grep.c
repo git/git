@@ -325,11 +325,8 @@ static int grep_config(const char *var, const char *value, void *cb)
 	struct grep_opt *opt = cb;
 	char *color = NULL;
 
-	switch (userdiff_config(var, value)) {
-	case 0: break;
-	case -1: return -1;
-	default: return 0;
-	}
+	if (userdiff_config(var, value) < 0)
+		return -1;
 
 	if (!strcmp(var, "grep.extendedregexp")) {
 		if (git_config_bool(var, value))
