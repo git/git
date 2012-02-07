@@ -8,6 +8,9 @@ UI, Workflows & Features
 
  * Improved handling of views, labels and branches in git-p4 (in contrib).
 
+ * "vcs-svn"/"svn-fe" learned to read dumps with svn-deltas and
+   support incremental imports.
+
  * "git am" learned to pass "-b" option to underlying "git mailinfo", so
    that bracketed string other than "PATCH" at the beginning can be kept.
 
@@ -25,6 +28,10 @@ UI, Workflows & Features
    by default to let the user edit the auto-generated merge message,
    to encourage people to explain their merges better. Legacy scripts
    can export MERGE_AUTOEDIT=no to retain the historical behaviour.
+
+ * "gitweb" allows intermediate entries in the directory hierarchy
+   that leads to a projects to be clicked, which in turn shows the
+   list of projects inside that directory.
 
 Performance
 
@@ -87,9 +94,13 @@ details).
    "-l/-L" to miscount the hits.
    (merge 50dd0f2 tr/grep-l-with-decoration later to maint).
 
+ * When asking for a tag to be pulled, "request-pull" shows the name
+   of the tag prefixed with "tags/"
+   (merge 2ad9ba0 jc/maint-request-pull-for-tag later to maint).
+
 ---
 exec >/var/tmp/1
-O=v1.7.9-110-g873ce7c
+O=v1.7.9-187-gdc347e9
 echo O=$(git describe)
 git log --first-parent --oneline ^maint $O..
 echo
