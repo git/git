@@ -28,16 +28,25 @@ set up install paths (via config.mak.autogen), so you can write instead
 If you're willing to trade off (much) longer build time for a later
 faster git you can also do a profile feedback build with
 
-	$ make profile-all
-	# make prefix=... install
+	$ make prefix=/usr PROFILE=BUILD all
+	# make prefix=/usr PROFILE=BUILD install
 
 This will run the complete test suite as training workload and then
 rebuild git with the generated profile feedback. This results in a git
 which is a few percent faster on CPU intensive workloads.  This
 may be a good tradeoff for distribution packagers.
 
-Note that the profile feedback build stage currently generates
-a lot of additional compiler warnings.
+Or if you just want to install a profile-optimized version of git into
+your home directory, you could run:
+
+	$ make PROFILE=BUILD install
+
+As a caveat: a profile-optimized build takes a *lot* longer since the
+git tree must be built twice, and in order for the profiling
+measurements to work properly, ccache must be disabled and the test
+suite has to be run using only a single CPU.  In addition, the profile
+feedback build stage currently generates a lot of additional compiler
+warnings.
 
 Issues of note:
 
