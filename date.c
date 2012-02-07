@@ -597,6 +597,33 @@ static int date_string(unsigned long date, int offset, char *buf, int len)
 	return snprintf(buf, len, "%lu %c%02d%02d", date, sign, offset / 60, offset % 60);
 }
 
+/*
+ * Parse a string like "0 +0000" as ancient timestamp near epoch, but
+ * only when it appears not as part of any other string.
+ */
+static int match_object_header_date(const char *date, unsigned long *timestamp, int *offset)
+{
+	char *end;
+	unsigned long stamp;
+	int ofs;
+
+	if (*date < '0' || '9' <= *date)
+		return -1;
+	stamp = strtoul(date, &end, 10);
+	if (*end != ' ' || stamp == ULONG_MAX || (end[1] != '+' && end[1] != '-'))
+		return -1;
+	date = end + 2;
+	ofs = strtol(date, &end, 10);
+	if ((*end != '\0' && (*end != '\n')) || end != date + 4)
+		return -1;
+	ofs = (ofs / 100) * 60 + (ofs % 100);
+	if (date[-1] == '-')
+		ofs = -ofs;
+	*timestamp = stamp;
+	*offset = ofs;
+	return 0;
+}
+
 /* Gr. strptime is crap for this; it doesn't have a way to require RFC2822
    (i.e. English) day/month names, and it doesn't work correctly with %z. */
 int parse_date_basic(const char *date, unsigned long *timestamp, int *offset)
@@ -622,6 +649,9 @@ int parse_date_basic(const char *date, unsigned long *timestamp, int *offset)
 	*offset = -1;
 	tm_gmt = 0;
 
+	if (*date == '@' &&
+	    !match_object_header_date(date + 1, timestamp, offset))
+		return 0; /* success */
 	for (;;) {
 		int match = 0;
 		unsigned char c = *date;
