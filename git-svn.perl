@@ -5381,7 +5381,7 @@ sub DESTROY {
 sub apply_diff {
 	my ($self) = @_;
 	my $mods = $self->{mods};
-	my %o = ( D => 1, R => 0, C => -1, A => 3, M => 3, T => 3 );
+	my %o = ( D => 0, C => 1, R => 2, A => 3, M => 4, T => 5 );
 	foreach my $m (sort { $o{$a->{chg}} <=> $o{$b->{chg}} } @$mods) {
 		my $f = $m->{chg};
 		if (defined $o{$f}) {
