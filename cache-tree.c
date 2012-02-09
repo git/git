@@ -150,9 +150,10 @@ void cache_tree_invalidate_path(struct cache_tree *it, const char *path)
 }
 
 static int verify_cache(struct cache_entry **cache,
-			int entries, int silent)
+			int entries, int flags)
 {
 	int i, funny;
+	int silent = flags & WRITE_TREE_SILENT;
 
 	/* Verify that the tree is merged */
 	funny = 0;
@@ -241,10 +242,11 @@ static int update_one(struct cache_tree *it,
 		      int entries,
 		      const char *base,
 		      int baselen,
-		      int missing_ok,
-		      int dryrun)
+		      int flags)
 {
 	struct strbuf buffer;
+	int missing_ok = flags & WRITE_TREE_MISSING_OK;
+	int dryrun = flags & WRITE_TREE_DRY_RUN;
 	int i;
 
 	if (0 <= it->entry_count && has_sha1_file(it->sha1))
@@ -288,8 +290,7 @@ static int update_one(struct cache_tree *it,
 				    cache + i, entries - i,
 				    path,
 				    baselen + sublen + 1,
-				    missing_ok,
-				    dryrun);
+				    flags);
 		if (subcnt < 0)
 			return subcnt;
 		i += subcnt - 1;
@@ -371,15 +372,13 @@ static int update_one(struct cache_tree *it,
 int cache_tree_update(struct cache_tree *it,
 		      struct cache_entry **cache,
 		      int entries,
-		      int missing_ok,
-		      int dryrun,
-		      int silent)
+		      int flags)
 {
 	int i;
-	i = verify_cache(cache, entries, silent);
+	i = verify_cache(cache, entries, flags);
 	if (i)
 		return i;
-	i = update_one(it, cache, entries, "", 0, missing_ok, dryrun);
+	i = update_one(it, cache, entries, "", 0, flags);
 	if (i < 0)
 		return i;
 	return 0;
@@ -572,11 +571,9 @@ int write_cache_as_tree(unsigned char *sha1, int flags, const char *prefix)
 
 	was_valid = cache_tree_fully_valid(active_cache_tree);
 	if (!was_valid) {
-		int missing_ok = flags & WRITE_TREE_MISSING_OK;
-
 		if (cache_tree_update(active_cache_tree,
 				      active_cache, active_nr,
-				      missing_ok, 0, 0) < 0)
+				      flags) < 0)
 			return WRITE_TREE_UNMERGED_INDEX;
 		if (0 <= newfd) {
 			if (!write_cache(newfd, active_cache, active_nr) &&
@@ -672,10 +669,10 @@ int cache_tree_matches_traversal(struct cache_tree *root,
 	return 0;
 }
 
-int update_main_cache_tree (int silent)
+int update_main_cache_tree(int flags)
 {
 	if (!the_index.cache_tree)
 		the_index.cache_tree = cache_tree();
 	return cache_tree_update(the_index.cache_tree,
-				 the_index.cache, the_index.cache_nr, 0, 0, silent);
+				 the_index.cache, the_index.cache_nr, flags);
 }
