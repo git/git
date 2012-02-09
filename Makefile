@@ -1775,15 +1775,17 @@ endif
 # data gathering
 PROFILE_DIR := $(CURDIR)
 
-ifeq "$(PROFILE)" "GEN"
+ifeq ("$(PROFILE)","GEN")
 	CFLAGS += -fprofile-generate=$(PROFILE_DIR) -DNO_NORETURN=1
 	EXTLIBS += -lgcov
 	export CCACHE_DISABLE=t
 	V=1
-else ifneq "$(PROFILE)" ""
+else
+ifneq ("$(PROFILE)","")
 	CFLAGS += -fprofile-use=$(PROFILE_DIR) -fprofile-correction -DNO_NORETURN=1
 	export CCACHE_DISABLE=t
 	V=1
+endif
 endif
 
 # Shell quote (do not use $(call) to accommodate ancient setups);
