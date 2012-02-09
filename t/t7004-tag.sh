@@ -586,6 +586,19 @@ test_expect_success \
 	test_cmp expect actual
 '
 
+test_expect_success 'annotations for blobs are empty' '
+	blob=$(git hash-object -w --stdin <<-\EOF
+	Blob paragraph 1.
+
+	Blob paragraph 2.
+	EOF
+	) &&
+	git tag tag-blob $blob &&
+	echo "tag-blob        " >expect &&
+	git tag -n1 -l tag-blob >actual &&
+	test_cmp expect actual
+'
+
 # trying to verify annotated non-signed tags:
 
 test_expect_success GPG \
