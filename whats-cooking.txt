@@ -1,28 +1,17 @@
 To: git@vger.kernel.org
-Subject: What's cooking in git.git (Feb 2012, #03; Thu, 9)
-X-master-at: 12766861cdf10fbbfda1023fd65aaf864eb8136a
-X-next-at: 35cc89d1e2c66d6b01c986f1d2eb3248ee5667f1
+Subject: What's cooking in git.git (Feb 2012, #04; Fri, 10)
+X-master-at: b6b3b6a01f357922ccd14f2615accc9bd39fc194
+X-next-at: b41c6bb8e2f080306ede9023919c9e703e625c79
 
-What's cooking in git.git (Feb 2012, #03; Thu, 9)
+What's cooking in git.git (Feb 2012, #04; Fri, 10)
 --------------------------------------------------
 
 Here are the topics that have been cooking.  Commits prefixed with '-' are
 only in 'pu' (proposed updates) while commits prefixed with '+' are in 'next'.
 
-Compared to the recent activity level on discussions of new features on
-the list, some people may be wondering if the rate of advancement of the
-'master' and 'next' branches is getting throttled.
-
-That is because it is.
-
-Now the obviously good bits that have been cooking during the feature
-freeze are pushed out to 'master', I'd want to make sure we can have a
-timely release of v1.7.9.1 so that people can start benefiting from the
-features and fixes introduced in v1.7.9 more smoothly and sooner, and that
-is where my focus lies at this moment. I've been picking up new topics and
-adding them to 'pu' only "as time and attention permit" basis, and this
-mode of operation probably will continue throughout the second week of the
-post v1.7.9 cycle (cf. http://tinyurl.com/gitcal).
+This round mosty consists of topics to fix new features introduced in
+1.7.9, in preparation for 1.7.9.1 maintenance release.  There are a few
+more of them to come.
 
 You can find the changes described here in the integration branches of the
 repositories listed at
@@ -30,155 +19,57 @@ repositories listed at
     http://git-blame.blogspot.com/p/git-public-repositories.html
 
 --------------------------------------------------
-[Graduated to "master"]
-
-* bl/gitweb-project-filter (2012-02-01) 8 commits
-  (merged to 'next' on 2012-02-01 at 2c96ce7)
- + gitweb: Make project search respect project_filter
- + gitweb: improve usability of projects search form
- + gitweb: place links to parent directories in page header
- + gitweb: show active project_filter in project_list page header
- + gitweb: limit links to alternate forms of project_list to active project_filter
- + gitweb: add project_filter to limit project list to a subdirectory
- + gitweb: prepare git_get_projects_list for use outside 'forks'.
- + gitweb: move hard coded .git suffix out of git_get_projects_list
-
-"gitweb" allows intermediate entries in the directory hierarchy that leads
-to a projects to be clicked, which in turn shows the list of projects
-inside that directory.
-
-* jc/maint-request-pull-for-tag (2012-01-31) 1 commit
-  (merged to 'next' on 2012-02-01 at 7649f18)
- + request-pull: explicitly ask tags/$name to be pulled
-
-When asking for a tag to be pulled, "request-pull" shows the name of the
-tag prefixed with "tags/"
-
-* jn/svn-fe (2012-02-02) 47 commits
-  (merged to 'next' on 2012-02-05 at e9d3917)
- + vcs-svn: suppress a -Wtype-limits warning
- + vcs-svn: allow import of > 4GiB files
- + vcs-svn: rename check_overflow arguments for clarity
-  (merged to 'next' on 2012-02-01 at 9288c95)
- + vcs-svn/svndiff.c: squelch false "unused" warning from gcc
- + Merge branch 'svn-fe' of git://repo.or.cz/git/jrn into jn/svn-fe
- + vcs-svn: reset first_commit_done in fast_export_init
- + Merge branch 'db/text-delta' into svn-fe
- + vcs-svn: do not initialize report_buffer twice
- + Merge branch 'db/text-delta' into svn-fe
- + vcs-svn: avoid hangs from corrupt deltas
- + vcs-svn: guard against overflow when computing preimage length
- + Merge branch 'db/delta-applier' into db/text-delta
- + vcs-svn: implement text-delta handling
- + Merge branch 'db/delta-applier' into db/text-delta
- + Merge branch 'db/delta-applier' into svn-fe
- + vcs-svn: cap number of bytes read from sliding view
- + test-svn-fe: split off "test-svn-fe -d" into a separate function
- + vcs-svn: let deltas use data from preimage
- + vcs-svn: let deltas use data from postimage
- + vcs-svn: verify that deltas consume all inline data
- + vcs-svn: implement copyfrom_data delta instruction
- + vcs-svn: read instructions from deltas
- + vcs-svn: read inline data from deltas
- + vcs-svn: read the preimage when applying deltas
- + vcs-svn: parse svndiff0 window header
- + vcs-svn: skeleton of an svn delta parser
- + vcs-svn: make buffer_read_binary API more convenient
- + vcs-svn: learn to maintain a sliding view of a file
- + Makefile: list one vcs-svn/xdiff object or header per line
- + Merge branch 'db/svn-fe-code-purge' into svn-fe
- + vcs-svn: drop obj_pool
- + vcs-svn: drop treap
- + vcs-svn: drop string_pool
- + vcs-svn: pass paths through to fast-import
- + Merge branch 'db/strbufs-for-metadata' into db/svn-fe-code-purge
- + Merge branch 'db/length-as-hash' (early part) into db/svn-fe-code-purge
- + Merge branch 'db/vcs-svn-incremental' into svn-fe
- + vcs-svn: avoid using ls command twice
- + vcs-svn: use mark from previous import for parent commit
- + vcs-svn: handle filenames with dq correctly
- + vcs-svn: quote paths correctly for ls command
- + vcs-svn: eliminate repo_tree structure
- + vcs-svn: add a comment before each commit
- + vcs-svn: save marks for imported commits
- + vcs-svn: use higher mark numbers for blobs
- + vcs-svn: set up channel to read fast-import cat-blob response
- + Merge commit 'v1.7.5' into svn-fe
-
-Originally merged to 'next' on 2012-01-29.
-
-"vcs-svn"/"svn-fe" learned to read dumps with svn-deltas and support
-incremental imports.
-
-* jx/i18n-more-marking (2012-02-01) 2 commits
-  (merged to 'next' on 2012-02-05 at 44e8cf6)
- + i18n: format_tracking_info "Your branch is behind" message
- + i18n: git-commit whence_s "merge/cherry-pick" message
-
-Marks a few more messages we forgot to mark for i18n.
-
-* rt/completion-branch-edit-desc (2012-01-29) 1 commit
-  (merged to 'next' on 2012-02-01 at 0627ebf)
- + completion: --edit-description option for git-branch
-
-Originally merged to 'next' on 2012-01-31.
-
---------------------------------------------------
 [New Topics]
 
-* jk/config-include (2012-02-06) 2 commits
- - config: add include directive
- - docs: add a basic description of the config API
+* nk/ctype-for-perf (2012-02-10) 2 commits
+  (merged to 'next' on 2012-02-10 at b41c6bb)
+ + ctype: implement islower/isupper macro
+ + ctype.c only wants git-compat-util.h
 
-An assignment to the include.path pseudo-variable causes the named file
-to be included in-place when Git looks up configuration variables.
+* jn/ancient-meld-support (2012-02-10) 1 commit
+ - mergetools/meld: Use --help output to detect --output support
 
-* jk/maint-tag-show-fixes (2012-02-08) 3 commits
-  (merged to 'next' on 2012-02-08 at 18459c4)
- + tag: do not show non-tag contents with "-n"
- + tag: die when listing missing or corrupt objects
- + tag: fix output of "tag -n" when errors occur
+--------------------------------------------------
+[Graduated to "master"]
 
-Bugfixes to "git tag -n" that lacked much error checking.
+* jc/branch-desc-typoavoidance (2012-02-05) 2 commits
+  (merged to 'next' on 2012-02-06 at 9fb0568)
+ + branch --edit-description: protect against mistyped branch name
+ + tests: add write_script helper function
+ (this branch is tangled with jk/tests-write-script.)
 
-* mm/empty-loose-error-message (2012-02-06) 1 commit
-  (merged to 'next' on 2012-02-07 at f119cac)
- + fsck: give accurate error message on empty loose object files
+Typo in "git branch --edit-description my-tpoic" was not diagnosed.
 
-Updates the error message emitted when we see an empty loose object.
+* jc/merge-ff-only-stronger-than-signed-merge (2012-02-05) 1 commit
+  (merged to 'next' on 2012-02-06 at 0fabf12)
+ + merge: do not create a signed tag merge under --ff-only option
+ (this branch is used by jn/merge-no-edit-fix.)
 
-* nd/columns (2012-02-08) 15 commits
- - column: Fix some compiler and sparse warnings
- - column: add a corner-case test to t3200
- - columns: minimum coding style fixes
- - tag: add --column
- - column: support piping stdout to external git-column process
- - status: add --column
- - branch: add --column
- - help: reuse print_columns() for help -a
- - column: add column.ui for default column output settings
- - column: support columns with different widths
- - column: add columnar layout
- - Stop starting pager recursively
- - Add git-column and column mode parsing
- - column: add API to print items in columns
- - Save terminal width before setting up pager
+"git merge --ff-only $tag" failed because it cannot record the required
+mergetag without creating a merge, but this is so common operation for
+branch that is used _only_ to follow the upstream, so it is allowed to
+fast-forward without recording the mergetag.
 
-The "show list of ..." mode of a handful of commands learn to produce
-column-oriented output.
+* jc/parse-date-raw (2012-02-03) 2 commits
+  (merged to 'next' on 2012-02-07 at 486ae6e)
+ + parse_date(): '@' prefix forces git-timestamp
+ + parse_date(): allow ancient git-timestamp
 
-Expecting a reroll.
+"rebase" and "commit --amend" failed to work on commits with ancient
+timestamps near year 1970.
 
-* jc/maint-commit-ignore-i-t-a (2012-02-07) 1 commit
- - commit: ignore intent-to-add entries instead of refusing
+* jk/tests-write-script (2012-02-03) 2 commits
+  (merged to 'next' on 2012-02-05 at 4264ffa)
+ + t0300: use write_script helper
+ + tests: add write_script helper function
+ (this branch is tangled with jc/branch-desc-typoavoidance.)
 
-Replaces the nd/commit-ignore-i-t-a series that was made unnecessary
-complicated by bad suggestions I made earlier.
+* jn/rpm-spec (2012-02-03) 1 commit
+  (merged to 'next' on 2012-02-05 at dba940b)
+ + git.spec: Workaround localized messages not put in any RPM
 
-* jk/userdiff-config-simplify (2012-02-07) 1 commit
- - drop odd return value semantics from userdiff_config
-
-Code cleanup.
+Fix breakage in v1.7.9 Makefile; rpmbuild notices an unpackaged but
+installed *.mo file and fails.
 
 * js/add-e-submodule-fix (2012-02-07) 1 commit
   (merged to 'next' on 2012-02-08 at c8e2d28)
@@ -187,33 +78,6 @@ Code cleanup.
 "add -e" learned not to show a diff for an otherwise unmodified submodule
 that only has uncommitted local changes in the patch prepared by for the
 user to edit.
-
-* nd/cache-tree-api-refactor (2012-02-07) 1 commit
-  (merged to 'next' on 2012-02-08 at a9abbca)
- + cache-tree: update API to take abitrary flags
-
-Code cleanup.
-
-* tg/tag-points-at (2012-02-08) 1 commit
- - tag: add --points-at list option
-
-Will merge to 'next'.
-
-* jl/maint-submodule-relative (2012-02-09) 2 commits
- - submodules: always use a relative path from gitdir to work tree
- - submodules: always use a relative path to gitdir
-
-* jn/merge-no-edit-fix (2012-02-09) 1 commit
- - merge: do not launch an editor on "--no-edit $tag"
- (this branch uses jc/merge-ff-only-stronger-than-signed-merge.)
-
-* ld/git-p4-expanded-keywords (2012-02-09) 2 commits
- - git-p4: initial demonstration of possible RCS keyword fixup
- - git-p4: add test case for RCS keywords
-
-* mp/make-cleanse-x-for-exe (2012-02-09) 1 commit
-  (merged to 'next' on 2012-02-09 at 35cc89d)
- + Explicitly set X to avoid potential build breakage
 
 --------------------------------------------------
 [Stalled]
@@ -262,22 +126,108 @@ the "bup" fanboys, to come up with a better logic, thinking that giving
 people an easy target to shoot for, they may be encouraged to help
 out. The plan is not working :-(.
 
+* nd/columns (2012-02-08) 15 commits
+ - column: Fix some compiler and sparse warnings
+ - column: add a corner-case test to t3200
+ - columns: minimum coding style fixes
+ - tag: add --column
+ - column: support piping stdout to external git-column process
+ - status: add --column
+ - branch: add --column
+ - help: reuse print_columns() for help -a
+ - column: add column.ui for default column output settings
+ - column: support columns with different widths
+ - column: add columnar layout
+ - Stop starting pager recursively
+ - Add git-column and column mode parsing
+ - column: add API to print items in columns
+ - Save terminal width before setting up pager
+
+The "show list of ..." mode of a handful of commands learn to produce
+column-oriented output.
+
+Expecting a reroll.
+
 --------------------------------------------------
 [Cooking]
+
+* jk/config-include (2012-02-06) 2 commits
+ - config: add include directive
+ - docs: add a basic description of the config API
+
+An assignment to the include.path pseudo-variable causes the named file
+to be included in-place when Git looks up configuration variables.
+
+* jk/maint-tag-show-fixes (2012-02-08) 3 commits
+  (merged to 'next' on 2012-02-08 at 18459c4)
+ + tag: do not show non-tag contents with "-n"
+ + tag: die when listing missing or corrupt objects
+ + tag: fix output of "tag -n" when errors occur
+
+Bugfixes to "git tag -n" that lacked much error checking.
+Will merge to 'masster'.
+
+* mm/empty-loose-error-message (2012-02-06) 1 commit
+  (merged to 'next' on 2012-02-07 at f119cac)
+ + fsck: give accurate error message on empty loose object files
+
+Updates the error message emitted when we see an empty loose object.
+Will merge to 'masster'.
+
+* jc/maint-commit-ignore-i-t-a (2012-02-07) 1 commit
+  (merged to 'next' on 2012-02-10 at e0040cf)
+ + commit: ignore intent-to-add entries instead of refusing
+
+Replaces the nd/commit-ignore-i-t-a series that was made unnecessary
+complicated by bad suggestions I made earlier.
+Will merge to 'masster'.
+
+* jk/userdiff-config-simplify (2012-02-07) 1 commit
+  (merged to 'next' on 2012-02-10 at e9854c1)
+ + drop odd return value semantics from userdiff_config
+
+Code cleanup.
+
+* nd/cache-tree-api-refactor (2012-02-07) 1 commit
+  (merged to 'next' on 2012-02-08 at a9abbca)
+ + cache-tree: update API to take abitrary flags
+
+Code cleanup.
+
+* tg/tag-points-at (2012-02-08) 1 commit
+  (merged to 'next' on 2012-02-10 at 4bff88f)
+ + tag: add --points-at list option
+
+* jl/maint-submodule-relative (2012-02-09) 2 commits
+ - submodules: always use a relative path from gitdir to work tree
+ - submodules: always use a relative path to gitdir
+
+The second one looked iffy.
+
+* jn/merge-no-edit-fix (2012-02-09) 1 commit
+  (merged to 'next' on 2012-02-10 at 014eec9)
+ + merge: do not launch an editor on "--no-edit $tag"
+
+In 1.7.9, "merge --no-edit $tag" incorrectly ignored --no-edit.
+
+* ld/git-p4-expanded-keywords (2012-02-09) 2 commits
+ - git-p4: initial demonstration of possible RCS keyword fixup
+ - git-p4: add test case for RCS keywords
+
+Waiting for reviews and user reports.
+
+* mp/make-cleanse-x-for-exe (2012-02-09) 1 commit
+  (merged to 'next' on 2012-02-09 at 35cc89d)
+ + Explicitly set X to avoid potential build breakage
+
+Will merge to 'master'.
 
 * bw/inet-pton-ntop-compat (2012-02-05) 1 commit
   (merged to 'next' on 2012-02-06 at 61303e6)
  + Drop system includes from inet_pton/inet_ntop compatibility wrappers
 
 The inclusion order of header files bites Solaris again and this fixes it.
-
-* jc/branch-desc-typoavoidance (2012-02-05) 2 commits
-  (merged to 'next' on 2012-02-06 at 9fb0568)
- + branch --edit-description: protect against mistyped branch name
- + tests: add write_script helper function
- (this branch is tangled with jk/tests-write-script.)
-
-Typo in "git branch --edit-description my-tpoic" was not diagnosed.
+Will merge to 'master'.
 
 * jc/checkout-out-of-unborn (2012-02-06) 1 commit
   (merged to 'next' on 2012-02-07 at 60eb328)
@@ -294,16 +244,6 @@ about creating a new branch from my current state" is perfectly fine.
 map_user() was not rewriting its output correctly, which resulted in the
 user visible symptom that "git blame -e" sometimes showed excess '>' at
 the end of email addresses.
-
-* jc/merge-ff-only-stronger-than-signed-merge (2012-02-05) 1 commit
-  (merged to 'next' on 2012-02-06 at 0fabf12)
- + merge: do not create a signed tag merge under --ff-only option
- (this branch is used by jn/merge-no-edit-fix.)
-
-"git merge --ff-only $tag" failed because it cannot record the required
-mergetag without creating a merge, but this is so common operation for
-branch that is used _only_ to follow the upstream, so it is allowed to
-fast-forward without recording the mergetag.
 
 * tt/profile-build-fix (2012-02-09) 2 commits
   (merged to 'next' on 2012-02-09 at 1c183af)
@@ -337,14 +277,6 @@ path may look like text but it is not, which "git diff" can do using the
 attributes system. Now "git grep" honors the same "binary" (or "-diff")
 attribute.
 
-* jc/parse-date-raw (2012-02-03) 2 commits
-  (merged to 'next' on 2012-02-07 at 486ae6e)
- + parse_date(): '@' prefix forces git-timestamp
- + parse_date(): allow ancient git-timestamp
-
-"rebase" and "commit --amend" failed to work on commits with ancient
-timestamps near year 1970.
-
 * jk/git-dir-lookup (2012-02-02) 1 commit
   (merged to 'next' on 2012-02-05 at 1856d74)
  + standardize and improve lookup rules for external local repos
@@ -361,24 +293,11 @@ The code to ask for password did not fall back to the terminal input when
 GIT_ASKPASS is set but does not work (e.g. lack of X with GUI askpass
 helper).
 
-* jk/tests-write-script (2012-02-03) 2 commits
-  (merged to 'next' on 2012-02-05 at 4264ffa)
- + t0300: use write_script helper
- + tests: add write_script helper function
- (this branch is tangled with jc/branch-desc-typoavoidance.)
-
 * jn/gitweb-search-utf-8 (2012-02-03) 1 commit
   (merged to 'next' on 2012-02-05 at 055e446)
  + gitweb: Allow UTF-8 encoded CGI query parameters and path_info
 
 Search box in "gitweb" did not accept non-ASCII characters correctly.
-
-* jn/rpm-spec (2012-02-03) 1 commit
-  (merged to 'next' on 2012-02-05 at dba940b)
- + git.spec: Workaround localized messages not put in any RPM
-
-Fix breakage in v1.7.9 Makefile; rpmbuild notices an unpackaged but
-installed *.mo file and fails.
 
 * fc/zsh-completion (2012-02-06) 3 commits
   (merged to 'next' on 2012-02-06 at c94dd12)
@@ -401,15 +320,3 @@ Fix git subcommand completion for zsh (in contrib/completion).
 
 "pack-objects" learned use parse-options, losing custom command line
 parsing code.
-
---------------------------------------------------
-[Discarded]
-
-* nd/commit-ignore-i-t-a (2012-02-06) 4 commits
- . commit: remove commit.ignoreIntentToAdd, assume it's always true
- . commit: turn commit.ignoreIntentToAdd to true by default
- . commit: introduce a config key to allow as-is commit with i-t-a entries
- . cache-tree: update API to take abitrary flags
-
-Instead of using configuration to selectively delay bugfixes like this
-series does, let's sell it as a pure bugfix.
