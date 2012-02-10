@@ -131,6 +131,7 @@ module_clone()
 	gitdir=
 	gitdir_base=
 	name=$(module_name "$path" 2>/dev/null)
+	test -n "$name" || name="$path"
 	base_path=$(dirname "$path")
 
 	gitdir=$(git rev-parse --git-dir)
