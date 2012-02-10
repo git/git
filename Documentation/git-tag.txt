@@ -12,7 +12,8 @@ SYNOPSIS
 'git tag' [-a | -s | -u <key-id>] [-f] [-m <msg> | -F <file>]
 	<tagname> [<commit> | <object>]
 'git tag' -d <tagname>...
-'git tag' [-n[<num>]] -l [--contains <commit>] [<pattern>...]
+'git tag' [-n[<num>]] -l [--contains <commit>] [--points-at <object>]
+	[<pattern>...]
 'git tag' -v <tagname>...
 
 DESCRIPTION
@@ -85,6 +86,9 @@ OPTIONS
 
 --contains <commit>::
 	Only list tags which contain the specified commit.
+
+--points-at <object>::
+	Only list tags of the given object.
 
 -m <msg>::
 --message=<msg>::
