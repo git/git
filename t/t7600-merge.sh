@@ -27,6 +27,7 @@ Testing basic merge operations/option parsing.
 '
 
 . ./test-lib.sh
+. "$TEST_DIRECTORY"/lib-gpg.sh
 
 printf '%s\n' 1 2 3 4 5 6 7 8 9 >file
 printf '%s\n' '1 X' 2 3 4 5 6 7 8 9 >file.1
@@ -668,6 +669,18 @@ test_expect_success 'merge --no-ff --edit' '
 	grep "work done on the side branch" raw &&
 	sed "1,/^$/d" >actual raw &&
 	test_cmp actual expected
+'
+
+test_expect_success GPG 'merge --ff-only tag' '
+	git reset --hard c0 &&
+	git commit --allow-empty -m "A newer commit" &&
+	git tag -s -m "A newer commit" signed &&
+	git reset --hard c0 &&
+
+	git merge --ff-only signed &&
+	git rev-parse signed^0 >expect &&
+	git rev-parse HEAD >actual &&
+	test_cmp actual expect
 '
 
 test_done
