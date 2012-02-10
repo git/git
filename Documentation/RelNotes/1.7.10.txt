@@ -62,9 +62,30 @@ Unless otherwise noted, all the fixes since v1.7.9 in the maintenance
 releases are contained in this release (see release notes to them for
 details).
 
+ * "add -e" learned not to show a diff for an otherwise unmodified
+   submodule that only has uncommitted local changes in the patch
+   prepared by for the user to edit.
+   (merge 701825d js/add-e-submodule-fix later to maint).
+
+ * "rebase" and "commit --amend" failed to work on commits with ancient
+   timestamps near year 1970.
+   (merge 2c733fb jc/parse-date-raw later to maint).
+
+ * "git merge --ff-only $tag" failed because it cannot record the
+   required mergetag without creating a merge, but this is so common
+   operation for branch that is used _only_ to follow the upstream, so
+   it is allowed to fast-forward without recording the mergetag.
+   (merge b5c9f1c jc/merge-ff-only-stronger-than-signed-merge later to maint).
+
+ * Typo in "git branch --edit-description my-tpoic" was not diagnosed.
+   (merge c2d17ba jc/branch-desc-typoavoidance later to maint).
+
+ * rpmbuild noticed an unpackaged but installed *.mo file and failed.
+   (merge 3a9f58c jn/rpm-spec later to maint).
+
 ---
 exec >/var/tmp/1
-O=v1.7.9-187-gdc347e9
+O=v1.7.9-208-gee8d52f
 echo O=$(git describe)
 git log --first-parent --oneline ^maint $O..
 echo
