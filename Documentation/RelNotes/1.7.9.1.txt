@@ -7,6 +7,11 @@ Fixes since v1.7.9
  * Subprocesses spawned from various git programs were often left running
    to completion even when the top-level process was killed.
 
+ * Using "git grep -l/-L" together with options -W or --break may not
+   make much sense as the output is to only count the number of hits
+   and there is no place for file breaks, but the latter options made
+   "-l/-L" to miscount the hits.
+
  * "git log --first-parent $pathspec" did not stay on the first parent
    chain and veered into side branch from which the whole change to the
    specified paths came.
@@ -15,5 +20,17 @@ Fixes since v1.7.9
 
  * When "git push" fails to update any refs, the client side did not
    report an error correctly to the end user.
+
+ * "git mergetool" now gives an empty file as the common base version
+   to the backend when dealing with the "both sides added, differently"
+   case.
+
+ * When asking for a tag to be pulled, "request-pull" did not show the
+   name of the tag prefixed with "tags/", which would have helped older
+   clients.
+
+ * "git submodule add $path" forgot to recompute the name to be stored
+   in .gitmodules when the submodule at $path was once added to the
+   superproject and already initialized.
 
 Also contains minor fixes and documentation updates.
