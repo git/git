@@ -63,7 +63,7 @@ die "fatal: No commits in common between $base and $head"
 find_matching_ref='
 	sub abbr {
 		my $ref = shift;
-		if ($ref =~ s|refs/heads/|| || $ref =~ s|refs/tags/||) {
+		if ($ref =~ s|^refs/heads/|| || $ref =~ s|^refs/tags/|tags/|) {
 			return $ref;
 		} else {
 			return $ref;
