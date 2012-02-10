@@ -62,42 +62,6 @@ Unless otherwise noted, all the fixes since v1.7.9 in the maintenance
 releases are contained in this release (see release notes to them for
 details).
 
- * When "git push" fails to update any refs, the client side did not
-   report an error correctly to the end user.
-   (merge 5238cbf sp/smart-http-failure-to-push later to maint).
-
- * "git push -q" was not sufficiently quiet.
-   (merge d336572 cb/push-quiet later to maint).
-
- * "git log --first-parent $pathspec" did not stay on the first parent
-   chain and veered into side branch from which the whole change to the
-   specified paths came.
-   (merge 36ed191 jc/maint-log-first-parent-pathspec later to maint).
-
- * Subprocesses spawned from various git programs were often left running
-   to completion even when the top-level process was killed.
-   (merge 10c6cdd cb/maint-kill-subprocess-upon-signal later to maint).
-
- * "git mergetool" now gives an empty file as the common base version
-   to the backend when dealing with the "both sides added, differently"
-   case.
-   (merge ec245ba da/maint-mergetool-twoway later to maint).
-
- * "git submodule add $path" forgot to recompute the name to be stored
-    in .gitmodules when the submodule at $path was once added to the
-    superproject and already initialized.
-   (merge 1017c1a jl/submodule-re-add later to maint).
-
- * Using "git grep -l/-L" together with options -W or --break may not
-   make much sense as the output is to only count the number of hits
-   and there is no place for file breaks, but the latter options made
-   "-l/-L" to miscount the hits.
-   (merge 50dd0f2 tr/grep-l-with-decoration later to maint).
-
- * When asking for a tag to be pulled, "request-pull" shows the name
-   of the tag prefixed with "tags/"
-   (merge 2ad9ba0 jc/maint-request-pull-for-tag later to maint).
-
 ---
 exec >/var/tmp/1
 O=v1.7.9-187-gdc347e9
