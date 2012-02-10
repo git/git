@@ -45,7 +45,7 @@ no)
 			save=$(git rev-parse --verify HEAD)
 
 			echo >&2 "* $branch"
-			git merge "$branch" || accept_rerere || exit
+			git merge --no-edit "$branch" || accept_rerere || exit
 
 			this=$(git rev-parse --verify HEAD)
 			if test "$this" = "$save"
