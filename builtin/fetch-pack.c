@@ -256,11 +256,6 @@ static void insert_one_alternate_ref(const struct ref *ref, void *unused)
 	rev_list_insert_ref(NULL, ref->old_sha1, 0, NULL);
 }
 
-static void insert_alternate_refs(void)
-{
-	for_each_alternate_ref(insert_one_alternate_ref, NULL);
-}
-
 #define INITIAL_FLUSH 16
 #define PIPESAFE_FLUSH 32
 #define LARGE_FLUSH 1024
@@ -295,7 +290,7 @@ static int find_common(int fd[2], unsigned char *result_sha1,
 	marked = 1;
 
 	for_each_ref(rev_list_insert_ref, NULL);
-	insert_alternate_refs();
+	for_each_alternate_ref(insert_one_alternate_ref, NULL);
 
 	fetching = 0;
 	for ( ; refs ; refs = refs->next) {
