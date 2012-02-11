@@ -813,28 +813,28 @@ int cmd_clone(int argc, const char **argv, const char *prefix)
 	}
 
 	refs = transport_get_remote_refs(transport);
-	mapped_refs = refs ? wanted_peer_refs(refs, refspec) : NULL;
-
-	/*
-	 * transport_get_remote_refs() may return refs with null sha-1
-	 * in mapped_refs (see struct transport->get_refs_list
-	 * comment). In that case we need fetch it early because
-	 * remote_head code below relies on it.
-	 *
-	 * for normal clones, transport_get_remote_refs() should
-	 * return reliable ref set, we can delay cloning until after
-	 * remote HEAD check.
-	 */
-	for (ref = refs; ref; ref = ref->next)
-		if (is_null_sha1(ref->old_sha1)) {
-			complete_refs_before_fetch = 0;
-			break;
-		}
-
-	if (!is_local && !complete_refs_before_fetch && refs)
-		transport_fetch_refs(transport, mapped_refs);
 
 	if (refs) {
+		mapped_refs = wanted_peer_refs(refs, refspec);
+		/*
+		 * transport_get_remote_refs() may return refs with null sha-1
+		 * in mapped_refs (see struct transport->get_refs_list
+		 * comment). In that case we need fetch it early because
+		 * remote_head code below relies on it.
+		 *
+		 * for normal clones, transport_get_remote_refs() should
+		 * return reliable ref set, we can delay cloning until after
+		 * remote HEAD check.
+		 */
+		for (ref = refs; ref; ref = ref->next)
+			if (is_null_sha1(ref->old_sha1)) {
+				complete_refs_before_fetch = 0;
+				break;
+			}
+
+		if (!is_local && !complete_refs_before_fetch)
+			transport_fetch_refs(transport, mapped_refs);
+
 		remote_head = find_ref_by_name(refs, "HEAD");
 		remote_head_points_at =
 			guess_remote_head(remote_head, mapped_refs, 0);
@@ -852,6 +852,7 @@ int cmd_clone(int argc, const char **argv, const char *prefix)
 	}
 	else {
 		warning(_("You appear to have cloned an empty repository."));
+		mapped_refs = NULL;
 		our_head_points_at = NULL;
 		remote_head_points_at = NULL;
 		remote_head = NULL;
