@@ -581,6 +581,11 @@ static void filter_refs(struct ref **refs, int nr_match, char **match)
 	*refs = newlist;
 }
 
+static void mark_alternate_complete(const struct ref *ref, void *unused)
+{
+	mark_complete(NULL, ref->old_sha1, 0, NULL);
+}
+
 static int everything_local(struct ref **refs, int nr_match, char **match)
 {
 	struct ref *ref;
@@ -609,6 +614,7 @@ static int everything_local(struct ref **refs, int nr_match, char **match)
 
 	if (!args.depth) {
 		for_each_ref(mark_complete, NULL);
+		for_each_alternate_ref(mark_alternate_complete, NULL);
 		if (cutoff)
 			mark_recent_complete_commits(cutoff);
 	}

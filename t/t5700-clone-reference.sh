@@ -167,7 +167,7 @@ test_expect_success 'prepare branched repository' '
 
 rm -f "$U.K"
 
-test_expect_failure 'fetch with incomplete alternates' '
+test_expect_success 'fetch with incomplete alternates' '
 	git init K &&
 	echo "$base_dir/A/.git/objects" >K/.git/objects/info/alternates &&
 	(
