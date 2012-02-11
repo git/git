@@ -232,9 +232,6 @@ static int add_one_reference(struct string_list_item *item, void *cb_data)
 {
 	char *ref_git;
 	struct strbuf alternate = STRBUF_INIT;
-	struct remote *remote;
-	struct transport *transport;
-	const struct ref *extra;
 
 	/* Beware: real_path() and mkpath() return static buffer */
 	ref_git = xstrdup(real_path(item->string));
@@ -249,14 +246,6 @@ static int add_one_reference(struct string_list_item *item, void *cb_data)
 	strbuf_addf(&alternate, "%s/objects", ref_git);
 	add_to_alternates_file(alternate.buf);
 	strbuf_release(&alternate);
-
-	remote = remote_get(ref_git);
-	transport = transport_get(remote, ref_git);
-	for (extra = transport_get_remote_refs(transport); extra;
-	     extra = extra->next)
-		add_extra_ref(extra->name, extra->old_sha1, 0);
-
-	transport_disconnect(transport);
 	free(ref_git);
 	return 0;
 }
@@ -500,7 +489,6 @@ static void update_remote_refs(const struct ref *refs,
 			       const char *msg)
 {
 	if (refs) {
-		clear_extra_refs();
 		write_remote_refs(mapped_refs);
 		if (option_single_branch)
 			write_followtags(refs, msg);
