@@ -52,13 +52,13 @@ test_cmp expected current'
 
 cd "$base_dir"
 
-rm -f "$U"
+rm -f "$U.D"
 
 test_expect_success 'cloning with reference (no -l -s)' \
-'GIT_DEBUG_SEND_PACK=3 git clone --reference B "file://$(pwd)/A" D 3>"$U"'
+'GIT_DEBUG_SEND_PACK=3 git clone --reference B "file://$(pwd)/A" D 3>"$U.D"'
 
 test_expect_success 'fetched no objects' \
-'! grep "^want" "$U"'
+'! grep "^want" "$U.D"'
 
 cd "$base_dir"
 
@@ -151,6 +151,34 @@ test_expect_success 'clone with reference from a tagged repository' '
 		cd A && git tag -a -m 'tagged' HEAD
 	) &&
 	git clone --reference=A A I
+'
+
+test_expect_success 'prepare branched repository' '
+	git clone A J &&
+	(
+		cd J &&
+		git checkout -b other master^ &&
+		echo other >otherfile &&
+		git add otherfile &&
+		git commit -m other &&
+		git checkout master
+	)
+'
+
+rm -f "$U.K"
+
+test_expect_failure 'fetch with incomplete alternates' '
+	git init K &&
+	echo "$base_dir/A/.git/objects" >K/.git/objects/info/alternates &&
+	(
+		cd K &&
+		git remote add J "file://$base_dir/J" &&
+		GIT_DEBUG_SEND_PACK=3 git fetch J 3>"$U.K"
+	) &&
+	master_object=$(cd A && git for-each-ref --format="%(objectname)" refs/heads/master) &&
+	! grep "^want $master_object" "$U.K" &&
+	tag_object=$(cd A && git for-each-ref --format="%(objectname)" refs/tags/HEAD) &&
+	! grep "^want $tag_object" "$U.K"
 '
 
 test_done
