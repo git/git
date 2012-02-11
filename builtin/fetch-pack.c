@@ -58,9 +58,9 @@ static void rev_list_push(struct commit *commit, int mark)
 	}
 }
 
-static int rev_list_insert_ref(const char *path, const unsigned char *sha1, int flag, void *cb_data)
+static int rev_list_insert_ref(const char *refname, const unsigned char *sha1, int flag, void *cb_data)
 {
-	struct object *o = deref_tag(parse_object(sha1), path, 0);
+	struct object *o = deref_tag(parse_object(sha1), refname, 0);
 
 	if (o && o->type == OBJ_COMMIT)
 		rev_list_push((struct commit *)o, SEEN);
@@ -68,9 +68,9 @@ static int rev_list_insert_ref(const char *path, const unsigned char *sha1, int 
 	return 0;
 }
 
-static int clear_marks(const char *path, const unsigned char *sha1, int flag, void *cb_data)
+static int clear_marks(const char *refname, const unsigned char *sha1, int flag, void *cb_data)
 {
-	struct object *o = deref_tag(parse_object(sha1), path, 0);
+	struct object *o = deref_tag(parse_object(sha1), refname, 0);
 
 	if (o && o->type == OBJ_COMMIT)
 		clear_commit_marks((struct commit *)o,
@@ -493,7 +493,7 @@ done:
 
 static struct commit_list *complete;
 
-static int mark_complete(const char *path, const unsigned char *sha1, int flag, void *cb_data)
+static int mark_complete(const char *refname, const unsigned char *sha1, int flag, void *cb_data)
 {
 	struct object *o = parse_object(sha1);
 
