@@ -136,7 +136,7 @@ test_expect_success setup '
 	git format-patch -M --stdout lorem^ >rename-add.patch &&
 
 	# reset time
-	unset test_tick &&
+	sane_unset test_tick &&
 	test_tick
 '
 

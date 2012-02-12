@@ -17,7 +17,7 @@ run_backend() {
 GET() {
 	REQUEST_METHOD="GET" && export REQUEST_METHOD &&
 	run_backend "/repo.git/$1" &&
-	unset REQUEST_METHOD &&
+	sane_unset REQUEST_METHOD &&
 	if ! grep "Status" act.out >act
 	then
 		printf "Status: 200 OK\r\n" >act
@@ -30,8 +30,8 @@ POST() {
 	REQUEST_METHOD="POST" && export REQUEST_METHOD &&
 	CONTENT_TYPE="application/x-$1-request" && export CONTENT_TYPE &&
 	run_backend "/repo.git/$1" "$2" &&
-	unset REQUEST_METHOD &&
-	unset CONTENT_TYPE &&
+	sane_unset REQUEST_METHOD &&
+	sane_unset CONTENT_TYPE &&
 	if ! grep "Status" act.out >act
 	then
 		printf "Status: 200 OK\r\n" >act
