@@ -912,6 +912,7 @@ set default_config(gui.fontdiff) [font configure font_diff]
 set default_config(gui.maxfilesdisplayed) 5000
 set default_config(gui.usettk) 1
 set default_config(gui.warndetachedcommit) 1
+set default_config(gui.tabsize) 8
 set font_descs {
 	{fontui   font_ui   {mc "Main Font"}}
 	{fontdiff font_diff {mc "Diff/Console Font"}}

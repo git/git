@@ -1,6 +1,19 @@
 # git-gui diff viewer
 # Copyright (C) 2006, 2007 Shawn Pearce
 
+proc apply_tab_size {{firsttab {}}} {
+	global have_tk85 repo_config ui_diff
+
+	set w [font measure font_diff "0"]
+	if {$have_tk85 && $firsttab != 0} {
+		$ui_diff configure -tabs [list [expr {$firsttab * $w}] [expr {($firsttab + $repo_config(gui.tabsize)) * $w}]]
+	} elseif {$have_tk85 || $repo_config(gui.tabsize) != 8} {
+		$ui_diff configure -tabs [expr {$repo_config(gui.tabsize) * $w}]
+	} else {
+		$ui_diff configure -tabs {}
+	}
+}
+
 proc clear_diff {} {
 	global ui_diff current_diff_path current_diff_header
 	global ui_index ui_workdir
@@ -104,6 +117,8 @@ proc show_diff {path w {lno {}} {scroll_pos {}} {callback {}}} {
 	ui_status [mc "Loading diff of %s..." [escape_path $path]]
 
 	set cont_info [list $scroll_pos $callback]
+
+	apply_tab_size 0
 
 	if {[string first {U} $m] >= 0} {
 		merge_load_stages $path [list show_unmerged_diff $cont_info]
@@ -401,7 +416,10 @@ proc read_diff {fd conflict_size cont_info} {
 
 		# -- Automatically detect if this is a 3 way diff.
 		#
-		if {[string match {@@@ *} $line]} {set is_3way_diff 1}
+		if {[string match {@@@ *} $line]} {
+			set is_3way_diff 1
+			apply_tab_size 1
+		}
 
 		if {$::current_diff_inheader} {
 
