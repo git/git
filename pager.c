@@ -110,3 +110,15 @@ int pager_in_use(void)
 	env = getenv("GIT_PAGER_IN_USE");
 	return env ? git_config_bool("GIT_PAGER_IN_USE", env) : 0;
 }
+
+/*
+ * How many columns do we need to show this number in decimal?
+ */
+int decimal_width(int number)
+{
+	int i, width;
+
+	for (width = 1, i = 10; i <= number; width++)
+		i *= 10;
+	return width;
+}
