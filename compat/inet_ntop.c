@@ -15,13 +15,7 @@
  * SOFTWARE.
  */
 
-#include <errno.h>
-#include <sys/types.h>
-
 #include "../git-compat-util.h"
-
-#include <stdio.h>
-#include <string.h>
 
 #ifndef NS_INADDRSZ
 #define NS_INADDRSZ	4
