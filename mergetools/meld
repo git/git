@@ -23,7 +23,7 @@ check_meld_for_output_version () {
 	meld_path="$(git config mergetool.meld.path)"
 	meld_path="${meld_path:-meld}"
 
-	if "$meld_path" --output /dev/null --help >/dev/null 2>&1
+	if "$meld_path" --help 2>&1 | grep -e --output >/dev/null
 	then
 		meld_has_output_option=true
 	else
