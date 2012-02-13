@@ -40,7 +40,7 @@ test -f "$GIT_DIR/MERGE_HEAD" && die_merge
 
 strategy_args= diffstat= no_commit= squash= no_ff= ff_only=
 log_arg= verbosity= progress= recurse_submodules=
-merge_args=
+merge_args= edit=
 curr_branch=$(git symbolic-ref -q HEAD)
 curr_branch_short="${curr_branch#refs/heads/}"
 rebase=$(git config --bool branch.$curr_branch_short.rebase)
@@ -70,6 +70,10 @@ do
 		no_commit=--no-commit ;;
 	--c|--co|--com|--comm|--commi|--commit)
 		no_commit=--commit ;;
+	-e|--edit)
+		edit=--edit ;;
+	--no-edit)
+		edit=--no-edit ;;
 	--sq|--squ|--squa|--squas|--squash)
 		squash=--squash ;;
 	--no-sq|--no-squ|--no-squa|--no-squas|--no-squash)
@@ -278,7 +282,7 @@ true)
 	eval="$eval --onto $merge_head ${oldremoteref:-$merge_head}"
 	;;
 *)
-	eval="git-merge $diffstat $no_commit $squash $no_ff $ff_only"
+	eval="git-merge $diffstat $no_commit $edit $squash $no_ff $ff_only"
 	eval="$eval  $log_arg $strategy_args $merge_args $verbosity $progress"
 	eval="$eval \"\$merge_name\" HEAD $merge_head"
 	;;
