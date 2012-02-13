@@ -8,6 +8,8 @@ UI, Workflows & Features
 
  * Improved handling of views, labels and branches in git-p4 (in contrib).
 
+ * Updated command line arguments completion script for zsh (in contrib).
+
  * "vcs-svn"/"svn-fe" learned to read dumps with svn-deltas and
    support incremental imports.
 
@@ -19,6 +21,11 @@ UI, Workflows & Features
 
  * "git clone" learned to detach the HEAD in the resulting repository
    when the source repository's HEAD does not point to a branch.
+
+ * The commands in the "git diff" family and "git apply --stat" that
+   count the number of files changed and the number of lines
+   inserted/deleted have been updated to match the output from
+   "diffstat".  This also opens the door to i18n this line.
 
  * When showing a patch while ignoring whitespace changes, the context
    lines are taken from the postimage, in order to make it easier to
@@ -62,6 +69,38 @@ Unless otherwise noted, all the fixes since v1.7.9 in the maintenance
 releases are contained in this release (see release notes to them for
 details).
 
+ * "git merge --no-edit $tag" failed to honor the --no-edit option.
+   (merge 3adab6f jn/merge-no-edit-fix later to maint).
+
+ * The error message emitted when we see an empty loose object was
+   not phrased correctly.
+   (merge 33e42de mm/empty-loose-error-message later to maint).
+
+ * Many small corner case bugs on "git tag -n" was corrected.
+   (merge 31fd8d7 jk/maint-tag-show-fixes later to maint).
+
+ * "git commit" refused to create a commit when entries added with
+   "add -N" remained in the index, without telling Git what their content
+   in the next commit should be. We should have created the commit without
+   these paths.
+   (merge 3f6d56d jc/maint-commit-ignore-i-t-a later to maint).
+
+ * Search box in "gitweb" did not accept non-ASCII characters correctly.
+   (merge 84d9e2d jn/gitweb-search-utf-8 later to maint).
+
+ * The code to ask for password did not fall back to the terminal
+   input when GIT_ASKPASS is set but does not work (e.g. lack of X
+   with GUI askpass helper).
+   (merge 84d7273 jk/prompt-fallback-to-tty later to maint).
+
+ * map_user() was not rewriting its output correctly, which resulted
+   in the user visible symptom that "git blame -e" sometimes showed
+   excess '>' at the end of email addresses.
+   (merge f026358 jc/maint-mailmap-output later to maint).
+
+ * "checkout -b" did not allow switching out of an unborn branch.
+    (merge abe1998 jc/checkout-out-of-unborn later to maint).
+
  * "add -e" learned not to show a diff for an otherwise unmodified
    submodule that only has uncommitted local changes in the patch
    prepared by for the user to edit.
@@ -85,7 +124,7 @@ details).
 
 ---
 exec >/var/tmp/1
-O=v1.7.9-208-gee8d52f
+O=v1.7.9-249-gaa47ec9
 echo O=$(git describe)
 git log --first-parent --oneline ^maint $O..
 echo
