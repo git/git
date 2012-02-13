@@ -99,28 +99,7 @@ details).
    (merge f026358 jc/maint-mailmap-output later to maint).
 
  * "checkout -b" did not allow switching out of an unborn branch.
-    (merge abe1998 jc/checkout-out-of-unborn later to maint).
-
- * "add -e" learned not to show a diff for an otherwise unmodified
-   submodule that only has uncommitted local changes in the patch
-   prepared by for the user to edit.
-   (merge 701825d js/add-e-submodule-fix later to maint).
-
- * "rebase" and "commit --amend" failed to work on commits with ancient
-   timestamps near year 1970.
-   (merge 2c733fb jc/parse-date-raw later to maint).
-
- * "git merge --ff-only $tag" failed because it cannot record the
-   required mergetag without creating a merge, but this is so common
-   operation for branch that is used _only_ to follow the upstream, so
-   it is allowed to fast-forward without recording the mergetag.
-   (merge b5c9f1c jc/merge-ff-only-stronger-than-signed-merge later to maint).
-
- * Typo in "git branch --edit-description my-tpoic" was not diagnosed.
-   (merge c2d17ba jc/branch-desc-typoavoidance later to maint).
-
- * rpmbuild noticed an unpackaged but installed *.mo file and failed.
-   (merge 3a9f58c jn/rpm-spec later to maint).
+   (merge abe1998 jc/checkout-out-of-unborn later to maint).
 
 ---
 exec >/var/tmp/1
