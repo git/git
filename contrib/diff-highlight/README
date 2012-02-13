@@ -57,3 +57,96 @@ following in your git configuration:
 	show = diff-highlight | less
 	diff = diff-highlight | less
 ---------------------------------------------
+
+Bugs
+----
+
+Because diff-highlight relies on heuristics to guess which parts of
+changes are important, there are some cases where the highlighting is
+more distracting than useful. Fortunately, these cases are rare in
+practice, and when they do occur, the worst case is simply a little
+extra highlighting. This section documents some cases known to be
+sub-optimal, in case somebody feels like working on improving the
+heuristics.
+
+1. Two changes on the same line get highlighted in a blob. For example,
+   highlighting:
+
+----------------------------------------------
+-foo(buf, size);
++foo(obj->buf, obj->size);
+----------------------------------------------
+
+   yields (where the inside of "+{}" would be highlighted):
+
+----------------------------------------------
+-foo(buf, size);
++foo(+{obj->buf, obj->}size);
+----------------------------------------------
+
+   whereas a more semantically meaningful output would be:
+
+----------------------------------------------
+-foo(buf, size);
++foo(+{obj->}buf, +{obj->}size);
+----------------------------------------------
+
+   Note that doing this right would probably involve a set of
+   content-specific boundary patterns, similar to word-diff. Otherwise
+   you get junk like:
+
+-----------------------------------------------------
+-this line has some -{i}nt-{ere}sti-{ng} text on it
++this line has some +{fa}nt+{a}sti+{c} text on it
+-----------------------------------------------------
+
+   which is less readable than the current output.
+
+2. The multi-line matching assumes that lines in the pre- and post-image
+   match by position. This is often the case, but can be fooled when a
+   line is removed from the top and a new one added at the bottom (or
+   vice versa). Unless the lines in the middle are also changed, diffs
+   will show this as two hunks, and it will not get highlighted at all
+   (which is good). But if the lines in the middle are changed, the
+   highlighting can be misleading. Here's a pathological case:
+
+-----------------------------------------------------
+-one
+-two
+-three
+-four
++two 2
++three 3
++four 4
++five 5
+-----------------------------------------------------
+
+   which gets highlighted as:
+
+-----------------------------------------------------
+-one
+-t-{wo}
+-three
+-f-{our}
++two 2
++t+{hree 3}
++four 4
++f+{ive 5}
+-----------------------------------------------------
+
+   because it matches "two" to "three 3", and so forth. It would be
+   nicer as:
+
+-----------------------------------------------------
+-one
+-two
+-three
+-four
++two +{2}
++three +{3}
++four +{4}
++five 5
+-----------------------------------------------------
+
+   which would probably involve pre-matching the lines into pairs
+   according to some heuristic.
