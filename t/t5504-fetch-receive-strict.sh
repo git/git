@@ -58,6 +58,11 @@ test_expect_success 'fetch with transfer.fsckobjects' '
 	)
 '
 
+cat >exp <<EOF
+To dst
+!	refs/heads/master:refs/heads/test	[remote rejected] (missing necessary objects)
+EOF
+
 test_expect_success 'push without strict' '
 	rm -rf dst &&
 	git init dst &&
@@ -66,7 +71,8 @@ test_expect_success 'push without strict' '
 		git config fetch.fsckobjects false &&
 		git config transfer.fsckobjects false
 	) &&
-	git push dst master:refs/heads/test
+	test_must_fail git push --porcelain dst master:refs/heads/test >act &&
+	test_cmp exp act
 '
 
 test_expect_success 'push with !receive.fsckobjects' '
@@ -77,8 +83,14 @@ test_expect_success 'push with !receive.fsckobjects' '
 		git config receive.fsckobjects false &&
 		git config transfer.fsckobjects true
 	) &&
-	git push dst master:refs/heads/test
+	test_must_fail git push --porcelain dst master:refs/heads/test >act &&
+	test_cmp exp act
 '
+
+cat >exp <<EOF
+To dst
+!	refs/heads/master:refs/heads/test	[remote rejected] (n/a (unpacker error))
+EOF
 
 test_expect_success 'push with receive.fsckobjects' '
 	rm -rf dst &&
@@ -88,7 +100,8 @@ test_expect_success 'push with receive.fsckobjects' '
 		git config receive.fsckobjects true &&
 		git config transfer.fsckobjects false
 	) &&
-	test_must_fail git push dst master:refs/heads/test
+	test_must_fail git push --porcelain dst master:refs/heads/test >act &&
+	test_cmp exp act
 '
 
 test_expect_success 'push with transfer.fsckobjects' '
@@ -98,7 +111,8 @@ test_expect_success 'push with transfer.fsckobjects' '
 		cd dst &&
 		git config transfer.fsckobjects true
 	) &&
-	test_must_fail git push dst master:refs/heads/test
+	test_must_fail git push --porcelain dst master:refs/heads/test >act &&
+	test_cmp exp act
 '
 
 test_done
