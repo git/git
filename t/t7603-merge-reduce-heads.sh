@@ -113,4 +113,23 @@ test_expect_success 'verify merge result' '
 	test $(git rev-parse HEAD^1) = $(git rev-parse E2) &&
 	test $(git rev-parse HEAD^2) = $(git rev-parse I2)
 '
+
+test_expect_success 'fast-forward to redundant refs' '
+	git reset --hard c0 &&
+	git merge c4 c5
+'
+
+test_expect_failure 'verify merge result' '
+	test $(git rev-parse HEAD) = $(git rev-parse c5)
+'
+
+test_expect_success 'merge up-to-date redundant refs' '
+	git reset --hard c5 &&
+	git merge c0 c4
+'
+
+test_expect_success 'verify merge result' '
+	test $(git rev-parse HEAD) = $(git rev-parse c5)
+'
+
 test_done
