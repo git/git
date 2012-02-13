@@ -321,7 +321,7 @@ test_expect_success 'use the same checkout for Git and CVS' '
 
 	(mkdir shared &&
 	 cd shared &&
-	 unset GIT_DIR &&
+	 sane_unset GIT_DIR &&
 	 cvs co . &&
 	 git init &&
 	 git add " space" &&
