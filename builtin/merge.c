@@ -1324,7 +1324,8 @@ int cmd_merge(int argc, const char **argv, const char *prefix)
 		    merge_remote_util(commit) &&
 		    merge_remote_util(commit)->obj &&
 		    merge_remote_util(commit)->obj->type == OBJ_TAG) {
-			option_edit = 1;
+			if (option_edit < 0)
+				option_edit = 1;
 			allow_fast_forward = 0;
 		}
 	}
