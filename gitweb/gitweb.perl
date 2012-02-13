@@ -3744,7 +3744,7 @@ sub get_page_title {
 
 	unless (defined $project) {
 		if (defined $project_filter) {
-			$title .= " - " . to_utf8($project_filter);
+			$title .= " - projects in '" . esc_path($project_filter) . "'";
 		}
 		return $title;
 	}
