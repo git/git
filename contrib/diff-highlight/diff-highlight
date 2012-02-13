@@ -23,7 +23,7 @@ while (<>) {
 	    $window[2] =~ /^$COLOR*\+/ &&
 	    $window[3] !~ /^$COLOR*\+/) {
 		print shift @window;
-		show_pair(shift @window, shift @window);
+		show_hunk(shift @window, shift @window);
 	}
 	else {
 		print shift @window;
@@ -48,7 +48,7 @@ if (@window == 3 &&
     $window[1] =~ /^$COLOR*-/ &&
     $window[2] =~ /^$COLOR*\+/) {
 	print shift @window;
-	show_pair(shift @window, shift @window);
+	show_hunk(shift @window, shift @window);
 }
 
 # And then flush any remaining lines.
@@ -58,7 +58,13 @@ while (@window) {
 
 exit 0;
 
-sub show_pair {
+sub show_hunk {
+	my ($a, $b) = @_;
+
+	print highlight_pair($a, $b);
+}
+
+sub highlight_pair {
 	my @a = split_line(shift);
 	my @b = split_line(shift);
 
@@ -106,12 +112,12 @@ sub show_pair {
 	}
 
 	if (is_pair_interesting(\@a, $pa, $sa, \@b, $pb, $sb)) {
-		print highlight(\@a, $pa, $sa);
-		print highlight(\@b, $pb, $sb);
+		return highlight_line(\@a, $pa, $sa),
+		       highlight_line(\@b, $pb, $sb);
 	}
 	else {
-		print join('', @a);
-		print join('', @b);
+		return join('', @a),
+		       join('', @b);
 	}
 }
 
@@ -121,7 +127,7 @@ sub split_line {
 	       split /($COLOR*)/;
 }
 
-sub highlight {
+sub highlight_line {
 	my ($line, $prefix, $suffix) = @_;
 
 	return join('',
