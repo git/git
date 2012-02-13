@@ -8,6 +8,7 @@ use strict;
 my $HIGHLIGHT   = "\x1b[7m";
 my $UNHIGHLIGHT = "\x1b[27m";
 my $COLOR = qr/\x1b\[[0-9;]*m/;
+my $BORING = qr/$COLOR|\s/;
 
 my @window;
 
@@ -104,8 +105,14 @@ sub show_pair {
 		}
 	}
 
-	print highlight(\@a, $pa, $sa);
-	print highlight(\@b, $pb, $sb);
+	if (is_pair_interesting(\@a, $pa, $sa, \@b, $pb, $sb)) {
+		print highlight(\@a, $pa, $sa);
+		print highlight(\@b, $pb, $sb);
+	}
+	else {
+		print join('', @a);
+		print join('', @b);
+	}
 }
 
 sub split_line {
@@ -124,4 +131,21 @@ sub highlight {
 		$UNHIGHLIGHT,
 		@{$line}[($suffix+1)..$#$line]
 	);
+}
+
+# Pairs are interesting to highlight only if we are going to end up
+# highlighting a subset (i.e., not the whole line). Otherwise, the highlighting
+# is just useless noise. We can detect this by finding either a matching prefix
+# or suffix (disregarding boring bits like whitespace and colorization).
+sub is_pair_interesting {
+	my ($a, $pa, $sa, $b, $pb, $sb) = @_;
+	my $prefix_a = join('', @$a[0..($pa-1)]);
+	my $prefix_b = join('', @$b[0..($pb-1)]);
+	my $suffix_a = join('', @$a[($sa+1)..$#$a]);
+	my $suffix_b = join('', @$b[($sb+1)..$#$b]);
+
+	return $prefix_a !~ /^$COLOR*-$BORING*$/ ||
+	       $prefix_b !~ /^$COLOR*\+$BORING*$/ ||
+	       $suffix_a !~ /^$BORING*$/ ||
+	       $suffix_b !~ /^$BORING*$/;
 }
