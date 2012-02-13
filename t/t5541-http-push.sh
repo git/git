@@ -105,7 +105,7 @@ cat >exp <<EOF
 remote: error: hook declined to update refs/heads/dev2
 To http://127.0.0.1:$LIB_HTTPD_PORT/smart/test_repo.git
  ! [remote rejected] dev2 -> dev2 (hook declined)
-error: failed to push some refs to 'http://127.0.0.1:5541/smart/test_repo.git'
+error: failed to push some refs to 'http://127.0.0.1:$LIB_HTTPD_PORT/smart/test_repo.git'
 EOF
 
 test_expect_success 'rejected update prints status' '
