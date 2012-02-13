@@ -52,7 +52,7 @@ sub evaluate_uri {
 	# as base URL.
 	# Therefore, if we needed to strip PATH_INFO, then we know that we have
 	# to build the base URL ourselves:
-	our $path_info = $ENV{"PATH_INFO"};
+	our $path_info = decode_utf8($ENV{"PATH_INFO"});
 	if ($path_info) {
 		if ($my_url =~ s,\Q$path_info\E$,, &&
 		    $my_uri =~ s,\Q$path_info\E$,, &&
@@ -817,9 +817,9 @@ sub evaluate_query_params {
 
 	while (my ($name, $symbol) = each %cgi_param_mapping) {
 		if ($symbol eq 'opt') {
-			$input_params{$name} = [ $cgi->param($symbol) ];
+			$input_params{$name} = [ map { decode_utf8($_) } $cgi->param($symbol) ];
 		} else {
-			$input_params{$name} = $cgi->param($symbol);
+			$input_params{$name} = decode_utf8($cgi->param($symbol));
 		}
 	}
 }
@@ -2775,7 +2775,7 @@ sub git_populate_project_tagcloud {
 	}
 
 	my $cloud;
-	my $matched = $cgi->param('by_tag');
+	my $matched = $input_params{'ctag'};
 	if (eval { require HTML::TagCloud; 1; }) {
 		$cloud = HTML::TagCloud->new;
 		foreach my $ctag (sort keys %ctags_lc) {
@@ -3906,7 +3906,7 @@ sub print_search_form {
 	                       -values => ['commit', 'grep', 'author', 'committer', 'pickaxe']) .
 	      $cgi->sup($cgi->a({-href => href(action=>"search_help")}, "?")) .
 	      " search:\n",
-	      $cgi->textfield(-name => "s", -value => $searchtext) . "\n" .
+	      $cgi->textfield(-name => "s", -value => $searchtext, -override => 1) . "\n" .
 	      "<span title=\"Extended regular expression\">" .
 	      $cgi->checkbox(-name => 'sr', -value => 1, -label => 're',
 	                     -checked => $search_use_regexp) .
@@ -5345,7 +5345,7 @@ sub git_project_list_body {
 
 	my $check_forks = gitweb_check_feature('forks');
 	my $show_ctags  = gitweb_check_feature('ctags');
-	my $tagfilter = $show_ctags ? $cgi->param('by_tag') : undef;
+	my $tagfilter = $show_ctags ? $input_params{'ctag'} : undef;
 	$check_forks = undef
 		if ($tagfilter || $searchtext);
 
@@ -6261,7 +6261,7 @@ sub git_tag {
 
 sub git_blame_common {
 	my $format = shift || 'porcelain';
-	if ($format eq 'porcelain' && $cgi->param('js')) {
+	if ($format eq 'porcelain' && $input_params{'javascript'}) {
 		$format = 'incremental';
 		$action = 'blame_incremental'; # for page title etc
 	}
