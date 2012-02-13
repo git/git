@@ -38,13 +38,13 @@ test_expect_success 'cherry-pick first..fourth works' '
 	cat <<-\EOF >expected &&
 	[master OBJID] second
 	 Author: A U Thor <author@example.com>
-	 1 files changed, 1 insertions(+), 0 deletions(-)
+	 1 file changed, 1 insertion(+)
 	[master OBJID] third
 	 Author: A U Thor <author@example.com>
-	 1 files changed, 1 insertions(+), 0 deletions(-)
+	 1 file changed, 1 insertion(+)
 	[master OBJID] fourth
 	 Author: A U Thor <author@example.com>
-	 1 files changed, 1 insertions(+), 0 deletions(-)
+	 1 file changed, 1 insertion(+)
 	EOF
 
 	git checkout -f master &&
@@ -64,15 +64,15 @@ test_expect_success 'cherry-pick --strategy resolve first..fourth works' '
 	Trying simple merge.
 	[master OBJID] second
 	 Author: A U Thor <author@example.com>
-	 1 files changed, 1 insertions(+), 0 deletions(-)
+	 1 file changed, 1 insertion(+)
 	Trying simple merge.
 	[master OBJID] third
 	 Author: A U Thor <author@example.com>
-	 1 files changed, 1 insertions(+), 0 deletions(-)
+	 1 file changed, 1 insertion(+)
 	Trying simple merge.
 	[master OBJID] fourth
 	 Author: A U Thor <author@example.com>
-	 1 files changed, 1 insertions(+), 0 deletions(-)
+	 1 file changed, 1 insertion(+)
 	EOF
 
 	git checkout -f master &&

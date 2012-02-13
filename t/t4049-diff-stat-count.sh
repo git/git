@@ -16,7 +16,7 @@ test_expect_success setup '
 	cat >expect <<-\EOF
 	 a |    1 +
 	 b |    1 +
-	 2 files changed, 2 insertions(+), 0 deletions(-)
+	 2 files changed, 2 insertions(+)
 	EOF
 	git diff --stat --stat-count=2 >actual &&
 	test_cmp expect actual

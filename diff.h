@@ -324,4 +324,7 @@ extern struct userdiff_driver *get_textconv(struct diff_filespec *one);
 
 extern int parse_rename_score(const char **cp_p);
 
+extern int print_stat_summary(FILE *fp, int files,
+			      int insertions, int deletions);
+
 #endif /* DIFF_H */

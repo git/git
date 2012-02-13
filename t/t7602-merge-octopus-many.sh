@@ -57,7 +57,7 @@ Merge made by the 'octopus' strategy.
  c2.c |    1 +
  c3.c |    1 +
  c4.c |    1 +
- 3 files changed, 3 insertions(+), 0 deletions(-)
+ 3 files changed, 3 insertions(+)
  create mode 100644 c2.c
  create mode 100644 c3.c
  create mode 100644 c4.c
@@ -74,7 +74,7 @@ Already up-to-date with c4
 Trying simple merge with c5
 Merge made by the 'octopus' strategy.
  c5.c |    1 +
- 1 files changed, 1 insertions(+), 0 deletions(-)
+ 1 file changed, 1 insertion(+)
  create mode 100644 c5.c
 EOF
 
@@ -89,7 +89,7 @@ Trying simple merge with c2
 Merge made by the 'octopus' strategy.
  c1.c |    1 +
  c2.c |    1 +
- 2 files changed, 2 insertions(+), 0 deletions(-)
+ 2 files changed, 2 insertions(+)
  create mode 100644 c1.c
  create mode 100644 c2.c
 EOF

@@ -3,7 +3,7 @@ $ git diff-tree --root --patch-with-stat initial
  dir/sub |    2 ++
  file0   |    3 +++
  file2   |    3 +++
- 3 files changed, 8 insertions(+), 0 deletions(-)
+ 3 files changed, 8 insertions(+)
 
 diff --git a/dir/sub b/dir/sub
 new file mode 100644
