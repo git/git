@@ -400,7 +400,7 @@ static int strbuf_check_tag_ref(struct strbuf *sb, const char *name)
 	return check_refname_format(sb->buf, 0);
 }
 
-int parse_opt_points_at(const struct option *opt __attribute__ ((unused)),
+static int parse_opt_points_at(const struct option *opt __attribute__((unused)),
 			const char *arg, int unset)
 {
 	unsigned char sha1[20];
