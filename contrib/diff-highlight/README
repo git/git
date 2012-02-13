@@ -14,13 +14,15 @@ Instead, this script post-processes the line-oriented diff, finds pairs
 of lines, and highlights the differing segments.  It's currently very
 simple and stupid about doing these tasks. In particular:
 
-  1. It will only highlight a pair of lines if they are the only two
-     lines in a hunk.  It could instead try to match up "before" and
-     "after" lines for a given hunk into pairs of similar lines.
-     However, this may end up visually distracting, as the paired
-     lines would have other highlighted lines in between them. And in
-     practice, the lines which most need attention called to their
-     small, hard-to-see changes are touching only a single line.
+  1. It will only highlight hunks in which the number of removed and
+     added lines is the same, and it will pair lines within the hunk by
+     position (so the first removed line is compared to the first added
+     line, and so forth). This is simple and tends to work well in
+     practice. More complex changes don't highlight well, so we tend to
+     exclude them due to the "same number of removed and added lines"
+     restriction. Or even if we do try to highlight them, they end up
+     not highlighting because of our "don't highlight if the whole line
+     would be highlighted" rule.
 
   2. It will find the common prefix and suffix of two lines, and
      consider everything in the middle to be "different". It could

@@ -10,23 +10,28 @@ my $UNHIGHLIGHT = "\x1b[27m";
 my $COLOR = qr/\x1b\[[0-9;]*m/;
 my $BORING = qr/$COLOR|\s/;
 
-my @window;
+my @removed;
+my @added;
+my $in_hunk;
 
 while (<>) {
-	# We highlight only single-line changes, so we need
-	# a 4-line window to make a decision on whether
-	# to highlight.
-	push @window, $_;
-	next if @window < 4;
-	if ($window[0] =~ /^$COLOR*(\@| )/ &&
-	    $window[1] =~ /^$COLOR*-/ &&
-	    $window[2] =~ /^$COLOR*\+/ &&
-	    $window[3] !~ /^$COLOR*\+/) {
-		print shift @window;
-		show_hunk(shift @window, shift @window);
+	if (!$in_hunk) {
+		print;
+		$in_hunk = /^$COLOR*\@/;
+	}
+	elsif (/^$COLOR*-/) {
+		push @removed, $_;
+	}
+	elsif (/^$COLOR*\+/) {
+		push @added, $_;
 	}
 	else {
-		print shift @window;
+		show_hunk(\@removed, \@added);
+		@removed = ();
+		@added = ();
+
+		print;
+		$in_hunk = /^$COLOR*[\@ ]/;
 	}
 
 	# Most of the time there is enough output to keep things streaming,
@@ -42,26 +47,37 @@ while (<>) {
 	}
 }
 
-# Special case a single-line hunk at the end of file.
-if (@window == 3 &&
-    $window[0] =~ /^$COLOR*(\@| )/ &&
-    $window[1] =~ /^$COLOR*-/ &&
-    $window[2] =~ /^$COLOR*\+/) {
-	print shift @window;
-	show_hunk(shift @window, shift @window);
-}
-
-# And then flush any remaining lines.
-while (@window) {
-	print shift @window;
-}
+# Flush any queued hunk (this can happen when there is no trailing context in
+# the final diff of the input).
+show_hunk(\@removed, \@added);
 
 exit 0;
 
 sub show_hunk {
 	my ($a, $b) = @_;
 
-	print highlight_pair($a, $b);
+	# If one side is empty, then there is nothing to compare or highlight.
+	if (!@$a || !@$b) {
+		print @$a, @$b;
+		return;
+	}
+
+	# If we have mismatched numbers of lines on each side, we could try to
+	# be clever and match up similar lines. But for now we are simple and
+	# stupid, and only handle multi-line hunks that remove and add the same
+	# number of lines.
+	if (@$a != @$b) {
+		print @$a, @$b;
+		return;
+	}
+
+	my @queue;
+	for (my $i = 0; $i < @$a; $i++) {
+		my ($rm, $add) = highlight_pair($a->[$i], $b->[$i]);
+		print $rm;
+		push @queue, $add;
+	}
+	print @queue;
 }
 
 sub highlight_pair {
