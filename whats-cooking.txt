@@ -1,9 +1,9 @@
 To: git@vger.kernel.org
-Subject: What's cooking in git.git (Feb 2012, #04; Fri, 10)
-X-master-at: b6b3b6a01f357922ccd14f2615accc9bd39fc194
-X-next-at: b41c6bb8e2f080306ede9023919c9e703e625c79
+Subject: What's cooking in git.git (Feb 2012, #05; Mon, 13)
+X-master-at: 6f5e880c68099b185e60b2492c75e506e16d8292
+X-next-at: adb73538176221d26b30b46087711875caebc24b
 
-What's cooking in git.git (Feb 2012, #04; Fri, 10)
+What's cooking in git.git (Feb 2012, #05; Mon, 13)
 --------------------------------------------------
 
 Here are the topics that have been cooking.  Commits prefixed with '-' are
@@ -21,63 +21,148 @@ repositories listed at
 --------------------------------------------------
 [New Topics]
 
+* bl/gitweb-project-filter (2012-02-12) 1 commit
+  (merged to 'next' on 2012-02-13 at 35366b8)
+ + gitweb: Harden and improve $project_filter page title
+
+An update to the new feature to "gitweb" to show list of projects for
+intermediate levels in directory hierarchies, already slated for 1.7.10.
+
+* dp/i18n-libcharset (2012-02-13) 1 commit
+  (merged to 'next' on 2012-02-13 at 528de77)
+ + Makefile: introduce CHARSET_LIB to link with -lcharset
+
+Some systems need to explicitly link -lcharset to get locale_charset().
+
+* lt/pull-no-edit (2012-02-12) 1 commit
+  (merged to 'next' on 2012-02-13 at 352f0cb)
+ + "git pull" doesn't know "--edit"
+
+For 1.7.10 where "git merge" by default spawns the editor when it can
+automatically commit to record the resulting merge.
+
+* mh/war-on-extra-refs (2012-02-12) 7 commits
+  (merged to 'next' on 2012-02-13 at adb7353)
+ + refs: remove the extra_refs API
+ + clone: do not add alternate references to extra_refs
+ + everything_local(): mark alternate refs as complete
+ + fetch-pack.c: inline insert_alternate_refs()
+ + fetch-pack.c: rename some parameters from "path" to "refname"
+ + clone.c: move more code into the "if (refs)" conditional
+ + t5700: document a failure of alternates to affect fetch
+
+Internal API clean-up that is very cleanly done.
+
+--------------------------------------------------
+[Graduated to "master"]
+
+* bw/inet-pton-ntop-compat (2012-02-05) 1 commit
+  (merged to 'next' on 2012-02-06 at 61303e6)
+ + Drop system includes from inet_pton/inet_ntop compatibility wrappers
+
+The inclusion order of header files bites Solaris again and this fixes it.
+
+* fc/zsh-completion (2012-02-06) 3 commits
+  (merged to 'next' on 2012-02-06 at c94dd12)
+ + completion: simplify __gitcomp and __gitcomp_nl implementations
+ + completion: use ls -1 instead of rolling a loop to do that ourselves
+ + completion: work around zsh option propagation bug
+
+Fix git subcommand completion for zsh (in contrib/completion).
+
+* jc/checkout-out-of-unborn (2012-02-06) 1 commit
+  (merged to 'next' on 2012-02-07 at 60eb328)
+ + git checkout -b: allow switching out of an unborn branch
+
+"checkout -b" did not allow switching out of an unborn branch.
+
+* jc/maint-commit-ignore-i-t-a (2012-02-07) 1 commit
+  (merged to 'next' on 2012-02-10 at e0040cf)
+ + commit: ignore intent-to-add entries instead of refusing
+
+Replaces the nd/commit-ignore-i-t-a series that was made unnecessary
+complicated by bad suggestions I made earlier.
+
+* jc/maint-mailmap-output (2012-02-06) 1 commit
+  (merged to 'next' on 2012-02-06 at 0a21425)
+ + mailmap: always return a plain mail address from map_user()
+
+map_user() was not rewriting its output correctly, which resulted in the
+user visible symptom that "git blame -e" sometimes showed excess '>' at
+the end of email addresses.
+
+* jk/maint-tag-show-fixes (2012-02-08) 3 commits
+  (merged to 'next' on 2012-02-08 at 18459c4)
+ + tag: do not show non-tag contents with "-n"
+ + tag: die when listing missing or corrupt objects
+ + tag: fix output of "tag -n" when errors occur
+
+Bugfixes to "git tag -n" that lacked much error checking.
+
+* jk/prompt-fallback-to-tty (2012-02-03) 2 commits
+  (merged to 'next' on 2012-02-06 at c0c995a)
+ + prompt: fall back to terminal if askpass fails
+ + prompt: clean up strbuf usage
+
+The code to ask for password did not fall back to the terminal input when
+GIT_ASKPASS is set but does not work (e.g. lack of X with GUI askpass
+helper).
+
+* jn/gitweb-search-utf-8 (2012-02-03) 1 commit
+  (merged to 'next' on 2012-02-05 at 055e446)
+ + gitweb: Allow UTF-8 encoded CGI query parameters and path_info
+
+Search box in "gitweb" did not accept non-ASCII characters correctly.
+
+* jn/merge-no-edit-fix (2012-02-09) 1 commit
+  (merged to 'next' on 2012-02-10 at 014eec9)
+ + merge: do not launch an editor on "--no-edit $tag"
+
+In 1.7.9, "merge --no-edit $tag" incorrectly ignored --no-edit.
+
+* mm/empty-loose-error-message (2012-02-06) 1 commit
+  (merged to 'next' on 2012-02-07 at f119cac)
+ + fsck: give accurate error message on empty loose object files
+
+Updates the error message emitted when we see an empty loose object.
+
+* mp/make-cleanse-x-for-exe (2012-02-09) 1 commit
+  (merged to 'next' on 2012-02-09 at 35cc89d)
+ + Explicitly set X to avoid potential build breakage
+
+The makefile allowed environment variable X seep into it result in
+command names suffixed with unnecessary strings.
+
+* nd/cache-tree-api-refactor (2012-02-07) 1 commit
+  (merged to 'next' on 2012-02-08 at a9abbca)
+ + cache-tree: update API to take abitrary flags
+
+Code cleanup.
+
+* nd/diffstat-gramnum (2012-02-03) 1 commit
+  (merged to 'next' on 2012-02-05 at 7335ecc)
+ + Use correct grammar in diffstat summary line
+
+The commands in the "git diff" family and "git apply --stat" that count
+the number of files changed and the number of lines inserted/deleted have
+been updated to match the output from "diffstat".  This also opens the
+door to i18n this line.
+
+* nd/find-pack-entry-recent-cache-invalidation (2012-02-01) 2 commits
+  (merged to 'next' on 2012-02-01 at e26aed0)
+ + find_pack_entry(): do not keep packed_git pointer locally
+ + sha1_file.c: move the core logic of find_pack_entry() into fill_pack_entry()
+
 * nk/ctype-for-perf (2012-02-10) 2 commits
   (merged to 'next' on 2012-02-10 at b41c6bb)
  + ctype: implement islower/isupper macro
  + ctype.c only wants git-compat-util.h
 
-* jn/ancient-meld-support (2012-02-10) 1 commit
- - mergetools/meld: Use --help output to detect --output support
-
---------------------------------------------------
-[Graduated to "master"]
-
-* jc/branch-desc-typoavoidance (2012-02-05) 2 commits
-  (merged to 'next' on 2012-02-06 at 9fb0568)
- + branch --edit-description: protect against mistyped branch name
- + tests: add write_script helper function
- (this branch is tangled with jk/tests-write-script.)
-
-Typo in "git branch --edit-description my-tpoic" was not diagnosed.
-
-* jc/merge-ff-only-stronger-than-signed-merge (2012-02-05) 1 commit
-  (merged to 'next' on 2012-02-06 at 0fabf12)
- + merge: do not create a signed tag merge under --ff-only option
- (this branch is used by jn/merge-no-edit-fix.)
-
-"git merge --ff-only $tag" failed because it cannot record the required
-mergetag without creating a merge, but this is so common operation for
-branch that is used _only_ to follow the upstream, so it is allowed to
-fast-forward without recording the mergetag.
-
-* jc/parse-date-raw (2012-02-03) 2 commits
-  (merged to 'next' on 2012-02-07 at 486ae6e)
- + parse_date(): '@' prefix forces git-timestamp
- + parse_date(): allow ancient git-timestamp
-
-"rebase" and "commit --amend" failed to work on commits with ancient
-timestamps near year 1970.
-
-* jk/tests-write-script (2012-02-03) 2 commits
-  (merged to 'next' on 2012-02-05 at 4264ffa)
- + t0300: use write_script helper
- + tests: add write_script helper function
- (this branch is tangled with jc/branch-desc-typoavoidance.)
-
-* jn/rpm-spec (2012-02-03) 1 commit
-  (merged to 'next' on 2012-02-05 at dba940b)
- + git.spec: Workaround localized messages not put in any RPM
-
-Fix breakage in v1.7.9 Makefile; rpmbuild notices an unpackaged but
-installed *.mo file and fails.
-
-* js/add-e-submodule-fix (2012-02-07) 1 commit
-  (merged to 'next' on 2012-02-08 at c8e2d28)
- + add -e: do not show difference in a submodule that is merely dirty
-
-"add -e" learned not to show a diff for an otherwise unmodified submodule
-that only has uncommitted local changes in the patch prepared by for the
-user to edit.
+* tt/profile-build-fix (2012-02-09) 2 commits
+  (merged to 'next' on 2012-02-09 at 1c183af)
+ + Makefile: fix syntax for older make
+  (merged to 'next' on 2012-02-07 at c8c5f3f)
+ + Fix build problems related to profile-directed optimization
 
 --------------------------------------------------
 [Stalled]
@@ -151,36 +236,20 @@ Expecting a reroll.
 --------------------------------------------------
 [Cooking]
 
+* jn/ancient-meld-support (2012-02-10) 1 commit
+  (merged to 'next' on 2012-02-13 at 28aca31)
+ + mergetools/meld: Use --help output to detect --output support
+
+More reliably tell if the given version of "meld" supports --output
+option.
+
 * jk/config-include (2012-02-06) 2 commits
- - config: add include directive
- - docs: add a basic description of the config API
+  (merged to 'next' on 2012-02-13 at 307ddf6)
+ + config: add include directive
+ + docs: add a basic description of the config API
 
 An assignment to the include.path pseudo-variable causes the named file
 to be included in-place when Git looks up configuration variables.
-
-* jk/maint-tag-show-fixes (2012-02-08) 3 commits
-  (merged to 'next' on 2012-02-08 at 18459c4)
- + tag: do not show non-tag contents with "-n"
- + tag: die when listing missing or corrupt objects
- + tag: fix output of "tag -n" when errors occur
-
-Bugfixes to "git tag -n" that lacked much error checking.
-Will merge to 'masster'.
-
-* mm/empty-loose-error-message (2012-02-06) 1 commit
-  (merged to 'next' on 2012-02-07 at f119cac)
- + fsck: give accurate error message on empty loose object files
-
-Updates the error message emitted when we see an empty loose object.
-Will merge to 'masster'.
-
-* jc/maint-commit-ignore-i-t-a (2012-02-07) 1 commit
-  (merged to 'next' on 2012-02-10 at e0040cf)
- + commit: ignore intent-to-add entries instead of refusing
-
-Replaces the nd/commit-ignore-i-t-a series that was made unnecessary
-complicated by bad suggestions I made earlier.
-Will merge to 'masster'.
 
 * jk/userdiff-config-simplify (2012-02-07) 1 commit
   (merged to 'next' on 2012-02-10 at e9854c1)
@@ -188,13 +257,9 @@ Will merge to 'masster'.
 
 Code cleanup.
 
-* nd/cache-tree-api-refactor (2012-02-07) 1 commit
-  (merged to 'next' on 2012-02-08 at a9abbca)
- + cache-tree: update API to take abitrary flags
-
-Code cleanup.
-
-* tg/tag-points-at (2012-02-08) 1 commit
+* tg/tag-points-at (2012-02-13) 2 commits
+  (merged to 'next' on 2012-02-13 at a8f4046)
+ + builtin/tag.c: Fix a sparse warning
   (merged to 'next' on 2012-02-10 at 4bff88f)
  + tag: add --points-at list option
 
@@ -204,61 +269,11 @@ Code cleanup.
 
 The second one looked iffy.
 
-* jn/merge-no-edit-fix (2012-02-09) 1 commit
-  (merged to 'next' on 2012-02-10 at 014eec9)
- + merge: do not launch an editor on "--no-edit $tag"
-
-In 1.7.9, "merge --no-edit $tag" incorrectly ignored --no-edit.
-
 * ld/git-p4-expanded-keywords (2012-02-09) 2 commits
  - git-p4: initial demonstration of possible RCS keyword fixup
  - git-p4: add test case for RCS keywords
 
 Waiting for reviews and user reports.
-
-* mp/make-cleanse-x-for-exe (2012-02-09) 1 commit
-  (merged to 'next' on 2012-02-09 at 35cc89d)
- + Explicitly set X to avoid potential build breakage
-
-Will merge to 'master'.
-
-* bw/inet-pton-ntop-compat (2012-02-05) 1 commit
-  (merged to 'next' on 2012-02-06 at 61303e6)
- + Drop system includes from inet_pton/inet_ntop compatibility wrappers
-
-The inclusion order of header files bites Solaris again and this fixes it.
-Will merge to 'master'.
-
-* jc/checkout-out-of-unborn (2012-02-06) 1 commit
-  (merged to 'next' on 2012-02-07 at 60eb328)
- + git checkout -b: allow switching out of an unborn branch
-
-I was fairly negative on this one, but Michael Haggerty and Peff convinced
-me that selling this as "'checkout -b' that lack the <start point> is
-about creating a new branch from my current state" is perfectly fine.
-
-* jc/maint-mailmap-output (2012-02-06) 1 commit
-  (merged to 'next' on 2012-02-06 at 0a21425)
- + mailmap: always return a plain mail address from map_user()
-
-map_user() was not rewriting its output correctly, which resulted in the
-user visible symptom that "git blame -e" sometimes showed excess '>' at
-the end of email addresses.
-
-* tt/profile-build-fix (2012-02-09) 2 commits
-  (merged to 'next' on 2012-02-09 at 1c183af)
- + Makefile: fix syntax for older make
-  (merged to 'next' on 2012-02-07 at c8c5f3f)
- + Fix build problems related to profile-directed optimization
-
-* nd/diffstat-gramnum (2012-02-03) 1 commit
-  (merged to 'next' on 2012-02-05 at 7335ecc)
- + Use correct grammar in diffstat summary line
-
-The commands in the "git diff" family and "git apply --stat" that count
-the number of files changed and the number of lines inserted/deleted have
-been updated to match the output from "diffstat".  This also opens the
-door to i18n this line.
 
 * jk/grep-binary-attribute (2012-02-02) 9 commits
   (merged to 'next' on 2012-02-05 at 9dffa7e)
@@ -277,6 +292,8 @@ path may look like text but it is not, which "git diff" can do using the
 attributes system. Now "git grep" honors the same "binary" (or "-diff")
 attribute.
 
+Will merge to 'master' after 1.7.9.1 settles.
+
 * jk/git-dir-lookup (2012-02-02) 1 commit
   (merged to 'next' on 2012-02-05 at 1856d74)
  + standardize and improve lookup rules for external local repos
@@ -284,33 +301,7 @@ attribute.
 When you have both .../foo and .../foo.git, "git clone .../foo" did not
 favor the former but the latter.
 
-* jk/prompt-fallback-to-tty (2012-02-03) 2 commits
-  (merged to 'next' on 2012-02-06 at c0c995a)
- + prompt: fall back to terminal if askpass fails
- + prompt: clean up strbuf usage
-
-The code to ask for password did not fall back to the terminal input when
-GIT_ASKPASS is set but does not work (e.g. lack of X with GUI askpass
-helper).
-
-* jn/gitweb-search-utf-8 (2012-02-03) 1 commit
-  (merged to 'next' on 2012-02-05 at 055e446)
- + gitweb: Allow UTF-8 encoded CGI query parameters and path_info
-
-Search box in "gitweb" did not accept non-ASCII characters correctly.
-
-* fc/zsh-completion (2012-02-06) 3 commits
-  (merged to 'next' on 2012-02-06 at c94dd12)
- + completion: simplify __gitcomp and __gitcomp_nl implementations
- + completion: use ls -1 instead of rolling a loop to do that ourselves
- + completion: work around zsh option propagation bug
-
-Fix git subcommand completion for zsh (in contrib/completion).
-
-* nd/find-pack-entry-recent-cache-invalidation (2012-02-01) 2 commits
-  (merged to 'next' on 2012-02-01 at e26aed0)
- + find_pack_entry(): do not keep packed_git pointer locally
- + sha1_file.c: move the core logic of find_pack_entry() into fill_pack_entry()
+Will merge to 'master' after 1.7.9.1 settles.
 
 * nd/pack-objects-parseopt (2012-02-01) 3 commits
   (merged to 'next' on 2012-02-05 at d0dc25d)
@@ -320,3 +311,5 @@ Fix git subcommand completion for zsh (in contrib/completion).
 
 "pack-objects" learned use parse-options, losing custom command line
 parsing code.
+
+Will merge to 'master' after 1.7.9.1 settles.
