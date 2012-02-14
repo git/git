@@ -1267,13 +1267,15 @@ const char mime_boundary_leader[] = "------------";
 
 static int scale_linear(int it, int width, int max_change)
 {
+	if (!it)
+		return 0;
 	/*
-	 * make sure that at least one '-' is printed if there were deletions,
-	 * and likewise for '+'.
+	 * make sure that at least one '-' or '+' is printed if
+	 * there is any change to this path. The easiest way is to
+	 * scale linearly as if the alloted width is one column shorter
+	 * than it is, and then add 1 to the result.
 	 */
-	if (max_change < 2)
-		return it;
-	return ((it - 1) * (width - 1) + max_change - 1) / (max_change - 1);
+	return 1 + (it * (width - 1) / max_change);
 }
 
 static void show_name(FILE *file,
@@ -1440,8 +1442,19 @@ static void show_stats(struct diffstat_t *data, struct diff_options *options)
 		dels += del;
 
 		if (width <= max_change) {
-			add = scale_linear(add, width, max_change);
-			del = scale_linear(del, width, max_change);
+			int total = add + del;
+
+			total = scale_linear(add + del, width, max_change);
+			if (total < 2 && add && del)
+				/* width >= 2 due to the sanity check */
+				total = 2;
+			if (add < del) {
+				add = scale_linear(add, width, max_change);
+				del = total - add;
+			} else {
+				del = scale_linear(del, width, max_change);
+				add = total - del;
+			}
 		}
 		fprintf(options->file, "%s", line_prefix);
 		show_name(options->file, prefix, name, len);
