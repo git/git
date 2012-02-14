@@ -69,15 +69,9 @@ Unless otherwise noted, all the fixes since v1.7.9 in the maintenance
 releases are contained in this release (see release notes to them for
 details).
 
- * "git merge --no-edit $tag" failed to honor the --no-edit option.
-   (merge 3adab6f jn/merge-no-edit-fix later to maint).
-
  * The error message emitted when we see an empty loose object was
    not phrased correctly.
    (merge 33e42de mm/empty-loose-error-message later to maint).
-
- * Many small corner case bugs on "git tag -n" was corrected.
-   (merge 31fd8d7 jk/maint-tag-show-fixes later to maint).
 
  * "git commit" refused to create a commit when entries added with
    "add -N" remained in the index, without telling Git what their content
