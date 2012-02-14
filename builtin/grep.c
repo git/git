@@ -189,7 +189,7 @@ static void *run(void *arg)
 		if (!w)
 			break;
 
-		if (skip_binary(opt, (const char *)w->identifier))
+		if (skip_binary(opt, (const char *)w->source.identifier))
 			continue;
 
 		opt->output_priv = w;
