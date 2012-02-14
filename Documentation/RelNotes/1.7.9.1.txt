@@ -4,6 +4,13 @@ Git v1.7.9.1 Release Notes
 Fixes since v1.7.9
 ------------------
 
+ * The makefile allowed environment variable X seep into it result in
+   command names suffixed with unnecessary strings.
+
+ * The set of included header files in compat/inet-{ntop,pton}
+   wrappers was updated for Windows some time ago, but in a way that
+   broke Solaris build.
+
  * rpmbuild noticed an unpackaged but installed *.mo file and failed.
 
  * Subprocesses spawned from various git programs were often left running
@@ -23,6 +30,8 @@ Fixes since v1.7.9
  * "git log --first-parent $pathspec" did not stay on the first parent
    chain and veered into side branch from which the whole change to the
    specified paths came.
+
+ * "git merge --no-edit $tag" failed to honor the --no-edit option.
 
  * "git merge --ff-only $tag" failed because it cannot record the
    required mergetag without creating a merge, but this is so common
@@ -48,5 +57,7 @@ Fixes since v1.7.9
  * "git submodule add $path" forgot to recompute the name to be stored
    in .gitmodules when the submodule at $path was once added to the
    superproject and already initialized.
+
+ * Many small corner case bugs on "git tag -n" was corrected.
 
 Also contains minor fixes and documentation updates.
