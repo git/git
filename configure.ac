@@ -836,6 +836,16 @@ AC_CHECK_HEADER([libcharset.h],
 [HAVE_LIBCHARSET_H=YesPlease],
 [HAVE_LIBCHARSET_H=])
 AC_SUBST(HAVE_LIBCHARSET_H)
+# Define CHARSET_LIB if libiconv does not export the locale_charset symbol
+# and libcharset does
+CHARSET_LIB=
+AC_CHECK_LIB([iconv], [locale_charset],
+       [],
+       [AC_CHECK_LIB([charset], [locale_charset],
+                     [CHARSET_LIB=-lcharset])
+       ]
+)
+AC_SUBST(CHARSET_LIB)
 #
 # Define NO_STRCASESTR if you don't have strcasestr.
 GIT_CHECK_FUNC(strcasestr,
