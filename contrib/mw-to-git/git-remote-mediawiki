@@ -531,7 +531,7 @@ sub mw_import {
 	foreach my $ref (@refs) {
 		mw_import_ref($ref);
 	}
-	print STDOUT "done\n";
+	print STDERR "done\n";
 }
 
 sub mw_import_ref {
