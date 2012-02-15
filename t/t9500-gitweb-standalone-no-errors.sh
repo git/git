@@ -630,6 +630,45 @@ test_expect_success \
 	'gitweb_run "p=.git;a=tree"'
 
 # ----------------------------------------------------------------------
+# searching
+
+cat >>gitweb_config.perl <<\EOF
+
+# enable search
+$feature{'search'}{'default'} = [1];
+$feature{'grep'}{'default'} = [1];
+$feature{'pickaxe'}{'default'} = [1];
+EOF
+
+test_expect_success \
+	'search: preparation' \
+	'echo "1st MATCH" >>file &&
+	 echo "2nd MATCH" >>file &&
+	 echo "MATCH" >>bar &&
+	 git add file bar &&
+	 git commit -m "Added MATCH word"'
+
+test_expect_success \
+	'search: commit author' \
+	'gitweb_run "p=.git;a=search;h=HEAD;st=author;s=A+U+Thor"'
+
+test_expect_success \
+	'search: commit message' \
+	'gitweb_run "p=.git;a=search;h=HEAD;st=commitr;s=MATCH"'
+
+test_expect_success \
+	'search: grep' \
+	'gitweb_run "p=.git;a=search;h=HEAD;st=grep;s=MATCH"'
+
+test_expect_success \
+	'search: pickaxe' \
+	'gitweb_run "p=.git;a=search;h=HEAD;st=pickaxe;s=MATCH"'
+
+test_expect_success \
+	'search: projects' \
+	'gitweb_run "a=project_list;s=.git"'
+
+# ----------------------------------------------------------------------
 # non-ASCII in README.html
 
 test_expect_success \

@@ -5850,9 +5850,10 @@ sub git_search_files {
 	my $alternate = 1;
 	my $matches = 0;
 	my $lastfile = '';
+	my $file_href;
 	while (my $line = <$fd>) {
 		chomp $line;
-		my ($file, $file_href, $lno, $ltext, $binary);
+		my ($file, $lno, $ltext, $binary);
 		last if ($matches++ > 1000);
 		if ($line =~ /^Binary file (.+) matches$/) {
 			$file = $1;
