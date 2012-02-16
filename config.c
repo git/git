@@ -879,9 +879,6 @@ int git_config_early(config_fn_t fn, void *data, const char *repo_config)
 	int ret = 0, found = 0;
 	const char *home = NULL;
 
-	/* Setting $GIT_CONFIG makes git read _only_ the given config file. */
-	if (config_exclusive_filename)
-		return git_config_from_file(fn, config_exclusive_filename, data);
 	if (git_config_system() && !access(git_etc_gitconfig(), R_OK)) {
 		ret += git_config_from_file(fn, git_etc_gitconfig(),
 					    data);
@@ -917,16 +914,29 @@ int git_config_early(config_fn_t fn, void *data, const char *repo_config)
 	return ret == 0 ? found : ret;
 }
 
-int git_config(config_fn_t fn, void *data)
+int git_config_with_options(config_fn_t fn, void *data,
+			    const char *filename)
 {
 	char *repo_config = NULL;
 	int ret;
+
+	/*
+	 * If we have a specific filename, use it. Otherwise, follow the
+	 * regular lookup sequence.
+	 */
+	if (filename)
+		return git_config_from_file(fn, filename, data);
 
 	repo_config = git_pathdup("config");
 	ret = git_config_early(fn, data, repo_config);
 	if (repo_config)
 		free(repo_config);
 	return ret;
+}
+
+int git_config(config_fn_t fn, void *data)
+{
+	return git_config_with_options(fn, data, config_exclusive_filename);
 }
 
 /*

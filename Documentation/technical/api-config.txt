@@ -47,6 +47,18 @@ will first feed the user-wide one to the callback, and then the
 repo-specific one; by overwriting, the higher-priority repo-specific
 value is left at the end).
 
+The `git_config_with_options` function lets the caller examine config
+while adjusting some of the default behavior of `git_config`. It should
+almost never be used by "regular" git code that is looking up
+configuration variables. It is intended for advanced callers like
+`git-config`, which are intentionally tweaking the normal config-lookup
+process. It takes one extra parameter:
+
+`filename`::
+If this parameter is non-NULL, it specifies the name of a file to
+parse for configuration, rather than looking in the usual files. Regular
+`git_config` defaults to `NULL`.
+
 There is a special version of `git_config` called `git_config_early`.
 This version takes an additional parameter to specify the repository
 config, instead of having it looked up via `git_path`. This is useful
