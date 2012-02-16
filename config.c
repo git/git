@@ -26,8 +26,6 @@ static config_file *cf;
 
 static int zlib_compression_seen;
 
-const char *config_exclusive_filename = NULL;
-
 static void lowercase(char *p)
 {
 	for (; *p; p++)
@@ -936,7 +934,7 @@ int git_config_with_options(config_fn_t fn, void *data,
 
 int git_config(config_fn_t fn, void *data)
 {
-	return git_config_with_options(fn, data, config_exclusive_filename);
+	return git_config_with_options(fn, data, NULL);
 }
 
 /*
@@ -1435,8 +1433,7 @@ write_err_out:
 int git_config_set_multivar(const char *key, const char *value,
 			const char *value_regex, int multi_replace)
 {
-	return git_config_set_multivar_in_file(config_exclusive_filename,
-					       key, value, value_regex,
+	return git_config_set_multivar_in_file(NULL, key, value, value_regex,
 					       multi_replace);
 }
 
@@ -1562,8 +1559,7 @@ out:
 
 int git_config_rename_section(const char *old_name, const char *new_name)
 {
-	return git_config_rename_section_in_file(config_exclusive_filename,
-						 old_name, new_name);
+	return git_config_rename_section_in_file(NULL, old_name, new_name);
 }
 
 /*
