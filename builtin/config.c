@@ -162,7 +162,7 @@ static int get_value(const char *key_, const char *regex_)
 	char *global = NULL, *repo_config = NULL;
 	const char *system_wide = NULL, *local;
 
-	local = config_exclusive_filename;
+	local = given_config_file;
 	if (!local) {
 		const char *home = getenv("HOME");
 		local = repo_config = git_pathdup("config");
@@ -301,7 +301,8 @@ static void get_color(const char *def_color)
 {
 	get_color_found = 0;
 	parsed_color[0] = '\0';
-	git_config(git_get_color_config, NULL);
+	git_config_with_options(git_get_color_config, NULL,
+				given_config_file);
 
 	if (!get_color_found && def_color)
 		color_parse(def_color, "command line", parsed_color);
@@ -328,7 +329,8 @@ static int get_colorbool(int print)
 {
 	get_colorbool_found = -1;
 	get_diff_color_found = -1;
-	git_config(git_get_colorbool_config, NULL);
+	git_config_with_options(git_get_colorbool_config, NULL,
+				given_config_file);
 
 	if (get_colorbool_found < 0) {
 		if (!strcmp(get_colorbool_slot, "color.diff"))
@@ -351,7 +353,7 @@ int cmd_config(int argc, const char **argv, const char *prefix)
 	int nongit = !startup_info->have_repository;
 	char *value;
 
-	config_exclusive_filename = getenv(CONFIG_ENVIRONMENT);
+	given_config_file = getenv(CONFIG_ENVIRONMENT);
 
 	argc = parse_options(argc, argv, prefix, builtin_config_options,
 			     builtin_config_usage,
@@ -366,23 +368,23 @@ int cmd_config(int argc, const char **argv, const char *prefix)
 		char *home = getenv("HOME");
 		if (home) {
 			char *user_config = xstrdup(mkpath("%s/.gitconfig", home));
-			config_exclusive_filename = user_config;
+			given_config_file = user_config;
 		} else {
 			die("$HOME not set");
 		}
 	}
 	else if (use_system_config)
-		config_exclusive_filename = git_etc_gitconfig();
+		given_config_file = git_etc_gitconfig();
 	else if (use_local_config)
-		config_exclusive_filename = git_pathdup("config");
+		given_config_file = git_pathdup("config");
 	else if (given_config_file) {
 		if (!is_absolute_path(given_config_file) && prefix)
-			config_exclusive_filename =
+			given_config_file =
 				xstrdup(prefix_filename(prefix,
 							strlen(prefix),
 							given_config_file));
 		else
-			config_exclusive_filename = given_config_file;
+			given_config_file = given_config_file;
 	}
 
 	if (end_null) {
@@ -421,28 +423,29 @@ int cmd_config(int argc, const char **argv, const char *prefix)
 
 	if (actions == ACTION_LIST) {
 		check_argc(argc, 0, 0);
-		if (git_config(show_all_config, NULL) < 0) {
-			if (config_exclusive_filename)
+		if (git_config_with_options(show_all_config, NULL,
+					    given_config_file) < 0) {
+			if (given_config_file)
 				die_errno("unable to read config file '%s'",
-					  config_exclusive_filename);
+					  given_config_file);
 			else
 				die("error processing config file(s)");
 		}
 	}
 	else if (actions == ACTION_EDIT) {
 		check_argc(argc, 0, 0);
-		if (!config_exclusive_filename && nongit)
+		if (!given_config_file && nongit)
 			die("not in a git directory");
 		git_config(git_default_config, NULL);
-		launch_editor(config_exclusive_filename ?
-			      config_exclusive_filename : git_path("config"),
+		launch_editor(given_config_file ?
+			      given_config_file : git_path("config"),
 			      NULL, NULL);
 	}
 	else if (actions == ACTION_SET) {
 		int ret;
 		check_argc(argc, 2, 2);
 		value = normalize_value(argv[0], argv[1]);
-		ret = git_config_set(argv[0], value);
+		ret = git_config_set_in_file(given_config_file, argv[0], value);
 		if (ret == CONFIG_NOTHING_SET)
 			error("cannot overwrite multiple values with a single value\n"
 			"       Use a regexp, --add or --replace-all to change %s.", argv[0]);
@@ -451,17 +454,20 @@ int cmd_config(int argc, const char **argv, const char *prefix)
 	else if (actions == ACTION_SET_ALL) {
 		check_argc(argc, 2, 3);
 		value = normalize_value(argv[0], argv[1]);
-		return git_config_set_multivar(argv[0], value, argv[2], 0);
+		return git_config_set_multivar_in_file(given_config_file,
+						       argv[0], value, argv[2], 0);
 	}
 	else if (actions == ACTION_ADD) {
 		check_argc(argc, 2, 2);
 		value = normalize_value(argv[0], argv[1]);
-		return git_config_set_multivar(argv[0], value, "^$", 0);
+		return git_config_set_multivar_in_file(given_config_file,
+						       argv[0], value, "^$", 0);
 	}
 	else if (actions == ACTION_REPLACE_ALL) {
 		check_argc(argc, 2, 3);
 		value = normalize_value(argv[0], argv[1]);
-		return git_config_set_multivar(argv[0], value, argv[2], 1);
+		return git_config_set_multivar_in_file(given_config_file,
+						       argv[0], value, argv[2], 1);
 	}
 	else if (actions == ACTION_GET) {
 		check_argc(argc, 1, 2);
@@ -482,18 +488,22 @@ int cmd_config(int argc, const char **argv, const char *prefix)
 	else if (actions == ACTION_UNSET) {
 		check_argc(argc, 1, 2);
 		if (argc == 2)
-			return git_config_set_multivar(argv[0], NULL, argv[1], 0);
+			return git_config_set_multivar_in_file(given_config_file,
+							       argv[0], NULL, argv[1], 0);
 		else
-			return git_config_set(argv[0], NULL);
+			return git_config_set_in_file(given_config_file,
+						      argv[0], NULL);
 	}
 	else if (actions == ACTION_UNSET_ALL) {
 		check_argc(argc, 1, 2);
-		return git_config_set_multivar(argv[0], NULL, argv[1], 1);
+		return git_config_set_multivar_in_file(given_config_file,
+						       argv[0], NULL, argv[1], 1);
 	}
 	else if (actions == ACTION_RENAME_SECTION) {
 		int ret;
 		check_argc(argc, 2, 2);
-		ret = git_config_rename_section(argv[0], argv[1]);
+		ret = git_config_rename_section_in_file(given_config_file,
+							argv[0], argv[1]);
 		if (ret < 0)
 			return ret;
 		if (ret == 0)
@@ -502,7 +512,8 @@ int cmd_config(int argc, const char **argv, const char *prefix)
 	else if (actions == ACTION_REMOVE_SECTION) {
 		int ret;
 		check_argc(argc, 1, 1);
-		ret = git_config_rename_section(argv[0], NULL);
+		ret = git_config_rename_section_in_file(given_config_file,
+							argv[0], NULL);
 		if (ret < 0)
 			return ret;
 		if (ret == 0)

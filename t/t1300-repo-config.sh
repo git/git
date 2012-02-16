@@ -458,6 +458,14 @@ test_expect_success 'refer config from subdirectory' '
 
 '
 
+test_expect_success 'refer config from subdirectory via GIT_CONFIG' '
+	(
+		cd x &&
+		GIT_CONFIG=../other-config git config --get ein.bahn >actual &&
+		test_cmp expect actual
+	)
+'
+
 cat > expect << EOF
 [ein]
 	bahn = strasse
@@ -958,6 +966,23 @@ test_expect_success 'git -c complains about empty key' '
 
 test_expect_success 'git -c complains about empty key and value' '
 	test_must_fail git -c "" rev-parse
+'
+
+test_expect_success 'git config --edit works' '
+	git config -f tmp test.value no &&
+	echo test.value=yes >expect &&
+	GIT_EDITOR="echo [test]value=yes >" git config -f tmp --edit &&
+	git config -f tmp --list >actual &&
+	test_cmp expect actual
+'
+
+test_expect_success 'git config --edit respects core.editor' '
+	git config -f tmp test.value no &&
+	echo test.value=yes >expect &&
+	test_config core.editor "echo [test]value=yes >" &&
+	git config -f tmp --edit &&
+	git config -f tmp --list >actual &&
+	test_cmp expect actual
 '
 
 test_done
