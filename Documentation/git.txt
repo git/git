@@ -9,11 +9,11 @@ git - the stupid content tracker
 SYNOPSIS
 --------
 [verse]
-'git' [--version] [--exec-path[=<path>]] [--html-path] [--man-path] [--info-path]
+'git' [--version] [--help] [-c <name>=<value>]
+    [--exec-path[=<path>]] [--html-path] [--man-path] [--info-path]
     [-p|--paginate|--no-pager] [--no-replace-objects] [--bare]
     [--git-dir=<path>] [--work-tree=<path>] [--namespace=<name>]
-    [-c <name>=<value>]
-    [--help] <command> [<args>]
+    <command> [<args>]
 
 DESCRIPTION
 -----------
