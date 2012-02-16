@@ -377,9 +377,10 @@ int cmd_config(int argc, const char **argv, const char *prefix)
 		config_exclusive_filename = git_pathdup("config");
 	else if (given_config_file) {
 		if (!is_absolute_path(given_config_file) && prefix)
-			config_exclusive_filename = prefix_filename(prefix,
-								    strlen(prefix),
-								    given_config_file);
+			config_exclusive_filename =
+				xstrdup(prefix_filename(prefix,
+							strlen(prefix),
+							given_config_file));
 		else
 			config_exclusive_filename = given_config_file;
 	}
