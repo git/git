@@ -1233,6 +1233,7 @@ int git_config_set_multivar_in_file(const char *config_filename,
 	int fd = -1, in_fd;
 	int ret;
 	struct lock_file *lock = NULL;
+	char *filename_buf = NULL;
 
 	/* parse-key returns negative; flip the sign to feed exit(3) */
 	ret = 0 - git_config_parse_key(key, &store.key, &store.baselen);
@@ -1241,6 +1242,8 @@ int git_config_set_multivar_in_file(const char *config_filename,
 
 	store.multi_replace = multi_replace;
 
+	if (!config_filename)
+		config_filename = filename_buf = git_pathdup("config");
 
 	/*
 	 * The lock serves a purpose in addition to locking: the new
@@ -1410,6 +1413,7 @@ int git_config_set_multivar_in_file(const char *config_filename,
 out_free:
 	if (lock)
 		rollback_lock_file(lock);
+	free(filename_buf);
 	return ret;
 
 write_err_out:
@@ -1421,19 +1425,9 @@ write_err_out:
 int git_config_set_multivar(const char *key, const char *value,
 			const char *value_regex, int multi_replace)
 {
-	const char *config_filename;
-	char *buf = NULL;
-	int ret;
-
-	if (config_exclusive_filename)
-		config_filename = config_exclusive_filename;
-	else
-		config_filename = buf = git_pathdup("config");
-
-	ret = git_config_set_multivar_in_file(config_filename, key, value,
-					value_regex, multi_replace);
-	free(buf);
-	return ret;
+	return git_config_set_multivar_in_file(config_exclusive_filename,
+					       key, value, value_regex,
+					       multi_replace);
 }
 
 static int section_name_match (const char *buf, const char *name)
