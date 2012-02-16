@@ -1,6 +1,6 @@
 #!/bin/sh
 
-test_description='checkout from unborn branch protects contents'
+test_description='checkout from unborn branch'
 . ./test-lib.sh
 
 test_expect_success 'setup' '
@@ -35,6 +35,15 @@ test_expect_success 'checkout from unborn merges identical index contents' '
 	echo content >file &&
 	git add file &&
 	git checkout -b new origin
+'
+
+test_expect_success 'checking out another branch from unborn state' '
+	git checkout --orphan newroot &&
+	git checkout -b anothername &&
+	test_must_fail git show-ref --verify refs/heads/newroot &&
+	git symbolic-ref HEAD >actual &&
+	echo refs/heads/anothername >expect &&
+	test_cmp expect actual
 '
 
 test_done
