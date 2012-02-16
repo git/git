@@ -451,7 +451,7 @@ test_expect_success 'refer config from subdirectory' '
 	mkdir x &&
 	(
 		cd x &&
-		echo strasse >expect
+		echo strasse >expect &&
 		git config --get --file ../other-config ein.bahn >actual &&
 		test_cmp expect actual
 	)
