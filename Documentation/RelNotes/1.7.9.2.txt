@@ -1,0 +1,27 @@
+Git v1.7.9.2 Release Notes
+==========================
+
+Fixes since v1.7.9.1
+--------------------
+
+* The error message emitted when we see an empty loose object was
+  not phrased correctly.
+
+* The code to ask for password did not fall back to the terminal
+  input when GIT_ASKPASS is set but does not work (e.g. lack of X
+  with GUI askpass helper).
+
+* map_user() was not rewriting its output correctly, which resulted
+  in the user visible symptom that "git blame -e" sometimes showed
+  excess '>' at the end of email addresses.
+
+* "git checkout -b" did not allow switching out of an unborn branch.
+
+* "git commit" refused to create a commit when entries added with
+  "add -N" remained in the index, without telling Git what their content
+  in the next commit should be. We should have created the commit without
+  these paths.
+
+* Search box in "gitweb" did not accept non-ASCII characters correctly.
+
+Also contains minor fixes and documentation updates.
