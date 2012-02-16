@@ -463,6 +463,8 @@ static inline int has_extension(const char *filename, const char *ext)
 #undef isdigit
 #undef isalpha
 #undef isalnum
+#undef islower
+#undef isupper
 #undef tolower
 #undef toupper
 extern unsigned char sane_ctype[256];
@@ -478,6 +480,8 @@ extern unsigned char sane_ctype[256];
 #define isdigit(x) sane_istest(x,GIT_DIGIT)
 #define isalpha(x) sane_istest(x,GIT_ALPHA)
 #define isalnum(x) sane_istest(x,GIT_ALPHA | GIT_DIGIT)
+#define islower(x) sane_iscase(x, 1)
+#define isupper(x) sane_iscase(x, 0)
 #define is_glob_special(x) sane_istest(x,GIT_GLOB_SPECIAL)
 #define is_regex_special(x) sane_istest(x,GIT_GLOB_SPECIAL | GIT_REGEX_SPECIAL)
 #define tolower(x) sane_case((unsigned char)(x), 0x20)
@@ -489,6 +493,17 @@ static inline int sane_case(int x, int high)
 	if (sane_istest(x, GIT_ALPHA))
 		x = (x & ~0x20) | high;
 	return x;
+}
+
+static inline int sane_iscase(int x, int is_lower)
+{
+	if (!sane_istest(x, GIT_ALPHA))
+		return 0;
+
+	if (is_lower)
+		return (x & 0x20) != 0;
+	else
+		return (x & 0x20) == 0;
 }
 
 static inline int strtoul_ui(char const *s, int base, unsigned int *result)
