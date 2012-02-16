@@ -95,28 +95,6 @@ string is given, prints an error message and returns -1.
 Similar to `git_config_string`, but expands `~` or `~user` into the
 user's home directory when found at the beginning of the path.
 
-Include Directives
-------------------
-
-By default, the config parser does not respect include directives.
-However, a caller can use the special `git_config_include` wrapper
-callback to support them. To do so, you simply wrap your "real" callback
-function and data pointer in a `struct config_include_data`, and pass
-the wrapper to the regular config-reading functions. For example:
-
--------------------------------------------
-int read_file_with_include(const char *file, config_fn_t fn, void *data)
-{
-	struct config_include_data inc = CONFIG_INCLUDE_INIT;
-	inc.fn = fn;
-	inc.data = data;
-	return git_config_from_file(git_config_include, file, &inc);
-}
--------------------------------------------
-
-`git_config` respects includes automatically. The lower-level
-`git_config_from_file` does not.
-
 Writing Config Files
 --------------------
 

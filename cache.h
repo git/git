@@ -1140,14 +1140,6 @@ extern const char *get_commit_output_encoding(void);
 
 extern int git_config_parse_parameter(const char *, config_fn_t fn, void *data);
 
-struct config_include_data {
-	int depth;
-	config_fn_t fn;
-	void *data;
-};
-#define CONFIG_INCLUDE_INIT { 0 }
-extern int git_config_include(const char *name, const char *value, void *data);
-
 extern const char *config_exclusive_filename;
 
 #define MAX_GITNAME (1000)
