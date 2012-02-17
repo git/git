@@ -1,17 +1,18 @@
 To: git@vger.kernel.org
-Subject: What's cooking in git.git (Feb 2012, #05; Mon, 13)
-X-master-at: 6f5e880c68099b185e60b2492c75e506e16d8292
-X-next-at: adb73538176221d26b30b46087711875caebc24b
+Subject: What's cooking in git.git (Feb 2012, #06; Thu, 16)
+X-master-at: b0d66b5110faaeb395610ba43b6eb70a18ab5e25
+X-next-at: a9004c5cb2204cf950debab328e86de5eefb9da4
 
-What's cooking in git.git (Feb 2012, #05; Mon, 13)
+What's cooking in git.git (Feb 2012, #06; Thu, 16)
 --------------------------------------------------
 
 Here are the topics that have been cooking.  Commits prefixed with '-' are
 only in 'pu' (proposed updates) while commits prefixed with '+' are in 'next'.
 
-This round mosty consists of topics to fix new features introduced in
-1.7.9, in preparation for 1.7.9.1 maintenance release.  There are a few
-more of them to come.
+The first maintenance release v1.7.9.1 ironed out usability kinks in the
+new features added in v1.7.9 release.  Topics that add new features and
+fixes that have been cooking in 'next' start to graduate to 'master'
+again.
 
 You can find the changes described here in the integration branches of the
 repositories listed at
@@ -19,7 +20,7 @@ repositories listed at
     http://git-blame.blogspot.com/p/git-public-repositories.html
 
 --------------------------------------------------
-[New Topics]
+[Graduated to "master"]
 
 * bl/gitweb-project-filter (2012-02-12) 1 commit
   (merged to 'next' on 2012-02-13 at 35366b8)
@@ -33,6 +34,43 @@ intermediate levels in directory hierarchies, already slated for 1.7.10.
  + Makefile: introduce CHARSET_LIB to link with -lcharset
 
 Some systems need to explicitly link -lcharset to get locale_charset().
+
+* jk/git-dir-lookup (2012-02-02) 1 commit
+  (merged to 'next' on 2012-02-05 at 1856d74)
+ + standardize and improve lookup rules for external local repos
+
+When you have both .../foo and .../foo.git, "git clone .../foo" did not
+favor the former but the latter.
+
+* jk/grep-binary-attribute (2012-02-02) 9 commits
+  (merged to 'next' on 2012-02-05 at 9dffa7e)
+ + grep: pre-load userdiff drivers when threaded
+ + grep: load file data after checking binary-ness
+ + grep: respect diff attributes for binary-ness
+ + grep: cache userdiff_driver in grep_source
+ + grep: drop grep_buffer's "name" parameter
+ + convert git-grep to use grep_source interface
+ + grep: refactor the concept of "grep source" into an object
+ + grep: move sha1-reading mutex into low-level code
+ + grep: make locking flag global
+
+Fixes a longstanding bug that there was no way to tell "git grep" that a
+path may look like text but it is not, which "git diff" can do using the
+attributes system. Now "git grep" honors the same "binary" (or "-diff")
+attribute.
+
+* jk/userdiff-config-simplify (2012-02-07) 1 commit
+  (merged to 'next' on 2012-02-10 at e9854c1)
+ + drop odd return value semantics from userdiff_config
+
+Code cleanup.
+
+* jn/ancient-meld-support (2012-02-10) 1 commit
+  (merged to 'next' on 2012-02-13 at 28aca31)
+ + mergetools/meld: Use --help output to detect --output support
+
+More reliably tell if the given version of "meld" supports --output
+option.
 
 * lt/pull-no-edit (2012-02-12) 1 commit
   (merged to 'next' on 2012-02-13 at 352f0cb)
@@ -53,116 +91,113 @@ automatically commit to record the resulting merge.
 
 Internal API clean-up that is very cleanly done.
 
+* nd/pack-objects-parseopt (2012-02-01) 3 commits
+  (merged to 'next' on 2012-02-05 at d0dc25d)
+ + pack-objects: convert to use parse_options()
+ + pack-objects: remove bogus comment
+ + pack-objects: do not accept "--index-version=version,"
+
+"pack-objects" learned use parse-options, losing custom command line
+parsing code.
+
 --------------------------------------------------
-[Graduated to "master"]
+[New Topics]
 
-* bw/inet-pton-ntop-compat (2012-02-05) 1 commit
-  (merged to 'next' on 2012-02-06 at 61303e6)
- + Drop system includes from inet_pton/inet_ntop compatibility wrappers
+* cb/maint-rev-list-verify-object (2012-02-13) 1 commit
+  (merged to 'next' on 2012-02-16 at a407b9a)
+ + git rev-list: fix invalid typecast
 
-The inclusion order of header files bites Solaris again and this fixes it.
+Fixes an obscure bug in "rev-list --verify" that skipped verification
+depending on the phase of the moon, which dates back to 1.7.8.x series.
 
-* fc/zsh-completion (2012-02-06) 3 commits
-  (merged to 'next' on 2012-02-06 at c94dd12)
- + completion: simplify __gitcomp and __gitcomp_nl implementations
- + completion: use ls -1 instead of rolling a loop to do that ourselves
- + completion: work around zsh option propagation bug
+* cb/maint-t5541-make-server-port-portable (2012-02-13) 1 commit
+  (merged to 'next' on 2012-02-16 at 762eefb)
+ + t5541: check error message against the real port number used
 
-Fix git subcommand completion for zsh (in contrib/completion).
+Test fix.
 
-* jc/checkout-out-of-unborn (2012-02-06) 1 commit
-  (merged to 'next' on 2012-02-07 at 60eb328)
- + git checkout -b: allow switching out of an unborn branch
+* cb/receive-pack-keep-errors (2012-02-13) 1 commit
+  (merged to 'next' on 2012-02-16 at 9ff846e)
+ + do not override receive-pack errors
 
-"checkout -b" did not allow switching out of an unborn branch.
+Sometimes error status detected by a check in an earlier phase of
+receive-pack (the other end of 'git push') was lost by later checks,
+resulting in false indication of success.
 
-* jc/maint-commit-ignore-i-t-a (2012-02-07) 1 commit
-  (merged to 'next' on 2012-02-10 at e0040cf)
- + commit: ignore intent-to-add entries instead of refusing
+* cb/transfer-no-progress (2012-02-13) 1 commit
+  (merged to 'next' on 2012-02-16 at ff17092)
+ + push/fetch/clone --no-progress suppresses progress output
 
-Replaces the nd/commit-ignore-i-t-a series that was made unnecessary
-complicated by bad suggestions I made earlier.
+The transport programs ignored --no-progress and showed progress when
+sending their output to a terminal.
 
-* jc/maint-mailmap-output (2012-02-06) 1 commit
-  (merged to 'next' on 2012-02-06 at 0a21425)
- + mailmap: always return a plain mail address from map_user()
+* jk/diff-highlight (2012-02-13) 5 commits
+ - diff-highlight: document some non-optimal cases
+ - diff-highlight: match multi-line hunks
+ - diff-highlight: refactor to prepare for multi-line hunks
+ - diff-highlight: don't highlight whole lines
+ - diff-highlight: make perl strict and warnings fatal
 
-map_user() was not rewriting its output correctly, which resulted in the
-user visible symptom that "git blame -e" sometimes showed excess '>' at
-the end of email addresses.
+Updates diff-highlight (in contrib/).
 
-* jk/maint-tag-show-fixes (2012-02-08) 3 commits
-  (merged to 'next' on 2012-02-08 at 18459c4)
- + tag: do not show non-tag contents with "-n"
- + tag: die when listing missing or corrupt objects
- + tag: fix output of "tag -n" when errors occur
+* zj/decimal-width (2012-02-14) 1 commit
+  (merged to 'next' on 2012-02-16 at 72805c4)
+ + make lineno_width() from blame reusable for others
+ (this branch is used by zj/diff-stat-dyncol.)
 
-Bugfixes to "git tag -n" that lacked much error checking.
+Refactoring.
 
-* jk/prompt-fallback-to-tty (2012-02-03) 2 commits
-  (merged to 'next' on 2012-02-06 at c0c995a)
- + prompt: fall back to terminal if askpass fails
- + prompt: clean up strbuf usage
+* zj/term-columns (2012-02-13) 1 commit
+  (merged to 'next' on 2012-02-16 at fe70c88)
+ + pager: find out the terminal width before spawning the pager
+ (this branch is used by zj/diff-stat-dyncol.)
 
-The code to ask for password did not fall back to the terminal input when
-GIT_ASKPASS is set but does not work (e.g. lack of X with GUI askpass
-helper).
+Fixes "git -p cmd" for any subcommand that cares about the true terminal
+width.
 
-* jn/gitweb-search-utf-8 (2012-02-03) 1 commit
-  (merged to 'next' on 2012-02-05 at 055e446)
- + gitweb: Allow UTF-8 encoded CGI query parameters and path_info
+* hv/submodule-recurse-push (2012-02-13) 3 commits
+ - push: teach --recurse-submodules the on-demand option
+ - Refactor submodule push check to use string list instead of integer
+ - Teach revision walking machinery to walk multiple times sequencially
 
-Search box in "gitweb" did not accept non-ASCII characters correctly.
+The bottom one was not clearly explained.
 
-* jn/merge-no-edit-fix (2012-02-09) 1 commit
-  (merged to 'next' on 2012-02-10 at 014eec9)
- + merge: do not launch an editor on "--no-edit $tag"
+* zj/diff-stat-dyncol (2012-02-15) 6 commits
+ . diff --stat: use less columns for change counts
+ - (squash to the previous -- replace the last line of the log with the following)
+ - diff --stat: use the full terminal width
+ - (squash to the previous -- replace the log message with this)
+ - diff --stat: tests for long filenames and big change counts
+ - Merge branches zj/decimal-width and zj/term-columns
+ (this branch uses zj/decimal-width and zj/term-columns.)
 
-In 1.7.9, "merge --no-edit $tag" incorrectly ignored --no-edit.
+* jc/diff-stat-scaler (2012-02-14) 1 commit
+  (merged to 'next' on 2012-02-16 at 404d336)
+ + diff --stat: show bars of same length for paths with same amount of changes
 
-* mm/empty-loose-error-message (2012-02-06) 1 commit
-  (merged to 'next' on 2012-02-07 at f119cac)
- + fsck: give accurate error message on empty loose object files
+The output from "git diff --stat" for two paths that have the same amount
+of changes showed graph bars of different length due to the way we handled
+rounding errors.
 
-Updates the error message emitted when we see an empty loose object.
+* jn/gitweb-unborn-head (2012-02-16) 1 commit
+ - gitweb: Deal with HEAD pointing to unborn branch in "heads" view
 
-* mp/make-cleanse-x-for-exe (2012-02-09) 1 commit
-  (merged to 'next' on 2012-02-09 at 35cc89d)
- + Explicitly set X to avoid potential build breakage
+"gitweb" compared non-existent value of HEAD with the names of commit
+objects at tips of branches, triggering runtime warnings.
 
-The makefile allowed environment variable X seep into it result in
-command names suffixed with unnecessary strings.
+* tr/perftest (2012-02-16) 3 commits
+ . Add a performance test for git-grep
+ . Introduce a performance testing framework
+ . Move the user-facing test library to test-lib-functions.sh
 
-* nd/cache-tree-api-refactor (2012-02-07) 1 commit
-  (merged to 'next' on 2012-02-08 at a9abbca)
- + cache-tree: update API to take abitrary flags
+When merged to 'pu' this seems to break quite a lot of tests.  One way it
+does so is by removing the write_script helper, but there may be others.
 
-Code cleanup.
+* jb/required-filter (2012-02-16) 1 commit
+ - Add a setting to require a filter to be successful
 
-* nd/diffstat-gramnum (2012-02-03) 1 commit
-  (merged to 'next' on 2012-02-05 at 7335ecc)
- + Use correct grammar in diffstat summary line
-
-The commands in the "git diff" family and "git apply --stat" that count
-the number of files changed and the number of lines inserted/deleted have
-been updated to match the output from "diffstat".  This also opens the
-door to i18n this line.
-
-* nd/find-pack-entry-recent-cache-invalidation (2012-02-01) 2 commits
-  (merged to 'next' on 2012-02-01 at e26aed0)
- + find_pack_entry(): do not keep packed_git pointer locally
- + sha1_file.c: move the core logic of find_pack_entry() into fill_pack_entry()
-
-* nk/ctype-for-perf (2012-02-10) 2 commits
-  (merged to 'next' on 2012-02-10 at b41c6bb)
- + ctype: implement islower/isupper macro
- + ctype.c only wants git-compat-util.h
-
-* tt/profile-build-fix (2012-02-09) 2 commits
-  (merged to 'next' on 2012-02-09 at 1c183af)
- + Makefile: fix syntax for older make
-  (merged to 'next' on 2012-02-07 at c8c5f3f)
- + Fix build problems related to profile-directed optimization
+A content filter used to be a way to make the recorded contents "more
+useful", but this defines a way to optionally mark a filter "required".
 
 --------------------------------------------------
 [Stalled]
@@ -212,50 +247,42 @@ people an easy target to shoot for, they may be encouraged to help
 out. The plan is not working :-(.
 
 * nd/columns (2012-02-08) 15 commits
- - column: Fix some compiler and sparse warnings
- - column: add a corner-case test to t3200
- - columns: minimum coding style fixes
- - tag: add --column
- - column: support piping stdout to external git-column process
- - status: add --column
- - branch: add --column
- - help: reuse print_columns() for help -a
- - column: add column.ui for default column output settings
- - column: support columns with different widths
- - column: add columnar layout
- - Stop starting pager recursively
- - Add git-column and column mode parsing
- - column: add API to print items in columns
- - Save terminal width before setting up pager
+ . column: Fix some compiler and sparse warnings
+ . column: add a corner-case test to t3200
+ . columns: minimum coding style fixes
+ . tag: add --column
+ . column: support piping stdout to external git-column process
+ . status: add --column
+ . branch: add --column
+ . help: reuse print_columns() for help -a
+ . column: add column.ui for default column output settings
+ . column: support columns with different widths
+ . column: add columnar layout
+ . Stop starting pager recursively
+ . Add git-column and column mode parsing
+ . column: add API to print items in columns
+ . Save terminal width before setting up pager
 
-The "show list of ..." mode of a handful of commands learn to produce
-column-oriented output.
-
-Expecting a reroll.
+Expecting a reroll on top of zj/term-columns topic.
 
 --------------------------------------------------
 [Cooking]
 
-* jn/ancient-meld-support (2012-02-10) 1 commit
-  (merged to 'next' on 2012-02-13 at 28aca31)
- + mergetools/meld: Use --help output to detect --output support
-
-More reliably tell if the given version of "meld" supports --output
-option.
-
-* jk/config-include (2012-02-06) 2 commits
-  (merged to 'next' on 2012-02-13 at 307ddf6)
- + config: add include directive
+* jk/config-include (2012-02-16) 9 commits
+ - config: add include directive
+ - config: eliminate config_exclusive_filename
+ - config: stop using config_exclusive_filename
+ - config: provide a version of git_config with more options
+ - config: teach git_config_rename_section a file argument
+ - config: teach git_config_set_multivar_in_file a default path
+ - config: copy the return value of prefix_filename
+ - t1300: add missing &&-chaining
  + docs: add a basic description of the config API
 
 An assignment to the include.path pseudo-variable causes the named file
 to be included in-place when Git looks up configuration variables.
 
-* jk/userdiff-config-simplify (2012-02-07) 1 commit
-  (merged to 'next' on 2012-02-10 at e9854c1)
- + drop odd return value semantics from userdiff_config
-
-Code cleanup.
+Reverted the earlier round from 'next'.
 
 * tg/tag-points-at (2012-02-13) 2 commits
   (merged to 'next' on 2012-02-13 at a8f4046)
@@ -263,53 +290,17 @@ Code cleanup.
   (merged to 'next' on 2012-02-10 at 4bff88f)
  + tag: add --points-at list option
 
+Will merge to 'master'.
+
 * jl/maint-submodule-relative (2012-02-09) 2 commits
  - submodules: always use a relative path from gitdir to work tree
  - submodules: always use a relative path to gitdir
 
 The second one looked iffy.
 
-* ld/git-p4-expanded-keywords (2012-02-09) 2 commits
- - git-p4: initial demonstration of possible RCS keyword fixup
- - git-p4: add test case for RCS keywords
+* ld/git-p4-expanded-keywords (2012-02-14) 1 commit
+  (merged to 'next' on 2012-02-16 at a9004c5)
+ + git-p4: add initial support for RCS keywords
 
-Waiting for reviews and user reports.
-
-* jk/grep-binary-attribute (2012-02-02) 9 commits
-  (merged to 'next' on 2012-02-05 at 9dffa7e)
- + grep: pre-load userdiff drivers when threaded
- + grep: load file data after checking binary-ness
- + grep: respect diff attributes for binary-ness
- + grep: cache userdiff_driver in grep_source
- + grep: drop grep_buffer's "name" parameter
- + convert git-grep to use grep_source interface
- + grep: refactor the concept of "grep source" into an object
- + grep: move sha1-reading mutex into low-level code
- + grep: make locking flag global
-
-Fixes a longstanding bug that there was no way to tell "git grep" that a
-path may look like text but it is not, which "git diff" can do using the
-attributes system. Now "git grep" honors the same "binary" (or "-diff")
-attribute.
-
-Will merge to 'master' after 1.7.9.1 settles.
-
-* jk/git-dir-lookup (2012-02-02) 1 commit
-  (merged to 'next' on 2012-02-05 at 1856d74)
- + standardize and improve lookup rules for external local repos
-
-When you have both .../foo and .../foo.git, "git clone .../foo" did not
-favor the former but the latter.
-
-Will merge to 'master' after 1.7.9.1 settles.
-
-* nd/pack-objects-parseopt (2012-02-01) 3 commits
-  (merged to 'next' on 2012-02-05 at d0dc25d)
- + pack-objects: convert to use parse_options()
- + pack-objects: remove bogus comment
- + pack-objects: do not accept "--index-version=version,"
-
-"pack-objects" learned use parse-options, losing custom command line
-parsing code.
-
-Will merge to 'master' after 1.7.9.1 settles.
+Teach git-p4 to unexpand $RCS$-like keywords that are embedded in
+tracked contents in order to reduce unnecessary merge conflicts.
