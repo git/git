@@ -11,9 +11,9 @@ General Usage
 Config files are parsed linearly, and each variable found is passed to a
 caller-provided callback function. The callback function is responsible
 for any actions to be taken on the config option, and is free to ignore
-some options (it is not uncommon for the configuration to be parsed
+some options. It is not uncommon for the configuration to be parsed
 several times during the run of a git program, with different callbacks
-picking out different variables useful to themselves).
+picking out different variables useful to themselves.
 
 A config callback function takes three parameters:
 
@@ -47,11 +47,12 @@ will first feed the user-wide one to the callback, and then the
 repo-specific one; by overwriting, the higher-priority repo-specific
 value is left at the end).
 
-There is a special version of `git_config` called `git_config_early`
-that takes an additional parameter to specify the repository config.
-This should be used early in a git program when the repository location
-has not yet been determined (and calling the usual lazy-evaluation
-lookup rules would yield an incorrect location).
+There is a special version of `git_config` called `git_config_early`.
+This version takes an additional parameter to specify the repository
+config, instead of having it looked up via `git_path`. This is useful
+early in a git program before the repository has been found. Unless
+you're working with early setup code, you probably don't want to use
+this.
 
 Reading Specific Files
 ----------------------
