@@ -191,4 +191,30 @@ test_expect_success 'cleaned up' '
 	test_cmp empty actual
 '
 
+test_expect_success 'rev-list --verify-objects' '
+	git rev-list --verify-objects --all >/dev/null 2>out &&
+	test_cmp empty out
+'
+
+test_expect_success 'rev-list --verify-objects with bad sha1' '
+	sha=$(echo blob | git hash-object -w --stdin) &&
+	old=$(echo $sha | sed "s+^..+&/+") &&
+	new=$(dirname $old)/ffffffffffffffffffffffffffffffffffffff &&
+	sha="$(dirname $new)$(basename $new)" &&
+	mv .git/objects/$old .git/objects/$new &&
+	test_when_finished "remove_object $sha" &&
+	git update-index --add --cacheinfo 100644 $sha foo &&
+	test_when_finished "git read-tree -u --reset HEAD" &&
+	tree=$(git write-tree) &&
+	test_when_finished "remove_object $tree" &&
+	cmt=$(echo bogus | git commit-tree $tree) &&
+	test_when_finished "remove_object $cmt" &&
+	git update-ref refs/heads/bogus $cmt &&
+	test_when_finished "git update-ref -d refs/heads/bogus" &&
+
+	test_might_fail git rev-list --verify-objects refs/heads/bogus >/dev/null 2>out &&
+	cat out &&
+	grep -q "error: sha1 mismatch 63ffffffffffffffffffffffffffffffffffffff" out
+'
+
 test_done
