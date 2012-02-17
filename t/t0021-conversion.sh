@@ -153,4 +153,41 @@ test_expect_success 'filter shell-escaped filenames' '
 	:
 '
 
+test_expect_success 'required filter success' '
+	git config filter.required.smudge cat &&
+	git config filter.required.clean cat &&
+	git config filter.required.required true &&
+
+	echo "*.r filter=required" >.gitattributes &&
+
+	echo test >test.r &&
+	git add test.r &&
+	rm -f test.r &&
+	git checkout -- test.r
+'
+
+test_expect_success 'required filter smudge failure' '
+	git config filter.failsmudge.smudge false &&
+	git config filter.failsmudge.clean cat &&
+	git config filter.failsmudge.required true &&
+
+	echo "*.fs filter=failsmudge" >.gitattributes &&
+
+	echo test >test.fs &&
+	git add test.fs &&
+	rm -f test.fs &&
+	test_must_fail git checkout -- test.fs
+'
+
+test_expect_success 'required filter clean failure' '
+	git config filter.failclean.smudge cat &&
+	git config filter.failclean.clean false &&
+	git config filter.failclean.required true &&
+
+	echo "*.fc filter=failclean" >.gitattributes &&
+
+	echo test >test.fc &&
+	test_must_fail git add test.fc
+'
+
 test_done
