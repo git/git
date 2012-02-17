@@ -179,6 +179,21 @@ test_expect_success 'git add --refresh' '
 	test -z "`git diff-index HEAD -- foo`"
 '
 
+test_expect_success 'git add --refresh with pathspec' '
+	git reset --hard &&
+	echo >foo && echo >bar && echo >baz &&
+	git add foo bar baz && H=$(git rev-parse :foo) && git rm -f foo &&
+	echo "100644 $H 3	foo" | git update-index --index-info &&
+	test-chmtime -60 bar baz &&
+	>expect &&
+	git add --refresh bar >actual &&
+	test_cmp expect actual &&
+
+	git diff-files --name-only >actual &&
+	! grep bar actual&&
+	grep baz actual
+'
+
 test_expect_success POSIXPERM,SANITY 'git add should fail atomically upon an unreadable file' '
 	git reset --hard &&
 	date >foo1 &&
