@@ -1276,7 +1276,7 @@ _git_commit ()
 			--dry-run --reuse-message= --reedit-message=
 			--reset-author --file= --message= --template=
 			--cleanup= --untracked-files --untracked-files=
-			--verbose --quiet --fixup= --squash=
+			--verbose --quiet --fixup= --squash= --no-edit
 			"
 		return
 	esac
