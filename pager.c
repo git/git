@@ -147,3 +147,15 @@ int term_columns(void)
 
 	return term_columns_at_startup;
 }
+
+/*
+ * How many columns do we need to show this number in decimal?
+ */
+int decimal_width(int number)
+{
+	int i, width;
+
+	for (width = 1, i = 10; i <= number; width++)
+		i *= 10;
+	return width;
+}

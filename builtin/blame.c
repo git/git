@@ -1829,18 +1829,6 @@ static int read_ancestry(const char *graft_file)
 }
 
 /*
- * How many columns do we need to show line numbers in decimal?
- */
-static int lineno_width(int lines)
-{
-	int i, width;
-
-	for (width = 1, i = 10; i <= lines; width++)
-		i *= 10;
-	return width;
-}
-
-/*
  * How many columns do we need to show line numbers, authors,
  * and filenames?
  */
@@ -1880,9 +1868,9 @@ static void find_alignment(struct scoreboard *sb, int *option)
 		if (largest_score < ent_score(sb, e))
 			largest_score = ent_score(sb, e);
 	}
-	max_orig_digits = lineno_width(longest_src_lines);
-	max_digits = lineno_width(longest_dst_lines);
-	max_score_digits = lineno_width(largest_score);
+	max_orig_digits = decimal_width(longest_src_lines);
+	max_digits = decimal_width(longest_dst_lines);
+	max_score_digits = decimal_width(largest_score);
 }
 
 /*
