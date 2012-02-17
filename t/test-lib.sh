@@ -55,6 +55,7 @@ unset $(perl -e '
 		.*_TEST
 		PROVE
 		VALGRIND
+		PERF_AGGREGATING_LATER
 	));
 	my @vars = grep(/^GIT_/ && !/^GIT_($ok)/o, @env);
 	print join("\n", @vars);
@@ -97,6 +98,8 @@ _z40=0000000000000000000000000000000000000000
 # Line feed
 LF='
 '
+
+export _x05 _x40 _z40 LF
 
 # Each test should start with something like this, after copyright notices:
 #
@@ -313,11 +316,16 @@ test_skip () {
 	esac
 }
 
+# stub; perf-lib overrides it
+test_at_end_hook_ () {
+	:
+}
+
 test_done () {
 	GIT_EXIT_OK=t
 
 	if test -z "$HARNESS_ACTIVE"; then
-		test_results_dir="$TEST_DIRECTORY/test-results"
+		test_results_dir="$TEST_OUTPUT_DIRECTORY/test-results"
 		mkdir -p "$test_results_dir"
 		test_results_path="$test_results_dir/${0%.sh}-$$.counts"
 
@@ -356,6 +364,8 @@ test_done () {
 		cd "$(dirname "$remove_trash")" &&
 		rm -rf "$(basename "$remove_trash")"
 
+		test_at_end_hook_
+
 		exit 0 ;;
 
 	*)
@@ -377,6 +387,12 @@ then
 	# outside of t/, e.g. for running tests on the test library
 	# itself.
 	TEST_DIRECTORY=$(pwd)
+fi
+if test -z "$TEST_OUTPUT_DIRECTORY"
+then
+	# Similarly, override this to store the test-results subdir
+	# elsewhere
+	TEST_OUTPUT_DIRECTORY=$TEST_DIRECTORY
 fi
 GIT_BUILD_DIR="$TEST_DIRECTORY"/..
 
@@ -513,7 +529,7 @@ test="trash directory.$(basename "$0" .sh)"
 test -n "$root" && test="$root/$test"
 case "$test" in
 /*) TRASH_DIRECTORY="$test" ;;
- *) TRASH_DIRECTORY="$TEST_DIRECTORY/$test" ;;
+ *) TRASH_DIRECTORY="$TEST_OUTPUT_DIRECTORY/$test" ;;
 esac
 test ! -z "$debug" || remove_trash=$TRASH_DIRECTORY
 rm -fr "$test" || {
@@ -525,7 +541,11 @@ rm -fr "$test" || {
 HOME="$TRASH_DIRECTORY"
 export HOME
 
-test_create_repo "$test"
+if test -z "$TEST_NO_CREATE_REPO"; then
+	test_create_repo "$test"
+else
+	mkdir -p "$test"
+fi
 # Use -P to resolve symlinks in our working directory so that the cwd
 # in subprocesses like git equals our $PWD (for pathname comparisons).
 cd -P "$test" || exit 1
