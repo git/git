@@ -92,9 +92,11 @@ test_expect_success "$name" '
 	echo yyy > bar/zzz/yyy &&
 	git update-index --add bar/zzz/yyy &&
 	git commit -m "$name" &&
-	test_must_fail git svn set-tree --find-copies-harder --rmdir \
-		${remotes_git_svn}..mybranch3' || true
-
+	git svn set-tree --find-copies-harder --rmdir \
+		${remotes_git_svn}..mybranch3 &&
+	svn_cmd up "$SVN_TREE" &&
+	test -d "$SVN_TREE"/bar/zzz &&
+	test -e "$SVN_TREE"/bar/zzz/yyy ' || true
 
 name='detect node change from directory to file #2'
 test_expect_success "$name" '
@@ -134,10 +136,10 @@ test_expect_success "$name" '
 	test -x "$SVN_TREE"/exec.sh'
 
 
-name='executable file becomes a symlink to bar/zzz (file)'
+name='executable file becomes a symlink to file'
 test_expect_success "$name" '
 	rm exec.sh &&
-	ln -s bar/zzz exec.sh &&
+	ln -s file exec.sh &&
 	git update-index exec.sh &&
 	git commit -m "$name" &&
 	git svn set-tree --find-copies-harder --rmdir \
@@ -148,14 +150,14 @@ test_expect_success "$name" '
 name='new symlink is added to a file that was also just made executable'
 
 test_expect_success "$name" '
-	chmod +x bar/zzz &&
-	ln -s bar/zzz exec-2.sh &&
-	git update-index --add bar/zzz exec-2.sh &&
+	chmod +x file &&
+	ln -s file exec-2.sh &&
+	git update-index --add file exec-2.sh &&
 	git commit -m "$name" &&
 	git svn set-tree --find-copies-harder --rmdir \
 		${remotes_git_svn}..mybranch5 &&
 	svn_cmd up "$SVN_TREE" &&
-	test -x "$SVN_TREE"/bar/zzz &&
+	test -x "$SVN_TREE"/file &&
 	test -h "$SVN_TREE"/exec-2.sh'
 
 name='modify a symlink to become a file'
@@ -195,14 +197,15 @@ name='check imported tree checksums expected tree checksums'
 rm -f expected
 if test_have_prereq UTF8
 then
-	echo tree bf522353586b1b883488f2bc73dab0d9f774b9a9 > expected
+	echo tree dc68b14b733e4ec85b04ab6f712340edc5dc936e > expected
 fi
 cat >> expected <<\EOF
-tree 83654bb36f019ae4fe77a0171f81075972087624
-tree 031b8d557afc6fea52894eaebb45bec52f1ba6d1
-tree 0b094cbff17168f24c302e297f55bfac65eb8bd3
-tree d667270a1f7b109f5eb3aaea21ede14b56bfdd6e
-tree 56a30b966619b863674f5978696f4a3594f2fca9
+tree c3322890dcf74901f32d216f05c5044f670ce632
+tree d3ccd5035feafd17b030c5732e7808cc49122853
+tree d03e1630363d4881e68929d532746b20b0986b83
+tree 149d63cd5878155c846e8c55d7d8487de283f89e
+tree 312b76e4f64ce14893aeac8591eb3960b065e247
+tree 149d63cd5878155c846e8c55d7d8487de283f89e
 tree d667270a1f7b109f5eb3aaea21ede14b56bfdd6e
 tree 8f51f74cf0163afc9ad68a4b1537288c4558b5a4
 EOF
