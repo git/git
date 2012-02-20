@@ -1,0 +1,146 @@
+Git performance tests
+=====================
+
+This directory holds performance testing scripts for git tools.  The
+first part of this document describes the various ways in which you
+can run them.
+
+When fixing the tools or adding enhancements, you are strongly
+encouraged to add tests in this directory to cover what you are
+trying to fix or enhance.  The later part of this short document
+describes how your test scripts should be organized.
+
+
+Running Tests
+-------------
+
+The easiest way to run tests is to say "make".  This runs all
+the tests on the current git repository.
+
+    === Running 2 tests in this tree ===
+    [...]
+    Test                                     this tree
+    ---------------------------------------------------------
+    0001.1: rev-list --all                   0.54(0.51+0.02)
+    0001.2: rev-list --all --objects         6.14(5.99+0.11)
+    7810.1: grep worktree, cheap regex       0.16(0.16+0.35)
+    7810.2: grep worktree, expensive regex   7.90(29.75+0.37)
+    7810.3: grep --cached, cheap regex       3.07(3.02+0.25)
+    7810.4: grep --cached, expensive regex   9.39(30.57+0.24)
+
+You can compare multiple repositories and even git revisions with the
+'run' script:
+
+    $ ./run . origin/next /path/to/git-tree p0001-rev-list.sh
+
+where . stands for the current git tree.  The full invocation is
+
+    ./run [<revision|directory>...] [--] [<test-script>...]
+
+A '.' argument is implied if you do not pass any other
+revisions/directories.
+
+You can also manually test this or another git build tree, and then
+call the aggregation script to summarize the results:
+
+    $ ./p0001-rev-list.sh
+    [...]
+    $ GIT_BUILD_DIR=/path/to/other/git ./p0001-rev-list.sh
+    [...]
+    $ ./aggregate.perl . /path/to/other/git ./p0001-rev-list.sh
+
+aggregate.perl has the same invocation as 'run', it just does not run
+anything beforehand.
+
+You can set the following variables (also in your config.mak):
+
+    GIT_PERF_REPEAT_COUNT
+	Number of times a test should be repeated for best-of-N
+	measurements.  Defaults to 5.
+
+    GIT_PERF_MAKE_OPTS
+	Options to use when automatically building a git tree for
+	performance testing.  E.g., -j6 would be useful.
+
+    GIT_PERF_REPO
+    GIT_PERF_LARGE_REPO
+	Repositories to copy for the performance tests.  The normal
+	repo should be at least git.git size.  The large repo should
+	probably be about linux-2.6.git size for optimal results.
+	Both default to the git.git you are running from.
+
+You can also pass the options taken by ordinary git tests; the most
+useful one is:
+
+--root=<directory>::
+	Create "trash" directories used to store all temporary data during
+	testing under <directory>, instead of the t/ directory.
+	Using this option with a RAM-based filesystem (such as tmpfs)
+	can massively speed up the test suite.
+
+
+Naming Tests
+------------
+
+The performance test files are named as:
+
+	pNNNN-commandname-details.sh
+
+where N is a decimal digit.  The same conventions for choosing NNNN as
+for normal tests apply.
+
+
+Writing Tests
+-------------
+
+The perf script starts much like a normal test script, except it
+sources perf-lib.sh:
+
+	#!/bin/sh
+	#
+	# Copyright (c) 2005 Junio C Hamano
+	#
+
+	test_description='xxx performance test'
+	. ./perf-lib.sh
+
+After that you will want to use some of the following:
+
+	test_perf_default_repo  # sets up a "normal" repository
+	test_perf_large_repo    # sets up a "large" repository
+
+	test_perf_default_repo sub  # ditto, in a subdir "sub"
+
+        test_checkout_worktree  # if you need the worktree too
+
+At least one of the first two is required!
+
+You can use test_expect_success as usual.  For actual performance
+tests, use
+
+	test_perf 'descriptive string' '
+		command1 &&
+		command2
+	'
+
+test_perf spawns a subshell, for lack of better options.  This means
+that
+
+* you _must_ export all variables that you need in the subshell
+
+* you _must_ flag all variables that you want to persist from the
+  subshell with 'test_export':
+
+	test_perf 'descriptive string' '
+		foo=$(git rev-parse HEAD) &&
+		test_export foo
+	'
+
+  The so-exported variables are automatically marked for export in the
+  shell executing the perf test.  For your convenience, test_export is
+  the same as export in the main shell.
+
+  This feature relies on a bit of magic using 'set' and 'source'.
+  While we have tried to make sure that it can cope with embedded
+  whitespace and other special characters, it will not work with
+  multi-line data.
