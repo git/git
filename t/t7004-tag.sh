@@ -1282,4 +1282,43 @@ test_expect_success 'mixing incompatibles modes and options is forbidden' '
 	test_must_fail git tag -v -s
 '
 
+# check points-at
+
+test_expect_success '--points-at cannot be used in non-list mode' '
+	test_must_fail git tag --points-at=v4.0 foo
+'
+
+test_expect_success '--points-at finds lightweight tags' '
+	echo v4.0 >expect &&
+	git tag --points-at v4.0 >actual &&
+	test_cmp expect actual
+'
+
+test_expect_success '--points-at finds annotated tags of commits' '
+	git tag -m "v4.0, annotated" annotated-v4.0 v4.0 &&
+	echo annotated-v4.0 >expect &&
+	git tag -l --points-at v4.0 "annotated*" >actual &&
+	test_cmp expect actual
+'
+
+test_expect_success '--points-at finds annotated tags of tags' '
+	git tag -m "describing the v4.0 tag object" \
+		annotated-again-v4.0 annotated-v4.0 &&
+	cat >expect <<-\EOF &&
+	annotated-again-v4.0
+	annotated-v4.0
+	EOF
+	git tag --points-at=annotated-v4.0 >actual &&
+	test_cmp expect actual
+'
+
+test_expect_success 'multiple --points-at are OR-ed together' '
+	cat >expect <<-\EOF &&
+	v2.0
+	v3.0
+	EOF
+	git tag --points-at=v2.0 --points-at=v3.0 >actual &&
+	test_cmp expect actual
+'
+
 test_done
