@@ -1,9 +1,9 @@
 To: git@vger.kernel.org
-Subject: What's cooking in git.git (Feb 2012, #06; Thu, 16)
-X-master-at: b0d66b5110faaeb395610ba43b6eb70a18ab5e25
-X-next-at: a9004c5cb2204cf950debab328e86de5eefb9da4
+Subject: What's cooking in git.git (Feb 2012, #07; Mon, 20)
+X-master-at: b3a769dc355b32c95783dc07f59e4dfebdd8bdc7
+X-next-at: 80e3ff2c99bd723b0dfb64b7283cf92e398c61b6
 
-What's cooking in git.git (Feb 2012, #06; Thu, 16)
+What's cooking in git.git (Feb 2012, #07; Mon, 20)
 --------------------------------------------------
 
 Here are the topics that have been cooking.  Commits prefixed with '-' are
@@ -21,87 +21,6 @@ repositories listed at
 
 --------------------------------------------------
 [Graduated to "master"]
-
-* bl/gitweb-project-filter (2012-02-12) 1 commit
-  (merged to 'next' on 2012-02-13 at 35366b8)
- + gitweb: Harden and improve $project_filter page title
-
-An update to the new feature to "gitweb" to show list of projects for
-intermediate levels in directory hierarchies, already slated for 1.7.10.
-
-* dp/i18n-libcharset (2012-02-13) 1 commit
-  (merged to 'next' on 2012-02-13 at 528de77)
- + Makefile: introduce CHARSET_LIB to link with -lcharset
-
-Some systems need to explicitly link -lcharset to get locale_charset().
-
-* jk/git-dir-lookup (2012-02-02) 1 commit
-  (merged to 'next' on 2012-02-05 at 1856d74)
- + standardize and improve lookup rules for external local repos
-
-When you have both .../foo and .../foo.git, "git clone .../foo" did not
-favor the former but the latter.
-
-* jk/grep-binary-attribute (2012-02-02) 9 commits
-  (merged to 'next' on 2012-02-05 at 9dffa7e)
- + grep: pre-load userdiff drivers when threaded
- + grep: load file data after checking binary-ness
- + grep: respect diff attributes for binary-ness
- + grep: cache userdiff_driver in grep_source
- + grep: drop grep_buffer's "name" parameter
- + convert git-grep to use grep_source interface
- + grep: refactor the concept of "grep source" into an object
- + grep: move sha1-reading mutex into low-level code
- + grep: make locking flag global
-
-Fixes a longstanding bug that there was no way to tell "git grep" that a
-path may look like text but it is not, which "git diff" can do using the
-attributes system. Now "git grep" honors the same "binary" (or "-diff")
-attribute.
-
-* jk/userdiff-config-simplify (2012-02-07) 1 commit
-  (merged to 'next' on 2012-02-10 at e9854c1)
- + drop odd return value semantics from userdiff_config
-
-Code cleanup.
-
-* jn/ancient-meld-support (2012-02-10) 1 commit
-  (merged to 'next' on 2012-02-13 at 28aca31)
- + mergetools/meld: Use --help output to detect --output support
-
-More reliably tell if the given version of "meld" supports --output
-option.
-
-* lt/pull-no-edit (2012-02-12) 1 commit
-  (merged to 'next' on 2012-02-13 at 352f0cb)
- + "git pull" doesn't know "--edit"
-
-For 1.7.10 where "git merge" by default spawns the editor when it can
-automatically commit to record the resulting merge.
-
-* mh/war-on-extra-refs (2012-02-12) 7 commits
-  (merged to 'next' on 2012-02-13 at adb7353)
- + refs: remove the extra_refs API
- + clone: do not add alternate references to extra_refs
- + everything_local(): mark alternate refs as complete
- + fetch-pack.c: inline insert_alternate_refs()
- + fetch-pack.c: rename some parameters from "path" to "refname"
- + clone.c: move more code into the "if (refs)" conditional
- + t5700: document a failure of alternates to affect fetch
-
-Internal API clean-up that is very cleanly done.
-
-* nd/pack-objects-parseopt (2012-02-01) 3 commits
-  (merged to 'next' on 2012-02-05 at d0dc25d)
- + pack-objects: convert to use parse_options()
- + pack-objects: remove bogus comment
- + pack-objects: do not accept "--index-version=version,"
-
-"pack-objects" learned use parse-options, losing custom command line
-parsing code.
-
---------------------------------------------------
-[New Topics]
 
 * cb/maint-rev-list-verify-object (2012-02-13) 1 commit
   (merged to 'next' on 2012-02-16 at a407b9a)
@@ -131,14 +50,19 @@ resulting in false indication of success.
 The transport programs ignored --no-progress and showed progress when
 sending their output to a terminal.
 
-* jk/diff-highlight (2012-02-13) 5 commits
- - diff-highlight: document some non-optimal cases
- - diff-highlight: match multi-line hunks
- - diff-highlight: refactor to prepare for multi-line hunks
- - diff-highlight: don't highlight whole lines
- - diff-highlight: make perl strict and warnings fatal
+* jc/diff-stat-scaler (2012-02-14) 1 commit
+  (merged to 'next' on 2012-02-16 at 404d336)
+ + diff --stat: show bars of same length for paths with same amount of changes
 
-Updates diff-highlight (in contrib/).
+The output from "git diff --stat" for two paths that have the same amount
+of changes showed graph bars of different length due to the way we handled
+rounding errors.
+
+* tg/tag-points-at (2012-02-13) 2 commits
+  (merged to 'next' on 2012-02-13 at a8f4046)
+ + builtin/tag.c: Fix a sparse warning
+  (merged to 'next' on 2012-02-10 at 4bff88f)
+ + tag: add --points-at list option
 
 * zj/decimal-width (2012-02-14) 1 commit
   (merged to 'next' on 2012-02-16 at 72805c4)
@@ -155,12 +79,80 @@ Refactoring.
 Fixes "git -p cmd" for any subcommand that cares about the true terminal
 width.
 
+--------------------------------------------------
+[New Topics]
+
+* fc/push-prune (2012-02-17) 2 commits
+ - remote: reorganize check_pattern_match()
+ - remote: use a local variable in match_push_refs()
+
+The first two of the three-patch RFC series.  The second one and the third
+one (not queued) both need better explanation, and the third one also had
+a handful of minor yuck factors all of which should be straightforward to
+improve.
+
+Expecting a reroll.
+
+* jc/add-refresh-unmerged (2012-02-17) 1 commit
+ - refresh_index: do not show unmerged path that is outside pathspec
+
+"git add --refresh <pathspec>" warned about unmerged paths outside the
+given pathspec.
+
+* jc/diff-ignore-case (2012-02-19) 6 commits
+ - diff -i
+ - diff: --ignore-case
+ - xdiff: introduce XDF_IGNORE_CASE
+ - xdiff: introduce XDF_INEXACT_MATCH
+ - xdiff: PATIENCE/HISTOGRAM are not independent option bits
+ - xdiff: remove XDL_PATCH_* macros
+
+"git diff" learned "--ignore-case" option.
+
+* jn/gitweb-hilite-regions (2012-02-19) 5 commits
+ - gitweb: Use esc_html_match_hl() in 'grep' search
+ - gitweb: Highlight matched part of shortened project description
+ - gitweb: Highlight matched part of project description when searching projects
+ - gitweb: Highlight matched part of project name when searching projects
+ - gitweb: Introduce esc_html_hl_regions
+ (this branch uses jn/gitweb-search-optim.)
+
+Not reviewed and do not know what this is about yet ;-).
+
+* jn/gitweb-search-optim (2012-02-19) 3 commits
+ - gitweb: Faster project search
+ - gitweb: Option for filling only specified info in fill_project_list_info
+ - gitweb: Refactor checking if part of project info need filling
+ (this branch is used by jn/gitweb-hilite-regions.)
+
+The API introduced in the second step still has yucky design, but at least
+it is more clear than the previous rounds what this is trying to do.
+
+* js/configure-libintl (2012-02-20) 1 commit
+ - configure: don't use -lintl when there is no gettext support
+
+Build fix for autoconf, meant for 'maint' track.
+
+* pj/remote-set-branches-usage-fix (2012-02-19) 1 commit
+ - remote: fix set-branches usage and documentation
+
+Documentation fix.
+
+--------------------------------------------------
+[Stalled]
+
+* jl/maint-submodule-relative (2012-02-09) 2 commits
+ - submodules: always use a relative path from gitdir to work tree
+ - submodules: always use a relative path to gitdir
+
+The second one looked iffy.
+
 * hv/submodule-recurse-push (2012-02-13) 3 commits
  - push: teach --recurse-submodules the on-demand option
  - Refactor submodule push check to use string list instead of integer
  - Teach revision walking machinery to walk multiple times sequencially
 
-The bottom one was not clearly explained.
+The bottom one was not clearly explained and needs a reroll.
 
 * zj/diff-stat-dyncol (2012-02-15) 6 commits
  . diff --stat: use less columns for change counts
@@ -169,38 +161,9 @@ The bottom one was not clearly explained.
  - (squash to the previous -- replace the log message with this)
  - diff --stat: tests for long filenames and big change counts
  - Merge branches zj/decimal-width and zj/term-columns
- (this branch uses zj/decimal-width and zj/term-columns.)
 
-* jc/diff-stat-scaler (2012-02-14) 1 commit
-  (merged to 'next' on 2012-02-16 at 404d336)
- + diff --stat: show bars of same length for paths with same amount of changes
-
-The output from "git diff --stat" for two paths that have the same amount
-of changes showed graph bars of different length due to the way we handled
-rounding errors.
-
-* jn/gitweb-unborn-head (2012-02-16) 1 commit
- - gitweb: Deal with HEAD pointing to unborn branch in "heads" view
-
-"gitweb" compared non-existent value of HEAD with the names of commit
-objects at tips of branches, triggering runtime warnings.
-
-* tr/perftest (2012-02-16) 3 commits
- . Add a performance test for git-grep
- . Introduce a performance testing framework
- . Move the user-facing test library to test-lib-functions.sh
-
-When merged to 'pu' this seems to break quite a lot of tests.  One way it
-does so is by removing the write_script helper, but there may be others.
-
-* jb/required-filter (2012-02-16) 1 commit
- - Add a setting to require a filter to be successful
-
-A content filter used to be a way to make the recorded contents "more
-useful", but this defines a way to optionally mark a filter "required".
-
---------------------------------------------------
-[Stalled]
+I am beginning to think that the last one should wait until the dust from
+the earlier part settles.
 
 * jc/advise-push-default (2011-12-18) 1 commit
  - push: hint to use push.default=upstream when appropriate
@@ -268,35 +231,61 @@ Expecting a reroll on top of zj/term-columns topic.
 --------------------------------------------------
 [Cooking]
 
-* jk/config-include (2012-02-16) 9 commits
- - config: add include directive
- - config: eliminate config_exclusive_filename
- - config: stop using config_exclusive_filename
- - config: provide a version of git_config with more options
- - config: teach git_config_rename_section a file argument
- - config: teach git_config_set_multivar_in_file a default path
- - config: copy the return value of prefix_filename
- - t1300: add missing &&-chaining
+* jk/diff-highlight (2012-02-13) 5 commits
+  (merged to 'next' on 2012-02-20 at ba040ae)
+ + diff-highlight: document some non-optimal cases
+ + diff-highlight: match multi-line hunks
+ + diff-highlight: refactor to prepare for multi-line hunks
+ + diff-highlight: don't highlight whole lines
+ + diff-highlight: make perl strict and warnings fatal
+
+Updates diff-highlight (in contrib/).
+
+* jn/gitweb-unborn-head (2012-02-17) 1 commit
+  (merged to 'next' on 2012-02-20 at 80e3ff2)
+ + gitweb: Fix "heads" view when there is no current branch
+
+"gitweb" compared non-existent value of HEAD with the names of commit
+objects at tips of branches, triggering runtime warnings.
+
+* tr/perftest (2012-02-17) 3 commits
+  (merged to 'next' on 2012-02-20 at 4c75ba9)
+ + Add a performance test for git-grep
+ + Introduce a performance testing framework
+ + Move the user-facing test library to test-lib-functions.sh
+
+* jb/required-filter (2012-02-17) 1 commit
+ . Add a setting to require a filter to be successful
+
+A content filter used to be a way to make the recorded contents "more
+useful", but this defines a way to optionally mark a filter "required".
+
+A few test in t0021 use 'false' as the filter, which can exit without
+reading any byte from us, before we start writing and causes us to die
+with SIGPIPE, leading to intermittent test failure.  I think treating this
+as a failure of running the filter (the end user's filter should read what
+is fed in full, produce its output and write the result back to us) is the
+right thing to do, so this patch needs update the surrounding code to
+handle such a situation better, probably by using sigchain_push(SIGPIPE)
+or something.
+
+* jk/config-include (2012-02-17) 10 commits
+  (merged to 'next' on 2012-02-20 at 7b150b7)
+ + config: add include directive
+ + config: eliminate config_exclusive_filename
+ + config: stop using config_exclusive_filename
+ + config: provide a version of git_config with more options
+ + config: teach git_config_rename_section a file argument
+ + config: teach git_config_set_multivar_in_file a default path
+ + config: copy the return value of prefix_filename
+ + t1300: add missing &&-chaining
+ + docs/api-config: minor clarifications
  + docs: add a basic description of the config API
 
 An assignment to the include.path pseudo-variable causes the named file
 to be included in-place when Git looks up configuration variables.
 
-Reverted the earlier round from 'next'.
-
-* tg/tag-points-at (2012-02-13) 2 commits
-  (merged to 'next' on 2012-02-13 at a8f4046)
- + builtin/tag.c: Fix a sparse warning
-  (merged to 'next' on 2012-02-10 at 4bff88f)
- + tag: add --points-at list option
-
-Will merge to 'master'.
-
-* jl/maint-submodule-relative (2012-02-09) 2 commits
- - submodules: always use a relative path from gitdir to work tree
- - submodules: always use a relative path to gitdir
-
-The second one looked iffy.
+Reverted the earlier round from 'next' and then fixed up further.
 
 * ld/git-p4-expanded-keywords (2012-02-14) 1 commit
   (merged to 'next' on 2012-02-16 at a9004c5)
@@ -304,3 +293,5 @@ The second one looked iffy.
 
 Teach git-p4 to unexpand $RCS$-like keywords that are embedded in
 tracked contents in order to reduce unnecessary merge conflicts.
+
+Is this ready for 'master'?
