@@ -24,4 +24,7 @@ Fixes since v1.7.9.1
 
 * Search box in "gitweb" did not accept non-ASCII characters correctly.
 
+* Search interface of "gitweb" did not show multiple matches in the same file
+  correctly.
+
 Also contains minor fixes and documentation updates.

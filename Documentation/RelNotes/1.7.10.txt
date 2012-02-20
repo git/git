@@ -31,10 +31,17 @@ UI, Workflows & Features
    lines are taken from the postimage, in order to make it easier to
    view the output.
 
+ * "git grep" pays attention to -diff (hence -binary) attributes now.
+
+ * "git tag --list" can be given "--points-at <object>" to limit its
+   output to those that point at the given object.
+
  * "git merge" in an interactive session learned to spawn the editor
    by default to let the user edit the auto-generated merge message,
    to encourage people to explain their merges better. Legacy scripts
    can export MERGE_AUTOEDIT=no to retain the historical behaviour.
+   Both "git merge" and "git pull" can be given --no-edit from the
+   command line to accept the auto-generated merge message.
 
  * "gitweb" allows intermediate entries in the directory hierarchy
    that leads to a projects to be clicked, which in turn shows the
@@ -46,13 +53,16 @@ Performance
    to parse_object() have been eliminated, to help performance in
    repositories with excessive number of refs.
 
-Internal Implementation
+Internal Implementation (please report possible regressions)
 
  * Recursive call chains in "git index-pack" to deal with long delta
    chains have been flattened, to reduce the stack footprint.
 
- * Use of add_extra_ref() API is slowly getting removed, to make it
-   possible to cleanly restructure the overall refs API.
+ * Use of add_extra_ref() API is now gone, to make it possible to
+   cleanly restructure the overall refs API.
+
+ * The command line parser of "git pack-objects" now uses parse-options
+   API.
 
  * The test suite supports the new "test_pause" helper function.
 
@@ -69,35 +79,41 @@ Unless otherwise noted, all the fixes since v1.7.9 in the maintenance
 releases are contained in this release (see release notes to them for
 details).
 
- * The error message emitted when we see an empty loose object was
-   not phrased correctly.
-   (merge 33e42de mm/empty-loose-error-message later to maint).
+ * When you have both .../foo and .../foo.git, "git clone .../foo" did not
+   favor the former but the latter.
+   (merge b3256eb jk/git-dir-lookup later to maint).
 
- * "git commit" refused to create a commit when entries added with
-   "add -N" remained in the index, without telling Git what their content
-   in the next commit should be. We should have created the commit without
-   these paths.
-   (merge 3f6d56d jc/maint-commit-ignore-i-t-a later to maint).
+ * Some systems need to explicitly link -lcharset to get locale_charset().
+   (merge b522528 dp/i18n-libcharset later to maint).
 
- * Search box in "gitweb" did not accept non-ASCII characters correctly.
-   (merge 84d9e2d jn/gitweb-search-utf-8 later to maint).
+ * The output from "git diff --stat" for two paths that have the same
+   amount of changes showed graph bars of different length due to the
+   way we handled rounding errors.
+   (merge 2eeeef2 jc/diff-stat-scaler later to maint).
 
- * The code to ask for password did not fall back to the terminal
-   input when GIT_ASKPASS is set but does not work (e.g. lack of X
-   with GUI askpass helper).
-   (merge 84d7273 jk/prompt-fallback-to-tty later to maint).
+ * We failed to give the true terminal width to any subcommand when
+   they are invoked with the pager, i.e. "git -p cmd".
+   (merge ad6c373 zj/term-columns later to maint).
 
- * map_user() was not rewriting its output correctly, which resulted
-   in the user visible symptom that "git blame -e" sometimes showed
-   excess '>' at the end of email addresses.
-   (merge f026358 jc/maint-mailmap-output later to maint).
+ * The transport programs ignored --no-progress and showed progress when
+   sending their output to a terminal.
+   (merge 01fdc21 cb/transfer-no-progress later to maint).
 
- * "checkout -b" did not allow switching out of an unborn branch.
-   (merge abe1998 jc/checkout-out-of-unborn later to maint).
+ * Sometimes error status detected by a check in an earlier phase of
+   receive-pack (the other end of 'git push') was lost by later
+   checks, resulting in false indication of success.
+   (merge ef7e93d cb/receive-pack-keep-errors later to maint).
+
+ * t5541 ignored user-supplied port number used for HTTP server testing
+   (merge d202a51 cb/maint-t5541-make-server-port-portable later to maint).
+
+ * "rev-list --verify" sometimes skipped verification depending on the
+   phase of the moon, which dates back to 1.7.8.x series.
+   (merge cb8da70 cb/maint-rev-list-verify-object later to maint).
 
 ---
 exec >/var/tmp/1
-O=v1.7.9-249-gaa47ec9
+O=v1.7.9.1-264-g76bdcf0
 echo O=$(git describe)
 git log --first-parent --oneline ^maint $O..
 echo
