@@ -8,8 +8,6 @@ UI, Workflows & Features
 
  * Improved handling of views, labels and branches in git-p4 (in contrib).
 
- * Updated command line arguments completion script for zsh (in contrib).
-
  * "vcs-svn"/"svn-fe" learned to read dumps with svn-deltas and
    support incremental imports.
 
@@ -22,16 +20,12 @@ UI, Workflows & Features
  * "git clone" learned to detach the HEAD in the resulting repository
    when the source repository's HEAD does not point to a branch.
 
- * The commands in the "git diff" family and "git apply --stat" that
-   count the number of files changed and the number of lines
-   inserted/deleted have been updated to match the output from
-   "diffstat".  This also opens the door to i18n this line.
-
  * When showing a patch while ignoring whitespace changes, the context
    lines are taken from the postimage, in order to make it easier to
    view the output.
 
- * "git grep" pays attention to -diff (hence -binary) attributes now.
+ * "diff-highlight" filter (in contrib/) was updated to produce more
+   aesthetically pleasing output.
 
  * "git tag --list" can be given "--points-at <object>" to limit its
    output to those that point at the given object.
@@ -79,41 +73,13 @@ Unless otherwise noted, all the fixes since v1.7.9 in the maintenance
 releases are contained in this release (see release notes to them for
 details).
 
- * When you have both .../foo and .../foo.git, "git clone .../foo" did not
-   favor the former but the latter.
-   (merge b3256eb jk/git-dir-lookup later to maint).
-
- * Some systems need to explicitly link -lcharset to get locale_charset().
-   (merge b522528 dp/i18n-libcharset later to maint).
-
- * The output from "git diff --stat" for two paths that have the same
-   amount of changes showed graph bars of different length due to the
-   way we handled rounding errors.
-   (merge 2eeeef2 jc/diff-stat-scaler later to maint).
-
- * We failed to give the true terminal width to any subcommand when
-   they are invoked with the pager, i.e. "git -p cmd".
-   (merge ad6c373 zj/term-columns later to maint).
-
- * The transport programs ignored --no-progress and showed progress when
-   sending their output to a terminal.
-   (merge 01fdc21 cb/transfer-no-progress later to maint).
-
- * Sometimes error status detected by a check in an earlier phase of
-   receive-pack (the other end of 'git push') was lost by later
-   checks, resulting in false indication of success.
-   (merge ef7e93d cb/receive-pack-keep-errors later to maint).
-
- * t5541 ignored user-supplied port number used for HTTP server testing
-   (merge d202a51 cb/maint-t5541-make-server-port-portable later to maint).
-
- * "rev-list --verify" sometimes skipped verification depending on the
-   phase of the moon, which dates back to 1.7.8.x series.
-   (merge cb8da70 cb/maint-rev-list-verify-object later to maint).
+ * "gitweb" used to drop warnings in the log file when "heads" view is
+   accessed in a repository whose HEAD does not point at a valid
+   branch.
 
 ---
 exec >/var/tmp/1
-O=v1.7.9.1-264-g76bdcf0
+O=v1.7.9.1-289-g5609586
 echo O=$(git describe)
 git log --first-parent --oneline ^maint $O..
 echo
