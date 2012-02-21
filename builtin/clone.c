@@ -45,7 +45,7 @@ static char *option_branch = NULL;
 static const char *real_git_dir;
 static char *option_upload_pack = "git-upload-pack";
 static int option_verbosity;
-static int option_progress;
+static int option_progress = -1;
 static struct string_list option_config;
 static struct string_list option_reference;
 
@@ -60,8 +60,8 @@ static int opt_parse_reference(const struct option *opt, const char *arg, int un
 
 static struct option builtin_clone_options[] = {
 	OPT__VERBOSITY(&option_verbosity),
-	OPT_BOOLEAN(0, "progress", &option_progress,
-			"force progress reporting"),
+	OPT_BOOL(0, "progress", &option_progress,
+		 "force progress reporting"),
 	OPT_BOOLEAN('n', "no-checkout", &option_no_checkout,
 		    "don't create a checkout"),
 	OPT_BOOLEAN(0, "bare", &option_bare, "create a bare repository"),

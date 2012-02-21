@@ -736,7 +736,7 @@ static int get_pack(int xd[2], char **pack_lockfile)
 	}
 	else {
 		*av++ = "unpack-objects";
-		if (args.quiet)
+		if (args.quiet || args.no_progress)
 			*av++ = "-q";
 	}
 	if (*hdr_arg)

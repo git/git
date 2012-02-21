@@ -19,7 +19,7 @@ static int thin;
 static int deleterefs;
 static const char *receivepack;
 static int verbosity;
-static int progress;
+static int progress = -1;
 
 static const char **refspec;
 static int refspec_nr;
@@ -260,7 +260,7 @@ int cmd_push(int argc, const char **argv, const char *prefix)
 		OPT_STRING( 0 , "exec", &receivepack, "receive-pack", "receive pack program"),
 		OPT_BIT('u', "set-upstream", &flags, "set upstream for git pull/status",
 			TRANSPORT_PUSH_SET_UPSTREAM),
-		OPT_BOOLEAN(0, "progress", &progress, "force progress reporting"),
+		OPT_BOOL(0, "progress", &progress, "force progress reporting"),
 		OPT_END()
 	};
 
