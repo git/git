@@ -642,8 +642,10 @@ static void check_aliased_updates(struct command *commands)
 	}
 	sort_string_list(&ref_list);
 
-	for (cmd = commands; cmd; cmd = cmd->next)
-		check_aliased_update(cmd, &ref_list);
+	for (cmd = commands; cmd; cmd = cmd->next) {
+		if (!cmd->error_string)
+			check_aliased_update(cmd, &ref_list);
+	}
 
 	string_list_clear(&ref_list, 0);
 }
@@ -707,8 +709,10 @@ static void execute_commands(struct command *commands, const char *unpacker_erro
 		set_connectivity_errors(commands);
 
 	if (run_receive_hook(commands, pre_receive_hook, 0)) {
-		for (cmd = commands; cmd; cmd = cmd->next)
-			cmd->error_string = "pre-receive hook declined";
+		for (cmd = commands; cmd; cmd = cmd->next) {
+			if (!cmd->error_string)
+				cmd->error_string = "pre-receive hook declined";
+		}
 		return;
 	}
 
@@ -717,9 +721,15 @@ static void execute_commands(struct command *commands, const char *unpacker_erro
 	free(head_name_to_free);
 	head_name = head_name_to_free = resolve_refdup("HEAD", sha1, 0, NULL);
 
-	for (cmd = commands; cmd; cmd = cmd->next)
-		if (!cmd->skip_update)
-			cmd->error_string = update(cmd);
+	for (cmd = commands; cmd; cmd = cmd->next) {
+		if (cmd->error_string)
+			continue;
+
+		if (cmd->skip_update)
+			continue;
+
+		cmd->error_string = update(cmd);
+	}
 }
 
 static struct command *read_head_info(void)
