@@ -778,4 +778,13 @@ test_expect_success \
 	'echo "\$projects_list_group_categories = 1;" >>gitweb_config.perl &&
 	 gitweb_run'
 
+# ----------------------------------------------------------------------
+# unborn branches
+
+test_expect_success \
+	'unborn HEAD: "summary" page (with "heads" subview)' \
+	'git checkout orphan_branch || git checkout --orphan orphan_branch &&
+	 test_when_finished "git checkout master" &&
+	 gitweb_run "p=.git;a=summary"'
+
 test_done
