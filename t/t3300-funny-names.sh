@@ -167,7 +167,7 @@ test_expect_success TABS_IN_FILENAMES 'git diff-tree delete with-funny' \
 test_expect_success TABS_IN_FILENAMES 'setup expect' '
 cat >expected <<\EOF
  "tabs\t,\" (dq) and spaces"
- 1 files changed, 0 insertions(+), 0 deletions(-)
+ 1 file changed, 0 insertions(+), 0 deletions(-)
 EOF
 '
 

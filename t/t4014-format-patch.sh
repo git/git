@@ -520,7 +520,7 @@ test_expect_success 'shortlog of cover-letter wraps overly-long onelines' '
 cat > expect << EOF
 ---
  file |   16 ++++++++++++++++
- 1 files changed, 16 insertions(+), 0 deletions(-)
+ 1 file changed, 16 insertions(+)
 
 diff --git a/file b/file
 index 40f36c6..2dc5c23 100644

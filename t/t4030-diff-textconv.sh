@@ -86,7 +86,7 @@ test_expect_success 'status -v produces text' '
 
 cat >expect.stat <<'EOF'
  file |  Bin 2 -> 4 bytes
- 1 files changed, 0 insertions(+), 0 deletions(-)
+ 1 file changed, 0 insertions(+), 0 deletions(-)
 EOF
 test_expect_success 'diffstat does not run textconv' '
 	echo file diff=fail >.gitattributes &&
