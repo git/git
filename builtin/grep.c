@@ -29,25 +29,12 @@ static int use_threads = 1;
 #define THREADS 8
 static pthread_t threads[THREADS];
 
-static void *load_sha1(const unsigned char *sha1, unsigned long *size,
-		       const char *name);
-static void *load_file(const char *filename, size_t *sz);
-
-enum work_type {WORK_SHA1, WORK_FILE};
-
 /* We use one producer thread and THREADS consumer
  * threads. The producer adds struct work_items to 'todo' and the
  * consumers pick work items from the same array.
  */
 struct work_item {
-	enum work_type type;
-	char *name;
-
-	/* if type == WORK_SHA1, then 'identifier' is a SHA1,
-	 * otherwise type == WORK_FILE, and 'identifier' is a NUL
-	 * terminated filename.
-	 */
-	void *identifier;
+	struct grep_source source;
 	char done;
 	struct strbuf out;
 };
@@ -85,21 +72,6 @@ static inline void grep_unlock(void)
 		pthread_mutex_unlock(&grep_mutex);
 }
 
-/* Used to serialize calls to read_sha1_file. */
-static pthread_mutex_t read_sha1_mutex;
-
-static inline void read_sha1_lock(void)
-{
-	if (use_threads)
-		pthread_mutex_lock(&read_sha1_mutex);
-}
-
-static inline void read_sha1_unlock(void)
-{
-	if (use_threads)
-		pthread_mutex_unlock(&read_sha1_mutex);
-}
-
 /* Signalled when a new work_item is added to todo. */
 static pthread_cond_t cond_add;
 
@@ -113,7 +85,8 @@ static pthread_cond_t cond_result;
 
 static int skip_first_line;
 
-static void add_work(enum work_type type, char *name, void *id)
+static void add_work(struct grep_opt *opt, enum grep_source_type type,
+		     const char *name, const void *id)
 {
 	grep_lock();
 
@@ -121,9 +94,9 @@ static void add_work(enum work_type type, char *name, void *id)
 		pthread_cond_wait(&cond_write, &grep_mutex);
 	}
 
-	todo[todo_end].type = type;
-	todo[todo_end].name = name;
-	todo[todo_end].identifier = id;
+	grep_source_init(&todo[todo_end].source, type, name, id);
+	if (opt->binary != GREP_BINARY_TEXT)
+		grep_source_load_driver(&todo[todo_end].source);
 	todo[todo_end].done = 0;
 	strbuf_reset(&todo[todo_end].out);
 	todo_end = (todo_end + 1) % ARRAY_SIZE(todo);
@@ -149,21 +122,6 @@ static struct work_item *get_work(void)
 	}
 	grep_unlock();
 	return ret;
-}
-
-static void grep_sha1_async(struct grep_opt *opt, char *name,
-			    const unsigned char *sha1)
-{
-	unsigned char *s;
-	s = xmalloc(20);
-	memcpy(s, sha1, 20);
-	add_work(WORK_SHA1, name, s);
-}
-
-static void grep_file_async(struct grep_opt *opt, char *name,
-			    const char *filename)
-{
-	add_work(WORK_FILE, name, xstrdup(filename));
 }
 
 static void work_done(struct work_item *w)
@@ -192,8 +150,7 @@ static void work_done(struct work_item *w)
 
 			write_or_die(1, p, len);
 		}
-		free(w->name);
-		free(w->identifier);
+		grep_source_clear(&w->source);
 	}
 
 	if (old_done != todo_done)
@@ -216,25 +173,8 @@ static void *run(void *arg)
 			break;
 
 		opt->output_priv = w;
-		if (w->type == WORK_SHA1) {
-			unsigned long sz;
-			void* data = load_sha1(w->identifier, &sz, w->name);
-
-			if (data) {
-				hit |= grep_buffer(opt, w->name, data, sz);
-				free(data);
-			}
-		} else if (w->type == WORK_FILE) {
-			size_t sz;
-			void* data = load_file(w->identifier, &sz);
-			if (data) {
-				hit |= grep_buffer(opt, w->name, data, sz);
-				free(data);
-			}
-		} else {
-			assert(0);
-		}
-
+		hit |= grep_source(opt, &w->source);
+		grep_source_clear_data(&w->source);
 		work_done(w);
 	}
 	free_grep_patterns(arg);
@@ -254,11 +194,12 @@ static void start_threads(struct grep_opt *opt)
 	int i;
 
 	pthread_mutex_init(&grep_mutex, NULL);
-	pthread_mutex_init(&read_sha1_mutex, NULL);
+	pthread_mutex_init(&grep_read_mutex, NULL);
 	pthread_mutex_init(&grep_attr_mutex, NULL);
 	pthread_cond_init(&cond_add, NULL);
 	pthread_cond_init(&cond_write, NULL);
 	pthread_cond_init(&cond_result, NULL);
+	grep_use_locks = 1;
 
 	for (i = 0; i < ARRAY_SIZE(todo); i++) {
 		strbuf_init(&todo[i].out, 0);
@@ -302,17 +243,16 @@ static int wait_all(void)
 	}
 
 	pthread_mutex_destroy(&grep_mutex);
-	pthread_mutex_destroy(&read_sha1_mutex);
+	pthread_mutex_destroy(&grep_read_mutex);
 	pthread_mutex_destroy(&grep_attr_mutex);
 	pthread_cond_destroy(&cond_add);
 	pthread_cond_destroy(&cond_write);
 	pthread_cond_destroy(&cond_result);
+	grep_use_locks = 0;
 
 	return hit;
 }
 #else /* !NO_PTHREADS */
-#define read_sha1_lock()
-#define read_sha1_unlock()
 
 static int wait_all(void)
 {
@@ -374,21 +314,9 @@ static void *lock_and_read_sha1_file(const unsigned char *sha1, enum object_type
 {
 	void *data;
 
-	read_sha1_lock();
+	grep_read_lock();
 	data = read_sha1_file(sha1, type, size);
-	read_sha1_unlock();
-	return data;
-}
-
-static void *load_sha1(const unsigned char *sha1, unsigned long *size,
-		       const char *name)
-{
-	enum object_type type;
-	void *data = lock_and_read_sha1_file(sha1, &type, size);
-
-	if (!data)
-		error(_("'%s': unable to read %s"), name, sha1_to_hex(sha1));
-
+	grep_read_unlock();
 	return data;
 }
 
@@ -396,7 +324,6 @@ static int grep_sha1(struct grep_opt *opt, const unsigned char *sha1,
 		     const char *filename, int tree_name_len)
 {
 	struct strbuf pathbuf = STRBUF_INIT;
-	char *name;
 
 	if (opt->relative && opt->prefix_length) {
 		quote_path_relative(filename + tree_name_len, -1, &pathbuf,
@@ -406,87 +333,51 @@ static int grep_sha1(struct grep_opt *opt, const unsigned char *sha1,
 		strbuf_addstr(&pathbuf, filename);
 	}
 
-	name = strbuf_detach(&pathbuf, NULL);
-
 #ifndef NO_PTHREADS
 	if (use_threads) {
-		grep_sha1_async(opt, name, sha1);
+		add_work(opt, GREP_SOURCE_SHA1, pathbuf.buf, sha1);
+		strbuf_release(&pathbuf);
 		return 0;
 	} else
 #endif
 	{
+		struct grep_source gs;
 		int hit;
-		unsigned long sz;
-		void *data = load_sha1(sha1, &sz, name);
-		if (!data)
-			hit = 0;
-		else
-			hit = grep_buffer(opt, name, data, sz);
 
-		free(data);
-		free(name);
+		grep_source_init(&gs, GREP_SOURCE_SHA1, pathbuf.buf, sha1);
+		strbuf_release(&pathbuf);
+		hit = grep_source(opt, &gs);
+
+		grep_source_clear(&gs);
 		return hit;
 	}
-}
-
-static void *load_file(const char *filename, size_t *sz)
-{
-	struct stat st;
-	char *data;
-	int i;
-
-	if (lstat(filename, &st) < 0) {
-	err_ret:
-		if (errno != ENOENT)
-			error(_("'%s': %s"), filename, strerror(errno));
-		return NULL;
-	}
-	if (!S_ISREG(st.st_mode))
-		return NULL;
-	*sz = xsize_t(st.st_size);
-	i = open(filename, O_RDONLY);
-	if (i < 0)
-		goto err_ret;
-	data = xmalloc(*sz + 1);
-	if (st.st_size != read_in_full(i, data, *sz)) {
-		error(_("'%s': short read %s"), filename, strerror(errno));
-		close(i);
-		free(data);
-		return NULL;
-	}
-	close(i);
-	data[*sz] = 0;
-	return data;
 }
 
 static int grep_file(struct grep_opt *opt, const char *filename)
 {
 	struct strbuf buf = STRBUF_INIT;
-	char *name;
 
 	if (opt->relative && opt->prefix_length)
 		quote_path_relative(filename, -1, &buf, opt->prefix);
 	else
 		strbuf_addstr(&buf, filename);
-	name = strbuf_detach(&buf, NULL);
 
 #ifndef NO_PTHREADS
 	if (use_threads) {
-		grep_file_async(opt, name, filename);
+		add_work(opt, GREP_SOURCE_FILE, buf.buf, filename);
+		strbuf_release(&buf);
 		return 0;
 	} else
 #endif
 	{
+		struct grep_source gs;
 		int hit;
-		size_t sz;
-		void *data = load_file(filename, &sz);
-		if (!data)
-			hit = 0;
-		else
-			hit = grep_buffer(opt, name, data, sz);
 
-		free(data);
-		free(name);
+		grep_source_init(&gs, GREP_SOURCE_FILE, buf.buf, filename);
+		strbuf_release(&buf);
+		hit = grep_source(opt, &gs);
+
+		grep_source_clear(&gs);
 		return hit;
 	}
 }
@@ -615,10 +506,10 @@ static int grep_object(struct grep_opt *opt, const struct pathspec *pathspec,
 		struct strbuf base;
 		int hit, len;
 
-		read_sha1_lock();
+		grep_read_lock();
 		data = read_object_with_reference(obj->sha1, tree_type,
 						  &size, NULL);
-		read_sha1_unlock();
+		grep_read_unlock();
 
 		if (!data)
 			die(_("unable to read tree (%s)"), sha1_to_hex(obj->sha1));
@@ -1029,8 +920,6 @@ int cmd_grep(int argc, const char **argv, const char *prefix)
 #else
 	use_threads = 0;
 #endif
-
-	opt.use_threads = use_threads;
 
 #ifndef NO_PTHREADS
 	if (use_threads) {
