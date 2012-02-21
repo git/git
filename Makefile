@@ -53,6 +53,10 @@ all::
 # FreeBSD can use either, but MinGW and some others need to use
 # libcharset.h's locale_charset() instead.
 #
+# Define CHARSET_LIB to you need to link with library other than -liconv to
+# use locale_charset() function.  On some platforms this needs to set to
+# -lcharset
+#
 # Define LIBC_CONTAINS_LIBINTL if your gettext implementation doesn't
 # need -lintl when linking.
 #
@@ -1695,6 +1699,7 @@ endif
 
 ifdef HAVE_LIBCHARSET_H
 	BASIC_CFLAGS += -DHAVE_LIBCHARSET_H
+	EXTLIBS += $(CHARSET_LIB)
 endif
 
 ifdef HAVE_DEV_TTY
