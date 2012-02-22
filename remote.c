@@ -978,16 +978,20 @@ static void tail_link_ref(struct ref *ref, struct ref ***tail)
 	*tail = &ref->next;
 }
 
+static struct ref *alloc_delete_ref(void)
+{
+	struct ref *ref = alloc_ref("(delete)");
+	hashclr(ref->new_sha1);
+	return ref;
+}
+
 static struct ref *try_explicit_object_name(const char *name)
 {
 	unsigned char sha1[20];
 	struct ref *ref;
 
-	if (!*name) {
-		ref = alloc_ref("(delete)");
-		hashclr(ref->new_sha1);
-		return ref;
-	}
+	if (!*name)
+		return alloc_delete_ref();
 	if (get_sha1(name, sha1))
 		return NULL;
 	ref = alloc_ref(name);
