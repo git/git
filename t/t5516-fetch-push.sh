@@ -979,4 +979,20 @@ test_expect_success 'push --porcelain --dry-run rejected' '
 	test_cmp .git/foo .git/bar
 '
 
+test_expect_success 'push --prune' '
+	mk_test heads/master heads/second heads/foo heads/bar &&
+	git push --prune testrepo &&
+	check_push_result $the_commit heads/master &&
+	check_push_result $the_first_commit heads/second &&
+	! check_push_result $the_first_commit heads/foo heads/bar
+'
+
+test_expect_success 'push --prune refspec' '
+	mk_test tmp/master tmp/second tmp/foo tmp/bar &&
+	git push --prune testrepo "refs/heads/*:refs/tmp/*" &&
+	check_push_result $the_commit tmp/master &&
+	check_push_result $the_first_commit tmp/second &&
+	! check_push_result $the_first_commit tmp/foo tmp/bar
+'
+
 test_done

@@ -8,6 +8,8 @@
 #include "tag.h"
 #include "string-list.h"
 
+enum map_direction { FROM_SRC, FROM_DST };
+
 static struct refspec s_tag_refspec = {
 	0,
 	1,
@@ -1115,7 +1117,7 @@ static int match_explicit_refs(struct ref *src, struct ref *dst,
 }
 
 static char *get_ref_match(const struct refspec *rs, int rs_nr, const struct ref *ref,
-		int send_mirror, const struct refspec **ret_pat)
+		int send_mirror, int direction, const struct refspec **ret_pat)
 {
 	const struct refspec *pat;
 	char *name;
@@ -1130,7 +1132,12 @@ static char *get_ref_match(const struct refspec *rs, int rs_nr, const struct ref
 
 		if (rs[i].pattern) {
 			const char *dst_side = rs[i].dst ? rs[i].dst : rs[i].src;
-			if (match_name_with_pattern(rs[i].src, ref->name, dst_side, &name)) {
+			int match;
+			if (direction == FROM_SRC)
+				match = match_name_with_pattern(rs[i].src, ref->name, dst_side, &name);
+			else
+				match = match_name_with_pattern(dst_side, ref->name, rs[i].src, &name);
+			if (match) {
 				matching_refs = i;
 				break;
 			}
@@ -1177,6 +1184,7 @@ int match_push_refs(struct ref *src, struct ref **dst,
 	struct refspec *rs;
 	int send_all = flags & MATCH_REFS_ALL;
 	int send_mirror = flags & MATCH_REFS_MIRROR;
+	int send_prune = flags & MATCH_REFS_PRUNE;
 	int errs;
 	static const char *default_refspec[] = { ":", NULL };
 	struct ref *ref, **dst_tail = tail_ref(dst);
@@ -1197,7 +1205,7 @@ int match_push_refs(struct ref *src, struct ref **dst,
 		if (ref->peer_ref)
 			continue;
 
-		dst_name = get_ref_match(rs, nr_refspec, ref, send_mirror, &pat);
+		dst_name = get_ref_match(rs, nr_refspec, ref, send_mirror, FROM_SRC, &pat);
 		if (!dst_name)
 			continue;
 
@@ -1223,6 +1231,23 @@ int match_push_refs(struct ref *src, struct ref **dst,
 		dst_peer->force = pat->force;
 	free_name:
 		free(dst_name);
+	}
+	if (send_prune) {
+		/* check for missing refs on the remote */
+		for (ref = *dst; ref; ref = ref->next) {
+			char *src_name;
+
+			if (ref->peer_ref)
+				/* We're already sending something to this ref. */
+				continue;
+
+			src_name = get_ref_match(rs, nr_refspec, ref, send_mirror, FROM_DST, NULL);
+			if (src_name) {
+				if (!find_ref_by_name(src, src_name))
+					ref->peer_ref = alloc_delete_ref();
+				free(src_name);
+			}
+		}
 	}
 	if (errs)
 		return -1;
