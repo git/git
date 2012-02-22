@@ -59,6 +59,20 @@ test_expect_success 'advice from failed cherry-pick' "
 	test_i18ncmp expected actual
 "
 
+test_expect_success 'advice from failed cherry-pick --no-commit' "
+	pristine_detach initial &&
+
+	picked=\$(git rev-parse --short picked) &&
+	cat <<-EOF >expected &&
+	error: could not apply \$picked... picked
+	hint: after resolving the conflicts, mark the corrected paths
+	hint: with 'git add <paths>' or 'git rm <paths>'
+	EOF
+	test_must_fail git cherry-pick --no-commit picked 2>actual &&
+
+	test_i18ncmp expected actual
+"
+
 test_expect_success 'failed cherry-pick sets CHERRY_PICK_HEAD' '
 	pristine_detach initial &&
 	test_must_fail git cherry-pick picked &&
