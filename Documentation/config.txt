@@ -1142,6 +1142,10 @@ gui.diffcontext::
 	Specifies how many context lines should be used in calls to diff
 	made by the linkgit:git-gui[1]. The default is "5".
 
+gui.diffopts::
+	Specifies additional parameters to pass to diff from 
+	linkgit:git-gui[1]. The default is "".
+
 gui.encoding::
 	Specifies the default encoding to use for displaying of
 	file contents in linkgit:git-gui[1] and linkgit:gitk[1].
