@@ -38,7 +38,7 @@ def p4_build_cmd(cmd):
 
     host = gitConfig("git-p4.host")
     if len(host) > 0:
-        real_cmd += ["-h", host]
+        real_cmd += ["-H", host]
 
     client = gitConfig("git-p4.client")
     if len(client) > 0:
