@@ -1878,8 +1878,7 @@ sub cmt_sha2rev_batch {
 
 sub working_head_info {
 	my ($head, $refs) = @_;
-	my @args = qw/log --no-color --no-decorate --first-parent
-	              --pretty=medium/;
+	my @args = qw/rev-list --first-parent --pretty=medium/;
 	my ($fh, $ctx) = command_output_pipe(@args, $head);
 	my $hash;
 	my %max;
@@ -2029,6 +2028,7 @@ use Carp qw/croak/;
 use File::Path qw/mkpath/;
 use File::Copy qw/copy/;
 use IPC::Open3;
+use Time::Local;
 use Memoize;  # core since 5.8.0, Jul 2002
 use Memoize::Storable;
 
@@ -3287,6 +3287,14 @@ sub get_untracked {
 	\@out;
 }
 
+sub get_tz {
+	# some systmes don't handle or mishandle %z, so be creative.
+	my $t = shift || time;
+	my $gm = timelocal(gmtime($t));
+	my $sign = qw( + + - )[ $t <=> $gm ];
+	return sprintf("%s%02d%02d", $sign, (gmtime(abs($t - $gm)))[2,1]);
+}
+
 # parse_svn_date(DATE)
 # --------------------
 # Given a date (in UTC) from Subversion, return a string in the format
@@ -3319,8 +3327,7 @@ sub parse_svn_date {
 			delete $ENV{TZ};
 		}
 
-		my $our_TZ =
-		    POSIX::strftime('%Z', $S, $M, $H, $d, $m - 1, $Y - 1900);
+		my $our_TZ = get_tz();
 
 		# This converts $epoch_in_UTC into our local timezone.
 		my ($sec, $min, $hour, $mday, $mon, $year,
@@ -3920,7 +3927,7 @@ sub rebuild {
 	my ($base_rev, $head) = ($partial ? $self->rev_map_max_norebuild(1) :
 		(undef, undef));
 	my ($log, $ctx) =
-	    command_output_pipe(qw/rev-list --pretty=raw --no-color --reverse/,
+	    command_output_pipe(qw/rev-list --pretty=raw --reverse/,
 				($head ? "$head.." : "") . $self->refname,
 				'--');
 	my $metadata_url = $self->metadata_url;
@@ -5130,7 +5137,7 @@ sub rmdirs {
 }
 
 sub open_or_add_dir {
-	my ($self, $full_path, $baton) = @_;
+	my ($self, $full_path, $baton, $deletions) = @_;
 	my $t = $self->{types}->{$full_path};
 	if (!defined $t) {
 		die "$full_path not known in r$self->{r} or we have a bug!\n";
@@ -5139,7 +5146,7 @@ sub open_or_add_dir {
 		no warnings 'once';
 		# SVN::Node::none and SVN::Node::file are used only once,
 		# so we're shutting up Perl's warnings about them.
-		if ($t == $SVN::Node::none) {
+		if ($t == $SVN::Node::none || defined($deletions->{$full_path})) {
 			return $self->add_directory($full_path, $baton,
 			    undef, -1, $self->{pool});
 		} elsif ($t == $SVN::Node::dir) {
@@ -5154,17 +5161,18 @@ sub open_or_add_dir {
 }
 
 sub ensure_path {
-	my ($self, $path) = @_;
+	my ($self, $path, $deletions) = @_;
 	my $bat = $self->{bat};
 	my $repo_path = $self->repo_path($path);
 	return $bat->{''} unless (length $repo_path);
+
 	my @p = split m#/+#, $repo_path;
 	my $c = shift @p;
-	$bat->{$c} ||= $self->open_or_add_dir($c, $bat->{''});
+	$bat->{$c} ||= $self->open_or_add_dir($c, $bat->{''}, $deletions);
 	while (@p) {
 		my $c0 = $c;
 		$c .= '/' . shift @p;
-		$bat->{$c} ||= $self->open_or_add_dir($c, $bat->{$c0});
+		$bat->{$c} ||= $self->open_or_add_dir($c, $bat->{$c0}, $deletions);
 	}
 	return $bat->{$c};
 }
@@ -5221,9 +5229,9 @@ sub apply_autoprops {
 }
 
 sub A {
-	my ($self, $m) = @_;
+	my ($self, $m, $deletions) = @_;
 	my ($dir, $file) = split_path($m->{file_b});
-	my $pbat = $self->ensure_path($dir);
+	my $pbat = $self->ensure_path($dir, $deletions);
 	my $fbat = $self->add_file($self->repo_path($m->{file_b}), $pbat,
 					undef, -1);
 	print "\tA\t$m->{file_b}\n" unless $::_q;
@@ -5233,9 +5241,9 @@ sub A {
 }
 
 sub C {
-	my ($self, $m) = @_;
+	my ($self, $m, $deletions) = @_;
 	my ($dir, $file) = split_path($m->{file_b});
-	my $pbat = $self->ensure_path($dir);
+	my $pbat = $self->ensure_path($dir, $deletions);
 	my $fbat = $self->add_file($self->repo_path($m->{file_b}), $pbat,
 				$self->url_path($m->{file_a}), $self->{r});
 	print "\tC\t$m->{file_a} => $m->{file_b}\n" unless $::_q;
@@ -5252,9 +5260,9 @@ sub delete_entry {
 }
 
 sub R {
-	my ($self, $m) = @_;
+	my ($self, $m, $deletions) = @_;
 	my ($dir, $file) = split_path($m->{file_b});
-	my $pbat = $self->ensure_path($dir);
+	my $pbat = $self->ensure_path($dir, $deletions);
 	my $fbat = $self->add_file($self->repo_path($m->{file_b}), $pbat,
 				$self->url_path($m->{file_a}), $self->{r});
 	print "\tR\t$m->{file_a} => $m->{file_b}\n" unless $::_q;
@@ -5263,14 +5271,14 @@ sub R {
 	$self->close_file($fbat,undef,$self->{pool});
 
 	($dir, $file) = split_path($m->{file_a});
-	$pbat = $self->ensure_path($dir);
+	$pbat = $self->ensure_path($dir, $deletions);
 	$self->delete_entry($m->{file_a}, $pbat);
 }
 
 sub M {
-	my ($self, $m) = @_;
+	my ($self, $m, $deletions) = @_;
 	my ($dir, $file) = split_path($m->{file_b});
-	my $pbat = $self->ensure_path($dir);
+	my $pbat = $self->ensure_path($dir, $deletions);
 	my $fbat = $self->open_file($self->repo_path($m->{file_b}),
 				$pbat,$self->{r},$self->{pool});
 	print "\t$m->{chg}\t$m->{file_b}\n" unless $::_q;
@@ -5340,9 +5348,9 @@ sub chg_file {
 }
 
 sub D {
-	my ($self, $m) = @_;
+	my ($self, $m, $deletions) = @_;
 	my ($dir, $file) = split_path($m->{file_b});
-	my $pbat = $self->ensure_path($dir);
+	my $pbat = $self->ensure_path($dir, $deletions);
 	print "\tD\t$m->{file_b}\n" unless $::_q;
 	$self->delete_entry($m->{file_b}, $pbat);
 }
@@ -5374,11 +5382,19 @@ sub DESTROY {
 sub apply_diff {
 	my ($self) = @_;
 	my $mods = $self->{mods};
-	my %o = ( D => 1, R => 0, C => -1, A => 3, M => 3, T => 3 );
+	my %o = ( D => 0, C => 1, R => 2, A => 3, M => 4, T => 5 );
+	my %deletions;
+
+	foreach my $m (@$mods) {
+		if ($m->{chg} eq "D") {
+			$deletions{$m->{file_b}} = 1;
+		}
+	}
+
 	foreach my $m (sort { $o{$a->{chg}} <=> $o{$b->{chg}} } @$mods) {
 		my $f = $m->{chg};
 		if (defined $o{$f}) {
-			$self->$f($m);
+			$self->$f($m, \%deletions);
 		} else {
 			fatal("Invalid change type: $f");
 		}
@@ -5994,7 +6010,6 @@ package Git::SVN::Log;
 use strict;
 use warnings;
 use POSIX qw/strftime/;
-use Time::Local;
 use constant commit_log_separator => ('-' x 72) . "\n";
 use vars qw/$TZ $limit $color $pager $non_recursive $verbose $oneline
             %rusers $show_commit $incremental/;
@@ -6104,11 +6119,8 @@ sub run_pager {
 }
 
 sub format_svn_date {
-	# some systmes don't handle or mishandle %z, so be creative.
 	my $t = shift || time;
-	my $gm = timelocal(gmtime($t));
-	my $sign = qw( + + - )[ $t <=> $gm ];
-	my $gmoff = sprintf("%s%02d%02d", $sign, (gmtime(abs($t - $gm)))[2,1]);
+	my $gmoff = Git::SVN::get_tz($t);
 	return strftime("%Y-%m-%d %H:%M:%S $gmoff (%a, %d %b %Y)", localtime($t));
 }
 
