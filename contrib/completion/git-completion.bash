@@ -726,6 +726,9 @@ __git_complete_remote_or_refspec ()
 {
 	local cur_="$cur" cmd="${words[1]}"
 	local i c=2 remote="" pfx="" lhs=1 no_complete_refspec=0
+	if [ "$cmd" = "remote" ]; then
+		c=$((++c))
+	fi
 	while [ $c -lt $cword ]; do
 		i="${words[c]}"
 		case "$i" in
@@ -776,7 +779,7 @@ __git_complete_remote_or_refspec ()
 			__gitcomp_nl "$(__git_refs)" "$pfx" "$cur_"
 		fi
 		;;
-	pull)
+	pull|remote)
 		if [ $lhs = 1 ]; then
 			__gitcomp_nl "$(__git_refs "$remote")" "$pfx" "$cur_"
 		else
@@ -2277,7 +2280,7 @@ _git_config ()
 
 _git_remote ()
 {
-	local subcommands="add rename rm show prune update set-head"
+	local subcommands="add rename rm set-head set-branches set-url show prune update"
 	local subcommand="$(__git_find_on_cmdline "$subcommands")"
 	if [ -z "$subcommand" ]; then
 		__gitcomp "$subcommands"
@@ -2285,8 +2288,11 @@ _git_remote ()
 	fi
 
 	case "$subcommand" in
-	rename|rm|show|prune)
+	rename|rm|set-url|show|prune)
 		__gitcomp_nl "$(__git_remotes)"
+		;;
+	set-head|set-branches)
+		__git_complete_remote_or_refspec
 		;;
 	update)
 		local i c='' IFS=$'\n'
