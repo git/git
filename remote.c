@@ -1110,10 +1110,11 @@ static int match_explicit_refs(struct ref *src, struct ref *dst,
 	return errs;
 }
 
-static const struct refspec *check_pattern_match(const struct refspec *rs,
-						 int rs_nr,
-						 const struct ref *src)
+static char *get_ref_match(const struct refspec *rs, int rs_nr, const struct ref *ref,
+		int send_mirror, const struct refspec **ret_pat)
 {
+	const struct refspec *pat;
+	char *name;
 	int i;
 	int matching_refs = -1;
 	for (i = 0; i < rs_nr; i++) {
@@ -1123,14 +1124,31 @@ static const struct refspec *check_pattern_match(const struct refspec *rs,
 			continue;
 		}
 
-		if (rs[i].pattern && match_name_with_pattern(rs[i].src, src->name,
-							     NULL, NULL))
-			return rs + i;
+		if (rs[i].pattern) {
+			const char *dst_side = rs[i].dst ? rs[i].dst : rs[i].src;
+			if (match_name_with_pattern(rs[i].src, ref->name, dst_side, &name)) {
+				matching_refs = i;
+				break;
+			}
+		}
 	}
-	if (matching_refs != -1)
-		return rs + matching_refs;
-	else
+	if (matching_refs == -1)
 		return NULL;
+
+	pat = rs + matching_refs;
+	if (pat->matching) {
+		/*
+		 * "matching refs"; traditionally we pushed everything
+		 * including refs outside refs/heads/ hierarchy, but
+		 * that does not make much sense these days.
+		 */
+		if (!send_mirror && prefixcmp(ref->name, "refs/heads/"))
+			return NULL;
+		name = xstrdup(ref->name);
+	}
+	if (ret_pat)
+		*ret_pat = pat;
+	return name;
 }
 
 static struct ref **tail_ref(struct ref **head)
@@ -1171,36 +1189,19 @@ int match_push_refs(struct ref *src, struct ref **dst,
 		struct ref *dst_peer;
 		const struct refspec *pat = NULL;
 		char *dst_name;
+
 		if (ref->peer_ref)
 			continue;
 
-		pat = check_pattern_match(rs, nr_refspec, ref);
-		if (!pat)
+		dst_name = get_ref_match(rs, nr_refspec, ref, send_mirror, &pat);
+		if (!dst_name)
 			continue;
 
-		if (pat->matching) {
-			/*
-			 * "matching refs"; traditionally we pushed everything
-			 * including refs outside refs/heads/ hierarchy, but
-			 * that does not make much sense these days.
-			 */
-			if (!send_mirror && prefixcmp(ref->name, "refs/heads/"))
-				continue;
-			dst_name = xstrdup(ref->name);
-
-
-		} else {
-			const char *dst_side = pat->dst ? pat->dst : pat->src;
-			if (!match_name_with_pattern(pat->src, ref->name,
-						     dst_side, &dst_name))
-				die("Didn't think it matches any more");
-		}
 		dst_peer = find_ref_by_name(*dst, dst_name);
 		if (dst_peer) {
 			if (dst_peer->peer_ref)
 				/* We're already sending something to this ref. */
 				goto free_name;
-
 		} else {
 			if (pat->matching && !(send_all || send_mirror))
 				/*
