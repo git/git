@@ -1157,7 +1157,7 @@ int match_push_refs(struct ref *src, struct ref **dst,
 	int send_mirror = flags & MATCH_REFS_MIRROR;
 	int errs;
 	static const char *default_refspec[] = { ":", NULL };
-	struct ref **dst_tail = tail_ref(dst);
+	struct ref *ref, **dst_tail = tail_ref(dst);
 
 	if (!nr_refspec) {
 		nr_refspec = 1;
@@ -1167,14 +1167,14 @@ int match_push_refs(struct ref *src, struct ref **dst,
 	errs = match_explicit_refs(src, *dst, &dst_tail, rs, nr_refspec);
 
 	/* pick the remainder */
-	for ( ; src; src = src->next) {
+	for (ref = src; ref; ref = ref->next) {
 		struct ref *dst_peer;
 		const struct refspec *pat = NULL;
 		char *dst_name;
-		if (src->peer_ref)
+		if (ref->peer_ref)
 			continue;
 
-		pat = check_pattern_match(rs, nr_refspec, src);
+		pat = check_pattern_match(rs, nr_refspec, ref);
 		if (!pat)
 			continue;
 
@@ -1184,13 +1184,14 @@ int match_push_refs(struct ref *src, struct ref **dst,
 			 * including refs outside refs/heads/ hierarchy, but
 			 * that does not make much sense these days.
 			 */
-			if (!send_mirror && prefixcmp(src->name, "refs/heads/"))
+			if (!send_mirror && prefixcmp(ref->name, "refs/heads/"))
 				continue;
-			dst_name = xstrdup(src->name);
+			dst_name = xstrdup(ref->name);
+
 
 		} else {
 			const char *dst_side = pat->dst ? pat->dst : pat->src;
-			if (!match_name_with_pattern(pat->src, src->name,
+			if (!match_name_with_pattern(pat->src, ref->name,
 						     dst_side, &dst_name))
 				die("Didn't think it matches any more");
 		}
@@ -1211,9 +1212,9 @@ int match_push_refs(struct ref *src, struct ref **dst,
 
 			/* Create a new one and link it */
 			dst_peer = make_linked_ref(dst_name, &dst_tail);
-			hashcpy(dst_peer->new_sha1, src->new_sha1);
+			hashcpy(dst_peer->new_sha1, ref->new_sha1);
 		}
-		dst_peer->peer_ref = copy_ref(src);
+		dst_peer->peer_ref = copy_ref(ref);
 		dst_peer->force = pat->force;
 	free_name:
 		free(dst_name);
