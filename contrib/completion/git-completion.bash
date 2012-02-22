@@ -60,18 +60,6 @@
 #       per-repository basis by setting the bash.showUpstream config
 #       variable.
 #
-#
-# To submit patches:
-#
-#    *) Read Documentation/SubmittingPatches
-#    *) Send all patches to the current maintainer:
-#
-#       "Shawn O. Pearce" <spearce@spearce.org>
-#
-#    *) Always CC the Git mailing list:
-#
-#       git@vger.kernel.org
-#
 
 if [[ -n ${ZSH_VERSION-} ]]; then
 	autoload -U +X bashcompinit && bashcompinit
