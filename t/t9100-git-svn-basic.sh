@@ -65,7 +65,8 @@ test_expect_success "$name" "
 	git update-index --add dir/file/file &&
 	git commit -m '$name' &&
 	test_must_fail git svn set-tree --find-copies-harder --rmdir \
-		${remotes_git_svn}..mybranch" || true
+		${remotes_git_svn}..mybranch
+"
 
 
 name='detect node change from directory to file #1'
@@ -79,7 +80,8 @@ test_expect_success "$name" '
 	git update-index --add -- bar &&
 	git commit -m "$name" &&
 	test_must_fail git svn set-tree --find-copies-harder --rmdir \
-		${remotes_git_svn}..mybranch2' || true
+		${remotes_git_svn}..mybranch2
+'
 
 
 name='detect node change from file to directory #2'
@@ -96,7 +98,8 @@ test_expect_success "$name" '
 		${remotes_git_svn}..mybranch3 &&
 	svn_cmd up "$SVN_TREE" &&
 	test -d "$SVN_TREE"/bar/zzz &&
-	test -e "$SVN_TREE"/bar/zzz/yyy ' || true
+	test -e "$SVN_TREE"/bar/zzz/yyy
+'
 
 name='detect node change from directory to file #2'
 test_expect_success "$name" '
@@ -109,7 +112,8 @@ test_expect_success "$name" '
 	git update-index --add -- dir &&
 	git commit -m "$name" &&
 	test_must_fail git svn set-tree --find-copies-harder --rmdir \
-		${remotes_git_svn}..mybranch4' || true
+		${remotes_git_svn}..mybranch4
+'
 
 
 name='remove executable bit from a file'
@@ -162,7 +166,7 @@ test_expect_success "$name" '
 
 name='modify a symlink to become a file'
 test_expect_success "$name" '
-	echo git help > help || true &&
+	echo git help >help &&
 	rm exec-2.sh &&
 	cp help exec-2.sh &&
 	git update-index exec-2.sh &&
