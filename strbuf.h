@@ -116,6 +116,7 @@ extern int strbuf_readlink(struct strbuf *sb, const char *path, size_t hint);
 
 extern int strbuf_getwholeline(struct strbuf *, FILE *, int);
 extern int strbuf_getline(struct strbuf *, FILE *, int);
+extern int strbuf_getwholeline_fd(struct strbuf *, int, int);
 
 extern void stripspace(struct strbuf *buf, int skip_comments);
 extern int launch_editor(const char *path, struct strbuf *buffer, const char *const *env);
