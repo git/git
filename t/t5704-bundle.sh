@@ -4,59 +4,42 @@ test_description='some bundle related tests'
 . ./test-lib.sh
 
 test_expect_success 'setup' '
-
-	: > file &&
-	git add file &&
-	test_tick &&
-	git commit -m initial &&
+	test_commit initial &&
 	test_tick &&
 	git tag -m tag tag &&
-	: > file2 &&
-	git add file2 &&
-	: > file3 &&
-	test_tick &&
-	git commit -m second &&
-	git add file3 &&
-	test_tick &&
-	git commit -m third
-
+	test_commit second &&
+	test_commit third &&
+	git tag -d initial &&
+	git tag -d second &&
+	git tag -d third
 '
 
 test_expect_success 'tags can be excluded by rev-list options' '
-
 	git bundle create bundle --all --since=7.Apr.2005.15:16:00.-0700 &&
 	git ls-remote bundle > output &&
 	! grep tag output
-
 '
 
 test_expect_success 'die if bundle file cannot be created' '
-
 	mkdir adir &&
 	test_must_fail git bundle create adir --all
-
 '
 
 test_expect_failure 'bundle --stdin' '
-
 	echo master | git bundle create stdin-bundle.bdl --stdin &&
 	git ls-remote stdin-bundle.bdl >output &&
 	grep master output
-
 '
 
 test_expect_failure 'bundle --stdin <rev-list options>' '
-
 	echo master | git bundle create hybrid-bundle.bdl --stdin tag &&
 	git ls-remote hybrid-bundle.bdl >output &&
 	grep master output
-
 '
 
 test_expect_success 'empty bundle file is rejected' '
-
-    >empty-bundle && test_must_fail git fetch empty-bundle
-
+	: >empty-bundle &&
+	test_must_fail git fetch empty-bundle
 '
 
 # This triggers a bug in older versions where the resulting line (with
