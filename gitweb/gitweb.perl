@@ -5202,39 +5202,56 @@ sub project_info_needs_filling {
 	return;
 }
 
-# fills project list info (age, description, owner, category, forks)
+# fills project list info (age, description, owner, category, forks, etc.)
 # for each project in the list, removing invalid projects from
-# returned list
+# returned list, or fill only specified info.
+#
+# Invalid projects are removed from the returned list if and only if you
+# ask 'age' or 'age_string' to be filled, because they are the only fields
+# that run unconditionally git command that requires repository, and
+# therefore do always check if project repository is invalid.
+#
+# USAGE:
+# * fill_project_list_info(\@project_list, 'descr_long', 'ctags')
+#   ensures that 'descr_long' and 'ctags' fields are filled
+# * @project_list = fill_project_list_info(\@project_list)
+#   ensures that all fields are filled (and invalid projects removed)
+#
 # NOTE: modifies $projlist, but does not remove entries from it
 sub fill_project_list_info {
-	my $projlist = shift;
+	my ($projlist, @wanted_keys) = @_;
 	my @projects;
+	my $filter_set = sub { return @_; };
+	if (@wanted_keys) {
+		my %wanted_keys = map { $_ => 1 } @wanted_keys;
+		$filter_set = sub { return grep { $wanted_keys{$_} } @_; };
+	}
 
 	my $show_ctags = gitweb_check_feature('ctags');
  PROJECT:
 	foreach my $pr (@$projlist) {
-		if (project_info_needs_filling($pr, 'age', 'age_string')) {
+		if (project_info_needs_filling($pr, $filter_set->('age', 'age_string'))) {
 			my (@activity) = git_get_last_activity($pr->{'path'});
 			unless (@activity) {
 				next PROJECT;
 			}
 			($pr->{'age'}, $pr->{'age_string'}) = @activity;
 		}
-		if (project_info_needs_filling($pr, 'descr', 'descr_long')) {
+		if (project_info_needs_filling($pr, $filter_set->('descr', 'descr_long'))) {
 			my $descr = git_get_project_description($pr->{'path'}) || "";
 			$descr = to_utf8($descr);
 			$pr->{'descr_long'} = $descr;
 			$pr->{'descr'} = chop_str($descr, $projects_list_description_width, 5);
 		}
-		if (project_info_needs_filling($pr, 'owner')) {
+		if (project_info_needs_filling($pr, $filter_set->('owner'))) {
 			$pr->{'owner'} = git_get_project_owner("$pr->{'path'}") || "";
 		}
 		if ($show_ctags &&
-		    project_info_needs_filling($pr, 'ctags')) {
+		    project_info_needs_filling($pr, $filter_set->('ctags'))) {
 			$pr->{'ctags'} = git_get_project_ctags($pr->{'path'});
 		}
 		if ($projects_list_group_categories &&
-		    project_info_needs_filling($pr, 'category')) {
+		    project_info_needs_filling($pr, $filter_set->('category'))) {
 			my $cat = git_get_project_category($pr->{'path'}) ||
 			                                   $project_list_default_category;
 			$pr->{'category'} = to_utf8($cat);
