@@ -483,6 +483,11 @@ git-p4.skipUserNameCheck::
 	user map, 'git p4' exits.  This option can be used to force
 	submission regardless.
 
+git-p4.attemptRCSCleanup:
+    If enabled, 'git p4 submit' will attempt to cleanup RCS keywords
+    ($Header$, etc). These would otherwise cause merge conflicts and prevent
+    the submit going ahead. This option should be considered experimental at
+    present.
 
 IMPLEMENTATION DETAILS
 ----------------------
