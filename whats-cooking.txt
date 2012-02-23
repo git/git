@@ -1,18 +1,13 @@
 To: git@vger.kernel.org
-Subject: What's cooking in git.git (Feb 2012, #07; Mon, 20)
-X-master-at: b3a769dc355b32c95783dc07f59e4dfebdd8bdc7
-X-next-at: 80e3ff2c99bd723b0dfb64b7283cf92e398c61b6
+Subject: What's cooking in git.git (Feb 2012, #08; Wed, 22)
+X-master-at: f1f1b96e99fa064ed9f0da263d4b4eb0407b3ceb
+X-next-at: b4472eeb9efa715ecf088c254868d80ebfa252fd
 
-What's cooking in git.git (Feb 2012, #07; Mon, 20)
+What's cooking in git.git (Feb 2012, #08; Wed, 22)
 --------------------------------------------------
 
 Here are the topics that have been cooking.  Commits prefixed with '-' are
 only in 'pu' (proposed updates) while commits prefixed with '+' are in 'next'.
-
-The first maintenance release v1.7.9.1 ironed out usability kinks in the
-new features added in v1.7.9 release.  Topics that add new features and
-fixes that have been cooking in 'next' start to graduate to 'master'
-again.
 
 You can find the changes described here in the integration branches of the
 repositories listed at
@@ -20,123 +15,52 @@ repositories listed at
     http://git-blame.blogspot.com/p/git-public-repositories.html
 
 --------------------------------------------------
-[Graduated to "master"]
-
-* cb/maint-rev-list-verify-object (2012-02-13) 1 commit
-  (merged to 'next' on 2012-02-16 at a407b9a)
- + git rev-list: fix invalid typecast
-
-Fixes an obscure bug in "rev-list --verify" that skipped verification
-depending on the phase of the moon, which dates back to 1.7.8.x series.
-
-* cb/maint-t5541-make-server-port-portable (2012-02-13) 1 commit
-  (merged to 'next' on 2012-02-16 at 762eefb)
- + t5541: check error message against the real port number used
-
-Test fix.
-
-* cb/receive-pack-keep-errors (2012-02-13) 1 commit
-  (merged to 'next' on 2012-02-16 at 9ff846e)
- + do not override receive-pack errors
-
-Sometimes error status detected by a check in an earlier phase of
-receive-pack (the other end of 'git push') was lost by later checks,
-resulting in false indication of success.
-
-* cb/transfer-no-progress (2012-02-13) 1 commit
-  (merged to 'next' on 2012-02-16 at ff17092)
- + push/fetch/clone --no-progress suppresses progress output
-
-The transport programs ignored --no-progress and showed progress when
-sending their output to a terminal.
-
-* jc/diff-stat-scaler (2012-02-14) 1 commit
-  (merged to 'next' on 2012-02-16 at 404d336)
- + diff --stat: show bars of same length for paths with same amount of changes
-
-The output from "git diff --stat" for two paths that have the same amount
-of changes showed graph bars of different length due to the way we handled
-rounding errors.
-
-* tg/tag-points-at (2012-02-13) 2 commits
-  (merged to 'next' on 2012-02-13 at a8f4046)
- + builtin/tag.c: Fix a sparse warning
-  (merged to 'next' on 2012-02-10 at 4bff88f)
- + tag: add --points-at list option
-
-* zj/decimal-width (2012-02-14) 1 commit
-  (merged to 'next' on 2012-02-16 at 72805c4)
- + make lineno_width() from blame reusable for others
- (this branch is used by zj/diff-stat-dyncol.)
-
-Refactoring.
-
-* zj/term-columns (2012-02-13) 1 commit
-  (merged to 'next' on 2012-02-16 at fe70c88)
- + pager: find out the terminal width before spawning the pager
- (this branch is used by zj/diff-stat-dyncol.)
-
-Fixes "git -p cmd" for any subcommand that cares about the true terminal
-width.
-
---------------------------------------------------
 [New Topics]
 
-* fc/push-prune (2012-02-17) 2 commits
- - remote: reorganize check_pattern_match()
- - remote: use a local variable in match_push_refs()
+* jb/filter-ignore-sigpipe (2012-02-21) 1 commit
+ - Ignore SIGPIPE when running a filter driver
 
-The first two of the three-patch RFC series.  The second one and the third
-one (not queued) both need better explanation, and the third one also had
-a handful of minor yuck factors all of which should be straightforward to
-improve.
+Looked sane.
+Will merge to "next".
 
-Expecting a reroll.
+* jc/pickaxe-ignore-case (2012-02-21) 1 commit
+ - pickaxe: allow -i to search in patch case-insensitively
 
-* jc/add-refresh-unmerged (2012-02-17) 1 commit
- - refresh_index: do not show unmerged path that is outside pathspec
+* jc/doc-merge-options (2012-02-22) 1 commit
+ - Documentation/merge-options.txt: group "ff" related options together
 
-"git add --refresh <pathspec>" warned about unmerged paths outside the
-given pathspec.
+Documentation for "git merge" had "--ff-only" far away from other options
+related to the handling of fast-forward merges.
 
-* jc/diff-ignore-case (2012-02-19) 6 commits
- - diff -i
- - diff: --ignore-case
- - xdiff: introduce XDF_IGNORE_CASE
- - xdiff: introduce XDF_INEXACT_MATCH
- - xdiff: PATIENCE/HISTOGRAM are not independent option bits
- - xdiff: remove XDL_PATCH_* macros
+* ph/cherry-pick-advice-refinement (2012-02-22) 1 commit
+ - cherry-pick: No advice to commit if --no-commit
 
-"git diff" learned "--ignore-case" option.
+* pj/completion-remote-set-url-branches (2012-02-22) 2 commits
+ - completion: normalize increment/decrement style
+ - completion: remote set-* <name> and <branch>
 
-* jn/gitweb-hilite-regions (2012-02-19) 5 commits
- - gitweb: Use esc_html_match_hl() in 'grep' search
- - gitweb: Highlight matched part of shortened project description
- - gitweb: Highlight matched part of project description when searching projects
- - gitweb: Highlight matched part of project name when searching projects
- - gitweb: Introduce esc_html_hl_regions
- (this branch uses jn/gitweb-search-optim.)
+* th/git-diffall (2012-02-22) 1 commit
+ - contrib: added git-diffall
 
-Not reviewed and do not know what this is about yet ;-).
+--------------------------------------------------
+[Graduated to "master"]
 
-* jn/gitweb-search-optim (2012-02-19) 3 commits
- - gitweb: Faster project search
- - gitweb: Option for filling only specified info in fill_project_list_info
- - gitweb: Refactor checking if part of project info need filling
- (this branch is used by jn/gitweb-hilite-regions.)
+* jk/diff-highlight (2012-02-13) 5 commits
+  (merged to 'next' on 2012-02-20 at ba040ae)
+ + diff-highlight: document some non-optimal cases
+ + diff-highlight: match multi-line hunks
+ + diff-highlight: refactor to prepare for multi-line hunks
+ + diff-highlight: don't highlight whole lines
+ + diff-highlight: make perl strict and warnings fatal
 
-The API introduced in the second step still has yucky design, but at least
-it is more clear than the previous rounds what this is trying to do.
+Updates diff-highlight (in contrib/).
 
-* js/configure-libintl (2012-02-20) 1 commit
- - configure: don't use -lintl when there is no gettext support
+* jn/gitweb-unborn-head (2012-02-17) 1 commit
+  (merged to 'next' on 2012-02-20 at 80e3ff2)
+ + gitweb: Fix "heads" view when there is no current branch
 
-Build fix for autoconf, meant for 'maint' track.
-
-* pj/remote-set-branches-usage-fix (2012-02-19) 1 commit
- - remote: fix set-branches usage and documentation
-
-Documentation fix.
+"gitweb" compared non-existent value of HEAD with the names of commit
+objects at tips of branches, triggering runtime warnings.
 
 --------------------------------------------------
 [Stalled]
@@ -231,22 +155,62 @@ Expecting a reroll on top of zj/term-columns topic.
 --------------------------------------------------
 [Cooking]
 
-* jk/diff-highlight (2012-02-13) 5 commits
-  (merged to 'next' on 2012-02-20 at ba040ae)
- + diff-highlight: document some non-optimal cases
- + diff-highlight: match multi-line hunks
- + diff-highlight: refactor to prepare for multi-line hunks
- + diff-highlight: don't highlight whole lines
- + diff-highlight: make perl strict and warnings fatal
+* fc/push-prune (2012-02-22) 4 commits
+ - push: add '--prune' option
+ - remote: refactor code into alloc_delete_ref()
+ - remote: reorganize check_pattern_match()
+ - remote: use a local variable in match_push_refs()
 
-Updates diff-highlight (in contrib/).
+Rerolled and looked sane.
+Will merge to "next".
 
-* jn/gitweb-unborn-head (2012-02-17) 1 commit
-  (merged to 'next' on 2012-02-20 at 80e3ff2)
- + gitweb: Fix "heads" view when there is no current branch
+* jc/add-refresh-unmerged (2012-02-17) 1 commit
+  (merged to 'next' on 2012-02-21 at 09f8721)
+ + refresh_index: do not show unmerged path that is outside pathspec
 
-"gitweb" compared non-existent value of HEAD with the names of commit
-objects at tips of branches, triggering runtime warnings.
+"git add --refresh <pathspec>" warned about unmerged paths outside the
+given pathspec.
+
+* jc/diff-ignore-case (2012-02-19) 6 commits
+ - diff -i
+ - diff: --ignore-case
+ - xdiff: introduce XDF_IGNORE_CASE
+ - xdiff: introduce XDF_INEXACT_MATCH
+ - xdiff: PATIENCE/HISTOGRAM are not independent option bits
+ - xdiff: remove XDL_PATCH_* macros
+
+"git diff" learns "--ignore-case" option.
+
+* jn/gitweb-hilite-regions (2012-02-19) 5 commits
+ - gitweb: Use esc_html_match_hl() in 'grep' search
+ - gitweb: Highlight matched part of shortened project description
+ - gitweb: Highlight matched part of project description when searching projects
+ - gitweb: Highlight matched part of project name when searching projects
+ - gitweb: Introduce esc_html_hl_regions
+ (this branch uses jn/gitweb-search-optim.)
+
+Not reviewed and do not know what this is about yet ;-).
+
+* jn/gitweb-search-optim (2012-02-19) 3 commits
+ - gitweb: Faster project search
+ - gitweb: Option for filling only specified info in fill_project_list_info
+ - gitweb: Refactor checking if part of project info need filling
+ (this branch is used by jn/gitweb-hilite-regions.)
+
+The API introduced in the second step still has yucky design, but at least
+it is more clear than the previous rounds what this is trying to do.
+
+* js/configure-libintl (2012-02-20) 1 commit
+  (merged to 'next' on 2012-02-21 at 79d7ccc)
+ + configure: don't use -lintl when there is no gettext support
+
+Build fix for autoconf, meant for 'maint' track.
+
+* pj/remote-set-branches-usage-fix (2012-02-19) 1 commit
+  (merged to 'next' on 2012-02-21 at cb71d0e)
+ + remote: fix set-branches usage and documentation
+
+Documentation fix.
 
 * tr/perftest (2012-02-17) 3 commits
   (merged to 'next' on 2012-02-20 at 4c75ba9)
@@ -255,19 +219,11 @@ objects at tips of branches, triggering runtime warnings.
  + Move the user-facing test library to test-lib-functions.sh
 
 * jb/required-filter (2012-02-17) 1 commit
- . Add a setting to require a filter to be successful
+ - Add a setting to require a filter to be successful
 
 A content filter used to be a way to make the recorded contents "more
 useful", but this defines a way to optionally mark a filter "required".
-
-A few test in t0021 use 'false' as the filter, which can exit without
-reading any byte from us, before we start writing and causes us to die
-with SIGPIPE, leading to intermittent test failure.  I think treating this
-as a failure of running the filter (the end user's filter should read what
-is fed in full, produce its output and write the result back to us) is the
-right thing to do, so this patch needs update the surrounding code to
-handle such a situation better, probably by using sigchain_push(SIGPIPE)
-or something.
+Will merge to "next" after waiting for a few more days for comments.
 
 * jk/config-include (2012-02-17) 10 commits
   (merged to 'next' on 2012-02-20 at 7b150b7)
@@ -294,4 +250,4 @@ Reverted the earlier round from 'next' and then fixed up further.
 Teach git-p4 to unexpand $RCS$-like keywords that are embedded in
 tracked contents in order to reduce unnecessary merge conflicts.
 
-Is this ready for 'master'?
+Waiting for follow-up fix-up patches.
