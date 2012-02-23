@@ -2987,6 +2987,10 @@ sub search_projects_list {
 	return @$projlist
 		unless ($tagfilter || $searchtext);
 
+	# searching projects require filling to be run before it;
+	fill_project_list_info($projlist,
+	                       $tagfilter  ? 'ctags' : (),
+	                       $searchtext ? ('path', 'descr') : ());
 	my @projects;
  PROJECT:
 	foreach my $pr (@$projlist) {
@@ -5188,35 +5192,70 @@ sub git_project_search_form {
 	print "</div>\n";
 }
 
-# fills project list info (age, description, owner, category, forks)
+# entry for given @keys needs filling if at least one of keys in list
+# is not present in %$project_info
+sub project_info_needs_filling {
+	my ($project_info, @keys) = @_;
+
+	# return List::MoreUtils::any { !exists $project_info->{$_} } @keys;
+	foreach my $key (@keys) {
+		if (!exists $project_info->{$key}) {
+			return 1;
+		}
+	}
+	return;
+}
+
+# fills project list info (age, description, owner, category, forks, etc.)
 # for each project in the list, removing invalid projects from
-# returned list
+# returned list, or fill only specified info.
+#
+# Invalid projects are removed from the returned list if and only if you
+# ask 'age' or 'age_string' to be filled, because they are the only fields
+# that run unconditionally git command that requires repository, and
+# therefore do always check if project repository is invalid.
+#
+# USAGE:
+# * fill_project_list_info(\@project_list, 'descr_long', 'ctags')
+#   ensures that 'descr_long' and 'ctags' fields are filled
+# * @project_list = fill_project_list_info(\@project_list)
+#   ensures that all fields are filled (and invalid projects removed)
+#
 # NOTE: modifies $projlist, but does not remove entries from it
 sub fill_project_list_info {
-	my $projlist = shift;
+	my ($projlist, @wanted_keys) = @_;
 	my @projects;
+	my $filter_set = sub { return @_; };
+	if (@wanted_keys) {
+		my %wanted_keys = map { $_ => 1 } @wanted_keys;
+		$filter_set = sub { return grep { $wanted_keys{$_} } @_; };
+	}
 
 	my $show_ctags = gitweb_check_feature('ctags');
  PROJECT:
 	foreach my $pr (@$projlist) {
-		my (@activity) = git_get_last_activity($pr->{'path'});
-		unless (@activity) {
-			next PROJECT;
+		if (project_info_needs_filling($pr, $filter_set->('age', 'age_string'))) {
+			my (@activity) = git_get_last_activity($pr->{'path'});
+			unless (@activity) {
+				next PROJECT;
+			}
+			($pr->{'age'}, $pr->{'age_string'}) = @activity;
 		}
-		($pr->{'age'}, $pr->{'age_string'}) = @activity;
-		if (!defined $pr->{'descr'}) {
+		if (project_info_needs_filling($pr, $filter_set->('descr', 'descr_long'))) {
 			my $descr = git_get_project_description($pr->{'path'}) || "";
 			$descr = to_utf8($descr);
 			$pr->{'descr_long'} = $descr;
 			$pr->{'descr'} = chop_str($descr, $projects_list_description_width, 5);
 		}
-		if (!defined $pr->{'owner'}) {
+		if (project_info_needs_filling($pr, $filter_set->('owner'))) {
 			$pr->{'owner'} = git_get_project_owner("$pr->{'path'}") || "";
 		}
-		if ($show_ctags) {
+		if ($show_ctags &&
+		    project_info_needs_filling($pr, $filter_set->('ctags'))) {
 			$pr->{'ctags'} = git_get_project_ctags($pr->{'path'});
 		}
-		if ($projects_list_group_categories && !defined $pr->{'category'}) {
+		if ($projects_list_group_categories &&
+		    project_info_needs_filling($pr, $filter_set->('category'))) {
 			my $cat = git_get_project_category($pr->{'path'}) ||
 			                                   $project_list_default_category;
 			$pr->{'category'} = to_utf8($cat);
@@ -5352,12 +5391,13 @@ sub git_project_list_body {
 	# filtering out forks before filling info allows to do less work
 	@projects = filter_forks_from_projects_list(\@projects)
 		if ($check_forks);
-	@projects = fill_project_list_info(\@projects);
-	# searching projects require filling to be run before it
+	# search_projects_list pre-fills required info
 	@projects = search_projects_list(\@projects,
 	                                 'searchtext' => $searchtext,
 	                                 'tagfilter'  => $tagfilter)
 		if ($tagfilter || $searchtext);
+	# fill the rest
+	@projects = fill_project_list_info(\@projects);
 
 	$order ||= $default_projects_order;
 	$from = 0 unless defined $from;
