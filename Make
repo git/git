@@ -135,6 +135,12 @@ if test -z "$tests" && test -n "$skip"
 then
 	: GIT_SKIP_TESTS="${GIT_SKIP_TESTS:-$skip}"
 fi
+if sh -c 'prove --version >/dev/null 2>&1' &&
+   sh -c 'prove --exec : >/dev/null 2>&1'
+then
+        DEFAULT_TEST_TARGET=prove GIT_PROVE_OPTS="$jobs"
+        export DEFAULT_TEST_TARGET GIT_PROVE_OPTS
+fi
 
 LC_ALL=$LANG
 export LANG LC_ALL

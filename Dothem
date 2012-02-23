@@ -48,12 +48,6 @@ do
 done
 
 sh -c 'asciidoc --version >/dev/null 2>&1' || nodoc=y
-if sh -c 'prove --version >/dev/null 2>&1' &&
-   sh -c 'prove --exec : >/dev/null 2>&1'
-then
-	DEFAULT_TEST_TARGET=prove GIT_PROVE_OPTS="$jobs"
-	export DEFAULT_TEST_TARGET GIT_PROVE_OPTS
-fi
 GIT_TEST_OPTS="$TRASH${GIT_TEST_OPTS+" $GIT_TEST_OPTS"}"
 export GIT_TEST_OPTS
 
@@ -73,6 +67,35 @@ then
 fi
 test -n "$branches" || branches='next master maint jch pu'
 test -n "$jobs" || jobs=-j2
+
+find_installed () {
+	branch=$1
+	test -f "$inst_prefix/git-$branch/bin/git" &&
+	installed=$($inst_prefix/git-$branch/bin/git version) &&
+	if version=$(expr "$installed" : '.*\.g\([0-9a-f]*\)$')
+	then
+		:
+	elif version=v$(expr "$installed" : \
+		'git version \(.*\)\.rc[0-9]*$')
+	then
+		version="$version"-$(expr "$installed" : \
+			'git version .*\.\(rc[0-9]*\)$')
+	else
+		version=v$(expr "$installed" : 'git version \(.*\)')
+	fi &&
+	git rev-parse --verify "$version^0" 2>/dev/null
+}
+
+installed_source_trees=" "
+for branch in $branches
+do
+	if	v=$(find_installed $branch) &&
+		test -n "$v" &&
+		v=$(git rev-parse --verify "$v^{tree}" 2>/dev/null)
+	then
+		installed_source_trees="$installed_source_trees$v "
+	fi
+done
 
 for branch in $branches
 do
@@ -99,21 +122,8 @@ do
 	private=$(git rev-parse -q --verify private-$branch 2>/dev/null)
 	case $? in 0|1) ;; *) exit $? ;; esac
 
-	if	test -f "$inst_prefix/git-$branch/bin/git" &&
-		installed=$($inst_prefix/git-$branch/bin/git version) &&
-		if version=$(expr "$installed" : '.*\.g\([0-9a-f]*\)$')
-		then
-			:
-		elif version=v$(expr "$installed" : \
-				'git version \(.*\)\.rc[0-9]*$')
-		then
-			version="$version"-$(expr "$installed" : \
-				'git version .*\.\(rc[0-9]*\)$')
-		else
-			version=v$(expr "$installed" : 'git version \(.*\)')
-		fi &&
-		version=$(git rev-parse --verify "$version^0" 2>/dev/null) &&
-		test "z$version" = "z$revision"
+	version=$(find_installed $branch)
+	if	test "z$version" = "z$revision"
 	then
 		echo "* up-to-date version \"$installed\" is already installed from $branch"
 		test -n "$force" || continue
@@ -121,16 +131,18 @@ do
 
 	(
 		skip_test=$notest
-		case ",$version,$revision," in
-		*,,*)
-			;;
-		*)
-			if git diff --quiet --exit-code $version $revision
-			then
-				skip_test=1
-			fi
+		vtree=$(git rev-parse --verify "$version^{tree}")
+		rtree=$(git rev-parse --verify "$revision^{tree}")
+		case "$installed_source_trees" in
+		*" $rtree "*)
+			skip_test=1
 			;;
 		esac
+		if test "z$vtree" = "z$rtree"
+		then
+			skip_test=1
+			nodoc=1
+		fi
 		case "$branch, $branches " in
 		jch,*' next '*)
 			if git diff --quiet --exit-code jch next
@@ -139,6 +151,7 @@ do
 			fi
 			;;
 		esac
+		test $(git rev-parse --verify "$version^{tree}" 2>/dev/null)
 		case "$skip_test" in
 		?*)	dotest= ;;
 		'')	dotest=test ;;
