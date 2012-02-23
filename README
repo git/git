@@ -42,10 +42,12 @@ including full documentation and Git related tools.
 
 The user discussion and development of Git take place on the Git
 mailing list -- everyone is welcome to post bug reports, feature
-requests, comments and patches to git@vger.kernel.org. To subscribe
-to the list, send an email with just "subscribe git" in the body to
-majordomo@vger.kernel.org. The mailing list archives are available at
-http://marc.theaimsgroup.com/?l=git and other archival sites.
+requests, comments and patches to git@vger.kernel.org (read
+Documentation/SubmittingPatches for instructions on patch submission).
+To subscribe to the list, send an email with just "subscribe git" in
+the body to majordomo@vger.kernel.org. The mailing list archives are
+available at http://marc.theaimsgroup.com/?l=git and other archival
+sites.
 
 The messages titled "A note from the maintainer", "What's in
 git.git (stable)" and "What's cooking in git.git (topics)" and
