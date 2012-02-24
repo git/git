@@ -195,8 +195,16 @@ static int crlf_to_git(const char *path, const char *src, size_t len,
 	char *dst;
 
 	if (crlf_action == CRLF_BINARY ||
-	    (crlf_action == CRLF_GUESS && auto_crlf == AUTO_CRLF_FALSE) || !len)
+	    (crlf_action == CRLF_GUESS && auto_crlf == AUTO_CRLF_FALSE) ||
+	    (src && !len))
 		return 0;
+
+	/*
+	 * If we are doing a dry-run and have no source buffer, there is
+	 * nothing to analyze; we must assume we would convert.
+	 */
+	if (!buf && !src)
+		return 1;
 
 	gather_stats(src, len, &stats);
 
@@ -532,7 +540,7 @@ static int ident_to_git(const char *path, const char *src, size_t len,
 {
 	char *dst, *dollar;
 
-	if (!ident || !count_ident(src, len))
+	if (!ident || (src && !count_ident(src, len)))
 		return 0;
 
 	if (!buf)
