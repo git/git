@@ -35,6 +35,13 @@ For shell scripts specifically (not exhaustive):
 
  - Case arms are indented at the same depth as case and esac lines.
 
+ - Redirection operators should be written with space before, but no
+   space after them.  In other words, write 'echo test >"$file"'
+   instead of 'echo test> $file' or 'echo test > $file'.  Note that
+   even though it is not required by POSIX to double-quote the
+   redirection target in a variable (as shown above), our code does so
+   because some versions of bash issue a warning without the quotes.
+
  - We prefer $( ... ) for command substitution; unlike ``, it
    properly nests.  It should have been the way Bourne spelled
    it from day one, but unfortunately isn't.
