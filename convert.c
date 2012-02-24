@@ -231,6 +231,13 @@ static int crlf_to_git(const char *path, const char *src, size_t len,
 	if (!stats.cr)
 		return 0;
 
+	/*
+	 * At this point all of our source analysis is done, and we are sure we
+	 * would convert. If we are in dry-run mode, we can give an answer.
+	 */
+	if (!buf)
+		return 1;
+
 	/* only grow if not in place */
 	if (strbuf_avail(buf) + buf->len < len)
 		strbuf_grow(buf, len - buf->len);
@@ -391,6 +398,9 @@ static int apply_filter(const char *path, const char *src, size_t len,
 	if (!cmd)
 		return 0;
 
+	if (!dst)
+		return 1;
+
 	memset(&async, 0, sizeof(async));
 	async.proc = filter_buffer;
 	async.data = &params;
@@ -524,6 +534,9 @@ static int ident_to_git(const char *path, const char *src, size_t len,
 
 	if (!ident || !count_ident(src, len))
 		return 0;
+
+	if (!buf)
+		return 1;
 
 	/* only grow if not in place */
 	if (strbuf_avail(buf) + buf->len < len)
@@ -754,13 +767,13 @@ int convert_to_git(const char *path, const char *src, size_t len,
 		filter = ca.drv->clean;
 
 	ret |= apply_filter(path, src, len, dst, filter);
-	if (ret) {
+	if (ret && dst) {
 		src = dst->buf;
 		len = dst->len;
 	}
 	ca.crlf_action = input_crlf_action(ca.crlf_action, ca.eol_attr);
 	ret |= crlf_to_git(path, src, len, dst, ca.crlf_action, checksafe);
-	if (ret) {
+	if (ret && dst) {
 		src = dst->buf;
 		len = dst->len;
 	}
