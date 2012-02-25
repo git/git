@@ -2451,7 +2451,7 @@ int cmd_pack_objects(int argc, const char **argv, const char *prefix)
 		die("bad pack compression level %d", pack_compression_level);
 #ifdef NO_PTHREADS
 	if (delta_search_threads != 1)
-		warning("no threads support, ignoring %s", arg);
+		warning("no threads support, ignoring --threads");
 #endif
 	if (!pack_to_stdout && !pack_size_limit)
 		pack_size_limit = pack_size_limit_cfg;
