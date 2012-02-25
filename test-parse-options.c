@@ -37,7 +37,11 @@ int main(int argc, const char **argv)
 		NULL
 	};
 	struct option options[] = {
-		OPT_BOOLEAN('b', "boolean", &boolean, "get a boolean"),
+		OPT_BOOL(0, "yes", &boolean, "get a boolean"),
+		OPT_BOOL('D', "no-doubt", &boolean, "begins with 'no-'"),
+		{ OPTION_SET_INT, 'B', "no-fear", &boolean, NULL,
+		  "be brave", PARSE_OPT_NOARG | PARSE_OPT_NONEG, NULL, 1 },
+		OPT_COUNTUP('b', "boolean", &boolean, "increment by one"),
 		OPT_BIT('4', "or4", &boolean,
 			"bitwise-or boolean with ...0100", 4),
 		OPT_NEGBIT(0, "neg-or4", &boolean, "same as --no-or4", 4),
@@ -62,11 +66,11 @@ int main(int argc, const char **argv)
 		OPT_ARGUMENT("quux", "means --quux"),
 		OPT_NUMBER_CALLBACK(&integer, "set integer to NUM",
 			number_callback),
-		{ OPTION_BOOLEAN, '+', NULL, &boolean, NULL, "same as -b",
+		{ OPTION_COUNTUP, '+', NULL, &boolean, NULL, "same as -b",
 		  PARSE_OPT_NOARG | PARSE_OPT_NONEG | PARSE_OPT_NODASH },
-		{ OPTION_BOOLEAN, 0, "ambiguous", &ambiguous, NULL,
+		{ OPTION_COUNTUP, 0, "ambiguous", &ambiguous, NULL,
 		  "positive ambiguity", PARSE_OPT_NOARG | PARSE_OPT_NONEG },
-		{ OPTION_BOOLEAN, 0, "no-ambiguous", &ambiguous, NULL,
+		{ OPTION_COUNTUP, 0, "no-ambiguous", &ambiguous, NULL,
 		  "negative ambiguity", PARSE_OPT_NOARG | PARSE_OPT_NONEG },
 		OPT_GROUP("Standard options"),
 		OPT__ABBREV(&abbrev),
