@@ -261,7 +261,7 @@ static int sort_by_offset(const void *e1, const void *e2)
 	return 0;
 }
 
-static int create_pack_dictionaries(struct packed_git *p)
+static struct idx_entry *get_packed_object_list(struct packed_git *p)
 {
 	uint32_t nr_objects, i;
 	struct idx_entry *objects;
@@ -275,7 +275,15 @@ static int create_pack_dictionaries(struct packed_git *p)
 	}
 	qsort(objects, nr_objects, sizeof(*objects), sort_by_offset);
 
-	for (i = 0; i < nr_objects; i++) {
+	return objects;
+}
+
+static int create_pack_dictionaries(struct packed_git *p,
+				    struct idx_entry *objects)
+{
+	unsigned int i;
+
+	for (i = 0; i < p->num_objects; i++) {
 		void *data;
 		enum object_type type;
 		unsigned long size;
@@ -310,20 +318,21 @@ static int create_pack_dictionaries(struct packed_git *p)
 				typename(type), sha1_to_hex(objects[i].sha1));
 		free(data);
 	}
-	free(objects);
 
 	return 0;
 }
 
-static int process_one_pack(const char *path)
+static struct packed_git *open_pack(const char *path)
 {
 	char arg[PATH_MAX];
 	int len;
 	struct packed_git *p;
 
 	len = strlcpy(arg, path, PATH_MAX);
-	if (len >= PATH_MAX)
-		return error("name too long: %s", path);
+	if (len >= PATH_MAX) {
+		error("name too long: %s", path);
+		return NULL;
+	}
 
 	/*
 	 * In addition to "foo.idx" we accept "foo.pack" and "foo";
@@ -333,8 +342,10 @@ static int process_one_pack(const char *path)
 		strcpy(arg + len - 5, ".idx");
 		len--;
 	} else if (!has_extension(arg, ".idx")) {
-		if (len + 4 >= PATH_MAX)
-			return error("name too long: %s.idx", arg);
+		if (len + 4 >= PATH_MAX) {
+			error("name too long: %s.idx", arg);
+			return NULL;
+		}
 		strcpy(arg + len, ".idx");
 		len += 4;
 	}
@@ -345,17 +356,36 @@ static int process_one_pack(const char *path)
 	 */
 	if (len + 1 >= PATH_MAX) {
 		arg[len - 4] = '\0';
-		return error("name too long: %s.pack", arg);
+		error("name too long: %s.pack", arg);
+		return NULL;
 	}
 
 	p = add_packed_git(arg, len, 1);
-	if (!p)
-		return error("packfile %s not found.", arg);
+	if (!p) {
+		error("packfile %s not found.", arg);
+		return NULL;
+	}
 
 	install_packed_git(p);
-	if (open_pack_index(p))
-		return error("packfile %s index not opened", p->pack_name);
-	return create_pack_dictionaries(p);
+	if (open_pack_index(p)) {
+		error("packfile %s index not opened", p->pack_name);
+		return NULL;
+	}
+
+	return p;
+}
+
+static void process_one_pack(char *src_pack)
+{
+	struct packed_git *p;
+	struct idx_entry *objs;
+
+	p = open_pack(src_pack);
+	if (!p)
+		die("unable to open source pack");
+
+	objs = get_packed_object_list(p);
+	create_pack_dictionaries(p, objs);
 }
 
 int main(int argc, char *argv[])
