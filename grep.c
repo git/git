@@ -79,7 +79,7 @@ static void compile_pcre_regexp(struct grep_pat *p, const struct grep_opt *opt)
 {
 	const char *error;
 	int erroffset;
-	int options = 0;
+	int options = PCRE_MULTILINE;
 
 	if (opt->ignore_case)
 		options |= PCRE_CASELESS;
