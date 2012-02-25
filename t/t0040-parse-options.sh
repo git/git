@@ -107,7 +107,7 @@ test_expect_success 'OPT_BOOL() negation #2' 'check boolean: 0 -D --no-no-doubt'
 test_expect_success 'OPT_BOOL() no negation #1' 'check_unknown --fear'
 test_expect_success 'OPT_BOOL() no negation #2' 'check_unknown --no-no-fear'
 
-test_expect_failure 'OPT_BOOL() positivation' 'check boolean: 0 -D --doubt'
+test_expect_success 'OPT_BOOL() positivation' 'check boolean: 0 -D --doubt'
 
 cat > expect << EOF
 boolean: 2
