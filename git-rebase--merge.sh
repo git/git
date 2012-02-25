@@ -90,10 +90,13 @@ call_merge () {
 
 finish_rb_merge () {
 	move_to_original_branch
-	git notes copy --for-rewrite=rebase < "$state_dir"/rewritten
-	if test -x "$GIT_DIR"/hooks/post-rewrite &&
-		test -s "$state_dir"/rewritten; then
-		"$GIT_DIR"/hooks/post-rewrite rebase < "$state_dir"/rewritten
+	if test -s "$state_dir"/rewritten
+	then
+		git notes copy --for-rewrite=rebase <"$state_dir"/rewritten
+		if test -x "$GIT_DIR"/hooks/post-rewrite
+		then
+			"$GIT_DIR"/hooks/post-rewrite rebase <"$state_dir"/rewritten
+		fi
 	fi
 	rm -r "$state_dir"
 	say All done.
