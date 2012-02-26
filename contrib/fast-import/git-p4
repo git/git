@@ -1428,6 +1428,7 @@ class P4Sync(Command, P4UserMap):
         self.p4BranchesInGit = []
         self.cloneExclude = []
         self.useClientSpec = False
+        self.useClientSpec_from_options = False
         self.clientSpecDirs = None
 
         if gitConfig("git-p4.syncFromOrigin") == "false":
@@ -2136,7 +2137,11 @@ class P4Sync(Command, P4UserMap):
             if not gitBranchExists(self.refPrefix + "HEAD") and self.importIntoRemotes and gitBranchExists(self.branch):
                 system("git symbolic-ref %sHEAD %s" % (self.refPrefix, self.branch))
 
-        if not self.useClientSpec:
+        # accept either the command-line option, or the configuration variable
+        if self.useClientSpec:
+            # will use this after clone to set the variable
+            self.useClientSpec_from_options = True
+        else:
             if gitConfig("git-p4.useclientspec", "--bool") == "true":
                 self.useClientSpec = True
         if self.useClientSpec:
@@ -2454,6 +2459,10 @@ class P4Clone(P4Sync):
                     system("git checkout -f")
             else:
                 print "Could not detect main branch. No checkout/master branch created."
+
+        # auto-set this variable if invoked with --use-client-spec
+        if self.useClientSpec_from_options:
+            system("git config --bool git-p4.useclientspec true")
 
         return True
 

@@ -241,6 +241,23 @@ test_expect_success 'quotes on rhs only' '
 '
 
 #
+# Submit tests
+#
+
+# clone sets variable
+test_expect_success 'clone --use-client-spec sets useClientSpec' '
+	client_view "//depot/... //client/..." &&
+	test_when_finished cleanup_git &&
+	"$GITP4" clone --use-client-spec --dest="$git" //depot &&
+	(
+		cd "$git" &&
+		git config --bool git-p4.useClientSpec >actual &&
+		echo true >true &&
+		test_cmp actual true
+	)
+'
+
+#
 # Rename directories to test quoting in depot-side mappings
 # //depot
 #    - "dir 1"
