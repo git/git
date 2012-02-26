@@ -31,7 +31,7 @@ client_view() {
 #
 check_files_exist() {
 	ok=0 &&
-	num=${#@} &&
+	num=$# &&
 	for arg ; do
 		test_path_is_file "$arg" &&
 		ok=$(($ok + 1))
