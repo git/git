@@ -555,6 +555,46 @@ def p4PathStartsWith(path, prefix):
         return path.lower().startswith(prefix.lower())
     return path.startswith(prefix)
 
+def getClientSpec():
+    """Look at the p4 client spec, create a View() object that contains
+       all the mappings, and return it."""
+
+    specList = p4CmdList("client -o")
+    if len(specList) != 1:
+        die('Output from "client -o" is %d lines, expecting 1' %
+            len(specList))
+
+    # dictionary of all client parameters
+    entry = specList[0]
+
+    # just the keys that start with "View"
+    view_keys = [ k for k in entry.keys() if k.startswith("View") ]
+
+    # hold this new View
+    view = View()
+
+    # append the lines, in order, to the view
+    for view_num in range(len(view_keys)):
+        k = "View%d" % view_num
+        if k not in view_keys:
+            die("Expected view key %s missing" % k)
+        view.append(entry[k])
+
+    return view
+
+def getClientRoot():
+    """Grab the client directory."""
+
+    output = p4CmdList("client -o")
+    if len(output) != 1:
+        die('Output from "client -o" is %d lines, expecting 1' % len(output))
+
+    entry = output[0]
+    if "Root" not in entry:
+        die('Client has no "Root"')
+
+    return entry["Root"]
+
 class Command:
     def __init__(self):
         self.usage = "usage: %prog [options]"
@@ -1119,11 +1159,20 @@ class P4Submit(Command, P4UserMap):
             print "Internal error: cannot locate perforce depot path from existing branches"
             sys.exit(128)
 
-        self.clientPath = p4Where(self.depotPath)
+        self.useClientSpec = False
+        if gitConfig("git-p4.useclientspec", "--bool") == "true":
+            self.useClientSpec = True
+        if self.useClientSpec:
+            self.clientSpecDirs = getClientSpec()
 
-        if len(self.clientPath) == 0:
-            print "Error: Cannot locate perforce checkout of %s in client view" % self.depotPath
-            sys.exit(128)
+        if self.useClientSpec:
+            # all files are relative to the client spec
+            self.clientPath = getClientRoot()
+        else:
+            self.clientPath = p4Where(self.depotPath)
+
+        if self.clientPath == "":
+            die("Error: Cannot locate perforce checkout of %s in client view" % self.depotPath)
 
         print "Perforce checkout for depot path %s located at %s" % (self.depotPath, self.clientPath)
         self.oldWorkingDirectory = os.getcwd()
@@ -2078,33 +2127,6 @@ class P4Sync(Command, P4UserMap):
             print self.gitError.read()
 
 
-    def getClientSpec(self):
-        specList = p4CmdList("client -o")
-        if len(specList) != 1:
-            die('Output from "client -o" is %d lines, expecting 1' %
-                len(specList))
-
-        # dictionary of all client parameters
-        entry = specList[0]
-
-        # just the keys that start with "View"
-        view_keys = [ k for k in entry.keys() if k.startswith("View") ]
-
-        # hold this new View
-        view = View()
-
-        # append the lines, in order, to the view
-        for view_num in range(len(view_keys)):
-            k = "View%d" % view_num
-            if k not in view_keys:
-                die("Expected view key %s missing" % k)
-            view.append(entry[k])
-
-        self.clientSpecDirs = view
-        if self.verbose:
-            for i, m in enumerate(self.clientSpecDirs.mappings):
-                    print "clientSpecDirs %d: %s" % (i, str(m))
-
     def run(self, args):
         self.depotPaths = []
         self.changeRange = ""
@@ -2145,7 +2167,7 @@ class P4Sync(Command, P4UserMap):
             if gitConfig("git-p4.useclientspec", "--bool") == "true":
                 self.useClientSpec = True
         if self.useClientSpec:
-            self.getClientSpec()
+            self.clientSpecDirs = getClientSpec()
 
         # TODO: should always look at previous commits,
         # merge with previous imports, if possible.
