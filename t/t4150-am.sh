@@ -123,6 +123,7 @@ test_expect_success setup '
 	git commit -m "added another file" &&
 
 	git format-patch --stdout master >lorem-move.patch &&
+	git format-patch --no-prefix --stdout master >lorem-zero.patch &&
 
 	git checkout -b rename &&
 	git mv file renamed &&
@@ -282,6 +283,20 @@ test_expect_success 'am -3 falls back to 3-way merge' '
 	test_tick &&
 	git commit -m "copied stuff" &&
 	git am -3 lorem-move.patch &&
+	! test -d .git/rebase-apply &&
+	git diff --exit-code lorem
+'
+
+test_expect_success 'am -3 -p0 can read --no-prefix patch' '
+	rm -fr .git/rebase-apply &&
+	git reset --hard &&
+	git checkout -b lorem3 master2 &&
+	sed -n -e "3,\$p" msg >file &&
+	head -n 9 msg >>file &&
+	git add file &&
+	test_tick &&
+	git commit -m "copied stuff" &&
+	git am -3 -p0 lorem-zero.patch &&
 	! test -d .git/rebase-apply &&
 	git diff --exit-code lorem
 '
