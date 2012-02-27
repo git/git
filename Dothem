@@ -125,14 +125,14 @@ do
 	version=$(find_installed $branch)
 	if	test "z$version" = "z$revision"
 	then
-		echo "* up-to-date version \"$installed\" is already installed from $branch"
+		echo "* up-to-date version is already installed from $branch"
 		test -n "$force" || continue
 	fi
 
+	vtree=$(git rev-parse --verify "$version^{tree}")
+	rtree=$(git rev-parse --verify "$revision^{tree}")
 	(
 		skip_test=$notest
-		vtree=$(git rev-parse --verify "$version^{tree}")
-		rtree=$(git rev-parse --verify "$revision^{tree}")
 		case "$installed_source_trees" in
 		*" $rtree "*)
 			skip_test=1
@@ -141,6 +141,12 @@ do
 		if test "z$vtree" = "z$rtree"
 		then
 			skip_test=1
+			nodoc=1
+		fi
+		dvtree=$(git rev-parse --verify "$version:Documentation/")
+		drtree=$(git rev-parse --verify "$revision:Documentation/")
+		if test "z$dvtree" = "z$drtree"
+		then
 			nodoc=1
 		fi
 		case "$branch, $branches " in
@@ -214,4 +220,5 @@ do
 		git reset --hard
 	) </dev/null || exit $?
 
+	installed_source_trees="$installed_source_trees$rtree "
 done
