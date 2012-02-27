@@ -303,9 +303,13 @@ CLIENT SPEC
 -----------
 The p4 client specification is maintained with the 'p4 client' command
 and contains among other fields, a View that specifies how the depot
-is mapped into the client repository.  Git-p4 can consult the client
-spec when given the '--use-client-spec' option or useClientSpec
-variable.
+is mapped into the client repository.  The 'clone' and 'sync' commands
+can consult the client spec when given the '--use-client-spec' option or
+when the useClientSpec variable is true.  After 'git p4 clone', the
+useClientSpec variable is automatically set in the repository
+configuration file.  This allows future 'git p4 submit' commands to
+work properly; the submit command looks only at the variable and does
+not have a command-line option.
 
 The full syntax for a p4 view is documented in 'p4 help views'.  Git-p4
 knows only a subset of the view syntax.  It understands multi-line
