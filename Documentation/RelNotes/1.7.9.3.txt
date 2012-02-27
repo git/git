@@ -14,4 +14,11 @@ Fixes since v1.7.9.2
  * "git add --refresh <pathspec>" used to warn about unmerged paths
    outside the given pathspec.
 
+ * The commit log template given with "git merge --edit" did not have
+   a short instructive text like what "git commit" gives.
+
+ * "gitweb" used to drop warnings in the log file when "heads" view is
+   accessed in a repository whose HEAD does not point at a valid
+   branch.
+
 Also contains minor fixes and documentation updates.
