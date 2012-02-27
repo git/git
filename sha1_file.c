@@ -2700,10 +2700,13 @@ static int index_core(unsigned char *sha1, int fd, size_t size,
  * This also bypasses the usual "convert-to-git" dance, and that is on
  * purpose. We could write a streaming version of the converting
  * functions and insert that before feeding the data to fast-import
- * (or equivalent in-core API described above), but the primary
- * motivation for trying to stream from the working tree file and to
- * avoid mmaping it in core is to deal with large binary blobs, and
- * by definition they do _not_ want to get any conversion.
+ * (or equivalent in-core API described above). However, that is
+ * somewhat complicated, as we do not know the size of the filter
+ * result, which we need to know beforehand when writing a git object.
+ * Since the primary motivation for trying to stream from the working
+ * tree file and to avoid mmaping it in core is to deal with large
+ * binary blobs, they generally do not want to get any conversion, and
+ * callers should avoid this code path when filters are requested.
  */
 static int index_stream(unsigned char *sha1, int fd, size_t size,
 			enum object_type type, const char *path,
@@ -2720,7 +2723,8 @@ int index_fd(unsigned char *sha1, int fd, struct stat *st,
 
 	if (!S_ISREG(st->st_mode))
 		ret = index_pipe(sha1, fd, type, path, flags);
-	else if (size <= big_file_threshold || type != OBJ_BLOB)
+	else if (size <= big_file_threshold || type != OBJ_BLOB ||
+		 (path && would_convert_to_git(path, NULL, 0, 0)))
 		ret = index_core(sha1, fd, size, type, path, flags);
 	else
 		ret = index_stream(sha1, fd, size, type, path, flags);
