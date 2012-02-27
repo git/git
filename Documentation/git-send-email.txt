@@ -198,6 +198,10 @@ must be used for each option.
 	if a username is not specified (with '--smtp-user' or 'sendemail.smtpuser'),
 	then authentication is not attempted.
 
+--smtp-debug=0|1::
+	Enable (1) or disable (0) debug output. If enabled, SMTP
+	commands and replies will be printed. Useful to debug TLS
+	connection and authentication problems.
 
 Automating
 ~~~~~~~~~~
