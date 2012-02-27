@@ -557,6 +557,55 @@ static int create_pack_dictionaries(struct packed_git *p,
 	return 0;
 }
 
+static unsigned long write_dict_table(struct sha1file *f, struct dict_table *t)
+{
+	unsigned char buffer[1024];
+	unsigned hdrlen;
+	unsigned long size, datalen;
+	z_stream stream;
+	int i, status;
+
+	/*
+	 * Stored dict table format: uncompressed data length followed by
+	 * compressed content.
+	 */
+
+	datalen = t->cur_offset;
+	hdrlen = encode_varint(datalen, buffer);
+	sha1write(f, buffer, hdrlen);
+
+	memset(&stream, 0, sizeof(stream));
+	deflateInit(&stream, pack_compression_level);
+
+	for (i = 0; i < t->nb_entries; i++) {
+		stream.next_in = t->data + t->entry[i].offset;
+		stream.avail_in = 2 + strlen((char *)t->data + t->entry[i].offset + 2) + 1;
+		do {
+			stream.next_out = buffer;
+			stream.avail_out = sizeof(buffer);
+			status = deflate(&stream, 0);
+			size = stream.next_out - (unsigned char *)buffer;
+			sha1write(f, buffer, size);
+		} while (status == Z_OK);
+	}
+	do {
+		stream.next_out = buffer;
+		stream.avail_out = sizeof(buffer);
+		status = deflate(&stream, Z_FINISH);
+		size = stream.next_out - (unsigned char *)buffer;
+		sha1write(f, buffer, size);
+	} while (status == Z_OK);
+	if (status != Z_STREAM_END)
+		die("unable to deflate dictionary table (%d)", status);
+	if (stream.total_in != datalen)
+		die("dict data size mismatch (%ld vs %ld)",
+		    stream.total_in, datalen);
+	datalen = stream.total_out;
+	deflateEnd(&stream);
+
+	return hdrlen + datalen;
+}
+
 static struct packed_git *open_pack(const char *path)
 {
 	char arg[PATH_MAX];
