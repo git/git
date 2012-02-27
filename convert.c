@@ -2,6 +2,7 @@
 #include "attr.h"
 #include "run-command.h"
 #include "quote.h"
+#include "sigchain.h"
 
 /*
  * convert.c - convert a file when checking it out and checking it in.
@@ -360,11 +361,15 @@ static int filter_buffer(int in, int out, void *data)
 	if (start_command(&child_process))
 		return error("cannot fork to run external filter %s", params->cmd);
 
+	sigchain_push(SIGPIPE, SIG_IGN);
+
 	write_err = (write_in_full(child_process.in, params->src, params->size) < 0);
 	if (close(child_process.in))
 		write_err = 1;
 	if (write_err)
 		error("cannot feed the input to external filter %s", params->cmd);
+
+	sigchain_pop(SIGPIPE);
 
 	status = finish_command(&child_process);
 	if (status)
