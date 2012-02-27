@@ -620,4 +620,8 @@ test_expect_success 'use set-upstream on the current branch' '
 
 '
 
+test_expect_success '--merged catches invalid object names' '
+	test_must_fail git branch --merged 0000000000000000000000000000000000000000
+'
+
 test_done
