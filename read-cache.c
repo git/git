@@ -1120,10 +1120,15 @@ int refresh_index(struct index_state *istate, unsigned int flags, const char **p
 		struct cache_entry *ce, *new;
 		int cache_errno = 0;
 		int changed = 0;
+		int filtered = 0;
 
 		ce = istate->cache[i];
 		if (ignore_submodules && S_ISGITLINK(ce->ce_mode))
 			continue;
+
+		if (pathspec &&
+		    !match_pathspec(pathspec, ce->name, strlen(ce->name), 0, seen))
+			filtered = 1;
 
 		if (ce_stage(ce)) {
 			while ((i < istate->cache_nr) &&
@@ -1132,12 +1137,14 @@ int refresh_index(struct index_state *istate, unsigned int flags, const char **p
 			i--;
 			if (allow_unmerged)
 				continue;
-			show_file(unmerged_fmt, ce->name, in_porcelain, &first, header_msg);
+			if (!filtered)
+				show_file(unmerged_fmt, ce->name, in_porcelain,
+					  &first, header_msg);
 			has_errors = 1;
 			continue;
 		}
 
-		if (pathspec && !match_pathspec(pathspec, ce->name, strlen(ce->name), 0, seen))
+		if (filtered)
 			continue;
 
 		new = refresh_cache_ent(istate, ce, options, &cache_errno, &changed);
