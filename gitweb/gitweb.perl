@@ -1715,6 +1715,47 @@ sub chop_and_escape_str {
 	}
 }
 
+# Highlight selected fragments of string, using given CSS class,
+# and escape HTML.  It is assumed that fragments do not overlap.
+# Regions are passed as list of pairs (array references).
+#
+# Example: esc_html_hl_regions("foobar", "mark", [ 0, 3 ]) returns
+# '<span class="mark">foo</span>bar'
+sub esc_html_hl_regions {
+	my ($str, $css_class, @sel) = @_;
+	return esc_html($str) unless @sel;
+
+	my $out = '';
+	my $pos = 0;
+
+	for my $s (@sel) {
+		$out .= esc_html(substr($str, $pos, $s->[0] - $pos))
+			if ($s->[0] - $pos > 0);
+		$out .= $cgi->span({-class => $css_class},
+		                   esc_html(substr($str, $s->[0], $s->[1] - $s->[0])));
+
+		$pos = $s->[1];
+	}
+	$out .= esc_html(substr($str, $pos))
+		if ($pos < length($str));
+
+	return $out;
+}
+
+# highlight match (if any), and escape HTML
+sub esc_html_match_hl {
+	my ($str, $regexp) = @_;
+	return esc_html($str) unless defined $regexp;
+
+	my @matches;
+	while ($str =~ /$regexp/g) {
+		push @matches, [$-[0], $+[0]];
+	}
+	return esc_html($str) unless @matches;
+
+	return esc_html_hl_regions($str, 'match', @matches);
+}
+
 ## ----------------------------------------------------------------------
 ## functions returning short strings
 
