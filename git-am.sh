@@ -202,7 +202,7 @@ check_patch_format () {
 		l1=
 		while test -z "$l1"
 		do
-			read l1
+			read l1 || break
 		done
 		read l2
 		read l3

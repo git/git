@@ -234,8 +234,10 @@ test_expect_success 'refuse to preserve users without perms' '
 		git config git-p4.skipSubmitEditCheck true &&
 		echo "username-noperms: a change by alice" >>file1 &&
 		git commit --author "Alice <alice@localhost>" -m "perms: a change by alice" file1 &&
-		P4EDITOR=touch P4USER=bob P4PASSWD=secret test_must_fail "$GITP4" commit --preserve-user &&
-		test_must_fail git diff --exit-code HEAD..p4/master
+		P4EDITOR=touch P4USER=bob P4PASSWD=secret &&
+		export P4EDITOR P4USER P4PASSWD &&
+		test_must_fail "$GITP4" commit --preserve-user &&
+		! git diff --exit-code HEAD..p4/master
 	)
 '
 
@@ -250,13 +252,15 @@ test_expect_success 'preserve user where author is unknown to p4' '
 		git commit --author "Bob <bob@localhost>" -m "preserve: a change by bob" file1 &&
 		echo "username-unknown: a change by charlie" >>file1 &&
 		git commit --author "Charlie <charlie@localhost>" -m "preserve: a change by charlie" file1 &&
-		P4EDITOR=touch P4USER=alice P4PASSWD=secret test_must_fail "$GITP4" commit --preserve-user &&
-		test_must_fail git diff --exit-code HEAD..p4/master &&
+		P4EDITOR=touch P4USER=alice P4PASSWD=secret &&
+		export P4EDITOR P4USER P4PASSWD &&
+		test_must_fail "$GITP4" commit --preserve-user &&
+		! git diff --exit-code HEAD..p4/master &&
 
 		echo "$0: repeat with allowMissingP4Users enabled" &&
 		git config git-p4.allowMissingP4Users true &&
 		git config git-p4.preserveUser true &&
-		P4EDITOR=touch P4USER=alice P4PASSWD=secret "$GITP4" commit &&
+		"$GITP4" commit &&
 		git diff --exit-code HEAD..p4/master &&
 		p4_check_commit_author file1 alice
 	)
@@ -275,20 +279,22 @@ test_expect_success 'not preserving user with mixed authorship' '
 		p4_add_user derek Derek &&
 
 		make_change_by_user usernamefile3 Derek derek@localhost &&
-		P4EDITOR=cat P4USER=alice P4PASSWD=secret "$GITP4" commit |\
+		P4EDITOR=cat P4USER=alice P4PASSWD=secret &&
+		export P4EDITOR P4USER P4PASSWD &&
+		"$GITP4" commit |\
 		grep "git author derek@localhost does not match" &&
 
 		make_change_by_user usernamefile3 Charlie charlie@localhost &&
-		P4EDITOR=cat P4USER=alice P4PASSWD=secret "$GITP4" commit |\
+		"$GITP4" commit |\
 		grep "git author charlie@localhost does not match" &&
 
 		make_change_by_user usernamefile3 alice alice@localhost &&
-		P4EDITOR=cat P4USER=alice P4PASSWD=secret "$GITP4" |\
+		"$GITP4" commit |\
 		test_must_fail grep "git author.*does not match" &&
 
 		git config git-p4.skipUserNameCheck true &&
 		make_change_by_user usernamefile3 Charlie charlie@localhost &&
-		P4EDITOR=cat P4USER=alice P4PASSWD=secret "$GITP4" commit |\
+		"$GITP4" commit |\
 		test_must_fail grep "git author.*does not match" &&
 
 		p4_check_commit_author usernamefile3 alice

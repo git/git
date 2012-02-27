@@ -31,7 +31,7 @@ client_view() {
 #
 check_files_exist() {
 	ok=0 &&
-	num=${#@} &&
+	num=$# &&
 	for arg ; do
 		test_path_is_file "$arg" &&
 		ok=$(($ok + 1))
@@ -71,20 +71,24 @@ git_verify() {
 #   - dir2
 #     - file21
 #     - file22
+init_depot() {
+	for d in 1 2 ; do
+		mkdir -p dir$d &&
+		for f in 1 2 ; do
+			echo dir$d/file$d$f >dir$d/file$d$f &&
+			p4 add dir$d/file$d$f &&
+			p4 submit -d "dir$d/file$d$f"
+		done
+	done &&
+	find . -type f ! -name files >files &&
+	check_files_exist dir1/file11 dir1/file12 \
+			  dir2/file21 dir2/file22
+}
+
 test_expect_success 'init depot' '
 	(
 		cd "$cli" &&
-		for d in 1 2 ; do
-			mkdir -p dir$d &&
-			for f in 1 2 ; do
-				echo dir$d/file$d$f >dir$d/file$d$f &&
-				p4 add dir$d/file$d$f &&
-				p4 submit -d "dir$d/file$d$f"
-			done
-		done &&
-		find . -type f ! -name files >files &&
-		check_files_exist dir1/file11 dir1/file12 \
-				  dir2/file21 dir2/file22
+		init_depot
 	)
 '
 
@@ -244,6 +248,139 @@ test_expect_success 'quotes on rhs only' '
 	test_when_finished cleanup_git &&
 	"$GITP4" clone --use-client-spec --dest="$git" //depot &&
 	git_verify "cdir 1/file11" "cdir 1/file12"
+'
+
+#
+# Submit tests
+#
+
+# clone sets variable
+test_expect_success 'clone --use-client-spec sets useClientSpec' '
+	client_view "//depot/... //client/..." &&
+	test_when_finished cleanup_git &&
+	"$GITP4" clone --use-client-spec --dest="$git" //depot &&
+	(
+		cd "$git" &&
+		git config --bool git-p4.useClientSpec >actual &&
+		echo true >true &&
+		test_cmp actual true
+	)
+'
+
+# clone just a subdir of the client spec
+test_expect_success 'subdir clone' '
+	client_view "//depot/... //client/..." &&
+	files="dir1/file11 dir1/file12 dir2/file21 dir2/file22" &&
+	client_verify $files &&
+	test_when_finished cleanup_git &&
+	"$GITP4" clone --use-client-spec --dest="$git" //depot/dir1 &&
+	git_verify dir1/file11 dir1/file12
+'
+
+#
+# submit back, see what happens:  five cases
+#
+test_expect_success 'subdir clone, submit modify' '
+	client_view "//depot/... //client/..." &&
+	test_when_finished cleanup_git &&
+	"$GITP4" clone --use-client-spec --dest="$git" //depot/dir1 &&
+	(
+		cd "$git" &&
+		git config git-p4.skipSubmitEdit true &&
+		echo line >>dir1/file12 &&
+		git add dir1/file12 &&
+		git commit -m dir1/file12 &&
+		"$GITP4" submit
+	) &&
+	(
+		cd "$cli" &&
+		test_path_is_file dir1/file12 &&
+		test_line_count = 2 dir1/file12
+	)
+'
+
+test_expect_success 'subdir clone, submit add' '
+	client_view "//depot/... //client/..." &&
+	test_when_finished cleanup_git &&
+	"$GITP4" clone --use-client-spec --dest="$git" //depot/dir1 &&
+	(
+		cd "$git" &&
+		git config git-p4.skipSubmitEdit true &&
+		echo file13 >dir1/file13 &&
+		git add dir1/file13 &&
+		git commit -m dir1/file13 &&
+		"$GITP4" submit
+	) &&
+	(
+		cd "$cli" &&
+		test_path_is_file dir1/file13
+	)
+'
+
+test_expect_success 'subdir clone, submit delete' '
+	client_view "//depot/... //client/..." &&
+	test_when_finished cleanup_git &&
+	"$GITP4" clone --use-client-spec --dest="$git" //depot/dir1 &&
+	(
+		cd "$git" &&
+		git config git-p4.skipSubmitEdit true &&
+		git rm dir1/file12 &&
+		git commit -m "delete dir1/file12" &&
+		"$GITP4" submit
+	) &&
+	(
+		cd "$cli" &&
+		test_path_is_missing dir1/file12
+	)
+'
+
+test_expect_success 'subdir clone, submit copy' '
+	client_view "//depot/... //client/..." &&
+	test_when_finished cleanup_git &&
+	"$GITP4" clone --use-client-spec --dest="$git" //depot/dir1 &&
+	(
+		cd "$git" &&
+		git config git-p4.skipSubmitEdit true &&
+		git config git-p4.detectCopies true &&
+		cp dir1/file11 dir1/file11a &&
+		git add dir1/file11a &&
+		git commit -m "copy to dir1/file11a" &&
+		"$GITP4" submit
+	) &&
+	(
+		cd "$cli" &&
+		test_path_is_file dir1/file11a
+	)
+'
+
+test_expect_success 'subdir clone, submit rename' '
+	client_view "//depot/... //client/..." &&
+	test_when_finished cleanup_git &&
+	"$GITP4" clone --use-client-spec --dest="$git" //depot/dir1 &&
+	(
+		cd "$git" &&
+		git config git-p4.skipSubmitEdit true &&
+		git config git-p4.detectRenames true &&
+		git mv dir1/file13 dir1/file13a &&
+		git commit -m "rename dir1/file13 to dir1/file13a" &&
+		"$GITP4" submit
+	) &&
+	(
+		cd "$cli" &&
+		test_path_is_missing dir1/file13 &&
+		test_path_is_file dir1/file13a
+	)
+'
+
+test_expect_success 'reinit depot' '
+	(
+		cd "$cli" &&
+		p4 sync -f &&
+		rm files &&
+		p4 delete */* &&
+		p4 submit -d "delete all files" &&
+		init_depot
+	)
 '
 
 #
