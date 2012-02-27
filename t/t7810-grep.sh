@@ -47,6 +47,13 @@ test_expect_success setup '
 	echo vvv >t/v &&
 	mkdir t/a &&
 	echo vvv >t/a/v &&
+	{
+		echo "line without leading space1"
+		echo " line with leading space1"
+		echo " line with leading space2"
+		echo " line with leading space3"
+		echo "line without leading space2"
+	} >space &&
 	git add . &&
 	test_tick &&
 	git commit -m initial
@@ -890,6 +897,22 @@ test_expect_success 'mimic ack-grep --group' '
 	git grep --break --heading -n --color \
 		-e char -e lo_w hello.c hello_world |
 	test_decode_color >actual &&
+	test_cmp expected actual
+'
+
+cat >expected <<EOF
+space: line with leading space1
+space: line with leading space2
+space: line with leading space3
+EOF
+
+test_expect_success LIBPCRE 'grep -E "^ "' '
+	git grep -E "^ " space >actual &&
+	test_cmp expected actual
+'
+
+test_expect_success LIBPCRE 'grep -P "^ "' '
+	git grep -P "^ " space >actual &&
 	test_cmp expected actual
 '
 
