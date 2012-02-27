@@ -38,23 +38,30 @@ UI, Workflows & Features
  * "diff-highlight" filter (in contrib/) was updated to produce more
    aesthetically pleasing output.
 
- * "git tag --list" can be given "--points-at <object>" to limit its
-   output to those that point at the given object.
-
  * "git merge" in an interactive session learned to spawn the editor
    by default to let the user edit the auto-generated merge message,
    to encourage people to explain their merges better. Legacy scripts
-   can export MERGE_AUTOEDIT=no to retain the historical behaviour.
+   can export GIT_MERGE_AUTOEDIT=no to retain the historical behavior.
    Both "git merge" and "git pull" can be given --no-edit from the
    command line to accept the auto-generated merge message.
+
+ * "git push" learned the "--prune" option, similar to "git fetch".
+
+ * "git tag --list" can be given "--points-at <object>" to limit its
+   output to those that point at the given object.
 
  * "gitweb" allows intermediate entries in the directory hierarchy
    that leads to a projects to be clicked, which in turn shows the
    list of projects inside that directory.
 
+ * "gitweb" learned to read various pieces of information for the
+   repositories lazily, instead of reading everything that could be
+   needed (including the ones that are not necessary for a specific
+   task).
+
 Performance
 
- * During "git upload-pack" in respose to "git fetch", unnecessary calls
+ * During "git upload-pack" in response to "git fetch", unnecessary calls
    to parse_object() have been eliminated, to help performance in
    repositories with excessive number of refs.
 
@@ -87,13 +94,35 @@ Unless otherwise noted, all the fixes since v1.7.9 in the maintenance
 releases are contained in this release (see release notes to them for
 details).
 
+ * The bulk check-in codepath streamed contents that needs
+   smudge/clean filters without running them, instead of punting and
+   delegating to the codepath to run filters after slurping everything
+   to core.
+   (merge 4f22b10 jk/maint-avoid-streaming-filtered-contents later to maint).
+
+ * When the filter driver exits before reading the content before the
+   main git process writes the contents to be filtered to the pipe to
+   it, the latter could be killed with SIGPIPE instead of ignoring
+   such an event as an error.
+   (merge 6424c2a jb/filter-ignore-sigpipe later to maint).
+
+ * When a remote helper exits before reading the blank line from the
+   main git process to signal the end of commands, the latter could be
+   killed with SIGPIPE. Instead we should ignore such event as a
+   non-error.
+   (merge c34fe63 sp/smart-http-failure-to-push later to maint).
+
+ * "git bundle create" produced a corrupt bundle file upon seeing
+   commits with excessively long subject line.
+   (merge 8a557bb tr/maint-bundle-long-subject later to maint).
+
  * "gitweb" used to drop warnings in the log file when "heads" view is
    accessed in a repository whose HEAD does not point at a valid
    branch.
 
 ---
 exec >/var/tmp/1
-O=v1.7.9.2-261-gd065f68
+O=v1.7.9.2-301-g507fba2
 echo O=$(git describe)
 git log --first-parent --oneline ^maint $O..
 echo
