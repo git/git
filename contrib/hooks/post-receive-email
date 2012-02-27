@@ -460,7 +460,7 @@ generate_delete_branch_email()
 {
 	echo "       was  $oldrev"
 	echo ""
-	echo $LOGEND
+	echo $LOGBEGIN
 	git show -s --pretty=oneline $oldrev
 	echo $LOGEND
 }
@@ -560,7 +560,7 @@ generate_delete_atag_email()
 {
 	echo "       was  $oldrev"
 	echo ""
-	echo $LOGEND
+	echo $LOGBEGIN
 	git show -s --pretty=oneline $oldrev
 	echo $LOGEND
 }
@@ -625,7 +625,7 @@ generate_delete_general_email()
 {
 	echo "       was  $oldrev"
 	echo ""
-	echo $LOGEND
+	echo $LOGBEGIN
 	git show -s --pretty=oneline $oldrev
 	echo $LOGEND
 }
