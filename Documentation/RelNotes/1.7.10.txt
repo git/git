@@ -22,6 +22,10 @@ UI, Workflows & Features
    file to be included in-place when Git looks up configuration
    variables.
 
+ * A content filter (clean/smudge) used to be just a way to make the
+   recorded contents "more useful", and allowed to fail; a filter can
+   new optionally be marked as "required".
+
  * "git am" learned to pass "-b" option to underlying "git mailinfo", so
    that bracketed string other than "PATCH" at the beginning can be kept.
 
@@ -122,7 +126,7 @@ details).
 
 ---
 exec >/var/tmp/1
-O=v1.7.9.2-301-g507fba2
+O=v1.7.9.2-322-g472fdee
 echo O=$(git describe)
 git log --first-parent --oneline ^maint $O..
 echo
