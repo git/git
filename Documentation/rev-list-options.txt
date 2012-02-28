@@ -117,27 +117,27 @@ parents) and `--max-parents=-1` (negative numbers denote no upper limit).
 	Pretend as if all the refs in `refs/heads` are listed
 	on the command line as '<commit>'. If '<pattern>' is given, limit
 	branches to ones matching given shell glob. If pattern lacks '?',
-	'*', or '[', '/*' at the end is implied.
+	'{asterisk}', or '[', '/{asterisk}' at the end is implied.
 
 --tags[=<pattern>]::
 
 	Pretend as if all the refs in `refs/tags` are listed
 	on the command line as '<commit>'. If '<pattern>' is given, limit
-	tags to ones matching given shell glob. If pattern lacks '?', '*',
-	or '[', '/*' at the end is implied.
+	tags to ones matching given shell glob. If pattern lacks '?', '{asterisk}',
+	or '[', '/{asterisk}' at the end is implied.
 
 --remotes[=<pattern>]::
 
 	Pretend as if all the refs in `refs/remotes` are listed
 	on the command line as '<commit>'. If '<pattern>' is given, limit
 	remote-tracking branches to ones matching given shell glob.
-	If pattern lacks '?', '*', or '[', '/*' at the end is implied.
+	If pattern lacks '?', '{asterisk}', or '[', '/{asterisk}' at the end is implied.
 
 --glob=<glob-pattern>::
 	Pretend as if all the refs matching shell glob '<glob-pattern>'
 	are listed on the command line as '<commit>'. Leading 'refs/',
-	is automatically prepended if missing. If pattern lacks '?', '*',
-	or '[', '/*' at the end is implied.
+	is automatically prepended if missing. If pattern lacks '?', '{asterisk}',
+	or '[', '/{asterisk}' at the end is implied.
 
 --ignore-missing::
 
