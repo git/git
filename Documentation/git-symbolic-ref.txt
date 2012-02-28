@@ -8,7 +8,8 @@ git-symbolic-ref - Read and modify symbolic refs
 SYNOPSIS
 --------
 [verse]
-'git symbolic-ref' [-q] [-m <reason>] <name> [<ref>]
+'git symbolic-ref' [-m <reason>] <name> <ref>
+'git symbolic-ref' [-q] [--short] <name>
 
 DESCRIPTION
 -----------
@@ -32,6 +33,10 @@ OPTIONS
 	Do not issue an error message if the <name> is not a
 	symbolic ref but a detached HEAD; instead exit with
 	non-zero status silently.
+
+--short::
+	When showing the value of <name> as a symbolic ref, try to shorten the
+	value, e.g. from `refs/heads/master` to `master`.
 
 -m::
 	Update the reflog for <name> with <reason>.  This is valid only
