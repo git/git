@@ -11,6 +11,7 @@
 #include "cache.h"
 #include "object.h"
 #include "tree-walk.h"
+#include "pack.h"
 
 struct data_entry {
 	unsigned offset;
@@ -244,46 +245,53 @@ static void dict_dump(void)
 	dump_dict_table(tree_path_table);
 }
 
-struct idx_entry
+static struct pack_idx_entry *get_packed_object_list(struct packed_git *p)
 {
-	off_t                offset;
-	const unsigned char *sha1;
-};
+	unsigned i, nr_objects = p->num_objects;
+	struct pack_idx_entry *objects;
 
-static int sort_by_offset(const void *e1, const void *e2)
-{
-	const struct idx_entry *entry1 = e1;
-	const struct idx_entry *entry2 = e2;
-	if (entry1->offset < entry2->offset)
-		return -1;
-	if (entry1->offset > entry2->offset)
-		return 1;
-	return 0;
-}
-
-static struct idx_entry *get_packed_object_list(struct packed_git *p)
-{
-	uint32_t nr_objects, i;
-	struct idx_entry *objects;
-
-	nr_objects = p->num_objects;
 	objects = xmalloc((nr_objects + 1) * sizeof(*objects));
-	objects[nr_objects].offset = p->index_size - 40;
+	objects[nr_objects].offset = p->pack_size - 20;
 	for (i = 0; i < nr_objects; i++) {
-		objects[i].sha1 = nth_packed_object_sha1(p, i);
+		hashcpy(objects[i].sha1, nth_packed_object_sha1(p, i));
 		objects[i].offset = nth_packed_object_offset(p, i);
 	}
-	qsort(objects, nr_objects, sizeof(*objects), sort_by_offset);
 
 	return objects;
 }
 
+static int sort_by_offset(const void *e1, const void *e2)
+{
+	const struct pack_idx_entry * const *entry1 = e1;
+	const struct pack_idx_entry * const *entry2 = e2;
+	if ((*entry1)->offset < (*entry2)->offset)
+		return -1;
+	if ((*entry1)->offset > (*entry2)->offset)
+		return 1;
+	return 0;
+}
+
+static struct pack_idx_entry **sort_objs_by_offset(struct pack_idx_entry *list,
+						    unsigned nr_objects)
+{
+	unsigned i;
+	struct pack_idx_entry **sorted;
+
+	sorted = xmalloc((nr_objects + 1) * sizeof(*sorted));
+	for (i = 0; i < nr_objects + 1; i++)
+		sorted[i] = &list[i];
+	qsort(sorted, nr_objects + 1, sizeof(*sorted), sort_by_offset);
+
+	return sorted;
+}
+
 static int create_pack_dictionaries(struct packed_git *p,
-				    struct idx_entry *objects)
+				    struct pack_idx_entry **obj_list)
 {
 	unsigned int i;
 
 	for (i = 0; i < p->num_objects; i++) {
+		struct pack_idx_entry *obj = obj_list[i];
 		void *data;
 		enum object_type type;
 		unsigned long size;
@@ -292,9 +300,9 @@ static int create_pack_dictionaries(struct packed_git *p,
 
 		oi.typep = &type;
 		oi.sizep = &size;
-		if (packed_object_info(p, objects[i].offset, &oi) < 0)
+		if (packed_object_info(p, obj->offset, &oi) < 0)
 			die("cannot get type of %s from %s",
-			    sha1_to_hex(objects[i].sha1), p->pack_name);
+			    sha1_to_hex(obj->sha1), p->pack_name);
 
 		switch (type) {
 		case OBJ_COMMIT:
@@ -306,16 +314,16 @@ static int create_pack_dictionaries(struct packed_git *p,
 		default:
 			continue;
 		}
-		data = unpack_entry(p, objects[i].offset, &type, &size);
+		data = unpack_entry(p, obj->offset, &type, &size);
 		if (!data)
 			die("cannot unpack %s from %s",
-			    sha1_to_hex(objects[i].sha1), p->pack_name);
-		if (check_sha1_signature(objects[i].sha1, data, size, typename(type)))
+			    sha1_to_hex(obj->sha1), p->pack_name);
+		if (check_sha1_signature(obj->sha1, data, size, typename(type)))
 			die("packed %s from %s is corrupt",
-			    sha1_to_hex(objects[i].sha1), p->pack_name);
+			    sha1_to_hex(obj->sha1), p->pack_name);
 		if (add_dict_entries(data, size) < 0)
 			die("can't process %s object %s",
-				typename(type), sha1_to_hex(objects[i].sha1));
+				typename(type), sha1_to_hex(obj->sha1));
 		free(data);
 	}
 
@@ -378,14 +386,18 @@ static struct packed_git *open_pack(const char *path)
 static void process_one_pack(char *src_pack)
 {
 	struct packed_git *p;
-	struct idx_entry *objs;
+	struct pack_idx_entry *objs, **p_objs;
+	unsigned nr_objects;
 
 	p = open_pack(src_pack);
 	if (!p)
 		die("unable to open source pack");
 
+	nr_objects = p->num_objects;
 	objs = get_packed_object_list(p);
-	create_pack_dictionaries(p, objs);
+	p_objs = sort_objs_by_offset(objs, nr_objects);
+
+	create_pack_dictionaries(p, p_objs);
 }
 
 int main(int argc, char *argv[])
