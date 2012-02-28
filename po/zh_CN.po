@@ -803,7 +803,7 @@ msgid ""
 "deleting branch '%s' that has been merged to\n"
 "         '%s', but not yet merged to HEAD."
 msgstr ""
-"要删除的分支 '%s' 已经合并到\n"
+"将要删除的分支 '%s' 已经被合并到\n"
 "         '%s'，但未合并到 HEAD。"
 
 #: builtin/branch.c:141
@@ -812,8 +812,8 @@ msgid ""
 "not deleting branch '%s' that is not yet merged to\n"
 "         '%s', even though it is merged to HEAD."
 msgstr ""
-"不要删除分支 '%s' 其尚未合并到\n"
-"         '%s'，虽然它已经合并到 HEAD。"
+"并未删除分支 '%s'， 虽然它已经合并到 HEAD，\n"
+"         然而却尚未被合并到分支 '%s' 。"
 
 #  汉字之间无空格，故删除尾部空格
 #. TRANSLATORS: This is "remote " in "remote branch '%s' not found"
