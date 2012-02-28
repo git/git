@@ -136,7 +136,7 @@ test_expect_success setup '
 	git format-patch -M --stdout lorem^ >rename-add.patch &&
 
 	# reset time
-	unset test_tick &&
+	sane_unset test_tick &&
 	test_tick
 '
 
@@ -503,6 +503,16 @@ test_expect_success 'am -q is quiet' '
 	test_tick &&
 	git am -q <patch1 >output.out 2>&1 &&
 	! test -s output.out
+'
+
+test_expect_success 'am empty-file does not infloop' '
+	rm -fr .git/rebase-apply &&
+	git reset --hard &&
+	touch empty-file &&
+	test_tick &&
+	{ git am empty-file > actual 2>&1 && false || :; } &&
+	echo Patch format detection failed. >expected &&
+	test_cmp expected actual
 '
 
 test_done

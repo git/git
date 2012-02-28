@@ -85,7 +85,6 @@ prep_for_email()
 	oldrev=$(git rev-parse $1)
 	newrev=$(git rev-parse $2)
 	refname="$3"
-	maxlines=$4
 
 	# --- Interpret
 	# 0000->1234 (create)
@@ -461,7 +460,7 @@ generate_delete_branch_email()
 {
 	echo "       was  $oldrev"
 	echo ""
-	echo $LOGEND
+	echo $LOGBEGIN
 	git show -s --pretty=oneline $oldrev
 	echo $LOGEND
 }
@@ -561,7 +560,7 @@ generate_delete_atag_email()
 {
 	echo "       was  $oldrev"
 	echo ""
-	echo $LOGEND
+	echo $LOGBEGIN
 	git show -s --pretty=oneline $oldrev
 	echo $LOGEND
 }
@@ -626,7 +625,7 @@ generate_delete_general_email()
 {
 	echo "       was  $oldrev"
 	echo ""
-	echo $LOGEND
+	echo $LOGBEGIN
 	git show -s --pretty=oneline $oldrev
 	echo $LOGEND
 }

@@ -14,13 +14,15 @@ Instead, this script post-processes the line-oriented diff, finds pairs
 of lines, and highlights the differing segments.  It's currently very
 simple and stupid about doing these tasks. In particular:
 
-  1. It will only highlight a pair of lines if they are the only two
-     lines in a hunk.  It could instead try to match up "before" and
-     "after" lines for a given hunk into pairs of similar lines.
-     However, this may end up visually distracting, as the paired
-     lines would have other highlighted lines in between them. And in
-     practice, the lines which most need attention called to their
-     small, hard-to-see changes are touching only a single line.
+  1. It will only highlight hunks in which the number of removed and
+     added lines is the same, and it will pair lines within the hunk by
+     position (so the first removed line is compared to the first added
+     line, and so forth). This is simple and tends to work well in
+     practice. More complex changes don't highlight well, so we tend to
+     exclude them due to the "same number of removed and added lines"
+     restriction. Or even if we do try to highlight them, they end up
+     not highlighting because of our "don't highlight if the whole line
+     would be highlighted" rule.
 
   2. It will find the common prefix and suffix of two lines, and
      consider everything in the middle to be "different". It could
@@ -55,3 +57,96 @@ following in your git configuration:
 	show = diff-highlight | less
 	diff = diff-highlight | less
 ---------------------------------------------
+
+Bugs
+----
+
+Because diff-highlight relies on heuristics to guess which parts of
+changes are important, there are some cases where the highlighting is
+more distracting than useful. Fortunately, these cases are rare in
+practice, and when they do occur, the worst case is simply a little
+extra highlighting. This section documents some cases known to be
+sub-optimal, in case somebody feels like working on improving the
+heuristics.
+
+1. Two changes on the same line get highlighted in a blob. For example,
+   highlighting:
+
+----------------------------------------------
+-foo(buf, size);
++foo(obj->buf, obj->size);
+----------------------------------------------
+
+   yields (where the inside of "+{}" would be highlighted):
+
+----------------------------------------------
+-foo(buf, size);
++foo(+{obj->buf, obj->}size);
+----------------------------------------------
+
+   whereas a more semantically meaningful output would be:
+
+----------------------------------------------
+-foo(buf, size);
++foo(+{obj->}buf, +{obj->}size);
+----------------------------------------------
+
+   Note that doing this right would probably involve a set of
+   content-specific boundary patterns, similar to word-diff. Otherwise
+   you get junk like:
+
+-----------------------------------------------------
+-this line has some -{i}nt-{ere}sti-{ng} text on it
++this line has some +{fa}nt+{a}sti+{c} text on it
+-----------------------------------------------------
+
+   which is less readable than the current output.
+
+2. The multi-line matching assumes that lines in the pre- and post-image
+   match by position. This is often the case, but can be fooled when a
+   line is removed from the top and a new one added at the bottom (or
+   vice versa). Unless the lines in the middle are also changed, diffs
+   will show this as two hunks, and it will not get highlighted at all
+   (which is good). But if the lines in the middle are changed, the
+   highlighting can be misleading. Here's a pathological case:
+
+-----------------------------------------------------
+-one
+-two
+-three
+-four
++two 2
++three 3
++four 4
++five 5
+-----------------------------------------------------
+
+   which gets highlighted as:
+
+-----------------------------------------------------
+-one
+-t-{wo}
+-three
+-f-{our}
++two 2
++t+{hree 3}
++four 4
++f+{ive 5}
+-----------------------------------------------------
+
+   because it matches "two" to "three 3", and so forth. It would be
+   nicer as:
+
+-----------------------------------------------------
+-one
+-two
+-three
+-four
++two +{2}
++three +{3}
++four +{4}
++five 5
+-----------------------------------------------------
+
+   which would probably involve pre-matching the lines into pairs
+   according to some heuristic.

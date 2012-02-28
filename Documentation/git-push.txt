@@ -10,7 +10,7 @@ SYNOPSIS
 --------
 [verse]
 'git push' [--all | --mirror | --tags] [-n | --dry-run] [--receive-pack=<git-receive-pack>]
-	   [--repo=<repository>] [-f | --force] [-v | --verbose] [-u | --set-upstream]
+	   [--repo=<repository>] [-f | --force] [--prune] [-v | --verbose] [-u | --set-upstream]
 	   [<repository> [<refspec>...]]
 
 DESCRIPTION
@@ -70,6 +70,14 @@ nor in any Push line of the corresponding remotes file---see below).
 --all::
 	Instead of naming each ref to push, specifies that all
 	refs under `refs/heads/` be pushed.
+
+--prune::
+	Remove remote branches that don't have a local counterpart. For example
+	a remote branch `tmp` will be removed if a local branch with the same
+	name doesn't exist any more. This also respects refspecs, e.g.
+	`git push --prune remote refs/heads/{asterisk}:refs/tmp/{asterisk}` would
+	make sure that remote `refs/tmp/foo` will be removed if `refs/heads/foo`
+	doesn't exist.
 
 --mirror::
 	Instead of naming each ref to push, specifies that all

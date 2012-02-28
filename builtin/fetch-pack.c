@@ -58,9 +58,9 @@ static void rev_list_push(struct commit *commit, int mark)
 	}
 }
 
-static int rev_list_insert_ref(const char *path, const unsigned char *sha1, int flag, void *cb_data)
+static int rev_list_insert_ref(const char *refname, const unsigned char *sha1, int flag, void *cb_data)
 {
-	struct object *o = deref_tag(parse_object(sha1), path, 0);
+	struct object *o = deref_tag(parse_object(sha1), refname, 0);
 
 	if (o && o->type == OBJ_COMMIT)
 		rev_list_push((struct commit *)o, SEEN);
@@ -68,9 +68,9 @@ static int rev_list_insert_ref(const char *path, const unsigned char *sha1, int 
 	return 0;
 }
 
-static int clear_marks(const char *path, const unsigned char *sha1, int flag, void *cb_data)
+static int clear_marks(const char *refname, const unsigned char *sha1, int flag, void *cb_data)
 {
-	struct object *o = deref_tag(parse_object(sha1), path, 0);
+	struct object *o = deref_tag(parse_object(sha1), refname, 0);
 
 	if (o && o->type == OBJ_COMMIT)
 		clear_commit_marks((struct commit *)o,
@@ -256,11 +256,6 @@ static void insert_one_alternate_ref(const struct ref *ref, void *unused)
 	rev_list_insert_ref(NULL, ref->old_sha1, 0, NULL);
 }
 
-static void insert_alternate_refs(void)
-{
-	for_each_alternate_ref(insert_one_alternate_ref, NULL);
-}
-
 #define INITIAL_FLUSH 16
 #define PIPESAFE_FLUSH 32
 #define LARGE_FLUSH 1024
@@ -295,7 +290,7 @@ static int find_common(int fd[2], unsigned char *result_sha1,
 	marked = 1;
 
 	for_each_ref(rev_list_insert_ref, NULL);
-	insert_alternate_refs();
+	for_each_alternate_ref(insert_one_alternate_ref, NULL);
 
 	fetching = 0;
 	for ( ; refs ; refs = refs->next) {
@@ -493,7 +488,7 @@ done:
 
 static struct commit_list *complete;
 
-static int mark_complete(const char *path, const unsigned char *sha1, int flag, void *cb_data)
+static int mark_complete(const char *refname, const unsigned char *sha1, int flag, void *cb_data)
 {
 	struct object *o = parse_object(sha1);
 
@@ -586,6 +581,11 @@ static void filter_refs(struct ref **refs, int nr_match, char **match)
 	*refs = newlist;
 }
 
+static void mark_alternate_complete(const struct ref *ref, void *unused)
+{
+	mark_complete(NULL, ref->old_sha1, 0, NULL);
+}
+
 static int everything_local(struct ref **refs, int nr_match, char **match)
 {
 	struct ref *ref;
@@ -614,6 +614,7 @@ static int everything_local(struct ref **refs, int nr_match, char **match)
 
 	if (!args.depth) {
 		for_each_ref(mark_complete, NULL);
+		for_each_alternate_ref(mark_alternate_complete, NULL);
 		if (cutoff)
 			mark_recent_complete_commits(cutoff);
 	}
@@ -736,7 +737,7 @@ static int get_pack(int xd[2], char **pack_lockfile)
 	}
 	else {
 		*av++ = "unpack-objects";
-		if (args.quiet)
+		if (args.quiet || args.no_progress)
 			*av++ = "-q";
 	}
 	if (*hdr_arg)

@@ -226,14 +226,8 @@ static const char * const cat_file_usage[] = {
 
 static int git_cat_file_config(const char *var, const char *value, void *cb)
 {
-	switch (userdiff_config(var, value)) {
-	case 0:
-		break;
-	case -1:
+	if (userdiff_config(var, value) < 0)
 		return -1;
-	default:
-		return 0;
-	}
 
 	return git_default_config(var, value, cb);
 }

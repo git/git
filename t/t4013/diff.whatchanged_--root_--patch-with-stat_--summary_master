@@ -8,7 +8,7 @@ Date:   Mon Jun 26 00:03:00 2006 +0000
  dir/sub |    2 ++
  file0   |    3 +++
  file3   |    4 ++++
- 3 files changed, 9 insertions(+), 0 deletions(-)
+ 3 files changed, 9 insertions(+)
  create mode 100644 file3
 
 diff --git a/dir/sub b/dir/sub
@@ -50,7 +50,7 @@ Date:   Mon Jun 26 00:02:00 2006 +0000
 ---
  dir/sub |    2 ++
  file1   |    3 +++
- 2 files changed, 5 insertions(+), 0 deletions(-)
+ 2 files changed, 5 insertions(+)
  create mode 100644 file1
 
 diff --git a/dir/sub b/dir/sub
@@ -126,7 +126,7 @@ Date:   Mon Jun 26 00:00:00 2006 +0000
  dir/sub |    2 ++
  file0   |    3 +++
  file2   |    3 +++
- 3 files changed, 8 insertions(+), 0 deletions(-)
+ 3 files changed, 8 insertions(+)
  create mode 100644 dir/sub
  create mode 100644 file0
  create mode 100644 file2

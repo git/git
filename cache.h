@@ -432,6 +432,7 @@ extern char *git_work_tree_cfg;
 extern int is_inside_work_tree(void);
 extern int have_git_dir(void);
 extern const char *get_git_dir(void);
+extern int is_git_directory(const char *path);
 extern char *get_object_directory(void);
 extern char *get_index_file(void);
 extern char *get_graft_file(void);
@@ -1114,6 +1115,8 @@ extern int git_config_from_file(config_fn_t fn, const char *, void *);
 extern void git_config_push_parameter(const char *text);
 extern int git_config_from_parameters(config_fn_t fn, void *data);
 extern int git_config(config_fn_t fn, void *);
+extern int git_config_with_options(config_fn_t fn, void *,
+				   const char *filename, int respect_includes);
 extern int git_config_early(config_fn_t fn, void *, const char *repo_config);
 extern int git_parse_ulong(const char *, unsigned long *);
 extern int git_config_int(const char *, const char *);
@@ -1129,6 +1132,7 @@ extern int git_config_parse_key(const char *, char **, int *);
 extern int git_config_set_multivar(const char *, const char *, const char *, int);
 extern int git_config_set_multivar_in_file(const char *, const char *, const char *, const char *, int);
 extern int git_config_rename_section(const char *, const char *);
+extern int git_config_rename_section_in_file(const char *, const char *, const char *);
 extern const char *git_etc_gitconfig(void);
 extern int check_repository_format_version(const char *var, const char *value, void *cb);
 extern int git_env_bool(const char *, int);
@@ -1139,7 +1143,13 @@ extern const char *get_commit_output_encoding(void);
 
 extern int git_config_parse_parameter(const char *, config_fn_t fn, void *data);
 
-extern const char *config_exclusive_filename;
+struct config_include_data {
+	int depth;
+	config_fn_t fn;
+	void *data;
+};
+#define CONFIG_INCLUDE_INIT { 0 }
+extern int git_config_include(const char *name, const char *value, void *data);
 
 #define MAX_GITNAME (1000)
 extern char git_default_email[MAX_GITNAME];
@@ -1176,6 +1186,8 @@ extern void setup_pager(void);
 extern const char *pager_program;
 extern int pager_in_use(void);
 extern int pager_use_color;
+extern int term_columns(void);
+extern int decimal_width(int);
 
 extern const char *editor_program;
 extern const char *askpass_program;

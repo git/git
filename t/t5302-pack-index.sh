@@ -74,6 +74,10 @@ test_expect_success 'index-pack --verify on index version 2' '
 '
 
 test_expect_success \
+    'pack-objects --index-version=2, is not accepted' \
+    'test_must_fail git pack-objects --index-version=2, test-3 <obj-list'
+
+test_expect_success \
     'index v2: force some 64-bit offsets with pack-objects' \
     'pack3=$(git pack-objects --index-version=2,0x40000 test-3 <obj-list)'
 

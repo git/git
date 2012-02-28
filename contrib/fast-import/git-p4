@@ -10,7 +10,7 @@
 
 import optparse, sys, os, marshal, subprocess, shelve
 import tempfile, getopt, os.path, time, platform
-import re
+import re, shutil
 
 verbose = False
 
@@ -38,7 +38,7 @@ def p4_build_cmd(cmd):
 
     host = gitConfig("git-p4.host")
     if len(host) > 0:
-        real_cmd += ["-h", host]
+        real_cmd += ["-H", host]
 
     client = gitConfig("git-p4.client")
     if len(client) > 0:
@@ -186,6 +186,47 @@ def split_p4_type(p4type):
         mods = s[1]
     return (base, mods)
 
+#
+# return the raw p4 type of a file (text, text+ko, etc)
+#
+def p4_type(file):
+    results = p4CmdList(["fstat", "-T", "headType", file])
+    return results[0]['headType']
+
+#
+# Given a type base and modifier, return a regexp matching
+# the keywords that can be expanded in the file
+#
+def p4_keywords_regexp_for_type(base, type_mods):
+    if base in ("text", "unicode", "binary"):
+        kwords = None
+        if "ko" in type_mods:
+            kwords = 'Id|Header'
+        elif "k" in type_mods:
+            kwords = 'Id|Header|Author|Date|DateTime|Change|File|Revision'
+        else:
+            return None
+        pattern = r"""
+            \$              # Starts with a dollar, followed by...
+            (%s)            # one of the keywords, followed by...
+            (:[^$]+)?       # possibly an old expansion, followed by...
+            \$              # another dollar
+            """ % kwords
+        return pattern
+    else:
+        return None
+
+#
+# Given a file, return a regexp matching the possible
+# RCS keywords that will be expanded, or None for files
+# with kw expansion turned off.
+#
+def p4_keywords_regexp_for_file(file):
+    if not os.path.exists(file):
+        return None
+    else:
+        (type_base, type_mods) = split_p4_type(p4_type(file))
+        return p4_keywords_regexp_for_type(type_base, type_mods)
 
 def setP4ExecBit(file, mode):
     # Reopens an already open file and changes the execute bit to match
@@ -555,6 +596,46 @@ def p4PathStartsWith(path, prefix):
         return path.lower().startswith(prefix.lower())
     return path.startswith(prefix)
 
+def getClientSpec():
+    """Look at the p4 client spec, create a View() object that contains
+       all the mappings, and return it."""
+
+    specList = p4CmdList("client -o")
+    if len(specList) != 1:
+        die('Output from "client -o" is %d lines, expecting 1' %
+            len(specList))
+
+    # dictionary of all client parameters
+    entry = specList[0]
+
+    # just the keys that start with "View"
+    view_keys = [ k for k in entry.keys() if k.startswith("View") ]
+
+    # hold this new View
+    view = View()
+
+    # append the lines, in order, to the view
+    for view_num in range(len(view_keys)):
+        k = "View%d" % view_num
+        if k not in view_keys:
+            die("Expected view key %s missing" % k)
+        view.append(entry[k])
+
+    return view
+
+def getClientRoot():
+    """Grab the client directory."""
+
+    output = p4CmdList("client -o")
+    if len(output) != 1:
+        die('Output from "client -o" is %d lines, expecting 1' % len(output))
+
+    entry = output[0]
+    if "Root" not in entry:
+        die('Client has no "Root"')
+
+    return entry["Root"]
+
 class Command:
     def __init__(self):
         self.usage = "usage: %prog [options]"
@@ -753,6 +834,29 @@ class P4Submit(Command, P4UserMap):
 
         return result
 
+    def patchRCSKeywords(self, file, pattern):
+        # Attempt to zap the RCS keywords in a p4 controlled file matching the given pattern
+        (handle, outFileName) = tempfile.mkstemp(dir='.')
+        try:
+            outFile = os.fdopen(handle, "w+")
+            inFile = open(file, "r")
+            regexp = re.compile(pattern, re.VERBOSE)
+            for line in inFile.readlines():
+                line = regexp.sub(r'$\1$', line)
+                outFile.write(line)
+            inFile.close()
+            outFile.close()
+            # Forcibly overwrite the original file
+            os.unlink(file)
+            shutil.move(outFileName, file)
+        except:
+            # cleanup our temporary file
+            os.unlink(outFileName)
+            print "Failed to strip RCS keywords in %s" % file
+            raise
+
+        print "Patched up RCS keywords in %s" % file
+
     def p4UserForCommit(self,id):
         # Return the tuple (perforce user,git email) for a given git commit id
         self.getUserMapFromPerforceServer()
@@ -918,6 +1022,7 @@ class P4Submit(Command, P4UserMap):
         filesToDelete = set()
         editedFiles = set()
         filesToChangeExecBit = {}
+
         for line in diff:
             diff = parseDiffTreeEntry(line)
             modifier = diff['status']
@@ -964,9 +1069,45 @@ class P4Submit(Command, P4UserMap):
         patchcmd = diffcmd + " | git apply "
         tryPatchCmd = patchcmd + "--check -"
         applyPatchCmd = patchcmd + "--check --apply -"
+        patch_succeeded = True
 
         if os.system(tryPatchCmd) != 0:
+            fixed_rcs_keywords = False
+            patch_succeeded = False
             print "Unfortunately applying the change failed!"
+
+            # Patch failed, maybe it's just RCS keyword woes. Look through
+            # the patch to see if that's possible.
+            if gitConfig("git-p4.attemptRCSCleanup","--bool") == "true":
+                file = None
+                pattern = None
+                kwfiles = {}
+                for file in editedFiles | filesToDelete:
+                    # did this file's delta contain RCS keywords?
+                    pattern = p4_keywords_regexp_for_file(file)
+
+                    if pattern:
+                        # this file is a possibility...look for RCS keywords.
+                        regexp = re.compile(pattern, re.VERBOSE)
+                        for line in read_pipe_lines(["git", "diff", "%s^..%s" % (id, id), file]):
+                            if regexp.search(line):
+                                if verbose:
+                                    print "got keyword match on %s in %s in %s" % (pattern, line, file)
+                                kwfiles[file] = pattern
+                                break
+
+                for file in kwfiles:
+                    if verbose:
+                        print "zapping %s with %s" % (line,pattern)
+                    self.patchRCSKeywords(file, kwfiles[file])
+                    fixed_rcs_keywords = True
+
+            if fixed_rcs_keywords:
+                print "Retrying the patch with RCS keywords cleaned up"
+                if os.system(tryPatchCmd) == 0:
+                    patch_succeeded = True
+
+        if not patch_succeeded:
             print "What do you want to do?"
             response = "x"
             while response != "s" and response != "a" and response != "w":
@@ -1119,11 +1260,20 @@ class P4Submit(Command, P4UserMap):
             print "Internal error: cannot locate perforce depot path from existing branches"
             sys.exit(128)
 
-        self.clientPath = p4Where(self.depotPath)
+        self.useClientSpec = False
+        if gitConfig("git-p4.useclientspec", "--bool") == "true":
+            self.useClientSpec = True
+        if self.useClientSpec:
+            self.clientSpecDirs = getClientSpec()
 
-        if len(self.clientPath) == 0:
-            print "Error: Cannot locate perforce checkout of %s in client view" % self.depotPath
-            sys.exit(128)
+        if self.useClientSpec:
+            # all files are relative to the client spec
+            self.clientPath = getClientRoot()
+        else:
+            self.clientPath = p4Where(self.depotPath)
+
+        if self.clientPath == "":
+            die("Error: Cannot locate perforce checkout of %s in client view" % self.depotPath)
 
         print "Perforce checkout for depot path %s located at %s" % (self.depotPath, self.clientPath)
         self.oldWorkingDirectory = os.getcwd()
@@ -1429,6 +1579,7 @@ class P4Sync(Command, P4UserMap):
         self.p4BranchesInGit = []
         self.cloneExclude = []
         self.useClientSpec = False
+        self.useClientSpec_from_options = False
         self.clientSpecDirs = None
         self.tempBranches = []
         self.tempBranchLocation = "git-p4-tmp"
@@ -1585,15 +1736,12 @@ class P4Sync(Command, P4UserMap):
 
         # Note that we do not try to de-mangle keywords on utf16 files,
         # even though in theory somebody may want that.
-        if type_base in ("text", "unicode", "binary"):
-            if "ko" in type_mods:
-                text = ''.join(contents)
-                text = re.sub(r'\$(Id|Header):[^$]*\$', r'$\1$', text)
-                contents = [ text ]
-            elif "k" in type_mods:
-                text = ''.join(contents)
-                text = re.sub(r'\$(Id|Header|Author|Date|DateTime|Change|File|Revision):[^$]*\$', r'$\1$', text)
-                contents = [ text ]
+        pattern = p4_keywords_regexp_for_type(type_base, type_mods)
+        if pattern:
+            regexp = re.compile(pattern, re.VERBOSE)
+            text = ''.join(contents)
+            text = regexp.sub(r'$\1$', text)
+            contents = [ text ]
 
         self.gitStream.write("M %s inline %s\n" % (git_mode, relPath))
 
@@ -2125,33 +2273,6 @@ class P4Sync(Command, P4UserMap):
             print self.gitError.read()
 
 
-    def getClientSpec(self):
-        specList = p4CmdList("client -o")
-        if len(specList) != 1:
-            die('Output from "client -o" is %d lines, expecting 1' %
-                len(specList))
-
-        # dictionary of all client parameters
-        entry = specList[0]
-
-        # just the keys that start with "View"
-        view_keys = [ k for k in entry.keys() if k.startswith("View") ]
-
-        # hold this new View
-        view = View()
-
-        # append the lines, in order, to the view
-        for view_num in range(len(view_keys)):
-            k = "View%d" % view_num
-            if k not in view_keys:
-                die("Expected view key %s missing" % k)
-            view.append(entry[k])
-
-        self.clientSpecDirs = view
-        if self.verbose:
-            for i, m in enumerate(self.clientSpecDirs.mappings):
-                    print "clientSpecDirs %d: %s" % (i, str(m))
-
     def run(self, args):
         self.depotPaths = []
         self.changeRange = ""
@@ -2184,11 +2305,15 @@ class P4Sync(Command, P4UserMap):
             if not gitBranchExists(self.refPrefix + "HEAD") and self.importIntoRemotes and gitBranchExists(self.branch):
                 system("git symbolic-ref %sHEAD %s" % (self.refPrefix, self.branch))
 
-        if not self.useClientSpec:
+        # accept either the command-line option, or the configuration variable
+        if self.useClientSpec:
+            # will use this after clone to set the variable
+            self.useClientSpec_from_options = True
+        else:
             if gitConfig("git-p4.useclientspec", "--bool") == "true":
                 self.useClientSpec = True
         if self.useClientSpec:
-            self.getClientSpec()
+            self.clientSpecDirs = getClientSpec()
 
         # TODO: should always look at previous commits,
         # merge with previous imports, if possible.
@@ -2508,6 +2633,10 @@ class P4Clone(P4Sync):
                     system("git checkout -f")
             else:
                 print "Could not detect main branch. No checkout/master branch created."
+
+        # auto-set this variable if invoked with --use-client-spec
+        if self.useClientSpec_from_options:
+            system("git config --bool git-p4.useclientspec true")
 
         return True
 

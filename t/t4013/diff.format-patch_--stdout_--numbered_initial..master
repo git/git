@@ -53,7 +53,7 @@ Subject: [PATCH 2/3] Third
 ---
  dir/sub |    2 ++
  file1   |    3 +++
- 2 files changed, 5 insertions(+), 0 deletions(-)
+ 2 files changed, 5 insertions(+)
  create mode 100644 file1
 
 diff --git a/dir/sub b/dir/sub
@@ -88,7 +88,7 @@ Subject: [PATCH 3/3] Side
  dir/sub |    2 ++
  file0   |    3 +++
  file3   |    4 ++++
- 3 files changed, 9 insertions(+), 0 deletions(-)
+ 3 files changed, 9 insertions(+)
  create mode 100644 file3
 
 diff --git a/dir/sub b/dir/sub

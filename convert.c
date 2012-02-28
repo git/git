@@ -2,6 +2,7 @@
 #include "attr.h"
 #include "run-command.h"
 #include "quote.h"
+#include "sigchain.h"
 
 /*
  * convert.c - convert a file when checking it out and checking it in.
@@ -195,8 +196,16 @@ static int crlf_to_git(const char *path, const char *src, size_t len,
 	char *dst;
 
 	if (crlf_action == CRLF_BINARY ||
-	    (crlf_action == CRLF_GUESS && auto_crlf == AUTO_CRLF_FALSE) || !len)
+	    (crlf_action == CRLF_GUESS && auto_crlf == AUTO_CRLF_FALSE) ||
+	    (src && !len))
 		return 0;
+
+	/*
+	 * If we are doing a dry-run and have no source buffer, there is
+	 * nothing to analyze; we must assume we would convert.
+	 */
+	if (!buf && !src)
+		return 1;
 
 	gather_stats(src, len, &stats);
 
@@ -230,6 +239,13 @@ static int crlf_to_git(const char *path, const char *src, size_t len,
 	/* Optimization: No CR? Nothing to convert, regardless. */
 	if (!stats.cr)
 		return 0;
+
+	/*
+	 * At this point all of our source analysis is done, and we are sure we
+	 * would convert. If we are in dry-run mode, we can give an answer.
+	 */
+	if (!buf)
+		return 1;
 
 	/* only grow if not in place */
 	if (strbuf_avail(buf) + buf->len < len)
@@ -360,11 +376,15 @@ static int filter_buffer(int in, int out, void *data)
 	if (start_command(&child_process))
 		return error("cannot fork to run external filter %s", params->cmd);
 
+	sigchain_push(SIGPIPE, SIG_IGN);
+
 	write_err = (write_in_full(child_process.in, params->src, params->size) < 0);
 	if (close(child_process.in))
 		write_err = 1;
 	if (write_err)
 		error("cannot feed the input to external filter %s", params->cmd);
+
+	sigchain_pop(SIGPIPE);
 
 	status = finish_command(&child_process);
 	if (status)
@@ -390,6 +410,9 @@ static int apply_filter(const char *path, const char *src, size_t len,
 
 	if (!cmd)
 		return 0;
+
+	if (!dst)
+		return 1;
 
 	memset(&async, 0, sizeof(async));
 	async.proc = filter_buffer;
@@ -522,8 +545,11 @@ static int ident_to_git(const char *path, const char *src, size_t len,
 {
 	char *dst, *dollar;
 
-	if (!ident || !count_ident(src, len))
+	if (!ident || (src && !count_ident(src, len)))
 		return 0;
+
+	if (!buf)
+		return 1;
 
 	/* only grow if not in place */
 	if (strbuf_avail(buf) + buf->len < len)
@@ -754,13 +780,13 @@ int convert_to_git(const char *path, const char *src, size_t len,
 		filter = ca.drv->clean;
 
 	ret |= apply_filter(path, src, len, dst, filter);
-	if (ret) {
+	if (ret && dst) {
 		src = dst->buf;
 		len = dst->len;
 	}
 	ca.crlf_action = input_crlf_action(ca.crlf_action, ca.eol_attr);
 	ret |= crlf_to_git(path, src, len, dst, ca.crlf_action, checksafe);
-	if (ret) {
+	if (ret && dst) {
 		src = dst->buf;
 		len = dst->len;
 	}

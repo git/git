@@ -15,11 +15,13 @@
 #include "diff.h"
 #include "revision.h"
 #include "gpg-interface.h"
+#include "sha1-array.h"
 
 static const char * const git_tag_usage[] = {
 	"git tag [-a|-s|-u <key-id>] [-f] [-m <msg>|-F <file>] <tagname> [<head>]",
 	"git tag -d <tagname>...",
-	"git tag -l [-n[<num>]] [<pattern>...]",
+	"git tag -l [-n[<num>]] [--contains <commit>] [--points-at <object>] "
+		"\n\t\t[<pattern>...]",
 	"git tag -v <tagname>...",
 	NULL
 };
@@ -30,6 +32,8 @@ struct tag_filter {
 	struct commit_list *with_commit;
 };
 
+static struct sha1_array points_at;
+
 static int match_pattern(const char **patterns, const char *ref)
 {
 	/* no pattern means match everything */
@@ -39,6 +43,24 @@ static int match_pattern(const char **patterns, const char *ref)
 		if (!fnmatch(*patterns, ref, 0))
 			return 1;
 	return 0;
+}
+
+static const unsigned char *match_points_at(const char *refname,
+					    const unsigned char *sha1)
+{
+	const unsigned char *tagged_sha1 = NULL;
+	struct object *obj;
+
+	if (sha1_array_lookup(&points_at, sha1) >= 0)
+		return sha1;
+	obj = parse_object(sha1);
+	if (!obj)
+		die(_("malformed object at '%s'"), refname);
+	if (obj->type == OBJ_TAG)
+		tagged_sha1 = ((struct tag *)obj)->tagged->sha1;
+	if (tagged_sha1 && sha1_array_lookup(&points_at, tagged_sha1) >= 0)
+		return tagged_sha1;
+	return NULL;
 }
 
 static int in_commit_list(const struct commit_list *want, struct commit *c)
@@ -83,18 +105,51 @@ static int contains(struct commit *candidate, const struct commit_list *want)
 	return contains_recurse(candidate, want);
 }
 
+static void show_tag_lines(const unsigned char *sha1, int lines)
+{
+	int i;
+	unsigned long size;
+	enum object_type type;
+	char *buf, *sp, *eol;
+	size_t len;
+
+	buf = read_sha1_file(sha1, &type, &size);
+	if (!buf)
+		die_errno("unable to read object %s", sha1_to_hex(sha1));
+	if (type != OBJ_COMMIT && type != OBJ_TAG)
+		goto free_return;
+	if (!size)
+		die("an empty %s object %s?",
+		    typename(type), sha1_to_hex(sha1));
+
+	/* skip header */
+	sp = strstr(buf, "\n\n");
+	if (!sp)
+		goto free_return;
+
+	/* only take up to "lines" lines, and strip the signature from a tag */
+	if (type == OBJ_TAG)
+		size = parse_signature(buf, size);
+	for (i = 0, sp += 2; i < lines && sp < buf + size; i++) {
+		if (i)
+			printf("\n    ");
+		eol = memchr(sp, '\n', size - (sp - buf));
+		len = eol ? eol - sp : size - (sp - buf);
+		fwrite(sp, len, 1, stdout);
+		if (!eol)
+			break;
+		sp = eol + 1;
+	}
+free_return:
+	free(buf);
+}
+
 static int show_reference(const char *refname, const unsigned char *sha1,
 			  int flag, void *cb_data)
 {
 	struct tag_filter *filter = cb_data;
 
 	if (match_pattern(filter->patterns, refname)) {
-		int i;
-		unsigned long size;
-		enum object_type type;
-		char *buf, *sp, *eol;
-		size_t len;
-
 		if (filter->with_commit) {
 			struct commit *commit;
 
@@ -105,38 +160,16 @@ static int show_reference(const char *refname, const unsigned char *sha1,
 				return 0;
 		}
 
+		if (points_at.nr && !match_points_at(refname, sha1))
+			return 0;
+
 		if (!filter->lines) {
 			printf("%s\n", refname);
 			return 0;
 		}
 		printf("%-15s ", refname);
-
-		buf = read_sha1_file(sha1, &type, &size);
-		if (!buf || !size)
-			return 0;
-
-		/* skip header */
-		sp = strstr(buf, "\n\n");
-		if (!sp) {
-			free(buf);
-			return 0;
-		}
-		/* only take up to "lines" lines, and strip the signature */
-		size = parse_signature(buf, size);
-		for (i = 0, sp += 2;
-				i < filter->lines && sp < buf + size;
-				i++) {
-			if (i)
-				printf("\n    ");
-			eol = memchr(sp, '\n', size - (sp - buf));
-			len = eol ? eol - sp : size - (sp - buf);
-			fwrite(sp, len, 1, stdout);
-			if (!eol)
-				break;
-			sp = eol + 1;
-		}
+		show_tag_lines(sha1, filter->lines);
 		putchar('\n');
-		free(buf);
 	}
 
 	return 0;
@@ -375,6 +408,23 @@ static int strbuf_check_tag_ref(struct strbuf *sb, const char *name)
 	return check_refname_format(sb->buf, 0);
 }
 
+static int parse_opt_points_at(const struct option *opt __attribute__((unused)),
+			const char *arg, int unset)
+{
+	unsigned char sha1[20];
+
+	if (unset) {
+		sha1_array_clear(&points_at);
+		return 0;
+	}
+	if (!arg)
+		return error(_("switch 'points-at' requires an object"));
+	if (get_sha1(arg, sha1))
+		return error(_("malformed object name '%s'"), arg);
+	sha1_array_append(&points_at, sha1);
+	return 0;
+}
+
 int cmd_tag(int argc, const char **argv, const char *prefix)
 {
 	struct strbuf buf = STRBUF_INIT;
@@ -417,6 +467,10 @@ int cmd_tag(int argc, const char **argv, const char *prefix)
 			PARSE_OPT_LASTARG_DEFAULT,
 			parse_opt_with_commit, (intptr_t)"HEAD",
 		},
+		{
+			OPTION_CALLBACK, 0, "points-at", NULL, "object",
+			"print only tags of the object", 0, parse_opt_points_at
+		},
 		OPT_END()
 	};
 
@@ -448,6 +502,8 @@ int cmd_tag(int argc, const char **argv, const char *prefix)
 		die(_("-n option is only allowed with -l."));
 	if (with_commit)
 		die(_("--contains option is only allowed with -l."));
+	if (points_at.nr)
+		die(_("--points-at option is only allowed with -l."));
 	if (delete)
 		return for_each_tag_name(argv, delete_tag);
 	if (verify)

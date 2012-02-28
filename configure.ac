@@ -640,7 +640,18 @@ AC_CHECK_LIB([c], [gettext],
 [LIBC_CONTAINS_LIBINTL=YesPlease],
 [LIBC_CONTAINS_LIBINTL=])
 AC_SUBST(LIBC_CONTAINS_LIBINTL)
-test -n "$LIBC_CONTAINS_LIBINTL" || LIBS="$LIBS -lintl"
+
+#
+# Define NO_GETTEXT if you don't want Git output to be translated.
+# A translated Git requires GNU libintl or another gettext implementation
+AC_CHECK_HEADER([libintl.h],
+[NO_GETTEXT=],
+[NO_GETTEXT=YesPlease])
+AC_SUBST(NO_GETTEXT)
+
+if test -z "$NO_GETTEXT"; then
+    test -n "$LIBC_CONTAINS_LIBINTL" || LIBS="$LIBS -lintl"
+fi
 
 ## Checks for header files.
 AC_MSG_NOTICE([CHECKS for header files])
@@ -824,18 +835,21 @@ AC_CHECK_HEADER([paths.h],
 [HAVE_PATHS_H=])
 AC_SUBST(HAVE_PATHS_H)
 #
-# Define NO_GETTEXT if you don't want Git output to be translated.
-# A translated Git requires GNU libintl or another gettext implementation
-AC_CHECK_HEADER([libintl.h],
-[NO_GETTEXT=],
-[NO_GETTEXT=YesPlease])
-AC_SUBST(NO_GETTEXT)
-#
 # Define HAVE_LIBCHARSET_H if have libcharset.h
 AC_CHECK_HEADER([libcharset.h],
 [HAVE_LIBCHARSET_H=YesPlease],
 [HAVE_LIBCHARSET_H=])
 AC_SUBST(HAVE_LIBCHARSET_H)
+# Define CHARSET_LIB if libiconv does not export the locale_charset symbol
+# and libcharset does
+CHARSET_LIB=
+AC_CHECK_LIB([iconv], [locale_charset],
+       [],
+       [AC_CHECK_LIB([charset], [locale_charset],
+                     [CHARSET_LIB=-lcharset])
+       ]
+)
+AC_SUBST(CHARSET_LIB)
 #
 # Define NO_STRCASESTR if you don't have strcasestr.
 GIT_CHECK_FUNC(strcasestr,

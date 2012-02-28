@@ -45,7 +45,7 @@ static char *option_branch = NULL;
 static const char *real_git_dir;
 static char *option_upload_pack = "git-upload-pack";
 static int option_verbosity;
-static int option_progress;
+static int option_progress = -1;
 static struct string_list option_config;
 static struct string_list option_reference;
 
@@ -60,8 +60,8 @@ static int opt_parse_reference(const struct option *opt, const char *arg, int un
 
 static struct option builtin_clone_options[] = {
 	OPT__VERBOSITY(&option_verbosity),
-	OPT_BOOLEAN(0, "progress", &option_progress,
-			"force progress reporting"),
+	OPT_BOOL(0, "progress", &option_progress,
+		 "force progress reporting"),
 	OPT_BOOLEAN('n', "no-checkout", &option_no_checkout,
 		    "don't create a checkout"),
 	OPT_BOOLEAN(0, "bare", &option_bare, "create a bare repository"),
@@ -107,7 +107,7 @@ static const char *argv_submodule[] = {
 
 static char *get_repo_path(const char *repo, int *is_bundle)
 {
-	static char *suffix[] = { "/.git", ".git", "" };
+	static char *suffix[] = { "/.git", "", ".git/.git", ".git" };
 	static char *bundle_suffix[] = { ".bundle", "" };
 	struct stat st;
 	int i;
@@ -117,7 +117,7 @@ static char *get_repo_path(const char *repo, int *is_bundle)
 		path = mkpath("%s%s", repo, suffix[i]);
 		if (stat(path, &st))
 			continue;
-		if (S_ISDIR(st.st_mode)) {
+		if (S_ISDIR(st.st_mode) && is_git_directory(path)) {
 			*is_bundle = 0;
 			return xstrdup(absolute_path(path));
 		} else if (S_ISREG(st.st_mode) && st.st_size > 8) {
@@ -232,9 +232,6 @@ static int add_one_reference(struct string_list_item *item, void *cb_data)
 {
 	char *ref_git;
 	struct strbuf alternate = STRBUF_INIT;
-	struct remote *remote;
-	struct transport *transport;
-	const struct ref *extra;
 
 	/* Beware: real_path() and mkpath() return static buffer */
 	ref_git = xstrdup(real_path(item->string));
@@ -249,14 +246,6 @@ static int add_one_reference(struct string_list_item *item, void *cb_data)
 	strbuf_addf(&alternate, "%s/objects", ref_git);
 	add_to_alternates_file(alternate.buf);
 	strbuf_release(&alternate);
-
-	remote = remote_get(ref_git);
-	transport = transport_get(remote, ref_git);
-	for (extra = transport_get_remote_refs(transport); extra;
-	     extra = extra->next)
-		add_extra_ref(extra->name, extra->old_sha1, 0);
-
-	transport_disconnect(transport);
 	free(ref_git);
 	return 0;
 }
@@ -500,7 +489,6 @@ static void update_remote_refs(const struct ref *refs,
 			       const char *msg)
 {
 	if (refs) {
-		clear_extra_refs();
 		write_remote_refs(mapped_refs);
 		if (option_single_branch)
 			write_followtags(refs, msg);
@@ -813,28 +801,28 @@ int cmd_clone(int argc, const char **argv, const char *prefix)
 	}
 
 	refs = transport_get_remote_refs(transport);
-	mapped_refs = refs ? wanted_peer_refs(refs, refspec) : NULL;
-
-	/*
-	 * transport_get_remote_refs() may return refs with null sha-1
-	 * in mapped_refs (see struct transport->get_refs_list
-	 * comment). In that case we need fetch it early because
-	 * remote_head code below relies on it.
-	 *
-	 * for normal clones, transport_get_remote_refs() should
-	 * return reliable ref set, we can delay cloning until after
-	 * remote HEAD check.
-	 */
-	for (ref = refs; ref; ref = ref->next)
-		if (is_null_sha1(ref->old_sha1)) {
-			complete_refs_before_fetch = 0;
-			break;
-		}
-
-	if (!is_local && !complete_refs_before_fetch && refs)
-		transport_fetch_refs(transport, mapped_refs);
 
 	if (refs) {
+		mapped_refs = wanted_peer_refs(refs, refspec);
+		/*
+		 * transport_get_remote_refs() may return refs with null sha-1
+		 * in mapped_refs (see struct transport->get_refs_list
+		 * comment). In that case we need fetch it early because
+		 * remote_head code below relies on it.
+		 *
+		 * for normal clones, transport_get_remote_refs() should
+		 * return reliable ref set, we can delay cloning until after
+		 * remote HEAD check.
+		 */
+		for (ref = refs; ref; ref = ref->next)
+			if (is_null_sha1(ref->old_sha1)) {
+				complete_refs_before_fetch = 0;
+				break;
+			}
+
+		if (!is_local && !complete_refs_before_fetch)
+			transport_fetch_refs(transport, mapped_refs);
+
 		remote_head = find_ref_by_name(refs, "HEAD");
 		remote_head_points_at =
 			guess_remote_head(remote_head, mapped_refs, 0);
@@ -852,6 +840,7 @@ int cmd_clone(int argc, const char **argv, const char *prefix)
 	}
 	else {
 		warning(_("You appear to have cloned an empty repository."));
+		mapped_refs = NULL;
 		our_head_points_at = NULL;
 		remote_head_points_at = NULL;
 		remote_head = NULL;

@@ -96,8 +96,8 @@ test_expect_success 'fresh clone with svn.authors-file in config' '
 		rm -r "$GIT_DIR" &&
 		test x = x"$(git config svn.authorsfile)" &&
 		test_config="$HOME"/.gitconfig &&
-		unset GIT_DIR &&
-		unset GIT_CONFIG &&
+		sane_unset GIT_DIR &&
+		sane_unset GIT_CONFIG &&
 		git config --global \
 		  svn.authorsfile "$HOME"/svn-authors &&
 		test x"$HOME"/svn-authors = x"$(git config svn.authorsfile)" &&

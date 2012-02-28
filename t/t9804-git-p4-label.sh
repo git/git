@@ -1,3 +1,5 @@
+#!/bin/sh
+
 test_description='git-p4 p4 label tests'
 
 . ./lib-git-p4.sh

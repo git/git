@@ -56,14 +56,6 @@ extern void warn_dangling_symref(FILE *fp, const char *msg_fmt, const char *refn
  */
 extern void add_packed_ref(const char *refname, const unsigned char *sha1);
 
-/*
- * Extra refs will be listed by for_each_ref() before any actual refs
- * for the duration of this process or until clear_extra_refs() is
- * called. Only extra refs added before for_each_ref() is called will
- * be listed on a given call of for_each_ref().
- */
-extern void add_extra_ref(const char *refname, const unsigned char *sha1, int flags);
-extern void clear_extra_refs(void);
 extern int ref_exists(const char *);
 
 extern int peel_ref(const char *refname, unsigned char *sha1);

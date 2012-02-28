@@ -210,14 +210,7 @@ static int parse_funcname(struct userdiff_funcname *f, const char *k,
 	if (git_config_string(&f->pattern, k, v) < 0)
 		return -1;
 	f->cflags = cflags;
-	return 1;
-}
-
-static int parse_string(const char **d, const char *k, const char *v)
-{
-	if (git_config_string(d, k, v) < 0)
-		return -1;
-	return 1;
+	return 0;
 }
 
 static int parse_tristate(int *b, const char *k, const char *v)
@@ -226,13 +219,13 @@ static int parse_tristate(int *b, const char *k, const char *v)
 		*b = -1;
 	else
 		*b = git_config_bool(k, v);
-	return 1;
+	return 0;
 }
 
 static int parse_bool(int *b, const char *k, const char *v)
 {
 	*b = git_config_bool(k, v);
-	return 1;
+	return 0;
 }
 
 int userdiff_config(const char *k, const char *v)
@@ -246,13 +239,13 @@ int userdiff_config(const char *k, const char *v)
 	if ((drv = parse_driver(k, v, "binary")))
 		return parse_tristate(&drv->binary, k, v);
 	if ((drv = parse_driver(k, v, "command")))
-		return parse_string(&drv->external, k, v);
+		return git_config_string(&drv->external, k, v);
 	if ((drv = parse_driver(k, v, "textconv")))
-		return parse_string(&drv->textconv, k, v);
+		return git_config_string(&drv->textconv, k, v);
 	if ((drv = parse_driver(k, v, "cachetextconv")))
 		return parse_bool(&drv->textconv_want_cache, k, v);
 	if ((drv = parse_driver(k, v, "wordregex")))
-		return parse_string(&drv->word_regex, k, v);
+		return git_config_string(&drv->word_regex, k, v);
 
 	return 0;
 }

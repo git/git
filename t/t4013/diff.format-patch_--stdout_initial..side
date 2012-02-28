@@ -8,7 +8,7 @@ Subject: [PATCH] Side
  dir/sub |    2 ++
  file0   |    3 +++
  file3   |    4 ++++
- 3 files changed, 9 insertions(+), 0 deletions(-)
+ 3 files changed, 9 insertions(+)
  create mode 100644 file3
 
 diff --git a/dir/sub b/dir/sub

@@ -993,11 +993,15 @@ void transport_set_verbosity(struct transport *transport, int verbosity,
 	 * Rules used to determine whether to report progress (processing aborts
 	 * when a rule is satisfied):
 	 *
-	 *   1. Report progress, if force_progress is 1 (ie. --progress).
-	 *   2. Don't report progress, if verbosity < 0 (ie. -q/--quiet ).
-	 *   3. Report progress if isatty(2) is 1.
+	 *   . Report progress, if force_progress is 1 (ie. --progress).
+	 *   . Don't report progress, if force_progress is 0 (ie. --no-progress).
+	 *   . Don't report progress, if verbosity < 0 (ie. -q/--quiet ).
+	 *   . Report progress if isatty(2) is 1.
 	 **/
-	transport->progress = force_progress || (verbosity >= 0 && isatty(2));
+	if (force_progress >= 0)
+		transport->progress = !!force_progress;
+	else
+		transport->progress = verbosity >= 0 && isatty(2);
 }
 
 int transport_push(struct transport *transport,
@@ -1028,6 +1032,8 @@ int transport_push(struct transport *transport,
 			match_flags |= MATCH_REFS_ALL;
 		if (flags & TRANSPORT_PUSH_MIRROR)
 			match_flags |= MATCH_REFS_MIRROR;
+		if (flags & TRANSPORT_PUSH_PRUNE)
+			match_flags |= MATCH_REFS_PRUNE;
 
 		if (match_push_refs(local_refs, &remote_refs,
 				    refspec_nr, refspec, match_flags)) {

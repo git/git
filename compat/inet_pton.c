@@ -15,13 +15,7 @@
  * WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-#include <errno.h>
-#include <sys/types.h>
-
 #include "../git-compat-util.h"
-
-#include <stdio.h>
-#include <string.h>
 
 #ifndef NS_INT16SZ
 #define NS_INT16SZ       2

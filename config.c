@@ -26,7 +26,68 @@ static config_file *cf;
 
 static int zlib_compression_seen;
 
-const char *config_exclusive_filename = NULL;
+#define MAX_INCLUDE_DEPTH 10
+static const char include_depth_advice[] =
+"exceeded maximum include depth (%d) while including\n"
+"	%s\n"
+"from\n"
+"	%s\n"
+"Do you have circular includes?";
+static int handle_path_include(const char *path, struct config_include_data *inc)
+{
+	int ret = 0;
+	struct strbuf buf = STRBUF_INIT;
+
+	/*
+	 * Use an absolute path as-is, but interpret relative paths
+	 * based on the including config file.
+	 */
+	if (!is_absolute_path(path)) {
+		char *slash;
+
+		if (!cf || !cf->name)
+			return error("relative config includes must come from files");
+
+		slash = find_last_dir_sep(cf->name);
+		if (slash)
+			strbuf_add(&buf, cf->name, slash - cf->name + 1);
+		strbuf_addstr(&buf, path);
+		path = buf.buf;
+	}
+
+	if (!access(path, R_OK)) {
+		if (++inc->depth > MAX_INCLUDE_DEPTH)
+			die(include_depth_advice, MAX_INCLUDE_DEPTH, path,
+			    cf && cf->name ? cf->name : "the command line");
+		ret = git_config_from_file(git_config_include, path, inc);
+		inc->depth--;
+	}
+	strbuf_release(&buf);
+	return ret;
+}
+
+int git_config_include(const char *var, const char *value, void *data)
+{
+	struct config_include_data *inc = data;
+	const char *type;
+	int ret;
+
+	/*
+	 * Pass along all values, including "include" directives; this makes it
+	 * possible to query information on the includes themselves.
+	 */
+	ret = inc->fn(var, value, inc->data);
+	if (ret < 0)
+		return ret;
+
+	type = skip_prefix(var, "include.");
+	if (!type)
+		return ret;
+
+	if (!strcmp(type, "path"))
+		ret = handle_path_include(value, inc);
+	return ret;
+}
 
 static void lowercase(char *p)
 {
@@ -879,9 +940,6 @@ int git_config_early(config_fn_t fn, void *data, const char *repo_config)
 	int ret = 0, found = 0;
 	const char *home = NULL;
 
-	/* Setting $GIT_CONFIG makes git read _only_ the given config file. */
-	if (config_exclusive_filename)
-		return git_config_from_file(fn, config_exclusive_filename, data);
 	if (git_config_system() && !access(git_etc_gitconfig(), R_OK)) {
 		ret += git_config_from_file(fn, git_etc_gitconfig(),
 					    data);
@@ -917,16 +975,37 @@ int git_config_early(config_fn_t fn, void *data, const char *repo_config)
 	return ret == 0 ? found : ret;
 }
 
-int git_config(config_fn_t fn, void *data)
+int git_config_with_options(config_fn_t fn, void *data,
+			    const char *filename, int respect_includes)
 {
 	char *repo_config = NULL;
 	int ret;
+	struct config_include_data inc = CONFIG_INCLUDE_INIT;
+
+	if (respect_includes) {
+		inc.fn = fn;
+		inc.data = data;
+		fn = git_config_include;
+		data = &inc;
+	}
+
+	/*
+	 * If we have a specific filename, use it. Otherwise, follow the
+	 * regular lookup sequence.
+	 */
+	if (filename)
+		return git_config_from_file(fn, filename, data);
 
 	repo_config = git_pathdup("config");
 	ret = git_config_early(fn, data, repo_config);
 	if (repo_config)
 		free(repo_config);
 	return ret;
+}
+
+int git_config(config_fn_t fn, void *data)
+{
+	return git_config_with_options(fn, data, NULL, 1);
 }
 
 /*
@@ -1233,6 +1312,7 @@ int git_config_set_multivar_in_file(const char *config_filename,
 	int fd = -1, in_fd;
 	int ret;
 	struct lock_file *lock = NULL;
+	char *filename_buf = NULL;
 
 	/* parse-key returns negative; flip the sign to feed exit(3) */
 	ret = 0 - git_config_parse_key(key, &store.key, &store.baselen);
@@ -1241,6 +1321,8 @@ int git_config_set_multivar_in_file(const char *config_filename,
 
 	store.multi_replace = multi_replace;
 
+	if (!config_filename)
+		config_filename = filename_buf = git_pathdup("config");
 
 	/*
 	 * The lock serves a purpose in addition to locking: the new
@@ -1410,6 +1492,7 @@ int git_config_set_multivar_in_file(const char *config_filename,
 out_free:
 	if (lock)
 		rollback_lock_file(lock);
+	free(filename_buf);
 	return ret;
 
 write_err_out:
@@ -1421,19 +1504,8 @@ write_err_out:
 int git_config_set_multivar(const char *key, const char *value,
 			const char *value_regex, int multi_replace)
 {
-	const char *config_filename;
-	char *buf = NULL;
-	int ret;
-
-	if (config_exclusive_filename)
-		config_filename = config_exclusive_filename;
-	else
-		config_filename = buf = git_pathdup("config");
-
-	ret = git_config_set_multivar_in_file(config_filename, key, value,
-					value_regex, multi_replace);
-	free(buf);
-	return ret;
+	return git_config_set_multivar_in_file(NULL, key, value, value_regex,
+					       multi_replace);
 }
 
 static int section_name_match (const char *buf, const char *name)
@@ -1476,19 +1548,19 @@ static int section_name_match (const char *buf, const char *name)
 }
 
 /* if new_name == NULL, the section is removed instead */
-int git_config_rename_section(const char *old_name, const char *new_name)
+int git_config_rename_section_in_file(const char *config_filename,
+				      const char *old_name, const char *new_name)
 {
 	int ret = 0, remove = 0;
-	char *config_filename;
+	char *filename_buf = NULL;
 	struct lock_file *lock = xcalloc(sizeof(struct lock_file), 1);
 	int out_fd;
 	char buf[1024];
 	FILE *config_file;
 
-	if (config_exclusive_filename)
-		config_filename = xstrdup(config_exclusive_filename);
-	else
-		config_filename = git_pathdup("config");
+	if (!config_filename)
+		config_filename = filename_buf = git_pathdup("config");
+
 	out_fd = hold_lock_file_for_update(lock, config_filename, 0);
 	if (out_fd < 0) {
 		ret = error("could not lock config file %s", config_filename);
@@ -1552,8 +1624,13 @@ unlock_and_out:
 	if (commit_lock_file(lock) < 0)
 		ret = error("could not commit config file %s", config_filename);
 out:
-	free(config_filename);
+	free(filename_buf);
 	return ret;
+}
+
+int git_config_rename_section(const char *old_name, const char *new_name)
+{
+	return git_config_rename_section_in_file(NULL, old_name, new_name);
 }
 
 /*

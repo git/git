@@ -183,12 +183,6 @@ static struct ref_cache {
 
 static struct ref_entry *current_ref;
 
-/*
- * Never call sort_ref_array() on the extra_refs, because it is
- * allowed to contain entries with duplicate names.
- */
-static struct ref_array extra_refs;
-
 static void clear_ref_array(struct ref_array *array)
 {
 	int i;
@@ -287,16 +281,6 @@ static void read_packed_refs(FILE *f, struct ref_array *array)
 		    !get_sha1_hex(refline + 1, sha1))
 			hashcpy(last->peeled, sha1);
 	}
-}
-
-void add_extra_ref(const char *refname, const unsigned char *sha1, int flag)
-{
-	add_ref(&extra_refs, create_ref_entry(refname, sha1, flag, 0));
-}
-
-void clear_extra_refs(void)
-{
-	clear_ref_array(&extra_refs);
 }
 
 static struct ref_array *get_packed_refs(struct ref_cache *refs)
@@ -733,15 +717,10 @@ fallback:
 static int do_for_each_ref(const char *submodule, const char *base, each_ref_fn fn,
 			   int trim, int flags, void *cb_data)
 {
-	int retval = 0, i, p = 0, l = 0;
+	int retval = 0, p = 0, l = 0;
 	struct ref_cache *refs = get_ref_cache(submodule);
 	struct ref_array *packed = get_packed_refs(refs);
 	struct ref_array *loose = get_loose_refs(refs);
-
-	struct ref_array *extra = &extra_refs;
-
-	for (i = 0; i < extra->nr; i++)
-		retval = do_one_ref(base, fn, trim, flags, cb_data, extra->refs[i]);
 
 	sort_ref_array(packed);
 	sort_ref_array(loose);

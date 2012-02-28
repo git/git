@@ -33,7 +33,7 @@ check_stat() {
 expect=$1; shift
 cat >expected <<EOF
  $expect |    1 +
- 1 files changed, 1 insertions(+), 0 deletions(-)
+ 1 file changed, 1 insertion(+)
 EOF
 test_expect_success "--stat $*" "
 	git diff --stat $* HEAD^ >actual &&

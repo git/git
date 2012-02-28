@@ -190,27 +190,27 @@ void clear_mailmap(struct string_list *map)
 int map_user(struct string_list *map,
 	     char *email, int maxlen_email, char *name, int maxlen_name)
 {
-	char *p;
+	char *end_of_email;
 	struct string_list_item *item;
 	struct mailmap_entry *me;
 	char buf[1024], *mailbuf;
 	int i;
 
 	/* figure out space requirement for email */
-	p = strchr(email, '>');
-	if (!p) {
+	end_of_email = strchr(email, '>');
+	if (!end_of_email) {
 		/* email passed in might not be wrapped in <>, but end with a \0 */
-		p = memchr(email, '\0', maxlen_email);
-		if (!p)
+		end_of_email = memchr(email, '\0', maxlen_email);
+		if (!end_of_email)
 			return 0;
 	}
-	if (p - email + 1 < sizeof(buf))
+	if (end_of_email - email + 1 < sizeof(buf))
 		mailbuf = buf;
 	else
-		mailbuf = xmalloc(p - email + 1);
+		mailbuf = xmalloc(end_of_email - email + 1);
 
 	/* downcase the email address */
-	for (i = 0; i < p - email; i++)
+	for (i = 0; i < end_of_email - email; i++)
 		mailbuf[i] = tolower(email[i]);
 	mailbuf[i] = 0;
 
@@ -236,6 +236,8 @@ int map_user(struct string_list *map,
 		}
 		if (maxlen_email && mi->email)
 			strlcpy(email, mi->email, maxlen_email);
+		else
+			*end_of_email = '\0';
 		if (maxlen_name && mi->name)
 			strlcpy(name, mi->name, maxlen_name);
 		debug_mm("map_user:  to '%s' <%s>\n", name, mi->email ? mi->email : "");
