@@ -123,7 +123,7 @@ static void write_cherry_pick_head(struct commit *commit, const char *pseudoref)
 	strbuf_release(&buf);
 }
 
-static void print_advice(int show_hint)
+static void print_advice(int show_hint, struct replay_opts *opts)
 {
 	char *msg = getenv("GIT_CHERRY_PICK_HELP");
 
@@ -138,10 +138,15 @@ static void print_advice(int show_hint)
 		return;
 	}
 
-	if (show_hint)
-		advise(_("after resolving the conflicts, mark the corrected paths\n"
-			 "with 'git add <paths>' or 'git rm <paths>'\n"
-			 "and commit the result with 'git commit'"));
+	if (show_hint) {
+		if (opts->no_commit)
+			advise(_("after resolving the conflicts, mark the corrected paths\n"
+				 "with 'git add <paths>' or 'git rm <paths>'"));
+		else
+			advise(_("after resolving the conflicts, mark the corrected paths\n"
+				 "with 'git add <paths>' or 'git rm <paths>'\n"
+				 "and commit the result with 'git commit'"));
+	}
 }
 
 static void write_message(struct strbuf *msgbuf, const char *filename)
@@ -423,7 +428,7 @@ static int do_pick_commit(struct commit *commit, struct replay_opts *opts)
 		      : _("could not apply %s... %s"),
 		      find_unique_abbrev(commit->object.sha1, DEFAULT_ABBREV),
 		      msg.subject);
-		print_advice(res == 1);
+		print_advice(res == 1, opts);
 		rerere(opts->allow_rerere_auto);
 	} else {
 		if (!opts->no_commit)
