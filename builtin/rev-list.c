@@ -242,13 +242,6 @@ void print_commit_list(struct commit_list *list,
 	}
 }
 
-static void show_tried_revs(struct commit_list *tried)
-{
-	printf("bisect_tried='");
-	print_commit_list(tried, "%s|", "%s");
-	printf("'\n");
-}
-
 static void print_var_str(const char *var, const char *val)
 {
 	printf("%s='%s'\n", var, val);
@@ -266,7 +259,7 @@ static int show_bisect_vars(struct rev_list_info *info, int reaches, int all)
 	struct commit_list *tried;
 	struct rev_info *revs = info->revs;
 
-	if (!revs->commits && !(flags & BISECT_SHOW_TRIED))
+	if (!revs->commits)
 		return 1;
 
 	revs->commits = filter_skipped(revs->commits, &tried,
@@ -293,9 +286,6 @@ static int show_bisect_vars(struct rev_list_info *info, int reaches, int all)
 		traverse_commit_list(revs, show_commit, show_object, info);
 		printf("------\n");
 	}
-
-	if (flags & BISECT_SHOW_TRIED)
-		show_tried_revs(tried);
 
 	print_var_str("bisect_rev", hex);
 	print_var_int("bisect_nr", cnt - 1);
