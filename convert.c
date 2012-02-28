@@ -452,6 +452,7 @@ static struct convert_driver {
 	struct convert_driver *next;
 	const char *smudge;
 	const char *clean;
+	int required;
 } *user_convert, **user_convert_tail;
 
 static int read_convert_config(const char *var, const char *value, void *cb)
@@ -494,6 +495,11 @@ static int read_convert_config(const char *var, const char *value, void *cb)
 
 	if (!strcmp("clean", ep))
 		return git_config_string(&drv->clean, var, value);
+
+	if (!strcmp("required", ep)) {
+		drv->required = git_config_bool(var, value);
+		return 0;
+	}
 
 	return 0;
 }
@@ -773,13 +779,19 @@ int convert_to_git(const char *path, const char *src, size_t len,
 {
 	int ret = 0;
 	const char *filter = NULL;
+	int required = 0;
 	struct conv_attrs ca;
 
 	convert_attrs(&ca, path);
-	if (ca.drv)
+	if (ca.drv) {
 		filter = ca.drv->clean;
+		required = ca.drv->required;
+	}
 
 	ret |= apply_filter(path, src, len, dst, filter);
+	if (!ret && required)
+		die("%s: clean filter '%s' failed", path, ca.drv->name);
+
 	if (ret && dst) {
 		src = dst->buf;
 		len = dst->len;
@@ -797,13 +809,16 @@ static int convert_to_working_tree_internal(const char *path, const char *src,
 					    size_t len, struct strbuf *dst,
 					    int normalizing)
 {
-	int ret = 0;
+	int ret = 0, ret_filter = 0;
 	const char *filter = NULL;
+	int required = 0;
 	struct conv_attrs ca;
 
 	convert_attrs(&ca, path);
-	if (ca.drv)
+	if (ca.drv) {
 		filter = ca.drv->smudge;
+		required = ca.drv->required;
+	}
 
 	ret |= ident_to_worktree(path, src, len, dst, ca.ident);
 	if (ret) {
@@ -822,7 +837,12 @@ static int convert_to_working_tree_internal(const char *path, const char *src,
 			len = dst->len;
 		}
 	}
-	return ret | apply_filter(path, src, len, dst, filter);
+
+	ret_filter = apply_filter(path, src, len, dst, filter);
+	if (!ret_filter && required)
+		die("%s: smudge filter %s failed", path, ca.drv->name);
+
+	return ret | ret_filter;
 }
 
 int convert_to_working_tree(const char *path, const char *src, size_t len, struct strbuf *dst)
