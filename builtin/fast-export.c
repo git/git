@@ -647,9 +647,7 @@ int cmd_fast_export(int argc, const char **argv, const char *prefix)
 			     "Output full tree for each commit"),
 		OPT_BOOLEAN(0, "use-done-feature", &use_done_feature,
 			     "Use the done feature to terminate the stream"),
-		{ OPTION_NEGBIT, 0, "data", &no_data, NULL,
-			"Skip output of blob data",
-			PARSE_OPT_NOARG | PARSE_OPT_NEGHELP, NULL, 1 },
+		OPT_BOOL(0, "no-data", &no_data, "Skip output of blob data"),
 		OPT_END()
 	};
 

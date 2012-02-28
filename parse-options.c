@@ -533,7 +533,7 @@ static int usage_with_options_internal(struct parse_opt_ctx_t *ctx,
 			continue;
 
 		pos = fprintf(outfile, "    ");
-		if (opts->short_name && !(opts->flags & PARSE_OPT_NEGHELP)) {
+		if (opts->short_name) {
 			if (opts->flags & PARSE_OPT_NODASH)
 				pos += fprintf(outfile, "%c", opts->short_name);
 			else
@@ -542,9 +542,7 @@ static int usage_with_options_internal(struct parse_opt_ctx_t *ctx,
 		if (opts->long_name && opts->short_name)
 			pos += fprintf(outfile, ", ");
 		if (opts->long_name)
-			pos += fprintf(outfile, "--%s%s",
-				(opts->flags & PARSE_OPT_NEGHELP) ?  "no-" : "",
-				opts->long_name);
+			pos += fprintf(outfile, "--%s", opts->long_name);
 		if (opts->type == OPTION_NUMBER)
 			pos += fprintf(outfile, "-NUM");
 
