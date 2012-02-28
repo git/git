@@ -52,6 +52,11 @@ static void show_commit(struct commit *commit, void *data)
 	struct rev_list_info *info = data;
 	struct rev_info *revs = info->revs;
 
+	if (info->flags & REV_LIST_QUIET) {
+		finish_commit(commit, data);
+		return;
+	}
+
 	graph_show_commit(revs->graph);
 
 	if (revs->count) {
@@ -172,8 +177,11 @@ static void finish_object(struct object *obj,
 			  const struct name_path *path, const char *name,
 			  void *cb_data)
 {
+	struct rev_list_info *info = cb_data;
 	if (obj->type == OBJ_BLOB && !has_sha1_file(obj->sha1))
 		die("missing blob object '%s'", sha1_to_hex(obj->sha1));
+	if (info->revs->verify_objects && !obj->parsed && obj->type != OBJ_COMMIT)
+		parse_object(obj->sha1);
 }
 
 static void show_object(struct object *obj,
@@ -181,10 +189,9 @@ static void show_object(struct object *obj,
 			void *cb_data)
 {
 	struct rev_list_info *info = cb_data;
-
 	finish_object(obj, path, component, cb_data);
-	if (info->revs->verify_objects && !obj->parsed && obj->type != OBJ_COMMIT)
-		parse_object(obj->sha1);
+	if (info->flags & REV_LIST_QUIET)
+		return;
 	show_object_with_name(stdout, obj, path, component);
 }
 
@@ -242,13 +249,6 @@ void print_commit_list(struct commit_list *list,
 	}
 }
 
-static void show_tried_revs(struct commit_list *tried)
-{
-	printf("bisect_tried='");
-	print_commit_list(tried, "%s|", "%s");
-	printf("'\n");
-}
-
 static void print_var_str(const char *var, const char *val)
 {
 	printf("%s='%s'\n", var, val);
@@ -261,12 +261,12 @@ static void print_var_int(const char *var, int val)
 
 static int show_bisect_vars(struct rev_list_info *info, int reaches, int all)
 {
-	int cnt, flags = info->bisect_show_flags;
+	int cnt, flags = info->flags;
 	char hex[41] = "";
 	struct commit_list *tried;
 	struct rev_info *revs = info->revs;
 
-	if (!revs->commits && !(flags & BISECT_SHOW_TRIED))
+	if (!revs->commits)
 		return 1;
 
 	revs->commits = filter_skipped(revs->commits, &tried,
@@ -294,9 +294,6 @@ static int show_bisect_vars(struct rev_list_info *info, int reaches, int all)
 		printf("------\n");
 	}
 
-	if (flags & BISECT_SHOW_TRIED)
-		show_tried_revs(tried);
-
 	print_var_str("bisect_rev", hex);
 	print_var_int("bisect_nr", cnt - 1);
 	print_var_int("bisect_good", all - reaches - 1);
@@ -315,7 +312,6 @@ int cmd_rev_list(int argc, const char **argv, const char *prefix)
 	int bisect_list = 0;
 	int bisect_show_vars = 0;
 	int bisect_find_all = 0;
-	int quiet = 0;
 
 	git_config(git_default_config, NULL);
 	init_revisions(&revs, prefix);
@@ -328,7 +324,8 @@ int cmd_rev_list(int argc, const char **argv, const char *prefix)
 	if (revs.bisect)
 		bisect_list = 1;
 
-	quiet = DIFF_OPT_TST(&revs.diffopt, QUICK);
+	if (DIFF_OPT_TST(&revs.diffopt, QUICK))
+		info.flags |= REV_LIST_QUIET;
 	for (i = 1 ; i < argc; i++) {
 		const char *arg = argv[i];
 
@@ -347,7 +344,7 @@ int cmd_rev_list(int argc, const char **argv, const char *prefix)
 		if (!strcmp(arg, "--bisect-all")) {
 			bisect_list = 1;
 			bisect_find_all = 1;
-			info.bisect_show_flags = BISECT_SHOW_ALL;
+			info.flags |= BISECT_SHOW_ALL;
 			revs.show_decorations = 1;
 			continue;
 		}
@@ -398,10 +395,7 @@ int cmd_rev_list(int argc, const char **argv, const char *prefix)
 			return show_bisect_vars(&info, reaches, all);
 	}
 
-	traverse_commit_list(&revs,
-			     quiet ? finish_commit : show_commit,
-			     quiet ? finish_object : show_object,
-			     &info);
+	traverse_commit_list(&revs, show_commit, show_object, &info);
 
 	if (revs.count) {
 		if (revs.left_right && revs.cherry_mark)
