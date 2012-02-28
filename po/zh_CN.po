@@ -105,13 +105,13 @@ msgstr[0] " %d 个文件被修改"
 #, c-format
 msgid ", %d insertion(+)"
 msgid_plural ", %d insertions(+)"
-msgstr[0] "，%d 行插入(+)"
+msgstr[0] "，插入 %d 行(+)"
 
 #: diff.c:1363
 #, c-format
 msgid ", %d deletion(-)"
 msgid_plural ", %d deletions(-)"
-msgstr[0] "，%d 行删除(-)"
+msgstr[0] "，删除 %d 行(-)"
 
 #: diff.c:3364
 #, c-format
