@@ -101,7 +101,7 @@ the '$GIT_DIR/refs' directory or from the '$GIT_DIR/packed-refs' file.
 
 '<rev>{tilde}<n>', e.g. 'master{tilde}3'::
   A suffix '{tilde}<n>' to a revision parameter means the commit
-  object that is the <n>th generation grand-parent of the named
+  object that is the <n>th generation ancestor of the named
   commit object, following only the first parents.  I.e. '<rev>{tilde}3' is
   equivalent to '<rev>{caret}{caret}{caret}' which is equivalent to
   '<rev>{caret}1{caret}1{caret}1'.  See below for an illustration of
