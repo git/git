@@ -27,12 +27,8 @@ test_expect_success 'loose objects borrowed from alternate are not missing' '
 		git init &&
 		echo ../../../.git/objects >.git/objects/info/alternates &&
 		test_commit C fileC one &&
-		git fsck >../out 2>&1
+		git fsck --no-dangling >../actual 2>&1
 	) &&
-	{
-		grep -v dangling out >actual ||
-		:
-	} &&
 	test_cmp empty actual
 '
 
