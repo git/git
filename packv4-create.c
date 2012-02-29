@@ -982,56 +982,46 @@ static off_t packv4_write_object(struct sha1file *f, struct packed_git *p,
 	return hdrlen + buf_size;
 }
 
-static struct packed_git *open_pack(const char *path)
+static char *normalize_pack_name(const char *path)
 {
-	char arg[PATH_MAX];
+	char buf[PATH_MAX];
 	int len;
-	struct packed_git *p;
 
-	len = strlcpy(arg, path, PATH_MAX);
-	if (len >= PATH_MAX) {
-		error("name too long: %s", path);
-		return NULL;
-	}
+	len = strlcpy(buf, path, PATH_MAX);
+	if (len >= PATH_MAX - 6)
+		die("name too long: %s", path);
 
 	/*
 	 * In addition to "foo.idx" we accept "foo.pack" and "foo";
-	 * normalize these forms to "foo.idx" for add_packed_git().
+	 * normalize these forms to "foo.pack".
 	 */
-	if (has_extension(arg, ".pack")) {
-		strcpy(arg + len - 5, ".idx");
-		len--;
-	} else if (!has_extension(arg, ".idx")) {
-		if (len + 4 >= PATH_MAX) {
-			error("name too long: %s.idx", arg);
-			return NULL;
-		}
-		strcpy(arg + len, ".idx");
-		len += 4;
+	if (has_extension(buf, ".idx")) {
+		strcpy(buf + len - 4, ".pack");
+		len++;
+	} else if (!has_extension(buf, ".pack")) {
+		strcpy(buf + len, ".pack");
+		len += 5;
 	}
 
-	/*
-	 * add_packed_git() uses our buffer (containing "foo.idx") to
-	 * build the pack filename ("foo.pack").  Make sure it fits.
-	 */
-	if (len + 1 >= PATH_MAX) {
-		arg[len - 4] = '\0';
-		error("name too long: %s.pack", arg);
-		return NULL;
-	}
+	return xstrdup(buf);
+}
 
-	p = add_packed_git(arg, len, 1);
-	if (!p) {
-		error("packfile %s not found.", arg);
-		return NULL;
-	}
+static struct packed_git *open_pack(const char *path)
+{
+	char *packname = normalize_pack_name(path);
+	int len = strlen(packname);
+	struct packed_git *p;
+
+	strcpy(packname + len - 5, ".idx");
+	p = add_packed_git(packname, len - 1, 1);
+	if (!p)
+		die("packfile %s not found.", packname);
 
 	install_packed_git(p);
-	if (open_pack_index(p)) {
-		error("packfile %s index not opened", p->pack_name);
-		return NULL;
-	}
+	if (open_pack_index(p))
+		die("packfile %s index not opened", p->pack_name);
 
+	free(packname);
 	return p;
 }
 
@@ -1043,6 +1033,7 @@ static void process_one_pack(char *src_pack, char *dst_pack)
 	struct pack_idx_option idx_opts;
 	unsigned i, nr_objects;
 	off_t written = 0;
+	char *packname;
 	unsigned char pack_sha1[20];
 
 	p = open_pack(src_pack);
@@ -1057,7 +1048,8 @@ static void process_one_pack(char *src_pack, char *dst_pack)
 	sort_dict_entries_by_hits(commit_ident_table);
 	sort_dict_entries_by_hits(tree_path_table);
 
-	f = packv4_open(dst_pack);
+	packname = normalize_pack_name(dst_pack);
+	f = packv4_open(packname);
 	if (!f)
 		die("unable to open destination pack");
 	written += packv4_write_header(f, nr_objects);
@@ -1079,7 +1071,10 @@ static void process_one_pack(char *src_pack, char *dst_pack)
 
 	reset_pack_idx_option(&idx_opts);
 	idx_opts.version = 3;
-	write_idx_file(dst_pack, p_objs, nr_objects, &idx_opts, pack_sha1);
+	strcpy(packname + strlen(packname) - 5, ".idx");
+	write_idx_file(packname, p_objs, nr_objects, &idx_opts, pack_sha1);
+
+	free(packname);
 }
 
 static int git_pack_config(const char *k, const char *v, void *cb)
