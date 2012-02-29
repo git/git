@@ -87,6 +87,8 @@ const char *write_idx_file(const char *index_name, struct pack_idx_entry **objec
 
 	/* if last object's offset is >= 2^31 we should use index V2 */
 	index_version = need_large_offset(last_obj_offset, opts) ? 2 : opts->version;
+	if (index_version < opts->version)
+		index_version = opts->version;
 
 	/* index versions 2 and above need a header */
 	if (index_version >= 2) {
@@ -127,7 +129,9 @@ const char *write_idx_file(const char *index_name, struct pack_idx_entry **objec
 			uint32_t offset = htonl(obj->offset);
 			sha1write(f, &offset, 4);
 		}
-		sha1write(f, obj->sha1, 20);
+		/* Pack v4 (using index v3) carries the SHA1 table already */
+		if (index_version < 3)
+			sha1write(f, obj->sha1, 20);
 		git_SHA1_Update(&ctx, obj->sha1, 20);
 		if ((opts->flags & WRITE_IDX_STRICT) &&
 		    (i && !hashcmp(list[-2]->sha1, obj->sha1)))

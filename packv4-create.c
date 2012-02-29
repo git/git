@@ -1040,8 +1040,10 @@ static void process_one_pack(char *src_pack, char *dst_pack)
 	struct packed_git *p;
 	struct sha1file *f;
 	struct pack_idx_entry *objs, **p_objs;
+	struct pack_idx_option idx_opts;
 	unsigned i, nr_objects;
 	off_t written = 0;
+	unsigned char pack_sha1[20];
 
 	p = open_pack(src_pack);
 	if (!p)
@@ -1067,11 +1069,17 @@ static void process_one_pack(char *src_pack, char *dst_pack)
 	for (i = 0; i < nr_objects; i++) {
 		off_t obj_pos = written;
 		struct pack_idx_entry *obj = p_objs[i];
+		crc32_begin(f);
 		written += packv4_write_object(f, p, obj);
 		obj->offset = obj_pos;
+		obj->crc32 = crc32_end(f);
 	}
 
-	sha1close(f, NULL, CSUM_CLOSE | CSUM_FSYNC);
+	sha1close(f, pack_sha1, CSUM_CLOSE | CSUM_FSYNC);
+
+	reset_pack_idx_option(&idx_opts);
+	idx_opts.version = 3;
+	write_idx_file(dst_pack, p_objs, nr_objects, &idx_opts, pack_sha1);
 }
 
 static int git_pack_config(const char *k, const char *v, void *cb)
