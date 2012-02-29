@@ -1,33 +1,78 @@
 Core GIT Translations
 =====================
 
-This directory holds the translations for the core of Git. This
-document describes how to add to and maintain these translations, and
-how to mark source strings for translation.
+This directory holds the translations for the core of Git. This document
+describes how you can contribute to the effort of enhancing the language
+coverage and maintaining the translation.
+
+The localization (l10n) coordinator, Jiang Xin <worldhello.net@gmail.com>,
+coordinates our localization effort in his repository:
+
+        https://github.com/gotgit/git-po/
+
+As a contributor for a language XX, you would fork this repository,
+prepare and/or update the translated message file po/XX.po (described
+later), and ask the l10n coordinator to pull your work.
+
+If there are multiple contributors for the same language, please first
+coordinate among yourselves and nominate the team leader for your
+language, so that the l10n coordinator only needs to interact with one
+person per language.
+
+For the list of exiting translations and language teams, see TEAMS file in
+this directory.
+
+The overall data-flow looks like this:
+
+    +-------------------+            +------------------+
+    | Git source code   | ---(1)---> | L10n coordinator |
+    | repository        | <---(4)--- | repository       |
+    +-------------------+            +------------------+
+                                          |      ^
+                                         (2)    (3)
+                                          V      |
+                                     +------------------+
+                                     | Language Team XX |
+                                     +------------------+
+
+ * Translatable strings are marked in the source file.
+ * L10n coordinator pulls from the source (1)
+ * L10n coordinator updates the message template po/git.pot
+ * Language team pulls from L10n coordinator (2)
+ * Language team updates the message file po/XX.po
+ * L10n coordinator pulls from Language team (3)
+ * L10n coordinator asks the result to be pulled (4).
 
 
-Generating a .pot file
-----------------------
+Maintaining the po/git.pot file
+-------------------------------
+
+(This is done by the l10n coordinator).
 
 The po/git.pot file contains a message catalog extracted from Git's
-sources. You need to generate it to add new translations with
-msginit(1), or update existing ones with msgmerge(1).
+sources. The l10n coordinator maintains it by adding new translations with
+msginit(1), or update existing ones with msgmerge(1).  In order to update
+the Git sources to extract the messages from, the l10n coordinator is
+expected to pull from the main git repository at strategic point in
+history (e.g. when a major release and release candidates are tagged),
+and then run "make pot" at the top-level directory.
 
-Since the file can be automatically generated it's not checked into
-git.git. To generate it do, at the top-level:
-
-    make pot
+Language contributors use this file to prepare translations for their
+language, but they are not expected to modify it.
 
 
-Initializing a .po file
------------------------
+Initializing a XX.po file
+-------------------------
 
-To add a new translation first generate git.pot (see above) and then
-in the po/ directory do:
+(This is done by the language teams).
+
+If your language XX does not have translated message file po/XX.po yet,
+you add a translation for the first time by running:
 
     msginit --locale=XX
 
-Where XX is your locale, e.g. "is", "de" or "pt_BR".
+in the po/ directory, where XX is the locale, e.g. "de", "is", "pt_BR",
+"zh_CN", etc.
 
 Then edit the automatically generated copyright info in your new XX.po
 to be correct, e.g. for Icelandic:
@@ -46,20 +91,35 @@ just "Git":
 
     perl -pi -e 's/(?<="Project-Id-Version: )PACKAGE VERSION/Git/' XX.po
 
+Once you are done testing the translation (see below), commit the result
+and ask the l10n coordinator to pull from you.
 
-Updating a .po file
--------------------
 
-If there's an existing *.po file for your language but you need to
-update the translation you first need to generate git.pot (see above)
-and then in the po/ directory do:
+Updating a XX.po file
+---------------------
+
+(This is done by the language teams).
+
+If you are replacing translation strings in an existing XX.po file to
+improve the translation, just edit the file.
+
+If there's an existing XX.po file for your language, but the repository
+of the l10n coordinator has newer po/git.pot file, you would need to first
+pull from the l10n coordinator (see the beginning of this document for its
+URL), and then update the existing translation by running:
 
     msgmerge --add-location --backup=off -U XX.po git.pot
 
-Where XX.po is the file you want to update.
+in the po/ directory, where XX.po is the file you want to update.
+
+Once you are done testing the translation (see below), commit the result
+and ask the l10n coordinator to pull from you.
+
 
 Testing your changes
 --------------------
+
+(This is done by the language teams, after creating or updating XX.po file).
 
 Before you submit your changes go back to the top-level and do:
 
@@ -74,6 +134,8 @@ with a newline or not.
 
 Marking strings for translation
 -------------------------------
+
+(This is done by the core developers).
 
 Before strings can be translated they first have to be marked for
 translation.
