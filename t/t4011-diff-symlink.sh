@@ -67,10 +67,7 @@ test_expect_success SYMLINKS 'diff removed symlink and file' '
 '
 
 test_expect_success SYMLINKS 'diff identical, but newly created symlink and file' '
-	cat >expected <<-\EOF &&
-	diff --git a/frotz b/frotz
-	diff --git a/nitfol b/nitfol
-	EOF
+	>expected &&
 	rm -f frotz nitfol &&
 	echo xyzzy >nitfol &&
 	test-chmtime +10 nitfol &&
