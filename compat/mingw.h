@@ -305,9 +305,7 @@ sig_handler_t mingw_signal(int sig, sig_handler_t handler);
  */
 
 void winansi_init(void);
-int winansi_isatty(int fd);
 HANDLE winansi_get_osfhandle(int fd);
-#define isatty winansi_isatty
 
 /*
  * git specific compatibility
