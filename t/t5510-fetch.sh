@@ -430,14 +430,16 @@ test_expect_success 'fetch --dry-run' '
 '
 
 test_expect_success "should be able to fetch with duplicate refspecs" '
-        mkdir dups &&
-        cd dups &&
-        git init &&
-        git config branch.master.remote three &&
-        git config remote.three.url ../three/.git &&
-        git config remote.three.fetch +refs/heads/*:refs/remotes/origin/* &&
-        git config --add remote.three.fetch +refs/heads/*:refs/remotes/origin/* &&
-        git fetch three
+	mkdir dups &&
+	(
+		cd dups &&
+		git init &&
+		git config branch.master.remote three &&
+		git config remote.three.url ../three/.git &&
+		git config remote.three.fetch +refs/heads/*:refs/remotes/origin/* &&
+		git config --add remote.three.fetch +refs/heads/*:refs/remotes/origin/* &&
+		git fetch three
+	)
 '
 
 test_done
