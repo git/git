@@ -98,7 +98,7 @@ done <<\EOF
 ignores expect80 format-patch -1 --stdout
 respects expect200 diff HEAD^ HEAD --stat
 respects expect200 show --stat
-ignores expect80 log -1 --stat
+respects expect200 log -1 --stat
 EOF
 
 cat >expect <<'EOF'
@@ -164,7 +164,7 @@ done <<\EOF
 ignores expect80 format-patch -1 --stdout
 respects expect200 diff HEAD^ HEAD --stat
 respects expect200 show --stat
-ignores expect80 log -1 --stat
+respects expect200 log -1 --stat
 EOF
 
 cat >expect <<'EOF'
