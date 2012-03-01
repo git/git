@@ -331,9 +331,7 @@ int mingw_raise(int sig);
  */
 
 void winansi_init(void);
-int winansi_isatty(int fd);
 HANDLE winansi_get_osfhandle(int fd);
-#define isatty winansi_isatty
 
 /*
  * git specific compatibility
