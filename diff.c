@@ -1343,7 +1343,10 @@ static void show_stats(struct diffstat_t *data, struct diff_options *options)
 		line_prefix = msg->buf;
 	}
 
-	width = options->stat_width ? options->stat_width : 80;
+	if (options->stat_width == -1)
+		width = term_columns();
+	else
+		width = options->stat_width ? options->stat_width : 80;
 	name_width = options->stat_name_width ? options->stat_name_width : 50;
 	count = options->stat_count ? options->stat_count : data->nr;
 

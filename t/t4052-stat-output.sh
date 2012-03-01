@@ -83,6 +83,10 @@ cat >expect80 <<'EOF'
  abcd | 1000 ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 EOF
 
+cat >expect200 <<'EOF'
+ abcd | 1000 ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+EOF
+
 while read verb expect cmd args
 do
 	test_expect_success "$cmd $verb COLUMNS (big change)" '
@@ -92,7 +96,7 @@ do
 	'
 done <<\EOF
 ignores expect80 format-patch -1 --stdout
-ignores expect80 diff HEAD^ HEAD --stat
+respects expect200 diff HEAD^ HEAD --stat
 ignores expect80 show --stat
 ignores expect80 log -1 --stat
 EOF
@@ -146,6 +150,9 @@ EOF
 cat >expect80 <<'EOF'
  ...aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa | 1000 ++++++++++++++++++++
 EOF
+cat >expect200 <<'EOF'
+ ...aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa | 1000 ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+EOF
 while read verb expect cmd args
 do
 	test_expect_success "$cmd $verb COLUMNS (long filename)" '
@@ -155,7 +162,7 @@ do
 	'
 done <<\EOF
 ignores expect80 format-patch -1 --stdout
-ignores expect80 diff HEAD^ HEAD --stat
+respects expect200 diff HEAD^ HEAD --stat
 ignores expect80 show --stat
 ignores expect80 log -1 --stat
 EOF
