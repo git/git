@@ -442,4 +442,19 @@ test_expect_success "should be able to fetch with duplicate refspecs" '
 	)
 '
 
+test_expect_success 'all boundary commits are excluded' '
+	test_commit base &&
+	test_commit oneside &&
+	git checkout HEAD^ &&
+	test_commit otherside &&
+	git checkout master &&
+	test_tick &&
+	git merge otherside &&
+	ad=$(git log --no-walk --format=%ad HEAD) &&
+	git bundle create twoside-boundary.bdl master --since="$ad" &&
+	convert_bundle_to_pack <twoside-boundary.bdl >twoside-boundary.pack &&
+	pack=$(git index-pack --fix-thin --stdin <twoside-boundary.pack) &&
+	test_bundle_object_count .git/objects/pack/pack-${pack##pack	}.pack 3
+'
+
 test_done
