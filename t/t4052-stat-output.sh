@@ -168,9 +168,9 @@ respects expect200 log -1 --stat
 EOF
 
 cat >expect <<'EOF'
- abcd | 1000 ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+ abcd | 1000 ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 EOF
-test_expect_success 'merge --stat ignores COLUMNS (big change)' '
+test_expect_success 'merge --stat respects COLUMNS (big change)' '
 	git checkout -b branch HEAD^^ &&
 	COLUMNS=100 git merge --stat --no-ff master^ >output &&
 	grep " | " output >actual
@@ -178,9 +178,9 @@ test_expect_success 'merge --stat ignores COLUMNS (big change)' '
 '
 
 cat >expect <<'EOF'
- ...aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa | 1000 ++++++++++++++++++++
+ ...aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa | 1000 ++++++++++++++++++++++++++++++++++++++++
 EOF
-test_expect_success 'merge --stat ignores COLUMNS (long filename)' '
+test_expect_success 'merge --stat respects COLUMNS (long filename)' '
 	COLUMNS=100 git merge --stat --no-ff master >output &&
 	grep " | " output >actual
 	test_cmp expect actual
