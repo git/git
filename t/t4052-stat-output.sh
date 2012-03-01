@@ -101,6 +101,25 @@ respects expect200 show --stat
 respects expect200 log -1 --stat
 EOF
 
+cat >expect40 <<'EOF'
+ abcd | 1000 ++++++++++++++++++++++++++
+EOF
+
+while read verb expect cmd args
+do
+	test_expect_success "$cmd $verb not enough COLUMNS (big change)" '
+		COLUMNS=40 git $cmd $args >output
+		grep " | " output >actual &&
+		test_cmp "$expect" actual
+	'
+done <<\EOF
+ignores expect80 format-patch -1 --stdout
+respects expect40 diff HEAD^ HEAD --stat
+respects expect40 show --stat
+respects expect40 log -1 --stat
+EOF
+
+
 cat >expect <<'EOF'
  abcd | 1000 ++++++++++++++++++++++++++
 EOF
