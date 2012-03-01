@@ -9,7 +9,7 @@ test_description='Test diff of symlinks.
 . ./test-lib.sh
 . "$TEST_DIRECTORY"/diff-lib.sh
 
-test_expect_success SYMLINKS 'diff new symlink' '
+test_expect_success SYMLINKS 'diff new symlink and file' '
 	cat >expected <<-\EOF &&
 	diff --git a/frotz b/frotz
 	new file mode 120000
@@ -19,22 +19,30 @@ test_expect_success SYMLINKS 'diff new symlink' '
 	@@ -0,0 +1 @@
 	+xyzzy
 	\ No newline at end of file
+	diff --git a/nitfol b/nitfol
+	new file mode 100644
+	index 0000000..7c465af
+	--- /dev/null
+	+++ b/nitfol
+	@@ -0,0 +1 @@
+	+xyzzy
 	EOF
 	ln -s xyzzy frotz &&
+	echo xyzzy >nitfol &&
 	git update-index &&
 	tree=$(git write-tree) &&
-	git update-index --add frotz &&
+	git update-index --add frotz nitfol &&
 	GIT_DIFF_OPTS=--unified=0 git diff-index -M -p $tree >current &&
 	compare_diff_patch expected current
 '
 
-test_expect_success SYMLINKS 'diff unchanged symlink'  '
+test_expect_success SYMLINKS 'diff unchanged symlink and file'  '
 	tree=$(git write-tree) &&
-	git update-index frotz &&
+	git update-index frotz nitfol &&
 	test -z "$(git diff-index --name-only $tree)"
 '
 
-test_expect_success SYMLINKS 'diff removed symlink' '
+test_expect_success SYMLINKS 'diff removed symlink and file' '
 	cat >expected <<-\EOF &&
 	diff --git a/frotz b/frotz
 	deleted file mode 120000
@@ -44,22 +52,38 @@ test_expect_success SYMLINKS 'diff removed symlink' '
 	@@ -1 +0,0 @@
 	-xyzzy
 	\ No newline at end of file
+	diff --git a/nitfol b/nitfol
+	deleted file mode 100644
+	index 7c465af..0000000
+	--- a/nitfol
+	+++ /dev/null
+	@@ -1 +0,0 @@
+	-xyzzy
 	EOF
 	mv frotz frotz2 &&
+	mv nitfol nitfol2 &&
 	git diff-index -M -p $tree >current &&
 	compare_diff_patch expected current
 '
 
-test_expect_success SYMLINKS 'diff identical, but newly created symlink' '
+test_expect_success SYMLINKS 'diff identical, but newly created symlink and file' '
 	cat >expected <<-\EOF &&
 	diff --git a/frotz b/frotz
+	diff --git a/nitfol b/nitfol
 	EOF
+	rm -f frotz nitfol &&
+	echo xyzzy >nitfol &&
+	test-chmtime +10 nitfol &&
 	ln -s xyzzy frotz &&
 	git diff-index -M -p $tree >current &&
+	compare_diff_patch expected current &&
+
+	>expected &&
+	git diff-index -M -p -w $tree >current &&
 	compare_diff_patch expected current
 '
 
-test_expect_success SYMLINKS 'diff different symlink' '
+test_expect_success SYMLINKS 'diff different symlink and file' '
 	cat >expected <<-\EOF &&
 	diff --git a/frotz b/frotz
 	index 7c465af..df1db54 120000
@@ -70,9 +94,17 @@ test_expect_success SYMLINKS 'diff different symlink' '
 	\ No newline at end of file
 	+yxyyz
 	\ No newline at end of file
+	diff --git a/nitfol b/nitfol
+	index 7c465af..df1db54 100644
+	--- a/nitfol
+	+++ b/nitfol
+	@@ -1 +1 @@
+	-xyzzy
+	+yxyyz
 	EOF
 	rm -f frotz &&
 	ln -s yxyyz frotz &&
+	echo yxyyz >nitfol &&
 	git diff-index -M -p $tree >current &&
 	compare_diff_patch expected current
 '
