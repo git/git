@@ -1375,13 +1375,15 @@ static void show_stats(struct diffstat_t *data, struct diff_options *options)
 	/*
 	 * We have width = stat_width or term_columns() columns total.
 	 * We want a maximum of min(max_len, stat_name_width) for the name part.
+	 * We want a maximum of min(max_change, stat_graph_width) for the +- part.
 	 * We also need 1 for " " and 4 + decimal_width(max_change)
 	 * for " | NNNN " and one the empty column at the end, altogether
 	 * 6 + decimal_width(max_change).
 	 *
 	 * If there's not enough space, we will use the smaller of
 	 * stat_name_width (if set) and 5/8*width for the filename,
-	 * and the rest for constant elements + graph part.
+	 * and the rest for constant elements + graph part, but no more
+	 * than stat_graph_width for the graph part.
 	 * (5/8 gives 50 for filename and 30 for the constant parts + graph
 	 * for the standard terminal size).
 	 *
@@ -1406,7 +1408,9 @@ static void show_stats(struct diffstat_t *data, struct diff_options *options)
 	/*
 	 * First assign sizes that are wanted, ignoring available width.
 	 */
-	graph_width = max_change;
+	graph_width = (options->stat_graph_width &&
+		       options->stat_graph_width < max_change) ?
+		options->stat_graph_width : max_change;
 	name_width = (options->stat_name_width > 0 &&
 		      options->stat_name_width < max_len) ?
 		options->stat_name_width : max_len;
@@ -1417,6 +1421,9 @@ static void show_stats(struct diffstat_t *data, struct diff_options *options)
 	if (name_width + number_width + 6 + graph_width > width) {
 		if (graph_width > width * 3/8 - number_width - 6)
 			graph_width = width * 3/8 - number_width - 6;
+		if (options->stat_graph_width &&
+		    graph_width > options->stat_graph_width)
+			graph_width = options->stat_graph_width;
 		if (name_width > width - number_width - 6 - graph_width)
 			name_width = width - number_width - 6 - graph_width;
 		else
@@ -3289,6 +3296,7 @@ static int stat_opt(struct diff_options *options, const char **av)
 	char *end;
 	int width = options->stat_width;
 	int name_width = options->stat_name_width;
+	int graph_width = options->stat_graph_width;
 	int count = options->stat_count;
 	int argcount = 1;
 
@@ -3317,6 +3325,16 @@ static int stat_opt(struct diff_options *options, const char **av)
 				name_width = strtoul(av[1], &end, 10);
 				argcount = 2;
 			}
+		} else if (!prefixcmp(arg, "-graph-width")) {
+			arg += strlen("-graph-width");
+			if (*arg == '=')
+				graph_width = strtoul(arg + 1, &end, 10);
+			else if (!*arg && !av[1])
+				die("Option '--stat-graph-width' requires a value");
+			else if (!*arg) {
+				graph_width = strtoul(av[1], &end, 10);
+				argcount = 2;
+			}
 		} else if (!prefixcmp(arg, "-count")) {
 			arg += strlen("-count");
 			if (*arg == '=')
@@ -3342,6 +3360,7 @@ static int stat_opt(struct diff_options *options, const char **av)
 		return 0;
 	options->output_format |= DIFF_FORMAT_DIFFSTAT;
 	options->stat_name_width = name_width;
+	options->stat_graph_width = graph_width;
 	options->stat_width = width;
 	options->stat_count = count;
 	return argcount;
