@@ -16,11 +16,6 @@ gmane=http://thread.gmane.org/gmane.comp.version-control.git/
 
   $gmane/173610
 
-* The "combined" diff always assumes it deals with text files. Teach it
-  to punt on binary and also use the textconv.
-
-  $gname/171613
-
 * Audit use of symbolic-ref without -m in our scripts and for each
   case decide if leaving a reflog entry for the HEAD is desirable.
   If so, add them.
