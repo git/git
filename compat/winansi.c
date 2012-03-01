@@ -8,11 +8,6 @@
 #include <winreg.h>
 
 /*
- Functions to be wrapped:
-*/
-#undef isatty
-
-/*
  ANSI codes used by git: m, K
 
  This file is git-specific. Therefore, this file does not attempt
@@ -104,6 +99,7 @@ static int is_console(int fd)
 
 	/* initialize attributes */
 	if (!initialized) {
+		console = hcon;
 		attr = plain_attr = sbi.wAttributes;
 		negative = 0;
 		initialized = 1;
@@ -465,29 +461,80 @@ static HANDLE duplicate_handle(HANDLE hnd)
 	return hresult;
 }
 
-static HANDLE redirect_console(FILE *stream, HANDLE *phcon, int new_fd)
+
+/*
+ * Make MSVCRT's internal file descriptor control structure accessible
+ * so that we can tweak OS handles and flags directly (we need MSVCRT
+ * to treat our pipe handle as if it were a console).
+ *
+ * We assume that the ioinfo structure (exposed by MSVCRT.dll via
+ * __pioinfo) starts with the OS handle and the flags. The exact size
+ * varies between MSVCRT versions, so we try different sizes until
+ * toggling the FDEV bit of _pioinfo(1)->osflags is reflected in
+ * isatty(1).
+ */
+typedef struct {
+	HANDLE osfhnd;
+	char osflags;
+} ioinfo;
+
+extern __declspec(dllimport) ioinfo *__pioinfo[];
+
+static size_t sizeof_ioinfo = 0;
+
+#define IOINFO_L2E 5
+#define IOINFO_ARRAY_ELTS (1 << IOINFO_L2E)
+
+#define FDEV  0x40
+
+static inline ioinfo* _pioinfo(int fd)
 {
-	/* get original console handle */
-	int fd = _fileno(stream);
-	HANDLE hcon = (HANDLE) _get_osfhandle(fd);
-	if (hcon == INVALID_HANDLE_VALUE)
-		die_errno("_get_osfhandle(%i) failed", fd);
+	return (ioinfo*)((char*)__pioinfo[fd >> IOINFO_L2E] +
+			(fd & (IOINFO_ARRAY_ELTS - 1)) * sizeof_ioinfo);
+}
 
-	/* save a copy to phcon and console (used by the background thread) */
-	console = *phcon = duplicate_handle(hcon);
+static int init_sizeof_ioinfo()
+{
+	int istty, wastty;
+	/* don't init twice */
+	if (sizeof_ioinfo)
+		return sizeof_ioinfo >= 256;
 
-	/* duplicate new_fd over fd (closes fd and associated handle (hcon)) */
-	if (_dup2(new_fd, fd))
-		die_errno("_dup2(%i, %i) failed", new_fd, fd);
+	sizeof_ioinfo = sizeof(ioinfo);
+	wastty = isatty(1);
+	while (sizeof_ioinfo < 256) {
+		/* toggle FDEV flag, check isatty, then toggle back */
+		_pioinfo(1)->osflags ^= FDEV;
+		istty = isatty(1);
+		_pioinfo(1)->osflags ^= FDEV;
+		/* return if we found the correct size */
+		if (istty != wastty)
+			return 0;
+		sizeof_ioinfo += sizeof(void*);
+	}
+	error("Tweaking file descriptors doesn't work with this MSVCRT.dll");
+	return 1;
+}
 
-	/* no buffering, or stdout / stderr will be out of sync */
-	setbuf(stream, NULL);
-	return (HANDLE) _get_osfhandle(fd);
+static HANDLE swap_osfhnd(int fd, HANDLE new_handle)
+{
+	ioinfo *pioinfo;
+	HANDLE old_handle;
+
+	/* init ioinfo size if we haven't done so */
+	if (init_sizeof_ioinfo())
+		return INVALID_HANDLE_VALUE;
+
+	/* get ioinfo pointer and change the handles */
+	pioinfo = _pioinfo(fd);
+	old_handle = pioinfo->osfhnd;
+	pioinfo->osfhnd = new_handle;
+	return old_handle;
 }
 
 void winansi_init(void)
 {
-	int con1, con2, hwrite_fd;
+	int con1, con2;
 	char name[32];
 
 	/* check if either stdout or stderr is a console output screen buffer */
@@ -516,37 +563,16 @@ void winansi_init(void)
 	if (atexit(winansi_exit))
 		die_errno("atexit(winansi_exit) failed");
 
-	/* create a file descriptor for the write end of the pipe */
-	hwrite_fd = _open_osfhandle((long) duplicate_handle(hwrite), _O_BINARY);
-	if (hwrite_fd == -1)
-		die_errno("_open_osfhandle(%li) failed", (long) hwrite);
-
 	/* redirect stdout / stderr to the pipe */
 	if (con1)
-		hwrite1 = redirect_console(stdout, &hconsole1, hwrite_fd);
+		hconsole1 = swap_osfhnd(1, hwrite1 = duplicate_handle(hwrite));
 	if (con2)
-		hwrite2 = redirect_console(stderr, &hconsole2, hwrite_fd);
-
-	/* close pipe file descriptor (also closes the duped hwrite) */
-	close(hwrite_fd);
+		hconsole2 = swap_osfhnd(2, hwrite2 = duplicate_handle(hwrite));
 }
 
 static int is_same_handle(HANDLE hnd, int fd)
 {
 	return hnd != INVALID_HANDLE_VALUE && hnd == (HANDLE) _get_osfhandle(fd);
-}
-
-/*
- * Return true if stdout / stderr is a pipe redirecting to the console.
- */
-int winansi_isatty(int fd)
-{
-	if (fd == 1 && is_same_handle(hwrite1, 1))
-		return 1;
-	else if (fd == 2 && is_same_handle(hwrite2, 2))
-		return 1;
-	else
-		return isatty(fd);
 }
 
 /*
