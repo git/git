@@ -447,6 +447,8 @@ int cmd_show(int argc, const char **argv, const char *prefix)
 	rev.diff = 1;
 	rev.always_show_header = 1;
 	rev.no_walk = 1;
+	rev.diffopt.stat_width = -1; 	/* Scale to real terminal size */
+
 	memset(&opt, 0, sizeof(opt));
 	opt.def = "HEAD";
 	opt.tweak = show_rev_tweak_rev;
