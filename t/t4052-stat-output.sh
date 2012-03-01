@@ -22,18 +22,18 @@ test_expect_success 'preparation' '
 while read cmd args
 do
 	cat >expect <<-'EOF'
-	 ...aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa |    1 +
+	 ...aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa |    1 +
 	EOF
-	test_expect_success "$cmd: a short graph bar does not extend to the full width" '
+	test_expect_success "$cmd: small change with long name gives more space to the name" '
 		git $cmd $args >output &&
 		grep " | " output >actual &&
 		test_cmp expect actual
 	'
 
 	cat >expect <<-'EOF'
-	 ...aaaaaaaaaaaaaaaaaaaaaa |    1 +
+	 ...aaaaaaaaaaaaaaaaaaaaaaaaaa |    1 +
 	EOF
-	test_expect_success "$cmd --stat=width: name is chopped to leave room to the right of a short bar" '
+	test_expect_success "$cmd --stat=width: a long name is given more room when the bar is short" '
 		git $cmd $args --stat=40 >output &&
 		grep " | " output >actual &&
 		test_cmp expect actual
@@ -131,11 +131,11 @@ test_expect_success 'preparation for long filename tests' '
 '
 
 cat >expect <<'EOF'
- ...aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa | 1000 +++++
+ ...aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa | 1000 ++++++++++++
 EOF
 while read cmd args
 do
-	test_expect_success "$cmd --stat=width with big change and long name favors name part" '
+	test_expect_success "$cmd --stat=width with big change is more balanced" '
 		git $cmd $args --stat-width=60 >output &&
 		grep " | " output >actual &&
 		test_cmp expect actual
@@ -151,7 +151,7 @@ cat >expect80 <<'EOF'
  ...aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa | 1000 ++++++++++++++++++++
 EOF
 cat >expect200 <<'EOF'
- ...aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa | 1000 ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+ aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa | 1000 +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 EOF
 while read verb expect cmd args
 do
@@ -178,7 +178,7 @@ test_expect_success 'merge --stat respects COLUMNS (big change)' '
 '
 
 cat >expect <<'EOF'
- ...aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa | 1000 ++++++++++++++++++++++++++++++++++++++++
+ aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa | 1000 +++++++++++++++++++++++++++++++++++++++
 EOF
 test_expect_success 'merge --stat respects COLUMNS (long filename)' '
 	COLUMNS=100 git merge --stat --no-ff master >output &&
