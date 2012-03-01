@@ -54,13 +54,15 @@ endif::git-format-patch[]
 
 --stat[=<width>[,<name-width>[,<count>]]]::
 	Generate a diffstat. By default, as much space as necessary
-	will be used for the filename part, and the rest for
-	the graph part. Maximum width defaults to terminal width,
-	or 80 columns if not connected to a terminal, and can be
-	overriden by `<width>`. The width of the filename part can be
-	limited by giving another width `<name-width>` after a comma.
-	The width of the graph part can be limited by using
-	`--stat-graph-width=<width>`.
+	will be used for the filename part, and the rest for the graph
+	part. Maximum width defaults to terminal width, or 80 columns
+	if not connected to a terminal, and can be overriden by
+	`<width>`. The width of the filename part can be limited by
+	giving another width `<name-width>` after a comma. The width
+	of the graph part can be limited by using
+	`--stat-graph-width=<width>` (affects all commands generating
+	a stat graph) or by setting `diff.statGraphWidth=<width>`
+	(does not affect `git format-patch`).
 	By giving a third parameter `<count>`, you can limit the
 	output to the first `<count>` lines, followed by `...` if
 	there are more.

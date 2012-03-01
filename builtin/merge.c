@@ -400,6 +400,7 @@ static void finish(struct commit *head_commit,
 		struct diff_options opts;
 		diff_setup(&opts);
 		opts.stat_width = -1; /* use full terminal width */
+		opts.stat_graph_width = -1; /* respect statGraphWidth config */
 		opts.output_format |=
 			DIFF_FORMAT_SUMMARY | DIFF_FORMAT_DIFFSTAT;
 		opts.detect_rename = DIFF_DETECT_RENAME;

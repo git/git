@@ -31,6 +31,7 @@ static const char *external_diff_cmd_cfg;
 int diff_auto_refresh_index = 1;
 static int diff_mnemonic_prefix;
 static int diff_no_prefix;
+static int diff_stat_graph_width;
 static int diff_dirstat_permille_default = 30;
 static struct diff_options default_diff_options;
 
@@ -154,6 +155,10 @@ int git_diff_ui_config(const char *var, const char *value, void *cb)
 	}
 	if (!strcmp(var, "diff.noprefix")) {
 		diff_no_prefix = git_config_bool(var, value);
+		return 0;
+	}
+	if (!strcmp(var, "diff.statgraphwidth")) {
+		diff_stat_graph_width = git_config_int(var, value);
 		return 0;
 	}
 	if (!strcmp(var, "diff.external"))
@@ -1397,6 +1402,9 @@ static void show_stats(struct diffstat_t *data, struct diff_options *options)
 		width = term_columns();
 	else
 		width = options->stat_width ? options->stat_width : 80;
+
+	if (options->stat_graph_width == -1)
+		options->stat_graph_width = diff_stat_graph_width;
 
 	/*
 	 * Guarantee 3/8*16==6 for the graph part
