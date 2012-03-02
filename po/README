@@ -6,21 +6,22 @@ describes how you can contribute to the effort of enhancing the language
 coverage and maintaining the translation.
 
 The localization (l10n) coordinator, Jiang Xin <worldhello.net@gmail.com>,
-coordinates our localization effort in his repository:
+coordinates our localization effort in the l10 coordinator repository:
 
-        https://github.com/gotgit/git-po/
+        https://github.com/git-l10n/git-po/
 
-As a contributor for a language XX, you would fork this repository,
-prepare and/or update the translated message file po/XX.po (described
-later), and ask the l10n coordinator to pull your work.
+As a contributor for a language XX, you should first check TEAMS file in
+this directory to see whether a dedicated repository for your language XX
+exists. Fork the dedicated repository and start to work if it exists.
+
+If you are the first contributor for the language XX, please fork this
+repository, prepare and/or update the translated message file po/XX.po
+(described later), and ask the l10n coordinator to pull your work.
 
 If there are multiple contributors for the same language, please first
 coordinate among yourselves and nominate the team leader for your
 language, so that the l10n coordinator only needs to interact with one
 person per language.
-
-For the list of exiting translations and language teams, see TEAMS file in
-this directory.
 
 The overall data-flow looks like this:
 
