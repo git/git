@@ -6,6 +6,11 @@ Updates since v1.7.9
 
 UI, Workflows & Features
 
+ * Teams for localizing the messages from the Porcelain layer of
+   commands are starting to form, thanks to Jiang Xin who volunteered
+   to be the localization coordinator.  An initial set of translated
+   messages for simplified chinese is available.
+
  * Improved handling of views, labels and branches in git-p4 (in contrib).
 
  * "git-p4" (in contrib) suffered from unnecessary merge conflicts when
@@ -98,6 +103,18 @@ Unless otherwise noted, all the fixes since v1.7.9 in the maintenance
 releases are contained in this release (see release notes to them for
 details).
 
+ * "git branch --with $that" assumed incorrectly that the user will never
+   ask the question with nonsense value in $that.
+   (merge 6c41e97 cn/maint-branch-with-bad later to maint).
+
+ * An invalid regular expression pattern given by an end user made
+   "gitweb" to return garbled response.
+   (merge 36612e4 jn/maint-gitweb-invalid-regexp later to maint).
+
+ * "git rev-list --verify-objects -q" omitted the extra verification
+   it needs to do over "git rev-list --objects -q" by mistake.
+   (merge 9899372 nd/maint-verify-objects later to maint).
+
  * The bulk check-in codepath streamed contents that needs
    smudge/clean filters without running them, instead of punting and
    delegating to the codepath to run filters after slurping everything
@@ -126,7 +143,7 @@ details).
 
 ---
 exec >/var/tmp/1
-O=v1.7.9.2-322-g472fdee
+O=v1.7.9.2-347-gbfabdfe
 echo O=$(git describe)
 git log --first-parent --oneline ^maint $O..
 echo

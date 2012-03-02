@@ -39,7 +39,8 @@ The parse-options API allows:
 * Short options may be bundled, e.g. `-a -b` can be specified as `-ab`.
 
 * Boolean long options can be 'negated' (or 'unset') by prepending
-  `no-`, e.g. `\--no-abbrev` instead of `\--abbrev`.
+  `no-`, e.g. `\--no-abbrev` instead of `\--abbrev`. Conversely,
+  options that begin with `no-` can be 'negated' by removing it.
 
 * Options and non-option arguments can clearly be separated using the `\--`
   option, e.g. `-a -b \--option \-- \--this-is-a-file` indicates that

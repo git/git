@@ -684,9 +684,8 @@ int cmd_grep(int argc, const char **argv, const char *prefix)
 	struct option options[] = {
 		OPT_BOOLEAN(0, "cached", &cached,
 			"search in index instead of in the work tree"),
-		{ OPTION_BOOLEAN, 0, "index", &use_index, NULL,
-			"finds in contents not managed by git",
-			PARSE_OPT_NOARG | PARSE_OPT_NEGHELP },
+		OPT_NEGBIT(0, "no-index", &use_index,
+			 "finds in contents not managed by git", 1),
 		OPT_BOOLEAN(0, "untracked", &untracked,
 			"search in both tracked and untracked files"),
 		OPT_SET_INT(0, "exclude-standard", &opt_exclude,
