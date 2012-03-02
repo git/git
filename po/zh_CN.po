@@ -99,7 +99,7 @@ msgstr "0 个文件被修改\n"
 #, c-format
 msgid " %d file changed"
 msgid_plural " %d files changed"
-msgstr[0] "%d 个文件被修改"
+msgstr[0] " %d 个文件被修改"
 
 #: diff.c:1352
 #, c-format
@@ -187,7 +187,7 @@ msgstr[0] ""
 #: builtin/merge.c:1093 builtin/merge.c:1103
 #, c-format
 msgid "Could not open '%s' for writing"
-msgstr "无法为写入打开 '%s'"
+msgstr "无法打开 '%s' 以写入"
 
 #: sequencer.c:122 builtin/merge.c:334 builtin/merge.c:865
 #: builtin/merge.c:1095 builtin/merge.c:1108
@@ -636,7 +636,7 @@ msgstr " （干净的工作区）"
 
 #: wt-status.c:884
 msgid "HEAD (no branch)"
-msgstr "头（非分支）"
+msgstr "HEAD（非分支）"
 
 #  注意保持句尾空格
 #: wt-status.c:890
@@ -856,7 +856,7 @@ msgstr ""
 #: builtin/branch.c:214
 #, c-format
 msgid "Error deleting %sbranch '%s'"
-msgstr "错误删除 %s分支 '%s'"
+msgstr "删除 %s分支 '%s' 时错误"
 
 #: builtin/branch.c:219
 #, c-format
