@@ -138,8 +138,12 @@ static void diffcore_pickaxe_grep(struct diff_options *o)
 {
 	int err;
 	regex_t regex;
+	int cflags = REG_EXTENDED | REG_NEWLINE;
 
-	err = regcomp(&regex, o->pickaxe, REG_EXTENDED | REG_NEWLINE);
+	if (DIFF_OPT_TST(o, PICKAXE_IGNORE_CASE))
+		cflags |= REG_ICASE;
+
+	err = regcomp(&regex, o->pickaxe, cflags);
 	if (err) {
 		char errbuf[1024];
 		regerror(err, &regex, errbuf, 1024);
@@ -237,7 +241,8 @@ static void diffcore_pickaxe_count(struct diff_options *o)
 		}
 		regexp = &regex;
 	} else {
-		kws = kwsalloc(NULL);
+		kws = kwsalloc(DIFF_OPT_TST(o, PICKAXE_IGNORE_CASE)
+			       ? tolower_trans_tbl : NULL);
 		kwsincr(kws, needle, len);
 		kwsprep(kws);
 	}

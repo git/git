@@ -168,15 +168,10 @@ static void compile_regexp(struct grep_pat *p, struct grep_opt *opt)
 		p->fixed = 0;
 
 	if (p->fixed) {
-		if (opt->regflags & REG_ICASE || p->ignore_case) {
-			static char trans[256];
-			int i;
-			for (i = 0; i < 256; i++)
-				trans[i] = tolower(i);
-			p->kws = kwsalloc(trans);
-		} else {
+		if (opt->regflags & REG_ICASE || p->ignore_case)
+			p->kws = kwsalloc(tolower_trans_tbl);
+		else
 			p->kws = kwsalloc(NULL);
-		}
 		kwsincr(p->kws, p->pattern, p->patternlen);
 		kwsprep(p->kws);
 		return;
