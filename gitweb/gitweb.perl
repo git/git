@@ -2905,10 +2905,10 @@ sub filter_forks_from_projects_list {
 sub search_projects_list {
 	my ($projlist, %opts) = @_;
 	my $tagfilter  = $opts{'tagfilter'};
-	my $searchtext = $opts{'searchtext'};
+	my $search_re = $opts{'search_regexp'};
 
 	return @$projlist
-		unless ($tagfilter || $searchtext);
+		unless ($tagfilter || $search_re);
 
 	my @projects;
  PROJECT:
@@ -2920,10 +2920,10 @@ sub search_projects_list {
 				grep { lc($_) eq lc($tagfilter) } keys %{$pr->{'ctags'}};
 		}
 
-		if ($searchtext) {
+		if ($search_re) {
 			next unless
-				$pr->{'path'} =~ /$searchtext/ ||
-				$pr->{'descr_long'} =~ /$searchtext/;
+				$pr->{'path'} =~ /$search_re/ ||
+				$pr->{'descr_long'} =~ /$search_re/;
 		}
 
 		push @projects, $pr;
@@ -5089,7 +5089,7 @@ sub git_project_list_body {
 	my $show_ctags  = gitweb_check_feature('ctags');
 	my $tagfilter = $show_ctags ? $cgi->param('by_tag') : undef;
 	$check_forks = undef
-		if ($tagfilter || $searchtext);
+		if ($tagfilter || $search_regexp);
 
 	# filtering out forks before filling info allows to do less work
 	@projects = filter_forks_from_projects_list(\@projects)
@@ -5097,9 +5097,9 @@ sub git_project_list_body {
 	@projects = fill_project_list_info(\@projects);
 	# searching projects require filling to be run before it
 	@projects = search_projects_list(\@projects,
-	                                 'searchtext' => $searchtext,
+	                                 'search_regexp' => $search_regexp,
 	                                 'tagfilter'  => $tagfilter)
-		if ($tagfilter || $searchtext);
+		if ($tagfilter || $search_regexp);
 
 	$order ||= $default_projects_order;
 	$from = 0 unless defined $from;
