@@ -19,6 +19,12 @@ else
 	test_done
 fi
 
+if ! type hg >/dev/null 2>&1
+then
+	skip_all='skipping git remote-hg tests: requires hg'
+	test_done
+fi
+
 # Call cmp with the arguments -x ".hg" -x ".git" <left> <right>
 
 vcs_cmp () {
