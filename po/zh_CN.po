@@ -2546,7 +2546,7 @@ msgstr "无。\n"
 
 #: builtin/merge.c:1462
 msgid "Not possible to fast-forward, aborting."
-msgstr "不可能快进式，终止。"
+msgstr "无法快进，终止。"
 
 #: builtin/merge.c:1485 builtin/merge.c:1562
 #, c-format
