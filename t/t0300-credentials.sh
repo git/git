@@ -8,10 +8,13 @@ test_expect_success 'setup helper scripts' '
 	cat >dump <<-\EOF &&
 	whoami=`echo $0 | sed s/.*git-credential-//`
 	echo >&2 "$whoami: $*"
-	while IFS== read key value; do
+	OIFS=$IFS
+	IFS==
+	while read key value; do
 		echo >&2 "$whoami: $key=$value"
 		eval "$key=$value"
 	done
+	IFS=$OIFS
 	EOF
 
 	cat >git-credential-useless <<-\EOF &&
