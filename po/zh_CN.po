@@ -2527,7 +2527,7 @@ msgstr "到空分支的非快进式提交没有意义"
 #: builtin/merge.c:1275 builtin/merge.c:1319
 #, c-format
 msgid "%s - not something we can merge"
-msgstr "%s - 不是我们可以合并的东西"
+msgstr "%s - 不能被合并"
 
 #: builtin/merge.c:1385
 #, c-format
