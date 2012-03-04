@@ -169,6 +169,24 @@ module_clone()
 	fi
 
 	echo "gitdir: $rel_gitdir" >"$path/.git"
+
+	a=$(cd "$gitdir" && pwd)/
+	b=$(cd "$path" && pwd)/
+	# Remove all common leading directories after a sanity check
+	if test "${a#$b}" != "$a" || test "${b#$a}" != "$b"; then
+		die "$(eval_gettext "Gitdir '\$a' is part of the submodule path '\$b' or vice versa")"
+	fi
+	while test "${a%%/*}" = "${b%%/*}"
+	do
+		a=${a#*/}
+		b=${b#*/}
+	done
+	# Now chop off the trailing '/'s that were added in the beginning
+	a=${a%/}
+	b=${b%/}
+
+	rel=$(echo $a | sed -e 's|[^/]*|..|g')
+	(clear_local_git_env; cd "$path" && GIT_WORK_TREE=. git config core.worktree "$rel/$b")
 }
 
 #

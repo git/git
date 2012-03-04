@@ -81,6 +81,13 @@ test_expect_success 'submodule add' '
 		test ! -s actual &&
 		echo "gitdir: ../.git/modules/submod" >expect &&
 		test_cmp expect submod/.git &&
+		(
+			cd submod &&
+			git config core.worktree >actual &&
+			echo "../../../submod" >expect &&
+			test_cmp expect actual &&
+			rm -f actual expect
+		) &&
 		git submodule init
 	) &&
 
@@ -497,6 +504,19 @@ test_expect_success 'relative path works with user@host:path' '
 		git config remote.origin.url user@host:repo &&
 		git submodule init &&
 		test "$(git config submodule.sub.url)" = user@host:subrepo
+	)
+'
+
+test_expect_success 'moving the superproject does not break submodules' '
+	(
+		cd addtest &&
+		git submodule status >expect
+	)
+	mv addtest addtest2 &&
+	(
+		cd addtest2 &&
+		git submodule status >actual &&
+		test_cmp expect actual
 	)
 '
 
