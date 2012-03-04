@@ -132,30 +132,11 @@ module_clone()
 	gitdir_base=
 	name=$(module_name "$path" 2>/dev/null)
 	test -n "$name" || name="$path"
-	base_path=$(dirname "$path")
+	base_name=$(dirname "$name")
 
 	gitdir=$(git rev-parse --git-dir)
-	gitdir_base="$gitdir/modules/$base_path"
-	gitdir="$gitdir/modules/$path"
-
-	case $gitdir in
-	/*)
-		a="$(cd_to_toplevel && pwd)/"
-		b=$gitdir
-		while [ "$b" ] && [ "${a%%/*}" = "${b%%/*}" ]
-		do
-			a=${a#*/} b=${b#*/};
-		done
-
-		rel="$a$name"
-		rel=`echo $rel | sed -e 's|[^/]*|..|g'`
-		rel_gitdir="$rel/$b"
-		;;
-	*)
-		rel=`echo $name | sed -e 's|[^/]*|..|g'`
-		rel_gitdir="$rel/$gitdir"
-		;;
-	esac
+	gitdir_base="$gitdir/modules/$base_name"
+	gitdir="$gitdir/modules/$name"
 
 	if test -d "$gitdir"
 	then
@@ -167,8 +148,6 @@ module_clone()
 			--separate-git-dir "$gitdir" "$url" "$path" ||
 		die "$(eval_gettext "Clone of '\$url' into submodule path '\$path' failed")"
 	fi
-
-	echo "gitdir: $rel_gitdir" >"$path/.git"
 
 	a=$(cd "$gitdir" && pwd)/
 	b=$(cd "$path" && pwd)/
@@ -184,6 +163,9 @@ module_clone()
 	# Now chop off the trailing '/'s that were added in the beginning
 	a=${a%/}
 	b=${b%/}
+
+	rel=$(echo $b | sed -e 's|[^/]*|..|g')
+	echo "gitdir: $rel/$a" >"$path/.git"
 
 	rel=$(echo $a | sed -e 's|[^/]*|..|g')
 	(clear_local_git_env; cd "$path" && GIT_WORK_TREE=. git config core.worktree "$rel/$b")
