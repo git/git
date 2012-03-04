@@ -79,6 +79,8 @@ test_expect_success 'submodule add' '
 		cd addtest &&
 		git submodule add -q "$submodurl" submod >actual &&
 		test ! -s actual &&
+		echo "gitdir: ../.git/modules/submod" >expect &&
+		test_cmp expect submod/.git &&
 		git submodule init
 	) &&
 

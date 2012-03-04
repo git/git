@@ -160,18 +160,15 @@ module_clone()
 	if test -d "$gitdir"
 	then
 		mkdir -p "$path"
-		echo "gitdir: $rel_gitdir" >"$path/.git"
 		rm -f "$gitdir/index"
 	else
 		mkdir -p "$gitdir_base"
-		if test -n "$reference"
-		then
-			git-clone $quiet "$reference" -n "$url" "$path" --separate-git-dir "$gitdir"
-		else
-			git-clone $quiet -n "$url" "$path" --separate-git-dir "$gitdir"
-		fi ||
+		git clone $quiet -n ${reference:+"$reference"} \
+			--separate-git-dir "$gitdir" "$url" "$path" ||
 		die "$(eval_gettext "Clone of '\$url' into submodule path '\$path' failed")"
 	fi
+
+	echo "gitdir: $rel_gitdir" >"$path/.git"
 }
 
 #
