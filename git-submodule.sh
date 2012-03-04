@@ -151,6 +151,9 @@ module_clone()
 
 	a=$(cd "$gitdir" && pwd)/
 	b=$(cd "$path" && pwd)/
+	# normalize Windows-style absolute paths to POSIX-style absolute paths
+	case $a in [a-zA-Z]:/*) a=/${a%%:*}${a#*:} ;; esac
+	case $b in [a-zA-Z]:/*) b=/${b%%:*}${b#*:} ;; esac
 	# Remove all common leading directories after a sanity check
 	if test "${a#$b}" != "$a" || test "${b#$a}" != "$b"; then
 		die "$(eval_gettext "Gitdir '\$a' is part of the submodule path '\$b' or vice versa")"
