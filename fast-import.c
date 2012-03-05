@@ -2712,7 +2712,7 @@ static void parse_new_tag(void)
 	/* Obtain the new tag name from the rest of our command */
 	sp = strchr(command_buf.buf, ' ') + 1;
 	t = pool_alloc(sizeof(struct tag));
-	t->next_tag = NULL;
+	memset(t, 0, sizeof(struct tag));
 	t->name = pool_strdup(sp);
 	if (last_tag)
 		last_tag->next_tag = t;
