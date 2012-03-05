@@ -11,6 +11,7 @@ create_merge_msgs() {
 
 	cp exp.subject exp.log &&
 	echo >>exp.log "" &&
+	echo >>exp.log "By A U Thor" &&
 	echo >>exp.log "* tag 'c2':" &&
 	echo >>exp.log "  c2"
 }

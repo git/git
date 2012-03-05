@@ -58,6 +58,7 @@ create_merge_msgs () {
 	} >squash.1-5-9 &&
 	echo >msg.nolog &&
 	{
+		echo "By A U Thor" &&
 		echo "* tag 'c3':" &&
 		echo "  commit 3" &&
 		echo
