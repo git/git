@@ -42,10 +42,11 @@ TZ=UTC
 TERM=dumb
 export LANG LC_ALL PAGER TERM TZ
 EDITOR=:
-unset VISUAL
-unset EMAIL
-unset LANGUAGE
-unset $(perl -e '
+# A call to "unset" with no arguments causes at least Solaris 10
+# /usr/xpg4/bin/sh and /bin/ksh to bail out.  So keep the unsets
+# deriving from the command substitution clustered with the other
+# ones.
+unset VISUAL EMAIL LANGUAGE $(perl -e '
 	my @env = keys %ENV;
 	my $ok = join("|", qw(
 		TRACE
