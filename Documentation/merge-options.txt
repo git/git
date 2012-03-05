@@ -13,13 +13,18 @@ inspect and further tweak the merge result before committing.
 	edit the default merge message.
 
 --ff::
+	When the merge resolves as a fast-forward, only update the branch
+	pointer, without creating a merge commit.  This is the default
+	behavior.
+
 --no-ff::
-	Do not generate a merge commit if the merge resolved as
-	a fast-forward, only update the branch pointer. This is
-	the default behavior of git-merge.
-+
-With --no-ff Generate a merge commit even if the merge
-resolved as a fast-forward.
+	Create a merge commit even when the merge resolves as a
+	fast-forward.
+
+--ff-only::
+	Refuse to merge and exit with a non-zero status unless the
+	current `HEAD` is already up-to-date or the merge can be
+	resolved as a fast-forward.
 
 --log[=<n>]::
 --no-log::
@@ -53,11 +58,6 @@ merge.
 +
 With --no-squash perform the merge and commit the result. This
 option can be used to override --squash.
-
---ff-only::
-	Refuse to merge and exit with a non-zero status unless the
-	current `HEAD` is already up-to-date or the merge can be
-	resolved as a fast-forward.
 
 -s <strategy>::
 --strategy=<strategy>::
