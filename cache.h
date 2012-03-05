@@ -1274,7 +1274,4 @@ extern struct startup_info *startup_info;
 /* builtin/merge.c */
 int checkout_fast_forward(const unsigned char *from, const unsigned char *to);
 
-/* in ctype.c, for kwset users */
-extern const char tolower_trans_tbl[256];
-
 #endif /* CACHE_H */
