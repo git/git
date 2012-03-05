@@ -393,6 +393,8 @@ int parse_options_step(struct parse_opt_ctx_t *ctx,
 			case -1:
 				return parse_options_usage(ctx, usagestr, options, 1);
 			case -2:
+				if (ctx->opt)
+					check_typos(arg + 1, options);
 				goto unknown;
 			}
 			if (ctx->opt)

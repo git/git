@@ -5256,7 +5256,7 @@ sub git_patchset_body {
 # . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
 
 sub git_project_search_form {
-	my ($searchtext, $search_use_regexp);
+	my ($searchtext, $search_use_regexp) = @_;
 
 	my $limit = '';
 	if ($project_filter) {

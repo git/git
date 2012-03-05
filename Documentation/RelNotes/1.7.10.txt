@@ -52,6 +52,9 @@ UI, Workflows & Features
 
  * "git push" learned the "--prune" option, similar to "git fetch".
 
+ * "git symbolic-ref" learned the "--short" option to abbreviate the
+   refname it shows unambiguously.
+
  * "git tag --list" can be given "--points-at <object>" to limit its
    output to those that point at the given object.
 
@@ -63,6 +66,9 @@ UI, Workflows & Features
    repositories lazily, instead of reading everything that could be
    needed (including the ones that are not necessary for a specific
    task).
+
+ * Project search in "gitweb" shows the substring that matched in the
+   project name and description highlighted.
 
 Foreign Interface
 
@@ -112,39 +118,10 @@ Unless otherwise noted, all the fixes since v1.7.9 in the maintenance
 releases are contained in this release (see release notes to them for
 details).
 
- * "git branch --with $that" assumed incorrectly that the user will never
-   ask the question with nonsense value in $that.
-   (merge 6c41e97 cn/maint-branch-with-bad later to maint).
-
- * An invalid regular expression pattern given by an end user made
-   "gitweb" to return garbled response.
-   (merge 36612e4 jn/maint-gitweb-invalid-regexp later to maint).
-
- * "git rev-list --verify-objects -q" omitted the extra verification
-   it needs to do over "git rev-list --objects -q" by mistake.
-   (merge 9899372 nd/maint-verify-objects later to maint).
-
- * The bulk check-in codepath streamed contents that needs
-   smudge/clean filters without running them, instead of punting and
-   delegating to the codepath to run filters after slurping everything
-   to core.
-   (merge 4f22b10 jk/maint-avoid-streaming-filtered-contents later to maint).
-
- * When the filter driver exits before reading the content before the
-   main git process writes the contents to be filtered to the pipe to
-   it, the latter could be killed with SIGPIPE instead of ignoring
-   such an event as an error.
-   (merge 6424c2a jb/filter-ignore-sigpipe later to maint).
-
- * When a remote helper exits before reading the blank line from the
-   main git process to signal the end of commands, the latter could be
-   killed with SIGPIPE. Instead we should ignore such event as a
-   non-error.
-   (merge c34fe63 sp/smart-http-failure-to-push later to maint).
-
- * "git bundle create" produced a corrupt bundle file upon seeing
-   commits with excessively long subject line.
-   (merge 8a557bb tr/maint-bundle-long-subject later to maint).
+ * The code to synthesize the fake ancestor tree used by 3-way merge
+   fallback in "git am" was not prepared to read a patch created with
+   a non-standard -p<num> value.
+   (merge a61ba26 jc/am-3-nonstandard-popt later to maint).
 
  * "gitweb" used to drop warnings in the log file when "heads" view is
    accessed in a repository whose HEAD does not point at a valid
@@ -152,7 +129,7 @@ details).
 
 ---
 exec >/var/tmp/1
-O=v1.7.9.2-358-g64d1544
+O=v1.7.9.2-383-gb8b5290
 echo O=$(git describe)
 git log --first-parent --oneline ^maint $O..
 echo
