@@ -497,15 +497,15 @@ msgstr "双方修改："
 
 #: wt-status.c:248
 msgid "new commits, "
-msgstr "新提交，"
+msgstr "新提交, "
 
 #: wt-status.c:250
 msgid "modified content, "
-msgstr "修改的内容，"
+msgstr "修改的内容, "
 
 #: wt-status.c:252
 msgid "untracked content, "
-msgstr "未跟踪的内容，"
+msgstr "未跟踪的内容, "
 
 #  为保证在输出中对齐，注意调整句中空格！
 #: wt-status.c:266
