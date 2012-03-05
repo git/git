@@ -9,6 +9,7 @@
 #include "remote.h"
 #include "string-list.h"
 #include "thread-utils.h"
+#include "sigchain.h"
 
 static int debug;
 
@@ -220,15 +221,21 @@ static struct child_process *get_helper(struct transport *transport)
 static int disconnect_helper(struct transport *transport)
 {
 	struct helper_data *data = transport->data;
-	struct strbuf buf = STRBUF_INIT;
 	int res = 0;
 
 	if (data->helper) {
 		if (debug)
 			fprintf(stderr, "Debug: Disconnecting.\n");
 		if (!data->no_disconnect_req) {
-			strbuf_addf(&buf, "\n");
-			sendline(data, &buf);
+			/*
+			 * Ignore write errors; there's nothing we can do,
+			 * since we're about to close the pipe anyway. And the
+			 * most likely error is EPIPE due to the helper dying
+			 * to report an error itself.
+			 */
+			sigchain_push(SIGPIPE, SIG_IGN);
+			xwrite(data->helper->in, "\n", 1);
+			sigchain_pop(SIGPIPE);
 		}
 		close(data->helper->in);
 		close(data->helper->out);
