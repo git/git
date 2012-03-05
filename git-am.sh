@@ -128,15 +128,18 @@ fall_back_3way () {
     mkdir "$dotest/patch-merge-tmp-dir"
 
     # First see if the patch records the index info that we can use.
-    git apply --build-fake-ancestor "$dotest/patch-merge-tmp-index" \
-	"$dotest/patch" &&
+    cmd="git apply $git_apply_opt --build-fake-ancestor" &&
+    cmd="$cmd "'"$dotest/patch-merge-tmp-index" "$dotest/patch"' &&
+    eval "$cmd" &&
     GIT_INDEX_FILE="$dotest/patch-merge-tmp-index" \
     git write-tree >"$dotest/patch-merge-base+" ||
     cannot_fallback "$(gettext "Repository lacks necessary blobs to fall back on 3-way merge.")"
 
     say Using index info to reconstruct a base tree...
-    if GIT_INDEX_FILE="$dotest/patch-merge-tmp-index" \
-	git apply --cached <"$dotest/patch"
+
+    cmd='GIT_INDEX_FILE="$dotest/patch-merge-tmp-index"'
+    cmd="$cmd git apply --cached $git_apply_opt"' <"$dotest/patch"'
+    if eval "$cmd"
     then
 	mv "$dotest/patch-merge-base+" "$dotest/patch-merge-base"
 	mv "$dotest/patch-merge-tmp-index" "$dotest/patch-merge-index"
