@@ -160,14 +160,12 @@ rm -f B
 
 test_expect_success 'fail when upstream arg is missing and not on branch' '
 	git checkout topic &&
-	test_must_fail git rebase >output.out &&
-	grep "You are not currently on a branch" output.out
+	test_must_fail git rebase
 '
 
 test_expect_success 'fail when upstream arg is missing and not configured' '
 	git checkout -b no-config topic &&
-	test_must_fail git rebase >output.out &&
-	grep "branch.no-config.merge" output.out
+	test_must_fail git rebase
 '
 
 test_expect_success 'default to @{upstream} when upstream arg is missing' '

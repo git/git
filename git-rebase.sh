@@ -380,7 +380,7 @@ then
 		then
 			. git-parse-remote
 			error_on_missing_default_upstream "rebase" "rebase" \
-				"against" "git rebase <upstream branch>"
+				"against" "git rebase <branch>"
 		fi
 		;;
 	*)	upstream_name="$1"
