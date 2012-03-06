@@ -2375,7 +2375,7 @@ msgid "Generation failed."
 msgstr "A geração da chave falhou."
 
 #: lib/sshkey.tcl:118
-msgid "Generation succeded, but no keys found."
+msgid "Generation succeeded, but no keys found."
 msgstr "A geração da chave foi bem-sucedida, mas nenhuma chave foi encontrada."
 
 #: lib/sshkey.tcl:121
