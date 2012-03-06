@@ -33,7 +33,7 @@ The list archive is available at a few public sites:
         http://marc.theaimsgroup.com/?l=git
         http://www.spinics.net/lists/git/
 
-Some people seem to prefer to read it over NNTP:
+For those who prefer to read it over NNTP (including the maintainer):
 
         nntp://news.gmane.org/gmane.comp.version-control.git
 
@@ -100,6 +100,10 @@ found in:
         https://code.google.com/p/git-{htmldocs,manpages}.git/
         https://github.com/gitster/git-{htmldocs,manpages}.git/
 
+You can browse the HTML manual pages at:
+
+	http://git-htmldocs.googlecode.com/git/git.html
+
 There are four branches in git.git repository that track the source tree
 of git: "master", "maint", "next", and "pu".
 
@@ -115,7 +119,7 @@ Whenever a feature release is made, "maint" branch is forked off from
 release are applied to this branch and maintenance releases are cut from
 it.  The maintenance releases are named with four dotted decimal, named
 after the feature release they are updates to; the last such release was
-1.7.8.4.  New features never go to this branch.  This branch is also
+1.7.9.3.  New features never go to this branch.  This branch is also
 merged into "master" to propagate the fixes forward.
 
 A new development does not usually happen on "master". When you send a
@@ -169,6 +173,10 @@ own authoritative repository and maintainers:
 
         git://git.kernel.org/pub/scm/gitk/gitk.git
 
+ - po/ comes from the localization coordinator, Jiang Xin:
+
+	https://github.com/git-l10n/git-po/
+
 I would like to thank everybody who helped to raise git into the current
 shape.  Especially I would like to thank the git list regulars whose help
 I have relied on and expect to continue relying on heavily:
@@ -176,27 +184,31 @@ I have relied on and expect to continue relying on heavily:
  - Linus Torvalds, Shawn Pearce, Johannes Schindelin, Nicolas Pitre,
    René Scharfe, Jeff King, Jonathan Nieder, Johan Herland, Johannes
    Sixt, Sverre Rabbelier, Michael J Gruber, Nguyễn Thái Ngọc Duy,
-   Ævar Arnfjörð Bjarmason and Thomas Rast on general design and
-   implementation issues and reviews on the mailing list.
+   Ævar Arnfjörð Bjarmason and Thomas Rast for helping with general
+   design and implementation issues and reviews on the mailing list.
 
- - Shawn and Nicolas Pitre on pack issues.
+ - Shawn and Nicolas Pitre for helping with packfile design and
+   implementation issues.
 
- - Martin Langhoff, Frank Lichtenheld and Ævar Arnfjörð Bjarmason on
+ - Martin Langhoff, Frank Lichtenheld and Ævar Arnfjörð Bjarmason for
    cvsserver and cvsimport.
 
- - Paul Mackerras on gitk.
+ - Paul Mackerras for gitk.
 
- - Eric Wong, David D. Kilzer and Sam Vilain on git-svn.
+ - Eric Wong, David D. Kilzer and Sam Vilain for git-svn.
 
- - Simon Hausmann and Pete Wyckoff on git-p4.
+ - Simon Hausmann, Pete Wyckoff and Luke Diamond for git-p4.
 
- - Jakub Narebski, John Hawley, Petr Baudis, Luben Tuikov, Giuseppe Bilotta on
-   gitweb.
+ - Jakub Narebski, John Hawley, Petr Baudis, Luben Tuikov, Giuseppe
+   Bilotta for maintaining and enhancing gitweb.
 
- - J. Bruce Fields, Jonathan Nieder, Michael J Gruber and Thomas Rast on
+ - Ævar Arnfjörð Bjarmason for kicking off the i18n effort, and Jiang
+   Xin for volunteering to be the l10n coordinator.
+
+ - J. Bruce Fields, Jonathan Nieder, Michael J Gruber and Thomas Rast for
    documentation (and countless others for proofreading and fixing).
 
- - Alexandre Julliard on Emacs integration.
+ - Alexandre Julliard for Emacs integration.
 
  - David Aguilar and Charles Bailey for taking good care of git-mergetool
    (and Theodore Ts'o for creating it in the first place) and git-difftool.
