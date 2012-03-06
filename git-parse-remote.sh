@@ -57,34 +57,31 @@ error_on_missing_default_upstream () {
 	op_prep="$3"
 	example="$4"
 	branch_name=$(git symbolic-ref -q HEAD)
+	# If there's only one remote, use that in the suggestion
+	remote="<remote>"
+	if test $(git remote | wc -l) = 1
+	then
+		remote=$(git remote)
+	fi
+
 	if test -z "$branch_name"
 	then
-		echo "You are not currently on a branch, so I cannot use any
-'branch.<branchname>.merge' in your configuration file.
-Please specify which branch you want to $op_type $op_prep on the command
-line and try again (e.g. '$example').
-See git-${cmd}(1) for details."
+		echo "You are not currently on a branch. Please specify which
+branch you want to $op_type $op_prep. See git-${cmd}(1) for details.
+
+    $example
+"
 	else
-		echo "You asked me to $cmd without telling me which branch you
-want to $op_type $op_prep, and 'branch.${branch_name#refs/heads/}.merge' in
-your configuration file does not tell me, either. Please
-specify which branch you want to use on the command line and
-try again (e.g. '$example').
-See git-${cmd}(1) for details.
+		echo "There is no tracking information for the current branch.
+Please specify which branch you want to $op_type $op_prep.
+See git-${cmd}(1) for details
 
-If you often $op_type $op_prep the same branch, you may want to
-use something like the following in your configuration file:
-    [branch \"${branch_name#refs/heads/}\"]
-    remote = <nickname>
-    merge = <remote-ref>"
-		test rebase = "$op_type" &&
-		echo "    rebase = true"
-		echo "
-    [remote \"<nickname>\"]
-    url = <url>
-    fetch = <refspec>
+    $example
 
-See git-config(1) for details."
+If you wish to set tracking information for this branch you can do so with:
+
+    git branch --set-upstream ${branch_name#refs/heads/} $remote/<branch>
+"
 	fi
 	exit 1
 }
