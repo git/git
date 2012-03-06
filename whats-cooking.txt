@@ -1,9 +1,9 @@
 To: git@vger.kernel.org
-Subject: What's cooking in git.git (Mar 2012, #02; Sun, 4)
-X-master-at: 4a92a1721483d6a109cf0993843b20159f8d3387
-X-next-at: 2cd1508a8dbb08e076d7fa1a12757da6a0d65d53
+Subject: What's cooking in git.git (Mar 2012, #03; Mon, 5)
+X-master-at: 2980b0de1b387e4f9a63c50ca741271990c849d5
+X-next-at: 38de349d595af3563cafab5297cbad2f3e920499
 
-What's cooking in git.git (Mar 2012, #02; Sun, 4)
+What's cooking in git.git (Mar 2012, #03; Mon, 5)
 --------------------------------------------------
 
 Here are the topics that have been cooking.  Commits prefixed with '-' are
@@ -27,112 +27,38 @@ repositories listed at
 --------------------------------------------------
 [New Topics]
 
-* cn/pull-rebase-message (2012-03-04) 1 commit
-  (merged to 'next' on 2012-03-04 at 5a6cd58)
- + Make git-{pull,rebase} message without tracking information friendlier
+* jc/fmt-merge-msg-people (2012-03-05) 1 commit
+  (merged to 'next' on 2012-03-05 at 38de349)
+ + fmt-merge-msg: show those involved in a merged series
 
-The advise message given when the user didn't give enough clue on what
-to merge was overly long.
+The "fmt-merge-msg" command learns to list the primary contributors
+involved in the side topic you are merging.
 
-* dg/test-from-elsewhere (2012-03-04) 2 commits
- - Support out-of-tree Valgrind tests
- - Allow overriding GIT_BUILD_DIR
+* nl/http-proxy-more (2012-03-05) 3 commits
+ - http: handle proxy authentication failure (error 407)
+ - http: handle proxy proactive authentication
+ - http: try http_proxy env var when http.proxy config option is not set
+ (this branch uses nl/http-proxy-auth.)
 
-Better support for out-of-tree test scripts.
+The code to talk to http proxies learn to use the same credential
+API used to talk to the final http destinations.
 
-* jh/threadable-symlink-check (2012-03-02) 1 commit
- - Add threaded versions of functions in symlinks.c.
+* nd/stream-more (2012-03-05) 6 commits
+ - fsck: use streaming API for writing lost-found blobs
+ - show: use streaming API for showing blobs
+ - parse_object: avoid putting whole blob in core
+ - cat-file: use streaming API to print blobs
+ - Add more large blob test cases
+ - streaming: make streaming-write-entry to be more reusable
 
-This does not look wrong, but is not urgent either.
+As I do not think changes in the original larger series that touch
+index-pack and unpack-objects will be ready for the upcoming 1.7.10,
+I've picked up only bits that deal with "use streaming API instead
+of reading things in core" and minimally fixed them up.  These we
+should be able to polish in time.
 
-* jh/trace-use-startup-info (2012-03-02) 1 commit
- - Use startup_info->prefix rather than prefix.
-
-I tend to agree with the doubt of the author of this patch expressed.
-
-* jn/maint-do-not-match-with-unsanitized-searchtext (2012-03-04) 1 commit
- - gitweb: Fix fixed string (non-regexp) project search
-
-"gitweb" did use quotemeta() to prepare search string when asked to
-do a fixed-string project search, but did not use it by mistake and
-used the user-supplied string instead.
-
-I would love to see this in 1.7.10; what I queued for 'maint' (that
-does not have the lazy fill-info stuff), and my conflict resolution
-into 'pu' to adjust for lazy fill-info, are both correct, I think,
-but please double check.
-
-* nl/http-proxy-auth (2012-03-02) 1 commit
-  (merged to 'next' on 2012-03-04 at f368669)
- + http: support proxies that require authentication
-
-Allow curl-based transport to use proxies that require authentication.
-
-* sl/modern-t0000 (2012-03-02) 1 commit
-  (merged to 'next' on 2012-03-04 at 2cd1508)
- + t0000: modernise style
-
-* th/mergetools-deltawalker (2012-03-04) 1 commit
- - mergetools: add a plug-in to support DeltaWalker
-
-Add plug-in to support DeltaWalker in difftool/mergetool.  
-
-Waiting for a few details to be filled in.
-
---------------------------------------------------
-[Graduated to "master"]
-
-* cb/fsck-squelch-dangling (2012-02-28) 1 commit
-  (merged to 'next' on 2012-02-29 at 9057e12)
- + fsck: --no-dangling omits "dangling object" information
-
-"fsck" learns "--no-dangling".
-
-* jc/am-3-nonstandard-popt (2012-02-26) 2 commits
-  (merged to 'next' on 2012-02-26 at 62a6ddf)
- + test: "am -3" can accept non-standard -p<num>
-  (merged to 'next' on 2012-02-26 at 1363bd6)
- + am -3: allow nonstandard -p<num> option
-
-The code to synthesize the fake ancestor tree used by 3-way merge
-fallback in "git am" was not prepared to read a patch created with a
-non-standard -p<num> value.
-
-* jk/symbolic-ref-short (2012-02-27) 1 commit
-  (merged to 'next' on 2012-02-28 at d00f766)
- + symbolic-ref --short: abbreviate the output unambiguously
-
-"git symbolic-ref" learned the "--short" option to abbreviate the
-refname it shows unambiguously.
-
-* jn/gitweb-hilite-regions (2012-02-26) 4 commits
-  (merged to 'next' on 2012-02-28 at 3244f30)
- + gitweb: Highlight matched part of shortened project description
- + gitweb: Highlight matched part of project description when searching projects
- + gitweb: Highlight matched part of project name when searching projects
- + gitweb: Introduce esc_html_match_hl and esc_html_hl_regions
-
-Project search in "gitweb" shows the substring that matched in the
-project name and description highlighted. The highlighting logic is
-meant to be reused later for other kinds of searches e.g. grep and
-commit log search.
-
-* rs/no-no-no-parseopt (2012-02-28) 3 commits
-  (merged to 'next' on 2012-02-29 at 94e60d0)
- + parse-options: remove PARSE_OPT_NEGHELP
- + parse-options: allow positivation of options starting, with no-
- + test-parse-options: convert to OPT_BOOL()
-
-Options that use PARSE_OPT_NEGHELP needed to word their help text in
-a strange way, and this gets rid of the uses of them.
-
-* th/git-diffall (2012-02-27) 1 commit
-  (merged to 'next' on 2012-02-28 at 4ba7a15)
- + contrib: add git-diffall script
-
-A sample script that drives an external tool that compares two
-directories, by populating two temporary directories with contents
-of two revisions in Git.
+The "test cases" patch needs to be trimmed to cover only these, I
+would think.
 
 --------------------------------------------------
 [Stalled]
@@ -189,6 +115,11 @@ Peff had a good suggestion outlining an updated code structure so
 that somebody new can try to dip his or her toes in the
 development. Any takers?
 
+* jh/trace-use-startup-info (2012-03-02) 1 commit
+ - Use startup_info->prefix rather than prefix.
+
+I tend to agree with the doubt of the author of this patch expressed.
+
 * ss/git-svn-prompt-sans-terminal (2012-01-04) 3 commits
  - fixup! 15eaaf4
  - git-svn, perl/Git.pm: extend Git::prompt helper for querying users
@@ -233,6 +164,60 @@ not working :-(.
 --------------------------------------------------
 [Cooking]
 
+* cn/pull-rebase-message (2012-03-04) 1 commit
+  (merged to 'next' on 2012-03-04 at 5a6cd58)
+ + Make git-{pull,rebase} message without tracking information friendlier
+
+The advise message given when the user didn't give enough clue on what
+to merge was overly long.
+Will merge to 'master'.
+
+* dg/test-from-elsewhere (2012-03-04) 2 commits
+ - Support out-of-tree Valgrind tests
+ - Allow overriding GIT_BUILD_DIR
+
+Better support for out-of-tree test scripts.
+
+* jh/threadable-symlink-check (2012-03-02) 1 commit
+  (merged to 'next' on 2012-03-05 at fdd667c)
+ + Add threaded versions of functions in symlinks.c.
+
+It probably is "threadble" not "threaded" but in any case this
+should not regress the current callers.
+
+* jn/maint-do-not-match-with-unsanitized-searchtext (2012-03-04) 1 commit
+ - gitweb: Fix fixed string (non-regexp) project search
+
+"gitweb" did use quotemeta() to prepare search string when asked to
+do a fixed-string project search, but did not use it by mistake and
+used the user-supplied string instead.
+
+I would love to see this in 1.7.10; what I queued for 'maint' (that
+does not have the lazy fill-info stuff), and my conflict resolution
+into 'pu' to adjust for lazy fill-info, are both correct, I think,
+but please double check.
+
+* nl/http-proxy-auth (2012-03-02) 1 commit
+  (merged to 'next' on 2012-03-04 at f368669)
+ + http: support proxies that require authentication
+ (this branch is used by nl/http-proxy-more.)
+
+Allow curl-based transport to use proxies that require authentication.
+Will merge to 'master'.
+
+* sl/modern-t0000 (2012-03-02) 1 commit
+  (merged to 'next' on 2012-03-04 at 2cd1508)
+ + t0000: modernise style
+
+Will merge to 'master'.
+
+* th/mergetools-deltawalker (2012-03-05) 1 commit
+  (merged to 'next' on 2012-03-05 at 167c74f)
+ + mergetools: add a plug-in to support DeltaWalker
+
+Add plug-in to support DeltaWalker in difftool/mergetool.  
+Will merge to 'master'.
+
 * jl/maint-submodule-relative (2012-03-04) 4 commits
  - submodules: fix ambiguous absolute paths under Windows
  - submodules: refactor computation of relative gitdir path
@@ -274,6 +259,8 @@ Should be safe, but is not urgent.
 "git bundle" did not record boundary commits correctly when there
 are many of them.
 
+Will merge to 'master'.
+
 * jc/pickaxe-ignore-case (2012-03-04) 3 commits
   (merged to 'next' on 2012-03-04 at 1ad3a39)
  + ctype.c: Fix a sparse warning
@@ -282,6 +269,8 @@ are many of them.
  + grep: use static trans-case table
 
 "git log -G/-S" pays attention to the "-i" option.
+
+Will merge to 'master'.
 
 * zj/diff-stat-dyncol (2012-03-01) 10 commits
   (merged to 'next' on 2012-03-01 at 79b4152)
@@ -297,3 +286,4 @@ are many of them.
  + Merge branches zj/decimal-width, zj/term-columns and jc/diff-stat-scaler
 
 Rerolled again and looking good.
+Will merge to 'master'.
