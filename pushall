@@ -6,14 +6,14 @@ do
 	git push "$remote" "$@" || exit $?
 done
 
-case "$#" in
-0)
+case "$#,$*" in
+0,* | 1,-n)
 	printf "github mirror: "
 	git push github "$@" || exit $?
 	for topic in htmldocs manpages
 	do
 		printf "%s: " "$topic"
-		( cd ../git-$topic.git && git push ) || exit
+		( cd ../git-$topic.git && git push "$@") || exit
 	done
 	;;
 esac
