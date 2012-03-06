@@ -2092,6 +2092,7 @@ _git_config ()
 		core.whitespace
 		core.worktree
 		diff.autorefreshindex
+		diff.statGraphWidth
 		diff.external
 		diff.ignoreSubmodules
 		diff.mnemonicprefix
