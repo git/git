@@ -25,7 +25,7 @@ branches to be listed, and option `-a` shows both. This list mode is also
 activated by the `--list` option (see below).
 <pattern> restricts the output to matching branches, the pattern is a shell
 wildcard (i.e., matched using fnmatch(3)).
-Multiple patterns may be given; if any of them matches, the tag is shown.
+Multiple patterns may be given; if any of them matches, the branch is shown.
 
 With `--contains`, shows only the branches that contain the named commit
 (in other words, the branches whose tip commits are descendants of the
