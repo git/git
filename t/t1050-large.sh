@@ -130,7 +130,7 @@ test_expect_success 'git-show a large file' '
 
 '
 
-test_expect_failure 'repack' '
+test_expect_success 'repack' '
 	git repack -ad
 '
 
