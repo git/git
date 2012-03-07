@@ -125,7 +125,7 @@ test_expect_success 'cat-file a large file from a tag' '
 	git cat-file blob largefiletag >/dev/null
 '
 
-test_expect_failure 'git-show a large file' '
+test_expect_success 'git-show a large file' '
 	git show :large1 >/dev/null
 
 '
