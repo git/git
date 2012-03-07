@@ -20,6 +20,7 @@
 #include "string-list.h"
 #include "parse-options.h"
 #include "branch.h"
+#include "streaming.h"
 
 /* Set a default date-time format for git log ("log.date" config variable) */
 static const char *default_date_mode = NULL;
@@ -383,8 +384,13 @@ static void show_tagger(char *buf, int len, struct rev_info *rev)
 	strbuf_release(&out);
 }
 
-static int show_object(const unsigned char *sha1, int show_tag_object,
-	struct rev_info *rev)
+static int show_blob_object(const unsigned char *sha1, struct rev_info *rev)
+{
+	fflush(stdout);
+	return stream_blob_to_fd(1, sha1, NULL, 0);
+}
+
+static int show_tag_object(const unsigned char *sha1, struct rev_info *rev)
 {
 	unsigned long size;
 	enum object_type type;
@@ -394,16 +400,16 @@ static int show_object(const unsigned char *sha1, int show_tag_object,
 	if (!buf)
 		return error(_("Could not read object %s"), sha1_to_hex(sha1));
 
-	if (show_tag_object)
-		while (offset < size && buf[offset] != '\n') {
-			int new_offset = offset + 1;
-			while (new_offset < size && buf[new_offset++] != '\n')
-				; /* do nothing */
-			if (!prefixcmp(buf + offset, "tagger "))
-				show_tagger(buf + offset + 7,
-					    new_offset - offset - 7, rev);
-			offset = new_offset;
-		}
+	assert(type == OBJ_TAG);
+	while (offset < size && buf[offset] != '\n') {
+		int new_offset = offset + 1;
+		while (new_offset < size && buf[new_offset++] != '\n')
+			; /* do nothing */
+		if (!prefixcmp(buf + offset, "tagger "))
+			show_tagger(buf + offset + 7,
+				    new_offset - offset - 7, rev);
+		offset = new_offset;
+	}
 
 	if (offset < size)
 		fwrite(buf + offset, size - offset, 1, stdout);
@@ -463,7 +469,7 @@ int cmd_show(int argc, const char **argv, const char *prefix)
 		const char *name = objects[i].name;
 		switch (o->type) {
 		case OBJ_BLOB:
-			ret = show_object(o->sha1, 0, NULL);
+			ret = show_blob_object(o->sha1, NULL);
 			break;
 		case OBJ_TAG: {
 			struct tag *t = (struct tag *)o;
@@ -474,7 +480,7 @@ int cmd_show(int argc, const char **argv, const char *prefix)
 					diff_get_color_opt(&rev.diffopt, DIFF_COMMIT),
 					t->tag,
 					diff_get_color_opt(&rev.diffopt, DIFF_RESET));
-			ret = show_object(o->sha1, 1, &rev);
+			ret = show_tag_object(o->sha1, &rev);
 			rev.shown_one = 1;
 			if (ret)
 				break;
