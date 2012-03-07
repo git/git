@@ -9,6 +9,18 @@ static void do_nothing(size_t size)
 
 static void (*try_to_free_routine)(size_t size) = do_nothing;
 
+static void memory_limit_check(size_t size)
+{
+	static int limit = -1;
+	if (limit == -1) {
+		const char *env = getenv("GIT_ALLOC_LIMIT");
+		limit = env ? atoi(env) * 1024 : 0;
+	}
+	if (limit && size > limit)
+		die("attempting to allocate %"PRIuMAX" over limit %d",
+		    (intmax_t)size, limit);
+}
+
 try_to_free_t set_try_to_free_routine(try_to_free_t routine)
 {
 	try_to_free_t old = try_to_free_routine;
@@ -32,7 +44,10 @@ char *xstrdup(const char *str)
 
 void *xmalloc(size_t size)
 {
-	void *ret = malloc(size);
+	void *ret;
+
+	memory_limit_check(size);
+	ret = malloc(size);
 	if (!ret && !size)
 		ret = malloc(1);
 	if (!ret) {
@@ -79,7 +94,10 @@ char *xstrndup(const char *str, size_t len)
 
 void *xrealloc(void *ptr, size_t size)
 {
-	void *ret = realloc(ptr, size);
+	void *ret;
+
+	memory_limit_check(size);
+	ret = realloc(ptr, size);
 	if (!ret && !size)
 		ret = realloc(ptr, 1);
 	if (!ret) {
@@ -95,7 +113,10 @@ void *xrealloc(void *ptr, size_t size)
 
 void *xcalloc(size_t nmemb, size_t size)
 {
-	void *ret = calloc(nmemb, size);
+	void *ret;
+
+	memory_limit_check(size * nmemb);
+	ret = calloc(nmemb, size);
 	if (!ret && (!nmemb || !size))
 		ret = calloc(1, 1);
 	if (!ret) {
