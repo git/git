@@ -132,46 +132,46 @@ module_clone()
 	gitdir_base=
 	name=$(module_name "$path" 2>/dev/null)
 	test -n "$name" || name="$path"
-	base_path=$(dirname "$path")
+	base_name=$(dirname "$name")
 
 	gitdir=$(git rev-parse --git-dir)
-	gitdir_base="$gitdir/modules/$base_path"
-	gitdir="$gitdir/modules/$path"
-
-	case $gitdir in
-	/*)
-		a="$(cd_to_toplevel && pwd)/"
-		b=$gitdir
-		while [ "$b" ] && [ "${a%%/*}" = "${b%%/*}" ]
-		do
-			a=${a#*/} b=${b#*/};
-		done
-
-		rel="$a$name"
-		rel=`echo $rel | sed -e 's|[^/]*|..|g'`
-		rel_gitdir="$rel/$b"
-		;;
-	*)
-		rel=`echo $name | sed -e 's|[^/]*|..|g'`
-		rel_gitdir="$rel/$gitdir"
-		;;
-	esac
+	gitdir_base="$gitdir/modules/$base_name"
+	gitdir="$gitdir/modules/$name"
 
 	if test -d "$gitdir"
 	then
 		mkdir -p "$path"
-		echo "gitdir: $rel_gitdir" >"$path/.git"
 		rm -f "$gitdir/index"
 	else
 		mkdir -p "$gitdir_base"
-		if test -n "$reference"
-		then
-			git-clone $quiet "$reference" -n "$url" "$path" --separate-git-dir "$gitdir"
-		else
-			git-clone $quiet -n "$url" "$path" --separate-git-dir "$gitdir"
-		fi ||
+		git clone $quiet -n ${reference:+"$reference"} \
+			--separate-git-dir "$gitdir" "$url" "$path" ||
 		die "$(eval_gettext "Clone of '\$url' into submodule path '\$path' failed")"
 	fi
+
+	a=$(cd "$gitdir" && pwd)/
+	b=$(cd "$path" && pwd)/
+	# normalize Windows-style absolute paths to POSIX-style absolute paths
+	case $a in [a-zA-Z]:/*) a=/${a%%:*}${a#*:} ;; esac
+	case $b in [a-zA-Z]:/*) b=/${b%%:*}${b#*:} ;; esac
+	# Remove all common leading directories after a sanity check
+	if test "${a#$b}" != "$a" || test "${b#$a}" != "$b"; then
+		die "$(eval_gettext "Gitdir '\$a' is part of the submodule path '\$b' or vice versa")"
+	fi
+	while test "${a%%/*}" = "${b%%/*}"
+	do
+		a=${a#*/}
+		b=${b#*/}
+	done
+	# Now chop off the trailing '/'s that were added in the beginning
+	a=${a%/}
+	b=${b%/}
+
+	rel=$(echo $b | sed -e 's|[^/]*|..|g')
+	echo "gitdir: $rel/$a" >"$path/.git"
+
+	rel=$(echo $a | sed -e 's|[^/]*|..|g')
+	(clear_local_git_env; cd "$path" && GIT_WORK_TREE=. git config core.worktree "$rel/$b")
 }
 
 #
