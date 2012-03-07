@@ -182,6 +182,8 @@ static void add_branch_desc(struct strbuf *out, const char *name)
 	strbuf_release(&desc);
 }
 
+#define util_as_int(elem) ((intptr_t)((elem)->util))
+
 static void record_person(int which, struct string_list *people,
 			  struct commit *commit)
 {
@@ -206,12 +208,10 @@ static void record_person(int which, struct string_list *people,
 	elem = string_list_lookup(people, name_buf);
 	if (!elem) {
 		elem = string_list_insert(people, name_buf);
-		elem->util = (void *) 0;
+		elem->util = (void *)0;
 	}
-	elem->util = (void*)(((intptr_t)elem->util) + 1);
+	elem->util = (void*)(util_as_int(elem) + 1);
 }
-
-#define util_as_int(elem) ((intptr_t)((elem)->util))
 
 static int cmp_string_list_util_as_int(const void *a_, const void *b_)
 {
@@ -237,10 +237,10 @@ static void add_people_count(struct strbuf *out, struct string_list *people)
 
 static int committer_is_me(const char *name)
 {
-	int namelen = strlen(name);
 	const char *me = git_committer_info(IDENT_NO_DATE);
-	return (me && !memcmp(me, name, namelen) &&
-		!memcmp(me + namelen, " <", 2));
+	return (me &&
+		(me = skip_prefix(me, name)) != NULL &&
+		skip_prefix(me, " <"));
 }
 
 static void add_people_info(struct strbuf *out,
@@ -341,6 +341,7 @@ static void shortlog(const char *name,
 	rev->pending.nr = 0;
 
 	string_list_clear(&authors, 0);
+	string_list_clear(&committers, 0);
 	string_list_clear(&subjects, 0);
 }
 
