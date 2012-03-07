@@ -152,8 +152,9 @@ struct fragment {
 	unsigned long oldpos, oldlines;
 	unsigned long newpos, newlines;
 	const char *patch;
+	unsigned free_patch:1,
+		rejected:1;
 	int size;
-	int rejected;
 	int linenr;
 	struct fragment *next;
 };
@@ -194,6 +195,24 @@ struct patch {
 	char new_sha1_prefix[41];
 	struct patch *next;
 };
+
+static void free_patch(struct patch *patch)
+{
+	while (patch) {
+		struct patch *patch_next = patch->next;
+		struct fragment *fragment = patch->fragments;
+
+		while (fragment) {
+			struct fragment *fragment_next = fragment->next;
+			if (fragment->patch != NULL && fragment->free_patch)
+				free((char *)fragment->patch);
+			free(fragment);
+			fragment = fragment_next;
+		}
+		free(patch);
+		patch = patch_next;
+	}
+}
 
 /*
  * A line in a file, len-bytes long (includes the terminating LF,
@@ -1741,6 +1760,7 @@ static struct fragment *parse_binary_hunk(char **buf_p,
 
 	frag = xcalloc(1, sizeof(*frag));
 	frag->patch = inflate_it(data, hunk_size, origlen);
+	frag->free_patch = 1;
 	if (!frag->patch)
 		goto corrupt;
 	free(data);
@@ -3686,7 +3706,6 @@ static int apply_patch(int fd, const char *filename, int options)
 	struct patch *list = NULL, **listp = &list;
 	int skipped_patch = 0;
 
-	/* FIXME - memory leak when using multiple patch files as inputs */
 	memset(&fn_table, 0, sizeof(struct string_list));
 	patch_input_file = filename;
 	read_patch_file(&buf, fd);
@@ -3711,8 +3730,7 @@ static int apply_patch(int fd, const char *filename, int options)
 			listp = &patch->next;
 		}
 		else {
-			/* perhaps free it a bit better? */
-			free(patch);
+			free_patch(patch);
 			skipped_patch++;
 		}
 		offset += nr;
@@ -3753,6 +3771,7 @@ static int apply_patch(int fd, const char *filename, int options)
 	if (summary)
 		summary_patch_list(list);
 
+	free_patch(list);
 	strbuf_release(&buf);
 	return 0;
 }
