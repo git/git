@@ -1,6 +1,31 @@
 Git v1.7.10 Release Notes
 =========================
 
+Compatibility Notes
+-------------------
+
+ * From this release on, the "git merge" command in an interactive
+   session will start an editor when it automatically resolves the
+   merge for the user to explain the resulting commit, just like the
+   "git commit" command does when it wasn't given a commit message.
+
+   If you have a script that runs "git merge" and keeps its standard
+   input and output attached to the user's terminal, and if you do not
+   want the user to explain the resulting merge commits, you can
+   export GIT_MERGE_AUTOEDIT environment variable set to "no", like
+   this:
+
+	#!/bin/sh
+	GIT_MERGE_AUTOEDIT=no
+	export GIT_MERGE_AUTOEDIT
+
+   to disable this behaviour (if you want your users to explain their
+   merge commits, you do not have to do anything).  Alternatively, you
+   can give the "--no-edit" option to individual invocations of the
+   "git merge" command if you know everybody who uses your script has
+   Git v1.7.8 or newer.
+
+
 Updates since v1.7.9
 --------------------
 
@@ -37,11 +62,18 @@ UI, Workflows & Features
    lines are taken from the postimage, in order to make it easier to
    view the output.
 
+ * "git diff --stat" learned to adjust the width of the output on
+   wider terminals, and give more columns to pathnames as needed.
+
  * "diff-highlight" filter (in contrib/) was updated to produce more
    aesthetically pleasing output.
 
  * "fsck" learned "--no-dangling" option to omit dangling object
    information.
+
+ * "git log -G" learned to pay attention to the "-i" option and can
+   find patch hunks that introduce or remove a string that matches the
+   given pattern ignoring the case.
 
  * "git merge" in an interactive session learned to spawn the editor
    by default to let the user edit the auto-generated merge message,
@@ -49,6 +81,10 @@ UI, Workflows & Features
    can export GIT_MERGE_AUTOEDIT=no to retain the historical behavior.
    Both "git merge" and "git pull" can be given --no-edit from the
    command line to accept the auto-generated merge message.
+
+ * The advise message given when the user didn't give enough clue on
+   what to merge to "git pull" and "git merge" has been updated to
+   be more concise and easier to understand.
 
  * "git push" learned the "--prune" option, similar to "git fetch".
 
@@ -72,7 +108,7 @@ UI, Workflows & Features
 
 Foreign Interface
 
- * Improved handling of views, labels and branches in git-p4 (in contrib).
+ * Improved handling of views, labels and branches in "git-p4" (in contrib).
 
  * "git-p4" (in contrib) suffered from unnecessary merge conflicts when
    p4 expanded the embedded $RCS$-like keywords; it can be now told to
@@ -83,11 +119,13 @@ Foreign Interface
  * "vcs-svn"/"svn-fe" learned to read dumps with svn-deltas and
    support incremental imports.
 
+ * "git difftool/mergetool" learned to drive DeltaWalker.
+
 Performance
 
- * During "git upload-pack" in response to "git fetch", unnecessary calls
-   to parse_object() have been eliminated, to help performance in
-   repositories with excessive number of refs.
+ * Unnecessary calls to parse_object() "git upload-pack" makes in
+   response to "git fetch", have been eliminated, to help performance
+   in repositories with excessive number of refs.
 
 Internal Implementation (please report possible regressions)
 
@@ -108,6 +146,9 @@ Internal Implementation (please report possible regressions)
  * t/Makefile is adjusted to prevent newer versions of GNU make from
    running tests in seemingly random order.
 
+ * The code to check if a path points at a file beyond a symbolic link
+   has been restructured to be thread-safe.
+
 Also contains minor documentation updates and code clean-ups.
 
 
@@ -117,6 +158,17 @@ Fixes since v1.7.9
 Unless otherwise noted, all the fixes since v1.7.9 in the maintenance
 releases are contained in this release (see release notes to them for
 details).
+
+ * "git bundle" did not record boundary commits correctly when there
+   are many of them.
+   (merge efe4be1 tr/maint-bundle-boundary later to maint).
+
+ * "git diff-index" and its friends at the plumbing level showed the
+   "diff --git" header and nothing else for a path whose cached stat
+   info is dirty without actual difference when asked to produce a
+   patch. This was a longstanding bug that we could have fixed long
+   time ago.
+   (merge b3f01ff jc/maint-diff-patch-header later to maint).
 
  * The code to synthesize the fake ancestor tree used by 3-way merge
    fallback in "git am" was not prepared to read a patch created with
@@ -129,7 +181,7 @@ details).
 
 ---
 exec >/var/tmp/1
-O=v1.7.9.2-383-gb8b5290
+O=v1.7.9.3-366-g1e4d087
 echo O=$(git describe)
 git log --first-parent --oneline ^maint $O..
 echo
