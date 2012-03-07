@@ -116,11 +116,11 @@ test_expect_success 'hash-object' '
 	git hash-object large1
 '
 
-test_expect_failure 'cat-file a large file' '
+test_expect_success 'cat-file a large file' '
 	git cat-file blob :large1 >/dev/null
 '
 
-test_expect_failure 'cat-file a large file from a tag' '
+test_expect_success 'cat-file a large file from a tag' '
 	git tag -m largefile largefiletag :large1 &&
 	git cat-file blob largefiletag >/dev/null
 '
