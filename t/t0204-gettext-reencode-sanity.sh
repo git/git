@@ -7,6 +7,10 @@ test_description="Gettext reencoding of our *.po/*.mo files works"
 
 . ./lib-gettext.sh
 
+# The constants used in a tricky observation for undefined behaviour
+RUNES="TILRAUN: ᚻᛖ ᚳᚹᚫᚦ ᚦᚫᛏ ᚻᛖ ᛒᚢᛞᛖ ᚩᚾ ᚦᚫᛗ ᛚᚪᚾᛞᛖ ᚾᚩᚱᚦᚹᛖᚪᚱᛞᚢᛗ ᚹᛁᚦ ᚦᚪ ᚹᛖᛥᚫ"
+PUNTS="TILRAUN: ?? ???? ??? ?? ???? ?? ??? ????? ??????????? ??? ?? ????"
+MSGKEY="TEST: Old English Runes"
 
 test_expect_success GETTEXT_LOCALE 'gettext: Emitting UTF-8 from our UTF-8 *.mo files / Icelandic' '
     printf "TILRAUN: Halló Heimur!" >expect &&
@@ -15,8 +19,8 @@ test_expect_success GETTEXT_LOCALE 'gettext: Emitting UTF-8 from our UTF-8 *.mo 
 '
 
 test_expect_success GETTEXT_LOCALE 'gettext: Emitting UTF-8 from our UTF-8 *.mo files / Runes' '
-    printf "TILRAUN: ᚻᛖ ᚳᚹᚫᚦ ᚦᚫᛏ ᚻᛖ ᛒᚢᛞᛖ ᚩᚾ ᚦᚫᛗ ᛚᚪᚾᛞᛖ ᚾᚩᚱᚦᚹᛖᚪᚱᛞᚢᛗ ᚹᛁᚦ ᚦᚪ ᚹᛖᛥᚫ" >expect &&
-    LANGUAGE=is LC_ALL="$is_IS_locale" gettext "TEST: Old English Runes" >actual &&
+    printf "%s" "$RUNES" >expect &&
+    LANGUAGE=is LC_ALL="$is_IS_locale" gettext "$MSGKEY" >actual &&
     test_cmp expect actual
 '
 
@@ -26,18 +30,23 @@ test_expect_success GETTEXT_ISO_LOCALE 'gettext: Emitting ISO-8859-1 from our UT
     test_cmp expect actual
 '
 
-test_expect_success GETTEXT_ISO_LOCALE 'gettext: Emitting ISO-8859-1 from our UTF-8 *.mo files / Runes' '
-    LANGUAGE=is LC_ALL="$is_IS_iso_locale" gettext "TEST: Old English Runes" >runes &&
-
-	if grep "^TEST: Old English Runes$" runes
-	then
-		say "Your system can not handle this complexity and returns the string as-is"
-	else
-		# Both Solaris and GNU libintl will return this stream of
-		# question marks, so it is s probably portable enough
-		printf "TILRAUN: ?? ???? ??? ?? ???? ?? ??? ????? ??????????? ??? ?? ????" >runes-expect &&
-		test_cmp runes-expect runes
-	fi
+test_expect_success GETTEXT_ISO_LOCALE 'gettext: impossible ISO-8859-1 output' '
+	LANGUAGE=is LC_ALL="$is_IS_iso_locale" gettext "$MSGKEY" >runes &&
+	case "$(cat runes)" in
+	"$MSGKEY")
+		say "Your system gives back the key to message catalog"
+		;;
+	"$PUNTS")
+		say "Your system replaces an impossible character with ?"
+		;;
+	"$RUNES")
+		say "Your system gives back the raw message for an impossible request"
+		;;
+	*)
+		say "We never saw the error behaviour your system exhibits"
+		false
+		;;
+	esac
 '
 
 test_expect_success GETTEXT_LOCALE 'gettext: Fetching a UTF-8 msgid -> UTF-8' '
