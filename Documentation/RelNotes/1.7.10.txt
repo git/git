@@ -43,20 +43,23 @@ UI, Workflows & Features
 
  * A content filter (clean/smudge) used to be just a way to make the
    recorded contents "more useful", and allowed to fail; a filter can
-   new optionally be marked as "required".
+   now optionally be marked as "required".
 
  * Options whose names begin with "--no-" (e.g. the "--no-verify"
    option of the "git commit" command) can be negated by omitting
    "no-" from its name, e.g. "git commit --verify".
 
  * "git am" learned to pass "-b" option to underlying "git mailinfo", so
-   that bracketed string other than "PATCH" at the beginning can be kept.
+   that a bracketed string other than "PATCH" at the beginning can be kept.
 
  * "git clone" learned "--single-branch" option to limit cloning to a
-   single branch (surprise!).
+   single branch (surprise!); tags that do not point into the history
+   of the branch are not fetched.
 
  * "git clone" learned to detach the HEAD in the resulting repository
-   when the source repository's HEAD does not point to a branch.
+   when the user specifies a tag with "--branch" (e.g., "--branch=v1.0").
+   Clone also learned to print the usual "detached HEAD" advice in such
+   a case, similar to "git checkout v1.0".
 
  * When showing a patch while ignoring whitespace changes, the context
    lines are taken from the postimage, in order to make it easier to
@@ -71,9 +74,12 @@ UI, Workflows & Features
  * "fsck" learned "--no-dangling" option to omit dangling object
    information.
 
- * "git log -G" learned to pay attention to the "-i" option and can
-   find patch hunks that introduce or remove a string that matches the
-   given pattern ignoring the case.
+ * "git log -G" and "git log -S" learned to pay attention to the "-i"
+   option.  With "-i", "log -G" ignores the case when finding patch
+   hunks that introduce or remove a string that matches the given
+   pattern.  Similarly with "-i", "log -S" ignores the case when
+   finding the commit the given block of text appears or disappears
+   from the file.
 
  * "git merge" in an interactive session learned to spawn the editor
    by default to let the user edit the auto-generated merge message,
@@ -82,11 +88,14 @@ UI, Workflows & Features
    Both "git merge" and "git pull" can be given --no-edit from the
    command line to accept the auto-generated merge message.
 
- * The advise message given when the user didn't give enough clue on
+ * The advice message given when the user didn't give enough clue on
    what to merge to "git pull" and "git merge" has been updated to
    be more concise and easier to understand.
 
  * "git push" learned the "--prune" option, similar to "git fetch".
+
+ * The whole directory that houses a top-level superproject managed by
+   "git submodule" can be moved to another place.
 
  * "git symbolic-ref" learned the "--short" option to abbreviate the
    refname it shows unambiguously.
@@ -95,7 +104,7 @@ UI, Workflows & Features
    output to those that point at the given object.
 
  * "gitweb" allows intermediate entries in the directory hierarchy
-   that leads to a projects to be clicked, which in turn shows the
+   that leads to a project to be clicked, which in turn shows the
    list of projects inside that directory.
 
  * "gitweb" learned to read various pieces of information for the
@@ -149,6 +158,10 @@ Internal Implementation (please report possible regressions)
  * The code to check if a path points at a file beyond a symbolic link
    has been restructured to be thread-safe.
 
+ * When pruning directories that has become empty during "git prune"
+   and "git prune-packed", call closedir() that iterates over a
+   directory before rmdir() it.
+
 Also contains minor documentation updates and code clean-ups.
 
 
@@ -179,9 +192,14 @@ details).
    accessed in a repository whose HEAD does not point at a valid
    branch.
 
+ * "gitweb" did use quotemeta() to prepare search string when asked to
+   do a fixed-string project search, but did not use it by mistake and
+   used the user-supplied string instead.
+   (merge e65ceb6 jn/maint-do-not-match-with-unsanitized-searchtext later to maint).
+
 ---
 exec >/var/tmp/1
-O=v1.7.9.3-366-g1e4d087
+O=v1.7.10-rc0-15-g9a4c97e
 echo O=$(git describe)
 git log --first-parent --oneline ^maint $O..
 echo
