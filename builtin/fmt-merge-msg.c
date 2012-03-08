@@ -182,7 +182,7 @@ static void add_branch_desc(struct strbuf *out, const char *name)
 	strbuf_release(&desc);
 }
 
-#define util_as_int(elem) ((intptr_t)((elem)->util))
+#define util_as_int(elem) ((int)((elem)->util))
 
 static void record_person(int which, struct string_list *people,
 			  struct commit *commit)
@@ -210,7 +210,7 @@ static void record_person(int which, struct string_list *people,
 		elem = string_list_insert(people, name_buf);
 		elem->util = (void *)0;
 	}
-	elem->util = (void*)(util_as_int(elem) + 1);
+	elem->util = (void*)((intptr_t)(util_as_int(elem) + 1));
 }
 
 static int cmp_string_list_util_as_int(const void *a_, const void *b_)
@@ -226,13 +226,13 @@ static void add_people_count(struct strbuf *out, struct string_list *people)
 	else if (people->nr == 2)
 		strbuf_addf(out, "%s (%d) and %s (%d)",
 			    people->items[0].string,
-			    (int)util_as_int(&people->items[0]),
+			    util_as_int(&people->items[0]),
 			    people->items[1].string,
-			    (int)util_as_int(&people->items[1]));
+			    util_as_int(&people->items[1]));
 	else if (people->nr)
 		strbuf_addf(out, "%s (%d) and others",
 			    people->items[0].string,
-			    (int)util_as_int(&people->items[0]));
+			    util_as_int(&people->items[0]));
 }
 
 static int committer_is_me(const char *name)
