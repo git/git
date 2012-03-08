@@ -8,13 +8,15 @@ static const char * const git_symbolic_ref_usage[] = {
 	NULL
 };
 
+static int shorten;
+
 static void check_symref(const char *HEAD, int quiet)
 {
 	unsigned char sha1[20];
 	int flag;
-	const char *refs_heads_master = resolve_ref_unsafe(HEAD, sha1, 0, &flag);
+	const char *refname = resolve_ref_unsafe(HEAD, sha1, 0, &flag);
 
-	if (!refs_heads_master)
+	if (!refname)
 		die("No such ref: %s", HEAD);
 	else if (!(flag & REF_ISSYMREF)) {
 		if (!quiet)
@@ -22,7 +24,9 @@ static void check_symref(const char *HEAD, int quiet)
 		else
 			exit(1);
 	}
-	puts(refs_heads_master);
+	if (shorten)
+		refname = shorten_unambiguous_ref(refname, 0);
+	puts(refname);
 }
 
 int cmd_symbolic_ref(int argc, const char **argv, const char *prefix)
@@ -32,6 +36,7 @@ int cmd_symbolic_ref(int argc, const char **argv, const char *prefix)
 	struct option options[] = {
 		OPT__QUIET(&quiet,
 			"suppress error message for non-symbolic (detached) refs"),
+		OPT_BOOL(0, "short", &shorten, "shorten ref output"),
 		OPT_STRING('m', NULL, &msg, "reason", "reason of the update"),
 		OPT_END(),
 	};

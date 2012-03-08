@@ -54,8 +54,8 @@ test_expect_success 'ridiculously long subject in boundary' '
 	git bundle list-heads long-subject-bundle.bdl >heads &&
 	test -s heads &&
 	git fetch long-subject-bundle.bdl &&
-	sed -n "/^-/{p;q}" long-subject-bundle.bdl >boundary &&
-	grep "^-$_x40 " boundary
+	sed -n "/^-/{p;q;}" long-subject-bundle.bdl >boundary &&
+	grep "^-[0-9a-f]\\{40\\} " boundary
 '
 
 test_done

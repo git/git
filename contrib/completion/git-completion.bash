@@ -137,7 +137,7 @@ __git_ps1_show_upstream ()
 			svn_upstream=${svn_upstream[ ${#svn_upstream[@]} - 2 ]}
 			svn_upstream=${svn_upstream%@*}
 			local n_stop="${#svn_remote[@]}"
-			for ((n=1; n <= n_stop; ++n)); do
+			for ((n=1; n <= n_stop; n++)); do
 				svn_upstream=${svn_upstream#${svn_remote[$n]}}
 			done
 
@@ -166,10 +166,8 @@ __git_ps1_show_upstream ()
 			for commit in $commits
 			do
 				case "$commit" in
-				"<"*) let ++behind
-					;;
-				*)    let ++ahead
-					;;
+				"<"*) ((behind++)) ;;
+				*)    ((ahead++))  ;;
 				esac
 			done
 			count="$behind	$ahead"
@@ -726,6 +724,9 @@ __git_complete_remote_or_refspec ()
 {
 	local cur_="$cur" cmd="${words[1]}"
 	local i c=2 remote="" pfx="" lhs=1 no_complete_refspec=0
+	if [ "$cmd" = "remote" ]; then
+		((c++))
+	fi
 	while [ $c -lt $cword ]; do
 		i="${words[c]}"
 		case "$i" in
@@ -743,7 +744,7 @@ __git_complete_remote_or_refspec ()
 		-*) ;;
 		*) remote="$i"; break ;;
 		esac
-		c=$((++c))
+		((c++))
 	done
 	if [ -z "$remote" ]; then
 		__gitcomp_nl "$(__git_remotes)"
@@ -776,7 +777,7 @@ __git_complete_remote_or_refspec ()
 			__gitcomp_nl "$(__git_refs)" "$pfx" "$cur_"
 		fi
 		;;
-	pull)
+	pull|remote)
 		if [ $lhs = 1 ]; then
 			__gitcomp_nl "$(__git_refs "$remote")" "$pfx" "$cur_"
 		else
@@ -983,7 +984,7 @@ __git_find_on_cmdline ()
 				return
 			fi
 		done
-		c=$((++c))
+		((c++))
 	done
 }
 
@@ -994,7 +995,7 @@ __git_has_doubledash ()
 		if [ "--" = "${words[c]}" ]; then
 			return 0
 		fi
-		c=$((++c))
+		((c++))
 	done
 	return 1
 }
@@ -1117,7 +1118,7 @@ _git_branch ()
 		-d|-m)	only_local_ref="y" ;;
 		-r)	has_r="y" ;;
 		esac
-		c=$((++c))
+		((c++))
 	done
 
 	case "$cur" in
@@ -2091,6 +2092,7 @@ _git_config ()
 		core.whitespace
 		core.worktree
 		diff.autorefreshindex
+		diff.statGraphWidth
 		diff.external
 		diff.ignoreSubmodules
 		diff.mnemonicprefix
@@ -2277,7 +2279,7 @@ _git_config ()
 
 _git_remote ()
 {
-	local subcommands="add rename rm show prune update set-head"
+	local subcommands="add rename rm set-head set-branches set-url show prune update"
 	local subcommand="$(__git_find_on_cmdline "$subcommands")"
 	if [ -z "$subcommand" ]; then
 		__gitcomp "$subcommands"
@@ -2285,8 +2287,11 @@ _git_remote ()
 	fi
 
 	case "$subcommand" in
-	rename|rm|show|prune)
+	rename|rm|set-url|show|prune)
 		__gitcomp_nl "$(__git_remotes)"
+		;;
+	set-head|set-branches)
+		__git_complete_remote_or_refspec
 		;;
 	update)
 		local i c='' IFS=$'\n'
@@ -2568,7 +2573,7 @@ _git_tag ()
 			f=1
 			;;
 		esac
-		c=$((++c))
+		((c++))
 	done
 
 	case "$prev" in
@@ -2621,7 +2626,7 @@ _git ()
 		--help) command="help"; break ;;
 		*) command="$i"; break ;;
 		esac
-		c=$((++c))
+		((c++))
 	done
 
 	if [ -z "$command" ]; then

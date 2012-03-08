@@ -14,6 +14,14 @@ test_bundle_object_count () {
 	test "$2" = $(grep '^[0-9a-f]\{40\} ' verify.out | wc -l)
 }
 
+convert_bundle_to_pack () {
+	while read x && test -n "$x"
+	do
+		:;
+	done
+	cat
+}
+
 test_expect_success setup '
 	echo >file original &&
 	git add file &&
@@ -206,13 +214,7 @@ test_expect_success 'unbundle 1' '
 
 test_expect_success 'bundle 1 has only 3 files ' '
 	cd "$D" &&
-	(
-		while read x && test -n "$x"
-		do
-			:;
-		done
-		cat
-	) <bundle1 >bundle.pack &&
+	convert_bundle_to_pack <bundle1 >bundle.pack &&
 	git index-pack bundle.pack &&
 	test_bundle_object_count bundle.pack 3
 '
@@ -229,13 +231,7 @@ test_expect_success 'bundle does not prerequisite objects' '
 	git add file2 &&
 	git commit -m add.file2 file2 &&
 	git bundle create bundle3 -1 HEAD &&
-	(
-		while read x && test -n "$x"
-		do
-			:;
-		done
-		cat
-	) <bundle3 >bundle.pack &&
+	convert_bundle_to_pack <bundle3 >bundle.pack &&
 	git index-pack bundle.pack &&
 	test_bundle_object_count bundle.pack 3
 '
@@ -433,14 +429,31 @@ test_expect_success 'fetch --dry-run' '
 '
 
 test_expect_success "should be able to fetch with duplicate refspecs" '
-        mkdir dups &&
-        cd dups &&
-        git init &&
-        git config branch.master.remote three &&
-        git config remote.three.url ../three/.git &&
-        git config remote.three.fetch +refs/heads/*:refs/remotes/origin/* &&
-        git config --add remote.three.fetch +refs/heads/*:refs/remotes/origin/* &&
-        git fetch three
+	mkdir dups &&
+	(
+		cd dups &&
+		git init &&
+		git config branch.master.remote three &&
+		git config remote.three.url ../three/.git &&
+		git config remote.three.fetch +refs/heads/*:refs/remotes/origin/* &&
+		git config --add remote.three.fetch +refs/heads/*:refs/remotes/origin/* &&
+		git fetch three
+	)
+'
+
+test_expect_success 'all boundary commits are excluded' '
+	test_commit base &&
+	test_commit oneside &&
+	git checkout HEAD^ &&
+	test_commit otherside &&
+	git checkout master &&
+	test_tick &&
+	git merge otherside &&
+	ad=$(git log --no-walk --format=%ad HEAD) &&
+	git bundle create twoside-boundary.bdl master --since="$ad" &&
+	convert_bundle_to_pack <twoside-boundary.bdl >twoside-boundary.pack &&
+	pack=$(git index-pack --fix-thin --stdin <twoside-boundary.pack) &&
+	test_bundle_object_count .git/objects/pack/pack-${pack##pack	}.pack 3
 '
 
 test_done

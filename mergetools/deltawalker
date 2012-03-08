@@ -1,0 +1,21 @@
+diff_cmd () {
+	"$merge_tool_path" "$LOCAL" "$REMOTE" >/dev/null 2>&1
+}
+
+merge_cmd () {
+	# Adding $(pwd)/ in front of $MERGED should not be necessary.
+	# However without it, DeltaWalker (at least v1.9.8 on Windows)
+	# crashes with a JRE exception.  The DeltaWalker user manual,
+	# shows $(pwd)/ whenever the '-merged' options is given.
+	# Adding it here seems to work around the problem.
+	if $base_present
+	then
+		"$merge_tool_path" "$LOCAL" "$REMOTE" "$BASE" -merged="$(pwd)/$MERGED"
+	else
+		"$merge_tool_path" "$LOCAL" "$REMOTE" -merged="$(pwd)/$MERGED"
+	fi >/dev/null 2>&1
+}
+
+translate_merge_tool_path() {
+	echo DeltaWalker
+}

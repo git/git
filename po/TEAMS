@@ -1,0 +1,15 @@
+Core Git translation language teams
+(please keep the list sorted alphabetically on language field)
+
+Language:	is (Icelandic)
+Leader:		Ævar Arnfjörð Bjarmason <avarab@gmail.com>
+
+Language:	zh_CN (Simplified Chinese)
+Repository:	https://github.com/gotgit/git-po-zh_CN/
+Leader:		Jiang Xin <worldhello.net@gmail.com>
+Members:	Riku <lu.riku AT gmail.com>
+		Zhuang Ya <zhuangya AT me.com>
+		Lian Cheng <rhythm.mail AT gmail.com>
+		Yichao Yu <yyc1992 AT gmail.com>
+		ws3389 <willsmith3389 AT gmail.com>
+		Thynson <lanxingcan AT gmail.com>

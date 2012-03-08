@@ -193,13 +193,14 @@ static int parse_long_opt(struct parse_opt_ctx_t *p, const char *arg,
 		arg_end = arg + strlen(arg);
 
 	for (; options->type != OPTION_END; options++) {
-		const char *rest;
-		int flags = 0;
+		const char *rest, *long_name = options->long_name;
+		int flags = 0, opt_flags = 0;
 
-		if (!options->long_name)
+		if (!long_name)
 			continue;
 
-		rest = skip_prefix(arg, options->long_name);
+again:
+		rest = skip_prefix(arg, long_name);
 		if (options->type == OPTION_ARGUMENT) {
 			if (!rest)
 				continue;
@@ -212,7 +213,7 @@ static int parse_long_opt(struct parse_opt_ctx_t *p, const char *arg,
 		}
 		if (!rest) {
 			/* abbreviated? */
-			if (!strncmp(options->long_name, arg, arg_end - arg)) {
+			if (!strncmp(long_name, arg, arg_end - arg)) {
 is_abbreviated:
 				if (abbrev_option) {
 					/*
@@ -227,7 +228,7 @@ is_abbreviated:
 				if (!(flags & OPT_UNSET) && *arg_end)
 					p->opt = arg_end + 1;
 				abbrev_option = options;
-				abbrev_flags = flags;
+				abbrev_flags = flags ^ opt_flags;
 				continue;
 			}
 			/* negation allowed? */
@@ -239,12 +240,18 @@ is_abbreviated:
 				goto is_abbreviated;
 			}
 			/* negated? */
-			if (strncmp(arg, "no-", 3))
+			if (prefixcmp(arg, "no-")) {
+				if (!prefixcmp(long_name, "no-")) {
+					long_name += 3;
+					opt_flags |= OPT_UNSET;
+					goto again;
+				}
 				continue;
+			}
 			flags |= OPT_UNSET;
-			rest = skip_prefix(arg + 3, options->long_name);
+			rest = skip_prefix(arg + 3, long_name);
 			/* abbreviated and negated? */
-			if (!rest && !prefixcmp(options->long_name, arg + 3))
+			if (!rest && !prefixcmp(long_name, arg + 3))
 				goto is_abbreviated;
 			if (!rest)
 				continue;
@@ -254,7 +261,7 @@ is_abbreviated:
 				continue;
 			p->opt = rest + 1;
 		}
-		return get_value(p, options, flags);
+		return get_value(p, options, flags ^ opt_flags);
 	}
 
 	if (ambiguous_option)
@@ -386,6 +393,8 @@ int parse_options_step(struct parse_opt_ctx_t *ctx,
 			case -1:
 				return parse_options_usage(ctx, usagestr, options, 1);
 			case -2:
+				if (ctx->opt)
+					check_typos(arg + 1, options);
 				goto unknown;
 			}
 			if (ctx->opt)
@@ -526,7 +535,7 @@ static int usage_with_options_internal(struct parse_opt_ctx_t *ctx,
 			continue;
 
 		pos = fprintf(outfile, "    ");
-		if (opts->short_name && !(opts->flags & PARSE_OPT_NEGHELP)) {
+		if (opts->short_name) {
 			if (opts->flags & PARSE_OPT_NODASH)
 				pos += fprintf(outfile, "%c", opts->short_name);
 			else
@@ -535,9 +544,7 @@ static int usage_with_options_internal(struct parse_opt_ctx_t *ctx,
 		if (opts->long_name && opts->short_name)
 			pos += fprintf(outfile, ", ");
 		if (opts->long_name)
-			pos += fprintf(outfile, "--%s%s",
-				(opts->flags & PARSE_OPT_NEGHELP) ?  "no-" : "",
-				opts->long_name);
+			pos += fprintf(outfile, "--%s", opts->long_name);
 		if (opts->type == OPTION_NUMBER)
 			pos += fprintf(outfile, "-NUM");
 
