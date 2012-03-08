@@ -38,4 +38,9 @@ test_expect_success 'test_export works with weird vars' '
 	test "$bar" = "weird # variable"
 '
 
+test_perf 'test-lib-functions correctly loaded in subshells' '
+	: >a &&
+	test_path_is_file a
+'
+
 test_done
