@@ -12,7 +12,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Git\n"
 "Report-Msgid-Bugs-To: Git Mailing List <git@vger.kernel.org>\n"
-"POT-Creation-Date: 2012-02-28 09:17+0800\n"
+"POT-Creation-Date: 2012-03-08 10:19+0800\n"
 "PO-Revision-Date: 2012-01-30 00:00+0800\n"
 "Last-Translator: Jiang Xin <worldhello.net@gmail.com>\n"
 "Language-Team: GitHub <https://github.com/gotgit/git/>\n"
@@ -71,18 +71,18 @@ msgid "failed to close rev-list's stdin: %s"
 msgstr "无法关闭 rev-list 的标准输入：%s"
 
 #  注意保持前导空格
-#: diff.c:104
+#: diff.c:105
 #, c-format
 msgid "  Failed to parse dirstat cut-off percentage '%.*s'\n"
 msgstr "  无法解析 dirstat 阈值 '%.*s'\n"
 
 #  注意保持前导空格
-#: diff.c:109
+#: diff.c:110
 #, c-format
 msgid "  Unknown dirstat parameter '%.*s'\n"
 msgstr "  未知 dirstat 参数 '%.*s'\n"
 
-#: diff.c:205
+#: diff.c:210
 #, c-format
 msgid ""
 "Found errors in 'diff.dirstat' config variable:\n"
@@ -91,29 +91,29 @@ msgstr ""
 "配置变量 'diff.dirstat' 出错：\n"
 "%s"
 
-#: diff.c:1331
+#: diff.c:1336
 msgid " 0 files changed\n"
 msgstr "0 个文件被修改\n"
 
-#: diff.c:1335
+#: diff.c:1340
 #, c-format
 msgid " %d file changed"
 msgid_plural " %d files changed"
 msgstr[0] " %d 个文件被修改"
 
-#: diff.c:1352
+#: diff.c:1357
 #, c-format
 msgid ", %d insertion(+)"
 msgid_plural ", %d insertions(+)"
 msgstr[0] "，插入 %d 行(+)"
 
-#: diff.c:1363
+#: diff.c:1368
 #, c-format
 msgid ", %d deletion(-)"
 msgid_plural ", %d deletions(-)"
 msgstr[0] "，删除 %d 行(-)"
 
-#: diff.c:3364
+#: diff.c:3424
 #, c-format
 msgid ""
 "Failed to parse --dirstat/-X option parameter:\n"
@@ -134,17 +134,17 @@ msgstr "gpg 没有接受数据"
 msgid "gpg failed to sign the data"
 msgstr "gpg 无法为数据签名"
 
-#: grep.c:1285
+#: grep.c:1280
 #, c-format
 msgid "'%s': unable to read %s"
 msgstr "'%s'：无法读取 %s"
 
-#: grep.c:1302
+#: grep.c:1297
 #, c-format
 msgid "'%s': %s"
 msgstr "'%s'：%s"
 
-#: grep.c:1313
+#: grep.c:1308
 #, c-format
 msgid "'%s': short read %s"
 msgstr "'%s'：读取不完整 %s"
@@ -183,19 +183,27 @@ msgstr[0] ""
 "您的分支和 '%s' 出现了偏离，\n"
 "并且各自分别有 %d 和 %d 处不同的提交。\n"
 
-#: sequencer.c:120 builtin/merge.c:862 builtin/merge.c:983
-#: builtin/merge.c:1093 builtin/merge.c:1103
+#: sequencer.c:120 builtin/merge.c:864 builtin/merge.c:985
+#: builtin/merge.c:1095 builtin/merge.c:1105
 #, c-format
 msgid "Could not open '%s' for writing"
 msgstr "无法打开 '%s' 以写入"
 
-#: sequencer.c:122 builtin/merge.c:334 builtin/merge.c:865
-#: builtin/merge.c:1095 builtin/merge.c:1108
+#: sequencer.c:122 builtin/merge.c:334 builtin/merge.c:867
+#: builtin/merge.c:1097 builtin/merge.c:1110
 #, c-format
 msgid "Could not write to '%s'"
 msgstr "无法写入 '%s'"
 
-#: sequencer.c:142
+#: sequencer.c:143
+msgid ""
+"after resolving the conflicts, mark the corrected paths\n"
+"with 'git add <paths>' or 'git rm <paths>'"
+msgstr ""
+"冲突解决完毕后，用 'git add <paths>' 或 'git rm <paths>'\n"
+"命令标记修正后的文件"
+
+#: sequencer.c:146
 msgid ""
 "after resolving the conflicts, mark the corrected paths\n"
 "with 'git add <paths>' or 'git rm <paths>'\n"
@@ -204,202 +212,202 @@ msgstr ""
 "冲突解决完毕后，用 'git add <paths>' 或 'git rm <paths>'\n"
 "对修正后的文件做标记，然后用 'git commit' 提交"
 
-#: sequencer.c:154 sequencer.c:680 sequencer.c:763
+#: sequencer.c:159 sequencer.c:685 sequencer.c:768
 #, c-format
 msgid "Could not write to %s"
 msgstr "不能写入 %s"
 
-#: sequencer.c:157
+#: sequencer.c:162
 #, c-format
 msgid "Error wrapping up %s"
 msgstr "错误收尾 %s"
 
-#: sequencer.c:172
+#: sequencer.c:177
 msgid "Your local changes would be overwritten by cherry-pick."
 msgstr "您的本地修改将被拣选操作覆盖。"
 
-#: sequencer.c:174
+#: sequencer.c:179
 msgid "Your local changes would be overwritten by revert."
 msgstr "您的本地修改将被还原操作覆盖。"
 
-#: sequencer.c:177
+#: sequencer.c:182
 msgid "Commit your changes or stash them to proceed."
 msgstr "提交您的修改或保存进度后再继续。"
 
 #. TRANSLATORS: %s will be "revert" or "cherry-pick"
-#: sequencer.c:227
+#: sequencer.c:232
 #, c-format
 msgid "%s: Unable to write new index file"
 msgstr "%s：无法写入新暂存区文件"
 
-#: sequencer.c:293
+#: sequencer.c:298
 msgid "Your index file is unmerged."
 msgstr "您的暂存区文件未完成合并。"
 
-#: sequencer.c:296
+#: sequencer.c:301
 msgid "You do not have a valid HEAD"
 msgstr "您没有一个有效的 HEAD"
 
-#: sequencer.c:311
+#: sequencer.c:316
 #, c-format
 msgid "Commit %s is a merge but no -m option was given."
 msgstr "提交 %s 是一个合并提交但未提供 -m 选项。"
 
-#: sequencer.c:319
+#: sequencer.c:324
 #, c-format
 msgid "Commit %s does not have parent %d"
 msgstr "提交 %s 没有父提交 %d"
 
-#: sequencer.c:323
+#: sequencer.c:328
 #, c-format
 msgid "Mainline was specified but commit %s is not a merge."
 msgstr "提供了主线但提交 %s 不是一个合并。"
 
 #. TRANSLATORS: The first %s will be "revert" or
 #. "cherry-pick", the second %s a SHA1
-#: sequencer.c:334
+#: sequencer.c:339
 #, c-format
 msgid "%s: cannot parse parent commit %s"
 msgstr "%s：不能解析父提交 %s"
 
-#: sequencer.c:338
+#: sequencer.c:343
 #, c-format
 msgid "Cannot get commit message for %s"
 msgstr "不能得到 %s 的提交说明"
 
-#: sequencer.c:422
+#: sequencer.c:427
 #, c-format
 msgid "could not revert %s... %s"
 msgstr "不能还原 %s... %s"
 
-#: sequencer.c:423
+#: sequencer.c:428
 #, c-format
 msgid "could not apply %s... %s"
 msgstr "不能应用 %s... %s"
 
-#: sequencer.c:445 sequencer.c:904 builtin/log.c:286 builtin/log.c:709
-#: builtin/log.c:1325 builtin/log.c:1544 builtin/merge.c:348
+#: sequencer.c:450 sequencer.c:909 builtin/log.c:288 builtin/log.c:713
+#: builtin/log.c:1329 builtin/log.c:1548 builtin/merge.c:348
 #: builtin/shortlog.c:181
 msgid "revision walk setup failed"
 msgstr "版本遍历设置失败"
 
-#: sequencer.c:448
+#: sequencer.c:453
 msgid "empty commit set passed"
 msgstr "提供了空的提交集"
 
-#: sequencer.c:456
+#: sequencer.c:461
 #, c-format
 msgid "git %s: failed to read the index"
 msgstr "git %s: 无法读取暂存区"
 
-#: sequencer.c:461
+#: sequencer.c:466
 #, c-format
 msgid "git %s: failed to refresh the index"
 msgstr "git %s: 无法刷新暂存区"
 
-#: sequencer.c:546
+#: sequencer.c:551
 #, c-format
 msgid "Cannot %s during a %s"
 msgstr "无法 %s 在 %s 过程中"
 
-#: sequencer.c:568
+#: sequencer.c:573
 #, c-format
 msgid "Could not parse line %d."
 msgstr "无法解析第 %d 行。"
 
-#: sequencer.c:573
+#: sequencer.c:578
 msgid "No commits parsed."
 msgstr "未有提交被解析。"
 
-#: sequencer.c:586
+#: sequencer.c:591
 #, c-format
 msgid "Could not open %s"
 msgstr "不能打开 %s"
 
-#: sequencer.c:590
+#: sequencer.c:595
 #, c-format
 msgid "Could not read %s."
 msgstr "不能读取 %s。"
 
-#: sequencer.c:597
+#: sequencer.c:602
 #, c-format
 msgid "Unusable instruction sheet: %s"
 msgstr "无用的指令表单：%s"
 
-#: sequencer.c:625
+#: sequencer.c:630
 #, c-format
 msgid "Invalid key: %s"
 msgstr "无效键名：%s"
 
-#: sequencer.c:628
+#: sequencer.c:633
 #, c-format
 msgid "Invalid value for %s: %s"
 msgstr "无效的 %s 值：%s"
 
-#: sequencer.c:640
+#: sequencer.c:645
 #, c-format
 msgid "Malformed options sheet: %s"
 msgstr "非法的选项表单：%s"
 
-#: sequencer.c:661
+#: sequencer.c:666
 msgid "a cherry-pick or revert is already in progress"
 msgstr "一个拣选或还原操作已在进行"
 
-#: sequencer.c:662
+#: sequencer.c:667
 msgid "try \"git cherry-pick (--continue | --quit | --abort)\""
 msgstr "尝试 \"git cherry-pick (--continue | --quit | --abort)\""
 
-#: sequencer.c:666
+#: sequencer.c:671
 #, c-format
 msgid "Could not create sequencer directory %s"
 msgstr "无法创建序列目录 %s"
 
-#: sequencer.c:682 sequencer.c:767
+#: sequencer.c:687 sequencer.c:772
 #, c-format
 msgid "Error wrapping up %s."
 msgstr "错误收尾 %s。"
 
-#: sequencer.c:701 sequencer.c:835
+#: sequencer.c:706 sequencer.c:840
 msgid "no cherry-pick or revert in progress"
 msgstr "没有拣选或还原操作在进行"
 
-#: sequencer.c:703
+#: sequencer.c:708
 msgid "cannot resolve HEAD"
 msgstr "不能解析 HEAD"
 
-#: sequencer.c:705
+#: sequencer.c:710
 msgid "cannot abort from a branch yet to be born"
 msgstr "不能从未初始分支终止"
 
-#: sequencer.c:727
+#: sequencer.c:732
 #, c-format
 msgid "cannot open %s: %s"
 msgstr "不能打开 %s：%s"
 
-#: sequencer.c:730
+#: sequencer.c:735
 #, c-format
 msgid "cannot read %s: %s"
 msgstr "不能读取 %s：%s"
 
-#: sequencer.c:731
+#: sequencer.c:736
 msgid "unexpected end of file"
 msgstr "未预期的文件结束"
 
-#: sequencer.c:737
+#: sequencer.c:742
 #, c-format
 msgid "stored pre-cherry-pick HEAD file '%s' is corrupt"
 msgstr "保存预拣选提交的 HEAD 文件 '%s' 损坏"
 
-#: sequencer.c:760
+#: sequencer.c:765
 #, c-format
 msgid "Could not format %s."
 msgstr "不能格式化 %s。"
 
-#: sequencer.c:922
+#: sequencer.c:927
 msgid "Can't revert as initial commit"
 msgstr "不能作为初始提交还原"
 
-#: sequencer.c:923
+#: sequencer.c:928
 msgid "Can't cherry-pick into empty head"
 msgstr "不能拣选到空分支"
 
@@ -896,56 +904,56 @@ msgstr "领先 %d，落后 %d] "
 msgid "(no branch)"
 msgstr "（非分支）"
 
-#: builtin/branch.c:562
+#: builtin/branch.c:566
 msgid "some refs could not be read"
 msgstr "一些引用无法读取"
 
-#: builtin/branch.c:575
+#: builtin/branch.c:579
 msgid "cannot rename the current branch while not on any."
 msgstr "无法重命名不存在的当前分支。"
 
-#: builtin/branch.c:585
+#: builtin/branch.c:589
 #, c-format
 msgid "Invalid branch name: '%s'"
 msgstr "无效的分支名：'%s'"
 
-#: builtin/branch.c:600
+#: builtin/branch.c:604
 msgid "Branch rename failed"
 msgstr "分支重命名失败"
 
-#: builtin/branch.c:604
+#: builtin/branch.c:608
 #, c-format
 msgid "Renamed a misnamed branch '%s' away"
 msgstr "重命名掉一个错误命名的旧分支 '%s'"
 
-#: builtin/branch.c:608
+#: builtin/branch.c:612
 #, c-format
 msgid "Branch renamed to %s, but HEAD is not updated!"
 msgstr "分支重命名为 %s，但 HEAD 没有更新！"
 
-#: builtin/branch.c:615
+#: builtin/branch.c:619
 msgid "Branch is renamed, but update of config-file failed"
 msgstr "分支被重命名，但更新 config 文件失败"
 
-#: builtin/branch.c:630
+#: builtin/branch.c:634
 #, c-format
 msgid "malformed object name %s"
 msgstr "非法的对象名 %s"
 
-#: builtin/branch.c:654
+#: builtin/branch.c:658
 #, c-format
 msgid "could not write branch description template: %s\n"
 msgstr "不能写分支描述模版：%s\n"
 
-#: builtin/branch.c:742
+#: builtin/branch.c:746
 msgid "Failed to resolve HEAD as a valid ref."
 msgstr "无法将 HEAD 解析为有效引用。"
 
-#: builtin/branch.c:747 builtin/clone.c:558
+#: builtin/branch.c:751 builtin/clone.c:558
 msgid "HEAD not found below refs/heads!"
 msgstr "未在 /refs/heads 下发现 HEAD！"
 
-#: builtin/branch.c:805
+#: builtin/branch.c:809
 msgid "-a and -r options to 'git branch' do not make sense with a branch name"
 msgstr "'git branch' 的 -a 和 -r 选项带一个分支名参数没有意义"
 
@@ -1007,11 +1015,11 @@ msgid "path '%s' is unmerged"
 msgstr "路径 '%s' 未合并"
 
 #: builtin/checkout.c:302 builtin/checkout.c:498 builtin/clone.c:583
-#: builtin/merge.c:809
+#: builtin/merge.c:811
 msgid "unable to write new index file"
 msgstr "无法写新的暂存区文件"
 
-#: builtin/checkout.c:319 builtin/diff.c:298 builtin/merge.c:406
+#: builtin/checkout.c:319 builtin/diff.c:302 builtin/merge.c:408
 msgid "diff_setup_done failed"
 msgstr "diff_setup_done 失败"
 
@@ -1652,7 +1660,7 @@ msgstr " （根提交）"
 msgid "could not parse HEAD commit"
 msgstr "无法解析 HEAD 提交"
 
-#: builtin/commit.c:1452 builtin/merge.c:507
+#: builtin/commit.c:1452 builtin/merge.c:509
 #, c-format
 msgid "could not open '%s' for reading"
 msgstr "无法打开 '%s' 读取"
@@ -1676,7 +1684,7 @@ msgstr "无法读取提交说明：%s"
 msgid "Aborting commit due to empty commit message.\n"
 msgstr "终止提交因为提交说明为空。\n"
 
-#: builtin/commit.c:1514 builtin/merge.c:933 builtin/merge.c:966
+#: builtin/commit.c:1514 builtin/merge.c:935 builtin/merge.c:968
 msgid "failed to write commit object"
 msgstr "写提交对象失败"
 
@@ -1791,26 +1799,26 @@ msgstr "'%s'：不是一个正规文件或符号链接"
 msgid "invalid option: %s"
 msgstr "无效选项：%s"
 
-#: builtin/diff.c:293
+#: builtin/diff.c:297
 msgid "Not a git repository"
 msgstr "不是一个 git 版本库"
 
-#: builtin/diff.c:343
+#: builtin/diff.c:347
 #, c-format
 msgid "invalid object '%s' given."
 msgstr "提供了无效对象 '%s'。"
 
-#: builtin/diff.c:348
+#: builtin/diff.c:352
 #, c-format
 msgid "more than %d trees given: '%s'"
 msgstr "提供了超过 %d 个树对象：'%s'"
 
-#: builtin/diff.c:358
+#: builtin/diff.c:362
 #, c-format
 msgid "more than two blobs given: '%s'"
 msgstr "提供了超过两个 blob 对象：'%s'"
 
-#: builtin/diff.c:366
+#: builtin/diff.c:370
 #, c-format
 msgid "unhandled object '%s' given."
 msgstr "提供了无法处理的对象 '%s'。"
@@ -2030,32 +2038,32 @@ msgstr "开关 `%c' 期望一个数字值"
 msgid "cannot open '%s'"
 msgstr "不能打开 '%s'"
 
-#: builtin/grep.c:889
+#: builtin/grep.c:888
 msgid "no pattern given."
 msgstr "未提供模式匹配。"
 
-#: builtin/grep.c:903
+#: builtin/grep.c:902
 #, c-format
 msgid "bad object %s"
 msgstr "坏对象 %s"
 
-#: builtin/grep.c:944
+#: builtin/grep.c:943
 msgid "--open-files-in-pager only works on the worktree"
 msgstr "--open-files-in-pager 仅用于工作区"
 
-#: builtin/grep.c:967
+#: builtin/grep.c:966
 msgid "--cached or --untracked cannot be used with --no-index."
 msgstr "--cached 或 --untracked 不能与 --no-index 共用"
 
-#: builtin/grep.c:972
+#: builtin/grep.c:971
 msgid "--no-index or --untracked cannot be used with revs."
 msgstr "--no-index 或 --untracked 不能和版本共用。"
 
-#: builtin/grep.c:975
+#: builtin/grep.c:974
 msgid "--[no-]exclude-standard cannot be used for tracked contents."
 msgstr "--[no-]exclude-standard 不能用于跟踪内容。"
 
-#: builtin/grep.c:983
+#: builtin/grep.c:982
 msgid "both --cached and trees are given."
 msgstr "同时给出了 --cached 和树对象。"
 
@@ -2203,109 +2211,109 @@ msgstr "不能访问当前工作目录"
 msgid "Cannot access work tree '%s'"
 msgstr "不能访问工作区 '%s'"
 
-#: builtin/log.c:185
+#: builtin/log.c:187
 #, c-format
 msgid "Final output: %d %s\n"
 msgstr "最终输出：%d %s\n"
 
-#: builtin/log.c:393 builtin/log.c:479
+#: builtin/log.c:395 builtin/log.c:483
 #, c-format
 msgid "Could not read object %s"
 msgstr "无法读取对象 %s"
 
-#: builtin/log.c:503
+#: builtin/log.c:507
 #, c-format
 msgid "Unknown type: %d"
 msgstr "未知类型：%d"
 
-#: builtin/log.c:592
+#: builtin/log.c:596
 msgid "format.headers without value"
 msgstr "format.headers 没有值"
 
-#: builtin/log.c:665
+#: builtin/log.c:669
 msgid "name of output directory is too long"
 msgstr "输出目录名太长"
 
-#: builtin/log.c:676
+#: builtin/log.c:680
 #, c-format
 msgid "Cannot open patch file %s"
 msgstr "无法打开补丁文件 %s"
 
-#: builtin/log.c:690
+#: builtin/log.c:694
 msgid "Need exactly one range."
 msgstr "只需要一个范围。"
 
-#: builtin/log.c:698
+#: builtin/log.c:702
 msgid "Not a range."
 msgstr "不是一个范围。"
 
-#: builtin/log.c:735
+#: builtin/log.c:739
 msgid "Could not extract email from committer identity."
 msgstr "无法从提交者身份中提取邮件地址。"
 
-#: builtin/log.c:781
+#: builtin/log.c:785
 msgid "Cover letter needs email format"
 msgstr "信封需要邮件地址格式"
 
-#: builtin/log.c:875
+#: builtin/log.c:879
 #, c-format
 msgid "insane in-reply-to: %s"
 msgstr "不正常的 in-reply-to：%s"
 
-#: builtin/log.c:948
+#: builtin/log.c:952
 msgid "Two output directories?"
 msgstr "两个输出目录？"
 
-#: builtin/log.c:1169
+#: builtin/log.c:1173
 #, c-format
 msgid "bogus committer info %s"
 msgstr "虚假的提交者信息 %s"
 
-#: builtin/log.c:1214
+#: builtin/log.c:1218
 msgid "-n and -k are mutually exclusive."
 msgstr "-n 和 -k 互斥。"
 
-#: builtin/log.c:1216
+#: builtin/log.c:1220
 msgid "--subject-prefix and -k are mutually exclusive."
 msgstr "--subject-prefix 和 -k 互斥。"
 
-#: builtin/log.c:1221 builtin/shortlog.c:284
+#: builtin/log.c:1225 builtin/shortlog.c:284
 #, c-format
 msgid "unrecognized argument: %s"
 msgstr "未识别的参数：%s"
 
-#: builtin/log.c:1224
+#: builtin/log.c:1228
 msgid "--name-only does not make sense"
 msgstr "--name-only 无意义"
 
-#: builtin/log.c:1226
+#: builtin/log.c:1230
 msgid "--name-status does not make sense"
 msgstr "--name-status 无意义"
 
-#: builtin/log.c:1228
+#: builtin/log.c:1232
 msgid "--check does not make sense"
 msgstr "--check 无意义"
 
-#: builtin/log.c:1251
+#: builtin/log.c:1255
 msgid "standard output, or directory, which one?"
 msgstr "标准输出或目录，哪一个？"
 
-#: builtin/log.c:1253
+#: builtin/log.c:1257
 #, c-format
 msgid "Could not create directory '%s'"
 msgstr "无法创建目录 '%s'"
 
-#: builtin/log.c:1406
+#: builtin/log.c:1410
 msgid "Failed to create output files"
 msgstr "无法创建输出文件"
 
-#: builtin/log.c:1510
+#: builtin/log.c:1514
 #, c-format
 msgid ""
 "Could not find a tracked remote branch, please specify <upstream> manually.\n"
 msgstr "无法找到跟踪的远程分支，请手工提供 <upstream>。\n"
 
-#: builtin/log.c:1526 builtin/log.c:1528 builtin/log.c:1540
+#: builtin/log.c:1530 builtin/log.c:1532 builtin/log.c:1544
 #, c-format
 msgid "Unknown commit %s"
 msgstr "未知提交 %s"
@@ -2369,53 +2377,53 @@ msgstr "完成 SQUASH_MSG"
 msgid "No merge message -- not updating HEAD\n"
 msgstr "无合并信息 -- 未更新 HEAD\n"
 
-#: builtin/merge.c:435
+#: builtin/merge.c:437
 #, c-format
 msgid "'%s' does not point to a commit"
 msgstr "'%s' 没有指向一个提交"
 
-#: builtin/merge.c:534
+#: builtin/merge.c:536
 #, c-format
 msgid "Bad branch.%s.mergeoptions string: %s"
 msgstr "错的 branch.%s.mergeoptions 字串：%s"
 
-#: builtin/merge.c:627
+#: builtin/merge.c:629
 msgid "git write-tree failed to write a tree"
 msgstr "git write-tree 无法写入一树对象"
 
-#: builtin/merge.c:677
+#: builtin/merge.c:679
 msgid "failed to read the cache"
 msgstr "无法读取缓存"
 
-#: builtin/merge.c:694
+#: builtin/merge.c:696
 msgid "Unable to write index."
 msgstr "不能写暂存区。"
 
-#: builtin/merge.c:707
+#: builtin/merge.c:709
 msgid "Not handling anything other than two heads merge."
 msgstr "不能处理两个头合并之外的任何操作。"
 
-#: builtin/merge.c:721
+#: builtin/merge.c:723
 #, c-format
 msgid "Unknown option for merge-recursive: -X%s"
 msgstr "merge-recursive 的未知选项：-X%s"
 
-#: builtin/merge.c:735
+#: builtin/merge.c:737
 #, c-format
 msgid "unable to write %s"
 msgstr "不能写 %s"
 
-#: builtin/merge.c:874
+#: builtin/merge.c:876
 #, c-format
 msgid "Could not read from '%s'"
 msgstr "不能从 '%s' 读取"
 
-#: builtin/merge.c:883
+#: builtin/merge.c:885
 #, c-format
 msgid "Not committing merge; use 'git commit' to complete the merge.\n"
 msgstr "未提交合并，使用 'git commit' 完成此次合并。\n"
 
-#: builtin/merge.c:889
+#: builtin/merge.c:891
 msgid ""
 "Please enter a commit message to explain why this merge is necessary,\n"
 "especially if it merges an updated upstream into a topic branch.\n"
@@ -2428,47 +2436,47 @@ msgstr ""
 "\n"
 "以 '#' 开头的行将被忽略，而且空提交说明将会终止提交。\n"
 
-#: builtin/merge.c:913
+#: builtin/merge.c:915
 msgid "Empty commit message."
 msgstr "空提交信息。"
 
-#: builtin/merge.c:925
+#: builtin/merge.c:927
 #, c-format
 msgid "Wonderful.\n"
 msgstr "太棒了。\n"
 
-#: builtin/merge.c:998
+#: builtin/merge.c:1000
 #, c-format
 msgid "Automatic merge failed; fix conflicts and then commit the result.\n"
 msgstr "自动合并失败，修正冲突然后提交修正的结果。\n"
 
-#: builtin/merge.c:1014
+#: builtin/merge.c:1016
 #, c-format
 msgid "'%s' is not a commit"
 msgstr "'%s' 不是一个提交"
 
-#: builtin/merge.c:1055
+#: builtin/merge.c:1057
 msgid "No current branch."
 msgstr "当前不在分支上。"
 
-#: builtin/merge.c:1057
+#: builtin/merge.c:1059
 msgid "No remote for the current branch."
 msgstr "当前分支没有远程版本库。"
 
-#: builtin/merge.c:1059
+#: builtin/merge.c:1061
 msgid "No default upstream defined for the current branch."
 msgstr "当前分支未定义默认上游分支。"
 
-#: builtin/merge.c:1064
+#: builtin/merge.c:1066
 #, c-format
 msgid "No remote tracking branch for %s from %s"
 msgstr "%s 没有来自 %s 的远程跟踪分支"
 
-#: builtin/merge.c:1186
+#: builtin/merge.c:1188
 msgid "There is no merge to abort (MERGE_HEAD missing)."
 msgstr "没有要终止的合并（MERGE_HEAD 丢失）"
 
-#: builtin/merge.c:1202 git-pull.sh:31
+#: builtin/merge.c:1204 git-pull.sh:31
 msgid ""
 "You have not concluded your merge (MERGE_HEAD exists).\n"
 "Please, commit your changes before you can merge."
@@ -2476,11 +2484,11 @@ msgstr ""
 "您尚未结束您的合并（存在 MERGE_HEAD）。\n"
 "请先提交您的修改，您才能合并。"
 
-#: builtin/merge.c:1205 git-pull.sh:34
+#: builtin/merge.c:1207 git-pull.sh:34
 msgid "You have not concluded your merge (MERGE_HEAD exists)."
 msgstr "您尚未结束您的合并（存在 MERGE_HEAD）。"
 
-#: builtin/merge.c:1209
+#: builtin/merge.c:1211
 msgid ""
 "You have not concluded your cherry-pick (CHERRY_PICK_HEAD exists).\n"
 "Please, commit your changes before you can merge."
@@ -2488,84 +2496,84 @@ msgstr ""
 "您尚未结束您的拣选（存在 CHERRY_PICK_HEAD）。\n"
 "请先提交您的修改，您才能合并。"
 
-#: builtin/merge.c:1212
+#: builtin/merge.c:1214
 msgid "You have not concluded your cherry-pick (CHERRY_PICK_HEAD exists)."
 msgstr "您尚未结束您的拣选（存在 CHERRY_PICK_HEAD）。"
 
-#: builtin/merge.c:1221
+#: builtin/merge.c:1223
 msgid "You cannot combine --squash with --no-ff."
 msgstr "您不能将 --squash 与 --no-ff 共用。"
 
-#: builtin/merge.c:1226
+#: builtin/merge.c:1228
 msgid "You cannot combine --no-ff with --ff-only."
 msgstr "您不能将 --no-ff 与 --ff-only 共用。"
 
-#: builtin/merge.c:1233
+#: builtin/merge.c:1235
 msgid "No commit specified and merge.defaultToUpstream not set."
 msgstr "未指出提交并且 merge.defaultToUpstream 未设置。"
 
-#: builtin/merge.c:1264
+#: builtin/merge.c:1266
 msgid "Can merge only exactly one commit into empty head"
 msgstr "只可将一个提交合并到空分支上"
 
-#: builtin/merge.c:1267
+#: builtin/merge.c:1269
 msgid "Squash commit into empty head not supported yet"
 msgstr "尚不支持到空分支的压缩提交"
 
-#: builtin/merge.c:1269
+#: builtin/merge.c:1271
 msgid "Non-fast-forward commit does not make sense into an empty head"
 msgstr "到空分支的非快进式提交没有意义"
 
-#: builtin/merge.c:1273 builtin/merge.c:1317
+#: builtin/merge.c:1275 builtin/merge.c:1319
 #, c-format
 msgid "%s - not something we can merge"
 msgstr "%s - 不是我们可以合并的东西"
 
-#: builtin/merge.c:1383
+#: builtin/merge.c:1385
 #, c-format
 msgid "Updating %s..%s\n"
 msgstr "更新 %s..%s\n"
 
-#: builtin/merge.c:1421
+#: builtin/merge.c:1423
 #, c-format
 msgid "Trying really trivial in-index merge...\n"
 msgstr "尝试非常小的暂存区内合并...\n"
 
-#: builtin/merge.c:1428
+#: builtin/merge.c:1430
 #, c-format
 msgid "Nope.\n"
 msgstr "无。\n"
 
-#: builtin/merge.c:1460
+#: builtin/merge.c:1462
 msgid "Not possible to fast-forward, aborting."
 msgstr "不可能快进式，终止。"
 
-#: builtin/merge.c:1483 builtin/merge.c:1560
+#: builtin/merge.c:1485 builtin/merge.c:1562
 #, c-format
 msgid "Rewinding the tree to pristine...\n"
 msgstr "将树回滚至原始状态...\n"
 
-#: builtin/merge.c:1487
+#: builtin/merge.c:1489
 #, c-format
 msgid "Trying merge strategy %s...\n"
 msgstr "尝试合并策略 %s...\n"
 
-#: builtin/merge.c:1551
+#: builtin/merge.c:1553
 #, c-format
 msgid "No merge strategy handled the merge.\n"
 msgstr "没有合并策略处理此合并。\n"
 
-#: builtin/merge.c:1553
+#: builtin/merge.c:1555
 #, c-format
 msgid "Merge with strategy %s failed.\n"
 msgstr "使用策略 %s 合并失败。\n"
 
-#: builtin/merge.c:1562
+#: builtin/merge.c:1564
 #, c-format
 msgid "Using the %s to prepare resolving by hand.\n"
 msgstr "使用 %s 以准备手工解决。\n"
 
-#: builtin/merge.c:1573
+#: builtin/merge.c:1575
 #, c-format
 msgid "Automatic merge went well; stopped before committing as requested\n"
 msgstr "自动合并进展顺利，按要求在提交前停止\n"
@@ -3204,11 +3212,11 @@ msgstr "已更新tag '%s'（曾为 %s）\n"
 msgid "You need to set your committer info first"
 msgstr "您需要先设置你的提交者信息"
 
-#: git-am.sh:135
+#: git-am.sh:136
 msgid "Repository lacks necessary blobs to fall back on 3-way merge."
 msgstr "版本库缺乏必要的 blob 数据以进行三路合并。"
 
-#: git-am.sh:144
+#: git-am.sh:147
 msgid ""
 "Did you hand edit your patch?\n"
 "It does not apply to blobs recorded in its index."
@@ -3216,46 +3224,46 @@ msgstr ""
 "您是否曾手动编辑过您的补丁？\n"
 "无法应用补丁到暂存区的数据中。"
 
-#: git-am.sh:153
+#: git-am.sh:156
 msgid "Falling back to patching base and 3-way merge..."
 msgstr "转而使用补丁应用的基础版本和三路合并..."
 
-#: git-am.sh:265
+#: git-am.sh:268
 msgid "Only one StGIT patch series can be applied at once"
 msgstr "一次只能有一个 StGIT 补丁队列被应用"
 
-#: git-am.sh:352
+#: git-am.sh:355
 #, sh-format
 msgid "Patch format $patch_format is not supported."
 msgstr "不支持 $patch_format 补丁格式。"
 
-#: git-am.sh:354
+#: git-am.sh:357
 msgid "Patch format detection failed."
 msgstr "补丁格式检测失败。"
 
-#: git-am.sh:406
+#: git-am.sh:409
 msgid "-d option is no longer supported.  Do not use."
 msgstr "不再支持 -d 选项。不要使用。"
 
-#: git-am.sh:469
+#: git-am.sh:472
 #, sh-format
 msgid "previous rebase directory $dotest still exists but mbox given."
 msgstr "之前的变基目录 $dotest 仍然存在但给出了mbox。"
 
-#: git-am.sh:474
+#: git-am.sh:477
 msgid "Please make up your mind. --skip or --abort?"
 msgstr "请下决心。--skip 或是 --abort ？"
 
-#: git-am.sh:501
+#: git-am.sh:504
 msgid "Resolve operation not in progress, we are not resuming."
 msgstr "解决操作未进行，我们不会继续。"
 
-#: git-am.sh:567
+#: git-am.sh:570
 #, sh-format
 msgid "Dirty index: cannot apply patches (dirty: $files)"
 msgstr "脏的暂存区：不能应用补丁（脏文件：$files）"
 
-#: git-am.sh:743
+#: git-am.sh:746
 msgid "cannot be interactive without stdin connected to a terminal."
 msgstr "没有和终端关联的标准输入不能进行交互式操作。"
 
@@ -3263,20 +3271,20 @@ msgstr "没有和终端关联的标准输入不能进行交互式操作。"
 #. TRANSLATORS: Make sure to include [y], [n], [e], [v] and [a]
 #. in your translation. The program will only accept English
 #. input at this point.
-#: git-am.sh:754
+#: git-am.sh:757
 msgid "Apply? [y]es/[n]o/[e]dit/[v]iew patch/[a]ccept all "
 msgstr "应用？[y]es/[n]o/[e]dit/[v]iew patch/[a]ccept all "
 
-#: git-am.sh:790
+#: git-am.sh:793
 #, sh-format
 msgid "Applying: $FIRSTLINE"
 msgstr "正应用：$FIRSTLINE"
 
-#: git-am.sh:835
+#: git-am.sh:838
 msgid "No changes -- Patch already applied."
 msgstr "没有变更 -- 补丁已经应用过。"
 
-#: git-am.sh:861
+#: git-am.sh:864
 msgid "applying to an empty history"
 msgstr "正应用到一个空历史上"
 
