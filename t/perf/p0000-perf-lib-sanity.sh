@@ -38,9 +38,18 @@ test_expect_success 'test_export works with weird vars' '
 	test "$bar" = "weird # variable"
 '
 
+test_perf 'important variables available in subshells' '
+	test -n "$HOME" &&
+	test -n "$TEST_DIRECTORY" &&
+	test -n "$TRASH_DIRECTORY" &&
+	test -n "$GIT_BUILD_DIR"
+'
+
 test_perf 'test-lib-functions correctly loaded in subshells' '
 	: >a &&
-	test_path_is_file a
+	test_path_is_file a &&
+	: >b &&
+	test_cmp a b
 '
 
 test_done
