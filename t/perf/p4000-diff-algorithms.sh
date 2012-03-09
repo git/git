@@ -7,7 +7,7 @@ test_description="Tests diff generation performance"
 test_perf_default_repo
 
 test_perf 'log -3000 (baseline)' '
-	git log -1000 >/dev/null
+	git log -3000 >/dev/null
 '
 
 test_perf 'log --raw -3000 (tree-only)' '
