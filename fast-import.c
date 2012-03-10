@@ -1640,6 +1640,8 @@ static int tree_content_get(
 		n = slash1 - p;
 	else
 		n = strlen(p);
+	if (!n)
+		die("Empty path component found in input");
 
 	if (!root->tree)
 		load_tree(root);
