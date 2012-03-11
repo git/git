@@ -118,7 +118,7 @@ test_expect_success 'with failing hook requiring GIT_PREFIX' '
 	git checkout -- file
 '
 
-test_expect_failure 'check the author in hook' '
+test_expect_success 'check the author in hook' '
 	write_script "$HOOK" <<-\EOF &&
 	test "$GIT_AUTHOR_NAME" = "New Author" &&
 	test "$GIT_AUTHOR_EMAIL" = "newauthor@example.com"
