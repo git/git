@@ -558,7 +558,7 @@ foo
 bar
 EOF
 
-test_expect_failure 'switch cwd before committing notes merge' '
+test_expect_success 'switch cwd before committing notes merge' '
 	git notes add -m foo HEAD &&
 	git notes --ref=other add -m bar HEAD &&
 	test_must_fail git notes merge refs/notes/other &&
