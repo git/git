@@ -553,4 +553,23 @@ test_expect_success 'resolve situation by aborting the notes merge' '
 	verify_notes z
 '
 
+cat >expect_notes <<EOF
+foo
+bar
+EOF
+
+test_expect_failure 'switch cwd before committing notes merge' '
+	git notes add -m foo HEAD &&
+	git notes --ref=other add -m bar HEAD &&
+	test_must_fail git notes merge refs/notes/other &&
+	(
+		cd .git/NOTES_MERGE_WORKTREE &&
+		echo "foo" > $(git rev-parse HEAD) &&
+		echo "bar" >> $(git rev-parse HEAD) &&
+		git notes merge --commit
+	) &&
+	git notes show HEAD > actual_notes &&
+	test_cmp expect_notes actual_notes
+'
+
 test_done
