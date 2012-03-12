@@ -1,6 +1,6 @@
 #!/bin/sh
 
-accept_rerere=t generate=no update= diff=
+accept_rerere="--rerere-autoupdate" generate=no update= diff=
 while case "$#,$1" in 0,*) break;; *,-*) ;; esac
 do
 	case "$1" in
@@ -21,17 +21,12 @@ done
 case "$generate" in
 no)
 	accept_rerere () {
-		if test -z "$accept_rerere"
+		if ! git write-tree 2>/dev/null
 		then
-			return 1
-		fi
-		if git diff |
-		   grep -e "^.+" -e "^+." |
-		   grep -e "^..<<<<<<<" -e "^..=======" -e "^..>>>>>>>" >/dev/null
-		then
+			git rerere remaining
 			return 1
 		else
-			EDITOR=: git commit -a --no-verify
+			EDITOR=: git commit --no-verify
 			echo "Accepted previous resolution"
 			return 0
 		fi
@@ -45,7 +40,9 @@ no)
 			save=$(git rev-parse --verify HEAD)
 
 			echo >&2 "* $branch"
-			git merge --no-edit "$branch" || accept_rerere || exit
+			git merge $accept_rerere --no-edit "$branch" ||
+			accept_rerere ||
+			exit
 
 			this=$(git rev-parse --verify HEAD)
 			if test "$this" = "$save"
