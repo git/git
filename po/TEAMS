@@ -4,6 +4,9 @@ Core Git translation language teams
 Language:	is (Icelandic)
 Leader:		Ævar Arnfjörð Bjarmason <avarab@gmail.com>
 
+Language:	sv (Swedish)
+Leader:		Peter Krefting <peter@softwolves.pp.se>
+
 Language:	zh_CN (Simplified Chinese)
 Repository:	https://github.com/gotgit/git-po-zh_CN/
 Leader:		Jiang Xin <worldhello.net@gmail.com>

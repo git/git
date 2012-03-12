@@ -1,31 +1,26 @@
-# Chinese translations for Git package
-# Git 软件包的简体中文翻译.
-# Copyright (C) 2012 Jiang Xin <worldhello.net AT gmail.com>
+# Swedish translations for Git.
+# Copyright (C) 2010-2012 Peter krefting <peter@softwolves.pp.se>
 # This file is distributed under the same license as the Git package.
-# Contributers:
-#   - Jiang Xin <worldhello.net AT gmail.com>
-#   - Riku <lu.riku AT gmail.com>
-#   - Zhuang Ya <zhuangya AT me.com>
-#   - Lian Cheng <rhythm.mail AT gmail.com>
+# Peter Krefting <peter@softwolves.pp.se>, 2010, 2011, 2012.
 #
 msgid ""
 msgstr ""
-"Project-Id-Version: Git\n"
+"Project-Id-Version: git 1.7.3\n"
 "Report-Msgid-Bugs-To: Git Mailing List <git@vger.kernel.org>\n"
 "POT-Creation-Date: 2012-03-08 10:19+0800\n"
-"PO-Revision-Date: 2012-01-30 00:00+0800\n"
-"Last-Translator: Jiang Xin <worldhello.net@gmail.com>\n"
-"Language-Team: GitHub <https://github.com/gotgit/git/>\n"
-"Language: zh_CN\n"
+"PO-Revision-Date: 2012-03-08 10:53+0100\n"
+"Last-Translator: Peter Krefting <peter@softwolves.pp.se>\n"
+"Language-Team: Swedish <tp-sv@listor.tp-sv.se>\n"
+"Language: sv\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"Plural-Forms: nplurals=1; plural=0;\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
 
 #: advice.c:34
 #, c-format
 msgid "hint: %.*s\n"
-msgstr "提示：%.*s\n"
+msgstr "tips: %.*s\n"
 
 #.
 #. * Message used both when 'git commit' fails and when
@@ -38,49 +33,48 @@ msgid ""
 "appropriate to mark resolution and make a commit,\n"
 "or use 'git commit -a'."
 msgstr ""
-"请先在工作区改正文件，然后酌情使用\n"
-"'git add/rm <file>' 标记解决方案，\n"
-"或使用 'git commit -a'。"
+"Rätta dem i din arbetskatalog,\n"
+"och använd sedan \"git add/rm <fil>\" som\n"
+"lämpligt för att ange lösning och checka in,\n"
+"eller använd \"git commit -a\"."
 
 #: commit.c:47
 #, c-format
 msgid "could not parse %s"
-msgstr "不能解析 %s"
+msgstr "kunde inte tolka %s"
 
 #: commit.c:49
 #, c-format
 msgid "%s %s is not a commit!"
-msgstr "%s %s 不是一个提交!"
+msgstr "%s %s är inte en incheckning!"
 
 #: compat/obstack.c:406 compat/obstack.c:408
 msgid "memory exhausted"
-msgstr "内存耗尽"
+msgstr "minnet slut"
 
 #: connected.c:39
 msgid "Could not run 'git rev-list'"
-msgstr "不能执行 'git rev-list'"
+msgstr "Kunde inte köra \"git rev-list\""
 
 #: connected.c:48
 #, c-format
 msgid "failed write to rev-list: %s"
-msgstr "无法写入 rev-list：%s"
+msgstr "kunde inte skriva till rev-list: %s"
 
 #: connected.c:56
 #, c-format
 msgid "failed to close rev-list's stdin: %s"
-msgstr "无法关闭 rev-list 的标准输入：%s"
+msgstr "kunde inte stänga rev-list:s standard in: %s"
 
-#  注意保持前导空格
 #: diff.c:105
 #, c-format
 msgid "  Failed to parse dirstat cut-off percentage '%.*s'\n"
-msgstr "  无法解析 dirstat 阈值 '%.*s'\n"
+msgstr "  Misslyckades tolka dirstat-avskärningsprocentandel \"%.*s\"\n"
 
-#  注意保持前导空格
 #: diff.c:110
 #, c-format
 msgid "  Unknown dirstat parameter '%.*s'\n"
-msgstr "  未知 dirstat 参数 '%.*s'\n"
+msgstr "  Okänd dirstat-parameter \"%.*s\"\n"
 
 #: diff.c:210
 #, c-format
@@ -88,30 +82,33 @@ msgid ""
 "Found errors in 'diff.dirstat' config variable:\n"
 "%s"
 msgstr ""
-"配置变量 'diff.dirstat' 出错：\n"
+"Hittade fel i konfigurationsvariabeln \"diff.dirstat\":\n"
 "%s"
 
 #: diff.c:1336
 msgid " 0 files changed\n"
-msgstr "0 个文件被修改\n"
+msgstr " 0 filer ändrade\n"
 
 #: diff.c:1340
 #, c-format
 msgid " %d file changed"
 msgid_plural " %d files changed"
-msgstr[0] " %d 个文件被修改"
+msgstr[0] " %d fil ändrad"
+msgstr[1] " %d filer ändrade"
 
 #: diff.c:1357
 #, c-format
 msgid ", %d insertion(+)"
 msgid_plural ", %d insertions(+)"
-msgstr[0] "，插入 %d 行(+)"
+msgstr[0] ", %d tillägg(+)"
+msgstr[1] ", %d tillägg(+)"
 
 #: diff.c:1368
 #, c-format
 msgid ", %d deletion(-)"
 msgid_plural ", %d deletions(-)"
-msgstr[0] "，删除 %d 行(-)"
+msgstr[0] ", %d borttagning(-)"
+msgstr[1] ", %d borttagningar(-)"
 
 #: diff.c:3424
 #, c-format
@@ -119,35 +116,35 @@ msgid ""
 "Failed to parse --dirstat/-X option parameter:\n"
 "%s"
 msgstr ""
-"无法解析 --dirstat/-X 选项的参数：\n"
+"Misslyckades tolka argument till flaggan --dirstat/-X;\n"
 "%s"
 
 #: gpg-interface.c:59
 msgid "could not run gpg."
-msgstr "不能执行 gpg。"
+msgstr "kunde inte köra gpg."
 
 #: gpg-interface.c:71
 msgid "gpg did not accept the data"
-msgstr "gpg 没有接受数据"
+msgstr "gpg godtog inte data"
 
 #: gpg-interface.c:82
 msgid "gpg failed to sign the data"
-msgstr "gpg 无法为数据签名"
+msgstr "gpg misslyckades signera data"
 
 #: grep.c:1280
 #, c-format
 msgid "'%s': unable to read %s"
-msgstr "'%s'：无法读取 %s"
+msgstr "\"%s\" kunde inte läsa %s"
 
 #: grep.c:1297
 #, c-format
 msgid "'%s': %s"
-msgstr "'%s'：%s"
+msgstr "\"%s\": %s"
 
 #: grep.c:1308
 #, c-format
 msgid "'%s': short read %s"
-msgstr "'%s'：读取不完整 %s"
+msgstr "\"%s\": kort läsning %s"
 
 #: help.c:287
 #, c-format
@@ -155,21 +152,25 @@ msgid ""
 "'%s' appears to be a git command, but we were not\n"
 "able to execute it. Maybe git-%s is broken?"
 msgstr ""
-"'%s' 像是一个 git 命令，但却无法运行。\n"
-"可能是 git-%s 受损？"
+"\"%s\" verkar vara ett git-kommando, men vi kan inte\n"
+"köra det. Kanske git-%s är trasigt?"
 
 #: remote.c:1607
 #, c-format
 msgid "Your branch is ahead of '%s' by %d commit.\n"
 msgid_plural "Your branch is ahead of '%s' by %d commits.\n"
-msgstr[0] "您的分支领先 '%s' 共 %d 个提交。\n"
+msgstr[0] "Din gren ligger före \"%s\" med %d incheckning.\n"
+msgstr[1] "Din gren ligger före \"%s\" med %d incheckningar.\n"
 
 #: remote.c:1613
 #, c-format
 msgid "Your branch is behind '%s' by %d commit, and can be fast-forwarded.\n"
 msgid_plural ""
 "Your branch is behind '%s' by %d commits, and can be fast-forwarded.\n"
-msgstr[0] "您的分支落后 '%s' 共 %d 个提交，且可以快进。\n"
+msgstr[0] ""
+"Din gren ligger efter \"%s\" med %d incheckning, och kan snabbspolas.\n"
+msgstr[1] ""
+"Din gren ligger efter \"%s\" med %d incheckningar, och kan snabbspolas.\n"
 
 #: remote.c:1621
 #, c-format
@@ -180,28 +181,31 @@ msgid_plural ""
 "Your branch and '%s' have diverged,\n"
 "and have %d and %d different commits each, respectively.\n"
 msgstr[0] ""
-"您的分支和 '%s' 出现了偏离，\n"
-"并且各自分别有 %d 和 %d 处不同的提交。\n"
+"Din gren och \"%s\" har divergerat,\n"
+"och har %d respektive %d olika incheckning.\n"
+msgstr[1] ""
+"Din gren och \"%s\" har divergerat,\n"
+"och har %d respektive %d olika incheckningar.\n"
 
 #: sequencer.c:120 builtin/merge.c:864 builtin/merge.c:985
 #: builtin/merge.c:1095 builtin/merge.c:1105
 #, c-format
 msgid "Could not open '%s' for writing"
-msgstr "无法打开 '%s' 以写入"
+msgstr "Kunde inte öppna \"%s\" för skrivning"
 
 #: sequencer.c:122 builtin/merge.c:334 builtin/merge.c:867
 #: builtin/merge.c:1097 builtin/merge.c:1110
 #, c-format
 msgid "Could not write to '%s'"
-msgstr "无法写入 '%s'"
+msgstr "Kunde inte skriva till \"%s\""
 
 #: sequencer.c:143
 msgid ""
 "after resolving the conflicts, mark the corrected paths\n"
 "with 'git add <paths>' or 'git rm <paths>'"
 msgstr ""
-"冲突解决完毕后，用 'git add <paths>' 或 'git rm <paths>'\n"
-"命令标记修正后的文件"
+"efter att ha löst konflikterna, markera de rättade sökvägarna\n"
+"med \"git add <sökvägar>\" eller \"git rm <sökvägar>\""
 
 #: sequencer.c:146
 msgid ""
@@ -209,583 +213,566 @@ msgid ""
 "with 'git add <paths>' or 'git rm <paths>'\n"
 "and commit the result with 'git commit'"
 msgstr ""
-"冲突解决完毕后，用 'git add <paths>' 或 'git rm <paths>'\n"
-"对修正后的文件做标记，然后用 'git commit' 提交"
+"efter att ha löst konflikterna, markera de rättade sökvägarna\n"
+"med \"git add <sökvägar>\" eller \"git rm <sökvägar>\"\n"
+"och checka in resultatet med \"git commit\""
 
 #: sequencer.c:159 sequencer.c:685 sequencer.c:768
 #, c-format
 msgid "Could not write to %s"
-msgstr "不能写入 %s"
+msgstr "Kunde inte skriva till %s"
 
 #: sequencer.c:162
 #, c-format
 msgid "Error wrapping up %s"
-msgstr "错误收尾 %s"
+msgstr "Fel vid ombrytning av %s"
 
 #: sequencer.c:177
 msgid "Your local changes would be overwritten by cherry-pick."
-msgstr "您的本地修改将被拣选操作覆盖。"
+msgstr "Dina lokala ändringar skulle skrivas över av \"cherry-pick\"."
 
 #: sequencer.c:179
 msgid "Your local changes would be overwritten by revert."
-msgstr "您的本地修改将被还原操作覆盖。"
+msgstr "Dina lokala ändringar skulle skrivas över av \"revert\"."
 
 #: sequencer.c:182
 msgid "Commit your changes or stash them to proceed."
-msgstr "提交您的修改或保存进度后再继续。"
+msgstr "Checka in dina ändringar eller använd \"stash\" för att fortsätta."
 
 #. TRANSLATORS: %s will be "revert" or "cherry-pick"
 #: sequencer.c:232
 #, c-format
 msgid "%s: Unable to write new index file"
-msgstr "%s：无法写入新暂存区文件"
+msgstr "%s: Kunde inte skriva ny indexfil"
 
 #: sequencer.c:298
 msgid "Your index file is unmerged."
-msgstr "您的暂存区文件未完成合并。"
+msgstr "Din indexfil har inte slagits ihop."
 
 #: sequencer.c:301
 msgid "You do not have a valid HEAD"
-msgstr "您没有一个有效的 HEAD"
+msgstr "Du har ingen giltig HEAD"
 
 #: sequencer.c:316
 #, c-format
 msgid "Commit %s is a merge but no -m option was given."
-msgstr "提交 %s 是一个合并提交但未提供 -m 选项。"
+msgstr "Incheckning %s är en sammanslagning, men flaggan -m angavs inte."
 
 #: sequencer.c:324
 #, c-format
 msgid "Commit %s does not have parent %d"
-msgstr "提交 %s 没有父提交 %d"
+msgstr "Incheckning %s har inte förälder %d"
 
 #: sequencer.c:328
 #, c-format
 msgid "Mainline was specified but commit %s is not a merge."
-msgstr "提供了主线但提交 %s 不是一个合并。"
+msgstr "Huvudlinje angavs, men incheckningen %s är inte en sammanslagning"
 
 #. TRANSLATORS: The first %s will be "revert" or
 #. "cherry-pick", the second %s a SHA1
 #: sequencer.c:339
 #, c-format
 msgid "%s: cannot parse parent commit %s"
-msgstr "%s：不能解析父提交 %s"
+msgstr "%s: kan inte tolka föräldraincheckningen %s"
 
 #: sequencer.c:343
 #, c-format
 msgid "Cannot get commit message for %s"
-msgstr "不能得到 %s 的提交说明"
+msgstr "Kan inte hämta incheckningsmeddelande för %s"
 
 #: sequencer.c:427
 #, c-format
 msgid "could not revert %s... %s"
-msgstr "不能还原 %s... %s"
+msgstr "kunde inte ångra %s... %s"
 
 #: sequencer.c:428
 #, c-format
 msgid "could not apply %s... %s"
-msgstr "不能应用 %s... %s"
+msgstr "kunde inte applicera %s... %s"
 
 #: sequencer.c:450 sequencer.c:909 builtin/log.c:288 builtin/log.c:713
 #: builtin/log.c:1329 builtin/log.c:1548 builtin/merge.c:348
 #: builtin/shortlog.c:181
 msgid "revision walk setup failed"
-msgstr "版本遍历设置失败"
+msgstr "misslyckades skapa revisionstraversering"
 
 #: sequencer.c:453
 msgid "empty commit set passed"
-msgstr "提供了空的提交集"
+msgstr "den angivna uppsättningen incheckningar är tom"
 
 #: sequencer.c:461
 #, c-format
 msgid "git %s: failed to read the index"
-msgstr "git %s: 无法读取暂存区"
+msgstr "git %s: misslyckades läsa indexet"
 
 #: sequencer.c:466
 #, c-format
 msgid "git %s: failed to refresh the index"
-msgstr "git %s: 无法刷新暂存区"
+msgstr "git %s: misslyckades uppdatera indexet"
 
 #: sequencer.c:551
 #, c-format
 msgid "Cannot %s during a %s"
-msgstr "无法 %s 在 %s 过程中"
+msgstr "kan inte %s under en %s"
 
 #: sequencer.c:573
 #, c-format
 msgid "Could not parse line %d."
-msgstr "无法解析第 %d 行。"
+msgstr "Kan inte tolka rad %d."
 
 #: sequencer.c:578
 msgid "No commits parsed."
-msgstr "未有提交被解析。"
+msgstr "Inga incheckningar lästes."
 
 #: sequencer.c:591
 #, c-format
 msgid "Could not open %s"
-msgstr "不能打开 %s"
+msgstr "Kunde inte öppna %s"
 
 #: sequencer.c:595
 #, c-format
 msgid "Could not read %s."
-msgstr "不能读取 %s。"
+msgstr "kunde inte läsa %s."
 
 #: sequencer.c:602
 #, c-format
 msgid "Unusable instruction sheet: %s"
-msgstr "无用的指令表单：%s"
+msgstr "Oanvändbart manus: %s"
 
 #: sequencer.c:630
 #, c-format
 msgid "Invalid key: %s"
-msgstr "无效键名：%s"
+msgstr "Felaktig nyckel: %s"
 
 #: sequencer.c:633
 #, c-format
 msgid "Invalid value for %s: %s"
-msgstr "无效的 %s 值：%s"
+msgstr "Felaktigt värde för %s: %s"
 
 #: sequencer.c:645
 #, c-format
 msgid "Malformed options sheet: %s"
-msgstr "非法的选项表单：%s"
+msgstr "Trasigt manus: %s"
 
 #: sequencer.c:666
 msgid "a cherry-pick or revert is already in progress"
-msgstr "一个拣选或还原操作已在进行"
+msgstr "en \"cherry-pick\" eller \"revert\" pågår redan"
 
 #: sequencer.c:667
 msgid "try \"git cherry-pick (--continue | --quit | --abort)\""
-msgstr "尝试 \"git cherry-pick (--continue | --quit | --abort)\""
+msgstr "testa \"git cherry-pick (--continue | --quit | --abort)\""
 
 #: sequencer.c:671
 #, c-format
 msgid "Could not create sequencer directory %s"
-msgstr "无法创建序列目录 %s"
+msgstr "Kunde inte skapa \"sequencer\"-katalogen \"%s\""
 
 #: sequencer.c:687 sequencer.c:772
 #, c-format
 msgid "Error wrapping up %s."
-msgstr "错误收尾 %s。"
+msgstr "Fel vid ombrytning av %s."
 
 #: sequencer.c:706 sequencer.c:840
 msgid "no cherry-pick or revert in progress"
-msgstr "没有拣选或还原操作在进行"
+msgstr "ingen \"cherry-pick\" eller \"revert\" pågår"
 
 #: sequencer.c:708
 msgid "cannot resolve HEAD"
-msgstr "不能解析 HEAD"
+msgstr "kan inte bestämma HEAD"
 
 #: sequencer.c:710
 msgid "cannot abort from a branch yet to be born"
-msgstr "不能从未初始分支终止"
+msgstr "kan inte avbryta från en gren som ännu inte är född"
 
 #: sequencer.c:732
 #, c-format
 msgid "cannot open %s: %s"
-msgstr "不能打开 %s：%s"
+msgstr "kan inte öppna %s: %s"
 
 #: sequencer.c:735
 #, c-format
 msgid "cannot read %s: %s"
-msgstr "不能读取 %s：%s"
+msgstr "kan inte läsa %s: %s"
 
 #: sequencer.c:736
 msgid "unexpected end of file"
-msgstr "未预期的文件结束"
+msgstr "oväntat filslut"
 
 #: sequencer.c:742
 #, c-format
 msgid "stored pre-cherry-pick HEAD file '%s' is corrupt"
-msgstr "保存预拣选提交的 HEAD 文件 '%s' 损坏"
+msgstr "sparad HEAD-fil från före \"cherry-pick\", \"%s\", är trasig"
 
 #: sequencer.c:765
 #, c-format
 msgid "Could not format %s."
-msgstr "不能格式化 %s。"
+msgstr "Kunde inte formatera %s."
 
 #: sequencer.c:927
 msgid "Can't revert as initial commit"
-msgstr "不能作为初始提交还原"
+msgstr "Kan inte ångra som första incheckning"
 
 #: sequencer.c:928
 msgid "Can't cherry-pick into empty head"
-msgstr "不能拣选到空分支"
+msgstr "Kan inte göra \"cherry-pick\" i ett tomt huvud"
 
 #: wt-status.c:134
 msgid "Unmerged paths:"
-msgstr "未合并的路径："
+msgstr "Ej sammanslagna sökvägar:"
 
-#  注意保持前导空格
 #: wt-status.c:140 wt-status.c:157
 #, c-format
 msgid "  (use \"git reset %s <file>...\" to unstage)"
-msgstr "  （使用 \"git reset %s <file>...\" 撤出暂存区）"
+msgstr "  (använd \"git reset %s <fil>...\" för att ta bort från kö)"
 
-#  注意保持前导空格
 #: wt-status.c:142 wt-status.c:159
 msgid "  (use \"git rm --cached <file>...\" to unstage)"
-msgstr "  （使用 \"git rm --cached <file>...\" 撤出暂存区）"
+msgstr "  (använd \"git rm --cached <fil>...\" för att ta bort från kö)"
 
-#  注意保持前导空格
 #: wt-status.c:143
 msgid "  (use \"git add/rm <file>...\" as appropriate to mark resolution)"
-msgstr "  （酌情使用 \"git add/rm <file>...\" 标记解决方案）"
+msgstr "  (använd \"git add/rm <fil>...\" som lämpligt för att ange lösning)"
 
 #: wt-status.c:151
 msgid "Changes to be committed:"
-msgstr "要提交的变更："
+msgstr "Ändringar att checka in:"
 
 #: wt-status.c:169
 msgid "Changes not staged for commit:"
-msgstr "未暂存至提交的变更："
+msgstr "Ändringar ej i incheckningskön:"
 
-#  注意保持前导空格
 #: wt-status.c:173
 msgid "  (use \"git add <file>...\" to update what will be committed)"
-msgstr "  （使用 \"git add <file>...\" 更新要提交的内容）"
+msgstr ""
+"  (använd \"git add <fil>...\" för att uppdatera vad som skall checkas in)"
 
-#  注意保持前导空格
 #: wt-status.c:175
 msgid "  (use \"git add/rm <file>...\" to update what will be committed)"
-msgstr "  （使用 \"git add/rm <file>...\" 更新要提交的内容）"
+msgstr ""
+"  (använd \"git add/rm <fil>...\" för att uppdatera vad som skall checkas in)"
 
-#  注意保持前导空格
 #: wt-status.c:176
 msgid ""
 "  (use \"git checkout -- <file>...\" to discard changes in working directory)"
-msgstr "  （使用 \"git checkout -- <file>...\" 丢弃工作区的改动）"
+msgstr ""
+"  (använd \"git checkout -- <fil>...\" för att förkasta ändringar i "
+"arbetskatalogen)"
 
-#  注意保持前导空格
 #: wt-status.c:178
 msgid "  (commit or discard the untracked or modified content in submodules)"
-msgstr "  （提交或丢弃子模组中未跟踪或修改的内容）"
+msgstr ""
+"  (checka in eller förkasta ospårat eller ändrat innehåll i undermoduler)"
 
+# %s är ett verb ("Untracked"/"Ignored").
 #: wt-status.c:187
 #, c-format
 msgid "%s files:"
-msgstr "%s文件："
+msgstr "%s filer:"
 
-#  注意保持前导空格
 #: wt-status.c:190
 #, c-format
 msgid "  (use \"git %s <file>...\" to include in what will be committed)"
-msgstr "  （使用 \"git %s <file>...\" 包含到提交列表）"
+msgstr ""
+"  (använd \"git %s <fil>...\" för att ta med i vad som skall checkas in)"
 
 #: wt-status.c:207
 msgid "bug"
-msgstr "bug"
+msgstr "programfel"
 
 #: wt-status.c:212
 msgid "both deleted:"
-msgstr "双方删除："
+msgstr "borttaget av bägge:"
 
 #: wt-status.c:213
 msgid "added by us:"
-msgstr "由我们添加："
+msgstr "tillagt av oss:"
 
 #: wt-status.c:214
 msgid "deleted by them:"
-msgstr "由他们删除："
+msgstr "borttaget av dem:"
 
 #: wt-status.c:215
 msgid "added by them:"
-msgstr "由他们添加："
+msgstr "tillagt av dem:"
 
 #: wt-status.c:216
 msgid "deleted by us:"
-msgstr "由我们删除："
+msgstr "borttaget av oss:"
 
 #: wt-status.c:217
 msgid "both added:"
-msgstr "双方添加："
+msgstr "tillagt av bägge:"
 
 #: wt-status.c:218
 msgid "both modified:"
-msgstr "双方修改："
+msgstr "ändrat av bägge:"
 
 #: wt-status.c:248
 msgid "new commits, "
-msgstr "新提交, "
+msgstr "nya incheckningar, "
 
 #: wt-status.c:250
 msgid "modified content, "
-msgstr "修改的内容, "
+msgstr "ändrat innehåll, "
 
 #: wt-status.c:252
 msgid "untracked content, "
-msgstr "未跟踪的内容, "
+msgstr "ospårat innehåll, "
 
-#  为保证在输出中对齐，注意调整句中空格！
 #: wt-status.c:266
 #, c-format
 msgid "new file:   %s"
-msgstr "新文件：    %s"
+msgstr "ny fil:     %s"
 
-#  为保证在输出中对齐，注意调整句中空格！
 #: wt-status.c:269
 #, c-format
 msgid "copied:     %s -> %s"
-msgstr "拷贝：      %s -> %s"
+msgstr "kopierad:   %s -> %s"
 
-#  为保证在输出中对齐，注意调整句中空格！
 #: wt-status.c:272
 #, c-format
 msgid "deleted:    %s"
-msgstr "删除：      %s"
+msgstr "borttagen:  %s"
 
-#  为保证在输出中对齐，注意调整句中空格！
 #: wt-status.c:275
 #, c-format
 msgid "modified:   %s"
-msgstr "修改：      %s"
+msgstr "ändrad:     %s"
 
-#  为保证在输出中对齐，注意调整句中空格！
 #: wt-status.c:278
 #, c-format
 msgid "renamed:    %s -> %s"
-msgstr "重命名：    %s -> %s"
+msgstr "namnbyte:   %s -> %s"
 
-#  为保证在输出中对齐，注意调整句中空格！
 #: wt-status.c:281
 #, c-format
 msgid "typechange: %s"
-msgstr "类型变更：  %s"
+msgstr "typbyte:    %s"
 
-#  为保证在输出中对齐，注意调整句中空格！
 #: wt-status.c:284
 #, c-format
 msgid "unknown:    %s"
-msgstr "未知：      %s"
+msgstr "okänd:      %s"
 
-#  为保证在输出中对齐，注意调整句中空格！
 #: wt-status.c:287
 #, c-format
 msgid "unmerged:   %s"
-msgstr "未合并：    %s"
+msgstr "osammansl.: %s"
 
 #: wt-status.c:290
 #, c-format
 msgid "bug: unhandled diff status %c"
-msgstr "bug: 未处理的差异状态 %c"
+msgstr "programfel: diff-status %c ej hanterad"
 
 #: wt-status.c:713
 msgid "On branch "
-msgstr "位于分支 "
+msgstr "På grenen "
 
 #: wt-status.c:720
 msgid "Not currently on any branch."
-msgstr "当前不在任何分支上。"
+msgstr "Inte på någon gren för närvarande."
 
 #: wt-status.c:731
 msgid "Initial commit"
-msgstr "初始提交"
+msgstr "Första incheckning"
 
 #: wt-status.c:745
 msgid "Untracked"
-msgstr "未跟踪的"
+msgstr "Ospårad"
 
 #: wt-status.c:747
 msgid "Ignored"
-msgstr "忽略的"
+msgstr "Ignorerad"
 
+# %s är nästa sträng eller tom.
 #: wt-status.c:749
 #, c-format
 msgid "Untracked files not listed%s"
-msgstr "未跟踪的文件没有列出%s"
+msgstr "Ospårade filer visas ej%s"
 
-#  注意保持前导空格
 #: wt-status.c:751
 msgid " (use -u option to show untracked files)"
-msgstr " （使用 -u 参数显示未跟踪的文件）"
+msgstr " (använd flaggan -u för att visa ospårade filer)"
 
 #: wt-status.c:757
 msgid "No changes"
-msgstr "没有修改"
+msgstr "Inga ändringar"
 
 #: wt-status.c:761
 #, c-format
 msgid "no changes added to commit%s\n"
-msgstr "修改尚未加入提交%s\n"
+msgstr "inga ändringar att checka in%s\n"
 
-#  注意保持前导空格
 #: wt-status.c:763
 msgid " (use \"git add\" and/or \"git commit -a\")"
-msgstr " （使用 \"git add\" 和/或 \"git commit -a\"）"
+msgstr " (använd \"git add\" och/eller \"git commit -a\")"
 
 #: wt-status.c:765
 #, c-format
 msgid "nothing added to commit but untracked files present%s\n"
-msgstr "空提交但存在未跟踪文件%s\n"
+msgstr "inget köat för incheckning, men ospårade filer finns%s\n"
 
-#  注意保持前导空格
 #: wt-status.c:767
 msgid " (use \"git add\" to track)"
-msgstr " （使用 \"git add\" 建立跟踪）"
+msgstr " (använd \"git add\" för att spåra)"
 
 #: wt-status.c:769 wt-status.c:772 wt-status.c:775
 #, c-format
 msgid "nothing to commit%s\n"
-msgstr "无须提交%s\n"
+msgstr "inget att checka in%s\n"
 
-#  注意保持前导空格
 #: wt-status.c:770
 msgid " (create/copy files and use \"git add\" to track)"
-msgstr " （新建/拷贝的文件使用 \"git add\" 建立跟踪）"
+msgstr " (skapa/kopiera filer och använd \"git add\" för att spåra)"
 
-#  注意保持前导空格
 #: wt-status.c:773
 msgid " (use -u to show untracked files)"
-msgstr " （使用 -u 显示未跟踪文件）"
+msgstr " (använd -u för att visa ospårade filer)"
 
-#  注意保持前导空格
 #: wt-status.c:776
 msgid " (working directory clean)"
-msgstr " （干净的工作区）"
+msgstr " (arbetskatalogen ren)"
 
 #: wt-status.c:884
 msgid "HEAD (no branch)"
-msgstr "HEAD（非分支）"
+msgstr "HEAD (ingen gren)"
 
-#  注意保持句尾空格
 #: wt-status.c:890
 msgid "Initial commit on "
-msgstr "初始提交于 "
+msgstr "Första incheckning på "
 
-#  注意保持句尾空格
 #: wt-status.c:905
 msgid "behind "
-msgstr "落后 "
+msgstr "efter "
 
-#  注意保持句尾空格
 #: wt-status.c:908 wt-status.c:911
 msgid "ahead "
-msgstr "领先 "
+msgstr "före "
 
-#  注意保持句尾空格
 #: wt-status.c:913
 msgid ", behind "
-msgstr "，落后 "
+msgstr ", efter "
 
 #: builtin/add.c:62
 #, c-format
 msgid "unexpected diff status %c"
-msgstr "意外的差异状态 %c"
+msgstr "diff-status %c förväntades inte"
 
 #: builtin/add.c:67 builtin/commit.c:298
 msgid "updating files failed"
-msgstr "更新文件失败"
+msgstr "misslyckades uppdatera filer"
 
 #: builtin/add.c:77
 #, c-format
 msgid "remove '%s'\n"
-msgstr "删除 '%s'\n"
+msgstr "ta bort \"%s\"\n"
 
 #: builtin/add.c:176
 #, c-format
 msgid "Path '%s' is in submodule '%.*s'"
-msgstr "路径 '%s' 属于模组 '%.*s'"
+msgstr "Sökvägen \"%s\" är i undermodulen \"%.*s\""
 
 #: builtin/add.c:192
 msgid "Unstaged changes after refreshing the index:"
-msgstr "刷新暂存区后未暂存的变更："
+msgstr "Ospårade ändringar efter att ha uppdaterat indexet:"
 
 #: builtin/add.c:195 builtin/add.c:456 builtin/rm.c:186
 #, c-format
 msgid "pathspec '%s' did not match any files"
-msgstr "路径 '%s' 未匹配任何文件"
+msgstr "sökvägsangivelsen \"%s\" motsvarade inte några filer"
 
 #: builtin/add.c:209
 #, c-format
 msgid "'%s' is beyond a symbolic link"
-msgstr "'%s' 位于符号链接中"
+msgstr "\"%s\" är på andra sidan av en symbolisk länk"
 
 #: builtin/add.c:276
 msgid "Could not read the index"
-msgstr "无法读取暂存区"
+msgstr "Kunde inte läsa indexet"
 
 #: builtin/add.c:286
 #, c-format
 msgid "Could not open '%s' for writing."
-msgstr "无法打开 '%s' 以写入。"
+msgstr "Kunde inte öppna \"%s\" för skrivning"
 
 #: builtin/add.c:290
 msgid "Could not write patch"
-msgstr "无法写补丁"
+msgstr "Kunde inte skriva patch"
 
 #: builtin/add.c:295
 #, c-format
 msgid "Could not stat '%s'"
-msgstr "无法查看文件状态 '%s'"
+msgstr "Kunde inte ta status på \"%s\""
 
 #: builtin/add.c:297
 msgid "Empty patch. Aborted."
-msgstr "空补丁。异常终止。"
+msgstr "Tom patch. Avbryter."
 
 #: builtin/add.c:303
 #, c-format
 msgid "Could not apply '%s'"
-msgstr "无法应用 '%s'"
+msgstr "Kunde inte applicera \"%s\""
 
 #: builtin/add.c:312
 msgid "The following paths are ignored by one of your .gitignore files:\n"
-msgstr "下列路径被您的一个 .gitignore 文件所忽略：\n"
+msgstr "Följande sökvägar ignoreras av en av dina .gitignore-filer:\n"
 
 #: builtin/add.c:352
 #, c-format
 msgid "Use -f if you really want to add them.\n"
-msgstr "使用 -f 参数如果你确实要添加它们。\n"
+msgstr "Använd -f om du verkligen vill lägga till dem.\n"
 
 #: builtin/add.c:353
 msgid "no files added"
-msgstr "没有文件被添加"
+msgstr "inga filer har lagts till"
 
 #: builtin/add.c:359
 msgid "adding files failed"
-msgstr "添加文件失败"
+msgstr "misslyckades lägga till filer"
 
 #: builtin/add.c:391
 msgid "-A and -u are mutually incompatible"
-msgstr "-A 和 -u 选项互斥"
+msgstr "-A och -u är ömsesidigt inkompatibla"
 
 #: builtin/add.c:393
 msgid "Option --ignore-missing can only be used together with --dry-run"
-msgstr "选项 --ignore-missing 只能和 --dry-run 共用"
+msgstr "Flaggan --ignore-missing kan endast användas tillsammans med --dry-run"
 
 #: builtin/add.c:413
 #, c-format
 msgid "Nothing specified, nothing added.\n"
-msgstr "未提供参数，没有文件被添加。\n"
+msgstr "Inget angivet, inget tillagt.\n"
 
 #: builtin/add.c:414
 #, c-format
 msgid "Maybe you wanted to say 'git add .'?\n"
-msgstr "也许您想要执行 'git add .'？\n"
+msgstr "Kanske menade du att skriva \"git add .\"?\n"
 
 #: builtin/add.c:420 builtin/clean.c:95 builtin/commit.c:358 builtin/mv.c:82
 #: builtin/rm.c:162
 msgid "index file corrupt"
-msgstr "暂存区文件损坏"
+msgstr "indexfilen trasig"
 
 #: builtin/add.c:476 builtin/mv.c:229 builtin/rm.c:260
 msgid "Unable to write new index file"
-msgstr "无法写入新暂存区文件"
+msgstr "Kunde inte skriva ny indexfil"
 
 #: builtin/archive.c:17
 #, c-format
 msgid "could not create archive file '%s'"
-msgstr "无法创建归档文件 '%s'"
+msgstr "Kunde inte skapa arkivfilen \"%s\""
 
 #: builtin/archive.c:20
 msgid "could not redirect output"
-msgstr "无法重定向输出"
+msgstr "kunde inte omdirigera utdata"
 
 #: builtin/archive.c:37
 msgid "git archive: Remote with no URL"
-msgstr "git archive: 未提供远程URL"
+msgstr "git archive: Fjärr utan URL"
 
 #: builtin/archive.c:58
 msgid "git archive: expected ACK/NAK, got EOF"
-msgstr "git archive: 期待ACK/NACK，却得到EOF"
+msgstr "git archive: förväntade ACK/NAK, fick EOF"
 
 #: builtin/archive.c:63
 #, c-format
@@ -795,64 +782,61 @@ msgstr "git archive: NACK %s"
 #: builtin/archive.c:65
 #, c-format
 msgid "remote error: %s"
-msgstr "远程错误：%s"
+msgstr "fjärrfel: %s"
 
 #: builtin/archive.c:66
 msgid "git archive: protocol error"
-msgstr "git archive: 协议错误"
+msgstr "git archive: protokollfel"
 
 #: builtin/archive.c:71
 msgid "git archive: expected a flush"
-msgstr "git archive: 预期一个刷新"
+msgstr "git archive: förväntade en tömning (flush)"
 
-#  保持原换行格式，在输出时 %s 的替代内容会让字串变长
 #: builtin/branch.c:137
 #, c-format
 msgid ""
 "deleting branch '%s' that has been merged to\n"
 "         '%s', but not yet merged to HEAD."
 msgstr ""
-"将要删除的分支 '%s' 已经被合并到\n"
-"         '%s'，但未合并到 HEAD。"
+"tar bort grenen \"%s\" som har slagits ihop med\n"
+"         \"%s\", men ännu inte slagits ihop med HEAD."
 
-#  保持原换行格式，在输出时 %s 的替代内容会让字串变长
 #: builtin/branch.c:141
 #, c-format
 msgid ""
 "not deleting branch '%s' that is not yet merged to\n"
 "         '%s', even though it is merged to HEAD."
 msgstr ""
-"并未删除分支 '%s'， 虽然它已经合并到 HEAD，\n"
-"         然而却尚未被合并到分支 '%s' 。"
+"tar inte bort grenen \"%s\" som inte har slagits ihop med\n"
+"         \"%s\", trots att den har slagits ihop med HEAD."
 
-#  汉字之间无空格，故删除尾部空格
 #. TRANSLATORS: This is "remote " in "remote branch '%s' not found"
 #: builtin/branch.c:163
 msgid "remote "
-msgstr "远程"
+msgstr "fjärr"
 
 #: builtin/branch.c:171
 msgid "cannot use -a with -d"
-msgstr "不能将 -a 和 -d 共用"
+msgstr "kan inte ange -a med -d"
 
 #: builtin/branch.c:177
 msgid "Couldn't look up commit object for HEAD"
-msgstr "无法查询 HEAD 指向的提交对象"
+msgstr "Kunde inte slå upp incheckningsobjekt för HEAD"
 
 #: builtin/branch.c:182
 #, c-format
 msgid "Cannot delete the branch '%s' which you are currently on."
-msgstr "无法删除您当前所在的分支 '%s'。"
+msgstr "Kan inte ta bort grenen \"%s\" som du befinner dig på för närvarande."
 
 #: builtin/branch.c:192
 #, c-format
 msgid "%sbranch '%s' not found."
-msgstr "%s分支 '%s' 未发现。"
+msgstr "%sgrenen \"%s\" hittades inte."
 
 #: builtin/branch.c:200
 #, c-format
 msgid "Couldn't look up commit object for '%s'"
-msgstr "无法查询 '%s' 指向的提交对象"
+msgstr "Kunde inte slå upp incheckningsobjekt för \"%s\""
 
 #: builtin/branch.c:206
 #, c-format
@@ -860,212 +844,211 @@ msgid ""
 "The branch '%s' is not fully merged.\n"
 "If you are sure you want to delete it, run 'git branch -D %s'."
 msgstr ""
-"分支 '%s' 没有完全合并。\n"
-"如果您确认要删除它，执行 'git branch -D %s'。"
+"Grenen \"%s\" har inte slagits samman i sin helhet.\n"
+"Om du är säker på att du vill ta bort den, kör \"git branch -D %s\"."
 
 #: builtin/branch.c:214
 #, c-format
 msgid "Error deleting %sbranch '%s'"
-msgstr "删除 %s分支 '%s' 时错误"
+msgstr "Fel vid borttagning av %sgrenen \"%s\""
 
 #: builtin/branch.c:219
 #, c-format
 msgid "Deleted %sbranch %s (was %s).\n"
-msgstr "已删除 %s分支 %s（曾为 %s）。\n"
+msgstr "Tog bort %sgrenen %s (var %s).\n"
 
 #: builtin/branch.c:224
 msgid "Update of config-file failed"
-msgstr "无法更新 config 文件"
+msgstr "Misslyckades uppdatera konfigurationsfil"
 
 #: builtin/branch.c:322
 #, c-format
 msgid "branch '%s' does not point at a commit"
-msgstr "分支 '%s' 未指向一个提交"
+msgstr "grenen \"%s\" pekar inte på en incheckning"
 
-#  注意保持句尾空格
 #: builtin/branch.c:394
 #, c-format
 msgid "behind %d] "
-msgstr "落后 %d] "
+msgstr "bakom %d] "
 
-#  注意保持句尾空格
 #: builtin/branch.c:396
 #, c-format
 msgid "ahead %d] "
-msgstr "领先 %d] "
+msgstr "före %d] "
 
-#  注意保持句尾空格
 #: builtin/branch.c:398
 #, c-format
 msgid "ahead %d, behind %d] "
-msgstr "领先 %d，落后 %d] "
+msgstr "före %d, bakom %d] "
 
 #: builtin/branch.c:501
 msgid "(no branch)"
-msgstr "（非分支）"
+msgstr "(ingen gren)"
 
 #: builtin/branch.c:566
 msgid "some refs could not be read"
-msgstr "一些引用无法读取"
+msgstr "vissa referenser kunde inte läsas"
 
 #: builtin/branch.c:579
 msgid "cannot rename the current branch while not on any."
-msgstr "无法重命名不存在的当前分支。"
+msgstr ""
+"kunde inte byta namn på aktuell gren när du inte befinner dig på någon."
 
 #: builtin/branch.c:589
 #, c-format
 msgid "Invalid branch name: '%s'"
-msgstr "无效的分支名：'%s'"
+msgstr "Felaktigt namn på gren: \"%s\""
 
 #: builtin/branch.c:604
 msgid "Branch rename failed"
-msgstr "分支重命名失败"
+msgstr "Misslyckades byta namn på gren"
 
 #: builtin/branch.c:608
 #, c-format
 msgid "Renamed a misnamed branch '%s' away"
-msgstr "重命名掉一个错误命名的旧分支 '%s'"
+msgstr "Bytte bort namn på en felaktigt namngiven gren \"%s\""
 
 #: builtin/branch.c:612
 #, c-format
 msgid "Branch renamed to %s, but HEAD is not updated!"
-msgstr "分支重命名为 %s，但 HEAD 没有更新！"
+msgstr "Grenen namnbytt till %s, men HEAD har inte uppdaterats!"
 
 #: builtin/branch.c:619
 msgid "Branch is renamed, but update of config-file failed"
-msgstr "分支被重命名，但更新 config 文件失败"
+msgstr "Grenen namnbytt, men misslyckades uppdatera konfigurationsfilen"
 
 #: builtin/branch.c:634
 #, c-format
 msgid "malformed object name %s"
-msgstr "非法的对象名 %s"
+msgstr "felformat objektnamn %s"
 
 #: builtin/branch.c:658
 #, c-format
 msgid "could not write branch description template: %s\n"
-msgstr "不能写分支描述模版：%s\n"
+msgstr "kunde inte skriva grenbeskrivningsmall: %s\n"
 
 #: builtin/branch.c:746
 msgid "Failed to resolve HEAD as a valid ref."
-msgstr "无法将 HEAD 解析为有效引用。"
+msgstr "Misslyckades slå upp HEAD som giltig referens"
 
 #: builtin/branch.c:751 builtin/clone.c:558
 msgid "HEAD not found below refs/heads!"
-msgstr "未在 /refs/heads 下发现 HEAD！"
+msgstr "HEAD hittades inte under refs/heads!"
 
 #: builtin/branch.c:809
 msgid "-a and -r options to 'git branch' do not make sense with a branch name"
-msgstr "'git branch' 的 -a 和 -r 选项带一个分支名参数没有意义"
+msgstr ""
+"flaggorna -a och -r på \"git branch\" kan inte anges tillsammans med ett "
+"grennamn"
 
 #: builtin/bundle.c:47
 #, c-format
 msgid "%s is okay\n"
-msgstr "%s 可以\n"
+msgstr "%s är okej\n"
 
 #: builtin/bundle.c:56
 msgid "Need a repository to create a bundle."
-msgstr "需要一个版本库来创建包"
+msgstr "Behöver ett arkiv för att skapa ett paket (bundle)."
 
 #: builtin/bundle.c:60
 msgid "Need a repository to unbundle."
-msgstr "需要一个版本库来解包"
+msgstr "Behöver ett arkiv för att packa upp ett paket (bundle)."
 
 #: builtin/checkout.c:113 builtin/checkout.c:146
 #, c-format
 msgid "path '%s' does not have our version"
-msgstr "路径 '%s' 没有我们的版本"
+msgstr "sökvägen \"%s\" har inte vår version"
 
 #: builtin/checkout.c:115 builtin/checkout.c:148
 #, c-format
 msgid "path '%s' does not have their version"
-msgstr "路径 '%s' 没有他们的版本"
+msgstr "sökvägen \"%s\" har inte deras version"
 
 #: builtin/checkout.c:131
 #, c-format
 msgid "path '%s' does not have all necessary versions"
-msgstr "路径 '%s' 没有全部必须的版本"
+msgstr "sökvägen \"%s\" innehåller inte alla nödvändiga versioner"
 
 #: builtin/checkout.c:175
 #, c-format
 msgid "path '%s' does not have necessary versions"
-msgstr "路径 '%s' 没有必须的版本"
+msgstr "sökvägen \"%s\" innehåller inte nödvändiga versioner"
 
 #: builtin/checkout.c:192
 #, c-format
 msgid "path '%s': cannot merge"
-msgstr "path '%s': 无法合并"
+msgstr "sökväg \"%s\": kan inte slå ihop"
 
 #: builtin/checkout.c:209
 #, c-format
 msgid "Unable to add merge result for '%s'"
-msgstr "无法为 '%s' 添加合并结果"
+msgstr "Kunde inte lägga till sammanslagningsresultat för \"%s\""
 
 #: builtin/checkout.c:212 builtin/reset.c:158
 #, c-format
 msgid "make_cache_entry failed for path '%s'"
-msgstr "对路径 '%s' 的 make_cache_entry 操作失败"
+msgstr "make_cache_entry misslyckades för sökvägen \"%s\""
 
 #: builtin/checkout.c:234 builtin/checkout.c:392
 msgid "corrupt index file"
-msgstr "冲突的暂存区文件"
+msgstr "indexfilen är trasig"
 
 #: builtin/checkout.c:264 builtin/checkout.c:271
 #, c-format
 msgid "path '%s' is unmerged"
-msgstr "路径 '%s' 未合并"
+msgstr "sökvägen \"%s\" har inte slagits ihop"
 
 #: builtin/checkout.c:302 builtin/checkout.c:498 builtin/clone.c:583
 #: builtin/merge.c:811
 msgid "unable to write new index file"
-msgstr "无法写新的暂存区文件"
+msgstr "kunde inte skriva ny indexfil"
 
 #: builtin/checkout.c:319 builtin/diff.c:302 builtin/merge.c:408
 msgid "diff_setup_done failed"
-msgstr "diff_setup_done 失败"
+msgstr "diff_setup_done misslyckades"
 
 #: builtin/checkout.c:414
 msgid "you need to resolve your current index first"
-msgstr "您需要先解决当前暂存区的冲突"
+msgstr "du måste lösa ditt befintliga index först"
 
 #: builtin/checkout.c:533
 #, c-format
 msgid "Can not do reflog for '%s'\n"
-msgstr "不能对 '%s' 保存引用日志\n"
+msgstr "Kan inte skapa referenslog för \"%s\"\n"
 
 #: builtin/checkout.c:565
 msgid "HEAD is now at"
-msgstr "HEAD 目前位于"
+msgstr "HEAD är nu på"
 
 #: builtin/checkout.c:572
 #, c-format
 msgid "Reset branch '%s'\n"
-msgstr "重置分支 '%s'\n"
+msgstr "Återställ gren \"%s\"\n"
 
 #: builtin/checkout.c:575
 #, c-format
 msgid "Already on '%s'\n"
-msgstr "已经位于 '%s'\n"
+msgstr "Redan på \"%s\"\n"
 
 #: builtin/checkout.c:579
 #, c-format
 msgid "Switched to and reset branch '%s'\n"
-msgstr "切换并重置分支 '%s'\n"
+msgstr "Växlade till och nollställde grenen \"%s\"\n"
 
 #: builtin/checkout.c:581
 #, c-format
 msgid "Switched to a new branch '%s'\n"
-msgstr "切换到一个新分支 '%s'\n"
+msgstr "Växlade till en ny gren \"%s\"\n"
 
 #: builtin/checkout.c:583
 #, c-format
 msgid "Switched to branch '%s'\n"
-msgstr "切换到分支 '%s'\n"
+msgstr "Växlade till grenen \"%s\"\n"
 
-#  注意保持前导空格
 #: builtin/checkout.c:639
 #, c-format
 msgid " ... and %d more.\n"
-msgstr " ... 及 %d 更多。\n"
+msgstr " ... och %d till.\n"
 
 #. The singular version
 #: builtin/checkout.c:645
@@ -1081,7 +1064,13 @@ msgid_plural ""
 "\n"
 "%s\n"
 msgstr[0] ""
-"警告：您正丢下 %d 个提交，未和任何分支关联：\n"
+"Varning: du lämnar %d incheckning bakom dig som inte är ansluten till\n"
+"någon av dina grenar:\n"
+"\n"
+"%s\n"
+msgstr[1] ""
+"Varning: du lämnar %d incheckningar bakom dig som inte är ansluta till\n"
+"någon av dina grenar:\n"
 "\n"
 "%s\n"
 
@@ -1094,75 +1083,75 @@ msgid ""
 " git branch new_branch_name %s\n"
 "\n"
 msgstr ""
-"如果您想要通过创建新分支保存他们，这可能是一个好时候。\n"
-"如下操作：\n"
+"Om du vill behålla dem genom att skapa en ny gren är nu en bra tidpunkt\n"
+"att göra så, med:\n"
 "\n"
-" git branch new_branch_name %s\n"
+" git branch nytt_grennamn %s\n"
 "\n"
 
 #: builtin/checkout.c:692
 msgid "internal error in revision walk"
-msgstr "在版本遍历时遇到内部错误"
+msgstr "internt fel vid genomgång av revisioner (revision walk)"
 
 #: builtin/checkout.c:696
 msgid "Previous HEAD position was"
-msgstr "之前的 HEAD 位置是"
+msgstr "Tidigare position för HEAD var"
 
 #: builtin/checkout.c:722
 msgid "You are on a branch yet to be born"
-msgstr "您位于一个未初始化的分支"
+msgstr "Du är på en gren som ännu inte är född"
 
 #. case (1)
 #: builtin/checkout.c:853
 #, c-format
 msgid "invalid reference: %s"
-msgstr "无效引用：%s"
+msgstr "felaktig referens: %s"
 
 #. case (1): want a tree
 #: builtin/checkout.c:892
 #, c-format
 msgid "reference is not a tree: %s"
-msgstr "引用不是一个树：%s"
+msgstr "referensen är inte ett träd: %s"
 
 #: builtin/checkout.c:972
 msgid "-B cannot be used with -b"
-msgstr "-B 不能和 -b 共用"
+msgstr "-B kan inte användas med -b"
 
 #: builtin/checkout.c:981
 msgid "--patch is incompatible with all other options"
-msgstr "--patch 选项和其他选项不兼容"
+msgstr "--patch är inkompatibel med alla andra flaggor"
 
 #: builtin/checkout.c:984
 msgid "--detach cannot be used with -b/-B/--orphan"
-msgstr "--detach 不能和 -b/-B/--orphan 共用"
+msgstr "--detcah kan inte användas med -b/-B/--orphan"
 
 #: builtin/checkout.c:986
 msgid "--detach cannot be used with -t"
-msgstr "--detach 不能和 -t 共用"
+msgstr "--detach kan inte användas med -t"
 
 #: builtin/checkout.c:992
 msgid "--track needs a branch name"
-msgstr "--track 需要一个分支名"
+msgstr "--track behöver ett namn på en gren"
 
 #: builtin/checkout.c:999
 msgid "Missing branch name; try -b"
-msgstr "缺少分支名；尝试 -b"
+msgstr "Grennamn saknas; försök med -b"
 
 #: builtin/checkout.c:1005
 msgid "--orphan and -b|-B are mutually exclusive"
-msgstr "--orphan 和 -b|-B 互斥"
+msgstr "--orphan och -b|-B kan inte användas samtidigt"
 
 #: builtin/checkout.c:1007
 msgid "--orphan cannot be used with -t"
-msgstr "--orphan 不能和 -t 共用"
+msgstr "--orphan kan inte användas med -t"
 
 #: builtin/checkout.c:1017
 msgid "git checkout: -f and -m are incompatible"
-msgstr "git checkout: -f 和 -m 不兼容"
+msgstr "git checkout: -f och -m är inkompatibla"
 
 #: builtin/checkout.c:1051
 msgid "invalid path specification"
-msgstr "无效的路径"
+msgstr "felaktig sökvägsangivelse"
 
 #: builtin/checkout.c:1059
 #, c-format
@@ -1170,199 +1159,202 @@ msgid ""
 "git checkout: updating paths is incompatible with switching branches.\n"
 "Did you intend to checkout '%s' which can not be resolved as commit?"
 msgstr ""
-"git checkout: 更新路径和切换分支不兼容。\n"
-"您是想要检出 '%s' 但未能将其解析为提交么？"
+"git checkout: uppdatera sökvägar är inkompatibelt med att växla gren.\n"
+"Ville du checka ut \"%s\" som inte kan lösas som en sammanslaning?"
 
 #: builtin/checkout.c:1061
 msgid "git checkout: updating paths is incompatible with switching branches."
-msgstr "git checkout: 更新路径和切换分支不兼容。"
+msgstr "git checkout: uppdatera sökvägar är inkompatibelt med att växla gren."
 
 #: builtin/checkout.c:1066
 msgid "git checkout: --detach does not take a path argument"
-msgstr "git checkout: --detach 不跟路径参数"
+msgstr "git checkout: --detach tar inte en sökväg som argument"
 
 #: builtin/checkout.c:1069
 msgid ""
 "git checkout: --ours/--theirs, --force and --merge are incompatible when\n"
 "checking out of the index."
 msgstr ""
-"git checkout: --ours/--theirs, --force 和 --merge 不兼容当\n"
-"检出暂存区时。"
+"git checkout: --ours/--theirs, --force och --merge är inkompatibla när\n"
+"du checkar ut från indexet."
 
 #: builtin/checkout.c:1088
 msgid "Cannot switch branch to a non-commit."
-msgstr "无法切换分支到一个非提交。"
+msgstr "Kan inte växla gren på en icke-incheckning."
 
 #: builtin/checkout.c:1091
 msgid "--ours/--theirs is incompatible with switching branches."
-msgstr "--ours/--theirs 和切换分支不兼容。"
+msgstr "--ours/--theirs är inkompatibla med att byta gren."
 
 #: builtin/clean.c:78
 msgid "-x and -X cannot be used together"
-msgstr "-x 和 -X 不能共用"
+msgstr "-x och -X kan inte användas samtidigt"
 
 #: builtin/clean.c:82
 msgid ""
 "clean.requireForce set to true and neither -n nor -f given; refusing to clean"
 msgstr ""
-"clean.requireForce 设置为 true，若未提供 -n 或 -f 选项，拒绝执行清理动作"
+"clean.requireForce satt till true, men varken -n eller -f angavs; vägrar "
+"städa"
 
 #: builtin/clean.c:85
 msgid ""
 "clean.requireForce defaults to true and neither -n nor -f given; refusing to "
 "clean"
 msgstr ""
-"clean.requireForce 默认为 true，若未提供 -n 或 -f 选项，拒绝执行清理动作"
+"clean.requireForce har standardvärdet true, men varken -n eller -f angavs; "
+"vägrar städa"
 
 #: builtin/clean.c:155 builtin/clean.c:176
 #, c-format
 msgid "Would remove %s\n"
-msgstr "将删除 %s\n"
+msgstr "Skulle ta bort %s\n"
 
 #: builtin/clean.c:159 builtin/clean.c:179
 #, c-format
 msgid "Removing %s\n"
-msgstr "正删除 %s\n"
+msgstr "Tar bort %s\n"
 
 #: builtin/clean.c:162 builtin/clean.c:182
 #, c-format
 msgid "failed to remove %s"
-msgstr "无法删除 %s"
+msgstr "misslyckades ta bort %s"
 
 #: builtin/clean.c:166
 #, c-format
 msgid "Would not remove %s\n"
-msgstr "不会删除 %s\n"
+msgstr "Skulle inte ta bort %s\n"
 
 #: builtin/clean.c:168
 #, c-format
 msgid "Not removing %s\n"
-msgstr "未删除 %s\n"
+msgstr "Tar inte bort %s\n"
 
 #: builtin/clone.c:243
 #, c-format
 msgid "reference repository '%s' is not a local directory."
-msgstr "引用版本库 '%s' 不是一个本地目录。"
+msgstr "referensarkivet \"%s\" är inte en lokal katalog."
 
 #: builtin/clone.c:302
 #, c-format
 msgid "failed to open '%s'"
-msgstr "打开 '%s' 失败"
+msgstr "misslyckades öppna \"%s\""
 
 #: builtin/clone.c:306
 #, c-format
 msgid "failed to create directory '%s'"
-msgstr "创建目录 '%s' 失败"
+msgstr "misslyckades skapa katalogen \"%s\""
 
 #: builtin/clone.c:308 builtin/diff.c:75
 #, c-format
 msgid "failed to stat '%s'"
-msgstr "枚举 '%s' 状态失败"
+msgstr "misslyckades ta status på \"%s\""
 
 #: builtin/clone.c:310
 #, c-format
 msgid "%s exists and is not a directory"
-msgstr "%s 存在且不是一个目录"
+msgstr "%s finns och är ingen katalog"
 
 #: builtin/clone.c:324
 #, c-format
 msgid "failed to stat %s\n"
-msgstr "枚举 %s 状态失败\n"
+msgstr "misslyckades ta status på %s\n"
 
 #: builtin/clone.c:341
 #, c-format
 msgid "failed to unlink '%s'"
-msgstr "删除 '%s' 失败"
+msgstr "misslyckades ta bort länken \"%s\""
 
 #: builtin/clone.c:346
 #, c-format
 msgid "failed to create link '%s'"
-msgstr "创建链接 '%s' 失败"
+msgstr "misslyckades skapa länken \"%s\""
 
 #: builtin/clone.c:350
 #, c-format
 msgid "failed to copy file to '%s'"
-msgstr "拷贝文件至 '%s' 失败"
+msgstr "misslyckades kopiera filen till \"%s\""
 
 #: builtin/clone.c:373
 #, c-format
 msgid "done.\n"
-msgstr "完成。\n"
+msgstr "klart.\n"
 
 #: builtin/clone.c:440
 #, c-format
 msgid "Could not find remote branch %s to clone."
-msgstr "无法发现要克隆的远程分支 %s。"
+msgstr "Kunde inte hitta fjärrgrenen %s för att klona."
 
 #: builtin/clone.c:549
 msgid "remote HEAD refers to nonexistent ref, unable to checkout.\n"
-msgstr "远程 HEAD 指向一个不存在的引用，无法检出。\n"
+msgstr ""
+"HEAD hos fjärren pekar på en obefintlig referens, kan inte checka ut.\n"
 
 #: builtin/clone.c:639
 msgid "Too many arguments."
-msgstr "太多参数。"
+msgstr "För många argument."
 
 #: builtin/clone.c:643
 msgid "You must specify a repository to clone."
-msgstr "你必须指定一个版本库来克隆"
+msgstr "Du måste ange ett arkiv att klona."
 
 #: builtin/clone.c:654
 #, c-format
 msgid "--bare and --origin %s options are incompatible."
-msgstr "--bare 和 --origin %s 选项不兼容。"
+msgstr "flaggorna --bare och --origin %s är inkompatibla."
 
 #: builtin/clone.c:668
 #, c-format
 msgid "repository '%s' does not exist"
-msgstr "版本库 '%s' 不存在"
+msgstr "arkivet \"%s\" finns inte"
 
 #: builtin/clone.c:673
 msgid "--depth is ignored in local clones; use file:// instead."
-msgstr "--depth 在本地克隆被忽略，改为 file:// 协议试试。"
+msgstr "--depth ignoreras i lokala kloningar; använd file:// istället"
 
 #: builtin/clone.c:683
 #, c-format
 msgid "destination path '%s' already exists and is not an empty directory."
-msgstr "目标路径 '%s' 已经存在且不是一个空目录。"
+msgstr "destinationssökvägen \"%s\" finns redan och är inte en tom katalog."
 
 #: builtin/clone.c:693
 #, c-format
 msgid "working tree '%s' already exists."
-msgstr "工作区 '%s' 已经存在。"
+msgstr "arbetsträdet \"%s\" finns redan."
 
 #: builtin/clone.c:706 builtin/clone.c:720
 #, c-format
 msgid "could not create leading directories of '%s'"
-msgstr "无法为 '%s' 创建目录"
+msgstr "kunde inte skapa inledande kataloger för \"%s\""
 
 #: builtin/clone.c:709
 #, c-format
 msgid "could not create work tree dir '%s'."
-msgstr "无法为 '%s' 创建工作区目录。"
+msgstr "kunde inte skapa arbetskatalogen \"%s\""
 
 #: builtin/clone.c:728
 #, c-format
 msgid "Cloning into bare repository '%s'...\n"
-msgstr "克隆到裸版本库 '%s'...\n"
+msgstr "Klonar till ett naket arkiv \"%s\"...\n"
 
 #: builtin/clone.c:730
 #, c-format
 msgid "Cloning into '%s'...\n"
-msgstr "正克隆到 '%s'...\n"
+msgstr "Klonar till \"%s\"...\n"
 
 #: builtin/clone.c:786
 #, c-format
 msgid "Don't know how to clone %s"
-msgstr "不知道如何克隆 %s"
+msgstr "Vet inte hur man klonar %s"
 
 #: builtin/clone.c:835
 #, c-format
 msgid "Remote branch %s not found in upstream %s"
-msgstr "远程分支 %s 在上游 %s 未发现"
+msgstr "Fjärrgrenen %s hittades inte i uppströmsarkivet %s"
 
 #: builtin/clone.c:842
 msgid "You appear to have cloned an empty repository."
-msgstr "您似乎克隆了一个空版本库。"
+msgstr "Du verkar ha klonat ett tomt arkiv."
 
 #: builtin/commit.c:42
 msgid ""
@@ -1377,13 +1369,15 @@ msgid ""
 "\n"
 "    git commit --amend --reset-author\n"
 msgstr ""
-"您的姓名和邮件地址会基于您的用户名和主机地址自动配置。请检查它们\n"
-"正确与否。您可通过下面命令对其显式声明以避免重复出现类似提示：\n"
+"Ditt namn och e-postadress konfigurerades automatiskt baserat på\n"
+"ditt användar-id och värdnamn. Kontrollera att de är riktiga. Du\n"
+"kan förhindra det här meddelandet genom att ställa dem explicit:\n"
 "\n"
-"    git config --global user.name \"Your Name\"\n"
-"    git config --global user.email you@example.com\n"
+"    git config --global user.name \"Ditt namn\"\n"
+"    git config --global user.email du@example.com\n"
 "\n"
-"设置完毕后，您可用下面命令来更改此次提交所使用的用户ID：\n"
+"När du gjort det kan du rätta identiteten som användes för den här\n"
+"incheckningen med:\n"
 "\n"
 "    git commit --amend --reset-author\n"
 
@@ -1393,8 +1387,9 @@ msgid ""
 "it empty. You can repeat your command with --allow-empty, or you can\n"
 "remove the commit entirely with \"git reset HEAD^\".\n"
 msgstr ""
-"您要修补最近的提交，但这么做会让它成为空提交。您可以重复您的命令并带上\n"
-"--allow-empty 选项，或者您可用命令 \"git reset HEAD^\" 整个删除该提交。\n"
+"Du bad om att utöka den senaste incheckningen, men om du gör det\n"
+"blir den tom. Du kan köra kommandot på nytt med --allow-empty, eller\n"
+"så kan du ta bort incheckningen helt med \"git reset HEAD^\".\n"
 
 #: builtin/commit.c:59
 msgid ""
@@ -1405,111 +1400,111 @@ msgid ""
 "\n"
 "Otherwise, please use 'git reset'\n"
 msgstr ""
-"之前的拣选操作现在是一个空提交，可能是由冲突解决导致的。如果您无论如何\n"
-"也要提交，使用命令：\n"
+"Den tidigare \"cherry-pick\":en är nu tom, kanske på grund av en löst\n"
+"konflikt. Om du vill checka in den ändå använder du:\n"
 "\n"
 "    git commit --allow-empty\n"
 "\n"
-"否则，请使用命令 'git reset'\n"
+"Annars använder du \"git reset\"\n"
 
 #: builtin/commit.c:205 builtin/reset.c:33
 msgid "merge"
-msgstr "合并"
+msgstr "sammanslagning"
 
 #: builtin/commit.c:208
 msgid "cherry-pick"
-msgstr "拣选"
+msgstr "cherry-pick"
 
 #: builtin/commit.c:325
 msgid "failed to unpack HEAD tree object"
-msgstr "解包 HEAD 树对象失败"
+msgstr "misslyckades packa upp HEAD:s trädobjekt"
 
 #: builtin/commit.c:367
 msgid "unable to create temporary index"
-msgstr "不能创建临时暂存区"
+msgstr "kunde inte skapa temporär indexfil"
 
 #: builtin/commit.c:373
 msgid "interactive add failed"
-msgstr "交互式添加失败"
+msgstr "interaktiv tilläggning misslyckades"
 
 #: builtin/commit.c:406 builtin/commit.c:427 builtin/commit.c:473
 msgid "unable to write new_index file"
-msgstr "无法写入新暂存区文件"
+msgstr "kunde inte skriva filen new_index"
 
-#  %s若翻为中文，前后不需要空格
+# %s är antingen "merge" eller "cherry-pick".
 #: builtin/commit.c:457
 #, c-format
 msgid "cannot do a partial commit during a %s."
-msgstr "在%s过程中不能做部分提交。"
+msgstr "kan inte utföra en delvis incheckning under en %s"
 
 #: builtin/commit.c:466
 msgid "cannot read the index"
-msgstr "无法读取暂存区"
+msgstr "kan inte läsa indexet"
 
 #: builtin/commit.c:486
 msgid "unable to write temporary index file"
-msgstr "无法写临时暂存区文件"
+msgstr "kunde inte skriva temporär indexfil"
 
 #: builtin/commit.c:550 builtin/commit.c:556
 #, c-format
 msgid "invalid commit: %s"
-msgstr "无效的提交：%s"
+msgstr "felaktig incheckning: %s"
 
 #: builtin/commit.c:579
 msgid "malformed --author parameter"
-msgstr "非法的 --author 参数"
+msgstr "felformad \"--author\"-flagga"
 
 #: builtin/commit.c:635
 #, c-format
 msgid "Malformed ident string: '%s'"
-msgstr "非法的识别字串：'%s'"
+msgstr "Felaktig indragningssträng: \"%s\""
 
 #: builtin/commit.c:670 builtin/commit.c:703 builtin/commit.c:1000
 #, c-format
 msgid "could not lookup commit %s"
-msgstr "不能查询提交 %s"
+msgstr "kunde inte slå upp incheckningen %s"
 
 #: builtin/commit.c:682 builtin/shortlog.c:296
 #, c-format
 msgid "(reading log message from standard input)\n"
-msgstr "（正从标准输入中读取说明信息）\n"
+msgstr "(läser loggmeddelande från standard in)\n"
 
 #: builtin/commit.c:684
 msgid "could not read log from standard input"
-msgstr "无法从标准输入中读取说明信息"
+msgstr "kunde inte läsa logg från standard in"
 
 #: builtin/commit.c:688
 #, c-format
 msgid "could not read log file '%s'"
-msgstr "无法读取说明文件 '%s'"
+msgstr "kunde inte läsa loggfilen \"%s\""
 
 #: builtin/commit.c:694
 msgid "commit has empty message"
-msgstr "提交说明为空"
+msgstr "incheckningen har ett tomt meddelande"
 
 #: builtin/commit.c:710
 msgid "could not read MERGE_MSG"
-msgstr "无法读取 MERGE_MSG"
+msgstr "kunde inte läsa MERGE_MSG"
 
 #: builtin/commit.c:714
 msgid "could not read SQUASH_MSG"
-msgstr "无法读取 SQUASH_MSG"
+msgstr "kunde inte läsa SQUASH_MSG"
 
 #: builtin/commit.c:718
 #, c-format
 msgid "could not read '%s'"
-msgstr "无法读取 '%s'"
+msgstr "kunde inte läsa \"%s\""
 
 #: builtin/commit.c:746
 #, c-format
 msgid "could not open '%s'"
-msgstr "无法打开 '%s'"
+msgstr "kunde inte öppna \"%s\""
 
 #: builtin/commit.c:770
 msgid "could not write commit template"
-msgstr "无法写提交模版"
+msgstr "kunde inte skriva incheckningsmall"
 
-#  %s若翻为中文，前后不需要空格
+# %s är "merge" eller "cherry-pick"
 #: builtin/commit.c:783
 #, c-format
 msgid ""
@@ -1520,181 +1515,176 @@ msgid ""
 "and try again.\n"
 msgstr ""
 "\n"
-"看起来您正在提交一个%s。\n"
-"如果不是这样，请删除文件\n"
+"Det verkar som du checkar in en %s.\n"
+"Om det inte stämmer tar du bort filen\n"
 "\t%s\n"
-"然后重试。\n"
+"och försöker igen.\n"
 
 #: builtin/commit.c:796
 msgid "Please enter the commit message for your changes."
-msgstr "请为您的修改输入提交说明。"
+msgstr "Ange ett incheckningsmeddelande för dina ändringar."
 
-#  前导空格用于拼接英文字串，中文字串拼接无需空格
 #: builtin/commit.c:799
 msgid ""
 " Lines starting\n"
 "with '#' will be ignored, and an empty message aborts the commit.\n"
 msgstr ""
-"以 '#' 开头\n"
-"的行将被忽略，并且空的提交说明将会中止提交。\n"
+" Rader som inleds\n"
+"med \"#\" kommer ignoreras, och ett tomt meddelande avbryter incheckningen.\n"
 
-#  前导空格用于拼接英文字串，中文字串拼接无需空格
 #: builtin/commit.c:804
 msgid ""
 " Lines starting\n"
 "with '#' will be kept; you may remove them yourself if you want to.\n"
 "An empty message aborts the commit.\n"
 msgstr ""
-"以 '#' 开头\n"
-"的行将被保留，您可以删除它们如果您想这样做的话。空的提交说明将会\n"
-"中止提交。\n"
+" Rader som inleds\n"
+"med \"#\" kommer behållas; du kan själv ta bort dem om du vill.\n"
+"Ett tomt meddelande avbryter incheckningen.\n"
 
-#  为保证在输出中对齐，注意调整句中空格！
 #: builtin/commit.c:816
 #, c-format
 msgid "%sAuthor:    %s"
-msgstr "%s作者：     %s"
+msgstr "%sFörfattare: %s"
 
-#  为保证在输出中对齐，注意调整句中空格！
 #: builtin/commit.c:823
 #, c-format
 msgid "%sCommitter: %s"
-msgstr "%s提交者：   %s"
+msgstr "%sIncheckare: %s"
 
 #: builtin/commit.c:843
 msgid "Cannot read index"
-msgstr "无法读取暂存区"
+msgstr "Kan inte läsa indexet"
 
 #: builtin/commit.c:880
 msgid "Error building trees"
-msgstr "无法创建树对象"
+msgstr "Fel vid byggande av träd"
 
 #: builtin/commit.c:895 builtin/tag.c:357
 #, c-format
 msgid "Please supply the message using either -m or -F option.\n"
-msgstr "请使用 -m 或者 -F 选项提供说明。\n"
+msgstr "Ange meddelandet en av flaggorna -m eller -F.\n"
 
 #: builtin/commit.c:975
 #, c-format
 msgid "No existing author found with '%s'"
-msgstr "没有找到匹配 '%s' 的作者"
+msgstr "Hittade ingen befintlig författare med \"%s\""
 
 #: builtin/commit.c:990 builtin/commit.c:1182
 #, c-format
 msgid "Invalid untracked files mode '%s'"
-msgstr "无效的非追踪文件参数 '%s'"
+msgstr "Ogiltigt läge för ospårade filer: \"%s\""
 
 #: builtin/commit.c:1030
 msgid "Using both --reset-author and --author does not make sense"
-msgstr "同时使用 --reset-author 和 --author 没有意义"
+msgstr "Kan inte använda både --reset-author och --author"
 
 #: builtin/commit.c:1041
 msgid "You have nothing to amend."
-msgstr "您没有要修补。"
+msgstr "Du har inget att utöka."
 
-#  %s若翻为中文，前后不需要空格
 #: builtin/commit.c:1043
 #, c-format
 msgid "You are in the middle of a %s -- cannot amend."
-msgstr "您正处于一个%s过程中 -- 无法修补提交。"
+msgstr "Du är i mitten av en %s -- kan inte utöka."
 
 #: builtin/commit.c:1045
 msgid "Options --squash and --fixup cannot be used together"
-msgstr "选项 --squash 和 --fixup 不能共用"
+msgstr "Flaggorna --squash och --fixup kan inte användas samtidigt"
 
 #: builtin/commit.c:1055
 msgid "Only one of -c/-C/-F/--fixup can be used."
-msgstr "只能用一个 -c/-C/-F/--fixup 选项。"
+msgstr "Endast en av -c/-C/-F/--fixup kan användas."
 
 #: builtin/commit.c:1057
 msgid "Option -m cannot be combined with -c/-C/-F/--fixup."
-msgstr "选项 -m 不能和 -c/-C/-F/--fixup 共用。"
+msgstr "Flaggan -m kan inte kombineras med -c/-C/-F/--fixup."
 
 #: builtin/commit.c:1063
 msgid "--reset-author can be used only with -C, -c or --amend."
-msgstr "--reset-author 只能和 -C, -c 或 --amend 共用。"
+msgstr "--reset-author kan endast användas med -C, -c eller --amend."
 
 #: builtin/commit.c:1080
 msgid "Only one of --include/--only/--all/--interactive/--patch can be used."
-msgstr "只能用一个 --include/--only/--all/--interactive/--patch 选项。"
+msgstr ""
+"Endast en av --include/--only/--all/--interactive/--patch kan användas."
 
 #: builtin/commit.c:1082
 msgid "No paths with --include/--only does not make sense."
-msgstr "参数 --include/--only 不跟路径没有意义。"
+msgstr "Du måste ange sökvägar tillsammans med --include/--only."
 
 #: builtin/commit.c:1084
 msgid "Clever... amending the last one with dirty index."
-msgstr "聪明... 在暂存区不干净下修补最后的提交。"
+msgstr "Smart... utöka den senaste med smutsigt index."
 
 #: builtin/commit.c:1086
 msgid "Explicit paths specified without -i nor -o; assuming --only paths..."
-msgstr "没有用 -i 或 -o 选项而显式地提供路径，认为是 --only paths..."
+msgstr "Explicita sökvägar angavs utan -i eller -o; antar --only sökvägar..."
 
 #: builtin/commit.c:1096 builtin/tag.c:556
 #, c-format
 msgid "Invalid cleanup mode %s"
-msgstr "无效的清理模式 %s"
+msgstr "Felaktigt städningsläge %s"
 
 #: builtin/commit.c:1101
 msgid "Paths with -a does not make sense."
-msgstr "路径和 -a 选项共用没有意义。"
+msgstr "Kan inte ange sökvägar med -a."
 
 #: builtin/commit.c:1280
 msgid "couldn't look up newly created commit"
-msgstr "无法找到新创建的提交"
+msgstr "kunde inte slå upp en precis skapad incheckning"
 
 #: builtin/commit.c:1282
 msgid "could not parse newly created commit"
-msgstr "无法解析新创建的提交"
+msgstr "kunde inte tolka en precis skapad incheckning"
 
 #: builtin/commit.c:1323
 msgid "detached HEAD"
-msgstr "分离头指针"
+msgstr "frånkopplad HEAD"
 
-#  注意保持前导空格
 #: builtin/commit.c:1325
 msgid " (root-commit)"
-msgstr " （根提交）"
+msgstr " (rotincheckning)"
 
 #: builtin/commit.c:1415
 msgid "could not parse HEAD commit"
-msgstr "无法解析 HEAD 提交"
+msgstr "kunde inte tolka HEAD:s incheckning"
 
 #: builtin/commit.c:1452 builtin/merge.c:509
 #, c-format
 msgid "could not open '%s' for reading"
-msgstr "无法打开 '%s' 读取"
+msgstr "kunde inte öppna \"%s\" för läsning"
 
 #: builtin/commit.c:1459
 #, c-format
 msgid "Corrupt MERGE_HEAD file (%s)"
-msgstr "损坏的 MERGE_HEAD 文件 (%s)"
+msgstr "Trasig MERGE_HEAD-fil (%s)"
 
 #: builtin/commit.c:1466
 msgid "could not read MERGE_MODE"
-msgstr "无法读取 MERGE_MODE"
+msgstr "kunde inte läsa MERGE_MODE"
 
 #: builtin/commit.c:1485
 #, c-format
 msgid "could not read commit message: %s"
-msgstr "无法读取提交说明：%s"
+msgstr "kunde inte läsa incheckningsmeddelande: %s"
 
 #: builtin/commit.c:1499
 #, c-format
 msgid "Aborting commit due to empty commit message.\n"
-msgstr "终止提交因为提交说明为空。\n"
+msgstr "Avbryter på grund av tomt incheckningsmeddelande.\n"
 
 #: builtin/commit.c:1514 builtin/merge.c:935 builtin/merge.c:968
 msgid "failed to write commit object"
-msgstr "写提交对象失败"
+msgstr "kunde inte skriva incheckningsobjekt"
 
 #: builtin/commit.c:1535
 msgid "cannot lock HEAD ref"
-msgstr "无法锁定 HEAD 引用"
+msgstr "kunde inte låsa HEAD-referens"
 
 #: builtin/commit.c:1539
 msgid "cannot update HEAD ref"
-msgstr "无法更新 HEAD 引用"
+msgstr "kunde inte uppdatera HEAD-referens"
 
 #: builtin/commit.c:1550
 msgid ""
@@ -1702,48 +1692,50 @@ msgid ""
 "new_index file. Check that disk is not full or quota is\n"
 "not exceeded, and then \"git reset HEAD\" to recover."
 msgstr ""
-"版本库已被更新，但无法写入新暂存区文件。检查是否磁盘\n"
-"已满或磁盘配额耗尽，然后执行 \"git reset HEAD\" 恢复。"
+"Arkivet har uppdaterats, men kunde inte skriva filen\n"
+"new_index. Kontrollera att disken inte är full och\n"
+"att kvoten inte har överskridits, och kör sedan\n"
+"\"git reset HEAD\" för att återställa."
 
 #: builtin/describe.c:234
 #, c-format
 msgid "annotated tag %s not available"
-msgstr "注释 tag %s 无效"
+msgstr "den annoterade taggen %s inte tillgänglig"
 
 #: builtin/describe.c:238
 #, c-format
 msgid "annotated tag %s has no embedded name"
-msgstr "注释 tag %s 没有嵌入名称"
+msgstr "den annoterade taggen %s har inget inbäddat namn"
 
 #: builtin/describe.c:240
 #, c-format
 msgid "tag '%s' is really '%s' here"
-msgstr "tag '%s' 确是在 '%s'"
+msgstr "taggen \"%s\" är i verkligheten \"%s\" här"
 
 #: builtin/describe.c:267
 #, c-format
 msgid "Not a valid object name %s"
-msgstr "不是一个有效的对象名 %s"
+msgstr "Objektnamnet är inte giltigt: %s"
 
 #: builtin/describe.c:270
 #, c-format
 msgid "%s is not a valid '%s' object"
-msgstr "%s 不是一个有效的 '%s' 对象"
+msgstr "%s är inte ett giltigt \"%s\"-objekt"
 
 #: builtin/describe.c:287
 #, c-format
 msgid "no tag exactly matches '%s'"
-msgstr "没有 tag 准确匹配 '%s'"
+msgstr "ingen tagg motsvarar \"%s\" exakt"
 
 #: builtin/describe.c:289
 #, c-format
 msgid "searching to describe %s\n"
-msgstr "搜索描述 %s\n"
+msgstr "söker för att beskriva %s\n"
 
 #: builtin/describe.c:329
 #, c-format
 msgid "finished search at %s\n"
-msgstr "完成搜索 %s\n"
+msgstr "avslutade sökning på %s\n"
 
 #: builtin/describe.c:353
 #, c-format
@@ -1751,8 +1743,8 @@ msgid ""
 "No annotated tags can describe '%s'.\n"
 "However, there were unannotated tags: try --tags."
 msgstr ""
-"没有注释 tag 能描述 '%s'。\n"
-"然而，有非注释 tag：尝试 --tags。"
+"Inga annoterade taggar kan beskriva \"%s\".\n"
+"Det finns dock oannoterade taggar: testa --tags."
 
 #: builtin/describe.c:357
 #, c-format
@@ -1760,13 +1752,13 @@ msgid ""
 "No tags can describe '%s'.\n"
 "Try --always, or create some tags."
 msgstr ""
-"没有注释 tag 能描述 '%s'。\n"
-"尝试 --always，或创建一些 tag。"
+"Inga taggar kan beskriva \"%s\".\n"
+"Testa --always, eller skapa några taggar."
 
 #: builtin/describe.c:378
 #, c-format
 msgid "traversed %lu commits\n"
-msgstr "已遍历 %lu 个提交\n"
+msgstr "traverserade %lu incheckningar\n"
 
 #: builtin/describe.c:381
 #, c-format
@@ -1774,120 +1766,119 @@ msgid ""
 "more than %i tags found; listed %i most recent\n"
 "gave up search at %s\n"
 msgstr ""
-"发现多于 %i 个 tag；列出最近的 %i 个\n"
-"放弃搜索 %s\n"
+"mer än %i taggar hittades; listar de %i senaste\n"
+"gav upp sökningen vid %s\n"
 
 #: builtin/describe.c:436
 msgid "--long is incompatible with --abbrev=0"
-msgstr "--long 与 --abbrev=0 不兼容"
+msgstr "--long är inkompatibel med --abbrev=0"
 
 #: builtin/describe.c:462
 msgid "No names found, cannot describe anything."
-msgstr "没有发现名称，无法描述任何东西"
+msgstr "Inga namn hittades, kan inte beskriva något."
 
 #: builtin/describe.c:482
 msgid "--dirty is incompatible with committishes"
-msgstr "--dirty 不能与提交共用"
+msgstr "--dirty är inkompatibelt med \"committish\"-värden"
 
 #: builtin/diff.c:77
 #, c-format
 msgid "'%s': not a regular file or symlink"
-msgstr "'%s'：不是一个正规文件或符号链接"
+msgstr "\"%s\": inte en normal fil eller symbolisk länk"
 
 #: builtin/diff.c:220
 #, c-format
 msgid "invalid option: %s"
-msgstr "无效选项：%s"
+msgstr "ogiltig flagga: %s"
 
 #: builtin/diff.c:297
 msgid "Not a git repository"
-msgstr "不是一个 git 版本库"
+msgstr "Inte ett git-arkiv"
 
 #: builtin/diff.c:347
 #, c-format
 msgid "invalid object '%s' given."
-msgstr "提供了无效对象 '%s'。"
+msgstr "objektet \"%s\" som angavs är felaktigt."
 
 #: builtin/diff.c:352
 #, c-format
 msgid "more than %d trees given: '%s'"
-msgstr "提供了超过 %d 个树对象：'%s'"
+msgstr "mer än %d träd angavs: \"%s\""
 
 #: builtin/diff.c:362
 #, c-format
 msgid "more than two blobs given: '%s'"
-msgstr "提供了超过两个 blob 对象：'%s'"
+msgstr "mer än två blobbar angavs: \"%s\""
 
 #: builtin/diff.c:370
 #, c-format
 msgid "unhandled object '%s' given."
-msgstr "提供了无法处理的对象 '%s'。"
+msgstr "ej hanterat objekt \"%s\" angavs."
 
 #: builtin/fetch.c:200
 msgid "Couldn't find remote ref HEAD"
-msgstr "无法发现远程 HEAD 引用"
+msgstr "Kunde inte hitta fjärr-referensen HEAD"
 
 #: builtin/fetch.c:252
 #, c-format
 msgid "object %s not found"
-msgstr "对象 %s 未发现"
+msgstr "objektet %s hittades inte"
 
 #: builtin/fetch.c:258
 msgid "[up to date]"
-msgstr "[最新]"
+msgstr "[àjour]"
 
 #: builtin/fetch.c:272
 #, c-format
 msgid "! %-*s %-*s -> %s  (can't fetch in current branch)"
-msgstr "! %-*s %-*s -> %s  （在当前分支下不能获取）"
+msgstr "! %-*s %-*s -> %s  (kan inte hämta i aktuell gren)"
 
 #: builtin/fetch.c:273 builtin/fetch.c:351
 msgid "[rejected]"
-msgstr "[已拒绝]"
+msgstr "[refuserad]"
 
 #: builtin/fetch.c:284
 msgid "[tag update]"
-msgstr "[tag更新]"
+msgstr "[uppdaterad tagg]"
 
-#  注意保持前导空格
 #: builtin/fetch.c:286 builtin/fetch.c:313 builtin/fetch.c:331
 msgid "  (unable to update local ref)"
-msgstr "  （不能更新本地引用）"
+msgstr "  (kunde inte uppdatera lokal ref)"
 
 #: builtin/fetch.c:298
 msgid "[new tag]"
-msgstr "[新tag]"
+msgstr "[ny tagg]"
 
 #: builtin/fetch.c:302
 msgid "[new branch]"
-msgstr "[新分支]"
+msgstr "[ny gren]"
 
 #: builtin/fetch.c:347
 msgid "unable to update local ref"
-msgstr "不能更新本地引用"
+msgstr "kunde inte uppdatera lokal ref"
 
 #: builtin/fetch.c:347
 msgid "forced update"
-msgstr "强制更新"
+msgstr "tvingad uppdatering"
 
 #: builtin/fetch.c:353
 msgid "(non-fast-forward)"
-msgstr "（非快进式推送）"
+msgstr "(ej snabbspolad)"
 
 #: builtin/fetch.c:384 builtin/fetch.c:676
 #, c-format
 msgid "cannot open %s: %s\n"
-msgstr "无法打开 %s：%s\n"
+msgstr "kan inte öppna %s: %s\n"
 
 #: builtin/fetch.c:393
 #, c-format
 msgid "%s did not send all necessary objects\n"
-msgstr "%s 未发送所有必须的对象\n"
+msgstr "%s sände inte alla nödvändiga objekt\n"
 
 #: builtin/fetch.c:479
 #, c-format
 msgid "From %.*s\n"
-msgstr "来自 %.*s\n"
+msgstr "Från %.*s\n"
 
 #: builtin/fetch.c:490
 #, c-format
@@ -1895,104 +1886,104 @@ msgid ""
 "some local refs could not be updated; try running\n"
 " 'git remote prune %s' to remove any old, conflicting branches"
 msgstr ""
-"一些本地引用不能被更新；尝试运行\n"
-" 'git remote prune %s' 来删除旧的、有冲突的分支"
+"några lokala referenser kunde inte uppdateras; testa att köra\n"
+" \"git remote prune %s\" för att ta bort gamla grenar som står i konflikt"
 
-#  注意保持前导空格
 #: builtin/fetch.c:540
 #, c-format
 msgid "   (%s will become dangling)\n"
-msgstr "   （%s 将成为悬空状态）\n"
+msgstr "   (%s kommer bli dinglande)\n"
 
-#  注意保持前导空格
 #: builtin/fetch.c:541
 #, c-format
 msgid "   (%s has become dangling)\n"
-msgstr "   （%s 已成为悬空状态）\n"
+msgstr "   (%s har blivit dinglande)\n"
 
 #: builtin/fetch.c:548
 msgid "[deleted]"
-msgstr "[已删除]"
+msgstr "[borttagen]"
 
 #: builtin/fetch.c:549
 msgid "(none)"
-msgstr "（无）"
+msgstr "(ingen)"
 
 #: builtin/fetch.c:666
 #, c-format
 msgid "Refusing to fetch into current branch %s of non-bare repository"
-msgstr "拒绝获取到非裸版本库的当前分支 %s"
+msgstr "Vägrar hämta till aktuell gren %s i ett icke-naket arkiv"
 
 #: builtin/fetch.c:700
 #, c-format
 msgid "Don't know how to fetch from %s"
-msgstr "不知道如何从 %s 获取"
+msgstr "Vet inte hur man hämtar från %s"
 
 #: builtin/fetch.c:777
 #, c-format
 msgid "Option \"%s\" value \"%s\" is not valid for %s"
-msgstr "选项 \"%s\" 的值 \"%s\" 对于 %s 是无效的"
+msgstr "Flaggan \"%s\" och värdet \"%s\" är inte giltigt för %s"
 
 #: builtin/fetch.c:780
 #, c-format
 msgid "Option \"%s\" is ignored for %s\n"
-msgstr "选项 \"%s\" 对于 %s 被忽略\n"
+msgstr "Flaggan \"%s\" ignoreras för %s\n"
 
 #: builtin/fetch.c:879
 #, c-format
 msgid "Fetching %s\n"
-msgstr "正在获取 %s\n"
+msgstr "Hämtar %s\n"
 
 #: builtin/fetch.c:881
 #, c-format
 msgid "Could not fetch %s"
-msgstr "不能获取 %s"
+msgstr "Kunde inte hämta %s"
 
 #: builtin/fetch.c:898
 msgid ""
 "No remote repository specified.  Please, specify either a URL or a\n"
 "remote name from which new revisions should be fetched."
-msgstr "未提供远程版本库。请提供一个URL或远程版本库名，用于获取新版本。"
+msgstr ""
+"Inget fjärrarkiv angavs. Ange antingen en URL eller namnet på ett\n"
+"fjärrarkiv som nya incheckningar skall hämtas från."
 
 #: builtin/fetch.c:918
 msgid "You need to specify a tag name."
-msgstr "你需要提供一个 tag 名称"
+msgstr "Du måste ange namnet på en tagg."
 
 #: builtin/fetch.c:970
 msgid "fetch --all does not take a repository argument"
-msgstr "fetch --all 不能带一个版本库参数"
+msgstr "fetch --all tar inte namnet på ett arkiv som argument"
 
 #: builtin/fetch.c:972
 msgid "fetch --all does not make sense with refspecs"
-msgstr "fetch --all 带引用表达式没有任何意义"
+msgstr "fetch --all kan inte anges med referensspecifikationer"
 
 #: builtin/fetch.c:983
 #, c-format
 msgid "No such remote or remote group: %s"
-msgstr "没有这样的远程或远程组：%s"
+msgstr "Fjärren eller fjärrgruppen finns inte: %s"
 
 #: builtin/fetch.c:991
 msgid "Fetching a group and specifying refspecs does not make sense"
-msgstr "获取组并提供引用表达式没有意义"
+msgstr "Kan inte hämta från grupp och ange referensspecifikationer"
 
 #: builtin/gc.c:63
 #, c-format
 msgid "Invalid %s: '%s'"
-msgstr "无效的 %s：'%s'"
+msgstr "Felaktigt %s: \"%s\""
 
 #: builtin/gc.c:78
 msgid "Too many options specified"
-msgstr "提供了太多的选项"
+msgstr "För många flaggor angavs"
 
 #: builtin/gc.c:103
 #, c-format
 msgid "insanely long object directory %.*s"
-msgstr "不正常的长对象目录 %.*s"
+msgstr "tokigt lång objektkatalog %.*s"
 
 #: builtin/gc.c:223
 #, c-format
 msgid "Auto packing the repository for optimum performance.\n"
-msgstr "自动打包版本库以求最佳性能。\n"
+msgstr "Packar arkivet automatiskt för optimal prestanda.\n"
 
 #: builtin/gc.c:226
 #, c-format
@@ -2000,162 +1991,164 @@ msgid ""
 "Auto packing the repository for optimum performance. You may also\n"
 "run \"git gc\" manually. See \"git help gc\" for more information.\n"
 msgstr ""
-"自动打包版本库以求最佳性能。你还可以\n"
-"手动运行 \"git gc\"。 参见 \"git help gc\" 获取更多信息。\n"
+"Packar arkivet automatiskt för optimal prestanda. Du kan även\n"
+"köra \"git gc\" manuellt. Se \"git help gc\" för mer information.\n"
 
 #: builtin/gc.c:256
 msgid ""
 "There are too many unreachable loose objects; run 'git prune' to remove them."
-msgstr "有太多无指向的松散对象，运行 'git prune' 删除它们。"
+msgstr ""
+"Det finns för många onåbara lösa objekt; kör \"git prune\" för att ta bort "
+"dem."
 
 #: builtin/grep.c:216
 #, c-format
 msgid "grep: failed to create thread: %s"
-msgstr "grep: 无法创建线程：%s"
+msgstr "grep: misslyckades skapa tråd. %s"
 
 #: builtin/grep.c:402
 #, c-format
 msgid "Failed to chdir: %s"
-msgstr "无法切换目录：%s"
+msgstr "Kunde inte byta katalog (chdir): %s"
 
 #: builtin/grep.c:478 builtin/grep.c:512
 #, c-format
 msgid "unable to read tree (%s)"
-msgstr "无法读取代码树（%s）"
+msgstr "kunde inte läsa träd (%s)"
 
 #: builtin/grep.c:526
 #, c-format
 msgid "unable to grep from object of type %s"
-msgstr "无法抓取来自于 %s 类型的对象"
+msgstr "Kunde inte \"grep\" från objekt av typen %s"
 
 #: builtin/grep.c:584
 #, c-format
 msgid "switch `%c' expects a numerical value"
-msgstr "开关 `%c' 期望一个数字值"
+msgstr "flaggan \"%c\" antar ett numeriskt värde"
 
 #: builtin/grep.c:601
 #, c-format
 msgid "cannot open '%s'"
-msgstr "不能打开 '%s'"
+msgstr "kan inte öppna \"%s\""
 
 #: builtin/grep.c:888
 msgid "no pattern given."
-msgstr "未提供模式匹配。"
+msgstr "inget mönster angavs."
 
 #: builtin/grep.c:902
 #, c-format
 msgid "bad object %s"
-msgstr "坏对象 %s"
+msgstr "felaktigt objekt %s"
 
 #: builtin/grep.c:943
 msgid "--open-files-in-pager only works on the worktree"
-msgstr "--open-files-in-pager 仅用于工作区"
+msgstr "--open-files-in-pager fungerar endast i arbetskatalogen"
 
 #: builtin/grep.c:966
 msgid "--cached or --untracked cannot be used with --no-index."
-msgstr "--cached 或 --untracked 不能与 --no-index 共用"
+msgstr "--cached och --untracked kan inte användas med --no-index."
 
 #: builtin/grep.c:971
 msgid "--no-index or --untracked cannot be used with revs."
-msgstr "--no-index 或 --untracked 不能和版本共用。"
+msgstr "--no-index och --untracked kan inte användas med revisioner."
 
 #: builtin/grep.c:974
 msgid "--[no-]exclude-standard cannot be used for tracked contents."
-msgstr "--[no-]exclude-standard 不能用于跟踪内容。"
+msgstr "--[no-]exclude-standard kan inte användas för spårat innehåll."
 
 #: builtin/grep.c:982
 msgid "both --cached and trees are given."
-msgstr "同时给出了 --cached 和树对象。"
+msgstr "både --cached och träd angavs."
 
 #: builtin/init-db.c:35
 #, c-format
 msgid "Could not make %s writable by group"
-msgstr "不能设置 %s 为组可写"
+msgstr "Kunde inte göra %s skrivbar för gruppen"
 
 #: builtin/init-db.c:62
 #, c-format
 msgid "insanely long template name %s"
-msgstr "太长的模版名 %s"
+msgstr "tokigt långt namn på mallen %s"
 
 #: builtin/init-db.c:67
 #, c-format
 msgid "cannot stat '%s'"
-msgstr "不能枚举 '%s' 状态"
+msgstr "kan inte ta status på \"%s\""
 
 #: builtin/init-db.c:73
 #, c-format
 msgid "cannot stat template '%s'"
-msgstr "不能枚举模版 '%s' 状态"
+msgstr "kan inte ta status på mallen \"%s\""
 
 #: builtin/init-db.c:80
 #, c-format
 msgid "cannot opendir '%s'"
-msgstr "不能打开目录 '%s'"
+msgstr "kan inte öppna katalogen (opendir) \"%s\""
 
 #: builtin/init-db.c:97
 #, c-format
 msgid "cannot readlink '%s'"
-msgstr "不能读取链接 '%s'"
+msgstr "kan inte läsa länk (readlink) \"%s\""
 
 #: builtin/init-db.c:99
 #, c-format
 msgid "insanely long symlink %s"
-msgstr "太长的符号链接 %s"
+msgstr "tokigt lång symbolisk länk %s"
 
 #: builtin/init-db.c:102
 #, c-format
 msgid "cannot symlink '%s' '%s'"
-msgstr "不能创建符号链接 '%s' 到 '%s'"
+msgstr "kan inte skapa symbolisk länk \"%s\" \"%s\""
 
 #: builtin/init-db.c:106
 #, c-format
 msgid "cannot copy '%s' to '%s'"
-msgstr "不能拷贝 '%s' 至 '%s'"
+msgstr "kan inte kopiera \"%s\" till \"%s\""
 
 #: builtin/init-db.c:110
 #, c-format
 msgid "ignoring template %s"
-msgstr "忽略模版 %s"
+msgstr "ignorerar mallen %s"
 
 #: builtin/init-db.c:133
 #, c-format
 msgid "insanely long template path %s"
-msgstr "太长的模版路径 %s"
+msgstr "tokigt lång mallsökväg %s"
 
 #: builtin/init-db.c:141
 #, c-format
 msgid "templates not found %s"
-msgstr "模版未找到 %s"
+msgstr "mallarna hittades inte %s"
 
 #: builtin/init-db.c:154
 #, c-format
 msgid "not copying templates of a wrong format version %d from '%s'"
-msgstr "未复制错误版本 %d 的模版自 '%s'"
+msgstr "kopierade inte mallar från felaktig formatversion %d från \"%s\""
 
 #: builtin/init-db.c:192
 #, c-format
 msgid "insane git directory %s"
-msgstr "不正常的 git 目录 %s"
+msgstr "tokig git-katalog %s"
 
 #: builtin/init-db.c:322 builtin/init-db.c:325
 #, c-format
 msgid "%s already exists"
-msgstr "%s 已经存在"
+msgstr "%s finns redan"
 
 #: builtin/init-db.c:354
 #, c-format
 msgid "unable to handle file type %d"
-msgstr "不能处理 %d 类型的文件"
+msgstr "kan inte hantera filtyp %d"
 
 #: builtin/init-db.c:357
 #, c-format
 msgid "unable to move %s to %s"
-msgstr "不能移动 %s 至 %s"
+msgstr "kan inte flytta %s till %s"
 
 #: builtin/init-db.c:362
 #, c-format
 msgid "Could not create git link %s"
-msgstr "不能创建 git link %s"
+msgstr "Kunde inte skapa gitlänk %s"
 
 #.
 #. * TRANSLATORS: The first '%s' is either "Reinitialized
@@ -2165,34 +2158,33 @@ msgstr "不能创建 git link %s"
 #: builtin/init-db.c:419
 #, c-format
 msgid "%s%s Git repository in %s%s\n"
-msgstr "%s%s Git 版本库于 %s%s\n"
+msgstr "%s%s Git-arkiv i %s%s\n"
 
 #: builtin/init-db.c:420
 msgid "Reinitialized existing"
-msgstr "重新初始化现存的"
+msgstr "Ominitierade befintligt"
 
 #: builtin/init-db.c:420
 msgid "Initialized empty"
-msgstr "初始化空的"
+msgstr "Initierade tomt"
 
-#  汉字字串合并，之间无空格，故删除前导空格
 #: builtin/init-db.c:421
 msgid " shared"
-msgstr "共享的"
+msgstr " delat"
 
 #: builtin/init-db.c:440
 msgid "cannot tell cwd"
-msgstr "无法获知当前路径"
+msgstr "kan inte läsa aktuell katalog (cwd)"
 
 #: builtin/init-db.c:521 builtin/init-db.c:528
 #, c-format
 msgid "cannot mkdir %s"
-msgstr "不能创建目录 %s"
+msgstr "kan inte skapa katalogen (mkdir) %s"
 
 #: builtin/init-db.c:532
 #, c-format
 msgid "cannot chdir to %s"
-msgstr "不能切换目录到 %s"
+msgstr "kan inte byta katalog (chdir) till %s"
 
 #: builtin/init-db.c:554
 #, c-format
@@ -2200,228 +2192,230 @@ msgid ""
 "%s (or --work-tree=<directory>) not allowed without specifying %s (or --git-"
 "dir=<directory>)"
 msgstr ""
-"不允许 %s（或 --work-tree=<directory>）而没有 %s（或 --git-dir=<directory>）"
+"%s (eller --work-tree=<katalog>) inte tillåtet utan att ange %s (eller --git-"
+"dir=<katalog>)"
 
 #: builtin/init-db.c:578
 msgid "Cannot access current working directory"
-msgstr "不能访问当前工作目录"
+msgstr "Kan inte komma åt aktuell arbetskatalog"
 
 #: builtin/init-db.c:585
 #, c-format
 msgid "Cannot access work tree '%s'"
-msgstr "不能访问工作区 '%s'"
+msgstr "Kan inte komma åt arbetskatalogen \"%s\""
 
 #: builtin/log.c:187
 #, c-format
 msgid "Final output: %d %s\n"
-msgstr "最终输出：%d %s\n"
+msgstr "Slututdata: %d %s\n"
 
 #: builtin/log.c:395 builtin/log.c:483
 #, c-format
 msgid "Could not read object %s"
-msgstr "无法读取对象 %s"
+msgstr "Kunde inte läsa objektet %s"
 
 #: builtin/log.c:507
 #, c-format
 msgid "Unknown type: %d"
-msgstr "未知类型：%d"
+msgstr "Okänd typ: %d"
 
 #: builtin/log.c:596
 msgid "format.headers without value"
-msgstr "format.headers 没有值"
+msgstr "format.headers utan värde"
 
 #: builtin/log.c:669
 msgid "name of output directory is too long"
-msgstr "输出目录名太长"
+msgstr "namnet på utdatakatalogen är för långt"
 
 #: builtin/log.c:680
 #, c-format
 msgid "Cannot open patch file %s"
-msgstr "无法打开补丁文件 %s"
+msgstr "Kan inte öppna patchfilen %s"
 
 #: builtin/log.c:694
 msgid "Need exactly one range."
-msgstr "只需要一个范围。"
+msgstr "Behöver precis ett intervall."
 
 #: builtin/log.c:702
 msgid "Not a range."
-msgstr "不是一个范围。"
+msgstr "Inte ett intervall."
 
 #: builtin/log.c:739
 msgid "Could not extract email from committer identity."
-msgstr "无法从提交者身份中提取邮件地址。"
+msgstr "Kunde inte extrahera e-postadress från incheckarens identitet."
 
 #: builtin/log.c:785
 msgid "Cover letter needs email format"
-msgstr "信封需要邮件地址格式"
+msgstr "Omslagsbrevet behöver e-postformat"
 
 #: builtin/log.c:879
 #, c-format
 msgid "insane in-reply-to: %s"
-msgstr "不正常的 in-reply-to：%s"
+msgstr "tokigt in-reply-to: %s"
 
 #: builtin/log.c:952
 msgid "Two output directories?"
-msgstr "两个输出目录？"
+msgstr "Två utdatakataloger?"
 
 #: builtin/log.c:1173
 #, c-format
 msgid "bogus committer info %s"
-msgstr "虚假的提交者信息 %s"
+msgstr "felaktig incheckarinformation %s"
 
 #: builtin/log.c:1218
 msgid "-n and -k are mutually exclusive."
-msgstr "-n 和 -k 互斥。"
+msgstr "-n och -k kan inte användas samtidigt."
 
 #: builtin/log.c:1220
 msgid "--subject-prefix and -k are mutually exclusive."
-msgstr "--subject-prefix 和 -k 互斥。"
+msgstr "--subject-prefix och -k kan inte användas samtidigt."
 
 #: builtin/log.c:1225 builtin/shortlog.c:284
 #, c-format
 msgid "unrecognized argument: %s"
-msgstr "未识别的参数：%s"
+msgstr "okänt argument: %s"
 
 #: builtin/log.c:1228
 msgid "--name-only does not make sense"
-msgstr "--name-only 无意义"
+msgstr "kan inte använda --name-only"
 
 #: builtin/log.c:1230
 msgid "--name-status does not make sense"
-msgstr "--name-status 无意义"
+msgstr "kan inte använda --name-status"
 
 #: builtin/log.c:1232
 msgid "--check does not make sense"
-msgstr "--check 无意义"
+msgstr "kan inte använda --check"
 
 #: builtin/log.c:1255
 msgid "standard output, or directory, which one?"
-msgstr "标准输出或目录，哪一个？"
+msgstr "standard ut, eller katalog, vilken skall det vara?"
 
 #: builtin/log.c:1257
 #, c-format
 msgid "Could not create directory '%s'"
-msgstr "无法创建目录 '%s'"
+msgstr "Kunde inte skapa katalogen \"%s\""
 
 #: builtin/log.c:1410
 msgid "Failed to create output files"
-msgstr "无法创建输出文件"
+msgstr "Misslyckades skapa utdatafiler"
 
 #: builtin/log.c:1514
 #, c-format
 msgid ""
 "Could not find a tracked remote branch, please specify <upstream> manually.\n"
-msgstr "无法找到跟踪的远程分支，请手工提供 <upstream>。\n"
+msgstr "Kunde inte hitta en spårad fjärrgren, ange <uppström> manuellt.\n"
 
 #: builtin/log.c:1530 builtin/log.c:1532 builtin/log.c:1544
 #, c-format
 msgid "Unknown commit %s"
-msgstr "未知提交 %s"
+msgstr "Okänd incheckning %s"
 
 #: builtin/merge.c:91
 msgid "switch `m' requires a value"
-msgstr "开关 `m' 需要一个值"
+msgstr "flaggan \"m\" behöver ett värde"
 
 #: builtin/merge.c:128
 #, c-format
 msgid "Could not find merge strategy '%s'.\n"
-msgstr "无法找到合并策略 '%s'。\n"
+msgstr "Kunde inte hitta sammanslagningsstrategin \"%s\".\n"
 
 #: builtin/merge.c:129
 #, c-format
 msgid "Available strategies are:"
-msgstr "可用的策略有："
+msgstr "Tillgängliga strategier är:"
 
 #: builtin/merge.c:134
 #, c-format
 msgid "Available custom strategies are:"
-msgstr "可用的自定义策略有："
+msgstr "Tillgängliga skräddarsydda strategier är:"
 
 #: builtin/merge.c:241
 msgid "could not run stash."
-msgstr "不能进行进度保存。"
+msgstr "kunde köra stash."
 
 #: builtin/merge.c:246
 msgid "stash failed"
-msgstr "进度保存失败"
+msgstr "stash misslyckades"
 
 #: builtin/merge.c:251
 #, c-format
 msgid "not a valid object: %s"
-msgstr "不是一个有效对象：%s"
+msgstr "inte ett giltigt objekt: %s"
 
 #: builtin/merge.c:270 builtin/merge.c:287
 msgid "read-tree failed"
-msgstr "读取树失败"
+msgstr "read-tree misslyckades"
 
-#  注意保持前导空格
 #: builtin/merge.c:317
 msgid " (nothing to squash)"
-msgstr " （无可压缩）"
+msgstr " (inget att platta till)"
 
 #: builtin/merge.c:330
 #, c-format
 msgid "Squash commit -- not updating HEAD\n"
-msgstr "压缩提交 -- 未更新 HEAD\n"
+msgstr "Tillplattningsincheckning -- uppdaterar inte HEAD\n"
 
 #: builtin/merge.c:362
 msgid "Writing SQUASH_MSG"
-msgstr "写入 SQUASH_MSG"
+msgstr "Skriver SQUASH_MSG"
 
 #: builtin/merge.c:364
 msgid "Finishing SQUASH_MSG"
-msgstr "完成 SQUASH_MSG"
+msgstr "Avslutar SQUASH_MSG"
 
 #: builtin/merge.c:386
 #, c-format
 msgid "No merge message -- not updating HEAD\n"
-msgstr "无合并信息 -- 未更新 HEAD\n"
+msgstr "Inget sammanslagningsmeddelande -- uppdaterar inte HEAD\n"
 
 #: builtin/merge.c:437
 #, c-format
 msgid "'%s' does not point to a commit"
-msgstr "'%s' 没有指向一个提交"
+msgstr "\"%s\" verkar inte peka på en incheckning"
 
 #: builtin/merge.c:536
 #, c-format
 msgid "Bad branch.%s.mergeoptions string: %s"
-msgstr "错的 branch.%s.mergeoptions 字串：%s"
+msgstr "Felaktig branch.%s.mergeoptions-sträng: %s"
 
 #: builtin/merge.c:629
 msgid "git write-tree failed to write a tree"
-msgstr "git write-tree 无法写入一树对象"
+msgstr "git write-tree misslyckades skriva ett träd"
 
 #: builtin/merge.c:679
 msgid "failed to read the cache"
-msgstr "无法读取缓存"
+msgstr "misslyckads läsa cachen"
 
 #: builtin/merge.c:696
 msgid "Unable to write index."
-msgstr "不能写暂存区。"
+msgstr "Kunde inte skriva indexet."
 
 #: builtin/merge.c:709
 msgid "Not handling anything other than two heads merge."
-msgstr "不能处理两个头合并之外的任何操作。"
+msgstr "Hanterar inte något annat än en sammanslagning av två huvuden."
 
 #: builtin/merge.c:723
 #, c-format
 msgid "Unknown option for merge-recursive: -X%s"
-msgstr "merge-recursive 的未知选项：-X%s"
+msgstr "Felaktig flagga för merge-recursive: -X%s"
 
 #: builtin/merge.c:737
 #, c-format
 msgid "unable to write %s"
-msgstr "不能写 %s"
+msgstr "kunde inte skriva %s"
 
 #: builtin/merge.c:876
 #, c-format
 msgid "Could not read from '%s'"
-msgstr "不能从 '%s' 读取"
+msgstr "Kunde inte läsa från \"%s\""
 
 #: builtin/merge.c:885
 #, c-format
 msgid "Not committing merge; use 'git commit' to complete the merge.\n"
-msgstr "未提交合并，使用 'git commit' 完成此次合并。\n"
+msgstr ""
+"Checkar inte in sammanslagningen; använd \"git commit\" för att slutföra "
+"den.\n"
 
 #: builtin/merge.c:891
 msgid ""
@@ -2431,266 +2425,270 @@ msgid ""
 "Lines starting with '#' will be ignored, and an empty message aborts\n"
 "the commit.\n"
 msgstr ""
-"请输入一个提交信息以解释此合并的必要性，尤其是将一个更新后的上游分支\n"
-"合并到主题分支。\n"
+"Ange ett incheckningsmeddelande för att förklara varför sammanslagningen\n"
+"är nödvändig, speciellt om den slår in en uppdaterad uppström i en\n"
+"temagren.\n"
 "\n"
-"以 '#' 开头的行将被忽略，而且空提交说明将会终止提交。\n"
+"Rader som inleds med \"#\" kommer ignoreras, och ett tomt meddelande\n"
+"avbryter incheckningen.\n"
 
 #: builtin/merge.c:915
 msgid "Empty commit message."
-msgstr "空提交信息。"
+msgstr "Tomt incheckningsmeddelande."
 
 #: builtin/merge.c:927
 #, c-format
 msgid "Wonderful.\n"
-msgstr "太棒了。\n"
+msgstr "Underbart.\n"
 
 #: builtin/merge.c:1000
 #, c-format
 msgid "Automatic merge failed; fix conflicts and then commit the result.\n"
-msgstr "自动合并失败，修正冲突然后提交修正的结果。\n"
+msgstr ""
+"Kunde inte slå ihop automatiskt; fixa konflikter och checka in resultatet.\n"
 
 #: builtin/merge.c:1016
 #, c-format
 msgid "'%s' is not a commit"
-msgstr "'%s' 不是一个提交"
+msgstr "\"%s\" är inte en incheckning"
 
 #: builtin/merge.c:1057
 msgid "No current branch."
-msgstr "当前不在分支上。"
+msgstr "Inte på någon gren."
 
 #: builtin/merge.c:1059
 msgid "No remote for the current branch."
-msgstr "当前分支没有远程版本库。"
+msgstr "Ingen fjärr för aktuell gren."
 
 #: builtin/merge.c:1061
 msgid "No default upstream defined for the current branch."
-msgstr "当前分支未定义默认上游分支。"
+msgstr "Ingen standarduppström angiven för aktuell gren."
 
 #: builtin/merge.c:1066
 #, c-format
 msgid "No remote tracking branch for %s from %s"
-msgstr "%s 没有来自 %s 的远程跟踪分支"
+msgstr "Ingen fjärrspårande gren för %s från %s"
 
 #: builtin/merge.c:1188
 msgid "There is no merge to abort (MERGE_HEAD missing)."
-msgstr "没有要终止的合并（MERGE_HEAD 丢失）"
+msgstr "Det finns ingen sammanslagning att avbryta (MERGE_HEAD saknas)."
 
 #: builtin/merge.c:1204 git-pull.sh:31
 msgid ""
 "You have not concluded your merge (MERGE_HEAD exists).\n"
 "Please, commit your changes before you can merge."
 msgstr ""
-"您尚未结束您的合并（存在 MERGE_HEAD）。\n"
-"请先提交您的修改，您才能合并。"
+"Du har inte avslutat sammanslagningen (MERGE_HEAD finns).\n"
+"Checka in dina ändringar innan du kan slå ihop."
 
 #: builtin/merge.c:1207 git-pull.sh:34
 msgid "You have not concluded your merge (MERGE_HEAD exists)."
-msgstr "您尚未结束您的合并（存在 MERGE_HEAD）。"
+msgstr "Du har inte avslutat sammanslagningen (MERGE_HEAD finns)."
 
 #: builtin/merge.c:1211
 msgid ""
 "You have not concluded your cherry-pick (CHERRY_PICK_HEAD exists).\n"
 "Please, commit your changes before you can merge."
 msgstr ""
-"您尚未结束您的拣选（存在 CHERRY_PICK_HEAD）。\n"
-"请先提交您的修改，您才能合并。"
+"Du har inte avslutat din \"cherry-pick\" (CHERRY_PICK_HEAD finns).\n"
+"Checka in dina ändringar innan du kan slå ihop."
 
 #: builtin/merge.c:1214
 msgid "You have not concluded your cherry-pick (CHERRY_PICK_HEAD exists)."
-msgstr "您尚未结束您的拣选（存在 CHERRY_PICK_HEAD）。"
+msgstr "Du har inte avslutat din \"cherry-pick\" (CHERRY_PICK_HEAD finns)."
 
 #: builtin/merge.c:1223
 msgid "You cannot combine --squash with --no-ff."
-msgstr "您不能将 --squash 与 --no-ff 共用。"
+msgstr "Du kan inte kombinera --squash med --no-ff."
 
 #: builtin/merge.c:1228
 msgid "You cannot combine --no-ff with --ff-only."
-msgstr "您不能将 --no-ff 与 --ff-only 共用。"
+msgstr "Du kan inte kombinera --no-ff med --ff-only."
 
 #: builtin/merge.c:1235
 msgid "No commit specified and merge.defaultToUpstream not set."
-msgstr "未指出提交并且 merge.defaultToUpstream 未设置。"
+msgstr "Ingen incheckning angiven och merge.defaultToUpstream är ej satt."
 
 #: builtin/merge.c:1266
 msgid "Can merge only exactly one commit into empty head"
-msgstr "只可将一个提交合并到空分支上"
+msgstr "Kan endast slå ihop en enda incheckning i ett tomt huvud."
 
 #: builtin/merge.c:1269
 msgid "Squash commit into empty head not supported yet"
-msgstr "尚不支持到空分支的压缩提交"
+msgstr "Stöder inte en tillplattningsincheckning på ett tomt huvud ännu"
 
 #: builtin/merge.c:1271
 msgid "Non-fast-forward commit does not make sense into an empty head"
-msgstr "到空分支的非快进式提交没有意义"
+msgstr "Icke-snabbspolad incheckning kan inte användas med ett tomt huvud"
 
 #: builtin/merge.c:1275 builtin/merge.c:1319
 #, c-format
 msgid "%s - not something we can merge"
-msgstr "%s - 不能被合并"
+msgstr "%s - inte något vi kan slå ihop"
 
 #: builtin/merge.c:1385
 #, c-format
 msgid "Updating %s..%s\n"
-msgstr "更新 %s..%s\n"
+msgstr "Uppdaterar %s..%s\n"
 
 #: builtin/merge.c:1423
 #, c-format
 msgid "Trying really trivial in-index merge...\n"
-msgstr "尝试非常小的暂存区内合并...\n"
+msgstr "Försöker riktigt enkel sammanslagning i indexet...\n"
 
 #: builtin/merge.c:1430
 #, c-format
 msgid "Nope.\n"
-msgstr "无。\n"
+msgstr "Nej.\n"
 
 #: builtin/merge.c:1462
 msgid "Not possible to fast-forward, aborting."
-msgstr "无法快进，终止。"
+msgstr "Kan inte snabbspola, avbryter."
 
 #: builtin/merge.c:1485 builtin/merge.c:1562
 #, c-format
 msgid "Rewinding the tree to pristine...\n"
-msgstr "将树回滚至原始状态...\n"
+msgstr "Återspolar trädet till orört...\n"
 
 #: builtin/merge.c:1489
 #, c-format
 msgid "Trying merge strategy %s...\n"
-msgstr "尝试合并策略 %s...\n"
+msgstr "Försöker sammanslagninsstrategin %s...\n"
 
 #: builtin/merge.c:1553
 #, c-format
 msgid "No merge strategy handled the merge.\n"
-msgstr "没有合并策略处理此合并。\n"
+msgstr "Ingen sammanslagningsstrategi hanterade sammanslagningen.\n"
 
 #: builtin/merge.c:1555
 #, c-format
 msgid "Merge with strategy %s failed.\n"
-msgstr "使用策略 %s 合并失败。\n"
+msgstr "Sammanslaning med strategin %s misslyckades.\n"
 
 #: builtin/merge.c:1564
 #, c-format
 msgid "Using the %s to prepare resolving by hand.\n"
-msgstr "使用 %s 以准备手工解决。\n"
+msgstr "Använder %s för att förbereda lösning för hand.\n"
 
 #: builtin/merge.c:1575
 #, c-format
 msgid "Automatic merge went well; stopped before committing as requested\n"
-msgstr "自动合并进展顺利，按要求在提交前停止\n"
+msgstr ""
+"Automatisk sammanslagning lyckades; stoppar före incheckning som önskat\n"
 
 #: builtin/mv.c:108
 #, c-format
 msgid "Checking rename of '%s' to '%s'\n"
-msgstr "检查 '%s' 到 '%s' 的重命名\n"
+msgstr "Kontrollerar namnbyte av \"%s\" till \"%s\"\n"
 
 #: builtin/mv.c:112
 msgid "bad source"
-msgstr "坏的源"
+msgstr "felaktig källa"
 
 #: builtin/mv.c:115
 msgid "can not move directory into itself"
-msgstr "不能将目录移动到自身"
+msgstr "kan inte flytta katalog till sig själv"
 
 #: builtin/mv.c:118
 msgid "cannot move directory over file"
-msgstr "不能将目录移动到文件"
+msgstr "kan inte flytta katalog över fil"
 
 #: builtin/mv.c:128
 #, c-format
 msgid "Huh? %.*s is in index?"
-msgstr "嗯？%.*s 在暂存区中？"
+msgstr "Vad? %.*s är i indexet?"
 
 #: builtin/mv.c:140
 msgid "source directory is empty"
-msgstr "源目录为空"
+msgstr "källkatalogen är tom"
 
 #: builtin/mv.c:171
 msgid "not under version control"
-msgstr "不在版本控制之下"
+msgstr "inte versionshanterad"
 
 #: builtin/mv.c:173
 msgid "destination exists"
-msgstr "目标已存在"
+msgstr "destinationen finns"
 
 #: builtin/mv.c:181
 #, c-format
 msgid "overwriting '%s'"
-msgstr "覆盖 '%s'"
+msgstr "skriver över \"%s\""
 
 #: builtin/mv.c:184
 msgid "Cannot overwrite"
-msgstr "不能覆盖"
+msgstr "Kan inte skriva över"
 
 #: builtin/mv.c:187
 msgid "multiple sources for the same target"
-msgstr "同一目标具有多个源"
+msgstr "flera källor för samma mål"
 
 #: builtin/mv.c:202
 #, c-format
 msgid "%s, source=%s, destination=%s"
-msgstr "%s，源=%s，目标=%s"
+msgstr "%s, källa=%s, mål=%s"
 
 #: builtin/mv.c:212
 #, c-format
 msgid "Renaming %s to %s\n"
-msgstr "重命名 %s 至 %s\n"
+msgstr "Byter namn på %s till %s\n"
 
 #: builtin/mv.c:215
 #, c-format
 msgid "renaming '%s' failed"
-msgstr "重命名 '%s' 失败"
+msgstr "misslyckades byta namn på \"%s\""
 
 #: builtin/notes.c:139
 #, c-format
 msgid "unable to start 'show' for object '%s'"
-msgstr "不能为对象 '%s' 开始 'show'"
+msgstr "kunde inte starta \"show\" för objektet \"%s\""
 
 #: builtin/notes.c:145
 msgid "can't fdopen 'show' output fd"
-msgstr "不能打开 'show' 输出文件句柄"
+msgstr "kunde inte öppna (fdopen) \"show\"-utdata-filhandtag"
 
 #: builtin/notes.c:155
 #, c-format
 msgid "failed to close pipe to 'show' for object '%s'"
-msgstr "无法为对象 '%s' 的 'show' 关闭管道"
+msgstr "kunde inte stänga röret till \"show\" för objektet \"%s\""
 
 #: builtin/notes.c:158
 #, c-format
 msgid "failed to finish 'show' for object '%s'"
-msgstr "无法为对象 '%s' 完成 'show'"
+msgstr "kunde inte avsluta \"show\" för objektet \"%s\""
 
 #: builtin/notes.c:175 builtin/tag.c:343
 #, c-format
 msgid "could not create file '%s'"
-msgstr "不能创建文件 '%s'"
+msgstr "kunde inte skapa filen \"%s\""
 
 #: builtin/notes.c:189
 msgid "Please supply the note contents using either -m or -F option"
-msgstr "请通过 -m 或 -F 选项为注解提供内容"
+msgstr "Ange innehåll för anteckningen med antingen -m eller -F"
 
 #: builtin/notes.c:210 builtin/notes.c:973
 #, c-format
 msgid "Removing note for object %s\n"
-msgstr "删除对象 %s 的注解\n"
+msgstr "Tar bort anteckning för objektet %s\n"
 
 #: builtin/notes.c:215
 msgid "unable to write note object"
-msgstr "不能写注解对象"
+msgstr "kunde inte skriva anteckningsobjekt"
 
 #: builtin/notes.c:217
 #, c-format
 msgid "The note contents has been left in %s"
-msgstr "注解内容被留在文件 %s 中"
+msgstr "Anteckningens innehåll har lämnats kvar i %s"
 
 #: builtin/notes.c:251 builtin/tag.c:521
 #, c-format
 msgid "cannot read '%s'"
-msgstr "不能读取 '%s'"
+msgstr "kunde inte läsa \"%s\""
 
 #: builtin/notes.c:253 builtin/tag.c:524
 #, c-format
 msgid "could not open or read '%s'"
-msgstr "不能打开或读取 '%s'"
+msgstr "kunde inte öppna eller läsa \"%s\""
 
 #: builtin/notes.c:272 builtin/notes.c:445 builtin/notes.c:447
 #: builtin/notes.c:507 builtin/notes.c:561 builtin/notes.c:644
@@ -2698,82 +2696,86 @@ msgstr "不能打开或读取 '%s'"
 #: builtin/notes.c:968 builtin/reset.c:293 builtin/tag.c:537
 #, c-format
 msgid "Failed to resolve '%s' as a valid ref."
-msgstr "无法解析 '%s' 为一个有效引用"
+msgstr "Kunde inte slå upp \"%s\" som en giltig referens."
 
 #: builtin/notes.c:275
 #, c-format
 msgid "Failed to read object '%s'."
-msgstr "无法读取对象 '%s'。"
+msgstr "Kunde inte läsa objektet \"%s\"."
 
 #: builtin/notes.c:299
 msgid "Cannot commit uninitialized/unreferenced notes tree"
-msgstr "不能提交未初始化/未引用的注解树"
+msgstr "Kan inte checka in oinitierat/orefererat anteckningsträd"
 
 #: builtin/notes.c:340
 #, c-format
 msgid "Bad notes.rewriteMode value: '%s'"
-msgstr "错误的 notes.rewriteMode 值：'%s'"
+msgstr "Felaktigt värde för notes.rewriteMode: '%s'"
 
 #: builtin/notes.c:350
 #, c-format
 msgid "Refusing to rewrite notes in %s (outside of refs/notes/)"
-msgstr "拒绝向 %s（在 refs/notes/ 之外）写入注解"
+msgstr "Vägrar skriva över anteckningar i %s (utanför refs/notes/)"
 
 #. TRANSLATORS: The first %s is the name of the
 #. environment variable, the second %s is its value
 #: builtin/notes.c:377
 #, c-format
 msgid "Bad %s value: '%s'"
-msgstr "错误的 %s 值：'%s'"
+msgstr "Felaktigt värde på %s: \"%s\""
 
 #: builtin/notes.c:441
 #, c-format
 msgid "Malformed input line: '%s'."
-msgstr "非法的输入行：'%s'。"
+msgstr "Felaktig indatarad: \"%s\"."
 
 #: builtin/notes.c:456
 #, c-format
 msgid "Failed to copy notes from '%s' to '%s'"
-msgstr "无法从 '%s' 拷贝注解到 '%s'"
+msgstr "Misslyckades kopiera anteckningar från \"%s\" till \"%s\""
 
 #: builtin/notes.c:500 builtin/notes.c:554 builtin/notes.c:627
 #: builtin/notes.c:639 builtin/notes.c:712 builtin/notes.c:759
 #: builtin/notes.c:1033
 msgid "too many parameters"
-msgstr "参数太多"
+msgstr "för många parametrar"
 
 #: builtin/notes.c:513 builtin/notes.c:772
 #, c-format
 msgid "No note found for object %s."
-msgstr "未发现对象 %s 的注解。"
+msgstr "Inga anteckningar hittades för objektet %s."
 
 #: builtin/notes.c:580
 #, c-format
 msgid ""
 "Cannot add notes. Found existing notes for object %s. Use '-f' to overwrite "
 "existing notes"
-msgstr "不能添加注解。发现对象 %s 已存在注解。使用 '-f' 覆盖现存注解"
+msgstr ""
+"Kan inte lägga till anteckningar. Hittade befintliga anteckningar för "
+"objektet %s. Använd \"-f\" för att skriva över befintliga anteckningar"
 
 #: builtin/notes.c:585 builtin/notes.c:662
 #, c-format
 msgid "Overwriting existing notes for object %s\n"
-msgstr "覆盖对象 %s 现存注解\n"
+msgstr "Skriver över befintliga anteckningar för objektet %s\n"
 
 #: builtin/notes.c:635
 msgid "too few parameters"
-msgstr "参数太少"
+msgstr "för få parametrar"
 
 #: builtin/notes.c:656
 #, c-format
 msgid ""
 "Cannot copy notes. Found existing notes for object %s. Use '-f' to overwrite "
 "existing notes"
-msgstr "不能拷贝注解。发现对象 %s 已存在注解。使用 '-f' 覆盖现存注解"
+msgstr ""
+"Kan inte kopiera anteckningar. Hittade befintliga anteckningar för objektet "
+"%s. Använd \"-f\" för att skriva över befintliga anteckningar"
 
 #: builtin/notes.c:668
 #, c-format
 msgid "Missing notes on source object %s. Cannot copy."
-msgstr "源对象 %s 缺少注解。不能拷贝。"
+msgstr "Anteckningar på källobjektet %s saknas. Kan inte kopiera."
 
 #: builtin/notes.c:717
 #, c-format
@@ -2781,46 +2783,46 @@ msgid ""
 "The -m/-F/-c/-C options have been deprecated for the 'edit' subcommand.\n"
 "Please use 'git notes add -f -m/-F/-c/-C' instead.\n"
 msgstr ""
-"选项 -m/-F/-c/-C 已为 'edit' 子命令废弃。\n"
-"请换用 'git notes add -f -m/-F/-c/-C'。\n"
+"Flaggorna -m/-F/-c/-C rekommenderas inte för underkommandot \"edit\".\n"
+"Använd \"git notes add -f -m/-F/-c/-C\" istället.\n"
 
 #: builtin/notes.c:971
 #, c-format
 msgid "Object %s has no note\n"
-msgstr "对象 %s 没有注解\n"
+msgstr "Objektet %s har ingen anteckning\n"
 
 #: builtin/notes.c:1103
 #, c-format
 msgid "Unknown subcommand: %s"
-msgstr "未知子命令：%s"
+msgstr "Okänt underkommando: %s"
 
 #: builtin/pack-objects.c:2310
 #, c-format
 msgid "unsupported index version %s"
-msgstr "不支持的暂存区版本 %s"
+msgstr "indexversionen %s stöds ej"
 
 #: builtin/pack-objects.c:2314
 #, c-format
 msgid "bad index version '%s'"
-msgstr "错误的暂存区版本 '%s'"
+msgstr "felaktig indexversion \"%s\""
 
 #: builtin/pack-objects.c:2322
 #, c-format
 msgid "option %s does not accept negative form"
-msgstr "选项 '%s' 不接受否定格式"
+msgstr "flaggan %s godtar inte negativ form"
 
 #: builtin/pack-objects.c:2326
 #, c-format
 msgid "unable to parse value '%s' for option %s"
-msgstr "不能解析值 '%s' 针对于选项 %s"
+msgstr "kunde inte tolka värdet \"%s\" för flaggan %s"
 
 #: builtin/push.c:44
 msgid "tag shorthand without <tag>"
-msgstr "tag 简写没有跟 <tag> 参数"
+msgstr "taggförkortning utan <tagg>"
 
 #: builtin/push.c:63
 msgid "--delete only accepts plain target ref names"
-msgstr "--delete 只接受简单的引用名称"
+msgstr "--delete godtar endast enkla målreferensnamn"
 
 #: builtin/push.c:73
 #, c-format
@@ -2831,10 +2833,11 @@ msgid ""
 "\n"
 "    git push %s HEAD:<name-of-remote-branch>\n"
 msgstr ""
-"您当前不在一个分支上。\n"
-"现在为推送当前历史（分离头指针），使用\n"
+"Du är inte på någon gren för närvarande.\n"
+"För att sända in historiken som leder till den aktuella (frånkopplat\n"
+"HEAD) situationen använder du\n"
 "\n"
-"    git push %s HEAD:<name-of-remote-branch>\n"
+"    git push %s HEAD:<namn-på-fjärrgren>\n"
 
 #: builtin/push.c:80
 #, c-format
@@ -2844,30 +2847,32 @@ msgid ""
 "\n"
 "    git push --set-upstream %s %s\n"
 msgstr ""
-"当前分支 %s 没有对应的上游分支。\n"
-"为推送当前分支并建立与远程上游的跟踪，使用\n"
+"Den aktuella grenen %s har ingen uppströmsgren.\n"
+"För att sända aktuell gren och ange fjärrarkiv som uppström använder du\n"
 "\n"
 "    git push --set-upstream %s %s\n"
 
 #: builtin/push.c:88
 #, c-format
 msgid "The current branch %s has multiple upstream branches, refusing to push."
-msgstr "当前分支 %s 有多个上游分支，拒绝推送。"
+msgstr "Den aktuella grenen %s har flera uppströmsgrenar, vägrar sända."
 
 #: builtin/push.c:111
 msgid ""
 "You didn't specify any refspecs to push, and push.default is \"nothing\"."
-msgstr "您没有为推送提供任何引用表达式，并且 push.default 为 \"nothing\"。"
+msgstr ""
+"Du angav inga referensspecifikationer att sända, och push.default är "
+"\"nothing\"."
 
 #: builtin/push.c:131
 #, c-format
 msgid "Pushing to %s\n"
-msgstr "推送到 %s\n"
+msgstr "Sänder till %s\n"
 
 #: builtin/push.c:135
 #, c-format
 msgid "failed to push some refs to '%s'"
-msgstr "无法推送一些引用到 '%s'"
+msgstr "misslyckades sända några referenser till \"%s\""
 
 #: builtin/push.c:143
 #, c-format
@@ -2876,14 +2881,17 @@ msgid ""
 "Merge the remote changes (e.g. 'git pull') before pushing again.  See the\n"
 "'Note about fast-forwards' section of 'git push --help' for details.\n"
 msgstr ""
-"为防止您丢失提交历史，禁止非快进式推送。\n"
-"再次推送前先与远程变更合并（如 'git pull'）。详见\n"
-"'git push --help' 中的 'Note about fast-forwards' 小节。\n"
+"För att förhindra att du tappar historik har icke snabbspolande "
+"uppdateringar\n"
+"avvisats. Slå ihop fjärrändringarna (t.ex \"git pull\") innan du sänder "
+"igen.\n"
+"Se avsnittet \"Note about fast-forward\" i \"git push --help\" för "
+"detaljer.\n"
 
 #: builtin/push.c:160
 #, c-format
 msgid "bad repository '%s'"
-msgstr "错误的版本库 '%s'"
+msgstr "felaktigt arkiv \"%s\""
 
 #: builtin/push.c:161
 msgid ""
@@ -2897,141 +2905,139 @@ msgid ""
 "\n"
 "    git push <name>\n"
 msgstr ""
-"未配置推送目标。\n"
-"或者通过命令行提供URL，或者用下面命令配置一个远程版本库\n"
+"Ingen destination har angivits.\n"
+"Ange antingen URL:en på kommandoraden eller ställ in ett uppströmsarkiv med\n"
 "\n"
-"    git remote add <name> <url>\n"
+"    git remote add <namn> <url>\n"
 "\n"
-"然后使用该远程版本库名执行推送\n"
+"och sänd sedan med hjälp av fjärrnamnet\n"
 "\n"
-"    git push <name>\n"
+"    git push <namn>\n"
 
 #: builtin/push.c:176
 msgid "--all and --tags are incompatible"
-msgstr "--all 和 --tags 不兼容"
+msgstr "--all och --tags är inkompatibla"
 
 #: builtin/push.c:177
 msgid "--all can't be combined with refspecs"
-msgstr "--all 不能和引用表达式共用"
+msgstr "--all kan inte kombineras med referensspecifikationer"
 
 #: builtin/push.c:182
 msgid "--mirror and --tags are incompatible"
-msgstr "--mirror 和 --tags 不兼容"
+msgstr "--mirror och --tags är inkompatibla"
 
 #: builtin/push.c:183
 msgid "--mirror can't be combined with refspecs"
-msgstr "--mirror 不能和引用表达式共用"
+msgstr "--mirror kan inte kombineras med referensspecifikationer"
 
 #: builtin/push.c:188
 msgid "--all and --mirror are incompatible"
-msgstr "--all 和 --mirror 不兼容"
+msgstr "--all och --mirror är inkompatibla"
 
 #: builtin/push.c:274
 msgid "--delete is incompatible with --all, --mirror and --tags"
-msgstr "--delete 与 --all、--mirror 及 --tags 不兼容"
+msgstr "--delete är imkompatibel med --all, --mirror och --tags"
 
 #: builtin/push.c:276
 msgid "--delete doesn't make sense without any refs"
-msgstr "--delete 未接任何引用没有意义"
+msgstr "--delete kan inte användas utan referenser"
 
 #: builtin/reset.c:33
 msgid "mixed"
-msgstr "混杂"
+msgstr "blandad"
 
 #: builtin/reset.c:33
 msgid "soft"
-msgstr "软性"
+msgstr "mjuk"
 
 #: builtin/reset.c:33
 msgid "hard"
-msgstr "硬性"
+msgstr "hård"
 
 #: builtin/reset.c:33
 msgid "keep"
-msgstr "保持"
+msgstr "behåll"
 
 #: builtin/reset.c:77
 msgid "You do not have a valid HEAD."
-msgstr "您没有一个有效的 HEAD。"
+msgstr "Du har inte en giltig HEAD."
 
 #: builtin/reset.c:79
 msgid "Failed to find tree of HEAD."
-msgstr "无法找到 HEAD 指向的树。"
+msgstr "Kunde inte hitta träder för HEAD."
 
 #: builtin/reset.c:85
 #, c-format
 msgid "Failed to find tree of %s."
-msgstr "无法找到 %s 指向的树。"
+msgstr "Kunde inte hitta träder för %s."
 
 #: builtin/reset.c:96
 msgid "Could not write new index file."
-msgstr "无法写入新的暂存区文件。"
+msgstr "Kunde inte skriva ny indexfil."
 
 #: builtin/reset.c:106
 #, c-format
 msgid "HEAD is now at %s"
-msgstr "HEAD 现在位于 %s"
+msgstr "HEAD är nu på %s"
 
 #: builtin/reset.c:130
 msgid "Could not read index"
-msgstr "不能读取暂存区"
+msgstr "Kunde inte läsa indexet"
 
 #: builtin/reset.c:133
 msgid "Unstaged changes after reset:"
-msgstr "重置后变更撤出暂存区："
+msgstr "Oköade ändringar efter återställning:"
 
-#  汉字之间无空格，故删除%s前后空格
 #: builtin/reset.c:223
 #, c-format
 msgid "Cannot do a %s reset in the middle of a merge."
-msgstr "在合并过程中不能做%s重置操作。"
+msgstr "Kan inte utföra en %s återställning mitt i en sammanslagning."
 
 #: builtin/reset.c:297
 #, c-format
 msgid "Could not parse object '%s'."
-msgstr "不能解析对象 '%s'。"
+msgstr "Kan inte tolka objektet \"%s\""
 
 #: builtin/reset.c:302
 msgid "--patch is incompatible with --{hard,mixed,soft}"
-msgstr "--patch 与 --{hard,mixed,soft} 不兼容"
+msgstr "--patch är inkompatibel med --{hard,mixed,soft}"
 
 #: builtin/reset.c:311
 msgid "--mixed with paths is deprecated; use 'git reset -- <paths>' instead."
-msgstr "--mixed 带路径已弃用，代之以 'git reset -- <paths>'。"
+msgstr ""
+"--mixed rekommenderas inte med sökvägar; använd \"git reset -- <sökvägar>\"."
 
-#  汉字之间无空格，故删除%s前后空格
 #: builtin/reset.c:313
 #, c-format
 msgid "Cannot do %s reset with paths."
-msgstr "不能带路径进行%s重置。"
+msgstr "Kan inte göra %s återställning med sökvägar."
 
-#  汉字之间无空格，故删除%s前后空格
 #: builtin/reset.c:325
 #, c-format
 msgid "%s reset is not allowed in a bare repository"
-msgstr "不能对裸版本库进行%s重置"
+msgstr "%s återställning tillåts inte i ett naket arkiv"
 
 #: builtin/reset.c:341
 #, c-format
 msgid "Could not reset index file to revision '%s'."
-msgstr "不能重置暂存区至版本 '%s'。"
+msgstr "Kunde inte återställa indexfilen till versionen \"%s\"."
 
 #: builtin/revert.c:70 builtin/revert.c:91
 #, c-format
 msgid "%s: %s cannot be used with %s"
-msgstr "%s: %s 不能和 %s 共用"
+msgstr "%s: %s kan inte användas med %s"
 
 #: builtin/revert.c:126
 msgid "program error"
-msgstr "程序错误"
+msgstr "programfel"
 
 #: builtin/revert.c:209
 msgid "revert failed"
-msgstr "还原失败"
+msgstr "\"revert\" misslyckades"
 
 #: builtin/revert.c:224
 msgid "cherry-pick failed"
-msgstr "拣选失败"
+msgstr "\"cherry-pick\" misslyckades"
 
 #: builtin/rm.c:109
 #, c-format
@@ -3039,8 +3045,8 @@ msgid ""
 "'%s' has staged content different from both the file and the HEAD\n"
 "(use -f to force removal)"
 msgstr ""
-"'%s' 暂存的内容和工作区文件及 HEAD 中的都不一样\n"
-"（使用 -f 强制删除）"
+"\"%s\" har köat ändringar som skiljer sig både från filen och HEAD\n"
+"(använd -f för att tvinga borttagning)"
 
 #: builtin/rm.c:115
 #, c-format
@@ -3048,8 +3054,8 @@ msgid ""
 "'%s' has changes staged in the index\n"
 "(use --cached to keep the file, or -f to force removal)"
 msgstr ""
-"'%s' 有变更已加入暂存区中\n"
-"（使用 --cached 保存文件，或用 -f 强制删除）"
+"\"%s\" har köade ändringar i indexet\n"
+"(använd --cached för att behålla filen eller -f för att tvinga borttagning)"
 
 #: builtin/rm.c:119
 #, c-format
@@ -3057,48 +3063,48 @@ msgid ""
 "'%s' has local modifications\n"
 "(use --cached to keep the file, or -f to force removal)"
 msgstr ""
-"'%s' 有本地修改\n"
-"（使用 --cached 保存文件，或用 -f 强制删除）"
+"\"%s\" har lokala ändringar\n"
+"(använd --cached för att behålla filen eller -f för att tvinga borttagning)"
 
 #: builtin/rm.c:194
 #, c-format
 msgid "not removing '%s' recursively without -r"
-msgstr "未提供 -r 选项不会递归删除 '%s'"
+msgstr "tar inte bort \"%s\" rekursivt utan -r"
 
 #: builtin/rm.c:230
 #, c-format
 msgid "git rm: unable to remove %s"
-msgstr "git rm：不能删除 %s"
+msgstr "git rm: kan inte ta bort %s"
 
 #: builtin/shortlog.c:157
 #, c-format
 msgid "Missing author: %s"
-msgstr "缺少作者：%s"
+msgstr "Författare saknas: %s"
 
 #: builtin/tag.c:58
 #, c-format
 msgid "malformed object at '%s'"
-msgstr "非法的对象于 '%s'"
+msgstr "felformat objekt vid \"%s\""
 
 #: builtin/tag.c:205
 #, c-format
 msgid "tag name too long: %.*s..."
-msgstr "tag 名字太长：%.*s..."
+msgstr "taggnamnet för långt: %.*s..."
 
 #: builtin/tag.c:210
 #, c-format
 msgid "tag '%s' not found."
-msgstr "tag '%s' 未发现。"
+msgstr "taggen \"%s\" hittades inte."
 
 #: builtin/tag.c:225
 #, c-format
 msgid "Deleted tag '%s' (was %s)\n"
-msgstr "已删除 tag '%s'（曾为 %s）\n"
+msgstr "Tog bort tagg \"%s\" (var %s)\n"
 
 #: builtin/tag.c:237
 #, c-format
 msgid "could not verify the tag '%s'"
-msgstr "不能校验 tag '%s'"
+msgstr "kunde inte bekräfta taggen \"%s\""
 
 #: builtin/tag.c:247
 msgid ""
@@ -3110,8 +3116,8 @@ msgid ""
 msgstr ""
 "\n"
 "#\n"
-"# 输入一个 tag 说明\n"
-"# 以 '#' 开头的行将被忽略。\n"
+"# Skriv ett taggmeddelande\n"
+"# Rader som inleds med \"#\" ignoreras.\n"
 "#\n"
 
 #: builtin/tag.c:254
@@ -3125,240 +3131,245 @@ msgid ""
 msgstr ""
 "\n"
 "#\n"
-"# 输入一个 tag 说明\n"
-"# 以 '#' 开头的行将被忽略，您可以删除它们如果您想这样做。\n"
+"# Skriv ett taggmeddelande\n"
+"# Rader som inleds med \"#\" kommer behållas; du kan själv ta bort dem om\n"
+"# du vill.\n"
 "#\n"
 
 #: builtin/tag.c:294
 msgid "unable to sign the tag"
-msgstr "无法签署 tag"
+msgstr "kunde inte signera taggen"
 
 #: builtin/tag.c:296
 msgid "unable to write tag file"
-msgstr "无法写 tag 文件"
+msgstr "kunde inte skriva tagg-filen"
 
 #: builtin/tag.c:321
 msgid "bad object type."
-msgstr "无效的对象类型"
+msgstr "felaktig objekttyp"
 
 #: builtin/tag.c:334
 msgid "tag header too big."
-msgstr "tag 头信息太大"
+msgstr "tagghuvud för stort."
 
 #: builtin/tag.c:366
 msgid "no tag message?"
-msgstr "无 tag 说明？"
+msgstr "inget taggmeddelande?"
 
 #: builtin/tag.c:372
 #, c-format
 msgid "The tag message has been left in %s\n"
-msgstr "tag 说明被保留在 %s\n"
+msgstr "Taggmeddelandet har lämnats i %s\n"
 
 #: builtin/tag.c:421
 msgid "switch 'points-at' requires an object"
-msgstr "开关 'points-at' 需要一个对象"
+msgstr "flaggan \"points-at\" behöver ett object"
 
 #: builtin/tag.c:423
 #, c-format
 msgid "malformed object name '%s'"
-msgstr "非法的对象名 '%s'"
+msgstr "felformat objektnamn \"%s\""
 
 #: builtin/tag.c:502
 msgid "-n option is only allowed with -l."
-msgstr "-n 选项只允许和 -l 共用。"
+msgstr "Flaggan -n är endast tillåten tillsammans med -l."
 
 #: builtin/tag.c:504
 msgid "--contains option is only allowed with -l."
-msgstr "--contains 选项只允许和 -l 共用。"
+msgstr "Flaggan --contains är endast tillåten tillsammans med -l"
 
 #: builtin/tag.c:506
 msgid "--points-at option is only allowed with -l."
-msgstr "--points-at 选项只允许和 -l 共用。"
+msgstr "Flaggan --points-at är endast tillåten tillsammans med -l."
 
 #: builtin/tag.c:514
 msgid "only one -F or -m option is allowed."
-msgstr "只允许一个 -F 或 -m 选项。"
+msgstr "endast en av flaggorna -F eller -m tillåts."
 
 #: builtin/tag.c:534
 msgid "too many params"
-msgstr "太多参数"
+msgstr "för många parametrar"
 
 #: builtin/tag.c:540
 #, c-format
 msgid "'%s' is not a valid tag name."
-msgstr "'%s' 不是一个有效的tag名称"
+msgstr "\"%s\" är inte ett giltigt taggnamn."
 
 #: builtin/tag.c:545
 #, c-format
 msgid "tag '%s' already exists"
-msgstr "tag '%s' 已存在"
+msgstr "taggen \"%s\" finns redan"
 
 #: builtin/tag.c:563
 #, c-format
 msgid "%s: cannot lock the ref"
-msgstr "%s：不能锁定引用"
+msgstr "%s: kan inte låsa referensen"
 
 #: builtin/tag.c:565
 #, c-format
 msgid "%s: cannot update the ref"
-msgstr "%s：不能更新引用"
+msgstr "%s: kan inte uppdatera referensen"
 
 #: builtin/tag.c:567
 #, c-format
 msgid "Updated tag '%s' (was %s)\n"
-msgstr "已更新tag '%s'（曾为 %s）\n"
+msgstr "Uppdaterad tagg \"%s\" (var %s)\n"
 
 #: git-am.sh:49
 msgid "You need to set your committer info first"
-msgstr "您需要先设置你的提交者信息"
+msgstr "Du måste ställa in din incheckarinformation först"
 
 #: git-am.sh:136
 msgid "Repository lacks necessary blobs to fall back on 3-way merge."
-msgstr "版本库缺乏必要的 blob 数据以进行三路合并。"
+msgstr ""
+"Arkivet saknar objekt som behövs för att falla tillbaka på 3-"
+"vägssammanslagning."
 
 #: git-am.sh:147
 msgid ""
 "Did you hand edit your patch?\n"
 "It does not apply to blobs recorded in its index."
 msgstr ""
-"您是否曾手动编辑过您的补丁？\n"
-"无法应用补丁到暂存区的数据中。"
+"Har du handredigerat din patch?\n"
+"Den kan inte appliceras på blobbar som antecknats i dess index."
 
 #: git-am.sh:156
 msgid "Falling back to patching base and 3-way merge..."
-msgstr "转而使用补丁应用的基础版本和三路合并..."
+msgstr ""
+"Faller tillbaka på att pacha grundversionen och trevägssammanslagning..."
 
 #: git-am.sh:268
 msgid "Only one StGIT patch series can be applied at once"
-msgstr "一次只能有一个 StGIT 补丁队列被应用"
+msgstr "Endast en StGIT-patchserie kan appliceras åt gången"
 
 #: git-am.sh:355
 #, sh-format
 msgid "Patch format $patch_format is not supported."
-msgstr "不支持 $patch_format 补丁格式。"
+msgstr "Patchformatet $patch_format stöds inte."
 
 #: git-am.sh:357
 msgid "Patch format detection failed."
-msgstr "补丁格式检测失败。"
+msgstr "Misslyckades detektera patchformat."
 
 #: git-am.sh:409
 msgid "-d option is no longer supported.  Do not use."
-msgstr "不再支持 -d 选项。不要使用。"
+msgstr "Flaggan -d stöds inte lägre. Använd inte."
 
 #: git-am.sh:472
 #, sh-format
 msgid "previous rebase directory $dotest still exists but mbox given."
-msgstr "之前的变基目录 $dotest 仍然存在但给出了mbox。"
+msgstr "tidigare rebase-katalog $dotest finns fortfarande, men mbox angavs."
 
 #: git-am.sh:477
 msgid "Please make up your mind. --skip or --abort?"
-msgstr "请下决心。--skip 或是 --abort ？"
+msgstr "Bestäm dig. --skip eller --abort?"
 
 #: git-am.sh:504
 msgid "Resolve operation not in progress, we are not resuming."
-msgstr "解决操作未进行，我们不会继续。"
+msgstr "Lösningsoperation pågår inte, vi återupptar inte."
 
 #: git-am.sh:570
 #, sh-format
 msgid "Dirty index: cannot apply patches (dirty: $files)"
-msgstr "脏的暂存区：不能应用补丁（脏文件：$files）"
+msgstr "Smutsigt index: kan inte applicera patchar (smutsiga: $files)"
 
 #: git-am.sh:746
 msgid "cannot be interactive without stdin connected to a terminal."
-msgstr "没有和终端关联的标准输入不能进行交互式操作。"
+msgstr ""
+"kan inte vara interaktiv om standard in inte är ansluten till en terminal."
 
-#  注意保持句尾空格
 #. TRANSLATORS: Make sure to include [y], [n], [e], [v] and [a]
 #. in your translation. The program will only accept English
 #. input at this point.
 #: git-am.sh:757
 msgid "Apply? [y]es/[n]o/[e]dit/[v]iew patch/[a]ccept all "
-msgstr "应用？[y]es/[n]o/[e]dit/[v]iew patch/[a]ccept all "
+msgstr "Applicera? Y=ja/N=nej/E=redigera/V=visa patch/A=godta alla "
 
 #: git-am.sh:793
 #, sh-format
 msgid "Applying: $FIRSTLINE"
-msgstr "正应用：$FIRSTLINE"
+msgstr "Applicerar: $FIRSTLINE"
 
 #: git-am.sh:838
 msgid "No changes -- Patch already applied."
-msgstr "没有变更 -- 补丁已经应用过。"
+msgstr "Inga ändringar -- Patchen har redan applicerats."
 
 #: git-am.sh:864
 msgid "applying to an empty history"
-msgstr "正应用到一个空历史上"
+msgstr "applicerar på en tom historik"
 
-#  注意保持句尾空格
 #. TRANSLATORS: Make sure to include [Y] and [n] in your
 #. translation. The program will only accept English input
 #. at this point.
 #: git-bisect.sh:54
 msgid "Do you want me to do it for you [Y/n]? "
-msgstr "您想让我为您这样做么[Y/n]？ "
+msgstr "Vill du att jag ska göra det åt dig [Y=ja/N=nej]?"
 
 #: git-bisect.sh:95
 #, sh-format
 msgid "unrecognised option: '$arg'"
-msgstr "未识别的选项：'$arg'"
+msgstr "flaggan känns inte igen: \"$arg\""
 
 #: git-bisect.sh:99
 #, sh-format
 msgid "'$arg' does not appear to be a valid revision"
-msgstr "'$arg' 看起来不像是一个有效的版本"
+msgstr "\"$arg\" verkar inte vara en giltig revision"
 
 #: git-bisect.sh:117
 msgid "Bad HEAD - I need a HEAD"
-msgstr "坏的 HEAD - 我需要一个 HEAD"
+msgstr "Felaktigt HEAD - Jag behöver ett HEAD"
 
 #: git-bisect.sh:130
 #, sh-format
 msgid ""
 "Checking out '$start_head' failed. Try 'git bisect reset <validbranch>'."
-msgstr "检出 '$start_head' 失败。尝试 'git bisect reset <validbranch>'。"
+msgstr ""
+"Misslyckades checka ut \"$start_head\". Försök \"git bisect reset "
+"<giltiggren>\""
 
+# cogito-relaterat
 #: git-bisect.sh:140
 msgid "won't bisect on seeked tree"
-msgstr "不会在已查找过的树上二分查找"
+msgstr "kör inte \"bisect\" på ett \"seeked\"-träd"
 
 #: git-bisect.sh:144
 msgid "Bad HEAD - strange symbolic ref"
-msgstr "错误的 HEAD - 奇怪的符号引用"
+msgstr "Felaktigt HEAD - konstig symbolisk referens"
 
 #: git-bisect.sh:189
 #, sh-format
 msgid "Bad bisect_write argument: $state"
-msgstr "错误的bisect_write参数：$state"
+msgstr "Felaktigt argument till bisect_write: $state"
 
 #: git-bisect.sh:218
 #, sh-format
 msgid "Bad rev input: $arg"
-msgstr "输入错误版本：$arg"
+msgstr "Felaktig rev-indata: $arg"
 
 #: git-bisect.sh:232
 msgid "Please call 'bisect_state' with at least one argument."
-msgstr "请在调用 'bisect_state' 时跟至少一个参数。"
+msgstr "Anropa \"bisect_state\" med minst ett argument."
 
 #: git-bisect.sh:244
 #, sh-format
 msgid "Bad rev input: $rev"
-msgstr "输入坏的版本：$rev"
+msgstr "Felaktig rev-indata: $rev"
 
 #: git-bisect.sh:250
 msgid "'git bisect bad' can take only one argument."
-msgstr "'git bisect bad' 只能带一个参数。"
+msgstr "\"git bisect bad\" kan bara ta ett argument."
 
-#  注意保持句尾空格
 #. TRANSLATORS: Make sure to include [Y] and [n] in your
 #. translation. The program will only accept English input
 #. at this point.
 #: git-bisect.sh:279
 msgid "Are you sure [Y/n]? "
-msgstr "您确认么[Y/n]？ "
+msgstr "Är du säker [Y=ja/N=nej]? "
 
 #: git-bisect.sh:354
 #, sh-format
 msgid "'$invalid' is not a valid commit"
-msgstr "'$invalid' 不是一个有效的提交"
+msgstr "\"$invalid\" är inte en giltig incheckning"
 
 #: git-bisect.sh:363
 #, sh-format
@@ -3366,25 +3377,25 @@ msgid ""
 "Could not check out original HEAD '$branch'.\n"
 "Try 'git bisect reset <commit>'."
 msgstr ""
-"不能检出原始 HEAD '$branch'。\n"
-"尝试 'git bisect reset <commit>'。"
+"Kunde inte checka ut original-HEAD \"$branch\".\n"
+"Försök \"git bisect reset <incheckning>\"."
 
 #: git-bisect.sh:390
 msgid "No logfile given"
-msgstr "未提供日志文件"
+msgstr "Ingen loggfil angiven"
 
 #: git-bisect.sh:391
 #, sh-format
 msgid "cannot read $file for replaying"
-msgstr "不能读取 $file 来重放"
+msgstr "kan inte läsa $file för uppspelning"
 
 #: git-bisect.sh:408
 msgid "?? what are you talking about?"
-msgstr "?? 您在说什么?"
+msgstr "?? vad menar du?"
 
 #: git-bisect.sh:474
 msgid "We are not bisecting."
-msgstr "我们没有进行二分查找。"
+msgstr "Vi utför ingen bisect för tillfället."
 
 #: git-pull.sh:21
 msgid ""
@@ -3392,206 +3403,207 @@ msgid ""
 "Please, fix them up in the work tree, and then use 'git add/rm <file>'\n"
 "as appropriate to mark resolution, or use 'git commit -a'."
 msgstr ""
-"Pull 不可用，因为你尚有未合并的文件。请先在工作区改正文件，\n"
-"然后酌情使用 'git add/rm <file>' 标记解决方案，\n"
-"或使用 'git commit -a'。"
+"Du kan inte göra en \"pull\" då du har ändringar som inte checkats in.\n"
+"Rätta dem i din arbetskatalog och använd sedan \"git add/rm <fil>\"\n"
+"där det är lämpligt för att ange lösning, eller använd \"git commit -a\"."
 
 #: git-pull.sh:25
 msgid "Pull is not possible because you have unmerged files."
-msgstr "Pull 不可用，因为你尚有未合并的文件。"
+msgstr "Du kan inte göra en \"pull\" då du har ändringar som inte checkats in."
 
 #: git-pull.sh:197
 msgid "updating an unborn branch with changes added to the index"
-msgstr "更新尚未诞生的分支，变更添加至暂存区"
+msgstr "uppdaterar en ofödd gren med ändringar som lagts till i indexet"
 
 #: git-pull.sh:253
 msgid "Cannot merge multiple branches into empty head"
-msgstr "无法将多个分支合并到空分支"
+msgstr "Kan inte slå ihop flera grenar i ett tomt huvud."
 
 #: git-pull.sh:257
 msgid "Cannot rebase onto multiple branches"
-msgstr "无法变基到多个分支"
+msgstr "Kan inte utföra en \"rebase\" ovanpå flera grenar"
 
 #: git-stash.sh:51
 msgid "git stash clear with parameters is unimplemented"
-msgstr "git stash clear 不支持参数"
+msgstr "\"git stash clear\" med parametrar har inte implementerats"
 
 #: git-stash.sh:74
 msgid "You do not have the initial commit yet"
-msgstr "您尚未建立初始提交"
+msgstr "Du har inte den första incheckningen ännu"
 
 #: git-stash.sh:89
 msgid "Cannot save the current index state"
-msgstr "无法保存当前暂存区状态"
+msgstr "Kan inte spara aktuellt tillstånd för indexet"
 
 #: git-stash.sh:123 git-stash.sh:136
 msgid "Cannot save the current worktree state"
-msgstr "无法保存当前工作区状态"
+msgstr "Kan inte spara aktuellt tillstånd för arbetskatalogen"
 
 #: git-stash.sh:140
 msgid "No changes selected"
-msgstr "没有修改被选择"
+msgstr "Inga ändringar valda"
 
 #: git-stash.sh:143
 msgid "Cannot remove temporary index (can't happen)"
-msgstr "无法删除临时暂存区（不应发生）"
+msgstr "Kan inte ta bort temporärt index (kan inte inträffa)"
 
 #: git-stash.sh:156
 msgid "Cannot record working tree state"
-msgstr "不能记录工作区状态"
+msgstr "Kan inte registrera tillstånd för arbetskatalog"
 
 #: git-stash.sh:223
 msgid "No local changes to save"
-msgstr "没有要保存的本地修改"
+msgstr "Inga lokala ändringar att spara"
 
 #: git-stash.sh:227
 msgid "Cannot initialize stash"
-msgstr "无法初始化stash"
+msgstr "Kan inte initiera \"stash\""
 
 #: git-stash.sh:235
 msgid "Cannot save the current status"
-msgstr "无法保存当前状态"
+msgstr "Kan inte spara aktuell status"
 
 #: git-stash.sh:253
 msgid "Cannot remove worktree changes"
-msgstr "无法删除工作区变更"
+msgstr "Kan inte ta bort ändringar i arbetskatalogen"
 
 #: git-stash.sh:352
 msgid "No stash found."
-msgstr "未发现stash。"
+msgstr "Ingen \"stash\" hittades."
 
 #: git-stash.sh:359
 #, sh-format
 msgid "Too many revisions specified: $REV"
-msgstr "提供太多的版本：$REV"
+msgstr "För många revisioner angivna: $REV"
 
 #: git-stash.sh:365
 #, sh-format
 msgid "$reference is not valid reference"
-msgstr "$reference 不是有效的引用"
+msgstr "$reference är inte en giltig referens."
 
 #: git-stash.sh:393
 #, sh-format
 msgid "'$args' is not a stash-like commit"
-msgstr "'$args' 不是stash样提交"
+msgstr "\"$args\" är inte en \"stash\"-liknande incheckning"
 
 #: git-stash.sh:404
 #, sh-format
 msgid "'$args' is not a stash reference"
-msgstr "'$args' 不是一个stash引用"
+msgstr "\"$args\" är inte en \"stash\"-referens"
 
 #: git-stash.sh:412
 msgid "unable to refresh index"
-msgstr "无法刷新暂存区"
+msgstr "kan inte uppdatera indexet"
 
 #: git-stash.sh:416
 msgid "Cannot apply a stash in the middle of a merge"
-msgstr "无法在合并过程中恢复进度"
+msgstr "Kan inte applicera en \"stash\" mitt i en sammanslagning"
 
 #: git-stash.sh:424
 msgid "Conflicts in index. Try without --index."
-msgstr "暂存区冲突。尝试不用 --index。"
+msgstr "Konflikter i indexet. Testa utan --index."
 
 #: git-stash.sh:426
 msgid "Could not save index tree"
-msgstr "无法保存暂存区"
+msgstr "Kunde inte spara indexträd"
 
 #: git-stash.sh:460
 msgid "Cannot unstage modified files"
-msgstr "无法还原修改的文件"
+msgstr "Kan inte ta bort ändrade filer ur kön"
 
 #: git-stash.sh:491
 #, sh-format
 msgid "Dropped ${REV} ($s)"
-msgstr "丢弃了 ${REV} ($s)"
+msgstr "Kastade ${REV} ($s)"
 
 #: git-stash.sh:492
 #, sh-format
 msgid "${REV}: Could not drop stash entry"
-msgstr "${REV}: 无法丢弃进度条目"
+msgstr "${REV}: Kunde inte kasta \"stash\"-post"
 
 #: git-stash.sh:499
 msgid "No branch name specified"
-msgstr "未指定分支名"
+msgstr "Inget grennamn angavs"
 
 #: git-stash.sh:570
 msgid "(To restore them type \"git stash apply\")"
-msgstr "（为恢复数据输入 \"git stash apply\"）"
+msgstr "(För att återställa dem, skriv \"git stash apply\")"
 
 #: git-submodule.sh:56
 #, sh-format
 msgid "cannot strip one component off url '$remoteurl'"
-msgstr "无法从 url '$remoteurl' 剥离一个组件"
+msgstr "kan inte ta bort en komponent från url:en \"$remoteurl\""
 
 #: git-submodule.sh:108
 #, sh-format
 msgid "No submodule mapping found in .gitmodules for path '$path'"
-msgstr "未在 .gitmodules 中发现路径 '$path' 的子模组映射"
+msgstr "Hittade ingen undermodulmappning i .gitmodules för sökvägen \"$path\""
 
 #: git-submodule.sh:173
 #, sh-format
 msgid "Clone of '$url' into submodule path '$path' failed"
-msgstr "克隆 '$url' 到子模组路径 '$path' 失败"
+msgstr "Misslyckades klona \"$url\" till undermodulsökvägen \"$path\""
 
 #: git-submodule.sh:247
 #, sh-format
 msgid "repo URL: '$repo' must be absolute or begin with ./|../"
-msgstr "版本库URL：'$repo' 必须是绝对路径或以 ./|../ 起始"
+msgstr "arkiv-URL: \"$repo\" måste vara absolut eller börja med ./|../"
 
 #: git-submodule.sh:264
 #, sh-format
 msgid "'$path' already exists in the index"
-msgstr "'$path' 已经存在于暂存区中"
+msgstr "\"$path\" finns redan i indexet"
 
 #: git-submodule.sh:281
 #, sh-format
 msgid "'$path' already exists and is not a valid git repo"
-msgstr "'$path' 已存在且不是一个有效的 git 版本库"
+msgstr "\"$path\" finns redan och är inte ett giltigt git-arkiv"
 
 #: git-submodule.sh:295
 #, sh-format
 msgid "Unable to checkout submodule '$path'"
-msgstr "不能检出子模组 '$path'"
+msgstr "Kan inte checka ut undermodul \"$path\""
 
 #: git-submodule.sh:300
 #, sh-format
 msgid "Failed to add submodule '$path'"
-msgstr "无法添加子模组 '$path'"
+msgstr "Misslyckades lägga till underkatalog \"$path\""
 
 #: git-submodule.sh:305
 #, sh-format
 msgid "Failed to register submodule '$path'"
-msgstr "无法注册子模组 '$path'"
+msgstr "Misslyckades registrera undermodul \"$path\""
 
 #: git-submodule.sh:347
 #, sh-format
 msgid "Entering '$prefix$path'"
-msgstr "正在进入 '$prefix$path'"
+msgstr "Går in i \"$prefix$path\""
 
 #: git-submodule.sh:359
 #, sh-format
 msgid "Stopping at '$path'; script returned non-zero status."
-msgstr "停止于 '$path'，脚本返回非零值。"
+msgstr "Stoppar på \"$path\"; skriptet returnerade en status skild från noll."
 
 #: git-submodule.sh:401
 #, sh-format
 msgid "No url found for submodule path '$path' in .gitmodules"
-msgstr "在 .gitmodules 中未找到子模组路径 '$path' 的url"
+msgstr "Hittade ingen url för undermodulsökvägen \"$path\" i .gitmodules"
 
 #: git-submodule.sh:410
 #, sh-format
 msgid "Failed to register url for submodule path '$path'"
-msgstr "无法为子模组路径 '$path' 注册 url"
+msgstr "Misslyckades registrera url för underkatalogsökväg \"$path\""
 
 #: git-submodule.sh:418
 #, sh-format
 msgid "Failed to register update mode for submodule path '$path'"
-msgstr "无法为子模组路径 '$path' 注册更新模式"
+msgstr ""
+"Misslyckades registrera uppdateringsläge för undermodulsökväg \"$path\""
 
 #: git-submodule.sh:420
 #, sh-format
 msgid "Submodule '$name' ($url) registered for path '$path'"
-msgstr "子模组 '$name' ($url) 已为路径 '$path' 注册"
+msgstr "Undermodulen \"$name\" ($url) registrerad för sökvägen \"$path\""
 
 #: git-submodule.sh:519
 #, sh-format
@@ -3599,75 +3611,72 @@ msgid ""
 "Submodule path '$path' not initialized\n"
 "Maybe you want to use 'update --init'?"
 msgstr ""
-"子模组路径 '$path' 没有初始化\n"
-"也许你想用 'update --init'？"
+"Undermodulen \"$path\" har inte initierats\n"
+"Kanske du vill köra \"update --init\"?"
 
 #: git-submodule.sh:532
 #, sh-format
 msgid "Unable to find current revision in submodule path '$path'"
-msgstr "无法在子模组路径 '$path' 中找到当前版本"
+msgstr "Kan inte hitta aktuell revision i undermodulsökväg \"$path\""
 
 #: git-submodule.sh:551
 #, sh-format
 msgid "Unable to fetch in submodule path '$path'"
-msgstr "无法在子模组路径 '$path' 中获取"
+msgstr "Kan inte hämta i undermodulsökväg \"$path\""
 
 #: git-submodule.sh:565
 #, sh-format
 msgid "Unable to rebase '$sha1' in submodule path '$path'"
-msgstr "无法在子模组路径 '$path' 中变基 '$sha1'"
+msgstr "Kan inte göra \"rebase\" av \"$sha1\" i undermodulsökväg \"$path\""
 
 #: git-submodule.sh:566
 #, sh-format
 msgid "Submodule path '$path': rebased into '$sha1'"
-msgstr "子模组路径 '$path'：变基至 '$sha1'"
+msgstr "Undermodulsökvägen \"$path\": \"rebase\":ad in i \"$sha1\""
 
 #: git-submodule.sh:571
 #, sh-format
 msgid "Unable to merge '$sha1' in submodule path '$path'"
-msgstr "无法合并 '$sha1' 到子模组路径 '$path' 中"
+msgstr "Kan inte slå ihop \"$sha1\" i undermodulsökvägen \"$path\""
 
 #: git-submodule.sh:572
 #, sh-format
 msgid "Submodule path '$path': merged in '$sha1'"
-msgstr "子模组路径 '$path'：已合并入 '$sha1'"
+msgstr "Undermodulsökvägen \"$path\": sammanslagen i \"$sha1\""
 
 #: git-submodule.sh:577
 #, sh-format
 msgid "Unable to checkout '$sha1' in submodule path '$path'"
-msgstr "无法在子模组路径 '$path' 中检出 '$sha1'"
+msgstr "Kan inte checka ut \"$sha1\" i undermodulsökvägen \"$path\""
 
 #: git-submodule.sh:578
 #, sh-format
 msgid "Submodule path '$path': checked out '$sha1'"
-msgstr "子模组路径 '$path'：检出 '$sha1'"
+msgstr "Undermodulsökvägen \"$path\": checkade ut \"$sha1\""
 
 #: git-submodule.sh:600 git-submodule.sh:923
 #, sh-format
 msgid "Failed to recurse into submodule path '$path'"
-msgstr "无法递归进子模组路径 '$path'"
+msgstr "Misslyckades rekursera in i undermodulsökvägen \"$path\""
 
 #: git-submodule.sh:708
 msgid "--"
 msgstr "--"
 
-#  注意保持前导空格
 #: git-submodule.sh:766
 #, sh-format
 msgid "  Warn: $name doesn't contain commit $sha1_src"
-msgstr "  警告：$name 未包含提交 $sha1_src"
+msgstr "  Varning: $name innehåller inte incheckning $sha1_src"
 
-#  注意保持前导空格
 #: git-submodule.sh:769
 #, sh-format
 msgid "  Warn: $name doesn't contain commit $sha1_dst"
-msgstr "  警告：$name 未包含提交 $sha1_dst"
+msgstr "  Varning: $name innehåller inte incheckning $sha1_dst"
 
-#  注意保持前导空格
 #: git-submodule.sh:772
 #, sh-format
 msgid "  Warn: $name doesn't contain commits $sha1_src and $sha1_dst"
-msgstr "  警告：$name 未包含提交 $sha1_src 和 $sha1_dst"
+msgstr "  Varning: $name innehåller inte incheckningar $sha1_src och $sha1_dst"
 
 #: git-submodule.sh:797
 msgid "blob"
@@ -3675,9 +3684,177 @@ msgstr "blob"
 
 #: git-submodule.sh:798
 msgid "submodule"
-msgstr "子模组"
+msgstr "undermodul"
 
 #: git-submodule.sh:969
 #, sh-format
 msgid "Synchronizing submodule url for '$name'"
-msgstr "为 '$name' 同步子模组url"
+msgstr "Synkroniserar undermodul-url för \"$name\""
+
+#~ msgid "# Changed but not updated:"
+#~ msgstr "# Ändrade men inte uppdaterade:"
+
+#~ msgid "A branch named '%s' already exists."
+#~ msgstr "Det finns redan en gren som heter \"%s\""
+
+#~ msgid "path '%s' does not have all 3 versions"
+#~ msgstr "sökvägen \"%s\" har inte alla 3 versionerna"
+
+#~ msgid "git checkout: we do not like '%s' as a branch name."
+#~ msgstr "git checkout: vi tycker inte om \"%s\" som namn på en gren."
+
+#~ msgid "git checkout: branch %s already exists"
+#~ msgstr "git checkout: grenen %s finns redan"
+
+#~ msgid "Paths with --interactive does not make sense."
+#~ msgstr "Kan inte ange sökvägar med --interactive."
+
+#~ msgid "No HEAD commit to compare with (yet)"
+#~ msgstr "Ingen HEAD-incheckning att jämföra med (ännu)"
+
+#~ msgid "cannot mix --fixed-strings and regexp"
+#~ msgstr "kan inte blanda --fixed-strings och reguljära uttryck"
+
+#~ msgid "invalid --decorate option: %s"
+#~ msgstr "felaktigt värde till --decorate: %s"
+
+#~ msgid "%s; will overwrite!"
+#~ msgstr "%s; kommer skriva över!"
+
+#~ msgid "Failed to write current notes tree to database"
+#~ msgstr "Kunde inte skriva aktuellt anteckningsträd till databasen"
+
+#~ msgid "Failed to commit notes tree to database"
+#~ msgstr "Kunde inte checka in anteckningsträd i databasen"
+
+# FIXME: Untranslatable!
+#
+#~ msgid "Refusing to %s notes in %s (outside of refs/notes/)"
+#~ msgstr "Vägrar %s anteckningar i %s (utanför refs/notes/)"
+
+#~ msgid "list"
+#~ msgstr "list"
+
+#~ msgid "add"
+#~ msgstr "add"
+
+#~ msgid "copy"
+#~ msgstr "copy"
+
+#~ msgid "show"
+#~ msgstr "show"
+
+#~ msgid "remove"
+#~ msgstr "remove"
+
+#~ msgid "prune"
+#~ msgstr "prune"
+
+#~ msgid "The current branch %s is not tracking anything."
+#~ msgstr "Den aktuella grenen %s spårar ingenting."
+
+#~ msgid "No destination configured to push to."
+#~ msgstr "Har inte ställt in någon destination att sända till."
+
+#~ msgid "Reflog action message too long: %.*s..."
+#~ msgstr "Reflog-händelsemeddelande för långt: %.*s..."
+
+#~ msgid "Could not read commit message of %s"
+#~ msgstr "Kunde inte läsa incheckningsmeddelandet för %s"
+
+#~ msgid "Could not extract author email from %s"
+#~ msgstr "Kunde inte hämta författarens e-postadress från %s"
+
+#~ msgid "Could not extract author time from %s"
+#~ msgstr "Kunde inte hämta författartid från %s"
+
+#~ msgid "No author information found in %s"
+#~ msgstr "Hittade ingen författarinformation i %s"
+
+#~ msgid "cherry-pick --ff cannot be used with --signoff"
+#~ msgstr "cherry-pick --ff kan inte användas med --signoff"
+
+#~ msgid "cherry-pick --ff cannot be used with --no-commit"
+#~ msgstr "cherry-pick --ff kan inte användas med --no-commit"
+
+#~ msgid "cherry-pick --ff cannot be used with -x"
+#~ msgstr "cherry-pick --ff kan inte användas med -x"
+
+#~ msgid "cherry-pick --ff cannot be used with --edit"
+#~ msgstr "cherry-pick --ff kan inte användas med --edit"
+
+#~ msgid "committer info too long."
+#~ msgstr "incheckarinformation för lång."
+
+#~ msgid ""
+#~ "\n"
+#~ "#\n"
+#~ "# Write a tag message\n"
+#~ "#\n"
+#~ msgstr ""
+#~ "\n"
+#~ "#\n"
+#~ "# Skriv ett taggmeddelande\n"
+#~ "#\n"
+
+#~ msgid "signing key value too long (%.10s...)"
+#~ msgstr "signeringsnyckelvärdet för långt (%.10s...)"
+
+#~ msgid ""
+#~ "When you have resolved this problem run \"$cmdline --resolved\".\n"
+#~ "If you would prefer to skip this patch, instead run \"$cmdline --skip\".\n"
+#~ "To restore the original branch and stop patching run \"$cmdline --abort\"."
+#~ msgstr ""
+#~ "När du har löst problemet kör du \"$cmdline --resolved\".\n"
+#~ "Om du vill hoppa över patchen kör du istället \"$cmdline --skip\".\n"
+#~ "För att återställa originalgrenen och avbryta kör du \"$cmdline --abort\"."
+
+#~ msgid ""
+#~ "Patch is empty.  Was it split wrong?\n"
+#~ "If you would prefer to skip this patch, instead run \"$cmdline --skip\".\n"
+#~ "To restore the original branch and stop patching run \"$cmdline --abort\"."
+#~ msgstr ""
+#~ "Patchen är tom. Delades den upp felaktigt?\n"
+#~ "Om du vill hoppa över patchen kör du istället \"$cmdline --skip\".\n"
+#~ "För att återställa originalgrenen och avbryta kör du \"$cmdline --abort\"."
+
+#~ msgid "Patch does not have a valid e-mail address."
+#~ msgstr "Patchen har inte någon giltig e-postadress."
+
+#~ msgid "Commit Body is:"
+#~ msgstr "Incheckningskroppen är:"
+
+#~ msgid ""
+#~ "No changes - did you forget to use 'git add'?\n"
+#~ "If there is nothing left to stage, chances are that something else\n"
+#~ "already introduced the same changes; you might want to skip this patch."
+#~ msgstr ""
+#~ "Inga ändringar - glömde du använda \"git add\"?\n"
+#~ "Om det inte är något kvar att köa kan det hända att något annat redan\n"
+#~ "introducerat samma ändringar; kanske du bör hoppa över patchen."
+
+#~ msgid ""
+#~ "You still have unmerged paths in your index\n"
+#~ "did you forget to use 'git add'?"
+#~ msgstr ""
+#~ "Du har fortfarande sökvägar som inte slagits samman i ditt index\n"
+#~ "glömde du använda \"git add\"?"
+
+#~ msgid "Patch failed at $msgnum $FIRSTLINE"
+#~ msgstr "Patchen misslyckades vid $msgnum $FIRSTLINE"
+
+#, fuzzy
+#~ msgid "You need to start by \"git bisect start\""
+#~ msgstr "Du måste ställa in din incheckarinformation först"
+
+#, fuzzy
+#~ msgid "Index was not unstashed."
+#~ msgstr "kunde köra stash."
+
+#, fuzzy
+#~ msgid "# Submodules changed but not updated:"
+#~ msgstr "# Ändrade men inte uppdaterade:"
+
+#, fuzzy
+#~ msgid "# Submodule changes to be committed:"
+#~ msgstr "# Ändringar att checka in:"
