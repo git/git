@@ -1,17 +1,18 @@
 To: git@vger.kernel.org
-Subject: What's cooking in git.git (Mar 2012, #04; Fri, 9)
+Subject: What's cooking in git.git (Mar 2012, #05; Sun, 11)
 X-master-at: 745950ce0e7e984158a00cd52c5811918d1f3495
 X-next-at: d9e556f99f2727d7117df36b37a2b6c7907f9d2f
 
-What's cooking in git.git (Mar 2012, #04; Fri, 9)
+What's cooking in git.git (Mar 2012, #05; Sun, 11)
 --------------------------------------------------
 
 Here are the topics that have been cooking.  Commits prefixed with '-' are
 only in 'pu' (proposed updates) while commits prefixed with '+' are in 'next'.
 
-Trivially correct fixes to old bugs may still graduate to 'master',
-but otherwise we are mostly in "regression fixes only" mode until
-1.7.10 final (see http://tinyurl.com/gitCal for schedule).
+I think the tip of 'master' is more or less complete for -rc1; I'll
+start ignoring new feature patches out of blue and low impact fix
+patches that are not very well cooked, expecting for them to be
+rerolled after 1.7.10 final.
 
 You can find the changes described here in the integration branches of the
 repositories listed at
@@ -21,164 +22,62 @@ repositories listed at
 --------------------------------------------------
 [New Topics]
 
-* rs/unpack-trees-leakfix (2012-03-06) 1 commit
-  (merged to 'next' on 2012-03-07 at 69a69cd)
- + unpack-trees: plug minor memory leak
+* ab/perl-i18n (2012-03-10) 3 commits
+ - fixup! de1e4ae
+ - perl/Makefile: install Git::I18N under NO_PERL_MAKEMAKER
+ - Git::I18N: compatibility with perl <5.8.3
 
-* jh/apply-free-patch (2012-03-07) 1 commit
- - apply: do not leak patches and fragments
+Attempts to help installations with ancient Perl and/or without
+MakeMaker.  Didn't quite work for me, so I tried to queue a fix-up
+commit, but an independent confirmation report is needed before it
+is squashed into Ævar's patches.
 
-* az/verify-tag-use-gpg-config (2012-03-08) 1 commit
-  (merged to 'next' on 2012-03-09 at d9e556f)
- + verify-tag: Parse GPG configuration options.
+* jc/commit-hook-authorship (2012-03-11) 3 commits
+ - commit: pass author/committer info to hooks
+ - t7503: does pre-commit-hook learn authorship?
+ - ident.c: add split_ident_line() to parse formatted ident line
+ (this branch is tangled with jc/run-hook-env-1.)
 
-"git tag -s" honored "gpg.program" configuration variable since
-1.7.9, but "git tag -v" and "git verify-tag" didn't.
+"git commit --author=$name" did not tell the name that was being
+recorded in the resulting commit to hooks, even though it does do so
+when the end user overrode the authorship via the "GIT_AUTHOR_NAME"
+environment variable.  This is a simpler of the two approaches.
 
-This is a fairly low impact fix, and we may want to have it in
-1.7.10.
+* jc/run-hook-env-1 (2012-03-11) 4 commits
+ . commit: pass author/committer info to hooks
+ - run_hook(): enhance the interface to pass arbitrary environment
+ - t7503: does pre-commit-hook learn authorship?
+ - ident.c: add split_ident_line() to parse formatted ident line
+ (this branch is tangled with jc/commit-hook-authorship.)
 
-* tb/maint-remove-irrelevant-i18n-test (2012-03-06) 1 commit
-  (merged to 'next' on 2012-03-07 at 23f2dd1)
- + t0204: remove a test that checks undefined behaviour
+Addresses the same issue, sharing the first two changes with the
+previous one, but uses a more complex approach, which may not be
+worth the complexity.  The third patch is a prerequiste for the
+fourth one (not used), but is independently useful.
 
-I tentatively parked this in 'next' but later reverted the merge.
+* jn/maint-fast-import-empty-ls (2012-03-09) 2 commits
+ - fast-import: don't allow 'ls' of path with empty components
+ - fast-import: leakfix for 'ls' of dirty trees
 
-* jc/maint-undefined-i18n-observation-test (2012-03-09) 1 commit
- - t0204: clarify the "observe undefined behaviour" test
+* ms/maint-config-error-at-eol-linecount (2012-03-11) 1 commit
+ - config: report errors at the EOL with correct line number
 
-It was unclear what a test in t0204 wanted to check; it turns out
-that it was only to observe an undefined behaviour of the system,
-and did not anticipate one kind of reasonable error behaviour.
+* jc/diff-algo-cleanup (2012-02-19) 2 commits
+ - xdiff: PATIENCE/HISTOGRAM are not independent option bits
+ - xdiff: remove XDL_PATCH_* macros
+ (this branch is used by jc/diff-ignore-case.)
 
-Replaces the tb/maint-remove-irrelevant-i18n-test topic.
+Resurrects the preparatory clean-up patches from another topic
+that was discarded.
 
-* mm/push-default-switch-warning (2012-03-09) 1 commit
- - push: start warning upcoming default change for push.default
+* cn/apply-fix-ws-can-lengthen-lines (2012-03-11) 1 commit
+ . apply: reallocate the postimage buffer when needed
 
-This resurrects an ancient patch I wrote during a discussion we had
-in the 1.6.3-1.6.4 era.  It also conflicts with the long-stalled
-jc/advise-push-default topic and for a good reason.  The latter is a
-lower impact patch that uses a more focused approach to limit the
-scope to the target audience that actually needs help.
+Attempts to address an ancient bug that dates back to the addition
+of an oddball "tab-in-indent" whitespace breakage class that wants
+to have longer lines than the original when fixing things up.
 
-* ph/rerere-doc (2012-03-08) 1 commit
- - rerere: Document 'rerere remaining'
-
-* sl/customize-sane-tool-path (2012-03-09) 1 commit
- - configure: allow user to prevent $PATH "sanitization" on Solaris
-
-Would be nice to hear from people who actually use autoconf, either
-on Solaris or other platforms.
-
---------------------------------------------------
-[Graduated to "master"]
-
-* cn/pull-rebase-message (2012-03-04) 1 commit
-  (merged to 'next' on 2012-03-04 at 5a6cd58)
- + Make git-{pull,rebase} message without tracking information friendlier
-
-The advise message given when the user didn't give enough clue on what
-to merge was overly long.
-
-* jc/maint-diff-patch-header (2012-03-01) 3 commits
-  (merged to 'next' on 2012-03-02 at 2cd2059)
- + diff -p: squelch "diff --git" header for stat-dirty paths
- + t4011: illustrate "diff-index -p" on stat-dirty paths
- + t4011: modernise style
- (this branch is used by jc/diff-ignore-mode.)
-
-"diff-index" and friends showed "diff --git" header and nothing else
-for a path that is only stat-dirty.
-
-* jc/pickaxe-ignore-case (2012-03-04) 3 commits
-  (merged to 'next' on 2012-03-04 at 1ad3a39)
- + ctype.c: Fix a sparse warning
-  (merged to 'next' on 2012-03-02 at 73a632b)
- + pickaxe: allow -i to search in patch case-insensitively
- + grep: use static trans-case table
-
-"git log -G/-S" pays attention to the "-i" option.
-
-* jh/threadable-symlink-check (2012-03-02) 1 commit
-  (merged to 'next' on 2012-03-05 at fdd667c)
- + Add threaded versions of functions in symlinks.c.
-
-It probably is "threadble" not "threaded" but in any case this
-should not regress the current callers.
-
-* jl/maint-submodule-relative (2012-03-04) 4 commits
-  (merged to 'next' on 2012-03-07 at e020e5c)
- + submodules: fix ambiguous absolute paths under Windows
- + submodules: refactor computation of relative gitdir path
- + submodules: always use a relative path from gitdir to work tree
- + submodules: always use a relative path to gitdir
-
-The whole directory that houses a top-level superproject managed by
-"git submodule" can be moved to another place.
-
-* jn/maint-do-not-match-with-unsanitized-searchtext (2012-03-06) 1 commit
-  (merged to 'next' on 2012-03-06 at 768ce21)
- + gitweb: Fix fixed string (non-regexp) project search
-
-"gitweb" did use quotemeta() to prepare search string when asked to
-do a fixed-string project search, but did not use it by mistake and
-used the user-supplied string instead.
-
-* kb/maint-prune-rmdir-closedir (2012-03-07) 1 commit
-  (merged to 'next' on 2012-03-07 at 2438c9a)
- + fix deletion of .git/objects sub-directories in git-prune/repack
-
-Call closedir() that iterates over a directory before rmdir() it.
-
-* nl/http-proxy-auth (2012-03-02) 1 commit
-  (merged to 'next' on 2012-03-04 at f368669)
- + http: support proxies that require authentication
- (this branch is used by nl/http-proxy-more.)
-
-Allow curl-based transport to use proxies that require authentication.
-
-* sl/modern-t0000 (2012-03-02) 1 commit
-  (merged to 'next' on 2012-03-04 at 2cd1508)
- + t0000: modernise style
-
-* th/mergetools-deltawalker (2012-03-05) 1 commit
-  (merged to 'next' on 2012-03-05 at 167c74f)
- + mergetools: add a plug-in to support DeltaWalker
-
-Add plug-in to support DeltaWalker in difftool/mergetool.  
-
-* tr/maint-bundle-boundary (2012-03-01) 3 commits
-  (merged to 'next' on 2012-03-02 at c25692f)
- + bundle: keep around names passed to add_pending_object()
- + t5510: ensure we stay in the toplevel test dir
- + t5510: refactor bundle->pack conversion
-
-"git bundle" did not record boundary commits correctly when there
-are many of them.
-
-* vr/branch-doc (2012-03-06) 3 commits
-  (merged to 'next' on 2012-03-06 at 6be3587)
- + Documentation/git-branch: add default for --contains
- + Documentation/git-branch: fix a typo
- + Documentation/git-branch: cleanups
-
-Documentation update.
-
-* zj/diff-stat-dyncol (2012-03-01) 10 commits
-  (merged to 'next' on 2012-03-01 at 79b4152)
- + diff --stat: add config option to limit graph width
- + diff --stat: enable limiting of the graph part
- + diff --stat: add a test for output with COLUMNS=40
- + diff --stat: use a maximum of 5/8 for the filename part
- + merge --stat: use the full terminal width
- + log --stat: use the full terminal width
- + show --stat: use the full terminal width
- + diff --stat: use the full terminal width
- + diff --stat: tests for long filenames and big change counts
- + Merge branches zj/decimal-width, zj/term-columns and jc/diff-stat-scaler
-
-Rerolled again and looking good.
+Needs more work; results in double-frees.
 
 --------------------------------------------------
 [Stalled]
@@ -277,6 +176,64 @@ not working :-(.
 --------------------------------------------------
 [Cooking]
 
+* rs/unpack-trees-leakfix (2012-03-06) 1 commit
+  (merged to 'next' on 2012-03-07 at 69a69cd)
+ + unpack-trees: plug minor memory leak
+
+Will defer til 1.7.10.
+
+* jh/apply-free-patch (2012-03-07) 1 commit
+ - apply: do not leak patches and fragments
+
+* az/verify-tag-use-gpg-config (2012-03-08) 1 commit
+  (merged to 'next' on 2012-03-09 at d9e556f)
+ + verify-tag: Parse GPG configuration options.
+
+"git tag -s" honored "gpg.program" configuration variable since
+1.7.9, but "git tag -v" and "git verify-tag" didn't.
+
+This is a fairly low impact fix.
+Will merge to 'master'.
+
+* tb/maint-remove-irrelevant-i18n-test (2012-03-06) 1 commit
+  (merged to 'next' on 2012-03-07 at 23f2dd1)
+ + t0204: remove a test that checks undefined behaviour
+
+I tentatively parked this in 'next' but later reverted the merge.
+Will discard.
+
+* jc/maint-undefined-i18n-observation-test (2012-03-09) 1 commit
+ - t0204: clarify the "observe undefined behaviour" test
+
+It was unclear what a test in t0204 wanted to check; it turns out
+that it was only to observe an undefined behaviour of the system,
+and did not anticipate one kind of reasonable error behaviour.
+
+Replaces the tb/maint-remove-irrelevant-i18n-test topic.
+
+We may want merge this before 1.7.10 to help Mac OS X builders.
+
+* mm/push-default-switch-warning (2012-03-09) 1 commit
+ - push: start warning upcoming default change for push.default
+
+This resurrects an ancient patch I wrote during a discussion we had
+in the 1.6.3-1.6.4 era.  It also conflicts with the long-stalled
+jc/advise-push-default topic and for a good reason---they address a
+similar issue.  The latter is a lower impact patch that uses a more
+focused approach to limit the scope to the target audience that
+actually needs help.
+
+* ph/rerere-doc (2012-03-08) 1 commit
+ - rerere: Document 'rerere remaining'
+
+Ping?
+
+* sl/customize-sane-tool-path (2012-03-09) 1 commit
+ - configure: allow user to prevent $PATH "sanitization" on Solaris
+
+Would be nice to hear from people who actually use autoconf, either
+on Solaris or other platforms.
+
 * jc/fmt-merge-msg-people (2012-03-08) 3 commits
   (merged to 'next' on 2012-03-08 at be31aa9)
  + fmt-merge-msg.c: make util_as_int() return "int"
@@ -288,8 +245,7 @@ not working :-(.
 The "fmt-merge-msg" command learns to list the primary contributors
 involved in the side topic you are merging.
 
-Judging by the rate of "oops, this is better" fix-ups, it was good
-that I decided to postpone this topic til the next cycle ;-)
+Will defer til 1.7.10.
 
 * nl/http-proxy-more (2012-03-05) 3 commits
  - http: handle proxy authentication failure (error 407)
@@ -311,30 +267,27 @@ re-rolling has stalled since the last review?
  + streaming: make streaming-write-entry to be more reusable
 
 Use API to read blob data in smaller chunks in more places to
-reduce the memory footprint.
+reduce the memory footprint.  In general, looked fairly good.
 
-* nd/threaded-index-pack (2012-03-02) 2 commits
+Will defer til 1.7.10.
+
+* nd/threaded-index-pack (2012-03-11) 2 commits
  - index-pack: support multithreaded delta resolving
  - index-pack: split second pass obj handling into own function
 
-Rerolled to fix a bug that was discovered with a trivial test, and
-resurrected from Stalled category, but I am reluctant to advance a
-topic that can easily break many people's repositories at this late
-in the cycle.
-
-What is queued here is a couple of review cycles old; will discard
-and replace with a re-roll when it comes.
+Another reroll after a bugreport on pthread usage discovered by
+Ramsey.
 
 --------------------------------------------------
 [Discarded]
 
-* jc/diff-ignore-case (2012-02-28) 6 commits
+* jc/diff-ignore-mode (2012-03-01) 1 commit
+ . diff --ignore-mode-change
+
+ * jc/diff-ignore-case (2012-02-28) 6 commits
  . diff: -i is "--ignore-case" but means a bit more in "log"
  . diff: --ignore-case
  . xdiff: introduce XDF_IGNORE_CASE
  . xdiff: introduce XDF_INEXACT_MATCH
- . xdiff: PATIENCE/HISTOGRAM are not independent option bits
- . xdiff: remove XDL_PATCH_* macros
-
-* jc/diff-ignore-mode (2012-03-01) 1 commit
- . diff --ignore-mode-change
+ - xdiff: PATIENCE/HISTOGRAM are not independent option bits
+ - xdiff: remove XDL_PATCH_* macros
