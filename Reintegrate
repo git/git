@@ -18,6 +18,51 @@ do
 	shift
 done
 
+annotate_merge () {
+	test -f Meta/whats-cooking.txt || return 0
+
+	perl -e '
+		my ($branch) = $ARGV[0];
+		my ($in_section) = 0;
+		my @msg = ();
+		while (<STDIN>) {
+			if (/^\* $branch /) {
+				$in_section = 1;
+				next;
+			}
+			if (/^[-*\[]/) {
+				last if	$in_section;
+			}
+			next unless $in_section;
+			next if (/^ /);
+			push @msg, $_;
+		}
+
+		if ($in_section && @msg) {
+			open(my $fh, "-|", qw(git cat-file commit HEAD));
+			my @original = (<$fh>);
+			my @final;
+			$in_section = 0;
+			for (@original) {
+				if (!$in_section) {
+					$in_section = 1 if (/^$/);
+					next;
+				}
+				push @final, $_;
+				if (/^$/ && $in_section == 1) {
+					push @final, @msg;
+					push @final, "\n";
+					$in_section = 2;
+				}
+			}
+			close $fh;
+			open($fh, "|-", qw(git commit --amend -F -));
+			print $fh @final;
+			close $fh;
+		}
+	' <Meta/whats-cooking.txt "$1"
+}
+
 case "$generate" in
 no)
 	accept_rerere () {
@@ -37,12 +82,18 @@ no)
 		case "$branch" in '#'* | '') continue ;; esac
 		case "$eh" in
 		"" | "#"*)
-			save=$(git rev-parse --verify HEAD)
-
 			echo >&2 "* $branch"
+
+			save=$(git rev-parse --verify HEAD)
+			tip=$(git rev-parse --verify "$branch^0")
+			mb=$(git merge-base "$tip" "$save")
+			test "$mb" = "$tip" && continue
+
 			git merge $accept_rerere --no-edit "$branch" ||
 			accept_rerere ||
 			exit
+
+			annotate_merge "$branch" || exit
 
 			this=$(git rev-parse --verify HEAD)
 			if test "$this" = "$save"
