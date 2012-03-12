@@ -380,7 +380,9 @@ do
 	-i|--interactive)
 		interactive=t ;;
 	-b|--binary)
-		: ;;
+		echo >&2 "The -b/--binary option was deprecated in 1.6.0 and removed in 1.7.10."
+		die "Please adjust your scripts."
+		;;
 	-3|--3way)
 		threeway=t ;;
 	-s|--signoff)

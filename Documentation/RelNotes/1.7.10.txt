@@ -25,6 +25,10 @@ Compatibility Notes
    "git merge" command if you know everybody who uses your script has
    Git v1.7.8 or newer.
 
+ * The "--binary/-b" options to "git am" have been a no-op for quite a
+   while and was deprecated in mid 2008 (v1.6.0).  When you give these
+   options to "git am", it will now fail with an error.
+
 
 Updates since v1.7.9
 --------------------
@@ -115,6 +119,10 @@ UI, Workflows & Features
  * Project search in "gitweb" shows the substring that matched in the
    project name and description highlighted.
 
+ * A new script "diffall" is added to contrib/; it drives an external
+   an external tool to perform a directory diff of two Git revisions
+   in one go, unlike "difftool" that compares one file at a time.
+
 Foreign Interface
 
  * Improved handling of views, labels and branches in "git-p4" (in contrib).
@@ -172,34 +180,17 @@ Unless otherwise noted, all the fixes since v1.7.9 in the maintenance
 releases are contained in this release (see release notes to them for
 details).
 
- * "git bundle" did not record boundary commits correctly when there
-   are many of them.
-   (merge efe4be1 tr/maint-bundle-boundary later to maint).
-
- * "git diff-index" and its friends at the plumbing level showed the
-   "diff --git" header and nothing else for a path whose cached stat
-   info is dirty without actual difference when asked to produce a
-   patch. This was a longstanding bug that we could have fixed long
-   time ago.
-   (merge b3f01ff jc/maint-diff-patch-header later to maint).
-
- * The code to synthesize the fake ancestor tree used by 3-way merge
-   fallback in "git am" was not prepared to read a patch created with
-   a non-standard -p<num> value.
-   (merge a61ba26 jc/am-3-nonstandard-popt later to maint).
+ * "git tag -s" honored "gpg.program" configuration variable since
+   1.7.9, but "git tag -v" and "git verify-tag" didn't.
+   (merge a2c2506 az/verify-tag-use-gpg-config later to maint).
 
  * "gitweb" used to drop warnings in the log file when "heads" view is
    accessed in a repository whose HEAD does not point at a valid
    branch.
 
- * "gitweb" did use quotemeta() to prepare search string when asked to
-   do a fixed-string project search, but did not use it by mistake and
-   used the user-supplied string instead.
-   (merge e65ceb6 jn/maint-do-not-match-with-unsanitized-searchtext later to maint).
-
 ---
 exec >/var/tmp/1
-O=v1.7.10-rc0-15-g9a4c97e
+O=v1.7.10-rc0-40-g57cec0a
 echo O=$(git describe)
 git log --first-parent --oneline ^maint $O..
 echo
