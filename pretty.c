@@ -531,41 +531,24 @@ static size_t format_person_part(struct strbuf *sb, char part,
 {
 	/* currently all placeholders have same length */
 	const int placeholder_len = 2;
-	int start, end, tz = 0;
+	int tz;
 	unsigned long date = 0;
-	char *ep;
-	const char *name_start, *name_end, *mail_start, *mail_end, *msg_end = msg+len;
 	char person_name[1024];
 	char person_mail[1024];
+	struct ident_split s;
+	const char *name_start, *name_end, *mail_start, *mail_end;
 
-	/* advance 'end' to point to email start delimiter */
-	for (end = 0; end < len && msg[end] != '<'; end++)
-		; /* do nothing */
-
-	/*
-	 * When end points at the '<' that we found, it should have
-	 * matching '>' later, which means 'end' must be strictly
-	 * below len - 1.
-	 */
-	if (end >= len - 2)
+	if (split_ident_line(&s, msg, len) < 0)
 		goto skip;
 
-	/* Seek for both name and email part */
-	name_start = msg;
-	name_end = msg+end;
-	while (name_end > name_start && isspace(*(name_end-1)))
-		name_end--;
-	mail_start = msg+end+1;
-	mail_end = mail_start;
-	while (mail_end < msg_end && *mail_end != '>')
-		mail_end++;
-	if (mail_end == msg_end)
-		goto skip;
-	end = mail_end-msg;
+	name_start = s.name_begin;
+	name_end = s.name_end;
+	mail_start = s.mail_begin;
+	mail_end = s.mail_end;
 
 	if (part == 'N' || part == 'E') { /* mailmap lookup */
-		strlcpy(person_name, name_start, name_end-name_start+1);
-		strlcpy(person_mail, mail_start, mail_end-mail_start+1);
+		strlcpy(person_name, name_start, name_end - name_start + 1);
+		strlcpy(person_mail, mail_start, mail_end - mail_start + 1);
 		mailmap_name(person_mail, sizeof(person_mail), person_name, sizeof(person_name));
 		name_start = person_name;
 		name_end = name_start + strlen(person_name);
@@ -581,28 +564,20 @@ static size_t format_person_part(struct strbuf *sb, char part,
 		return placeholder_len;
 	}
 
-	/* advance 'start' to point to date start delimiter */
-	for (start = end + 1; start < len && isspace(msg[start]); start++)
-		; /* do nothing */
-	if (start >= len)
-		goto skip;
-	date = strtoul(msg + start, &ep, 10);
-	if (msg + start == ep)
+	if (!s.date_begin)
 		goto skip;
 
+	date = strtoul(s.date_begin, NULL, 10);
+
 	if (part == 't') {	/* date, UNIX timestamp */
-		strbuf_add(sb, msg + start, ep - (msg + start));
+		strbuf_add(sb, s.date_begin, s.date_end - s.date_begin);
 		return placeholder_len;
 	}
 
 	/* parse tz */
-	for (start = ep - msg + 1; start < len && isspace(msg[start]); start++)
-		; /* do nothing */
-	if (start + 1 < len) {
-		tz = strtoul(msg + start + 1, NULL, 10);
-		if (msg[start] == '-')
-			tz = -tz;
-	}
+	tz = strtoul(s.tz_begin + 1, NULL, 10);
+	if (*s.tz_begin == '-')
+		tz = -tz;
 
 	switch (part) {
 	case 'd':	/* date */
@@ -621,8 +596,9 @@ static size_t format_person_part(struct strbuf *sb, char part,
 
 skip:
 	/*
-	 * bogus commit, 'sb' cannot be updated, but we still need to
-	 * compute a valid return value.
+	 * reading from either a bogus commit, or a reflog entry with
+	 * %gn, %ge, etc.; 'sb' cannot be updated, but we still need
+	 * to compute a valid return value.
 	 */
 	if (part == 'n' || part == 'e' || part == 't' || part == 'd'
 	    || part == 'D' || part == 'r' || part == 'i')
