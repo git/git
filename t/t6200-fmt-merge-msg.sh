@@ -35,18 +35,15 @@ test_expect_success setup '
 
 	echo "l3" >two &&
 	test_tick &&
-	GIT_COMMITTER_NAME="Another Committer" \
-	GIT_AUTHOR_NAME="Another Author" git commit -a -m "Left #3" &&
+	git commit -a -m "Left #3" &&
 
 	echo "l4" >two &&
 	test_tick &&
-	GIT_COMMITTER_NAME="Another Committer" \
-	GIT_AUTHOR_NAME="Another Author" git commit -a -m "Left #4" &&
+	git commit -a -m "Left #4" &&
 
 	echo "l5" >two &&
 	test_tick &&
-	GIT_COMMITTER_NAME="Another Committer" \
-	GIT_AUTHOR_NAME="Another Author" git commit -a -m "Left #5" &&
+	git commit -a -m "Left #5" &&
 	git tag tag-l5 &&
 
 	git checkout right &&
@@ -102,8 +99,6 @@ test_expect_success '[merge] summary/log configuration' '
 	cat >expected <<-EOF &&
 	Merge branch ${apos}left${apos}
 
-	By Another Author (3) and A U Thor (2)
-	via Another Committer
 	* left:
 	  Left #5
 	  Left #4
@@ -149,8 +144,6 @@ test_expect_success 'merge.log=3 limits shortlog length' '
 	cat >expected <<-EOF &&
 	Merge branch ${apos}left${apos}
 
-	By Another Author (3) and A U Thor (2)
-	via Another Committer
 	* left: (5 commits)
 	  Left #5
 	  Left #4
@@ -166,8 +159,6 @@ test_expect_success 'merge.log=5 shows all 5 commits' '
 	cat >expected <<-EOF &&
 	Merge branch ${apos}left${apos}
 
-	By Another Author (3) and A U Thor (2)
-	via Another Committer
 	* left:
 	  Left #5
 	  Left #4
@@ -190,8 +181,6 @@ test_expect_success '--log=3 limits shortlog length' '
 	cat >expected <<-EOF &&
 	Merge branch ${apos}left${apos}
 
-	By Another Author (3) and A U Thor (2)
-	via Another Committer
 	* left: (5 commits)
 	  Left #5
 	  Left #4
@@ -207,8 +196,6 @@ test_expect_success '--log=5 shows all 5 commits' '
 	cat >expected <<-EOF &&
 	Merge branch ${apos}left${apos}
 
-	By Another Author (3) and A U Thor (2)
-	via Another Committer
 	* left:
 	  Left #5
 	  Left #4
@@ -238,8 +225,6 @@ test_expect_success 'fmt-merge-msg -m' '
 	cat >expected.log <<-EOF &&
 	Sync with left
 
-	By Another Author (3) and A U Thor (2)
-	via Another Committer
 	* ${apos}left${apos} of $(pwd):
 	  Left #5
 	  Left #4
@@ -271,8 +256,6 @@ test_expect_success 'setup: expected shortlog for two branches' '
 	cat >expected <<-EOF
 	Merge branches ${apos}left${apos} and ${apos}right${apos}
 
-	By Another Author (3) and A U Thor (2)
-	via Another Committer
 	* left:
 	  Left #5
 	  Left #4
@@ -280,7 +263,6 @@ test_expect_success 'setup: expected shortlog for two branches' '
 	  Common #2
 	  Common #1
 
-	By A U Thor
 	* right:
 	  Right #5
 	  Right #4
@@ -371,7 +353,6 @@ test_expect_success 'merge-msg tag' '
 	cat >expected <<-EOF &&
 	Merge tag ${apos}tag-r3${apos}
 
-	By A U Thor
 	* tag ${apos}tag-r3${apos}:
 	  Right #3
 	  Common #2
@@ -393,14 +374,11 @@ test_expect_success 'merge-msg two tags' '
 	cat >expected <<-EOF &&
 	Merge tags ${apos}tag-r3${apos} and ${apos}tag-l5${apos}
 
-	By A U Thor
 	* tag ${apos}tag-r3${apos}:
 	  Right #3
 	  Common #2
 	  Common #1
 
-	By Another Author (3) and A U Thor (2)
-	via Another Committer
 	* tag ${apos}tag-l5${apos}:
 	  Left #5
 	  Left #4
@@ -424,14 +402,11 @@ test_expect_success 'merge-msg tag and branch' '
 	cat >expected <<-EOF &&
 	Merge branch ${apos}left${apos}, tag ${apos}tag-r3${apos}
 
-	By A U Thor
 	* tag ${apos}tag-r3${apos}:
 	  Right #3
 	  Common #2
 	  Common #1
 
-	By Another Author (3) and A U Thor (2)
-	via Another Committer
 	* left:
 	  Left #5
 	  Left #4
@@ -456,7 +431,6 @@ test_expect_success 'merge-msg lots of commits' '
 		cat <<-EOF &&
 		Merge branch ${apos}long${apos}
 
-		By A U Thor
 		* long: (35 commits)
 		EOF
 
