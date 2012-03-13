@@ -29,6 +29,18 @@ test_expect_success "-p $*" "
 "
 }
 
+check_numstat() {
+expect=$1; shift
+cat >expected <<EOF
+1	0	$expect
+EOF
+test_expect_success "--numstat $*" "
+	echo '1	0	$expect' >expected &&
+	git diff --numstat $* HEAD^ >actual &&
+	test_cmp expected actual
+"
+}
+
 check_stat() {
 expect=$1; shift
 cat >expected <<EOF
@@ -37,7 +49,7 @@ cat >expected <<EOF
 EOF
 test_expect_success "--stat $*" "
 	git diff --stat $* HEAD^ >actual &&
-	test_cmp expected actual
+	test_i18ncmp expected actual
 "
 }
 
@@ -52,7 +64,7 @@ test_expect_success "--raw $*" "
 "
 }
 
-for type in diff stat raw; do
+for type in diff numstat stat raw; do
 	check_$type file2 --relative=subdir/
 	check_$type file2 --relative=subdir
 	check_$type dir/file2 --relative=sub

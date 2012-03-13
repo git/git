@@ -252,50 +252,47 @@ EOF
 '
 
 cat <<EOF >expect_diff_stat
- changed/text             |    2 +-
- dst/copy/changed/text    |   10 ++++++++++
- dst/copy/rearranged/text |   10 ++++++++++
- dst/copy/unchanged/text  |   10 ++++++++++
- dst/move/changed/text    |   10 ++++++++++
- dst/move/rearranged/text |   10 ++++++++++
- dst/move/unchanged/text  |   10 ++++++++++
- rearranged/text          |    2 +-
- src/move/changed/text    |   10 ----------
- src/move/rearranged/text |   10 ----------
- src/move/unchanged/text  |   10 ----------
- 11 files changed, 62 insertions(+), 32 deletions(-)
+1	1	changed/text
+10	0	dst/copy/changed/text
+10	0	dst/copy/rearranged/text
+10	0	dst/copy/unchanged/text
+10	0	dst/move/changed/text
+10	0	dst/move/rearranged/text
+10	0	dst/move/unchanged/text
+1	1	rearranged/text
+0	10	src/move/changed/text
+0	10	src/move/rearranged/text
+0	10	src/move/unchanged/text
 EOF
 
 cat <<EOF >expect_diff_stat_M
- changed/text                      |    2 +-
- dst/copy/changed/text             |   10 ++++++++++
- dst/copy/rearranged/text          |   10 ++++++++++
- dst/copy/unchanged/text           |   10 ++++++++++
- {src => dst}/move/changed/text    |    2 +-
- {src => dst}/move/rearranged/text |    2 +-
- {src => dst}/move/unchanged/text  |    0
- rearranged/text                   |    2 +-
- 8 files changed, 34 insertions(+), 4 deletions(-)
+1	1	changed/text
+10	0	dst/copy/changed/text
+10	0	dst/copy/rearranged/text
+10	0	dst/copy/unchanged/text
+1	1	{src => dst}/move/changed/text
+1	1	{src => dst}/move/rearranged/text
+0	0	{src => dst}/move/unchanged/text
+1	1	rearranged/text
 EOF
 
 cat <<EOF >expect_diff_stat_CC
- changed/text                      |    2 +-
- {src => dst}/copy/changed/text    |    2 +-
- {src => dst}/copy/rearranged/text |    2 +-
- {src => dst}/copy/unchanged/text  |    0
- {src => dst}/move/changed/text    |    2 +-
- {src => dst}/move/rearranged/text |    2 +-
- {src => dst}/move/unchanged/text  |    0
- rearranged/text                   |    2 +-
- 8 files changed, 6 insertions(+), 6 deletions(-)
+1	1	changed/text
+1	1	{src => dst}/copy/changed/text
+1	1	{src => dst}/copy/rearranged/text
+0	0	{src => dst}/copy/unchanged/text
+1	1	{src => dst}/move/changed/text
+1	1	{src => dst}/move/rearranged/text
+0	0	{src => dst}/move/unchanged/text
+1	1	rearranged/text
 EOF
 
-test_expect_success 'sanity check setup (--stat)' '
-	git diff --stat HEAD^..HEAD >actual_diff_stat &&
+test_expect_success 'sanity check setup (--numstat)' '
+	git diff --numstat HEAD^..HEAD >actual_diff_stat &&
 	test_cmp expect_diff_stat actual_diff_stat &&
-	git diff --stat -M HEAD^..HEAD >actual_diff_stat_M &&
+	git diff --numstat -M HEAD^..HEAD >actual_diff_stat_M &&
 	test_cmp expect_diff_stat_M actual_diff_stat_M &&
-	git diff --stat -C -C HEAD^..HEAD >actual_diff_stat_CC &&
+	git diff --numstat -C -C HEAD^..HEAD >actual_diff_stat_CC &&
 	test_cmp expect_diff_stat_CC actual_diff_stat_CC
 '
 
