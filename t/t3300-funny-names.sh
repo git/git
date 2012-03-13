@@ -174,7 +174,7 @@ EOF
 test_expect_success TABS_IN_FILENAMES 'git diff-tree rename with-funny applied' \
 	'git diff-index -M -p $t0 |
 	 git apply --stat | sed -e "s/|.*//" -e "s/ *\$//" >current &&
-	 test_cmp expected current'
+	 test_i18ncmp expected current'
 
 test_expect_success TABS_IN_FILENAMES 'setup expect' '
 cat > expected <<\EOF
@@ -187,12 +187,12 @@ EOF
 test_expect_success TABS_IN_FILENAMES 'git diff-tree delete with-funny applied' \
 	'git diff-index -p $t0 |
 	 git apply --stat | sed -e "s/|.*//" -e "s/ *\$//" >current &&
-	 test_cmp expected current'
+	 test_i18ncmp expected current'
 
 test_expect_success TABS_IN_FILENAMES 'git apply non-git diff' \
 	'git diff-index -p $t0 |
 	 sed -ne "/^[-+@]/p" |
 	 git apply --stat | sed -e "s/|.*//" -e "s/ *\$//" >current &&
-	 test_cmp expected current'
+	 test_i18ncmp expected current'
 
 test_done

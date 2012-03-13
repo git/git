@@ -25,11 +25,11 @@ cat > expected <<\EOF
 EOF
 test_expect_success 'diff without --binary' \
 	'git diff | git apply --stat --summary >current &&
-	 test_cmp expected current'
+	 test_i18ncmp expected current'
 
 test_expect_success 'diff with --binary' \
 	'git diff --binary | git apply --stat --summary >current &&
-	 test_cmp expected current'
+	 test_i18ncmp expected current'
 
 # apply needs to be able to skip the binary material correctly
 # in order to report the line number of a corrupt patch.

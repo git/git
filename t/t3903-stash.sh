@@ -447,7 +447,7 @@ test_expect_success 'stash show - stashes on stack, stash-like argument' '
 	 1 file changed, 1 insertion(+)
 	EOF
 	git stash show ${STASH_ID} >actual &&
-	test_cmp expected actual
+	test_i18ncmp expected actual
 '
 
 test_expect_success 'stash show -p - stashes on stack, stash-like argument' '
@@ -485,7 +485,7 @@ test_expect_success 'stash show - no stashes on stack, stash-like argument' '
 	 1 file changed, 1 insertion(+)
 	EOF
 	git stash show ${STASH_ID} >actual &&
-	test_cmp expected actual
+	test_i18ncmp expected actual
 '
 
 test_expect_success 'stash show -p - no stashes on stack, stash-like argument' '

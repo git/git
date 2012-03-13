@@ -55,7 +55,7 @@ test_expect_success 'cherry-pick first..fourth works' '
 	git diff --quiet HEAD other &&
 
 	sed -e "s/$_x05[0-9a-f][0-9a-f]/OBJID/" <actual >actual.fuzzy &&
-	test_cmp expected actual.fuzzy &&
+	test_i18ncmp expected actual.fuzzy &&
 	check_head_differs_from fourth
 '
 
@@ -82,7 +82,7 @@ test_expect_success 'cherry-pick --strategy resolve first..fourth works' '
 	git diff --quiet other &&
 	git diff --quiet HEAD other &&
 	sed -e "s/$_x05[0-9a-f][0-9a-f]/OBJID/" <actual >actual.fuzzy &&
-	test_cmp expected actual.fuzzy &&
+	test_i18ncmp expected actual.fuzzy &&
 	check_head_differs_from fourth
 '
 

@@ -17,13 +17,13 @@ do
 	test_expect_success "$title" '
 		git apply --stat --summary \
 			<"$TEST_DIRECTORY/t4100/t-apply-$num.patch" >current &&
-		test_cmp "$TEST_DIRECTORY"/t4100/t-apply-$num.expect current
+		test_i18ncmp "$TEST_DIRECTORY"/t4100/t-apply-$num.expect current
 	'
 
 	test_expect_success "$title with recount" '
 		sed -e "$UNC" <"$TEST_DIRECTORY/t4100/t-apply-$num.patch" |
 		git apply --recount --stat --summary >current &&
-		test_cmp "$TEST_DIRECTORY"/t4100/t-apply-$num.expect current
+		test_i18ncmp "$TEST_DIRECTORY"/t4100/t-apply-$num.expect current
 	'
 done <<\EOF
 rename
