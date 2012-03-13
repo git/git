@@ -171,28 +171,35 @@ cat >expected <<\EOF
 EOF
 '
 
-test_expect_success TABS_IN_FILENAMES 'git diff-tree rename with-funny applied' \
+test_expect_success TABS_IN_FILENAMES 'diffstat for rename with funny chars' \
 	'git diff-index -M -p $t0 |
 	 git apply --stat | sed -e "s/|.*//" -e "s/ *\$//" >current &&
 	 test_i18ncmp expected current'
 
+test_expect_success TABS_IN_FILENAMES 'numstat for rename with funny chars' \
+	'cat >expected <<-\EOF &&
+	0	0	"tabs\t,\" (dq) and spaces"
+	EOF
+	 git diff-index -M -p $t0 >diff &&
+	 git apply --numstat <diff >current &&
+	 test_cmp expected current'
+
 test_expect_success TABS_IN_FILENAMES 'setup expect' '
 cat > expected <<\EOF
- no-funny
- "tabs\t,\" (dq) and spaces"
- 2 files changed, 3 insertions(+), 3 deletions(-)
+0	3	no-funny
+3	0	"tabs\t,\" (dq) and spaces"
 EOF
 '
 
-test_expect_success TABS_IN_FILENAMES 'git diff-tree delete with-funny applied' \
+test_expect_success TABS_IN_FILENAMES 'numstat without -M for funny rename' \
 	'git diff-index -p $t0 |
-	 git apply --stat | sed -e "s/|.*//" -e "s/ *\$//" >current &&
-	 test_i18ncmp expected current'
+	 git apply --numstat >current &&
+	 test_cmp expected current'
 
-test_expect_success TABS_IN_FILENAMES 'git apply non-git diff' \
+test_expect_success TABS_IN_FILENAMES 'numstat for non-git funny rename diff' \
 	'git diff-index -p $t0 |
 	 sed -ne "/^[-+@]/p" |
-	 git apply --stat | sed -e "s/|.*//" -e "s/ *\$//" >current &&
-	 test_i18ncmp expected current'
+	 git apply --numstat >current &&
+	 test_cmp expected current'
 
 test_done
