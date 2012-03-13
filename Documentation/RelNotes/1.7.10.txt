@@ -26,8 +26,8 @@ Compatibility Notes
    Git v1.7.8 or newer.
 
  * The "--binary/-b" options to "git am" have been a no-op for quite a
-   while and was deprecated in mid 2008 (v1.6.0).  When you give these
-   options to "git am", it will now fail with an error.
+   while and were deprecated in mid 2008 (v1.6.0).  When you give these
+   options to "git am", it will now warn and ask you not to use them.
 
 
 Updates since v1.7.9

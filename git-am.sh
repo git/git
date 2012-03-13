@@ -380,8 +380,8 @@ do
 	-i|--interactive)
 		interactive=t ;;
 	-b|--binary)
-		echo >&2 "The -b/--binary option was deprecated in 1.6.0 and removed in 1.7.10."
-		die "Please adjust your scripts."
+		echo >&2 "The $1 option has been a no-op for long time, and"
+		echo >&2 "it will be removed. Please do not use it anymore."
 		;;
 	-3|--3way)
 		threeway=t ;;
