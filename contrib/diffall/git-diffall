@@ -36,7 +36,9 @@ fi
 
 start_dir=$(pwd)
 
-# needed to access tar utility
+# All the file paths returned by the diff command are relative to the root
+# of the working copy. So if the script is called from a subdirectory, it
+# must switch to the root of working copy before trying to use those paths.
 cdup=$(git rev-parse --show-cdup) &&
 cd "$cdup" || {
 	echo >&2 "Cannot chdir to $cdup, the toplevel of the working tree"
