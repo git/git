@@ -45,13 +45,10 @@ cd "$cdup" || {
 	exit 1
 }
 
-# mktemp is not available on all platforms (missing from msysgit)
-# Use a hard-coded tmp dir if it is not available
-tmp="$(mktemp -d -t tmp.XXXXXX 2>/dev/null)" || {
-	tmp=/tmp/git-diffall-tmp.$$
-	mkdir "$tmp" || exit 1
-}
-
+# set up temp dir
+tmp=$(perl -e 'use File::Temp qw(tempdir);
+	$t=tempdir("/tmp/git-diffall.XXXXX") or exit(1);
+	print $t') || exit 1
 trap 'rm -rf "$tmp" 2>/dev/null' EXIT
 
 left=
