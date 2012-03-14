@@ -49,7 +49,7 @@ cd "$cdup" || {
 tmp=$(perl -e 'use File::Temp qw(tempdir);
 	$t=tempdir("/tmp/git-diffall.XXXXX") or exit(1);
 	print $t') || exit 1
-trap 'rm -rf "$tmp" 2>/dev/null' EXIT
+trap 'rm -rf "$tmp"' EXIT
 
 left=
 right=
@@ -233,9 +233,8 @@ do
 	fi
 done < "$tmp/filelist"
 
-cd "$tmp"
-LOCAL="$left_dir"
-REMOTE="$right_dir"
+LOCAL="$tmp/$left_dir"
+REMOTE="$tmp/$right_dir"
 
 if test -n "$diff_tool"
 then
