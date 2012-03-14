@@ -202,10 +202,14 @@ then
 		fi
 	done < "$tmp/filelist"
 else
-	# Mac users have gnutar rather than tar
-	(tar --ignore-failed-read -c -T "$tmp/filelist" | (cd "$tmp/$right_dir" && tar -x)) || {
-		gnutar --ignore-failed-read -c -T "$tmp/filelist" | (cd "$tmp/$right_dir" && gnutar -x)
-	}
+	while read name
+	do
+		if test -e "$name"
+		then
+			mkdir -p "$tmp/$right_dir/$(dirname "$name")"
+			cp "$name" "$tmp/$right_dir/$name"
+		fi
+	done < "$tmp/filelist"
 fi
 
 # Populate the tmp/left_dir directory with the files to be compared
