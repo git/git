@@ -119,8 +119,8 @@ UI, Workflows & Features
  * Project search in "gitweb" shows the substring that matched in the
    project name and description highlighted.
 
- * A new script "diffall" is added to contrib/; it drives an external
-   an external tool to perform a directory diff of two Git revisions
+ * A new script "diffall" is added to contrib/; it drives an
+   external tool to perform a directory diff of two Git revisions
    in one go, unlike "difftool" that compares one file at a time.
 
 Foreign Interface
@@ -180,9 +180,17 @@ Unless otherwise noted, all the fixes since v1.7.9 in the maintenance
 releases are contained in this release (see release notes to them for
 details).
 
+ * The "remaining" subcommand to "git rerere" was not documented.
+   (merge 3e7a1df ph/rerere-doc later to maint).
+
  * "git tag -s" honored "gpg.program" configuration variable since
    1.7.9, but "git tag -v" and "git verify-tag" didn't.
    (merge a2c2506 az/verify-tag-use-gpg-config later to maint).
+
+ * When "git config" diagnoses an error in a configuration file and
+   shows the line number for the offending line, it miscounted if the
+   error was at the end of line.
+   (merge 4b34059 ms/maint-config-error-at-eol-linecount later to maint).
 
  * "gitweb" used to drop warnings in the log file when "heads" view is
    accessed in a repository whose HEAD does not point at a valid
@@ -190,7 +198,7 @@ details).
 
 ---
 exec >/var/tmp/1
-O=v1.7.10-rc0-40-g57cec0a
+O=v1.7.10-rc0-50-gd973dc0
 echo O=$(git describe)
 git log --first-parent --oneline ^maint $O..
 echo
