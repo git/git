@@ -1008,11 +1008,13 @@ static const char *userdiff_word_regex(struct diff_filespec *one)
 }
 
 static void init_diff_words_data(struct emit_callback *ecbdata,
-				 struct diff_options *o,
+				 struct diff_options *orig_opts,
 				 struct diff_filespec *one,
 				 struct diff_filespec *two)
 {
 	int i;
+	struct diff_options *o = xmalloc(sizeof(struct diff_options));
+	memcpy(o, orig_opts, sizeof(struct diff_options));
 
 	ecbdata->diff_words =
 		xcalloc(1, sizeof(struct diff_words_data));
@@ -1052,6 +1054,7 @@ static void free_diff_words_data(struct emit_callback *ecbdata)
 {
 	if (ecbdata->diff_words) {
 		diff_words_flush(ecbdata);
+		free (ecbdata->diff_words->opt);
 		free (ecbdata->diff_words->minus.text.ptr);
 		free (ecbdata->diff_words->minus.orig);
 		free (ecbdata->diff_words->plus.text.ptr);

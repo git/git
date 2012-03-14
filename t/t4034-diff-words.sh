@@ -365,7 +365,7 @@ test_expect_success 'setup history with two files' '
 	git commit -mmodified -a
 '
 
-test_expect_failure 'wordRegex for the first file does not apply to the second' '
+test_expect_success 'wordRegex for the first file does not apply to the second' '
 	echo "*.tex diff=tex" >.gitattributes &&
 	git config diff.tex.wordRegex "[a-z]+|." &&
 	cat >expect <<-\EOF &&
