@@ -179,38 +179,32 @@ fi
 mkdir -p "$tmp/$left_dir" "$tmp/$right_dir"
 
 # Populate the tmp/right_dir directory with the files to be compared
-if test -n "$right"
-then
-	while read name
-	do
+while read name
+do
+	if test -n "$right"
+	then
 		ls_list=$(git ls-tree $right "$name")
 		if test -n "$ls_list"
 		then
 			mkdir -p "$tmp/$right_dir/$(dirname "$name")"
 			git show "$right":"$name" >"$tmp/$right_dir/$name" || true
 		fi
-	done < "$tmp/filelist"
-elif test -n "$compare_staged"
-then
-	while read name
-	do
+	elif test -n "$compare_staged"
+	then
 		ls_list=$(git ls-files -- "$name")
 		if test -n "$ls_list"
 		then
 			mkdir -p "$tmp/$right_dir/$(dirname "$name")"
 			git show :"$name" >"$tmp/$right_dir/$name"
 		fi
-	done < "$tmp/filelist"
-else
-	while read name
-	do
+	else
 		if test -e "$name"
 		then
 			mkdir -p "$tmp/$right_dir/$(dirname "$name")"
 			cp "$name" "$tmp/$right_dir/$name"
 		fi
-	done < "$tmp/filelist"
-fi
+	fi
+done < "$tmp/filelist"
 
 # Populate the tmp/left_dir directory with the files to be compared
 while read name
