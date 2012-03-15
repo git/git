@@ -72,7 +72,8 @@ static void warn_if_raster_font(void)
 			L"doesn\'t support Unicode. If you experience strange "
 			L"characters in the output, consider switching to a "
 			L"TrueType font such as Lucida Console!\n";
-		WriteConsoleW(console, msg, wcslen(msg), NULL, NULL);
+		DWORD dummy;
+		WriteConsoleW(console, msg, wcslen(msg), &dummy, NULL);
 	}
 }
 
@@ -114,12 +115,13 @@ static void write_console(unsigned char *str, size_t len)
 {
 	/* only called from console_thread, so a static buffer will do */
 	static wchar_t wbuf[2 * BUFFER_SIZE + 1];
+	DWORD dummy;
 
 	/* convert utf-8 to utf-16 */
 	int wlen = xutftowcsn(wbuf, (char*) str, ARRAY_SIZE(wbuf), len);
 
 	/* write directly to console */
-	WriteConsoleW(console, wbuf, wlen, NULL, NULL);
+	WriteConsoleW(console, wbuf, wlen, &dummy, NULL);
 
 	/* remember if non-ascii characters are printed */
 	if (wlen != len)
