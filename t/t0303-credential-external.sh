@@ -1,6 +1,34 @@
 #!/bin/sh
 
-test_description='external credential helper tests'
+test_description='external credential helper tests
+
+This is a tool for authors of external helper tools to sanity-check
+their helpers. If you have written the "git-credential-foo" helper,
+you check it with:
+
+  make GIT_TEST_CREDENTIAL_HELPER=foo t0303-credential-external.sh
+
+This assumes that your helper is capable of both storing and
+retrieving credentials (some helpers may be read-only, and they will
+fail these tests).
+
+Please note that the individual tests do not verify all of the
+preconditions themselves, but rather build on each other. A failing
+test means that tests later in the sequence can return false "OK"
+results.
+
+If your helper supports time-based expiration with a configurable
+timeout, you can test that feature with:
+
+  make GIT_TEST_CREDENTIAL_HELPER=foo \
+       GIT_TEST_CREDENTIAL_HELPER_TIMEOUT="foo --timeout=1" \
+       t0303-credential-external.sh
+
+If your helper requires additional setup before the tests are started,
+you can set GIT_TEST_CREDENTIAL_HELPER_SETUP to a sequence of shell
+commands.
+'
+
 . ./test-lib.sh
 . "$TEST_DIRECTORY"/lib-credential.sh
 
