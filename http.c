@@ -42,6 +42,7 @@ static long curl_low_speed_time = -1;
 static int curl_ftp_no_epsv;
 static const char *curl_http_proxy;
 static const char *curl_cookie_file;
+static struct credential cre_url = CREDENTIAL_INIT;
 static struct credential http_auth = CREDENTIAL_INIT;
 static int http_proactive_auth;
 static const char *user_agent;
@@ -232,7 +233,7 @@ static int has_cert_password(void)
 	return 1;
 }
 
-static CURL *get_curl_handle(void)
+static CURL *get_curl_handle(const char *url)
 {
 	CURL *result = curl_easy_init();
 
@@ -295,6 +296,28 @@ static CURL *get_curl_handle(void)
 	if (curl_ftp_no_epsv)
 		curl_easy_setopt(result, CURLOPT_FTP_USE_EPSV, 0);
 
+	if (!curl_http_proxy) {
+		const char *env_proxy, *no_proxy;
+		char *env_proxy_var;
+		int read_http_proxy;
+		struct strbuf buf = STRBUF_INIT;
+		credential_from_url(&cre_url, url);
+		strbuf_addf(&buf, "%s_proxy", cre_url.protocol);
+		env_proxy_var = strbuf_detach(&buf, NULL);
+		env_proxy = getenv(env_proxy_var);
+		if (env_proxy) {
+			read_http_proxy = 1;
+			no_proxy = getenv("no_proxy");
+			if (!no_proxy)
+				no_proxy = getenv("NO_PROXY");
+			if (no_proxy && (!strcmp("*", no_proxy) || strstr(no_proxy, cre_url.host)))
+				read_http_proxy = 0;
+
+			if (read_http_proxy)
+				curl_http_proxy = xstrdup(env_proxy);
+		}
+		free(env_proxy_var);
+	}
 	if (curl_http_proxy) {
 		curl_easy_setopt(result, CURLOPT_PROXY, curl_http_proxy);
 		curl_easy_setopt(result, CURLOPT_PROXYAUTH, CURLAUTH_ANY);
@@ -385,7 +408,7 @@ void http_init(struct remote *remote, const char *url, int proactive_auth)
 	}
 
 #ifndef NO_CURL_EASY_DUPHANDLE
-	curl_default = get_curl_handle();
+	curl_default = get_curl_handle(url);
 #endif
 }
 
@@ -434,7 +457,7 @@ void http_cleanup(void)
 	ssl_cert_password_required = 0;
 }
 
-struct active_request_slot *get_active_slot(void)
+struct active_request_slot *get_active_slot(const char *url)
 {
 	struct active_request_slot *slot = active_queue_head;
 	struct active_request_slot *newslot;
@@ -472,7 +495,7 @@ struct active_request_slot *get_active_slot(void)
 
 	if (slot->curl == NULL) {
 #ifdef NO_CURL_EASY_DUPHANDLE
-		slot->curl = get_curl_handle();
+		slot->curl = get_curl_handle(url);
 #else
 		slot->curl = curl_easy_duphandle(curl_default);
 #endif
@@ -745,7 +768,7 @@ static int http_request(const char *url, void *result, int target, int options)
 	struct strbuf buf = STRBUF_INIT;
 	int ret;
 
-	slot = get_active_slot();
+	slot = get_active_slot(url);
 	slot->results = &results;
 	curl_easy_setopt(slot->curl, CURLOPT_HTTPGET, 1);
 
@@ -1090,7 +1113,7 @@ struct http_pack_request *new_http_pack_request(
 		goto abort;
 	}
 
-	preq->slot = get_active_slot();
+	preq->slot = get_active_slot(preq->url);
 	curl_easy_setopt(preq->slot->curl, CURLOPT_FILE, preq->packfile);
 	curl_easy_setopt(preq->slot->curl, CURLOPT_WRITEFUNCTION, fwrite);
 	curl_easy_setopt(preq->slot->curl, CURLOPT_URL, preq->url);
@@ -1250,7 +1273,7 @@ struct http_object_request *new_http_object_request(const char *base_url,
 		}
 	}
 
-	freq->slot = get_active_slot();
+	freq->slot = get_active_slot(freq->url);
 
 	curl_easy_setopt(freq->slot->curl, CURLOPT_FILE, freq);
 	curl_easy_setopt(freq->slot->curl, CURLOPT_WRITEFUNCTION, fwrite_sha1_file);

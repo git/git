@@ -383,7 +383,7 @@ static int probe_rpc(struct rpc_state *rpc)
 	struct strbuf buf = STRBUF_INIT;
 	int err;
 
-	slot = get_active_slot();
+	slot = get_active_slot(rpc->service_url);
 
 	headers = curl_slist_append(headers, rpc->hdr_content_type);
 	headers = curl_slist_append(headers, rpc->hdr_accept);
@@ -440,7 +440,7 @@ static int post_rpc(struct rpc_state *rpc)
 			return err;
 	}
 
-	slot = get_active_slot();
+	slot = get_active_slot(rpc->service_url);
 
 	curl_easy_setopt(slot->curl, CURLOPT_NOBODY, 0);
 	curl_easy_setopt(slot->curl, CURLOPT_POST, 1);
