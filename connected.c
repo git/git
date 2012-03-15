@@ -6,18 +6,18 @@
 /*
  * If we feed all the commits we want to verify to this command
  *
- *  $ git rev-list --verify-objects --stdin --not --all
+ *  $ git rev-list --objects --stdin --not --all
  *
  * and if it does not error out, that means everything reachable from
- * these commits locally exists and is connected to some of our
- * existing refs.
+ * these commits locally exists and is connected to our existing refs.
+ * Note that this does _not_ validate the individual objects.
  *
  * Returns 0 if everything is connected, non-zero otherwise.
  */
 int check_everything_connected(sha1_iterate_fn fn, int quiet, void *cb_data)
 {
 	struct child_process rev_list;
-	const char *argv[] = {"rev-list", "--verify-objects",
+	const char *argv[] = {"rev-list", "--objects",
 			      "--stdin", "--not", "--all", NULL, NULL};
 	char commit[41];
 	unsigned char sha1[20];
