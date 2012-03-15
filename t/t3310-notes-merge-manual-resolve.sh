@@ -324,7 +324,7 @@ y and z notes on 4th commit
 EOF
 	git notes merge --commit &&
 	# No .git/NOTES_MERGE_* files left
-	test_must_fail ls .git/NOTES_MERGE_* >output 2>/dev/null &&
+	test_might_fail ls .git/NOTES_MERGE_* >output 2>/dev/null &&
 	test_cmp /dev/null output &&
 	# Merge commit has pre-merge y and pre-merge z as parents
 	test "$(git rev-parse refs/notes/m^1)" = "$(cat pre_merge_y)" &&
@@ -386,7 +386,7 @@ test_expect_success 'redo merge of z into m (== y) with default ("manual") resol
 test_expect_success 'abort notes merge' '
 	git notes merge --abort &&
 	# No .git/NOTES_MERGE_* files left
-	test_must_fail ls .git/NOTES_MERGE_* >output 2>/dev/null &&
+	test_might_fail ls .git/NOTES_MERGE_* >output 2>/dev/null &&
 	test_cmp /dev/null output &&
 	# m has not moved (still == y)
 	test "$(git rev-parse refs/notes/m)" = "$(cat pre_merge_y)" &&
@@ -453,7 +453,7 @@ EOF
 	# Finalize merge
 	git notes merge --commit &&
 	# No .git/NOTES_MERGE_* files left
-	test_must_fail ls .git/NOTES_MERGE_* >output 2>/dev/null &&
+	test_might_fail ls .git/NOTES_MERGE_* >output 2>/dev/null &&
 	test_cmp /dev/null output &&
 	# Merge commit has pre-merge y and pre-merge z as parents
 	test "$(git rev-parse refs/notes/m^1)" = "$(cat pre_merge_y)" &&
@@ -542,7 +542,7 @@ EOF
 test_expect_success 'resolve situation by aborting the notes merge' '
 	git notes merge --abort &&
 	# No .git/NOTES_MERGE_* files left
-	test_must_fail ls .git/NOTES_MERGE_* >output 2>/dev/null &&
+	test_might_fail ls .git/NOTES_MERGE_* >output 2>/dev/null &&
 	test_cmp /dev/null output &&
 	# m has not moved (still == w)
 	test "$(git rev-parse refs/notes/m)" = "$(git rev-parse refs/notes/w)" &&

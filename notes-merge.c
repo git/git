@@ -267,7 +267,8 @@ static void check_notes_merge_worktree(struct notes_merge_options *o)
 		 * Must establish NOTES_MERGE_WORKTREE.
 		 * Abort if NOTES_MERGE_WORKTREE already exists
 		 */
-		if (file_exists(git_path(NOTES_MERGE_WORKTREE))) {
+		if (file_exists(git_path(NOTES_MERGE_WORKTREE)) &&
+		    !is_empty_dir(git_path(NOTES_MERGE_WORKTREE))) {
 			if (advice_resolve_conflict)
 				die("You have not concluded your previous "
 				    "notes merge (%s exists).\nPlease, use "
@@ -756,14 +757,18 @@ int notes_merge_commit(struct notes_merge_options *o,
 
 int notes_merge_abort(struct notes_merge_options *o)
 {
-	/* Remove .git/NOTES_MERGE_WORKTREE directory and all files within */
+	/*
+	 * Remove all files within .git/NOTES_MERGE_WORKTREE. We do not remove
+	 * the .git/NOTES_MERGE_WORKTREE directory itself, since it might be
+	 * the current working directory of the user.
+	 */
 	struct strbuf buf = STRBUF_INIT;
 	int ret;
 
 	strbuf_addstr(&buf, git_path(NOTES_MERGE_WORKTREE));
 	if (o->verbosity >= 3)
-		printf("Removing notes merge worktree at %s\n", buf.buf);
-	ret = remove_dir_recursively(&buf, 0);
+		printf("Removing notes merge worktree at %s/*\n", buf.buf);
+	ret = remove_dir_recursively(&buf, REMOVE_DIR_KEEP_TOPLEVEL);
 	strbuf_release(&buf);
 	return ret;
 }
