@@ -1,6 +1,7 @@
 #include "../git-compat-util.h"
 #include "win32.h"
 #include <conio.h>
+#include <wchar.h>
 #include "../strbuf.h"
 #include "../run-command.h"
 #include "../cache.h"
@@ -200,14 +201,16 @@ static int ask_yes_no_if_possible(const char *format, ...)
 	}
 }
 
-#undef unlink
 int mingw_unlink(const char *pathname)
 {
 	int ret, tries = 0;
+	wchar_t wpathname[MAX_PATH];
+	if (xutftowcs_path(wpathname, pathname) < 0)
+		return -1;
 
 	/* read-only files cannot be removed */
-	chmod(pathname, 0666);
-	while ((ret = unlink(pathname)) == -1 && tries < ARRAY_SIZE(delay)) {
+	_wchmod(wpathname, 0666);
+	while ((ret = _wunlink(wpathname)) == -1 && tries < ARRAY_SIZE(delay)) {
 		if (!is_file_in_use_error(GetLastError()))
 			break;
 		/*
@@ -223,43 +226,40 @@ int mingw_unlink(const char *pathname)
 	while (ret == -1 && is_file_in_use_error(GetLastError()) &&
 	       ask_yes_no_if_possible("Unlink of file '%s' failed. "
 			"Should I try again?", pathname))
-	       ret = unlink(pathname);
+	       ret = _wunlink(wpathname);
 	return ret;
 }
 
-static int is_dir_empty(const char *path)
+static int is_dir_empty(const wchar_t *wpath)
 {
-	struct strbuf buf = STRBUF_INIT;
-	WIN32_FIND_DATAA findbuf;
+	WIN32_FIND_DATAW findbuf;
 	HANDLE handle;
-
-	strbuf_addf(&buf, "%s\\*", path);
-	handle = FindFirstFileA(buf.buf, &findbuf);
-	if (handle == INVALID_HANDLE_VALUE) {
-		strbuf_release(&buf);
+	wchar_t wbuf[MAX_PATH + 2];
+	wcscpy(wbuf, wpath);
+	wcscat(wbuf, L"\\*");
+	handle = FindFirstFileW(wbuf, &findbuf);
+	if (handle == INVALID_HANDLE_VALUE)
 		return GetLastError() == ERROR_NO_MORE_FILES;
-	}
 
-	while (!strcmp(findbuf.cFileName, ".") ||
-			!strcmp(findbuf.cFileName, ".."))
-		if (!FindNextFile(handle, &findbuf)) {
-			strbuf_release(&buf);
+	while (!wcscmp(findbuf.cFileName, L".") ||
+			!wcscmp(findbuf.cFileName, L".."))
+		if (!FindNextFileW(handle, &findbuf))
 			return GetLastError() == ERROR_NO_MORE_FILES;
-		}
 	FindClose(handle);
-	strbuf_release(&buf);
 	return 0;
 }
 
-#undef rmdir
 int mingw_rmdir(const char *pathname)
 {
 	int ret, tries = 0;
+	wchar_t wpathname[MAX_PATH];
+	if (xutftowcs_path(wpathname, pathname) < 0)
+		return -1;
 
-	while ((ret = rmdir(pathname)) == -1 && tries < ARRAY_SIZE(delay)) {
+	while ((ret = _wrmdir(wpathname)) == -1 && tries < ARRAY_SIZE(delay)) {
 		if (!is_file_in_use_error(GetLastError()))
 			break;
-		if (!is_dir_empty(pathname)) {
+		if (!is_dir_empty(wpathname)) {
 			errno = ENOTEMPTY;
 			break;
 		}
@@ -276,14 +276,14 @@ int mingw_rmdir(const char *pathname)
 	while (ret == -1 && is_file_in_use_error(GetLastError()) &&
 	       ask_yes_no_if_possible("Deletion of directory '%s' failed. "
 			"Should I try again?", pathname))
-	       ret = rmdir(pathname);
+	       ret = _wrmdir(wpathname);
 	return ret;
 }
 
-static int make_hidden(const char *path)
+static int make_hidden(const wchar_t *path)
 {
-	DWORD attribs = GetFileAttributes(path);
-	if (SetFileAttributes(path, FILE_ATTRIBUTE_HIDDEN | attribs))
+	DWORD attribs = GetFileAttributesW(path);
+	if (SetFileAttributesW(path, FILE_ATTRIBUTE_HIDDEN | attribs))
 		return 0;
 	errno = err_win_to_posix(GetLastError());
 	return -1;
@@ -291,19 +291,23 @@ static int make_hidden(const char *path)
 
 void mingw_mark_as_git_dir(const char *dir)
 {
-	if (hide_dotfiles != HIDE_DOTFILES_FALSE && !is_bare_repository() &&
-	    make_hidden(dir))
-		warning("Failed to make '%s' hidden", dir);
+	wchar_t wdir[MAX_PATH];
+	if (hide_dotfiles != HIDE_DOTFILES_FALSE && !is_bare_repository())
+		if (xutftowcs_path(wdir, dir) < 0 || make_hidden(wdir))
+			warning("Failed to make '%s' hidden", dir);
 	git_config_set("core.hideDotFiles",
 		hide_dotfiles == HIDE_DOTFILES_FALSE ? "false" :
 		(hide_dotfiles == HIDE_DOTFILES_DOTGITONLY ?
 		 "dotGitOnly" : "true"));
 }
 
-#undef mkdir
 int mingw_mkdir(const char *path, int mode)
 {
-	int ret = mkdir(path);
+	int ret;
+	wchar_t wpath[MAX_PATH];
+	if (xutftowcs_path(wpath, path) < 0)
+		return -1;
+	ret = _wmkdir(wpath);
 	if (!ret && hide_dotfiles == HIDE_DOTFILES_TRUE) {
 		/*
 		 * In Windows a file or dir starting with a dot is not
@@ -312,17 +316,17 @@ int mingw_mkdir(const char *path, int mode)
 		 */
 		const char *start = basename((char*)path);
 		if (*start == '.')
-			return make_hidden(path);
+			return make_hidden(wpath);
 	}
 	return ret;
 }
 
-#undef open
 int mingw_open (const char *filename, int oflags, ...)
 {
 	va_list args;
 	unsigned mode;
 	int fd;
+	wchar_t wfilename[MAX_PATH];
 
 	va_start(args, oflags);
 	mode = va_arg(args, int);
@@ -331,10 +335,12 @@ int mingw_open (const char *filename, int oflags, ...)
 	if (filename && !strcmp(filename, "/dev/null"))
 		filename = "nul";
 
-	fd = open(filename, oflags, mode);
+	if (xutftowcs_path(wfilename, filename) < 0)
+		return -1;
+	fd = _wopen(wfilename, oflags, mode);
 
 	if (fd < 0 && (oflags & O_CREAT) && errno == EACCES) {
-		DWORD attrs = GetFileAttributes(filename);
+		DWORD attrs = GetFileAttributesW(wfilename);
 		if (attrs != INVALID_FILE_ATTRIBUTES && (attrs & FILE_ATTRIBUTE_DIRECTORY))
 			errno = EISDIR;
 	}
@@ -346,7 +352,7 @@ int mingw_open (const char *filename, int oflags, ...)
 		 * such a file is created.
 		 */
 		const char *start = basename((char*)filename);
-		if (*start == '.' && make_hidden(filename))
+		if (*start == '.' && make_hidden(wfilename))
 			warning("Could not mark '%s' as hidden.", filename);
 	}
 	return fd;
@@ -369,36 +375,67 @@ ssize_t mingw_write(int fd, const void *buf, size_t count)
 	return write(fd, buf, min(count, 31 * 1024 * 1024));
 }
 
-#undef fopen
 FILE *mingw_fopen (const char *filename, const char *otype)
 {
 	int hide = 0;
 	FILE *file;
+	wchar_t wfilename[MAX_PATH], wotype[4];
 	if (hide_dotfiles == HIDE_DOTFILES_TRUE &&
 	    basename((char*)filename)[0] == '.')
 		hide = access(filename, F_OK);
 	if (filename && !strcmp(filename, "/dev/null"))
 		filename = "nul";
-	file = fopen(filename, otype);
-	if (file && hide && make_hidden(filename))
+	if (xutftowcs_path(wfilename, filename) < 0 ||
+		xutftowcs(wotype, otype, ARRAY_SIZE(wotype)) < 0)
+		return NULL;
+	file = _wfopen(wfilename, wotype);
+	if (file && hide && make_hidden(wfilename))
 		warning("Could not mark '%s' as hidden.", filename);
 	return file;
 }
 
-#undef freopen
 FILE *mingw_freopen (const char *filename, const char *otype, FILE *stream)
 {
 	int hide = 0;
 	FILE *file;
+	wchar_t wfilename[MAX_PATH], wotype[4];
 	if (hide_dotfiles == HIDE_DOTFILES_TRUE &&
 	    basename((char*)filename)[0] == '.')
 		hide = access(filename, F_OK);
 	if (filename && !strcmp(filename, "/dev/null"))
 		filename = "nul";
-	file = freopen(filename, otype, stream);
-	if (file && hide && make_hidden(filename))
+	if (xutftowcs_path(wfilename, filename) < 0 ||
+		xutftowcs(wotype, otype, ARRAY_SIZE(wotype)) < 0)
+		return NULL;
+	file = _wfreopen(wfilename, wotype, stream);
+	if (file && hide && make_hidden(wfilename))
 		warning("Could not mark '%s' as hidden.", filename);
 	return file;
+}
+
+int mingw_access(const char *filename, int mode)
+{
+	wchar_t wfilename[MAX_PATH];
+	if (xutftowcs_path(wfilename, filename) < 0)
+		return -1;
+	/* X_OK is not supported by the MSVCRT version */
+	return _waccess(wfilename, mode & ~X_OK);
+}
+
+int mingw_chdir(const char *dirname)
+{
+	wchar_t wdirname[MAX_PATH];
+	if (xutftowcs_path(wdirname, dirname) < 0)
+		return -1;
+	return _wchdir(wdirname);
+}
+
+int mingw_chmod(const char *filename, int mode)
+{
+	wchar_t wfilename[MAX_PATH];
+	if (xutftowcs_path(wfilename, filename) < 0)
+		return -1;
+	return _wchmod(wfilename, mode);
 }
 
 /*
@@ -426,10 +463,12 @@ static inline time_t filetime_to_time_t(const FILETIME *ft)
  */
 static int do_lstat(int follow, const char *file_name, struct stat *buf)
 {
-	int err;
 	WIN32_FILE_ATTRIBUTE_DATA fdata;
+	wchar_t wfilename[MAX_PATH];
+	if (xutftowcs_path(wfilename, file_name) < 0)
+		return -1;
 
-	if (!(err = get_file_attr(file_name, &fdata))) {
+	if (GetFileAttributesExW(wfilename, GetFileExInfoStandard, &fdata)) {
 		buf->st_ino = 0;
 		buf->st_gid = 0;
 		buf->st_uid = 0;
@@ -442,8 +481,8 @@ static int do_lstat(int follow, const char *file_name, struct stat *buf)
 		buf->st_mtime = filetime_to_time_t(&(fdata.ftLastWriteTime));
 		buf->st_ctime = filetime_to_time_t(&(fdata.ftCreationTime));
 		if (fdata.dwFileAttributes & FILE_ATTRIBUTE_REPARSE_POINT) {
-			WIN32_FIND_DATAA findbuf;
-			HANDLE handle = FindFirstFileA(file_name, &findbuf);
+			WIN32_FIND_DATAW findbuf;
+			HANDLE handle = FindFirstFileW(wfilename, &findbuf);
 			if (handle != INVALID_HANDLE_VALUE) {
 				if ((findbuf.dwFileAttributes & FILE_ATTRIBUTE_REPARSE_POINT) &&
 						(findbuf.dwReserved0 == IO_REPARSE_TAG_SYMLINK)) {
@@ -462,7 +501,23 @@ static int do_lstat(int follow, const char *file_name, struct stat *buf)
 		}
 		return 0;
 	}
-	errno = err;
+	switch (GetLastError()) {
+	case ERROR_ACCESS_DENIED:
+	case ERROR_SHARING_VIOLATION:
+	case ERROR_LOCK_VIOLATION:
+	case ERROR_SHARING_BUFFER_EXCEEDED:
+		errno = EACCES;
+		break;
+	case ERROR_BUFFER_OVERFLOW:
+		errno = ENAMETOOLONG;
+		break;
+	case ERROR_NOT_ENOUGH_MEMORY:
+		errno = ENOMEM;
+		break;
+	default:
+		errno = ENOENT;
+		break;
+	}
 	return -1;
 }
 
@@ -551,16 +606,20 @@ int mingw_utime (const char *file_name, const struct utimbuf *times)
 {
 	FILETIME mft, aft;
 	int fh, rc;
+	DWORD attrs;
+	wchar_t wfilename[MAX_PATH];
+	if (xutftowcs_path(wfilename, file_name) < 0)
+		return -1;
 
 	/* must have write permission */
-	DWORD attrs = GetFileAttributes(file_name);
+	attrs = GetFileAttributesW(wfilename);
 	if (attrs != INVALID_FILE_ATTRIBUTES &&
 	    (attrs & FILE_ATTRIBUTE_READONLY)) {
 		/* ignore errors here; open() will report them */
-		SetFileAttributes(file_name, attrs & ~FILE_ATTRIBUTE_READONLY);
+		SetFileAttributesW(wfilename, attrs & ~FILE_ATTRIBUTE_READONLY);
 	}
 
-	if ((fh = open(file_name, O_RDWR | O_BINARY)) < 0) {
+	if ((fh = _wopen(wfilename, O_RDWR | O_BINARY)) < 0) {
 		rc = -1;
 		goto revert_attrs;
 	}
@@ -583,7 +642,7 @@ revert_attrs:
 	if (attrs != INVALID_FILE_ATTRIBUTES &&
 	    (attrs & FILE_ATTRIBUTE_READONLY)) {
 		/* ignore errors again */
-		SetFileAttributes(file_name, attrs);
+		SetFileAttributesW(wfilename, attrs);
 	}
 	return rc;
 }
@@ -592,6 +651,18 @@ unsigned int sleep (unsigned int seconds)
 {
 	Sleep(seconds*1000);
 	return 0;
+}
+
+char *mingw_mktemp(char *template)
+{
+	wchar_t wtemplate[MAX_PATH];
+	if (xutftowcs_path(wtemplate, template) < 0)
+		return NULL;
+	if (!_wmktemp(wtemplate))
+		return NULL;
+	if (xwcstoutf(template, wtemplate, strlen(template) + 1) < 0)
+		return NULL;
+	return template;
 }
 
 int mkstemp(char *template)
@@ -652,17 +723,18 @@ struct tm *localtime_r(const time_t *timep, struct tm *result)
 	return result;
 }
 
-#undef getcwd
 char *mingw_getcwd(char *pointer, int len)
 {
 	int i;
-	char *ret = getcwd(pointer, len);
-	if (!ret)
-		return ret;
+	wchar_t wpointer[MAX_PATH];
+	if (!_wgetcwd(wpointer, ARRAY_SIZE(wpointer)))
+		return NULL;
+	if (xwcstoutf(pointer, wpointer, len) < 0)
+		return NULL;
 	for (i = 0; pointer[i]; i++)
 		if (pointer[i] == '\\')
 			pointer[i] = '/';
-	return ret;
+	return pointer;
 }
 
 #undef getenv
@@ -1495,33 +1567,36 @@ int mingw_rename(const char *pold, const char *pnew)
 {
 	DWORD attrs, gle;
 	int tries = 0;
+	wchar_t wpold[MAX_PATH], wpnew[MAX_PATH];
+	if (xutftowcs_path(wpold, pold) < 0 || xutftowcs_path(wpnew, pnew) < 0)
+		return -1;
 
 	/*
 	 * Try native rename() first to get errno right.
 	 * It is based on MoveFile(), which cannot overwrite existing files.
 	 */
-	if (!rename(pold, pnew))
+	if (!_wrename(wpold, wpnew))
 		return 0;
 	if (errno != EEXIST)
 		return -1;
 repeat:
-	if (MoveFileEx(pold, pnew, MOVEFILE_REPLACE_EXISTING))
+	if (MoveFileExW(wpold, wpnew, MOVEFILE_REPLACE_EXISTING))
 		return 0;
 	/* TODO: translate more errors */
 	gle = GetLastError();
 	if (gle == ERROR_ACCESS_DENIED &&
-	    (attrs = GetFileAttributes(pnew)) != INVALID_FILE_ATTRIBUTES) {
+	    (attrs = GetFileAttributesW(wpnew)) != INVALID_FILE_ATTRIBUTES) {
 		if (attrs & FILE_ATTRIBUTE_DIRECTORY) {
 			errno = EISDIR;
 			return -1;
 		}
 		if ((attrs & FILE_ATTRIBUTE_READONLY) &&
-		    SetFileAttributes(pnew, attrs & ~FILE_ATTRIBUTE_READONLY)) {
-			if (MoveFileEx(pold, pnew, MOVEFILE_REPLACE_EXISTING))
+		    SetFileAttributesW(wpnew, attrs & ~FILE_ATTRIBUTE_READONLY)) {
+			if (MoveFileExW(wpold, wpnew, MOVEFILE_REPLACE_EXISTING))
 				return 0;
 			gle = GetLastError();
 			/* revert file attributes on failure */
-			SetFileAttributes(pnew, attrs);
+			SetFileAttributesW(wpnew, attrs);
 		}
 	}
 	if (tries < ARRAY_SIZE(delay) && gle == ERROR_ACCESS_DENIED) {
@@ -1731,11 +1806,16 @@ void mingw_open_html(const char *unixpath)
 
 int link(const char *oldpath, const char *newpath)
 {
-	typedef BOOL (WINAPI *T)(const char*, const char*, LPSECURITY_ATTRIBUTES);
+	typedef BOOL (WINAPI *T)(LPCWSTR, LPCWSTR, LPSECURITY_ATTRIBUTES);
 	static T create_hard_link = NULL;
+	wchar_t woldpath[MAX_PATH], wnewpath[MAX_PATH];
+	if (xutftowcs_path(woldpath, oldpath) < 0 ||
+		xutftowcs_path(wnewpath, newpath) < 0)
+		return -1;
+
 	if (!create_hard_link) {
 		create_hard_link = (T) GetProcAddress(
-			GetModuleHandle("kernel32.dll"), "CreateHardLinkA");
+			GetModuleHandle("kernel32.dll"), "CreateHardLinkW");
 		if (!create_hard_link)
 			create_hard_link = (T)-1;
 	}
@@ -1743,7 +1823,7 @@ int link(const char *oldpath, const char *newpath)
 		errno = ENOSYS;
 		return -1;
 	}
-	if (!create_hard_link(newpath, oldpath, NULL)) {
+	if (!create_hard_link(wnewpath, woldpath, NULL)) {
 		errno = err_win_to_posix(GetLastError());
 		return -1;
 	}
