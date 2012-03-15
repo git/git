@@ -32,8 +32,9 @@ OPTIONS
 --tool=<tool>::
 	Use the diff tool specified by <tool>.
 	Valid diff tools are:
-	araxis, bc3, diffuse, emerge, ecmerge, gvimdiff, kdiff3,
-	kompare, meld, opendiff, p4merge, tkdiff, vimdiff and xxdiff.
+	araxis, bc3, deltawalker, diffuse, emerge, ecmerge, gvimdiff,
+	kdiff3,	kompare, meld, opendiff, p4merge, tkdiff, vimdiff and
+	xxdiff.
 +
 If a diff tool is not specified, 'git difftool'
 will use the configuration variable `diff.tool`.  If the
