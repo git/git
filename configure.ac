@@ -137,6 +137,23 @@ if test -n "$1"; then
 fi
 ])
 
+# Directories holding "saner" versions of common or POSIX binaries.
+AC_ARG_WITH([sane-tool-path],
+  [AS_HELP_STRING(
+    [--with-sane-tool-path=DIR-1[[:DIR-2...:DIR-n]]],
+    [Directories to prepend to PATH in build system and generated scripts])],
+  [if test "$withval" = "no"; then
+    withval=''
+  else
+    AC_MSG_NOTICE([Setting SANE_TOOL_PATH to '$withval'])
+  fi
+  GIT_CONF_APPEND_LINE([SANE_TOOL_PATH=$withval])],
+  [# If the "--with-sane-tool-path" option was not given, don't touch
+   # SANE_TOOL_PATH here, but let defaults in Makefile take care of it.
+   # This should minimize spurious differences in the behaviour of the
+   # Git build system when configure is used w.r.t. when it is not.
+   :])
+
 ## Site configuration related to programs (before tests)
 ## --with-PACKAGE[=ARG] and --without-PACKAGE
 #
