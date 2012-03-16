@@ -1307,6 +1307,45 @@ test_expect_success \
 	INPUT_END'
 
 test_expect_success \
+	'N: reject foo/ syntax in copy source' \
+	'test_must_fail git fast-import <<-INPUT_END
+	commit refs/heads/N5C
+	committer $GIT_COMMITTER_NAME <$GIT_COMMITTER_EMAIL> $GIT_COMMITTER_DATE
+	data <<COMMIT
+	copy with invalid syntax
+	COMMIT
+
+	from refs/heads/branch^0
+	C file2/ file3
+	INPUT_END'
+
+test_expect_success \
+	'N: reject foo/ syntax in rename source' \
+	'test_must_fail git fast-import <<-INPUT_END
+	commit refs/heads/N5D
+	committer $GIT_COMMITTER_NAME <$GIT_COMMITTER_EMAIL> $GIT_COMMITTER_DATE
+	data <<COMMIT
+	rename with invalid syntax
+	COMMIT
+
+	from refs/heads/branch^0
+	R file2/ file3
+	INPUT_END'
+
+test_expect_success \
+	'N: reject foo/ syntax in ls argument' \
+	'test_must_fail git fast-import <<-INPUT_END
+	commit refs/heads/N5E
+	committer $GIT_COMMITTER_NAME <$GIT_COMMITTER_EMAIL> $GIT_COMMITTER_DATE
+	data <<COMMIT
+	copy with invalid syntax
+	COMMIT
+
+	from refs/heads/branch^0
+	ls "file2/"
+	INPUT_END'
+
+test_expect_success \
 	'N: copy to root by id and modify' \
 	'echo "hello, world" >expect.foo &&
 	 echo hello >expect.bar &&
