@@ -12,7 +12,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Git\n"
 "Report-Msgid-Bugs-To: Git Mailing List <git@vger.kernel.org>\n"
-"POT-Creation-Date: 2012-03-08 10:19+0800\n"
+"POT-Creation-Date: 2012-03-16 20:18+0800\n"
 "PO-Revision-Date: 2012-01-30 00:00+0800\n"
 "Last-Translator: Jiang Xin <worldhello.net@gmail.com>\n"
 "Language-Team: GitHub <https://github.com/gotgit/git/>\n"
@@ -3241,29 +3241,29 @@ msgstr "不支持 $patch_format 补丁格式。"
 msgid "Patch format detection failed."
 msgstr "补丁格式检测失败。"
 
-#: git-am.sh:409
+#: git-am.sh:411
 msgid "-d option is no longer supported.  Do not use."
 msgstr "不再支持 -d 选项。不要使用。"
 
-#: git-am.sh:472
+#: git-am.sh:474
 #, sh-format
 msgid "previous rebase directory $dotest still exists but mbox given."
 msgstr "之前的变基目录 $dotest 仍然存在但给出了mbox。"
 
-#: git-am.sh:477
+#: git-am.sh:479
 msgid "Please make up your mind. --skip or --abort?"
 msgstr "请下决心。--skip 或是 --abort ？"
 
-#: git-am.sh:504
+#: git-am.sh:506
 msgid "Resolve operation not in progress, we are not resuming."
 msgstr "解决操作未进行，我们不会继续。"
 
-#: git-am.sh:570
+#: git-am.sh:572
 #, sh-format
 msgid "Dirty index: cannot apply patches (dirty: $files)"
 msgstr "脏的暂存区：不能应用补丁（脏文件：$files）"
 
-#: git-am.sh:746
+#: git-am.sh:748
 msgid "cannot be interactive without stdin connected to a terminal."
 msgstr "没有和终端关联的标准输入不能进行交互式操作。"
 
@@ -3271,20 +3271,20 @@ msgstr "没有和终端关联的标准输入不能进行交互式操作。"
 #. TRANSLATORS: Make sure to include [y], [n], [e], [v] and [a]
 #. in your translation. The program will only accept English
 #. input at this point.
-#: git-am.sh:757
+#: git-am.sh:759
 msgid "Apply? [y]es/[n]o/[e]dit/[v]iew patch/[a]ccept all "
 msgstr "应用？[y]es/[n]o/[e]dit/[v]iew patch/[a]ccept all "
 
-#: git-am.sh:793
+#: git-am.sh:795
 #, sh-format
 msgid "Applying: $FIRSTLINE"
 msgstr "正应用：$FIRSTLINE"
 
-#: git-am.sh:838
+#: git-am.sh:840
 msgid "No changes -- Patch already applied."
 msgstr "没有变更 -- 补丁已经应用过。"
 
-#: git-am.sh:864
+#: git-am.sh:866
 msgid "applying to an empty history"
 msgstr "正应用到一个空历史上"
 
@@ -3528,10 +3528,15 @@ msgstr "无法从 url '$remoteurl' 剥离一个组件"
 msgid "No submodule mapping found in .gitmodules for path '$path'"
 msgstr "未在 .gitmodules 中发现路径 '$path' 的子模组映射"
 
-#: git-submodule.sh:173
+#: git-submodule.sh:149
 #, sh-format
 msgid "Clone of '$url' into submodule path '$path' failed"
 msgstr "克隆 '$url' 到子模组路径 '$path' 失败"
+
+#: git-submodule.sh:159
+#, sh-format
+msgid "Gitdir '$a' is part of the submodule path '$b' or vice versa"
+msgstr "Gitdir '$a' 在子模组路径 '$b' 之下或者相反"
 
 #: git-submodule.sh:247
 #, sh-format
