@@ -23,7 +23,7 @@ class NonLocalHg(object):
             from_path = self.repo.path
 
         self.repo.ui.setconfig('ui', 'quiet', "true")
-        self.hg.clone(self.repo.ui, from_path, path, update=False, pull=True)
+        self.hg.clone(self.repo.ui, {}, from_path, path, update=False, pull=True)
 
         return path
 
