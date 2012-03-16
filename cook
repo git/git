@@ -664,7 +664,7 @@ sub wildo {
 
 		if (/^Will (?:\S+ ){0,2}(keep|merge|drop|discard|cook|kick|defer)[,. ]/ ||
 		    /^Not urgent/ || /^Not ready/ || /^Waiting for / ||
-		    /^Needs? / || /Expecting /) {
+		    /^Needs? / || /^Expecting / || /^May want to /) {
 			wildo_queue(\%what, $_, $topic);
 			$topic = undef;
 		}
