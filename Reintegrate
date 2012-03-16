@@ -1,10 +1,11 @@
 #!/bin/sh
 
-accept_rerere="--rerere-autoupdate" generate=no update= diff=
+accept_rerere="--rerere-autoupdate" generate=no update= diff= edit=
 while case "$#,$1" in 0,*) break;; *,-*) ;; esac
 do
 	case "$1" in
 	-n)	accept_rerere= ;;
+	-e)	edit=t ;;
 	-d)	update=${2?"diff with what?"}
 		diff=yes
 		generate=yes
@@ -66,7 +67,7 @@ annotate_merge () {
 case "$generate" in
 no)
 	accept_rerere () {
-		if ! git write-tree 2>/dev/null
+		if ! git write-tree 2>/dev/null >/dev/null
 		then
 			git rerere remaining
 			return 1
@@ -94,6 +95,8 @@ no)
 			exit
 
 			annotate_merge "$branch" || exit
+			test -z "$edit" ||
+			git commit --amend || exit
 
 			this=$(git rev-parse --verify HEAD)
 			if test "$this" = "$save"
