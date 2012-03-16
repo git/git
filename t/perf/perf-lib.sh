@@ -45,6 +45,10 @@ TEST_NO_CREATE_REPO=t
 
 . ../test-lib.sh
 
+# Variables from test-lib that are normally internal to the tests; we
+# need to export them for test_perf subshells
+export TEST_DIRECTORY TRASH_DIRECTORY GIT_BUILD_DIR GIT_TEST_CMP
+
 perf_results_dir=$TEST_OUTPUT_DIRECTORY/test-results
 mkdir -p "$perf_results_dir"
 rm -f "$perf_results_dir"/$(basename "$0" .sh).subtests
@@ -119,7 +123,7 @@ test_run_perf_ () {
 	test_export_="test_cleanup"
 	export test_cleanup test_export_
 	/usr/bin/time -f "%E %U %S" -o test_time.$i "$SHELL" -c '
-. '"$TEST_DIRECTORY"/../test-lib-functions.sh'
+. '"$TEST_DIRECTORY"/test-lib-functions.sh'
 test_export () {
 	[ $# != 0 ] || return 0
 	test_export_="$test_export_\\|$1"

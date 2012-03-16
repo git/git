@@ -35,8 +35,6 @@ static void prune_dir(int i, DIR *dir, char *pathname, int len, int opts)
 			unlink_or_warn(pathname);
 		display_progress(progress, i + 1);
 	}
-	pathname[len] = 0;
-	rmdir(pathname);
 }
 
 void prune_packed_objects(int opts)
@@ -65,6 +63,8 @@ void prune_packed_objects(int opts)
 			continue;
 		prune_dir(i, d, pathname, len + 3, opts);
 		closedir(d);
+		pathname[len + 2] = '\0';
+		rmdir(pathname);
 	}
 	stop_progress(&progress);
 }

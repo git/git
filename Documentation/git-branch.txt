@@ -24,8 +24,8 @@ be highlighted with an asterisk.  Option `-r` causes the remote-tracking
 branches to be listed, and option `-a` shows both. This list mode is also
 activated by the `--list` option (see below).
 <pattern> restricts the output to matching branches, the pattern is a shell
-wildcard (i.e., matched using fnmatch(3))
-Multiple patterns may be given; if any of them matches, the tag is shown.
+wildcard (i.e., matched using fnmatch(3)).
+Multiple patterns may be given; if any of them matches, the branch is shown.
 
 With `--contains`, shows only the branches that contain the named commit
 (in other words, the branches whose tip commits are descendants of the
@@ -49,7 +49,7 @@ the remote-tracking branch. This behavior may be changed via the global
 overridden by using the `--track` and `--no-track` options, and
 changed later using `git branch --set-upstream`.
 
-With a '-m' or '-M' option, <oldbranch> will be renamed to <newbranch>.
+With a `-m` or `-M` option, <oldbranch> will be renamed to <newbranch>.
 If <oldbranch> had a corresponding reflog, it is renamed to match
 <newbranch>, and a reflog entry is created to remember the branch
 renaming. If <newbranch> exists, -M must be used to force the rename
@@ -59,7 +59,7 @@ With a `-d` or `-D` option, `<branchname>` will be deleted.  You may
 specify more than one branch for deletion.  If the branch currently
 has a reflog then the reflog will also be deleted.
 
-Use -r together with -d to delete remote-tracking branches. Note, that it
+Use `-r` together with `-d` to delete remote-tracking branches. Note, that it
 only makes sense to delete remote-tracking branches if they no longer exist
 in the remote repository or if 'git fetch' was configured not to fetch
 them again. See also the 'prune' subcommand of linkgit:git-remote[1] for a
@@ -154,17 +154,18 @@ start-point is either a local or remote-tracking branch.
 	branch.autosetupmerge configuration variable is true.
 
 --set-upstream::
-	If specified branch does not exist yet or if '--force' has been
-	given, acts exactly like '--track'. Otherwise sets up configuration
-	like '--track' would when creating the branch, except that where
+	If specified branch does not exist yet or if `--force` has been
+	given, acts exactly like `--track`. Otherwise sets up configuration
+	like `--track` would when creating the branch, except that where
 	branch points to is not changed.
 
 --edit-description::
 	Open an editor and edit the text to explain what the branch is
 	for, to be used by various other commands (e.g. `request-pull`).
 
---contains <commit>::
-	Only list branches which contain the specified commit.
+--contains [<commit>]::
+	Only list branches which contain the specified commit (HEAD
+	if not specified).
 
 --merged [<commit>]::
 	Only list branches whose tips are reachable from the

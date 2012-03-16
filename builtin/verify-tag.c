@@ -58,6 +58,14 @@ static int verify_tag(const char *name, int verbose)
 	return ret;
 }
 
+static int git_verify_tag_config(const char *var, const char *value, void *cb)
+{
+	int status = git_gpg_config(var, value, cb);
+	if (status)
+		return status;
+	return git_default_config(var, value, cb);
+}
+
 int cmd_verify_tag(int argc, const char **argv, const char *prefix)
 {
 	int i = 1, verbose = 0, had_error = 0;
@@ -66,7 +74,7 @@ int cmd_verify_tag(int argc, const char **argv, const char *prefix)
 		OPT_END()
 	};
 
-	git_config(git_default_config, NULL);
+	git_config(git_verify_tag_config, NULL);
 
 	argc = parse_options(argc, argv, prefix, verify_tag_options,
 			     verify_tag_usage, PARSE_OPT_KEEP_ARGV0);

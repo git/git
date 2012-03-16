@@ -380,7 +380,9 @@ do
 	-i|--interactive)
 		interactive=t ;;
 	-b|--binary)
-		: ;;
+		echo >&2 "The $1 option has been a no-op for long time, and"
+		echo >&2 "it will be removed. Please do not use it anymore."
+		;;
 	-3|--3way)
 		threeway=t ;;
 	-s|--signoff)

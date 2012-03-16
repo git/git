@@ -85,9 +85,9 @@ static int prune_dir(int i, char *path)
 		}
 		fprintf(stderr, "bad sha1 file: %s/%s\n", path, de->d_name);
 	}
+	closedir(dir);
 	if (!show_only)
 		rmdir(path);
-	closedir(dir);
 	return 0;
 }
 
