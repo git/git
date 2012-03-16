@@ -180,6 +180,10 @@ Unless otherwise noted, all the fixes since v1.7.9 in the maintenance
 releases are contained in this release (see release notes to them for
 details).
 
+ * "git fast-import" accepted "ls" command with an empty path by
+   mistake.
+   (merge 178e1de jn/maint-fast-import-empty-ls later to maint).
+
  * The "remaining" subcommand to "git rerere" was not documented.
    (merge 3e7a1df ph/rerere-doc later to maint).
 
@@ -192,13 +196,18 @@ details).
    error was at the end of line.
    (merge 4b34059 ms/maint-config-error-at-eol-linecount later to maint).
 
+ * "configure" script learned to take "--sane-tool-path" from the
+   command line to record SANE_TOOL_PATH (used to avoid broken
+   platform tools in /usr/bin) in config.mak-autogen.  This may be useful
+   for people on Solaris who have saner tools outside /usr/xpg[46]/bin.
+
  * "gitweb" used to drop warnings in the log file when "heads" view is
    accessed in a repository whose HEAD does not point at a valid
    branch.
 
 ---
 exec >/var/tmp/1
-O=v1.7.10-rc0-50-gd973dc0
+O=v1.7.10-rc1-18-g0987145
 echo O=$(git describe)
 git log --first-parent --oneline ^maint $O..
 echo
