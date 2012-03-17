@@ -83,6 +83,17 @@ test_expect_success PERL 'difftool ignores bad --tool values' '
 	test "$diff" = ""
 '
 
+test_expect_success PERL 'difftool forwards arguments to diff' '
+	>for-diff &&
+	git add for-diff &&
+	echo changes>for-diff &&
+	git add for-diff &&
+	diff=$(git difftool --cached --no-prompt -- for-diff) &&
+	test "$diff" = "" &&
+	git reset -- for-diff &&
+	rm for-diff
+'
+
 test_expect_success PERL 'difftool honors --gui' '
 	git config merge.tool bogus-tool &&
 	git config diff.tool bogus-tool &&
