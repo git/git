@@ -641,11 +641,15 @@ proc varcinit {view} {
 
 proc resetvarcs {view} {
     global varcid varccommits parents children vseedcount ordertok
+    global vshortids
 
     foreach vid [array names varcid $view,*] {
 	unset varcid($vid)
 	unset children($vid)
 	unset parents($vid)
+    }
+    foreach vid [array names vshortids $view,*] {
+	unset vshortids($vid)
     }
     # some commits might have children but haven't been seen yet
     foreach vid [array names children $view,*] {
@@ -933,7 +937,7 @@ proc fix_reversal {p a v} {
 proc insertrow {id p v} {
     global cmitlisted children parents varcid varctok vtokmod
     global varccommits ordertok commitidx numcommits curview
-    global targetid targetrow
+    global targetid targetrow vshortids
 
     readcommit $id
     set vid $v,$id
@@ -942,6 +946,7 @@ proc insertrow {id p v} {
     set parents($vid) [list $p]
     set a [newvarc $v $id]
     set varcid($vid) $a
+    lappend vshortids($v,[string range $id 0 3]) $id
     if {[string compare [lindex $varctok($v) $a] $vtokmod($v)] < 0} {
 	modify_arc $v $a
     }
@@ -1397,7 +1402,7 @@ proc getcommitlines {fd inst view updating}  {
     global commitidx commitdata vdatemode
     global parents children curview hlview
     global idpending ordertok
-    global varccommits varcid varctok vtokmod vfilelimit
+    global varccommits varcid varctok vtokmod vfilelimit vshortids
 
     set stuff [read $fd 500000]
     # git log doesn't terminate the last commit with a null...
@@ -1496,6 +1501,8 @@ proc getcommitlines {fd inst view updating}  {
 	}
 	set id [lindex $ids 0]
 	set vid $view,$id
+
+	lappend vshortids($view,[string range $id 0 3]) $id
 
 	if {!$listed && $updating && ![info exists varcid($vid)] &&
 	    $vfilelimit($view) ne {}} {
@@ -1719,11 +1726,26 @@ proc getcommit {id} {
 # and are present in the current view.
 # This is fairly slow...
 proc longid {prefix} {
-    global varcid curview
+    global varcid curview vshortids
 
     set ids {}
-    foreach match [array names varcid "$curview,$prefix*"] {
-	lappend ids [lindex [split $match ","] 1]
+    if {[string length $prefix] >= 4} {
+	set vshortid $curview,[string range $prefix 0 3]
+	if {[info exists vshortids($vshortid)]} {
+	    foreach id $vshortids($vshortid) {
+		if {[string match "$prefix*" $id]} {
+		    if {[lsearch -exact $ids $id] < 0} {
+			lappend ids $id
+			if {[llength $ids] >= 2} break
+		    }
+		}
+	    }
+	}
+    } else {
+	foreach match [array names varcid "$curview,$prefix*"] {
+	    lappend ids [lindex [split $match ","] 1]
+	    if {[llength $ids] >= 2} break
+	}
     }
     return $ids
 }
