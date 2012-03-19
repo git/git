@@ -1,9 +1,9 @@
 To: git@vger.kernel.org
-Subject: What's cooking in git.git (Mar 2012, #06; Wed, 14)
-X-master-at: 0e2d57fd50f61e668be3180bc8f25991ea88aa8c
-X-next-at: 38e1251a4abf75d6f2ce839f27cea2f57690fd15
+Subject: What's cooking in git.git (Mar 2012, #07; Mon, 19)
+X-master-at: f524129737d9ba3e685c31bacde844ec1db1fea9
+X-next-at: 898d27118349f1a83f6d93545cb67dbcb0b8c288
 
-What's cooking in git.git (Mar 2012, #06; Wed, 14)
+What's cooking in git.git (Mar 2012, #07; Mon, 19)
 --------------------------------------------------
 
 Here are the topics that have been cooking.  Commits prefixed with '-' are
@@ -21,77 +21,45 @@ repositories listed at
 --------------------------------------------------
 [Graduated to "master"]
 
-* az/verify-tag-use-gpg-config (2012-03-08) 1 commit
-  (merged to 'next' on 2012-03-09 at d9e556f)
- + verify-tag: Parse GPG configuration options.
+* ab/perl-i18n (2012-03-10) 3 commits
+ + perl/Makefile: install Git::I18N under NO_PERL_MAKEMAKER
+ + Git::I18N: compatibility with perl <5.8.3
 
-"git tag -s" honored "gpg.program" configuration variable since
-1.7.9, but "git tag -v" and "git verify-tag" didn't.
+Attempts to help installations with ancient Perl and/or without
+MakeMaker.
 
-This is a fairly low impact fix.
+* jc/maint-verify-objects-remove-pessimism (2012-03-15) 1 commit
+  (merged to 'next' on 2012-03-15 at f824530)
+ + fetch/receive: remove over-pessimistic connectivity check
 
-* jc/i18n-shell-script-gettext (2012-03-12) 1 commit
-  (merged to 'next' on 2012-03-12 at 1326b5e)
- + i18n: fix auto detection of gettext scheme for shell scripts
+The code to validate the history connectivity between old refs and new
+refs used by fetch and receive-pack, introduced in 1.7.8, was grossly
+inefficient and unnecessarily tried to re-validate integrity of individual
+objects. This essentially reverts the patch that introduced the
+performance regression.
 
-The auto detection was testing if a fixed string that is known to be
-non-empty is empty by mistake.
+* jn/maint-fast-import-empty-ls (2012-03-09) 2 commits
+  (merged to 'next' on 2012-03-15 at d531079)
+ + fast-import: don't allow 'ls' of path with empty components
+ + fast-import: leakfix for 'ls' of dirty trees
 
-* jc/maint-undefined-i18n-observation-test (2012-03-09) 1 commit
-  (merged to 'next' on 2012-03-12 at 42aaabe)
- + t0204: clarify the "observe undefined behaviour" test
+fast-import did not diagnose "ls ''" that asks an empty path
+as an error.
 
-It was unclear what a test in t0204 wanted to check; it turns out
-that it was only to observe an undefined behaviour of the system,
-and did not anticipate one kind of reasonable error behaviour.
+* sl/customize-sane-tool-path (2012-03-09) 1 commit
+  (merged to 'next' on 2012-03-15 at a838844)
+ + configure: allow user to prevent $PATH "sanitization" on Solaris
 
-Replaces the tb/maint-remove-irrelevant-i18n-test topic.
-
-* ms/maint-config-error-at-eol-linecount (2012-03-12) 1 commit
-  (merged to 'next' on 2012-03-12 at ba17441)
- + config: report errors at the EOL with correct line number
-
-When "git config" diagnoses an error in a configuration file and
-shows the line number for the offending line, it miscounted if the
-error was at the end of line.
-
-* ph/rerere-doc (2012-03-08) 1 commit
-  (merged to 'next' on 2012-03-12 at 2456f65)
- + rerere: Document 'rerere remaining'
-
---------------------------------------------------
-[New Topics]
-
-* jh/notes-merge-in-git-dir-worktree (2012-03-12) 2 commits
- - notes-merge: use opendir/readdir instead of using read_directory()
- - t3310: illustrate failure to "notes merge --commit" inside $GIT_DIR/
-
-Running "notes merge --commit" failed to perform correctly when run
-from any directory inside $GIT_DIR/.  When "notes merge" stops with
-conflicts, $GIT_DIR/NOTES_MERGE_WORKTREE is the place a user edits
-to resolve it.
-
-Not urgent.
-
-* jn/diffstat-tests (2012-03-13) 7 commits
- - diffstat summary line varies by locale: miscellany
- - test: use numstat instead of diffstat in binary-diff test
- - test: use --numstat instead of --stat in "git stash show" tests
- - test: test cherry-pick functionality and output separately
- - test: modernize funny-names test style
- - test: use numstat instead of diffstat in funny-names test
- - test: use test_i18ncmp when checking --stat output
-
-Some tests checked the "diff --stat" output when they do not have to,
-which unnecessarily made things harder to verify under GETTEXT_POISON.
-Not urgent.
+"configure" script learned to take "--sane-tool-path" from the command
+line to record SANE_TOOL_PATH (used to avoid broken platform tools in
+/usr/bin) in config.mak-autogen.  This may be useful for people on Solaris
+who have saner tools outside /usr/xpg[46]/bin.
 
 * th/doc-diff-submodule-option (2012-03-14) 1 commit
   (merged to 'next' on 2012-03-14 at 0e1d755)
  + Documentation/diff-options: reword description of --submodule option
 
 Update "diff --submodule" documentation.
-May want to ship with 1.7.10.
 
 * th/git-diffall (2012-03-14) 5 commits
   (merged to 'next' on 2012-03-14 at 38e1251)
@@ -102,37 +70,83 @@ May want to ship with 1.7.10.
  + contrib/diffall: comment actual reason for 'cdup'
 
 Update sample "diffall" script.
-May want to ship with 1.7.10.
 
-* tr/maint-word-diff-regex-sticky (2012-03-14) 3 commits
- - diff: tweak a _copy_ of diff_options with word-diff
- - diff: refactor the word-diff setup from builtin_diff_cmd
- - t4034: diff.*.wordregex should not be "sticky" in --word-diff
+* th/mergetools-deltawalker (2012-03-15) 1 commit
+  (merged to 'next' on 2012-03-15 at 1a62faf)
+ + Documentation/difftool: add deltawalker to list of valid diff tools
 
-The regexp configured with wordregex was incorrectly reused across
-files.
+--------------------------------------------------
+[New Topics]
+
+* jc/maint-clean-nested-worktree-in-subdir (2012-03-15) 2 commits
+ - clean: preserve nested git worktree in subdirectories
+ - remove_dir_recursively(): Add flag for skipping removal of toplevel dir
+ (this branch is tangled with jh/notes-merge-in-git-dir-worktree.)
+
+"git clean -d -f" (not "-d -f -f") is supposed to protect nested working
+trees of independent git repositories that exist in the current project
+working tree from getting removed, but the protection applied only to such
+working trees that are at the top-level of the current project by mistake.
+
 Not urgent.
 
-* zj/test-cred-helper-nicer-prove (2012-03-14) 3 commits
- - t0303: resurrect commit message as test documentation
- - fixup?
- - t0303: immediately bail out w/o GIT_TEST_CREDENTIAL_HELPER
+* ct/advise-push-default (2012-03-19) 1 commit
+ - push: Provide situational hints for non-fast-forward errors
 
-Minor improvement to t0303.
+Breaks down the cases in which "git push" fails due to non-ff into three
+categories, and gives separate advise messages.  I think there should be
+three advise confvars, not just two.
+
+* nl/rebase-i-cheat-sheet (2012-03-16) 1 commit
+ - [Do not merge] rebase -i: remind that the lines are top-to-bottom
+
 Not urgent.
+
+* da/difftool-test (2012-03-19) 1 commit
+ - t7800: Test difftool passing arguments to diff
+
+Makes sure "difftool" options can be given in any order.
+
+* th/difftool-diffall (2012-03-19) 9 commits
+ - difftool: print list of valid tools with '--tool-help'
+ - difftool: teach dir-diff to copy modified files back to working tree
+ - difftool: teach difftool to handle directory diffs
+ - difftool: replace system call with Git::command_noisy
+ - difftool: eliminate setup_environment function
+ - difftool: stop appending '.exe' to git
+ - difftool: remove explicit change of PATH
+ - difftool: exit(0) when usage is printed
+ - difftool: parse options using Getopt::Long
+
+Reworks the "diffall" contrib script into "difftool" framework.  Use of
+Getopt::Long obviously contradicts with da/difftool-test and breaks 'pu'.
 
 --------------------------------------------------
 [Stalled]
 
-* ab/perl-i18n (2012-03-10) 3 commits
- - fixup! de1e4ae
- - perl/Makefile: install Git::I18N under NO_PERL_MAKEMAKER
- - Git::I18N: compatibility with perl <5.8.3
+* nd/columns (2012-03-13) 12 commits
+ - column: support grouping entries
+ - column: support "denser" mode
+ - ls-files: support --column
+ - tag: add --column
+ - column: support piping stdout to external git-column process
+ - status: add --column
+ - branch: add --column
+ - help: reuse print_columns() for help -a
+ - column: add dense layout support
+ - column: add columnar layout
+ - Stop starting pager recursively
+ - Add column layout skeleton and git-column
 
-Attempts to help installations with ancient Perl and/or without
-MakeMaker.  Didn't quite work for me, so I tried to queue a fix-up
-commit, but an independent confirmation report is needed before it
-is squashed into Ævar's patches.
+Rerolled again.  Modulo minor nits, looked nicer than the previous round.
+
+* nd/threaded-index-pack (2012-03-11) 2 commits
+ - index-pack: support multithreaded delta resolving
+ - index-pack: split second pass obj handling into own function
+
+Another reroll after a bugreport on pthread usage discovered by Ramsey,
+but it seems the topic is cooking between Ramsay and Duy out of tree.
+Waiting for resolution.
 
 * dg/test-from-elsewhere (2012-03-04) 2 commits
  - Support out-of-tree Valgrind tests
@@ -160,14 +174,6 @@ Needs more work; results in double-frees.
 
 The bottom one was not clearly explained and needs a reroll.
 
-* jc/advise-push-default (2011-12-18) 1 commit
- - push: hint to use push.default=upstream when appropriate
-
-Peff had a good suggestion outlining an updated code structure so
-that somebody new can try to dip his or her toes in the development.
-
-A rework is being attempted by Christopher Tiwald.
-
 * ss/git-svn-prompt-sans-terminal (2012-01-04) 3 commits
  - fixup! 15eaaf4
  - git-svn, perl/Git.pm: extend Git::prompt helper for querying users
@@ -178,8 +184,7 @@ from Ævar. The second one needs more work, both in perl/Git.pm and
 prompt.c, to give precedence to tty over SSH_ASKPASS when terminal
 is available.
 
-* jc/split-blob (2012-02-23) 7 commits
- - fixup?
+* jc/split-blob (2012-03-16) 6 commits
  - chunked-object: streaming checkout
  - chunked-object: fallback checkout codepaths
  - bulk-checkin: support chunked-object encoding
@@ -212,27 +217,49 @@ not working :-(.
 --------------------------------------------------
 [Cooking]
 
-* nd/columns (2012-03-13) 12 commits
- - column: support grouping entries
- - column: support "denser" mode
- - ls-files: support --column
- - tag: add --column
- - column: support piping stdout to external git-column process
- - status: add --column
- - branch: add --column
- - help: reuse print_columns() for help -a
- - column: add dense layout support
- - column: add columnar layout
- - Stop starting pager recursively
- - Add column layout skeleton and git-column
+* jh/notes-merge-in-git-dir-worktree (2012-03-15) 4 commits
+ - notes-merge: Don't remove .git/NOTES_MERGE_WORKTREE; it may be the user's cwd
+ - notes-merge: use opendir/readdir instead of using read_directory()
+ - t3310: illustrate failure to "notes merge --commit" inside $GIT_DIR/
+ - remove_dir_recursively(): Add flag for skipping removal of toplevel dir
+ (this branch is tangled with jc/maint-clean-nested-worktree-in-subdir.)
 
-Rerolled again.  Modulo minor nits, looked nicer than the previous round.
+Running "notes merge --commit" failed to perform correctly when run
+from any directory inside $GIT_DIR/.  When "notes merge" stops with
+conflicts, $GIT_DIR/NOTES_MERGE_WORKTREE is the place a user edits
+to resolve it.
 
-* nd/optim-connected (2012-03-14) 1 commit
- - {fetch,receive}-pack: skip sha-1 integrity test on objects from new pack
+Not urgent.
 
-Optimizes the local connectivity check performed by "git fetch" and "git
-receive-pack" that is run in response to "git push".
+* jn/diffstat-tests (2012-03-13) 7 commits
+ - diffstat summary line varies by locale: miscellany
+ - test: use numstat instead of diffstat in binary-diff test
+ - test: use --numstat instead of --stat in "git stash show" tests
+ - test: test cherry-pick functionality and output separately
+ - test: modernize funny-names test style
+ - test: use numstat instead of diffstat in funny-names test
+ - test: use test_i18ncmp when checking --stat output
+
+Some tests checked the "diff --stat" output when they do not have to,
+which unnecessarily made things harder to verify under GETTEXT_POISON.
+
+Not urgent.
+
+* tr/maint-word-diff-regex-sticky (2012-03-14) 3 commits
+ - diff: tweak a _copy_ of diff_options with word-diff
+ - diff: refactor the word-diff setup from builtin_diff_cmd
+ - t4034: diff.*.wordregex should not be "sticky" in --word-diff
+
+The regexp configured with wordregex was incorrectly reused across
+files.
+Not urgent.
+
+* zj/test-cred-helper-nicer-prove (2012-03-15) 2 commits
+ - t0303: resurrect commit message as test documentation
+ - t0303: immediately bail out w/o GIT_TEST_CREDENTIAL_HELPER
+
+Minor improvement to t0303.
+Not urgent.
 
 * jc/commit-hook-authorship (2012-03-11) 3 commits
   (merged to 'next' on 2012-03-12 at 05ca7f8)
@@ -248,32 +275,28 @@ environment variable.  This is a simpler of the two approaches.
 
 Will defer til 1.7.10.
 
-* jc/run-hook-env-1 (2012-03-11) 4 commits
- . commit: pass author/committer info to hooks
+* jc/run-hook-env-1 (2012-03-11) 3 commits
  - run_hook(): enhance the interface to pass arbitrary environment
  + t7503: does pre-commit-hook learn authorship?
  + ident.c: add split_ident_line() to parse formatted ident line
  (this branch is tangled with jc/commit-hook-authorship.)
 
-Addresses the same issue as jc/commit-hook-authorship, sharing the first
-two changes with the previous one, but uses a more complex approach, which
-may not be worth the complexity.  The third patch is a prerequiste for the
-fourth one (not used), but is independently useful.
+Not urgent.
 
-* jn/maint-fast-import-empty-ls (2012-03-09) 2 commits
- - fast-import: don't allow 'ls' of path with empty components
- - fast-import: leakfix for 'ls' of dirty trees
-
-fast-import did not diagnose "ls ''" that asks an empty path
-as an error.
+Updates run_hook() API to be much less specific to "commit".  It would
+only be useful if people start doing more interesting things with hooks.
 
 * jc/diff-algo-cleanup (2012-02-19) 2 commits
- - xdiff: PATIENCE/HISTOGRAM are not independent option bits
- - xdiff: remove XDL_PATCH_* macros
+  (merged to 'next' on 2012-03-15 at cca0032)
+ + xdiff: PATIENCE/HISTOGRAM are not independent option bits
+ + xdiff: remove XDL_PATCH_* macros
  (this branch is used by jc/diff-ignore-case.)
 
-Resurrects the preparatory clean-up patches from another topic
-that was discarded.
+Resurrects the preparatory clean-up patches from another topic that was
+discarded, as this would give a saner foundation to build on diff.algo
+configuration option series.
+
+Not urgent.
 
 * jh/apply-free-patch (2012-03-07) 1 commit
  - apply: do not leak patches and fragments
@@ -296,30 +319,22 @@ Will discard.
 * mm/push-default-switch-warning (2012-03-09) 1 commit
  - push: start warning upcoming default change for push.default
 
-This resurrects an ancient patch I wrote during a discussion we had
-in the 1.6.3-1.6.4 era.  It also conflicts with the long-stalled
-jc/advise-push-default topic and for a good reason---they address a
-similar issue.  The latter is a lower impact patch that uses a more
-focused approach to limit the scope to the target audience that
-actually needs help.
+Not urgent.
 
-* sl/customize-sane-tool-path (2012-03-09) 1 commit
- - configure: allow user to prevent $PATH "sanitization" on Solaris
-
-Would be nice to hear from people who actually use autoconf, either
-on Solaris or other platforms.
+This resurrects an ancient patch I wrote during a discussion we had in the
+1.6.3-1.6.4 era.  This should probably come after ct/advise-push-default
+topic and at that point the advise messages need to be rephrased, taking
+the future default change into account.
 
 * jc/fmt-merge-msg-people (2012-03-13) 1 commit
  - fmt-merge-msg: show those involved in a merged series
-
-Rerolled.
 
 The "fmt-merge-msg" command learns to list the primary contributors
 involved in the side topic you are merging.
 
 Will defer til 1.7.10.
 
-* nl/http-proxy-more (2012-03-14) 5 commits
+* nl/http-proxy-more (2012-03-15) 5 commits
  - http: rename HTTP_REAUTH to HTTP_AUTH_RETRY
  - http: Avoid limit of retrying request only twice
  - http: handle proxy authentication failure (error 407)
@@ -346,13 +361,6 @@ reduce the memory footprint.  In general, looked fairly good.
 
 Will defer til 1.7.10.
 
-* nd/threaded-index-pack (2012-03-11) 2 commits
- - index-pack: support multithreaded delta resolving
- - index-pack: split second pass obj handling into own function
-
-Another reroll after a bugreport on pthread usage discovered by
-Ramsey.
-
 --------------------------------------------------
 [Discarded]
 
@@ -371,3 +379,18 @@ Ramsey.
  . Use startup_info->prefix rather than prefix.
 
 I tend to agree with the doubt of the author of this patch expressed.
+
+* nd/optim-connected (2012-03-15) 1 commit
+ . {fetch,receive}-pack: skip sha-1 integrity test on objects from new pack
+
+jc/maint-verify-objects-remove-pessimism replaces this.
+
+* jc/advise-push-default (2011-12-18) 1 commit
+ . push: hint to use push.default=upstream when appropriate
+
+A rework by Christopher Tiwald replaces this.
+
+* th/mergetools-tool-help (2012-03-15) 1 commit
+ . difftool: print list of valid tools with '--tool-help'
+
+Reworked as part of th/difftool-diffall topic.
