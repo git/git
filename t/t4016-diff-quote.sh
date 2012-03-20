@@ -57,22 +57,33 @@ test_expect_success TABS_IN_FILENAMES 'git diff --summary -M HEAD' '
 	test_cmp expect actual
 '
 
-test_expect_success TABS_IN_FILENAMES 'setup expected files' '
-cat >expect <<\EOF
- pathname.1 => "Rpathname\twith HT.0"            |    0
- pathname.3 => "Rpathname\nwith LF.0"            |    0
- "pathname\twith HT.3" => "Rpathname\nwith LF.1" |    0
- pathname.2 => Rpathname with SP.0               |    0
- "pathname\twith HT.2" => Rpathname with SP.1    |    0
- pathname.0 => Rpathname.0                       |    0
- "pathname\twith HT.0" => Rpathname.1            |    0
- 7 files changed, 0 insertions(+), 0 deletions(-)
-EOF
+test_expect_success TABS_IN_FILENAMES 'git diff --numstat -M HEAD' '
+	cat >expect <<-\EOF &&
+	0	0	pathname.1 => "Rpathname\twith HT.0"
+	0	0	pathname.3 => "Rpathname\nwith LF.0"
+	0	0	"pathname\twith HT.3" => "Rpathname\nwith LF.1"
+	0	0	pathname.2 => Rpathname with SP.0
+	0	0	"pathname\twith HT.2" => Rpathname with SP.1
+	0	0	pathname.0 => Rpathname.0
+	0	0	"pathname\twith HT.0" => Rpathname.1
+	EOF
+	git diff --numstat -M HEAD >actual &&
+	test_cmp expect actual
 '
 
 test_expect_success TABS_IN_FILENAMES 'git diff --stat -M HEAD' '
+	cat >expect <<-\EOF &&
+	 pathname.1 => "Rpathname\twith HT.0"            |    0
+	 pathname.3 => "Rpathname\nwith LF.0"            |    0
+	 "pathname\twith HT.3" => "Rpathname\nwith LF.1" |    0
+	 pathname.2 => Rpathname with SP.0               |    0
+	 "pathname\twith HT.2" => Rpathname with SP.1    |    0
+	 pathname.0 => Rpathname.0                       |    0
+	 "pathname\twith HT.0" => Rpathname.1            |    0
+	 7 files changed, 0 insertions(+), 0 deletions(-)
+	EOF
 	git diff --stat -M HEAD >actual &&
-	test_cmp expect actual
+	test_i18ncmp expect actual
 '
 
 test_done
