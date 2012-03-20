@@ -721,6 +721,10 @@ void transport_print_push_status(const char *dest, struct ref *refs,
 {
 	struct ref *ref;
 	int n = 0;
+	unsigned char head_sha1[20];
+	char *head;
+
+	head = resolve_refdup("HEAD", head_sha1, 1, NULL);
 
 	if (verbose) {
 		for (ref = refs; ref; ref = ref->next)
@@ -738,8 +742,13 @@ void transport_print_push_status(const char *dest, struct ref *refs,
 		    ref->status != REF_STATUS_UPTODATE &&
 		    ref->status != REF_STATUS_OK)
 			n += print_one_push_status(ref, dest, n, porcelain);
-		if (ref->status == REF_STATUS_REJECT_NONFASTFORWARD)
-			*nonfastforward = 1;
+		if (ref->status == REF_STATUS_REJECT_NONFASTFORWARD &&
+		    *nonfastforward != NON_FF_HEAD) {
+			if (!strcmp(head, ref->name))
+				*nonfastforward = NON_FF_HEAD;
+			else
+				*nonfastforward = NON_FF_OTHER;
+		}
 	}
 }
 
