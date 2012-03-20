@@ -1132,8 +1132,10 @@ sub dispatch {
 	if (!defined $action) {
 		if (defined $hash) {
 			$action = git_get_type($hash);
+			$action or die_error(404, "Object does not exist");
 		} elsif (defined $hash_base && defined $file_name) {
 			$action = git_get_type("$hash_base:$file_name");
+			$action or die_error(404, "File or directory does not exist");
 		} elsif (defined $project) {
 			$action = 'summary';
 		} else {
@@ -2400,7 +2402,7 @@ sub get_feed_info {
 	return unless (defined $project);
 	# some views should link to OPML, or to generic project feed,
 	# or don't have specific feed yet (so they should use generic)
-	return if ($action =~ /^(?:tags|heads|forks|tag|search)$/x);
+	return if (!$action || $action =~ /^(?:tags|heads|forks|tag|search)$/x);
 
 	my $branch;
 	# branches refs uses 'refs/heads/' prefix (fullname) to differentiate

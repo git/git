@@ -343,11 +343,10 @@ static void print_advice(int show_hint)
 		return;
 	}
 
-	if (show_hint) {
-		advise("after resolving the conflicts, mark the corrected paths");
-		advise("with 'git add <paths>' or 'git rm <paths>'");
-		advise("and commit the result with 'git commit'");
-	}
+	if (show_hint)
+		advise(_("after resolving the conflicts, mark the corrected paths\n"
+			 "with 'git add <paths>' or 'git rm <paths>'\n"
+			 "and commit the result with 'git commit'"));
 }
 
 static void write_message(struct strbuf *msgbuf, const char *filename)
