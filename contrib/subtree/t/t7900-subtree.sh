@@ -8,7 +8,9 @@ This test verifies the basic operation of the merge, pull, add
 and split subcommands of git subtree.
 '
 
-. ./test-lib.sh
+export TEST_DIRECTORY=$(pwd)/../../../t
+
+. ../../../t/test-lib.sh
 
 create()
 {
@@ -30,7 +32,7 @@ check_equal()
 }
 
 fixnl()
-{	
+{
 	t=""
 	while read x; do
 		t="$t$x "
