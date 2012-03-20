@@ -516,4 +516,294 @@ test_expect_success 'show added path under "--follow -M"' '
 	)
 '
 
+cat >expect <<\EOF
+*   commit COMMIT_OBJECT_NAME
+|\  Merge: MERGE_PARENTS
+| | Author: A U Thor <author@example.com>
+| |
+| |     Merge HEADS DESCRIPTION
+| |
+| * commit COMMIT_OBJECT_NAME
+| | Author: A U Thor <author@example.com>
+| |
+| |     reach
+| | ---
+| |  reach.t |    1 +
+| |  1 file changed, 1 insertion(+)
+| |
+| | diff --git a/reach.t b/reach.t
+| | new file mode 100644
+| | index 0000000..10c9591
+| | --- /dev/null
+| | +++ b/reach.t
+| | @@ -0,0 +1 @@
+| | +reach
+| |
+|  \
+*-. \   commit COMMIT_OBJECT_NAME
+|\ \ \  Merge: MERGE_PARENTS
+| | | | Author: A U Thor <author@example.com>
+| | | |
+| | | |     Merge HEADS DESCRIPTION
+| | | |
+| | * | commit COMMIT_OBJECT_NAME
+| | |/  Author: A U Thor <author@example.com>
+| | |
+| | |       octopus-b
+| | |   ---
+| | |    octopus-b.t |    1 +
+| | |    1 file changed, 1 insertion(+)
+| | |
+| | |   diff --git a/octopus-b.t b/octopus-b.t
+| | |   new file mode 100644
+| | |   index 0000000..d5fcad0
+| | |   --- /dev/null
+| | |   +++ b/octopus-b.t
+| | |   @@ -0,0 +1 @@
+| | |   +octopus-b
+| | |
+| * | commit COMMIT_OBJECT_NAME
+| |/  Author: A U Thor <author@example.com>
+| |
+| |       octopus-a
+| |   ---
+| |    octopus-a.t |    1 +
+| |    1 file changed, 1 insertion(+)
+| |
+| |   diff --git a/octopus-a.t b/octopus-a.t
+| |   new file mode 100644
+| |   index 0000000..11ee015
+| |   --- /dev/null
+| |   +++ b/octopus-a.t
+| |   @@ -0,0 +1 @@
+| |   +octopus-a
+| |
+* | commit COMMIT_OBJECT_NAME
+|/  Author: A U Thor <author@example.com>
+|
+|       seventh
+|   ---
+|    seventh.t |    1 +
+|    1 file changed, 1 insertion(+)
+|
+|   diff --git a/seventh.t b/seventh.t
+|   new file mode 100644
+|   index 0000000..9744ffc
+|   --- /dev/null
+|   +++ b/seventh.t
+|   @@ -0,0 +1 @@
+|   +seventh
+|
+*   commit COMMIT_OBJECT_NAME
+|\  Merge: MERGE_PARENTS
+| | Author: A U Thor <author@example.com>
+| |
+| |     Merge branch 'tangle'
+| |
+| *   commit COMMIT_OBJECT_NAME
+| |\  Merge: MERGE_PARENTS
+| | | Author: A U Thor <author@example.com>
+| | |
+| | |     Merge branch 'side' (early part) into tangle
+| | |
+| * |   commit COMMIT_OBJECT_NAME
+| |\ \  Merge: MERGE_PARENTS
+| | | | Author: A U Thor <author@example.com>
+| | | |
+| | | |     Merge branch 'master' (early part) into tangle
+| | | |
+| * | | commit COMMIT_OBJECT_NAME
+| | | | Author: A U Thor <author@example.com>
+| | | |
+| | | |     tangle-a
+| | | | ---
+| | | |  tangle-a |    1 +
+| | | |  1 file changed, 1 insertion(+)
+| | | |
+| | | | diff --git a/tangle-a b/tangle-a
+| | | | new file mode 100644
+| | | | index 0000000..7898192
+| | | | --- /dev/null
+| | | | +++ b/tangle-a
+| | | | @@ -0,0 +1 @@
+| | | | +a
+| | | |
+* | | |   commit COMMIT_OBJECT_NAME
+|\ \ \ \  Merge: MERGE_PARENTS
+| | | | | Author: A U Thor <author@example.com>
+| | | | |
+| | | | |     Merge branch 'side'
+| | | | |
+| * | | | commit COMMIT_OBJECT_NAME
+| | |_|/  Author: A U Thor <author@example.com>
+| |/| |
+| | | |       side-2
+| | | |   ---
+| | | |    2 |    1 +
+| | | |    1 file changed, 1 insertion(+)
+| | | |
+| | | |   diff --git a/2 b/2
+| | | |   new file mode 100644
+| | | |   index 0000000..0cfbf08
+| | | |   --- /dev/null
+| | | |   +++ b/2
+| | | |   @@ -0,0 +1 @@
+| | | |   +2
+| | | |
+| * | | commit COMMIT_OBJECT_NAME
+| | | | Author: A U Thor <author@example.com>
+| | | |
+| | | |     side-1
+| | | | ---
+| | | |  1 |    1 +
+| | | |  1 file changed, 1 insertion(+)
+| | | |
+| | | | diff --git a/1 b/1
+| | | | new file mode 100644
+| | | | index 0000000..d00491f
+| | | | --- /dev/null
+| | | | +++ b/1
+| | | | @@ -0,0 +1 @@
+| | | | +1
+| | | |
+* | | | commit COMMIT_OBJECT_NAME
+| | | | Author: A U Thor <author@example.com>
+| | | |
+| | | |     Second
+| | | | ---
+| | | |  one |    1 +
+| | | |  1 file changed, 1 insertion(+)
+| | | |
+| | | | diff --git a/one b/one
+| | | | new file mode 100644
+| | | | index 0000000..9a33383
+| | | | --- /dev/null
+| | | | +++ b/one
+| | | | @@ -0,0 +1 @@
+| | | | +case
+| | | |
+* | | | commit COMMIT_OBJECT_NAME
+| |_|/  Author: A U Thor <author@example.com>
+|/| |
+| | |       sixth
+| | |   ---
+| | |    a/two |    1 -
+| | |    1 file changed, 1 deletion(-)
+| | |
+| | |   diff --git a/a/two b/a/two
+| | |   deleted file mode 100644
+| | |   index 9245af5..0000000
+| | |   --- a/a/two
+| | |   +++ /dev/null
+| | |   @@ -1 +0,0 @@
+| | |   -ni
+| | |
+* | | commit COMMIT_OBJECT_NAME
+| | | Author: A U Thor <author@example.com>
+| | |
+| | |     fifth
+| | | ---
+| | |  a/two |    1 +
+| | |  1 file changed, 1 insertion(+)
+| | |
+| | | diff --git a/a/two b/a/two
+| | | new file mode 100644
+| | | index 0000000..9245af5
+| | | --- /dev/null
+| | | +++ b/a/two
+| | | @@ -0,0 +1 @@
+| | | +ni
+| | |
+* | | commit COMMIT_OBJECT_NAME
+|/ /  Author: A U Thor <author@example.com>
+| |
+| |       fourth
+| |   ---
+| |    ein |    1 +
+| |    1 file changed, 1 insertion(+)
+| |
+| |   diff --git a/ein b/ein
+| |   new file mode 100644
+| |   index 0000000..9d7e69f
+| |   --- /dev/null
+| |   +++ b/ein
+| |   @@ -0,0 +1 @@
+| |   +ichi
+| |
+* | commit COMMIT_OBJECT_NAME
+|/  Author: A U Thor <author@example.com>
+|
+|       third
+|   ---
+|    ichi |    1 +
+|    one  |    1 -
+|    2 files changed, 1 insertion(+), 1 deletion(-)
+|
+|   diff --git a/ichi b/ichi
+|   new file mode 100644
+|   index 0000000..9d7e69f
+|   --- /dev/null
+|   +++ b/ichi
+|   @@ -0,0 +1 @@
+|   +ichi
+|   diff --git a/one b/one
+|   deleted file mode 100644
+|   index 9d7e69f..0000000
+|   --- a/one
+|   +++ /dev/null
+|   @@ -1 +0,0 @@
+|   -ichi
+|
+* commit COMMIT_OBJECT_NAME
+| Author: A U Thor <author@example.com>
+|
+|     second
+| ---
+|  one |    2 +-
+|  1 file changed, 1 insertion(+), 1 deletion(-)
+|
+| diff --git a/one b/one
+| index 5626abf..9d7e69f 100644
+| --- a/one
+| +++ b/one
+| @@ -1 +1 @@
+| -one
+| +ichi
+|
+* commit COMMIT_OBJECT_NAME
+  Author: A U Thor <author@example.com>
+
+      initial
+  ---
+   one |    1 +
+   1 file changed, 1 insertion(+)
+
+  diff --git a/one b/one
+  new file mode 100644
+  index 0000000..5626abf
+  --- /dev/null
+  +++ b/one
+  @@ -0,0 +1 @@
+  +one
+EOF
+
+sanitize_output () {
+	sed -e 's/ *$//' \
+	    -e 's/commit [0-9a-f]*$/commit COMMIT_OBJECT_NAME/' \
+	    -e 's/Merge: [ 0-9a-f]*$/Merge: MERGE_PARENTS/' \
+	    -e 's/Merge tag.*/Merge HEADS DESCRIPTION/' \
+	    -e 's/Merge commit.*/Merge HEADS DESCRIPTION/' \
+	    -e 's/, 0 deletions(-)//' \
+	    -e 's/, 0 insertions(+)//' \
+	    -e 's/ 1 files changed, / 1 file changed, /' \
+	    -e 's/, 1 deletions(-)/, 1 deletion(-)/' \
+	    -e 's/, 1 insertions(+)/, 1 insertion(+)/'
+}
+
+test_expect_success 'log --graph with diff and stats' '
+	git log --graph --pretty=short --stat -p >actual &&
+	sanitize_output >actual.sanitized <actual &&
+	test_cmp expect actual.sanitized
+'
+
 test_done
