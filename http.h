@@ -73,7 +73,7 @@ extern curlioerr ioctl_buffer(CURL *handle, int cmd, void *clientp);
 #endif
 
 /* Slot lifecycle functions */
-extern struct active_request_slot *get_active_slot(void);
+extern struct active_request_slot *get_active_slot(const char *url);
 extern int start_active_slot(struct active_request_slot *slot);
 extern void run_active_slot(struct active_request_slot *slot);
 extern void finish_active_slot(struct active_request_slot *slot);
@@ -123,7 +123,7 @@ extern char *get_remote_object_url(const char *url, const char *hex,
 #define HTTP_MISSING_TARGET	1
 #define HTTP_ERROR		2
 #define HTTP_START_FAILED	3
-#define HTTP_REAUTH	4
+#define HTTP_AUTH_RETRY	4
 #define HTTP_NOAUTH	5
 
 /*
