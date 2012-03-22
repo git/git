@@ -13,8 +13,6 @@
 use 5.008;
 use strict;
 use warnings;
-use Cwd qw(abs_path);
-use File::Basename qw(dirname);
 use Getopt::Long qw(:config pass_through);
 use Git;
 
@@ -33,8 +31,6 @@ USAGE
 
 sub setup_environment
 {
-	my $DIR = abs_path(dirname($0));
-	$ENV{PATH} = "$DIR:$ENV{PATH}";
 	$ENV{GIT_PAGER} = '';
 	$ENV{GIT_EXTERNAL_DIFF} = 'git-difftool--helper';
 }
