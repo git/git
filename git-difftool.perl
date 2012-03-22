@@ -15,17 +15,15 @@ use strict;
 use warnings;
 use Cwd qw(abs_path);
 use File::Basename qw(dirname);
-
-require Git;
-
-my $DIR = abs_path(dirname($0));
-
+use Getopt::Long qw(:config pass_through);
+use Git;
 
 sub usage
 {
 	print << 'USAGE';
-usage: git difftool [-t|--tool=<tool>] [-x|--extcmd=<cmd>]
-                    [-y|--no-prompt]   [-g|--gui]
+usage: git difftool [-t|--tool=<tool>]
+                    [-x|--extcmd=<cmd>] [-g|--gui]
+                    [--prompt] [-y|--no-prompt]
                     ['git diff' options]
 USAGE
 	exit 1;
@@ -33,6 +31,7 @@ USAGE
 
 sub setup_environment
 {
+	my $DIR = abs_path(dirname($0));
 	$ENV{PATH} = "$DIR:$ENV{PATH}";
 	$ENV{GIT_PAGER} = '';
 	$ENV{GIT_EXTERNAL_DIFF} = 'git-difftool--helper';
@@ -47,75 +46,57 @@ sub exe
 	return $exe;
 }
 
-sub generate_command
-{
-	my @command = (exe('git'), 'diff');
-	my $skip_next = 0;
-	my $idx = -1;
-	my $prompt = '';
-	for my $arg (@ARGV) {
-		$idx++;
-		if ($skip_next) {
-			$skip_next = 0;
-			next;
-		}
-		if ($arg eq '-t' || $arg eq '--tool') {
-			usage() if $#ARGV <= $idx;
-			$ENV{GIT_DIFF_TOOL} = $ARGV[$idx + 1];
-			$skip_next = 1;
-			next;
-		}
-		if ($arg =~ /^--tool=/) {
-			$ENV{GIT_DIFF_TOOL} = substr($arg, 7);
-			next;
-		}
-		if ($arg eq '-x' || $arg eq '--extcmd') {
-			usage() if $#ARGV <= $idx;
-			$ENV{GIT_DIFFTOOL_EXTCMD} = $ARGV[$idx + 1];
-			$skip_next = 1;
-			next;
-		}
-		if ($arg =~ /^--extcmd=/) {
-			$ENV{GIT_DIFFTOOL_EXTCMD} = substr($arg, 9);
-			next;
-		}
-		if ($arg eq '-g' || $arg eq '--gui') {
-			eval {
-				my $tool = Git::command_oneline('config',
-				                                'diff.guitool');
-				if (length($tool)) {
-					$ENV{GIT_DIFF_TOOL} = $tool;
-				}
-			};
-			next;
-		}
-		if ($arg eq '-y' || $arg eq '--no-prompt') {
-			$prompt = 'no';
-			next;
-		}
-		if ($arg eq '--prompt') {
-			$prompt = 'yes';
-			next;
-		}
-		if ($arg eq '-h') {
-			usage();
-		}
-		push @command, $arg;
+# parse command-line options. all unrecognized options and arguments
+# are passed through to the 'git diff' command.
+my ($difftool_cmd, $extcmd, $gui, $help, $prompt);
+GetOptions('g|gui' => \$gui,
+	'h' => \$help,
+	'prompt!' => \$prompt,
+	'y' => sub { $prompt = 0; },
+	't|tool:s' => \$difftool_cmd,
+	'x|extcmd:s' => \$extcmd);
+
+if (defined($help)) {
+	usage();
+}
+if (defined($difftool_cmd)) {
+	if (length($difftool_cmd) > 0) {
+		$ENV{GIT_DIFF_TOOL} = $difftool_cmd;
+	} else {
+		print "No <tool> given for --tool=<tool>\n";
+		usage();
 	}
-	if ($prompt eq 'yes') {
+}
+if (defined($extcmd)) {
+	if (length($extcmd) > 0) {
+		$ENV{GIT_DIFFTOOL_EXTCMD} = $extcmd;
+	} else {
+		print "No <cmd> given for --extcmd=<cmd>\n";
+		usage();
+	}
+}
+if (defined($gui)) {
+	my $guitool = "";
+	$guitool = Git::config('diff.guitool');
+	if (length($guitool) > 0) {
+		$ENV{GIT_DIFF_TOOL} = $guitool;
+	}
+}
+if (defined($prompt)) {
+	if ($prompt) {
 		$ENV{GIT_DIFFTOOL_PROMPT} = 'true';
-	} elsif ($prompt eq 'no') {
+	} else {
 		$ENV{GIT_DIFFTOOL_NO_PROMPT} = 'true';
 	}
-	return @command
 }
 
 setup_environment();
+my @command = (exe('git'), 'diff', @ARGV);
 
 # ActiveState Perl for Win32 does not implement POSIX semantics of
 # exec* system call. It just spawns the given executable and finishes
 # the starting program, exiting with code 0.
 # system will at least catch the errors returned by git diff,
 # allowing the caller of git difftool better handling of failures.
-my $rc = system(generate_command());
+my $rc = system(@command);
 exit($rc | ($rc >> 8));
