@@ -35,15 +35,6 @@ sub setup_environment
 	$ENV{GIT_EXTERNAL_DIFF} = 'git-difftool--helper';
 }
 
-sub exe
-{
-	my $exe = shift;
-	if ($^O eq 'MSWin32' || $^O eq 'msys') {
-		return "$exe.exe";
-	}
-	return $exe;
-}
-
 # parse command-line options. all unrecognized options and arguments
 # are passed through to the 'git diff' command.
 my ($difftool_cmd, $extcmd, $gui, $help, $prompt);
@@ -89,7 +80,7 @@ if (defined($prompt)) {
 }
 
 setup_environment();
-my @command = (exe('git'), 'diff', @ARGV);
+my @command = ('git', 'diff', @ARGV);
 
 # ActiveState Perl for Win32 does not implement POSIX semantics of
 # exec* system call. It just spawns the given executable and finishes
