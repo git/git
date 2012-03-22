@@ -94,6 +94,19 @@ test_expect_success PERL 'difftool honors --gui' '
 	restore_test_defaults
 '
 
+test_expect_success PERL 'difftool --gui last setting wins' '
+	git config diff.guitool bogus-tool &&
+	git difftool --no-prompt --gui --no-gui &&
+
+	git config merge.tool bogus-tool &&
+	git config diff.tool bogus-tool &&
+	git config diff.guitool test-tool &&
+	diff=$(git difftool --no-prompt --no-gui --gui branch) &&
+	test "$diff" = "branch" &&
+
+	restore_test_defaults
+'
+
 test_expect_success PERL 'difftool --gui works without configured diff.guitool' '
 	git config diff.tool test-tool &&
 

@@ -22,7 +22,8 @@ sub usage
 {
 	print << 'USAGE';
 usage: git difftool [-t|--tool=<tool>]
-                    [-x|--extcmd=<cmd>] [-g|--gui]
+                    [-x|--extcmd=<cmd>]
+                    [-g|--gui] [--no-gui]
                     [--prompt] [-y|--no-prompt]
                     ['git diff' options]
 USAGE
@@ -49,7 +50,7 @@ sub exe
 # parse command-line options. all unrecognized options and arguments
 # are passed through to the 'git diff' command.
 my ($difftool_cmd, $extcmd, $gui, $help, $prompt);
-GetOptions('g|gui' => \$gui,
+GetOptions('g|gui!' => \$gui,
 	'h' => \$help,
 	'prompt!' => \$prompt,
 	'y' => sub { $prompt = 0; },
@@ -75,7 +76,7 @@ if (defined($extcmd)) {
 		usage();
 	}
 }
-if (defined($gui)) {
+if ($gui) {
 	my $guitool = "";
 	$guitool = Git::config('diff.guitool');
 	if (length($guitool) > 0) {
