@@ -29,6 +29,16 @@ Compatibility Notes
    while and were deprecated in mid 2008 (v1.6.0).  When you give these
    options to "git am", it will now warn and ask you not to use them.
 
+ * When you do not tell which branches and tags to push to the "git push"
+   command in any way, the command used "matching refs" rule to update
+   remote branches and tags with branches and tags with the same name you
+   locally have.  In future versions of Git, this will change to use the
+   "upstream" rule to update the branch at the remote you would "pull"
+   from into your current branch with your local current branch.  The
+   release after 1.7.10 will start issuing a warning about this change,
+   to encourage you to tell the command what to push out, e.g. by setting
+   push.default configuration.
+
 
 Updates since v1.7.9
 --------------------
@@ -180,6 +190,10 @@ Unless otherwise noted, all the fixes since v1.7.9 in the maintenance
 releases are contained in this release (see release notes to them for
 details).
 
+ * Build with NO_PERL_MAKEMAKER was broken and Git::I18N did not work
+   with versions of Perl older than 5.8.3.
+   (merge 5eb660e ab/perl-i18n later to maint).
+
  * "git fast-import" accepted "ls" command with an empty path by
    mistake.
    (merge 178e1de jn/maint-fast-import-empty-ls later to maint).
@@ -201,13 +215,15 @@ details).
    platform tools in /usr/bin) in config.mak-autogen.  This may be useful
    for people on Solaris who have saner tools outside /usr/xpg[46]/bin.
 
+ * zsh port of bash completion script needed another workaround.
+
  * "gitweb" used to drop warnings in the log file when "heads" view is
    accessed in a repository whose HEAD does not point at a valid
    branch.
 
 ---
 exec >/var/tmp/1
-O=v1.7.10-rc1-18-g0987145
+O=v1.7.10-rc1-32-geb2c67c
 echo O=$(git describe)
 git log --first-parent --oneline ^maint $O..
 echo
