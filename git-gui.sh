@@ -154,6 +154,7 @@ set _trace [lsearch -exact $argv --trace]
 if {$_trace >= 0} {
 	set argv [lreplace $argv $_trace $_trace]
 	set _trace 1
+	if {[tk windowingsystem] eq "win32"} { console show }
 } else {
 	set _trace 0
 }
