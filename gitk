@@ -2542,6 +2542,8 @@ proc makewindow {} {
 	{mc "Return to mark" command gotomark}
 	{mc "Find descendant of this and mark" command find_common_desc}
 	{mc "Compare with marked commit" command compare_commits}
+	{mc "Diff this -> marked commit" command {diffvsmark 0}}
+	{mc "Diff marked commit -> this" command {diffvsmark 1}}
     }
     $rowctxmenu configure -tearoff 0
 
@@ -2550,6 +2552,8 @@ proc makewindow {} {
 	{mc "Diff this -> selected" command {diffvssel 0}}
 	{mc "Diff selected -> this" command {diffvssel 1}}
 	{mc "Make patch" command mkpatch}
+	{mc "Diff this -> marked commit" command {diffvsmark 0}}
+	{mc "Diff marked commit -> this" command {diffvsmark 1}}
     }
     $fakerowmenu configure -tearoff 0
 
@@ -8495,6 +8499,11 @@ proc rowmenu {x y id} {
     } else {
 	set state normal
     }
+    if {[info exists markedid] && $markedid ne $id} {
+	set mstate normal
+    } else {
+	set mstate disabled
+    }
     if {$id ne $nullid && $id ne $nullid2} {
 	set menu $rowctxmenu
 	if {$mainhead ne {}} {
@@ -8502,21 +8511,17 @@ proc rowmenu {x y id} {
 	} else {
 	    $menu entryconfigure 7 -label [mc "Detached head: can't reset" $mainhead] -state disabled
 	}
-	if {[info exists markedid] && $markedid ne $id} {
-	    $menu entryconfigure 9 -state normal
-	    $menu entryconfigure 10 -state normal
-	    $menu entryconfigure 11 -state normal
-	} else {
-	    $menu entryconfigure 9 -state disabled
-	    $menu entryconfigure 10 -state disabled
-	    $menu entryconfigure 11 -state disabled
-	}
+	$menu entryconfigure 9 -state $mstate
+	$menu entryconfigure 10 -state $mstate
+	$menu entryconfigure 11 -state $mstate
     } else {
 	set menu $fakerowmenu
     }
     $menu entryconfigure [mca "Diff this -> selected"] -state $state
     $menu entryconfigure [mca "Diff selected -> this"] -state $state
     $menu entryconfigure [mca "Make patch"] -state $state
+    $menu entryconfigure [mca "Diff this -> marked commit"] -state $mstate
+    $menu entryconfigure [mca "Diff marked commit -> this"] -state $mstate
     tk_popup $menu $x $y
 }
 
@@ -8715,6 +8720,21 @@ proc diffvssel {dirn} {
     } else {
 	set oldid $rowmenuid
 	set newid [commitonrow $selectedline]
+    }
+    addtohistory [list doseldiff $oldid $newid] savectextpos
+    doseldiff $oldid $newid
+}
+
+proc diffvsmark {dirn} {
+    global rowmenuid markedid
+
+    if {![info exists markedid]} return
+    if {$dirn} {
+	set oldid $markedid
+	set newid $rowmenuid
+    } else {
+	set oldid $rowmenuid
+	set newid $markedid
     }
     addtohistory [list doseldiff $oldid $newid] savectextpos
     doseldiff $oldid $newid
