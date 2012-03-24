@@ -14,6 +14,35 @@ proc hasworktree {} {
 		  [exec git rev-parse --is-inside-git-dir] == "false"}]
 }
 
+proc reponame {} {
+    global gitdir
+    set n [file normalize $gitdir]
+    if {[string match "*/.git" $n]} {
+	set n [string range $n 0 end-5]
+    }
+    return [file tail $n]
+}
+
+proc gitworktree {} {
+    variable _gitworktree
+    if {[info exists _gitworktree]} {
+	return $_gitworktree
+    }
+    # v1.7.0 introduced --show-toplevel to return the canonical work-tree
+    if {[catch {set _gitworktree [exec git rev-parse --show-toplevel]}]} {
+        # try to set work tree from environment, core.worktree or use
+        # cdup to obtain a relative path to the top of the worktree. If
+        # run from the top, the ./ prefix ensures normalize expands pwd.
+        if {[catch { set _gitworktree $env(GIT_WORK_TREE) }]} {
+	    catch {set _gitworktree [exec git config --get core.worktree]}
+	    if {$_gitworktree eq ""} {
+		set _gitworktree [file normalize ./[exec git rev-parse --show-cdup]]
+	    }
+        }
+    }
+    return $_gitworktree
+}
+
 # A simple scheduler for compute-intensive stuff.
 # The aim is to make sure that event handlers for GUI actions can
 # run at least every 50-100 ms.  Unfortunately fileevent handlers are
@@ -612,11 +641,15 @@ proc varcinit {view} {
 
 proc resetvarcs {view} {
     global varcid varccommits parents children vseedcount ordertok
+    global vshortids
 
     foreach vid [array names varcid $view,*] {
 	unset varcid($vid)
 	unset children($vid)
 	unset parents($vid)
+    }
+    foreach vid [array names vshortids $view,*] {
+	unset vshortids($vid)
     }
     # some commits might have children but haven't been seen yet
     foreach vid [array names children $view,*] {
@@ -904,7 +937,7 @@ proc fix_reversal {p a v} {
 proc insertrow {id p v} {
     global cmitlisted children parents varcid varctok vtokmod
     global varccommits ordertok commitidx numcommits curview
-    global targetid targetrow
+    global targetid targetrow vshortids
 
     readcommit $id
     set vid $v,$id
@@ -913,6 +946,7 @@ proc insertrow {id p v} {
     set parents($vid) [list $p]
     set a [newvarc $v $id]
     set varcid($vid) $a
+    lappend vshortids($v,[string range $id 0 3]) $id
     if {[string compare [lindex $varctok($v) $a] $vtokmod($v)] < 0} {
 	modify_arc $v $a
     }
@@ -1368,7 +1402,7 @@ proc getcommitlines {fd inst view updating}  {
     global commitidx commitdata vdatemode
     global parents children curview hlview
     global idpending ordertok
-    global varccommits varcid varctok vtokmod vfilelimit
+    global varccommits varcid varctok vtokmod vfilelimit vshortids
 
     set stuff [read $fd 500000]
     # git log doesn't terminate the last commit with a null...
@@ -1467,6 +1501,8 @@ proc getcommitlines {fd inst view updating}  {
 	}
 	set id [lindex $ids 0]
 	set vid $view,$id
+
+	lappend vshortids($view,[string range $id 0 3]) $id
 
 	if {!$listed && $updating && ![info exists varcid($vid)] &&
 	    $vfilelimit($view) ne {}} {
@@ -1690,11 +1726,26 @@ proc getcommit {id} {
 # and are present in the current view.
 # This is fairly slow...
 proc longid {prefix} {
-    global varcid curview
+    global varcid curview vshortids
 
     set ids {}
-    foreach match [array names varcid "$curview,$prefix*"] {
-	lappend ids [lindex [split $match ","] 1]
+    if {[string length $prefix] >= 4} {
+	set vshortid $curview,[string range $prefix 0 3]
+	if {[info exists vshortids($vshortid)]} {
+	    foreach id $vshortids($vshortid) {
+		if {[string match "$prefix*" $id]} {
+		    if {[lsearch -exact $ids $id] < 0} {
+			lappend ids $id
+			if {[llength $ids] >= 2} break
+		    }
+		}
+	    }
+	}
+    } else {
+	foreach match [array names varcid "$curview,$prefix*"] {
+	    lappend ids [lindex [split $match ","] 1]
+	    if {[llength $ids] >= 2} break
+	}
     }
     return $ids
 }
@@ -2491,6 +2542,8 @@ proc makewindow {} {
 	{mc "Return to mark" command gotomark}
 	{mc "Find descendant of this and mark" command find_common_desc}
 	{mc "Compare with marked commit" command compare_commits}
+	{mc "Diff this -> marked commit" command {diffvsmark 0}}
+	{mc "Diff marked commit -> this" command {diffvsmark 1}}
     }
     $rowctxmenu configure -tearoff 0
 
@@ -2499,6 +2552,8 @@ proc makewindow {} {
 	{mc "Diff this -> selected" command {diffvssel 0}}
 	{mc "Diff selected -> this" command {diffvssel 1}}
 	{mc "Make patch" command mkpatch}
+	{mc "Diff this -> marked commit" command {diffvsmark 0}}
+	{mc "Diff marked commit -> this" command {diffvsmark 1}}
     }
     $fakerowmenu configure -tearoff 0
 
@@ -4630,8 +4685,9 @@ proc askfindhighlight {row id} {
     }
     set info $commitinfo($id)
     set isbold 0
-    set fldtypes [list [mc Headline] [mc Author] [mc Date] [mc Committer] [mc CDate] [mc Comments]]
+    set fldtypes [list [mc Headline] [mc Author] "" [mc Committer] "" [mc Comments]]
     foreach f $info ty $fldtypes {
+	if {$ty eq ""} continue
 	if {($findloc eq [mc "All fields"] || $findloc eq $ty) &&
 	    [doesmatch $f]} {
 	    if {$ty eq [mc "Author"]} {
@@ -6492,7 +6548,7 @@ proc findmore {} {
     if {![info exists find_dirn]} {
 	return 0
     }
-    set fldtypes [list [mc "Headline"] [mc "Author"] [mc "Date"] [mc "Committer"] [mc "CDate"] [mc "Comments"]]
+    set fldtypes [list [mc "Headline"] [mc "Author"] "" [mc "Committer"] "" [mc "Comments"]]
     set l $findcurline
     set moretodo 0
     if {$find_dirn > 0} {
@@ -6553,6 +6609,7 @@ proc findmore {} {
 	    }
 	    set info $commitinfo($id)
 	    foreach f $info ty $fldtypes {
+		if {$ty eq ""} continue
 		if {($findloc eq [mc "All fields"] || $findloc eq $ty) &&
 		    [doesmatch $f]} {
 		    set found 1
@@ -6705,7 +6762,7 @@ proc appendwithlinks {text tags} {
 
     set start [$ctext index "end - 1c"]
     $ctext insert end $text $tags
-    set links [regexp -indices -all -inline {\m[0-9a-f]{6,40}\M} $text]
+    set links [regexp -indices -all -inline {(?:\m|-g)[0-9a-f]{6,40}\M} $text]
     foreach l $links {
 	set s [lindex $l 0]
 	set e [lindex $l 1]
@@ -6720,6 +6777,10 @@ proc appendwithlinks {text tags} {
 
 proc setlink {id lk} {
     global curview ctext pendinglinks
+
+    if {[string range $id 0 1] eq "-g"} {
+      set id [string range $id 2 end]
+    }
 
     set known 0
     if {[string length $id] < 40} {
@@ -7393,19 +7454,15 @@ proc startdiff {ids} {
     }
 }
 
+# If the filename (name) is under any of the passed filter paths
+# then return true to include the file in the listing.
 proc path_filter {filter name} {
+    set worktree [gitworktree]
     foreach p $filter {
-	set l [string length $p]
-	if {[string index $p end] eq "/"} {
-	    if {[string compare -length $l $p $name] == 0} {
-		return 1
-	    }
-	} else {
-	    if {[string compare -length $l $p $name] == 0 &&
-		([string length $name] == $l ||
-		 [string index $name $l] eq "/")} {
-		return 1
-	    }
+	set fq_p [file normalize $p]
+	set fq_n [file normalize [file join $worktree $name]]
+	if {[string match [file normalize $fq_p]* $fq_n]} {
+	    return 1
 	}
     }
     return 0
@@ -7419,7 +7476,7 @@ proc addtocflist {ids} {
 }
 
 proc diffcmd {ids flags} {
-    global nullid nullid2
+    global log_showroot nullid nullid2
 
     set i [lsearch -exact $ids $nullid]
     set j [lsearch -exact $ids $nullid2]
@@ -7453,6 +7510,9 @@ proc diffcmd {ids flags} {
 	    lappend cmd HEAD
 	}
     } else {
+	if {$log_showroot} {
+	    lappend flags --root
+	}
 	set cmd [concat | git diff-tree -r $flags $ids]
     }
     return $cmd
@@ -8442,6 +8502,11 @@ proc rowmenu {x y id} {
     } else {
 	set state normal
     }
+    if {[info exists markedid] && $markedid ne $id} {
+	set mstate normal
+    } else {
+	set mstate disabled
+    }
     if {$id ne $nullid && $id ne $nullid2} {
 	set menu $rowctxmenu
 	if {$mainhead ne {}} {
@@ -8449,21 +8514,17 @@ proc rowmenu {x y id} {
 	} else {
 	    $menu entryconfigure 7 -label [mc "Detached head: can't reset" $mainhead] -state disabled
 	}
-	if {[info exists markedid] && $markedid ne $id} {
-	    $menu entryconfigure 9 -state normal
-	    $menu entryconfigure 10 -state normal
-	    $menu entryconfigure 11 -state normal
-	} else {
-	    $menu entryconfigure 9 -state disabled
-	    $menu entryconfigure 10 -state disabled
-	    $menu entryconfigure 11 -state disabled
-	}
+	$menu entryconfigure 9 -state $mstate
+	$menu entryconfigure 10 -state $mstate
+	$menu entryconfigure 11 -state $mstate
     } else {
 	set menu $fakerowmenu
     }
     $menu entryconfigure [mca "Diff this -> selected"] -state $state
     $menu entryconfigure [mca "Diff selected -> this"] -state $state
     $menu entryconfigure [mca "Make patch"] -state $state
+    $menu entryconfigure [mca "Diff this -> marked commit"] -state $mstate
+    $menu entryconfigure [mca "Diff marked commit -> this"] -state $mstate
     tk_popup $menu $x $y
 }
 
@@ -8662,6 +8723,21 @@ proc diffvssel {dirn} {
     } else {
 	set oldid $rowmenuid
 	set newid [commitonrow $selectedline]
+    }
+    addtohistory [list doseldiff $oldid $newid] savectextpos
+    doseldiff $oldid $newid
+}
+
+proc diffvsmark {dirn} {
+    global rowmenuid markedid
+
+    if {![info exists markedid]} return
+    if {$dirn} {
+	set oldid $markedid
+	set newid $rowmenuid
+    } else {
+	set oldid $rowmenuid
+	set newid $markedid
     }
     addtohistory [list doseldiff $oldid $newid] savectextpos
     doseldiff $oldid $newid
@@ -10773,6 +10849,139 @@ proc chg_fontparam {v sub op} {
     font config sample -$sub $fontparam($sub)
 }
 
+# Create a property sheet tab page
+proc create_prefs_page {w} {
+    global NS
+    set parent [join [lrange [split $w .] 0 end-1] .]
+    if {[winfo class $parent] eq "TNotebook"} {
+	${NS}::frame $w
+    } else {
+	${NS}::labelframe $w
+    }
+}
+
+proc prefspage_general {notebook} {
+    global NS maxwidth maxgraphpct showneartags showlocalchanges
+    global tabstop limitdiffs autoselect autosellen extdifftool perfile_attrs
+    global hideremotes want_ttk have_ttk
+
+    set page [create_prefs_page $notebook.general]
+
+    ${NS}::label $page.ldisp -text [mc "Commit list display options"]
+    grid $page.ldisp - -sticky w -pady 10
+    ${NS}::label $page.spacer -text " "
+    ${NS}::label $page.maxwidthl -text [mc "Maximum graph width (lines)"]
+    spinbox $page.maxwidth -from 0 -to 100 -width 4 -textvariable maxwidth
+    grid $page.spacer $page.maxwidthl $page.maxwidth -sticky w
+    ${NS}::label $page.maxpctl -text [mc "Maximum graph width (% of pane)"]
+    spinbox $page.maxpct -from 1 -to 100 -width 4 -textvariable maxgraphpct
+    grid x $page.maxpctl $page.maxpct -sticky w
+    ${NS}::checkbutton $page.showlocal -text [mc "Show local changes"] \
+	-variable showlocalchanges
+    grid x $page.showlocal -sticky w
+    ${NS}::checkbutton $page.autoselect -text [mc "Auto-select SHA1 (length)"] \
+	-variable autoselect
+    spinbox $page.autosellen -from 1 -to 40 -width 4 -textvariable autosellen
+    grid x $page.autoselect $page.autosellen -sticky w
+    ${NS}::checkbutton $page.hideremotes -text [mc "Hide remote refs"] \
+	-variable hideremotes
+    grid x $page.hideremotes -sticky w
+
+    ${NS}::label $page.ddisp -text [mc "Diff display options"]
+    grid $page.ddisp - -sticky w -pady 10
+    ${NS}::label $page.tabstopl -text [mc "Tab spacing"]
+    spinbox $page.tabstop -from 1 -to 20 -width 4 -textvariable tabstop
+    grid x $page.tabstopl $page.tabstop -sticky w
+    ${NS}::checkbutton $page.ntag -text [mc "Display nearby tags"] \
+	-variable showneartags
+    grid x $page.ntag -sticky w
+    ${NS}::checkbutton $page.ldiff -text [mc "Limit diffs to listed paths"] \
+	-variable limitdiffs
+    grid x $page.ldiff -sticky w
+    ${NS}::checkbutton $page.lattr -text [mc "Support per-file encodings"] \
+	-variable perfile_attrs
+    grid x $page.lattr -sticky w
+
+    ${NS}::entry $page.extdifft -textvariable extdifftool
+    ${NS}::frame $page.extdifff
+    ${NS}::label $page.extdifff.l -text [mc "External diff tool" ]
+    ${NS}::button $page.extdifff.b -text [mc "Choose..."] -command choose_extdiff
+    pack $page.extdifff.l $page.extdifff.b -side left
+    pack configure $page.extdifff.l -padx 10
+    grid x $page.extdifff $page.extdifft -sticky ew
+
+    ${NS}::label $page.lgen -text [mc "General options"]
+    grid $page.lgen - -sticky w -pady 10
+    ${NS}::checkbutton $page.want_ttk -variable want_ttk \
+	-text [mc "Use themed widgets"]
+    if {$have_ttk} {
+	${NS}::label $page.ttk_note -text [mc "(change requires restart)"]
+    } else {
+	${NS}::label $page.ttk_note -text [mc "(currently unavailable)"]
+    }
+    grid x $page.want_ttk $page.ttk_note -sticky w
+    return $page
+}
+
+proc prefspage_colors {notebook} {
+    global NS uicolor bgcolor fgcolor ctext diffcolors selectbgcolor markbgcolor
+
+    set page [create_prefs_page $notebook.colors]
+
+    ${NS}::label $page.cdisp -text [mc "Colors: press to choose"]
+    grid $page.cdisp - -sticky w -pady 10
+    label $page.ui -padx 40 -relief sunk -background $uicolor
+    ${NS}::button $page.uibut -text [mc "Interface"] \
+       -command [list choosecolor uicolor {} $page.ui [mc "interface"] setui]
+    grid x $page.uibut $page.ui -sticky w
+    label $page.bg -padx 40 -relief sunk -background $bgcolor
+    ${NS}::button $page.bgbut -text [mc "Background"] \
+	-command [list choosecolor bgcolor {} $page.bg [mc "background"] setbg]
+    grid x $page.bgbut $page.bg -sticky w
+    label $page.fg -padx 40 -relief sunk -background $fgcolor
+    ${NS}::button $page.fgbut -text [mc "Foreground"] \
+	-command [list choosecolor fgcolor {} $page.fg [mc "foreground"] setfg]
+    grid x $page.fgbut $page.fg -sticky w
+    label $page.diffold -padx 40 -relief sunk -background [lindex $diffcolors 0]
+    ${NS}::button $page.diffoldbut -text [mc "Diff: old lines"] \
+	-command [list choosecolor diffcolors 0 $page.diffold [mc "diff old lines"] \
+		      [list $ctext tag conf d0 -foreground]]
+    grid x $page.diffoldbut $page.diffold -sticky w
+    label $page.diffnew -padx 40 -relief sunk -background [lindex $diffcolors 1]
+    ${NS}::button $page.diffnewbut -text [mc "Diff: new lines"] \
+	-command [list choosecolor diffcolors 1 $page.diffnew [mc "diff new lines"] \
+		      [list $ctext tag conf dresult -foreground]]
+    grid x $page.diffnewbut $page.diffnew -sticky w
+    label $page.hunksep -padx 40 -relief sunk -background [lindex $diffcolors 2]
+    ${NS}::button $page.hunksepbut -text [mc "Diff: hunk header"] \
+	-command [list choosecolor diffcolors 2 $page.hunksep \
+		      [mc "diff hunk header"] \
+		      [list $ctext tag conf hunksep -foreground]]
+    grid x $page.hunksepbut $page.hunksep -sticky w
+    label $page.markbgsep -padx 40 -relief sunk -background $markbgcolor
+    ${NS}::button $page.markbgbut -text [mc "Marked line bg"] \
+	-command [list choosecolor markbgcolor {} $page.markbgsep \
+		      [mc "marked line background"] \
+		      [list $ctext tag conf omark -background]]
+    grid x $page.markbgbut $page.markbgsep -sticky w
+    label $page.selbgsep -padx 40 -relief sunk -background $selectbgcolor
+    ${NS}::button $page.selbgbut -text [mc "Select bg"] \
+	-command [list choosecolor selectbgcolor {} $page.selbgsep [mc "background"] setselbg]
+    grid x $page.selbgbut $page.selbgsep -sticky w
+    return $page
+}
+
+proc prefspage_fonts {notebook} {
+    global NS
+    set page [create_prefs_page $notebook.fonts]
+    ${NS}::label $page.cfont -text [mc "Fonts: press to choose"]
+    grid $page.cfont - -sticky w -pady 10
+    mkfontdisp mainfont $page [mc "Main font"]
+    mkfontdisp textfont $page [mc "Diff display font"]
+    mkfontdisp uifont $page [mc "User interface font"]
+    return $page
+}
+
 proc doprefs {} {
     global maxwidth maxgraphpct use_ttk NS
     global oldprefs prefstop showneartags showlocalchanges
@@ -10793,106 +11002,37 @@ proc doprefs {} {
     ttk_toplevel $top
     wm title $top [mc "Gitk preferences"]
     make_transient $top .
-    ${NS}::label $top.ldisp -text [mc "Commit list display options"]
-    grid $top.ldisp - -sticky w -pady 10
-    ${NS}::label $top.spacer -text " "
-    ${NS}::label $top.maxwidthl -text [mc "Maximum graph width (lines)"]
-    spinbox $top.maxwidth -from 0 -to 100 -width 4 -textvariable maxwidth
-    grid $top.spacer $top.maxwidthl $top.maxwidth -sticky w
-    ${NS}::label $top.maxpctl -text [mc "Maximum graph width (% of pane)"]
-    spinbox $top.maxpct -from 1 -to 100 -width 4 -textvariable maxgraphpct
-    grid x $top.maxpctl $top.maxpct -sticky w
-    ${NS}::checkbutton $top.showlocal -text [mc "Show local changes"] \
-	-variable showlocalchanges
-    grid x $top.showlocal -sticky w
-    ${NS}::checkbutton $top.autoselect -text [mc "Auto-select SHA1 (length)"] \
-	-variable autoselect
-    spinbox $top.autosellen -from 1 -to 40 -width 4 -textvariable autosellen
-    grid x $top.autoselect $top.autosellen -sticky w
-    ${NS}::checkbutton $top.hideremotes -text [mc "Hide remote refs"] \
-	-variable hideremotes
-    grid x $top.hideremotes -sticky w
 
-    ${NS}::label $top.ddisp -text [mc "Diff display options"]
-    grid $top.ddisp - -sticky w -pady 10
-    ${NS}::label $top.tabstopl -text [mc "Tab spacing"]
-    spinbox $top.tabstop -from 1 -to 20 -width 4 -textvariable tabstop
-    grid x $top.tabstopl $top.tabstop -sticky w
-    ${NS}::checkbutton $top.ntag -text [mc "Display nearby tags"] \
-	-variable showneartags
-    grid x $top.ntag -sticky w
-    ${NS}::checkbutton $top.ldiff -text [mc "Limit diffs to listed paths"] \
-	-variable limitdiffs
-    grid x $top.ldiff -sticky w
-    ${NS}::checkbutton $top.lattr -text [mc "Support per-file encodings"] \
-	-variable perfile_attrs
-    grid x $top.lattr -sticky w
-
-    ${NS}::entry $top.extdifft -textvariable extdifftool
-    ${NS}::frame $top.extdifff
-    ${NS}::label $top.extdifff.l -text [mc "External diff tool" ]
-    ${NS}::button $top.extdifff.b -text [mc "Choose..."] -command choose_extdiff
-    pack $top.extdifff.l $top.extdifff.b -side left
-    pack configure $top.extdifff.l -padx 10
-    grid x $top.extdifff $top.extdifft -sticky ew
-
-    ${NS}::label $top.lgen -text [mc "General options"]
-    grid $top.lgen - -sticky w -pady 10
-    ${NS}::checkbutton $top.want_ttk -variable want_ttk \
-	-text [mc "Use themed widgets"]
-    if {$have_ttk} {
-	${NS}::label $top.ttk_note -text [mc "(change requires restart)"]
+    if {[set use_notebook [expr {$use_ttk && [info command ::ttk::notebook] ne ""}]]} {
+	set notebook [ttk::notebook $top.notebook]
     } else {
-	${NS}::label $top.ttk_note -text [mc "(currently unavailable)"]
+	set notebook [${NS}::frame $top.notebook -borderwidth 0 -relief flat]
     }
-    grid x $top.want_ttk $top.ttk_note -sticky w
 
-    ${NS}::label $top.cdisp -text [mc "Colors: press to choose"]
-    grid $top.cdisp - -sticky w -pady 10
-    label $top.ui -padx 40 -relief sunk -background $uicolor
-    ${NS}::button $top.uibut -text [mc "Interface"] \
-       -command [list choosecolor uicolor {} $top.ui [mc "interface"] setui]
-    grid x $top.uibut $top.ui -sticky w
-    label $top.bg -padx 40 -relief sunk -background $bgcolor
-    ${NS}::button $top.bgbut -text [mc "Background"] \
-	-command [list choosecolor bgcolor {} $top.bg [mc "background"] setbg]
-    grid x $top.bgbut $top.bg -sticky w
-    label $top.fg -padx 40 -relief sunk -background $fgcolor
-    ${NS}::button $top.fgbut -text [mc "Foreground"] \
-	-command [list choosecolor fgcolor {} $top.fg [mc "foreground"] setfg]
-    grid x $top.fgbut $top.fg -sticky w
-    label $top.diffold -padx 40 -relief sunk -background [lindex $diffcolors 0]
-    ${NS}::button $top.diffoldbut -text [mc "Diff: old lines"] \
-	-command [list choosecolor diffcolors 0 $top.diffold [mc "diff old lines"] \
-		      [list $ctext tag conf d0 -foreground]]
-    grid x $top.diffoldbut $top.diffold -sticky w
-    label $top.diffnew -padx 40 -relief sunk -background [lindex $diffcolors 1]
-    ${NS}::button $top.diffnewbut -text [mc "Diff: new lines"] \
-	-command [list choosecolor diffcolors 1 $top.diffnew [mc "diff new lines"] \
-		      [list $ctext tag conf dresult -foreground]]
-    grid x $top.diffnewbut $top.diffnew -sticky w
-    label $top.hunksep -padx 40 -relief sunk -background [lindex $diffcolors 2]
-    ${NS}::button $top.hunksepbut -text [mc "Diff: hunk header"] \
-	-command [list choosecolor diffcolors 2 $top.hunksep \
-		      [mc "diff hunk header"] \
-		      [list $ctext tag conf hunksep -foreground]]
-    grid x $top.hunksepbut $top.hunksep -sticky w
-    label $top.markbgsep -padx 40 -relief sunk -background $markbgcolor
-    ${NS}::button $top.markbgbut -text [mc "Marked line bg"] \
-	-command [list choosecolor markbgcolor {} $top.markbgsep \
-		      [mc "marked line background"] \
-		      [list $ctext tag conf omark -background]]
-    grid x $top.markbgbut $top.markbgsep -sticky w
-    label $top.selbgsep -padx 40 -relief sunk -background $selectbgcolor
-    ${NS}::button $top.selbgbut -text [mc "Select bg"] \
-	-command [list choosecolor selectbgcolor {} $top.selbgsep [mc "background"] setselbg]
-    grid x $top.selbgbut $top.selbgsep -sticky w
+    lappend pages [prefspage_general $notebook] [mc "General"]
+    lappend pages [prefspage_colors $notebook] [mc "Colors"]
+    lappend pages [prefspage_fonts $notebook] [mc "Fonts"]
+    foreach {page title} $pages {
+	if {$use_notebook} {
+	    $notebook add $page -text $title
+	} else {
+	    set btn [${NS}::button $notebook.b_[string map {. X} $page] \
+			 -text $title -command [list raise $page]]
+	    $page configure -text $title
+	    grid $btn -row 0 -column [incr col] -sticky w
+	    grid $page -row 1 -column 0 -sticky news -columnspan 100
+	}
+    }
 
-    ${NS}::label $top.cfont -text [mc "Fonts: press to choose"]
-    grid $top.cfont - -sticky w -pady 10
-    mkfontdisp mainfont $top [mc "Main font"]
-    mkfontdisp textfont $top [mc "Diff display font"]
-    mkfontdisp uifont $top [mc "User interface font"]
+    if {!$use_notebook} {
+	grid columnconfigure $notebook 0 -weight 1
+	grid rowconfigure $notebook 1 -weight 1
+	raise [lindex $pages 0]
+    }
+
+    grid $notebook -sticky news -padx 2 -pady 2
+    grid rowconfigure $top 0 -weight 1
+    grid columnconfigure $top 0 -weight 1
 
     ${NS}::frame $top.buts
     ${NS}::button $top.buts.ok -text [mc "OK"] -command prefsok -default active
@@ -10904,7 +11044,7 @@ proc doprefs {} {
     grid columnconfigure $top.buts 1 -weight 1 -uniform a
     grid $top.buts - - -pady 10 -sticky ew
     grid columnconfigure $top 2 -weight 1
-    bind $top <Visibility> "focus $top.buts.ok"
+    bind $top <Visibility> [list focus $top.buts.ok]
 }
 
 proc choose_extdiff {} {
@@ -11422,10 +11562,20 @@ catch {
     }
 }
 
+set log_showroot true
+catch {
+    set log_showroot [exec git config --bool --get log.showroot]
+}
+
 if {[tk windowingsystem] eq "aqua"} {
     set mainfont {{Lucida Grande} 9}
     set textfont {Monaco 9}
     set uifont {{Lucida Grande} 9 bold}
+} elseif {![catch {::tk::pkgconfig get fontsystem} xft] && $xft eq "xft"} {
+    # fontconfig!
+    set mainfont {sans 9}
+    set textfont {monospace 9}
+    set uifont {sans 9 bold}
 } else {
     set mainfont {Helvetica 9}
     set textfont {Courier 9}
@@ -11607,6 +11757,8 @@ if {[package vcompare $git_version "1.6.6.2"] >= 0} {
     set show_notes "--show-notes"
 }
 
+set appname "gitk"
+
 set runq {}
 set history {}
 set historyindex 0
@@ -11676,7 +11828,7 @@ catch {
 }
 # wait for the window to become visible
 tkwait visibility .
-wm title . "[file tail $argv0]: [file tail [pwd]]"
+wm title . "$appname: [reponame]"
 update
 readrefs
 
