@@ -135,8 +135,10 @@ static char *parse_value(void)
 	for (;;) {
 		int c = get_next_char();
 		if (c == '\n') {
-			if (quote)
+			if (quote) {
+				cf->linenr--;
 				return NULL;
+			}
 			return cf->value.buf;
 		}
 		if (comment)
@@ -226,7 +228,7 @@ static int get_extended_base_var(char *name, int baselen, int c)
 {
 	do {
 		if (c == '\n')
-			return -1;
+			goto error_incomplete_line;
 		c = get_next_char();
 	} while (isspace(c));
 
@@ -238,13 +240,13 @@ static int get_extended_base_var(char *name, int baselen, int c)
 	for (;;) {
 		int c = get_next_char();
 		if (c == '\n')
-			return -1;
+			goto error_incomplete_line;
 		if (c == '"')
 			break;
 		if (c == '\\') {
 			c = get_next_char();
 			if (c == '\n')
-				return -1;
+				goto error_incomplete_line;
 		}
 		name[baselen++] = c;
 		if (baselen > MAXNAME / 2)
@@ -255,6 +257,9 @@ static int get_extended_base_var(char *name, int baselen, int c)
 	if (get_next_char() != ']')
 		return -1;
 	return baselen;
+error_incomplete_line:
+	cf->linenr--;
+	return -1;
 }
 
 static int get_base_var(char *name)
