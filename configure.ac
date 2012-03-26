@@ -27,10 +27,11 @@ AC_DEFUN([GIT_ARG_SET_PATH],
 # Optional second argument allows setting NO_PROGRAM=YesPlease if
 # --without-PROGRAM is used.
 AC_DEFUN([GIT_CONF_APPEND_PATH],
-[PROGRAM=m4_toupper($1); \
+[m4_pushdef([GIT_UC_PROGRAM], m4_toupper([$1]))dnl
+PROGRAM=GIT_UC_PROGRAM; \
 if test "$withval" = "no"; then \
 	if test -n "$2"; then \
-		m4_toupper($1)_PATH=$withval; \
+		GIT_UC_PROGRAM[]_PATH=$withval; \
 		AC_MSG_NOTICE([Disabling use of ${PROGRAM}]); \
 		GIT_CONF_APPEND_LINE(NO_${PROGRAM}=YesPlease); \
 		GIT_CONF_APPEND_LINE(${PROGRAM}_PATH=); \
@@ -41,12 +42,12 @@ else \
 	if test "$withval" = "yes"; then \
 		AC_MSG_WARN([You should provide path for --with-$1=PATH]); \
 	else \
-		m4_toupper($1)_PATH=$withval; \
-		AC_MSG_NOTICE([Setting m4_toupper($1)_PATH to $withval]); \
+		GIT_UC_PROGRAM[]_PATH=$withval; \
+		AC_MSG_NOTICE([Setting GIT_UC_PROGRAM[]_PATH to $withval]); \
 		GIT_CONF_APPEND_LINE(${PROGRAM}_PATH=$withval); \
 	fi; \
 fi; \
-]) # GIT_CONF_APPEND_PATH
+m4_popdef([GIT_UC_PROGRAM])]) # GIT_CONF_APPEND_PATH
 #
 # GIT_PARSE_WITH(PACKAGE)
 # -----------------------
@@ -55,18 +56,19 @@ fi; \
 # * Set PACKAGEDIR=PATH for --with-PACKAGE=PATH
 # * Unset NO_PACKAGE for --with-PACKAGE without ARG
 AC_DEFUN([GIT_PARSE_WITH],
-[PACKAGE=m4_toupper($1); \
+[m4_pushdef([GIT_UC_PACKAGE], m4_toupper([$1]))dnl
+PACKAGE=GIT_UC_PACKAGE; \
 if test "$withval" = "no"; then \
-	m4_toupper(NO_$1)=YesPlease; \
+	NO_[]GIT_UC_PACKAGE=YesPlease; \
 elif test "$withval" = "yes"; then \
-	m4_toupper(NO_$1)=; \
+	NO_[]GIT_UC_PACKAGE=; \
 else \
-	m4_toupper(NO_$1)=; \
-	m4_toupper($1)DIR=$withval; \
-	AC_MSG_NOTICE([Setting m4_toupper($1)DIR to $withval]); \
+	NO_[]GIT_UC_PACKAGE=; \
+	GIT_UC_PACKAGE[]DIR=$withval; \
+	AC_MSG_NOTICE([Setting GIT_UC_PACKAGE[]DIR to $withval]); \
 	GIT_CONF_APPEND_LINE(${PACKAGE}DIR=$withval); \
 fi \
-])# GIT_PARSE_WITH
+m4_popdef([GIT_UC_PACKAGE])]) # GIT_PARSE_WITH
 #
 # GIT_PARSE_WITH_SET_MAKE_VAR(WITHNAME, VAR, HELP_TEXT)
 # ---------------------
