@@ -409,10 +409,13 @@ The interactive mode is meant for this type of workflow:
 
 where point 2. consists of several instances of
 
-a. regular use
+a) regular use
+
  1. finish something worthy of a commit
  2. commit
-b. independent fixup
+
+b) independent fixup
+
  1. realize that something does not work
  2. fix that
  3. commit it
