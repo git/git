@@ -45,6 +45,8 @@ Updates since v1.7.9
 
 UI, Workflows & Features
 
+ * various "gitk" updates.
+
  * Teams for localizing the messages from the Porcelain layer of
    commands are starting to form, thanks to Jiang Xin who volunteered
    to be the localization coordinator.  An initial set of translated
@@ -194,36 +196,20 @@ details).
    with versions of Perl older than 5.8.3.
    (merge 5eb660e ab/perl-i18n later to maint).
 
- * "git fast-import" accepted "ls" command with an empty path by
-   mistake.
-   (merge 178e1de jn/maint-fast-import-empty-ls later to maint).
-
- * The "remaining" subcommand to "git rerere" was not documented.
-   (merge 3e7a1df ph/rerere-doc later to maint).
-
  * "git tag -s" honored "gpg.program" configuration variable since
    1.7.9, but "git tag -v" and "git verify-tag" didn't.
    (merge a2c2506 az/verify-tag-use-gpg-config later to maint).
 
- * When "git config" diagnoses an error in a configuration file and
-   shows the line number for the offending line, it miscounted if the
-   error was at the end of line.
-   (merge 4b34059 ms/maint-config-error-at-eol-linecount later to maint).
-
- * "configure" script learned to take "--sane-tool-path" from the
-   command line to record SANE_TOOL_PATH (used to avoid broken
-   platform tools in /usr/bin) in config.mak-autogen.  This may be useful
-   for people on Solaris who have saner tools outside /usr/xpg[46]/bin.
+ * "configure" script learned to take "--with-sane-tool-path" from the
+   command line to record SANE_TOOL_PATH (used to avoid broken platform
+   tools in /usr/bin) in config.mak.autogen.  This may be useful for
+   people on Solaris who have saner tools outside /usr/xpg[46]/bin.
 
  * zsh port of bash completion script needed another workaround.
 
- * "gitweb" used to drop warnings in the log file when "heads" view is
-   accessed in a repository whose HEAD does not point at a valid
-   branch.
-
 ---
 exec >/var/tmp/1
-O=v1.7.10-rc1-32-geb2c67c
+O=v1.7.10-rc2-18-gee459ba
 echo O=$(git describe)
 git log --first-parent --oneline ^maint $O..
 echo
