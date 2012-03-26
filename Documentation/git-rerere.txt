@@ -8,7 +8,7 @@ git-rerere - Reuse recorded resolution of conflicted merges
 SYNOPSIS
 --------
 [verse]
-'git rerere' ['clear'|'forget' <pathspec>|'diff'|'status'|'gc']
+'git rerere' ['clear'|'forget' <pathspec>|'diff'|'remaining'|'status'|'gc']
 
 DESCRIPTION
 -----------
@@ -37,30 +37,35 @@ its working state.
 
 'clear'::
 
-This resets the metadata used by rerere if a merge resolution is to be
+Reset the metadata used by rerere if a merge resolution is to be
 aborted.  Calling 'git am [--skip|--abort]' or 'git rebase [--skip|--abort]'
 will automatically invoke this command.
 
 'forget' <pathspec>::
 
-This resets the conflict resolutions which rerere has recorded for the current
+Reset the conflict resolutions which rerere has recorded for the current
 conflict in <pathspec>.
 
 'diff'::
 
-This displays diffs for the current state of the resolution.  It is
+Display diffs for the current state of the resolution.  It is
 useful for tracking what has changed while the user is resolving
 conflicts.  Additional arguments are passed directly to the system
 'diff' command installed in PATH.
 
 'status'::
 
-Like 'diff', but this only prints the filenames that will be tracked
-for resolutions.
+Print paths with conflicts whose merge resolution rerere will record.
+
+'remaining'::
+
+Print paths with conflicts that have not been autoresolved by rerere.
+This includes paths whose resolutions cannot be tracked by rerere,
+such as conflicting submodules.
 
 'gc'::
 
-This prunes records of conflicted merges that
+Prune records of conflicted merges that
 occurred a long time ago.  By default, unresolved conflicts older
 than 15 days and resolved conflicts older than 60
 days are pruned.  These defaults are controlled via the
