@@ -46,7 +46,7 @@ EDITOR=:
 # /usr/xpg4/bin/sh and /bin/ksh to bail out.  So keep the unsets
 # deriving from the command substitution clustered with the other
 # ones.
-unset VISUAL EMAIL LANGUAGE $(perl -e '
+unset VISUAL EMAIL LANGUAGE COLUMNS $(perl -e '
 	my @env = keys %ENV;
 	my $ok = join("|", qw(
 		TRACE

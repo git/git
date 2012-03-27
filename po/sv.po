@@ -5,10 +5,10 @@
 #
 msgid ""
 msgstr ""
-"Project-Id-Version: git 1.7.3\n"
+"Project-Id-Version: git 1.7.10\n"
 "Report-Msgid-Bugs-To: Git Mailing List <git@vger.kernel.org>\n"
-"POT-Creation-Date: 2012-03-08 10:19+0800\n"
-"PO-Revision-Date: 2012-03-08 10:53+0100\n"
+"POT-Creation-Date: 2012-03-16 20:18+0800\n"
+"PO-Revision-Date: 2012-03-26 07:00+0100\n"
 "Last-Translator: Peter Krefting <peter@softwolves.pp.se>\n"
 "Language-Team: Swedish <tp-sv@listor.tp-sv.se>\n"
 "Language: sv\n"
@@ -463,11 +463,11 @@ msgid "  (commit or discard the untracked or modified content in submodules)"
 msgstr ""
 "  (checka in eller förkasta ospårat eller ändrat innehåll i undermoduler)"
 
-# %s är ett verb ("Untracked"/"Ignored").
+# %s är ett verb ("Untracked"/"Ignored"); lägg till ett -e.
 #: wt-status.c:187
 #, c-format
 msgid "%s files:"
-msgstr "%s filer:"
+msgstr "%se filer:"
 
 #: wt-status.c:190
 #, c-format
@@ -1886,7 +1886,7 @@ msgid ""
 "some local refs could not be updated; try running\n"
 " 'git remote prune %s' to remove any old, conflicting branches"
 msgstr ""
-"några lokala referenser kunde inte uppdateras; testa att köra\n"
+"vissa lokala referenser kunde inte uppdateras; testa att köra\n"
 " \"git remote prune %s\" för att ta bort gamla grenar som står i konflikt"
 
 #: builtin/fetch.c:540
@@ -2872,7 +2872,7 @@ msgstr "Sänder till %s\n"
 #: builtin/push.c:135
 #, c-format
 msgid "failed to push some refs to '%s'"
-msgstr "misslyckades sända några referenser till \"%s\""
+msgstr "misslyckades sända vissa referenser till \"%s\""
 
 #: builtin/push.c:143
 #, c-format
@@ -3251,29 +3251,29 @@ msgstr "Patchformatet $patch_format stöds inte."
 msgid "Patch format detection failed."
 msgstr "Misslyckades detektera patchformat."
 
-#: git-am.sh:409
+#: git-am.sh:411
 msgid "-d option is no longer supported.  Do not use."
 msgstr "Flaggan -d stöds inte lägre. Använd inte."
 
-#: git-am.sh:472
+#: git-am.sh:474
 #, sh-format
 msgid "previous rebase directory $dotest still exists but mbox given."
 msgstr "tidigare rebase-katalog $dotest finns fortfarande, men mbox angavs."
 
-#: git-am.sh:477
+#: git-am.sh:479
 msgid "Please make up your mind. --skip or --abort?"
 msgstr "Bestäm dig. --skip eller --abort?"
 
-#: git-am.sh:504
+#: git-am.sh:506
 msgid "Resolve operation not in progress, we are not resuming."
 msgstr "Lösningsoperation pågår inte, vi återupptar inte."
 
-#: git-am.sh:570
+#: git-am.sh:572
 #, sh-format
 msgid "Dirty index: cannot apply patches (dirty: $files)"
 msgstr "Smutsigt index: kan inte applicera patchar (smutsiga: $files)"
 
-#: git-am.sh:746
+#: git-am.sh:748
 msgid "cannot be interactive without stdin connected to a terminal."
 msgstr ""
 "kan inte vara interaktiv om standard in inte är ansluten till en terminal."
@@ -3281,20 +3281,20 @@ msgstr ""
 #. TRANSLATORS: Make sure to include [y], [n], [e], [v] and [a]
 #. in your translation. The program will only accept English
 #. input at this point.
-#: git-am.sh:757
+#: git-am.sh:759
 msgid "Apply? [y]es/[n]o/[e]dit/[v]iew patch/[a]ccept all "
 msgstr "Applicera? Y=ja/N=nej/E=redigera/V=visa patch/A=godta alla "
 
-#: git-am.sh:793
+#: git-am.sh:795
 #, sh-format
 msgid "Applying: $FIRSTLINE"
 msgstr "Applicerar: $FIRSTLINE"
 
-#: git-am.sh:838
+#: git-am.sh:840
 msgid "No changes -- Patch already applied."
 msgstr "Inga ändringar -- Patchen har redan applicerats."
 
-#: git-am.sh:864
+#: git-am.sh:866
 msgid "applying to an empty history"
 msgstr "applicerar på en tom historik"
 
@@ -3539,10 +3539,15 @@ msgstr "kan inte ta bort en komponent från url:en \"$remoteurl\""
 msgid "No submodule mapping found in .gitmodules for path '$path'"
 msgstr "Hittade ingen undermodulmappning i .gitmodules för sökvägen \"$path\""
 
-#: git-submodule.sh:173
+#: git-submodule.sh:149
 #, sh-format
 msgid "Clone of '$url' into submodule path '$path' failed"
 msgstr "Misslyckades klona \"$url\" till undermodulsökvägen \"$path\""
+
+#: git-submodule.sh:159
+#, sh-format
+msgid "Gitdir '$a' is part of the submodule path '$b' or vice versa"
+msgstr "Gitkatalog \"$a\" ingår i underkatalogsökvägen \"$b\" eller omvänt"
 
 #: git-submodule.sh:247
 #, sh-format

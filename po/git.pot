@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: Git Mailing List <git@vger.kernel.org>\n"
-"POT-Creation-Date: 2012-03-08 10:19+0800\n"
+"POT-Creation-Date: 2012-03-16 20:18+0800\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -3071,49 +3071,49 @@ msgstr ""
 msgid "Patch format detection failed."
 msgstr ""
 
-#: git-am.sh:409
+#: git-am.sh:411
 msgid "-d option is no longer supported.  Do not use."
 msgstr ""
 
-#: git-am.sh:472
+#: git-am.sh:474
 #, sh-format
 msgid "previous rebase directory $dotest still exists but mbox given."
 msgstr ""
 
-#: git-am.sh:477
+#: git-am.sh:479
 msgid "Please make up your mind. --skip or --abort?"
 msgstr ""
 
-#: git-am.sh:504
+#: git-am.sh:506
 msgid "Resolve operation not in progress, we are not resuming."
 msgstr ""
 
-#: git-am.sh:570
+#: git-am.sh:572
 #, sh-format
 msgid "Dirty index: cannot apply patches (dirty: $files)"
 msgstr ""
 
-#: git-am.sh:746
+#: git-am.sh:748
 msgid "cannot be interactive without stdin connected to a terminal."
 msgstr ""
 
 #. TRANSLATORS: Make sure to include [y], [n], [e], [v] and [a]
 #. in your translation. The program will only accept English
 #. input at this point.
-#: git-am.sh:757
+#: git-am.sh:759
 msgid "Apply? [y]es/[n]o/[e]dit/[v]iew patch/[a]ccept all "
 msgstr ""
 
-#: git-am.sh:793
+#: git-am.sh:795
 #, sh-format
 msgid "Applying: $FIRSTLINE"
 msgstr ""
 
-#: git-am.sh:838
+#: git-am.sh:840
 msgid "No changes -- Patch already applied."
 msgstr ""
 
-#: git-am.sh:864
+#: git-am.sh:866
 msgid "applying to an empty history"
 msgstr ""
 
@@ -3350,9 +3350,14 @@ msgstr ""
 msgid "No submodule mapping found in .gitmodules for path '$path'"
 msgstr ""
 
-#: git-submodule.sh:173
+#: git-submodule.sh:149
 #, sh-format
 msgid "Clone of '$url' into submodule path '$path' failed"
+msgstr ""
+
+#: git-submodule.sh:159
+#, sh-format
+msgid "Gitdir '$a' is part of the submodule path '$b' or vice versa"
 msgstr ""
 
 #: git-submodule.sh:247

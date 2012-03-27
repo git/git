@@ -5,6 +5,7 @@ Language:	is (Icelandic)
 Leader:		Ævar Arnfjörð Bjarmason <avarab@gmail.com>
 
 Language:	sv (Swedish)
+Repository:	https://github.com/nafmo/git-l10n-sv/
 Leader:		Peter Krefting <peter@softwolves.pp.se>
 
 Language:	zh_CN (Simplified Chinese)
