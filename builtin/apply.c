@@ -198,19 +198,24 @@ struct patch {
 
 static void free_patch(struct patch *patch)
 {
-	while (patch) {
-		struct patch *patch_next = patch->next;
-		struct fragment *fragment = patch->fragments;
+	struct fragment *fragment = patch->fragments;
 
-		while (fragment) {
-			struct fragment *fragment_next = fragment->next;
-			if (fragment->patch != NULL && fragment->free_patch)
-				free((char *)fragment->patch);
-			free(fragment);
-			fragment = fragment_next;
-		}
-		free(patch);
-		patch = patch_next;
+	while (fragment) {
+		struct fragment *fragment_next = fragment->next;
+		if (fragment->patch != NULL && fragment->free_patch)
+			free((char *)fragment->patch);
+		free(fragment);
+		fragment = fragment_next;
+	}
+	free(patch);
+}
+
+static void free_patch_list(struct patch *list)
+{
+	while (list) {
+		struct patch *next = list->next;
+		free_patch(list);
+		list = next;
 	}
 }
 
@@ -3771,7 +3776,7 @@ static int apply_patch(int fd, const char *filename, int options)
 	if (summary)
 		summary_patch_list(list);
 
-	free_patch(list);
+	free_patch_list(list);
 	strbuf_release(&buf);
 	return 0;
 }
