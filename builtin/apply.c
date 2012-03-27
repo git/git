@@ -3724,7 +3724,6 @@ static int apply_patch(int fd, const char *filename, int options)
 	struct patch *list = NULL, **listp = &list;
 	int skipped_patch = 0;
 
-	memset(&fn_table, 0, sizeof(struct string_list));
 	patch_input_file = filename;
 	read_patch_file(&buf, fd);
 	offset = 0;
@@ -3791,6 +3790,7 @@ static int apply_patch(int fd, const char *filename, int options)
 
 	free_patch_list(list);
 	strbuf_release(&buf);
+	string_list_clear(&fn_table, 0);
 	return 0;
 }
 
