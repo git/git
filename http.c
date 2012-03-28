@@ -829,7 +829,7 @@ int http_get_strbuf(const char *url, struct strbuf *result, int options)
 }
 
 /*
- * Downloads an url and stores the result in the given file.
+ * Downloads a URL and stores the result in the given file.
  *
  * If a previous interrupted download is detected (i.e. a previous temporary
  * file is still around) the download is resumed.
