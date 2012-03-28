@@ -46,11 +46,19 @@ Updates since v1.7.9
 UI, Workflows & Features
 
  * various "gitk" updates.
+   - show the path to the top level directory in the window title
+   - update preference edit dialog
+   - display file list correctly when directories are given on command line
+   - make "git-describe" output in the log message into a clickable link
+   - avoid matching the UNIX timestamp part when searching all fields
+   - give preference to symbolic font names like sans & monospace
+   - allow comparing two commits using a mark
+   - "gitk" honors log.showroot configuration.
 
  * Teams for localizing the messages from the Porcelain layer of
    commands are starting to form, thanks to Jiang Xin who volunteered
-   to be the localization coordinator.  An initial set of translated
-   messages for simplified chinese is available.
+   to be the localization coordinator.  Translated messages for
+   simplified Chinese and Swedish are available.
 
  * The configuration mechanism learned an "include" facility; an
    assignment to the include.path pseudo-variable causes the named
@@ -206,11 +214,3 @@ details).
    people on Solaris who have saner tools outside /usr/xpg[46]/bin.
 
  * zsh port of bash completion script needed another workaround.
-
----
-exec >/var/tmp/1
-O=v1.7.10-rc2-18-gee459ba
-echo O=$(git describe)
-git log --first-parent --oneline ^maint $O..
-echo
-git shortlog --no-merges ^maint $O..
