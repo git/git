@@ -127,7 +127,7 @@ extern char *get_remote_object_url(const char *url, const char *hex,
 #define HTTP_NOAUTH	5
 
 /*
- * Requests an url and stores the result in a strbuf.
+ * Requests a URL and stores the result in a strbuf.
  *
  * If the result pointer is NULL, a HTTP HEAD request is made instead of GET.
  */

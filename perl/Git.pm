@@ -691,7 +691,7 @@ The hash is in the format C<refname =\> hash>. For tags, the C<refname> entry
 contains the tag object while a C<refname^{}> entry gives the tagged objects.
 
 C<REPOSITORY> has the same meaning as the appropriate C<git-ls-remote>
-argument; either an URL or a remote name (if called on a repository instance).
+argument; either a URL or a remote name (if called on a repository instance).
 C<GROUPS> is an optional arrayref that can contain 'tags' to return all the
 tags and/or 'heads' to return all the heads. C<REFGLOB> is an optional array
 of strings containing a shell-like glob to further limit the refs returned in

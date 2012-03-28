@@ -1154,7 +1154,7 @@ int transport_disconnect(struct transport *transport)
 }
 
 /*
- * Strip username (and password) from an url and return
+ * Strip username (and password) from a URL and return
  * it in a newly allocated string.
  */
 char *transport_anonymize_url(const char *url)
