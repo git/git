@@ -25,7 +25,7 @@ plumbing scripts and/or are writing new ones.
 'git sh-i18n{litdd}envsubst' is Git's stripped-down copy of the GNU
 `envsubst(1)` program that comes with the GNU gettext package. It's
 used internally by linkgit:git-sh-i18n[1] to interpolate the variables
-passed to the the `eval_gettext` function.
+passed to the `eval_gettext` function.
 
 No promises are made about the interface, or that this
 program won't disappear without warning in the next version

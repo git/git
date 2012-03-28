@@ -40,7 +40,7 @@ int git_check_attr(const char *path, int, struct git_attr_check *);
 
 /*
  * Retrieve all attributes that apply to the specified path.  *num
- * will be set the the number of attributes on the path; **check will
+ * will be set to the number of attributes on the path; **check will
  * be set to point at a newly-allocated array of git_attr_check
  * objects describing the attributes and their values.  *check must be
  * free()ed by the caller.

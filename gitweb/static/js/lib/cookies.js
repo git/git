@@ -30,7 +30,7 @@
  *                            If a negative value is specified or a date in the past),
  *                            the cookie will be deleted.
  *                            If set to null or omitted, the cookie will be a session cookie
- *                            and will not be retained when the the browser exits.
+ *                            and will not be retained when the browser exits.
  * @param {String} [options.path] Restrict access of a cookie to particular directory
  *                               (default: path of page that created the cookie).
  * @param {String} [options.domain] Override what web sites are allowed to access cookie

@@ -178,7 +178,7 @@ used:
 
 C:
 
- - Include builtin.h at the top, it'll pull in in gettext.h, which
+ - Include builtin.h at the top, it'll pull in gettext.h, which
    defines the gettext interface. Consult with the list if you need to
    use gettext.h directly.
 
