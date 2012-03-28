@@ -241,6 +241,12 @@ sub get_commit {
 			}
 			push @desc, $commit{$_}->{'log'};
 		}
+
+		if (80 < @desc) {
+			@desc = @desc[0..4];
+			push @desc, "- ...";
+		}
+
 		my $list = join("\n", map { " " . $_ } @desc);
 		my $relation = describe_relation($topic{$branch});
 		$topic{$branch}{'desc'} = $head . $list;
