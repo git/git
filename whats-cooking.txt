@@ -1,15 +1,17 @@
 To: git@vger.kernel.org
-Subject: What's cooking in git.git (Mar 2012, #09; Mon, 26)
-X-master-at: fae9d761c78cba1039854b51df6c2f7360e59cba
-X-next-at: 74cd462aafcd177c1507741065d5836c6f8424aa
+Subject: What's cooking in git.git (Mar 2012, #10; Wed, 28)
+X-master-at: 455cf268dbaf227bdbd5e9fbf96525452bcfe44f
+X-next-at: 59406684b6bbd073b171b4f8f3bc5b33966f3187
 
-What's cooking in git.git (Mar 2012, #09; Mon, 26)
+What's cooking in git.git (Mar 2012, #10; Wed, 28)
 --------------------------------------------------
 
 Here are the topics that have been cooking.  Commits prefixed with '-' are
 only in 'pu' (proposed updates) while commits prefixed with '+' are in 'next'.
 
-The updates for "gitk" part is now ready for 1.7.10.
+Hopefully the release will be done early next week.  The final rc was
+tagged and pushed out today so that people can play with it and report
+possible issues.
 
 You can find the changes described here in the integration branches of the
 repositories listed at
@@ -19,18 +21,36 @@ repositories listed at
 --------------------------------------------------
 [New Topics]
 
-* rs/combine-diff-zero-context-at-the-beginning (2012-03-25) 1 commit
- - combine-diff: fix loop index underflow
+* dg/subtree (2012-03-25) 112 commits
+ - Add 'contrib/subtree/' from commit '2e63f75b8f49abe220ef55ec4e978e7a3b8dc351'
+ - Add Subtree Test Makefile
+ - Build Subtree
+ - Use Project Config Files
+ - Remove Unneeded Files
+ - ...
 
-Fixes an age old corner case bug in combine diff (only triggered with -U0
-and the hunk at the beginning of the file needs to be shown).
+A test merge of the 'subtree'.
 
-* sl/autoconf (2012-03-26) 3 commits
- - configure: be more idiomatic
- - configure: avoid some code repetitions thanks to m4_{push,pop}def
- - configure: move definitions of private m4 macros before AC_INIT invocation
+* jk/branch-quiet (2012-03-26) 2 commits
+ - teach "git branch" a --quiet option
+ - checkout: suppress tracking message with "-q"
 
-Updates our configure.ac to follow a better "autoconf" style.
+Even with "-q"uiet option, "checkout" used to report setting up tracking.
+Also "branch" learns "-q"uiet option to squelch informational message.
+
+* jk/run-command-eacces (2012-03-27) 3 commits
+ - [DONTMERGE] semi-squashable test addition
+ - git: continue alias lookup on EACCES errors
+ - run-command: propagate EACCES errors to parent
+
+When PATH contains an unreadable directory, alias expansion code did not
+kick in, and failed with an error that said "git-subcmd" was not found.
+
+* jb/am-include (2012-03-28) 1 commit
+ - am: support --include option
+
+* jc/am-report-3way (2012-03-28) 1 commit
+ - am -3: list the paths that needed 3-way fallback
 
 --------------------------------------------------
 [Stalled]
@@ -86,30 +106,18 @@ Another reroll after a bugreport on pthread usage discovered by Ramsey,
 but it seems the topic is cooking between Ramsay and Duy out of tree.
 Waiting for resolution.
 
-* jh/apply-free-patch (2012-03-21) 4 commits
+* jh/apply-free-patch (2012-03-27) 6 commits
  - apply.c: WIP ownership audit
  - apply: free patch->result
+ - apply: release memory for fn_table
  - apply: free patch->{def,old,new}_name fields
+ - apply: rename free_patch() to free_patch_list()
  - apply: do not leak patches and fragments
 
-Valgrind reports quite a lot of discarded memory inside apply. I have a
-slight suspicion that we should first clarify the ownership rules of
-pieces of memory in this standalone program that was designed to be "run
-once and let exit take care of the memory" before proceeding further.
+Valgrind reports quite a lot of discarded memory inside apply.  I started
+auditing the memory ownership rules in the command, and am almost done.
 
 Will defer til 1.7.10.
-
-* dg/test-from-elsewhere (2012-03-04) 2 commits
- - Support out-of-tree Valgrind tests
- - Allow overriding GIT_BUILD_DIR
-
-Better support for out-of-tree test scripts, but it appears that the
-approach needs to be rethought.  By repointing TEST_DIRECTORY to a
-directory other than $(pwd)/.., an out of place test script can reach
-test helpers and freshly built Git relative to it (GIT_BUILD_DIR is
-a mere short-hand for $TEST_DIRECTORY/..).
-
-Discussion stalled.
 
 * hv/submodule-recurse-push (2012-02-13) 3 commits
  - push: teach --recurse-submodules the on-demand option
@@ -160,6 +168,19 @@ not working :-(.
 
 --------------------------------------------------
 [Cooking]
+
+* rs/combine-diff-zero-context-at-the-beginning (2012-03-25) 1 commit
+ - combine-diff: fix loop index underflow
+
+Fixes an age old corner case bug in combine diff (only triggered with -U0
+and the hunk at the beginning of the file needs to be shown).
+
+* sl/autoconf (2012-03-26) 3 commits
+ - configure: be more idiomatic
+ - configure: avoid some code repetitions thanks to m4_{push,pop}def
+ - configure: move definitions of private m4 macros before AC_INIT invocation
+
+Updates our configure.ac to follow a better "autoconf" style.
 
 * wk/gitweb-snapshot-use-if-modified-since (2012-03-26) 3 commits
  - gitweb: add If-Modified-Since handling to git_snapshot().
@@ -379,3 +400,9 @@ Will defer til 1.7.10.
  + t0204: remove a test that checks undefined behaviour
 
 I tentatively parked this in 'next' but later reverted the merge.
+
+* dg/test-from-elsewhere (2012-03-04) 2 commits
+ . Support out-of-tree Valgrind tests
+ . Allow overriding GIT_BUILD_DIR
+
+No immediate need; dropped.
