@@ -56,6 +56,11 @@ function.
 	returning a `struct commit *` each time you call it. The end of the
 	revision list is indicated by returning a NULL pointer.
 
+`reset_revision_walk`::
+
+	Reset the flags used by the revision walking api. You can use
+	this to do multiple sequencial revision walks.
+
 Data structures
 ---------------
 

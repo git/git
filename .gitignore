@@ -183,6 +183,7 @@
 /test-mktemp
 /test-parse-options
 /test-path-utils
+/test-revision-walking
 /test-run-command
 /test-sha1
 /test-sigchain

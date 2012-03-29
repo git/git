@@ -404,6 +404,7 @@ int check_submodule_needs_pushing(unsigned char new_sha1[20], const char *remote
 	while ((commit = get_revision(&rev)) && !needs_pushing)
 		commit_need_pushing(commit, &needs_pushing);
 
+	reset_revision_walk();
 	free(sha1_copy);
 	strbuf_release(&remotes_arg);
 
@@ -741,6 +742,7 @@ static int find_first_merges(struct object_array *result, const char *path,
 		if (in_merge_bases(b, &commit, 1))
 			add_object_array(o, NULL, &merges);
 	}
+	reset_revision_walk();
 
 	/* Now we've got all merges that contain a and b. Prune all
 	 * merges that contain another found merge and save them in
