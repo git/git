@@ -7841,11 +7841,13 @@ sub git_feed {
 		print $cgi->header(
 			-type => $content_type,
 			-charset => 'utf-8',
-			-last_modified => $latest_date{'rfc2822'});
+			-last_modified => $latest_date{'rfc2822'},
+			-status => '200 OK');
 	} else {
 		print $cgi->header(
 			-type => $content_type,
-			-charset => 'utf-8');
+			-charset => 'utf-8',
+			-status => '200 OK');
 	}
 
 	# Optimization: skip generating the body if client asks only
