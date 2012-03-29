@@ -138,6 +138,8 @@ int transport_set_option(struct transport *transport, const char *name,
 void transport_set_verbosity(struct transport *transport, int verbosity,
 	int force_progress);
 
+#define NON_FF_HEAD 1
+#define NON_FF_OTHER 2
 int transport_push(struct transport *connection,
 		   int refspec_nr, const char **refspec, int flags,
 		   int * nonfastforward);
