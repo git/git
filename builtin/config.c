@@ -397,8 +397,6 @@ int cmd_config(int argc, const char **argv, const char *prefix)
 				xstrdup(prefix_filename(prefix,
 							strlen(prefix),
 							given_config_file));
-		else
-			given_config_file = given_config_file;
 	}
 
 	if (respect_includes == -1)
