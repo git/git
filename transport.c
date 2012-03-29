@@ -11,6 +11,7 @@
 #include "branch.h"
 #include "url.h"
 #include "submodule.h"
+#include "string-list.h"
 
 /* rsync support */
 
@@ -1000,6 +1001,20 @@ void transport_set_verbosity(struct transport *transport, int verbosity,
 	transport->progress = force_progress || (verbosity >= 0 && isatty(2));
 }
 
+static void die_with_unpushed_submodules(struct string_list *needs_pushing)
+{
+	int i;
+
+	fprintf(stderr, "The following submodule paths contain changes that can\n"
+			"not be found on any remote:\n");
+	for (i = 0; i < needs_pushing->nr; i++)
+		printf("  %s\n", needs_pushing->items[i].string);
+
+	string_list_clear(needs_pushing, 0);
+
+	die("Aborting.");
+}
+
 int transport_push(struct transport *transport,
 		   int refspec_nr, const char **refspec, int flags,
 		   int *nonfastforward)
@@ -1040,10 +1055,15 @@ int transport_push(struct transport *transport,
 
 		if ((flags & TRANSPORT_RECURSE_SUBMODULES_CHECK) && !is_bare_repository()) {
 			struct ref *ref = remote_refs;
+			struct string_list needs_pushing;
+
+			memset(&needs_pushing, 0, sizeof(struct string_list));
+			needs_pushing.strdup_strings = 1;
 			for (; ref; ref = ref->next)
 				if (!is_null_sha1(ref->new_sha1) &&
-				    check_submodule_needs_pushing(ref->new_sha1,transport->remote->name))
-					die("There are unpushed submodules, aborting.");
+				    find_unpushed_submodules(ref->new_sha1,
+					    transport->remote->name, &needs_pushing))
+					die_with_unpushed_submodules(&needs_pushing);
 		}
 
 		push_ret = transport->push_refs(transport, remote_refs, flags);

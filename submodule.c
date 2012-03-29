@@ -357,21 +357,19 @@ static void collect_submodules_from_diff(struct diff_queue_struct *q,
 					 void *data)
 {
 	int i;
-	int *needs_pushing = data;
+	struct string_list *needs_pushing = data;
 
 	for (i = 0; i < q->nr; i++) {
 		struct diff_filepair *p = q->queue[i];
 		if (!S_ISGITLINK(p->two->mode))
 			continue;
-		if (submodule_needs_pushing(p->two->path, p->two->sha1)) {
-			*needs_pushing = 1;
-			break;
-		}
+		if (submodule_needs_pushing(p->two->path, p->two->sha1))
+			string_list_insert(needs_pushing, p->two->path);
 	}
 }
 
-
-static void commit_need_pushing(struct commit *commit, int *needs_pushing)
+static void find_unpushed_submodule_commits(struct commit *commit,
+		struct string_list *needs_pushing)
 {
 	struct rev_info rev;
 
@@ -382,14 +380,15 @@ static void commit_need_pushing(struct commit *commit, int *needs_pushing)
 	diff_tree_combined_merge(commit, 1, &rev);
 }
 
-int check_submodule_needs_pushing(unsigned char new_sha1[20], const char *remotes_name)
+int find_unpushed_submodules(unsigned char new_sha1[20],
+		const char *remotes_name, struct string_list *needs_pushing)
 {
 	struct rev_info rev;
 	struct commit *commit;
 	const char *argv[] = {NULL, NULL, "--not", "NULL", NULL};
 	int argc = ARRAY_SIZE(argv) - 1;
 	char *sha1_copy;
-	int needs_pushing = 0;
+
 	struct strbuf remotes_arg = STRBUF_INIT;
 
 	strbuf_addf(&remotes_arg, "--remotes=%s", remotes_name);
@@ -401,14 +400,14 @@ int check_submodule_needs_pushing(unsigned char new_sha1[20], const char *remote
 	if (prepare_revision_walk(&rev))
 		die("revision walk setup failed");
 
-	while ((commit = get_revision(&rev)) && !needs_pushing)
-		commit_need_pushing(commit, &needs_pushing);
+	while ((commit = get_revision(&rev)) != NULL)
+		find_unpushed_submodule_commits(commit, needs_pushing);
 
 	reset_revision_walk();
 	free(sha1_copy);
 	strbuf_release(&remotes_arg);
 
-	return needs_pushing;
+	return needs_pushing->nr;
 }
 
 static int is_submodule_commit_present(const char *path, unsigned char sha1[20])

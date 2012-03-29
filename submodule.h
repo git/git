@@ -29,6 +29,7 @@ int fetch_populated_submodules(int num_options, const char **options,
 unsigned is_submodule_modified(const char *path, int ignore_untracked);
 int merge_submodule(unsigned char result[20], const char *path, const unsigned char base[20],
 		    const unsigned char a[20], const unsigned char b[20], int search);
-int check_submodule_needs_pushing(unsigned char new_sha1[20], const char *remotes_name);
+int find_unpushed_submodules(unsigned char new_sha1[20], const char *remotes_name,
+		struct string_list *needs_pushing);
 
 #endif
