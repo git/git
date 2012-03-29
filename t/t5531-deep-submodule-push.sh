@@ -119,4 +119,98 @@ test_expect_success 'push succeeds if submodule has no remote and is on the firs
 	)
 '
 
+test_expect_success 'push unpushed submodules when not needed' '
+	(
+		cd work &&
+		(
+			cd gar/bage &&
+			git checkout master &&
+			>junk5 &&
+			git add junk5 &&
+			git commit -m "Fifth junk" &&
+			git push &&
+			git rev-parse origin/master >../../../expected
+		) &&
+		git checkout master &&
+		git add gar/bage &&
+		git commit -m "Fifth commit for gar/bage" &&
+		git push --recurse-submodules=on-demand ../pub.git master
+	) &&
+	(
+		cd submodule.git &&
+		git rev-parse master >../actual
+	) &&
+	test_cmp expected actual
+'
+
+test_expect_success 'push unpushed submodules when not needed 2' '
+	(
+		cd submodule.git &&
+		git rev-parse master >../expected
+	) &&
+	(
+		cd work &&
+		(
+			cd gar/bage &&
+			>junk6 &&
+			git add junk6 &&
+			git commit -m "Sixth junk"
+		) &&
+		>junk2 &&
+		git add junk2 &&
+		git commit -m "Second junk for work" &&
+		git push --recurse-submodules=on-demand ../pub.git master
+	) &&
+	(
+		cd submodule.git &&
+		git rev-parse master >../actual
+	) &&
+	test_cmp expected actual
+'
+
+test_expect_success 'push unpushed submodules recursively' '
+	(
+		cd work &&
+		(
+			cd gar/bage &&
+			git checkout master &&
+			> junk7 &&
+			git add junk7 &&
+			git commit -m "Seventh junk" &&
+			git rev-parse master >../../../expected
+		) &&
+		git checkout master &&
+		git add gar/bage &&
+		git commit -m "Seventh commit for gar/bage" &&
+		git push --recurse-submodules=on-demand ../pub.git master
+	) &&
+	(
+		cd submodule.git &&
+		git rev-parse master >../actual
+	) &&
+	test_cmp expected actual
+'
+
+test_expect_success 'push unpushable submodule recursively fails' '
+	(
+		cd work &&
+		(
+			cd gar/bage &&
+			git rev-parse origin/master >../../../expected &&
+			git checkout master~0 &&
+			> junk8 &&
+			git add junk8 &&
+			git commit -m "Eighth junk"
+		) &&
+		git add gar/bage &&
+		git commit -m "Eighth commit for gar/bage" &&
+		test_must_fail git push --recurse-submodules=on-demand ../pub.git master
+	) &&
+	(
+		cd submodule.git &&
+		git rev-parse master >../actual
+	) &&
+	test_cmp expected actual
+'
+
 test_done

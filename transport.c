@@ -1009,6 +1009,11 @@ static void die_with_unpushed_submodules(struct string_list *needs_pushing)
 			"not be found on any remote:\n");
 	for (i = 0; i < needs_pushing->nr; i++)
 		printf("  %s\n", needs_pushing->items[i].string);
+	fprintf(stderr, "\nPlease try\n\n"
+			"	git push --recurse-submodules=on-demand\n\n"
+			"or cd to the path and use\n\n"
+			"	git push\n\n"
+			"to push them to a remote.\n\n");
 
 	string_list_clear(needs_pushing, 0);
 
@@ -1053,7 +1058,17 @@ int transport_push(struct transport *transport,
 			flags & TRANSPORT_PUSH_MIRROR,
 			flags & TRANSPORT_PUSH_FORCE);
 
-		if ((flags & TRANSPORT_RECURSE_SUBMODULES_CHECK) && !is_bare_repository()) {
+		if ((flags & TRANSPORT_RECURSE_SUBMODULES_ON_DEMAND) && !is_bare_repository()) {
+			struct ref *ref = remote_refs;
+			for (; ref; ref = ref->next)
+				if (!is_null_sha1(ref->new_sha1) &&
+				    !push_unpushed_submodules(ref->new_sha1,
+					    transport->remote->name))
+				    die ("Failed to push all needed submodules!");
+		}
+
+		if ((flags & (TRANSPORT_RECURSE_SUBMODULES_ON_DEMAND |
+			      TRANSPORT_RECURSE_SUBMODULES_CHECK)) && !is_bare_repository()) {
 			struct ref *ref = remote_refs;
 			struct string_list needs_pushing;
 

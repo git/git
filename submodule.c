@@ -410,6 +410,54 @@ int find_unpushed_submodules(unsigned char new_sha1[20],
 	return needs_pushing->nr;
 }
 
+static int push_submodule(const char *path)
+{
+	if (add_submodule_odb(path))
+		return 1;
+
+	if (for_each_remote_ref_submodule(path, has_remote, NULL) > 0) {
+		struct child_process cp;
+		const char *argv[] = {"push", NULL};
+
+		memset(&cp, 0, sizeof(cp));
+		cp.argv = argv;
+		cp.env = local_repo_env;
+		cp.git_cmd = 1;
+		cp.no_stdin = 1;
+		cp.dir = path;
+		if (run_command(&cp))
+			return 0;
+		close(cp.out);
+	}
+
+	return 1;
+}
+
+int push_unpushed_submodules(unsigned char new_sha1[20], const char *remotes_name)
+{
+	int i, ret = 1;
+	struct string_list needs_pushing;
+
+	memset(&needs_pushing, 0, sizeof(struct string_list));
+	needs_pushing.strdup_strings = 1;
+
+	if (!find_unpushed_submodules(new_sha1, remotes_name, &needs_pushing))
+		return 1;
+
+	for (i = 0; i < needs_pushing.nr; i++) {
+		const char *path = needs_pushing.items[i].string;
+		fprintf(stderr, "Pushing submodule '%s'\n", path);
+		if (!push_submodule(path)) {
+			fprintf(stderr, "Unable to push submodule '%s'\n", path);
+			ret = 0;
+		}
+	}
+
+	string_list_clear(&needs_pushing, 0);
+
+	return ret;
+}
+
 static int is_submodule_commit_present(const char *path, unsigned char sha1[20])
 {
 	int is_present = 0;

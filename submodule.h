@@ -31,5 +31,6 @@ int merge_submodule(unsigned char result[20], const char *path, const unsigned c
 		    const unsigned char a[20], const unsigned char b[20], int search);
 int find_unpushed_submodules(unsigned char new_sha1[20], const char *remotes_name,
 		struct string_list *needs_pushing);
+int push_unpushed_submodules(unsigned char new_sha1[20], const char *remotes_name);
 
 #endif
