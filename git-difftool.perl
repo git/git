@@ -15,12 +15,14 @@ use strict;
 use warnings;
 use File::Basename qw(dirname);
 use File::Copy;
+use File::Find;
 use File::stat;
 use File::Path qw(mkpath);
 use File::Temp qw(tempdir);
 use Getopt::Long qw(:config pass_through);
 use Git;
 
+my @tools;
 my @working_tree;
 my $rc;
 my $repo = Git->repository();
@@ -30,7 +32,7 @@ sub usage
 {
 	my $exitcode = shift;
 	print << 'USAGE';
-usage: git difftool [-t|--tool=<tool>]
+usage: git difftool [-t|--tool=<tool>] [--tool-help]
                     [-x|--extcmd=<cmd>]
                     [-g|--gui] [--no-gui]
                     [--prompt] [-y|--no-prompt]
@@ -61,6 +63,51 @@ sub find_worktree
 }
 
 my $workdir = find_worktree();
+
+sub filter_tool_scripts
+{
+	if (-d $_) {
+		if ($_ ne ".") {
+			# Ignore files in subdirectories
+			$File::Find::prune = 1;
+		}
+	} else {
+		if ((-f $_) && ($_ ne "defaults")) {
+			push(@tools, $_);
+		}
+	}
+}
+
+sub print_tool_help
+{
+	my ($cmd, @found, @notfound);
+	my $gitpath = Git::exec_path();
+
+	find(\&filter_tool_scripts, "$gitpath/mergetools");
+
+	foreach my $tool (@tools) {
+		$cmd  = "TOOL_MODE=diff";
+		$cmd .= ' && . "$(git --exec-path)/git-mergetool--lib"';
+		$cmd .= " && get_merge_tool_path $tool >/dev/null 2>&1";
+		$cmd .= " && can_diff >/dev/null 2>&1";
+		if (system('sh', '-c', $cmd) == 0) {
+			push(@found, $tool);
+		} else {
+			push(@notfound, $tool);
+		}
+	}
+
+	print "'git difftool --tool=<tool>' may be set to one of the following:\n";
+	print "\t$_\n" for (sort(@found));
+
+	print "\nThe following tools are valid, but not currently available:\n";
+	print "\t$_\n" for (sort(@notfound));
+
+	print "\nNOTE: Some of the tools listed above only work in a windowed\n";
+	print "environment. If run in a terminal-only session, they will fail.\n";
+
+	exit(0);
+}
 
 sub setup_dir_diff
 {
@@ -230,17 +277,21 @@ sub write_to_file
 
 # parse command-line options. all unrecognized options and arguments
 # are passed through to the 'git diff' command.
-my ($difftool_cmd, $dirdiff, $extcmd, $gui, $help, $prompt);
+my ($difftool_cmd, $dirdiff, $extcmd, $gui, $help, $prompt, $tool_help);
 GetOptions('g|gui!' => \$gui,
 	'd|dir-diff' => \$dirdiff,
 	'h' => \$help,
 	'prompt!' => \$prompt,
 	'y' => sub { $prompt = 0; },
 	't|tool:s' => \$difftool_cmd,
+	'tool-help' => \$tool_help,
 	'x|extcmd:s' => \$extcmd);
 
 if (defined($help)) {
 	usage(0);
+}
+if (defined($tool_help)) {
+	print_tool_help();
 }
 if (defined($difftool_cmd)) {
 	if (length($difftool_cmd) > 0) {

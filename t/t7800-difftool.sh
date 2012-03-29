@@ -319,6 +319,11 @@ test_expect_success PERL 'say no to the second file' '
 	echo "$diff" | stdin_doesnot_contain br2
 '
 
+test_expect_success PERL 'difftool --tool-help' '
+	tool_help=$(git difftool --tool-help) &&
+	echo "$tool_help" | stdin_contains tool
+'
+
 test_expect_success PERL 'setup change in subdirectory' '
 	git checkout master &&
 	mkdir sub &&
