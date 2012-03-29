@@ -76,7 +76,7 @@ class GitHg(object):
         author = ctx.user()
 
         # check for git author pattern compliance
-        regex = re.compile('^(.*?) \<(.*?)\>(.*)$')
+        regex = re.compile('^(.*?) ?\<(.*?)\>(.*)$')
         a = regex.match(author)
 
         if a:
