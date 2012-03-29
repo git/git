@@ -196,17 +196,20 @@ struct patch {
 	struct patch *next;
 };
 
+static void free_fragment_list(struct fragment *list)
+{
+	while (list) {
+		struct fragment *next = list->next;
+		if (list->free_patch)
+			free((char *)list->patch);
+		free(list);
+		list = next;
+	}
+}
+
 static void free_patch(struct patch *patch)
 {
-	struct fragment *fragment = patch->fragments;
-
-	while (fragment) {
-		struct fragment *fragment_next = fragment->next;
-		if (fragment->patch != NULL && fragment->free_patch)
-			free((char *)fragment->patch);
-		free(fragment);
-		fragment = fragment_next;
-	}
+	free_fragment_list(patch->fragments);
 	free(patch->def_name);
 	free(patch->old_name);
 	free(patch->new_name);
@@ -2992,7 +2995,10 @@ static int apply_data(struct patch *patch, struct stat *st, struct cache_entry *
 				/*
 				 * There is no way to apply subproject
 				 * patch without looking at the index.
+				 * NEEDSWORK: shouldn't this be flagged
+				 * as an error???
 				 */
+				free_fragment_list(patch->fragments);
 				patch->fragments = NULL;
 			}
 		} else {
