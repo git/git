@@ -30,10 +30,12 @@ test_expect_success 'setup: initial commit' '
 '
 
 test_expect_success '-m and -F do not mix' '
+	git checkout HEAD file && echo >>file && git add file &&
 	test_must_fail git commit -m foo -m bar -F file
 '
 
 test_expect_success '-m and -C do not mix' '
+	git checkout HEAD file && echo >>file && git add file &&
 	test_must_fail git commit -C HEAD -m illegal
 '
 
