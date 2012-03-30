@@ -899,27 +899,10 @@ static int prepare_to_commit(const char *index_file, const char *prefix,
 	return 1;
 }
 
-/*
- * Find out if the message in the strbuf contains only whitespace and
- * Signed-off-by lines.
- */
-static int message_is_empty(struct strbuf *sb)
+static int rest_is_empty(struct strbuf *sb, int start)
 {
-	struct strbuf tmpl = STRBUF_INIT;
+	int i, eol;
 	const char *nl;
-	int eol, i, start = 0;
-
-	if (cleanup_mode == CLEANUP_NONE && sb->len)
-		return 0;
-
-	/* See if the template is just a prefix of the message. */
-	if (template_file && strbuf_read_file(&tmpl, template_file, 0) > 0) {
-		stripspace(&tmpl, cleanup_mode == CLEANUP_ALL);
-		if (start + tmpl.len <= sb->len &&
-		    memcmp(tmpl.buf, sb->buf + start, tmpl.len) == 0)
-			start += tmpl.len;
-	}
-	strbuf_release(&tmpl);
 
 	/* Check if the rest is just whitespace and Signed-of-by's. */
 	for (i = start; i < sb->len; i++) {
@@ -940,6 +923,40 @@ static int message_is_empty(struct strbuf *sb)
 	}
 
 	return 1;
+}
+
+/*
+ * Find out if the message in the strbuf contains only whitespace and
+ * Signed-off-by lines.
+ */
+static int message_is_empty(struct strbuf *sb)
+{
+	if (cleanup_mode == CLEANUP_NONE && sb->len)
+		return 0;
+	return rest_is_empty(sb, 0);
+}
+
+/*
+ * See if the user edited the message in the editor or left what
+ * was in the template intact
+ */
+static int template_untouched(struct strbuf *sb)
+{
+	struct strbuf tmpl = STRBUF_INIT;
+	char *start;
+
+	if (cleanup_mode == CLEANUP_NONE && sb->len)
+		return 0;
+
+	if (!template_file || strbuf_read_file(&tmpl, template_file, 0) <= 0)
+		return 0;
+
+	stripspace(&tmpl, cleanup_mode == CLEANUP_ALL);
+	start = (char *)skip_prefix(sb->buf, tmpl.buf);
+	if (!start)
+		start = sb->buf;
+	strbuf_release(&tmpl);
+	return rest_is_empty(sb, start - sb->buf);
 }
 
 static const char *find_author_by_nickname(const char *name)
@@ -1490,6 +1507,11 @@ int cmd_commit(int argc, const char **argv, const char *prefix)
 
 	if (cleanup_mode != CLEANUP_NONE)
 		stripspace(&sb, cleanup_mode == CLEANUP_ALL);
+	if (template_untouched(&sb) && !allow_empty_message) {
+		rollback_index_files();
+		fprintf(stderr, _("Aborting commit; you did not edit the message.\n"));
+		exit(1);
+	}
 	if (message_is_empty(&sb) && !allow_empty_message) {
 		rollback_index_files();
 		fprintf(stderr, _("Aborting commit due to empty commit message.\n"));

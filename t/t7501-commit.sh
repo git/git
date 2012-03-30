@@ -86,6 +86,12 @@ test_expect_success 'template "emptyness" check does not kick in with -F' '
 	git commit -t file -F file
 '
 
+test_expect_success 'template "emptyness" check' '
+	git checkout HEAD file && echo >>file && git add file &&
+	test_must_fail git commit -t file 2>err &&
+	test_i18ngrep "did not edit" err
+'
+
 test_expect_success 'setup: commit message from file' '
 	git checkout HEAD file && echo >>file && git add file &&
 	echo this is the commit message, coming from a file >msg &&
