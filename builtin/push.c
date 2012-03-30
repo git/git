@@ -65,6 +65,16 @@ static void set_refspecs(const char **refs, int nr)
 	}
 }
 
+static int push_url_of_remote(struct remote *remote, const char ***url_p)
+{
+	if (remote->pushurl_nr) {
+		*url_p = remote->pushurl;
+		return remote->pushurl_nr;
+	}
+	*url_p = remote->url;
+	return remote->url_nr;
+}
+
 static void setup_push_upstream(struct remote *remote)
 {
 	struct strbuf refspec = STRBUF_INIT;
@@ -76,7 +86,7 @@ static void setup_push_upstream(struct remote *remote)
 		    "\n"
 		    "    git push %s HEAD:<name-of-remote-branch>\n"),
 		    remote->name);
-	if (!branch->merge_nr || !branch->merge)
+	if (!branch->merge_nr || !branch->merge || !branch->remote_name)
 		die(_("The current branch %s has no upstream branch.\n"
 		    "To push the current branch and set the remote as upstream, use\n"
 		    "\n"
@@ -87,6 +97,12 @@ static void setup_push_upstream(struct remote *remote)
 	if (branch->merge_nr != 1)
 		die(_("The current branch %s has multiple upstream branches, "
 		    "refusing to push."), branch->name);
+	if (strcmp(branch->remote_name, remote->name))
+		die(_("You are pushing to remote '%s', which is not the upstream of\n"
+		      "your current branch '%s', without telling me what to push\n"
+		      "to update which remote branch."),
+		    remote->name, branch->name);
+
 	strbuf_addf(&refspec, "%s:%s", branch->name, branch->merge[0]->src);
 	add_refspec(refspec.buf);
 }
@@ -196,13 +212,7 @@ static int do_push(const char *repo, int flags)
 			setup_default_push_refspecs(remote);
 	}
 	errs = 0;
-	if (remote->pushurl_nr) {
-		url = remote->pushurl;
-		url_nr = remote->pushurl_nr;
-	} else {
-		url = remote->url;
-		url_nr = remote->url_nr;
-	}
+	url_nr = push_url_of_remote(remote, &url);
 	if (url_nr) {
 		for (i = 0; i < url_nr; i++) {
 			struct transport *transport =
