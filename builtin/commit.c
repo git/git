@@ -1049,6 +1049,8 @@ static int parse_and_validate_options(int argc, const char *argv[],
 		die(_("Only one of -c/-C/-F/--fixup can be used."));
 	if (message.len && f > 0)
 		die((_("Option -m cannot be combined with -c/-C/-F/--fixup.")));
+	if (f || message.len)
+		template_file = NULL;
 	if (edit_message)
 		use_message = edit_message;
 	if (amend && !use_message && !fixup_message)
