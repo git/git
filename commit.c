@@ -361,6 +361,21 @@ struct commit_list *commit_list_insert(struct commit *item, struct commit_list *
 	return new_list;
 }
 
+void commit_list_reverse(struct commit_list **list_p)
+{
+	struct commit_list *prev = NULL, *curr = *list_p, *next;
+
+	if (!list_p)
+		return;
+	while (curr) {
+		next = curr->next;
+		curr->next = prev;
+		prev = curr;
+		curr = next;
+	}
+	*list_p = prev;
+}
+
 unsigned commit_list_count(const struct commit_list *l)
 {
 	unsigned c = 0;
