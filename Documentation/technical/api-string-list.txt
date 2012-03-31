@@ -83,7 +83,9 @@ Functions
 
 	Insert a new element to the string_list. The returned pointer can be
 	handy if you want to write something to the `util` pointer of the
-	string_list_item containing the just added string.
+	string_list_item containing the just added string. If the given
+	string already exists the insertion will be skipped and the
+	pointer to the existing item returned.
 +
 Since this function uses xrealloc() (which die()s if it fails) if the
 list needs to grow, it is safe not to check the pointer. I.e. you may
