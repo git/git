@@ -43,13 +43,15 @@ GIT_EDITOR::
     `$SOME_ENVIRONMENT_VARIABLE`, `"C:\Program Files\Vim\gvim.exe"
     --nofork`.  The order of preference is the `$GIT_EDITOR`
     environment variable, then `core.editor` configuration, then
-    `$VISUAL`, then `$EDITOR`, and then finally 'vi'.
+    `$VISUAL`, then `$EDITOR`, and then the default chosen at compile
+    time, which is usually 'vi'.
 
 GIT_PAGER::
     Text viewer for use by git commands (e.g., 'less').  The value
     is meant to be interpreted by the shell.  The order of preference
     is the `$GIT_PAGER` environment variable, then `core.pager`
-    configuration, then `$PAGER`, and then finally 'less'.
+    configuration, then `$PAGER`, and then the default chosen at
+    compile time (usually 'less').
 
 Diagnostics
 -----------
