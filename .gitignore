@@ -180,6 +180,7 @@
 /test-index-version
 /test-line-buffer
 /test-match-trees
+/test-mergesort
 /test-mktemp
 /test-obj-pool
 /test-parse-options
