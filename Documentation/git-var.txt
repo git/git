@@ -45,6 +45,9 @@ GIT_EDITOR::
     environment variable, then `core.editor` configuration, then
     `$VISUAL`, then `$EDITOR`, and then the default chosen at compile
     time, which is usually 'vi'.
+ifdef::git-default-editor[]
+    The build you are using chose '{git-default-editor}' as the default.
+endif::git-default-editor[]
 
 GIT_PAGER::
     Text viewer for use by git commands (e.g., 'less').  The value
@@ -52,6 +55,9 @@ GIT_PAGER::
     is the `$GIT_PAGER` environment variable, then `core.pager`
     configuration, then `$PAGER`, and then the default chosen at
     compile time (usually 'less').
+ifdef::git-default-pager[]
+    The build you are using chose '{git-default-pager}' as the default.
+endif::git-default-pager[]
 
 Diagnostics
 -----------

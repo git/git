@@ -124,6 +124,16 @@ SHELL_PATH ?= $(SHELL)
 # Shell quote;
 SHELL_PATH_SQ = $(subst ','\'',$(SHELL_PATH))
 
+ifdef DEFAULT_PAGER
+DEFAULT_PAGER_SQ = $(subst ','\'',$(DEFAULT_PAGER))
+ASCIIDOC_EXTRA += -a 'git-default-pager=$(DEFAULT_PAGER_SQ)'
+endif
+
+ifdef DEFAULT_EDITOR
+DEFAULT_EDITOR_SQ = $(subst ','\'',$(DEFAULT_EDITOR))
+ASCIIDOC_EXTRA += -a 'git-default-editor=$(DEFAULT_EDITOR_SQ)'
+endif
+
 #
 # Please note that there is a minor bug in asciidoc.
 # The version after 6.0.3 _will_ include the patch found here:
