@@ -248,4 +248,70 @@ test_expect_success 'clone shallow object count' '
 	grep "^count: 52" count.shallow
 '
 
+test_expect_success 'setup tests for the --stdin parameter' '
+	for head in C D E F
+	do
+		add $head
+	done &&
+	for head in A B C D E F
+	do
+		git tag $head $head
+	done &&
+	cat >input <<-\EOF
+	refs/heads/C
+	refs/heads/A
+	refs/heads/D
+	refs/tags/C
+	refs/heads/B
+	refs/tags/A
+	refs/heads/E
+	refs/tags/B
+	refs/tags/E
+	refs/tags/D
+	EOF
+	sort <input >expect &&
+	(
+		echo refs/heads/E &&
+		echo refs/tags/E &&
+		cat input
+	) >input.dup
+'
+
+test_expect_success 'fetch refs from cmdline' '
+	(
+		cd client &&
+		git fetch-pack --no-progress .. $(cat ../input)
+	) >output &&
+	cut -d " " -f 2 <output | sort >actual &&
+	test_cmp expect actual
+'
+
+test_expect_success 'fetch refs from stdin' '
+	(
+		cd client &&
+		git fetch-pack --stdin --no-progress .. <../input
+	) >output &&
+	cut -d " " -f 2 <output | sort >actual &&
+	test_cmp expect actual
+'
+
+test_expect_success 'fetch mixed refs from cmdline and stdin' '
+	(
+		cd client &&
+		tail -n +5 ../input |
+		git fetch-pack --stdin --no-progress .. $(head -n 4 ../input)
+	) >output &&
+	cut -d " " -f 2 <output | sort >actual &&
+	test_cmp expect actual
+'
+
+test_expect_success 'test duplicate refs from stdin' '
+	(
+	cd client &&
+	test_must_fail git fetch-pack --stdin --no-progress .. <../input.dup
+	) >output &&
+	cut -d " " -f 2 <output | sort >actual &&
+	test_cmp expect actual
+'
+
 test_done
