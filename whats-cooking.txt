@@ -1,17 +1,19 @@
 To: git@vger.kernel.org
-Subject: What's cooking in git.git (Mar 2012, #10; Wed, 28)
-X-master-at: 455cf268dbaf227bdbd5e9fbf96525452bcfe44f
-X-next-at: 59406684b6bbd073b171b4f8f3bc5b33966f3187
+Subject: What's cooking in git.git (Apr 2012, #01; Mon, 2)
+X-master-at: d82829b6128263951569221ca0c00dd143da055c
+X-next-at: 534144fcf8debe1f1ee527931c7346ce866f9ef5
 
-What's cooking in git.git (Mar 2012, #10; Wed, 28)
+What's cooking in git.git (Apr 2012, #01; Mon, 2)
 --------------------------------------------------
 
 Here are the topics that have been cooking.  Commits prefixed with '-' are
 only in 'pu' (proposed updates) while commits prefixed with '+' are in 'next'.
 
-Hopefully the release will be done early next week.  The final rc was
-tagged and pushed out today so that people can play with it and report
-possible issues.
+It seems that a last minute bug or two slipped in with the latest gitk
+updates, so I'll probably do the 1.7.10-rc4 tonight or tomorrow with the
+two patches posted yesterday and schedule the final by the end of the
+week.  In the meantime, 1.7.9.6 is also out, to give GIT_MERGE_AUTOEDIT
+support for the maintenance track.
 
 You can find the changes described here in the integration branches of the
 repositories listed at
@@ -21,36 +23,78 @@ repositories listed at
 --------------------------------------------------
 [New Topics]
 
-* dg/subtree (2012-03-25) 112 commits
- - Add 'contrib/subtree/' from commit '2e63f75b8f49abe220ef55ec4e978e7a3b8dc351'
- - Add Subtree Test Makefile
- - Build Subtree
- - Use Project Config Files
- - Remove Unneeded Files
- - ...
+* pt/gitk (2012-04-02) 2 commits
+ - gitk: fix setting font display with new tabbed dialog layout.
+ - gitk: fix tabbed preferences construction when using tcl 8.4
 
-A test merge of the 'subtree'.
+Pat spotted and fixed a few bugs in the latest gitk updates; we may need
+these in 1.7.10 so testing on various platforms is very much appreciated.
 
-* jk/branch-quiet (2012-03-26) 2 commits
- - teach "git branch" a --quiet option
- - checkout: suppress tracking message with "-q"
+* bw/spawn-via-shell-path (2012-03-31) 2 commits
+ - fixup? Quote SHELL_PATH the same way as DEFAULT_EDITOR for C
+ - Use SHELL_PATH from build system in run_command.c:prepare_shell_cmd
 
-Even with "-q"uiet option, "checkout" used to report setting up tracking.
-Also "branch" learns "-q"uiet option to squelch informational message.
+"sh" on the user's PATH may be utterly broken on some systems;
+consistently use SHELL_PATH even from inside run-command API.
 
-* jk/run-command-eacces (2012-03-27) 3 commits
- - [DONTMERGE] semi-squashable test addition
- - git: continue alias lookup on EACCES errors
- - run-command: propagate EACCES errors to parent
+Will squash the fixup and schedule it to merge soon after 1.7.10.
 
-When PATH contains an unreadable directory, alias expansion code did not
-kick in, and failed with an error that said "git-subcmd" was not found.
+* jc/commit-unedited-template (2012-04-01) 4 commits
+ - git-commit.txt: clarify -t requires editing message
+ - commit: rephrase the error when user did not touch templated log message
+ - commit: do not trigger bogus "has templated message edited" check
+ - t7501: test the right kind of breakage
 
-* jb/am-include (2012-03-28) 1 commit
- - am: support --include option
+When "git commit --template F" errors out because the user did not touch
+the message, it claimed that it aborts due to "empty message", which was
+utterly wrong.
 
-* jc/am-report-3way (2012-03-28) 1 commit
- - am -3: list the paths that needed 3-way fallback
+* jc/push-upstream-sanity (2012-03-30) 1 commit
+ - push: detect nonsense "upstream" check more carefully
+
+"git push $there" without refspec, when the current branch is set to push
+to a remote different from $there, used to push to $there using the
+upstream information to a remote unreleated to $there.
+
+This is necessary if we were to switch the push.default to 'current'.
+
+* jk/http-backend-keep-committer-ident-env (2012-03-30) 1 commit
+ - http-backend: respect existing GIT_COMMITTER_* variables
+
+The smart-http backend used to always override GIT_COMMITTER_* variables
+with REMOTE_USER and REMOTE_ADDR.
+
+* mk/gitweb-diff-hl (2012-03-29) 8 commits
+ - gitweb: Refinement highlightning in combined diffs
+ - gitweb: Highlight interesting parts of diff
+ - gitweb: Push formatting diff lines to print_diff_chunk()
+ - gitweb: Move HTML-formatting diff line back to process_diff_line()
+ - gitweb: Use print_diff_chunk() for both side-by-side and inline diffs
+ - gitweb: Extract print_sidebyside_diff_lines()
+ - gitweb: Pass esc_html_hl_regions() options to esc_html()
+ - gitweb: esc_html_hl_regions(): Don't create empty <span> elements
+
+* it/fetch-pack-many-refs (2012-04-02) 5 commits
+ - remote-curl: main test case for the OS command line overflow
+ - fetch-pack: test cases for the new --stdin option
+ - fixup? no longer need flex argv[]
+ - remote-curl: send the refs to fetch-pack on stdin
+ - fetch-pack: new --stdin option to read refs from stdin
+
+Will squash the fix-up one and then requeue.
+
+* jn/debian-customizes-default-editor (2012-03-31) 3 commits
+ - fixup? do not hide the "usual" default from readers
+ - var doc: advertise current DEFAULT_PAGER and DEFAULT_EDITOR settings
+ - var doc: default editor and pager are configurable at build time
+
+Haven't heard anything back for the fix-up suggestion, but otherwise
+looked sane.
+
+* rs/commit-list-sort-in-batch (2012-04-02) 3 commits
+ - revision: insert unsorted, then sort in prepare_revision_walk()
+ - commit: use mergesort() in commit_list_sort_by_date()
+ - add mergesort() for linked lists
 
 --------------------------------------------------
 [Stalled]
@@ -106,8 +150,9 @@ Another reroll after a bugreport on pthread usage discovered by Ramsey,
 but it seems the topic is cooking between Ramsay and Duy out of tree.
 Waiting for resolution.
 
-* jh/apply-free-patch (2012-03-27) 6 commits
+* jh/apply-free-patch (2012-03-28) 7 commits
  - apply.c: WIP ownership audit
+ - apply: free unused fragments for submodule patch
  - apply: free patch->result
  - apply: release memory for fn_table
  - apply: free patch->{def,old,new}_name fields
@@ -118,13 +163,6 @@ Valgrind reports quite a lot of discarded memory inside apply.  I started
 auditing the memory ownership rules in the command, and am almost done.
 
 Will defer til 1.7.10.
-
-* hv/submodule-recurse-push (2012-02-13) 3 commits
- - push: teach --recurse-submodules the on-demand option
- - Refactor submodule push check to use string list instead of integer
- - Teach revision walking machinery to walk multiple times sequencially
-
-The bottom one was not clearly explained and needs a reroll.
 
 * ss/git-svn-prompt-sans-terminal (2012-01-04) 3 commits
  - fixup! 15eaaf4
@@ -169,6 +207,40 @@ not working :-(.
 --------------------------------------------------
 [Cooking]
 
+* hv/submodule-recurse-push (2012-03-30) 3 commits
+ - push: teach --recurse-submodules the on-demand option
+ - Refactor submodule push check to use string list instead of integer
+ - Teach revision walking machinery to walk multiple times sequencially
+
+* dg/subtree (2012-03-25) 112 commits
+ - Add 'contrib/subtree/' from commit '2e63f75b8f49abe220ef55ec4e978e7a3b8dc351'
+ - Add Subtree Test Makefile
+ - Build Subtree
+ - Use Project Config Files
+ - Remove Unneeded Files
+ - ...
+
+A test merge of the 'subtree'.
+
+* jk/branch-quiet (2012-03-26) 2 commits
+ - teach "git branch" a --quiet option
+ - checkout: suppress tracking message with "-q"
+
+Even with "-q"uiet option, "checkout" used to report setting up tracking.
+Also "branch" learns "-q"uiet option to squelch informational message.
+
+* jk/run-command-eacces (2012-03-30) 1 commit
+ - run-command: treat inaccessible directories as ENOENT
+
+When PATH contains an unreadable directory, alias expansion code did not
+kick in, and failed with an error that said "git-subcmd" was not found.
+
+* jb/am-include (2012-03-28) 1 commit
+ - am: support --include option
+
+* jc/am-report-3way (2012-03-28) 1 commit
+ - am -3: list the paths that needed 3-way fallback
+
 * rs/combine-diff-zero-context-at-the-beginning (2012-03-25) 1 commit
  - combine-diff: fix loop index underflow
 
@@ -182,23 +254,13 @@ and the hunk at the beginning of the file needs to be shown).
 
 Updates our configure.ac to follow a better "autoconf" style.
 
-* wk/gitweb-snapshot-use-if-modified-since (2012-03-26) 3 commits
+* wk/gitweb-snapshot-use-if-modified-since (2012-03-30) 3 commits
  - gitweb: add If-Modified-Since handling to git_snapshot().
  - gitweb: refactor If-Modified-Since handling
  - gitweb: add `status` headers to git_feed() responses.
 
 Makes 'snapshot' request to "gitweb" honor If-Modified-Since: header,
 based on the commit date.
-
-* jc/maint-merge-autoedit (2012-03-20) 1 commit
- - merge: backport GIT_MERGE_AUTOEDIT support
-
-In 1.7.10, we added GIT_MERGE_AUTOEDIT=no environment variable to help
-older scripts to let them refuse giving users a chance to explain the
-merge, but forgot that 1.7.9 automatically opens an editor when merging an
-annotated tag, and there is no equivalent escape hatch.  A merge of this
-topic to 1.7.10 track becomes a no-op, but we may want to apply this to
-the 1.7.9.x series.
 
 * jk/diff-no-rename-empty (2012-03-23) 4 commits
  - merge-recursive: don't detect renames of empty files
@@ -209,7 +271,7 @@ the 1.7.9.x series.
 Forbids rename detection logic from matching two empty files as renames
 during merge-recursive to prevent mismerges.
 
-* th/difftool-diffall (2012-03-26) 9 commits
+* th/difftool-diffall (2012-03-29) 9 commits
  - difftool: print list of valid tools with '--tool-help'
  - difftool: teach difftool to handle directory diffs
  - difftool: replace system call with Git::command_noisy
@@ -237,8 +299,9 @@ working trees that are at the top-level of the current project by mistake.
 Not urgent.
 
 * ct/advise-push-default (2012-03-26) 2 commits
- - clean up struct ref's nonfastforward field
- - push: Provide situational hints for non-fast-forward errors
+  (merged to 'next' on 2012-03-28 at 62764ae)
+ + clean up struct ref's nonfastforward field
+ + push: Provide situational hints for non-fast-forward errors
 
 Breaks down the cases in which "git push" fails due to non-ff into three
 categories, and gives separate advise messages.  This should be a good
@@ -347,7 +410,8 @@ Not urgent.
 Will defer til 1.7.10.
 
 * mm/push-default-switch-warning (2012-03-09) 1 commit
- - push: start warning upcoming default change for push.default
+  (merged to 'next' on 2012-03-28 at 074b16b)
+ + push: start warning upcoming default change for push.default
 
 Not urgent.
 
