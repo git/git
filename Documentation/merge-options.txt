@@ -8,9 +8,19 @@ failed and do not autocommit, to give the user a chance to
 inspect and further tweak the merge result before committing.
 
 --edit::
--e::
+--no-edit::
 	Invoke editor before committing successful merge to further
-	edit the default merge message.
+	edit the default merge message. The `--no-edit` option can be
+	used to accept the auto-generated message (this is generally
+	discouraged) when merging an annotated tag, in which case
+	`git merge` automatically spawns the editor so that the result
+	of the GPG verification of the tag can be seen.
++
+Older scripts may depend on the historical behaviour of not allowing the
+user to edit the merge log message. They will see an editor opened when
+they run `git merge` to merge an annotated tag. To make it easier to adjust
+such scripts to the updated behaviour, the environment variable
+`GIT_MERGE_AUTOEDIT` can be set to `no` at the beginning of them.
 
 --ff::
 	When the merge resolves as a fast-forward, only update the branch
