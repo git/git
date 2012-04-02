@@ -4,6 +4,14 @@ Core Git translation language teams
 Language:	is (Icelandic)
 Leader:		Ævar Arnfjörð Bjarmason <avarab@gmail.com>
 
+Language:	nl (Dutch)
+Repository:	https://github.com/vfr-nl/git-po/
+Leader:		Vincent van Ravesteijn <vfr@lyx.org>
+
+Language:	pt_PT (Portuguese - Portugal)
+Repository:	https://github.com/marcomsousa/git-l10n-pt_PT/
+Leader:		Marco Sousa <marcomsousa AT gmail.com>
+
 Language:	sv (Swedish)
 Repository:	https://github.com/nafmo/git-l10n-sv/
 Leader:		Peter Krefting <peter@softwolves.pp.se>
