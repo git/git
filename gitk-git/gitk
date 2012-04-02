@@ -10795,7 +10795,7 @@ proc fontok {} {
     if {$fontparam(slant) eq "italic"} {
 	lappend fontpref($f) "italic"
     }
-    set w $prefstop.$f
+    set w $prefstop.notebook.fonts.$f
     $w conf -text $fontparam(family) -font $fontpref($f)
 
     fontcan
@@ -11012,6 +11012,7 @@ proc doprefs {} {
     lappend pages [prefspage_general $notebook] [mc "General"]
     lappend pages [prefspage_colors $notebook] [mc "Colors"]
     lappend pages [prefspage_fonts $notebook] [mc "Fonts"]
+    set col 0
     foreach {page title} $pages {
 	if {$use_notebook} {
 	    $notebook add $page -text $title
