@@ -1247,11 +1247,13 @@ static int verify_hdr(struct cache_header *hdr, unsigned long size)
 {
 	git_SHA_CTX c;
 	unsigned char sha1[20];
+	int hdr_version;
 
 	if (hdr->hdr_signature != htonl(CACHE_SIGNATURE))
 		return error("bad signature");
-	if (hdr->hdr_version != htonl(2) && hdr->hdr_version != htonl(3))
-		return error("bad index version");
+	hdr_version = ntohl(hdr->hdr_version);
+	if (hdr_version < 2 || 3 < hdr_version)
+		return error("bad index version %d", hdr_version);
 	git_SHA1_Init(&c);
 	git_SHA1_Update(&c, hdr, size - 20);
 	git_SHA1_Final(sha1, &c);
