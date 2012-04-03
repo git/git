@@ -1307,6 +1307,30 @@ static inline uint32_t ntoh_l_force_align(void *p)
 #define ntoh_l(var) ntoh_l_force_align(&(var))
 #endif
 
+static struct cache_entry *cache_entry_from_ondisk(struct ondisk_cache_entry *ondisk,
+						   unsigned int flags,
+						   const char *name,
+						   size_t len)
+{
+	struct cache_entry *ce = xmalloc(cache_entry_size(len));
+
+	ce->ce_ctime.sec = ntoh_l(ondisk->ctime.sec);
+	ce->ce_mtime.sec = ntoh_l(ondisk->mtime.sec);
+	ce->ce_ctime.nsec = ntoh_l(ondisk->ctime.nsec);
+	ce->ce_mtime.nsec = ntoh_l(ondisk->mtime.nsec);
+	ce->ce_dev   = ntoh_l(ondisk->dev);
+	ce->ce_ino   = ntoh_l(ondisk->ino);
+	ce->ce_mode  = ntoh_l(ondisk->mode);
+	ce->ce_uid   = ntoh_l(ondisk->uid);
+	ce->ce_gid   = ntoh_l(ondisk->gid);
+	ce->ce_size  = ntoh_l(ondisk->size);
+	ce->ce_flags = flags;
+	hashcpy(ce->sha1, ondisk->sha1);
+	memcpy(ce->name, name, len);
+	ce->name[len] = '\0';
+	return ce;
+}
+
 static struct cache_entry *create_from_disk(struct ondisk_cache_entry *ondisk,
 					    unsigned long *ent_size)
 {
@@ -1335,25 +1359,7 @@ static struct cache_entry *create_from_disk(struct ondisk_cache_entry *ondisk,
 
 	if (len == CE_NAMEMASK)
 		len = strlen(name);
-
-	ce = xmalloc(cache_entry_size(len));
-
-	ce->ce_ctime.sec = ntoh_l(ondisk->ctime.sec);
-	ce->ce_mtime.sec = ntoh_l(ondisk->mtime.sec);
-	ce->ce_ctime.nsec = ntoh_l(ondisk->ctime.nsec);
-	ce->ce_mtime.nsec = ntoh_l(ondisk->mtime.nsec);
-	ce->ce_dev   = ntoh_l(ondisk->dev);
-	ce->ce_ino   = ntoh_l(ondisk->ino);
-	ce->ce_mode  = ntoh_l(ondisk->mode);
-	ce->ce_uid   = ntoh_l(ondisk->uid);
-	ce->ce_gid   = ntoh_l(ondisk->gid);
-	ce->ce_size  = ntoh_l(ondisk->size);
-	ce->ce_flags = flags;
-
-	hashcpy(ce->sha1, ondisk->sha1);
-
-	memcpy(ce->name, name, len);
-	ce->name[len] = '\0';
+	ce = cache_entry_from_ondisk(ondisk, flags, name, len);
 	*ent_size = ondisk_ce_size(ce);
 	return ce;
 }
