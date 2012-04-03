@@ -32,12 +32,12 @@ Compatibility Notes
  * When you do not tell which branches and tags to push to the "git push"
    command in any way, the command used "matching refs" rule to update
    remote branches and tags with branches and tags with the same name you
-   locally have.  In future versions of Git, this will change to use the
-   "upstream" rule to update the branch at the remote you would "pull"
-   from into your current branch with your local current branch.  The
-   release after 1.7.10 will start issuing a warning about this change,
-   to encourage you to tell the command what to push out, e.g. by setting
-   push.default configuration.
+   locally have.  In future versions of Git, this will change to push out
+   only your current branch according to either the "upstream" or the
+   "current" rule.  Although "upstream" may be more powerful once the
+   user understands Git better, the semantics "current" gives is
+   simpler and easier to understand for beginners and may be a safer
+   and better default option, but we haven't decided yet.
 
 
 Updates since v1.7.9
@@ -58,7 +58,7 @@ UI, Workflows & Features
  * Teams for localizing the messages from the Porcelain layer of
    commands are starting to form, thanks to Jiang Xin who volunteered
    to be the localization coordinator.  Translated messages for
-   simplified Chinese and Swedish are available.
+   simplified Chinese, Swedish and Portuguese are available.
 
  * The configuration mechanism learned an "include" facility; an
    assignment to the include.path pseudo-variable causes the named
