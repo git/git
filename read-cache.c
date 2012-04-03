@@ -12,6 +12,8 @@
 #include "commit.h"
 #include "blob.h"
 #include "resolve-undo.h"
+#include "strbuf.h"
+#include "varint.h"
 
 static struct cache_entry *refresh_cache_entry(struct cache_entry *ce, int really);
 
@@ -1236,6 +1238,7 @@ struct ondisk_cache_entry_extended {
 	char name[FLEX_ARRAY]; /* more */
 };
 
+/* These are only used for v3 or lower */
 #define align_flex_name(STRUCT,len) ((offsetof(struct STRUCT,name) + (len) + 8) & ~7)
 #define ondisk_cache_entry_size(len) align_flex_name(ondisk_cache_entry,len)
 #define ondisk_cache_entry_extended_size(len) align_flex_name(ondisk_cache_entry_extended,len)
@@ -1252,7 +1255,7 @@ static int verify_hdr(struct cache_header *hdr, unsigned long size)
 	if (hdr->hdr_signature != htonl(CACHE_SIGNATURE))
 		return error("bad signature");
 	hdr_version = ntohl(hdr->hdr_version);
-	if (hdr_version < 2 || 3 < hdr_version)
+	if (hdr_version < 2 || 4 < hdr_version)
 		return error("bad index version %d", hdr_version);
 	git_SHA1_Init(&c);
 	git_SHA1_Update(&c, hdr, size - 20);
@@ -1331,8 +1334,30 @@ static struct cache_entry *cache_entry_from_ondisk(struct ondisk_cache_entry *on
 	return ce;
 }
 
+/*
+ * Adjacent cache entries tend to share the leading paths, so it makes
+ * sense to only store the differences in later entries.  In the v4
+ * on-disk format of the index, each on-disk cache entry stores the
+ * number of bytes to be stripped from the end of the previous name,
+ * and the bytes to append to the result, to come up with its name.
+ */
+static unsigned long expand_name_field(struct strbuf *name, const char *cp_)
+{
+	const unsigned char *ep, *cp = (const unsigned char *)cp_;
+	size_t len = decode_varint(&cp);
+
+	if (name->len < len)
+		die("malformed name field in the index");
+	strbuf_remove(name, name->len - len, len);
+	for (ep = cp; *ep; ep++)
+		; /* find the end */
+	strbuf_add(name, cp, ep - cp);
+	return (const char *)ep + 1 - cp_;
+}
+
 static struct cache_entry *create_from_disk(struct ondisk_cache_entry *ondisk,
-					    unsigned long *ent_size)
+					    unsigned long *ent_size,
+					    struct strbuf *previous_name)
 {
 	struct cache_entry *ce;
 	size_t len;
@@ -1357,10 +1382,22 @@ static struct cache_entry *create_from_disk(struct ondisk_cache_entry *ondisk,
 	else
 		name = ondisk->name;
 
-	if (len == CE_NAMEMASK)
-		len = strlen(name);
-	ce = cache_entry_from_ondisk(ondisk, flags, name, len);
-	*ent_size = ondisk_ce_size(ce);
+	if (!previous_name) {
+		/* v3 and earlier */
+		if (len == CE_NAMEMASK)
+			len = strlen(name);
+		ce = cache_entry_from_ondisk(ondisk, flags, name, len);
+
+		*ent_size = ondisk_ce_size(ce);
+	} else {
+		unsigned long consumed;
+		consumed = expand_name_field(previous_name, name);
+		ce = cache_entry_from_ondisk(ondisk, flags,
+					     previous_name->buf,
+					     previous_name->len);
+
+		*ent_size = (name - ((char *)ondisk)) + consumed;
+	}
 	return ce;
 }
 
@@ -1373,6 +1410,7 @@ int read_index_from(struct index_state *istate, const char *path)
 	struct cache_header *hdr;
 	void *mmap;
 	size_t mmap_size;
+	struct strbuf previous_name_buf = STRBUF_INIT, *previous_name;
 
 	errno = EBUSY;
 	if (istate->initialized)
@@ -1410,6 +1448,11 @@ int read_index_from(struct index_state *istate, const char *path)
 	istate->cache = xcalloc(istate->cache_alloc, sizeof(struct cache_entry *));
 	istate->initialized = 1;
 
+	if (hdr->hdr_version == htonl(4))
+		previous_name = &previous_name_buf;
+	else
+		previous_name = NULL;
+
 	src_offset = sizeof(*hdr);
 	for (i = 0; i < istate->cache_nr; i++) {
 		struct ondisk_cache_entry *disk_ce;
@@ -1417,11 +1460,12 @@ int read_index_from(struct index_state *istate, const char *path)
 		unsigned long consumed;
 
 		disk_ce = (struct ondisk_cache_entry *)((char *)mmap + src_offset);
-		ce = create_from_disk(disk_ce, &consumed);
+		ce = create_from_disk(disk_ce, &consumed, previous_name);
 		set_index_entry(istate, i, ce);
 
 		src_offset += consumed;
 	}
+	strbuf_release(&previous_name_buf);
 	istate->timestamp.sec = st.st_mtime;
 	istate->timestamp.nsec = ST_MTIME_NSEC(st);
 
