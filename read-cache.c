@@ -1305,7 +1305,8 @@ static inline uint32_t ntoh_l_force_align(void *p)
 #define ntoh_l(var) ntoh_l_force_align(&(var))
 #endif
 
-static struct cache_entry *create_from_disk(struct ondisk_cache_entry *ondisk)
+static struct cache_entry *create_from_disk(struct ondisk_cache_entry *ondisk,
+					    unsigned long *ent_size)
 {
 	struct cache_entry *ce;
 	size_t len;
@@ -1351,6 +1352,7 @@ static struct cache_entry *create_from_disk(struct ondisk_cache_entry *ondisk)
 
 	memcpy(ce->name, name, len);
 	ce->name[len] = '\0';
+	*ent_size = ondisk_ce_size(ce);
 	return ce;
 }
 
@@ -1404,12 +1406,13 @@ int read_index_from(struct index_state *istate, const char *path)
 	for (i = 0; i < istate->cache_nr; i++) {
 		struct ondisk_cache_entry *disk_ce;
 		struct cache_entry *ce;
+		unsigned long consumed;
 
 		disk_ce = (struct ondisk_cache_entry *)((char *)mmap + src_offset);
-		ce = create_from_disk(disk_ce);
+		ce = create_from_disk(disk_ce, &consumed);
 		set_index_entry(istate, i, ce);
 
-		src_offset += ondisk_ce_size(ce);
+		src_offset += consumed;
 	}
 	istate->timestamp.sec = st.st_mtime;
 	istate->timestamp.nsec = ST_MTIME_NSEC(st);
