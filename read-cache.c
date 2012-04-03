@@ -1605,13 +1605,10 @@ static void ce_smudge_racily_clean_entry(struct cache_entry *ce)
 	}
 }
 
-static int ce_write_entry(git_SHA_CTX *c, int fd, struct cache_entry *ce)
+/* Copy miscellaneous fields but not the name */
+static char *copy_cache_entry_to_ondisk(struct ondisk_cache_entry *ondisk,
+				       struct cache_entry *ce)
 {
-	int size = ondisk_ce_size(ce);
-	struct ondisk_cache_entry *ondisk = xcalloc(1, size);
-	char *name;
-	int result;
-
 	ondisk->ctime.sec = htonl(ce->ce_ctime.sec);
 	ondisk->mtime.sec = htonl(ce->ce_mtime.sec);
 	ondisk->ctime.nsec = htonl(ce->ce_ctime.nsec);
@@ -1628,10 +1625,21 @@ static int ce_write_entry(git_SHA_CTX *c, int fd, struct cache_entry *ce)
 		struct ondisk_cache_entry_extended *ondisk2;
 		ondisk2 = (struct ondisk_cache_entry_extended *)ondisk;
 		ondisk2->flags2 = htons((ce->ce_flags & CE_EXTENDED_FLAGS) >> 16);
-		name = ondisk2->name;
+		return ondisk2->name;
 	}
-	else
-		name = ondisk->name;
+	else {
+		return ondisk->name;
+	}
+}
+
+static int ce_write_entry(git_SHA_CTX *c, int fd, struct cache_entry *ce)
+{
+	int size = ondisk_ce_size(ce);
+	struct ondisk_cache_entry *ondisk = xcalloc(1, size);
+	char *name;
+	int result;
+
+	name = copy_cache_entry_to_ondisk(ondisk, ce);
 	memcpy(name, ce->name, ce_namelen(ce));
 
 	result = ce_write(c, fd, ondisk, size);
