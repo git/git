@@ -1,9 +1,9 @@
 To: git@vger.kernel.org
-Subject: What's cooking in git.git (Apr 2012, #01; Mon, 2)
-X-master-at: d82829b6128263951569221ca0c00dd143da055c
-X-next-at: 534144fcf8debe1f1ee527931c7346ce866f9ef5
+Subject: What's cooking in git.git (Apr 2012, #02; Wed, 4)
+X-master-at: e5056c05ecd2bdaceaa95e12e9e94b1584ec59c8
+X-next-at: 0677f639064c22077f02df7b77b29cd097a4ecef
 
-What's cooking in git.git (Apr 2012, #01; Mon, 2)
+What's cooking in git.git (Apr 2012, #02; Wed, 4)
 --------------------------------------------------
 
 Here are the topics that have been cooking.  Commits prefixed with '-' are
@@ -23,78 +23,33 @@ repositories listed at
 --------------------------------------------------
 [New Topics]
 
+* jc/index-v4 (2012-04-04) 10 commits
+ - update-index: upgrade/downgrade on-disk index version
+ - read-cache.c: write prefix-compressed names in the index
+ - read-cache.c: read prefix-compressed names in index on-disk version v4
+ - read-cache.c: move code to copy incore to ondisk cache to a helper function
+ - read-cache.c: move code to copy ondisk to incore cache to a helper function
+ - read-cache.c: report the header version we do not understand
+ - read-cache.c: make create_from_disk() report number of bytes it consumed
+ - read-cache.c: allow unaligned mapping of the index file
+ - cache.h: hide on-disk index details
+ - varint: make it available outside the context of pack
+ (this branch is tangled with jc/split-blob.)
+
+* jk/add-p-skip-conflicts (2012-04-04) 3 commits
+ - fixup from rctay
+ - snap
+ - add -p: skip conflicted paths
+
+--------------------------------------------------
+[Graduated to "master"]
+
 * pt/gitk (2012-04-02) 2 commits
- - gitk: fix setting font display with new tabbed dialog layout.
- - gitk: fix tabbed preferences construction when using tcl 8.4
+ + gitk: fix setting font display with new tabbed dialog layout.
+ + gitk: fix tabbed preferences construction when using tcl 8.4
 
 Pat spotted and fixed a few bugs in the latest gitk updates; we may need
 these in 1.7.10 so testing on various platforms is very much appreciated.
-
-* bw/spawn-via-shell-path (2012-03-31) 2 commits
- - fixup? Quote SHELL_PATH the same way as DEFAULT_EDITOR for C
- - Use SHELL_PATH from build system in run_command.c:prepare_shell_cmd
-
-"sh" on the user's PATH may be utterly broken on some systems;
-consistently use SHELL_PATH even from inside run-command API.
-
-Will squash the fixup and schedule it to merge soon after 1.7.10.
-
-* jc/commit-unedited-template (2012-04-01) 4 commits
- - git-commit.txt: clarify -t requires editing message
- - commit: rephrase the error when user did not touch templated log message
- - commit: do not trigger bogus "has templated message edited" check
- - t7501: test the right kind of breakage
-
-When "git commit --template F" errors out because the user did not touch
-the message, it claimed that it aborts due to "empty message", which was
-utterly wrong.
-
-* jc/push-upstream-sanity (2012-03-30) 1 commit
- - push: detect nonsense "upstream" check more carefully
-
-"git push $there" without refspec, when the current branch is set to push
-to a remote different from $there, used to push to $there using the
-upstream information to a remote unreleated to $there.
-
-This is necessary if we were to switch the push.default to 'current'.
-
-* jk/http-backend-keep-committer-ident-env (2012-03-30) 1 commit
- - http-backend: respect existing GIT_COMMITTER_* variables
-
-The smart-http backend used to always override GIT_COMMITTER_* variables
-with REMOTE_USER and REMOTE_ADDR.
-
-* mk/gitweb-diff-hl (2012-03-29) 8 commits
- - gitweb: Refinement highlightning in combined diffs
- - gitweb: Highlight interesting parts of diff
- - gitweb: Push formatting diff lines to print_diff_chunk()
- - gitweb: Move HTML-formatting diff line back to process_diff_line()
- - gitweb: Use print_diff_chunk() for both side-by-side and inline diffs
- - gitweb: Extract print_sidebyside_diff_lines()
- - gitweb: Pass esc_html_hl_regions() options to esc_html()
- - gitweb: esc_html_hl_regions(): Don't create empty <span> elements
-
-* it/fetch-pack-many-refs (2012-04-02) 5 commits
- - remote-curl: main test case for the OS command line overflow
- - fetch-pack: test cases for the new --stdin option
- - fixup? no longer need flex argv[]
- - remote-curl: send the refs to fetch-pack on stdin
- - fetch-pack: new --stdin option to read refs from stdin
-
-Will squash the fix-up one and then requeue.
-
-* jn/debian-customizes-default-editor (2012-03-31) 3 commits
- - fixup? do not hide the "usual" default from readers
- - var doc: advertise current DEFAULT_PAGER and DEFAULT_EDITOR settings
- - var doc: default editor and pager are configurable at build time
-
-Haven't heard anything back for the fix-up suggestion, but otherwise
-looked sane.
-
-* rs/commit-list-sort-in-batch (2012-04-02) 3 commits
- - revision: insert unsorted, then sort in prepare_revision_walk()
- - commit: use mergesort() in commit_list_sort_by_date()
- - add mergesort() for linked lists
 
 --------------------------------------------------
 [Stalled]
@@ -174,13 +129,15 @@ from Ævar. The second one needs more work, both in perl/Git.pm and
 prompt.c, to give precedence to tty over SSH_ASKPASS when terminal
 is available.
 
-* jc/split-blob (2012-03-16) 6 commits
+* jc/split-blob (2012-04-03) 7 commits
  - chunked-object: streaming checkout
  - chunked-object: fallback checkout codepaths
  - bulk-checkin: support chunked-object encoding
  - bulk-checkin: allow the same data to be multiply hashed
  - new representation types in the packstream
- - varint-in-pack: refactor varint encoding/decoding
+ - packfile: use varint functions
+ - varint: make it available outside the context of pack
+ (this branch is tangled with jc/index-v4.)
 
 Not ready.
 
@@ -207,6 +164,71 @@ not working :-(.
 --------------------------------------------------
 [Cooking]
 
+* bw/spawn-via-shell-path (2012-04-03) 1 commit
+ - Use SHELL_PATH from build system in run_command.c:prepare_shell_cmd
+
+"sh" on the user's PATH may be utterly broken on some systems;
+consistently use SHELL_PATH even from inside run-command API.
+
+* jc/commit-unedited-template (2012-04-03) 5 commits
+ - Documentation/git-commit: rephrase the "initial-ness" of templates
+ - git-commit.txt: clarify -t requires editing message
+ - commit: rephrase the error when user did not touch templated log message
+ - commit: do not trigger bogus "has templated message edited" check
+ - t7501: test the right kind of breakage
+
+When "git commit --template F" errors out because the user did not touch
+the message, it claimed that it aborts due to "empty message", which was
+utterly wrong.
+
+* jc/push-upstream-sanity (2012-04-03) 2 commits
+ - [fixup] remove misguided "try to see if URLs are the same"
+ - push: detect nonsense "upstream" check more carefully
+
+"git push $there" without refspec, when the current branch is set to push
+to a remote different from $there, used to push to $there using the
+upstream information to a remote unreleated to $there.
+
+This is necessary if we were to switch the push.default to 'current'.
+
+* jk/http-backend-keep-committer-ident-env (2012-03-30) 1 commit
+ - http-backend: respect existing GIT_COMMITTER_* variables
+
+The smart-http backend used to always override GIT_COMMITTER_* variables
+with REMOTE_USER and REMOTE_ADDR.
+
+* mk/gitweb-diff-hl (2012-04-04) 8 commits
+ - gitweb: Refinement highlightning in combined diffs
+ - gitweb: Highlight interesting parts of diff
+ - gitweb: Push formatting diff lines to print_diff_chunk()
+ - gitweb: Use print_diff_chunk() for both side-by-side and inline diffs
+ - gitweb: Extract print_sidebyside_diff_lines()
+ - gitweb: Pass esc_html_hl_regions() options to esc_html()
+ - gitweb: esc_html_hl_regions(): Don't create empty <span> elements
+ - gitweb: Use descriptive names in esc_html_hl_regions()
+
+* it/fetch-pack-many-refs (2012-04-02) 5 commits
+ - remote-curl: main test case for the OS command line overflow
+ - fetch-pack: test cases for the new --stdin option
+ - fixup? no longer need flex argv[]
+ - remote-curl: send the refs to fetch-pack on stdin
+ - fetch-pack: new --stdin option to read refs from stdin
+
+Will squash the fix-up one and then requeue.
+
+* jn/debian-customizes-default-editor (2012-03-31) 3 commits
+ - fixup? do not hide the "usual" default from readers
+ - var doc: advertise current DEFAULT_PAGER and DEFAULT_EDITOR settings
+ - var doc: default editor and pager are configurable at build time
+
+Haven't heard anything back for the fix-up suggestion, but otherwise
+looked sane.
+
+* rs/commit-list-sort-in-batch (2012-04-02) 3 commits
+ - revision: insert unsorted, then sort in prepare_revision_walk()
+ - commit: use mergesort() in commit_list_sort_by_date()
+ - add mergesort() for linked lists
+
 * hv/submodule-recurse-push (2012-03-30) 3 commits
  - push: teach --recurse-submodules the on-demand option
  - Refactor submodule push check to use string list instead of integer
@@ -229,7 +251,7 @@ A test merge of the 'subtree'.
 Even with "-q"uiet option, "checkout" used to report setting up tracking.
 Also "branch" learns "-q"uiet option to squelch informational message.
 
-* jk/run-command-eacces (2012-03-30) 1 commit
+* jk/run-command-eacces (2012-04-03) 1 commit
  - run-command: treat inaccessible directories as ENOENT
 
 When PATH contains an unreadable directory, alias expansion code did not
@@ -271,10 +293,9 @@ based on the commit date.
 Forbids rename detection logic from matching two empty files as renames
 during merge-recursive to prevent mismerges.
 
-* th/difftool-diffall (2012-03-29) 9 commits
+* th/difftool-diffall (2012-04-04) 8 commits
  - difftool: print list of valid tools with '--tool-help'
  - difftool: teach difftool to handle directory diffs
- - difftool: replace system call with Git::command_noisy
  - difftool: eliminate setup_environment function
  - difftool: stop appending '.exe' to git
  - difftool: remove explicit change of PATH
