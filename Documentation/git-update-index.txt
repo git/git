@@ -19,7 +19,7 @@ SYNOPSIS
 	     [--ignore-submodules]
 	     [--really-refresh] [--unresolve] [--again | -g]
 	     [--info-only] [--index-info]
-	     [-z] [--stdin]
+	     [-z] [--stdin] [--index-version <n>]
 	     [--verbose]
 	     [--] [<file>...]
 
@@ -142,6 +142,10 @@ you will need to handle the situation manually.
 
 --verbose::
         Report what is being added and removed from index.
+
+--index-version <n>::
+	Write the resulting index out in the named on-disk format version.
+	The current default version is 2.
 
 -z::
 	Only meaningful with `--stdin` or `--index-info`; paths are
