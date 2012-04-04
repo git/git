@@ -105,6 +105,9 @@ struct cache_header {
 	unsigned int hdr_entries;
 };
 
+#define INDEX_FORMAT_LB 2
+#define INDEX_FORMAT_UB 4
+
 /*
  * The "cache_time" is just the low 32 bits of the
  * time. It doesn't matter if it overflows - we only
@@ -265,6 +268,7 @@ static inline unsigned int canon_mode(unsigned int mode)
 
 struct index_state {
 	struct cache_entry **cache;
+	unsigned int version;
 	unsigned int cache_nr, cache_alloc, cache_changed;
 	struct string_list *resolve_undo;
 	struct cache_tree *cache_tree;

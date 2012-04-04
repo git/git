@@ -1196,6 +1196,8 @@ static struct cache_entry *refresh_cache_entry(struct cache_entry *ce, int reall
  * Index File I/O
  *****************************************************************/
 
+#define INDEX_FORMAT_DEFAULT 3
+
 /*
  * dev/ino/uid/gid/size are also just tracked to the low 32 bits
  * Again - this is just a (very strong in practice) heuristic that
@@ -1443,12 +1445,13 @@ int read_index_from(struct index_state *istate, const char *path)
 	if (verify_hdr(hdr, mmap_size) < 0)
 		goto unmap;
 
+	istate->version = ntohl(hdr->hdr_version);
 	istate->cache_nr = ntohl(hdr->hdr_entries);
 	istate->cache_alloc = alloc_nr(istate->cache_nr);
 	istate->cache = xcalloc(istate->cache_alloc, sizeof(struct cache_entry *));
 	istate->initialized = 1;
 
-	if (hdr->hdr_version == htonl(4))
+	if (istate->version == 4)
 		previous_name = &previous_name_buf;
 	else
 		previous_name = NULL;
@@ -1676,15 +1679,45 @@ static char *copy_cache_entry_to_ondisk(struct ondisk_cache_entry *ondisk,
 	}
 }
 
-static int ce_write_entry(git_SHA_CTX *c, int fd, struct cache_entry *ce)
+static int ce_write_entry(git_SHA_CTX *c, int fd, struct cache_entry *ce,
+			  struct strbuf *previous_name)
 {
-	int size = ondisk_ce_size(ce);
-	struct ondisk_cache_entry *ondisk = xcalloc(1, size);
+	int size;
+	struct ondisk_cache_entry *ondisk;
 	char *name;
 	int result;
 
-	name = copy_cache_entry_to_ondisk(ondisk, ce);
-	memcpy(name, ce->name, ce_namelen(ce));
+	if (!previous_name) {
+		size = ondisk_ce_size(ce);
+		ondisk = xcalloc(1, size);
+		name = copy_cache_entry_to_ondisk(ondisk, ce);
+		memcpy(name, ce->name, ce_namelen(ce));
+	} else {
+		int common, to_remove, prefix_size;
+		unsigned char to_remove_vi[16];
+		for (common = 0;
+		     (ce->name[common] &&
+		      common < previous_name->len &&
+		      ce->name[common] == previous_name->buf[common]);
+		     common++)
+			; /* still matching */
+		to_remove = previous_name->len - common;
+		prefix_size = encode_varint(to_remove, to_remove_vi);
+
+		if (ce->ce_flags & CE_EXTENDED)
+			size = offsetof(struct ondisk_cache_entry_extended, name);
+		else
+			size = offsetof(struct ondisk_cache_entry, name);
+		size += prefix_size + (ce_namelen(ce) - common + 1);
+
+		ondisk = xcalloc(1, size);
+		name = copy_cache_entry_to_ondisk(ondisk, ce);
+		memcpy(name, to_remove_vi, prefix_size);
+		memcpy(name + prefix_size, ce->name + common, ce_namelen(ce) - common);
+
+		strbuf_splice(previous_name, common, to_remove,
+			      ce->name + common, ce_namelen(ce) - common);
+	}
 
 	result = ce_write(c, fd, ondisk, size);
 	free(ondisk);
@@ -1720,10 +1753,11 @@ int write_index(struct index_state *istate, int newfd)
 {
 	git_SHA_CTX c;
 	struct cache_header hdr;
-	int i, err, removed, extended;
+	int i, err, removed, extended, hdr_version;
 	struct cache_entry **cache = istate->cache;
 	int entries = istate->cache_nr;
 	struct stat st;
+	struct strbuf previous_name_buf = STRBUF_INIT, *previous_name;
 
 	for (i = removed = extended = 0; i < entries; i++) {
 		if (cache[i]->ce_flags & CE_REMOVE)
@@ -1737,24 +1771,34 @@ int write_index(struct index_state *istate, int newfd)
 		}
 	}
 
+	if (!istate->version)
+		istate->version = INDEX_FORMAT_DEFAULT;
+
+	/* demote version 3 to version 2 when the latter suffices */
+	if (istate->version == 3 || istate->version == 2)
+		istate->version = extended ? 3 : 2;
+
+	hdr_version = istate->version;
+
 	hdr.hdr_signature = htonl(CACHE_SIGNATURE);
-	/* for extended format, increase version so older git won't try to read it */
-	hdr.hdr_version = htonl(extended ? 3 : 2);
+	hdr.hdr_version = htonl(hdr_version);
 	hdr.hdr_entries = htonl(entries - removed);
 
 	git_SHA1_Init(&c);
 	if (ce_write(&c, newfd, &hdr, sizeof(hdr)) < 0)
 		return -1;
 
+	previous_name = (hdr_version == 4) ? &previous_name_buf : NULL;
 	for (i = 0; i < entries; i++) {
 		struct cache_entry *ce = cache[i];
 		if (ce->ce_flags & CE_REMOVE)
 			continue;
 		if (!ce_uptodate(ce) && is_racy_timestamp(istate, ce))
 			ce_smudge_racily_clean_entry(ce);
-		if (ce_write_entry(&c, newfd, ce) < 0)
+		if (ce_write_entry(&c, newfd, ce, previous_name) < 0)
 			return -1;
 	}
+	strbuf_release(&previous_name_buf);
 
 	/* Write extension data here */
 	if (istate->cache_tree) {
