@@ -1003,7 +1003,7 @@ static void mingw_execve(const char *cmd, char *const *argv, char *const *env)
 	}
 }
 
-void mingw_execvp(const char *cmd, char *const *argv)
+int mingw_execvp(const char *cmd, char *const *argv)
 {
 	char **path = get_path_split();
 	char *prog = path_lookup(cmd, path, 0);
@@ -1015,11 +1015,13 @@ void mingw_execvp(const char *cmd, char *const *argv)
 		errno = ENOENT;
 
 	free_path_split(path);
+	return -1;
 }
 
-void mingw_execv(const char *cmd, char *const *argv)
+int mingw_execv(const char *cmd, char *const *argv)
 {
 	mingw_execve(cmd, argv, environ);
+	return -1;
 }
 
 int mingw_kill(pid_t pid, int sig)
