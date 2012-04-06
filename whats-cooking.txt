@@ -1,55 +1,22 @@
 To: git@vger.kernel.org
-Subject: What's cooking in git.git (Apr 2012, #02; Wed, 4)
-X-master-at: e5056c05ecd2bdaceaa95e12e9e94b1584ec59c8
-X-next-at: 0677f639064c22077f02df7b77b29cd097a4ecef
+Subject: What's cooking in git.git (Apr 2012, #03; Fri, 6)
+X-master-at: e8dde3e5f9ddb7cf95a6ff3cea6cf07c3a2db80d
+X-next-at: 554fe20f43cb5d69d3fd745ccacd93776a4c101d
 
-What's cooking in git.git (Apr 2012, #02; Wed, 4)
+What's cooking in git.git (Apr 2012, #03; Fri, 6)
 --------------------------------------------------
 
 Here are the topics that have been cooking.  Commits prefixed with '-' are
 only in 'pu' (proposed updates) while commits prefixed with '+' are in 'next'.
 
-It seems that a last minute bug or two slipped in with the latest gitk
-updates, so I'll probably do the 1.7.10-rc4 tonight or tomorrow with the
-two patches posted yesterday and schedule the final by the end of the
-week.  In the meantime, 1.7.9.6 is also out, to give GIT_MERGE_AUTOEDIT
-support for the maintenance track.
+After slipping for about a week, 1.7.10 final has been tagged.  Let's wait
+for a few days to give time for the dust to settle and then open the new
+development cycle sometime next week.
 
 You can find the changes described here in the integration branches of the
 repositories listed at
 
     http://git-blame.blogspot.com/p/git-public-repositories.html
-
---------------------------------------------------
-[New Topics]
-
-* jc/index-v4 (2012-04-04) 10 commits
- - update-index: upgrade/downgrade on-disk index version
- - read-cache.c: write prefix-compressed names in the index
- - read-cache.c: read prefix-compressed names in index on-disk version v4
- - read-cache.c: move code to copy incore to ondisk cache to a helper function
- - read-cache.c: move code to copy ondisk to incore cache to a helper function
- - read-cache.c: report the header version we do not understand
- - read-cache.c: make create_from_disk() report number of bytes it consumed
- - read-cache.c: allow unaligned mapping of the index file
- - cache.h: hide on-disk index details
- - varint: make it available outside the context of pack
- (this branch is tangled with jc/split-blob.)
-
-* jk/add-p-skip-conflicts (2012-04-04) 3 commits
- - fixup from rctay
- - snap
- - add -p: skip conflicted paths
-
---------------------------------------------------
-[Graduated to "master"]
-
-* pt/gitk (2012-04-02) 2 commits
- + gitk: fix setting font display with new tabbed dialog layout.
- + gitk: fix tabbed preferences construction when using tcl 8.4
-
-Pat spotted and fixed a few bugs in the latest gitk updates; we may need
-these in 1.7.10 so testing on various platforms is very much appreciated.
 
 --------------------------------------------------
 [Stalled]
@@ -164,6 +131,31 @@ not working :-(.
 --------------------------------------------------
 [Cooking]
 
+* jc/index-v4 (2012-04-04) 10 commits
+ - update-index: upgrade/downgrade on-disk index version
+ - read-cache.c: write prefix-compressed names in the index
+ - read-cache.c: read prefix-compressed names in index on-disk version v4
+ - read-cache.c: move code to copy incore to ondisk cache to a helper function
+ - read-cache.c: move code to copy ondisk to incore cache to a helper function
+ - read-cache.c: report the header version we do not understand
+ - read-cache.c: make create_from_disk() report number of bytes it consumed
+ - read-cache.c: allow unaligned mapping of the index file
+ - cache.h: hide on-disk index details
+ - varint: make it available outside the context of pack
+ (this branch is tangled with jc/split-blob.)
+
+Trivially shrinks the on-disk size of the index file to save both I/O and
+checksum overhead.  The "v4" format represented here may not be what we
+eventually want to have, but the preparatory refactoring steps and the way
+how backward compatibility is retained should give plenty to learn to GSoC
+student-hopefuls.
+
+* jk/add-p-skip-conflicts (2012-04-05) 1 commit
+ - add--interactive: ignore unmerged entries in patch mode
+
+Excludes conflicted paths from "add -p" processing, as it is not prepared
+to handle them.
+
 * bw/spawn-via-shell-path (2012-04-03) 1 commit
  - Use SHELL_PATH from build system in run_command.c:prepare_shell_cmd
 
@@ -181,15 +173,13 @@ When "git commit --template F" errors out because the user did not touch
 the message, it claimed that it aborts due to "empty message", which was
 utterly wrong.
 
-* jc/push-upstream-sanity (2012-04-03) 2 commits
- - [fixup] remove misguided "try to see if URLs are the same"
- - push: detect nonsense "upstream" check more carefully
+* jc/push-upstream-sanity (2012-04-05) 1 commit
+ - push: error out when the "upstream" semantics does not make sense
 
-"git push $there" without refspec, when the current branch is set to push
-to a remote different from $there, used to push to $there using the
-upstream information to a remote unreleated to $there.
-
-This is necessary if we were to switch the push.default to 'current'.
+Fix broken 'push to upstream' implementation.  "git push $there" without
+refspec, when the current branch is set to push to a remote different from
+$there, used to push to $there using the upstream information to a remote
+unreleated to $there.
 
 * jk/http-backend-keep-committer-ident-env (2012-03-30) 1 commit
  - http-backend: respect existing GIT_COMMITTER_* variables
@@ -197,7 +187,7 @@ This is necessary if we were to switch the push.default to 'current'.
 The smart-http backend used to always override GIT_COMMITTER_* variables
 with REMOTE_USER and REMOTE_ADDR.
 
-* mk/gitweb-diff-hl (2012-04-04) 8 commits
+* mk/gitweb-diff-hl (2012-04-05) 8 commits
  - gitweb: Refinement highlightning in combined diffs
  - gitweb: Highlight interesting parts of diff
  - gitweb: Push formatting diff lines to print_diff_chunk()
@@ -206,6 +196,8 @@ with REMOTE_USER and REMOTE_ADDR.
  - gitweb: Pass esc_html_hl_regions() options to esc_html()
  - gitweb: esc_html_hl_regions(): Don't create empty <span> elements
  - gitweb: Use descriptive names in esc_html_hl_regions()
+
+Rerolled.
 
 * it/fetch-pack-many-refs (2012-04-02) 5 commits
  - remote-curl: main test case for the OS command line overflow
@@ -243,6 +235,7 @@ looked sane.
  - ...
 
 A test merge of the 'subtree'.
+Waiting for an updated pull request.
 
 * jk/branch-quiet (2012-03-26) 2 commits
  - teach "git branch" a --quiet option
@@ -251,8 +244,9 @@ A test merge of the 'subtree'.
 Even with "-q"uiet option, "checkout" used to report setting up tracking.
 Also "branch" learns "-q"uiet option to squelch informational message.
 
-* jk/run-command-eacces (2012-04-03) 1 commit
+* jk/run-command-eacces (2012-04-05) 2 commits
  - run-command: treat inaccessible directories as ENOENT
+ - compat/mingw.[ch]: Change return type of exec functions to int
 
 When PATH contains an unreadable directory, alias expansion code did not
 kick in, and failed with an error that said "git-subcmd" was not found.
