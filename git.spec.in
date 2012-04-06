@@ -101,6 +101,7 @@ Group:          Development/Libraries
 Requires:       git = %{version}-%{release}
 Requires:       perl(:MODULE_COMPAT_%(eval "`%{__perl} -V:version`"; echo $version))
 BuildRequires:  perl(Error)
+BuildRequires:  perl(ExtUtils::MakeMaker)
 
 %description -n perl-Git
 Perl interface to Git
