@@ -1,0 +1,4 @@
+#!/bin/sh
+
+Meta/RelBuild &&
+Meta/RelUpload

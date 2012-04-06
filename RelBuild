@@ -1,0 +1,30 @@
+#!/bin/sh
+
+version=$(git describe --exact) &&
+label=$(echo "$version" | sed -e 's|^v||') &&
+version=$(echo "$label" | sed -e 's|-|.|g') || exit
+
+make clean && make dist &&
+
+ASCIIDOC_NO_ROFF=YesPlease \
+ASCIIDOC8=YesPlease \
+MAN_BASE_URL="git-htmldocs/" \
+make dist-doc || exit
+
+# The above used to be
+# MAN_BASE_URL="http://www.kernel.org/pub/software/scm/git/docs/"
+
+files="
+	git-$version.tar.gz
+	git-htmldocs-$version.tar.gz
+	git-manpages-$version.tar.gz
+"
+
+for file in $files
+do
+	test -f $file || exit
+done
+
+sha1sum $files | gpg --clearsign >git-$version.sign
+
+ls -l git-$version.sign $files
