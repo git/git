@@ -19,7 +19,7 @@ Compatibility Notes
 	GIT_MERGE_AUTOEDIT=no
 	export GIT_MERGE_AUTOEDIT
 
-   to disable this behaviour (if you want your users to explain their
+   to disable this behavior (if you want your users to explain their
    merge commits, you do not have to do anything).  Alternatively, you
    can give the "--no-edit" option to individual invocations of the
    "git merge" command if you know everybody who uses your script has
@@ -29,15 +29,16 @@ Compatibility Notes
    while and were deprecated in mid 2008 (v1.6.0).  When you give these
    options to "git am", it will now warn and ask you not to use them.
 
- * When you do not tell which branches and tags to push to the "git push"
-   command in any way, the command used "matching refs" rule to update
-   remote branches and tags with branches and tags with the same name you
-   locally have.  In future versions of Git, this will change to push out
-   only your current branch according to either the "upstream" or the
-   "current" rule.  Although "upstream" may be more powerful once the
-   user understands Git better, the semantics "current" gives is
-   simpler and easier to understand for beginners and may be a safer
-   and better default option, but we haven't decided yet.
+ * When you do not tell which branches and tags to push to the "git
+   push" command in any way, the command used "matching refs" rule to
+   update remote branches and tags with branches and tags with the
+   same name you locally have.  In future versions of Git, this will
+   change to push out only your current branch according to either the
+   "upstream" or the "current" rule.  Although "upstream" may be more
+   powerful once the user understands Git better, the semantics
+   "current" gives is simpler and easier to understand for beginners
+   and may be a safer and better default option.  We haven't decided
+   yet which one to switch to.
 
 
 Updates since v1.7.9
@@ -138,6 +139,8 @@ UI, Workflows & Features
 
  * Project search in "gitweb" shows the substring that matched in the
    project name and description highlighted.
+
+ * HTTP transport learned to authenticate with a proxy if needed.
 
  * A new script "diffall" is added to contrib/; it drives an
    external tool to perform a directory diff of two Git revisions
