@@ -84,7 +84,13 @@ class GitHg(object):
             email = a.group(2)
             extra = a.group(4)
             if not extra is None and len(extra) > 0:
-                name += ' ext:(' + urllib.quote(extra) + ')'
+                if email.endswith(' <at'):
+                    extra = extra.replace(' ', '')
+                    extra = extra.replace(' <dot> ', '.')
+                    extra = extra.replace('>', '')
+                    email = email[:-4] + '@' + extra
+                else:
+                    name += ' ext:(' + urllib.quote(extra) + ')'
             author = name + ' <' + email + '>'
         else:
             if author.find('<') >= 0:
