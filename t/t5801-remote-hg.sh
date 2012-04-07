@@ -73,7 +73,7 @@ test_expect_success 'pulling from remote remote' '
 	vcs_cmp public clone
 '
 
-test_expect_success 'pushing to local empty repo' '
+test_expect_failure 'pushing to local empty repo' '
 	hg init localempty &&
 	(cd localclone &&
 	git push --all "hg::file://${ROOT}/localempty") &&
@@ -82,7 +82,7 @@ test_expect_success 'pushing to local empty repo' '
 	vcs_cmp localclone localempty
 '
 
-test_expect_success 'pushing to remote empty repo' '
+test_expect_failure 'pushing to remote empty repo' '
 	hg init empty &&
 	(cd localclone &&
 	git push --all "hg::remote://${ROOT}/empty") &&
@@ -91,7 +91,7 @@ test_expect_success 'pushing to remote empty repo' '
 	vcs_cmp localclone empty
 '
 
-test_expect_success 'pushing to local repo' '
+test_expect_failure 'pushing to local repo' '
 	(cd localclone &&
 	echo content >>file &&
 	git commit -a -m three &&
@@ -106,7 +106,7 @@ test_expect_success 'synch with changes from localclone' '
 	 git pull)
 '
 
-test_expect_success 'pushing remote local repo' '
+test_expect_failure 'pushing remote local repo' '
 	(cd clone &&
 	echo content >>file &&
 	git commit -a -m four &&
