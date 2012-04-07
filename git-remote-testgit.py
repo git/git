@@ -56,7 +56,7 @@ class TestgitRemoteHelper(RemoteHelper):
         head is at clone time.
         """
 
-        for ref in repo.revs:
+        for ref in repo.revs_:
             debug("? refs/heads/%s", ref)
             print "? refs/heads/%s" % ref
 
