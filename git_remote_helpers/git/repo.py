@@ -61,7 +61,7 @@ class GitRepo(object):
         self.revmap = dict(sanitize(i) for i in output)
         if "HEAD" in self.revmap:
             del self.revmap["HEAD"]
-        self.revs = self.revmap.keys()
+        self.revs_ = self.revmap.keys()
         ofile.close()
 
     def get_head(self):
