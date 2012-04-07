@@ -2038,7 +2038,7 @@ proc makewindow {} {
     set file {
 	mc "File" cascade {
 	    {mc "Update" command updatecommits -accelerator F5}
-	    {mc "Reload" command reloadcommits -accelerator Meta1-F5}
+	    {mc "Reload" command reloadcommits -accelerator Shift-F5}
 	    {mc "Reread references" command rereadrefs}
 	    {mc "List references" command showrefs -accelerator F2}
 	    {xx "" separator}
@@ -2495,7 +2495,7 @@ proc makewindow {} {
     bindkey ? {dofind -1 1}
     bindkey f nextfile
     bind . <F5> updatecommits
-    bind . <$M1B-F5> reloadcommits
+    bind . <Shift-F5> reloadcommits
     bind . <F2> showrefs
     bind . <Shift-F4> {newview 0}
     catch { bind . <Shift-Key-XF86_Switch_VT_4> {newview 0} }
