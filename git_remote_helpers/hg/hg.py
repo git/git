@@ -76,17 +76,21 @@ class GitHg(object):
         author = ctx.user()
 
         # check for git author pattern compliance
-        regex = re.compile('^(.*?) ?\<(.*?)\>(.*)$')
+        regex = re.compile('^(.*?) ?\<(.*?)(|\>(.*))$')
         a = regex.match(author)
 
         if a:
             name = a.group(1)
             email = a.group(2)
-            if len(a.group(3)) > 0:
-                name += ' ext:(' + urllib.quote(a.group(3)) + ')'
+            extra = a.group(4)
+            if not extra is None and len(extra) > 0:
+                name += ' ext:(' + urllib.quote(extra) + ')'
             author = name + ' <' + email + '>'
         else:
-            author = author + ' <none@none>'
+            if author.find('<') >= 0:
+                author = author + '>'
+            else:
+                author = author + ' <none@none>'
 
         if 'author' in ctx.extra():
             author = apply_delta(author, ctx.extra()['author'])
