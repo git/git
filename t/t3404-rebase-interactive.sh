@@ -624,8 +624,38 @@ test_expect_success 'submodule rebase -i' '
 	FAKE_LINES="1 squash 2 3" git rebase -i A
 '
 
+test_expect_success 'submodule conflict setup' '
+	git tag submodule-base &&
+	git checkout HEAD^ &&
+	(
+		cd sub && git checkout HEAD^ && echo 4 >elif &&
+		git add elif && git commit -m "submodule conflict"
+	) &&
+	git add sub &&
+	test_tick &&
+	git commit -m "Conflict in submodule" &&
+	git tag submodule-topic
+'
+
+test_expect_success 'rebase -i continue with only submodule staged' '
+	test_must_fail git rebase -i submodule-base &&
+	git add sub &&
+	git rebase --continue &&
+	test $(git rev-parse submodule-base) != $(git rev-parse HEAD)
+'
+
+test_expect_success 'rebase -i continue with unstaged submodule' '
+	git checkout submodule-topic &&
+	git reset --hard &&
+	test_must_fail git rebase -i submodule-base &&
+	git reset &&
+	git rebase --continue &&
+	test $(git rev-parse submodule-base) = $(git rev-parse HEAD)
+'
+
 test_expect_success 'avoid unnecessary reset' '
 	git checkout master &&
+	git reset --hard &&
 	test-chmtime =123456789 file3 &&
 	git update-index --refresh &&
 	HEAD=$(git rev-parse HEAD) &&
