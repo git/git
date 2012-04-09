@@ -42,7 +42,7 @@ class HgRemoteHelper(RemoteHelper):
         repo.marksfile = 'git.marks'
         repo.hg = hg
         repo.prefix = prefix
-        repo.revs2 = revs # must not override repo.revs()
+        repo.revs_ = revs # must not override repo.revs()
 
         self.setup_repo(repo, alias)
 
@@ -65,7 +65,7 @@ class HgRemoteHelper(RemoteHelper):
 
         local.git_hg = repo.git_hg
         local.hg = repo.hg
-        local.revs2 = repo.revs2
+        local.revs_ = repo.revs_
         local.exporter = GitExporter(local)
         local.importer = GitImporter(local)
         local.is_local = repo.is_local
@@ -76,7 +76,7 @@ class HgRemoteHelper(RemoteHelper):
         """Lists all known references.
         """
 
-        for ref in repo.revs2:
+        for ref in repo.revs_:
             debug("? refs/heads/%s", ref)
             print "? refs/heads/%s" % ref
 
