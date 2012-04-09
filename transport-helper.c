@@ -22,6 +22,8 @@
 #include "packfile.h"
 
 static int debug;
+/* TODO: put somewhere sensible, e.g. git_transport_options? */
+static int auto_gc = 1;
 
 struct helper_data {
 	char *name;
@@ -587,6 +589,13 @@ static int fetch_with_import(struct transport *transport,
 		}
 	}
 	strbuf_release(&buf);
+	if (auto_gc) {
+		struct child_process cmd = CHILD_PROCESS_INIT;
+
+		cmd.git_cmd = 1;
+		strvec_pushl(&cmd.args, "gc", "--auto", "--quiet", NULL);
+		run_command(&cmd);
+	}
 	return 0;
 }
 
