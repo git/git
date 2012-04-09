@@ -1,6 +1,6 @@
 #!/bin/sh
 
-test_description='git-p4 p4 filetype tests'
+test_description='git p4 filetype tests'
 
 . ./lib-git-p4.sh
 
@@ -37,7 +37,7 @@ test_expect_success 'utf-16 file create' '
 
 test_expect_success 'utf-16 file test' '
 	test_when_finished cleanup_git &&
-	"$GITP4" clone --dest="$git" //depot@all &&
+	git p4 clone --dest="$git" //depot@all &&
 	(
 		cd "$git" &&
 
@@ -84,7 +84,7 @@ test_expect_success 'keyword file test' '
 	build_smush &&
 	test_when_finished rm -f k_smush.py ko_smush.py &&
 	test_when_finished cleanup_git &&
-	"$GITP4" clone --dest="$git" //depot@all &&
+	git p4 clone --dest="$git" //depot@all &&
 	(
 		cd "$git" &&
 
@@ -94,7 +94,7 @@ test_expect_success 'keyword file test' '
 		"$PYTHON_PATH" "$TRASH_DIRECTORY/ko_smush.py" <"$cli/k-text-ko" >cli-k-text-ko-smush &&
 		test_cmp cli-k-text-ko-smush k-text-ko &&
 
-		# utf16, even though p4 expands keywords, git-p4 does not
+		# utf16, even though p4 expands keywords, git p4 does not
 		# try to undo that
 		test_cmp "$cli/k-utf16-k" k-utf16-k &&
 		test_cmp "$cli/k-utf16-ko" k-utf16-ko
@@ -125,7 +125,7 @@ test_expect_success 'ignore apple' '
 		p4 submit -d appledouble
 	) &&
 	test_when_finished cleanup_git &&
-	"$GITP4" clone --dest="$git" //depot@all &&
+	git p4 clone --dest="$git" //depot@all &&
 	(
 		cd "$git" &&
 		test ! -f double.png

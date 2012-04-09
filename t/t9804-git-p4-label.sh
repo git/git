@@ -1,6 +1,6 @@
 #!/bin/sh
 
-test_description='git-p4 p4 label tests'
+test_description='git p4 label tests'
 
 . ./lib-git-p4.sh
 
@@ -50,7 +50,7 @@ test_expect_success 'basic p4 labels' '
 
 		p4 labels ... &&
 
-		"$GITP4" clone --dest="$git" --detect-labels //depot@all &&
+		git p4 clone --dest="$git" --detect-labels //depot@all &&
 		cd "$git" &&
 
 		git tag &&
@@ -89,7 +89,7 @@ test_expect_failure 'two labels on the same changelist' '
 
 		p4 labels ... &&
 
-		"$GITP4" clone --dest="$git" --detect-labels //depot@all &&
+		git p4 clone --dest="$git" --detect-labels //depot@all &&
 		cd "$git" &&
 
 		git tag | grep tag_f1 &&

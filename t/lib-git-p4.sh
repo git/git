@@ -1,19 +1,17 @@
 #
-# Library code for git-p4 tests
+# Library code for git p4 tests
 #
 
 . ./test-lib.sh
 
 if ! test_have_prereq PYTHON; then
-	skip_all='skipping git-p4 tests; python not available'
+	skip_all='skipping git p4 tests; python not available'
 	test_done
 fi
 ( p4 -h && p4d -h ) >/dev/null 2>&1 || {
-	skip_all='skipping git-p4 tests; no p4 or p4d'
+	skip_all='skipping git p4 tests; no p4 or p4d'
 	test_done
 }
-
-GITP4="$GIT_BUILD_DIR/git-p4"
 
 # Try to pick a unique port: guess a large number, then hope
 # no more than one of each test is running.
