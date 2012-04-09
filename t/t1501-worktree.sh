@@ -68,7 +68,7 @@ test_expect_success 'inside work tree' '
 	)
 '
 
-test_expect_failure 'empty prefix is actually written out' '
+test_expect_success 'empty prefix is actually written out' '
 	echo >expected &&
 	(
 		cd work &&
