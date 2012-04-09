@@ -13,7 +13,7 @@ fi
 	test_done
 }
 
-GITP4="$GIT_BUILD_DIR/contrib/fast-import/git-p4"
+GITP4="$GIT_BUILD_DIR/git-p4"
 
 # Try to pick a unique port: guess a large number, then hope
 # no more than one of each test is running.
