@@ -23,23 +23,6 @@ static void add_to_ref_list(const unsigned char *sha1, const char *name,
 	list->nr++;
 }
 
-/* Eventually this should go to strbuf.[ch] */
-static int strbuf_readline_fd(struct strbuf *sb, int fd)
-{
-	strbuf_reset(sb);
-
-	while (1) {
-		char ch;
-		ssize_t len = xread(fd, &ch, 1);
-		if (len <= 0)
-			return len;
-		strbuf_addch(sb, ch);
-		if (ch == '\n')
-			break;
-	}
-	return 0;
-}
-
 static int parse_bundle_header(int fd, struct bundle_header *header,
 			       const char *report_path)
 {
@@ -47,7 +30,7 @@ static int parse_bundle_header(int fd, struct bundle_header *header,
 	int status = 0;
 
 	/* The bundle header begins with the signature */
-	if (strbuf_readline_fd(&buf, fd) ||
+	if (strbuf_getwholeline_fd(&buf, fd, '\n') ||
 	    strcmp(buf.buf, bundle_signature)) {
 		if (report_path)
 			error("'%s' does not look like a v2 bundle file",
@@ -57,7 +40,7 @@ static int parse_bundle_header(int fd, struct bundle_header *header,
 	}
 
 	/* The bundle header ends with an empty line */
-	while (!strbuf_readline_fd(&buf, fd) &&
+	while (!strbuf_getwholeline_fd(&buf, fd, '\n') &&
 	       buf.len && buf.buf[0] != '\n') {
 		unsigned char sha1[20];
 		int is_prereq = 0;
@@ -251,7 +234,7 @@ int create_bundle(struct bundle_header *header, const char *path,
 	const char **argv_boundary = xmalloc((argc + 4) * sizeof(const char *));
 	const char **argv_pack = xmalloc(6 * sizeof(const char *));
 	int i, ref_count = 0;
-	char buffer[1024];
+	struct strbuf buf = STRBUF_INIT;
 	struct rev_info revs;
 	struct child_process rls;
 	FILE *rls_fout;
@@ -283,20 +266,21 @@ int create_bundle(struct bundle_header *header, const char *path,
 	if (start_command(&rls))
 		return -1;
 	rls_fout = xfdopen(rls.out, "r");
-	while (fgets(buffer, sizeof(buffer), rls_fout)) {
+	while (strbuf_getwholeline(&buf, rls_fout, '\n') != EOF) {
 		unsigned char sha1[20];
-		if (buffer[0] == '-') {
-			write_or_die(bundle_fd, buffer, strlen(buffer));
-			if (!get_sha1_hex(buffer + 1, sha1)) {
+		if (buf.len > 0 && buf.buf[0] == '-') {
+			write_or_die(bundle_fd, buf.buf, buf.len);
+			if (!get_sha1_hex(buf.buf + 1, sha1)) {
 				struct object *object = parse_object(sha1);
 				object->flags |= UNINTERESTING;
-				add_pending_object(&revs, object, buffer);
+				add_pending_object(&revs, object, buf.buf);
 			}
-		} else if (!get_sha1_hex(buffer, sha1)) {
+		} else if (!get_sha1_hex(buf.buf, sha1)) {
 			struct object *object = parse_object(sha1);
 			object->flags |= SHOWN;
 		}
 	}
+	strbuf_release(&buf);
 	fclose(rls_fout);
 	if (finish_command(&rls))
 		return error("rev-list died");

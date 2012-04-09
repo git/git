@@ -255,8 +255,24 @@ same behaviour as well.
 
 `strbuf_getline`::
 
-	Read a line from a FILE* pointer. The second argument specifies the line
+	Read a line from a FILE *, overwriting the existing contents
+	of the strbuf. The second argument specifies the line
 	terminator character, typically `'\n'`.
+	Reading stops after the terminator or at EOF.  The terminator
+	is removed from the buffer before returning.  Returns 0 unless
+	there was nothing left before EOF, in which case it returns `EOF`.
+
+`strbuf_getwholeline`::
+
+	Like `strbuf_getline`, but keeps the trailing terminator (if
+	any) in the buffer.
+
+`strbuf_getwholeline_fd`::
+
+	Like `strbuf_getwholeline`, but operates on a file descriptor.
+	It reads one character at a time, so it is very slow.  Do not
+	use it unless you need the correct position in the file
+	descriptor.
 
 `stripspace`::
 
