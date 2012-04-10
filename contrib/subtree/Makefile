@@ -1,3 +1,6 @@
+-include ../../config.mak.autogen
+-include ../../config.mak
+
 prefix ?= /usr/local
 mandir ?= $(prefix)/share/man
 gitdir ?= $(shell git --exec-path)
