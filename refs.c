@@ -342,41 +342,53 @@ static int do_for_each_ref_in_arrays(struct ref_array *array1,
  */
 static int names_conflict(const char *refname1, const char *refname2)
 {
-	int len1 = strlen(refname1);
-	int len2 = strlen(refname2);
-	int cmplen;
-	const char *lead;
+	for (; *refname1 && *refname1 == *refname2; refname1++, refname2++)
+		;
+	return (*refname1 == '\0' && *refname2 == '/')
+		|| (*refname1 == '/' && *refname2 == '\0');
+}
 
-	if (len1 < len2) {
-		cmplen = len1;
-		lead = refname2;
-	} else {
-		cmplen = len2;
-		lead = refname1;
+struct name_conflict_cb {
+	const char *refname;
+	const char *oldrefname;
+	const char *conflicting_refname;
+};
+
+static int name_conflict_fn(const char *existingrefname, const unsigned char *sha1,
+			    int flags, void *cb_data)
+{
+	struct name_conflict_cb *data = (struct name_conflict_cb *)cb_data;
+	if (data->oldrefname && !strcmp(data->oldrefname, existingrefname))
+		return 0;
+	if (names_conflict(data->refname, existingrefname)) {
+		data->conflicting_refname = existingrefname;
+		return 1;
 	}
-	return !strncmp(refname1, refname2, cmplen) && lead[cmplen] == '/';
+	return 0;
 }
 
 /*
  * Return true iff a reference named refname could be created without
- * conflicting with the name of an existing reference.  If oldrefname
- * is non-NULL, ignore potential conflicts with oldrefname (e.g.,
- * because oldrefname is scheduled for deletion in the same
+ * conflicting with the name of an existing reference in array.  If
+ * oldrefname is non-NULL, ignore potential conflicts with oldrefname
+ * (e.g., because oldrefname is scheduled for deletion in the same
  * operation).
  */
 static int is_refname_available(const char *refname, const char *oldrefname,
 				struct ref_array *array)
 {
-	int i;
-	for (i = 0; i < array->nr; i++) {
-		struct ref_entry *entry = array->refs[i];
-		if (oldrefname && !strcmp(oldrefname, entry->name))
-			continue;
-		if (names_conflict(refname, entry->name)) {
-			error("'%s' exists; cannot create '%s'",
-			      entry->name, refname);
-			return 0;
-		}
+	struct name_conflict_cb data;
+	data.refname = refname;
+	data.oldrefname = oldrefname;
+	data.conflicting_refname = NULL;
+
+	sort_ref_array(array);
+	if (do_for_each_ref_in_array(array, 0, "", name_conflict_fn,
+				     0, DO_FOR_EACH_INCLUDE_BROKEN,
+				     &data)) {
+		error("'%s' exists; cannot create '%s'",
+		      data.conflicting_refname, refname);
+		return 0;
 	}
 	return 1;
 }
