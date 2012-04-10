@@ -71,7 +71,9 @@ do
 
 	case "$LF$common$LF" in
 	*"$LF$SHA1$LF"*)
-		echo "Already up-to-date with $pretty_name"
+		cat << EOF
+Already up-to-date with $pretty_name
+EOF
 		continue
 		;;
 	esac
@@ -83,7 +85,9 @@ do
 		# tree as the intermediate result of the merge.
 		# We still need to count this as part of the parent set.
 
-		echo "Fast-forwarding to: $pretty_name"
+		cat << EOF
+Fast-forwarding to: $pretty_name
+EOF
 		git read-tree -u -m $head $SHA1 || exit
 		MRC=$SHA1 MRT=$(git write-tree)
 		continue
@@ -91,7 +95,9 @@ do
 
 	NON_FF_MERGE=1
 
-	echo "Trying simple merge with $pretty_name"
+	cat << EOF
+Trying simple merge with $pretty_name
+EOF
 	git read-tree -u -m --aggressive  $common $MRT $SHA1 || exit 2
 	next=$(git write-tree 2>/dev/null)
 	if test $? -ne 0
