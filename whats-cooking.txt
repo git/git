@@ -1,22 +1,77 @@
 To: git@vger.kernel.org
-Subject: What's cooking in git.git (Apr 2012, #03; Fri, 6)
-X-master-at: e8dde3e5f9ddb7cf95a6ff3cea6cf07c3a2db80d
-X-next-at: 554fe20f43cb5d69d3fd745ccacd93776a4c101d
+Subject: What's cooking in git.git (Apr 2012, #04; Tue, 10)
+X-master-at: 7945c7fad05da2ac7f6f1f89202799993a591eac
+X-next-at: ed64435ffdef61ad35e045a9d6fc46a098169618
 
-What's cooking in git.git (Apr 2012, #03; Fri, 6)
+What's cooking in git.git (Apr 2012, #04; Tue, 10)
 --------------------------------------------------
 
 Here are the topics that have been cooking.  Commits prefixed with '-' are
 only in 'pu' (proposed updates) while commits prefixed with '+' are in 'next'.
 
-After slipping for about a week, 1.7.10 final has been tagged.  Let's wait
-for a few days to give time for the dust to settle and then open the new
-development cycle sometime next week.
+This issue describes the state of my tree in preparation for opening the
+post 1.7.10 cycle.  The 'next' branch has not been rewound yet, but it
+soon will be.  The Stalled topics will be discarded by default.
+
+"git subtree" is in contrib/ now.
 
 You can find the changes described here in the integration branches of the
 repositories listed at
 
     http://git-blame.blogspot.com/p/git-public-repositories.html
+
+--------------------------------------------------
+[New Topics]
+
+* bw/submodule-sed-solaris (2012-04-09) 1 commit
+ - Avoid bug in Solaris xpg4/sed as used in submodule
+
+Sensible.
+Will merge to 'next'.
+
+* cb/http-multi-curl-auth (2012-04-10) 2 commits
+ - fix http auth with multiple curl handles
+ - http auth fails with multiple curl handles
+
+Fixes http authentication breakage when we keep multiple HTTP requests in
+flight using curl-multi.
+
+Peff may want to sign this off, but otherwise looked sensible.
+
+* jk/rebase-i-submodule-conflict-only (2012-04-09) 1 commit
+ - rebase -i continue: don't skip commits that only change submodules
+
+Giving "--continue" to a conflicted "rebase -i" session skipped a commit
+that only results in changes to submodules.
+
+Sensible.
+Will merge to 'next'.
+
+* ms/remote-usage-string (2012-04-09) 1 commit
+ - remote: update builtin usage
+
+As an independent follow-up, we may want to rethink how the overall usage
+string and subcommand usage strings are maintained.
+
+Will merge to 'next'.
+
+* pw/fast-import-dataref-parsing (2012-04-10) 1 commit
+ - fast-import: tighten parsing of datarefs
+
+* pw/git-p4 (2012-04-09) 3 commits
+ - git p4: use "git p4" directly in tests
+ - git p4: update name in script
+ - git-p4: move to toplevel
+
+Will merge to 'next'.
+
+* rl/show-empty-prefix (2012-04-10) 1 commit
+ - rev-parse --show-prefix: add in trailing newline
+
+Will merge to 'next'.
+
+* tr/xdiff-fast-hash (2012-04-09) 1 commit
+ - xdiff: load full words in the inner loop of xdl_hash_record
 
 --------------------------------------------------
 [Stalled]
@@ -26,27 +81,20 @@ repositories listed at
  - log --graph: fix break in graph lines
  - log --graph --stat: three-dash separator should come after graph lines
 
-The combination of two options "log --graph --stat" was an obscure corner
-case nobody cared about, and did not correctly show the ancestry graph
-lines.
+With a review from Zbigniew, I have been expecting that this would be
+rerolled, but that didn't happen.
 
-I've split the original patch into three pieces, one for fixes to two
-different issues and a test.  Also the test is adjusted so that the series
-can be back-merged to older codebase that did not have 7f81463 (Use
-correct grammar in diffstat summary line, 2012-02-01) that first appeared
-in v1.7.9.2
-
-With a review from Zbigniew, I would expect that this would be rerolled
-again.
+Will discard shortly unless nothing happens.
 
 * cn/apply-fix-ws-can-lengthen-lines (2012-03-11) 1 commit
  . apply: reallocate the postimage buffer when needed
 
 Attempts to address an ancient bug that dates back to the addition
 of an oddball "tab-in-indent" whitespace breakage class that wants
-to have longer lines than the original when fixing things up.
+to have longer lines than the original when fixing things up; broken
+and results in double-frees.
 
-Needs more work; results in double-frees.
+Will discard shortly unless nothing happens.
 
 * nd/columns (2012-03-13) 12 commits
  - column: support grouping entries
@@ -62,7 +110,10 @@ Needs more work; results in double-frees.
  - Stop starting pager recursively
  - Add column layout skeleton and git-column
 
-Rerolled again.  Modulo minor nits, looked nicer than the previous round.
+Modulo minor nits, looked nicer than the previous round and getting closer
+to completion but nothing has happened recently.
+
+Will discard shortly unless nothing happens.
 
 * nd/threaded-index-pack (2012-03-11) 2 commits
  - index-pack: support multithreaded delta resolving
@@ -70,7 +121,8 @@ Rerolled again.  Modulo minor nits, looked nicer than the previous round.
 
 Another reroll after a bugreport on pthread usage discovered by Ramsey,
 but it seems the topic is cooking between Ramsay and Duy out of tree.
-Waiting for resolution.
+
+Will discard shortly unless nothing happens.
 
 * jh/apply-free-patch (2012-03-28) 7 commits
  - apply.c: WIP ownership audit
@@ -84,8 +136,6 @@ Waiting for resolution.
 Valgrind reports quite a lot of discarded memory inside apply.  I started
 auditing the memory ownership rules in the command, and am almost done.
 
-Will defer til 1.7.10.
-
 * ss/git-svn-prompt-sans-terminal (2012-01-04) 3 commits
  - fixup! 15eaaf4
  - git-svn, perl/Git.pm: extend Git::prompt helper for querying users
@@ -95,6 +145,8 @@ The bottom one has been replaced with a rewrite based on comments
 from Ævar. The second one needs more work, both in perl/Git.pm and
 prompt.c, to give precedence to tty over SSH_ASKPASS when terminal
 is available.
+
+Will discard shortly unless nothing happens.
 
 * jc/split-blob (2012-04-03) 7 commits
  - chunked-object: streaming checkout
@@ -156,11 +208,15 @@ student-hopefuls.
 Excludes conflicted paths from "add -p" processing, as it is not prepared
 to handle them.
 
+Will merge to 'next'.
+
 * bw/spawn-via-shell-path (2012-04-03) 1 commit
  - Use SHELL_PATH from build system in run_command.c:prepare_shell_cmd
 
 "sh" on the user's PATH may be utterly broken on some systems;
 consistently use SHELL_PATH even from inside run-command API.
+
+Will merge to 'next'.
 
 * jc/commit-unedited-template (2012-04-03) 5 commits
  - Documentation/git-commit: rephrase the "initial-ness" of templates
@@ -173,6 +229,8 @@ When "git commit --template F" errors out because the user did not touch
 the message, it claimed that it aborts due to "empty message", which was
 utterly wrong.
 
+Will merge to 'next'.
+
 * jc/push-upstream-sanity (2012-04-05) 1 commit
  - push: error out when the "upstream" semantics does not make sense
 
@@ -181,11 +239,15 @@ refspec, when the current branch is set to push to a remote different from
 $there, used to push to $there using the upstream information to a remote
 unreleated to $there.
 
+Will merge to 'next'.
+
 * jk/http-backend-keep-committer-ident-env (2012-03-30) 1 commit
  - http-backend: respect existing GIT_COMMITTER_* variables
 
 The smart-http backend used to always override GIT_COMMITTER_* variables
 with REMOTE_USER and REMOTE_ADDR.
+
+Will merge to 'next'.
 
 * mk/gitweb-diff-hl (2012-04-05) 8 commits
  - gitweb: Refinement highlightning in combined diffs
@@ -199,24 +261,21 @@ with REMOTE_USER and REMOTE_ADDR.
 
 Rerolled.
 
-* it/fetch-pack-many-refs (2012-04-02) 5 commits
+* it/fetch-pack-many-refs (2012-04-10) 4 commits
  - remote-curl: main test case for the OS command line overflow
  - fetch-pack: test cases for the new --stdin option
- - fixup? no longer need flex argv[]
  - remote-curl: send the refs to fetch-pack on stdin
  - fetch-pack: new --stdin option to read refs from stdin
 
-Will squash the fix-up one and then requeue.
+Will merge to 'next'.
 
-* jn/debian-customizes-default-editor (2012-03-31) 3 commits
- - fixup? do not hide the "usual" default from readers
+* jn/debian-customizes-default-editor (2012-04-10) 2 commits
  - var doc: advertise current DEFAULT_PAGER and DEFAULT_EDITOR settings
  - var doc: default editor and pager are configurable at build time
 
-Haven't heard anything back for the fix-up suggestion, but otherwise
-looked sane.
+Will merge to 'next'.
 
-* rs/commit-list-sort-in-batch (2012-04-02) 3 commits
+* rs/commit-list-sort-in-batch (2012-04-09) 3 commits
  - revision: insert unsorted, then sort in prepare_revision_walk()
  - commit: use mergesort() in commit_list_sort_by_date()
  - add mergesort() for linked lists
@@ -226,23 +285,14 @@ looked sane.
  - Refactor submodule push check to use string list instead of integer
  - Teach revision walking machinery to walk multiple times sequencially
 
-* dg/subtree (2012-03-25) 112 commits
- - Add 'contrib/subtree/' from commit '2e63f75b8f49abe220ef55ec4e978e7a3b8dc351'
- - Add Subtree Test Makefile
- - Build Subtree
- - Use Project Config Files
- - Remove Unneeded Files
- - ...
-
-A test merge of the 'subtree'.
-Waiting for an updated pull request.
-
 * jk/branch-quiet (2012-03-26) 2 commits
  - teach "git branch" a --quiet option
  - checkout: suppress tracking message with "-q"
 
 Even with "-q"uiet option, "checkout" used to report setting up tracking.
 Also "branch" learns "-q"uiet option to squelch informational message.
+
+Will merge to 'next'.
 
 * jk/run-command-eacces (2012-04-05) 2 commits
  - run-command: treat inaccessible directories as ENOENT
@@ -251,11 +301,17 @@ Also "branch" learns "-q"uiet option to squelch informational message.
 When PATH contains an unreadable directory, alias expansion code did not
 kick in, and failed with an error that said "git-subcmd" was not found.
 
+Will merge to 'next'.
+
 * jb/am-include (2012-03-28) 1 commit
  - am: support --include option
 
+Will merge to 'next'.
+
 * jc/am-report-3way (2012-03-28) 1 commit
  - am -3: list the paths that needed 3-way fallback
+
+Will merge to 'next'.
 
 * rs/combine-diff-zero-context-at-the-beginning (2012-03-25) 1 commit
  - combine-diff: fix loop index underflow
@@ -263,12 +319,16 @@ kick in, and failed with an error that said "git-subcmd" was not found.
 Fixes an age old corner case bug in combine diff (only triggered with -U0
 and the hunk at the beginning of the file needs to be shown).
 
+Will merge to 'next'.
+
 * sl/autoconf (2012-03-26) 3 commits
  - configure: be more idiomatic
  - configure: avoid some code repetitions thanks to m4_{push,pop}def
  - configure: move definitions of private m4 macros before AC_INIT invocation
 
 Updates our configure.ac to follow a better "autoconf" style.
+
+Will merge to 'next'.
 
 * wk/gitweb-snapshot-use-if-modified-since (2012-03-30) 3 commits
  - gitweb: add If-Modified-Since handling to git_snapshot().
@@ -278,6 +338,8 @@ Updates our configure.ac to follow a better "autoconf" style.
 Makes 'snapshot' request to "gitweb" honor If-Modified-Since: header,
 based on the commit date.
 
+Will merge to 'next'.
+
 * jk/diff-no-rename-empty (2012-03-23) 4 commits
  - merge-recursive: don't detect renames of empty files
  - teach diffcore-rename to optionally ignore empty content
@@ -286,6 +348,8 @@ based on the commit date.
 
 Forbids rename detection logic from matching two empty files as renames
 during merge-recursive to prevent mismerges.
+
+Will merge to 'next'.
 
 * th/difftool-diffall (2012-04-04) 8 commits
  - difftool: print list of valid tools with '--tool-help'
@@ -311,7 +375,7 @@ trees of independent git repositories that exist in the current project
 working tree from getting removed, but the protection applied only to such
 working trees that are at the top-level of the current project by mistake.
 
-Not urgent.
+Will merge to 'next'.
 
 * ct/advise-push-default (2012-03-26) 2 commits
   (merged to 'next' on 2012-03-28 at 62764ae)
@@ -322,17 +386,21 @@ Breaks down the cases in which "git push" fails due to non-ff into three
 categories, and gives separate advise messages.  This should be a good
 change regardless of mm/push-default-switch-warning topic.
 
+Will merge to 'next'.
+
 * nl/rebase-i-cheat-sheet (2012-03-20) 1 commit
   (merged to 'next' on 2012-03-20 at 3092a2b)
  + rebase -i: remind that the lines are top-to-bottom
 
-Not urgent.
+Will merge to 'next'.
 
 * da/difftool-test (2012-03-19) 1 commit
   (merged to 'next' on 2012-03-20 at 0ada7d4)
  + t7800: Test difftool passing arguments to diff
 
 Makes sure "difftool" options can be given in any order.
+
+Will merge to 'master'.
 
 * jh/notes-merge-in-git-dir-worktree (2012-03-15) 4 commits
   (merged to 'next' on 2012-03-20 at 0c1b1de)
@@ -347,7 +415,7 @@ from any directory inside $GIT_DIR/.  When "notes merge" stops with
 conflicts, $GIT_DIR/NOTES_MERGE_WORKTREE is the place a user edits
 to resolve it.
 
-Not urgent.
+Will merge to 'master'.
 
 * jn/diffstat-tests (2012-03-13) 7 commits
   (merged to 'next' on 2012-03-20 at 8791b2f)
@@ -362,7 +430,7 @@ Not urgent.
 Some tests checked the "diff --stat" output when they do not have to,
 which unnecessarily made things harder to verify under GETTEXT_POISON.
 
-Not urgent.
+Will merge to 'master'.
 
 * tr/maint-word-diff-regex-sticky (2012-03-14) 3 commits
   (merged to 'next' on 2012-03-20 at b3f67cd)
@@ -372,7 +440,8 @@ Not urgent.
 
 The regexp configured with wordregex was incorrectly reused across
 files.
-Not urgent.
+
+Will merge to 'master'.
 
 * zj/test-cred-helper-nicer-prove (2012-03-15) 2 commits
   (merged to 'next' on 2012-03-20 at b675ec1)
@@ -380,7 +449,7 @@ Not urgent.
  + t0303: immediately bail out w/o GIT_TEST_CREDENTIAL_HELPER
 
 Minor improvement to t0303.
-Not urgent.
+Will merge to 'master'.
 
 * jc/commit-hook-authorship (2012-03-11) 3 commits
   (merged to 'next' on 2012-03-12 at 05ca7f8)
@@ -392,9 +461,9 @@ Not urgent.
 "git commit --author=$name" did not tell the name that was being
 recorded in the resulting commit to hooks, even though it does do so
 when the end user overrode the authorship via the "GIT_AUTHOR_NAME"
-environment variable.  This is a simpler of the two approaches.
+environment variable.
 
-Will defer til 1.7.10.
+Will merge to 'master'.
 
 * jc/run-hook-env-1 (2012-03-11) 3 commits
  - run_hook(): enhance the interface to pass arbitrary environment
@@ -416,24 +485,24 @@ Resurrects the preparatory clean-up patches from another topic that was
 discarded, as this would give a saner foundation to build on diff.algo
 configuration option series.
 
-Not urgent.
+Will merge to 'master'.
 
 * rs/unpack-trees-leakfix (2012-03-06) 1 commit
   (merged to 'next' on 2012-03-07 at 69a69cd)
  + unpack-trees: plug minor memory leak
 
-Will defer til 1.7.10.
+Will sneak a fix-up under this one when I rebuild 'next' tomorrow.
 
 * mm/push-default-switch-warning (2012-03-09) 1 commit
   (merged to 'next' on 2012-03-28 at 074b16b)
  + push: start warning upcoming default change for push.default
 
-Not urgent.
-
 This resurrects an ancient patch I wrote during a discussion we had in the
 1.6.3-1.6.4 era.  This should probably come after ct/advise-push-default
 topic and at that point the advise messages need to be rephrased, taking
 the future default change into account.
+
+Will kick back to 'pu'.
 
 * jc/fmt-merge-msg-people (2012-03-13) 1 commit
  - fmt-merge-msg: show those involved in a merged series
@@ -441,9 +510,10 @@ the future default change into account.
 The "fmt-merge-msg" command learns to list the primary contributors
 involved in the side topic you are merging.
 
-Will defer til 1.7.10.
+Will merge to 'next'.
 
-* nl/http-proxy-more (2012-03-15) 5 commits
+* nl/http-proxy-more (2012-04-10) 6 commits
+ - fixup? 6e17b8c
   (merged to 'next' on 2012-03-20 at c004001)
  + http: rename HTTP_REAUTH to HTTP_AUTH_RETRY
  + http: Avoid limit of retrying request only twice
@@ -454,7 +524,7 @@ Will defer til 1.7.10.
 The code to talk to http proxies learn to use the same credential
 API used to talk to the final http destinations.
 
-Will defer til 1.7.10.
+Will kick back to 'pu'.
 
 * nd/stream-more (2012-03-07) 7 commits
   (merged to 'next' on 2012-03-07 at 7325922)
@@ -469,19 +539,4 @@ Will defer til 1.7.10.
 Use API to read blob data in smaller chunks in more places to
 reduce the memory footprint.  In general, looked fairly good.
 
-Will defer til 1.7.10.
-
---------------------------------------------------
-[Discarded]
-
-* tb/maint-remove-irrelevant-i18n-test (2012-03-06) 1 commit
-  (merged to 'next' on 2012-03-07 at 23f2dd1)
- + t0204: remove a test that checks undefined behaviour
-
-I tentatively parked this in 'next' but later reverted the merge.
-
-* dg/test-from-elsewhere (2012-03-04) 2 commits
- . Support out-of-tree Valgrind tests
- . Allow overriding GIT_BUILD_DIR
-
-No immediate need; dropped.
+Will merge to 'master'.
