@@ -250,6 +250,7 @@ static struct ref_entry *current_ref;
 static int do_one_ref(const char *base, each_ref_fn fn, int trim,
 		      int flags, void *cb_data, struct ref_entry *entry)
 {
+	int retval;
 	if (prefixcmp(entry->name, base))
 		return 0;
 
@@ -262,7 +263,9 @@ static int do_one_ref(const char *base, each_ref_fn fn, int trim,
 		}
 	}
 	current_ref = entry;
-	return fn(entry->name + trim, entry->sha1, entry->flag, cb_data);
+	retval = fn(entry->name + trim, entry->sha1, entry->flag, cb_data);
+	current_ref = NULL;
+	return retval;
 }
 
 /*
@@ -872,7 +875,7 @@ static int do_for_each_ref(const char *submodule, const char *base, each_ref_fn 
 		}
 		retval = do_one_ref(base, fn, trim, flags, cb_data, entry);
 		if (retval)
-			goto end_each;
+			return retval;
 	}
 
 	if (l < loose->nr) {
@@ -883,12 +886,10 @@ static int do_for_each_ref(const char *submodule, const char *base, each_ref_fn 
 	for (; p < packed->nr; p++) {
 		retval = do_one_ref(base, fn, trim, flags, cb_data, packed->refs[p]);
 		if (retval)
-			goto end_each;
+			return retval;
 	}
 
-end_each:
-	current_ref = NULL;
-	return retval;
+	return 0;
 }
 
 static int do_head_ref(const char *submodule, each_ref_fn fn, void *cb_data)
