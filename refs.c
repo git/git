@@ -101,6 +101,11 @@ int check_refname_format(const char *refname, int flags)
 
 struct ref_entry;
 
+struct ref_value {
+	unsigned char sha1[20];
+	unsigned char peeled[20];
+};
+
 struct ref_array {
 	int nr, alloc;
 
@@ -120,8 +125,9 @@ struct ref_array {
 
 struct ref_entry {
 	unsigned char flag; /* ISSYMREF? ISPACKED? */
-	unsigned char sha1[20];
-	unsigned char peeled[20];
+	union {
+		struct ref_value value;
+	} u;
 	/* The full name of the reference (e.g., "refs/heads/master"): */
 	char name[FLEX_ARRAY];
 };
@@ -138,8 +144,8 @@ static struct ref_entry *create_ref_entry(const char *refname,
 		die("Reference has invalid format: '%s'", refname);
 	len = strlen(refname) + 1;
 	ref = xmalloc(sizeof(struct ref_entry) + len);
-	hashcpy(ref->sha1, sha1);
-	hashclr(ref->peeled);
+	hashcpy(ref->u.value.sha1, sha1);
+	hashclr(ref->u.value.peeled);
 	memcpy(ref->name, refname, len);
 	ref->flag = flag;
 	return ref;
@@ -210,7 +216,7 @@ static int is_dup_ref(const struct ref_entry *ref1, const struct ref_entry *ref2
 {
 	if (!strcmp(ref1->name, ref2->name)) {
 		/* Duplicate name; make sure that the SHA1s match: */
-		if (hashcmp(ref1->sha1, ref2->sha1))
+		if (hashcmp(ref1->u.value.sha1, ref2->u.value.sha1))
 			die("Duplicated ref, and SHA1s don't match: %s",
 			    ref1->name);
 		warning("Duplicated ref: %s", ref1->name);
@@ -262,13 +268,13 @@ static int do_one_ref(const char *base, each_ref_fn fn, int trim,
 	if (!(flags & DO_FOR_EACH_INCLUDE_BROKEN)) {
 		if (entry->flag & REF_ISBROKEN)
 			return 0; /* ignore broken refs e.g. dangling symref */
-		if (!has_sha1_file(entry->sha1)) {
+		if (!has_sha1_file(entry->u.value.sha1)) {
 			error("%s does not point to a valid object!", entry->name);
 			return 0;
 		}
 	}
 	current_ref = entry;
-	retval = fn(entry->name + trim, entry->sha1, entry->flag, cb_data);
+	retval = fn(entry->name + trim, entry->u.value.sha1, entry->flag, cb_data);
 	current_ref = NULL;
 	return retval;
 }
@@ -531,7 +537,7 @@ static void read_packed_refs(FILE *f, struct ref_array *array)
 		    strlen(refline) == 42 &&
 		    refline[41] == '\n' &&
 		    !get_sha1_hex(refline + 1, sha1))
-			hashcpy(last->peeled, sha1);
+			hashcpy(last->u.value.peeled, sha1);
 	}
 }
 
@@ -653,7 +659,7 @@ static int resolve_gitlink_packed_ref(struct ref_cache *refs,
 	if (ref == NULL)
 		return -1;
 
-	memcpy(sha1, ref->sha1, 20);
+	memcpy(sha1, ref->u.value.sha1, 20);
 	return 0;
 }
 
@@ -723,7 +729,7 @@ static int get_packed_ref(const char *refname, unsigned char *sha1)
 	struct ref_array *packed = get_packed_refs(get_ref_cache(NULL));
 	struct ref_entry *entry = search_ref_array(packed, refname);
 	if (entry) {
-		hashcpy(sha1, entry->sha1);
+		hashcpy(sha1, entry->u.value.sha1);
 		return 0;
 	}
 	return -1;
@@ -886,10 +892,10 @@ int peel_ref(const char *refname, unsigned char *sha1)
 	if (current_ref && (current_ref->name == refname
 		|| !strcmp(current_ref->name, refname))) {
 		if (current_ref->flag & REF_KNOWS_PEELED) {
-			hashcpy(sha1, current_ref->peeled);
+			hashcpy(sha1, current_ref->u.value.peeled);
 			return 0;
 		}
-		hashcpy(base, current_ref->sha1);
+		hashcpy(base, current_ref->u.value.sha1);
 		goto fallback;
 	}
 
@@ -901,7 +907,7 @@ int peel_ref(const char *refname, unsigned char *sha1)
 		struct ref_entry *r = search_ref_array(array, refname);
 
 		if (r != NULL && r->flag & REF_KNOWS_PEELED) {
-			hashcpy(sha1, r->peeled);
+			hashcpy(sha1, r->u.value.peeled);
 			return 0;
 		}
 	}
