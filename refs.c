@@ -288,6 +288,52 @@ static int do_for_each_ref_in_array(struct ref_array *array, int offset,
 }
 
 /*
+ * Call fn for each reference in the union of array1 and array2, in
+ * order by refname.  If an entry appears in both array1 and array2,
+ * then only process the version that is in array2.  The input arrays
+ * must already be sorted.
+ */
+static int do_for_each_ref_in_arrays(struct ref_array *array1,
+				     struct ref_array *array2,
+				     const char *base, each_ref_fn fn, int trim,
+				     int flags, void *cb_data)
+{
+	int retval;
+	int i1 = 0, i2 = 0;
+
+	assert(array1->sorted == array1->nr);
+	assert(array2->sorted == array2->nr);
+	while (i1 < array1->nr && i2 < array2->nr) {
+		struct ref_entry *e1 = array1->refs[i1];
+		struct ref_entry *e2 = array2->refs[i2];
+		int cmp = strcmp(e1->name, e2->name);
+		if (cmp < 0) {
+			retval = do_one_ref(base, fn, trim, flags, cb_data, e1);
+			i1++;
+		} else {
+			retval = do_one_ref(base, fn, trim, flags, cb_data, e2);
+			i2++;
+			if (cmp == 0) {
+				/*
+				 * There was a ref in array1 with the
+				 * same name; ignore it.
+				 */
+				i1++;
+			}
+		}
+		if (retval)
+			return retval;
+	}
+	if (i1 < array1->nr)
+		return do_for_each_ref_in_array(array1, i1,
+						base, fn, trim, flags, cb_data);
+	if (i2 < array2->nr)
+		return do_for_each_ref_in_array(array2, i2,
+						base, fn, trim, flags, cb_data);
+	return 0;
+}
+
+/*
  * Return true iff a reference named refname could be created without
  * conflicting with the name of an existing reference.  If oldrefname
  * is non-NULL, ignore potential conflicts with oldrefname (e.g.,
@@ -873,36 +919,14 @@ void warn_dangling_symref(FILE *fp, const char *msg_fmt, const char *refname)
 static int do_for_each_ref(const char *submodule, const char *base, each_ref_fn fn,
 			   int trim, int flags, void *cb_data)
 {
-	int retval = 0, p = 0, l = 0;
 	struct ref_cache *refs = get_ref_cache(submodule);
-	struct ref_array *packed = get_packed_refs(refs);
-	struct ref_array *loose = get_loose_refs(refs);
-
-	sort_ref_array(packed);
-	sort_ref_array(loose);
-	while (p < packed->nr && l < loose->nr) {
-		struct ref_entry *entry;
-		int cmp = strcmp(packed->refs[p]->name, loose->refs[l]->name);
-		if (!cmp) {
-			p++;
-			continue;
-		}
-		if (cmp > 0) {
-			entry = loose->refs[l++];
-		} else {
-			entry = packed->refs[p++];
-		}
-		retval = do_one_ref(base, fn, trim, flags, cb_data, entry);
-		if (retval)
-			return retval;
-	}
-
-	if (l < loose->nr)
-		return do_for_each_ref_in_array(loose, l, base, fn, trim, flags, cb_data);
-	if (p < packed->nr)
-		return do_for_each_ref_in_array(packed, p, base, fn, trim, flags, cb_data);
-
-	return 0;
+	struct ref_array *packed_refs = get_packed_refs(refs);
+	struct ref_array *loose_refs = get_loose_refs(refs);
+	sort_ref_array(packed_refs);
+	sort_ref_array(loose_refs);
+	return do_for_each_ref_in_arrays(packed_refs,
+					 loose_refs,
+					 base, fn, trim, flags, cb_data);
 }
 
 static int do_head_ref(const char *submodule, each_ref_fn fn, void *cb_data)
