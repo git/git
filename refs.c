@@ -269,6 +269,25 @@ static int do_one_ref(const char *base, each_ref_fn fn, int trim,
 }
 
 /*
+ * Call fn for each reference in array that has index in the range
+ * offset <= index < array->nr.  This function does not sort the
+ * array; sorting should be done by the caller.
+ */
+static int do_for_each_ref_in_array(struct ref_array *array, int offset,
+				    const char *base,
+				    each_ref_fn fn, int trim, int flags, void *cb_data)
+{
+	int i;
+	assert(array->sorted == array->nr);
+	for (i = offset; i < array->nr; i++) {
+		int retval = do_one_ref(base, fn, trim, flags, cb_data, array->refs[i]);
+		if (retval)
+			return retval;
+	}
+	return 0;
+}
+
+/*
  * Return true iff a reference named refname could be created without
  * conflicting with the name of an existing reference.  If oldrefname
  * is non-NULL, ignore potential conflicts with oldrefname (e.g.,
@@ -878,16 +897,10 @@ static int do_for_each_ref(const char *submodule, const char *base, each_ref_fn 
 			return retval;
 	}
 
-	if (l < loose->nr) {
-		p = l;
-		packed = loose;
-	}
-
-	for (; p < packed->nr; p++) {
-		retval = do_one_ref(base, fn, trim, flags, cb_data, packed->refs[p]);
-		if (retval)
-			return retval;
-	}
+	if (l < loose->nr)
+		return do_for_each_ref_in_array(loose, l, base, fn, trim, flags, cb_data);
+	if (p < packed->nr)
+		return do_for_each_ref_in_array(packed, p, base, fn, trim, flags, cb_data);
 
 	return 0;
 }
