@@ -45,7 +45,7 @@ $(GIT_SUBTREE_XML): $(GIT_SUBTREE_TXT)
 		-agit_version=$(gitver) $^
 
 test:
-	./test.sh
+	$(MAKE) -C t/ test
 
 clean:
 	rm -f *~ *.xml *.html *.1
