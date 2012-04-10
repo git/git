@@ -1,22 +1,28 @@
-
 HOW TO INSTALL git-subtree
 ==========================
 
-You simply need to copy the file 'git-subtree.sh' to where
-the rest of the git scripts are stored. 
+First, build from the top source directory.
 
-From the Git bash window just run:
+Then, in contrib/subtree, run:
 
-install.sh 
+  make
+  make install
+  make install-doc
 
-Or if you have the full Cygwin installed, you can use make:
+If you used configure to do the main build the git-subtree build will
+pick up those settings.  If not, you will likely have to provide a
+value for prefix:
 
-make install
+  make prefix=<some dir>
+  make prefix=<some dir> install
+  make prefix=<some dir> install-doc
 
-That will make a 'git subtree' (note: space instead of dash) command
-available.  See the file git-subtree.txt for more.
+To run tests first copy git-subtree to the main build area so the
+newly-built git can find it:
 
-You can also install the man page by doing:
+  cp git-subtree ../..
 
-	make doc
-	cp git-subtree.1 /usr/share/man/man1/
+Then:
+
+  make test
+
