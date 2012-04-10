@@ -227,11 +227,13 @@ static int is_dup_ref(const struct ref_entry *ref1, const struct ref_entry *ref2
 }
 
 /*
- * Sort the entries in dir (if they are not already sorted).
+ * Sort the entries in dir (if they are not already sorted)
+ * and remove any duplicate entries.
  */
 static void sort_ref_dir(struct ref_dir *dir)
 {
 	int i, j;
+	struct ref_entry *last = NULL;
 
 	/*
 	 * This check also prevents passing a zero-length array to qsort(),
@@ -242,16 +244,15 @@ static void sort_ref_dir(struct ref_dir *dir)
 
 	qsort(dir->entries, dir->nr, sizeof(*dir->entries), ref_entry_cmp);
 
-	/* Remove any duplicates from the ref_dir */
-	i = 0;
-	for (j = 1; j < dir->nr; j++) {
-		if (is_dup_ref(dir->entries[i], dir->entries[j])) {
-			free_ref_entry(dir->entries[j]);
-			continue;
-		}
-		dir->entries[++i] = dir->entries[j];
+	/* Remove any duplicates: */
+	for (i = 0, j = 0; j < dir->nr; j++) {
+		struct ref_entry *entry = dir->entries[j];
+		if (last && is_dup_ref(last, entry))
+			free_ref_entry(entry);
+		else
+			last = dir->entries[i++] = entry;
 	}
-	dir->sorted = dir->nr = i + 1;
+	dir->sorted = dir->nr = i;
 }
 
 #define DO_FOR_EACH_INCLUDE_BROKEN 01
