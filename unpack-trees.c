@@ -772,7 +772,7 @@ static int unpack_callback(int n, unsigned long mask, unsigned long dirmask, str
 	if (unpack_nondirectories(n, mask, dirmask, src, names, info) < 0)
 		return -1;
 
-	if (src[0]) {
+	if (o->merge && src[0]) {
 		if (ce_stage(src[0]))
 			mark_ce_used_same_name(src[0], o);
 		else
