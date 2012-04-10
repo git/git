@@ -51,7 +51,7 @@ static int check_refname_component(const char *refname, int flags)
 		last = ch;
 	}
 	if (cp == refname)
-		return -1; /* Component has zero length. */
+		return 0; /* Component has zero length. */
 	if (refname[0] == '.') {
 		if (!(flags & REFNAME_DOT_COMPONENT))
 			return -1; /* Component starts with '.'. */
@@ -74,7 +74,7 @@ int check_refname_format(const char *refname, int flags)
 	while (1) {
 		/* We are at the start of a path component. */
 		component_len = check_refname_component(refname, flags);
-		if (component_len < 0) {
+		if (component_len <= 0) {
 			if ((flags & REFNAME_REFSPEC_PATTERN) &&
 					refname[0] == '*' &&
 					(refname[1] == '\0' || refname[1] == '/')) {
