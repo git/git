@@ -1143,13 +1143,34 @@ static int do_for_each_ref(const char *submodule, const char *base, each_ref_fn 
 			   int trim, int flags, void *cb_data)
 {
 	struct ref_cache *refs = get_ref_cache(submodule);
-	struct ref_dir *packed_refs = get_packed_refs(refs);
-	struct ref_dir *loose_refs = get_loose_refs(refs);
-	sort_ref_dir(packed_refs);
-	sort_ref_dir(loose_refs);
-	return do_for_each_ref_in_dirs(packed_refs,
-				       loose_refs,
-				       base, fn, trim, flags, cb_data);
+	struct ref_dir *packed_dir = get_packed_refs(refs);
+	struct ref_dir *loose_dir = get_loose_refs(refs);
+	int retval = 0;
+
+	if (base && *base) {
+		packed_dir = find_containing_dir(packed_dir, base, 0);
+		loose_dir = find_containing_dir(loose_dir, base, 0);
+	}
+
+	if (packed_dir && loose_dir) {
+		sort_ref_dir(packed_dir);
+		sort_ref_dir(loose_dir);
+		retval = do_for_each_ref_in_dirs(
+				packed_dir, loose_dir,
+				base, fn, trim, flags, cb_data);
+	} else if (packed_dir) {
+		sort_ref_dir(packed_dir);
+		retval = do_for_each_ref_in_dir(
+				packed_dir, 0,
+				base, fn, trim, flags, cb_data);
+	} else if (loose_dir) {
+		sort_ref_dir(loose_dir);
+		retval = do_for_each_ref_in_dir(
+				loose_dir, 0,
+				base, fn, trim, flags, cb_data);
+	}
+
+	return retval;
 }
 
 static int do_head_ref(const char *submodule, each_ref_fn fn, void *cb_data)
