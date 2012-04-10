@@ -15,8 +15,11 @@ struct ref_lock {
 #define REF_ISBROKEN 0x04
 
 /*
- * Calls the specified function for each ref file until it returns nonzero,
- * and returns the value
+ * Calls the specified function for each ref file until it returns
+ * nonzero, and returns the value.  Please note that it is not safe to
+ * modify references while an iteration is in progress, unless the
+ * same callback function invocation that modifies the reference also
+ * returns a nonzero value to immediately stop the iteration.
  */
 typedef int each_ref_fn(const char *refname, const unsigned char *sha1, int flags, void *cb_data);
 extern int head_ref(each_ref_fn, void *);
