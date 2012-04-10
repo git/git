@@ -1,0 +1,50 @@
+
+	delete tempdir
+
+	'git subtree rejoin' option to do the same as --rejoin, eg. after a
+	  rebase
+
+	--prefix doesn't force the subtree correctly in merge/pull:
+	"-s subtree" should be given an explicit subtree option?
+		There doesn't seem to be a way to do this.  We'd have to
+		patch git-merge-subtree.  Ugh.
+		(but we could avoid this problem by generating squashes with
+		exactly the right subtree structure, rather than using
+		subtree merge...)
+
+	add a 'push' subcommand to parallel 'pull'
+	
+	add a 'log' subcommand to see what's new in a subtree?
+
+	add to-submodule and from-submodule commands
+
+	automated tests for --squash stuff
+
+	"add" command non-obviously requires a commitid; would be easier if
+		it had a "pull" sort of mode instead
+
+	"pull" and "merge" commands should fail if you've never merged
+		that --prefix before
+		
+	docs should provide an example of "add"
+	
+	note that the initial split doesn't *have* to have a commitid
+		specified... that's just an optimization
+
+	if you try to add (or maybe merge?) with an invalid commitid, you
+		get a misleading "prefix must end with /" message from
+		one of the other git tools that git-subtree calls.  Should
+		detect this situation and print the *real* problem.
+	
+	"pull --squash" should do fetch-synthesize-merge, but instead just
+		does "pull" directly, which doesn't work at all.
+
+	make a 'force-update' that does what 'add' does even if the subtree
+		already exists.  That way we can help people who imported
+		subtrees "incorrectly" (eg. by just copying in the files) in
+		the past.
+
+	guess --prefix automatically if possible based on pwd
+
+	make a 'git subtree grafts' that automatically expands --squash'd
+		commits so you can see the full history if you want it.
