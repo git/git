@@ -13,17 +13,22 @@ LIB_HTTPD_PORT=${LIB_HTTPD_PORT-'5550'}
 start_httpd
 
 test_expect_success 'setup repository' '
-	echo content >file &&
+	echo content1 >file &&
 	git add file &&
 	git commit -m one
+	echo content2 >file &&
+	git add file &&
+	git commit -m two
 '
 
-test_expect_success 'create http-accessible bare repository' '
-	mkdir "$HTTPD_DOCUMENT_ROOT_PATH/repo.git" &&
+test_expect_success 'create http-accessible bare repository with loose objects' '
+	cp -a .git "$HTTPD_DOCUMENT_ROOT_PATH/repo.git" &&
 	(cd "$HTTPD_DOCUMENT_ROOT_PATH/repo.git" &&
-	 git --bare init &&
+	 git config core.bare true &&
+	 mkdir -p hooks &&
 	 echo "exec git update-server-info" >hooks/post-update &&
-	 chmod +x hooks/post-update
+	 chmod +x hooks/post-update &&
+	 hooks/post-update
 	) &&
 	git remote add public "$HTTPD_DOCUMENT_ROOT_PATH/repo.git" &&
 	git push public master:master
@@ -87,21 +92,21 @@ test_expect_success 'http auth can use user/pass in URL' '
 	expect_askpass none
 '
 
-test_expect_success 'http auth can use just user in URL' '
+test_expect_failure 'http auth can use just user in URL' '
 	>askpass-query &&
 	echo user@host >askpass-response &&
 	git clone "$HTTPD_URL_USER/auth/repo.git" clone-auth-pass &&
 	expect_askpass pass user@host
 '
 
-test_expect_success 'http auth can request both user and pass' '
+test_expect_failure 'http auth can request both user and pass' '
 	>askpass-query &&
 	echo user@host >askpass-response &&
 	git clone "$HTTPD_URL/auth/repo.git" clone-auth-both &&
 	expect_askpass both user@host
 '
 
-test_expect_success 'http auth respects credential helper config' '
+test_expect_failure 'http auth respects credential helper config' '
 	test_config_global credential.helper "!f() {
 		cat >/dev/null
 		echo username=user@host
@@ -113,7 +118,7 @@ test_expect_success 'http auth respects credential helper config' '
 	expect_askpass none
 '
 
-test_expect_success 'http auth can get username from config' '
+test_expect_failure 'http auth can get username from config' '
 	test_config_global "credential.$HTTPD_URL.username" user@host &&
 	>askpass-query &&
 	echo user@host >askpass-response &&
@@ -121,7 +126,7 @@ test_expect_success 'http auth can get username from config' '
 	expect_askpass pass user@host
 '
 
-test_expect_success 'configured username does not override URL' '
+test_expect_failure 'configured username does not override URL' '
 	test_config_global "credential.$HTTPD_URL.username" wrong &&
 	>askpass-query &&
 	echo user@host >askpass-response &&
