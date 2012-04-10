@@ -145,6 +145,11 @@ static struct ref_entry *create_ref_entry(const char *refname,
 	return ref;
 }
 
+static void free_ref_entry(struct ref_entry *entry)
+{
+	free(entry);
+}
+
 /* Add a ref_entry to the end of the ref_array (unsorted). */
 static void add_ref(struct ref_array *refs, struct ref_entry *ref)
 {
@@ -156,7 +161,7 @@ static void clear_ref_array(struct ref_array *array)
 {
 	int i;
 	for (i = 0; i < array->nr; i++)
-		free(array->refs[i]);
+		free_ref_entry(array->refs[i]);
 	free(array->refs);
 	array->sorted = array->nr = array->alloc = 0;
 	array->refs = NULL;
@@ -235,7 +240,7 @@ static void sort_ref_array(struct ref_array *array)
 	i = 0;
 	for (j = 1; j < array->nr; j++) {
 		if (is_dup_ref(array->refs[i], array->refs[j])) {
-			free(array->refs[j]);
+			free_ref_entry(array->refs[j]);
 			continue;
 		}
 		array->refs[++i] = array->refs[j];
