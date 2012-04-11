@@ -383,7 +383,6 @@ static void say_patch_name(FILE *output, const char *pre,
 	fputs(post, output);
 }
 
-#define CHUNKSIZE (8192)
 #define SLOP (16)
 
 static void read_patch_file(struct strbuf *sb, int fd)
