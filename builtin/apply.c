@@ -1088,7 +1088,7 @@ static const char *stop_at_slash(const char *line, int llen)
  * creation or deletion of an empty file.  In any of these cases,
  * both sides are the same name under a/ and b/ respectively.
  */
-static char *git_header_name(char *line, int llen)
+static char *git_header_name(const char *line, int llen)
 {
 	const char *name;
 	const char *second = NULL;
@@ -1215,7 +1215,7 @@ static char *git_header_name(char *line, int llen)
 }
 
 /* Verify that we recognize the lines following a git header */
-static int parse_git_header(char *line, int len, unsigned int size, struct patch *patch)
+static int parse_git_header(const char *line, int len, unsigned int size, struct patch *patch)
 {
 	unsigned long offset;
 
@@ -1331,7 +1331,7 @@ static int parse_range(const char *line, int len, int offset, const char *expect
 	return offset + ex;
 }
 
-static void recount_diff(char *line, int size, struct fragment *fragment)
+static void recount_diff(const char *line, int size, struct fragment *fragment)
 {
 	int oldlines = 0, newlines = 0, ret = 0;
 
@@ -1385,7 +1385,7 @@ static void recount_diff(char *line, int size, struct fragment *fragment)
  * Parse a unified diff fragment header of the
  * form "@@ -a,b +c,d @@"
  */
-static int parse_fragment_header(char *line, int len, struct fragment *fragment)
+static int parse_fragment_header(const char *line, int len, struct fragment *fragment)
 {
 	int offset;
 
@@ -1399,7 +1399,7 @@ static int parse_fragment_header(char *line, int len, struct fragment *fragment)
 	return offset;
 }
 
-static int find_header(char *line, unsigned long size, int *hdrsize, struct patch *patch)
+static int find_header(const char *line, unsigned long size, int *hdrsize, struct patch *patch)
 {
 	unsigned long offset, len;
 
@@ -1511,7 +1511,7 @@ static void check_whitespace(const char *line, int len, unsigned ws_rule)
  * between a "---" that is part of a patch, and a "---" that starts
  * the next patch is to look at the line counts..
  */
-static int parse_fragment(char *line, unsigned long size,
+static int parse_fragment(const char *line, unsigned long size,
 			  struct patch *patch, struct fragment *fragment)
 {
 	int added, deleted;
@@ -1607,7 +1607,7 @@ static int parse_fragment(char *line, unsigned long size,
 	return offset;
 }
 
-static int parse_single_patch(char *line, unsigned long size, struct patch *patch)
+static int parse_single_patch(const char *line, unsigned long size, struct patch *patch)
 {
 	unsigned long offset = 0;
 	unsigned long oldlines = 0, newlines = 0, context = 0;
