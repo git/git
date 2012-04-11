@@ -1740,6 +1740,9 @@ sub esc_html_hl_regions {
 	for my $s (@sel) {
 		my ($begin, $end) = @$s;
 
+		# Don't create empty <span> elements.
+		next if $end <= $begin;
+
 		my $escaped = esc_html(substr($str, $begin, $end - $begin));
 
 		$out .= esc_html(substr($str, $pos, $begin - $pos))
