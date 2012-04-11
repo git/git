@@ -518,11 +518,6 @@ test_expect_success 'shortlog of cover-letter wraps overly-long onelines' '
 '
 
 cat > expect << EOF
----
- file |   16 ++++++++++++++++
- 1 file changed, 16 insertions(+)
-
-diff --git a/file b/file
 index 40f36c6..2dc5c23 100644
 --- a/file
 +++ b/file
@@ -537,7 +532,9 @@ EOF
 test_expect_success 'format-patch respects -U' '
 
 	git format-patch -U4 -2 &&
-	sed -e "1,/^\$/d" -e "/^+5/q" < 0001-This-is-an-excessively-long-subject-line-for-a-messa.patch > output &&
+	sed -e "1,/^diff/d" -e "/^+5/q" \
+		<0001-This-is-an-excessively-long-subject-line-for-a-messa.patch \
+		>output &&
 	test_cmp expect output
 
 '
