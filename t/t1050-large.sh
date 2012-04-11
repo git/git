@@ -6,11 +6,15 @@ test_description='adding and checking out large blobs'
 . ./test-lib.sh
 
 test_expect_success setup '
-	git config core.bigfilethreshold 200k &&
+	# clone does not allow us to pass core.bigfilethreshold to
+	# new repos, so set core.bigfilethreshold globally
+	git config --global core.bigfilethreshold 200k &&
 	echo X | dd of=large1 bs=1k seek=2000 &&
 	echo X | dd of=large2 bs=1k seek=2000 &&
 	echo X | dd of=large3 bs=1k seek=2000 &&
-	echo Y | dd of=huge bs=1k seek=2500
+	echo Y | dd of=huge bs=1k seek=2500 &&
+	GIT_ALLOC_LIMIT=1500 &&
+	export GIT_ALLOC_LIMIT
 '
 
 test_expect_success 'add a large file or two' '
@@ -98,6 +102,36 @@ test_expect_success 'packsize limit' '
 
 		test_cmp expect actual
 	)
+'
+
+test_expect_success 'diff --raw' '
+	git commit -q -m initial &&
+	echo modified >>large1 &&
+	git add large1 &&
+	git commit -q -m modified &&
+	git diff --raw HEAD^
+'
+
+test_expect_success 'hash-object' '
+	git hash-object large1
+'
+
+test_expect_success 'cat-file a large file' '
+	git cat-file blob :large1 >/dev/null
+'
+
+test_expect_success 'cat-file a large file from a tag' '
+	git tag -m largefile largefiletag :large1 &&
+	git cat-file blob largefiletag >/dev/null
+'
+
+test_expect_success 'git-show a large file' '
+	git show :large1 >/dev/null
+
+'
+
+test_expect_success 'repack' '
+	git repack -ad
 '
 
 test_done

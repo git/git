@@ -12,6 +12,7 @@
 #include "parse-options.h"
 #include "dir.h"
 #include "progress.h"
+#include "streaming.h"
 
 #define REACHABLE 0x0001
 #define SEEN      0x0002
@@ -238,13 +239,8 @@ static void check_unreachable_object(struct object *obj)
 			if (!(f = fopen(filename, "w")))
 				die_errno("Could not open '%s'", filename);
 			if (obj->type == OBJ_BLOB) {
-				enum object_type type;
-				unsigned long size;
-				char *buf = read_sha1_file(obj->sha1,
-						&type, &size);
-				if (buf && fwrite(buf, 1, size, f) != size)
+				if (stream_blob_to_fd(fileno(f), obj->sha1, NULL, 1))
 					die_errno("Could not write '%s'", filename);
-				free(buf);
 			} else
 				fprintf(f, "%s\n", sha1_to_hex(obj->sha1));
 			if (fclose(f))
