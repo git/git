@@ -160,7 +160,7 @@ test_commit_autosquash_flags () {
 		git config --unset-all i18n.commitencoding &&
 		git rebase --autosquash -i HEAD^^^ &&
 		git log --oneline >actual &&
-		test 3 = $(wc -l <actual)
+		test_line_count = 3 actual
 	'
 }
 

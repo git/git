@@ -18,7 +18,7 @@ reachable_via() {
 
 test_valid_repo() {
 	git fsck --full > fsck.log &&
-	test `wc -l < fsck.log` = 0
+	test_line_count = 0 fsck.log
 }
 
 base_dir=`pwd`

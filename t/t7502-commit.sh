@@ -335,7 +335,7 @@ test_expect_success 'A single-liner subject with a token plus colon is not a foo
 	git reset --hard &&
 	git commit -s -m "hello: kitty" --allow-empty &&
 	git cat-file commit HEAD | sed -e "1,/^$/d" >actual &&
-	test $(wc -l <actual) = 3
+	test_line_count = 3 actual
 
 '
 
