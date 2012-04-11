@@ -1,0 +1,29 @@
+Git v1.7.11 Release Notes
+=========================
+
+Updates since v1.7.10
+---------------------
+
+UI, Workflows & Features
+
+ * A third-party tool "git subtree" is distributed in contrib/
+
+
+Foreign Interface
+
+
+Performance
+
+
+Internal Implementation (please report possible regressions)
+
+
+Also contains minor documentation updates and code clean-ups.
+
+
+Fixes since v1.7.10
+-------------------
+
+Unless otherwise noted, all the fixes since v1.7.10 in the maintenance
+releases are contained in this release (see release notes to them for
+details).
