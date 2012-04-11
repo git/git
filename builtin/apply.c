@@ -151,6 +151,10 @@ struct fragment {
 	unsigned long leading, trailing;
 	unsigned long oldpos, oldlines;
 	unsigned long newpos, newlines;
+	/*
+	 * 'patch' is usually borrowed from buf in apply_patch(),
+	 * but some codepaths store an allocated buffer.
+	 */
 	const char *patch;
 	unsigned free_patch:1,
 		rejected:1;
@@ -332,6 +336,11 @@ static void add_line_info(struct image *img, const char *bol, size_t len, unsign
 	img->nr++;
 }
 
+/*
+ * "buf" has the file contents to be patched (read from various sources).
+ * attach it to "image" and add line-based index to it.
+ * "image" now owns the "buf".
+ */
 static void prepare_image(struct image *image, char *buf, size_t len,
 			  int prepare_linetable)
 {
@@ -1607,6 +1616,14 @@ static int parse_fragment(const char *line, unsigned long size,
 	return offset;
 }
 
+/*
+ * We have seen "diff --git a/... b/..." header (or a traditional patch
+ * header).  Read hunks that belong to this patch into fragments and hang
+ * them to the given patch structure.
+ *
+ * The (fragment->patch, fragment->size) pair points into the memory given
+ * by the caller, not a copy, when we return.
+ */
 static int parse_single_patch(const char *line, unsigned long size, struct patch *patch)
 {
 	unsigned long offset = 0;
@@ -1700,6 +1717,11 @@ static char *inflate_it(const void *data, unsigned long size,
 	return out;
 }
 
+/*
+ * Read a binary hunk and return a new fragment; fragment->patch
+ * points at an allocated memory that the caller must free, so
+ * it is marked as "->free_patch = 1".
+ */
 static struct fragment *parse_binary_hunk(char **buf_p,
 					  unsigned long *sz_p,
 					  int *status_p,
@@ -1853,6 +1875,13 @@ static int parse_binary(char *buffer, unsigned long size, struct patch *patch)
 	return used;
 }
 
+/*
+ * Read the patch text in "buffer" taht extends for "size" bytes; stop
+ * reading after seeing a single patch (i.e. changes to a single file).
+ * Create fragments (i.e. patch hunks) and hang them to the given patch.
+ * Return the number of bytes consumed, so that the caller can call us
+ * again for the next patch.
+ */
 static int parse_chunk(char *buffer, unsigned long size, struct patch *patch)
 {
 	int hdrsize, patchsize;
@@ -2413,6 +2442,11 @@ static void remove_last_line(struct image *img)
 	img->len -= img->line[--img->nr].len;
 }
 
+/*
+ * The change from "preimage" and "postimage" has been found to
+ * apply at applied_pos (counts in line numbers) in "img".
+ * Update "img" to remove "preimage" and replace it with "postimage".
+ */
 static void update_image(struct image *img,
 			 int applied_pos,
 			 struct image *preimage,
@@ -2484,6 +2518,11 @@ static void update_image(struct image *img,
 	img->nr = nr;
 }
 
+/*
+ * Use the patch-hunk text in "frag" to prepare two images (preimage and
+ * postimage) for the hunk.  Find lines that match "preimage" in "img" and
+ * replace the part of "img" with "postimage" text.
+ */
 static int apply_one_fragment(struct image *img, struct fragment *frag,
 			      int inaccurate_eof, unsigned ws_rule,
 			      int nth_fragment)
@@ -2774,6 +2813,12 @@ static int apply_binary_fragment(struct image *img, struct patch *patch)
 	return -1;
 }
 
+/*
+ * Replace "img" with the result of applying the binary patch.
+ * The binary patch data itself in patch->fragment is still kept
+ * but the preimage prepared by the caller in "img" is freed here
+ * or in the helper function apply_binary_fragment() this calls.
+ */
 static int apply_binary(struct image *img, struct patch *patch)
 {
 	const char *name = patch->old_name ? patch->old_name : patch->new_name;
@@ -2981,7 +3026,7 @@ static int apply_data(struct patch *patch, struct stat *st, struct cache_entry *
 			return error("patch %s has been renamed/deleted",
 				patch->old_name);
 		}
-		/* We have a patched copy in memory use that */
+		/* We have a patched copy in memory; use that. */
 		strbuf_add(&buf, tpatch->result, tpatch->resultsize);
 	} else if (cached) {
 		if (read_file_or_gitlink(ce, &buf))
@@ -3139,6 +3184,10 @@ static int check_preimage(struct patch *patch, struct cache_entry **ce, struct s
 	return 0;
 }
 
+/*
+ * Check and apply the patch in-core; leave the result in patch->result
+ * for the caller to write it out to the final destination.
+ */
 static int check_patch(struct patch *patch)
 {
 	struct stat st;
@@ -3726,7 +3775,7 @@ static void prefix_patches(struct patch *p)
 static int apply_patch(int fd, const char *filename, int options)
 {
 	size_t offset;
-	struct strbuf buf = STRBUF_INIT;
+	struct strbuf buf = STRBUF_INIT; /* owns the patch text */
 	struct patch *list = NULL, **listp = &list;
 	int skipped_patch = 0;
 
