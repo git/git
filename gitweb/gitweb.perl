@@ -2430,26 +2430,26 @@ sub format_cc_diff_chunk_header {
 }
 
 # process patch (diff) line (not to be used for diff headers),
-# returning class and HTML-formatted (but not wrapped) line
-sub process_diff_line {
-	my $line = shift;
-	my ($from, $to) = @_;
-
-	my $diff_class = diff_line_class($line, $from, $to);
+# returning HTML-formatted (but not wrapped) line
+sub format_diff_line {
+	my ($line, $diff_class, $from, $to) = @_;
 
 	chomp $line;
 	$line = untabify($line);
 
 	if ($from && $to && $line =~ m/^\@{2} /) {
 		$line = format_unidiff_chunk_header($line, $from, $to);
-		return $diff_class, $line;
-
 	} elsif ($from && $to && $line =~ m/^\@{3}/) {
 		$line = format_cc_diff_chunk_header($line, $from, $to);
-		return $diff_class, $line;
-
+	} else {
+		$line = esc_html($line, -nbsp=>1);
 	}
-	return $diff_class, esc_html($line, -nbsp=>1);
+
+	my $diff_classes = "diff";
+	$diff_classes .= " $diff_class" if ($diff_class);
+	$line = "<div class=\"$diff_classes\">$line</div>\n";
+
+	return $line;
 }
 
 # Generates undef or something like "_snapshot_" or "snapshot (_tbz2_ _zip_)",
@@ -5068,7 +5068,7 @@ sub print_diff_lines {
 }
 
 sub print_diff_chunk {
-	my ($diff_style, $is_combined, @chunk) = @_;
+	my ($diff_style, $is_combined, $from, $to, @chunk) = @_;
 	my (@ctx, @rem, @add);
 
 	# The class of the previous line.
@@ -5089,6 +5089,8 @@ sub print_diff_chunk {
 
 	foreach my $line_info (@chunk) {
 		my ($class, $line) = @$line_info;
+
+		$line = format_diff_line($line, $class, $from, $to);
 
 		# print chunk headers
 		if ($class && $class eq 'chunk_header') {
@@ -5243,22 +5245,19 @@ sub git_patchset_body {
 
 			next PATCH if ($patch_line =~ m/^diff /);
 
-			my ($class, $line) = process_diff_line($patch_line, \%from, \%to);
-			my $diff_classes = "diff";
-			$diff_classes .= " $class" if ($class);
-			$line = "<div class=\"$diff_classes\">$line</div>\n";
+			my $class = diff_line_class($patch_line, \%from, \%to);
 
 			if ($class eq 'chunk_header') {
-				print_diff_chunk($diff_style, $is_combined, @chunk);
+				print_diff_chunk($diff_style, $is_combined, \%from, \%to, @chunk);
 				@chunk = ();
 			}
 
-			push @chunk, [ $class, $line ];
+			push @chunk, [ $class, $patch_line ];
 		}
 
 	} continue {
 		if (@chunk) {
-			print_diff_chunk($diff_style, $is_combined, @chunk);
+			print_diff_chunk($diff_style, $is_combined, \%from, \%to, @chunk);
 			@chunk = ();
 		}
 		print "</div>\n"; # class="patch"
