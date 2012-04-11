@@ -30,7 +30,7 @@ test_expect_success 'basic p4 labels' '
 
 		p4 tag -l TAG_F1_ONLY main/f1 &&
 		p4 tag -l TAG_WITH\$_SHELL_CHAR main/... &&
-		p4 tag -l this_tag_will_be_skipped main/... &&
+		p4 tag -l this_tag_will_be\ skipped main/... &&
 
 		echo f4 >main/f4 &&
 		p4 add main/f4 &&
@@ -50,7 +50,7 @@ test_expect_success 'basic p4 labels' '
 
 		git p4 clone --dest="$git" //depot@all &&
 		cd "$git" &&
-		git config git-p4.validLabelRegexp ".*TAG.*" &&
+		git config git-p4.labelImportRegexp ".*TAG.*" &&
 		git p4 sync --import-labels --verbose &&
 
 		git tag &&

@@ -15,7 +15,7 @@ import re, shutil
 verbose = False
 
 # Only labels/tags matching this will be imported/exported
-defaultLabelRegexp = r'[A-Z0-9_\-.]+$'
+defaultLabelRegexp = r'[a-zA-Z0-9_\-.]+$'
 
 def p4_build_cmd(cmd):
     """Build a suitable p4 command line.
@@ -1255,11 +1255,10 @@ class P4Submit(Command, P4UserMap):
     # Export git tags as p4 labels. Create a p4 label and then tag
     # with that.
     def exportGitTags(self, gitTags):
-        validTagRegexp = gitConfig("git-p4.validTagRegexp")
-        if len(validTagRegexp) == 0:
-            validTagRegexp = defaultLabelRegexp
-        m = re.compile(validTagRegexp)
-        commit_re = re.compile(r'\s*\[git-p4:.*change = (\d+)\s*\]')
+        validLabelRegexp = gitConfig("git-p4.labelExportRegexp")
+        if len(validLabelRegexp) == 0:
+            validLabelRegexp = defaultLabelRegexp
+        m = re.compile(validLabelRegexp)
 
         for name in gitTags:
 
@@ -1269,17 +1268,16 @@ class P4Submit(Command, P4UserMap):
                 continue
 
             # Get the p4 commit this corresponds to
-            changelist = None
-            for l in read_pipe_lines(["git", "log", "--max-count=1", name]):
-                match = commit_re.match(l)
-                if match:
-                    changelist = match.group(1)
+            logMessage = extractLogMessageFromGitCommit(name)
+            values = extractSettingsGitLog(logMessage)
 
-            if not changelist:
+            if not values.has_key('change'):
                 # a tag pointing to something not sent to p4; ignore
                 if verbose:
                     print "git tag %s does not give a p4 commit" % name
                 continue
+            else:
+                changelist = values['change']
 
             # Get the tag details.
             inHeader = True
@@ -2076,7 +2074,7 @@ class P4Sync(Command, P4UserMap):
             print "import p4 labels: " + ' '.join(p4Labels)
 
         ignoredP4Labels = gitConfigList("git-p4.ignoredP4Labels")
-        validLabelRegexp = gitConfig("git-p4.validLabelRegexp")
+        validLabelRegexp = gitConfig("git-p4.labelImportRegexp")
         if len(validLabelRegexp) == 0:
             validLabelRegexp = defaultLabelRegexp
         m = re.compile(validLabelRegexp)
