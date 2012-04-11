@@ -5002,6 +5002,52 @@ sub git_difftree_body {
 	print "</table>\n";
 }
 
+# Print context lines and then rem/add lines in a side-by-side manner.
+sub print_sidebyside_diff_lines {
+	my ($ctx, $rem, $add) = @_;
+
+	# print context block before add/rem block
+	if (@$ctx) {
+		print join '',
+			'<div class="chunk_block ctx">',
+				'<div class="old">',
+				@$ctx,
+				'</div>',
+				'<div class="new">',
+				@$ctx,
+				'</div>',
+			'</div>';
+	}
+
+	if (!@$add) {
+		# pure removal
+		print join '',
+			'<div class="chunk_block rem">',
+				'<div class="old">',
+				@$rem,
+				'</div>',
+			'</div>';
+	} elsif (!@$rem) {
+		# pure addition
+		print join '',
+			'<div class="chunk_block add">',
+				'<div class="new">',
+				@$add,
+				'</div>',
+			'</div>';
+	} else {
+		print join '',
+			'<div class="chunk_block chg">',
+				'<div class="old">',
+				@$rem,
+				'</div>',
+				'<div class="new">',
+				@$add,
+				'</div>',
+			'</div>';
+	}
+}
+
 sub print_sidebyside_diff_chunk {
 	my @chunk = @_;
 	my (@ctx, @rem, @add);
@@ -5028,51 +5074,11 @@ sub print_sidebyside_diff_chunk {
 			next;
 		}
 
-		## print from accumulator when type of class of lines change
-		# empty contents block on start rem/add block, or end of chunk
-		if (@ctx && (!$class || $class eq 'rem' || $class eq 'add')) {
-			print join '',
-				'<div class="chunk_block ctx">',
-					'<div class="old">',
-					@ctx,
-					'</div>',
-					'<div class="new">',
-					@ctx,
-					'</div>',
-				'</div>';
-			@ctx = ();
-		}
-		# empty add/rem block on start context block, or end of chunk
-		if ((@rem || @add) && (!$class || $class eq 'ctx')) {
-			if (!@add) {
-				# pure removal
-				print join '',
-					'<div class="chunk_block rem">',
-						'<div class="old">',
-						@rem,
-						'</div>',
-					'</div>';
-			} elsif (!@rem) {
-				# pure addition
-				print join '',
-					'<div class="chunk_block add">',
-						'<div class="new">',
-						@add,
-						'</div>',
-					'</div>';
-			} else {
-				# assume that it is change
-				print join '',
-					'<div class="chunk_block chg">',
-						'<div class="old">',
-						@rem,
-						'</div>',
-						'<div class="new">',
-						@add,
-						'</div>',
-					'</div>';
-			}
-			@rem = @add = ();
+		## print from accumulator when have some add/rem lines or end
+		# of chunk (flush context lines)
+		if (!$class || ((@rem || @add) && $class eq 'ctx')) {
+			print_sidebyside_diff_lines(\@ctx, \@rem, \@add);
+			@ctx = @rem = @add = ();
 		}
 
 		## adding lines to accumulator
