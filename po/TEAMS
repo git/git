@@ -1,6 +1,10 @@
 Core Git translation language teams
 (please keep the list sorted alphabetically on language field)
 
+Language:	da (Danish)
+Repository:	https://github.com/git-da/git-po/
+Leader:		Byrial Jensen <byrial@vip.cybercity.dk>
+
 Language:	is (Icelandic)
 Leader:		Ævar Arnfjörð Bjarmason <avarab@gmail.com>
 
