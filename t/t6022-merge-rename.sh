@@ -884,4 +884,20 @@ test_expect_success 'no spurious "refusing to lose untracked" message' '
 	! grep "refusing to lose untracked file" errors.txt
 '
 
+test_expect_success 'do not follow renames for empty files' '
+	git checkout -f -b empty-base &&
+	>empty1 &&
+	git add empty1 &&
+	git commit -m base &&
+	echo content >empty1 &&
+	git add empty1 &&
+	git commit -m fill &&
+	git checkout -b empty-topic HEAD^ &&
+	git mv empty1 empty2 &&
+	git commit -m rename &&
+	test_must_fail git merge empty-base &&
+	>expect &&
+	test_cmp expect empty2
+'
+
 test_done
