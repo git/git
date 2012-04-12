@@ -7004,6 +7004,28 @@ sub snapshot_name {
 	return wantarray ? ($name, $name) : $name;
 }
 
+sub exit_if_unmodified_since {
+	my ($latest_epoch) = @_;
+	our $cgi;
+
+	my $if_modified = $cgi->http('IF_MODIFIED_SINCE');
+	if (defined $if_modified) {
+		my $since;
+		if (eval { require HTTP::Date; 1; }) {
+			$since = HTTP::Date::str2time($if_modified);
+		} elsif (eval { require Time::ParseDate; 1; }) {
+			$since = Time::ParseDate::parsedate($if_modified, GMT => 1);
+		}
+		if (defined $since && $latest_epoch <= $since) {
+			my %latest_date = parse_date($latest_epoch);
+			print $cgi->header(
+				-last_modified => $latest_date{'rfc2822'},
+				-status => '304 Not Modified');
+			goto DONE_GITWEB;
+		}
+	}
+}
+
 sub git_snapshot {
 	my $format = $input_params{'snapshot_format'};
 	if (!@snapshot_fmts) {
@@ -7030,6 +7052,10 @@ sub git_snapshot {
 
 	my ($name, $prefix) = snapshot_name($project, $hash);
 	my $filename = "$name$known_snapshot_formats{$format}{'suffix'}";
+
+	my %co = parse_commit($hash);
+	exit_if_unmodified_since($co{'committer_epoch'}) if %co;
+
 	my $cmd = quote_command(
 		git_cmd(), 'archive',
 		"--format=$known_snapshot_formats{$format}{'format'}",
@@ -7039,9 +7065,15 @@ sub git_snapshot {
 	}
 
 	$filename =~ s/(["\\])/\\$1/g;
+	my %latest_date;
+	if (%co) {
+		%latest_date = parse_date($co{'committer_epoch'}, $co{'committer_tz'});
+	}
+
 	print $cgi->header(
 		-type => $known_snapshot_formats{$format}{'type'},
 		-content_disposition => 'inline; filename="' . $filename . '"',
+		%co ? (-last_modified => $latest_date{'rfc2822'}) : (),
 		-status => '200 OK');
 
 	open my $fd, "-|", $cmd
@@ -7821,33 +7853,14 @@ sub git_feed {
 	if (defined($commitlist[0])) {
 		%latest_commit = %{$commitlist[0]};
 		my $latest_epoch = $latest_commit{'committer_epoch'};
-		%latest_date   = parse_date($latest_epoch, $latest_commit{'comitter_tz'});
-		my $if_modified = $cgi->http('IF_MODIFIED_SINCE');
-		if (defined $if_modified) {
-			my $since;
-			if (eval { require HTTP::Date; 1; }) {
-				$since = HTTP::Date::str2time($if_modified);
-			} elsif (eval { require Time::ParseDate; 1; }) {
-				$since = Time::ParseDate::parsedate($if_modified, GMT => 1);
-			}
-			if (defined $since && $latest_epoch <= $since) {
-				print $cgi->header(
-					-type => $content_type,
-					-charset => 'utf-8',
-					-last_modified => $latest_date{'rfc2822'},
-					-status => '304 Not Modified');
-				return;
-			}
-		}
-		print $cgi->header(
-			-type => $content_type,
-			-charset => 'utf-8',
-			-last_modified => $latest_date{'rfc2822'});
-	} else {
-		print $cgi->header(
-			-type => $content_type,
-			-charset => 'utf-8');
+		exit_if_unmodified_since($latest_epoch);
+		%latest_date = parse_date($latest_epoch, $latest_commit{'comitter_tz'});
 	}
+	print $cgi->header(
+		-type => $content_type,
+		-charset => 'utf-8',
+		%latest_date ? (-last_modified => $latest_date{'rfc2822'}) : (),
+		-status => '200 OK');
 
 	# Optimization: skip generating the body if client asks only
 	# for Last-Modified date.
