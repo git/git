@@ -399,8 +399,8 @@ test_expect_success SANITY 'removal failure' '
 '
 
 test_expect_success 'nested git work tree' '
-	rm -fr foo bar &&
-	mkdir foo bar &&
+	rm -fr foo bar baz &&
+	mkdir -p foo bar baz/boo &&
 	(
 		cd foo &&
 		git init &&
@@ -411,16 +411,25 @@ test_expect_success 'nested git work tree' '
 	(
 		cd bar &&
 		>goodbye.people
+	) &&
+	(
+		cd baz/boo &&
+		git init &&
+		>deeper.world
+		git add . &&
+		git commit -a -m deeply.nested
 	) &&
 	git clean -f -d &&
 	test -f foo/.git/index &&
 	test -f foo/hello.world &&
+	test -f baz/boo/.git/index &&
+	test -f baz/boo/deeper.world &&
 	! test -d bar
 '
 
 test_expect_success 'force removal of nested git work tree' '
-	rm -fr foo bar &&
-	mkdir foo bar &&
+	rm -fr foo bar baz &&
+	mkdir -p foo bar baz/boo &&
 	(
 		cd foo &&
 		git init &&
@@ -432,9 +441,17 @@ test_expect_success 'force removal of nested git work tree' '
 		cd bar &&
 		>goodbye.people
 	) &&
+	(
+		cd baz/boo &&
+		git init &&
+		>deeper.world
+		git add . &&
+		git commit -a -m deeply.nested
+	) &&
 	git clean -f -f -d &&
 	! test -d foo &&
-	! test -d bar
+	! test -d bar &&
+	! test -d baz
 '
 
 test_expect_success 'git clean -e' '
