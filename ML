@@ -1,11 +1,13 @@
 #!/bin/sh
 # Merge later...
 
+target=maint
+
 # Read from RelNotes and find mergeable topics
 search_topics () {
 	tmp=/tmp/ML.$$
 	trap 'rm -f "$tmp"' 0
-	git rev-list --parents --first-parent maint..master >"$tmp"
+	git rev-list --parents --first-parent $target..master >"$tmp"
 
 	x40='[0-9a-f]'
 	x40="$x40$x40$x40$x40$x40"
@@ -20,8 +22,8 @@ search_topics () {
 		fi
 
 		comment=
-		if ! git show-ref --quiet --verify "refs/heads/$topic" &&
-		    test $(git log --oneline maint..$full_sha1 | wc -l) != 0
+		if ! git show-ref --quiet --verify "refs/heads/$topic" ||
+		    test $(git log --oneline $target..$full_sha1 | wc -l) != 0
 		then
 			comment="$topic gone"
 			tip=$full_sha1 topic=$sha1
@@ -38,7 +40,7 @@ search_topics () {
 		ago=$(
 		    git show -s --format='%ar' $fp
 		)
-		lg=$(git log --oneline maint..$tip | wc -l)
+		lg=$(git log --oneline $target..$tip | wc -l)
 		if test $lg != 0
 		then
 			echo "$topic # $lg${ago+ ($ago)}${comment+ $comment}"
@@ -47,6 +49,23 @@ search_topics () {
 		fi
 	done
 }
+
+while	case "$#,$1" in
+	0,*)
+		break ;;
+	*,-t)
+		target=${2?"-t target???"}
+		git show-ref --quiet --verify "refs/heads/$target" || {
+			echo >&2 "$target: no such branch"
+			exit 1
+		}
+		shift ;;
+	*)
+		break ;;
+	esac
+do
+	shift
+done
 
 case $# in
 0)
