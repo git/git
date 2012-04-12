@@ -14,7 +14,7 @@
  */
 void create_branch(const char *head, const char *name, const char *start_name,
 		   int force, int reflog,
-		   int clobber_head, enum branch_track track);
+		   int clobber_head, int quiet, enum branch_track track);
 
 /*
  * Validates that the requested branch may be created, returning the

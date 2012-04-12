@@ -101,9 +101,10 @@ void install_branch_config(int flag, const char *local, const char *origin, cons
  * config.
  */
 static int setup_tracking(const char *new_ref, const char *orig_ref,
-                          enum branch_track track)
+			  enum branch_track track, int quiet)
 {
 	struct tracking tracking;
+	int config_flags = quiet ? 0 : BRANCH_CONFIG_VERBOSE;
 
 	if (strlen(new_ref) > 1024 - 7 - 7 - 1)
 		return error("Tracking not set up: name too long: %s",
@@ -128,7 +129,7 @@ static int setup_tracking(const char *new_ref, const char *orig_ref,
 		return error("Not tracking: ambiguous information for ref %s",
 				orig_ref);
 
-	install_branch_config(BRANCH_CONFIG_VERBOSE, new_ref, tracking.remote,
+	install_branch_config(config_flags, new_ref, tracking.remote,
 			      tracking.src ? tracking.src : orig_ref);
 
 	free(tracking.src);
@@ -191,7 +192,7 @@ int validate_new_branchname(const char *name, struct strbuf *ref,
 void create_branch(const char *head,
 		   const char *name, const char *start_name,
 		   int force, int reflog, int clobber_head,
-		   enum branch_track track)
+		   int quiet, enum branch_track track)
 {
 	struct ref_lock *lock = NULL;
 	struct commit *commit;
@@ -260,7 +261,7 @@ void create_branch(const char *head,
 			 start_name);
 
 	if (real_ref && track)
-		setup_tracking(ref.buf+11, real_ref, track);
+		setup_tracking(ref.buf+11, real_ref, track, quiet);
 
 	if (!dont_change_ref)
 		if (write_ref_sha1(lock, sha1, msg) < 0)
