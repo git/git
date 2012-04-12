@@ -30,7 +30,7 @@ do
 done
 
 if	next_tree=$(git rev-parse next^{tree}) &&
-	next_equiv=$(git rev-list jch..pu |
+	next_equiv=$(git rev-list --first-parent master..pu |
 		xargs -n1 sh -c '
 			echo $(git rev-parse $1^{tree}) $1
 		' - | sed -n -e "s/^$next_tree //p"
@@ -40,7 +40,12 @@ then
 	jch=$(git rev-list --first-parent master..jch | wc -l) &&
 	pu=$(git rev-list --first-parent master..pu | wc -l) &&
 	next=$(git rev-list --first-parent master..$next_equiv | wc -l) &&
-	echo $jch..$next..$pu
+	if test $jch -le $next
+	then
+		echo "master..$jch..jch..$next..next..$pu..pu"
+	else
+		echo "master..$next..next..$jch..jch..$pu..pu"
+	fi
 else
 	git diff --stat next jch
 fi
