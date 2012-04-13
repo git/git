@@ -2,6 +2,7 @@
 #include "column.h"
 #include "string-list.h"
 #include "parse-options.h"
+#include "run-command.h"
 #include "utf8.h"
 
 #define XY2LINEAR(d, x, y) (COL_LAYOUT((d)->colopts) == COL_COLUMN ? \
@@ -361,5 +362,73 @@ int parseopt_column_callback(const struct option *opt,
 	if (arg)
 		return parse_config(colopts, arg);
 
+	return 0;
+}
+
+static int fd_out = -1;
+static struct child_process column_process;
+
+int run_column_filter(int colopts, const struct column_options *opts)
+{
+	const char *av[10];
+	int ret, ac = 0;
+	struct strbuf sb_colopt  = STRBUF_INIT;
+	struct strbuf sb_width   = STRBUF_INIT;
+	struct strbuf sb_padding = STRBUF_INIT;
+
+	if (fd_out != -1)
+		return -1;
+
+	av[ac++] = "column";
+	strbuf_addf(&sb_colopt, "--raw-mode=%d", colopts);
+	av[ac++] = sb_colopt.buf;
+	if (opts && opts->width) {
+		strbuf_addf(&sb_width, "--width=%d", opts->width);
+		av[ac++] = sb_width.buf;
+	}
+	if (opts && opts->indent) {
+		av[ac++] = "--indent";
+		av[ac++] = opts->indent;
+	}
+	if (opts && opts->padding) {
+		strbuf_addf(&sb_padding, "--padding=%d", opts->padding);
+		av[ac++] = sb_padding.buf;
+	}
+	av[ac] = NULL;
+
+	fflush(stdout);
+	memset(&column_process, 0, sizeof(column_process));
+	column_process.in = -1;
+	column_process.out = dup(1);
+	column_process.git_cmd = 1;
+	column_process.argv = av;
+
+	ret = start_command(&column_process);
+
+	strbuf_release(&sb_colopt);
+	strbuf_release(&sb_width);
+	strbuf_release(&sb_padding);
+
+	if (ret)
+		return -2;
+
+	fd_out = dup(1);
+	close(1);
+	dup2(column_process.in, 1);
+	close(column_process.in);
+	return 0;
+}
+
+int stop_column_filter(void)
+{
+	if (fd_out == -1)
+		return -1;
+
+	fflush(stdout);
+	close(1);
+	finish_command(&column_process);
+	dup2(fd_out, 1);
+	close(fd_out);
+	fd_out = -1;
 	return 0;
 }
