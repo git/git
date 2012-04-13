@@ -848,6 +848,10 @@ column.ui::
 	never show in columns
 `auto`;;
 	show in columns if the output is to the terminal
+`column`;;
+	fill columns before rows (default)
+`row`;;
+	fill rows before columns
 `plain`;;
 	show in one column
 --

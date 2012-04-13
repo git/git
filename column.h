@@ -10,6 +10,8 @@
 #define COL_AUTO          0x0020
 
 #define COL_LAYOUT(c) ((c) & COL_LAYOUT_MASK)
+#define COL_COLUMN             0   /* Fill columns before rows */
+#define COL_ROW                1   /* Fill rows before columns */
 #define COL_PLAIN             15   /* one column */
 
 #define explicitly_enable_column(c) \
