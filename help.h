@@ -25,7 +25,7 @@ extern void add_cmdname(struct cmdnames *cmds, const char *name, int len);
 /* Here we require that excludes is a sorted list. */
 extern void exclude_cmds(struct cmdnames *cmds, struct cmdnames *excludes);
 extern int is_in_cmdlist(struct cmdnames *cmds, const char *name);
-extern void list_commands(const char *title,
+extern void list_commands(const char *title, unsigned int colopts,
 			  struct cmdnames *main_cmds,
 			  struct cmdnames *other_cmds);
 

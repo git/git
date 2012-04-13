@@ -9,6 +9,7 @@
 #include "common-cmds.h"
 #include "parse-options.h"
 #include "run-command.h"
+#include "column.h"
 #include "help.h"
 
 static struct man_viewer_list {
@@ -30,6 +31,7 @@ enum help_format {
 };
 
 static int show_all = 0;
+static unsigned int colopts;
 static enum help_format help_format = HELP_FORMAT_NONE;
 static struct option builtin_help_options[] = {
 	OPT_BOOLEAN('a', "all", &show_all, "print all available commands"),
@@ -251,6 +253,8 @@ static int add_man_viewer_info(const char *var, const char *value)
 
 static int git_help_config(const char *var, const char *value, void *cb)
 {
+	if (!prefixcmp(var, "column."))
+		return git_column_config(var, value, "help", &colopts);
 	if (!strcmp(var, "help.format")) {
 		if (!value)
 			return config_error_nonbool(var);
@@ -424,8 +428,9 @@ int cmd_help(int argc, const char **argv, const char *prefix)
 	parsed_help_format = help_format;
 
 	if (show_all) {
+		git_config(git_help_config, NULL);
 		printf("usage: %s\n\n", git_usage_string);
-		list_commands("git commands", &main_cmds, &other_cmds);
+		list_commands("git commands", colopts, &main_cmds, &other_cmds);
 		printf("%s\n", git_more_info_string);
 		return 0;
 	}
