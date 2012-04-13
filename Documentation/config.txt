@@ -854,6 +854,10 @@ column.ui::
 	fill rows before columns
 `plain`;;
 	show in one column
+`dense`;;
+	make unequal size columns to utilize more space
+`nodense`;;
+	make equal size columns
 --
 +
 	This option defaults to 'never'.
