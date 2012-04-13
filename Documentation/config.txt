@@ -862,6 +862,10 @@ column.ui::
 +
 	This option defaults to 'never'.
 
+column.branch::
+	Specify whether to output branch listing in `git branch` in columns.
+	See `column.ui` for details.
+
 commit.status::
 	A boolean to enable/disable inclusion of status information in the
 	commit message template when using an editor to prepare the commit
