@@ -73,7 +73,7 @@ void setup_pager(void)
 {
 	const char *pager = git_pager(isatty(1));
 
-	if (!pager)
+	if (!pager || pager_in_use())
 		return;
 
 	/*
