@@ -210,14 +210,23 @@ static int http_options(const char *var, const char *value, void *cb)
 
 static void init_curl_http_auth(CURL *result)
 {
-	if (http_auth.username) {
+	if (!http_auth.username)
+		return;
+
+	credential_fill(&http_auth);
+
+#if LIBCURL_VERSION_NUM >= 0x071301
+	curl_easy_setopt(result, CURLOPT_USERNAME, http_auth.username);
+	curl_easy_setopt(result, CURLOPT_PASSWORD, http_auth.password);
+#else
+	{
 		static struct strbuf up = STRBUF_INIT;
-		credential_fill(&http_auth);
 		strbuf_reset(&up);
 		strbuf_addf(&up, "%s:%s",
 			    http_auth.username, http_auth.password);
 		curl_easy_setopt(result, CURLOPT_USERPWD, up.buf);
 	}
+#endif
 }
 
 static int has_cert_password(void)
