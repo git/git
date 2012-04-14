@@ -125,7 +125,7 @@ test_expect_success 'branch@{u} works when tracking a local branch' '
 
 test_expect_success 'branch@{u} error message when no upstream' '
 	cat >expect <<-EOF &&
-	error: No upstream branch found for ${sq}non-tracking${sq}
+	error: No upstream configured for branch ${sq}non-tracking${sq}
 	fatal: Needed a single revision
 	EOF
 	error_message non-tracking@{u} 2>actual &&
@@ -134,7 +134,7 @@ test_expect_success 'branch@{u} error message when no upstream' '
 
 test_expect_success '@{u} error message when no upstream' '
 	cat >expect <<-EOF &&
-	error: No upstream branch found for ${sq}master${sq}
+	error: No upstream configured for branch ${sq}master${sq}
 	fatal: Needed a single revision
 	EOF
 	test_must_fail git rev-parse --verify @{u} 2>actual &&
@@ -162,7 +162,7 @@ test_expect_success '@{u} error message when not on a branch' '
 
 test_expect_success 'branch@{u} error message if upstream branch not fetched' '
 	cat >expect <<-EOF &&
-	error: No upstream branch found for ${sq}bad-upstream${sq}
+	error: Upstream branch ${sq}refs/heads/side${sq} not stored as a remote-tracking branch
 	fatal: Needed a single revision
 	EOF
 	error_message bad-upstream@{u} 2>actual &&
