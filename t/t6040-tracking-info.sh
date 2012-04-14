@@ -71,13 +71,13 @@ test_expect_success 'checkout' '
 	(
 		cd test && git checkout b1
 	) >actual &&
-	grep "have 1 and 1 different" actual
+	test_i18ngrep "have 1 and 1 different" actual
 '
 
 test_expect_success 'checkout with local tracked branch' '
 	git checkout master &&
 	git checkout follower >actual &&
-	grep "is ahead of" actual
+	test_i18ngrep "is ahead of" actual
 '
 
 test_expect_success 'status' '
@@ -87,14 +87,14 @@ test_expect_success 'status' '
 		# reports nothing to commit
 		test_must_fail git commit --dry-run
 	) >actual &&
-	grep "have 1 and 1 different" actual
+	test_i18ngrep "have 1 and 1 different" actual
 '
 
 test_expect_success 'fail to track lightweight tags' '
 	git checkout master &&
 	git tag light &&
 	test_must_fail git branch --track lighttrack light >actual &&
-	test_must_fail grep "set up to track" actual &&
+	test_i18ngrep ! "set up to track" actual &&
 	test_must_fail git checkout lighttrack
 '
 
@@ -102,7 +102,7 @@ test_expect_success 'fail to track annotated tags' '
 	git checkout master &&
 	git tag -m heavy heavy &&
 	test_must_fail git branch --track heavytrack heavy >actual &&
-	test_must_fail grep "set up to track" actual &&
+	test_i18ngrep ! "set up to track" actual &&
 	test_must_fail git checkout heavytrack
 '
 
