@@ -856,10 +856,14 @@ int interpret_branch_name(const char *name, struct strbuf *buf)
 	len = cp + tmp_len - name;
 	cp = xstrndup(name, cp - name);
 	upstream = branch_get(*cp ? cp : NULL);
-	if (!upstream
-	    || !upstream->merge
-	    || !upstream->merge[0]->dst)
-		return error("No upstream branch found for '%s'", cp);
+	/*
+	 * Upstream can be NULL only if cp refers to HEAD and HEAD
+	 * points to something different than a branch.
+	 */
+	if (!upstream)
+		return error("HEAD does not point to a branch");
+	if (!upstream->merge || !upstream->merge[0]->dst)
+		return error("No upstream branch found for '%s'", upstream->name);
 	free(cp);
 	cp = shorten_unambiguous_ref(upstream->merge[0]->dst, 0);
 	strbuf_reset(buf);

@@ -134,7 +134,7 @@ test_expect_success 'branch@{u} error message when no upstream' '
 
 test_expect_success '@{u} error message when no upstream' '
 	cat >expect <<-EOF &&
-	error: No upstream branch found for ${sq}${sq}
+	error: No upstream branch found for ${sq}master${sq}
 	fatal: Needed a single revision
 	EOF
 	test_must_fail git rev-parse --verify @{u} 2>actual &&
@@ -152,7 +152,7 @@ test_expect_success 'branch@{u} error message with misspelt branch' '
 
 test_expect_success '@{u} error message when not on a branch' '
 	cat >expect <<-EOF &&
-	error: No upstream branch found for ${sq}${sq}
+	error: HEAD does not point to a branch
 	fatal: Needed a single revision
 	EOF
 	git checkout HEAD^0 &&
