@@ -527,7 +527,7 @@ test_expect_success 'am empty-file does not infloop' '
 	test_tick &&
 	{ git am empty-file > actual 2>&1 && false || :; } &&
 	echo Patch format detection failed. >expected &&
-	test_cmp expected actual
+	test_i18ncmp expected actual
 '
 
 test_done
