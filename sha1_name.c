@@ -862,8 +862,11 @@ int interpret_branch_name(const char *name, struct strbuf *buf)
 	 */
 	if (!upstream)
 		return error("HEAD does not point to a branch");
-	if (!upstream->merge || !upstream->merge[0]->dst)
+	if (!upstream->merge || !upstream->merge[0]->dst) {
+		if (!ref_exists(upstream->refname))
+			return error("No such branch: '%s'", cp);
 		return error("No upstream branch found for '%s'", upstream->name);
+	}
 	free(cp);
 	cp = shorten_unambiguous_ref(upstream->merge[0]->dst, 0);
 	strbuf_reset(buf);

@@ -143,7 +143,7 @@ test_expect_success '@{u} error message when no upstream' '
 
 test_expect_success 'branch@{u} error message with misspelt branch' '
 	cat >expect <<-EOF &&
-	error: No upstream branch found for ${sq}no-such-branch${sq}
+	error: No such branch: ${sq}no-such-branch${sq}
 	fatal: Needed a single revision
 	EOF
 	error_message no-such-branch@{u} 2>actual &&
