@@ -1715,17 +1715,21 @@ int setup_revisions(int argc, const char **argv, struct rev_info *revs, struct s
 		submodule = opt->submodule;
 
 	/* First, search for "--" */
-	seen_dashdash = 0;
-	for (i = 1; i < argc; i++) {
-		const char *arg = argv[i];
-		if (strcmp(arg, "--"))
-			continue;
-		argv[i] = NULL;
-		argc = i;
-		if (argv[i + 1])
-			append_prune_data(&prune_data, argv + i + 1);
+	if (opt && opt->assume_dashdash) {
 		seen_dashdash = 1;
-		break;
+	} else {
+		seen_dashdash = 0;
+		for (i = 1; i < argc; i++) {
+			const char *arg = argv[i];
+			if (strcmp(arg, "--"))
+				continue;
+			argv[i] = NULL;
+			argc = i;
+			if (argv[i + 1])
+				append_prune_data(&prune_data, argv + i + 1);
+			seen_dashdash = 1;
+			break;
+		}
 	}
 
 	/* Second, deal with arguments and options */
