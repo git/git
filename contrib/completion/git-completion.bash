@@ -1658,7 +1658,7 @@ _git_notes ()
 		__gitcomp '--ref'
 		;;
 	,*)
-		case "${words[cword-1]}" in
+		case "$prev" in
 		--ref)
 			__gitcomp_nl "$(__git_refs)"
 			;;
@@ -1684,7 +1684,7 @@ _git_notes ()
 	prune,*)
 		;;
 	*)
-		case "${words[cword-1]}" in
+		case "$prev" in
 		-m|-F)
 			;;
 		*)
