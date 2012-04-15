@@ -179,6 +179,7 @@ test_expect_success 'double dash "git" itself' '
 	--bare Z
 	--version Z
 	--exec-path Z
+	--exec-path=
 	--html-path Z
 	--info-path Z
 	--work-tree=
@@ -207,7 +208,11 @@ test_expect_success 'double dash "git checkout"' '
 test_expect_success 'general options' '
 	test_completion "git --ver" "--version " &&
 	test_completion "git --hel" "--help " &&
-	test_completion "git --exe" "--exec-path " &&
+	sed -e "s/Z$//" >expected <<-\EOF &&
+	--exec-path Z
+	--exec-path=
+	EOF
+	test_completion "git --exe" &&
 	test_completion "git --htm" "--html-path " &&
 	test_completion "git --pag" "--paginate " &&
 	test_completion "git --no-p" "--no-pager " &&

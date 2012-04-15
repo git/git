@@ -2639,6 +2639,7 @@ _git ()
 			--bare
 			--version
 			--exec-path
+			--exec-path=
 			--html-path
 			--info-path
 			--work-tree=
