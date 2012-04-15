@@ -2640,8 +2640,10 @@ _git ()
 			--version
 			--exec-path
 			--html-path
+			--info-path
 			--work-tree=
 			--namespace=
+			--no-replace-objects
 			--help
 			"
 			;;

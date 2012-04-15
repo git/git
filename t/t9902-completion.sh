@@ -180,8 +180,10 @@ test_expect_success 'double dash "git" itself' '
 	--version Z
 	--exec-path Z
 	--html-path Z
+	--info-path Z
 	--work-tree=
 	--namespace=
+	--no-replace-objects Z
 	--help Z
 	EOF
 	test_completion "git --"
@@ -202,4 +204,18 @@ test_expect_success 'double dash "git checkout"' '
 	test_completion "git checkout --"
 '
 
+test_expect_success 'general options' '
+	test_completion "git --ver" "--version " &&
+	test_completion "git --hel" "--help " &&
+	test_completion "git --exe" "--exec-path " &&
+	test_completion "git --htm" "--html-path " &&
+	test_completion "git --pag" "--paginate " &&
+	test_completion "git --no-p" "--no-pager " &&
+	test_completion "git --git" "--git-dir=" &&
+	test_completion "git --wor" "--work-tree=" &&
+	test_completion "git --nam" "--namespace=" &&
+	test_completion "git --bar" "--bare " &&
+	test_completion "git --inf" "--info-path " &&
+	test_completion "git --no-r" "--no-replace-objects "
+'
 test_done
