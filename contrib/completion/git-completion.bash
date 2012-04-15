@@ -2623,8 +2623,9 @@ _git ()
 		case "$i" in
 		--git-dir=*) __git_dir="${i#--git-dir=}" ;;
 		--bare)      __git_dir="." ;;
-		--version|-p|--paginate) ;;
 		--help) command="help"; break ;;
+		-c) c=$((++c)) ;;
+		-*) ;;
 		*) command="$i"; break ;;
 		esac
 		((c++))

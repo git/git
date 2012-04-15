@@ -223,4 +223,21 @@ test_expect_success 'general options' '
 	test_completion "git --inf" "--info-path " &&
 	test_completion "git --no-r" "--no-replace-objects "
 '
+
+test_expect_success 'general options plus command' '
+	test_completion "git --version check" "checkout " &&
+	test_completion "git --paginate check" "checkout " &&
+	test_completion "git --git-dir=foo check" "checkout " &&
+	test_completion "git --bare check" "checkout " &&
+	test_completion "git --help des" "describe " &&
+	test_completion "git --exec-path=foo check" "checkout " &&
+	test_completion "git --html-path check" "checkout " &&
+	test_completion "git --no-pager check" "checkout " &&
+	test_completion "git --work-tree=foo check" "checkout " &&
+	test_completion "git --namespace=foo check" "checkout " &&
+	test_completion "git --paginate check" "checkout " &&
+	test_completion "git --info-path check" "checkout " &&
+	test_completion "git --no-replace-objects check" "checkout "
+'
+
 test_done
