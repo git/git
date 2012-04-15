@@ -304,16 +304,16 @@ __git_ps1 ()
 	fi
 }
 
-# __gitcomp_1 requires 2 arguments
 __gitcomp_1 ()
 {
-	local c IFS=' '$'\t'$'\n'
+	local c IFS=$' \t\n'
 	for c in $1; do
-		case "$c$2" in
-		--*=*) printf %s$'\n' "$c$2" ;;
-		*.)    printf %s$'\n' "$c$2" ;;
-		*)     printf %s$'\n' "$c$2 " ;;
+		c="$c$2"
+		case $c in
+		--*=*|*.) ;;
+		*) c="$c " ;;
 		esac
+		printf '%s\n' "$c"
 	done
 }
 
