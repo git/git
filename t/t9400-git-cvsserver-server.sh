@@ -476,14 +476,14 @@ test_expect_success 'cvs status' '
     cd cvswork &&
     GIT_CONFIG="$git_config" cvs update &&
     GIT_CONFIG="$git_config" cvs status | grep "^File: status.file" >../out &&
-    test $(wc -l <../out) = 2
+    test_line_count = 2 ../out
 '
 
 cd "$WORKDIR"
 test_expect_success 'cvs status (nonrecursive)' '
     cd cvswork &&
     GIT_CONFIG="$git_config" cvs status -l | grep "^File: status.file" >../out &&
-    test $(wc -l <../out) = 1
+    test_line_count = 1 ../out
 '
 
 cd "$WORKDIR"

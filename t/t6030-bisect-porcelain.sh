@@ -480,7 +480,7 @@ test_expect_success 'many merge bases creation' '
 	git merge -m "merge HASH7 and SIDE_HASH7" "$HASH7" &&
 	B_HASH=$(git rev-parse --verify HEAD) &&
 	git merge-base --all "$A_HASH" "$B_HASH" > merge_bases.txt &&
-	test $(wc -l < merge_bases.txt) = "2" &&
+	test_line_count = 2 merge_bases.txt &&
 	grep "$HASH5" merge_bases.txt &&
 	grep "$SIDE_HASH5" merge_bases.txt
 '

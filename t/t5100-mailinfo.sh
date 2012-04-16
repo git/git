@@ -65,7 +65,7 @@ test_expect_success 'respect NULs' '
 	git mailsplit -d3 -o. "$TEST_DIRECTORY"/t5100/nul-plain &&
 	test_cmp "$TEST_DIRECTORY"/t5100/nul-plain 001 &&
 	(cat 001 | git mailinfo msg patch) &&
-	test 4 = $(wc -l < patch)
+	test_line_count = 4 patch
 
 '
 
