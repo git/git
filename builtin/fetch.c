@@ -294,16 +294,24 @@ static int update_local_ref(struct ref *ref,
 		const char *msg;
 		const char *what;
 		int r;
-		if (!strncmp(ref->name, "refs/tags/", 10)) {
+		/*
+		 * Nicely describe the new ref we're fetching.
+		 * Base this on the remote's ref name, as it's
+		 * more likely to follow a standard layout.
+		 */
+		const char *name = remote_ref ? remote_ref->name : "";
+		if (!prefixcmp(name, "refs/tags/")) {
 			msg = "storing tag";
 			what = _("[new tag]");
-		}
-		else {
+		} else if (!prefixcmp(name, "refs/heads/")) {
 			msg = "storing head";
 			what = _("[new branch]");
 			if ((recurse_submodules != RECURSE_SUBMODULES_OFF) &&
 			    (recurse_submodules != RECURSE_SUBMODULES_ON))
 				check_for_new_submodule_commits(ref->new_sha1);
+		} else {
+			msg = "storing ref";
+			what = _("[new ref]");
 		}
 
 		r = s_update_ref(msg, ref, 0);
