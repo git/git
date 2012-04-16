@@ -92,6 +92,7 @@
 /git-name-rev
 /git-mv
 /git-notes
+/git-p4
 /git-pack-redundant
 /git-pack-objects
 /git-pack-refs

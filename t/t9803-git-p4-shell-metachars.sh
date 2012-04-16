@@ -1,6 +1,6 @@
 #!/bin/sh
 
-test_description='git-p4 transparency to shell metachars in filenames'
+test_description='git p4 transparency to shell metachars in filenames'
 
 . ./lib-git-p4.sh
 
@@ -18,7 +18,7 @@ test_expect_success 'init depot' '
 '
 
 test_expect_success 'shell metachars in filenames' '
-	"$GITP4" clone --dest="$git" //depot &&
+	git p4 clone --dest="$git" //depot &&
 	test_when_finished cleanup_git &&
 	(
 		cd "$git" &&
@@ -28,7 +28,7 @@ test_expect_success 'shell metachars in filenames' '
 		echo f2 >"file with spaces" &&
 		git add "file with spaces" &&
 		git commit -m "add files" &&
-		P4EDITOR=touch "$GITP4" submit
+		P4EDITOR=touch git p4 submit
 	) &&
 	(
 		cd "$cli" &&
@@ -39,7 +39,7 @@ test_expect_success 'shell metachars in filenames' '
 '
 
 test_expect_success 'deleting with shell metachars' '
-	"$GITP4" clone --dest="$git" //depot &&
+	git p4 clone --dest="$git" //depot &&
 	test_when_finished cleanup_git &&
 	(
 		cd "$git" &&
@@ -47,7 +47,7 @@ test_expect_success 'deleting with shell metachars' '
 		git rm foo\$bar &&
 		git rm file\ with\ spaces &&
 		git commit -m "remove files" &&
-		P4EDITOR=touch "$GITP4" submit
+		P4EDITOR=touch git p4 submit
 	) &&
 	(
 		cd "$cli" &&
@@ -97,7 +97,7 @@ test_expect_success 'branch with shell char' '
 		cd "$git" &&
 
 		git config git-p4.branchList main:branch\$3 &&
-		"$GITP4" clone --dest=. --detect-branches //depot@all &&
+		git p4 clone --dest=. --detect-branches //depot@all &&
 		git log --all --graph --decorate --stat &&
 		git reset --hard p4/depot/branch\$3 &&
 		test -f shell_char_branch_file &&
