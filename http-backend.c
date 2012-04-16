@@ -7,6 +7,7 @@
 #include "run-command.h"
 #include "string-list.h"
 #include "url.h"
+#include "argv-array.h"
 
 static const char content_type[] = "Content-Type";
 static const char content_length[] = "Content-Length";
@@ -317,8 +318,7 @@ static void run_service(const char **argv)
 	const char *encoding = getenv("HTTP_CONTENT_ENCODING");
 	const char *user = getenv("REMOTE_USER");
 	const char *host = getenv("REMOTE_ADDR");
-	char *env[3];
-	struct strbuf buf = STRBUF_INIT;
+	struct argv_array env = ARGV_ARRAY_INIT;
 	int gzipped_request = 0;
 	struct child_process cld;
 
@@ -332,17 +332,15 @@ static void run_service(const char **argv)
 	if (!host || !*host)
 		host = "(none)";
 
-	memset(&env, 0, sizeof(env));
-	strbuf_addf(&buf, "GIT_COMMITTER_NAME=%s", user);
-	env[0] = strbuf_detach(&buf, NULL);
-
-	strbuf_addf(&buf, "GIT_COMMITTER_EMAIL=%s@http.%s", user, host);
-	env[1] = strbuf_detach(&buf, NULL);
-	env[2] = NULL;
+	if (!getenv("GIT_COMMITTER_NAME"))
+		argv_array_pushf(&env, "GIT_COMMITTER_NAME=%s", user);
+	if (!getenv("GIT_COMMITTER_EMAIL"))
+		argv_array_pushf(&env, "GIT_COMMITTER_EMAIL=%s@http.%s",
+				 user, host);
 
 	memset(&cld, 0, sizeof(cld));
 	cld.argv = argv;
-	cld.env = (const char *const *)env;
+	cld.env = env.argv;
 	if (gzipped_request)
 		cld.in = -1;
 	cld.git_cmd = 1;
@@ -357,9 +355,7 @@ static void run_service(const char **argv)
 
 	if (finish_command(&cld))
 		exit(1);
-	free(env[0]);
-	free(env[1]);
-	strbuf_release(&buf);
+	argv_array_clear(&env);
 }
 
 static int show_text_ref(const char *name, const unsigned char *sha1,
