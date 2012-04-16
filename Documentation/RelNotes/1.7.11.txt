@@ -8,6 +8,16 @@ UI, Workflows & Features
 
  * A third-party tool "git subtree" is distributed in contrib/
 
+ * Even with "-q"uiet option, "checkout" used to report setting up
+   tracking.  Also "branch" learned the "-q"uiet option to squelch
+   informational message.
+
+ * The smart-http backend used to always override GIT_COMMITTER_*
+   variables with REMOTE_USER and REMOTE_ADDR, but these variables are
+   now preserved when set.
+
+ * A 'snapshot' request to "gitweb" honors If-Modified-Since: header,
+   based on the commit date.
 
 Foreign Interface
 
@@ -17,9 +27,15 @@ Performance
 
 Internal Implementation (please report possible regressions)
 
+ * Minor memory leak during unpack_trees (hence "merge" and "checkout"
+   to check out another branch) has been plugged.
+
  * More lower-level commands learned to use the streaming API to read
    from the object store without keeping everything in core.
 
+ * Because "sh" on the user's PATH may be utterly broken on some
+   systems, run-command API now uses SHELL_PATH, not /bin/sh, when
+   spawning an external command.
 
 Also contains minor documentation updates and code clean-ups.
 
@@ -30,6 +46,31 @@ Fixes since v1.7.10
 Unless otherwise noted, all the fixes since v1.7.10 in the maintenance
 releases are contained in this release (see release notes to them for
 details).
+
+ * "git clean -d -f" (not "-d -f -f") is supposed to protect nested
+   working trees of independent git repositories that exist in the
+   current project working tree from getting removed, but the
+   protection applied only to such working trees that are at the
+   top-level of the current project by mistake.
+   (merge ae2f203 jc/maint-clean-nested-worktree-in-subdir later to maint).
+
+ * Rename detection logic used to match two empty files as renames
+   during merge-recursive, leading unnatural mismerges.
+   (merge 4f7cb99 jk/diff-no-rename-empty later to maint).
+
+ * An age-old corner case bug in combine diff (only triggered with -U0
+   and the hunk at the beginning of the file needs to be shown) has
+   been fixed.
+   (merge e5e9b56 rs/combine-diff-zero-context-at-the-beginning later to maint).
+
+ * When "git commit --template F" errors out because the user did not
+   touch the message, it claimed that it aborts due to "empty
+   message", which was utterly wrong.
+   (merge 1f08c2c jc/commit-unedited-template later to maint).
+
+ * "git add -p" is not designed to deal with unmerged paths but did
+   not exclude them and tried to apply funny patches only to fail.
+   (merge 4066bd6 jk/add-p-skip-conflicts later to maint).
 
  * "git commit --author=$name" did not tell the name that was being
    recorded in the resulting commit to hooks, even though it does do
