@@ -35,6 +35,16 @@ test_expect_success setup '
 '
 
 test_expect_success 'cherry-pick first..fourth works' '
+	git checkout -f master &&
+	git reset --hard first &&
+	test_tick &&
+	git cherry-pick first..fourth &&
+	git diff --quiet other &&
+	git diff --quiet HEAD other &&
+	check_head_differs_from fourth
+'
+
+test_expect_success 'output to keep user entertained during multi-pick' '
 	cat <<-\EOF >expected &&
 	[master OBJID] second
 	 Author: A U Thor <author@example.com>
@@ -51,15 +61,22 @@ test_expect_success 'cherry-pick first..fourth works' '
 	git reset --hard first &&
 	test_tick &&
 	git cherry-pick first..fourth >actual &&
-	git diff --quiet other &&
-	git diff --quiet HEAD other &&
-
 	sed -e "s/$_x05[0-9a-f][0-9a-f]/OBJID/" <actual >actual.fuzzy &&
-	test_cmp expected actual.fuzzy &&
-	check_head_differs_from fourth
+	test_line_count -ge 3 actual.fuzzy &&
+	test_i18ncmp expected actual.fuzzy
 '
 
 test_expect_success 'cherry-pick --strategy resolve first..fourth works' '
+	git checkout -f master &&
+	git reset --hard first &&
+	test_tick &&
+	git cherry-pick --strategy resolve first..fourth &&
+	git diff --quiet other &&
+	git diff --quiet HEAD other &&
+	check_head_differs_from fourth
+'
+
+test_expect_success 'output during multi-pick indicates merge strategy' '
 	cat <<-\EOF >expected &&
 	Trying simple merge.
 	[master OBJID] second
@@ -79,11 +96,8 @@ test_expect_success 'cherry-pick --strategy resolve first..fourth works' '
 	git reset --hard first &&
 	test_tick &&
 	git cherry-pick --strategy resolve first..fourth >actual &&
-	git diff --quiet other &&
-	git diff --quiet HEAD other &&
 	sed -e "s/$_x05[0-9a-f][0-9a-f]/OBJID/" <actual >actual.fuzzy &&
-	test_cmp expected actual.fuzzy &&
-	check_head_differs_from fourth
+	test_i18ncmp expected actual.fuzzy
 '
 
 test_expect_success 'cherry-pick --ff first..fourth works' '

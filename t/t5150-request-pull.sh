@@ -216,7 +216,7 @@ test_expect_success 'pull request format' '
 		git request-pull initial "$downstream_url" >../request
 	) &&
 	<request sed -nf fuzz.sed >request.fuzzy &&
-	test_cmp expect request.fuzzy
+	test_i18ncmp expect request.fuzzy
 
 '
 
