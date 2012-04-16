@@ -2076,11 +2076,13 @@ int prepare_revision_walk(struct rev_info *revs)
 		if (commit) {
 			if (!(commit->object.flags & SEEN)) {
 				commit->object.flags |= SEEN;
-				commit_list_insert_by_date(commit, &revs->commits);
+				commit_list_insert(commit, &revs->commits);
 			}
 		}
 		e++;
 	}
+	commit_list_reverse(&revs->commits);
+	commit_list_sort_by_date(&revs->commits);
 	if (!revs->leak_pending)
 		free(list);
 

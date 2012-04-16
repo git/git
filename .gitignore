@@ -181,6 +181,7 @@
 /test-index-version
 /test-line-buffer
 /test-match-trees
+/test-mergesort
 /test-mktemp
 /test-parse-options
 /test-path-utils
