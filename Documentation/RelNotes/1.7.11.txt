@@ -17,6 +17,9 @@ Performance
 
 Internal Implementation (please report possible regressions)
 
+ * More lower-level commands learned to use the streaming API to read
+   from the object store without keeping everything in core.
+
 
 Also contains minor documentation updates and code clean-ups.
 
@@ -27,3 +30,19 @@ Fixes since v1.7.10
 Unless otherwise noted, all the fixes since v1.7.10 in the maintenance
 releases are contained in this release (see release notes to them for
 details).
+
+ * "git commit --author=$name" did not tell the name that was being
+   recorded in the resulting commit to hooks, even though it does do
+   so when the end user overrode the authorship via the
+   "GIT_AUTHOR_NAME" environment variable.
+   (merge 7dfe8ad jc/commit-hook-authorship later to maint).
+
+ * The regexp configured with diff.wordregex was incorrectly reused
+   across files.
+   (merge 6440d34 tr/maint-word-diff-regex-sticky later to maint).
+
+ * Running "notes merge --commit" failed to perform correctly when run
+   from any directory inside $GIT_DIR/.  When "notes merge" stops with
+   conflicts, $GIT_DIR/NOTES_MERGE_WORKTREE is the place a user edits
+   to resolve it.
+   (merge dabba59 jh/notes-merge-in-git-dir-worktree later to maint).
