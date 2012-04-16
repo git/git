@@ -144,6 +144,19 @@ static int too_many_packs(void)
 	return gc_auto_pack_limit <= cnt;
 }
 
+static void add_repack_all_option(void)
+{
+	if (prune_expire && !strcmp(prune_expire, "now"))
+		append_option(argv_repack, "-a", MAX_ADD);
+	else {
+		append_option(argv_repack, "-A", MAX_ADD);
+		if (prune_expire) {
+			append_option(argv_repack, "--unpack-unreachable", MAX_ADD);
+			append_option(argv_repack, prune_expire, MAX_ADD);
+		}
+	}
+}
+
 static int need_to_gc(void)
 {
 	/*
@@ -160,10 +173,7 @@ static int need_to_gc(void)
 	 * there is no need.
 	 */
 	if (too_many_packs())
-		append_option(argv_repack,
-			      prune_expire && !strcmp(prune_expire, "now") ?
-			      "-a" : "-A",
-			      MAX_ADD);
+		add_repack_all_option();
 	else if (!too_many_loose_objects())
 		return 0;
 
@@ -227,10 +237,7 @@ int cmd_gc(int argc, const char **argv, const char *prefix)
 					"run \"git gc\" manually. See "
 					"\"git help gc\" for more information.\n"));
 	} else
-		append_option(argv_repack,
-			      prune_expire && !strcmp(prune_expire, "now")
-			      ? "-a" : "-A",
-			      MAX_ADD);
+		add_repack_all_option();
 
 	if (pack_refs && run_command_v_opt(argv_pack_refs, RUN_GIT_CMD))
 		return error(FAILED_RUN, argv_pack_refs[0]);

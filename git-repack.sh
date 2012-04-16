@@ -15,6 +15,7 @@ F               pass --no-reuse-object to git-pack-objects
 n               do not run git-update-server-info
 q,quiet         be quiet
 l               pass --local to git-pack-objects
+unpack-unreachable=  with -A, do not loosen objects older than this
  Packing constraints
 window=         size of the window used for delta compression
 window-memory=  same as the above, but limit memory size instead of entries count
@@ -33,6 +34,8 @@ do
 	-a)	all_into_one=t ;;
 	-A)	all_into_one=t
 		unpack_unreachable=--unpack-unreachable ;;
+	--unpack-unreachable)
+		unpack_unreachable="--unpack-unreachable=$2"; shift ;;
 	-d)	remove_redundant=t ;;
 	-q)	GIT_QUIET=t ;;
 	-f)	no_reuse=--no-reuse-delta ;;
@@ -76,7 +79,12 @@ case ",$all_into_one," in
 		if test -n "$existing" -a -n "$unpack_unreachable" -a \
 			-n "$remove_redundant"
 		then
-			args="$args $unpack_unreachable"
+			# This may have arbitrary user arguments, so we
+			# have to protect it against whitespace splitting
+			# when it gets run as "pack-objects $args" later.
+			# Fortunately, we know it's an approxidate, so we
+			# can just use dots instead.
+			args="$args $(echo "$unpack_unreachable" | tr ' ' .)"
 		fi
 	fi
 	;;
