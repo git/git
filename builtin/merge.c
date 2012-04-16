@@ -52,7 +52,6 @@ static int fast_forward_only, option_edit = -1;
 static int allow_trivial = 1, have_message;
 static int overwrite_ignore = 1;
 static struct strbuf merge_msg = STRBUF_INIT;
-static struct commit_list *remoteheads;
 static struct strategy **use_strategies;
 static size_t use_strategies_nr, use_strategies_alloc;
 static const char **xopts;
@@ -318,7 +317,7 @@ static void finish_up_to_date(const char *msg)
 	drop_save();
 }
 
-static void squash_message(struct commit *commit)
+static void squash_message(struct commit *commit, struct commit_list *remoteheads)
 {
 	struct rev_info rev;
 	struct strbuf out = STRBUF_INIT;
@@ -366,6 +365,7 @@ static void squash_message(struct commit *commit)
 }
 
 static void finish(struct commit *head_commit,
+		   struct commit_list *remoteheads,
 		   const unsigned char *new_head, const char *msg)
 {
 	struct strbuf reflog_message = STRBUF_INIT;
@@ -380,7 +380,7 @@ static void finish(struct commit *head_commit,
 			getenv("GIT_REFLOG_ACTION"), msg);
 	}
 	if (squash) {
-		squash_message(head_commit);
+		squash_message(head_commit, remoteheads);
 	} else {
 		if (verbosity >= 0 && !merge_msg.len)
 			printf(_("No merge message -- not updating HEAD\n"));
@@ -681,6 +681,7 @@ int try_merge_command(const char *strategy, size_t xopts_nr,
 }
 
 static int try_merge_strategy(const char *strategy, struct commit_list *common,
+			      struct commit_list *remoteheads,
 			      struct commit *head, const char *head_arg)
 {
 	int index_fd;
@@ -874,14 +875,14 @@ static void read_merge_msg(struct strbuf *msg)
 		die_errno(_("Could not read from '%s'"), filename);
 }
 
-static void write_merge_state(void);
-static void abort_commit(const char *err_msg)
+static void write_merge_state(struct commit_list *);
+static void abort_commit(struct commit_list *remoteheads, const char *err_msg)
 {
 	if (err_msg)
 		error("%s", err_msg);
 	fprintf(stderr,
 		_("Not committing merge; use 'git commit' to complete the merge.\n"));
-	write_merge_state();
+	write_merge_state(remoteheads);
 	exit(1);
 }
 
@@ -892,7 +893,7 @@ N_("Please enter a commit message to explain why this merge is necessary,\n"
    "Lines starting with '#' will be ignored, and an empty message aborts\n"
    "the commit.\n");
 
-static void prepare_to_commit(void)
+static void prepare_to_commit(struct commit_list *remoteheads)
 {
 	struct strbuf msg = STRBUF_INIT;
 	const char *comment = _(merge_editor_comment);
@@ -905,18 +906,18 @@ static void prepare_to_commit(void)
 		 git_path("MERGE_MSG"), "merge", NULL, NULL);
 	if (option_edit) {
 		if (launch_editor(git_path("MERGE_MSG"), NULL, NULL))
-			abort_commit(NULL);
+			abort_commit(remoteheads, NULL);
 	}
 	read_merge_msg(&msg);
 	stripspace(&msg, option_edit);
 	if (!msg.len)
-		abort_commit(_("Empty commit message."));
+		abort_commit(remoteheads, _("Empty commit message."));
 	strbuf_release(&merge_msg);
 	strbuf_addbuf(&merge_msg, &msg);
 	strbuf_release(&msg);
 }
 
-static int merge_trivial(struct commit *head)
+static int merge_trivial(struct commit *head, struct commit_list *remoteheads)
 {
 	unsigned char result_tree[20], result_commit[20];
 	struct commit_list *parent = xmalloc(sizeof(*parent));
@@ -927,17 +928,18 @@ static int merge_trivial(struct commit *head)
 	parent->next = xmalloc(sizeof(*parent->next));
 	parent->next->item = remoteheads->item;
 	parent->next->next = NULL;
-	prepare_to_commit();
+	prepare_to_commit(remoteheads);
 	if (commit_tree(&merge_msg, result_tree, parent, result_commit, NULL,
 			sign_commit))
 		die(_("failed to write commit object"));
-	finish(head, result_commit, "In-index merge");
+	finish(head, remoteheads, result_commit, "In-index merge");
 	drop_save();
 	return 0;
 }
 
 static int finish_automerge(struct commit *head,
 			    struct commit_list *common,
+			    struct commit_list *remoteheads,
 			    unsigned char *result_tree,
 			    const char *wt_strategy)
 {
@@ -959,13 +961,13 @@ static int finish_automerge(struct commit *head,
 			pptr = &commit_list_insert(j->item, pptr)->next;
 	}
 	strbuf_addch(&merge_msg, '\n');
-	prepare_to_commit();
+	prepare_to_commit(remoteheads);
 	free_commit_list(remoteheads);
 	if (commit_tree(&merge_msg, result_tree, parents, result_commit,
 			NULL, sign_commit))
 		die(_("failed to write commit object"));
 	strbuf_addf(&buf, "Merge made by the '%s' strategy.", wt_strategy);
-	finish(head, result_commit, buf.buf);
+	finish(head, remoteheads, result_commit, buf.buf);
 	strbuf_release(&buf);
 	drop_save();
 	return 0;
@@ -1070,7 +1072,7 @@ static int setup_with_upstream(const char ***argv)
 	return i;
 }
 
-static void write_merge_state(void)
+static void write_merge_state(struct commit_list *remoteheads)
 {
 	const char *filename;
 	int fd;
@@ -1148,6 +1150,7 @@ int cmd_merge(int argc, const char **argv, const char *prefix)
 	int best_cnt = -1, merge_was_ok = 0, automerge_was_ok = 0;
 	struct commit_list *common = NULL;
 	const char *best_strategy = NULL, *wt_strategy = NULL;
+	struct commit_list *remoteheads = NULL;
 	struct commit_list **remotes = &remoteheads;
 	void *branch_to_free;
 
@@ -1400,7 +1403,7 @@ int cmd_merge(int argc, const char **argv, const char *prefix)
 			goto done;
 		}
 
-		finish(head_commit, commit->object.sha1, msg.buf);
+		finish(head_commit, remoteheads, commit->object.sha1, msg.buf);
 		drop_save();
 		goto done;
 	} else if (!remoteheads->next && common->next)
@@ -1422,7 +1425,7 @@ int cmd_merge(int argc, const char **argv, const char *prefix)
 			if (!read_tree_trivial(common->item->object.sha1,
 					       head_commit->object.sha1,
 					       remoteheads->item->object.sha1)) {
-				ret = merge_trivial(head_commit);
+				ret = merge_trivial(head_commit, remoteheads);
 				goto done;
 			}
 			printf(_("Nope.\n"));
@@ -1493,7 +1496,8 @@ int cmd_merge(int argc, const char **argv, const char *prefix)
 		wt_strategy = use_strategies[i]->name;
 
 		ret = try_merge_strategy(use_strategies[i]->name,
-					 common, head_commit, head_arg);
+					 common, remoteheads,
+					 head_commit, head_arg);
 		if (!option_commit && !ret) {
 			merge_was_ok = 1;
 			/*
@@ -1535,8 +1539,8 @@ int cmd_merge(int argc, const char **argv, const char *prefix)
 	 * auto resolved the merge cleanly.
 	 */
 	if (automerge_was_ok) {
-		ret = finish_automerge(head_commit, common, result_tree,
-				       wt_strategy);
+		ret = finish_automerge(head_commit, common, remoteheads,
+				       result_tree, wt_strategy);
 		goto done;
 	}
 
@@ -1561,13 +1565,14 @@ int cmd_merge(int argc, const char **argv, const char *prefix)
 		restore_state(head_commit->object.sha1, stash);
 		printf(_("Using the %s to prepare resolving by hand.\n"),
 			best_strategy);
-		try_merge_strategy(best_strategy, common, head_commit, head_arg);
+		try_merge_strategy(best_strategy, common, remoteheads,
+				   head_commit, head_arg);
 	}
 
 	if (squash)
-		finish(head_commit, NULL, NULL);
+		finish(head_commit, remoteheads, NULL, NULL);
 	else
-		write_merge_state();
+		write_merge_state(remoteheads);
 
 	if (merge_was_ok)
 		fprintf(stderr, _("Automatic merge went well; "
