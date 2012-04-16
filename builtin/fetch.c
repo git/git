@@ -240,6 +240,7 @@ static int s_update_ref(const char *action,
 
 static int update_local_ref(struct ref *ref,
 			    const char *remote,
+			    const struct ref *remote_ref,
 			    struct strbuf *display)
 {
 	struct commit *current = NULL, *updated;
@@ -466,7 +467,7 @@ static int store_updated_refs(const char *raw_url, const char *remote_name,
 
 			strbuf_reset(&note);
 			if (ref) {
-				rc |= update_local_ref(ref, what, &note);
+				rc |= update_local_ref(ref, what, rm, &note);
 				free(ref);
 			} else
 				strbuf_addf(&note, "* %-*s %-*s -> FETCH_HEAD",
