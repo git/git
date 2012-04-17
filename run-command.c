@@ -94,7 +94,11 @@ static const char **prepare_shell_cmd(const char **argv)
 		die("BUG: shell command is empty");
 
 	if (strcspn(argv[0], "|&;<>()$`\\\"' \t\n*?[#~=%") != strlen(argv[0])) {
+#ifndef WIN32
 		nargv[nargc++] = SHELL_PATH;
+#else
+		nargv[nargc++] = "sh";
+#endif
 		nargv[nargc++] = "-c";
 
 		if (argc < 2)
