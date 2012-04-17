@@ -73,6 +73,91 @@ test_completion ()
 	test_cmp expected out
 }
 
+newline=$'\n'
+
+test_expect_success '__gitcomp - trailing space - options' '
+	sed -e "s/Z$//" >expected <<-\EOF &&
+	--reuse-message=Z
+	--reedit-message=Z
+	--reset-author Z
+	EOF
+	(
+		local -a COMPREPLY &&
+		cur="--re" &&
+		__gitcomp "--dry-run --reuse-message= --reedit-message=
+				--reset-author" &&
+		IFS="$newline" &&
+		echo "${COMPREPLY[*]}" > out
+	) &&
+	test_cmp expected out
+'
+
+test_expect_success '__gitcomp - trailing space - config keys' '
+	sed -e "s/Z$//" >expected <<-\EOF &&
+	branch.Z
+	branch.autosetupmerge Z
+	branch.autosetuprebase Z
+	browser.Z
+	EOF
+	(
+		local -a COMPREPLY &&
+		cur="br" &&
+		__gitcomp "branch. branch.autosetupmerge
+				branch.autosetuprebase browser." &&
+		IFS="$newline" &&
+		echo "${COMPREPLY[*]}" > out
+	) &&
+	test_cmp expected out
+'
+
+test_expect_success '__gitcomp - option parameter' '
+	sed -e "s/Z$//" >expected <<-\EOF &&
+	recursive Z
+	resolve Z
+	EOF
+	(
+		local -a COMPREPLY &&
+		cur="--strategy=re" &&
+		__gitcomp "octopus ours recursive resolve subtree
+			" "" "re" &&
+		IFS="$newline" &&
+		echo "${COMPREPLY[*]}" > out
+	) &&
+	test_cmp expected out
+'
+
+test_expect_success '__gitcomp - prefix' '
+	sed -e "s/Z$//" >expected <<-\EOF &&
+	branch.maint.merge Z
+	branch.maint.mergeoptions Z
+	EOF
+	(
+		local -a COMPREPLY &&
+		cur="branch.me" &&
+		__gitcomp "remote merge mergeoptions rebase
+			" "branch.maint." "me" &&
+		IFS="$newline" &&
+		echo "${COMPREPLY[*]}" > out
+	) &&
+	test_cmp expected out
+'
+
+test_expect_success '__gitcomp - suffix' '
+	sed -e "s/Z$//" >expected <<-\EOF &&
+	branch.master.Z
+	branch.maint.Z
+	EOF
+	(
+		local -a COMPREPLY &&
+		cur="branch.me" &&
+		__gitcomp "master maint next pu
+			" "branch." "ma" "." &&
+		IFS="$newline" &&
+		echo "${COMPREPLY[*]}" > out
+	) &&
+	test_cmp expected out
+'
+
 test_expect_success 'basic' '
 	run_completion "git \"\"" &&
 	# built-in
