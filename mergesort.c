@@ -23,10 +23,10 @@ static void *pop_item(struct mergesort_sublist *l,
 	return p;
 }
 
-void *mergesort(void *list,
-		void *(*get_next_fn)(const void *),
-		void (*set_next_fn)(void *, void *),
-		int (*compare_fn)(const void *, const void *))
+void *llist_mergesort(void *list,
+		      void *(*get_next_fn)(const void *),
+		      void (*set_next_fn)(void *, void *),
+		      int (*compare_fn)(const void *, const void *))
 {
 	unsigned long l;
 

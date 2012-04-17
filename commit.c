@@ -429,8 +429,8 @@ static void commit_list_set_next(void *a, void *next)
 
 void commit_list_sort_by_date(struct commit_list **list)
 {
-	*list = mergesort(*list, commit_list_get_next, commit_list_set_next,
-			  commit_list_compare_by_date);
+	*list = llist_mergesort(*list, commit_list_get_next, commit_list_set_next,
+				commit_list_compare_by_date);
 }
 
 struct commit *pop_most_recent_commit(struct commit_list **list,
