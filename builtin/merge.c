@@ -1137,6 +1137,21 @@ static int default_edit_option(void)
 		st_stdin.st_mode == st_stdout.st_mode);
 }
 
+static struct commit_list *collect_parents(int argc, const char **argv)
+{
+	int i;
+	struct commit_list *remoteheads = NULL;
+	struct commit_list **remotes = &remoteheads;
+
+	for (i = 0; i < argc; i++) {
+		struct commit *commit = get_merge_parent(argv[i]);
+		if (!commit)
+			die(_("%s - not something we can merge"), argv[i]);
+		remotes = &commit_list_insert(commit, remotes)->next;
+	}
+	*remotes = NULL;
+	return remoteheads;
+}
 
 int cmd_merge(int argc, const char **argv, const char *prefix)
 {
@@ -1150,8 +1165,7 @@ int cmd_merge(int argc, const char **argv, const char *prefix)
 	int best_cnt = -1, merge_was_ok = 0, automerge_was_ok = 0;
 	struct commit_list *common = NULL;
 	const char *best_strategy = NULL, *wt_strategy = NULL;
-	struct commit_list *remoteheads = NULL;
-	struct commit_list **remotes = &remoteheads;
+	struct commit_list *remoteheads, *p;
 	void *branch_to_free;
 
 	if (argc == 2 && !strcmp(argv[1], "-h"))
@@ -1256,6 +1270,7 @@ int cmd_merge(int argc, const char **argv, const char *prefix)
 		head_arg = argv[1];
 		argv += 2;
 		argc -= 2;
+		remoteheads = collect_parents(argc, argv);
 	} else if (!head_commit) {
 		struct commit *remote_head;
 		/*
@@ -1271,7 +1286,8 @@ int cmd_merge(int argc, const char **argv, const char *prefix)
 		if (!allow_fast_forward)
 			die(_("Non-fast-forward commit does not make sense into "
 			    "an empty head"));
-		remote_head = get_merge_parent(argv[0]);
+		remoteheads = collect_parents(argc, argv);
+		remote_head = remoteheads->item;
 		if (!remote_head)
 			die(_("%s - not something we can merge"), argv[0]);
 		read_empty(remote_head->object.sha1, 0);
@@ -1289,8 +1305,9 @@ int cmd_merge(int argc, const char **argv, const char *prefix)
 		 * the standard merge summary message to be appended
 		 * to the given message.
 		 */
-		for (i = 0; i < argc; i++)
-			merge_name(argv[i], &merge_names);
+		remoteheads = collect_parents(argc, argv);
+		for (p = remoteheads; p; p = p->next)
+			merge_name(merge_remote_util(p->item)->name, &merge_names);
 
 		if (!have_message || shortlog_len) {
 			struct fmt_merge_msg_opts opts;
@@ -1309,19 +1326,16 @@ int cmd_merge(int argc, const char **argv, const char *prefix)
 			builtin_merge_options);
 
 	strbuf_addstr(&buf, "merge");
-	for (i = 0; i < argc; i++)
-		strbuf_addf(&buf, " %s", argv[i]);
+	for (p = remoteheads; p; p = p->next)
+		strbuf_addf(&buf, " %s", merge_remote_util(p->item)->name);
 	setenv("GIT_REFLOG_ACTION", buf.buf, 0);
 	strbuf_reset(&buf);
 
-	for (i = 0; i < argc; i++) {
-		struct commit *commit = get_merge_parent(argv[i]);
-		if (!commit)
-			die(_("%s - not something we can merge"), argv[i]);
-		remotes = &commit_list_insert(commit, remotes)->next;
+	for (p = remoteheads; p; p = p->next) {
+		struct commit *commit = p->item;
 		strbuf_addf(&buf, "GITHEAD_%s",
 			    sha1_to_hex(commit->object.sha1));
-		setenv(buf.buf, argv[i], 1);
+		setenv(buf.buf, merge_remote_util(commit)->name, 1);
 		strbuf_reset(&buf);
 		if (!fast_forward_only &&
 		    merge_remote_util(commit) &&
