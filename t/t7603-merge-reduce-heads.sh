@@ -119,7 +119,7 @@ test_expect_success 'fast-forward to redundant refs' '
 	git merge c4 c5
 '
 
-test_expect_failure 'verify merge result' '
+test_expect_success 'verify merge result' '
 	test $(git rev-parse HEAD) = $(git rev-parse c5)
 '
 

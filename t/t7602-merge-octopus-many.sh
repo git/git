@@ -76,7 +76,7 @@ Merge made by the 'recursive' strategy.
  create mode 100644 c5.c
 EOF
 
-test_expect_failure 'merge reduces irrelevant remote heads' '
+test_expect_success 'merge reduces irrelevant remote heads' '
 	GIT_MERGE_VERBOSITY=0 git merge c4 c5 >actual &&
 	test_cmp expected actual
 '

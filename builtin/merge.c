@@ -938,31 +938,22 @@ static int merge_trivial(struct commit *head, struct commit_list *remoteheads)
 }
 
 static int finish_automerge(struct commit *head,
+			    int head_subsumed,
 			    struct commit_list *common,
 			    struct commit_list *remoteheads,
 			    unsigned char *result_tree,
 			    const char *wt_strategy)
 {
-	struct commit_list *parents = NULL, *j;
+	struct commit_list *parents = NULL;
 	struct strbuf buf = STRBUF_INIT;
 	unsigned char result_commit[20];
 
 	free_commit_list(common);
-	if (allow_fast_forward) {
-		parents = remoteheads;
+	parents = remoteheads;
+	if (!head_subsumed || !allow_fast_forward)
 		commit_list_insert(head, &parents);
-		parents = reduce_heads(parents);
-	} else {
-		struct commit_list **pptr = &parents;
-
-		pptr = &commit_list_insert(head,
-				pptr)->next;
-		for (j = remoteheads; j; j = j->next)
-			pptr = &commit_list_insert(j->item, pptr)->next;
-	}
 	strbuf_addch(&merge_msg, '\n');
 	prepare_to_commit(remoteheads);
-	free_commit_list(remoteheads);
 	if (commit_tree(&merge_msg, result_tree, parents, result_commit,
 			NULL, sign_commit))
 		die(_("failed to write commit object"));
@@ -1137,12 +1128,16 @@ static int default_edit_option(void)
 		st_stdin.st_mode == st_stdout.st_mode);
 }
 
-static struct commit_list *collect_parents(int argc, const char **argv)
+static struct commit_list *collect_parents(struct commit *head_commit,
+					   int *head_subsumed,
+					   int argc, const char **argv)
 {
 	int i;
-	struct commit_list *remoteheads = NULL;
+	struct commit_list *remoteheads = NULL, *parents, *next;
 	struct commit_list **remotes = &remoteheads;
 
+	if (head_commit)
+		remotes = &commit_list_insert(head_commit, remotes)->next;
 	for (i = 0; i < argc; i++) {
 		struct commit *commit = get_merge_parent(argv[i]);
 		if (!commit)
@@ -1150,6 +1145,20 @@ static struct commit_list *collect_parents(int argc, const char **argv)
 		remotes = &commit_list_insert(commit, remotes)->next;
 	}
 	*remotes = NULL;
+
+	parents = reduce_heads(remoteheads);
+
+	*head_subsumed = 1; /* we will flip this to 0 when we find it */
+	for (remoteheads = NULL, remotes = &remoteheads;
+	     parents;
+	     parents = next) {
+		struct commit *commit = parents->item;
+		next = parents->next;
+		if (commit == head_commit)
+			*head_subsumed = 0;
+		else
+			remotes = &commit_list_insert(commit, remotes)->next;
+	}
 	return remoteheads;
 }
 
@@ -1161,7 +1170,7 @@ int cmd_merge(int argc, const char **argv, const char *prefix)
 	struct commit *head_commit;
 	struct strbuf buf = STRBUF_INIT;
 	const char *head_arg;
-	int flag, i, ret = 0;
+	int flag, i, ret = 0, head_subsumed;
 	int best_cnt = -1, merge_was_ok = 0, automerge_was_ok = 0;
 	struct commit_list *common = NULL;
 	const char *best_strategy = NULL, *wt_strategy = NULL;
@@ -1270,7 +1279,7 @@ int cmd_merge(int argc, const char **argv, const char *prefix)
 		head_arg = argv[1];
 		argv += 2;
 		argc -= 2;
-		remoteheads = collect_parents(argc, argv);
+		remoteheads = collect_parents(head_commit, &head_subsumed, argc, argv);
 	} else if (!head_commit) {
 		struct commit *remote_head;
 		/*
@@ -1286,7 +1295,7 @@ int cmd_merge(int argc, const char **argv, const char *prefix)
 		if (!allow_fast_forward)
 			die(_("Non-fast-forward commit does not make sense into "
 			    "an empty head"));
-		remoteheads = collect_parents(argc, argv);
+		remoteheads = collect_parents(head_commit, &head_subsumed, argc, argv);
 		remote_head = remoteheads->item;
 		if (!remote_head)
 			die(_("%s - not something we can merge"), argv[0]);
@@ -1305,7 +1314,7 @@ int cmd_merge(int argc, const char **argv, const char *prefix)
 		 * the standard merge summary message to be appended
 		 * to the given message.
 		 */
-		remoteheads = collect_parents(argc, argv);
+		remoteheads = collect_parents(head_commit, &head_subsumed, argc, argv);
 		for (p = remoteheads; p; p = p->next)
 			merge_name(merge_remote_util(p->item)->name, &merge_names);
 
@@ -1351,7 +1360,9 @@ int cmd_merge(int argc, const char **argv, const char *prefix)
 		option_edit = 0;
 
 	if (!use_strategies) {
-		if (!remoteheads->next)
+		if (!remoteheads)
+			; /* already up-to-date */
+		else if (!remoteheads->next)
 			add_strategies(pull_twohead, DEFAULT_TWOHEAD);
 		else
 			add_strategies(pull_octopus, DEFAULT_OCTOPUS);
@@ -1364,7 +1375,9 @@ int cmd_merge(int argc, const char **argv, const char *prefix)
 			allow_trivial = 0;
 	}
 
-	if (!remoteheads->next)
+	if (!remoteheads)
+		; /* already up-to-date */
+	else if (!remoteheads->next)
 		common = get_merge_bases(head_commit, remoteheads->item, 1);
 	else {
 		struct commit_list *list = remoteheads;
@@ -1376,10 +1389,11 @@ int cmd_merge(int argc, const char **argv, const char *prefix)
 	update_ref("updating ORIG_HEAD", "ORIG_HEAD", head_commit->object.sha1,
 		   NULL, 0, DIE_ON_ERR);
 
-	if (!common)
+	if (remoteheads && !common)
 		; /* No common ancestors found. We need a real merge. */
-	else if (!remoteheads->next && !common->next &&
-			common->item == remoteheads->item) {
+	else if (!remoteheads ||
+		 (!remoteheads->next && !common->next &&
+		  common->item == remoteheads->item)) {
 		/*
 		 * If head can reach all the merge then we are up to date.
 		 * but first the most common case of merging one remote.
@@ -1553,7 +1567,8 @@ int cmd_merge(int argc, const char **argv, const char *prefix)
 	 * auto resolved the merge cleanly.
 	 */
 	if (automerge_was_ok) {
-		ret = finish_automerge(head_commit, common, remoteheads,
+		ret = finish_automerge(head_commit, head_subsumed,
+				       common, remoteheads,
 				       result_tree, wt_strategy);
 		goto done;
 	}

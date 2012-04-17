@@ -79,7 +79,7 @@ test_expect_success 'merge -s subtree up-to-date' '
 
 '
 
-test_expect_failure 'merge fast-forward octopus' '
+test_expect_success 'merge fast-forward octopus' '
 
 	git reset --hard c0 &&
 	test_tick &&
