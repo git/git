@@ -22,9 +22,10 @@ typedef int socklen_t;
 #define S_IWOTH 0
 #define S_IXOTH 0
 #define S_IRWXO (S_IROTH | S_IWOTH | S_IXOTH)
-#define S_ISUID 0
-#define S_ISGID 0
-#define S_ISVTX 0
+
+#define S_ISUID 0004000
+#define S_ISGID 0002000
+#define S_ISVTX 0001000
 
 #define WIFEXITED(x) 1
 #define WIFSIGNALED(x) 0
