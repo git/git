@@ -2,8 +2,7 @@
 #include "argv-array.h"
 #include "strbuf.h"
 
-static const char *empty_argv_storage = NULL;
-const char **empty_argv = &empty_argv_storage;
+const char *empty_argv[] = { NULL };
 
 void argv_array_init(struct argv_array *array)
 {

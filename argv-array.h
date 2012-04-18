@@ -1,7 +1,7 @@
 #ifndef ARGV_ARRAY_H
 #define ARGV_ARRAY_H
 
-extern const char **empty_argv;
+extern const char *empty_argv[];
 
 struct argv_array {
 	const char **argv;
