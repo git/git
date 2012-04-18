@@ -234,7 +234,7 @@ static int do_recursive_merge(struct commit *base, struct commit *next,
 
 	if (!clean) {
 		int i;
-		strbuf_addstr(msgbuf, "\nConflicts:\n\n");
+		strbuf_addstr(msgbuf, "\nConflicts:\n");
 		for (i = 0; i < active_nr;) {
 			struct cache_entry *ce = active_cache[i++];
 			if (ce_stage(ce)) {
