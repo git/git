@@ -38,6 +38,17 @@ void argv_array_pushf(struct argv_array *array, const char *fmt, ...)
 	argv_array_push_nodup(array, strbuf_detach(&v, NULL));
 }
 
+void argv_array_pushl(struct argv_array *array, ...)
+{
+	va_list ap;
+	const char *arg;
+
+	va_start(ap, array);
+	while((arg = va_arg(ap, const char *)))
+		argv_array_push(array, arg);
+	va_end(ap);
+}
+
 void argv_array_clear(struct argv_array *array)
 {
 	if (array->argv != empty_argv) {
