@@ -23,7 +23,6 @@ test_expect_success $PREREQ \
       echo do
       echo "  echo \"!\$a!\""
       echo "done >commandline\$output"
-      test_have_prereq MINGW && echo "dos2unix commandline\$output"
       echo "cat > msgtxt\$output"
       ) >fake.sendmail &&
      chmod +x ./fake.sendmail &&
@@ -97,7 +96,7 @@ EOF
 
 test_expect_success $PREREQ \
     'Verify commandline' \
-    'test_cmp expected commandline1'
+    'test_cmp_text expected commandline1'
 
 test_expect_success $PREREQ 'Send patches with --envelope-sender' '
     clean_fake_sendmail &&
@@ -117,7 +116,7 @@ EOF
 
 test_expect_success $PREREQ \
     'Verify commandline' \
-    'test_cmp expected commandline1'
+    'test_cmp_text expected commandline1'
 
 test_expect_success $PREREQ 'Send patches with --envelope-sender=auto' '
     clean_fake_sendmail &&
@@ -137,7 +136,7 @@ EOF
 
 test_expect_success $PREREQ \
     'Verify commandline' \
-    'test_cmp expected commandline1'
+    'test_cmp_text expected commandline1'
 
 test_expect_success $PREREQ 'setup expect' "
 cat >expected-show-all-headers <<\EOF
@@ -261,7 +260,7 @@ test_expect_success $PREREQ 'Show all headers' '
 		-e "s/^\(Message-Id:\).*/\1 MESSAGE-ID-STRING/" \
 		-e "s/^\(X-Mailer:\).*/\1 X-MAILER-STRING/" \
 		>actual-show-all-headers &&
-	test_cmp expected-show-all-headers actual-show-all-headers
+	test_cmp_text expected-show-all-headers actual-show-all-headers
 '
 
 test_expect_success $PREREQ 'Prompting works' '
@@ -429,13 +428,13 @@ test_expect_success $PREREQ 'In-Reply-To without --chain-reply-to' '
 		2>errors &&
 	# The first message is a reply to --in-reply-to
 	sed -n -e "s/^In-Reply-To: *\(.*\)/\1/p" msgtxt1 >actual &&
-	test_cmp expect actual &&
+	test_cmp_text expect actual &&
 	# Second and subsequent messages are replies to the first one
 	sed -n -e "s/^Message-Id: *\(.*\)/\1/p" msgtxt1 >expect &&
 	sed -n -e "s/^In-Reply-To: *\(.*\)/\1/p" msgtxt2 >actual &&
-	test_cmp expect actual &&
+	test_cmp_text expect actual &&
 	sed -n -e "s/^In-Reply-To: *\(.*\)/\1/p" msgtxt3 >actual &&
-	test_cmp expect actual
+	test_cmp_text expect actual
 '
 
 test_expect_success $PREREQ 'In-Reply-To with --chain-reply-to' '
@@ -450,13 +449,13 @@ test_expect_success $PREREQ 'In-Reply-To with --chain-reply-to' '
 		$patches $patches $patches \
 		2>errors &&
 	sed -n -e "s/^In-Reply-To: *\(.*\)/\1/p" msgtxt1 >actual &&
-	test_cmp expect actual &&
+	test_cmp_text expect actual &&
 	sed -n -e "s/^Message-Id: *\(.*\)/\1/p" msgtxt1 >expect &&
 	sed -n -e "s/^In-Reply-To: *\(.*\)/\1/p" msgtxt2 >actual &&
-	test_cmp expect actual &&
+	test_cmp_text expect actual &&
 	sed -n -e "s/^Message-Id: *\(.*\)/\1/p" msgtxt2 >expect &&
 	sed -n -e "s/^In-Reply-To: *\(.*\)/\1/p" msgtxt3 >actual &&
-	test_cmp expect actual
+	test_cmp_text expect actual
 '
 
 test_expect_success $PREREQ 'setup fake editor' '
@@ -528,7 +527,7 @@ test_suppression () {
 		-e "s/^\(Message-Id:\).*/\1 MESSAGE-ID-STRING/" \
 		-e "s/^\(X-Mailer:\).*/\1 X-MAILER-STRING/" \
 		>actual-suppress-$1${2+"-$2"} &&
-	test_cmp expected-suppress-$1${2+"-$2"} actual-suppress-$1${2+"-$2"}
+	test_cmp_text expected-suppress-$1${2+"-$2"} actual-suppress-$1${2+"-$2"}
 }
 
 test_expect_success $PREREQ 'sendemail.cc set' '
@@ -1244,7 +1243,7 @@ test_expect_success $PREREQ 'asks about and fixes 8bit encodings' '
 	grep email-using-8bit stdout &&
 	grep "Which 8bit encoding" stdout &&
 	egrep "Content|MIME" msgtxt1 >actual &&
-	test_cmp actual content-type-decl
+	test_cmp_text actual content-type-decl
 '
 
 test_expect_success $PREREQ 'sendemail.8bitEncoding works' '
@@ -1255,7 +1254,7 @@ test_expect_success $PREREQ 'sendemail.8bitEncoding works' '
 			--smtp-server="$(pwd)/fake.sendmail" \
 			email-using-8bit >stdout &&
 	egrep "Content|MIME" msgtxt1 >actual &&
-	test_cmp actual content-type-decl
+	test_cmp_text actual content-type-decl
 '
 
 test_expect_success $PREREQ '--8bit-encoding overrides sendemail.8bitEncoding' '
@@ -1267,7 +1266,7 @@ test_expect_success $PREREQ '--8bit-encoding overrides sendemail.8bitEncoding' '
 			--8bit-encoding=UTF-8 \
 			email-using-8bit >stdout &&
 	egrep "Content|MIME" msgtxt1 >actual &&
-	test_cmp actual content-type-decl
+	test_cmp_text actual content-type-decl
 '
 
 test_expect_success $PREREQ 'setup expect' '
@@ -1296,7 +1295,7 @@ test_expect_success $PREREQ '--8bit-encoding also treats subject' '
 			--8bit-encoding=UTF-8 \
 			email-using-8bit >stdout &&
 	grep "Subject" msgtxt1 >actual &&
-	test_cmp expected actual
+	test_cmp_text expected actual
 '
 
 # Note that the patches in this test are deliberately out of order; we
