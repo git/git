@@ -53,7 +53,48 @@ static void init_src_data(struct src_data *data)
 static struct string_list srcs = STRING_LIST_INIT_DUP;
 static struct string_list origins = STRING_LIST_INIT_DUP;
 
-static int handle_line(char *line)
+struct merge_parents {
+	int alloc, nr;
+	struct merge_parent {
+		unsigned char given[20];
+		unsigned char commit[20];
+		unsigned char used;
+	} *item;
+};
+
+/*
+ * I know, I know, this is inefficient, but you won't be pulling and merging
+ * hundreds of heads at a time anyway.
+ */
+static struct merge_parent *find_merge_parent(struct merge_parents *table,
+					      unsigned char *given,
+					      unsigned char *commit)
+{
+	int i;
+	for (i = 0; i < table->nr; i++) {
+		if (given && hashcmp(table->item[i].given, given))
+			continue;
+		if (commit && hashcmp(table->item[i].commit, commit))
+			continue;
+		return &table->item[i];
+	}
+	return NULL;
+}
+
+static void add_merge_parent(struct merge_parents *table,
+			     unsigned char *given,
+			     unsigned char *commit)
+{
+	if (table->nr && find_merge_parent(table, given, commit))
+		return;
+	ALLOC_GROW(table->item, table->nr + 1, table->alloc);
+	hashcpy(table->item[table->nr].given, given);
+	hashcpy(table->item[table->nr].commit, commit);
+	table->item[table->nr].used = 0;
+	table->nr++;
+}
+
+static int handle_line(char *line, struct merge_parents *merge_parents)
 {
 	int i, len = strlen(line);
 	struct origin_data *origin_data;
@@ -61,6 +102,7 @@ static int handle_line(char *line)
 	struct src_data *src_data;
 	struct string_list_item *item;
 	int pulling_head = 0;
+	unsigned char sha1[20];
 
 	if (len < 43 || line[40] != '\t')
 		return 1;
@@ -71,14 +113,15 @@ static int handle_line(char *line)
 	if (line[41] != '\t')
 		return 2;
 
-	line[40] = 0;
-	origin_data = xcalloc(1, sizeof(struct origin_data));
-	i = get_sha1(line, origin_data->sha1);
-	line[40] = '\t';
-	if (i) {
-		free(origin_data);
+	i = get_sha1_hex(line, sha1);
+	if (i)
 		return 3;
-	}
+
+	if (!find_merge_parent(merge_parents, sha1, NULL))
+		return 0; /* subsumed by other parents */
+
+	origin_data = xcalloc(1, sizeof(struct origin_data));
+	hashcpy(origin_data->sha1, sha1);
 
 	if (line[len - 1] == '\n')
 		line[len - 1] = 0;
@@ -366,6 +409,67 @@ static void fmt_merge_msg_sigs(struct strbuf *out)
 	strbuf_release(&tagbuf);
 }
 
+static void find_merge_parents(struct merge_parents *result,
+			       struct strbuf *in, unsigned char *head)
+{
+	struct commit_list *parents, *next;
+	struct commit *head_commit;
+	int pos = 0, i, j;
+
+	parents = NULL;
+	while (pos < in->len) {
+		int len;
+		char *p = in->buf + pos;
+		char *newline = strchr(p, '\n');
+		unsigned char sha1[20];
+		struct commit *parent;
+		struct object *obj;
+
+		len = newline ? newline - p : strlen(p);
+		pos += len + !!newline;
+
+		if (len < 43 ||
+		    get_sha1_hex(p, sha1) ||
+		    p[40] != '\t' ||
+		    p[41] != '\t')
+			continue; /* skip not-for-merge */
+		/*
+		 * Do not use get_merge_parent() here; we do not have
+		 * "name" here and we do not want to contaminate its
+		 * util field yet.
+		 */
+		obj = parse_object(sha1);
+		parent = (struct commit *)peel_to_type(NULL, 0, obj, OBJ_COMMIT);
+		if (!parent)
+			continue;
+		commit_list_insert(parent, &parents);
+		add_merge_parent(result, obj->sha1, parent->object.sha1);
+	}
+	head_commit = lookup_commit(head);
+	if (head_commit)
+		commit_list_insert(head_commit, &parents);
+	parents = reduce_heads(parents);
+
+	while (parents) {
+		for (i = 0; i < result->nr; i++)
+			if (!hashcmp(result->item[i].commit,
+				     parents->item->object.sha1))
+				result->item[i].used = 1;
+		next = parents->next;
+		free(parents);
+		parents = next;
+	}
+
+	for (i = j = 0; i < result->nr; i++) {
+		if (result->item[i].used) {
+			if (i != j)
+				result->item[j] = result->item[i];
+			j++;
+		}
+	}
+	result->nr = j;
+}
+
 int fmt_merge_msg(struct strbuf *in, struct strbuf *out,
 		  struct fmt_merge_msg_opts *opts)
 {
@@ -373,6 +477,9 @@ int fmt_merge_msg(struct strbuf *in, struct strbuf *out,
 	unsigned char head_sha1[20];
 	const char *current_branch;
 	void *current_branch_to_free;
+	struct merge_parents merge_parents;
+
+	memset(&merge_parents, 0, sizeof(merge_parents));
 
 	/* get current branch */
 	current_branch = current_branch_to_free =
@@ -381,6 +488,8 @@ int fmt_merge_msg(struct strbuf *in, struct strbuf *out,
 		die("No current branch");
 	if (!prefixcmp(current_branch, "refs/heads/"))
 		current_branch += 11;
+
+	find_merge_parents(&merge_parents, in, head_sha1);
 
 	/* get a line */
 	while (pos < in->len) {
@@ -392,7 +501,7 @@ int fmt_merge_msg(struct strbuf *in, struct strbuf *out,
 		pos += len + !!newline;
 		i++;
 		p[len] = 0;
-		if (handle_line(p))
+		if (handle_line(p, &merge_parents))
 			die ("Error in line %d: %.*s", i, len, p);
 	}
 
@@ -423,6 +532,7 @@ int fmt_merge_msg(struct strbuf *in, struct strbuf *out,
 
 	strbuf_complete_line(out);
 	free(current_branch_to_free);
+	free(merge_parents.item);
 	return 0;
 }
 
