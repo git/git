@@ -16,6 +16,20 @@ UI, Workflows & Features
    variables with REMOTE_USER and REMOTE_ADDR, but these variables are
    now preserved when set.
 
+ * "git am" learned the "--include" option, which is an opposite of
+   existing the "--exclude" option.
+
+ * When "git am -3" needs to fall back to an application to a
+   synthesized preimage followed by a 3-way merge, the paths that
+   needed such treatment are now reported to the end user, so that the
+   result in them can be eyeballed with extra care.
+
+ * The "fmt-merge-msg" command learns to list the primary contributors
+   involved in the side topic you are merging.
+
+ * The cases "git push" fails due to non-ff can be broken into three
+   categories; each case is given a separate advise message.
+
  * A 'snapshot' request to "gitweb" honors If-Modified-Since: header,
    based on the commit date.
 
@@ -35,7 +49,7 @@ Internal Implementation (please report possible regressions)
 
  * Because "sh" on the user's PATH may be utterly broken on some
    systems, run-command API now uses SHELL_PATH, not /bin/sh, when
-   spawning an external command.
+   spawning an external command (not applicable to Windows port).
 
 Also contains minor documentation updates and code clean-ups.
 
@@ -46,6 +60,18 @@ Fixes since v1.7.10
 Unless otherwise noted, all the fixes since v1.7.10 in the maintenance
 releases are contained in this release (see release notes to them for
 details).
+
+ * When PATH contains an unreadable directory, alias expansion code
+   did not kick in, and failed with an error that said "git-subcmd"
+   was not found.
+   (merge 38f865c jk/run-command-eacces later to maint).
+
+ * The 'push to upstream' implementation was broken in some corner
+   cases. "git push $there" without refspec, when the current branch
+   is set to push to a remote different from $there, used to push to
+   $there using the upstream information to a remote unreleated to
+   $there.
+   (merge 135dade jc/push-upstream-sanity later to maint).
 
  * "git clean -d -f" (not "-d -f -f") is supposed to protect nested
    working trees of independent git repositories that exist in the
