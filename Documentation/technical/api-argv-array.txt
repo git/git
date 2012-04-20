@@ -37,6 +37,11 @@ Functions
 `argv_array_push`::
 	Push a copy of a string onto the end of the array.
 
+`argv_array_pushl`::
+	Push a list of strings onto the end of the array. The arguments
+	should be a list of `const char *` strings, terminated by a NULL
+	argument.
+
 `argv_array_pushf`::
 	Format a string and push it onto the end of the array. This is a
 	convenience wrapper combining `strbuf_addf` and `argv_array_push`.
