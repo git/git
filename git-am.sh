@@ -139,6 +139,12 @@ fall_back_3way () {
     say Using index info to reconstruct a base tree...
 
     cmd='GIT_INDEX_FILE="$dotest/patch-merge-tmp-index"'
+
+    if test -z "$GIT_QUIET"
+    then
+	eval "$cmd git diff-index --cached --diff-filter=AM --name-status HEAD"
+    fi
+
     cmd="$cmd git apply --cached $git_apply_opt"' <"$dotest/patch"'
     if eval "$cmd"
     then
