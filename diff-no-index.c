@@ -109,6 +109,7 @@ static int queue_diff(struct diff_options *o,
 				n1 = buffer1;
 				strncpy(buffer1 + len1, p1.items[i1++].string,
 						PATH_MAX - len1);
+				buffer1[PATH_MAX-1] = 0;
 			}
 
 			if (comp < 0)
@@ -117,6 +118,7 @@ static int queue_diff(struct diff_options *o,
 				n2 = buffer2;
 				strncpy(buffer2 + len2, p2.items[i2++].string,
 						PATH_MAX - len2);
+				buffer2[PATH_MAX-1] = 0;
 			}
 
 			ret = queue_diff(o, n1, n2);
