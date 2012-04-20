@@ -238,6 +238,10 @@ leave out at most one of A and B, in which case it defaults to HEAD.
 	will be reset to where it was when the rebase operation was
 	started.
 
+--keep-empty::
+	Keep the commits that do not change anything from its
+	parents in the result.
+
 --skip::
 	Restart the rebasing process by skipping the current patch.
 
