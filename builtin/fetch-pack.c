@@ -23,7 +23,9 @@ static struct fetch_pack_args args = {
 };
 
 static const char fetch_pack_usage[] =
-"git fetch-pack [--all] [--quiet|-q] [--keep|-k] [--thin] [--include-tag] [--upload-pack=<git-upload-pack>] [--depth=<n>] [--no-progress] [-v] [<host>:]<directory> [<refs>...]";
+"git fetch-pack [--all] [--stdin] [--quiet|-q] [--keep|-k] [--thin] "
+"[--include-tag] [--upload-pack=<git-upload-pack>] [--depth=<n>] "
+"[--no-progress] [-v] [<host>:]<directory> [<refs>...]";
 
 #define COMPLETE	(1U << 0)
 #define COMMON		(1U << 1)
@@ -942,6 +944,10 @@ int cmd_fetch_pack(int argc, const char **argv, const char *prefix)
 				args.fetch_all = 1;
 				continue;
 			}
+			if (!strcmp("--stdin", arg)) {
+				args.stdin_refs = 1;
+				continue;
+			}
 			if (!strcmp("-v", arg)) {
 				args.verbose = 1;
 				continue;
@@ -972,6 +978,40 @@ int cmd_fetch_pack(int argc, const char **argv, const char *prefix)
 	}
 	if (!dest)
 		usage(fetch_pack_usage);
+
+	if (args.stdin_refs) {
+		/*
+		 * Copy refs from cmdline to new growable list, then
+		 * append the refs from the standard input.
+		 */
+		int alloc_heads = nr_heads;
+		int size = nr_heads * sizeof(*heads);
+		heads = memcpy(xmalloc(size), heads, size);
+		if (args.stateless_rpc) {
+			/* in stateless RPC mode we use pkt-line to read
+			 * from stdin, until we get a flush packet
+			 */
+			static char line[1000];
+			for (;;) {
+				int n = packet_read_line(0, line, sizeof(line));
+				if (!n)
+					break;
+				if (line[n-1] == '\n')
+					n--;
+				ALLOC_GROW(heads, nr_heads + 1, alloc_heads);
+				heads[nr_heads++] = xmemdupz(line, n);
+			}
+		}
+		else {
+			/* read from stdin one ref per line, until EOF */
+			struct strbuf line = STRBUF_INIT;
+			while (strbuf_getline(&line, stdin, '\n') != EOF) {
+				ALLOC_GROW(heads, nr_heads + 1, alloc_heads);
+				heads[nr_heads++] = strbuf_detach(&line, NULL);
+			}
+			strbuf_release(&line);
+		}
+	}
 
 	if (args.stateless_rpc) {
 		conn = NULL;
