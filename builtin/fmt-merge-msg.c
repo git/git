@@ -27,6 +27,8 @@ int fmt_merge_msg_config(const char *key, const char *value, void *cb)
 			merge_log_config = DEFAULT_MERGE_LOG_LEN;
 	} else if (!strcmp(key, "merge.branchdesc")) {
 		use_branch_desc = git_config_bool(key, value);
+	} else {
+		return git_default_config(key, value, cb);
 	}
 	return 0;
 }
@@ -180,6 +182,101 @@ static void add_branch_desc(struct strbuf *out, const char *name)
 	strbuf_release(&desc);
 }
 
+#define util_as_integral(elem) ((intptr_t)((elem)->util))
+
+static void record_person(int which, struct string_list *people,
+			  struct commit *commit)
+{
+	char name_buf[MAX_GITNAME], *name, *name_end;
+	struct string_list_item *elem;
+	const char *field = (which == 'a') ? "\nauthor " : "\ncommitter ";
+
+	name = strstr(commit->buffer, field);
+	if (!name)
+		return;
+	name += strlen(field);
+	name_end = strchrnul(name, '<');
+	if (*name_end)
+		name_end--;
+	while (isspace(*name_end) && name <= name_end)
+		name_end--;
+	if (name_end < name || name + MAX_GITNAME <= name_end)
+		return;
+	memcpy(name_buf, name, name_end - name + 1);
+	name_buf[name_end - name + 1] = '\0';
+
+	elem = string_list_lookup(people, name_buf);
+	if (!elem) {
+		elem = string_list_insert(people, name_buf);
+		elem->util = (void *)0;
+	}
+	elem->util = (void*)(util_as_integral(elem) + 1);
+}
+
+static int cmp_string_list_util_as_integral(const void *a_, const void *b_)
+{
+	const struct string_list_item *a = a_, *b = b_;
+	return util_as_integral(b) - util_as_integral(a);
+}
+
+static void add_people_count(struct strbuf *out, struct string_list *people)
+{
+	if (people->nr == 1)
+		strbuf_addf(out, "%s", people->items[0].string);
+	else if (people->nr == 2)
+		strbuf_addf(out, "%s (%d) and %s (%d)",
+			    people->items[0].string,
+			    (int)util_as_integral(&people->items[0]),
+			    people->items[1].string,
+			    (int)util_as_integral(&people->items[1]));
+	else if (people->nr)
+		strbuf_addf(out, "%s (%d) and others",
+			    people->items[0].string,
+			    (int)util_as_integral(&people->items[0]));
+}
+
+static void credit_people(struct strbuf *out,
+			  struct string_list *them,
+			  int kind)
+{
+	const char *label;
+	const char *me;
+
+	if (kind == 'a') {
+		label = "\nBy ";
+		me = git_author_info(IDENT_NO_DATE);
+	} else {
+		label = "\nvia ";
+		me = git_committer_info(IDENT_NO_DATE);
+	}
+
+	if (!them->nr ||
+	    (them->nr == 1 &&
+	     me &&
+	     (me = skip_prefix(me, them->items->string)) != NULL &&
+	     skip_prefix(me, " <")))
+		return;
+	strbuf_addstr(out, label);
+	add_people_count(out, them);
+}
+
+static void add_people_info(struct strbuf *out,
+			    struct string_list *authors,
+			    struct string_list *committers)
+{
+	if (authors->nr)
+		qsort(authors->items,
+		      authors->nr, sizeof(authors->items[0]),
+		      cmp_string_list_util_as_integral);
+	if (committers->nr)
+		qsort(committers->items,
+		      committers->nr, sizeof(committers->items[0]),
+		      cmp_string_list_util_as_integral);
+
+	credit_people(out, authors, 'a');
+	credit_people(out, committers, 'c');
+}
+
 static void shortlog(const char *name,
 		     struct origin_data *origin_data,
 		     struct commit *head,
@@ -190,6 +287,8 @@ static void shortlog(const char *name,
 	struct commit *commit;
 	struct object *branch;
 	struct string_list subjects = STRING_LIST_INIT_DUP;
+	struct string_list authors = STRING_LIST_INIT_DUP;
+	struct string_list committers = STRING_LIST_INIT_DUP;
 	int flags = UNINTERESTING | TREESAME | SEEN | SHOWN | ADDED;
 	struct strbuf sb = STRBUF_INIT;
 	const unsigned char *sha1 = origin_data->sha1;
@@ -199,7 +298,6 @@ static void shortlog(const char *name,
 		return;
 
 	setup_revisions(0, NULL, rev, NULL);
-	rev->ignore_merges = 1;
 	add_pending_object(rev, branch, name);
 	add_pending_object(rev, &head->object, "^HEAD");
 	head->object.flags |= UNINTERESTING;
@@ -208,10 +306,15 @@ static void shortlog(const char *name,
 	while ((commit = get_revision(rev)) != NULL) {
 		struct pretty_print_context ctx = {0};
 
-		/* ignore merges */
-		if (commit->parents && commit->parents->next)
+		if (commit->parents && commit->parents->next) {
+			/* do not list a merge but count committer */
+			record_person('c', &committers, commit);
 			continue;
-
+		}
+		if (!count)
+			/* the 'tip' committer */
+			record_person('c', &committers, commit);
+		record_person('a', &authors, commit);
 		count++;
 		if (subjects.nr > limit)
 			continue;
@@ -226,6 +329,7 @@ static void shortlog(const char *name,
 			string_list_append(&subjects, strbuf_detach(&sb, NULL));
 	}
 
+	add_people_info(out, &authors, &committers);
 	if (count > limit)
 		strbuf_addf(out, "\n* %s: (%d commits)\n", name, count);
 	else
@@ -246,6 +350,8 @@ static void shortlog(const char *name,
 	rev->commits = NULL;
 	rev->pending.nr = 0;
 
+	string_list_clear(&authors, 0);
+	string_list_clear(&committers, 0);
 	string_list_clear(&subjects, 0);
 }
 
