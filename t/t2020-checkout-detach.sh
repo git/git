@@ -148,7 +148,7 @@ test_expect_success 'tracking count is accurate after orphan check' '
 	git config branch.child.merge refs/heads/master &&
 	git checkout child^ &&
 	git checkout child >stdout &&
-	test_cmp expect stdout
+	test_i18ncmp expect stdout
 '
 
 test_done
