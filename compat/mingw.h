@@ -274,9 +274,9 @@ int mingw_utime(const char *file_name, const struct utimbuf *times);
 pid_t mingw_spawnvpe(const char *cmd, const char **argv, char **env,
 		     const char *dir,
 		     int fhin, int fhout, int fherr);
-void mingw_execvp(const char *cmd, char *const *argv);
+int mingw_execvp(const char *cmd, char *const *argv);
 #define execvp mingw_execvp
-void mingw_execv(const char *cmd, char *const *argv);
+int mingw_execv(const char *cmd, char *const *argv);
 #define execv mingw_execv
 
 static inline unsigned int git_ntohl(unsigned int x)
