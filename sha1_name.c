@@ -856,10 +856,22 @@ int interpret_branch_name(const char *name, struct strbuf *buf)
 	len = cp + tmp_len - name;
 	cp = xstrndup(name, cp - name);
 	upstream = branch_get(*cp ? cp : NULL);
-	if (!upstream
-	    || !upstream->merge
-	    || !upstream->merge[0]->dst)
-		return error("No upstream branch found for '%s'", cp);
+	/*
+	 * Upstream can be NULL only if cp refers to HEAD and HEAD
+	 * points to something different than a branch.
+	 */
+	if (!upstream)
+		return error(_("HEAD does not point to a branch"));
+	if (!upstream->merge || !upstream->merge[0]->dst) {
+		if (!ref_exists(upstream->refname))
+			return error(_("No such branch: '%s'"), cp);
+		if (!upstream->merge)
+			return error(_("No upstream configured for branch '%s'"),
+				     upstream->name);
+		return error(
+			_("Upstream branch '%s' not stored as a remote-tracking branch"),
+			upstream->merge[0]->src);
+	}
 	free(cp);
 	cp = shorten_unambiguous_ref(upstream->merge[0]->dst, 0);
 	strbuf_reset(buf);
