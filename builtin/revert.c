@@ -129,6 +129,7 @@ static void verify_opt_mutually_compatible(const char *me, ...)
 				break;
 		}
 	}
+	va_end(ap);
 
 	if (opt1 && opt2)
 		die(_("%s: %s cannot be used with %s"),	me, opt1, opt2);
