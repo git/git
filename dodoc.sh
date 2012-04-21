@@ -9,10 +9,11 @@
 
 unset GIT_DIR
 
-MASTERREPO=/srv/project/git/git.git/
-DOCREFHIER=refs/docs
-MANREPO=/srv/project/git/git-manpages.git/
-HTMLREPO=/srv/project/git/git-htmldocs.git/
+: ${TOP-/srv/project/git}
+
+MASTERREPO=$TOP/git.git/
+MANREPO=$TOP/git-manpages.git/
+HTMLREPO=$TOP/git-htmldocs.git/
 
 target_repo () {
 	TARGETVAR=$(echo "$1"REPO | tr 'a-z' 'A-Z') &&
