@@ -95,7 +95,7 @@ __git_ps1_show_upstream ()
 {
 	local key value
 	local svn_remote svn_url_pattern count n
-	local upstream=git legacy="" verbose=""
+	local upstream=git upstream_path="" legacy="" verbose=""
 
 	svn_remote=()
 	# get some config options from git-config
@@ -142,9 +142,18 @@ __git_ps1_show_upstream ()
 				svn_upstream=${svn_upstream#${svn_remote[$n]}}
 			done
 
+			upstream_path="$(
+				expr "$svn_upstream" : ".*/\(tags/.*\)"
+			)$(
+				expr "$svn_upstream" : ".*branches/\(.*\)"
+			)$(
+				expr "$svn_upstream" : ".*/\(trunk\)"
+			)"
 			if [[ -z "$svn_upstream" ]]; then
 				# default branch name for checkouts with no layout:
 				upstream=${GIT_SVN_ID:-git-svn}
+			elif [[ -n "$upstream_path" ]]; then
+				upstream=$upstream_path
 			else
 				upstream=${svn_upstream#/}
 			fi
