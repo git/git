@@ -72,6 +72,19 @@ test_expect_success 'pushing to local repo' '
 	compare_refs localclone HEAD server HEAD
 '
 
+# Generally, skip this test.  It demonstrates a now-fixed race in
+# git-remote-testgit, but is too slow to leave in for general use.
+: test_expect_success 'racily pushing to local repo' '
+	test_when_finished "rm -rf server2 localclone2" &&
+	cp -a server server2 &&
+	git clone "testgit::${PWD}/server2" localclone2 &&
+	(cd localclone2 &&
+	echo content >>file &&
+	git commit -a -m three &&
+	GIT_REMOTE_TESTGIT_SLEEPY=2 git push) &&
+	compare_refs localclone2 HEAD server2 HEAD
+'
+
 test_expect_success 'synch with changes from localclone' '
 	(cd clone &&
 	 git pull)
