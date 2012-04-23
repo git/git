@@ -113,7 +113,7 @@ test_expect_success 'unmerge with plumbing' '
 	prime_resolve_undo &&
 	git update-index --unresolve fi/le &&
 	git ls-files -u >actual &&
-	test $(wc -l <actual) = 3
+	test_line_count = 3 actual
 '
 
 test_expect_success 'rerere and rerere forget' '

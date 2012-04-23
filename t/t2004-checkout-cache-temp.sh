@@ -40,7 +40,7 @@ test_expect_success \
 rm -f path* .merge_* out .git/index &&
 git read-tree $t1 &&
 git checkout-index --temp -- path1 >out &&
-test $(wc -l <out) = 1 &&
+test_line_count = 1 out &&
 test $(cut "-d	" -f2 out) = path1 &&
 p=$(cut "-d	" -f1 out) &&
 test -f $p &&
@@ -51,7 +51,7 @@ test_expect_success \
 rm -f path* .merge_* out .git/index &&
 git read-tree $t1 &&
 git checkout-index -a --temp >out &&
-test $(wc -l <out) = 5 &&
+test_line_count = 5 out &&
 for f in path0 path1 path3 path4 asubdir/path5
 do
 	test $(grep $f out | cut "-d	" -f2) = $f &&
@@ -69,7 +69,7 @@ test_expect_success \
 'checkout one stage 2 to temporary file' '
 rm -f path* .merge_* out &&
 git checkout-index --stage=2 --temp -- path1 >out &&
-test $(wc -l <out) = 1 &&
+test_line_count = 1 out &&
 test $(cut "-d	" -f2 out) = path1 &&
 p=$(cut "-d	" -f1 out) &&
 test -f $p &&
@@ -79,7 +79,7 @@ test_expect_success \
 'checkout all stage 2 to temporary files' '
 rm -f path* .merge_* out &&
 git checkout-index --all --stage=2 --temp >out &&
-test $(wc -l <out) = 3 &&
+test_line_count = 3 out &&
 for f in path1 path2 path4
 do
 	test $(grep $f out | cut "-d	" -f2) = $f &&
@@ -92,13 +92,13 @@ test_expect_success \
 'checkout all stages/one file to nothing' '
 rm -f path* .merge_* out &&
 git checkout-index --stage=all --temp -- path0 >out &&
-test $(wc -l <out) = 0'
+test_line_count = 0 out'
 
 test_expect_success \
 'checkout all stages/one file to temporary files' '
 rm -f path* .merge_* out &&
 git checkout-index --stage=all --temp -- path1 >out &&
-test $(wc -l <out) = 1 &&
+test_line_count = 1 out &&
 test $(cut "-d	" -f2 out) = path1 &&
 cut "-d	" -f1 out | (read s1 s2 s3 &&
 test -f $s1 &&
@@ -112,7 +112,7 @@ test_expect_success \
 'checkout some stages/one file to temporary files' '
 rm -f path* .merge_* out &&
 git checkout-index --stage=all --temp -- path2 >out &&
-test $(wc -l <out) = 1 &&
+test_line_count = 1 out &&
 test $(cut "-d	" -f2 out) = path2 &&
 cut "-d	" -f1 out | (read s1 s2 s3 &&
 test $s1 = . &&
@@ -125,7 +125,7 @@ test_expect_success \
 'checkout all stages/all files to temporary files' '
 rm -f path* .merge_* out &&
 git checkout-index -a --stage=all --temp >out &&
-test $(wc -l <out) = 5'
+test_line_count = 5 out'
 
 test_expect_success \
 '-- path0: no entry' '
@@ -185,7 +185,7 @@ test_expect_success \
 'checkout --temp within subdir' '
 (cd asubdir &&
  git checkout-index -a --stage=all >out &&
- test $(wc -l <out) = 1 &&
+ test_line_count = 1 out &&
  test $(grep path5 out | cut "-d	" -f2) = path5 &&
  grep path5 out | cut "-d	" -f1 | (read s1 s2 s3 &&
  test -f ../$s1 &&
@@ -203,7 +203,7 @@ t4=$(git write-tree) &&
 rm -f .git/index &&
 git read-tree $t4 &&
 git checkout-index --temp -a >out &&
-test $(wc -l <out) = 1 &&
+test_line_count = 1 out &&
 test $(cut "-d	" -f2 out) = a &&
 p=$(cut "-d	" -f1 out) &&
 test -f $p &&

@@ -104,7 +104,7 @@ test_expect_failure 'conflict caused if rename not detected' '
 	test 0 -eq $(git ls-files -u | wc -l) &&
 	test 0 -eq $(git ls-files -o | wc -l) &&
 
-	test 6 -eq $(wc -l < c) &&
+	test_line_count = 6 c &&
 	test $(git rev-parse HEAD:a) = $(git rev-parse B:a) &&
 	test $(git rev-parse HEAD:b) = $(git rev-parse A:b)
 '

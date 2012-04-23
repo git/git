@@ -33,7 +33,7 @@ test_auto_fixup () {
 	test_tick &&
 	git rebase $2 -i HEAD^^^ &&
 	git log --oneline >actual &&
-	test 3 = $(wc -l <actual) &&
+	test_line_count = 3 actual &&
 	git diff --exit-code $1 &&
 	test 1 = "$(git cat-file blob HEAD^:file1)" &&
 	test 1 = $(git cat-file commit HEAD^ | grep first | wc -l)
@@ -62,7 +62,7 @@ test_auto_squash () {
 	test_tick &&
 	git rebase $2 -i HEAD^^^ &&
 	git log --oneline >actual &&
-	test 3 = $(wc -l <actual) &&
+	test_line_count = 3 actual &&
 	git diff --exit-code $1 &&
 	test 1 = "$(git cat-file blob HEAD^:file1)" &&
 	test 2 = $(git cat-file commit HEAD^ | grep first | wc -l)
@@ -90,7 +90,7 @@ test_expect_success 'misspelled auto squash' '
 	test_tick &&
 	git rebase --autosquash -i HEAD^^^ &&
 	git log --oneline >actual &&
-	test 4 = $(wc -l <actual) &&
+	test_line_count = 4 actual &&
 	git diff --exit-code final-missquash &&
 	test 0 = $(git rev-list final-missquash...HEAD | wc -l)
 '
@@ -109,7 +109,7 @@ test_expect_success 'auto squash that matches 2 commits' '
 	test_tick &&
 	git rebase --autosquash -i HEAD~4 &&
 	git log --oneline >actual &&
-	test 4 = $(wc -l <actual) &&
+	test_line_count = 4 actual &&
 	git diff --exit-code final-multisquash &&
 	test 1 = "$(git cat-file blob HEAD^^:file1)" &&
 	test 2 = $(git cat-file commit HEAD^^ | grep first | wc -l) &&
@@ -130,7 +130,7 @@ test_expect_success 'auto squash that matches a commit after the squash' '
 	test_tick &&
 	git rebase --autosquash -i HEAD~4 &&
 	git log --oneline >actual &&
-	test 5 = $(wc -l <actual) &&
+	test_line_count = 5 actual &&
 	git diff --exit-code final-presquash &&
 	test 0 = "$(git cat-file blob HEAD^^:file1)" &&
 	test 1 = "$(git cat-file blob HEAD^:file1)" &&
@@ -147,7 +147,7 @@ test_expect_success 'auto squash that matches a sha1' '
 	test_tick &&
 	git rebase --autosquash -i HEAD^^^ &&
 	git log --oneline >actual &&
-	test 3 = $(wc -l <actual) &&
+	test_line_count = 3 actual &&
 	git diff --exit-code final-shasquash &&
 	test 1 = "$(git cat-file blob HEAD^:file1)" &&
 	test 1 = $(git cat-file commit HEAD^ | grep squash | wc -l)
@@ -163,7 +163,7 @@ test_expect_success 'auto squash that matches longer sha1' '
 	test_tick &&
 	git rebase --autosquash -i HEAD^^^ &&
 	git log --oneline >actual &&
-	test 3 = $(wc -l <actual) &&
+	test_line_count = 3 actual &&
 	git diff --exit-code final-longshasquash &&
 	test 1 = "$(git cat-file blob HEAD^:file1)" &&
 	test 1 = $(git cat-file commit HEAD^ | grep squash | wc -l)
@@ -179,7 +179,7 @@ test_auto_commit_flags () {
 	test_tick &&
 	git rebase --autosquash -i HEAD^^^ &&
 	git log --oneline >actual &&
-	test 3 = $(wc -l <actual) &&
+	test_line_count = 3 actual &&
 	git diff --exit-code final-commit-$1 &&
 	test 1 = "$(git cat-file blob HEAD^:file1)" &&
 	test $2 = $(git cat-file commit HEAD^ | grep first | wc -l)
