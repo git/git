@@ -563,6 +563,7 @@ VCSSVN_H += vcs-svn/svndump.h
 MISC_H += branch.h
 MISC_H += bundle.h
 MISC_H += bisect.h
+MISC_H += common-cmds.h
 MISC_H += fetch-pack.h
 MISC_H += thread-utils.h
 MISC_H += send-pack.h

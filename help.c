@@ -217,8 +217,9 @@ void list_commands(const char *title, struct cmdnames *main_cmds,
 
 	if (main_cmds->cnt) {
 		const char *exec_path = git_exec_path();
-		printf("available %s in '%s'\n", title, exec_path);
-		printf("----------------");
+		printf_ln(_("available %s in '%s'"), title, exec_path);
+		/* TRANSLATORS: this must align with "available %s in '%s'" */
+		printf(_("----------------"));
 		mput_char('-', strlen(title) + strlen(exec_path));
 		putchar('\n');
 		pretty_print_string_list(main_cmds, longest);
@@ -226,8 +227,12 @@ void list_commands(const char *title, struct cmdnames *main_cmds,
 	}
 
 	if (other_cmds->cnt) {
-		printf("%s available from elsewhere on your $PATH\n", title);
-		printf("---------------------------------------");
+		printf_ln(_("%s available from elsewhere on your $PATH"), title);
+		/* TRANSLATORS:
+		 * this must align with
+		 * "%s available from elsewhere on your $PATH"
+		 */
+		printf(_("---------------------------------------"));
 		mput_char('-', strlen(title));
 		putchar('\n');
 		pretty_print_string_list(other_cmds, longest);
@@ -341,7 +346,7 @@ const char *help_unknown_cmd(const char *cmd)
 	      sizeof(*main_cmds.names), levenshtein_compare);
 
 	if (!main_cmds.cnt)
-		die ("Uh oh. Your system reports no Git commands at all.");
+		die(_("Uh oh. Your system reports no Git commands at all."));
 
 	/* skip and count prefix matches */
 	for (n = 0; n < main_cmds.cnt && !main_cmds.names[n]->len; n++)
@@ -362,23 +367,26 @@ const char *help_unknown_cmd(const char *cmd)
 		const char *assumed = main_cmds.names[0]->name;
 		main_cmds.names[0] = NULL;
 		clean_cmdnames(&main_cmds);
-		fprintf(stderr, "WARNING: You called a Git command named '%s', "
-			"which does not exist.\n"
-			"Continuing under the assumption that you meant '%s'\n",
+		fprintf_ln(stderr,
+			   _("WARNING: You called a Git command named '%s', "
+			     "which does not exist.\n"
+			     "Continuing under the assumption that you meant '%s'"),
 			cmd, assumed);
 		if (autocorrect > 0) {
-			fprintf(stderr, "in %0.1f seconds automatically...\n",
+			fprintf_ln(stderr, _("in %0.1f seconds automatically..."),
 				(float)autocorrect/10.0);
 			poll(NULL, 0, autocorrect * 100);
 		}
 		return assumed;
 	}
 
-	fprintf(stderr, "git: '%s' is not a git command. See 'git --help'.\n", cmd);
+	fprintf_ln(stderr, _("git: '%s' is not a git command. See 'git --help'."), cmd);
 
 	if (SIMILAR_ENOUGH(best_similarity)) {
-		fprintf(stderr, "\nDid you mean %s?\n",
-			n < 2 ? "this": "one of these");
+		fprintf_ln(stderr,
+			   Q_("\nDid you mean this?",
+			      "\nDid you mean one of these?",
+			   n));
 
 		for (i = 0; i < n; i++)
 			fprintf(stderr, "\t%s\n", main_cmds.names[i]->name);
