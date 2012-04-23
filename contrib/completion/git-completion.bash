@@ -304,16 +304,16 @@ __git_ps1 ()
 	fi
 }
 
-# __gitcomp_1 requires 2 arguments
 __gitcomp_1 ()
 {
-	local c IFS=' '$'\t'$'\n'
+	local c IFS=$' \t\n'
 	for c in $1; do
-		case "$c$2" in
-		--*=*) printf %s$'\n' "$c$2" ;;
-		*.)    printf %s$'\n' "$c$2" ;;
-		*)     printf %s$'\n' "$c$2 " ;;
+		c="$c$2"
+		case $c in
+		--*=*|*.) ;;
+		*) c="$c " ;;
 		esac
+		printf '%s\n' "$c"
 	done
 }
 
@@ -1658,7 +1658,7 @@ _git_notes ()
 		__gitcomp '--ref'
 		;;
 	,*)
-		case "${words[cword-1]}" in
+		case "$prev" in
 		--ref)
 			__gitcomp_nl "$(__git_refs)"
 			;;
@@ -1684,7 +1684,7 @@ _git_notes ()
 	prune,*)
 		;;
 	*)
-		case "${words[cword-1]}" in
+		case "$prev" in
 		-m|-F)
 			;;
 		*)
@@ -2623,8 +2623,9 @@ _git ()
 		case "$i" in
 		--git-dir=*) __git_dir="${i#--git-dir=}" ;;
 		--bare)      __git_dir="." ;;
-		--version|-p|--paginate) ;;
 		--help) command="help"; break ;;
+		-c) c=$((++c)) ;;
+		-*) ;;
 		*) command="$i"; break ;;
 		esac
 		((c++))
@@ -2639,9 +2640,12 @@ _git ()
 			--bare
 			--version
 			--exec-path
+			--exec-path=
 			--html-path
+			--info-path
 			--work-tree=
 			--namespace=
+			--no-replace-objects
 			--help
 			"
 			;;
