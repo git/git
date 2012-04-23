@@ -335,22 +335,25 @@ static void clear_image(struct image *image)
 	image->len = 0;
 }
 
-static void say_patch_name(FILE *output, const char *pre,
-			   struct patch *patch, const char *post)
+/* fmt must contain _one_ %s and no other substitution */
+static void say_patch_name(FILE *output, const char *fmt, struct patch *patch)
 {
-	fputs(pre, output);
+	struct strbuf sb = STRBUF_INIT;
+
 	if (patch->old_name && patch->new_name &&
 	    strcmp(patch->old_name, patch->new_name)) {
-		quote_c_style(patch->old_name, NULL, output, 0);
-		fputs(" => ", output);
-		quote_c_style(patch->new_name, NULL, output, 0);
+		quote_c_style(patch->old_name, &sb, NULL, 0);
+		strbuf_addstr(&sb, " => ");
+		quote_c_style(patch->new_name, &sb, NULL, 0);
 	} else {
 		const char *n = patch->new_name;
 		if (!n)
 			n = patch->old_name;
-		quote_c_style(n, NULL, output, 0);
+		quote_c_style(n, &sb, NULL, 0);
 	}
-	fputs(post, output);
+	fprintf(output, fmt, sb.buf);
+	fputc('\n', output);
+	strbuf_release(&sb);
 }
 
 #define CHUNKSIZE (8192)
@@ -3172,7 +3175,7 @@ static int check_patch_list(struct patch *patch)
 	while (patch) {
 		if (apply_verbosely)
 			say_patch_name(stderr,
-				       "Checking patch ", patch, "...\n");
+				       _("Checking patch %s..."), patch);
 		err |= check_patch(patch);
 		patch = patch->next;
 	}
@@ -3536,6 +3539,7 @@ static int write_out_one_reject(struct patch *patch)
 	char namebuf[PATH_MAX];
 	struct fragment *frag;
 	int cnt = 0;
+	struct strbuf sb = STRBUF_INIT;
 
 	for (cnt = 0, frag = patch->fragments; frag; frag = frag->next) {
 		if (!frag->rejected)
@@ -3546,7 +3550,7 @@ static int write_out_one_reject(struct patch *patch)
 	if (!cnt) {
 		if (apply_verbosely)
 			say_patch_name(stderr,
-				       "Applied patch ", patch, " cleanly.\n");
+				       _("Applied patch %s cleanly."), patch);
 		return 0;
 	}
 
@@ -3557,8 +3561,12 @@ static int write_out_one_reject(struct patch *patch)
 		die(_("internal error"));
 
 	/* Say this even without --verbose */
-	say_patch_name(stderr, "Applying patch ", patch, " with");
-	fprintf(stderr, " %d rejects...\n", cnt);
+	strbuf_addf(&sb, Q_("Applying patch %%s with %d reject...",
+			    "Applying patch %%s with %d rejects...",
+			    cnt),
+		    cnt);
+	say_patch_name(stderr, sb.buf, patch);
+	strbuf_release(&sb);
 
 	cnt = strlen(patch->new_name);
 	if (ARRAY_SIZE(namebuf) <= cnt + 5) {
