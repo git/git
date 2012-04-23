@@ -99,6 +99,8 @@ __attribute__((format (printf,2,3)))
 extern void strbuf_addf(struct strbuf *sb, const char *fmt, ...);
 __attribute__((format (printf,2,0)))
 extern void strbuf_vaddf(struct strbuf *sb, const char *fmt, va_list ap);
+__attribute__((format (printf,2,3)))
+extern void strbuf_addf_ln(struct strbuf *sb, const char *fmt, ...);
 
 extern void strbuf_add_lines(struct strbuf *sb, const char *prefix, const char *buf, size_t size);
 
@@ -128,5 +130,10 @@ extern void strbuf_add_urlencode(struct strbuf *, const char *, size_t,
 				 int reserved);
 extern void strbuf_addstr_urlencode(struct strbuf *, const char *,
 				    int reserved);
+
+__attribute__((format (printf,1,2)))
+extern int printf_ln(const char *fmt, ...);
+__attribute__((format (printf,2,3)))
+extern int fprintf_ln(FILE *fp, const char *fmt, ...);
 
 #endif /* STRBUF_H */
