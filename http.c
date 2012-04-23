@@ -210,14 +210,23 @@ static int http_options(const char *var, const char *value, void *cb)
 
 static void init_curl_http_auth(CURL *result)
 {
-	if (http_auth.username) {
-		struct strbuf up = STRBUF_INIT;
-		credential_fill(&http_auth);
+	if (!http_auth.username)
+		return;
+
+	credential_fill(&http_auth);
+
+#if LIBCURL_VERSION_NUM >= 0x071301
+	curl_easy_setopt(result, CURLOPT_USERNAME, http_auth.username);
+	curl_easy_setopt(result, CURLOPT_PASSWORD, http_auth.password);
+#else
+	{
+		static struct strbuf up = STRBUF_INIT;
+		strbuf_reset(&up);
 		strbuf_addf(&up, "%s:%s",
 			    http_auth.username, http_auth.password);
-		curl_easy_setopt(result, CURLOPT_USERPWD,
-				 strbuf_detach(&up, NULL));
+		curl_easy_setopt(result, CURLOPT_USERPWD, up.buf);
 	}
+#endif
 }
 
 static int has_cert_password(void)
@@ -494,6 +503,8 @@ struct active_request_slot *get_active_slot(void)
 	curl_easy_setopt(slot->curl, CURLOPT_POSTFIELDS, NULL);
 	curl_easy_setopt(slot->curl, CURLOPT_UPLOAD, 0);
 	curl_easy_setopt(slot->curl, CURLOPT_HTTPGET, 1);
+	if (http_auth.password)
+		init_curl_http_auth(slot->curl);
 
 	return slot;
 }
