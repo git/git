@@ -7,13 +7,14 @@ static const char *usage_msg = "\n"
 
 static void show_dates(char **argv, struct timeval *now)
 {
-	char buf[128];
+	struct strbuf buf = STRBUF_INIT;
 
 	for (; *argv; argv++) {
 		time_t t = atoi(*argv);
-		show_date_relative(t, 0, now, buf, sizeof(buf));
-		printf("%s -> %s\n", *argv, buf);
+		show_date_relative(t, 0, now, &buf);
+		printf("%s -> %s\n", *argv, buf.buf);
 	}
+	strbuf_release(&buf);
 }
 
 static void parse_dates(char **argv, struct timeval *now)
