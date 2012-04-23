@@ -1260,8 +1260,8 @@ static int prune_remote(const char *remote, int dry_run)
 	int result = 0, i;
 	struct ref_states states;
 	const char *dangling_msg = dry_run
-		? " %s will become dangling!\n"
-		: " %s has become dangling!\n";
+		? " %s will become dangling!"
+		: " %s has become dangling!";
 
 	memset(&states, 0, sizeof(states));
 	get_remote_ref_states(remote, &states, GET_REF_STATES);
