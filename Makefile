@@ -386,6 +386,7 @@ XDIFF_OBJS =
 VCSSVN_H =
 VCSSVN_OBJS =
 VCSSVN_TEST_OBJS =
+MISC_H =
 EXTRA_CPPFLAGS =
 LIB_H =
 LIB_OBJS =
@@ -542,6 +543,35 @@ export PYTHON_PATH
 LIB_FILE=libgit.a
 XDIFF_LIB=xdiff/lib.a
 VCSSVN_LIB=vcs-svn/lib.a
+
+XDIFF_H += xdiff/xinclude.h
+XDIFF_H += xdiff/xmacros.h
+XDIFF_H += xdiff/xdiff.h
+XDIFF_H += xdiff/xtypes.h
+XDIFF_H += xdiff/xutils.h
+XDIFF_H += xdiff/xprepare.h
+XDIFF_H += xdiff/xdiffi.h
+XDIFF_H += xdiff/xemit.h
+
+VCSSVN_H += vcs-svn/line_buffer.h
+VCSSVN_H += vcs-svn/sliding_window.h
+VCSSVN_H += vcs-svn/repo_tree.h
+VCSSVN_H += vcs-svn/fast_export.h
+VCSSVN_H += vcs-svn/svndiff.h
+VCSSVN_H += vcs-svn/svndump.h
+
+MISC_H += branch.h
+MISC_H += bundle.h
+MISC_H += bisect.h
+MISC_H += fetch-pack.h
+MISC_H += thread-utils.h
+MISC_H += send-pack.h
+MISC_H += shortlog.h
+MISC_H += reachable.h
+MISC_H += wt-status.h
+MISC_H += tar.h
+MISC_H += url.h
+MISC_H += walker.h
 
 LIB_H += advice.h
 LIB_H += archive.h
@@ -2177,23 +2207,7 @@ connect.o transport.o url.o http-backend.o: url.h
 http-fetch.o http-walker.o remote-curl.o transport.o walker.o: walker.h
 http.o http-walker.o http-push.o http-fetch.o remote-curl.o: http.h url.h
 
-XDIFF_H += xdiff/xinclude.h
-XDIFF_H += xdiff/xmacros.h
-XDIFF_H += xdiff/xdiff.h
-XDIFF_H += xdiff/xtypes.h
-XDIFF_H += xdiff/xutils.h
-XDIFF_H += xdiff/xprepare.h
-XDIFF_H += xdiff/xdiffi.h
-XDIFF_H += xdiff/xemit.h
-
 xdiff-interface.o $(XDIFF_OBJS): $(XDIFF_H)
-
-VCSSVN_H += vcs-svn/line_buffer.h
-VCSSVN_H += vcs-svn/sliding_window.h
-VCSSVN_H += vcs-svn/repo_tree.h
-VCSSVN_H += vcs-svn/fast_export.h
-VCSSVN_H += vcs-svn/svndiff.h
-VCSSVN_H += vcs-svn/svndump.h
 
 $(VCSSVN_OBJS) $(VCSSVN_TEST_OBJS): $(LIB_H) $(VCSSVN_H)
 endif
@@ -2289,7 +2303,7 @@ XGETTEXT_FLAGS_C = $(XGETTEXT_FLAGS) --language=C \
 	--keyword=_ --keyword=N_ --keyword="Q_:1,2"
 XGETTEXT_FLAGS_SH = $(XGETTEXT_FLAGS) --language=Shell
 XGETTEXT_FLAGS_PERL = $(XGETTEXT_FLAGS) --keyword=__ --language=Perl
-LOCALIZED_C := $(C_OBJ:o=c)
+LOCALIZED_C := $(C_OBJ:o=c) $(LIB_H) $(XDIFF_H) $(VCSSVN_H) $(MISC_H)
 LOCALIZED_SH := $(SCRIPT_SH)
 LOCALIZED_PERL := $(SCRIPT_PERL)
 
