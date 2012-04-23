@@ -634,6 +634,8 @@ int cmd_rev_parse(int argc, const char **argv, const char *prefix)
 			if (!strcmp(arg, "--show-prefix")) {
 				if (prefix)
 					puts(prefix);
+				else
+					putchar('\n');
 				continue;
 			}
 			if (!strcmp(arg, "--show-cdup")) {
