@@ -4070,7 +4070,7 @@ sub rev_map_set {
 	if ($update_ref) {
 		$sigmask = POSIX::SigSet->new();
 		my $signew = POSIX::SigSet->new(SIGINT, SIGHUP, SIGTERM,
-			SIGALRM, SIGPIPE, SIGUSR1, SIGUSR2);
+			SIGALRM, SIGUSR1, SIGUSR2);
 		sigprocmask(SIG_BLOCK, $signew, $sigmask) or
 			croak "Can't block signals: $!";
 	}
