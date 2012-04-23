@@ -672,7 +672,7 @@ rearrange_squash () {
 case "$action" in
 continue)
 	# do we have anything to commit?
-	if git diff-index --cached --quiet --ignore-submodules HEAD --
+	if git diff-index --cached --quiet HEAD --
 	then
 		: Nothing to commit -- skip this
 	else
