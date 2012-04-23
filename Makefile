@@ -2266,6 +2266,8 @@ $(XDIFF_LIB): $(XDIFF_OBJS)
 $(VCSSVN_LIB): $(VCSSVN_OBJS)
 	$(QUIET_AR)$(RM) $@ && $(AR) rcs $@ $(VCSSVN_OBJS)
 
+export DEFAULT_EDITOR DEFAULT_PAGER
+
 doc:
 	$(MAKE) -C Documentation all
 
