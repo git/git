@@ -35,11 +35,21 @@ UI, Workflows & Features
 
 Foreign Interface
 
+ * "git p4" has been moved out of contrib/ area.
 
 Performance
 
+ * "git apply" had some memory leaks plugged.
+
+ * Setting up a revision traversal with many starting points was
+   inefficient as these were placed in a date-order priority queue
+   one-by-one.  Now they are collected in the queue unordered first,
+   and sorted immediately before getting used.
 
 Internal Implementation (please report possible regressions)
+
+ * "git rev-parse --show-prefix" used to emit nothing when run at the
+   top-level of the working tree, but now it gives a blank line.
 
  * Minor memory leak during unpack_trees (hence "merge" and "checkout"
    to check out another branch) has been plugged.
@@ -60,6 +70,23 @@ Fixes since v1.7.10
 Unless otherwise noted, all the fixes since v1.7.10 in the maintenance
 releases are contained in this release (see release notes to them for
 details).
+
+ * "git fetch" that recurses into submodules on demand did not check
+   if it needs to go into submodules when non branches (most notably,
+   tags) are fetched.
+   (merge a6801ad jl/maint-submodule-recurse-fetch later to maint).
+
+ * "git blame" started missing quite a few changes from the origin
+   since we stopped using the diff minimalization by default in v1.7.2
+   era.
+   (merge 059a500 jc/maint-blame-minimal later to maint).
+
+ * "log -p --graph" used with "--stat" had a few formatting error.
+   (merge e2c5966 lp/maint-diff-three-dash-with-graph later to maint).
+
+ * Giving "--continue" to a conflicted "rebase -i" session skipped a
+   commit that only results in changes to submodules.
+   (merge a6754cd jk/rebase-i-submodule-conflict-only later to maint).
 
  * When PATH contains an unreadable directory, alias expansion code
    did not kick in, and failed with an error that said "git-subcmd"
