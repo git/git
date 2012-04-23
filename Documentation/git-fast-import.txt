@@ -98,9 +98,10 @@ OPTIONS
 	options.
 
 --cat-blob-fd=<fd>::
-	Specify the file descriptor that will be written to
-	when the `cat-blob` command is encountered in the stream.
-	The default behaviour is to write to `stdout`.
+	Write responses to `cat-blob` and `ls` queries to the
+	file descriptor <fd> instead of `stdout`.  Allows `progress`
+	output intended for the end-user to be separated from other
+	output.
 
 --done::
 	Require a `done` command at the end of the stream.
@@ -942,6 +943,9 @@ This command can be used anywhere in the stream that comments are
 accepted.  In particular, the `cat-blob` command can be used in the
 middle of a commit but not in the middle of a `data` command.
 
+See ``Responses To Commands'' below for details about how to read
+this output safely.
+
 `ls`
 ~~~~
 Prints information about the object at a path to a file descriptor
@@ -990,6 +994,9 @@ instead report
 ====
 	missing SP <path> LF
 ====
+
+See ``Responses To Commands'' below for details about how to read
+this output safely.
 
 `feature`
 ~~~~~~~~~
@@ -1078,6 +1085,35 @@ This can be used to tell fast-import to finish early.
 If the `--done` command line option or `feature done` command is
 in use, the `done` command is mandatory and marks the end of the
 stream.
+
+Responses To Commands
+---------------------
+New objects written by fast-import are not available immediately.
+Most fast-import commands have no visible effect until the next
+checkpoint (or completion).  The frontend can send commands to
+fill fast-import's input pipe without worrying about how quickly
+they will take effect, which improves performance by simplifying
+scheduling.
+
+For some frontends, though, it is useful to be able to read back
+data from the current repository as it is being updated (for
+example when the source material describes objects in terms of
+patches to be applied to previously imported objects).  This can
+be accomplished by connecting the frontend and fast-import via
+bidirectional pipes:
+
+====
+	mkfifo fast-import-output
+	frontend <fast-import-output |
+	git fast-import >fast-import-output
+====
+
+A frontend set up this way can use `progress`, `ls`, and `cat-blob`
+commands to read information from the import in progress.
+
+To avoid deadlock, such frontends must completely consume any
+pending output from `progress`, `ls`, and `cat-blob` before
+performing writes to fast-import that might block.
 
 Crash Reports
 -------------
