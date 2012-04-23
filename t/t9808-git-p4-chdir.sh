@@ -1,6 +1,6 @@
 #!/bin/sh
 
-test_description='git-p4 relative chdir'
+test_description='git p4 relative chdir'
 
 . ./lib-git-p4.sh
 
@@ -26,7 +26,7 @@ test_expect_success 'P4CONFIG and absolute dir clone' '
 	(
 		P4CONFIG=p4config && export P4CONFIG &&
 		sane_unset P4PORT P4CLIENT &&
-		"$GITP4" clone --verbose --dest="$git" //depot
+		git p4 clone --verbose --dest="$git" //depot
 	)
 '
 
@@ -38,7 +38,7 @@ test_expect_success 'P4CONFIG and relative dir clone' '
 	(
 		P4CONFIG=p4config && export P4CONFIG &&
 		sane_unset P4PORT P4CLIENT &&
-		"$GITP4" clone --verbose --dest="git" //depot
+		git p4 clone --verbose --dest="git" //depot
 	)
 '
 

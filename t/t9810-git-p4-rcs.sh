@@ -84,13 +84,13 @@ scrub_ko_check () {
 #
 test_expect_success 'edit far away from RCS lines' '
 	test_when_finished cleanup_git &&
-	"$GITP4" clone --dest="$git" //depot &&
+	git p4 clone --dest="$git" //depot &&
 	(
 		cd "$git" &&
 		git config git-p4.skipSubmitEdit true &&
 		sed -i "s/^line7/line7 edit/" filek &&
 		git commit -m "filek line7 edit" filek &&
-		"$GITP4" submit &&
+		git p4 submit &&
 		scrub_k_check filek
 	)
 '
@@ -100,14 +100,14 @@ test_expect_success 'edit far away from RCS lines' '
 #
 test_expect_success 'edit near RCS lines' '
 	test_when_finished cleanup_git &&
-	"$GITP4" clone --dest="$git" //depot &&
+	git p4 clone --dest="$git" //depot &&
 	(
 		cd "$git" &&
 		git config git-p4.skipSubmitEdit true &&
 		git config git-p4.attemptRCSCleanup true &&
 		sed -i "s/^line4/line4 edit/" filek &&
 		git commit -m "filek line4 edit" filek &&
-		"$GITP4" submit &&
+		git p4 submit &&
 		scrub_k_check filek
 	)
 '
@@ -117,14 +117,14 @@ test_expect_success 'edit near RCS lines' '
 #
 test_expect_success 'edit keyword lines' '
 	test_when_finished cleanup_git &&
-	"$GITP4" clone --dest="$git" //depot &&
+	git p4 clone --dest="$git" //depot &&
 	(
 		cd "$git" &&
 		git config git-p4.skipSubmitEdit true &&
 		git config git-p4.attemptRCSCleanup true &&
 		sed -i "/Revision/d" filek &&
 		git commit -m "filek remove Revision line" filek &&
-		"$GITP4" submit &&
+		git p4 submit &&
 		scrub_k_check filek
 	)
 '
@@ -134,14 +134,14 @@ test_expect_success 'edit keyword lines' '
 #
 test_expect_success 'scrub ko files differently' '
 	test_when_finished cleanup_git &&
-	"$GITP4" clone --dest="$git" //depot &&
+	git p4 clone --dest="$git" //depot &&
 	(
 		cd "$git" &&
 		git config git-p4.skipSubmitEdit true &&
 		git config git-p4.attemptRCSCleanup true &&
 		sed -i "s/^line4/line4 edit/" fileko &&
 		git commit -m "fileko line4 edit" fileko &&
-		"$GITP4" submit &&
+		git p4 submit &&
 		scrub_ko_check fileko &&
 		! scrub_k_check fileko
 	)
@@ -168,7 +168,7 @@ test_expect_success 'cleanup after failure' '
 #
 test_expect_success 'do not scrub plain text' '
 	test_when_finished cleanup_git &&
-	"$GITP4" clone --dest="$git" //depot &&
+	git p4 clone --dest="$git" //depot &&
 	(
 		cd "$git" &&
 		git config git-p4.skipSubmitEdit true &&
@@ -181,7 +181,7 @@ test_expect_success 'do not scrub plain text' '
 			sed -i "s/^line5/line5 p4 edit/" file_text &&
 			p4 submit -d "file5 p4 edit"
 		) &&
-		! "$GITP4" submit &&
+		! git p4 submit &&
 		(
 			# exepct something like:
 			#    file_text - file(s) not opened on this client
@@ -239,7 +239,7 @@ p4_append_to_file () {
 # even though the change itself would otherwise apply cleanly.
 test_expect_success 'cope with rcs keyword expansion damage' '
 	test_when_finished cleanup_git &&
-	"$GITP4" clone --dest="$git" //depot &&
+	git p4 clone --dest="$git" //depot &&
 	(
 		cd "$git" &&
 		git config git-p4.skipSubmitEdit true &&
@@ -252,10 +252,10 @@ test_expect_success 'cope with rcs keyword expansion damage' '
 
 		git add kwfile1.c &&
 		git commit -m "Zap an RCS kw line" &&
-		"$GITP4" submit &&
-		"$GITP4" rebase &&
+		git p4 submit &&
+		git p4 rebase &&
 		git diff p4/master &&
-		"$GITP4" commit &&
+		git p4 commit &&
 		echo "try modifying in both" &&
 		cd "$cli" &&
 		p4 edit kwfile1.c &&
@@ -265,8 +265,8 @@ test_expect_success 'cope with rcs keyword expansion damage' '
 		echo "line from git at the top" | cat - kwfile1.c >kwfile1.c.new &&
 		mv kwfile1.c.new kwfile1.c &&
 		git commit -m "Add line in git at the top" kwfile1.c &&
-		"$GITP4" rebase &&
-		"$GITP4" submit
+		git p4 rebase &&
+		git p4 submit
 	)
 '
 
@@ -280,7 +280,7 @@ test_expect_success 'cope with rcs keyword file deletion' '
 		cat kwdelfile.c &&
 		grep 1 kwdelfile.c
 	) &&
-	"$GITP4" clone --dest="$git" //depot &&
+	git p4 clone --dest="$git" //depot &&
 	(
 		cd "$git" &&
 		grep Revision kwdelfile.c &&
@@ -288,7 +288,7 @@ test_expect_success 'cope with rcs keyword file deletion' '
 		git commit -m "Delete a file containing RCS keywords" &&
 		git config git-p4.skipSubmitEdit true &&
 		git config git-p4.attemptRCSCleanup true &&
-		"$GITP4" submit
+		git p4 submit
 	) &&
 	(
 		cd "$cli" &&
@@ -301,7 +301,7 @@ test_expect_success 'cope with rcs keyword file deletion' '
 # work fine without any special handling.
 test_expect_success 'Add keywords in git which match the default p4 values' '
 	test_when_finished cleanup_git &&
-	"$GITP4" clone --dest="$git" //depot &&
+	git p4 clone --dest="$git" //depot &&
 	(
 		cd "$git" &&
 		echo "NewKW: \$Revision\$" >>kwfile1.c &&
@@ -309,7 +309,7 @@ test_expect_success 'Add keywords in git which match the default p4 values' '
 		git commit -m "Adding RCS keywords in git" &&
 		git config git-p4.skipSubmitEdit true &&
 		git config git-p4.attemptRCSCleanup true &&
-		"$GITP4" submit
+		git p4 submit
 	) &&
 	(
 		cd "$cli" &&
@@ -325,7 +325,7 @@ test_expect_success 'Add keywords in git which match the default p4 values' '
 #
 test_expect_failure 'Add keywords in git which do not match the default p4 values' '
 	test_when_finished cleanup_git &&
-	"$GITP4" clone --dest="$git" //depot &&
+	git p4 clone --dest="$git" //depot &&
 	(
 		cd "$git" &&
 		echo "NewKW2: \$Revision:1\$" >>kwfile1.c &&
@@ -333,7 +333,7 @@ test_expect_failure 'Add keywords in git which do not match the default p4 value
 		git commit -m "Adding RCS keywords in git" &&
 		git config git-p4.skipSubmitEdit true &&
 		git config git-p4.attemptRCSCleanup true &&
-		"$GITP4" submit
+		git p4 submit
 	) &&
 	(
 		cd "$cli" &&
@@ -356,7 +356,7 @@ test_expect_success 'merge conflict handling still works' '
 		p4 add -t ktext merge2.c &&
 		p4 submit -d "add merge test file"
 	) &&
-	"$GITP4" clone --dest="$git" //depot &&
+	git p4 clone --dest="$git" //depot &&
 	(
 		cd "$git" &&
 		sed -e "/Hello/d" merge2.c >merge2.c.tmp &&
@@ -374,7 +374,7 @@ test_expect_success 'merge conflict handling still works' '
 		test -f merge2.c &&
 		git config git-p4.skipSubmitEdit true &&
 		git config git-p4.attemptRCSCleanup true &&
-		!(echo "s" | "$GITP4" submit) &&
+		!(echo "s" | git p4 submit) &&
 		git rebase --skip &&
 		! test -f merge2.c
 	)
