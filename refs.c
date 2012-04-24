@@ -2242,57 +2242,59 @@ int for_each_reflog_ent(const char *refname, each_reflog_ent_fn fn, void *cb_dat
 	return for_each_recent_reflog_ent(refname, fn, 0, cb_data);
 }
 
-static int do_for_each_reflog(const char *base, each_ref_fn fn, void *cb_data)
+/*
+ * Call fn for each reflog in the namespace indicated by name.  name
+ * must be empty or end with '/'.  Name will be used as a scratch
+ * space, but its contents will be restored before return.
+ */
+static int do_for_each_reflog(struct strbuf *name, each_ref_fn fn, void *cb_data)
 {
-	DIR *d = opendir(git_path("logs/%s", base));
+	DIR *d = opendir(git_path("logs/%s", name->buf));
 	int retval = 0;
 	struct dirent *de;
-	int baselen;
-	char *log;
+	int oldlen = name->len;
 
 	if (!d)
-		return *base ? errno : 0;
-
-	baselen = strlen(base);
-	log = xmalloc(baselen + 257);
-	memcpy(log, base, baselen);
-	if (baselen && base[baselen-1] != '/')
-		log[baselen++] = '/';
+		return name->len ? errno : 0;
 
 	while ((de = readdir(d)) != NULL) {
 		struct stat st;
-		int namelen;
 
 		if (de->d_name[0] == '.')
 			continue;
-		namelen = strlen(de->d_name);
-		if (namelen > 255)
-			continue;
 		if (has_extension(de->d_name, ".lock"))
 			continue;
-		memcpy(log + baselen, de->d_name, namelen+1);
-		if (stat(git_path("logs/%s", log), &st) < 0)
-			continue;
-		if (S_ISDIR(st.st_mode)) {
-			retval = do_for_each_reflog(log, fn, cb_data);
+		strbuf_addstr(name, de->d_name);
+		if (stat(git_path("logs/%s", name->buf), &st) < 0) {
+			; /* silently ignore */
 		} else {
-			unsigned char sha1[20];
-			if (read_ref_full(log, sha1, 0, NULL))
-				retval = error("bad ref for %s", log);
-			else
-				retval = fn(log, sha1, 0, cb_data);
+			if (S_ISDIR(st.st_mode)) {
+				strbuf_addch(name, '/');
+				retval = do_for_each_reflog(name, fn, cb_data);
+			} else {
+				unsigned char sha1[20];
+				if (read_ref_full(name->buf, sha1, 0, NULL))
+					retval = error("bad ref for %s", name->buf);
+				else
+					retval = fn(name->buf, sha1, 0, cb_data);
+			}
+			if (retval)
+				break;
 		}
-		if (retval)
-			break;
+		strbuf_setlen(name, oldlen);
 	}
-	free(log);
 	closedir(d);
 	return retval;
 }
 
 int for_each_reflog(each_ref_fn fn, void *cb_data)
 {
-	return do_for_each_reflog("", fn, cb_data);
+	int retval;
+	struct strbuf name;
+	strbuf_init(&name, PATH_MAX);
+	retval = do_for_each_reflog(&name, fn, cb_data);
+	strbuf_release(&name);
+	return retval;
 }
 
 int update_ref(const char *action, const char *refname,
