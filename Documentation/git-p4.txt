@@ -158,10 +158,13 @@ OPTIONS
 
 General options
 ~~~~~~~~~~~~~~~
-All commands except clone accept this option.
+All commands except clone accept these options.
 
 --git-dir <dir>::
 	Set the 'GIT_DIR' environment variable.  See linkgit:git[1].
+
+--verbose::
+	Provide more progress information.
 
 Sync options
 ~~~~~~~~~~~~
@@ -192,9 +195,6 @@ git repository:
 
 --silent::
 	Do not print any progress information.
-
---verbose::
-	Provide more progress information.
 
 --detect-labels::
 	Query p4 for labels associated with the depot paths, and add
@@ -248,9 +248,6 @@ options described above.
 Submit options
 ~~~~~~~~~~~~~~
 These options can be used to modify 'git p4 submit' behavior.
-
---verbose::
-	Provide more progress information.
 
 --origin <commit>::
 	Upstream location from which commits are identified to submit to
