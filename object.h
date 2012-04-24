@@ -76,4 +76,6 @@ void add_object_array(struct object *obj, const char *name, struct object_array 
 void add_object_array_with_mode(struct object *obj, const char *name, struct object_array *array, unsigned mode);
 void object_array_remove_duplicates(struct object_array *);
 
+void clear_object_flags(unsigned flags);
+
 #endif /* OBJECT_H */
