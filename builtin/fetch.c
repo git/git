@@ -546,8 +546,8 @@ static int prune_refs(struct refspec *refs, int ref_count, struct ref *ref_map)
 	int result = 0;
 	struct ref *ref, *stale_refs = get_stale_heads(refs, ref_count, ref_map);
 	const char *dangling_msg = dry_run
-		? _("   (%s will become dangling)\n")
-		: _("   (%s has become dangling)\n");
+		? _("   (%s will become dangling)")
+		: _("   (%s has become dangling)");
 
 	for (ref = stale_refs; ref; ref = ref->next) {
 		if (!dry_run)

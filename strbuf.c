@@ -464,3 +464,36 @@ void strbuf_addstr_urlencode(struct strbuf *sb, const char *s,
 {
 	strbuf_add_urlencode(sb, s, strlen(s), reserved);
 }
+
+void strbuf_addf_ln(struct strbuf *sb, const char *fmt, ...)
+{
+	va_list ap;
+	va_start(ap, fmt);
+	strbuf_vaddf(sb, fmt, ap);
+	va_end(ap);
+	strbuf_addch(sb, '\n');
+}
+
+int printf_ln(const char *fmt, ...)
+{
+	int ret;
+	va_list ap;
+	va_start(ap, fmt);
+	ret = vprintf(fmt, ap);
+	va_end(ap);
+	if (ret < 0 || putchar('\n') == EOF)
+		return -1;
+	return ret + 1;
+}
+
+int fprintf_ln(FILE *fp, const char *fmt, ...)
+{
+	int ret;
+	va_list ap;
+	va_start(ap, fmt);
+	ret = vfprintf(fp, fmt, ap);
+	va_end(ap);
+	if (ret < 0 || putc('\n', fp) == EOF)
+		return -1;
+	return ret + 1;
+}
