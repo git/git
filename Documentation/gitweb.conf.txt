@@ -499,6 +499,10 @@ $maxload::
 Set `$maxload` to undefined value (`undef`) to turn this feature off.
 The default value is 300.
 
+$omit_age_column::
+	If true, omit the column with date of the most current commit on the
+	projects list page. It can save a bit of I/O and a fork per repository.
+
 $per_request_config::
 	If this is set to code reference, it will be run once for each request.
 	You can	set parts of configuration that change per session this way.
