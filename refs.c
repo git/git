@@ -749,13 +749,17 @@ void add_packed_ref(const char *refname, const unsigned char *sha1)
 			create_ref_entry(refname, sha1, REF_ISPACKED, 1));
 }
 
+/*
+ * Read the loose references for refs from the namespace dirname.
+ * dirname must end with '/'.
+ */
 static void get_ref_dir(struct ref_cache *refs, const char *dirname,
 			struct ref_dir *dir)
 {
 	DIR *d;
 	const char *path;
 	struct dirent *de;
-	int dirnamelen;
+	int dirnamelen = strlen(dirname);
 	struct strbuf refname;
 
 	if (*refs->name)
@@ -767,13 +771,8 @@ static void get_ref_dir(struct ref_cache *refs, const char *dirname,
 	if (!d)
 		return;
 
-	dirnamelen = strlen(dirname);
 	strbuf_init(&refname, dirnamelen + 257);
 	strbuf_add(&refname, dirname, dirnamelen);
-	if (dirnamelen && dirname[dirnamelen-1] != '/') {
-		strbuf_addch(&refname, '/');
-		dirnamelen++;
-	}
 
 	while ((de = readdir(d)) != NULL) {
 		unsigned char sha1[20];
@@ -792,6 +791,7 @@ static void get_ref_dir(struct ref_cache *refs, const char *dirname,
 		if (stat(refdir, &st) < 0) {
 			; /* silently ignore */
 		} else if (S_ISDIR(st.st_mode)) {
+			strbuf_addch(&refname, '/');
 			get_ref_dir(refs, refname.buf, dir);
 		} else {
 			if (*refs->name) {
@@ -816,7 +816,7 @@ static void get_ref_dir(struct ref_cache *refs, const char *dirname,
 static struct ref_dir *get_loose_refs(struct ref_cache *refs)
 {
 	if (!refs->did_loose) {
-		get_ref_dir(refs, "refs", &refs->loose);
+		get_ref_dir(refs, "refs/", &refs->loose);
 		refs->did_loose = 1;
 	}
 	return &refs->loose;
