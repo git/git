@@ -438,6 +438,10 @@ div.diff.add {
 	color: #008800;
 }
 
+div.diff.add span.marked {
+	background-color: #aaffaa;
+}
+
 div.diff.from_file a.path,
 div.diff.from_file {
 	color: #aa0000;
@@ -445,6 +449,10 @@ div.diff.from_file {
 
 div.diff.rem {
 	color: #cc0000;
+}
+
+div.diff.rem span.marked {
+	background-color: #ffaaaa;
 }
 
 div.diff.chunk_header a,
