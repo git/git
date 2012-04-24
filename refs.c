@@ -756,7 +756,7 @@ static void get_ref_dir(struct ref_cache *refs, const char *base,
 	const char *path;
 	struct dirent *de;
 	int baselen;
-	char *refname;
+	struct strbuf refname;
 
 	if (*refs->name)
 		path = git_path_submodule(refs->name, "%s", base);
@@ -768,50 +768,48 @@ static void get_ref_dir(struct ref_cache *refs, const char *base,
 		return;
 
 	baselen = strlen(base);
-	refname = xmalloc(baselen + 257);
-
-	memcpy(refname, base, baselen);
-	if (baselen && base[baselen-1] != '/')
-		refname[baselen++] = '/';
+	strbuf_init(&refname, baselen + 257);
+	strbuf_add(&refname, base, baselen);
+	if (baselen && base[baselen-1] != '/') {
+		strbuf_addch(&refname, '/');
+		baselen++;
+	}
 
 	while ((de = readdir(d)) != NULL) {
 		unsigned char sha1[20];
 		struct stat st;
 		int flag;
-		int namelen;
 		const char *refdir;
 
 		if (de->d_name[0] == '.')
 			continue;
-		namelen = strlen(de->d_name);
-		if (namelen > 255)
-			continue;
 		if (has_extension(de->d_name, ".lock"))
 			continue;
-		memcpy(refname + baselen, de->d_name, namelen+1);
+		strbuf_addstr(&refname, de->d_name);
 		refdir = *refs->name
-			? git_path_submodule(refs->name, "%s", refname)
-			: git_path("%s", refname);
-		if (stat(refdir, &st) < 0)
-			continue;
-		if (S_ISDIR(st.st_mode)) {
-			get_ref_dir(refs, refname, dir);
-			continue;
-		}
-		if (*refs->name) {
-			hashclr(sha1);
-			flag = 0;
-			if (resolve_gitlink_ref(refs->name, refname, sha1) < 0) {
+			? git_path_submodule(refs->name, "%s", refname.buf)
+			: git_path("%s", refname.buf);
+		if (stat(refdir, &st) < 0) {
+			; /* silently ignore */
+		} else if (S_ISDIR(st.st_mode)) {
+			get_ref_dir(refs, refname.buf, dir);
+		} else {
+			if (*refs->name) {
+				hashclr(sha1);
+				flag = 0;
+				if (resolve_gitlink_ref(refs->name, refname.buf, sha1) < 0) {
+					hashclr(sha1);
+					flag |= REF_ISBROKEN;
+				}
+			} else if (read_ref_full(refname.buf, sha1, 1, &flag)) {
 				hashclr(sha1);
 				flag |= REF_ISBROKEN;
 			}
-		} else if (read_ref_full(refname, sha1, 1, &flag)) {
-			hashclr(sha1);
-			flag |= REF_ISBROKEN;
+			add_ref(dir, create_ref_entry(refname.buf, sha1, flag, 1));
 		}
-		add_ref(dir, create_ref_entry(refname, sha1, flag, 1));
+		strbuf_setlen(&refname, baselen);
 	}
-	free(refname);
+	strbuf_release(&refname);
 	closedir(d);
 }
 
