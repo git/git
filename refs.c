@@ -749,30 +749,30 @@ void add_packed_ref(const char *refname, const unsigned char *sha1)
 			create_ref_entry(refname, sha1, REF_ISPACKED, 1));
 }
 
-static void get_ref_dir(struct ref_cache *refs, const char *base,
+static void get_ref_dir(struct ref_cache *refs, const char *dirname,
 			struct ref_dir *dir)
 {
 	DIR *d;
 	const char *path;
 	struct dirent *de;
-	int baselen;
+	int dirnamelen;
 	struct strbuf refname;
 
 	if (*refs->name)
-		path = git_path_submodule(refs->name, "%s", base);
+		path = git_path_submodule(refs->name, "%s", dirname);
 	else
-		path = git_path("%s", base);
+		path = git_path("%s", dirname);
 
 	d = opendir(path);
 	if (!d)
 		return;
 
-	baselen = strlen(base);
-	strbuf_init(&refname, baselen + 257);
-	strbuf_add(&refname, base, baselen);
-	if (baselen && base[baselen-1] != '/') {
+	dirnamelen = strlen(dirname);
+	strbuf_init(&refname, dirnamelen + 257);
+	strbuf_add(&refname, dirname, dirnamelen);
+	if (dirnamelen && dirname[dirnamelen-1] != '/') {
 		strbuf_addch(&refname, '/');
-		baselen++;
+		dirnamelen++;
 	}
 
 	while ((de = readdir(d)) != NULL) {
@@ -807,7 +807,7 @@ static void get_ref_dir(struct ref_cache *refs, const char *base,
 			}
 			add_ref(dir, create_ref_entry(refname.buf, sha1, flag, 1));
 		}
-		strbuf_setlen(&refname, baselen);
+		strbuf_setlen(&refname, dirnamelen);
 	}
 	strbuf_release(&refname);
 	closedir(d);
