@@ -277,6 +277,27 @@ static struct ref_entry *search_ref_dir(struct ref_dir *dir, const char *refname
 }
 
 /*
+ * Search for a directory entry directly within dir (without
+ * recursing).  Sort dir if necessary.  subdirname must be a directory
+ * name (i.e., end in '/').  If mkdir is set, then create the
+ * directory if it is missing; otherwise, return NULL if the desired
+ * directory cannot be found.
+ */
+static struct ref_entry *search_for_subdir(struct ref_dir *dir,
+					   const char *subdirname, int mkdir)
+{
+	struct ref_entry *entry = search_ref_dir(dir, subdirname);
+	if (!entry) {
+		if (!mkdir)
+			return NULL;
+		entry = create_dir_entry(subdirname);
+		add_entry_to_dir(dir, entry);
+	}
+	assert(entry->flag & REF_DIR);
+	return entry;
+}
+
+/*
  * If refname is a reference name, find the ref_dir within the dir
  * tree that should hold refname.  If refname is a directory name
  * (i.e., ends in '/'), then return that ref_dir itself.  dir must
@@ -294,17 +315,10 @@ static struct ref_dir *find_containing_dir(struct ref_dir *dir,
 	for (slash = strchr(refname_copy, '/'); slash; slash = strchr(slash + 1, '/')) {
 		char tmp = slash[1];
 		slash[1] = '\0';
-		entry = search_ref_dir(dir, refname_copy);
-		if (!entry) {
-			if (!mkdir) {
-				dir = NULL;
-				break;
-			}
-			entry = create_dir_entry(refname_copy);
-			add_entry_to_dir(dir, entry);
-		}
+		entry = search_for_subdir(dir, refname_copy, mkdir);
 		slash[1] = tmp;
-		assert(entry->flag & REF_DIR);
+		if (!entry)
+			break;
 		dir = &entry->u.subdir;
 	}
 
