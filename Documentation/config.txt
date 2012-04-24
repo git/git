@@ -1690,7 +1690,6 @@ push.default::
   With this, `git push` will update the same remote ref as the one which
   is merged by `git pull`, making `push` and `pull` symmetrical.
   See "branch.<name>.merge" for how to configure the upstream branch.
-* `tracking` - deprecated synonym for `upstream`.
 * `current` - push the current branch to a branch of the same name.
   +
   The `current` and `upstream` modes are for those who want to
