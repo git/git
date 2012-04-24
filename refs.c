@@ -2246,47 +2246,47 @@ static int do_for_each_reflog(const char *base, each_ref_fn fn, void *cb_data)
 {
 	DIR *d = opendir(git_path("logs/%s", base));
 	int retval = 0;
+	struct dirent *de;
+	int baselen;
+	char *log;
 
-	if (d) {
-		struct dirent *de;
-		int baselen = strlen(base);
-		char *log = xmalloc(baselen + 257);
+	if (!d)
+		return *base ? errno : 0;
 
-		memcpy(log, base, baselen);
-		if (baselen && base[baselen-1] != '/')
-			log[baselen++] = '/';
+	baselen = strlen(base);
+	log = xmalloc(baselen + 257);
+	memcpy(log, base, baselen);
+	if (baselen && base[baselen-1] != '/')
+		log[baselen++] = '/';
 
-		while ((de = readdir(d)) != NULL) {
-			struct stat st;
-			int namelen;
+	while ((de = readdir(d)) != NULL) {
+		struct stat st;
+		int namelen;
 
-			if (de->d_name[0] == '.')
-				continue;
-			namelen = strlen(de->d_name);
-			if (namelen > 255)
-				continue;
-			if (has_extension(de->d_name, ".lock"))
-				continue;
-			memcpy(log + baselen, de->d_name, namelen+1);
-			if (stat(git_path("logs/%s", log), &st) < 0)
-				continue;
-			if (S_ISDIR(st.st_mode)) {
-				retval = do_for_each_reflog(log, fn, cb_data);
-			} else {
-				unsigned char sha1[20];
-				if (read_ref_full(log, sha1, 0, NULL))
-					retval = error("bad ref for %s", log);
-				else
-					retval = fn(log, sha1, 0, cb_data);
-			}
-			if (retval)
-				break;
+		if (de->d_name[0] == '.')
+			continue;
+		namelen = strlen(de->d_name);
+		if (namelen > 255)
+			continue;
+		if (has_extension(de->d_name, ".lock"))
+			continue;
+		memcpy(log + baselen, de->d_name, namelen+1);
+		if (stat(git_path("logs/%s", log), &st) < 0)
+			continue;
+		if (S_ISDIR(st.st_mode)) {
+			retval = do_for_each_reflog(log, fn, cb_data);
+		} else {
+			unsigned char sha1[20];
+			if (read_ref_full(log, sha1, 0, NULL))
+				retval = error("bad ref for %s", log);
+			else
+				retval = fn(log, sha1, 0, cb_data);
 		}
-		free(log);
-		closedir(d);
+		if (retval)
+			break;
 	}
-	else if (*base)
-		return errno;
+	free(log);
+	closedir(d);
 	return retval;
 }
 
