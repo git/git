@@ -24,6 +24,7 @@ P4DPORT=$((10669 + ($testid - $git_p4_test_start)))
 
 export P4PORT=localhost:$P4DPORT
 export P4CLIENT=client
+export P4EDITOR=:
 
 db="$TRASH_DIRECTORY/db"
 cli="$TRASH_DIRECTORY/cli"

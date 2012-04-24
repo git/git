@@ -15,7 +15,7 @@ import re, shutil
 verbose = False
 
 # Only labels/tags matching this will be imported/exported
-defaultLabelRegexp = r'[A-Z0-9_\-.]+$'
+defaultLabelRegexp = r'[a-zA-Z0-9_\-.]+$'
 
 def p4_build_cmd(cmd):
     """Build a suitable p4 command line.
@@ -662,6 +662,7 @@ class Command:
     def __init__(self):
         self.usage = "usage: %prog [options]"
         self.needsGit = True
+        self.verbose = False
 
 class P4UserMap:
     def __init__(self):
@@ -727,13 +728,9 @@ class P4UserMap:
 class P4Debug(Command):
     def __init__(self):
         Command.__init__(self)
-        self.options = [
-            optparse.make_option("--verbose", dest="verbose", action="store_true",
-                                 default=False),
-            ]
+        self.options = []
         self.description = "A tool to debug the output of p4 -G."
         self.needsGit = False
-        self.verbose = False
 
     def run(self, args):
         j = 0
@@ -747,11 +744,9 @@ class P4RollBack(Command):
     def __init__(self):
         Command.__init__(self)
         self.options = [
-            optparse.make_option("--verbose", dest="verbose", action="store_true"),
             optparse.make_option("--local", dest="rollbackLocalBranches", action="store_true")
         ]
         self.description = "A tool to debug the multi-branch import. Don't use :)"
-        self.verbose = False
         self.rollbackLocalBranches = False
 
     def run(self, args):
@@ -809,7 +804,6 @@ class P4Submit(Command, P4UserMap):
         Command.__init__(self)
         P4UserMap.__init__(self)
         self.options = [
-                optparse.make_option("--verbose", dest="verbose", action="store_true"),
                 optparse.make_option("--origin", dest="origin"),
                 optparse.make_option("-M", dest="detectRenames", action="store_true"),
                 # preserve the user, requires relevant p4 permissions
@@ -821,7 +815,6 @@ class P4Submit(Command, P4UserMap):
         self.interactive = True
         self.origin = ""
         self.detectRenames = False
-        self.verbose = False
         self.preserveUser = gitConfig("git-p4.preserveUser").lower() == "true"
         self.isWindows = (platform.system() == "Windows")
         self.exportLabels = False
@@ -994,7 +987,7 @@ class P4Submit(Command, P4UserMap):
         mtime = os.stat(template_file).st_mtime
 
         # invoke the editor
-        if os.environ.has_key("P4EDITOR"):
+        if os.environ.has_key("P4EDITOR") and (os.environ.get("P4EDITOR") != ""):
             editor = os.environ.get("P4EDITOR")
         else:
             editor = read_pipe("git var GIT_EDITOR").strip()
@@ -1255,11 +1248,10 @@ class P4Submit(Command, P4UserMap):
     # Export git tags as p4 labels. Create a p4 label and then tag
     # with that.
     def exportGitTags(self, gitTags):
-        validTagRegexp = gitConfig("git-p4.validTagRegexp")
-        if len(validTagRegexp) == 0:
-            validTagRegexp = defaultLabelRegexp
-        m = re.compile(validTagRegexp)
-        commit_re = re.compile(r'\s*\[git-p4:.*change = (\d+)\s*\]')
+        validLabelRegexp = gitConfig("git-p4.labelExportRegexp")
+        if len(validLabelRegexp) == 0:
+            validLabelRegexp = defaultLabelRegexp
+        m = re.compile(validLabelRegexp)
 
         for name in gitTags:
 
@@ -1269,17 +1261,16 @@ class P4Submit(Command, P4UserMap):
                 continue
 
             # Get the p4 commit this corresponds to
-            changelist = None
-            for l in read_pipe_lines(["git", "log", "--max-count=1", name]):
-                match = commit_re.match(l)
-                if match:
-                    changelist = match.group(1)
+            logMessage = extractLogMessageFromGitCommit(name)
+            values = extractSettingsGitLog(logMessage)
 
-            if not changelist:
+            if not values.has_key('change'):
                 # a tag pointing to something not sent to p4; ignore
                 if verbose:
                     print "git tag %s does not give a p4 commit" % name
                 continue
+            else:
+                changelist = values['change']
 
             # Get the tag details.
             inHeader = True
@@ -1646,7 +1637,6 @@ class P4Sync(Command, P4UserMap):
                 optparse.make_option("--silent", dest="silent", action="store_true"),
                 optparse.make_option("--detect-labels", dest="detectLabels", action="store_true"),
                 optparse.make_option("--import-labels", dest="importLabels", action="store_true"),
-                optparse.make_option("--verbose", dest="verbose", action="store_true"),
                 optparse.make_option("--import-local", dest="importIntoRemotes", action="store_false",
                                      help="Import into refs/heads/ , not refs/remotes"),
                 optparse.make_option("--max-changes", dest="maxChanges"),
@@ -1673,7 +1663,6 @@ class P4Sync(Command, P4UserMap):
         self.importLabels = False
         self.changesFile = ""
         self.syncWithOrigin = True
-        self.verbose = False
         self.importIntoRemotes = True
         self.maxChanges = ""
         self.isWindows = (platform.system() == "Windows")
@@ -2076,7 +2065,7 @@ class P4Sync(Command, P4UserMap):
             print "import p4 labels: " + ' '.join(p4Labels)
 
         ignoredP4Labels = gitConfigList("git-p4.ignoredP4Labels")
-        validLabelRegexp = gitConfig("git-p4.validLabelRegexp")
+        validLabelRegexp = gitConfig("git-p4.labelImportRegexp")
         if len(validLabelRegexp) == 0:
             validLabelRegexp = defaultLabelRegexp
         m = re.compile(validLabelRegexp)
@@ -2714,9 +2703,7 @@ class P4Rebase(Command):
         Command.__init__(self)
         self.options = [
                 optparse.make_option("--import-labels", dest="importLabels", action="store_true"),
-                optparse.make_option("--verbose", dest="verbose", action="store_true"),
         ]
-        self.verbose = False
         self.importLabels = False
         self.description = ("Fetches the latest revision from perforce and "
                             + "rebases the current work (branch) against it")
@@ -2913,16 +2900,16 @@ def main():
 
     args = sys.argv[2:]
 
-    if len(options) > 0:
-        if cmd.needsGit:
-            options.append(optparse.make_option("--git-dir", dest="gitdir"))
+    options.append(optparse.make_option("--verbose", dest="verbose", action="store_true"))
+    if cmd.needsGit:
+        options.append(optparse.make_option("--git-dir", dest="gitdir"))
 
-        parser = optparse.OptionParser(cmd.usage.replace("%prog", "%prog " + cmdName),
-                                       options,
-                                       description = cmd.description,
-                                       formatter = HelpFormatter())
+    parser = optparse.OptionParser(cmd.usage.replace("%prog", "%prog " + cmdName),
+                                   options,
+                                   description = cmd.description,
+                                   formatter = HelpFormatter())
 
-        (cmd, args) = parser.parse_args(sys.argv[2:], cmd);
+    (cmd, args) = parser.parse_args(sys.argv[2:], cmd);
     global verbose
     verbose = cmd.verbose
     if cmd.needsGit:
