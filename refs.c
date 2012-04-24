@@ -754,6 +754,9 @@ static void get_ref_dir(struct ref_cache *refs, const char *base,
 {
 	DIR *d;
 	const char *path;
+	struct dirent *de;
+	int baselen;
+	char *refname;
 
 	if (*refs->name)
 		path = git_path_submodule(refs->name, "%s", base);
@@ -761,55 +764,55 @@ static void get_ref_dir(struct ref_cache *refs, const char *base,
 		path = git_path("%s", base);
 
 	d = opendir(path);
-	if (d) {
-		struct dirent *de;
-		int baselen = strlen(base);
-		char *refname = xmalloc(baselen + 257);
+	if (!d)
+		return;
 
-		memcpy(refname, base, baselen);
-		if (baselen && base[baselen-1] != '/')
-			refname[baselen++] = '/';
+	baselen = strlen(base);
+	refname = xmalloc(baselen + 257);
 
-		while ((de = readdir(d)) != NULL) {
-			unsigned char sha1[20];
-			struct stat st;
-			int flag;
-			int namelen;
-			const char *refdir;
+	memcpy(refname, base, baselen);
+	if (baselen && base[baselen-1] != '/')
+		refname[baselen++] = '/';
 
-			if (de->d_name[0] == '.')
-				continue;
-			namelen = strlen(de->d_name);
-			if (namelen > 255)
-				continue;
-			if (has_extension(de->d_name, ".lock"))
-				continue;
-			memcpy(refname + baselen, de->d_name, namelen+1);
-			refdir = *refs->name
-				? git_path_submodule(refs->name, "%s", refname)
-				: git_path("%s", refname);
-			if (stat(refdir, &st) < 0)
-				continue;
-			if (S_ISDIR(st.st_mode)) {
-				get_ref_dir(refs, refname, dir);
-				continue;
-			}
-			if (*refs->name) {
-				hashclr(sha1);
-				flag = 0;
-				if (resolve_gitlink_ref(refs->name, refname, sha1) < 0) {
-					hashclr(sha1);
-					flag |= REF_ISBROKEN;
-				}
-			} else if (read_ref_full(refname, sha1, 1, &flag)) {
+	while ((de = readdir(d)) != NULL) {
+		unsigned char sha1[20];
+		struct stat st;
+		int flag;
+		int namelen;
+		const char *refdir;
+
+		if (de->d_name[0] == '.')
+			continue;
+		namelen = strlen(de->d_name);
+		if (namelen > 255)
+			continue;
+		if (has_extension(de->d_name, ".lock"))
+			continue;
+		memcpy(refname + baselen, de->d_name, namelen+1);
+		refdir = *refs->name
+			? git_path_submodule(refs->name, "%s", refname)
+			: git_path("%s", refname);
+		if (stat(refdir, &st) < 0)
+			continue;
+		if (S_ISDIR(st.st_mode)) {
+			get_ref_dir(refs, refname, dir);
+			continue;
+		}
+		if (*refs->name) {
+			hashclr(sha1);
+			flag = 0;
+			if (resolve_gitlink_ref(refs->name, refname, sha1) < 0) {
 				hashclr(sha1);
 				flag |= REF_ISBROKEN;
 			}
-			add_ref(dir, create_ref_entry(refname, sha1, flag, 1));
+		} else if (read_ref_full(refname, sha1, 1, &flag)) {
+			hashclr(sha1);
+			flag |= REF_ISBROKEN;
 		}
-		free(refname);
-		closedir(d);
+		add_ref(dir, create_ref_entry(refname, sha1, flag, 1));
 	}
+	free(refname);
+	closedir(d);
 }
 
 static struct ref_dir *get_loose_refs(struct ref_cache *refs)
