@@ -1680,12 +1680,24 @@ push.default::
 	line. Possible values are:
 +
 * `nothing` - do not push anything.
-* `matching` - push all matching branches.
-  All branches having the same name in both ends are considered to be
-  matching. This is the default.
+* `matching` - push all branches having the same name in both ends.
+  This is for those who prepare all the branches into a publishable
+  shape and then push them out with a single command.  It is not
+  appropriate for pushing into a repository shared by multiple users,
+  since locally stalled branches will attempt a non-fast forward push
+  if other users updated the branch.  This is the default.
 * `upstream` - push the current branch to its upstream branch.
+  With this, `git push` will update the same remote ref as the one which
+  is merged by `git pull`, making `push` and `pull` symmetrical.
+  See "branch.<name>.merge" for how to configure the upstream branch.
 * `tracking` - deprecated synonym for `upstream`.
 * `current` - push the current branch to a branch of the same name.
+  +
+  The `current` and `upstream` modes are for those who want to
+  push out a single branch after finishing work, even when the other
+  branches are not yet ready to be pushed out. If you are working with
+  other people to push into the same shared repository, you would want
+  to use one of these.
 
 rebase.stat::
 	Whether to show a diffstat of what changed upstream since the last
