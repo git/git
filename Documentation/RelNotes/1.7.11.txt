@@ -8,6 +8,9 @@ UI, Workflows & Features
 
  * A third-party tool "git subtree" is distributed in contrib/
 
+ * Error messages given when @{u} is used for a branch without its
+   upstream configured have been clatified.
+
  * Even with "-q"uiet option, "checkout" used to report setting up
    tracking.  Also "branch" learned the "-q"uiet option to squelch
    informational message.
@@ -30,10 +33,19 @@ UI, Workflows & Features
  * The cases "git push" fails due to non-ff can be broken into three
    categories; each case is given a separate advise message.
 
+ * "git push --recurse-submodules" learned to optionally look into the
+   histories of submodules bound to the superproject and push them
+   out.
+
  * A 'snapshot' request to "gitweb" honors If-Modified-Since: header,
    based on the commit date.
 
+ * "gitweb" learned to highlight the patch it outputs even more.
+
 Foreign Interface
+
+ * "git svn" used to die with unwanted SIGPIPE when talking with HTTP
+   server that uses keep-alive.
 
  * "git p4" has been moved out of contrib/ area.
 
@@ -61,6 +73,9 @@ Internal Implementation (please report possible regressions)
    systems, run-command API now uses SHELL_PATH, not /bin/sh, when
    spawning an external command (not applicable to Windows port).
 
+ * The API to iterate over refs/ hierarchy has been tweaked to allow
+   walking only a subset of it more efficiently.
+
 Also contains minor documentation updates and code clean-ups.
 
 
@@ -70,6 +85,17 @@ Fixes since v1.7.10
 Unless otherwise noted, all the fixes since v1.7.10 in the maintenance
 releases are contained in this release (see release notes to them for
 details).
+
+ * The parser in "fast-import" did not diagnose ":9" style references
+   that is not followed by required SP/LF as an error.
+   (merge 06454cb pw/fast-import-dataref-parsing later to maint).
+
+ * When "git fetch" encounters repositories with too many references,
+   the command line of "fetch-pack" that is run by a helper
+   e.g. remote-curl, may fail to hold all of them. Now such an
+   internal invocation can feed the references through the standard
+   input of "fetch-pack".
+   (merge 7103d25 it/fetch-pack-many-refs later to maint).
 
  * "git fetch" that recurses into submodules on demand did not check
    if it needs to go into submodules when non branches (most notably,
