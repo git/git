@@ -36,6 +36,11 @@ $ENV{TZ} = 'UTC';
 $| = 1; # unbuffer STDOUT
 
 sub fatal (@) { print STDERR "@_\n"; exit 1 }
+
+# All SVN commands do it.  Otherwise we may die on SIGPIPE when the remote
+# repository decides to close the connection which we expect to be kept alive.
+$SIG{PIPE} = 'IGNORE';
+
 sub _req_svn {
 	require SVN::Core; # use()-ing this causes segfaults for me... *shrug*
 	require SVN::Ra;
@@ -2031,6 +2036,7 @@ use IPC::Open3;
 use Time::Local;
 use Memoize;  # core since 5.8.0, Jul 2002
 use Memoize::Storable;
+use POSIX qw(:signal_h);
 
 my ($_gc_nr, $_gc_period);
 
@@ -4059,11 +4065,14 @@ sub rev_map_set {
 	length $commit == 40 or die "arg3 must be a full SHA1 hexsum\n";
 	my $db = $self->map_path($uuid);
 	my $db_lock = "$db.lock";
-	my $sig;
+	my $sigmask;
 	$update_ref ||= 0;
 	if ($update_ref) {
-		$SIG{INT} = $SIG{HUP} = $SIG{TERM} = $SIG{ALRM} = $SIG{PIPE} =
-		            $SIG{USR1} = $SIG{USR2} = sub { $sig = $_[0] };
+		$sigmask = POSIX::SigSet->new();
+		my $signew = POSIX::SigSet->new(SIGINT, SIGHUP, SIGTERM,
+			SIGALRM, SIGUSR1, SIGUSR2);
+		sigprocmask(SIG_BLOCK, $signew, $sigmask) or
+			croak "Can't block signals: $!";
 	}
 	mkfile($db);
 
@@ -4102,9 +4111,8 @@ sub rev_map_set {
 	                            "$db_lock => $db ($!)\n";
 	delete $LOCKFILES{$db_lock};
 	if ($update_ref) {
-		$SIG{INT} = $SIG{HUP} = $SIG{TERM} = $SIG{ALRM} = $SIG{PIPE} =
-		            $SIG{USR1} = $SIG{USR2} = 'DEFAULT';
-		kill $sig, $$ if defined $sig;
+		sigprocmask(SIG_SETMASK, $sigmask) or
+			croak "Can't restore signal mask: $!";
 	}
 }
 
