@@ -4,18 +4,109 @@
 #include "tag.h"
 #include "dir.h"
 
-/* ISSYMREF=0x01, ISPACKED=0x02 and ISBROKEN=0x04 are public interfaces */
-#define REF_KNOWS_PEELED 0x10
+/*
+ * Make sure "ref" is something reasonable to have under ".git/refs/";
+ * We do not like it if:
+ *
+ * - any path component of it begins with ".", or
+ * - it has double dots "..", or
+ * - it has ASCII control character, "~", "^", ":" or SP, anywhere, or
+ * - it ends with a "/".
+ * - it ends with ".lock"
+ * - it contains a "\" (backslash)
+ */
 
-struct ref_entry {
-	unsigned char flag; /* ISSYMREF? ISPACKED? */
+/* Return true iff ch is not allowed in reference names. */
+static inline int bad_ref_char(int ch)
+{
+	if (((unsigned) ch) <= ' ' || ch == 0x7f ||
+	    ch == '~' || ch == '^' || ch == ':' || ch == '\\')
+		return 1;
+	/* 2.13 Pattern Matching Notation */
+	if (ch == '*' || ch == '?' || ch == '[') /* Unsupported */
+		return 1;
+	return 0;
+}
+
+/*
+ * Try to read one refname component from the front of refname.  Return
+ * the length of the component found, or -1 if the component is not
+ * legal.
+ */
+static int check_refname_component(const char *refname, int flags)
+{
+	const char *cp;
+	char last = '\0';
+
+	for (cp = refname; ; cp++) {
+		char ch = *cp;
+		if (ch == '\0' || ch == '/')
+			break;
+		if (bad_ref_char(ch))
+			return -1; /* Illegal character in refname. */
+		if (last == '.' && ch == '.')
+			return -1; /* Refname contains "..". */
+		if (last == '@' && ch == '{')
+			return -1; /* Refname contains "@{". */
+		last = ch;
+	}
+	if (cp == refname)
+		return 0; /* Component has zero length. */
+	if (refname[0] == '.') {
+		if (!(flags & REFNAME_DOT_COMPONENT))
+			return -1; /* Component starts with '.'. */
+		/*
+		 * Even if leading dots are allowed, don't allow "."
+		 * as a component (".." is prevented by a rule above).
+		 */
+		if (refname[1] == '\0')
+			return -1; /* Component equals ".". */
+	}
+	if (cp - refname >= 5 && !memcmp(cp - 5, ".lock", 5))
+		return -1; /* Refname ends with ".lock". */
+	return cp - refname;
+}
+
+int check_refname_format(const char *refname, int flags)
+{
+	int component_len, component_count = 0;
+
+	while (1) {
+		/* We are at the start of a path component. */
+		component_len = check_refname_component(refname, flags);
+		if (component_len <= 0) {
+			if ((flags & REFNAME_REFSPEC_PATTERN) &&
+					refname[0] == '*' &&
+					(refname[1] == '\0' || refname[1] == '/')) {
+				/* Accept one wildcard as a full refname component. */
+				flags &= ~REFNAME_REFSPEC_PATTERN;
+				component_len = 1;
+			} else {
+				return -1;
+			}
+		}
+		component_count++;
+		if (refname[component_len] == '\0')
+			break;
+		/* Skip to next component. */
+		refname += component_len + 1;
+	}
+
+	if (refname[component_len - 1] == '.')
+		return -1; /* Refname ends with '.'. */
+	if (!(flags & REFNAME_ALLOW_ONELEVEL) && component_count < 2)
+		return -1; /* Refname has only one component. */
+	return 0;
+}
+
+struct ref_entry;
+
+struct ref_value {
 	unsigned char sha1[20];
 	unsigned char peeled[20];
-	/* The full name of the reference (e.g., "refs/heads/master"): */
-	char name[FLEX_ARRAY];
 };
 
-struct ref_array {
+struct ref_dir {
 	int nr, alloc;
 
 	/*
@@ -26,41 +117,59 @@ struct ref_array {
 	 */
 	int sorted;
 
-	struct ref_entry **refs;
+	struct ref_entry **entries;
 };
 
+/* ISSYMREF=0x01, ISPACKED=0x02, and ISBROKEN=0x04 are public interfaces */
+#define REF_KNOWS_PEELED 0x08
+#define REF_DIR 0x10
+
 /*
- * Parse one line from a packed-refs file.  Write the SHA1 to sha1.
- * Return a pointer to the refname within the line (null-terminated),
- * or NULL if there was a problem.
+ * A ref_entry represents either a reference or a "subdirectory" of
+ * references.  Each directory in the reference namespace is
+ * represented by a ref_entry with (flags & REF_DIR) set and
+ * containing a subdir member that holds the entries in that
+ * directory.  References are represented by a ref_entry with (flags &
+ * REF_DIR) unset and a value member that describes the reference's
+ * value.  The flag member is at the ref_entry level, but it is also
+ * needed to interpret the contents of the value field (in other
+ * words, a ref_value object is not very much use without the
+ * enclosing ref_entry).
+ *
+ * Reference names cannot end with slash and directories' names are
+ * always stored with a trailing slash (except for the top-level
+ * directory, which is always denoted by "").  This has two nice
+ * consequences: (1) when the entries in each subdir are sorted
+ * lexicographically by name (as they usually are), the references in
+ * a whole tree can be generated in lexicographic order by traversing
+ * the tree in left-to-right, depth-first order; (2) the names of
+ * references and subdirectories cannot conflict, and therefore the
+ * presence of an empty subdirectory does not block the creation of a
+ * similarly-named reference.  (The fact that reference names with the
+ * same leading components can conflict *with each other* is a
+ * separate issue that is regulated by is_refname_available().)
+ *
+ * Please note that the name field contains the fully-qualified
+ * reference (or subdirectory) name.  Space could be saved by only
+ * storing the relative names.  But that would require the full names
+ * to be generated on the fly when iterating in do_for_each_ref(), and
+ * would break callback functions, who have always been able to assume
+ * that the name strings that they are passed will not be freed during
+ * the iteration.
  */
-static const char *parse_ref_line(char *line, unsigned char *sha1)
-{
+struct ref_entry {
+	unsigned char flag; /* ISSYMREF? ISPACKED? */
+	union {
+		struct ref_value value; /* if not (flags&REF_DIR) */
+		struct ref_dir subdir; /* if (flags&REF_DIR) */
+	} u;
 	/*
-	 * 42: the answer to everything.
-	 *
-	 * In this case, it happens to be the answer to
-	 *  40 (length of sha1 hex representation)
-	 *  +1 (space in between hex and name)
-	 *  +1 (newline at the end of the line)
+	 * The full name of the reference (e.g., "refs/heads/master")
+	 * or the full name of the directory with a trailing slash
+	 * (e.g., "refs/heads/"):
 	 */
-	int len = strlen(line) - 42;
-
-	if (len <= 0)
-		return NULL;
-	if (get_sha1_hex(line, sha1) < 0)
-		return NULL;
-	if (!isspace(line[40]))
-		return NULL;
-	line += 41;
-	if (isspace(*line))
-		return NULL;
-	if (line[len] != '\n')
-		return NULL;
-	line[len] = 0;
-
-	return line;
-}
+	char name[FLEX_ARRAY];
+};
 
 static struct ref_entry *create_ref_entry(const char *refname,
 					  const unsigned char *sha1, int flag,
@@ -74,18 +183,59 @@ static struct ref_entry *create_ref_entry(const char *refname,
 		die("Reference has invalid format: '%s'", refname);
 	len = strlen(refname) + 1;
 	ref = xmalloc(sizeof(struct ref_entry) + len);
-	hashcpy(ref->sha1, sha1);
-	hashclr(ref->peeled);
+	hashcpy(ref->u.value.sha1, sha1);
+	hashclr(ref->u.value.peeled);
 	memcpy(ref->name, refname, len);
 	ref->flag = flag;
 	return ref;
 }
 
-/* Add a ref_entry to the end of the ref_array (unsorted). */
-static void add_ref(struct ref_array *refs, struct ref_entry *ref)
+static void clear_ref_dir(struct ref_dir *dir);
+
+static void free_ref_entry(struct ref_entry *entry)
 {
-	ALLOC_GROW(refs->refs, refs->nr + 1, refs->alloc);
-	refs->refs[refs->nr++] = ref;
+	if (entry->flag & REF_DIR)
+		clear_ref_dir(&entry->u.subdir);
+	free(entry);
+}
+
+/*
+ * Add a ref_entry to the end of dir (unsorted).  Entry is always
+ * stored directly in dir; no recursion into subdirectories is
+ * done.
+ */
+static void add_entry_to_dir(struct ref_dir *dir, struct ref_entry *entry)
+{
+	ALLOC_GROW(dir->entries, dir->nr + 1, dir->alloc);
+	dir->entries[dir->nr++] = entry;
+}
+
+/*
+ * Clear and free all entries in dir, recursively.
+ */
+static void clear_ref_dir(struct ref_dir *dir)
+{
+	int i;
+	for (i = 0; i < dir->nr; i++)
+		free_ref_entry(dir->entries[i]);
+	free(dir->entries);
+	dir->sorted = dir->nr = dir->alloc = 0;
+	dir->entries = NULL;
+}
+
+/*
+ * Create a struct ref_entry object for the specified dirname.
+ * dirname is the name of the directory with a trailing slash (e.g.,
+ * "refs/heads/") or "" for the top-level directory.
+ */
+static struct ref_entry *create_dir_entry(const char *dirname)
+{
+	struct ref_entry *direntry;
+	int len = strlen(dirname);
+	direntry = xcalloc(1, sizeof(struct ref_entry) + len + 1);
+	memcpy(direntry->name, dirname, len + 1);
+	direntry->flag = REF_DIR;
+	return direntry;
 }
 
 static int ref_entry_cmp(const void *a, const void *b)
@@ -95,69 +245,28 @@ static int ref_entry_cmp(const void *a, const void *b)
 	return strcmp(one->name, two->name);
 }
 
-/*
- * Emit a warning and return true iff ref1 and ref2 have the same name
- * and the same sha1.  Die if they have the same name but different
- * sha1s.
- */
-static int is_dup_ref(const struct ref_entry *ref1, const struct ref_entry *ref2)
-{
-	if (!strcmp(ref1->name, ref2->name)) {
-		/* Duplicate name; make sure that the SHA1s match: */
-		if (hashcmp(ref1->sha1, ref2->sha1))
-			die("Duplicated ref, and SHA1s don't match: %s",
-			    ref1->name);
-		warning("Duplicated ref: %s", ref1->name);
-		return 1;
-	} else {
-		return 0;
-	}
-}
+static void sort_ref_dir(struct ref_dir *dir);
 
 /*
- * Sort the entries in array (if they are not already sorted).
+ * Return the entry with the given refname from the ref_dir
+ * (non-recursively), sorting dir if necessary.  Return NULL if no
+ * such entry is found.
  */
-static void sort_ref_array(struct ref_array *array)
-{
-	int i, j;
-
-	/*
-	 * This check also prevents passing a zero-length array to qsort(),
-	 * which is a problem on some platforms.
-	 */
-	if (array->sorted == array->nr)
-		return;
-
-	qsort(array->refs, array->nr, sizeof(*array->refs), ref_entry_cmp);
-
-	/* Remove any duplicates from the ref_array */
-	i = 0;
-	for (j = 1; j < array->nr; j++) {
-		if (is_dup_ref(array->refs[i], array->refs[j])) {
-			free(array->refs[j]);
-			continue;
-		}
-		array->refs[++i] = array->refs[j];
-	}
-	array->sorted = array->nr = i + 1;
-}
-
-static struct ref_entry *search_ref_array(struct ref_array *array, const char *refname)
+static struct ref_entry *search_ref_dir(struct ref_dir *dir, const char *refname)
 {
 	struct ref_entry *e, **r;
 	int len;
 
-	if (refname == NULL)
+	if (refname == NULL || !dir->nr)
 		return NULL;
 
-	if (!array->nr)
-		return NULL;
-	sort_ref_array(array);
+	sort_ref_dir(dir);
+
 	len = strlen(refname) + 1;
 	e = xmalloc(sizeof(struct ref_entry) + len);
 	memcpy(e->name, refname, len);
 
-	r = bsearch(&e, array->refs, array->nr, sizeof(*array->refs), ref_entry_cmp);
+	r = bsearch(&e, dir->entries, dir->nr, sizeof(*dir->entries), ref_entry_cmp);
 
 	free(e);
 
@@ -168,6 +277,316 @@ static struct ref_entry *search_ref_array(struct ref_array *array, const char *r
 }
 
 /*
+ * If refname is a reference name, find the ref_dir within the dir
+ * tree that should hold refname.  If refname is a directory name
+ * (i.e., ends in '/'), then return that ref_dir itself.  dir must
+ * represent the top-level directory.  Sort ref_dirs and recurse into
+ * subdirectories as necessary.  If mkdir is set, then create any
+ * missing directories; otherwise, return NULL if the desired
+ * directory cannot be found.
+ */
+static struct ref_dir *find_containing_dir(struct ref_dir *dir,
+					   const char *refname, int mkdir)
+{
+	char *refname_copy = xstrdup(refname);
+	char *slash;
+	struct ref_entry *entry;
+	for (slash = strchr(refname_copy, '/'); slash; slash = strchr(slash + 1, '/')) {
+		char tmp = slash[1];
+		slash[1] = '\0';
+		entry = search_ref_dir(dir, refname_copy);
+		if (!entry) {
+			if (!mkdir) {
+				dir = NULL;
+				break;
+			}
+			entry = create_dir_entry(refname_copy);
+			add_entry_to_dir(dir, entry);
+		}
+		slash[1] = tmp;
+		assert(entry->flag & REF_DIR);
+		dir = &entry->u.subdir;
+	}
+
+	free(refname_copy);
+	return dir;
+}
+
+/*
+ * Find the value entry with the given name in dir, sorting ref_dirs
+ * and recursing into subdirectories as necessary.  If the name is not
+ * found or it corresponds to a directory entry, return NULL.
+ */
+static struct ref_entry *find_ref(struct ref_dir *dir, const char *refname)
+{
+	struct ref_entry *entry;
+	dir = find_containing_dir(dir, refname, 0);
+	if (!dir)
+		return NULL;
+	entry = search_ref_dir(dir, refname);
+	return (entry && !(entry->flag & REF_DIR)) ? entry : NULL;
+}
+
+/*
+ * Add a ref_entry to the ref_dir (unsorted), recursing into
+ * subdirectories as necessary.  dir must represent the top-level
+ * directory.  Return 0 on success.
+ */
+static int add_ref(struct ref_dir *dir, struct ref_entry *ref)
+{
+	dir = find_containing_dir(dir, ref->name, 1);
+	if (!dir)
+		return -1;
+	add_entry_to_dir(dir, ref);
+	return 0;
+}
+
+/*
+ * Emit a warning and return true iff ref1 and ref2 have the same name
+ * and the same sha1.  Die if they have the same name but different
+ * sha1s.
+ */
+static int is_dup_ref(const struct ref_entry *ref1, const struct ref_entry *ref2)
+{
+	if (strcmp(ref1->name, ref2->name))
+		return 0;
+
+	/* Duplicate name; make sure that they don't conflict: */
+
+	if ((ref1->flag & REF_DIR) || (ref2->flag & REF_DIR))
+		/* This is impossible by construction */
+		die("Reference directory conflict: %s", ref1->name);
+
+	if (hashcmp(ref1->u.value.sha1, ref2->u.value.sha1))
+		die("Duplicated ref, and SHA1s don't match: %s", ref1->name);
+
+	warning("Duplicated ref: %s", ref1->name);
+	return 1;
+}
+
+/*
+ * Sort the entries in dir non-recursively (if they are not already
+ * sorted) and remove any duplicate entries.
+ */
+static void sort_ref_dir(struct ref_dir *dir)
+{
+	int i, j;
+	struct ref_entry *last = NULL;
+
+	/*
+	 * This check also prevents passing a zero-length array to qsort(),
+	 * which is a problem on some platforms.
+	 */
+	if (dir->sorted == dir->nr)
+		return;
+
+	qsort(dir->entries, dir->nr, sizeof(*dir->entries), ref_entry_cmp);
+
+	/* Remove any duplicates: */
+	for (i = 0, j = 0; j < dir->nr; j++) {
+		struct ref_entry *entry = dir->entries[j];
+		if (last && is_dup_ref(last, entry))
+			free_ref_entry(entry);
+		else
+			last = dir->entries[i++] = entry;
+	}
+	dir->sorted = dir->nr = i;
+}
+
+#define DO_FOR_EACH_INCLUDE_BROKEN 01
+
+static struct ref_entry *current_ref;
+
+static int do_one_ref(const char *base, each_ref_fn fn, int trim,
+		      int flags, void *cb_data, struct ref_entry *entry)
+{
+	int retval;
+	if (prefixcmp(entry->name, base))
+		return 0;
+
+	if (!(flags & DO_FOR_EACH_INCLUDE_BROKEN)) {
+		if (entry->flag & REF_ISBROKEN)
+			return 0; /* ignore broken refs e.g. dangling symref */
+		if (!has_sha1_file(entry->u.value.sha1)) {
+			error("%s does not point to a valid object!", entry->name);
+			return 0;
+		}
+	}
+	current_ref = entry;
+	retval = fn(entry->name + trim, entry->u.value.sha1, entry->flag, cb_data);
+	current_ref = NULL;
+	return retval;
+}
+
+/*
+ * Call fn for each reference in dir that has index in the range
+ * offset <= index < dir->nr.  Recurse into subdirectories that are in
+ * that index range, sorting them before iterating.  This function
+ * does not sort dir itself; it should be sorted beforehand.
+ */
+static int do_for_each_ref_in_dir(struct ref_dir *dir, int offset,
+				  const char *base,
+				  each_ref_fn fn, int trim, int flags, void *cb_data)
+{
+	int i;
+	assert(dir->sorted == dir->nr);
+	for (i = offset; i < dir->nr; i++) {
+		struct ref_entry *entry = dir->entries[i];
+		int retval;
+		if (entry->flag & REF_DIR) {
+			sort_ref_dir(&entry->u.subdir);
+			retval = do_for_each_ref_in_dir(&entry->u.subdir, 0,
+							base, fn, trim, flags, cb_data);
+		} else {
+			retval = do_one_ref(base, fn, trim, flags, cb_data, entry);
+		}
+		if (retval)
+			return retval;
+	}
+	return 0;
+}
+
+/*
+ * Call fn for each reference in the union of dir1 and dir2, in order
+ * by refname.  Recurse into subdirectories.  If a value entry appears
+ * in both dir1 and dir2, then only process the version that is in
+ * dir2.  The input dirs must already be sorted, but subdirs will be
+ * sorted as needed.
+ */
+static int do_for_each_ref_in_dirs(struct ref_dir *dir1,
+				   struct ref_dir *dir2,
+				   const char *base, each_ref_fn fn, int trim,
+				   int flags, void *cb_data)
+{
+	int retval;
+	int i1 = 0, i2 = 0;
+
+	assert(dir1->sorted == dir1->nr);
+	assert(dir2->sorted == dir2->nr);
+	while (1) {
+		struct ref_entry *e1, *e2;
+		int cmp;
+		if (i1 == dir1->nr) {
+			return do_for_each_ref_in_dir(dir2, i2,
+						      base, fn, trim, flags, cb_data);
+		}
+		if (i2 == dir2->nr) {
+			return do_for_each_ref_in_dir(dir1, i1,
+						      base, fn, trim, flags, cb_data);
+		}
+		e1 = dir1->entries[i1];
+		e2 = dir2->entries[i2];
+		cmp = strcmp(e1->name, e2->name);
+		if (cmp == 0) {
+			if ((e1->flag & REF_DIR) && (e2->flag & REF_DIR)) {
+				/* Both are directories; descend them in parallel. */
+				sort_ref_dir(&e1->u.subdir);
+				sort_ref_dir(&e2->u.subdir);
+				retval = do_for_each_ref_in_dirs(
+						&e1->u.subdir, &e2->u.subdir,
+						base, fn, trim, flags, cb_data);
+				i1++;
+				i2++;
+			} else if (!(e1->flag & REF_DIR) && !(e2->flag & REF_DIR)) {
+				/* Both are references; ignore the one from dir1. */
+				retval = do_one_ref(base, fn, trim, flags, cb_data, e2);
+				i1++;
+				i2++;
+			} else {
+				die("conflict between reference and directory: %s",
+				    e1->name);
+			}
+		} else {
+			struct ref_entry *e;
+			if (cmp < 0) {
+				e = e1;
+				i1++;
+			} else {
+				e = e2;
+				i2++;
+			}
+			if (e->flag & REF_DIR) {
+				sort_ref_dir(&e->u.subdir);
+				retval = do_for_each_ref_in_dir(
+						&e->u.subdir, 0,
+						base, fn, trim, flags, cb_data);
+			} else {
+				retval = do_one_ref(base, fn, trim, flags, cb_data, e);
+			}
+		}
+		if (retval)
+			return retval;
+	}
+	if (i1 < dir1->nr)
+		return do_for_each_ref_in_dir(dir1, i1,
+					      base, fn, trim, flags, cb_data);
+	if (i2 < dir2->nr)
+		return do_for_each_ref_in_dir(dir2, i2,
+					      base, fn, trim, flags, cb_data);
+	return 0;
+}
+
+/*
+ * Return true iff refname1 and refname2 conflict with each other.
+ * Two reference names conflict if one of them exactly matches the
+ * leading components of the other; e.g., "foo/bar" conflicts with
+ * both "foo" and with "foo/bar/baz" but not with "foo/bar" or
+ * "foo/barbados".
+ */
+static int names_conflict(const char *refname1, const char *refname2)
+{
+	for (; *refname1 && *refname1 == *refname2; refname1++, refname2++)
+		;
+	return (*refname1 == '\0' && *refname2 == '/')
+		|| (*refname1 == '/' && *refname2 == '\0');
+}
+
+struct name_conflict_cb {
+	const char *refname;
+	const char *oldrefname;
+	const char *conflicting_refname;
+};
+
+static int name_conflict_fn(const char *existingrefname, const unsigned char *sha1,
+			    int flags, void *cb_data)
+{
+	struct name_conflict_cb *data = (struct name_conflict_cb *)cb_data;
+	if (data->oldrefname && !strcmp(data->oldrefname, existingrefname))
+		return 0;
+	if (names_conflict(data->refname, existingrefname)) {
+		data->conflicting_refname = existingrefname;
+		return 1;
+	}
+	return 0;
+}
+
+/*
+ * Return true iff a reference named refname could be created without
+ * conflicting with the name of an existing reference in array.  If
+ * oldrefname is non-NULL, ignore potential conflicts with oldrefname
+ * (e.g., because oldrefname is scheduled for deletion in the same
+ * operation).
+ */
+static int is_refname_available(const char *refname, const char *oldrefname,
+				struct ref_dir *dir)
+{
+	struct name_conflict_cb data;
+	data.refname = refname;
+	data.oldrefname = oldrefname;
+	data.conflicting_refname = NULL;
+
+	sort_ref_dir(dir);
+	if (do_for_each_ref_in_dir(dir, 0, "", name_conflict_fn,
+				   0, DO_FOR_EACH_INCLUDE_BROKEN,
+				   &data)) {
+		error("'%s' exists; cannot create '%s'",
+		      data.conflicting_refname, refname);
+		return 0;
+	}
+	return 1;
+}
+
+/*
  * Future: need to be in "struct repository"
  * when doing a full libification.
  */
@@ -175,35 +594,23 @@ static struct ref_cache {
 	struct ref_cache *next;
 	char did_loose;
 	char did_packed;
-	struct ref_array loose;
-	struct ref_array packed;
+	struct ref_dir loose;
+	struct ref_dir packed;
 	/* The submodule name, or "" for the main repo. */
 	char name[FLEX_ARRAY];
 } *ref_cache;
 
-static struct ref_entry *current_ref;
-
-static void clear_ref_array(struct ref_array *array)
-{
-	int i;
-	for (i = 0; i < array->nr; i++)
-		free(array->refs[i]);
-	free(array->refs);
-	array->sorted = array->nr = array->alloc = 0;
-	array->refs = NULL;
-}
-
 static void clear_packed_ref_cache(struct ref_cache *refs)
 {
 	if (refs->did_packed)
-		clear_ref_array(&refs->packed);
+		clear_ref_dir(&refs->packed);
 	refs->did_packed = 0;
 }
 
 static void clear_loose_ref_cache(struct ref_cache *refs)
 {
 	if (refs->did_loose)
-		clear_ref_array(&refs->loose);
+		clear_ref_dir(&refs->loose);
 	refs->did_loose = 0;
 }
 
@@ -249,7 +656,40 @@ void invalidate_ref_cache(const char *submodule)
 	clear_loose_ref_cache(refs);
 }
 
-static void read_packed_refs(FILE *f, struct ref_array *array)
+/*
+ * Parse one line from a packed-refs file.  Write the SHA1 to sha1.
+ * Return a pointer to the refname within the line (null-terminated),
+ * or NULL if there was a problem.
+ */
+static const char *parse_ref_line(char *line, unsigned char *sha1)
+{
+	/*
+	 * 42: the answer to everything.
+	 *
+	 * In this case, it happens to be the answer to
+	 *  40 (length of sha1 hex representation)
+	 *  +1 (space in between hex and name)
+	 *  +1 (newline at the end of the line)
+	 */
+	int len = strlen(line) - 42;
+
+	if (len <= 0)
+		return NULL;
+	if (get_sha1_hex(line, sha1) < 0)
+		return NULL;
+	if (!isspace(line[40]))
+		return NULL;
+	line += 41;
+	if (isspace(*line))
+		return NULL;
+	if (line[len] != '\n')
+		return NULL;
+	line[len] = 0;
+
+	return line;
+}
+
+static void read_packed_refs(FILE *f, struct ref_dir *dir)
 {
 	struct ref_entry *last = NULL;
 	char refline[PATH_MAX];
@@ -271,7 +711,7 @@ static void read_packed_refs(FILE *f, struct ref_array *array)
 		refname = parse_ref_line(refline, sha1);
 		if (refname) {
 			last = create_ref_entry(refname, sha1, flag, 1);
-			add_ref(array, last);
+			add_ref(dir, last);
 			continue;
 		}
 		if (last &&
@@ -279,11 +719,11 @@ static void read_packed_refs(FILE *f, struct ref_array *array)
 		    strlen(refline) == 42 &&
 		    refline[41] == '\n' &&
 		    !get_sha1_hex(refline + 1, sha1))
-			hashcpy(last->peeled, sha1);
+			hashcpy(last->u.value.peeled, sha1);
 	}
 }
 
-static struct ref_array *get_packed_refs(struct ref_cache *refs)
+static struct ref_dir *get_packed_refs(struct ref_cache *refs)
 {
 	if (!refs->did_packed) {
 		const char *packed_refs_file;
@@ -310,9 +750,9 @@ void add_packed_ref(const char *refname, const unsigned char *sha1)
 }
 
 static void get_ref_dir(struct ref_cache *refs, const char *base,
-			struct ref_array *array)
+			struct ref_dir *dir)
 {
-	DIR *dir;
+	DIR *d;
 	const char *path;
 
 	if (*refs->name)
@@ -320,10 +760,8 @@ static void get_ref_dir(struct ref_cache *refs, const char *base,
 	else
 		path = git_path("%s", base);
 
-
-	dir = opendir(path);
-
-	if (dir) {
+	d = opendir(path);
+	if (d) {
 		struct dirent *de;
 		int baselen = strlen(base);
 		char *refname = xmalloc(baselen + 257);
@@ -332,7 +770,7 @@ static void get_ref_dir(struct ref_cache *refs, const char *base,
 		if (baselen && base[baselen-1] != '/')
 			refname[baselen++] = '/';
 
-		while ((de = readdir(dir)) != NULL) {
+		while ((de = readdir(d)) != NULL) {
 			unsigned char sha1[20];
 			struct stat st;
 			int flag;
@@ -353,7 +791,7 @@ static void get_ref_dir(struct ref_cache *refs, const char *base,
 			if (stat(refdir, &st) < 0)
 				continue;
 			if (S_ISDIR(st.st_mode)) {
-				get_ref_dir(refs, refname, array);
+				get_ref_dir(refs, refname, dir);
 				continue;
 			}
 			if (*refs->name) {
@@ -367,48 +805,14 @@ static void get_ref_dir(struct ref_cache *refs, const char *base,
 				hashclr(sha1);
 				flag |= REF_ISBROKEN;
 			}
-			add_ref(array, create_ref_entry(refname, sha1, flag, 1));
+			add_ref(dir, create_ref_entry(refname, sha1, flag, 1));
 		}
 		free(refname);
-		closedir(dir);
+		closedir(d);
 	}
 }
 
-struct warn_if_dangling_data {
-	FILE *fp;
-	const char *refname;
-	const char *msg_fmt;
-};
-
-static int warn_if_dangling_symref(const char *refname, const unsigned char *sha1,
-				   int flags, void *cb_data)
-{
-	struct warn_if_dangling_data *d = cb_data;
-	const char *resolves_to;
-	unsigned char junk[20];
-
-	if (!(flags & REF_ISSYMREF))
-		return 0;
-
-	resolves_to = resolve_ref_unsafe(refname, junk, 0, NULL);
-	if (!resolves_to || strcmp(resolves_to, d->refname))
-		return 0;
-
-	fprintf(d->fp, d->msg_fmt, refname);
-	return 0;
-}
-
-void warn_dangling_symref(FILE *fp, const char *msg_fmt, const char *refname)
-{
-	struct warn_if_dangling_data data;
-
-	data.fp = fp;
-	data.refname = refname;
-	data.msg_fmt = msg_fmt;
-	for_each_rawref(warn_if_dangling_symref, &data);
-}
-
-static struct ref_array *get_loose_refs(struct ref_cache *refs)
+static struct ref_dir *get_loose_refs(struct ref_cache *refs)
 {
 	if (!refs->did_loose) {
 		get_ref_dir(refs, "refs", &refs->loose);
@@ -430,13 +834,13 @@ static int resolve_gitlink_packed_ref(struct ref_cache *refs,
 				      const char *refname, unsigned char *sha1)
 {
 	struct ref_entry *ref;
-	struct ref_array *array = get_packed_refs(refs);
+	struct ref_dir *dir = get_packed_refs(refs);
 
-	ref = search_ref_array(array, refname);
+	ref = find_ref(dir, refname);
 	if (ref == NULL)
 		return -1;
 
-	memcpy(sha1, ref->sha1, 20);
+	memcpy(sha1, ref->u.value.sha1, 20);
 	return 0;
 }
 
@@ -503,10 +907,10 @@ int resolve_gitlink_ref(const char *path, const char *refname, unsigned char *sh
  */
 static int get_packed_ref(const char *refname, unsigned char *sha1)
 {
-	struct ref_array *packed = get_packed_refs(get_ref_cache(NULL));
-	struct ref_entry *entry = search_ref_array(packed, refname);
+	struct ref_dir *packed = get_packed_refs(get_ref_cache(NULL));
+	struct ref_entry *entry = find_ref(packed, refname);
 	if (entry) {
-		hashcpy(sha1, entry->sha1);
+		hashcpy(sha1, entry->u.value.sha1);
 		return 0;
 	}
 	return -1;
@@ -645,23 +1049,10 @@ int read_ref(const char *refname, unsigned char *sha1)
 	return read_ref_full(refname, sha1, 1, NULL);
 }
 
-#define DO_FOR_EACH_INCLUDE_BROKEN 01
-static int do_one_ref(const char *base, each_ref_fn fn, int trim,
-		      int flags, void *cb_data, struct ref_entry *entry)
+int ref_exists(const char *refname)
 {
-	if (prefixcmp(entry->name, base))
-		return 0;
-
-	if (!(flags & DO_FOR_EACH_INCLUDE_BROKEN)) {
-		if (entry->flag & REF_ISBROKEN)
-			return 0; /* ignore broken refs e.g. dangling symref */
-		if (!has_sha1_file(entry->sha1)) {
-			error("%s does not point to a valid object!", entry->name);
-			return 0;
-		}
-	}
-	current_ref = entry;
-	return fn(entry->name + trim, entry->sha1, entry->flag, cb_data);
+	unsigned char sha1[20];
+	return !!resolve_ref_unsafe(refname, sha1, 1, NULL);
 }
 
 static int filter_refs(const char *refname, const unsigned char *sha1, int flags,
@@ -682,10 +1073,10 @@ int peel_ref(const char *refname, unsigned char *sha1)
 	if (current_ref && (current_ref->name == refname
 		|| !strcmp(current_ref->name, refname))) {
 		if (current_ref->flag & REF_KNOWS_PEELED) {
-			hashcpy(sha1, current_ref->peeled);
+			hashcpy(sha1, current_ref->u.value.peeled);
 			return 0;
 		}
-		hashcpy(base, current_ref->sha1);
+		hashcpy(base, current_ref->u.value.sha1);
 		goto fallback;
 	}
 
@@ -693,11 +1084,11 @@ int peel_ref(const char *refname, unsigned char *sha1)
 		return -1;
 
 	if ((flag & REF_ISPACKED)) {
-		struct ref_array *array = get_packed_refs(get_ref_cache(NULL));
-		struct ref_entry *r = search_ref_array(array, refname);
+		struct ref_dir *dir = get_packed_refs(get_ref_cache(NULL));
+		struct ref_entry *r = find_ref(dir, refname);
 
 		if (r != NULL && r->flag & REF_KNOWS_PEELED) {
-			hashcpy(sha1, r->peeled);
+			hashcpy(sha1, r->u.value.peeled);
 			return 0;
 		}
 	}
@@ -714,49 +1105,73 @@ fallback:
 	return -1;
 }
 
+struct warn_if_dangling_data {
+	FILE *fp;
+	const char *refname;
+	const char *msg_fmt;
+};
+
+static int warn_if_dangling_symref(const char *refname, const unsigned char *sha1,
+				   int flags, void *cb_data)
+{
+	struct warn_if_dangling_data *d = cb_data;
+	const char *resolves_to;
+	unsigned char junk[20];
+
+	if (!(flags & REF_ISSYMREF))
+		return 0;
+
+	resolves_to = resolve_ref_unsafe(refname, junk, 0, NULL);
+	if (!resolves_to || strcmp(resolves_to, d->refname))
+		return 0;
+
+	fprintf(d->fp, d->msg_fmt, refname);
+	return 0;
+}
+
+void warn_dangling_symref(FILE *fp, const char *msg_fmt, const char *refname)
+{
+	struct warn_if_dangling_data data;
+
+	data.fp = fp;
+	data.refname = refname;
+	data.msg_fmt = msg_fmt;
+	for_each_rawref(warn_if_dangling_symref, &data);
+}
+
 static int do_for_each_ref(const char *submodule, const char *base, each_ref_fn fn,
 			   int trim, int flags, void *cb_data)
 {
-	int retval = 0, p = 0, l = 0;
 	struct ref_cache *refs = get_ref_cache(submodule);
-	struct ref_array *packed = get_packed_refs(refs);
-	struct ref_array *loose = get_loose_refs(refs);
+	struct ref_dir *packed_dir = get_packed_refs(refs);
+	struct ref_dir *loose_dir = get_loose_refs(refs);
+	int retval = 0;
 
-	sort_ref_array(packed);
-	sort_ref_array(loose);
-	while (p < packed->nr && l < loose->nr) {
-		struct ref_entry *entry;
-		int cmp = strcmp(packed->refs[p]->name, loose->refs[l]->name);
-		if (!cmp) {
-			p++;
-			continue;
-		}
-		if (cmp > 0) {
-			entry = loose->refs[l++];
-		} else {
-			entry = packed->refs[p++];
-		}
-		retval = do_one_ref(base, fn, trim, flags, cb_data, entry);
-		if (retval)
-			goto end_each;
+	if (base && *base) {
+		packed_dir = find_containing_dir(packed_dir, base, 0);
+		loose_dir = find_containing_dir(loose_dir, base, 0);
 	}
 
-	if (l < loose->nr) {
-		p = l;
-		packed = loose;
+	if (packed_dir && loose_dir) {
+		sort_ref_dir(packed_dir);
+		sort_ref_dir(loose_dir);
+		retval = do_for_each_ref_in_dirs(
+				packed_dir, loose_dir,
+				base, fn, trim, flags, cb_data);
+	} else if (packed_dir) {
+		sort_ref_dir(packed_dir);
+		retval = do_for_each_ref_in_dir(
+				packed_dir, 0,
+				base, fn, trim, flags, cb_data);
+	} else if (loose_dir) {
+		sort_ref_dir(loose_dir);
+		retval = do_for_each_ref_in_dir(
+				loose_dir, 0,
+				base, fn, trim, flags, cb_data);
 	}
 
-	for (; p < packed->nr; p++) {
-		retval = do_one_ref(base, fn, trim, flags, cb_data, packed->refs[p]);
-		if (retval)
-			goto end_each;
-	}
-
-end_each:
-	current_ref = NULL;
 	return retval;
 }
-
 
 static int do_head_ref(const char *submodule, each_ref_fn fn, void *cb_data)
 {
@@ -908,101 +1323,6 @@ int for_each_rawref(each_ref_fn fn, void *cb_data)
 			       DO_FOR_EACH_INCLUDE_BROKEN, cb_data);
 }
 
-/*
- * Make sure "ref" is something reasonable to have under ".git/refs/";
- * We do not like it if:
- *
- * - any path component of it begins with ".", or
- * - it has double dots "..", or
- * - it has ASCII control character, "~", "^", ":" or SP, anywhere, or
- * - it ends with a "/".
- * - it ends with ".lock"
- * - it contains a "\" (backslash)
- */
-
-/* Return true iff ch is not allowed in reference names. */
-static inline int bad_ref_char(int ch)
-{
-	if (((unsigned) ch) <= ' ' || ch == 0x7f ||
-	    ch == '~' || ch == '^' || ch == ':' || ch == '\\')
-		return 1;
-	/* 2.13 Pattern Matching Notation */
-	if (ch == '*' || ch == '?' || ch == '[') /* Unsupported */
-		return 1;
-	return 0;
-}
-
-/*
- * Try to read one refname component from the front of refname.  Return
- * the length of the component found, or -1 if the component is not
- * legal.
- */
-static int check_refname_component(const char *refname, int flags)
-{
-	const char *cp;
-	char last = '\0';
-
-	for (cp = refname; ; cp++) {
-		char ch = *cp;
-		if (ch == '\0' || ch == '/')
-			break;
-		if (bad_ref_char(ch))
-			return -1; /* Illegal character in refname. */
-		if (last == '.' && ch == '.')
-			return -1; /* Refname contains "..". */
-		if (last == '@' && ch == '{')
-			return -1; /* Refname contains "@{". */
-		last = ch;
-	}
-	if (cp == refname)
-		return -1; /* Component has zero length. */
-	if (refname[0] == '.') {
-		if (!(flags & REFNAME_DOT_COMPONENT))
-			return -1; /* Component starts with '.'. */
-		/*
-		 * Even if leading dots are allowed, don't allow "."
-		 * as a component (".." is prevented by a rule above).
-		 */
-		if (refname[1] == '\0')
-			return -1; /* Component equals ".". */
-	}
-	if (cp - refname >= 5 && !memcmp(cp - 5, ".lock", 5))
-		return -1; /* Refname ends with ".lock". */
-	return cp - refname;
-}
-
-int check_refname_format(const char *refname, int flags)
-{
-	int component_len, component_count = 0;
-
-	while (1) {
-		/* We are at the start of a path component. */
-		component_len = check_refname_component(refname, flags);
-		if (component_len < 0) {
-			if ((flags & REFNAME_REFSPEC_PATTERN) &&
-					refname[0] == '*' &&
-					(refname[1] == '\0' || refname[1] == '/')) {
-				/* Accept one wildcard as a full refname component. */
-				flags &= ~REFNAME_REFSPEC_PATTERN;
-				component_len = 1;
-			} else {
-				return -1;
-			}
-		}
-		component_count++;
-		if (refname[component_len] == '\0')
-			break;
-		/* Skip to next component. */
-		refname += component_len + 1;
-	}
-
-	if (refname[component_len - 1] == '.')
-		return -1; /* Refname ends with '.'. */
-	if (!(flags & REFNAME_ALLOW_ONELEVEL) && component_count < 2)
-		return -1; /* Refname has only one component. */
-	return 0;
-}
-
 const char *prettify_refname(const char *name)
 {
 	return name + (
@@ -1070,35 +1390,6 @@ static int remove_empty_directories(const char *file)
 	strbuf_release(&path);
 
 	return result;
-}
-
-/*
- * Return true iff a reference named refname could be created without
- * conflicting with the name of an existing reference.  If oldrefname
- * is non-NULL, ignore potential conflicts with oldrefname (e.g.,
- * because oldrefname is scheduled for deletion in the same
- * operation).
- */
-static int is_refname_available(const char *refname, const char *oldrefname,
-				struct ref_array *array)
-{
-	int i, namlen = strlen(refname); /* e.g. 'foo/bar' */
-	for (i = 0; i < array->nr; i++ ) {
-		struct ref_entry *entry = array->refs[i];
-		/* entry->name could be 'foo' or 'foo/bar/baz' */
-		if (!oldrefname || strcmp(oldrefname, entry->name)) {
-			int len = strlen(entry->name);
-			int cmplen = (namlen < len) ? namlen : len;
-			const char *lead = (namlen < len) ? entry->name : refname;
-			if (!strncmp(refname, entry->name, cmplen) &&
-			    lead[cmplen] == '/') {
-				error("'%s' exists; cannot create '%s'",
-				      entry->name, refname);
-				return 0;
-			}
-		}
-	}
-	return 1;
 }
 
 /*
@@ -1286,36 +1577,44 @@ struct ref_lock *lock_any_ref_for_update(const char *refname,
 	return lock_ref_sha1_basic(refname, old_sha1, flags, NULL);
 }
 
+struct repack_without_ref_sb {
+	const char *refname;
+	int fd;
+};
+
+static int repack_without_ref_fn(const char *refname, const unsigned char *sha1,
+				 int flags, void *cb_data)
+{
+	struct repack_without_ref_sb *data = cb_data;
+	char line[PATH_MAX + 100];
+	int len;
+
+	if (!strcmp(data->refname, refname))
+		return 0;
+	len = snprintf(line, sizeof(line), "%s %s\n",
+		       sha1_to_hex(sha1), refname);
+	/* this should not happen but just being defensive */
+	if (len > sizeof(line))
+		die("too long a refname '%s'", refname);
+	write_or_die(data->fd, line, len);
+	return 0;
+}
+
 static struct lock_file packlock;
 
 static int repack_without_ref(const char *refname)
 {
-	struct ref_array *packed;
-	int fd, i;
-
-	packed = get_packed_refs(get_ref_cache(NULL));
-	if (search_ref_array(packed, refname) == NULL)
+	struct repack_without_ref_sb data;
+	struct ref_dir *packed = get_packed_refs(get_ref_cache(NULL));
+	if (find_ref(packed, refname) == NULL)
 		return 0;
-	fd = hold_lock_file_for_update(&packlock, git_path("packed-refs"), 0);
-	if (fd < 0) {
+	data.refname = refname;
+	data.fd = hold_lock_file_for_update(&packlock, git_path("packed-refs"), 0);
+	if (data.fd < 0) {
 		unable_to_lock_error(git_path("packed-refs"), errno);
 		return error("cannot delete '%s' from packed refs", refname);
 	}
-
-	for (i = 0; i < packed->nr; i++) {
-		char line[PATH_MAX + 100];
-		int len;
-		struct ref_entry *ref = packed->refs[i];
-
-		if (!strcmp(refname, ref->name))
-			continue;
-		len = snprintf(line, sizeof(line), "%s %s\n",
-			       sha1_to_hex(ref->sha1), ref->name);
-		/* this should not happen but just being defensive */
-		if (len > sizeof(line))
-			die("too long a refname '%s'", ref->name);
-		write_or_die(fd, line, len);
-	}
+	do_for_each_ref_in_dir(packed, 0, "", repack_without_ref_fn, 0, 0, &data);
 	return commit_lock_file(&packlock);
 }
 
@@ -1926,10 +2225,10 @@ int for_each_reflog_ent(const char *refname, each_reflog_ent_fn fn, void *cb_dat
 
 static int do_for_each_reflog(const char *base, each_ref_fn fn, void *cb_data)
 {
-	DIR *dir = opendir(git_path("logs/%s", base));
+	DIR *d = opendir(git_path("logs/%s", base));
 	int retval = 0;
 
-	if (dir) {
+	if (d) {
 		struct dirent *de;
 		int baselen = strlen(base);
 		char *log = xmalloc(baselen + 257);
@@ -1938,7 +2237,7 @@ static int do_for_each_reflog(const char *base, each_ref_fn fn, void *cb_data)
 		if (baselen && base[baselen-1] != '/')
 			log[baselen++] = '/';
 
-		while ((de = readdir(dir)) != NULL) {
+		while ((de = readdir(d)) != NULL) {
 			struct stat st;
 			int namelen;
 
@@ -1965,7 +2264,7 @@ static int do_for_each_reflog(const char *base, each_ref_fn fn, void *cb_data)
 				break;
 		}
 		free(log);
-		closedir(dir);
+		closedir(d);
 	}
 	else if (*base)
 		return errno;
@@ -2002,12 +2301,6 @@ int update_ref(const char *action, const char *refname,
 		return 1;
 	}
 	return 0;
-}
-
-int ref_exists(const char *refname)
-{
-	unsigned char sha1[20];
-	return !!resolve_ref_unsafe(refname, sha1, 1, NULL);
 }
 
 struct ref *find_ref_by_name(const struct ref *list, const char *name)
