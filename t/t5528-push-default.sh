@@ -71,4 +71,48 @@ test_expect_success '"upstream" does not push when remotes do not match' '
 	test_must_fail git push parent2
 '
 
+test_expect_success 'push from/to new branch with upstream, matching and simple' '
+	git checkout -b new-branch &&
+	test_push_failure simple &&
+	test_push_failure matching &&
+	test_push_failure upstream
+'
+
+test_expect_success 'push from/to new branch with current creates remote branch' '
+	test_config branch.new-branch.remote repo1 &&
+	git checkout new-branch &&
+	test_push_success current new-branch
+'
+
+test_expect_success 'push to existing branch, with no upstream configured' '
+	test_config branch.master.remote repo1 &&
+	git checkout master &&
+	test_push_failure simple &&
+	test_push_failure upstream
+'
+
+test_expect_success 'push to existing branch, upstream configured with same name' '
+	test_config branch.master.remote repo1 &&
+	test_config branch.master.merge refs/heads/master &&
+	git checkout master &&
+	test_commit six &&
+	test_push_success upstream master &&
+	test_commit seven &&
+	test_push_success simple master
+'
+
+test_expect_success 'push to existing branch, upstream configured with different name' '
+	test_config branch.master.remote repo1 &&
+	test_config branch.master.merge refs/heads/other-name &&
+	git checkout master &&
+	test_commit eight &&
+	test_push_success upstream other-name &&
+	test_commit nine &&
+	test_push_failure simple &&
+	git --git-dir=repo1 log -1 --format="%h %s" "other-name" >expect-other-name &&
+	test_push_success current master &&
+	git --git-dir=repo1 log -1 --format="%h %s" "other-name" >actual-other-name &&
+	test_cmp expect-other-name actual-other-name
+'
+
 test_done

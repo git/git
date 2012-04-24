@@ -76,7 +76,44 @@ static int push_url_of_remote(struct remote *remote, const char ***url_p)
 	return remote->url_nr;
 }
 
-static void setup_push_upstream(struct remote *remote)
+static NORETURN int die_push_simple(struct branch *branch, struct remote *remote) {
+	/*
+	 * There's no point in using shorten_unambiguous_ref here,
+	 * as the ambiguity would be on the remote side, not what
+	 * we have locally. Plus, this is supposed to be the simple
+	 * mode. If the user is doing something crazy like setting
+	 * upstream to a non-branch, we should probably be showing
+	 * them the big ugly fully qualified ref.
+	 */
+	const char *advice_maybe = "";
+	const char *short_upstream =
+		skip_prefix(branch->merge[0]->src, "refs/heads/");
+
+	if (!short_upstream)
+		short_upstream = branch->merge[0]->src;
+	/*
+	 * Don't show advice for people who explicitely set
+	 * push.default.
+	 */
+	if (push_default == PUSH_DEFAULT_UNSPECIFIED)
+		advice_maybe = _("\n"
+				 "To choose either option permanently, "
+				 "see push.default in 'git help config'.");
+	die(_("The upstream branch of your current branch does not match\n"
+	      "the name of your current branch.  To push to the upstream branch\n"
+	      "on the remote, use\n"
+	      "\n"
+	      "    git push %s HEAD:%s\n"
+	      "\n"
+	      "To push to the branch of the same name on the remote, use\n"
+	      "\n"
+	      "    git push %s %s\n"
+	      "%s"),
+	    remote->name, short_upstream,
+	    remote->name, branch->name, advice_maybe);
+}
+
+static void setup_push_upstream(struct remote *remote, int simple)
 {
 	struct strbuf refspec = STRBUF_INIT;
 	struct branch *branch = branch_get(NULL);
@@ -103,6 +140,8 @@ static void setup_push_upstream(struct remote *remote)
 		      "your current branch '%s', without telling me what to push\n"
 		      "to update which remote branch."),
 		    remote->name, branch->name);
+	if (simple && strcmp(branch->refname, branch->merge[0]->src))
+		die_push_simple(branch, remote);
 
 	strbuf_addf(&refspec, "%s:%s", branch->name, branch->merge[0]->src);
 	add_refspec(refspec.buf);
@@ -119,8 +158,12 @@ static void setup_default_push_refspecs(struct remote *remote)
 		add_refspec(":");
 		break;
 
+	case PUSH_DEFAULT_SIMPLE:
+		setup_push_upstream(remote, 1);
+		break;
+
 	case PUSH_DEFAULT_UPSTREAM:
-		setup_push_upstream(remote);
+		setup_push_upstream(remote, 0);
 		break;
 
 	case PUSH_DEFAULT_CURRENT:
