@@ -1685,10 +1685,14 @@ push.default::
   shape and then push them out with a single command.  It is not
   appropriate for pushing into a repository shared by multiple users,
   since locally stalled branches will attempt a non-fast forward push
-  if other users updated the branch.  This is the default.
+  if other users updated the branch.
+  +
+  This is currently the default, but Git 2.0 will change the default
+  to `simple`.
 * `simple` - like `upstream`, but refuses to push if the upstream
   branch's name is different from the local one. This is the safest
-  option and is well-suited for beginners.
+  option and is well-suited for beginners. It will become the default
+  in Git 2.0.
 * `upstream` - push the current branch to its upstream branch.
   With this, `git push` will update the same remote ref as the one which
   is merged by `git pull`, making `push` and `pull` symmetrical.
