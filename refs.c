@@ -765,7 +765,8 @@ void add_packed_ref(const char *refname, const unsigned char *sha1)
 
 /*
  * Read the loose references for refs from the namespace dirname.
- * dirname must end with '/'.
+ * dirname must end with '/'.  dir must be the directory entry
+ * corresponding to dirname.
  */
 static void get_ref_dir(struct ref_cache *refs, const char *dirname,
 			struct ref_dir *dir)
@@ -806,7 +807,8 @@ static void get_ref_dir(struct ref_cache *refs, const char *dirname,
 			; /* silently ignore */
 		} else if (S_ISDIR(st.st_mode)) {
 			strbuf_addch(&refname, '/');
-			get_ref_dir(refs, refname.buf, dir);
+			get_ref_dir(refs, refname.buf,
+				    &search_for_subdir(dir, refname.buf, 1)->u.subdir);
 		} else {
 			if (*refs->name) {
 				hashclr(sha1);
@@ -819,7 +821,8 @@ static void get_ref_dir(struct ref_cache *refs, const char *dirname,
 				hashclr(sha1);
 				flag |= REF_ISBROKEN;
 			}
-			add_ref(dir, create_ref_entry(refname.buf, sha1, flag, 1));
+			add_entry_to_dir(dir,
+					 create_ref_entry(refname.buf, sha1, flag, 1));
 		}
 		strbuf_setlen(&refname, dirnamelen);
 	}
@@ -830,7 +833,8 @@ static void get_ref_dir(struct ref_cache *refs, const char *dirname,
 static struct ref_dir *get_loose_refs(struct ref_cache *refs)
 {
 	if (!refs->did_loose) {
-		get_ref_dir(refs, "refs/", &refs->loose);
+		get_ref_dir(refs, "refs/",
+			    &search_for_subdir(&refs->loose, "refs/", 1)->u.subdir);
 		refs->did_loose = 1;
 	}
 	return &refs->loose;
