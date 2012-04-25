@@ -203,8 +203,7 @@ void load_command_list(const char *prefix,
 	exclude_cmds(other_cmds, main_cmds);
 }
 
-void list_commands(const char *title, struct cmdnames *main_cmds,
-		   struct cmdnames *other_cmds)
+void list_commands(struct cmdnames *main_cmds, struct cmdnames *other_cmds)
 {
 	int i, longest = 0;
 
@@ -217,23 +216,14 @@ void list_commands(const char *title, struct cmdnames *main_cmds,
 
 	if (main_cmds->cnt) {
 		const char *exec_path = git_exec_path();
-		printf_ln(_("available %s in '%s'"), title, exec_path);
-		/* TRANSLATORS: this must align with "available %s in '%s'" */
-		printf(_("----------------"));
-		mput_char('-', strlen(title) + strlen(exec_path));
+		printf_ln(_("available git commands in '%s'"), exec_path);
 		putchar('\n');
 		pretty_print_string_list(main_cmds, longest);
 		putchar('\n');
 	}
 
 	if (other_cmds->cnt) {
-		printf_ln(_("%s available from elsewhere on your $PATH"), title);
-		/* TRANSLATORS:
-		 * this must align with
-		 * "%s available from elsewhere on your $PATH"
-		 */
-		printf(_("---------------------------------------"));
-		mput_char('-', strlen(title));
+		printf_ln(_("git commands available from elsewhere on your $PATH"));
 		putchar('\n');
 		pretty_print_string_list(other_cmds, longest);
 		putchar('\n');
