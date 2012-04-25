@@ -91,7 +91,7 @@ test_expect_success 'no config, edited' '
 		cd "$git" &&
 		echo line >>file1 &&
 		git commit -a -m "change 5" &&
-		EDITOR="\"$ed\"" git p4 submit &&
+		P4EDITOR="" EDITOR="\"$ed\"" git p4 submit &&
 		p4 changes //depot/... >wc &&
 		test_line_count = 5 wc
 	)
