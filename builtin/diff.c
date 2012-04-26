@@ -327,7 +327,7 @@ int cmd_diff(int argc, const char **argv, const char *prefix)
 				add_head_to_pending(&rev);
 				if (!rev.pending.nr) {
 					struct tree *tree;
-					tree = lookup_tree((const unsigned char*)EMPTY_TREE_SHA1_BIN);
+					tree = lookup_tree(EMPTY_TREE_SHA1_BIN);
 					add_pending_object(&rev, &tree->object, "HEAD");
 				}
 				break;

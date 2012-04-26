@@ -3146,6 +3146,7 @@ void diff_setup(struct diff_options *options)
 	options->rename_limit = -1;
 	options->dirstat_permille = diff_dirstat_permille_default;
 	options->context = 3;
+	DIFF_OPT_SET(options, RENAME_EMPTY);
 
 	options->change = diff_change;
 	options->add_remove = diff_addremove;
@@ -3516,6 +3517,10 @@ int diff_opt_parse(struct diff_options *options, const char **av, int ac)
 	}
 	else if (!strcmp(arg, "--no-renames"))
 		options->detect_rename = 0;
+	else if (!strcmp(arg, "--rename-empty"))
+		DIFF_OPT_SET(options, RENAME_EMPTY);
+	else if (!strcmp(arg, "--no-rename-empty"))
+		DIFF_OPT_CLR(options, RENAME_EMPTY);
 	else if (!strcmp(arg, "--relative"))
 		DIFF_OPT_SET(options, RELATIVE_NAME);
 	else if (!prefixcmp(arg, "--relative=")) {

@@ -164,7 +164,7 @@ static void write_message(struct strbuf *msgbuf, const char *filename)
 
 static struct tree *empty_tree(void)
 {
-	return lookup_tree((const unsigned char *)EMPTY_TREE_SHA1_BIN);
+	return lookup_tree(EMPTY_TREE_SHA1_BIN);
 }
 
 static int error_dirty_index(struct replay_opts *opts)
