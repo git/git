@@ -1,0 +1,31 @@
+#!/bin/sh
+
+short=
+case "$1" in --short|-s) short=t; shift ;; esac
+
+parse_version='
+	s/^\(v[.0-9]*\)\(-\([1-9][0-9]*\)-g\([0-9a-f][0-9a-f]*\)\)*$/v=\1 n=\3 r=\4/
+'
+
+git for-each-ref --format='%(refname)' refs/heads/maint\* |
+sed -e 's|^refs/heads/||' -e '/^maint[^-]/d' |
+while read track
+do
+	case "$short" in
+	t)
+		echo "$track	$(git describe "refs/heads/$track")"
+		;;
+	*)
+		v= n= r=
+		eval $(git describe "refs/heads/$track" | sed -e "$parse_version")
+
+		echo "* $v..$track"
+		case "$n" in
+		"")
+			;;
+		*)
+			git --no-pager shortlog --no-merges "$v..$track"
+			;;
+		esac
+	esac
+done
