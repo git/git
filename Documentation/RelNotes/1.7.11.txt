@@ -86,6 +86,17 @@ Unless otherwise noted, all the fixes since v1.7.10 in the maintenance
 releases are contained in this release (see release notes to them for
 details).
 
+ * The i18n of error message "git stash save" was not properly done.
+   (merge ed3c400 rl/maint-stash-i18n-save-error later to maint).
+
+ * The report from "git fetch" said "new branch" even for a non branch
+   ref.
+   (merge 0997ada mb/fetch-call-a-non-branch-a-ref later to maint).
+
+ * The "diff --no-index" codepath used limited-length buffers, risking
+   pathnames getting truncated.  Update it to use the strbuf API.
+   (merge 875b91b jm/maint-strncpy-diff-no-index later to maint).
+
  * The parser in "fast-import" did not diagnose ":9" style references
    that is not followed by required SP/LF as an error.
    (merge 06454cb pw/fast-import-dataref-parsing later to maint).
@@ -113,56 +124,3 @@ details).
  * Giving "--continue" to a conflicted "rebase -i" session skipped a
    commit that only results in changes to submodules.
    (merge a6754cd jk/rebase-i-submodule-conflict-only later to maint).
-
- * When PATH contains an unreadable directory, alias expansion code
-   did not kick in, and failed with an error that said "git-subcmd"
-   was not found.
-   (merge 38f865c jk/run-command-eacces later to maint).
-
- * The 'push to upstream' implementation was broken in some corner
-   cases. "git push $there" without refspec, when the current branch
-   is set to push to a remote different from $there, used to push to
-   $there using the upstream information to a remote unreleated to
-   $there.
-   (merge 135dade jc/push-upstream-sanity later to maint).
-
- * "git clean -d -f" (not "-d -f -f") is supposed to protect nested
-   working trees of independent git repositories that exist in the
-   current project working tree from getting removed, but the
-   protection applied only to such working trees that are at the
-   top-level of the current project by mistake.
-   (merge ae2f203 jc/maint-clean-nested-worktree-in-subdir later to maint).
-
- * Rename detection logic used to match two empty files as renames
-   during merge-recursive, leading unnatural mismerges.
-   (merge 4f7cb99 jk/diff-no-rename-empty later to maint).
-
- * An age-old corner case bug in combine diff (only triggered with -U0
-   and the hunk at the beginning of the file needs to be shown) has
-   been fixed.
-   (merge e5e9b56 rs/combine-diff-zero-context-at-the-beginning later to maint).
-
- * When "git commit --template F" errors out because the user did not
-   touch the message, it claimed that it aborts due to "empty
-   message", which was utterly wrong.
-   (merge 1f08c2c jc/commit-unedited-template later to maint).
-
- * "git add -p" is not designed to deal with unmerged paths but did
-   not exclude them and tried to apply funny patches only to fail.
-   (merge 4066bd6 jk/add-p-skip-conflicts later to maint).
-
- * "git commit --author=$name" did not tell the name that was being
-   recorded in the resulting commit to hooks, even though it does do
-   so when the end user overrode the authorship via the
-   "GIT_AUTHOR_NAME" environment variable.
-   (merge 7dfe8ad jc/commit-hook-authorship later to maint).
-
- * The regexp configured with diff.wordregex was incorrectly reused
-   across files.
-   (merge 6440d34 tr/maint-word-diff-regex-sticky later to maint).
-
- * Running "notes merge --commit" failed to perform correctly when run
-   from any directory inside $GIT_DIR/.  When "notes merge" stops with
-   conflicts, $GIT_DIR/NOTES_MERGE_WORKTREE is the place a user edits
-   to resolve it.
-   (merge dabba59 jh/notes-merge-in-git-dir-worktree later to maint).
