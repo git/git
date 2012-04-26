@@ -52,7 +52,7 @@ static int get_mode(const char *path, int *mode)
 }
 
 static int queue_diff(struct diff_options *o,
-		const char *name1, const char *name2)
+		      const char *name1, const char *name2)
 {
 	int mode1 = 0, mode2 = 0;
 
@@ -63,10 +63,11 @@ static int queue_diff(struct diff_options *o,
 		return error("file/directory conflict: %s, %s", name1, name2);
 
 	if (S_ISDIR(mode1) || S_ISDIR(mode2)) {
-		char buffer1[PATH_MAX], buffer2[PATH_MAX];
+		struct strbuf buffer1 = STRBUF_INIT;
+		struct strbuf buffer2 = STRBUF_INIT;
 		struct string_list p1 = STRING_LIST_INIT_DUP;
 		struct string_list p2 = STRING_LIST_INIT_DUP;
-		int len1 = 0, len2 = 0, i1, i2, ret = 0;
+		int i1, i2, ret = 0;
 
 		if (name1 && read_directory(name1, &p1))
 			return -1;
@@ -76,19 +77,15 @@ static int queue_diff(struct diff_options *o,
 		}
 
 		if (name1) {
-			len1 = strlen(name1);
-			if (len1 > 0 && name1[len1 - 1] == '/')
-				len1--;
-			memcpy(buffer1, name1, len1);
-			buffer1[len1++] = '/';
+			strbuf_addstr(&buffer1, name1);
+			if (buffer1.len && buffer1.buf[buffer1.len - 1] != '/')
+				strbuf_addch(&buffer1, '/');
 		}
 
 		if (name2) {
-			len2 = strlen(name2);
-			if (len2 > 0 && name2[len2 - 1] == '/')
-				len2--;
-			memcpy(buffer2, name2, len2);
-			buffer2[len2++] = '/';
+			strbuf_addstr(&buffer2, name2);
+			if (buffer2.len && buffer2.buf[buffer2.len - 1] != '/')
+				strbuf_addch(&buffer2, '/');
 		}
 
 		for (i1 = i2 = 0; !ret && (i1 < p1.nr || i2 < p2.nr); ) {
@@ -100,29 +97,28 @@ static int queue_diff(struct diff_options *o,
 			else if (i2 == p2.nr)
 				comp = -1;
 			else
-				comp = strcmp(p1.items[i1].string,
-					p2.items[i2].string);
+				comp = strcmp(p1.items[i1].string, p2.items[i2].string);
 
 			if (comp > 0)
 				n1 = NULL;
 			else {
-				n1 = buffer1;
-				strncpy(buffer1 + len1, p1.items[i1++].string,
-						PATH_MAX - len1);
+				strbuf_addstr(&buffer1, p1.items[i1++].string);
+				n1 = buffer1.buf;
 			}
 
 			if (comp < 0)
 				n2 = NULL;
 			else {
-				n2 = buffer2;
-				strncpy(buffer2 + len2, p2.items[i2++].string,
-						PATH_MAX - len2);
+				strbuf_addstr(&buffer2, p2.items[i2++].string);
+				n2 = buffer2.buf;
 			}
 
 			ret = queue_diff(o, n1, n2);
 		}
 		string_list_clear(&p1, 0);
 		string_list_clear(&p2, 0);
+		strbuf_reset(&buffer1);
+		strbuf_reset(&buffer2);
 
 		return ret;
 	} else {
