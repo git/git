@@ -3,6 +3,7 @@
 test_description='word diff colors'
 
 . ./test-lib.sh
+. "$TEST_DIRECTORY"/diff-lib.sh
 
 cat >pre.simple <<-\EOF
 	h(4)
@@ -293,6 +294,10 @@ test_expect_success '--word-diff=none' '
 	word_diff --word-diff=plain --word-diff=none
 '
 
+test_expect_success 'unset default driver' '
+	test_unconfig diff.wordregex
+'
+
 test_language_driver bibtex
 test_language_driver cpp
 test_language_driver csharp
@@ -346,6 +351,37 @@ test_expect_success 'word-diff with no newline at EOF' '
 	printf "%s" "a a a a a" >pre &&
 	printf "%s" "a a ab a a" >post &&
 	word_diff --word-diff=plain
+'
+
+test_expect_success 'setup history with two files' '
+	echo "a b; c" >a.tex &&
+	echo "a b; c" >z.txt &&
+	git add a.tex z.txt &&
+	git commit -minitial &&
+
+	# modify both
+	echo "a bx; c" >a.tex &&
+	echo "a bx; c" >z.txt &&
+	git commit -mmodified -a
+'
+
+test_expect_success 'wordRegex for the first file does not apply to the second' '
+	echo "*.tex diff=tex" >.gitattributes &&
+	git config diff.tex.wordRegex "[a-z]+|." &&
+	cat >expect <<-\EOF &&
+		diff --git a/a.tex b/a.tex
+		--- a/a.tex
+		+++ b/a.tex
+		@@ -1 +1 @@
+		a [-b-]{+bx+}; c
+		diff --git a/z.txt b/z.txt
+		--- a/z.txt
+		+++ b/z.txt
+		@@ -1 +1 @@
+		a [-b;-]{+bx;+} c
+	EOF
+	git diff --word-diff HEAD~ >actual &&
+	compare_diff_patch expect actual
 '
 
 test_done
