@@ -136,6 +136,9 @@ our $export_ok = "++GITWEB_EXPORT_OK++";
 # don't generate age column on the projects list page
 our $omit_age_column = 0;
 
+# don't generate information about owners of repositories
+our $omit_owner=0;
+
 # show repository only if this subroutine returns true
 # when given the path to the project, for example:
 #    sub { return -e "$_[0]/git-daemon-export-ok"; }
@@ -5465,8 +5468,10 @@ sub git_project_list_rows {
 		                        ? esc_html_match_hl_chopped($pr->{'descr_long'},
 		                                                    $pr->{'descr'}, $search_regexp)
 		                        : esc_html($pr->{'descr'})) .
-		      "</td>\n" .
-		      "<td><i>" . chop_and_escape_str($pr->{'owner'}, 15) . "</i></td>\n";
+		      "</td>\n";
+		unless ($omit_owner) {
+		        print "<td><i>" . chop_and_escape_str($pr->{'owner'}, 15) . "</i></td>\n";
+		}
 		unless ($omit_age_column) {
 		        print "<td class=\"". age_class($pr->{'age'}) . "\">" .
 		            (defined $pr->{'age_string'} ? $pr->{'age_string'} : "No commits") . "</td>\n";
@@ -5502,7 +5507,9 @@ sub git_project_list_body {
 	                                 'tagfilter'  => $tagfilter)
 		if ($tagfilter || $search_regexp);
 	# fill the rest
-	my @all_fields = $omit_age_column ? ('descr', 'descr_long', 'owner', 'ctags', 'category') : ();
+	my @all_fields = ('descr', 'descr_long', 'ctags', 'category');
+	push @all_fields, ('age', 'age_string') unless($omit_age_column);
+	push @all_fields, 'owner' unless($omit_owner);
 	@projects = fill_project_list_info(\@projects, @all_fields);
 
 	$order ||= $default_projects_order;
@@ -5534,7 +5541,7 @@ sub git_project_list_body {
 		}
 		print_sort_th('project', $order, 'Project');
 		print_sort_th('descr', $order, 'Description');
-		print_sort_th('owner', $order, 'Owner');
+		print_sort_th('owner', $order, 'Owner') unless $omit_owner;
 		print_sort_th('age', $order, 'Last Change') unless $omit_age_column;
 		print "<th></th>\n" . # for links
 		      "</tr>\n";
@@ -6288,8 +6295,10 @@ sub git_summary {
 
 	print "<div class=\"title\">&nbsp;</div>\n";
 	print "<table class=\"projects_list\">\n" .
-	      "<tr id=\"metadata_desc\"><td>description</td><td>" . esc_html($descr) . "</td></tr>\n" .
-	      "<tr id=\"metadata_owner\"><td>owner</td><td>" . esc_html($owner) . "</td></tr>\n";
+	      "<tr id=\"metadata_desc\"><td>description</td><td>" . esc_html($descr) . "</td></tr>\n";
+        unless ($omit_owner) {
+	        print  "<tr id=\"metadata_owner\"><td>owner</td><td>" . esc_html($owner) . "</td></tr>\n";
+        }
 	if (defined $cd{'rfc2822'}) {
 		print "<tr id=\"metadata_lchange\"><td>last change</td>" .
 		      "<td>".format_timestamp_html(\%cd)."</td></tr>\n";
