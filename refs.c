@@ -106,6 +106,8 @@ struct ref_value {
 	unsigned char peeled[20];
 };
 
+struct ref_cache;
+
 struct ref_dir {
 	int nr, alloc;
 
@@ -116,6 +118,9 @@ struct ref_dir {
 	 * after the addition of every reference.
 	 */
 	int sorted;
+
+	/* A pointer to the ref_cache that contains this ref_dir. */
+	struct ref_cache *ref_cache;
 
 	struct ref_entry **entries;
 };
@@ -234,12 +239,14 @@ static void clear_ref_dir(struct ref_dir *dir)
  * dirname is the name of the directory with a trailing slash (e.g.,
  * "refs/heads/") or "" for the top-level directory.
  */
-static struct ref_entry *create_dir_entry(const char *dirname)
+static struct ref_entry *create_dir_entry(struct ref_cache *ref_cache,
+					  const char *dirname)
 {
 	struct ref_entry *direntry;
 	int len = strlen(dirname);
 	direntry = xcalloc(1, sizeof(struct ref_entry) + len + 1);
 	memcpy(direntry->name, dirname, len + 1);
+	direntry->u.subdir.ref_cache = ref_cache;
 	direntry->flag = REF_DIR;
 	return direntry;
 }
@@ -296,7 +303,7 @@ static struct ref_dir *search_for_subdir(struct ref_dir *dir,
 	if (!entry) {
 		if (!mkdir)
 			return NULL;
-		entry = create_dir_entry(subdirname);
+		entry = create_dir_entry(dir->ref_cache, subdirname);
 		add_entry_to_dir(dir, entry);
 	}
 	return get_ref_dir(entry);
@@ -753,7 +760,7 @@ static struct ref_dir *get_packed_refs(struct ref_cache *refs)
 		const char *packed_refs_file;
 		FILE *f;
 
-		refs->packed = create_dir_entry("");
+		refs->packed = create_dir_entry(refs, "");
 		if (*refs->name)
 			packed_refs_file = git_path_submodule(refs->name, "packed-refs");
 		else
@@ -843,7 +850,7 @@ static void read_loose_refs(struct ref_cache *refs, const char *dirname,
 static struct ref_dir *get_loose_refs(struct ref_cache *refs)
 {
 	if (!refs->loose) {
-		refs->loose = create_dir_entry("");
+		refs->loose = create_dir_entry(refs, "");
 		read_loose_refs(refs, "refs/",
 				search_for_subdir(get_ref_dir(refs->loose),
 						  "refs/", 1));
