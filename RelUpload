@@ -1,0 +1,17 @@
+#!/bin/sh
+
+pw=$(sed -ne '/code.google.com login jch2355@gmail.com/s/.* password //p' $HOME/.netrc)
+
+for s in git-*.sign
+do
+	test -f "$s" &&
+	v=$(expr "$s" : '^git-\(.*\)\.sign$') &&
+
+	googlecode_upload.py -p git-core -u jch2355@gmail.com -w "$pw" \
+	    -s "Git $v" git-$v.tar.gz &&
+	googlecode_upload.py -p git-core -u jch2355@gmail.com -w "$pw" \
+	    -s "Git $v documentation pages (HTML)" git-htmldocs-$v.tar.gz &&
+	googlecode_upload.py -p git-core -u jch2355@gmail.com -w "$pw" \
+	    -s "Git $v documentation pages (man)" git-manpages-$v.tar.gz &&
+	cat git-$v.sign || break
+done
