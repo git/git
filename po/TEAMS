@@ -5,6 +5,10 @@ Language:	da (Danish)
 Repository:	https://github.com/git-da/git-po/
 Leader:		Byrial Jensen <byrial@vip.cybercity.dk>
 
+Language:	de (German)
+Repository:	https://github.com/ralfth/git-po-de
+Leader:		Ralf Thielow <ralf.thielow@googlemail.com>
+
 Language:	is (Icelandic)
 Leader:		Ævar Arnfjörð Bjarmason <avarab@gmail.com>
 
