@@ -289,8 +289,8 @@ static struct ref_entry *search_ref_dir(struct ref_dir *dir, const char *refname
  * directory if it is missing; otherwise, return NULL if the desired
  * directory cannot be found.
  */
-static struct ref_entry *search_for_subdir(struct ref_dir *dir,
-					   const char *subdirname, int mkdir)
+static struct ref_dir *search_for_subdir(struct ref_dir *dir,
+					 const char *subdirname, int mkdir)
 {
 	struct ref_entry *entry = search_ref_dir(dir, subdirname);
 	if (!entry) {
@@ -299,8 +299,7 @@ static struct ref_entry *search_for_subdir(struct ref_dir *dir,
 		entry = create_dir_entry(subdirname);
 		add_entry_to_dir(dir, entry);
 	}
-	assert(entry->flag & REF_DIR);
-	return entry;
+	return get_ref_dir(entry);
 }
 
 /*
@@ -319,14 +318,14 @@ static struct ref_dir *find_containing_dir(struct ref_dir *dir,
 	const char *slash;
 	strbuf_init(&dirname, PATH_MAX);
 	for (slash = strchr(refname, '/'); slash; slash = strchr(slash + 1, '/')) {
-		struct ref_entry *entry;
+		struct ref_dir *subdir;
 		strbuf_add(&dirname,
 			   refname + dirname.len,
 			   (slash + 1) - (refname + dirname.len));
-		entry = search_for_subdir(dir, dirname.buf, mkdir);
-		if (!entry)
+		subdir = search_for_subdir(dir, dirname.buf, mkdir);
+		if (!subdir)
 			break;
-		dir = get_ref_dir(entry);
+		dir = subdir;
 	}
 
 	strbuf_release(&dirname);
@@ -819,7 +818,7 @@ static void read_loose_refs(struct ref_cache *refs, const char *dirname,
 		} else if (S_ISDIR(st.st_mode)) {
 			strbuf_addch(&refname, '/');
 			read_loose_refs(refs, refname.buf,
-					get_ref_dir(search_for_subdir(dir, refname.buf, 1)));
+					search_for_subdir(dir, refname.buf, 1));
 		} else {
 			if (*refs->name) {
 				hashclr(sha1);
@@ -846,8 +845,8 @@ static struct ref_dir *get_loose_refs(struct ref_cache *refs)
 	if (!refs->loose) {
 		refs->loose = create_dir_entry("");
 		read_loose_refs(refs, "refs/",
-				get_ref_dir(search_for_subdir(get_ref_dir(refs->loose),
-							      "refs/", 1)));
+				search_for_subdir(get_ref_dir(refs->loose),
+						  "refs/", 1));
 	}
 	return get_ref_dir(refs->loose);
 }
