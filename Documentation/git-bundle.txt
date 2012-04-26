@@ -61,7 +61,7 @@ unbundle <file>::
 	A list of arguments, acceptable to 'git rev-parse' and
 	'git rev-list' (and containing a named ref, see SPECIFYING REFERENCES
 	below), that specifies the specific objects and references
-	to transport.  For example, `master{tilde}10..master` causes the
+	to transport.  For example, `master~10..master` causes the
 	current master reference to be packaged along with all objects
 	added since its 10th ancestor commit.  There is no explicit
 	limit to the number of references and objects that may be
@@ -80,12 +80,12 @@ SPECIFYING REFERENCES
 
 'git bundle' will only package references that are shown by
 'git show-ref': this includes heads, tags, and remote heads.  References
-such as `master{tilde}1` cannot be packaged, but are perfectly suitable for
+such as `master~1` cannot be packaged, but are perfectly suitable for
 defining the basis.  More than one reference may be packaged, and more
 than one basis can be specified.  The objects packaged are those not
 contained in the union of the given bases.  Each basis can be
-specified explicitly (e.g. `^master{tilde}10`), or implicitly (e.g.
-`master{tilde}10..master`, `--since=10.days.ago master`).
+specified explicitly (e.g. `^master~10`), or implicitly (e.g.
+`master~10..master`, `--since=10.days.ago master`).
 
 It is very important that the basis used be held by the destination.
 It is okay to err on the side of caution, causing the bundle file

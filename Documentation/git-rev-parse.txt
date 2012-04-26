@@ -113,15 +113,14 @@ OPTIONS
 +
 If a `pattern` is given, only refs matching the given shell glob are
 shown.  If the pattern does not contain a globbing character (`?`,
-`{asterisk}`, or `[`), it is turned into a prefix match by
-appending `/{asterisk}`.
+`*`, or `[`), it is turned into a prefix match by appending `/*`.
 
 --glob=pattern::
 	Show all refs matching the shell glob pattern `pattern`. If
 	the pattern does not start with `refs/`, this is automatically
 	prepended.  If the pattern does not contain a globbing
-	character (`?`, `{asterisk}`, or `[`), it is turned into a prefix
-	match by appending `/{asterisk}`.
+	character (`?`, `*`, or `[`), it is turned into a prefix
+	match by appending `/*`.
 
 --show-toplevel::
 	Show the absolute path of the top-level directory.

@@ -36,7 +36,7 @@ More specifically, they:
 
 . They cannot have ASCII control characters (i.e. bytes whose
   values are lower than \040, or \177 `DEL`), space, tilde `~`,
-  caret `{caret}`, colon `:`, question-mark `?`, asterisk `*`,
+  caret `^`, colon `:`, question-mark `?`, asterisk `*`,
   or open bracket `[` anywhere.
 
 . They cannot end with a slash `/` nor a dot `.`.

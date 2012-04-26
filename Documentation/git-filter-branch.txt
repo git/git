@@ -96,8 +96,8 @@ OPTIONS
 --index-filter <command>::
 	This is the filter for rewriting the index.  It is similar to the
 	tree filter but does not check out the tree, which makes it much
-	faster.  Frequently used with `git rm \--cached
-	\--ignore-unmatch ...`, see EXAMPLES below.  For hairy
+	faster.  Frequently used with `git rm --cached
+	--ignore-unmatch ...`, see EXAMPLES below.  For hairy
 	cases, see linkgit:git-update-index[1].
 
 --parent-filter <command>::
@@ -222,11 +222,11 @@ However, if the file is absent from the tree of some commit,
 a simple `rm filename` will fail for that tree and commit.
 Thus you may instead want to use `rm -f filename` as the script.
 
-Using `\--index-filter` with 'git rm' yields a significantly faster
+Using `--index-filter` with 'git rm' yields a significantly faster
 version.  Like with using `rm filename`, `git rm --cached filename`
 will fail if the file is absent from the tree of a commit.  If you
 want to "completely forget" a file, it does not matter when it entered
-history, so we also add `\--ignore-unmatch`:
+history, so we also add `--ignore-unmatch`:
 
 --------------------------------------------------------------------------
 git filter-branch --index-filter 'git rm --cached --ignore-unmatch filename' HEAD
@@ -242,8 +242,8 @@ git filter-branch --subdirectory-filter foodir -- --all
 -------------------------------------------------------
 
 Thus you can, e.g., turn a library subdirectory into a repository of
-its own.  Note the `\--` that separates 'filter-branch' options from
-revision options, and the `\--all` to rewrite all branches and tags.
+its own.  Note the `--` that separates 'filter-branch' options from
+revision options, and the `--all` to rewrite all branches and tags.
 
 To set a commit (which typically is at the tip of another
 history) to be the parent of the current initial commit, in
@@ -371,23 +371,23 @@ Checklist for Shrinking a Repository
 ------------------------------------
 
 git-filter-branch is often used to get rid of a subset of files,
-usually with some combination of `\--index-filter` and
-`\--subdirectory-filter`.  People expect the resulting repository to
+usually with some combination of `--index-filter` and
+`--subdirectory-filter`.  People expect the resulting repository to
 be smaller than the original, but you need a few more steps to
 actually make it smaller, because git tries hard not to lose your
 objects until you tell it to.  First make sure that:
 
 * You really removed all variants of a filename, if a blob was moved
-  over its lifetime.  `git log \--name-only \--follow \--all \--
-  filename` can help you find renames.
+  over its lifetime.  `git log --name-only --follow --all -- filename`
+  can help you find renames.
 
-* You really filtered all refs: use `\--tag-name-filter cat \--
-  \--all` when calling git-filter-branch.
+* You really filtered all refs: use `--tag-name-filter cat -- --all`
+  when calling git-filter-branch.
 
 Then there are two ways to get a smaller repository.  A safer way is
 to clone, that keeps your original intact.
 
-* Clone it with `git clone +++file:///path/to/repo+++`.  The clone
+* Clone it with `git clone file:///path/to/repo`.  The clone
   will not have the removed objects.  See linkgit:git-clone[1].  (Note
   that cloning with a plain path just hardlinks everything!)
 
@@ -397,14 +397,14 @@ approach, so *make a backup* or go back to cloning it.  You have been
 warned.
 
 * Remove the original refs backed up by git-filter-branch: say `git
-  for-each-ref \--format="%(refname)" refs/original/ | xargs -n 1 git
+  for-each-ref --format="%(refname)" refs/original/ | xargs -n 1 git
   update-ref -d`.
 
-* Expire all reflogs with `git reflog expire \--expire=now \--all`.
+* Expire all reflogs with `git reflog expire --expire=now --all`.
 
-* Garbage collect all unreferenced objects with `git gc \--prune=now`
+* Garbage collect all unreferenced objects with `git gc --prune=now`
   (or if your git-gc is not new enough to support arguments to
-  `\--prune`, use `git repack -ad; git prune` instead).
+  `--prune`, use `git repack -ad; git prune` instead).
 
 GIT
 ---

@@ -73,7 +73,7 @@ pre-commit
 ~~~~~~~~~~
 
 This hook is invoked by 'git commit', and can be bypassed
-with `\--no-verify` option.  It takes no parameter, and is
+with `--no-verify` option.  It takes no parameter, and is
 invoked before obtaining the proposed commit log message and
 making a commit.  Exiting with non-zero status from this script
 causes the 'git commit' to abort.
@@ -99,12 +99,12 @@ given); `template` (if a `-t` option was given or the
 configuration option `commit.template` is set); `merge` (if the
 commit is a merge or a `.git/MERGE_MSG` file exists); `squash`
 (if a `.git/SQUASH_MSG` file exists); or `commit`, followed by
-a commit SHA1 (if a `-c`, `-C` or `\--amend` option was given).
+a commit SHA1 (if a `-c`, `-C` or `--amend` option was given).
 
 If the exit status is non-zero, 'git commit' will abort.
 
 The purpose of the hook is to edit the message file in place, and
-it is not suppressed by the `\--no-verify` option.  A non-zero exit
+it is not suppressed by the `--no-verify` option.  A non-zero exit
 means a failure of the hook and aborts the commit.  It should not
 be used as replacement for pre-commit hook.
 
@@ -115,7 +115,7 @@ commit-msg
 ~~~~~~~~~~
 
 This hook is invoked by 'git commit', and can be bypassed
-with `\--no-verify` option.  It takes a single parameter, the
+with `--no-verify` option.  It takes a single parameter, the
 name of the file that holds the proposed commit log message.
 Exiting with non-zero status causes the 'git commit' to
 abort.

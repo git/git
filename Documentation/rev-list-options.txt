@@ -198,7 +198,7 @@ excluded from the output.
 +
 For example, `--cherry-pick --right-only A...B` omits those
 commits from `B` which are in `A` or are patch-equivalent to a commit in
-`A`. In other words, this lists the `{plus}` commits from `git cherry A B`.
+`A`. In other words, this lists the `+` commits from `git cherry A B`.
 More precisely, `--cherry-pick --right-only --no-merges` gives the exact
 list.
 
@@ -455,7 +455,7 @@ The effect of this is best shown by way of comparing to
 	  `---------'
 -----------------------------------------------------------------------
 +
-Note the major differences in `N` and `P` over '\--full-history':
+Note the major differences in `N` and `P` over '--full-history':
 +
 --
 * `N`'s parent list had `I` removed, because it is an ancestor of the
@@ -494,7 +494,7 @@ of course).
 When we want to find out what commits in `M` are contaminated with the
 bug introduced by `D` and need fixing, however, we might want to view
 only the subset of 'D..M' that are actually descendants of `D`, i.e.
-excluding `C` and `K`. This is exactly what the '\--ancestry-path'
+excluding `C` and `K`. This is exactly what the '--ancestry-path'
 option does. Applied to the 'D..M' range, it results in:
 +
 -----------------------------------------------------------------------

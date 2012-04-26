@@ -101,15 +101,15 @@ One way to do it is to pull master into the topic branch:
 
 The commits marked with `*` touch the same area in the same
 file; you need to resolve the conflicts when creating the commit
-marked with `{plus}`.  Then you can test the result to make sure your
+marked with `+`.  Then you can test the result to make sure your
 work-in-progress still works with what is in the latest master.
 
 After this test merge, there are two ways to continue your work
 on the topic.  The easiest is to build on top of the test merge
-commit `{plus}`, and when your work in the topic branch is finally
+commit `+`, and when your work in the topic branch is finally
 ready, pull the topic branch into master, and/or ask the
 upstream to pull from you.  By that time, however, the master or
-the upstream might have been advanced since the test merge `{plus}`,
+the upstream might have been advanced since the test merge `+`,
 in which case the final commit graph would look like this:
 
 ------------

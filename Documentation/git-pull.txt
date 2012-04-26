@@ -110,7 +110,7 @@ include::merge-options.txt[]
 +
 See `pull.rebase`, `branch.<name>.rebase` and `branch.autosetuprebase` in
 linkgit:git-config[1] if you want to make `git pull` always use
-`{litdd}rebase` instead of merging.
+`--rebase` instead of merging.
 +
 [NOTE]
 This is a potentially _dangerous_ mode of operation.

@@ -87,7 +87,7 @@ to the `capabilities` command (see COMMANDS, below).
 	capability use this.
 +
 A helper advertising the capability
-`refspec refs/heads/{asterisk}:refs/svn/origin/branches/{asterisk}`
+`refspec refs/heads/*:refs/svn/origin/branches/*`
 is saying that, when it is asked to `import refs/heads/topic`, the
 stream it outputs will update the `refs/svn/origin/branches/topic`
 ref.
@@ -96,7 +96,7 @@ This capability can be advertised multiple times.  The first
 applicable refspec takes precedence.  The left-hand of refspecs
 advertised with this capability must cover all refs reported by
 the list command.  If no 'refspec' capability is advertised,
-there is an implied `refspec {asterisk}:{asterisk}`.
+there is an implied `refspec *:*`.
 
 Capabilities for Pushing
 ~~~~~~~~~~~~~~~~~~~~~~~~
@@ -148,7 +148,7 @@ Other frontends may have some other order of preference.
 	This modifies the 'import' capability.
 +
 A helper advertising
-`refspec refs/heads/{asterisk}:refs/svn/origin/branches/{asterisk}`
+`refspec refs/heads/*:refs/svn/origin/branches/*`
 in its capabilities is saying that, when it handles
 `import refs/heads/topic`, the stream it outputs will update the
 `refs/svn/origin/branches/topic` ref.
@@ -157,7 +157,7 @@ This capability can be advertised multiple times.  The first
 applicable refspec takes precedence.  The left-hand of refspecs
 advertised with this capability must cover all refs reported by
 the list command.  If no 'refspec' capability is advertised,
-there is an implied `refspec {asterisk}:{asterisk}`.
+there is an implied `refspec *:*`.
 
 INVOCATION
 ----------

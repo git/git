@@ -52,10 +52,10 @@ EXAMPLES
 	Shows the tag `v1.0.0`, along with the object the tags
 	points at.
 
-`git show v1.0.0^\{tree\}`::
+`git show v1.0.0^{tree}`::
 	Shows the tree pointed to by the tag `v1.0.0`.
 
-`git show -s --format=%s v1.0.0^\{commit\}`::
+`git show -s --format=%s v1.0.0^{commit}`::
 	Shows the subject of the commit pointed to by the
 	tag `v1.0.0`.
 
