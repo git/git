@@ -49,9 +49,10 @@ Documentation for older releases are available here:
 * release notes for
   link:RelNotes/1.7.10.txt[1.7.10].
 
-* link:v1.7.9.6/git.html[documentation for release 1.7.9.6]
+* link:v1.7.9.7/git.html[documentation for release 1.7.9.7]
 
 * release notes for
+  link:RelNotes/1.7.9.7.txt[1.7.9.7],
   link:RelNotes/1.7.9.6.txt[1.7.9.6],
   link:RelNotes/1.7.9.5.txt[1.7.9.5],
   link:RelNotes/1.7.9.4.txt[1.7.9.4],
@@ -60,9 +61,10 @@ Documentation for older releases are available here:
   link:RelNotes/1.7.9.1.txt[1.7.9.1],
   link:RelNotes/1.7.9.txt[1.7.9].
 
-* link:v1.7.8.5/git.html[documentation for release 1.7.8.5]
+* link:v1.7.8.6/git.html[documentation for release 1.7.8.6]
 
 * release notes for
+  link:RelNotes/1.7.8.6.txt[1.7.8.6],
   link:RelNotes/1.7.8.5.txt[1.7.8.5],
   link:RelNotes/1.7.8.4.txt[1.7.8.4],
   link:RelNotes/1.7.8.3.txt[1.7.8.3],
@@ -70,9 +72,10 @@ Documentation for older releases are available here:
   link:RelNotes/1.7.8.1.txt[1.7.8.1],
   link:RelNotes/1.7.8.txt[1.7.8].
 
-* link:v1.7.7.6/git.html[documentation for release 1.7.7.6]
+* link:v1.7.7.7/git.html[documentation for release 1.7.7.7]
 
 * release notes for
+  link:RelNotes/1.7.7.7.txt[1.7.7.7],
   link:RelNotes/1.7.7.6.txt[1.7.7.6],
   link:RelNotes/1.7.7.5.txt[1.7.7.5],
   link:RelNotes/1.7.7.4.txt[1.7.7.4],
