@@ -309,20 +309,21 @@ static struct ref_entry *search_for_subdir(struct ref_dir *dir,
 static struct ref_dir *find_containing_dir(struct ref_dir *dir,
 					   const char *refname, int mkdir)
 {
-	char *refname_copy = xstrdup(refname);
-	char *slash;
-	struct ref_entry *entry;
-	for (slash = strchr(refname_copy, '/'); slash; slash = strchr(slash + 1, '/')) {
-		char tmp = slash[1];
-		slash[1] = '\0';
-		entry = search_for_subdir(dir, refname_copy, mkdir);
-		slash[1] = tmp;
+	struct strbuf dirname;
+	const char *slash;
+	strbuf_init(&dirname, PATH_MAX);
+	for (slash = strchr(refname, '/'); slash; slash = strchr(slash + 1, '/')) {
+		struct ref_entry *entry;
+		strbuf_add(&dirname,
+			   refname + dirname.len,
+			   (slash + 1) - (refname + dirname.len));
+		entry = search_for_subdir(dir, dirname.buf, mkdir);
 		if (!entry)
 			break;
 		dir = &entry->u.subdir;
 	}
 
-	free(refname_copy);
+	strbuf_release(&dirname);
 	return dir;
 }
 
