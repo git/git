@@ -533,9 +533,20 @@ static int is_a_merge(const struct commit *current_head)
 
 static const char sign_off_header[] = "Signed-off-by: ";
 
+static void export_one(const char *var, const char *s, const char *e, int hack)
+{
+	struct strbuf buf = STRBUF_INIT;
+	if (hack)
+		strbuf_addch(&buf, hack);
+	strbuf_addf(&buf, "%.*s", (int)(e - s), s);
+	setenv(var, buf.buf, 1);
+	strbuf_release(&buf);
+}
+
 static void determine_author_info(struct strbuf *author_ident)
 {
 	char *name, *email, *date;
+	struct ident_split author;
 
 	name = getenv("GIT_AUTHOR_NAME");
 	email = getenv("GIT_AUTHOR_EMAIL");
@@ -585,6 +596,11 @@ static void determine_author_info(struct strbuf *author_ident)
 		date = force_date;
 	strbuf_addstr(author_ident, fmt_ident(name, email, date,
 					      IDENT_ERROR_ON_NO_NAME));
+	if (!split_ident_line(&author, author_ident->buf, author_ident->len)) {
+		export_one("GIT_AUTHOR_NAME", author.name_begin, author.name_end, 0);
+		export_one("GIT_AUTHOR_EMAIL", author.mail_begin, author.mail_end, 0);
+		export_one("GIT_AUTHOR_DATE", author.date_begin, author.tz_end, '@');
+	}
 }
 
 static int ends_rfc2822_footer(struct strbuf *sb)
@@ -651,6 +667,9 @@ static int prepare_to_commit(const char *index_file, const char *prefix,
 	const char *hook_arg2 = NULL;
 	int ident_shown = 0;
 	int clean_message_contents = (cleanup_mode != CLEANUP_NONE);
+
+	/* This checks and barfs if author is badly specified */
+	determine_author_info(author_ident);
 
 	if (!no_verify && run_hook(index_file, "pre-commit", NULL))
 		return 0;
@@ -770,9 +789,6 @@ static int prepare_to_commit(const char *index_file, const char *prefix,
 		die_errno(_("could not write commit template"));
 
 	strbuf_release(&sb);
-
-	/* This checks and barfs if author is badly specified */
-	determine_author_info(author_ident);
 
 	/* This checks if committer ident is explicitly given */
 	strbuf_addstr(&committer_ident, git_committer_info(0));
