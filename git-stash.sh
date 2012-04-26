@@ -199,8 +199,8 @@ save_stash () {
 			#    $ git stash save --blah-blah 2>&1 | head -n 2
 			#    error: unknown option for 'stash save': --blah-blah
 			#           To provide a message, use git stash save -- '--blah-blah'
-			eval_gettextln "$("error: unknown option for 'stash save': \$option
-       To provide a message, use git stash save -- '\$option'")"
+			eval_gettextln "error: unknown option for 'stash save': \$option
+       To provide a message, use git stash save -- '\$option'"
 			usage
 			;;
 		*)
