@@ -22,8 +22,7 @@ search_topics () {
 		fi
 
 		comment=
-		if ! git show-ref --quiet --verify "refs/heads/$topic" ||
-		    test $(git log --oneline $target..$full_sha1 | wc -l) != 0
+		if ! git show-ref --quiet --verify "refs/heads/$topic"
 		then
 			comment="$topic gone"
 			tip=$full_sha1 topic=$sha1
