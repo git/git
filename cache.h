@@ -1305,4 +1305,6 @@ extern struct startup_info *startup_info;
 /* builtin/merge.c */
 int checkout_fast_forward(const unsigned char *from, const unsigned char *to);
 
+int sane_execvp(const char *file, char *const argv[]);
+
 #endif /* CACHE_H */
