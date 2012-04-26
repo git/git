@@ -550,6 +550,14 @@ EOF
 
 test_expect_success "rename succeeded" "test_cmp expect .git/config"
 
+test_expect_success 'renaming empty section name is rejected' '
+	test_must_fail git config --rename-section branch.zwei ""
+'
+
+test_expect_success 'renaming to bogus section is rejected' '
+	test_must_fail git config --rename-section branch.zwei "bogus name"
+'
+
 cat >> .git/config << EOF
   [branch "zwei"] a = 1 [branch "vier"]
 EOF
