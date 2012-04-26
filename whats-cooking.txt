@@ -1,15 +1,18 @@
 To: git@vger.kernel.org
-Subject: What's cooking in git.git (Apr 2012, #09; Mon, 23)
-X-master-at: aa39b858a35d99135e1403575a358b97d26ff466
-X-next-at: 8de07476bf9d007657eaa0b87f26678540e92092
+Subject: What's cooking in git.git (Apr 2012, #10; Thu, 26)
+X-master-at: 010b260e6f23b8964ef53b989e1c1baa8973edbe
+X-next-at: 9919198d495ad46119f57aec159ea212bd584242
 
-What's cooking in git.git (Apr 2012, #09; Mon, 23)
+What's cooking in git.git (Apr 2012, #10; Thu, 26)
 --------------------------------------------------
 
 Here are the topics that have been cooking.  Commits prefixed with '-' are
 only in 'pu' (proposed updates) while commits prefixed with '+' are in 'next'.
 
-The fourth batch of topics in this cycle is now in 'master'.
+The fifth batch of topics in this cycle is now in 'master'.  I also
+merged accumulated fixes that have been in 'master' since v1.7.10 to
+'maint', so that we can issue the first maintenance release sometime
+next week.
 
 You can find the changes described here in the integration branches of the
 repositories listed at
@@ -19,147 +22,202 @@ repositories listed at
 --------------------------------------------------
 [Graduated to "master"]
 
-* bw/test-fix-grep-gnuism (2012-04-19) 1 commit
-  (merged to 'next' on 2012-04-20 at ee7eec4)
- + t9400: fix gnuism in grep
-
-Fix two places that were the only place in the test suite that gave "a\+"
-to platform grep and expected it to mean one or more "a", which is a
-blatant GNUism.
-
-* jc/maint-blame-minimal (2012-04-11) 1 commit
-  (merged to 'next' on 2012-04-20 at 2213284)
- + blame: accept --need-minimal
-
-"git blame" started missing quite a few changes from the origin since we
-stopped using the diff minimalization by default in v1.7.2 era.
-
-* jh/apply-free-patch (2012-04-11) 9 commits
-  (merged to 'next' on 2012-04-15 at 8cccf57)
- + apply: document buffer ownership rules across functions
- + apply: tighten constness of line buffer
- + apply: drop unused macro
- + apply: free unused fragments for submodule patch
- + apply: free patch->result
- + apply: release memory for fn_table
- + apply: free patch->{def,old,new}_name fields
- + apply: rename free_patch() to free_patch_list()
- + apply: do not leak patches and fragments
-
-Valgrind reports quite a lot of discarded memory inside apply.
-
-* jk/rebase-i-submodule-conflict-only (2012-04-09) 1 commit
-  (merged to 'next' on 2012-04-15 at 94367a8)
- + rebase -i continue: don't skip commits that only change submodules
-
-Giving "--continue" to a conflicted "rebase -i" session skipped a commit
-that only results in changes to submodules.
-
-* jl/maint-submodule-recurse-fetch (2012-04-14) 1 commit
-  (merged to 'next' on 2012-04-20 at 2769d39)
- + submodules: recursive fetch also checks new tags for submodule commits
-
-* jn/debian-customizes-default-editor (2012-04-10) 2 commits
-  (merged to 'next' on 2012-04-15 at 0fc85c3)
- + var doc: advertise current DEFAULT_PAGER and DEFAULT_EDITOR settings
- + var doc: default editor and pager are configurable at build time
-
-* jn/fast-import-doc (2012-04-15) 1 commit
-  (merged to 'next' on 2012-04-20 at b9a7250)
- + fast-import doc: cat-blob and ls responses need to be consumed quickly
-
-* jn/more-i18ncmp (2012-04-14) 3 commits
-  (merged to 'next' on 2012-04-20 at b5548a3)
- + test: am of empty patch should not succeed
- + test: use test_i18ncmp for "Patch format detection failed" message
- + test: do not rely on US English tracking-info messages
-
-* lp/maint-diff-three-dash-with-graph (2012-03-20) 3 commits
-  (merged to 'next' on 2012-04-20 at b6cf0ff)
- + t4202: add test for "log --graph --stat -p" separator lines
- + log --graph: fix break in graph lines
- + log --graph --stat: three-dash separator should come after graph lines
-
-* ms/remote-usage-string (2012-04-09) 1 commit
-  (merged to 'next' on 2012-04-15 at 704be8f)
- + remote: update builtin usage
-
-As an independent follow-up, we may want to rethink how the overall usage
-string and subcommand usage strings are maintained.
-
-* pw/git-p4 (2012-04-09) 3 commits
-  (merged to 'next' on 2012-04-15 at 81ea41a)
- + git p4: use "git p4" directly in tests
- + git p4: update name in script
- + git-p4: move to toplevel
- (this branch is used by ld/git-p4-tags-and-labels.)
-
-* rj/mingw-isguid (2012-04-18) 1 commit
-  (merged to 'next' on 2012-04-20 at 9dbebca)
- + compat/mingw.h: Set S_ISUID to prevent a fast-import test failure
-
-* rj/sh-setup-mswin-pwd (2012-04-18) 1 commit
-  (merged to 'next' on 2012-04-20 at 6125f8d)
- + git-sh-setup.sh: Add an pwd() function for MinGW
-
-* rj/submodule-mswin-path (2012-04-18) 1 commit
-  (merged to 'next' on 2012-04-20 at fd9f8b3)
- + git-submodule.sh: Don't use $path variable in eval_gettext string
-
-* rl/show-empty-prefix (2012-04-10) 1 commit
-  (merged to 'next' on 2012-04-15 at b2e5938)
- + rev-parse --show-prefix: add in trailing newline
-
-* rs/commit-list-sort-in-batch (2012-04-17) 4 commits
-  (merged to 'next' on 2012-04-17 at 21208e9)
- + mergesort: rename it to llist_mergesort()
-  (merged to 'next' on 2012-04-15 at 39fe527)
- + revision: insert unsorted, then sort in prepare_revision_walk()
- + commit: use mergesort() in commit_list_sort_by_date()
- + add mergesort() for linked lists
-
-* sl/test-wc-l-line-count (2012-04-11) 1 commit
-  (merged to 'next' on 2012-04-15 at 40797d9)
- + tests: modernise style: more uses of test_line_count
-
---------------------------------------------------
-[New Topics]
-
 * cc/fix-missing-va-end-in-revert (2012-04-21) 1 commit
   (merged to 'next' on 2012-04-23 at b90eb70)
  + revert: add missing va_end
 
-Will merge to 'master'.
+* fc/completion-tests (2012-04-21) 7 commits
+  (merged to 'next' on 2012-04-23 at 9b42326)
+ + completion: fix completion after 'git --option <TAB>'
+ + completion: avoid trailing space for --exec-path
+ + completion: add missing general options
+ + completion: simplify by using $prev
+ + completion: simplify __gitcomp_1
+ + tests: add tests for the __gitcomp() completion helper function
+ + tests: add initial bash completion tests
 
-* pw/t5800-import-race-fix (2012-04-22) 2 commits
- - fixup! git-remote-testgit: fix race when spawning fast-import
- - git-remote-testgit: fix race when spawning fast-import
+* hv/submodule-recurse-push (2012-03-30) 3 commits
+  (merged to 'next' on 2012-04-20 at fe99e3d)
+ + push: teach --recurse-submodules the on-demand option
+ + Refactor submodule push check to use string list instead of integer
+ + Teach revision walking machinery to walk multiple times sequencially
 
-Will merge to 'next' after squashing the fixup!
+"git push --recurse-submodules" learns to optionally look into the
+histories of submodules bound to the superproject and push them out.
 
-* nd/i18n (2012-04-23) 11 commits
- - i18n: bundle: mark strings for translation
- - i18n: index-pack: mark strings for translation
- - i18n: apply: update say_patch_name to give translators complete sentence
- - i18n: apply: mark strings for translation
- - i18n: remote: mark strings for translation
- - i18n: make warn_dangling_symref() automatically append \n
- - i18n: help: mark strings for translation
- - i18n: mark relative dates for translation
- - fixup! strbuf: convenience format functions with \n automatically appended
- - strbuf: convenience format functions with \n automatically appended
- - Makefile: feed all header files to xgettext
+* it/fetch-pack-many-refs (2012-04-10) 4 commits
+  (merged to 'next' on 2012-04-20 at e2126d7)
+ + remote-curl: main test case for the OS command line overflow
+ + fetch-pack: test cases for the new --stdin option
+ + remote-curl: send the refs to fetch-pack on stdin
+ + fetch-pack: new --stdin option to read refs from stdin
 
-Will merge to 'next' after squashing the fixup!
-We can address the pseudo-underline of section headers in "git help --all"
-as a follow-up patch.
+When "git fetch" encounters repositories with too many references, the
+command line of "fetch-pack" that is run by a helper e.g. remote-curl,
+may fail to hold all of them. Now such an internal invocation can feed
+the references through the standard input of "fetch-pack".
 
-* rk/git-svn-ignore-sigpipe (2012-04-23) 3 commits
- - git-svn: drop redundant blocking of SIGPIPE
- - git-svn: ignore SIGPIPE
- - git-svn: use POSIX::sigprocmask to block signals
+* jm/maint-strncpy-diff-no-index (2012-04-16) 1 commit
+  (merged to 'next' on 2012-04-20 at 638ed9f)
+ + diff: avoid stack-buffer-read-overrun for very long name
 
-Waiting for an Ack from Eric.
+* mb/fetch-call-a-non-branch-a-ref (2012-04-17) 2 commits
+  (merged to 'next' on 2012-04-20 at df2c57e)
+ + fetch: describe new refs based on where it came from
+ + fetch: Give remote_ref to update_local_ref() as well
+
+* mh/ref-api (2012-04-10) 13 commits
+  (merged to 'next' on 2012-04-20 at 94e9384)
+ + do_for_each_ref(): only iterate over the subtree that was requested
+ + refs: store references hierarchically
+ + sort_ref_dir(): simplify logic
+ + refs.c: rename ref_array -> ref_dir
+ + struct ref_entry: nest the value part in a union
+ + check_refname_component(): return 0 for zero-length components
+ + free_ref_entry(): new function
+ + names_conflict(): simplify implementation
+ + repack_without_ref(): reimplement using do_for_each_ref_in_array()
+ + do_for_each_ref_in_arrays(): new function
+ + do_for_each_ref_in_array(): new function
+ + refs: manage current_ref within do_one_ref()
+ + refs.c: reorder definitions more logically
+
+* mk/gitweb-diff-hl (2012-04-11) 8 commits
+  (merged to 'next' on 2012-04-20 at 54179a2)
+ + gitweb: Refinement highlightning in combined diffs
+ + gitweb: Highlight interesting parts of diff
+ + gitweb: Push formatting diff lines to print_diff_chunk()
+ + gitweb: Use print_diff_chunk() for both side-by-side and inline diffs
+ + gitweb: Extract print_sidebyside_diff_lines()
+ + gitweb: Pass esc_html_hl_regions() options to esc_html()
+ + gitweb: esc_html_hl_regions(): Don't create empty <span> elements
+ + gitweb: Use descriptive names in esc_html_hl_regions()
+
+"gitweb" learns to highlight the patch it outputs even more.
+
+* pw/fast-import-dataref-parsing (2012-04-10) 1 commit
+  (merged to 'next' on 2012-04-20 at c299a63)
+ + fast-import: tighten parsing of datarefs
+
+The parser in "fast-import" did not diagnose ":9" style references
+that is not followed by required SP/LF as an error.
+
+* rl/maint-stash-i18n-save-error (2012-04-14) 1 commit
+  (merged to 'next' on 2012-04-23 at 3692fec)
+ + stash: use eval_gettextln correctly
+
+* zj/upstream-error-message (2012-04-15) 5 commits
+  (merged to 'next' on 2012-04-20 at 1ed9682)
+ + i18n: mark @{upstream} error messages for translation
+ + Be more specific if upstream branch is not tracked
+ + Provide better message for barnhc_wiht_tpyo@{u}
+ + Provide branch name in error message when using @{u}
+ + t1507: add tests to document @{upstream} behaviour
+
+Error messages given when @{u} is used for a branch without its
+upstream configured have been clatified.
+
+--------------------------------------------------
+[New Topics]
+
+* mm/simple-push (2012-04-24) 7 commits
+ - push.default doc: explain simple after upstream
+ - push: document the future default change for push.default (matching -> simple)
+ - t5570: use explicit push refspec
+ - push: introduce new push.default mode "simple"
+ - t5528-push-default.sh: add helper functions
+ - Undocument deprecated alias 'push.default=tracking'
+ - Documentation: explain push.default option a bit more
+ (this branch is used by mm/push-default-switch-warning.)
+
+New users tend to work on one branch at a time and push the result
+out. The current and upstream modes of push is a more suitable default
+mode than matching mode for these people, but neither is surprise-free
+depending on how the project is set up. Introduce a "simple" mode that
+is a subset of "upstream" but only works when the branch is named the same
+between the remote and local repositories.
+
+The plan is to make it the new default when push.default is not
+configured.
+
+* mh/ref-api-lazy-loose (2012-04-25) 30 commits
+ - refs: read loose references lazily
+ - create_dir_entry(): allow the flag value to be passed as an argument
+ - read_loose_refs(): access ref_cache via the ref_dir field
+ - read_loose_refs(): rename function from get_ref_dir()
+ - struct ref_dir: store a reference to the enclosing ref_cache
+ - sort_ref_dir(): take (ref_entry *) instead of (ref_dir *)
+ - do_for_each_ref_in_dir(): take (ref_entry *) instead of (ref_dir *)
+ - do_for_each_ref_in_dirs(): take (ref_entry *) instead of (ref_dir *)
+ - add_entry(): take (ref_entry *) instead of (ref_dir *)
+ - search_ref_dir(): take (ref_entry *) instead of (ref_dir *)
+ - search_for_subdir(): take (ref_entry *) instead of (ref_dir *)
+ - get_ref_dir(): remove dirname argument
+ - get_ref_dir(): take (ref_entry *) instead of (ref_dir *)
+ - find_containing_direntry(): use (ref_entry *) instead of (ref_dir *)
+ - add_ref(): take (ref_entry *) instead of (ref_dir *)
+ - read_packed_refs(): take (ref_entry *) instead of (ref_dir *)
+ - find_ref(): take (ref_entry *) instead of (ref_dir *)
+ - is_refname_available(): take (ref_entry *) instead of (ref_dir *)
+ - get_loose_refs(): return (ref_entry *) instead of (ref_dir *)
+ - get_packed_refs(): return (ref_entry *) instead of (ref_dir *)
+ - refs: wrap top-level ref_dirs in ref_entries
+ - do_for_each_reflog(): reuse strbuf across recursive function calls
+ - do_for_each_reflog(): use a strbuf to hold logfile name
+ - do_for_each_reflog(): return early on error
+ - get_ref_dir(): take the containing directory as argument
+ - refs.c: extract function search_for_subdir()
+ - get_ref_dir(): require that the dirname argument ends in '/'
+ - get_ref_dir(): rename "base" parameter to "dirname"
+ - get_ref_dir(): use a strbuf to hold refname
+ - get_ref_dir(): return early if directory cannot be read
+
+Refs API is updated to lazily read sub-hierarchies of refs/ namespace,
+so that we do not have to grab everything from the filesystem when we
+are only interested in listing branches, for example.
+
+* mm/include-userpath (2012-04-25) 2 commits
+  (merged to 'next' on 2012-04-26 at c68e261)
+ + fixup! config: expand tildes in include.path variable
+ + config: expand tildes in include.path variable
+
+The new "include.path" directive in the configuration files learned
+to understand "~/path" and "~user/path".
+
+* rs/commit-list-append (2012-04-25) 3 commits
+  (merged to 'next' on 2012-04-26 at 2ba48b3)
+ + commit: remove commit_list_reverse()
+ + revision: append to list instead of insert and reverse
+ + sequencer: export commit_list_append()
+
+* jk/maint-config-bogus-section (2012-04-25) 1 commit
+  (merged to 'next' on 2012-04-26 at 9919198)
+ + config: reject bogus section names for --rename-section
+
+"git config --rename-section" to rename an existing section into a
+bogus one did not check the new name.
+
+* kk/maint-gitweb-missing-owner (2012-04-25) 1 commit
+ - gitweb: Don't set owner if got empty value from projects.list
+ (this branch is used by kk/gitweb-omit-expensive.)
+
+Will merge to 'next'.
+
+* jk/doc-asciidoc-inline-literal (2012-04-26) 1 commit
+ - docs: stop using asciidoc no-inline-literal
+
+Our documentation was written for an ancient version of AsciiDoc,
+making the source not very readable.
+
+* kk/gitweb-omit-expensive (2012-04-26) 2 commits
+ - gitweb: Option to not display information about owner
+ - gitweb: Option to omit column with time of the last change
+ (this branch uses kk/maint-gitweb-missing-owner.)
+
+"gitweb" learned to optionally omit output of fields that are expensive
+to generate.
+
+Will merge to 'next'.
 
 --------------------------------------------------
 [Stalled]
@@ -199,16 +257,38 @@ not working :-(.
 --------------------------------------------------
 [Cooking]
 
-* nh/empty-rebase (2012-04-20) 7 commits
- - fixup! git-rebase: add keep_empty flag
- - git-rebase: add keep_empty flag
- - fixup! git-cherry-pick: Add test to validate new options
- - git-cherry-pick: Add test to validate new options
- - fixup! git-cherry-pick: Add keep-redundant-commits option
- - git-cherry-pick: Add keep-redundant-commits option
- - git-cherry-pick: add allow-empty option
+* pw/t5800-import-race-fix (2012-04-24) 1 commit
+  (merged to 'next' on 2012-04-24 at e97bb42)
+ + git-remote-testgit: fix race when spawning fast-import
 
-Will merge to 'next' after squashing the fixup!
+Longstanding bug in a test scaffolding that occasionally made t5800
+hang was fixed.
+
+* nd/i18n (2012-04-25) 11 commits
+ - help: replace underlining "help -a" headers using hyphens with a blank line
+  (merged to 'next' on 2012-04-24 at 07965a4)
+ + i18n: bundle: mark strings for translation
+ + i18n: index-pack: mark strings for translation
+ + i18n: apply: update say_patch_name to give translators complete sentence
+ + i18n: apply: mark strings for translation
+ + i18n: remote: mark strings for translation
+ + i18n: make warn_dangling_symref() automatically append \n
+ + i18n: help: mark strings for translation
+ + i18n: mark relative dates for translation
+ + strbuf: convenience format functions with \n automatically appended
+ + Makefile: feed all header files to xgettext
+
+More message strings marked for i18n.
+
+* nh/empty-rebase (2012-04-24) 4 commits
+  (merged to 'next' on 2012-04-24 at 91d2dfd)
+ + git-rebase: add keep_empty flag
+ + git-cherry-pick: Add test to validate new options
+ + git-cherry-pick: Add keep-redundant-commits option
+ + git-cherry-pick: add allow-empty option
+
+"git rebase" learned to optionally keep commits that do not introduce
+any change in the original history.
 
 * rt/cherry-revert-conflict-summary (2012-04-19) 1 commit
   (merged to 'next' on 2012-04-23 at e7766c2)
@@ -225,12 +305,6 @@ Will merge to 'master'.
 * js/fast-import-test-9300 (2012-04-20) 1 commit
   (merged to 'next' on 2012-04-23 at a9bd236)
  + t9300-fast-import: avoid 'exit' in test_expect_success snippets
-
-Will merge to 'master'.
-
-* jm/maint-strncpy-diff-no-index (2012-04-16) 1 commit
-  (merged to 'next' on 2012-04-20 at 638ed9f)
- + diff: avoid stack-buffer-read-overrun for very long name
 
 Will merge to 'master'.
 
@@ -271,12 +345,11 @@ the "--" to the end of the argv_array it passes to setup_revisions().
 Will merge to 'master'.
 
 * cb/daemon-test-race-fix (2012-04-19) 1 commit
- - git-daemon wrapper to wait until daemon is ready
+  (merged to 'next' on 2012-04-24 at d5c30be)
+ + git-daemon wrapper to wait until daemon is ready
 
 Fix race condition between starting and waiting for git-daemon in the
 test.
-
-Will merge to 'next'.
 
 * cb/maint-report-mount-point-correctly-in-setup (2012-04-15) 1 commit
   (merged to 'next' on 2012-04-23 at 9e0c8b4)
@@ -284,12 +357,6 @@ Will merge to 'next'.
 
 The filesystem boundary was not correctly reported when .git directory
 discovery stopped at a mount point.
-
-Will merge to 'master'.
-
-* rl/maint-stash-i18n-save-error (2012-04-14) 1 commit
-  (merged to 'next' on 2012-04-23 at 3692fec)
- + stash: use eval_gettextln correctly
 
 Will merge to 'master'.
 
@@ -304,9 +371,10 @@ Will merge to 'master'.
  - Stop starting pager recursively
  - Add column layout skeleton and git-column
 
-Will merge to 'next'.
+A couple of commands learn --column option to produce columnar output.
 
-* nl/http-proxy-more (2012-04-19) 7 commits
+* nl/http-proxy-more (2012-04-26) 8 commits
+ - http: try an uppercase version of $proto_proxy
  - http: fix proxy password passing
  - http: fix proxy authentication
  - http: rename HTTP_REAUTH to HTTP_AUTH_RETRY
@@ -319,33 +387,6 @@ The code to talk to http proxies learn to use the same credential
 API used to talk to the final http destinations.  This still needs
 to peek into $ENV{HTTPS_PROXY}.
 
-* mb/fetch-call-a-non-branch-a-ref (2012-04-17) 2 commits
-  (merged to 'next' on 2012-04-20 at df2c57e)
- + fetch: describe new refs based on where it came from
- + fetch: Give remote_ref to update_local_ref() as well
-
-Will merge to 'master'.
-
-* mh/ref-api (2012-04-10) 13 commits
-  (merged to 'next' on 2012-04-20 at 94e9384)
- + do_for_each_ref(): only iterate over the subtree that was requested
- + refs: store references hierarchically
- + sort_ref_dir(): simplify logic
- + refs.c: rename ref_array -> ref_dir
- + struct ref_entry: nest the value part in a union
- + check_refname_component(): return 0 for zero-length components
- + free_ref_entry(): new function
- + names_conflict(): simplify implementation
- + repack_without_ref(): reimplement using do_for_each_ref_in_array()
- + do_for_each_ref_in_arrays(): new function
- + do_for_each_ref_in_array(): new function
- + refs: manage current_ref within do_one_ref()
- + refs.c: reorder definitions more logically
-
-Allows walking only a sub-hierarchy in refs/*.
-
-Will merge to 'master'.
-
 * jk/repack-no-explode-objects-from-old-pack (2012-04-18) 4 commits
   (merged to 'next' on 2012-04-20 at 4eb2534)
  + gc: use argv-array for sub-commands
@@ -354,35 +395,17 @@ Will merge to 'master'.
   (merged to 'next' on 2012-04-15 at 7586e50)
  + gc: do not explode objects which will be immediately pruned
 
-* ld/git-p4-tags-and-labels (2012-04-11) 2 commits
+* ld/git-p4-tags-and-labels (2012-04-25) 7 commits
+  (merged to 'next' on 2012-04-25 at 8b959e5)
+ + git p4: fix unit tests
+  (merged to 'next' on 2012-04-24 at bf55d92)
+ + git p4: move verbose to base class
+ + git p4: Ignore P4EDITOR if it is empty
+ + git p4: Squash P4EDITOR in test harness
+ + git p4: fix-up "import/export of labels to/from p4"
   (merged to 'next' on 2012-04-15 at 1b1e9a1)
  + git p4: import/export of labels to/from p4
  + git p4: Fixing script editor checks
-
-Waiting for a follow-up to address the review comments
-by Pete Wyckoff Message-ID: <20120418113422.GB19994@padd.com>
-
-* zj/upstream-error-message (2012-04-15) 5 commits
-  (merged to 'next' on 2012-04-20 at 1ed9682)
- + i18n: mark @{upstream} error messages for translation
- + Be more specific if upstream branch is not tracked
- + Provide better message for barnhc_wiht_tpyo@{u}
- + Provide branch name in error message when using @{u}
- + t1507: add tests to document @{upstream} behaviour
-
-Will merge to 'master'.
-
-* fc/completion-tests (2012-04-21) 7 commits
-  (merged to 'next' on 2012-04-23 at 9b42326)
- + completion: fix completion after 'git --option <TAB>'
- + completion: avoid trailing space for --exec-path
- + completion: add missing general options
- + completion: simplify by using $prev
- + completion: simplify __gitcomp_1
- + tests: add tests for the __gitcomp() completion helper function
- + tests: add initial bash completion tests
-
-Will merge to 'master'.
 
 * nd/threaded-index-pack (2012-04-19) 4 commits
  - index-pack: disable threading if NO_PREAD is defined
@@ -402,16 +425,9 @@ flight using curl-multi.
 
 Will merge to 'master'.
 
-* pw/fast-import-dataref-parsing (2012-04-10) 1 commit
-  (merged to 'next' on 2012-04-20 at c299a63)
- + fast-import: tighten parsing of datarefs
-
-Will merge to 'master'.
-
 * tr/xdiff-fast-hash (2012-04-09) 1 commit
- - xdiff: load full words in the inner loop of xdl_hash_record
-
-Will merge to 'next'.
+  (merged to 'next' on 2012-04-24 at ed693cf)
+ + xdiff: load full words in the inner loop of xdl_hash_record
 
 * jc/index-v4 (2012-04-04) 10 commits
   (merged to 'next' on 2012-04-19 at 5e4b029)
@@ -436,36 +452,6 @@ student-hopefuls.
 The bottom one makes use of "varint" encoding from the stalled
 jc/split-blob topic.
 
-* mk/gitweb-diff-hl (2012-04-11) 8 commits
-  (merged to 'next' on 2012-04-20 at 54179a2)
- + gitweb: Refinement highlightning in combined diffs
- + gitweb: Highlight interesting parts of diff
- + gitweb: Push formatting diff lines to print_diff_chunk()
- + gitweb: Use print_diff_chunk() for both side-by-side and inline diffs
- + gitweb: Extract print_sidebyside_diff_lines()
- + gitweb: Pass esc_html_hl_regions() options to esc_html()
- + gitweb: esc_html_hl_regions(): Don't create empty <span> elements
- + gitweb: Use descriptive names in esc_html_hl_regions()
-
-Will merge to 'master'.
-
-* it/fetch-pack-many-refs (2012-04-10) 4 commits
-  (merged to 'next' on 2012-04-20 at e2126d7)
- + remote-curl: main test case for the OS command line overflow
- + fetch-pack: test cases for the new --stdin option
- + remote-curl: send the refs to fetch-pack on stdin
- + fetch-pack: new --stdin option to read refs from stdin
-
-Will merge to 'master'.
-
-* hv/submodule-recurse-push (2012-03-30) 3 commits
-  (merged to 'next' on 2012-04-20 at fe99e3d)
- + push: teach --recurse-submodules the on-demand option
- + Refactor submodule push check to use string list instead of integer
- + Teach revision walking machinery to walk multiple times sequencially
-
-Will merge to 'master'.
-
 * th/difftool-diffall (2012-04-23) 8 commits
  - difftool: print list of valid tools with '--tool-help'
  - difftool: teach difftool to handle directory diffs
@@ -489,23 +475,7 @@ Not urgent.
 Updates run_hook() API to be much less specific to "commit".  It would
 only be useful if people start doing more interesting things with hooks.
 
-* mm/push-default-switch-warning (2012-04-23) 10 commits
- - fixup! push: introduce new push.default mode "simple"
- - fixup! t5528-push-default.sh: add helper functions
- - push: suggested updates to push configuration documentation
+* mm/push-default-switch-warning (2012-04-26) 2 commits
+ - t5541: warning message is given even with --quiet
  - push: start warning upcoming default change for push.default
- - push: document the future default change for push.default (matching -> simple)
- - t5570: use explicit push refspec
- - push: introduce new push.default mode "simple"
- - t5528-push-default.sh: add helper functions
- - Undocument deprecated alias 'push.default=tracking'
- - Documentation: explain push.default option a bit more
-
-Introduces 'simple' mode to be used as the push.default in a future
-version of git.  I think the series is almost there modulo some minor
-nits.
-
-This topic should be renamed to "mm/push-simple-method" and the last
-step to start warning made into a separate topic that build on it, but
-the review comments need to be addressed in a reroll before that
-
+ (this branch uses mm/simple-push.)
