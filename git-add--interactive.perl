@@ -268,6 +268,7 @@ sub get_empty_tree {
 # FILE:		is file different from index?
 # INDEX_ADDDEL:	is it add/delete between HEAD and index?
 # FILE_ADDDEL:	is it add/delete between index and file?
+# UNMERGED:	is the path unmerged
 
 sub list_modified {
 	my ($only) = @_;
@@ -318,16 +319,10 @@ sub list_modified {
 		}
 	}
 
-	for (run_cmd_pipe(qw(git diff-files --numstat --summary --), @tracked)) {
+	for (run_cmd_pipe(qw(git diff-files --numstat --summary --raw --), @tracked)) {
 		if (($add, $del, $file) =
 		    /^([-\d]+)	([-\d]+)	(.*)/) {
 			$file = unquote_path($file);
-			if (!exists $data{$file}) {
-				$data{$file} = +{
-					INDEX => 'unchanged',
-					BINARY => 0,
-				};
-			}
 			my ($change, $bin);
 			if ($add eq '-' && $del eq '-') {
 				$change = 'binary';
@@ -345,6 +340,18 @@ sub list_modified {
 		       /^ (create|delete) mode [0-7]+ (.*)$/) {
 			$file = unquote_path($file);
 			$data{$file}{FILE_ADDDEL} = $adddel;
+		}
+		elsif (/^:[0-7]+ [0-7]+ [0-9a-f]+ [0-9a-f]+ (.)	(.*)$/) {
+			$file = unquote_path($2);
+			if (!exists $data{$file}) {
+				$data{$file} = +{
+					INDEX => 'unchanged',
+					BINARY => 0,
+				};
+			}
+			if ($1 eq 'U') {
+				$data{$file}{UNMERGED} = 1;
+			}
 		}
 	}
 
@@ -1190,6 +1197,10 @@ sub apply_patch_for_checkout_commit {
 
 sub patch_update_cmd {
 	my @all_mods = list_modified($patch_mode_flavour{FILTER});
+	error_msg "ignoring unmerged: $_->{VALUE}\n"
+		for grep { $_->{UNMERGED} } @all_mods;
+	@all_mods = grep { !$_->{UNMERGED} } @all_mods;
+
 	my @mods = grep { !($_->{BINARY}) } @all_mods;
 	my @them;
 
