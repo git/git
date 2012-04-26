@@ -785,9 +785,9 @@ void add_packed_ref(const char *refname, const unsigned char *sha1)
  * dirname must end with '/'.  dir must be the directory entry
  * corresponding to dirname.
  */
-static void read_loose_refs(struct ref_cache *refs, const char *dirname,
-			    struct ref_dir *dir)
+static void read_loose_refs(const char *dirname, struct ref_dir *dir)
 {
+	struct ref_cache *refs = dir->ref_cache;
 	DIR *d;
 	const char *path;
 	struct dirent *de;
@@ -824,7 +824,7 @@ static void read_loose_refs(struct ref_cache *refs, const char *dirname,
 			; /* silently ignore */
 		} else if (S_ISDIR(st.st_mode)) {
 			strbuf_addch(&refname, '/');
-			read_loose_refs(refs, refname.buf,
+			read_loose_refs(refname.buf,
 					search_for_subdir(dir, refname.buf, 1));
 		} else {
 			if (*refs->name) {
@@ -851,7 +851,7 @@ static struct ref_dir *get_loose_refs(struct ref_cache *refs)
 {
 	if (!refs->loose) {
 		refs->loose = create_dir_entry(refs, "");
-		read_loose_refs(refs, "refs/",
+		read_loose_refs("refs/",
 				search_for_subdir(get_ref_dir(refs->loose),
 						  "refs/", 1));
 	}
