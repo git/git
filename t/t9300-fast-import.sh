@@ -24,6 +24,13 @@ head_c () {
 	' - "$1"
 }
 
+verify_packs () {
+	for p in .git/objects/pack/*.pack
+	do
+		git verify-pack "$@" "$p" || return
+	done
+}
+
 file2_data='file2
 second line of EOF'
 
@@ -105,9 +112,10 @@ test_expect_success \
     'A: create pack from stdin' \
     'git fast-import --export-marks=marks.out <input &&
 	 git whatchanged master'
-test_expect_success \
-	'A: verify pack' \
-	'for p in .git/objects/pack/*.pack;do git verify-pack $p||exit;done'
+
+test_expect_success 'A: verify pack' '
+	verify_packs
+'
 
 cat >expect <<EOF
 author $GIT_COMMITTER_NAME <$GIT_COMMITTER_EMAIL> $GIT_COMMITTER_DATE
@@ -252,9 +260,11 @@ test_expect_success \
 	'A: verify marks import does not crash' \
 	'git fast-import --import-marks=marks.out <input &&
 	 git whatchanged verify--import-marks'
-test_expect_success \
-	'A: verify pack' \
-	'for p in .git/objects/pack/*.pack;do git verify-pack $p||exit;done'
+
+test_expect_success 'A: verify pack' '
+	verify_packs
+'
+
 cat >expect <<EOF
 :000000 100755 0000000000000000000000000000000000000000 7123f7f44e39be127c5eb701e5968176ee9d78b1 A	copy-of-file2
 EOF
@@ -514,9 +524,11 @@ test_expect_success \
     'C: incremental import create pack from stdin' \
     'git fast-import <input &&
 	 git whatchanged branch'
-test_expect_success \
-	'C: verify pack' \
-	'for p in .git/objects/pack/*.pack;do git verify-pack $p||exit;done'
+
+test_expect_success 'C: verify pack' '
+	verify_packs
+'
+
 test_expect_success \
 	'C: validate reuse existing blob' \
 	'test $newf = `git rev-parse --verify branch:file2/newf` &&
@@ -572,9 +584,10 @@ test_expect_success \
     'D: inline data in commit' \
     'git fast-import <input &&
 	 git whatchanged branch'
-test_expect_success \
-	'D: verify pack' \
-	'for p in .git/objects/pack/*.pack;do git verify-pack $p||exit;done'
+
+test_expect_success 'D: verify pack' '
+	verify_packs
+'
 
 cat >expect <<EOF
 :000000 100755 0000000000000000000000000000000000000000 35a59026a33beac1569b1c7f66f3090ce9c09afc A	newdir/exec.sh
@@ -618,9 +631,10 @@ test_expect_success 'E: rfc2822 date, --date-format=raw' '
 test_expect_success \
     'E: rfc2822 date, --date-format=rfc2822' \
     'git fast-import --date-format=rfc2822 <input'
-test_expect_success \
-	'E: verify pack' \
-	'for p in .git/objects/pack/*.pack;do git verify-pack $p||exit;done'
+
+test_expect_success 'E: verify pack' '
+	verify_packs
+'
 
 cat >expect <<EOF
 author $GIT_AUTHOR_NAME <$GIT_AUTHOR_EMAIL> 1170778938 -0500
@@ -669,9 +683,10 @@ test_expect_success \
 		fi
 	 fi
 	'
-test_expect_success \
-	'F: verify pack' \
-	'for p in .git/objects/pack/*.pack;do git verify-pack $p||exit;done'
+
+test_expect_success 'F: verify pack' '
+	verify_packs
+'
 
 cat >expect <<EOF
 tree `git rev-parse branch~1^{tree}`
@@ -705,9 +720,11 @@ INPUT_END
 test_expect_success \
     'G: non-fast-forward update forced' \
     'git fast-import --force <input'
-test_expect_success \
-	'G: verify pack' \
-	'for p in .git/objects/pack/*.pack;do git verify-pack $p||exit;done'
+
+test_expect_success 'G: verify pack' '
+	verify_packs
+'
+
 test_expect_success \
 	'G: branch changed, but logged' \
 	'test $old_branch != `git rev-parse --verify branch^0` &&
@@ -742,9 +759,10 @@ test_expect_success \
     'H: deletall, add 1' \
     'git fast-import <input &&
 	 git whatchanged H'
-test_expect_success \
-	'H: verify pack' \
-	'for p in .git/objects/pack/*.pack;do git verify-pack $p||exit;done'
+
+test_expect_success 'H: verify pack' '
+	verify_packs
+'
 
 cat >expect <<EOF
 :100755 000000 f1fb5da718392694d0076d677d6d0e364c79b0bc 0000000000000000000000000000000000000000 D	file2/newf
@@ -1857,9 +1875,10 @@ test_expect_success \
 	'Q: commit notes' \
 	'git fast-import <input &&
 	 git whatchanged notes-test'
-test_expect_success \
-	'Q: verify pack' \
-	'for p in .git/objects/pack/*.pack;do git verify-pack $p||exit;done'
+
+test_expect_success 'Q: verify pack' '
+	verify_packs
+'
 
 commit1=$(git rev-parse notes-test~2)
 commit2=$(git rev-parse notes-test^)
@@ -2616,13 +2635,14 @@ test_expect_success \
 	'R: blob bigger than threshold' \
 	'test_create_repo R &&
 	 git --git-dir=R/.git fast-import --big-file-threshold=1 <input'
-test_expect_success \
-	'R: verify created pack' \
-	': >verify &&
-	 for p in R/.git/objects/pack/*.pack;
-	 do
-	   git verify-pack -v $p >>verify || exit;
-	 done'
+
+test_expect_success 'R: verify created pack' '
+	(
+		cd R &&
+		verify_packs -v > ../verify
+	)
+'
+
 test_expect_success \
 	'R: verify written objects' \
 	'git --git-dir=R/.git cat-file blob big-file:big1 >actual &&
