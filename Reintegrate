@@ -1,11 +1,13 @@
 #!/bin/sh
 
-accept_rerere="--rerere-autoupdate" generate=no update= diff= edit=
+accept_rerere="--rerere-autoupdate" generate=no update= diff= edit= stop_at_cut=
 while case "$#,$1" in 0,*) break;; *,-*) ;; esac
 do
 	case "$1" in
 	-n)	accept_rerere= ;;
 	-e)	edit=t ;;
+	-c)	stop_at_cut=1 ;;
+	-c?*)	stop_at_cut=${1#-c} ;;
 	-d)	update=${2?"diff with what?"}
 		diff=yes
 		generate=yes
@@ -78,9 +80,17 @@ no)
 		fi
 	}
 
+	cut_seen=0
 	while read branch eh
 	do
+		case "$branch" in '###') cut_seen=$(( $cut_seen + 1 )) ;; esac
+		if test -n "$stop_at_cut" && test $stop_at_cut -le $cut_seen
+		then
+			continue
+		fi
+
 		case "$branch" in '#'* | '') continue ;; esac
+
 		case "$eh" in
 		"" | "#"*)
 			echo >&2 "* $branch"
