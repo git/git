@@ -182,12 +182,15 @@ static void parse_args(int argc, const char **argv, struct replay_opts *opts)
 	if (opts->subcommand != REPLAY_NONE) {
 		opts->revs = NULL;
 	} else {
+		struct setup_revision_opt s_r_opt;
 		opts->revs = xmalloc(sizeof(*opts->revs));
 		init_revisions(opts->revs, NULL);
 		opts->revs->no_walk = 1;
 		if (argc < 2)
 			usage_with_options(usage_str, options);
-		argc = setup_revisions(argc, argv, opts->revs, NULL);
+		memset(&s_r_opt, 0, sizeof(s_r_opt));
+		s_r_opt.assume_dashdash = 1;
+		argc = setup_revisions(argc, argv, opts->revs, &s_r_opt);
 	}
 
 	if (argc > 1)

@@ -183,6 +183,7 @@ struct setup_revision_opt {
 	const char *def;
 	void (*tweak)(struct rev_info *, struct setup_revision_opt *);
 	const char *submodule;
+	int assume_dashdash;
 };
 
 extern void init_revisions(struct rev_info *revs, const char *prefix);
