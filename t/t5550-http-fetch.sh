@@ -13,17 +13,22 @@ LIB_HTTPD_PORT=${LIB_HTTPD_PORT-'5550'}
 start_httpd
 
 test_expect_success 'setup repository' '
-	echo content >file &&
+	echo content1 >file &&
 	git add file &&
 	git commit -m one
+	echo content2 >file &&
+	git add file &&
+	git commit -m two
 '
 
-test_expect_success 'create http-accessible bare repository' '
-	mkdir "$HTTPD_DOCUMENT_ROOT_PATH/repo.git" &&
+test_expect_success 'create http-accessible bare repository with loose objects' '
+	cp -a .git "$HTTPD_DOCUMENT_ROOT_PATH/repo.git" &&
 	(cd "$HTTPD_DOCUMENT_ROOT_PATH/repo.git" &&
-	 git --bare init &&
+	 git config core.bare true &&
+	 mkdir -p hooks &&
 	 echo "exec git update-server-info" >hooks/post-update &&
-	 chmod +x hooks/post-update
+	 chmod +x hooks/post-update &&
+	 hooks/post-update
 	) &&
 	git remote add public "$HTTPD_DOCUMENT_ROOT_PATH/repo.git" &&
 	git push public master:master
