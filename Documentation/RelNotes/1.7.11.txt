@@ -86,6 +86,30 @@ Unless otherwise noted, all the fixes since v1.7.10 in the maintenance
 releases are contained in this release (see release notes to them for
 details).
 
+ * Octopus merge strategy did not reduce heads that are recorded in the
+   final commit correctly.
+   (merge 5802f81 jc/merge-reduce-parents-early later to maint).
+
+ * In the older days, the header "Conflicts:" in "cherry-pick" and
+   "merge" was separated by a blank line from the list of paths that
+   follow for readability, but when "merge" was rewritten in C, we lost
+   it by mistake. Remove the newline from "cherry-pick" to make them
+   match again.
+   (merge 5112068 rt/cherry-revert-conflict-summary later to maint).
+
+ * The filesystem boundary was not correctly reported when .git
+   directory discovery stopped at a mount point.
+   (merge 2565b43 cb/maint-report-mount-point-correctly-in-setup later to maint).
+
+ * The command line parser choked "git cherry-pick $name" when $name
+   can be both revision name and a pathname, even though $name can
+   never be a path in the context of the command.
+   (merge 6d5b93f cb/cherry-pick-rev-path-confusion later to maint).
+
+ * HTTP transport that requires authentication did not work correctly
+   when multiple connections are used simultaneously.
+   (merge 6f4c347 cb/http-multi-curl-auth later to maint).
+
  * The i18n of error message "git stash save" was not properly done.
    (merge ed3c400 rl/maint-stash-i18n-save-error later to maint).
 
