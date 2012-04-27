@@ -50,8 +50,7 @@ EOF
 	test_cmp expected actual
 '
 
-test_expect_success 'COLUMNS = 1' '
-	cat >expected <<\EOF &&
+cat >expected <<\EOF
 one
 two
 three
@@ -64,6 +63,8 @@ nine
 ten
 eleven
 EOF
+
+test_expect_success COLUMNS_CAN_BE_1 'COLUMNS = 1' '
 	COLUMNS=1 git column --mode=column <lista >actual &&
 	test_cmp expected actual
 '
