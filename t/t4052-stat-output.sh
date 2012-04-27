@@ -292,7 +292,8 @@ cat >expect1-graph <<'EOF'
 EOF
 while read verb expect cmd args
 do
-	test_expect_success "$cmd $verb prefix greater than COLUMNS (big change)" '
+	test_expect_success COLUMNS_CAN_BE_1 \
+		"$cmd $verb prefix greater than COLUMNS (big change)" '
 		COLUMNS=1 git $cmd $args >output
 		grep " | " output >actual &&
 		test_cmp "$expect" actual
@@ -300,7 +301,8 @@ do
 
 	test "$cmd" != diff || continue
 
-	test_expect_success "$cmd --graph $verb prefix greater than COLUMNS (big change)" '
+	test_expect_success COLUMNS_CAN_BE_1 \
+		"$cmd --graph $verb prefix greater than COLUMNS (big change)" '
 		COLUMNS=1 git $cmd $args --graph >output
 		grep " | " output >actual &&
 		test_cmp "$expect-graph" actual
