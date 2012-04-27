@@ -178,7 +178,6 @@
 /test-dump-cache-tree
 /test-scrap-cache-tree
 /test-genrandom
-/test-git-daemon
 /test-index-version
 /test-line-buffer
 /test-match-trees
