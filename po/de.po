@@ -1,13 +1,13 @@
 # German translations for Git.
-# Copyright (C) 2012 Ralf Thielow <ralf.thielow@googlemail.com>
+# Copyright (C) 2010-2012 Ralf Thielow <ralf.thielow@googlemail.com>
 # This file is distributed under the same license as the Git package.
-# Ralf Thielow <ralf.thielow@googlemail.com>, 2012.
+# Ralf Thielow <ralf.thielow@googlemail.com>, 2010, 2011, 2012.
 #
 msgid ""
 msgstr ""
 "Project-Id-Version: git 1.7.10\n"
 "Report-Msgid-Bugs-To: Git Mailing List <git@vger.kernel.org>\n"
-"POT-Creation-Date: 2012-04-28 20:33+0800\n"
+"POT-Creation-Date: 2012-04-28 20:17+0800\n"
 "PO-Revision-Date: 2012-03-28 18:46+0200\n"
 "Last-Translator: Ralf Thielow <ralf.thielow@googlemail.com>\n"
 "Language-Team: German\n"
@@ -17,7 +17,7 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
 
-#: advice.c:34
+#: advice.c:40
 #, c-format
 msgid "hint: %.*s\n"
 msgstr "Hinweis: %.*s\n"
@@ -26,7 +26,7 @@ msgstr "Hinweis: %.*s\n"
 #. * Message used both when 'git commit' fails and when
 #. * other commands doing a merge do.
 #.
-#: advice.c:64
+#: advice.c:70
 msgid ""
 "Fix them up in the work tree,\n"
 "and then use 'git add/rm <file>' as\n"
@@ -38,12 +38,12 @@ msgstr ""
 "vorgesehen, um die Auflösung zu markieren und dann einzutragen,\n"
 "oder benutze 'git commit -a'."
 
-#: commit.c:47
+#: commit.c:48
 #, c-format
 msgid "could not parse %s"
 msgstr "konnte %s nicht parsen"
 
-#: commit.c:49
+#: commit.c:50
 #, c-format
 msgid "%s %s is not a commit!"
 msgstr "%s %s ist keine Version!"
@@ -188,14 +188,14 @@ msgstr[1] ""
 "Dein Zweig und '%s' sind divergiert,\n"
 "und haben jeweils %d und %d unterschiedliche Versionen.\n"
 
-#: sequencer.c:120 builtin/merge.c:864 builtin/merge.c:985
-#: builtin/merge.c:1095 builtin/merge.c:1105
+#: sequencer.c:120 builtin/merge.c:865 builtin/merge.c:978
+#: builtin/merge.c:1088 builtin/merge.c:1098
 #, c-format
 msgid "Could not open '%s' for writing"
 msgstr "Konnte '%s' nicht zum Schreiben öffnen."
 
-#: sequencer.c:122 builtin/merge.c:334 builtin/merge.c:867
-#: builtin/merge.c:1097 builtin/merge.c:1110
+#: sequencer.c:122 builtin/merge.c:333 builtin/merge.c:868
+#: builtin/merge.c:1090 builtin/merge.c:1103
 #, c-format
 msgid "Could not write to '%s'"
 msgstr "Konnte nicht nach '%s' schreiben."
@@ -294,8 +294,8 @@ msgstr "Konnte %s nicht zurücksetzen... %s"
 msgid "could not apply %s... %s"
 msgstr "Konnte %s nicht anwenden... %s"
 
-#: sequencer.c:450 sequencer.c:909 builtin/log.c:288 builtin/log.c:713
-#: builtin/log.c:1329 builtin/log.c:1548 builtin/merge.c:348
+#: sequencer.c:450 sequencer.c:909 builtin/log.c:289 builtin/log.c:719
+#: builtin/log.c:1335 builtin/log.c:1554 builtin/merge.c:347
 #: builtin/shortlog.c:181
 msgid "revision walk setup failed"
 msgstr "Einrichtung des Revisionsgangs fehlgeschlagen"
@@ -405,8 +405,9 @@ msgstr "Unerwartetes Dateiende"
 #: sequencer.c:742
 #, c-format
 msgid "stored pre-cherry-pick HEAD file '%s' is corrupt"
-msgstr "gespeicherte \"pre-cherry-pick\" Datei der Zweigspitze (HEAD) '%s' "
-"ist beschädigt"
+msgstr ""
+"gespeicherte \"pre-cherry-pick\" Datei der Zweigspitze (HEAD) '%s' ist "
+"beschädigt"
 
 #: sequencer.c:765
 #, c-format
@@ -419,7 +420,27 @@ msgstr "Kann nicht zu initialer Version zurücksetzen."
 
 #: sequencer.c:928
 msgid "Can't cherry-pick into empty head"
-msgstr "Kann \"cherry-pick\" nicht in einen leeren Kopf ausführen."
+msgstr "Kann \"cherry-pick\" nicht in einem leerem Kopf ausführen."
+
+#: sha1_name.c:864
+msgid "HEAD does not point to a branch"
+msgstr "Zweigspitze (HEAD) zeigt auf keinen Zweig"
+
+#: sha1_name.c:867
+#, c-format
+msgid "No such branch: '%s'"
+msgstr "Kein solcher Zweig '%s'"
+
+#: sha1_name.c:869
+#, c-format
+msgid "No upstream configured for branch '%s'"
+msgstr "Kein entferntes Projektarchiv für Zweig '%s' konfiguriert."
+
+#: sha1_name.c:872
+#, c-format
+msgid "Upstream branch '%s' not stored as a remote-tracking branch"
+msgstr "Zweig '%s' des entfernten Projektarchivs ist nicht als entfernter "
+"Übernahmezweig gespeichert"
 
 #: wt-status.c:134
 msgid "Unmerged paths:"
@@ -693,7 +714,7 @@ msgstr "Pfadspezifikation '%s' stimmt mit keinen Dateien überein"
 #: builtin/add.c:209
 #, c-format
 msgid "'%s' is beyond a symbolic link"
-msgstr "'%s' ist über einer symbolischen Verknüpfung"
+msgstr "'%s' ist über einem symbolischen Link"
 
 #: builtin/add.c:276
 msgid "Could not read the index"
@@ -802,7 +823,7 @@ msgstr "git archive: Protokollfehler"
 
 #: builtin/archive.c:71
 msgid "git archive: expected a flush"
-msgstr "git archive: erwartete eine Leerung (flush)"
+msgstr "git archive: erwartete eine Spülung (flush)"
 
 #: builtin/branch.c:137
 #, c-format
@@ -824,34 +845,34 @@ msgstr ""
 "         '%s', obwohl er mit der Zweigspitze (HEAD) zusammengeführt wurde."
 
 #. TRANSLATORS: This is "remote " in "remote branch '%s' not found"
-#: builtin/branch.c:163
+#: builtin/branch.c:164
 msgid "remote "
 msgstr "entfernter "
 
-#: builtin/branch.c:171
+#: builtin/branch.c:172
 msgid "cannot use -a with -d"
 msgstr "kann -a nicht mit -d benutzen"
 
-#: builtin/branch.c:177
+#: builtin/branch.c:178
 msgid "Couldn't look up commit object for HEAD"
 msgstr "Konnte Versionsobjekt für Zweigspitze (HEAD) nicht nachschlagen."
 
-#: builtin/branch.c:182
+#: builtin/branch.c:183
 #, c-format
 msgid "Cannot delete the branch '%s' which you are currently on."
 msgstr "Kann Zweig '%s' nicht entfernen auf dem du dich gerade befindest."
 
-#: builtin/branch.c:192
+#: builtin/branch.c:193
 #, c-format
 msgid "%sbranch '%s' not found."
 msgstr "%sZweig '%s' nicht gefunden."
 
-#: builtin/branch.c:200
+#: builtin/branch.c:201
 #, c-format
 msgid "Couldn't look up commit object for '%s'"
 msgstr "Konnte Versionsobjekt für '%s' nicht nachschlagen."
 
-#: builtin/branch.c:206
+#: builtin/branch.c:207
 #, c-format
 msgid ""
 "The branch '%s' is not fully merged.\n"
@@ -860,97 +881,97 @@ msgstr ""
 "Der Zweig '%s' ist nicht vollständig zusammengeführt.\n"
 "Wenn du sicher bist diesen Zweig zu entfernen, führe 'git branch -D %s' aus."
 
-#: builtin/branch.c:214
+#: builtin/branch.c:215
 #, c-format
 msgid "Error deleting %sbranch '%s'"
 msgstr "Fehler beim Löschen von %sZweig '%s'"
 
-#: builtin/branch.c:219
+#: builtin/branch.c:221
 #, c-format
 msgid "Deleted %sbranch %s (was %s).\n"
 msgstr "Entferne %sZweig %s (war %s).\n"
 
-#: builtin/branch.c:224
+#: builtin/branch.c:226
 msgid "Update of config-file failed"
 msgstr "Aktualisierung der Konfigurationsdatei fehlgeschlagen."
 
-#: builtin/branch.c:322
+#: builtin/branch.c:324
 #, c-format
 msgid "branch '%s' does not point at a commit"
 msgstr "Zweig '%s' zeigt auf keine Version"
 
-#: builtin/branch.c:394
+#: builtin/branch.c:396
 #, c-format
 msgid "behind %d] "
 msgstr "hinter %d] "
 
-#: builtin/branch.c:396
+#: builtin/branch.c:398
 #, c-format
 msgid "ahead %d] "
 msgstr "vor %d] "
 
-#: builtin/branch.c:398
+#: builtin/branch.c:400
 #, c-format
 msgid "ahead %d, behind %d] "
 msgstr "vor %d, hinter %d] "
 
-#: builtin/branch.c:501
+#: builtin/branch.c:503
 msgid "(no branch)"
 msgstr "(kein Zweig)"
 
-#: builtin/branch.c:566
+#: builtin/branch.c:568
 msgid "some refs could not be read"
 msgstr "einige Referenzen konnten nicht gelesen werden"
 
-#: builtin/branch.c:579
+#: builtin/branch.c:581
 msgid "cannot rename the current branch while not on any."
 msgstr ""
 "Kann aktuellen Zweig nicht umbennen, solange du dich auf keinem befindest."
 
-#: builtin/branch.c:589
+#: builtin/branch.c:591
 #, c-format
 msgid "Invalid branch name: '%s'"
 msgstr "Ungültiger Zweig-Name: '%s'"
 
-#: builtin/branch.c:604
+#: builtin/branch.c:606
 msgid "Branch rename failed"
 msgstr "Umbenennung des Zweiges fehlgeschlagen"
 
-#: builtin/branch.c:608
+#: builtin/branch.c:610
 #, c-format
 msgid "Renamed a misnamed branch '%s' away"
 msgstr "falsch benannten Zweig '%s' umbenannt"
 
-#: builtin/branch.c:612
+#: builtin/branch.c:614
 #, c-format
 msgid "Branch renamed to %s, but HEAD is not updated!"
 msgstr "Zweig umbenannt zu %s, aber Zweigspitze (HEAD) ist nicht aktualisiert!"
 
-#: builtin/branch.c:619
+#: builtin/branch.c:621
 msgid "Branch is renamed, but update of config-file failed"
 msgstr ""
 "Zweig ist umbenannt, aber die Aktualisierung der Konfigurationsdatei ist "
 "fehlgeschlagen."
 
-#: builtin/branch.c:634
+#: builtin/branch.c:636
 #, c-format
 msgid "malformed object name %s"
 msgstr "Missgebildeter Objektname %s"
 
-#: builtin/branch.c:658
+#: builtin/branch.c:660
 #, c-format
 msgid "could not write branch description template: %s\n"
 msgstr "Konnte Beschreibungsvorlage für Zweig nicht schreiben: %s\n"
 
-#: builtin/branch.c:746
+#: builtin/branch.c:750
 msgid "Failed to resolve HEAD as a valid ref."
 msgstr "Zweigspitze (HEAD) konnte nicht als gültige Referenz aufgelöst werden."
 
-#: builtin/branch.c:751 builtin/clone.c:558
+#: builtin/branch.c:755 builtin/clone.c:558
 msgid "HEAD not found below refs/heads!"
 msgstr "Zweigspitze (HEAD) wurde nicht unter \"refs/heads\" gefunden!"
 
-#: builtin/branch.c:809
+#: builtin/branch.c:813
 msgid "-a and -r options to 'git branch' do not make sense with a branch name"
 msgstr ""
 "Die Optionen -a und -r bei 'git branch' machen mit einem Zweignamen keinen "
@@ -1014,7 +1035,7 @@ msgid "path '%s' is unmerged"
 msgstr "Pfad '%s' ist nicht zusammengeführt."
 
 #: builtin/checkout.c:302 builtin/checkout.c:498 builtin/clone.c:583
-#: builtin/merge.c:811
+#: builtin/merge.c:812
 msgid "unable to write new index file"
 msgstr "Konnte neue Bereitstellungsdatei nicht schreiben."
 
@@ -1031,42 +1052,42 @@ msgstr "Du musst zuerst deine aktuelle Bereitstellung auflösen."
 msgid "Can not do reflog for '%s'\n"
 msgstr "Konnte \"reflog\" für '%s' nicht durchführen\n"
 
-#: builtin/checkout.c:565
+#: builtin/checkout.c:566
 msgid "HEAD is now at"
 msgstr "Zweigspitze (HEAD) ist jetzt bei"
 
-#: builtin/checkout.c:572
+#: builtin/checkout.c:573
 #, c-format
 msgid "Reset branch '%s'\n"
 msgstr "Setze Zweig '%s' zurück\n"
 
-#: builtin/checkout.c:575
+#: builtin/checkout.c:576
 #, c-format
 msgid "Already on '%s'\n"
 msgstr "Bereits auf '%s'\n"
 
-#: builtin/checkout.c:579
+#: builtin/checkout.c:580
 #, c-format
 msgid "Switched to and reset branch '%s'\n"
 msgstr "Gewechselt zu zurückgesetztem Zweig '%s'\n"
 
-#: builtin/checkout.c:581
+#: builtin/checkout.c:582
 #, c-format
 msgid "Switched to a new branch '%s'\n"
 msgstr "Gewechselt zu einem neuen Zweig '%s'\n"
 
-#: builtin/checkout.c:583
+#: builtin/checkout.c:584
 #, c-format
 msgid "Switched to branch '%s'\n"
 msgstr "Gewechselt zu Zweig '%s'\n"
 
-#: builtin/checkout.c:639
+#: builtin/checkout.c:640
 #, c-format
 msgid " ... and %d more.\n"
 msgstr " ... und %d weitere.\n"
 
 #. The singular version
-#: builtin/checkout.c:645
+#: builtin/checkout.c:646
 #, c-format
 msgid ""
 "Warning: you are leaving %d commit behind, not connected to\n"
@@ -1089,7 +1110,7 @@ msgstr[1] ""
 "\n"
 "%s\n"
 
-#: builtin/checkout.c:663
+#: builtin/checkout.c:664
 #, c-format
 msgid ""
 "If you want to keep them by creating a new branch, this may be a good time\n"
@@ -1104,71 +1125,71 @@ msgstr ""
 " git branch neuer_zweig_name %s\n"
 "\n"
 
-#: builtin/checkout.c:692
+#: builtin/checkout.c:693
 msgid "internal error in revision walk"
 msgstr "interner Fehler im Revisionsgang"
 
-#: builtin/checkout.c:696
+#: builtin/checkout.c:697
 msgid "Previous HEAD position was"
 msgstr "Vorherige Position der Zweigspitze (HEAD) war"
 
-#: builtin/checkout.c:722
+#: builtin/checkout.c:723
 msgid "You are on a branch yet to be born"
 msgstr "Du bist auf einem Zweig, der noch nicht geboren wurde."
 
 #. case (1)
-#: builtin/checkout.c:853
+#: builtin/checkout.c:854
 #, c-format
 msgid "invalid reference: %s"
 msgstr "Ungültige Referenz: %s"
 
 #. case (1): want a tree
-#: builtin/checkout.c:892
+#: builtin/checkout.c:893
 #, c-format
 msgid "reference is not a tree: %s"
 msgstr "Referenz ist kein Baum: %s"
 
-#: builtin/checkout.c:972
+#: builtin/checkout.c:973
 msgid "-B cannot be used with -b"
 msgstr "-B kann nicht mit -b benutzt werden"
 
-#: builtin/checkout.c:981
+#: builtin/checkout.c:982
 msgid "--patch is incompatible with all other options"
 msgstr "--patch ist inkompatibel mit allen anderen Optionen"
 
-#: builtin/checkout.c:984
+#: builtin/checkout.c:985
 msgid "--detach cannot be used with -b/-B/--orphan"
 msgstr "--detach kann nicht mit -b/-B/--orphan benutzt werden"
 
-#: builtin/checkout.c:986
+#: builtin/checkout.c:987
 msgid "--detach cannot be used with -t"
 msgstr "--detach kann nicht mit -t benutzt werden"
 
-#: builtin/checkout.c:992
+#: builtin/checkout.c:993
 msgid "--track needs a branch name"
 msgstr "--track benötigt einen Zweignamen"
 
-#: builtin/checkout.c:999
+#: builtin/checkout.c:1000
 msgid "Missing branch name; try -b"
 msgstr "Vermisse Zweignamen; versuche -b"
 
-#: builtin/checkout.c:1005
+#: builtin/checkout.c:1006
 msgid "--orphan and -b|-B are mutually exclusive"
 msgstr "--orphan und -b|-B sind gegenseitig exklusiv"
 
-#: builtin/checkout.c:1007
+#: builtin/checkout.c:1008
 msgid "--orphan cannot be used with -t"
 msgstr "--orphan kann nicht mit -t benutzt werden"
 
-#: builtin/checkout.c:1017
+#: builtin/checkout.c:1018
 msgid "git checkout: -f and -m are incompatible"
 msgstr "git checkout: -f und -m sind inkompatibel"
 
-#: builtin/checkout.c:1051
+#: builtin/checkout.c:1052
 msgid "invalid path specification"
 msgstr "ungültige Pfadspezifikation"
 
-#: builtin/checkout.c:1059
+#: builtin/checkout.c:1060
 #, c-format
 msgid ""
 "git checkout: updating paths is incompatible with switching branches.\n"
@@ -1179,17 +1200,17 @@ msgstr ""
 "Hast du beabsichtigt '%s' auszuchecken, welcher nicht als Version aufgelöst "
 "werden kann?"
 
-#: builtin/checkout.c:1061
+#: builtin/checkout.c:1062
 msgid "git checkout: updating paths is incompatible with switching branches."
 msgstr ""
 "git checkout: Aktualisierung von Pfaden ist inkompatibel mit dem Wechsel von "
 "Zweigen."
 
-#: builtin/checkout.c:1066
+#: builtin/checkout.c:1067
 msgid "git checkout: --detach does not take a path argument"
 msgstr "git checkout: --detach nimmt kein Pfad-Argument"
 
-#: builtin/checkout.c:1069
+#: builtin/checkout.c:1070
 msgid ""
 "git checkout: --ours/--theirs, --force and --merge are incompatible when\n"
 "checking out of the index."
@@ -1197,11 +1218,11 @@ msgstr ""
 "git checkout: --ours/--theirs, --force and --merge sind inkompatibel wenn\n"
 "du außerhalb der Bereitstellung auscheckst."
 
-#: builtin/checkout.c:1088
+#: builtin/checkout.c:1089
 msgid "Cannot switch branch to a non-commit."
 msgstr "Kann Zweig nur zu einer Version wechseln."
 
-#: builtin/checkout.c:1091
+#: builtin/checkout.c:1092
 msgid "--ours/--theirs is incompatible with switching branches."
 msgstr "--ours/--theirs ist inkompatibel mit den Wechseln von Zweigen."
 
@@ -1242,12 +1263,12 @@ msgstr "Fehler beim Entfernen von %s"
 #: builtin/clean.c:166
 #, c-format
 msgid "Would not remove %s\n"
-msgstr "Würde %s nicht entfernen\n"
+msgstr "Würde nicht entfernen %s\n"
 
 #: builtin/clean.c:168
 #, c-format
 msgid "Not removing %s\n"
-msgstr "Entferne %s nicht\n"
+msgstr "Entferne nicht %s\n"
 
 #: builtin/clone.c:243
 #, c-format
@@ -1370,7 +1391,7 @@ msgstr "Weiß nicht wie %s zu klonen ist."
 #: builtin/clone.c:835
 #, c-format
 msgid "Remote branch %s not found in upstream %s"
-msgstr "entfernten Zweig %s nicht im anderen Projektarchiv %s gefunden"
+msgstr "entfernter Zweig %s nicht im anderen Projektarchiv gefunden %s"
 
 #: builtin/clone.c:842
 msgid "You appear to have cloned an empty repository."
@@ -1478,7 +1499,7 @@ msgstr "Fehlerhafter --author Parameter"
 #: builtin/commit.c:651
 #, c-format
 msgid "Malformed ident string: '%s'"
-msgstr "Fehlerhafter Identifikations-String: '%s'"
+msgstr "Fehlerhafte Identifikations-String: '%s'"
 
 #: builtin/commit.c:689 builtin/commit.c:722 builtin/commit.c:1033
 #, c-format
@@ -1639,7 +1660,7 @@ msgstr "--include/--only machen ohne Pfade keinen Sinn."
 #: builtin/commit.c:1119
 msgid "Clever... amending the last one with dirty index."
 msgstr ""
-"Klug... nachbessern der letzten Version mit einer unsauberen Bereitstellung."
+"Klug... nachbessern der letzten Version mit einem unsauberen Bereitstellung."
 
 #: builtin/commit.c:1121
 msgid "Explicit paths specified without -i nor -o; assuming --only paths..."
@@ -1662,7 +1683,7 @@ msgstr "Konnte neu erstellte Version nicht nachschlagen."
 
 #: builtin/commit.c:1317
 msgid "could not parse newly created commit"
-msgstr "Konnte neu erstellte Version nicht analysieren."
+msgstr "Konnte neulich erstellte Version nicht analysieren."
 
 #: builtin/commit.c:1358
 msgid "detached HEAD"
@@ -1705,7 +1726,7 @@ msgstr "Eintragung abgebrochen; du hast die Beschreibung nicht editiert.\n"
 msgid "Aborting commit due to empty commit message.\n"
 msgstr "Eintragung aufgrund leerer Versionsbeschreibung abgebrochen.\n"
 
-#: builtin/commit.c:1554 builtin/merge.c:935 builtin/merge.c:968
+#: builtin/commit.c:1554 builtin/merge.c:936 builtin/merge.c:961
 msgid "failed to write commit object"
 msgstr "Fehler beim Schreiben des Versionsobjektes."
 
@@ -1725,7 +1746,7 @@ msgid ""
 msgstr ""
 "Das Projektarchiv wurde aktualisiert, aber die \"new_index\"-Datei\n"
 "konnte nicht geschrieben werden. Prüfe, dass dein Speicher nicht\n"
-"voll und dein Kontingent nicht aufgebraucht ist und führe\n"
+"voll und Dein Kontingent nicht aufgebraucht ist und führe\n"
 "anschließend \"git reset HEAD\" zu Wiederherstellung aus."
 
 #: builtin/describe.c:234
@@ -1815,7 +1836,7 @@ msgstr "--dirty ist inkompatibel mit \"committish\"-Werten"
 #: builtin/diff.c:77
 #, c-format
 msgid "'%s': not a regular file or symlink"
-msgstr "'%s': keine reguläre Datei oder symbolische Verknüpfung"
+msgstr "'%s': keine reguläre Datei oder symbolischer Link"
 
 #: builtin/diff.c:220
 #, c-format
@@ -1850,68 +1871,72 @@ msgstr "unbehandeltes Objekt '%s' gegeben"
 msgid "Couldn't find remote ref HEAD"
 msgstr "Konnte entfernte Referenz der Zweigspitze (HEAD) nicht finden."
 
-#: builtin/fetch.c:252
+#: builtin/fetch.c:253
 #, c-format
 msgid "object %s not found"
 msgstr "Objekt %s nicht gefunden"
 
-#: builtin/fetch.c:258
+#: builtin/fetch.c:259
 msgid "[up to date]"
 msgstr "[aktuell]"
 
-#: builtin/fetch.c:272
+#: builtin/fetch.c:273
 #, c-format
 msgid "! %-*s %-*s -> %s  (can't fetch in current branch)"
 msgstr "! %-*s %-*s -> %s  (kann nicht im aktuellen Zweig anfordern)"
 
-#: builtin/fetch.c:273 builtin/fetch.c:351
+#: builtin/fetch.c:274 builtin/fetch.c:360
 msgid "[rejected]"
 msgstr "[zurückgewiesen]"
 
-#: builtin/fetch.c:284
+#: builtin/fetch.c:285
 msgid "[tag update]"
 msgstr "[Markierungsaktualisierung]"
 
-#: builtin/fetch.c:286 builtin/fetch.c:313 builtin/fetch.c:331
+#: builtin/fetch.c:287 builtin/fetch.c:322 builtin/fetch.c:340
 msgid "  (unable to update local ref)"
 msgstr "  (kann lokale Referenz nicht aktualisieren)"
 
-#: builtin/fetch.c:298
+#: builtin/fetch.c:305
 msgid "[new tag]"
 msgstr "[neue Markierung]"
 
-#: builtin/fetch.c:302
+#: builtin/fetch.c:308
 msgid "[new branch]"
 msgstr "[neuer Zweig]"
 
-#: builtin/fetch.c:347
+#: builtin/fetch.c:311
+msgid "[new ref]"
+msgstr "[neue Referenz]"
+
+#: builtin/fetch.c:356
 msgid "unable to update local ref"
 msgstr "kann lokale Referenz nicht aktualisieren"
 
-#: builtin/fetch.c:347
+#: builtin/fetch.c:356
 msgid "forced update"
 msgstr "Aktualisierung erzwungen"
 
-#: builtin/fetch.c:353
+#: builtin/fetch.c:362
 msgid "(non-fast-forward)"
 msgstr "(kein Vorspulen)"
 
-#: builtin/fetch.c:384 builtin/fetch.c:676
+#: builtin/fetch.c:393 builtin/fetch.c:685
 #, c-format
 msgid "cannot open %s: %s\n"
 msgstr "kann %s nicht öffnen: %s\n"
 
-#: builtin/fetch.c:393
+#: builtin/fetch.c:402
 #, c-format
 msgid "%s did not send all necessary objects\n"
 msgstr "%s hat nicht alle erforderlichen Objekte gesendet\n"
 
-#: builtin/fetch.c:479
+#: builtin/fetch.c:488
 #, c-format
 msgid "From %.*s\n"
 msgstr "Von %.*s\n"
 
-#: builtin/fetch.c:490
+#: builtin/fetch.c:499
 #, c-format
 msgid ""
 "some local refs could not be updated; try running\n"
@@ -1920,57 +1945,57 @@ msgstr ""
 "Einige lokale Referenzen konnten nicht aktualisiert werden; versuche\n"
 "'git remote prune %s' um jeden älteren, widersprüchlichen Zweig zu entfernen."
 
-#: builtin/fetch.c:540
+#: builtin/fetch.c:549
 #, c-format
 msgid "   (%s will become dangling)\n"
 msgstr "   (%s wird unreferenziert werden)\n"
 
-#: builtin/fetch.c:541
+#: builtin/fetch.c:550
 #, c-format
 msgid "   (%s has become dangling)\n"
 msgstr "   (%s wurde unreferenziert)\n"
 
-#: builtin/fetch.c:548
+#: builtin/fetch.c:557
 msgid "[deleted]"
 msgstr "[gelöscht]"
 
-#: builtin/fetch.c:549
+#: builtin/fetch.c:558
 msgid "(none)"
 msgstr "(keine)"
 
-#: builtin/fetch.c:666
+#: builtin/fetch.c:675
 #, c-format
 msgid "Refusing to fetch into current branch %s of non-bare repository"
 msgstr ""
 "Ablehnung des Anforderns in aktuellen Zweig %s von einem nicht-leeren "
 "Projektarchiv"
 
-#: builtin/fetch.c:700
+#: builtin/fetch.c:709
 #, c-format
 msgid "Don't know how to fetch from %s"
 msgstr "Weiß nicht wie von %s angefordert wird."
 
-#: builtin/fetch.c:777
+#: builtin/fetch.c:786
 #, c-format
 msgid "Option \"%s\" value \"%s\" is not valid for %s"
 msgstr "Option \"%s\" Wert \"%s\" ist nicht gültig für %s"
 
-#: builtin/fetch.c:780
+#: builtin/fetch.c:789
 #, c-format
 msgid "Option \"%s\" is ignored for %s\n"
 msgstr "Option \"%s\" wird ignoriert für %s\n"
 
-#: builtin/fetch.c:879
+#: builtin/fetch.c:888
 #, c-format
 msgid "Fetching %s\n"
 msgstr "Hole %s ab\n"
 
-#: builtin/fetch.c:881
+#: builtin/fetch.c:890
 #, c-format
 msgid "Could not fetch %s"
 msgstr "Konnte %s nicht anfordern"
 
-#: builtin/fetch.c:898
+#: builtin/fetch.c:907
 msgid ""
 "No remote repository specified.  Please, specify either a URL or a\n"
 "remote name from which new revisions should be fetched."
@@ -1979,24 +2004,24 @@ msgstr ""
 "eine URL oder einen Entfernungsname, von welchem neue Revisionen angefordert "
 "werden sollen."
 
-#: builtin/fetch.c:918
+#: builtin/fetch.c:927
 msgid "You need to specify a tag name."
 msgstr "Du musst den Namen der Markierung spezifizieren."
 
-#: builtin/fetch.c:970
+#: builtin/fetch.c:979
 msgid "fetch --all does not take a repository argument"
 msgstr "fetch -all nimmt kein Projektarchiv als Argument"
 
-#: builtin/fetch.c:972
+#: builtin/fetch.c:981
 msgid "fetch --all does not make sense with refspecs"
 msgstr "fetch --all macht keinen Sinn mit Referenzspezifikationen"
 
-#: builtin/fetch.c:983
+#: builtin/fetch.c:992
 #, c-format
 msgid "No such remote or remote group: %s"
 msgstr "Keine solche Entfernung oder Entfernungsgruppe: %s"
 
-#: builtin/fetch.c:991
+#: builtin/fetch.c:1000
 msgid "Fetching a group and specifying refspecs does not make sense"
 msgstr ""
 "Abholen einer Gruppe und Spezifizieren von Referenzspezifikationen macht "
@@ -2243,103 +2268,103 @@ msgstr "Kann nicht auf aktuelles Arbeitsverzeichnis zugreifen."
 msgid "Cannot access work tree '%s'"
 msgstr "Kann nicht auf Arbeitsbaum '%s' zugreifen."
 
-#: builtin/log.c:187
+#: builtin/log.c:188
 #, c-format
 msgid "Final output: %d %s\n"
 msgstr "letzte Ausgabe: %d %s\n"
 
-#: builtin/log.c:395 builtin/log.c:483
+#: builtin/log.c:401 builtin/log.c:489
 #, c-format
 msgid "Could not read object %s"
 msgstr "Kann Objekt %s nicht lesen."
 
-#: builtin/log.c:507
+#: builtin/log.c:513
 #, c-format
 msgid "Unknown type: %d"
 msgstr "Unbekannter Typ: %d"
 
-#: builtin/log.c:596
+#: builtin/log.c:602
 msgid "format.headers without value"
 msgstr "format.headers ohne Wert"
 
-#: builtin/log.c:669
+#: builtin/log.c:675
 msgid "name of output directory is too long"
 msgstr "Name des Ausgabeverzeichnisses ist zu lang."
 
-#: builtin/log.c:680
+#: builtin/log.c:686
 #, c-format
 msgid "Cannot open patch file %s"
 msgstr "Kann Patch-Datei %s nicht öffnen"
 
-#: builtin/log.c:694
+#: builtin/log.c:700
 msgid "Need exactly one range."
 msgstr "Brauche genau einen Bereich."
 
-#: builtin/log.c:702
+#: builtin/log.c:708
 msgid "Not a range."
 msgstr "Kein Bereich."
 
-#: builtin/log.c:739
+#: builtin/log.c:745
 msgid "Could not extract email from committer identity."
 msgstr "Konnte E-Mail von der Intentität des Einreichers nicht extrahieren."
 
-#: builtin/log.c:785
+#: builtin/log.c:791
 msgid "Cover letter needs email format"
-msgstr "Deckblatt benötigt E-Mail-Format"
+msgstr "Anschreiben benötigt E-Mail-Format"
 
-#: builtin/log.c:879
+#: builtin/log.c:885
 #, c-format
 msgid "insane in-reply-to: %s"
 msgstr "verrücktes in-reply-to: %s"
 
-#: builtin/log.c:952
+#: builtin/log.c:958
 msgid "Two output directories?"
 msgstr "Zwei Ausgabeverzeichnisse?"
 
-#: builtin/log.c:1173
+#: builtin/log.c:1179
 #, c-format
 msgid "bogus committer info %s"
-msgstr "unechte Einreicher-Information %s"
+msgstr "unechte Einreicher-Informationen %s"
 
-#: builtin/log.c:1218
+#: builtin/log.c:1224
 msgid "-n and -k are mutually exclusive."
 msgstr "-n und -k sind zueinander exklusiv"
 
-#: builtin/log.c:1220
+#: builtin/log.c:1226
 msgid "--subject-prefix and -k are mutually exclusive."
 msgstr "--subject-prefix und -k sind zueinander exklusiv"
 
-#: builtin/log.c:1225 builtin/shortlog.c:284
+#: builtin/log.c:1231 builtin/shortlog.c:284
 #, c-format
 msgid "unrecognized argument: %s"
 msgstr "nicht erkanntes Argument: %s"
 
-#: builtin/log.c:1228
+#: builtin/log.c:1234
 msgid "--name-only does not make sense"
 msgstr "--name-only macht keinen Sinn"
 
-#: builtin/log.c:1230
+#: builtin/log.c:1236
 msgid "--name-status does not make sense"
 msgstr "--name-status macht keinen Sinn"
 
-#: builtin/log.c:1232
+#: builtin/log.c:1238
 msgid "--check does not make sense"
 msgstr "--check macht keinen Sinn"
 
-#: builtin/log.c:1255
+#: builtin/log.c:1261
 msgid "standard output, or directory, which one?"
 msgstr "Standard-Ausgabe oder Verzeichnis, welches von beidem?"
 
-#: builtin/log.c:1257
+#: builtin/log.c:1263
 #, c-format
 msgid "Could not create directory '%s'"
 msgstr "Konnte Verzeichnis '%s' nicht erstellen."
 
-#: builtin/log.c:1410
+#: builtin/log.c:1416
 msgid "Failed to create output files"
 msgstr "Fehler beim Erstellen der Ausgabedateien."
 
-#: builtin/log.c:1514
+#: builtin/log.c:1520
 #, c-format
 msgid ""
 "Could not find a tracked remote branch, please specify <upstream> manually.\n"
@@ -2347,69 +2372,69 @@ msgstr ""
 "Konnte gefolgten, entfernten Zweig nicht finden, bitte spezifiziere "
 "<upstream> manuell.\n"
 
-#: builtin/log.c:1530 builtin/log.c:1532 builtin/log.c:1544
+#: builtin/log.c:1536 builtin/log.c:1538 builtin/log.c:1550
 #, c-format
 msgid "Unknown commit %s"
 msgstr "Unbekannte Version %s"
 
-#: builtin/merge.c:91
+#: builtin/merge.c:90
 msgid "switch `m' requires a value"
 msgstr "Schalter 'm' erfordert einen Wert."
 
-#: builtin/merge.c:128
+#: builtin/merge.c:127
 #, c-format
 msgid "Could not find merge strategy '%s'.\n"
 msgstr "Konnte Zusammenführungsstrategie '%s' nicht finden.\n"
 
-#: builtin/merge.c:129
+#: builtin/merge.c:128
 #, c-format
 msgid "Available strategies are:"
 msgstr "Verfügbare Strategien sind:"
 
-#: builtin/merge.c:134
+#: builtin/merge.c:133
 #, c-format
 msgid "Available custom strategies are:"
 msgstr "Verfügbare benutzerdefinierte Strategien sind:"
 
-#: builtin/merge.c:241
+#: builtin/merge.c:240
 msgid "could not run stash."
 msgstr "Konnte \"stash\" nicht ausführen."
 
-#: builtin/merge.c:246
+#: builtin/merge.c:245
 msgid "stash failed"
 msgstr "\"stash\" fehlgeschlagen"
 
-#: builtin/merge.c:251
+#: builtin/merge.c:250
 #, c-format
 msgid "not a valid object: %s"
 msgstr "kein gültiges Objekt: %s"
 
-#: builtin/merge.c:270 builtin/merge.c:287
+#: builtin/merge.c:269 builtin/merge.c:286
 msgid "read-tree failed"
 msgstr "read-tree fehlgeschlagen"
 
-#: builtin/merge.c:317
+#: builtin/merge.c:316
 msgid " (nothing to squash)"
 msgstr " (nichts zu quetschen)"
 
-#: builtin/merge.c:330
+#: builtin/merge.c:329
 #, c-format
 msgid "Squash commit -- not updating HEAD\n"
 msgstr "Quetsche Version -- aktualisiere Zweigspitze (HEAD) nicht\n"
 
-#: builtin/merge.c:362
+#: builtin/merge.c:361
 msgid "Writing SQUASH_MSG"
 msgstr "Schreibe SQUASH_MSG"
 
-#: builtin/merge.c:364
+#: builtin/merge.c:363
 msgid "Finishing SQUASH_MSG"
 msgstr "Schließe SQUASH_MSG ab"
 
 #: builtin/merge.c:386
 #, c-format
 msgid "No merge message -- not updating HEAD\n"
-msgstr "Keine Zusammenführungsbeschreibung -- aktualisiere Zweigspitze (HEAD) "
-"nicht\n"
+msgstr ""
+"Keine Zusammenführungsbeschreibung -- aktualisiere Zweigspitze (HEAD) nicht\n"
 
 #: builtin/merge.c:437
 #, c-format
@@ -2429,37 +2454,37 @@ msgstr "\"git write-tree\" schlug beim Schreiben eines Baumes fehl"
 msgid "failed to read the cache"
 msgstr "Lesen des Zwischenspeichers fehlgeschlagen"
 
-#: builtin/merge.c:696
+#: builtin/merge.c:697
 msgid "Unable to write index."
 msgstr "Konnte Bereitstellung nicht schreiben."
 
-#: builtin/merge.c:709
+#: builtin/merge.c:710
 msgid "Not handling anything other than two heads merge."
 msgstr "Behandle nichts anderes als die Zusammenführung von zwei Köpfen."
 
-#: builtin/merge.c:723
+#: builtin/merge.c:724
 #, c-format
 msgid "Unknown option for merge-recursive: -X%s"
 msgstr "Unbekannte Option für merge-recursive: -X%s"
 
-#: builtin/merge.c:737
+#: builtin/merge.c:738
 #, c-format
 msgid "unable to write %s"
 msgstr "konnte %s nicht schreiben"
 
-#: builtin/merge.c:876
+#: builtin/merge.c:877
 #, c-format
 msgid "Could not read from '%s'"
 msgstr "konnte nicht von '%s' lesen"
 
-#: builtin/merge.c:885
+#: builtin/merge.c:886
 #, c-format
 msgid "Not committing merge; use 'git commit' to complete the merge.\n"
 msgstr ""
 "Zusammenführung nicht eingetragen; benutze 'git commit' um die "
 "Zusammenführung abzuschließen.\n"
 
-#: builtin/merge.c:891
+#: builtin/merge.c:892
 msgid ""
 "Please enter a commit message to explain why this merge is necessary,\n"
 "especially if it merges an updated upstream into a topic branch.\n"
@@ -2469,56 +2494,61 @@ msgid ""
 msgstr ""
 "Bitte gebe eine Versionsbeschreibung ein um zu erklären, warum diese "
 "Zusammenführung erforderlich ist,\n"
-"insbesondere wenn es einen aktualisierten entfernten Zweig mit einem "
-"Thema-Zweig zusammenführt.\n"
+"insbesondere wenn es einen aktualisierten entfernten Zweig mit einem Thema-"
+"Zweig zusammenführt.\n"
 "\n"
 "Zeilen beginnend mit '#' werden ignoriert, und eine leere Beschreibung "
 "bricht die Eintragung ab.\n"
 
-#: builtin/merge.c:915
+#: builtin/merge.c:916
 msgid "Empty commit message."
-msgstr "Leere Versionsbeschreibung."
+msgstr "Leere Versionsbeschreibung"
 
-#: builtin/merge.c:927
+#: builtin/merge.c:928
 #, c-format
 msgid "Wonderful.\n"
 msgstr "Wunderbar.\n"
 
-#: builtin/merge.c:1000
+#: builtin/merge.c:993
 #, c-format
 msgid "Automatic merge failed; fix conflicts and then commit the result.\n"
 msgstr ""
 "Automatische Zusammenführung fehlgeschlagen; behebe die Konflikte und trage "
 "dann das Ergebnis ein.\n"
 
-#: builtin/merge.c:1016
+#: builtin/merge.c:1009
 #, c-format
 msgid "'%s' is not a commit"
 msgstr "'%s' ist keine Version"
 
-#: builtin/merge.c:1057
+#: builtin/merge.c:1050
 msgid "No current branch."
 msgstr "Kein aktueller Zweig."
 
-#: builtin/merge.c:1059
+#: builtin/merge.c:1052
 msgid "No remote for the current branch."
 msgstr "Kein anderes Archiv für den aktuellen Zweig."
 
-#: builtin/merge.c:1061
+#: builtin/merge.c:1054
 msgid "No default upstream defined for the current branch."
-msgstr "Kein entferntes Standard-Projektarchiv für den aktuellen Zweig "
-"definiert."
+msgstr ""
+"Kein entferntes Standard-Projektarchiv für den aktuellen Zweig definiert."
 
-#: builtin/merge.c:1066
+#: builtin/merge.c:1059
 #, c-format
 msgid "No remote tracking branch for %s from %s"
 msgstr "Kein entfernter Übernahmezweig für %s von %s"
 
-#: builtin/merge.c:1188
+#: builtin/merge.c:1146 builtin/merge.c:1303
+#, c-format
+msgid "%s - not something we can merge"
+msgstr "%s - nichts was wir zusammenführen können"
+
+#: builtin/merge.c:1214
 msgid "There is no merge to abort (MERGE_HEAD missing)."
 msgstr "Es gibt keine Zusammenführung zum Abbrechen (vermisse MERGE_HEAD)"
 
-#: builtin/merge.c:1204 git-pull.sh:31
+#: builtin/merge.c:1230 git-pull.sh:31
 msgid ""
 "You have not concluded your merge (MERGE_HEAD exists).\n"
 "Please, commit your changes before you can merge."
@@ -2526,12 +2556,12 @@ msgstr ""
 "Du hast deine Zusammenführung nicht abgeschlossen (MERGE_HEAD existiert).\n"
 "Bitte trage deine Änderungen ein, bevor du zusammenführen kannst."
 
-#: builtin/merge.c:1207 git-pull.sh:34
+#: builtin/merge.c:1233 git-pull.sh:34
 msgid "You have not concluded your merge (MERGE_HEAD exists)."
 msgstr ""
 "Du hast deine Zusammenführung nicht abgeschlossen (MERGE_HEAD existiert)."
 
-#: builtin/merge.c:1211
+#: builtin/merge.c:1237
 msgid ""
 "You have not concluded your cherry-pick (CHERRY_PICK_HEAD exists).\n"
 "Please, commit your changes before you can merge."
@@ -2540,87 +2570,82 @@ msgstr ""
 "existiert).\n"
 "Bitte trage deine Änderungen ein, bevor du zusammenführen kannst."
 
-#: builtin/merge.c:1214
+#: builtin/merge.c:1240
 msgid "You have not concluded your cherry-pick (CHERRY_PICK_HEAD exists)."
 msgstr ""
 "Du hast deinen \"cherry-pick\" nicht abgeschlossen (CHERRY_PICK_HEAD "
 "existiert)."
 
-#: builtin/merge.c:1223
+#: builtin/merge.c:1249
 msgid "You cannot combine --squash with --no-ff."
 msgstr "Du kannst --squash nicht mit --no-ff kombinieren."
 
-#: builtin/merge.c:1228
+#: builtin/merge.c:1254
 msgid "You cannot combine --no-ff with --ff-only."
 msgstr "Du kannst --no-ff nicht mit --ff--only kombinieren."
 
-#: builtin/merge.c:1235
+#: builtin/merge.c:1261
 msgid "No commit specified and merge.defaultToUpstream not set."
 msgstr "Keine Version spezifiziert und merge.defaultToUpstream nicht gesetzt."
 
-#: builtin/merge.c:1266
+#: builtin/merge.c:1293
 msgid "Can merge only exactly one commit into empty head"
 msgstr "Kann nur exakt eine Version in einem leeren Kopf zusammenführen."
 
-#: builtin/merge.c:1269
+#: builtin/merge.c:1296
 msgid "Squash commit into empty head not supported yet"
 msgstr ""
 "Quetschen einer Version in einen leeren Kopf wird momentan nicht unterstützt."
 
-#: builtin/merge.c:1271
+#: builtin/merge.c:1298
 msgid "Non-fast-forward commit does not make sense into an empty head"
 msgstr "nicht vorzuspulende Version macht in einem leeren Kopf keinen Sinn"
 
-#: builtin/merge.c:1275 builtin/merge.c:1319
-#, c-format
-msgid "%s - not something we can merge"
-msgstr "%s - nichts was wir zusammenführen können"
-
-#: builtin/merge.c:1382
+#: builtin/merge.c:1413
 #, c-format
 msgid "Updating %s..%s\n"
 msgstr "Aktualisiere %s..%s\n"
 
-#: builtin/merge.c:1420
+#: builtin/merge.c:1451
 #, c-format
 msgid "Trying really trivial in-index merge...\n"
 msgstr "Probiere wirklich triviale \"in-index\"-Zusammenführung...\n"
 
-#: builtin/merge.c:1427
+#: builtin/merge.c:1458
 #, c-format
 msgid "Nope.\n"
 msgstr "Nein.\n"
 
-#: builtin/merge.c:1459
+#: builtin/merge.c:1490
 msgid "Not possible to fast-forward, aborting."
 msgstr "Vorspulen nicht möglich, breche ab."
 
-#: builtin/merge.c:1482 builtin/merge.c:1559
+#: builtin/merge.c:1513 builtin/merge.c:1592
 #, c-format
 msgid "Rewinding the tree to pristine...\n"
 msgstr "Rücklauf des Baumes bis zum Ursprung...\n"
 
-#: builtin/merge.c:1486
+#: builtin/merge.c:1517
 #, c-format
 msgid "Trying merge strategy %s...\n"
 msgstr "Probiere Zusammenführungsstrategie %s...\n"
 
-#: builtin/merge.c:1550
+#: builtin/merge.c:1583
 #, c-format
 msgid "No merge strategy handled the merge.\n"
 msgstr "Keine Zusammenführungsstrategie behandelt die Zusammenführung.\n"
 
-#: builtin/merge.c:1552
+#: builtin/merge.c:1585
 #, c-format
 msgid "Merge with strategy %s failed.\n"
 msgstr "Zusammenführung mit Strategie %s fehlgeschlagen.\n"
 
-#: builtin/merge.c:1561
+#: builtin/merge.c:1594
 #, c-format
 msgid "Using the %s to prepare resolving by hand.\n"
 msgstr "Benutze \"%s\" um die Auflösung per Hand vorzubereiten.\n"
 
-#: builtin/merge.c:1572
+#: builtin/merge.c:1606
 #, c-format
 msgid "Automatic merge went well; stopped before committing as requested\n"
 msgstr ""
@@ -2647,7 +2672,7 @@ msgstr "kann Verzeichnis nicht über Datei verschieben"
 #: builtin/mv.c:128
 #, c-format
 msgid "Huh? %.*s is in index?"
-msgstr "Huh? %.*s ist bereitgestellt?"
+msgstr "Huh? %.*s ist in der Bereitstellung?"
 
 #: builtin/mv.c:140
 msgid "source directory is empty"
@@ -2868,15 +2893,15 @@ msgstr "Option %s akzeptiert keine negative Form"
 msgid "unable to parse value '%s' for option %s"
 msgstr "konnte Wert '%s' für Option %s nicht analysieren"
 
-#: builtin/push.c:44
+#: builtin/push.c:45
 msgid "tag shorthand without <tag>"
 msgstr "Kurzschrift für Markierung ohne <Markierung>"
 
-#: builtin/push.c:63
+#: builtin/push.c:64
 msgid "--delete only accepts plain target ref names"
 msgstr "--delete akzeptiert nur reine Referenz-Namen als Ziel"
 
-#: builtin/push.c:83
+#: builtin/push.c:84
 #, c-format
 msgid ""
 "You are not currently on a branch.\n"
@@ -2891,7 +2916,7 @@ msgstr ""
 "\n"
 "    git push %s HEAD:<Name-des-entfernten-Zweiges>\n"
 
-#: builtin/push.c:90
+#: builtin/push.c:91
 #, c-format
 msgid ""
 "The current branch %s has no upstream branch.\n"
@@ -2905,13 +2930,13 @@ msgstr ""
 "\n"
 "    git push --set-upstream %s %s\n"
 
-#: builtin/push.c:98
+#: builtin/push.c:99
 #, c-format
 msgid "The current branch %s has multiple upstream branches, refusing to push."
 msgstr ""
 "Der aktuelle Zweig %s hat mehrere entfernte Zweige, Versand verweigert."
 
-#: builtin/push.c:101
+#: builtin/push.c:102
 #, c-format
 msgid ""
 "You are pushing to remote '%s', which is not the upstream of\n"
@@ -2920,44 +2945,71 @@ msgid ""
 msgstr ""
 "Du versendest nach '%s', welches kein entferntes Projektarchiv deines\n"
 "aktuellen Zweiges '%s' ist, ohne mir mitzuteilen, was ich versenden\n"
-"soll, um welchen entfernten Zweig zu aktualisieren."
+"soll um welchen entfernten Zweig zu aktualisieren."
 
-#: builtin/push.c:127
+#: builtin/push.c:131
 msgid ""
 "You didn't specify any refspecs to push, and push.default is \"nothing\"."
 msgstr ""
-"Du hast keine Referenzspezifikationen zum Versenden spezifiziert, und "
-"push.default ist \"nothing\"."
+"Du hast keine Referenzspezifikationen zum Versenden spezifiziert, und push."
+"default ist \"nothing\"."
 
-#: builtin/push.c:147
+#: builtin/push.c:138
+msgid ""
+"Updates were rejected because the tip of your current branch is behind\n"
+"its remote counterpart. Merge the remote changes (e.g. 'git pull')\n"
+"before pushing again.\n"
+"See the 'Note about fast-forwards' in 'git push --help' for details."
+msgstr ""
+"Aktualisierungen wurden zurückgewiesen, weil die Spitze deines aktuellen\n"
+"Zweiges hinter seinem entfernten Gegenstück ist. Führe die entfernten\n"
+"Änderungen zusammen (z.B. 'git pull') bevor du erneut versendest.\n"
+"Siehe auch die 'Note about fast-forwards' Sektion von 'git push --help'\n"
+"für weitere Details."
+
+#: builtin/push.c:144
+msgid ""
+"Updates were rejected because a pushed branch tip is behind its remote\n"
+"counterpart. If you did not intend to push that branch, you may want to\n"
+"specify branches to push or set the 'push.default' configuration\n"
+"variable to 'current' or 'upstream' to push only the current branch."
+msgstr ""
+"Aktualisierungen wurden zurückgewiesen, weil die Spitze eines versendeten\n"
+"Zweiges hinter seinem entfernten Gegenstück ist. Wenn du nicht beabsichtigt\n"
+"hast, diesen Zweig zu versenden, kannst du auch den zu versendenden Zweig\n"
+"spezifizieren oder die Konfigurationsvariable 'push.default' zu 'current'\n"
+"oder 'upstream' setze, um nur den aktuellen Zweig zu versenden."
+
+#: builtin/push.c:150
+msgid ""
+"Updates were rejected because a pushed branch tip is behind its remote\n"
+"counterpart. Check out this branch and merge the remote changes\n"
+"(e.g. 'git pull') before pushing again.\n"
+"See the 'Note about fast-forwards' in 'git push --help' for details."
+msgstr ""
+"Aktualisierungen wurden zurückgewiesen, weil die Spitze eines versendeten\n"
+"Zweiges hinter seinem entfernten Gegenstück ist. Checke diesen Zweig aus\n"
+"und führe die entfernten Änderungen zusammen (z.B. 'git pull') bevor du\n"
+"erneut versendest.\n"
+"Sie auch die 'Note about fast-forwards' Sektion von 'git push --help'\n"
+"für weitere Details."
+
+#: builtin/push.c:190
 #, c-format
 msgid "Pushing to %s\n"
-msgstr "Sende nach %s\n"
+msgstr "Schiebe zu %s\n"
 
-#: builtin/push.c:151
+#: builtin/push.c:194
 #, c-format
 msgid "failed to push some refs to '%s'"
 msgstr "Fehler beim Versenden einiger Referenzen nach '%s'"
 
-#: builtin/push.c:159
-#, c-format
-msgid ""
-"To prevent you from losing history, non-fast-forward updates were rejected\n"
-"Merge the remote changes (e.g. 'git pull') before pushing again.  See the\n"
-"'Note about fast-forwards' section of 'git push --help' for details.\n"
-msgstr ""
-"Um dich vor Verlust von Historie zu bewahren, wurden nicht vorzuspulende "
-"Aktualisierungen zurückgewiesen.\n"
-"Führe die entfernten Änderungen zusammen (z.B. 'git pull') bevor du erneut "
-"versendest. Siehe auch die 'Note about fast-forwards' Sektion von \n"
-"'git push --help' für weitere Details.\n"
-
-#: builtin/push.c:176
+#: builtin/push.c:226
 #, c-format
 msgid "bad repository '%s'"
 msgstr "schlechtes Projektarchiv '%s'"
 
-#: builtin/push.c:177
+#: builtin/push.c:227
 msgid ""
 "No configured push destination.\n"
 "Either specify the URL from the command-line or configure a remote "
@@ -2979,31 +3031,31 @@ msgstr ""
 "\n"
 "    git push <Name>\n"
 
-#: builtin/push.c:192
+#: builtin/push.c:242
 msgid "--all and --tags are incompatible"
 msgstr "--all und --tags sind inkompatibel"
 
-#: builtin/push.c:193
+#: builtin/push.c:243
 msgid "--all can't be combined with refspecs"
 msgstr "--all kann nicht mit Referenzspezifikationen kombiniert werden"
 
-#: builtin/push.c:198
+#: builtin/push.c:248
 msgid "--mirror and --tags are incompatible"
 msgstr "--mirror und --tags sind inkompatibel"
 
-#: builtin/push.c:199
+#: builtin/push.c:249
 msgid "--mirror can't be combined with refspecs"
 msgstr "--mirror kann nicht mit Referenzspezifikationen kombiniert werden"
 
-#: builtin/push.c:204
+#: builtin/push.c:254
 msgid "--all and --mirror are incompatible"
 msgstr "--all und --mirror sind inkompatibel"
 
-#: builtin/push.c:284
+#: builtin/push.c:342
 msgid "--delete is incompatible with --all, --mirror and --tags"
 msgstr "--delete ist inkompatibel mit --all, --mirror und --tags"
 
-#: builtin/push.c:286
+#: builtin/push.c:344
 msgid "--delete doesn't make sense without any refs"
 msgstr "--delete macht ohne irgendeine Referenz ohne keinen Sinn"
 
@@ -3088,20 +3140,20 @@ msgstr "%s Zurücksetzung ist in einem leeren Projektarchiv nicht erlaubt"
 msgid "Could not reset index file to revision '%s'."
 msgstr "Konnte Bereitstellungsdatei nicht zu Revision '%s' zurücksetzen."
 
-#: builtin/revert.c:70 builtin/revert.c:91
+#: builtin/revert.c:70 builtin/revert.c:92
 #, c-format
 msgid "%s: %s cannot be used with %s"
 msgstr "%s: %s kann nicht mit %s benutzt werden"
 
-#: builtin/revert.c:126
+#: builtin/revert.c:127
 msgid "program error"
 msgstr "Programmfehler"
 
-#: builtin/revert.c:209
+#: builtin/revert.c:213
 msgid "revert failed"
 msgstr "\"revert\" fehlgeschlagen"
 
-#: builtin/revert.c:224
+#: builtin/revert.c:228
 msgid "cherry-pick failed"
 msgstr "\"cherry-pick\" fehlgeschlagen"
 
@@ -3227,7 +3279,7 @@ msgstr "keine Markierungsbeschreibung?"
 #: builtin/tag.c:372
 #, c-format
 msgid "The tag message has been left in %s\n"
-msgstr "Die Markierungsbeschreibung wurde in %s gelassen\n"
+msgstr "Die Markierungsbeschreibung wurde gelassen in %s\n"
 
 #: builtin/tag.c:421
 msgid "switch 'points-at' requires an object"
@@ -3283,17 +3335,17 @@ msgstr "%s: kann Referenz nicht aktualisieren"
 msgid "Updated tag '%s' (was %s)\n"
 msgstr "Aktualisierte Markierung '%s' (war %s)\n"
 
-#: git-am.sh:49
+#: git-am.sh:50
 msgid "You need to set your committer info first"
 msgstr "Du musst zuerst die Informationen des Eintragenden setzen."
 
-#: git-am.sh:136
+#: git-am.sh:137
 msgid "Repository lacks necessary blobs to fall back on 3-way merge."
 msgstr ""
 "Dem Projektarchiv fehlen notwendige Blobs um auf eine 3-Wege-Zusammenführung "
 "zurückzufallen."
 
-#: git-am.sh:147
+#: git-am.sh:154
 msgid ""
 "Did you hand edit your patch?\n"
 "It does not apply to blobs recorded in its index."
@@ -3302,49 +3354,49 @@ msgstr ""
 "Er kann nicht auf aufgezeichnete Blobs in seiner Bereitstellung angewendet "
 "werden."
 
-#: git-am.sh:156
+#: git-am.sh:163
 msgid "Falling back to patching base and 3-way merge..."
 msgstr "Falle zurück zum Patchen der Basis und der 3-Wege-Zusammenführung..."
 
-#: git-am.sh:268
+#: git-am.sh:275
 msgid "Only one StGIT patch series can be applied at once"
 msgstr "Es kann nur eine StGIT Patch-Serie auf einmal angewendet werden."
 
-#: git-am.sh:355
+#: git-am.sh:362
 #, sh-format
 msgid "Patch format $patch_format is not supported."
 msgstr "Patch-Format $patch_format wird nicht unterstützt."
 
-#: git-am.sh:357
+#: git-am.sh:364
 msgid "Patch format detection failed."
 msgstr "Patch-Formaterkennung fehlgeschlagen."
 
-#: git-am.sh:411
+#: git-am.sh:418
 msgid "-d option is no longer supported.  Do not use."
 msgstr "-d Option wird nicht länger unterstützt. Nicht benutzen."
 
-#: git-am.sh:474
+#: git-am.sh:481
 #, sh-format
 msgid "previous rebase directory $dotest still exists but mbox given."
 msgstr ""
 "Vorheriges Verzeichnis des Neuaufbaus $dotest existiert noch, aber mbox "
 "gegeben."
 
-#: git-am.sh:479
+#: git-am.sh:486
 msgid "Please make up your mind. --skip or --abort?"
 msgstr "Bitte werde dir klar. --skip oder --abort?"
 
-#: git-am.sh:506
+#: git-am.sh:513
 msgid "Resolve operation not in progress, we are not resuming."
 msgstr "keine Auflösung in Durchführung, wir setzen nicht fort."
 
-#: git-am.sh:572
+#: git-am.sh:579
 #, sh-format
 msgid "Dirty index: cannot apply patches (dirty: $files)"
 msgstr ""
 "Unsaubere Bereitstellung: kann Patches nicht anwenden (unsauber: $files)"
 
-#: git-am.sh:748
+#: git-am.sh:755
 msgid "cannot be interactive without stdin connected to a terminal."
 msgstr ""
 "Kann nicht interaktiv sein, ohne das die Standard-Eingabe mit einem Terminal "
@@ -3353,20 +3405,20 @@ msgstr ""
 #. TRANSLATORS: Make sure to include [y], [n], [e], [v] and [a]
 #. in your translation. The program will only accept English
 #. input at this point.
-#: git-am.sh:759
+#: git-am.sh:766
 msgid "Apply? [y]es/[n]o/[e]dit/[v]iew patch/[a]ccept all "
 msgstr "Anwenden? [y]es/[n]o/[e]dit/[v]iew patch/[a]ccept all "
 
-#: git-am.sh:795
+#: git-am.sh:802
 #, sh-format
 msgid "Applying: $FIRSTLINE"
 msgstr "Wende an: $FIRSTLINE"
 
-#: git-am.sh:840
+#: git-am.sh:847
 msgid "No changes -- Patch already applied."
 msgstr "Keine Änderungen -- Patches bereits angewendet."
 
-#: git-am.sh:866
+#: git-am.sh:873
 msgid "applying to an empty history"
 msgstr "wende zu leerer Historie an"
 
@@ -3458,7 +3510,7 @@ msgstr "Keine Log-Datei gegeben"
 #: git-bisect.sh:391
 #, sh-format
 msgid "cannot read $file for replaying"
-msgstr "kann $file nicht zum neu abspielen lesen"
+msgstr "kann $file nicht für das Abspielen lesen"
 
 #: git-bisect.sh:408
 msgid "?? what are you talking about?"
@@ -3567,7 +3619,7 @@ msgstr "'$args' ist keine \"stash\"-Referenz"
 
 #: git-stash.sh:412
 msgid "unable to refresh index"
-msgstr "Konnte die Bereitstellung nicht aktualisieren"
+msgstr "unfähig die Bereitstellung zu aktualisieren"
 
 #: git-stash.sh:416
 msgid "Cannot apply a stash in the middle of a merge"
@@ -3601,171 +3653,173 @@ msgstr "Kein Zweigname spezifiziert"
 
 #: git-stash.sh:570
 msgid "(To restore them type \"git stash apply\")"
-msgstr "(Um es wiederherzustellen, schreibe \"git stash apply\")"
+msgstr "(Um es wiederherzustellen schreibe \"git stash apply\")"
 
 #: git-submodule.sh:56
 #, sh-format
 msgid "cannot strip one component off url '$remoteurl'"
-msgstr "Kann eine Komponente von URL '$remoteurl' nicht rausziehen"
+msgstr "Kann eine Komponente von URL '$remoteurl' nicht abstreifen"
 
-#: git-submodule.sh:108
+#: git-submodule.sh:109
 #, sh-format
-msgid "No submodule mapping found in .gitmodules for path '$path'"
-msgstr "Keine Unterprojekt-Zuordnung in .gitmodules für Pfad '$path' gefunden"
+msgid "No submodule mapping found in .gitmodules for path '$sm_path'"
+msgstr "Keine Unterprojekt-Zuordnung in .gitmodules für Pfad '$sm_path' gefunden"
 
-#: git-submodule.sh:149
+#: git-submodule.sh:150
 #, sh-format
-msgid "Clone of '$url' into submodule path '$path' failed"
-msgstr "Klonen von '$url' in Unterprojekt-Pfad '$path' fehlgeschlagen"
+msgid "Clone of '$url' into submodule path '$sm_path' failed"
+msgstr "Klonen von '$url' in Unterprojekt-Pfad '$sm_path' fehlgeschlagen"
 
-#: git-submodule.sh:159
+#: git-submodule.sh:160
 #, sh-format
 msgid "Gitdir '$a' is part of the submodule path '$b' or vice versa"
-msgstr "Git-Verzeichnis '$a' ist Teil des Unterprojekt-Pfades '$b' oder umgekehrt"
+msgstr ""
+"Git-Verzeichnis '$a' ist Teil des Unterprojekt-Pfades '$b' oder umgekehrt"
 
-#: git-submodule.sh:247
+#: git-submodule.sh:249
 #, sh-format
 msgid "repo URL: '$repo' must be absolute or begin with ./|../"
 msgstr "repo URL: '$repo' muss absolut sein oder mit ./|../ beginnen"
 
-#: git-submodule.sh:264
-#, sh-format
-msgid "'$path' already exists in the index"
-msgstr "'$path' existiert bereits in der Bereitstellung"
+#: git-submodule.sh:266
+#,  sh-format
+msgid "'$sm_path' already exists in the index"
+msgstr "'$sm_path' existiert bereits in der Bereitstellung"
 
-#: git-submodule.sh:281
+#: git-submodule.sh:283
 #, sh-format
-msgid "'$path' already exists and is not a valid git repo"
-msgstr "'$path' existiert bereits und ist kein gültiges Git-Projektarchiv"
+msgid "'$sm_path' already exists and is not a valid git repo"
+msgstr "'$sm_path' existiert bereits und ist kein gültiges Git-Projektarchiv"
 
-#: git-submodule.sh:295
+#: git-submodule.sh:297
 #, sh-format
-msgid "Unable to checkout submodule '$path'"
-msgstr "Unfähig Unterprojekt '$path' auszuchecken"
+msgid "Unable to checkout submodule '$sm_path'"
+msgstr "Unfähig Unterprojekt '$sm_path' auszuchecken"
 
-#: git-submodule.sh:300
+#: git-submodule.sh:302
 #, sh-format
-msgid "Failed to add submodule '$path'"
-msgstr "Hinzufügen von Unterprojekt '$path' fehlgeschlagen"
+msgid "Failed to add submodule '$sm_path'"
+msgstr "Hinzufügen von Unterprojekt '$sm_path' fehlgeschlagen"
 
-#: git-submodule.sh:305
+#: git-submodule.sh:307
 #, sh-format
-msgid "Failed to register submodule '$path'"
-msgstr "Registrierung von Unterprojekt '$path' fehlgeschlagen"
+msgid "Failed to register submodule '$sm_path'"
+msgstr "Registierung von Unterprojekt '$sm_path' fehlgeschlagen"
 
-#: git-submodule.sh:347
+#: git-submodule.sh:349
 #, sh-format
-msgid "Entering '$prefix$path'"
-msgstr "Betrete '$prefix$path'"
+msgid "Entering '$prefix$sm_path'"
+msgstr "Betrete '$prefix$sm_path'"
 
-#: git-submodule.sh:359
+#: git-submodule.sh:363
 #, sh-format
-msgid "Stopping at '$path'; script returned non-zero status."
-msgstr "Stoppe bei '$path'; Skript gab nicht-Null Status zurück."
+msgid "Stopping at '$sm_path'; script returned non-zero status."
+msgstr "Stoppe bei '$sm_path'; Skript gab nicht-Null Status zurück."
 
-#: git-submodule.sh:401
+#: git-submodule.sh:405
 #, sh-format
-msgid "No url found for submodule path '$path' in .gitmodules"
-msgstr "Keine URL für Unterprojekt-Pfad '$path' in .gitmodules gefunden"
+msgid "No url found for submodule path '$sm_path' in .gitmodules"
+msgstr "Keine URL für Unterprojekt-Pfad '$sm_path' in .gitmodules gefunden"
 
-#: git-submodule.sh:410
+#: git-submodule.sh:414
 #, sh-format
-msgid "Failed to register url for submodule path '$path'"
-msgstr "Fehler beim Registrieren der URL für Unterprojekt-Pfad '$path'"
+msgid "Failed to register url for submodule path '$sm_path'"
+msgstr "Fehler beim Registrieren der URL für Unterprojekt-Pfad '$sm_path'"
 
-#: git-submodule.sh:418
+#: git-submodule.sh:422
 #, sh-format
-msgid "Failed to register update mode for submodule path '$path'"
-msgstr "Fehler beim Registrieren des Aktualisierungsmodus für Unterprojekt-Pfad"
-" '$path'"
+msgid "Failed to register update mode for submodule path '$sm_path'"
+msgstr ""
+"Fehler beim Registrieren des Aktualisierungsmodus für Unterprojekt-Pfad "
+"'$sm_path'"
 
-#: git-submodule.sh:420
+#: git-submodule.sh:424
 #, sh-format
-msgid "Submodule '$name' ($url) registered for path '$path'"
-msgstr "Unterprojekt '$name' ($url) registriert für Pfad '$path'"
+msgid "Submodule '$name' ($url) registered for path '$sm_path'"
+msgstr "Unterprojekt '$name' ($url) registriert für Pfad '$sm_path'"
 
-#: git-submodule.sh:519
+#: git-submodule.sh:523
 #, sh-format
 msgid ""
-"Submodule path '$path' not initialized\n"
+"Submodule path '$sm_path' not initialized\n"
 "Maybe you want to use 'update --init'?"
 msgstr ""
-"Unterprojekt-Pfad '$path' nicht initialisiert\n"
+"Unterprojekt-Pfad '$sm_path' nicht initialisiert\n"
 "Vielleicht möchtest du 'update --init' benutzen?"
 
-#: git-submodule.sh:532
+#: git-submodule.sh:536
 #, sh-format
-msgid "Unable to find current revision in submodule path '$path'"
-msgstr "Konnte aktuelle Revision in Unterprojekt-Pfad '$path' nicht finden"
+msgid "Unable to find current revision in submodule path '$sm_path'"
+msgstr "Konnte aktuelle Revision in Unterprojekt-Pfad '$sm_path' nicht finden"
 
-#: git-submodule.sh:551
+#: git-submodule.sh:555
 #, sh-format
-msgid "Unable to fetch in submodule path '$path'"
-msgstr "Konnte Unterprojekt-Pfad '$path' nicht anfordern"
+msgid "Unable to fetch in submodule path '$sm_path'"
+msgstr "Konnte in Unterprojekt-Pfad '$sm_path' nicht anfordern"
 
-#: git-submodule.sh:565
+#: git-submodule.sh:569
 #, sh-format
-msgid "Unable to rebase '$sha1' in submodule path '$path'"
-msgstr "Neuaufbau von '$sha1' in Unterprojekt-Pfad '$path' nicht möglich"
+msgid "Unable to rebase '$sha1' in submodule path '$sm_path'"
+msgstr "Neuaufbau von '$sha1' in Unterprojekt-Pfad '$sm_path' nicht möglich"
 
-#: git-submodule.sh:566
+#: git-submodule.sh:570
 #, sh-format
-msgid "Submodule path '$path': rebased into '$sha1'"
-msgstr "Unterprojekt-Pfad '$path': neu aufgebaut in '$sha1'"
+msgid "Submodule path '$sm_path': rebased into '$sha1'"
+msgstr "Unterprojekt-Pfad '$sm_path': neu aufgebaut in '$sha1'"
 
-#: git-submodule.sh:571
+#: git-submodule.sh:575
 #, sh-format
-msgid "Unable to merge '$sha1' in submodule path '$path'"
-msgstr "Konnte '$sha1' nicht in Unterprojekt-Pfad '$path' zusammenführen"
+msgid "Unable to merge '$sha1' in submodule path '$sm_path'"
+msgstr "Konnte '$sha1' nicht in Unterprojekt-Pfad '$sm_path' zusammenführen"
 
-#: git-submodule.sh:572
+#: git-submodule.sh:576
 #, sh-format
-msgid "Submodule path '$path': merged in '$sha1'"
-msgstr "Unterprojekt-Pfad '$path': zusammengeführt in '$sha1'"
+msgid "Submodule path '$sm_path': merged in '$sha1'"
+msgstr "Unterprojekt-Pfad '$sm_path': zusammengeführt in '$sha1'"
 
-#: git-submodule.sh:577
+#: git-submodule.sh:581
 #, sh-format
-msgid "Unable to checkout '$sha1' in submodule path '$path'"
-msgstr "Konnte '$sha1' in Unterprojekt-Pfad '$path' nicht auschecken."
+msgid "Unable to checkout '$sha1' in submodule path '$sm_path'"
+msgstr "Konnte '$sha1' in Unterprojekt-Pfad '$sm_path' nicht auschecken."
 
-#: git-submodule.sh:578
+#: git-submodule.sh:582
 #, sh-format
-msgid "Submodule path '$path': checked out '$sha1'"
-msgstr "Unterprojekt-Pfad: '$path': '$sha1' ausgecheckt"
+msgid "Submodule path '$sm_path': checked out '$sha1'"
+msgstr "Unterprojekt-Pfad: '$sm_path': '$sha1' ausgecheckt"
 
-#: git-submodule.sh:600 git-submodule.sh:923
+#: git-submodule.sh:604 git-submodule.sh:927
 #, sh-format
-msgid "Failed to recurse into submodule path '$path'"
-msgstr "Fehler bei Rekursion in Unterprojekt-Pfad '$path'"
+msgid "Failed to recurse into submodule path '$sm_path'"
+msgstr "Fehler bei Rekursion in Unterprojekt-Pfad '$sm_path'"
 
-#: git-submodule.sh:708
+#: git-submodule.sh:712
 msgid "--"
 msgstr "--"
 
-#: git-submodule.sh:766
+#: git-submodule.sh:770
 #, sh-format
 msgid "  Warn: $name doesn't contain commit $sha1_src"
 msgstr "  Warnung: $name beinhaltet nicht Version $sha1_src"
 
-#: git-submodule.sh:769
+#: git-submodule.sh:773
 #, sh-format
 msgid "  Warn: $name doesn't contain commit $sha1_dst"
 msgstr "  Warnung: $name beinhaltet nicht Version $sha1_dst"
 
-#: git-submodule.sh:772
+#: git-submodule.sh:776
 #, sh-format
 msgid "  Warn: $name doesn't contain commits $sha1_src and $sha1_dst"
 msgstr "  Warnung: $name beinhaltet nich die Versionen $sha1_src und $sha1_dst"
 
-#: git-submodule.sh:797
+#: git-submodule.sh:801
 msgid "blob"
 msgstr "Blob"
 
-#: git-submodule.sh:798
+#: git-submodule.sh:802
 msgid "submodule"
 msgstr "Unterprojekt"
 
-#: git-submodule.sh:969
+#: git-submodule.sh:973
 #, sh-format
 msgid "Synchronizing submodule url for '$name'"
 msgstr "Synchronisiere Unterprojekt-URL für '$name'"
