@@ -648,6 +648,33 @@ static unsigned long packv4_write_tables(struct sha1file *f, unsigned nr_objects
 	return written;
 }
 
+static int write_object_header(struct sha1file *f, enum object_type type, unsigned long size)
+{
+	unsigned char buf[16];
+	uint64_t val;
+	int len;
+
+	/*
+	 * We really have only one kind of delta object.
+	 */
+	if (type == OBJ_OFS_DELTA)
+		type = OBJ_REF_DELTA;
+
+	/*
+	 * We allocate 4 bits in the LSB for the object type which should
+	 * be good for quite a while, given that we effectively encodes
+	 * only 5 object types: commit, tree, blob, delta, tag.
+	 */
+	val = size;
+	if (MSB(val, 4))
+		die("fixme: the code doesn't currently cope with big sizes");
+	val <<= 4;
+	val |= type;
+	len = encode_varint(val, buf);
+	sha1write(f, buf, len);
+	return len;
+}
+
 static struct packed_git *open_pack(const char *path)
 {
 	char arg[PATH_MAX];
