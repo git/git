@@ -12,6 +12,7 @@
 #include "object.h"
 #include "tree-walk.h"
 #include "pack.h"
+#include "pack-revindex.h"
 #include "varint.h"
 
 
@@ -673,6 +674,65 @@ static int write_object_header(struct sha1file *f, enum object_type type, unsign
 	len = encode_varint(val, buf);
 	sha1write(f, buf, len);
 	return len;
+}
+
+static unsigned long copy_object_data(struct sha1file *f, struct packed_git *p,
+				      off_t offset)
+{
+	struct pack_window *w_curs = NULL;
+	struct revindex_entry *revidx;
+	enum object_type type;
+	unsigned long avail, size, datalen, written;
+	int hdrlen, reflen, idx_nr;
+	unsigned char *src, buf[24];
+
+	revidx = find_pack_revindex(p, offset);
+	idx_nr = revidx->nr;
+	datalen = revidx[1].offset - offset;
+
+	src = use_pack(p, &w_curs, offset, &avail);
+	hdrlen = unpack_object_header_buffer(src, avail, &type, &size);
+
+	written = write_object_header(f, type, size);
+
+	if (type == OBJ_OFS_DELTA) {
+		const unsigned char *cp = src + hdrlen;
+		off_t base_offset = decode_varint(&cp);
+		hdrlen = cp - src;
+		base_offset = offset - base_offset;
+		if (base_offset <= 0 || base_offset >= offset)
+			die("delta offset out of bound");
+		revidx = find_pack_revindex(p, base_offset);
+		reflen = encode_sha1ref(nth_packed_object_sha1(p, revidx->nr), buf);
+		sha1write(f, buf, reflen);
+		written += reflen;
+	} else if (type == OBJ_REF_DELTA) {
+		reflen = encode_sha1ref(src + hdrlen, buf);
+		hdrlen += 20;
+		sha1write(f, buf, reflen);
+		written += reflen;
+	}
+
+	if (p->index_version > 1 &&
+	    check_pack_crc(p, &w_curs, offset, datalen, idx_nr))
+		die("bad CRC for object at offset %"PRIuMAX" in %s",
+		    (uintmax_t)offset, p->pack_name);
+
+	offset += hdrlen;
+	datalen -= hdrlen;
+
+	while (datalen) {
+		src = use_pack(p, &w_curs, offset, &avail);
+		if (avail > datalen)
+			avail = datalen;
+		sha1write(f, src, avail);
+		written += avail;
+		offset += avail;
+		datalen -= avail;
+	}
+	unuse_pack(&w_curs);
+
+	return written;
 }
 
 static struct packed_git *open_pack(const char *path)
