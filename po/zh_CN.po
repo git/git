@@ -12,7 +12,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Git\n"
 "Report-Msgid-Bugs-To: Git Mailing List <git@vger.kernel.org>\n"
-"POT-Creation-Date: 2012-03-16 20:18+0800\n"
+"POT-Creation-Date: 2012-04-28 20:33+0800\n"
 "PO-Revision-Date: 2012-01-30 00:00+0800\n"
 "Last-Translator: Jiang Xin <worldhello.net@gmail.com>\n"
 "Language-Team: GitHub <https://github.com/gotgit/git/>\n"
@@ -91,29 +91,29 @@ msgstr ""
 "发现配置变量 'diff.dirstat' 中的错误：\n"
 "%s"
 
-#: diff.c:1336
+#: diff.c:1400
 msgid " 0 files changed\n"
 msgstr " 0 个文件被修改\n"
 
-#: diff.c:1340
+#: diff.c:1404
 #, c-format
 msgid " %d file changed"
 msgid_plural " %d files changed"
 msgstr[0] " %d 个文件被修改"
 
-#: diff.c:1357
+#: diff.c:1421
 #, c-format
 msgid ", %d insertion(+)"
 msgid_plural ", %d insertions(+)"
 msgstr[0] "，插入 %d 行(+)"
 
-#: diff.c:1368
+#: diff.c:1432
 #, c-format
 msgid ", %d deletion(-)"
 msgid_plural ", %d deletions(-)"
 msgstr[0] "，删除 %d 行(-)"
 
-#: diff.c:3424
+#: diff.c:3435
 #, c-format
 msgid ""
 "Failed to parse --dirstat/-X option parameter:\n"
@@ -1452,67 +1452,67 @@ msgstr "无法读取索引"
 msgid "unable to write temporary index file"
 msgstr "无法写临时索引文件"
 
-#: builtin/commit.c:550 builtin/commit.c:556
+#: builtin/commit.c:561 builtin/commit.c:567
 #, c-format
 msgid "invalid commit: %s"
 msgstr "无效的提交：%s"
 
-#: builtin/commit.c:579
+#: builtin/commit.c:590
 msgid "malformed --author parameter"
 msgstr "非法的 --author 参数"
 
-#: builtin/commit.c:635
+#: builtin/commit.c:651
 #, c-format
 msgid "Malformed ident string: '%s'"
 msgstr "非法的身份字符串：'%s'"
 
-#: builtin/commit.c:670 builtin/commit.c:703 builtin/commit.c:1000
+#: builtin/commit.c:689 builtin/commit.c:722 builtin/commit.c:1033
 #, c-format
 msgid "could not lookup commit %s"
 msgstr "不能查询提交 %s"
 
-#: builtin/commit.c:682 builtin/shortlog.c:296
+#: builtin/commit.c:701 builtin/shortlog.c:296
 #, c-format
 msgid "(reading log message from standard input)\n"
 msgstr "（正从标准输入中读取日志信息）\n"
 
-#: builtin/commit.c:684
+#: builtin/commit.c:703
 msgid "could not read log from standard input"
 msgstr "不能从标准输入中读取日志信息"
 
-#: builtin/commit.c:688
+#: builtin/commit.c:707
 #, c-format
 msgid "could not read log file '%s'"
 msgstr "不能读取日志文件 '%s'"
 
-#: builtin/commit.c:694
+#: builtin/commit.c:713
 msgid "commit has empty message"
 msgstr "提交说明为空"
 
-#: builtin/commit.c:710
+#: builtin/commit.c:729
 msgid "could not read MERGE_MSG"
 msgstr "不能读取 MERGE_MSG"
 
-#: builtin/commit.c:714
+#: builtin/commit.c:733
 msgid "could not read SQUASH_MSG"
 msgstr "不能读取 SQUASH_MSG"
 
-#: builtin/commit.c:718
+#: builtin/commit.c:737
 #, c-format
 msgid "could not read '%s'"
 msgstr "不能读取 '%s'"
 
-#: builtin/commit.c:746
+#: builtin/commit.c:765
 #, c-format
 msgid "could not open '%s'"
 msgstr "不能打开 '%s'"
 
-#: builtin/commit.c:770
+#: builtin/commit.c:789
 msgid "could not write commit template"
 msgstr "不能写提交模版"
 
 #  译者：%s若翻为中文，前后不需要空格
-#: builtin/commit.c:783
+#: builtin/commit.c:799
 #, c-format
 msgid ""
 "\n"
@@ -1527,12 +1527,12 @@ msgstr ""
 "\t%s\n"
 "然后重试。\n"
 
-#: builtin/commit.c:796
+#: builtin/commit.c:812
 msgid "Please enter the commit message for your changes."
 msgstr "请为您的修改输入提交说明。"
 
 #  译者：中文字符串拼接，可删除前导空格
-#: builtin/commit.c:799
+#: builtin/commit.c:815
 msgid ""
 " Lines starting\n"
 "with '#' will be ignored, and an empty message aborts the commit.\n"
@@ -1541,7 +1541,7 @@ msgstr ""
 "的行将被忽略，并且空的提交说明将会中止提交。\n"
 
 #  译者：中文字符串拼接，可删除前导空格
-#: builtin/commit.c:804
+#: builtin/commit.c:820
 msgid ""
 " Lines starting\n"
 "with '#' will be kept; you may remove them yourself if you want to.\n"
@@ -1552,153 +1552,158 @@ msgstr ""
 "中止提交。\n"
 
 #  译者：为保证在输出中对齐，注意调整句中空格！
-#: builtin/commit.c:816
+#: builtin/commit.c:832
 #, c-format
 msgid "%sAuthor:    %s"
 msgstr "%s作者：     %s"
 
 #  译者：为保证在输出中对齐，注意调整句中空格！
-#: builtin/commit.c:823
+#: builtin/commit.c:839
 #, c-format
 msgid "%sCommitter: %s"
 msgstr "%s提交者：   %s"
 
-#: builtin/commit.c:843
+#: builtin/commit.c:859
 msgid "Cannot read index"
 msgstr "无法读取索引"
 
-#: builtin/commit.c:880
+#: builtin/commit.c:896
 msgid "Error building trees"
 msgstr "无法创建树对象"
 
-#: builtin/commit.c:895 builtin/tag.c:357
+#: builtin/commit.c:911 builtin/tag.c:357
 #, c-format
 msgid "Please supply the message using either -m or -F option.\n"
 msgstr "请使用 -m 或者 -F 选项提供提交说明。\n"
 
-#: builtin/commit.c:975
+#: builtin/commit.c:1008
 #, c-format
 msgid "No existing author found with '%s'"
 msgstr "没有找到匹配 '%s' 的作者"
 
-#: builtin/commit.c:990 builtin/commit.c:1182
+#: builtin/commit.c:1023 builtin/commit.c:1217
 #, c-format
 msgid "Invalid untracked files mode '%s'"
 msgstr "无效的未追踪文件参数 '%s'"
 
-#: builtin/commit.c:1030
+#: builtin/commit.c:1063
 msgid "Using both --reset-author and --author does not make sense"
 msgstr "同时使用 --reset-author 和 --author 没有意义"
 
-#: builtin/commit.c:1041
+#: builtin/commit.c:1074
 msgid "You have nothing to amend."
 msgstr "您没有可修补的提交。"
 
 #  译者：%s若翻为中文，前后不需要空格
-#: builtin/commit.c:1043
+#: builtin/commit.c:1076
 #, c-format
 msgid "You are in the middle of a %s -- cannot amend."
 msgstr "您正处于一个%s的过程中 -- 无法修补提交。"
 
-#: builtin/commit.c:1045
+#: builtin/commit.c:1078
 msgid "Options --squash and --fixup cannot be used together"
 msgstr "选项 --squash 和 --fixup 不能共用"
 
-#: builtin/commit.c:1055
+#: builtin/commit.c:1088
 msgid "Only one of -c/-C/-F/--fixup can be used."
 msgstr "只能用一个 -c/-C/-F/--fixup 选项。"
 
-#: builtin/commit.c:1057
+#: builtin/commit.c:1090
 msgid "Option -m cannot be combined with -c/-C/-F/--fixup."
 msgstr "选项 -m 不能和 -c/-C/-F/--fixup 共用。"
 
-#: builtin/commit.c:1063
+#: builtin/commit.c:1098
 msgid "--reset-author can be used only with -C, -c or --amend."
 msgstr "--reset-author 只能和 -C、-c 或 --amend 共用。"
 
-#: builtin/commit.c:1080
+#: builtin/commit.c:1115
 msgid "Only one of --include/--only/--all/--interactive/--patch can be used."
 msgstr "只能用一个 --include/--only/--all/--interactive/--patch 选项。"
 
-#: builtin/commit.c:1082
+#: builtin/commit.c:1117
 msgid "No paths with --include/--only does not make sense."
 msgstr "参数 --include/--only 不跟路径没有意义。"
 
-#: builtin/commit.c:1084
+#: builtin/commit.c:1119
 msgid "Clever... amending the last one with dirty index."
 msgstr "聪明... 在索引不干净下修补最后的提交。"
 
-#: builtin/commit.c:1086
+#: builtin/commit.c:1121
 msgid "Explicit paths specified without -i nor -o; assuming --only paths..."
 msgstr "指定了明确的路径而没有使用 -i 或 -o 选项；认为是 --only paths..."
 
-#: builtin/commit.c:1096 builtin/tag.c:556
+#: builtin/commit.c:1131 builtin/tag.c:556
 #, c-format
 msgid "Invalid cleanup mode %s"
 msgstr "无效的清理模式 %s"
 
-#: builtin/commit.c:1101
+#: builtin/commit.c:1136
 msgid "Paths with -a does not make sense."
 msgstr "路径和 -a 选项共用没有意义。"
 
-#: builtin/commit.c:1280
+#: builtin/commit.c:1315
 msgid "couldn't look up newly created commit"
 msgstr "无法找到新创建的提交"
 
-#: builtin/commit.c:1282
+#: builtin/commit.c:1317
 msgid "could not parse newly created commit"
 msgstr "不能解析新创建的提交"
 
-#: builtin/commit.c:1323
+#: builtin/commit.c:1358
 msgid "detached HEAD"
 msgstr "分离头指针"
 
 #  译者：中文字符串拼接，可删除前导空格
-#: builtin/commit.c:1325
+#: builtin/commit.c:1360
 msgid " (root-commit)"
 msgstr "（根提交）"
 
-#: builtin/commit.c:1415
+#: builtin/commit.c:1450
 msgid "could not parse HEAD commit"
 msgstr "不能解析 HEAD 提交"
 
-#: builtin/commit.c:1452 builtin/merge.c:509
+#: builtin/commit.c:1487 builtin/merge.c:509
 #, c-format
 msgid "could not open '%s' for reading"
 msgstr "不能为读入打开 '%s'"
 
-#: builtin/commit.c:1459
+#: builtin/commit.c:1494
 #, c-format
 msgid "Corrupt MERGE_HEAD file (%s)"
 msgstr "损坏的 MERGE_HEAD 文件（%s）"
 
-#: builtin/commit.c:1466
+#: builtin/commit.c:1501
 msgid "could not read MERGE_MODE"
 msgstr "不能读取 MERGE_MODE"
 
-#: builtin/commit.c:1485
+#: builtin/commit.c:1520
 #, c-format
 msgid "could not read commit message: %s"
 msgstr "不能读取提交说明：%s"
 
-#: builtin/commit.c:1499
+#: builtin/commit.c:1534
+#, c-format
+msgid "Aborting commit; you did not edit the message.\n"
+msgstr "终止提交；您未更改来自模版的提交说明。\n"
+
+#: builtin/commit.c:1539
 #, c-format
 msgid "Aborting commit due to empty commit message.\n"
 msgstr "终止提交因为提交说明为空。\n"
 
-#: builtin/commit.c:1514 builtin/merge.c:935 builtin/merge.c:968
+#: builtin/commit.c:1554 builtin/merge.c:935 builtin/merge.c:968
 msgid "failed to write commit object"
 msgstr "无法写提交对象"
 
-#: builtin/commit.c:1535
+#: builtin/commit.c:1575
 msgid "cannot lock HEAD ref"
 msgstr "无法锁定 HEAD 引用"
 
-#: builtin/commit.c:1539
+#: builtin/commit.c:1579
 msgid "cannot update HEAD ref"
 msgstr "无法更新 HEAD 引用"
 
-#: builtin/commit.c:1550
+#: builtin/commit.c:1590
 msgid ""
 "Repository has been updated, but unable to write\n"
 "new_index file. Check that disk is not full or quota is\n"
@@ -2202,7 +2207,8 @@ msgid ""
 "%s (or --work-tree=<directory>) not allowed without specifying %s (or --git-"
 "dir=<directory>)"
 msgstr ""
-"不允许 %s（或 --work-tree=<directory>）而没有指定 %s（或 --git-dir=<directory>）"
+"不允许 %s（或 --work-tree=<directory>）而没有指定 %s（或 --git-"
+"dir=<directory>）"
 
 #: builtin/init-db.c:578
 msgid "Cannot access current working directory"
@@ -2531,51 +2537,51 @@ msgstr "到空分支的非快进式提交没有意义"
 msgid "%s - not something we can merge"
 msgstr "%s - 不能被合并"
 
-#: builtin/merge.c:1385
+#: builtin/merge.c:1382
 #, c-format
 msgid "Updating %s..%s\n"
 msgstr "更新 %s..%s\n"
 
-#: builtin/merge.c:1423
+#: builtin/merge.c:1420
 #, c-format
 msgid "Trying really trivial in-index merge...\n"
 msgstr "尝试非常小的索引内合并...\n"
 
-#: builtin/merge.c:1430
+#: builtin/merge.c:1427
 #, c-format
 msgid "Nope.\n"
 msgstr "无。\n"
 
-#: builtin/merge.c:1462
+#: builtin/merge.c:1459
 msgid "Not possible to fast-forward, aborting."
 msgstr "无法快进，终止。"
 
-#: builtin/merge.c:1485 builtin/merge.c:1562
+#: builtin/merge.c:1482 builtin/merge.c:1559
 #, c-format
 msgid "Rewinding the tree to pristine...\n"
 msgstr "将树回滚至原始状态...\n"
 
-#: builtin/merge.c:1489
+#: builtin/merge.c:1486
 #, c-format
 msgid "Trying merge strategy %s...\n"
 msgstr "尝试合并策略 %s...\n"
 
-#: builtin/merge.c:1553
+#: builtin/merge.c:1550
 #, c-format
 msgid "No merge strategy handled the merge.\n"
 msgstr "没有合并策略处理此合并。\n"
 
-#: builtin/merge.c:1555
+#: builtin/merge.c:1552
 #, c-format
 msgid "Merge with strategy %s failed.\n"
 msgstr "使用策略 %s 合并失败。\n"
 
-#: builtin/merge.c:1564
+#: builtin/merge.c:1561
 #, c-format
 msgid "Using the %s to prepare resolving by hand.\n"
 msgstr "使用 %s 以准备手工解决。\n"
 
-#: builtin/merge.c:1575
+#: builtin/merge.c:1572
 #, c-format
 msgid "Automatic merge went well; stopped before committing as requested\n"
 msgstr "自动合并进展顺利，按要求在提交前停止\n"
@@ -2824,7 +2830,7 @@ msgstr "tag 简写没有跟 <tag> 参数"
 msgid "--delete only accepts plain target ref names"
 msgstr "--delete 只接受简单的目标引用名"
 
-#: builtin/push.c:73
+#: builtin/push.c:83
 #, c-format
 msgid ""
 "You are not currently on a branch.\n"
@@ -2838,7 +2844,7 @@ msgstr ""
 "\n"
 "    git push %s HEAD:<name-of-remote-branch>\n"
 
-#: builtin/push.c:80
+#: builtin/push.c:90
 #, c-format
 msgid ""
 "The current branch %s has no upstream branch.\n"
@@ -2851,27 +2857,37 @@ msgstr ""
 "\n"
 "    git push --set-upstream %s %s\n"
 
-#: builtin/push.c:88
+#: builtin/push.c:98
 #, c-format
 msgid "The current branch %s has multiple upstream branches, refusing to push."
 msgstr "当前分支 %s 有多个上游分支，拒绝推送。"
 
-#: builtin/push.c:111
+#: builtin/push.c:101
+#, c-format
+msgid ""
+"You are pushing to remote '%s', which is not the upstream of\n"
+"your current branch '%s', without telling me what to push\n"
+"to update which remote branch."
+msgstr ""
+"您正推送至远程 '%s'（其并非当前分支 '%s' 的上游），\n"
+"而没有告诉我要推送什么、更新哪个远程分支。"
+
+#: builtin/push.c:127
 msgid ""
 "You didn't specify any refspecs to push, and push.default is \"nothing\"."
 msgstr "您没有为推送指定任何引用表达式，并且 push.default 为 \"nothing\"。"
 
-#: builtin/push.c:131
+#: builtin/push.c:147
 #, c-format
 msgid "Pushing to %s\n"
 msgstr "推送到 %s\n"
 
-#: builtin/push.c:135
+#: builtin/push.c:151
 #, c-format
 msgid "failed to push some refs to '%s'"
 msgstr "无法推送一些引用到 '%s'"
 
-#: builtin/push.c:143
+#: builtin/push.c:159
 #, c-format
 msgid ""
 "To prevent you from losing history, non-fast-forward updates were rejected\n"
@@ -2882,12 +2898,12 @@ msgstr ""
 "再次推送前先与远程变更合并（如 'git pull'）。详见\n"
 "'git push --help' 中的 'Note about fast-forwards' 小节。\n"
 
-#: builtin/push.c:160
+#: builtin/push.c:176
 #, c-format
 msgid "bad repository '%s'"
 msgstr "坏的版本库 '%s'"
 
-#: builtin/push.c:161
+#: builtin/push.c:177
 msgid ""
 "No configured push destination.\n"
 "Either specify the URL from the command-line or configure a remote "
@@ -2908,31 +2924,31 @@ msgstr ""
 "\n"
 "    git push <name>\n"
 
-#: builtin/push.c:176
+#: builtin/push.c:192
 msgid "--all and --tags are incompatible"
 msgstr "--all 和 --tags 不兼容"
 
-#: builtin/push.c:177
+#: builtin/push.c:193
 msgid "--all can't be combined with refspecs"
 msgstr "--all 不能和引用表达式共用"
 
-#: builtin/push.c:182
+#: builtin/push.c:198
 msgid "--mirror and --tags are incompatible"
 msgstr "--mirror 和 --tags 不兼容"
 
-#: builtin/push.c:183
+#: builtin/push.c:199
 msgid "--mirror can't be combined with refspecs"
 msgstr "--mirror 不能和引用表达式共用"
 
-#: builtin/push.c:188
+#: builtin/push.c:204
 msgid "--all and --mirror are incompatible"
 msgstr "--all 和 --mirror 不兼容"
 
-#: builtin/push.c:274
+#: builtin/push.c:284
 msgid "--delete is incompatible with --all, --mirror and --tags"
 msgstr "--delete 与 --all、--mirror 及 --tags 不兼容"
 
-#: builtin/push.c:276
+#: builtin/push.c:286
 msgid "--delete doesn't make sense without any refs"
 msgstr "--delete 未接任何引用没有意义"
 
