@@ -330,4 +330,30 @@ test_expect_success PERL 'split hunk "add -p (edit)"' '
 	! grep "^+15" actual
 '
 
+test_expect_success 'patch mode ignores unmerged entries' '
+	git reset --hard &&
+	test_commit conflict &&
+	test_commit non-conflict &&
+	git checkout -b side &&
+	test_commit side conflict.t &&
+	git checkout master &&
+	test_commit master conflict.t &&
+	test_must_fail git merge side &&
+	echo changed >non-conflict.t &&
+	echo y | git add -p >output &&
+	! grep a/conflict.t output &&
+	cat >expected <<-\EOF &&
+	* Unmerged path conflict.t
+	diff --git a/non-conflict.t b/non-conflict.t
+	index f766221..5ea2ed4 100644
+	--- a/non-conflict.t
+	+++ b/non-conflict.t
+	@@ -1 +1 @@
+	-non-conflict
+	+changed
+	EOF
+	git diff --cached >diff &&
+	test_cmp expected diff
+'
+
 test_done

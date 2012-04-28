@@ -66,21 +66,19 @@ EOF
 test_expect_success 'merge output uses pretty names' '
 	git reset --hard c1 &&
 	git merge c2 c3 c4 >actual &&
-	test_cmp actual expected
+	test_i18ncmp expected actual
 '
 
 cat >expected <<\EOF
-Already up-to-date with c4
-Trying simple merge with c5
-Merge made by the 'octopus' strategy.
+Merge made by the 'recursive' strategy.
  c5.c |    1 +
  1 file changed, 1 insertion(+)
  create mode 100644 c5.c
 EOF
 
-test_expect_success 'merge up-to-date output uses pretty names' '
-	git merge c4 c5 >actual &&
-	test_cmp actual expected
+test_expect_success 'merge reduces irrelevant remote heads' '
+	GIT_MERGE_VERBOSITY=0 git merge c4 c5 >actual &&
+	test_i18ncmp expected actual
 '
 
 cat >expected <<\EOF
@@ -97,7 +95,7 @@ EOF
 test_expect_success 'merge fast-forward output uses pretty names' '
 	git reset --hard c0 &&
 	git merge c1 c2 >actual &&
-	test_cmp actual expected
+	test_i18ncmp expected actual
 '
 
 test_done

@@ -23,9 +23,8 @@ test_expect_success 'move the files into a "sub" directory' '
 '
 
 cat > expected <<\EOF
- bar => sub/bar |  Bin 5 -> 5 bytes
- foo => sub/foo |    0
- 2 files changed, 0 insertions(+), 0 deletions(-)
+-	-	bar => sub/bar
+0	0	foo => sub/foo
 
 diff --git a/bar b/sub/bar
 similarity index 100%
@@ -38,7 +37,8 @@ rename to sub/foo
 EOF
 
 test_expect_success 'git show -C -C report renames' '
-	git show -C -C --raw --binary --stat | tail -n 12 > current &&
+	git show -C -C --raw --binary --numstat >patch-with-stat &&
+	tail -n 11 patch-with-stat >current &&
 	test_cmp expected current
 '
 

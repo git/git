@@ -1,6 +1,6 @@
 #!/bin/sh
 
-test_description='git-p4 p4 branching tests'
+test_description='git p4 tests for p4 branches'
 
 . ./lib-git-p4.sh
 
@@ -63,7 +63,7 @@ test_expect_success 'basic p4 branches' '
 
 test_expect_success 'import main, no branch detection' '
 	test_when_finished cleanup_git &&
-	"$GITP4" clone --dest="$git" //depot/main@all &&
+	git p4 clone --dest="$git" //depot/main@all &&
 	(
 		cd "$git" &&
 		git log --oneline --graph --decorate --all &&
@@ -74,7 +74,7 @@ test_expect_success 'import main, no branch detection' '
 
 test_expect_success 'import branch1, no branch detection' '
 	test_when_finished cleanup_git &&
-	"$GITP4" clone --dest="$git" //depot/branch1@all &&
+	git p4 clone --dest="$git" //depot/branch1@all &&
 	(
 		cd "$git" &&
 		git log --oneline --graph --decorate --all &&
@@ -85,7 +85,7 @@ test_expect_success 'import branch1, no branch detection' '
 
 test_expect_success 'import branch2, no branch detection' '
 	test_when_finished cleanup_git &&
-	"$GITP4" clone --dest="$git" //depot/branch2@all &&
+	git p4 clone --dest="$git" //depot/branch2@all &&
 	(
 		cd "$git" &&
 		git log --oneline --graph --decorate --all &&
@@ -96,7 +96,7 @@ test_expect_success 'import branch2, no branch detection' '
 
 test_expect_success 'import depot, no branch detection' '
 	test_when_finished cleanup_git &&
-	"$GITP4" clone --dest="$git" //depot@all &&
+	git p4 clone --dest="$git" //depot@all &&
 	(
 		cd "$git" &&
 		git log --oneline --graph --decorate --all &&
@@ -107,7 +107,7 @@ test_expect_success 'import depot, no branch detection' '
 
 test_expect_success 'import depot, branch detection' '
 	test_when_finished cleanup_git &&
-	"$GITP4" clone --dest="$git" --detect-branches //depot@all &&
+	git p4 clone --dest="$git" --detect-branches //depot@all &&
 	(
 		cd "$git" &&
 
@@ -132,7 +132,7 @@ test_expect_success 'import depot, branch detection, branchList branch definitio
 	(
 		cd "$git" &&
 		git config git-p4.branchList main:branch1 &&
-		"$GITP4" clone --dest=. --detect-branches //depot@all &&
+		git p4 clone --dest=. --detect-branches //depot@all &&
 
 		git log --oneline --graph --decorate --all &&
 
@@ -189,15 +189,15 @@ test_expect_success 'add simple p4 branches' '
 # Configure branches through git-config and clone them.
 # All files are tested to make sure branches were cloned correctly.
 # Finally, make an update to branch1 on P4 side to check if it is imported
-# correctly by git-p4.
-test_expect_success 'git-p4 clone simple branches' '
+# correctly by git p4.
+test_expect_success 'git p4 clone simple branches' '
 	test_when_finished cleanup_git &&
 	test_create_repo "$git" &&
 	(
 		cd "$git" &&
 		git config git-p4.branchList branch1:branch2 &&
 		git config --add git-p4.branchList branch1:branch3 &&
-		"$GITP4" clone --dest=. --detect-branches //depot@all &&
+		git p4 clone --dest=. --detect-branches //depot@all &&
 		git log --all --graph --decorate --stat &&
 		git reset --hard p4/depot/branch1 &&
 		test -f file1 &&
@@ -221,13 +221,13 @@ test_expect_success 'git-p4 clone simple branches' '
 		p4 submit -d "update file2 in branch3" &&
 		cd "$git" &&
 		git reset --hard p4/depot/branch1 &&
-		"$GITP4" rebase &&
+		git p4 rebase &&
 		grep file2_ file2
 	)
 '
 
 # Create a complex branch structure in P4 depot to check if they are correctly
-# cloned. The branches are created from older changelists to check if git-p4 is
+# cloned. The branches are created from older changelists to check if git p4 is
 # able to correctly detect them.
 # The final expected structure is:
 # `branch1
@@ -248,7 +248,7 @@ test_expect_success 'git-p4 clone simple branches' '
 #   `- file1
 #   `- file2
 #   `- file3
-test_expect_success 'git-p4 add complex branches' '
+test_expect_success 'git p4 add complex branches' '
 	test_when_finished cleanup_git &&
 	test_create_repo "$git" &&
 	(
@@ -263,10 +263,10 @@ test_expect_success 'git-p4 add complex branches' '
 	)
 '
 
-# Configure branches through git-config and clone them. git-p4 will only be able
+# Configure branches through git-config and clone them. git p4 will only be able
 # to clone the original structure if it is able to detect the origin changelist
 # of each branch.
-test_expect_success 'git-p4 clone complex branches' '
+test_expect_success 'git p4 clone complex branches' '
 	test_when_finished cleanup_git &&
 	test_create_repo "$git" &&
 	(
@@ -275,7 +275,7 @@ test_expect_success 'git-p4 clone complex branches' '
 		git config --add git-p4.branchList branch1:branch3 &&
 		git config --add git-p4.branchList branch1:branch4 &&
 		git config --add git-p4.branchList branch1:branch5 &&
-		"$GITP4" clone --dest=. --detect-branches //depot@all &&
+		git p4 clone --dest=. --detect-branches //depot@all &&
 		git log --all --graph --decorate --stat &&
 		git reset --hard p4/depot/branch1 &&
 		test_path_is_file file1 &&

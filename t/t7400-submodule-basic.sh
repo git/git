@@ -234,7 +234,7 @@ EOF
 
 test_expect_success 'status should only print one line' '
 	git submodule status >lines &&
-	test $(wc -l <lines) = 1
+	test_line_count = 1 lines
 '
 
 test_expect_success 'setup - fetch commit name from submodule' '

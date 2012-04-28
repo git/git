@@ -31,13 +31,6 @@ the updated p4 remote branch.
 
 EXAMPLE
 -------
-* Create an alias for 'git p4', using the full path to the 'git-p4'
-  script if needed:
-+
-------------
-$ git config --global alias.p4 '!git-p4'
-------------
-
 * Clone a repository:
 +
 ------------
@@ -311,19 +304,19 @@ configuration file.  This allows future 'git p4 submit' commands to
 work properly; the submit command looks only at the variable and does
 not have a command-line option.
 
-The full syntax for a p4 view is documented in 'p4 help views'.  Git-p4
+The full syntax for a p4 view is documented in 'p4 help views'.  'Git p4'
 knows only a subset of the view syntax.  It understands multi-line
 mappings, overlays with '+', exclusions with '-' and double-quotes
-around whitespace.  Of the possible wildcards, git-p4 only handles
-'...', and only when it is at the end of the path.  Git-p4 will complain
+around whitespace.  Of the possible wildcards, 'git p4' only handles
+'...', and only when it is at the end of the path.  'Git p4' will complain
 if it encounters an unhandled wildcard.
 
 Bugs in the implementation of overlap mappings exist.  If multiple depot
 paths map through overlays to the same location in the repository,
-git-p4 can choose the wrong one.  This is hard to solve without
-dedicating a client spec just for git-p4.
+'git p4' can choose the wrong one.  This is hard to solve without
+dedicating a client spec just for 'git p4'.
 
-The name of the client can be given to git-p4 in multiple ways.  The
+The name of the client can be given to 'git p4' in multiple ways.  The
 variable 'git-p4.client' takes precedence if it exists.  Otherwise,
 normal p4 mechanisms of determining the client are used:  environment
 variable P4CLIENT, a file referenced by P4CONFIG, or the local host name.

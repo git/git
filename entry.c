@@ -120,58 +120,15 @@ static int streaming_write_entry(struct cache_entry *ce, char *path,
 				 const struct checkout *state, int to_tempfile,
 				 int *fstat_done, struct stat *statbuf)
 {
-	struct git_istream *st;
-	enum object_type type;
-	unsigned long sz;
 	int result = -1;
-	ssize_t kept = 0;
-	int fd = -1;
-
-	st = open_istream(ce->sha1, &type, &sz, filter);
-	if (!st)
-		return -1;
-	if (type != OBJ_BLOB)
-		goto close_and_exit;
+	int fd;
 
 	fd = open_output_fd(path, ce, to_tempfile);
-	if (fd < 0)
-		goto close_and_exit;
-
-	for (;;) {
-		char buf[1024 * 16];
-		ssize_t wrote, holeto;
-		ssize_t readlen = read_istream(st, buf, sizeof(buf));
-
-		if (!readlen)
-			break;
-		if (sizeof(buf) == readlen) {
-			for (holeto = 0; holeto < readlen; holeto++)
-				if (buf[holeto])
-					break;
-			if (readlen == holeto) {
-				kept += holeto;
-				continue;
-			}
-		}
-
-		if (kept && lseek(fd, kept, SEEK_CUR) == (off_t) -1)
-			goto close_and_exit;
-		else
-			kept = 0;
-		wrote = write_in_full(fd, buf, readlen);
-
-		if (wrote != readlen)
-			goto close_and_exit;
-	}
-	if (kept && (lseek(fd, kept - 1, SEEK_CUR) == (off_t) -1 ||
-		     write(fd, "", 1) != 1))
-		goto close_and_exit;
-	*fstat_done = fstat_output(fd, state, statbuf);
-
-close_and_exit:
-	close_istream(st);
-	if (0 <= fd)
+	if (0 <= fd) {
+		result = stream_blob_to_fd(fd, ce->sha1, filter, 1);
+		*fstat_done = fstat_output(fd, state, statbuf);
 		result = close(fd);
+	}
 	if (result && 0 <= fd)
 		unlink(path);
 	return result;

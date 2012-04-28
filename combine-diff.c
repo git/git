@@ -423,7 +423,7 @@ static int make_hunks(struct sline *sline, unsigned long cnt,
 						     hunk_begin, j);
 				la = (la + context < cnt + 1) ?
 					(la + context) : cnt + 1;
-				while (j <= --la) {
+				while (la && j <= --la) {
 					if (sline[la].flag & mark) {
 						contin = 1;
 						break;

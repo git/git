@@ -533,9 +533,20 @@ static int is_a_merge(const struct commit *current_head)
 
 static const char sign_off_header[] = "Signed-off-by: ";
 
+static void export_one(const char *var, const char *s, const char *e, int hack)
+{
+	struct strbuf buf = STRBUF_INIT;
+	if (hack)
+		strbuf_addch(&buf, hack);
+	strbuf_addf(&buf, "%.*s", (int)(e - s), s);
+	setenv(var, buf.buf, 1);
+	strbuf_release(&buf);
+}
+
 static void determine_author_info(struct strbuf *author_ident)
 {
 	char *name, *email, *date;
+	struct ident_split author;
 
 	name = getenv("GIT_AUTHOR_NAME");
 	email = getenv("GIT_AUTHOR_EMAIL");
@@ -585,6 +596,11 @@ static void determine_author_info(struct strbuf *author_ident)
 		date = force_date;
 	strbuf_addstr(author_ident, fmt_ident(name, email, date,
 					      IDENT_ERROR_ON_NO_NAME));
+	if (!split_ident_line(&author, author_ident->buf, author_ident->len)) {
+		export_one("GIT_AUTHOR_NAME", author.name_begin, author.name_end, 0);
+		export_one("GIT_AUTHOR_EMAIL", author.mail_begin, author.mail_end, 0);
+		export_one("GIT_AUTHOR_DATE", author.date_begin, author.tz_end, '@');
+	}
 }
 
 static int ends_rfc2822_footer(struct strbuf *sb)
@@ -651,6 +667,9 @@ static int prepare_to_commit(const char *index_file, const char *prefix,
 	const char *hook_arg2 = NULL;
 	int ident_shown = 0;
 	int clean_message_contents = (cleanup_mode != CLEANUP_NONE);
+
+	/* This checks and barfs if author is badly specified */
+	determine_author_info(author_ident);
 
 	if (!no_verify && run_hook(index_file, "pre-commit", NULL))
 		return 0;
@@ -770,9 +789,6 @@ static int prepare_to_commit(const char *index_file, const char *prefix,
 		die_errno(_("could not write commit template"));
 
 	strbuf_release(&sb);
-
-	/* This checks and barfs if author is badly specified */
-	determine_author_info(author_ident);
 
 	/* This checks if committer ident is explicitly given */
 	strbuf_addstr(&committer_ident, git_committer_info(0));
@@ -905,27 +921,10 @@ static int prepare_to_commit(const char *index_file, const char *prefix,
 	return 1;
 }
 
-/*
- * Find out if the message in the strbuf contains only whitespace and
- * Signed-off-by lines.
- */
-static int message_is_empty(struct strbuf *sb)
+static int rest_is_empty(struct strbuf *sb, int start)
 {
-	struct strbuf tmpl = STRBUF_INIT;
+	int i, eol;
 	const char *nl;
-	int eol, i, start = 0;
-
-	if (cleanup_mode == CLEANUP_NONE && sb->len)
-		return 0;
-
-	/* See if the template is just a prefix of the message. */
-	if (template_file && strbuf_read_file(&tmpl, template_file, 0) > 0) {
-		stripspace(&tmpl, cleanup_mode == CLEANUP_ALL);
-		if (start + tmpl.len <= sb->len &&
-		    memcmp(tmpl.buf, sb->buf + start, tmpl.len) == 0)
-			start += tmpl.len;
-	}
-	strbuf_release(&tmpl);
 
 	/* Check if the rest is just whitespace and Signed-of-by's. */
 	for (i = start; i < sb->len; i++) {
@@ -946,6 +945,40 @@ static int message_is_empty(struct strbuf *sb)
 	}
 
 	return 1;
+}
+
+/*
+ * Find out if the message in the strbuf contains only whitespace and
+ * Signed-off-by lines.
+ */
+static int message_is_empty(struct strbuf *sb)
+{
+	if (cleanup_mode == CLEANUP_NONE && sb->len)
+		return 0;
+	return rest_is_empty(sb, 0);
+}
+
+/*
+ * See if the user edited the message in the editor or left what
+ * was in the template intact
+ */
+static int template_untouched(struct strbuf *sb)
+{
+	struct strbuf tmpl = STRBUF_INIT;
+	char *start;
+
+	if (cleanup_mode == CLEANUP_NONE && sb->len)
+		return 0;
+
+	if (!template_file || strbuf_read_file(&tmpl, template_file, 0) <= 0)
+		return 0;
+
+	stripspace(&tmpl, cleanup_mode == CLEANUP_ALL);
+	start = (char *)skip_prefix(sb->buf, tmpl.buf);
+	if (!start)
+		start = sb->buf;
+	strbuf_release(&tmpl);
+	return rest_is_empty(sb, start - sb->buf);
 }
 
 static const char *find_author_by_nickname(const char *name)
@@ -1055,6 +1088,8 @@ static int parse_and_validate_options(int argc, const char *argv[],
 		die(_("Only one of -c/-C/-F/--fixup can be used."));
 	if (message.len && f > 0)
 		die((_("Option -m cannot be combined with -c/-C/-F/--fixup.")));
+	if (f || message.len)
+		template_file = NULL;
 	if (edit_message)
 		use_message = edit_message;
 	if (amend && !use_message && !fixup_message)
@@ -1494,6 +1529,11 @@ int cmd_commit(int argc, const char **argv, const char *prefix)
 
 	if (cleanup_mode != CLEANUP_NONE)
 		stripspace(&sb, cleanup_mode == CLEANUP_ALL);
+	if (template_untouched(&sb) && !allow_empty_message) {
+		rollback_index_files();
+		fprintf(stderr, _("Aborting commit; you did not edit the message.\n"));
+		exit(1);
+	}
 	if (message_is_empty(&sb) && !allow_empty_message) {
 		rollback_index_files();
 		fprintf(stderr, _("Aborting commit due to empty commit message.\n"));

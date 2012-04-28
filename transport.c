@@ -11,6 +11,7 @@
 #include "branch.h"
 #include "url.h"
 #include "submodule.h"
+#include "string-list.h"
 
 /* rsync support */
 
@@ -721,6 +722,10 @@ void transport_print_push_status(const char *dest, struct ref *refs,
 {
 	struct ref *ref;
 	int n = 0;
+	unsigned char head_sha1[20];
+	char *head;
+
+	head = resolve_refdup("HEAD", head_sha1, 1, NULL);
 
 	if (verbose) {
 		for (ref = refs; ref; ref = ref->next)
@@ -738,8 +743,13 @@ void transport_print_push_status(const char *dest, struct ref *refs,
 		    ref->status != REF_STATUS_UPTODATE &&
 		    ref->status != REF_STATUS_OK)
 			n += print_one_push_status(ref, dest, n, porcelain);
-		if (ref->status == REF_STATUS_REJECT_NONFASTFORWARD)
-			*nonfastforward = 1;
+		if (ref->status == REF_STATUS_REJECT_NONFASTFORWARD &&
+		    *nonfastforward != NON_FF_HEAD) {
+			if (!strcmp(head, ref->name))
+				*nonfastforward = NON_FF_HEAD;
+			else
+				*nonfastforward = NON_FF_OTHER;
+		}
 	}
 }
 
@@ -1004,6 +1014,25 @@ void transport_set_verbosity(struct transport *transport, int verbosity,
 		transport->progress = verbosity >= 0 && isatty(2);
 }
 
+static void die_with_unpushed_submodules(struct string_list *needs_pushing)
+{
+	int i;
+
+	fprintf(stderr, "The following submodule paths contain changes that can\n"
+			"not be found on any remote:\n");
+	for (i = 0; i < needs_pushing->nr; i++)
+		printf("  %s\n", needs_pushing->items[i].string);
+	fprintf(stderr, "\nPlease try\n\n"
+			"	git push --recurse-submodules=on-demand\n\n"
+			"or cd to the path and use\n\n"
+			"	git push\n\n"
+			"to push them to a remote.\n\n");
+
+	string_list_clear(needs_pushing, 0);
+
+	die("Aborting.");
+}
+
 int transport_push(struct transport *transport,
 		   int refspec_nr, const char **refspec, int flags,
 		   int *nonfastforward)
@@ -1044,12 +1073,27 @@ int transport_push(struct transport *transport,
 			flags & TRANSPORT_PUSH_MIRROR,
 			flags & TRANSPORT_PUSH_FORCE);
 
-		if ((flags & TRANSPORT_RECURSE_SUBMODULES_CHECK) && !is_bare_repository()) {
+		if ((flags & TRANSPORT_RECURSE_SUBMODULES_ON_DEMAND) && !is_bare_repository()) {
 			struct ref *ref = remote_refs;
 			for (; ref; ref = ref->next)
 				if (!is_null_sha1(ref->new_sha1) &&
-				    check_submodule_needs_pushing(ref->new_sha1,transport->remote->name))
-					die("There are unpushed submodules, aborting.");
+				    !push_unpushed_submodules(ref->new_sha1,
+					    transport->remote->name))
+				    die ("Failed to push all needed submodules!");
+		}
+
+		if ((flags & (TRANSPORT_RECURSE_SUBMODULES_ON_DEMAND |
+			      TRANSPORT_RECURSE_SUBMODULES_CHECK)) && !is_bare_repository()) {
+			struct ref *ref = remote_refs;
+			struct string_list needs_pushing;
+
+			memset(&needs_pushing, 0, sizeof(struct string_list));
+			needs_pushing.strdup_strings = 1;
+			for (; ref; ref = ref->next)
+				if (!is_null_sha1(ref->new_sha1) &&
+				    find_unpushed_submodules(ref->new_sha1,
+					    transport->remote->name, &needs_pushing))
+					die_with_unpushed_submodules(&needs_pushing);
 		}
 
 		push_ret = transport->push_refs(transport, remote_refs, flags);

@@ -248,6 +248,10 @@ case $(uname -s) in
 	find () {
 		/usr/bin/find "$@"
 	}
+	# git sees Windows-style pwd
+	pwd () {
+		builtin pwd -W
+	}
 	is_absolute_path () {
 		case "$1" in
 		[/\\]* | [A-Za-z]:*)

@@ -118,4 +118,22 @@ test_expect_success 'with failing hook requiring GIT_PREFIX' '
 	git checkout -- file
 '
 
+test_expect_success 'check the author in hook' '
+	write_script "$HOOK" <<-\EOF &&
+	test "$GIT_AUTHOR_NAME" = "New Author" &&
+	test "$GIT_AUTHOR_EMAIL" = "newauthor@example.com"
+	EOF
+	test_must_fail git commit --allow-empty -m "by a.u.thor" &&
+	(
+		GIT_AUTHOR_NAME="New Author" &&
+		GIT_AUTHOR_EMAIL="newauthor@example.com" &&
+		export GIT_AUTHOR_NAME GIT_AUTHOR_EMAIL &&
+		git commit --allow-empty -m "by new.author via env" &&
+		git show -s
+	) &&
+	git commit --author="New Author <newauthor@example.com>" \
+		--allow-empty -m "by new.author via command line" &&
+	git show -s
+'
+
 test_done

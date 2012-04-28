@@ -92,6 +92,7 @@
 /git-name-rev
 /git-mv
 /git-notes
+/git-p4
 /git-pack-redundant
 /git-pack-objects
 /git-pack-refs
@@ -180,9 +181,11 @@
 /test-index-version
 /test-line-buffer
 /test-match-trees
+/test-mergesort
 /test-mktemp
 /test-parse-options
 /test-path-utils
+/test-revision-walking
 /test-run-command
 /test-sha1
 /test-sigchain

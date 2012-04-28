@@ -132,11 +132,14 @@ OPTIONS
 
 -t <file>::
 --template=<file>::
-	Use the contents of the given file as the initial version
-	of the commit message. The editor is invoked and you can
-	make subsequent changes. If a message is specified using
-	the `-m` or `-F` options, this option has no effect. This
-	overrides the `commit.template` configuration variable.
+	When editing the commit message, start the editor with the
+	contents in the given file.  The `commit.template` configuration
+	variable is often used to give this option implicitly to the
+	command.  This mechanism can be used by projects that want to
+	guide participants with some hints on what to write in the message
+	in what order.  If the user exits the editor without editing the
+	message, the commit is aborted.  This has no effect when a message
+	is given by other means, e.g. with the `-m` or `-F` options.
 
 -s::
 --signoff::

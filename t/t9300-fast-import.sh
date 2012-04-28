@@ -24,6 +24,13 @@ head_c () {
 	' - "$1"
 }
 
+verify_packs () {
+	for p in .git/objects/pack/*.pack
+	do
+		git verify-pack "$@" "$p" || return
+	done
+}
+
 file2_data='file2
 second line of EOF'
 
@@ -105,9 +112,10 @@ test_expect_success \
     'A: create pack from stdin' \
     'git fast-import --export-marks=marks.out <input &&
 	 git whatchanged master'
-test_expect_success \
-	'A: verify pack' \
-	'for p in .git/objects/pack/*.pack;do git verify-pack $p||exit;done'
+
+test_expect_success 'A: verify pack' '
+	verify_packs
+'
 
 cat >expect <<EOF
 author $GIT_COMMITTER_NAME <$GIT_COMMITTER_EMAIL> $GIT_COMMITTER_DATE
@@ -252,9 +260,11 @@ test_expect_success \
 	'A: verify marks import does not crash' \
 	'git fast-import --import-marks=marks.out <input &&
 	 git whatchanged verify--import-marks'
-test_expect_success \
-	'A: verify pack' \
-	'for p in .git/objects/pack/*.pack;do git verify-pack $p||exit;done'
+
+test_expect_success 'A: verify pack' '
+	verify_packs
+'
+
 cat >expect <<EOF
 :000000 100755 0000000000000000000000000000000000000000 7123f7f44e39be127c5eb701e5968176ee9d78b1 A	copy-of-file2
 EOF
@@ -514,9 +524,11 @@ test_expect_success \
     'C: incremental import create pack from stdin' \
     'git fast-import <input &&
 	 git whatchanged branch'
-test_expect_success \
-	'C: verify pack' \
-	'for p in .git/objects/pack/*.pack;do git verify-pack $p||exit;done'
+
+test_expect_success 'C: verify pack' '
+	verify_packs
+'
+
 test_expect_success \
 	'C: validate reuse existing blob' \
 	'test $newf = `git rev-parse --verify branch:file2/newf` &&
@@ -572,9 +584,10 @@ test_expect_success \
     'D: inline data in commit' \
     'git fast-import <input &&
 	 git whatchanged branch'
-test_expect_success \
-	'D: verify pack' \
-	'for p in .git/objects/pack/*.pack;do git verify-pack $p||exit;done'
+
+test_expect_success 'D: verify pack' '
+	verify_packs
+'
 
 cat >expect <<EOF
 :000000 100755 0000000000000000000000000000000000000000 35a59026a33beac1569b1c7f66f3090ce9c09afc A	newdir/exec.sh
@@ -618,9 +631,10 @@ test_expect_success 'E: rfc2822 date, --date-format=raw' '
 test_expect_success \
     'E: rfc2822 date, --date-format=rfc2822' \
     'git fast-import --date-format=rfc2822 <input'
-test_expect_success \
-	'E: verify pack' \
-	'for p in .git/objects/pack/*.pack;do git verify-pack $p||exit;done'
+
+test_expect_success 'E: verify pack' '
+	verify_packs
+'
 
 cat >expect <<EOF
 author $GIT_AUTHOR_NAME <$GIT_AUTHOR_EMAIL> 1170778938 -0500
@@ -669,9 +683,10 @@ test_expect_success \
 		fi
 	 fi
 	'
-test_expect_success \
-	'F: verify pack' \
-	'for p in .git/objects/pack/*.pack;do git verify-pack $p||exit;done'
+
+test_expect_success 'F: verify pack' '
+	verify_packs
+'
 
 cat >expect <<EOF
 tree `git rev-parse branch~1^{tree}`
@@ -705,9 +720,11 @@ INPUT_END
 test_expect_success \
     'G: non-fast-forward update forced' \
     'git fast-import --force <input'
-test_expect_success \
-	'G: verify pack' \
-	'for p in .git/objects/pack/*.pack;do git verify-pack $p||exit;done'
+
+test_expect_success 'G: verify pack' '
+	verify_packs
+'
+
 test_expect_success \
 	'G: branch changed, but logged' \
 	'test $old_branch != `git rev-parse --verify branch^0` &&
@@ -742,9 +759,10 @@ test_expect_success \
     'H: deletall, add 1' \
     'git fast-import <input &&
 	 git whatchanged H'
-test_expect_success \
-	'H: verify pack' \
-	'for p in .git/objects/pack/*.pack;do git verify-pack $p||exit;done'
+
+test_expect_success 'H: verify pack' '
+	verify_packs
+'
 
 cat >expect <<EOF
 :100755 000000 f1fb5da718392694d0076d677d6d0e364c79b0bc 0000000000000000000000000000000000000000 D	file2/newf
@@ -1857,9 +1875,10 @@ test_expect_success \
 	'Q: commit notes' \
 	'git fast-import <input &&
 	 git whatchanged notes-test'
-test_expect_success \
-	'Q: verify pack' \
-	'for p in .git/objects/pack/*.pack;do git verify-pack $p||exit;done'
+
+test_expect_success 'Q: verify pack' '
+	verify_packs
+'
 
 commit1=$(git rev-parse notes-test~2)
 commit2=$(git rev-parse notes-test^)
@@ -2616,13 +2635,14 @@ test_expect_success \
 	'R: blob bigger than threshold' \
 	'test_create_repo R &&
 	 git --git-dir=R/.git fast-import --big-file-threshold=1 <input'
-test_expect_success \
-	'R: verify created pack' \
-	': >verify &&
-	 for p in R/.git/objects/pack/*.pack;
-	 do
-	   git verify-pack -v $p >>verify || exit;
-	 done'
+
+test_expect_success 'R: verify created pack' '
+	(
+		cd R &&
+		verify_packs -v > ../verify
+	)
+'
+
 test_expect_success \
 	'R: verify written objects' \
 	'git --git-dir=R/.git cat-file blob big-file:big1 >actual &&
@@ -2634,5 +2654,292 @@ test_expect_success \
 	'R: blob appears only once' \
 	'n=$(grep $a verify | wc -l) &&
 	 test 1 = $n'
+
+###
+### series S
+###
+#
+# Make sure missing spaces and EOLs after mark references
+# cause errors.
+#
+# Setup:
+#
+#   1--2--4
+#    \   /
+#     -3-
+#
+#   commit marks:  301, 302, 303, 304
+#   blob marks:              403, 404, resp.
+#   note mark:          202
+#
+# The error message when a space is missing not at the
+# end of the line is:
+#
+#   Missing space after ..
+#
+# or when extra characters come after the mark at the end
+# of the line:
+#
+#   Garbage after ..
+#
+# or when the dataref is neither "inline " or a known SHA1,
+#
+#   Invalid dataref ..
+#
+test_tick
+
+cat >input <<INPUT_END
+commit refs/heads/S
+mark :301
+committer $GIT_COMMITTER_NAME <$GIT_COMMITTER_EMAIL> $GIT_COMMITTER_DATE
+data <<COMMIT
+commit 1
+COMMIT
+M 100644 inline hello.c
+data <<BLOB
+blob 1
+BLOB
+
+commit refs/heads/S
+mark :302
+committer $GIT_COMMITTER_NAME <$GIT_COMMITTER_EMAIL> $GIT_COMMITTER_DATE
+data <<COMMIT
+commit 2
+COMMIT
+from :301
+M 100644 inline hello.c
+data <<BLOB
+blob 2
+BLOB
+
+blob
+mark :403
+data <<BLOB
+blob 3
+BLOB
+
+blob
+mark :202
+data <<BLOB
+note 2
+BLOB
+INPUT_END
+
+test_expect_success 'S: initialize for S tests' '
+	git fast-import --export-marks=marks <input
+'
+
+#
+# filemodify, three datarefs
+#
+test_expect_success 'S: filemodify with garbage after mark must fail' '
+	test_must_fail git fast-import --import-marks=marks <<-EOF 2>err &&
+	commit refs/heads/S
+	committer $GIT_COMMITTER_NAME <$GIT_COMMITTER_EMAIL> $GIT_COMMITTER_DATE
+	data <<COMMIT
+	commit N
+	COMMIT
+	M 100644 :403x hello.c
+	EOF
+	cat err &&
+	test_i18ngrep "space after mark" err
+'
+
+# inline is misspelled; fast-import thinks it is some unknown dataref
+test_expect_success 'S: filemodify with garbage after inline must fail' '
+	test_must_fail git fast-import --import-marks=marks <<-EOF 2>err &&
+	commit refs/heads/S
+	committer $GIT_COMMITTER_NAME <$GIT_COMMITTER_EMAIL> $GIT_COMMITTER_DATE
+	data <<COMMIT
+	commit N
+	COMMIT
+	M 100644 inlineX hello.c
+	data <<BLOB
+	inline
+	BLOB
+	EOF
+	cat err &&
+	test_i18ngrep "nvalid dataref" err
+'
+
+test_expect_success 'S: filemodify with garbage after sha1 must fail' '
+	sha1=$(grep :403 marks | cut -d\  -f2) &&
+	test_must_fail git fast-import --import-marks=marks <<-EOF 2>err &&
+	commit refs/heads/S
+	committer $GIT_COMMITTER_NAME <$GIT_COMMITTER_EMAIL> $GIT_COMMITTER_DATE
+	data <<COMMIT
+	commit N
+	COMMIT
+	M 100644 ${sha1}x hello.c
+	EOF
+	cat err &&
+	test_i18ngrep "space after SHA1" err
+'
+
+#
+# notemodify, three ways to say dataref
+#
+test_expect_success 'S: notemodify with garabge after mark dataref must fail' '
+	test_must_fail git fast-import --import-marks=marks <<-EOF 2>err &&
+	commit refs/heads/S
+	committer $GIT_COMMITTER_NAME <$GIT_COMMITTER_EMAIL> $GIT_COMMITTER_DATE
+	data <<COMMIT
+	commit S note dataref markref
+	COMMIT
+	N :202x :302
+	EOF
+	cat err &&
+	test_i18ngrep "space after mark" err
+'
+
+test_expect_success 'S: notemodify with garbage after inline dataref must fail' '
+	test_must_fail git fast-import --import-marks=marks <<-EOF 2>err &&
+	commit refs/heads/S
+	committer $GIT_COMMITTER_NAME <$GIT_COMMITTER_EMAIL> $GIT_COMMITTER_DATE
+	data <<COMMIT
+	commit S note dataref inline
+	COMMIT
+	N inlineX :302
+	data <<BLOB
+	note blob
+	BLOB
+	EOF
+	cat err &&
+	test_i18ngrep "nvalid dataref" err
+'
+
+test_expect_success 'S: notemodify with garbage after sha1 dataref must fail' '
+	sha1=$(grep :202 marks | cut -d\  -f2) &&
+	test_must_fail git fast-import --import-marks=marks <<-EOF 2>err &&
+	commit refs/heads/S
+	committer $GIT_COMMITTER_NAME <$GIT_COMMITTER_EMAIL> $GIT_COMMITTER_DATE
+	data <<COMMIT
+	commit S note dataref sha1
+	COMMIT
+	N ${sha1}x :302
+	EOF
+	cat err &&
+	test_i18ngrep "space after SHA1" err
+'
+
+#
+# notemodify, mark in committish
+#
+test_expect_success 'S: notemodify with garbarge after mark committish must fail' '
+	test_must_fail git fast-import --import-marks=marks <<-EOF 2>err &&
+	commit refs/heads/Snotes
+	committer $GIT_COMMITTER_NAME <$GIT_COMMITTER_EMAIL> $GIT_COMMITTER_DATE
+	data <<COMMIT
+	commit S note committish
+	COMMIT
+	N :202 :302x
+	EOF
+	cat err &&
+	test_i18ngrep "after mark" err
+'
+
+#
+# from
+#
+test_expect_success 'S: from with garbage after mark must fail' '
+	# no &&
+	git fast-import --import-marks=marks --export-marks=marks <<-EOF 2>err
+	commit refs/heads/S2
+	mark :303
+	committer $GIT_COMMITTER_NAME <$GIT_COMMITTER_EMAIL> $GIT_COMMITTER_DATE
+	data <<COMMIT
+	commit 3
+	COMMIT
+	from :301x
+	M 100644 :403 hello.c
+	EOF
+
+	ret=$? &&
+	echo returned $ret &&
+	test $ret -ne 0 && # failed, but it created the commit
+
+	# go create the commit, need it for merge test
+	git fast-import --import-marks=marks --export-marks=marks <<-EOF &&
+	commit refs/heads/S2
+	mark :303
+	committer $GIT_COMMITTER_NAME <$GIT_COMMITTER_EMAIL> $GIT_COMMITTER_DATE
+	data <<COMMIT
+	commit 3
+	COMMIT
+	from :301
+	M 100644 :403 hello.c
+	EOF
+
+	# now evaluate the error
+	cat err &&
+	test_i18ngrep "after mark" err
+'
+
+
+#
+# merge
+#
+test_expect_success 'S: merge with garbage after mark must fail' '
+	test_must_fail git fast-import --import-marks=marks <<-EOF 2>err &&
+	commit refs/heads/S
+	mark :304
+	committer $GIT_COMMITTER_NAME <$GIT_COMMITTER_EMAIL> $GIT_COMMITTER_DATE
+	data <<COMMIT
+	merge 4
+	COMMIT
+	from :302
+	merge :303x
+	M 100644 :403 hello.c
+	EOF
+	cat err &&
+	test_i18ngrep "after mark" err
+'
+
+#
+# tag, from markref
+#
+test_expect_success 'S: tag with garbage after mark must fail' '
+	test_must_fail git fast-import --import-marks=marks <<-EOF 2>err &&
+	tag refs/tags/Stag
+	from :302x
+	tagger $GIT_COMMITTER_NAME <$GIT_COMMITTER_EMAIL> $GIT_COMMITTER_DATE
+	data <<TAG
+	tag S
+	TAG
+	EOF
+	cat err &&
+	test_i18ngrep "after mark" err
+'
+
+#
+# cat-blob markref
+#
+test_expect_success 'S: cat-blob with garbage after mark must fail' '
+	test_must_fail git fast-import --import-marks=marks <<-EOF 2>err &&
+	cat-blob :403x
+	EOF
+	cat err &&
+	test_i18ngrep "after mark" err
+'
+
+#
+# ls markref
+#
+test_expect_success 'S: ls with garbage after mark must fail' '
+	test_must_fail git fast-import --import-marks=marks <<-EOF 2>err &&
+	ls :302x hello.c
+	EOF
+	cat err &&
+	test_i18ngrep "space after mark" err
+'
+
+test_expect_success 'S: ls with garbage after sha1 must fail' '
+	sha1=$(grep :302 marks | cut -d\  -f2) &&
+	test_must_fail git fast-import --import-marks=marks <<-EOF 2>err &&
+	ls ${sha1}x hello.c
+	EOF
+	cat err &&
+	test_i18ngrep "space after tree-ish" err
+'
 
 test_done

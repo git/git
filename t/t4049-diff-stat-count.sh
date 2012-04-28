@@ -19,7 +19,7 @@ test_expect_success setup '
 	 2 files changed, 2 insertions(+)
 	EOF
 	git diff --stat --stat-count=2 >actual &&
-	test_cmp expect actual
+	test_i18ncmp expect actual
 '
 
 test_done

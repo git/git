@@ -13,7 +13,7 @@ SYNOPSIS
 	 [--3way] [--interactive] [--committer-date-is-author-date]
 	 [--ignore-date] [--ignore-space-change | --ignore-whitespace]
 	 [--whitespace=<option>] [-C<n>] [-p<n>] [--directory=<dir>]
-	 [--exclude=<path>] [--reject] [-q | --quiet]
+	 [--exclude=<path>] [--include=<path>] [--reject] [-q | --quiet]
 	 [--scissors | --no-scissors]
 	 [(<mbox> | <Maildir>)...]
 'git am' (--continue | --skip | --abort)
@@ -92,6 +92,7 @@ default.   You can use `--no-utf8` to override this.
 -p<n>::
 --directory=<dir>::
 --exclude=<path>::
+--include=<path>::
 --reject::
 	These flags are passed to the 'git apply' (see linkgit:git-apply[1])
 	program that applies

@@ -126,6 +126,11 @@ OPTIONS
 	relationship to upstream branch (if any). If given twice, print
 	the name of the upstream branch, as well.
 
+-q::
+--quiet::
+	Be more quiet when creating or deleting a branch, suppressing
+	non-error messages.
+
 --abbrev=<length>::
 	Alter the sha1's minimum display length in the output listing.
 	The default value is 7 and can be overridden by the `core.abbrev`

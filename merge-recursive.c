@@ -485,6 +485,7 @@ static struct string_list *get_renames(struct merge_options *o,
 	renames = xcalloc(1, sizeof(struct string_list));
 	diff_setup(&opts);
 	DIFF_OPT_SET(&opts, RECURSIVE);
+	DIFF_OPT_CLR(&opts, RENAME_EMPTY);
 	opts.detect_rename = DIFF_DETECT_RENAME;
 	opts.rename_limit = o->merge_rename_limit >= 0 ? o->merge_rename_limit :
 			    o->diff_rename_limit >= 0 ? o->diff_rename_limit :
@@ -1914,7 +1915,7 @@ int merge_recursive(struct merge_options *o,
 		/* if there is no common ancestor, use an empty tree */
 		struct tree *tree;
 
-		tree = lookup_tree((const unsigned char *)EMPTY_TREE_SHA1_BIN);
+		tree = lookup_tree(EMPTY_TREE_SHA1_BIN);
 		merged_common_ancestors = make_virtual_commit(tree, "ancestor");
 	}
 
@@ -2068,9 +2069,9 @@ int parse_merge_opt(struct merge_options *o, const char *s)
 	else if (!prefixcmp(s, "subtree="))
 		o->subtree_shift = s + strlen("subtree=");
 	else if (!strcmp(s, "patience"))
-		o->xdl_opts |= XDF_PATIENCE_DIFF;
+		o->xdl_opts = DIFF_WITH_ALG(o, PATIENCE_DIFF);
 	else if (!strcmp(s, "histogram"))
-		o->xdl_opts |= XDF_HISTOGRAM_DIFF;
+		o->xdl_opts = DIFF_WITH_ALG(o, HISTOGRAM_DIFF);
 	else if (!strcmp(s, "ignore-space-change"))
 		o->xdl_opts |= XDF_IGNORE_WHITESPACE_CHANGE;
 	else if (!strcmp(s, "ignore-all-space"))

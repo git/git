@@ -240,6 +240,7 @@ static int s_update_ref(const char *action,
 
 static int update_local_ref(struct ref *ref,
 			    const char *remote,
+			    const struct ref *remote_ref,
 			    struct strbuf *display)
 {
 	struct commit *current = NULL, *updated;
@@ -293,18 +294,26 @@ static int update_local_ref(struct ref *ref,
 		const char *msg;
 		const char *what;
 		int r;
-		if (!strncmp(ref->name, "refs/tags/", 10)) {
+		/*
+		 * Nicely describe the new ref we're fetching.
+		 * Base this on the remote's ref name, as it's
+		 * more likely to follow a standard layout.
+		 */
+		const char *name = remote_ref ? remote_ref->name : "";
+		if (!prefixcmp(name, "refs/tags/")) {
 			msg = "storing tag";
 			what = _("[new tag]");
-		}
-		else {
+		} else if (!prefixcmp(name, "refs/heads/")) {
 			msg = "storing head";
 			what = _("[new branch]");
-			if ((recurse_submodules != RECURSE_SUBMODULES_OFF) &&
-			    (recurse_submodules != RECURSE_SUBMODULES_ON))
-				check_for_new_submodule_commits(ref->new_sha1);
+		} else {
+			msg = "storing ref";
+			what = _("[new ref]");
 		}
 
+		if ((recurse_submodules != RECURSE_SUBMODULES_OFF) &&
+		    (recurse_submodules != RECURSE_SUBMODULES_ON))
+			check_for_new_submodule_commits(ref->new_sha1);
 		r = s_update_ref(msg, ref, 0);
 		strbuf_addf(display, "%c %-*s %-*s -> %s%s",
 			    r ? '!' : '*',
@@ -466,7 +475,7 @@ static int store_updated_refs(const char *raw_url, const char *remote_name,
 
 			strbuf_reset(&note);
 			if (ref) {
-				rc |= update_local_ref(ref, what, &note);
+				rc |= update_local_ref(ref, what, rm, &note);
 				free(ref);
 			} else
 				strbuf_addf(&note, "* %-*s %-*s -> FETCH_HEAD",

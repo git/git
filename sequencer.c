@@ -164,7 +164,7 @@ static void write_message(struct strbuf *msgbuf, const char *filename)
 
 static struct tree *empty_tree(void)
 {
-	return lookup_tree((const unsigned char *)EMPTY_TREE_SHA1_BIN);
+	return lookup_tree(EMPTY_TREE_SHA1_BIN);
 }
 
 static int error_dirty_index(struct replay_opts *opts)
@@ -234,7 +234,7 @@ static int do_recursive_merge(struct commit *base, struct commit *next,
 
 	if (!clean) {
 		int i;
-		strbuf_addstr(msgbuf, "\nConflicts:\n\n");
+		strbuf_addstr(msgbuf, "\nConflicts:\n");
 		for (i = 0; i < active_nr;) {
 			struct cache_entry *ce = active_cache[i++];
 			if (ce_stage(ce)) {

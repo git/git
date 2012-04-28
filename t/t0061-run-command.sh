@@ -34,4 +34,17 @@ test_expect_success POSIXPERM 'run_command reports EACCES' '
 	grep "fatal: cannot exec.*hello.sh" err
 '
 
+test_expect_success POSIXPERM 'unreadable directory in PATH' '
+	mkdir local-command &&
+	test_when_finished "chmod u+rwx local-command && rm -fr local-command" &&
+	git config alias.nitfol "!echo frotz" &&
+	chmod a-rx local-command &&
+	(
+		PATH=./local-command:$PATH &&
+		git nitfol >actual
+	) &&
+	echo frotz >expect &&
+	test_cmp expect actual
+'
+
 test_done

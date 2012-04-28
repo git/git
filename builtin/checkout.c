@@ -543,6 +543,7 @@ static void update_refs_for_switch(struct checkout_opts *opts,
 				      opts->new_branch_force ? 1 : 0,
 				      opts->new_branch_log,
 				      opts->new_branch_force ? 1 : 0,
+				      opts->quiet,
 				      opts->track);
 		new->name = opts->new_branch;
 		setup_branch_path(new);

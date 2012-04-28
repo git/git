@@ -91,7 +91,11 @@ EOF
 test_expect_success 'diffstat does not run textconv' '
 	echo file diff=fail >.gitattributes &&
 	git diff --stat HEAD^ HEAD >actual &&
-	test_cmp expect.stat actual
+	test_i18ncmp expect.stat actual &&
+
+	head -n1 <expect.stat >expect.line1 &&
+	head -n1 <actual >actual.line1 &&
+	test_cmp expect.line1 actual.line1
 '
 # restore working setup
 echo file diff=foo >.gitattributes

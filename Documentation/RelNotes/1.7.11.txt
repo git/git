@@ -1,0 +1,150 @@
+Git v1.7.11 Release Notes
+=========================
+
+Updates since v1.7.10
+---------------------
+
+UI, Workflows & Features
+
+ * A third-party tool "git subtree" is distributed in contrib/
+
+ * Error messages given when @{u} is used for a branch without its
+   upstream configured have been clatified.
+
+ * Even with "-q"uiet option, "checkout" used to report setting up
+   tracking.  Also "branch" learned the "-q"uiet option to squelch
+   informational message.
+
+ * The smart-http backend used to always override GIT_COMMITTER_*
+   variables with REMOTE_USER and REMOTE_ADDR, but these variables are
+   now preserved when set.
+
+ * "git am" learned the "--include" option, which is an opposite of
+   existing the "--exclude" option.
+
+ * When "git am -3" needs to fall back to an application to a
+   synthesized preimage followed by a 3-way merge, the paths that
+   needed such treatment are now reported to the end user, so that the
+   result in them can be eyeballed with extra care.
+
+ * The "fmt-merge-msg" command learns to list the primary contributors
+   involved in the side topic you are merging.
+
+ * The cases "git push" fails due to non-ff can be broken into three
+   categories; each case is given a separate advise message.
+
+ * "git push --recurse-submodules" learned to optionally look into the
+   histories of submodules bound to the superproject and push them
+   out.
+
+ * A 'snapshot' request to "gitweb" honors If-Modified-Since: header,
+   based on the commit date.
+
+ * "gitweb" learned to highlight the patch it outputs even more.
+
+Foreign Interface
+
+ * "git svn" used to die with unwanted SIGPIPE when talking with HTTP
+   server that uses keep-alive.
+
+ * "git p4" has been moved out of contrib/ area.
+
+Performance
+
+ * "git apply" had some memory leaks plugged.
+
+ * Setting up a revision traversal with many starting points was
+   inefficient as these were placed in a date-order priority queue
+   one-by-one.  Now they are collected in the queue unordered first,
+   and sorted immediately before getting used.
+
+Internal Implementation (please report possible regressions)
+
+ * "git rev-parse --show-prefix" used to emit nothing when run at the
+   top-level of the working tree, but now it gives a blank line.
+
+ * Minor memory leak during unpack_trees (hence "merge" and "checkout"
+   to check out another branch) has been plugged.
+
+ * More lower-level commands learned to use the streaming API to read
+   from the object store without keeping everything in core.
+
+ * Because "sh" on the user's PATH may be utterly broken on some
+   systems, run-command API now uses SHELL_PATH, not /bin/sh, when
+   spawning an external command (not applicable to Windows port).
+
+ * The API to iterate over refs/ hierarchy has been tweaked to allow
+   walking only a subset of it more efficiently.
+
+Also contains minor documentation updates and code clean-ups.
+
+
+Fixes since v1.7.10
+-------------------
+
+Unless otherwise noted, all the fixes since v1.7.10 in the maintenance
+releases are contained in this release (see release notes to them for
+details).
+
+ * Octopus merge strategy did not reduce heads that are recorded in the
+   final commit correctly.
+   (merge 5802f81 jc/merge-reduce-parents-early later to maint).
+
+ * In the older days, the header "Conflicts:" in "cherry-pick" and
+   "merge" was separated by a blank line from the list of paths that
+   follow for readability, but when "merge" was rewritten in C, we lost
+   it by mistake. Remove the newline from "cherry-pick" to make them
+   match again.
+   (merge 5112068 rt/cherry-revert-conflict-summary later to maint).
+
+ * The filesystem boundary was not correctly reported when .git
+   directory discovery stopped at a mount point.
+   (merge 2565b43 cb/maint-report-mount-point-correctly-in-setup later to maint).
+
+ * The command line parser choked "git cherry-pick $name" when $name
+   can be both revision name and a pathname, even though $name can
+   never be a path in the context of the command.
+   (merge 6d5b93f cb/cherry-pick-rev-path-confusion later to maint).
+
+ * HTTP transport that requires authentication did not work correctly
+   when multiple connections are used simultaneously.
+   (merge 6f4c347 cb/http-multi-curl-auth later to maint).
+
+ * The i18n of error message "git stash save" was not properly done.
+   (merge ed3c400 rl/maint-stash-i18n-save-error later to maint).
+
+ * The report from "git fetch" said "new branch" even for a non branch
+   ref.
+   (merge 0997ada mb/fetch-call-a-non-branch-a-ref later to maint).
+
+ * The "diff --no-index" codepath used limited-length buffers, risking
+   pathnames getting truncated.  Update it to use the strbuf API.
+   (merge 875b91b jm/maint-strncpy-diff-no-index later to maint).
+
+ * The parser in "fast-import" did not diagnose ":9" style references
+   that is not followed by required SP/LF as an error.
+   (merge 06454cb pw/fast-import-dataref-parsing later to maint).
+
+ * When "git fetch" encounters repositories with too many references,
+   the command line of "fetch-pack" that is run by a helper
+   e.g. remote-curl, may fail to hold all of them. Now such an
+   internal invocation can feed the references through the standard
+   input of "fetch-pack".
+   (merge 7103d25 it/fetch-pack-many-refs later to maint).
+
+ * "git fetch" that recurses into submodules on demand did not check
+   if it needs to go into submodules when non branches (most notably,
+   tags) are fetched.
+   (merge a6801ad jl/maint-submodule-recurse-fetch later to maint).
+
+ * "git blame" started missing quite a few changes from the origin
+   since we stopped using the diff minimalization by default in v1.7.2
+   era.
+   (merge 059a500 jc/maint-blame-minimal later to maint).
+
+ * "log -p --graph" used with "--stat" had a few formatting error.
+   (merge e2c5966 lp/maint-diff-three-dash-with-graph later to maint).
+
+ * Giving "--continue" to a conflicted "rebase -i" session skipped a
+   commit that only results in changes to submodules.
+   (merge a6754cd jk/rebase-i-submodule-conflict-only later to maint).

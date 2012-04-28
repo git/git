@@ -432,7 +432,7 @@ test_expect_success 'stash branch - stashes on stack, stash-like argument' '
 	test $(git ls-files --modified | wc -l) -eq 1
 '
 
-test_expect_success 'stash show - stashes on stack, stash-like argument' '
+test_expect_success 'stash show format defaults to --stat' '
 	git stash clear &&
 	test_when_finished "git reset --hard HEAD" &&
 	git reset --hard &&
@@ -447,6 +447,21 @@ test_expect_success 'stash show - stashes on stack, stash-like argument' '
 	 1 file changed, 1 insertion(+)
 	EOF
 	git stash show ${STASH_ID} >actual &&
+	test_i18ncmp expected actual
+'
+
+test_expect_success 'stash show - stashes on stack, stash-like argument' '
+	git stash clear &&
+	test_when_finished "git reset --hard HEAD" &&
+	git reset --hard &&
+	echo foo >> file &&
+	git stash &&
+	test_when_finished "git stash drop" &&
+	echo bar >> file &&
+	STASH_ID=$(git stash create) &&
+	git reset --hard &&
+	echo "1	0	file" >expected &&
+	git stash show --numstat ${STASH_ID} >actual &&
 	test_cmp expected actual
 '
 
@@ -480,11 +495,8 @@ test_expect_success 'stash show - no stashes on stack, stash-like argument' '
 	echo foo >> file &&
 	STASH_ID=$(git stash create) &&
 	git reset --hard &&
-	cat >expected <<-EOF &&
-	 file |    1 +
-	 1 file changed, 1 insertion(+)
-	EOF
-	git stash show ${STASH_ID} >actual &&
+	echo "1	0	file" >expected &&
+	git stash show --numstat ${STASH_ID} >actual &&
 	test_cmp expected actual
 '
 

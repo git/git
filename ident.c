@@ -220,6 +220,74 @@ static int copy(char *buf, size_t size, int offset, const char *src)
 	return offset;
 }
 
+/*
+ * Reverse of fmt_ident(); given an ident line, split the fields
+ * to allow the caller to parse it.
+ * Signal a success by returning 0, but date/tz fields of the result
+ * can still be NULL if the input line only has the name/email part
+ * (e.g. reading from a reflog entry).
+ */
+int split_ident_line(struct ident_split *split, const char *line, int len)
+{
+	const char *cp;
+	size_t span;
+	int status = -1;
+
+	memset(split, 0, sizeof(*split));
+
+	split->name_begin = line;
+	for (cp = line; *cp && cp < line + len; cp++)
+		if (*cp == '<') {
+			split->mail_begin = cp + 1;
+			break;
+		}
+	if (!split->mail_begin)
+		return status;
+
+	for (cp = split->mail_begin - 2; line < cp; cp--)
+		if (!isspace(*cp)) {
+			split->name_end = cp + 1;
+			break;
+		}
+	if (!split->name_end)
+		return status;
+
+	for (cp = split->mail_begin; cp < line + len; cp++)
+		if (*cp == '>') {
+			split->mail_end = cp;
+			break;
+		}
+	if (!split->mail_end)
+		return status;
+
+	for (cp = split->mail_end + 1; cp < line + len && isspace(*cp); cp++)
+		;
+	if (line + len <= cp)
+		goto person_only;
+	split->date_begin = cp;
+	span = strspn(cp, "0123456789");
+	if (!span)
+		goto person_only;
+	split->date_end = split->date_begin + span;
+	for (cp = split->date_end; cp < line + len && isspace(*cp); cp++)
+		;
+	if (line + len <= cp || (*cp != '+' && *cp != '-'))
+		goto person_only;
+	split->tz_begin = cp;
+	span = strspn(cp + 1, "0123456789");
+	if (!span)
+		goto person_only;
+	split->tz_end = split->tz_begin + 1 + span;
+	return 0;
+
+person_only:
+	split->date_begin = NULL;
+	split->date_end = NULL;
+	split->tz_begin = NULL;
+	split->tz_end = NULL;
+	return 0;
+}
+
 static const char *env_hint =
 "\n"
 "*** Please tell me who you are.\n"

@@ -1,6 +1,6 @@
 #!/bin/sh
 
-test_description='git-p4 tests'
+test_description='git p4 tests'
 
 . ./lib-git-p4.sh
 
@@ -20,8 +20,8 @@ test_expect_success 'add p4 files' '
 	)
 '
 
-test_expect_success 'basic git-p4 clone' '
-	"$GITP4" clone --dest="$git" //depot &&
+test_expect_success 'basic git p4 clone' '
+	git p4 clone --dest="$git" //depot &&
 	test_when_finished cleanup_git &&
 	(
 		cd "$git" &&
@@ -30,8 +30,8 @@ test_expect_success 'basic git-p4 clone' '
 	)
 '
 
-test_expect_success 'git-p4 clone @all' '
-	"$GITP4" clone --dest="$git" //depot@all &&
+test_expect_success 'git p4 clone @all' '
+	git p4 clone --dest="$git" //depot@all &&
 	test_when_finished cleanup_git &&
 	(
 		cd "$git" &&
@@ -40,12 +40,12 @@ test_expect_success 'git-p4 clone @all' '
 	)
 '
 
-test_expect_success 'git-p4 sync uninitialized repo' '
+test_expect_success 'git p4 sync uninitialized repo' '
 	test_create_repo "$git" &&
 	test_when_finished cleanup_git &&
 	(
 		cd "$git" &&
-		test_must_fail "$GITP4" sync
+		test_must_fail git p4 sync
 	)
 '
 
@@ -53,13 +53,13 @@ test_expect_success 'git-p4 sync uninitialized repo' '
 # Create a git repo by hand.  Add a commit so that HEAD is valid.
 # Test imports a new p4 repository into a new git branch.
 #
-test_expect_success 'git-p4 sync new branch' '
+test_expect_success 'git p4 sync new branch' '
 	test_create_repo "$git" &&
 	test_when_finished cleanup_git &&
 	(
 		cd "$git" &&
 		test_commit head &&
-		"$GITP4" sync --branch=refs/remotes/p4/depot //depot@all &&
+		git p4 sync --branch=refs/remotes/p4/depot //depot@all &&
 		git log --oneline p4/depot >lines &&
 		test_line_count = 2 lines
 	)
@@ -76,7 +76,7 @@ test_expect_success 'clone two dirs' '
 		p4 add sub2/f2 &&
 		p4 submit -d "sub2/f2"
 	) &&
-	"$GITP4" clone --dest="$git" //depot/sub1 //depot/sub2 &&
+	git p4 clone --dest="$git" //depot/sub1 //depot/sub2 &&
 	test_when_finished cleanup_git &&
 	(
 		cd "$git" &&
@@ -94,7 +94,7 @@ test_expect_success 'clone two dirs, @all' '
 		p4 add sub1/f3 &&
 		p4 submit -d "sub1/f3"
 	) &&
-	"$GITP4" clone --dest="$git" //depot/sub1@all //depot/sub2@all &&
+	git p4 clone --dest="$git" //depot/sub1@all //depot/sub2@all &&
 	test_when_finished cleanup_git &&
 	(
 		cd "$git" &&
@@ -112,7 +112,7 @@ test_expect_success 'clone two dirs, @all, conflicting files' '
 		p4 add sub2/f3 &&
 		p4 submit -d "sub2/f3"
 	) &&
-	"$GITP4" clone --dest="$git" //depot/sub1@all //depot/sub2@all &&
+	git p4 clone --dest="$git" //depot/sub1@all //depot/sub2@all &&
 	test_when_finished cleanup_git &&
 	(
 		cd "$git" &&
@@ -134,7 +134,7 @@ test_expect_success 'exit when p4 fails to produce marshaled output' '
 	exit 1
 	EOF
 	chmod 755 "$badp4dir"/p4 &&
-	PATH="$badp4dir:$PATH" "$GITP4" clone --dest="$git" //depot >errs 2>&1 ; retval=$? &&
+	PATH="$badp4dir:$PATH" git p4 clone --dest="$git" //depot >errs 2>&1 ; retval=$? &&
 	test $retval -eq 1 &&
 	test_must_fail grep -q Traceback errs
 '
@@ -151,8 +151,8 @@ test_expect_success 'add p4 files with wildcards in the names' '
 	)
 '
 
-test_expect_success 'wildcard files git-p4 clone' '
-	"$GITP4" clone --dest="$git" //depot &&
+test_expect_success 'wildcard files git p4 clone' '
+	git p4 clone --dest="$git" //depot &&
 	test_when_finished cleanup_git &&
 	(
 		cd "$git" &&
@@ -164,7 +164,7 @@ test_expect_success 'wildcard files git-p4 clone' '
 '
 
 test_expect_success 'clone bare' '
-	"$GITP4" clone --dest="$git" --bare //depot &&
+	git p4 clone --dest="$git" --bare //depot &&
 	test_when_finished cleanup_git &&
 	(
 		cd "$git" &&
@@ -209,7 +209,7 @@ test_expect_success 'preserve users' '
 	p4_add_user alice Alice &&
 	p4_add_user bob Bob &&
 	p4_grant_admin alice &&
-	"$GITP4" clone --dest="$git" //depot &&
+	git p4 clone --dest="$git" //depot &&
 	test_when_finished cleanup_git &&
 	(
 		cd "$git" &&
@@ -218,7 +218,7 @@ test_expect_success 'preserve users' '
 		git commit --author "Alice <alice@localhost>" -m "a change by alice" file1 &&
 		git commit --author "Bob <bob@localhost>" -m "a change by bob" file2 &&
 		git config git-p4.skipSubmitEditCheck true &&
-		P4EDITOR=touch P4USER=alice P4PASSWD=secret "$GITP4" commit --preserve-user &&
+		P4EDITOR=touch P4USER=alice P4PASSWD=secret git p4 commit --preserve-user &&
 		p4_check_commit_author file1 alice &&
 		p4_check_commit_author file2 bob
 	)
@@ -227,7 +227,7 @@ test_expect_success 'preserve users' '
 # Test username support, submitting as bob, who lacks admin rights. Should
 # not submit change to p4 (git diff should show deltas).
 test_expect_success 'refuse to preserve users without perms' '
-	"$GITP4" clone --dest="$git" //depot &&
+	git p4 clone --dest="$git" //depot &&
 	test_when_finished cleanup_git &&
 	(
 		cd "$git" &&
@@ -236,14 +236,14 @@ test_expect_success 'refuse to preserve users without perms' '
 		git commit --author "Alice <alice@localhost>" -m "perms: a change by alice" file1 &&
 		P4EDITOR=touch P4USER=bob P4PASSWD=secret &&
 		export P4EDITOR P4USER P4PASSWD &&
-		test_must_fail "$GITP4" commit --preserve-user &&
+		test_must_fail git p4 commit --preserve-user &&
 		! git diff --exit-code HEAD..p4/master
 	)
 '
 
 # What happens with unknown author? Without allowMissingP4Users it should fail.
 test_expect_success 'preserve user where author is unknown to p4' '
-	"$GITP4" clone --dest="$git" //depot &&
+	git p4 clone --dest="$git" //depot &&
 	test_when_finished cleanup_git &&
 	(
 		cd "$git" &&
@@ -254,24 +254,24 @@ test_expect_success 'preserve user where author is unknown to p4' '
 		git commit --author "Charlie <charlie@localhost>" -m "preserve: a change by charlie" file1 &&
 		P4EDITOR=touch P4USER=alice P4PASSWD=secret &&
 		export P4EDITOR P4USER P4PASSWD &&
-		test_must_fail "$GITP4" commit --preserve-user &&
+		test_must_fail git p4 commit --preserve-user &&
 		! git diff --exit-code HEAD..p4/master &&
 
 		echo "$0: repeat with allowMissingP4Users enabled" &&
 		git config git-p4.allowMissingP4Users true &&
 		git config git-p4.preserveUser true &&
-		"$GITP4" commit &&
+		git p4 commit &&
 		git diff --exit-code HEAD..p4/master &&
 		p4_check_commit_author file1 alice
 	)
 '
 
-# If we're *not* using --preserve-user, git-p4 should warn if we're submitting
+# If we're *not* using --preserve-user, git p4 should warn if we're submitting
 # changes that are not all ours.
 # Test: user in p4 and user unknown to p4.
 # Test: warning disabled and user is the same.
 test_expect_success 'not preserving user with mixed authorship' '
-	"$GITP4" clone --dest="$git" //depot &&
+	git p4 clone --dest="$git" //depot &&
 	test_when_finished cleanup_git &&
 	(
 		cd "$git" &&
@@ -281,20 +281,20 @@ test_expect_success 'not preserving user with mixed authorship' '
 		make_change_by_user usernamefile3 Derek derek@localhost &&
 		P4EDITOR=cat P4USER=alice P4PASSWD=secret &&
 		export P4EDITOR P4USER P4PASSWD &&
-		"$GITP4" commit |\
+		git p4 commit |\
 		grep "git author derek@localhost does not match" &&
 
 		make_change_by_user usernamefile3 Charlie charlie@localhost &&
-		"$GITP4" commit |\
+		git p4 commit |\
 		grep "git author charlie@localhost does not match" &&
 
 		make_change_by_user usernamefile3 alice alice@localhost &&
-		"$GITP4" commit |\
+		git p4 commit |\
 		test_must_fail grep "git author.*does not match" &&
 
 		git config git-p4.skipUserNameCheck true &&
 		make_change_by_user usernamefile3 Charlie charlie@localhost &&
-		"$GITP4" commit |\
+		git p4 commit |\
 		test_must_fail grep "git author.*does not match" &&
 
 		p4_check_commit_author usernamefile3 alice
@@ -313,7 +313,7 @@ test_expect_success 'initial import time from top change time' '
 	p4change=$(p4 -G changes -m 1 //depot/... | marshal_dump change) &&
 	p4time=$(p4 -G changes -m 1 //depot/... | marshal_dump time) &&
 	sleep 3 &&
-	"$GITP4" clone --dest="$git" //depot &&
+	git p4 clone --dest="$git" //depot &&
 	test_when_finished cleanup_git &&
 	(
 		cd "$git" &&
@@ -331,7 +331,7 @@ test_expect_success 'initial import time from top change time' '
 # Repeat, this time with a smaller threshold and confirm that the rename is
 # detected in P4.
 test_expect_success 'detect renames' '
-	"$GITP4" clone --dest="$git" //depot@all &&
+	git p4 clone --dest="$git" //depot@all &&
 	test_when_finished cleanup_git &&
 	(
 		cd "$git" &&
@@ -340,7 +340,7 @@ test_expect_success 'detect renames' '
 		git mv file1 file4 &&
 		git commit -a -m "Rename file1 to file4" &&
 		git diff-tree -r -M HEAD &&
-		"$GITP4" submit &&
+		git p4 submit &&
 		p4 filelog //depot/file4 &&
 		p4 filelog //depot/file4 | test_must_fail grep -q "branch from" &&
 
@@ -348,7 +348,7 @@ test_expect_success 'detect renames' '
 		git commit -a -m "Rename file4 to file5" &&
 		git diff-tree -r -M HEAD &&
 		git config git-p4.detectRenames true &&
-		"$GITP4" submit &&
+		git p4 submit &&
 		p4 filelog //depot/file5 &&
 		p4 filelog //depot/file5 | grep -q "branch from //depot/file4" &&
 
@@ -360,7 +360,7 @@ test_expect_success 'detect renames' '
 		level=$(git diff-tree -r -M HEAD | sed 1d | cut -f1 | cut -d" " -f5 | sed "s/R0*//") &&
 		test -n "$level" && test "$level" -gt 0 && test "$level" -lt 98 &&
 		git config git-p4.detectRenames $(($level + 2)) &&
-		"$GITP4" submit &&
+		git p4 submit &&
 		p4 filelog //depot/file6 &&
 		p4 filelog //depot/file6 | test_must_fail grep -q "branch from" &&
 
@@ -372,7 +372,7 @@ test_expect_success 'detect renames' '
 		level=$(git diff-tree -r -M HEAD | sed 1d | cut -f1 | cut -d" " -f5 | sed "s/R0*//") &&
 		test -n "$level" && test "$level" -gt 2 && test "$level" -lt 100 &&
 		git config git-p4.detectRenames $(($level - 2)) &&
-		"$GITP4" submit &&
+		git p4 submit &&
 		p4 filelog //depot/file7 &&
 		p4 filelog //depot/file7 | grep -q "branch from //depot/file6"
 	)
@@ -390,7 +390,7 @@ test_expect_success 'detect renames' '
 # Modify and copy a file, configure a smaller threshold in detectCopies and
 # confirm that copy is detected in P4.
 test_expect_success 'detect copies' '
-	"$GITP4" clone --dest="$git" //depot@all &&
+	git p4 clone --dest="$git" //depot@all &&
 	test_when_finished cleanup_git &&
 	(
 		cd "$git" &&
@@ -400,7 +400,7 @@ test_expect_success 'detect copies' '
 		git add file8 &&
 		git commit -a -m "Copy file2 to file8" &&
 		git diff-tree -r -C HEAD &&
-		"$GITP4" submit &&
+		git p4 submit &&
 		p4 filelog //depot/file8 &&
 		p4 filelog //depot/file8 | test_must_fail grep -q "branch from" &&
 
@@ -409,7 +409,7 @@ test_expect_success 'detect copies' '
 		git commit -a -m "Copy file2 to file9" &&
 		git diff-tree -r -C HEAD &&
 		git config git-p4.detectCopies true &&
-		"$GITP4" submit &&
+		git p4 submit &&
 		p4 filelog //depot/file9 &&
 		p4 filelog //depot/file9 | test_must_fail grep -q "branch from" &&
 
@@ -418,7 +418,7 @@ test_expect_success 'detect copies' '
 		git add file2 file10 &&
 		git commit -a -m "Modify and copy file2 to file10" &&
 		git diff-tree -r -C HEAD &&
-		"$GITP4" submit &&
+		git p4 submit &&
 		p4 filelog //depot/file10 &&
 		p4 filelog //depot/file10 | grep -q "branch from //depot/file" &&
 
@@ -429,7 +429,7 @@ test_expect_success 'detect copies' '
 		src=$(git diff-tree -r -C --find-copies-harder HEAD | sed 1d | cut -f2) &&
 		test "$src" = file10 &&
 		git config git-p4.detectCopiesHarder true &&
-		"$GITP4" submit &&
+		git p4 submit &&
 		p4 filelog //depot/file11 &&
 		p4 filelog //depot/file11 | grep -q "branch from //depot/file" &&
 
@@ -443,7 +443,7 @@ test_expect_success 'detect copies' '
 		src=$(git diff-tree -r -C --find-copies-harder HEAD | sed 1d | cut -f2) &&
 		test "$src" = file10 &&
 		git config git-p4.detectCopies $(($level + 2)) &&
-		"$GITP4" submit &&
+		git p4 submit &&
 		p4 filelog //depot/file12 &&
 		p4 filelog //depot/file12 | test_must_fail grep -q "branch from" &&
 
@@ -457,7 +457,7 @@ test_expect_success 'detect copies' '
 		src=$(git diff-tree -r -C --find-copies-harder HEAD | sed 1d | cut -f2) &&
 		test "$src" = file10 &&
 		git config git-p4.detectCopies $(($level - 2)) &&
-		"$GITP4" submit &&
+		git p4 submit &&
 		p4 filelog //depot/file13 &&
 		p4 filelog //depot/file13 | grep -q "branch from //depot/file"
 	)

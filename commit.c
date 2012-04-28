@@ -7,6 +7,7 @@
 #include "revision.h"
 #include "notes.h"
 #include "gpg-interface.h"
+#include "mergesort.h"
 
 int save_commit_buffer = 1;
 
@@ -360,6 +361,21 @@ struct commit_list *commit_list_insert(struct commit *item, struct commit_list *
 	return new_list;
 }
 
+void commit_list_reverse(struct commit_list **list_p)
+{
+	struct commit_list *prev = NULL, *curr = *list_p, *next;
+
+	if (!list_p)
+		return;
+	while (curr) {
+		next = curr->next;
+		curr->next = prev;
+		prev = curr;
+		curr = next;
+	}
+	*list_p = prev;
+}
+
 unsigned commit_list_count(const struct commit_list *l)
 {
 	unsigned c = 0;
@@ -390,15 +406,31 @@ struct commit_list * commit_list_insert_by_date(struct commit *item, struct comm
 	return commit_list_insert(item, pp);
 }
 
+static int commit_list_compare_by_date(const void *a, const void *b)
+{
+	unsigned long a_date = ((const struct commit_list *)a)->item->date;
+	unsigned long b_date = ((const struct commit_list *)b)->item->date;
+	if (a_date < b_date)
+		return 1;
+	if (a_date > b_date)
+		return -1;
+	return 0;
+}
+
+static void *commit_list_get_next(const void *a)
+{
+	return ((const struct commit_list *)a)->next;
+}
+
+static void commit_list_set_next(void *a, void *next)
+{
+	((struct commit_list *)a)->next = next;
+}
 
 void commit_list_sort_by_date(struct commit_list **list)
 {
-	struct commit_list *ret = NULL;
-	while (*list) {
-		commit_list_insert_by_date((*list)->item, &ret);
-		*list = (*list)->next;
-	}
-	*list = ret;
+	*list = llist_mergesort(*list, commit_list_get_next, commit_list_set_next,
+				commit_list_compare_by_date);
 }
 
 struct commit *pop_most_recent_commit(struct commit_list **list,

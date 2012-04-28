@@ -128,7 +128,12 @@ do
 		} >"$actual" &&
 		if test -f "$expect"
 		then
-			test_cmp "$expect" "$actual" &&
+			case $cmd in
+			*format-patch* | *-stat*)
+				test_i18ncmp "$expect" "$actual";;
+			*)
+				test_cmp "$expect" "$actual";;
+			esac &&
 			rm -f "$actual"
 		else
 			# this is to help developing new tests.

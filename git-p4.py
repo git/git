@@ -1129,12 +1129,12 @@ class P4Submit(Command, P4UserMap):
                     print "The following files should be scheduled for deletion with p4 delete:"
                     print " ".join(filesToDelete)
                 die("Please resolve and submit the conflict manually and "
-                    + "continue afterwards with git-p4 submit --continue")
+                    + "continue afterwards with git p4 submit --continue")
             elif response == "w":
                 system(diffcmd + " > patch.txt")
                 print "Patch saved to patch.txt in %s !" % self.clientPath
                 die("Please resolve and submit the conflict manually and "
-                    "continue afterwards with git-p4 submit --continue")
+                    "continue afterwards with git p4 submit --continue")
 
         system(applyPatchCmd)
 
@@ -1178,8 +1178,8 @@ class P4Submit(Command, P4UserMap):
 
             if self.checkAuthorship and not self.p4UserIsMe(p4User):
                 submitTemplate += "######## git author %s does not match your p4 account.\n" % gitEmail
-                submitTemplate += "######## Use git-p4 option --preserve-user to modify authorship\n"
-                submitTemplate += "######## Use git-p4 config git-p4.skipUserNameCheck hides this message.\n"
+                submitTemplate += "######## Use option --preserve-user to modify authorship.\n"
+                submitTemplate += "######## Variable git-p4.skipUserNameCheck hides this message.\n"
 
             separatorLine = "######## everything below this line is just the diff #######\n"
 
@@ -2254,7 +2254,7 @@ class P4Sync(Command, P4UserMap):
 
         details["change"] = newestRevision
 
-        # Use time from top-most change so that all git-p4 clones of
+        # Use time from top-most change so that all git p4 clones of
         # the same p4 repo have the same commit SHA1s.
         res = p4CmdList("describe -s %d" % newestRevision)
         newestTime = None
@@ -2474,8 +2474,8 @@ class P4Sync(Command, P4UserMap):
 
                 changes.sort()
             else:
-                # catch "git-p4 sync" with no new branches, in a repo that
-                # does not have any existing git-p4 branches
+                # catch "git p4 sync" with no new branches, in a repo that
+                # does not have any existing p4 branches
                 if len(args) == 0 and not self.p4BranchesInGit:
                     die("No remote p4 branches.  Perhaps you never did \"git p4 clone\" in here.");
                 if self.verbose:
