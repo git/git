@@ -708,6 +708,19 @@ static inline void hashclr(unsigned char *hash)
 #define EMPTY_TREE_SHA1_BIN \
 	 ((const unsigned char *) EMPTY_TREE_SHA1_BIN_LITERAL)
 
+#define EMPTY_BLOB_SHA1_HEX \
+	"e69de29bb2d1d6434b8b29ae775ad8c2e48c5391"
+#define EMPTY_BLOB_SHA1_BIN_LITERAL \
+	"\xe6\x9d\xe2\x9b\xb2\xd1\xd6\x43\x4b\x8b" \
+	"\x29\xae\x77\x5a\xd8\xc2\xe4\x8c\x53\x91"
+#define EMPTY_BLOB_SHA1_BIN \
+	((const unsigned char *) EMPTY_BLOB_SHA1_BIN_LITERAL)
+
+static inline int is_empty_blob_sha1(const unsigned char *sha1)
+{
+	return !hashcmp(sha1, EMPTY_BLOB_SHA1_BIN);
+}
+
 int git_mkstemp(char *path, size_t n, const char *template);
 
 int git_mkstemps(char *path, size_t n, const char *template, int suffix_len);
@@ -927,6 +940,22 @@ extern const char *fmt_ident(const char *name, const char *email, const char *da
 extern const char *fmt_name(const char *name, const char *email);
 extern const char *git_editor(void);
 extern const char *git_pager(int stdout_is_tty);
+
+struct ident_split {
+	const char *name_begin;
+	const char *name_end;
+	const char *mail_begin;
+	const char *mail_end;
+	const char *date_begin;
+	const char *date_end;
+	const char *tz_begin;
+	const char *tz_end;
+};
+/*
+ * Signals an success with 0, but time part of the result may be NULL
+ * if the input lacks timestamp and zone
+ */
+extern int split_ident_line(struct ident_split *, const char *, int);
 
 struct checkout {
 	const char *base_dir;
@@ -1275,5 +1304,7 @@ extern struct startup_info *startup_info;
 
 /* builtin/merge.c */
 int checkout_fast_forward(const unsigned char *from, const unsigned char *to);
+
+int sane_execvp(const char *file, char *const argv[]);
 
 #endif /* CACHE_H */

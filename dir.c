@@ -1172,22 +1172,32 @@ int is_empty_dir(const char *path)
 	return ret;
 }
 
-int remove_dir_recursively(struct strbuf *path, int flag)
+static int remove_dir_recurse(struct strbuf *path, int flag, int *kept_up)
 {
 	DIR *dir;
 	struct dirent *e;
-	int ret = 0, original_len = path->len, len;
+	int ret = 0, original_len = path->len, len, kept_down = 0;
 	int only_empty = (flag & REMOVE_DIR_EMPTY_ONLY);
+	int keep_toplevel = (flag & REMOVE_DIR_KEEP_TOPLEVEL);
 	unsigned char submodule_head[20];
 
 	if ((flag & REMOVE_DIR_KEEP_NESTED_GIT) &&
-	    !resolve_gitlink_ref(path->buf, "HEAD", submodule_head))
+	    !resolve_gitlink_ref(path->buf, "HEAD", submodule_head)) {
 		/* Do not descend and nuke a nested git work tree. */
+		if (kept_up)
+			*kept_up = 1;
 		return 0;
+	}
 
+	flag &= ~REMOVE_DIR_KEEP_TOPLEVEL;
 	dir = opendir(path->buf);
-	if (!dir)
-		return rmdir(path->buf);
+	if (!dir) {
+		/* an empty dir could be removed even if it is unreadble */
+		if (!keep_toplevel)
+			return rmdir(path->buf);
+		else
+			return -1;
+	}
 	if (path->buf[original_len - 1] != '/')
 		strbuf_addch(path, '/');
 
@@ -1202,7 +1212,7 @@ int remove_dir_recursively(struct strbuf *path, int flag)
 		if (lstat(path->buf, &st))
 			; /* fall thru */
 		else if (S_ISDIR(st.st_mode)) {
-			if (!remove_dir_recursively(path, only_empty))
+			if (!remove_dir_recurse(path, flag, &kept_down))
 				continue; /* happy */
 		} else if (!only_empty && !unlink(path->buf))
 			continue; /* happy, too */
@@ -1214,9 +1224,20 @@ int remove_dir_recursively(struct strbuf *path, int flag)
 	closedir(dir);
 
 	strbuf_setlen(path, original_len);
-	if (!ret)
+	if (!ret && !keep_toplevel && !kept_down)
 		ret = rmdir(path->buf);
+	else if (kept_up)
+		/*
+		 * report the uplevel that it is not an error that we
+		 * did not rmdir() our directory.
+		 */
+		*kept_up = !ret;
 	return ret;
+}
+
+int remove_dir_recursively(struct strbuf *path, int flag)
+{
+	return remove_dir_recurse(path, flag, NULL);
 }
 
 void setup_standard_excludes(struct dir_struct *dir)

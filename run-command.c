@@ -76,6 +76,68 @@ static inline void dup_devnull(int to)
 }
 #endif
 
+static char *locate_in_PATH(const char *file)
+{
+	const char *p = getenv("PATH");
+	struct strbuf buf = STRBUF_INIT;
+
+	if (!p || !*p)
+		return NULL;
+
+	while (1) {
+		const char *end = strchrnul(p, ':');
+
+		strbuf_reset(&buf);
+
+		/* POSIX specifies an empty entry as the current directory. */
+		if (end != p) {
+			strbuf_add(&buf, p, end - p);
+			strbuf_addch(&buf, '/');
+		}
+		strbuf_addstr(&buf, file);
+
+		if (!access(buf.buf, F_OK))
+			return strbuf_detach(&buf, NULL);
+
+		if (!*end)
+			break;
+		p = end + 1;
+	}
+
+	strbuf_release(&buf);
+	return NULL;
+}
+
+static int exists_in_PATH(const char *file)
+{
+	char *r = locate_in_PATH(file);
+	free(r);
+	return r != NULL;
+}
+
+int sane_execvp(const char *file, char * const argv[])
+{
+	if (!execvp(file, argv))
+		return 0; /* cannot happen ;-) */
+
+	/*
+	 * When a command can't be found because one of the directories
+	 * listed in $PATH is unsearchable, execvp reports EACCES, but
+	 * careful usability testing (read: analysis of occasional bug
+	 * reports) reveals that "No such file or directory" is more
+	 * intuitive.
+	 *
+	 * We avoid commands with "/", because execvp will not do $PATH
+	 * lookups in that case.
+	 *
+	 * The reassignment of EACCES to errno looks like a no-op below,
+	 * but we need to protect against exists_in_PATH overwriting errno.
+	 */
+	if (errno == EACCES && !strchr(file, '/'))
+		errno = exists_in_PATH(file) ? EACCES : ENOENT;
+	return -1;
+}
+
 static const char **prepare_shell_cmd(const char **argv)
 {
 	int argc, nargc = 0;
@@ -114,7 +176,7 @@ static int execv_shell_cmd(const char **argv)
 {
 	const char **nargv = prepare_shell_cmd(argv);
 	trace_argv_printf(nargv, "trace: exec:");
-	execvp(nargv[0], (char **)nargv);
+	sane_execvp(nargv[0], (char **)nargv);
 	free(nargv);
 	return -1;
 }
@@ -339,7 +401,7 @@ fail_pipe:
 		} else if (cmd->use_shell) {
 			execv_shell_cmd(cmd->argv);
 		} else {
-			execvp(cmd->argv[0], (char *const*) cmd->argv);
+			sane_execvp(cmd->argv[0], (char *const*) cmd->argv);
 		}
 		if (errno == ENOENT) {
 			if (!cmd->silent_exec_failure)
