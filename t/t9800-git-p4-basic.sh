@@ -335,7 +335,7 @@ test_expect_success 'detect renames' '
 	test_when_finished cleanup_git &&
 	(
 		cd "$git" &&
-		git config git-p4.skipSubmitEditCheck true &&
+		git config git-p4.skipSubmitEdit true &&
 
 		git mv file1 file4 &&
 		git commit -a -m "Rename file1 to file4" &&
@@ -394,7 +394,7 @@ test_expect_success 'detect copies' '
 	test_when_finished cleanup_git &&
 	(
 		cd "$git" &&
-		git config git-p4.skipSubmitEditCheck true &&
+		git config git-p4.skipSubmitEdit true &&
 
 		cp file2 file8 &&
 		git add file8 &&

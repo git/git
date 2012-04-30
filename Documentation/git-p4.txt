@@ -158,10 +158,13 @@ OPTIONS
 
 General options
 ~~~~~~~~~~~~~~~
-All commands except clone accept this option.
+All commands except clone accept these options.
 
 --git-dir <dir>::
 	Set the 'GIT_DIR' environment variable.  See linkgit:git[1].
+
+--verbose::
+	Provide more progress information.
 
 Sync options
 ~~~~~~~~~~~~
@@ -193,12 +196,13 @@ git repository:
 --silent::
 	Do not print any progress information.
 
---verbose::
-	Provide more progress information.
-
 --detect-labels::
 	Query p4 for labels associated with the depot paths, and add
-	them as tags in git.
+	them as tags in git. Limited usefulness as only imports labels
+	associated with new changelists. Deprecated.
+
+--import-labels::
+	Import labels from p4 into git.
 
 --import-local::
 	By default, p4 branches are stored in 'refs/remotes/p4/',
@@ -245,9 +249,6 @@ Submit options
 ~~~~~~~~~~~~~~
 These options can be used to modify 'git p4 submit' behavior.
 
---verbose::
-	Provide more progress information.
-
 --origin <commit>::
 	Upstream location from which commits are identified to submit to
 	p4.  By default, this is the most recent p4 commit reachable
@@ -263,6 +264,16 @@ These options can be used to modify 'git p4 submit' behavior.
 	Re-author p4 changes before submitting to p4.  This option
 	requires p4 admin privileges.
 
+--export-labels::
+	Export tags from git as p4 labels. Tags found in git are applied
+	to the perforce working directory.
+
+Rebase options
+~~~~~~~~~~~~~~
+These options can be used to modify 'git p4 rebase' behavior.
+
+--import-labels::
+	Import p4 labels.
 
 DEPOT PATH SYNTAX
 -----------------
@@ -427,10 +438,22 @@ git-p4.branchList::
 	enabled.  Each entry should be a pair of branch names separated
 	by a colon (:).  This example declares that both branchA and
 	branchB were created from main:
+
 -------------
 git config       git-p4.branchList main:branchA
 git config --add git-p4.branchList main:branchB
 -------------
+
+git-p4.ignoredP4Labels::
+	List of p4 labels to ignore. This is built automatically as
+	unimportable labels are discovered.
+
+git-p4.importLabels::
+	Import p4 labels into git, as per --import-labels.
+
+git-p4.labelImportRegexp::
+	Only p4 labels matching this regular expression will be imported. The
+	default value is '[a-zA-Z0-9_\-.]+$'.
 
 git-p4.useClientSpec::
 	Specify that the p4 client spec should be used to identify p4
@@ -481,10 +504,17 @@ git-p4.skipUserNameCheck::
 	submission regardless.
 
 git-p4.attemptRCSCleanup:
-    If enabled, 'git p4 submit' will attempt to cleanup RCS keywords
-    ($Header$, etc). These would otherwise cause merge conflicts and prevent
-    the submit going ahead. This option should be considered experimental at
-    present.
+	If enabled, 'git p4 submit' will attempt to cleanup RCS keywords
+	($Header$, etc). These would otherwise cause merge conflicts and prevent
+	the submit going ahead. This option should be considered experimental at
+	present.
+
+git-p4.exportLabels::
+	Export git tags to p4 labels, as per --export-labels.
+
+git-p4.labelExportRegexp::
+	Only p4 labels matching this regular expression will be exported. The
+	default value is '[a-zA-Z0-9_\-.]+$'.
 
 IMPLEMENTATION DETAILS
 ----------------------
