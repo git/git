@@ -9,7 +9,7 @@
 
 unset GIT_DIR
 
-: ${TOP-/srv/project/git}
+: ${TOP=/srv/project/git}
 
 MASTERREPO=$TOP/git.git/
 MANREPO=$TOP/git-manpages.git/
