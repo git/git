@@ -425,7 +425,7 @@ int cmd_help(int argc, const char **argv, const char *prefix)
 
 	if (show_all) {
 		printf(_("usage: %s%s"), _(git_usage_string), "\n\n");
-		list_commands(_("git commands"), &main_cmds, &other_cmds);
+		list_commands(&main_cmds, &other_cmds);
 		printf("%s\n", _(git_more_info_string));
 		return 0;
 	}
