@@ -135,8 +135,8 @@ def p4_system(cmd):
 def p4_integrate(src, dest):
     p4_system(["integrate", "-Dt", src, dest])
 
-def p4_sync(path):
-    p4_system(["sync", path])
+def p4_sync(f, *options):
+    p4_system(["sync"] + list(options) + [f])
 
 def p4_add(f):
     p4_system(["add", f])
@@ -1361,12 +1361,18 @@ class P4Submit(Command, P4UserMap):
         self.oldWorkingDirectory = os.getcwd()
 
         # ensure the clientPath exists
+        new_client_dir = False
         if not os.path.exists(self.clientPath):
+            new_client_dir = True
             os.makedirs(self.clientPath)
 
         chdir(self.clientPath)
         print "Synchronizing p4 checkout..."
-        p4_sync("...")
+        if new_client_dir:
+            # old one was destroyed, and maybe nobody told p4
+            p4_sync("...", "-f")
+        else:
+            p4_sync("...")
         self.check()
 
         commits = []

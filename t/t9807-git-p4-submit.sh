@@ -28,6 +28,11 @@ test_expect_success 'submit with no client dir' '
 		rm -rf "$cli" &&
 		git config git-p4.skipSubmitEdit true &&
 		git p4 submit
+	) &&
+	(
+		cd "$cli" &&
+		test_path_is_file file1 &&
+		test_path_is_file file2
 	)
 '
 
@@ -44,7 +49,6 @@ test_expect_success 'submit --origin' '
 	) &&
 	(
 		cd "$cli" &&
-		p4 sync &&
 		test_path_is_missing "file3.t" &&
 		test_path_is_file "file4.t"
 	)
@@ -79,7 +83,6 @@ test_expect_success 'submit with master branch name from argv' '
 	) &&
 	(
 		cd "$cli" &&
-		p4 sync &&
 		test_path_is_file "file6.t" &&
 		test_path_is_missing "file7.t"
 	)
