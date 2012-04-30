@@ -194,24 +194,6 @@ static void determine_whence(struct wt_status *s)
 		s->whence = whence;
 }
 
-static const char *whence_s(void)
-{
-	const char *s = "";
-
-	switch (whence) {
-	case FROM_COMMIT:
-		break;
-	case FROM_MERGE:
-		s = _("merge");
-		break;
-	case FROM_CHERRY_PICK:
-		s = _("cherry-pick");
-		break;
-	}
-
-	return s;
-}
-
 static void rollback_index_files(void)
 {
 	switch (commit_style) {
@@ -453,8 +435,12 @@ static char *prepare_index(int argc, const char **argv, const char *prefix,
 	 */
 	commit_style = COMMIT_PARTIAL;
 
-	if (whence != FROM_COMMIT)
-		die(_("cannot do a partial commit during a %s."), whence_s());
+	if (whence != FROM_COMMIT) {
+		if (whence == FROM_MERGE)
+			die(_("cannot do a partial commit during a merge."));
+		else if (whence == FROM_CHERRY_PICK)
+			die(_("cannot do a partial commit during a cherry-pick."));
+	}
 
 	memset(&partial, 0, sizeof(partial));
 	partial.strdup_strings = 1;
@@ -796,13 +782,17 @@ static int prepare_to_commit(const char *index_file, const char *prefix,
 		char *ai_tmp, *ci_tmp;
 		if (whence != FROM_COMMIT)
 			status_printf_ln(s, GIT_COLOR_NORMAL,
-				_("\n"
-				"It looks like you may be committing a %s.\n"
-				"If this is not correct, please remove the file\n"
-				"	%s\n"
-				"and try again.\n"
-				""),
-				whence_s(),
+			    whence == FROM_MERGE
+				? _("\n"
+					"It looks like you may be committing a merge.\n"
+					"If this is not correct, please remove the file\n"
+					"	%s\n"
+					"and try again.\n")
+				: _("\n"
+					"It looks like you may be committing a cherry-pick.\n"
+					"If this is not correct, please remove the file\n"
+					"	%s\n"
+					"and try again.\n"),
 				git_path(whence == FROM_MERGE
 					 ? "MERGE_HEAD"
 					 : "CHERRY_PICK_HEAD"));
@@ -1072,8 +1062,12 @@ static int parse_and_validate_options(int argc, const char *argv[],
 	/* Sanity check options */
 	if (amend && !current_head)
 		die(_("You have nothing to amend."));
-	if (amend && whence != FROM_COMMIT)
-		die(_("You are in the middle of a %s -- cannot amend."), whence_s());
+	if (amend && whence != FROM_COMMIT) {
+		if (whence == FROM_MERGE)
+			die(_("You are in the middle of a merge -- cannot amend."));
+		else if (whence == FROM_CHERRY_PICK)
+			die(_("You are in the middle of a cherry-pick -- cannot amend."));
+	}
 	if (fixup_message && squash_message)
 		die(_("Options --squash and --fixup cannot be used together"));
 	if (use_message)
