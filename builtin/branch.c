@@ -152,21 +152,22 @@ static int delete_branches(int argc, const char **argv, int force, int kinds,
 	struct commit *rev, *head_rev = NULL;
 	unsigned char sha1[20];
 	char *name = NULL;
-	const char *fmt, *remote;
+	const char *fmt;
 	int i;
 	int ret = 0;
+	int remote_branch = 0;
 	struct strbuf bname = STRBUF_INIT;
 
 	switch (kinds) {
 	case REF_REMOTE_BRANCH:
 		fmt = "refs/remotes/%s";
-		/* TRANSLATORS: This is "remote " in "remote branch '%s' not found" */
-		remote = _("remote ");
+		/* For subsequent UI messages */
+		remote_branch = 1;
+
 		force = 1;
 		break;
 	case REF_LOCAL_BRANCH:
 		fmt = "refs/heads/%s";
-		remote = "";
 		break;
 	default:
 		die(_("cannot use -a with -d"));
@@ -190,8 +191,9 @@ static int delete_branches(int argc, const char **argv, int force, int kinds,
 
 		name = xstrdup(mkpath(fmt, bname.buf));
 		if (read_ref(name, sha1)) {
-			error(_("%sbranch '%s' not found."),
-					remote, bname.buf);
+			error(remote_branch
+			      ? _("remote branch '%s' not found.")
+			      : _("branch '%s' not found."), bname.buf);
 			ret = 1;
 			continue;
 		}
@@ -212,14 +214,18 @@ static int delete_branches(int argc, const char **argv, int force, int kinds,
 		}
 
 		if (delete_ref(name, sha1, 0)) {
-			error(_("Error deleting %sbranch '%s'"), remote,
+			error(remote_branch
+			      ? _("Error deleting remote branch '%s'")
+			      : _("Error deleting branch '%s'"),
 			      bname.buf);
 			ret = 1;
 		} else {
 			struct strbuf buf = STRBUF_INIT;
 			if (!quiet)
-				printf(_("Deleted %sbranch %s (was %s).\n"),
-				       remote, bname.buf,
+				printf(remote_branch
+				       ? _("Deleted remote branch %s (was %s).\n")
+				       : _("Deleted branch %s (was %s).\n"),
+				       bname.buf,
 				       find_unique_abbrev(sha1, DEFAULT_ABBREV));
 			strbuf_addf(&buf, "branch.%s", bname.buf);
 			if (git_config_rename_section(buf.buf, NULL) < 0)
