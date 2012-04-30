@@ -158,7 +158,8 @@ test_expect_success 'submit copy' '
 	) &&
 	(
 		cd "$cli" &&
-		test_path_is_file file5.ta
+		test_path_is_file file5.ta &&
+		test ! -w file5.ta
 	)
 '
 
@@ -176,7 +177,8 @@ test_expect_success 'submit rename' '
 	(
 		cd "$cli" &&
 		test_path_is_missing file6.t &&
-		test_path_is_file file6.ta
+		test_path_is_file file6.ta &&
+		test ! -w file6.ta
 	)
 '
 

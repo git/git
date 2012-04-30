@@ -1038,6 +1038,7 @@ class P4Submit(Command, P4UserMap):
         filesToAdd = set()
         filesToDelete = set()
         editedFiles = set()
+        pureRenameCopy = set()
         filesToChangeExecBit = {}
 
         for line in diff:
@@ -1061,10 +1062,13 @@ class P4Submit(Command, P4UserMap):
             elif modifier == "C":
                 src, dest = diff['src'], diff['dst']
                 p4_integrate(src, dest)
+                pureRenameCopy.add(dest)
                 if diff['src_sha1'] != diff['dst_sha1']:
                     p4_edit(dest)
+                    pureRenameCopy.discard(dest)
                 if isModeExecChanged(diff['src_mode'], diff['dst_mode']):
                     p4_edit(dest)
+                    pureRenameCopy.discard(dest)
                     filesToChangeExecBit[dest] = diff['dst_mode']
                 os.unlink(dest)
                 editedFiles.add(dest)
@@ -1073,6 +1077,8 @@ class P4Submit(Command, P4UserMap):
                 p4_integrate(src, dest)
                 if diff['src_sha1'] != diff['dst_sha1']:
                     p4_edit(dest)
+                else:
+                    pureRenameCopy.add(dest)
                 if isModeExecChanged(diff['src_mode'], diff['dst_mode']):
                     p4_edit(dest)
                     filesToChangeExecBit[dest] = diff['dst_mode']
@@ -1226,6 +1232,12 @@ class P4Submit(Command, P4UserMap):
                         # unmarshalled.
                         changelist = self.lastP4Changelist()
                         self.modifyChangelistUser(changelist, p4User)
+
+                # The rename/copy happened by applying a patch that created a
+                # new file.  This leaves it writable, which confuses p4.
+                for f in pureRenameCopy:
+                    p4_sync(f, "-f")
+
             else:
                 # skip this patch
                 print "Submission cancelled, undoing p4 changes."

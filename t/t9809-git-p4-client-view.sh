@@ -349,7 +349,8 @@ test_expect_success 'subdir clone, submit copy' '
 	) &&
 	(
 		cd "$cli" &&
-		test_path_is_file dir1/file11a
+		test_path_is_file dir1/file11a &&
+		test ! -w dir1/file11a
 	)
 '
 
@@ -368,14 +369,14 @@ test_expect_success 'subdir clone, submit rename' '
 	(
 		cd "$cli" &&
 		test_path_is_missing dir1/file13 &&
-		test_path_is_file dir1/file13a
+		test_path_is_file dir1/file13a &&
+		test ! -w dir1/file13a
 	)
 '
 
 test_expect_success 'reinit depot' '
 	(
 		cd "$cli" &&
-		p4 sync -f &&
 		rm files &&
 		p4 delete */* &&
 		p4 submit -d "delete all files" &&
