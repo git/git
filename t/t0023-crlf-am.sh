@@ -11,7 +11,7 @@ Date: Thu, 23 Aug 2007 13:00:00 +0200
 Subject: test1
 
 ---
- foo |    1 +
+ foo | 1 +
  1 files changed, 1 insertions(+), 0 deletions(-)
  create mode 100644 foo
 

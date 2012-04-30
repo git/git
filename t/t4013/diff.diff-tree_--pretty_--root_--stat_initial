@@ -5,8 +5,8 @@ Date:   Mon Jun 26 00:00:00 2006 +0000
 
     Initial
 
- dir/sub |    2 ++
- file0   |    3 +++
- file2   |    3 +++
+ dir/sub | 2 ++
+ file0   | 3 +++
+ file2   | 3 +++
  3 files changed, 8 insertions(+)
 $

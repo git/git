@@ -5,7 +5,7 @@ Date:   Mon Jun 26 00:03:00 2006 +0000
 
     Side
 ---
- dir/sub |    2 ++
+ dir/sub | 2 ++
  1 file changed, 2 insertions(+)
 
 diff --git a/dir/sub b/dir/sub
@@ -24,7 +24,7 @@ Date:   Mon Jun 26 00:02:00 2006 +0000
 
     Third
 ---
- dir/sub |    2 ++
+ dir/sub | 2 ++
  1 file changed, 2 insertions(+)
 
 diff --git a/dir/sub b/dir/sub
@@ -46,7 +46,7 @@ Date:   Mon Jun 26 00:01:00 2006 +0000
     
     This is the second commit.
 ---
- dir/sub |    2 ++
+ dir/sub | 2 ++
  1 file changed, 2 insertions(+)
 
 diff --git a/dir/sub b/dir/sub

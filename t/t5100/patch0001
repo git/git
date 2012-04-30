@@ -1,5 +1,5 @@
 ---
- foo |    2 +-
+ foo | 2 +-
  1 files changed, 1 insertions(+), 1 deletions(-)
 
 diff --git a/foo b/foo

@@ -443,7 +443,7 @@ test_expect_success 'stash show format defaults to --stat' '
 	STASH_ID=$(git stash create) &&
 	git reset --hard &&
 	cat >expected <<-EOF &&
-	 file |    1 +
+	 file | 1 +
 	 1 file changed, 1 insertion(+)
 	EOF
 	git stash show ${STASH_ID} >actual &&

@@ -54,9 +54,9 @@ Trying simple merge with c2
 Trying simple merge with c3
 Trying simple merge with c4
 Merge made by the 'octopus' strategy.
- c2.c |    1 +
- c3.c |    1 +
- c4.c |    1 +
+ c2.c | 1 +
+ c3.c | 1 +
+ c4.c | 1 +
  3 files changed, 3 insertions(+)
  create mode 100644 c2.c
  create mode 100644 c3.c
@@ -71,7 +71,7 @@ test_expect_success 'merge output uses pretty names' '
 
 cat >expected <<\EOF
 Merge made by the 'recursive' strategy.
- c5.c |    1 +
+ c5.c | 1 +
  1 file changed, 1 insertion(+)
  create mode 100644 c5.c
 EOF
@@ -85,8 +85,8 @@ cat >expected <<\EOF
 Fast-forwarding to: c1
 Trying simple merge with c2
 Merge made by the 'octopus' strategy.
- c1.c |    1 +
- c2.c |    1 +
+ c1.c | 1 +
+ c2.c | 1 +
  2 files changed, 2 insertions(+)
  create mode 100644 c1.c
  create mode 100644 c2.c
