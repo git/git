@@ -113,8 +113,21 @@ GIT index format
     are encoded in 7-bit ASCII and the encoding cannot contain a NUL
     byte (iow, this is a UNIX pathname).
 
+  (Version 4) In version 4, the entry path name is prefix-compressed
+    relative to the path name for the previous entry (the very first
+    entry is encoded as if the path name for the previous entry is an
+    empty string).  At the beginning of an entry, an integer N in the
+    variable width encoding (the same encoding as the offset is encoded
+    for OFS_DELTA pack entries; see pack-format.txt) is stored, followed
+    by a NUL-terminated string S.  Removing N bytes from the end of the
+    path name for the previous entry, and replacing it with the string S
+    yields the path name for this entry.
+
   1-8 nul bytes as necessary to pad the entry to a multiple of eight bytes
   while keeping the name NUL-terminated.
+
+  (Version 4) In version 4, the padding after the pathname does not
+  exist.
 
 == Extensions
 
