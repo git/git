@@ -71,4 +71,16 @@ test_expect_success 'alias loop' '
 	test_must_fail git log --pretty=test-foo
 '
 
+test_expect_success 'NUL separation' '
+	printf "add bar\0initial" >expected &&
+	git log -z --pretty="format:%s" >actual &&
+	test_cmp expected actual
+'
+
+test_expect_success 'NUL termination' '
+	printf "add bar\0initial\0" >expected &&
+	git log -z --pretty="tformat:%s" >actual &&
+	test_cmp expected actual
+'
+
 test_done
