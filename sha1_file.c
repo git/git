@@ -2417,7 +2417,7 @@ int move_temp_to_file(const char *tmpfile, const char *filename)
 	unlink_or_warn(tmpfile);
 	if (ret) {
 		if (ret != EEXIST) {
-			return error("unable to write sha1 filename %s: %s\n", filename, strerror(ret));
+			return error("unable to write sha1 filename %s: %s", filename, strerror(ret));
 		}
 		/* FIXME!!! Collision check here ? */
 	}
@@ -2509,9 +2509,9 @@ static int write_loose_object(const unsigned char *sha1, char *hdr, int hdrlen,
 	fd = create_tmpfile(tmp_file, sizeof(tmp_file), filename);
 	if (fd < 0) {
 		if (errno == EACCES)
-			return error("insufficient permission for adding an object to repository database %s\n", get_object_directory());
+			return error("insufficient permission for adding an object to repository database %s", get_object_directory());
 		else
-			return error("unable to create temporary sha1 filename %s: %s\n", tmp_file, strerror(errno));
+			return error("unable to create temporary sha1 filename %s: %s", tmp_file, strerror(errno));
 	}
 
 	/* Set it up */

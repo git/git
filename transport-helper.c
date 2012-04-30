@@ -199,7 +199,7 @@ static struct child_process *get_helper(struct transport *transport)
 			data->import_marks = strbuf_detach(&arg, NULL);
 		} else if (mandatory) {
 			die("Unknown mandatory capability %s. This remote "
-			    "helper probably needs newer version of Git.\n",
+			    "helper probably needs newer version of Git.",
 			    capname);
 		}
 	}
@@ -599,7 +599,7 @@ static void push_update_ref_status(struct strbuf *buf,
 		status = REF_STATUS_REMOTE_REJECT;
 		refname = buf->buf + 6;
 	} else
-		die("expected ok/error, helper said '%s'\n", buf->buf);
+		die("expected ok/error, helper said '%s'", buf->buf);
 
 	msg = strchr(refname, ' ');
 	if (msg) {

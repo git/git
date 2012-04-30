@@ -518,7 +518,7 @@ int cmd_fetch__tool(int argc, const char **argv, const char *prefix)
 		filename = git_path("FETCH_HEAD");
 		fp = fopen(filename, "a");
 		if (!fp)
-			return error("cannot open %s: %s\n", filename, strerror(errno));
+			return error("cannot open %s: %s", filename, strerror(errno));
 		result = append_fetch_head(fp, argv[2], argv[3],
 					   argv[4], argv[5],
 					   argv[6], !!argv[7][0],
@@ -536,7 +536,7 @@ int cmd_fetch__tool(int argc, const char **argv, const char *prefix)
 		filename = git_path("FETCH_HEAD");
 		fp = fopen(filename, "a");
 		if (!fp)
-			return error("cannot open %s: %s\n", filename, strerror(errno));
+			return error("cannot open %s: %s", filename, strerror(errno));
 		result = fetch_native_store(fp, argv[2], argv[3], argv[4],
 					    verbose, force);
 		fclose(fp);
