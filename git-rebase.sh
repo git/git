@@ -43,6 +43,7 @@ s,strategy=!       use the given merge strategy
 no-ff!             cherry-pick all commits, even if unchanged
 m,merge!           use merging strategies to rebase
 i,interactive!     let the user edit the list of commits to rebase
+k,keep-empty	   preserve empty commits during rebase
 f,force-rebase!    force rebase even if branch is up to date
 X,strategy-option=! pass the argument through to the merge strategy
 stat!              display a diffstat of what changed upstream
@@ -97,6 +98,7 @@ state_dir=
 action=
 preserve_merges=
 autosquash=
+keep_empty=
 test "$(git config --bool rebase.autosquash)" = "true" && autosquash=t
 
 read_basic_state () {
@@ -219,6 +221,9 @@ do
 		;;
 	-i)
 		interactive_rebase=explicit
+		;;
+	-k)
+		keep_empty=yes
 		;;
 	-p)
 		preserve_merges=t
