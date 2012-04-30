@@ -27,7 +27,7 @@ static int fsck_walk_tree(struct tree *tree, fsck_walk_func walk, void *data)
 		else if (S_ISREG(entry.mode) || S_ISLNK(entry.mode))
 			result = walk(&lookup_blob(entry.sha1)->object, OBJ_BLOB, data);
 		else {
-			result = error("in tree %s: entry %s has bad mode %.6o\n",
+			result = error("in tree %s: entry %s has bad mode %.6o",
 					sha1_to_hex(tree->object.sha1), entry.path, entry.mode);
 		}
 		if (result < 0)

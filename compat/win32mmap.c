@@ -30,7 +30,7 @@ void *git_mmap(void *start, size_t length, int prot, int flags, int fd, off_t of
 	temp = MapViewOfFileEx(hmap, FILE_MAP_COPY, h, l, length, start);
 
 	if (!CloseHandle(hmap))
-		warning("unable to close file mapping handle\n");
+		warning("unable to close file mapping handle");
 
 	return temp ? temp : MAP_FAILED;
 }

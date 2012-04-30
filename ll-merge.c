@@ -73,7 +73,7 @@ static int ll_xdl_merge(const struct ll_merge_driver *drv_unused,
 	if (buffer_is_binary(orig->ptr, orig->size) ||
 	    buffer_is_binary(src1->ptr, src1->size) ||
 	    buffer_is_binary(src2->ptr, src2->size)) {
-		warning("Cannot merge binary files: %s (%s vs. %s)\n",
+		warning("Cannot merge binary files: %s (%s vs. %s)",
 			path, name1, name2);
 		return ll_binary_merge(drv_unused, result,
 				       path,

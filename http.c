@@ -917,7 +917,7 @@ static char *fetch_pack_index(unsigned char *sha1, const char *base_url)
 	tmp = strbuf_detach(&buf, NULL);
 
 	if (http_get_file(url, tmp, 0) != HTTP_OK) {
-		error("Unable to get pack index %s\n", url);
+		error("Unable to get pack index %s", url);
 		free(tmp);
 		tmp = NULL;
 	}

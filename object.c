@@ -176,7 +176,7 @@ struct object *parse_object_buffer(const unsigned char *sha1, enum object_type t
 			obj = &tag->object;
 		}
 	} else {
-		warning("object %s has unknown type id %d\n", sha1_to_hex(sha1), type);
+		warning("object %s has unknown type id %d", sha1_to_hex(sha1), type);
 		obj = NULL;
 	}
 	if (obj && obj->type == OBJ_NONE)
@@ -202,7 +202,7 @@ struct object *parse_object(const unsigned char *sha1)
 	    (!obj && has_sha1_file(sha1) &&
 	     sha1_object_info(sha1, NULL) == OBJ_BLOB)) {
 		if (check_sha1_signature(repl, NULL, 0, NULL) < 0) {
-			error("sha1 mismatch %s\n", sha1_to_hex(repl));
+			error("sha1 mismatch %s", sha1_to_hex(repl));
 			return NULL;
 		}
 		parse_blob_buffer(lookup_blob(sha1), NULL, 0);
@@ -213,7 +213,7 @@ struct object *parse_object(const unsigned char *sha1)
 	if (buffer) {
 		if (check_sha1_signature(repl, buffer, size, typename(type)) < 0) {
 			free(buffer);
-			error("sha1 mismatch %s\n", sha1_to_hex(repl));
+			error("sha1 mismatch %s", sha1_to_hex(repl));
 			return NULL;
 		}
 

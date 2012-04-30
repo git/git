@@ -175,7 +175,7 @@ static void read_props(void)
 		int ch;
 
 		if (!type || t[1] != ' ')
-			die("invalid property line: %s\n", t);
+			die("invalid property line: %s", t);
 		len = atoi(&t[2]);
 		strbuf_reset(&val);
 		buffer_read_binary(&input, &val, len);
@@ -201,7 +201,7 @@ static void read_props(void)
 			strbuf_reset(&key);
 			continue;
 		default:
-			die("invalid property line: %s\n", t);
+			die("invalid property line: %s", t);
 		}
 	}
 }
