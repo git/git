@@ -7,7 +7,7 @@ USAGE="$me rev-list-args"
 
 SUBDIRECTORY_OK=Yes
 OPTIONS_SPEC=
-. git-sh-setup
+. $(git --exec-path)/git-sh-setup
 require_work_tree
 cd_to_toplevel
 
