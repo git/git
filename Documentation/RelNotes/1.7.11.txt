@@ -19,6 +19,9 @@ UI, Workflows & Features
    variables with REMOTE_USER and REMOTE_ADDR, but these variables are
    now preserved when set.
 
+ * "include.path" mechanism of the configuration files learned to
+   understand "~/path" and "~user/path".
+
  * "git am" learned the "--include" option, which is an opposite of
    existing the "--exclude" option.
 
@@ -47,11 +50,18 @@ Foreign Interface
  * "git svn" used to die with unwanted SIGPIPE when talking with HTTP
    server that uses keep-alive.
 
+ * "git svn" learned to use platform specific authentication
+   providers, e.g. gnome-keyring, kwallet, etc.
+
  * "git p4" has been moved out of contrib/ area.
 
 Performance
 
  * "git apply" had some memory leaks plugged.
+
+ * "git repack" used to write out unreachable objects as loose objects
+   when repacking, even if such loose objects will immediately pruned
+   due to its age.
 
  * Setting up a revision traversal with many starting points was
    inefficient as these were placed in a date-order priority queue
@@ -85,6 +95,12 @@ Fixes since v1.7.10
 Unless otherwise noted, all the fixes since v1.7.10 in the maintenance
 releases are contained in this release (see release notes to them for
 details).
+
+ * The test scaffolding for git-daemon was flaky.
+   (merge 46e3581 js/daemon-test-race-fix later to maint).
+
+ * The test scaffolding for fast-import was flaky.
+   (merge 7fb8e16 pw/t5800-import-race-fix later to maint).
 
  * Octopus merge strategy did not reduce heads that are recorded in the
    final commit correctly.
