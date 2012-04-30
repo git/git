@@ -798,16 +798,15 @@ static int prepare_to_commit(const char *index_file, const char *prefix,
 					 : "CHERRY_PICK_HEAD"));
 
 		fprintf(s->fp, "\n");
-		status_printf(s, GIT_COLOR_NORMAL,
-			_("Please enter the commit message for your changes."));
 		if (cleanup_mode == CLEANUP_ALL)
-			status_printf_more(s, GIT_COLOR_NORMAL,
-				_(" Lines starting\n"
-				"with '#' will be ignored, and an empty"
+			status_printf(s, GIT_COLOR_NORMAL,
+				_("Please enter the commit message for your changes."
+				" Lines starting\nwith '#' will be ignored, and an empty"
 				" message aborts the commit.\n"));
 		else /* CLEANUP_SPACE, that is. */
-			status_printf_more(s, GIT_COLOR_NORMAL,
-				_(" Lines starting\n"
+			status_printf(s, GIT_COLOR_NORMAL,
+				_("Please enter the commit message for your changes."
+				" Lines starting\n"
 				"with '#' will be kept; you may remove them"
 				" yourself if you want to.\n"
 				"An empty message aborts the commit.\n"));
