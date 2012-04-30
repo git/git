@@ -63,7 +63,7 @@ EXAMPLES
 
 	Create a tarball for v1.4.0 release.
 
-`git tar-tree v1.4.0{caret}\{tree\} git-1.4.0 | gzip >git-1.4.0.tar.gz`::
+`git tar-tree v1.4.0^{tree} git-1.4.0 | gzip >git-1.4.0.tar.gz`::
 
 	Create a tarball for v1.4.0 release, but without a
 	global extended pax header.

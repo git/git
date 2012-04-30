@@ -184,7 +184,7 @@ the conflicted merge in the specified paths.
 +
 This means that you can use `git checkout -p` to selectively discard
 edits from your current working tree. See the ``Interactive Mode''
-section of linkgit:git-add[1] to learn how to operate the `\--patch` mode.
+section of linkgit:git-add[1] to learn how to operate the `--patch` mode.
 
 <branch>::
 	Branch to checkout; if it refers to a branch (i.e., a name that,
@@ -193,11 +193,11 @@ section of linkgit:git-add[1] to learn how to operate the `\--patch` mode.
 	commit, your HEAD becomes "detached" and you are no longer on
 	any branch (see below for details).
 +
-As a special case, the `"@\{-N\}"` syntax for the N-th last branch
+As a special case, the `"@{-N}"` syntax for the N-th last branch
 checks out the branch (instead of detaching).  You may also specify
-`-` which is synonymous with `"@\{-1\}"`.
+`-` which is synonymous with `"@{-1}"`.
 +
-As a further special case, you may use `"A\...B"` as a shortcut for the
+As a further special case, you may use `"A...B"` as a shortcut for the
 merge base of `A` and `B` if there is exactly one merge base. You can
 leave out at most one of `A` and `B`, in which case it defaults to `HEAD`.
 

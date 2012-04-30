@@ -47,7 +47,7 @@ OPTIONS
 --format[=<format>]::
 	Instead of the commit subject, use some other information to
 	describe each commit.  '<format>' can be any string accepted
-	by the `--format` option of 'git log', such as '{asterisk} [%h] %s'.
+	by the `--format` option of 'git log', such as '* [%h] %s'.
 	(See the "PRETTY FORMATS" section of linkgit:git-log[1].)
 
 	Each pretty-printed commit will be rewrapped before it is shown.

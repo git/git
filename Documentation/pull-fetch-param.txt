@@ -13,7 +13,7 @@ endif::git-pull[]
 
 <refspec>::
 	The format of a <refspec> parameter is an optional plus
-	`{plus}`, followed by the source ref <src>, followed
+	`+`, followed by the source ref <src>, followed
 	by a colon `:`, followed by the destination ref <dst>.
 +
 The remote ref that matches <src>

@@ -39,13 +39,13 @@ as well).  It is an alias for `git log -g --abbrev-commit --pretty=oneline`;
 see linkgit:git-log[1].
 
 The reflog is useful in various git commands, to specify the old value
-of a reference. For example, `HEAD@\{2\}` means "where HEAD used to be
-two moves ago", `master@\{one.week.ago\}` means "where master used to
+of a reference. For example, `HEAD@{2}` means "where HEAD used to be
+two moves ago", `master@{one.week.ago}` means "where master used to
 point to one week ago", and so on. See linkgit:gitrevisions[7] for
 more details.
 
 To delete single entries from the reflog, use the subcommand "delete"
-and specify the _exact_ entry (e.g. "`git reflog delete master@\{2\}`").
+and specify the _exact_ entry (e.g. "`git reflog delete master@{2}`").
 
 
 OPTIONS

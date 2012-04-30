@@ -481,8 +481,8 @@ Common unit suffixes of 'k', 'm', or 'g' are supported.
 core.excludesfile::
 	In addition to '.gitignore' (per-directory) and
 	'.git/info/exclude', git looks into this file for patterns
-	of files which are not meant to be tracked.  "{tilde}/" is expanded
-	to the value of `$HOME` and "{tilde}user/" to the specified user's
+	of files which are not meant to be tracked.  "`~/`" is expanded
+	to the value of `$HOME` and "`~user/`" to the specified user's
 	home directory.  See linkgit:gitignore[5].
 
 core.askpass::
@@ -863,7 +863,7 @@ commit.status::
 
 commit.template::
 	Specify a file to use as the template for new commit messages.
-	"{tilde}/" is expanded to the value of `$HOME` and "{tilde}user/" to the
+	"`~/`" is expanded to the value of `$HOME` and "`~user/`" to the
 	specified user's home directory.
 
 credential.helper::
@@ -988,7 +988,7 @@ format.thread::
 	a boolean value, or `shallow` or `deep`.  `shallow` threading
 	makes every mail a reply to the head of the series,
 	where the head is chosen from the cover letter, the
-	`\--in-reply-to`, and the first patch mail, in this order.
+	`--in-reply-to`, and the first patch mail, in this order.
 	`deep` threading makes every mail a reply to the previous one.
 	A true boolean value is the same as `shallow`, and a false
 	value disables threading.
@@ -1419,7 +1419,7 @@ instaweb.port::
 interactive.singlekey::
 	In interactive commands, allow the user to provide one-letter
 	input with a single key (i.e., without hitting enter).
-	Currently this is used by the `\--patch` mode of
+	Currently this is used by the `--patch` mode of
 	linkgit:git-add[1], linkgit:git-checkout[1], linkgit:git-commit[1],
 	linkgit:git-reset[1], and linkgit:git-stash[1]. Note that this
 	setting is silently ignored if portable keystroke input
@@ -1427,13 +1427,13 @@ interactive.singlekey::
 
 log.abbrevCommit::
 	If true, makes linkgit:git-log[1], linkgit:git-show[1], and
-	linkgit:git-whatchanged[1] assume `\--abbrev-commit`. You may
-	override this option with `\--no-abbrev-commit`.
+	linkgit:git-whatchanged[1] assume `--abbrev-commit`. You may
+	override this option with `--no-abbrev-commit`.
 
 log.date::
 	Set the default date-time mode for the 'log' command.
 	Setting a value for log.date is similar to using 'git log''s
-	`\--date` option.  Possible values are `relative`, `local`,
+	`--date` option.  Possible values are `relative`, `local`,
 	`default`, `iso`, `rfc`, and `short`; see linkgit:git-log[1]
 	for details.
 
@@ -1623,18 +1623,18 @@ pack.indexVersion::
 	and this config option ignored whenever the corresponding pack is
 	larger than 2 GB.
 +
-If you have an old git that does not understand the version 2 `{asterisk}.idx` file,
+If you have an old git that does not understand the version 2 `*.idx` file,
 cloning or fetching over a non native protocol (e.g. "http" and "rsync")
-that will copy both `{asterisk}.pack` file and corresponding `{asterisk}.idx` file from the
+that will copy both `*.pack` file and corresponding `*.idx` file from the
 other side may give you a repository that cannot be accessed with your
-older version of git. If the `{asterisk}.pack` file is smaller than 2 GB, however,
+older version of git. If the `*.pack` file is smaller than 2 GB, however,
 you can use linkgit:git-index-pack[1] on the *.pack file to regenerate
-the `{asterisk}.idx` file.
+the `*.idx` file.
 
 pack.packSizeLimit::
 	The maximum size of a pack.  This setting only affects
 	packing to a file when repacking, i.e. the git:// protocol
-	is unaffected.  It can be overridden by the `\--max-pack-size`
+	is unaffected.  It can be overridden by the `--max-pack-size`
 	option of linkgit:git-repack[1]. The minimum size allowed is
 	limited to 1 MiB. The default is unlimited.
 	Common unit suffixes of 'k', 'm', or 'g' are
@@ -1644,8 +1644,8 @@ pager.<cmd>::
 	If the value is boolean, turns on or off pagination of the
 	output of a particular git subcommand when writing to a tty.
 	Otherwise, turns on pagination for the subcommand using the
-	pager specified by the value of `pager.<cmd>`.  If `\--paginate`
-	or `\--no-pager` is specified on the command line, it takes
+	pager specified by the value of `pager.<cmd>`.  If `--paginate`
+	or `--no-pager` is specified on the command line, it takes
 	precedence over this option.  To disable pagination for all
 	commands, set `core.pager` or `GIT_PAGER` to `cat`.
 
@@ -1653,9 +1653,9 @@ pretty.<name>::
 	Alias for a --pretty= format string, as specified in
 	linkgit:git-log[1]. Any aliases defined here can be used just
 	as the built-in pretty formats could. For example,
-	running `git config pretty.changelog "format:{asterisk} %H %s"`
+	running `git config pretty.changelog "format:* %H %s"`
 	would cause the invocation `git log --pretty=changelog`
-	to be equivalent to running `git log "--pretty=format:{asterisk} %H %s"`.
+	to be equivalent to running `git log "--pretty=format:* %H %s"`.
 	Note that an alias with the same name as a built-in format
 	will be silently ignored.
 
@@ -1786,7 +1786,7 @@ remote.<name>.push::
 
 remote.<name>.mirror::
 	If true, pushing to this remote will automatically behave
-	as if the `\--mirror` option was given on the command line.
+	as if the `--mirror` option was given on the command line.
 
 remote.<name>.skipDefaultUpdate::
 	If true, this remote will be skipped by default when updating

@@ -79,8 +79,7 @@ a file that you have not told git about does not remove that file.
 
 File globbing matches across directory boundaries.  Thus, given
 two directories `d` and `d2`, there is a difference between
-using `git rm {apostrophe}d{asterisk}{apostrophe}` and
-`git rm {apostrophe}d/{asterisk}{apostrophe}`, as the former will
+using `git rm 'd*'` and `git rm 'd/*'`, as the former will
 also remove all of directory `d2`.
 
 REMOVING FILES THAT HAVE DISAPPEARED FROM THE FILESYSTEM

@@ -27,7 +27,7 @@ throw away all uncommitted changes in your working directory, you
 should see linkgit:git-reset[1], particularly the '--hard' option.  If
 you want to extract specific files as they were in another commit, you
 should see linkgit:git-checkout[1], specifically the `git checkout
-<commit> \-- <filename>` syntax.  Take care with these alternatives as
+<commit> -- <filename>` syntax.  Take care with these alternatives as
 both will discard uncommitted changes in your working directory.
 
 OPTIONS
@@ -105,7 +105,7 @@ EXAMPLES
 	Revert the changes specified by the fourth last commit in HEAD
 	and create a new commit with the reverted changes.
 
-`git revert -n master{tilde}5..master{tilde}2`::
+`git revert -n master~5..master~2`::
 
 	Revert the changes done by commits from the fifth last commit
 	in master (included) to the third last commit in master

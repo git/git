@@ -98,8 +98,8 @@ you originally wrote.
 <9> switch to the master branch.
 <10> merge a topic branch into your master branch.
 <11> review commit logs; other forms to limit output can be
-combined and include `\--max-count=10` (show 10 commits),
-`\--until=2005-12-10`, etc.
+combined and include `--max-count=10` (show 10 commits),
+`--until=2005-12-10`, etc.
 <12> view only the changes that touch what's in `curses/`
 directory, since `v2.43` tag.
 

@@ -168,11 +168,11 @@ a similarity score different from the default of 50% by giving a
 number after the "-M" or "-C" option (e.g. "-M8" to tell it to use
 8/10 = 80%).
 
-Note.  When the "-C" option is used with `\--find-copies-harder`
+Note.  When the "-C" option is used with `--find-copies-harder`
 option, 'git diff-{asterisk}' commands feed unmodified filepairs to
 diffcore mechanism as well as modified ones.  This lets the copy
 detector consider unmodified files as copy source candidates at
-the expense of making it slower.  Without `\--find-copies-harder`,
+the expense of making it slower.  Without `--find-copies-harder`,
 'git diff-{asterisk}' commands can detect copies only if the file that was
 copied happened to have been modified in the same changeset.
 
@@ -224,7 +224,7 @@ diffcore-pickaxe: For Detecting Addition/Deletion of Specified String
 
 This transformation is used to find filepairs that represent
 changes that touch a specified string, and is controlled by the
--S option and the `\--pickaxe-all` option to the 'git diff-{asterisk}'
+-S option and the `--pickaxe-all` option to the 'git diff-*'
 commands.
 
 When diffcore-pickaxe is in use, it checks if there are
@@ -233,9 +233,9 @@ different number of specified string.  Such a filepair represents
 "the string appeared in this changeset".  It also checks for the
 opposite case that loses the specified string.
 
-When `\--pickaxe-all` is not in effect, diffcore-pickaxe leaves
+When `--pickaxe-all` is not in effect, diffcore-pickaxe leaves
 only such filepairs that touch the specified string in its
-output.  When `\--pickaxe-all` is used, diffcore-pickaxe leaves all
+output.  When `--pickaxe-all` is used, diffcore-pickaxe leaves all
 filepairs intact if there is such a filepair, or makes the
 output empty otherwise.  The latter behaviour is designed to
 make reviewing of the changes in the context of the whole

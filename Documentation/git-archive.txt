@@ -160,7 +160,7 @@ EXAMPLES
 
 	Same as above, but the format is inferred from the output file.
 
-`git archive --format=tar --prefix=git-1.4.0/ v1.4.0{caret}\{tree\} | gzip >git-1.4.0.tar.gz`::
+`git archive --format=tar --prefix=git-1.4.0/ v1.4.0^{tree} | gzip >git-1.4.0.tar.gz`::
 
 	Create a compressed tarball for v1.4.0 release, but without a
 	global extended pax header.

@@ -39,8 +39,8 @@ To achieve this, try to split your work into small steps from the very
 beginning. It is always easier to squash a few commits together than
 to split one big commit into several.  Don't be afraid of making too
 small or imperfect steps along the way. You can always go back later
-and edit the commits with `git rebase \--interactive` before you
-publish them.  You can use `git stash save \--keep-index` to run the
+and edit the commits with `git rebase --interactive` before you
+publish them.  You can use `git stash save --keep-index` to run the
 test suite independent of other uncommitted changes; see the EXAMPLES
 section of linkgit:git-stash[1].
 
