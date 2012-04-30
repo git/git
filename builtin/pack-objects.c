@@ -63,6 +63,7 @@ static uint32_t nr_objects, nr_alloc, nr_result, nr_written;
 static int non_empty;
 static int reuse_delta = 1, reuse_object = 1;
 static int keep_unreachable, unpack_unreachable, include_tag;
+static unsigned long unpack_unreachable_expiration;
 static int local;
 static int incremental;
 static int ignore_packed_keep;
@@ -2249,6 +2250,10 @@ static void loosen_unused_packed_objects(struct rev_info *revs)
 		if (!p->pack_local || p->pack_keep)
 			continue;
 
+		if (unpack_unreachable_expiration &&
+		    p->mtime < unpack_unreachable_expiration)
+			continue;
+
 		if (open_pack_index(p))
 			die("cannot open pack index");
 
@@ -2312,6 +2317,21 @@ static int option_parse_index_version(const struct option *opt,
 		pack_idx_opts.off32_limit = strtoul(c+1, &c, 0);
 	if (*c || pack_idx_opts.off32_limit & 0x80000000)
 		die(_("bad index version '%s'"), val);
+	return 0;
+}
+
+static int option_parse_unpack_unreachable(const struct option *opt,
+					   const char *arg, int unset)
+{
+	if (unset) {
+		unpack_unreachable = 0;
+		unpack_unreachable_expiration = 0;
+	}
+	else {
+		unpack_unreachable = 1;
+		if (arg)
+			unpack_unreachable_expiration = approxidate(arg);
+	}
 	return 0;
 }
 
@@ -2392,8 +2412,9 @@ int cmd_pack_objects(int argc, const char **argv, const char *prefix)
 			 "include tag objects that refer to objects to be packed"),
 		OPT_BOOL(0, "keep-unreachable", &keep_unreachable,
 			 "keep unreachable objects"),
-		OPT_BOOL(0, "unpack-unreachable", &unpack_unreachable,
-			 "unpack unreachable objects"),
+		{ OPTION_CALLBACK, 0, "unpack-unreachable", NULL, "time",
+		  "unpack unreachable objects newer than <time>",
+		  PARSE_OPT_OPTARG, option_parse_unpack_unreachable },
 		OPT_BOOL(0, "thin", &thin,
 			 "create thin packs"),
 		OPT_BOOL(0, "honor-pack-keep", &ignore_packed_keep,

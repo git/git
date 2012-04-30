@@ -2,8 +2,7 @@
 #include "argv-array.h"
 #include "strbuf.h"
 
-static const char *empty_argv_storage = NULL;
-const char **empty_argv = &empty_argv_storage;
+const char *empty_argv[] = { NULL };
 
 void argv_array_init(struct argv_array *array)
 {
@@ -37,6 +36,17 @@ void argv_array_pushf(struct argv_array *array, const char *fmt, ...)
 	va_end(ap);
 
 	argv_array_push_nodup(array, strbuf_detach(&v, NULL));
+}
+
+void argv_array_pushl(struct argv_array *array, ...)
+{
+	va_list ap;
+	const char *arg;
+
+	va_start(ap, array);
+	while((arg = va_arg(ap, const char *)))
+		argv_array_push(array, arg);
+	va_end(ap);
 }
 
 void argv_array_clear(struct argv_array *array)

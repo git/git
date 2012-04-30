@@ -14,6 +14,7 @@
 #include "cache.h"
 #include "parse-options.h"
 #include "run-command.h"
+#include "argv-array.h"
 
 #define FAILED_RUN "failed to run %s"
 
@@ -28,12 +29,11 @@ static int gc_auto_threshold = 6700;
 static int gc_auto_pack_limit = 50;
 static const char *prune_expire = "2.weeks.ago";
 
-#define MAX_ADD 10
-static const char *argv_pack_refs[] = {"pack-refs", "--all", "--prune", NULL};
-static const char *argv_reflog[] = {"reflog", "expire", "--all", NULL};
-static const char *argv_repack[MAX_ADD] = {"repack", "-d", "-l", NULL};
-static const char *argv_prune[] = {"prune", "--expire", NULL, NULL, NULL};
-static const char *argv_rerere[] = {"rerere", "gc", NULL};
+static struct argv_array pack_refs_cmd = ARGV_ARRAY_INIT;
+static struct argv_array reflog = ARGV_ARRAY_INIT;
+static struct argv_array repack = ARGV_ARRAY_INIT;
+static struct argv_array prune = ARGV_ARRAY_INIT;
+static struct argv_array rerere = ARGV_ARRAY_INIT;
 
 static int gc_config(const char *var, const char *value, void *cb)
 {
@@ -65,19 +65,6 @@ static int gc_config(const char *var, const char *value, void *cb)
 		return git_config_string(&prune_expire, var, value);
 	}
 	return git_default_config(var, value, cb);
-}
-
-static void append_option(const char **cmd, const char *opt, int max_length)
-{
-	int i;
-
-	for (i = 0; cmd[i]; i++)
-		;
-
-	if (i + 2 >= max_length)
-		die(_("Too many options specified"));
-	cmd[i++] = opt;
-	cmd[i] = NULL;
 }
 
 static int too_many_loose_objects(void)
@@ -144,6 +131,17 @@ static int too_many_packs(void)
 	return gc_auto_pack_limit <= cnt;
 }
 
+static void add_repack_all_option(void)
+{
+	if (prune_expire && !strcmp(prune_expire, "now"))
+		argv_array_push(&repack, "-a");
+	else {
+		argv_array_push(&repack, "-A");
+		if (prune_expire)
+			argv_array_pushf(&repack, "--unpack-unreachable=%s", prune_expire);
+	}
+}
+
 static int need_to_gc(void)
 {
 	/*
@@ -160,10 +158,7 @@ static int need_to_gc(void)
 	 * there is no need.
 	 */
 	if (too_many_packs())
-		append_option(argv_repack,
-			      prune_expire && !strcmp(prune_expire, "now") ?
-			      "-a" : "-A",
-			      MAX_ADD);
+		add_repack_all_option();
 	else if (!too_many_loose_objects())
 		return 0;
 
@@ -177,7 +172,6 @@ int cmd_gc(int argc, const char **argv, const char *prefix)
 	int aggressive = 0;
 	int auto_gc = 0;
 	int quiet = 0;
-	char buf[80];
 
 	struct option builtin_gc_options[] = {
 		OPT__QUIET(&quiet, "suppress progress reporting"),
@@ -192,6 +186,12 @@ int cmd_gc(int argc, const char **argv, const char *prefix)
 	if (argc == 2 && !strcmp(argv[1], "-h"))
 		usage_with_options(builtin_gc_usage, builtin_gc_options);
 
+	argv_array_pushl(&pack_refs_cmd, "pack-refs", "--all", "--prune", NULL);
+	argv_array_pushl(&reflog, "reflog", "expire", "--all", NULL);
+	argv_array_pushl(&repack, "repack", "-d", "-l", NULL);
+	argv_array_pushl(&prune, "prune", "--expire", NULL );
+	argv_array_pushl(&rerere, "rerere", "gc", NULL);
+
 	git_config(gc_config, NULL);
 
 	if (pack_refs < 0)
@@ -203,15 +203,13 @@ int cmd_gc(int argc, const char **argv, const char *prefix)
 		usage_with_options(builtin_gc_usage, builtin_gc_options);
 
 	if (aggressive) {
-		append_option(argv_repack, "-f", MAX_ADD);
-		append_option(argv_repack, "--depth=250", MAX_ADD);
-		if (aggressive_window > 0) {
-			sprintf(buf, "--window=%d", aggressive_window);
-			append_option(argv_repack, buf, MAX_ADD);
-		}
+		argv_array_push(&repack, "-f");
+		argv_array_push(&repack, "--depth=250");
+		if (aggressive_window > 0)
+			argv_array_pushf(&repack, "--window=%d", aggressive_window);
 	}
 	if (quiet)
-		append_option(argv_repack, "-q", MAX_ADD);
+		argv_array_push(&repack, "-q");
 
 	if (auto_gc) {
 		/*
@@ -227,30 +225,27 @@ int cmd_gc(int argc, const char **argv, const char *prefix)
 					"run \"git gc\" manually. See "
 					"\"git help gc\" for more information.\n"));
 	} else
-		append_option(argv_repack,
-			      prune_expire && !strcmp(prune_expire, "now")
-			      ? "-a" : "-A",
-			      MAX_ADD);
+		add_repack_all_option();
 
-	if (pack_refs && run_command_v_opt(argv_pack_refs, RUN_GIT_CMD))
-		return error(FAILED_RUN, argv_pack_refs[0]);
+	if (pack_refs && run_command_v_opt(pack_refs_cmd.argv, RUN_GIT_CMD))
+		return error(FAILED_RUN, pack_refs_cmd.argv[0]);
 
-	if (run_command_v_opt(argv_reflog, RUN_GIT_CMD))
-		return error(FAILED_RUN, argv_reflog[0]);
+	if (run_command_v_opt(reflog.argv, RUN_GIT_CMD))
+		return error(FAILED_RUN, reflog.argv[0]);
 
-	if (run_command_v_opt(argv_repack, RUN_GIT_CMD))
-		return error(FAILED_RUN, argv_repack[0]);
+	if (run_command_v_opt(repack.argv, RUN_GIT_CMD))
+		return error(FAILED_RUN, repack.argv[0]);
 
 	if (prune_expire) {
-		argv_prune[2] = prune_expire;
+		argv_array_push(&prune, prune_expire);
 		if (quiet)
-			argv_prune[3] = "--no-progress";
-		if (run_command_v_opt(argv_prune, RUN_GIT_CMD))
-			return error(FAILED_RUN, argv_prune[0]);
+			argv_array_push(&prune, "--no-progress");
+		if (run_command_v_opt(prune.argv, RUN_GIT_CMD))
+			return error(FAILED_RUN, prune.argv[0]);
 	}
 
-	if (run_command_v_opt(argv_rerere, RUN_GIT_CMD))
-		return error(FAILED_RUN, argv_rerere[0]);
+	if (run_command_v_opt(rerere.argv, RUN_GIT_CMD))
+		return error(FAILED_RUN, rerere.argv[0]);
 
 	if (auto_gc && too_many_loose_objects())
 		warning(_("There are too many unreachable loose objects; "
