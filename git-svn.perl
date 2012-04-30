@@ -5444,7 +5444,7 @@ BEGIN {
 }
 
 sub _auth_providers () {
-	[
+	my @rv = (
 	  SVN::Client::get_simple_provider(),
 	  SVN::Client::get_ssl_server_trust_file_provider(),
 	  SVN::Client::get_simple_prompt_provider(
@@ -5460,7 +5460,23 @@ sub _auth_providers () {
 	    \&Git::SVN::Prompt::ssl_server_trust),
 	  SVN::Client::get_username_prompt_provider(
 	    \&Git::SVN::Prompt::username, 2)
-	]
+	);
+
+	# earlier 1.6.x versions would segfault, and <= 1.5.x didn't have
+	# this function
+	if ($SVN::Core::VERSION gt '1.6.12') {
+		my $config = SVN::Core::config_get_config($config_dir);
+		my ($p, @a);
+		# config_get_config returns all config files from
+		# ~/.subversion, auth_get_platform_specific_client_providers
+		# just wants the config "file".
+		@a = ($config->{'config'}, undef);
+		$p = SVN::Core::auth_get_platform_specific_client_providers(@a);
+		# Insert the return value from
+		# auth_get_platform_specific_providers
+		unshift @rv, @$p;
+	}
+	\@rv;
 }
 
 sub escape_uri_only {
