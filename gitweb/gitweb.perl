@@ -3012,9 +3012,11 @@ sub git_get_projects_list {
 			}
 			if (check_export_ok("$projectroot/$path")) {
 				my $pr = {
-					path => $path,
-					owner => to_utf8($owner),
+					path => $path
 				};
+				if ($owner) {
+					$pr->{'owner'} = to_utf8($owner);
+				}
 				push @list, $pr;
 			}
 		}
