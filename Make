@@ -56,7 +56,7 @@ do
 	)
 done
 
-Wall='-Wall -Wdeclaration-after-statement' tests= jobs= skip=
+Wall='-Wall -Wdeclaration-after-statement' tests= jobs= skip= oldtest=
 case `uname` in
 OpenBSD)
 	NEEDS_CRYPTO_WITH_SSL=YesPlease ; export NEEDS_CRYPTO_WITH_SSL
@@ -101,6 +101,9 @@ do
 		'')	jobs=$1 ;;
 		esac
 		;;
+	-noprove | --noprove)
+		oldtest=t
+		;;
 	-loose | --loose)
 		Wall=
 		;;
@@ -135,7 +138,8 @@ if test -z "$tests" && test -n "$skip"
 then
 	: GIT_SKIP_TESTS="${GIT_SKIP_TESTS:-$skip}"
 fi
-if sh -c 'prove --version >/dev/null 2>&1' &&
+if test -z "$oldtest" &&
+   sh -c 'prove --version >/dev/null 2>&1' &&
    sh -c 'prove --exec : >/dev/null 2>&1'
 then
         DEFAULT_TEST_TARGET=prove GIT_PROVE_OPTS="$jobs"
