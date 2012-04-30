@@ -95,7 +95,9 @@ included file is expanded immediately, as if its contents had been
 found at the location of the include directive. If the value of the
 `include.path` variable is a relative path, the path is considered to be
 relative to the configuration file in which the include directive was
-found. See below for examples.
+found. The value of `include.path` is subject to tilde expansion: `{tilde}/`
+is expanded to the value of `$HOME`, and `{tilde}user/` to the specified
+user's home directory. See below for examples.
 
 Example
 ~~~~~~~
@@ -122,6 +124,7 @@ Example
 	[include]
 		path = /path/to/foo.inc ; include by absolute path
 		path = foo ; expand "foo" relative to the current file
+		path = ~/foo ; expand "foo" in your $HOME directory
 
 Variables
 ~~~~~~~~~

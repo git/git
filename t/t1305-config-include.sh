@@ -29,6 +29,14 @@ test_expect_success 'chained relative paths' '
 	test_cmp expect actual
 '
 
+test_expect_success 'include paths get tilde-expansion' '
+	echo "[test]one = 1" >one &&
+	echo "[include]path = ~/one" >.gitconfig &&
+	echo 1 >expect &&
+	git config test.one >actual &&
+	test_cmp expect actual
+'
+
 test_expect_success 'include options can still be examined' '
 	echo "[test]one = 1" >one &&
 	echo "[include]path = one" >.gitconfig &&
