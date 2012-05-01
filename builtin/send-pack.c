@@ -492,6 +492,9 @@ int cmd_send_pack(int argc, const char **argv, const char *prefix)
 		}
 	}
 
+	if (!args.quiet)
+		args.progress = isatty(2);
+
 	if (args.stateless_rpc) {
 		conn = NULL;
 		fd[0] = 0;
