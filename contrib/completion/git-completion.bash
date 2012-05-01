@@ -676,9 +676,7 @@ __git_complete_revlist_file ()
 		*)   pfx="$ref:$pfx" ;;
 		esac
 
-		local IFS=$'\n'
-		COMPREPLY=($(compgen -P "$pfx" \
-			-W "$(git --git-dir="$(__gitdir)" ls-tree "$ls" \
+		__gitcomp_nl "$(git --git-dir="$(__gitdir)" ls-tree "$ls" \
 				| sed '/^100... blob /{
 				           s,^.*	,,
 				           s,$, ,
@@ -692,7 +690,7 @@ __git_complete_revlist_file ()
 				           s,$,/,
 				       }
 				       s/^.*	//')" \
-			-- "$cur_"))
+			"$pfx" "$cur_" ""
 		;;
 	*...*)
 		pfx="${cur_%...*}..."
