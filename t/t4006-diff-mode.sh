@@ -46,18 +46,12 @@ test_expect_success '--shortstat output after text chmod' '
 
 test_expect_success '--stat output after binary chmod' '
 	test_chmod +x binbin &&
-	cat >expect <<-EOF &&
-	 binbin |  Bin 1024 -> 1024 bytes
-	 1 file changed, 0 insertions(+), 0 deletions(-)
-	EOF
+	echo " 0 files changed" >expect &&
 	git diff HEAD --stat >actual &&
 	test_cmp expect actual
 '
 
 test_expect_success '--shortstat output after binary chmod' '
-	cat >expect <<-EOF &&
-	 1 file changed, 0 insertions(+), 0 deletions(-)
-	EOF
 	git diff HEAD --shortstat >actual &&
 	test_cmp expect actual
 '
