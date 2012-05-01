@@ -1,4 +1,4 @@
-#!/usr/bin/env perl
+#!/usr/bin/perl
 # Copyright 2005, Ryan Anderson <ryan@michonline.com>
 # Distribution permitted under the GPL v2, as distributed
 # by the Free Software Foundation.
