@@ -774,6 +774,7 @@ static int push_git(struct discovery *heads, int nr_spec, char **specs)
 		argv[argc++] = "--quiet";
 	else if (options.verbosity > 1)
 		argv[argc++] = "--verbose";
+	argv[argc++] = options.progress ? "--progress" : "--no-progress";
 	argv[argc++] = url;
 	for (i = 0; i < nr_spec; i++)
 		argv[argc++] = specs[i];
