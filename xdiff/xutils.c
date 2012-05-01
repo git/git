@@ -290,38 +290,32 @@ static inline unsigned long has_zero(unsigned long a)
 	return ((a - ONEBYTES) & ~a) & HIGHBITS;
 }
 
-#if __WORDSIZE == 64
-
-/*
- * Jan Achrenius on G+: microoptimized version of
- * the simpler "(mask & ONEBYTES) * ONEBYTES >> 56"
- * that works for the bytemasks without having to
- * mask them first.
- */
 static inline long count_masked_bytes(unsigned long mask)
 {
-	return mask * 0x0001020304050608 >> 56;
+	if (sizeof(long) == 8) {
+		/*
+		 * Jan Achrenius on G+: microoptimized version of
+		 * the simpler "(mask & ONEBYTES) * ONEBYTES >> 56"
+		 * that works for the bytemasks without having to
+		 * mask them first.
+		 */
+		return mask * 0x0001020304050608 >> 56;
+	} else {
+		/*
+		 * Modified Carl Chatfield G+ version for 32-bit *
+		 *
+		 * (a) gives us
+		 *   -1 (0, ff), 0 (ffff) or 1 (ffffff)
+		 * (b) gives us
+		 *   0 for 0, 1 for (ff ffff ffffff)
+		 * (a+b+1) gives us
+		 *   correct 0-3 bytemask count result
+		 */
+		long a = (mask - 256) >> 23;
+		long b = mask & 1;
+		return a + b + 1;
+	}
 }
-
-#else	/* 32-bit case */
-
-/* Modified Carl Chatfield G+ version for 32-bit */
-static inline long count_masked_bytes(long mask)
-{
-	/*
-	 * (a) gives us
-	 *   -1 (0, ff), 0 (ffff) or 1 (ffffff)
-	 * (b) gives us
-	 *   0 for 0, 1 for (ff ffff ffffff)
-	 * (a+b+1) gives us
-	 *   correct 0-3 bytemask count result
-	 */
-	long a = (mask - 256) >> 23;
-	long b = mask & 1;
-	return a + b + 1;
-}
-
-#endif
 
 unsigned long xdl_hash_record(char const **data, char const *top, long flags)
 {
