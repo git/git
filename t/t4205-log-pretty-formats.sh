@@ -83,4 +83,20 @@ test_expect_success 'NUL termination' '
 	test_cmp expected actual
 '
 
+test_expect_success 'NUL separation with --stat' '
+	stat0_part=$(git diff --stat HEAD^ HEAD) &&
+	stat1_part=$(git diff --stat --root HEAD^) &&
+	printf "add bar\n$stat0_part\n\0initial\n$stat1_part\n" >expected &&
+	git log -z --stat --pretty="format:%s" >actual &&
+	test_cmp expected actual
+'
+
+test_expect_failure 'NUL termination with --stat' '
+	stat0_part=$(git diff --stat HEAD^ HEAD) &&
+	stat1_part=$(git diff --stat --root HEAD^) &&
+	printf "add bar\n$stat0_part\n\0initial\n$stat1_part\n\0" >expected &&
+	git log -z --stat --pretty="tformat:%s" >actual &&
+	test_cmp expected actual
+'
+
 test_done
