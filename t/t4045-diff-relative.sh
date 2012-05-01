@@ -44,7 +44,7 @@ test_expect_success "--numstat $*" "
 check_stat() {
 expect=$1; shift
 cat >expected <<EOF
- $expect |    1 +
+ $expect | 1 +
  1 file changed, 1 insertion(+)
 EOF
 test_expect_success "--stat $*" "

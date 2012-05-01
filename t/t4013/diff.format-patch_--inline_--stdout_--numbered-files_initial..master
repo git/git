@@ -14,9 +14,9 @@ Content-Transfer-Encoding: 8bit
 
 This is the second commit.
 ---
- dir/sub |    2 ++
- file0   |    3 +++
- file2   |    3 ---
+ dir/sub | 2 ++
+ file0   | 3 +++
+ file2   | 3 ---
  3 files changed, 5 insertions(+), 3 deletions(-)
  delete mode 100644 file2
 
@@ -73,8 +73,8 @@ Content-Type: text/plain; charset=UTF-8; format=fixed
 Content-Transfer-Encoding: 8bit
 
 ---
- dir/sub |    2 ++
- file1   |    3 +++
+ dir/sub | 2 ++
+ file1   | 3 +++
  2 files changed, 5 insertions(+)
  create mode 100644 file1
 
@@ -121,9 +121,9 @@ Content-Type: text/plain; charset=UTF-8; format=fixed
 Content-Transfer-Encoding: 8bit
 
 ---
- dir/sub |    2 ++
- file0   |    3 +++
- file3   |    4 ++++
+ dir/sub | 2 ++
+ file0   | 3 +++
+ file3   | 4 ++++
  3 files changed, 9 insertions(+)
  create mode 100644 file3
 
