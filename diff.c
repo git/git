@@ -2370,6 +2370,7 @@ static void builtin_diffstat(const char *name_a, const char *name_b,
 {
 	mmfile_t mf1, mf2;
 	struct diffstat_file *data;
+	int same_contents;
 
 	data = diffstat_add(diffstat, name_a, name_b);
 
@@ -2378,9 +2379,11 @@ static void builtin_diffstat(const char *name_a, const char *name_b,
 		return;
 	}
 
+	same_contents = !hashcmp(one->sha1, two->sha1);
+
 	if (diff_filespec_is_binary(one) || diff_filespec_is_binary(two)) {
 		data->is_binary = 1;
-		if (!hashcmp(one->sha1, two->sha1)) {
+		if (same_contents) {
 			data->added = 0;
 			data->deleted = 0;
 		} else {
@@ -2396,7 +2399,7 @@ static void builtin_diffstat(const char *name_a, const char *name_b,
 		data->added = count_lines(two->data, two->size);
 	}
 
-	else {
+	else if (!same_contents) {
 		/* Crazy xdl interfaces.. */
 		xpparam_t xpp;
 		xdemitconf_t xecfg;
