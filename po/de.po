@@ -2076,7 +2076,7 @@ msgstr "keine Muster gegeben"
 #: builtin/grep.c:902
 #, c-format
 msgid "bad object %s"
-msgstr "schlechtes Objekt %s"
+msgstr "ungültiges Objekt %s"
 
 #: builtin/grep.c:943
 msgid "--open-files-in-pager only works on the worktree"
@@ -2419,7 +2419,7 @@ msgstr "'%s' zeigt auf keine Version"
 #: builtin/merge.c:536
 #, c-format
 msgid "Bad branch.%s.mergeoptions string: %s"
-msgstr "Schlechter branch.%s.mergeoptions String: %s"
+msgstr "Ungültiger branch.%s.mergeoptions String: %s"
 
 #: builtin/merge.c:629
 msgid "git write-tree failed to write a tree"
@@ -2634,7 +2634,7 @@ msgstr "Prüfe Umbenennen von '%s' nach '%s'\n"
 
 #: builtin/mv.c:112
 msgid "bad source"
-msgstr "schlechte Quelle"
+msgstr "ungültige Quelle"
 
 #: builtin/mv.c:115
 msgid "can not move directory into itself"
@@ -2761,7 +2761,7 @@ msgstr "Kann uninitialisierten/unreferenzierten Notiz-Baum nicht eintragen."
 #: builtin/notes.c:340
 #, c-format
 msgid "Bad notes.rewriteMode value: '%s'"
-msgstr "Schlechter notes.rewriteMode Wert: '%s'"
+msgstr "Ungültiger notes.rewriteMode Wert: '%s'"
 
 #: builtin/notes.c:350
 #, c-format
@@ -2774,7 +2774,7 @@ msgstr ""
 #: builtin/notes.c:377
 #, c-format
 msgid "Bad %s value: '%s'"
-msgstr "Schlechter %s Wert: '%s'"
+msgstr "Ungültiger %s Wert: '%s'"
 
 #: builtin/notes.c:441
 #, c-format
@@ -2856,7 +2856,7 @@ msgstr "Nicht unterstützte Bereitstellungsversion %s"
 #: builtin/pack-objects.c:2314
 #, c-format
 msgid "bad index version '%s'"
-msgstr "Schlechte Bereitstellungsversion '%s'"
+msgstr "Ungültige Bereitstellungsversion '%s'"
 
 #: builtin/pack-objects.c:2322
 #, c-format
@@ -2955,7 +2955,7 @@ msgstr ""
 #: builtin/push.c:176
 #, c-format
 msgid "bad repository '%s'"
-msgstr "schlechtes Projektarchiv '%s'"
+msgstr "ungültiges Projektarchiv '%s'"
 
 #: builtin/push.c:177
 msgid ""
@@ -3214,7 +3214,7 @@ msgstr "konnte Markierungsdatei nicht schreiben"
 
 #: builtin/tag.c:321
 msgid "bad object type."
-msgstr "schlechter Objekt-Typ"
+msgstr "ungültiger Objekt-Typ"
 
 #: builtin/tag.c:334
 msgid "tag header too big."
@@ -3389,7 +3389,7 @@ msgstr "'$arg' scheint keine gültige Version zu sein"
 
 #: git-bisect.sh:117
 msgid "Bad HEAD - I need a HEAD"
-msgstr "Schlechte Zweigspitze (HEAD) - Ich brauche eine Zweigspitze (HEAD)"
+msgstr "Ungültige Zweigspitze (HEAD) - Ich brauche eine Zweigspitze (HEAD)"
 
 #: git-bisect.sh:130
 #, sh-format
@@ -3405,17 +3405,17 @@ msgstr "werde nicht auf gesuchtem Baum halbieren"
 
 #: git-bisect.sh:144
 msgid "Bad HEAD - strange symbolic ref"
-msgstr "Schlechte Zweigspitze (HEAD) - merkwürdige symbolische Referenz"
+msgstr "Ungültige Zweigspitze (HEAD) - merkwürdige symbolische Referenz"
 
 #: git-bisect.sh:189
 #, sh-format
 msgid "Bad bisect_write argument: $state"
-msgstr "Schlechtes \"bisect_write\" Argument: $state"
+msgstr "Ungültiges \"bisect_write\" Argument: $state"
 
 #: git-bisect.sh:218
 #, sh-format
 msgid "Bad rev input: $arg"
-msgstr "Schlechte Referenz-Eingabe: $arg"
+msgstr "Ungültige Referenz-Eingabe: $arg"
 
 #: git-bisect.sh:232
 msgid "Please call 'bisect_state' with at least one argument."
@@ -3424,7 +3424,7 @@ msgstr "Bitte rufe 'bisect_state' mit mindestens einem Argument auf."
 #: git-bisect.sh:244
 #, sh-format
 msgid "Bad rev input: $rev"
-msgstr "Schlechte Referenz-Eingabe: $rev"
+msgstr "Ungültige Referenz-Eingabe: $rev"
 
 #: git-bisect.sh:250
 msgid "'git bisect bad' can take only one argument."
