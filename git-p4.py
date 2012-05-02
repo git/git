@@ -133,25 +133,29 @@ def p4_system(cmd):
     subprocess.check_call(real_cmd, shell=expand)
 
 def p4_integrate(src, dest):
-    p4_system(["integrate", "-Dt", src, dest])
+    p4_system(["integrate", "-Dt", wildcard_encode(src), wildcard_encode(dest)])
 
-def p4_sync(path):
-    p4_system(["sync", path])
+def p4_sync(f, *options):
+    p4_system(["sync"] + list(options) + [wildcard_encode(f)])
 
 def p4_add(f):
-    p4_system(["add", f])
+    # forcibly add file names with wildcards
+    if wildcard_present(f):
+        p4_system(["add", "-f", f])
+    else:
+        p4_system(["add", f])
 
 def p4_delete(f):
-    p4_system(["delete", f])
+    p4_system(["delete", wildcard_encode(f)])
 
 def p4_edit(f):
-    p4_system(["edit", f])
+    p4_system(["edit", wildcard_encode(f)])
 
 def p4_revert(f):
-    p4_system(["revert", f])
+    p4_system(["revert", wildcard_encode(f)])
 
-def p4_reopen(type, file):
-    p4_system(["reopen", "-t", type, file])
+def p4_reopen(type, f):
+    p4_system(["reopen", "-t", type, wildcard_encode(f)])
 
 #
 # Canonicalize the p4 type and return a tuple of the
@@ -248,7 +252,7 @@ def setP4ExecBit(file, mode):
 def getP4OpenedType(file):
     # Returns the perforce file type for the given file.
 
-    result = p4_read_pipe(["opened", file])
+    result = p4_read_pipe(["opened", wildcard_encode(file)])
     match = re.match(".*\((.+)\)\r?$", result)
     if match:
         return match.group(1)
@@ -658,6 +662,34 @@ def getClientRoot():
 
     return entry["Root"]
 
+#
+# P4 wildcards are not allowed in filenames.  P4 complains
+# if you simply add them, but you can force it with "-f", in
+# which case it translates them into %xx encoding internally.
+#
+def wildcard_decode(path):
+    # Search for and fix just these four characters.  Do % last so
+    # that fixing it does not inadvertently create new %-escapes.
+    # Cannot have * in a filename in windows; untested as to
+    # what p4 would do in such a case.
+    if not platform.system() == "Windows":
+        path = path.replace("%2A", "*")
+    path = path.replace("%23", "#") \
+               .replace("%40", "@") \
+               .replace("%25", "%")
+    return path
+
+def wildcard_encode(path):
+    # do % first to avoid double-encoding the %s introduced here
+    path = path.replace("%", "%25") \
+               .replace("*", "%2A") \
+               .replace("#", "%23") \
+               .replace("@", "%40")
+    return path
+
+def wildcard_present(path):
+    return path.translate(None, "*#@%") != path
+
 class Command:
     def __init__(self):
         self.usage = "usage: %prog [options]"
@@ -1038,6 +1070,7 @@ class P4Submit(Command, P4UserMap):
         filesToAdd = set()
         filesToDelete = set()
         editedFiles = set()
+        pureRenameCopy = set()
         filesToChangeExecBit = {}
 
         for line in diff:
@@ -1061,10 +1094,13 @@ class P4Submit(Command, P4UserMap):
             elif modifier == "C":
                 src, dest = diff['src'], diff['dst']
                 p4_integrate(src, dest)
+                pureRenameCopy.add(dest)
                 if diff['src_sha1'] != diff['dst_sha1']:
                     p4_edit(dest)
+                    pureRenameCopy.discard(dest)
                 if isModeExecChanged(diff['src_mode'], diff['dst_mode']):
                     p4_edit(dest)
+                    pureRenameCopy.discard(dest)
                     filesToChangeExecBit[dest] = diff['dst_mode']
                 os.unlink(dest)
                 editedFiles.add(dest)
@@ -1073,6 +1109,8 @@ class P4Submit(Command, P4UserMap):
                 p4_integrate(src, dest)
                 if diff['src_sha1'] != diff['dst_sha1']:
                     p4_edit(dest)
+                else:
+                    pureRenameCopy.add(dest)
                 if isModeExecChanged(diff['src_mode'], diff['dst_mode']):
                     p4_edit(dest)
                     filesToChangeExecBit[dest] = diff['dst_mode']
@@ -1181,7 +1219,8 @@ class P4Submit(Command, P4UserMap):
                 del(os.environ["P4DIFF"])
             diff = ""
             for editedFile in editedFiles:
-                diff += p4_read_pipe(['diff', '-du', editedFile])
+                diff += p4_read_pipe(['diff', '-du',
+                                      wildcard_encode(editedFile)])
 
             newdiff = ""
             for newFile in filesToAdd:
@@ -1226,6 +1265,12 @@ class P4Submit(Command, P4UserMap):
                         # unmarshalled.
                         changelist = self.lastP4Changelist()
                         self.modifyChangelistUser(changelist, p4User)
+
+                # The rename/copy happened by applying a patch that created a
+                # new file.  This leaves it writable, which confuses p4.
+                for f in pureRenameCopy:
+                    p4_sync(f, "-f")
+
             else:
                 # skip this patch
                 print "Submission cancelled, undoing p4 changes."
@@ -1361,12 +1406,18 @@ class P4Submit(Command, P4UserMap):
         self.oldWorkingDirectory = os.getcwd()
 
         # ensure the clientPath exists
+        new_client_dir = False
         if not os.path.exists(self.clientPath):
+            new_client_dir = True
             os.makedirs(self.clientPath)
 
         chdir(self.clientPath)
         print "Synchronizing p4 checkout..."
-        p4_sync("...")
+        if new_client_dir:
+            # old one was destroyed, and maybe nobody told p4
+            p4_sync("...", "-f")
+        else:
+            p4_sync("...")
         self.check()
 
         commits = []
@@ -1679,23 +1730,6 @@ class P4Sync(Command, P4UserMap):
         if gitConfig("git-p4.syncFromOrigin") == "false":
             self.syncWithOrigin = False
 
-    #
-    # P4 wildcards are not allowed in filenames.  P4 complains
-    # if you simply add them, but you can force it with "-f", in
-    # which case it translates them into %xx encoding internally.
-    # Search for and fix just these four characters.  Do % last so
-    # that fixing it does not inadvertently create new %-escapes.
-    #
-    def wildcard_decode(self, path):
-        # Cannot have * in a filename in windows; untested as to
-        # what p4 would do in such a case.
-        if not self.isWindows:
-            path = path.replace("%2A", "*")
-        path = path.replace("%23", "#") \
-                   .replace("%40", "@") \
-                   .replace("%25", "%")
-        return path
-
     # Force a checkpoint in fast-import and wait for it to finish
     def checkpoint(self):
         self.gitStream.write("checkpoint\n\n")
@@ -1763,6 +1797,7 @@ class P4Sync(Command, P4UserMap):
             fnum = fnum + 1
 
             relPath = self.stripRepoPath(path, self.depotPaths)
+            relPath = wildcard_decode(relPath)
 
             for branch in self.knownBranches.keys():
 
@@ -1780,7 +1815,7 @@ class P4Sync(Command, P4UserMap):
 
     def streamOneP4File(self, file, contents):
         relPath = self.stripRepoPath(file['depotFile'], self.branchPrefixes)
-        relPath = self.wildcard_decode(relPath)
+        relPath = wildcard_decode(relPath)
         if verbose:
             sys.stderr.write("%s\n" % relPath)
 
@@ -1849,6 +1884,7 @@ class P4Sync(Command, P4UserMap):
 
     def streamOneP4Deletion(self, file):
         relPath = self.stripRepoPath(file['path'], self.branchPrefixes)
+        relPath = wildcard_decode(relPath)
         if verbose:
             sys.stderr.write("delete %s\n" % relPath)
         self.gitStream.write("D %s\n" % relPath)

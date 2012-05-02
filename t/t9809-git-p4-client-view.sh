@@ -349,7 +349,8 @@ test_expect_success 'subdir clone, submit copy' '
 	) &&
 	(
 		cd "$cli" &&
-		test_path_is_file dir1/file11a
+		test_path_is_file dir1/file11a &&
+		test ! -w dir1/file11a
 	)
 '
 
@@ -368,14 +369,47 @@ test_expect_success 'subdir clone, submit rename' '
 	(
 		cd "$cli" &&
 		test_path_is_missing dir1/file13 &&
-		test_path_is_file dir1/file13a
+		test_path_is_file dir1/file13a &&
+		test ! -w dir1/file13a
+	)
+'
+
+# see t9800 for the non-client-spec case, and the rest of the wildcard tests
+test_expect_success 'wildcard files submit back to p4, client-spec case' '
+	client_view "//depot/... //client/..." &&
+	test_when_finished cleanup_git &&
+	git p4 clone --use-client-spec --dest="$git" //depot/dir1 &&
+	(
+		cd "$git" &&
+		echo git-wild-hash >dir1/git-wild#hash &&
+		echo git-wild-star >dir1/git-wild\*star &&
+		echo git-wild-at >dir1/git-wild@at &&
+		echo git-wild-percent >dir1/git-wild%percent &&
+		git add dir1/git-wild* &&
+		git commit -m "add some wildcard filenames" &&
+		git config git-p4.skipSubmitEditCheck true &&
+		git p4 submit
+	) &&
+	(
+		cd "$cli" &&
+		test_path_is_file dir1/git-wild#hash &&
+		test_path_is_file dir1/git-wild\*star &&
+		test_path_is_file dir1/git-wild@at &&
+		test_path_is_file dir1/git-wild%percent
+	) &&
+	(
+		# delete these carefully, cannot just do "p4 delete"
+		# on files with wildcards; but git-p4 knows how
+		cd "$git" &&
+		git rm dir1/git-wild* &&
+		git commit -m "clean up the wildcards" &&
+		git p4 submit
 	)
 '
 
 test_expect_success 'reinit depot' '
 	(
 		cd "$cli" &&
-		p4 sync -f &&
 		rm files &&
 		p4 delete */* &&
 		p4 submit -d "delete all files" &&
