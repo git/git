@@ -410,6 +410,7 @@ int cmd_send_pack(int argc, const char **argv, const char *prefix)
 	const char *receivepack = "git-receive-pack";
 	int flags;
 	int nonfastforward = 0;
+	int progress = -1;
 
 	argv++;
 	for (i = 1; i < argc; i++, argv++) {
@@ -452,6 +453,14 @@ int cmd_send_pack(int argc, const char **argv, const char *prefix)
 				args.verbose = 1;
 				continue;
 			}
+			if (!strcmp(arg, "--progress")) {
+				progress = 1;
+				continue;
+			}
+			if (!strcmp(arg, "--no-progress")) {
+				progress = 0;
+				continue;
+			}
 			if (!strcmp(arg, "--thin")) {
 				args.use_thin_pack = 1;
 				continue;
@@ -491,6 +500,10 @@ int cmd_send_pack(int argc, const char **argv, const char *prefix)
 			    dest, remote_name);
 		}
 	}
+
+	if (progress == -1)
+		progress = !args.quiet && isatty(2);
+	args.progress = progress;
 
 	if (args.stateless_rpc) {
 		conn = NULL;
