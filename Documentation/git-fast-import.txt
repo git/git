@@ -479,9 +479,9 @@ current branch value should be written as:
 ----
 	from refs/heads/branch^0
 ----
-The `{caret}0` suffix is necessary as fast-import does not permit a branch to
+The `^0` suffix is necessary as fast-import does not permit a branch to
 start from itself, and the branch is created in memory before the
-`from` command is even read from the input.  Adding `{caret}0` will force
+`from` command is even read from the input.  Adding `^0` will force
 fast-import to resolve the commit through Git's revision parsing library,
 rather than its internal branch table, thereby loading in the
 existing value of the branch.
@@ -979,7 +979,7 @@ Reading from a named tree::
 
 See `filemodify` above for a detailed description of `<path>`.
 
-Output uses the same format as `git ls-tree <tree> {litdd} <path>`:
+Output uses the same format as `git ls-tree <tree> -- <path>`:
 
 ====
 	<mode> SP ('blob' | 'tree' | 'commit') SP <dataref> HT <path> LF

@@ -70,7 +70,7 @@ copy::
 	second object). This subcommand is equivalent to:
 	`git notes add [-f] -C $(git notes list <from-object>) <to-object>`
 +
-In `\--stdin` mode, take lines in the format
+In `--stdin` mode, take lines in the format
 +
 ----------
 <from-object> SP <to-object> [ SP <rest> ] LF

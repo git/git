@@ -41,7 +41,7 @@ working tree in one go.
 +
 This means that `git reset -p` is the opposite of `git add -p`, i.e.
 you can use it to selectively reset hunks. See the ``Interactive Mode''
-section of linkgit:git-add[1] to learn how to operate the `\--patch` mode.
+section of linkgit:git-add[1] to learn how to operate the `--patch` mode.
 
 'git reset' --<mode> [<commit>]::
 	This form resets the current branch head to <commit> and
