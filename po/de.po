@@ -34,8 +34,8 @@ msgid ""
 "or use 'git commit -a'."
 msgstr ""
 "Korrigiere dies im Arbeitsbaum,\n"
-"und benutze dann 'git add/rm <Datei>' wie\n"
-"vorgesehen, um die Auflösung zu markieren und dann einzutragen,\n"
+"und benutze dann 'git add/rm <Datei>'\n"
+"um die Auflösung entsprechend zu markieren und einzutragen,\n"
 "oder benutze 'git commit -a'."
 
 #: commit.c:47
@@ -360,7 +360,7 @@ msgstr "Fehlerhaftes Optionsblatt: %s"
 
 #: sequencer.c:666
 msgid "a cherry-pick or revert is already in progress"
-msgstr "\"cherry-pick\" oder \"revert\" wird bereits ausgeführt"
+msgstr "\"cherry-pick\" oder \"revert\" ist bereits im Gang"
 
 #: sequencer.c:667
 msgid "try \"git cherry-pick (--continue | --quit | --abort)\""
@@ -378,7 +378,7 @@ msgstr "Fehler beim Einpacken von %s."
 
 #: sequencer.c:706 sequencer.c:840
 msgid "no cherry-pick or revert in progress"
-msgstr "kein \"cherry-pick\" oder \"revert\" in Ausführung"
+msgstr "kein \"cherry-pick\" oder \"revert\" im Gang"
 
 #: sequencer.c:708
 msgid "cannot resolve HEAD"
@@ -386,7 +386,7 @@ msgstr "kann Zweigspitze (HEAD) nicht auflösen"
 
 #: sequencer.c:710
 msgid "cannot abort from a branch yet to be born"
-msgstr "kann nicht von einem Zweig abbrechen, der noch geboren wird"
+msgstr "kann nicht abbrechen: bin auf einem Zweig, der noch geboren wird"
 
 #: sequencer.c:732
 #, c-format
@@ -441,7 +441,7 @@ msgstr ""
 #: wt-status.c:143
 msgid "  (use \"git add/rm <file>...\" as appropriate to mark resolution)"
 msgstr ""
-"  (benutze \"git add/rm <Datei>...\" wie vorgesehen, um die Auflösung zu "
+"  (benutze \"git add/rm <Datei>...\" um die Auflösung entsprechend zu "
 "markieren)"
 
 #: wt-status.c:151
@@ -454,12 +454,11 @@ msgstr "Änderungen, die nicht zum Eintragen bereitgestellt sind:"
 
 #: wt-status.c:173
 msgid "  (use \"git add <file>...\" to update what will be committed)"
-msgstr "  (benutze \"git add <Datei>...\" zur Aktualisierung der Eintragung)"
+msgstr "  (benutze \"git add <Datei>...\" zum Bereitstellen)"
 
 #: wt-status.c:175
 msgid "  (use \"git add/rm <file>...\" to update what will be committed)"
-msgstr ""
-"  (benutze \"git add/rm <Datei>...\" zur Aktualisierung der Eintragung)"
+msgstr "  (benutze \"git add/rm <Datei>...\" zum Bereitstellen)"
 
 #: wt-status.c:176
 msgid ""
@@ -655,11 +654,11 @@ msgstr "hinter "
 
 #: wt-status.c:908 wt-status.c:911
 msgid "ahead "
-msgstr "über "
+msgstr "weiter: "
 
 #: wt-status.c:913
 msgid ", behind "
-msgstr ", hinter "
+msgstr ", zurückgefallen "
 
 #: builtin/add.c:62
 #, c-format
@@ -882,12 +881,12 @@ msgstr "Zweig '%s' zeigt auf keine Version"
 #: builtin/branch.c:394
 #, c-format
 msgid "behind %d] "
-msgstr "hinter %d] "
+msgstr "%d hinterher] "
 
 #: builtin/branch.c:396
 #, c-format
 msgid "ahead %d] "
-msgstr "vor %d] "
+msgstr "%d voraus] "
 
 #: builtin/branch.c:398
 #, c-format
@@ -1549,9 +1548,8 @@ msgid ""
 " Lines starting\n"
 "with '#' will be ignored, and an empty message aborts the commit.\n"
 msgstr ""
-" Zeilen beginnend\n"
-"mit '#' werden ignoriert, und eine leere Versionsbeschreibung bricht die "
-"Eintragung ab.\n"
+" Zeilen, die mit '#'\n"
+"beginnen, werden ignoriert, und eine leere Versionsbeschreibung bricht die Eintragung ab.\n"
 
 #: builtin/commit.c:820
 msgid ""
@@ -1559,8 +1557,8 @@ msgid ""
 "with '#' will be kept; you may remove them yourself if you want to.\n"
 "An empty message aborts the commit.\n"
 msgstr ""
-" Zeilen beginnend\n"
-"mit '#' werden beibehalten; wenn du möchtest, kannst du diese entfernen.\n"
+" Zeilen, die mit '#'\n"
+"beginnen, werden beibehalten; wenn du möchtest, kannst du diese entfernen.\n"
 "Eine leere Versionsbeschreibung bricht die Eintragung ab.\n"
 
 #: builtin/commit.c:832
@@ -1741,7 +1739,7 @@ msgstr "annotierte Markierung %s hat keinen eingebetteten Namen"
 #: builtin/describe.c:240
 #, c-format
 msgid "tag '%s' is really '%s' here"
-msgstr "Markierung '%s' ist wirklich '%s' hier"
+msgstr "Markierung '%s' ist eigentlich '%s' hier"
 
 #: builtin/describe.c:267
 #, c-format
@@ -1810,7 +1808,7 @@ msgstr "Keine Namen gefunden, kann nichts beschreiben."
 
 #: builtin/describe.c:482
 msgid "--dirty is incompatible with committishes"
-msgstr "--dirty ist inkompatibel mit \"committish\"-Werten"
+msgstr "--dirty ist inkompatibel mit Versionen"
 
 #: builtin/diff.c:77
 #, c-format
@@ -1976,8 +1974,8 @@ msgid ""
 "remote name from which new revisions should be fetched."
 msgstr ""
 "Kein entferntes Projektarchiv spezifiziert. Bitte spezifiziere entweder\n"
-"eine URL oder einen Entfernungsname, von welchem neue Revisionen angefordert "
-"werden sollen."
+"eine URL oder den Namen eines entfernten Archivs, von welchem neue\n"
+"Revisionen angefordert werden sollen."
 
 #: builtin/fetch.c:918
 msgid "You need to specify a tag name."
@@ -2009,7 +2007,7 @@ msgstr "Ungültiger %s: '%s'"
 
 #: builtin/gc.c:78
 msgid "Too many options specified"
-msgstr "Zu viele Optionen spezifiziert"
+msgstr "Zu viele Optionen angegeben"
 
 #: builtin/gc.c:103
 #, c-format
@@ -2019,7 +2017,7 @@ msgstr "wahnsinnig langes Objekt-Verzeichnis %.*s"
 #: builtin/gc.c:223
 #, c-format
 msgid "Auto packing the repository for optimum performance.\n"
-msgstr "Automatische Paketierung des Repositories für optimale Leitung.\n"
+msgstr "Automatisches Packen des Projektarchivs für optimale Leistung.\n"
 
 #: builtin/gc.c:226
 #, c-format
@@ -2027,17 +2025,13 @@ msgid ""
 "Auto packing the repository for optimum performance. You may also\n"
 "run \"git gc\" manually. See \"git help gc\" for more information.\n"
 msgstr ""
-"Automatische Paketierung des Repositories für optimale Leitung. Du darfst "
-"auch\n"
-"\"git gc\" manuell ausführen. Siehe \"git help gc\" für weitere "
-"Informationen.\n"
+"Automatisches Packen des Projektarchivs für optimale Leistung. Du kannst auch\n"
+"\"git gc\" manuell ausführen. Siehe \"git help gc\" für weitere Informationen.\n"
 
 #: builtin/gc.c:256
 msgid ""
 "There are too many unreachable loose objects; run 'git prune' to remove them."
-msgstr ""
-"Es gibt zu viele unerreichbare, verlorene Objekte; führe 'git prune' aus um "
-"diese zu entfernen."
+msgstr "Es gibt zu viele unerreichbare lose Objekte; führe 'git prune' aus um diese zu entfernen."
 
 #: builtin/grep.c:216
 #, c-format
@@ -2303,11 +2297,11 @@ msgstr "unechte Einreicher-Information %s"
 
 #: builtin/log.c:1218
 msgid "-n and -k are mutually exclusive."
-msgstr "-n und -k sind zueinander exklusiv"
+msgstr "-n und -k schliessen sich gegenseitig aus"
 
 #: builtin/log.c:1220
 msgid "--subject-prefix and -k are mutually exclusive."
-msgstr "--subject-prefix und -k sind zueinander exklusiv"
+msgstr "--subject-prefix und -k schliessen sich gegenseitig aus"
 
 #: builtin/log.c:1225 builtin/shortlog.c:284
 #, c-format
@@ -2564,12 +2558,11 @@ msgstr "Kann nur exakt eine Version in einem leeren Kopf zusammenführen."
 
 #: builtin/merge.c:1269
 msgid "Squash commit into empty head not supported yet"
-msgstr ""
-"Quetschen einer Version in einen leeren Kopf wird momentan nicht unterstützt."
+msgstr "Bin auf einem Zweig, der noch geboren wird; kann nicht quetschen."
 
 #: builtin/merge.c:1271
 msgid "Non-fast-forward commit does not make sense into an empty head"
-msgstr "nicht vorzuspulende Version macht in einem leeren Kopf keinen Sinn"
+msgstr "Bin auf einem Zweig, der noch geboren wird; --no-ff macht keinen Sinn."
 
 #: builtin/merge.c:1275 builtin/merge.c:1319
 #, c-format
@@ -2932,7 +2925,7 @@ msgstr ""
 #: builtin/push.c:147
 #, c-format
 msgid "Pushing to %s\n"
-msgstr "Sende nach %s\n"
+msgstr "Versende nach %s\n"
 
 #: builtin/push.c:151
 #, c-format
@@ -3009,19 +3002,19 @@ msgstr "--delete macht ohne irgendeine Referenz keinen Sinn"
 
 #: builtin/reset.c:33
 msgid "mixed"
-msgstr "gemischt"
+msgstr "mixed"
 
 #: builtin/reset.c:33
 msgid "soft"
-msgstr "weich"
+msgstr "soft"
 
 #: builtin/reset.c:33
 msgid "hard"
-msgstr "hart"
+msgstr "hard"
 
 #: builtin/reset.c:33
 msgid "keep"
-msgstr "halten"
+msgstr "keep"
 
 #: builtin/reset.c:77
 msgid "You do not have a valid HEAD."
@@ -3056,8 +3049,7 @@ msgstr "Nicht bereitgestellte Änderungen nach Zurücksetzung:"
 #: builtin/reset.c:223
 #, c-format
 msgid "Cannot do a %s reset in the middle of a merge."
-msgstr ""
-"Kann keine %s Zurücksetzung innerhalb einer Zusammenführung durchführen."
+msgstr "Kann keine '%s' Zurücksetzung innerhalb einer Zusammenführung durchführen."
 
 #: builtin/reset.c:297
 #, c-format
@@ -3076,7 +3068,7 @@ msgstr ""
 #: builtin/reset.c:313
 #, c-format
 msgid "Cannot do %s reset with paths."
-msgstr "Kann keine %s Zurücksetzung mit Pfaden machen."
+msgstr "Kann keine '%s' Zurücksetzung mit Pfaden machen."
 
 #: builtin/reset.c:325
 #, c-format
@@ -3185,7 +3177,7 @@ msgstr ""
 "\n"
 "#\n"
 "# Gebe eine Markierungsbeschreibung ein\n"
-"# Zeilen beginnend mit '#' werden ignoriert.\n"
+"# Zeilen, die mit '#' beginnen, werden ignoriert.\n"
 "#\n"
 
 #: builtin/tag.c:254
@@ -3200,8 +3192,8 @@ msgstr ""
 "\n"
 "#\n"
 "# Gebe eine Markierungsbeschreibung ein\n"
-"# Zeilen beginnend mit '#' werden behalten; du darfst diese selbst entfernen "
-"wenn du möchtest.\n"
+"# Zeilen, die mit '#' beginnen, werden behalten; du darfst diese\n"
+"# selbst entfernen wenn du möchtest.\n"
 "#\n"
 
 #: builtin/tag.c:294
@@ -3299,8 +3291,7 @@ msgid ""
 "It does not apply to blobs recorded in its index."
 msgstr ""
 "Hast du den Patch per Hand editiert?\n"
-"Er kann nicht auf aufgezeichnete Blobs in seiner Bereitstellung angewendet "
-"werden."
+"Er kann nicht auf die Blobs in seiner 'index' Zeile angewendet werden."
 
 #: git-am.sh:156
 msgid "Falling back to patching base and 3-way merge..."
@@ -3346,9 +3337,7 @@ msgstr ""
 
 #: git-am.sh:748
 msgid "cannot be interactive without stdin connected to a terminal."
-msgstr ""
-"Kann nicht interaktiv sein, ohne das die Standard-Eingabe mit einem Terminal "
-"verbunden ist."
+msgstr "Kann nicht interaktiv sein, ohne dass die Standard-Eingabe mit einem Terminal verbunden ist."
 
 #. TRANSLATORS: Make sure to include [y], [n], [e], [v] and [a]
 #. in your translation. The program will only accept English
@@ -3448,7 +3437,7 @@ msgid ""
 "Could not check out original HEAD '$branch'.\n"
 "Try 'git bisect reset <commit>'."
 msgstr ""
-"Konnte die originale Zweigspitze (HEAD) '$branch' nicht auschecken.\n"
+"Konnte die ursprüngliche Zweigspitze (HEAD) '$branch' nicht auschecken.\n"
 "Versuche 'git bisect reset <Version>'."
 
 #: git-bisect.sh:390
@@ -3476,7 +3465,7 @@ msgid ""
 msgstr ""
 "\"pull\" ist nicht möglich weil du nicht zusammengeführte Dateien hast.\n"
 "Bitte korrigiere dies im Arbeitsbaum und benutze dann 'git add/rm <Datei>'\n"
-"wie vorgesehen, um die Auflösung zu markieren, oder benutze 'git commit -a'."
+"um die Auflösung entsprechend zu markieren, oder benutze 'git commit -a'."
 
 #: git-pull.sh:25
 msgid "Pull is not possible because you have unmerged files."
@@ -3491,7 +3480,7 @@ msgstr ""
 
 #: git-pull.sh:253
 msgid "Cannot merge multiple branches into empty head"
-msgstr "Kann nicht mehrere Zweige in einen leeren Kopf zusammenführen"
+msgstr "Kann nicht mehrere Zweige in einen ungeborenen Zweig zusammenführen"
 
 #: git-pull.sh:257
 msgid "Cannot rebase onto multiple branches"
