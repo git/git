@@ -41,11 +41,28 @@ sub fatal (@) { print STDERR "@_\n"; exit 1 }
 # repository decides to close the connection which we expect to be kept alive.
 $SIG{PIPE} = 'IGNORE';
 
+# Given a dot separated version number, "subtract" it from
+# the SVN::Core::VERSION; non-negaitive return means the SVN::Core
+# is at least at the version the caller asked for.
+sub compare_svn_version {
+	my (@ours) = split(/\./, $SVN::Core::VERSION);
+	my (@theirs) = split(/\./, $_[0]);
+	my ($i, $diff);
+
+	for ($i = 0; $i < @ours && $i < @theirs; $i++) {
+		$diff = $ours[$i] - $theirs[$i];
+		return $diff if ($diff);
+	}
+	return 1 if ($i < @ours);
+	return -1 if ($i < @theirs);
+	return 0;
+}
+
 sub _req_svn {
 	require SVN::Core; # use()-ing this causes segfaults for me... *shrug*
 	require SVN::Ra;
 	require SVN::Delta;
-	if ($SVN::Core::VERSION lt '1.1.0') {
+	if (::compare_svn_version('1.1.0') < 0) {
 		fatal "Need SVN::Core 1.1.0 or better (got $SVN::Core::VERSION)";
 	}
 }
@@ -1474,7 +1491,7 @@ sub cmd_info {
 	}
 	::_req_svn();
 	$result .= "Repository UUID: $uuid\n" unless $diff_status eq "A" &&
-		($SVN::Core::VERSION le '1.5.4' || $file_type ne "dir");
+		(::compare_svn_version('1.5.4') <= 0 || $file_type ne "dir");
 	$result .= "Revision: " . ($diff_status eq "A" ? 0 : $rev) . "\n";
 
 	$result .= "Node Kind: " .
@@ -5464,7 +5481,7 @@ sub _auth_providers () {
 
 	# earlier 1.6.x versions would segfault, and <= 1.5.x didn't have
 	# this function
-	if ($SVN::Core::VERSION gt '1.6.12') {
+	if (::compare_svn_version('1.6.12') > 0) {
 		my $config = SVN::Core::config_get_config($config_dir);
 		my ($p, @a);
 		# config_get_config returns all config files from
@@ -5623,7 +5640,7 @@ sub get_log {
 	# drop it.  Therefore, the receiver callback passed to it
 	# is made aware of this limitation by being wrapped if
 	# the limit passed to is being wrapped.
-	if ($SVN::Core::VERSION le '1.2.0') {
+	if (::compare_svn_version('1.2.0') <= 0) {
 		my $limit = splice(@args, 3, 1);
 		if ($limit > 0) {
 			my $receiver = pop @args;
@@ -5655,7 +5672,8 @@ sub trees_match {
 
 sub get_commit_editor {
 	my ($self, $log, $cb, $pool) = @_;
-	my @lock = $SVN::Core::VERSION ge '1.2.0' ? (undef, 0) : ();
+
+	my @lock = (::compare_svn_version('1.2.0') >= 0) ? (undef, 0) : ();
 	$self->SUPER::get_commit_editor($log, $cb, @lock, $pool);
 }
 
@@ -5673,7 +5691,7 @@ sub gs_do_update {
 	my (@pc) = split m#/#, $path;
 	my $reporter = $self->do_update($rev_b, (@pc ? shift @pc : ''),
 	                                1, $editor, $pool);
-	my @lock = $SVN::Core::VERSION ge '1.2.0' ? (undef) : ();
+	my @lock = (::compare_svn_version('1.2.0') >= 0) ? (undef) : ();
 
 	# Since we can't rely on svn_ra_reparent being available, we'll
 	# just have to do some magic with set_path to make it so
@@ -5723,7 +5741,7 @@ sub gs_do_switch {
 	$ra ||= $self;
 	$url_b = escape_url($url_b);
 	my $reporter = $ra->do_switch($rev_b, '', 1, $url_b, $editor, $pool);
-	my @lock = $SVN::Core::VERSION ge '1.2.0' ? (undef) : ();
+	my @lock = (::compare_svn_version('1.2.0') >= 0) ? (undef) : ();
 	$reporter->set_path('', $rev_a, 0, @lock, $pool);
 	$reporter->finish_report($pool);
 
