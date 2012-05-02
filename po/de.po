@@ -1355,7 +1355,7 @@ msgstr "Konnte Arbeitsverzeichnis '%s' nicht erstellen."
 #: builtin/clone.c:728
 #, c-format
 msgid "Cloning into bare repository '%s'...\n"
-msgstr "Klone in leeres Projektarchiv '%s'...\n"
+msgstr "Klone in bloßes Projektarchiv '%s'...\n"
 
 #: builtin/clone.c:730
 #, c-format
@@ -3081,7 +3081,7 @@ msgstr "Kann keine %s Zurücksetzung mit Pfaden machen."
 #: builtin/reset.c:325
 #, c-format
 msgid "%s reset is not allowed in a bare repository"
-msgstr "%s Zurücksetzung ist in einem leeren Projektarchiv nicht erlaubt"
+msgstr "'%s' Zurücksetzung ist in einem bloßen Projektarchiv nicht erlaubt"
 
 #: builtin/reset.c:341
 #, c-format
