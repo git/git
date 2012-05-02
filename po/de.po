@@ -145,7 +145,7 @@ msgstr "'%s': %s"
 #: grep.c:1308
 #, c-format
 msgid "'%s': short read %s"
-msgstr "'%s': kurz gelesen %s"
+msgstr "'%s': read() zu kurz %s"
 
 #: help.c:287
 #, c-format
@@ -758,7 +758,7 @@ msgstr "Nichts spezifiziert, nichts hinzugefügt.\n"
 #: builtin/add.c:414
 #, c-format
 msgid "Maybe you wanted to say 'git add .'?\n"
-msgstr "Wolltest du vieleicht 'git add .' sagen?\n"
+msgstr "Wolltest du vielleicht 'git add .' sagen?\n"
 
 #: builtin/add.c:420 builtin/clean.c:95 builtin/commit.c:358 builtin/mv.c:82
 #: builtin/rm.c:162
@@ -794,7 +794,7 @@ msgstr "git archive: NACK %s"
 #: builtin/archive.c:65
 #, c-format
 msgid "remote error: %s"
-msgstr "Versandfehler: %s"
+msgstr "Fehler am anderen Ende: %s"
 
 #: builtin/archive.c:66
 msgid "git archive: protocol error"
@@ -2209,11 +2209,11 @@ msgstr "Initialisierte leeres"
 
 #: builtin/init-db.c:421
 msgid " shared"
-msgstr " geteilt"
+msgstr " geteiltes"
 
 #: builtin/init-db.c:440
 msgid "cannot tell cwd"
-msgstr "kann nicht \"cwd\" sagen"
+msgstr "kann aktuelles Verzeichnis nicht bestimmen"
 
 #: builtin/init-db.c:521 builtin/init-db.c:528
 #, c-format
@@ -3005,7 +3005,7 @@ msgstr "--delete ist inkompatibel mit --all, --mirror und --tags"
 
 #: builtin/push.c:286
 msgid "--delete doesn't make sense without any refs"
-msgstr "--delete macht ohne irgendeine Referenz ohne keinen Sinn"
+msgstr "--delete macht ohne irgendeine Referenz keinen Sinn"
 
 #: builtin/reset.c:33
 msgid "mixed"
@@ -3231,7 +3231,7 @@ msgstr "Die Markierungsbeschreibung wurde in %s gelassen\n"
 
 #: builtin/tag.c:421
 msgid "switch 'points-at' requires an object"
-msgstr "Wechseln von 'points-at' erfordert ein Objekt"
+msgstr "Option 'points-at' erfordert ein Objekt"
 
 #: builtin/tag.c:423
 #, c-format
@@ -3385,7 +3385,7 @@ msgstr "nicht erkannte Option: '$arg'"
 #: git-bisect.sh:99
 #, sh-format
 msgid "'$arg' does not appear to be a valid revision"
-msgstr "'$arg' scheint keine gültige Option zu sein"
+msgstr "'$arg' scheint keine gültige Version zu sein"
 
 #: git-bisect.sh:117
 msgid "Bad HEAD - I need a HEAD"
@@ -3419,7 +3419,7 @@ msgstr "Schlechte Referenz-Eingabe: $arg"
 
 #: git-bisect.sh:232
 msgid "Please call 'bisect_state' with at least one argument."
-msgstr "Bitte rufe 'bisect_state' mit mindestens einem Argument."
+msgstr "Bitte rufe 'bisect_state' mit mindestens einem Argument auf."
 
 #: git-bisect.sh:244
 #, sh-format
@@ -3558,7 +3558,7 @@ msgstr "$reference ist keine gültige Referenz"
 #: git-stash.sh:393
 #, sh-format
 msgid "'$args' is not a stash-like commit"
-msgstr "'$args' ist keine \"stash\"-artiger Version"
+msgstr "'$args' ist keine \"stash\"-artige Version"
 
 #: git-stash.sh:404
 #, sh-format
@@ -3755,7 +3755,7 @@ msgstr "  Warnung: $name beinhaltet nicht Version $sha1_dst"
 #: git-submodule.sh:772
 #, sh-format
 msgid "  Warn: $name doesn't contain commits $sha1_src and $sha1_dst"
-msgstr "  Warnung: $name beinhaltet nich die Versionen $sha1_src und $sha1_dst"
+msgstr "  Warnung: $name beinhaltet nicht die Versionen $sha1_src und $sha1_dst"
 
 #: git-submodule.sh:797
 msgid "blob"
