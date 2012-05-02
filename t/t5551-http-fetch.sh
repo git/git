@@ -109,5 +109,36 @@ test_expect_success 'follow redirects (302)' '
 	git clone $HTTPD_URL/smart-redir-temp/repo.git --quiet repo-t
 '
 
+test -n "$GIT_TEST_LONG" && test_set_prereq EXPENSIVE
+
+test_expect_success EXPENSIVE 'create 50,000 tags in the repo' '
+	(
+	cd "$HTTPD_DOCUMENT_ROOT_PATH/repo.git" &&
+	for i in `seq 50000`
+	do
+		echo "commit refs/heads/too-many-refs"
+		echo "mark :$i"
+		echo "committer git <git@example.com> $i +0000"
+		echo "data 0"
+		echo "M 644 inline bla.txt"
+		echo "data 4"
+		echo "bla"
+		# make every commit dangling by always
+		# rewinding the branch after each commit
+		echo "reset refs/heads/too-many-refs"
+		echo "from :1"
+	done | git fast-import --export-marks=marks &&
+
+	# now assign tags to all the dangling commits we created above
+	tag=$(perl -e "print \"bla\" x 30") &&
+	sed -e "s/^:\(.\+\) \(.\+\)$/\2 refs\/tags\/$tag-\1/" <marks >>packed-refs
+	)
+'
+
+test_expect_success EXPENSIVE 'clone the 50,000 tag repo to check OS command line overflow' '
+	git clone $HTTPD_URL/smart/repo.git too-many-refs 2>err &&
+	test_line_count = 0 err
+'
+
 stop_httpd
 test_done
