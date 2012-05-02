@@ -152,6 +152,7 @@ struct diff_options {
 	diff_format_fn_t format_callback;
 	void *format_callback_data;
 	diff_prefix_fn_t output_prefix;
+	int output_prefix_length;
 	void *output_prefix_data;
 };
 
