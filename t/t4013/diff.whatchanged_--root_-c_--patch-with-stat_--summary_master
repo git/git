@@ -6,8 +6,8 @@ Date:   Mon Jun 26 00:04:00 2006 +0000
 
     Merge branch 'side'
 
- dir/sub |    2 ++
- file0   |    3 +++
+ dir/sub | 2 ++
+ file0   | 3 +++
  2 files changed, 5 insertions(+)
 
 diff --combined dir/sub
@@ -44,9 +44,9 @@ Date:   Mon Jun 26 00:03:00 2006 +0000
 
     Side
 ---
- dir/sub |    2 ++
- file0   |    3 +++
- file3   |    4 ++++
+ dir/sub | 2 ++
+ file0   | 3 +++
+ file3   | 4 ++++
  3 files changed, 9 insertions(+)
  create mode 100644 file3
 
@@ -87,8 +87,8 @@ Date:   Mon Jun 26 00:02:00 2006 +0000
 
     Third
 ---
- dir/sub |    2 ++
- file1   |    3 +++
+ dir/sub | 2 ++
+ file1   | 3 +++
  2 files changed, 5 insertions(+)
  create mode 100644 file1
 
@@ -120,9 +120,9 @@ Date:   Mon Jun 26 00:01:00 2006 +0000
     
     This is the second commit.
 ---
- dir/sub |    2 ++
- file0   |    3 +++
- file2   |    3 ---
+ dir/sub | 2 ++
+ file0   | 3 +++
+ file2   | 3 ---
  3 files changed, 5 insertions(+), 3 deletions(-)
  delete mode 100644 file2
 
@@ -162,9 +162,9 @@ Date:   Mon Jun 26 00:00:00 2006 +0000
 
     Initial
 ---
- dir/sub |    2 ++
- file0   |    3 +++
- file2   |    3 +++
+ dir/sub | 2 ++
+ file0   | 3 +++
+ file2   | 3 +++
  3 files changed, 8 insertions(+)
  create mode 100644 dir/sub
  create mode 100644 file0

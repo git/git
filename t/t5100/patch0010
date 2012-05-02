@@ -1,5 +1,5 @@
 ---
- builtin-mailinfo.c |    2 +-
+ builtin-mailinfo.c | 2 +-
  1 files changed, 1 insertions(+), 1 deletions(-)
 
 diff --git a/builtin-mailinfo.c b/builtin-mailinfo.c

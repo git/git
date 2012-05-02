@@ -22,7 +22,7 @@ test_expect_success 'preparation' '
 while read cmd args
 do
 	cat >expect <<-'EOF'
-	 ...aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa |    1 +
+	 ...aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa | 1 +
 	EOF
 	test_expect_success "$cmd: small change with long name gives more space to the name" '
 		git $cmd $args >output &&
@@ -31,7 +31,7 @@ do
 	'
 
 	cat >expect <<-'EOF'
-	 ...aaaaaaaaaaaaaaaaaaaaaaaaaa |    1 +
+	 ...aaaaaaaaaaaaaaaaaaaaaaaaaaaaa | 1 +
 	EOF
 	test_expect_success "$cmd --stat=width: a long name is given more room when the bar is short" '
 		git $cmd $args --stat=40 >output &&
@@ -46,7 +46,7 @@ do
 	'
 
 	cat >expect <<-'EOF'
-	 ...aaaaaaaaaaaaaaaaaaaaaaaaaaa |    1 +
+	 ...aaaaaaaaaaaaaaaaaaaaaaaaaaa | 1 +
 	EOF
 	test_expect_success "$cmd --stat=...,name-width with long name" '
 		git $cmd $args --stat=60,30 >output &&

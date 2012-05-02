@@ -1,7 +1,7 @@
 ---
 
- Documentation/git-cvsimport-script.txt |    9 ++++++++-
- git-cvsimport-script                   |    4 ++--
+ Documentation/git-cvsimport-script.txt | 9 ++++++++-
+ git-cvsimport-script                   | 4 ++--
  2 files changed, 10 insertions(+), 3 deletions(-)
 
 50452f9c0c2df1f04d83a26266ba704b13861632

@@ -323,7 +323,7 @@ test_expect_success 'verbose flag is heeded, even after --continue' '
 	echo resolved > file1 &&
 	git add file1 &&
 	git rebase --continue > output &&
-	grep "^ file1 |    2 +-$" output
+	grep "^ file1 | 2 +-$" output
 '
 
 test_expect_success 'multi-squash only fires up editor once' '

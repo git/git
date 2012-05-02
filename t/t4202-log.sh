@@ -528,7 +528,7 @@ cat >expect <<\EOF
 | |
 | |     reach
 | | ---
-| |  reach.t |    1 +
+| |  reach.t | 1 +
 | |  1 file changed, 1 insertion(+)
 | |
 | | diff --git a/reach.t b/reach.t
@@ -551,7 +551,7 @@ cat >expect <<\EOF
 | | |
 | | |       octopus-b
 | | |   ---
-| | |    octopus-b.t |    1 +
+| | |    octopus-b.t | 1 +
 | | |    1 file changed, 1 insertion(+)
 | | |
 | | |   diff --git a/octopus-b.t b/octopus-b.t
@@ -567,7 +567,7 @@ cat >expect <<\EOF
 | |
 | |       octopus-a
 | |   ---
-| |    octopus-a.t |    1 +
+| |    octopus-a.t | 1 +
 | |    1 file changed, 1 insertion(+)
 | |
 | |   diff --git a/octopus-a.t b/octopus-a.t
@@ -583,7 +583,7 @@ cat >expect <<\EOF
 |
 |       seventh
 |   ---
-|    seventh.t |    1 +
+|    seventh.t | 1 +
 |    1 file changed, 1 insertion(+)
 |
 |   diff --git a/seventh.t b/seventh.t
@@ -617,7 +617,7 @@ cat >expect <<\EOF
 | | | |
 | | | |     tangle-a
 | | | | ---
-| | | |  tangle-a |    1 +
+| | | |  tangle-a | 1 +
 | | | |  1 file changed, 1 insertion(+)
 | | | |
 | | | | diff --git a/tangle-a b/tangle-a
@@ -639,7 +639,7 @@ cat >expect <<\EOF
 | |/| |
 | | | |       side-2
 | | | |   ---
-| | | |    2 |    1 +
+| | | |    2 | 1 +
 | | | |    1 file changed, 1 insertion(+)
 | | | |
 | | | |   diff --git a/2 b/2
@@ -655,7 +655,7 @@ cat >expect <<\EOF
 | | | |
 | | | |     side-1
 | | | | ---
-| | | |  1 |    1 +
+| | | |  1 | 1 +
 | | | |  1 file changed, 1 insertion(+)
 | | | |
 | | | | diff --git a/1 b/1
@@ -671,7 +671,7 @@ cat >expect <<\EOF
 | | | |
 | | | |     Second
 | | | | ---
-| | | |  one |    1 +
+| | | |  one | 1 +
 | | | |  1 file changed, 1 insertion(+)
 | | | |
 | | | | diff --git a/one b/one
@@ -687,7 +687,7 @@ cat >expect <<\EOF
 |/| |
 | | |       sixth
 | | |   ---
-| | |    a/two |    1 -
+| | |    a/two | 1 -
 | | |    1 file changed, 1 deletion(-)
 | | |
 | | |   diff --git a/a/two b/a/two
@@ -703,7 +703,7 @@ cat >expect <<\EOF
 | | |
 | | |     fifth
 | | | ---
-| | |  a/two |    1 +
+| | |  a/two | 1 +
 | | |  1 file changed, 1 insertion(+)
 | | |
 | | | diff --git a/a/two b/a/two
@@ -719,7 +719,7 @@ cat >expect <<\EOF
 | |
 | |       fourth
 | |   ---
-| |    ein |    1 +
+| |    ein | 1 +
 | |    1 file changed, 1 insertion(+)
 | |
 | |   diff --git a/ein b/ein
@@ -735,8 +735,8 @@ cat >expect <<\EOF
 |
 |       third
 |   ---
-|    ichi |    1 +
-|    one  |    1 -
+|    ichi | 1 +
+|    one  | 1 -
 |    2 files changed, 1 insertion(+), 1 deletion(-)
 |
 |   diff --git a/ichi b/ichi
@@ -759,7 +759,7 @@ cat >expect <<\EOF
 |
 |     second
 | ---
-|  one |    2 +-
+|  one | 2 +-
 |  1 file changed, 1 insertion(+), 1 deletion(-)
 |
 | diff --git a/one b/one
@@ -775,7 +775,7 @@ cat >expect <<\EOF
 
       initial
   ---
-   one |    1 +
+   one | 1 +
    1 file changed, 1 insertion(+)
 
   diff --git a/one b/one
