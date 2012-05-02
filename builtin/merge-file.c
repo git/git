@@ -63,7 +63,7 @@ int cmd_merge_file(int argc, const char **argv, const char *prefix)
 	if (quiet) {
 		if (!freopen("/dev/null", "w", stderr))
 			return error("failed to redirect stderr to /dev/null: "
-				     "%s\n", strerror(errno));
+				     "%s", strerror(errno));
 	}
 
 	if (prefix)
@@ -76,7 +76,7 @@ int cmd_merge_file(int argc, const char **argv, const char *prefix)
 		if (read_mmfile(mmfs + i, fname))
 			return -1;
 		if (buffer_is_binary(mmfs[i].ptr, mmfs[i].size))
-			return error("Cannot merge binary files: %s\n",
+			return error("Cannot merge binary files: %s",
 					argv[i]);
 	}
 

@@ -663,7 +663,7 @@ static int edit_branch_description(const char *branch_name)
 	fp = fopen(git_path(edit_description), "w");
 	if ((fwrite(buf.buf, 1, buf.len, fp) < buf.len) || fclose(fp)) {
 		strbuf_release(&buf);
-		return error(_("could not write branch description template: %s\n"),
+		return error(_("could not write branch description template: %s"),
 			     strerror(errno));
 	}
 	strbuf_reset(&buf);
