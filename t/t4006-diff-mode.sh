@@ -27,7 +27,7 @@ test_expect_success 'chmod' '
 
 test_expect_success 'prepare binary file' '
 	git commit -m rezrov &&
-	dd if=/dev/zero of=binbin bs=1024 count=1 &&
+	printf "\00\01\02\03\04\05\06" >binbin &&
 	git add binbin &&
 	git commit -m binbin
 '
