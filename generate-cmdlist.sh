@@ -16,7 +16,7 @@ do
      /^NAME/,/git-'"$cmd"'/H
      ${
 	    x
-	    s/.*git-'"$cmd"' - \(.*\)/  {"'"$cmd"'", "\1"},/
+	    s/.*git-'"$cmd"' - \(.*\)/  {"'"$cmd"'", N_("\1")},/
 	    p
      }' "Documentation/git-$cmd.txt"
 done

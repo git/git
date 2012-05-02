@@ -877,10 +877,8 @@ enum date_mode {
 };
 
 const char *show_date(unsigned long time, int timezone, enum date_mode mode);
-const char *show_date_relative(unsigned long time, int tz,
-			       const struct timeval *now,
-			       char *timebuf,
-			       size_t timebuf_size);
+void show_date_relative(unsigned long time, int tz, const struct timeval *now,
+			struct strbuf *timebuf);
 int parse_date(const char *date, char *buf, int bufsize);
 int parse_date_basic(const char *date, unsigned long *timestamp, int *offset);
 void datestamp(char *buf, int bufsize);
