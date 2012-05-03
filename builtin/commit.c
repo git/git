@@ -27,6 +27,7 @@
 #include "quote.h"
 #include "submodule.h"
 #include "gpg-interface.h"
+#include "column.h"
 
 static const char * const builtin_commit_usage[] = {
 	"git commit [options] [--] <filepattern>...",
@@ -88,6 +89,7 @@ static int quiet, verbose, no_verify, allow_empty, dry_run, renew_authorship;
 static int no_post_rewrite, allow_empty_message;
 static char *untracked_files_arg, *force_date, *ignore_submodule_arg;
 static char *sign_commit;
+static unsigned int colopts;
 
 /*
  * The default commit message cleanup mode will remove the lines
@@ -1173,6 +1175,8 @@ static int git_status_config(const char *k, const char *v, void *cb)
 {
 	struct wt_status *s = cb;
 
+	if (!prefixcmp(k, "column."))
+		return git_column_config(k, v, "status", &colopts);
 	if (!strcmp(k, "status.submodulesummary")) {
 		int is_bool;
 		s->submodule_summary = git_config_bool_or_int(k, v, &is_bool);
@@ -1238,6 +1242,7 @@ int cmd_status(int argc, const char **argv, const char *prefix)
 		{ OPTION_STRING, 0, "ignore-submodules", &ignore_submodule_arg, "when",
 		  "ignore changes to submodules, optional when: all, dirty, untracked. (Default: all)",
 		  PARSE_OPT_OPTARG, NULL, (intptr_t)"all" },
+		OPT_COLUMN(0, "column", &colopts, "list untracked files in columns"),
 		OPT_END(),
 	};
 
@@ -1251,6 +1256,8 @@ int cmd_status(int argc, const char **argv, const char *prefix)
 	argc = parse_options(argc, argv, prefix,
 			     builtin_status_options,
 			     builtin_status_usage, 0);
+	finalize_colopts(&colopts, -1);
+	s.colopts = colopts;
 
 	if (null_termination && status_format == STATUS_FORMAT_LONG)
 		status_format = STATUS_FORMAT_PORCELAIN;

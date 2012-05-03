@@ -160,6 +160,83 @@ test_expect_success 'git branch --list -d t should fail' '
 	test_path_is_missing .git/refs/heads/t
 '
 
+test_expect_success 'git branch --column' '
+	COLUMNS=81 git branch --column=column >actual &&
+	cat >expected <<\EOF &&
+  a/b/c     bam       foo       l       * master    n         o/p       r
+  abc       bar       j/k       m/m       master2   o/o       q
+EOF
+	test_cmp expected actual
+'
+
+test_expect_success 'git branch --column with an extremely long branch name' '
+	long=this/is/a/part/of/long/branch/name &&
+	long=z$long/$long/$long/$long &&
+	test_when_finished "git branch -d $long" &&
+	git branch $long &&
+	COLUMNS=80 git branch --column=column >actual &&
+	cat >expected <<EOF &&
+  a/b/c
+  abc
+  bam
+  bar
+  foo
+  j/k
+  l
+  m/m
+* master
+  master2
+  n
+  o/o
+  o/p
+  q
+  r
+  $long
+EOF
+	test_cmp expected actual
+'
+
+test_expect_success 'git branch with column.*' '
+	git config column.ui column &&
+	git config column.branch "dense" &&
+	COLUMNS=80 git branch >actual &&
+	git config --unset column.branch &&
+	git config --unset column.ui &&
+	cat >expected <<\EOF &&
+  a/b/c   bam   foo   l   * master    n     o/p   r
+  abc     bar   j/k   m/m   master2   o/o   q
+EOF
+	test_cmp expected actual
+'
+
+test_expect_success 'git branch --column -v should fail' '
+	test_must_fail git branch --column -v
+'
+
+test_expect_success 'git branch -v with column.ui ignored' '
+	git config column.ui column &&
+	COLUMNS=80 git branch -v | cut -c -10 | sed "s/ *$//" >actual &&
+	git config --unset column.ui &&
+	cat >expected <<\EOF &&
+  a/b/c
+  abc
+  bam
+  bar
+  foo
+  j/k
+  l
+  m/m
+* master
+  master2
+  n
+  o/o
+  o/p
+  q
+  r
+EOF
+	test_cmp expected actual
+'
+
 mv .git/config .git/config-saved
 
 test_expect_success 'git branch -m q q2 without config should succeed' '

@@ -4,6 +4,8 @@
 #include "levenshtein.h"
 #include "help.h"
 #include "common-cmds.h"
+#include "string-list.h"
+#include "column.h"
 
 void add_cmdname(struct cmdnames *cmds, const char *name, int len)
 {
@@ -70,31 +72,25 @@ void exclude_cmds(struct cmdnames *cmds, struct cmdnames *excludes)
 	cmds->cnt = cj;
 }
 
-static void pretty_print_string_list(struct cmdnames *cmds, int longest)
+static void pretty_print_string_list(struct cmdnames *cmds,
+				     unsigned int colopts)
 {
-	int cols = 1, rows;
-	int space = longest + 1; /* min 1 SP between words */
-	int max_cols = term_columns() - 1; /* don't print *on* the edge */
-	int i, j;
+	struct string_list list = STRING_LIST_INIT_NODUP;
+	struct column_options copts;
+	int i;
 
-	if (space < max_cols)
-		cols = max_cols / space;
-	rows = DIV_ROUND_UP(cmds->cnt, cols);
-
-	for (i = 0; i < rows; i++) {
-		printf("  ");
-
-		for (j = 0; j < cols; j++) {
-			int n = j * rows + i;
-			int size = space;
-			if (n >= cmds->cnt)
-				break;
-			if (j == cols-1 || n + rows >= cmds->cnt)
-				size = 1;
-			printf("%-*s", size, cmds->names[n]->name);
-		}
-		putchar('\n');
-	}
+	for (i = 0; i < cmds->cnt; i++)
+		string_list_append(&list, cmds->names[i]->name);
+	/*
+	 * always enable column display, we only consult column.*
+	 * about layout strategy and stuff
+	 */
+	colopts = (colopts & ~COL_ENABLE_MASK) | COL_ENABLED;
+	memset(&copts, 0, sizeof(copts));
+	copts.indent = "  ";
+	copts.padding = 2;
+	print_columns(&list, colopts, &copts);
+	string_list_clear(&list, 0);
 }
 
 static int is_executable(const char *name)
@@ -203,29 +199,21 @@ void load_command_list(const char *prefix,
 	exclude_cmds(other_cmds, main_cmds);
 }
 
-void list_commands(struct cmdnames *main_cmds, struct cmdnames *other_cmds)
+void list_commands(unsigned int colopts,
+		   struct cmdnames *main_cmds, struct cmdnames *other_cmds)
 {
-	int i, longest = 0;
-
-	for (i = 0; i < main_cmds->cnt; i++)
-		if (longest < main_cmds->names[i]->len)
-			longest = main_cmds->names[i]->len;
-	for (i = 0; i < other_cmds->cnt; i++)
-		if (longest < other_cmds->names[i]->len)
-			longest = other_cmds->names[i]->len;
-
 	if (main_cmds->cnt) {
 		const char *exec_path = git_exec_path();
 		printf_ln(_("available git commands in '%s'"), exec_path);
 		putchar('\n');
-		pretty_print_string_list(main_cmds, longest);
+		pretty_print_string_list(main_cmds, colopts);
 		putchar('\n');
 	}
 
 	if (other_cmds->cnt) {
 		printf_ln(_("git commands available from elsewhere on your $PATH"));
 		putchar('\n');
-		pretty_print_string_list(other_cmds, longest);
+		pretty_print_string_list(other_cmds, colopts);
 		putchar('\n');
 	}
 }

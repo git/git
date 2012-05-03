@@ -11,6 +11,7 @@
 #include "remote.h"
 #include "refs.h"
 #include "submodule.h"
+#include "column.h"
 
 static char default_wt_status_colors[][COLOR_MAXLEN] = {
 	GIT_COLOR_NORMAL, /* WT_STATUS_HEADER */
@@ -641,6 +642,8 @@ static void wt_status_print_other(struct wt_status *s,
 {
 	int i;
 	struct strbuf buf = STRBUF_INIT;
+	static struct string_list output = STRING_LIST_INIT_DUP;
+	struct column_options copts;
 
 	if (!l->nr)
 		return;
@@ -649,12 +652,33 @@ static void wt_status_print_other(struct wt_status *s,
 
 	for (i = 0; i < l->nr; i++) {
 		struct string_list_item *it;
+		const char *path;
 		it = &(l->items[i]);
+		path = quote_path(it->string, strlen(it->string),
+				  &buf, s->prefix);
+		if (column_active(s->colopts)) {
+			string_list_append(&output, path);
+			continue;
+		}
 		status_printf(s, color(WT_STATUS_HEADER, s), "\t");
 		status_printf_more(s, color(WT_STATUS_UNTRACKED, s),
-			"%s\n", quote_path(it->string, strlen(it->string),
-					    &buf, s->prefix));
+				   "%s\n", path);
 	}
+
+	strbuf_release(&buf);
+	if (!column_active(s->colopts))
+		return;
+
+	strbuf_addf(&buf, "%s#\t%s",
+		    color(WT_STATUS_HEADER, s),
+		    color(WT_STATUS_UNTRACKED, s));
+	memset(&copts, 0, sizeof(copts));
+	copts.padding = 1;
+	copts.indent = buf.buf;
+	if (want_color(s->use_color))
+		copts.nl = GIT_COLOR_RESET "\n";
+	print_columns(&output, s->colopts, &copts);
+	string_list_clear(&output, 0);
 	strbuf_release(&buf);
 }
 
