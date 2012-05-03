@@ -31,6 +31,26 @@ GUNZIP=${GUNZIP:-gzip -d}
 
 SUBSTFORMAT=%H%n
 
+check_zip() {
+	zipfile=$1.zip
+	listfile=$1.lst
+	dir=$1
+	dir_with_prefix=$dir/$2
+
+	test_expect_success UNZIP " extract ZIP archive" "
+		(mkdir $dir && cd $dir && $UNZIP ../$zipfile)
+	"
+
+	test_expect_success UNZIP " validate filenames" "
+		(cd ${dir_with_prefix}a && find .) | sort >$listfile &&
+		test_cmp a.lst $listfile
+	"
+
+	test_expect_success UNZIP " validate file contents" "
+		diff -r a ${dir_with_prefix}a
+	"
+}
+
 test_expect_success \
     'populate workdir' \
     'mkdir a b c &&
@@ -181,9 +201,18 @@ test_expect_success \
       test_cmp a/substfile2 g/prefix/a/substfile2
 '
 
+$UNZIP -v >/dev/null 2>&1
+if [ $? -eq 127 ]; then
+	say "Skipping ZIP tests, because unzip was not found"
+else
+	test_set_prereq UNZIP
+fi
+
 test_expect_success \
     'git archive --format=zip' \
     'git archive --format=zip HEAD >d.zip'
+
+check_zip d
 
 test_expect_success \
     'git archive --format=zip in a bare repo' \
@@ -207,55 +236,25 @@ test_expect_success 'git archive with --output, override inferred format' '
 	test_cmp b.tar d4.zip
 '
 
-$UNZIP -v >/dev/null 2>&1
-if [ $? -eq 127 ]; then
-	say "Skipping ZIP tests, because unzip was not found"
-else
-	test_set_prereq UNZIP
-fi
-
-test_expect_success UNZIP \
-    'extract ZIP archive' \
-    '(mkdir d && cd d && $UNZIP ../d.zip)'
-
-test_expect_success UNZIP \
-    'validate filenames' \
-    '(cd d/a && find .) | sort >d.lst &&
-     test_cmp a.lst d.lst'
-
-test_expect_success UNZIP \
-    'validate file contents' \
-    'diff -r a d/a'
-
 test_expect_success \
     'git archive --format=zip with prefix' \
     'git archive --format=zip --prefix=prefix/ HEAD >e.zip'
 
-test_expect_success UNZIP \
-    'extract ZIP archive with prefix' \
-    '(mkdir e && cd e && $UNZIP ../e.zip)'
+check_zip e prefix/
 
-test_expect_success UNZIP \
-    'validate filenames with prefix' \
-    '(cd e/prefix/a && find .) | sort >e.lst &&
-     test_cmp a.lst e.lst'
-
-test_expect_success UNZIP \
-    'validate file contents with prefix' \
-    'diff -r a e/prefix/a'
-
-test_expect_success UNZIP 'git archive -0 --format=zip on large files' '
-    test_config core.bigfilethreshold 1 &&
-    git archive -0 --format=zip HEAD >large.zip &&
-    (mkdir large && cd large && $UNZIP ../large.zip)
+test_expect_success 'git archive -0 --format=zip on large files' '
+	test_config core.bigfilethreshold 1 &&
+	git archive -0 --format=zip HEAD >large.zip
 '
 
-test_expect_success UNZIP 'git archive --format=zip on large files' '
-    test_config core.bigfilethreshold 1 &&
-    git archive --format=zip HEAD >large-compressed.zip &&
-    (mkdir large-compressed && cd large-compressed && $UNZIP ../large-compressed.zip) &&
-    test_cmp large-compressed/a/bin/sh large/a/bin/sh
+check_zip large
+
+test_expect_success 'git archive --format=zip on large files' '
+	test_config core.bigfilethreshold 1 &&
+	git archive --format=zip HEAD >large-compressed.zip
 '
+
+check_zip large-compressed
 
 test_expect_success \
     'git archive --list outside of a git repo' \
