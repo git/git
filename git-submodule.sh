@@ -266,7 +266,7 @@ cmd_add()
 	then
 		cat >&2 <<EOF
 The following path is ignored by one of your .gitignore files:
-$(eval_gettextln $smpath)
+$(eval_gettextln $sm_path)
 Use -f if you really want to add it.
 EOF
 		exit 1
