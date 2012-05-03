@@ -123,6 +123,43 @@ static size_t get_path_prefix(const char *path, size_t pathlen, size_t maxlen)
 	return i;
 }
 
+static void prepare_header(struct archiver_args *args,
+			   struct ustar_header *header,
+			   unsigned int mode, unsigned long size)
+{
+	sprintf(header->mode, "%07o", mode & 07777);
+	sprintf(header->size, "%011lo", S_ISREG(mode) ? size : 0);
+	sprintf(header->mtime, "%011lo", (unsigned long) args->time);
+
+	sprintf(header->uid, "%07o", 0);
+	sprintf(header->gid, "%07o", 0);
+	strlcpy(header->uname, "root", sizeof(header->uname));
+	strlcpy(header->gname, "root", sizeof(header->gname));
+	sprintf(header->devmajor, "%07o", 0);
+	sprintf(header->devminor, "%07o", 0);
+
+	memcpy(header->magic, "ustar", 6);
+	memcpy(header->version, "00", 2);
+
+	sprintf(header->chksum, "%07o", ustar_header_chksum(header));
+}
+
+static int write_extended_header(struct archiver_args *args,
+				 const unsigned char *sha1,
+				 const void *buffer, unsigned long size)
+{
+	struct ustar_header header;
+	unsigned int mode;
+	memset(&header, 0, sizeof(header));
+	*header.typeflag = TYPEFLAG_EXT_HEADER;
+	mode = 0100666;
+	sprintf(header.name, "%s.paxheader", sha1_to_hex(sha1));
+	prepare_header(args, &header, mode, size);
+	write_blocked(&header, sizeof(header));
+	write_blocked(buffer, size);
+	return 0;
+}
+
 static int write_tar_entry(struct archiver_args *args,
 		const unsigned char *sha1, const char *path, size_t pathlen,
 		unsigned int mode, void *buffer, unsigned long size)
@@ -134,13 +171,9 @@ static int write_tar_entry(struct archiver_args *args,
 	memset(&header, 0, sizeof(header));
 
 	if (!sha1) {
-		*header.typeflag = TYPEFLAG_GLOBAL_HEADER;
-		mode = 0100666;
-		strcpy(header.name, "pax_global_header");
+		die("BUG: sha1 == NULL is not supported");
 	} else if (!path) {
-		*header.typeflag = TYPEFLAG_EXT_HEADER;
-		mode = 0100666;
-		sprintf(header.name, "%s.paxheader", sha1_to_hex(sha1));
+		die("BUG: path == NULL is not supported");
 	} else {
 		if (S_ISDIR(mode) || S_ISGITLINK(mode)) {
 			*header.typeflag = TYPEFLAG_DIR;
@@ -182,25 +215,11 @@ static int write_tar_entry(struct archiver_args *args,
 			memcpy(header.linkname, buffer, size);
 	}
 
-	sprintf(header.mode, "%07o", mode & 07777);
-	sprintf(header.size, "%011lo", S_ISREG(mode) ? size : 0);
-	sprintf(header.mtime, "%011lo", (unsigned long) args->time);
-
-	sprintf(header.uid, "%07o", 0);
-	sprintf(header.gid, "%07o", 0);
-	strlcpy(header.uname, "root", sizeof(header.uname));
-	strlcpy(header.gname, "root", sizeof(header.gname));
-	sprintf(header.devmajor, "%07o", 0);
-	sprintf(header.devminor, "%07o", 0);
-
-	memcpy(header.magic, "ustar", 6);
-	memcpy(header.version, "00", 2);
-
-	sprintf(header.chksum, "%07o", ustar_header_chksum(&header));
+	prepare_header(args, &header, mode, size);
 
 	if (ext_header.len > 0) {
-		err = write_tar_entry(args, sha1, NULL, 0, 0, ext_header.buf,
-				ext_header.len);
+		err = write_extended_header(args, sha1, ext_header.buf,
+					    ext_header.len);
 		if (err)
 			return err;
 	}
@@ -215,11 +234,18 @@ static int write_global_extended_header(struct archiver_args *args)
 {
 	const unsigned char *sha1 = args->commit_sha1;
 	struct strbuf ext_header = STRBUF_INIT;
-	int err;
+	struct ustar_header header;
+	unsigned int mode;
+	int err = 0;
 
 	strbuf_append_ext_header(&ext_header, "comment", sha1_to_hex(sha1), 40);
-	err = write_tar_entry(args, NULL, NULL, 0, 0, ext_header.buf,
-			ext_header.len);
+	memset(&header, 0, sizeof(header));
+	*header.typeflag = TYPEFLAG_GLOBAL_HEADER;
+	mode = 0100666;
+	strcpy(header.name, "pax_global_header");
+	prepare_header(args, &header, mode, ext_header.len);
+	write_blocked(&header, sizeof(header));
+	write_blocked(ext_header.buf, ext_header.len);
 	strbuf_release(&ext_header);
 	return err;
 }
