@@ -390,8 +390,10 @@ static struct ref_dir *find_containing_dir(struct ref_dir *dir,
 			   refname + dirname.len,
 			   (slash + 1) - (refname + dirname.len));
 		subdir = search_for_subdir(dir, dirname.buf, mkdir);
-		if (!subdir)
+		if (!subdir) {
+			dir = NULL;
 			break;
+		}
 		dir = subdir;
 	}
 
