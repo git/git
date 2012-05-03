@@ -261,9 +261,17 @@ static int is_index_unchanged(void)
 		return error(_("Could not resolve HEAD commit\n"));
 
 	head_commit = lookup_commit(head_sha1);
-	if (!head_commit || parse_commit(head_commit))
-		return error(_("could not parse commit %s\n"),
-			     sha1_to_hex(head_commit->object.sha1));
+
+	/*
+	 * If head_commit is NULL, check_commit, called from
+	 * lookup_commit, would have indicated that head_commit is not
+	 * a commit object already.  parse_commit() will return failure
+	 * without further complaints in such a case.  Otherwise, if
+	 * the commit is invalid, parse_commit() will complain.  So
+	 * there is nothing for us to say here.  Just return failure.
+	 */
+	if (parse_commit(head_commit))
+		return -1;
 
 	if (!active_cache_tree)
 		active_cache_tree = cache_tree();
