@@ -16,7 +16,12 @@ test_expect_success setup '
 	test_tick &&
 	git commit -m second &&
 	git tag c1 &&
-	git branch test
+	git branch test &&
+	echo third >file &&
+	git add file &&
+	test_tick &&
+	git commit -m third &&
+	git tag c2
 '
 
 test_expect_success 'merge -s recursive up-to-date' '
@@ -72,6 +77,16 @@ test_expect_success 'merge -s subtree up-to-date' '
 	current=$(git rev-parse HEAD) &&
 	test "$expect" = "$current"
 
+'
+
+test_expect_success 'merge fast-forward octopus' '
+
+	git reset --hard c0 &&
+	test_tick &&
+	git merge c1 c2
+	expect=$(git rev-parse c2) &&
+	current=$(git rev-parse HEAD) &&
+	test "$expect" = "$current"
 '
 
 test_done
