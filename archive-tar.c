@@ -161,11 +161,15 @@ static int write_extended_header(struct archiver_args *args,
 }
 
 static int write_tar_entry(struct archiver_args *args,
-		const unsigned char *sha1, const char *path, size_t pathlen,
-		unsigned int mode, void *buffer, unsigned long size)
+			   const unsigned char *sha1,
+			   const char *path, size_t pathlen,
+			   unsigned int mode)
 {
 	struct ustar_header header;
 	struct strbuf ext_header = STRBUF_INIT;
+	unsigned int old_mode = mode;
+	unsigned long size;
+	void *buffer;
 	int err = 0;
 
 	memset(&header, 0, sizeof(header));
@@ -199,7 +203,17 @@ static int write_tar_entry(struct archiver_args *args,
 	} else
 		memcpy(header.name, path, pathlen);
 
-	if (S_ISLNK(mode) && buffer) {
+	if (S_ISLNK(mode) || S_ISREG(mode)) {
+		enum object_type type;
+		buffer = sha1_file_to_archive(args, path, sha1, old_mode, &type, &size);
+		if (!buffer)
+			return error("cannot read %s", sha1_to_hex(sha1));
+	} else {
+		buffer = NULL;
+		size = 0;
+	}
+
+	if (S_ISLNK(mode)) {
 		if (size > sizeof(header.linkname)) {
 			sprintf(header.linkname, "see %s.paxheader",
 			        sha1_to_hex(sha1));
@@ -214,13 +228,16 @@ static int write_tar_entry(struct archiver_args *args,
 	if (ext_header.len > 0) {
 		err = write_extended_header(args, sha1, ext_header.buf,
 					    ext_header.len);
-		if (err)
+		if (err) {
+			free(buffer);
 			return err;
+		}
 	}
 	strbuf_release(&ext_header);
 	write_blocked(&header, sizeof(header));
 	if (S_ISREG(mode) && buffer && size > 0)
 		write_blocked(buffer, size);
+	free(buffer);
 	return err;
 }
 

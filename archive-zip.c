@@ -121,8 +121,9 @@ static void *zlib_deflate(void *data, unsigned long size,
 }
 
 static int write_zip_entry(struct archiver_args *args,
-		const unsigned char *sha1, const char *path, size_t pathlen,
-		unsigned int mode, void *buffer, unsigned long size)
+			   const unsigned char *sha1,
+			   const char *path, size_t pathlen,
+			   unsigned int mode)
 {
 	struct zip_local_header header;
 	struct zip_dir_header dirent;
@@ -134,6 +135,8 @@ static int write_zip_entry(struct archiver_args *args,
 	int method;
 	unsigned char *out;
 	void *deflated = NULL;
+	void *buffer;
+	unsigned long size;
 
 	crc = crc32(0, NULL, 0);
 
@@ -148,7 +151,14 @@ static int write_zip_entry(struct archiver_args *args,
 		out = NULL;
 		uncompressed_size = 0;
 		compressed_size = 0;
+		buffer = NULL;
+		size = 0;
 	} else if (S_ISREG(mode) || S_ISLNK(mode)) {
+		enum object_type type;
+		buffer = sha1_file_to_archive(args, path, sha1, mode, &type, &size);
+		if (!buffer)
+			return error("cannot read %s", sha1_to_hex(sha1));
+
 		method = 0;
 		attr2 = S_ISLNK(mode) ? ((mode | 0777) << 16) :
 			(mode & 0111) ? ((mode) << 16) : 0;
@@ -229,6 +239,7 @@ static int write_zip_entry(struct archiver_args *args,
 	}
 
 	free(deflated);
+	free(buffer);
 
 	return 0;
 }
