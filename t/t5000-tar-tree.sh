@@ -250,6 +250,13 @@ test_expect_success UNZIP 'git archive -0 --format=zip on large files' '
     (mkdir large && cd large && $UNZIP ../large.zip)
 '
 
+test_expect_success UNZIP 'git archive --format=zip on large files' '
+    test_config core.bigfilethreshold 1 &&
+    git archive --format=zip HEAD >large-compressed.zip &&
+    (mkdir large-compressed && cd large-compressed && $UNZIP ../large-compressed.zip) &&
+    test_cmp large-compressed/a/bin/sh large/a/bin/sh
+'
+
 test_expect_success \
     'git archive --list outside of a git repo' \
     'GIT_DIR=some/non-existing/directory git archive --list'

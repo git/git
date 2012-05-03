@@ -211,7 +211,7 @@ static int write_zip_entry(struct archiver_args *args,
 		compressed_size = size;
 
 		if (S_ISREG(mode) && type == OBJ_BLOB && !args->convert &&
-		    size > big_file_threshold && method == 0) {
+		    size > big_file_threshold) {
 			stream = open_istream(sha1, &type, &size, NULL);
 			if (!stream)
 				return error("cannot stream blob %s",
@@ -302,6 +302,68 @@ static int write_zip_entry(struct archiver_args *args,
 			return readlen;
 
 		compressed_size = size;
+		zip_offset += compressed_size;
+
+		write_zip_data_desc(size, compressed_size, crc);
+		zip_offset += ZIP_DATA_DESC_SIZE;
+
+		set_zip_dir_data_desc(&dirent, size, compressed_size, crc);
+	} else if (stream && method == 8) {
+		unsigned char buf[STREAM_BUFFER_SIZE];
+		ssize_t readlen;
+		git_zstream zstream;
+		int result;
+		size_t out_len;
+		unsigned char compressed[STREAM_BUFFER_SIZE * 2];
+
+		memset(&zstream, 0, sizeof(zstream));
+		git_deflate_init(&zstream, args->compression_level);
+
+		compressed_size = 0;
+		zstream.next_out = compressed;
+		zstream.avail_out = sizeof(compressed);
+
+		for (;;) {
+			readlen = read_istream(stream, buf, sizeof(buf));
+			if (readlen <= 0)
+				break;
+			crc = crc32(crc, buf, readlen);
+
+			zstream.next_in = buf;
+			zstream.avail_in = readlen;
+			result = git_deflate(&zstream, 0);
+			if (result != Z_OK)
+				die("deflate error (%d)", result);
+			out = compressed;
+			if (!compressed_size)
+				out += 2;
+			out_len = zstream.next_out - out;
+
+			if (out_len > 0) {
+				write_or_die(1, out, out_len);
+				compressed_size += out_len;
+				zstream.next_out = compressed;
+				zstream.avail_out = sizeof(compressed);
+			}
+
+		}
+		close_istream(stream);
+		if (readlen)
+			return readlen;
+
+		zstream.next_in = buf;
+		zstream.avail_in = 0;
+		result = git_deflate(&zstream, Z_FINISH);
+		if (result != Z_STREAM_END)
+			die("deflate error (%d)", result);
+
+		git_deflate_end(&zstream);
+		out = compressed;
+		if (!compressed_size)
+			out += 2;
+		out_len = zstream.next_out - out - 4;
+		write_or_die(1, out, out_len);
+		compressed_size += out_len;
 		zip_offset += compressed_size;
 
 		write_zip_data_desc(size, compressed_size, crc);
