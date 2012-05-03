@@ -129,7 +129,6 @@ static int write_zip_entry(struct archiver_args *args,
 	struct zip_dir_header dirent;
 	unsigned long attr2;
 	unsigned long compressed_size;
-	unsigned long uncompressed_size;
 	unsigned long crc;
 	unsigned long direntsize;
 	int method;
@@ -149,7 +148,7 @@ static int write_zip_entry(struct archiver_args *args,
 		method = 0;
 		attr2 = 16;
 		out = NULL;
-		uncompressed_size = 0;
+		size = 0;
 		compressed_size = 0;
 		buffer = NULL;
 		size = 0;
@@ -166,7 +165,6 @@ static int write_zip_entry(struct archiver_args *args,
 			method = 8;
 		crc = crc32(crc, buffer, size);
 		out = buffer;
-		uncompressed_size = size;
 		compressed_size = size;
 	} else {
 		return error("unsupported file mode: 0%o (SHA1: %s)", mode,
@@ -204,7 +202,7 @@ static int write_zip_entry(struct archiver_args *args,
 	copy_le16(dirent.mdate, zip_date);
 	copy_le32(dirent.crc32, crc);
 	copy_le32(dirent.compressed_size, compressed_size);
-	copy_le32(dirent.size, uncompressed_size);
+	copy_le32(dirent.size, size);
 	copy_le16(dirent.filename_length, pathlen);
 	copy_le16(dirent.extra_length, 0);
 	copy_le16(dirent.comment_length, 0);
@@ -226,7 +224,7 @@ static int write_zip_entry(struct archiver_args *args,
 	copy_le16(header.mdate, zip_date);
 	copy_le32(header.crc32, crc);
 	copy_le32(header.compressed_size, compressed_size);
-	copy_le32(header.size, uncompressed_size);
+	copy_le32(header.size, size);
 	copy_le16(header.filename_length, pathlen);
 	copy_le16(header.extra_length, 0);
 	write_or_die(1, &header, ZIP_LOCAL_HEADER_SIZE);
