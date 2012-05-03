@@ -120,6 +120,26 @@ static void *zlib_deflate(void *data, unsigned long size,
 	return buffer;
 }
 
+static void set_zip_dir_data_desc(struct zip_dir_header *header,
+				  unsigned long size,
+				  unsigned long compressed_size,
+				  unsigned long crc)
+{
+	copy_le32(header->crc32, crc);
+	copy_le32(header->compressed_size, compressed_size);
+	copy_le32(header->size, size);
+}
+
+static void set_zip_header_data_desc(struct zip_local_header *header,
+				     unsigned long size,
+				     unsigned long compressed_size,
+				     unsigned long crc)
+{
+	copy_le32(header->crc32, crc);
+	copy_le32(header->compressed_size, compressed_size);
+	copy_le32(header->size, size);
+}
+
 static int write_zip_entry(struct archiver_args *args,
 			   const unsigned char *sha1,
 			   const char *path, size_t pathlen,
@@ -200,9 +220,7 @@ static int write_zip_entry(struct archiver_args *args,
 	copy_le16(dirent.compression_method, method);
 	copy_le16(dirent.mtime, zip_time);
 	copy_le16(dirent.mdate, zip_date);
-	copy_le32(dirent.crc32, crc);
-	copy_le32(dirent.compressed_size, compressed_size);
-	copy_le32(dirent.size, size);
+	set_zip_dir_data_desc(&dirent, size, compressed_size, crc);
 	copy_le16(dirent.filename_length, pathlen);
 	copy_le16(dirent.extra_length, 0);
 	copy_le16(dirent.comment_length, 0);
@@ -210,11 +228,6 @@ static int write_zip_entry(struct archiver_args *args,
 	copy_le16(dirent.attr1, 0);
 	copy_le32(dirent.attr2, attr2);
 	copy_le32(dirent.offset, zip_offset);
-	memcpy(zip_dir + zip_dir_offset, &dirent, ZIP_DIR_HEADER_SIZE);
-	zip_dir_offset += ZIP_DIR_HEADER_SIZE;
-	memcpy(zip_dir + zip_dir_offset, path, pathlen);
-	zip_dir_offset += pathlen;
-	zip_dir_entries++;
 
 	copy_le32(header.magic, 0x04034b50);
 	copy_le16(header.version, 10);
@@ -222,9 +235,7 @@ static int write_zip_entry(struct archiver_args *args,
 	copy_le16(header.compression_method, method);
 	copy_le16(header.mtime, zip_time);
 	copy_le16(header.mdate, zip_date);
-	copy_le32(header.crc32, crc);
-	copy_le32(header.compressed_size, compressed_size);
-	copy_le32(header.size, size);
+	set_zip_header_data_desc(&header, size, compressed_size, crc);
 	copy_le16(header.filename_length, pathlen);
 	copy_le16(header.extra_length, 0);
 	write_or_die(1, &header, ZIP_LOCAL_HEADER_SIZE);
@@ -238,6 +249,12 @@ static int write_zip_entry(struct archiver_args *args,
 
 	free(deflated);
 	free(buffer);
+
+	memcpy(zip_dir + zip_dir_offset, &dirent, ZIP_DIR_HEADER_SIZE);
+	zip_dir_offset += ZIP_DIR_HEADER_SIZE;
+	memcpy(zip_dir + zip_dir_offset, path, pathlen);
+	zip_dir_offset += pathlen;
+	zip_dir_entries++;
 
 	return 0;
 }
