@@ -162,6 +162,36 @@ test_expect_success 'fetch following tags' '
 
 '
 
+test_expect_success 'fetch uses remote ref names to describe new refs' '
+	cd "$D" &&
+	git init descriptive &&
+	(
+		cd descriptive &&
+		git config remote.o.url .. &&
+		git config remote.o.fetch "refs/heads/*:refs/crazyheads/*" &&
+		git config --add remote.o.fetch "refs/others/*:refs/heads/*" &&
+		git fetch o
+	) &&
+	git tag -a -m "Descriptive tag" descriptive-tag &&
+	git branch descriptive-branch &&
+	git checkout descriptive-branch &&
+	echo "Nuts" >crazy &&
+	git add crazy &&
+	git commit -a -m "descriptive commit" &&
+	git update-ref refs/others/crazy HEAD &&
+	(
+		cd descriptive &&
+		git fetch o 2>actual &&
+		grep " -> refs/crazyheads/descriptive-branch$" actual |
+		test_i18ngrep "new branch" &&
+		grep " -> descriptive-tag$" actual |
+		test_i18ngrep "new tag" &&
+		grep " -> crazy$" actual |
+		test_i18ngrep "new ref"
+	) &&
+	git checkout master
+'
+
 test_expect_success 'fetch must not resolve short tag name' '
 
 	cd "$D" &&
