@@ -3,6 +3,7 @@
  */
 #include "cache.h"
 #include "archive.h"
+#include "streaming.h"
 
 static int zip_date;
 static int zip_time;
@@ -15,6 +16,7 @@ static unsigned int zip_dir_offset;
 static unsigned int zip_dir_entries;
 
 #define ZIP_DIRECTORY_MIN_SIZE	(1024 * 1024)
+#define ZIP_STREAM (8)
 
 struct zip_local_header {
 	unsigned char magic[4];
@@ -28,6 +30,14 @@ struct zip_local_header {
 	unsigned char size[4];
 	unsigned char filename_length[2];
 	unsigned char extra_length[2];
+	unsigned char _end[1];
+};
+
+struct zip_data_desc {
+	unsigned char magic[4];
+	unsigned char crc32[4];
+	unsigned char compressed_size[4];
+	unsigned char size[4];
 	unsigned char _end[1];
 };
 
@@ -70,6 +80,7 @@ struct zip_dir_trailer {
  * we're interested in.
  */
 #define ZIP_LOCAL_HEADER_SIZE	offsetof(struct zip_local_header, _end)
+#define ZIP_DATA_DESC_SIZE	offsetof(struct zip_data_desc, _end)
 #define ZIP_DIR_HEADER_SIZE	offsetof(struct zip_dir_header, _end)
 #define ZIP_DIR_TRAILER_SIZE	offsetof(struct zip_dir_trailer, _end)
 
@@ -120,6 +131,19 @@ static void *zlib_deflate(void *data, unsigned long size,
 	return buffer;
 }
 
+static void write_zip_data_desc(unsigned long size,
+				unsigned long compressed_size,
+				unsigned long crc)
+{
+	struct zip_data_desc trailer;
+
+	copy_le32(trailer.magic, 0x08074b50);
+	copy_le32(trailer.crc32, crc);
+	copy_le32(trailer.compressed_size, compressed_size);
+	copy_le32(trailer.size, size);
+	write_or_die(1, &trailer, ZIP_DATA_DESC_SIZE);
+}
+
 static void set_zip_dir_data_desc(struct zip_dir_header *header,
 				  unsigned long size,
 				  unsigned long compressed_size,
@@ -140,6 +164,8 @@ static void set_zip_header_data_desc(struct zip_local_header *header,
 	copy_le32(header->size, size);
 }
 
+#define STREAM_BUFFER_SIZE (1024 * 16)
+
 static int write_zip_entry(struct archiver_args *args,
 			   const unsigned char *sha1,
 			   const char *path, size_t pathlen,
@@ -155,6 +181,8 @@ static int write_zip_entry(struct archiver_args *args,
 	unsigned char *out;
 	void *deflated = NULL;
 	void *buffer;
+	struct git_istream *stream = NULL;
+	unsigned long flags = 0;
 	unsigned long size;
 
 	crc = crc32(0, NULL, 0);
@@ -173,25 +201,38 @@ static int write_zip_entry(struct archiver_args *args,
 		buffer = NULL;
 		size = 0;
 	} else if (S_ISREG(mode) || S_ISLNK(mode)) {
-		enum object_type type;
-		buffer = sha1_file_to_archive(args, path, sha1, mode, &type, &size);
-		if (!buffer)
-			return error("cannot read %s", sha1_to_hex(sha1));
+		enum object_type type = sha1_object_info(sha1, &size);
 
 		method = 0;
 		attr2 = S_ISLNK(mode) ? ((mode | 0777) << 16) :
 			(mode & 0111) ? ((mode) << 16) : 0;
-		if (S_ISREG(mode) && args->compression_level != 0)
+		if (S_ISREG(mode) && args->compression_level != 0 && size > 0)
 			method = 8;
-		crc = crc32(crc, buffer, size);
-		out = buffer;
 		compressed_size = size;
+
+		if (S_ISREG(mode) && type == OBJ_BLOB && !args->convert &&
+		    size > big_file_threshold && method == 0) {
+			stream = open_istream(sha1, &type, &size, NULL);
+			if (!stream)
+				return error("cannot stream blob %s",
+					     sha1_to_hex(sha1));
+			flags |= ZIP_STREAM;
+			out = buffer = NULL;
+		} else {
+			buffer = sha1_file_to_archive(args, path, sha1, mode,
+						      &type, &size);
+			if (!buffer)
+				return error("cannot read %s",
+					     sha1_to_hex(sha1));
+			crc = crc32(crc, buffer, size);
+			out = buffer;
+		}
 	} else {
 		return error("unsupported file mode: 0%o (SHA1: %s)", mode,
 				sha1_to_hex(sha1));
 	}
 
-	if (method == 8) {
+	if (buffer && method == 8) {
 		deflated = zlib_deflate(buffer, size, args->compression_level,
 				&compressed_size);
 		if (deflated && compressed_size - 6 < size) {
@@ -216,7 +257,7 @@ static int write_zip_entry(struct archiver_args *args,
 	copy_le16(dirent.creator_version,
 		S_ISLNK(mode) || (S_ISREG(mode) && (mode & 0111)) ? 0x0317 : 0);
 	copy_le16(dirent.version, 10);
-	copy_le16(dirent.flags, 0);
+	copy_le16(dirent.flags, flags);
 	copy_le16(dirent.compression_method, method);
 	copy_le16(dirent.mtime, zip_time);
 	copy_le16(dirent.mdate, zip_date);
@@ -231,18 +272,43 @@ static int write_zip_entry(struct archiver_args *args,
 
 	copy_le32(header.magic, 0x04034b50);
 	copy_le16(header.version, 10);
-	copy_le16(header.flags, 0);
+	copy_le16(header.flags, flags);
 	copy_le16(header.compression_method, method);
 	copy_le16(header.mtime, zip_time);
 	copy_le16(header.mdate, zip_date);
-	set_zip_header_data_desc(&header, size, compressed_size, crc);
+	if (flags & ZIP_STREAM)
+		set_zip_header_data_desc(&header, 0, 0, 0);
+	else
+		set_zip_header_data_desc(&header, size, compressed_size, crc);
 	copy_le16(header.filename_length, pathlen);
 	copy_le16(header.extra_length, 0);
 	write_or_die(1, &header, ZIP_LOCAL_HEADER_SIZE);
 	zip_offset += ZIP_LOCAL_HEADER_SIZE;
 	write_or_die(1, path, pathlen);
 	zip_offset += pathlen;
-	if (compressed_size > 0) {
+	if (stream && method == 0) {
+		unsigned char buf[STREAM_BUFFER_SIZE];
+		ssize_t readlen;
+
+		for (;;) {
+			readlen = read_istream(stream, buf, sizeof(buf));
+			if (readlen <= 0)
+				break;
+			crc = crc32(crc, buf, readlen);
+			write_or_die(1, buf, readlen);
+		}
+		close_istream(stream);
+		if (readlen)
+			return readlen;
+
+		compressed_size = size;
+		zip_offset += compressed_size;
+
+		write_zip_data_desc(size, compressed_size, crc);
+		zip_offset += ZIP_DATA_DESC_SIZE;
+
+		set_zip_dir_data_desc(&dirent, size, compressed_size, crc);
+	} else if (compressed_size > 0) {
 		write_or_die(1, out, compressed_size);
 		zip_offset += compressed_size;
 	}

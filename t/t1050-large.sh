@@ -138,4 +138,8 @@ test_expect_success 'tar achiving' '
 	git archive --format=tar HEAD >/dev/null
 '
 
+test_expect_success 'zip achiving, store only' '
+	git archive --format=zip -0 HEAD >/dev/null
+'
+
 test_done

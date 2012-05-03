@@ -244,6 +244,12 @@ test_expect_success UNZIP \
     'validate file contents with prefix' \
     'diff -r a e/prefix/a'
 
+test_expect_success UNZIP 'git archive -0 --format=zip on large files' '
+    test_config core.bigfilethreshold 1 &&
+    git archive -0 --format=zip HEAD >large.zip &&
+    (mkdir large && cd large && $UNZIP ../large.zip)
+'
+
 test_expect_success \
     'git archive --list outside of a git repo' \
     'GIT_DIR=some/non-existing/directory git archive --list'
