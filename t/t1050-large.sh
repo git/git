@@ -134,4 +134,8 @@ test_expect_success 'repack' '
 	git repack -ad
 '
 
+test_expect_success 'tar achiving' '
+	git archive --format=tar HEAD >/dev/null
+'
+
 test_done

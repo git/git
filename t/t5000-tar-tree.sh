@@ -84,6 +84,12 @@ test_expect_success \
     'git archive vs. git tar-tree' \
     'test_cmp b.tar b2.tar'
 
+test_expect_success 'git archive on large files' '
+    test_config core.bigfilethreshold 1 &&
+    git archive HEAD >b3.tar &&
+    test_cmp b.tar b3.tar
+'
+
 test_expect_success \
     'git archive in a bare repo' \
     '(cd bare.git && git archive HEAD) >b3.tar'

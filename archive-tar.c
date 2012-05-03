@@ -4,6 +4,7 @@
 #include "cache.h"
 #include "tar.h"
 #include "archive.h"
+#include "streaming.h"
 #include "run-command.h"
 
 #define RECORDSIZE	(512)
@@ -30,10 +31,9 @@ static void write_if_needed(void)
  * queues up writes, so that all our write(2) calls write exactly one
  * full block; pads writes to RECORDSIZE
  */
-static void write_blocked(const void *data, unsigned long size)
+static void do_write_blocked(const void *data, unsigned long size)
 {
 	const char *buf = data;
-	unsigned long tail;
 
 	if (offset) {
 		unsigned long chunk = BLOCKSIZE - offset;
@@ -54,12 +54,23 @@ static void write_blocked(const void *data, unsigned long size)
 		memcpy(block + offset, buf, size);
 		offset += size;
 	}
+}
+
+static void finish_record(void)
+{
+	unsigned long tail;
 	tail = offset % RECORDSIZE;
 	if (tail)  {
 		memset(block + offset, 0, RECORDSIZE - tail);
 		offset += RECORDSIZE - tail;
 	}
 	write_if_needed();
+}
+
+static void write_blocked(const void *data, unsigned long size)
+{
+	do_write_blocked(data, size);
+	finish_record();
 }
 
 /*
@@ -75,6 +86,33 @@ static void write_trailer(void)
 		memset(block, 0, offset);
 		write_or_die(1, block, BLOCKSIZE);
 	}
+}
+
+/*
+ * queues up writes, so that all our write(2) calls write exactly one
+ * full block; pads writes to RECORDSIZE
+ */
+static int stream_blocked(const unsigned char *sha1)
+{
+	struct git_istream *st;
+	enum object_type type;
+	unsigned long sz;
+	char buf[BLOCKSIZE];
+	ssize_t readlen;
+
+	st = open_istream(sha1, &type, &sz, NULL);
+	if (!st)
+		return error("cannot stream blob %s", sha1_to_hex(sha1));
+	for (;;) {
+		readlen = read_istream(st, buf, sizeof(buf));
+		if (readlen <= 0)
+			break;
+		do_write_blocked(buf, readlen);
+	}
+	close_istream(st);
+	if (!readlen)
+		finish_record();
+	return readlen;
 }
 
 /*
@@ -203,7 +241,11 @@ static int write_tar_entry(struct archiver_args *args,
 	} else
 		memcpy(header.name, path, pathlen);
 
-	if (S_ISLNK(mode) || S_ISREG(mode)) {
+	if (S_ISREG(mode) && !args->convert &&
+	    sha1_object_info(sha1, &size) == OBJ_BLOB &&
+	    size > big_file_threshold)
+		buffer = NULL;
+	else if (S_ISLNK(mode) || S_ISREG(mode)) {
 		enum object_type type;
 		buffer = sha1_file_to_archive(args, path, sha1, old_mode, &type, &size);
 		if (!buffer)
@@ -235,8 +277,12 @@ static int write_tar_entry(struct archiver_args *args,
 	}
 	strbuf_release(&ext_header);
 	write_blocked(&header, sizeof(header));
-	if (S_ISREG(mode) && buffer && size > 0)
-		write_blocked(buffer, size);
+	if (S_ISREG(mode) && size > 0) {
+		if (buffer)
+			write_blocked(buffer, size);
+		else
+			err = stream_blocked(sha1);
+	}
 	free(buffer);
 	return err;
 }
