@@ -121,7 +121,7 @@ test_expect_success 'log.date does not invoke "--date" magic (oneline)' '
 cat >expect <<'EOF'
 HEAD@{0}
 EOF
-test_expect_failure 'log.date does not invoke "--date" magic (format=%gd)' '
+test_expect_success 'log.date does not invoke "--date" magic (format=%gd)' '
 	test_config log.date raw &&
 	git log -g -1 --format=%gd >actual &&
 	test_cmp expect actual
