@@ -779,7 +779,7 @@ msgstr "Konnte Ausgabe nicht umleiten."
 
 #: builtin/archive.c:37
 msgid "git archive: Remote with no URL"
-msgstr "git archive: Anderes Archiv ohne URL"
+msgstr "git archive: Externes Archiv ohne URL"
 
 #: builtin/archive.c:58
 msgid "git archive: expected ACK/NAK, got EOF"
@@ -825,7 +825,7 @@ msgstr ""
 #. TRANSLATORS: This is "remote " in "remote branch '%s' not found"
 #: builtin/branch.c:163
 msgid "remote "
-msgstr "entfernter "
+msgstr "externer "
 
 #: builtin/branch.c:171
 msgid "cannot use -a with -d"
@@ -1301,12 +1301,12 @@ msgstr "Fertig.\n"
 #: builtin/clone.c:440
 #, c-format
 msgid "Could not find remote branch %s to clone."
-msgstr "Entfernter Zweig %s konnte nicht zum Klonen gefunden werden."
+msgstr "Externer Zweig %s konnte nicht zum Klonen gefunden werden."
 
 #: builtin/clone.c:549
 msgid "remote HEAD refers to nonexistent ref, unable to checkout.\n"
 msgstr ""
-"Entfernte Zweigspitze (HEAD) bezieht sich auf eine nicht existierende "
+"Externe Zweigspitze (HEAD) bezieht sich auf eine nicht existierende "
 "Referenz und kann nicht ausgecheckt werden.\n"
 
 #: builtin/clone.c:639
@@ -1369,7 +1369,7 @@ msgstr "Weiß nicht wie %s zu klonen ist."
 #: builtin/clone.c:835
 #, c-format
 msgid "Remote branch %s not found in upstream %s"
-msgstr "entfernten Zweig %s nicht im anderen Projektarchiv %s gefunden"
+msgstr "externer Zweig %s nicht im anderen Projektarchiv %s gefunden"
 
 #: builtin/clone.c:842
 msgid "You appear to have cloned an empty repository."
@@ -1846,7 +1846,7 @@ msgstr "unbehandeltes Objekt '%s' gegeben"
 
 #: builtin/fetch.c:200
 msgid "Couldn't find remote ref HEAD"
-msgstr "Konnte entfernte Referenz der Zweigspitze (HEAD) nicht finden."
+msgstr "Konnte externe Referenz der Zweigspitze (HEAD) nicht finden."
 
 #: builtin/fetch.c:252
 #, c-format
@@ -1973,8 +1973,8 @@ msgid ""
 "No remote repository specified.  Please, specify either a URL or a\n"
 "remote name from which new revisions should be fetched."
 msgstr ""
-"Kein entferntes Projektarchiv spezifiziert. Bitte spezifiziere entweder\n"
-"eine URL oder den Namen eines entfernten Archivs, von welchem neue\n"
+"Kein externes Projektarchiv spezifiziert. Bitte spezifiziere entweder\n"
+"eine URL oder den Namen eines externen Archivs, von welchem neue\n"
 "Revisionen angefordert werden sollen."
 
 #: builtin/fetch.c:918
@@ -1992,7 +1992,7 @@ msgstr "fetch --all macht keinen Sinn mit Referenzspezifikationen"
 #: builtin/fetch.c:983
 #, c-format
 msgid "No such remote or remote group: %s"
-msgstr "Keine solche Entfernung oder Entfernungsgruppe: %s"
+msgstr "Kein externes Archiv (einzeln oder Gruppe): %s"
 
 #: builtin/fetch.c:991
 msgid "Fetching a group and specifying refspecs does not make sense"
@@ -2338,7 +2338,7 @@ msgstr "Fehler beim Erstellen der Ausgabedateien."
 msgid ""
 "Could not find a tracked remote branch, please specify <upstream> manually.\n"
 msgstr ""
-"Konnte gefolgten entfernten Zweig nicht finden, bitte spezifiziere "
+"Konnte gefolgten externen Zweig nicht finden, bitte spezifiziere "
 "<upstream> manuell.\n"
 
 #: builtin/log.c:1530 builtin/log.c:1532 builtin/log.c:1544
@@ -2463,7 +2463,7 @@ msgid ""
 msgstr ""
 "Bitte gebe eine Versionsbeschreibung ein um zu erklären, warum diese "
 "Zusammenführung erforderlich ist,\n"
-"insbesondere wenn es einen aktualisierten entfernten Zweig mit einem "
+"insbesondere wenn es einen aktualisierten, externen Zweig mit einem "
 "Thema-Zweig zusammenführt.\n"
 "\n"
 "Zeilen beginnend mit '#' werden ignoriert, und eine leere Beschreibung "
@@ -2496,17 +2496,17 @@ msgstr "Kein aktueller Zweig."
 
 #: builtin/merge.c:1059
 msgid "No remote for the current branch."
-msgstr "Kein anderes Archiv für den aktuellen Zweig."
+msgstr "Kein externes Archiv für den aktuellen Zweig."
 
 #: builtin/merge.c:1061
 msgid "No default upstream defined for the current branch."
-msgstr "Kein entferntes Standard-Projektarchiv für den aktuellen Zweig "
+msgstr "Kein externes Standard-Projektarchiv für den aktuellen Zweig "
 "definiert."
 
 #: builtin/merge.c:1066
 #, c-format
 msgid "No remote tracking branch for %s from %s"
-msgstr "Kein entfernter Übernahmezweig für %s von %s"
+msgstr "Kein externer Übernahmezweig für %s von %s"
 
 #: builtin/merge.c:1188
 msgid "There is no merge to abort (MERGE_HEAD missing)."
@@ -2882,7 +2882,7 @@ msgstr ""
 "Um die Historie, führend zum aktuellen (freistehende Zweigspitze (HEAD))\n"
 "Status zu versenden, benutze\n"
 "\n"
-"    git push %s HEAD:<Name-des-entfernten-Zweiges>\n"
+"    git push %s HEAD:<Name-des-externen-Zweiges>\n"
 
 #: builtin/push.c:90
 #, c-format
@@ -2892,9 +2892,9 @@ msgid ""
 "\n"
 "    git push --set-upstream %s %s\n"
 msgstr ""
-"Der aktuelle Zweig %s hat keinen Zweig im entfernten Projektarchiv.\n"
-"Um den aktuellen Zweig zu versenden und die Entfernung als entferntes\n"
-"Projektarchiv zu setzen, benutze\n"
+"Der aktuelle Zweig %s hat keinen Zweig im externen Projektarchiv.\n"
+"Um den aktuellen Zweig zu versenden und das Fernarchiv als externes\n"
+"Projektarchiv zu verwenden, benutze\n"
 "\n"
 "    git push --set-upstream %s %s\n"
 
@@ -2902,7 +2902,7 @@ msgstr ""
 #, c-format
 msgid "The current branch %s has multiple upstream branches, refusing to push."
 msgstr ""
-"Der aktuelle Zweig %s hat mehrere entfernte Zweige, Versand verweigert."
+"Der aktuelle Zweig %s hat mehrere externe Zweige, Versand verweigert."
 
 #: builtin/push.c:101
 #, c-format
@@ -2911,9 +2911,9 @@ msgid ""
 "your current branch '%s', without telling me what to push\n"
 "to update which remote branch."
 msgstr ""
-"Du versendest nach '%s', welches kein entferntes Projektarchiv deines\n"
+"Du versendest nach '%s', welches kein externes Projektarchiv deines\n"
 "aktuellen Zweiges '%s' ist, ohne mir mitzuteilen, was ich versenden\n"
-"soll, um welchen entfernten Zweig zu aktualisieren."
+"soll, um welchen externen Zweig zu aktualisieren."
 
 #: builtin/push.c:127
 msgid ""
@@ -2941,7 +2941,7 @@ msgid ""
 msgstr ""
 "Um dich vor Verlust von Historie zu bewahren, wurden nicht vorzuspulende "
 "Aktualisierungen zurückgewiesen.\n"
-"Führe die entfernten Änderungen zusammen (z.B. 'git pull') bevor du erneut "
+"Führe die externen Änderungen zusammen (z.B. 'git pull') bevor du erneut "
 "versendest. Siehe auch die 'Note about fast-forwards' Sektion von \n"
 "'git push --help' für weitere Details.\n"
 
@@ -2964,7 +2964,7 @@ msgid ""
 msgstr ""
 "Kein Ziel zum Versenden konfiguriert.\n"
 "Entweder spezifizierst du die URL von der Kommandozeile oder konfigurierst "
-"ein entferntes Projektarchiv unter Benutzung von\n"
+"ein externes Projektarchiv unter Benutzung von\n"
 "\n"
 "    git remote add <Name> <URL>\n"
 "\n"
