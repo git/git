@@ -169,9 +169,10 @@ msgid "Your branch is behind '%s' by %d commit, and can be fast-forwarded.\n"
 msgid_plural ""
 "Your branch is behind '%s' by %d commits, and can be fast-forwarded.\n"
 msgstr[0] ""
-"Dein Zweig ist hinter '%s' um %d Version, und kann vorgespult werden.\n"
+"Dein Zweig ist zu '%s' um %d Version hinterher, und kann vorgespult werden.\n"
 msgstr[1] ""
-"Dein Zweig ist hinter '%s' um %d Versionen, und kann vorgespult werden.\n"
+"Dein Zweig ist zu '%s' um %d Versionen hinterher, und kann vorgespult "
+"werden.\n"
 
 #: remote.c:1621
 #, c-format
@@ -650,15 +651,15 @@ msgstr "Initiale Version auf "
 
 #: wt-status.c:905
 msgid "behind "
-msgstr "hinter "
+msgstr "hinterher "
 
 #: wt-status.c:908 wt-status.c:911
 msgid "ahead "
-msgstr "weiter: "
+msgstr "voraus "
 
 #: wt-status.c:913
 msgid ", behind "
-msgstr ", zurückgefallen "
+msgstr ", hinterher "
 
 #: builtin/add.c:62
 #, c-format
@@ -891,7 +892,7 @@ msgstr "%d voraus] "
 #: builtin/branch.c:398
 #, c-format
 msgid "ahead %d, behind %d] "
-msgstr "vor %d, hinter %d] "
+msgstr "%d voraus, %d hinterher] "
 
 #: builtin/branch.c:501
 msgid "(no branch)"
@@ -1078,12 +1079,12 @@ msgid_plural ""
 "\n"
 "%s\n"
 msgstr[0] ""
-"Warnung: Du verlässt %d Version zurückliegend, nicht verbunden zu\n"
+"Warnung: Du bist um %d Version hinterher, nicht verbunden zu\n"
 "einem deiner Zweige:\n"
 "\n"
 "%s\n"
 msgstr[1] ""
-"Warnung: Du verlässt %d Versionen zurückliegend, nicht verbunden zu\n"
+"Warnung: Du bist um %d Versionen hinterher, nicht verbunden zu\n"
 "einem deiner Zweige:\n"
 "\n"
 "%s\n"
