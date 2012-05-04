@@ -11,14 +11,13 @@ check_not_detached () {
 	git symbolic-ref -q HEAD >/dev/null
 }
 
-ORPHAN_WARNING='you are leaving .* commit.*behind'
 PREV_HEAD_DESC='Previous HEAD position was'
 check_orphan_warning() {
-	test_i18ngrep "$ORPHAN_WARNING" "$1" &&
+	test_i18ngrep "you are leaving $2 behind" "$1" &&
 	test_i18ngrep ! "$PREV_HEAD_DESC" "$1"
 }
 check_no_orphan_warning() {
-	test_i18ngrep ! "$ORPHAN_WARNING" "$1" &&
+	test_i18ngrep ! "you are leaving .* commit.*behind" "$1" &&
 	test_i18ngrep "$PREV_HEAD_DESC" "$1"
 }
 
@@ -110,12 +109,24 @@ test_expect_success 'checkout warns on orphan commits' '
 	git checkout --detach two &&
 	echo content >orphan &&
 	git add orphan &&
-	git commit -a -m orphan &&
+	git commit -a -m orphan1 &&
+	echo new content >orphan &&
+	git commit -a -m orphan2 &&
+	orphan2=$(git rev-parse HEAD) &&
 	git checkout master 2>stderr
 '
 
 test_expect_success 'checkout warns on orphan commits: output' '
-	check_orphan_warning stderr
+	check_orphan_warning stderr "2 commits"
+'
+
+test_expect_success 'checkout warns orphaning 1 of 2 commits' '
+	git checkout "$orphan2" &&
+	git checkout HEAD^ 2>stderr
+'
+
+test_expect_success 'checkout warns orphaning 1 of 2 commits: output' '
+	check_orphan_warning stderr "2 commits"
 '
 
 test_expect_success 'checkout does not warn leaving ref tip' '
