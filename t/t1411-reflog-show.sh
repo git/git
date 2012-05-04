@@ -65,6 +65,14 @@ test_expect_success 'using @{now} syntax shows reflog date (oneline)' '
 '
 
 cat >expect <<'EOF'
+HEAD@{Thu Apr 7 15:13:13 2005 -0700}
+EOF
+test_expect_success 'using @{now} syntax shows reflog date (format=%gd)' '
+	git log -g -1 --format=%gd HEAD@{now} >actual &&
+	test_cmp expect actual
+'
+
+cat >expect <<'EOF'
 Reflog: HEAD@{1112911993 -0700} (C O Mitter <committer@example.com>)
 Reflog message: commit (initial): one
 EOF
@@ -79,6 +87,43 @@ e46513e HEAD@{1112911993 -0700}: commit (initial): one
 EOF
 test_expect_success 'using --date= shows reflog date (oneline)' '
 	git log -g -1 --oneline --date=raw >actual &&
+	test_cmp expect actual
+'
+
+cat >expect <<'EOF'
+HEAD@{1112911993 -0700}
+EOF
+test_expect_success 'using --date= shows reflog date (format=%gd)' '
+	git log -g -1 --format=%gd --date=raw >actual &&
+	test_cmp expect actual
+'
+
+cat >expect <<'EOF'
+Reflog: HEAD@{0} (C O Mitter <committer@example.com>)
+Reflog message: commit (initial): one
+EOF
+test_expect_success 'log.date does not invoke "--date" magic (multiline)' '
+	test_config log.date raw &&
+	git log -g -1 >tmp &&
+	grep ^Reflog <tmp >actual &&
+	test_cmp expect actual
+'
+
+cat >expect <<'EOF'
+e46513e HEAD@{0}: commit (initial): one
+EOF
+test_expect_success 'log.date does not invoke "--date" magic (oneline)' '
+	test_config log.date raw &&
+	git log -g -1 --oneline >actual &&
+	test_cmp expect actual
+'
+
+cat >expect <<'EOF'
+HEAD@{0}
+EOF
+test_expect_failure 'log.date does not invoke "--date" magic (format=%gd)' '
+	test_config log.date raw &&
+	git log -g -1 --format=%gd >actual &&
 	test_cmp expect actual
 '
 
