@@ -126,7 +126,7 @@ test_expect_success 'checkout warns orphaning 1 of 2 commits' '
 '
 
 test_expect_success 'checkout warns orphaning 1 of 2 commits: output' '
-	check_orphan_warning stderr "2 commits"
+	check_orphan_warning stderr "1 commit"
 '
 
 test_expect_success 'checkout does not warn leaving ref tip' '
