@@ -1,21 +1,17 @@
 To: git@vger.kernel.org
-Subject: What's cooking in git.git (May 2012, #01; Wed, 2)
-X-master-at: 34875f4a53b9e495622553a671776f66dc37eb2b
-X-next-at: 54d16fbcc9122b1e712cc718d11dda4a9c125ec6
+Subject: What's cooking in git.git (May 2012, #02; Fri, 4)
+X-master-at: 8275905e7e9e8945f0bffdd207f622be39026943
+X-next-at: 8a79d964318316d4ce0606e0bf1c5fa7b677a641
 
-What's cooking in git.git (May 2012, #01; Wed, 2)
+What's cooking in git.git (May 2012, #02; Fri, 4)
 --------------------------------------------------
 
 Here are the topics that have been cooking.  Commits prefixed with '-' are
 only in 'pu' (proposed updates) while commits prefixed with '+' are in 'next'.
 
-The eighth batch of topics in this cycle is now in 'master', the topics in
-'next' all look ready, and we do not have many topics left in 'pu'.  The
-cycle is going well ;-)
-
-Except for folks with libsvn-perl 1.6.x where x is greater than 9; we know
-how the fix should look like, and we will have it in tomorrow's integration
-round.
+Both 'next' and 'pu' branches are rapidly shrinking.  Given that we would
+want to go into feature freeze in a week and half, I think this cycle is
+going fairly well.
 
 You can find the changes described here in the integration branches of the
 repositories listed at
@@ -25,34 +21,69 @@ repositories listed at
 --------------------------------------------------
 [New Topics]
 
-* jk/maint-tformat-with-z (2012-05-01) 2 commits
-  (merged to 'next' on 2012-05-02 at a0f8af7)
- + log-tree: the previous one is still not quite right
- + log-tree: use custom line terminator in line termination mode
+* jc/install-no-hardlinks (2012-05-04) 1 commit
+ - Makefile: NO_INSTALL_HARDLINKS
 
-"log -z --pretty=tformat:..." does not terminate each record with NUL
-and this is a beginning of an attempt to fix it.  It still is not right
-but the patch does not make externally observable behaviour worse.
+Your build platform may support hardlinks but you may prefer not to use
+them, e.g. when installing to DESTDIR to make a tarball and untarring on
+a filesystem that has poor support for hardlinks.
+
+The Makefile in git-gui project may need to learn to honor the same
+setting; it unconditionally creates git-citool by hardlinking git-gui.
+
+Will merge to 'next'.
+
+* jk/maint-reflog-walk-count-vs-time (2012-05-04) 4 commits
+ - reflog-walk: always make HEAD@{0} show indexed selectors
+ - reflog-walk: clean up "flag" field of commit_reflog struct
+ - log: respect date_mode_explicit with --format:%gd
+ - t1411: add more selector index/date tests
+
+Gives a better DWIM behaviour for --pretty=format:%gd, "stash list", and
+"log -g", depending on how the starting point ("master" vs "master@{0}" vs
+"master@{now}") and date formatting options (e.g. "--date=iso") are given
+on the command line.
+
+We may want to clean it up further so that "--date=default" is taken as an
+explicit request to show them in timed, not counted, format.
+
+* nd/i18n-branch-lego (2012-05-04) 1 commit
+ - branch: remove lego in i18n tracking info strings
+
+Fix yet another message construction by concatenating pieces of sentenes,
+which is unfriendly to i18n.
+
+Will merge to 'next'.
+
+* nh/empty-rebase (2012-05-03) 1 commit
+  (merged to 'next' on 2012-05-04 at 8a79d96)
+ + git cherry-pick: do not dereference a potential NULL pointer
+
+Fix to a topic merged to 'master'.
 
 Will merge to 'master'.
 
-* nd/stream-to-archive (2012-04-30) 9 commits
- - archive-zip: streaming for deflated files
- - archive-zip: streaming for stored files
- - archive-zip: factor out helpers for writing sizes and CRC
- - archive-zip: remove uncompressed_size
- - streaming: void pointer instead of char pointer
- - archive-tar: stream large blobs to tar file
- - archive: delegate blob reading to backend
- - archive-tar: unindent write_tar_entry by one level
- - archive-tar: turn write_tar_entry into blob-writing only
+* jc/maint-push-refs-all (2012-05-04) 2 commits
+ - get_fetch_map(): tighten checks on dest refs
+ - fetch/push: allow refs/*:refs/*
 
-Stream large blobs directly out to archive files without slurping
-everything in memory first.  The streaming version of "tar" may need
-further fixing.
+Allows pushing and fetching refs/stash.
+Not ready.
+There still seem to be other bugs hiding (e.g. try pushing twice).
 
-Expecting another reroll; the second version already had review exchanges
-so I didn't pick it up.
+* js/checkout-detach-count (2012-05-04) 2 commits
+ - checkout (detached): truncate list of orphaned commits at the new HEAD
+ - t2020-checkout-detach: check for the number of orphaned commits
+
+When checking out another commit from an already detached state, we used
+to report all commits that are not reachable from any of the refs as
+lossage, but some of them might be reachable from the new HEAD, and there
+is no need to warn about them.
+
+Will merge to 'next'.
+
+--------------------------------------------------
+[Graduated to "master"]
 
 * jk/maint-push-progress (2012-05-01) 3 commits
   (merged to 'next' on 2012-05-01 at 2286130)
@@ -64,225 +95,39 @@ so I didn't pick it up.
 
 Will merge to 'master'.
 
-* zj/diff-empty-chmod (2012-05-02) 5 commits
-  (merged to 'next' on 2012-05-02 at fb8cb11)
- + t4006: Windows do not have /dev/zero
-  (merged to 'next' on 2012-05-01 at 5a92787)
- + diff --stat: do not run diff on indentical files
- + diff --stat: report mode-only changes for binary files like text files
- + tests: check --[short]stat output after chmod
- + test: modernize style of t4006
+* nd/columns (2012-04-27) 10 commits
+  (merged to 'next' on 2012-04-30 at 93bb157)
+ + tag: add --column
+ + column: support piping stdout to external git-column process
+ + status: add --column
+ + branch: add --column
+ + help: reuse print_columns() for help -a
+ + column: add dense layout support
+ + t9002: work around shells that are unable to set COLUMNS to 1
+ + column: add columnar layout
+ + Stop starting pager recursively
+ + Add column layout skeleton and git-column
 
-"git diff --stat" used to fully count a binary file with modified
-execution bits whose contents is unmodified, which was not right.
+A couple of commands learn --column option to produce columnar output.
 
 Will merge to 'master'.
 
 --------------------------------------------------
-[Graduated to "master"]
-
-* ab/i18n (2012-04-30) 3 commits
-  (merged to 'next' on 2012-04-30 at 5e7620d)
- + git-commit: remove lego in i18n messages
- + git-commit: remove lego in i18n messages
- + git-branch: remove lego in i18n messages
-
-Fixes some constructs that build messages meant for i18n by concatenating
-pieces of strings.
-
-* jc/index-v4 (2012-04-27) 12 commits
-  (merged to 'next' on 2012-04-29 at ed71f9c)
- + index-v4: document the entry format
- + unpack-trees: preserve the index file version of original
-  (merged to 'next' on 2012-04-19 at 5e4b029)
- + update-index: upgrade/downgrade on-disk index version
- + read-cache.c: write prefix-compressed names in the index
- + read-cache.c: read prefix-compressed names in index on-disk version v4
- + read-cache.c: move code to copy incore to ondisk cache to a helper function
- + read-cache.c: move code to copy ondisk to incore cache to a helper function
- + read-cache.c: report the header version we do not understand
- + read-cache.c: make create_from_disk() report number of bytes it consumed
- + read-cache.c: allow unaligned mapping of the index file
- + cache.h: hide on-disk index details
- + varint: make it available outside the context of pack
- (this branch is tangled with jc/split-blob.)
-
-Trivially shrinks the on-disk size of the index file to save both I/O and
-checksum overhead.  It even comes with a technical doc updates.
-
-The topic should give a solid base to build on further updates, with the
-code refactoring in its earlier parts, and the backward compatibility
-mechanism in its later parts.
-
-* jc/rerere-train (2012-04-30) 1 commit
-  (merged to 'next' on 2012-04-30 at 0cc4308)
- + contrib/rerere-train: use installed git-sh-setup
-
-A script written long time ago proved to be useful this week for me ;-)
-with a minor tweak.
-
-* jk/doc-asciidoc-inline-literal (2012-04-26) 1 commit
-  (merged to 'next' on 2012-04-30 at a52b4e6)
- + docs: stop using asciidoc no-inline-literal
-
-Our documentation was written for an ancient version of AsciiDoc,
-making the source not very readable.
-
-* jk/maint-config-bogus-section (2012-04-25) 1 commit
-  (merged to 'next' on 2012-04-26 at 9919198)
- + config: reject bogus section names for --rename-section
-
-"git config --rename-section" to rename an existing section into a
-bogus one did not check the new name.
-
-* jk/maint-gitweb-test-use-sane-perl (2012-05-01) 2 commits
-  (merged to 'next' on 2012-05-01 at 88b3f80)
- + Consistently use perl from /usr/bin/ for scripts
- + t/gitweb-lib: use $PERL_PATH to run gitweb
-
-When using a Perl script on a system where "perl" found on user's $PATH
-could be ancient or otherwise broken, we allow builders to specify the
-path to a good copy of Perl with $PERL_PATH.  The gitweb test forgot to
-use that Perl when running its test.
-
-* ld/git-p4-tags-and-labels (2012-04-25) 7 commits
-  (merged to 'next' on 2012-04-25 at 8b959e5)
- + git p4: fix unit tests
-  (merged to 'next' on 2012-04-24 at bf55d92)
- + git p4: move verbose to base class
- + git p4: Ignore P4EDITOR if it is empty
- + git p4: Squash P4EDITOR in test harness
- + git p4: fix-up "import/export of labels to/from p4"
-  (merged to 'next' on 2012-04-15 at 1b1e9a1)
- + git p4: import/export of labels to/from p4
- + git p4: Fixing script editor checks
-
-Support p4 labels by importing/exporting them as git tags.
-
-* lp/diffstat-with-graph (2012-04-27) 8 commits
-  (merged to 'next' on 2012-04-30 at b301202)
- + t4052: work around shells unable to set COLUMNS to 1
- + Merge branch 'zj/mksh-columns-breakage' into lp/diffstat-with-graph
-  (merged to 'next' on 2012-04-23 at 8de0747)
- + Prevent graph_width of stat width from falling below min
- + t4052: Test diff-stat output with minimum columns
- + t4052: Adjust --graph --stat output for prefixes
- + Adjust stat width calculations to take --graph output into account
- + Add output_prefix_length to diff_options
- + t4052: test --stat output with --graph
- (this branch uses zj/mksh-columns-breakage; is tangled with nd/columns.)
-
-"log --graph" was not very friendly with "--stat" option and its output
-had line breaks at wrong places.
-
-* mm/simple-push (2012-04-24) 7 commits
-  (merged to 'next' on 2012-04-30 at 1a571d2)
- + push.default doc: explain simple after upstream
- + push: document the future default change for push.default (matching -> simple)
- + t5570: use explicit push refspec
- + push: introduce new push.default mode "simple"
- + t5528-push-default.sh: add helper functions
- + Undocument deprecated alias 'push.default=tracking'
- + Documentation: explain push.default option a bit more
- (this branch is used by mm/push-default-switch-warning.)
-
-New users tend to work on one branch at a time and push the result
-out. The current and upstream modes of push is a more suitable default
-mode than matching mode for these people, but neither is surprise-free
-depending on how the project is set up. Introduce a "simple" mode that
-is a subset of "upstream" but only works when the branch is named the same
-between the remote and local repositories.
-
-The plan is to make it the new default when push.default is not
-configured.
-
-* nd/i18n (2012-04-25) 11 commits
-  (merged to 'next' on 2012-04-30 at d8bbd7a)
- + help: replace underlining "help -a" headers using hyphens with a blank line
-  (merged to 'next' on 2012-04-24 at 07965a4)
- + i18n: bundle: mark strings for translation
- + i18n: index-pack: mark strings for translation
- + i18n: apply: update say_patch_name to give translators complete sentence
- + i18n: apply: mark strings for translation
- + i18n: remote: mark strings for translation
- + i18n: make warn_dangling_symref() automatically append \n
- + i18n: help: mark strings for translation
- + i18n: mark relative dates for translation
- + strbuf: convenience format functions with \n automatically appended
- + Makefile: feed all header files to xgettext
-
-More message strings marked for i18n.
-
-* nh/empty-rebase (2012-04-24) 4 commits
-  (merged to 'next' on 2012-04-24 at 91d2dfd)
- + git-rebase: add keep_empty flag
- + git-cherry-pick: Add test to validate new options
- + git-cherry-pick: Add keep-redundant-commits option
- + git-cherry-pick: add allow-empty option
-
-"git rebase" learned to optionally keep commits that do not introduce
-any change in the original history.
-
-* pw/message-cleanup (2012-04-30) 2 commits
-  (merged to 'next' on 2012-04-30 at 703c0c4)
- + remove blank filename in error message
- + remove superfluous newlines in error messages
-
-Many error/warning messages had extra trailing newlines that are
-unnecessary.
-
-* pw/p4-various (2012-04-30) 4 commits
-  (merged to 'next' on 2012-04-30 at b20428c)
- + git p4: submit files with wildcards
- + git p4: fix writable file after rename or copy
- + git p4: test submit
- + git p4: bring back files in deleted client directory
-
-Miscellaneous updates to "git p4".
-
-* tr/xdiff-fast-hash (2012-05-01) 2 commits
-  (merged to 'next' on 2012-05-01 at 5155b98)
- + xdiff: choose XDL_FAST_HASH code on sizeof(long) instead of __WORDSIZE
-  (merged to 'next' on 2012-04-24 at ed693cf)
- + xdiff: load full words in the inner loop of xdl_hash_record
-
-Use word-at-a-time comparison to find end of line or NUL (end of buffer),
-borrowed from the linux-kernel discussion.
-
-* zj/diff-stat-smaller-num-columns (2012-04-30) 1 commit
-  (merged to 'next' on 2012-05-01 at eb68d3b)
- + diff --stat: use less columns for change counts
-
-Spend only minimum number of columns necessary to show the number of lines
-in the output from "diff --stat", instead of always allocating 4 columns
-even when showing changes that are much smaller than 1000 lines.
-
-* zj/mksh-columns-breakage (2012-04-27) 1 commit
-  (merged to 'next' on 2012-04-30 at cce82a8)
- + test-lib: skip test with COLUMNS=1 under mksh
- (this branch is used by lp/diffstat-with-graph and nd/columns.)
-
-A broken shell may not let us set an environment value to an arbitrary
-value, interfering with some of the tests. Introduce a test prerequisite
-so that we can skip some tests on such a platform.
-
---------------------------------------------------
 [Stalled]
 
-* nl/http-proxy-more (2012-04-26) 8 commits
- - http: try an uppercase version of $proto_proxy
- - http: fix proxy password passing
- - http: fix proxy authentication
+* nl/http-proxy-more (2012-05-03) 6 commits
  - http: rename HTTP_REAUTH to HTTP_AUTH_RETRY
  - http: Avoid limit of retrying request only twice
  - http: handle proxy authentication failure (error 407)
+ - http: fix http_proxy specified without protocol part
  - http: handle proxy proactive authentication
  - http: try http_proxy env var when http.proxy config option is not set
 
-Still needs to address review comments from Peff, some of which were
-partly addressed with later "fixup" patches queued here.
+It appears that the scope of this series should be drastically reduced, or
+perhaps wait the entire topic until cURL library gains the necessary hooks
+to tell us what proxy server wants us to authenticate when giving us 407.
 
-It probably is a good idea to re-roll the entire series.
+Probably we will end up discarding this series, at least for this cycle.
 
 * jc/run-hook-env-1 (2012-03-11) 1 commit
  - run_hook(): enhance the interface to pass arbitrary environment
@@ -325,46 +170,72 @@ not working :-(.
 --------------------------------------------------
 [Cooking]
 
-* mh/ref-api-lazy-loose (2012-04-26) 18 commits
- - refs: read loose references lazily
- - read_loose_refs(): eliminate ref_cache argument
- - struct ref_dir: store a reference to the enclosing ref_cache
- - search_for_subdir(): return (ref_dir *) instead of (ref_entry *)
- - get_ref_dir(): add function for getting a ref_dir from a ref_entry
- - read_loose_refs(): rename function from get_ref_dir()
- - refs: wrap top-level ref_dirs in ref_entries
- - find_containing_dir(): use strbuf in implementation of this function
- - bisect: copy filename string obtained from git_path()
- - do_for_each_reflog(): reuse strbuf across recursive function calls
- - do_for_each_reflog(): use a strbuf to hold logfile name
- - do_for_each_reflog(): return early on error
- - get_ref_dir(): take the containing directory as argument
- - refs.c: extract function search_for_subdir()
- - get_ref_dir(): require that the dirname argument ends in '/'
- - get_ref_dir(): rename "base" parameter to "dirname"
- - get_ref_dir(): use a strbuf to hold refname
- - get_ref_dir(): return early if directory cannot be read
+* jk/maint-tformat-with-z (2012-05-01) 2 commits
+  (merged to 'next' on 2012-05-02 at a0f8af7)
+ + log-tree: the previous one is still not quite right
+ + log-tree: use custom line terminator in line termination mode
+
+"log -z --pretty=tformat:..." does not terminate each record with NUL
+and this is a beginning of an attempt to fix it.  It still is not right
+but the patch does not make externally observable behaviour worse.
+
+Will merge to 'master'.
+
+* nd/stream-to-archive (2012-05-03) 10 commits
+ - t5000: rationalize unzip tests
+ - archive-zip: streaming for deflated files
+ - archive-zip: streaming for stored files
+ - archive-zip: factor out helpers for writing sizes and CRC
+ - archive-zip: remove uncompressed_size
+ - archive-tar: stream large blobs to tar file
+ - archive: delegate blob reading to backend
+ - archive-tar: unindent write_tar_entry by one level
+ - archive-tar: turn write_tar_entry into blob-writing only
+ - streaming: void pointer instead of char pointer
+
+Stream large blobs directly out to archive files without slurping
+everything in memory first.
+
+Will merge to 'next'.
+
+* zj/diff-empty-chmod (2012-05-02) 5 commits
+  (merged to 'next' on 2012-05-02 at fb8cb11)
+ + t4006: Windows do not have /dev/zero
+  (merged to 'next' on 2012-05-01 at 5a92787)
+ + diff --stat: do not run diff on indentical files
+ + diff --stat: report mode-only changes for binary files like text files
+ + tests: check --[short]stat output after chmod
+ + test: modernize style of t4006
+
+"git diff --stat" used to fully count a binary file with modified
+execution bits whose contents is unmodified, which was not right.
+
+Will merge to 'master'.
+
+* mh/ref-api-lazy-loose (2012-05-04) 18 commits
+  (merged to 'next' on 2012-05-04 at a70d858)
+ + refs: fix find_containing_dir() regression
+ + refs: read loose references lazily
+ + read_loose_refs(): eliminate ref_cache argument
+ + struct ref_dir: store a reference to the enclosing ref_cache
+ + search_for_subdir(): return (ref_dir *) instead of (ref_entry *)
+ + get_ref_dir(): add function for getting a ref_dir from a ref_entry
+ + read_loose_refs(): rename function from get_ref_dir()
+ + refs: wrap top-level ref_dirs in ref_entries
+ + find_containing_dir(): use strbuf in implementation of this function
+ + bisect: copy filename string obtained from git_path()
+ + do_for_each_reflog(): use a strbuf to hold logfile name
+ + do_for_each_reflog(): return early on error
+ + get_ref_dir(): take the containing directory as argument
+ + refs.c: extract function search_for_subdir()
+ + get_ref_dir(): require that the dirname argument ends in '/'
+ + get_ref_dir(): rename "base" parameter to "dirname"
+ + get_ref_dir(): use a strbuf to hold refname
+ + get_ref_dir(): return early if directory cannot be read
 
 Refs API is updated to lazily read sub-hierarchies of refs/ namespace,
 so that we do not have to grab everything from the filesystem when we
 are only interested in listing branches, for example.
-
-This looked mostly sane. Did I miss "needs more work" review comments?
-
-* nd/columns (2012-04-27) 10 commits
-  (merged to 'next' on 2012-04-30 at 93bb157)
- + tag: add --column
- + column: support piping stdout to external git-column process
- + status: add --column
- + branch: add --column
- + help: reuse print_columns() for help -a
- + column: add dense layout support
- + t9002: work around shells that are unable to set COLUMNS to 1
- + column: add columnar layout
- + Stop starting pager recursively
- + Add column layout skeleton and git-column
-
-A couple of commands learn --column option to produce columnar output.
 
 Will merge to 'master'.
 
@@ -373,6 +244,9 @@ Will merge to 'master'.
  - index-pack: support multithreaded delta resolving
  - index-pack: split second pass obj handling into own function
  - compat/win32/pthread.h: Add an pthread_key_delete() implementation
+
+The resulting code seems to be correct but is somewhat a confusing mess.
+We may want to have a reroll before merging it to 'next'.
 
 * th/difftool-diffall (2012-04-23) 8 commits
   (merged to 'next' on 2012-05-02 at fdc9f60)
