@@ -127,6 +127,14 @@ test_expect_success 'log.date does not invoke "--date" magic (format=%gd)' '
 	test_cmp expect actual
 '
 
+cat >expect <<'EOF'
+HEAD@{0}
+EOF
+test_expect_success '--date magic does not override explicit @{0} syntax' '
+	git log -g -1 --format=%gd --date=raw HEAD@{0} >actual &&
+	test_cmp expect actual
+'
+
 : >expect
 test_expect_success 'empty reflog file' '
 	git branch empty &&
