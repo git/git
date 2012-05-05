@@ -44,11 +44,15 @@ a "true" or "false" string for bool), or '--path', which does some
 path expansion (see '--path' below).  If no type specifier is passed, no
 checks or transformations are performed on the value.
 
-The file-option can be one of '--system', '--global' or '--file'
-which specify where the values will be read from or written to.
-The default is to assume the config file of the current repository,
-.git/config unless defined otherwise with GIT_DIR and GIT_CONFIG
-(see <<FILES>>).
+When reading, the values are read from the system, global and
+repository local configuration files by default, and options
+'--system', '--global', '--local' and '--file <filename>' can be
+used to tell the command to read from only that location (see <<FILES>>).
+
+When writing, the new value is written to the repository local
+configuration file by default, and options '--system', '--global',
+'--file <filename>' can be used to tell the command to write to
+that location (you can say '--local' but that is the default).
 
 This command will fail (with exit code ret) if:
 
