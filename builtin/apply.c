@@ -919,7 +919,10 @@ static int gitdiff_hdrend(const char *line, struct patch *patch)
  * their names against any previous information, just
  * to make sure..
  */
-static char *gitdiff_verify_name(const char *line, int isnull, char *orig_name, const char *oldnew)
+#define DIFF_OLD_NAME 0
+#define DIFF_NEW_NAME 1
+
+static char *gitdiff_verify_name(const char *line, int isnull, char *orig_name, int side)
 {
 	if (!orig_name && !isnull)
 		return find_name(line, NULL, p_value, TERM_TAB);
@@ -934,7 +937,9 @@ static char *gitdiff_verify_name(const char *line, int isnull, char *orig_name, 
 			die(_("git apply: bad git-diff - expected /dev/null, got %s on line %d"), name, linenr);
 		another = find_name(line, NULL, p_value, TERM_TAB);
 		if (!another || memcmp(another, name, len + 1))
-			die(_("git apply: bad git-diff - inconsistent %s filename on line %d"), oldnew, linenr);
+			die((side == DIFF_NEW_NAME) ?
+			    _("git apply: bad git-diff - inconsistent new filename on line %d") :
+			    _("git apply: bad git-diff - inconsistent old filename on line %d"), linenr);
 		free(another);
 		return orig_name;
 	}
@@ -949,7 +954,8 @@ static char *gitdiff_verify_name(const char *line, int isnull, char *orig_name, 
 static int gitdiff_oldname(const char *line, struct patch *patch)
 {
 	char *orig = patch->old_name;
-	patch->old_name = gitdiff_verify_name(line, patch->is_new, patch->old_name, "old");
+	patch->old_name = gitdiff_verify_name(line, patch->is_new, patch->old_name,
+					      DIFF_OLD_NAME);
 	if (orig != patch->old_name)
 		free(orig);
 	return 0;
@@ -958,7 +964,8 @@ static int gitdiff_oldname(const char *line, struct patch *patch)
 static int gitdiff_newname(const char *line, struct patch *patch)
 {
 	char *orig = patch->new_name;
-	patch->new_name = gitdiff_verify_name(line, patch->is_delete, patch->new_name, "new");
+	patch->new_name = gitdiff_verify_name(line, patch->is_delete, patch->new_name,
+					      DIFF_NEW_NAME);
 	if (orig != patch->new_name)
 		free(orig);
 	return 0;
