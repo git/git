@@ -31,6 +31,10 @@ Language:	sv (Swedish)
 Repository:	https://github.com/nafmo/git-l10n-sv/
 Leader:		Peter Krefting <peter@softwolves.pp.se>
 
+Language:	vi (Vietnamese)
+Repository:	https://github.com/vnwildman/git.git
+Leader:		Trần Ngọc Quân <vnwildman AT gmail.com>
+
 Language:	zh_CN (Simplified Chinese)
 Repository:	https://github.com/gotgit/git-po-zh_CN/
 Leader:		Jiang Xin <worldhello.net@gmail.com>
