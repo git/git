@@ -39,6 +39,11 @@ struct base_data {
 	int ofs_first, ofs_last;
 };
 
+#if !defined(NO_PTHREADS) && defined(NO_PREAD)
+/* NO_PREAD uses compat/pread.c, which is not thread-safe. Disable threading. */
+#define NO_PTHREADS
+#endif
+
 struct thread_local {
 #ifndef NO_PTHREADS
 	pthread_t thread;
