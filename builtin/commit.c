@@ -109,7 +109,6 @@ static int show_ignored_in_status;
 static const char *only_include_assumed;
 static struct strbuf message = STRBUF_INIT;
 
-static int null_termination;
 static enum {
 	STATUS_FORMAT_LONG,
 	STATUS_FORMAT_SHORT,
@@ -460,10 +459,10 @@ static int run_status(FILE *fp, const char *index_file, const char *prefix, int 
 
 	switch (status_format) {
 	case STATUS_FORMAT_SHORT:
-		wt_shortstatus_print(s, null_termination, status_show_branch);
+		wt_shortstatus_print(s, status_show_branch);
 		break;
 	case STATUS_FORMAT_PORCELAIN:
-		wt_porcelain_print(s, null_termination);
+		wt_porcelain_print(s);
 		break;
 	case STATUS_FORMAT_LONG:
 		wt_status_print(s);
@@ -1082,7 +1081,7 @@ static int parse_and_validate_options(int argc, const char *argv[],
 	if (all && argc > 0)
 		die(_("Paths with -a does not make sense."));
 
-	if (null_termination && status_format == STATUS_FORMAT_LONG)
+	if (s->null_termination && status_format == STATUS_FORMAT_LONG)
 		status_format = STATUS_FORMAT_PORCELAIN;
 	if (status_format != STATUS_FORMAT_LONG)
 		dry_run = 1;
@@ -1181,7 +1180,7 @@ int cmd_status(int argc, const char **argv, const char *prefix)
 		OPT_SET_INT(0, "porcelain", &status_format,
 			    "machine-readable output",
 			    STATUS_FORMAT_PORCELAIN),
-		OPT_BOOLEAN('z', "null", &null_termination,
+		OPT_BOOLEAN('z', "null", &s.null_termination,
 			    "terminate entries with NUL"),
 		{ OPTION_STRING, 'u', "untracked-files", &untracked_files_arg,
 		  "mode",
@@ -1206,7 +1205,7 @@ int cmd_status(int argc, const char **argv, const char *prefix)
 			     builtin_status_options,
 			     builtin_status_usage, 0);
 
-	if (null_termination && status_format == STATUS_FORMAT_LONG)
+	if (s.null_termination && status_format == STATUS_FORMAT_LONG)
 		status_format = STATUS_FORMAT_PORCELAIN;
 
 	handle_untracked_files_arg(&s);
@@ -1231,10 +1230,10 @@ int cmd_status(int argc, const char **argv, const char *prefix)
 
 	switch (status_format) {
 	case STATUS_FORMAT_SHORT:
-		wt_shortstatus_print(&s, null_termination, status_show_branch);
+		wt_shortstatus_print(&s, status_show_branch);
 		break;
 	case STATUS_FORMAT_PORCELAIN:
-		wt_porcelain_print(&s, null_termination);
+		wt_porcelain_print(&s);
 		break;
 	case STATUS_FORMAT_LONG:
 		s.verbose = verbose;
@@ -1406,7 +1405,7 @@ int cmd_commit(int argc, const char **argv, const char *prefix)
 		OPT_BOOLEAN(0, "branch", &status_show_branch, "show branch information"),
 		OPT_SET_INT(0, "porcelain", &status_format,
 			    "machine-readable output", STATUS_FORMAT_PORCELAIN),
-		OPT_BOOLEAN('z', "null", &null_termination,
+		OPT_BOOLEAN('z', "null", &s.null_termination,
 			    "terminate entries with NUL"),
 		OPT_BOOLEAN(0, "amend", &amend, "amend previous commit"),
 		OPT_BOOLEAN(0, "no-post-rewrite", &no_post_rewrite, "bypass post-rewrite hook"),
