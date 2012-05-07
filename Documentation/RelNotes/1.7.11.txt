@@ -13,6 +13,9 @@ UI, Workflows & Features
    name over there.  The plan is to make this mode the new default
    value when push.default is not configured.
 
+ * A couple of commands learned the "--column" option to produce
+   columnar output.
+
  * A third-party tool "git subtree" is distributed in contrib/
 
  * Error messages given when @{u} is used for a branch without its
@@ -39,6 +42,11 @@ UI, Workflows & Features
 
  * The output from "diff/log --stat" used to always allocate 4 columns
    to show the number of modified lines, but not anymore.
+
+ * "git difftool" learned the "--dir-diff" option to spawn external
+   diff tools that can compare two directory hierarchies at a time
+   after populating two temporary directories, instead of running an
+   instance of the external tool once per a file pair.
 
  * The "fmt-merge-msg" command learns to list the primary contributors
    involved in the side topic you are merging.
@@ -116,11 +124,17 @@ Unless otherwise noted, all the fixes since v1.7.10 in the maintenance
 releases are contained in this release (see release notes to them for
 details).
 
- * When using a Perl script on a system where "perl" found on user's
-   $PATH could be ancient or otherwise broken, we allow builders to
-   specify the path to a good copy of Perl with $PERL_PATH.  The
-   gitweb test forgot to use that Perl when running its test.
-   (merge 0754e08 jk/maint-gitweb-test-use-sane-perl later to maint).
+ * "git diff --stat" used to fully count a binary file with modified
+   execution bits whose contents is unmodified, which was not quite
+   right.
+
+ * "log -z --pretty=tformat:..." did not terminate each record with
+   NUL.  The fix is not entirely correct when the output also asks for
+   --patch and/or --stat, though.
+   (merge fafd382 jk/maint-tformat-with-z later to maint).
+
+ * "git push" over smart-http lost progress output a few releases ago.
+   (merge e304aeb jk/maint-push-progress later to maint).
 
  * A contrib script "rerere-train" did not work out of the box unless
    user futzed with her $PATH.
@@ -129,48 +143,3 @@ details).
  * "log --graph" was not very friendly with "--stat" option and its
    output had line breaks at wrong places.
    (merge bafa16e lp/diffstat-with-graph later to maint).
-
- * "git config --rename-section" to rename an existing section into a
-   bogus one did not check the new name.
-   (merge 94a35b1 jk/maint-config-bogus-section later to maint).
-
- * The test scaffolding for git-daemon was flaky.
-   (merge 46e3581 js/daemon-test-race-fix later to maint).
-
- * The test scaffolding for fast-import was flaky.
-   (merge 7fb8e16 pw/t5800-import-race-fix later to maint).
-
- * Octopus merge strategy did not reduce heads that are recorded in the
-   final commit correctly.
-   (merge 5802f81 jc/merge-reduce-parents-early later to maint).
-
- * In the older days, the header "Conflicts:" in "cherry-pick" and
-   "merge" was separated by a blank line from the list of paths that
-   follow for readability, but when "merge" was rewritten in C, we lost
-   it by mistake. Remove the newline from "cherry-pick" to make them
-   match again.
-   (merge 5112068 rt/cherry-revert-conflict-summary later to maint).
-
- * The filesystem boundary was not correctly reported when .git
-   directory discovery stopped at a mount point.
-   (merge 2565b43 cb/maint-report-mount-point-correctly-in-setup later to maint).
-
- * The command line parser choked "git cherry-pick $name" when $name
-   can be both revision name and a pathname, even though $name can
-   never be a path in the context of the command.
-   (merge 6d5b93f cb/cherry-pick-rev-path-confusion later to maint).
-
- * HTTP transport that requires authentication did not work correctly
-   when multiple connections are used simultaneously.
-   (merge 6f4c347 cb/http-multi-curl-auth later to maint).
-
- * The i18n of error message "git stash save" was not properly done.
-   (merge ed3c400 rl/maint-stash-i18n-save-error later to maint).
-
- * The report from "git fetch" said "new branch" even for a non branch
-   ref.
-   (merge 0997ada mb/fetch-call-a-non-branch-a-ref later to maint).
-
- * The "diff --no-index" codepath used limited-length buffers, risking
-   pathnames getting truncated.  Update it to use the strbuf API.
-   (merge 875b91b jm/maint-strncpy-diff-no-index later to maint).
