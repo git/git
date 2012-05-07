@@ -732,7 +732,7 @@ int cmd_clone(int argc, const char **argv, const char *prefix)
 		opts.update = 1;
 		opts.merge = 1;
 		opts.fn = oneway_merge;
-		opts.verbose_update = (option_verbosity > 0);
+		opts.verbose_update = (option_verbosity >= 0);
 		opts.src_index = &the_index;
 		opts.dst_index = &the_index;
 
