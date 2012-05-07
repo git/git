@@ -11,12 +11,12 @@ extern int add_reflog_for_walk(struct reflog_walk_info *info,
 extern void fake_reflog_parent(struct reflog_walk_info *info,
 		struct commit *commit);
 extern void show_reflog_message(struct reflog_walk_info *info, int,
-		enum date_mode);
+				enum date_mode, int force_date);
 extern void get_reflog_message(struct strbuf *sb,
 		struct reflog_walk_info *reflog_info);
 extern void get_reflog_selector(struct strbuf *sb,
 		struct reflog_walk_info *reflog_info,
-		enum date_mode dmode,
+		enum date_mode dmode, int force_date,
 		int shorten);
 
 #endif

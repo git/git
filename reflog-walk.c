@@ -252,7 +252,7 @@ void fake_reflog_parent(struct reflog_walk_info *info, struct commit *commit)
 
 void get_reflog_selector(struct strbuf *sb,
 			 struct reflog_walk_info *reflog_info,
-			 enum date_mode dmode,
+			 enum date_mode dmode, int force_date,
 			 int shorten)
 {
 	struct commit_reflog *commit_reflog = reflog_info->last_commit_reflog;
@@ -273,7 +273,7 @@ void get_reflog_selector(struct strbuf *sb,
 
 	strbuf_addf(sb, "%s@{", printed_ref);
 	if (commit_reflog->selector == SELECTOR_DATE ||
-	    (commit_reflog->selector == SELECTOR_NONE && dmode)) {
+	    (commit_reflog->selector == SELECTOR_NONE && force_date)) {
 		info = &commit_reflog->reflogs->items[commit_reflog->recno+1];
 		strbuf_addstr(sb, show_date(info->timestamp, info->tz, dmode));
 	} else {
@@ -302,7 +302,7 @@ void get_reflog_message(struct strbuf *sb,
 }
 
 void show_reflog_message(struct reflog_walk_info *reflog_info, int oneline,
-	enum date_mode dmode)
+			 enum date_mode dmode, int force_date)
 {
 	if (reflog_info && reflog_info->last_commit_reflog) {
 		struct commit_reflog *commit_reflog = reflog_info->last_commit_reflog;
@@ -310,7 +310,7 @@ void show_reflog_message(struct reflog_walk_info *reflog_info, int oneline,
 		struct strbuf selector = STRBUF_INIT;
 
 		info = &commit_reflog->reflogs->items[commit_reflog->recno+1];
-		get_reflog_selector(&selector, reflog_info, dmode, 0);
+		get_reflog_selector(&selector, reflog_info, dmode, force_date, 0);
 		if (oneline) {
 			printf("%s: %s", selector.buf, info->message);
 		}
