@@ -114,7 +114,6 @@ static enum {
 	STATUS_FORMAT_SHORT,
 	STATUS_FORMAT_PORCELAIN
 } status_format = STATUS_FORMAT_LONG;
-static int status_show_branch;
 
 static int opt_parse_m(const struct option *opt, const char *arg, int unset)
 {
@@ -459,7 +458,7 @@ static int run_status(FILE *fp, const char *index_file, const char *prefix, int 
 
 	switch (status_format) {
 	case STATUS_FORMAT_SHORT:
-		wt_shortstatus_print(s, status_show_branch);
+		wt_shortstatus_print(s);
 		break;
 	case STATUS_FORMAT_PORCELAIN:
 		wt_porcelain_print(s);
@@ -1175,7 +1174,7 @@ int cmd_status(int argc, const char **argv, const char *prefix)
 		OPT__VERBOSE(&verbose, "be verbose"),
 		OPT_SET_INT('s', "short", &status_format,
 			    "show status concisely", STATUS_FORMAT_SHORT),
-		OPT_BOOLEAN('b', "branch", &status_show_branch,
+		OPT_BOOLEAN('b', "branch", &s.show_branch,
 			    "show branch information"),
 		OPT_SET_INT(0, "porcelain", &status_format,
 			    "machine-readable output",
@@ -1230,7 +1229,7 @@ int cmd_status(int argc, const char **argv, const char *prefix)
 
 	switch (status_format) {
 	case STATUS_FORMAT_SHORT:
-		wt_shortstatus_print(&s, status_show_branch);
+		wt_shortstatus_print(&s);
 		break;
 	case STATUS_FORMAT_PORCELAIN:
 		wt_porcelain_print(&s);
@@ -1402,7 +1401,7 @@ int cmd_commit(int argc, const char **argv, const char *prefix)
 		OPT_BOOLEAN(0, "dry-run", &dry_run, "show what would be committed"),
 		OPT_SET_INT(0, "short", &status_format, "show status concisely",
 			    STATUS_FORMAT_SHORT),
-		OPT_BOOLEAN(0, "branch", &status_show_branch, "show branch information"),
+		OPT_BOOLEAN(0, "branch", &s.show_branch, "show branch information"),
 		OPT_SET_INT(0, "porcelain", &status_format,
 			    "machine-readable output", STATUS_FORMAT_PORCELAIN),
 		OPT_BOOLEAN('z', "null", &s.null_termination,

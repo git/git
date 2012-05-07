@@ -177,7 +177,7 @@ order is reversed (e.g 'from \-> to' becomes 'to from'). Second, a NUL
 and the terminating newline (but a space still separates the status
 field from the first filename).  Third, filenames containing special
 characters are not specially formatted; no quoting or
-backslash-escaping is performed. Fourth, there is no branch line.
+backslash-escaping is performed.
 
 CONFIGURATION
 -------------

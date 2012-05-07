@@ -57,6 +57,7 @@ struct wt_status {
 	const char *ignore_submodule_arg;
 	char color_palette[WT_STATUS_MAXSLOT][COLOR_MAXLEN];
 	int null_termination;
+	int show_branch;
 
 	/* These are computed during processing of the individual sections */
 	int commitable;
@@ -73,7 +74,7 @@ void wt_status_prepare(struct wt_status *s);
 void wt_status_print(struct wt_status *s);
 void wt_status_collect(struct wt_status *s);
 
-void wt_shortstatus_print(struct wt_status *s, int show_branch);
+void wt_shortstatus_print(struct wt_status *s);
 void wt_porcelain_print(struct wt_status *s);
 
 void status_printf_ln(struct wt_status *s, const char *color, const char *fmt, ...)

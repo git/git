@@ -918,11 +918,11 @@ static void wt_shortstatus_print_tracking(struct wt_status *s)
 	fputc(s->null_termination ? '\0' : '\n', s->fp);
 }
 
-void wt_shortstatus_print(struct wt_status *s, int show_branch)
+void wt_shortstatus_print(struct wt_status *s)
 {
 	int i;
 
-	if (show_branch)
+	if (s->show_branch)
 		wt_shortstatus_print_tracking(s);
 
 	for (i = 0; i < s->change.nr; i++) {
@@ -955,5 +955,5 @@ void wt_porcelain_print(struct wt_status *s)
 	s->use_color = 0;
 	s->relative_paths = 0;
 	s->prefix = NULL;
-	wt_shortstatus_print(s, 0);
+	wt_shortstatus_print(s);
 }

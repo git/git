@@ -656,9 +656,14 @@ test_expect_success 'status --porcelain ignores color.status' '
 git config --unset color.status
 git config --unset color.ui
 
-test_expect_success 'status --porcelain ignores -b' '
+test_expect_success 'status --porcelain respects -b' '
 
 	git status --porcelain -b >output &&
+	{
+		echo "## master" &&
+		cat expect
+	} >tmp &&
+	mv tmp expect &&
 	test_cmp expect output
 
 '
