@@ -889,8 +889,8 @@ static void wt_shortstatus_print_tracking(struct wt_status *s)
 	if (s->is_initial)
 		color_fprintf(s->fp, header_color, _("Initial commit on "));
 	if (!stat_tracking_info(branch, &num_ours, &num_theirs)) {
-		color_fprintf_ln(s->fp, branch_color_local,
-			"%s", branch_name);
+		color_fprintf(s->fp, branch_color_local, "%s", branch_name);
+		fputc(s->null_termination ? '\0' : '\n', s->fp);
 		return;
 	}
 
@@ -914,7 +914,8 @@ static void wt_shortstatus_print_tracking(struct wt_status *s)
 		color_fprintf(s->fp, branch_color_remote, "%d", num_theirs);
 	}
 
-	color_fprintf_ln(s->fp, header_color, "]");
+	color_fprintf(s->fp, header_color, "]");
+	fputc(s->null_termination ? '\0' : '\n', s->fp);
 }
 
 void wt_shortstatus_print(struct wt_status *s, int show_branch)
