@@ -22,6 +22,7 @@ except ImportError:
     _digest = sha.new
 import sys
 import os
+import time
 sys.path.insert(0, os.getenv("GITPYTHONLIB","."))
 
 from git_remote_helpers.util import die, debug, warn
@@ -204,6 +205,11 @@ def read_one_line(repo):
     """Reads and processes one command.
     """
 
+    sleepy = os.environ.get("GIT_REMOTE_TESTGIT_SLEEPY")
+    if sleepy:
+        debug("Sleeping %d sec before readline" % int(sleepy))
+        time.sleep(int(sleepy))
+
     line = sys.stdin.readline()
 
     cmdline = line
@@ -258,6 +264,7 @@ def main(args):
 
     more = True
 
+    sys.stdin = os.fdopen(sys.stdin.fileno(), 'r', 0)
     while (more):
         more = read_one_line(repo)
 
