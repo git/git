@@ -56,7 +56,7 @@ struct wt_status {
 	enum untracked_status_type show_untracked_files;
 	const char *ignore_submodule_arg;
 	char color_palette[WT_STATUS_MAXSLOT][COLOR_MAXLEN];
-	int colopts;
+	unsigned colopts;
 	int null_termination;
 	int show_branch;
 
