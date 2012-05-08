@@ -801,7 +801,7 @@ void wt_status_print(struct wt_status *s)
 	}
 }
 
-static void wt_shortstatus_unmerged(int null_termination, struct string_list_item *it,
+static void wt_shortstatus_unmerged(struct string_list_item *it,
 			   struct wt_status *s)
 {
 	struct wt_status_change_data *d = it->util;
@@ -817,7 +817,7 @@ static void wt_shortstatus_unmerged(int null_termination, struct string_list_ite
 	case 7: how = "UU"; break; /* both modified */
 	}
 	color_fprintf(s->fp, color(WT_STATUS_UNMERGED, s), "%s", how);
-	if (null_termination) {
+	if (s->null_termination) {
 		fprintf(stdout, " %s%c", it->string, 0);
 	} else {
 		struct strbuf onebuf = STRBUF_INIT;
@@ -828,7 +828,7 @@ static void wt_shortstatus_unmerged(int null_termination, struct string_list_ite
 	}
 }
 
-static void wt_shortstatus_status(int null_termination, struct string_list_item *it,
+static void wt_shortstatus_status(struct string_list_item *it,
 			 struct wt_status *s)
 {
 	struct wt_status_change_data *d = it->util;
@@ -842,7 +842,7 @@ static void wt_shortstatus_status(int null_termination, struct string_list_item 
 	else
 		putchar(' ');
 	putchar(' ');
-	if (null_termination) {
+	if (s->null_termination) {
 		fprintf(stdout, "%s%c", it->string, 0);
 		if (d->head_path)
 			fprintf(stdout, "%s%c", d->head_path, 0);
@@ -870,10 +870,10 @@ static void wt_shortstatus_status(int null_termination, struct string_list_item 
 	}
 }
 
-static void wt_shortstatus_other(int null_termination, struct string_list_item *it,
+static void wt_shortstatus_other(struct string_list_item *it,
 				 struct wt_status *s, const char *sign)
 {
-	if (null_termination) {
+	if (s->null_termination) {
 		fprintf(stdout, "%s %s%c", sign, it->string, 0);
 	} else {
 		struct strbuf onebuf = STRBUF_INIT;
@@ -913,8 +913,8 @@ static void wt_shortstatus_print_tracking(struct wt_status *s)
 	if (s->is_initial)
 		color_fprintf(s->fp, header_color, _("Initial commit on "));
 	if (!stat_tracking_info(branch, &num_ours, &num_theirs)) {
-		color_fprintf_ln(s->fp, branch_color_local,
-			"%s", branch_name);
+		color_fprintf(s->fp, branch_color_local, "%s", branch_name);
+		fputc(s->null_termination ? '\0' : '\n', s->fp);
 		return;
 	}
 
@@ -938,14 +938,15 @@ static void wt_shortstatus_print_tracking(struct wt_status *s)
 		color_fprintf(s->fp, branch_color_remote, "%d", num_theirs);
 	}
 
-	color_fprintf_ln(s->fp, header_color, "]");
+	color_fprintf(s->fp, header_color, "]");
+	fputc(s->null_termination ? '\0' : '\n', s->fp);
 }
 
-void wt_shortstatus_print(struct wt_status *s, int null_termination, int show_branch)
+void wt_shortstatus_print(struct wt_status *s)
 {
 	int i;
 
-	if (show_branch)
+	if (s->show_branch)
 		wt_shortstatus_print_tracking(s);
 
 	for (i = 0; i < s->change.nr; i++) {
@@ -955,28 +956,28 @@ void wt_shortstatus_print(struct wt_status *s, int null_termination, int show_br
 		it = &(s->change.items[i]);
 		d = it->util;
 		if (d->stagemask)
-			wt_shortstatus_unmerged(null_termination, it, s);
+			wt_shortstatus_unmerged(it, s);
 		else
-			wt_shortstatus_status(null_termination, it, s);
+			wt_shortstatus_status(it, s);
 	}
 	for (i = 0; i < s->untracked.nr; i++) {
 		struct string_list_item *it;
 
 		it = &(s->untracked.items[i]);
-		wt_shortstatus_other(null_termination, it, s, "??");
+		wt_shortstatus_other(it, s, "??");
 	}
 	for (i = 0; i < s->ignored.nr; i++) {
 		struct string_list_item *it;
 
 		it = &(s->ignored.items[i]);
-		wt_shortstatus_other(null_termination, it, s, "!!");
+		wt_shortstatus_other(it, s, "!!");
 	}
 }
 
-void wt_porcelain_print(struct wt_status *s, int null_termination)
+void wt_porcelain_print(struct wt_status *s)
 {
 	s->use_color = 0;
 	s->relative_paths = 0;
 	s->prefix = NULL;
-	wt_shortstatus_print(s, null_termination, 0);
+	wt_shortstatus_print(s);
 }
