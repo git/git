@@ -1100,7 +1100,7 @@ int cmd_checkout(int argc, const char **argv, const char *prefix)
 	if (opts.writeout_stage)
 		die(_("--ours/--theirs is incompatible with switching branches."));
 
-	if (!new.commit) {
+	if (!new.commit && opts.new_branch) {
 		unsigned char rev[20];
 		int flag;
 
