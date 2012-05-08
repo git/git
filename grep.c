@@ -318,7 +318,7 @@ static struct grep_expr *prep_header_patterns(struct grep_opt *opt)
 
 	if (!opt->header_list)
 		return NULL;
-	p = opt->header_list;
+
 	for (p = opt->header_list; p; p = p->next) {
 		if (p->token != GREP_PATTERN_HEAD)
 			die("bug: a non-header pattern in grep header list.");
