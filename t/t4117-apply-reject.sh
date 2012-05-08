@@ -46,6 +46,14 @@ test_expect_success setup '
 	cat file1 >saved.file1
 '
 
+test_expect_success 'apply --reject is incompatible with --3way' '
+	test_when_finished "cat saved.file1 >file1" &&
+	git diff >patch.0 &&
+	git checkout file1 &&
+	test_must_fail git apply --reject --3way patch.0 &&
+	git diff --exit-code
+'
+
 test_expect_success 'apply without --reject should fail' '
 
 	if git apply patch.1
