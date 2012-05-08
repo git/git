@@ -1,17 +1,17 @@
 To: git@vger.kernel.org
-Subject: What's cooking in git.git (May 2012, #02; Fri, 4)
-X-master-at: 8275905e7e9e8945f0bffdd207f622be39026943
-X-next-at: 8a79d964318316d4ce0606e0bf1c5fa7b677a641
+Subject: What's cooking in git.git (May 2012, #03; Tue, 8)
+X-master-at: a3935e6791c619a9f2f472e9e553d45d88c4e263
+X-next-at: fc4d754aa0f0b59f9e5aae11a66367f2db8d5ae0
 
-What's cooking in git.git (May 2012, #02; Fri, 4)
+What's cooking in git.git (May 2012, #03; Tue, 8)
 --------------------------------------------------
 
 Here are the topics that have been cooking.  Commits prefixed with '-' are
 only in 'pu' (proposed updates) while commits prefixed with '+' are in 'next'.
 
-Both 'next' and 'pu' branches are rapidly shrinking.  Given that we would
-want to go into feature freeze in a week and half, I think this cycle is
-going fairly well.
+The ninth batch of topics have graduated to 'master'; we seem to have
+accumulated more topics on 'next' in the meantime, but they all look
+healthy.  It is a good time to start preparing for the feature freeze.
 
 You can find the changes described here in the integration branches of the
 repositories listed at
@@ -21,39 +21,108 @@ repositories listed at
 --------------------------------------------------
 [New Topics]
 
-* jc/install-no-hardlinks (2012-05-04) 1 commit
- - Makefile: NO_INSTALL_HARDLINKS
+* ah/maint-grep-double-init (2012-05-07) 1 commit
+  (merged to 'next' on 2012-05-08 at 51f84c5)
+ + grep.c: remove redundant line of code
 
-Your build platform may support hardlinks but you may prefer not to use
-them, e.g. when installing to DESTDIR to make a tarball and untarring on
-a filesystem that has poor support for hardlinks.
+Will merge to 'master'.
 
-The Makefile in git-gui project may need to learn to honor the same
-setting; it unconditionally creates git-citool by hardlinking git-gui.
+* ef/maint-1.7.6-clone-progress-fix (2012-05-07) 1 commit
+ + clone: fix progress-regression
+ (this branch is used by ef/maint-clone-progress-fix.)
 
-Will merge to 'next'.
+Will merge to 'master'.
 
-* jk/maint-reflog-walk-count-vs-time (2012-05-04) 4 commits
- - reflog-walk: always make HEAD@{0} show indexed selectors
- - reflog-walk: clean up "flag" field of commit_reflog struct
- - log: respect date_mode_explicit with --format:%gd
- - t1411: add more selector index/date tests
+* ef/maint-clone-progress-fix (2012-05-07) 1 commit
+  (merged to 'next' on 2012-05-08 at b9a6cad)
+ + Merge branch 'ef/maint-1.7.6-clone-progress-fix' into ef/maint-clone-progress-fix
+ (this branch uses ef/maint-1.7.6-clone-progress-fix.)
 
-Gives a better DWIM behaviour for --pretty=format:%gd, "stash list", and
-"log -g", depending on how the starting point ("master" vs "master@{0}" vs
-"master@{now}") and date formatting options (e.g. "--date=iso") are given
-on the command line.
+Some time ago, "git clone" lost the progress output for its "checkout"
+phase; when run without any "--quiet" option, it should give progress to
+the lengthy operation.
 
-We may want to clean it up further so that "--date=default" is taken as an
-explicit request to show them in timed, not counted, format.
+Will merge to 'master'.
 
-* nd/i18n-branch-lego (2012-05-04) 1 commit
- - branch: remove lego in i18n tracking info strings
+* fa/maint-config-doc (2012-05-07) 1 commit
+  (merged to 'next' on 2012-05-08 at 54cc478)
+ + Documentation/git-config: describe and clarify "--local <file>" option
 
-Fix yet another message construction by concatenating pieces of sentenes,
-which is unfriendly to i18n.
+Will merge to 'master'.
 
-Will merge to 'next'.
+* fc/simplify-complete-revlist-file (2012-05-07) 1 commit
+  (merged to 'next' on 2012-05-08 at ff0b7d1)
+ + completion: simplify __git_complete_revlist_file
+
+Will merge to 'master'.
+
+* jk/maint-status-porcelain-z-b (2012-05-08) 4 commits
+ + status: respect "-b" for porcelain format
+ + status: fix null termination with "-b"
+ + status: refactor null_termination option
+ + commit: refactor option parsing
+ (this branch is used by jk/status-porcelain-z-b.)
+
+Will merge to 'master'.
+
+* jk/status-porcelain-z-b (2012-05-08) 2 commits
+  (merged to 'next' on 2012-05-08 at 31172dd)
+ + status: refactor colopts handling
+ + Merge branch 'jk/maint-status-porcelain-z-b' into HEAD
+ (this branch uses jk/maint-status-porcelain-z-b.)
+
+"git status --porcelain" ignored "--branch" option by mistake.  The output
+for "git status --branch -z" was also incorrect and did not terminate the
+record for the current branch name with NUL as asked.
+
+Will merge to 'master'.
+
+* ef/checkout-empty (2012-05-08) 1 commit
+  (merged to 'next' on 2012-05-08 at fc4d754)
+ + checkout: do not corrupt HEAD on empty repo
+
+Running "git checkout" on an unborn branch used to corrupt HEAD
+(regression in 1.7.10); this makes it error out.
+
+Will merge to 'master'.
+
+* nd/i18n-apply-lego (2012-05-08) 1 commit
+  (merged to 'next' on 2012-05-08 at c2be904)
+ + apply: remove lego in i18n string in gitdiff_verify_name
+
+Will merge to 'master'.
+
+* nd/i18n-parseopt (2012-05-08) 2 commits
+  (merged to 'next' on 2012-05-08 at 15eb029)
+ + i18n: apply: mark parseopt strings for translation
+ + i18n: parseopt: lookup help and argument translations when showing usage
+
+Text from "git cmd --help" are getting prepared for i18n.
+
+* rs/maint-dir-strbuf (2012-05-08) 1 commit
+ + dir: convert to strbuf
+ (this branch is used by rs/dir-strbuf.)
+
+Will merge to 'master'.
+
+* rs/dir-strbuf (2012-05-08) 1 commit
+  (merged to 'next' on 2012-05-08 at 0bc94fb)
+ + Merge branch 'rs/maint-dir-strbuf' into rs/dir-strbuf
+ (this branch uses rs/maint-dir-strbuf.)
+
+Will merge to 'master'.
+
+--------------------------------------------------
+[Graduated to "master"]
+
+* jk/maint-tformat-with-z (2012-05-01) 2 commits
+  (merged to 'next' on 2012-05-02 at a0f8af7)
+ + log-tree: the previous one is still not quite right
+ + log-tree: use custom line terminator in line termination mode
+
+"log -z --pretty=tformat:..." does not terminate each record with NUL
+and this is a beginning of an attempt to fix it.  It still is not right
+but the patch does not make externally observable behaviour worse.
 
 * nh/empty-rebase (2012-05-03) 1 commit
   (merged to 'next' on 2012-05-04 at 8a79d96)
@@ -61,7 +130,34 @@ Will merge to 'next'.
 
 Fix to a topic merged to 'master'.
 
-Will merge to 'master'.
+* th/difftool-diffall (2012-04-23) 8 commits
+  (merged to 'next' on 2012-05-02 at fdc9f60)
+ + difftool: print list of valid tools with '--tool-help'
+ + difftool: teach difftool to handle directory diffs
+ + difftool: eliminate setup_environment function
+ + difftool: stop appending '.exe' to git
+ + difftool: remove explicit change of PATH
+ + difftool: exit(0) when usage is printed
+ + difftool: add '--no-gui' option
+ + difftool: parse options using Getopt::Long
+
+Rolls the two-directory-diff logic from diffall script (in contrib/) into
+"git difftool" framework. 
+
+* zj/diff-empty-chmod (2012-05-02) 5 commits
+  (merged to 'next' on 2012-05-02 at fb8cb11)
+ + t4006: Windows do not have /dev/zero
+  (merged to 'next' on 2012-05-01 at 5a92787)
+ + diff --stat: do not run diff on indentical files
+ + diff --stat: report mode-only changes for binary files like text files
+ + tests: check --[short]stat output after chmod
+ + test: modernize style of t4006
+
+"git diff --stat" used to fully count a binary file with modified
+execution bits whose contents is unmodified, which was not right.
+
+--------------------------------------------------
+[Stalled]
 
 * jc/maint-push-refs-all (2012-05-04) 2 commits
  - get_fetch_map(): tighten checks on dest refs
@@ -70,50 +166,6 @@ Will merge to 'master'.
 Allows pushing and fetching refs/stash.
 Not ready.
 There still seem to be other bugs hiding (e.g. try pushing twice).
-
-* js/checkout-detach-count (2012-05-04) 2 commits
- - checkout (detached): truncate list of orphaned commits at the new HEAD
- - t2020-checkout-detach: check for the number of orphaned commits
-
-When checking out another commit from an already detached state, we used
-to report all commits that are not reachable from any of the refs as
-lossage, but some of them might be reachable from the new HEAD, and there
-is no need to warn about them.
-
-Will merge to 'next'.
-
---------------------------------------------------
-[Graduated to "master"]
-
-* jk/maint-push-progress (2012-05-01) 3 commits
-  (merged to 'next' on 2012-05-01 at 2286130)
- + t5541: test more combinations of --progress
- + teach send-pack about --[no-]progress
- + send-pack: show progress when isatty(2)
-
-"git push" over smart-http lost progress output and this resurrects it.
-
-Will merge to 'master'.
-
-* nd/columns (2012-04-27) 10 commits
-  (merged to 'next' on 2012-04-30 at 93bb157)
- + tag: add --column
- + column: support piping stdout to external git-column process
- + status: add --column
- + branch: add --column
- + help: reuse print_columns() for help -a
- + column: add dense layout support
- + t9002: work around shells that are unable to set COLUMNS to 1
- + column: add columnar layout
- + Stop starting pager recursively
- + Add column layout skeleton and git-column
-
-A couple of commands learn --column option to produce columnar output.
-
-Will merge to 'master'.
-
---------------------------------------------------
-[Stalled]
 
 * nl/http-proxy-more (2012-05-03) 6 commits
  - http: rename HTTP_REAUTH to HTTP_AUTH_RETRY
@@ -170,45 +222,71 @@ not working :-(.
 --------------------------------------------------
 [Cooking]
 
-* jk/maint-tformat-with-z (2012-05-01) 2 commits
-  (merged to 'next' on 2012-05-02 at a0f8af7)
- + log-tree: the previous one is still not quite right
- + log-tree: use custom line terminator in line termination mode
+* jc/install-no-hardlinks (2012-05-04) 1 commit
+  (merged to 'next' on 2012-05-07 at b69e132)
+ + Makefile: NO_INSTALL_HARDLINKS
 
-"log -z --pretty=tformat:..." does not terminate each record with NUL
-and this is a beginning of an attempt to fix it.  It still is not right
-but the patch does not make externally observable behaviour worse.
+Your build platform may support hardlinks but you may prefer not to use
+them, e.g. when installing to DESTDIR to make a tarball and untarring on
+a filesystem that has poor support for hardlinks.
+
+The Makefile in git-gui project may need to learn to honor the same
+setting; it unconditionally creates git-citool by hardlinking git-gui.
+
+Will merge to 'master'.
+
+* jk/maint-reflog-walk-count-vs-time (2012-05-07) 5 commits
+  (merged to 'next' on 2012-05-08 at b1a9987)
+ + reflog-walk: tell explicit --date=default from not having --date at all
+  (merged to 'next' on 2012-05-07 at 3652958)
+ + reflog-walk: always make HEAD@{0} show indexed selectors
+ + reflog-walk: clean up "flag" field of commit_reflog struct
+ + log: respect date_mode_explicit with --format:%gd
+ + t1411: add more selector index/date tests
+
+Gives a better DWIM behaviour for --pretty=format:%gd, "stash list", and
+"log -g", depending on how the starting point ("master" vs "master@{0}" vs
+"master@{now}") and date formatting options (e.g. "--date=iso") are given
+on the command line.
+
+Will merge to 'master'.
+
+* nd/i18n-branch-lego (2012-05-04) 1 commit
+  (merged to 'next' on 2012-05-07 at af4e16f)
+ + branch: remove lego in i18n tracking info strings
+
+Fix yet another message construction by concatenating pieces of sentenes,
+which is unfriendly to i18n.
+
+Will merge to 'next'.
+
+* js/checkout-detach-count (2012-05-04) 2 commits
+  (merged to 'next' on 2012-05-07 at 2957590)
+ + checkout (detached): truncate list of orphaned commits at the new HEAD
+ + t2020-checkout-detach: check for the number of orphaned commits
+
+When checking out another commit from an already detached state, we used
+to report all commits that are not reachable from any of the refs as
+lossage, but some of them might be reachable from the new HEAD, and there
+is no need to warn about them.
 
 Will merge to 'master'.
 
 * nd/stream-to-archive (2012-05-03) 10 commits
- - t5000: rationalize unzip tests
- - archive-zip: streaming for deflated files
- - archive-zip: streaming for stored files
- - archive-zip: factor out helpers for writing sizes and CRC
- - archive-zip: remove uncompressed_size
- - archive-tar: stream large blobs to tar file
- - archive: delegate blob reading to backend
- - archive-tar: unindent write_tar_entry by one level
- - archive-tar: turn write_tar_entry into blob-writing only
- - streaming: void pointer instead of char pointer
+  (merged to 'next' on 2012-05-07 at 92f11c4)
+ + t5000: rationalize unzip tests
+ + archive-zip: streaming for deflated files
+ + archive-zip: streaming for stored files
+ + archive-zip: factor out helpers for writing sizes and CRC
+ + archive-zip: remove uncompressed_size
+ + archive-tar: stream large blobs to tar file
+ + archive: delegate blob reading to backend
+ + archive-tar: unindent write_tar_entry by one level
+ + archive-tar: turn write_tar_entry into blob-writing only
+ + streaming: void pointer instead of char pointer
 
 Stream large blobs directly out to archive files without slurping
 everything in memory first.
-
-Will merge to 'next'.
-
-* zj/diff-empty-chmod (2012-05-02) 5 commits
-  (merged to 'next' on 2012-05-02 at fb8cb11)
- + t4006: Windows do not have /dev/zero
-  (merged to 'next' on 2012-05-01 at 5a92787)
- + diff --stat: do not run diff on indentical files
- + diff --stat: report mode-only changes for binary files like text files
- + tests: check --[short]stat output after chmod
- + test: modernize style of t4006
-
-"git diff --stat" used to fully count a binary file with modified
-execution bits whose contents is unmodified, which was not right.
 
 Will merge to 'master'.
 
@@ -239,28 +317,14 @@ are only interested in listing branches, for example.
 
 Will merge to 'master'.
 
-* nd/threaded-index-pack (2012-04-19) 4 commits
- - index-pack: disable threading if NO_PREAD is defined
- - index-pack: support multithreaded delta resolving
- - index-pack: split second pass obj handling into own function
- - compat/win32/pthread.h: Add an pthread_key_delete() implementation
+* nd/threaded-index-pack (2012-05-07) 4 commits
+  (merged to 'next' on 2012-05-08 at 053b797)
+ + index-pack: disable threading if NO_PREAD is defined
+ + index-pack: support multithreaded delta resolving
+ + index-pack: restructure pack processing into three main functions
+ + compat/win32/pthread.h: Add an pthread_key_delete() implementation
 
-The resulting code seems to be correct but is somewhat a confusing mess.
-We may want to have a reroll before merging it to 'next'.
-
-* th/difftool-diffall (2012-04-23) 8 commits
-  (merged to 'next' on 2012-05-02 at fdc9f60)
- + difftool: print list of valid tools with '--tool-help'
- + difftool: teach difftool to handle directory diffs
- + difftool: eliminate setup_environment function
- + difftool: stop appending '.exe' to git
- + difftool: remove explicit change of PATH
- + difftool: exit(0) when usage is printed
- + difftool: add '--no-gui' option
- + difftool: parse options using Getopt::Long
-
-Rolls the two-directory-diff logic from diffall script (in contrib/) into
-"git difftool" framework. 
+Enables threading in index-pack to resolve base data in parallel.
 
 Will merge to 'master'.
 
