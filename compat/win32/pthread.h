@@ -86,6 +86,11 @@ static inline int pthread_key_create(pthread_key_t *keyp, void (*destructor)(voi
 	return (*keyp = TlsAlloc()) == TLS_OUT_OF_INDEXES ? EAGAIN : 0;
 }
 
+static inline int pthread_key_delete(pthread_key_t key)
+{
+	return TlsFree(key) ? 0 : EINVAL;
+}
+
 static inline int pthread_setspecific(pthread_key_t key, const void *value)
 {
 	return TlsSetValue(key, (void *)value) ? 0 : EINVAL;
