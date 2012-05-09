@@ -906,12 +906,15 @@ struct handle_split_cb_data {
 	long tlno;
 };
 
-static void handle_split_cb(void *data, long same, long p_next, long t_next)
+static int handle_split_cb(long start_a, long count_a,
+			   long start_b, long count_b, void *data)
 {
 	struct handle_split_cb_data *d = data;
-	handle_split(d->sb, d->ent, d->tlno, d->plno, same, d->parent, d->split);
-	d->plno = p_next;
-	d->tlno = t_next;
+	handle_split(d->sb, d->ent, d->tlno, d->plno, start_b, d->parent,
+		     d->split);
+	d->plno = start_a + count_a;
+	d->tlno = start_b + count_b;
+	return 0;
 }
 
 /*
@@ -931,6 +934,8 @@ static void find_copy_in_blob(struct scoreboard *sb,
 	struct handle_split_cb_data d;
 	xpparam_t xpp;
 	xdemitconf_t xecfg;
+	xdemitcb_t ecb;
+
 	memset(&d, 0, sizeof(d));
 	d.sb = sb; d.ent = ent; d.parent = parent; d.split = split;
 	/*
@@ -954,8 +959,11 @@ static void find_copy_in_blob(struct scoreboard *sb,
 	xpp.flags = xdl_opts;
 	memset(&xecfg, 0, sizeof(xecfg));
 	xecfg.ctxlen = 1;
+	xecfg.hunk_func = handle_split_cb;
+	memset(&ecb, 0, sizeof(ecb));
+	ecb.priv = &d;
 	memset(split, 0, sizeof(struct blame_entry [3]));
-	xdi_diff_hunks(file_p, &file_o, handle_split_cb, &d, &xpp, &xecfg);
+	xdi_diff(file_p, &file_o, &xpp, &xecfg, &ecb);
 	/* remainder, if any, all match the preimage */
 	handle_split(sb, ent, d.tlno, d.plno, ent->num_lines, parent, split);
 }
