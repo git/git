@@ -88,6 +88,20 @@ struct origin {
 	char path[FLEX_ARRAY];
 };
 
+static int diff_hunks(mmfile_t *file_a, mmfile_t *file_b, long ctxlen,
+		      xdl_emit_hunk_consume_func_t hunk_func, void *cb_data)
+{
+	xpparam_t xpp = {0};
+	xdemitconf_t xecfg = {0};
+	xdemitcb_t ecb = {0};
+
+	xpp.flags = xdl_opts;
+	xecfg.ctxlen = ctxlen;
+	xecfg.hunk_func = hunk_func;
+	ecb.priv = cb_data;
+	return xdi_diff(file_a, file_b, &xpp, &xecfg, &ecb);
+}
+
 /*
  * Prepare diff_filespec and convert it using diff textconv API
  * if the textconv driver exists.
@@ -781,9 +795,6 @@ static int pass_blame_to_parent(struct scoreboard *sb,
 	int last_in_target;
 	mmfile_t file_p, file_o;
 	struct blame_chunk_cb_data d;
-	xpparam_t xpp;
-	xdemitconf_t xecfg;
-	xdemitcb_t ecb;
 
 	memset(&d, 0, sizeof(d));
 	d.sb = sb; d.target = target; d.parent = parent;
@@ -795,14 +806,7 @@ static int pass_blame_to_parent(struct scoreboard *sb,
 	fill_origin_blob(&sb->revs->diffopt, target, &file_o);
 	num_get_patch++;
 
-	memset(&xpp, 0, sizeof(xpp));
-	xpp.flags = xdl_opts;
-	memset(&xecfg, 0, sizeof(xecfg));
-	xecfg.ctxlen = 0;
-	xecfg.hunk_func = blame_chunk_cb;
-	memset(&ecb, 0, sizeof(ecb));
-	ecb.priv = &d;
-	xdi_diff(&file_p, &file_o, &xpp, &xecfg, &ecb);
+	diff_hunks(&file_p, &file_o, 0, blame_chunk_cb, &d);
 	/* The rest (i.e. anything after tlno) are the same as the parent */
 	blame_chunk(sb, d.tlno, d.plno, last_in_target, target, parent);
 
@@ -932,9 +936,6 @@ static void find_copy_in_blob(struct scoreboard *sb,
 	int cnt;
 	mmfile_t file_o;
 	struct handle_split_cb_data d;
-	xpparam_t xpp;
-	xdemitconf_t xecfg;
-	xdemitcb_t ecb;
 
 	memset(&d, 0, sizeof(d));
 	d.sb = sb; d.ent = ent; d.parent = parent; d.split = split;
@@ -955,15 +956,8 @@ static void find_copy_in_blob(struct scoreboard *sb,
 	 * file_o is a part of final image we are annotating.
 	 * file_p partially may match that image.
 	 */
-	memset(&xpp, 0, sizeof(xpp));
-	xpp.flags = xdl_opts;
-	memset(&xecfg, 0, sizeof(xecfg));
-	xecfg.ctxlen = 1;
-	xecfg.hunk_func = handle_split_cb;
-	memset(&ecb, 0, sizeof(ecb));
-	ecb.priv = &d;
 	memset(split, 0, sizeof(struct blame_entry [3]));
-	xdi_diff(file_p, &file_o, &xpp, &xecfg, &ecb);
+	diff_hunks(file_p, &file_o, 1, handle_split_cb, &d);
 	/* remainder, if any, all match the preimage */
 	handle_split(sb, ent, d.tlno, d.plno, ent->num_lines, parent, split);
 }
