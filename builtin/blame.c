@@ -759,12 +759,14 @@ struct blame_chunk_cb_data {
 	long tlno;
 };
 
-static void blame_chunk_cb(void *data, long same, long p_next, long t_next)
+static int blame_chunk_cb(long start_a, long count_a,
+			  long start_b, long count_b, void *data)
 {
 	struct blame_chunk_cb_data *d = data;
-	blame_chunk(d->sb, d->tlno, d->plno, same, d->target, d->parent);
-	d->plno = p_next;
-	d->tlno = t_next;
+	blame_chunk(d->sb, d->tlno, d->plno, start_b, d->target, d->parent);
+	d->plno = start_a + count_a;
+	d->tlno = start_b + count_b;
+	return 0;
 }
 
 /*
@@ -781,6 +783,8 @@ static int pass_blame_to_parent(struct scoreboard *sb,
 	struct blame_chunk_cb_data d;
 	xpparam_t xpp;
 	xdemitconf_t xecfg;
+	xdemitcb_t ecb;
+
 	memset(&d, 0, sizeof(d));
 	d.sb = sb; d.target = target; d.parent = parent;
 	last_in_target = find_last_in_target(sb, target);
@@ -795,7 +799,10 @@ static int pass_blame_to_parent(struct scoreboard *sb,
 	xpp.flags = xdl_opts;
 	memset(&xecfg, 0, sizeof(xecfg));
 	xecfg.ctxlen = 0;
-	xdi_diff_hunks(&file_p, &file_o, blame_chunk_cb, &d, &xpp, &xecfg);
+	xecfg.hunk_func = blame_chunk_cb;
+	memset(&ecb, 0, sizeof(ecb));
+	ecb.priv = &d;
+	xdi_diff(&file_p, &file_o, &xpp, &xecfg, &ecb);
 	/* The rest (i.e. anything after tlno) are the same as the parent */
 	blame_chunk(sb, d.tlno, d.plno, last_in_target, target, parent);
 
