@@ -557,11 +557,7 @@ int xdl_diff(mmfile_t *mf1, mmfile_t *mf2, xpparam_t const *xpp,
 	     xdemitconf_t const *xecfg, xdemitcb_t *ecb) {
 	xdchange_t *xscr;
 	xdfenv_t xe;
-	emit_func_t ef = xecfg->emit_func ?
-		(emit_func_t)xecfg->emit_func : xdl_emit_diff;
-
-	if (xecfg->hunk_func)
-		ef = xdl_call_hunk_func;
+	emit_func_t ef = xecfg->hunk_func ? xdl_call_hunk_func : xdl_emit_diff;
 
 	if (xdl_do_diff(mf1, mf2, xpp, &xe) < 0) {
 

@@ -96,7 +96,6 @@ typedef struct s_xdemitconf {
 	unsigned long flags;
 	find_func_t find_func;
 	void *find_func_priv;
-	void (*emit_func)();
 	xdl_emit_hunk_consume_func_t hunk_func;
 } xdemitconf_t;
 
