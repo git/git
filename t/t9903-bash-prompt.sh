@@ -85,7 +85,7 @@ test_expect_success 'gitdir - parent is a .git directory' '
 	test_cmp expected "$actual"
 '
 
-test_expect_failure 'gitdir - $GIT_DIR set while .git directory in cwd' '
+test_expect_success 'gitdir - $GIT_DIR set while .git directory in cwd' '
 	echo "$TRASH_DIRECTORY/otherrepo/.git" > expected &&
 	(
 		GIT_DIR="$TRASH_DIRECTORY/otherrepo/.git" &&
@@ -104,6 +104,14 @@ test_expect_success 'gitdir - $GIT_DIR set while .git directory in parent' '
 		__gitdir > "$actual"
 	) &&
 	test_cmp expected "$actual"
+'
+
+test_expect_success 'gitdir - non-existing $GIT_DIR' '
+	(
+		GIT_DIR="$TRASH_DIRECTORY/non-existing" &&
+		export GIT_DIR &&
+		test_must_fail __gitdir
+	)
 '
 
 test_expect_success 'gitdir - gitfile in cwd' '
