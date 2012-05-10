@@ -18,6 +18,7 @@
 #include "parse-options.h"
 #include "xdiff-interface.h"
 #include "ll-merge.h"
+#include "rerere.h"
 
 /*
  *  --check turns on checking that the working tree matches the
@@ -4026,6 +4027,8 @@ static int write_out_results(struct patch *list)
 		for_each_string_list_item(item, &cpath)
 			fprintf(stderr, "U %s\n", item->string);
 		string_list_clear(&cpath, 0);
+
+		rerere(0);
 	}
 
 	return errs;

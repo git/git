@@ -75,4 +75,29 @@ test_expect_success 'apply with --3way' '
 	test_cmp expect.diff actual.diff
 '
 
+test_expect_success 'apply with --3way with rerere enabled' '
+	git config rerere.enabled true &&
+
+	# Merging side should be similar to applying this patch
+	git diff ...side >P.diff &&
+
+	# The corresponding conflicted merge
+	git reset --hard &&
+	git checkout master^0 &&
+	test_must_fail git merge --no-commit side &&
+
+	# Manually resolve and record the resolution
+	create_file 1 two 3 4 five six 7 >one &&
+	git rerere &&
+	cat one >expect &&
+
+	# should fail to apply
+	git reset --hard &&
+	git checkout master^0 &&
+	test_must_fail git apply --index --3way P.diff &&
+
+	# but rerere should have replayed the recorded resolution
+	test_cmp expect one
+'
+
 test_done
