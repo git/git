@@ -1614,8 +1614,12 @@ static void show_stats(struct diffstat_t *data, struct diff_options *options)
 		if (data->files[i]->is_binary) {
 			fprintf(options->file, "%s", line_prefix);
 			show_name(options->file, prefix, name, len);
-			fprintf(options->file, " %*s ", number_width, "Bin");
-			fprintf(options->file, "%s%"PRIuMAX"%s",
+			fprintf(options->file, " %*s", number_width, "Bin");
+			if (!added && !deleted) {
+				putc('\n', options->file);
+				continue;
+			}
+			fprintf(options->file, " %s%"PRIuMAX"%s",
 				del_c, deleted, reset);
 			fprintf(options->file, " -> ");
 			fprintf(options->file, "%s%"PRIuMAX"%s",
@@ -1689,17 +1693,16 @@ static void show_shortstats(struct diffstat_t *data, struct diff_options *option
 		return;
 
 	for (i = 0; i < data->nr; i++) {
-		if (!data->files[i]->is_binary &&
-		    !data->files[i]->is_unmerged) {
-			int added = data->files[i]->added;
-			int deleted= data->files[i]->deleted;
-			if (!data->files[i]->is_renamed &&
-			    (added + deleted == 0)) {
-				total_files--;
-			} else {
-				adds += added;
-				dels += deleted;
-			}
+		int added = data->files[i]->added;
+		int deleted= data->files[i]->deleted;
+
+		if (data->files[i]->is_unmerged)
+			continue;
+		if (!data->files[i]->is_renamed && (added + deleted == 0)) {
+			total_files--;
+		} else {
+			adds += added;
+			dels += deleted;
 		}
 	}
 	if (options->output_prefix) {
@@ -2399,6 +2402,7 @@ static void builtin_diffstat(const char *name_a, const char *name_b,
 {
 	mmfile_t mf1, mf2;
 	struct diffstat_file *data;
+	int same_contents;
 
 	data = diffstat_add(diffstat, name_a, name_b);
 
@@ -2407,10 +2411,17 @@ static void builtin_diffstat(const char *name_a, const char *name_b,
 		return;
 	}
 
+	same_contents = !hashcmp(one->sha1, two->sha1);
+
 	if (diff_filespec_is_binary(one) || diff_filespec_is_binary(two)) {
 		data->is_binary = 1;
-		data->added = diff_filespec_size(two);
-		data->deleted = diff_filespec_size(one);
+		if (same_contents) {
+			data->added = 0;
+			data->deleted = 0;
+		} else {
+			data->added = diff_filespec_size(two);
+			data->deleted = diff_filespec_size(one);
+		}
 	}
 
 	else if (complete_rewrite) {
@@ -2420,7 +2431,7 @@ static void builtin_diffstat(const char *name_a, const char *name_b,
 		data->added = count_lines(two->data, two->size);
 	}
 
-	else {
+	else if (!same_contents) {
 		/* Crazy xdl interfaces.. */
 		xpparam_t xpp;
 		xdemitconf_t xecfg;

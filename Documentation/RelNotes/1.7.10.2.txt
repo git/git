@@ -1,0 +1,46 @@
+Git v1.7.10.2 Release Notes
+===========================
+
+Fixes since v1.7.10.1
+---------------------
+
+ * The test scaffolding for git-daemon was flaky.
+
+ * The test scaffolding for fast-import was flaky.
+
+ * The filesystem boundary was not correctly reported when .git directory
+   discovery stopped at a mount point.
+
+ * HTTP transport that requires authentication did not work correctly when
+   multiple connections are used simultaneously.
+
+ * In the older days, the header "Conflicts:" in "cherry-pick" and "merge"
+   was separated by a blank line from the list of paths that follow for
+   readability, but when "merge" was rewritten in C, we lost it by
+   mistake. Remove the newline from "cherry-pick" to make them match
+   again.
+
+ * The command line parser choked "git cherry-pick $name" when $name can
+   be both revision name and a pathname, even though $name can never be a
+   path in the context of the command.
+
+ * "git config --rename-section" to rename an existing section into a
+   bogus one did not check the new name.
+
+ * The "diff --no-index" codepath used limited-length buffers, risking
+   pathnames getting truncated.  Update it to use the strbuf API.
+
+ * The report from "git fetch" said "new branch" even for a non branch
+   ref.
+
+ * Octopus merge strategy did not reduce heads that are recorded in the
+   final commit correctly.
+
+ * The i18n of error message "git stash save" was not properly done.
+
+ * When using a Perl script on a system where "perl" found on user's
+   $PATH could be ancient or otherwise broken, we allow builders to
+   specify the path to a good copy of Perl with $PERL_PATH.  The
+   gitweb test forgot to use that Perl when running its test.
+
+Also contains minor fixes and documentation updates.
