@@ -11532,6 +11532,11 @@ if {[catch {package require Tk 8.4} err]} {
     exit 1
 }
 
+# Unset GIT_TRACE var if set
+if { [info exists ::env(GIT_TRACE)] } {
+    unset ::env(GIT_TRACE)
+}
+
 # defaults...
 set wrcomcmd "git diff-tree --stdin -p --pretty"
 
