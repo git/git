@@ -99,7 +99,7 @@ int close_istream(struct git_istream *st)
 	return r;
 }
 
-ssize_t read_istream(struct git_istream *st, char *buf, size_t sz)
+ssize_t read_istream(struct git_istream *st, void *buf, size_t sz)
 {
 	return st->vtbl->read(st, buf, sz);
 }
