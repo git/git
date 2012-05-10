@@ -167,10 +167,11 @@ module_clone()
 	a=${a%/}
 	b=${b%/}
 
-	rel=$(echo $b | sed -e 's|[^/]*|..|g')
+	# Turn each leading "*/" component into "../"
+	rel=$(echo $b | sed -e 's|[^/][^/]*|..|g')
 	echo "gitdir: $rel/$a" >"$path/.git"
 
-	rel=$(echo $a | sed -e 's|[^/]*|..|g')
+	rel=$(echo $a | sed -e 's|[^/][^/]*|..|g')
 	(clear_local_git_env; cd "$path" && GIT_WORK_TREE=. git config core.worktree "$rel/$b")
 }
 
