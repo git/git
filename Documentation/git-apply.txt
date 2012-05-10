@@ -9,7 +9,7 @@ git-apply - Apply a patch to files and/or to the index
 SYNOPSIS
 --------
 [verse]
-'git apply' [--stat] [--numstat] [--summary] [--check] [--index]
+'git apply' [--stat] [--numstat] [--summary] [--check] [--index] [--3way]
 	  [--apply] [--no-add] [--build-fake-ancestor=<file>] [-R | --reverse]
 	  [--allow-binary-replacement | --binary] [--reject] [-z]
 	  [-p<n>] [-C<n>] [--inaccurate-eof] [--recount] [--cached]
@@ -71,6 +71,15 @@ OPTIONS
 	Apply a patch without touching the working tree. Instead take the
 	cached data, apply the patch, and store the result in the index
 	without using the working tree. This implies `--index`.
+
+-3::
+--3way::
+	When the patch does not apply cleanly, fall back on 3-way merge if
+	the patch records the identity of blobs it is supposed to apply to,
+	and we have those blobs available locally, possibly leaving the
+	conflict markers in the files in the working tree for the user to
+	resolve.  This option implies the `--index` option, and is incompatible
+	with the `--reject` and the `--cached` options.
 
 --build-fake-ancestor=<file>::
 	Newer 'git diff' output has embedded 'index information'
