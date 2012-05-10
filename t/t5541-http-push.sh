@@ -30,6 +30,7 @@ test_expect_success 'setup remote repository' '
 	git clone --bare test_repo test_repo.git &&
 	cd test_repo.git &&
 	git config http.receivepack true &&
+	git config core.logallrefupdates true &&
 	ORIG_HEAD=$(git rev-parse --verify HEAD) &&
 	cd - &&
 	mv test_repo.git "$HTTPD_DOCUMENT_ROOT_PATH"
@@ -243,6 +244,26 @@ test_expect_success 'push --progress shows progress to non-tty' '
 	git push --progress >output 2>&1 &&
 	grep "^To http" output &&
 	grep "^Writing objects" output
+'
+
+test_expect_success 'http push gives sane defaults to reflog' '
+	cd "$ROOT_PATH"/test_repo_clone &&
+	test_commit reflog-test &&
+	git push "$HTTPD_URL"/smart/test_repo.git &&
+	git --git-dir="$HTTPD_DOCUMENT_ROOT_PATH/test_repo.git" \
+		log -g -1 --format="%gn <%ge>" >actual &&
+	echo "anonymous <anonymous@http.127.0.0.1>" >expect &&
+	test_cmp expect actual
+'
+
+test_expect_success 'http push respects GIT_COMMITTER_* in reflog' '
+	cd "$ROOT_PATH"/test_repo_clone &&
+	test_commit custom-reflog-test &&
+	git push "$HTTPD_URL"/smart_custom_env/test_repo.git &&
+	git --git-dir="$HTTPD_DOCUMENT_ROOT_PATH/test_repo.git" \
+		log -g -1 --format="%gn <%ge>" >actual &&
+	echo "Custom User <custom@example.com>" >expect &&
+	test_cmp expect actual
 '
 
 stop_httpd
