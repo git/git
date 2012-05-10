@@ -25,12 +25,14 @@ UI, Workflows & Features
    tracking.  Also "branch" learned the "-q"uiet option to squelch
    informational message.
 
+ * Your build platform may support hardlinks but you may prefer not to
+   use them, e.g. when installing to DESTDIR to make a tarball and
+   untarring on a filesystem that has poor support for hardlinks.
+   There is a Makefile option NO_INSTALL_HARDLINKS for you.
+
  * The smart-http backend used to always override GIT_COMMITTER_*
    variables with REMOTE_USER and REMOTE_ADDR, but these variables are
    now preserved when set.
-
- * "include.path" mechanism of the configuration files learned to
-   understand "~/path" and "~user/path".
 
  * "git am" learned the "--include" option, which is an opposite of
    existing the "--exclude" option.
@@ -83,6 +85,9 @@ Performance and Internal Implementation (please report possible regressions)
  * An experimental "version 4" format of the index file has been
    introduced to reduce on-disk footprint and I/O overhead.
 
+ * "git archive" learned to produce its output without reading the
+   blob object it writes out in memory in its entirety.
+
  * The code to compute hash values for lines used by the internal diff
    engine was optimized on little-endian machines, using the same
    trick the kernel folks came up with.
@@ -124,6 +129,22 @@ Unless otherwise noted, all the fixes since v1.7.10 in the maintenance
 releases are contained in this release (see release notes to them for
 details).
 
+ * When checking out another commit from an already detached state, we
+   used to report all commits that are not reachable from any of the
+   refs as lossage, but some of them might be reachable from the new
+   HEAD, and there is no need to warn about them.
+   (merge 5d88639 js/checkout-detach-count later to maint).
+
+ * Some time ago, "git clone" lost the progress output for its
+   "checkout" phase; when run without any "--quiet" option, it should
+   give progress to the lengthy operation.
+   (merge 8f63da1 ef/maint-clone-progress-fix later to maint).
+
+ * "git status --porcelain" ignored "--branch" option by mistake.  The
+   output for "git status --branch -z" was also incorrect and did not
+   terminate the record for the current branch name with NUL as asked.
+   (merge d4a6bf1 jk/maint-status-porcelain-z-b later to maint).
+
  * "git diff --stat" used to fully count a binary file with modified
    execution bits whose contents is unmodified, which was not quite
    right.
@@ -132,14 +153,3 @@ details).
    NUL.  The fix is not entirely correct when the output also asks for
    --patch and/or --stat, though.
    (merge fafd382 jk/maint-tformat-with-z later to maint).
-
- * "git push" over smart-http lost progress output a few releases ago.
-   (merge e304aeb jk/maint-push-progress later to maint).
-
- * A contrib script "rerere-train" did not work out of the box unless
-   user futzed with her $PATH.
-   (merge 53876fc jc/rerere-train later to maint).
-
- * "log --graph" was not very friendly with "--stat" option and its
-   output had line breaks at wrong places.
-   (merge bafa16e lp/diffstat-with-graph later to maint).
