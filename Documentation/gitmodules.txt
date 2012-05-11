@@ -41,8 +41,11 @@ submodule.<name>.update::
 	the commit specified in the superproject. If 'merge', the commit
 	specified in the superproject will be merged into the current branch
 	in the submodule.
+	If 'none', the submodule with name `$name` will not be updated
+	by default.
+
 	This config option is overridden if 'git submodule update' is given
-	the '--merge' or '--rebase' options.
+	the '--merge', '--rebase' or '--checkout' options.
 
 submodule.<name>.fetchRecurseSubmodules::
 	This option can be used to control recursive fetching of this

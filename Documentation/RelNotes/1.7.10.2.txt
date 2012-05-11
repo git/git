@@ -14,6 +14,9 @@ Fixes since v1.7.10.1
  * HTTP transport that requires authentication did not work correctly when
    multiple connections are used simultaneously.
 
+ * Minor memory leak during unpack_trees (hence "merge" and "checkout"
+   to check out another branch) has been plugged.
+
  * In the older days, the header "Conflicts:" in "cherry-pick" and "merge"
    was separated by a blank line from the list of paths that follow for
    readability, but when "merge" was rewritten in C, we lost it by
@@ -52,12 +55,23 @@ Fixes since v1.7.10.1
  * "git push" over smart-http lost progress output a few releases ago;
    this release resurrects it.
 
+ * The error and advice messages given by "git push" when it fails due
+   to non-ff were not very helpful to new users; it has been broken
+   into three cases, and each is given a separate advice message.
+
  * The insn sheet given by "rebase -i" did not make it clear that the
    insn lines can be re-ordered to affect the order of the commits in
    the resulting history.
 
+ * "git repack" used to write out unreachable objects as loose objects
+   when repacking, even if such loose objects will immediately pruned
+   due to its age.
+
  * A contrib script "rerere-train" did not work out of the box unless
    user futzed with her $PATH.
+
+ * "git rev-parse --show-prefix" used to emit nothing when run at the
+   top-level of the working tree, but now it gives a blank line.
 
  * The i18n of error message "git stash save" was not properly done.
 
