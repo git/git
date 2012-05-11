@@ -1,17 +1,16 @@
 To: git@vger.kernel.org
-Subject: What's cooking in git.git (May 2012, #03; Tue, 8)
-X-master-at: a3935e6791c619a9f2f472e9e553d45d88c4e263
-X-next-at: fc4d754aa0f0b59f9e5aae11a66367f2db8d5ae0
+Subject: What's cooking in git.git (May 2012, #04; Fri, 11)
+X-master-at: cd07cc53125fb2ca77a644831d4e5d9517bb7a05
+X-next-at: 441bd9a9d602910692074224920f8049ef81ea99
 
-What's cooking in git.git (May 2012, #03; Tue, 8)
+What's cooking in git.git (May 2012, #04; Fri, 11)
 --------------------------------------------------
 
 Here are the topics that have been cooking.  Commits prefixed with '-' are
 only in 'pu' (proposed updates) while commits prefixed with '+' are in 'next'.
 
-The ninth batch of topics have graduated to 'master'; we seem to have
-accumulated more topics on 'next' in the meantime, but they all look
-healthy.  It is a good time to start preparing for the feature freeze.
+The tenth and eleventh batch of topics are now in 'master', and there is
+the second maintenance release on the 1.7.10.x track out.
 
 You can find the changes described here in the integration branches of the
 repositories listed at
@@ -19,19 +18,22 @@ repositories listed at
     http://git-blame.blogspot.com/p/git-public-repositories.html
 
 --------------------------------------------------
-[New Topics]
+[Graduated to "master"]
 
 * ah/maint-grep-double-init (2012-05-07) 1 commit
   (merged to 'next' on 2012-05-08 at 51f84c5)
  + grep.c: remove redundant line of code
 
-Will merge to 'master'.
+* ef/checkout-empty (2012-05-08) 1 commit
+  (merged to 'next' on 2012-05-08 at fc4d754)
+ + checkout: do not corrupt HEAD on empty repo
+
+Running "git checkout" on an unborn branch used to corrupt HEAD
+(regression in 1.7.10); this makes it error out.
 
 * ef/maint-1.7.6-clone-progress-fix (2012-05-07) 1 commit
  + clone: fix progress-regression
  (this branch is used by ef/maint-clone-progress-fix.)
-
-Will merge to 'master'.
 
 * ef/maint-clone-progress-fix (2012-05-07) 1 commit
   (merged to 'next' on 2012-05-08 at b9a6cad)
@@ -42,19 +44,34 @@ Some time ago, "git clone" lost the progress output for its "checkout"
 phase; when run without any "--quiet" option, it should give progress to
 the lengthy operation.
 
-Will merge to 'master'.
-
 * fa/maint-config-doc (2012-05-07) 1 commit
   (merged to 'next' on 2012-05-08 at 54cc478)
  + Documentation/git-config: describe and clarify "--local <file>" option
 
-Will merge to 'master'.
+* jc/install-no-hardlinks (2012-05-04) 1 commit
+  (merged to 'next' on 2012-05-07 at b69e132)
+ + Makefile: NO_INSTALL_HARDLINKS
 
-* fc/simplify-complete-revlist-file (2012-05-07) 1 commit
-  (merged to 'next' on 2012-05-08 at ff0b7d1)
- + completion: simplify __git_complete_revlist_file
+Your build platform may support hardlinks but you may prefer not to use
+them, e.g. when installing to DESTDIR to make a tarball and untarring on
+a filesystem that has poor support for hardlinks.
 
-Will merge to 'master'.
+The Makefile in git-gui project may need to learn to honor the same
+setting; it unconditionally creates git-citool by hardlinking git-gui.
+
+* jk/maint-reflog-walk-count-vs-time (2012-05-07) 5 commits
+  (merged to 'next' on 2012-05-08 at b1a9987)
+ + reflog-walk: tell explicit --date=default from not having --date at all
+  (merged to 'next' on 2012-05-07 at 3652958)
+ + reflog-walk: always make HEAD@{0} show indexed selectors
+ + reflog-walk: clean up "flag" field of commit_reflog struct
+ + log: respect date_mode_explicit with --format:%gd
+ + t1411: add more selector index/date tests
+
+Gives a better DWIM behaviour for --pretty=format:%gd, "stash list", and
+"log -g", depending on how the starting point ("master" vs "master@{0}" vs
+"master@{now}") and date formatting options (e.g. "--date=iso") are given
+on the command line.
 
 * jk/maint-status-porcelain-z-b (2012-05-08) 4 commits
  + status: respect "-b" for porcelain format
@@ -62,8 +79,6 @@ Will merge to 'master'.
  + status: refactor null_termination option
  + commit: refactor option parsing
  (this branch is used by jk/status-porcelain-z-b.)
-
-Will merge to 'master'.
 
 * jk/status-porcelain-z-b (2012-05-08) 2 commits
   (merged to 'next' on 2012-05-08 at 31172dd)
@@ -75,86 +90,125 @@ Will merge to 'master'.
 for "git status --branch -z" was also incorrect and did not terminate the
 record for the current branch name with NUL as asked.
 
-Will merge to 'master'.
+* js/checkout-detach-count (2012-05-04) 2 commits
+  (merged to 'next' on 2012-05-07 at 2957590)
+ + checkout (detached): truncate list of orphaned commits at the new HEAD
+ + t2020-checkout-detach: check for the number of orphaned commits
 
-* ef/checkout-empty (2012-05-08) 1 commit
-  (merged to 'next' on 2012-05-08 at fc4d754)
- + checkout: do not corrupt HEAD on empty repo
+When checking out another commit from an already detached state, we used
+to report all commits that are not reachable from any of the refs as
+lossage, but some of them might be reachable from the new HEAD, and there
+is no need to warn about them.
 
-Running "git checkout" on an unborn branch used to corrupt HEAD
-(regression in 1.7.10); this makes it error out.
+* mh/ref-api-lazy-loose (2012-05-04) 18 commits
+  (merged to 'next' on 2012-05-04 at a70d858)
+ + refs: fix find_containing_dir() regression
+ + refs: read loose references lazily
+ + read_loose_refs(): eliminate ref_cache argument
+ + struct ref_dir: store a reference to the enclosing ref_cache
+ + search_for_subdir(): return (ref_dir *) instead of (ref_entry *)
+ + get_ref_dir(): add function for getting a ref_dir from a ref_entry
+ + read_loose_refs(): rename function from get_ref_dir()
+ + refs: wrap top-level ref_dirs in ref_entries
+ + find_containing_dir(): use strbuf in implementation of this function
+ + bisect: copy filename string obtained from git_path()
+ + do_for_each_reflog(): use a strbuf to hold logfile name
+ + do_for_each_reflog(): return early on error
+ + get_ref_dir(): take the containing directory as argument
+ + refs.c: extract function search_for_subdir()
+ + get_ref_dir(): require that the dirname argument ends in '/'
+ + get_ref_dir(): rename "base" parameter to "dirname"
+ + get_ref_dir(): use a strbuf to hold refname
+ + get_ref_dir(): return early if directory cannot be read
 
-Will merge to 'master'.
+Refs API is updated to lazily read sub-hierarchies of refs/ namespace,
+so that we do not have to grab everything from the filesystem when we
+are only interested in listing branches, for example.
 
 * nd/i18n-apply-lego (2012-05-08) 1 commit
   (merged to 'next' on 2012-05-08 at c2be904)
  + apply: remove lego in i18n string in gitdiff_verify_name
 
-Will merge to 'master'.
+* nd/i18n-branch-lego (2012-05-04) 1 commit
+  (merged to 'next' on 2012-05-07 at af4e16f)
+ + branch: remove lego in i18n tracking info strings
 
-* nd/i18n-parseopt (2012-05-08) 2 commits
-  (merged to 'next' on 2012-05-08 at 15eb029)
- + i18n: apply: mark parseopt strings for translation
- + i18n: parseopt: lookup help and argument translations when showing usage
+Fix yet another message construction by concatenating pieces of sentenes,
+which is unfriendly to i18n.
 
-Text from "git cmd --help" are getting prepared for i18n.
+* nd/stream-to-archive (2012-05-03) 10 commits
+  (merged to 'next' on 2012-05-07 at 92f11c4)
+ + t5000: rationalize unzip tests
+ + archive-zip: streaming for deflated files
+ + archive-zip: streaming for stored files
+ + archive-zip: factor out helpers for writing sizes and CRC
+ + archive-zip: remove uncompressed_size
+ + archive-tar: stream large blobs to tar file
+ + archive: delegate blob reading to backend
+ + archive-tar: unindent write_tar_entry by one level
+ + archive-tar: turn write_tar_entry into blob-writing only
+ + streaming: void pointer instead of char pointer
 
-* rs/maint-dir-strbuf (2012-05-08) 1 commit
- + dir: convert to strbuf
- (this branch is used by rs/dir-strbuf.)
-
-Will merge to 'master'.
+Stream large blobs directly out to archive files without slurping
+everything in memory first.
 
 * rs/dir-strbuf (2012-05-08) 1 commit
   (merged to 'next' on 2012-05-08 at 0bc94fb)
  + Merge branch 'rs/maint-dir-strbuf' into rs/dir-strbuf
  (this branch uses rs/maint-dir-strbuf.)
 
-Will merge to 'master'.
+* rs/maint-dir-strbuf (2012-05-08) 1 commit
+ + dir: convert to strbuf
+ (this branch is used by rs/dir-strbuf.)
 
 --------------------------------------------------
-[Graduated to "master"]
+[New Topics]
 
-* jk/maint-tformat-with-z (2012-05-01) 2 commits
-  (merged to 'next' on 2012-05-02 at a0f8af7)
- + log-tree: the previous one is still not quite right
- + log-tree: use custom line terminator in line termination mode
+* rs/xdiff-lose-emit-func (2012-05-09) 6 commits
+  (merged to 'next' on 2012-05-11 at 1eeb893)
+ + xdiff: remove unused functions
+ + xdiff: remove emit_func() and xdi_diff_hunks()
+ + blame: factor out helper for calling xdi_diff()
+ + blame: use hunk_func(), part 2
+ + blame: use hunk_func(), part 1
+ + xdiff: add hunk_func()
 
-"log -z --pretty=tformat:..." does not terminate each record with NUL
-and this is a beginning of an attempt to fix it.  It still is not right
-but the patch does not make externally observable behaviour worse.
+Simplifies the interface between the implementation of "blame" and
+underlying xdiff engine, and removes a lot of unnecessary code from
+the latter.
 
-* nh/empty-rebase (2012-05-03) 1 commit
-  (merged to 'next' on 2012-05-04 at 8a79d96)
- + git cherry-pick: do not dereference a potential NULL pointer
+* sg/bash-prompt (2012-05-09) 4 commits
+ - completion: respect $GIT_DIR
+ - completion: use __gitdir() in _git_log()
+ - tests: add tests for the bash prompt functions in the completion script
+ - tests: move code to run tests under bash into a helper library
 
-Fix to a topic merged to 'master'.
+This is only the "correction" bits taken from the beginning of a larger
+series that is to be rerolled.
 
-* th/difftool-diffall (2012-04-23) 8 commits
-  (merged to 'next' on 2012-05-02 at fdc9f60)
- + difftool: print list of valid tools with '--tool-help'
- + difftool: teach difftool to handle directory diffs
- + difftool: eliminate setup_environment function
- + difftool: stop appending '.exe' to git
- + difftool: remove explicit change of PATH
- + difftool: exit(0) when usage is printed
- + difftool: add '--no-gui' option
- + difftool: parse options using Getopt::Long
+* jc/apply-3way (2012-05-10) 9 commits
+ - apply: document --3way option
+ - apply: allow rerere() upon --3way results
+ - apply: register conflicted stages to the index
+ - apply: plug the three-way merge logic in
+ - apply: fall back on three-way merge
+ - apply: accept -3/--3way command line option
+ - apply: split load_preimage() helper function out
+ - apply: refactor read_file_or_gitlink()
+ - apply: clear_image() clears things a bit more
 
-Rolls the two-directory-diff logic from diffall script (in contrib/) into
-"git difftool" framework. 
+"git apply" learns to wiggle the base version and perform three-way merge
+when a patch does not exactly apply to the version you have.
 
-* zj/diff-empty-chmod (2012-05-02) 5 commits
-  (merged to 'next' on 2012-05-02 at fb8cb11)
- + t4006: Windows do not have /dev/zero
-  (merged to 'next' on 2012-05-01 at 5a92787)
- + diff --stat: do not run diff on indentical files
- + diff --stat: report mode-only changes for binary files like text files
- + tests: check --[short]stat output after chmod
- + test: modernize style of t4006
+* ld/git-p4-tags-and-labels (2012-05-11) 3 commits
+  (merged to 'next' on 2012-05-11 at 441bd9a)
+ + git p4: fix bug when enabling tag import/export via config variables
+ + git p4: fix bug when verbose enabled with tag export
+ + git p4: add test for tag import/export enabled via config
 
-"git diff --stat" used to fully count a binary file with modified
-execution bits whose contents is unmodified, which was not right.
+* rs/dir-strbuf-read-recursive-fix (2012-05-11) 2 commits
+ - dir: simplify fill_directory()
+ - dir: respect string length argument of read_directory_recursive()
 
 --------------------------------------------------
 [Stalled]
@@ -166,20 +220,6 @@ execution bits whose contents is unmodified, which was not right.
 Allows pushing and fetching refs/stash.
 Not ready.
 There still seem to be other bugs hiding (e.g. try pushing twice).
-
-* nl/http-proxy-more (2012-05-03) 6 commits
- - http: rename HTTP_REAUTH to HTTP_AUTH_RETRY
- - http: Avoid limit of retrying request only twice
- - http: handle proxy authentication failure (error 407)
- - http: fix http_proxy specified without protocol part
- - http: handle proxy proactive authentication
- - http: try http_proxy env var when http.proxy config option is not set
-
-It appears that the scope of this series should be drastically reduced, or
-perhaps wait the entire topic until cURL library gains the necessary hooks
-to tell us what proxy server wants us to authenticate when giving us 407.
-
-Probably we will end up discarding this series, at least for this cycle.
 
 * jc/run-hook-env-1 (2012-03-11) 1 commit
  - run_hook(): enhance the interface to pass arbitrary environment
@@ -222,100 +262,26 @@ not working :-(.
 --------------------------------------------------
 [Cooking]
 
-* jc/install-no-hardlinks (2012-05-04) 1 commit
-  (merged to 'next' on 2012-05-07 at b69e132)
- + Makefile: NO_INSTALL_HARDLINKS
+* nl/http-proxy-more (2012-05-11) 2 commits
+ - http: rename HTTP_REAUTH to HTTP_AUTH_RETRY
+ - http: Avoid limit of retrying request only twice
 
-Your build platform may support hardlinks but you may prefer not to use
-them, e.g. when installing to DESTDIR to make a tarball and untarring on
-a filesystem that has poor support for hardlinks.
+I queued only the later two patches from this series, even though they do
+not make much sense without the first one that seems to need a bit more
+work, so that we won't forget.
 
-The Makefile in git-gui project may need to learn to honor the same
-setting; it unconditionally creates git-citool by hardlinking git-gui.
-
-Will merge to 'master'.
-
-* jk/maint-reflog-walk-count-vs-time (2012-05-07) 5 commits
-  (merged to 'next' on 2012-05-08 at b1a9987)
- + reflog-walk: tell explicit --date=default from not having --date at all
-  (merged to 'next' on 2012-05-07 at 3652958)
- + reflog-walk: always make HEAD@{0} show indexed selectors
- + reflog-walk: clean up "flag" field of commit_reflog struct
- + log: respect date_mode_explicit with --format:%gd
- + t1411: add more selector index/date tests
-
-Gives a better DWIM behaviour for --pretty=format:%gd, "stash list", and
-"log -g", depending on how the starting point ("master" vs "master@{0}" vs
-"master@{now}") and date formatting options (e.g. "--date=iso") are given
-on the command line.
+* fc/simplify-complete-revlist-file (2012-05-07) 1 commit
+  (merged to 'next' on 2012-05-08 at ff0b7d1)
+ + completion: simplify __git_complete_revlist_file
 
 Will merge to 'master'.
 
-* nd/i18n-branch-lego (2012-05-04) 1 commit
-  (merged to 'next' on 2012-05-07 at af4e16f)
- + branch: remove lego in i18n tracking info strings
+* nd/i18n-parseopt (2012-05-08) 2 commits
+  (merged to 'next' on 2012-05-08 at 15eb029)
+ + i18n: apply: mark parseopt strings for translation
+ + i18n: parseopt: lookup help and argument translations when showing usage
 
-Fix yet another message construction by concatenating pieces of sentenes,
-which is unfriendly to i18n.
-
-Will merge to 'next'.
-
-* js/checkout-detach-count (2012-05-04) 2 commits
-  (merged to 'next' on 2012-05-07 at 2957590)
- + checkout (detached): truncate list of orphaned commits at the new HEAD
- + t2020-checkout-detach: check for the number of orphaned commits
-
-When checking out another commit from an already detached state, we used
-to report all commits that are not reachable from any of the refs as
-lossage, but some of them might be reachable from the new HEAD, and there
-is no need to warn about them.
-
-Will merge to 'master'.
-
-* nd/stream-to-archive (2012-05-03) 10 commits
-  (merged to 'next' on 2012-05-07 at 92f11c4)
- + t5000: rationalize unzip tests
- + archive-zip: streaming for deflated files
- + archive-zip: streaming for stored files
- + archive-zip: factor out helpers for writing sizes and CRC
- + archive-zip: remove uncompressed_size
- + archive-tar: stream large blobs to tar file
- + archive: delegate blob reading to backend
- + archive-tar: unindent write_tar_entry by one level
- + archive-tar: turn write_tar_entry into blob-writing only
- + streaming: void pointer instead of char pointer
-
-Stream large blobs directly out to archive files without slurping
-everything in memory first.
-
-Will merge to 'master'.
-
-* mh/ref-api-lazy-loose (2012-05-04) 18 commits
-  (merged to 'next' on 2012-05-04 at a70d858)
- + refs: fix find_containing_dir() regression
- + refs: read loose references lazily
- + read_loose_refs(): eliminate ref_cache argument
- + struct ref_dir: store a reference to the enclosing ref_cache
- + search_for_subdir(): return (ref_dir *) instead of (ref_entry *)
- + get_ref_dir(): add function for getting a ref_dir from a ref_entry
- + read_loose_refs(): rename function from get_ref_dir()
- + refs: wrap top-level ref_dirs in ref_entries
- + find_containing_dir(): use strbuf in implementation of this function
- + bisect: copy filename string obtained from git_path()
- + do_for_each_reflog(): use a strbuf to hold logfile name
- + do_for_each_reflog(): return early on error
- + get_ref_dir(): take the containing directory as argument
- + refs.c: extract function search_for_subdir()
- + get_ref_dir(): require that the dirname argument ends in '/'
- + get_ref_dir(): rename "base" parameter to "dirname"
- + get_ref_dir(): use a strbuf to hold refname
- + get_ref_dir(): return early if directory cannot be read
-
-Refs API is updated to lazily read sub-hierarchies of refs/ namespace,
-so that we do not have to grab everything from the filesystem when we
-are only interested in listing branches, for example.
-
-Will merge to 'master'.
+Text from "git cmd --help" are getting prepared for i18n.
 
 * nd/threaded-index-pack (2012-05-07) 4 commits
   (merged to 'next' on 2012-05-08 at 053b797)
