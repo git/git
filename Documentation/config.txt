@@ -141,8 +141,23 @@ advice.*::
 +
 --
 	pushNonFastForward::
-		Advice shown when linkgit:git-push[1] refuses
-		non-fast-forward refs.
+		Set this variable to 'false' if you want to disable
+		'pushNonFFCurrent', 'pushNonFFDefault', and
+		'pushNonFFMatching' simultaneously.
+	pushNonFFCurrent::
+		Advice shown when linkgit:git-push[1] fails due to a
+		non-fast-forward update to the current branch.
+	pushNonFFDefault::
+		Advice to set 'push.default' to 'upstream' or 'current'
+		when you ran linkgit:git-push[1] and pushed 'matching
+		refs' by default (i.e. you did not provide an explicit
+		refspec, and no 'push.default' configuration was set)
+		and it resulted in a non-fast-forward error.
+	pushNonFFMatching::
+		Advice shown when you ran linkgit:git-push[1] and pushed
+		'matching refs' explicitly (i.e. you used ':', or
+		specified a refspec that isn't your current branch) and
+		it resulted in a non-fast-forward error.
 	statusHints::
 		Directions on how to stage/unstage/add shown in the
 		output of linkgit:git-status[1] and the template shown
