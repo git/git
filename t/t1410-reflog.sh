@@ -100,8 +100,7 @@ test_expect_success setup '
 
 	check_fsck &&
 
-	loglen=$(wc -l <.git/logs/refs/heads/master) &&
-	test $loglen = 4
+	test_line_count = 4 .git/logs/refs/heads/master
 '
 
 test_expect_success rewind '
@@ -117,8 +116,7 @@ test_expect_success rewind '
 
 	check_have A B C D E F G H I J K L &&
 
-	loglen=$(wc -l <.git/logs/refs/heads/master) &&
-	test $loglen = 5
+	test_line_count = 5 .git/logs/refs/heads/master
 '
 
 test_expect_success 'corrupt and check' '
@@ -136,8 +134,7 @@ test_expect_success 'reflog expire --dry-run should not touch reflog' '
 		--stale-fix \
 		--all &&
 
-	loglen=$(wc -l <.git/logs/refs/heads/master) &&
-	test $loglen = 5 &&
+	test_line_count = 5 .git/logs/refs/heads/master &&
 
 	check_fsck "missing blob $F"
 '
@@ -150,8 +147,7 @@ test_expect_success 'reflog expire' '
 		--stale-fix \
 		--all &&
 
-	loglen=$(wc -l <.git/logs/refs/heads/master) &&
-	test $loglen = 2 &&
+	test_line_count = 2 .git/logs/refs/heads/master &&
 
 	check_fsck "dangling commit $K"
 '
@@ -217,9 +213,7 @@ test_expect_success 'delete' '
 test_expect_success 'rewind2' '
 
 	test_tick && git reset --hard HEAD~2 &&
-	loglen=$(wc -l <.git/logs/refs/heads/master) &&
-	test $loglen = 4
-
+	test_line_count = 4 .git/logs/refs/heads/master
 '
 
 test_expect_success '--expire=never' '
@@ -228,9 +222,7 @@ test_expect_success '--expire=never' '
 		--expire=never \
 		--expire-unreachable=never \
 		--all &&
-	loglen=$(wc -l <.git/logs/refs/heads/master) &&
-	test $loglen = 4
-
+	test_line_count = 4 .git/logs/refs/heads/master
 '
 
 test_expect_success 'gc.reflogexpire=never' '
@@ -238,8 +230,7 @@ test_expect_success 'gc.reflogexpire=never' '
 	git config gc.reflogexpire never &&
 	git config gc.reflogexpireunreachable never &&
 	git reflog expire --verbose --all &&
-	loglen=$(wc -l <.git/logs/refs/heads/master) &&
-	test $loglen = 4
+	test_line_count = 4 .git/logs/refs/heads/master
 '
 
 test_expect_success 'gc.reflogexpire=false' '
@@ -247,8 +238,7 @@ test_expect_success 'gc.reflogexpire=false' '
 	git config gc.reflogexpire false &&
 	git config gc.reflogexpireunreachable false &&
 	git reflog expire --verbose --all &&
-	loglen=$(wc -l <.git/logs/refs/heads/master) &&
-	test $loglen = 4 &&
+	test_line_count = 4 .git/logs/refs/heads/master &&
 
 	git config --unset gc.reflogexpire &&
 	git config --unset gc.reflogexpireunreachable

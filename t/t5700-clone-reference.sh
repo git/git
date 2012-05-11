@@ -34,7 +34,7 @@ test_expect_success 'cloning with reference (-l -s)' \
 cd "$base_dir"
 
 test_expect_success 'existence of info/alternates' \
-'test `wc -l <C/.git/objects/info/alternates` = 2'
+'test_line_count = 2 C/.git/objects/info/alternates'
 
 cd "$base_dir"
 
@@ -63,7 +63,7 @@ test_expect_success 'fetched no objects' \
 cd "$base_dir"
 
 test_expect_success 'existence of info/alternates' \
-'test `wc -l <D/.git/objects/info/alternates` = 1'
+'test_line_count = 1 D/.git/objects/info/alternates'
 
 cd "$base_dir"
 
