@@ -53,9 +53,6 @@ UI, Workflows & Features
  * The "fmt-merge-msg" command learns to list the primary contributors
    involved in the side topic you are merging.
 
- * The cases "git push" fails due to non-ff can be broken into three
-   categories; each case is given a separate advise message.
-
  * "git rebase" learned to optionally keep commits that do not
    introduce any change in the original history.
 
@@ -94,20 +91,10 @@ Performance and Internal Implementation (please report possible regressions)
 
  * "git apply" had some memory leaks plugged.
 
- * "git repack" used to write out unreachable objects as loose objects
-   when repacking, even if such loose objects will immediately pruned
-   due to its age.
-
  * Setting up a revision traversal with many starting points was
    inefficient as these were placed in a date-order priority queue
    one-by-one.  Now they are collected in the queue unordered first,
    and sorted immediately before getting used.
-
- * "git rev-parse --show-prefix" used to emit nothing when run at the
-   top-level of the working tree, but now it gives a blank line.
-
- * Minor memory leak during unpack_trees (hence "merge" and "checkout"
-   to check out another branch) has been plugged.
 
  * More lower-level commands learned to use the streaming API to read
    from the object store without keeping everything in core.
@@ -128,6 +115,14 @@ Fixes since v1.7.10
 Unless otherwise noted, all the fixes since v1.7.10 in the maintenance
 releases are contained in this release (see release notes to them for
 details).
+
+ * The DWIM behaviour for "log --pretty=format:%gd -g" was somewhat
+   broken and gave undue precedence to configured log.date, causing
+   "git stash list" to show "stash@{time stamp string}".
+   (merge 55ccf85 jk/maint-reflog-walk-count-vs-time later to maint).
+
+ * Running "git checkout" on an unborn branch used to corrupt HEAD.
+   (merge 8338f77 ef/checkout-empty later to maint).
 
  * When checking out another commit from an already detached state, we
    used to report all commits that are not reachable from any of the
