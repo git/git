@@ -74,7 +74,6 @@ char *common_prefix(const char **pathspec)
 
 int fill_directory(struct dir_struct *dir, const char **pathspec)
 {
-	const char *path;
 	size_t len;
 
 	/*
@@ -82,15 +81,9 @@ int fill_directory(struct dir_struct *dir, const char **pathspec)
 	 * use that to optimize the directory walk
 	 */
 	len = common_prefix_len(pathspec);
-	path = "";
-
-	if (len)
-		path = xmemdupz(*pathspec, len);
 
 	/* Read the directory and prune it */
-	read_directory(dir, path, len, pathspec);
-	if (*path)
-		free((char *)path);
+	read_directory(dir, pathspec ? *pathspec : "", len, pathspec);
 	return len;
 }
 
