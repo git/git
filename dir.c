@@ -960,15 +960,16 @@ static int read_directory_recursive(struct dir_struct *dir,
 				    int check_only,
 				    const struct path_simplify *simplify)
 {
-	DIR *fdir = opendir(*base ? base : ".");
+	DIR *fdir;
 	int contents = 0;
 	struct dirent *de;
 	struct strbuf path = STRBUF_INIT;
 
-	if (!fdir)
-		return 0;
-
 	strbuf_add(&path, base, baselen);
+
+	fdir = opendir(path.len ? path.buf : ".");
+	if (!fdir)
+		goto out;
 
 	while ((de = readdir(fdir)) != NULL) {
 		switch (treat_path(dir, de, &path, baselen, simplify)) {
@@ -984,12 +985,11 @@ static int read_directory_recursive(struct dir_struct *dir,
 		}
 		contents++;
 		if (check_only)
-			goto exit_early;
-		else
-			dir_add_name(dir, path.buf, path.len);
+			break;
+		dir_add_name(dir, path.buf, path.len);
 	}
-exit_early:
 	closedir(fdir);
+ out:
 	strbuf_release(&path);
 
 	return contents;
