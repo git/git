@@ -2069,9 +2069,9 @@ int parse_merge_opt(struct merge_options *o, const char *s)
 	else if (!prefixcmp(s, "subtree="))
 		o->subtree_shift = s + strlen("subtree=");
 	else if (!strcmp(s, "patience"))
-		o->xdl_opts |= XDF_PATIENCE_DIFF;
+		o->xdl_opts = DIFF_WITH_ALG(o, PATIENCE_DIFF);
 	else if (!strcmp(s, "histogram"))
-		o->xdl_opts |= XDF_HISTOGRAM_DIFF;
+		o->xdl_opts = DIFF_WITH_ALG(o, HISTOGRAM_DIFF);
 	else if (!strcmp(s, "ignore-space-change"))
 		o->xdl_opts |= XDF_IGNORE_WHITESPACE_CHANGE;
 	else if (!strcmp(s, "ignore-all-space"))
