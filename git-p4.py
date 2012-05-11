@@ -1257,7 +1257,7 @@ class P4Submit(Command, P4UserMap):
 
             if not m.match(name):
                 if verbose:
-                    print "tag %s does not match regexp %s" % (name, validTagRegexp)
+                    print "tag %s does not match regexp %s" % (name, validLabelRegexp)
                 continue
 
             # Get the p4 commit this corresponds to
