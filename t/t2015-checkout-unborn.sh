@@ -46,4 +46,15 @@ test_expect_success 'checking out another branch from unborn state' '
 	test_cmp expect actual
 '
 
+test_expect_success 'checking out in a newly created repo' '
+	test_create_repo empty &&
+	(
+		cd empty &&
+		git symbolic-ref HEAD >expect &&
+		test_must_fail git checkout &&
+		git symbolic-ref HEAD >actual &&
+		test_cmp expect actual
+	)
+'
+
 test_done
