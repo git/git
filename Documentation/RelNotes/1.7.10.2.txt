@@ -24,6 +24,9 @@ Fixes since v1.7.10.1
    be both revision name and a pathname, even though $name can never be a
    path in the context of the command.
 
+ * The "include.path" facility in the configuration mechanism added in
+   1.7.10 forgot to interpret "~/path" and "~user/path" as it should.
+
  * "git config --rename-section" to rename an existing section into a
    bogus one did not check the new name.
 
@@ -33,10 +36,32 @@ Fixes since v1.7.10.1
  * The report from "git fetch" said "new branch" even for a non branch
    ref.
 
+ * The http-backend (the server side of the smart http transfer) used
+   to overwrite GIT_COMMITTER_NAME and GIT_COMMITTER_EMAIL with the
+   value obtained from REMOTE_USER unconditionally, making it
+   impossible for the server side site-specific customization to use
+   different identity sources to affect the names logged. It now uses
+   REMOTE_USER only as a fallback value.
+
+ * "log --graph" was not very friendly with "--stat" option and its
+   output had line breaks at wrong places.
+
  * Octopus merge strategy did not reduce heads that are recorded in the
    final commit correctly.
 
+ * "git push" over smart-http lost progress output a few releases ago;
+   this release resurrects it.
+
+ * The insn sheet given by "rebase -i" did not make it clear that the
+   insn lines can be re-ordered to affect the order of the commits in
+   the resulting history.
+
+ * A contrib script "rerere-train" did not work out of the box unless
+   user futzed with her $PATH.
+
  * The i18n of error message "git stash save" was not properly done.
+
+ * "git submodule" used a sed script that some platforms mishandled.
 
  * When using a Perl script on a system where "perl" found on user's
    $PATH could be ancient or otherwise broken, we allow builders to

@@ -59,12 +59,15 @@ static void format_subst(const struct commit *commit,
 	free(to_free);
 }
 
-static void *sha1_file_to_archive(const char *path, const unsigned char *sha1,
-		unsigned int mode, enum object_type *type,
-		unsigned long *sizep, const struct commit *commit)
+void *sha1_file_to_archive(const struct archiver_args *args,
+			   const char *path, const unsigned char *sha1,
+			   unsigned int mode, enum object_type *type,
+			   unsigned long *sizep)
 {
 	void *buffer;
+	const struct commit *commit = args->convert ? args->commit : NULL;
 
+	path += args->baselen;
 	buffer = read_sha1_file(sha1, type, sizep);
 	if (buffer && S_ISREG(mode)) {
 		struct strbuf buf = STRBUF_INIT;
@@ -109,12 +112,9 @@ static int write_archive_entry(const unsigned char *sha1, const char *base,
 	write_archive_entry_fn_t write_entry = c->write_entry;
 	struct git_attr_check check[2];
 	const char *path_without_prefix;
-	int convert = 0;
 	int err;
-	enum object_type type;
-	unsigned long size;
-	void *buffer;
 
+	args->convert = 0;
 	strbuf_reset(&path);
 	strbuf_grow(&path, PATH_MAX);
 	strbuf_add(&path, args->base, args->baselen);
@@ -126,28 +126,22 @@ static int write_archive_entry(const unsigned char *sha1, const char *base,
 	if (!git_check_attr(path_without_prefix, ARRAY_SIZE(check), check)) {
 		if (ATTR_TRUE(check[0].value))
 			return 0;
-		convert = ATTR_TRUE(check[1].value);
+		args->convert = ATTR_TRUE(check[1].value);
 	}
 
 	if (S_ISDIR(mode) || S_ISGITLINK(mode)) {
 		strbuf_addch(&path, '/');
 		if (args->verbose)
 			fprintf(stderr, "%.*s\n", (int)path.len, path.buf);
-		err = write_entry(args, sha1, path.buf, path.len, mode, NULL, 0);
+		err = write_entry(args, sha1, path.buf, path.len, mode);
 		if (err)
 			return err;
 		return (S_ISDIR(mode) ? READ_TREE_RECURSIVE : 0);
 	}
 
-	buffer = sha1_file_to_archive(path_without_prefix, sha1, mode,
-			&type, &size, convert ? args->commit : NULL);
-	if (!buffer)
-		return error("cannot read %s", sha1_to_hex(sha1));
 	if (args->verbose)
 		fprintf(stderr, "%.*s\n", (int)path.len, path.buf);
-	err = write_entry(args, sha1, path.buf, path.len, mode, buffer, size);
-	free(buffer);
-	return err;
+	return write_entry(args, sha1, path.buf, path.len, mode);
 }
 
 int write_archive_entries(struct archiver_args *args,
@@ -167,7 +161,7 @@ int write_archive_entries(struct archiver_args *args,
 		if (args->verbose)
 			fprintf(stderr, "%.*s\n", (int)len, args->base);
 		err = write_entry(args, args->tree->object.sha1, args->base,
-				len, 040777, NULL, 0);
+				  len, 040777);
 		if (err)
 			return err;
 	}
