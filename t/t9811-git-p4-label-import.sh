@@ -195,6 +195,26 @@ test_expect_success 'tag that cannot be exported' '
 	)
 '
 
+test_expect_success 'use git config to enable import/export of tags' '
+	git p4 clone --verbose --dest="$git" //depot@all &&
+	(
+		cd "$git" &&
+		git config git-p4.exportLabels true &&
+		git config git-p4.importLabels true &&
+		git tag CFG_A_GIT_TAG &&
+		git p4 rebase --verbose &&
+		git p4 submit --verbose &&
+		git tag &&
+		git tag | grep TAG_F1_1
+	) &&
+	(
+		cd "$cli" &&
+		p4 labels &&
+		p4 labels | grep CFG_A_GIT_TAG
+	)
+'
+
+
 test_expect_success 'kill p4d' '
 	kill_p4d
 '
