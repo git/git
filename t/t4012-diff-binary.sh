@@ -113,7 +113,7 @@ cat >expect <<EOF
 EOF
 
 test_expect_success 'diff --stat with binary files and big change count' '
-	echo X | dd of=binfile bs=1k seek=1 &&
+	perl -e "print \"\\0\" x 1024; print \"X\\n\";" > binfile &&
 	git add binfile &&
 	i=0 &&
 	while test $i -lt 10000; do
