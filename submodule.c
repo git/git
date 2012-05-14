@@ -63,6 +63,9 @@ static int add_submodule_odb(const char *path)
 	alt_odb->name[40] = '\0';
 	alt_odb->name[41] = '\0';
 	alt_odb_list = alt_odb;
+
+	/* add possible alternates from the submodule */
+	read_info_alternates(objects_directory.buf, 0);
 	prepare_alt_odb();
 done:
 	strbuf_release(&objects_directory);
