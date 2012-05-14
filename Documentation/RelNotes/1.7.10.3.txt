@@ -1,0 +1,26 @@
+Git v1.7.10.3 Release Notes
+===========================
+
+Fixes since v1.7.10.2
+---------------------
+
+ * Running "git checkout" on an unborn branch used to corrupt HEAD.
+
+ * When checking out another commit from an already detached state, we
+   used to report all commits that are not reachable from any of the
+   refs as lossage, but some of them might be reachable from the new
+   HEAD, and there is no need to warn about them.
+
+ * Some time ago, "git clone" lost the progress output for its
+   "checkout" phase; when run without any "--quiet" option, it should
+   give progress to the lengthy operation.
+
+ * "log -z --pretty=tformat:..." did not terminate each record with
+   NUL.  The fix is not entirely correct when the output also asks for
+   --patch and/or --stat, though.
+
+ * The DWIM behaviour for "log --pretty=format:%gd -g" was somewhat
+   broken and gave undue precedence to configured log.date, causing
+   "git stash list" to show "stash@{time stamp string}".
+
+Also contains minor fixes and documentation updates.
