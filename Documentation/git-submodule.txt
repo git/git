@@ -43,9 +43,9 @@ if you choose to go that route.
 Submodules are composed from a so-called `gitlink` tree entry
 in the main repository that refers to a particular commit object
 within the inner repository that is completely separate.
-A record in the `.gitmodules` file at the root of the source
-tree assigns a logical name to the submodule and describes
-the default URL the submodule shall be cloned from.
+A record in the `.gitmodules` (see linkgit:gitmodules[5]) file at the
+root of the source tree assigns a logical name to the submodule and
+describes the default URL the submodule shall be cloned from.
 The logical name can be used for overriding this URL within your
 local repository configuration (see 'submodule init').
 
