@@ -21,7 +21,7 @@ that allow to change the behavior of a command.
 * There are basically two forms of options:
   'Short options' consist of one dash (`-`) and one alphanumeric
   character.
-  'Long options' begin with two dashes (`\--`) and some
+  'Long options' begin with two dashes (`--`) and some
   alphanumeric characters.
 
 * Options are case-sensitive.
@@ -31,7 +31,7 @@ The parse-options API allows:
 
 * 'sticked' and 'separate form' of options with arguments.
   `-oArg` is sticked, `-o Arg` is separate form.
-  `\--option=Arg` is sticked, `\--option Arg` is separate form.
+  `--option=Arg` is sticked, `--option Arg` is separate form.
 
 * Long options may be 'abbreviated', as long as the abbreviation
   is unambiguous.
@@ -39,12 +39,12 @@ The parse-options API allows:
 * Short options may be bundled, e.g. `-a -b` can be specified as `-ab`.
 
 * Boolean long options can be 'negated' (or 'unset') by prepending
-  `no-`, e.g. `\--no-abbrev` instead of `\--abbrev`. Conversely,
+  `no-`, e.g. `--no-abbrev` instead of `--abbrev`. Conversely,
   options that begin with `no-` can be 'negated' by removing it.
 
-* Options and non-option arguments can clearly be separated using the `\--`
-  option, e.g. `-a -b \--option \-- \--this-is-a-file` indicates that
-  `\--this-is-a-file` must not be processed as an option.
+* Options and non-option arguments can clearly be separated using the `--`
+  option, e.g. `-a -b --option -- --this-is-a-file` indicates that
+  `--this-is-a-file` must not be processed as an option.
 
 Steps to parse options
 ----------------------
@@ -76,7 +76,7 @@ before the full parser, which in turn shows the full help message.
 Flags are the bitwise-or of:
 
 `PARSE_OPT_KEEP_DASHDASH`::
-	Keep the `\--` that usually separates options from
+	Keep the `--` that usually separates options from
 	non-option arguments.
 
 `PARSE_OPT_STOP_AT_NON_OPTION`::
@@ -114,22 +114,22 @@ say `static struct option builtin_add_options[]`.
 There are some macros to easily define options:
 
 `OPT__ABBREV(&int_var)`::
-	Add `\--abbrev[=<n>]`.
+	Add `--abbrev[=<n>]`.
 
 `OPT__COLOR(&int_var, description)`::
-	Add `\--color[=<when>]` and `--no-color`.
+	Add `--color[=<when>]` and `--no-color`.
 
 `OPT__DRY_RUN(&int_var, description)`::
-	Add `-n, \--dry-run`.
+	Add `-n, --dry-run`.
 
 `OPT__FORCE(&int_var, description)`::
-	Add `-f, \--force`.
+	Add `-f, --force`.
 
 `OPT__QUIET(&int_var, description)`::
-	Add `-q, \--quiet`.
+	Add `-q, --quiet`.
 
 `OPT__VERBOSE(&int_var, description)`::
-	Add `-v, \--verbose`.
+	Add `-v, --verbose`.
 
 `OPT_GROUP(description)`::
 	Start an option group. `description` is a short string that
@@ -216,10 +216,10 @@ The last element of the array must be `OPT_END()`.
 If not stated otherwise, interpret the arguments as follows:
 
 * `short` is a character for the short option
-  (e.g. `{apostrophe}e{apostrophe}` for `-e`, use `0` to omit),
+  (e.g. `'e'` for `-e`, use `0` to omit),
 
 * `long` is a string for the long option
-  (e.g. `"example"` for `\--example`, use `NULL` to omit),
+  (e.g. `"example"` for `--example`, use `NULL` to omit),
 
 * `int_var` is an integer variable,
 
@@ -243,10 +243,10 @@ The function must be defined in this form:
 The callback mechanism is as follows:
 
 * Inside `func`, the only interesting member of the structure
-  given by `opt` is the void pointer `opt\->value`.
-  `\*opt\->value` will be the value that is saved into `var`, if you
+  given by `opt` is the void pointer `opt->value`.
+  `*opt->value` will be the value that is saved into `var`, if you
   use `OPT_CALLBACK()`.
-  For example, do `*(unsigned long *)opt\->value = 42;` to get 42
+  For example, do `*(unsigned long *)opt->value = 42;` to get 42
   into an `unsigned long` variable.
 
 * Return value `0` indicates success and non-zero return

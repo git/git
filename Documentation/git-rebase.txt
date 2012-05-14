@@ -267,7 +267,7 @@ which makes little sense.
 -X <strategy-option>::
 --strategy-option=<strategy-option>::
 	Pass the <strategy-option> through to the merge strategy.
-	This implies `\--merge` and, if no strategy has been
+	This implies `--merge` and, if no strategy has been
 	specified, `-s recursive`.  Note the reversal of 'ours' and
 	'theirs' as noted in above for the `-m` option.
 
@@ -611,8 +611,8 @@ Easy case: The changes are literally the same.::
 Hard case: The changes are not the same.::
 
 	This happens if the 'subsystem' rebase had conflicts, or used
-	`\--interactive` to omit, edit, squash, or fixup commits; or
-	if the upstream used one of `commit \--amend`, `reset`, or
+	`--interactive` to omit, edit, squash, or fixup commits; or
+	if the upstream used one of `commit --amend`, `reset`, or
 	`filter-branch`.
 
 
@@ -648,7 +648,7 @@ correspond to the ones before the rebase.
 NOTE: While an "easy case recovery" sometimes appears to be successful
       even in the hard case, it may have unintended consequences.  For
       example, a commit that was removed via `git rebase
-      \--interactive` will be **resurrected**!
+      --interactive` will be **resurrected**!
 
 The idea is to manually tell 'git rebase' "where the old 'subsystem'
 ended and your 'topic' began", that is, what the old merge-base
@@ -656,7 +656,7 @@ between them was.  You will have to find a way to name the last commit
 of the old 'subsystem', for example:
 
 * With the 'subsystem' reflog: after 'git fetch', the old tip of
-  'subsystem' is at `subsystem@\{1}`.  Subsequent fetches will
+  'subsystem' is at `subsystem@{1}`.  Subsequent fetches will
   increase the number.  (See linkgit:git-reflog[1].)
 
 * Relative to the tip of 'topic': knowing that your 'topic' has three

@@ -160,7 +160,7 @@ introduced the file with:
 	git log --diff-filter=A --pretty=short -- foo
 
 and then annotate the change between the commit and its
-parents, using `commit{caret}!` notation:
+parents, using `commit^!` notation:
 
 	git blame -C -C -f $commit^! -- foo
 

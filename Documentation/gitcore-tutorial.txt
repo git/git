@@ -151,8 +151,8 @@ to your working tree, you use the 'git update-index' program. That
 program normally just takes a list of filenames you want to update, but
 to avoid trivial mistakes, it refuses to add new entries to the index
 (or remove existing ones) unless you explicitly tell it that you're
-adding a new entry with the `\--add` flag (or removing an entry with the
-`\--remove`) flag.
+adding a new entry with the `--add` flag (or removing an entry with the
+`--remove`) flag.
 
 So to populate the index with the two files you just created, you can do
 
@@ -399,10 +399,10 @@ $ git diff HEAD
 which ends up doing the above for you.
 
 In other words, 'git diff-index' normally compares a tree against the
-working tree, but when given the `\--cached` flag, it is told to
+working tree, but when given the `--cached` flag, it is told to
 instead compare against just the index cache contents, and ignore the
 current working tree state entirely. Since we just wrote the index
-file to HEAD, doing `git diff-index \--cached -p HEAD` should thus return
+file to HEAD, doing `git diff-index --cached -p HEAD` should thus return
 an empty set of differences, and that's exactly what it does.
 
 [NOTE]
@@ -411,7 +411,7 @@ an empty set of differences, and that's exactly what it does.
 comparisons, and saying that it compares a tree against the working
 tree is thus not strictly accurate. In particular, the list of
 files to compare (the "meta-data") *always* comes from the index file,
-regardless of whether the `\--cached` flag is used or not. The `\--cached`
+regardless of whether the `--cached` flag is used or not. The `--cached`
 flag really only determines whether the file *contents* to be compared
 come from the working tree or not.
 
@@ -433,7 +433,7 @@ update the index cache:
 $ git update-index hello
 ------------------------------------------------
 
-(note how we didn't need the `\--add` flag this time, since git knew
+(note how we didn't need the `--add` flag this time, since git knew
 about the file already).
 
 Note what happens to the different 'git diff-{asterisk}' versions here.
@@ -560,7 +560,7 @@ short history.
 When using the above two commands, the initial commit will be shown.
 If this is a problem because it is huge, you can hide it by setting
 the log.showroot configuration variable to false. Having this, you
-can still show it for each command just adding the `\--root` option,
+can still show it for each command just adding the `--root` option,
 which is a flag for 'git diff-tree' accepted by both commands.
 
 With that, you should now be having some inkling of what git does, and
@@ -881,7 +881,7 @@ helps you view what's going on:
 $ gitk --all
 ----------------
 
-will show you graphically both of your branches (that's what the `\--all`
+will show you graphically both of your branches (that's what the `--all`
 means: normally it will just show you your current `HEAD`) and their
 histories. You can also see exactly how they came to be from a common
 source.
@@ -935,7 +935,7 @@ which will very loudly warn you that you're now committing a merge
 (which is correct, so never mind), and you can write a small merge
 message about your adventures in 'git merge'-land.
 
-After you're done, start up `gitk \--all` to see graphically what the
+After you're done, start up `gitk --all` to see graphically what the
 history looks like. Notice that `mybranch` still exists, and you can
 switch to it, and continue to work with it if you want to. The
 `mybranch` branch will not contain the merge, but next time you merge it
@@ -958,11 +958,11 @@ $ git show-branch --topo-order --more=1 master mybranch
 The first two lines indicate that it is showing the two branches
 and the first line of the commit log message from their
 top-of-the-tree commits, you are currently on `master` branch
-(notice the asterisk `{asterisk}` character), and the first column for
+(notice the asterisk `*` character), and the first column for
 the later output lines is used to show commits contained in the
 `master` branch, and the second column for the `mybranch`
 branch. Three commits are shown along with their log messages.
-All of them have non blank characters in the first column (`{asterisk}`
+All of them have non blank characters in the first column (`*`
 shows an ordinary commit on the current branch, `-` is a merge commit), which
 means they are now part of the `master` branch. Only the "Some
 work" commit has the plus `+` character in the second column,
@@ -1013,7 +1013,7 @@ not actually do a merge. Instead, it just updated the top of
 the tree of your branch to that of the `master` branch. This is
 often called 'fast-forward' merge.
 
-You can run `gitk \--all` again to see how the commit ancestry
+You can run `gitk --all` again to see how the commit ancestry
 looks like, or run 'show-branch', which tells you this.
 
 ------------------------------------------------
@@ -1257,7 +1257,7 @@ this 'collapsing' tends to trivially merge most of the paths
 fairly quickly, leaving only a handful of real changes in non-zero
 stages.
 
-To look at only non-zero stages, use `\--unmerged` flag:
+To look at only non-zero stages, use `--unmerged` flag:
 
 ------------
 $ git ls-files --unmerged
@@ -1420,7 +1420,7 @@ packed, and stores the packed file in `.git/objects/pack`
 directory.
 
 [NOTE]
-You will see two files, `pack-{asterisk}.pack` and `pack-{asterisk}.idx`,
+You will see two files, `pack-*.pack` and `pack-*.idx`,
 in `.git/objects/pack` directory. They are closely related to
 each other, and if you ever copy them by hand to a different
 repository for whatever reason, you should make sure you copy

@@ -25,22 +25,22 @@ arguments.  Here are the rules:
    are paths.
 
  * When an argument can be misunderstood as either a revision or a path,
-   they can be disambiguated by placing `\--` between them.
-   E.g. `git diff \-- HEAD` is, "I have a file called HEAD in my work
+   they can be disambiguated by placing `--` between them.
+   E.g. `git diff -- HEAD` is, "I have a file called HEAD in my work
    tree.  Please show changes between the version I staged in the index
    and what I have in the work tree for that file". not "show difference
    between the HEAD commit and the work tree as a whole".  You can say
-   `git diff HEAD \--` to ask for the latter.
+   `git diff HEAD --` to ask for the latter.
 
- * Without disambiguating `\--`, git makes a reasonable guess, but errors
+ * Without disambiguating `--`, git makes a reasonable guess, but errors
    out and asking you to disambiguate when ambiguous.  E.g. if you have a
    file called HEAD in your work tree, `git diff HEAD` is ambiguous, and
-   you have to say either `git diff HEAD \--` or `git diff \-- HEAD` to
+   you have to say either `git diff HEAD --` or `git diff -- HEAD` to
    disambiguate.
 
 When writing a script that is expected to handle random user-input, it is
 a good practice to make it explicit which arguments are which by placing
-disambiguating `\--` at appropriate places.
+disambiguating `--` at appropriate places.
 
 Here are the rules regarding the "flags" that you should follow when you are
 scripting git:
