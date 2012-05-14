@@ -93,7 +93,7 @@ static int diff_hunks(mmfile_t *file_a, mmfile_t *file_b, long ctxlen,
 {
 	xpparam_t xpp = {0};
 	xdemitconf_t xecfg = {0};
-	xdemitcb_t ecb = {0};
+	xdemitcb_t ecb = {NULL};
 
 	xpp.flags = xdl_opts;
 	xecfg.ctxlen = ctxlen;
