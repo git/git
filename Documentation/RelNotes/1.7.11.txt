@@ -85,6 +85,10 @@ Performance and Internal Implementation (please report possible regressions)
  * "git archive" learned to produce its output without reading the
    blob object it writes out in memory in its entirety.
 
+ * "git index-pack" that runs when fetching or pushing objects to
+   complete the packfile on the receiving end learned to use multiple
+   threads to do its job when available.
+
  * The code to compute hash values for lines used by the internal diff
    engine was optimized on little-endian machines, using the same
    trick the kernel folks came up with.
@@ -116,25 +120,6 @@ Unless otherwise noted, all the fixes since v1.7.10 in the maintenance
 releases are contained in this release (see release notes to them for
 details).
 
- * The DWIM behaviour for "log --pretty=format:%gd -g" was somewhat
-   broken and gave undue precedence to configured log.date, causing
-   "git stash list" to show "stash@{time stamp string}".
-   (merge 55ccf85 jk/maint-reflog-walk-count-vs-time later to maint).
-
- * Running "git checkout" on an unborn branch used to corrupt HEAD.
-   (merge 8338f77 ef/checkout-empty later to maint).
-
- * When checking out another commit from an already detached state, we
-   used to report all commits that are not reachable from any of the
-   refs as lossage, but some of them might be reachable from the new
-   HEAD, and there is no need to warn about them.
-   (merge 5d88639 js/checkout-detach-count later to maint).
-
- * Some time ago, "git clone" lost the progress output for its
-   "checkout" phase; when run without any "--quiet" option, it should
-   give progress to the lengthy operation.
-   (merge 8f63da1 ef/maint-clone-progress-fix later to maint).
-
  * "git status --porcelain" ignored "--branch" option by mistake.  The
    output for "git status --branch -z" was also incorrect and did not
    terminate the record for the current branch name with NUL as asked.
@@ -143,8 +128,3 @@ details).
  * "git diff --stat" used to fully count a binary file with modified
    execution bits whose contents is unmodified, which was not quite
    right.
-
- * "log -z --pretty=tformat:..." did not terminate each record with
-   NUL.  The fix is not entirely correct when the output also asks for
-   --patch and/or --stat, though.
-   (merge fafd382 jk/maint-tformat-with-z later to maint).
