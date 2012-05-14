@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: Git Mailing List <git@vger.kernel.org>\n"
-"POT-Creation-Date: 2012-05-08 15:45+0800\n"
+"POT-Creation-Date: 2012-05-15 06:31+0800\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -18,7 +18,7 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=INTEGER; plural=EXPRESSION;\n"
 
-#: advice.c:34
+#: advice.c:40
 #, c-format
 msgid "hint: %.*s\n"
 msgstr ""
@@ -27,7 +27,7 @@ msgstr ""
 #. * Message used both when 'git commit' fails and when
 #. * other commands doing a merge do.
 #.
-#: advice.c:64
+#: advice.c:70
 msgid ""
 "Fix them up in the work tree,\n"
 "and then use 'git add/rm <file>' as\n"
@@ -105,7 +105,7 @@ msgid_plural ", %d deletions(-)"
 msgstr[0] ""
 msgstr[1] ""
 
-#: diff.c:3435
+#: diff.c:3439
 #, c-format
 msgid ""
 "Failed to parse --dirstat/-X option parameter:\n"
@@ -1039,96 +1039,96 @@ msgid ""
 "\n"
 msgstr ""
 
-#: builtin/checkout.c:692
+#: builtin/checkout.c:693
 msgid "internal error in revision walk"
 msgstr ""
 
-#: builtin/checkout.c:696
+#: builtin/checkout.c:697
 msgid "Previous HEAD position was"
 msgstr ""
 
-#: builtin/checkout.c:722
+#: builtin/checkout.c:723
 msgid "You are on a branch yet to be born"
 msgstr ""
 
 #. case (1)
-#: builtin/checkout.c:853
+#: builtin/checkout.c:854
 #, c-format
 msgid "invalid reference: %s"
 msgstr ""
 
 #. case (1): want a tree
-#: builtin/checkout.c:892
+#: builtin/checkout.c:893
 #, c-format
 msgid "reference is not a tree: %s"
 msgstr ""
 
-#: builtin/checkout.c:972
+#: builtin/checkout.c:973
 msgid "-B cannot be used with -b"
 msgstr ""
 
-#: builtin/checkout.c:981
+#: builtin/checkout.c:982
 msgid "--patch is incompatible with all other options"
 msgstr ""
 
-#: builtin/checkout.c:984
+#: builtin/checkout.c:985
 msgid "--detach cannot be used with -b/-B/--orphan"
 msgstr ""
 
-#: builtin/checkout.c:986
+#: builtin/checkout.c:987
 msgid "--detach cannot be used with -t"
 msgstr ""
 
-#: builtin/checkout.c:992
+#: builtin/checkout.c:993
 msgid "--track needs a branch name"
 msgstr ""
 
-#: builtin/checkout.c:999
+#: builtin/checkout.c:1000
 msgid "Missing branch name; try -b"
 msgstr ""
 
-#: builtin/checkout.c:1005
+#: builtin/checkout.c:1006
 msgid "--orphan and -b|-B are mutually exclusive"
 msgstr ""
 
-#: builtin/checkout.c:1007
+#: builtin/checkout.c:1008
 msgid "--orphan cannot be used with -t"
 msgstr ""
 
-#: builtin/checkout.c:1017
+#: builtin/checkout.c:1018
 msgid "git checkout: -f and -m are incompatible"
 msgstr ""
 
-#: builtin/checkout.c:1051
+#: builtin/checkout.c:1052
 msgid "invalid path specification"
 msgstr ""
 
-#: builtin/checkout.c:1059
+#: builtin/checkout.c:1060
 #, c-format
 msgid ""
 "git checkout: updating paths is incompatible with switching branches.\n"
 "Did you intend to checkout '%s' which can not be resolved as commit?"
 msgstr ""
 
-#: builtin/checkout.c:1061
+#: builtin/checkout.c:1062
 msgid "git checkout: updating paths is incompatible with switching branches."
 msgstr ""
 
-#: builtin/checkout.c:1066
+#: builtin/checkout.c:1067
 msgid "git checkout: --detach does not take a path argument"
 msgstr ""
 
-#: builtin/checkout.c:1069
+#: builtin/checkout.c:1070
 msgid ""
 "git checkout: --ours/--theirs, --force and --merge are incompatible when\n"
 "checking out of the index."
 msgstr ""
 
-#: builtin/checkout.c:1088
+#: builtin/checkout.c:1089
 msgid "Cannot switch branch to a non-commit."
 msgstr ""
 
-#: builtin/checkout.c:1091
+#: builtin/checkout.c:1092
 msgid "--ours/--theirs is incompatible with switching branches."
 msgstr ""
 
@@ -1874,28 +1874,24 @@ msgstr ""
 msgid "Invalid %s: '%s'"
 msgstr ""
 
-#: builtin/gc.c:78
-msgid "Too many options specified"
-msgstr ""
-
-#: builtin/gc.c:103
+#: builtin/gc.c:90
 #, c-format
 msgid "insanely long object directory %.*s"
 msgstr ""
 
-#: builtin/gc.c:223
+#: builtin/gc.c:221
 #, c-format
 msgid "Auto packing the repository for optimum performance.\n"
 msgstr ""
 
-#: builtin/gc.c:226
+#: builtin/gc.c:224
 #, c-format
 msgid ""
 "Auto packing the repository for optimum performance. You may also\n"
 "run \"git gc\" manually. See \"git help gc\" for more information.\n"
 msgstr ""
 
-#: builtin/gc.c:256
+#: builtin/gc.c:251
 msgid ""
 "There are too many unreachable loose objects; run 'git prune' to remove them."
 msgstr ""
@@ -2673,35 +2669,35 @@ msgstr ""
 msgid "Unknown subcommand: %s"
 msgstr ""
 
-#: builtin/pack-objects.c:2310
+#: builtin/pack-objects.c:2315
 #, c-format
 msgid "unsupported index version %s"
 msgstr ""
 
-#: builtin/pack-objects.c:2314
+#: builtin/pack-objects.c:2319
 #, c-format
 msgid "bad index version '%s'"
 msgstr ""
 
-#: builtin/pack-objects.c:2322
+#: builtin/pack-objects.c:2342
 #, c-format
 msgid "option %s does not accept negative form"
 msgstr ""
 
-#: builtin/pack-objects.c:2326
+#: builtin/pack-objects.c:2346
 #, c-format
 msgid "unable to parse value '%s' for option %s"
 msgstr ""
 
-#: builtin/push.c:44
+#: builtin/push.c:45
 msgid "tag shorthand without <tag>"
 msgstr ""
 
-#: builtin/push.c:63
+#: builtin/push.c:64
 msgid "--delete only accepts plain target ref names"
 msgstr ""
 
-#: builtin/push.c:83
+#: builtin/push.c:84
 #, c-format
 msgid ""
 "You are not currently on a branch.\n"
@@ -2711,7 +2707,7 @@ msgid ""
 "    git push %s HEAD:<name-of-remote-branch>\n"
 msgstr ""
 
-#: builtin/push.c:90
+#: builtin/push.c:91
 #, c-format
 msgid ""
 "The current branch %s has no upstream branch.\n"
@@ -2720,12 +2716,12 @@ msgid ""
 "    git push --set-upstream %s %s\n"
 msgstr ""
 
-#: builtin/push.c:98
+#: builtin/push.c:99
 #, c-format
 msgid "The current branch %s has multiple upstream branches, refusing to push."
 msgstr ""
 
-#: builtin/push.c:101
+#: builtin/push.c:102
 #, c-format
 msgid ""
 "You are pushing to remote '%s', which is not the upstream of\n"
@@ -2733,35 +2729,51 @@ msgid ""
 "to update which remote branch."
 msgstr ""
 
-#: builtin/push.c:127
+#: builtin/push.c:131
 msgid ""
 "You didn't specify any refspecs to push, and push.default is \"nothing\"."
 msgstr ""
 
-#: builtin/push.c:147
+#: builtin/push.c:138
+msgid ""
+"Updates were rejected because the tip of your current branch is behind\n"
+"its remote counterpart. Merge the remote changes (e.g. 'git pull')\n"
+"before pushing again.\n"
+"See the 'Note about fast-forwards' in 'git push --help' for details."
+msgstr ""
+
+#: builtin/push.c:144
+msgid ""
+"Updates were rejected because a pushed branch tip is behind its remote\n"
+"counterpart. If you did not intend to push that branch, you may want to\n"
+"specify branches to push or set the 'push.default' configuration\n"
+"variable to 'current' or 'upstream' to push only the current branch."
+msgstr ""
+
+#: builtin/push.c:150
+msgid ""
+"Updates were rejected because a pushed branch tip is behind its remote\n"
+"counterpart. Check out this branch and merge the remote changes\n"
+"(e.g. 'git pull') before pushing again.\n"
+"See the 'Note about fast-forwards' in 'git push --help' for details."
+msgstr ""
+
+#: builtin/push.c:190
 #, c-format
 msgid "Pushing to %s\n"
 msgstr ""
 
-#: builtin/push.c:151
+#: builtin/push.c:194
 #, c-format
 msgid "failed to push some refs to '%s'"
 msgstr ""
 
-#: builtin/push.c:159
-#, c-format
-msgid ""
-"To prevent you from losing history, non-fast-forward updates were rejected\n"
-"Merge the remote changes (e.g. 'git pull') before pushing again.  See the\n"
-"'Note about fast-forwards' section of 'git push --help' for details.\n"
-msgstr ""
-
-#: builtin/push.c:176
+#: builtin/push.c:226
 #, c-format
 msgid "bad repository '%s'"
 msgstr ""
 
-#: builtin/push.c:177
+#: builtin/push.c:227
 msgid ""
 "No configured push destination.\n"
 "Either specify the URL from the command-line or configure a remote "
@@ -2774,31 +2786,31 @@ msgid ""
 "    git push <name>\n"
 msgstr ""
 
-#: builtin/push.c:192
+#: builtin/push.c:242
 msgid "--all and --tags are incompatible"
 msgstr ""
 
-#: builtin/push.c:193
+#: builtin/push.c:243
 msgid "--all can't be combined with refspecs"
 msgstr ""
 
-#: builtin/push.c:198
+#: builtin/push.c:248
 msgid "--mirror and --tags are incompatible"
 msgstr ""
 
-#: builtin/push.c:199
+#: builtin/push.c:249
 msgid "--mirror can't be combined with refspecs"
 msgstr ""
 
-#: builtin/push.c:204
+#: builtin/push.c:254
 msgid "--all and --mirror are incompatible"
 msgstr ""
 
-#: builtin/push.c:284
+#: builtin/push.c:334
 msgid "--delete is incompatible with --all, --mirror and --tags"
 msgstr ""
 
-#: builtin/push.c:286
+#: builtin/push.c:336
 msgid "--delete doesn't make sense without any refs"
 msgstr ""
 
@@ -2881,20 +2893,20 @@ msgstr ""
 msgid "Could not reset index file to revision '%s'."
 msgstr ""
 
-#: builtin/revert.c:70 builtin/revert.c:91
+#: builtin/revert.c:70 builtin/revert.c:92
 #, c-format
 msgid "%s: %s cannot be used with %s"
 msgstr ""
 
-#: builtin/revert.c:126
+#: builtin/revert.c:127
 msgid "program error"
 msgstr ""
 
-#: builtin/revert.c:212
+#: builtin/revert.c:213
 msgid "revert failed"
 msgstr ""
 
-#: builtin/revert.c:227
+#: builtin/revert.c:228
 msgid "cherry-pick failed"
 msgstr ""
 
@@ -3377,146 +3389,146 @@ msgstr ""
 msgid "Gitdir '$a' is part of the submodule path '$b' or vice versa"
 msgstr ""
 
-#: git-submodule.sh:247
+#: git-submodule.sh:248
 #, sh-format
 msgid "repo URL: '$repo' must be absolute or begin with ./|../"
 msgstr ""
 
-#: git-submodule.sh:264
+#: git-submodule.sh:265
 #, sh-format
 msgid "'$path' already exists in the index"
 msgstr ""
 
-#: git-submodule.sh:281
+#: git-submodule.sh:282
 #, sh-format
 msgid "'$path' already exists and is not a valid git repo"
 msgstr ""
 
-#: git-submodule.sh:295
+#: git-submodule.sh:296
 #, sh-format
 msgid "Unable to checkout submodule '$path'"
 msgstr ""
 
-#: git-submodule.sh:300
+#: git-submodule.sh:301
 #, sh-format
 msgid "Failed to add submodule '$path'"
 msgstr ""
 
-#: git-submodule.sh:305
+#: git-submodule.sh:306
 #, sh-format
 msgid "Failed to register submodule '$path'"
 msgstr ""
 
-#: git-submodule.sh:347
+#: git-submodule.sh:348
 #, sh-format
 msgid "Entering '$prefix$path'"
 msgstr ""
 
-#: git-submodule.sh:359
+#: git-submodule.sh:360
 #, sh-format
 msgid "Stopping at '$path'; script returned non-zero status."
 msgstr ""
 
-#: git-submodule.sh:401
+#: git-submodule.sh:402
 #, sh-format
 msgid "No url found for submodule path '$path' in .gitmodules"
 msgstr ""
 
-#: git-submodule.sh:410
+#: git-submodule.sh:411
 #, sh-format
 msgid "Failed to register url for submodule path '$path'"
 msgstr ""
 
-#: git-submodule.sh:418
+#: git-submodule.sh:419
 #, sh-format
 msgid "Failed to register update mode for submodule path '$path'"
 msgstr ""
 
-#: git-submodule.sh:420
+#: git-submodule.sh:421
 #, sh-format
 msgid "Submodule '$name' ($url) registered for path '$path'"
 msgstr ""
 
-#: git-submodule.sh:519
+#: git-submodule.sh:520
 #, sh-format
 msgid ""
 "Submodule path '$path' not initialized\n"
 "Maybe you want to use 'update --init'?"
 msgstr ""
 
-#: git-submodule.sh:532
+#: git-submodule.sh:533
 #, sh-format
 msgid "Unable to find current revision in submodule path '$path'"
 msgstr ""
 
-#: git-submodule.sh:551
+#: git-submodule.sh:552
 #, sh-format
 msgid "Unable to fetch in submodule path '$path'"
 msgstr ""
 
-#: git-submodule.sh:565
+#: git-submodule.sh:566
 #, sh-format
 msgid "Unable to rebase '$sha1' in submodule path '$path'"
 msgstr ""
 
-#: git-submodule.sh:566
+#: git-submodule.sh:567
 #, sh-format
 msgid "Submodule path '$path': rebased into '$sha1'"
 msgstr ""
 
-#: git-submodule.sh:571
+#: git-submodule.sh:572
 #, sh-format
 msgid "Unable to merge '$sha1' in submodule path '$path'"
 msgstr ""
 
-#: git-submodule.sh:572
+#: git-submodule.sh:573
 #, sh-format
 msgid "Submodule path '$path': merged in '$sha1'"
 msgstr ""
 
-#: git-submodule.sh:577
+#: git-submodule.sh:578
 #, sh-format
 msgid "Unable to checkout '$sha1' in submodule path '$path'"
 msgstr ""
 
-#: git-submodule.sh:578
+#: git-submodule.sh:579
 #, sh-format
 msgid "Submodule path '$path': checked out '$sha1'"
 msgstr ""
 
-#: git-submodule.sh:600 git-submodule.sh:923
+#: git-submodule.sh:601 git-submodule.sh:924
 #, sh-format
 msgid "Failed to recurse into submodule path '$path'"
 msgstr ""
 
-#: git-submodule.sh:708
+#: git-submodule.sh:709
 msgid "--"
 msgstr ""
 
-#: git-submodule.sh:766
+#: git-submodule.sh:767
 #, sh-format
 msgid "  Warn: $name doesn't contain commit $sha1_src"
 msgstr ""
 
-#: git-submodule.sh:769
+#: git-submodule.sh:770
 #, sh-format
 msgid "  Warn: $name doesn't contain commit $sha1_dst"
 msgstr ""
 
-#: git-submodule.sh:772
+#: git-submodule.sh:773
 #, sh-format
 msgid "  Warn: $name doesn't contain commits $sha1_src and $sha1_dst"
 msgstr ""
 
-#: git-submodule.sh:797
+#: git-submodule.sh:798
 msgid "blob"
 msgstr ""
 
-#: git-submodule.sh:798
+#: git-submodule.sh:799
 msgid "submodule"
 msgstr ""
 
-#: git-submodule.sh:969
+#: git-submodule.sh:970
 #, sh-format
 msgid "Synchronizing submodule url for '$name'"
 msgstr ""
