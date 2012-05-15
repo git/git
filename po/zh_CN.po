@@ -12,7 +12,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Git\n"
 "Report-Msgid-Bugs-To: Git Mailing List <git@vger.kernel.org>\n"
-"POT-Creation-Date: 2012-05-08 15:45+0800\n"
+"POT-Creation-Date: 2012-05-15 06:31+0800\n"
 "PO-Revision-Date: 2012-01-30 00:00+0800\n"
 "Last-Translator: Jiang Xin <worldhello.net@gmail.com>\n"
 "Language-Team: GitHub <https://github.com/gotgit/git/>\n"
@@ -22,7 +22,7 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=1; plural=0;\n"
 
-#: advice.c:34
+#: advice.c:40
 #, c-format
 msgid "hint: %.*s\n"
 msgstr "提示：%.*s\n"
@@ -31,7 +31,7 @@ msgstr "提示：%.*s\n"
 #. * Message used both when 'git commit' fails and when
 #. * other commands doing a merge do.
 #.
-#: advice.c:64
+#: advice.c:70
 msgid ""
 "Fix them up in the work tree,\n"
 "and then use 'git add/rm <file>' as\n"
@@ -113,7 +113,7 @@ msgid ", %d deletion(-)"
 msgid_plural ", %d deletions(-)"
 msgstr[0] "，删除 %d 行(-)"
 
-#: diff.c:3435
+#: diff.c:3439
 #, c-format
 msgid ""
 "Failed to parse --dirstat/-X option parameter:\n"
@@ -1103,71 +1103,71 @@ msgstr ""
 " git branch new_branch_name %s\n"
 "\n"
 
-#: builtin/checkout.c:692
+#: builtin/checkout.c:693
 msgid "internal error in revision walk"
 msgstr "在版本遍历时遇到内部错误"
 
-#: builtin/checkout.c:696
+#: builtin/checkout.c:697
 msgid "Previous HEAD position was"
 msgstr "之前的 HEAD 位置是"
 
-#: builtin/checkout.c:722
+#: builtin/checkout.c:723
 msgid "You are on a branch yet to be born"
 msgstr "您位于一个尚未初始化的分支"
 
 #. case (1)
-#: builtin/checkout.c:853
+#: builtin/checkout.c:854
 #, c-format
 msgid "invalid reference: %s"
 msgstr "无效引用：%s"
 
 #. case (1): want a tree
-#: builtin/checkout.c:892
+#: builtin/checkout.c:893
 #, c-format
 msgid "reference is not a tree: %s"
 msgstr "引用不是一个树：%s"
 
-#: builtin/checkout.c:972
+#: builtin/checkout.c:973
 msgid "-B cannot be used with -b"
 msgstr "-B 不能和 -b 共用"
 
-#: builtin/checkout.c:981
+#: builtin/checkout.c:982
 msgid "--patch is incompatible with all other options"
 msgstr "--patch 选项和其他选项不兼容"
 
-#: builtin/checkout.c:984
+#: builtin/checkout.c:985
 msgid "--detach cannot be used with -b/-B/--orphan"
 msgstr "--detach 不能和 -b/-B/--orphan 共用"
 
-#: builtin/checkout.c:986
+#: builtin/checkout.c:987
 msgid "--detach cannot be used with -t"
 msgstr "--detach 不能和 -t 共用"
 
-#: builtin/checkout.c:992
+#: builtin/checkout.c:993
 msgid "--track needs a branch name"
 msgstr "--track 需要一个分支名"
 
-#: builtin/checkout.c:999
+#: builtin/checkout.c:1000
 msgid "Missing branch name; try -b"
 msgstr "缺少分支名；尝试 -b"
 
-#: builtin/checkout.c:1005
+#: builtin/checkout.c:1006
 msgid "--orphan and -b|-B are mutually exclusive"
 msgstr "--orphan 和 -b|-B 互斥"
 
-#: builtin/checkout.c:1007
+#: builtin/checkout.c:1008
 msgid "--orphan cannot be used with -t"
 msgstr "--orphan 不能和 -t 共用"
 
-#: builtin/checkout.c:1017
+#: builtin/checkout.c:1018
 msgid "git checkout: -f and -m are incompatible"
 msgstr "git checkout：-f 和 -m 不兼容"
 
-#: builtin/checkout.c:1051
+#: builtin/checkout.c:1052
 msgid "invalid path specification"
 msgstr "无效的路径规格"
 
-#: builtin/checkout.c:1059
+#: builtin/checkout.c:1060
 #, c-format
 msgid ""
 "git checkout: updating paths is incompatible with switching branches.\n"
@@ -1176,26 +1176,26 @@ msgstr ""
 "git checkout：更新路径和切换分支不兼容。\n"
 "您是想要检出 '%s' 但未能将其解析为提交么？"
 
-#: builtin/checkout.c:1061
+#: builtin/checkout.c:1062
 msgid "git checkout: updating paths is incompatible with switching branches."
 msgstr "git checkout：更新路径和切换分支不兼容。"
 
-#: builtin/checkout.c:1066
+#: builtin/checkout.c:1067
 msgid "git checkout: --detach does not take a path argument"
 msgstr "git checkout：--detach 不跟路径参数"
 
-#: builtin/checkout.c:1069
+#: builtin/checkout.c:1070
 msgid ""
 "git checkout: --ours/--theirs, --force and --merge are incompatible when\n"
 "checking out of the index."
 msgstr ""
 "git checkout：在从索引检出时，--ours/--theirs、--force 和 --merge 不兼容。"
 
-#: builtin/checkout.c:1088
+#: builtin/checkout.c:1089
 msgid "Cannot switch branch to a non-commit."
 msgstr "无法切换分支到一个非提交。"
 
-#: builtin/checkout.c:1091
+#: builtin/checkout.c:1092
 msgid "--ours/--theirs is incompatible with switching branches."
 msgstr "--ours/--theirs 和切换分支不兼容。"
 
@@ -1991,21 +1991,17 @@ msgstr "获取组并指定引用表达式没有意义"
 msgid "Invalid %s: '%s'"
 msgstr "无效的 %s：'%s'"
 
-#: builtin/gc.c:78
-msgid "Too many options specified"
-msgstr "指定了太多的选项"
-
-#: builtin/gc.c:103
+#: builtin/gc.c:90
 #, c-format
 msgid "insanely long object directory %.*s"
 msgstr "不正常的长对象目录 %.*s"
 
-#: builtin/gc.c:223
+#: builtin/gc.c:221
 #, c-format
 msgid "Auto packing the repository for optimum performance.\n"
 msgstr "自动打包版本库以求最佳性能。\n"
 
-#: builtin/gc.c:226
+#: builtin/gc.c:224
 #, c-format
 msgid ""
 "Auto packing the repository for optimum performance. You may also\n"
@@ -2014,7 +2010,7 @@ msgstr ""
 "自动打包版本库以求最佳性能。您还可以手动运行 \"git gc\"。\n"
 "参见 \"git help gc\" 以获取更多信息。\n"
 
-#: builtin/gc.c:256
+#: builtin/gc.c:251
 msgid ""
 "There are too many unreachable loose objects; run 'git prune' to remove them."
 msgstr "有太多不可达的松散对象，运行 'git prune' 删除它们。"
@@ -2806,35 +2802,35 @@ msgstr "对象 %s 没有注解\n"
 msgid "Unknown subcommand: %s"
 msgstr "未知子命令：%s"
 
-#: builtin/pack-objects.c:2310
+#: builtin/pack-objects.c:2315
 #, c-format
 msgid "unsupported index version %s"
 msgstr "不支持的索引版本 %s"
 
-#: builtin/pack-objects.c:2314
+#: builtin/pack-objects.c:2319
 #, c-format
 msgid "bad index version '%s'"
 msgstr "坏的索引版本 '%s'"
 
-#: builtin/pack-objects.c:2322
+#: builtin/pack-objects.c:2342
 #, c-format
 msgid "option %s does not accept negative form"
 msgstr "选项 %s 不接受否定格式"
 
-#: builtin/pack-objects.c:2326
+#: builtin/pack-objects.c:2346
 #, c-format
 msgid "unable to parse value '%s' for option %s"
 msgstr "不能解析值 '%s' 针对于选项 %s"
 
-#: builtin/push.c:44
+#: builtin/push.c:45
 msgid "tag shorthand without <tag>"
 msgstr "tag 简写没有跟 <tag> 参数"
 
-#: builtin/push.c:63
+#: builtin/push.c:64
 msgid "--delete only accepts plain target ref names"
 msgstr "--delete 只接受简单的目标引用名"
 
-#: builtin/push.c:83
+#: builtin/push.c:84
 #, c-format
 msgid ""
 "You are not currently on a branch.\n"
@@ -2848,7 +2844,7 @@ msgstr ""
 "\n"
 "    git push %s HEAD:<name-of-remote-branch>\n"
 
-#: builtin/push.c:90
+#: builtin/push.c:91
 #, c-format
 msgid ""
 "The current branch %s has no upstream branch.\n"
@@ -2861,12 +2857,12 @@ msgstr ""
 "\n"
 "    git push --set-upstream %s %s\n"
 
-#: builtin/push.c:98
+#: builtin/push.c:99
 #, c-format
 msgid "The current branch %s has multiple upstream branches, refusing to push."
 msgstr "当前分支 %s 有多个上游分支，拒绝推送。"
 
-#: builtin/push.c:101
+#: builtin/push.c:102
 #, c-format
 msgid ""
 "You are pushing to remote '%s', which is not the upstream of\n"
@@ -2876,38 +2872,61 @@ msgstr ""
 "您正推送至远程 '%s'（其并非当前分支 '%s' 的上游），\n"
 "而没有告诉我要推送什么、更新哪个远程分支。"
 
-#: builtin/push.c:127
+#: builtin/push.c:131
 msgid ""
 "You didn't specify any refspecs to push, and push.default is \"nothing\"."
 msgstr "您没有为推送指定任何引用表达式，并且 push.default 为 \"nothing\"。"
 
-#: builtin/push.c:147
+#: builtin/push.c:138
+msgid ""
+"Updates were rejected because the tip of your current branch is behind\n"
+"its remote counterpart. Merge the remote changes (e.g. 'git pull')\n"
+"before pushing again.\n"
+"See the 'Note about fast-forwards' in 'git push --help' for details."
+msgstr ""
+"更新被拒绝，因为您当前分支的最新提交落后于其对应的远程分支。\n"
+"再次推送前，先与远程变更合并（如 'git pull'）。详见\n"
+"'git push --help' 中的 'Note about fast-forwards' 小节。"
+
+#: builtin/push.c:144
+msgid ""
+"Updates were rejected because a pushed branch tip is behind its remote\n"
+"counterpart. If you did not intend to push that branch, you may want to\n"
+"specify branches to push or set the 'push.default' configuration\n"
+"variable to 'current' or 'upstream' to push only the current branch."
+msgstr ""
+"更新被拒绝，因为推送的一个分支的最新提交落后于其对应的远程分支。\n"
+"如果您并非有意推送该分支，您可以在推送时指定要推送的分支，或者将\n"
+"配置变量 'push.default' 设置为 'current' 或 'upstream' 以便只推送"
+"当前分支。"
+
+#: builtin/push.c:150
+msgid ""
+"Updates were rejected because a pushed branch tip is behind its remote\n"
+"counterpart. Check out this branch and merge the remote changes\n"
+"(e.g. 'git pull') before pushing again.\n"
+"See the 'Note about fast-forwards' in 'git push --help' for details."
+msgstr ""
+"更新被拒绝，因为推送的一个分支的最新提交落后于其对应的远程分支。\n"
+"检出该分支并与远程变更合并（如 'git pull'），然后再推送。详见\n"
+"'git push --help' 中的 'Note about fast-forwards' 小节。"
+
+#: builtin/push.c:190
 #, c-format
 msgid "Pushing to %s\n"
 msgstr "推送到 %s\n"
 
-#: builtin/push.c:151
+#: builtin/push.c:194
 #, c-format
 msgid "failed to push some refs to '%s'"
 msgstr "无法推送一些引用到 '%s'"
 
-#: builtin/push.c:159
-#, c-format
-msgid ""
-"To prevent you from losing history, non-fast-forward updates were rejected\n"
-"Merge the remote changes (e.g. 'git pull') before pushing again.  See the\n"
-"'Note about fast-forwards' section of 'git push --help' for details.\n"
-msgstr ""
-"为了防止您丢失提交历史，非快进式更新被拒绝。\n"
-"再次推送前先与远程变更合并（如 'git pull'）。详见\n"
-"'git push --help' 中的 'Note about fast-forwards' 小节。\n"
-
-#: builtin/push.c:176
+#: builtin/push.c:226
 #, c-format
 msgid "bad repository '%s'"
 msgstr "坏的版本库 '%s'"
 
-#: builtin/push.c:177
+#: builtin/push.c:227
 msgid ""
 "No configured push destination.\n"
 "Either specify the URL from the command-line or configure a remote "
@@ -2928,31 +2947,31 @@ msgstr ""
 "\n"
 "    git push <name>\n"
 
-#: builtin/push.c:192
+#: builtin/push.c:242
 msgid "--all and --tags are incompatible"
 msgstr "--all 和 --tags 不兼容"
 
-#: builtin/push.c:193
+#: builtin/push.c:243
 msgid "--all can't be combined with refspecs"
 msgstr "--all 不能和引用表达式共用"
 
-#: builtin/push.c:198
+#: builtin/push.c:248
 msgid "--mirror and --tags are incompatible"
 msgstr "--mirror 和 --tags 不兼容"
 
-#: builtin/push.c:199
+#: builtin/push.c:249
 msgid "--mirror can't be combined with refspecs"
 msgstr "--mirror 不能和引用表达式共用"
 
-#: builtin/push.c:204
+#: builtin/push.c:254
 msgid "--all and --mirror are incompatible"
 msgstr "--all 和 --mirror 不兼容"
 
-#: builtin/push.c:284
+#: builtin/push.c:334
 msgid "--delete is incompatible with --all, --mirror and --tags"
 msgstr "--delete 与 --all、--mirror 及 --tags 不兼容"
 
-#: builtin/push.c:286
+#: builtin/push.c:336
 msgid "--delete doesn't make sense without any refs"
 msgstr "--delete 未接任何引用没有意义"
 
@@ -3038,20 +3057,20 @@ msgstr "不能对裸版本库进行%s重置"
 msgid "Could not reset index file to revision '%s'."
 msgstr "不能重置索引文件至版本 '%s'。"
 
-#: builtin/revert.c:70 builtin/revert.c:91
+#: builtin/revert.c:70 builtin/revert.c:92
 #, c-format
 msgid "%s: %s cannot be used with %s"
 msgstr "%s：%s 不能和 %s 共用"
 
-#: builtin/revert.c:126
+#: builtin/revert.c:127
 msgid "program error"
 msgstr "程序错误"
 
-#: builtin/revert.c:212
+#: builtin/revert.c:213
 msgid "revert failed"
 msgstr "还原失败"
 
-#: builtin/revert.c:227
+#: builtin/revert.c:228
 msgid "cherry-pick failed"
 msgstr "拣选失败"
 
@@ -3560,67 +3579,67 @@ msgstr "无法克隆 '$url' 到子模组路径 '$path'"
 msgid "Gitdir '$a' is part of the submodule path '$b' or vice versa"
 msgstr "Gitdir '$a' 在子模组路径 '$b' 之下或者相反"
 
-#: git-submodule.sh:247
+#: git-submodule.sh:248
 #, sh-format
 msgid "repo URL: '$repo' must be absolute or begin with ./|../"
 msgstr "版本库URL：'$repo' 必须是绝对路径或以 ./|../ 起始"
 
-#: git-submodule.sh:264
+#: git-submodule.sh:265
 #, sh-format
 msgid "'$path' already exists in the index"
 msgstr "'$path' 已经存在于索引中"
 
-#: git-submodule.sh:281
+#: git-submodule.sh:282
 #, sh-format
 msgid "'$path' already exists and is not a valid git repo"
 msgstr "'$path' 已存在且不是一个有效的 git 版本库"
 
-#: git-submodule.sh:295
+#: git-submodule.sh:296
 #, sh-format
 msgid "Unable to checkout submodule '$path'"
 msgstr "不能检出子模组 '$path'"
 
-#: git-submodule.sh:300
+#: git-submodule.sh:301
 #, sh-format
 msgid "Failed to add submodule '$path'"
 msgstr "无法添加子模组 '$path'"
 
-#: git-submodule.sh:305
+#: git-submodule.sh:306
 #, sh-format
 msgid "Failed to register submodule '$path'"
 msgstr "无法注册子模组 '$path'"
 
-#: git-submodule.sh:347
+#: git-submodule.sh:348
 #, sh-format
 msgid "Entering '$prefix$path'"
 msgstr "正在进入 '$prefix$path'"
 
-#: git-submodule.sh:359
+#: git-submodule.sh:360
 #, sh-format
 msgid "Stopping at '$path'; script returned non-zero status."
 msgstr "停止于 '$path'，脚本返回非零值。"
 
-#: git-submodule.sh:401
+#: git-submodule.sh:402
 #, sh-format
 msgid "No url found for submodule path '$path' in .gitmodules"
 msgstr "在 .gitmodules 中未找到子模组路径 '$path' 的 url"
 
-#: git-submodule.sh:410
+#: git-submodule.sh:411
 #, sh-format
 msgid "Failed to register url for submodule path '$path'"
 msgstr "无法为子模组路径 '$path' 注册 url"
 
-#: git-submodule.sh:418
+#: git-submodule.sh:419
 #, sh-format
 msgid "Failed to register update mode for submodule path '$path'"
 msgstr "无法为子模组路径 '$path' 注册更新模式"
 
-#: git-submodule.sh:420
+#: git-submodule.sh:421
 #, sh-format
 msgid "Submodule '$name' ($url) registered for path '$path'"
 msgstr "子模组 '$name' ($url) 已为路径 '$path' 注册"
 
-#: git-submodule.sh:519
+#: git-submodule.sh:520
 #, sh-format
 msgid ""
 "Submodule path '$path' not initialized\n"
@@ -3629,82 +3648,85 @@ msgstr ""
 "子模组路径 '$path' 没有初始化\n"
 "也许您想用 'update --init'？"
 
-#: git-submodule.sh:532
+#: git-submodule.sh:533
 #, sh-format
 msgid "Unable to find current revision in submodule path '$path'"
 msgstr "无法在子模组路径 '$path' 中找到当前版本"
 
-#: git-submodule.sh:551
+#: git-submodule.sh:552
 #, sh-format
 msgid "Unable to fetch in submodule path '$path'"
 msgstr "无法在子模组路径 '$path' 中获取"
 
-#: git-submodule.sh:565
+#: git-submodule.sh:566
 #, sh-format
 msgid "Unable to rebase '$sha1' in submodule path '$path'"
 msgstr "无法在子模组路径 '$path' 中变基 '$sha1'"
 
-#: git-submodule.sh:566
+#: git-submodule.sh:567
 #, sh-format
 msgid "Submodule path '$path': rebased into '$sha1'"
 msgstr "子模组路径 '$path'：变基至 '$sha1'"
 
-#: git-submodule.sh:571
+#: git-submodule.sh:572
 #, sh-format
 msgid "Unable to merge '$sha1' in submodule path '$path'"
 msgstr "无法合并 '$sha1' 到子模组路径 '$path' 中"
 
-#: git-submodule.sh:572
+#: git-submodule.sh:573
 #, sh-format
 msgid "Submodule path '$path': merged in '$sha1'"
 msgstr "子模组路径 '$path'：已合并入 '$sha1'"
 
-#: git-submodule.sh:577
+#: git-submodule.sh:578
 #, sh-format
 msgid "Unable to checkout '$sha1' in submodule path '$path'"
 msgstr "无法在子模组路径 '$path' 中检出 '$sha1'"
 
-#: git-submodule.sh:578
+#: git-submodule.sh:579
 #, sh-format
 msgid "Submodule path '$path': checked out '$sha1'"
 msgstr "子模组路径 '$path'：检出 '$sha1'"
 
-#: git-submodule.sh:600 git-submodule.sh:923
+#: git-submodule.sh:601 git-submodule.sh:924
 #, sh-format
 msgid "Failed to recurse into submodule path '$path'"
 msgstr "无法递归进子模组路径 '$path'"
 
-#: git-submodule.sh:708
+#: git-submodule.sh:709
 msgid "--"
 msgstr "--"
 
 #  译者：注意保持前导空格
-#: git-submodule.sh:766
+#: git-submodule.sh:767
 #, sh-format
 msgid "  Warn: $name doesn't contain commit $sha1_src"
 msgstr "  警告：$name 未包含提交 $sha1_src"
 
 #  译者：注意保持前导空格
-#: git-submodule.sh:769
+#: git-submodule.sh:770
 #, sh-format
 msgid "  Warn: $name doesn't contain commit $sha1_dst"
 msgstr "  警告：$name 未包含提交 $sha1_dst"
 
 #  译者：注意保持前导空格
-#: git-submodule.sh:772
+#: git-submodule.sh:773
 #, sh-format
 msgid "  Warn: $name doesn't contain commits $sha1_src and $sha1_dst"
 msgstr "  警告：$name 未包含提交 $sha1_src 和 $sha1_dst"
 
-#: git-submodule.sh:797
+#: git-submodule.sh:798
 msgid "blob"
 msgstr "blob"
 
-#: git-submodule.sh:798
+#: git-submodule.sh:799
 msgid "submodule"
 msgstr "子模组"
 
-#: git-submodule.sh:969
+#: git-submodule.sh:970
 #, sh-format
 msgid "Synchronizing submodule url for '$name'"
 msgstr "为 '$name' 同步子模组 url"
+
+#~ msgid "Too many options specified"
+#~ msgstr "指定了太多的选项"
