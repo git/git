@@ -1327,7 +1327,7 @@ static void get_object_details(void)
 	for (i = 0; i < nr_objects; i++) {
 		struct object_entry *entry = sorted_by_offset[i];
 		check_object(entry);
-		if (big_file_threshold <= entry->size)
+		if (big_file_threshold < entry->size)
 			entry->no_try_delta = 1;
 	}
 
