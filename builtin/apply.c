@@ -2970,9 +2970,15 @@ static struct patch *in_fn_table(const char *name)
  * item->util in the filename table records the status of the path.
  * Usually it points at a patch (whose result records the contents
  * of it after applying it), but it could be PATH_WAS_DELETED for a
- * path that a previously applied patch has already removed.
+ * path that a previously applied patch has already removed, or
+ * PATH_TO_BE_DELETED for a path that a later patch would remove.
+ *
+ * The latter is needed to deal with a case where two paths A and B
+ * are swapped by first renaming A to B and then renaming B to A;
+ * moving A to B should not be prevented due to presense of B as we
+ * will remove it in a later patch.
  */
- #define PATH_TO_BE_DELETED ((struct patch *) -2)
+#define PATH_TO_BE_DELETED ((struct patch *) -2)
 #define PATH_WAS_DELETED ((struct patch *) -1)
 
 static int to_be_deleted(struct patch *patch)
