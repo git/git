@@ -597,7 +597,9 @@ restart:
 
   if (!rc && timeout == INFTIM)
     {
-      SwitchToThread();
+      /* Sleep 1 millisecond to avoid busy wait */
+      SleepEx(1, TRUE);
+
       goto restart;
     }
 
