@@ -3046,22 +3046,50 @@ static int checkout_target(struct cache_entry *ce, struct stat *st)
 	return 0;
 }
 
+static struct patch *previous_patch(struct patch *patch, int *gone)
+{
+	struct patch *previous;
+
+	*gone = 0;
+	if (patch->is_copy || patch->is_rename)
+		return NULL; /* "git" patches do not depend on the order */
+
+	previous = in_fn_table(patch->old_name);
+	if (!previous)
+		return NULL;
+
+	if (to_be_deleted(previous))
+		return NULL; /* the deletion hasn't happened yet */
+
+	if (was_deleted(previous))
+		*gone = 1;
+
+	return previous;
+}
+
+/*
+ * We are about to apply "patch"; populate the "image" with the
+ * current version we have, from the working tree or from the index,
+ * depending on the situation e.g. --cached/--index.  If we are
+ * applying a non-git patch that incrementally updates the tree,
+ * we read from the result of a previous diff.
+ */
 static int load_preimage(struct image *image,
 			 struct patch *patch, struct stat *st, struct cache_entry *ce)
 {
 	struct strbuf buf = STRBUF_INIT;
 	size_t len;
 	char *img;
-	struct patch *tpatch;
+	struct patch *previous;
+	int status;
 
-	if (!(patch->is_copy || patch->is_rename) &&
-	    (tpatch = in_fn_table(patch->old_name)) != NULL && !to_be_deleted(tpatch)) {
-		if (was_deleted(tpatch)) {
-			return error(_("patch %s has been renamed/deleted"),
-				patch->old_name);
-		}
+	previous = previous_patch(patch, &status);
+	if (status)
+		return error(_("path %s has been renamed/deleted"),
+			     patch->old_name);
+	if (previous) {
 		/* We have a patched copy in memory; use that. */
-		strbuf_add(&buf, tpatch->result, tpatch->resultsize);
+		strbuf_add(&buf, previous->result, previous->resultsize);
 	} else if (cached) {
 		if (read_file_or_gitlink(ce, &buf))
 			return error(_("read of %s failed"), patch->old_name);
@@ -3143,39 +3171,41 @@ static int verify_index_match(struct cache_entry *ce, struct stat *st)
 	return ce_match_stat(ce, st, CE_MATCH_IGNORE_VALID|CE_MATCH_IGNORE_SKIP_WORKTREE);
 }
 
+/*
+ * If "patch" that we are looking at modifies or deletes what we have,
+ * we would want it not to lose any local modification we have, either
+ * in the working tree or in the index.
+ *
+ * This also decides if a non-git patch is a creation patch or a
+ * modification to an existing empty file.  We do not check the state
+ * of the current tree for a creation patch in this function; the caller
+ * check_patch() separately makes sure (and errors out otherwise) that
+ * the path the patch creates does not exist in the current tree.
+ */
 static int check_preimage(struct patch *patch, struct cache_entry **ce, struct stat *st)
 {
 	const char *old_name = patch->old_name;
-	struct patch *tpatch = NULL;
-	int stat_ret = 0;
+	struct patch *previous = NULL;
+	int stat_ret = 0, status;
 	unsigned st_mode = 0;
 
-	/*
-	 * Make sure that we do not have local modifications from the
-	 * index when we are looking at the index.  Also make sure
-	 * we have the preimage file to be patched in the work tree,
-	 * unless --cached, which tells git to apply only in the index.
-	 */
 	if (!old_name)
 		return 0;
 
 	assert(patch->is_new <= 0);
+	previous = previous_patch(patch, &status);
 
-	if (!(patch->is_copy || patch->is_rename) &&
-	    (tpatch = in_fn_table(old_name)) != NULL && !to_be_deleted(tpatch)) {
-		if (was_deleted(tpatch))
-			return error(_("%s: has been deleted/renamed"), old_name);
-		st_mode = tpatch->new_mode;
+	if (status)
+		return error(_("path %s has been renamed/deleted"), old_name);
+	if (previous) {
+		st_mode = previous->new_mode;
 	} else if (!cached) {
 		stat_ret = lstat(old_name, st);
 		if (stat_ret && errno != ENOENT)
 			return error(_("%s: %s"), old_name, strerror(errno));
 	}
 
-	if (to_be_deleted(tpatch))
-		tpatch = NULL;
-
-	if (check_index && !tpatch) {
+	if (check_index && !previous) {
 		int pos = cache_name_pos(old_name, strlen(old_name));
 		if (pos < 0) {
 			if (patch->is_new < 0)
@@ -3197,7 +3227,7 @@ static int check_preimage(struct patch *patch, struct cache_entry **ce, struct s
 		return error(_("%s: %s"), old_name, strerror(errno));
 	}
 
-	if (!cached && !tpatch)
+	if (!cached && !previous)
 		st_mode = ce_mode_from_stat(*ce, st->st_mode);
 
 	if (patch->is_new < 0)
