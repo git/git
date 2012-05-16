@@ -200,21 +200,177 @@ static void copy_pack_data(struct sha1file *f,
 }
 
 /* Return 0 if we will bust the pack-size limit */
+static unsigned long write_no_reuse_object(struct sha1file *f, struct object_entry *entry,
+					   unsigned long limit, int usable_delta)
+{
+	unsigned long size, datalen;
+	unsigned char header[10], dheader[10];
+	unsigned hdrlen;
+	enum object_type type;
+	void *buf;
+
+	if (!usable_delta) {
+		buf = read_sha1_file(entry->idx.sha1, &type, &size);
+		if (!buf)
+			die("unable to read %s", sha1_to_hex(entry->idx.sha1));
+		/*
+		 * make sure no cached delta data remains from a
+		 * previous attempt before a pack split occurred.
+		 */
+		free(entry->delta_data);
+		entry->delta_data = NULL;
+		entry->z_delta_size = 0;
+	} else if (entry->delta_data) {
+		size = entry->delta_size;
+		buf = entry->delta_data;
+		entry->delta_data = NULL;
+		type = (allow_ofs_delta && entry->delta->idx.offset) ?
+			OBJ_OFS_DELTA : OBJ_REF_DELTA;
+	} else {
+		buf = get_delta(entry);
+		size = entry->delta_size;
+		type = (allow_ofs_delta && entry->delta->idx.offset) ?
+			OBJ_OFS_DELTA : OBJ_REF_DELTA;
+	}
+
+	if (entry->z_delta_size)
+		datalen = entry->z_delta_size;
+	else
+		datalen = do_compress(&buf, size);
+
+	/*
+	 * The object header is a byte of 'type' followed by zero or
+	 * more bytes of length.
+	 */
+	hdrlen = encode_in_pack_object_header(type, size, header);
+
+	if (type == OBJ_OFS_DELTA) {
+		/*
+		 * Deltas with relative base contain an additional
+		 * encoding of the relative offset for the delta
+		 * base from this object's position in the pack.
+		 */
+		off_t ofs = entry->idx.offset - entry->delta->idx.offset;
+		unsigned pos = sizeof(dheader) - 1;
+		dheader[pos] = ofs & 127;
+		while (ofs >>= 7)
+			dheader[--pos] = 128 | (--ofs & 127);
+		if (limit && hdrlen + sizeof(dheader) - pos + datalen + 20 >= limit) {
+			free(buf);
+			return 0;
+		}
+		sha1write(f, header, hdrlen);
+		sha1write(f, dheader + pos, sizeof(dheader) - pos);
+		hdrlen += sizeof(dheader) - pos;
+	} else if (type == OBJ_REF_DELTA) {
+		/*
+		 * Deltas with a base reference contain
+		 * an additional 20 bytes for the base sha1.
+		 */
+		if (limit && hdrlen + 20 + datalen + 20 >= limit) {
+			free(buf);
+			return 0;
+		}
+		sha1write(f, header, hdrlen);
+		sha1write(f, entry->delta->idx.sha1, 20);
+		hdrlen += 20;
+	} else {
+		if (limit && hdrlen + datalen + 20 >= limit) {
+			free(buf);
+			return 0;
+		}
+		sha1write(f, header, hdrlen);
+	}
+	sha1write(f, buf, datalen);
+	free(buf);
+
+	return hdrlen + datalen;
+}
+
+/* Return 0 if we will bust the pack-size limit */
+static unsigned long write_reuse_object(struct sha1file *f, struct object_entry *entry,
+					unsigned long limit, int usable_delta)
+{
+	struct packed_git *p = entry->in_pack;
+	struct pack_window *w_curs = NULL;
+	struct revindex_entry *revidx;
+	off_t offset;
+	enum object_type type = entry->type;
+	unsigned long datalen;
+	unsigned char header[10], dheader[10];
+	unsigned hdrlen;
+
+	if (entry->delta)
+		type = (allow_ofs_delta && entry->delta->idx.offset) ?
+			OBJ_OFS_DELTA : OBJ_REF_DELTA;
+	hdrlen = encode_in_pack_object_header(type, entry->size, header);
+
+	offset = entry->in_pack_offset;
+	revidx = find_pack_revindex(p, offset);
+	datalen = revidx[1].offset - offset;
+	if (!pack_to_stdout && p->index_version > 1 &&
+	    check_pack_crc(p, &w_curs, offset, datalen, revidx->nr)) {
+		error("bad packed object CRC for %s", sha1_to_hex(entry->idx.sha1));
+		unuse_pack(&w_curs);
+		return write_no_reuse_object(f, entry, limit, usable_delta);
+	}
+
+	offset += entry->in_pack_header_size;
+	datalen -= entry->in_pack_header_size;
+
+	if (!pack_to_stdout && p->index_version == 1 &&
+	    check_pack_inflate(p, &w_curs, offset, datalen, entry->size)) {
+		error("corrupt packed object for %s", sha1_to_hex(entry->idx.sha1));
+		unuse_pack(&w_curs);
+		return write_no_reuse_object(f, entry, limit, usable_delta);
+	}
+
+	if (type == OBJ_OFS_DELTA) {
+		off_t ofs = entry->idx.offset - entry->delta->idx.offset;
+		unsigned pos = sizeof(dheader) - 1;
+		dheader[pos] = ofs & 127;
+		while (ofs >>= 7)
+			dheader[--pos] = 128 | (--ofs & 127);
+		if (limit && hdrlen + sizeof(dheader) - pos + datalen + 20 >= limit) {
+			unuse_pack(&w_curs);
+			return 0;
+		}
+		sha1write(f, header, hdrlen);
+		sha1write(f, dheader + pos, sizeof(dheader) - pos);
+		hdrlen += sizeof(dheader) - pos;
+		reused_delta++;
+	} else if (type == OBJ_REF_DELTA) {
+		if (limit && hdrlen + 20 + datalen + 20 >= limit) {
+			unuse_pack(&w_curs);
+			return 0;
+		}
+		sha1write(f, header, hdrlen);
+		sha1write(f, entry->delta->idx.sha1, 20);
+		hdrlen += 20;
+		reused_delta++;
+	} else {
+		if (limit && hdrlen + datalen + 20 >= limit) {
+			unuse_pack(&w_curs);
+			return 0;
+		}
+		sha1write(f, header, hdrlen);
+	}
+	copy_pack_data(f, p, &w_curs, offset, datalen);
+	unuse_pack(&w_curs);
+	reused++;
+	return hdrlen + datalen;
+}
+
+/* Return 0 if we will bust the pack-size limit */
 static unsigned long write_object(struct sha1file *f,
 				  struct object_entry *entry,
 				  off_t write_offset)
 {
-	unsigned long size, limit, datalen;
-	void *buf;
-	unsigned char header[10], dheader[10];
-	unsigned hdrlen;
-	enum object_type type;
+	unsigned long limit, len;
 	int usable_delta, to_reuse;
 
 	if (!pack_to_stdout)
 		crc32_begin(f);
-
-	type = entry->type;
 
 	/* apply size limit if limited packsize and not first object */
 	if (!pack_size_limit || !nr_written)
@@ -243,11 +399,11 @@ static unsigned long write_object(struct sha1file *f,
 		to_reuse = 0;	/* explicit */
 	else if (!entry->in_pack)
 		to_reuse = 0;	/* can't reuse what we don't have */
-	else if (type == OBJ_REF_DELTA || type == OBJ_OFS_DELTA)
+	else if (entry->type == OBJ_REF_DELTA || entry->type == OBJ_OFS_DELTA)
 				/* check_object() decided it for us ... */
 		to_reuse = usable_delta;
 				/* ... but pack split may override that */
-	else if (type != entry->in_pack_type)
+	else if (entry->type != entry->in_pack_type)
 		to_reuse = 0;	/* pack has delta which is unusable */
 	else if (entry->delta)
 		to_reuse = 0;	/* we want to pack afresh */
@@ -256,153 +412,19 @@ static unsigned long write_object(struct sha1file *f,
 				 * and we do not need to deltify it.
 				 */
 
-	if (!to_reuse) {
-		no_reuse:
-		if (!usable_delta) {
-			buf = read_sha1_file(entry->idx.sha1, &type, &size);
-			if (!buf)
-				die("unable to read %s", sha1_to_hex(entry->idx.sha1));
-			/*
-			 * make sure no cached delta data remains from a
-			 * previous attempt before a pack split occurred.
-			 */
-			free(entry->delta_data);
-			entry->delta_data = NULL;
-			entry->z_delta_size = 0;
-		} else if (entry->delta_data) {
-			size = entry->delta_size;
-			buf = entry->delta_data;
-			entry->delta_data = NULL;
-			type = (allow_ofs_delta && entry->delta->idx.offset) ?
-				OBJ_OFS_DELTA : OBJ_REF_DELTA;
-		} else {
-			buf = get_delta(entry);
-			size = entry->delta_size;
-			type = (allow_ofs_delta && entry->delta->idx.offset) ?
-				OBJ_OFS_DELTA : OBJ_REF_DELTA;
-		}
+	if (!to_reuse)
+		len = write_no_reuse_object(f, entry, limit, usable_delta);
+	else
+		len = write_reuse_object(f, entry, limit, usable_delta);
+	if (!len)
+		return 0;
 
-		if (entry->z_delta_size)
-			datalen = entry->z_delta_size;
-		else
-			datalen = do_compress(&buf, size);
-
-		/*
-		 * The object header is a byte of 'type' followed by zero or
-		 * more bytes of length.
-		 */
-		hdrlen = encode_in_pack_object_header(type, size, header);
-
-		if (type == OBJ_OFS_DELTA) {
-			/*
-			 * Deltas with relative base contain an additional
-			 * encoding of the relative offset for the delta
-			 * base from this object's position in the pack.
-			 */
-			off_t ofs = entry->idx.offset - entry->delta->idx.offset;
-			unsigned pos = sizeof(dheader) - 1;
-			dheader[pos] = ofs & 127;
-			while (ofs >>= 7)
-				dheader[--pos] = 128 | (--ofs & 127);
-			if (limit && hdrlen + sizeof(dheader) - pos + datalen + 20 >= limit) {
-				free(buf);
-				return 0;
-			}
-			sha1write(f, header, hdrlen);
-			sha1write(f, dheader + pos, sizeof(dheader) - pos);
-			hdrlen += sizeof(dheader) - pos;
-		} else if (type == OBJ_REF_DELTA) {
-			/*
-			 * Deltas with a base reference contain
-			 * an additional 20 bytes for the base sha1.
-			 */
-			if (limit && hdrlen + 20 + datalen + 20 >= limit) {
-				free(buf);
-				return 0;
-			}
-			sha1write(f, header, hdrlen);
-			sha1write(f, entry->delta->idx.sha1, 20);
-			hdrlen += 20;
-		} else {
-			if (limit && hdrlen + datalen + 20 >= limit) {
-				free(buf);
-				return 0;
-			}
-			sha1write(f, header, hdrlen);
-		}
-		sha1write(f, buf, datalen);
-		free(buf);
-	}
-	else {
-		struct packed_git *p = entry->in_pack;
-		struct pack_window *w_curs = NULL;
-		struct revindex_entry *revidx;
-		off_t offset;
-
-		if (entry->delta)
-			type = (allow_ofs_delta && entry->delta->idx.offset) ?
-				OBJ_OFS_DELTA : OBJ_REF_DELTA;
-		hdrlen = encode_in_pack_object_header(type, entry->size, header);
-
-		offset = entry->in_pack_offset;
-		revidx = find_pack_revindex(p, offset);
-		datalen = revidx[1].offset - offset;
-		if (!pack_to_stdout && p->index_version > 1 &&
-		    check_pack_crc(p, &w_curs, offset, datalen, revidx->nr)) {
-			error("bad packed object CRC for %s", sha1_to_hex(entry->idx.sha1));
-			unuse_pack(&w_curs);
-			goto no_reuse;
-		}
-
-		offset += entry->in_pack_header_size;
-		datalen -= entry->in_pack_header_size;
-		if (!pack_to_stdout && p->index_version == 1 &&
-		    check_pack_inflate(p, &w_curs, offset, datalen, entry->size)) {
-			error("corrupt packed object for %s", sha1_to_hex(entry->idx.sha1));
-			unuse_pack(&w_curs);
-			goto no_reuse;
-		}
-
-		if (type == OBJ_OFS_DELTA) {
-			off_t ofs = entry->idx.offset - entry->delta->idx.offset;
-			unsigned pos = sizeof(dheader) - 1;
-			dheader[pos] = ofs & 127;
-			while (ofs >>= 7)
-				dheader[--pos] = 128 | (--ofs & 127);
-			if (limit && hdrlen + sizeof(dheader) - pos + datalen + 20 >= limit) {
-				unuse_pack(&w_curs);
-				return 0;
-			}
-			sha1write(f, header, hdrlen);
-			sha1write(f, dheader + pos, sizeof(dheader) - pos);
-			hdrlen += sizeof(dheader) - pos;
-			reused_delta++;
-		} else if (type == OBJ_REF_DELTA) {
-			if (limit && hdrlen + 20 + datalen + 20 >= limit) {
-				unuse_pack(&w_curs);
-				return 0;
-			}
-			sha1write(f, header, hdrlen);
-			sha1write(f, entry->delta->idx.sha1, 20);
-			hdrlen += 20;
-			reused_delta++;
-		} else {
-			if (limit && hdrlen + datalen + 20 >= limit) {
-				unuse_pack(&w_curs);
-				return 0;
-			}
-			sha1write(f, header, hdrlen);
-		}
-		copy_pack_data(f, p, &w_curs, offset, datalen);
-		unuse_pack(&w_curs);
-		reused++;
-	}
 	if (usable_delta)
 		written_delta++;
 	written++;
 	if (!pack_to_stdout)
 		entry->idx.crc32 = crc32_end(f);
-	return hdrlen + datalen;
+	return len;
 }
 
 enum write_one_status {
