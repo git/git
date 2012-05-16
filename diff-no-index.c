@@ -123,8 +123,8 @@ static int queue_diff(struct diff_options *o,
 		}
 		string_list_clear(&p1, 0);
 		string_list_clear(&p2, 0);
-		strbuf_reset(&buffer1);
-		strbuf_reset(&buffer2);
+		strbuf_release(&buffer1);
+		strbuf_release(&buffer2);
 
 		return ret;
 	} else {
