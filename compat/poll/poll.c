@@ -605,7 +605,7 @@ restart:
 
   if (!rc && timeout == INFTIM)
     {
-      SwitchToThread();
+      SleepEx (1, TRUE);
       goto restart;
     }
 
