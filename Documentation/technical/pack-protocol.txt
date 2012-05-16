@@ -351,7 +351,7 @@ Then the server will start sending its packfile data.
 A simple clone may look like this (with no 'have' lines):
 
 ----
-   C: 0054want 74730d410fcb6603ace96f1dc55ea6196122532d\0multi_ack \
+   C: 0054want 74730d410fcb6603ace96f1dc55ea6196122532d multi_ack \
      side-band-64k ofs-delta\n
    C: 0032want 7d1665144a3a975c05f1f43902ddaf084e784dbe\n
    C: 0032want 5a3f6be755bbb7deae50065988cbfa1ffa9ab68a\n
@@ -367,7 +367,7 @@ A simple clone may look like this (with no 'have' lines):
 An incremental update (fetch) response might look like this:
 
 ----
-   C: 0054want 74730d410fcb6603ace96f1dc55ea6196122532d\0multi_ack \
+   C: 0054want 74730d410fcb6603ace96f1dc55ea6196122532d multi_ack \
      side-band-64k ofs-delta\n
    C: 0032want 7d1665144a3a975c05f1f43902ddaf084e784dbe\n
    C: 0032want 5a3f6be755bbb7deae50065988cbfa1ffa9ab68a\n

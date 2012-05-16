@@ -391,6 +391,7 @@ static void fill_tracking_info(struct strbuf *stat, const char *branch_name,
 		int show_upstream_ref)
 {
 	int ours, theirs;
+	char *ref = NULL;
 	struct branch *branch = branch_get(branch_name);
 
 	if (!stat_tracking_info(branch, &ours, &theirs)) {
@@ -401,16 +402,29 @@ static void fill_tracking_info(struct strbuf *stat, const char *branch_name,
 		return;
 	}
 
-	strbuf_addch(stat, '[');
 	if (show_upstream_ref)
-		strbuf_addf(stat, "%s: ",
-			shorten_unambiguous_ref(branch->merge[0]->dst, 0));
-	if (!ours)
-		strbuf_addf(stat, _("behind %d] "), theirs);
-	else if (!theirs)
-		strbuf_addf(stat, _("ahead %d] "), ours);
-	else
-		strbuf_addf(stat, _("ahead %d, behind %d] "), ours, theirs);
+		ref = shorten_unambiguous_ref(branch->merge[0]->dst, 0);
+	if (!ours) {
+		if (ref)
+			strbuf_addf(stat, _("[%s: behind %d]"), ref, theirs);
+		else
+			strbuf_addf(stat, _("[behind %d]"), theirs);
+
+	} else if (!theirs) {
+		if (ref)
+			strbuf_addf(stat, _("[%s: ahead %d]"), ref, ours);
+		else
+			strbuf_addf(stat, _("[ahead %d]"), ours);
+	} else {
+		if (ref)
+			strbuf_addf(stat, _("[%s: ahead %d, behind %d]"),
+				    ref, ours, theirs);
+		else
+			strbuf_addf(stat, _("[ahead %d, behind %d]"),
+				    ours, theirs);
+	}
+	strbuf_addch(stat, ' ');
+	free(ref);
 }
 
 static int matches_merge_filter(struct commit *commit)
