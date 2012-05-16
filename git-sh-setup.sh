@@ -218,27 +218,8 @@ clear_local_git_env() {
 	unset $(git rev-parse --local-env-vars)
 }
 
-# Make sure we are in a valid repository of a vintage we understand,
-# if we require to be in a git repository.
-if test -z "$NONGIT_OK"
-then
-	GIT_DIR=$(git rev-parse --git-dir) || exit
-	if [ -z "$SUBDIRECTORY_OK" ]
-	then
-		test -z "$(git rev-parse --show-cdup)" || {
-			exit=$?
-			echo >&2 "You need to run this command from the toplevel of the working tree."
-			exit $exit
-		}
-	fi
-	test -n "$GIT_DIR" && GIT_DIR=$(cd "$GIT_DIR" && pwd) || {
-		echo >&2 "Unable to determine absolute path of git directory"
-		exit 1
-	}
-	: ${GIT_OBJECT_DIRECTORY="$GIT_DIR/objects"}
-fi
 
-# Fix some commands on Windows
+# Platform specific tweaks to work around some commands
 case $(uname -s) in
 *MINGW*)
 	# Windows has its own (incompatible) sort and find
@@ -269,3 +250,23 @@ case $(uname -s) in
 		return 1
 	}
 esac
+
+# Make sure we are in a valid repository of a vintage we understand,
+# if we require to be in a git repository.
+if test -z "$NONGIT_OK"
+then
+	GIT_DIR=$(git rev-parse --git-dir) || exit
+	if [ -z "$SUBDIRECTORY_OK" ]
+	then
+		test -z "$(git rev-parse --show-cdup)" || {
+			exit=$?
+			echo >&2 "You need to run this command from the toplevel of the working tree."
+			exit $exit
+		}
+	fi
+	test -n "$GIT_DIR" && GIT_DIR=$(cd "$GIT_DIR" && pwd) || {
+		echo >&2 "Unable to determine absolute path of git directory"
+		exit 1
+	}
+	: ${GIT_OBJECT_DIRECTORY="$GIT_DIR/objects"}
+fi
