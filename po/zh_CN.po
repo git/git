@@ -12,7 +12,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Git\n"
 "Report-Msgid-Bugs-To: Git Mailing List <git@vger.kernel.org>\n"
-"POT-Creation-Date: 2012-04-28 20:17+0800\n"
+"POT-Creation-Date: 2012-05-15 06:31+0800\n"
 "PO-Revision-Date: 2012-01-30 00:00+0800\n"
 "Last-Translator: Jiang Xin <worldhello.net@gmail.com>\n"
 "Language-Team: GitHub <https://github.com/gotgit/git/>\n"
@@ -113,7 +113,7 @@ msgid ", %d deletion(-)"
 msgid_plural ", %d deletions(-)"
 msgstr[0] "，删除 %d 行(-)"
 
-#: diff.c:3435
+#: diff.c:3439
 #, c-format
 msgid ""
 "Failed to parse --dirstat/-X option parameter:\n"
@@ -2010,21 +2010,17 @@ msgstr "获取组并指定引用表达式没有意义"
 msgid "Invalid %s: '%s'"
 msgstr "无效的 %s：'%s'"
 
-#: builtin/gc.c:78
-msgid "Too many options specified"
-msgstr "指定了太多的选项"
-
-#: builtin/gc.c:103
+#: builtin/gc.c:90
 #, c-format
 msgid "insanely long object directory %.*s"
 msgstr "不正常的长对象目录 %.*s"
 
-#: builtin/gc.c:223
+#: builtin/gc.c:221
 #, c-format
 msgid "Auto packing the repository for optimum performance.\n"
 msgstr "自动打包版本库以求最佳性能。\n"
 
-#: builtin/gc.c:226
+#: builtin/gc.c:224
 #, c-format
 msgid ""
 "Auto packing the repository for optimum performance. You may also\n"
@@ -2033,7 +2029,7 @@ msgstr ""
 "自动打包版本库以求最佳性能。您还可以手动运行 \"git gc\"。\n"
 "参见 \"git help gc\" 以获取更多信息。\n"
 
-#: builtin/gc.c:256
+#: builtin/gc.c:251
 msgid ""
 "There are too many unreachable loose objects; run 'git prune' to remove them."
 msgstr "有太多不可达的松散对象，运行 'git prune' 删除它们。"
@@ -2825,22 +2821,22 @@ msgstr "对象 %s 没有注解\n"
 msgid "Unknown subcommand: %s"
 msgstr "未知子命令：%s"
 
-#: builtin/pack-objects.c:2310
+#: builtin/pack-objects.c:2315
 #, c-format
 msgid "unsupported index version %s"
 msgstr "不支持的索引版本 %s"
 
-#: builtin/pack-objects.c:2314
+#: builtin/pack-objects.c:2319
 #, c-format
 msgid "bad index version '%s'"
 msgstr "坏的索引版本 '%s'"
 
-#: builtin/pack-objects.c:2322
+#: builtin/pack-objects.c:2342
 #, c-format
 msgid "option %s does not accept negative form"
 msgstr "选项 %s 不接受否定格式"
 
-#: builtin/pack-objects.c:2326
+#: builtin/pack-objects.c:2346
 #, c-format
 msgid "unable to parse value '%s' for option %s"
 msgstr "不能解析值 '%s' 针对于选项 %s"
@@ -2907,9 +2903,9 @@ msgid ""
 "before pushing again.\n"
 "See the 'Note about fast-forwards' in 'git push --help' for details."
 msgstr ""
-"更新被拒绝，因为您当前分支落后于对应的远程分支。再次推送前先与远程变更\n"
-"合并（如 'git pull'）。\n"
-"详见 'git push --help' 中的 'Note about fast-forwards' 的内容。"
+"更新被拒绝，因为您当前分支的最新提交落后于其对应的远程分支。\n"
+"再次推送前，先与远程变更合并（如 'git pull'）。详见\n"
+"'git push --help' 中的 'Note about fast-forwards' 小节。"
 
 #: builtin/push.c:144
 msgid ""
@@ -2918,9 +2914,10 @@ msgid ""
 "specify branches to push or set the 'push.default' configuration\n"
 "variable to 'current' or 'upstream' to push only the current branch."
 msgstr ""
-"更新被拒绝，因为推送的一个分支落后于对应的远程分支。如果您并非有意推送\n"
-"该分支，您可以指定要推送的分支或者设置 'push.default' 配置变量为\n"
-"'current' 或 'upstream' 以便只推送当前分支。"
+"更新被拒绝，因为推送的一个分支的最新提交落后于其对应的远程分支。\n"
+"如果您并非有意推送该分支，您可以在推送时指定要推送的分支，或者将\n"
+"配置变量 'push.default' 设置为 'current' 或 'upstream' 以便只推送"
+"当前分支。"
 
 #: builtin/push.c:150
 msgid ""
@@ -2929,9 +2926,9 @@ msgid ""
 "(e.g. 'git pull') before pushing again.\n"
 "See the 'Note about fast-forwards' in 'git push --help' for details."
 msgstr ""
-"更新被拒绝，因为推送的一个分支落后于对应的远程分支。检出该分支并在再次\n"
-"推送之前与远程变更合并（如 'git pull'）。\n"
-"详见 'git push --help' 中的 'Note about fast-forwards' 的内容。"
+"更新被拒绝，因为推送的一个分支的最新提交落后于其对应的远程分支。\n"
+"检出该分支并与远程变更合并（如 'git pull'），然后再推送。详见\n"
+"'git push --help' 中的 'Note about fast-forwards' 小节。"
 
 #: builtin/push.c:190
 #, c-format
@@ -2989,11 +2986,11 @@ msgstr "--mirror 不能和引用表达式共用"
 msgid "--all and --mirror are incompatible"
 msgstr "--all 和 --mirror 不兼容"
 
-#: builtin/push.c:342
+#: builtin/push.c:334
 msgid "--delete is incompatible with --all, --mirror and --tags"
 msgstr "--delete 与 --all、--mirror 及 --tags 不兼容"
 
-#: builtin/push.c:344
+#: builtin/push.c:336
 msgid "--delete doesn't make sense without any refs"
 msgstr "--delete 未接任何引用没有意义"
 
@@ -3601,67 +3598,67 @@ msgstr "无法克隆 '$url' 到子模组路径 '$sm_path'"
 msgid "Gitdir '$a' is part of the submodule path '$b' or vice versa"
 msgstr "Gitdir '$a' 在子模组路径 '$b' 之下或者相反"
 
-#: git-submodule.sh:249
+#: git-submodule.sh:248
 #, sh-format
 msgid "repo URL: '$repo' must be absolute or begin with ./|../"
 msgstr "版本库URL：'$repo' 必须是绝对路径或以 ./|../ 起始"
 
-#: git-submodule.sh:266
+#: git-submodule.sh:265
 #, sh-format
 msgid "'$sm_path' already exists in the index"
 msgstr "'$sm_path' 已经存在于索引中"
 
-#: git-submodule.sh:283
+#: git-submodule.sh:282
 #, sh-format
 msgid "'$sm_path' already exists and is not a valid git repo"
 msgstr "'$sm_path' 已存在且不是一个有效的 git 版本库"
 
-#: git-submodule.sh:297
+#: git-submodule.sh:296
 #, sh-format
 msgid "Unable to checkout submodule '$sm_path'"
 msgstr "不能检出子模组 '$sm_path'"
 
-#: git-submodule.sh:302
+#: git-submodule.sh:301
 #, sh-format
 msgid "Failed to add submodule '$sm_path'"
 msgstr "无法添加子模组 '$sm_path'"
 
-#: git-submodule.sh:307
+#: git-submodule.sh:306
 #, sh-format
 msgid "Failed to register submodule '$sm_path'"
 msgstr "无法注册子模组 '$sm_path'"
 
-#: git-submodule.sh:349
+#: git-submodule.sh:348
 #, sh-format
 msgid "Entering '$prefix$sm_path'"
 msgstr "正在进入 '$prefix$sm_path'"
 
-#: git-submodule.sh:363
+#: git-submodule.sh:360
 #, sh-format
 msgid "Stopping at '$sm_path'; script returned non-zero status."
 msgstr "停止于 '$sm_path'，脚本返回非零值。"
 
-#: git-submodule.sh:405
+#: git-submodule.sh:402
 #, sh-format
 msgid "No url found for submodule path '$sm_path' in .gitmodules"
 msgstr "在 .gitmodules 中未找到子模组路径 '$sm_path' 的 url"
 
-#: git-submodule.sh:414
+#: git-submodule.sh:411
 #, sh-format
 msgid "Failed to register url for submodule path '$sm_path'"
 msgstr "无法为子模组路径 '$sm_path' 注册 url"
 
-#: git-submodule.sh:422
+#: git-submodule.sh:419
 #, sh-format
 msgid "Failed to register update mode for submodule path '$sm_path'"
 msgstr "无法为子模组路径 '$sm_path' 注册更新模式"
 
-#: git-submodule.sh:424
+#: git-submodule.sh:421
 #, sh-format
 msgid "Submodule '$name' ($url) registered for path '$sm_path'"
 msgstr "子模组 '$name' ($url) 已为路径 '$sm_path' 注册"
 
-#: git-submodule.sh:523
+#: git-submodule.sh:520
 #, sh-format
 msgid ""
 "Submodule path '$sm_path' not initialized\n"
@@ -3670,82 +3667,85 @@ msgstr ""
 "子模组路径 '$sm_path' 没有初始化\n"
 "也许您想用 'update --init'？"
 
-#: git-submodule.sh:536
+#: git-submodule.sh:533
 #, sh-format
 msgid "Unable to find current revision in submodule path '$sm_path'"
 msgstr "无法在子模组路径 '$sm_path' 中找到当前版本"
 
-#: git-submodule.sh:555
+#: git-submodule.sh:552
 #, sh-format
 msgid "Unable to fetch in submodule path '$sm_path'"
 msgstr "无法在子模组路径 '$sm_path' 中获取"
 
-#: git-submodule.sh:569
+#: git-submodule.sh:566
 #, sh-format
 msgid "Unable to rebase '$sha1' in submodule path '$sm_path'"
 msgstr "无法在子模组路径 '$sm_path' 中变基 '$sha1'"
 
-#: git-submodule.sh:570
+#: git-submodule.sh:567
 #, sh-format
 msgid "Submodule path '$sm_path': rebased into '$sha1'"
 msgstr "子模组路径 '$sm_path'：变基至 '$sha1'"
 
-#: git-submodule.sh:575
+#: git-submodule.sh:572
 #, sh-format
 msgid "Unable to merge '$sha1' in submodule path '$sm_path'"
 msgstr "无法合并 '$sha1' 到子模组路径 '$sm_path' 中"
 
-#: git-submodule.sh:576
+#: git-submodule.sh:573
 #, sh-format
 msgid "Submodule path '$sm_path': merged in '$sha1'"
 msgstr "子模组路径 '$sm_path'：已合并入 '$sha1'"
 
-#: git-submodule.sh:581
+#: git-submodule.sh:578
 #, sh-format
 msgid "Unable to checkout '$sha1' in submodule path '$sm_path'"
 msgstr "无法在子模组路径 '$sm_path' 中检出 '$sha1'"
 
-#: git-submodule.sh:582
+#: git-submodule.sh:579
 #, sh-format
 msgid "Submodule path '$sm_path': checked out '$sha1'"
 msgstr "子模组路径 '$sm_path'：检出 '$sha1'"
 
-#: git-submodule.sh:604 git-submodule.sh:927
+#: git-submodule.sh:601 git-submodule.sh:924
 #, sh-format
 msgid "Failed to recurse into submodule path '$sm_path'"
 msgstr "无法递归进子模组路径 '$sm_path'"
 
-#: git-submodule.sh:712
+#: git-submodule.sh:709
 msgid "--"
 msgstr "--"
 
 #  译者：注意保持前导空格
-#: git-submodule.sh:770
+#: git-submodule.sh:767
 #, sh-format
 msgid "  Warn: $name doesn't contain commit $sha1_src"
 msgstr "  警告：$name 未包含提交 $sha1_src"
 
 #  译者：注意保持前导空格
-#: git-submodule.sh:773
+#: git-submodule.sh:770
 #, sh-format
 msgid "  Warn: $name doesn't contain commit $sha1_dst"
 msgstr "  警告：$name 未包含提交 $sha1_dst"
 
 #  译者：注意保持前导空格
-#: git-submodule.sh:776
+#: git-submodule.sh:773
 #, sh-format
 msgid "  Warn: $name doesn't contain commits $sha1_src and $sha1_dst"
 msgstr "  警告：$name 未包含提交 $sha1_src 和 $sha1_dst"
 
-#: git-submodule.sh:801
+#: git-submodule.sh:798
 msgid "blob"
 msgstr "blob"
 
-#: git-submodule.sh:802
+#: git-submodule.sh:799
 msgid "submodule"
 msgstr "子模组"
 
-#: git-submodule.sh:973
+#: git-submodule.sh:970
 #, sh-format
 msgid "Synchronizing submodule url for '$name'"
 msgstr "为 '$name' 同步子模组 url"
+
+#~ msgid "Too many options specified"
+#~ msgstr "指定了太多的选项"

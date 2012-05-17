@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: git 1.7.10\n"
 "Report-Msgid-Bugs-To: Git Mailing List <git@vger.kernel.org>\n"
-"POT-Creation-Date: 2012-05-08 15:45+0800\n"
+"POT-Creation-Date: 2012-05-15 06:31+0800\n"
 "PO-Revision-Date: 2012-03-28 18:46+0200\n"
 "Last-Translator: Ralf Thielow <ralf.thielow@googlemail.com>\n"
 "Language-Team: German\n"
@@ -111,7 +111,7 @@ msgid_plural ", %d deletions(-)"
 msgstr[0] ", %d Zeile entfernt(-)"
 msgstr[1] ", %d Zeilen entfernt(-)"
 
-#: diff.c:3435
+#: diff.c:3439
 #, c-format
 msgid ""
 "Failed to parse --dirstat/-X option parameter:\n"
@@ -2035,23 +2035,19 @@ msgstr ""
 msgid "Invalid %s: '%s'"
 msgstr "Ungültiger %s: '%s'"
 
-#: builtin/gc.c:78
-msgid "Too many options specified"
-msgstr "Zu viele Optionen angegeben"
-
-#: builtin/gc.c:103
+#: builtin/gc.c:90
 #, c-format
 msgid "insanely long object directory %.*s"
 msgstr "zu langes Objekt-Verzeichnis %.*s"
 
-#: builtin/gc.c:223
+#: builtin/gc.c:221
 #, c-format
 msgid "Auto packing the repository for optimum performance.\n"
 msgstr ""
 "Die Datenbank des Projektarchivs wird für eine optimale Performance "
 "komprimiert.\n"
 
-#: builtin/gc.c:226
+#: builtin/gc.c:224
 #, c-format
 msgid ""
 "Auto packing the repository for optimum performance. You may also\n"
@@ -2061,7 +2057,7 @@ msgstr ""
 "komprimiert. Du kannst auch \"git gc\" manuell ausführen. Siehe \"git help gc"
 "\" für weitere Informationen.\n"
 
-#: builtin/gc.c:256
+#: builtin/gc.c:251
 msgid ""
 "There are too many unreachable loose objects; run 'git prune' to remove them."
 msgstr ""
@@ -2876,22 +2872,22 @@ msgstr "Objekt %s hat keine Notiz\n"
 msgid "Unknown subcommand: %s"
 msgstr "Unbekanntes Unterkommando: %s"
 
-#: builtin/pack-objects.c:2310
+#: builtin/pack-objects.c:2315
 #, c-format
 msgid "unsupported index version %s"
 msgstr "Nicht unterstützte Bereitstellungsversion %s"
 
-#: builtin/pack-objects.c:2314
+#: builtin/pack-objects.c:2319
 #, c-format
 msgid "bad index version '%s'"
 msgstr "Ungültige Bereitstellungsversion '%s'"
 
-#: builtin/pack-objects.c:2322
+#: builtin/pack-objects.c:2342
 #, c-format
 msgid "option %s does not accept negative form"
 msgstr "Option %s akzeptiert keine negative Form"
 
-#: builtin/pack-objects.c:2326
+#: builtin/pack-objects.c:2346
 #, c-format
 msgid "unable to parse value '%s' for option %s"
 msgstr "konnte Wert '%s' für Option %s nicht parsen"
@@ -2964,10 +2960,10 @@ msgid ""
 "See the 'Note about fast-forwards' in 'git push --help' for details."
 msgstr ""
 "Aktualisierungen wurden zurückgewiesen, weil die Spitze deines aktuellen\n"
-"Zweiges hinter seinem entfernten Gegenstück ist. Führe die entfernten\n"
-"Änderungen zusammen (z.B. 'git pull') bevor du erneut versendest.\n"
-"Siehe auch die 'Note about fast-forwards' Sektion von 'git push --help'\n"
-"für weitere Details."
+"Zweiges hinter seinem externen Gegenstück zurückgefallen ist. Führe die\n"
+"externen Änderungen zusammen (z.B. 'git pull') bevor du erneut versendest.\n"
+"Siehe auch die Sektion 'Note about fast-forwards' in 'git push --help' für\n"
+"weitere Details."
 
 #: builtin/push.c:144
 msgid ""
@@ -2977,10 +2973,10 @@ msgid ""
 "variable to 'current' or 'upstream' to push only the current branch."
 msgstr ""
 "Aktualisierungen wurden zurückgewiesen, weil die Spitze eines versendeten\n"
-"Zweiges hinter seinem entfernten Gegenstück ist. Wenn du nicht beabsichtigt\n"
-"hast, diesen Zweig zu versenden, kannst du auch den zu versendenden Zweig\n"
-"spezifizieren oder die Konfigurationsvariable 'push.default' zu 'current'\n"
-"oder 'upstream' setze, um nur den aktuellen Zweig zu versenden."
+"Zweiges hinter seinem externen Gegenstück zurückgefallen ist. Wenn du nicht\n"
+"beabsichtigt hast, diesen Zweig zu versenden, kannst du auch den zu versendenden\n"
+"Zweig spezifizieren oder die Konfigurationsvariable 'push.default' zu 'current'\n"
+"oder 'upstream' setzen, um nur den aktuellen Zweig zu versenden."
 
 #: builtin/push.c:150
 msgid ""
@@ -2990,10 +2986,10 @@ msgid ""
 "See the 'Note about fast-forwards' in 'git push --help' for details."
 msgstr ""
 "Aktualisierungen wurden zurückgewiesen, weil die Spitze eines versendeten\n"
-"Zweiges hinter seinem entfernten Gegenstück ist. Checke diesen Zweig aus\n"
-"und führe die entfernten Änderungen zusammen (z.B. 'git pull') bevor du\n"
-"erneut versendest.\n"
-"Sie auch die 'Note about fast-forwards' Sektion von 'git push --help'\n"
+"Zweiges hinter seinem externen Gegenstück zurückgefallen ist. Checke diesen\n"
+"Zweig aus und führe die externen Änderungen zusammen (z.B. 'git pull')\n"
+"bevor du erneut versendest.\n"
+"Siehe auch die Sektion 'Note about fast-forwards' in 'git push --help'\n"
 "für weitere Details."
 
 #: builtin/push.c:190
@@ -3006,20 +3002,7 @@ msgstr "Versende nach %s\n"
 msgid "failed to push some refs to '%s'"
 msgstr "Fehler beim Versenden einiger Referenzen nach '%s'"
 
-#: builtin/push.c:159
-#, c-format
-msgid ""
-"To prevent you from losing history, non-fast-forward updates were rejected\n"
-"Merge the remote changes (e.g. 'git pull') before pushing again.  See the\n"
-"'Note about fast-forwards' section of 'git push --help' for details.\n"
-msgstr ""
-"Um dich vor Verlust von Historie zu bewahren, wurden nicht vorzuspulende "
-"Aktualisierungen zurückgewiesen.\n"
-"Führe die externen Änderungen zusammen (z.B. 'git pull') bevor du erneut "
-"versendest. Siehe auch die 'Note about fast-forwards' Sektion von \n"
-"'git push --help' für weitere Details.\n"
-
-#: builtin/push.c:176
+#: builtin/push.c:226
 #, c-format
 msgid "bad repository '%s'"
 msgstr "ungültiges Projektarchiv '%s'"
@@ -3066,11 +3049,11 @@ msgstr "--mirror kann nicht mit Referenzspezifikationen kombiniert werden"
 msgid "--all and --mirror are incompatible"
 msgstr "--all und --mirror sind inkompatibel"
 
-#: builtin/push.c:342
+#: builtin/push.c:334
 msgid "--delete is incompatible with --all, --mirror and --tags"
 msgstr "--delete ist inkompatibel mit --all, --mirror und --tags"
 
-#: builtin/push.c:344
+#: builtin/push.c:336
 msgid "--delete doesn't make sense without any refs"
 msgstr "--delete macht ohne irgendeine Referenz keinen Sinn"
 
@@ -3165,11 +3148,11 @@ msgstr "%s: %s kann nicht mit %s benutzt werden"
 msgid "program error"
 msgstr "Programmfehler"
 
-#: builtin/revert.c:212
+#: builtin/revert.c:213
 msgid "revert failed"
 msgstr "\"revert\" fehlgeschlagen"
 
-#: builtin/revert.c:227
+#: builtin/revert.c:228
 msgid "cherry-pick failed"
 msgstr "\"cherry-pick\" fehlgeschlagen"
 
@@ -3692,68 +3675,68 @@ msgid "Gitdir '$a' is part of the submodule path '$b' or vice versa"
 msgstr ""
 "Git-Verzeichnis '$a' ist Teil des Unterprojekt-Pfades '$b', oder umgekehrt"
 
-#: git-submodule.sh:249
+#: git-submodule.sh:248
 #, sh-format
 msgid "repo URL: '$repo' must be absolute or begin with ./|../"
 msgstr "repo URL: '$repo' muss absolut sein oder mit ./|../ beginnen"
 
-#: git-submodule.sh:266
-#,  sh-format
-msgid "'$sm_path' already exists in the index"
-msgstr "'$sm_path' existiert bereits in der Bereitstellung"
+#: git-submodule.sh:265
+#, sh-format
+msgid "'$path' already exists in the index"
+msgstr "'$path' existiert bereits in der Bereitstellung"
 
-#: git-submodule.sh:283
+#: git-submodule.sh:282
 #, sh-format
 msgid "'$sm_path' already exists and is not a valid git repo"
 msgstr "'$sm_path' existiert bereits und ist kein gültiges Git-Projektarchiv"
 
-#: git-submodule.sh:297
+#: git-submodule.sh:296
 #, sh-format
 msgid "Unable to checkout submodule '$sm_path'"
 msgstr "Unfähig Unterprojekt '$sm_path' auszuchecken"
 
-#: git-submodule.sh:302
+#: git-submodule.sh:301
 #, sh-format
 msgid "Failed to add submodule '$sm_path'"
 msgstr "Hinzufügen von Unterprojekt '$sm_path' fehlgeschlagen"
 
-#: git-submodule.sh:307
+#: git-submodule.sh:306
 #, sh-format
 msgid "Failed to register submodule '$sm_path'"
 msgstr "Registierung von Unterprojekt '$sm_path' fehlgeschlagen"
 
-#: git-submodule.sh:349
+#: git-submodule.sh:348
 #, sh-format
 msgid "Entering '$prefix$sm_path'"
 msgstr "Betrete '$prefix$sm_path'"
 
-#: git-submodule.sh:363
+#: git-submodule.sh:360
 #, sh-format
 msgid "Stopping at '$sm_path'; script returned non-zero status."
 msgstr "Stoppe bei '$sm_path'; Skript gab nicht-Null Status zurück."
 
-#: git-submodule.sh:405
+#: git-submodule.sh:402
 #, sh-format
 msgid "No url found for submodule path '$sm_path' in .gitmodules"
 msgstr "Keine URL für Unterprojekt-Pfad '$sm_path' in .gitmodules gefunden"
 
-#: git-submodule.sh:414
+#: git-submodule.sh:411
 #, sh-format
 msgid "Failed to register url for submodule path '$sm_path'"
 msgstr "Registrierung der URL für Unterprojekt-Pfad '$sm_path' fehlgeschlagen"
 
-#: git-submodule.sh:422
+#: git-submodule.sh:419
 #, sh-format
 msgid "Failed to register update mode for submodule path '$sm_path'"
 msgstr "Registrierung des Aktualisierungsmodus für Unterprojekt-Pfad "
 "'$sm_path' fehlgeschlagen"
 
-#: git-submodule.sh:424
+#: git-submodule.sh:421
 #, sh-format
 msgid "Submodule '$name' ($url) registered for path '$sm_path'"
 msgstr "Unterprojekt '$name' ($url) ist für Pfad '$sm_path' registriert"
 
-#: git-submodule.sh:523
+#: git-submodule.sh:520
 #, sh-format
 msgid ""
 "Submodule path '$sm_path' not initialized\n"
@@ -3762,81 +3745,84 @@ msgstr ""
 "Unterprojekt-Pfad '$sm_path' ist nicht initialisiert\n"
 "Vielleicht möchtest du 'update --init' benutzen?"
 
-#: git-submodule.sh:536
+#: git-submodule.sh:533
 #, sh-format
 msgid "Unable to find current revision in submodule path '$sm_path'"
 msgstr "Konnte aktuelle Version in Unterprojekt-Pfad '$sm_path' nicht finden"
 
-#: git-submodule.sh:555
+#: git-submodule.sh:552
 #, sh-format
 msgid "Unable to fetch in submodule path '$sm_path'"
 msgstr "Konnte in Unterprojekt-Pfad '$sm_path' nicht anfordern"
 
-#: git-submodule.sh:569
+#: git-submodule.sh:566
 #, sh-format
 msgid "Unable to rebase '$sha1' in submodule path '$sm_path'"
 msgstr "Neuaufbau von '$sha1' in Unterprojekt-Pfad '$sm_path' nicht möglich"
 
-#: git-submodule.sh:570
+#: git-submodule.sh:567
 #, sh-format
 msgid "Submodule path '$sm_path': rebased into '$sha1'"
 msgstr "Unterprojekt-Pfad '$sm_path': neu aufgebaut in '$sha1'"
 
-#: git-submodule.sh:575
+#: git-submodule.sh:572
 #, sh-format
 msgid "Unable to merge '$sha1' in submodule path '$sm_path'"
 msgstr ""
 "Zusammenführung von '$sha1' in Unterprojekt-Pfad '$sm_path' fehlgeschlagen"
 
-#: git-submodule.sh:576
+#: git-submodule.sh:573
 #, sh-format
 msgid "Submodule path '$sm_path': merged in '$sha1'"
 msgstr "Unterprojekt-Pfad '$sm_path': zusammengeführt in '$sha1'"
 
-#: git-submodule.sh:581
+#: git-submodule.sh:578
 #, sh-format
 msgid "Unable to checkout '$sha1' in submodule path '$sm_path'"
 msgstr "Konnte '$sha1' in Unterprojekt-Pfad '$sm_path' nicht auschecken."
 
-#: git-submodule.sh:582
+#: git-submodule.sh:579
 #, sh-format
 msgid "Submodule path '$sm_path': checked out '$sha1'"
 msgstr "Unterprojekt-Pfad: '$sm_path': '$sha1' ausgecheckt"
 
-#: git-submodule.sh:604 git-submodule.sh:927
+#: git-submodule.sh:601 git-submodule.sh:924
 #, sh-format
 msgid "Failed to recurse into submodule path '$sm_path'"
 msgstr "Fehler bei Rekursion in Unterprojekt-Pfad '$sm_path'"
 
-#: git-submodule.sh:712
+#: git-submodule.sh:709
 msgid "--"
 msgstr "--"
 
-#: git-submodule.sh:770
+#: git-submodule.sh:767
 #, sh-format
 msgid "  Warn: $name doesn't contain commit $sha1_src"
 msgstr "  Warnung: $name beinhaltet nicht Version $sha1_src"
 
-#: git-submodule.sh:773
+#: git-submodule.sh:770
 #, sh-format
 msgid "  Warn: $name doesn't contain commit $sha1_dst"
 msgstr "  Warnung: $name beinhaltet nicht Version $sha1_dst"
 
-#: git-submodule.sh:776
+#: git-submodule.sh:773
 #, sh-format
 msgid "  Warn: $name doesn't contain commits $sha1_src and $sha1_dst"
 msgstr ""
 "  Warnung: $name beinhaltet nicht die Versionen $sha1_src und $sha1_dst"
 
-#: git-submodule.sh:801
+#: git-submodule.sh:798
 msgid "blob"
 msgstr "Blob"
 
-#: git-submodule.sh:802
+#: git-submodule.sh:799
 msgid "submodule"
 msgstr "Unterprojekt"
 
-#: git-submodule.sh:973
+#: git-submodule.sh:970
 #, sh-format
 msgid "Synchronizing submodule url for '$name'"
 msgstr "Synchronisiere Unterprojekt-URL für '$name'"
+
+#~ msgid "Too many options specified"
+#~ msgstr "Zu viele Optionen angegeben"
