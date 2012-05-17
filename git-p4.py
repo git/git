@@ -2340,6 +2340,10 @@ class P4Sync(Command, P4UserMap):
         cnt = 1
         for change in changes:
             description = p4Cmd(["describe", str(change)])
+            if 'code' in description and description['code'] == 'error':
+                sys.stderr.write("p4 returned an error for change %d: %s\n"
+                                 % (change, description['data']))
+                continue
             self.updateOptionDict(description)
 
             if not self.silent:
