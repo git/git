@@ -88,6 +88,20 @@ struct origin {
 	char path[FLEX_ARRAY];
 };
 
+static int diff_hunks(mmfile_t *file_a, mmfile_t *file_b, long ctxlen,
+		      xdl_emit_hunk_consume_func_t hunk_func, void *cb_data)
+{
+	xpparam_t xpp = {0};
+	xdemitconf_t xecfg = {0};
+	xdemitcb_t ecb = {NULL};
+
+	xpp.flags = xdl_opts;
+	xecfg.ctxlen = ctxlen;
+	xecfg.hunk_func = hunk_func;
+	ecb.priv = cb_data;
+	return xdi_diff(file_a, file_b, &xpp, &xecfg, &ecb);
+}
+
 /*
  * Prepare diff_filespec and convert it using diff textconv API
  * if the textconv driver exists.
@@ -759,12 +773,14 @@ struct blame_chunk_cb_data {
 	long tlno;
 };
 
-static void blame_chunk_cb(void *data, long same, long p_next, long t_next)
+static int blame_chunk_cb(long start_a, long count_a,
+			  long start_b, long count_b, void *data)
 {
 	struct blame_chunk_cb_data *d = data;
-	blame_chunk(d->sb, d->tlno, d->plno, same, d->target, d->parent);
-	d->plno = p_next;
-	d->tlno = t_next;
+	blame_chunk(d->sb, d->tlno, d->plno, start_b, d->target, d->parent);
+	d->plno = start_a + count_a;
+	d->tlno = start_b + count_b;
+	return 0;
 }
 
 /*
@@ -779,8 +795,7 @@ static int pass_blame_to_parent(struct scoreboard *sb,
 	int last_in_target;
 	mmfile_t file_p, file_o;
 	struct blame_chunk_cb_data d;
-	xpparam_t xpp;
-	xdemitconf_t xecfg;
+
 	memset(&d, 0, sizeof(d));
 	d.sb = sb; d.target = target; d.parent = parent;
 	last_in_target = find_last_in_target(sb, target);
@@ -791,11 +806,7 @@ static int pass_blame_to_parent(struct scoreboard *sb,
 	fill_origin_blob(&sb->revs->diffopt, target, &file_o);
 	num_get_patch++;
 
-	memset(&xpp, 0, sizeof(xpp));
-	xpp.flags = xdl_opts;
-	memset(&xecfg, 0, sizeof(xecfg));
-	xecfg.ctxlen = 0;
-	xdi_diff_hunks(&file_p, &file_o, blame_chunk_cb, &d, &xpp, &xecfg);
+	diff_hunks(&file_p, &file_o, 0, blame_chunk_cb, &d);
 	/* The rest (i.e. anything after tlno) are the same as the parent */
 	blame_chunk(sb, d.tlno, d.plno, last_in_target, target, parent);
 
@@ -899,12 +910,15 @@ struct handle_split_cb_data {
 	long tlno;
 };
 
-static void handle_split_cb(void *data, long same, long p_next, long t_next)
+static int handle_split_cb(long start_a, long count_a,
+			   long start_b, long count_b, void *data)
 {
 	struct handle_split_cb_data *d = data;
-	handle_split(d->sb, d->ent, d->tlno, d->plno, same, d->parent, d->split);
-	d->plno = p_next;
-	d->tlno = t_next;
+	handle_split(d->sb, d->ent, d->tlno, d->plno, start_b, d->parent,
+		     d->split);
+	d->plno = start_a + count_a;
+	d->tlno = start_b + count_b;
+	return 0;
 }
 
 /*
@@ -922,8 +936,7 @@ static void find_copy_in_blob(struct scoreboard *sb,
 	int cnt;
 	mmfile_t file_o;
 	struct handle_split_cb_data d;
-	xpparam_t xpp;
-	xdemitconf_t xecfg;
+
 	memset(&d, 0, sizeof(d));
 	d.sb = sb; d.ent = ent; d.parent = parent; d.split = split;
 	/*
@@ -943,12 +956,8 @@ static void find_copy_in_blob(struct scoreboard *sb,
 	 * file_o is a part of final image we are annotating.
 	 * file_p partially may match that image.
 	 */
-	memset(&xpp, 0, sizeof(xpp));
-	xpp.flags = xdl_opts;
-	memset(&xecfg, 0, sizeof(xecfg));
-	xecfg.ctxlen = 1;
 	memset(split, 0, sizeof(struct blame_entry [3]));
-	xdi_diff_hunks(file_p, &file_o, handle_split_cb, &d, &xpp, &xecfg);
+	diff_hunks(file_p, &file_o, 1, handle_split_cb, &d);
 	/* remainder, if any, all match the preimage */
 	handle_split(sb, ent, d.tlno, d.plno, ent->num_lines, parent, split);
 }

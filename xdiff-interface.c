@@ -156,50 +156,6 @@ int xdi_diff_outf(mmfile_t *mf1, mmfile_t *mf2,
 	return ret;
 }
 
-struct xdiff_emit_hunk_state {
-	xdiff_emit_hunk_consume_fn consume;
-	void *consume_callback_data;
-};
-
-static int process_diff(xdfenv_t *xe, xdchange_t *xscr, xdemitcb_t *ecb,
-			xdemitconf_t const *xecfg)
-{
-	long s1, s2, same, p_next, t_next;
-	xdchange_t *xch, *xche;
-	struct xdiff_emit_hunk_state *state = ecb->priv;
-	xdiff_emit_hunk_consume_fn fn = state->consume;
-	void *consume_callback_data = state->consume_callback_data;
-
-	for (xch = xscr; xch; xch = xche->next) {
-		xche = xdl_get_hunk(xch, xecfg);
-
-		s1 = XDL_MAX(xch->i1 - xecfg->ctxlen, 0);
-		s2 = XDL_MAX(xch->i2 - xecfg->ctxlen, 0);
-		same = s2 + XDL_MAX(xch->i1 - s1, 0);
-		p_next = xche->i1 + xche->chg1;
-		t_next = xche->i2 + xche->chg2;
-
-		fn(consume_callback_data, same, p_next, t_next);
-	}
-	return 0;
-}
-
-int xdi_diff_hunks(mmfile_t *mf1, mmfile_t *mf2,
-		   xdiff_emit_hunk_consume_fn fn, void *consume_callback_data,
-		   xpparam_t const *xpp, xdemitconf_t *xecfg)
-{
-	struct xdiff_emit_hunk_state state;
-	xdemitcb_t ecb;
-
-	memset(&state, 0, sizeof(state));
-	memset(&ecb, 0, sizeof(ecb));
-	state.consume = fn;
-	state.consume_callback_data = consume_callback_data;
-	xecfg->emit_func = (void (*)())process_diff;
-	ecb.priv = &state;
-	return xdi_diff(mf1, mf2, xpp, xecfg, &ecb);
-}
-
 int read_mmfile(mmfile_t *ptr, const char *filename)
 {
 	struct stat st;
