@@ -189,18 +189,16 @@ and have no uncommitted changes.
 	last fetched commit from the upstream SVN.
 
 'dcommit'::
-	Commit each diff from a specified head directly to the SVN
+	Commit each diff from the current branch directly to the SVN
 	repository, and then rebase or reset (depending on whether or
 	not there is a diff between SVN and head).  This will create
 	a revision in SVN for each commit in git.
-	It is recommended that you run 'git svn' fetch and rebase (not
-	pull or merge) your commits against the latest changes in the
-	SVN repository.
-	An optional revision or branch argument may be specified, and
-	causes 'git svn' to do all work on that revision/branch
-	instead of HEAD.
-	This is advantageous over 'set-tree' (below) because it produces
-	cleaner, more linear history.
++
+When an optional git branch name (or a git commit object name)
+is specified as an argument, the subcommand works on the specified
+branch, not on the current branch.
++
+Use of 'dcommit' is preferred to 'set-tree' (below).
 +
 --no-rebase;;
 	After committing, do not rebase or reset.
@@ -802,18 +800,19 @@ have each person clone that repository with 'git clone':
 
 REBASE VS. PULL/MERGE
 ---------------------
+Prefer to use 'git svn rebase' or 'git rebase', rather than
+'git pull' or 'git merge' to synchronize unintegrated commits with a 'git svn'
+branch. Doing so will keep the history of unintegrated commits linear with
+respect to the upstream SVN repository and allow the use of the preferred
+'git svn dcommit' subcommand to push unintegrated commits back into SVN.
 
-Originally, 'git svn' recommended that the 'remotes/git-svn' branch be
-pulled or merged from.  This is because the author favored
+Originally, 'git svn' recommended that developers pulled or merged from
+the 'git svn' branch.  This was because the author favored
 `git svn set-tree B` to commit a single head rather than the
-`git svn set-tree A..B` notation to commit multiple commits.
-
-If you use `git svn set-tree A..B` to commit several diffs and you do
-not have the latest remotes/git-svn merged into my-branch, you should
-use `git svn rebase` to update your work branch instead of `git pull` or
-`git merge`.  `pull`/`merge` can cause non-linear history to be flattened
-when committing into SVN, which can lead to merge commits reversing
-previous commits in SVN.
+`git svn set-tree A..B` notation to commit multiple commits. Use of
+'git pull' or 'git merge' with `git svn set-tree A..B` will cause non-linear
+history to be flattened when committing into SVN and this can lead to merge
+commits unexpectedly reversing previous commits in SVN.
 
 MERGE TRACKING
 --------------
