@@ -106,7 +106,7 @@ my ($_stdin, $_help, $_edit,
 	$_message, $_file, $_branch_dest,
 	$_template, $_shared,
 	$_version, $_fetch_all, $_no_rebase, $_fetch_parent,
-	$_merge, $_strategy, $_dry_run, $_local,
+	$_merge, $_strategy, $_preserve_merges, $_dry_run, $_local,
 	$_prefix, $_no_checkout, $_url, $_verbose,
 	$_git_format, $_commit_url, $_tag, $_merge_info, $_interactive);
 $Git::SVN::_follow_parent = 1;
@@ -255,6 +255,7 @@ my %cmd = (
 			  'local|l' => \$_local,
 			  'fetch-all|all' => \$_fetch_all,
 			  'dry-run|n' => \$_dry_run,
+			  'preserve-merges|p' => \$_preserve_merges,
 			  %fc_opts } ],
 	'commit-diff' => [ \&cmd_commit_diff,
 	                   'Commit a diff between two trees',
@@ -1592,6 +1593,7 @@ sub rebase_cmd {
 	push @cmd, '-v' if $_verbose;
 	push @cmd, qw/--merge/ if $_merge;
 	push @cmd, "--strategy=$_strategy" if $_strategy;
+	push @cmd, "--preserve-merges" if $_preserve_merges;
 	@cmd;
 }
 
