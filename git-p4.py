@@ -1302,7 +1302,7 @@ class P4Submit(Command, P4UserMap):
 
             if not m.match(name):
                 if verbose:
-                    print "tag %s does not match regexp %s" % (name, validTagRegexp)
+                    print "tag %s does not match regexp %s" % (name, validLabelRegexp)
                 continue
 
             # Get the p4 commit this corresponds to
@@ -1451,7 +1451,7 @@ class P4Submit(Command, P4UserMap):
             rebase.rebase()
 
         if gitConfig("git-p4.exportLabels", "--bool") == "true":
-            self.exportLabels = true
+            self.exportLabels = True
 
         if self.exportLabels:
             p4Labels = getP4Labels(self.depotPath)
@@ -2711,7 +2711,7 @@ class P4Sync(Command, P4UserMap):
                         sys.stdout.write("\n")
 
         if gitConfig("git-p4.importLabels", "--bool") == "true":
-            self.importLabels = true
+            self.importLabels = True
 
         if self.importLabels:
             p4Labels = getP4Labels(self.depotPaths)
