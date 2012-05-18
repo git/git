@@ -68,6 +68,7 @@ static int queue_diff(struct diff_options *o,
 		struct string_list p1 = STRING_LIST_INIT_DUP;
 		struct string_list p2 = STRING_LIST_INIT_DUP;
 		int i1, i2, ret = 0;
+		size_t len1 = 0, len2 = 0;
 
 		if (name1 && read_directory(name1, &p1))
 			return -1;
@@ -80,17 +81,22 @@ static int queue_diff(struct diff_options *o,
 			strbuf_addstr(&buffer1, name1);
 			if (buffer1.len && buffer1.buf[buffer1.len - 1] != '/')
 				strbuf_addch(&buffer1, '/');
+			len1 = buffer1.len;
 		}
 
 		if (name2) {
 			strbuf_addstr(&buffer2, name2);
 			if (buffer2.len && buffer2.buf[buffer2.len - 1] != '/')
 				strbuf_addch(&buffer2, '/');
+			len2 = buffer2.len;
 		}
 
 		for (i1 = i2 = 0; !ret && (i1 < p1.nr || i2 < p2.nr); ) {
 			const char *n1, *n2;
 			int comp;
+
+			strbuf_setlen(&buffer1, len1);
+			strbuf_setlen(&buffer2, len2);
 
 			if (i1 == p1.nr)
 				comp = 1;
@@ -117,8 +123,8 @@ static int queue_diff(struct diff_options *o,
 		}
 		string_list_clear(&p1, 0);
 		string_list_clear(&p2, 0);
-		strbuf_reset(&buffer1);
-		strbuf_reset(&buffer2);
+		strbuf_release(&buffer1);
+		strbuf_release(&buffer2);
 
 		return ret;
 	} else {
