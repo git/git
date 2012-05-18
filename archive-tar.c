@@ -101,13 +101,13 @@ static void strbuf_append_ext_header(struct strbuf *sb, const char *keyword,
 
 static unsigned int ustar_header_chksum(const struct ustar_header *header)
 {
-	char *p = (char *)header;
+	const char *p = (const char *)header;
 	unsigned int chksum = 0;
 	while (p < header->chksum)
 		chksum += *p++;
 	chksum += sizeof(header->chksum) * ' ';
 	p += sizeof(header->chksum);
-	while (p < (char *)header + sizeof(struct ustar_header))
+	while (p < (const char *)header + sizeof(struct ustar_header))
 		chksum += *p++;
 	return chksum;
 }
