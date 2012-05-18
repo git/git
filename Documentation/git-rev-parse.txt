@@ -137,7 +137,8 @@ appending `/{asterisk}`.
 
 --git-dir::
 	Show `$GIT_DIR` if defined. Otherwise show the path to
-	the .git directory, relative to the current directory.
+	the .git directory. The path shown, when relative, is
+	relative to the current working directory.
 +
 If `$GIT_DIR` is not defined and the current directory
 is not detected to lie in a git repository or work tree
