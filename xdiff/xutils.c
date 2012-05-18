@@ -122,35 +122,6 @@ void *xdl_cha_alloc(chastore_t *cha) {
 	return data;
 }
 
-
-void *xdl_cha_first(chastore_t *cha) {
-	chanode_t *sncur;
-
-	if (!(cha->sncur = sncur = cha->head))
-		return NULL;
-
-	cha->scurr = 0;
-
-	return (char *) sncur + sizeof(chanode_t) + cha->scurr;
-}
-
-
-void *xdl_cha_next(chastore_t *cha) {
-	chanode_t *sncur;
-
-	if (!(sncur = cha->sncur))
-		return NULL;
-	cha->scurr += cha->isize;
-	if (cha->scurr == sncur->icurr) {
-		if (!(sncur = cha->sncur = sncur->next))
-			return NULL;
-		cha->scurr = 0;
-	}
-
-	return (char *) sncur + sizeof(chanode_t) + cha->scurr;
-}
-
-
 long xdl_guess_lines(mmfile_t *mf, long sample) {
 	long nl = 0, size, tsize = 0;
 	char const *data, *cur, *top;
@@ -429,20 +400,6 @@ int xdl_num_out(char *out, long val) {
 
 	return str - out;
 }
-
-
-long xdl_atol(char const *str, char const **next) {
-	long val, base;
-	char const *top;
-
-	for (top = str; XDL_ISDIGIT(*top); top++);
-	if (next)
-		*next = top;
-	for (val = 0, base = 1, top--; top >= str; top--, base *= 10)
-		val += base * (long)(*top - '0');
-	return val;
-}
-
 
 int xdl_emit_hunk_hdr(long s1, long c1, long s2, long c2,
 		      const char *func, long funclen, xdemitcb_t *ecb) {
