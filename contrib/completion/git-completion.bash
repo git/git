@@ -2702,6 +2702,18 @@ __git_complete ()
 		|| complete -o default -o nospace -F $wrapper $1
 }
 
+# wrapper for backwards compatibility
+_git ()
+{
+	__git_wrap_main_git
+}
+
+# wrapper for backwards compatibility
+_gitk ()
+{
+	__git_wrap_main_gitk
+}
+
 __git_complete git _main_git
 __git_complete gitk _main_gitk
 
