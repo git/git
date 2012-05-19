@@ -247,6 +247,7 @@ test_expect_success '-p handles "no changes" gracefully' '
 '
 
 test_expect_failure 'exchange two commits with -p' '
+	git checkout H &&
 	FAKE_LINES="2 1" git rebase -i -p HEAD~2 &&
 	test H = $(git cat-file commit HEAD^ | sed -ne \$p) &&
 	test G = $(git cat-file commit HEAD | sed -ne \$p)
