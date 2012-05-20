@@ -322,6 +322,11 @@ test_expect_success 'grep -f, multiple patterns' '
 	test_cmp expected actual
 '
 
+test_expect_success 'grep, multiple patterns' '
+	git grep "$(cat patterns)" >actual &&
+	test_cmp expected actual
+'
+
 cat >expected <<EOF
 file:foo mmap bar
 file:foo_mmap bar
