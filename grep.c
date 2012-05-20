@@ -18,14 +18,19 @@ static struct grep_pat *create_grep_pat(const char *pat, size_t patlen,
 	return p;
 }
 
+static void do_append_grep_pat(struct grep_pat ***tail, struct grep_pat *p)
+{
+	**tail = p;
+	*tail = &p->next;
+	p->next = NULL;
+}
+
 void append_header_grep_pattern(struct grep_opt *opt,
 				enum grep_header_field field, const char *pat)
 {
 	struct grep_pat *p = create_grep_pat(pat, strlen(pat), "header", 0,
 					     GREP_PATTERN_HEAD, field);
-	*opt->header_tail = p;
-	opt->header_tail = &p->next;
-	p->next = NULL;
+	do_append_grep_pat(&opt->header_tail, p);
 }
 
 void append_grep_pattern(struct grep_opt *opt, const char *pat,
@@ -38,9 +43,7 @@ void append_grep_pat(struct grep_opt *opt, const char *pat, size_t patlen,
 		     const char *origin, int no, enum grep_pat_token t)
 {
 	struct grep_pat *p = create_grep_pat(pat, patlen, origin, no, t, 0);
-	*opt->pattern_tail = p;
-	opt->pattern_tail = &p->next;
-	p->next = NULL;
+	do_append_grep_pat(&opt->pattern_tail, p);
 }
 
 struct grep_opt *grep_opt_dup(const struct grep_opt *opt)
