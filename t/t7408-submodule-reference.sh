@@ -28,7 +28,7 @@ git prune'
 
 cd "$base_dir"
 
-test_expect_success 'preparing supermodule' \
+test_expect_success 'preparing superproject' \
 'test_create_repo super && cd super &&
 echo file > file &&
 git add file &&
@@ -55,7 +55,7 @@ diff expected current'
 
 cd "$base_dir"
 
-test_expect_success 'cloning supermodule' \
+test_expect_success 'cloning superproject' \
 'git clone super super-clone'
 
 cd "$base_dir"
