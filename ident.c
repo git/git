@@ -95,8 +95,10 @@ static void copy_email(const struct passwd *pw, struct strbuf *email)
 
 const char *ident_default_name(void)
 {
-	if (!git_default_name.len)
+	if (!git_default_name.len) {
 		copy_gecos(xgetpwuid_self(), &git_default_name);
+		strbuf_trim(&git_default_name);
+	}
 	return git_default_name.buf;
 }
 
@@ -110,6 +112,7 @@ const char *ident_default_email(void)
 			user_ident_explicitly_given |= IDENT_MAIL_GIVEN;
 		} else
 			copy_email(xgetpwuid_self(), &git_default_email);
+		strbuf_trim(&git_default_email);
 	}
 	return git_default_email.buf;
 }
