@@ -7,7 +7,11 @@
  */
 #include "cache.h"
 
+#define MAX_GITNAME (1000)
+static char git_default_name[MAX_GITNAME];
+static char git_default_email[MAX_GITNAME];
 static char git_default_date[50];
+int user_ident_explicitly_given;
 
 #ifdef NO_GECOS_IN_PWENT
 #define get_gecos(ignored) "&"
