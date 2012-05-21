@@ -316,7 +316,6 @@ const char *fmt_ident(const char *name, const char *email,
 	char date[50];
 	int i;
 	int error_on_no_name = (flag & IDENT_ERROR_ON_NO_NAME);
-	int warn_on_no_name = (flag & IDENT_WARN_ON_NO_NAME);
 	int name_addr_only = (flag & IDENT_NO_DATE);
 
 	if (!name)
@@ -327,13 +326,11 @@ const char *fmt_ident(const char *name, const char *email,
 	if (!*name) {
 		struct passwd *pw;
 
-		if ((warn_on_no_name || error_on_no_name) &&
-		    name == git_default_name && env_hint) {
-			fputs(env_hint, stderr);
-			env_hint = NULL; /* warn only once */
-		}
-		if (error_on_no_name)
+		if (error_on_no_name) {
+			if (name == git_default_name)
+				fputs(env_hint, stderr);
 			die("empty ident %s <%s> not allowed", name, email);
+		}
 		pw = getpwuid(getuid());
 		if (!pw)
 			die("You don't exist. Go away!");

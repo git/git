@@ -887,9 +887,8 @@ unsigned long approxidate_careful(const char *, int *);
 unsigned long approxidate_relative(const char *date, const struct timeval *now);
 enum date_mode parse_date_format(const char *format);
 
-#define IDENT_WARN_ON_NO_NAME  1
-#define IDENT_ERROR_ON_NO_NAME 2
-#define IDENT_NO_DATE	       4
+#define IDENT_ERROR_ON_NO_NAME 1
+#define IDENT_NO_DATE	       2
 extern const char *git_author_info(int);
 extern const char *git_committer_info(int);
 extern const char *fmt_ident(const char *name, const char *email, const char *date_str, int);
