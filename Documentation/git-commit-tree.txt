@@ -88,11 +88,6 @@ for one to be entered and terminated with ^D.
 
 include::date-formats.txt[]
 
-Diagnostics
------------
-You don't exist. Go away!::
-    The passwd(5) gecos field couldn't be read
-
 Discussion
 ----------
 

@@ -59,11 +59,6 @@ ifdef::git-default-pager[]
     The build you are using chose '{git-default-pager}' as the default.
 endif::git-default-pager[]
 
-Diagnostics
------------
-You don't exist. Go away!::
-    The passwd(5) gecos field couldn't be read
-
 SEE ALSO
 --------
 linkgit:git-commit-tree[1]

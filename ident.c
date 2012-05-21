@@ -100,12 +100,8 @@ static void copy_email(const struct passwd *pw, struct strbuf *email)
 
 const char *ident_default_name(void)
 {
-	if (!git_default_name.len) {
-		struct passwd *pw = getpwuid(getuid());
-		if (!pw)
-			die("You don't exist. Go away!");
-		copy_gecos(pw, &git_default_name);
-	}
+	if (!git_default_name.len)
+		copy_gecos(xgetpwuid_self(), &git_default_name);
 	return git_default_name.buf;
 }
 
@@ -117,12 +113,8 @@ const char *ident_default_email(void)
 		if (email && email[0]) {
 			strbuf_addstr(&git_default_email, email);
 			user_ident_explicitly_given |= IDENT_MAIL_GIVEN;
-		} else {
-			struct passwd *pw = getpwuid(getuid());
-			if (!pw)
-				die("You don't exist. Go away!");
-			copy_email(pw, &git_default_email);
-		}
+		} else
+			copy_email(xgetpwuid_self(), &git_default_email);
 	}
 	return git_default_email.buf;
 }
@@ -303,9 +295,7 @@ const char *fmt_ident(const char *name, const char *email,
 				fputs(env_hint, stderr);
 			die("empty ident %s <%s> not allowed", name, email);
 		}
-		pw = getpwuid(getuid());
-		if (!pw)
-			die("You don't exist. Go away!");
+		pw = xgetpwuid_self();
 		name = pw->pw_name;
 	}
 
