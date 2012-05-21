@@ -1657,7 +1657,7 @@ M 160000 :6 sub
 INPUT_END
 
 test_expect_success \
-	'P: supermodule & submodule mix' \
+	'P: superproject & submodule mix' \
 	'git fast-import <input &&
 	 git checkout subuse1 &&
 	 rm -rf sub && mkdir sub && (cd sub &&
