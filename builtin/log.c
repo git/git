@@ -663,7 +663,8 @@ static FILE *realstdout = NULL;
 static const char *output_directory = NULL;
 static int outdir_offset;
 
-static int reopen_stdout(struct commit *commit, struct rev_info *rev, int quiet)
+static int reopen_stdout(struct commit *commit, const char *subject,
+			 struct rev_info *rev, int quiet)
 {
 	struct strbuf filename = STRBUF_INIT;
 	int suffix_len = strlen(fmt_patch_suffix) + 1;
@@ -677,7 +678,7 @@ static int reopen_stdout(struct commit *commit, struct rev_info *rev, int quiet)
 			strbuf_addch(&filename, '/');
 	}
 
-	get_patch_filename(commit, rev->nr, fmt_patch_suffix, &filename);
+	get_patch_filename(commit, subject, rev->nr, fmt_patch_suffix, &filename);
 
 	if (!quiet)
 		fprintf(realstdout, "%s\n", filename.buf + outdir_offset);
@@ -778,7 +779,6 @@ static void make_cover_letter(struct rev_info *rev, int use_stdout,
 	const char *encoding = "UTF-8";
 	struct diff_options opts;
 	int need_8bit_cte = 0;
-	struct commit *commit = NULL;
 	struct pretty_print_context pp = {0};
 
 	if (rev->commit_format != CMIT_FMT_EMAIL)
@@ -786,30 +786,9 @@ static void make_cover_letter(struct rev_info *rev, int use_stdout,
 
 	committer = git_committer_info(0);
 
-	if (!numbered_files) {
-		/*
-		 * We fake a commit for the cover letter so we get the filename
-		 * desired.
-		 */
-		commit = xcalloc(1, sizeof(*commit));
-		commit->buffer = xmalloc(400);
-		snprintf(commit->buffer, 400,
-			"tree 0000000000000000000000000000000000000000\n"
-			"parent %s\n"
-			"author %s\n"
-			"committer %s\n\n"
-			"cover letter\n",
-			sha1_to_hex(head->object.sha1), committer, committer);
-	}
-
-	if (!use_stdout && reopen_stdout(commit, rev, quiet))
+	if (!use_stdout &&
+	    reopen_stdout(NULL, numbered_files ? NULL : "cover-letter", rev, quiet))
 		return;
-
-	if (commit) {
-
-		free(commit->buffer);
-		free(commit);
-	}
 
 	log_write_email_headers(rev, head, &pp.subject, &pp.after_subject,
 				&need_8bit_cte);
@@ -1405,8 +1384,8 @@ int cmd_format_patch(int argc, const char **argv, const char *prefix)
 			gen_message_id(&rev, sha1_to_hex(commit->object.sha1));
 		}
 
-		if (!use_stdout && reopen_stdout(numbered_files ? NULL : commit,
-						 &rev, quiet))
+		if (!use_stdout &&
+		    reopen_stdout(numbered_files ? NULL : commit, NULL, &rev, quiet))
 			die(_("Failed to create output files"));
 		shown = log_tree_commit(&rev, commit);
 		free(commit->buffer);
