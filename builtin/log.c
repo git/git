@@ -737,15 +737,9 @@ static void get_patch_ids(struct rev_info *rev, struct patch_ids *ids, const cha
 
 static void gen_message_id(struct rev_info *info, char *base)
 {
-	const char *committer = git_committer_info(IDENT_WARN_ON_NO_NAME);
-	const char *email_start = strrchr(committer, '<');
-	const char *email_end = strrchr(committer, '>');
 	struct strbuf buf = STRBUF_INIT;
-	if (!email_start || !email_end || email_start > email_end - 1)
-		die(_("Could not extract email from committer identity."));
-	strbuf_addf(&buf, "%s.%lu.git.%.*s", base,
-		    (unsigned long) time(NULL),
-		    (int)(email_end - email_start - 1), email_start + 1);
+	strbuf_addf(&buf, "%s.%lu.git.%s", base,
+		    (unsigned long) time(NULL), ident_default_email());
 	info->message_id = strbuf_detach(&buf, NULL);
 }
 
