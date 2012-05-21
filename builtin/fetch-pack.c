@@ -909,7 +909,6 @@ int cmd_fetch_pack(int argc, const char **argv, const char *prefix)
 
 	packet_trace_identity("fetch-pack");
 
-	nr_heads = 0;
 	heads = NULL;
 	for (i = 1; i < argc; i++) {
 		const char *arg = argv[i];
@@ -971,13 +970,16 @@ int cmd_fetch_pack(int argc, const char **argv, const char *prefix)
 			}
 			usage(fetch_pack_usage);
 		}
-		dest = arg;
-		heads = (char **)(argv + i + 1);
-		nr_heads = argc - i - 1;
 		break;
 	}
-	if (!dest)
+
+	if (i < argc)
+		dest = argv[i++];
+	else
 		usage(fetch_pack_usage);
+
+	heads = (char **)(argv + i);
+	nr_heads = argc - i;
 
 	if (args.stdin_refs) {
 		/*
