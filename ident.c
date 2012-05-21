@@ -121,15 +121,6 @@ const char *ident_default_date(void)
 	return git_default_date;
 }
 
-static int add_raw(char *buf, size_t size, int offset, const char *str)
-{
-	size_t len = strlen(str);
-	if (offset + len > size)
-		return size;
-	memcpy(buf + offset, str, len);
-	return offset + len;
-}
-
 static int crud(unsigned char c)
 {
 	return  c <= 32  ||
@@ -148,7 +139,7 @@ static int crud(unsigned char c)
  * Copy over a string to the destination, but avoid special
  * characters ('\n', '<' and '>') and remove crud at the end
  */
-static int copy(char *buf, size_t size, int offset, const char *src)
+static void strbuf_addstr_without_crud(struct strbuf *sb, const char *src)
 {
 	size_t i, len;
 	unsigned char c;
@@ -172,19 +163,19 @@ static int copy(char *buf, size_t size, int offset, const char *src)
 	/*
 	 * Copy the rest to the buffer, but avoid the special
 	 * characters '\n' '<' and '>' that act as delimiters on
-	 * an identification line
+	 * an identification line. We can only remove crud, never add it,
+	 * so 'len' is our maximum.
 	 */
+	strbuf_grow(sb, len);
 	for (i = 0; i < len; i++) {
 		c = *src++;
 		switch (c) {
 		case '\n': case '<': case '>':
 			continue;
 		}
-		if (offset >= size)
-			return size;
-		buf[offset++] = c;
+		sb->buf[sb->len++] = c;
 	}
-	return offset;
+	sb->buf[sb->len] = '\0';
 }
 
 /*
@@ -271,9 +262,8 @@ static const char *env_hint =
 const char *fmt_ident(const char *name, const char *email,
 		      const char *date_str, int flag)
 {
-	static char buffer[1000];
+	static struct strbuf ident = STRBUF_INIT;
 	char date[50];
-	int i;
 	int error_on_no_name = (flag & IDENT_ERROR_ON_NO_NAME);
 	int name_addr_only = (flag & IDENT_NO_DATE);
 
@@ -300,19 +290,16 @@ const char *fmt_ident(const char *name, const char *email,
 			die("invalid date format: %s", date_str);
 	}
 
-	i = copy(buffer, sizeof(buffer), 0, name);
-	i = add_raw(buffer, sizeof(buffer), i, " <");
-	i = copy(buffer, sizeof(buffer), i, email);
+	strbuf_reset(&ident);
+	strbuf_addstr_without_crud(&ident, name);
+	strbuf_addstr(&ident, " <");
+	strbuf_addstr_without_crud(&ident, email);
+	strbuf_addch(&ident, '>');
 	if (!name_addr_only) {
-		i = add_raw(buffer, sizeof(buffer), i,  "> ");
-		i = copy(buffer, sizeof(buffer), i, date);
-	} else {
-		i = add_raw(buffer, sizeof(buffer), i, ">");
+		strbuf_addch(&ident, ' ');
+		strbuf_addstr_without_crud(&ident, date);
 	}
-	if (i >= sizeof(buffer))
-		die("Impossibly long personal identifier");
-	buffer[i] = 0;
-	return buffer;
+	return ident.buf;
 }
 
 const char *fmt_name(const char *name, const char *email)
