@@ -72,6 +72,8 @@ extern const struct refspec *tag_refspec;
 struct ref *alloc_ref(const char *name);
 struct ref *copy_ref(const struct ref *ref);
 struct ref *copy_ref_list(const struct ref *ref);
+void sort_ref_list(struct ref **, int (*cmp)(const void *, const void *));
+int ref_compare_name(const void *, const void *);
 
 int check_ref_type(const struct ref *ref, int flags);
 
