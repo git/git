@@ -681,15 +681,12 @@ static int file_callback(const struct option *opt, const char *arg, int unset)
 	if (!patterns)
 		die_errno(_("cannot open '%s'"), arg);
 	while (strbuf_getline(&sb, patterns, '\n') == 0) {
-		char *s;
-		size_t len;
-
 		/* ignore empty line like grep does */
 		if (sb.len == 0)
 			continue;
 
-		s = strbuf_detach(&sb, &len);
-		append_grep_pat(grep_opt, s, len, arg, ++lno, GREP_PATTERN);
+		append_grep_pat(grep_opt, sb.buf, sb.len, arg, ++lno,
+				GREP_PATTERN);
 	}
 	if (!from_stdin)
 		fclose(patterns);
