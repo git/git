@@ -900,7 +900,8 @@ int cmd_fetch_pack(int argc, const char **argv, const char *prefix)
 {
 	int i, ret, nr_heads;
 	struct ref *ref = NULL;
-	char *dest = NULL, **heads;
+	const char *dest = NULL;
+	char **heads;
 	int fd[2];
 	char *pack_lockfile = NULL;
 	char **pack_lockfile_ptr = NULL;
@@ -970,7 +971,7 @@ int cmd_fetch_pack(int argc, const char **argv, const char *prefix)
 			}
 			usage(fetch_pack_usage);
 		}
-		dest = (char *)arg;
+		dest = arg;
 		heads = (char **)(argv + i + 1);
 		nr_heads = argc - i - 1;
 		break;
@@ -1017,7 +1018,7 @@ int cmd_fetch_pack(int argc, const char **argv, const char *prefix)
 		fd[0] = 0;
 		fd[1] = 1;
 	} else {
-		conn = git_connect(fd, (char *)dest, args.uploadpack,
+		conn = git_connect(fd, dest, args.uploadpack,
 				   args.verbose ? CONNECT_VERBOSE : 0);
 	}
 
