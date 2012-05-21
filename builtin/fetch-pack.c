@@ -910,67 +910,64 @@ int cmd_fetch_pack(int argc, const char **argv, const char *prefix)
 	packet_trace_identity("fetch-pack");
 
 	heads = NULL;
-	for (i = 1; i < argc; i++) {
+	for (i = 1; i < argc && *argv[i] == '-'; i++) {
 		const char *arg = argv[i];
 
-		if (*arg == '-') {
-			if (!prefixcmp(arg, "--upload-pack=")) {
-				args.uploadpack = arg + 14;
-				continue;
-			}
-			if (!prefixcmp(arg, "--exec=")) {
-				args.uploadpack = arg + 7;
-				continue;
-			}
-			if (!strcmp("--quiet", arg) || !strcmp("-q", arg)) {
-				args.quiet = 1;
-				continue;
-			}
-			if (!strcmp("--keep", arg) || !strcmp("-k", arg)) {
-				args.lock_pack = args.keep_pack;
-				args.keep_pack = 1;
-				continue;
-			}
-			if (!strcmp("--thin", arg)) {
-				args.use_thin_pack = 1;
-				continue;
-			}
-			if (!strcmp("--include-tag", arg)) {
-				args.include_tag = 1;
-				continue;
-			}
-			if (!strcmp("--all", arg)) {
-				args.fetch_all = 1;
-				continue;
-			}
-			if (!strcmp("--stdin", arg)) {
-				args.stdin_refs = 1;
-				continue;
-			}
-			if (!strcmp("-v", arg)) {
-				args.verbose = 1;
-				continue;
-			}
-			if (!prefixcmp(arg, "--depth=")) {
-				args.depth = strtol(arg + 8, NULL, 0);
-				continue;
-			}
-			if (!strcmp("--no-progress", arg)) {
-				args.no_progress = 1;
-				continue;
-			}
-			if (!strcmp("--stateless-rpc", arg)) {
-				args.stateless_rpc = 1;
-				continue;
-			}
-			if (!strcmp("--lock-pack", arg)) {
-				args.lock_pack = 1;
-				pack_lockfile_ptr = &pack_lockfile;
-				continue;
-			}
-			usage(fetch_pack_usage);
+		if (!prefixcmp(arg, "--upload-pack=")) {
+			args.uploadpack = arg + 14;
+			continue;
 		}
-		break;
+		if (!prefixcmp(arg, "--exec=")) {
+			args.uploadpack = arg + 7;
+			continue;
+		}
+		if (!strcmp("--quiet", arg) || !strcmp("-q", arg)) {
+			args.quiet = 1;
+			continue;
+		}
+		if (!strcmp("--keep", arg) || !strcmp("-k", arg)) {
+			args.lock_pack = args.keep_pack;
+			args.keep_pack = 1;
+			continue;
+		}
+		if (!strcmp("--thin", arg)) {
+			args.use_thin_pack = 1;
+			continue;
+		}
+		if (!strcmp("--include-tag", arg)) {
+			args.include_tag = 1;
+			continue;
+		}
+		if (!strcmp("--all", arg)) {
+			args.fetch_all = 1;
+			continue;
+		}
+		if (!strcmp("--stdin", arg)) {
+			args.stdin_refs = 1;
+			continue;
+		}
+		if (!strcmp("-v", arg)) {
+			args.verbose = 1;
+			continue;
+		}
+		if (!prefixcmp(arg, "--depth=")) {
+			args.depth = strtol(arg + 8, NULL, 0);
+			continue;
+		}
+		if (!strcmp("--no-progress", arg)) {
+			args.no_progress = 1;
+			continue;
+		}
+		if (!strcmp("--stateless-rpc", arg)) {
+			args.stateless_rpc = 1;
+			continue;
+		}
+		if (!strcmp("--lock-pack", arg)) {
+			args.lock_pack = 1;
+			pack_lockfile_ptr = &pack_lockfile;
+			continue;
+		}
+		usage(fetch_pack_usage);
 	}
 
 	if (i < argc)
