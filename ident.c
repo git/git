@@ -74,6 +74,10 @@ static int add_mailname_host(char *buf, size_t len)
 	}
 	/* success! */
 	fclose(mailname);
+
+	len = strlen(buf);
+	if (len && buf[len-1] == '\n')
+		buf[len-1] = '\0';
 	return 0;
 }
 
