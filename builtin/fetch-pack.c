@@ -777,6 +777,8 @@ static struct ref *do_fetch_pack(int fd[2],
 	struct ref *ref = copy_ref_list(orig_ref);
 	unsigned char sha1[20];
 
+	sort_ref_list(&ref, ref_compare_name);
+
 	if (is_repository_shallow() && !server_supports("shallow"))
 		die("Server does not support shallow clients");
 	if (server_supports("multi_ack_detailed")) {
