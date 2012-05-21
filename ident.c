@@ -388,3 +388,24 @@ int user_ident_sufficiently_given(void)
 	return (user_ident_explicitly_given == IDENT_ALL_GIVEN);
 #endif
 }
+
+int git_ident_config(const char *var, const char *value, void *data)
+{
+	if (!strcmp(var, "user.name")) {
+		if (!value)
+			return config_error_nonbool(var);
+		strlcpy(git_default_name, value, sizeof(git_default_name));
+		user_ident_explicitly_given |= IDENT_NAME_GIVEN;
+		return 0;
+	}
+
+	if (!strcmp(var, "user.email")) {
+		if (!value)
+			return config_error_nonbool(var);
+		strlcpy(git_default_email, value, sizeof(git_default_email));
+		user_ident_explicitly_given |= IDENT_MAIL_GIVEN;
+		return 0;
+	}
+
+	return 0;
+}
