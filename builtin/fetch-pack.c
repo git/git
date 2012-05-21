@@ -834,21 +834,12 @@ static int remove_duplicates(int nr_heads, char **heads)
 {
 	int src, dst;
 
-	for (src = dst = 0; src < nr_heads; src++) {
-		/* If heads[src] is different from any of
-		 * heads[0..dst], push it in.
-		 */
-		int i;
-		for (i = 0; i < dst; i++) {
-			if (!strcmp(heads[i], heads[src]))
-				break;
-		}
-		if (i < dst)
-			continue;
-		if (src != dst)
-			heads[dst] = heads[src];
-		dst++;
-	}
+	if (!nr_heads)
+		return 0;
+
+	for (src = dst = 1; src < nr_heads; src++)
+		if (strcmp(heads[src], heads[dst-1]))
+			heads[dst++] = heads[src];
 	return dst;
 }
 
