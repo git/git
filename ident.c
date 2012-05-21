@@ -65,23 +65,18 @@ static void add_domainname(struct strbuf *out)
 {
 	char buf[1024];
 	struct hostent *he;
-	const char *domainname;
 
 	if (gethostname(buf, sizeof(buf))) {
 		warning("cannot get host name: %s", strerror(errno));
 		strbuf_addstr(out, "(none)");
 		return;
 	}
-	strbuf_addstr(out, buf);
 	if (strchr(buf, '.'))
-		return;
-
-	he = gethostbyname(buf);
-	strbuf_addch(out, '.');
-	if (he && (domainname = strchr(he->h_name, '.')))
-		strbuf_addstr(out, domainname + 1);
+		strbuf_addstr(out, buf);
+	else if ((he = gethostbyname(buf)) && strchr(he->h_name, '.'))
+		strbuf_addstr(out, he->h_name);
 	else
-		strbuf_addstr(out, "(none)");
+		strbuf_addf(out, "%s.(none)", buf);
 }
 
 static void copy_email(const struct passwd *pw, struct strbuf *email)
