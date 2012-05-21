@@ -1057,6 +1057,11 @@ int cmd_fetch_pack(int argc, const char **argv, const char *prefix)
 	return ret;
 }
 
+static int compare_heads(const void *a, const void *b)
+{
+	return strcmp(*(const char **)a, *(const char **)b);
+}
+
 struct ref *fetch_pack(struct fetch_pack_args *my_args,
 		       int fd[], struct child_process *conn,
 		       const struct ref *ref,
@@ -1076,8 +1081,11 @@ struct ref *fetch_pack(struct fetch_pack_args *my_args,
 			st.st_mtime = 0;
 	}
 
-	if (heads && nr_heads)
+	if (heads && nr_heads) {
 		nr_heads = remove_duplicates(nr_heads, heads);
+		qsort(heads, nr_heads, sizeof(*heads), compare_heads);
+	}
+
 	if (!ref) {
 		packet_flush(fd[1]);
 		die("no matching remote head");
