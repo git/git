@@ -528,6 +528,7 @@ static void filter_refs(struct ref **refs, int nr_match, char **match)
 	struct ref **newtail = &newlist;
 	struct ref *ref, *next;
 	struct ref *fastarray[32];
+	int match_pos;
 
 	if (nr_match && !args.fetch_all) {
 		if (ARRAY_SIZE(fastarray) < nr_match)
@@ -540,6 +541,7 @@ static void filter_refs(struct ref **refs, int nr_match, char **match)
 	else
 		return_refs = NULL;
 
+	match_pos = 0;
 	for (ref = *refs; ref; ref = next) {
 		next = ref->next;
 		if (!memcmp(ref->name, "refs/", 5) &&
@@ -553,15 +555,20 @@ static void filter_refs(struct ref **refs, int nr_match, char **match)
 			continue;
 		}
 		else {
-			int i;
-			for (i = 0; i < nr_match; i++) {
-				if (!strcmp(ref->name, match[i])) {
-					match[i][0] = '\0';
-					return_refs[i] = ref;
+			int cmp = -1;
+			while (match_pos < nr_match) {
+				cmp = strcmp(ref->name, match[match_pos]);
+				if (cmp < 0) /* definitely do not have it */
+					break;
+				else if (cmp == 0) { /* definitely have it */
+					match[match_pos][0] = '\0';
+					return_refs[match_pos] = ref;
 					break;
 				}
+				else /* might have it; keep looking */
+					match_pos++;
 			}
-			if (i < nr_match)
+			if (!cmp)
 				continue; /* we will link it later */
 		}
 		free(ref);
