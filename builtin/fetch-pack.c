@@ -898,10 +898,11 @@ static void fetch_pack_setup(void)
 
 int cmd_fetch_pack(int argc, const char **argv, const char *prefix)
 {
-	int i, ret, nr_heads;
+	int i, ret;
 	struct ref *ref = NULL;
 	const char *dest = NULL;
-	char **heads;
+	int alloc_heads = 0, nr_heads = 0;
+	char **heads = NULL;
 	int fd[2];
 	char *pack_lockfile = NULL;
 	char **pack_lockfile_ptr = NULL;
@@ -909,7 +910,6 @@ int cmd_fetch_pack(int argc, const char **argv, const char *prefix)
 
 	packet_trace_identity("fetch-pack");
 
-	heads = NULL;
 	for (i = 1; i < argc && *argv[i] == '-'; i++) {
 		const char *arg = argv[i];
 
@@ -975,17 +975,14 @@ int cmd_fetch_pack(int argc, const char **argv, const char *prefix)
 	else
 		usage(fetch_pack_usage);
 
-	heads = (char **)(argv + i);
-	nr_heads = argc - i;
-
+	/*
+	 * Copy refs from cmdline to growable list, then append any
+	 * refs from the standard input:
+	 */
+	ALLOC_GROW(heads, argc - i, alloc_heads);
+	for (; i < argc; i++)
+		heads[nr_heads++] = xstrdup(argv[i]);
 	if (args.stdin_refs) {
-		/*
-		 * Copy refs from cmdline to new growable list, then
-		 * append the refs from the standard input.
-		 */
-		int alloc_heads = nr_heads;
-		int size = nr_heads * sizeof(*heads);
-		heads = memcpy(xmalloc(size), heads, size);
 		if (args.stateless_rpc) {
 			/* in stateless RPC mode we use pkt-line to read
 			 * from stdin, until we get a flush packet
