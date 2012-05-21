@@ -334,9 +334,7 @@ const char *fmt_ident(const char *name, const char *email,
 		pw = getpwuid(getuid());
 		if (!pw)
 			die("You don't exist. Go away!");
-		strlcpy(git_default_name, pw->pw_name,
-			sizeof(git_default_name));
-		name = git_default_name;
+		name = pw->pw_name;
 	}
 
 	strcpy(date, ident_default_date());
