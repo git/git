@@ -117,21 +117,20 @@ static void copy_email(const struct passwd *pw)
 			sizeof(git_default_email) - len);
 }
 
-static void setup_ident(const char **name, const char **emailp)
+const char *ident_default_name(void)
 {
-	struct passwd *pw = NULL;
-
-	/* Get the name ("gecos") */
-	if (!*name && !git_default_name[0]) {
-		pw = getpwuid(getuid());
+	if (!git_default_name[0]) {
+		struct passwd *pw = getpwuid(getuid());
 		if (!pw)
 			die("You don't exist. Go away!");
 		copy_gecos(pw, git_default_name, sizeof(git_default_name));
 	}
-	if (!*name)
-		*name = git_default_name;
+	return git_default_name;
+}
 
-	if (!*emailp && !git_default_email[0]) {
+const char *ident_default_email(void)
+{
+	if (!git_default_email[0]) {
 		const char *email = getenv("EMAIL");
 
 		if (email && email[0]) {
@@ -139,19 +138,20 @@ static void setup_ident(const char **name, const char **emailp)
 				sizeof(git_default_email));
 			user_ident_explicitly_given |= IDENT_MAIL_GIVEN;
 		} else {
-			if (!pw)
-				pw = getpwuid(getuid());
+			struct passwd *pw = getpwuid(getuid());
 			if (!pw)
 				die("You don't exist. Go away!");
 			copy_email(pw);
 		}
 	}
-	if (!*emailp)
-		*emailp = git_default_email;
+	return git_default_email;
+}
 
-	/* And set the default date */
+const char *ident_default_date(void)
+{
 	if (!git_default_date[0])
 		datestamp(git_default_date, sizeof(git_default_date));
+	return git_default_date;
 }
 
 static int add_raw(char *buf, size_t size, int offset, const char *str)
@@ -311,7 +311,10 @@ const char *fmt_ident(const char *name, const char *email,
 	int warn_on_no_name = (flag & IDENT_WARN_ON_NO_NAME);
 	int name_addr_only = (flag & IDENT_NO_DATE);
 
-	setup_ident(&name, &email);
+	if (!name)
+		name = ident_default_name();
+	if (!email)
+		email = ident_default_email();
 
 	if (!*name) {
 		struct passwd *pw;
@@ -331,7 +334,7 @@ const char *fmt_ident(const char *name, const char *email,
 		name = git_default_name;
 	}
 
-	strcpy(date, git_default_date);
+	strcpy(date, ident_default_date());
 	if (!name_addr_only && date_str && date_str[0]) {
 		if (parse_date(date_str, date, sizeof(date)) < 0)
 			die("invalid date format: %s", date_str);
