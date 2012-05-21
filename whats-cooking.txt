@@ -1,16 +1,17 @@
 To: git@vger.kernel.org
-Subject: What's cooking in git.git (May 2012, #04; Fri, 11)
-X-master-at: cd07cc53125fb2ca77a644831d4e5d9517bb7a05
-X-next-at: 441bd9a9d602910692074224920f8049ef81ea99
+Subject: What's cooking in git.git (May 2012, #05; Sun, 20)
+X-master-at: aa3bb87176d42f1782c5030fa41e6e62492551c0
+X-next-at: 292236e1ac597c1020462c4a16e9603482ac1410
 
-What's cooking in git.git (May 2012, #04; Fri, 11)
+What's cooking in git.git (May 2012, #05; Sun, 20)
 --------------------------------------------------
 
 Here are the topics that have been cooking.  Commits prefixed with '-' are
 only in 'pu' (proposed updates) while commits prefixed with '+' are in 'next'.
 
-The tenth and eleventh batch of topics are now in 'master', and there is
-the second maintenance release on the 1.7.10.x track out.
+I haven't tagged 1.7.11-rc0 as some of the late "fixup" patches still
+haven't settled yet, but hopefully we can go directly to rc1 by the end of
+the week.
 
 You can find the changes described here in the integration branches of the
 repositories listed at
@@ -18,153 +19,135 @@ repositories listed at
     http://git-blame.blogspot.com/p/git-public-repositories.html
 
 --------------------------------------------------
-[Graduated to "master"]
-
-* ah/maint-grep-double-init (2012-05-07) 1 commit
-  (merged to 'next' on 2012-05-08 at 51f84c5)
- + grep.c: remove redundant line of code
-
-* ef/checkout-empty (2012-05-08) 1 commit
-  (merged to 'next' on 2012-05-08 at fc4d754)
- + checkout: do not corrupt HEAD on empty repo
-
-Running "git checkout" on an unborn branch used to corrupt HEAD
-(regression in 1.7.10); this makes it error out.
-
-* ef/maint-1.7.6-clone-progress-fix (2012-05-07) 1 commit
- + clone: fix progress-regression
- (this branch is used by ef/maint-clone-progress-fix.)
-
-* ef/maint-clone-progress-fix (2012-05-07) 1 commit
-  (merged to 'next' on 2012-05-08 at b9a6cad)
- + Merge branch 'ef/maint-1.7.6-clone-progress-fix' into ef/maint-clone-progress-fix
- (this branch uses ef/maint-1.7.6-clone-progress-fix.)
-
-Some time ago, "git clone" lost the progress output for its "checkout"
-phase; when run without any "--quiet" option, it should give progress to
-the lengthy operation.
-
-* fa/maint-config-doc (2012-05-07) 1 commit
-  (merged to 'next' on 2012-05-08 at 54cc478)
- + Documentation/git-config: describe and clarify "--local <file>" option
-
-* jc/install-no-hardlinks (2012-05-04) 1 commit
-  (merged to 'next' on 2012-05-07 at b69e132)
- + Makefile: NO_INSTALL_HARDLINKS
-
-Your build platform may support hardlinks but you may prefer not to use
-them, e.g. when installing to DESTDIR to make a tarball and untarring on
-a filesystem that has poor support for hardlinks.
-
-The Makefile in git-gui project may need to learn to honor the same
-setting; it unconditionally creates git-citool by hardlinking git-gui.
-
-* jk/maint-reflog-walk-count-vs-time (2012-05-07) 5 commits
-  (merged to 'next' on 2012-05-08 at b1a9987)
- + reflog-walk: tell explicit --date=default from not having --date at all
-  (merged to 'next' on 2012-05-07 at 3652958)
- + reflog-walk: always make HEAD@{0} show indexed selectors
- + reflog-walk: clean up "flag" field of commit_reflog struct
- + log: respect date_mode_explicit with --format:%gd
- + t1411: add more selector index/date tests
-
-Gives a better DWIM behaviour for --pretty=format:%gd, "stash list", and
-"log -g", depending on how the starting point ("master" vs "master@{0}" vs
-"master@{now}") and date formatting options (e.g. "--date=iso") are given
-on the command line.
-
-* jk/maint-status-porcelain-z-b (2012-05-08) 4 commits
- + status: respect "-b" for porcelain format
- + status: fix null termination with "-b"
- + status: refactor null_termination option
- + commit: refactor option parsing
- (this branch is used by jk/status-porcelain-z-b.)
-
-* jk/status-porcelain-z-b (2012-05-08) 2 commits
-  (merged to 'next' on 2012-05-08 at 31172dd)
- + status: refactor colopts handling
- + Merge branch 'jk/maint-status-porcelain-z-b' into HEAD
- (this branch uses jk/maint-status-porcelain-z-b.)
-
-"git status --porcelain" ignored "--branch" option by mistake.  The output
-for "git status --branch -z" was also incorrect and did not terminate the
-record for the current branch name with NUL as asked.
-
-* js/checkout-detach-count (2012-05-04) 2 commits
-  (merged to 'next' on 2012-05-07 at 2957590)
- + checkout (detached): truncate list of orphaned commits at the new HEAD
- + t2020-checkout-detach: check for the number of orphaned commits
-
-When checking out another commit from an already detached state, we used
-to report all commits that are not reachable from any of the refs as
-lossage, but some of them might be reachable from the new HEAD, and there
-is no need to warn about them.
-
-* mh/ref-api-lazy-loose (2012-05-04) 18 commits
-  (merged to 'next' on 2012-05-04 at a70d858)
- + refs: fix find_containing_dir() regression
- + refs: read loose references lazily
- + read_loose_refs(): eliminate ref_cache argument
- + struct ref_dir: store a reference to the enclosing ref_cache
- + search_for_subdir(): return (ref_dir *) instead of (ref_entry *)
- + get_ref_dir(): add function for getting a ref_dir from a ref_entry
- + read_loose_refs(): rename function from get_ref_dir()
- + refs: wrap top-level ref_dirs in ref_entries
- + find_containing_dir(): use strbuf in implementation of this function
- + bisect: copy filename string obtained from git_path()
- + do_for_each_reflog(): use a strbuf to hold logfile name
- + do_for_each_reflog(): return early on error
- + get_ref_dir(): take the containing directory as argument
- + refs.c: extract function search_for_subdir()
- + get_ref_dir(): require that the dirname argument ends in '/'
- + get_ref_dir(): rename "base" parameter to "dirname"
- + get_ref_dir(): use a strbuf to hold refname
- + get_ref_dir(): return early if directory cannot be read
-
-Refs API is updated to lazily read sub-hierarchies of refs/ namespace,
-so that we do not have to grab everything from the filesystem when we
-are only interested in listing branches, for example.
-
-* nd/i18n-apply-lego (2012-05-08) 1 commit
-  (merged to 'next' on 2012-05-08 at c2be904)
- + apply: remove lego in i18n string in gitdiff_verify_name
-
-* nd/i18n-branch-lego (2012-05-04) 1 commit
-  (merged to 'next' on 2012-05-07 at af4e16f)
- + branch: remove lego in i18n tracking info strings
-
-Fix yet another message construction by concatenating pieces of sentenes,
-which is unfriendly to i18n.
-
-* nd/stream-to-archive (2012-05-03) 10 commits
-  (merged to 'next' on 2012-05-07 at 92f11c4)
- + t5000: rationalize unzip tests
- + archive-zip: streaming for deflated files
- + archive-zip: streaming for stored files
- + archive-zip: factor out helpers for writing sizes and CRC
- + archive-zip: remove uncompressed_size
- + archive-tar: stream large blobs to tar file
- + archive: delegate blob reading to backend
- + archive-tar: unindent write_tar_entry by one level
- + archive-tar: turn write_tar_entry into blob-writing only
- + streaming: void pointer instead of char pointer
-
-Stream large blobs directly out to archive files without slurping
-everything in memory first.
-
-* rs/dir-strbuf (2012-05-08) 1 commit
-  (merged to 'next' on 2012-05-08 at 0bc94fb)
- + Merge branch 'rs/maint-dir-strbuf' into rs/dir-strbuf
- (this branch uses rs/maint-dir-strbuf.)
-
-* rs/maint-dir-strbuf (2012-05-08) 1 commit
- + dir: convert to strbuf
- (this branch is used by rs/dir-strbuf.)
-
---------------------------------------------------
 [New Topics]
 
-* rs/xdiff-lose-emit-func (2012-05-09) 6 commits
+* hv/submodule-alt-odb (2012-05-14) 1 commit
+  (merged to 'next' on 2012-05-18 at 2f17ac8)
+ + teach add_submodule_odb() to look for alternates
+
+When peeking into object stores of submodules, the code forgot that they
+might borrow objects from alternate object stores on their own.
+
+* jk/ident-gecos-strbuf (2012-05-20) 13 commits
+ - format-patch: refactor get_patch_filename
+ - ident: use a dynamic strbuf in fmt_ident
+ - ident: use full dns names to generate email addresses
+ - ident: report passwd errors with a more friendly message
+ - drop length limitations on gecos-derived names and emails
+ - ident: don't write fallback username into git_default_name
+ - fmt_ident: drop IDENT_WARN_ON_NO_NAME code
+ - format-patch: use default email for generating message ids
+ - fmt-merge-msg: don't use static buffer in record_person
+ - move git_default_* variables to ident.c
+ - move identity config parsing to ident.c
+ - http-push: do not access git_default_email directly
+ - ident: split setup_ident into separate functions
+
+Fixes quite a lot of brokenness when ident information needs to be taken
+from the system and cleans up the code.  The series seem to break tests
+here and there along the way but at the end everything balances out ;-)
+
+* bp/diff-no-index-strbuf-fix (2012-05-16) 2 commits
+  (merged to 'next' on 2012-05-18 at b2c26bb)
+ + diff --no-index: don't leak buffers in queue_diff
+ + diff --no-index: reset temporary buffer lengths on directory iteration
+
+* js/rebase-i-p-test-fix (2012-05-18) 1 commit
+  (merged to 'next' on 2012-05-18 at b7482fc)
+ + Fix t3411.3 to actually rebase something
+
+* js/rev-parse-doc-fix (2012-05-18) 1 commit
+  (merged to 'next' on 2012-05-18 at c16f1c7)
+ + rev-parse doc: --git-dir does not always show a relative path
+
+* js/submodule-relative (2012-05-20) 2 commits
+ - submodule: fix handling of superproject with relative origin URLs
+ - submodule: add tests for add,sync,init in presence of relative super origin URL
+
+* mh/ref-api-lazy-loose (2012-05-20) 1 commit
+ - free_ref_entry(): do not trigger reading of loose refs
+
+* mh/test-keep-prove-cache (2012-05-20) 1 commit
+ - t/Makefile: retain cache t/.prove across prove runs
+
+* ng/pack-objects-cleanup (2012-05-18) 2 commits
+ - pack-objects: refactor write_object() into helper functions
+ - pack-objects, streaming: turn "xx >= big_file_threshold" to ".. > .."
+
+* rs/archive-tree-in-tip-simplify (2012-05-18) 2 commits
+  (merged to 'next' on 2012-05-18 at a8ca614)
+ + archive-tar: keep const in checksum calculation
+ + archive: simplify refname handling
+
+* rs/maint-grep-F (2012-05-20) 3 commits
+ - grep: support newline separated pattern list
+ - grep: factor out do_append_grep_pat()
+ - grep: factor out create_grep_pat()
+
+* rs/xdiff-fast-hash-fix (2012-05-18) 1 commit
+ - xdiff: signed right shift for 32-bit case of XDL_FAST_HASH
+
+* sp/sh-windows-pwd (2012-05-16) 1 commit
+ - git-sh-setup: define workaround wrappers before they are used
+
+* fc/git-complete-helper-fix (2012-05-20) 2 commits
+ - completion: add support for backwards compatibility
+ - completion: rename internal helpers _git and _gitk
+
+* jc/wip-apply-3way (2012-05-14) 9 commits
+ . WIP: apply --3way with add/add conflicts
+ . apply: refactor codepath to check new files
+ - apply: register conflicted stages to the index
+ - apply: plug the three-way merge logic in
+ - apply: fall back on three-way merge
+ - apply: accept -3/--3way command line option
+ - apply: split load_preimage() helper function out
+ - apply: refactor read_file_or_gitlink()
+ - apply: clear_image() clears things a bit more
+ (this branch is tangled with jc/apply-3way.)
+
+--------------------------------------------------
+[Graduated to "master"]
+
+* fc/git-complete-helper (2012-05-20) 2 commits
+ - completion: add support for backwards compatibility
+ - completion: rename internal helpers _git and _gitk
+* fc/git-complete-helper (2012-05-14) 1 commit
+  (merged to 'next' on 2012-05-14 at 759d5f4)
+ + completion: add new __git_complete helper
+
+There is a late fix-up that still need to be merged for backward
+compatibility for external users of the unpublished internal API.
+
+* fc/simplify-complete-revlist-file (2012-05-07) 1 commit
+  (merged to 'next' on 2012-05-08 at ff0b7d1)
+ + completion: simplify __git_complete_revlist_file
+
+* ld/git-p4-tags-and-labels (2012-05-11) 3 commits
+  (merged to 'next' on 2012-05-11 at 441bd9a)
+ + git p4: fix bug when enabling tag import/export via config variables
+ + git p4: fix bug when verbose enabled with tag export
+ + git p4: add test for tag import/export enabled via config
+
+* nd/i18n-parseopt (2012-05-08) 2 commits
+  (merged to 'next' on 2012-05-08 at 15eb029)
+ + i18n: apply: mark parseopt strings for translation
+ + i18n: parseopt: lookup help and argument translations when showing usage
+
+Text from "git cmd --help" are getting prepared for i18n.
+
+* nd/threaded-index-pack (2012-05-07) 4 commits
+  (merged to 'next' on 2012-05-08 at 053b797)
+ + index-pack: disable threading if NO_PREAD is defined
+ + index-pack: support multithreaded delta resolving
+ + index-pack: restructure pack processing into three main functions
+ + compat/win32/pthread.h: Add an pthread_key_delete() implementation
+
+Enables threading in index-pack to resolve base data in parallel.
+
+* rs/xdiff-lose-emit-func (2012-05-14) 7 commits
+  (merged to 'next' on 2012-05-14 at 422f328)
+ + builtin/blame.c: Fix a "Using plain integer as NULL pointer" warning
   (merged to 'next' on 2012-05-11 at 1eeb893)
  + xdiff: remove unused functions
  + xdiff: remove emit_func() and xdi_diff_hunks()
@@ -174,8 +157,11 @@ everything in memory first.
  + xdiff: add hunk_func()
 
 Simplifies the interface between the implementation of "blame" and
-underlying xdiff engine, and removes a lot of unnecessary code from
-the latter.
+underlying xdiff engine, and removes a lot of unused or unnecessary code
+from the latter.
+
+--------------------------------------------------
+[Stalled]
 
 * sg/bash-prompt (2012-05-09) 4 commits
  - completion: respect $GIT_DIR
@@ -186,7 +172,10 @@ the latter.
 This is only the "correction" bits taken from the beginning of a larger
 series that is to be rerolled.
 
-* jc/apply-3way (2012-05-10) 9 commits
+* jc/apply-3way (2012-05-16) 12 commits
+ - WIP: the message is bogus in apply:::check_patch()
+ - apply: refactor "previous patch" logic
+ - apply: a bit more comments on PATH_TO_BE_DELETED
  - apply: document --3way option
  - apply: allow rerere() upon --3way results
  - apply: register conflicted stages to the index
@@ -196,22 +185,15 @@ series that is to be rerolled.
  - apply: split load_preimage() helper function out
  - apply: refactor read_file_or_gitlink()
  - apply: clear_image() clears things a bit more
+ (this branch is tangled with jc/wip-apply-3way.)
 
 "git apply" learns to wiggle the base version and perform three-way merge
 when a patch does not exactly apply to the version you have.
 
-* ld/git-p4-tags-and-labels (2012-05-11) 3 commits
-  (merged to 'next' on 2012-05-11 at 441bd9a)
- + git p4: fix bug when enabling tag import/export via config variables
- + git p4: fix bug when verbose enabled with tag export
- + git p4: add test for tag import/export enabled via config
-
-* rs/dir-strbuf-read-recursive-fix (2012-05-11) 2 commits
- - dir: simplify fill_directory()
- - dir: respect string length argument of read_directory_recursive()
-
---------------------------------------------------
-[Stalled]
+It turns out that it is somewhat unpleasant to handle add/add conflicts in
+this code, but it seems necessary if we want to use "apply -3" to replace
+the use of "apply --build-fake-ancestor" followed by the slow "merge" in
+"am -3".
 
 * jc/maint-push-refs-all (2012-05-04) 2 commits
  - get_fetch_map(): tighten checks on dest refs
@@ -262,6 +244,10 @@ not working :-(.
 --------------------------------------------------
 [Cooking]
 
+* rs/dir-strbuf-read-recursive-fix (2012-05-11) 2 commits
+ - dir: simplify fill_directory()
+ - dir: respect string length argument of read_directory_recursive()
+
 * nl/http-proxy-more (2012-05-11) 2 commits
  - http: rename HTTP_REAUTH to HTTP_AUTH_RETRY
  - http: Avoid limit of retrying request only twice
@@ -269,30 +255,6 @@ not working :-(.
 I queued only the later two patches from this series, even though they do
 not make much sense without the first one that seems to need a bit more
 work, so that we won't forget.
-
-* fc/simplify-complete-revlist-file (2012-05-07) 1 commit
-  (merged to 'next' on 2012-05-08 at ff0b7d1)
- + completion: simplify __git_complete_revlist_file
-
-Will merge to 'master'.
-
-* nd/i18n-parseopt (2012-05-08) 2 commits
-  (merged to 'next' on 2012-05-08 at 15eb029)
- + i18n: apply: mark parseopt strings for translation
- + i18n: parseopt: lookup help and argument translations when showing usage
-
-Text from "git cmd --help" are getting prepared for i18n.
-
-* nd/threaded-index-pack (2012-05-07) 4 commits
-  (merged to 'next' on 2012-05-08 at 053b797)
- + index-pack: disable threading if NO_PREAD is defined
- + index-pack: support multithreaded delta resolving
- + index-pack: restructure pack processing into three main functions
- + compat/win32/pthread.h: Add an pthread_key_delete() implementation
-
-Enables threading in index-pack to resolve base data in parallel.
-
-Will merge to 'master'.
 
 * mm/push-default-switch-warning (2012-04-26) 2 commits
  - t5541: warning message is given even with --quiet
@@ -308,8 +270,5 @@ Will squash the two, but this has to wait for a few release cycles.
  + Revert "git-daemon wrapper to wait until daemon is ready"
   (merged to 'next' on 2012-04-24 at d5c30be)
  + git-daemon wrapper to wait until daemon is ready
-
-Fix race condition between starting and waiting for git-daemon in the
-test.
 
 Reverted from 'next' to replace it with js/daemon-test-race-fix.
