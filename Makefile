@@ -1340,7 +1340,9 @@ ifneq (,$(findstring MINGW,$(uname_S)))
 		compat/win32/pthread.o compat/win32/syslog.o \
 		compat/win32/poll.o compat/win32/dirent.o
 	EXTLIBS += -lws2_32
+	GITLIBS += git.res
 	PTHREAD_LIBS =
+	RC = windres -O coff
 	X = .exe
 	SPARSE_FLAGS = -Wno-one-bit-signed-bitfield
 ifneq (,$(wildcard ../THIS_IS_MSYSGIT))
@@ -1831,6 +1833,7 @@ ifndef V
 	QUIET_MSGFMT   = @echo '   ' MSGFMT $@;
 	QUIET_GCOV     = @echo '   ' GCOV $@;
 	QUIET_SP       = @echo '   ' SP $<;
+	QUIET_RC       = @echo '   ' RC $@;
 	QUIET_SUBDIR0  = +@subdir=
 	QUIET_SUBDIR1  = ;$(NO_SUBDIR) echo '   ' SUBDIR $$subdir; \
 			 $(MAKE) $(PRINT_DIR) -C $$subdir
@@ -2017,6 +2020,11 @@ $(patsubst %.sh,%,$(SCRIPT_SH)) : % : %.sh
 $(SCRIPT_LIB) : % : %.sh
 	$(QUIET_GEN)$(cmd_munge_script) && \
 	mv $@+ $@
+
+git.res: git.rc
+	$(QUIET_RC)$(RC) \
+	  $(join -DMAJOR= -DMINOR= -DPATCH=, $(wordlist 1,3,$(subst ., ,$(GIT_VERSION)))) \
+	  -DGIT_VERSION="\\\"$(GIT_VERSION)\\\"" $< -o $@
 
 ifndef NO_PERL
 $(patsubst %.perl,%,$(SCRIPT_PERL)): perl/perl.mak
@@ -2705,7 +2713,7 @@ profile-clean:
 	$(RM) $(addsuffix *.gcno,$(addprefix $(PROFILE_DIR)/, $(object_dirs)))
 
 clean: profile-clean
-	$(RM) *.o block-sha1/*.o ppc/*.o compat/*.o compat/*/*.o xdiff/*.o vcs-svn/*.o \
+	$(RM) *.o *.res block-sha1/*.o ppc/*.o compat/*.o compat/*/*.o xdiff/*.o vcs-svn/*.o \
 		builtin/*.o $(LIB_FILE) $(XDIFF_LIB) $(VCSSVN_LIB)
 	$(RM) $(ALL_PROGRAMS) $(SCRIPT_LIB) $(BUILT_INS) git$X
 	$(RM) $(TEST_PROGRAMS)
@@ -2843,4 +2851,3 @@ cover_db: coverage-report
 
 cover_db_html: cover_db
 	cover -report html -outputdir cover_db_html cover_db
-
