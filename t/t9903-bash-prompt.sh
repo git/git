@@ -7,7 +7,7 @@ test_description='test git-specific bash prompt functions'
 
 . ./lib-bash.sh
 
-. "$GIT_BUILD_DIR/contrib/completion/git-completion.bash"
+. "$GIT_BUILD_DIR/contrib/completion/git-prompt.sh"
 
 actual="$TRASH_DIRECTORY/actual"
 
