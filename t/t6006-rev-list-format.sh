@@ -282,4 +282,11 @@ test_expect_success 'oneline with empty message' '
 	test $(git rev-list --oneline --graph HEAD | wc -l) -eq 5
 '
 
+test_expect_success 'single-character name is parsed correctly' '
+	git commit --author="a <a@example.com>" --allow-empty -m foo &&
+	echo "a <a@example.com>" >expect &&
+	git log -1 --format="%an <%ae>" >actual &&
+	test_cmp expect actual
+'
+
 test_done
