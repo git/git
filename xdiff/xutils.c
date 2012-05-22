@@ -280,9 +280,11 @@ static unsigned long xdl_hash_record_with_whitespace(char const **data,
 
 #ifdef XDL_FAST_HASH
 
-#define ONEBYTES	0x0101010101010101ul
-#define NEWLINEBYTES	0x0a0a0a0a0a0a0a0aul
-#define HIGHBITS	0x8080808080808080ul
+#define REPEAT_BYTE(x)  ((~0ul / 0xff) * (x))
+
+#define ONEBYTES	REPEAT_BYTE(0x01)
+#define NEWLINEBYTES	REPEAT_BYTE(0x0a)
+#define HIGHBITS	REPEAT_BYTE(0x80)
 
 /* Return the high bit set in the first byte that is a zero */
 static inline unsigned long has_zero(unsigned long a)
