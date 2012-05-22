@@ -176,7 +176,7 @@ test_expect_success 'test "foreach --quiet --recursive"' '
 		cd clone2 &&
 		git submodule foreach -q --recursive "echo \$name-\$path" > ../actual
 	) &&
-	test_cmp expect actual
+	test_cmp_text expect actual
 '
 
 test_expect_success 'use "update --recursive" to checkout all submodules' '
@@ -223,7 +223,7 @@ test_expect_success 'test "status --recursive"' '
 		cd clone3 &&
 		git submodule status --recursive > ../actual
 	) &&
-	test_cmp expect actual
+	test_cmp_text expect actual
 '
 
 sed -e "/nested1 /s/.*/+$nested1sha1 nested1 (file2~1)/;/sub[1-3]/d" < expect > expect2
@@ -238,11 +238,7 @@ test_expect_success 'ensure "status --cached --recursive" preserves the --cached
 		) &&
 		git submodule status --cached --recursive -- nested1 > ../actual
 	) &&
-	if test_have_prereq MINGW
-	then
-		dos2unix actual
-	fi &&
-	test_cmp expect actual
+	test_cmp_text expect actual
 '
 
 test_expect_success 'use "git clone --recursive" to checkout all submodules' '

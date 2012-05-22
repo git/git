@@ -18,6 +18,8 @@
 #include "parse-options.h"
 #include "quote.h"
 
+#define REF_HANDLED (ALL_REV_FLAGS + 1)
+
 static const char *fast_export_usage[] = {
 	"git fast-export [rev-list-opts]",
 	NULL
@@ -473,6 +475,7 @@ static void handle_tag(const char *name, struct tag *tag)
 }
 
 static void get_tags_and_duplicates(struct object_array *pending,
+				    struct string_list *refs,
 				    struct string_list *extra_refs)
 {
 	struct tag *tag;
@@ -484,7 +487,7 @@ static void get_tags_and_duplicates(struct object_array *pending,
 		struct commit *commit = commit;
 		char *full_name;
 
-		if (dwim_ref(e->name, strlen(e->name), sha1, &full_name) != 1)
+		if ((e->flags & UNINTERESTING) || dwim_ref(e->name, strlen(e->name), sha1, &full_name) != 1)
 			continue;
 
 		switch (e->item->type) {
@@ -524,15 +527,48 @@ static void get_tags_and_duplicates(struct object_array *pending,
 		if (commit->util)
 			/* more than one name for the same object */
 			string_list_append(extra_refs, full_name)->util = commit;
-		else
+		else {
 			commit->util = full_name;
+			/* we might need to set this ref explicitly */
+			string_list_append(refs, full_name)->util = commit;
+		}
 	}
 }
 
-static void handle_tags_and_duplicates(struct string_list *extra_refs)
+static void handle_reset(const char *name, struct object *object)
 {
-	struct commit *commit;
+	int mark = get_object_mark(object);
+
+	if (mark)
+		printf("reset %s\nfrom :%d\n\n", name,
+		       get_object_mark(object));
+	else
+		printf("reset %s\nfrom %s\n\n", name,
+		       sha1_to_hex(object->sha1));
+}
+
+static void handle_tags_and_duplicates(struct string_list *refs, struct string_list *extra_refs)
+{
 	int i;
+
+	/* even if no commits were exported, we need to export the ref */
+	for (i = refs->nr - 1; i >= 0; i--) {
+		const char *name = refs->items[i].string;
+		struct object *object = refs->items[i].util;
+
+		if (!(object->flags & REF_HANDLED)) {
+			if (object->type & OBJ_TAG)
+				handle_tag(name, (struct tag *)object);
+			else {
+				if (!prefixcmp(name, "refs/tags/") &&
+				    (tag_of_filtered_mode != REWRITE ||
+				     !get_object_mark(object)))
+					continue;
+				handle_reset(name, object);
+				object->flags |= REF_HANDLED;
+			}
+		}
+	}
 
 	for (i = extra_refs->nr - 1; i >= 0; i--) {
 		const char *name = extra_refs->items[i].string;
@@ -543,9 +579,7 @@ static void handle_tags_and_duplicates(struct string_list *extra_refs)
 			break;
 		case OBJ_COMMIT:
 			/* create refs pointing to already seen commits */
-			commit = (struct commit *)object;
-			printf("reset %s\nfrom :%d\n\n", name,
-			       get_object_mark(&commit->object));
+			handle_reset(name, object);
 			show_progress();
 			break;
 		}
@@ -610,7 +644,7 @@ static void import_marks(char *input_file)
 			die ("Could not read blob %s", sha1_to_hex(sha1));
 
 		if (object->flags & SHOWN)
-			error("Object %s already has a mark", sha1);
+			error("Object %s already has a mark", sha1_to_hex(sha1));
 
 		mark_object(object, mark);
 		if (last_idnum < mark)
@@ -625,7 +659,7 @@ int cmd_fast_export(int argc, const char **argv, const char *prefix)
 {
 	struct rev_info revs;
 	struct object_array commits = OBJECT_ARRAY_INIT;
-	struct string_list extra_refs = STRING_LIST_INIT_NODUP;
+	struct string_list refs = STRING_LIST_INIT_NODUP, extra_refs = STRING_LIST_INIT_NODUP;
 	struct commit *commit;
 	char *export_filename = NULL, *import_filename = NULL;
 	struct option options[] = {
@@ -675,7 +709,7 @@ int cmd_fast_export(int argc, const char **argv, const char *prefix)
 	if (import_filename && revs.prune_data.nr)
 		full_tree = 1;
 
-	get_tags_and_duplicates(&revs.pending, &extra_refs);
+	get_tags_and_duplicates(&revs.pending, &refs, &extra_refs);
 
 	if (prepare_revision_walk(&revs))
 		die("revision walk setup failed");
@@ -687,11 +721,12 @@ int cmd_fast_export(int argc, const char **argv, const char *prefix)
 		}
 		else {
 			handle_commit(commit, &revs);
+			commit->object.flags |= REF_HANDLED;
 			handle_tail(&commits, &revs);
 		}
 	}
 
-	handle_tags_and_duplicates(&extra_refs);
+	handle_tags_and_duplicates(&refs, &extra_refs);
 
 	if (export_filename)
 		export_marks(export_filename);

@@ -38,14 +38,14 @@ class GitRepo(object):
         self.path = path
         self.head = None
         self.revmap = {}
-        self.local = not is_remote(self.path)
+        self.local = lambda: not is_remote(self.path)
 
         if(self.path.endswith('.git')):
             self.gitpath = self.path
         else:
             self.gitpath = os.path.join(self.path, '.git')
 
-        if self.local and not os.path.exists(self.gitpath):
+        if self.local() and not os.path.exists(self.gitpath):
             os.makedirs(self.gitpath)
 
     def get_revs(self):
@@ -61,14 +61,14 @@ class GitRepo(object):
         self.revmap = dict(sanitize(i) for i in output)
         if "HEAD" in self.revmap:
             del self.revmap["HEAD"]
-        self.revs = self.revmap.keys()
+        self.revs_ = self.revmap.keys()
         ofile.close()
 
     def get_head(self):
         """Determines the head of a local repo.
         """
 
-        if not self.local:
+        if not self.local():
             return
 
         path = os.path.join(self.gitpath, "HEAD")

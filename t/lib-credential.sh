@@ -9,7 +9,7 @@ check() {
 	read_chunk >expect-stderr &&
 	test-credential "$@" <stdin >stdout 2>stderr &&
 	test_cmp expect-stdout stdout &&
-	test_cmp expect-stderr stderr
+	test_cmp_text expect-stderr stderr
 }
 
 read_chunk() {

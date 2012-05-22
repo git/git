@@ -8,7 +8,7 @@ test_description='Test remote-helper import and export commands'
 . ./test-lib.sh
 
 if ! test_have_prereq PYTHON ; then
-	skip_all='skipping git-remote-hg tests, python not available'
+	skip_all='skipping remote helper tests, python not available'
 	test_done
 fi
 
@@ -17,7 +17,7 @@ import sys
 if sys.hexversion < 0x02040000:
     sys.exit(1)
 ' || {
-	skip_all='skipping git-remote-hg tests, python version < 2.4'
+	skip_all='skipping remote helper tests, python version < 2.4'
 	test_done
 }
 
@@ -137,6 +137,25 @@ test_expect_success 'push new branch by name' '
 	) &&
 	compare_refs clone HEAD server refs/heads/new-name
 '
+
+test_expect_success 'push new branch with old content' '
+	(cd clone &&
+	 git checkout -b existing &&
+	 git push origin existing
+	) &&
+	compare_refs clone refs/heads/existing server refs/heads/existing
+'
+
+test_expect_failure BROKEN 'delete branch' '
+	(cd clone &&
+	 git checkout -b delete-me &&
+	 echo content >>file &&
+	 git commit -a -m eight &&
+	 git push origin delete-me
+	 git push origin :delete-me) &&
+	test_must_fail git --git-dir="server/.git" rev-parse --verify delete-me
+'
+
 
 test_expect_failure 'push new branch with old:new refspec' '
 	(cd clone &&

@@ -187,6 +187,12 @@ The default is true, except linkgit:git-clone[1] or linkgit:git-init[1]
 will probe and set core.fileMode false if appropriate when the
 repository is created.
 
+core.hideDotFiles::
+	(Windows-only) If true (which is the default), mark newly-created
+	directories and files whose name starts with a dot as hidden.
+	If 'dotGitOnly', only the .git/ directory is hidden, but no other
+	files starting with a dot.
+
 core.ignoreCygwinFSTricks::
 	This option is only used by Cygwin implementation of Git. If false,
 	the Cygwin stat() and lstat() functions are used. This may be useful
@@ -711,6 +717,7 @@ branch.<name>.rebase::
 	instead of merging the default branch from the default remote when
 	"git pull" is run. See "pull.rebase" for doing this in a non
 	branch-specific manner.
+	When the value is `interactive`, the rebase is run in interactive mode.
 +
 *NOTE*: this is a possibly dangerous operation; do *not* use
 it unless you understand the implications (see linkgit:git-rebase[1]
@@ -1791,6 +1798,11 @@ receive.denyCurrentBranch::
 	print a warning of such a push to stderr, but allow the push to
 	proceed. If set to false or "ignore", allow such pushes with no
 	message. Defaults to "refuse".
++
+There are two more options that are meant for Git experts: "updateInstead"
+which will run `read-tree -u -m HEAD` and "detachInstead" which will detach
+the HEAD so it does not need to change.  Both options come with their own
+set of possible *complications*, but can be appropriate in rare workflows.
 
 receive.denyNonFastForwards::
 	If set to true, git-receive-pack will deny a ref update which is

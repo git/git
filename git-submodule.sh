@@ -152,9 +152,6 @@ module_clone()
 
 	a=$(cd "$gitdir" && pwd)/
 	b=$(cd "$sm_path" && pwd)/
-	# normalize Windows-style absolute paths to POSIX-style absolute paths
-	case $a in [a-zA-Z]:/*) a=/${a%%:*}${a#*:} ;; esac
-	case $b in [a-zA-Z]:/*) b=/${b%%:*}${b#*:} ;; esac
 	# Remove all common leading directories after a sanity check
 	if test "${a#$b}" != "$a" || test "${b#$a}" != "$b"; then
 		die "$(eval_gettext "Gitdir '\$a' is part of the submodule path '\$b' or vice versa")"
@@ -267,9 +264,11 @@ cmd_add()
 
 	if test -z "$force" && ! git add --dry-run --ignore-missing "$sm_path" > /dev/null 2>&1
 	then
-		eval_gettextln "The following path is ignored by one of your .gitignore files:
-\$sm_path
-Use -f if you really want to add it." >&2
+		cat >&2 <<EOF
+The following path is ignored by one of your .gitignore files:
+$(eval_gettextln $sm_path)
+Use -f if you really want to add it.
+EOF
 		exit 1
 	fi
 
@@ -836,12 +835,16 @@ cmd_summary() {
 	done |
 	if test -n "$for_status"; then
 		if [ -n "$files" ]; then
-			gettextln "# Submodules changed but not updated:"
+			status_msg="$(gettextln "# Submodules changed but not updated:")"
 		else
-			gettextln "# Submodule changes to be committed:"
+			status_msg="$(gettextln "# Submodule changes to be committed:")"
 		fi
-		echo "#"
-		sed -e 's|^|# |' -e 's|^# $|#|'
+		status_sed=$(sed -e 's|^|# |' -e 's|^# $|#|')
+		cat <<EOF
+$status_msg
+#
+$status_sed
+EOF
 	else
 		cat
 	fi

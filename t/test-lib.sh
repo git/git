@@ -15,6 +15,10 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see http://www.gnu.org/licenses/ .
 
+# for git on windows so stdin will not be misdetected as attached to a
+# terminal
+exec < /dev/null
+
 # if --tee was passed, write the output not only to the terminal, but
 # additionally to the file test-results/$BASENAME.out, too.
 case "$GIT_TEST_TEE_STARTED, $* " in
@@ -631,12 +635,24 @@ else
 	test_set_prereq C_LOCALE_OUTPUT
 fi
 
+# Use this instead of test_cmp to compare files that are expected to contain
+# text (and therefore it should not matter whether the line ends in an LF or
+# a CR/LF).
+test_cmp_text () {
+	if test_have_prereq MINGW
+	then
+		dos2unix "$1" &&
+		dos2unix "$2"
+	fi &&
+	test_cmp "$@"
+}
+
 # Use this instead of test_cmp to compare files that contain expected and
 # actual output from git commands that can be translated.  When running
 # under GETTEXT_POISON this pretends that the command produced expected
 # results.
 test_i18ncmp () {
-	test -n "$GETTEXT_POISON" || test_cmp "$@"
+	test -n "$GETTEXT_POISON" || test_cmp_text "$@"
 }
 
 # Use this instead of "grep expected-string actual" to see if the

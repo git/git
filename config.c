@@ -758,6 +758,15 @@ static int git_default_core_config(const char *var, const char *value)
 		return 0;
 	}
 
+	if (!strcmp(var, "core.hidedotfiles")) {
+		if (value && !strcasecmp(value, "dotgitonly")) {
+			hide_dotfiles = HIDE_DOTFILES_DOTGITONLY;
+			return 0;
+		}
+		hide_dotfiles = git_config_bool(var, value);
+		return 0;
+	}
+
 	/* Add other config variables here and to Documentation/config.txt. */
 	return 0;
 }
@@ -959,7 +968,7 @@ int git_config_early(config_fn_t fn, void *data, const char *repo_config)
 		found += 1;
 	}
 
-	home = getenv("HOME");
+	home = get_home_directory();
 	if (home) {
 		char buf[PATH_MAX];
 		char *user_config = mksnpath(buf, sizeof(buf), "%s/.gitconfig", home);
