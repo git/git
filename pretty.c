@@ -547,8 +547,10 @@ static size_t format_person_part(struct strbuf *sb, char part,
 	mail_end = s.mail_end;
 
 	if (part == 'N' || part == 'E') { /* mailmap lookup */
-		strlcpy(person_name, name_start, name_end - name_start + 1);
-		strlcpy(person_mail, mail_start, mail_end - mail_start + 1);
+		snprintf(person_name, sizeof(person_name), "%.*s",
+			 (int)(name_end - name_start), name_start);
+		snprintf(person_mail, sizeof(person_mail), "%.*s",
+			 (int)(mail_end - mail_start), mail_start);
 		mailmap_name(person_mail, sizeof(person_mail), person_name, sizeof(person_name));
 		name_start = person_name;
 		name_end = name_start + strlen(person_name);
