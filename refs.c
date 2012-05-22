@@ -352,9 +352,9 @@ static struct ref_entry *search_ref_dir(struct ref_dir *dir,
  * directory cannot be found.  dir must already be complete.
  */
 static struct ref_dir *search_for_subdir(struct ref_dir *dir,
-					 const char *subdirname, int mkdir)
+					 const char *subdirname, size_t len,
+					 int mkdir)
 {
-	size_t len = strlen(subdirname);
 	struct ref_entry *entry = search_ref_dir(dir, subdirname, len);
 	if (!entry) {
 		if (!mkdir)
@@ -383,15 +383,11 @@ static struct ref_dir *search_for_subdir(struct ref_dir *dir,
 static struct ref_dir *find_containing_dir(struct ref_dir *dir,
 					   const char *refname, int mkdir)
 {
-	struct strbuf dirname;
 	const char *slash;
-	strbuf_init(&dirname, PATH_MAX);
 	for (slash = strchr(refname, '/'); slash; slash = strchr(slash + 1, '/')) {
+		size_t dirnamelen = slash - refname + 1;
 		struct ref_dir *subdir;
-		strbuf_add(&dirname,
-			   refname + dirname.len,
-			   (slash + 1) - (refname + dirname.len));
-		subdir = search_for_subdir(dir, dirname.buf, mkdir);
+		subdir = search_for_subdir(dir, refname, dirnamelen, mkdir);
 		if (!subdir) {
 			dir = NULL;
 			break;
@@ -399,7 +395,6 @@ static struct ref_dir *find_containing_dir(struct ref_dir *dir,
 		dir = subdir;
 	}
 
-	strbuf_release(&dirname);
 	return dir;
 }
 
