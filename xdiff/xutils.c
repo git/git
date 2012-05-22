@@ -301,7 +301,13 @@ static inline long count_masked_bytes(unsigned long mask)
 		 * that works for the bytemasks without having to
 		 * mask them first.
 		 */
-		return mask * 0x0001020304050608 >> 56;
+		/*
+		 * return mask * 0x0001020304050608 >> 56;
+		 *
+		 * Doing it like this avoids warnings on 32-bit machines.
+		 */
+		long a = (REPEAT_BYTE(0x01) / 0xff + 1);
+		return mask * a >> (sizeof(long) * 7);
 	} else {
 		/*
 		 * Modified Carl Chatfield G+ version for 32-bit *
