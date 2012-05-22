@@ -315,6 +315,23 @@ static int ref_entry_cmp(const void *a, const void *b)
 
 static void sort_ref_dir(struct ref_dir *dir);
 
+struct string_slice {
+	size_t len;
+	const char *str;
+};
+
+static int ref_entry_cmp_sslice(const void *key_, const void *ent_)
+{
+	struct string_slice *key = (struct string_slice *)key_;
+	struct ref_entry *ent = *(struct ref_entry **)ent_;
+	int entlen = strlen(ent->name);
+	int cmplen = key->len < entlen ? key->len : entlen;
+	int cmp = memcmp(key->str, ent->name, cmplen);
+	if (cmp)
+		return cmp;
+	return key->len - entlen;
+}
+
 /*
  * Return the entry with the given refname from the ref_dir
  * (non-recursively), sorting dir if necessary.  Return NULL if no
@@ -323,20 +340,17 @@ static void sort_ref_dir(struct ref_dir *dir);
 static struct ref_entry *search_ref_dir(struct ref_dir *dir,
 					const char *refname, size_t len)
 {
-	struct ref_entry *e, **r;
+	struct ref_entry **r;
+	struct string_slice key;
 
 	if (refname == NULL || !dir->nr)
 		return NULL;
 
 	sort_ref_dir(dir);
-
-	e = xmalloc(sizeof(struct ref_entry) + len + 1);
-	memcpy(e->name, refname, len);
-	e->name[len] = '\0';
-
-	r = bsearch(&e, dir->entries, dir->nr, sizeof(*dir->entries), ref_entry_cmp);
-
-	free(e);
+	key.len = len;
+	key.str = refname;
+	r = bsearch(&key, dir->entries, dir->nr, sizeof(*dir->entries),
+		    ref_entry_cmp_sslice);
 
 	if (r == NULL)
 		return NULL;
