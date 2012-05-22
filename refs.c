@@ -319,19 +319,19 @@ static void sort_ref_dir(struct ref_dir *dir);
  * (non-recursively), sorting dir if necessary.  Return NULL if no
  * such entry is found.  dir must already be complete.
  */
-static struct ref_entry *search_ref_dir(struct ref_dir *dir, const char *refname)
+static struct ref_entry *search_ref_dir(struct ref_dir *dir,
+					const char *refname, size_t len)
 {
 	struct ref_entry *e, **r;
-	int len;
 
 	if (refname == NULL || !dir->nr)
 		return NULL;
 
 	sort_ref_dir(dir);
 
-	len = strlen(refname) + 1;
-	e = xmalloc(sizeof(struct ref_entry) + len);
+	e = xmalloc(sizeof(struct ref_entry) + len + 1);
 	memcpy(e->name, refname, len);
+	e->name[len] = '\0';
 
 	r = bsearch(&e, dir->entries, dir->nr, sizeof(*dir->entries), ref_entry_cmp);
 
@@ -353,7 +353,8 @@ static struct ref_entry *search_ref_dir(struct ref_dir *dir, const char *refname
 static struct ref_dir *search_for_subdir(struct ref_dir *dir,
 					 const char *subdirname, int mkdir)
 {
-	struct ref_entry *entry = search_ref_dir(dir, subdirname);
+	size_t len = strlen(subdirname);
+	struct ref_entry *entry = search_ref_dir(dir, subdirname, len);
 	if (!entry) {
 		if (!mkdir)
 			return NULL;
@@ -412,7 +413,7 @@ static struct ref_entry *find_ref(struct ref_dir *dir, const char *refname)
 	dir = find_containing_dir(dir, refname, 0);
 	if (!dir)
 		return NULL;
-	entry = search_ref_dir(dir, refname);
+	entry = search_ref_dir(dir, refname, strlen(refname));
 	return (entry && !(entry->flag & REF_DIR)) ? entry : NULL;
 }
 
