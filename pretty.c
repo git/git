@@ -1010,6 +1010,7 @@ static size_t format_commit_one(struct strbuf *sb, const char *placeholder,
 				get_reflog_selector(sb,
 						    c->pretty_ctx->reflog_info,
 						    c->pretty_ctx->date_mode,
+						    c->pretty_ctx->date_mode_explicit,
 						    (placeholder[1] == 'd'));
 			return 2;
 		case 's':	/* reflog message */
