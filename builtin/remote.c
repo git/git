@@ -674,7 +674,7 @@ static int mv(int argc, const char **argv)
 				      strlen(rename.old), rename.new,
 				      strlen(rename.new));
 		} else
-			warning(_("Not updating non-default fetch respec\n"
+			warning(_("Not updating non-default fetch refspec\n"
 				  "\t%s\n"
 				  "\tPlease update the configuration manually if necessary."),
 				buf2.buf);

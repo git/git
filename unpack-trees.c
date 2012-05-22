@@ -1210,7 +1210,7 @@ static int verify_uptodate_1(struct cache_entry *ce,
 			return 0;
 		/*
 		 * NEEDSWORK: the current default policy is to allow
-		 * submodule to be out of sync wrt the supermodule
+		 * submodule to be out of sync wrt the superproject
 		 * index.  This needs to be tightened later for
 		 * submodules that are marked to be automatically
 		 * checked out.
