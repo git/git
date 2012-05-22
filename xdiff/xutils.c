@@ -309,19 +309,11 @@ static inline long count_masked_bytes(unsigned long mask)
 		long a = (REPEAT_BYTE(0x01) / 0xff + 1);
 		return mask * a >> (sizeof(long) * 7);
 	} else {
-		/*
-		 * Modified Carl Chatfield G+ version for 32-bit *
-		 *
-		 * (a) gives us
-		 *   -1 (0, ff), 0 (ffff) or 1 (ffffff)
-		 * (b) gives us
-		 *   0 for 0, 1 for (ff ffff ffffff)
-		 * (a+b+1) gives us
-		 *   correct 0-3 bytemask count result
-		 */
-		long a = (mask - 256) >> 23;
-		long b = mask & 1;
-		return a + b + 1;
+		/* Carl Chatfield / Jan Achrenius G+ version for 32-bit */
+		/* (000000 0000ff 00ffff ffffff) -> ( 1 1 2 3 ) */
+		long a = (0x0ff0001 + mask) >> 23;
+		/* Fix the 1 for 00 case */
+		return a & mask;
 	}
 }
 
