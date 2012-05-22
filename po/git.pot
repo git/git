@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: Git Mailing List <git@vger.kernel.org>\n"
-"POT-Creation-Date: 2012-05-15 06:42+0800\n"
+"POT-Creation-Date: 2012-05-21 08:57+0800\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -326,6 +326,27 @@ msgid_plural ""
 "Did you mean one of these?"
 msgstr[0] ""
 msgstr[1] ""
+
+#: parse-options.c:493
+msgid "..."
+msgstr ""
+
+#: parse-options.c:511
+#, c-format
+msgid "usage: %s"
+msgstr ""
+
+#. TRANSLATORS: the colon here should align with the
+#. one in "usage: %s" translation
+#: parse-options.c:515
+#, c-format
+msgid "   or: %s"
+msgstr ""
+
+#: parse-options.c:518
+#, c-format
+msgid "    %s"
+msgstr ""
 
 #: remote.c:1607
 #, c-format
@@ -941,6 +962,10 @@ msgstr ""
 msgid "Unable to write new index file"
 msgstr ""
 
+#: builtin/apply.c:53
+msgid "git apply [options] [<patch>...]"
+msgstr ""
+
 #: builtin/apply.c:106
 #, c-format
 msgid "unrecognized whitespace option '%s'"
@@ -1256,6 +1281,118 @@ msgstr ""
 
 #: builtin/apply.c:3847
 msgid "unable to read index file"
+msgstr ""
+
+#: builtin/apply.c:3962 builtin/apply.c:3965
+msgid "path"
+msgstr ""
+
+#: builtin/apply.c:3963
+msgid "don't apply changes matching the given path"
+msgstr ""
+
+#: builtin/apply.c:3966
+msgid "apply changes matching the given path"
+msgstr ""
+
+#: builtin/apply.c:3968
+msgid "num"
+msgstr ""
+
+#: builtin/apply.c:3969
+msgid "remove <num> leading slashes from traditional diff paths"
+msgstr ""
+
+#: builtin/apply.c:3972
+msgid "ignore additions made by the patch"
+msgstr ""
+
+#: builtin/apply.c:3974
+msgid "instead of applying the patch, output diffstat for the input"
+msgstr ""
+
+#: builtin/apply.c:3978
+msgid "shows number of added and deleted lines in decimal notation"
+msgstr ""
+
+#: builtin/apply.c:3980
+msgid "instead of applying the patch, output a summary for the input"
+msgstr ""
+
+#: builtin/apply.c:3982
+msgid "instead of applying the patch, see if the patch is applicable"
+msgstr ""
+
+#: builtin/apply.c:3984
+msgid "make sure the patch is applicable to the current index"
+msgstr ""
+
+#: builtin/apply.c:3986
+msgid "apply a patch without touching the working tree"
+msgstr ""
+
+#: builtin/apply.c:3988
+msgid "also apply the patch (use with --stat/--summary/--check)"
+msgstr ""
+
+#: builtin/apply.c:3990
+msgid "build a temporary index based on embedded index information"
+msgstr ""
+
+#: builtin/apply.c:3992
+msgid "paths are separated with NUL character"
+msgstr ""
+
+#: builtin/apply.c:3995
+msgid "ensure at least <n> lines of context match"
+msgstr ""
+
+#: builtin/apply.c:3996
+msgid "action"
+msgstr ""
+
+#: builtin/apply.c:3997
+msgid "detect new or modified lines that have whitespace errors"
+msgstr ""
+
+#: builtin/apply.c:4000 builtin/apply.c:4003
+msgid "ignore changes in whitespace when finding context"
+msgstr ""
+
+#: builtin/apply.c:4006
+msgid "apply the patch in reverse"
+msgstr ""
+
+#: builtin/apply.c:4008
+msgid "don't expect at least one line of context"
+msgstr ""
+
+#: builtin/apply.c:4010
+msgid "leave the rejected hunks in corresponding *.rej files"
+msgstr ""
+
+#: builtin/apply.c:4012
+msgid "allow overlapping hunks"
+msgstr ""
+
+#: builtin/apply.c:4013
+msgid "be verbose"
+msgstr ""
+
+#: builtin/apply.c:4015
+msgid "tolerate incorrectly detected missing new-line at the end of file"
+msgstr ""
+
+#: builtin/apply.c:4018
+msgid "do not trust the line counts in the hunk headers"
+msgstr ""
+
+#: builtin/apply.c:4020
+msgid "root"
+msgstr ""
+
+#: builtin/apply.c:4021
+msgid "prepend <root> to all filenames"
 msgstr ""
 
 #: builtin/apply.c:4042
@@ -4321,6 +4458,38 @@ msgstr ""
 
 #: git.c:16
 msgid "See 'git help <command>' for more information on a specific command."
+msgstr ""
+
+#: parse-options.h:133 parse-options.h:235
+msgid "n"
+msgstr ""
+
+#: parse-options.h:141
+msgid "time"
+msgstr ""
+
+#: parse-options.h:149
+msgid "file"
+msgstr ""
+
+#: parse-options.h:151
+msgid "when"
+msgstr ""
+
+#: parse-options.h:156
+msgid "no-op (backward compatibility)"
+msgstr ""
+
+#: parse-options.h:228
+msgid "be more verbose"
+msgstr ""
+
+#: parse-options.h:230
+msgid "be more quiet"
+msgstr ""
+
+#: parse-options.h:236
+msgid "use <n> digits to display SHA-1s"
 msgstr ""
 
 #: common-cmds.h:8
