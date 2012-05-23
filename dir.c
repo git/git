@@ -74,7 +74,6 @@ char *common_prefix(const char **pathspec)
 
 int fill_directory(struct dir_struct *dir, const char **pathspec)
 {
-	const char *path;
 	size_t len;
 
 	/*
@@ -82,15 +81,9 @@ int fill_directory(struct dir_struct *dir, const char **pathspec)
 	 * use that to optimize the directory walk
 	 */
 	len = common_prefix_len(pathspec);
-	path = "";
-
-	if (len)
-		path = xmemdupz(*pathspec, len);
 
 	/* Read the directory and prune it */
-	read_directory(dir, path, len, pathspec);
-	if (*path)
-		free((char *)path);
+	read_directory(dir, pathspec ? *pathspec : "", len, pathspec);
 	return len;
 }
 
@@ -960,15 +953,16 @@ static int read_directory_recursive(struct dir_struct *dir,
 				    int check_only,
 				    const struct path_simplify *simplify)
 {
-	DIR *fdir = opendir(*base ? base : ".");
+	DIR *fdir;
 	int contents = 0;
 	struct dirent *de;
 	struct strbuf path = STRBUF_INIT;
 
-	if (!fdir)
-		return 0;
-
 	strbuf_add(&path, base, baselen);
+
+	fdir = opendir(path.len ? path.buf : ".");
+	if (!fdir)
+		goto out;
 
 	while ((de = readdir(fdir)) != NULL) {
 		switch (treat_path(dir, de, &path, baselen, simplify)) {
@@ -984,12 +978,11 @@ static int read_directory_recursive(struct dir_struct *dir,
 		}
 		contents++;
 		if (check_only)
-			goto exit_early;
-		else
-			dir_add_name(dir, path.buf, path.len);
+			break;
+		dir_add_name(dir, path.buf, path.len);
 	}
-exit_early:
 	closedir(fdir);
+ out:
 	strbuf_release(&path);
 
 	return contents;
