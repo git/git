@@ -9,10 +9,10 @@ test_expect_success setup '
 	# clone does not allow us to pass core.bigfilethreshold to
 	# new repos, so set core.bigfilethreshold globally
 	git config --global core.bigfilethreshold 200k &&
-	echo X | dd of=large1 bs=1k seek=2000 &&
-	echo X | dd of=large2 bs=1k seek=2000 &&
-	echo X | dd of=large3 bs=1k seek=2000 &&
-	echo Y | dd of=huge bs=1k seek=2500 &&
+	perl -e "print \"\\0\" x 2048000; print \"X\\n\";" > large1 &&
+	perl -e "print \"\\0\" x 2048000; print \"X\\n\";" > large2 &&
+	perl -e "print \"\\0\" x 2048000; print \"X\\n\";" > large3 &&
+	perl -e "print \"\\0\" x 2560000; print \"Y\\n\";" > huge &&
 	GIT_ALLOC_LIMIT=1500 &&
 	export GIT_ALLOC_LIMIT
 '
