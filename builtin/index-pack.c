@@ -384,11 +384,27 @@ static void unlink_base_data(struct base_data *c)
 	free_base_data(c);
 }
 
-static void *unpack_entry_data(unsigned long offset, unsigned long size)
+static int is_delta_type(enum object_type type)
+{
+	return (type == OBJ_REF_DELTA || type == OBJ_OFS_DELTA);
+}
+
+static void *unpack_entry_data(unsigned long offset, unsigned long size,
+			       enum object_type type, unsigned char *sha1)
 {
 	int status;
 	git_zstream stream;
 	void *buf = xmalloc(size);
+	git_SHA_CTX c;
+	char hdr[32];
+	int hdrlen;
+
+	if (!is_delta_type(type)) {
+		hdrlen = sprintf(hdr, "%s %lu", typename(type), size) + 1;
+		git_SHA1_Init(&c);
+		git_SHA1_Update(&c, hdr, hdrlen);
+	} else
+		sha1 = NULL;
 
 	memset(&stream, 0, sizeof(stream));
 	git_inflate_init(&stream);
@@ -396,18 +412,25 @@ static void *unpack_entry_data(unsigned long offset, unsigned long size)
 	stream.avail_out = size;
 
 	do {
+		unsigned char *last_out = stream.next_out;
 		stream.next_in = fill(1);
 		stream.avail_in = input_len;
 		status = git_inflate(&stream, 0);
 		use(input_len - stream.avail_in);
+		if (sha1)
+			git_SHA1_Update(&c, last_out, stream.next_out - last_out);
 	} while (status == Z_OK);
 	if (stream.total_out != size || status != Z_STREAM_END)
 		bad_object(offset, _("inflate returned %d"), status);
 	git_inflate_end(&stream);
+	if (sha1)
+		git_SHA1_Final(sha1, &c);
 	return buf;
 }
 
-static void *unpack_raw_entry(struct object_entry *obj, union delta_base *delta_base)
+static void *unpack_raw_entry(struct object_entry *obj,
+			      union delta_base *delta_base,
+			      unsigned char *sha1)
 {
 	unsigned char *p;
 	unsigned long size, c;
@@ -467,7 +490,7 @@ static void *unpack_raw_entry(struct object_entry *obj, union delta_base *delta_
 	}
 	obj->hdr_size = consumed_bytes - obj->idx.offset;
 
-	data = unpack_entry_data(obj->idx.offset, obj->size);
+	data = unpack_entry_data(obj->idx.offset, obj->size, obj->type, sha1);
 	obj->idx.crc32 = input_crc32;
 	return data;
 }
@@ -569,9 +592,8 @@ static void find_delta_children(const union delta_base *base,
 }
 
 static void sha1_object(const void *data, unsigned long size,
-			enum object_type type, unsigned char *sha1)
+			enum object_type type, const unsigned char *sha1)
 {
-	hash_sha1_file(data, size, typename(type), sha1);
 	read_lock();
 	if (has_sha1_file(sha1)) {
 		void *has_data;
@@ -625,11 +647,6 @@ static void sha1_object(const void *data, unsigned long size,
 		}
 		read_unlock();
 	}
-}
-
-static int is_delta_type(enum object_type type)
-{
-	return (type == OBJ_REF_DELTA || type == OBJ_OFS_DELTA);
 }
 
 /*
@@ -711,6 +728,8 @@ static void resolve_delta(struct object_entry *delta_obj,
 	free(delta_data);
 	if (!result->data)
 		bad_object(delta_obj->idx.offset, _("failed to apply delta"));
+	hash_sha1_file(result->data, result->size,
+		       typename(delta_obj->real_type), delta_obj->idx.sha1);
 	sha1_object(result->data, result->size, delta_obj->real_type,
 		    delta_obj->idx.sha1);
 	counter_lock();
@@ -851,7 +870,7 @@ static void parse_pack_objects(unsigned char *sha1)
 				nr_objects);
 	for (i = 0; i < nr_objects; i++) {
 		struct object_entry *obj = &objects[i];
-		void *data = unpack_raw_entry(obj, &delta->base);
+		void *data = unpack_raw_entry(obj, &delta->base, obj->idx.sha1);
 		obj->real_type = obj->type;
 		if (is_delta_type(obj->type)) {
 			nr_deltas++;
