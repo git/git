@@ -5,9 +5,9 @@
 #
 msgid ""
 msgstr ""
-"Project-Id-Version: git 1.7.10\n"
+"Project-Id-Version: git 1.7.11\n"
 "Report-Msgid-Bugs-To: Git Mailing List <git@vger.kernel.org>\n"
-"POT-Creation-Date: 2012-05-15 06:42+0800\n"
+"POT-Creation-Date: 2012-05-21 08:57+0800\n"
 "PO-Revision-Date: 2012-03-28 18:46+0200\n"
 "Last-Translator: Ralf Thielow <ralf.thielow@googlemail.com>\n"
 "Language-Team: German\n"
@@ -342,6 +342,27 @@ msgstr[0] ""
 msgstr[1] ""
 "\n"
 "Hast du eines von diesen gemeint?"
+
+#: parse-options.c:493
+msgid "..."
+msgstr "..."
+
+#: parse-options.c:511
+#, c-format
+msgid "usage: %s"
+msgstr "Verwendung: %s"
+
+#. TRANSLATORS: the colon here should align with the
+#. one in "usage: %s" translation
+#: parse-options.c:515
+#, c-format
+msgid "   or: %s"
+msgstr "      oder: %s"
+
+#: parse-options.c:518
+#, c-format
+msgid "    %s"
+msgstr "    %s"
 
 #: remote.c:1607
 #, c-format
@@ -991,6 +1012,10 @@ msgstr "Bereitstellungsdatei beschädigt"
 msgid "Unable to write new index file"
 msgstr "Konnte neue Bereitstellungsdatei nicht schreiben."
 
+#: builtin/apply.c:53
+msgid "git apply [options] [<patch>...]"
+msgstr "git apply [Optionen] [<Patch>...]"
+
 #: builtin/apply.c:106
 #, c-format
 msgid "unrecognized whitespace option '%s'"
@@ -1319,6 +1344,127 @@ msgstr "nicht erkannte Eingabe"
 #: builtin/apply.c:3847
 msgid "unable to read index file"
 msgstr "Konnte Bereitstellungsdatei nicht lesen"
+
+#: builtin/apply.c:3962 builtin/apply.c:3965
+msgid "path"
+msgstr "Pfad"
+
+#: builtin/apply.c:3963
+msgid "don't apply changes matching the given path"
+msgstr "wendet keine Änderungen im angegebenen Pfad an"
+
+#: builtin/apply.c:3966
+msgid "apply changes matching the given path"
+msgstr "wendet Änderungen nur im angegebenen Pfad an"
+
+#: builtin/apply.c:3968
+msgid "num"
+msgstr "Anzahl"
+
+#: builtin/apply.c:3969
+msgid "remove <num> leading slashes from traditional diff paths"
+msgstr "entfernt <Anzahl> vorrangestellte Schrägstriche von herkömmlichen "
+"Differenzpfaden"
+
+#: builtin/apply.c:3972
+msgid "ignore additions made by the patch"
+msgstr "ignoriert hinzugefügte Zeilen des Patches"
+
+#: builtin/apply.c:3974
+msgid "instead of applying the patch, output diffstat for the input"
+msgstr "anstatt der Anwendung des Patches, wird der \"diffstat\" für die Eingabe "
+"ausgegeben"
+
+#: builtin/apply.c:3978
+msgid "shows number of added and deleted lines in decimal notation"
+msgstr "zeigt die Anzahl von hinzugefügten/entfernten Zeilen in "
+"Dezimalnotation"
+
+#: builtin/apply.c:3980
+msgid "instead of applying the patch, output a summary for the input"
+msgstr "anstatt der Anwendung des Patches, wird eine Zusammenfassung für die "
+"Eingabe ausgegeben"
+
+#: builtin/apply.c:3982
+msgid "instead of applying the patch, see if the patch is applicable"
+msgstr "anstatt der Anwendung des Patches, zeige ob Patch angewendet werden "
+"kann"
+
+#: builtin/apply.c:3984
+msgid "make sure the patch is applicable to the current index"
+msgstr "stellt sicher, dass der Patch in der aktuellen Bereitstellung "
+"angewendet werden kann"
+
+#: builtin/apply.c:3986
+msgid "apply a patch without touching the working tree"
+msgstr "wendet einen Patch an, ohne Änderungen im Arbeitszweig vorzunehmen"
+
+#: builtin/apply.c:3988
+msgid "also apply the patch (use with --stat/--summary/--check)"
+msgstr "wendet den Patch an (Benutzung mit --stat/--summary/--check)"
+
+#: builtin/apply.c:3990
+msgid "build a temporary index based on embedded index information"
+msgstr "erstellt eine temporäre Bereitstellung basierend auf den integrierten "
+"Bereitstellungsinformationen"
+
+#: builtin/apply.c:3992
+msgid "paths are separated with NUL character"
+msgstr "Pfade sind getrennt durch NUL Zeichen"
+
+#: builtin/apply.c:3995
+msgid "ensure at least <n> lines of context match"
+msgstr "stellt sicher, dass mindestens <Anzahl> Zeilen des Kontextes "
+"übereinstimmen"
+
+#: builtin/apply.c:3996
+msgid "action"
+msgstr "Aktion"
+
+#: builtin/apply.c:3997
+msgid "detect new or modified lines that have whitespace errors"
+msgstr "ermittelt neue oder geänderte Zeilen die Fehler in Leerzeichen haben"
+
+#: builtin/apply.c:4000 builtin/apply.c:4003
+msgid "ignore changes in whitespace when finding context"
+msgstr "ignoriert Änderungen in Leerzeichen bei der Suche des Kontextes"
+
+#: builtin/apply.c:4006
+msgid "apply the patch in reverse"
+msgstr "wendet den Patch in umgekehrter Reihenfolge an"
+
+#: builtin/apply.c:4008
+msgid "don't expect at least one line of context"
+msgstr "erwartet keinen Kontext"
+
+#: builtin/apply.c:4010
+msgid "leave the rejected hunks in corresponding *.rej files"
+msgstr "hinterlässt zurückgewiesene Patch-Bereiche in den entsprechenden *.rej "
+"Dateien"
+
+#: builtin/apply.c:4012
+msgid "allow overlapping hunks"
+msgstr "erlaubt sich überlappende Patch-Bereiche"
+
+#: builtin/apply.c:4013
+msgid "be verbose"
+msgstr "erweiterte Ausgaben"
+
+#: builtin/apply.c:4015
+msgid "tolerate incorrectly detected missing new-line at the end of file"
+msgstr "toleriert fehlerhaft erkannten fehlenden Zeilenumbruch am Dateiende"
+
+#: builtin/apply.c:4018
+msgid "do not trust the line counts in the hunk headers"
+msgstr "vertraut nicht den Zeilennummern im Kopf des Patch-Bereiches"
+
+#: builtin/apply.c:4020
+msgid "root"
+msgstr "Wurzelverzeichnis"
+
+#: builtin/apply.c:4021
+msgid "prepend <root> to all filenames"
+msgstr "stellt <Wurzelverzeichnis> vor alle Dateinamen"
 
 #: builtin/apply.c:4042
 msgid "--index outside a repository"
@@ -2562,8 +2708,8 @@ msgstr "(nichts)"
 #, c-format
 msgid "Refusing to fetch into current branch %s of non-bare repository"
 msgstr ""
-"Das Anfordern in den aktuellen Zweig %s von einem nicht-bloßen "
-"Projektarchiv wurde verweigert."
+"Das Anfordern in den aktuellen Zweig %s von einem nicht-bloßen Projektarchiv "
+"wurde verweigert."
 
 #: builtin/fetch.c:709
 #, c-format
@@ -2851,8 +2997,8 @@ msgstr "Wert für Versatz bei Differenzobjekt übergelaufen"
 
 #: builtin/index-pack.c:458
 msgid "delta base offset is out of bound"
-msgstr "Wert für Versatz bei Differenzobjekt liegt außerhalb des gültigen "
-"Bereichs"
+msgstr ""
+"Wert für Versatz bei Differenzobjekt liegt außerhalb des gültigen Bereichs"
 
 #: builtin/index-pack.c:466
 #, c-format
@@ -3798,8 +3944,8 @@ msgid ""
 "To choose either option permanently, see push.default in 'git help config'."
 msgstr ""
 "\n"
-"Um eine Variante permanent zu verwenden, siehe push.default in "
-"'git help config'."
+"Um eine Variante permanent zu verwenden, siehe push.default in 'git help "
+"config'."
 
 #: builtin/push.c:102
 #, c-format
@@ -3876,8 +4022,8 @@ msgstr ""
 msgid ""
 "You didn't specify any refspecs to push, and push.default is \"nothing\"."
 msgstr ""
-"Du hast keine Referenzspezifikationen zum Versenden angegeben, und "
-"push.default ist \"nothing\"."
+"Du hast keine Referenzspezifikationen zum Versenden angegeben, und push."
+"default ist \"nothing\"."
 
 #: builtin/push.c:181
 msgid ""
@@ -3901,8 +4047,10 @@ msgid ""
 msgstr ""
 "Aktualisierungen wurden zurückgewiesen, weil die Spitze eines versendeten\n"
 "Zweiges hinter seinem externen Gegenstück zurückgefallen ist. Wenn du nicht\n"
-"beabsichtigt hast, diesen Zweig zu versenden, kannst du auch den zu versendenden\n"
-"Zweig spezifizieren oder die Konfigurationsvariable 'push.default' zu 'current'\n"
+"beabsichtigt hast, diesen Zweig zu versenden, kannst du auch den zu "
+"versendenden\n"
+"Zweig spezifizieren oder die Konfigurationsvariable 'push.default' zu "
+"'current'\n"
 "oder 'upstream' setzen, um nur den aktuellen Zweig zu versenden."
 
 #: builtin/push.c:193
@@ -4008,8 +4156,9 @@ msgstr "Angabe eines Hauptzweiges macht mit --mirror keinen Sinn"
 
 #: builtin/remote.c:187
 msgid "specifying branches to track makes sense only with fetch mirrors"
-msgstr "die Angabe von zu folgenden Zweigen macht nur mit dem Abholen "
-"von Spiegelarchiven Sinn"
+msgstr ""
+"die Angabe von zu folgenden Zweigen macht nur mit dem Abholen von "
+"Spiegelarchiven Sinn"
 
 #: builtin/remote.c:195 builtin/remote.c:646
 #, c-format
@@ -4072,8 +4221,7 @@ msgid ""
 "\tPlease update the configuration manually if necessary."
 msgstr ""
 "Keine Aktualisierung der nicht standardmäßigen Referenzspezifikation zum "
-"Abholen"
-"\t%s\n"
+"Abholen\t%s\n"
 "\tBitte aktualisiere, falls notwendig, die Konfiguration manuell."
 
 #: builtin/remote.c:683
@@ -4231,8 +4379,8 @@ msgstr "  Hauptzweig: %s"
 msgid ""
 "  HEAD branch (remote HEAD is ambiguous, may be one of the following):\n"
 msgstr ""
-"  Hauptzweig (externer Hauptzweig ist mehrdeutig, könnte einer der "
-"folgenden sein):\n"
+"  Hauptzweig (externer Hauptzweig ist mehrdeutig, könnte einer der folgenden "
+"sein):\n"
 
 #: builtin/remote.c:1151
 #, c-format
@@ -4635,6 +4783,38 @@ msgstr ""
 "Siehe 'git help <Kommando>' für weitere Informationen zu einem spezifischen "
 "Kommando"
 
+#: parse-options.h:133 parse-options.h:235
+msgid "n"
+msgstr "Anzahl"
+
+#: parse-options.h:141
+msgid "time"
+msgstr "Zeit"
+
+#: parse-options.h:149
+msgid "file"
+msgstr "Datei"
+
+#: parse-options.h:151
+msgid "when"
+msgstr "wann"
+
+#: parse-options.h:156
+msgid "no-op (backward compatibility)"
+msgstr "Kein Effekt (Rückwärtskompatibilität)"
+
+#: parse-options.h:228
+msgid "be more verbose"
+msgstr "erweiterte Ausgaben"
+
+#: parse-options.h:230
+msgid "be more quiet"
+msgstr "weniger Ausgaben"
+
+#: parse-options.h:236
+msgid "use <n> digits to display SHA-1s"
+msgstr "benutze <n> Ziffern zur Anzeige von SHA-1s"
+
 #: common-cmds.h:8
 msgid "Add file contents to the index"
 msgstr "stellt Dateiinhalte zur Eintragung bereit"
@@ -4693,8 +4873,9 @@ msgstr ""
 
 #: common-cmds.h:21
 msgid "Fetch from and merge with another repository or a local branch"
-msgstr "Fordert Objekte von einem externen Projektarchiv an und führt sie "
-"mit einem anderen Projektarchiv oder einem lokalen Zweig zusammen"
+msgstr ""
+"Fordert Objekte von einem externen Projektarchiv an und führt sie mit einem "
+"anderen Projektarchiv oder einem lokalen Zweig zusammen"
 
 #: common-cmds.h:22
 msgid "Update remote refs along with associated objects"
