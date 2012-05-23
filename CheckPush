@@ -47,5 +47,6 @@ then
 		echo "master..$next..next..$jch..jch..$pu..pu"
 	fi
 else
+	echo "git diff --stat next jch"
 	git diff --stat next jch
 fi
