@@ -244,7 +244,7 @@ int split_ident_line(struct ident_split *split, const char *line, int len)
 	if (!split->mail_begin)
 		return status;
 
-	for (cp = split->mail_begin - 2; line < cp; cp--)
+	for (cp = split->mail_begin - 2; line <= cp; cp--)
 		if (!isspace(*cp)) {
 			split->name_end = cp + 1;
 			break;
