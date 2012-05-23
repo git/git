@@ -7,6 +7,7 @@
 #include "dir.h"
 #include "tag.h"
 #include "string-list.h"
+#include "mergesort.h"
 
 enum map_direction { FROM_SRC, FROM_DST };
 
@@ -916,6 +917,27 @@ void free_refs(struct ref *ref)
 		free_ref(ref);
 		ref = next;
 	}
+}
+
+int ref_compare_name(const void *va, const void *vb)
+{
+	const struct ref *a = va, *b = vb;
+	return strcmp(a->name, b->name);
+}
+
+static void *ref_list_get_next(const void *a)
+{
+	return ((const struct ref *)a)->next;
+}
+
+static void ref_list_set_next(void *a, void *next)
+{
+	((struct ref *)a)->next = next;
+}
+
+void sort_ref_list(struct ref **l, int (*cmp)(const void *, const void *))
+{
+	*l = llist_mergesort(*l, ref_list_get_next, ref_list_set_next, cmp);
 }
 
 static int count_refspec_match(const char *pattern,
