@@ -392,9 +392,10 @@ static int is_delta_type(enum object_type type)
 static void *unpack_entry_data(unsigned long offset, unsigned long size,
 			       enum object_type type, unsigned char *sha1)
 {
+	static char fixed_buf[8192];
 	int status;
 	git_zstream stream;
-	void *buf = xmalloc(size);
+	void *buf;
 	git_SHA_CTX c;
 	char hdr[32];
 	int hdrlen;
@@ -405,11 +406,15 @@ static void *unpack_entry_data(unsigned long offset, unsigned long size,
 		git_SHA1_Update(&c, hdr, hdrlen);
 	} else
 		sha1 = NULL;
+	if (type == OBJ_BLOB && size > big_file_threshold)
+		buf = fixed_buf;
+	else
+		buf = xmalloc(size);
 
 	memset(&stream, 0, sizeof(stream));
 	git_inflate_init(&stream);
 	stream.next_out = buf;
-	stream.avail_out = size;
+	stream.avail_out = buf == fixed_buf ? sizeof(fixed_buf) : size;
 
 	do {
 		unsigned char *last_out = stream.next_out;
@@ -419,13 +424,17 @@ static void *unpack_entry_data(unsigned long offset, unsigned long size,
 		use(input_len - stream.avail_in);
 		if (sha1)
 			git_SHA1_Update(&c, last_out, stream.next_out - last_out);
+		if (buf == fixed_buf) {
+			stream.next_out = buf;
+			stream.avail_out = sizeof(fixed_buf);
+		}
 	} while (status == Z_OK);
 	if (stream.total_out != size || status != Z_STREAM_END)
 		bad_object(offset, _("inflate returned %d"), status);
 	git_inflate_end(&stream);
 	if (sha1)
 		git_SHA1_Final(sha1, &c);
-	return buf;
+	return buf == fixed_buf ? NULL : buf;
 }
 
 static void *unpack_raw_entry(struct object_entry *obj,
@@ -591,14 +600,21 @@ static void find_delta_children(const union delta_base *base,
 	*last_index = last;
 }
 
-static void sha1_object(const void *data, unsigned long size,
-			enum object_type type, const unsigned char *sha1)
+static void sha1_object(const void *data, struct object_entry *obj_entry,
+			unsigned long size, enum object_type type,
+			const unsigned char *sha1)
 {
+	void *new_data = NULL;
+
+	assert(data || obj_entry);
+
 	read_lock();
 	if (has_sha1_file(sha1)) {
 		void *has_data;
 		enum object_type has_type;
 		unsigned long has_size;
+		if (!data)
+			data = new_data = get_data_from_pack(obj_entry);
 		has_data = read_sha1_file(sha1, &has_type, &has_size);
 		read_unlock();
 		if (!has_data)
@@ -622,6 +638,9 @@ static void sha1_object(const void *data, unsigned long size,
 			struct object *obj;
 			int eaten;
 			void *buf = (void *) data;
+
+			if (!buf)
+				buf = new_data = get_data_from_pack(obj_entry);
 
 			/*
 			 * we do not need to free the memory here, as the
@@ -647,6 +666,8 @@ static void sha1_object(const void *data, unsigned long size,
 		}
 		read_unlock();
 	}
+
+	free(new_data);
 }
 
 /*
@@ -730,7 +751,7 @@ static void resolve_delta(struct object_entry *delta_obj,
 		bad_object(delta_obj->idx.offset, _("failed to apply delta"));
 	hash_sha1_file(result->data, result->size,
 		       typename(delta_obj->real_type), delta_obj->idx.sha1);
-	sha1_object(result->data, result->size, delta_obj->real_type,
+	sha1_object(result->data, NULL, result->size, delta_obj->real_type,
 		    delta_obj->idx.sha1);
 	counter_lock();
 	nr_resolved_deltas++;
@@ -860,7 +881,7 @@ static void *threaded_second_pass(void *data)
  */
 static void parse_pack_objects(unsigned char *sha1)
 {
-	int i;
+	int i, nr_delays = 0;
 	struct delta_entry *delta = deltas;
 	struct stat st;
 
@@ -876,8 +897,12 @@ static void parse_pack_objects(unsigned char *sha1)
 			nr_deltas++;
 			delta->obj_no = i;
 			delta++;
+		} else if (!data) {
+			/* large blobs, check later */
+			obj->real_type = OBJ_BAD;
+			nr_delays++;
 		} else
-			sha1_object(data, obj->size, obj->type, obj->idx.sha1);
+			sha1_object(data, NULL, obj->size, obj->type, obj->idx.sha1);
 		free(data);
 		display_progress(progress, i+1);
 	}
@@ -897,6 +922,17 @@ static void parse_pack_objects(unsigned char *sha1)
 	if (S_ISREG(st.st_mode) &&
 			lseek(input_fd, 0, SEEK_CUR) - input_len != st.st_size)
 		die(_("pack has junk at the end"));
+
+	for (i = 0; i < nr_objects; i++) {
+		struct object_entry *obj = &objects[i];
+		if (obj->real_type != OBJ_BAD)
+			continue;
+		obj->real_type = obj->type;
+		sha1_object(NULL, obj, obj->size, obj->type, obj->idx.sha1);
+		nr_delays--;
+	}
+	if (nr_delays)
+		die(_("confusion beyond insanity in parse_pack_objects()"));
 }
 
 /*
