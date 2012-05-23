@@ -121,7 +121,7 @@ static enum input_source istream_source(const unsigned char *sha1,
 	case OI_LOOSE:
 		return loose;
 	case OI_PACKED:
-		if (!oi->u.packed.is_delta && big_file_threshold <= size)
+		if (!oi->u.packed.is_delta && big_file_threshold < size)
 			return pack_non_delta;
 		/* fallthru */
 	default:
