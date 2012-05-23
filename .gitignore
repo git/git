@@ -222,6 +222,7 @@
 /cscope*
 *.obj
 *.lib
+*.res
 *.sln
 *.suo
 *.ncb
