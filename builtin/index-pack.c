@@ -504,7 +504,9 @@ static void *unpack_raw_entry(struct object_entry *obj,
 	return data;
 }
 
-static void *get_data_from_pack(struct object_entry *obj)
+static void *unpack_data(struct object_entry *obj,
+			 int (*consume)(const unsigned char *, unsigned long, void *),
+			 void *cb_data)
 {
 	off_t from = obj[0].idx.offset + obj[0].hdr_size;
 	unsigned long len = obj[1].idx.offset - from;
@@ -512,15 +514,16 @@ static void *get_data_from_pack(struct object_entry *obj)
 	git_zstream stream;
 	int status;
 
-	data = xmalloc(obj->size);
+	data = xmalloc(consume ? 64*1024 : obj->size);
 	inbuf = xmalloc((len < 64*1024) ? len : 64*1024);
 
 	memset(&stream, 0, sizeof(stream));
 	git_inflate_init(&stream);
 	stream.next_out = data;
-	stream.avail_out = obj->size;
+	stream.avail_out = consume ? 64*1024 : obj->size;
 
 	do {
+		unsigned char *last_out = stream.next_out;
 		ssize_t n = (len < 64*1024) ? len : 64*1024;
 		n = pread(pack_fd, inbuf, n, from);
 		if (n < 0)
@@ -535,6 +538,15 @@ static void *get_data_from_pack(struct object_entry *obj)
 		stream.next_in = inbuf;
 		stream.avail_in = n;
 		status = git_inflate(&stream, 0);
+		if (consume) {
+			if (consume(last_out, stream.next_out - last_out, cb_data)) {
+				free(inbuf);
+				free(data);
+				return NULL;
+			}
+			stream.next_out = data;
+			stream.avail_out = 64*1024;
+		}
 	} while (len && status == Z_OK && !stream.avail_in);
 
 	/* This has been inflated OK when first encountered, so... */
@@ -543,7 +555,16 @@ static void *get_data_from_pack(struct object_entry *obj)
 
 	git_inflate_end(&stream);
 	free(inbuf);
+	if (consume) {
+		free(data);
+		data = NULL;
+	}
 	return data;
+}
+
+static void *get_data_from_pack(struct object_entry *obj)
+{
+	return unpack_data(obj, NULL, NULL);
 }
 
 static int compare_delta_bases(const union delta_base *base1,
