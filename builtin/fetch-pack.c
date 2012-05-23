@@ -899,9 +899,11 @@ static void fetch_pack_setup(void)
 
 int cmd_fetch_pack(int argc, const char **argv, const char *prefix)
 {
-	int i, ret, nr_heads;
+	int i, ret;
 	struct ref *ref = NULL;
-	char *dest = NULL, **heads;
+	const char *dest = NULL;
+	int alloc_heads = 0, nr_heads = 0;
+	char **heads = NULL;
 	int fd[2];
 	char *pack_lockfile = NULL;
 	char **pack_lockfile_ptr = NULL;
@@ -909,84 +911,79 @@ int cmd_fetch_pack(int argc, const char **argv, const char *prefix)
 
 	packet_trace_identity("fetch-pack");
 
-	nr_heads = 0;
-	heads = NULL;
-	for (i = 1; i < argc; i++) {
+	for (i = 1; i < argc && *argv[i] == '-'; i++) {
 		const char *arg = argv[i];
 
-		if (*arg == '-') {
-			if (!prefixcmp(arg, "--upload-pack=")) {
-				args.uploadpack = arg + 14;
-				continue;
-			}
-			if (!prefixcmp(arg, "--exec=")) {
-				args.uploadpack = arg + 7;
-				continue;
-			}
-			if (!strcmp("--quiet", arg) || !strcmp("-q", arg)) {
-				args.quiet = 1;
-				continue;
-			}
-			if (!strcmp("--keep", arg) || !strcmp("-k", arg)) {
-				args.lock_pack = args.keep_pack;
-				args.keep_pack = 1;
-				continue;
-			}
-			if (!strcmp("--thin", arg)) {
-				args.use_thin_pack = 1;
-				continue;
-			}
-			if (!strcmp("--include-tag", arg)) {
-				args.include_tag = 1;
-				continue;
-			}
-			if (!strcmp("--all", arg)) {
-				args.fetch_all = 1;
-				continue;
-			}
-			if (!strcmp("--stdin", arg)) {
-				args.stdin_refs = 1;
-				continue;
-			}
-			if (!strcmp("-v", arg)) {
-				args.verbose = 1;
-				continue;
-			}
-			if (!prefixcmp(arg, "--depth=")) {
-				args.depth = strtol(arg + 8, NULL, 0);
-				continue;
-			}
-			if (!strcmp("--no-progress", arg)) {
-				args.no_progress = 1;
-				continue;
-			}
-			if (!strcmp("--stateless-rpc", arg)) {
-				args.stateless_rpc = 1;
-				continue;
-			}
-			if (!strcmp("--lock-pack", arg)) {
-				args.lock_pack = 1;
-				pack_lockfile_ptr = &pack_lockfile;
-				continue;
-			}
-			usage(fetch_pack_usage);
+		if (!prefixcmp(arg, "--upload-pack=")) {
+			args.uploadpack = arg + 14;
+			continue;
 		}
-		dest = (char *)arg;
-		heads = (char **)(argv + i + 1);
-		nr_heads = argc - i - 1;
-		break;
+		if (!prefixcmp(arg, "--exec=")) {
+			args.uploadpack = arg + 7;
+			continue;
+		}
+		if (!strcmp("--quiet", arg) || !strcmp("-q", arg)) {
+			args.quiet = 1;
+			continue;
+		}
+		if (!strcmp("--keep", arg) || !strcmp("-k", arg)) {
+			args.lock_pack = args.keep_pack;
+			args.keep_pack = 1;
+			continue;
+		}
+		if (!strcmp("--thin", arg)) {
+			args.use_thin_pack = 1;
+			continue;
+		}
+		if (!strcmp("--include-tag", arg)) {
+			args.include_tag = 1;
+			continue;
+		}
+		if (!strcmp("--all", arg)) {
+			args.fetch_all = 1;
+			continue;
+		}
+		if (!strcmp("--stdin", arg)) {
+			args.stdin_refs = 1;
+			continue;
+		}
+		if (!strcmp("-v", arg)) {
+			args.verbose = 1;
+			continue;
+		}
+		if (!prefixcmp(arg, "--depth=")) {
+			args.depth = strtol(arg + 8, NULL, 0);
+			continue;
+		}
+		if (!strcmp("--no-progress", arg)) {
+			args.no_progress = 1;
+			continue;
+		}
+		if (!strcmp("--stateless-rpc", arg)) {
+			args.stateless_rpc = 1;
+			continue;
+		}
+		if (!strcmp("--lock-pack", arg)) {
+			args.lock_pack = 1;
+			pack_lockfile_ptr = &pack_lockfile;
+			continue;
+		}
+		usage(fetch_pack_usage);
 	}
-	if (!dest)
+
+	if (i < argc)
+		dest = argv[i++];
+	else
 		usage(fetch_pack_usage);
 
+	/*
+	 * Copy refs from cmdline to growable list, then append any
+	 * refs from the standard input:
+	 */
+	ALLOC_GROW(heads, argc - i, alloc_heads);
+	for (; i < argc; i++)
+		heads[nr_heads++] = xstrdup(argv[i]);
 	if (args.stdin_refs) {
-		/*
-		 * Copy refs from cmdline to new growable list, then
-		 * append the refs from the standard input.
-		 */
-		int alloc_heads = nr_heads;
-		int size = nr_heads * sizeof(*heads);
-		heads = memcpy(xmalloc(size), heads, size);
 		if (args.stateless_rpc) {
 			/* in stateless RPC mode we use pkt-line to read
 			 * from stdin, until we get a flush packet
@@ -1018,7 +1015,7 @@ int cmd_fetch_pack(int argc, const char **argv, const char *prefix)
 		fd[0] = 0;
 		fd[1] = 1;
 	} else {
-		conn = git_connect(fd, (char *)dest, args.uploadpack,
+		conn = git_connect(fd, dest, args.uploadpack,
 				   args.verbose ? CONNECT_VERBOSE : 0);
 	}
 
