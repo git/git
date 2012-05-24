@@ -268,7 +268,7 @@ const char *fmt_ident(const char *name, const char *email,
 	static struct strbuf ident = STRBUF_INIT;
 	char date[50];
 	int error_on_no_name = (flag & IDENT_ERROR_ON_NO_NAME);
-	int name_addr_only = (flag & IDENT_NO_DATE);
+	int want_date = !(flag & IDENT_NO_DATE);
 
 	if (!name)
 		name = ident_default_name();
@@ -287,10 +287,13 @@ const char *fmt_ident(const char *name, const char *email,
 		name = pw->pw_name;
 	}
 
-	strcpy(date, ident_default_date());
-	if (!name_addr_only && date_str && date_str[0]) {
-		if (parse_date(date_str, date, sizeof(date)) < 0)
-			die("invalid date format: %s", date_str);
+	if (want_date) {
+		if (date_str && date_str[0]) {
+			if (parse_date(date_str, date, sizeof(date)) < 0)
+				die("invalid date format: %s", date_str);
+		}
+		else
+			strcpy(date, ident_default_date());
 	}
 
 	strbuf_reset(&ident);
@@ -298,7 +301,7 @@ const char *fmt_ident(const char *name, const char *email,
 	strbuf_addstr(&ident, " <");
 	strbuf_addstr_without_crud(&ident, email);
 	strbuf_addch(&ident, '>');
-	if (!name_addr_only) {
+	if (want_date) {
 		strbuf_addch(&ident, ' ');
 		strbuf_addstr_without_crud(&ident, date);
 	}
