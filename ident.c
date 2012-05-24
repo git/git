@@ -288,6 +288,12 @@ const char *fmt_ident(const char *name, const char *email,
 		name = pw->pw_name;
 	}
 
+	if (strict && email == git_default_email.buf &&
+	    strstr(email, "(none)")) {
+		fputs(env_hint, stderr);
+		die("unable to auto-detect email address (got '%s')", email);
+	}
+
 	if (want_date) {
 		if (date_str && date_str[0]) {
 			if (parse_date(date_str, date, sizeof(date)) < 0)
