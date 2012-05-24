@@ -1082,8 +1082,8 @@ struct ref *fetch_pack(struct fetch_pack_args *my_args,
 	}
 
 	if (heads && nr_heads) {
-		nr_heads = remove_duplicates(nr_heads, heads);
 		qsort(heads, nr_heads, sizeof(*heads), compare_heads);
+		nr_heads = remove_duplicates(nr_heads, heads);
 	}
 
 	if (!ref) {
