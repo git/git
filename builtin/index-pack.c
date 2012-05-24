@@ -9,6 +9,7 @@
 #include "progress.h"
 #include "fsck.h"
 #include "exec_cmd.h"
+#include "streaming.h"
 #include "thread-utils.h"
 
 static const char index_pack_usage[] =
@@ -621,31 +622,102 @@ static void find_delta_children(const union delta_base *base,
 	*last_index = last;
 }
 
+struct compare_data {
+	struct object_entry *entry;
+	struct git_istream *st;
+	unsigned char *buf;
+	unsigned long buf_size;
+};
+
+static int compare_objects(const unsigned char *buf, unsigned long size,
+			   void *cb_data)
+{
+	struct compare_data *data = cb_data;
+
+	if (data->buf_size < size) {
+		free(data->buf);
+		data->buf = xmalloc(size);
+		data->buf_size = size;
+	}
+
+	while (size) {
+		ssize_t len = read_istream(data->st, data->buf, size);
+		if (len == 0)
+			die(_("SHA1 COLLISION FOUND WITH %s !"),
+			    sha1_to_hex(data->entry->idx.sha1));
+		if (len < 0)
+			die(_("unable to read %s"),
+			    sha1_to_hex(data->entry->idx.sha1));
+		if (memcmp(buf, data->buf, len))
+			die(_("SHA1 COLLISION FOUND WITH %s !"),
+			    sha1_to_hex(data->entry->idx.sha1));
+		size -= len;
+		buf += len;
+	}
+	return 0;
+}
+
+static int check_collison(struct object_entry *entry)
+{
+	struct compare_data data;
+	enum object_type type;
+	unsigned long size;
+
+	if (entry->size <= big_file_threshold || entry->type != OBJ_BLOB)
+		return -1;
+
+	memset(&data, 0, sizeof(data));
+	data.entry = entry;
+	data.st = open_istream(entry->idx.sha1, &type, &size, NULL);
+	if (!data.st)
+		return -1;
+	if (size != entry->size || type != entry->type)
+		die(_("SHA1 COLLISION FOUND WITH %s !"),
+		    sha1_to_hex(entry->idx.sha1));
+	unpack_data(entry, compare_objects, &data);
+	close_istream(data.st);
+	free(data.buf);
+	return 0;
+}
+
 static void sha1_object(const void *data, struct object_entry *obj_entry,
 			unsigned long size, enum object_type type,
 			const unsigned char *sha1)
 {
 	void *new_data = NULL;
+	int collision_test_needed;
 
 	assert(data || obj_entry);
 
 	read_lock();
-	if (has_sha1_file(sha1)) {
+	collision_test_needed = has_sha1_file(sha1);
+	read_unlock();
+
+	if (collision_test_needed && !data) {
+		read_lock();
+		if (!check_collison(obj_entry))
+			collision_test_needed = 0;
+		read_unlock();
+	}
+	if (collision_test_needed) {
 		void *has_data;
 		enum object_type has_type;
 		unsigned long has_size;
-		if (!data)
-			data = new_data = get_data_from_pack(obj_entry);
+		read_lock();
+		has_type = sha1_object_info(sha1, &has_size);
+		if (has_type != type || has_size != size)
+			die(_("SHA1 COLLISION FOUND WITH %s !"), sha1_to_hex(sha1));
 		has_data = read_sha1_file(sha1, &has_type, &has_size);
 		read_unlock();
+		if (!data)
+			data = new_data = get_data_from_pack(obj_entry);
 		if (!has_data)
 			die(_("cannot read existing object %s"), sha1_to_hex(sha1));
 		if (size != has_size || type != has_type ||
 		    memcmp(data, has_data, size) != 0)
 			die(_("SHA1 COLLISION FOUND WITH %s !"), sha1_to_hex(sha1));
 		free(has_data);
-	} else
-		read_unlock();
+	}
 
 	if (strict) {
 		read_lock();
