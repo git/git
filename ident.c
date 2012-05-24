@@ -269,13 +269,14 @@ const char *fmt_ident(const char *name, const char *email,
 	char date[50];
 	int error_on_no_name = (flag & IDENT_ERROR_ON_NO_NAME);
 	int want_date = !(flag & IDENT_NO_DATE);
+	int want_name = !(flag & IDENT_NO_NAME);
 
-	if (!name)
+	if (want_name && !name)
 		name = ident_default_name();
 	if (!email)
 		email = ident_default_email();
 
-	if (!*name) {
+	if (want_name && !*name) {
 		struct passwd *pw;
 
 		if (error_on_no_name) {
@@ -297,10 +298,13 @@ const char *fmt_ident(const char *name, const char *email,
 	}
 
 	strbuf_reset(&ident);
-	strbuf_addstr_without_crud(&ident, name);
-	strbuf_addstr(&ident, " <");
+	if (want_name) {
+		strbuf_addstr_without_crud(&ident, name);
+		strbuf_addstr(&ident, " <");
+	}
 	strbuf_addstr_without_crud(&ident, email);
-	strbuf_addch(&ident, '>');
+	if (want_name)
+			strbuf_addch(&ident, '>');
 	if (want_date) {
 		strbuf_addch(&ident, ' ');
 		strbuf_addstr_without_crud(&ident, date);

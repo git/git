@@ -889,6 +889,7 @@ enum date_mode parse_date_format(const char *format);
 
 #define IDENT_ERROR_ON_NO_NAME 1
 #define IDENT_NO_DATE	       2
+#define IDENT_NO_NAME	       4
 extern const char *git_author_info(int);
 extern const char *git_committer_info(int);
 extern const char *fmt_ident(const char *name, const char *email, const char *date_str, int);
