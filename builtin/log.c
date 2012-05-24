@@ -1147,7 +1147,7 @@ int cmd_format_patch(int argc, const char **argv, const char *prefix)
 	if (do_signoff) {
 		const char *committer;
 		const char *endpos;
-		committer = git_committer_info(IDENT_ERROR_ON_NO_NAME);
+		committer = git_committer_info(IDENT_STRICT);
 		endpos = strchr(committer, '>');
 		if (!endpos)
 			die(_("bogus committer info %s"), committer);

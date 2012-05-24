@@ -267,7 +267,7 @@ const char *fmt_ident(const char *name, const char *email,
 {
 	static struct strbuf ident = STRBUF_INIT;
 	char date[50];
-	int error_on_no_name = (flag & IDENT_ERROR_ON_NO_NAME);
+	int strict = (flag & IDENT_STRICT);
 	int want_date = !(flag & IDENT_NO_DATE);
 	int want_name = !(flag & IDENT_NO_NAME);
 
@@ -279,7 +279,7 @@ const char *fmt_ident(const char *name, const char *email,
 	if (want_name && !*name) {
 		struct passwd *pw;
 
-		if (error_on_no_name) {
+		if (strict) {
 			if (name == git_default_name.buf)
 				fputs(env_hint, stderr);
 			die("empty ident name (for <%s>) not allowed", email);
@@ -314,7 +314,7 @@ const char *fmt_ident(const char *name, const char *email,
 
 const char *fmt_name(const char *name, const char *email)
 {
-	return fmt_ident(name, email, NULL, IDENT_ERROR_ON_NO_NAME | IDENT_NO_DATE);
+	return fmt_ident(name, email, NULL, IDENT_STRICT | IDENT_NO_DATE);
 }
 
 const char *git_author_info(int flag)
