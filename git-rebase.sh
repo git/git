@@ -165,6 +165,7 @@ run_specific_rebase () {
 	if [ "$interactive_rebase" = implied ]; then
 		GIT_EDITOR=:
 		export GIT_EDITOR
+		autosquash=
 	fi
 	. git-rebase--$type
 }
