@@ -281,7 +281,7 @@ const char *fmt_ident(const char *name, const char *email,
 		if (error_on_no_name) {
 			if (name == git_default_name.buf)
 				fputs(env_hint, stderr);
-			die("empty ident %s <%s> not allowed", name, email);
+			die("empty ident name (for <%s>) not allowed", email);
 		}
 		pw = xgetpwuid_self();
 		name = pw->pw_name;
