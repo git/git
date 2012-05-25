@@ -271,6 +271,15 @@ test_expect_success 'status -s -b' '
 
 '
 
+test_expect_success 'status -s -z -b' '
+	tr "\\n" Q <expect >expect.q &&
+	mv expect.q expect &&
+	git status -s -z -b >output &&
+	nul_to_q <output >output.q &&
+	mv output.q output &&
+	test_cmp expect output
+'
+
 test_expect_success 'setup dir3' '
 	mkdir dir3 &&
 	: >dir3/untracked1 &&
@@ -647,9 +656,14 @@ test_expect_success 'status --porcelain ignores color.status' '
 git config --unset color.status
 git config --unset color.ui
 
-test_expect_success 'status --porcelain ignores -b' '
+test_expect_success 'status --porcelain respects -b' '
 
 	git status --porcelain -b >output &&
+	{
+		echo "## master" &&
+		cat expect
+	} >tmp &&
+	mv tmp expect &&
 	test_cmp expect output
 
 '
