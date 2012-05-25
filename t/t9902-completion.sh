@@ -63,7 +63,7 @@ run_completion ()
 	local _cword
 	_words=( $1 )
 	(( _cword = ${#_words[@]} - 1 ))
-	__git_wrap_git && print_comp
+	__git_wrap_main_git && print_comp
 }
 
 test_completion ()
