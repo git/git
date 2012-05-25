@@ -251,9 +251,11 @@ static unsigned long xdl_hash_record_with_whitespace(char const **data,
 
 #ifdef XDL_FAST_HASH
 
-#define ONEBYTES	0x0101010101010101ul
-#define NEWLINEBYTES	0x0a0a0a0a0a0a0a0aul
-#define HIGHBITS	0x8080808080808080ul
+#define REPEAT_BYTE(x)  ((~0ul / 0xff) * (x))
+
+#define ONEBYTES	REPEAT_BYTE(0x01)
+#define NEWLINEBYTES	REPEAT_BYTE(0x0a)
+#define HIGHBITS	REPEAT_BYTE(0x80)
 
 /* Return the high bit set in the first byte that is a zero */
 static inline unsigned long has_zero(unsigned long a)
@@ -270,21 +272,19 @@ static inline long count_masked_bytes(unsigned long mask)
 		 * that works for the bytemasks without having to
 		 * mask them first.
 		 */
-		return mask * 0x0001020304050608 >> 56;
-	} else {
 		/*
-		 * Modified Carl Chatfield G+ version for 32-bit *
+		 * return mask * 0x0001020304050608 >> 56;
 		 *
-		 * (a) gives us
-		 *   -1 (0, ff), 0 (ffff) or 1 (ffffff)
-		 * (b) gives us
-		 *   0 for 0, 1 for (ff ffff ffffff)
-		 * (a+b+1) gives us
-		 *   correct 0-3 bytemask count result
+		 * Doing it like this avoids warnings on 32-bit machines.
 		 */
-		long a = (mask - 256) >> 23;
-		long b = mask & 1;
-		return a + b + 1;
+		long a = (REPEAT_BYTE(0x01) / 0xff + 1);
+		return mask * a >> (sizeof(long) * 7);
+	} else {
+		/* Carl Chatfield / Jan Achrenius G+ version for 32-bit */
+		/* (000000 0000ff 00ffff ffffff) -> ( 1 1 2 3 ) */
+		long a = (0x0ff0001 + mask) >> 23;
+		/* Fix the 1 for 00 case */
+		return a & mask;
 	}
 }
 
