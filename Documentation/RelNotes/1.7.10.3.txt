@@ -4,6 +4,12 @@ Git v1.7.10.3 Release Notes
 Fixes since v1.7.10.2
 ---------------------
 
+ * The message file for German translation has been updated a bit.
+
+ * "git status --porcelain" ignored "--branch" option by mistake.  The
+   output for "git status --branch -z" was also incorrect and did not
+   terminate the record for the current branch name with NUL as asked.
+
  * Running "git checkout" on an unborn branch used to corrupt HEAD.
 
  * When checking out another commit from an already detached state, we
