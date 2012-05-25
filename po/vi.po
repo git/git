@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: git-1.7.10.1\n"
 "Report-Msgid-Bugs-To: Git Mailing List <git@vger.kernel.org>\n"
 "POT-Creation-Date: 2012-05-21 08:57+0800\n"
-"PO-Revision-Date: 2012-05-22 08:08+0700\n"
+"PO-Revision-Date: 2012-05-25 08:15+0700\n"
 "Last-Translator: Trần Ngọc Quân <vnwildman@gmail.com>\n"
 "Language-Team: Vietnamese <translation-team-vi@lists.sourceforge.net>\n"
 "MIME-Version: 1.0\n"
@@ -2288,9 +2288,9 @@ msgstr "Gặp lỗi khi xây dựng cây"
 
 #: builtin/commit.c:846
 #: builtin/tag.c:361
-#, c-format
+#, fuzzy, c-format
 msgid "Please supply the message using either -m or -F option.\n"
-msgstr ""
+msgstr "Xin hãy áp dụng nội dung của ghi chú sử dụng hoặc là tùy chọn -m hoặc là -F"
 
 #: builtin/commit.c:943
 #, fuzzy, c-format
@@ -3201,7 +3201,7 @@ msgstr "%s%s kho Git trong %s%s\n"
 #: builtin/init-db.c:420
 #, fuzzy
 msgid "Reinitialized existing"
-msgstr "Chưa có cột nào tồn tại."
+msgstr "Thoát ra"
 
 #: builtin/init-db.c:420
 #, fuzzy
@@ -3568,7 +3568,7 @@ msgstr "Không.\n"
 
 #: builtin/merge.c:1490
 msgid "Not possible to fast-forward, aborting."
-msgstr ""
+msgstr "Thực hiện lệnh fast-forward là không thể được, đang bỏ qua."
 
 #: builtin/merge.c:1513
 #: builtin/merge.c:1592
@@ -3594,7 +3594,7 @@ msgstr "Hòa trộn với chiến lược %s gặp lỗi.\n"
 #: builtin/merge.c:1594
 #, c-format
 msgid "Using the %s to prepare resolving by hand.\n"
-msgstr ""
+msgstr "Sử dụng %s để chuẩn bị giải quyết bằng tay.\n"
 
 #: builtin/merge.c:1606
 #, c-format
@@ -3612,7 +3612,7 @@ msgstr "nguồn sai"
 
 #: builtin/mv.c:115
 msgid "can not move directory into itself"
-msgstr ""
+msgstr "không thể di chuyển một thư mục vào trong chính nó được"
 
 #: builtin/mv.c:118
 msgid "cannot move directory over file"
@@ -3646,7 +3646,7 @@ msgstr "Không thể ghi chèn"
 
 #: builtin/mv.c:187
 msgid "multiple sources for the same target"
-msgstr ""
+msgstr "Nhiều nguồn cho cùng một đích"
 
 #: builtin/mv.c:202
 #, c-format
@@ -3667,21 +3667,21 @@ msgstr "đổi tên %s gặp lỗi"
 #: builtin/notes.c:139
 #, c-format
 msgid "unable to start 'show' for object '%s'"
-msgstr ""
+msgstr "không thể khởi chạy 'show' cho đối tượng '%s'"
 
 #: builtin/notes.c:145
 msgid "can't fdopen 'show' output fd"
-msgstr ""
+msgstr "không thể fdopen 'show' (lệnh hiển thị) mô tả tập tin (fd) kết xuất"
 
 #: builtin/notes.c:155
 #, c-format
 msgid "failed to close pipe to 'show' for object '%s'"
-msgstr ""
+msgstr "gặp lỗi khi đóng đường ống cho lệnh 'show' cho đối tượng '%s'"
 
 #: builtin/notes.c:158
 #, c-format
 msgid "failed to finish 'show' for object '%s'"
-msgstr ""
+msgstr "gặp lỗi khi hoàn thành 'show' cho đối tượng '%s'"
 
 #: builtin/notes.c:175
 #: builtin/tag.c:347
@@ -3691,7 +3691,7 @@ msgstr "không thể tạo tập tin '%s'"
 
 #: builtin/notes.c:189
 msgid "Please supply the note contents using either -m or -F option"
-msgstr ""
+msgstr "Xin hãy áp dụng nội dung của ghi chú sử dụng hoặc là tùy chọn -m hoặc là -F"
 
 #: builtin/notes.c:210
 #: builtin/notes.c:973
@@ -3706,7 +3706,7 @@ msgstr "không thể ghi đối tượng ghi chú (note)"
 #: builtin/notes.c:217
 #, c-format
 msgid "The note contents has been left in %s"
-msgstr ""
+msgstr "Nội dung ghi chú còn lại %s"
 
 #: builtin/notes.c:251
 #: builtin/tag.c:542
@@ -3734,7 +3734,7 @@ msgstr "không thể mở để đọc hay ghi '%s'"
 #: builtin/tag.c:558
 #, c-format
 msgid "Failed to resolve '%s' as a valid ref."
-msgstr ""
+msgstr "Gặp lỗi khi giải quyết '%s' như là một tham chiếu (ref) hợp lệ."
 
 #: builtin/notes.c:275
 #, c-format
@@ -3743,7 +3743,7 @@ msgstr "Gặp lỗi khi đọc đối tượng '%s'."
 
 #: builtin/notes.c:299
 msgid "Cannot commit uninitialized/unreferenced notes tree"
-msgstr ""
+msgstr "Không thể chuyển giao (commit) chưa được khởi tạo hoặc không được tham chiếu cây ghi chú"
 
 #: builtin/notes.c:340
 #, c-format
@@ -3753,7 +3753,7 @@ msgstr "Giá trị notes.rewriteMode sai: '%s'"
 #: builtin/notes.c:350
 #, c-format
 msgid "Refusing to rewrite notes in %s (outside of refs/notes/)"
-msgstr ""
+msgstr "Từ chối ghi đè ghi chú trong %s (nằm ngoài của refs/notes/)"
 
 #. TRANSLATORS: The first %s is the name of the
 #. environment variable, the second %s is its value
@@ -3791,13 +3791,13 @@ msgstr "không ghi chú được tìm thấy cho đối tượng %s."
 #: builtin/notes.c:580
 #, c-format
 msgid "Cannot add notes. Found existing notes for object %s. Use '-f' to overwrite existing notes"
-msgstr ""
+msgstr "Không thể thêm các ghi chú. Đã tìm thấy các ghi chú đã sẵn có cho đối tượng %s. Sử dụng tùy chọn '-f' để ghi đè lên các ghi chú cũ"
 
 #: builtin/notes.c:585
 #: builtin/notes.c:662
 #, c-format
 msgid "Overwriting existing notes for object %s\n"
-msgstr ""
+msgstr "Đang ghi đè lên ghi chú cũ cho đối tượng %s\n"
 
 #: builtin/notes.c:635
 msgid "too few parameters"
@@ -3806,12 +3806,12 @@ msgstr "quá ít đối số"
 #: builtin/notes.c:656
 #, c-format
 msgid "Cannot copy notes. Found existing notes for object %s. Use '-f' to overwrite existing notes"
-msgstr ""
+msgstr "Không thể sao chép các ghi chú. Đã tìm thấy các ghi chú đã sẵn có cho đối tượng %s. Sử dụng tùy chọn '-f' để ghi đè lên các ghi chú cũ"
 
 #: builtin/notes.c:668
 #, c-format
 msgid "Missing notes on source object %s. Cannot copy."
-msgstr ""
+msgstr "Thiếu ghi chú trên đối tượng nguốn %s. Không thể sao chép."
 
 #: builtin/notes.c:717
 #, c-format
@@ -3819,6 +3819,8 @@ msgid ""
 "The -m/-F/-c/-C options have been deprecated for the 'edit' subcommand.\n"
 "Please use 'git notes add -f -m/-F/-c/-C' instead.\n"
 msgstr ""
+"Các tùy chọn -m/-F/-c/-C đã cổ không còn dùng nữa cho lệnh con 'edit'.\n"
+"Xin hãy sử dụng lệnh sau để thay thế: 'git notes add -f -m/-F/-c/-C'.\n"
 
 #: builtin/notes.c:971
 #, c-format
@@ -3858,7 +3860,7 @@ msgstr "biên dịch mà không hỗ trợ -x"
 
 #: builtin/push.c:64
 msgid "--delete only accepts plain target ref names"
-msgstr ""
+msgstr "--delete chỉ chấp nhận các tên tham chiếu (ref) dạng thường"
 
 #: builtin/push.c:99
 msgid ""
@@ -3951,7 +3953,7 @@ msgstr "Đang push (đẩy) lên %s\n"
 #: builtin/push.c:237
 #, c-format
 msgid "failed to push some refs to '%s'"
-msgstr ""
+msgstr "gặp lỗi khi push (đẩy lên) một số tham chiếu (ref) đến '%s'"
 
 #: builtin/push.c:269
 #, c-format
@@ -4405,9 +4407,9 @@ msgid "Unstaged changes after reset:"
 msgstr ""
 
 #: builtin/reset.c:223
-#, c-format
+#, fuzzy, c-format
 msgid "Cannot do a %s reset in the middle of a merge."
-msgstr ""
+msgstr "Bạn đang ở giữa của quá trình hòa trộn -- không thể thực hiện amend (tu bổ)."
 
 #: builtin/reset.c:297
 #, c-format
@@ -4555,9 +4557,9 @@ msgid "no tag message?"
 msgstr "không có thông điệp (message) cho thẻ (tag)?"
 
 #: builtin/tag.c:376
-#, c-format
+#, fuzzy, c-format
 msgid "The tag message has been left in %s\n"
-msgstr ""
+msgstr "Nội dung ghi chú còn lại %s"
 
 #: builtin/tag.c:425
 msgid "switch 'points-at' requires an object"
@@ -5010,8 +5012,9 @@ msgid "unable to refresh index"
 msgstr "không thể làm tươi mới bảng mục lục"
 
 #: git-stash.sh:416
+#, fuzzy
 msgid "Cannot apply a stash in the middle of a merge"
-msgstr ""
+msgstr "Bạn đang ở giữa của quá trình hòa trộn -- không thể thực hiện amend (tu bổ)."
 
 #: git-stash.sh:424
 msgid "Conflicts in index. Try without --index."
@@ -5206,7 +5209,7 @@ msgstr "mô-đun con"
 #: git-submodule.sh:973
 #, sh-format
 msgid "Synchronizing submodule url for '$name'"
-msgstr ""
+msgstr "Đang đồng bộ hóa url mô-đun-con cho '$name'"
 
 #, fuzzy
 #~ msgid "could not parse commit %s\n"
