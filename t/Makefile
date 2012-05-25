@@ -28,7 +28,7 @@ test: pre-clean $(TEST_LINT)
 
 prove: pre-clean $(TEST_LINT)
 	@echo "*** prove ***"; GIT_CONFIG=.git/config $(PROVE) --exec '$(SHELL_PATH_SQ)' $(GIT_PROVE_OPTS) $(T) :: $(GIT_TEST_OPTS)
-	$(MAKE) clean
+	$(MAKE) clean-except-prove-cache
 
 $(T):
 	@echo "*** $@ ***"; GIT_CONFIG=.git/config '$(SHELL_PATH_SQ)' $@ $(GIT_TEST_OPTS)
@@ -36,9 +36,11 @@ $(T):
 pre-clean:
 	$(RM) -r test-results
 
-clean:
+clean-except-prove-cache:
 	$(RM) -r 'trash directory'.* test-results
 	$(RM) -r valgrind/bin
+
+clean: clean-except-prove-cache
 	$(RM) .prove
 
 test-lint: test-lint-duplicates test-lint-executable
