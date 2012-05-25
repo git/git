@@ -740,7 +740,8 @@ static void gen_message_id(struct rev_info *info, char *base)
 {
 	struct strbuf buf = STRBUF_INIT;
 	strbuf_addf(&buf, "%s.%lu.git.%s", base,
-		    (unsigned long) time(NULL), ident_default_email());
+		    (unsigned long) time(NULL),
+		    git_committer_info(IDENT_NO_NAME|IDENT_NO_DATE|IDENT_STRICT));
 	info->message_id = strbuf_detach(&buf, NULL);
 }
 
@@ -1146,7 +1147,7 @@ int cmd_format_patch(int argc, const char **argv, const char *prefix)
 	if (do_signoff) {
 		const char *committer;
 		const char *endpos;
-		committer = git_committer_info(IDENT_ERROR_ON_NO_NAME);
+		committer = git_committer_info(IDENT_STRICT);
 		endpos = strchr(committer, '>');
 		if (!endpos)
 			die(_("bogus committer info %s"), committer);

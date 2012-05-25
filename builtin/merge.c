@@ -1447,7 +1447,7 @@ int cmd_merge(int argc, const char **argv, const char *prefix)
 		refresh_cache(REFRESH_QUIET);
 		if (allow_trivial && !fast_forward_only) {
 			/* See if it is really trivial. */
-			git_committer_info(IDENT_ERROR_ON_NO_NAME);
+			git_committer_info(IDENT_STRICT);
 			printf(_("Trying really trivial in-index merge...\n"));
 			if (!read_tree_trivial(common->item->object.sha1,
 					       head_commit->object.sha1,
@@ -1490,7 +1490,7 @@ int cmd_merge(int argc, const char **argv, const char *prefix)
 		die(_("Not possible to fast-forward, aborting."));
 
 	/* We are going to make a new commit. */
-	git_committer_info(IDENT_ERROR_ON_NO_NAME);
+	git_committer_info(IDENT_STRICT);
 
 	/*
 	 * At this point, we need a real merge.  No matter what strategy

@@ -267,38 +267,51 @@ const char *fmt_ident(const char *name, const char *email,
 {
 	static struct strbuf ident = STRBUF_INIT;
 	char date[50];
-	int error_on_no_name = (flag & IDENT_ERROR_ON_NO_NAME);
-	int name_addr_only = (flag & IDENT_NO_DATE);
+	int strict = (flag & IDENT_STRICT);
+	int want_date = !(flag & IDENT_NO_DATE);
+	int want_name = !(flag & IDENT_NO_NAME);
 
-	if (!name)
+	if (want_name && !name)
 		name = ident_default_name();
 	if (!email)
 		email = ident_default_email();
 
-	if (!*name) {
+	if (want_name && !*name) {
 		struct passwd *pw;
 
-		if (error_on_no_name) {
+		if (strict) {
 			if (name == git_default_name.buf)
 				fputs(env_hint, stderr);
-			die("empty ident %s <%s> not allowed", name, email);
+			die("empty ident name (for <%s>) not allowed", email);
 		}
 		pw = xgetpwuid_self();
 		name = pw->pw_name;
 	}
 
-	strcpy(date, ident_default_date());
-	if (!name_addr_only && date_str && date_str[0]) {
-		if (parse_date(date_str, date, sizeof(date)) < 0)
-			die("invalid date format: %s", date_str);
+	if (strict && email == git_default_email.buf &&
+	    strstr(email, "(none)")) {
+		fputs(env_hint, stderr);
+		die("unable to auto-detect email address (got '%s')", email);
+	}
+
+	if (want_date) {
+		if (date_str && date_str[0]) {
+			if (parse_date(date_str, date, sizeof(date)) < 0)
+				die("invalid date format: %s", date_str);
+		}
+		else
+			strcpy(date, ident_default_date());
 	}
 
 	strbuf_reset(&ident);
-	strbuf_addstr_without_crud(&ident, name);
-	strbuf_addstr(&ident, " <");
+	if (want_name) {
+		strbuf_addstr_without_crud(&ident, name);
+		strbuf_addstr(&ident, " <");
+	}
 	strbuf_addstr_without_crud(&ident, email);
-	strbuf_addch(&ident, '>');
-	if (!name_addr_only) {
+	if (want_name)
+			strbuf_addch(&ident, '>');
+	if (want_date) {
 		strbuf_addch(&ident, ' ');
 		strbuf_addstr_without_crud(&ident, date);
 	}
@@ -307,7 +320,7 @@ const char *fmt_ident(const char *name, const char *email,
 
 const char *fmt_name(const char *name, const char *email)
 {
-	return fmt_ident(name, email, NULL, IDENT_ERROR_ON_NO_NAME | IDENT_NO_DATE);
+	return fmt_ident(name, email, NULL, IDENT_STRICT | IDENT_NO_DATE);
 }
 
 const char *git_author_info(int flag)

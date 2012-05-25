@@ -1154,9 +1154,9 @@ int commit_tree_extended(const struct strbuf *msg, unsigned char *tree,
 
 	/* Person/date information */
 	if (!author)
-		author = git_author_info(IDENT_ERROR_ON_NO_NAME);
+		author = git_author_info(IDENT_STRICT);
 	strbuf_addf(&buffer, "author %s\n", author);
-	strbuf_addf(&buffer, "committer %s\n", git_committer_info(IDENT_ERROR_ON_NO_NAME));
+	strbuf_addf(&buffer, "committer %s\n", git_committer_info(IDENT_STRICT));
 	if (!encoding_is_utf8)
 		strbuf_addf(&buffer, "encoding %s\n", git_commit_encoding);
 
