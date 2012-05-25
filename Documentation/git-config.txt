@@ -198,9 +198,7 @@ If not set explicitly with '--file', there are three files where
 'git config' will search for configuration options:
 
 $GIT_DIR/config::
-	Repository specific configuration file. (The filename is
-	of course relative to the repository root, not the working
-	directory.)
+	Repository specific configuration file.
 
 ~/.gitconfig::
 	User-specific configuration file. Also called "global"

@@ -462,7 +462,10 @@ static void fmt_tag_signature(struct strbuf *tagbuf,
 		strbuf_add(tagbuf, tag_body, buf + len - tag_body);
 	}
 	strbuf_complete_line(tagbuf);
-	strbuf_add_lines(tagbuf, "# ", sig->buf, sig->len);
+	if (sig->len) {
+		strbuf_addch(tagbuf, '\n');
+		strbuf_add_lines(tagbuf, "# ", sig->buf, sig->len);
+	}
 }
 
 static void fmt_merge_msg_sigs(struct strbuf *out)
@@ -627,8 +630,7 @@ int fmt_merge_msg(struct strbuf *in, struct strbuf *out,
 		rev.ignore_merges = 1;
 		rev.limited = 1;
 
-		if (suffixcmp(out->buf, "\n"))
-			strbuf_addch(out, '\n');
+		strbuf_complete_line(out);
 
 		for (i = 0; i < origins.nr; i++)
 			shortlog(origins.items[i].string,
