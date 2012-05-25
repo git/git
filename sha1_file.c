@@ -228,7 +228,6 @@ char *sha1_pack_index_name(const unsigned char *sha1)
 struct alternate_object_database *alt_odb_list;
 static struct alternate_object_database **alt_odb_tail;
 
-static void read_info_alternates(const char * alternates, int depth);
 static int git_open_noatime(const char *name);
 
 /*
@@ -353,7 +352,7 @@ static void link_alt_odb_entries(const char *alt, const char *ep, int sep,
 	}
 }
 
-static void read_info_alternates(const char * relative_base, int depth)
+void read_info_alternates(const char * relative_base, int depth)
 {
 	char *map;
 	size_t mapsz;
