@@ -458,4 +458,38 @@ EOF
 	test_cmp expected actual
 '
 
+test_expect_success 'diff --submodule with objects referenced by alternates' '
+	mkdir sub_alt &&
+	(cd sub_alt &&
+		git init &&
+		echo a >a &&
+		git add a &&
+		git commit -m a
+	) &&
+	mkdir super &&
+	(cd super &&
+		git clone -s ../sub_alt sub &&
+		git init &&
+		git add sub &&
+		git commit -m "sub a"
+	) &&
+	(cd sub_alt &&
+		sha1_before=$(git rev-parse --short HEAD)
+		echo b >b &&
+		git add b &&
+		git commit -m b
+		sha1_after=$(git rev-parse --short HEAD)
+		echo "Submodule sub $sha1_before..$sha1_after:
+  > b" >../expected
+	) &&
+	(cd super &&
+		(cd sub &&
+			git fetch &&
+			git checkout origin/master
+		) &&
+		git diff --submodule > ../actual
+	)
+	test_cmp expected actual
+'
+
 test_done

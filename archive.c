@@ -254,18 +254,11 @@ static void parse_treeish_arg(const char **argv,
 	/* Remotes are only allowed to fetch actual refs */
 	if (remote) {
 		char *ref = NULL;
-		const char *refname, *colon = NULL;
+		const char *colon = strchr(name, ':');
+		int refnamelen = colon ? colon - name : strlen(name);
 
-		colon = strchr(name, ':');
-		if (colon)
-			refname = xstrndup(name, colon - name);
-		else
-			refname = name;
-
-		if (!dwim_ref(refname, strlen(refname), sha1, &ref))
-			die("no such ref: %s", refname);
-		if (refname != name)
-			free((void *)refname);
+		if (!dwim_ref(name, refnamelen, sha1, &ref))
+			die("no such ref: %.*s", refnamelen, name);
 		free(ref);
 	}
 
