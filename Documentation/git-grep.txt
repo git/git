@@ -31,7 +31,9 @@ SYNOPSIS
 DESCRIPTION
 -----------
 Look for specified patterns in the tracked files in the work tree, blobs
-registered in the index file, or blobs in given tree objects.
+registered in the index file, or blobs in given tree objects.  Patterns
+are lists of one or more search expressions separated by newline
+characters.  An empty string as search expression matches all lines.
 
 
 CONFIGURATION
