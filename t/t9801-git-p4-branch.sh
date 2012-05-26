@@ -306,6 +306,58 @@ test_expect_success 'git p4 clone complex branches' '
 	)
 '
 
+# Move branch3/file3 to branch4/file3 in a single changelist
+test_expect_success 'git p4 submit to two branches in a single changelist' '
+	(
+		cd "$cli" &&
+		p4 integrate //depot/branch3/file3 //depot/branch4/file3 &&
+		p4 delete //depot/branch3/file3 &&
+		p4 submit -d "Move branch3/file3 to branch4/file3"
+	)
+'
+
+# Confirm that changes to two branches done in a single changelist
+# are correctly imported by git p4
+test_expect_success 'git p4 sync changes to two branches in the same changelist' '
+	test_when_finished cleanup_git &&
+	test_create_repo "$git" &&
+	(
+		cd "$git" &&
+		git config git-p4.branchList branch1:branch2 &&
+		git config --add git-p4.branchList branch1:branch3 &&
+		git config --add git-p4.branchList branch1:branch4 &&
+		git config --add git-p4.branchList branch1:branch5 &&
+		git p4 clone --dest=. --detect-branches //depot@all &&
+		git log --all --graph --decorate --stat &&
+		git reset --hard p4/depot/branch1 &&
+		test_path_is_file file1 &&
+		test_path_is_file file2 &&
+		test_path_is_file file3 &&
+		grep update file2 &&
+		git reset --hard p4/depot/branch2 &&
+		test_path_is_file file1 &&
+		test_path_is_file file2 &&
+		test_path_is_missing file3 &&
+		! grep update file2 &&
+		git reset --hard p4/depot/branch3 &&
+		test_path_is_file file1 &&
+		test_path_is_file file2 &&
+		test_path_is_missing file3 &&
+		grep update file2 &&
+		git reset --hard p4/depot/branch4 &&
+		test_path_is_file file1 &&
+		test_path_is_file file2 &&
+		test_path_is_file file3 &&
+		! grep update file2 &&
+		git reset --hard p4/depot/branch5 &&
+		test_path_is_file file1 &&
+		test_path_is_file file2 &&
+		test_path_is_file file3 &&
+		! grep update file2 &&
+		test_path_is_missing .git/git-p4-tmp
+	)
+'
+
 test_expect_success 'kill p4d' '
 	kill_p4d
 '
