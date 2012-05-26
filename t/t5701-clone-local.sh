@@ -3,7 +3,10 @@
 test_description='test local clone'
 . ./test-lib.sh
 
-D=`pwd`
+repo_is_hardlinked() {
+	find "$1/objects" -type f -links 1 >output &&
+	test_line_count = 0 output
+}
 
 test_expect_success 'preparing origin repository' '
 	: >file && git add . && git commit -m1 &&
@@ -19,105 +22,72 @@ test_expect_success 'preparing origin repository' '
 '
 
 test_expect_success 'local clone without .git suffix' '
-	cd "$D" &&
 	git clone -l -s a b &&
-	cd b &&
+	(cd b &&
 	test "$(GIT_CONFIG=.git/config git config --bool core.bare)" = false &&
-	git fetch
+	git fetch)
 '
 
 test_expect_success 'local clone with .git suffix' '
-	cd "$D" &&
 	git clone -l -s a.git c &&
-	cd c &&
-	git fetch
+	(cd c && git fetch)
 '
 
 test_expect_success 'local clone from x' '
-	cd "$D" &&
 	git clone -l -s x y &&
-	cd y &&
-	git fetch
+	(cd y && git fetch)
 '
 
 test_expect_success 'local clone from x.git that does not exist' '
-	cd "$D" &&
-	if git clone -l -s x.git z
-	then
-		echo "Oops, should have failed"
-		false
-	else
-		echo happy
-	fi
+	test_must_fail git clone -l -s x.git z
 '
 
 test_expect_success 'With -no-hardlinks, local will make a copy' '
-	cd "$D" &&
 	git clone --bare --no-hardlinks x w &&
-	cd w &&
-	linked=$(find objects -type f ! -links 1 | wc -l) &&
-	test 0 = $linked
+	! repo_is_hardlinked w
 '
 
 test_expect_success 'Even without -l, local will make a hardlink' '
-	cd "$D" &&
 	rm -fr w &&
 	git clone -l --bare x w &&
-	cd w &&
-	copied=$(find objects -type f -links 1 | wc -l) &&
-	test 0 = $copied
+	repo_is_hardlinked w
 '
 
 test_expect_success 'local clone of repo with nonexistent ref in HEAD' '
-	cd "$D" &&
 	echo "ref: refs/heads/nonexistent" > a.git/HEAD &&
 	git clone a d &&
-	cd d &&
+	(cd d &&
 	git fetch &&
-	test ! -e .git/refs/remotes/origin/HEAD'
+	test ! -e .git/refs/remotes/origin/HEAD)
+'
 
 test_expect_success 'bundle clone without .bundle suffix' '
-	cd "$D" &&
 	git clone dir/b3 &&
-	cd b3 &&
-	git fetch
+	(cd b3 && git fetch)
 '
 
 test_expect_success 'bundle clone with .bundle suffix' '
-	cd "$D" &&
 	git clone b1.bundle &&
-	cd b1 &&
-	git fetch
+	(cd b1 && git fetch)
 '
 
 test_expect_success 'bundle clone from b4' '
-	cd "$D" &&
 	git clone b4 bdl &&
-	cd bdl &&
-	git fetch
+	(cd bdl && git fetch)
 '
 
 test_expect_success 'bundle clone from b4.bundle that does not exist' '
-	cd "$D" &&
-	if git clone b4.bundle bb
-	then
-		echo "Oops, should have failed"
-		false
-	else
-		echo happy
-	fi
+	test_must_fail git clone b4.bundle bb
 '
 
 test_expect_success 'bundle clone with nonexistent HEAD' '
-	cd "$D" &&
 	git clone b2.bundle b2 &&
-	cd b2 &&
+	(cd b2 &&
 	git fetch &&
-	test ! -e .git/refs/heads/master
+	test_must_fail git rev-parse --verify refs/heads/master)
 '
 
 test_expect_success 'clone empty repository' '
-	cd "$D" &&
 	mkdir empty &&
 	(cd empty &&
 	 git init &&
@@ -135,7 +105,6 @@ test_expect_success 'clone empty repository' '
 '
 
 test_expect_success 'clone empty repository, and then push should not segfault.' '
-	cd "$D" &&
 	rm -fr empty/ empty-clone/ &&
 	mkdir empty &&
 	(cd empty && git init) &&
@@ -145,13 +114,11 @@ test_expect_success 'clone empty repository, and then push should not segfault.'
 '
 
 test_expect_success 'cloning non-existent directory fails' '
-	cd "$D" &&
 	rm -rf does-not-exist &&
 	test_must_fail git clone does-not-exist
 '
 
 test_expect_success 'cloning non-git directory fails' '
-	cd "$D" &&
 	rm -rf not-a-git-repo not-a-git-repo-clone &&
 	mkdir not-a-git-repo &&
 	test_must_fail git clone not-a-git-repo not-a-git-repo-clone
