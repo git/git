@@ -218,7 +218,7 @@ test_expect_success 'git p4 clone simple branches' '
 		cd branch1 &&
 		p4 edit file2 &&
 		echo file2_ >>file2 &&
-		p4 submit -d "update file2 in branch3" &&
+		p4 submit -d "update file2 in branch1" &&
 		cd "$git" &&
 		git reset --hard p4/depot/branch1 &&
 		git p4 rebase &&
@@ -249,8 +249,6 @@ test_expect_success 'git p4 clone simple branches' '
 #   `- file2
 #   `- file3
 test_expect_success 'git p4 add complex branches' '
-	test_when_finished cleanup_git &&
-	test_create_repo "$git" &&
 	(
 		cd "$cli" &&
 		changelist=$(p4 changes -m1 //depot/... | cut -d" " -f2) &&
