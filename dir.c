@@ -498,56 +498,56 @@ int excluded_from_list(const char *pathname,
 {
 	int i;
 
-	if (el->nr) {
-		for (i = el->nr - 1; 0 <= i; i--) {
-			struct exclude *x = el->excludes[i];
-			const char *exclude = x->pattern;
-			int to_exclude = x->to_exclude;
+	if (!el->nr)
+		return -1;	/* undefined */
 
-			if (x->flags & EXC_FLAG_MUSTBEDIR) {
-				if (*dtype == DT_UNKNOWN)
-					*dtype = get_dtype(NULL, pathname, pathlen);
-				if (*dtype != DT_DIR)
-					continue;
+	for (i = el->nr - 1; 0 <= i; i--) {
+		struct exclude *x = el->excludes[i];
+		const char *exclude = x->pattern;
+		int to_exclude = x->to_exclude;
+
+		if (x->flags & EXC_FLAG_MUSTBEDIR) {
+			if (*dtype == DT_UNKNOWN)
+				*dtype = get_dtype(NULL, pathname, pathlen);
+			if (*dtype != DT_DIR)
+				continue;
+		}
+
+		if (x->flags & EXC_FLAG_NODIR) {
+			/* match basename */
+			if (x->flags & EXC_FLAG_NOWILDCARD) {
+				if (!strcmp_icase(exclude, basename))
+					return to_exclude;
+			} else if (x->flags & EXC_FLAG_ENDSWITH) {
+				if (x->patternlen - 1 <= pathlen &&
+				    !strcmp_icase(exclude + 1, pathname + pathlen - x->patternlen + 1))
+					return to_exclude;
+			} else {
+				if (fnmatch_icase(exclude, basename, 0) == 0)
+					return to_exclude;
 			}
+			continue;
+		}
 
-			if (x->flags & EXC_FLAG_NODIR) {
-				/* match basename */
-				if (x->flags & EXC_FLAG_NOWILDCARD) {
-					if (!strcmp_icase(exclude, basename))
-						return to_exclude;
-				} else if (x->flags & EXC_FLAG_ENDSWITH) {
-					if (x->patternlen - 1 <= pathlen &&
-					    !strcmp_icase(exclude + 1, pathname + pathlen - x->patternlen + 1))
-						return to_exclude;
-				} else {
-					if (fnmatch_icase(exclude, basename, 0) == 0)
-						return to_exclude;
-				}
-			}
-			else {
-				/* match with FNM_PATHNAME:
-				 * exclude has base (baselen long) implicitly
-				 * in front of it.
-				 */
-				int baselen = x->baselen;
-				if (*exclude == '/')
-					exclude++;
 
-				if (pathlen < baselen ||
-				    (baselen && pathname[baselen-1] != '/') ||
-				    strncmp_icase(pathname, x->base, baselen))
-				    continue;
+		/* match with FNM_PATHNAME:
+		 * exclude has base (baselen long) implicitly in front of it.
+		 */
+		if (*exclude == '/')
+			exclude++;
 
-				if (x->flags & EXC_FLAG_NOWILDCARD) {
-					if (!strcmp_icase(exclude, pathname + baselen))
-						return to_exclude;
-				} else {
-					if (fnmatch_icase(exclude, pathname+baselen,
-						    FNM_PATHNAME) == 0)
-					    return to_exclude;
-				}
-			}
+		if (pathlen < x->baselen ||
+		    (x->baselen && pathname[x->baselen-1] != '/') ||
+		    strncmp_icase(pathname, x->base, x->baselen))
+			continue;
+
+		if (x->flags & EXC_FLAG_NOWILDCARD) {
+			if (!strcmp_icase(exclude, pathname + x->baselen))
+				return to_exclude;
+		} else {
+			if (fnmatch_icase(exclude, pathname+x->baselen,
+					  FNM_PATHNAME) == 0)
+				return to_exclude;
 		}
 	}
 	return -1; /* undecided */
