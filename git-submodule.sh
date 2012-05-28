@@ -396,8 +396,9 @@ cmd_init()
 	module_list "$@" |
 	while read mode sha1 stage sm_path
 	do
-		# Skip already registered paths
 		name=$(module_name "$sm_path") || exit
+
+		# Copy url setting when it is not set yet
 		if test -z "$(git config "submodule.$name.url")"
 		then
 			url=$(git config -f .gitmodules submodule."$name".url)
@@ -412,6 +413,8 @@ cmd_init()
 			esac
 			git config submodule."$name".url "$url" ||
 			die "$(eval_gettext "Failed to register url for submodule path '\$sm_path'")"
+
+			say "$(eval_gettext "Submodule '\$name' (\$url) registered for path '\$sm_path'")"
 		fi
 
 		# Copy "update" setting when it is not set yet
@@ -420,8 +423,6 @@ cmd_init()
 		test -n "$(git config submodule."$name".update)" ||
 		git config submodule."$name".update "$upd" ||
 		die "$(eval_gettext "Failed to register update mode for submodule path '\$sm_path'")"
-
-		say "$(eval_gettext "Submodule '\$name' (\$url) registered for path '\$sm_path'")"
 	done
 }
 
