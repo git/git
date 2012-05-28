@@ -68,8 +68,8 @@ sub _req_svn {
 }
 my $can_compress = eval { require Compress::Zlib; 1};
 push @Git::SVN::Ra::ISA, 'SVN::Ra';
-push @SVN::Git::Editor::ISA, 'SVN::Delta::Editor';
-push @SVN::Git::Fetcher::ISA, 'SVN::Delta::Editor';
+push @Git::SVN::Editor::ISA, 'SVN::Delta::Editor';
+push @Git::SVN::Fetcher::ISA, 'SVN::Delta::Editor';
 use Carp qw/croak/;
 use Digest::MD5;
 use IO::File qw//;
@@ -89,7 +89,7 @@ BEGIN {
 	foreach (qw/command command_oneline command_noisy command_output_pipe
 	            command_input_pipe command_close_pipe
 	            command_bidi_pipe command_close_bidi_pipe/) {
-		for my $package ( qw(SVN::Git::Editor SVN::Git::Fetcher
+		for my $package ( qw(Git::SVN::Editor Git::SVN::Fetcher
 			Git::SVN::Migration Git::SVN::Log Git::SVN),
 			__PACKAGE__) {
 			*{"${package}::$_"} = \&{"Git::$_"};
@@ -111,12 +111,12 @@ my ($_stdin, $_help, $_edit,
 	$_prefix, $_no_checkout, $_url, $_verbose,
 	$_git_format, $_commit_url, $_tag, $_merge_info, $_interactive);
 $Git::SVN::_follow_parent = 1;
-$SVN::Git::Fetcher::_placeholder_filename = ".gitignore";
+$Git::SVN::Fetcher::_placeholder_filename = ".gitignore";
 $_q ||= 0;
 my %remote_opts = ( 'username=s' => \$Git::SVN::Prompt::_username,
                     'config-dir=s' => \$Git::SVN::Ra::config_dir,
                     'no-auth-cache' => \$Git::SVN::Prompt::_no_auth_cache,
-                    'ignore-paths=s' => \$SVN::Git::Fetcher::_ignore_regex,
+                    'ignore-paths=s' => \$Git::SVN::Fetcher::_ignore_regex,
                     'ignore-refs=s' => \$Git::SVN::Ra::_ignore_refs_regex );
 my %fc_opts = ( 'follow-parent|follow!' => \$Git::SVN::_follow_parent,
 		'authors-file|A=s' => \$_authors,
@@ -149,10 +149,10 @@ my %init_opts = ( 'template=s' => \$_template, 'shared:s' => \$_shared,
 		  'rewrite-uuid=s' => sub { $icv{rewriteUUID} = $_[1] },
                   %remote_opts );
 my %cmt_opts = ( 'edit|e' => \$_edit,
-		'rmdir' => \$SVN::Git::Editor::_rmdir,
-		'find-copies-harder' => \$SVN::Git::Editor::_find_copies_harder,
-		'l=i' => \$SVN::Git::Editor::_rename_limit,
-		'copy-similarity|C=i'=> \$SVN::Git::Editor::_cp_similarity
+		'rmdir' => \$Git::SVN::Editor::_rmdir,
+		'find-copies-harder' => \$Git::SVN::Editor::_find_copies_harder,
+		'l=i' => \$Git::SVN::Editor::_rename_limit,
+		'copy-similarity|C=i'=> \$Git::SVN::Editor::_cp_similarity
 );
 
 my %cmd = (
@@ -164,9 +164,9 @@ my %cmd = (
 	clone => [ \&cmd_clone, "Initialize and fetch revisions",
 			{ 'revision|r=s' => \$_revision,
 			  'preserve-empty-dirs' =>
-				\$SVN::Git::Fetcher::_preserve_empty_dirs,
+				\$Git::SVN::Fetcher::_preserve_empty_dirs,
 			  'placeholder-filename=s' =>
-				\$SVN::Git::Fetcher::_placeholder_filename,
+				\$Git::SVN::Fetcher::_placeholder_filename,
 			   %fc_opts, %init_opts } ],
 	init => [ \&cmd_init, "Initialize a repo for tracking" .
 			  " (requires URL argument)",
@@ -464,15 +464,15 @@ sub do_git_init_db {
 		command_noisy('config', "$pfx.$i", $icv{$i});
 		$set = $i;
 	}
-	my $ignore_paths_regex = \$SVN::Git::Fetcher::_ignore_regex;
+	my $ignore_paths_regex = \$Git::SVN::Fetcher::_ignore_regex;
 	command_noisy('config', "$pfx.ignore-paths", $$ignore_paths_regex)
 		if defined $$ignore_paths_regex;
 	my $ignore_refs_regex = \$Git::SVN::Ra::_ignore_refs_regex;
 	command_noisy('config', "$pfx.ignore-refs", $$ignore_refs_regex)
 		if defined $$ignore_refs_regex;
 
-	if (defined $SVN::Git::Fetcher::_preserve_empty_dirs) {
-		my $fname = \$SVN::Git::Fetcher::_placeholder_filename;
+	if (defined $Git::SVN::Fetcher::_preserve_empty_dirs) {
+		my $fname = \$Git::SVN::Fetcher::_placeholder_filename;
 		command_noisy('config', "$pfx.preserve-empty-dirs", 'true');
 		command_noisy('config', "$pfx.placeholder-filename", $$fname);
 	}
@@ -942,7 +942,7 @@ sub cmd_dcommit {
 			                },
 					mergeinfo => $_merge_info,
 			                svn_path => '');
-			if (!SVN::Git::Editor->new(\%ed_opts)->apply_diff) {
+			if (!Git::SVN::Editor->new(\%ed_opts)->apply_diff) {
 				print "No changes\n$d~1 == $d\n";
 			} elsif ($parents->{$d} && @{$parents->{$d}}) {
 				$gs->{inject_parents_dcommit}->{$cmt_rev} =
@@ -1066,8 +1066,8 @@ sub cmd_branch {
 		            " with the --destination argument.\n";
 		}
 		foreach my $g (@{$allglobs}) {
-			# SVN::Git::Editor could probably be moved to Git.pm..
-			my $re = SVN::Git::Editor::glob2pat($g->{path}->{left});
+			# Git::SVN::Editor could probably be moved to Git.pm..
+			my $re = Git::SVN::Editor::glob2pat($g->{path}->{left});
 			if ($_branch_dest =~ /$re/) {
 				$glob = $g;
 				last;
@@ -1425,7 +1425,7 @@ sub cmd_commit_diff {
 	                tree_b => $tb,
 	                editor_cb => sub { print "Committed r$_[0]\n" },
 	                svn_path => $svn_path );
-	if (!SVN::Git::Editor->new(\%ed_opts)->apply_diff) {
+	if (!Git::SVN::Editor->new(\%ed_opts)->apply_diff) {
 		print "No changes\n$ta == $tb\n";
 	}
 }
@@ -3157,7 +3157,7 @@ sub find_parent_branch {
 			# at the moment), so we can't rely on it
 			$self->{last_rev} = $r0;
 			$self->{last_commit} = $parent;
-			$ed = SVN::Git::Fetcher->new($self, $gs->{path});
+			$ed = Git::SVN::Fetcher->new($self, $gs->{path});
 			$gs->ra->gs_do_switch($r0, $rev, $gs,
 					      $self->full_url, $ed)
 			  or die "SVN connection failed somewhere...\n";
@@ -3175,7 +3175,7 @@ sub find_parent_branch {
 		} else {
 			print STDERR "Following parent with do_update\n"
 			             unless $::_q > 1;
-			$ed = SVN::Git::Fetcher->new($self);
+			$ed = Git::SVN::Fetcher->new($self);
 			$self->ra->gs_do_update($rev, $rev, $self, $ed)
 			  or die "SVN connection failed somewhere...\n";
 		}
@@ -3198,7 +3198,7 @@ sub do_fetch {
 			push @{$log_entry->{parents}}, $lc;
 			return $log_entry;
 		}
-		$ed = SVN::Git::Fetcher->new($self);
+		$ed = Git::SVN::Fetcher->new($self);
 		$last_rev = $self->{last_rev};
 		$ed->{c} = $lc;
 		@parents = ($lc);
@@ -3207,7 +3207,7 @@ sub do_fetch {
 		if (my $log_entry = $self->find_parent_branch($paths, $rev)) {
 			return $log_entry;
 		}
-		$ed = SVN::Git::Fetcher->new($self);
+		$ed = Git::SVN::Fetcher->new($self);
 	}
 	unless ($self->ra->gs_do_update($last_rev, $rev, $self, $ed)) {
 		die "SVN connection failed somewhere...\n";
@@ -3912,7 +3912,7 @@ sub set_tree {
 	                editor_cb => sub {
 			       $self->set_tree_cb($log_entry, $tree, @_) },
 	                svn_path => $self->{path} );
-	if (!SVN::Git::Editor->new(\%ed_opts)->apply_diff) {
+	if (!Git::SVN::Editor->new(\%ed_opts)->apply_diff) {
 		print "No changes\nr$self->{last_rev} = $tree\n";
 	}
 }
@@ -4328,7 +4328,7 @@ sub remove_username {
 	$_[0] =~ s{^([^:]*://)[^@]+@}{$1};
 }
 
-package SVN::Git::Fetcher;
+package Git::SVN::Fetcher;
 use vars qw/@ISA $_ignore_regex $_preserve_empty_dirs $_placeholder_filename
             @deleted_gpath %added_placeholder $repo_id/;
 use strict;
@@ -4831,7 +4831,7 @@ sub stash_placeholder_list {
 	}
 }
 
-package SVN::Git::Editor;
+package Git::SVN::Editor;
 use vars qw/@ISA $_rmdir $_cp_similarity $_find_copies_harder $_rename_limit/;
 use strict;
 use warnings;
