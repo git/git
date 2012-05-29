@@ -7,7 +7,10 @@
  */
 #include "cache.h"
 
+static struct strbuf git_default_name = STRBUF_INIT;
+static struct strbuf git_default_email = STRBUF_INIT;
 static char git_default_date[50];
+int user_ident_explicitly_given;
 
 #ifdef NO_GECOS_IN_PWENT
 #define get_gecos(ignored) "&"
@@ -15,42 +18,27 @@ static char git_default_date[50];
 #define get_gecos(struct_passwd) ((struct_passwd)->pw_gecos)
 #endif
 
-static void copy_gecos(const struct passwd *w, char *name, size_t sz)
+static void copy_gecos(const struct passwd *w, struct strbuf *name)
 {
-	char *src, *dst;
-	size_t len, nlen;
-
-	nlen = strlen(w->pw_name);
+	char *src;
 
 	/* Traditionally GECOS field had office phone numbers etc, separated
 	 * with commas.  Also & stands for capitalized form of the login name.
 	 */
 
-	for (len = 0, dst = name, src = get_gecos(w); len < sz; src++) {
+	for (src = get_gecos(w); *src && *src != ','; src++) {
 		int ch = *src;
-		if (ch != '&') {
-			*dst++ = ch;
-			if (ch == 0 || ch == ',')
-				break;
-			len++;
-			continue;
-		}
-		if (len + nlen < sz) {
+		if (ch != '&')
+			strbuf_addch(name, ch);
+		else {
 			/* Sorry, Mr. McDonald... */
-			*dst++ = toupper(*w->pw_name);
-			memcpy(dst, w->pw_name + 1, nlen - 1);
-			dst += nlen - 1;
-			len += nlen;
+			strbuf_addch(name, toupper(*w->pw_name));
+			strbuf_addstr(name, w->pw_name + 1);
 		}
 	}
-	if (len < sz)
-		name[len] = 0;
-	else
-		die("Your parents must have hated you!");
-
 }
 
-static int add_mailname_host(char *buf, size_t len)
+static int add_mailname_host(struct strbuf *buf)
 {
 	FILE *mailname;
 
@@ -61,7 +49,7 @@ static int add_mailname_host(char *buf, size_t len)
 				strerror(errno));
 		return -1;
 	}
-	if (!fgets(buf, len, mailname)) {
+	if (strbuf_getline(buf, mailname, '\n') == EOF) {
 		if (ferror(mailname))
 			warning("cannot read /etc/mailname: %s",
 				strerror(errno));
@@ -73,94 +61,67 @@ static int add_mailname_host(char *buf, size_t len)
 	return 0;
 }
 
-static void add_domainname(char *buf, size_t len)
+static void add_domainname(struct strbuf *out)
 {
+	char buf[1024];
 	struct hostent *he;
-	size_t namelen;
-	const char *domainname;
 
-	if (gethostname(buf, len)) {
+	if (gethostname(buf, sizeof(buf))) {
 		warning("cannot get host name: %s", strerror(errno));
-		strlcpy(buf, "(none)", len);
+		strbuf_addstr(out, "(none)");
 		return;
 	}
-	namelen = strlen(buf);
-	if (memchr(buf, '.', namelen))
-		return;
-
-	he = gethostbyname(buf);
-	buf[namelen++] = '.';
-	buf += namelen;
-	len -= namelen;
-	if (he && (domainname = strchr(he->h_name, '.')))
-		strlcpy(buf, domainname + 1, len);
+	if (strchr(buf, '.'))
+		strbuf_addstr(out, buf);
+	else if ((he = gethostbyname(buf)) && strchr(he->h_name, '.'))
+		strbuf_addstr(out, he->h_name);
 	else
-		strlcpy(buf, "(none)", len);
+		strbuf_addf(out, "%s.(none)", buf);
 }
 
-static void copy_email(const struct passwd *pw)
+static void copy_email(const struct passwd *pw, struct strbuf *email)
 {
 	/*
 	 * Make up a fake email address
 	 * (name + '@' + hostname [+ '.' + domainname])
 	 */
-	size_t len = strlen(pw->pw_name);
-	if (len > sizeof(git_default_email)/2)
-		die("Your sysadmin must hate you!");
-	memcpy(git_default_email, pw->pw_name, len);
-	git_default_email[len++] = '@';
+	strbuf_addstr(email, pw->pw_name);
+	strbuf_addch(email, '@');
 
-	if (!add_mailname_host(git_default_email + len,
-				sizeof(git_default_email) - len))
+	if (!add_mailname_host(email))
 		return;	/* read from "/etc/mailname" (Debian) */
-	add_domainname(git_default_email + len,
-			sizeof(git_default_email) - len);
+	add_domainname(email);
 }
 
-static void setup_ident(const char **name, const char **emailp)
+const char *ident_default_name(void)
 {
-	struct passwd *pw = NULL;
-
-	/* Get the name ("gecos") */
-	if (!*name && !git_default_name[0]) {
-		pw = getpwuid(getuid());
-		if (!pw)
-			die("You don't exist. Go away!");
-		copy_gecos(pw, git_default_name, sizeof(git_default_name));
+	if (!git_default_name.len) {
+		copy_gecos(xgetpwuid_self(), &git_default_name);
+		strbuf_trim(&git_default_name);
 	}
-	if (!*name)
-		*name = git_default_name;
+	return git_default_name.buf;
+}
 
-	if (!*emailp && !git_default_email[0]) {
+const char *ident_default_email(void)
+{
+	if (!git_default_email.len) {
 		const char *email = getenv("EMAIL");
 
 		if (email && email[0]) {
-			strlcpy(git_default_email, email,
-				sizeof(git_default_email));
+			strbuf_addstr(&git_default_email, email);
 			user_ident_explicitly_given |= IDENT_MAIL_GIVEN;
-		} else {
-			if (!pw)
-				pw = getpwuid(getuid());
-			if (!pw)
-				die("You don't exist. Go away!");
-			copy_email(pw);
-		}
+		} else
+			copy_email(xgetpwuid_self(), &git_default_email);
+		strbuf_trim(&git_default_email);
 	}
-	if (!*emailp)
-		*emailp = git_default_email;
-
-	/* And set the default date */
-	if (!git_default_date[0])
-		datestamp(git_default_date, sizeof(git_default_date));
+	return git_default_email.buf;
 }
 
-static int add_raw(char *buf, size_t size, int offset, const char *str)
+const char *ident_default_date(void)
 {
-	size_t len = strlen(str);
-	if (offset + len > size)
-		return size;
-	memcpy(buf + offset, str, len);
-	return offset + len;
+	if (!git_default_date[0])
+		datestamp(git_default_date, sizeof(git_default_date));
+	return git_default_date;
 }
 
 static int crud(unsigned char c)
@@ -181,7 +142,7 @@ static int crud(unsigned char c)
  * Copy over a string to the destination, but avoid special
  * characters ('\n', '<' and '>') and remove crud at the end
  */
-static int copy(char *buf, size_t size, int offset, const char *src)
+static void strbuf_addstr_without_crud(struct strbuf *sb, const char *src)
 {
 	size_t i, len;
 	unsigned char c;
@@ -205,19 +166,19 @@ static int copy(char *buf, size_t size, int offset, const char *src)
 	/*
 	 * Copy the rest to the buffer, but avoid the special
 	 * characters '\n' '<' and '>' that act as delimiters on
-	 * an identification line
+	 * an identification line. We can only remove crud, never add it,
+	 * so 'len' is our maximum.
 	 */
+	strbuf_grow(sb, len);
 	for (i = 0; i < len; i++) {
 		c = *src++;
 		switch (c) {
 		case '\n': case '<': case '>':
 			continue;
 		}
-		if (offset >= size)
-			return size;
-		buf[offset++] = c;
+		sb->buf[sb->len++] = c;
 	}
-	return offset;
+	sb->buf[sb->len] = '\0';
 }
 
 /*
@@ -304,57 +265,62 @@ static const char *env_hint =
 const char *fmt_ident(const char *name, const char *email,
 		      const char *date_str, int flag)
 {
-	static char buffer[1000];
+	static struct strbuf ident = STRBUF_INIT;
 	char date[50];
-	int i;
-	int error_on_no_name = (flag & IDENT_ERROR_ON_NO_NAME);
-	int warn_on_no_name = (flag & IDENT_WARN_ON_NO_NAME);
-	int name_addr_only = (flag & IDENT_NO_DATE);
+	int strict = (flag & IDENT_STRICT);
+	int want_date = !(flag & IDENT_NO_DATE);
+	int want_name = !(flag & IDENT_NO_NAME);
 
-	setup_ident(&name, &email);
+	if (want_name && !name)
+		name = ident_default_name();
+	if (!email)
+		email = ident_default_email();
 
-	if (!*name) {
+	if (want_name && !*name) {
 		struct passwd *pw;
 
-		if ((warn_on_no_name || error_on_no_name) &&
-		    name == git_default_name && env_hint) {
-			fputs(env_hint, stderr);
-			env_hint = NULL; /* warn only once */
+		if (strict) {
+			if (name == git_default_name.buf)
+				fputs(env_hint, stderr);
+			die("empty ident name (for <%s>) not allowed", email);
 		}
-		if (error_on_no_name)
-			die("empty ident %s <%s> not allowed", name, email);
-		pw = getpwuid(getuid());
-		if (!pw)
-			die("You don't exist. Go away!");
-		strlcpy(git_default_name, pw->pw_name,
-			sizeof(git_default_name));
-		name = git_default_name;
+		pw = xgetpwuid_self();
+		name = pw->pw_name;
 	}
 
-	strcpy(date, git_default_date);
-	if (!name_addr_only && date_str && date_str[0]) {
-		if (parse_date(date_str, date, sizeof(date)) < 0)
-			die("invalid date format: %s", date_str);
+	if (strict && email == git_default_email.buf &&
+	    strstr(email, "(none)")) {
+		fputs(env_hint, stderr);
+		die("unable to auto-detect email address (got '%s')", email);
 	}
 
-	i = copy(buffer, sizeof(buffer), 0, name);
-	i = add_raw(buffer, sizeof(buffer), i, " <");
-	i = copy(buffer, sizeof(buffer), i, email);
-	if (!name_addr_only) {
-		i = add_raw(buffer, sizeof(buffer), i,  "> ");
-		i = copy(buffer, sizeof(buffer), i, date);
-	} else {
-		i = add_raw(buffer, sizeof(buffer), i, ">");
+	if (want_date) {
+		if (date_str && date_str[0]) {
+			if (parse_date(date_str, date, sizeof(date)) < 0)
+				die("invalid date format: %s", date_str);
+		}
+		else
+			strcpy(date, ident_default_date());
 	}
-	if (i >= sizeof(buffer))
-		die("Impossibly long personal identifier");
-	buffer[i] = 0;
-	return buffer;
+
+	strbuf_reset(&ident);
+	if (want_name) {
+		strbuf_addstr_without_crud(&ident, name);
+		strbuf_addstr(&ident, " <");
+	}
+	strbuf_addstr_without_crud(&ident, email);
+	if (want_name)
+			strbuf_addch(&ident, '>');
+	if (want_date) {
+		strbuf_addch(&ident, ' ');
+		strbuf_addstr_without_crud(&ident, date);
+	}
+	return ident.buf;
 }
 
 const char *fmt_name(const char *name, const char *email)
 {
-	return fmt_ident(name, email, NULL, IDENT_ERROR_ON_NO_NAME | IDENT_NO_DATE);
+	return fmt_ident(name, email, NULL, IDENT_STRICT | IDENT_NO_DATE);
 }
 
 const char *git_author_info(int flag)
@@ -384,4 +350,27 @@ int user_ident_sufficiently_given(void)
 #else
 	return (user_ident_explicitly_given == IDENT_ALL_GIVEN);
 #endif
+}
+
+int git_ident_config(const char *var, const char *value, void *data)
+{
+	if (!strcmp(var, "user.name")) {
+		if (!value)
+			return config_error_nonbool(var);
+		strbuf_reset(&git_default_name);
+		strbuf_addstr(&git_default_name, value);
+		user_ident_explicitly_given |= IDENT_NAME_GIVEN;
+		return 0;
+	}
+
+	if (!strcmp(var, "user.email")) {
+		if (!value)
+			return config_error_nonbool(var);
+		strbuf_reset(&git_default_email);
+		strbuf_addstr(&git_default_email, value);
+		user_ident_explicitly_given |= IDENT_MAIL_GIVEN;
+		return 0;
+	}
+
+	return 0;
 }

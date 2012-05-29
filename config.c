@@ -762,28 +762,6 @@ static int git_default_core_config(const char *var, const char *value)
 	return 0;
 }
 
-static int git_default_user_config(const char *var, const char *value)
-{
-	if (!strcmp(var, "user.name")) {
-		if (!value)
-			return config_error_nonbool(var);
-		strlcpy(git_default_name, value, sizeof(git_default_name));
-		user_ident_explicitly_given |= IDENT_NAME_GIVEN;
-		return 0;
-	}
-
-	if (!strcmp(var, "user.email")) {
-		if (!value)
-			return config_error_nonbool(var);
-		strlcpy(git_default_email, value, sizeof(git_default_email));
-		user_ident_explicitly_given |= IDENT_MAIL_GIVEN;
-		return 0;
-	}
-
-	/* Add other config variables here and to Documentation/config.txt. */
-	return 0;
-}
-
 static int git_default_i18n_config(const char *var, const char *value)
 {
 	if (!strcmp(var, "i18n.commitencoding"))
@@ -870,7 +848,7 @@ int git_default_config(const char *var, const char *value, void *dummy)
 		return git_default_core_config(var, value);
 
 	if (!prefixcmp(var, "user."))
-		return git_default_user_config(var, value);
+		return git_ident_config(var, value, dummy);
 
 	if (!prefixcmp(var, "i18n."))
 		return git_default_i18n_config(var, value);

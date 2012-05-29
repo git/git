@@ -887,15 +887,19 @@ unsigned long approxidate_careful(const char *, int *);
 unsigned long approxidate_relative(const char *date, const struct timeval *now);
 enum date_mode parse_date_format(const char *format);
 
-#define IDENT_WARN_ON_NO_NAME  1
-#define IDENT_ERROR_ON_NO_NAME 2
-#define IDENT_NO_DATE	       4
+#define IDENT_STRICT	       1
+#define IDENT_NO_DATE	       2
+#define IDENT_NO_NAME	       4
 extern const char *git_author_info(int);
 extern const char *git_committer_info(int);
 extern const char *fmt_ident(const char *name, const char *email, const char *date_str, int);
 extern const char *fmt_name(const char *name, const char *email);
+extern const char *ident_default_name(void);
+extern const char *ident_default_email(void);
+extern const char *ident_default_date(void);
 extern const char *git_editor(void);
 extern const char *git_pager(int stdout_is_tty);
+extern int git_ident_config(const char *, const char *, void *);
 
 struct ident_split {
 	const char *name_begin;
@@ -1139,9 +1143,6 @@ struct config_include_data {
 #define CONFIG_INCLUDE_INIT { 0 }
 extern int git_config_include(const char *name, const char *value, void *data);
 
-#define MAX_GITNAME (1000)
-extern char git_default_email[MAX_GITNAME];
-extern char git_default_name[MAX_GITNAME];
 #define IDENT_NAME_GIVEN 01
 #define IDENT_MAIL_GIVEN 02
 #define IDENT_ALL_GIVEN (IDENT_NAME_GIVEN|IDENT_MAIL_GIVEN)

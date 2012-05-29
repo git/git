@@ -402,3 +402,15 @@ int remove_or_warn(unsigned int mode, const char *file)
 {
 	return S_ISGITLINK(mode) ? rmdir_or_warn(file) : unlink_or_warn(file);
 }
+
+struct passwd *xgetpwuid_self(void)
+{
+	struct passwd *pw;
+
+	errno = 0;
+	pw = getpwuid(getuid());
+	if (!pw)
+		die(_("unable to look up current user in the passwd file: %s"),
+		    errno ? strerror(errno) : _("no such user"));
+	return pw;
+}

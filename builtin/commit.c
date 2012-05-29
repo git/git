@@ -526,8 +526,7 @@ static void determine_author_info(struct strbuf *author_ident)
 
 	if (force_date)
 		date = force_date;
-	strbuf_addstr(author_ident, fmt_ident(name, email, date,
-					      IDENT_ERROR_ON_NO_NAME));
+	strbuf_addstr(author_ident, fmt_ident(name, email, date, IDENT_STRICT));
 	if (!split_ident_line(&author, author_ident->buf, author_ident->len)) {
 		export_one("GIT_AUTHOR_NAME", author.name_begin, author.name_end, 0);
 		export_one("GIT_AUTHOR_EMAIL", author.mail_begin, author.mail_end, 0);

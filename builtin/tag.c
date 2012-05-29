@@ -332,7 +332,7 @@ static void create_tag(const unsigned char *object, const char *tag,
 			  sha1_to_hex(object),
 			  typename(type),
 			  tag,
-			  git_committer_info(IDENT_ERROR_ON_NO_NAME));
+			  git_committer_info(IDENT_STRICT));
 
 	if (header_len > sizeof(header_buf) - 1)
 		die(_("tag header too big."));
