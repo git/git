@@ -305,12 +305,13 @@ static void clear_ref_dir(struct ref_dir *dir)
  * "refs/heads/") or "" for the top-level directory.
  */
 static struct ref_entry *create_dir_entry(struct ref_cache *ref_cache,
-					  const char *dirname, int incomplete)
+					  const char *dirname, size_t len,
+					  int incomplete)
 {
 	struct ref_entry *direntry;
-	int len = strlen(dirname);
 	direntry = xcalloc(1, sizeof(struct ref_entry) + len + 1);
-	memcpy(direntry->name, dirname, len + 1);
+	memcpy(direntry->name, dirname, len);
+	direntry->name[len] = '\0';
 	direntry->u.subdir.ref_cache = ref_cache;
 	direntry->flag = REF_DIR | (incomplete ? REF_INCOMPLETE : 0);
 	return direntry;
@@ -325,28 +326,42 @@ static int ref_entry_cmp(const void *a, const void *b)
 
 static void sort_ref_dir(struct ref_dir *dir);
 
+struct string_slice {
+	size_t len;
+	const char *str;
+};
+
+static int ref_entry_cmp_sslice(const void *key_, const void *ent_)
+{
+	struct string_slice *key = (struct string_slice *)key_;
+	struct ref_entry *ent = *(struct ref_entry **)ent_;
+	int entlen = strlen(ent->name);
+	int cmplen = key->len < entlen ? key->len : entlen;
+	int cmp = memcmp(key->str, ent->name, cmplen);
+	if (cmp)
+		return cmp;
+	return key->len - entlen;
+}
+
 /*
  * Return the entry with the given refname from the ref_dir
  * (non-recursively), sorting dir if necessary.  Return NULL if no
  * such entry is found.  dir must already be complete.
  */
-static struct ref_entry *search_ref_dir(struct ref_dir *dir, const char *refname)
+static struct ref_entry *search_ref_dir(struct ref_dir *dir,
+					const char *refname, size_t len)
 {
-	struct ref_entry *e, **r;
-	int len;
+	struct ref_entry **r;
+	struct string_slice key;
 
 	if (refname == NULL || !dir->nr)
 		return NULL;
 
 	sort_ref_dir(dir);
-
-	len = strlen(refname) + 1;
-	e = xmalloc(sizeof(struct ref_entry) + len);
-	memcpy(e->name, refname, len);
-
-	r = bsearch(&e, dir->entries, dir->nr, sizeof(*dir->entries), ref_entry_cmp);
-
-	free(e);
+	key.len = len;
+	key.str = refname;
+	r = bsearch(&key, dir->entries, dir->nr, sizeof(*dir->entries),
+		    ref_entry_cmp_sslice);
 
 	if (r == NULL)
 		return NULL;
@@ -362,9 +377,10 @@ static struct ref_entry *search_ref_dir(struct ref_dir *dir, const char *refname
  * directory cannot be found.  dir must already be complete.
  */
 static struct ref_dir *search_for_subdir(struct ref_dir *dir,
-					 const char *subdirname, int mkdir)
+					 const char *subdirname, size_t len,
+					 int mkdir)
 {
-	struct ref_entry *entry = search_ref_dir(dir, subdirname);
+	struct ref_entry *entry = search_ref_dir(dir, subdirname, len);
 	if (!entry) {
 		if (!mkdir)
 			return NULL;
@@ -374,7 +390,7 @@ static struct ref_dir *search_for_subdir(struct ref_dir *dir,
 		 * therefore, create an empty record for it but mark
 		 * the record complete.
 		 */
-		entry = create_dir_entry(dir->ref_cache, subdirname, 0);
+		entry = create_dir_entry(dir->ref_cache, subdirname, len, 0);
 		add_entry_to_dir(dir, entry);
 	}
 	return get_ref_dir(entry);
@@ -392,15 +408,11 @@ static struct ref_dir *search_for_subdir(struct ref_dir *dir,
 static struct ref_dir *find_containing_dir(struct ref_dir *dir,
 					   const char *refname, int mkdir)
 {
-	struct strbuf dirname;
 	const char *slash;
-	strbuf_init(&dirname, PATH_MAX);
 	for (slash = strchr(refname, '/'); slash; slash = strchr(slash + 1, '/')) {
+		size_t dirnamelen = slash - refname + 1;
 		struct ref_dir *subdir;
-		strbuf_add(&dirname,
-			   refname + dirname.len,
-			   (slash + 1) - (refname + dirname.len));
-		subdir = search_for_subdir(dir, dirname.buf, mkdir);
+		subdir = search_for_subdir(dir, refname, dirnamelen, mkdir);
 		if (!subdir) {
 			dir = NULL;
 			break;
@@ -408,7 +420,6 @@ static struct ref_dir *find_containing_dir(struct ref_dir *dir,
 		dir = subdir;
 	}
 
-	strbuf_release(&dirname);
 	return dir;
 }
 
@@ -423,7 +434,7 @@ static struct ref_entry *find_ref(struct ref_dir *dir, const char *refname)
 	dir = find_containing_dir(dir, refname, 0);
 	if (!dir)
 		return NULL;
-	entry = search_ref_dir(dir, refname);
+	entry = search_ref_dir(dir, refname, strlen(refname));
 	return (entry && !(entry->flag & REF_DIR)) ? entry : NULL;
 }
 
@@ -833,7 +844,7 @@ static struct ref_dir *get_packed_refs(struct ref_cache *refs)
 		const char *packed_refs_file;
 		FILE *f;
 
-		refs->packed = create_dir_entry(refs, "", 0);
+		refs->packed = create_dir_entry(refs, "", 0, 0);
 		if (*refs->name)
 			packed_refs_file = git_path_submodule(refs->name, "packed-refs");
 		else
@@ -898,7 +909,8 @@ static void read_loose_refs(const char *dirname, struct ref_dir *dir)
 		} else if (S_ISDIR(st.st_mode)) {
 			strbuf_addch(&refname, '/');
 			add_entry_to_dir(dir,
-					 create_dir_entry(refs, refname.buf, 1));
+					 create_dir_entry(refs, refname.buf,
+							  refname.len, 1));
 		} else {
 			if (*refs->name) {
 				hashclr(sha1);
@@ -928,12 +940,12 @@ static struct ref_dir *get_loose_refs(struct ref_cache *refs)
 		 * are about to read the only subdirectory that can
 		 * hold references:
 		 */
-		refs->loose = create_dir_entry(refs, "", 0);
+		refs->loose = create_dir_entry(refs, "", 0, 0);
 		/*
 		 * Create an incomplete entry for "refs/":
 		 */
 		add_entry_to_dir(get_ref_dir(refs->loose),
-				 create_dir_entry(refs, "refs/", 1));
+				 create_dir_entry(refs, "refs/", 5, 1));
 	}
 	return get_ref_dir(refs->loose);
 }
