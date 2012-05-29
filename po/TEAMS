@@ -15,6 +15,10 @@ Members:	Thomas Rast <trast@student.ethz.ch>
 Language:	is (Icelandic)
 Leader:		Ævar Arnfjörð Bjarmason <avarab@gmail.com>
 
+Language:	it (Italian)
+Repository:	https://github.com/quizzlo/git-po-it/
+Leader:		Marco Paolone <marcopaolone@gmail.com>
+
 Language:	nl (Dutch)
 Repository:	https://github.com/vfr-nl/git-po/
 Leader:		Vincent van Ravesteijn <vfr@lyx.org>
