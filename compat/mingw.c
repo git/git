@@ -1019,7 +1019,7 @@ static int try_shell_exec(const char *cmd, char *const *argv, char **env)
 	return pid;
 }
 
-static void mingw_execve(const char *cmd, char *const *argv, char *const *env)
+static int mingw_execve(const char *cmd, char *const *argv, char *const *env)
 {
 	/* check if git_command is a shell script */
 	if (!try_shell_exec(cmd, argv, (char **)env)) {
@@ -1027,11 +1027,12 @@ static void mingw_execve(const char *cmd, char *const *argv, char *const *env)
 
 		pid = mingw_spawnve(cmd, (const char **)argv, (char **)env, 0);
 		if (pid < 0)
-			return;
+			return -1;
 		if (waitpid(pid, &status, 0) < 0)
 			status = 255;
 		exit(status);
 	}
+	return -1;
 }
 
 int mingw_execvp(const char *cmd, char *const *argv)
