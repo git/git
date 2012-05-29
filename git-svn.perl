@@ -68,8 +68,7 @@ sub _req_svn {
 }
 my $can_compress = eval { require Compress::Zlib; 1};
 push @Git::SVN::Ra::ISA, 'SVN::Ra';
-push @SVN::Git::Editor::ISA, 'SVN::Delta::Editor';
-push @SVN::Git::Fetcher::ISA, 'SVN::Delta::Editor';
+push @Git::SVN::Editor::ISA, 'SVN::Delta::Editor';
 use Carp qw/croak/;
 use Digest::MD5;
 use IO::File qw//;
@@ -80,6 +79,8 @@ use File::Find;
 use Getopt::Long qw/:config gnu_getopt no_ignore_case auto_abbrev/;
 use IPC::Open3;
 use Git;
+use Git::SVN::Fetcher qw//;
+use Git::SVN::Prompt qw//;
 use Memoize;  # core since 5.8.0, Jul 2002
 
 BEGIN {
@@ -88,7 +89,7 @@ BEGIN {
 	foreach (qw/command command_oneline command_noisy command_output_pipe
 	            command_input_pipe command_close_pipe
 	            command_bidi_pipe command_close_bidi_pipe/) {
-		for my $package ( qw(SVN::Git::Editor SVN::Git::Fetcher
+		for my $package ( qw(Git::SVN::Editor
 			Git::SVN::Migration Git::SVN::Log Git::SVN),
 			__PACKAGE__) {
 			*{"${package}::$_"} = \&{"Git::$_"};
@@ -110,12 +111,12 @@ my ($_stdin, $_help, $_edit,
 	$_prefix, $_no_checkout, $_url, $_verbose,
 	$_git_format, $_commit_url, $_tag, $_merge_info, $_interactive);
 $Git::SVN::_follow_parent = 1;
-$SVN::Git::Fetcher::_placeholder_filename = ".gitignore";
+$Git::SVN::Fetcher::_placeholder_filename = ".gitignore";
 $_q ||= 0;
 my %remote_opts = ( 'username=s' => \$Git::SVN::Prompt::_username,
                     'config-dir=s' => \$Git::SVN::Ra::config_dir,
                     'no-auth-cache' => \$Git::SVN::Prompt::_no_auth_cache,
-                    'ignore-paths=s' => \$SVN::Git::Fetcher::_ignore_regex,
+                    'ignore-paths=s' => \$Git::SVN::Fetcher::_ignore_regex,
                     'ignore-refs=s' => \$Git::SVN::Ra::_ignore_refs_regex );
 my %fc_opts = ( 'follow-parent|follow!' => \$Git::SVN::_follow_parent,
 		'authors-file|A=s' => \$_authors,
@@ -148,10 +149,10 @@ my %init_opts = ( 'template=s' => \$_template, 'shared:s' => \$_shared,
 		  'rewrite-uuid=s' => sub { $icv{rewriteUUID} = $_[1] },
                   %remote_opts );
 my %cmt_opts = ( 'edit|e' => \$_edit,
-		'rmdir' => \$SVN::Git::Editor::_rmdir,
-		'find-copies-harder' => \$SVN::Git::Editor::_find_copies_harder,
-		'l=i' => \$SVN::Git::Editor::_rename_limit,
-		'copy-similarity|C=i'=> \$SVN::Git::Editor::_cp_similarity
+		'rmdir' => \$Git::SVN::Editor::_rmdir,
+		'find-copies-harder' => \$Git::SVN::Editor::_find_copies_harder,
+		'l=i' => \$Git::SVN::Editor::_rename_limit,
+		'copy-similarity|C=i'=> \$Git::SVN::Editor::_cp_similarity
 );
 
 my %cmd = (
@@ -163,9 +164,9 @@ my %cmd = (
 	clone => [ \&cmd_clone, "Initialize and fetch revisions",
 			{ 'revision|r=s' => \$_revision,
 			  'preserve-empty-dirs' =>
-				\$SVN::Git::Fetcher::_preserve_empty_dirs,
+				\$Git::SVN::Fetcher::_preserve_empty_dirs,
 			  'placeholder-filename=s' =>
-				\$SVN::Git::Fetcher::_placeholder_filename,
+				\$Git::SVN::Fetcher::_placeholder_filename,
 			   %fc_opts, %init_opts } ],
 	init => [ \&cmd_init, "Initialize a repo for tracking" .
 			  " (requires URL argument)",
@@ -463,15 +464,15 @@ sub do_git_init_db {
 		command_noisy('config', "$pfx.$i", $icv{$i});
 		$set = $i;
 	}
-	my $ignore_paths_regex = \$SVN::Git::Fetcher::_ignore_regex;
+	my $ignore_paths_regex = \$Git::SVN::Fetcher::_ignore_regex;
 	command_noisy('config', "$pfx.ignore-paths", $$ignore_paths_regex)
 		if defined $$ignore_paths_regex;
 	my $ignore_refs_regex = \$Git::SVN::Ra::_ignore_refs_regex;
 	command_noisy('config', "$pfx.ignore-refs", $$ignore_refs_regex)
 		if defined $$ignore_refs_regex;
 
-	if (defined $SVN::Git::Fetcher::_preserve_empty_dirs) {
-		my $fname = \$SVN::Git::Fetcher::_placeholder_filename;
+	if (defined $Git::SVN::Fetcher::_preserve_empty_dirs) {
+		my $fname = \$Git::SVN::Fetcher::_placeholder_filename;
 		command_noisy('config', "$pfx.preserve-empty-dirs", 'true');
 		command_noisy('config', "$pfx.placeholder-filename", $$fname);
 	}
@@ -941,7 +942,7 @@ sub cmd_dcommit {
 			                },
 					mergeinfo => $_merge_info,
 			                svn_path => '');
-			if (!SVN::Git::Editor->new(\%ed_opts)->apply_diff) {
+			if (!Git::SVN::Editor->new(\%ed_opts)->apply_diff) {
 				print "No changes\n$d~1 == $d\n";
 			} elsif ($parents->{$d} && @{$parents->{$d}}) {
 				$gs->{inject_parents_dcommit}->{$cmt_rev} =
@@ -1065,8 +1066,8 @@ sub cmd_branch {
 		            " with the --destination argument.\n";
 		}
 		foreach my $g (@{$allglobs}) {
-			# SVN::Git::Editor could probably be moved to Git.pm..
-			my $re = SVN::Git::Editor::glob2pat($g->{path}->{left});
+			# Git::SVN::Editor could probably be moved to Git.pm..
+			my $re = Git::SVN::Editor::glob2pat($g->{path}->{left});
 			if ($_branch_dest =~ /$re/) {
 				$glob = $g;
 				last;
@@ -1424,7 +1425,7 @@ sub cmd_commit_diff {
 	                tree_b => $tb,
 	                editor_cb => sub { print "Committed r$_[0]\n" },
 	                svn_path => $svn_path );
-	if (!SVN::Git::Editor->new(\%ed_opts)->apply_diff) {
+	if (!Git::SVN::Editor->new(\%ed_opts)->apply_diff) {
 		print "No changes\n$ta == $tb\n";
 	}
 }
@@ -3156,7 +3157,7 @@ sub find_parent_branch {
 			# at the moment), so we can't rely on it
 			$self->{last_rev} = $r0;
 			$self->{last_commit} = $parent;
-			$ed = SVN::Git::Fetcher->new($self, $gs->{path});
+			$ed = Git::SVN::Fetcher->new($self, $gs->{path});
 			$gs->ra->gs_do_switch($r0, $rev, $gs,
 					      $self->full_url, $ed)
 			  or die "SVN connection failed somewhere...\n";
@@ -3174,7 +3175,7 @@ sub find_parent_branch {
 		} else {
 			print STDERR "Following parent with do_update\n"
 			             unless $::_q > 1;
-			$ed = SVN::Git::Fetcher->new($self);
+			$ed = Git::SVN::Fetcher->new($self);
 			$self->ra->gs_do_update($rev, $rev, $self, $ed)
 			  or die "SVN connection failed somewhere...\n";
 		}
@@ -3197,7 +3198,7 @@ sub do_fetch {
 			push @{$log_entry->{parents}}, $lc;
 			return $log_entry;
 		}
-		$ed = SVN::Git::Fetcher->new($self);
+		$ed = Git::SVN::Fetcher->new($self);
 		$last_rev = $self->{last_rev};
 		$ed->{c} = $lc;
 		@parents = ($lc);
@@ -3206,7 +3207,7 @@ sub do_fetch {
 		if (my $log_entry = $self->find_parent_branch($paths, $rev)) {
 			return $log_entry;
 		}
-		$ed = SVN::Git::Fetcher->new($self);
+		$ed = Git::SVN::Fetcher->new($self);
 	}
 	unless ($self->ra->gs_do_update($last_rev, $rev, $self, $ed)) {
 		die "SVN connection failed somewhere...\n";
@@ -3911,7 +3912,7 @@ sub set_tree {
 	                editor_cb => sub {
 			       $self->set_tree_cb($log_entry, $tree, @_) },
 	                svn_path => $self->{path} );
-	if (!SVN::Git::Editor->new(\%ed_opts)->apply_diff) {
+	if (!Git::SVN::Editor->new(\%ed_opts)->apply_diff) {
 		print "No changes\nr$self->{last_rev} = $tree\n";
 	}
 }
@@ -4327,654 +4328,7 @@ sub remove_username {
 	$_[0] =~ s{^([^:]*://)[^@]+@}{$1};
 }
 
-package Git::SVN::Prompt;
-use strict;
-use warnings;
-require SVN::Core;
-use vars qw/$_no_auth_cache $_username/;
-
-sub simple {
-	my ($cred, $realm, $default_username, $may_save, $pool) = @_;
-	$may_save = undef if $_no_auth_cache;
-	$default_username = $_username if defined $_username;
-	if (defined $default_username && length $default_username) {
-		if (defined $realm && length $realm) {
-			print STDERR "Authentication realm: $realm\n";
-			STDERR->flush;
-		}
-		$cred->username($default_username);
-	} else {
-		username($cred, $realm, $may_save, $pool);
-	}
-	$cred->password(_read_password("Password for '" .
-	                               $cred->username . "': ", $realm));
-	$cred->may_save($may_save);
-	$SVN::_Core::SVN_NO_ERROR;
-}
-
-sub ssl_server_trust {
-	my ($cred, $realm, $failures, $cert_info, $may_save, $pool) = @_;
-	$may_save = undef if $_no_auth_cache;
-	print STDERR "Error validating server certificate for '$realm':\n";
-	{
-		no warnings 'once';
-		# All variables SVN::Auth::SSL::* are used only once,
-		# so we're shutting up Perl warnings about this.
-		if ($failures & $SVN::Auth::SSL::UNKNOWNCA) {
-			print STDERR " - The certificate is not issued ",
-			    "by a trusted authority. Use the\n",
-			    "   fingerprint to validate ",
-			    "the certificate manually!\n";
-		}
-		if ($failures & $SVN::Auth::SSL::CNMISMATCH) {
-			print STDERR " - The certificate hostname ",
-			    "does not match.\n";
-		}
-		if ($failures & $SVN::Auth::SSL::NOTYETVALID) {
-			print STDERR " - The certificate is not yet valid.\n";
-		}
-		if ($failures & $SVN::Auth::SSL::EXPIRED) {
-			print STDERR " - The certificate has expired.\n";
-		}
-		if ($failures & $SVN::Auth::SSL::OTHER) {
-			print STDERR " - The certificate has ",
-			    "an unknown error.\n";
-		}
-	} # no warnings 'once'
-	printf STDERR
-	        "Certificate information:\n".
-	        " - Hostname: %s\n".
-	        " - Valid: from %s until %s\n".
-	        " - Issuer: %s\n".
-	        " - Fingerprint: %s\n",
-	        map $cert_info->$_, qw(hostname valid_from valid_until
-	                               issuer_dname fingerprint);
-	my $choice;
-prompt:
-	print STDERR $may_save ?
-	      "(R)eject, accept (t)emporarily or accept (p)ermanently? " :
-	      "(R)eject or accept (t)emporarily? ";
-	STDERR->flush;
-	$choice = lc(substr(<STDIN> || 'R', 0, 1));
-	if ($choice =~ /^t$/i) {
-		$cred->may_save(undef);
-	} elsif ($choice =~ /^r$/i) {
-		return -1;
-	} elsif ($may_save && $choice =~ /^p$/i) {
-		$cred->may_save($may_save);
-	} else {
-		goto prompt;
-	}
-	$cred->accepted_failures($failures);
-	$SVN::_Core::SVN_NO_ERROR;
-}
-
-sub ssl_client_cert {
-	my ($cred, $realm, $may_save, $pool) = @_;
-	$may_save = undef if $_no_auth_cache;
-	print STDERR "Client certificate filename: ";
-	STDERR->flush;
-	chomp(my $filename = <STDIN>);
-	$cred->cert_file($filename);
-	$cred->may_save($may_save);
-	$SVN::_Core::SVN_NO_ERROR;
-}
-
-sub ssl_client_cert_pw {
-	my ($cred, $realm, $may_save, $pool) = @_;
-	$may_save = undef if $_no_auth_cache;
-	$cred->password(_read_password("Password: ", $realm));
-	$cred->may_save($may_save);
-	$SVN::_Core::SVN_NO_ERROR;
-}
-
-sub username {
-	my ($cred, $realm, $may_save, $pool) = @_;
-	$may_save = undef if $_no_auth_cache;
-	if (defined $realm && length $realm) {
-		print STDERR "Authentication realm: $realm\n";
-	}
-	my $username;
-	if (defined $_username) {
-		$username = $_username;
-	} else {
-		print STDERR "Username: ";
-		STDERR->flush;
-		chomp($username = <STDIN>);
-	}
-	$cred->username($username);
-	$cred->may_save($may_save);
-	$SVN::_Core::SVN_NO_ERROR;
-}
-
-sub _read_password {
-	my ($prompt, $realm) = @_;
-	my $password = '';
-	if (exists $ENV{GIT_ASKPASS}) {
-		open(PH, "-|", $ENV{GIT_ASKPASS}, $prompt);
-		$password = <PH>;
-		$password =~ s/[\012\015]//; # \n\r
-		close(PH);
-	} else {
-		print STDERR $prompt;
-		STDERR->flush;
-		require Term::ReadKey;
-		Term::ReadKey::ReadMode('noecho');
-		while (defined(my $key = Term::ReadKey::ReadKey(0))) {
-			last if $key =~ /[\012\015]/; # \n\r
-			$password .= $key;
-		}
-		Term::ReadKey::ReadMode('restore');
-		print STDERR "\n";
-		STDERR->flush;
-	}
-	$password;
-}
-
-package SVN::Git::Fetcher;
-use vars qw/@ISA $_ignore_regex $_preserve_empty_dirs $_placeholder_filename
-            @deleted_gpath %added_placeholder $repo_id/;
-use strict;
-use warnings;
-use Carp qw/croak/;
-use File::Basename qw/dirname/;
-use IO::File qw//;
-
-# file baton members: path, mode_a, mode_b, pool, fh, blob, base
-sub new {
-	my ($class, $git_svn, $switch_path) = @_;
-	my $self = SVN::Delta::Editor->new;
-	bless $self, $class;
-	if (exists $git_svn->{last_commit}) {
-		$self->{c} = $git_svn->{last_commit};
-		$self->{empty_symlinks} =
-		                  _mark_empty_symlinks($git_svn, $switch_path);
-	}
-
-	# some options are read globally, but can be overridden locally
-	# per [svn-remote "..."] section.  Command-line options will *NOT*
-	# override options set in an [svn-remote "..."] section
-	$repo_id = $git_svn->{repo_id};
-	my $k = "svn-remote.$repo_id.ignore-paths";
-	my $v = eval { command_oneline('config', '--get', $k) };
-	$self->{ignore_regex} = $v;
-
-	$k = "svn-remote.$repo_id.preserve-empty-dirs";
-	$v = eval { command_oneline('config', '--get', '--bool', $k) };
-	if ($v && $v eq 'true') {
-		$_preserve_empty_dirs = 1;
-		$k = "svn-remote.$repo_id.placeholder-filename";
-		$v = eval { command_oneline('config', '--get', $k) };
-		$_placeholder_filename = $v;
-	}
-
-	# Load the list of placeholder files added during previous invocations.
-	$k = "svn-remote.$repo_id.added-placeholder";
-	$v = eval { command_oneline('config', '--get-all', $k) };
-	if ($_preserve_empty_dirs && $v) {
-		# command() prints errors to stderr, so we only call it if
-		# command_oneline() succeeded.
-		my @v = command('config', '--get-all', $k);
-		$added_placeholder{ dirname($_) } = $_ foreach @v;
-	}
-
-	$self->{empty} = {};
-	$self->{dir_prop} = {};
-	$self->{file_prop} = {};
-	$self->{absent_dir} = {};
-	$self->{absent_file} = {};
-	$self->{gii} = $git_svn->tmp_index_do(sub { Git::IndexInfo->new });
-	$self->{pathnameencoding} = Git::config('svn.pathnameencoding');
-	$self;
-}
-
-# this uses the Ra object, so it must be called before do_{switch,update},
-# not inside them (when the Git::SVN::Fetcher object is passed) to
-# do_{switch,update}
-sub _mark_empty_symlinks {
-	my ($git_svn, $switch_path) = @_;
-	my $bool = Git::config_bool('svn.brokenSymlinkWorkaround');
-	return {} if (!defined($bool)) || (defined($bool) && ! $bool);
-
-	my %ret;
-	my ($rev, $cmt) = $git_svn->last_rev_commit;
-	return {} unless ($rev && $cmt);
-
-	# allow the warning to be printed for each revision we fetch to
-	# ensure the user sees it.  The user can also disable the workaround
-	# on the repository even while git svn is running and the next
-	# revision fetched will skip this expensive function.
-	my $printed_warning;
-	chomp(my $empty_blob = `git hash-object -t blob --stdin < /dev/null`);
-	my ($ls, $ctx) = command_output_pipe(qw/ls-tree -r -z/, $cmt);
-	local $/ = "\0";
-	my $pfx = defined($switch_path) ? $switch_path : $git_svn->{path};
-	$pfx .= '/' if length($pfx);
-	while (<$ls>) {
-		chomp;
-		s/\A100644 blob $empty_blob\t//o or next;
-		unless ($printed_warning) {
-			print STDERR "Scanning for empty symlinks, ",
-			             "this may take a while if you have ",
-				     "many empty files\n",
-				     "You may disable this with `",
-				     "git config svn.brokenSymlinkWorkaround ",
-				     "false'.\n",
-				     "This may be done in a different ",
-				     "terminal without restarting ",
-				     "git svn\n";
-			$printed_warning = 1;
-		}
-		my $path = $_;
-		my (undef, $props) =
-		               $git_svn->ra->get_file($pfx.$path, $rev, undef);
-		if ($props->{'svn:special'}) {
-			$ret{$path} = 1;
-		}
-	}
-	command_close_pipe($ls, $ctx);
-	\%ret;
-}
-
-# returns true if a given path is inside a ".git" directory
-sub in_dot_git {
-	$_[0] =~ m{(?:^|/)\.git(?:/|$)};
-}
-
-# return value: 0 -- don't ignore, 1 -- ignore
-sub is_path_ignored {
-	my ($self, $path) = @_;
-	return 1 if in_dot_git($path);
-	return 1 if defined($self->{ignore_regex}) &&
-	            $path =~ m!$self->{ignore_regex}!;
-	return 0 unless defined($_ignore_regex);
-	return 1 if $path =~ m!$_ignore_regex!o;
-	return 0;
-}
-
-sub set_path_strip {
-	my ($self, $path) = @_;
-	$self->{path_strip} = qr/^\Q$path\E(\/|$)/ if length $path;
-}
-
-sub open_root {
-	{ path => '' };
-}
-
-sub open_directory {
-	my ($self, $path, $pb, $rev) = @_;
-	{ path => $path };
-}
-
-sub git_path {
-	my ($self, $path) = @_;
-	if (my $enc = $self->{pathnameencoding}) {
-		require Encode;
-		Encode::from_to($path, 'UTF-8', $enc);
-	}
-	if ($self->{path_strip}) {
-		$path =~ s!$self->{path_strip}!! or
-		  die "Failed to strip path '$path' ($self->{path_strip})\n";
-	}
-	$path;
-}
-
-sub delete_entry {
-	my ($self, $path, $rev, $pb) = @_;
-	return undef if $self->is_path_ignored($path);
-
-	my $gpath = $self->git_path($path);
-	return undef if ($gpath eq '');
-
-	# remove entire directories.
-	my ($tree) = (command('ls-tree', '-z', $self->{c}, "./$gpath")
-	                 =~ /\A040000 tree ([a-f\d]{40})\t\Q$gpath\E\0/);
-	if ($tree) {
-		my ($ls, $ctx) = command_output_pipe(qw/ls-tree
-		                                     -r --name-only -z/,
-				                     $tree);
-		local $/ = "\0";
-		while (<$ls>) {
-			chomp;
-			my $rmpath = "$gpath/$_";
-			$self->{gii}->remove($rmpath);
-			print "\tD\t$rmpath\n" unless $::_q;
-		}
-		print "\tD\t$gpath/\n" unless $::_q;
-		command_close_pipe($ls, $ctx);
-	} else {
-		$self->{gii}->remove($gpath);
-		print "\tD\t$gpath\n" unless $::_q;
-	}
-	# Don't add to @deleted_gpath if we're deleting a placeholder file.
-	push @deleted_gpath, $gpath unless $added_placeholder{dirname($path)};
-	$self->{empty}->{$path} = 0;
-	undef;
-}
-
-sub open_file {
-	my ($self, $path, $pb, $rev) = @_;
-	my ($mode, $blob);
-
-	goto out if $self->is_path_ignored($path);
-
-	my $gpath = $self->git_path($path);
-	($mode, $blob) = (command('ls-tree', '-z', $self->{c}, "./$gpath")
-	                     =~ /\A(\d{6}) blob ([a-f\d]{40})\t\Q$gpath\E\0/);
-	unless (defined $mode && defined $blob) {
-		die "$path was not found in commit $self->{c} (r$rev)\n";
-	}
-	if ($mode eq '100644' && $self->{empty_symlinks}->{$path}) {
-		$mode = '120000';
-	}
-out:
-	{ path => $path, mode_a => $mode, mode_b => $mode, blob => $blob,
-	  pool => SVN::Pool->new, action => 'M' };
-}
-
-sub add_file {
-	my ($self, $path, $pb, $cp_path, $cp_rev) = @_;
-	my $mode;
-
-	if (!$self->is_path_ignored($path)) {
-		my ($dir, $file) = ($path =~ m#^(.*?)/?([^/]+)$#);
-		delete $self->{empty}->{$dir};
-		$mode = '100644';
-
-		if ($added_placeholder{$dir}) {
-			# Remove our placeholder file, if we created one.
-			delete_entry($self, $added_placeholder{$dir})
-				unless $path eq $added_placeholder{$dir};
-			delete $added_placeholder{$dir}
-		}
-	}
-
-	{ path => $path, mode_a => $mode, mode_b => $mode,
-	  pool => SVN::Pool->new, action => 'A' };
-}
-
-sub add_directory {
-	my ($self, $path, $cp_path, $cp_rev) = @_;
-	goto out if $self->is_path_ignored($path);
-	my $gpath = $self->git_path($path);
-	if ($gpath eq '') {
-		my ($ls, $ctx) = command_output_pipe(qw/ls-tree
-		                                     -r --name-only -z/,
-				                     $self->{c});
-		local $/ = "\0";
-		while (<$ls>) {
-			chomp;
-			$self->{gii}->remove($_);
-			print "\tD\t$_\n" unless $::_q;
-			push @deleted_gpath, $gpath;
-		}
-		command_close_pipe($ls, $ctx);
-		$self->{empty}->{$path} = 0;
-	}
-	my ($dir, $file) = ($path =~ m#^(.*?)/?([^/]+)$#);
-	delete $self->{empty}->{$dir};
-	$self->{empty}->{$path} = 1;
-
-	if ($added_placeholder{$dir}) {
-		# Remove our placeholder file, if we created one.
-		delete_entry($self, $added_placeholder{$dir});
-		delete $added_placeholder{$dir}
-	}
-
-out:
-	{ path => $path };
-}
-
-sub change_dir_prop {
-	my ($self, $db, $prop, $value) = @_;
-	return undef if $self->is_path_ignored($db->{path});
-	$self->{dir_prop}->{$db->{path}} ||= {};
-	$self->{dir_prop}->{$db->{path}}->{$prop} = $value;
-	undef;
-}
-
-sub absent_directory {
-	my ($self, $path, $pb) = @_;
-	return undef if $self->is_path_ignored($path);
-	$self->{absent_dir}->{$pb->{path}} ||= [];
-	push @{$self->{absent_dir}->{$pb->{path}}}, $path;
-	undef;
-}
-
-sub absent_file {
-	my ($self, $path, $pb) = @_;
-	return undef if $self->is_path_ignored($path);
-	$self->{absent_file}->{$pb->{path}} ||= [];
-	push @{$self->{absent_file}->{$pb->{path}}}, $path;
-	undef;
-}
-
-sub change_file_prop {
-	my ($self, $fb, $prop, $value) = @_;
-	return undef if $self->is_path_ignored($fb->{path});
-	if ($prop eq 'svn:executable') {
-		if ($fb->{mode_b} != 120000) {
-			$fb->{mode_b} = defined $value ? 100755 : 100644;
-		}
-	} elsif ($prop eq 'svn:special') {
-		$fb->{mode_b} = defined $value ? 120000 : 100644;
-	} else {
-		$self->{file_prop}->{$fb->{path}} ||= {};
-		$self->{file_prop}->{$fb->{path}}->{$prop} = $value;
-	}
-	undef;
-}
-
-sub apply_textdelta {
-	my ($self, $fb, $exp) = @_;
-	return undef if $self->is_path_ignored($fb->{path});
-	my $fh = $::_repository->temp_acquire('svn_delta');
-	# $fh gets auto-closed() by SVN::TxDelta::apply(),
-	# (but $base does not,) so dup() it for reading in close_file
-	open my $dup, '<&', $fh or croak $!;
-	my $base = $::_repository->temp_acquire('git_blob');
-
-	if ($fb->{blob}) {
-		my ($base_is_link, $size);
-
-		if ($fb->{mode_a} eq '120000' &&
-		    ! $self->{empty_symlinks}->{$fb->{path}}) {
-			print $base 'link ' or die "print $!\n";
-			$base_is_link = 1;
-		}
-	retry:
-		$size = $::_repository->cat_blob($fb->{blob}, $base);
-		die "Failed to read object $fb->{blob}" if ($size < 0);
-
-		if (defined $exp) {
-			seek $base, 0, 0 or croak $!;
-			my $got = ::md5sum($base);
-			if ($got ne $exp) {
-				my $err = "Checksum mismatch: ".
-				       "$fb->{path} $fb->{blob}\n" .
-				       "expected: $exp\n" .
-				       "     got: $got\n";
-				if ($base_is_link) {
-					warn $err,
-					     "Retrying... (possibly ",
-					     "a bad symlink from SVN)\n";
-					$::_repository->temp_reset($base);
-					$base_is_link = 0;
-					goto retry;
-				}
-				die $err;
-			}
-		}
-	}
-	seek $base, 0, 0 or croak $!;
-	$fb->{fh} = $fh;
-	$fb->{base} = $base;
-	[ SVN::TxDelta::apply($base, $dup, undef, $fb->{path}, $fb->{pool}) ];
-}
-
-sub close_file {
-	my ($self, $fb, $exp) = @_;
-	return undef if $self->is_path_ignored($fb->{path});
-
-	my $hash;
-	my $path = $self->git_path($fb->{path});
-	if (my $fh = $fb->{fh}) {
-		if (defined $exp) {
-			seek($fh, 0, 0) or croak $!;
-			my $got = ::md5sum($fh);
-			if ($got ne $exp) {
-				die "Checksum mismatch: $path\n",
-				    "expected: $exp\n    got: $got\n";
-			}
-		}
-		if ($fb->{mode_b} == 120000) {
-			sysseek($fh, 0, 0) or croak $!;
-			my $rd = sysread($fh, my $buf, 5);
-
-			if (!defined $rd) {
-				croak "sysread: $!\n";
-			} elsif ($rd == 0) {
-				warn "$path has mode 120000",
-				     " but it points to nothing\n",
-				     "converting to an empty file with mode",
-				     " 100644\n";
-				$fb->{mode_b} = '100644';
-			} elsif ($buf ne 'link ') {
-				warn "$path has mode 120000",
-				     " but is not a link\n";
-			} else {
-				my $tmp_fh = $::_repository->temp_acquire(
-					'svn_hash');
-				my $res;
-				while ($res = sysread($fh, my $str, 1024)) {
-					my $out = syswrite($tmp_fh, $str, $res);
-					defined($out) && $out == $res
-						or croak("write ",
-							Git::temp_path($tmp_fh),
-							": $!\n");
-				}
-				defined $res or croak $!;
-
-				($fh, $tmp_fh) = ($tmp_fh, $fh);
-				Git::temp_release($tmp_fh, 1);
-			}
-		}
-
-		$hash = $::_repository->hash_and_insert_object(
-				Git::temp_path($fh));
-		$hash =~ /^[a-f\d]{40}$/ or die "not a sha1: $hash\n";
-
-		Git::temp_release($fb->{base}, 1);
-		Git::temp_release($fh, 1);
-	} else {
-		$hash = $fb->{blob} or die "no blob information\n";
-	}
-	$fb->{pool}->clear;
-	$self->{gii}->update($fb->{mode_b}, $hash, $path) or croak $!;
-	print "\t$fb->{action}\t$path\n" if $fb->{action} && ! $::_q;
-	undef;
-}
-
-sub abort_edit {
-	my $self = shift;
-	$self->{nr} = $self->{gii}->{nr};
-	delete $self->{gii};
-	$self->SUPER::abort_edit(@_);
-}
-
-sub close_edit {
-	my $self = shift;
-
-	if ($_preserve_empty_dirs) {
-		my @empty_dirs;
-
-		# Any entry flagged as empty that also has an associated
-		# dir_prop represents a newly created empty directory.
-		foreach my $i (keys %{$self->{empty}}) {
-			push @empty_dirs, $i if exists $self->{dir_prop}->{$i};
-		}
-
-		# Search for directories that have become empty due subsequent
-		# file deletes.
-		push @empty_dirs, $self->find_empty_directories();
-
-		# Finally, add a placeholder file to each empty directory.
-		$self->add_placeholder_file($_) foreach (@empty_dirs);
-
-		$self->stash_placeholder_list();
-	}
-
-	$self->{git_commit_ok} = 1;
-	$self->{nr} = $self->{gii}->{nr};
-	delete $self->{gii};
-	$self->SUPER::close_edit(@_);
-}
-
-sub find_empty_directories {
-	my ($self) = @_;
-	my @empty_dirs;
-	my %dirs = map { dirname($_) => 1 } @deleted_gpath;
-
-	foreach my $dir (sort keys %dirs) {
-		next if $dir eq ".";
-
-		# If there have been any additions to this directory, there is
-		# no reason to check if it is empty.
-		my $skip_added = 0;
-		foreach my $t (qw/dir_prop file_prop/) {
-			foreach my $path (keys %{ $self->{$t} }) {
-				if (exists $self->{$t}->{dirname($path)}) {
-					$skip_added = 1;
-					last;
-				}
-			}
-			last if $skip_added;
-		}
-		next if $skip_added;
-
-		# Use `git ls-tree` to get the filenames of this directory
-		# that existed prior to this particular commit.
-		my $ls = command('ls-tree', '-z', '--name-only',
-				 $self->{c}, "$dir/");
-		my %files = map { $_ => 1 } split(/\0/, $ls);
-
-		# Remove the filenames that were deleted during this commit.
-		delete $files{$_} foreach (@deleted_gpath);
-
-		# Report the directory if there are no filenames left.
-		push @empty_dirs, $dir unless (scalar %files);
-	}
-	@empty_dirs;
-}
-
-sub add_placeholder_file {
-	my ($self, $dir) = @_;
-	my $path = "$dir/$_placeholder_filename";
-	my $gpath = $self->git_path($path);
-
-	my $fh = $::_repository->temp_acquire($gpath);
-	my $hash = $::_repository->hash_and_insert_object(Git::temp_path($fh));
-	Git::temp_release($fh, 1);
-	$self->{gii}->update('100644', $hash, $gpath) or croak $!;
-
-	# The directory should no longer be considered empty.
-	delete $self->{empty}->{$dir} if exists $self->{empty}->{$dir};
-
-	# Keep track of any placeholder files we create.
-	$added_placeholder{$dir} = $path;
-}
-
-sub stash_placeholder_list {
-	my ($self) = @_;
-	my $k = "svn-remote.$repo_id.added-placeholder";
-	my $v = eval { command_oneline('config', '--get-all', $k) };
-	command_noisy('config', '--unset-all', $k) if $v;
-	foreach (values %added_placeholder) {
-		command_noisy('config', '--add', $k, $_);
-	}
-}
-
-package SVN::Git::Editor;
+package Git::SVN::Editor;
 use vars qw/@ISA $_rmdir $_cp_similarity $_find_copies_harder $_rename_limit/;
 use strict;
 use warnings;
