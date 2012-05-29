@@ -528,6 +528,7 @@ static void filter_refs(struct ref **refs, int nr_match, char **match)
 	struct ref **newtail = &newlist;
 	struct ref *ref, *next;
 	struct ref *fastarray[32];
+	int match_pos;
 
 	if (nr_match && !args.fetch_all) {
 		if (ARRAY_SIZE(fastarray) < nr_match)
@@ -540,6 +541,7 @@ static void filter_refs(struct ref **refs, int nr_match, char **match)
 	else
 		return_refs = NULL;
 
+	match_pos = 0;
 	for (ref = *refs; ref; ref = next) {
 		next = ref->next;
 		if (!memcmp(ref->name, "refs/", 5) &&
@@ -553,15 +555,20 @@ static void filter_refs(struct ref **refs, int nr_match, char **match)
 			continue;
 		}
 		else {
-			int i;
-			for (i = 0; i < nr_match; i++) {
-				if (!strcmp(ref->name, match[i])) {
-					match[i][0] = '\0';
-					return_refs[i] = ref;
+			int cmp = -1;
+			while (match_pos < nr_match) {
+				cmp = strcmp(ref->name, match[match_pos]);
+				if (cmp < 0) /* definitely do not have it */
+					break;
+				else if (cmp == 0) { /* definitely have it */
+					match[match_pos][0] = '\0';
+					return_refs[match_pos] = ref;
 					break;
 				}
+				else /* might have it; keep looking */
+					match_pos++;
 			}
-			if (i < nr_match)
+			if (!cmp)
 				continue; /* we will link it later */
 		}
 		free(ref);
@@ -777,6 +784,8 @@ static struct ref *do_fetch_pack(int fd[2],
 	struct ref *ref = copy_ref_list(orig_ref);
 	unsigned char sha1[20];
 
+	sort_ref_list(&ref, ref_compare_name);
+
 	if (is_repository_shallow() && !server_supports("shallow"))
 		die("Server does not support shallow clients");
 	if (server_supports("multi_ack_detailed")) {
@@ -834,21 +843,12 @@ static int remove_duplicates(int nr_heads, char **heads)
 {
 	int src, dst;
 
-	for (src = dst = 0; src < nr_heads; src++) {
-		/* If heads[src] is different from any of
-		 * heads[0..dst], push it in.
-		 */
-		int i;
-		for (i = 0; i < dst; i++) {
-			if (!strcmp(heads[i], heads[src]))
-				break;
-		}
-		if (i < dst)
-			continue;
-		if (src != dst)
-			heads[dst] = heads[src];
-		dst++;
-	}
+	if (!nr_heads)
+		return 0;
+
+	for (src = dst = 1; src < nr_heads; src++)
+		if (strcmp(heads[src], heads[dst-1]))
+			heads[dst++] = heads[src];
 	return dst;
 }
 
@@ -1054,6 +1054,11 @@ int cmd_fetch_pack(int argc, const char **argv, const char *prefix)
 	return ret;
 }
 
+static int compare_heads(const void *a, const void *b)
+{
+	return strcmp(*(const char **)a, *(const char **)b);
+}
+
 struct ref *fetch_pack(struct fetch_pack_args *my_args,
 		       int fd[], struct child_process *conn,
 		       const struct ref *ref,
@@ -1073,8 +1078,11 @@ struct ref *fetch_pack(struct fetch_pack_args *my_args,
 			st.st_mtime = 0;
 	}
 
-	if (heads && nr_heads)
+	if (heads && nr_heads) {
+		qsort(heads, nr_heads, sizeof(*heads), compare_heads);
 		nr_heads = remove_duplicates(nr_heads, heads);
+	}
+
 	if (!ref) {
 		packet_flush(fd[1]);
 		die("no matching remote head");
