@@ -46,13 +46,16 @@ OPTIONS
 	mechanism and clones the repository by making a copy of
 	HEAD and everything under objects and refs directories.
 	The files under `.git/objects/` directory are hardlinked
-	to save space when possible.  This is now the default when
-	the source repository is specified with `/path/to/repo`
-	syntax, so it essentially is a no-op option.  To force
-	copying instead of hardlinking (which may be desirable
-	if you are trying to make a back-up of your repository),
-	but still avoid the usual "git aware" transport
-	mechanism, `--no-hardlinks` can be used.
+	to save space when possible.
++
+If the repository is specified as a local path (e.g., `/path/to/repo`),
+this is the default, and --local is essentially a no-op.  If the
+repository is specified as a URL, then this flag is ignored (and we
+never use the local optimizations).
++
+To force copying instead of hardlinking (which may be desirable if you
+are trying to make a back-up of your repository), but still avoid the
+usual "git aware" transport mechanism, `--no-hardlinks` can be used.
 
 --no-hardlinks::
 	Optimize the cloning process from a repository on a
