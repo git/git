@@ -38,7 +38,7 @@ static const char * const builtin_clone_usage[] = {
 };
 
 static int option_no_checkout, option_bare, option_mirror, option_single_branch = -1;
-static int option_local, option_no_hardlinks, option_shared, option_recursive;
+static int option_local = -1, option_no_hardlinks, option_shared, option_recursive;
 static char *option_template, *option_depth;
 static char *option_origin = NULL;
 static char *option_branch = NULL;
@@ -70,8 +70,8 @@ static struct option builtin_clone_options[] = {
 		PARSE_OPT_NOARG | PARSE_OPT_HIDDEN },
 	OPT_BOOLEAN(0, "mirror", &option_mirror,
 		    "create a mirror repository (implies bare)"),
-	OPT_BOOLEAN('l', "local", &option_local,
-		    "to clone from a local repository"),
+	OPT_BOOL('l', "local", &option_local,
+		"to clone from a local repository"),
 	OPT_BOOLEAN(0, "no-hardlinks", &option_no_hardlinks,
 		    "don't use local hardlinks, always copy"),
 	OPT_BOOLEAN('s', "shared", &option_shared,
@@ -342,7 +342,7 @@ static void copy_or_link_directory(struct strbuf *src, struct strbuf *dest,
 		if (!option_no_hardlinks) {
 			if (!link(src->buf, dest->buf))
 				continue;
-			if (option_local)
+			if (option_local > 0)
 				die_errno(_("failed to create link '%s'"), dest->buf);
 			option_no_hardlinks = 1;
 		}
@@ -668,7 +668,7 @@ int cmd_clone(int argc, const char **argv, const char *prefix)
 		die(_("repository '%s' does not exist"), repo_name);
 	else
 		repo = repo_name;
-	is_local = path && !is_bundle;
+	is_local = option_local != 0 && path && !is_bundle;
 	if (is_local && option_depth)
 		warning(_("--depth is ignored in local clones; use file:// instead."));
 

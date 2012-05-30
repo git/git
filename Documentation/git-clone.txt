@@ -51,7 +51,9 @@ OPTIONS
 If the repository is specified as a local path (e.g., `/path/to/repo`),
 this is the default, and --local is essentially a no-op.  If the
 repository is specified as a URL, then this flag is ignored (and we
-never use the local optimizations).
+never use the local optimizations).  Specifying `--no-local` will
+override the default when `/path/to/repo` is given, using the regular
+git transport instead.
 +
 To force copying instead of hardlinking (which may be desirable if you
 are trying to make a back-up of your repository), but still avoid the
