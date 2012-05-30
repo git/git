@@ -161,11 +161,9 @@ Issues of note:
    makeinfo and docbook2X.  Version 0.8.3 is known to work.
 
    Building and installing the pdf file additionally requires
-   dblatex.  Version 0.2.7 with asciidoc >= 8.2.7 is known to work.
+   dblatex.  Version >= 0.2.7 is known to work.
 
-   The documentation is written for AsciiDoc 7, but by default
-   uses some compatibility wrappers to work on AsciiDoc 8. If you have
-   AsciiDoc 7, try "make ASCIIDOC7=YesPlease".
+   All formats require at least asciidoc 8.4.1.
 
    There are also "make quick-install-doc", "make quick-install-man"
    and "make quick-install-html" which install preformatted man pages
