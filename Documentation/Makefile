@@ -125,15 +125,6 @@ DEFAULT_EDITOR_SQ = $(subst ','\'',$(DEFAULT_EDITOR))
 ASCIIDOC_EXTRA += -a 'git-default-editor=$(DEFAULT_EDITOR_SQ)'
 endif
 
-#
-# Please note that there is a minor bug in asciidoc.
-# The version after 6.0.3 _will_ include the patch found here:
-#   http://marc.theaimsgroup.com/?l=git&m=111558757202243&w=2
-#
-# Until that version is released you may have to apply the patch
-# yourself - yes, all 6 characters of it!
-#
-
 QUIET_SUBDIR0  = +$(MAKE) -C # space to separate -C and subdir
 QUIET_SUBDIR1  =
 
