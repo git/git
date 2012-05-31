@@ -158,7 +158,7 @@ static int parse_cat_response_line(const char *header, off_t *len)
 
 	if (ends_with(header, headerlen, " missing"))
 		return error("cat-blob reports missing blob: %s", header);
-	type = memmem(header, headerlen, " blob ", strlen(" blob "));
+	type = strstr(header, " blob ");
 	if (!type)
 		return error("cat-blob header has wrong object type: %s", header);
 	n = strtoumax(type + strlen(" blob "), (char **) &end, 10);
