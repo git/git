@@ -31,9 +31,7 @@ static int apply_delta(int argc, char *argv[])
 		die_errno("cannot close preimage");
 	if (buffer_deinit(&delta))
 		die_errno("cannot close delta");
-	buffer_reset(&preimage);
 	strbuf_release(&preimage_view.buf);
-	buffer_reset(&delta);
 	return 0;
 }
 

@@ -6,7 +6,6 @@ struct line_buffer;
 
 void fast_export_init(int fd);
 void fast_export_deinit(void);
-void fast_export_reset(void);
 
 void fast_export_delete(const char *path);
 void fast_export_modify(const char *path, uint32_t mode, const char *dataref);
