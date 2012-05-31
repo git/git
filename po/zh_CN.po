@@ -13,14 +13,14 @@ msgstr ""
 "Project-Id-Version: Git\n"
 "Report-Msgid-Bugs-To: Git Mailing List <git@vger.kernel.org>\n"
 "POT-Creation-Date: 2012-05-21 08:57+0800\n"
-"PO-Revision-Date: 2012-06-01 17:40+0800\n"
+"PO-Revision-Date: 2012-06-01 17:43+0800\n"
 "Last-Translator: Jiang Xin <worldhello.net@gmail.com>\n"
 "Language-Team: GitHub <https://github.com/gotgit/git/>\n"
 "Language: zh_CN\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"Plural-Forms: nplurals=1; plural=0;\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
 
 #: advice.c:40
 #, c-format
@@ -72,6 +72,7 @@ msgstr "版本遍历设置失败"
 msgid "The bundle contains %d ref"
 msgid_plural "The bundle contains %d refs"
 msgstr[0] "这个包中含有 %d 个引用"
+msgstr[1] "这个包中含有 %d 个引用"
 
 #: bundle.c:192
 #, c-format
@@ -152,54 +153,63 @@ msgstr "在将来"
 msgid "%lu second ago"
 msgid_plural "%lu seconds ago"
 msgstr[0] "%lu 秒钟之前"
+msgstr[1] "%lu 秒钟之前"
 
 #: date.c:108
 #, c-format
 msgid "%lu minute ago"
 msgid_plural "%lu minutes ago"
 msgstr[0] "%lu 分钟之前"
+msgstr[1] "%lu 分钟之前"
 
 #: date.c:115
 #, c-format
 msgid "%lu hour ago"
 msgid_plural "%lu hours ago"
 msgstr[0] "%lu 小时之前"
+msgstr[1] "%lu 小时之前"
 
 #: date.c:122
 #, c-format
 msgid "%lu day ago"
 msgid_plural "%lu days ago"
 msgstr[0] "%lu 天之前"
+msgstr[1] "%lu 天之前"
 
 #: date.c:128
 #, c-format
 msgid "%lu week ago"
 msgid_plural "%lu weeks ago"
 msgstr[0] "%lu 周之前"
+msgstr[1] "%lu 周之前"
 
 #: date.c:135
 #, c-format
 msgid "%lu month ago"
 msgid_plural "%lu months ago"
 msgstr[0] "%lu 个月之前"
+msgstr[1] "%lu 个月之前"
 
 #: date.c:146
 #, c-format
 msgid "%lu year"
 msgid_plural "%lu years"
 msgstr[0] "%lu 年"
+msgstr[1] "%lu 年"
 
 #: date.c:149
 #, c-format
 msgid "%s, %lu month ago"
 msgid_plural "%s, %lu months ago"
 msgstr[0] "%s，%lu 个月之前"
+msgstr[1] "%s，%lu 个月之前"
 
 #: date.c:154 date.c:159
 #, c-format
 msgid "%lu year ago"
 msgid_plural "%lu years ago"
 msgstr[0] "%lu 年前"
+msgstr[1] "%lu 年前"
 
 #  译者：注意保持前导空格
 #: diff.c:105
@@ -231,18 +241,21 @@ msgstr " 0 个文件被修改\n"
 msgid " %d file changed"
 msgid_plural " %d files changed"
 msgstr[0] " %d 个文件被修改"
+msgstr[1] " %d 个文件被修改"
 
 #: diff.c:1421
 #, c-format
 msgid ", %d insertion(+)"
 msgid_plural ", %d insertions(+)"
 msgstr[0] "，插入 %d 行(+)"
+msgstr[1] "，插入 %d 行(+)"
 
 #: diff.c:1432
 #, c-format
 msgid ", %d deletion(-)"
 msgid_plural ", %d deletions(-)"
 msgstr[0] "，删除 %d 行(-)"
+msgstr[1] "，删除 %d 行(-)"
 
 #: diff.c:3478
 #, c-format
@@ -362,6 +375,7 @@ msgstr "    %s"
 msgid "Your branch is ahead of '%s' by %d commit.\n"
 msgid_plural "Your branch is ahead of '%s' by %d commits.\n"
 msgstr[0] "您的分支领先 '%s' 共 %d 个提交。\n"
+msgstr[1] "您的分支领先 '%s' 共 %d 个提交。\n"
 
 #: remote.c:1613
 #, c-format
@@ -369,6 +383,7 @@ msgid "Your branch is behind '%s' by %d commit, and can be fast-forwarded.\n"
 msgid_plural ""
 "Your branch is behind '%s' by %d commits, and can be fast-forwarded.\n"
 msgstr[0] "您的分支落后 '%s' 共 %d 个提交，并且可以快进。\n"
+msgstr[1] "您的分支落后 '%s' 共 %d 个提交，并且可以快进。\n"
 
 #: remote.c:1621
 #, c-format
@@ -379,6 +394,9 @@ msgid_plural ""
 "Your branch and '%s' have diverged,\n"
 "and have %d and %d different commits each, respectively.\n"
 msgstr[0] ""
+"您的分支和 '%s' 出现了偏离，\n"
+"并且各自分别有 %d 和 %d 处不同的提交。\n"
+msgstr[1] ""
 "您的分支和 '%s' 出现了偏离，\n"
 "并且各自分别有 %d 和 %d 处不同的提交。\n"
 
@@ -1070,8 +1088,8 @@ msgid ""
 msgid_plural ""
 "git diff header lacks filename information when removing %d leading pathname "
 "components (line %d)"
-msgstr[0] ""
-"当移除 %d 个前导路径后 git diff 头缺乏文件名信息（第 %d 行）"
+msgstr[0] "当移除 %d 个前导路径后 git diff 头缺乏文件名信息（第 %d 行）"
+msgstr[1] "当移除 %d 个前导路径后 git diff 头缺乏文件名信息（第 %d 行）"
 
 #: builtin/apply.c:1628
 msgid "new file depends on old contents"
@@ -1141,6 +1159,7 @@ msgstr "无效的行首字符：'%c'"
 msgid "Hunk #%d succeeded at %d (offset %d line)."
 msgid_plural "Hunk #%d succeeded at %d (offset %d lines)."
 msgstr[0] "块 #%d 成功应用于 %d (偏移 %d 行）"
+msgstr[1] "块 #%d 成功应用于 %d (偏移 %d 行）"
 
 #: builtin/apply.c:2775
 #, c-format
@@ -1300,6 +1319,7 @@ msgstr "内部错误"
 msgid "Applying patch %%s with %d reject..."
 msgid_plural "Applying patch %%s with %d rejects..."
 msgstr[0] "应用补丁 %%s 时 %d 个被拒绝..."
+msgstr[1] "应用补丁 %%s 时 %d 个被拒绝..."
 
 #: builtin/apply.c:3681
 #, c-format
@@ -1454,12 +1474,14 @@ msgstr "不能打开补丁 '%s'"
 msgid "squelched %d whitespace error"
 msgid_plural "squelched %d whitespace errors"
 msgstr[0] "抑制下仍有 %d 个空白字符误用"
+msgstr[1] "抑制下仍有 %d 个空白字符误用"
 
 #: builtin/apply.c:4081 builtin/apply.c:4091
 #, c-format
 msgid "%d line adds whitespace errors."
 msgid_plural "%d lines add whitespace errors."
 msgstr[0] "%d 行有空白字符误用。"
+msgstr[1] "%d 行有空白字符误用。"
 
 #: builtin/archive.c:17
 #, c-format
@@ -1530,6 +1552,7 @@ msgid "Cannot delete the branch '%s' which you are currently on."
 msgstr "无法删除您当前所在的分支 '%s'。"
 
 #: builtin/branch.c:202
+#, c-format
 msgid "remote branch '%s' not found."
 msgstr "远程分支 '%s' 未发现。"
 
@@ -1791,6 +1814,10 @@ msgid_plural ""
 "\n"
 "%s\n"
 msgstr[0] ""
+"警告：您正丢下 %d 个提交，未和任何分支关联：\n"
+"\n"
+"%s\n"
+msgstr[1] ""
 "警告：您正丢下 %d 个提交，未和任何分支关联：\n"
 "\n"
 "%s\n"
@@ -2868,6 +2895,7 @@ msgstr "意外的类型的对象"
 msgid "cannot fill %d byte"
 msgid_plural "cannot fill %d bytes"
 msgstr[0] "无法填充 %d 字节"
+msgstr[1] "无法填充 %d 字节"
 
 #: builtin/index-pack.c:236
 msgid "early EOF"
@@ -2931,6 +2959,7 @@ msgstr "无法读取包文件"
 msgid "premature end of pack file, %lu byte missing"
 msgid_plural "premature end of pack file, %lu bytes missing"
 msgstr[0] "包文件过早结束，缺少 %lu 字节"
+msgstr[1] "包文件过早结束，缺少 %lu 字节"
 
 #: builtin/index-pack.c:510
 msgid "serious inflate inconsistency"
@@ -3002,6 +3031,7 @@ msgstr "不可理喻"
 msgid "pack has %d unresolved delta"
 msgid_plural "pack has %d unresolved deltas"
 msgstr[0] "包有 %d 个未解决的 delta"
+msgstr[1] "包有 %d 个未解决的 delta"
 
 #: builtin/index-pack.c:998
 #, c-format
@@ -3050,12 +3080,14 @@ msgstr "无法为 %s 打开包索引文件"
 msgid "non delta: %d object"
 msgid_plural "non delta: %d objects"
 msgstr[0] "非 delta：%d 个对象"
+msgstr[1] "非 delta：%d 个对象"
 
 #: builtin/index-pack.c:1303
 #, c-format
 msgid "chain length = %d: %lu object"
 msgid_plural "chain length = %d: %lu objects"
 msgstr[0] "链长 = %d: %lu 对象"
+msgstr[1] "链长 = %d: %lu 对象"
 
 #: builtin/index-pack.c:1330
 msgid "Cannot come back to cwd"
@@ -4129,10 +4161,8 @@ msgid ""
 msgid_plural ""
 "Note: Some branches outside the refs/remotes/ hierarchy were not removed;\n"
 "to delete them, use:"
-msgstr[0] ""
-"注意：ref/remotes 层级之外的一个分支未被移除。要删除它，使用："
-msgstr[1] ""
-"注意：ref/remotes 层级之外的一些分支未被移除。要删除它们，使用："
+msgstr[0] "注意：ref/remotes 层级之外的一个分支未被移除。要删除它，使用："
+msgstr[1] "注意：ref/remotes 层级之外的一些分支未被移除。要删除它们，使用："
 
 #: builtin/remote.c:943
 #, c-format
@@ -4247,14 +4277,14 @@ msgstr "  HEAD分支：%s"
 #, c-format
 msgid ""
 "  HEAD branch (remote HEAD is ambiguous, may be one of the following):\n"
-msgstr ""
-"  HEAD 分支（远程 HEAD 模糊，可能是下列中的一个）：\n"
+msgstr "  HEAD 分支（远程 HEAD 模糊，可能是下列中的一个）：\n"
 
 #: builtin/remote.c:1151
 #, c-format
 msgid "  Remote branch:%s"
 msgid_plural "  Remote branches:%s"
 msgstr[0] "  远程分支：%s"
+msgstr[1] "  远程分支：%s"
 
 #  译者：中文字符串拼接，可删除前导空格
 #: builtin/remote.c:1154 builtin/remote.c:1181
@@ -4265,6 +4295,7 @@ msgstr "（状态未查询）"
 msgid "  Local branch configured for 'git pull':"
 msgid_plural "  Local branches configured for 'git pull':"
 msgstr[0] "  为 'git pull' 配置的本地分支："
+msgstr[1] "  为 'git pull' 配置的本地分支："
 
 #: builtin/remote.c:1171
 msgid "  Local refs will be mirrored by 'git push'"
@@ -4275,6 +4306,7 @@ msgstr "  本地引用将在 'git push' 时被镜像"
 msgid "  Local ref configured for 'git push'%s:"
 msgid_plural "  Local refs configured for 'git push'%s:"
 msgstr[0] "  为 'git push' 配置的本地引用%s："
+msgstr[1] "  为 'git push' 配置的本地引用%s："
 
 #: builtin/remote.c:1216
 msgid "Cannot determine remote HEAD"
