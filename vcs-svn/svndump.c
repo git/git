@@ -361,7 +361,7 @@ void svndump_read(const char *url)
 			reset_rev_ctx(atoi(val));
 			break;
 		case sizeof("Node-path"):
-			if (prefixcmp(t, "Node-"))
+			if (constcmp(t, "Node-"))
 				continue;
 			if (!constcmp(t + strlen("Node-"), "path")) {
 				if (active_ctx == NODE_CTX)
