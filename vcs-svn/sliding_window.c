@@ -54,7 +54,7 @@ int move_window(struct sliding_view *view, off_t off, size_t width)
 		return -1;
 	if (off < view->off || off + width < view->off + view->width)
 		return error("invalid delta: window slides left");
-	if (view->max_off >= 0 && view->max_off < off + width)
+	if (view->max_off >= 0 && view->max_off < off + (off_t) width)
 		return error("delta preimage ends early");
 
 	file_offset = view->off + view->buf.len;
