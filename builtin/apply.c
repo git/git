@@ -3262,10 +3262,18 @@ static int check_patch(struct patch *patch)
 		int same = !strcmp(old_name, new_name);
 		if (!patch->new_mode)
 			patch->new_mode = patch->old_mode;
-		if ((patch->old_mode ^ patch->new_mode) & S_IFMT)
-			return error(_("new mode (%o) of %s does not match old mode (%o)%s%s"),
-				patch->new_mode, new_name, patch->old_mode,
-				same ? "" : " of ", same ? "" : old_name);
+		if ((patch->old_mode ^ patch->new_mode) & S_IFMT) {
+			if (same)
+				return error(_("new mode (%o) of %s does not "
+					       "match old mode (%o)"),
+					patch->new_mode, new_name,
+					patch->old_mode);
+			else
+				return error(_("new mode (%o) of %s does not "
+					       "match old mode (%o) of %s"),
+					patch->new_mode, new_name,
+					patch->old_mode, old_name);
+		}
 	}
 
 	if (apply_data(patch, &st, ce) < 0)
