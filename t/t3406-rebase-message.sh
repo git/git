@@ -62,4 +62,9 @@ test_expect_success 'rebase -n overrides config rebase.stat config' '
         ! grep "^ fileX |  *1 +$" diffstat.txt
 '
 
+test_expect_success 'rebase --onto outputs the invalid ref' '
+	test_must_fail git rebase --onto invalid-ref HEAD HEAD 2>err &&
+	grep "invalid-ref" err
+'
+
 test_done
