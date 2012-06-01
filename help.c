@@ -317,7 +317,7 @@ const char *help_unknown_cmd(const char *cmd)
 		}
 
 		main_cmds.names[i]->len =
-			levenshtein(cmd, candidate, 0, 2, 1, 4) + 1;
+			levenshtein(cmd, candidate, 0, 2, 1, 3) + 1;
 	}
 
 	qsort(main_cmds.names, main_cmds.cnt,
