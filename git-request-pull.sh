@@ -57,9 +57,13 @@ headrev=$(git rev-parse --verify "$head"^0) || exit
 merge_base=$(git merge-base $baserev $headrev) ||
 die "fatal: No commits in common between $base and $head"
 
-# $head is the token given from the command line. If a ref with that
-# name exists at the remote and their values match, we should use it.
-# Otherwise find a ref that matches $headrev.
+# $head is the token given from the command line, and $tag_name, if
+# exists, is the tag we are going to show the commit information for.
+# If that tag exists at the remote and it points at the commit, use it.
+# Otherwise, if a branch with the same name as $head exists at the remote
+# and their values match, use that instead.
+#
+# Otherwise find a random ref that matches $headrev.
 find_matching_ref='
 	sub abbr {
 		my $ref = shift;
@@ -70,24 +74,29 @@ find_matching_ref='
 		}
 	}
 
-	my ($exact, $found);
+	my ($tagged, $branch, $found);
 	while (<STDIN>) {
 		my ($sha1, $ref, $deref) = /^(\S+)\s+(\S+?)(\^\{\})?$/;
 		next unless ($sha1 eq $ARGV[1]);
 		$found = abbr($ref);
-		if ($ref =~ m|/\Q$ARGV[0]\E$|) {
-			$exact = $found;
+		if ($deref && $ref eq "tags/$ARGV[2]") {
+			$tagged = $found;
 			last;
 		}
+		if ($ref =~ m|/\Q$ARGV[0]\E$|) {
+			$exact = $found;
+		}
 	}
-	if ($exact) {
+	if ($tagged) {
+		print "$tagged\n";
+	} elsif ($exact) {
 		print "$exact\n";
 	} elsif ($found) {
 		print "$found\n";
 	}
 '
 
-ref=$(git ls-remote "$url" | perl -e "$find_matching_ref" "$head" "$headrev")
+ref=$(git ls-remote "$url" | perl -e "$find_matching_ref" "$head" "$headrev" "$tag_name")
 
 url=$(git ls-remote --get-url "$url")
 
@@ -114,6 +123,12 @@ fi &&
 
 if test -n "$tag_name"
 then
+	if test -z "$ref" || test "$ref" != "tags/$tag_name"
+	then
+		echo >&2 "warn: You locally have $tag_name but it does not (yet)"
+		echo >&2 "warn: appear to be at $url"
+		echo >&2 "warn: Do you want to push it there, perhaps?"
+	fi
 	git cat-file tag "$tag_name" |
 	sed -n -e '1,/^$/d' -e '/^-----BEGIN PGP /q' -e p
 	echo
