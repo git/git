@@ -15,6 +15,10 @@ Members:	Thomas Rast <trast@student.ethz.ch>
 Language:	is (Icelandic)
 Leader:		Ævar Arnfjörð Bjarmason <avarab@gmail.com>
 
+Language:	it (Italian)
+Repository:	https://github.com/quizzlo/git-po-it/
+Leader:		Marco Paolone <marcopaolone@gmail.com>
+
 Language:	nl (Dutch)
 Repository:	https://github.com/vfr-nl/git-po/
 Leader:		Vincent van Ravesteijn <vfr@lyx.org>
@@ -26,6 +30,10 @@ Leader:		Marco Sousa <marcomsousa AT gmail.com>
 Language:	sv (Swedish)
 Repository:	https://github.com/nafmo/git-l10n-sv/
 Leader:		Peter Krefting <peter@softwolves.pp.se>
+
+Language:	vi (Vietnamese)
+Repository:	https://github.com/vnwildman/git.git
+Leader:		Trần Ngọc Quân <vnwildman AT gmail.com>
 
 Language:	zh_CN (Simplified Chinese)
 Repository:	https://github.com/gotgit/git-po-zh_CN/

@@ -106,6 +106,9 @@ Performance and Internal Implementation (please report possible regressions)
  * More lower-level commands learned to use the streaming API to read
    from the object store without keeping everything in core.
 
+ * The weighting parameters to suggestion command name typo have been
+   tweaked, so that "git tags" will suggest "tag?" and not "stage?".
+
  * Because "sh" on the user's PATH may be utterly broken on some
    systems, run-command API now uses SHELL_PATH, not /bin/sh, when
    spawning an external command (not applicable to Windows port).
@@ -123,26 +126,19 @@ Unless otherwise noted, all the fixes since v1.7.10 in the maintenance
 releases are contained in this release (see release notes to them for
 details).
 
- * The progress indicator for a large "git checkout" was sent to
-   stderr even if it is not a terminal.
-   (merge e9fc64c ap/checkout-no-progress-for-non-tty later to maint).
+ * When "git rebase" is fed a bad revision name (either as base, or
+   with the --onto option), it did not correctly give the command line
+   parameter it had trouble with in its error message.
+   (merge 9180fea ef/maint-rebase-error-message later to maint).
 
- * A name taken from mailmap was copied into an internal buffer
-   incorrectly and could overun the buffer if it is too long.
-   (merge c9b4e9e jk/format-person-part-buffer-limit later to maint).
+ * "git rebase -p" used to pay attention to rebase.autosquash which
+    was wrong.  "git rebase -p -i" should, but "git rebase -p" by
+    itself should not.
+   (merge 8a6dae1 vr/rebase-autosquash-does-not-imply-i later to maint).
 
- * A malformed commit object that has a header line chomped in the
-   middle could kill git with a NULL pointer dereference.
-   (merge a9c7a8a jk/pretty-commit-header-incomplete-line later to maint).
-
- * An author/committer name that is a single character was mishandled
-   as an invalid name by mistake.
-   (merge d9955fd jk/ident-split-fix later to maint).
-
- * "git grep -e '$pattern'", unlike the case where the patterns are
-   read from a file, did not treat individual lines in the given
-   pattern argument as separate regular expressions as it should.
-   (merge ec83061 rs/maint-grep-F later to maint).
+ * "git submodule init" used to report "registered for path ..."
+   even for submodules that were registered earlier.
+   (cherry-pick c1c259e jl/submodule-report-new-path-once later to maint).
 
  * "git diff --stat" used to fully count a binary file with modified
    execution bits whose contents is unmodified, which was not quite
