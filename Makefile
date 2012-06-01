@@ -2089,7 +2089,7 @@ configure: configure.ac
 	$(RM) $<+
 
 # These can record GIT_VERSION
-git.o git.spec \
+git.o git.spec http.o \
 	$(patsubst %.sh,%,$(SCRIPT_SH)) \
 	$(patsubst %.perl,%,$(SCRIPT_PERL)) \
 	: GIT-VERSION-FILE
