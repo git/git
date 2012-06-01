@@ -580,6 +580,38 @@ int excluded(struct dir_struct *dir, const char *pathname, int *dtype_p)
 	return 0;
 }
 
+void path_exclude_check_init(struct path_exclude_check *check,
+			     struct dir_struct *dir)
+{
+	check->dir = dir;
+	strbuf_init(&check->path, 256);
+}
+
+void path_exclude_check_clear(struct path_exclude_check *check)
+{
+	strbuf_release(&check->path);
+}
+
+int path_excluded(struct path_exclude_check *check, struct cache_entry *ce)
+{
+	int i, dtype;
+	struct strbuf *path = &check->path;
+
+	strbuf_setlen(path, 0);
+	for (i = 0; ce->name[i]; i++) {
+		int ch = ce->name[i];
+
+		if (ch == '/') {
+			dtype = DT_DIR;
+			if (excluded(check->dir, path->buf, &dtype))
+				return 1;
+		}
+		strbuf_addch(path, ch);
+	}
+	dtype = ce_to_dtype(ce);
+	return excluded(check->dir, ce->name, &dtype);
+}
+
 static struct dir_entry *dir_entry_new(const char *pathname, int len)
 {
 	struct dir_entry *ent;
