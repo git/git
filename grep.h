@@ -38,7 +38,7 @@ struct grep_pat {
 	const char *origin;
 	int no;
 	enum grep_pat_token token;
-	const char *pattern;
+	char *pattern;
 	size_t patternlen;
 	enum grep_header_field field;
 	regex_t regexp;
