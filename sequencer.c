@@ -291,7 +291,8 @@ static int is_index_unchanged(void)
  * If we are revert, or if our cherry-pick results in a hand merge,
  * we had better say that the current user is responsible for that.
  */
-static int run_git_commit(const char *defmsg, struct replay_opts *opts)
+static int run_git_commit(const char *defmsg, struct replay_opts *opts,
+			  int allow_empty)
 {
 	struct argv_array array;
 	int rc;
@@ -307,7 +308,7 @@ static int run_git_commit(const char *defmsg, struct replay_opts *opts)
 		argv_array_push(&array, defmsg);
 	}
 
-	if (opts->allow_empty)
+	if (allow_empty)
 		argv_array_push(&array, "--allow-empty");
 
 	rc = run_command_v_opt(array.argv, RUN_GIT_CMD);
@@ -335,6 +336,44 @@ static int is_original_commit_empty(struct commit *commit)
 	return !hashcmp(ptree_sha1, commit->tree->object.sha1);
 }
 
+/*
+ * Do we run "git commit" with "--allow-empty"?
+ */
+static int allow_empty(struct replay_opts *opts, struct commit *commit)
+{
+	int index_unchanged, empty_commit;
+
+	/*
+	 * Three cases:
+	 *
+	 * (1) we do not allow empty at all and error out.
+	 *
+	 * (2) we allow ones that were initially empty, but
+	 * forbid the ones that become empty;
+	 *
+	 * (3) we allow both.
+	 */
+	if (!opts->allow_empty)
+		return 0; /* let "git commit" barf as necessary */
+
+	index_unchanged = is_index_unchanged();
+	if (index_unchanged < 0)
+		return index_unchanged;
+	if (!index_unchanged)
+		return 0; /* we do not have to say --allow-empty */
+
+	if (opts->keep_redundant_commits)
+		return 1;
+
+	empty_commit = is_original_commit_empty(commit);
+	if (empty_commit < 0)
+		return empty_commit;
+	if (!empty_commit)
+		return 0;
+	else
+		return 1;
+}
+
 static int do_pick_commit(struct commit *commit, struct replay_opts *opts)
 {
 	unsigned char head[20];
@@ -344,8 +383,6 @@ static int do_pick_commit(struct commit *commit, struct replay_opts *opts)
 	char *defmsg = NULL;
 	struct strbuf msgbuf = STRBUF_INIT;
 	int res;
-	int empty_commit;
-	int index_unchanged;
 
 	if (opts->no_commit) {
 		/*
@@ -471,10 +508,6 @@ static int do_pick_commit(struct commit *commit, struct replay_opts *opts)
 		free_commit_list(remotes);
 	}
 
-	empty_commit = is_original_commit_empty(commit);
-	if (empty_commit < 0)
-		return empty_commit;
-
 	/*
 	 * If the merge was clean or if it failed due to conflict, we write
 	 * CHERRY_PICK_HEAD for the subsequent invocation of commit to use.
@@ -495,27 +528,11 @@ static int do_pick_commit(struct commit *commit, struct replay_opts *opts)
 		print_advice(res == 1, opts);
 		rerere(opts->allow_rerere_auto);
 	} else {
-		index_unchanged = is_index_unchanged();
-		/*
-		 * If index_unchanged is less than 0, that indicates we either
-		 * couldn't parse HEAD or the index, so error out here.
-		 */
-		if (index_unchanged < 0)
-			return index_unchanged;
-
-		if (!empty_commit && !opts->keep_redundant_commits && index_unchanged)
-			/*
-			 * The head tree and the index match
-			 * meaning the commit is empty.  Since it wasn't created
-			 * empty (based on the previous test), we can conclude
-			 * the commit has been made redundant.  Since we don't
-			 * want to keep redundant commits, we can just return
-			 * here, skipping this commit
-			 */
-			return 0;
-
+		int allow = allow_empty(opts, commit);
+		if (allow < 0)
+			return allow;
 		if (!opts->no_commit)
-			res = run_git_commit(defmsg, opts);
+			res = run_git_commit(defmsg, opts, allow);
 	}
 
 	free_message(&msg);
