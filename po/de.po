@@ -2812,8 +2812,8 @@ msgid ""
 "run \"git gc\" manually. See \"git help gc\" for more information.\n"
 msgstr ""
 "Die Datenbank des Projektarchivs wird für eine optimale Performance\n"
-"komprimiert. Du kannst auch \"git gc\" manuell ausführen. Siehe \"git help gc"
-"\" für weitere Informationen.\n"
+"komprimiert. Du kannst auch \"git gc\" manuell ausführen.\n"
+"Siehe \"git help gc\" für weitere Informationen.\n"
 
 #: builtin/gc.c:251
 msgid ""
