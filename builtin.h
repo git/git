@@ -9,7 +9,6 @@
 
 #define DEFAULT_MERGE_LOG_LEN 20
 
-extern const char git_version_string[];
 extern const char git_usage_string[];
 extern const char git_more_info_string[];
 
