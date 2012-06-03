@@ -418,7 +418,7 @@ case "$onto_name" in
 	;;
 *)
 	onto=$(git rev-parse --verify "${onto_name}^0") ||
-	die "Does not point to a valid commit: $1"
+	die "Does not point to a valid commit: $onto_name"
 	;;
 esac
 
