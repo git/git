@@ -26,7 +26,9 @@ test_expect_success setup '
 	(cd super-clone && git submodule update --init) &&
 	git clone super empty-clone &&
 	(cd empty-clone && git submodule init) &&
-	git clone super top-only-clone
+	git clone super top-only-clone &&
+	git clone super relative-clone &&
+	(cd relative-clone && git submodule update --init)
 '
 
 test_expect_success 'change submodule' '
@@ -85,5 +87,91 @@ test_expect_success '"git submodule sync" should not vivify uninteresting submod
 	 test -z "$(git config submodule.submodule.url)"
 	)
 '
+
+test_expect_failure '"git submodule sync" handles origin URL of the form foo' '
+	(cd relative-clone &&
+	 git remote set-url origin foo &&
+	 git submodule sync &&
+	(cd submodule &&
+	 #actual fails with: "cannot strip off url foo
+	 test "$(git config remote.origin.url)" = "../submodule"
+	)
+	)
+'
+
+test_expect_failure '"git submodule sync" handles origin URL of the form foo/bar' '
+	(cd relative-clone &&
+	 git remote set-url origin foo/bar &&
+	 git submodule sync &&
+	(cd submodule &&
+	 #actual foo/submodule
+	 test "$(git config remote.origin.url)" = "../foo/submodule"
+	)
+	)
+'
+
+test_expect_failure '"git submodule sync" handles origin URL of the form ./foo' '
+	(cd relative-clone &&
+	 git remote set-url origin ./foo &&
+	 git submodule sync &&
+	(cd submodule &&
+	 #actual ./submodule
+	 test "$(git config remote.origin.url)" = "../submodule"
+	)
+	)
+'
+
+test_expect_failure '"git submodule sync" handles origin URL of the form ./foo/bar' '
+	(cd relative-clone &&
+	 git remote set-url origin ./foo/bar &&
+	 git submodule sync &&
+	(cd submodule &&
+	 #actual ./foo/submodule
+	 test "$(git config remote.origin.url)" = "../foo/submodule"
+	)
+	)
+'
+
+test_expect_failure '"git submodule sync" handles origin URL of the form ../foo' '
+	(cd relative-clone &&
+	 git remote set-url origin ../foo &&
+	 git submodule sync &&
+	(cd submodule &&
+	 #actual ../submodule
+	 test "$(git config remote.origin.url)" = "../../submodule"
+	)
+	)
+'
+
+test_expect_failure '"git submodule sync" handles origin URL of the form ../foo/bar' '
+	(cd relative-clone &&
+	 git remote set-url origin ../foo/bar &&
+	 git submodule sync &&
+	(cd submodule &&
+	 #actual ../foo/submodule
+	 test "$(git config remote.origin.url)" = "../../foo/submodule"
+	)
+	)
+'
+
+test_expect_failure '"git submodule sync" handles origin URL of the form ../foo/bar with deeply nested submodule' '
+	(cd relative-clone &&
+	 git remote set-url origin ../foo/bar &&
+	 mkdir -p a/b/c &&
+	 ( cd a/b/c &&
+	   git init &&
+	   :> .gitignore &&
+	   git add .gitignore &&
+	   test_tick &&
+	   git commit -m "initial commit" ) &&
+	 git submodule add ../bar/a/b/c ./a/b/c &&
+	 git submodule sync &&
+	(cd a/b/c &&
+	 #actual ../foo/bar/a/b/c
+	 test "$(git config remote.origin.url)" = "../../../../foo/bar/a/b/c"
+	)
+	)
+'
+
 
 test_done
