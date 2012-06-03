@@ -22,4 +22,8 @@ Fixes since v1.7.10.3
    read from a file, did not treat individual lines in the given
    pattern argument as separate regular expressions as it should.
 
+ * When "git rebase" was given a bad commit to replay the history on,
+   its error message did not correctly give the command line argument
+   it had trouble parsing.
+
 Also contains minor fixes and documentation updates.
