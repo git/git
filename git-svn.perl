@@ -4837,7 +4837,7 @@ sub _auth_providers () {
 
 	# earlier 1.6.x versions would segfault, and <= 1.5.x didn't have
 	# this function
-	if (::compare_svn_version('1.6.12') > 0) {
+	if (::compare_svn_version('1.6.15') >= 0) {
 		my $config = SVN::Core::config_get_config($config_dir);
 		my ($p, @a);
 		# config_get_config returns all config files from
