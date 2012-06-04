@@ -42,7 +42,7 @@ for TRASH in /dev/shm /tmp ""
 do
 	if test -n "$TRASH" && test -d "$TRASH" && test -w "$TRASH"
 	then
-		TRASH="--root=$TRASH/testpen"
+		TRASH="--root=$(cd "$TRASH/testpen" && /bin/pwd)"
 		break
 	fi
 done
@@ -132,32 +132,38 @@ do
 	vtree=$(git rev-parse --verify "$version^{tree}")
 	rtree=$(git rev-parse --verify "$revision^{tree}")
 	(
-		skip_test=$notest
-		case "$installed_source_trees" in
-		*" $rtree "*)
-			skip_test=1
+		skip_test=$notest skip_doc=$nodoc
+		case "$force" in
+		?*)
 			;;
-		esac
-		if test "z$vtree" = "z$rtree"
-		then
-			skip_test=1
-			nodoc=1
-		fi
-		dvtree=$(git rev-parse --verify "$version:Documentation/")
-		drtree=$(git rev-parse --verify "$revision:Documentation/")
-		if test "z$dvtree" = "z$drtree"
-		then
-			nodoc=1
-		fi
-		case "$branch, $branches " in
-		jch,*' next '*)
-			if git diff --quiet --exit-code jch next
+		'')
+			case "$installed_source_trees" in
+			*" $rtree "*)
+				skip_test=1
+				;;
+			esac
+			if test "z$vtree" = "z$rtree"
 			then
 				skip_test=1
+				skip_doc=1
 			fi
+			dvtree=$(git rev-parse --verify "$version:Documentation/")
+			drtree=$(git rev-parse --verify "$revision:Documentation/")
+			if test "z$dvtree" = "z$drtree"
+			then
+				skip_doc=1
+			fi
+			case "$branch, $branches " in
+			jch,*' next '*)
+				if git diff --quiet --exit-code jch next
+				then
+					skip_test=1
+				fi
+				;;
+			esac
 			;;
 		esac
-		test $(git rev-parse --verify "$version^{tree}" 2>/dev/null)
+
 		case "$skip_test" in
 		?*)	dotest= ;;
 		'')	dotest=test ;;
@@ -197,7 +203,7 @@ do
 		Meta/Make $M ${test+"$test"} $jobs -- ${with_dash:+SHELL_PATH=/bin/dash} $dotest &&
 
 		{
-			test -n "$nodoc" ||
+			test -n "$skip_doc" ||
 			if test "$save" = "$(git rev-parse HEAD)"
 			then
 				Meta/Make $M $jobs -- doc &&
