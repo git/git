@@ -32,13 +32,15 @@ search_topics () {
 			echo >&2 "$tip moved from $sha1"
 			continue
 		fi
-		ago=
+
+		ago= lg=0
 		fp=$(
 		    sed -ne "s/^\($x40\) $x40 $tip"'$/\1/p' "$tmp"
 		) &&
+		test -n "$fp" &&
 		ago=$(
 		    git show -s --format='%ar' $fp
-		)
+		) &&
 		lg=$(git log --oneline $target..$tip | wc -l)
 		if test $lg != 0
 		then
