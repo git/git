@@ -1,13 +1,18 @@
 To: git@vger.kernel.org
-Subject: What's cooking in git.git (May 2012, #07; Thu, 31)
-X-master-at: b2478aa0858811c29061ed32c2686468b89d7296
-X-next-at: 11af7cdeca7ffbfb4387fb8253081fd22c3dd697
+Subject: What's cooking in git.git (Jun 2012, #01; Sun, 3)
+X-master-at: 3fe4498197ced84886b4adaddf18f1109b477f8e
+X-next-at: 281ad67c6ed0afb147ad426ff961c221b935af77
 
-What's cooking in git.git (May 2012, #07; Thu, 31)
+What's cooking in git.git (Jun 2012, #01; Sun, 3)
 --------------------------------------------------
 
 Here are the topics that have been cooking.  Commits prefixed with '-' are
 only in 'pu' (proposed updates) while commits prefixed with '+' are in 'next'.
+
+v1.7.11-rc1 has been tagged.  Except for trivially obvious and small
+fixes to older bugs and trivially obvious and small patches to
+documentation, please consider we are in "regression fix only"
+mode.  Finding and fixing since v1.7.10 is the top priority.
 
 You can find the changes described here in the integration branches of the
 repositories listed at
@@ -15,207 +20,84 @@ repositories listed at
     http://git-blame.blogspot.com/p/git-public-repositories.html
 
 --------------------------------------------------
-[Graduated to "master"]
-
-* ap/checkout-no-progress-for-non-tty (2012-05-24) 1 commit
-  (merged to 'next' on 2012-05-24 at dc473bd)
- + checkout: no progress messages if !isatty(2).
-
-"git checkout" gave progress display even when the standard error
-stream was not connected to the tty, which made little sense.
-
-* fc/git-complete-helper-fix (2012-05-20) 2 commits
-  (merged to 'next' on 2012-05-23 at 6124da2)
- + completion: add support for backwards compatibility
- + completion: rename internal helpers _git and _gitk
-
-Would help people who relied on (unofficial) _git/_gitk helper in their
-completion tweaks.
-
-* jk/fetch-pack-remove-dups-optim (2012-05-24) 6 commits
-  (merged to 'next' on 2012-05-24 at cf56fe6)
- + fetch-pack: sort incoming heads list earlier
-  (merged to 'next' on 2012-05-23 at 6057c21)
- + fetch-pack: avoid quadratic loop in filter_refs
- + fetch-pack: sort the list of incoming refs
- + add sorting infrastructure for list refs
- + fetch-pack: avoid quadratic behavior in remove_duplicates
- + fetch-pack: sort incoming heads
-
-The way "fetch-pack" that is given multiple references to fetch tried to
-remove duplicates was very inefficient.
-
-* jk/format-person-part-buffer-limit (2012-05-22) 1 commit
-  (merged to 'next' on 2012-05-23 at ef025b0)
- + pretty: avoid buffer overflow in format_person_part
-
-* jk/ident-gecos-strbuf (2012-05-24) 22 commits
-  (merged to 'next' on 2012-05-24 at 7148763)
- + format-patch: do not use bogus email addresses in message ids
- + ident: reject bogus email addresses with IDENT_STRICT
- + ident: rename IDENT_ERROR_ON_NO_NAME to IDENT_STRICT
- + format-patch: use GIT_COMMITTER_EMAIL in message ids
- + ident: let callers omit name with fmt_indent
- + ident: refactor NO_DATE flag in fmt_ident
- + ident: reword empty ident error message
-  (merged to 'next' on 2012-05-23 at 6fce816)
- + format-patch: refactor get_patch_filename
- + ident: trim whitespace from default name/email
- + ident: use a dynamic strbuf in fmt_ident
- + ident: use full dns names to generate email addresses
- + ident: report passwd errors with a more friendly message
- + drop length limitations on gecos-derived names and emails
- + ident: don't write fallback username into git_default_name
- + fmt_ident: drop IDENT_WARN_ON_NO_NAME code
- + format-patch: use default email for generating message ids
- + ident: trim trailing newline from /etc/mailname
- + move git_default_* variables to ident.c
- + move identity config parsing to ident.c
- + fmt-merge-msg: don't use static buffer in record_person
- + http-push: do not access git_default_email directly
- + ident: split setup_ident into separate functions
-
-Fixes quite a lot of brokenness when ident information needs to be taken
-from the system and cleans up the code.
-
-* jk/ident-split-fix (2012-05-22) 1 commit
-  (merged to 'next' on 2012-05-23 at 811c9ec)
- + fix off-by-one error in split_ident_line
-
-An author/committer name that is a single character was mishandled as an
-invalid name by mistake.
-
-* jk/pretty-commit-header-incomplete-line (2012-05-22) 1 commit
-  (merged to 'next' on 2012-05-23 at f788433)
- + avoid segfault when reading header of malformed commits
-
-* mh/fetch-pack-constness (2012-05-22) 4 commits
-  (merged to 'next' on 2012-05-23 at be95121)
- + cmd_fetch_pack(): respect constness of argv parameter
- + cmd_fetch_pack(): combine the loop termination conditions
- + cmd_fetch_pack(): handle non-option arguments outside of the loop
- + cmd_fetch_pack(): declare dest to be const
-
-Tighten constness of some local variables in a callchain.
-
-* mh/ref-api (2012-05-24) 1 commit
-  (merged to 'next' on 2012-05-24 at c8d54c0)
- + Avoid sorting if references are added to ref_cache in order
-
-* mh/ref-api-lazy-loose (2012-05-20) 1 commit
-  (merged to 'next' on 2012-05-23 at c41a30a)
- + free_ref_entry(): do not trigger reading of loose refs
-
-The code to lazily read loose refs by mistake unnecessarily read the refs
-in a subhierarchy when we free the data for the subhierarchy.
-
-* mh/test-keep-prove-cache (2012-05-20) 1 commit
-  (merged to 'next' on 2012-05-23 at 870d1f9)
- + t/Makefile: retain cache t/.prove across prove runs
-
-* ng/pack-objects-cleanup (2012-05-18) 2 commits
-  (merged to 'next' on 2012-05-23 at f90b1ba)
- + pack-objects: refactor write_object() into helper functions
- + pack-objects, streaming: turn "xx >= big_file_threshold" to ".. > .."
-
-* rs/dir-strbuf-read-recursive-fix (2012-05-11) 2 commits
-  (merged to 'next' on 2012-05-23 at 2e22549)
- + dir: simplify fill_directory()
- + dir: respect string length argument of read_directory_recursive()
-
-* rs/maint-grep-F (2012-05-21) 4 commits
-  (merged to 'next' on 2012-05-23 at b24143c)
- + grep: stop leaking line strings with -f
- + grep: support newline separated pattern list
- + grep: factor out do_append_grep_pat()
- + grep: factor out create_grep_pat()
-
-"git grep -e '$pattern'", unlike the case where the patterns are read from
-a file, did not treat individual lines in the given pattern argument as
-separate regular expressions as it should.
-
-* rs/refs-string-slice (2012-05-22) 4 commits
-  (merged to 'next' on 2012-05-23 at d224de1)
- + refs: do not create ref_entry when searching
- + refs: use strings directly in find_containing_dir()
- + refs: convert parameter of create_dir_entry() to length-limited string
- + refs: convert parameter of search_ref_dir() to length-limited string
-
-Avoid unnecessary temporary allocations while looking for matching refs
-inside refs API.
-
-* rs/xdiff-fast-hash-fix (2012-05-23) 3 commits
-  (merged to 'next' on 2012-05-23 at 8df26a5)
- + xdiff: import new 32-bit version of count_masked_bytes()
- + xdiff: avoid more compiler warnings with XDL_FAST_HASH on 32-bit machines
- + xdiff: avoid compiler warnings with XDL_FAST_HASH on 32-bit machines
-
-* sp/sh-windows-pwd (2012-05-16) 1 commit
-  (merged to 'next' on 2012-05-23 at 63004c3)
- + git-sh-setup: define workaround wrappers before they are used
-
-* va/git-p4-test (2012-05-23) 2 commits
- - git-p4: Verify detection of "empty" branch creation
- - git-p4: Test changelists touching two branches
-
-Rerolled and Acked by Pete.
-
---------------------------------------------------
 [New Topics]
 
-* jl/submodule-report-new-path-once (2012-05-29) 1 commit
-  (merged to 'next' on 2012-05-30 at e482dd9)
- + submodules: print "registered for path" message only once
+* jc/ls-files-i-dir (2012-06-03) 2 commits
+ - ls-files -i: micro-optimize path_excluded()
+ - ls-files -i: pay attention to exclusion of leading paths
 
-Will merge to master by 1.7.11 final.
+"git ls-files --exclude=t -i" did not consider anything under t/
+as excluded, as it did not pay attention to exclusion of leading
+paths while walking the index.
 
-* mm/levenstein-penalize-deletion-less (2012-05-29) 1 commit
-  (merged to 'next' on 2012-05-30 at b2a0346)
- + Reduce cost of deletion in levenstein distance (4 -> 3)
+* jc/request-pull-match-tagname (2012-06-01) 1 commit
+ - request-pull: really favor a matching tag
 
-Will merge to master by 1.7.11 final.
+"git request-pull $url dev" when the tip of "dev" branch was tagged
+with "ext4-for-linus" used the contents from the tag in the output
+but still asked the "dev" branch to be pulled, not the tag.
 
-* nd/exclude-workaround-top-heavy (2012-05-29) 2 commits
- - exclude: do strcmp as much as possible before fnmatch
- - Unindent excluded_from_list()
+* db/vcs-svn (2012-06-01) 6 commits
+ - vcs-svn: drop no-op reset methods
+ - vcs-svn: fix signedness warnings
+ - vcs-svn: prefer strstr over memmem
+ - vcs-svn: prefer constcmp to prefixcmp
+ - vcs-svn: simplify cleanup in apply_one_window()
+ - vcs-svn: fix clang-analyzer error
 
-* nd/stream-pack-objects (2012-05-29) 1 commit
- - pack-objects: use streaming interface for reading large loose blobs
+* jk/version-string (2012-06-03) 3 commits
+ - http: get default user-agent from git_user_agent
+ - version: add git_user_agent function
+ - move git_version_string into version.c
 
-* vr/rebase-autosquash-does-not-imply-i (2012-05-29) 1 commit
-  (merged to 'next' on 2012-05-30 at 10dd3af)
- + Do not autosquash in case of an implied interactive rebase
+* mm/api-credentials-doc (2012-06-03) 3 commits
+ - api-credentials.txt: mention credential.helper explicitly
+ - api-credentials.txt: add "see also" section
+ - api-credentials.txt: show the big picture first
 
-Will merge to master by 1.7.11 final.
-
-* nh/empty-rebase (2012-05-29) 1 commit
-  (merged to 'next' on 2012-05-30 at 270703a)
- + cherry-pick: regression fix for empty commits
-
-Will merge to master by 1.7.11 final.
-
-* ef/maint-rebase-error-message (2012-05-30) 1 commit
-  (merged to 'next' on 2012-05-30 at 5194fe3)
- + rebase: report invalid commit correctly
-
-Will merge to master by 1.7.11 final.
-
-* jk/clone-local (2012-05-30) 2 commits
- - clone: allow --no-local to turn off local optimizations
- - docs/clone: mention that --local may be ignored
-
-* jk/no-more-asciidoc7 (2012-05-30) 2 commits
- - docs: drop antique comment from Makefile
- - docs: drop asciidoc7compatible flag
-
-* jk/no-op-push-message (2012-05-30) 1 commit
- - improve no-op push output
+--------------------------------------------------
+[Graduated to "master"]
 
 * ef/http-o-depends-on-gvf (2012-05-31) 1 commit
   (merged to 'next' on 2012-05-31 at 11af7cd)
  + Makefile: add missing GIT-VERSION-FILE dependency
 
-Will merge to master by 1.7.11 final.
+A compilation fix.
+
+* ef/maint-rebase-error-message (2012-05-30) 1 commit
+  (merged to 'next' on 2012-05-30 at 5194fe3)
+ + rebase: report invalid commit correctly
+
+When "git rebase" was given a bad commit to replay the history on,
+its error message did not correctly give the command line argument
+it had trouble parsing.
+
+* jl/submodule-report-new-path-once (2012-05-29) 1 commit
+  (merged to 'next' on 2012-05-30 at e482dd9)
+ + submodules: print "registered for path" message only once
+
+"git submodule init" said "registered for path" even for a submodule
+that was already registered.
+
+* mm/levenstein-penalize-deletion-less (2012-05-29) 1 commit
+  (merged to 'next' on 2012-05-30 at b2a0346)
+ + Reduce cost of deletion in levenstein distance (4 -> 3)
+
+"git tags" errored out, suggesting "git stage" while "git tag" is
+a far more appropriate choice.
+
+* nh/empty-rebase (2012-05-29) 1 commit
+  (merged to 'next' on 2012-05-30 at 270703a)
+ + cherry-pick: regression fix for empty commits
+
+Fix for a new topic that happened in the 1.7.11 track.
+
+* vr/rebase-autosquash-does-not-imply-i (2012-05-29) 1 commit
+  (merged to 'next' on 2012-05-30 at 10dd3af)
+ + Do not autosquash in case of an implied interactive rebase
+
+"git rebase -p" should not pay attention to rebase.autosquash nor
+"git rebase -p --autosquash".
 
 --------------------------------------------------
 [Stalled]
@@ -227,6 +109,27 @@ Will merge to master by 1.7.11 final.
 I queued only the later two patches from this series, even though they do
 not make much sense without the first one that seems to need a bit more
 work, so that we won't forget.
+
+* jk/no-op-push-message (2012-05-30) 1 commit
+ - improve no-op push output
+
+Rewords the status message of "git push" that pushed only one ref
+differently from "Everything up-to-date", to give a bit more help to
+people who get the message when their current branch is not pushed.
+
+It probably is a better idea to add a message that says that the
+current was not pushed to address the problem in a more direct way.
+
+* fc/git-prompt-script (2012-05-22) 5 commits
+ - completion: split __git_ps1 into a separate script
+ - completion: remove executable mode
+ - Merge branch 'fc/git-complete-helper' into fc/git-prompt-script
+ - tests: add tests for the bash prompt functions in the completion script
+ - tests: move code to run tests under bash into a helper library
+ (this branch is tangled with sg/bash-prompt.)
+
+The last remaining sticking point is what to do with the duplicated shell
+function.
 
 * sg/bash-prompt (2012-05-09) 4 commits
  - completion: respect $GIT_DIR
@@ -310,19 +213,35 @@ not working :-(.
 --------------------------------------------------
 [Cooking]
 
-* fc/git-prompt-script (2012-05-22) 5 commits
- - completion: split __git_ps1 into a separate script
- - completion: remove executable mode
- - Merge branch 'fc/git-complete-helper' into fc/git-prompt-script
- - tests: add tests for the bash prompt functions in the completion script
- - tests: move code to run tests under bash into a helper library
- (this branch is tangled with sg/bash-prompt.)
+* nd/exclude-workaround-top-heavy (2012-05-29) 2 commits
+ - exclude: do strcmp as much as possible before fnmatch
+ - Unindent excluded_from_list()
 
-The last remaining sticking point is what to do with the duplicated shell
-function.
+Attempts to optimize matching with an exclude pattern with a deep
+directory hierarchy by taking the part that specifies leading path
+without wildcard literally.
+
+The code to check for wildcard needs to be redone.
+
+* nd/stream-pack-objects (2012-05-29) 1 commit
+ - pack-objects: use streaming interface for reading large loose blobs
+
+* jk/clone-local (2012-05-30) 2 commits
+ - clone: allow --no-local to turn off local optimizations
+ - docs/clone: mention that --local may be ignored
+
+"git clone --local $path" started its life as an experiment to
+optionally use link/copy when cloning a repository on the disk, but
+we didn't deprecate it after we made the option a no-op to always
+use the optimization.
+
+* jk/no-more-asciidoc7 (2012-05-30) 2 commits
+ - docs: drop antique comment from Makefile
+ - docs: drop asciidoc7compatible flag
 
 * cr/persistent-https (2012-05-30) 1 commit
- - Add persistent-https to contrib
+  (merged to 'next' on 2012-06-01 at c647464)
+ + Add persistent-https to contrib
 
 A remote helper that acts as a proxy that caches ssl session for the
 https:// transport is added to the contrib/ area.
@@ -336,12 +255,11 @@ https:// transport is added to the contrib/ area.
 Use streaming API to read from the object store to avoid having to hold
 a large blob object in-core while running index-pack.
 
-* js/submodule-relative (2012-05-29) 3 commits
- - t7403-*.sh: Avoid use of the nonportable '==' operator
- - submodule: fix handling of relative superproject origin URLs
- - submodule: document handling of relative superproject origin URLs
-
-Reroll went to v7 but hasn't settled yet.
+* js/submodule-relative (2012-06-03) 4 commits
+ - submodule: fix handling of superproject origin URLs like foo, ./foo and ./foo/bar
+ - submodule: fix sync handling of some relative superproject origin URLs
+ - submodule: document failure to handle relative superproject origin URLs
+ - submodule: additional regression tests for relative URLs
 
 * mm/push-default-switch-warning (2012-04-26) 2 commits
  - t5541: warning message is given even with --quiet
@@ -359,10 +277,3 @@ Will squash the two, but this has to wait for a few release cycles.
  + git-daemon wrapper to wait until daemon is ready
 
 Reverted from 'next' to replace it with js/daemon-test-race-fix.
-
-* jc/revert-nh-empty-rebase (2012-05-23) 1 commit
- . Revert nh/empty-rebase topic
-
-The earlier series was found to regress the more important "cherry-pick";
-I'd prefer to see it fixed, but in case if it does not happen soon, this
-is a fallback measure that can be merged before 1.7.11 final.
