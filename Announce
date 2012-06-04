@@ -32,16 +32,18 @@ case "$vername" in
 	;;
 esac
 
-echo "To: git@vger.kernel.org"
-Meta/ProjectContact -b
-echo "Subject: [ANNOUNCE] Git $vername
-"
+cat <<EOF
+To: git@vger.kernel.org
+Cc: Linux Kernel <linux-kernel@vger.kernel.org>
+Subject: [ANNOUNCE] Git $relname
 
-fmt -70 <<EOF
-$kind Git $vername is now available$for_testing at the usual places.
 EOF
 
-cat <<EOF
+fmt -68 <<EOF
+$kind Git $relname is now available$for_testing at the usual places.
+EOF
+
+cat <<\EOF
 
 The release tarballs are found at:
 
@@ -49,11 +51,16 @@ The release tarballs are found at:
 
 and their SHA-1 checksums are:
 
-bbf85bd767ca6b7e9caa1489bb4ba7ec64e0ab35  git-1.7.7.tar.gz
-33183db94fd25e001bd8a9fd6696b992f61e28d8  git-htmldocs-1.7.7.tar.gz
-75d3cceb46f7a46eeb825033dff76af5eb5ea3d9  git-manpages-1.7.7.tar.gz
+EOF
 
-Also the following public repositories all have a copy of the v$vername
+if test -f git-$vername.sign
+then
+	sed -e '1,/^$/d' -e '/^-----BEGIN PGP SIGNATURE/,$d' git-$vername.sign
+fi
+
+cat <<EOF
+
+Also the following public repositories all have a copy of the $relname
 tag and the $branch branch that the tag points at:
 
   url = git://repo.or.cz/alt-git.git
@@ -61,6 +68,21 @@ tag and the $branch branch that the tag points at:
   url = git://git.sourceforge.jp/gitroot/git-core/git.git
   url = git://git-core.git.sourceforge.net/gitroot/git-core/git-core
   url = https://github.com/gitster/git
+
+EOF
+
+RelNotes=$(git cat-file blob "${branch}:RelNotes") &&
+git cat-file blob "${branch}:$RelNotes" |
+case "$relname" in
+*-rc[0-9]*)
+	sed -e 's/^Git .* Release Notes$/& (draft)/'
+	;;
+*)
+	cat
+	;;
+esac
+
+cat <<EOF
 
 ----------------------------------------------------------------
 
