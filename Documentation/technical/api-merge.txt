@@ -36,7 +36,7 @@ the operation of a low-level (single file) merge.  Some options:
 	ancestors in a recursive merge.
 	If a helper program is specified by the
 	`[merge "<driver>"] recursive` configuration, it will
-	be used (see linkgit:gitattributes[5]).
+	be used (see linkgit:../gitattributes[5]).
 
 `variant`::
 	Resolve local conflicts automatically in favor

@@ -2,7 +2,7 @@ config API
 ==========
 
 The config API gives callers a way to access git configuration files
-(and files which have the same syntax). See linkgit:git-config[1] for a
+(and files which have the same syntax). See linkgit:../git-config[1] for a
 discussion of the config file syntax.
 
 General Usage
