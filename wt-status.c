@@ -23,6 +23,7 @@ static char default_wt_status_colors[][COLOR_MAXLEN] = {
 	GIT_COLOR_GREEN,  /* WT_STATUS_LOCAL_BRANCH */
 	GIT_COLOR_RED,    /* WT_STATUS_REMOTE_BRANCH */
 	GIT_COLOR_NIL,    /* WT_STATUS_ONBRANCH */
+	GIT_COLOR_NORMAL, /* WT_STATUS_IN_PROGRESS */
 };
 
 static const char *color(int slot, struct wt_status *s)
@@ -728,6 +729,160 @@ static void wt_status_print_tracking(struct wt_status *s)
 	color_fprintf_ln(s->fp, color(WT_STATUS_HEADER, s), "#");
 }
 
+static int has_unmerged(struct wt_status *s)
+{
+	int i;
+
+	for (i = 0; i < s->change.nr; i++) {
+		struct wt_status_change_data *d;
+		d = s->change.items[i].util;
+		if (d->stagemask)
+			return 1;
+	}
+	return 0;
+}
+
+static void show_merge_in_progress(struct wt_status *s,
+				struct wt_status_state *state,
+				const char *color)
+{
+	if (has_unmerged(s)) {
+		status_printf_ln(s, color, _("You have unmerged paths."));
+		if (advice_status_hints)
+			status_printf_ln(s, color,
+				_("  (fix conflicts and run \"git commit\")"));
+	} else {
+		status_printf_ln(s, color,
+			_("All conflicts fixed but you are still merging."));
+		if (advice_status_hints)
+			status_printf_ln(s, color,
+				_("  (use \"git commit\" to conclude merge)"));
+	}
+	wt_status_print_trailer(s);
+}
+
+static void show_am_in_progress(struct wt_status *s,
+				struct wt_status_state *state,
+				const char *color)
+{
+	status_printf_ln(s, color,
+		_("You are in the middle of an am session."));
+	if (state->am_empty_patch)
+		status_printf_ln(s, color,
+			_("The current patch is empty."));
+	if (advice_status_hints) {
+		if (!state->am_empty_patch)
+			status_printf_ln(s, color,
+				_("  (fix conflicts and then run \"git am --resolved\")"));
+		status_printf_ln(s, color,
+			_("  (use \"git am --skip\" to skip this patch)"));
+		status_printf_ln(s, color,
+			_("  (use \"git am --abort\" to restore the original branch)"));
+	}
+	wt_status_print_trailer(s);
+}
+
+static void show_rebase_in_progress(struct wt_status *s,
+				struct wt_status_state *state,
+				const char *color)
+{
+	struct stat st;
+
+	if (has_unmerged(s)) {
+		status_printf_ln(s, color, _("You are currently rebasing."));
+		if (advice_status_hints) {
+			status_printf_ln(s, color,
+				_("  (fix conflicts and then run \"git rebase --continue\")"));
+			status_printf_ln(s, color,
+				_("  (use \"git rebase --skip\" to skip this patch)"));
+			status_printf_ln(s, color,
+				_("  (use \"git rebase --abort\" to check out the original branch)"));
+		}
+	} else if (state->rebase_in_progress || !stat(git_path("MERGE_MSG"), &st)) {
+		status_printf_ln(s, color, _("You are currently rebasing."));
+		if (advice_status_hints)
+			status_printf_ln(s, color,
+				_("  (all conflicts fixed: run \"git rebase --continue\")"));
+	} else {
+		status_printf_ln(s, color, _("You are currently editing a commit during a rebase."));
+		if (advice_status_hints && !s->amend) {
+			status_printf_ln(s, color,
+				_("  (use \"git commit --amend\" to amend the current commit)"));
+			status_printf_ln(s, color,
+				_("  (use \"git rebase --continue\" once you are satisfied with your changes)"));
+		}
+	}
+	wt_status_print_trailer(s);
+}
+
+static void show_cherry_pick_in_progress(struct wt_status *s,
+					struct wt_status_state *state,
+					const char *color)
+{
+	status_printf_ln(s, color, _("You are currently cherry-picking."));
+	if (advice_status_hints) {
+		if (has_unmerged(s))
+			status_printf_ln(s, color,
+				_("  (fix conflicts and run \"git commit\")"));
+		else
+			status_printf_ln(s, color,
+				_("  (all conflicts fixed: run \"git commit\")"));
+	}
+	wt_status_print_trailer(s);
+}
+
+static void show_bisect_in_progress(struct wt_status *s,
+				struct wt_status_state *state,
+				const char *color)
+{
+	status_printf_ln(s, color, _("You are currently bisecting."));
+	if (advice_status_hints)
+		status_printf_ln(s, color,
+			_("  (use \"git bisect reset\" to get back to the original branch)"));
+	wt_status_print_trailer(s);
+}
+
+static void wt_status_print_state(struct wt_status *s)
+{
+	const char *state_color = color(WT_STATUS_IN_PROGRESS, s);
+	struct wt_status_state state;
+	struct stat st;
+
+	memset(&state, 0, sizeof(state));
+
+	if (!stat(git_path("MERGE_HEAD"), &st)) {
+		state.merge_in_progress = 1;
+	} else if (!stat(git_path("rebase-apply"), &st)) {
+		if (!stat(git_path("rebase-apply/applying"), &st)) {
+			state.am_in_progress = 1;
+			if (!stat(git_path("rebase-apply/patch"), &st) && !st.st_size)
+				state.am_empty_patch = 1;
+		} else {
+			state.rebase_in_progress = 1;
+		}
+	} else if (!stat(git_path("rebase-merge"), &st)) {
+		if (!stat(git_path("rebase-merge/interactive"), &st))
+			state.rebase_interactive_in_progress = 1;
+		else
+			state.rebase_in_progress = 1;
+	} else if (!stat(git_path("CHERRY_PICK_HEAD"), &st)) {
+		state.cherry_pick_in_progress = 1;
+	}
+	if (!stat(git_path("BISECT_LOG"), &st))
+		state.bisect_in_progress = 1;
+
+	if (state.merge_in_progress)
+		show_merge_in_progress(s, &state, state_color);
+	else if (state.am_in_progress)
+		show_am_in_progress(s, &state, state_color);
+	else if (state.rebase_in_progress || state.rebase_interactive_in_progress)
+		show_rebase_in_progress(s, &state, state_color);
+	else if (state.cherry_pick_in_progress)
+		show_cherry_pick_in_progress(s, &state, state_color);
+	if (state.bisect_in_progress)
+		show_bisect_in_progress(s, &state, state_color);
+}
+
 void wt_status_print(struct wt_status *s)
 {
 	const char *branch_color = color(WT_STATUS_ONBRANCH, s);
@@ -750,6 +905,7 @@ void wt_status_print(struct wt_status *s)
 			wt_status_print_tracking(s);
 	}
 
+	wt_status_print_state(s);
 	if (s->is_initial) {
 		status_printf_ln(s, color(WT_STATUS_HEADER, s), "");
 		status_printf_ln(s, color(WT_STATUS_HEADER, s), _("Initial commit"));

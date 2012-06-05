@@ -30,6 +30,9 @@ test_expect_success 'Report new path with conflict' '
 
 cat >expect <<EOF
 # On branch side
+# You have unmerged paths.
+#   (fix conflicts and run "git commit")
+#
 # Unmerged paths:
 #   (use "git add/rm <file>..." as appropriate to mark resolution)
 #
@@ -117,5 +120,66 @@ test_expect_success 'git diff-index --cached -C shows 2 copies + 1 unmerged' '
 	sed "s/^C[0-9]*/C/g" >actual &&
 	test_cmp expected actual
 '
+
+
+test_expect_success 'status when conflicts with add and rm advice (deleted by them)' '
+	git reset --hard &&
+	git checkout master &&
+	test_commit init main.txt init &&
+	git checkout -b second_branch &&
+	git rm main.txt &&
+	git commit -m "main.txt deleted on second_branch" &&
+	test_commit second conflict.txt second &&
+	git checkout master &&
+	test_commit on_second main.txt on_second &&
+	test_commit master conflict.txt master &&
+	test_must_fail git merge second_branch &&
+	cat >expected <<-\EOF &&
+	# On branch master
+	# You have unmerged paths.
+	#   (fix conflicts and run "git commit")
+	#
+	# Unmerged paths:
+	#   (use "git add/rm <file>..." as appropriate to mark resolution)
+	#
+	#	both added:         conflict.txt
+	#	deleted by them:    main.txt
+	#
+	no changes added to commit (use "git add" and/or "git commit -a")
+	EOF
+	git status --untracked-files=no >actual &&
+	test_i18ncmp expected actual
+'
+
+
+test_expect_success 'status when conflicts with add and rm advice (both deleted)' '
+	git reset --hard &&
+	git checkout -b conflict &&
+	test_commit one main.txt one &&
+	git branch conflict_second &&
+	git mv main.txt sub_master.txt &&
+	git commit -m "main.txt renamed in sub_master.txt" &&
+	git checkout conflict_second &&
+	git mv main.txt sub_second.txt &&
+	git commit -m "main.txt renamed in sub_second.txt" &&
+	test_must_fail git merge conflict &&
+	cat >expected <<-\EOF &&
+	# On branch conflict_second
+	# You have unmerged paths.
+	#   (fix conflicts and run "git commit")
+	#
+	# Unmerged paths:
+	#   (use "git add/rm <file>..." as appropriate to mark resolution)
+	#
+	#	both deleted:       main.txt
+	#	added by them:      sub_master.txt
+	#	added by us:        sub_second.txt
+	#
+	no changes added to commit (use "git add" and/or "git commit -a")
+	EOF
+	git status --untracked-files=no >actual &&
+	test_i18ncmp expected actual
+'
+
 
 test_done
