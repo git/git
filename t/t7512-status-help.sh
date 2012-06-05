@@ -30,7 +30,7 @@ test_expect_success 'status when conflicts unresolved' '
 	#   (fix conflicts and run "git commit")
 	#
 	# Unmerged paths:
-	#   (use "git add/rm <file>..." as appropriate to mark resolution)
+	#   (use "git add <file>..." to mark resolution)
 	#
 	#	both modified:      main.txt
 	#
@@ -83,7 +83,7 @@ test_expect_success 'status when rebase in progress before resolving conflicts' 
 	#
 	# Unmerged paths:
 	#   (use "git reset HEAD <file>..." to unstage)
-	#   (use "git add/rm <file>..." as appropriate to mark resolution)
+	#   (use "git add <file>..." to mark resolution)
 	#
 	#	both modified:      main.txt
 	#
@@ -140,7 +140,7 @@ test_expect_success 'status during rebase -i when conflicts unresolved' '
 	#
 	# Unmerged paths:
 	#   (use "git reset HEAD <file>..." to unstage)
-	#   (use "git add/rm <file>..." as appropriate to mark resolution)
+	#   (use "git add <file>..." to mark resolution)
 	#
 	#	both modified:      main.txt
 	#
@@ -336,7 +336,7 @@ test_expect_success 'status when cherry-picking before resolving conflicts' '
 	#   (fix conflicts and run "git commit")
 	#
 	# Unmerged paths:
-	#   (use "git add/rm <file>..." as appropriate to mark resolution)
+	#   (use "git add <file>..." to mark resolution)
 	#
 	#	both modified:      main.txt
 	#

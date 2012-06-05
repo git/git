@@ -152,7 +152,7 @@ test_expect_success 'status when conflicts with add and rm advice (deleted by th
 '
 
 
-test_expect_success 'status when conflicts with add and rm advice (both deleted)' '
+test_expect_success 'prepare for conflicts' '
 	git reset --hard &&
 	git checkout -b conflict &&
 	test_commit one main.txt one &&
@@ -161,7 +161,11 @@ test_expect_success 'status when conflicts with add and rm advice (both deleted)
 	git commit -m "main.txt renamed in sub_master.txt" &&
 	git checkout conflict_second &&
 	git mv main.txt sub_second.txt &&
-	git commit -m "main.txt renamed in sub_second.txt" &&
+	git commit -m "main.txt renamed in sub_second.txt"
+'
+
+
+test_expect_success 'status when conflicts with add and rm advice (both deleted)' '
 	test_must_fail git merge conflict &&
 	cat >expected <<-\EOF &&
 	# On branch conflict_second
@@ -179,6 +183,34 @@ test_expect_success 'status when conflicts with add and rm advice (both deleted)
 	EOF
 	git status --untracked-files=no >actual &&
 	test_i18ncmp expected actual
+'
+
+
+test_expect_success 'status when conflicts with only rm advice (both deleted)' '
+	git reset --hard conflict_second &&
+	test_must_fail git merge conflict &&
+	git add sub_master.txt &&
+	git add sub_second.txt &&
+	cat >expected <<-\EOF &&
+	# On branch conflict_second
+	# You have unmerged paths.
+	#   (fix conflicts and run "git commit")
+	#
+	# Changes to be committed:
+	#
+	#	new file:   sub_master.txt
+	#
+	# Unmerged paths:
+	#   (use "git rm <file>..." to mark resolution)
+	#
+	#	both deleted:       main.txt
+	#
+	# Untracked files not listed (use -u option to show untracked files)
+	EOF
+	git status --untracked-files=no >actual &&
+	test_i18ncmp expected actual &&
+	git reset --hard &&
+	git checkout master
 '
 
 
