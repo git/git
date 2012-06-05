@@ -958,11 +958,12 @@ static char *lookup_prog(const char *dir, int dirlen, const char *cmd,
 
 	if (!isexe && _waccess(wpath, F_OK) == 0)
 		return xstrdup(path);
-	path[strlen(path)-4] = '\0';
+	wpath[wcslen(wpath)-4] = '\0';
 	if ((!exe_only || isexe) && _waccess(wpath, F_OK) == 0) {
-
-		if (!(GetFileAttributesW(wpath) & FILE_ATTRIBUTE_DIRECTORY))
+		if (!(GetFileAttributesW(wpath) & FILE_ATTRIBUTE_DIRECTORY)) {
+			path[strlen(path)-4] = '\0';
 			return xstrdup(path);
+		}
 	}
 	return NULL;
 }
