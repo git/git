@@ -573,6 +573,56 @@ int excluded(struct dir_struct *dir, const char *pathname, int *dtype_p)
 	return 0;
 }
 
+void path_exclude_check_init(struct path_exclude_check *check,
+			     struct dir_struct *dir)
+{
+	check->dir = dir;
+	strbuf_init(&check->path, 256);
+}
+
+void path_exclude_check_clear(struct path_exclude_check *check)
+{
+	strbuf_release(&check->path);
+}
+
+/*
+ * Is the ce->name excluded?  This is for a caller like show_files() that
+ * do not honor directory hierarchy and iterate through paths that are
+ * possibly in an ignored directory.
+ *
+ * A path to a directory known to be excluded is left in check->path to
+ * optimize for repeated checks for files in the same excluded directory.
+ */
+int path_excluded(struct path_exclude_check *check, struct cache_entry *ce)
+{
+	int i, dtype;
+	struct strbuf *path = &check->path;
+
+	if (path->len &&
+	    path->len <= ce_namelen(ce) &&
+	    !memcmp(ce->name, path->buf, path->len) &&
+	    (!ce->name[path->len] || ce->name[path->len] == '/'))
+		return 1;
+
+	strbuf_setlen(path, 0);
+	for (i = 0; ce->name[i]; i++) {
+		int ch = ce->name[i];
+
+		if (ch == '/') {
+			dtype = DT_DIR;
+			if (excluded(check->dir, path->buf, &dtype))
+				return 1;
+		}
+		strbuf_addch(path, ch);
+	}
+
+	/* An entry in the index; cannot be a directory with subentries */
+	strbuf_setlen(path, 0);
+
+	dtype = ce_to_dtype(ce);
+	return excluded(check->dir, ce->name, &dtype);
+}
+
 static struct dir_entry *dir_entry_new(const char *pathname, int len)
 {
 	struct dir_entry *ent;

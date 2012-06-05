@@ -1,6 +1,8 @@
 #ifndef DIR_H
 #define DIR_H
 
+#include "strbuf.h"
+
 struct dir_entry {
 	unsigned int len;
 	char name[FLEX_ARRAY]; /* more */
@@ -78,6 +80,20 @@ extern int excluded_from_list(const char *pathname, int pathlen, const char *bas
 			      int *dtype, struct exclude_list *el);
 extern int excluded(struct dir_struct *, const char *, int *);
 struct dir_entry *dir_add_ignored(struct dir_struct *dir, const char *pathname, int len);
+
+/*
+ * The excluded() API is meant for callers that check each level of leading
+ * directory hierarchies with excluded() to avoid recursing into excluded
+ * directories.  Callers that do not do so should use this API instead.
+ */
+struct path_exclude_check {
+	struct dir_struct *dir;
+	struct strbuf path;
+};
+extern void path_exclude_check_init(struct path_exclude_check *, struct dir_struct *);
+extern void path_exclude_check_clear(struct path_exclude_check *);
+extern int path_excluded(struct path_exclude_check *, struct cache_entry *);
+
 extern int add_excludes_from_file_to_list(const char *fname, const char *base, int baselen,
 					  char **buf_p, struct exclude_list *which, int check_index);
 extern void add_excludes_from_file(struct dir_struct *, const char *fname);
