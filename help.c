@@ -6,6 +6,7 @@
 #include "common-cmds.h"
 #include "string-list.h"
 #include "column.h"
+#include "version.h"
 
 void add_cmdname(struct cmdnames *cmds, const char *name, int len)
 {

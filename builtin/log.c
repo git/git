@@ -21,6 +21,7 @@
 #include "parse-options.h"
 #include "branch.h"
 #include "streaming.h"
+#include "version.h"
 
 /* Set a default date-time format for git log ("log.date" config variable) */
 static const char *default_date_mode = NULL;
