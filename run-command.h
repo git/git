@@ -39,7 +39,6 @@ struct child_process {
 	unsigned stdout_to_stderr:1;
 	unsigned use_shell:1;
 	unsigned clean_on_exit:1;
-	void (*preexec_cb)(void);
 };
 
 int start_command(struct child_process *);

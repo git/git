@@ -11,21 +11,6 @@
  * something different on Windows.
  */
 
-#ifndef WIN32
-static void pager_preexec(void)
-{
-	/*
-	 * Work around bug in "less" by not starting it until we
-	 * have real input
-	 */
-	fd_set in;
-
-	FD_ZERO(&in);
-	FD_SET(0, &in);
-	select(1, &in, NULL, &in, NULL);
-}
-#endif
-
 static const char *pager_argv[] = { NULL, NULL };
 static struct child_process pager_process;
 
@@ -93,9 +78,6 @@ void setup_pager(void)
 		static const char *env[] = { "LESS=FRSX", NULL };
 		pager_process.env = env;
 	}
-#ifndef WIN32
-	pager_process.preexec_cb = pager_preexec;
-#endif
 	if (start_command(&pager_process))
 		return;
 
