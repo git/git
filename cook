@@ -674,10 +674,7 @@ sub wildo {
 			wildo_queue(\%what, $_, $topic);
 			$topic = undef;
 		}
-		if (/^Not urgent;/) {
-			wildo_queue(\%what, $_, $topic);
-			$topic = undef;
-		}
+
 		if (/Originally merged to 'next' on ([-0-9]+)/) {
 			$topic->[1] = $1;
 		}
