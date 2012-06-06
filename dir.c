@@ -560,7 +560,7 @@ int excluded_from_list(const char *pathname,
 	return -1; /* undecided */
 }
 
-int excluded(struct dir_struct *dir, const char *pathname, int *dtype_p)
+static int excluded(struct dir_struct *dir, const char *pathname, int *dtype_p)
 {
 	int pathlen = strlen(pathname);
 	int st;
