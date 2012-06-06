@@ -99,7 +99,7 @@ test_expect_failure '"git submodule sync" handles origin URL of the form foo' '
 	)
 '
 
-test_expect_failure '"git submodule sync" handles origin URL of the form foo/bar' '
+test_expect_success '"git submodule sync" handles origin URL of the form foo/bar' '
 	(cd relative-clone &&
 	 git remote set-url origin foo/bar &&
 	 git submodule sync &&
@@ -132,7 +132,7 @@ test_expect_failure '"git submodule sync" handles origin URL of the form ./foo/b
 	)
 '
 
-test_expect_failure '"git submodule sync" handles origin URL of the form ../foo' '
+test_expect_success '"git submodule sync" handles origin URL of the form ../foo' '
 	(cd relative-clone &&
 	 git remote set-url origin ../foo &&
 	 git submodule sync &&
@@ -143,7 +143,7 @@ test_expect_failure '"git submodule sync" handles origin URL of the form ../foo'
 	)
 '
 
-test_expect_failure '"git submodule sync" handles origin URL of the form ../foo/bar' '
+test_expect_success '"git submodule sync" handles origin URL of the form ../foo/bar' '
 	(cd relative-clone &&
 	 git remote set-url origin ../foo/bar &&
 	 git submodule sync &&
@@ -154,7 +154,7 @@ test_expect_failure '"git submodule sync" handles origin URL of the form ../foo/
 	)
 '
 
-test_expect_failure '"git submodule sync" handles origin URL of the form ../foo/bar with deeply nested submodule' '
+test_expect_success '"git submodule sync" handles origin URL of the form ../foo/bar with deeply nested submodule' '
 	(cd relative-clone &&
 	 git remote set-url origin ../foo/bar &&
 	 mkdir -p a/b/c &&
