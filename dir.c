@@ -593,31 +593,40 @@ void path_exclude_check_clear(struct path_exclude_check *check)
 }
 
 /*
- * Is the ce->name excluded?  This is for a caller like show_files() that
+ * Is this name excluded?  This is for a caller like show_files() that
  * do not honor directory hierarchy and iterate through paths that are
  * possibly in an ignored directory.
  *
  * A path to a directory known to be excluded is left in check->path to
  * optimize for repeated checks for files in the same excluded directory.
  */
-int path_excluded(struct path_exclude_check *check, struct cache_entry *ce)
+int path_excluded(struct path_exclude_check *check,
+		  const char *name, int namelen, int *dtype)
 {
-	int i, dtype;
+	int i;
 	struct strbuf *path = &check->path;
 
+	/*
+	 * we allow the caller to pass namelen as an optimization; it
+	 * must match the length of the name, as we eventually call
+	 * excluded() on the whole name string.
+	 */
+	if (namelen < 0)
+		namelen = strlen(name);
+
 	if (path->len &&
-	    path->len <= ce_namelen(ce) &&
-	    !memcmp(ce->name, path->buf, path->len) &&
-	    (!ce->name[path->len] || ce->name[path->len] == '/'))
+	    path->len <= namelen &&
+	    !memcmp(name, path->buf, path->len) &&
+	    (!name[path->len] || name[path->len] == '/'))
 		return 1;
 
 	strbuf_setlen(path, 0);
-	for (i = 0; ce->name[i]; i++) {
-		int ch = ce->name[i];
+	for (i = 0; name[i]; i++) {
+		int ch = name[i];
 
 		if (ch == '/') {
-			dtype = DT_DIR;
-			if (excluded(check->dir, path->buf, &dtype))
+			int dt = DT_DIR;
+			if (excluded(check->dir, path->buf, &dt))
 				return 1;
 		}
 		strbuf_addch(path, ch);
@@ -626,8 +635,7 @@ int path_excluded(struct path_exclude_check *check, struct cache_entry *ce)
 	/* An entry in the index; cannot be a directory with subentries */
 	strbuf_setlen(path, 0);
 
-	dtype = ce_to_dtype(ce);
-	return excluded(check->dir, ce->name, &dtype);
+	return excluded(check->dir, name, dtype);
 }
 
 static struct dir_entry *dir_entry_new(const char *pathname, int len)
