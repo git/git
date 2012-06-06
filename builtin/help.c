@@ -12,6 +12,10 @@
 #include "column.h"
 #include "help.h"
 
+#ifndef DEFAULT_HELP_FORMAT
+#define DEFAULT_HELP_FORMAT "man"
+#endif
+
 static struct man_viewer_list {
 	struct man_viewer_list *next;
 	char name[FLEX_ARRAY];
@@ -445,7 +449,9 @@ int cmd_help(int argc, const char **argv, const char *prefix)
 	setup_git_directory_gently(&nongit);
 	git_config(git_help_config, NULL);
 
-	if (parsed_help_format != HELP_FORMAT_NONE)
+	if (parsed_help_format == HELP_FORMAT_NONE)
+		help_format = parse_help_format(DEFAULT_HELP_FORMAT);
+	else
 		help_format = parsed_help_format;
 
 	alias = alias_lookup(argv[0]);

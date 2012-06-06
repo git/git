@@ -296,6 +296,10 @@ all::
 # the diff algorithm.  It gives a nice speedup if your processor has
 # fast unaligned word loads.  Does NOT work on big-endian systems!
 # Enabled by default on x86_64.
+#
+# Define DEFAULT_HELP_FORMAT to "man", "info" or "html"
+# (defaults to "man") if you want to have a different default when
+# "git help" is called without a parameter specifying the format.
 
 GIT-VERSION-FILE: FORCE
 	@$(SHELL_PATH) ./GIT-VERSION-GEN
@@ -1236,6 +1240,7 @@ ifeq ($(uname_S),Windows)
 	BLK_SHA1 = YesPlease
 	NO_POSIX_GOODIES = UnfortunatelyYes
 	NATIVE_CRLF = YesPlease
+	DEFAULT_HELP_FORMAT = html
 
 	CC = compat/vcbuild/scripts/clink.pl
 	AR = compat/vcbuild/scripts/lib.pl
@@ -1913,6 +1918,10 @@ SHELL_PATH_CQ = "$(subst ",\",$(subst \,\\,$(SHELL_PATH)))"
 SHELL_PATH_CQ_SQ = $(subst ','\'',$(SHELL_PATH_CQ))
 
 BASIC_CFLAGS += -DSHELL_PATH='$(SHELL_PATH_CQ_SQ)'
+endif
+
+ifdef DEFAULT_HELP_FORMAT
+BASIC_CFLAGS += -DDEFAULT_HELP_FORMAT='"$(DEFAULT_HELP_FORMAT)"'
 endif
 
 ALL_CFLAGS += $(BASIC_CFLAGS)
