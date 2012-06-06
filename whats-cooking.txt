@@ -1,18 +1,17 @@
 To: git@vger.kernel.org
-Subject: What's cooking in git.git (Jun 2012, #01; Sun, 3)
-X-master-at: 3fe4498197ced84886b4adaddf18f1109b477f8e
-X-next-at: 281ad67c6ed0afb147ad426ff961c221b935af77
+Subject: What's cooking in git.git (Jun 2012, #02; Wed, 6)
+X-master-at: f623ca1cae600e97cb0b38131fdd33e4fb669cf8
+X-next-at: 8e148144574e6c6511b591286e44a677a260d760
 
-What's cooking in git.git (Jun 2012, #01; Sun, 3)
+What's cooking in git.git (Jun 2012, #02; Wed, 6)
 --------------------------------------------------
 
 Here are the topics that have been cooking.  Commits prefixed with '-' are
 only in 'pu' (proposed updates) while commits prefixed with '+' are in 'next'.
 
-v1.7.11-rc1 has been tagged.  Except for trivially obvious and small
-fixes to older bugs and trivially obvious and small patches to
-documentation, please consider we are in "regression fix only"
-mode.  Finding and fixing since v1.7.10 is the top priority.
+I'm planning to tag 1.7.11-rc2 tomorrow or Friday (we have slipped
+by one week). Please concentrate on testing, finding and fixing
+regressions introduced after 1.7.10 until 1.7.11 final.
 
 You can find the changes described here in the integration branches of the
 repositories listed at
@@ -22,85 +21,89 @@ repositories listed at
 --------------------------------------------------
 [New Topics]
 
-* jc/ls-files-i-dir (2012-06-03) 2 commits
- - ls-files -i: micro-optimize path_excluded()
- - ls-files -i: pay attention to exclusion of leading paths
+* jc/bundle-complete-notice (2012-06-04) 1 commit
+  (merged to 'next' on 2012-06-05 at ee25a35)
+ + tweak "bundle verify" of a complete history
 
-"git ls-files --exclude=t -i" did not consider anything under t/
-as excluded, as it did not pay attention to exclusion of leading
-paths while walking the index.
+Running "git bundle verify" on a bundle that records a complete
+history said "it requires these 0 commits".
 
-* jc/request-pull-match-tagname (2012-06-01) 1 commit
- - request-pull: really favor a matching tag
+Not urgent; probably early post 1.7.11.
 
-"git request-pull $url dev" when the tip of "dev" branch was tagged
-with "ext4-for-linus" used the contents from the tag in the output
-but still asked the "dev" branch to be pulled, not the tag.
+* jc/svn-auth-providers-unusable-at-1.6.12 (2012-06-04) 1 commit
+  (merged to 'next' on 2012-06-04 at c4ffe24)
+ + git-svn: platform auth providers are working only on 1.6.15 or newer
 
-* db/vcs-svn (2012-06-01) 6 commits
- - vcs-svn: drop no-op reset methods
- - vcs-svn: fix signedness warnings
- - vcs-svn: prefer strstr over memmem
- - vcs-svn: prefer constcmp to prefixcmp
- - vcs-svn: simplify cleanup in apply_one_window()
- - vcs-svn: fix clang-analyzer error
+Regression fix for people with libsvn between 1.6.12 and 1.6.15 on
+which we tried to use non-working platform auth providers.
 
-* jk/version-string (2012-06-03) 3 commits
- - http: get default user-agent from git_user_agent
- - version: add git_user_agent function
- - move git_version_string into version.c
+Will merge to master.
 
-* mm/api-credentials-doc (2012-06-03) 3 commits
- - api-credentials.txt: mention credential.helper explicitly
- - api-credentials.txt: add "see also" section
- - api-credentials.txt: show the big picture first
+* lk/more-helpful-status-hints (2012-06-05) 4 commits
+ - status: better advices when splitting a commit (during rebase -i)
+ - status: don't suggest "git rm" or "git add" if not appropriate
+ - t7512-status-help.sh: better advices for git status
+ - wt-status.*: better advices for git status added
 
---------------------------------------------------
-[Graduated to "master"]
+Almost there, modulo minor details pointed out by Matthieu.
 
-* ef/http-o-depends-on-gvf (2012-05-31) 1 commit
-  (merged to 'next' on 2012-05-31 at 11af7cd)
- + Makefile: add missing GIT-VERSION-FILE dependency
+* rr/maint-t3510-cascade-fix (2012-06-04) 1 commit
+  (merged to 'next' on 2012-06-04 at 4c3368b)
+ + t3510 (cherry-pick-sequence): add missing '&&'
 
-A compilation fix.
+Will merge to master.
 
-* ef/maint-rebase-error-message (2012-05-30) 1 commit
-  (merged to 'next' on 2012-05-30 at 5194fe3)
- + rebase: report invalid commit correctly
+* jc/merge-annotated-tag (2012-06-05) 2 commits
+ - merge: allow fast-forwarding to an annotated but unsigned tag
+ - merge: separte the logic to check for a signed tag
 
-When "git rebase" was given a bad commit to replay the history on,
-its error message did not correctly give the command line argument
-it had trouble parsing.
+"git merge anno" created a merge commit even when anno is an
+unsigned annotated tag that points at a commit that can be fast
+forwarded to; this came from a laziness of the implementation of
+merging of signed tags in 1.7.9, and can be worked around by saying
+"git merge --ff-only anno", so it is not really necessariy, but is
+here for completeness.
 
-* jl/submodule-report-new-path-once (2012-05-29) 1 commit
-  (merged to 'next' on 2012-05-30 at e482dd9)
- + submodules: print "registered for path" message only once
+Not urgent.
 
-"git submodule init" said "registered for path" even for a submodule
-that was already registered.
+* jk/no-more-pre-exec-callback (2012-06-05) 1 commit
+ - pager: drop "wait for output to run less" hack
 
-* mm/levenstein-penalize-deletion-less (2012-05-29) 1 commit
-  (merged to 'next' on 2012-05-30 at b2a0346)
- + Reduce cost of deletion in levenstein distance (4 -> 3)
+On hold for 6 months until ancient "less" goes extinct.
 
-"git tags" errored out, suggesting "git stage" while "git tag" is
-a far more appropriate choice.
+* jk/maint-t1304-setfacl (2012-06-06) 1 commit
+ - t1304: improve setfacl prerequisite setup
 
-* nh/empty-rebase (2012-05-29) 1 commit
-  (merged to 'next' on 2012-05-30 at 270703a)
- + cherry-pick: regression fix for empty commits
+Works around a false test failure caused by a bug in ecryptofs.
 
-Fix for a new topic that happened in the 1.7.11 track.
+Not urgent; probably early post 1.7.11.
 
-* vr/rebase-autosquash-does-not-imply-i (2012-05-29) 1 commit
-  (merged to 'next' on 2012-05-30 at 10dd3af)
- + Do not autosquash in case of an implied interactive rebase
+* lk/rebase-i-x (2012-06-06) 1 commit
+ - rebase [-i --exec | -ix] <cmd>...
 
-"git rebase -p" should not pay attention to rebase.autosquash nor
-"git rebase -p --autosquash".
+Adds -x <cmd> to "rebase -i" to insert "exec <cmd>" after each
+commit in the resulting history.
+
+Not urgent; probably early post 1.7.11.
+
+* vr/help-per-platform (2012-06-06) 1 commit
+ - help: use HTML as the default help format on Windows
+
+* jc/fmt-merge-msg-people (2012-06-06) 1 commit
+ - fmt-merge-msg: make attribution into comment lines
 
 --------------------------------------------------
 [Stalled]
+
+* nd/exclude-workaround-top-heavy (2012-05-29) 2 commits
+ - exclude: do strcmp as much as possible before fnmatch
+ - Unindent excluded_from_list()
+
+Attempts to optimize matching with an exclude pattern with a deep
+directory hierarchy by taking the part that specifies leading path
+without wildcard literally.
+
+The code to check for wildcard needs to be redone.
 
 * nl/http-proxy-more (2012-05-11) 2 commits
  - http: rename HTTP_REAUTH to HTTP_AUTH_RETRY
@@ -116,9 +119,6 @@ work, so that we won't forget.
 Rewords the status message of "git push" that pushed only one ref
 differently from "Everything up-to-date", to give a bit more help to
 people who get the message when their current branch is not pushed.
-
-It probably is a better idea to add a message that says that the
-current was not pushed to address the problem in a more direct way.
 
 * fc/git-prompt-script (2012-05-22) 5 commits
  - completion: split __git_ps1 into a separate script
@@ -142,8 +142,8 @@ This is only the "correction" bits taken from the beginning of a larger
 series that is to be rerolled.  The first two are tangled with Felipe's
 topic so a reroll, if comes, should build on top of them.
 
-* jc/apply-3way (2012-05-16) 12 commits
- - WIP: the message is bogus in apply:::check_patch()
+* jc/apply-3way (2012-06-06) 12 commits
+ - apply: fix an incomplete message
  - apply: refactor "previous patch" logic
  - apply: a bit more comments on PATH_TO_BE_DELETED
  - apply: document --3way option
@@ -213,31 +213,84 @@ not working :-(.
 --------------------------------------------------
 [Cooking]
 
-* nd/exclude-workaround-top-heavy (2012-05-29) 2 commits
- - exclude: do strcmp as much as possible before fnmatch
- - Unindent excluded_from_list()
+* jc/ls-files-i-dir (2012-06-05) 6 commits
+ - dir.c: make excluded() file scope static
+ - unpack-trees.c: use path_excluded() in check_ok_to_remove()
+ - builtin/add.c: use path_excluded()
+ - path_excluded(): update API to less cache-entry centric
+  (merged to 'next' on 2012-06-05 at 8f35db3)
+ + ls-files -i: micro-optimize path_excluded()
+ + ls-files -i: pay attention to exclusion of leading paths
 
-Attempts to optimize matching with an exclude pattern with a deep
-directory hierarchy by taking the part that specifies leading path
-without wildcard literally.
+"git ls-files --exclude=t -i" did not consider anything under t/
+as excluded, as it did not pay attention to exclusion of leading
+paths while walking the index.  Other two users of excluded() are
+also updated.
 
-The code to check for wildcard needs to be redone.
+Not urgent; probably early post 1.7.11.
+
+* jc/request-pull-match-tagname (2012-06-01) 1 commit
+  (merged to 'next' on 2012-06-05 at f0dc420)
+ + request-pull: really favor a matching tag
+
+"git request-pull $url dev" when the tip of "dev" branch was tagged
+with "ext4-for-linus" used the contents from the tag in the output
+but still asked the "dev" branch to be pulled, not the tag.
+
+Not urgent; probably early post 1.7.11.
+
+* db/vcs-svn (2012-06-01) 6 commits
+ - vcs-svn: drop no-op reset methods
+ - vcs-svn: fix signedness warnings
+ - vcs-svn: prefer strstr over memmem
+ - vcs-svn: prefer constcmp to prefixcmp
+ - vcs-svn: simplify cleanup in apply_one_window()
+ - vcs-svn: fix clang-analyzer error
+
+I do not know the doneness of this series that came out of the
+blue.  Are people involved in vcs-svn happy with this series?
+
+* jk/version-string (2012-06-03) 3 commits
+  (merged to 'next' on 2012-06-05 at b6f7266)
+ + http: get default user-agent from git_user_agent
+ + version: add git_user_agent function
+ + move git_version_string into version.c
+
+I am somewhat tempted to merge this to master before 1.7.11 final.
+Thoughts?
+
+* mm/api-credentials-doc (2012-06-04) 4 commits
+  (merged to 'next' on 2012-06-05 at 8e14814)
+ + api-credentials.txt: add "see also" section
+ + api-credentials.txt: mention credential.helper explicitly
+ + api-credentials.txt: show the big picture first
+ + doc: fix xref link from api docs to manual pages
+
+Will merge to master.
 
 * nd/stream-pack-objects (2012-05-29) 1 commit
  - pack-objects: use streaming interface for reading large loose blobs
 
+Not urgent; probably early post 1.7.11.
+
 * jk/clone-local (2012-05-30) 2 commits
- - clone: allow --no-local to turn off local optimizations
- - docs/clone: mention that --local may be ignored
+  (merged to 'next' on 2012-06-05 at b819eb5)
+ + clone: allow --no-local to turn off local optimizations
+ + docs/clone: mention that --local may be ignored
 
 "git clone --local $path" started its life as an experiment to
 optionally use link/copy when cloning a repository on the disk, but
 we didn't deprecate it after we made the option a no-op to always
 use the optimization.
 
+Not urgent; probably early post 1.7.11.
+
 * jk/no-more-asciidoc7 (2012-05-30) 2 commits
- - docs: drop antique comment from Makefile
- - docs: drop asciidoc7compatible flag
+  (merged to 'next' on 2012-06-05 at 3f117df)
+ + docs: drop antique comment from Makefile
+ + docs: drop asciidoc7compatible flag
+
+Not urgent; probably early post 1.7.11.
 
 * cr/persistent-https (2012-05-30) 1 commit
   (merged to 'next' on 2012-06-01 at c647464)
@@ -245,6 +298,8 @@ use the optimization.
 
 A remote helper that acts as a proxy that caches ssl session for the
 https:// transport is added to the contrib/ area.
+
+Will merge to master.
 
 * nd/stream-index-pack (2012-05-24) 4 commits
  - index-pack: use streaming interface for collision test on large blobs
@@ -255,17 +310,27 @@ https:// transport is added to the contrib/ area.
 Use streaming API to read from the object store to avoid having to hold
 a large blob object in-core while running index-pack.
 
-* js/submodule-relative (2012-06-03) 4 commits
+Not urgent; probably early post 1.7.11.
+
+* js/submodule-relative (2012-06-06) 4 commits
  - submodule: fix handling of superproject origin URLs like foo, ./foo and ./foo/bar
  - submodule: fix sync handling of some relative superproject origin URLs
  - submodule: document failure to handle relative superproject origin URLs
  - submodule: additional regression tests for relative URLs
 
-* mm/push-default-switch-warning (2012-04-26) 2 commits
- - t5541: warning message is given even with --quiet
+Makes "git submodule" deal with nested submodule structure where a
+module is contained within a module whose origin is specified as a
+relative URL to its superproject's origin.
+
+Not urgent; probably early post 1.7.11.
+
+* mm/push-default-switch-warning (2012-06-06) 1 commit
  - push: start warning upcoming default change for push.default
 
-Will squash the two, but this has to wait for a few release cycles.
+Will merge to next after 1.7.11.
+
+Hopwefully we can have a solidly tested series early in 1.7.12 or
+1.7.13 at the latest.
 
 --------------------------------------------------
 [Discarded]
