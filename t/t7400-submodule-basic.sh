@@ -564,7 +564,7 @@ test_expect_success '../subrepo works with scp-style URL - user@host:path/to/rep
 	)
 '
 
-test_expect_failure '../subrepo works with relative local path - foo' '
+test_expect_success '../subrepo works with relative local path - foo' '
 	(
 		cd reltest &&
 		cp pristine-.git-config .git/config &&
@@ -587,7 +587,7 @@ test_expect_success '../subrepo works with relative local path - foo/bar' '
 	)
 '
 
-test_expect_failure '../subrepo works with relative local path - ./foo' '
+test_expect_success '../subrepo works with relative local path - ./foo' '
 	(
 		cd reltest &&
 		cp pristine-.git-config .git/config &&
@@ -598,7 +598,7 @@ test_expect_failure '../subrepo works with relative local path - ./foo' '
 	)
 '
 
-test_expect_failure '../subrepo works with relative local path - ./foo/bar' '
+test_expect_success '../subrepo works with relative local path - ./foo/bar' '
 	(
 		cd reltest &&
 		cp pristine-.git-config .git/config &&

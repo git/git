@@ -60,8 +60,12 @@ resolve_relative_url ()
 	*:*|/*)
 		is_relative=
 		;;
+	./*|../*)
+		is_relative=t
+		;;
 	*)
 		is_relative=t
+		remoteurl="./$remoteurl"
 		;;
 	esac
 
@@ -79,7 +83,12 @@ resolve_relative_url ()
 				sep=:
 				;;
 			*)
-				die "$(eval_gettext "cannot strip one component off url '\$remoteurl'")"
+				if test -z "$is_relative" || test "." = "$remoteurl"
+				then
+					die "$(eval_gettext "cannot strip one component off url '\$remoteurl'")"
+				else
+					remoteurl=.
+				fi
 				;;
 			esac
 			;;
@@ -90,7 +99,8 @@ resolve_relative_url ()
 			break;;
 		esac
 	done
-	echo "${is_relative:+${up_path}}$remoteurl$sep${url%/}"
+	remoteurl="$remoteurl$sep${url%/}"
+	echo "${is_relative:+${up_path}}${remoteurl#./}"
 }
 
 #
