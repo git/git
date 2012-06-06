@@ -40,7 +40,7 @@ done
 
 for TRASH in /dev/shm /tmp ""
 do
-	if test -n "$TRASH" && test -d "$TRASH" && test -w "$TRASH"
+	if test -n "$TRASH" && mkdir -p "$TRASH/testpen" && test -w "TRASH/testpen"
 	then
 		TRASH="--root=$(cd "$TRASH/testpen" && /bin/pwd)"
 		break
