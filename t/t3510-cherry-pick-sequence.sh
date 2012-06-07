@@ -31,7 +31,7 @@ test_cmp_rev () {
 }
 
 test_expect_success setup '
-	git config advice.detachedhead false
+	git config advice.detachedhead false &&
 	echo unrelated >unrelated &&
 	git add unrelated &&
 	test_commit initial foo a &&
