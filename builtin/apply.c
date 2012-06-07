@@ -3159,29 +3159,6 @@ static int apply_data(struct patch *patch, struct stat *st, struct cache_entry *
 	return 0;
 }
 
-static int check_to_create_blob(const char *new_name, int ok_if_exists)
-{
-	struct stat nst;
-	if (!lstat(new_name, &nst)) {
-		if (S_ISDIR(nst.st_mode) || ok_if_exists)
-			return 0;
-		/*
-		 * A leading component of new_name might be a symlink
-		 * that is going to be removed with this patch, but
-		 * still pointing at somewhere that has the path.
-		 * In such a case, path "new_name" does not exist as
-		 * far as git is concerned.
-		 */
-		if (has_symlink_leading_path(new_name, strlen(new_name)))
-			return 0;
-
-		return error(_("%s: already exists in working directory"), new_name);
-	}
-	else if ((errno != ENOENT) && (errno != ENOTDIR))
-		return error("%s: %s", new_name, strerror(errno));
-	return 0;
-}
-
 static int verify_index_match(struct cache_entry *ce, struct stat *st)
 {
 	if (S_ISGITLINK(ce->ce_mode)) {
@@ -3269,6 +3246,29 @@ static int check_preimage(struct patch *patch, struct cache_entry **ce, struct s
 	patch->is_delete = 0;
 	free(patch->old_name);
 	patch->old_name = NULL;
+	return 0;
+}
+
+static int check_to_create_blob(const char *new_name, int ok_if_exists)
+{
+	struct stat nst;
+	if (!lstat(new_name, &nst)) {
+		if (S_ISDIR(nst.st_mode) || ok_if_exists)
+			return 0;
+		/*
+		 * A leading component of new_name might be a symlink
+		 * that is going to be removed with this patch, but
+		 * still pointing at somewhere that has the path.
+		 * In such a case, path "new_name" does not exist as
+		 * far as git is concerned.
+		 */
+		if (has_symlink_leading_path(new_name, strlen(new_name)))
+			return 0;
+
+		return error(_("%s: already exists in working directory"), new_name);
+	}
+	else if ((errno != ENOENT) && (errno != ENOTDIR))
+		return error("%s: %s", new_name, strerror(errno));
 	return 0;
 }
 
