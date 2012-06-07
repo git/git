@@ -3249,9 +3249,21 @@ static int check_preimage(struct patch *patch, struct cache_entry **ce, struct s
 	return 0;
 }
 
-static int check_to_create_blob(const char *new_name, int ok_if_exists)
+
+#define EXISTS_IN_INDEX 1
+#define EXISTS_IN_WORKTREE 2
+
+static int check_to_create(const char *new_name, int ok_if_exists)
 {
 	struct stat nst;
+
+	if (check_index &&
+	    cache_name_pos(new_name, strlen(new_name)) >= 0 &&
+	    !ok_if_exists)
+		return EXISTS_IN_INDEX;
+	if (cached)
+		return 0;
+
 	if (!lstat(new_name, &nst)) {
 		if (S_ISDIR(nst.st_mode) || ok_if_exists)
 			return 0;
@@ -3265,10 +3277,10 @@ static int check_to_create_blob(const char *new_name, int ok_if_exists)
 		if (has_symlink_leading_path(new_name, strlen(new_name)))
 			return 0;
 
-		return error(_("%s: already exists in working directory"), new_name);
-	}
-	else if ((errno != ENOENT) && (errno != ENOTDIR))
+		return EXISTS_IN_WORKTREE;
+	} else if ((errno != ENOENT) && (errno != ENOTDIR)) {
 		return error("%s: %s", new_name, strerror(errno));
+	}
 	return 0;
 }
 
@@ -3316,15 +3328,21 @@ static int check_patch(struct patch *patch)
 
 	if (new_name &&
 	    ((0 < patch->is_new) | (0 < patch->is_rename) | patch->is_copy)) {
-		if (check_index &&
-		    cache_name_pos(new_name, strlen(new_name)) >= 0 &&
-		    !ok_if_exists)
+		int err = check_to_create(new_name, ok_if_exists);
+
+		switch (err) {
+		case 0:
+			break; /* happy */
+		case EXISTS_IN_INDEX:
 			return error(_("%s: already exists in index"), new_name);
-		if (!cached) {
-			int err = check_to_create_blob(new_name, ok_if_exists);
-			if (err)
-				return err;
+			break;
+		case EXISTS_IN_WORKTREE:
+			return error(_("%s: already exists in working directory"),
+				     new_name);
+		default:
+			return err;
 		}
+
 		if (!patch->new_mode) {
 			if (0 < patch->is_new)
 				patch->new_mode = S_IFREG | 0644;
