@@ -197,6 +197,7 @@ struct patch {
 	unsigned int is_rename:1;
 	unsigned int recount:1;
 	unsigned int conflicted_threeway:1;
+	unsigned int direct_to_threeway:1;
 	struct fragment *fragments;
 	char *result;
 	size_t resultsize;
@@ -3187,6 +3188,48 @@ static int three_way_merge(struct image *image,
 	return status;
 }
 
+/*
+ * When directly falling back to add/add three-way merge, we read from
+ * the current contents of the new_name.  In no cases other than that
+ * this function will be called.
+ */
+static int load_current(struct image *image, struct patch *patch)
+{
+	struct strbuf buf = STRBUF_INIT;
+	int status, pos;
+	size_t len;
+	char *img;
+	struct stat st;
+	struct cache_entry *ce;
+	char *name = patch->new_name;
+	unsigned mode = patch->new_mode;
+
+	if (!patch->is_new)
+		die("BUG: patch to %s is not a creation", patch->old_name);
+
+	pos = cache_name_pos(name, strlen(name));
+	if (pos < 0)
+		return error(_("%s: does not exist in index"), name);
+	ce = active_cache[pos];
+	if (lstat(name, &st)) {
+		if (errno != ENOENT)
+			return error(_("%s: %s"), name, strerror(errno));
+		if (checkout_target(ce, &st))
+			return -1;
+	}
+	if (verify_index_match(ce, &st))
+		return error(_("%s: does not match index"), name);
+
+	status = load_patch_target(&buf, ce, &st, name, mode);
+	if (status < 0)
+		return status;
+	else if (status)
+		return -1;
+	img = strbuf_detach(&buf, &len);
+	prepare_image(image, img, len, !patch->is_binary);
+	return 0;
+}
+
 static int try_threeway(struct image *image, struct patch *patch,
 			struct stat *st, struct cache_entry *ce)
 {
@@ -3198,13 +3241,15 @@ static int try_threeway(struct image *image, struct patch *patch,
 	struct image tmp_image;
 
 	/* No point falling back to 3-way merge in these cases */
-	if (patch->is_new || patch->is_delete ||
+	if (patch->is_delete ||
 	    S_ISGITLINK(patch->old_mode) || S_ISGITLINK(patch->new_mode))
 		return -1;
 
 	/* Preimage the patch was prepared for */
-	if (get_sha1(patch->old_sha1_prefix, pre_sha1) ||
-	    read_blob_object(&buf, pre_sha1, patch->old_mode))
+	if (patch->is_new)
+		write_sha1_file("", 0, blob_type, pre_sha1);
+	else if (get_sha1(patch->old_sha1_prefix, pre_sha1) ||
+		 read_blob_object(&buf, pre_sha1, patch->old_mode))
 		return error("repository lacks the necessary blob to fall back on 3-way merge.");
 
 	fprintf(stderr, "Falling back to three-way merge...\n");
@@ -3221,9 +3266,15 @@ static int try_threeway(struct image *image, struct patch *patch,
 	clear_image(&tmp_image);
 
 	/* our_sha1[] is ours */
-	if (load_preimage(&tmp_image, patch, st, ce))
-		return error("cannot read the current contents of '%s'",
-			     patch->old_name);
+	if (patch->is_new) {
+		if (load_current(&tmp_image, patch))
+			return error("cannot read the current contents of '%s'",
+				     patch->new_name);
+	} else {
+		if (load_preimage(&tmp_image, patch, st, ce))
+			return error("cannot read the current contents of '%s'",
+				     patch->old_name);
+	}
 	write_sha1_file(tmp_image.buf, tmp_image.len, blob_type, our_sha1);
 	clear_image(&tmp_image);
 
@@ -3254,7 +3305,8 @@ static int apply_data(struct patch *patch, struct stat *st, struct cache_entry *
 	if (load_preimage(&image, patch, st, ce) < 0)
 		return -1;
 
-	if (apply_fragments(&image, patch) < 0) {
+	if (patch->direct_to_threeway ||
+	    apply_fragments(&image, patch) < 0) {
 		/* Note: with --reject, apply_fragments() returns 0 */
 		if (!threeway || try_threeway(&image, patch, st, ce) < 0)
 			return -1;
@@ -3431,7 +3483,9 @@ static int check_patch(struct patch *patch)
 	    ((0 < patch->is_new) | (0 < patch->is_rename) | patch->is_copy)) {
 		int err = check_to_create(new_name, ok_if_exists);
 
-		switch (err) {
+		if (err && threeway) {
+			patch->direct_to_threeway = 1;
+		} else switch (err) {
 		case 0:
 			break; /* happy */
 		case EXISTS_IN_INDEX:
