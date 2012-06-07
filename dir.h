@@ -7,7 +7,6 @@ struct dir_entry {
 };
 
 #define EXC_FLAG_NODIR 1
-#define EXC_FLAG_NOWILDCARD 2
 #define EXC_FLAG_ENDSWITH 4
 #define EXC_FLAG_MUSTBEDIR 8
 
@@ -17,6 +16,7 @@ struct exclude_list {
 	struct exclude {
 		const char *pattern;
 		int patternlen;
+		int nowildcardlen;
 		const char *base;
 		int baselen;
 		int to_exclude;

@@ -341,8 +341,7 @@ void add_exclude(const char *string, const char *base,
 	x->flags = flags;
 	if (!strchr(string, '/'))
 		x->flags |= EXC_FLAG_NODIR;
-	if (no_wildcard(string))
-		x->flags |= EXC_FLAG_NOWILDCARD;
+	x->nowildcardlen = simple_length(string);
 	if (*string == '*' && no_wildcard(string+1))
 		x->flags |= EXC_FLAG_ENDSWITH;
 	ALLOC_GROW(which->excludes, which->nr + 1, which->alloc);
@@ -518,8 +517,9 @@ int excluded_from_list(const char *pathname,
 
 	for (i = el->nr - 1; 0 <= i; i--) {
 		struct exclude *x = el->excludes[i];
-		const char *exclude = x->pattern;
+		const char *name, *exclude = x->pattern;
 		int to_exclude = x->to_exclude;
+		int namelen, prefix = x->nowildcardlen;
 
 		if (x->flags & EXC_FLAG_MUSTBEDIR) {
 			if (*dtype == DT_UNKNOWN)
@@ -530,7 +530,7 @@ int excluded_from_list(const char *pathname,
 
 		if (x->flags & EXC_FLAG_NODIR) {
 			/* match basename */
-			if (x->flags & EXC_FLAG_NOWILDCARD) {
+			if (prefix == x->patternlen) {
 				if (!strcmp_icase(exclude, basename))
 					return to_exclude;
 			} else if (x->flags & EXC_FLAG_ENDSWITH) {
@@ -544,26 +544,37 @@ int excluded_from_list(const char *pathname,
 			continue;
 		}
 
-
 		/* match with FNM_PATHNAME:
 		 * exclude has base (baselen long) implicitly in front of it.
 		 */
-		if (*exclude == '/')
+		if (*exclude == '/') {
 			exclude++;
+			prefix--;
+		}
 
 		if (pathlen < x->baselen ||
 		    (x->baselen && pathname[x->baselen-1] != '/') ||
 		    strncmp_icase(pathname, x->base, x->baselen))
 			continue;
 
-		if (x->flags & EXC_FLAG_NOWILDCARD) {
-			if (!strcmp_icase(exclude, pathname + x->baselen))
-				return to_exclude;
-		} else {
-			if (fnmatch_icase(exclude, pathname+x->baselen,
-					  FNM_PATHNAME) == 0)
-				return to_exclude;
+		namelen = x->baselen ? pathlen - x->baselen : pathlen;
+		name = pathname + pathlen  - namelen;
+
+		/* if the non-wildcard part is longer than the
+		   remaining pathname, surely it cannot match */
+		if (prefix > namelen)
+			continue;
+
+		if (prefix) {
+			if (strncmp_icase(exclude, name, prefix))
+				continue;
+			exclude += prefix;
+			name    += prefix;
+			namelen -= prefix;
 		}
+
+		if (!namelen || !fnmatch_icase(exclude, name, FNM_PATHNAME))
+			return to_exclude;
 	}
 	return -1; /* undecided */
 }
