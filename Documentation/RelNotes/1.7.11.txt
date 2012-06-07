@@ -18,10 +18,13 @@ UI, Workflows & Features
 
  * A third-party tool "git subtree" is distributed in contrib/
 
- * Error messages given when @{u} is used for a branch without its
-   upstream configured have been clatified.
+ * A remote helper that acts as a proxy and caches ssl session for the
+   https:// transport is added to the contrib/ area.
 
- * Even with "-q"uiet option, "checkout" used to report setting up
+ * Error messages given when @{u} is used for a branch without its
+   upstream configured have been clarified.
+
+ * Even with the "-q"uiet option, "checkout" used to report setting up
    tracking.  Also "branch" learned the "-q"uiet option to squelch
    informational message.
 
@@ -37,8 +40,8 @@ UI, Workflows & Features
  * "git am" learned the "--include" option, which is an opposite of
    existing the "--exclude" option.
 
- * When "git am -3" needs to fall back to an application to a
-   synthesized preimage followed by a 3-way merge, the paths that
+ * When "git am -3" needs to fall back to an application of the patch
+   to a synthesized preimage followed by a 3-way merge, the paths that
    needed such treatment are now reported to the end user, so that the
    result in them can be eyeballed with extra care.
 
@@ -50,7 +53,7 @@ UI, Workflows & Features
    after populating two temporary directories, instead of running an
    instance of the external tool once per a file pair.
 
- * The "fmt-merge-msg" command learns to list the primary contributors
+ * The "fmt-merge-msg" command learned to list the primary contributors
    involved in the side topic you are merging.
 
  * "git rebase" learned to optionally keep commits that do not
@@ -67,15 +70,15 @@ UI, Workflows & Features
 
 Foreign Interface
 
- * "git svn" used to die with unwanted SIGPIPE when talking with HTTP
+ * "git svn" used to die with unwanted SIGPIPE when talking with an HTTP
    server that uses keep-alive.
 
  * "git svn" learned to use platform specific authentication
    providers, e.g. gnome-keyring, kwallet, etc.
 
- * "git p4" has been moved out of contrib/ area and has seen more work
-   on importing labels as tags from (and exporting tags as labels to)
-   p4.
+ * "git p4" has been moved out of the contrib/ area and has seen more
+   work on importing labels as tags from (and exporting tags as labels
+   to) p4.
 
 Performance and Internal Implementation (please report possible regressions)
 
@@ -113,8 +116,8 @@ Performance and Internal Implementation (please report possible regressions)
    systems, run-command API now uses SHELL_PATH, not /bin/sh, when
    spawning an external command (not applicable to Windows port).
 
- * The API to iterate over refs/ hierarchy has been tweaked to allow
-   walking only a subset of it more efficiently.
+ * The API to iterate over the refs/ hierarchy has been tweaked to
+   allow walking only a subset of it more efficiently.
 
 Also contains minor documentation updates and code clean-ups.
 
