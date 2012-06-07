@@ -544,13 +544,13 @@ static int do_plain_rerere(struct string_list *rr, int fd)
 
 		if (has_rerere_resolution(name)) {
 			if (!merge(name, path)) {
-				if (rerere_autoupdate)
+				const char *msg;
+				if (rerere_autoupdate) {
 					string_list_insert(&update, path);
-				fprintf(stderr,
-					"%s '%s' using previous resolution.\n",
-					rerere_autoupdate
-					? "Staged" : "Resolved",
-					path);
+					msg = "Staged '%s' using previous resolution.\n";
+				} else
+					msg = "Resolved '%s' using previous resolution.\n";
+				fprintf(stderr, msg, path);
 				goto mark_resolved;
 			}
 		}
