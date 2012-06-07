@@ -288,9 +288,24 @@ int match_pathspec_depth(const struct pathspec *ps,
 	return retval;
 }
 
+/*
+ * Return the length of the "simple" part of a path match limiter.
+ */
+static int simple_length(const char *match)
+{
+	int len = -1;
+
+	for (;;) {
+		unsigned char c = *match++;
+		len++;
+		if (c == '\0' || is_glob_special(c))
+			return len;
+	}
+}
+
 static int no_wildcard(const char *string)
 {
-	return string[strcspn(string, "*?[{\\")] == '\0';
+	return string[simple_length(string)] == '\0';
 }
 
 void add_exclude(const char *string, const char *base,
@@ -995,21 +1010,6 @@ static int cmp_name(const void *p1, const void *p2)
 
 	return cache_name_compare(e1->name, e1->len,
 				  e2->name, e2->len);
-}
-
-/*
- * Return the length of the "simple" part of a path match limiter.
- */
-static int simple_length(const char *match)
-{
-	int len = -1;
-
-	for (;;) {
-		unsigned char c = *match++;
-		len++;
-		if (c == '\0' || is_glob_special(c))
-			return len;
-	}
 }
 
 static struct path_simplify *create_simplify(const char **pathspec)
