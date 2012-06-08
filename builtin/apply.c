@@ -3140,10 +3140,54 @@ static int load_preimage(struct image *image,
 	return 0;
 }
 
+static int three_way_merge(struct image *image,
+			   char *path,
+			   const unsigned char *base,
+			   const unsigned char *ours,
+			   const unsigned char *theirs)
+{
+	return -1; /* for now */
+}
+
 static int try_threeway(struct image *image, struct patch *patch,
 			struct stat *st, struct cache_entry *ce)
 {
-	return -1; /* for now */
+	unsigned char pre_sha1[20], post_sha1[20], our_sha1[20];
+	struct strbuf buf = STRBUF_INIT;
+	size_t len;
+	char *img;
+	struct image tmp_image;
+
+	/* No point falling back to 3-way merge in these cases */
+	if (patch->is_new || patch->is_delete ||
+	    S_ISGITLINK(patch->old_mode) || S_ISGITLINK(patch->new_mode))
+		return -1;
+
+	/* Preimage the patch was prepared for */
+	if (get_sha1(patch->old_sha1_prefix, pre_sha1) ||
+	    read_blob_object(&buf, pre_sha1, patch->old_mode))
+		return error("repository lacks the necessary blob to fall back on 3-way merge.");
+	img = strbuf_detach(&buf, &len);
+	prepare_image(&tmp_image, img, len, 1);
+	/* Apply the patch to get the post image */
+	if (apply_fragments(&tmp_image, patch) < 0) {
+		clear_image(&tmp_image);
+		return -1;
+	}
+	/* post_sha1[] is theirs */
+	write_sha1_file(tmp_image.buf, tmp_image.len, blob_type, post_sha1);
+	clear_image(&tmp_image);
+
+	/* our_sha1[] is ours */
+	if (load_preimage(&tmp_image, patch, st, ce))
+		return error("cannot read the current contents of '%s'",
+			     patch->old_name);
+	write_sha1_file(tmp_image.buf, tmp_image.len, blob_type, our_sha1);
+	clear_image(&tmp_image);
+
+	/* in-core three-way merge between post and our using pre as base */
+	return three_way_merge(image,
+			       patch->new_name, pre_sha1, our_sha1, post_sha1);
 }
 
 static int apply_data(struct patch *patch, struct stat *st, struct cache_entry *ce)
