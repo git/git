@@ -1949,8 +1949,9 @@ static struct commit_list **simplify_one(struct rev_info *revs, struct commit *c
 	}
 
 	/*
-	 * Do we know what commit all of our parents should be rewritten to?
-	 * Otherwise we are not ready to rewrite this one yet.
+	 * Do we know what commit all of our parents that matter
+	 * should be rewritten to?  Otherwise we are not ready to
+	 * rewrite this one yet.
 	 */
 	for (cnt = 0, p = commit->parents; p; p = p->next) {
 		pst = locate_simplify_state(revs, p->item);
@@ -1958,6 +1959,8 @@ static struct commit_list **simplify_one(struct rev_info *revs, struct commit *c
 			tail = &commit_list_insert(p->item, tail)->next;
 			cnt++;
 		}
+		if (revs->first_parent_only)
+			break;
 	}
 	if (cnt) {
 		tail = &commit_list_insert(commit, tail)->next;
@@ -1970,8 +1973,13 @@ static struct commit_list **simplify_one(struct rev_info *revs, struct commit *c
 	for (p = commit->parents; p; p = p->next) {
 		pst = locate_simplify_state(revs, p->item);
 		p->item = pst->simplified;
+		if (revs->first_parent_only)
+			break;
 	}
-	cnt = remove_duplicate_parents(commit);
+	if (!revs->first_parent_only)
+		cnt = remove_duplicate_parents(commit);
+	else
+		cnt = 1;
 
 	/*
 	 * It is possible that we are a merge and one side branch
