@@ -1023,6 +1023,10 @@ int unpack_trees(unsigned len, struct tree_desc *t, struct unpack_trees_options 
 			o->el = &el;
 	}
 
+	if (o->dir) {
+		o->path_exclude_check = xmalloc(sizeof(struct path_exclude_check));
+		path_exclude_check_init(o->path_exclude_check, o->dir);
+	}
 	memset(&o->result, 0, sizeof(o->result));
 	o->result.initialized = 1;
 	o->result.timestamp.sec = o->src_index->timestamp.sec;
@@ -1148,6 +1152,10 @@ int unpack_trees(unsigned len, struct tree_desc *t, struct unpack_trees_options 
 
 done:
 	free_excludes(&el);
+	if (o->path_exclude_check) {
+		path_exclude_check_clear(o->path_exclude_check);
+		free(o->path_exclude_check);
+	}
 	return ret;
 
 return_failed:
@@ -1363,7 +1371,8 @@ static int check_ok_to_remove(const char *name, int len, int dtype,
 	if (ignore_case && icase_exists(o, name, len, st))
 		return 0;
 
-	if (o->dir && excluded(o->dir, name, &dtype))
+	if (o->dir &&
+	    path_excluded(o->path_exclude_check, name, -1, &dtype))
 		/*
 		 * ce->name is explicitly excluded, so it is Ok to
 		 * overwrite it.

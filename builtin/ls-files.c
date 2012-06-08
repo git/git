@@ -200,6 +200,12 @@ static void show_ru_info(void)
 	}
 }
 
+static int ce_excluded(struct path_exclude_check *check, struct cache_entry *ce)
+{
+	int dtype = ce_to_dtype(ce);
+	return path_excluded(check, ce->name, ce_namelen(ce), &dtype);
+}
+
 static void show_files(struct dir_struct *dir)
 {
 	int i;
@@ -220,7 +226,7 @@ static void show_files(struct dir_struct *dir)
 		for (i = 0; i < active_nr; i++) {
 			struct cache_entry *ce = active_cache[i];
 			if ((dir->flags & DIR_SHOW_IGNORED) &&
-			    !path_excluded(&check, ce))
+			    !ce_excluded(&check, ce))
 				continue;
 			if (show_unmerged && !ce_stage(ce))
 				continue;
@@ -236,7 +242,7 @@ static void show_files(struct dir_struct *dir)
 			struct stat st;
 			int err;
 			if ((dir->flags & DIR_SHOW_IGNORED) &&
-			    !path_excluded(&check, ce))
+			    !ce_excluded(&check, ce))
 				continue;
 			if (ce->ce_flags & CE_UPDATE)
 				continue;
