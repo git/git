@@ -5,10 +5,10 @@
 #
 msgid ""
 msgstr ""
-"Project-Id-Version: git-1.7.11-rc0-100-g5498c\n"
+"Project-Id-Version: git-1.7.11.rc2.2.gb694fbb\n"
 "Report-Msgid-Bugs-To: Git Mailing List <git@vger.kernel.org>\n"
-"POT-Creation-Date: 2012-06-02 07:03+0800\n"
-"PO-Revision-Date: 2012-06-03 07:13+0700\n"
+"POT-Creation-Date: 2012-06-08 10:20+0800\n"
+"PO-Revision-Date: 2012-06-09 14:08+0700\n"
 "Last-Translator: Trần Ngọc Quân <vnwildman@gmail.com>\n"
 "Language-Team: Vietnamese <translation-team-vi@lists.sourceforge.net>\n"
 "MIME-Version: 1.0\n"
@@ -4887,6 +4887,29 @@ msgstr "Tạo, liệt kê, xóa hay xác thực một đối tượng thẻ (tag
 msgid "You need to set your committer info first"
 msgstr "Bạn cần đặt thông tin về người chuyển giao mã nguồn trước đã"
 
+#: git-am.sh:95
+msgid ""
+"You seem to have moved HEAD since the last 'am' failure.\n"
+"Not rewinding to ORIG_HEAD"
+msgstr ""
+"Bạn có lẽ đã có HEAD đã bị di chuyển đi kể từ lần 'am' thất bại cuối cùng.\n"
+"Không thể chuyển tới ORIG_HEAD"
+
+#: git-am.sh:105
+#, sh-format
+msgid ""
+"When you have resolved this problem run \"$cmdline --resolved\".\n"
+"If you would prefer to skip this patch, instead run \"$cmdline --skip\".\n"
+"To restore the original branch and stop patching run \"$cmdline --abort\"."
+msgstr ""
+"Khi bạn cần giải quyết vấn đề này hãy chạy lệnh \"$cmdline --resolved\".\n"
+"Nếu bạn có ý định bỏ qua miếng vá, thay vào đó bạn chạy \"$cmdline --skip\".\n"
+"Để phục hồi lại thành nhánh nguyên bản và dừng việc vá lại thì chạy \"$cmdline --abort\"."
+
+#: git-am.sh:121
+msgid "Cannot fall back to three-way merge."
+msgstr "Đang trở lại để hòa trộn kiểu 'three-way'."
+
 #: git-am.sh:137
 msgid "Repository lacks necessary blobs to fall back on 3-way merge."
 msgstr "Kho thiếu đối tượng blob cần thiết để trở về trên '3-way merge'."
@@ -4938,9 +4961,28 @@ msgstr "Thao tác phân giải không đang được tiến hành, chúng ta kh�
 msgid "Dirty index: cannot apply patches (dirty: $files)"
 msgstr "Bảng mục lục sai: không thể áp dụng các miếng vá (sai: $files)"
 
+#: git-am.sh:671
+#, sh-format
+msgid ""
+"Patch is empty.  Was it split wrong?\n"
+"If you would prefer to skip this patch, instead run \"$cmdline --skip\".\n"
+"To restore the original branch and stop patching run \"$cmdline --abort\"."
+msgstr ""
+"Miếng vá trống rỗng.  Nó đã bị chia cắt sai phải không?\n"
+"Nếu bạn thích bỏ qua miếng vá này, hãy chạy lệnh sau để thay thế \"$cmdline --skip\".\n"
+"Để phục hồi lại nhánh nguyên bản và dừng vá lại hãy chạy lệnh \"$cmdline --abort\"."
+
+#: git-am.sh:708
+msgid "Patch does not have a valid e-mail address."
+msgstr "Miếng vá không có địa chỉ e-mail hợp lệ."
+
 #: git-am.sh:755
 msgid "cannot be interactive without stdin connected to a terminal."
 msgstr "không thể được tương tác mà không có stdin kết nối với một thiết bị cuối"
+
+#: git-am.sh:759
+msgid "Commit Body is:"
+msgstr "Thân của lần chuyển giao (commit) là:"
 
 #. TRANSLATORS: Make sure to include [y], [n], [e], [v] and [a]
 #. in your translation. The program will only accept English
@@ -4954,13 +4996,40 @@ msgstr "Áp dụng? đồng ý [y]/không [n]/chỉnh sửa [e]/hiển thị mi�
 msgid "Applying: $FIRSTLINE"
 msgstr "Đang áp dụng (miếng vá): $FIRSTLINE"
 
+#: git-am.sh:823
+msgid ""
+"No changes - did you forget to use 'git add'?\n"
+"If there is nothing left to stage, chances are that something else\n"
+"already introduced the same changes; you might want to skip this patch."
+msgstr ""
+"Không có thay đổi nào - bạn đã quên sử dụng lệnh 'git add' à?\n"
+"Nếu ở đây không có gì còn lại stage, tình cờ là có một số thứ khác\n"
+"đã sẵn được đưa vào với cùng nội dung thay đổi; bạn có lẽ muốn bỏ qua miếng vá này."
+
+#: git-am.sh:831
+msgid ""
+"You still have unmerged paths in your index\n"
+"did you forget to use 'git add'?"
+msgstr ""
+"Bạn vẫn có những đường dẫn chưa được hòa trộn trong bảng mục lục của mình\n"
+"bạn đã quên sử dụng lệnh 'git add' à?"
+
 #: git-am.sh:847
 msgid "No changes -- Patch already applied."
 msgstr "Không thay đổi gì cả -- Miếng vá đã được áp dụng rồi."
 
+#: git-am.sh:857
+#, sh-format
+msgid "Patch failed at $msgnum $FIRSTLINE"
+msgstr "Vá gặp lỗi tại $msgnum $FIRSTLINE"
+
 #: git-am.sh:873
 msgid "applying to an empty history"
 msgstr "áp dụng vào một lịch sử trống rỗng"
+
+#: git-bisect.sh:48
+msgid "You need to start by \"git bisect start\""
+msgstr "Bạn cần khởi đầu bằng \"git bisect start\""
 
 #. TRANSLATORS: Make sure to include [Y] and [n] in your
 #. translation. The program will only accept English input
@@ -5019,12 +5088,41 @@ msgstr "Đầu vào rev sai: $rev"
 msgid "'git bisect bad' can take only one argument."
 msgstr "'git bisect bad' có thể lấy chỉ một đối số."
 
+#. have bad but not good.  we could bisect although
+#. this is less optimum.
+#: git-bisect.sh:273
+msgid "Warning: bisecting only with a bad commit."
+msgstr "Cảnh báo: chỉ thực hiện việc bisect với một lần chuyển giao (commit) sai."
+
 #. TRANSLATORS: Make sure to include [Y] and [n] in your
 #. translation. The program will only accept English input
 #. at this point.
 #: git-bisect.sh:279
 msgid "Are you sure [Y/n]? "
 msgstr "Bạn có chắc chắn chưa [Y/n]?"
+
+#: git-bisect.sh:289
+msgid ""
+"You need to give me at least one good and one bad revisions.\n"
+"(You can use \"git bisect bad\" and \"git bisect good\" for that.)"
+msgstr ""
+"Bạn phải chỉ cho tôi ít nhất một điểm xét duyệt tốt và một điểm sai.\n"
+"(Bạn có thể sử dụng \"git bisect bad\" và \"git bisect good\" cho cái đó.)"
+
+#: git-bisect.sh:292
+msgid ""
+"You need to start by \"git bisect start\".\n"
+"You then need to give me at least one good and one bad revisions.\n"
+"(You can use \"git bisect bad\" and \"git bisect good\" for that.)"
+msgstr ""
+"Bạn cần bắt đầu bằng lệnh \"git bisect start\".\n"
+"Bạn sau đó cần phải chỉ cho tôi ít nhất một điểm xét duyệt đúng và một điểm sai.\n"
+"(Bạn có thể sử dụng \"git bisect bad\" và \"git bisect good\" cho chúng.)"
+
+#: git-bisect.sh:347
+#: git-bisect.sh:474
+msgid "We are not bisecting."
+msgstr "Chúng tôi không bisect."
 
 #: git-bisect.sh:354
 #, sh-format
@@ -5053,9 +5151,36 @@ msgstr "không thể đọc $file để thao diễn lại"
 msgid "?? what are you talking about?"
 msgstr "?? bạn đang nói gì thế?"
 
-#: git-bisect.sh:474
-msgid "We are not bisecting."
-msgstr "Chúng tôi không bisect."
+#: git-bisect.sh:420
+#, sh-format
+msgid "running $command"
+msgstr "đang chạy lệnh $command"
+
+#: git-bisect.sh:427
+#, sh-format
+msgid ""
+"bisect run failed:\n"
+"exit code $res from '$command' is < 0 or >= 128"
+msgstr ""
+"chạy bisect gặp lỗi:\n"
+"mã trả về $res từ lệnh '$command' là < 0 hoặc >= 128"
+
+#: git-bisect.sh:453
+msgid "bisect run cannot continue any more"
+msgstr "bisect không thể tiếp tục thêm được nữa"
+
+#: git-bisect.sh:459
+#, sh-format
+msgid ""
+"bisect run failed:\n"
+"'bisect_state $state' exited with error code $res"
+msgstr ""
+"chạy bisect gặp lỗi:\n"
+"'bisect_state $state' đã thoát ra với mã lỗi $res"
+
+#: git-bisect.sh:466
+msgid "bisect run success"
+msgstr "bisect chạy thành công"
 
 #: git-pull.sh:21
 msgid ""
@@ -5074,6 +5199,21 @@ msgstr "Full là không thể thực hiện bởi vì bạn có những tập ti
 #: git-pull.sh:197
 msgid "updating an unborn branch with changes added to the index"
 msgstr "đang cập nhật một nhánh chưa được sinh ra với các thay đổi được thêm vào bảng mục lục"
+
+#. The fetch involved updating the current branch.
+#. The working tree and the index file is still based on the
+#. $orig_head commit, but we are merging into $curr_head.
+#. First update the working tree to match $curr_head.
+#: git-pull.sh:228
+#, sh-format
+msgid ""
+"Warning: fetch updated the current branch head.\n"
+"Warning: fast-forwarding your working tree from\n"
+"Warning: commit $orig_head."
+msgstr ""
+"Cảnh báo: fetch đã cập nhật head nhánh hiện tại.\n"
+"Cảnh báo: đang fast-forward cây làm việc của bạn từ\n"
+"Cảnh báo: commit $orig_head."
 
 #: git-pull.sh:253
 msgid "Cannot merge multiple branches into empty head"
@@ -5111,6 +5251,25 @@ msgstr "Không thể gỡ bỏ bảng mục lục tạm thời (không thể x�
 #: git-stash.sh:156
 msgid "Cannot record working tree state"
 msgstr "Không thể ghi lại trạng thái cây làm việc hiện hành"
+
+#. TRANSLATORS: $option is an invalid option, like
+#. `--blah-blah'. The 7 spaces at the beginning of the
+#. second line correspond to "error: ". So you should line
+#. up the second line with however many characters the
+#. translation of "error: " takes in your language. E.g. in
+#. English this is:
+#.
+#. $ git stash save --blah-blah 2>&1 | head -n 2
+#. error: unknown option for 'stash save': --blah-blah
+#. To provide a message, use git stash save -- '--blah-blah'
+#: git-stash.sh:202
+#, sh-format
+msgid ""
+"error: unknown option for 'stash save': $option\n"
+"       To provide a message, use git stash save -- '$option'"
+msgstr ""
+"lỗi: không hiểu tùy chọn cho 'stash save': $option\n"
+"       Để cung cấp một thông điệp, sử dụng git stash save -- '$option'"
 
 #: git-stash.sh:223
 msgid "No local changes to save"
@@ -5172,6 +5331,10 @@ msgstr "Không thể ghi lại cây chỉ mục"
 msgid "Cannot unstage modified files"
 msgstr "Không thể bỏ trạng thía của các tập tin đã được sửa chữa"
 
+#: git-stash.sh:474
+msgid "Index was not unstashed."
+msgstr "Bảng mục lục đã không được bỏ stash."
+
 #: git-stash.sh:491
 #, sh-format
 msgid "Dropped ${REV} ($s)"
@@ -5219,6 +5382,22 @@ msgstr "repo URL: '$repo' phải là đường dẫn tuyệt đối hoặc là b
 #, sh-format
 msgid "'$sm_path' already exists in the index"
 msgstr "'$sm_path' thực sự đã tồn tại ở bảng mục lục rồi"
+
+#: git-submodule.sh:270
+#, sh-format
+msgid ""
+"The following path is ignored by one of your .gitignore files:\n"
+"$sm_path\n"
+"Use -f if you really want to add it."
+msgstr ""
+"Các đường dẫn theo sau đây sẽ bị lờ đi bởi một trong các tập tin .gitignore của bạn:\n"
+"$sm_path\n"
+"Sử dụng -f nếu bạn thực sự muốn thêm nó vào."
+
+#: git-submodule.sh:281
+#, sh-format
+msgid "Adding existing repo at '$sm_path' to the index"
+msgstr "Đang thêm repo có sẵn tại '$sm_path' vào bảng mục lục"
 
 #: git-submodule.sh:283
 #, sh-format
@@ -5326,8 +5505,14 @@ msgid "Failed to recurse into submodule path '$sm_path'"
 msgstr "Gặp lỗi khi đệ quy vào trong đường dẫn mô-đun-con '$sm_path'"
 
 #: git-submodule.sh:713
-msgid "--"
-msgstr "--"
+msgid "--cached cannot be used with --files"
+msgstr "--cached không thể được sử dụng cùng với --files"
+
+#. unexpected type
+#: git-submodule.sh:753
+#, sh-format
+msgid "unexpected mode $mod_dst"
+msgstr "chế độ không như mong chờ $mod_dst"
 
 #: git-submodule.sh:771
 #, sh-format
@@ -5352,10 +5537,21 @@ msgstr "blob"
 msgid "submodule"
 msgstr "mô-đun con"
 
+#: git-submodule.sh:840
+msgid "# Submodules changed but not updated:"
+msgstr "# Những mô-đun-con đã bị thay đổi nhưng chưa được cập nhật:"
+
+#: git-submodule.sh:842
+msgid "# Submodule changes to be committed:"
+msgstr "# Những thay đổi mô-đun-con được chuyển giao (commit):"
+
 #: git-submodule.sh:974
 #, sh-format
 msgid "Synchronizing submodule url for '$name'"
 msgstr "Đang đồng bộ hóa url mô-đun-con cho '$name'"
+
+#~ msgid "--"
+#~ msgstr "--"
 
 #~ msgid "Could not extract email from committer identity."
 #~ msgstr ""
