@@ -2055,6 +2055,10 @@ use Time::Local;
 use Memoize;  # core since 5.8.0, Jul 2002
 use Memoize::Storable;
 use POSIX qw(:signal_h);
+my $can_use_yaml;
+BEGIN {
+	$can_use_yaml = eval { require Git::SVN::Memoize::YAML; 1};
+}
 
 my ($_gc_nr, $_gc_period);
 
@@ -3577,6 +3581,17 @@ sub has_no_changes {
 		command_oneline("rev-parse", "$commit~1^{tree}"));
 }
 
+sub tie_for_persistent_memoization {
+	my $hash = shift;
+	my $path = shift;
+
+	if ($can_use_yaml) {
+		tie %$hash => 'Git::SVN::Memoize::YAML', "$path.yaml";
+	} else {
+		tie %$hash => 'Memoize::Storable', "$path.db", 'nstore';
+	}
+}
+
 # The GIT_DIR environment variable is not always set until after the command
 # line arguments are processed, so we can't memoize in a BEGIN block.
 {
@@ -3589,22 +3604,26 @@ sub has_no_changes {
 		my $cache_path = "$ENV{GIT_DIR}/svn/.caches/";
 		mkpath([$cache_path]) unless -d $cache_path;
 
-		tie my %lookup_svn_merge_cache => 'Memoize::Storable',
-		    "$cache_path/lookup_svn_merge.db", 'nstore';
+		my %lookup_svn_merge_cache;
+		my %check_cherry_pick_cache;
+		my %has_no_changes_cache;
+
+		tie_for_persistent_memoization(\%lookup_svn_merge_cache,
+		    "$cache_path/lookup_svn_merge");
 		memoize 'lookup_svn_merge',
 			SCALAR_CACHE => 'FAULT',
 			LIST_CACHE => ['HASH' => \%lookup_svn_merge_cache],
 		;
 
-		tie my %check_cherry_pick_cache => 'Memoize::Storable',
-		    "$cache_path/check_cherry_pick.db", 'nstore';
+		tie_for_persistent_memoization(\%check_cherry_pick_cache,
+		    "$cache_path/check_cherry_pick");
 		memoize 'check_cherry_pick',
 			SCALAR_CACHE => 'FAULT',
 			LIST_CACHE => ['HASH' => \%check_cherry_pick_cache],
 		;
 
-		tie my %has_no_changes_cache => 'Memoize::Storable',
-		    "$cache_path/has_no_changes.db", 'nstore';
+		tie_for_persistent_memoization(\%has_no_changes_cache,
+		    "$cache_path/has_no_changes");
 		memoize 'has_no_changes',
 			SCALAR_CACHE => ['HASH' => \%has_no_changes_cache],
 			LIST_CACHE => 'FAULT',
