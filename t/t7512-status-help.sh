@@ -196,6 +196,283 @@ test_expect_success 'status when rebasing -i in edit mode' '
 '
 
 
+test_expect_success 'status when splitting a commit' '
+	git reset --hard master &&
+	git checkout -b split_commit &&
+	test_commit one_split main.txt one &&
+	test_commit two_split main.txt two &&
+	test_commit three_split main.txt three &&
+	test_commit four_split main.txt four &&
+	FAKE_LINES="1 edit 2 3" &&
+	export FAKE_LINES &&
+	test_when_finished "git rebase --abort" &&
+	git rebase -i HEAD~3 &&
+	git reset HEAD^ &&
+	cat >expected <<-\EOF &&
+	# Not currently on any branch.
+	# You are currently splitting a commit during a rebase.
+	#   (Once your working directory is clean, run "git rebase --continue")
+	#
+	# Changes not staged for commit:
+	#   (use "git add <file>..." to update what will be committed)
+	#   (use "git checkout -- <file>..." to discard changes in working directory)
+	#
+	#	modified:   main.txt
+	#
+	no changes added to commit (use "git add" and/or "git commit -a")
+	EOF
+	git status --untracked-files=no >actual &&
+	test_i18ncmp expected actual
+'
+
+
+test_expect_success 'status after editing the last commit with --amend during a rebase -i' '
+	git reset --hard master &&
+	git checkout -b amend_last &&
+	test_commit one_amend main.txt one &&
+	test_commit two_amend main.txt two &&
+	test_commit three_amend main.txt three &&
+	test_commit four_amend main.txt four &&
+	FAKE_LINES="1 2 edit 3" &&
+	export FAKE_LINES &&
+	test_when_finished "git rebase --abort" &&
+	git rebase -i HEAD~3 &&
+	git commit --amend -m "foo" &&
+	cat >expected <<-\EOF &&
+	# Not currently on any branch.
+	# You are currently editing a commit during a rebase.
+	#   (use "git commit --amend" to amend the current commit)
+	#   (use "git rebase --continue" once you are satisfied with your changes)
+	#
+	nothing to commit (use -u to show untracked files)
+	EOF
+	git status --untracked-files=no >actual &&
+	test_i18ncmp expected actual
+'
+
+
+test_expect_success 'prepare for several edits' '
+	git reset --hard master &&
+	git checkout -b several_edits &&
+	test_commit one_edits main.txt one &&
+	test_commit two_edits main.txt two &&
+	test_commit three_edits main.txt three &&
+	test_commit four_edits main.txt four
+'
+
+
+test_expect_success 'status: (continue first edit) second edit' '
+	FAKE_LINES="edit 1 edit 2 3" &&
+	export FAKE_LINES &&
+	test_when_finished "git rebase --abort" &&
+	git rebase -i HEAD~3 &&
+	git rebase --continue &&
+	cat >expected <<-\EOF &&
+	# Not currently on any branch.
+	# You are currently editing a commit during a rebase.
+	#   (use "git commit --amend" to amend the current commit)
+	#   (use "git rebase --continue" once you are satisfied with your changes)
+	#
+	nothing to commit (use -u to show untracked files)
+	EOF
+	git status --untracked-files=no >actual &&
+	test_i18ncmp expected actual
+'
+
+
+test_expect_success 'status: (continue first edit) second edit and split' '
+	git reset --hard several_edits &&
+	FAKE_LINES="edit 1 edit 2 3" &&
+	export FAKE_LINES &&
+	test_when_finished "git rebase --abort" &&
+	git rebase -i HEAD~3 &&
+	git rebase --continue &&
+	git reset HEAD^ &&
+	cat >expected <<-\EOF &&
+	# Not currently on any branch.
+	# You are currently splitting a commit during a rebase.
+	#   (Once your working directory is clean, run "git rebase --continue")
+	#
+	# Changes not staged for commit:
+	#   (use "git add <file>..." to update what will be committed)
+	#   (use "git checkout -- <file>..." to discard changes in working directory)
+	#
+	#	modified:   main.txt
+	#
+	no changes added to commit (use "git add" and/or "git commit -a")
+	EOF
+	git status --untracked-files=no >actual &&
+	test_i18ncmp expected actual
+'
+
+
+test_expect_success 'status: (continue first edit) second edit and amend' '
+	git reset --hard several_edits &&
+	FAKE_LINES="edit 1 edit 2 3" &&
+	export FAKE_LINES &&
+	test_when_finished "git rebase --abort" &&
+	git rebase -i HEAD~3 &&
+	git rebase --continue &&
+	git commit --amend -m "foo" &&
+	cat >expected <<-\EOF &&
+	# Not currently on any branch.
+	# You are currently editing a commit during a rebase.
+	#   (use "git commit --amend" to amend the current commit)
+	#   (use "git rebase --continue" once you are satisfied with your changes)
+	#
+	nothing to commit (use -u to show untracked files)
+	EOF
+	git status --untracked-files=no >actual &&
+	test_i18ncmp expected actual
+'
+
+
+test_expect_success 'status: (amend first edit) second edit' '
+	git reset --hard several_edits &&
+	FAKE_LINES="edit 1 edit 2 3" &&
+	export FAKE_LINES &&
+	test_when_finished "git rebase --abort" &&
+	git rebase -i HEAD~3 &&
+	git commit --amend -m "a" &&
+	git rebase --continue &&
+	cat >expected <<-\EOF &&
+	# Not currently on any branch.
+	# You are currently editing a commit during a rebase.
+	#   (use "git commit --amend" to amend the current commit)
+	#   (use "git rebase --continue" once you are satisfied with your changes)
+	#
+	nothing to commit (use -u to show untracked files)
+	EOF
+	git status --untracked-files=no >actual &&
+	test_i18ncmp expected actual
+'
+
+
+test_expect_success 'status: (amend first edit) second edit and split' '
+	git reset --hard several_edits &&
+	FAKE_LINES="edit 1 edit 2 3" &&
+	export FAKE_LINES &&
+	test_when_finished "git rebase --abort" &&
+	git rebase -i HEAD~3 &&
+	git commit --amend -m "b" &&
+	git rebase --continue &&
+	git reset HEAD^ &&
+	cat >expected <<-\EOF &&
+	# Not currently on any branch.
+	# You are currently splitting a commit during a rebase.
+	#   (Once your working directory is clean, run "git rebase --continue")
+	#
+	# Changes not staged for commit:
+	#   (use "git add <file>..." to update what will be committed)
+	#   (use "git checkout -- <file>..." to discard changes in working directory)
+	#
+	#	modified:   main.txt
+	#
+	no changes added to commit (use "git add" and/or "git commit -a")
+	EOF
+	git status --untracked-files=no >actual &&
+	test_i18ncmp expected actual
+'
+
+
+test_expect_success 'status: (amend first edit) second edit and amend' '
+	git reset --hard several_edits &&
+	FAKE_LINES="edit 1 edit 2 3" &&
+	export FAKE_LINES &&
+	test_when_finished "git rebase --abort" &&
+	git rebase -i HEAD~3 &&
+	git commit --amend -m "c" &&
+	git rebase --continue &&
+	git commit --amend -m "d" &&
+	cat >expected <<-\EOF &&
+	# Not currently on any branch.
+	# You are currently editing a commit during a rebase.
+	#   (use "git commit --amend" to amend the current commit)
+	#   (use "git rebase --continue" once you are satisfied with your changes)
+	#
+	nothing to commit (use -u to show untracked files)
+	EOF
+	git status --untracked-files=no >actual &&
+	test_i18ncmp expected actual
+'
+
+
+test_expect_success 'status: (split first edit) second edit' '
+	git reset --hard several_edits &&
+	FAKE_LINES="edit 1 edit 2 3" &&
+	export FAKE_LINES &&
+	test_when_finished "git rebase --abort" &&
+	git rebase -i HEAD~3 &&
+	git reset HEAD^ &&
+	git add main.txt &&
+	git commit -m "e" &&
+	git rebase --continue &&
+	cat >expected <<-\EOF &&
+	# Not currently on any branch.
+	# You are currently editing a commit during a rebase.
+	#   (use "git commit --amend" to amend the current commit)
+	#   (use "git rebase --continue" once you are satisfied with your changes)
+	#
+	nothing to commit (use -u to show untracked files)
+	EOF
+	git status --untracked-files=no >actual &&
+	test_i18ncmp expected actual
+'
+
+
+test_expect_success 'status: (split first edit) second edit and split' '
+	git reset --hard several_edits &&
+	FAKE_LINES="edit 1 edit 2 3" &&
+	export FAKE_LINES &&
+	test_when_finished "git rebase --abort" &&
+	git rebase -i HEAD~3 &&
+	git reset HEAD^ &&
+	git add main.txt &&
+	git commit --amend -m "f" &&
+	git rebase --continue &&
+	git reset HEAD^ &&
+	cat >expected <<-\EOF &&
+	# Not currently on any branch.
+	# You are currently splitting a commit during a rebase.
+	#   (Once your working directory is clean, run "git rebase --continue")
+	#
+	# Changes not staged for commit:
+	#   (use "git add <file>..." to update what will be committed)
+	#   (use "git checkout -- <file>..." to discard changes in working directory)
+	#
+	#	modified:   main.txt
+	#
+	no changes added to commit (use "git add" and/or "git commit -a")
+	EOF
+	git status --untracked-files=no >actual &&
+	test_i18ncmp expected actual
+'
+
+
+test_expect_success 'status: (split first edit) second edit and amend' '
+	git reset --hard several_edits &&
+	FAKE_LINES="edit 1 edit 2 3" &&
+	export FAKE_LINES &&
+	test_when_finished "git rebase --abort" &&
+	git rebase -i HEAD~3 &&
+	git reset HEAD^ &&
+	git add main.txt &&
+	git commit --amend -m "g" &&
+	git rebase --continue &&
+	git commit --amend -m "h" &&
+	cat >expected <<-\EOF &&
+	# Not currently on any branch.
+	# You are currently editing a commit during a rebase.
+	#   (use "git commit --amend" to amend the current commit)
+	#   (use "git rebase --continue" once you are satisfied with your changes)
+	#
+	nothing to commit (use -u to show untracked files)
+	EOF
+	git status --untracked-files=no >actual &&
+	test_i18ncmp expected actual
+'
+
+
 test_expect_success 'prepare am_session' '
 	git reset --hard master &&
 	git checkout -b am_session &&

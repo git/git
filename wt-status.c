@@ -12,6 +12,7 @@
 #include "refs.h"
 #include "submodule.h"
 #include "column.h"
+#include "strbuf.h"
 
 static char default_wt_status_colors[][COLOR_MAXLEN] = {
 	GIT_COLOR_NORMAL, /* WT_STATUS_HEADER */
@@ -817,6 +818,52 @@ static void show_am_in_progress(struct wt_status *s,
 	wt_status_print_trailer(s);
 }
 
+static char *read_line_from_git_path(const char *filename)
+{
+	struct strbuf buf = STRBUF_INIT;
+	FILE *fp = fopen(git_path("%s", filename), "r");
+	if (!fp) {
+		strbuf_release(&buf);
+		return NULL;
+	}
+	strbuf_getline(&buf, fp, '\n');
+	if (!fclose(fp)) {
+		return strbuf_detach(&buf, NULL);
+	} else {
+		strbuf_release(&buf);
+		return NULL;
+	}
+}
+
+static int split_commit_in_progress(struct wt_status *s)
+{
+	int split_in_progress = 0;
+	char *head = read_line_from_git_path("HEAD");
+	char *orig_head = read_line_from_git_path("ORIG_HEAD");
+	char *rebase_amend = read_line_from_git_path("rebase-merge/amend");
+	char *rebase_orig_head = read_line_from_git_path("rebase-merge/orig-head");
+
+	if (!head || !orig_head || !rebase_amend || !rebase_orig_head ||
+	    !s->branch || strcmp(s->branch, "HEAD"))
+		return split_in_progress;
+
+	if (!strcmp(rebase_amend, rebase_orig_head)) {
+		if (strcmp(head, rebase_amend))
+			split_in_progress = 1;
+	} else if (strcmp(orig_head, rebase_orig_head)) {
+		split_in_progress = 1;
+	}
+
+	if (!s->amend && !s->nowarn && !s->workdir_dirty)
+		split_in_progress = 0;
+
+	free(head);
+	free(orig_head);
+	free(rebase_amend);
+	free(rebase_orig_head);
+	return split_in_progress;
+}
+
 static void show_rebase_in_progress(struct wt_status *s,
 				struct wt_status_state *state,
 				const char *color)
@@ -838,6 +885,11 @@ static void show_rebase_in_progress(struct wt_status *s,
 		if (advice_status_hints)
 			status_printf_ln(s, color,
 				_("  (all conflicts fixed: run \"git rebase --continue\")"));
+	} else if (split_commit_in_progress(s)) {
+		status_printf_ln(s, color, _("You are currently splitting a commit during a rebase."));
+		if (advice_status_hints)
+			status_printf_ln(s, color,
+				_("  (Once your working directory is clean, run \"git rebase --continue\")"));
 	} else {
 		status_printf_ln(s, color, _("You are currently editing a commit during a rebase."));
 		if (advice_status_hints && !s->amend) {
