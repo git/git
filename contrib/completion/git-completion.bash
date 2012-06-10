@@ -36,6 +36,8 @@ esac
 # returns location of .git repo
 __gitdir ()
 {
+	# Note: this function is duplicated in git-prompt.sh
+	# When updating it, make sure you update the other one to match.
 	if [ -z "${1-}" ]; then
 		if [ -n "${__git_dir-}" ]; then
 			echo "$__git_dir"
