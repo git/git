@@ -591,7 +591,8 @@ B<git-svn> itself.
 
 =head1 SEE ALSO
 
-L<SVN::Delta>.
+L<SVN::Delta>,
+L<Git::SVN::Editor>.
 
 =head1 INCOMPATIBILITIES
 
