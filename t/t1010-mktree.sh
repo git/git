@@ -42,13 +42,13 @@ test_expect_success 'ls-tree piped to mktree (2)' '
 '
 
 test_expect_success 'ls-tree output in wrong order given to mktree (1)' '
-	$PERL_PATH -e "print reverse <>" <top |
+	"$PERL_PATH" -e "print reverse <>" <top |
 	git mktree >actual &&
 	test_cmp tree actual
 '
 
 test_expect_success 'ls-tree output in wrong order given to mktree (2)' '
-	$PERL_PATH -e "print reverse <>" <top.withsub |
+	"$PERL_PATH" -e "print reverse <>" <top.withsub |
 	git mktree >actual &&
 	test_cmp tree.withsub actual
 '

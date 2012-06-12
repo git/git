@@ -21,7 +21,7 @@ EOF
 
 cat >hexdump <<'EOF'
 #!/bin/sh
-$PERL_PATH -e '$/ = undef; $_ = <>; s/./ord($&)/ge; print $_' < "$1"
+"$PERL_PATH" -e '$/ = undef; $_ = <>; s/./ord($&)/ge; print $_' < "$1"
 EOF
 chmod +x hexdump
 

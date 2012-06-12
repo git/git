@@ -60,7 +60,7 @@ test_expect_success 'diff --stat counts binary rewrite as 0 lines' '
 {
 	echo "#!$SHELL_PATH"
 	cat <<'EOF'
-$PERL_PATH -e '$/ = undef; $_ = <>; s/./ord($&)/ge; print $_' < "$1"
+"$PERL_PATH" -e '$/ = undef; $_ = <>; s/./ord($&)/ge; print $_' < "$1"
 EOF
 } >dump
 chmod +x dump

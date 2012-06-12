@@ -71,7 +71,7 @@ test_expect_success 'ls-files -z does not quote funny filename' '
 	tabs	," (dq) and spaces
 	EOF
 	git ls-files -z >ls-files.z &&
-	$PERL_PATH -pe "y/\000/\012/" <ls-files.z >current &&
+	"$PERL_PATH" -pe "y/\000/\012/" <ls-files.z >current &&
 	test_cmp expected current
 '
 
@@ -108,7 +108,7 @@ test_expect_success 'diff-index -z does not quote funny filename' '
 	tabs	," (dq) and spaces
 	EOF
 	git diff-index -z --name-status $t0 >diff-index.z &&
-	$PERL_PATH -pe "y/\000/\012/" <diff-index.z >current &&
+	"$PERL_PATH" -pe "y/\000/\012/" <diff-index.z >current &&
 	test_cmp expected current
 '
 
@@ -118,7 +118,7 @@ test_expect_success 'diff-tree -z does not quote funny filename' '
 	tabs	," (dq) and spaces
 	EOF
 	git diff-tree -z --name-status $t0 $t1 >diff-tree.z &&
-	$PERL_PATH -pe y/\\000/\\012/ <diff-tree.z >current &&
+	"$PERL_PATH" -pe y/\\000/\\012/ <diff-tree.z >current &&
 	test_cmp expected current
 '
 

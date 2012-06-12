@@ -118,7 +118,7 @@ test_expect_success 'no diff with -diff' '
 	git diff | grep Binary
 '
 
-echo NULZbetweenZwords | $PERL_PATH -pe 'y/Z/\000/' > file
+echo NULZbetweenZwords | "$PERL_PATH" -pe 'y/Z/\000/' > file
 
 test_expect_success 'force diff with "diff"' '
 	echo >.gitattributes "file diff" &&
