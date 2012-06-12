@@ -12,8 +12,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Git\n"
 "Report-Msgid-Bugs-To: Git Mailing List <git@vger.kernel.org>\n"
-"POT-Creation-Date: 2012-06-02 07:03+0800\n"
-"PO-Revision-Date: 2012-06-02 17:05+0800\n"
+"POT-Creation-Date: 2012-06-08 10:20+0800\n"
+"PO-Revision-Date: 2012-06-08 12:24+0800\n"
 "Last-Translator: Jiang Xin <worldhello.net@gmail.com>\n"
 "Language-Team: GitHub <https://github.com/gotgit/git/>\n"
 "Language: zh_CN\n"
@@ -4806,6 +4806,28 @@ msgstr "创建、列出、删除或校验一个GPG签名的 tag 对象"
 msgid "You need to set your committer info first"
 msgstr "您需要先设置你的提交者信息"
 
+#: git-am.sh:95
+msgid ""
+"You seem to have moved HEAD since the last 'am' failure.\n"
+"Not rewinding to ORIG_HEAD"
+msgstr ""
+"您好像在上一次 'am' 失败后移动了 HEAD。未回退至 ORIG_HEAD"
+
+#: git-am.sh:105
+#, sh-format
+msgid ""
+"When you have resolved this problem run \"$cmdline --resolved\".\n"
+"If you would prefer to skip this patch, instead run \"$cmdline --skip\".\n"
+"To restore the original branch and stop patching run \"$cmdline --abort\"."
+msgstr ""
+"当您解决了此问题后，执行 \"$cmdline --resolved\"。\n"
+"如果您想跳过此补丁，则执行 \"$cmdline --skip\"。\n"
+"要恢复原分支并停止打补丁，执行 \"$cmdline --abort\"。"
+
+#: git-am.sh:121
+msgid "Cannot fall back to three-way merge."
+msgstr "无法求助于三路合并。"
+
 #: git-am.sh:137
 msgid "Repository lacks necessary blobs to fall back on 3-way merge."
 msgstr "版本库缺乏必要的 blob 数据以进行三路合并。"
@@ -4820,7 +4842,7 @@ msgstr ""
 
 #: git-am.sh:163
 msgid "Falling back to patching base and 3-way merge..."
-msgstr "回退到补丁基础版本并使用三路合并..."
+msgstr "转而在基础版本上打补丁及进行三路合并..."
 
 #: git-am.sh:275
 msgid "Only one StGIT patch series can be applied at once"
@@ -4857,9 +4879,28 @@ msgstr "解决操作未进行，我们不会继续。"
 msgid "Dirty index: cannot apply patches (dirty: $files)"
 msgstr "脏的索引：不能应用补丁（脏文件：$files）"
 
+#: git-am.sh:671
+#, sh-format
+msgid ""
+"Patch is empty.  Was it split wrong?\n"
+"If you would prefer to skip this patch, instead run \"$cmdline --skip\".\n"
+"To restore the original branch and stop patching run \"$cmdline --abort\"."
+msgstr ""
+"补丁为空。是不是切分错误？\n"
+"如果您想要跳过这个补丁，执行 \"$cmdline --skip\"。\n"
+"要恢复原分支并停止打补丁，执行 \"$cmdline --abort\"。"
+
+#: git-am.sh:708
+msgid "Patch does not have a valid e-mail address."
+msgstr "补丁中没有一个有效的邮件地址。"
+
 #: git-am.sh:755
 msgid "cannot be interactive without stdin connected to a terminal."
 msgstr "标准输入没有和终端关联，不能进行交互式操作。"
+
+#: git-am.sh:759
+msgid "Commit Body is:"
+msgstr "提交内容为："
 
 #  译者：注意保持句尾空格
 #. TRANSLATORS: Make sure to include [y], [n], [e], [v] and [a]
@@ -4874,13 +4915,39 @@ msgstr "应用？[y]es/[n]o/[e]dit/[v]iew patch/[a]ccept all "
 msgid "Applying: $FIRSTLINE"
 msgstr "正应用：$FIRSTLINE"
 
+#: git-am.sh:823
+msgid ""
+"No changes - did you forget to use 'git add'?\n"
+"If there is nothing left to stage, chances are that something else\n"
+"already introduced the same changes; you might want to skip this patch."
+msgstr ""
+"没有变更 —— 您是不是忘了执行 'git add'？\n"
+"如果没有什么要添加到暂存区的，则很可能是其它提交已经引入了相同的变更。\n"
+"您也许想要跳过这个补丁。"
+
+#: git-am.sh:831
+msgid ""
+"You still have unmerged paths in your index\n"
+"did you forget to use 'git add'?"
+msgstr ""
+"您的索引中仍有未合并的路径。您是否忘了执行 'git add'？"
+
 #: git-am.sh:847
 msgid "No changes -- Patch already applied."
 msgstr "没有变更 -- 补丁已经应用过。"
 
+#: git-am.sh:857
+#, sh-format
+msgid "Patch failed at $msgnum $FIRSTLINE"
+msgstr "补丁失败于 $msgnum $FIRSTLINE"
+
 #: git-am.sh:873
 msgid "applying to an empty history"
 msgstr "正应用到一个空历史上"
+
+#: git-bisect.sh:48
+msgid "You need to start by \"git bisect start\""
+msgstr "您需要执行 \"git bisect start\" 来开始"
 
 #  译者：注意保持句尾空格
 #. TRANSLATORS: Make sure to include [Y] and [n] in your
@@ -4941,6 +5008,12 @@ msgstr "输入坏的版本：$rev"
 msgid "'git bisect bad' can take only one argument."
 msgstr "'git bisect bad' 只能带一个参数。"
 
+#. have bad but not good.  we could bisect although
+#. this is less optimum.
+#: git-bisect.sh:273
+msgid "Warning: bisecting only with a bad commit."
+msgstr "警告：在仅有一个坏提交下进行二分查找。"
+
 #  译者：注意保持句尾空格
 #. TRANSLATORS: Make sure to include [Y] and [n] in your
 #. translation. The program will only accept English input
@@ -4948,6 +5021,28 @@ msgstr "'git bisect bad' 只能带一个参数。"
 #: git-bisect.sh:279
 msgid "Are you sure [Y/n]? "
 msgstr "您确认么[Y/n]？ "
+
+#: git-bisect.sh:289
+msgid ""
+"You need to give me at least one good and one bad revisions.\n"
+"(You can use \"git bisect bad\" and \"git bisect good\" for that.)"
+msgstr ""
+"您需要给我至少一个好版本和一个坏版本。\n"
+"（您可以用 \"git bisect bad\" 和 \"git bisect good\" 命令来标识。）"
+
+#: git-bisect.sh:292
+msgid ""
+"You need to start by \"git bisect start\".\n"
+"You then need to give me at least one good and one bad revisions.\n"
+"(You can use \"git bisect bad\" and \"git bisect good\" for that.)"
+msgstr ""
+"您需要执行 \"git bisect start\" 来开始。\n"
+"然后需要提供我至少一个好版本和一个坏版本。\n"
+"（您可以用 \"git bisect bad\" 和 \"git bisect good\" 命令来标识。）"
+
+#: git-bisect.sh:347 git-bisect.sh:474
+msgid "We are not bisecting."
+msgstr "我们没有在二分查找。"
 
 #: git-bisect.sh:354
 #, sh-format
@@ -4976,9 +5071,36 @@ msgstr "不能读取 $file 来重放"
 msgid "?? what are you talking about?"
 msgstr "?? 您在说什么?"
 
-#: git-bisect.sh:474
-msgid "We are not bisecting."
-msgstr "我们没有在二分查找。"
+#: git-bisect.sh:420
+#, sh-format
+msgid "running $command"
+msgstr "运行 $command"
+
+#: git-bisect.sh:427
+#, sh-format
+msgid ""
+"bisect run failed:\n"
+"exit code $res from '$command' is < 0 or >= 128"
+msgstr ""
+"二分查找运行失败：\n"
+"命令 '$command' 的退出码 $res 或者小于 0 或者大于等于 128"
+
+#: git-bisect.sh:453
+msgid "bisect run cannot continue any more"
+msgstr "二分查找不能继续运行"
+
+#: git-bisect.sh:459
+#, sh-format
+msgid ""
+"bisect run failed:\n"
+"'bisect_state $state' exited with error code $res"
+msgstr ""
+"二分查找运行失败：\n"
+"'bisect_state $state' 退出码为 $res"
+
+#: git-bisect.sh:466
+msgid "bisect run success"
+msgstr "二分查找运行成功"
 
 #: git-pull.sh:21
 msgid ""
@@ -4997,6 +5119,20 @@ msgstr "Pull 不可用，因为您尚有未合并的文件。"
 #: git-pull.sh:197
 msgid "updating an unborn branch with changes added to the index"
 msgstr "更新尚未诞生的分支，变更添加至索引"
+
+#. The fetch involved updating the current branch.
+#. The working tree and the index file is still based on the
+#. $orig_head commit, but we are merging into $curr_head.
+#. First update the working tree to match $curr_head.
+#: git-pull.sh:228
+#, sh-format
+msgid ""
+"Warning: fetch updated the current branch head.\n"
+"Warning: fast-forwarding your working tree from\n"
+"Warning: commit $orig_head."
+msgstr ""
+"警告：fetch 更新了当前的分支。您的工作区\n"
+"警告：从原提交 $orig_head 快进。"
 
 #: git-pull.sh:253
 msgid "Cannot merge multiple branches into empty head"
@@ -5033,6 +5169,25 @@ msgstr "无法删除临时索引（不应发生）"
 #: git-stash.sh:156
 msgid "Cannot record working tree state"
 msgstr "不能记录工作区状态"
+
+#. TRANSLATORS: $option is an invalid option, like
+#. `--blah-blah'. The 7 spaces at the beginning of the
+#. second line correspond to "error: ". So you should line
+#. up the second line with however many characters the
+#. translation of "error: " takes in your language. E.g. in
+#. English this is:
+#.
+#. $ git stash save --blah-blah 2>&1 | head -n 2
+#. error: unknown option for 'stash save': --blah-blah
+#. To provide a message, use git stash save -- '--blah-blah'
+#: git-stash.sh:202
+#, sh-format
+msgid ""
+"error: unknown option for 'stash save': $option\n"
+"       To provide a message, use git stash save -- '$option'"
+msgstr ""
+"错误：'stash save' 的未知选项：$option\n"
+"      要提供一个描述信息，使用 git stash save -- '$option'"
 
 #: git-stash.sh:223
 msgid "No local changes to save"
@@ -5094,6 +5249,10 @@ msgstr "不能保存索引树"
 msgid "Cannot unstage modified files"
 msgstr "无法还原修改的文件"
 
+#: git-stash.sh:474
+msgid "Index was not unstashed."
+msgstr "索引的进度没有被恢复。"
+
 #: git-stash.sh:491
 #, sh-format
 msgid "Dropped ${REV} ($s)"
@@ -5141,6 +5300,22 @@ msgstr "版本库URL：'$repo' 必须是绝对路径或以 ./|../ 起始"
 #, sh-format
 msgid "'$sm_path' already exists in the index"
 msgstr "'$sm_path' 已经存在于索引中"
+
+#: git-submodule.sh:270
+#, sh-format
+msgid ""
+"The following path is ignored by one of your .gitignore files:\n"
+"$sm_path\n"
+"Use -f if you really want to add it."
+msgstr ""
+"以下路径被您的一个 .gitignore 文件所忽略：\n"
+"$sm_path\n"
+"如果您确实想添加它，使用 -f 参数。"
+
+#: git-submodule.sh:281
+#, sh-format
+msgid "Adding existing repo at '$sm_path' to the index"
+msgstr "添加位于 '$sm_path' 的现存版本库到索引"
 
 #: git-submodule.sh:283
 #, sh-format
@@ -5247,8 +5422,14 @@ msgid "Failed to recurse into submodule path '$sm_path'"
 msgstr "无法递归进子模组路径 '$sm_path'"
 
 #: git-submodule.sh:713
-msgid "--"
-msgstr "--"
+msgid "--cached cannot be used with --files"
+msgstr "--cached 不能和 --files 共用"
+
+#. unexpected type
+#: git-submodule.sh:753
+#, sh-format
+msgid "unexpected mode $mod_dst"
+msgstr "意外的模式 $mod_dst"
 
 #  译者：注意保持前导空格
 #: git-submodule.sh:771
@@ -5276,19 +5457,15 @@ msgstr "blob"
 msgid "submodule"
 msgstr "子模组"
 
+#: git-submodule.sh:840
+msgid "# Submodules changed but not updated:"
+msgstr "# 子模组已修改但尚未更新："
+
+#: git-submodule.sh:842
+msgid "# Submodule changes to be committed:"
+msgstr "要提交的子模组变更："
+
 #: git-submodule.sh:974
 #, sh-format
 msgid "Synchronizing submodule url for '$name'"
 msgstr "为 '$name' 同步子模组 url"
-
-#~ msgid "Could not extract email from committer identity."
-#~ msgstr "不能从提交者身份中提取邮件地址。"
-
-#~ msgid "cherry-pick"
-#~ msgstr "拣选"
-
-#~ msgid "Please enter the commit message for your changes."
-#~ msgstr "请为您的修改输入提交说明。"
-
-#~ msgid "Too many options specified"
-#~ msgstr "指定了太多的选项"
