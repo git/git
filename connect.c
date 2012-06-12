@@ -536,7 +536,7 @@ struct child_process *git_connect(int fd[2], const char *url_orig,
 	 * Add support for ssh port: ssh://host.xy:<port>/...
 	 */
 	if (protocol == PROTO_SSH && host != url)
-		port = get_port(host);
+		port = get_port(end);
 
 	if (protocol == PROTO_GIT) {
 		/* These underlying connection commands die() if they
