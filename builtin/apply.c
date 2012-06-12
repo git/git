@@ -3067,6 +3067,31 @@ static struct patch *previous_patch(struct patch *patch, int *gone)
 	return previous;
 }
 
+#define SUBMODULE_PATCH_WITHOUT_INDEX 1
+
+static int load_patch_target(struct strbuf *buf,
+			     struct cache_entry *ce,
+			     struct stat *st,
+			     const char *name,
+			     unsigned expected_mode)
+{
+	if (cached) {
+		if (read_file_or_gitlink(ce, buf))
+			return error(_("read of %s failed"), name);
+	} else if (name) {
+		if (S_ISGITLINK(expected_mode)) {
+			if (ce)
+				return read_file_or_gitlink(ce, buf);
+			else
+				return SUBMODULE_PATCH_WITHOUT_INDEX;
+		} else {
+			if (read_old_data(st, name, buf))
+				return error(_("read of %s failed"), name);
+		}
+	}
+	return 0;
+}
+
 /*
  * We are about to apply "patch"; populate the "image" with the
  * current version we have, from the working tree or from the index,
@@ -3090,26 +3115,22 @@ static int load_preimage(struct image *image,
 	if (previous) {
 		/* We have a patched copy in memory; use that. */
 		strbuf_add(&buf, previous->result, previous->resultsize);
-	} else if (cached) {
-		if (read_file_or_gitlink(ce, &buf))
+	} else {
+		status = load_patch_target(&buf, ce, st,
+					   patch->old_name, patch->old_mode);
+		if (status < 0)
+			return status;
+		else if (status == SUBMODULE_PATCH_WITHOUT_INDEX) {
+			/*
+			 * There is no way to apply subproject
+			 * patch without looking at the index.
+			 * NEEDSWORK: shouldn't this be flagged
+			 * as an error???
+			 */
+			free_fragment_list(patch->fragments);
+			patch->fragments = NULL;
+		} else if (status) {
 			return error(_("read of %s failed"), patch->old_name);
-	} else if (patch->old_name) {
-		if (S_ISGITLINK(patch->old_mode)) {
-			if (ce) {
-				read_file_or_gitlink(ce, &buf);
-			} else {
-				/*
-				 * There is no way to apply subproject
-				 * patch without looking at the index.
-				 * NEEDSWORK: shouldn't this be flagged
-				 * as an error???
-				 */
-				free_fragment_list(patch->fragments);
-				patch->fragments = NULL;
-			}
-		} else {
-			if (read_old_data(st, patch->old_name, &buf))
-				return error(_("read of %s failed"), patch->old_name);
 		}
 	}
 
