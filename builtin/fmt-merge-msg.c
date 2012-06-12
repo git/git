@@ -286,10 +286,10 @@ static void credit_people(struct strbuf *out,
 	const char *me;
 
 	if (kind == 'a') {
-		label = "\nBy ";
+		label = "\n# By ";
 		me = git_author_info(IDENT_NO_DATE);
 	} else {
-		label = "\nvia ";
+		label = "\n# Via ";
 		me = git_committer_info(IDENT_NO_DATE);
 	}
 
