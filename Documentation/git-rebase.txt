@@ -8,9 +8,9 @@ git-rebase - Forward-port local commits to the updated upstream head
 SYNOPSIS
 --------
 [verse]
-'git rebase' [-i | --interactive] [options] [--onto <newbase>]
+'git rebase' [-i | --interactive] [options] [--exec <cmd>] [--onto <newbase>]
 	[<upstream>] [<branch>]
-'git rebase' [-i | --interactive] [options] --onto <newbase>
+'git rebase' [-i | --interactive] [options] [--exec <cmd>] --onto <newbase>
 	--root [<branch>]
 'git rebase' --continue | --skip | --abort
 
@@ -210,7 +210,7 @@ rebase.autosquash::
 
 OPTIONS
 -------
-<newbase>::
+--onto <newbase>::
 	Starting point at which to create the new commits. If the
 	--onto option is not specified, the starting point is
 	<upstream>.  May be any valid commit, and not just an
@@ -344,6 +344,27 @@ This uses the `--interactive` machinery internally, but combining it
 with the `--interactive` option explicitly is generally not a good
 idea unless you know what you are doing (see BUGS below).
 
+-x <cmd>::
+--exec <cmd>::
+	Append "exec <cmd>" after each line creating a commit in the
+	final history. <cmd> will be interpreted as one or more shell
+	commands.
++
+This option can only be used with the `--interactive` option
+(see INTERACTIVE MODE below).
++
+You may execute several commands by either using one instance of `--exec`
+with several commands:
++
+	git rebase -i --exec "cmd1 && cmd2 && ..."
++
+or by giving more than one `--exec`:
++
+	git rebase -i --exec "cmd1" --exec "cmd2" --exec ...
++
+If `--autosquash` is used, "exec" lines will not be appended for
+the intermediate commits, and will only appear at the end of each
+squash/fixup series.
 
 --root::
 	Rebase all commits reachable from <branch>, instead of
@@ -520,6 +541,24 @@ The "exec" command launches the command in a shell (the one specified
 in `$SHELL`, or the default shell if `$SHELL` is not set), so you can
 use shell features (like "cd", ">", ";" ...). The command is run from
 the root of the working tree.
+
+----------------------------------
+$ git rebase -i --exec "make test"
+----------------------------------
+
+This command lets you check that intermediate commits are compilable.
+The todo list becomes like that:
+
+--------------------
+pick 5928aea one
+exec make test
+pick 04d0fda two
+exec make test
+pick ba46169 three
+exec make test
+pick f4593f9 four
+exec make test
+--------------------
 
 SPLITTING COMMITS
 -----------------
