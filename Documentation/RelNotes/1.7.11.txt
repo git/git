@@ -54,7 +54,8 @@ UI, Workflows & Features
    instance of the external tool once per a file pair.
 
  * The "fmt-merge-msg" command learned to list the primary contributors
-   involved in the side topic you are merging.
+   involved in the side topic you are merging in a comment in the merge
+   commit template.
 
  * "git rebase" learned to optionally keep commits that do not
    introduce any change in the original history.
@@ -128,6 +129,10 @@ Fixes since v1.7.10
 Unless otherwise noted, all the fixes since v1.7.10 in the maintenance
 releases are contained in this release (see release notes to them for
 details).
+
+ * "git fast-export" did not give a readable error message when the
+   same mark erroneously appeared twice in the --import-marks input.
+   (merge 43bc230 js/maint-fast-export-mark-error later to maint).
 
  * "git rebase -p" used to pay attention to rebase.autosquash which
     was wrong.  "git rebase -p -i" should, but "git rebase -p" by
