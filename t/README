@@ -307,6 +307,25 @@ Don't:
    Use test_done instead if you need to stop the tests early (see
    "Skipping tests" below).
 
+ - use '! git cmd' when you want to make sure the git command exits
+   with failure in a controlled way by calling "die()".  Instead,
+   use 'test_must_fail git cmd'.  This will signal a failure if git
+   dies in an unexpected way (e.g. segfault).
+
+ - use perl without spelling it as "$PERL_PATH". This is to help our
+   friends on Windows where the platform Perl often adds CR before
+   the end of line, and they bundle Git with a version of Perl that
+   does not do so, whose path is specified with $PERL_PATH.
+
+ - use sh without spelling it as "$SHELL_PATH", when the script can
+   be misinterpreted by broken platform shell (e.g. Solaris).
+
+ - chdir around in tests.  It is not sufficient to chdir to
+   somewhere and then chdir back to the original location later in
+   the test, as any intermediate step can fail and abort the test,
+   causing the next test to start in an unexpected directory.  Do so
+   inside a subshell if necessary.
+
  - Break the TAP output
 
    The raw output from your test may be interpreted by a TAP harness. TAP
@@ -342,9 +361,9 @@ If you need to skip tests you should do so by using the three-arg form
 of the test_* functions (see the "Test harness library" section
 below), e.g.:
 
-    test_expect_success PERL 'I need Perl' "
-        '$PERL_PATH' -e 'hlagh() if unf_unf()'
-    "
+    test_expect_success PERL 'I need Perl' '
+        "$PERL_PATH" -e "hlagh() if unf_unf()"
+    '
 
 The advantage of skipping tests like this is that platforms that don't
 have the PERL and other optional dependencies get an indication of how
