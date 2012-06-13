@@ -3034,6 +3034,18 @@ static void prepare_fn_table(struct patch *patch)
 	}
 }
 
+static int checkout_target(struct cache_entry *ce, struct stat *st)
+{
+	struct checkout costate;
+
+	memset(&costate, 0, sizeof(costate));
+	costate.base_dir = "";
+	costate.refresh_cache = 1;
+	if (checkout_entry(ce, &costate, NULL) || lstat(ce->name, st))
+		return error(_("cannot checkout %s"), ce->name);
+	return 0;
+}
+
 static int apply_data(struct patch *patch, struct stat *st, struct cache_entry *ce)
 {
 	struct strbuf buf = STRBUF_INIT;
@@ -3163,13 +3175,7 @@ static int check_preimage(struct patch *patch, struct cache_entry **ce, struct s
 		}
 		*ce = active_cache[pos];
 		if (stat_ret < 0) {
-			struct checkout costate;
-			/* checkout */
-			memset(&costate, 0, sizeof(costate));
-			costate.base_dir = "";
-			costate.refresh_cache = 1;
-			if (checkout_entry(*ce, &costate, NULL) ||
-			    lstat(old_name, st))
+			if (checkout_target(*ce, st))
 				return -1;
 		}
 		if (!cached && verify_index_match(*ce, st))
