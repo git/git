@@ -3074,6 +3074,16 @@ static struct patch *previous_patch(struct patch *patch, int *gone)
 	return previous;
 }
 
+static int verify_index_match(struct cache_entry *ce, struct stat *st)
+{
+	if (S_ISGITLINK(ce->ce_mode)) {
+		if (!S_ISDIR(st->st_mode))
+			return -1;
+		return 0;
+	}
+	return ce_match_stat(ce, st, CE_MATCH_IGNORE_VALID|CE_MATCH_IGNORE_SKIP_WORKTREE);
+}
+
 #define SUBMODULE_PATCH_WITHOUT_INDEX 1
 
 static int load_patch_target(struct strbuf *buf,
@@ -3258,16 +3268,6 @@ static int apply_data(struct patch *patch, struct stat *st, struct cache_entry *
 		return error(_("removal patch leaves file contents"));
 
 	return 0;
-}
-
-static int verify_index_match(struct cache_entry *ce, struct stat *st)
-{
-	if (S_ISGITLINK(ce->ce_mode)) {
-		if (!S_ISDIR(st->st_mode))
-			return -1;
-		return 0;
-	}
-	return ce_match_stat(ce, st, CE_MATCH_IGNORE_VALID|CE_MATCH_IGNORE_SKIP_WORKTREE);
 }
 
 /*
