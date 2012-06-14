@@ -510,14 +510,19 @@ test_expect_success '../subrepo works with port-qualified URL - ssh://hostname:2
 	)
 '
 
-test_expect_success '../subrepo path works with local path - /foo/repo' '
+# About the choice of the path in the next test:
+# - double-slash side-steps path mangling issues on Windows
+# - it is still an absolute local path
+# - there cannot be a server with a blank in its name just in case the
+#   path is used erroneously to access a //server/share style path
+test_expect_success '../subrepo path works with local path - //somewhere else/repo' '
 	(
 		cd reltest &&
 		cp pristine-.git-config .git/config &&
 		cp pristine-.gitmodules .gitmodules &&
-		git config remote.origin.url /foo/repo &&
+		git config remote.origin.url "//somewhere else/repo" &&
 		git submodule init &&
-		test "$(git config submodule.sub.url)" = /foo/subrepo
+		test "$(git config submodule.sub.url)" = "//somewhere else/subrepo"
 	)
 '
 
