@@ -341,7 +341,7 @@ See also function `git-blame-mode'."
     (save-excursion
       (goto-char (process-mark proc))
       (insert-before-markers str)
-      (goto-char 0)
+      (goto-char (point-min))
       (unless in-blame-filter
         (let ((more t)
               (in-blame-filter t))
