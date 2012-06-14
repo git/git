@@ -337,16 +337,16 @@ See also function `git-blame-mode'."
 (defvar in-blame-filter nil)
 
 (defun git-blame-filter (proc str)
-  (save-excursion
-    (set-buffer (process-buffer proc))
-    (goto-char (process-mark proc))
-    (insert-before-markers str)
-    (goto-char 0)
-    (unless in-blame-filter
-      (let ((more t)
-            (in-blame-filter t))
-        (while more
-          (setq more (git-blame-parse)))))))
+  (with-current-buffer (process-buffer proc)
+    (save-excursion
+      (goto-char (process-mark proc))
+      (insert-before-markers str)
+      (goto-char 0)
+      (unless in-blame-filter
+        (let ((more t)
+              (in-blame-filter t))
+          (while more
+            (setq more (git-blame-parse))))))))
 
 (defun git-blame-parse ()
   (cond ((looking-at "\\([0-9a-f]\\{40\\}\\) \\([0-9]+\\) \\([0-9]+\\) \\([0-9]+\\)\n")
@@ -385,33 +385,33 @@ See also function `git-blame-mode'."
           info))))
 
 (defun git-blame-create-overlay (info start-line num-lines)
-  (save-excursion
-    (set-buffer git-blame-file)
-    (let ((inhibit-point-motion-hooks t)
-          (inhibit-modification-hooks t))
-      (goto-char (point-min))
-      (forward-line (1- start-line))
-      (let* ((start (point))
-             (end (progn (forward-line num-lines) (point)))
-             (ovl (make-overlay start end))
-             (hash (car info))
-             (spec `((?h . ,(substring hash 0 6))
-                     (?H . ,hash)
-                     (?a . ,(git-blame-get-info info 'author))
-                     (?A . ,(git-blame-get-info info 'author-mail))
-                     (?c . ,(git-blame-get-info info 'committer))
-                     (?C . ,(git-blame-get-info info 'committer-mail))
-                     (?s . ,(git-blame-get-info info 'summary)))))
-        (push ovl git-blame-overlays)
-        (overlay-put ovl 'git-blame info)
-        (overlay-put ovl 'help-echo
-                     (format-spec git-blame-mouseover-format spec))
-        (if git-blame-use-colors
-            (overlay-put ovl 'face (list :background
-                                         (cdr (assq 'color (cdr info))))))
-        (overlay-put ovl 'line-prefix
-                     (propertize (format-spec git-blame-prefix-format spec)
-                                 'face 'git-blame-prefix-face))))))
+  (with-current-buffer git-blame-file
+    (save-excursion
+      (let ((inhibit-point-motion-hooks t)
+            (inhibit-modification-hooks t))
+        (goto-char (point-min))
+        (forward-line (1- start-line))
+        (let* ((start (point))
+               (end (progn (forward-line num-lines) (point)))
+               (ovl (make-overlay start end))
+               (hash (car info))
+               (spec `((?h . ,(substring hash 0 6))
+                       (?H . ,hash)
+                       (?a . ,(git-blame-get-info info 'author))
+                       (?A . ,(git-blame-get-info info 'author-mail))
+                       (?c . ,(git-blame-get-info info 'committer))
+                       (?C . ,(git-blame-get-info info 'committer-mail))
+                       (?s . ,(git-blame-get-info info 'summary)))))
+          (push ovl git-blame-overlays)
+          (overlay-put ovl 'git-blame info)
+          (overlay-put ovl 'help-echo
+                       (format-spec git-blame-mouseover-format spec))
+          (if git-blame-use-colors
+              (overlay-put ovl 'face (list :background
+                                           (cdr (assq 'color (cdr info))))))
+          (overlay-put ovl 'line-prefix
+                       (propertize (format-spec git-blame-prefix-format spec)
+                                   'face 'git-blame-prefix-face)))))))
 
 (defun git-blame-add-info (info key value)
   (nconc info (list (cons (intern key) value))))
