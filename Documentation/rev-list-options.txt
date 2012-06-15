@@ -622,6 +622,7 @@ These options are mostly targeted for packing of git repositories.
 --no-walk::
 
 	Only show the given revs, but do not traverse their ancestors.
+	This has no effect if a range is specified.
 
 --do-walk::
 
