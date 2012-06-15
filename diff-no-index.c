@@ -224,12 +224,7 @@ void diff_no_index(struct rev_info *revs,
 		}
 	}
 
-	/*
-	 * If the user asked for our exit code then don't start a
-	 * pager or we would end up reporting its exit code instead.
-	 */
-	if (!DIFF_OPT_TST(&revs->diffopt, EXIT_WITH_STATUS))
-		setup_pager();
+	setup_diff_pager(&revs->diffopt);
 
 	if (prefix) {
 		int len = strlen(prefix);
