@@ -224,8 +224,6 @@ void diff_no_index(struct rev_info *revs,
 		}
 	}
 
-	setup_diff_pager(&revs->diffopt);
-
 	if (prefix) {
 		int len = strlen(prefix);
 		const char *paths[3];
@@ -250,12 +248,14 @@ void diff_no_index(struct rev_info *revs,
 	if (!revs->diffopt.output_format)
 		revs->diffopt.output_format = DIFF_FORMAT_PATCH;
 
-	DIFF_OPT_SET(&revs->diffopt, EXIT_WITH_STATUS);
 	DIFF_OPT_SET(&revs->diffopt, NO_INDEX);
 
 	revs->max_count = -2;
 	if (diff_setup_done(&revs->diffopt) < 0)
 		die("diff_setup_done failed");
+
+	setup_diff_pager(&revs->diffopt);
+	DIFF_OPT_SET(&revs->diffopt, EXIT_WITH_STATUS);
 
 	if (queue_diff(&revs->diffopt, revs->diffopt.pathspec.raw[0],
 		       revs->diffopt.pathspec.raw[1]))
