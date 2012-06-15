@@ -2,6 +2,7 @@
 # Makefile for perl support modules and routine
 #
 makfile:=perl.mak
+modules =
 
 PERL_PATH_SQ = $(subst ','\'',$(PERL_PATH))
 prefix_SQ = $(subst ','\'',$(prefix))
@@ -22,19 +23,35 @@ clean:
 
 ifdef NO_PERL_MAKEMAKER
 instdir_SQ = $(subst ','\'',$(prefix)/lib)
+
+modules += Git
+modules += Git/I18N
+modules += Git/SVN/Memoize/YAML
+modules += Git/SVN/Fetcher
+modules += Git/SVN/Editor
+modules += Git/SVN/Prompt
+modules += Git/SVN/Ra
+
 $(makfile): ../GIT-CFLAGS Makefile
 	echo all: private-Error.pm Git.pm Git/I18N.pm > $@
-	echo '	mkdir -p blib/lib/Git' >> $@
-	echo '	$(RM) blib/lib/Git.pm; cp Git.pm blib/lib/' >> $@
-	echo '	$(RM) blib/lib/Git/I18N.pm; cp Git/I18N.pm blib/lib/Git/' >> $@
+	echo '	mkdir -p blib/lib/Git/SVN/Memoize' >> $@
+	set -e; \
+	for i in $(modules); \
+	do \
+		echo '	$(RM) blib/lib/'$$i'.pm' >> $@; \
+		echo '	cp '$$i'.pm blib/lib/'$$i'.pm' >> $@; \
+	done
 	echo '	$(RM) blib/lib/Error.pm' >> $@
 	'$(PERL_PATH_SQ)' -MError -e 'exit($$Error::VERSION < 0.15009)' || \
 	echo '	cp private-Error.pm blib/lib/Error.pm' >> $@
 	echo install: >> $@
-	echo '	mkdir -p "$$(DESTDIR)$(instdir_SQ)"' >> $@
-	echo '	mkdir -p "$$(DESTDIR)$(instdir_SQ)/Git"' >> $@
-	echo '	$(RM) "$$(DESTDIR)$(instdir_SQ)/Git.pm"; cp Git.pm "$$(DESTDIR)$(instdir_SQ)"' >> $@
-	echo '	$(RM) "$$(DESTDIR)$(instdir_SQ)/Git/I18N.pm"; cp Git/I18N.pm "$$(DESTDIR)$(instdir_SQ)/Git"' >> $@
+	echo '	mkdir -p "$$(DESTDIR)$(instdir_SQ)/Git/SVN/Memoize"' >> $@
+	set -e; \
+	for i in $(modules); \
+	do \
+		echo '	$(RM) "$$(DESTDIR)$(instdir_SQ)/'$$i'.pm"' >> $@; \
+		echo '	cp '$$i'.pm "$$(DESTDIR)$(instdir_SQ)/'$$i'.pm"' >> $@; \
+	done
 	echo '	$(RM) "$$(DESTDIR)$(instdir_SQ)/Error.pm"' >> $@
 	'$(PERL_PATH_SQ)' -MError -e 'exit($$Error::VERSION < 0.15009)' || \
 	echo '	cp private-Error.pm "$$(DESTDIR)$(instdir_SQ)/Error.pm"' >> $@
