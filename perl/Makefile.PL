@@ -24,6 +24,10 @@ endif
 MAKE_FRAG
 }
 
+# XXX. When editing this list:
+#
+# * Please update perl/Makefile, too.
+# * Don't forget to test with NO_PERL_MAKEMAKER=YesPlease
 my %pm = (
 	'Git.pm' => '$(INST_LIBDIR)/Git.pm',
 	'Git/I18N.pm' => '$(INST_LIBDIR)/Git/I18N.pm',
