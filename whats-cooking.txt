@@ -1,18 +1,28 @@
 To: git@vger.kernel.org
-Subject: What's cooking in git.git (Jun 2012, #03; Wed, 13)
-X-master-at: 2ae48a9bb87193de9e9da10abd9e7286c0e4c43d
-X-next-at: 8698a94dadcf25a536d802359376c8811d29a59d
+Subject: What's cooking in git.git (Jun 2012, #04; Fri, 15)
+X-master-at: 7dba3f73e9571963fa03549956879d15ca7ad2d3
+X-next-at: b465d9982e61447cc6f1c0b16b99b6f38e7c0a47
 
-What's cooking in git.git (Jun 2012, #03; Wed, 13)
+What's cooking in git.git (Jun 2012, #04; Fri, 15)
 --------------------------------------------------
 
 Here are the topics that have been cooking.  Commits prefixed with '-' are
 only in 'pu' (proposed updates) while commits prefixed with '+' are in 'next'.
 
-Most likely, I'll tag 1.7.11 final this weekend.  It doesn't look
-like there is any remaining topic that cannot wait for the next
-cycle.  A few small regressions on the master front have been
-patched up, and it seems we are good to go.
+A few more regression fixes have been made on the 'master' front
+since 1.7.11-rc3.
+
+ - Recent "git diff" change started counting changes to binary files
+   in bytes and adding it to shortstat output; fixed by Alexander
+   Strasser.
+
+ - Perl libraries needed for git-svn weren't correctly installed
+   when MakeMaker was not in use; fixed by Jonathan Nieder.
+
+ - Some gitweb tests failed when neither HTTP::Date or
+   Time::ParseDate was available; fixed by Ramsay Jones.
+
+The final is still expected to happen this weekend.
 
 You can find the changes described here in the integration branches of the
 repositories listed at
@@ -22,80 +32,21 @@ repositories listed at
 --------------------------------------------------
 [New Topics]
 
-* nd/i18n-branch-lego (2012-06-07) 1 commit
- - Remove i18n legos in notifying new branch tracking setup
+* lm/git-blame-el (2012-06-14) 3 commits
+ - git-blame.el: Do not use bare 0 to mean (point-min)
+ - git-blame.el: Use with-current-buffer where appropriate
+ - git-blame.el: Do not use goto-line in lisp code
 
-Restructure the way message strings are created, in preparation for
-marking them for i18n.
+Will merge to next after 1.7.11.
 
-* nd/i18n-misc (2012-06-07) 3 commits
- - rerere: remove i18n legos in result message
- - notes-merge: remove i18n legos in merge result message
- - reflog: remove i18n legos in pruning message
+* lp/no-cmd-http-fetch (2012-06-15) 1 commit
+ - builtin.h: remove unused cmd_<foo> declarations
 
-Restructure the way message strings are created, in preparation for
-marking them for i18n.
+Will merge to next after 1.7.11.
 
-* rr/doc-commit (2012-06-08) 1 commit
- - commit: document a couple of options
-
-* hv/remote-end-hung-up (2012-06-11) 1 commit
- - lessen the impression of unexpectedness on remote hangup
-
-* hv/submodule-checkout-nuke-submodules (2012-06-11) 1 commit
- - update-index: allow overwriting existing submodule index entries
-
-* jc/rev-list-simplify-merges-first-parent (2012-06-13) 3 commits
- - revision: ignore side parents while running simplify-merges
- - revision: note the lack of free() in simplify_merges()
- - revision: "simplify" options imply topo-order sort
-
-* jc/ustar-checksum-is-unsigned (2012-06-13) 1 commit
- - archive: ustar header checksum is computed unsigned
-
-* rs/git-blame-mapcar-mapc (2012-06-10) 1 commit
- - git-blame.el: use mapc instead of mapcar
-
-* rs/ipv6-ssh-url (2012-06-13) 1 commit
- - git: Wrong parsing of ssh urls with IPv6 literals ignores port
-
-* vr/use-our-perl-in-tests (2012-06-12) 3 commits
- - t/README: add a bit more Don'ts
- - tests: enclose $PERL_PATH in duoble quotes
- - t: Replace 'perl' by $PERL_PATH
-
---------------------------------------------------
-[Graduated to "master"]
-
-* cr/persistent-https (2012-05-30) 1 commit
-  (merged to 'next' on 2012-06-01 at c647464)
- + Add persistent-https to contrib
-
-A remote helper that acts as a proxy that caches ssl session for the
-https:// transport is added to the contrib/ area.
-
-* jc/fmt-merge-msg-people (2012-06-06) 1 commit
-  (merged to 'next' on 2012-06-08 at 7d8f4b6)
- + fmt-merge-msg: make attribution into comment lines
-
-* jc/svn-auth-providers-unusable-at-1.6.12 (2012-06-04) 1 commit
-  (merged to 'next' on 2012-06-04 at c4ffe24)
- + git-svn: platform auth providers are working only on 1.6.15 or newer
-
-Regression fix for people with libsvn between 1.6.12 and 1.6.15 on
-which we tried to use non-working platform auth providers.
-
-* mm/api-credentials-doc (2012-06-07) 5 commits
- + docs: fix cross-directory linkgit references
-  (merged to 'next' on 2012-06-05 at 8e14814)
- + api-credentials.txt: add "see also" section
- + api-credentials.txt: mention credential.helper explicitly
- + api-credentials.txt: show the big picture first
- + doc: fix xref link from api docs to manual pages
-
-* rr/maint-t3510-cascade-fix (2012-06-04) 1 commit
-  (merged to 'next' on 2012-06-04 at 4c3368b)
- + t3510 (cherry-pick-sequence): add missing '&&'
+* jk/diff-no-index-pager (2012-06-15) 2 commits
+ - do not run pager with diff --no-index --quiet
+ - fix pager.diff with diff --no-index
 
 --------------------------------------------------
 [Stalled]
@@ -193,6 +144,68 @@ not working :-(.
 --------------------------------------------------
 [Cooking]
 
+* nd/i18n-branch-lego (2012-06-07) 1 commit
+ - Remove i18n legos in notifying new branch tracking setup
+
+Restructure the way message strings are created, in preparation for
+marking them for i18n.
+
+Will merge to next after 1.7.11.
+
+* nd/i18n-misc (2012-06-07) 3 commits
+ - rerere: remove i18n legos in result message
+ - notes-merge: remove i18n legos in merge result message
+ - reflog: remove i18n legos in pruning message
+
+Restructure the way message strings are created, in preparation for
+marking them for i18n.
+
+Will merge to next after 1.7.11.
+
+* rr/doc-commit (2012-06-08) 1 commit
+ - commit: document a couple of options
+
+Will merge to next after 1.7.11.
+
+* hv/remote-end-hung-up (2012-06-11) 1 commit
+ - lessen the impression of unexpectedness on remote hangup
+
+Still being discussed.
+
+* hv/submodule-checkout-nuke-submodules (2012-06-11) 1 commit
+ - update-index: allow overwriting existing submodule index entries
+
+Will merge to next after 1.7.11.
+
+* jc/rev-list-simplify-merges-first-parent (2012-06-13) 3 commits
+ - revision: ignore side parents while running simplify-merges
+ - revision: note the lack of free() in simplify_merges()
+ - revision: "simplify" options imply topo-order sort
+
+I need to send this out to the list for re-review.
+
+* jc/ustar-checksum-is-unsigned (2012-06-13) 1 commit
+ - archive: ustar header checksum is computed unsigned
+
+Will merge to next after 1.7.11.
+
+* rs/git-blame-mapcar-mapc (2012-06-10) 1 commit
+ - git-blame.el: use mapc instead of mapcar
+
+Will merge to next after 1.7.11.
+
+* rs/ipv6-ssh-url (2012-06-13) 1 commit
+ - git: Wrong parsing of ssh urls with IPv6 literals ignores port
+
+Will merge to next after 1.7.11.
+
+* vr/use-our-perl-in-tests (2012-06-12) 3 commits
+ - t/README: add a bit more Don'ts
+ - tests: enclose $PERL_PATH in duoble quotes
+ - t: Replace 'perl' by $PERL_PATH
+
+Will merge to next after 1.7.11.
+
 * jc/apply-3way (2012-06-13) 19 commits
  - apply --3way: tests
  - apply: document --3way option
@@ -217,6 +230,7 @@ not working :-(.
 "git apply" learns to wiggle the base version and perform three-way merge
 when a patch does not exactly apply to the version you have.
 
+Waiting for comments.
 
 * nd/exclude-workaround-top-heavy (2012-06-07) 3 commits
  - exclude: do strcmp as much as possible before fnmatch
@@ -236,14 +250,13 @@ history said "it requires these 0 commits".
 
 Not urgent; probably early post 1.7.11.
 
-* lk/more-helpful-status-hints (2012-06-11) 5 commits
- - fixup! status: better advices when splitting a commit (during rebase -i)
+* lk/more-helpful-status-hints (2012-06-14) 4 commits
  - status: better advices when splitting a commit (during rebase -i)
  - status: don't suggest "git rm" or "git add" if not appropriate
  - t7512-status-help.sh: better advices for git status
  - wt-status.*: better advices for git status added
 
-Almost there, modulo minor details pointed out by Matthieu.
+Will merge to next after 1.7.11.
 
 * jk/no-more-pre-exec-callback (2012-06-05) 1 commit
  - pager: drop "wait for output to run less" hack
@@ -353,7 +366,8 @@ a large blob object in-core while running index-pack.
 
 Will merge to next after 1.7.11.
 
-* js/submodule-relative (2012-06-06) 4 commits
+* js/submodule-relative (2012-06-14) 5 commits
+ - t7400: avoid path mangling issues
  - submodule: fix handling of superproject origin URLs like foo, ./foo and ./foo/bar
  - submodule: fix sync handling of some relative superproject origin URLs
  - submodule: document failure to handle relative superproject origin URLs
@@ -394,4 +408,3 @@ forwarded to; this came from a laziness of the implementation of
 merging of signed tags in 1.7.9.  People may have different opinion
 on making signed and unsigned annotated tag behave differently, but
 I tend to agree that it is probably not a good idea.
-
