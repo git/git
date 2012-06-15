@@ -47,7 +47,9 @@ OPTIONS
 	linkgit:gitrevisions[7].
 	Sets of commits can be passed but no traversal is done by
 	default, as if the '--no-walk' option was specified, see
-	linkgit:git-rev-list[1].
+	linkgit:git-rev-list[1]. Note that specifying a range will
+	feed all <commit>... arguments to a single revision walk
+	(see a later example that uses 'maint master..next').
 
 -e::
 --edit::
@@ -129,6 +131,15 @@ EXAMPLES
 
 	Apply the changes introduced by all commits that are ancestors
 	of master but not of HEAD to produce new commits.
+
+`git cherry-pick maint next ^master`::
+`git cherry-pick maint master..next`::
+
+	Apply the changes introduced by all commits that are
+	ancestors of maint or next, but not master or any of its
+	ancestors.  Note that the latter does not mean `maint` and
+	everything between `master` and `next`; specifically,
+	`maint` will not be used if it is included in `master`.
 
 `git cherry-pick master{tilde}4 master{tilde}2`::
 
