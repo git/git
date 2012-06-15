@@ -1700,7 +1700,7 @@ static void show_shortstats(struct diffstat_t *data, struct diff_options *option
 			continue;
 		if (!data->files[i]->is_renamed && (added + deleted == 0)) {
 			total_files--;
-		} else {
+		} else if (!data->files[i]->is_binary) { /* don't count bytes */
 			adds += added;
 			dels += deleted;
 		}
