@@ -130,15 +130,6 @@ Unless otherwise noted, all the fixes since v1.7.10 in the maintenance
 releases are contained in this release (see release notes to them for
 details).
 
- * "git fast-export" did not give a readable error message when the
-   same mark erroneously appeared twice in the --import-marks input.
-   (merge 43bc230 js/maint-fast-export-mark-error later to maint).
-
- * "git rebase -p" used to pay attention to rebase.autosquash which
-    was wrong.  "git rebase -p -i" should, but "git rebase -p" by
-    itself should not.
-   (cherry-pick 8a6dae1 vr/rebase-autosquash-does-not-imply-i later to maint).
-
  * "git submodule init" used to report "registered for path ..."
    even for submodules that were registered earlier.
    (cherry-pick c1c259e jl/submodule-report-new-path-once later to maint).
