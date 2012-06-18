@@ -1045,7 +1045,7 @@ int cmd_grep(int argc, const char **argv, const char *prefix)
 	if (!seen_dashdash) {
 		int j;
 		for (j = i; j < argc; j++)
-			verify_filename(prefix, argv[j]);
+			verify_filename(prefix, argv[j], j == i);
 	}
 
 	paths = get_pathspec(prefix, argv + i);

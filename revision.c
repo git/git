@@ -1755,7 +1755,7 @@ int setup_revisions(int argc, const char **argv, struct rev_info *revs, struct s
 			 * but the latter we have checked in the main loop.
 			 */
 			for (j = i; j < argc; j++)
-				verify_filename(revs->prefix, argv[j]);
+				verify_filename(revs->prefix, argv[j], j == i);
 
 			append_prune_data(&prune_data, argv + i);
 			break;

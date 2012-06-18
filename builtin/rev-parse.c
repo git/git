@@ -486,7 +486,7 @@ int cmd_rev_parse(int argc, const char **argv, const char *prefix)
 
 		if (as_is) {
 			if (show_file(arg) && as_is < 2)
-				verify_filename(prefix, arg);
+				verify_filename(prefix, arg, 0);
 			continue;
 		}
 		if (!strcmp(arg,"-n")) {
@@ -732,7 +732,7 @@ int cmd_rev_parse(int argc, const char **argv, const char *prefix)
 		as_is = 1;
 		if (!show_file(arg))
 			continue;
-		verify_filename(prefix, arg);
+		verify_filename(prefix, arg, 1);
 	}
 	if (verify) {
 		if (revs_count == 1) {
