@@ -57,7 +57,7 @@ test_expect_success 'showing a range walks (Y shape, ^ first)' '
 	test_cmp expect actual.filtered
 '
 
-test_expect_failure 'showing a range walks (Y shape, ^ last)' '
+test_expect_success 'showing a range walks (Y shape, ^ last)' '
 	cat >expect <<-EOF &&
 	commit $(git rev-parse main3)
 	commit $(git rev-parse main2)
@@ -98,7 +98,7 @@ test_expect_success 'showing annotated tag plus commit' '
 	test_cmp expect actual.filtered
 '
 
-test_expect_failure 'showing range' '
+test_expect_success 'showing range' '
 	cat >expect <<-EOF &&
 	commit $(git rev-parse main3)
 	commit $(git rev-parse main2)
