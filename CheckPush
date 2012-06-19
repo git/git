@@ -4,7 +4,33 @@ for range in $(
 	prev_branch=
 	{
 		git for-each-ref --format='%(refname)' refs/heads/maint-* |
-		sed -e 's|^refs/heads/||'
+		perl -e '
+			sub compare_dotted_version {
+				my (@ours) = split(/\./, $_[0]);
+				my (@theirs) = split(/\./, $_[1]);
+				my ($i, $diff);
+
+				for ($i = 0; $i < @ours && $i < @theirs; $i++) {
+					$diff = $ours[$i] - $theirs[$i];
+					return $diff if ($diff);
+				}
+				return 1 if ($i < @ours);
+				return -1 if ($i < @theirs);
+				return 0;
+			}
+			my @maint = ();
+			while (<STDIN>) {
+				next unless s|^refs/heads/||;
+				chomp;
+				my ($v) = ($_ =~ /^maint-(.*)$/);
+				push @maint, [$v, $_];
+			}
+			for (map { $_->[1] }
+			     sort { compare_dotted_version($a->[0], $b->[0]) }
+			     @maint) {
+				print "$_\n";
+			}
+		'
 		cat <<-EOF
 		maint
 		master
