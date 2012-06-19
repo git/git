@@ -88,7 +88,7 @@ msgstr "Nach geänderten Dateien suchen..."
 
 #: git-gui.sh:1454
 msgid "Calling prepare-commit-msg hook..."
-msgstr "Aufrufen der Eintragen-Vorbereiten-Kontrolle..."
+msgstr "Aufrufen der Eintragen-Vorbereiten-Kontrolle (»prepare-commit hook«)..."
 
 #: git-gui.sh:1471
 msgid "Commit declined by prepare-commit-msg hook."
@@ -1446,7 +1446,7 @@ msgstr ""
 
 #: lib/commit.tcl:234
 msgid "Calling pre-commit hook..."
-msgstr "Aufrufen der Vor-Eintragen-Kontrolle..."
+msgstr "Aufrufen der Vor-Eintragen-Kontrolle (»pre-commit hook«)..."
 
 #: lib/commit.tcl:249
 msgid "Commit declined by pre-commit hook."
@@ -1454,7 +1454,7 @@ msgstr "Eintragen abgelehnt durch Vor-Eintragen-Kontrolle (»pre-commit hook«).
 
 #: lib/commit.tcl:272
 msgid "Calling commit-msg hook..."
-msgstr "Aufrufen der Versionsbeschreibungs-Kontrolle..."
+msgstr "Aufrufen der Versionsbeschreibungs-Kontrolle (»commit-message hook«)..."
 
 #: lib/commit.tcl:287
 msgid "Commit declined by commit-msg hook."
