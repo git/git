@@ -72,7 +72,7 @@ msgstr ""
 
 #: git-gui.sh:1154
 msgid "Cannot use bare repository:"
-msgstr "Leeres Projektarchiv kann nicht benutzt werden:"
+msgstr "Bloßes Projektarchiv kann nicht benutzt werden:"
 
 #: git-gui.sh:1162
 msgid "No working directory"
