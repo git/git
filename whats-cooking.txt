@@ -1,28 +1,17 @@
 To: git@vger.kernel.org
-Subject: What's cooking in git.git (Jun 2012, #04; Fri, 15)
-X-master-at: 7dba3f73e9571963fa03549956879d15ca7ad2d3
-X-next-at: b465d9982e61447cc6f1c0b16b99b6f38e7c0a47
+Subject: What's cooking in git.git (Jun 2012, #05; Tue, 19)
+X-master-at: d28436736a078a429213003a9472e8caeb86c286
+X-next-at: 4a7aa997f0006fbd039bce2d9fedafc4a70322d7
 
-What's cooking in git.git (Jun 2012, #04; Fri, 15)
+What's cooking in git.git (Jun 2012, #05; Tue, 19)
 --------------------------------------------------
 
 Here are the topics that have been cooking.  Commits prefixed with '-' are
 only in 'pu' (proposed updates) while commits prefixed with '+' are in 'next'.
 
-A few more regression fixes have been made on the 'master' front
-since 1.7.11-rc3.
-
- - Recent "git diff" change started counting changes to binary files
-   in bytes and adding it to shortstat output; fixed by Alexander
-   Strasser.
-
- - Perl libraries needed for git-svn weren't correctly installed
-   when MakeMaker was not in use; fixed by Jonathan Nieder.
-
- - Some gitweb tests failed when neither HTTP::Date or
-   Time::ParseDate was available; fixed by Ramsay Jones.
-
-The final is still expected to happen this weekend.
+Now 1.7.11 is out, I'll start merging topics that have been cooking
+in 'next' to 'master', but let's wait for a few days in case some
+brown paper bag bugfixes are needed.
 
 You can find the changes described here in the integration branches of the
 repositories listed at
@@ -32,24 +21,106 @@ repositories listed at
 --------------------------------------------------
 [New Topics]
 
-* lm/git-blame-el (2012-06-14) 3 commits
- - git-blame.el: Do not use bare 0 to mean (point-min)
- - git-blame.el: Use with-current-buffer where appropriate
- - git-blame.el: Do not use goto-line in lisp code
+* cn/cherry-pick-range-docs (2012-06-15) 2 commits
+ - git-cherry-pick.txt: clarify the use of revision range notation
+ - Documentation: --no-walk is no-op if range is specified
 
-Will merge to next after 1.7.11.
+Will merge to 'next' and soon to 'master'.
 
-* lp/no-cmd-http-fetch (2012-06-15) 1 commit
- - builtin.h: remove unused cmd_<foo> declarations
+* jc/sha1-name-more (2012-06-18) 9 commits
+ - sha1_name.c: get_describe_name() by definition groks only commits
+ - sha1_name.c: teach get_short_sha1() a commit-only option
+ - sha1_name.c: allow get_short_sha1() to take other flags
+ - sha1_name.c: teach find_short_packed_object() a commit-only option
+ - sha1_name.c: teach find_short_object_filename() a commit-only option
+ - sha1_name.c: refactor find_short_packed_object()
+ - sha1_name.c: rename "now" to "current"
+ - sha1_name.c: clarify what "fake" is for in find_short_object_filename()
+ - sha1_name.c: indentation fix
 
-Will merge to next after 1.7.11.
+Teaches the object name parser that a "git describe" output is
+always a commit object, to prolong the lifetime of abbreviated
+object name in it.
 
-* jk/diff-no-index-pager (2012-06-15) 2 commits
- - do not run pager with diff --no-index --quiet
- - fix pager.diff with diff --no-index
+* jk/version-string-dependency (2012-06-19) 3 commits
+ - Makefile: split prefix flags from GIT-CFLAGS
+ - Makefile: split GIT_USER_AGENT from GIT-CFLAGS
+ - Makefile: apply dependencies consistently to sparse/asm targets
+ (this branch uses jk/version-string.)
+
+* jn/perl-makemaker-leading-paths (2012-06-15) 1 commit
+ - perl/Makefile: move "mkdir -p" to module installation loop for maintainability
+
+Will wait for a few days to see if somebody comes up with a more
+concise and cleaner way to do this, but otherwise this looked good.
+
+* mm/verify-filename-fix (2012-06-18) 2 commits
+ - verify_filename(): ask the caller to chose the kind of diagnosis
+ - sha1_name: do not trigger detailed diagnosis for file arguments
+
+"git diff COPYING HEAD:COPYING" gave a nonsense error message that
+claimed that the treeish HEAD did not have COPYING in it.
+
+Will merge to 'next' and soon to 'master'.
+
+* tr/maint-show-walk (2012-06-19) 2 commits
+ - show: fix "range implies walking"
+ - Demonstrate git-show is broken with ranges
+
+Fixes "git show"'s auto-walking behaviour, and make it behave just
+like "git log" does when it walks.
+
+Note that this is different from Thomas's patch.
 
 --------------------------------------------------
 [Stalled]
+
+* db/vcs-svn (2012-06-01) 6 commits
+ - vcs-svn: drop no-op reset methods
+ - vcs-svn: fix signedness warnings
+ - vcs-svn: prefer strstr over memmem
+ - vcs-svn: prefer constcmp to prefixcmp
+ - vcs-svn: simplify cleanup in apply_one_window()
+ - vcs-svn: fix clang-analyzer error
+
+Waiting for Jonathan's clean-up offered earlier.
+
+* vr/use-our-perl-in-tests (2012-06-12) 3 commits
+ - t/README: add a bit more Don'ts
+ - tests: enclose $PERL_PATH in duoble quotes
+ - t: Replace 'perl' by $PERL_PATH
+
+Needs more work.
+
+There are still unconverted use of bare 'perl' remaining in the test
+scripts, the second patch needs its title typofixed, and PERL_PATH
+needs to be exported to the environment from test-lib.sh.
+
+* jc/apply-3way (2012-06-13) 19 commits
+ - apply --3way: tests
+ - apply: document --3way option
+ - apply: allow rerere() upon --3way results
+ - apply: register conflicted stages to the index
+ - apply: --3way with add/add conflict
+ - apply: move verify_index_match() higher
+ - apply: plug the three-way merge logic in
+ - apply: fall back on three-way merge
+ - apply: accept -3/--3way command line option
+ - apply: move "already exists" logic to check_to_create()
+ - apply: move check_to_create_blob() closer to its sole caller
+ - apply: further split load_preimage()
+ - apply: refactor "previous patch" logic
+ - apply: split load_preimage() helper function out
+ - apply: factor out checkout_target() helper function
+ - apply: refactor read_file_or_gitlink()
+ - apply: clear_image() clears things a bit more
+ - apply: a bit more comments on PATH_TO_BE_DELETED
+ - apply: fix an incomplete comment in check_patch()
+
+"git apply" learns to wiggle the base version and perform three-way merge
+when a patch does not exactly apply to the version you have.
+
+Waiting for comments.
 
 * nl/http-proxy-more (2012-05-11) 2 commits
  - http: rename HTTP_REAUTH to HTTP_AUTH_RETRY
@@ -58,6 +129,8 @@ Will merge to next after 1.7.11.
 I queued only the later two patches from this series, even though they do
 not make much sense without the first one that seems to need a bit more
 work, so that we won't forget.
+
+Will discard without prejudice, unless rerolled.
 
 * jk/no-op-push-message (2012-05-30) 1 commit
  - improve no-op push output
@@ -69,30 +142,20 @@ people who get the message when their current branch is not pushed.
 I had an impression after the discussion thread that a redesign is
 coming, but it hasn't happened yet.
 
-* fc/git-prompt-script (2012-06-10) 6 commits
- - completion: warn people about duplicated function
- - completion: split __git_ps1 into a separate script
- - completion: remove executable mode
- - Merge branch 'fc/git-complete-helper' into fc/git-prompt-script
- - tests: add tests for the bash prompt functions in the completion script
- - tests: move code to run tests under bash into a helper library
- (this branch is tangled with sg/bash-prompt.)
-
-The last remaining sticking point is what to do with the duplicated
-shell function.  Together with the warning patch at the tip, if we
-side port the tip commit from sg/bash-prompt, I think this will be
-ready for testing.
+Will discard without prejudice, unless rerolled.
 
 * sg/bash-prompt (2012-05-09) 4 commits
- - completion: respect $GIT_DIR
- - completion: use __gitdir() in _git_log()
+ . completion: respect $GIT_DIR
+ . completion: use __gitdir() in _git_log()
  - tests: add tests for the bash prompt functions in the completion script
  - tests: move code to run tests under bash into a helper library
  (this branch is tangled with fc/git-prompt-script.)
 
-This is only the "correction" bits taken from the beginning of a larger
-series that is to be rerolled.  The first two are tangled with Felipe's
-topic so a reroll, if comes, should build on top of them.
+This is only the "correction" bits taken from the beginning of a
+larger series that is to be rerolled.  The tip commit has been
+cherry-picked to fc/fc/git-prompt-script topic.
+
+Will discard without prejudice.
 
 * jc/maint-push-refs-all (2012-05-04) 2 commits
  - get_fetch_map(): tighten checks on dest refs
@@ -104,12 +167,12 @@ There still seem to be other bugs hiding (e.g. try pushing twice).
 Not ready.
 
 * jc/run-hook-env-1 (2012-03-11) 1 commit
- - run_hook(): enhance the interface to pass arbitrary environment
-
-Not urgent.
+ . run_hook(): enhance the interface to pass arbitrary environment
 
 Updates run_hook() API to be much less specific to "commit".  It would
 only be useful if people start doing more interesting things with hooks.
+
+Will discard.
 
 * jc/split-blob (2012-04-03) 6 commits
  - chunked-object: streaming checkout
@@ -144,13 +207,47 @@ not working :-(.
 --------------------------------------------------
 [Cooking]
 
+* fc/git-prompt-script (2012-06-19) 7 commits
+ - completion: respect $GIT_DIR
+ - completion: warn people about duplicated function
+ - completion: split __git_ps1 into a separate script
+ - completion: remove executable mode
+ - Merge branch 'fc/git-complete-helper' into fc/git-prompt-script
+ - tests: add tests for the bash prompt functions in the completion script
+ - tests: move code to run tests under bash into a helper library
+ (this branch is tangled with sg/bash-prompt.)
+
+Splits a rather heavy-ish "git completion" script out and creates a
+separate "git prompting" script, to help lazy-autoloading of the
+completion part while making prompting part always available.
+
+Will merge to 'next'.
+
+* lm/git-blame-el (2012-06-14) 3 commits
+ - git-blame.el: Do not use bare 0 to mean (point-min)
+ - git-blame.el: Use with-current-buffer where appropriate
+ - git-blame.el: Do not use goto-line in lisp code
+
+Will merge to 'next' and soon to 'master'.
+
+* lp/no-cmd-http-fetch (2012-06-15) 1 commit
+ - builtin.h: remove unused cmd_<foo> declarations
+
+Will merge to 'next' and soon to 'master'.
+
+* jk/diff-no-index-pager (2012-06-15) 2 commits
+ - do not run pager with diff --no-index --quiet
+ - fix pager.diff with diff --no-index
+
+Will merge to 'next' and soon to 'master'.
+
 * nd/i18n-branch-lego (2012-06-07) 1 commit
  - Remove i18n legos in notifying new branch tracking setup
 
 Restructure the way message strings are created, in preparation for
 marking them for i18n.
 
-Will merge to next after 1.7.11.
+Will merge to 'next' and soon to 'master'.
 
 * nd/i18n-misc (2012-06-07) 3 commits
  - rerere: remove i18n legos in result message
@@ -160,22 +257,22 @@ Will merge to next after 1.7.11.
 Restructure the way message strings are created, in preparation for
 marking them for i18n.
 
-Will merge to next after 1.7.11.
+Will merge to 'next' and soon to 'master'.
 
 * rr/doc-commit (2012-06-08) 1 commit
  - commit: document a couple of options
 
-Will merge to next after 1.7.11.
+Will merge to 'next' and soon to 'master'.
 
-* hv/remote-end-hung-up (2012-06-11) 1 commit
- - lessen the impression of unexpectedness on remote hangup
+* hv/remote-end-hung-up (2012-06-19) 1 commit
+ - remove the impression of unexpectedness when access is denied
 
-Still being discussed.
+Will merge to 'next'.
 
 * hv/submodule-checkout-nuke-submodules (2012-06-11) 1 commit
  - update-index: allow overwriting existing submodule index entries
 
-Will merge to next after 1.7.11.
+Will merge to 'next'.
 
 * jc/rev-list-simplify-merges-first-parent (2012-06-13) 3 commits
  - revision: ignore side parents while running simplify-merges
@@ -187,50 +284,17 @@ I need to send this out to the list for re-review.
 * jc/ustar-checksum-is-unsigned (2012-06-13) 1 commit
  - archive: ustar header checksum is computed unsigned
 
-Will merge to next after 1.7.11.
+Will merge to 'next' and soon to 'master'.
 
 * rs/git-blame-mapcar-mapc (2012-06-10) 1 commit
  - git-blame.el: use mapc instead of mapcar
 
-Will merge to next after 1.7.11.
+Will merge to 'next' and soon to 'master'.
 
 * rs/ipv6-ssh-url (2012-06-13) 1 commit
  - git: Wrong parsing of ssh urls with IPv6 literals ignores port
 
-Will merge to next after 1.7.11.
-
-* vr/use-our-perl-in-tests (2012-06-12) 3 commits
- - t/README: add a bit more Don'ts
- - tests: enclose $PERL_PATH in duoble quotes
- - t: Replace 'perl' by $PERL_PATH
-
-Will merge to next after 1.7.11.
-
-* jc/apply-3way (2012-06-13) 19 commits
- - apply --3way: tests
- - apply: document --3way option
- - apply: allow rerere() upon --3way results
- - apply: register conflicted stages to the index
- - apply: --3way with add/add conflict
- - apply: move verify_index_match() higher
- - apply: plug the three-way merge logic in
- - apply: fall back on three-way merge
- - apply: accept -3/--3way command line option
- - apply: move "already exists" logic to check_to_create()
- - apply: move check_to_create_blob() closer to its sole caller
- - apply: further split load_preimage()
- - apply: refactor "previous patch" logic
- - apply: split load_preimage() helper function out
- - apply: factor out checkout_target() helper function
- - apply: refactor read_file_or_gitlink()
- - apply: clear_image() clears things a bit more
- - apply: a bit more comments on PATH_TO_BE_DELETED
- - apply: fix an incomplete comment in check_patch()
-
-"git apply" learns to wiggle the base version and perform three-way merge
-when a patch does not exactly apply to the version you have.
-
-Waiting for comments.
+Will merge to 'next' and soon to 'master'.
 
 * nd/exclude-workaround-top-heavy (2012-06-07) 3 commits
  - exclude: do strcmp as much as possible before fnmatch
@@ -241,14 +305,18 @@ Attempts to optimize matching with an exclude pattern with a deep
 directory hierarchy by taking the part that specifies leading path
 without wildcard literally.
 
+Will merge to 'next'.
+
 * jc/bundle-complete-notice (2012-06-04) 1 commit
-  (merged to 'next' on 2012-06-05 at ee25a35)
+  (merged to 'next' on 2012-06-19 at b42227b)
  + tweak "bundle verify" of a complete history
+
+Originally merged to 'next' on 2012-06-04.
 
 Running "git bundle verify" on a bundle that records a complete
 history said "it requires these 0 commits".
 
-Not urgent; probably early post 1.7.11.
+Will merge to 'master'.
 
 * lk/more-helpful-status-hints (2012-06-14) 4 commits
  - status: better advices when splitting a commit (during rebase -i)
@@ -256,7 +324,7 @@ Not urgent; probably early post 1.7.11.
  - t7512-status-help.sh: better advices for git status
  - wt-status.*: better advices for git status added
 
-Will merge to next after 1.7.11.
+Will merge to 'next'.
 
 * jk/no-more-pre-exec-callback (2012-06-05) 1 commit
  - pager: drop "wait for output to run less" hack
@@ -264,12 +332,14 @@ Will merge to next after 1.7.11.
 On hold for 6 months until ancient "less" goes extinct.
 
 * jk/maint-t1304-setfacl (2012-06-07) 1 commit
-  (merged to 'next' on 2012-06-08 at ebba27c)
+  (merged to 'next' on 2012-06-19 at 2449521)
  + t1304: improve setfacl prerequisite setup
+
+Originally merged to 'next' on 2012-06-08.
 
 Works around a false test failure caused by a bug in ecryptofs.
 
-Not urgent; probably early post 1.7.11.
+Will merge to 'master'.
 
 * lk/rebase-i-x (2012-06-13) 1 commit
  - rebase -i: teach "--exec <cmd>"
@@ -277,83 +347,93 @@ Not urgent; probably early post 1.7.11.
 Adds -x <cmd> to "rebase -i" to insert "exec <cmd>" after each
 commit in the resulting history.
 
-Will merge to next after 1.7.11.
+Will merge to 'next'.
 
 * vr/help-per-platform (2012-06-06) 1 commit
-  (merged to 'next' on 2012-06-08 at f4b2b0b)
+  (merged to 'next' on 2012-06-19 at d9a08ba)
  + help: use HTML as the default help format on Windows
 
-Not urgent; probably early post 1.7.11.
+Originally merged to 'next' on 2012-06-08
+
+We used to always default to "man" format even on platforms where
+"man" viewer is not widely available.
+
+Will merge to 'master'.
 
 * jc/ls-files-i-dir (2012-06-05) 6 commits
-  (merged to 'next' on 2012-06-08 at 2b5a256)
+  (merged to 'next' on 2012-06-19 at 4a7aa99)
  + dir.c: make excluded() file scope static
  + unpack-trees.c: use path_excluded() in check_ok_to_remove()
  + builtin/add.c: use path_excluded()
  + path_excluded(): update API to less cache-entry centric
-  (merged to 'next' on 2012-06-05 at 8f35db3)
  + ls-files -i: micro-optimize path_excluded()
  + ls-files -i: pay attention to exclusion of leading paths
+
+Originally merged to 'next' on 2012-06-08.
 
 "git ls-files --exclude=t -i" did not consider anything under t/
 as excluded, as it did not pay attention to exclusion of leading
 paths while walking the index.  Other two users of excluded() are
 also updated.
 
-Not urgent; probably early post 1.7.11.
+Will merge to 'master'.
 
 * jc/request-pull-match-tagname (2012-06-01) 1 commit
-  (merged to 'next' on 2012-06-05 at f0dc420)
+  (merged to 'next' on 2012-06-19 at bb96d6c)
  + request-pull: really favor a matching tag
+
+Originally merged to 'next' on 2012-06-05.
 
 "git request-pull $url dev" when the tip of "dev" branch was tagged
 with "ext4-for-linus" used the contents from the tag in the output
 but still asked the "dev" branch to be pulled, not the tag.
 
-Not urgent; probably early post 1.7.11.
-
-* db/vcs-svn (2012-06-01) 6 commits
- - vcs-svn: drop no-op reset methods
- - vcs-svn: fix signedness warnings
- - vcs-svn: prefer strstr over memmem
- - vcs-svn: prefer constcmp to prefixcmp
- - vcs-svn: simplify cleanup in apply_one_window()
- - vcs-svn: fix clang-analyzer error
-
-I'd take Jonathan's clean-up offer and keep this on hold until
-1.7.11 final.
+Will merge to 'master'.
 
 * jk/version-string (2012-06-03) 3 commits
-  (merged to 'next' on 2012-06-05 at b6f7266)
+  (merged to 'next' on 2012-06-19 at 12f8e07)
  + http: get default user-agent from git_user_agent
  + version: add git_user_agent function
  + move git_version_string into version.c
+ (this branch is used by jk/version-string-dependency.)
 
-Will merge to master early post 1.7.11.
+Originally merged to 'next' on 2012-06-05.
+
+Teaches git native protocol agents to show software version over the
+wire.
+
+Will merge to 'master'.
 
 * nd/stream-pack-objects (2012-05-29) 1 commit
  - pack-objects: use streaming interface for reading large loose blobs
 
-Will merge to next after 1.7.11.
+Will merge to 'next'.
 
 * jk/clone-local (2012-05-30) 2 commits
-  (merged to 'next' on 2012-06-05 at b819eb5)
+  (merged to 'next' on 2012-06-19 at a42bbcc)
  + clone: allow --no-local to turn off local optimizations
  + docs/clone: mention that --local may be ignored
+
+Originally merged to 'next' on 2012-06-05.
 
 "git clone --local $path" started its life as an experiment to
 optionally use link/copy when cloning a repository on the disk, but
 we didn't deprecate it after we made the option a no-op to always
 use the optimization.
 
-Not urgent; probably early post 1.7.11.
+Will merge to 'master'.
 
 * jk/no-more-asciidoc7 (2012-05-30) 2 commits
-  (merged to 'next' on 2012-06-05 at 3f117df)
+  (merged to 'next' on 2012-06-19 at a36b498)
  + docs: drop antique comment from Makefile
  + docs: drop asciidoc7compatible flag
 
-Not urgent; probably early post 1.7.11.
+Originally merged to 'next' on 2012-06-05.
+
+We no longer use AsciiDoc7 syntax in our documentation and favor a
+more modern style.
+
+Will merge to 'master'.
 
 * nd/stream-index-pack (2012-05-24) 4 commits
  - index-pack: use streaming interface for collision test on large blobs
@@ -364,7 +444,7 @@ Not urgent; probably early post 1.7.11.
 Use streaming API to read from the object store to avoid having to hold
 a large blob object in-core while running index-pack.
 
-Will merge to next after 1.7.11.
+Will merge to 'next'.
 
 * js/submodule-relative (2012-06-14) 5 commits
  - t7400: avoid path mangling issues
@@ -377,12 +457,12 @@ Makes "git submodule" deal with nested submodule structure where a
 module is contained within a module whose origin is specified as a
 relative URL to its superproject's origin.
 
-Not urgent; probably early post 1.7.11.
+Will merge to 'next'.
 
 * mm/push-default-switch-warning (2012-06-06) 1 commit
  - push: start warning upcoming default change for push.default
 
-Will merge to next after 1.7.11.
+Will merge to 'next'.
 
 Hopwefully we can have a solidly tested series early in 1.7.12 or
 1.7.13 at the latest.
