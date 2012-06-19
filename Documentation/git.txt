@@ -734,7 +734,7 @@ other
 
 'GIT_EDITOR'::
 	This environment variable overrides `$EDITOR` and `$VISUAL`.
-	It is used by several git comands when, on interactive mode,
+	It is used by several git commands when, on interactive mode,
 	an editor is to be launched. See also linkgit:git-var[1]
 	and the `core.editor` option in linkgit:git-config[1].
 

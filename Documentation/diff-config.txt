@@ -54,7 +54,7 @@ and accumulating child directory counts in the parent directories:
 
 diff.statGraphWidth::
 	Limit the width of the graph part in --stat output. If set, applies
-	to all commands generating --stat outuput except format-patch.
+	to all commands generating --stat output except format-patch.
 
 diff.external::
 	If this config variable is set, diff generation is not

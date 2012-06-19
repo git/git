@@ -244,7 +244,7 @@ $highlight_bin::
 	By default set to 'highlight'; set it to full path to highlight
 	executable if it is not installed on your web server's PATH.
 	Note that 'highlight' feature must be set for gitweb to actually
-	use syntax hightlighting.
+	use syntax highlighting.
 +
 *NOTE*: if you want to add support for new file type (supported by
 "highlight" but not used by gitweb), you need to modify `%highlight_ext`

@@ -1600,7 +1600,7 @@ dangling tree b24c2473f1fd3d91352a624795be026d64c8841f
 You will see informational messages on dangling objects. They are objects
 that still exist in the repository but are no longer referenced by any of
 your branches, and can (and will) be removed after a while with "gc".
-You can run `git fsck --no-dangling` to supress these messages, and still
+You can run `git fsck --no-dangling` to suppress these messages, and still
 view real errors.
 
 [[recovering-lost-changes]]

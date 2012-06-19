@@ -9,7 +9,7 @@ SYNOPSIS
 --------
 [verse]
 'git column' [--command=<name>] [--[raw-]mode=<mode>] [--width=<width>]
-	     [--indent=<string>] [--nl=<string>] [--pading=<n>]
+	     [--indent=<string>] [--nl=<string>] [--padding=<n>]
 
 DESCRIPTION
 -----------
