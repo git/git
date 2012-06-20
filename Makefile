@@ -397,7 +397,7 @@ XDIFF_OBJS =
 VCSSVN_H =
 VCSSVN_OBJS =
 VCSSVN_TEST_OBJS =
-MISC_H =
+GENERATED_H =
 EXTRA_CPPFLAGS =
 LIB_H =
 LIB_OBJS =
@@ -574,30 +574,22 @@ VCSSVN_H += vcs-svn/fast_export.h
 VCSSVN_H += vcs-svn/svndiff.h
 VCSSVN_H += vcs-svn/svndump.h
 
-MISC_H += bisect.h
-MISC_H += branch.h
-MISC_H += bundle.h
-MISC_H += common-cmds.h
-MISC_H += fetch-pack.h
-MISC_H += reachable.h
-MISC_H += send-pack.h
-MISC_H += shortlog.h
-MISC_H += tar.h
-MISC_H += thread-utils.h
-MISC_H += url.h
-MISC_H += walker.h
-MISC_H += wt-status.h
+GENERATED_H += common-cmds.h
 
 LIB_H += advice.h
 LIB_H += archive.h
 LIB_H += argv-array.h
 LIB_H += attr.h
+LIB_H += bisect.h
 LIB_H += blob.h
+LIB_H += branch.h
 LIB_H += builtin.h
 LIB_H += bulk-checkin.h
+LIB_H += bundle.h
 LIB_H += cache-tree.h
 LIB_H += cache.h
 LIB_H += color.h
+LIB_H += column.h
 LIB_H += commit.h
 LIB_H += compat/bswap.h
 LIB_H += compat/cygwin.h
@@ -618,6 +610,7 @@ LIB_H += diff.h
 LIB_H += diffcore.h
 LIB_H += dir.h
 LIB_H += exec_cmd.h
+LIB_H += fetch-pack.h
 LIB_H += fmt-merge-msg.h
 LIB_H += fsck.h
 LIB_H += gettext.h
@@ -627,6 +620,7 @@ LIB_H += graph.h
 LIB_H += grep.h
 LIB_H += hash.h
 LIB_H += help.h
+LIB_H += http.h
 LIB_H += kwset.h
 LIB_H += levenshtein.h
 LIB_H += list-objects.h
@@ -649,6 +643,7 @@ LIB_H += pkt-line.h
 LIB_H += progress.h
 LIB_H += prompt.h
 LIB_H += quote.h
+LIB_H += reachable.h
 LIB_H += reflog-walk.h
 LIB_H += refs.h
 LIB_H += remote.h
@@ -656,9 +651,11 @@ LIB_H += rerere.h
 LIB_H += resolve-undo.h
 LIB_H += revision.h
 LIB_H += run-command.h
+LIB_H += send-pack.h
 LIB_H += sequencer.h
 LIB_H += sha1-array.h
 LIB_H += sha1-lookup.h
+LIB_H += shortlog.h
 LIB_H += sideband.h
 LIB_H += sigchain.h
 LIB_H += strbuf.h
@@ -666,14 +663,18 @@ LIB_H += streaming.h
 LIB_H += string-list.h
 LIB_H += submodule.h
 LIB_H += tag.h
+LIB_H += tar.h
 LIB_H += thread-utils.h
 LIB_H += transport.h
 LIB_H += tree-walk.h
 LIB_H += tree.h
 LIB_H += unpack-trees.h
+LIB_H += url.h
 LIB_H += userdiff.h
 LIB_H += utf8.h
 LIB_H += varint.h
+LIB_H += walker.h
+LIB_H += wt-status.h
 LIB_H += xdiff-interface.h
 LIB_H += xdiff/xdiff.h
 
@@ -2237,20 +2238,6 @@ else
 # gcc detects!
 
 $(GIT_OBJS): $(LIB_H)
-builtin/branch.o builtin/checkout.o builtin/clone.o builtin/reset.o branch.o transport.o: branch.h
-builtin/bundle.o bundle.o transport.o: bundle.h
-builtin/bisect--helper.o builtin/rev-list.o bisect.o: bisect.h
-builtin/clone.o builtin/fetch-pack.o transport.o: fetch-pack.h
-builtin/index-pack.o builtin/grep.o builtin/pack-objects.o transport-helper.o thread-utils.o: thread-utils.h
-builtin/send-pack.o transport.o: send-pack.h
-builtin/log.o builtin/shortlog.o: shortlog.h
-builtin/prune.o builtin/reflog.o reachable.o: reachable.h
-builtin/commit.o builtin/revert.o wt-status.o: wt-status.h
-builtin/tar-tree.o archive-tar.o: tar.h
-connect.o transport.o url.o http-backend.o: url.h
-builtin/branch.o builtin/commit.o builtin/tag.o column.o help.o pager.o: column.h
-http-fetch.o http-walker.o remote-curl.o transport.o walker.o: walker.h
-http.o http-walker.o http-push.o http-fetch.o remote-curl.o: http.h url.h
 
 xdiff-interface.o $(XDIFF_OBJS): $(XDIFF_H)
 
@@ -2347,7 +2334,7 @@ XGETTEXT_FLAGS_C = $(XGETTEXT_FLAGS) --language=C \
 	--keyword=_ --keyword=N_ --keyword="Q_:1,2"
 XGETTEXT_FLAGS_SH = $(XGETTEXT_FLAGS) --language=Shell
 XGETTEXT_FLAGS_PERL = $(XGETTEXT_FLAGS) --keyword=__ --language=Perl
-LOCALIZED_C := $(C_OBJ:o=c) $(LIB_H) $(XDIFF_H) $(VCSSVN_H) $(MISC_H)
+LOCALIZED_C := $(C_OBJ:o=c) $(LIB_H) $(XDIFF_H) $(VCSSVN_H) $(GENERATED_H)
 LOCALIZED_SH := $(SCRIPT_SH)
 LOCALIZED_PERL := $(SCRIPT_PERL)
 
