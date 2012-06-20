@@ -2008,7 +2008,8 @@ common-cmds.h: $(wildcard Documentation/git-*.txt)
 	$(QUIET_GEN)./generate-cmdlist.sh > $@+ && mv $@+ $@
 
 SCRIPT_DEFINES = $(SHELL_PATH_SQ):$(DIFF_SQ):$(GIT_VERSION):\
-	$(localedir_SQ):$(NO_CURL):$(USE_GETTEXT_SCHEME):$(SANE_TOOL_PATH_SQ)
+	$(localedir_SQ):$(NO_CURL):$(USE_GETTEXT_SCHEME):$(SANE_TOOL_PATH_SQ):\
+	$(gitwebdir_SQ):$(PERL_PATH_SQ)
 define cmd_munge_script
 $(RM) $@ $@+ && \
 sed -e '1s|#!.*/sh|#!$(SHELL_PATH_SQ)|' \
@@ -2018,6 +2019,8 @@ sed -e '1s|#!.*/sh|#!$(SHELL_PATH_SQ)|' \
     -e 's/@@NO_CURL@@/$(NO_CURL)/g' \
     -e 's/@@USE_GETTEXT_SCHEME@@/$(USE_GETTEXT_SCHEME)/g' \
     -e $(BROKEN_PATH_FIX) \
+    -e 's|@@GITWEBDIR@@|$(gitwebdir_SQ)|g' \
+    -e 's|@@PERL@@|$(PERL_PATH_SQ)|g' \
     $@.sh >$@+
 endef
 
@@ -2064,13 +2067,8 @@ $(patsubst %.perl,%,$(SCRIPT_PERL)): % : %.perl
 gitweb:
 	$(QUIET_SUBDIR0)gitweb $(QUIET_SUBDIR1) all
 
-git-instaweb: git-instaweb.sh gitweb
-	$(QUIET_GEN)$(RM) $@ $@+ && \
-	sed -e '1s|#!.*/sh|#!$(SHELL_PATH_SQ)|' \
-	    -e 's/@@NO_CURL@@/$(NO_CURL)/g' \
-	    -e 's|@@GITWEBDIR@@|$(gitwebdir_SQ)|g' \
-	    -e 's|@@PERL@@|$(PERL_PATH_SQ)|g' \
-	    $@.sh > $@+ && \
+git-instaweb: git-instaweb.sh gitweb GIT-SCRIPT-DEFINES
+	$(QUIET_GEN)$(cmd_munge_script) && \
 	chmod +x $@+ && \
 	mv $@+ $@
 else # NO_PERL
