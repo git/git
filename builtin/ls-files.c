@@ -200,9 +200,19 @@ static void show_ru_info(void)
 	}
 }
 
+static int ce_excluded(struct path_exclude_check *check, struct cache_entry *ce)
+{
+	int dtype = ce_to_dtype(ce);
+	return path_excluded(check, ce->name, ce_namelen(ce), &dtype);
+}
+
 static void show_files(struct dir_struct *dir)
 {
 	int i;
+	struct path_exclude_check check;
+
+	if ((dir->flags & DIR_SHOW_IGNORED))
+		path_exclude_check_init(&check, dir);
 
 	/* For cached/deleted files we don't need to even do the readdir */
 	if (show_others || show_killed) {
@@ -215,9 +225,8 @@ static void show_files(struct dir_struct *dir)
 	if (show_cached | show_stage) {
 		for (i = 0; i < active_nr; i++) {
 			struct cache_entry *ce = active_cache[i];
-			int dtype = ce_to_dtype(ce);
-			if (dir->flags & DIR_SHOW_IGNORED &&
-			    !excluded(dir, ce->name, &dtype))
+			if ((dir->flags & DIR_SHOW_IGNORED) &&
+			    !ce_excluded(&check, ce))
 				continue;
 			if (show_unmerged && !ce_stage(ce))
 				continue;
@@ -232,9 +241,8 @@ static void show_files(struct dir_struct *dir)
 			struct cache_entry *ce = active_cache[i];
 			struct stat st;
 			int err;
-			int dtype = ce_to_dtype(ce);
-			if (dir->flags & DIR_SHOW_IGNORED &&
-			    !excluded(dir, ce->name, &dtype))
+			if ((dir->flags & DIR_SHOW_IGNORED) &&
+			    !ce_excluded(&check, ce))
 				continue;
 			if (ce->ce_flags & CE_UPDATE)
 				continue;
@@ -247,6 +255,9 @@ static void show_files(struct dir_struct *dir)
 				show_ce_entry(tag_modified, ce);
 		}
 	}
+
+	if ((dir->flags & DIR_SHOW_IGNORED))
+		path_exclude_check_clear(&check);
 }
 
 /*
