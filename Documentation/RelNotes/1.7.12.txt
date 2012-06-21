@@ -1,0 +1,55 @@
+Git v1.7.12 Release Notes
+=========================
+
+Updates since v1.7.11
+---------------------
+
+UI, Workflows & Features
+
+ * "git help" used to always default to "man" format even on platforms
+   where "man" viewer is not widely available.
+
+ * "git clone --local $path" started its life as an experiment to
+   optionally use link/copy when cloning a repository on the disk, but
+   we didn't deprecate it after we made the option a no-op to always
+   use the optimization.  The command learned "--no-local" option to
+   turn this off, as a more explicit alternative over use of file://
+   URL.
+
+ * git native protocol agents learned to show software version over
+   the wire, so that the server log can be examined to see the vintage
+   distribution of clients.
+
+
+Foreign Interface
+
+
+Performance and Internal Implementation (please report possible regressions)
+
+ * Some tests showed false failures caused by a bug in ecryptofs.
+
+
+Also contains minor documentation updates and code clean-ups.
+
+
+Fixes since v1.7.11
+-------------------
+
+Unless otherwise noted, all the fixes since v1.7.11 in the maintenance
+releases are contained in this release (see release notes to them for
+details).
+
+* Running "git bundle verify" on a bundle that records a complete
+  history said "it requires these 0 commits".
+   (merge 8c3710f jc/bundle-complete-notice later to maint).
+
+* "git ls-files --exclude=t -i" did not consider anything under t/ as
+  excluded, as it did not pay attention to exclusion of leading paths
+  while walking the index.  Other two users of excluded() are also
+  updated.
+   (merge 0d316f0 jc/ls-files-i-dir later to maint).
+
+* "git request-pull $url dev" when the tip of "dev" branch was tagged
+  with "ext4-for-linus" used the contents from the tag in the output
+  but still asked the "dev" branch to be pulled, not the tag.
+   (merge 682853e jc/request-pull-match-tagname later to maint).
