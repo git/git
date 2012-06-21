@@ -4,6 +4,7 @@
 #include "run-command.h"
 #include "url.h"
 #include "credential.h"
+#include "version.h"
 
 int active_requests;
 int http_is_verbose;
@@ -299,7 +300,7 @@ static CURL *get_curl_handle(void)
 		curl_easy_setopt(result, CURLOPT_VERBOSE, 1);
 
 	curl_easy_setopt(result, CURLOPT_USERAGENT,
-		user_agent ? user_agent : GIT_HTTP_USER_AGENT);
+		user_agent ? user_agent : git_user_agent());
 
 	if (curl_ftp_no_epsv)
 		curl_easy_setopt(result, CURLOPT_FTP_USE_EPSV, 0);
