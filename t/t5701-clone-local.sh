@@ -124,4 +124,14 @@ test_expect_success 'cloning non-git directory fails' '
 	test_must_fail git clone not-a-git-repo not-a-git-repo-clone
 '
 
+test_expect_success 'cloning file:// does not hardlink' '
+	git clone --bare file://"$(pwd)"/a non-local &&
+	! repo_is_hardlinked non-local
+'
+
+test_expect_success 'cloning a local path with --no-local does not hardlink' '
+	git clone --bare --no-local a force-nonlocal &&
+	! repo_is_hardlinked force-nonlocal
+'
+
 test_done
