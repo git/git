@@ -1,17 +1,15 @@
 To: git@vger.kernel.org
-Subject: What's cooking in git.git (Jun 2012, #05; Tue, 19)
-X-master-at: d28436736a078a429213003a9472e8caeb86c286
-X-next-at: 4a7aa997f0006fbd039bce2d9fedafc4a70322d7
+Subject: What's cooking in git.git (Jun 2012, #06; Thu, 21)
+X-master-at: 0e18bef7e62d6fffd09c394381056ec7a4a79840
+X-next-at: d03daced714572d0060e2bd8ae5e751b5a245f46
 
-What's cooking in git.git (Jun 2012, #05; Tue, 19)
+What's cooking in git.git (Jun 2012, #06; Thu, 21)
 --------------------------------------------------
 
 Here are the topics that have been cooking.  Commits prefixed with '-' are
 only in 'pu' (proposed updates) while commits prefixed with '+' are in 'next'.
 
-Now 1.7.11 is out, I'll start merging topics that have been cooking
-in 'next' to 'master', but let's wait for a few days in case some
-brown paper bag bugfixes are needed.
+A brown-paper bag release 1.7.11.1 is out.
 
 You can find the changes described here in the integration branches of the
 repositories listed at
@@ -19,58 +17,86 @@ repositories listed at
     http://git-blame.blogspot.com/p/git-public-repositories.html
 
 --------------------------------------------------
-[New Topics]
+[Graduated to "master"]
 
-* cn/cherry-pick-range-docs (2012-06-15) 2 commits
- - git-cherry-pick.txt: clarify the use of revision range notation
- - Documentation: --no-walk is no-op if range is specified
+* jc/bundle-complete-notice (2012-06-04) 1 commit
+  (merged to 'next' on 2012-06-19 at b42227b)
+ + tweak "bundle verify" of a complete history
 
-Will merge to 'next' and soon to 'master'.
+Originally merged to 'next' on 2012-06-04.
 
-* jc/sha1-name-more (2012-06-18) 9 commits
- - sha1_name.c: get_describe_name() by definition groks only commits
- - sha1_name.c: teach get_short_sha1() a commit-only option
- - sha1_name.c: allow get_short_sha1() to take other flags
- - sha1_name.c: teach find_short_packed_object() a commit-only option
- - sha1_name.c: teach find_short_object_filename() a commit-only option
- - sha1_name.c: refactor find_short_packed_object()
- - sha1_name.c: rename "now" to "current"
- - sha1_name.c: clarify what "fake" is for in find_short_object_filename()
- - sha1_name.c: indentation fix
+Running "git bundle verify" on a bundle that records a complete
+history said "it requires these 0 commits".
 
-Teaches the object name parser that a "git describe" output is
-always a commit object, to prolong the lifetime of abbreviated
-object name in it.
+* jc/ls-files-i-dir (2012-06-05) 6 commits
+  (merged to 'next' on 2012-06-19 at 4a7aa99)
+ + dir.c: make excluded() file scope static
+ + unpack-trees.c: use path_excluded() in check_ok_to_remove()
+ + builtin/add.c: use path_excluded()
+ + path_excluded(): update API to less cache-entry centric
+ + ls-files -i: micro-optimize path_excluded()
+ + ls-files -i: pay attention to exclusion of leading paths
 
-* jk/version-string-dependency (2012-06-19) 3 commits
- - Makefile: split prefix flags from GIT-CFLAGS
- - Makefile: split GIT_USER_AGENT from GIT-CFLAGS
- - Makefile: apply dependencies consistently to sparse/asm targets
- (this branch uses jk/version-string.)
+Originally merged to 'next' on 2012-06-08.
 
-* jn/perl-makemaker-leading-paths (2012-06-15) 1 commit
- - perl/Makefile: move "mkdir -p" to module installation loop for maintainability
+"git ls-files --exclude=t -i" did not consider anything under t/
+as excluded, as it did not pay attention to exclusion of leading
+paths while walking the index.  Other two users of excluded() are
+also updated.
 
-Will wait for a few days to see if somebody comes up with a more
-concise and cleaner way to do this, but otherwise this looked good.
+* jc/request-pull-match-tagname (2012-06-01) 1 commit
+  (merged to 'next' on 2012-06-19 at bb96d6c)
+ + request-pull: really favor a matching tag
 
-* mm/verify-filename-fix (2012-06-18) 2 commits
- - verify_filename(): ask the caller to chose the kind of diagnosis
- - sha1_name: do not trigger detailed diagnosis for file arguments
+Originally merged to 'next' on 2012-06-05.
 
-"git diff COPYING HEAD:COPYING" gave a nonsense error message that
-claimed that the treeish HEAD did not have COPYING in it.
+"git request-pull $url dev" when the tip of "dev" branch was tagged
+with "ext4-for-linus" used the contents from the tag in the output
+but still asked the "dev" branch to be pulled, not the tag.
 
-Will merge to 'next' and soon to 'master'.
+* jk/clone-local (2012-05-30) 2 commits
+  (merged to 'next' on 2012-06-19 at a42bbcc)
+ + clone: allow --no-local to turn off local optimizations
+ + docs/clone: mention that --local may be ignored
 
-* tr/maint-show-walk (2012-06-19) 2 commits
- - show: fix "range implies walking"
- - Demonstrate git-show is broken with ranges
+Originally merged to 'next' on 2012-06-05.
 
-Fixes "git show"'s auto-walking behaviour, and make it behave just
-like "git log" does when it walks.
+"git clone --local $path" started its life as an experiment to
+optionally use link/copy when cloning a repository on the disk, but
+we didn't deprecate it after we made the option a no-op to always
+use the optimization.
 
-Note that this is different from Thomas's patch.
+The command learns "--no-local" option to turn this off, as a more
+explicit alternative over use of file:// URL.
+
+* jk/maint-t1304-setfacl (2012-06-07) 1 commit
+  (merged to 'next' on 2012-06-19 at 2449521)
+ + t1304: improve setfacl prerequisite setup
+
+Originally merged to 'next' on 2012-06-08.
+
+Works around a false test failure caused by a bug in ecryptofs.
+
+* jk/version-string (2012-06-03) 3 commits
+  (merged to 'next' on 2012-06-19 at 12f8e07)
+ + http: get default user-agent from git_user_agent
+ + version: add git_user_agent function
+ + move git_version_string into version.c
+ (this branch is used by jk/version-string-dependency.)
+
+Originally merged to 'next' on 2012-06-05.
+
+Teaches git native protocol agents to show software version over the
+wire.
+
+* vr/help-per-platform (2012-06-06) 1 commit
+  (merged to 'next' on 2012-06-19 at d9a08ba)
+ + help: use HTML as the default help format on Windows
+
+Originally merged to 'next' on 2012-06-08
+
+We used to always default to "man" format even on platforms where
+"man" viewer is not widely available.
 
 --------------------------------------------------
 [Stalled]
@@ -207,6 +233,73 @@ not working :-(.
 --------------------------------------------------
 [Cooking]
 
+* cn/cherry-pick-range-docs (2012-06-15) 2 commits
+  (merged to 'next' on 2012-06-21 at 5cf7f97)
+ + git-cherry-pick.txt: clarify the use of revision range notation
+ + Documentation: --no-walk is no-op if range is specified
+
+The command line argument of "git cherry-pick maint master..next" is
+just an ordinary revision range, which is unintuitive and at least
+deserves documentation.
+
+Will merge to 'master'.
+
+* jc/sha1-name-more (2012-06-21) 9 commits
+ - sha1_name.c: get_describe_name() by definition groks only commits
+ - sha1_name.c: teach get_short_sha1() a commit-only option
+ - sha1_name.c: allow get_short_sha1() to take other flags
+ - sha1_name.c: restructure disambiguation of short names
+ - sha1_name.c: correct misnamed "canonical" and "res"
+ - sha1_name.c: refactor find_short_packed_object()
+ - sha1_name.c: rename "now" to "current"
+ - sha1_name.c: clarify what "fake" is for in find_short_object_filename()
+ - sha1_name.c: indentation fix
+
+Teaches the object name parser that a "git describe" output is
+always a commit object, to prolong the lifetime of abbreviated
+object name in it.
+
+* jk/version-string-dependency (2012-06-20) 11 commits
+ - Makefile: move GIT-VERSION-FILE dependencies closer to use
+ - Makefile: build instaweb similar to other scripts
+ - Makefile: update scripts when build-time parameters change
+ - Makefile: do not replace @@GIT_VERSION@@ in shell scripts
+ - Makefile: split prefix flags from GIT-CFLAGS
+ - Makefile: split GIT_USER_AGENT from GIT-CFLAGS
+ - Makefile: do not replace @@GIT_USER_AGENT@@ in scripts
+ - Makefile: apply dependencies consistently to sparse/asm targets
+ - Makefile: do not have git.o depend on common-cmds.h
+ - Makefile: fold MISC_H into LIB_H
+ - Makefile: sort LIB_H list
+
+Will hold in 'pu' to give Peff and Jonathan to work out improvements
+for a week or so.
+
+* jn/perl-makemaker-leading-paths (2012-06-15) 1 commit
+ - perl/Makefile: move "mkdir -p" to module installation loop for maintainability
+
+Will wait for a few days to see if somebody comes up with a more
+concise and cleaner way to do this, but otherwise this looked good.
+
+* mm/verify-filename-fix (2012-06-18) 2 commits
+  (merged to 'next' on 2012-06-21 at d03dace)
+ + verify_filename(): ask the caller to chose the kind of diagnosis
+ + sha1_name: do not trigger detailed diagnosis for file arguments
+
+"git diff COPYING HEAD:COPYING" gave a nonsense error message that
+claimed that the treeish HEAD did not have COPYING in it.
+
+Will merge to 'master'.
+
+* tr/maint-show-walk (2012-06-19) 2 commits
+ - show: fix "range implies walking"
+ - Demonstrate git-show is broken with ranges
+
+Fixes "git show"'s auto-walking behaviour, and make it behave just
+like "git log" does when it walks.
+
+Note that this is different from Thomas's patch.
+
 * fc/git-prompt-script (2012-06-19) 7 commits
  - completion: respect $GIT_DIR
  - completion: warn people about duplicated function
@@ -224,45 +317,53 @@ completion part while making prompting part always available.
 Will merge to 'next'.
 
 * lm/git-blame-el (2012-06-14) 3 commits
- - git-blame.el: Do not use bare 0 to mean (point-min)
- - git-blame.el: Use with-current-buffer where appropriate
- - git-blame.el: Do not use goto-line in lisp code
+  (merged to 'next' on 2012-06-21 at 6514487)
+ + git-blame.el: Do not use bare 0 to mean (point-min)
+ + git-blame.el: Use with-current-buffer where appropriate
+ + git-blame.el: Do not use goto-line in lisp code
 
-Will merge to 'next' and soon to 'master'.
+Will merge to 'master'.
 
 * lp/no-cmd-http-fetch (2012-06-15) 1 commit
- - builtin.h: remove unused cmd_<foo> declarations
+  (merged to 'next' on 2012-06-21 at 242a10e)
+ + builtin.h: remove unused cmd_<foo> declarations
 
-Will merge to 'next' and soon to 'master'.
+Will merge to 'master'.
 
 * jk/diff-no-index-pager (2012-06-15) 2 commits
- - do not run pager with diff --no-index --quiet
- - fix pager.diff with diff --no-index
+  (merged to 'next' on 2012-06-21 at e2a2562)
+ + do not run pager with diff --no-index --quiet
+ + fix pager.diff with diff --no-index
 
-Will merge to 'next' and soon to 'master'.
+"git diff --no-index" did not work with pagers correctly.
+
+Will merge to 'master'.
 
 * nd/i18n-branch-lego (2012-06-07) 1 commit
- - Remove i18n legos in notifying new branch tracking setup
+  (merged to 'next' on 2012-06-21 at 0cb53fc)
+ + Remove i18n legos in notifying new branch tracking setup
 
 Restructure the way message strings are created, in preparation for
 marking them for i18n.
 
-Will merge to 'next' and soon to 'master'.
+Will merge to 'master'.
 
 * nd/i18n-misc (2012-06-07) 3 commits
- - rerere: remove i18n legos in result message
- - notes-merge: remove i18n legos in merge result message
- - reflog: remove i18n legos in pruning message
+  (merged to 'next' on 2012-06-21 at 0a82040)
+ + rerere: remove i18n legos in result message
+ + notes-merge: remove i18n legos in merge result message
+ + reflog: remove i18n legos in pruning message
 
 Restructure the way message strings are created, in preparation for
 marking them for i18n.
 
-Will merge to 'next' and soon to 'master'.
+Will merge to 'master'.
 
 * rr/doc-commit (2012-06-08) 1 commit
- - commit: document a couple of options
+  (merged to 'next' on 2012-06-21 at af8301c)
+ + commit: document a couple of options
 
-Will merge to 'next' and soon to 'master'.
+Will merge to 'master'.
 
 * hv/remote-end-hung-up (2012-06-19) 1 commit
  - remove the impression of unexpectedness when access is denied
@@ -282,19 +383,28 @@ Will merge to 'next'.
 I need to send this out to the list for re-review.
 
 * jc/ustar-checksum-is-unsigned (2012-06-13) 1 commit
- - archive: ustar header checksum is computed unsigned
+  (merged to 'next' on 2012-06-21 at bb8e2b0)
+ + archive: ustar header checksum is computed unsigned
 
-Will merge to 'next' and soon to 'master'.
+"git archive" incorrectly computed the header checksum; the symptom
+was observed only when using pathnames with hi-bit set.
+
+Will merge to 'master'.
 
 * rs/git-blame-mapcar-mapc (2012-06-10) 1 commit
- - git-blame.el: use mapc instead of mapcar
+  (merged to 'next' on 2012-06-21 at 71a3b36)
+ + git-blame.el: use mapc instead of mapcar
 
-Will merge to 'next' and soon to 'master'.
+Will merge to 'master'.
 
 * rs/ipv6-ssh-url (2012-06-13) 1 commit
- - git: Wrong parsing of ssh urls with IPv6 literals ignores port
+  (merged to 'next' on 2012-06-21 at d0116a8)
+ + git: Wrong parsing of ssh urls with IPv6 literals ignores port
 
-Will merge to 'next' and soon to 'master'.
+Will merge to 'master'.
+
+ssh:// URLs to IPv6 hosts with custom port number were parsed
+incorrectly.
 
 * nd/exclude-workaround-top-heavy (2012-06-07) 3 commits
  - exclude: do strcmp as much as possible before fnmatch
@@ -306,17 +416,6 @@ directory hierarchy by taking the part that specifies leading path
 without wildcard literally.
 
 Will merge to 'next'.
-
-* jc/bundle-complete-notice (2012-06-04) 1 commit
-  (merged to 'next' on 2012-06-19 at b42227b)
- + tweak "bundle verify" of a complete history
-
-Originally merged to 'next' on 2012-06-04.
-
-Running "git bundle verify" on a bundle that records a complete
-history said "it requires these 0 commits".
-
-Will merge to 'master'.
 
 * lk/more-helpful-status-hints (2012-06-14) 4 commits
  - status: better advices when splitting a commit (during rebase -i)
@@ -331,16 +430,6 @@ Will merge to 'next'.
 
 On hold for 6 months until ancient "less" goes extinct.
 
-* jk/maint-t1304-setfacl (2012-06-07) 1 commit
-  (merged to 'next' on 2012-06-19 at 2449521)
- + t1304: improve setfacl prerequisite setup
-
-Originally merged to 'next' on 2012-06-08.
-
-Works around a false test failure caused by a bug in ecryptofs.
-
-Will merge to 'master'.
-
 * lk/rebase-i-x (2012-06-13) 1 commit
  - rebase -i: teach "--exec <cmd>"
 
@@ -349,79 +438,10 @@ commit in the resulting history.
 
 Will merge to 'next'.
 
-* vr/help-per-platform (2012-06-06) 1 commit
-  (merged to 'next' on 2012-06-19 at d9a08ba)
- + help: use HTML as the default help format on Windows
-
-Originally merged to 'next' on 2012-06-08
-
-We used to always default to "man" format even on platforms where
-"man" viewer is not widely available.
-
-Will merge to 'master'.
-
-* jc/ls-files-i-dir (2012-06-05) 6 commits
-  (merged to 'next' on 2012-06-19 at 4a7aa99)
- + dir.c: make excluded() file scope static
- + unpack-trees.c: use path_excluded() in check_ok_to_remove()
- + builtin/add.c: use path_excluded()
- + path_excluded(): update API to less cache-entry centric
- + ls-files -i: micro-optimize path_excluded()
- + ls-files -i: pay attention to exclusion of leading paths
-
-Originally merged to 'next' on 2012-06-08.
-
-"git ls-files --exclude=t -i" did not consider anything under t/
-as excluded, as it did not pay attention to exclusion of leading
-paths while walking the index.  Other two users of excluded() are
-also updated.
-
-Will merge to 'master'.
-
-* jc/request-pull-match-tagname (2012-06-01) 1 commit
-  (merged to 'next' on 2012-06-19 at bb96d6c)
- + request-pull: really favor a matching tag
-
-Originally merged to 'next' on 2012-06-05.
-
-"git request-pull $url dev" when the tip of "dev" branch was tagged
-with "ext4-for-linus" used the contents from the tag in the output
-but still asked the "dev" branch to be pulled, not the tag.
-
-Will merge to 'master'.
-
-* jk/version-string (2012-06-03) 3 commits
-  (merged to 'next' on 2012-06-19 at 12f8e07)
- + http: get default user-agent from git_user_agent
- + version: add git_user_agent function
- + move git_version_string into version.c
- (this branch is used by jk/version-string-dependency.)
-
-Originally merged to 'next' on 2012-06-05.
-
-Teaches git native protocol agents to show software version over the
-wire.
-
-Will merge to 'master'.
-
 * nd/stream-pack-objects (2012-05-29) 1 commit
  - pack-objects: use streaming interface for reading large loose blobs
 
 Will merge to 'next'.
-
-* jk/clone-local (2012-05-30) 2 commits
-  (merged to 'next' on 2012-06-19 at a42bbcc)
- + clone: allow --no-local to turn off local optimizations
- + docs/clone: mention that --local may be ignored
-
-Originally merged to 'next' on 2012-06-05.
-
-"git clone --local $path" started its life as an experiment to
-optionally use link/copy when cloning a repository on the disk, but
-we didn't deprecate it after we made the option a no-op to always
-use the optimization.
-
-Will merge to 'master'.
 
 * jk/no-more-asciidoc7 (2012-05-30) 2 commits
   (merged to 'next' on 2012-06-19 at a36b498)
@@ -459,7 +479,7 @@ relative URL to its superproject's origin.
 
 Will merge to 'next'.
 
-* mm/push-default-switch-warning (2012-06-06) 1 commit
+* mm/push-default-switch-warning (2012-06-20) 1 commit
  - push: start warning upcoming default change for push.default
 
 Will merge to 'next'.
