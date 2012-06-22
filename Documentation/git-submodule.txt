@@ -140,7 +140,7 @@ update::
 	checkout the commit specified in the index of the containing repository.
 	This will make the submodules HEAD be detached unless `--rebase` or
 	`--merge` is specified or the key `submodule.$name.update` is set to
-	`rebase`, `merge` or `none`. `none` can be overriden by specifying
+	`rebase`, `merge` or `none`. `none` can be overridden by specifying
 	`--checkout`.
 +
 If the submodule is not yet initialized, and you just want to use the

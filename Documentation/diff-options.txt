@@ -59,7 +59,7 @@ endif::git-format-patch[]
 	Generate a diffstat. By default, as much space as necessary
 	will be used for the filename part, and the rest for the graph
 	part. Maximum width defaults to terminal width, or 80 columns
-	if not connected to a terminal, and can be overriden by
+	if not connected to a terminal, and can be overridden by
 	`<width>`. The width of the filename part can be limited by
 	giving another width `<name-width>` after a comma. The width
 	of the graph part can be limited by using

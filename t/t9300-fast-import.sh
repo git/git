@@ -2117,7 +2117,7 @@ test_expect_success \
     grep :1 git.marks'
 
 test_expect_success \
-    'R: export-marks options can be overriden by commandline options' \
+    'R: export-marks options can be overridden by commandline options' \
     'cat input | git fast-import --export-marks=other.marks &&
     grep :1 other.marks'
 
