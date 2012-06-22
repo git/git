@@ -67,4 +67,33 @@ test_expect_success 'read with --list: xdg file exists and ~/.gitconfig exists' 
 '
 
 
+test_expect_success 'Setup' '
+	git init git &&
+	cd git &&
+	echo foo >to_be_excluded
+'
+
+
+test_expect_success 'Exclusion of a file in the XDG ignore file' '
+	mkdir -p "$HOME"/.config/git/ &&
+	echo to_be_excluded >"$HOME"/.config/git/ignore &&
+	test_must_fail git add to_be_excluded
+'
+
+
+test_expect_success 'Exclusion in both XDG and local ignore files' '
+	echo to_be_excluded >.gitignore &&
+	test_must_fail git add to_be_excluded
+'
+
+
+test_expect_success 'Exclusion in a non-XDG global ignore file' '
+	rm .gitignore &&
+	echo >"$HOME"/.config/git/ignore &&
+	echo to_be_excluded >"$HOME"/my_gitignore &&
+	git config core.excludesfile "$HOME"/my_gitignore &&
+	test_must_fail git add to_be_excluded
+'
+
+
 test_done
