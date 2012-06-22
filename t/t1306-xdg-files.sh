@@ -96,4 +96,33 @@ test_expect_success 'Exclusion in a non-XDG global ignore file' '
 '
 
 
+test_expect_success 'Checking attributes in the XDG attributes file' '
+	echo foo >f &&
+	git check-attr -a f >actual &&
+	test_line_count -eq 0 actual &&
+	echo "f attr_f" >"$HOME"/.config/git/attributes &&
+	echo "f: attr_f: set" >expected &&
+	git check-attr -a f >actual &&
+	test_cmp expected actual
+'
+
+
+test_expect_success 'Checking attributes in both XDG and local attributes files' '
+	echo "f -attr_f" >.gitattributes &&
+	echo "f: attr_f: unset" >expected &&
+	git check-attr -a f >actual &&
+	test_cmp expected actual
+'
+
+
+test_expect_success 'Checking attributes in a non-XDG global attributes file' '
+	test_might_fail rm .gitattributes &&
+	echo "f attr_f=test" >"$HOME"/my_gitattributes &&
+	git config core.attributesfile "$HOME"/my_gitattributes &&
+	echo "f: attr_f: test" >expected &&
+	git check-attr -a f >actual &&
+	test_cmp expected actual
+'
+
+
 test_done
