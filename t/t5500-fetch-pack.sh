@@ -125,6 +125,11 @@ test_expect_success 'single branch object count' '
 	test_cmp expected count.singlebranch
 '
 
+test_expect_success 'single given branch clone' '
+	git clone --single-branch --branch A "file://$(pwd)/." branch-a &&
+	test_must_fail git --git-dir=branch-a/.git rev-parse origin/B
+'
+
 test_expect_success 'clone shallow' '
 	git clone --no-single-branch --depth 2 "file://$(pwd)/." shallow
 '
@@ -276,7 +281,7 @@ test_expect_success 'clone shallow with --branch' '
 '
 
 test_expect_success 'clone shallow object count' '
-	echo "in-pack: 12" > count3.expected &&
+	echo "in-pack: 6" > count3.expected &&
 	GIT_DIR=shallow3/.git git count-objects -v |
 		grep "^in-pack" > count3.actual &&
 	test_cmp count3.expected count3.actual
