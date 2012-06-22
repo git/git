@@ -62,7 +62,7 @@ test_expect_success 'am with dos files config am.keepcr' '
 	git diff --exit-code master
 '
 
-test_expect_success 'am with dos files config am.keepcr overriden by --no-keep-cr' '
+test_expect_success 'am with dos files config am.keepcr overridden by --no-keep-cr' '
 	git config am.keepcr 1 &&
 	git checkout -b dosfiles-conf-keepcr-override initial &&
 	git format-patch -k initial..master &&
@@ -83,7 +83,7 @@ test_expect_success 'am with dos files with --keep-cr continue' '
 	git diff --exit-code master
 '
 
-test_expect_success 'am with unix files config am.keepcr overriden by --no-keep-cr' '
+test_expect_success 'am with unix files config am.keepcr overridden by --no-keep-cr' '
 	git config am.keepcr 1 &&
 	git checkout -b unixfiles-conf-keepcr-override initial &&
 	cp -f file1 file &&
