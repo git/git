@@ -387,10 +387,7 @@ int cmd_config(int argc, const char **argv, const char *prefix)
 
 		home_config_paths(&user_config, &xdg_config, "config");
 
-		if (access(user_config, R_OK) && !access(xdg_config, R_OK) &&
-		    (actions == ACTION_LIST ||
-		     actions == ACTION_GET_COLOR ||
-		     actions == ACTION_GET_COLORBOOL))
+		if (access(user_config, R_OK) && !access(xdg_config, R_OK))
 			given_config_file = xdg_config;
 		else if (user_config)
 			given_config_file = user_config;

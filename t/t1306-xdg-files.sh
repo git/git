@@ -125,4 +125,34 @@ test_expect_success 'Checking attributes in a non-XDG global attributes file' '
 '
 
 
+test_expect_success 'write: xdg file exists and ~/.gitconfig doesn'\''t' '
+	mkdir -p "$HOME"/.config/git &&
+	>"$HOME"/.config/git/config &&
+	test_might_fail rm "$HOME"/.gitconfig &&
+	git config --global user.name "write_config" &&
+	echo "[user]" >expected &&
+	echo "	name = write_config" >>expected &&
+	test_cmp expected "$HOME"/.config/git/config
+'
+
+
+test_expect_success 'write: xdg file exists and ~/.gitconfig exists' '
+	>"$HOME"/.gitconfig &&
+	git config --global user.name "write_gitconfig" &&
+	echo "[user]" >expected &&
+	echo "	name = write_gitconfig" >>expected &&
+	test_cmp expected "$HOME"/.gitconfig
+'
+
+
+test_expect_success 'write: ~/.config/git/ exists and config file doesn'\''t' '
+	test_might_fail rm "$HOME"/.gitconfig &&
+	test_might_fail rm "$HOME"/.config/git/config &&
+	git config --global user.name "write_gitconfig" &&
+	echo "[user]" >expected &&
+	echo "	name = write_gitconfig" >>expected &&
+	test_cmp expected "$HOME"/.gitconfig
+'
+
+
 test_done
