@@ -449,10 +449,10 @@ int cmd_help(int argc, const char **argv, const char *prefix)
 	setup_git_directory_gently(&nongit);
 	git_config(git_help_config, NULL);
 
-	if (parsed_help_format == HELP_FORMAT_NONE)
-		help_format = parse_help_format(DEFAULT_HELP_FORMAT);
-	else
+	if (parsed_help_format != HELP_FORMAT_NONE)
 		help_format = parsed_help_format;
+	if (help_format == HELP_FORMAT_NONE)
+		help_format = parse_help_format(DEFAULT_HELP_FORMAT);
 
 	alias = alias_lookup(argv[0]);
 	if (alias && !is_git_command(argv[0])) {
