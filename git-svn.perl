@@ -367,9 +367,9 @@ Git::SVN::init_vars();
 eval {
 	Git::SVN::verify_remotes_sanity();
 	$cmd{$cmd}->[0]->(@ARGV);
+	post_fetch_checkout();
 };
 fatal $@ if $@;
-post_fetch_checkout();
 exit 0;
 
 ####################### primary functions ######################
@@ -1598,8 +1598,8 @@ sub rebase_cmd {
 
 sub post_fetch_checkout {
 	return if $_no_checkout;
+	return if verify_ref('HEAD^0');
 	my $gs = $Git::SVN::_head or return;
-	return if verify_ref('refs/heads/master^0');
 
 	# look for "trunk" ref if it exists
 	my $remote = Git::SVN::read_all_remotes()->{$gs->{repo_id}};
@@ -1612,9 +1612,8 @@ sub post_fetch_checkout {
 		}
 	}
 
-	my $valid_head = verify_ref('HEAD^0');
-	command_noisy(qw(update-ref refs/heads/master), $gs->refname);
-	return if ($valid_head || !verify_ref('HEAD^0'));
+	command_noisy(qw(update-ref HEAD), $gs->refname);
+	return unless verify_ref('HEAD^0');
 
 	return if $ENV{GIT_DIR} !~ m#^(?:.*/)?\.git$#;
 	my $index = $ENV{GIT_INDEX_FILE} || "$ENV{GIT_DIR}/index";
