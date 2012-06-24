@@ -71,6 +71,26 @@ char *git_terminal_prompt(const char *prompt, int echo)
 	return buf.buf;
 }
 
+#elif defined(WIN32)
+
+char *git_terminal_prompt(const char *prompt, int echo)
+{
+	static struct strbuf buf = STRBUF_INIT;
+
+	fputs(prompt, stderr);
+	strbuf_reset(&buf);
+	for (;;) {
+		int c = _getch();
+		if (c == '\n' || c == '\r')
+			break;
+		if (echo)
+			putc(c, stderr);
+		strbuf_addch(&buf, c);
+	}
+	putc('\n', stderr);
+	return buf.buf;
+}
+
 #else
 
 char *git_terminal_prompt(const char *prompt, int echo)
