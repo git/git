@@ -64,7 +64,10 @@ test_expect_success 'no empty path components' '
 
 test_expect_success 'clone remote repository' '
 	rm -rf test_repo_clone &&
-	git clone $HTTPD_URL/smart/test_repo.git test_repo_clone
+	git clone $HTTPD_URL/smart/test_repo.git test_repo_clone &&
+	(
+		cd test_repo_clone && git config push.default matching
+	)
 '
 
 test_expect_success 'push to remote repository (standard)' '
