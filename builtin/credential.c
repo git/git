@@ -19,10 +19,7 @@ int cmd_credential(int argc, const char **argv, const char *prefix)
 
 	if (!strcmp(op, "fill")) {
 		credential_fill(&c);
-		if (c.username)
-			printf("username=%s\n", c.username);
-		if (c.password)
-			printf("password=%s\n", c.password);
+		credential_write(&c, stdout);
 	} else if (!strcmp(op, "approve")) {
 		credential_approve(&c);
 	} else if (!strcmp(op, "reject")) {

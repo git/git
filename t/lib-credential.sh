@@ -62,6 +62,8 @@ helper_test() {
 		protocol=https
 		host=example.com
 		--
+		protocol=https
+		host=example.com
 		username=askpass-username
 		password=askpass-password
 		--
@@ -84,6 +86,8 @@ helper_test() {
 		protocol=https
 		host=example.com
 		--
+		protocol=https
+		host=example.com
 		username=store-user
 		password=store-pass
 		--
@@ -95,6 +99,8 @@ helper_test() {
 		protocol=http
 		host=example.com
 		--
+		protocol=http
+		host=example.com
 		username=askpass-username
 		password=askpass-password
 		--
@@ -108,6 +114,8 @@ helper_test() {
 		protocol=https
 		host=other.tld
 		--
+		protocol=https
+		host=other.tld
 		username=askpass-username
 		password=askpass-password
 		--
@@ -122,6 +130,8 @@ helper_test() {
 		host=example.com
 		username=other
 		--
+		protocol=https
+		host=example.com
 		username=other
 		password=askpass-password
 		--
@@ -143,6 +153,9 @@ helper_test() {
 		host=path.tld
 		path=bar.git
 		--
+		protocol=http
+		host=path.tld
+		path=bar.git
 		username=askpass-username
 		password=askpass-password
 		--
@@ -160,6 +173,8 @@ helper_test() {
 		protocol=https
 		host=example.com
 		--
+		protocol=https
+		host=example.com
 		username=askpass-username
 		password=askpass-password
 		--
@@ -186,6 +201,8 @@ helper_test() {
 		host=example.com
 		username=user1
 		--
+		protocol=https
+		host=example.com
 		username=user1
 		password=pass1
 		EOF
@@ -194,6 +211,8 @@ helper_test() {
 		host=example.com
 		username=user2
 		--
+		protocol=https
+		host=example.com
 		username=user2
 		password=pass2
 		EOF
@@ -210,6 +229,8 @@ helper_test() {
 		host=example.com
 		username=user1
 		--
+		protocol=https
+		host=example.com
 		username=user1
 		password=askpass-password
 		--
@@ -223,6 +244,8 @@ helper_test() {
 		host=example.com
 		username=user2
 		--
+		protocol=https
+		host=example.com
 		username=user2
 		password=pass2
 		EOF
@@ -244,6 +267,8 @@ helper_test_timeout() {
 		protocol=https
 		host=timeout.tld
 		--
+		protocol=https
+		host=timeout.tld
 		username=askpass-username
 		password=askpass-password
 		--
