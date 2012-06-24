@@ -1067,7 +1067,6 @@ EOF
 }
 
 sub diff_applies {
-	my $fh;
 	return run_git_apply($patch_mode_flavour{APPLY_CHECK} . ' --check',
 			     map { @{$_->{TEXT}} } @_);
 }
@@ -1514,7 +1513,6 @@ sub patch_update_file {
 	}
 
 	if (@result) {
-		my $fh;
 		my @patch = reassemble_patch($head->{TEXT}, @result);
 		my $apply_routine = $patch_mode_flavour{APPLY};
 		&$apply_routine(@patch);
