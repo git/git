@@ -4,10 +4,20 @@
 # stdout and stderr should be provided on stdin,
 # separated by "--".
 check() {
+	credential_opts=
+	credential_cmd=$1
+	shift
+	for arg in "$@"; do
+		credential_opts="$credential_opts -c credential.helper='$arg'"
+	done
 	read_chunk >stdin &&
 	read_chunk >expect-stdout &&
 	read_chunk >expect-stderr &&
-	test-credential "$@" <stdin >stdout 2>stderr &&
+	if ! eval "git $credential_opts credential $credential_cmd <stdin >stdout 2>stderr"; then
+		echo "git credential failed with code $?" &&
+		cat stderr &&
+		false
+	fi &&
 	test_cmp expect-stdout stdout &&
 	test_cmp expect-stderr stderr
 }
@@ -41,7 +51,7 @@ reject() {
 		echo protocol=$2
 		echo host=$3
 		echo username=$4
-	) | test-credential reject $1
+	) | git -c credential.helper=$1 credential reject
 }
 
 helper_test() {
