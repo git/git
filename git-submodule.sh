@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# git-submodules.sh: add, init, update or list git submodules
+# git-submodule.sh: add, init, update or list git submodules
 #
 # Copyright (c) 2007 Lars Hjemli
 
