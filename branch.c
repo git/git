@@ -74,25 +74,33 @@ void install_branch_config(int flag, const char *local, const char *origin, cons
 		strbuf_addf(&key, "branch.%s.rebase", local);
 		git_config_set(key.buf, "true");
 	}
+	strbuf_release(&key);
 
 	if (flag & BRANCH_CONFIG_VERBOSE) {
-		strbuf_reset(&key);
-
-		strbuf_addstr(&key, origin ? "remote" : "local");
-
-		/* Are we tracking a proper "branch"? */
-		if (remote_is_branch) {
-			strbuf_addf(&key, " branch %s", shortname);
-			if (origin)
-				strbuf_addf(&key, " from %s", origin);
-		}
+		if (remote_is_branch && origin)
+			printf(rebasing ?
+			       "Branch %s set up to track remote branch %s from %s by rebasing.\n" :
+			       "Branch %s set up to track remote branch %s from %s.\n",
+			       local, shortname, origin);
+		else if (remote_is_branch && !origin)
+			printf(rebasing ?
+			       "Branch %s set up to track local branch %s by rebasing.\n" :
+			       "Branch %s set up to track local branch %s.\n",
+			       local, shortname);
+		else if (!remote_is_branch && origin)
+			printf(rebasing ?
+			       "Branch %s set up to track remote ref %s by rebasing.\n" :
+			       "Branch %s set up to track remote ref %s.\n",
+			       local, remote);
+		else if (!remote_is_branch && !origin)
+			printf(rebasing ?
+			       "Branch %s set up to track local ref %s by rebasing.\n" :
+			       "Branch %s set up to track local ref %s.\n",
+			       local, remote);
 		else
-			strbuf_addf(&key, " ref %s", remote);
-		printf("Branch %s set up to track %s%s.\n",
-		       local, key.buf,
-		       rebasing ? " by rebasing" : "");
+			die("BUG: impossible combination of %d and %p",
+			    remote_is_branch, origin);
 	}
-	strbuf_release(&key);
 }
 
 /*
