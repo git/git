@@ -1,6 +1,5 @@
 #include "../git-compat-util.h"
 #include "win32.h"
-#include <conio.h>
 #include <wchar.h>
 #include "../strbuf.h"
 #include "../run-command.h"
