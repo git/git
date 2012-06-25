@@ -90,6 +90,7 @@
 #define WIN32_LEAN_AND_MEAN  /* stops windows.h including winsock.h */
 #include <winsock2.h>
 #include <windows.h>
+#include <conio.h>
 #endif
 
 #include <unistd.h>
