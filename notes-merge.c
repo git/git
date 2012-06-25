@@ -524,8 +524,10 @@ static int merge_from_diffs(struct notes_merge_options *o,
 	free(changes);
 
 	if (o->verbosity >= 4)
-		printf("Merge result: %i unmerged notes and a %s notes tree\n",
-			conflicts, t->dirty ? "dirty" : "clean");
+		printf(t->dirty ?
+		       "Merge result: %i unmerged notes and a dirty notes tree\n" :
+		       "Merge result: %i unmerged notes and a clean notes tree\n",
+		       conflicts);
 
 	return conflicts ? -1 : 1;
 }

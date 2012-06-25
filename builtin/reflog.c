@@ -330,8 +330,10 @@ static int expire_reflog_ent(unsigned char *osha1, unsigned char *nsha1,
 		printf("keep %s", message);
 	return 0;
  prune:
-	if (!cb->newlog || cb->cmd->verbose)
-		printf("%sprune %s", cb->newlog ? "" : "would ", message);
+	if (!cb->newlog)
+		printf("would prune %s", message);
+	else if (cb->cmd->verbose)
+		printf("prune %s", message);
 	return 0;
 }
 
