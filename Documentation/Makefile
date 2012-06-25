@@ -66,12 +66,6 @@ endif
 -include ../config.mak
 
 #
-# For asciidoc ...
-#	-7.1.2,	set ASCIIDOC7
-#	8.0-,	no extra settings are needed
-#
-
-#
 # For docbook-xsl ...
 #	-1.68.1,	no extra settings are needed?
 #	1.69.0,		set ASCIIDOC_ROFF?
@@ -81,9 +75,6 @@ endif
 #	1.73.0-,	no extra settings are needed
 #
 
-ifndef ASCIIDOC7
-ASCIIDOC_EXTRA += -a asciidoc7compatible
-endif
 ifdef DOCBOOK_XSL_172
 ASCIIDOC_EXTRA += -a git-asciidoc-no-roff
 MANPAGE_XSL = manpage-1.72.xsl
@@ -133,15 +124,6 @@ ifdef DEFAULT_EDITOR
 DEFAULT_EDITOR_SQ = $(subst ','\'',$(DEFAULT_EDITOR))
 ASCIIDOC_EXTRA += -a 'git-default-editor=$(DEFAULT_EDITOR_SQ)'
 endif
-
-#
-# Please note that there is a minor bug in asciidoc.
-# The version after 6.0.3 _will_ include the patch found here:
-#   http://marc.theaimsgroup.com/?l=git&m=111558757202243&w=2
-#
-# Until that version is released you may have to apply the patch
-# yourself - yes, all 6 characters of it!
-#
 
 QUIET_SUBDIR0  = +$(MAKE) -C # space to separate -C and subdir
 QUIET_SUBDIR1  =

@@ -203,8 +203,6 @@ all::
 # Define NO_ST_BLOCKS_IN_STRUCT_STAT if your platform does not have st_blocks
 # field that counts the on-disk footprint in 512-byte blocks.
 #
-# Define ASCIIDOC7 if you want to format documentation with AsciiDoc 7
-#
 # Define DOCBOOK_XSL_172 if you want to format man pages with DocBook XSL v1.72
 # (not v1.73 or v1.71).
 #
@@ -1843,10 +1841,6 @@ ifndef V
 	export QUIET_GEN
 	export QUIET_BUILT_IN
 endif
-endif
-
-ifdef ASCIIDOC7
-	export ASCIIDOC7
 endif
 
 ifdef NO_INSTALL_HARDLINKS
