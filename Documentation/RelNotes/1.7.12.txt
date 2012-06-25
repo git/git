@@ -24,9 +24,12 @@ UI, Workflows & Features
 Foreign Interface
 
 
-Performance and Internal Implementation (please report possible regressions)
+Performance, Internal Implementation, etc. (please report possible regressions)
 
  * Some tests showed false failures caused by a bug in ecryptofs.
+
+ * We no longer use AsciiDoc7 syntax in our documentation and favor a
+   more modern style.
 
 
 Also contains minor documentation updates and code clean-ups.
@@ -39,17 +42,24 @@ Unless otherwise noted, all the fixes since v1.7.11 in the maintenance
 releases are contained in this release (see release notes to them for
 details).
 
-* Running "git bundle verify" on a bundle that records a complete
-  history said "it requires these 0 commits".
+ * The documentation for "git cherry-pick A B..C" was misleading.
+   (merge b98878e cn/cherry-pick-range-docs later to maint).
+
+ * "git archive" incorrectly computed the header checksum; the symptom
+   was observed only when using pathnames with hi-bit set.
+   (merge a5a46eb jc/ustar-checksum-is-unsigned later to maint).
+
+ * Running "git bundle verify" on a bundle that records a complete
+   history said "it requires these 0 commits".
    (merge 8c3710f jc/bundle-complete-notice later to maint).
 
-* "git ls-files --exclude=t -i" did not consider anything under t/ as
-  excluded, as it did not pay attention to exclusion of leading paths
-  while walking the index.  Other two users of excluded() are also
-  updated.
+ * "git ls-files --exclude=t -i" did not consider anything under t/ as
+   excluded, as it did not pay attention to exclusion of leading paths
+   while walking the index.  Other two users of excluded() are also
+   updated.
    (merge 0d316f0 jc/ls-files-i-dir later to maint).
 
-* "git request-pull $url dev" when the tip of "dev" branch was tagged
-  with "ext4-for-linus" used the contents from the tag in the output
-  but still asked the "dev" branch to be pulled, not the tag.
+ * "git request-pull $url dev" when the tip of "dev" branch was tagged
+   with "ext4-for-linus" used the contents from the tag in the output
+   but still asked the "dev" branch to be pulled, not the tag.
    (merge 682853e jc/request-pull-match-tagname later to maint).
