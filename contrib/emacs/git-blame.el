@@ -304,7 +304,7 @@ See also function `git-blame-mode'."
 
 (defun git-blame-cleanup ()
   "Remove all blame properties"
-    (mapcar 'delete-overlay git-blame-overlays)
+    (mapc 'delete-overlay git-blame-overlays)
     (setq git-blame-overlays nil)
     (remove-git-blame-text-properties (point-min) (point-max)))
 
