@@ -31,7 +31,7 @@ SUBDIRECTORY_OK=Yes
 OPTIONS_KEEPDASHDASH=
 OPTIONS_SPEC="\
 git rebase [-i] [options] [--onto <newbase>] [<upstream>] [<branch>]
-git rebase [-i] [options] --onto <newbase> --root [<branch>]
+git rebase [-i] [options] [--onto <newbase>] --root [<branch>]
 git-rebase [-i] --continue | --abort | --skip
 --
  Available options are
@@ -364,6 +364,11 @@ and run me again.  I am stopping in case you still have something
 valuable there.'
 fi
 
+if test -n "$rebase_root" && test -z "$onto"
+then
+	test -z "$interactive_rebase" && interactive_rebase=implied
+fi
+
 if test -n "$interactive_rebase"
 then
 	type=interactive
@@ -397,7 +402,12 @@ then
 	die "invalid upstream $upstream_name"
 	upstream_arg="$upstream_name"
 else
-	test -z "$onto" && die "You must specify --onto when using --root"
+	if test -z "$onto"
+	then
+		empty_tree=`git hash-object -t tree /dev/null`
+		onto=`git commit-tree $empty_tree </dev/null`
+		squash_onto="$onto"
+	fi
 	unset upstream_name
 	unset upstream
 	upstream_arg=--root
