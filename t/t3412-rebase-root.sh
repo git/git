@@ -22,10 +22,6 @@ test_expect_success 'prepare repository' '
 	test_commit 4 B
 '
 
-test_expect_success 'rebase --root expects --onto' '
-	test_must_fail git rebase --root
-'
-
 test_expect_success 'setup pre-rebase hook' '
 	mkdir -p .git/hooks &&
 	cat >.git/hooks/pre-rebase <<EOF &&
