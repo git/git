@@ -683,6 +683,7 @@ To restore the original branch and stop patching run \"\$cmdline --abort\"."
 			sed -e '1,/^$/d' >"$dotest/msg-clean"
 			echo "$commit" > "$dotest/original-commit"
 			get_author_ident_from_commit "$commit" > "$dotest/author-script"
+			git diff-tree --root --binary "$commit" >"$dotest/patch"
 		else
 			{
 				sed -n '/^Subject/ s/Subject: //p' "$dotest/info"
