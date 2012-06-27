@@ -126,15 +126,14 @@ test_expect_success 'clone two dirs, @all, conflicting files' '
 '
 
 test_expect_success 'exit when p4 fails to produce marshaled output' '
-	badp4dir="$TRASH_DIRECTORY/badp4dir" &&
-	mkdir "$badp4dir" &&
-	test_when_finished "rm \"$badp4dir/p4\" && rmdir \"$badp4dir\"" &&
-	cat >"$badp4dir"/p4 <<-EOF &&
+	mkdir badp4dir &&
+	test_when_finished "rm badp4dir/p4 && rmdir badp4dir" &&
+	cat >badp4dir/p4 <<-EOF &&
 	#!$SHELL_PATH
 	exit 1
 	EOF
-	chmod 755 "$badp4dir"/p4 &&
-	PATH="$badp4dir:$PATH" git p4 clone --dest="$git" //depot >errs 2>&1 ; retval=$? &&
+	chmod 755 badp4dir/p4 &&
+	PATH="$TRASH_DIRECTORY/badp4dir:$PATH" git p4 clone --dest="$git" //depot >errs 2>&1 ; retval=$? &&
 	test $retval -eq 1 &&
 	test_must_fail grep -q Traceback errs
 '

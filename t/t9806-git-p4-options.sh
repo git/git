@@ -39,10 +39,9 @@ test_expect_success 'clone --branch' '
 '
 
 test_expect_success 'clone --changesfile' '
-	cf="$TRASH_DIRECTORY/cf" &&
-	test_when_finished "rm \"$cf\"" &&
-	printf "1\n3\n" >"$cf" &&
-	git p4 clone --changesfile="$cf" --dest="$git" //depot &&
+	test_when_finished "rm cf" &&
+	printf "1\n3\n" >cf &&
+	git p4 clone --changesfile="$TRASH_DIRECTORY/cf" --dest="$git" //depot &&
 	test_when_finished cleanup_git &&
 	(
 		cd "$git" &&
@@ -55,10 +54,9 @@ test_expect_success 'clone --changesfile' '
 '
 
 test_expect_success 'clone --changesfile, @all' '
-	cf="$TRASH_DIRECTORY/cf" &&
-	test_when_finished "rm \"$cf\"" &&
-	printf "1\n3\n" >"$cf" &&
-	test_must_fail git p4 clone --changesfile="$cf" --dest="$git" //depot@all
+	test_when_finished "rm cf" &&
+	printf "1\n3\n" >cf &&
+	test_must_fail git p4 clone --changesfile="$TRASH_DIRECTORY/cf" --dest="$git" //depot@all
 '
 
 # imports both master and p4/master in refs/heads
