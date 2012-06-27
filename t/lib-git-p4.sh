@@ -99,5 +99,6 @@ kill_p4d() {
 }
 
 cleanup_git() {
-	rm -rf "$git"
+	rm -rf "$git" &&
+	mkdir "$git"
 }

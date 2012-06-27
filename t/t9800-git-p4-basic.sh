@@ -270,6 +270,7 @@ test_expect_success 'wildcard files submit back to p4, delete' '
 '
 
 test_expect_success 'clone bare' '
+	rm -rf "$git" &&
 	git p4 clone --dest="$git" --bare //depot &&
 	test_when_finished cleanup_git &&
 	(

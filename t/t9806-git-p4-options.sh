@@ -149,7 +149,6 @@ test_expect_success 'clone --use-client-spec' '
 	cleanup_git &&
 
 	# same thing again, this time with variable instead of option
-	mkdir "$git" &&
 	(
 		cd "$git" &&
 		git init &&
