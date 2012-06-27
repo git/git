@@ -173,6 +173,7 @@ void diff_no_index(struct rev_info *revs,
 	int i;
 	int no_index = 0;
 	unsigned options = 0;
+	const char *paths[2];
 
 	/* Were we asked to do --no-index explicitly? */
 	for (i = 1; i < argc; i++) {
@@ -231,8 +232,6 @@ void diff_no_index(struct rev_info *revs,
 
 	if (prefix) {
 		int len = strlen(prefix);
-		const char *paths[3];
-		memset(paths, 0, sizeof(paths));
 
 		for (i = 0; i < 2; i++) {
 			const char *p = argv[argc - 2 + i];
@@ -245,10 +244,10 @@ void diff_no_index(struct rev_info *revs,
 			     : p);
 			paths[i] = p;
 		}
-		diff_tree_setup_paths(paths, &revs->diffopt);
+	} else {
+		for (i = 0; i < 2; i++)
+			paths[i] = argv[argc - 2 + i];
 	}
-	else
-		diff_tree_setup_paths(argv + argc - 2, &revs->diffopt);
 	revs->diffopt.skip_stat_unmatch = 1;
 	if (!revs->diffopt.output_format)
 		revs->diffopt.output_format = DIFF_FORMAT_PATCH;
@@ -260,8 +259,7 @@ void diff_no_index(struct rev_info *revs,
 	if (diff_setup_done(&revs->diffopt) < 0)
 		die("diff_setup_done failed");
 
-	if (queue_diff(&revs->diffopt, revs->diffopt.pathspec.raw[0],
-		       revs->diffopt.pathspec.raw[1]))
+	if (queue_diff(&revs->diffopt, paths[0], paths[1]))
 		exit(1);
 	diff_set_mnemonic_prefix(&revs->diffopt, "1/", "2/");
 	diffcore_std(&revs->diffopt);
