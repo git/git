@@ -170,7 +170,7 @@ void diff_no_index(struct rev_info *revs,
 		   int argc, const char **argv,
 		   int nongit, const char *prefix)
 {
-	int i;
+	int i, prefixlen;
 	int no_index = 0;
 	unsigned options = 0;
 	const char *paths[2];
@@ -230,23 +230,18 @@ void diff_no_index(struct rev_info *revs,
 	if (!DIFF_OPT_TST(&revs->diffopt, EXIT_WITH_STATUS))
 		setup_pager();
 
-	if (prefix) {
-		int len = strlen(prefix);
-
-		for (i = 0; i < 2; i++) {
-			const char *p = argv[argc - 2 + i];
+	prefixlen = prefix ? strlen(prefix) : 0;
+	for (i = 0; i < 2; i++) {
+		const char *p = argv[argc - 2 + i];
+		if (!strcmp(p, "-"))
 			/*
-			 * stdin should be spelled as '-'; if you have
-			 * path that is '-', spell it as ./-.
+			 * stdin should be spelled as "-"; if you have
+			 * path that is "-", spell it as "./-".
 			 */
-			p = (strcmp(p, "-")
-			     ? xstrdup(prefix_filename(prefix, len, p))
-			     : p);
-			paths[i] = p;
-		}
-	} else {
-		for (i = 0; i < 2; i++)
-			paths[i] = argv[argc - 2 + i];
+			p = p;
+		else if (prefixlen)
+			p = xstrdup(prefix_filename(prefix, prefixlen, p));
+		paths[i] = p;
 	}
 	revs->diffopt.skip_stat_unmatch = 1;
 	if (!revs->diffopt.output_format)
