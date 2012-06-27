@@ -258,6 +258,64 @@ sub mw_connect_maybe {
 	}
 }
 
+## Functions for listing pages on the remote wiki
+sub get_mw_tracked_pages {
+	my $pages = shift;
+	my @some_pages = @tracked_pages;
+	while (@some_pages) {
+		my $last = 50;
+		if ($#some_pages < $last) {
+			$last = $#some_pages;
+		}
+		my @slice = @some_pages[0..$last];
+		get_mw_first_pages(\@slice, $pages);
+		@some_pages = @some_pages[51..$#some_pages];
+	}
+}
+
+sub get_mw_tracked_categories {
+	my $pages = shift;
+	foreach my $category (@tracked_categories) {
+		if (index($category, ':') < 0) {
+			# Mediawiki requires the Category
+			# prefix, but let's not force the user
+			# to specify it.
+			$category = "Category:" . $category;
+		}
+		my $mw_pages = $mediawiki->list( {
+			action => 'query',
+			list => 'categorymembers',
+			cmtitle => $category,
+			cmlimit => 'max' } )
+			|| die $mediawiki->{error}->{code} . ': '
+				. $mediawiki->{error}->{details};
+		foreach my $page (@{$mw_pages}) {
+			$pages->{$page->{title}} = $page;
+		}
+	}
+}
+
+sub get_mw_all_pages {
+	my $pages = shift;
+	# No user-provided list, get the list of pages from the API.
+	my $mw_pages = $mediawiki->list({
+		action => 'query',
+		list => 'allpages',
+		aplimit => 'max'
+	});
+	if (!defined($mw_pages)) {
+		print STDERR "fatal: could not get the list of wiki pages.\n";
+		print STDERR "fatal: '$url' does not appear to be a mediawiki\n";
+		print STDERR "fatal: make sure '$url/api.php' is a valid page.\n";
+		exit 1;
+	}
+	foreach my $page (@{$mw_pages}) {
+		$pages->{$page->{title}} = $page;
+	}
+}
+
+# queries the wiki for a set of pages. Meant to be used within a loop
+# querying the wiki for slices of page list.
 sub get_mw_first_pages {
 	my $some_pages = shift;
 	my @some_pages = @{$some_pages};
@@ -286,6 +344,7 @@ sub get_mw_first_pages {
 	}
 }
 
+# Get the list of pages to be fetched according to configuration.
 sub get_mw_pages {
 	mw_connect_maybe();
 
@@ -295,55 +354,14 @@ sub get_mw_pages {
 		$user_defined = 1;
 		# The user provided a list of pages titles, but we
 		# still need to query the API to get the page IDs.
-
-		my @some_pages = @tracked_pages;
-		while (@some_pages) {
-			my $last = 50;
-			if ($#some_pages < $last) {
-				$last = $#some_pages;
-			}
-			my @slice = @some_pages[0..$last];
-			get_mw_first_pages(\@slice, \%pages);
-			@some_pages = @some_pages[51..$#some_pages];
-		}
+		get_mw_tracked_pages(\%pages);
 	}
 	if (@tracked_categories) {
 		$user_defined = 1;
-		foreach my $category (@tracked_categories) {
-			if (index($category, ':') < 0) {
-				# Mediawiki requires the Category
-				# prefix, but let's not force the user
-				# to specify it.
-				$category = "Category:" . $category;
-			}
-			my $mw_pages = $mediawiki->list( {
-				action => 'query',
-				list => 'categorymembers',
-				cmtitle => $category,
-				cmlimit => 'max' } )
-			    || die $mediawiki->{error}->{code} . ': ' . $mediawiki->{error}->{details};
-			foreach my $page (@{$mw_pages}) {
-				$pages{$page->{title}} = $page;
-			}
-		}
+		get_mw_tracked_categories(\%pages);
 	}
 	if (!$user_defined) {
-		# No user-provided list, get the list of pages from
-		# the API.
-		my $mw_pages = $mediawiki->list({
-			action => 'query',
-			list => 'allpages',
-			aplimit => 500,
-		});
-		if (!defined($mw_pages)) {
-			print STDERR "fatal: could not get the list of wiki pages.\n";
-			print STDERR "fatal: '$url' does not appear to be a mediawiki\n";
-			print STDERR "fatal: make sure '$url/api.php' is a valid page.\n";
-			exit 1;
-		}
-		foreach my $page (@{$mw_pages}) {
-			$pages{$page->{title}} = $page;
-		}
+		get_mw_all_pages(\%pages);
 	}
 	return values(%pages);
 }
