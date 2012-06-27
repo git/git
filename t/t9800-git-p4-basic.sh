@@ -45,7 +45,8 @@ test_expect_success 'git p4 sync uninitialized repo' '
 	test_when_finished cleanup_git &&
 	(
 		cd "$git" &&
-		test_must_fail git p4 sync
+		test_must_fail git p4 sync 2>errs &&
+		test_i18ngrep "Perhaps you never did" errs
 	)
 '
 
