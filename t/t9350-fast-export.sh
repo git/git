@@ -430,7 +430,7 @@ test_expect_success 'fast-export quotes pathnames' '
 	 git commit -m rename &&
 	 git read-tree --empty &&
 	 git commit -m deletion &&
-	 git fast-export HEAD >export.out &&
+	 git fast-export -M HEAD >export.out &&
 	 git rev-list HEAD >expect &&
 	 git init result &&
 	 cd result &&
