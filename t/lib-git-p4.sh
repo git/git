@@ -27,7 +27,7 @@ export P4CLIENT=client
 export P4EDITOR=:
 
 db="$TRASH_DIRECTORY/db"
-cli="$TRASH_DIRECTORY/cli"
+cli=$(test-path-utils real_path "$TRASH_DIRECTORY/cli")
 git="$TRASH_DIRECTORY/git"
 pidfile="$TRASH_DIRECTORY/p4d.pid"
 
