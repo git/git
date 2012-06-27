@@ -2,6 +2,10 @@
 # Library code for git p4 tests
 #
 
+# p4 tests never use the top-level repo; always build/clone into
+# a subdirectory called "$git"
+TEST_NO_CREATE_REPO=NoThanks
+
 . ./test-lib.sh
 
 if ! test_have_prereq PYTHON; then
