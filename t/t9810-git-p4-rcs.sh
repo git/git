@@ -1,6 +1,6 @@
 #!/bin/sh
 
-test_description='git-p4 rcs keywords'
+test_description='git p4 rcs keywords'
 
 . ./lib-git-p4.sh
 
@@ -147,7 +147,7 @@ test_expect_success 'scrub ko files differently' '
 	)
 '
 
-# hack; git-p4 submit should do it on its own
+# hack; git p4 submit should do it on its own
 test_expect_success 'cleanup after failure' '
 	(
 		cd "$cli" &&
@@ -193,7 +193,7 @@ test_expect_success 'do not scrub plain text' '
 	)
 '
 
-# hack; git-p4 submit should do it on its own
+# hack; git p4 submit should do it on its own
 test_expect_success 'cleanup after failure 2' '
 	(
 		cd "$cli" &&
