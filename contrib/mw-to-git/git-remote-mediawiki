@@ -348,8 +348,12 @@ sub get_mw_pages {
 	return values(%pages);
 }
 
+# usage: $out = run_git("command args");
+#        $out = run_git("command args", "raw"); # don't interpret output as UTF-8.
 sub run_git {
-	open(my $git, "-|:encoding(UTF-8)", "git " . $_[0]);
+	my $args = shift;
+	my $encoding = (shift || "encoding(UTF-8)");
+	open(my $git, "-|:$encoding", "git " . $args);
 	my $res = do { local $/; <$git> };
 	close($git);
 
@@ -705,6 +709,63 @@ sub error_non_fast_forward {
 	return 0;
 }
 
+sub mw_upload_file {
+	my $complete_file_name = shift;
+	my $new_sha1 = shift;
+	my $extension = shift;
+	my $file_deleted = shift;
+	my $summary = shift;
+	my $newrevid;
+	my $path = "File:" . $complete_file_name;
+	my %hashFiles = get_allowed_file_extensions();
+	if (!exists($hashFiles{$extension})) {
+		print STDERR "$complete_file_name is not a permitted file on this wiki.\n";
+		print STDERR "Check the configuration of file uploads in your mediawiki.\n";
+		return $newrevid;
+	}
+	# Deleting and uploading a file requires a priviledged user
+	if ($file_deleted) {
+		mw_connect_maybe();
+		my $query = {
+			action => 'delete',
+			title => $path,
+			reason => $summary
+		};
+		if (!$mediawiki->edit($query)) {
+			print STDERR "Failed to delete file on remote wiki\n";
+			print STDERR "Check your permissions on the remote site. Error code:\n";
+			print STDERR $mediawiki->{error}->{code} . ':' . $mediawiki->{error}->{details};
+			exit 1;
+		}
+	} else {
+		# Don't let perl try to interpret file content as UTF-8 => use "raw"
+		my $content = run_git("cat-file blob $new_sha1", "raw");
+		if ($content ne "") {
+			mw_connect_maybe();
+			$mediawiki->{config}->{upload_url} =
+				"$url/index.php/Special:Upload";
+			$mediawiki->edit({
+				action => 'upload',
+				filename => $complete_file_name,
+				comment => $summary,
+				file => [undef,
+					 $complete_file_name,
+					 Content => $content],
+				ignorewarnings => 1,
+			}, {
+				skip_encoding => 1
+			} ) || die $mediawiki->{error}->{code} . ':'
+				 . $mediawiki->{error}->{details};
+			my $last_file_page = $mediawiki->get_page({title => $path});
+			$newrevid = $last_file_page->{revid};
+			print STDERR "Pushed file: $new_sha1 - $complete_file_name.\n";
+		} else {
+			print STDERR "Empty file $complete_file_name not pushed.\n";
+		}
+	}
+	return $newrevid;
+}
+
 sub mw_push_file {
 	my $diff_info = shift;
 	# $diff_info contains a string in this format:
@@ -717,7 +778,8 @@ sub mw_push_file {
 	my $summary = shift;
 	# MediaWiki revision number. Keep the previous one by default,
 	# in case there's no edit to perform.
-	my $newrevid = shift;
+	my $oldrevid = shift;
+	my $newrevid;
 
 	my $new_sha1 = $diff_info_split[3];
 	my $old_sha1 = $diff_info_split[2];
@@ -725,9 +787,11 @@ sub mw_push_file {
 	my $page_deleted = ($new_sha1 eq NULL_SHA1);
 	$complete_file_name = mediawiki_clean_filename($complete_file_name);
 
-	if (substr($complete_file_name,-3) eq ".mw") {
-		my $title = substr($complete_file_name,0,-3);
-
+	my ($title, $extension) = $complete_file_name =~ /^(.*)\.([^\.]*)$/;
+	if (!defined($extension)) {
+		$extension = "";
+	}
+	if ($extension eq "mw") {
 		my $file_content;
 		if ($page_deleted) {
 			# Deleting a page usually requires
@@ -745,7 +809,7 @@ sub mw_push_file {
 			action => 'edit',
 			summary => $summary,
 			title => $title,
-			basetimestamp => $basetimestamps{$newrevid},
+			basetimestamp => $basetimestamps{$oldrevid},
 			text => mediawiki_clean($file_content, $page_created),
 				  }, {
 					  skip_encoding => 1 # Helps with names with accentuated characters
@@ -757,7 +821,7 @@ sub mw_push_file {
 				    $mediawiki->{error}->{code} .
 				    ' from mediwiki: ' . $mediawiki->{error}->{details} .
 				    ".\n";
-				return ($newrevid, "non-fast-forward");
+				return ($oldrevid, "non-fast-forward");
 			} else {
 				# Other errors. Shouldn't happen => just die()
 				die 'Fatal: Error ' .
@@ -768,8 +832,11 @@ sub mw_push_file {
 		$newrevid = $result->{edit}->{newrevid};
 		print STDERR "Pushed file: $new_sha1 - $title\n";
 	} else {
-		print STDERR "$complete_file_name not a mediawiki file (Not pushable on this version of git-remote-mediawiki).\n"
+		$newrevid = mw_upload_file($complete_file_name, $new_sha1,
+					   $extension, $page_deleted,
+					   $summary);
 	}
+	$newrevid = ($newrevid or $oldrevid);
 	return ($newrevid, "ok");
 }
 
@@ -905,4 +972,19 @@ sub mw_push_revision {
 
 	print STDOUT "ok $remote\n";
 	return 1;
+}
+
+sub get_allowed_file_extensions {
+	mw_connect_maybe();
+
+	my $query = {
+		action => 'query',
+		meta => 'siteinfo',
+		siprop => 'fileextensions'
+		};
+	my $result = $mediawiki->api($query);
+	my @file_extensions= map $_->{ext},@{$result->{query}->{fileextensions}};
+	my %hashFile = map {$_ => 1}@file_extensions;
+
+	return %hashFile;
 }
