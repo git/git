@@ -873,8 +873,8 @@ sub mw_push_revision {
 		# TODO: we could detect rename, and encode them with a #redirect on the wiki.
 		# TODO: for now, it's just a delete+add
 		my @diff_info_list = split(/\0/, $diff_infos);
-		# Keep the first line of the commit message as mediawiki comment for the revision
-		my $commit_msg = (split(/\n/, run_git("show --pretty=format:\"%s\" $sha1_commit")))[0];
+		# Keep the subject line of the commit message as mediawiki comment for the revision
+		my $commit_msg = run_git("log --no-walk --format=\"%s\" $sha1_commit");
 		chomp($commit_msg);
 		# Push every blob
 		while (@diff_info_list) {
