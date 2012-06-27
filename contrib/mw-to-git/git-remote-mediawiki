@@ -36,11 +36,10 @@
 use strict;
 use MediaWiki::API;
 use DateTime::Format::ISO8601;
-use encoding 'utf8';
 
-# use encoding 'utf8' doesn't change STDERROR
-# but we're going to output UTF-8 filenames to STDERR
+# By default, use UTF-8 to communicate with Git and the user
 binmode STDERR, ":utf8";
+binmode STDOUT, ":utf8";
 
 use URI::Escape;
 use IPC::Open2;
