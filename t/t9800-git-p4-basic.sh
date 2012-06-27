@@ -134,9 +134,13 @@ test_expect_success 'exit when p4 fails to produce marshaled output' '
 	exit 1
 	EOF
 	chmod 755 badp4dir/p4 &&
-	PATH="$TRASH_DIRECTORY/badp4dir:$PATH" git p4 clone --dest="$git" //depot >errs 2>&1 ; retval=$? &&
-	test $retval -eq 1 &&
-	test_must_fail grep -q Traceback errs
+	(
+		PATH="$TRASH_DIRECTORY/badp4dir:$PATH" &&
+		export PATH &&
+		test_expect_code 1 git p4 clone --dest="$git" //depot >errs 2>&1
+	) &&
+	cat errs &&
+	! test_i18ngrep Traceback errs
 '
 
 test_expect_success 'clone bare' '
