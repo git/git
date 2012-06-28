@@ -211,12 +211,6 @@ static int process_path(const char *path)
 	if (S_ISDIR(st.st_mode))
 		return process_directory(path, len, &st);
 
-	/*
-	 * Process a regular file
-	 */
-	if (ce && S_ISGITLINK(ce->ce_mode))
-		return error("%s is already a gitlink, not replacing", path);
-
 	return add_one_path(ce, path, len, &st);
 }
 
