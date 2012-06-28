@@ -1,15 +1,15 @@
 To: git@vger.kernel.org
-Subject: What's cooking in git.git (Jun 2012, #07; Mon, 25)
-X-master-at: bc9e7dd41fe8b51cc7f2e79312a2ff777899f930
-X-next-at: d3f29e2e8f7ed8869c211f67f49ffecd8994f456
+Subject: What's cooking in git.git (Jun 2012, #08; Thu, 28)
+X-master-at: e7b44f182bc1b2ac32eadbc477a76a185f49ac88
+X-next-at: ce5f79f7997da38c414b6b9006eda871419ecfe7
 
-What's cooking in git.git (Jun 2012, #07; Mon, 25)
+What's cooking in git.git (Jun 2012, #08; Thu, 28)
 --------------------------------------------------
 
 Here are the topics that have been cooking.  Commits prefixed with '-' are
 only in 'pu' (proposed updates) while commits prefixed with '+' are in 'next'.
 
-The second batch of topics have graduated to 'master', and a handful
+The third batch of topics have graduated to 'master', and a handful
 of topics have entered 'next' for developer testing.
 
 You can find the changes described here in the integration branches of the
@@ -20,111 +20,254 @@ repositories listed at
 --------------------------------------------------
 [Graduated to "master"]
 
-* cn/cherry-pick-range-docs (2012-06-15) 2 commits
-  (merged to 'next' on 2012-06-21 at 5cf7f97)
- + git-cherry-pick.txt: clarify the use of revision range notation
- + Documentation: --no-walk is no-op if range is specified
+* fc/git-prompt-script (2012-06-19) 7 commits
+  (merged to 'next' on 2012-06-25 at e690a02)
+ + completion: respect $GIT_DIR
+ + completion: warn people about duplicated function
+ + completion: split __git_ps1 into a separate script
+ + completion: remove executable mode
+ + Merge branch 'fc/git-complete-helper' into fc/git-prompt-script
+ + tests: add tests for the bash prompt functions in the completion script
+ + tests: move code to run tests under bash into a helper library
 
-The command line argument of "git cherry-pick maint master..next" is
-just an ordinary revision range, which is unintuitive and at least
-deserves documentation.
+Split a rather heavy-ish "git completion" script out to create a
+separate "git prompting" script, to help lazy-autoloading of the
+completion part while making prompting part always available.
 
-* jc/ustar-checksum-is-unsigned (2012-06-13) 1 commit
-  (merged to 'next' on 2012-06-21 at bb8e2b0)
- + archive: ustar header checksum is computed unsigned
+* hv/submodule-update-nuke-submodules (2012-06-11) 1 commit
+  (merged to 'next' on 2012-06-25 at bbfcd02)
+ + update-index: allow overwriting existing submodule index entries
 
-"git archive" incorrectly computed the header checksum; the symptom
-was observed only when using pathnames with hi-bit set.
+"git add" allows adding a regular file to the path where a submodule
+used to exist, but "git update-index" does not allow an equivalent
+operation to Porcelain writers.
 
-* jk/no-more-asciidoc7 (2012-05-30) 2 commits
-  (merged to 'next' on 2012-06-19 at a36b498)
- + docs: drop antique comment from Makefile
- + docs: drop asciidoc7compatible flag
+* jc/rev-list-simplify-merges-first-parent (2012-06-13) 3 commits
+  (merged to 'next' on 2012-06-25 at 4c5ffbe)
+ + revision: ignore side parents while running simplify-merges
+ + revision: note the lack of free() in simplify_merges()
+ + revision: "simplify" options imply topo-order sort
 
-Originally merged to 'next' on 2012-06-05.
+When "git log" is given "--simplify-merges/by-decoration" together
+with "--first-parent", the combination of these options makes the
+simplification logic to use in-core commit objects that haven't been
+examined for relevance, either producing incorrect result or taking
+too long to produce any output.  Teach the simplification logic to
+ignore commits that the first-parent traversal logic ignored when
+both are in effect to work around the issue.
 
-We no longer use AsciiDoc7 syntax in our documentation and favor a
-more modern style.
+* jk/diff-no-index-pager (2012-06-15) 2 commits
+  (merged to 'next' on 2012-06-21 at e2a2562)
+ + do not run pager with diff --no-index --quiet
+ + fix pager.diff with diff --no-index
 
-* lm/git-blame-el (2012-06-14) 3 commits
-  (merged to 'next' on 2012-06-21 at 6514487)
- + git-blame.el: Do not use bare 0 to mean (point-min)
- + git-blame.el: Use with-current-buffer where appropriate
- + git-blame.el: Do not use goto-line in lisp code
+"git diff --no-index" did not work with pagers correctly.
 
-* lp/no-cmd-http-fetch (2012-06-15) 1 commit
-  (merged to 'next' on 2012-06-21 at 242a10e)
- + builtin.h: remove unused cmd_<foo> declarations
+* js/submodule-relative (2012-06-14) 5 commits
+  (merged to 'next' on 2012-06-25 at 310ed77)
+ + t7400: avoid path mangling issues
+ + submodule: fix handling of superproject origin URLs like foo, ./foo and ./foo/bar
+ + submodule: fix sync handling of some relative superproject origin URLs
+ + submodule: document failure to handle relative superproject origin URLs
+ + submodule: additional regression tests for relative URLs
 
-Remove unused declarations of nonexisting functions from a header
-file.
+Teach "git submodule" deal with nested submodule structure where a
+module is contained within a module whose origin is specified as a
+relative URL to its superproject's origin.
 
-* nd/i18n-branch-lego (2012-06-07) 1 commit
-  (merged to 'next' on 2012-06-21 at 0cb53fc)
- + Remove i18n legos in notifying new branch tracking setup
+* lk/more-helpful-status-hints (2012-06-14) 4 commits
+  (merged to 'next' on 2012-06-25 at 6502d4b)
+ + status: better advices when splitting a commit (during rebase -i)
+ + status: don't suggest "git rm" or "git add" if not appropriate
+ + t7512-status-help.sh: better advices for git status
+ + wt-status.*: better advices for git status added
 
-Restructure the way message strings are created, in preparation for
-marking them for i18n.
+Give finer classification to various states of paths in conflicted
+state and offer advice messages in the "git status" output.
 
-* nd/i18n-misc (2012-06-07) 3 commits
-  (merged to 'next' on 2012-06-21 at 0a82040)
- + rerere: remove i18n legos in result message
- + notes-merge: remove i18n legos in merge result message
- + reflog: remove i18n legos in pruning message
+* lk/rebase-i-x (2012-06-13) 1 commit
+  (merged to 'next' on 2012-06-25 at 8252da2)
+ + rebase -i: teach "--exec <cmd>"
 
-Restructure the way message strings are created, in preparation for
-marking them for i18n.
+Teach "-x <cmd>" to "rebase -i" to insert "exec <cmd>" after each
+commit in the resulting history.
 
-* rr/doc-commit (2012-06-08) 1 commit
-  (merged to 'next' on 2012-06-21 at af8301c)
- + commit: document a couple of options
+* mm/verify-filename-fix (2012-06-18) 2 commits
+  (merged to 'next' on 2012-06-21 at d03dace)
+ + verify_filename(): ask the caller to chose the kind of diagnosis
+ + sha1_name: do not trigger detailed diagnosis for file arguments
 
-* rs/git-blame-mapcar-mapc (2012-06-10) 1 commit
-  (merged to 'next' on 2012-06-21 at 71a3b36)
- + git-blame.el: use mapc instead of mapcar
+"git diff COPYING HEAD:COPYING" gave a nonsense error message that
+claimed that the treeish HEAD did not have COPYING in it.
 
-* rs/ipv6-ssh-url (2012-06-13) 1 commit
-  (merged to 'next' on 2012-06-21 at d0116a8)
- + git: Wrong parsing of ssh urls with IPv6 literals ignores port
+* nd/exclude-workaround-top-heavy (2012-06-07) 3 commits
+  (merged to 'next' on 2012-06-25 at 08429bb)
+ + exclude: do strcmp as much as possible before fnmatch
+ + dir.c: get rid of the wildcard symbol set in no_wildcard()
+ + Unindent excluded_from_list()
 
-ssh:// URLs to IPv6 hosts with custom port number were parsed
-incorrectly.
+Attempt to optimize matching with an exclude pattern with a deep
+directory hierarchy by taking the part that specifies leading path
+without wildcard literally.
+
+* nd/stream-index-pack (2012-05-24) 4 commits
+  (merged to 'next' on 2012-06-25 at 3084674)
+ + index-pack: use streaming interface for collision test on large blobs
+ + index-pack: factor out unpack core from get_data_from_pack
+ + index-pack: use streaming interface on large blobs (most of the time)
+ + index-pack: hash non-delta objects while reading from stream
+
+Use streaming API to read from the object store to avoid having to hold
+a large blob object in-core while running index-pack.
+
+* nd/stream-pack-objects (2012-05-29) 1 commit
+  (merged to 'next' on 2012-06-25 at fa91345)
+ + pack-objects: use streaming interface for reading large loose blobs
+
+"pack-objects" learned to read large loose blobs using the streaming API,
+without the need to hold everything in core at once.
 
 --------------------------------------------------
 [New Topics]
 
-* mm/config-xdg (2012-06-25) 4 commits
- - config: write to $XDG_CONFIG_HOME/git/config file when appropriate
- - Let core.attributesfile default to $XDG_CONFIG_HOME/git/attributes
- - Let core.excludesfile default to $XDG_CONFIG_HOME/git/ignore
- - config: read (but not write) from $XDG_CONFIG_HOME/git/config file
+* tb/sanitize-decomposed-utf-8-pathname (2012-06-25) 1 commit
+ - git on Mac OS and precomposed unicode
 
-Teach git to read various information from $XDG_CONFIG_HOME/git/ to allow
-the user to avoid cluttering $HOME.
+Teaches git to normalize pathnames read from readdir(3) and all
+arguments from the command line into precomposed UTF-8 (assuming
+that they come as decomposed UTF-8) to work around issues on Mac OS.
 
-* mm/credential-plumbing (2012-06-25) 3 commits
- - git-remote-mediawiki: add credential support
- - git credential fill: output the whole 'struct credential'
- - add 'git credential' plumbing command
-
-Expose the credential API to scripted Porcelain writers.
-
-* th/diff-no-index-fixes (2012-06-22) 2 commits
- - diff-no-index: exit(1) if 'diff --quiet <repo file> <external file>' finds changes
- - diff: handle relative paths in no-index
-
-"git diff --no-index" did not correctly handle relative paths and
-did not correctly give exit codes when run under "--quiet" option.
+I think there still are other places that need conversion
+(e.g. paths that are read from stdin for some commands), but this
+should be a step in the right direction.
 
 Will merge to 'next'.
 
-* nd/clone-single-fix (2012-06-22) 1 commit
- - clone: fix ref selection in --single-branch --branch=xxx
+* cw/no-detaching-an-unborn (2012-06-26) 1 commit
+ - git-checkout: disallow --detach on unborn branch
 
-"git clone --single-branch" to clone a single branch did not limit
-the cloning to the specified branch.
+"git checkout --detach" when you are still on an unborn branch
+should be forbidden, but it wasn't.
 
 Will merge to 'next'.
+
+* cw/rebase-i-root (2012-06-26) 2 commits
+ - Add tests for rebase -i --root without --onto
+ - rebase -i: support --root without --onto
+
+"git rebase [-i] --root $tip" can now be used to rewrite all the
+history down to the root.
+
+Will merge to 'next'.
+
+* js/fast-export-paths-with-spaces (2012-06-27) 1 commit
+ - fast-export: quote paths with spaces
+
+"git fast-export" produced an input stream for fast-import without
+properly quoting pathnames when they contain SPs in them.
+
+Will merge to 'next'.
+
+* mm/mediawiki-file-attachments (2012-06-27) 5 commits
+ - git-remote-mediawiki: import "File:" attachments
+ - git-remote-mediawiki: split get_mw_pages into smaller functions
+ - git-remote-mediawiki: send "File:" attachments to a remote wiki
+ - git-remote-mediawiki: don't "use encoding 'utf8';"
+ - git-remote-mediawiki: don't compute the diff when getting commit message
+ (this branch uses mm/credential-plumbing.)
+
+"mediawiki" remote helper (in contrib/) learned to handle file
+attachments.
+
+Will merge to 'next'.
+
+* mz/rebase-no-mbox (2012-06-26) 4 commits
+ - am: don't call mailinfo if $rebasing
+ - am --rebasing: get patch body from commit, not from mailbox
+ - rebase --root: print usage on too many args
+ - rebase: don't source git-sh-setup twice
+
+Teach "am --rebasing" codepath to grab authorship, log message and
+the patch text directly out of existing commits.
+
+Will merge to 'next'.
+
+* pw/git-p4-tests (2012-06-27) 10 commits
+ - git p4 test: fix badp4dir test
+ - git p4 test: split up big t9800 test
+ - git p4 test: cleanup_git should make a new $git
+ - git p4 test: copy source indeterminate
+ - git p4 test: check for error message in failed test
+ - git p4 test: rename some "git-p4 command" strings
+ - git p4 test: never create default test repo
+ - git p4 test: simplify quoting involving TRASH_DIRECTORY
+ - git p4 test: use real_path to resolve p4 client symlinks
+ - git p4 test: wait longer for p4d to start and test its pid
+
+More "git p4" tests.
+
+Will merge to 'next'.
+
+* rj/platform-pread-may-be-thread-unsafe (2012-06-26) 1 commit
+  (merged to 'next' on 2012-06-28 at ce5f79f)
+ + index-pack: Disable threading on cygwin
+
+On Cygwin, the platform pread(3) is not thread safe, just like our
+own compat/ emulation, and cannot be used in the index-pack program.
+
+* jc/refactor-diff-stdin (2012-06-28) 3 commits
+ - diff-index.c: "git diff" has no need to read blob from the standard input
+ - diff-index.c: unify handling of command line paths
+ - diff-index.c: do not pretend paths are pathspecs
+
+Due to the way "git diff --no-index" is bolted onto by touching the
+low level code that is shared with the rest of the "git diff" code,
+even though it has to work in a very different way, any comparison
+that involves a file "-" at the root level incorrectly tried to read
+from the standard input.  This cleans up the no-index codepath
+further to remove code that reads from the standard input from the
+core side, which is never necessary when git is running its usual
+diff operation.
+
+Will merge to 'next', and later down to older maintenance releases.
+
+* mz/empty-rebase-test (2012-06-27) 1 commit
+ - add test case for rebase of empty commit
+
+We did not have test to make sure "git rebase" without extra options
+filters out an empty commit in the original history.
+
+* cw/help-over-network (2012-06-28) 2 commits
+ - Allow help.htmlpath to be a URL prefix
+ - Add config variable to set HTML path for git-help --web
+
+"git help -w $cmd" can show HTML version of documentation for
+"git-$cmd" by setting help.htmlpath to somewhere other than the
+default location where the build procedure installs them locally;
+the variable can even point at a http:// URL.
+
+* lt/commit-tree-guess-utf-8 (2012-06-28) 1 commit
+ - commit/commit-tree: correct latin1 to utf-8
+
+Teaches "git commit" and "git commit-tree" the "we are told to use
+utf-8 in log message, but this does not look like utf-8---attempt to
+pass it through convert-from-latin1-to-utf8 and see if it makes
+sense" heuristics "git mailinfo" already uses.
+
+A draft from Linus received privately without a log message.
+Hopefully it will be rerolled.
+
+* jc/test-lib-source-build-options-early (2012-06-24) 1 commit
+ - test-lib: reorder and include GIT-BUILD-OPTIONS a lot earlier
+ (this branch uses vr/use-our-perl-in-tests.)
+
+Reorders t/test-lib.sh so that we dot-source GIT-BUILD-OPTIONS that
+records the shell and Perl the user told us to use with Git a lot
+early, so that test-lib.sh script itself can use "$PERL_PATH" in
+one of its early operations.
+
+Needs to be eyeballed by people who run tests with exotic options
+like valgrind, --root=/dev/shm/somewhere, etc.
 
 --------------------------------------------------
 [Stalled]
@@ -138,28 +281,6 @@ Will merge to 'next'.
  - vcs-svn: fix clang-analyzer error
 
 Waiting for Jonathan's clean-up offered earlier.
-
-* nl/http-proxy-more (2012-05-11) 2 commits
- - http: rename HTTP_REAUTH to HTTP_AUTH_RETRY
- - http: Avoid limit of retrying request only twice
-
-I queued only the later two patches from this series, even though they do
-not make much sense without the first one that seems to need a bit more
-work, so that we won't forget.
-
-Will discard without prejudice, unless rerolled.
-
-* jk/no-op-push-message (2012-05-30) 1 commit
- - improve no-op push output
-
-Rewords the status message of "git push" that pushed only one ref
-differently from "Everything up-to-date", to give a bit more help to
-people who get the message when their current branch is not pushed.
-
-I had an impression after the discussion thread that a redesign is
-coming, but it hasn't happened yet.
-
-Will discard without prejudice, unless rerolled.
 
 * jc/apply-3way (2012-06-13) 19 commits
  - apply --3way: tests
@@ -185,7 +306,7 @@ Will discard without prejudice, unless rerolled.
 "git apply" learns to wiggle the base version and perform three-way merge
 when a patch does not exactly apply to the version you have.
 
-Waiting for comments.
+Will merge to 'next' after reading it over once again.
 
 * jc/maint-push-refs-all (2012-05-04) 2 commits
  - get_fetch_map(): tighten checks on dest refs
@@ -229,17 +350,59 @@ not working :-(.
 --------------------------------------------------
 [Cooking]
 
-* vr/use-our-perl-in-tests (2012-06-24) 5 commits
- - test-lib: reorder and include GIT-BUILD-OPTIONS a lot earlier
+* mm/config-xdg (2012-06-25) 4 commits
+  (merged to 'next' on 2012-06-28 at 57049d1)
+ + config: write to $XDG_CONFIG_HOME/git/config file when appropriate
+ + Let core.attributesfile default to $XDG_CONFIG_HOME/git/attributes
+ + Let core.excludesfile default to $XDG_CONFIG_HOME/git/ignore
+ + config: read (but not write) from $XDG_CONFIG_HOME/git/config file
+
+Teach git to read various information from $XDG_CONFIG_HOME/git/ to allow
+the user to avoid cluttering $HOME.
+
+Will merge to 'next'.
+
+* mm/credential-plumbing (2012-06-25) 3 commits
+  (merged to 'next' on 2012-06-28 at 6e6fe9f)
+ + git-remote-mediawiki: add credential support
+ + git credential fill: output the whole 'struct credential'
+ + add 'git credential' plumbing command
+ (this branch is used by mm/mediawiki-file-attachments.)
+
+Expose the credential API to scripted Porcelain writers.
+
+Will merge to 'next'.
+
+* th/diff-no-index-fixes (2012-06-22) 2 commits
+  (merged to 'next' on 2012-06-26 at 450e781)
+ + diff-no-index: exit(1) if 'diff --quiet <repo file> <external file>' finds changes
+ + diff: handle relative paths in no-index
+
+"git diff --no-index" did not correctly handle relative paths and
+did not correctly give exit codes when run under "--quiet" option.
+
+Will merge to 'master'.
+
+* nd/clone-single-fix (2012-06-22) 1 commit
+  (merged to 'next' on 2012-06-26 at c9fff5e)
+ + clone: fix ref selection in --single-branch --branch=xxx
+
+"git clone --single-branch" to clone a single branch did not limit
+the cloning to the specified branch.
+
+Will merge to 'master'.
+
+* vr/use-our-perl-in-tests (2012-06-24) 4 commits
  - t/README: add a bit more Don'ts
  - tests: enclose $PERL_PATH in double quotes
  - t/test-lib.sh: export PERL_PATH for use in scripts
  - t: Replace 'perl' by $PERL_PATH
+ (this branch is used by jc/test-lib-source-build-options-early.)
 
-The tip one is iffy and needs to be carefully proof-read by folks
-who have worked on adding various features to the test suite, e.g. 
-valgrind, testing in an out of tree trash area, running under prove,
-etc.
+Some implementations of Perl terminates "lines" with CRLF even when
+the script is operating on just a sequence of bytes.  Make sure to
+use "$PERL_PATH", the version of Perl the user told Git to use, in
+our tests to avoid unnecessary breakages in tests.
 
 * jc/sha1-name-more (2012-06-23) 9 commits
  - sha1_name.c: get_describe_name() by definition groks only commits
@@ -256,8 +419,10 @@ Teaches the object name parser that a "git describe" output is
 always a commit object, to prolong the lifetime of abbreviated
 object name in it.
 
-It has a handful of failing tests that show directions for a couple
-of enhancement ideas.
+It has a handful of tests that expect failure and show directions
+for a couple of enhancement ideas.
+
+Will merge to 'next'.
 
 * jk/version-string-dependency (2012-06-20) 11 commits
  - Makefile: move GIT-VERSION-FILE dependencies closer to use
@@ -276,19 +441,11 @@ Will keep in 'pu' to give Peff and Jonathan to work out improvements
 for a week or so.
 
 * jn/perl-makemaker-leading-paths (2012-06-15) 1 commit
- - perl/Makefile: move "mkdir -p" to module installation loop for maintainability
+  (merged to 'next' on 2012-06-28 at 286d854)
+ + perl/Makefile: move "mkdir -p" to module installation loop for maintainability
 
-Will merge to 'next' after waiting for a few more days.
-
-* mm/verify-filename-fix (2012-06-18) 2 commits
-  (merged to 'next' on 2012-06-21 at d03dace)
- + verify_filename(): ask the caller to chose the kind of diagnosis
- + sha1_name: do not trigger detailed diagnosis for file arguments
-
-"git diff COPYING HEAD:COPYING" gave a nonsense error message that
-claimed that the treeish HEAD did not have COPYING in it.
-
-Will merge to 'master'.
+Minor build tweak.  People who do not use ExtUtils::MakeMaker may
+want to test this before it hits the 'master' branch.
 
 * tr/maint-show-walk (2012-06-19) 2 commits
  - show: fix "range implies walking"
@@ -301,29 +458,6 @@ Note that this is different from Thomas's patch.
 
 Waiting for response from original author.
 
-* fc/git-prompt-script (2012-06-19) 7 commits
-  (merged to 'next' on 2012-06-25 at e690a02)
- + completion: respect $GIT_DIR
- + completion: warn people about duplicated function
- + completion: split __git_ps1 into a separate script
- + completion: remove executable mode
- + Merge branch 'fc/git-complete-helper' into fc/git-prompt-script
- + tests: add tests for the bash prompt functions in the completion script
- + tests: move code to run tests under bash into a helper library
-
-Split a rather heavy-ish "git completion" script out to create a
-separate "git prompting" script, to help lazy-autoloading of the
-completion part while making prompting part always available.
-
-* jk/diff-no-index-pager (2012-06-15) 2 commits
-  (merged to 'next' on 2012-06-21 at e2a2562)
- + do not run pager with diff --no-index --quiet
- + fix pager.diff with diff --no-index
-
-"git diff --no-index" did not work with pagers correctly.
-
-Will merge to 'master'.
-
 * hv/remote-end-hung-up (2012-06-19) 1 commit
   (merged to 'next' on 2012-06-25 at d3f29e2)
  + remove the impression of unexpectedness when access is denied
@@ -333,137 +467,37 @@ side because authentication failed, we issued an error message "The
 remote side hung up unexpectedly."  Give hint that it may be a
 permission problem in the message when we can reasonably suspect it.
 
-* hv/submodule-update-nuke-submodules (2012-06-11) 1 commit
-  (merged to 'next' on 2012-06-25 at bbfcd02)
- + update-index: allow overwriting existing submodule index entries
-
-"git add" allows adding a regular file to the path where a submodule
-used to exist, but "git update-index" does not allow an equivalent
-operation to Porcelain writers.
-
-* jc/rev-list-simplify-merges-first-parent (2012-06-13) 3 commits
-  (merged to 'next' on 2012-06-25 at 4c5ffbe)
- + revision: ignore side parents while running simplify-merges
- + revision: note the lack of free() in simplify_merges()
- + revision: "simplify" options imply topo-order sort
-
-When "--simplify-merges/by-decoration" is given together with
-"--first-parent" to "git log", the combination of these options
-makes the simplification logic to use in-core commit objects that
-haven't been examined for relevance, either producing incorrect
-result or taking too long to produce any output.  Teach the
-simplification logic to ignore commits that the first-parent
-traversal logic ignored when both are in effect to work around the
-issue.
-
-* nd/exclude-workaround-top-heavy (2012-06-07) 3 commits
-  (merged to 'next' on 2012-06-25 at 08429bb)
- + exclude: do strcmp as much as possible before fnmatch
- + dir.c: get rid of the wildcard symbol set in no_wildcard()
- + Unindent excluded_from_list()
-
-Attempt to optimize matching with an exclude pattern with a deep
-directory hierarchy by taking the part that specifies leading path
-without wildcard literally.
-
-* lk/more-helpful-status-hints (2012-06-14) 4 commits
-  (merged to 'next' on 2012-06-25 at 6502d4b)
- + status: better advices when splitting a commit (during rebase -i)
- + status: don't suggest "git rm" or "git add" if not appropriate
- + t7512-status-help.sh: better advices for git status
- + wt-status.*: better advices for git status added
-
-Give finer classification to various states of paths in conflicted
-state and offer advice messages in the "git status" output.
+Will merge to 'master'.
 
 * jk/no-more-pre-exec-callback (2012-06-05) 1 commit
  - pager: drop "wait for output to run less" hack
 
 Will defer for 6 months until ancient "less" goes extinct.
 
-* lk/rebase-i-x (2012-06-13) 1 commit
-  (merged to 'next' on 2012-06-25 at 8252da2)
- + rebase -i: teach "--exec <cmd>"
-
-Teach "-x <cmd>" to "rebase -i" to insert "exec <cmd>" after each
-commit in the resulting history.
-
-* nd/stream-pack-objects (2012-05-29) 1 commit
-  (merged to 'next' on 2012-06-25 at fa91345)
- + pack-objects: use streaming interface for reading large loose blobs
-
-"pack-objects" learned to read large loose blobs using the streaming API,
-without the need to hold everything in core at once.
-
-* nd/stream-index-pack (2012-05-24) 4 commits
-  (merged to 'next' on 2012-06-25 at 3084674)
- + index-pack: use streaming interface for collision test on large blobs
- + index-pack: factor out unpack core from get_data_from_pack
- + index-pack: use streaming interface on large blobs (most of the time)
- + index-pack: hash non-delta objects while reading from stream
-
-Use streaming API to read from the object store to avoid having to hold
-a large blob object in-core while running index-pack.
-
-* js/submodule-relative (2012-06-14) 5 commits
-  (merged to 'next' on 2012-06-25 at 310ed77)
- + t7400: avoid path mangling issues
- + submodule: fix handling of superproject origin URLs like foo, ./foo and ./foo/bar
- + submodule: fix sync handling of some relative superproject origin URLs
- + submodule: document failure to handle relative superproject origin URLs
- + submodule: additional regression tests for relative URLs
-
-Teach "git submodule" deal with nested submodule structure where a
-module is contained within a module whose origin is specified as a
-relative URL to its superproject's origin.
-
 * mm/push-default-switch-warning (2012-06-24) 1 commit
- - push: start warning upcoming default change for push.default
+  (merged to 'next' on 2012-06-26 at fea512a)
+ + push: start warning upcoming default change for push.default
 
-Will merge to 'next'.
-
-Hopwefully we can have a solidly tested series early in 1.7.12 or
+Hopefully we can have a solidly tested series early in 1.7.12 or
 1.7.13 at the latest.
 
 --------------------------------------------------
 [Discarded]
 
-* cb/daemon-test-race-fix (2012-04-27) 2 commits
-  (merged to 'next' on 2012-04-27 at 84bbcf8)
- + Revert "git-daemon wrapper to wait until daemon is ready"
-  (merged to 'next' on 2012-04-24 at d5c30be)
- + git-daemon wrapper to wait until daemon is ready
+* nl/http-proxy-more (2012-05-11) 2 commits
+ . http: rename HTTP_REAUTH to HTTP_AUTH_RETRY
+ . http: Avoid limit of retrying request only twice
 
-Reverted from 'next' to replace it with js/daemon-test-race-fix.
+I queued only the later two patches from this series, even though they do
+not make much sense without the first one that seems to need a bit more
+work, so that we won't forget.
 
-* jc/merge-annotated-tag (2012-06-05) 2 commits
- . merge: allow fast-forwarding to an annotated but unsigned tag
- . merge: separte the logic to check for a signed tag
+* jk/no-op-push-message (2012-05-30) 1 commit
+ . improve no-op push output
 
-"git merge anno" created a merge commit even when anno is an
-unsigned annotated tag that points at a commit that can be fast
-forwarded to; this came from a laziness of the implementation of
-merging of signed tags in 1.7.9.  People may have different opinion
-on making signed and unsigned annotated tag behave differently, but
-I tend to agree that it is probably not a good idea.
+Rewords the status message of "git push" that pushed only one ref
+differently from "Everything up-to-date", to give a bit more help to
+people who get the message when their current branch is not pushed.
 
-* jc/run-hook-env-1 (2012-03-11) 1 commit
- . run_hook(): enhance the interface to pass arbitrary environment
-
-Updates run_hook() API to be much less specific to "commit".  It would
-only be useful if people start doing more interesting things with hooks.
-
-Will discard.
-
-* sg/bash-prompt (2012-05-09) 4 commits
- . completion: respect $GIT_DIR
- . completion: use __gitdir() in _git_log()
- - tests: add tests for the bash prompt functions in the completion script
- - tests: move code to run tests under bash into a helper library
- (this branch is tangled with fc/git-prompt-script.)
-
-This is only the "correction" bits taken from the beginning of a
-larger series that is to be rerolled.  The tip commit has been
-cherry-picked to fc/fc/git-prompt-script topic.
-
-Will discard without prejudice.
+I had an impression after the discussion thread that a redesign is
+coming, but it hasn't happened yet.
