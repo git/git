@@ -159,9 +159,10 @@ advice.*::
 		specified a refspec that isn't your current branch) and
 		it resulted in a non-fast-forward error.
 	statusHints::
-		Directions on how to stage/unstage/add shown in the
-		output of linkgit:git-status[1] and the template shown
-		when writing commit messages.
+		Show directions on how to proceed from the current
+		state in the output of linkgit:git-status[1] and in
+		the template shown when writing commit messages in
+		linkgit:git-commit[1].
 	commitBeforeMerge::
 		Advice shown when linkgit:git-merge[1] refuses to
 		merge to avoid overwriting local changes.
