@@ -1112,8 +1112,92 @@ int commit_tree(const struct strbuf *msg, unsigned char *tree,
 	return result;
 }
 
+static int find_invalid_utf8(const char *buf, int len)
+{
+	int offset = 0;
+
+	while (len) {
+		unsigned char c = *buf++;
+		int bytes, bad_offset;
+
+		len--;
+		offset++;
+
+		/* Simple US-ASCII? No worries. */
+		if (c < 0x80)
+			continue;
+
+		bad_offset = offset-1;
+
+		/*
+		 * Count how many more high bits set: that's how
+		 * many more bytes this sequence should have.
+		 */
+		bytes = 0;
+		while (c & 0x40) {
+			c <<= 1;
+			bytes++;
+		}
+
+		/* Must be between 1 and 5 more bytes */
+		if (bytes < 1 || bytes > 5)
+			return bad_offset;
+
+		/* Do we *have* that many bytes? */
+		if (len < bytes)
+			return bad_offset;
+
+		offset += bytes;
+		len -= bytes;
+
+		/* And verify that they are good continuation bytes */
+		do {
+			if ((*buf++ & 0xc0) != 0x80)
+				return bad_offset;
+		} while (--bytes);
+
+		/* We could/should check the value and length here too */
+	}
+	return -1;
+}
+
+/*
+ * This verifies that the buffer is in proper utf8 format.
+ *
+ * If it isn't, it assumes any non-utf8 characters are Latin1,
+ * and does the conversion.
+ *
+ * Fixme: we should probably also disallow overlong forms and
+ * invalid characters. But we don't do that currently.
+ */
+static int verify_utf8(struct strbuf *buf)
+{
+	int ok = 1;
+	long pos = 0;
+
+	for (;;) {
+		int bad;
+		unsigned char c;
+		unsigned char replace[2];
+
+		bad = find_invalid_utf8(buf->buf + pos, buf->len - pos);
+		if (bad < 0)
+			return ok;
+		pos += bad;
+		ok = 0;
+		c = buf->buf[pos];
+		strbuf_remove(buf, pos, 1);
+
+		/* We know 'c' must be in the range 128-255 */
+		replace[0] = 0xc0 + (c >> 6);
+		replace[1] = 0x80 + (c & 0x3f);
+		strbuf_insert(buf, pos, replace, 2);
+		pos += 2;
+	}
+}
+
 static const char commit_utf8_warn[] =
-"Warning: commit message does not conform to UTF-8.\n"
+"Warning: commit message did not conform to UTF-8.\n"
 "You may want to amend it after fixing the message, or set the config\n"
 "variable i18n.commitencoding to the encoding your project uses.\n";
 
@@ -1170,7 +1254,7 @@ int commit_tree_extended(const struct strbuf *msg, unsigned char *tree,
 	strbuf_addbuf(&buffer, msg);
 
 	/* And check the encoding */
-	if (encoding_is_utf8 && !is_utf8(buffer.buf))
+	if (encoding_is_utf8 && !verify_utf8(&buffer))
 		fprintf(stderr, commit_utf8_warn);
 
 	if (sign_commit && do_sign_commit(&buffer, sign_commit))
