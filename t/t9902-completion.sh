@@ -3,21 +3,9 @@
 # Copyright (c) 2012 Felipe Contreras
 #
 
-if test -n "$BASH" && test -z "$POSIXLY_CORRECT"; then
-	# we are in full-on bash mode
-	true
-elif type bash >/dev/null 2>&1; then
-	# execute in full-on bash mode
-	unset POSIXLY_CORRECT
-	exec bash "$0" "$@"
-else
-	echo '1..0 #SKIP skipping bash completion tests; bash not available'
-	exit 0
-fi
-
 test_description='test bash completion'
 
-. ./test-lib.sh
+. ./lib-bash.sh
 
 complete ()
 {
