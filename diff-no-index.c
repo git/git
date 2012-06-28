@@ -32,6 +32,13 @@ static int read_directory(const char *path, struct string_list *list)
 	return 0;
 }
 
+/*
+ * This should be "(standard input)" or something, but it will
+ * probably expose many more breakages in the way no-index code
+ * is bolted onto the diff callchain.
+ */
+static const char file_from_standard_input[] = "-";
+
 static int get_mode(const char *path, int *mode)
 {
 	struct stat st;
@@ -42,13 +49,43 @@ static int get_mode(const char *path, int *mode)
 	else if (!strcasecmp(path, "nul"))
 		*mode = 0;
 #endif
-	else if (!strcmp(path, "-"))
+	else if (path == file_from_standard_input)
 		*mode = create_ce_mode(0666);
 	else if (lstat(path, &st))
 		return error("Could not access '%s'", path);
 	else
 		*mode = st.st_mode;
 	return 0;
+}
+
+static int populate_from_stdin(struct diff_filespec *s)
+{
+	struct strbuf buf = STRBUF_INIT;
+	size_t size = 0;
+
+	if (strbuf_read(&buf, 0, 0) < 0)
+		return error("error while reading from stdin %s",
+				     strerror(errno));
+
+	s->should_munmap = 0;
+	s->data = strbuf_detach(&buf, &size);
+	s->size = size;
+	s->should_free = 1;
+	s->is_stdin = 1;
+	return 0;
+}
+
+static struct diff_filespec *noindex_filespec(const char *name, int mode)
+{
+	struct diff_filespec *s;
+
+	if (!name)
+		name = "/dev/null";
+	s = alloc_filespec(name);
+	fill_filespec(s, null_sha1, mode);
+	if (name == file_from_standard_input)
+		populate_from_stdin(s);
+	return s;
 }
 
 static int queue_diff(struct diff_options *o,
@@ -135,15 +172,8 @@ static int queue_diff(struct diff_options *o,
 			tmp_c = name1; name1 = name2; name2 = tmp_c;
 		}
 
-		if (!name1)
-			name1 = "/dev/null";
-		if (!name2)
-			name2 = "/dev/null";
-		d1 = alloc_filespec(name1);
-		d2 = alloc_filespec(name2);
-		fill_filespec(d1, null_sha1, mode1);
-		fill_filespec(d2, null_sha1, mode2);
-
+		d1 = noindex_filespec(name1, mode1);
+		d2 = noindex_filespec(name2, mode2);
 		diff_queue(&diff_queued_diff, d1, d2);
 		return 0;
 	}
@@ -238,7 +268,7 @@ void diff_no_index(struct rev_info *revs,
 			 * stdin should be spelled as "-"; if you have
 			 * path that is "-", spell it as "./-".
 			 */
-			p = p;
+			p = file_from_standard_input;
 		else if (prefixlen)
 			p = xstrdup(prefix_filename(prefix, prefixlen, p));
 		paths[i] = p;

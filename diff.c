@@ -2426,22 +2426,6 @@ static int reuse_worktree_file(const char *name, const unsigned char *sha1, int 
 	return 0;
 }
 
-static int populate_from_stdin(struct diff_filespec *s)
-{
-	struct strbuf buf = STRBUF_INIT;
-	size_t size = 0;
-
-	if (strbuf_read(&buf, 0, 0) < 0)
-		return error("error while reading from stdin %s",
-				     strerror(errno));
-
-	s->should_munmap = 0;
-	s->data = strbuf_detach(&buf, &size);
-	s->size = size;
-	s->should_free = 1;
-	return 0;
-}
-
 static int diff_populate_gitlink(struct diff_filespec *s, int size_only)
 {
 	int len;
@@ -2490,9 +2474,6 @@ int diff_populate_filespec(struct diff_filespec *s, int size_only)
 		struct strbuf buf = STRBUF_INIT;
 		struct stat st;
 		int fd;
-
-		if (!strcmp(s->path, "-"))
-			return populate_from_stdin(s);
 
 		if (lstat(s->path, &st) < 0) {
 			if (errno == ENOENT) {
@@ -2855,7 +2836,7 @@ static void diff_fill_sha1_info(struct diff_filespec *one)
 	if (DIFF_FILE_VALID(one)) {
 		if (!one->sha1_valid) {
 			struct stat st;
-			if (!strcmp(one->path, "-")) {
+			if (one->is_stdin) {
 				hashcpy(one->sha1, null_sha1);
 				return;
 			}

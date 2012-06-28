@@ -458,4 +458,16 @@ test_expect_success 'amend can copy notes' '
 
 '
 
+test_expect_success 'commit a file whose name is a dash' '
+	git reset --hard &&
+	for i in 1 2 3 4 5
+	do
+		echo $i
+	done >./- &&
+	git add ./- &&
+	test_tick &&
+	git commit -m "add dash" >output </dev/null &&
+	test_i18ngrep " changed, 5 insertions" output
+'
+
 test_done
