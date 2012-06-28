@@ -16,6 +16,7 @@
 #include "list-objects.h"
 #include "progress.h"
 #include "refs.h"
+#include "streaming.h"
 #include "thread-utils.h"
 
 static const char *pack_usage[] = {
@@ -150,6 +151,46 @@ static unsigned long do_compress(void **pptr, unsigned long size)
 	return stream.total_out;
 }
 
+static unsigned long write_large_blob_data(struct git_istream *st, struct sha1file *f,
+					   const unsigned char *sha1)
+{
+	git_zstream stream;
+	unsigned char ibuf[1024 * 16];
+	unsigned char obuf[1024 * 16];
+	unsigned long olen = 0;
+
+	memset(&stream, 0, sizeof(stream));
+	git_deflate_init(&stream, pack_compression_level);
+
+	for (;;) {
+		ssize_t readlen;
+		int zret = Z_OK;
+		readlen = read_istream(st, ibuf, sizeof(ibuf));
+		if (readlen == -1)
+			die(_("unable to read %s"), sha1_to_hex(sha1));
+
+		stream.next_in = ibuf;
+		stream.avail_in = readlen;
+		while ((stream.avail_in || readlen == 0) &&
+		       (zret == Z_OK || zret == Z_BUF_ERROR)) {
+			stream.next_out = obuf;
+			stream.avail_out = sizeof(obuf);
+			zret = git_deflate(&stream, readlen ? 0 : Z_FINISH);
+			sha1write(f, obuf, stream.next_out - obuf);
+			olen += stream.next_out - obuf;
+		}
+		if (stream.avail_in)
+			die(_("deflate error (%d)"), zret);
+		if (readlen == 0) {
+			if (zret != Z_STREAM_END)
+				die(_("deflate error (%d)"), zret);
+			break;
+		}
+	}
+	git_deflate_end(&stream);
+	return olen;
+}
+
 /*
  * we are going to reuse the existing object data as is.  make
  * sure it is not corrupt.
@@ -208,11 +249,18 @@ static unsigned long write_no_reuse_object(struct sha1file *f, struct object_ent
 	unsigned hdrlen;
 	enum object_type type;
 	void *buf;
+	struct git_istream *st = NULL;
 
 	if (!usable_delta) {
-		buf = read_sha1_file(entry->idx.sha1, &type, &size);
-		if (!buf)
-			die("unable to read %s", sha1_to_hex(entry->idx.sha1));
+		if (entry->type == OBJ_BLOB &&
+		    entry->size > big_file_threshold &&
+		    (st = open_istream(entry->idx.sha1, &type, &size, NULL)) != NULL)
+			buf = NULL;
+		else {
+			buf = read_sha1_file(entry->idx.sha1, &type, &size);
+			if (!buf)
+				die(_("unable to read %s"), sha1_to_hex(entry->idx.sha1));
+		}
 		/*
 		 * make sure no cached delta data remains from a
 		 * previous attempt before a pack split occurred.
@@ -233,7 +281,9 @@ static unsigned long write_no_reuse_object(struct sha1file *f, struct object_ent
 			OBJ_OFS_DELTA : OBJ_REF_DELTA;
 	}
 
-	if (entry->z_delta_size)
+	if (st)	/* large blob case, just assume we don't compress well */
+		datalen = size;
+	else if (entry->z_delta_size)
 		datalen = entry->z_delta_size;
 	else
 		datalen = do_compress(&buf, size);
@@ -256,6 +306,8 @@ static unsigned long write_no_reuse_object(struct sha1file *f, struct object_ent
 		while (ofs >>= 7)
 			dheader[--pos] = 128 | (--ofs & 127);
 		if (limit && hdrlen + sizeof(dheader) - pos + datalen + 20 >= limit) {
+			if (st)
+				close_istream(st);
 			free(buf);
 			return 0;
 		}
@@ -268,6 +320,8 @@ static unsigned long write_no_reuse_object(struct sha1file *f, struct object_ent
 		 * an additional 20 bytes for the base sha1.
 		 */
 		if (limit && hdrlen + 20 + datalen + 20 >= limit) {
+			if (st)
+				close_istream(st);
 			free(buf);
 			return 0;
 		}
@@ -276,13 +330,20 @@ static unsigned long write_no_reuse_object(struct sha1file *f, struct object_ent
 		hdrlen += 20;
 	} else {
 		if (limit && hdrlen + datalen + 20 >= limit) {
+			if (st)
+				close_istream(st);
 			free(buf);
 			return 0;
 		}
 		sha1write(f, header, hdrlen);
 	}
-	sha1write(f, buf, datalen);
-	free(buf);
+	if (st) {
+		datalen = write_large_blob_data(st, f, entry->idx.sha1);
+		close_istream(st);
+	} else {
+		sha1write(f, buf, datalen);
+		free(buf);
+	}
 
 	return hdrlen + datalen;
 }
