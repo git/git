@@ -20,6 +20,20 @@ UI, Workflows & Features
    the wire, so that the server log can be examined to see the vintage
    distribution of clients.
 
+ * "git rebase -i" learned "-x <cmd>" to insert "exec <cmd>" after
+   each commit in the resulting history.
+
+ * "git status" gives finer classification to various states of paths
+   in conflicted state and offer advice messages in its output.
+
+ * "git submodule" learned to deal with nested submodule structure
+   where a module is contained within a module whose origin is
+   specified as a relative URL to its superproject's origin.
+
+ * A rather heavy-ish "git completion" script has been split to create
+   a separate "git prompting" script, to help lazy-autoloading of the
+   completion part while making prompting part always available.
+
 
 Foreign Interface
 
@@ -31,6 +45,14 @@ Performance, Internal Implementation, etc. (please report possible regressions)
  * We no longer use AsciiDoc7 syntax in our documentation and favor a
    more modern style.
 
+ * "git index-pack" and "git pack-objects" use streaming API to read
+   from the object store to avoid having to hold a large blob object
+   in-core while they are doing their thing.
+
+ * Code to match paths with exclude patterns learned to avoid calling
+   fnmatch() by comparing fixed leading substring literally when
+   possible.
+
 
 Also contains minor documentation updates and code clean-ups.
 
@@ -41,6 +63,27 @@ Fixes since v1.7.11
 Unless otherwise noted, all the fixes since v1.7.11 in the maintenance
 releases are contained in this release (see release notes to them for
 details).
+
+ * When "git log" gets "--simplify-merges/by-decoration" together with
+   "--first-parent", the combination of these options makes the
+   simplification logic to use in-core commit objects that haven't
+   been examined for relevance, either producing incorrect result or
+   taking too long to produce any output.  Teach the simplification
+   logic to ignore commits that the first-parent traversal logic
+   ignored when both are in effect to work around the issue.
+   (merge 6e513ba jc/rev-list-simplify-merges-first-parent later to maint).
+
+ * "git add" allows adding a regular file to the path where a
+   submodule used to exist, but "git update-index" does not allow an
+   equivalent operation to Porcelain writers.
+   (merge 242f55f hv/submodule-update-nuke-submodules later to maint).
+
+ * "git diff --no-index" did not work with pagers correctly.
+   (merge af63b54 jk/diff-no-index-pager later to maint).
+
+ * "git diff COPYING HEAD:COPYING" gave a nonsense error message that
+   claimed that the treeish HEAD did not have COPYING in it.
+   (merge 023e37c mm/verify-filename-fix later to maint).
 
  * The documentation for "git cherry-pick A B..C" was misleading.
    (merge b98878e cn/cherry-pick-range-docs later to maint).
