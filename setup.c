@@ -53,11 +53,17 @@ int check_filename(const char *prefix, const char *arg)
 	die_errno("failed to stat '%s'", arg);
 }
 
-static void NORETURN die_verify_filename(const char *prefix, const char *arg)
+static void NORETURN die_verify_filename(const char *prefix,
+					 const char *arg,
+					 int diagnose_misspelt_rev)
 {
 	unsigned char sha1[20];
 	unsigned mode;
 
+	if (!diagnose_misspelt_rev)
+		die("%s: no such path in the working tree.\n"
+		    "Use '-- <path>...' to specify paths that do not exist locally.",
+		    arg);
 	/*
 	 * Saying "'(icase)foo' does not exist in the index" when the
 	 * user gave us ":(icase)foo" is just stupid.  A magic pathspec
@@ -80,14 +86,29 @@ static void NORETURN die_verify_filename(const char *prefix, const char *arg)
  * as true, because even if such a filename were to exist, we want
  * it to be preceded by the "--" marker (or we want the user to
  * use a format like "./-filename")
+ *
+ * The "diagnose_misspelt_rev" is used to provide a user-friendly
+ * diagnosis when dying upon finding that "name" is not a pathname.
+ * If set to 1, the diagnosis will try to diagnose "name" as an
+ * invalid object name (e.g. HEAD:foo). If set to 0, the diagnosis
+ * will only complain about an inexisting file.
+ *
+ * This function is typically called to check that a "file or rev"
+ * argument is unambiguous. In this case, the caller will want
+ * diagnose_misspelt_rev == 1 when verifying the first non-rev
+ * argument (which could have been a revision), and
+ * diagnose_misspelt_rev == 0 for the next ones (because we already
+ * saw a filename, there's not ambiguity anymore).
  */
-void verify_filename(const char *prefix, const char *arg)
+void verify_filename(const char *prefix,
+		     const char *arg,
+		     int diagnose_misspelt_rev)
 {
 	if (*arg == '-')
 		die("bad flag '%s' used after filename", arg);
 	if (check_filename(prefix, arg))
 		return;
-	die_verify_filename(prefix, arg);
+	die_verify_filename(prefix, arg, diagnose_misspelt_rev);
 }
 
 /*

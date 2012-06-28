@@ -285,7 +285,7 @@ int cmd_reset(int argc, const char **argv, const char *prefix)
 			rev = argv[i++];
 		} else {
 			/* Otherwise we treat this as a filename */
-			verify_filename(prefix, argv[i]);
+			verify_filename(prefix, argv[i], 1);
 		}
 	}
 

@@ -409,7 +409,9 @@ extern const char *setup_git_directory(void);
 extern char *prefix_path(const char *prefix, int len, const char *path);
 extern const char *prefix_filename(const char *prefix, int len, const char *path);
 extern int check_filename(const char *prefix, const char *name);
-extern void verify_filename(const char *prefix, const char *name);
+extern void verify_filename(const char *prefix,
+			    const char *name,
+			    int diagnose_misspelt_rev);
 extern void verify_non_filename(const char *prefix, const char *name);
 
 #define INIT_DB_QUIET 0x0001
