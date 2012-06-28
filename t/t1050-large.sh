@@ -130,6 +130,11 @@ test_expect_success 'git-show a large file' '
 
 '
 
+test_expect_success 'index-pack' '
+	git clone file://"`pwd`"/.git foo &&
+	GIT_DIR=non-existent git index-pack --strict --verify foo/.git/objects/pack/*.pack
+'
+
 test_expect_success 'repack' '
 	git repack -ad
 '
