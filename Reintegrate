@@ -100,7 +100,7 @@ no)
 			mb=$(git merge-base "$tip" "$save")
 			test "$mb" = "$tip" && continue
 
-			git merge $accept_rerere --no-edit "$branch" ||
+			EDITOR=: git merge $accept_rerere "$branch" ||
 			accept_rerere ||
 			exit
 
