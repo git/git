@@ -30,7 +30,22 @@ nofetch=
 update=
 prefix=
 
-# Resolve relative url by appending to parent's url
+# The function takes at most 2 arguments. The first argument is the
+# URL that navigates to the submodule origin repo. When relative, this URL
+# is relative to the superproject origin URL repo. The second up_path
+# argument, if specified, is the relative path that navigates
+# from the submodule working tree to the superproject working tree.
+#
+# The output of the function is the origin URL of the submodule.
+#
+# The output will either be an absolute URL or filesystem path (if the
+# superproject origin URL is an absolute URL or filesystem path,
+# respectively) or a relative file system path (if the superproject
+# origin URL is a relative file system path).
+#
+# When the output is a relative file system path, the path is either
+# relative to the submodule working tree, if up_path is specified, or to
+# the superproject working tree otherwise.
 resolve_relative_url ()
 {
 	remote=$(get_default_remote)
@@ -39,6 +54,21 @@ resolve_relative_url ()
 	url="$1"
 	remoteurl=${remoteurl%/}
 	sep=/
+	up_path="$2"
+
+	case "$remoteurl" in
+	*:*|/*)
+		is_relative=
+		;;
+	./*|../*)
+		is_relative=t
+		;;
+	*)
+		is_relative=t
+		remoteurl="./$remoteurl"
+		;;
+	esac
+
 	while test -n "$url"
 	do
 		case "$url" in
@@ -53,7 +83,12 @@ resolve_relative_url ()
 				sep=:
 				;;
 			*)
-				die "$(eval_gettext "cannot strip one component off url '\$remoteurl'")"
+				if test -z "$is_relative" || test "." = "$remoteurl"
+				then
+					die "$(eval_gettext "cannot strip one component off url '\$remoteurl'")"
+				else
+					remoteurl=.
+				fi
 				;;
 			esac
 			;;
@@ -64,7 +99,8 @@ resolve_relative_url ()
 			break;;
 		esac
 	done
-	echo "$remoteurl$sep${url%/}"
+	remoteurl="$remoteurl$sep${url%/}"
+	echo "${is_relative:+${up_path}}${remoteurl#./}"
 }
 
 #
@@ -965,14 +1001,26 @@ cmd_sync()
 		# Possibly a url relative to parent
 		case "$url" in
 		./*|../*)
-			url=$(resolve_relative_url "$url") || exit
+			# rewrite foo/bar as ../.. to find path from
+			# submodule work tree to superproject work tree
+			up_path="$(echo "$sm_path" | sed "s/[^/][^/]*/../g")" &&
+			# guarantee a trailing /
+			up_path=${up_path%/}/ &&
+			# path from submodule work tree to submodule origin repo
+			sub_origin_url=$(resolve_relative_url "$url" "$up_path") &&
+			# path from superproject work tree to submodule origin repo
+			super_config_url=$(resolve_relative_url "$url") || exit
+			;;
+		*)
+			sub_origin_url="$url"
+			super_config_url="$url"
 			;;
 		esac
 
 		if git config "submodule.$name.url" >/dev/null 2>/dev/null
 		then
 			say "$(eval_gettext "Synchronizing submodule url for '\$name'")"
-			git config submodule."$name".url "$url"
+			git config submodule."$name".url "$super_config_url"
 
 			if test -e "$sm_path"/.git
 			then
@@ -980,7 +1028,7 @@ cmd_sync()
 				clear_local_git_env
 				cd "$sm_path"
 				remote=$(get_default_remote)
-				git config remote."$remote".url "$url"
+				git config remote."$remote".url "$sub_origin_url"
 			)
 			fi
 		fi
