@@ -1125,12 +1125,24 @@ static int get_sha1_with_context_1(const char *name, unsigned char *sha1,
 	return ret;
 }
 
-int get_sha1_with_mode_1(const char *name, unsigned char *sha1, unsigned *mode,
-			 int only_to_die, const char *prefix)
+/*
+ * Call this function when you know "name" given by the end user must
+ * name an object but it doesn't; the function _may_ die with a better
+ * diagnostic message than "no such object 'name'", e.g. "Path 'doc' does not
+ * exist in 'HEAD'" when given "HEAD:doc", or it may return in which case
+ * you have a chance to diagnose the error further.
+ */
+void maybe_die_on_misspelt_object_name(const char *name, const char *prefix)
 {
 	struct object_context oc;
-	int ret;
-	ret = get_sha1_with_context_1(name, sha1, &oc, only_to_die, prefix);
+	unsigned char sha1[20];
+	get_sha1_with_context_1(name, sha1, &oc, 1, prefix);
+}
+
+int get_sha1_with_mode(const char *str, unsigned char *sha1, unsigned *mode)
+{
+	struct object_context oc;
+	int ret = get_sha1_with_context_1(str, sha1, &oc, 0, NULL);
 	*mode = oc.mode;
 	return ret;
 }
