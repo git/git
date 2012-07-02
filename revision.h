@@ -183,6 +183,7 @@ struct setup_revision_opt {
 	const char *def;
 	void (*tweak)(struct rev_info *, struct setup_revision_opt *);
 	const char *submodule;
+	unsigned revarg_opt;
 };
 
 extern void init_revisions(struct rev_info *revs, const char *prefix);
@@ -191,6 +192,7 @@ extern void parse_revision_opt(struct rev_info *revs, struct parse_opt_ctx_t *ct
 				 const struct option *options,
 				 const char * const usagestr[]);
 #define REVARG_CANNOT_BE_FILENAME 01
+#define REVARG_COMMITTISH 02
 extern int handle_revision_arg(const char *arg, struct rev_info *revs, int flags, unsigned revarg_opt);
 
 extern int prepare_revision_walk(struct rev_info *revs);

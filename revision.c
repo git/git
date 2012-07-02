@@ -1102,6 +1102,7 @@ int handle_revision_arg(const char *arg_, struct rev_info *revs, int flags, unsi
 	int local_flags;
 	const char *arg = arg_;
 	int cant_be_filename = revarg_opt & REVARG_CANNOT_BE_FILENAME;
+	unsigned get_sha1_flags = 0;
 
 	dotdot = strstr(arg, "..");
 	if (dotdot) {
@@ -1179,7 +1180,11 @@ int handle_revision_arg(const char *arg_, struct rev_info *revs, int flags, unsi
 		local_flags = UNINTERESTING;
 		arg++;
 	}
-	if (get_sha1_with_context(arg, 0, sha1, &oc))
+
+	if (revarg_opt & REVARG_COMMITTISH)
+		get_sha1_flags = GET_SHA1_COMMITTISH;
+
+	if (get_sha1_with_context(arg, get_sha1_flags, sha1, &oc))
 		return revs->ignore_missing ? 0 : -1;
 	if (!cant_be_filename)
 		verify_non_filename(revs->prefix, arg);
@@ -1707,7 +1712,9 @@ int setup_revisions(int argc, const char **argv, struct rev_info *revs, struct s
 
 	/* Second, deal with arguments and options */
 	flags = 0;
-	revarg_opt = seen_dashdash ? REVARG_CANNOT_BE_FILENAME : 0;
+	revarg_opt = opt ? opt->revarg_opt : 0;
+	if (seen_dashdash)
+		revarg_opt |= REVARG_CANNOT_BE_FILENAME;
 	read_from_stdin = 0;
 	for (left = i = 1; i < argc; i++) {
 		const char *arg = argv[i];
