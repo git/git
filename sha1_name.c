@@ -872,7 +872,7 @@ int get_sha1_mb(const char *name, unsigned char *sha1)
 		struct strbuf sb;
 		strbuf_init(&sb, dots - name);
 		strbuf_add(&sb, name, dots - name);
-		st = get_sha1(sb.buf, sha1_tmp);
+		st = get_sha1_committish(sb.buf, sha1_tmp);
 		strbuf_release(&sb);
 	}
 	if (st)
@@ -881,7 +881,7 @@ int get_sha1_mb(const char *name, unsigned char *sha1)
 	if (!one)
 		return -1;
 
-	if (get_sha1(dots[3] ? (dots + 3) : "HEAD", sha1_tmp))
+	if (get_sha1_committish(dots[3] ? (dots + 3) : "HEAD", sha1_tmp))
 		return -1;
 	two = lookup_commit_reference_gently(sha1_tmp, 0);
 	if (!two)
@@ -997,6 +997,23 @@ int get_sha1(const char *name, unsigned char *sha1)
 {
 	struct object_context unused;
 	return get_sha1_with_context(name, 0, sha1, &unused);
+}
+
+/*
+ * Many callers know that the user meant to name a committish by
+ * syntactical positions where the object name appears.  Calling this
+ * function allows the machinery to disambiguate shorter-than-unique
+ * abbreviated object names between committish and others.
+ *
+ * Note that this does NOT error out when the named object is not a
+ * committish. It is merely to give a hint to the disambiguation
+ * machinery.
+ */
+int get_sha1_committish(const char *name, unsigned char *sha1)
+{
+	struct object_context unused;
+	return get_sha1_with_context(name, GET_SHA1_COMMITTISH,
+				     sha1, &unused);
 }
 
 /* Must be called only when object_name:filename doesn't exist. */

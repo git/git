@@ -102,7 +102,7 @@ test_expect_failure 'disambiguate commit' '
 	test $(git rev-parse $commit^) = $(git rev-parse 0000000000e4f)
 '
 
-test_expect_failure 'log name1..name2 takes only commit-ishes on both ends' '
+test_expect_success 'log name1..name2 takes only commit-ishes on both ends' '
 	git log 000000000..000000000 &&
 	git log ..000000000 &&
 	git log 000000000.. &&
