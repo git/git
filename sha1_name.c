@@ -1139,14 +1139,6 @@ void maybe_die_on_misspelt_object_name(const char *name, const char *prefix)
 	get_sha1_with_context_1(name, sha1, &oc, 1, prefix);
 }
 
-int get_sha1_with_mode(const char *str, unsigned char *sha1, unsigned *mode)
-{
-	struct object_context oc;
-	int ret = get_sha1_with_context_1(str, sha1, &oc, 0, NULL);
-	*mode = oc.mode;
-	return ret;
-}
-
 int get_sha1_with_context(const char *str, unsigned char *sha1, struct object_context *orc)
 {
 	return get_sha1_with_context_1(str, sha1, orc, 0, NULL);
