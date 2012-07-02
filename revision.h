@@ -190,7 +190,8 @@ extern int setup_revisions(int argc, const char **argv, struct rev_info *revs, s
 extern void parse_revision_opt(struct rev_info *revs, struct parse_opt_ctx_t *ctx,
 				 const struct option *options,
 				 const char * const usagestr[]);
-extern int handle_revision_arg(const char *arg, struct rev_info *revs,int flags,int cant_be_filename);
+#define REVARG_CANNOT_BE_FILENAME 01
+extern int handle_revision_arg(const char *arg, struct rev_info *revs, int flags, unsigned revarg_opt);
 
 extern int prepare_revision_walk(struct rev_info *revs);
 extern struct commit *get_revision(struct rev_info *revs);

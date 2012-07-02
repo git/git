@@ -1093,9 +1093,7 @@ static void prepare_show_merge(struct rev_info *revs)
 	revs->limited = 1;
 }
 
-int handle_revision_arg(const char *arg_, struct rev_info *revs,
-			int flags,
-			int cant_be_filename)
+int handle_revision_arg(const char *arg_, struct rev_info *revs, int flags, unsigned revarg_opt)
 {
 	struct object_context oc;
 	char *dotdot;
@@ -1103,6 +1101,7 @@ int handle_revision_arg(const char *arg_, struct rev_info *revs,
 	unsigned char sha1[20];
 	int local_flags;
 	const char *arg = arg_;
+	int cant_be_filename = revarg_opt & REVARG_CANNOT_BE_FILENAME;
 
 	dotdot = strstr(arg, "..");
 	if (dotdot) {
@@ -1236,7 +1235,7 @@ static void read_revisions_from_stdin(struct rev_info *revs,
 			}
 			die("options not supported in --stdin mode");
 		}
-		if (handle_revision_arg(sb.buf, revs, 0, 1))
+		if (handle_revision_arg(sb.buf, revs, 0, REVARG_CANNOT_BE_FILENAME))
 			die("bad revision '%s'", sb.buf);
 	}
 	if (seen_dashdash)
@@ -1684,7 +1683,7 @@ static int handle_revision_pseudo_opt(const char *submodule,
  */
 int setup_revisions(int argc, const char **argv, struct rev_info *revs, struct setup_revision_opt *opt)
 {
-	int i, flags, left, seen_dashdash, read_from_stdin, got_rev_arg = 0;
+	int i, flags, left, seen_dashdash, read_from_stdin, got_rev_arg = 0, revarg_opt;
 	struct cmdline_pathspec prune_data;
 	const char *submodule = NULL;
 
@@ -1708,6 +1707,7 @@ int setup_revisions(int argc, const char **argv, struct rev_info *revs, struct s
 
 	/* Second, deal with arguments and options */
 	flags = 0;
+	revarg_opt = seen_dashdash ? REVARG_CANNOT_BE_FILENAME : 0;
 	read_from_stdin = 0;
 	for (left = i = 1; i < argc; i++) {
 		const char *arg = argv[i];
@@ -1743,7 +1743,8 @@ int setup_revisions(int argc, const char **argv, struct rev_info *revs, struct s
 			continue;
 		}
 
-		if (handle_revision_arg(arg, revs, flags, seen_dashdash)) {
+
+		if (handle_revision_arg(arg, revs, flags, revarg_opt)) {
 			int j;
 			if (seen_dashdash || *arg == '^')
 				die("bad revision '%s'", arg);
