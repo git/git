@@ -817,11 +817,7 @@ static inline int get_sha1_with_mode(const char *str, unsigned char *sha1, unsig
 {
 	return get_sha1_with_mode_1(str, sha1, mode, 0, NULL);
 }
-extern int get_sha1_with_context_1(const char *name, unsigned char *sha1, struct object_context *orc, int only_to_die, const char *prefix);
-static inline int get_sha1_with_context(const char *str, unsigned char *sha1, struct object_context *orc)
-{
-	return get_sha1_with_context_1(str, sha1, orc, 0, NULL);
-}
+extern int get_sha1_with_context(const char *str, unsigned char *sha1, struct object_context *orc);
 
 /*
  * Try to read a SHA1 in hexadecimal format from the 40 characters

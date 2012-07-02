@@ -992,16 +992,6 @@ static void diagnose_invalid_index_path(int stage,
 }
 
 
-int get_sha1_with_mode_1(const char *name, unsigned char *sha1, unsigned *mode,
-			 int only_to_die, const char *prefix)
-{
-	struct object_context oc;
-	int ret;
-	ret = get_sha1_with_context_1(name, sha1, &oc, only_to_die, prefix);
-	*mode = oc.mode;
-	return ret;
-}
-
 static char *resolve_relative_path(const char *rel)
 {
 	if (prefixcmp(rel, "./") && prefixcmp(rel, "../"))
@@ -1019,9 +1009,9 @@ static char *resolve_relative_path(const char *rel)
 			   rel);
 }
 
-int get_sha1_with_context_1(const char *name, unsigned char *sha1,
-			    struct object_context *oc,
-			    int only_to_die, const char *prefix)
+static int get_sha1_with_context_1(const char *name, unsigned char *sha1,
+				   struct object_context *oc,
+				   int only_to_die, const char *prefix)
 {
 	int ret, bracket_depth;
 	int namelen = strlen(name);
@@ -1133,4 +1123,19 @@ int get_sha1_with_context_1(const char *name, unsigned char *sha1,
 		}
 	}
 	return ret;
+}
+
+int get_sha1_with_mode_1(const char *name, unsigned char *sha1, unsigned *mode,
+			 int only_to_die, const char *prefix)
+{
+	struct object_context oc;
+	int ret;
+	ret = get_sha1_with_context_1(name, sha1, &oc, only_to_die, prefix);
+	*mode = oc.mode;
+	return ret;
+}
+
+int get_sha1_with_context(const char *str, unsigned char *sha1, struct object_context *orc)
+{
+	return get_sha1_with_context_1(str, sha1, orc, 0, NULL);
 }
