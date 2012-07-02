@@ -996,7 +996,7 @@ int strbuf_check_branch_ref(struct strbuf *sb, const char *name)
 int get_sha1(const char *name, unsigned char *sha1)
 {
 	struct object_context unused;
-	return get_sha1_with_context(name, sha1, &unused);
+	return get_sha1_with_context(name, 0, sha1, &unused);
 }
 
 /* Must be called only when object_name:filename doesn't exist. */
@@ -1112,20 +1112,24 @@ static char *resolve_relative_path(const char *rel)
 			   rel);
 }
 
-static int get_sha1_with_context_1(const char *name, unsigned char *sha1,
-				   struct object_context *oc,
-				   int only_to_die, const char *prefix)
+static int get_sha1_with_context_1(const char *name,
+				   unsigned flags,
+				   const char *prefix,
+				   unsigned char *sha1,
+				   struct object_context *oc)
 {
 	int ret, bracket_depth;
 	int namelen = strlen(name);
 	const char *cp;
+	int only_to_die = flags & GET_SHA1_ONLY_TO_DIE;
 
 	memset(oc, 0, sizeof(*oc));
 	oc->mode = S_IFINVALID;
-	ret = get_sha1_1(name, namelen, sha1, 0);
+	ret = get_sha1_1(name, namelen, sha1, flags);
 	if (!ret)
 		return ret;
-	/* sha1:path --> object name of path in ent sha1
+	/*
+	 * sha1:path --> object name of path in ent sha1
 	 * :path -> object name of absolute path in index
 	 * :./path -> object name of path relative to cwd in index
 	 * :[0-3]:path -> object name of path in index at stage
@@ -1239,10 +1243,10 @@ void maybe_die_on_misspelt_object_name(const char *name, const char *prefix)
 {
 	struct object_context oc;
 	unsigned char sha1[20];
-	get_sha1_with_context_1(name, sha1, &oc, 1, prefix);
+	get_sha1_with_context_1(name, GET_SHA1_ONLY_TO_DIE, prefix, sha1, &oc);
 }
 
-int get_sha1_with_context(const char *str, unsigned char *sha1, struct object_context *orc)
+int get_sha1_with_context(const char *str, unsigned flags, unsigned char *sha1, struct object_context *orc)
 {
-	return get_sha1_with_context_1(str, sha1, orc, 0, NULL);
+	return get_sha1_with_context_1(str, flags, NULL, sha1, orc);
 }

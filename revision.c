@@ -1180,7 +1180,7 @@ int handle_revision_arg(const char *arg_, struct rev_info *revs,
 		local_flags = UNINTERESTING;
 		arg++;
 	}
-	if (get_sha1_with_context(arg, sha1, &oc))
+	if (get_sha1_with_context(arg, 0, sha1, &oc))
 		return revs->ignore_missing ? 0 : -1;
 	if (!cant_be_filename)
 		verify_non_filename(revs->prefix, arg);
@@ -1795,7 +1795,7 @@ int setup_revisions(int argc, const char **argv, struct rev_info *revs, struct s
 		unsigned char sha1[20];
 		struct object *object;
 		struct object_context oc;
-		if (get_sha1_with_context(revs->def, sha1, &oc))
+		if (get_sha1_with_context(revs->def, 0, sha1, &oc))
 			die("bad default revision '%s'", revs->def);
 		object = get_reference(revs, revs->def, sha1, 0);
 		add_pending_object_with_mode(revs, object, revs->def, oc.mode);
