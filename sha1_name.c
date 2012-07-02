@@ -224,6 +224,24 @@ static int disambiguate_commit_only(const unsigned char *sha1, void *cb_data_unu
 	return kind == OBJ_COMMIT;
 }
 
+static int disambiguate_committish_only(const unsigned char *sha1, void *cb_data_unused)
+{
+	struct object *obj;
+	int kind;
+
+	kind = sha1_object_info(sha1, NULL);
+	if (kind == OBJ_COMMIT)
+		return 1;
+	if (kind != OBJ_TAG)
+		return 0;
+
+	/* We need to do this the hard way... */
+	obj = deref_tag(lookup_object(sha1), NULL, 0);
+	if (obj && obj->type == OBJ_COMMIT)
+		return 1;
+	return 0;
+}
+
 static int get_short_sha1(const char *name, int len, unsigned char *sha1,
 			  unsigned flags)
 {
@@ -261,6 +279,8 @@ static int get_short_sha1(const char *name, int len, unsigned char *sha1,
 	memset(&ds, 0, sizeof(ds));
 	if (flags & GET_SHA1_COMMIT)
 		ds.fn = disambiguate_commit_only;
+	else if (flags & GET_SHA1_COMMITTISH)
+		ds.fn = disambiguate_committish_only;
 
 	find_short_object_filename(len, hex_pfx, &ds);
 	find_short_packed_object(len, bin_pfx, &ds);
@@ -440,7 +460,7 @@ static int get_parent(const char *name, int len,
 		      unsigned char *result, int idx)
 {
 	unsigned char sha1[20];
-	int ret = get_sha1_1(name, len, sha1, 0);
+	int ret = get_sha1_1(name, len, sha1, GET_SHA1_COMMITTISH);
 	struct commit *commit;
 	struct commit_list *p;
 
@@ -473,7 +493,7 @@ static int get_nth_ancestor(const char *name, int len,
 	struct commit *commit;
 	int ret;
 
-	ret = get_sha1_1(name, len, sha1, 0);
+	ret = get_sha1_1(name, len, sha1, GET_SHA1_COMMITTISH);
 	if (ret)
 		return ret;
 	commit = lookup_commit_reference(sha1);
@@ -519,6 +539,7 @@ static int peel_onion(const char *name, int len, unsigned char *sha1)
 	unsigned char outer[20];
 	const char *sp;
 	unsigned int expected_type = 0;
+	unsigned lookup_flags = 0;
 	struct object *o;
 
 	/*
@@ -554,7 +575,10 @@ static int peel_onion(const char *name, int len, unsigned char *sha1)
 	else
 		return -1;
 
-	if (get_sha1_1(name, sp - name - 2, outer, 0))
+	if (expected_type == OBJ_COMMIT)
+		lookup_flags = GET_SHA1_COMMITTISH;
+
+	if (get_sha1_1(name, sp - name - 2, outer, lookup_flags))
 		return -1;
 
 	o = parse_object(outer);
@@ -666,7 +690,7 @@ static int get_sha1_1(const char *name, int len, unsigned char *sha1, unsigned l
 	if (!ret)
 		return 0;
 
-	return get_short_sha1(name, len, sha1, 0);
+	return get_short_sha1(name, len, sha1, lookup_flags);
 }
 
 /*

@@ -813,6 +813,7 @@ struct object_context {
 
 #define GET_SHA1_QUIETLY 01
 #define GET_SHA1_COMMIT 02
+#define GET_SHA1_COMMITTISH 04
 
 extern int get_sha1(const char *str, unsigned char *sha1);
 extern void maybe_die_on_misspelt_object_name(const char *name, const char *prefix);
