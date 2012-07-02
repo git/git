@@ -1828,6 +1828,16 @@ static int read_ancestry(const char *graft_file)
 	return 0;
 }
 
+static int update_auto_abbrev(int auto_abbrev, struct origin *suspect)
+{
+	const char *uniq = find_unique_abbrev(suspect->commit->object.sha1,
+					      auto_abbrev);
+	int len = strlen(uniq);
+	if (auto_abbrev < len)
+		return len;
+	return auto_abbrev;
+}
+
 /*
  * How many columns do we need to show line numbers in decimal?
  */
@@ -1850,12 +1860,16 @@ static void find_alignment(struct scoreboard *sb, int *option)
 	int longest_dst_lines = 0;
 	unsigned largest_score = 0;
 	struct blame_entry *e;
+	int compute_auto_abbrev = (abbrev < 0);
+	int auto_abbrev = default_abbrev;
 
 	for (e = sb->ent; e; e = e->next) {
 		struct origin *suspect = e->suspect;
 		struct commit_info ci;
 		int num;
 
+		if (compute_auto_abbrev)
+			auto_abbrev = update_auto_abbrev(auto_abbrev, suspect);
 		if (strcmp(suspect->path, sb->path))
 			*option |= OUTPUT_SHOW_NAME;
 		num = strlen(suspect->path);
@@ -1883,6 +1897,10 @@ static void find_alignment(struct scoreboard *sb, int *option)
 	max_orig_digits = lineno_width(longest_src_lines);
 	max_digits = lineno_width(longest_dst_lines);
 	max_score_digits = lineno_width(largest_score);
+
+	if (compute_auto_abbrev)
+		/* one more abbrev length is needed for the boundary commit */
+		abbrev = auto_abbrev + 1;
 }
 
 /*
@@ -2360,10 +2378,9 @@ int cmd_blame(int argc, const char **argv, const char *prefix)
 parse_done:
 	argc = parse_options_end(&ctx);
 
-	if (abbrev == -1)
-		abbrev = default_abbrev;
-	/* one more abbrev length is needed for the boundary commit */
-	abbrev++;
+	if (0 < abbrev)
+		/* one more abbrev length is needed for the boundary commit */
+		abbrev++;
 
 	if (revs_file && read_ancestry(revs_file))
 		die_errno("reading graft file '%s' failed", revs_file);
