@@ -75,7 +75,7 @@ test_expect_success 'disambiguate blob' '
 	test_cmp a0blgqsjc actual
 '
 
-test_expect_failure 'disambiguate tree' '
+test_expect_success 'disambiguate tree' '
 	commit=$(echo "d7xm" | git commit-tree 000000000) &&
 	test $(git rev-parse $commit^{tree}) = $(git rev-parse 0000000000cdc)
 '
@@ -97,7 +97,7 @@ test_expect_success 'disambiguate commit-ish' '
 	git rev-parse --verify 000000000^0
 '
 
-test_expect_failure 'disambiguate commit' '
+test_expect_success 'disambiguate commit' '
 	commit=$(echo "j9xqh" | git commit-tree 0000000000cdc -p 000000000) &&
 	test $(git rev-parse $commit^) = $(git rev-parse 0000000000e4f)
 '
