@@ -212,7 +212,7 @@ static int finish_object_disambiguation(struct disambiguate_state *ds,
 				    ds->fn(ds->candidate, ds->cb_data));
 
 	if (!ds->candidate_ok)
-		return SHORT_NAME_NOT_FOUND;
+		return SHORT_NAME_AMBIGUOUS;
 
 	hashcpy(sha1, ds->candidate);
 	return 0;
