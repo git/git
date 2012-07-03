@@ -111,7 +111,7 @@ test_expect_success 'log name1..name2 takes only commit-ishes on both ends' '
 	git log 000000000...
 '
 
-test_expect_failure 'rev-parse name1..name2 takes only commit-ishes on both ends' '
+test_expect_success 'rev-parse name1..name2 takes only commit-ishes on both ends' '
 	git rev-parse 000000000..000000000 &&
 	git rev-parse ..000000000 &&
 	git rev-parse 000000000..

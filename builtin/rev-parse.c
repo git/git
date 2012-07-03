@@ -238,7 +238,7 @@ static int try_difference(const char *arg)
 		next = "HEAD";
 	if (dotdot == arg)
 		this = "HEAD";
-	if (!get_sha1(this, sha1) && !get_sha1(next, end)) {
+	if (!get_sha1_committish(this, sha1) && !get_sha1_committish(next, end)) {
 		show_rev(NORMAL, end, next);
 		show_rev(symmetric ? NORMAL : REVERSED, sha1, this);
 		if (symmetric) {
@@ -278,7 +278,7 @@ static int try_parent_shorthands(const char *arg)
 		return 0;
 
 	*dotdot = 0;
-	if (get_sha1(arg, sha1))
+	if (get_sha1_committish(arg, sha1))
 		return 0;
 
 	if (!parents_only)
