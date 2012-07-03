@@ -242,6 +242,36 @@ static int disambiguate_committish_only(const unsigned char *sha1, void *cb_data
 	return 0;
 }
 
+static int disambiguate_tree_only(const unsigned char *sha1, void *cb_data_unused)
+{
+	int kind = sha1_object_info(sha1, NULL);
+	return kind == OBJ_TREE;
+}
+
+static int disambiguate_treeish_only(const unsigned char *sha1, void *cb_data_unused)
+{
+	struct object *obj;
+	int kind;
+
+	kind = sha1_object_info(sha1, NULL);
+	if (kind == OBJ_TREE || kind == OBJ_COMMIT)
+		return 1;
+	if (kind != OBJ_TAG)
+		return 0;
+
+	/* We need to do this the hard way... */
+	obj = deref_tag(lookup_object(sha1), NULL, 0);
+	if (obj && (obj->type == OBJ_TREE || obj->type == OBJ_COMMIT))
+		return 1;
+	return 0;
+}
+
+static int disambiguate_blob_only(const unsigned char *sha1, void *cb_data_unused)
+{
+	int kind = sha1_object_info(sha1, NULL);
+	return kind == OBJ_BLOB;
+}
+
 static int get_short_sha1(const char *name, int len, unsigned char *sha1,
 			  unsigned flags)
 {
@@ -281,6 +311,12 @@ static int get_short_sha1(const char *name, int len, unsigned char *sha1,
 		ds.fn = disambiguate_commit_only;
 	else if (flags & GET_SHA1_COMMITTISH)
 		ds.fn = disambiguate_committish_only;
+	else if (flags & GET_SHA1_TREE)
+		ds.fn = disambiguate_tree_only;
+	else if (flags & GET_SHA1_TREEISH)
+		ds.fn = disambiguate_treeish_only;
+	else if (flags & GET_SHA1_BLOB)
+		ds.fn = disambiguate_blob_only;
 
 	find_short_object_filename(len, hex_pfx, &ds);
 	find_short_packed_object(len, bin_pfx, &ds);
@@ -1016,6 +1052,34 @@ int get_sha1_committish(const char *name, unsigned char *sha1)
 				     sha1, &unused);
 }
 
+int get_sha1_treeish(const char *name, unsigned char *sha1)
+{
+	struct object_context unused;
+	return get_sha1_with_context(name, GET_SHA1_TREEISH,
+				     sha1, &unused);
+}
+
+int get_sha1_commit(const char *name, unsigned char *sha1)
+{
+	struct object_context unused;
+	return get_sha1_with_context(name, GET_SHA1_COMMIT,
+				     sha1, &unused);
+}
+
+int get_sha1_tree(const char *name, unsigned char *sha1)
+{
+	struct object_context unused;
+	return get_sha1_with_context(name, GET_SHA1_TREE,
+				     sha1, &unused);
+}
+
+int get_sha1_blob(const char *name, unsigned char *sha1)
+{
+	struct object_context unused;
+	return get_sha1_with_context(name, GET_SHA1_BLOB,
+				     sha1, &unused);
+}
+
 /* Must be called only when object_name:filename doesn't exist. */
 static void diagnose_invalid_sha1_path(const char *prefix,
 				       const char *filename,
@@ -1221,7 +1285,7 @@ static int get_sha1_with_context_1(const char *name,
 			strncpy(object_name, name, cp-name);
 			object_name[cp-name] = '\0';
 		}
-		if (!get_sha1_1(name, cp-name, tree_sha1, 0)) {
+		if (!get_sha1_1(name, cp-name, tree_sha1, GET_SHA1_TREEISH)) {
 			const char *filename = cp+1;
 			char *new_filename = NULL;
 

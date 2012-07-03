@@ -45,7 +45,7 @@ test_expect_success 'warn ambiguity when no candidate matches type hint' '
 	grep "short SHA1 000000000 is ambiguous" actual
 '
 
-test_expect_failure 'disambiguate tree-ish' '
+test_expect_success 'disambiguate tree-ish' '
 	# feed tree-ish in an unambiguous way
 	git rev-parse --verify 0000000000cdc:a0blgqsjc &&
 
