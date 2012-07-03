@@ -54,7 +54,7 @@ test_expect_success 'disambiguate tree-ish' '
 	git rev-parse --verify 000000000:a0blgqsjc
 '
 
-test_expect_failure 'disambiguate blob' '
+test_expect_success 'disambiguate blob' '
 	sed -e "s/|$//" >patch <<-EOF &&
 	diff --git a/frotz b/frotz
 	index 000000000..ffffff 100644
