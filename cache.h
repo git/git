@@ -828,6 +828,9 @@ extern int get_sha1_blob(const char *str, unsigned char *sha1);
 extern void maybe_die_on_misspelt_object_name(const char *name, const char *prefix);
 extern int get_sha1_with_context(const char *str, unsigned flags, unsigned char *sha1, struct object_context *orc);
 
+typedef int each_abbrev_fn(const unsigned char *sha1, void *);
+extern int for_each_abbrev(const char *prefix, each_abbrev_fn, void *);
+
 /*
  * Try to read a SHA1 in hexadecimal format from the 40 characters
  * starting at hex.  Write the 20-byte result to sha1 in binary form.

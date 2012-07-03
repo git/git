@@ -20,10 +20,15 @@ struct disambiguate_state {
 	unsigned candidate_ok:1;
 	unsigned disambiguate_fn_used:1;
 	unsigned ambiguous:1;
+	unsigned always_call_fn:1;
 };
 
 static void update_candidates(struct disambiguate_state *ds, const unsigned char *current)
 {
+	if (ds->always_call_fn) {
+		ds->ambiguous = ds->fn(current, ds->cb_data) ? 1 : 0;
+		return;
+	}
 	if (!ds->candidate_exists) {
 		/* this is the first candidate */
 		hashcpy(ds->candidate, current);
@@ -272,17 +277,12 @@ static int disambiguate_blob_only(const unsigned char *sha1, void *cb_data_unuse
 	return kind == OBJ_BLOB;
 }
 
-static int get_short_sha1(const char *name, int len, unsigned char *sha1,
-			  unsigned flags)
+static int prepare_prefixes(const char *name, int len,
+			    unsigned char *bin_pfx,
+			    char *hex_pfx)
 {
-	int i, status;
-	char hex_pfx[40];
-	unsigned char bin_pfx[20];
-	struct disambiguate_state ds;
-	int quietly = !!(flags & GET_SHA1_QUIETLY);
+	int i;
 
-	if (len < MINIMUM_ABBREV || len > 40)
-		return -1;
 	hashclr(bin_pfx);
 	memset(hex_pfx, 'x', 40);
 	for (i = 0; i < len ;i++) {
@@ -303,6 +303,22 @@ static int get_short_sha1(const char *name, int len, unsigned char *sha1,
 			val <<= 4;
 		bin_pfx[i >> 1] |= val;
 	}
+	return 0;
+}
+
+static int get_short_sha1(const char *name, int len, unsigned char *sha1,
+			  unsigned flags)
+{
+	int status;
+	char hex_pfx[40];
+	unsigned char bin_pfx[20];
+	struct disambiguate_state ds;
+	int quietly = !!(flags & GET_SHA1_QUIETLY);
+
+	if (len < MINIMUM_ABBREV || len > 40)
+		return -1;
+	if (prepare_prefixes(name, len, bin_pfx, hex_pfx) < 0)
+		return -1;
 
 	prepare_alt_odb();
 
@@ -325,6 +341,31 @@ static int get_short_sha1(const char *name, int len, unsigned char *sha1,
 	if (!quietly && (status == SHORT_NAME_AMBIGUOUS))
 		return error("short SHA1 %.*s is ambiguous.", len, hex_pfx);
 	return status;
+}
+
+
+int for_each_abbrev(const char *prefix, each_abbrev_fn fn, void *cb_data)
+{
+	char hex_pfx[40];
+	unsigned char bin_pfx[20];
+	struct disambiguate_state ds;
+	int len = strlen(prefix);
+
+	if (len < MINIMUM_ABBREV || len > 40)
+		return -1;
+	if (prepare_prefixes(prefix, len, bin_pfx, hex_pfx) < 0)
+		return -1;
+
+	prepare_alt_odb();
+
+	memset(&ds, 0, sizeof(ds));
+	ds.always_call_fn = 1;
+	ds.cb_data = cb_data;
+	ds.fn = fn;
+
+	find_short_object_filename(len, hex_pfx, &ds);
+	find_short_packed_object(len, bin_pfx, &ds);
+	return ds.ambiguous;
 }
 
 const char *find_unique_abbrev(const unsigned char *sha1, int len)

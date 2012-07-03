@@ -252,4 +252,13 @@ test_expect_success 'ambiguous commit-ish' '
 	test_must_fail git log 000000000...
 '
 
+test_expect_success 'rev-parse --disambiguate' '
+	# The test creates 16 objects that share the prefix and two
+	# commits created by commit-tree in earlier tests do not share
+	# the prefix.
+	git rev-parse --disambiguate=000000000 >actual &&
+	test "$(wc -l <actual)" = 16 &&
+	test "$(sed -e "s/^\(.........\).*/\1/" actual | sort -u)" = 000000000
+'
+
 test_done

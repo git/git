@@ -101,6 +101,12 @@ OPTIONS
 	The option core.warnAmbiguousRefs is used to select the strict
 	abbreviation mode.
 
+--disambiguate=<prefix>::
+	Show every object whose name begins with the given prefix.
+	The <prefix> must be at least 4 hexadecimal digits long to
+	avoid listing each and every object in the repository by
+	mistake.
+
 --all::
 	Show all refs found in `refs/`.
 

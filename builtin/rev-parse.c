@@ -195,6 +195,12 @@ static int anti_reference(const char *refname, const unsigned char *sha1, int fl
 	return 0;
 }
 
+static int show_abbrev(const unsigned char *sha1, void *cb_data)
+{
+	show_rev(NORMAL, sha1, NULL);
+	return 0;
+}
+
 static void show_datestring(const char *flag, const char *datestr)
 {
 	static char buffer[100];
@@ -587,6 +593,10 @@ int cmd_rev_parse(int argc, const char **argv, const char *prefix)
 			}
 			if (!strcmp(arg, "--all")) {
 				for_each_ref(show_reference, NULL);
+				continue;
+			}
+			if (!prefixcmp(arg, "--disambiguate=")) {
+				for_each_abbrev(arg + 15, show_abbrev, NULL);
 				continue;
 			}
 			if (!strcmp(arg, "--bisect")) {
