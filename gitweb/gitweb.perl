@@ -4460,30 +4460,23 @@ sub git_print_log {
 	}
 
 	# print log
-	my $signoff = 0;
-	my $empty = 0;
+	my $skip_blank_line = 0;
 	foreach my $line (@$log) {
 		if ($line =~ m/^ *(signed[ \-]off[ \-]by[ :]|acked[ \-]by[ :]|cc[ :])/i) {
-			$signoff = 1;
-			$empty = 0;
 			if (! $opts{'-remove_signoff'}) {
 				print "<span class=\"signoff\">" . esc_html($line) . "</span><br/>\n";
-				next;
-			} else {
-				# remove signoff lines
-				next;
+				$skip_blank_line = 1;
 			}
-		} else {
-			$signoff = 0;
+			next;
 		}
 
 		# print only one empty line
 		# do not print empty line after signoff
 		if ($line eq "") {
-			next if ($empty || $signoff);
-			$empty = 1;
+			next if ($skip_blank_line);
+			$skip_blank_line = 1;
 		} else {
-			$empty = 0;
+			$skip_blank_line = 0;
 		}
 
 		print format_log_line_html($line) . "<br/>\n";
@@ -4491,7 +4484,7 @@ sub git_print_log {
 
 	if ($opts{'-final_empty_line'}) {
 		# end with single empty line
-		print "<br/>\n" unless $empty;
+		print "<br/>\n" unless $skip_blank_line;
 	}
 }
 
