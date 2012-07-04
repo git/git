@@ -524,7 +524,6 @@ static void *unpack_data(struct object_entry *obj,
 	stream.avail_out = consume ? 64*1024 : obj->size;
 
 	do {
-		unsigned char *last_out = stream.next_out;
 		ssize_t n = (len < 64*1024) ? len : 64*1024;
 		n = pread(pack_fd, inbuf, n, from);
 		if (n < 0)
@@ -538,15 +537,19 @@ static void *unpack_data(struct object_entry *obj,
 		len -= n;
 		stream.next_in = inbuf;
 		stream.avail_in = n;
-		status = git_inflate(&stream, 0);
-		if (consume) {
-			if (consume(last_out, stream.next_out - last_out, cb_data)) {
-				free(inbuf);
-				free(data);
-				return NULL;
-			}
-			stream.next_out = data;
-			stream.avail_out = 64*1024;
+		if (!consume)
+			status = git_inflate(&stream, 0);
+		else {
+			do {
+				status = git_inflate(&stream, 0);
+				if (consume(data, stream.next_out - data, cb_data)) {
+					free(inbuf);
+					free(data);
+					return NULL;
+				}
+				stream.next_out = data;
+				stream.avail_out = 64*1024;
+			} while (status == Z_OK && stream.avail_in);
 		}
 	} while (len && status == Z_OK && !stream.avail_in);
 
