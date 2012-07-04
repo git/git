@@ -102,3 +102,16 @@ cleanup_git() {
 	rm -rf "$git" &&
 	mkdir "$git"
 }
+
+marshal_dump() {
+	what=$1 &&
+	line=${2:-1} &&
+	cat >"$TRASH_DIRECTORY/marshal-dump.py" <<-EOF &&
+	import marshal
+	import sys
+	for i in range($line):
+	    d = marshal.load(sys.stdin)
+	print d['$what']
+	EOF
+	"$PYTHON_PATH" "$TRASH_DIRECTORY/marshal-dump.py"
+}
