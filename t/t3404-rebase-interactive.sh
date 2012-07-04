@@ -777,7 +777,11 @@ test_expect_success 'rebase -i --root retain root commit author and message' '
 
 test_expect_success 'rebase -i --root temporary sentinel commit' '
 	git checkout B &&
-	FAKE_LINES="2" test_must_fail git rebase -i --root &&
+	(
+		FAKE_LINES="2" &&
+		export FAKE_LINES &&
+		test_must_fail git rebase -i --root
+	) &&
 	git cat-file commit HEAD | grep "^tree 4b825dc642cb" &&
 	git rebase --abort
 '
