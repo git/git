@@ -854,9 +854,34 @@ class P4Submit(Command, P4UserMap):
         if len(p4CmdList("opened ...")) > 0:
             die("You have files opened with perforce! Close them before starting the sync.")
 
-    # replaces everything between 'Description:' and the next P4 submit template field with the
-    # commit message
-    def prepareLogMessage(self, template, message):
+    def separate_jobs_from_description(self, message):
+        """Extract and return a possible Jobs field in the commit
+           message.  It goes into a separate section in the p4 change
+           specification.
+
+           A jobs line starts with "Jobs:" and looks like a new field
+           in a form.  Values are white-space separated on the same
+           line or on following lines that start with a tab.
+
+           This does not parse and extract the full git commit message
+           like a p4 form.  It just sees the Jobs: line as a marker
+           to pass everything from then on directly into the p4 form,
+           but outside the description section.
+
+           Return a tuple (stripped log message, jobs string)."""
+
+        m = re.search(r'^Jobs:', message, re.MULTILINE)
+        if m is None:
+            return (message, None)
+
+        jobtext = message[m.start():]
+        stripped_message = message[:m.start()].rstrip()
+        return (stripped_message, jobtext)
+
+    def prepareLogMessage(self, template, message, jobs):
+        """Edits the template returned from "p4 change -o" to insert
+           the message in the Description field, and the jobs text in
+           the Jobs field."""
         result = ""
 
         inDescriptionSection = False
@@ -869,6 +894,9 @@ class P4Submit(Command, P4UserMap):
             if inDescriptionSection:
                 if line.startswith("Files:") or line.startswith("Jobs:"):
                     inDescriptionSection = False
+                    # insert Jobs section
+                    if jobs:
+                        result += jobs + "\n"
                 else:
                     continue
             else:
@@ -980,7 +1008,13 @@ class P4Submit(Command, P4UserMap):
         return 0
 
     def prepareSubmitTemplate(self):
-        # remove lines in the Files section that show changes to files outside the depot path we're committing into
+        """Run "p4 change -o" to grab a change specification template.
+           This does not use "p4 -G", as it is nice to keep the submission
+           template in original order, since a human might edit it.
+
+           Remove lines in the Files section that show changes to files
+           outside the depot path we're committing into."""
+
         template = ""
         inFilesSection = False
         for line in p4_read_pipe_lines(['change', '-o']):
@@ -1205,10 +1239,10 @@ class P4Submit(Command, P4UserMap):
 
         logMessage = extractLogMessageFromGitCommit(id)
         logMessage = logMessage.strip()
+        (logMessage, jobs) = self.separate_jobs_from_description(logMessage)
 
         template = self.prepareSubmitTemplate()
-
-        submitTemplate = self.prepareLogMessage(template, logMessage)
+        submitTemplate = self.prepareLogMessage(template, logMessage, jobs)
 
         if self.preserveUser:
            submitTemplate = submitTemplate + ("\n######## Actual user %s, modified after commit\n" % p4User)
