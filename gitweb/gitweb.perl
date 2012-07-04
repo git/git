@@ -4470,6 +4470,16 @@ sub git_print_log {
 			next;
 		}
 
+		if ($line =~ m,\s*([a-z]*link): (https?://\S+),i) {
+			if (! $opts{'-remove_signoff'}) {
+				print "<span class=\"signoff\">" . esc_html($1) . ": " .
+					"<a href=\"" . esc_html($2) . "\">" . esc_html($2) . "</a>" .
+					"</span><br/>\n";
+				$skip_blank_line = 1;
+			}
+			next;
+		}
+
 		# print only one empty line
 		# do not print empty line after signoff
 		if ($line eq "") {
