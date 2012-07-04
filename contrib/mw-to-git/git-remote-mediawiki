@@ -33,7 +33,6 @@
 use strict;
 use MediaWiki::API;
 use DateTime::Format::ISO8601;
-use FileHandle;
 
 # By default, use UTF-8 to communicate with Git and the user
 binmode STDERR, ":utf8";
@@ -89,9 +88,6 @@ chomp($wiki_domain);
 my $shallow_import = run_git("config --get --bool remote.". $remotename .".shallow");
 chomp($shallow_import);
 $shallow_import = ($shallow_import eq "true");
-
-# Cache for MediaWiki namespace ids.
-my %namespace_id;
 
 # Dumb push: don't update notes and mediawiki ref to reflect the last push.
 #
@@ -267,7 +263,13 @@ sub mw_connect_maybe {
 ## Functions for listing pages on the remote wiki
 sub get_mw_tracked_pages {
 	my $pages = shift;
-	my @some_pages = @tracked_pages;
+	get_mw_page_list(\@tracked_pages, $pages);
+}
+
+sub get_mw_page_list {
+	my $page_list = shift;
+	my $pages = shift;
+	my @some_pages = @$page_list;
 	while (@some_pages) {
 		my $last = 50;
 		if ($#some_pages < $last) {
@@ -443,17 +445,17 @@ sub get_linked_mediafiles {
 		my $result = $mediawiki->api($query);
 
 		while (my ($id, $page) = each(%{$result->{query}->{pages}})) {
-			my @titles;
+			my @media_titles;
 			if (defined($page->{links})) {
 				my @link_titles = map $_->{title}, @{$page->{links}};
-				push(@titles, @link_titles);
+				push(@media_titles, @link_titles);
 			}
 			if (defined($page->{images})) {
 				my @image_titles = map $_->{title}, @{$page->{images}};
-				push(@titles, @image_titles);
+				push(@media_titles, @image_titles);
 			}
-			if (@titles) {
-				get_mw_first_pages(\@titles, \%{$pages});
+			if (@media_titles) {
+				get_mw_page_list(\@media_titles, $pages);
 			}
 		}
 
@@ -463,16 +465,16 @@ sub get_linked_mediafiles {
 
 sub get_mw_mediafile_for_page_revision {
 	# Name of the file on Wiki, with the prefix.
-	my $mw_filename = shift;
+	my $filename = shift;
 	my $timestamp = shift;
 	my %mediafile;
 
-	# Search if on MediaWiki exists a media file with given
-	# timestamp. In that case download the file.
+	# Search if on a media file with given timestamp exists on
+	# MediaWiki. In that case download the file.
 	my $query = {
 		action => 'query',
 		prop => 'imageinfo',
-		titles => $mw_filename,
+		titles => "File:" . $filename,
 		iistart => $timestamp,
 		iiend => $timestamp,
 		iiprop => 'timestamp|archivename|url',
@@ -480,62 +482,33 @@ sub get_mw_mediafile_for_page_revision {
 	};
 	my $result = $mediawiki->api($query);
 
-	my ($fileid, $file) = each ( %{$result->{query}->{pages}} );
+	my ($fileid, $file) = each( %{$result->{query}->{pages}} );
 	# If not defined it means there is no revision of the file for
 	# given timestamp.
 	if (defined($file->{imageinfo})) {
-		# Get real name of media file.
-		my $filename;
-		if (index($mw_filename, 'File:') == 0) {
-			$filename = substr $mw_filename, 5;
-		} else {
-			$filename = substr $mw_filename, 6;
-		}
 		$mediafile{title} = $filename;
 
 		my $fileinfo = pop(@{$file->{imageinfo}});
 		$mediafile{timestamp} = $fileinfo->{timestamp};
-		# If this is an old version of the file, the file has to be
-		# obtained from the archive. Otherwise it can be downloaded
-		# by MediaWiki API download() function.
-		if (defined($fileinfo->{archivename})) {
-			$mediafile{content} = download_mw_mediafile_from_archive($fileinfo->{url});
-		} else {
-			$mediafile{content} = download_mw_mediafile($mw_filename);
-		}
+		# Mediawiki::API's download function doesn't support https URLs
+		# and can't download old versions of files.
+		print STDERR "\tDownloading file $mediafile{title}, version $mediafile{timestamp}\n";
+		$mediafile{content} = download_mw_mediafile($fileinfo->{url});
 	}
 	return %mediafile;
 }
 
-sub download_mw_mediafile_from_archive {
-	my $url = shift;
-	my $file;
-
-	my $ua = LWP::UserAgent->new;
-	my $response = $ua->get($url);
-	if ($response->code) {
-		$file = $response->decoded_content;
-	} else {
-		print STDERR "Error downloading a file from archive.\n";
-	}
-
-	return $file;
-}
-
 sub download_mw_mediafile {
-	my $filename = shift;
+	my $url = shift;
 
-	$mediawiki->{config}->{files_url} = $url;
-
-	my $file_content = $mediawiki->download( { title => $filename } );
-	if (!defined($file_content)) {
-		print STDERR "\tFile \'$filename\' could not be downloaded.\n";
-		exit 1;
-	} elsif ($file_content eq "") {
-		print STDERR "\tFile \'$filename\' does not exist on the wiki.\n";
-		exit 1;
+	my $response = $mediawiki->{ua}->get($url);
+	if ($response->code == 200) {
+		return $response->decoded_content;
 	} else {
-		return $file_content;
+		print STDERR "Error downloading mediafile from :\n";
+		print STDERR "URL: $url\n";
+		print STDERR "Server response: " . $response->code . " " . $response->message . "\n";
+		exit 1;
 	}
 }
 
@@ -878,24 +851,16 @@ sub mw_import_ref {
 		$commit{date} = DateTime::Format::ISO8601->parse_datetime($last_timestamp);
 
 		# Differentiates classic pages and media files.
-		my @prefix = split(":", $page_title);
-
+		my ($namespace, $filename) = $page_title =~ /^([^:]*):(.*)$/;
 		my %mediafile;
-		if ($prefix[0] eq "File" || $prefix[0] eq "Image") {
-			# The name of the file is the same as the media page.
-			my $filename = $page_title;
+		if ($namespace && get_mw_namespace_id($namespace) == get_mw_namespace_id("File")) {
 			%mediafile = get_mw_mediafile_for_page_revision($filename, $rev->{timestamp});
 		}
 		# If this is a revision of the media page for new version
 		# of a file do one common commit for both file and media page.
 		# Else do commit only for that page.
 		print STDERR "$n/", scalar(@revisions), ": Revision #$pagerevid->{revid} of $commit{title}\n";
-		if (%mediafile) {
-			print STDERR "\tDownloading file $mediafile{title}, version $mediafile{timestamp}\n";
-			import_file_revision(\%commit, ($fetch_from == 1), $n, \%mediafile);
-		} else {
-			import_file_revision(\%commit, ($fetch_from == 1), $n);
-		}
+		import_file_revision(\%commit, ($fetch_from == 1), $n, \%mediafile);
 	}
 
 	if ($fetch_from == 1 && $n == 0) {
@@ -1201,28 +1166,35 @@ sub get_allowed_file_extensions {
 	return %hashFile;
 }
 
+# In memory cache for MediaWiki namespace ids.
+my %namespace_id;
+
+# Namespaces whose id is cached in the configuration file
+# (to avoid duplicates)
+my %cached_mw_namespace_id;
+
 # Return MediaWiki id for a canonical namespace name.
 # Ex.: "File", "Project".
-# Looks for the namespace id in the local configuration
-# variables, if it is not found asks MW API.
 sub get_mw_namespace_id {
 	mw_connect_maybe();
 	my $name = shift;
 
 	if (!exists $namespace_id{$name}) {
 		# Look at configuration file, if the record for that namespace is
-		# already stored. Namespaces are stored in form:
+		# already cached. Namespaces are stored in form:
 		# "Name_of_namespace:Id_namespace", ex.: "File:6".
 		my @temp = split(/[ \n]/, run_git("config --get-all remote."
-						. $remotename .".namespaces"));
+						. $remotename .".namespaceCache"));
 		chomp(@temp);
 		foreach my $ns (@temp) {
-			my ($n, $s) = split(/:/, $ns);
-			$namespace_id{$n} = $s;
+			my ($n, $id) = split(/:/, $ns);
+			$namespace_id{$n} = $id;
+			$cached_mw_namespace_id{$n} = 1;
 		}
 	}
 
 	if (!exists $namespace_id{$name}) {
+		print STDERR "Namespace $name not found in cache, querying the wiki ...\n";
 		# NS not found => get namespace id from MW and store it in
 	        # configuration file.
 	        my $query = {
@@ -1233,16 +1205,26 @@ sub get_mw_namespace_id {
 	        my $result = $mediawiki->api($query);
 
 	        while (my ($id, $ns) = each(%{$result->{query}->{namespaces}})) {
-	                if (defined($ns->{canonical}) && ($ns->{canonical} eq $name)) {
-	                        run_git("config --add remote.". $remotename
-					.".namespaces ". $name .":". $ns->{id});
-				$namespace_id{$name} = $ns->{id};
-	                }
+	                if (defined($ns->{id}) && defined($ns->{canonical})) {
+				$namespace_id{$ns->{canonical}} = $ns->{id};
+				if ($ns->{'*'}) {
+					# alias (e.g. french Fichier: as alias for canonical File:)
+					$namespace_id{$ns->{'*'}} = $ns->{id};
+				}
+			}
 	        }
 	}
 
-	if (exists $namespace_id{$name}) {
-		return $namespace_id{$name};
+	my $id = $namespace_id{$name};
+
+	if (defined $id) {
+		# Store explicitely requested namespaces on disk
+		if (!exists $cached_mw_namespace_id{$name}) {
+			run_git("config --add remote.". $remotename
+				.".namespaceCache \"". $name .":". $id ."\"");
+			$cached_mw_namespace_id{$name} = 1;
+		}
+		return $id;
 	} else {
 		die "No such namespace $name on MediaWiki.";
 	}
