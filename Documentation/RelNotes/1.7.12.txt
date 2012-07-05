@@ -16,6 +16,13 @@ UI, Workflows & Features
    turn this off, as a more explicit alternative over use of file://
    URL.
 
+ * "git fetch" and friends used to say "remote side hung up
+   unexpectedly" when they failed to get response they expect from the
+   other side, but one common reason why they don't get expected
+   response is that the remote repository does not exist or cannot be
+   read. The error message in this case was updated to give better
+   hints to the user.
+
  * git native protocol agents learned to show software version over
    the wire, so that the server log can be examined to see the vintage
    distribution of clients.
@@ -63,6 +70,14 @@ Fixes since v1.7.11
 Unless otherwise noted, all the fixes since v1.7.11 in the maintenance
 releases are contained in this release (see release notes to them for
 details).
+
+ * "git clone --single-branch" to clone a single branch did not limit
+   the cloning to the specified branch.
+   (merge 0ec4b16 nd/clone-single-fix later to maint).
+
+ * "git diff --no-index" did not correctly handle relative paths and
+   did not correctly give exit codes when run under "--quiet" option.
+   (merge 304970d th/diff-no-index-fixes later to maint).
 
  * When "git log" gets "--simplify-merges/by-decoration" together with
    "--first-parent", the combination of these options makes the
