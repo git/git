@@ -4,7 +4,7 @@
 static int inside_git_dir = -1;
 static int inside_work_tree = -1;
 
-char *prefix_path(const char *prefix, int len, const char *path)
+static char *prefix_path_gently(const char *prefix, int len, const char *path)
 {
 	const char *orig = path;
 	char *sanitized;
@@ -31,13 +31,33 @@ char *prefix_path(const char *prefix, int len, const char *path)
 		if (strncmp(sanitized, work_tree, len) ||
 		    (len > root_len && sanitized[len] != '\0' && sanitized[len] != '/')) {
 		error_out:
-			die("'%s' is outside repository", orig);
+			free(sanitized);
+			return NULL;
 		}
 		if (sanitized[len] == '/')
 			len++;
 		memmove(sanitized, sanitized + len, total - len);
 	}
 	return sanitized;
+}
+
+char *prefix_path(const char *prefix, int len, const char *path)
+{
+	char *r = prefix_path_gently(prefix, len, path);
+	if (!r)
+		die("'%s' is outside repository", path);
+	return r;
+}
+
+int path_inside_repo(const char *prefix, const char *path)
+{
+	int len = prefix ? strlen(prefix) : 0;
+	char *r = prefix_path_gently(prefix, len, path);
+	if (r) {
+		free(r);
+		return 1;
+	}
+	return 0;
 }
 
 int check_filename(const char *prefix, const char *arg)

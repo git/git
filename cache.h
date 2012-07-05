@@ -413,6 +413,7 @@ extern void verify_filename(const char *prefix,
 			    const char *name,
 			    int diagnose_misspelt_rev);
 extern void verify_non_filename(const char *prefix, const char *name);
+extern int path_inside_repo(const char *prefix, const char *path);
 
 #define INIT_DB_QUIET 0x0001
 
