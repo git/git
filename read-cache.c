@@ -1119,7 +1119,7 @@ int refresh_index(struct index_state *istate, unsigned int flags, const char **p
 			continue;
 
 		if (pathspec &&
-		    !match_pathspec(pathspec, ce->name, strlen(ce->name), 0, seen))
+		    !match_pathspec(pathspec, ce->name, ce_namelen(ce), 0, seen))
 			filtered = 1;
 
 		if (ce_stage(ce)) {
@@ -1841,7 +1841,7 @@ int read_index_unmerged(struct index_state *istate)
 		if (!ce_stage(ce))
 			continue;
 		unmerged = 1;
-		len = strlen(ce->name);
+		len = ce_namelen(ce);
 		size = cache_entry_size(len);
 		new_ce = xcalloc(1, size);
 		memcpy(new_ce->name, ce->name, len);
