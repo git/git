@@ -912,6 +912,14 @@ sub mw_import_revids {
 
 		my $result = $mediawiki->api($query);
 
+		if (!$result) {
+			die "Failed to retrieve modified page for revision $pagerevid";
+		}
+
+		if (!defined($result->{query}->{pages})) {
+			die "Invalid revision $pagerevid.";
+		}
+
 		my @result_pages = values(%{$result->{query}->{pages}});
 		my $result_page = $result_pages[0];
 		my $rev = $result_pages[0]->{revisions}->[0];
