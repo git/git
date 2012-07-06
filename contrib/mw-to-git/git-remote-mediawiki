@@ -13,12 +13,9 @@
 #
 # Known limitations:
 #
-# - Poor performance in the best case: it takes forever to check
-#   whether we're up-to-date (on fetch or push) or to fetch a few
-#   revisions from a large wiki, because we use exclusively a
-#   page-based synchronization. We could switch to a wiki-wide
-#   synchronization when the synchronization involves few revisions
-#   but the wiki is large.
+# - Several strategies are provided to fetch modifications from the
+#   wiki, but no automatic heuristics is provided, the user has
+#   to understand and chose which strategy is appropriate for him.
 #
 # - Git renames could be turned into MediaWiki renames (see TODO
 #   below)
@@ -88,6 +85,21 @@ chomp($wiki_domain);
 my $shallow_import = run_git("config --get --bool remote.". $remotename .".shallow");
 chomp($shallow_import);
 $shallow_import = ($shallow_import eq "true");
+
+# Fetch (clone and pull) by revisions instead of by pages. This behavior
+# is more efficient when we have a wiki with lots of pages and we fetch
+# the revisions quite often so that they concern only few pages.
+# Possible values:
+# - by_rev: perform one query per new revision on the remote wiki
+# - by_page: query each tracked page for new revision
+my $fetch_strategy = run_git("config --get remote.$remotename.fetchStrategy");
+unless ($fetch_strategy) {
+	$fetch_strategy = run_git("config --get mediawiki.fetchStrategy");
+}
+chomp($fetch_strategy);
+unless ($fetch_strategy) {
+	$fetch_strategy = "by_page";
+}
 
 # Dumb push: don't update notes and mediawiki ref to reflect the last push.
 #
@@ -533,6 +545,26 @@ sub get_last_local_revision {
 # Remember the timestamp corresponding to a revision id.
 my %basetimestamps;
 
+# Get the last remote revision without taking in account which pages are
+# tracked or not. This function makes a single request to the wiki thus
+# avoid a loop onto all tracked pages. This is useful for the fetch-by-rev
+# option.
+sub get_last_global_remote_rev {
+	mw_connect_maybe();
+
+	my $query = {
+		action => 'query',
+		list => 'recentchanges',
+		prop => 'revisions',
+		rclimit => '1',
+		rcdir => 'older',
+	};
+	my $result = $mediawiki->api($query);
+	return $result->{query}->{recentchanges}[0]->{revid};
+}
+
+# Get the last remote revision concerning the tracked pages and the tracked
+# categories.
 sub get_last_remote_revision {
 	mw_connect_maybe();
 
@@ -803,9 +835,6 @@ sub mw_import_ref {
 
 	mw_connect_maybe();
 
-	my %pages_hash = get_mw_pages();
-	my @pages = values(%pages_hash);
-
 	print STDERR "Searching revisions...\n";
 	my $last_local = get_last_local_revision();
 	my $fetch_from = $last_local + 1;
@@ -814,10 +843,35 @@ sub mw_import_ref {
 	} else {
 		print STDERR ", fetching from here.\n";
 	}
-	my ($n, @revisions) = fetch_mw_revisions(\@pages, $fetch_from);
 
-	# Creation of the fast-import stream
-	print STDERR "Fetching & writing export data...\n";
+	my $n = 0;
+	if ($fetch_strategy eq "by_rev") {
+		print STDERR "Fetching & writing export data by revs...\n";
+		$n = mw_import_ref_by_revs($fetch_from);
+	} elsif ($fetch_strategy eq "by_page") {
+		print STDERR "Fetching & writing export data by pages...\n";
+		$n = mw_import_ref_by_pages($fetch_from);
+	} else {
+		print STDERR "fatal: invalid fetch strategy \"$fetch_strategy\".\n";
+		print STDERR "Check your configuration variables remote.$remotename.fetchStrategy and mediawiki.fetchStrategy\n";
+		exit 1;
+	}
+
+	if ($fetch_from == 1 && $n == 0) {
+		print STDERR "You appear to have cloned an empty MediaWiki.\n";
+		# Something has to be done remote-helper side. If nothing is done, an error is
+		# thrown saying that HEAD is refering to unknown object 0000000000000000000
+		# and the clone fails.
+	}
+}
+
+sub mw_import_ref_by_pages {
+
+	my $fetch_from = shift;
+	my %pages_hash = get_mw_pages();
+	my @pages = values(%pages_hash);
+
+	my ($n, @revisions) = fetch_mw_revisions(\@pages, $fetch_from);
 
 	@revisions = sort {$a->{revid} <=> $b->{revid}} @revisions;
 	my @revision_ids = map $_->{revid}, @revisions;
@@ -825,12 +879,26 @@ sub mw_import_ref {
 	return mw_import_revids($fetch_from, \@revision_ids, \%pages_hash);
 }
 
+sub mw_import_ref_by_revs {
+
+	my $fetch_from = shift;
+	my %pages_hash = get_mw_pages();
+
+	my $last_remote = get_last_global_remote_rev();
+	my @revision_ids = $fetch_from..$last_remote;
+	return mw_import_revids($fetch_from, \@revision_ids, \%pages_hash);
+}
+
+# Import revisions given in second argument (array of integers).
+# Only pages appearing in the third argument (hash indexed by page titles)
+# will be imported.
 sub mw_import_revids {
 	my $fetch_from = shift;
 	my $revision_ids = shift;
 	my $pages = shift;
 
 	my $n = 0;
+	my $n_actual = 0;
 	my $last_timestamp = 0; # Placeholer in case $rev->timestamp is undefined
 
 	foreach my $pagerevid (@$revision_ids) {
@@ -848,9 +916,20 @@ sub mw_import_revids {
 		my $result_page = $result_pages[0];
 		my $rev = $result_pages[0]->{revisions}->[0];
 
+	        # Count page even if we skip it, since we display
+		# $n/$total and $total includes skipped pages.
 		$n++;
 
 		my $page_title = $result_page->{title};
+
+		if (!exists($pages->{$page_title})) {
+			print STDERR "$n/", scalar(@$revision_ids),
+				": Skipping revision #$rev->{revid} of $page_title\n";
+			next;
+		}
+
+		$n_actual++;
+
 		my %commit;
 		$commit{author} = $rev->{user} || 'Anonymous';
 		$commit{comment} = $rev->{comment} || '*Empty MediaWiki Message*';
@@ -875,17 +954,10 @@ sub mw_import_revids {
 		# of a file do one common commit for both file and media page.
 		# Else do commit only for that page.
 		print STDERR "$n/", scalar(@$revision_ids), ": Revision #$rev->{revid} of $commit{title}\n";
-		import_file_revision(\%commit, ($fetch_from == 1), $n, \%mediafile);
+		import_file_revision(\%commit, ($fetch_from == 1), $n_actual, \%mediafile);
 	}
 
-	if ($fetch_from == 1 && $n == 0) {
-		print STDERR "You appear to have cloned an empty MediaWiki.\n";
-		# Something has to be done remote-helper side. If nothing is done, an error is
-		# thrown saying that HEAD is refering to unknown object 0000000000000000000
-		# and the clone fails.
-	}
-
-	return $n;
+	return $n_actual;
 }
 
 sub error_non_fast_forward {
