@@ -77,8 +77,9 @@ static int error_short_read(struct line_buffer *input)
 static int read_chunk(struct line_buffer *delta, off_t *delta_len,
 		      struct strbuf *buf, size_t len)
 {
+	assert(*delta_len >= 0);
 	strbuf_reset(buf);
-	if (len > *delta_len ||
+	if (len > (uintmax_t) *delta_len ||
 	    buffer_read_binary(delta, buf, len) != len)
 		return error_short_read(delta);
 	*delta_len -= buf->len;
@@ -290,7 +291,7 @@ error_out:
 int svndiff0_apply(struct line_buffer *delta, off_t delta_len,
 			struct sliding_view *preimage, FILE *postimage)
 {
-	assert(delta && preimage && postimage);
+	assert(delta && preimage && postimage && delta_len >= 0);
 
 	if (read_magic(delta, &delta_len))
 		return -1;
