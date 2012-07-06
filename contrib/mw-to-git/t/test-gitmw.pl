@@ -193,6 +193,21 @@ sub wiki_getallpagename {
 	}
 }
 
+sub wiki_upload_file {
+	my $file_name = $_[0];
+	my $resultat = $mw->edit ( {
+		action => 'upload',
+		filename => $file_name,
+		comment => 'upload a file',
+		file => [ $file_name ],
+		ignorewarnings=>1,
+	}, {
+		skip_encoding => 1
+	} ) || die $mw->{error}->{code} . ' : ' . $mw->{error}->{details};
+}
+
+
+
 # Main part of this script: parse the command line arguments
 # and select which function to execute
 my $fct_to_call = shift;
@@ -200,6 +215,7 @@ my $fct_to_call = shift;
 wiki_login($wiki_admin, $wiki_admin_pass);
 
 my %functions_to_call = qw(
+	upload_file    wiki_upload_file
 	get_page       wiki_getpage
 	delete_page    wiki_delete_page
 	edit_page      wiki_editpage

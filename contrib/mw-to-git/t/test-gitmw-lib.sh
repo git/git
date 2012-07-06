@@ -26,6 +26,9 @@ else
 	WIKI_DIR_INST="$CURR_DIR/$WEB_WWW"
 fi
 
+wiki_upload_file () {
+	"$CURR_DIR"/test-gitmw.pl upload_file "$@"
+}
 
 wiki_getpage () {
 	"$CURR_DIR"/test-gitmw.pl get_page "$@"
