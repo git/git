@@ -822,10 +822,18 @@ sub mw_import_ref {
 	@revisions = sort {$a->{revid} <=> $b->{revid}} @revisions;
 	my @revision_ids = map $_->{revid}, @revisions;
 
-	$n = 0;
+	return mw_import_revids($fetch_from, \@revision_ids, \%pages_hash);
+}
+
+sub mw_import_revids {
+	my $fetch_from = shift;
+	my $revision_ids = shift;
+	my $pages = shift;
+
+	my $n = 0;
 	my $last_timestamp = 0; # Placeholer in case $rev->timestamp is undefined
 
-	foreach my $pagerevid (@revision_ids) {
+	foreach my $pagerevid (@$revision_ids) {
 		# fetch the content of the pages
 		my $query = {
 			action => 'query',
@@ -866,7 +874,7 @@ sub mw_import_ref {
 		# If this is a revision of the media page for new version
 		# of a file do one common commit for both file and media page.
 		# Else do commit only for that page.
-		print STDERR "$n/", scalar(@revision_ids), ": Revision #$rev->{revid} of $commit{title}\n";
+		print STDERR "$n/", scalar(@$revision_ids), ": Revision #$rev->{revid} of $commit{title}\n";
 		import_file_revision(\%commit, ($fetch_from == 1), $n, \%mediafile);
 	}
 
@@ -876,6 +884,8 @@ sub mw_import_ref {
 		# thrown saying that HEAD is refering to unknown object 0000000000000000000
 		# and the clone fails.
 	}
+
+	return $n;
 }
 
 sub error_non_fast_forward {
