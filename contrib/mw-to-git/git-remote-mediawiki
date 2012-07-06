@@ -379,7 +379,7 @@ sub get_mw_pages {
 			get_all_mediafiles(\%pages);
 		}
 	}
-	return values(%pages);
+	return %pages;
 }
 
 # usage: $out = run_git("command args");
@@ -536,7 +536,8 @@ my %basetimestamps;
 sub get_last_remote_revision {
 	mw_connect_maybe();
 
-	my @pages = get_mw_pages();
+	my %pages_hash = get_mw_pages();
+	my @pages = values(%pages_hash);
 
 	my $max_rev_num = 0;
 
@@ -802,7 +803,8 @@ sub mw_import_ref {
 
 	mw_connect_maybe();
 
-	my @pages = get_mw_pages();
+	my %pages_hash = get_mw_pages();
+	my @pages = values(%pages_hash);
 
 	print STDERR "Searching revisions...\n";
 	my $last_local = get_last_local_revision();
