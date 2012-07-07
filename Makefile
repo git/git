@@ -392,11 +392,8 @@ BUILTIN_OBJS =
 BUILT_INS =
 COMPAT_CFLAGS =
 COMPAT_OBJS =
-XDIFF_H =
 XDIFF_OBJS =
-VCSSVN_H =
 VCSSVN_OBJS =
-VCSSVN_TEST_OBJS =
 GENERATED_H =
 EXTRA_CPPFLAGS =
 LIB_H =
@@ -558,21 +555,21 @@ LIB_FILE=libgit.a
 XDIFF_LIB=xdiff/lib.a
 VCSSVN_LIB=vcs-svn/lib.a
 
-XDIFF_H += xdiff/xinclude.h
-XDIFF_H += xdiff/xmacros.h
-XDIFF_H += xdiff/xdiff.h
-XDIFF_H += xdiff/xtypes.h
-XDIFF_H += xdiff/xutils.h
-XDIFF_H += xdiff/xprepare.h
-XDIFF_H += xdiff/xdiffi.h
-XDIFF_H += xdiff/xemit.h
+LIB_H += xdiff/xinclude.h
+LIB_H += xdiff/xmacros.h
+LIB_H += xdiff/xdiff.h
+LIB_H += xdiff/xtypes.h
+LIB_H += xdiff/xutils.h
+LIB_H += xdiff/xprepare.h
+LIB_H += xdiff/xdiffi.h
+LIB_H += xdiff/xemit.h
 
-VCSSVN_H += vcs-svn/line_buffer.h
-VCSSVN_H += vcs-svn/sliding_window.h
-VCSSVN_H += vcs-svn/repo_tree.h
-VCSSVN_H += vcs-svn/fast_export.h
-VCSSVN_H += vcs-svn/svndiff.h
-VCSSVN_H += vcs-svn/svndump.h
+LIB_H += vcs-svn/line_buffer.h
+LIB_H += vcs-svn/sliding_window.h
+LIB_H += vcs-svn/repo_tree.h
+LIB_H += vcs-svn/fast_export.h
+LIB_H += vcs-svn/svndiff.h
+LIB_H += vcs-svn/svndump.h
 
 GENERATED_H += common-cmds.h
 
@@ -2110,13 +2107,6 @@ version.o git.spec \
 	$(patsubst %.perl,%,$(SCRIPT_PERL)) \
 	: GIT-VERSION-FILE
 
-TEST_OBJS := $(patsubst test-%$X,test-%.o,$(TEST_PROGRAMS))
-GIT_OBJS := $(LIB_OBJS) $(BUILTIN_OBJS) $(PROGRAM_OBJS) $(TEST_OBJS) \
-	git.o
-ifndef NO_CURL
-	GIT_OBJS += http.o http-walker.o remote-curl.o
-endif
-
 XDIFF_OBJS += xdiff/xdiffi.o
 XDIFF_OBJS += xdiff/xprepare.o
 XDIFF_OBJS += xdiff/xutils.o
@@ -2132,9 +2122,14 @@ VCSSVN_OBJS += vcs-svn/fast_export.o
 VCSSVN_OBJS += vcs-svn/svndiff.o
 VCSSVN_OBJS += vcs-svn/svndump.o
 
-VCSSVN_TEST_OBJS += test-line-buffer.o
-
-OBJECTS := $(GIT_OBJS) $(XDIFF_OBJS) $(VCSSVN_OBJS)
+TEST_OBJS := $(patsubst test-%$X,test-%.o,$(TEST_PROGRAMS))
+OBJECTS := $(LIB_OBJS) $(BUILTIN_OBJS) $(PROGRAM_OBJS) $(TEST_OBJS) \
+	$(XDIFF_OBJS) \
+	$(VCSSVN_OBJS) \
+	git.o
+ifndef NO_CURL
+	OBJECTS += http.o http-walker.o remote-curl.o
+endif
 
 dep_files := $(foreach f,$(OBJECTS),$(dir $f).depend/$(notdir $f).d)
 dep_dirs := $(addsuffix .depend,$(sort $(dir $(OBJECTS))))
@@ -2233,15 +2228,8 @@ else
 # Dependencies on automatically generated headers such as common-cmds.h
 # should _not_ be included here, since they are necessary even when
 # building an object for the first time.
-#
-# XXX. Please check occasionally that these include all dependencies
-# gcc detects!
 
-$(GIT_OBJS): $(LIB_H)
-
-xdiff-interface.o $(XDIFF_OBJS): $(XDIFF_H)
-
-$(VCSSVN_OBJS) $(VCSSVN_TEST_OBJS): $(LIB_H) $(VCSSVN_H)
+$(OBJECTS): $(LIB_H)
 endif
 
 exec_cmd.sp exec_cmd.s exec_cmd.o: EXTRA_CPPFLAGS = \
@@ -2334,7 +2322,7 @@ XGETTEXT_FLAGS_C = $(XGETTEXT_FLAGS) --language=C \
 	--keyword=_ --keyword=N_ --keyword="Q_:1,2"
 XGETTEXT_FLAGS_SH = $(XGETTEXT_FLAGS) --language=Shell
 XGETTEXT_FLAGS_PERL = $(XGETTEXT_FLAGS) --keyword=__ --language=Perl
-LOCALIZED_C := $(C_OBJ:o=c) $(LIB_H) $(XDIFF_H) $(VCSSVN_H) $(GENERATED_H)
+LOCALIZED_C := $(C_OBJ:o=c) $(LIB_H) $(GENERATED_H)
 LOCALIZED_SH := $(SCRIPT_SH)
 LOCALIZED_PERL := $(SCRIPT_PERL)
 
