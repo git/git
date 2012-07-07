@@ -1973,6 +1973,39 @@ shell_compatibility_test: please_set_SHELL_PATH_to_a_more_modern_shell
 strip: $(PROGRAMS) git$X
 	$(STRIP) $(STRIP_OPTS) $(PROGRAMS) git$X
 
+### Target-specific flags and dependencies
+
+# The generic compilation pattern rule and automatically
+# computed header dependencies (falling back to a dependency on
+# LIB_H) are enough to describe how most targets should be built,
+# but some targets are special enough to need something a little
+# different.
+#
+# - When a source file "foo.c" #includes a generated header file,
+#   we need to list that dependency for the "foo.o" target.
+#
+#   We also list it from other targets that are built from foo.c
+#   like "foo.sp" and "foo.s", even though that is easy to forget
+#   to do because the generated header is already present around
+#   after a regular build attempt.
+#
+# - Some code depends on configuration kept in makefile
+#   variables. The target-specific variable EXTRA_CPPFLAGS can
+#   be used to convey that information to the C preprocessor
+#   using -D options.
+#
+#   The "foo.o" target should have a corresponding dependency on
+#   a file that changes when the value of the makefile variable
+#   changes.  For example, targets making use of the
+#   $(GIT_VERSION) variable depend on GIT-VERSION-FILE.
+#
+#   Technically the ".sp" and ".s" targets do not need this
+#   dependency because they are force-built, but they get the
+#   same dependency for consistency. This way, you do not have to
+#   know how each target is implemented. And it means the
+#   dependencies here will not need to change if the force-build
+#   details change some day.
+
 git.sp git.s git.o: GIT-PREFIX
 git.sp git.s git.o: EXTRA_CPPFLAGS = \
 	'-DGIT_HTML_PATH="$(htmldir_SQ)"' \
