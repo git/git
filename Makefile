@@ -1924,7 +1924,6 @@ GIT_USER_AGENT_CQ = "$(subst ",\",$(subst \,\\,$(GIT_USER_AGENT)))"
 GIT_USER_AGENT_CQ_SQ = $(subst ','\'',$(GIT_USER_AGENT_CQ))
 GIT-USER-AGENT: FORCE
 	@if test x'$(GIT_USER_AGENT_SQ)' != x"`cat GIT-USER-AGENT 2>/dev/null`"; then \
-		echo >&2 "    * new user-agent flag"; \
 		echo '$(GIT_USER_AGENT_SQ)' >GIT-USER-AGENT; \
 	fi
 
