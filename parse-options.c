@@ -476,6 +476,7 @@ int parse_options(int argc, const char **argv, const char *prefix,
 		usage_with_options(usagestr, options);
 	}
 
+	precompose_argv(argc, argv);
 	return parse_options_end(&ctx);
 }
 

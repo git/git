@@ -14,6 +14,7 @@ int strbuf_add_wrapped_bytes(struct strbuf *buf, const char *data, int len,
 			     int indent, int indent2, int width);
 
 #ifndef NO_ICONV
+char *reencode_string_iconv(const char *in, size_t insz, iconv_t conv);
 char *reencode_string(const char *in, const char *out_encoding, const char *in_encoding);
 #else
 #define reencode_string(a,b,c) NULL

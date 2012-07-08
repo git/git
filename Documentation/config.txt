@@ -210,6 +210,15 @@ The default is false, except linkgit:git-clone[1] or linkgit:git-init[1]
 will probe and set core.ignorecase true if appropriate when the repository
 is created.
 
+core.precomposeunicode::
+	This option is only used by Mac OS implementation of git.
+	When core.precomposeunicode=true, git reverts the unicode decomposition
+	of filenames done by Mac OS. This is useful when sharing a repository
+	between Mac OS and Linux or Windows.
+	(Git for Windows 1.7.10 or higher is needed, or git under cygwin 1.7).
+	When false, file names are handled fully transparent by git,
+	which is backward compatible with older versions of git.
+
 core.trustctime::
 	If false, the ctime differences between the index and the
 	working tree are ignored; useful when the inode change time

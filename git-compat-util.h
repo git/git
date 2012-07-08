@@ -153,6 +153,15 @@
 #endif
 #endif
 
+/* used on Mac OS X */
+#ifdef PRECOMPOSE_UNICODE
+#include "compat/precompose_utf8.h"
+#else
+#define precompose_str(in,i_nfd2nfc)
+#define precompose_argv(c,v)
+#define probe_utf8_pathname_composition(a,b)
+#endif
+
 #ifndef NO_LIBGEN_H
 #include <libgen.h>
 #else

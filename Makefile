@@ -600,6 +600,7 @@ LIB_H += compat/bswap.h
 LIB_H += compat/cygwin.h
 LIB_H += compat/mingw.h
 LIB_H += compat/obstack.h
+LIB_H += compat/precompose_utf8.h
 LIB_H += compat/terminal.h
 LIB_H += compat/win32/dirent.h
 LIB_H += compat/win32/poll.h
@@ -990,6 +991,8 @@ ifeq ($(uname_S),Darwin)
 	NO_MEMMEM = YesPlease
 	USE_ST_TIMESPEC = YesPlease
 	HAVE_DEV_TTY = YesPlease
+	COMPAT_OBJS += compat/precompose_utf8.o
+	BASIC_CFLAGS += -DPRECOMPOSE_UNICODE
 endif
 ifeq ($(uname_S),SunOS)
 	NEEDS_SOCKET = YesPlease
