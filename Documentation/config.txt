@@ -484,7 +484,9 @@ core.excludesfile::
 	'.git/info/exclude', git looks into this file for patterns
 	of files which are not meant to be tracked.  "`~/`" is expanded
 	to the value of `$HOME` and "`~user/`" to the specified user's
-	home directory.  See linkgit:gitignore[5].
+	home directory. Its default value is $XDG_CONFIG_HOME/git/ignore.
+	If $XDG_CONFIG_HOME is either not set or empty, $HOME/.config/git/ignore
+	is used instead. See linkgit:gitignore[5].
 
 core.askpass::
 	Some commands (e.g. svn and http interfaces) that interactively
@@ -499,7 +501,9 @@ core.attributesfile::
 	In addition to '.gitattributes' (per-directory) and
 	'.git/info/attributes', git looks into this file for attributes
 	(see linkgit:gitattributes[5]). Path expansions are made the same
-	way as for `core.excludesfile`.
+	way as for `core.excludesfile`. Its default value is
+	$XDG_CONFIG_HOME/git/attributes. If $XDG_CONFIG_HOME is either not
+	set or empty, $HOME/.config/git/attributes is used instead.
 
 core.editor::
 	Commands such as `commit` and `tag` that lets you edit
