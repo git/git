@@ -1,13 +1,15 @@
 To: git@vger.kernel.org
-Subject: What's cooking in git.git (Jul 2012, #01; Tue, 3)
-X-master-at: b12905140a8239ac687450ad43f18b5f0bcfb62e
-X-next-at: c7ed6b9aeb316c5c29cc1de761d47bbd184a3884
+Subject: What's cooking in git.git (Jul 2012, #02; Mon, 9)
+X-master-at: 299666cc5c792dbc3b67622fcc03d41ff95f4346
+X-next-at: 61b12c254ff58ac7c57a6e1ab2aa50b1ada84e72
 
-What's cooking in git.git (Jul 2012, #01; Tue, 3)
+What's cooking in git.git (Jul 2012, #02; Mon, 9)
 --------------------------------------------------
 
 Here are the topics that have been cooking.  Commits prefixed with '-' are
 only in 'pu' (proposed updates) while commits prefixed with '+' are in 'next'.
+
+The fourth and fifth batches of topics have graduated to 'master'.
 
 You can find the changes described here in the integration branches of the
 repositories listed at
@@ -17,6 +19,149 @@ repositories listed at
 --------------------------------------------------
 [New Topics]
 
+* jl/submodule-rm (2012-07-05) 2 commits
+ - rm: remove submodules from the index and the .gitmodules file
+ - rm: don't fail when removing populated submodules
+
+* mh/maint-revisions-doc (2012-07-05) 2 commits
+ - Document rev^! and rev^@ as revision specifiers
+ - Make <refname> documentation more consistent.
+
+The tip one is a bit suspicious.
+
+* nk/maint-gitweb-log-by-lines (2012-07-05) 3 commits
+ - gitweb: Add support to Link: tag
+ - gitweb: Handle other types of tag in git_print_log
+ - gitweb: Cleanup git_print_log()
+
+Is the use of esc_html() in the tip one correct?
+
+* pw/git-p4-jobs (2012-07-05) 3 commits
+ - git p4: notice Jobs lines in git commit messages
+ - git p4 test: refactor marshal_dump
+ - git p4: remove unused P4Submit interactive setting
+
+Will merge to 'next'.
+
+* pw/git-p4-move (2012-07-05) 2 commits
+ - git p4: add support for 'p4 move' in P4Submit
+ - git p4: refactor diffOpts calculation
+
+Will be rerolled.
+
+* ar/clone-honor-umask-at-top (2012-07-08) 1 commit
+ - Restore umasks influence on the permissions of work tree created by clone
+
+May want to rephrase the log message a bit.
+
+Will merge to 'next'.
+
+* jn/vcs-svn (2012-07-05) 12 commits
+  (merged to 'next' on 2012-07-09 at 1d97a8f)
+ + vcs-svn: allow 64-bit Prop-Content-Length
+ + vcs-svn: suppress a signed/unsigned comparison warning
+ + vcs-svn: suppress a signed/unsigned comparison warning
+ + vcs-svn: suppress signed/unsigned comparison warnings
+ + vcs-svn: use strstr instead of memmem
+ + vcs-svn: use constcmp instead of prefixcmp
+ + vcs-svn: simplify cleanup in apply_one_window
+ + vcs-svn: avoid self-assignment in dummy initialization of pre_off
+ + vcs-svn: drop no-op reset methods
+ + vcs-svn: suppress -Wtype-limits warning
+ + vcs-svn: allow import of > 4GiB files
+ + vcs-svn: rename check_overflow and its arguments for clarity
+
+Reroll of db/vcs-svn.
+
+Will merge to 'master'.
+
+* mm/mediawiki-tests (2012-07-06) 12 commits
+  (merged to 'next' on 2012-07-09 at 4d874e8)
+ + git-remote-mediawiki: be more defensive when requests fail
+ + git-remote-mediawiki: more efficient 'pull' in the best case
+ + git-remote-mediawiki: extract revision-importing loop to a function
+ + git-remote-mediawiki: refactor loop over revision ids
+ + git-remote-mediawiki: change return type of get_mw_pages
+ + git-remote-mediawiki (t9363): test 'File:' import and export
+ + git-remote-mediawiki: support for uploading file in test environment
+ + git-remote-mediawiki (t9362): test git-remote-mediawiki with UTF8 characters
+ + git-remote-mediawiki (t9361): test git-remote-mediawiki pull and push
+ + git-remote-mediawiki (t9360): test git-remote-mediawiki clone
+ + git-remote-mediawiki: test environment of git-remote-mediawiki
+ + git-remote-mediawiki: scripts to install, delete and clear a MediaWiki
+ (this branch uses mm/mediawiki-file-attachments.)
+
+Will merge to 'master'.
+
+* ph/stash-rerere (2012-07-08) 2 commits
+ - stash: invoke rerere in case of conflict
+ - test: git-stash conflict sets up rerere
+
+Will be rerolled but is going in the right direction.
+
+* tg/ce-namelen (2012-07-08) 1 commit
+ - Replace strlen() with ce_namelen()
+
+Trivially correct clean-up and micro optimization.
+
+* jn/makefile-cleanup (2012-07-09) 14 commits
+ - Makefile: document ground rules for target-specific dependencies
+ - Makefile: move GIT-VERSION-FILE dependencies closer to use
+ - Makefile: build instaweb similar to other scripts
+ - Makefile: update scripts when build-time parameters change
+ - Makefile: do not replace @@GIT_VERSION@@ in shell scripts
+ - Makefile: split prefix flags from GIT-CFLAGS
+ - Makefile: be silent when only GIT_USER_AGENT changes
+ - Makefile: split GIT_USER_AGENT from GIT-CFLAGS
+ - Makefile: do not replace @@GIT_USER_AGENT@@ in scripts
+ - Makefile: apply dependencies consistently to sparse/asm targets
+ - Makefile: do not have git.o depend on common-cmds.h
+ - Makefile: fold XDIFF_H and VCSSVN_H into LIB_H
+ - Makefile: fold MISC_H into LIB_H
+ - Makefile: sort LIB_H list
+ (this branch is tangled with jk/version-string-dependency.)
+
+Tweaks and replaces jk/version-string-dependency.
+
+Will merge to 'next'.
+
+* cw/amend-commit-without-message (2012-07-09) 1 commit
+ - Allow edit of empty message with commit --amend
+
+"commit --amend" used to refuse amending a commit with an empty log
+message, with or without "--allow-empty-message".
+
+Will merge to 'next'.
+
+--------------------------------------------------
+[Graduated to "master"]
+
+* cw/help-over-network (2012-06-28) 2 commits
+  (merged to 'next' on 2012-07-03 at 99e8d28)
+ + Allow help.htmlpath to be a URL prefix
+ + Add config variable to set HTML path for git-help --web
+
+"git help -w $cmd" can show HTML version of documentation for
+"git-$cmd" by setting help.htmlpath to somewhere other than the
+default location where the build procedure installs them locally;
+the variable can even point at a http:// URL.
+
+* cw/no-detaching-an-unborn (2012-06-26) 1 commit
+  (merged to 'next' on 2012-07-03 at 552c5ca)
+ + git-checkout: disallow --detach on unborn branch
+
+"git checkout --detach", when you are still on an unborn branch,
+should be forbidden, but it wasn't.
+
+* hv/remote-end-hung-up (2012-06-19) 1 commit
+  (merged to 'next' on 2012-06-25 at d3f29e2)
+ + remove the impression of unexpectedness when access is denied
+
+When we get disconnected while expecting a response from the remote
+side because authentication failed, we issued an error message "The
+remote side hung up unexpectedly."  Give hint that it may be a
+permission problem in the message when we can reasonably suspect it.
+
 * jc/maint-blame-unique-abbrev (2012-07-02) 1 commit
   (merged to 'next' on 2012-07-03 at c7ed6b9)
  + blame: compute abbreviation width that ensures uniqueness
@@ -24,25 +169,103 @@ repositories listed at
 "git blame" did not try to make sure the abbreviated commit object
 names in its output are unique.
 
-* jk/push-delete-ref-error-message (2012-07-03) 1 commit
- - push: don't guess at qualifying remote refs on deletion
+* jn/perl-makemaker-leading-paths (2012-06-29) 2 commits
+  (merged to 'next' on 2012-06-29 at 0f17059)
+ + perl/Makefile: Fix a missing double-quote
+  (merged to 'next' on 2012-06-28 at 286d854)
+ + perl/Makefile: move "mkdir -p" to module installation loop for maintainability
 
-The error message from "git push $there :bogo" mentioned we tried
-and failed to guess what ref is being deleted based on the LHS of
-the refspec, which we don't.
+Minor build tweak.  People who do not use ExtUtils::MakeMaker may
+want to test this before it hits the 'master' branch.
+
+* js/fast-export-paths-with-spaces (2012-06-27) 1 commit
+  (merged to 'next' on 2012-07-03 at f9c23e9)
+ + fast-export: quote paths with spaces
+
+"git fast-export" produced an input stream for fast-import without
+properly quoting pathnames when they contain SPs in them.
+
+* mm/config-xdg (2012-06-25) 4 commits
+  (merged to 'next' on 2012-06-28 at 57049d1)
+ + config: write to $XDG_CONFIG_HOME/git/config file when appropriate
+ + Let core.attributesfile default to $XDG_CONFIG_HOME/git/attributes
+ + Let core.excludesfile default to $XDG_CONFIG_HOME/git/ignore
+ + config: read (but not write) from $XDG_CONFIG_HOME/git/config file
+
+Teach git to read various information from $XDG_CONFIG_HOME/git/ to allow
+the user to avoid cluttering $HOME.
+
+* mm/credential-plumbing (2012-07-08) 4 commits
+  (merged to 'next' on 2012-07-08 at fce8ea2)
+ + git-remote-mediawiki: update comments to reflect credential support
+  (merged to 'next' on 2012-06-28 at 6e6fe9f)
+ + git-remote-mediawiki: add credential support
+ + git credential fill: output the whole 'struct credential'
+ + add 'git credential' plumbing command
+ (this branch is tangled with mm/mediawiki-file-attachments and mm/mediawiki-tests.)
+
+Expose the credential API to scripted Porcelain writers.
+
+* mz/empty-rebase-test (2012-06-27) 1 commit
+  (merged to 'next' on 2012-07-03 at 1e7de3f)
+ + add test case for rebase of empty commit
+
+We did not have test to make sure "git rebase" without extra options
+filters out an empty commit in the original history.
+
+* nd/clone-single-fix (2012-06-22) 1 commit
+  (merged to 'next' on 2012-06-26 at c9fff5e)
+ + clone: fix ref selection in --single-branch --branch=xxx
+
+"git clone --single-branch" to clone a single branch did not limit
+the cloning to the specified branch.
+
+* pw/git-p4-tests (2012-06-27) 10 commits
+  (merged to 'next' on 2012-07-03 at 9bd9cda)
+ + git p4 test: fix badp4dir test
+ + git p4 test: split up big t9800 test
+ + git p4 test: cleanup_git should make a new $git
+ + git p4 test: copy source indeterminate
+ + git p4 test: check for error message in failed test
+ + git p4 test: rename some "git-p4 command" strings
+ + git p4 test: never create default test repo
+ + git p4 test: simplify quoting involving TRASH_DIRECTORY
+ + git p4 test: use real_path to resolve p4 client symlinks
+ + git p4 test: wait longer for p4d to start and test its pid
+ (this branch is used by pw/git-p4-jobs and pw/git-p4-move.)
+
+More "git p4" tests.
+
+* rj/platform-pread-may-be-thread-unsafe (2012-06-26) 1 commit
+  (merged to 'next' on 2012-06-28 at ce5f79f)
+ + index-pack: Disable threading on cygwin
+
+On Cygwin, the platform pread(3) is not thread safe, just like our
+own compat/ emulation, and cannot be used in the index-pack program.
+
+* th/diff-no-index-fixes (2012-06-22) 2 commits
+  (merged to 'next' on 2012-06-26 at 450e781)
+ + diff-no-index: exit(1) if 'diff --quiet <repo file> <external file>' finds changes
+ + diff: handle relative paths in no-index
+
+"git diff --no-index" did not correctly handle relative paths and
+did not correctly give exit codes when run under "--quiet" option.
+
+* vr/use-our-perl-in-tests (2012-06-24) 4 commits
+  (merged to 'next' on 2012-07-03 at 90dfcf0)
+ + t/README: add a bit more Don'ts
+ + tests: enclose $PERL_PATH in double quotes
+ + t/test-lib.sh: export PERL_PATH for use in scripts
+ + t: Replace 'perl' by $PERL_PATH
+ (this branch is used by jc/test-lib-source-build-options-early.)
+
+Some implementations of Perl terminates "lines" with CRLF even when
+the script is operating on just a sequence of bytes.  Make sure to
+use "$PERL_PATH", the version of Perl the user told Git to use, in
+our tests to avoid unnecessary breakages in tests.
 
 --------------------------------------------------
 [Stalled]
-
-* db/vcs-svn (2012-06-01) 6 commits
- - vcs-svn: drop no-op reset methods
- - vcs-svn: fix signedness warnings
- - vcs-svn: prefer strstr over memmem
- - vcs-svn: prefer constcmp to prefixcmp
- - vcs-svn: simplify cleanup in apply_one_window()
- - vcs-svn: fix clang-analyzer error
-
-Waiting for Jonathan's clean-up offered earlier.
 
 * jc/apply-3way (2012-06-13) 19 commits
  - apply --3way: tests
@@ -112,8 +335,17 @@ not working :-(.
 --------------------------------------------------
 [Cooking]
 
-* tb/sanitize-decomposed-utf-8-pathname (2012-07-02) 1 commit
- - git on Mac OS and precomposed unicode
+* jk/push-delete-ref-error-message (2012-07-03) 1 commit
+  (merged to 'next' on 2012-07-09 at 82c6bd2)
+ + push: don't guess at qualifying remote refs on deletion
+
+The error message from "git push $there :bogo" mentioned we tried
+and failed to guess what ref is being deleted based on the LHS of
+the refspec, which we don't.
+
+* tb/sanitize-decomposed-utf-8-pathname (2012-07-08) 1 commit
+  (merged to 'next' on 2012-07-09 at 61b12c2)
+ + git on Mac OS and precomposed unicode
 
 Teaches git to normalize pathnames read from readdir(3) and all
 arguments from the command line into precomposed UTF-8 (assuming
@@ -123,16 +355,11 @@ I think there still are other places that need conversion
 (e.g. paths that are read from stdin for some commands), but this
 should be a good first step in the right direction.
 
-Will merge to 'next'.
+Will merge to 'master'.
 
-* cw/no-detaching-an-unborn (2012-06-26) 1 commit
-  (merged to 'next' on 2012-07-03 at 552c5ca)
- + git-checkout: disallow --detach on unborn branch
-
-"git checkout --detach", when you are still on an unborn branch,
-should be forbidden, but it wasn't.
-
-* cw/rebase-i-root (2012-06-26) 2 commits
+* cw/rebase-i-root (2012-07-05) 3 commits
+  (merged to 'next' on 2012-07-05 at aeb4c56)
+ + t3404: make test 57 work with dash and others
   (merged to 'next' on 2012-07-03 at 231c0a4)
  + Add tests for rebase -i --root without --onto
  + rebase -i: support --root without --onto
@@ -140,24 +367,21 @@ should be forbidden, but it wasn't.
 "git rebase [-i] --root $tip" can now be used to rewrite all the
 history down to the root.
 
-* js/fast-export-paths-with-spaces (2012-06-27) 1 commit
-  (merged to 'next' on 2012-07-03 at f9c23e9)
- + fast-export: quote paths with spaces
-
-"git fast-export" produced an input stream for fast-import without
-properly quoting pathnames when they contain SPs in them.
-
-* mm/mediawiki-file-attachments (2012-06-27) 5 commits
+* mm/mediawiki-file-attachments (2012-07-04) 6 commits
+  (merged to 'next' on 2012-07-09 at 4b85fa2)
+ + git-remote-mediawiki: improve support for non-English Wikis
   (merged to 'next' on 2012-07-03 at 90f2f45)
  + git-remote-mediawiki: import "File:" attachments
  + git-remote-mediawiki: split get_mw_pages into smaller functions
  + git-remote-mediawiki: send "File:" attachments to a remote wiki
  + git-remote-mediawiki: don't "use encoding 'utf8';"
  + git-remote-mediawiki: don't compute the diff when getting commit message
- (this branch uses mm/credential-plumbing.)
+ (this branch is used by mm/mediawiki-tests.)
 
 "mediawiki" remote helper (in contrib/) learned to handle file
 attachments.
+
+Will merge to 'master'.
 
 * mz/rebase-no-mbox (2012-06-26) 4 commits
   (merged to 'next' on 2012-07-03 at 5bf5c12)
@@ -171,32 +395,13 @@ the patch text directly out of existing commits.  This will help
 rebasing commits that have confusing "diff" output in their log
 messages.
 
-* pw/git-p4-tests (2012-06-27) 10 commits
-  (merged to 'next' on 2012-07-03 at 9bd9cda)
- + git p4 test: fix badp4dir test
- + git p4 test: split up big t9800 test
- + git p4 test: cleanup_git should make a new $git
- + git p4 test: copy source indeterminate
- + git p4 test: check for error message in failed test
- + git p4 test: rename some "git-p4 command" strings
- + git p4 test: never create default test repo
- + git p4 test: simplify quoting involving TRASH_DIRECTORY
- + git p4 test: use real_path to resolve p4 client symlinks
- + git p4 test: wait longer for p4d to start and test its pid
-
-More "git p4" tests.
-
-* rj/platform-pread-may-be-thread-unsafe (2012-06-26) 1 commit
-  (merged to 'next' on 2012-06-28 at ce5f79f)
- + index-pack: Disable threading on cygwin
-
-On Cygwin, the platform pread(3) is not thread safe, just like our
-own compat/ emulation, and cannot be used in the index-pack program.
+Will merge to 'master'.
 
 * jc/refactor-diff-stdin (2012-06-28) 3 commits
- - diff-index.c: "git diff" has no need to read blob from the standard input
- - diff-index.c: unify handling of command line paths
- - diff-index.c: do not pretend paths are pathspecs
+  (merged to 'next' on 2012-07-09 at ef407ee)
+ + diff-index.c: "git diff" has no need to read blob from the standard input
+ + diff-index.c: unify handling of command line paths
+ + diff-index.c: do not pretend paths are pathspecs
 
 Due to the way "git diff --no-index" is bolted onto by touching the
 low level code that is shared with the rest of the "git diff" code,
@@ -207,23 +412,7 @@ further to remove code that reads from the standard input from the
 core side, which is never necessary when git is running its usual
 diff operation.
 
-Will merge to 'next', and later down to older maintenance releases.
-
-* mz/empty-rebase-test (2012-06-27) 1 commit
-  (merged to 'next' on 2012-07-03 at 1e7de3f)
- + add test case for rebase of empty commit
-We did not have test to make sure "git rebase" without extra options
-filters out an empty commit in the original history.
-
-* cw/help-over-network (2012-06-28) 2 commits
-  (merged to 'next' on 2012-07-03 at 99e8d28)
- + Allow help.htmlpath to be a URL prefix
- + Add config variable to set HTML path for git-help --web
-
-"git help -w $cmd" can show HTML version of documentation for
-"git-$cmd" by setting help.htmlpath to somewhere other than the
-default location where the build procedure installs them locally;
-the variable can even point at a http:// URL.
+Will merge to 'master', and later down to older maintenance releases.
 
 * lt/commit-tree-guess-utf-8 (2012-06-28) 1 commit
  - commit/commit-tree: correct latin1 to utf-8
@@ -238,7 +427,6 @@ Hopefully it will be rerolled.
 
 * jc/test-lib-source-build-options-early (2012-06-24) 1 commit
  - test-lib: reorder and include GIT-BUILD-OPTIONS a lot earlier
- (this branch uses vr/use-our-perl-in-tests.)
 
 Reorders t/test-lib.sh so that we dot-source GIT-BUILD-OPTIONS that
 records the shell and Perl the user told us to use with Git a lot
@@ -248,58 +436,7 @@ one of its early operations.
 Needs to be eyeballed by people who run tests with exotic options
 like valgrind, --root=/dev/shm/somewhere, etc.
 
-* mm/config-xdg (2012-06-25) 4 commits
-  (merged to 'next' on 2012-06-28 at 57049d1)
- + config: write to $XDG_CONFIG_HOME/git/config file when appropriate
- + Let core.attributesfile default to $XDG_CONFIG_HOME/git/attributes
- + Let core.excludesfile default to $XDG_CONFIG_HOME/git/ignore
- + config: read (but not write) from $XDG_CONFIG_HOME/git/config file
-
-Teach git to read various information from $XDG_CONFIG_HOME/git/ to allow
-the user to avoid cluttering $HOME.
-
-* mm/credential-plumbing (2012-06-25) 3 commits
-  (merged to 'next' on 2012-06-28 at 6e6fe9f)
- + git-remote-mediawiki: add credential support
- + git credential fill: output the whole 'struct credential'
- + add 'git credential' plumbing command
- (this branch is used by mm/mediawiki-file-attachments.)
-
-Expose the credential API to scripted Porcelain writers.
-
-* th/diff-no-index-fixes (2012-06-22) 2 commits
-  (merged to 'next' on 2012-06-26 at 450e781)
- + diff-no-index: exit(1) if 'diff --quiet <repo file> <external file>' finds changes
- + diff: handle relative paths in no-index
-
-"git diff --no-index" did not correctly handle relative paths and
-did not correctly give exit codes when run under "--quiet" option.
-
-Will merge to 'master'.
-
-* nd/clone-single-fix (2012-06-22) 1 commit
-  (merged to 'next' on 2012-06-26 at c9fff5e)
- + clone: fix ref selection in --single-branch --branch=xxx
-
-"git clone --single-branch" to clone a single branch did not limit
-the cloning to the specified branch.
-
-Will merge to 'master'.
-
-* vr/use-our-perl-in-tests (2012-06-24) 4 commits
-  (merged to 'next' on 2012-07-03 at 90dfcf0)
- + t/README: add a bit more Don'ts
- + tests: enclose $PERL_PATH in double quotes
- + t/test-lib.sh: export PERL_PATH for use in scripts
- + t: Replace 'perl' by $PERL_PATH
- (this branch is used by jc/test-lib-source-build-options-early.)
-
-Some implementations of Perl terminates "lines" with CRLF even when
-the script is operating on just a sequence of bytes.  Make sure to
-use "$PERL_PATH", the version of Perl the user told Git to use, in
-our tests to avoid unnecessary breakages in tests.
-
-* jc/sha1-name-more (2012-07-03) 25 commits
+* jc/sha1-name-more (2012-07-04) 25 commits
  - rev-parse --disambiguate=<prefix>
  - rev-parse: A and B in "rev-parse A..B" refer to committish
  - reset: the command takes committish
@@ -331,49 +468,17 @@ is always a commit object, "A" in "git log A" must be a committish,
 and "A" and "B" in "git log A...B" both must be committish, etc., to
 prolong the lifetime of abbreviated object names.
 
-* jk/version-string-dependency (2012-06-20) 11 commits
- - Makefile: move GIT-VERSION-FILE dependencies closer to use
- - Makefile: build instaweb similar to other scripts
- - Makefile: update scripts when build-time parameters change
- - Makefile: do not replace @@GIT_VERSION@@ in shell scripts
- - Makefile: split prefix flags from GIT-CFLAGS
- - Makefile: split GIT_USER_AGENT from GIT-CFLAGS
- - Makefile: do not replace @@GIT_USER_AGENT@@ in scripts
- - Makefile: apply dependencies consistently to sparse/asm targets
- - Makefile: do not have git.o depend on common-cmds.h
- - Makefile: fold MISC_H into LIB_H
- - Makefile: sort LIB_H list
-
-Will keep in 'pu' to give Peff and Jonathan to work out improvements.
-
-* jn/perl-makemaker-leading-paths (2012-06-29) 2 commits
-  (merged to 'next' on 2012-06-29 at 0f17059)
- + perl/Makefile: Fix a missing double-quote
-  (merged to 'next' on 2012-06-28 at 286d854)
- + perl/Makefile: move "mkdir -p" to module installation loop for maintainability
-
-Minor build tweak.  People who do not use ExtUtils::MakeMaker may
-want to test this before it hits the 'master' branch.
+Will merge to 'next'.
 
 * tr/maint-show-walk (2012-06-19) 2 commits
- - show: fix "range implies walking"
- - Demonstrate git-show is broken with ranges
+  (merged to 'next' on 2012-07-09 at c8e0e06)
+ + show: fix "range implies walking"
+ + Demonstrate git-show is broken with ranges
 
 Fixes "git show"'s auto-walking behaviour, and make it behave just
 like "git log" does when it walks.
 
 Note that this is different from Thomas's patch.
-
-Waiting for response from original author.
-
-* hv/remote-end-hung-up (2012-06-19) 1 commit
-  (merged to 'next' on 2012-06-25 at d3f29e2)
- + remove the impression of unexpectedness when access is denied
-
-When we get disconnected while expecting a response from the remote
-side because authentication failed, we issued an error message "The
-remote side hung up unexpectedly."  Give hint that it may be a
-permission problem in the message when we can reasonably suspect it.
 
 Will merge to 'master'.
 
@@ -386,8 +491,7 @@ Will defer for 6 months until ancient "less" goes extinct.
   (merged to 'next' on 2012-06-26 at fea512a)
  + push: start warning upcoming default change for push.default
 
-Hopefully we can have a solidly tested series early in 1.7.12 or
-1.7.13 at the latest.
+Will defer for another cycle.
 
 --------------------------------------------------
 [Discarded]
@@ -409,3 +513,29 @@ people who get the message when their current branch is not pushed.
 
 I had an impression after the discussion thread that a redesign is
 coming, but it hasn't happened yet.
+
+* db/vcs-svn (2012-06-01) 6 commits
+ . vcs-svn: drop no-op reset methods
+ . vcs-svn: fix signedness warnings
+ . vcs-svn: prefer strstr over memmem
+ . vcs-svn: prefer constcmp to prefixcmp
+ . vcs-svn: simplify cleanup in apply_one_window()
+ . vcs-svn: fix clang-analyzer error
+
+Replaced by jn/vcs-svn.
+
+* jk/version-string-dependency (2012-06-20) 11 commits
+ . Makefile: move GIT-VERSION-FILE dependencies closer to use
+ . Makefile: build instaweb similar to other scripts
+ . Makefile: update scripts when build-time parameters change
+ . Makefile: do not replace @@GIT_VERSION@@ in shell scripts
+ . Makefile: split prefix flags from GIT-CFLAGS
+ . Makefile: split GIT_USER_AGENT from GIT-CFLAGS
+ . Makefile: do not replace @@GIT_USER_AGENT@@ in scripts
+ . Makefile: apply dependencies consistently to sparse/asm targets
+ . Makefile: do not have git.o depend on common-cmds.h
+ - Makefile: fold MISC_H into LIB_H
+ - Makefile: sort LIB_H list
+ (this branch is tangled with jn/makefile-cleanup.)
+
+Replaced by jn/makefile-cleanup.
