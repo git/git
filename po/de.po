@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: git 1.7.11\n"
 "Report-Msgid-Bugs-To: Git Mailing List <git@vger.kernel.org>\n"
-"POT-Creation-Date: 2012-06-08 10:20+0800\n"
+"POT-Creation-Date: 2012-07-03 10:23+0800\n"
 "PO-Revision-Date: 2012-03-28 18:46+0200\n"
 "Last-Translator: Ralf Thielow <ralf.thielow@googlemail.com>\n"
 "Language-Team: German\n"
@@ -57,8 +57,8 @@ msgstr "Konnte '%s' nicht öffnen"
 msgid "Repository lacks these prerequisite commits:"
 msgstr "Dem Projektarchiv fehlen folgende vorrausgesetzte Versionen:"
 
-#: bundle.c:164 sequencer.c:550 sequencer.c:982 builtin/log.c:289
-#: builtin/log.c:720 builtin/log.c:1309 builtin/log.c:1528 builtin/merge.c:347
+#: bundle.c:164 sequencer.c:550 sequencer.c:982 builtin/log.c:290
+#: builtin/log.c:721 builtin/log.c:1310 builtin/log.c:1529 builtin/merge.c:347
 #: builtin/shortlog.c:181
 msgid "revision walk setup failed"
 msgstr "Einrichtung des Revisionsgangs fehlgeschlagen"
@@ -71,44 +71,48 @@ msgstr[0] "Das Paket enthält %d Referenz"
 msgstr[1] "Das Paket enthält %d Referenzen"
 
 #: bundle.c:192
+msgid "The bundle records a complete history."
+msgstr "Das Paket speichert eine komplette Historie."
+
+#: bundle.c:195
 #, c-format
 msgid "The bundle requires this ref"
 msgid_plural "The bundle requires these %d refs"
 msgstr[0] "Das Paket benötigt diese Referenz"
 msgstr[1] "Das Paket benötigt diese %d Referenzen"
 
-#: bundle.c:290
+#: bundle.c:294
 msgid "rev-list died"
 msgstr "\"rev-list\" abgebrochen"
 
-#: bundle.c:296 builtin/log.c:1205 builtin/shortlog.c:284
+#: bundle.c:300 builtin/log.c:1206 builtin/shortlog.c:284
 #, c-format
 msgid "unrecognized argument: %s"
 msgstr "nicht erkanntes Argument: %s"
 
-#: bundle.c:331
+#: bundle.c:335
 #, c-format
 msgid "ref '%s' is excluded by the rev-list options"
 msgstr "Referenz '%s' wird durch \"rev-list\" Optionen ausgeschlossen"
 
-#: bundle.c:376
+#: bundle.c:380
 msgid "Refusing to create empty bundle."
 msgstr "Erstellung eines leeren Pakets zurückgewiesen."
 
-#: bundle.c:394
+#: bundle.c:398
 msgid "Could not spawn pack-objects"
 msgstr "Konnte Paketobjekte nicht erstellen"
 
-#: bundle.c:412
+#: bundle.c:416
 msgid "pack-objects died"
 msgstr "Erstellung der Paketobjekte abgebrochen"
 
-#: bundle.c:415
+#: bundle.c:419
 #, c-format
 msgid "cannot create '%s'"
 msgstr "kann '%s' nicht erstellen"
 
-#: bundle.c:437
+#: bundle.c:441
 msgid "index-pack died"
 msgstr "Erstellung der Paketindexdatei abgebrochen"
 
@@ -288,16 +292,16 @@ msgstr "'%s': %s"
 msgid "'%s': short read %s"
 msgstr "'%s': read() zu kurz %s"
 
-#: help.c:207
+#: help.c:208
 #, c-format
 msgid "available git commands in '%s'"
 msgstr "Vorhandene Git-Kommandos in '%s'"
 
-#: help.c:214
+#: help.c:215
 msgid "git commands available from elsewhere on your $PATH"
 msgstr "Vorhandene Git-Kommandos irgendwo in deinem $PATH"
 
-#: help.c:270
+#: help.c:271
 #, c-format
 msgid ""
 "'%s' appears to be a git command, but we were not\n"
@@ -306,11 +310,11 @@ msgstr ""
 "'%s' scheint ein git-Kommando zu sein, konnte aber\n"
 "nicht ausgeführt werden. Vielleicht ist git-%s fehlerhaft?"
 
-#: help.c:327
+#: help.c:328
 msgid "Uh oh. Your system reports no Git commands at all."
 msgstr "Uh oh. Keine Git-Kommandos auf deinem System vorhanden."
 
-#: help.c:349
+#: help.c:350
 #, c-format
 msgid ""
 "WARNING: You called a Git command named '%s', which does not exist.\n"
@@ -319,17 +323,17 @@ msgstr ""
 "Warnung: Du hast das nicht existierende Git-Kommando '%s' ausgeführt.\n"
 "Setze fort unter der Annahme das du '%s' gemeint hast"
 
-#: help.c:354
+#: help.c:355
 #, c-format
 msgid "in %0.1f seconds automatically..."
 msgstr "automatisch in %0.1f Sekunden..."
 
-#: help.c:361
+#: help.c:362
 #, c-format
 msgid "git: '%s' is not a git command. See 'git --help'."
 msgstr "git: '%s' ist kein Git-Kommando. Siehe 'git --help'."
 
-#: help.c:365
+#: help.c:366
 msgid ""
 "\n"
 "Did you mean this?"
@@ -673,243 +677,351 @@ msgstr "konnte aktuellen Benutzer nicht in Passwort-Datei finden: %s"
 msgid "no such user"
 msgstr "kein solcher Benutzer"
 
-#: wt-status.c:135
+#: wt-status.c:141
 msgid "Unmerged paths:"
 msgstr "Nicht zusammengeführte Pfade:"
 
-#: wt-status.c:141 wt-status.c:158
+#: wt-status.c:168 wt-status.c:195
 #, c-format
 msgid "  (use \"git reset %s <file>...\" to unstage)"
 msgstr ""
 "  (benutze \"git reset %s <Datei>...\" zum Herausnehmen aus der "
 "Bereitstellung)"
 
-#: wt-status.c:143 wt-status.c:160
+#: wt-status.c:170 wt-status.c:197
 msgid "  (use \"git rm --cached <file>...\" to unstage)"
 msgstr ""
 "  (benutze \"git rm --cached <Datei>...\" zum Herausnehmen aus der "
 "Bereitstellung)"
 
-#: wt-status.c:144
+#: wt-status.c:174
+msgid "  (use \"git add <file>...\" to mark resolution)"
+msgstr "  (benutze \"git add/rm <Datei>...\" um die Auflösung zu markieren)"
+
+#: wt-status.c:176 wt-status.c:180
 msgid "  (use \"git add/rm <file>...\" as appropriate to mark resolution)"
 msgstr ""
 "  (benutze \"git add/rm <Datei>...\" um die Auflösung entsprechend zu "
 "markieren)"
 
-#: wt-status.c:152
+#: wt-status.c:178
+msgid "  (use \"git rm <file>...\" to mark resolution)"
+msgstr "  (benutze \"git add/rm <Datei>...\" um die Auflösung zu markieren)"
+
+#: wt-status.c:189
 msgid "Changes to be committed:"
 msgstr "zum Eintragen bereitgestellte Änderungen:"
 
-#: wt-status.c:170
+#: wt-status.c:207
 msgid "Changes not staged for commit:"
 msgstr "Änderungen, die nicht zum Eintragen bereitgestellt sind:"
 
-#: wt-status.c:174
+#: wt-status.c:211
 msgid "  (use \"git add <file>...\" to update what will be committed)"
 msgstr "  (benutze \"git add <Datei>...\" zum Bereitstellen)"
 
-#: wt-status.c:176
+#: wt-status.c:213
 msgid "  (use \"git add/rm <file>...\" to update what will be committed)"
 msgstr "  (benutze \"git add/rm <Datei>...\" zum Bereitstellen)"
 
-#: wt-status.c:177
+#: wt-status.c:214
 msgid ""
 "  (use \"git checkout -- <file>...\" to discard changes in working directory)"
 msgstr ""
 "  (benutze \"git checkout -- <Datei>...\" um die Änderungen im "
 "Arbeitsverzeichnis zu verwerfen)"
 
-#: wt-status.c:179
+#: wt-status.c:216
 msgid "  (commit or discard the untracked or modified content in submodules)"
 msgstr ""
 "  (trage ein oder verwerfe den unbeobachteten oder geänderten Inhalt in den "
 "Unterprojekten)"
 
-#: wt-status.c:188
+#: wt-status.c:225
 #, c-format
 msgid "%s files:"
 msgstr "%s Dateien:"
 
-#: wt-status.c:191
+#: wt-status.c:228
 #, c-format
 msgid "  (use \"git %s <file>...\" to include in what will be committed)"
 msgstr "  (benutze \"git %s <Datei>...\" zum Einfügen in die Eintragung)"
 
-#: wt-status.c:208
+#: wt-status.c:245
 msgid "bug"
 msgstr "Fehler"
 
-#: wt-status.c:213
+#: wt-status.c:250
 msgid "both deleted:"
 msgstr "beide gelöscht:"
 
-#: wt-status.c:214
+#: wt-status.c:251
 msgid "added by us:"
 msgstr "von uns hinzugefügt:"
 
-#: wt-status.c:215
+#: wt-status.c:252
 msgid "deleted by them:"
 msgstr "von denen gelöscht:"
 
-#: wt-status.c:216
+#: wt-status.c:253
 msgid "added by them:"
 msgstr "von denen hinzugefügt:"
 
-#: wt-status.c:217
+#: wt-status.c:254
 msgid "deleted by us:"
 msgstr "von uns gelöscht:"
 
-#: wt-status.c:218
+#: wt-status.c:255
 msgid "both added:"
 msgstr "von beiden hinzugefügt:"
 
-#: wt-status.c:219
+#: wt-status.c:256
 msgid "both modified:"
 msgstr "von beiden geändert:"
 
-#: wt-status.c:249
+#: wt-status.c:286
 msgid "new commits, "
 msgstr "neue Versionen, "
 
-#: wt-status.c:251
+#: wt-status.c:288
 msgid "modified content, "
 msgstr "geänderter Inhalt, "
 
-#: wt-status.c:253
+#: wt-status.c:290
 msgid "untracked content, "
 msgstr "unbeobachteter Inhalt, "
 
-#: wt-status.c:267
+#: wt-status.c:304
 #, c-format
 msgid "new file:   %s"
 msgstr "neue Datei:   %s"
 
-#: wt-status.c:270
+#: wt-status.c:307
 #, c-format
 msgid "copied:     %s -> %s"
 msgstr "kopiert:     %s -> %s"
 
-#: wt-status.c:273
+#: wt-status.c:310
 #, c-format
 msgid "deleted:    %s"
 msgstr "gelöscht:    %s"
 
-#: wt-status.c:276
+#: wt-status.c:313
 #, c-format
 msgid "modified:   %s"
 msgstr "geändert:   %s"
 
-#: wt-status.c:279
+#: wt-status.c:316
 #, c-format
 msgid "renamed:    %s -> %s"
 msgstr "umbenannt:    %s -> %s"
 
-#: wt-status.c:282
+#: wt-status.c:319
 #, c-format
 msgid "typechange: %s"
 msgstr "Typänderung: %s"
 
-#: wt-status.c:285
+#: wt-status.c:322
 #, c-format
 msgid "unknown:    %s"
 msgstr "unbekannt:    %s"
 
-#: wt-status.c:288
+#: wt-status.c:325
 #, c-format
 msgid "unmerged:   %s"
 msgstr "nicht zusammengeführt:   %s"
 
-#: wt-status.c:291
+#: wt-status.c:328
 #, c-format
 msgid "bug: unhandled diff status %c"
 msgstr "Fehler: unbehandelter Differenz-Status %c"
 
-#: wt-status.c:737
+#: wt-status.c:786
+msgid "You have unmerged paths."
+msgstr "Du hast nicht zusammengeführte Pfade."
+
+#: wt-status.c:789 wt-status.c:913
+msgid "  (fix conflicts and run \"git commit\")"
+msgstr " (behebe die Konflikte und führe \"git commit\" aus)"
+
+#: wt-status.c:792
+msgid "All conflicts fixed but you are still merging."
+msgstr "Alle Konflikte sind behoben, aber du bist immer noch beim "
+"Zusammenführen."
+
+#: wt-status.c:795
+msgid "  (use \"git commit\" to conclude merge)"
+msgstr "  (benutze \"git commit\" um die Zusammenführung abzuschließen)"
+
+#: wt-status.c:805
+msgid "You are in the middle of an am session."
+msgstr "Eine \"am\"-Sitzung ist im Gange."
+
+#: wt-status.c:808
+msgid "The current patch is empty."
+msgstr "Der aktuelle Patch ist leer."
+
+#: wt-status.c:812
+msgid "  (fix conflicts and then run \"git am --resolved\")"
+msgstr "  (behebe die Konflikte und führe dann \"git am --resolved\" aus)"
+
+#: wt-status.c:814
+msgid "  (use \"git am --skip\" to skip this patch)"
+msgstr " (benutze \"git am --skip\" um diesen Patch auszulassen)"
+
+#: wt-status.c:816
+msgid "  (use \"git am --abort\" to restore the original branch)"
+msgstr "  (benutze \"git am --abort\" um den ursprünglichen Zweig "
+"wiederherzustellen)"
+
+#: wt-status.c:874 wt-status.c:884
+msgid "You are currently rebasing."
+msgstr "Du bist gerade beim Neuaufbau."
+
+#: wt-status.c:877
+msgid "  (fix conflicts and then run \"git rebase --continue\")"
+msgstr "  (behebe die Konflikte und führe dann \"git rebase --continue\" aus)"
+
+#: wt-status.c:879
+msgid "  (use \"git rebase --skip\" to skip this patch)"
+msgstr "  (benutze \"git rebase --skip\" um diesen Patch auszulassen)"
+
+#: wt-status.c:881
+msgid "  (use \"git rebase --abort\" to check out the original branch)"
+msgstr "  (benutze \"git rebase --abort\" um den ursprünglichen Zweig "
+"auszuchecken)"
+
+#: wt-status.c:887
+msgid "  (all conflicts fixed: run \"git rebase --continue\")"
+msgstr "  (alle Konflikte behoben: führe \"git rebase --continue\" aus)"
+
+#: wt-status.c:889
+msgid "You are currently splitting a commit during a rebase."
+msgstr "Du teilst gerade eine Version während eines Neuaufbaus auf."
+
+#: wt-status.c:892
+msgid "  (Once your working directory is clean, run \"git rebase --continue\")"
+msgstr "  (Sobald dein Arbeitsverzeichnis sauber ist, führe "
+"\"git rebase --continue\" aus)"
+
+#: wt-status.c:894
+msgid "You are currently editing a commit during a rebase."
+msgstr "Du editierst gerade eine Version während eines Neuaufbaus."
+
+#: wt-status.c:897
+msgid "  (use \"git commit --amend\" to amend the current commit)"
+msgstr "  (benutze \"git commit --amend\" um die aktuelle Version "
+"nachzubessern)"
+
+#: wt-status.c:899
+msgid ""
+"  (use \"git rebase --continue\" once you are satisfied with your changes)"
+msgstr "  (benutze \"git rebase --continue\" sobald deine Änderungen "
+"abgeschlossen sind)"
+
+#: wt-status.c:909
+msgid "You are currently cherry-picking."
+msgstr "Du führst gerade \"cherry-pick\" aus."
+
+#: wt-status.c:916
+msgid "  (all conflicts fixed: run \"git commit\")"
+msgstr "  (alle Konflikte behoben: führe \"git commit\" aus)"
+
+#: wt-status.c:925
+msgid "You are currently bisecting."
+msgstr "Du bist gerade beim Halbieren."
+
+#: wt-status.c:928
+msgid "  (use \"git bisect reset\" to get back to the original branch)"
+msgstr "  (benutze \"git bisect reset\" um zum ursprünglichen Zweig "
+"zurückzukehren)"
+
+#: wt-status.c:979
 msgid "On branch "
 msgstr "Auf Zweig "
 
-#: wt-status.c:744
+#: wt-status.c:986
 msgid "Not currently on any branch."
 msgstr "Im Moment auf keinem Zweig."
 
-#: wt-status.c:755
+#: wt-status.c:998
 msgid "Initial commit"
 msgstr "Initiale Version"
 
-#: wt-status.c:769
+#: wt-status.c:1012
 msgid "Untracked"
 msgstr "Unbeobachtete"
 
-#: wt-status.c:771
+#: wt-status.c:1014
 msgid "Ignored"
 msgstr "Ignorierte"
 
-#: wt-status.c:773
+#: wt-status.c:1016
 #, c-format
 msgid "Untracked files not listed%s"
 msgstr "Unbeobachtete Dateien nicht aufgelistet%s"
 
-#: wt-status.c:775
+#: wt-status.c:1018
 msgid " (use -u option to show untracked files)"
 msgstr " (benutze die Option -u um unbeobachteten Dateien anzuzeigen)"
 
-#: wt-status.c:781
+#: wt-status.c:1024
 msgid "No changes"
 msgstr "Keine Änderungen"
 
-#: wt-status.c:785
+#: wt-status.c:1028
 #, c-format
 msgid "no changes added to commit%s\n"
 msgstr "keine Änderungen zum Eintragen hinzugefügt%s\n"
 
-#: wt-status.c:787
+#: wt-status.c:1030
 msgid " (use \"git add\" and/or \"git commit -a\")"
 msgstr " (benutze \"git add\" und/oder \"git commit -a\")"
 
-#: wt-status.c:789
+#: wt-status.c:1032
 #, c-format
 msgid "nothing added to commit but untracked files present%s\n"
 msgstr ""
 "nichts zum Eintragen hinzugefügt, aber es gibt unbeobachtete Dateien%s\n"
 
-#: wt-status.c:791
+#: wt-status.c:1034
 msgid " (use \"git add\" to track)"
 msgstr " (benutze \"git add\" zum Beobachten)"
 
-#: wt-status.c:793 wt-status.c:796 wt-status.c:799
+#: wt-status.c:1036 wt-status.c:1039 wt-status.c:1042
 #, c-format
 msgid "nothing to commit%s\n"
 msgstr "nichts zum Eintragen%s\n"
 
-#: wt-status.c:794
+#: wt-status.c:1037
 msgid " (create/copy files and use \"git add\" to track)"
 msgstr " (Erstelle/Kopiere Dateien und benutze \"git add\" zum Beobachten)"
 
-#: wt-status.c:797
+#: wt-status.c:1040
 msgid " (use -u to show untracked files)"
 msgstr " (benutze die Option -u um unbeobachtete Dateien anzuzeigen)"
 
-#: wt-status.c:800
+#: wt-status.c:1043
 msgid " (working directory clean)"
 msgstr " (Arbeitsverzeichnis sauber)"
 
-#: wt-status.c:908
+#: wt-status.c:1151
 msgid "HEAD (no branch)"
 msgstr "HEAD (kein Zweig)"
 
-#: wt-status.c:914
+#: wt-status.c:1157
 msgid "Initial commit on "
 msgstr "Initiale Version auf "
 
-#: wt-status.c:929
+#: wt-status.c:1172
 msgid "behind "
 msgstr "hinterher "
 
-#: wt-status.c:932 wt-status.c:935
+#: wt-status.c:1175 wt-status.c:1178
 msgid "ahead "
 msgstr "voraus "
 
-#: wt-status.c:937
+#: wt-status.c:1180
 msgid ", behind "
 msgstr ", hinterher "
 
@@ -937,7 +1049,7 @@ msgid "Unstaged changes after refreshing the index:"
 msgstr ""
 "Nicht bereitgestellte Änderungen nach Aktualisierung der Bereitstellung:"
 
-#: builtin/add.c:195 builtin/add.c:456 builtin/rm.c:186
+#: builtin/add.c:195 builtin/add.c:459 builtin/rm.c:186
 #, c-format
 msgid "pathspec '%s' did not match any files"
 msgstr "Pfadspezifikation '%s' stimmt mit keinen Dateien überein"
@@ -1017,7 +1129,7 @@ msgstr "Wolltest du vielleicht 'git add .' sagen?\n"
 msgid "index file corrupt"
 msgstr "Bereitstellungsdatei beschädigt"
 
-#: builtin/add.c:476 builtin/apply.c:4108 builtin/mv.c:229 builtin/rm.c:260
+#: builtin/add.c:480 builtin/apply.c:4108 builtin/mv.c:229 builtin/rm.c:260
 msgid "Unable to write new index file"
 msgstr "Konnte neue Bereitstellungsdatei nicht schreiben."
 
@@ -2608,22 +2720,22 @@ msgstr "Ungültige Option: %s"
 msgid "Not a git repository"
 msgstr "Kein Git-Projektarchiv"
 
-#: builtin/diff.c:347
+#: builtin/diff.c:341
 #, c-format
 msgid "invalid object '%s' given."
 msgstr "Objekt '%s' ist ungültig."
 
-#: builtin/diff.c:352
+#: builtin/diff.c:346
 #, c-format
 msgid "more than %d trees given: '%s'"
 msgstr "Mehr als %d Zweige angegeben: '%s'"
 
-#: builtin/diff.c:362
+#: builtin/diff.c:356
 #, c-format
 msgid "more than two blobs given: '%s'"
 msgstr "Mehr als zwei Blobs angegeben: '%s'"
 
-#: builtin/diff.c:370
+#: builtin/diff.c:364
 #, c-format
 msgid "unhandled object '%s' given."
 msgstr "unbehandeltes Objekt '%s' angegeben"
@@ -2882,30 +2994,30 @@ msgstr ""
 msgid "both --cached and trees are given."
 msgstr "sowohl --cached als auch Zweige gegeben"
 
-#: builtin/help.c:59
+#: builtin/help.c:63
 #, c-format
 msgid "unrecognized help format '%s'"
 msgstr "nicht erkanntes Hilfeformat: %s"
 
-#: builtin/help.c:87
+#: builtin/help.c:91
 msgid "Failed to start emacsclient."
 msgstr "Konnte emacsclient nicht starten."
 
-#: builtin/help.c:100
+#: builtin/help.c:104
 msgid "Failed to parse emacsclient version."
 msgstr "Konnte Version des emacsclient nicht parsen."
 
-#: builtin/help.c:108
+#: builtin/help.c:112
 #, c-format
 msgid "emacsclient version '%d' too old (< 22)."
 msgstr "Version des emacsclient '%d' ist zu alt (< 22)."
 
-#: builtin/help.c:126 builtin/help.c:154 builtin/help.c:163 builtin/help.c:171
+#: builtin/help.c:130 builtin/help.c:158 builtin/help.c:167 builtin/help.c:175
 #, c-format
 msgid "failed to exec '%s': %s"
 msgstr "Fehler beim Ausführen von '%s': %s"
 
-#: builtin/help.c:211
+#: builtin/help.c:215
 #, c-format
 msgid ""
 "'%s': path for unsupported man viewer.\n"
@@ -2914,7 +3026,7 @@ msgstr ""
 "'%s': Pfad für nicht unterstützten Handbuchbetrachter.\n"
 "Du könntest stattdessen 'man.<Werkzeug>.cmd' benutzen."
 
-#: builtin/help.c:223
+#: builtin/help.c:227
 #, c-format
 msgid ""
 "'%s': cmd for supported man viewer.\n"
@@ -2923,267 +3035,278 @@ msgstr ""
 "'%s': Kommando für unterstützten Handbuchbetrachter.\n"
 "Du könntest stattdessen 'man.<Werkzeug>.path' benutzen."
 
-#: builtin/help.c:287
+#: builtin/help.c:291
 msgid "The most commonly used git commands are:"
 msgstr "Die allgemein verwendeten Git-Kommandos sind:"
 
-#: builtin/help.c:355
+#: builtin/help.c:359
 #, c-format
 msgid "'%s': unknown man viewer."
 msgstr "'%s': unbekannter Handbuch-Betrachter."
 
-#: builtin/help.c:372
+#: builtin/help.c:376
 msgid "no man viewer handled the request"
 msgstr "kein Handbuch-Betrachter konnte mit dieser Anfrage umgehen"
 
-#: builtin/help.c:380
+#: builtin/help.c:384
 msgid "no info viewer handled the request"
 msgstr "kein Informations-Betrachter konnte mit dieser Anfrage umgehen"
 
-#: builtin/help.c:391
+#: builtin/help.c:395
 #, c-format
 msgid "'%s': not a documentation directory."
 msgstr "'%s' ist kein Dokumentationsverzeichnis"
 
-#: builtin/help.c:432 builtin/help.c:439
+#: builtin/help.c:436 builtin/help.c:443
 #, c-format
 msgid "usage: %s%s"
 msgstr "Verwendung: %s%s"
 
-#: builtin/help.c:453
+#: builtin/help.c:459
 #, c-format
 msgid "`git %s' is aliased to `%s'"
 msgstr "für `git %s' wurde der Alias `%s' angelegt"
 
-#: builtin/index-pack.c:169
+#: builtin/index-pack.c:170
 #, c-format
 msgid "object type mismatch at %s"
 msgstr "Objekt-Typen passen bei %s nicht zusammen"
 
-#: builtin/index-pack.c:189
+#: builtin/index-pack.c:190
 msgid "object of unexpected type"
 msgstr "Objekt hat unerwarteten Typ"
 
-#: builtin/index-pack.c:226
+#: builtin/index-pack.c:227
 #, c-format
 msgid "cannot fill %d byte"
 msgid_plural "cannot fill %d bytes"
 msgstr[0] "kann %d Byte nicht lesen"
 msgstr[1] "kann %d Bytes nicht lesen"
 
-#: builtin/index-pack.c:236
+#: builtin/index-pack.c:237
 msgid "early EOF"
 msgstr "zu frühes Dateiende"
 
-#: builtin/index-pack.c:237
+#: builtin/index-pack.c:238
 msgid "read error on input"
 msgstr "Fehler beim Lesen der Eingabe"
 
-#: builtin/index-pack.c:249
+#: builtin/index-pack.c:250
 msgid "used more bytes than were available"
 msgstr "verwendete mehr Bytes als verfügbar waren"
 
-#: builtin/index-pack.c:256
+#: builtin/index-pack.c:257
 msgid "pack too large for current definition of off_t"
 msgstr "Paket ist zu groß für die aktuelle Definition von off_t"
 
-#: builtin/index-pack.c:272
+#: builtin/index-pack.c:273
 #, c-format
 msgid "unable to create '%s'"
 msgstr "konnte '%s' nicht erstellen"
 
-#: builtin/index-pack.c:277
+#: builtin/index-pack.c:278
 #, c-format
 msgid "cannot open packfile '%s'"
 msgstr "Kann Paketdatei '%s' nicht öffnen"
 
-#: builtin/index-pack.c:291
+#: builtin/index-pack.c:292
 msgid "pack signature mismatch"
 msgstr "Paketsignatur stimmt nicht überein"
 
-#: builtin/index-pack.c:311
+#: builtin/index-pack.c:312
 #, c-format
 msgid "pack has bad object at offset %lu: %s"
 msgstr "Paket hat ein ungültiges Objekt bei Versatz %lu: %s"
 
-#: builtin/index-pack.c:405
+#: builtin/index-pack.c:434
 #, c-format
 msgid "inflate returned %d"
 msgstr "Dekomprimierung gab %d zurück"
 
-#: builtin/index-pack.c:450
+#: builtin/index-pack.c:483
 msgid "offset value overflow for delta base object"
 msgstr "Wert für Versatz bei Differenzobjekt übergelaufen"
 
-#: builtin/index-pack.c:458
+#: builtin/index-pack.c:491
 msgid "delta base offset is out of bound"
 msgstr ""
 "Wert für Versatz bei Differenzobjekt liegt außerhalb des gültigen Bereichs"
 
-#: builtin/index-pack.c:466
+#: builtin/index-pack.c:499
 #, c-format
 msgid "unknown object type %d"
 msgstr "Unbekannter Objekt-Typ %d"
 
-#: builtin/index-pack.c:495
+#: builtin/index-pack.c:531
 msgid "cannot pread pack file"
 msgstr "Kann Paketdatei %s nicht lesen"
 
-#: builtin/index-pack.c:497
+#: builtin/index-pack.c:533
 #, c-format
 msgid "premature end of pack file, %lu byte missing"
 msgid_plural "premature end of pack file, %lu bytes missing"
 msgstr[0] "frühzeitiges Ende der Paketdatei, vermisse %lu Byte"
 msgstr[1] "frühzeitiges Ende der Paketdatei, vermisse %lu Bytes"
 
-#: builtin/index-pack.c:510
+#: builtin/index-pack.c:555
 msgid "serious inflate inconsistency"
 msgstr "ernsthafte Inkonsistenz nach Dekomprimierung"
 
-#: builtin/index-pack.c:583
-#, c-format
-msgid "cannot read existing object %s"
-msgstr "Kann existierendes Objekt %s nicht lesen."
-
-#: builtin/index-pack.c:586
+#: builtin/index-pack.c:646 builtin/index-pack.c:652 builtin/index-pack.c:675
+#: builtin/index-pack.c:709 builtin/index-pack.c:718
 #, c-format
 msgid "SHA1 COLLISION FOUND WITH %s !"
 msgstr "SHA1 KOLLISION MIT %s GEFUNDEN !"
 
-#: builtin/index-pack.c:598
+#: builtin/index-pack.c:649 builtin/pack-objects.c:170
+#: builtin/pack-objects.c:262
+#, c-format
+msgid "unable to read %s"
+msgstr "kann %s nicht lesen"
+
+#: builtin/index-pack.c:715
+#, c-format
+msgid "cannot read existing object %s"
+msgstr "Kann existierendes Objekt %s nicht lesen."
+
+#: builtin/index-pack.c:729
 #, c-format
 msgid "invalid blob object %s"
 msgstr "ungültiges Blob-Objekt %s"
 
-#: builtin/index-pack.c:610
+#: builtin/index-pack.c:744
 #, c-format
 msgid "invalid %s"
 msgstr "Ungültiger Objekt-Typ %s"
 
-#: builtin/index-pack.c:612
+#: builtin/index-pack.c:746
 msgid "Error in object"
 msgstr "Fehler in Objekt"
 
-#: builtin/index-pack.c:614
+#: builtin/index-pack.c:748
 #, c-format
 msgid "Not all child objects of %s are reachable"
 msgstr "Nicht alle Kind-Objekte von %s sind erreichbar"
 
-#: builtin/index-pack.c:687 builtin/index-pack.c:713
+#: builtin/index-pack.c:818 builtin/index-pack.c:844
 msgid "failed to apply delta"
 msgstr "Konnte Dateiunterschied nicht anwenden"
 
-#: builtin/index-pack.c:850
+#: builtin/index-pack.c:983
 msgid "Receiving objects"
 msgstr "Empfange Objekte"
 
-#: builtin/index-pack.c:850
+#: builtin/index-pack.c:983
 msgid "Indexing objects"
 msgstr "Indiziere Objekte"
 
-#: builtin/index-pack.c:872
+#: builtin/index-pack.c:1009
 msgid "pack is corrupted (SHA1 mismatch)"
 msgstr "Paket ist beschädigt (SHA1 unterschiedlich)"
 
-#: builtin/index-pack.c:877
+#: builtin/index-pack.c:1014
 msgid "cannot fstat packfile"
 msgstr "kann Paketdatei nicht lesen"
 
-#: builtin/index-pack.c:880
+#: builtin/index-pack.c:1017
 msgid "pack has junk at the end"
 msgstr "Paketende enthält nicht verwendbaren Inhalt"
 
-#: builtin/index-pack.c:903
+#: builtin/index-pack.c:1028
+msgid "confusion beyond insanity in parse_pack_objects()"
+msgstr "Fehler beim Ausführen von \"parse_pack_objects()\""
+
+#: builtin/index-pack.c:1051
 msgid "Resolving deltas"
 msgstr "Löse Unterschiede auf"
 
-#: builtin/index-pack.c:954
+#: builtin/index-pack.c:1102
 msgid "confusion beyond insanity"
 msgstr "Fehler beim Auflösen der Unterschiede"
 
-#: builtin/index-pack.c:973
+#: builtin/index-pack.c:1121
 #, c-format
 msgid "pack has %d unresolved delta"
 msgid_plural "pack has %d unresolved deltas"
 msgstr[0] "Paket hat %d unaufgelöste Unterschied"
 msgstr[1] "Paket hat %d unaufgelöste Unterschiede"
 
-#: builtin/index-pack.c:998
+#: builtin/index-pack.c:1146
 #, c-format
 msgid "unable to deflate appended object (%d)"
 msgstr "Konnte angehängtes Objekt (%d) nicht komprimieren"
 
-#: builtin/index-pack.c:1077
+#: builtin/index-pack.c:1225
 #, c-format
 msgid "local object %s is corrupt"
 msgstr "lokales Objekt %s ist beschädigt"
 
-#: builtin/index-pack.c:1101
+#: builtin/index-pack.c:1249
 msgid "error while closing pack file"
 msgstr "Fehler beim Schließen der Paketdatei"
 
-#: builtin/index-pack.c:1114
+#: builtin/index-pack.c:1262
 #, c-format
 msgid "cannot write keep file '%s'"
 msgstr "Kann Paketbeschreibungsdatei '%s' nicht schreiben"
 
-#: builtin/index-pack.c:1122
+#: builtin/index-pack.c:1270
 #, c-format
 msgid "cannot close written keep file '%s'"
 msgstr "Kann eben erstellte Paketbeschreibungsdatei '%s' nicht schließen"
 
-#: builtin/index-pack.c:1135
+#: builtin/index-pack.c:1283
 msgid "cannot store pack file"
 msgstr "Kann Paketdatei nicht speichern"
 
-#: builtin/index-pack.c:1146
+#: builtin/index-pack.c:1294
 msgid "cannot store index file"
 msgstr "Kann Indexdatei nicht speichern"
 
-#: builtin/index-pack.c:1247
+#: builtin/index-pack.c:1395
 #, c-format
 msgid "Cannot open existing pack file '%s'"
 msgstr "Kann existierende Paketdatei '%s' nicht öffnen"
 
-#: builtin/index-pack.c:1249
+#: builtin/index-pack.c:1397
 #, c-format
 msgid "Cannot open existing pack idx file for '%s'"
 msgstr "Kann existierende Indexdatei für Paket '%s' nicht öffnen"
 
-#: builtin/index-pack.c:1296
+#: builtin/index-pack.c:1444
 #, c-format
 msgid "non delta: %d object"
 msgid_plural "non delta: %d objects"
 msgstr[0] "kein Unterschied: %d Objekt"
 msgstr[1] "kein Unterschied: %d Objekte"
 
-#: builtin/index-pack.c:1303
+#: builtin/index-pack.c:1451
 #, c-format
 msgid "chain length = %d: %lu object"
 msgid_plural "chain length = %d: %lu objects"
 msgstr[0] "Länge der Objekt-Liste = %d: %lu Objekt"
 msgstr[1] "Länge der Objekt-Liste = %d: %lu Objekte"
 
-#: builtin/index-pack.c:1330
+#: builtin/index-pack.c:1478
 msgid "Cannot come back to cwd"
 msgstr "Kann nicht zurück zu Arbeitsverzeichnis wechseln"
 
-#: builtin/index-pack.c:1374 builtin/index-pack.c:1377
-#: builtin/index-pack.c:1389 builtin/index-pack.c:1393
+#: builtin/index-pack.c:1522 builtin/index-pack.c:1525
+#: builtin/index-pack.c:1537 builtin/index-pack.c:1541
 #, c-format
 msgid "bad %s"
 msgstr "%s ist ungültig"
 
-#: builtin/index-pack.c:1407
+#: builtin/index-pack.c:1555
 msgid "--fix-thin cannot be used without --stdin"
 msgstr "--fix-thin kann nicht ohne --stdin benutzt werden"
 
-#: builtin/index-pack.c:1411 builtin/index-pack.c:1421
+#: builtin/index-pack.c:1559 builtin/index-pack.c:1569
 #, c-format
 msgid "packfile name '%s' does not end with '.pack'"
 msgstr "Name der Paketdatei '%s' endet nicht mit '.pack'"
 
-#: builtin/index-pack.c:1430
+#: builtin/index-pack.c:1578
 msgid "--verify with no packfile name given"
 msgstr "--verify ohne Name der Paketdatei angegeben"
 
@@ -3331,94 +3454,94 @@ msgstr "Kann nicht auf aktuelles Arbeitsverzeichnis zugreifen."
 msgid "Cannot access work tree '%s'"
 msgstr "Kann nicht auf Arbeitsbaum '%s' zugreifen."
 
-#: builtin/log.c:188
+#: builtin/log.c:189
 #, c-format
 msgid "Final output: %d %s\n"
 msgstr "letzte Ausgabe: %d %s\n"
 
-#: builtin/log.c:401 builtin/log.c:489
+#: builtin/log.c:402 builtin/log.c:490
 #, c-format
 msgid "Could not read object %s"
 msgstr "Kann Objekt %s nicht lesen."
 
-#: builtin/log.c:513
+#: builtin/log.c:514
 #, c-format
 msgid "Unknown type: %d"
 msgstr "Unbekannter Typ: %d"
 
-#: builtin/log.c:602
+#: builtin/log.c:603
 msgid "format.headers without value"
 msgstr "format.headers ohne Wert"
 
-#: builtin/log.c:676
+#: builtin/log.c:677
 msgid "name of output directory is too long"
 msgstr "Name des Ausgabeverzeichnisses ist zu lang."
 
-#: builtin/log.c:687
+#: builtin/log.c:688
 #, c-format
 msgid "Cannot open patch file %s"
 msgstr "Kann Patch-Datei %s nicht öffnen"
 
-#: builtin/log.c:701
+#: builtin/log.c:702
 msgid "Need exactly one range."
 msgstr "Brauche genau einen Versionsbereich."
 
-#: builtin/log.c:709
+#: builtin/log.c:710
 msgid "Not a range."
 msgstr "Kein Versionsbereich."
 
-#: builtin/log.c:786
+#: builtin/log.c:787
 msgid "Cover letter needs email format"
 msgstr "Anschreiben benötigt E-Mail-Format"
 
-#: builtin/log.c:859
+#: builtin/log.c:860
 #, c-format
 msgid "insane in-reply-to: %s"
 msgstr "ungültiges in-reply-to: %s"
 
-#: builtin/log.c:932
+#: builtin/log.c:933
 msgid "Two output directories?"
 msgstr "Zwei Ausgabeverzeichnisse?"
 
-#: builtin/log.c:1153
+#: builtin/log.c:1154
 #, c-format
 msgid "bogus committer info %s"
 msgstr "unechte Einreicher-Informationen %s"
 
-#: builtin/log.c:1198
+#: builtin/log.c:1199
 msgid "-n and -k are mutually exclusive."
 msgstr "-n und -k schliessen sich gegenseitig aus"
 
-#: builtin/log.c:1200
+#: builtin/log.c:1201
 msgid "--subject-prefix and -k are mutually exclusive."
 msgstr "--subject-prefix und -k schliessen sich gegenseitig aus"
 
-#: builtin/log.c:1208
+#: builtin/log.c:1209
 msgid "--name-only does not make sense"
 msgstr "--name-only macht keinen Sinn"
 
-#: builtin/log.c:1210
+#: builtin/log.c:1211
 msgid "--name-status does not make sense"
 msgstr "--name-status macht keinen Sinn"
 
-#: builtin/log.c:1212
+#: builtin/log.c:1213
 msgid "--check does not make sense"
 msgstr "--check macht keinen Sinn"
 
-#: builtin/log.c:1235
+#: builtin/log.c:1236
 msgid "standard output, or directory, which one?"
 msgstr "Standard-Ausgabe oder Verzeichnis, welches von beidem?"
 
-#: builtin/log.c:1237
+#: builtin/log.c:1238
 #, c-format
 msgid "Could not create directory '%s'"
 msgstr "Konnte Verzeichnis '%s' nicht erstellen."
 
-#: builtin/log.c:1390
+#: builtin/log.c:1391
 msgid "Failed to create output files"
 msgstr "Fehler beim Erstellen der Ausgabedateien."
 
-#: builtin/log.c:1494
+#: builtin/log.c:1495
 #, c-format
 msgid ""
 "Could not find a tracked remote branch, please specify <upstream> manually.\n"
@@ -3426,7 +3549,7 @@ msgstr ""
 "Konnte gefolgten, externen Zweig nicht finden, bitte gebe <upstream> manuell "
 "an.\n"
 
-#: builtin/log.c:1510 builtin/log.c:1512 builtin/log.c:1524
+#: builtin/log.c:1511 builtin/log.c:1513 builtin/log.c:1525
 #, c-format
 msgid "Unknown commit %s"
 msgstr "Unbekannte Version %s"
@@ -3926,22 +4049,27 @@ msgstr "Objekt %s hat keine Notiz\n"
 msgid "Unknown subcommand: %s"
 msgstr "Unbekanntes Unterkommando: %s"
 
-#: builtin/pack-objects.c:2337
+#: builtin/pack-objects.c:183 builtin/pack-objects.c:186
+#, c-format
+msgid "deflate error (%d)"
+msgstr "Fehler beim Komprimieren (%d)"
+
+#: builtin/pack-objects.c:2398
 #, c-format
 msgid "unsupported index version %s"
 msgstr "Nicht unterstützte Bereitstellungsversion %s"
 
-#: builtin/pack-objects.c:2341
+#: builtin/pack-objects.c:2402
 #, c-format
 msgid "bad index version '%s'"
 msgstr "Ungültige Bereitstellungsversion '%s'"
 
-#: builtin/pack-objects.c:2364
+#: builtin/pack-objects.c:2425
 #, c-format
 msgid "option %s does not accept negative form"
 msgstr "Option %s akzeptiert keine negative Form"
 
-#: builtin/pack-objects.c:2368
+#: builtin/pack-objects.c:2429
 #, c-format
 msgid "unable to parse value '%s' for option %s"
 msgstr "konnte Wert '%s' für Option %s nicht parsen"
@@ -4946,9 +5074,10 @@ msgid ""
 "To restore the original branch and stop patching run \"$cmdline --abort\"."
 msgstr ""
 "Wenn du das Problem aufgelöst hast, führe \"$cmdline --resolved\" aus.\n"
-"Falls du diesen Patch auslassen möchtest, führe stattdessen "
-"\"$cmdline --skip\" aus.\n"
-"Um den ursprünglichen Zweig wiederherzustellen und die Anwendung der Patches\n"
+"Falls du diesen Patch auslassen möchtest, führe stattdessen \"$cmdline --skip"
+"\" aus.\n"
+"Um den ursprünglichen Zweig wiederherzustellen und die Anwendung der "
+"Patches\n"
 "abzubrechen, führe \"$cmdline --abort\" aus."
 
 #: git-am.sh:121
@@ -5019,9 +5148,10 @@ msgid ""
 "To restore the original branch and stop patching run \"$cmdline --abort\"."
 msgstr ""
 "Patch ist leer. Wurde er falsch aufgeteilt?\n"
-"Wenn du diesen Patch auslassen möchtest, führe stattdessen "
-"\"$cmdline --skip\" aus.\n"
-"Um den ursprünglichen Zweig wiederherzustellen und die Anwendung der Patches\n"
+"Wenn du diesen Patch auslassen möchtest, führe stattdessen \"$cmdline --skip"
+"\" aus.\n"
+"Um den ursprünglichen Zweig wiederherzustellen und die Anwendung der "
+"Patches\n"
 "abzubrechen, führe \"$cmdline --abort\" aus."
 
 #: git-am.sh:708
@@ -5414,109 +5544,108 @@ msgstr "Kein Zweigname spezifiziert"
 msgid "(To restore them type \"git stash apply\")"
 msgstr "(Zur Wiederherstellung gebe \"git stash apply\" ein)"
 
-#: git-submodule.sh:56
+#: git-submodule.sh:88
 #, sh-format
 msgid "cannot strip one component off url '$remoteurl'"
 msgstr "Kann eine Komponente von URL '$remoteurl' nicht extrahieren"
 
-#: git-submodule.sh:109
+#: git-submodule.sh:145
 #, sh-format
 msgid "No submodule mapping found in .gitmodules for path '$sm_path'"
 msgstr ""
 "Keine Unterprojekt-Zuordnung in .gitmodules für Pfad '$sm_path' gefunden"
 
-#: git-submodule.sh:150
+#: git-submodule.sh:186
 #, sh-format
 msgid "Clone of '$url' into submodule path '$sm_path' failed"
 msgstr "Klonen von '$url' in Unterprojekt-Pfad '$sm_path' fehlgeschlagen"
 
-#: git-submodule.sh:160
+#: git-submodule.sh:196
 #, sh-format
 msgid "Gitdir '$a' is part of the submodule path '$b' or vice versa"
 msgstr ""
 "Git-Verzeichnis '$a' ist Teil des Unterprojekt-Pfades '$b', oder umgekehrt"
 
-#: git-submodule.sh:249
+#: git-submodule.sh:285
 #, sh-format
 msgid "repo URL: '$repo' must be absolute or begin with ./|../"
 msgstr "repo URL: '$repo' muss absolut sein oder mit ./|../ beginnen"
 
-#: git-submodule.sh:266
+#: git-submodule.sh:302
 #, sh-format
 msgid "'$sm_path' already exists in the index"
 msgstr "'$sm_path' existiert bereits in der Bereitstellung"
 
-#: git-submodule.sh:270
+#: git-submodule.sh:306
 #, sh-format
 msgid ""
 "The following path is ignored by one of your .gitignore files:\n"
 "$sm_path\n"
 "Use -f if you really want to add it."
 msgstr ""
-"Der folgende Pfad wird durch eine deiner \".gitignore\" Dateien "
-"ignoriert:\n"
+"Der folgende Pfad wird durch eine deiner \".gitignore\" Dateien ignoriert:\n"
 "$sm_path\n"
 "Benutze -f wenn du diesen wirklich hinzufügen möchtest."
 
-#: git-submodule.sh:281
+#: git-submodule.sh:317
 #, sh-format
 msgid "Adding existing repo at '$sm_path' to the index"
-msgstr "Füge existierendes Projektarchiv in '$sm_path' der Bereitstellung "
-"hinzu."
+msgstr ""
+"Füge existierendes Projektarchiv in '$sm_path' der Bereitstellung hinzu."
 
-#: git-submodule.sh:283
+#: git-submodule.sh:319
 #, sh-format
 msgid "'$sm_path' already exists and is not a valid git repo"
 msgstr "'$sm_path' existiert bereits und ist kein gültiges Git-Projektarchiv"
 
-#: git-submodule.sh:297
+#: git-submodule.sh:333
 #, sh-format
 msgid "Unable to checkout submodule '$sm_path'"
 msgstr "Unfähig Unterprojekt '$sm_path' auszuchecken"
 
-#: git-submodule.sh:302
+#: git-submodule.sh:338
 #, sh-format
 msgid "Failed to add submodule '$sm_path'"
 msgstr "Hinzufügen von Unterprojekt '$sm_path' fehlgeschlagen"
 
-#: git-submodule.sh:307
+#: git-submodule.sh:343
 #, sh-format
 msgid "Failed to register submodule '$sm_path'"
 msgstr "Registierung von Unterprojekt '$sm_path' fehlgeschlagen"
 
-#: git-submodule.sh:349
+#: git-submodule.sh:385
 #, sh-format
 msgid "Entering '$prefix$sm_path'"
 msgstr "Betrete '$prefix$sm_path'"
 
-#: git-submodule.sh:363
+#: git-submodule.sh:399
 #, sh-format
 msgid "Stopping at '$sm_path'; script returned non-zero status."
 msgstr "Stoppe bei '$sm_path'; Skript gab nicht-Null Status zurück."
 
-#: git-submodule.sh:406
+#: git-submodule.sh:442
 #, sh-format
 msgid "No url found for submodule path '$sm_path' in .gitmodules"
 msgstr "Keine URL für Unterprojekt-Pfad '$sm_path' in .gitmodules gefunden"
 
-#: git-submodule.sh:415
+#: git-submodule.sh:451
 #, sh-format
 msgid "Failed to register url for submodule path '$sm_path'"
 msgstr "Registrierung der URL für Unterprojekt-Pfad '$sm_path' fehlgeschlagen"
 
-#: git-submodule.sh:417
+#: git-submodule.sh:453
 #, sh-format
 msgid "Submodule '$name' ($url) registered for path '$sm_path'"
 msgstr "Unterprojekt '$name' ($url) ist für Pfad '$sm_path' registriert"
 
-#: git-submodule.sh:425
+#: git-submodule.sh:461
 #, sh-format
 msgid "Failed to register update mode for submodule path '$sm_path'"
 msgstr ""
 "Registrierung des Aktualisierungsmodus für Unterprojekt-Pfad '$sm_path' "
 "fehlgeschlagen"
 
-#: git-submodule.sh:524
+#: git-submodule.sh:560
 #, sh-format
 msgid ""
 "Submodule path '$sm_path' not initialized\n"
@@ -5525,95 +5654,95 @@ msgstr ""
 "Unterprojekt-Pfad '$sm_path' ist nicht initialisiert\n"
 "Vielleicht möchtest du 'update --init' benutzen?"
 
-#: git-submodule.sh:537
+#: git-submodule.sh:573
 #, sh-format
 msgid "Unable to find current revision in submodule path '$sm_path'"
 msgstr "Konnte aktuelle Version in Unterprojekt-Pfad '$sm_path' nicht finden"
 
-#: git-submodule.sh:556
+#: git-submodule.sh:592
 #, sh-format
 msgid "Unable to fetch in submodule path '$sm_path'"
 msgstr "Konnte in Unterprojekt-Pfad '$sm_path' nicht anfordern"
 
-#: git-submodule.sh:570
+#: git-submodule.sh:606
 #, sh-format
 msgid "Unable to rebase '$sha1' in submodule path '$sm_path'"
 msgstr "Neuaufbau von '$sha1' in Unterprojekt-Pfad '$sm_path' nicht möglich"
 
-#: git-submodule.sh:571
+#: git-submodule.sh:607
 #, sh-format
 msgid "Submodule path '$sm_path': rebased into '$sha1'"
 msgstr "Unterprojekt-Pfad '$sm_path': neu aufgebaut in '$sha1'"
 
-#: git-submodule.sh:576
+#: git-submodule.sh:612
 #, sh-format
 msgid "Unable to merge '$sha1' in submodule path '$sm_path'"
 msgstr ""
 "Zusammenführung von '$sha1' in Unterprojekt-Pfad '$sm_path' fehlgeschlagen"
 
-#: git-submodule.sh:577
+#: git-submodule.sh:613
 #, sh-format
 msgid "Submodule path '$sm_path': merged in '$sha1'"
 msgstr "Unterprojekt-Pfad '$sm_path': zusammengeführt in '$sha1'"
 
-#: git-submodule.sh:582
+#: git-submodule.sh:618
 #, sh-format
 msgid "Unable to checkout '$sha1' in submodule path '$sm_path'"
 msgstr "Konnte '$sha1' in Unterprojekt-Pfad '$sm_path' nicht auschecken."
 
-#: git-submodule.sh:583
+#: git-submodule.sh:619
 #, sh-format
 msgid "Submodule path '$sm_path': checked out '$sha1'"
 msgstr "Unterprojekt-Pfad: '$sm_path': '$sha1' ausgecheckt"
 
-#: git-submodule.sh:605 git-submodule.sh:928
+#: git-submodule.sh:641 git-submodule.sh:964
 #, sh-format
 msgid "Failed to recurse into submodule path '$sm_path'"
 msgstr "Fehler bei Rekursion in Unterprojekt-Pfad '$sm_path'"
 
-#: git-submodule.sh:713
+#: git-submodule.sh:749
 msgid "--cached cannot be used with --files"
 msgstr "--cached kann nicht mit --files benutzt werden"
 
 #. unexpected type
-#: git-submodule.sh:753
+#: git-submodule.sh:789
 #, sh-format
 msgid "unexpected mode $mod_dst"
 msgstr "unerwarteter Modus $mod_dst"
 
-#: git-submodule.sh:771
+#: git-submodule.sh:807
 #, sh-format
 msgid "  Warn: $name doesn't contain commit $sha1_src"
 msgstr "  Warnung: $name beinhaltet nicht Version $sha1_src"
 
-#: git-submodule.sh:774
+#: git-submodule.sh:810
 #, sh-format
 msgid "  Warn: $name doesn't contain commit $sha1_dst"
 msgstr "  Warnung: $name beinhaltet nicht Version $sha1_dst"
 
-#: git-submodule.sh:777
+#: git-submodule.sh:813
 #, sh-format
 msgid "  Warn: $name doesn't contain commits $sha1_src and $sha1_dst"
 msgstr ""
 "  Warnung: $name beinhaltet nicht die Versionen $sha1_src und $sha1_dst"
 
-#: git-submodule.sh:802
+#: git-submodule.sh:838
 msgid "blob"
 msgstr "Blob"
 
-#: git-submodule.sh:803
+#: git-submodule.sh:839
 msgid "submodule"
 msgstr "Unterprojekt"
 
-#: git-submodule.sh:840
+#: git-submodule.sh:876
 msgid "# Submodules changed but not updated:"
 msgstr "# Unterprojekte geändert, aber nicht aktualisiert:"
 
-#: git-submodule.sh:842
+#: git-submodule.sh:878
 msgid "# Submodule changes to be committed:"
 msgstr "# Änderungen in Unterprojekt zum Eintragen:"
 
-#: git-submodule.sh:974
+#: git-submodule.sh:1022
 #, sh-format
 msgid "Synchronizing submodule url for '$name'"
 msgstr "Synchronisiere Unterprojekt-URL für '$name'"
