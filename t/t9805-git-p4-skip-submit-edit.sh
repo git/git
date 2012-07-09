@@ -78,20 +78,19 @@ test_expect_success 'skipSubmitEditCheck' '
 test_expect_success 'no config, edited' '
 	git p4 clone --dest="$git" //depot &&
 	test_when_finished cleanup_git &&
-	ed="$TRASH_DIRECTORY/ed.sh" &&
-	test_when_finished "rm \"$ed\"" &&
-	cat >"$ed" <<-EOF &&
+	test_when_finished "rm ed.sh" &&
+	cat >ed.sh <<-EOF &&
 		#!$SHELL_PATH
 		sleep 1
 		touch "\$1"
 		exit 0
 	EOF
-	chmod 755 "$ed" &&
+	chmod 755 ed.sh &&
 	(
 		cd "$git" &&
 		echo line >>file1 &&
 		git commit -a -m "change 5" &&
-		P4EDITOR="" EDITOR="\"$ed\"" git p4 submit &&
+		P4EDITOR="" EDITOR="\"$TRASH_DIRECTORY/ed.sh\"" git p4 submit &&
 		p4 changes //depot/... >wc &&
 		test_line_count = 5 wc
 	)

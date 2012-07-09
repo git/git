@@ -2,6 +2,10 @@
 # Library code for git p4 tests
 #
 
+# p4 tests never use the top-level repo; always build/clone into
+# a subdirectory called "$git"
+TEST_NO_CREATE_REPO=NoThanks
+
 . ./test-lib.sh
 
 if ! test_have_prereq PYTHON; then
@@ -27,23 +31,48 @@ export P4CLIENT=client
 export P4EDITOR=:
 
 db="$TRASH_DIRECTORY/db"
-cli="$TRASH_DIRECTORY/cli"
+cli=$(test-path-utils real_path "$TRASH_DIRECTORY/cli")
 git="$TRASH_DIRECTORY/git"
 pidfile="$TRASH_DIRECTORY/p4d.pid"
 
 start_p4d() {
 	mkdir -p "$db" "$cli" "$git" &&
+	rm -f "$pidfile" &&
 	(
 		p4d -q -r "$db" -p $P4DPORT &
 		echo $! >"$pidfile"
 	) &&
-	for i in 1 2 3 4 5 ; do
-		p4 info >/dev/null 2>&1 && break || true &&
-		echo waiting for p4d to start &&
+
+	# This gives p4d a long time to start up, as it can be
+	# quite slow depending on the machine.  Set this environment
+	# variable to something smaller to fail faster in, say,
+	# an automated test setup.  If the p4d process dies, that
+	# will be caught with the "kill -0" check below.
+	i=${P4D_START_PATIENCE:-300}
+	pid=$(cat "$pidfile")
+	ready=
+	while test $i -gt 0
+	do
+		# succeed when p4 client commands start to work
+		if p4 info >/dev/null 2>&1
+		then
+			ready=true
+			break
+		fi
+		# fail if p4d died
+		kill -0 $pid 2>/dev/null || break
+		echo waiting for p4d to start
 		sleep 1
-	done &&
-	# complain if it never started
-	p4 info >/dev/null &&
+		i=$(( $i - 1 ))
+	done
+
+	if test -z "$ready"
+	then
+		# p4d failed to start
+		return 1
+	fi
+
+	# build a client
 	(
 		cd "$cli" &&
 		p4 client -i <<-EOF
@@ -53,6 +82,7 @@ start_p4d() {
 		View: //depot/... //client/...
 		EOF
 	)
+	return 0
 }
 
 kill_p4d() {
@@ -69,5 +99,6 @@ kill_p4d() {
 }
 
 cleanup_git() {
-	rm -rf "$git"
+	rm -rf "$git" &&
+	mkdir "$git"
 }

@@ -39,10 +39,9 @@ test_expect_success 'clone --branch' '
 '
 
 test_expect_success 'clone --changesfile' '
-	cf="$TRASH_DIRECTORY/cf" &&
-	test_when_finished "rm \"$cf\"" &&
-	printf "1\n3\n" >"$cf" &&
-	git p4 clone --changesfile="$cf" --dest="$git" //depot &&
+	test_when_finished "rm cf" &&
+	printf "1\n3\n" >cf &&
+	git p4 clone --changesfile="$TRASH_DIRECTORY/cf" --dest="$git" //depot &&
 	test_when_finished cleanup_git &&
 	(
 		cd "$git" &&
@@ -55,10 +54,9 @@ test_expect_success 'clone --changesfile' '
 '
 
 test_expect_success 'clone --changesfile, @all' '
-	cf="$TRASH_DIRECTORY/cf" &&
-	test_when_finished "rm \"$cf\"" &&
-	printf "1\n3\n" >"$cf" &&
-	test_must_fail git p4 clone --changesfile="$cf" --dest="$git" //depot@all
+	test_when_finished "rm cf" &&
+	printf "1\n3\n" >cf &&
+	test_must_fail git p4 clone --changesfile="$TRASH_DIRECTORY/cf" --dest="$git" //depot@all
 '
 
 # imports both master and p4/master in refs/heads
@@ -128,7 +126,7 @@ test_expect_success 'clone --use-client-spec' '
 		exec >/dev/null &&
 		test_must_fail git p4 clone --dest="$git" --use-client-spec
 	) &&
-	cli2="$TRASH_DIRECTORY/cli2" &&
+	cli2=$(test-path-utils real_path "$TRASH_DIRECTORY/cli2") &&
 	mkdir -p "$cli2" &&
 	test_when_finished "rmdir \"$cli2\"" &&
 	(
@@ -151,7 +149,6 @@ test_expect_success 'clone --use-client-spec' '
 	cleanup_git &&
 
 	# same thing again, this time with variable instead of option
-	mkdir "$git" &&
 	(
 		cd "$git" &&
 		git init &&

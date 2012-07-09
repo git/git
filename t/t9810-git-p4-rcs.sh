@@ -1,6 +1,6 @@
 #!/bin/sh
 
-test_description='git-p4 rcs keywords'
+test_description='git p4 rcs keywords'
 
 . ./lib-git-p4.sh
 
@@ -147,7 +147,7 @@ test_expect_success 'scrub ko files differently' '
 	)
 '
 
-# hack; git-p4 submit should do it on its own
+# hack; git p4 submit should do it on its own
 test_expect_success 'cleanup after failure' '
 	(
 		cd "$cli" &&
@@ -193,7 +193,7 @@ test_expect_success 'do not scrub plain text' '
 	)
 '
 
-# hack; git-p4 submit should do it on its own
+# hack; git p4 submit should do it on its own
 test_expect_success 'cleanup after failure 2' '
 	(
 		cd "$cli" &&
@@ -244,7 +244,7 @@ test_expect_success 'cope with rcs keyword expansion damage' '
 		cd "$git" &&
 		git config git-p4.skipSubmitEdit true &&
 		git config git-p4.attemptRCSCleanup true &&
-		(cd ../cli && p4_append_to_file kwfile1.c) &&
+		(cd "$cli" && p4_append_to_file kwfile1.c) &&
 		old_lines=$(wc -l <kwfile1.c) &&
 		"$PERL_PATH" -n -i -e "print unless m/Revision:/" kwfile1.c &&
 		new_lines=$(wc -l <kwfile1.c) &&
