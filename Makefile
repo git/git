@@ -158,6 +158,9 @@ all::
 # Define NO_PREAD if you have a problem with pread() system call (e.g.
 # cygwin1.dll before v1.5.22).
 #
+# Define NO_THREAD_SAFE_PREAD if your pread() implementation is not
+# thread-safe. (e.g. compat/pread.c or cygwin)
+#
 # Define NO_FAST_WORKING_DIRECTORY if accessing objects in pack files is
 # generally faster on your platform than accessing the working directory.
 #
@@ -1059,6 +1062,7 @@ ifeq ($(uname_O),Cygwin)
 		NO_IPV6 = YesPlease
 		OLD_ICONV = UnfortunatelyYes
 	endif
+	NO_THREAD_SAFE_PREAD = YesPlease
 	NEEDS_LIBICONV = YesPlease
 	NO_FAST_WORKING_DIRECTORY = UnfortunatelyYes
 	NO_TRUSTABLE_FILEMODE = UnfortunatelyYes
@@ -1668,6 +1672,10 @@ endif
 ifdef NO_PREAD
 	COMPAT_CFLAGS += -DNO_PREAD
 	COMPAT_OBJS += compat/pread.o
+	NO_THREAD_SAFE_PREAD = YesPlease
+endif
+ifdef NO_THREAD_SAFE_PREAD
+	BASIC_CFLAGS += -DNO_THREAD_SAFE_PREAD
 endif
 ifdef NO_FAST_WORKING_DIRECTORY
 	BASIC_CFLAGS += -DNO_FAST_WORKING_DIRECTORY
