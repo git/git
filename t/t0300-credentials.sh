@@ -82,6 +82,9 @@ test_expect_success 'credential_fill passes along metadata' '
 	host=example.com
 	path=foo.git
 	--
+	protocol=ftp
+	host=example.com
+	path=foo.git
 	username=one
 	password=two
 	--
@@ -213,6 +216,8 @@ test_expect_success 'match configured credential' '
 	host=example.com
 	path=repo.git
 	--
+	protocol=https
+	host=example.com
 	username=foo
 	password=bar
 	--
@@ -225,6 +230,8 @@ test_expect_success 'do not match configured credential' '
 	protocol=https
 	host=bar
 	--
+	protocol=https
+	host=bar
 	username=askpass-username
 	password=askpass-password
 	--
@@ -239,6 +246,8 @@ test_expect_success 'pull username from config' '
 	protocol=https
 	host=example.com
 	--
+	protocol=https
+	host=example.com
 	username=foo
 	password=askpass-password
 	--
@@ -252,6 +261,8 @@ test_expect_success 'http paths can be part of context' '
 	host=example.com
 	path=foo.git
 	--
+	protocol=https
+	host=example.com
 	username=foo
 	password=bar
 	--
@@ -265,6 +276,9 @@ test_expect_success 'http paths can be part of context' '
 	host=example.com
 	path=foo.git
 	--
+	protocol=https
+	host=example.com
+	path=foo.git
 	username=foo
 	password=bar
 	--

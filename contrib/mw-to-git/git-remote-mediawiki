@@ -26,9 +26,6 @@
 # - Git renames could be turned into MediaWiki renames (see TODO
 #   below)
 #
-# - login/password support requires the user to write the password
-#   cleartext in a file (see TODO below).
-#
 # - No way to import "one page, and all pages included in it"
 #
 # - Multiple remote MediaWikis have not been very well tested.
@@ -43,6 +40,8 @@ use encoding 'utf8';
 binmode STDERR, ":utf8";
 
 use URI::Escape;
+use IPC::Open2;
+
 use warnings;
 
 # Mediawiki filenames can contain forward slashes. This variable decides by which pattern they should be replaced
@@ -72,9 +71,7 @@ my @tracked_categories = split(/[ \n]/, run_git("config --get-all remote.". $rem
 chomp(@tracked_categories);
 
 my $wiki_login = run_git("config --get remote.". $remotename .".mwLogin");
-# TODO: ideally, this should be able to read from keyboard, but we're
-# inside a remote helper, so our stdin is connect to git, not to a
-# terminal.
+# Note: mwPassword is discourraged. Use the credential system instead.
 my $wiki_passwd = run_git("config --get remote.". $remotename .".mwPassword");
 my $wiki_domain = run_git("config --get remote.". $remotename .".mwDomain");
 chomp($wiki_login);
@@ -151,28 +148,108 @@ while (<STDIN>) {
 
 ########################## Functions ##############################
 
+## credential API management (generic functions)
+
+sub credential_from_url {
+	my $url = shift;
+	my $parsed = URI->new($url);
+	my %credential;
+
+	if ($parsed->scheme) {
+		$credential{protocol} = $parsed->scheme;
+	}
+	if ($parsed->host) {
+		$credential{host} = $parsed->host;
+	}
+	if ($parsed->path) {
+		$credential{path} = $parsed->path;
+	}
+	if ($parsed->userinfo) {
+		if ($parsed->userinfo =~ /([^:]*):(.*)/) {
+			$credential{username} = $1;
+			$credential{password} = $2;
+		} else {
+			$credential{username} = $parsed->userinfo;
+		}
+	}
+
+	return %credential;
+}
+
+sub credential_read {
+	my %credential;
+	my $reader = shift;
+	my $op = shift;
+	while (<$reader>) {
+		my ($key, $value) = /([^=]*)=(.*)/;
+		if (not defined $key) {
+			die "ERROR receiving response from git credential $op:\n$_\n";
+		}
+		$credential{$key} = $value;
+	}
+	return %credential;
+}
+
+sub credential_write {
+	my $credential = shift;
+	my $writer = shift;
+	while (my ($key, $value) = each(%$credential) ) {
+		if ($value) {
+			print $writer "$key=$value\n";
+		}
+	}
+}
+
+sub credential_run {
+	my $op = shift;
+	my $credential = shift;
+	my $pid = open2(my $reader, my $writer, "git credential $op");
+	credential_write($credential, $writer);
+	print $writer "\n";
+	close($writer);
+
+	if ($op eq "fill") {
+		%$credential = credential_read($reader, $op);
+	} else {
+		if (<$reader>) {
+			die "ERROR while running git credential $op:\n$_";
+		}
+	}
+	close($reader);
+	waitpid($pid, 0);
+	my $child_exit_status = $? >> 8;
+	if ($child_exit_status != 0) {
+		die "'git credential $op' failed with code $child_exit_status.";
+	}
+}
+
 # MediaWiki API instance, created lazily.
 my $mediawiki;
 
 sub mw_connect_maybe {
 	if ($mediawiki) {
-	    return;
+		return;
 	}
 	$mediawiki = MediaWiki::API->new;
 	$mediawiki->{config}->{api_url} = "$url/api.php";
 	if ($wiki_login) {
-		if (!$mediawiki->login({
-			lgname => $wiki_login,
-			lgpassword => $wiki_passwd,
-			lgdomain => $wiki_domain,
-		})) {
-			print STDERR "Failed to log in mediawiki user \"$wiki_login\" on $url\n";
-			print STDERR "(error " .
-			    $mediawiki->{error}->{code} . ': ' .
-			    $mediawiki->{error}->{details} . ")\n";
-			exit 1;
+		my %credential = credential_from_url($url);
+		$credential{username} = $wiki_login;
+		$credential{password} = $wiki_passwd;
+		credential_run("fill", \%credential);
+		my $request = {lgname => $credential{username},
+			       lgpassword => $credential{password},
+			       lgdomain => $wiki_domain};
+		if ($mediawiki->login($request)) {
+			credential_run("approve", \%credential);
+			print STDERR "Logged in mediawiki user \"$credential{username}\".\n";
 		} else {
-			print STDERR "Logged in with user \"$wiki_login\".\n";
+			print STDERR "Failed to log in mediawiki user \"$credential{username}\" on $url\n";
+			print STDERR "  (error " .
+				$mediawiki->{error}->{code} . ': ' .
+				$mediawiki->{error}->{details} . ")\n";
+			credential_run("reject", \%credential);
+			exit 1;
 		}
 	}
 }
