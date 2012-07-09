@@ -10,7 +10,7 @@ find_blame() {
 cat >helper <<'EOF'
 #!/bin/sh
 grep -q '^bin: ' "$1" || { echo "E: $1 is not \"binary\" file" 1>&2; exit 1; }
-perl -p -e 's/^bin: /converted: /' "$1"
+"$PERL_PATH" -p -e 's/^bin: /converted: /' "$1"
 EOF
 chmod +x helper
 
