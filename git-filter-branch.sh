@@ -84,7 +84,7 @@ set_ident () {
 			s/.*/GIT_'$uid'_EMAIL='\''&'\''; export GIT_'$uid'_EMAIL/p
 
 			g
-			s/^'$lid' [^<]* <[^>]*> \(.*\)$/\1/
+			s/^'$lid' [^<]* <[^>]*> \(.*\)$/@\1/
 			s/'\''/'\''\'\'\''/g
 			s/.*/GIT_'$uid'_DATE='\''&'\''; export GIT_'$uid'_DATE/p
 
