@@ -634,6 +634,15 @@ sub wildo_flush_topic {
 	}
 }
 
+sub wildo_match {
+	if (/^Will (?:\S+ ){0,2}(keep|merge|drop|discard|cook|kick|defer|be re-?rolled)[,. ]/ ||
+	    /^Not urgent/ || /^Not ready/ || /^Waiting for / ||
+	    /^Needs? / || /^Expecting / || /^May want to /) {
+		return 1;
+	}
+	return 0;
+}
+
 sub wildo {
 	my (%what, $topic, $last_merge_to_next, $in_section);
 	my $too_recent = '9999-99-99';
@@ -668,9 +677,7 @@ sub wildo {
 		next if (/^ /);
 		next unless defined $topic;
 
-		if (/^Will (?:\S+ ){0,2}(keep|merge|drop|discard|cook|kick|defer)[,. ]/ ||
-		    /^Not urgent/ || /^Not ready/ || /^Waiting for / ||
-		    /^Needs? / || /^Expecting / || /^May want to /) {
+		if (wildo_match($_)) {
 			wildo_queue(\%what, $_, $topic);
 			$topic = undef;
 		}
@@ -705,6 +712,111 @@ sub wildo {
 }
 
 ################################################################
+# HavDone
+sub havedone_show {
+	my $topic = shift;
+	my $str = shift;
+	my $prefix = " * ";
+	$str =~ s/\A\n+//;
+	$str =~ s/\n+\Z//;
+
+	print "($topic)\n";
+	for $str (split(/\n/, $str)) {
+		print "$prefix$str\n";
+		$prefix = "   ";
+	}
+}
+
+sub havedone_count {
+	my @range = @_;
+	my $cnt = `git rev-list --count @range`;
+	chomp $cnt;
+	return $cnt;
+}
+
+sub havedone {
+	my $fh;
+	my %topic = ();
+	my @topic = ();
+	my ($topic, $to_maint, %to_maint, %merged);
+	if (!@ARGV) {
+		open($fh, '-|',
+		     qw(git rev-list --first-parent -1 master Documentation/RelNotes))
+		    or die "$!: open rev-list";
+		my ($rev) = <$fh>;
+		close($fh) or die "$!: close rev-list";
+		chomp $rev;
+		@ARGV = ("$rev..master");
+	}
+	open($fh, '-|',
+	     qw(git log --first-parent --oneline --reverse), @ARGV)
+	    or die "$!: open log --first-parent";
+	while (<$fh>) {
+		my ($sha1, $branch) = /^([0-9a-f]+) Merge branch '(.*)'$/;
+		next unless $branch;
+		$topic{$branch} = "";
+		$merged{$branch} = $sha1;
+		push @topic, $branch;
+	}
+	close($fh) or die "$!: close log --first-parent";
+	open($fh, "<", "Meta/whats-cooking.txt")
+	    or die "$!: open whats-cooking";
+	while (<$fh>) {
+		chomp;
+		if (/^\[(.*)\]$/) {
+			# section header
+			$topic = undef;
+			next;
+		}
+		if (/^\* (\S+) \([-0-9]+\) \d+ commits?$/) {
+			if (exists $topic{$1}) {
+				$topic = $1;
+				$to_maint = 0;
+			} else {
+				$topic = undef;
+			}
+			next;
+		}
+		next if (/^ / || !defined $topic);
+		if (wildo_match($_)) {
+			next;
+		}
+		$topic{$topic} .= "$_\n";
+	}
+	close($fh) or die "$!: close whats-cooking";
+
+	for $topic (@topic) {
+		my $merged = $merged{$topic};
+		my $in_master = havedone_count("$merged^1..$merged^2");
+		my $not_in_maint = havedone_count("maint..$merged^2");
+		if ($in_master == $not_in_maint) {
+			$to_maint{$topic} = 1;
+		}
+	}
+
+	my $shown = 0;
+	for $topic (@topic) {
+		next if (exists $to_maint{$topic});
+		havedone_show($topic, $topic{$topic});
+		print "\n";
+		$shown++;
+	}
+
+	if ($shown) {
+		print "-" x 64, "\n";
+	}
+
+	for $topic (@topic) {
+		next unless (exists $to_maint{$topic});
+		havedone_show($topic, $topic{$topic});
+		my $sha1 = `git rev-parse --short $topic`;
+		chomp $sha1;
+		print "   (merge $sha1 $topic later to maint).\n";
+		print "\n";
+	}
+}
+
+################################################################
 # WhatsCooking
 
 sub doit {
@@ -720,8 +832,9 @@ sub doit {
 use Getopt::Long;
 
 my $wildo;
-if (!GetOptions("wildo" => \$wildo)) {
-	print STDERR "$0 [--wildo]";
+my $havedone;
+if (!GetOptions("wildo" => \$wildo, "havedone" => \$havedone)) {
+	print STDERR "$0 [--wildo|--havedone]";
 	exit 1;
 }
 
@@ -730,6 +843,8 @@ if ($wildo) {
 		push @ARGV, "Meta/whats-cooking.txt";
 	}
 	wildo();
+} elsif ($havedone) {
+	havedone();
 } else {
 	doit();
 }
