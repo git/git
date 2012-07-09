@@ -116,4 +116,10 @@ test_expect_success '--orphan refuses to switch if a merge is needed' '
 	git reset --hard
 '
 
+test_expect_success 'cannot --detach on an unborn branch' '
+	git checkout master &&
+	git checkout --orphan new &&
+	test_must_fail git checkout --detach
+'
+
 test_done
