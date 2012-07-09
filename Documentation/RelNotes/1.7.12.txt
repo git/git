@@ -6,6 +6,16 @@ Updates since v1.7.11
 
 UI, Workflows & Features
 
+ * Per-user $HOME/.gitconfig file can optionally be stored in
+   $HOME/.config/git/config instead, which is in line with XDG.
+
+ * The value of core.attributesfile and core.excludesfile default to
+   $HOME/.config/attributes and $HOME/.config/ignore respectively when
+   these files exist.
+
+ * Scripted Porcelain writers now have access to the credential API via
+   the "git credential" plumbing command.
+
  * "git help" used to always default to "man" format even on platforms
    where "man" viewer is not widely available.
 
@@ -26,6 +36,11 @@ UI, Workflows & Features
  * git native protocol agents learned to show software version over
    the wire, so that the server log can be examined to see the vintage
    distribution of clients.
+
+ * "git help -w $cmd" can show HTML version of documentation for
+   "git-$cmd" by setting help.htmlpath to somewhere other than the
+   default location where the build procedure installs them locally;
+   the variable can even point at a http:// URL.
 
  * "git rebase -i" learned "-x <cmd>" to insert "exec <cmd>" after
    each commit in the resulting history.
@@ -70,6 +85,34 @@ Fixes since v1.7.11
 Unless otherwise noted, all the fixes since v1.7.11 in the maintenance
 releases are contained in this release (see release notes to them for
 details).
+
+ * We did not have test to make sure "git rebase" without extra options
+   filters out an empty commit in the original history.
+   (merge 2b5ba7b mz/empty-rebase-test later to maint).
+
+ * "git fast-export" produced an input stream for fast-import without
+   properly quoting pathnames when they contain SPs in them.
+   (merge ff59f6d js/fast-export-paths-with-spaces later to maint).
+
+ * "git checkout --detach", when you are still on an unborn branch,
+   should be forbidden, but it wasn't.
+   (merge 8ced1aa cw/no-detaching-an-unborn later to maint).
+
+ * Some implementations of Perl terminates "lines" with CRLF even when
+   the script is operating on just a sequence of bytes.  Make sure to
+   use "$PERL_PATH", the version of Perl the user told Git to use, in
+   our tests to avoid unnecessary breakages in tests.
+   (merge ad78585 vr/use-our-perl-in-tests later to maint).
+
+ * "git blame" did not try to make sure that the abbreviated commit
+   object names in its output are unique.
+   (merge b31272f jc/maint-blame-unique-abbrev later to maint).
+
+ * On Cygwin, the platform pread(2) is not thread safe, just like our
+   own compat/ emulation, and cannot be used in the index-pack
+   program.  Makefile variable NO_THREAD_SAFE_PREAD can be defined to
+   avoid use of this function in a threaded program.
+   (merge c0f8654 rj/platform-pread-may-be-thread-unsafe later to maint).
 
  * "git clone --single-branch" to clone a single branch did not limit
    the cloning to the specified branch.
