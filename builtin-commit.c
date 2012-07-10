@@ -188,6 +188,9 @@ static int list_paths(struct string_list *list, const char *with_tree,
 	int i;
 	char *m;
 
+	if (!pattern)
+		return 0;
+
 	for (i = 0; pattern[i]; i++)
 		;
 	m = xcalloc(1, i);
@@ -324,7 +327,7 @@ static char *prepare_index(int argc, const char **argv, const char *prefix, int 
 	 * hooks on the real index, and create commit from the_index.
 	 * We still need to refresh the index here.
 	 */
-	if (!pathspec || !*pathspec) {
+	if (!only && (!pathspec || !*pathspec)) {
 		fd = hold_locked_index(&index_lock, 1);
 		refresh_cache_or_die(refresh_flags);
 		if (write_cache(fd, active_cache, active_nr) ||
