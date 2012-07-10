@@ -203,7 +203,7 @@ test_expect_success 'mergetool skips resolved paths when rerere is active' '
     git reset --hard
 '
 
-test_expect_failure 'conflicted stash sets up rerere'  '
+test_expect_success 'conflicted stash sets up rerere'  '
     git config rerere.enabled true &&
     git checkout stash1 &&
     echo "Conflicting stash content" >file11 &&

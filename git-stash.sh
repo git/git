@@ -469,6 +469,7 @@ apply_stash () {
 	else
 		# Merge conflict; keep the exit status from merge-recursive
 		status=$?
+		git rerere
 		if test -n "$INDEX_OPTION"
 		then
 			gettextln "Index was not unstashed." >&2
