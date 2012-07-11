@@ -397,10 +397,15 @@ int df_name_compare(const char *name1, int len1, int mode1,
 
 int cache_name_compare(const char *name1, int flags1, const char *name2, int flags2)
 {
-	int len1 = flags1 & CE_NAMEMASK;
-	int len2 = flags2 & CE_NAMEMASK;
-	int len = len1 < len2 ? len1 : len2;
-	int cmp;
+	int len1, len2, len, cmp;
+
+	len1 = flags1 & CE_NAMEMASK;
+	if (CE_NAMEMASK <= len1)
+		len1 = strlen(name1 + CE_NAMEMASK) + CE_NAMEMASK;
+	len2 = flags2 & CE_NAMEMASK;
+	if (CE_NAMEMASK <= len2)
+		len2 = strlen(name2 + CE_NAMEMASK) + CE_NAMEMASK;
+	len = len1 < len2 ? len1 : len2;
 
 	cmp = memcmp(name1, name2, len);
 	if (cmp)
