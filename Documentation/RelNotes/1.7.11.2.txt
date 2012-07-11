@@ -1,0 +1,53 @@
+Git v1.7.11.2 Release Notes
+===========================
+
+Fixes since v1.7.11.1
+---------------------
+
+ * On Cygwin, the platform pread(2) is not thread safe, just like our
+   own compat/ emulation, and cannot be used in the index-pack
+   program.  Makefile variable NO_THREAD_SAFE_PREAD can be defined to
+   avoid use of this function in a threaded program.
+
+ * "git add" allows adding a regular file to the path where a
+   submodule used to exist, but "git update-index" does not allow an
+   equivalent operation to Porcelain writers.
+
+ * "git archive" incorrectly computed the header checksum; the symptom
+   was observed only when using pathnames with hi-bit set.
+
+ * "git blame" did not try to make sure that the abbreviated commit
+   object names in its output are unique.
+
+ * Running "git bundle verify" on a bundle that records a complete
+   history said "it requires these 0 commits".
+
+ * "git clone --single-branch" to clone a single branch did not limit
+   the cloning to the specified branch.
+
+ * "git diff --no-index" did not correctly handle relative paths and
+   did not correctly give exit codes when run under "--quiet" option.
+
+ * "git diff --no-index" did not work with pagers correctly.
+
+ * "git diff COPYING HEAD:COPYING" gave a nonsense error message that
+   claimed that the treeish HEAD did not have COPYING in it.
+
+ * When "git log" gets "--simplify-merges/by-decoration" together with
+   "--first-parent", the combination of these options makes the
+   simplification logic to use in-core commit objects that haven't
+   been examined for relevance, either producing incorrect result or
+   taking too long to produce any output.  Teach the simplification
+   logic to ignore commits that the first-parent traversal logic
+   ignored when both are in effect to work around the issue.
+
+ * "git ls-files --exclude=t -i" did not consider anything under t/ as
+   excluded, as it did not pay attention to exclusion of leading paths
+   while walking the index.  Other two users of excluded() are also
+   updated.
+
+ * "git request-pull $url dev" when the tip of "dev" branch was tagged
+   with "ext4-for-linus" used the contents from the tag in the output
+   but still asked the "dev" branch to be pulled, not the tag.
+
+Also contains minor typofixes and documentation updates.
