@@ -3510,7 +3510,8 @@ static void add_index_file(const char *path, unsigned mode, void *buf, unsigned 
 	ce = xcalloc(1, ce_size);
 	memcpy(ce->name, path, namelen);
 	ce->ce_mode = create_ce_mode(mode);
-	ce->ce_flags = namelen;
+	ce->ce_flags = create_ce_flags(0);
+	ce->ce_namelen = namelen;
 	if (S_ISGITLINK(mode)) {
 		const char *s = buf;
 

@@ -2171,7 +2171,8 @@ static struct commit *fake_working_tree_commit(struct diff_options *opt,
 	ce = xcalloc(1, size);
 	hashcpy(ce->sha1, origin->blob_sha1);
 	memcpy(ce->name, path, len);
-	ce->ce_flags = create_ce_flags(len, 0);
+	ce->ce_flags = create_ce_flags(0);
+	ce->ce_namelen = len;
 	ce->ce_mode = create_ce_mode(mode);
 	add_cache_entry(ce, ADD_CACHE_OK_TO_ADD|ADD_CACHE_OK_TO_REPLACE);
 

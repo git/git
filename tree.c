@@ -22,7 +22,8 @@ static int read_one_entry_opt(const unsigned char *sha1, const char *base, int b
 	ce = xcalloc(1, size);
 
 	ce->ce_mode = create_ce_mode(mode);
-	ce->ce_flags = create_ce_flags(baselen + len, stage);
+	ce->ce_flags = create_ce_flags(stage);
+	ce->ce_namelen = baselen + len;
 	memcpy(ce->name, base, baselen);
 	memcpy(ce->name + baselen, pathname, len+1);
 	hashcpy(ce->sha1, sha1);
@@ -133,8 +134,8 @@ static int cmp_cache_name_compare(const void *a_, const void *b_)
 
 	ce1 = *((const struct cache_entry **)a_);
 	ce2 = *((const struct cache_entry **)b_);
-	return cache_name_compare(ce1->name, ce1->ce_flags,
-				  ce2->name, ce2->ce_flags);
+	return cache_name_stage_compare(ce1->name, ce1->ce_namelen, ce_stage(ce1),
+				  ce2->name, ce2->ce_namelen, ce_stage(ce2));
 }
 
 int read_tree(struct tree *tree, int stage, struct pathspec *match)

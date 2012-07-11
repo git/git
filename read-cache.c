@@ -17,6 +17,10 @@
 
 static struct cache_entry *refresh_cache_entry(struct cache_entry *ce, int really);
 
+/* Mask for the name length in ce_flags in the on-disk index */
+
+#define CE_NAMEMASK  (0x0fff)
+
 /* Index extensions.
  *
  * The first letter should be 'A'..'Z' for extensions that are not
@@ -54,8 +58,8 @@ void rename_index_entry_at(struct index_state *istate, int nr, const char *new_n
 
 	new = xmalloc(cache_entry_size(namelen));
 	copy_cache_entry(new, old);
-	new->ce_flags &= ~(CE_STATE_MASK | CE_NAMEMASK);
-	new->ce_flags |= (namelen >= CE_NAMEMASK ? CE_NAMEMASK : namelen);
+	new->ce_flags &= ~CE_STATE_MASK;
+	new->ce_namelen = namelen;
 	memcpy(new->name, new_name, namelen + 1);
 
 	cache_tree_invalidate_path(istate->cache_tree, old->name);
@@ -395,17 +399,10 @@ int df_name_compare(const char *name1, int len1, int mode1,
 	return c1 - c2;
 }
 
-int cache_name_compare(const char *name1, int flags1, const char *name2, int flags2)
+int cache_name_stage_compare(const char *name1, int len1, int stage1, const char *name2, int len2, int stage2)
 {
-	int len1, len2, len, cmp;
-
-	len1 = flags1 & CE_NAMEMASK;
-	if (CE_NAMEMASK <= len1)
-		len1 = strlen(name1 + CE_NAMEMASK) + CE_NAMEMASK;
-	len2 = flags2 & CE_NAMEMASK;
-	if (CE_NAMEMASK <= len2)
-		len2 = strlen(name2 + CE_NAMEMASK) + CE_NAMEMASK;
-	len = len1 < len2 ? len1 : len2;
+	int len = len1 < len2 ? len1 : len2;
+	int cmp;
 
 	cmp = memcmp(name1, name2, len);
 	if (cmp)
@@ -415,18 +412,19 @@ int cache_name_compare(const char *name1, int flags1, const char *name2, int fla
 	if (len1 > len2)
 		return 1;
 
-	/* Compare stages  */
-	flags1 &= CE_STAGEMASK;
-	flags2 &= CE_STAGEMASK;
-
-	if (flags1 < flags2)
+	if (stage1 < stage2)
 		return -1;
-	if (flags1 > flags2)
+	if (stage1 > stage2)
 		return 1;
 	return 0;
 }
 
-int index_name_pos(const struct index_state *istate, const char *name, int namelen)
+int cache_name_compare(const char *name1, int len1, const char *name2, int len2)
+{
+	return cache_name_stage_compare(name1, len1, 0, name2, len2, 0);
+}
+
+int index_name_stage_pos(const struct index_state *istate, const char *name, int namelen, int stage)
 {
 	int first, last;
 
@@ -435,7 +433,7 @@ int index_name_pos(const struct index_state *istate, const char *name, int namel
 	while (last > first) {
 		int next = (last + first) >> 1;
 		struct cache_entry *ce = istate->cache[next];
-		int cmp = cache_name_compare(name, namelen, ce->name, ce->ce_flags);
+		int cmp = cache_name_stage_compare(name, namelen, stage, ce->name, ce_namelen(ce), ce_stage(ce));
 		if (!cmp)
 			return next;
 		if (cmp < 0) {
@@ -445,6 +443,11 @@ int index_name_pos(const struct index_state *istate, const char *name, int namel
 		first = next+1;
 	}
 	return -first-1;
+}
+
+int index_name_pos(const struct index_state *istate, const char *name, int namelen)
+{
+	return index_name_stage_pos(istate, name, namelen, 0);
 }
 
 /* Remove entry, return true if there are more entries to go.. */
@@ -586,7 +589,7 @@ int add_to_index(struct index_state *istate, const char *path, struct stat *st, 
 	size = cache_entry_size(namelen);
 	ce = xcalloc(1, size);
 	memcpy(ce->name, path, namelen);
-	ce->ce_flags = namelen;
+	ce->ce_namelen = namelen;
 	if (!intent_only)
 		fill_stat_cache_info(ce, st);
 	else
@@ -688,7 +691,8 @@ struct cache_entry *make_cache_entry(unsigned int mode,
 
 	hashcpy(ce->sha1, sha1);
 	memcpy(ce->name, path, len);
-	ce->ce_flags = create_ce_flags(len, stage);
+	ce->ce_flags = create_ce_flags(stage);
+	ce->ce_namelen = len;
 	ce->ce_mode = create_ce_mode(mode);
 
 	if (refresh)
@@ -825,7 +829,7 @@ static int has_dir_name(struct index_state *istate,
 		}
 		len = slash - name;
 
-		pos = index_name_pos(istate, name, create_ce_flags(len, stage));
+		pos = index_name_stage_pos(istate, name, len, stage);
 		if (pos >= 0) {
 			/*
 			 * Found one, but not so fast.  This could
@@ -915,7 +919,7 @@ static int add_index_entry_with_check(struct index_state *istate, struct cache_e
 	int new_only = option & ADD_CACHE_NEW_ONLY;
 
 	cache_tree_invalidate_path(istate->cache_tree, ce->name);
-	pos = index_name_pos(istate, ce->name, ce->ce_flags);
+	pos = index_name_stage_pos(istate, ce->name, ce_namelen(ce), ce_stage(ce));
 
 	/* existing match? Just replace it. */
 	if (pos >= 0) {
@@ -947,7 +951,7 @@ static int add_index_entry_with_check(struct index_state *istate, struct cache_e
 		if (!ok_to_replace)
 			return error("'%s' appears as both a file and as a directory",
 				     ce->name);
-		pos = index_name_pos(istate, ce->name, ce->ce_flags);
+		pos = index_name_stage_pos(istate, ce->name, ce_namelen(ce), ce_stage(ce));
 		pos = -pos-1;
 	}
 	return pos + 1;
@@ -1324,7 +1328,8 @@ static struct cache_entry *cache_entry_from_ondisk(struct ondisk_cache_entry *on
 	ce->ce_uid   = ntoh_l(ondisk->uid);
 	ce->ce_gid   = ntoh_l(ondisk->gid);
 	ce->ce_size  = ntoh_l(ondisk->size);
-	ce->ce_flags = flags;
+	ce->ce_flags = flags & ~CE_NAMEMASK;
+	ce->ce_namelen = len;
 	hashcpy(ce->sha1, ondisk->sha1);
 	memcpy(ce->name, name, len);
 	ce->name[len] = '\0';
@@ -1651,6 +1656,8 @@ static void ce_smudge_racily_clean_entry(struct cache_entry *ce)
 static char *copy_cache_entry_to_ondisk(struct ondisk_cache_entry *ondisk,
 				       struct cache_entry *ce)
 {
+	short flags;
+
 	ondisk->ctime.sec = htonl(ce->ce_ctime.sec);
 	ondisk->mtime.sec = htonl(ce->ce_mtime.sec);
 	ondisk->ctime.nsec = htonl(ce->ce_ctime.nsec);
@@ -1662,7 +1669,10 @@ static char *copy_cache_entry_to_ondisk(struct ondisk_cache_entry *ondisk,
 	ondisk->gid  = htonl(ce->ce_gid);
 	ondisk->size = htonl(ce->ce_size);
 	hashcpy(ondisk->sha1, ce->sha1);
-	ondisk->flags = htons(ce->ce_flags);
+
+	flags = ce->ce_flags;
+	flags |= (ce_namelen(ce) >= CE_NAMEMASK ? CE_NAMEMASK : ce_namelen(ce));
+	ondisk->flags = htons(flags);
 	if (ce->ce_flags & CE_EXTENDED) {
 		struct ondisk_cache_entry_extended *ondisk2;
 		ondisk2 = (struct ondisk_cache_entry_extended *)ondisk;
@@ -1850,7 +1860,8 @@ int read_index_unmerged(struct index_state *istate)
 		size = cache_entry_size(len);
 		new_ce = xcalloc(1, size);
 		memcpy(new_ce->name, ce->name, len);
-		new_ce->ce_flags = create_ce_flags(len, 0) | CE_CONFLICTED;
+		new_ce->ce_flags = create_ce_flags(0) | CE_CONFLICTED;
+		new_ce->ce_namelen = len;
 		new_ce->ce_mode = ce->ce_mode;
 		if (add_index_entry(istate, new_ce, 0))
 			return error("%s: cannot drop to stage #0",

@@ -128,13 +128,13 @@ struct cache_entry {
 	unsigned int ce_gid;
 	unsigned int ce_size;
 	unsigned int ce_flags;
+	unsigned int ce_namelen;
 	unsigned char sha1[20];
 	struct cache_entry *next;
 	struct cache_entry *dir_next;
 	char name[FLEX_ARRAY]; /* more */
 };
 
-#define CE_NAMEMASK  (0x0fff)
 #define CE_STAGEMASK (0x3000)
 #define CE_EXTENDED  (0x4000)
 #define CE_VALID     (0x8000)
@@ -198,21 +198,12 @@ static inline void copy_cache_entry(struct cache_entry *dst, struct cache_entry 
 	dst->ce_flags = (dst->ce_flags & ~CE_STATE_MASK) | state;
 }
 
-static inline unsigned create_ce_flags(size_t len, unsigned stage)
+static inline unsigned create_ce_flags(unsigned stage)
 {
-	if (len >= CE_NAMEMASK)
-		len = CE_NAMEMASK;
-	return (len | (stage << CE_STAGESHIFT));
+	return (stage << CE_STAGESHIFT);
 }
 
-static inline size_t ce_namelen(const struct cache_entry *ce)
-{
-	size_t len = ce->ce_flags & CE_NAMEMASK;
-	if (len < CE_NAMEMASK)
-		return len;
-	return strlen(ce->name + CE_NAMEMASK) + CE_NAMEMASK;
-}
-
+#define ce_namelen(ce) ((ce)->ce_namelen)
 #define ce_size(ce) cache_entry_size(ce_namelen(ce))
 #define ce_stage(ce) ((CE_STAGEMASK & (ce)->ce_flags) >> CE_STAGESHIFT)
 #define ce_uptodate(ce) ((ce)->ce_flags & CE_UPTODATE)
@@ -451,6 +442,7 @@ extern int discard_index(struct index_state *);
 extern int unmerged_index(const struct index_state *);
 extern int verify_path(const char *path);
 extern struct cache_entry *index_name_exists(struct index_state *istate, const char *name, int namelen, int igncase);
+extern int index_name_stage_pos(const struct index_state *, const char *name, int namelen, int stage);
 extern int index_name_pos(const struct index_state *, const char *name, int namelen);
 #define ADD_CACHE_OK_TO_ADD 1		/* Ok to add */
 #define ADD_CACHE_OK_TO_REPLACE 2	/* Ok to replace file/directory */
@@ -863,6 +855,7 @@ extern int validate_headref(const char *ref);
 extern int base_name_compare(const char *name1, int len1, int mode1, const char *name2, int len2, int mode2);
 extern int df_name_compare(const char *name1, int len1, int mode1, const char *name2, int len2, int mode2);
 extern int cache_name_compare(const char *name1, int len1, const char *name2, int len2);
+extern int cache_name_stage_compare(const char *name1, int len1, int stage1, const char *name2, int len2, int stage2);
 
 extern void *read_object_with_reference(const unsigned char *sha1,
 					const char *required_type,

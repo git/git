@@ -95,7 +95,8 @@ static int add_one_path(struct cache_entry *old, const char *path, int len, stru
 	size = cache_entry_size(len);
 	ce = xcalloc(1, size);
 	memcpy(ce->name, path, len);
-	ce->ce_flags = len;
+	ce->ce_flags = create_ce_flags(0);
+	ce->ce_namelen = len;
 	fill_stat_cache_info(ce, st);
 	ce->ce_mode = ce_mode_from_stat(old, st->st_mode);
 
@@ -229,7 +230,8 @@ static int add_cacheinfo(unsigned int mode, const unsigned char *sha1,
 
 	hashcpy(ce->sha1, sha1);
 	memcpy(ce->name, path, len);
-	ce->ce_flags = create_ce_flags(len, stage);
+	ce->ce_flags = create_ce_flags(stage);
+	ce->ce_namelen = len;
 	ce->ce_mode = create_ce_mode(mode);
 	if (assume_unchanged)
 		ce->ce_flags |= CE_VALID;
@@ -427,7 +429,8 @@ static struct cache_entry *read_one_ent(const char *which,
 
 	hashcpy(ce->sha1, sha1);
 	memcpy(ce->name, path, namelen);
-	ce->ce_flags = create_ce_flags(namelen, stage);
+	ce->ce_flags = create_ce_flags(stage);
+	ce->ce_namelen = namelen;
 	ce->ce_mode = create_ce_mode(mode);
 	return ce;
 }
