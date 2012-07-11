@@ -31,7 +31,7 @@ cat > expected <<\EOF
  d |  Bin
  4 files changed, 2 insertions(+), 2 deletions(-)
 EOF
-test_expect_success '"apply --stat" output for binary file change' '
+test_expect_success 'apply --stat output for binary file change' '
 	git diff >diff &&
 	git apply --stat --summary <diff >current &&
 	test_i18ncmp expected current
