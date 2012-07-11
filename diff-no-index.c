@@ -151,23 +151,6 @@ static int queue_diff(struct diff_options *o,
 	}
 }
 
-static int path_outside_repo(const char *path)
-{
-	const char *work_tree;
-	size_t len;
-
-	if (!is_absolute_path(path))
-		return 0;
-	work_tree = get_git_work_tree();
-	if (!work_tree)
-		return 1;
-	len = strlen(work_tree);
-	if (strncmp(path, work_tree, len) ||
-	    (path[len] != '\0' && path[len] != '/'))
-		return 1;
-	return 0;
-}
-
 void diff_no_index(struct rev_info *revs,
 		   int argc, const char **argv,
 		   int nongit, const char *prefix)
@@ -197,8 +180,8 @@ void diff_no_index(struct rev_info *revs,
 		 * a colourful "diff" replacement.
 		 */
 		if ((argc != i + 2) ||
-		    (!path_outside_repo(argv[i]) &&
-		     !path_outside_repo(argv[i+1])))
+		    (path_inside_repo(prefix, argv[i]) &&
+		     path_inside_repo(prefix, argv[i+1])))
 			return;
 	}
 	if (argc != i + 2)
@@ -268,5 +251,5 @@ void diff_no_index(struct rev_info *revs,
 	 * The return code for --no-index imitates diff(1):
 	 * 0 = no changes, 1 = changes, else error
 	 */
-	exit(revs->diffopt.found_changes);
+	exit(diff_result_code(&revs->diffopt, 0));
 }
