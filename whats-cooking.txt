@@ -1,15 +1,17 @@
 To: git@vger.kernel.org
-Subject: What's cooking in git.git (Jul 2012, #02; Mon, 9)
-X-master-at: 299666cc5c792dbc3b67622fcc03d41ff95f4346
-X-next-at: 61b12c254ff58ac7c57a6e1ab2aa50b1ada84e72
+Subject: What's cooking in git.git (Jul 2012, #03; Wed, 11)
+X-master-at: 2b533592900ecebeb69e2dd1b70744433700ff2d
+X-next-at: 03fbcf6d885017d6d49b32c4b9a7f578ebd6d0de
 
-What's cooking in git.git (Jul 2012, #02; Mon, 9)
+What's cooking in git.git (Jul 2012, #03; Wed, 11)
 --------------------------------------------------
 
 Here are the topics that have been cooking.  Commits prefixed with '-' are
 only in 'pu' (proposed updates) while commits prefixed with '+' are in 'next'.
 
-The fourth and fifth batches of topics have graduated to 'master'.
+Many topics in flight are now in 'next' and all of them look more or
+less done (knock wood).  Many fixes that are already in 'master' are
+now merged down to the 'maint' branch and 1.7.11.2 has been tagged.
 
 You can find the changes described here in the integration branches of the
 repositories listed at
@@ -19,6 +21,115 @@ repositories listed at
 --------------------------------------------------
 [New Topics]
 
+* jc/maint-filter-branch-epoch-date (2012-07-09) 1 commit
+  (merged to 'next' on 2012-07-10 at f9774ca)
+ + filter-branch: do not forget the '@' prefix to force git-timestamp
+
+In 1.7.9 era, we taught "git rebase" about the raw timestamp format
+but we did not teach the same trick to "filter-branch", which rolled
+a similar logic on its own.
+
+* jk/maint-commit-amend-only-no-paths (2012-07-10) 1 commit
+  (merged to 'next' on 2012-07-10 at 1c650c2)
+ + commit: fix "--amend --only" with no pathspec
+
+"git commit --amend --only --" was meant to allow "Clever" people to
+rewrite the commit message without making any change even when they
+have already changes for the next commit added to their index, but
+it never worked as advertised since it was introduced in 1.3.0 era.
+
+* jk/index-pack-streaming-fix (2012-07-10) 1 commit
+ - index-pack: loop while inflating objects in unpack_data
+
+This needs to go to 'master' soonish.
+
+* mb/remote-default-nn-origin (2012-07-11) 6 commits
+ - Teach get_default_remote to respect remote.default.
+ - Test that plain "git fetch" uses remote.default when on a detached HEAD.
+ - Teach clone to set remote.default.
+ - Teach "git remote" about remote.default.
+ - Teach remote.c about the remote.default configuration setting.
+ - Rename remote.c's default_remote_name static variables.
+
+* tg/ce-namelen-field (2012-07-11) 2 commits
+ - Strip namelen out of ce_flags into a ce_namelen field
+ - Merge branch 'tg/maint-cache-name-compare' into tg/ce-namelen-field
+ (this branch uses tg/maint-cache-name-compare.)
+
+* tg/maint-cache-name-compare (2012-07-11) 1 commit
+ - cache_name_compare(): do not truncate while comparing paths
+ (this branch is used by tg/ce-namelen-field.)
+
+--------------------------------------------------
+[Stalled]
+
+* jc/maint-push-refs-all (2012-05-04) 2 commits
+ - get_fetch_map(): tighten checks on dest refs
+ - fetch/push: allow refs/*:refs/*
+
+Allows pushing and fetching refs/stash.
+There still seem to be other bugs hiding (e.g. try pushing twice).
+
+Not ready.
+
+* jc/split-blob (2012-04-03) 6 commits
+ - chunked-object: streaming checkout
+ - chunked-object: fallback checkout codepaths
+ - bulk-checkin: support chunked-object encoding
+ - bulk-checkin: allow the same data to be multiply hashed
+ - new representation types in the packstream
+ - packfile: use varint functions
+
+Not ready.
+
+I finished the streaming checkout codepath, but as explained in
+127b177 (bulk-checkin: support chunked-object encoding, 2011-11-30),
+these are still early steps of a long and painful journey. At least
+pack-objects and fsck need to learn the new encoding for the series
+to be usable locally, and then index-pack/unpack-objects needs to
+learn it to be used remotely.
+
+Given that I heard a lot of noise that people want large files, and
+that I was asked by somebody at GitTogether'11 privately for an
+advice on how to pay developers (not me) to help adding necessary
+support, I am somewhat dissapointed that the original patch series
+that was sent almost two months ago still remains here without much
+comments and updates from the developer community. I even made the
+interface to the logic that decides where to split chunks easily
+replaceable, and I deliberately made the logic in the original patch
+extremely stupid to entice others, especially the "bup" fanboys, to
+come up with a better logic, thinking that giving people an easy
+target to shoot for, they may be encouraged to help out. The plan is
+not working :-(.
+
+--------------------------------------------------
+[Cooking]
+
+* jc/apply-3way (2012-07-09) 19 commits
+  (merged to 'next' on 2012-07-10 at fb5c872)
+ + apply: tests for the --3way option
+ + apply: document --3way option
+ + apply: allow rerere() to work on --3way results
+ + apply: register conflicted stages to the index
+ + apply: --3way with add/add conflict
+ + apply: move verify_index_match() higher
+ + apply: plug the three-way merge logic in
+ + apply: fall back on three-way merge
+ + apply: accept -3/--3way command line option
+ + apply: move "already exists" logic to check_to_create()
+ + apply: move check_to_create_blob() closer to its sole caller
+ + apply: further split load_preimage()
+ + apply: refactor "previous patch" logic
+ + apply: split load_preimage() helper function out
+ + apply: factor out checkout_target() helper function
+ + apply: refactor read_file_or_gitlink()
+ + apply: clear_image() clears things a bit more
+ + apply: a bit more comments on PATH_TO_BE_DELETED
+ + apply: fix an incomplete comment in check_patch()
+
+"git apply" learns to wiggle the base version and perform three-way merge
+when a patch does not exactly apply to the version you have.
+
 * jl/submodule-rm (2012-07-05) 2 commits
  - rm: remove submodules from the index and the .gitmodules file
  - rm: don't fail when removing populated submodules
@@ -27,7 +138,7 @@ repositories listed at
  - Document rev^! and rev^@ as revision specifiers
  - Make <refname> documentation more consistent.
 
-The tip one is a bit suspicious.
+The tip one will be rerolled.
 
 * nk/maint-gitweb-log-by-lines (2012-07-05) 3 commits
  - gitweb: Add support to Link: tag
@@ -37,11 +148,13 @@ The tip one is a bit suspicious.
 Is the use of esc_html() in the tip one correct?
 
 * pw/git-p4-jobs (2012-07-05) 3 commits
- - git p4: notice Jobs lines in git commit messages
- - git p4 test: refactor marshal_dump
- - git p4: remove unused P4Submit interactive setting
+  (merged to 'next' on 2012-07-10 at c6ef8f9)
+ + git p4: notice Jobs lines in git commit messages
+ + git p4 test: refactor marshal_dump
+ + git p4: remove unused P4Submit interactive setting
 
-Will merge to 'next'.
+Teach "git p4" to notice "Jobs:" in the log message and relay it to
+Perforce to trigger its "jobs" support.
 
 * pw/git-p4-move (2012-07-05) 2 commits
  - git p4: add support for 'p4 move' in P4Submit
@@ -49,12 +162,15 @@ Will merge to 'next'.
 
 Will be rerolled.
 
-* ar/clone-honor-umask-at-top (2012-07-08) 1 commit
- - Restore umasks influence on the permissions of work tree created by clone
+* ar/clone-honor-umask-at-top (2012-07-09) 3 commits
+  (merged to 'next' on 2012-07-10 at 680bc22)
+ + add: create ADD_EDIT.patch with mode 0666
+ + rerere: make rr-cache fanout directory honor umask
+ + Restore umasks influence on the permissions of work tree created by clone
 
-May want to rephrase the log message a bit.
-
-Will merge to 'next'.
+A handful of files and directories we create had tighter than
+necessary permission bits when the user wanted to have group
+writability (e.g. by setting "umask 002").
 
 * jn/vcs-svn (2012-07-05) 12 commits
   (merged to 'next' on 2012-07-09 at 1d97a8f)
@@ -100,240 +216,38 @@ Will merge to 'master'.
 Will be rerolled but is going in the right direction.
 
 * tg/ce-namelen (2012-07-08) 1 commit
- - Replace strlen() with ce_namelen()
+  (merged to 'next' on 2012-07-10 at 87755d8)
+ + Replace strlen() with ce_namelen()
 
 Trivially correct clean-up and micro optimization.
 
+Will merge to 'master'.
+
 * jn/makefile-cleanup (2012-07-09) 14 commits
- - Makefile: document ground rules for target-specific dependencies
- - Makefile: move GIT-VERSION-FILE dependencies closer to use
- - Makefile: build instaweb similar to other scripts
- - Makefile: update scripts when build-time parameters change
- - Makefile: do not replace @@GIT_VERSION@@ in shell scripts
- - Makefile: split prefix flags from GIT-CFLAGS
- - Makefile: be silent when only GIT_USER_AGENT changes
- - Makefile: split GIT_USER_AGENT from GIT-CFLAGS
- - Makefile: do not replace @@GIT_USER_AGENT@@ in scripts
- - Makefile: apply dependencies consistently to sparse/asm targets
- - Makefile: do not have git.o depend on common-cmds.h
- - Makefile: fold XDIFF_H and VCSSVN_H into LIB_H
- - Makefile: fold MISC_H into LIB_H
- - Makefile: sort LIB_H list
- (this branch is tangled with jk/version-string-dependency.)
+  (merged to 'next' on 2012-07-10 at f55e6a1)
+ + Makefile: document ground rules for target-specific dependencies
+ + Makefile: move GIT-VERSION-FILE dependencies closer to use
+ + Makefile: build instaweb similar to other scripts
+ + Makefile: update scripts when build-time parameters change
+ + Makefile: do not replace @@GIT_VERSION@@ in shell scripts
+ + Makefile: split prefix flags from GIT-CFLAGS
+ + Makefile: be silent when only GIT_USER_AGENT changes
+ + Makefile: split GIT_USER_AGENT from GIT-CFLAGS
+ + Makefile: do not replace @@GIT_USER_AGENT@@ in scripts
+ + Makefile: apply dependencies consistently to sparse/asm targets
+ + Makefile: do not have git.o depend on common-cmds.h
+ + Makefile: fold XDIFF_H and VCSSVN_H into LIB_H
+ + Makefile: fold MISC_H into LIB_H
+ + Makefile: sort LIB_H list
 
-Tweaks and replaces jk/version-string-dependency.
-
-Will merge to 'next'.
+Tightens dependency rules to avoid unnecessary recompilation.
 
 * cw/amend-commit-without-message (2012-07-09) 1 commit
- - Allow edit of empty message with commit --amend
+  (merged to 'next' on 2012-07-10 at e7c75d5)
+ + Allow edit of empty message with commit --amend
 
 "commit --amend" used to refuse amending a commit with an empty log
 message, with or without "--allow-empty-message".
-
-Will merge to 'next'.
-
---------------------------------------------------
-[Graduated to "master"]
-
-* cw/help-over-network (2012-06-28) 2 commits
-  (merged to 'next' on 2012-07-03 at 99e8d28)
- + Allow help.htmlpath to be a URL prefix
- + Add config variable to set HTML path for git-help --web
-
-"git help -w $cmd" can show HTML version of documentation for
-"git-$cmd" by setting help.htmlpath to somewhere other than the
-default location where the build procedure installs them locally;
-the variable can even point at a http:// URL.
-
-* cw/no-detaching-an-unborn (2012-06-26) 1 commit
-  (merged to 'next' on 2012-07-03 at 552c5ca)
- + git-checkout: disallow --detach on unborn branch
-
-"git checkout --detach", when you are still on an unborn branch,
-should be forbidden, but it wasn't.
-
-* hv/remote-end-hung-up (2012-06-19) 1 commit
-  (merged to 'next' on 2012-06-25 at d3f29e2)
- + remove the impression of unexpectedness when access is denied
-
-When we get disconnected while expecting a response from the remote
-side because authentication failed, we issued an error message "The
-remote side hung up unexpectedly."  Give hint that it may be a
-permission problem in the message when we can reasonably suspect it.
-
-* jc/maint-blame-unique-abbrev (2012-07-02) 1 commit
-  (merged to 'next' on 2012-07-03 at c7ed6b9)
- + blame: compute abbreviation width that ensures uniqueness
-
-"git blame" did not try to make sure the abbreviated commit object
-names in its output are unique.
-
-* jn/perl-makemaker-leading-paths (2012-06-29) 2 commits
-  (merged to 'next' on 2012-06-29 at 0f17059)
- + perl/Makefile: Fix a missing double-quote
-  (merged to 'next' on 2012-06-28 at 286d854)
- + perl/Makefile: move "mkdir -p" to module installation loop for maintainability
-
-Minor build tweak.  People who do not use ExtUtils::MakeMaker may
-want to test this before it hits the 'master' branch.
-
-* js/fast-export-paths-with-spaces (2012-06-27) 1 commit
-  (merged to 'next' on 2012-07-03 at f9c23e9)
- + fast-export: quote paths with spaces
-
-"git fast-export" produced an input stream for fast-import without
-properly quoting pathnames when they contain SPs in them.
-
-* mm/config-xdg (2012-06-25) 4 commits
-  (merged to 'next' on 2012-06-28 at 57049d1)
- + config: write to $XDG_CONFIG_HOME/git/config file when appropriate
- + Let core.attributesfile default to $XDG_CONFIG_HOME/git/attributes
- + Let core.excludesfile default to $XDG_CONFIG_HOME/git/ignore
- + config: read (but not write) from $XDG_CONFIG_HOME/git/config file
-
-Teach git to read various information from $XDG_CONFIG_HOME/git/ to allow
-the user to avoid cluttering $HOME.
-
-* mm/credential-plumbing (2012-07-08) 4 commits
-  (merged to 'next' on 2012-07-08 at fce8ea2)
- + git-remote-mediawiki: update comments to reflect credential support
-  (merged to 'next' on 2012-06-28 at 6e6fe9f)
- + git-remote-mediawiki: add credential support
- + git credential fill: output the whole 'struct credential'
- + add 'git credential' plumbing command
- (this branch is tangled with mm/mediawiki-file-attachments and mm/mediawiki-tests.)
-
-Expose the credential API to scripted Porcelain writers.
-
-* mz/empty-rebase-test (2012-06-27) 1 commit
-  (merged to 'next' on 2012-07-03 at 1e7de3f)
- + add test case for rebase of empty commit
-
-We did not have test to make sure "git rebase" without extra options
-filters out an empty commit in the original history.
-
-* nd/clone-single-fix (2012-06-22) 1 commit
-  (merged to 'next' on 2012-06-26 at c9fff5e)
- + clone: fix ref selection in --single-branch --branch=xxx
-
-"git clone --single-branch" to clone a single branch did not limit
-the cloning to the specified branch.
-
-* pw/git-p4-tests (2012-06-27) 10 commits
-  (merged to 'next' on 2012-07-03 at 9bd9cda)
- + git p4 test: fix badp4dir test
- + git p4 test: split up big t9800 test
- + git p4 test: cleanup_git should make a new $git
- + git p4 test: copy source indeterminate
- + git p4 test: check for error message in failed test
- + git p4 test: rename some "git-p4 command" strings
- + git p4 test: never create default test repo
- + git p4 test: simplify quoting involving TRASH_DIRECTORY
- + git p4 test: use real_path to resolve p4 client symlinks
- + git p4 test: wait longer for p4d to start and test its pid
- (this branch is used by pw/git-p4-jobs and pw/git-p4-move.)
-
-More "git p4" tests.
-
-* rj/platform-pread-may-be-thread-unsafe (2012-06-26) 1 commit
-  (merged to 'next' on 2012-06-28 at ce5f79f)
- + index-pack: Disable threading on cygwin
-
-On Cygwin, the platform pread(3) is not thread safe, just like our
-own compat/ emulation, and cannot be used in the index-pack program.
-
-* th/diff-no-index-fixes (2012-06-22) 2 commits
-  (merged to 'next' on 2012-06-26 at 450e781)
- + diff-no-index: exit(1) if 'diff --quiet <repo file> <external file>' finds changes
- + diff: handle relative paths in no-index
-
-"git diff --no-index" did not correctly handle relative paths and
-did not correctly give exit codes when run under "--quiet" option.
-
-* vr/use-our-perl-in-tests (2012-06-24) 4 commits
-  (merged to 'next' on 2012-07-03 at 90dfcf0)
- + t/README: add a bit more Don'ts
- + tests: enclose $PERL_PATH in double quotes
- + t/test-lib.sh: export PERL_PATH for use in scripts
- + t: Replace 'perl' by $PERL_PATH
- (this branch is used by jc/test-lib-source-build-options-early.)
-
-Some implementations of Perl terminates "lines" with CRLF even when
-the script is operating on just a sequence of bytes.  Make sure to
-use "$PERL_PATH", the version of Perl the user told Git to use, in
-our tests to avoid unnecessary breakages in tests.
-
---------------------------------------------------
-[Stalled]
-
-* jc/apply-3way (2012-06-13) 19 commits
- - apply --3way: tests
- - apply: document --3way option
- - apply: allow rerere() upon --3way results
- - apply: register conflicted stages to the index
- - apply: --3way with add/add conflict
- - apply: move verify_index_match() higher
- - apply: plug the three-way merge logic in
- - apply: fall back on three-way merge
- - apply: accept -3/--3way command line option
- - apply: move "already exists" logic to check_to_create()
- - apply: move check_to_create_blob() closer to its sole caller
- - apply: further split load_preimage()
- - apply: refactor "previous patch" logic
- - apply: split load_preimage() helper function out
- - apply: factor out checkout_target() helper function
- - apply: refactor read_file_or_gitlink()
- - apply: clear_image() clears things a bit more
- - apply: a bit more comments on PATH_TO_BE_DELETED
- - apply: fix an incomplete comment in check_patch()
-
-"git apply" learns to wiggle the base version and perform three-way merge
-when a patch does not exactly apply to the version you have.
-
-Will merge to 'next' after reading it over once again.
-
-* jc/maint-push-refs-all (2012-05-04) 2 commits
- - get_fetch_map(): tighten checks on dest refs
- - fetch/push: allow refs/*:refs/*
-
-Allows pushing and fetching refs/stash.
-There still seem to be other bugs hiding (e.g. try pushing twice).
-
-Not ready.
-
-* jc/split-blob (2012-04-03) 6 commits
- - chunked-object: streaming checkout
- - chunked-object: fallback checkout codepaths
- - bulk-checkin: support chunked-object encoding
- - bulk-checkin: allow the same data to be multiply hashed
- - new representation types in the packstream
- - packfile: use varint functions
-
-Not ready.
-
-I finished the streaming checkout codepath, but as explained in
-127b177 (bulk-checkin: support chunked-object encoding, 2011-11-30),
-these are still early steps of a long and painful journey. At least
-pack-objects and fsck need to learn the new encoding for the series
-to be usable locally, and then index-pack/unpack-objects needs to
-learn it to be used remotely.
-
-Given that I heard a lot of noise that people want large files, and
-that I was asked by somebody at GitTogether'11 privately for an
-advice on how to pay developers (not me) to help adding necessary
-support, I am somewhat dissapointed that the original patch series
-that was sent almost two months ago still remains here without much
-comments and updates from the developer community. I even made the
-interface to the logic that decides where to split chunks easily
-replaceable, and I deliberately made the logic in the original patch
-extremely stupid to entice others, especially the "bup" fanboys, to
-come up with a better logic, thinking that giving people an easy
-target to shoot for, they may be encouraged to help out. The plan is
-not working :-(.
-
---------------------------------------------------
-[Cooking]
 
 * jk/push-delete-ref-error-message (2012-07-03) 1 commit
   (merged to 'next' on 2012-07-09 at 82c6bd2)
@@ -436,39 +350,38 @@ one of its early operations.
 Needs to be eyeballed by people who run tests with exotic options
 like valgrind, --root=/dev/shm/somewhere, etc.
 
-* jc/sha1-name-more (2012-07-04) 25 commits
- - rev-parse --disambiguate=<prefix>
- - rev-parse: A and B in "rev-parse A..B" refer to committish
- - reset: the command takes committish
- - commit-tree: the command wants a tree and commits
- - apply: --build-fake-ancestor expects blobs
- - sha1_name.c: add support for disambiguating other types
- - revision.c: the "log" family, except for "show", takes committish
- - revision.c: allow handle_revision_arg() to take other flags
- - sha1_name.c: introduce get_sha1_committish()
- - sha1_name.c: teach lookup context to get_sha1_with_context()
- - sha1_name.c: many short names can only be committish
- - sha1_name.c: get_sha1_1() takes lookup flags
- - sha1_name.c: get_describe_name() by definition groks only commits
- - sha1_name.c: teach get_short_sha1() a commit-only option
- - sha1_name.c: allow get_short_sha1() to take other flags
- - get_sha1(): fix error status regression
- - sha1_name.c: restructure disambiguation of short names
- - sha1_name.c: correct misnamed "canonical" and "res"
- - sha1_name.c: refactor find_short_packed_object()
- - sha1_name.c: rename "now" to "current"
- - sha1_name.c: clarify what "fake" is for in find_short_object_filename()
- - sha1_name.c: get rid of get_sha1_with_mode()
- - sha1_name.c: get rid of get_sha1_with_mode_1()
- - sha1_name.c: hide get_sha1_with_context_1() ugliness
- - sha1_name.c: indentation fix
+* jc/sha1-name-more (2012-07-09) 25 commits
+  (merged to 'next' on 2012-07-10 at 669dd92)
+ + rev-parse --disambiguate=<prefix>
+ + rev-parse: A and B in "rev-parse A..B" refer to committish
+ + reset: the command takes committish
+ + commit-tree: the command wants a tree and commits
+ + apply: --build-fake-ancestor expects blobs
+ + sha1_name.c: add support for disambiguating other types
+ + revision.c: the "log" family, except for "show", takes committish
+ + revision.c: allow handle_revision_arg() to take other flags
+ + sha1_name.c: introduce get_sha1_committish()
+ + sha1_name.c: teach lookup context to get_sha1_with_context()
+ + sha1_name.c: many short names can only be committish
+ + sha1_name.c: get_sha1_1() takes lookup flags
+ + sha1_name.c: get_describe_name() by definition groks only commits
+ + sha1_name.c: teach get_short_sha1() a commit-only option
+ + sha1_name.c: allow get_short_sha1() to take other flags
+ + get_sha1(): fix error status regression
+ + sha1_name.c: restructure disambiguation of short names
+ + sha1_name.c: correct misnamed "canonical" and "res"
+ + sha1_name.c: refactor find_short_packed_object()
+ + sha1_name.c: rename "now" to "current"
+ + sha1_name.c: clarify what "fake" is for in find_short_object_filename()
+ + sha1_name.c: get rid of get_sha1_with_mode()
+ + sha1_name.c: get rid of get_sha1_with_mode_1()
+ + sha1_name.c: hide get_sha1_with_context_1() ugliness
+ + sha1_name.c: indentation fix
 
 Teaches the object name parser things like a "git describe" output
 is always a commit object, "A" in "git log A" must be a committish,
 and "A" and "B" in "git log A...B" both must be committish, etc., to
 prolong the lifetime of abbreviated object names.
-
-Will merge to 'next'.
 
 * tr/maint-show-walk (2012-06-19) 2 commits
   (merged to 'next' on 2012-07-09 at c8e0e06)
@@ -492,50 +405,3 @@ Will defer for 6 months until ancient "less" goes extinct.
  + push: start warning upcoming default change for push.default
 
 Will defer for another cycle.
-
---------------------------------------------------
-[Discarded]
-
-* nl/http-proxy-more (2012-05-11) 2 commits
- . http: rename HTTP_REAUTH to HTTP_AUTH_RETRY
- . http: Avoid limit of retrying request only twice
-
-I queued only the later two patches from this series, even though they do
-not make much sense without the first one that seems to need a bit more
-work, so that we won't forget.
-
-* jk/no-op-push-message (2012-05-30) 1 commit
- . improve no-op push output
-
-Rewords the status message of "git push" that pushed only one ref
-differently from "Everything up-to-date", to give a bit more help to
-people who get the message when their current branch is not pushed.
-
-I had an impression after the discussion thread that a redesign is
-coming, but it hasn't happened yet.
-
-* db/vcs-svn (2012-06-01) 6 commits
- . vcs-svn: drop no-op reset methods
- . vcs-svn: fix signedness warnings
- . vcs-svn: prefer strstr over memmem
- . vcs-svn: prefer constcmp to prefixcmp
- . vcs-svn: simplify cleanup in apply_one_window()
- . vcs-svn: fix clang-analyzer error
-
-Replaced by jn/vcs-svn.
-
-* jk/version-string-dependency (2012-06-20) 11 commits
- . Makefile: move GIT-VERSION-FILE dependencies closer to use
- . Makefile: build instaweb similar to other scripts
- . Makefile: update scripts when build-time parameters change
- . Makefile: do not replace @@GIT_VERSION@@ in shell scripts
- . Makefile: split prefix flags from GIT-CFLAGS
- . Makefile: split GIT_USER_AGENT from GIT-CFLAGS
- . Makefile: do not replace @@GIT_USER_AGENT@@ in scripts
- . Makefile: apply dependencies consistently to sparse/asm targets
- . Makefile: do not have git.o depend on common-cmds.h
- - Makefile: fold MISC_H into LIB_H
- - Makefile: sort LIB_H list
- (this branch is tangled with jn/makefile-cleanup.)
-
-Replaced by jn/makefile-cleanup.
