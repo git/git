@@ -1358,11 +1358,13 @@ static int handle_revision_opt(struct rev_info *revs, int argc, const char **arg
 		revs->topo_order = 1;
 	} else if (!strcmp(arg, "--simplify-merges")) {
 		revs->simplify_merges = 1;
+		revs->topo_order = 1;
 		revs->rewrite_parents = 1;
 		revs->simplify_history = 0;
 		revs->limited = 1;
 	} else if (!strcmp(arg, "--simplify-by-decoration")) {
 		revs->simplify_merges = 1;
+		revs->topo_order = 1;
 		revs->rewrite_parents = 1;
 		revs->simplify_history = 0;
 		revs->simplify_by_decoration = 1;
@@ -1947,8 +1949,9 @@ static struct commit_list **simplify_one(struct rev_info *revs, struct commit *c
 	}
 
 	/*
-	 * Do we know what commit all of our parents should be rewritten to?
-	 * Otherwise we are not ready to rewrite this one yet.
+	 * Do we know what commit all of our parents that matter
+	 * should be rewritten to?  Otherwise we are not ready to
+	 * rewrite this one yet.
 	 */
 	for (cnt = 0, p = commit->parents; p; p = p->next) {
 		pst = locate_simplify_state(revs, p->item);
@@ -1956,6 +1959,8 @@ static struct commit_list **simplify_one(struct rev_info *revs, struct commit *c
 			tail = &commit_list_insert(p->item, tail)->next;
 			cnt++;
 		}
+		if (revs->first_parent_only)
+			break;
 	}
 	if (cnt) {
 		tail = &commit_list_insert(commit, tail)->next;
@@ -1968,8 +1973,13 @@ static struct commit_list **simplify_one(struct rev_info *revs, struct commit *c
 	for (p = commit->parents; p; p = p->next) {
 		pst = locate_simplify_state(revs, p->item);
 		p->item = pst->simplified;
+		if (revs->first_parent_only)
+			break;
 	}
-	cnt = remove_duplicate_parents(commit);
+	if (!revs->first_parent_only)
+		cnt = remove_duplicate_parents(commit);
+	else
+		cnt = 1;
 
 	/*
 	 * It is possible that we are a merge and one side branch
@@ -2013,25 +2023,31 @@ static struct commit_list **simplify_one(struct rev_info *revs, struct commit *c
 
 static void simplify_merges(struct rev_info *revs)
 {
-	struct commit_list *list;
+	struct commit_list *list, *next;
 	struct commit_list *yet_to_do, **tail;
+	struct commit *commit;
 
-	if (!revs->topo_order)
-		sort_in_topological_order(&revs->commits, revs->lifo);
 	if (!revs->prune)
 		return;
 
 	/* feed the list reversed */
 	yet_to_do = NULL;
-	for (list = revs->commits; list; list = list->next)
-		commit_list_insert(list->item, &yet_to_do);
+	for (list = revs->commits; list; list = next) {
+		commit = list->item;
+		next = list->next;
+		/*
+		 * Do not free(list) here yet; the original list
+		 * is used later in this function.
+		 */
+		commit_list_insert(commit, &yet_to_do);
+	}
 	while (yet_to_do) {
 		list = yet_to_do;
 		yet_to_do = NULL;
 		tail = &yet_to_do;
 		while (list) {
-			struct commit *commit = list->item;
-			struct commit_list *next = list->next;
+			commit = list->item;
+			next = list->next;
 			free(list);
 			list = next;
 			tail = simplify_one(revs, commit, tail);
@@ -2043,9 +2059,10 @@ static void simplify_merges(struct rev_info *revs)
 	revs->commits = NULL;
 	tail = &revs->commits;
 	while (list) {
-		struct commit *commit = list->item;
-		struct commit_list *next = list->next;
 		struct merge_simplify_state *st;
+
+		commit = list->item;
+		next = list->next;
 		free(list);
 		list = next;
 		st = locate_simplify_state(revs, commit);
