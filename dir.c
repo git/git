@@ -553,7 +553,7 @@ int excluded_from_list(const char *pathname,
 	return -1; /* undecided */
 }
 
-int excluded(struct dir_struct *dir, const char *pathname, int *dtype_p)
+static int excluded(struct dir_struct *dir, const char *pathname, int *dtype_p)
 {
 	int pathlen = strlen(pathname);
 	int st;
@@ -571,6 +571,64 @@ int excluded(struct dir_struct *dir, const char *pathname, int *dtype_p)
 		}
 	}
 	return 0;
+}
+
+void path_exclude_check_init(struct path_exclude_check *check,
+			     struct dir_struct *dir)
+{
+	check->dir = dir;
+	strbuf_init(&check->path, 256);
+}
+
+void path_exclude_check_clear(struct path_exclude_check *check)
+{
+	strbuf_release(&check->path);
+}
+
+/*
+ * Is this name excluded?  This is for a caller like show_files() that
+ * do not honor directory hierarchy and iterate through paths that are
+ * possibly in an ignored directory.
+ *
+ * A path to a directory known to be excluded is left in check->path to
+ * optimize for repeated checks for files in the same excluded directory.
+ */
+int path_excluded(struct path_exclude_check *check,
+		  const char *name, int namelen, int *dtype)
+{
+	int i;
+	struct strbuf *path = &check->path;
+
+	/*
+	 * we allow the caller to pass namelen as an optimization; it
+	 * must match the length of the name, as we eventually call
+	 * excluded() on the whole name string.
+	 */
+	if (namelen < 0)
+		namelen = strlen(name);
+
+	if (path->len &&
+	    path->len <= namelen &&
+	    !memcmp(name, path->buf, path->len) &&
+	    (!name[path->len] || name[path->len] == '/'))
+		return 1;
+
+	strbuf_setlen(path, 0);
+	for (i = 0; name[i]; i++) {
+		int ch = name[i];
+
+		if (ch == '/') {
+			int dt = DT_DIR;
+			if (excluded(check->dir, path->buf, &dt))
+				return 1;
+		}
+		strbuf_addch(path, ch);
+	}
+
+	/* An entry in the index; cannot be a directory with subentries */
+	strbuf_setlen(path, 0);
+
+	return excluded(check->dir, name, dtype);
 }
 
 static struct dir_entry *dir_entry_new(const char *pathname, int len)
