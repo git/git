@@ -120,6 +120,15 @@ def p4_read_pipe_lines(c):
     real_cmd = p4_build_cmd(c)
     return read_pipe_lines(real_cmd)
 
+def p4_has_command(cmd):
+    """Ask p4 for help on this command.  If it returns an error, the
+       command does not exist in this version of p4."""
+    real_cmd = p4_build_cmd(["help", cmd])
+    p = subprocess.Popen(real_cmd, stdout=subprocess.PIPE,
+                                   stderr=subprocess.PIPE)
+    p.communicate()
+    return p.returncode == 0
+
 def system(cmd):
     expand = isinstance(cmd,basestring)
     if verbose:
@@ -156,6 +165,9 @@ def p4_revert(f):
 
 def p4_reopen(type, f):
     p4_system(["reopen", "-t", type, wildcard_encode(f)])
+
+def p4_move(src, dest):
+    p4_system(["move", "-k", wildcard_encode(src), wildcard_encode(dest)])
 
 #
 # Canonicalize the p4 type and return a tuple of the
@@ -850,6 +862,7 @@ class P4Submit(Command, P4UserMap):
         self.preserveUser = gitConfig("git-p4.preserveUser").lower() == "true"
         self.isWindows = (platform.system() == "Windows")
         self.exportLabels = False
+        self.p4HasMoveCommand = p4_has_command("move")
 
     def check(self):
         if len(p4CmdList("opened ...")) > 0:
@@ -1046,7 +1059,6 @@ class P4Submit(Command, P4UserMap):
 
         (p4User, gitEmail) = self.p4UserForCommit(id)
 
-
         diff = read_pipe_lines("git diff-tree -r %s \"%s^\" \"%s\"" % (self.diffOpts, id, id))
         filesToAdd = set()
         filesToDelete = set()
@@ -1087,17 +1099,23 @@ class P4Submit(Command, P4UserMap):
                 editedFiles.add(dest)
             elif modifier == "R":
                 src, dest = diff['src'], diff['dst']
-                p4_integrate(src, dest)
-                if diff['src_sha1'] != diff['dst_sha1']:
-                    p4_edit(dest)
+                if self.p4HasMoveCommand:
+                    p4_edit(src)        # src must be open before move
+                    p4_move(src, dest)  # opens for (move/delete, move/add)
                 else:
-                    pureRenameCopy.add(dest)
+                    p4_integrate(src, dest)
+                    if diff['src_sha1'] != diff['dst_sha1']:
+                        p4_edit(dest)
+                    else:
+                        pureRenameCopy.add(dest)
                 if isModeExecChanged(diff['src_mode'], diff['dst_mode']):
-                    p4_edit(dest)
+                    if not self.p4HasMoveCommand:
+                        p4_edit(dest)   # with move: already open, writable
                     filesToChangeExecBit[dest] = diff['dst_mode']
-                os.unlink(dest)
+                if not self.p4HasMoveCommand:
+                    os.unlink(dest)
+                    filesToDelete.add(src)
                 editedFiles.add(dest)
-                filesToDelete.add(src)
             else:
                 die("unknown modifier %s for %s" % (modifier, path))
 
