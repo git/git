@@ -940,12 +940,12 @@ int git_config_early(config_fn_t fn, void *data, const char *repo_config)
 		found += 1;
 	}
 
-	if (!access(xdg_config, R_OK)) {
+	if (xdg_config && !access(xdg_config, R_OK)) {
 		ret += git_config_from_file(fn, xdg_config, data);
 		found += 1;
 	}
 
-	if (!access(user_config, R_OK)) {
+	if (user_config && !access(user_config, R_OK)) {
 		ret += git_config_from_file(fn, user_config, data);
 		found += 1;
 	}

@@ -387,12 +387,20 @@ int cmd_config(int argc, const char **argv, const char *prefix)
 
 		home_config_paths(&user_config, &xdg_config, "config");
 
-		if (access(user_config, R_OK) && !access(xdg_config, R_OK))
-			given_config_file = xdg_config;
-		else if (user_config)
-			given_config_file = user_config;
-		else
+		if (!user_config)
+			/*
+			 * It is unknown if HOME/.gitconfig exists, so
+			 * we do not know if we should write to XDG
+			 * location; error out even if XDG_CONFIG_HOME
+			 * is set and points at a sane location.
+			 */
 			die("$HOME not set");
+
+		if (access(user_config, R_OK) &&
+		    xdg_config && !access(xdg_config, R_OK))
+			given_config_file = xdg_config;
+		else
+			given_config_file = user_config;
 	}
 	else if (use_system_config)
 		given_config_file = git_etc_gitconfig();
