@@ -335,10 +335,19 @@ test_tick () {
 # Both <file> and <contents> default to <message>.
 
 test_commit () {
-	file=${2:-"$1.t"}
+	notick= &&
+	if test "z$1" = "z--notick"
+	then
+		notick=yes
+		shift
+	fi &&
+	file=${2:-"$1.t"} &&
 	echo "${3-$1}" > "$file" &&
 	git add "$file" &&
-	test_tick &&
+	if test -z "$notick"
+	then
+		test_tick
+	fi &&
 	git commit -m "$1" &&
 	git tag "$1"
 }
