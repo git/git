@@ -6,6 +6,15 @@ Updates since v1.7.11
 
 UI, Workflows & Features
 
+ * Git can be told to normalize pathnames it read from readdir(3) and
+   all arguments it got from the command line into precomposed UTF-8
+   (assuming that they come as decomposed UTF-8), in order to work
+   around issues on Mac OS.
+
+   I think there still are other places that need conversion
+   (e.g. paths that are read from stdin for some commands), but this
+   should be a good first step in the right direction.
+
  * Per-user $HOME/.gitconfig file can optionally be stored in
    $HOME/.config/git/config instead, which is in line with XDG.
 
@@ -59,6 +68,12 @@ UI, Workflows & Features
 
 Foreign Interface
 
+ * "mediawiki" remote helper (in contrib/) learned to handle file
+   attachments.
+
+ * vcs-svn has been updated to clean-up compilation, lift 32-bit
+   limitations, etc.
+
 
 Performance, Internal Implementation, etc. (please report possible regressions)
 
@@ -66,6 +81,11 @@ Performance, Internal Implementation, etc. (please report possible regressions)
 
  * We no longer use AsciiDoc7 syntax in our documentation and favor a
    more modern style.
+
+ * "git am --rebasing" codepath was taught to grab authorship, log
+   message and the patch text directly out of existing commits.  This
+   will help rebasing commits that have confusing "diff" output in
+   their log messages.
 
  * "git index-pack" and "git pack-objects" use streaming API to read
    from the object store to avoid having to hold a large blob object
@@ -85,6 +105,19 @@ Fixes since v1.7.11
 Unless otherwise noted, all the fixes since v1.7.11 in the maintenance
 releases are contained in this release (see release notes to them for
 details).
+
+ * "git show"'s auto-walking behaviour was an unreliable and
+   unpredictable hack; it now behaves just like "git log" does when it
+   walks.
+   (merge c5941f1 tr/maint-show-walk later to maint).
+
+ * "git diff", "git status" and anything that internally uses the
+   comparison machinery was utterly broken when the difference
+   involved a file with "-" as its name.  This was due to the way "git
+   diff --no-index" was incorrectly bolted on to the system, making
+   any comparison that involves a file "-" at the root level
+   incorrectly read from the standard input.
+   (merge 4682d85 jc/refactor-diff-stdin later to maint).
 
  * We did not have test to make sure "git rebase" without extra options
    filters out an empty commit in the original history.
