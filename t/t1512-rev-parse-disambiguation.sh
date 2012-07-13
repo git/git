@@ -98,7 +98,7 @@ test_expect_success 'disambiguate commit-ish' '
 '
 
 test_expect_success 'disambiguate commit' '
-	commit=$(echo "j9xqh" | git commit-tree 0000000000cdc -p 000000000) &&
+	commit=$(echo "hoaxj" | git commit-tree 0000000000cdc -p 000000000) &&
 	test $(git rev-parse $commit^) = $(git rev-parse 0000000000e4f)
 '
 
@@ -254,8 +254,8 @@ test_expect_success 'ambiguous commit-ish' '
 
 test_expect_success 'rev-parse --disambiguate' '
 	# The test creates 16 objects that share the prefix and two
-	# commits created by commit-tree in earlier tests do not share
-	# the prefix.
+	# commits created by commit-tree in earlier tests share a
+	# different prefix.
 	git rev-parse --disambiguate=000000000 >actual &&
 	test $(wc -l <actual) = 16 &&
 	test "$(sed -e "s/^\(.........\).*/\1/" actual | sort -u)" = 000000000
