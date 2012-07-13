@@ -3,8 +3,6 @@
 # Copyright (c) 2010 Junio C Hamano.
 #
 
-. git-sh-setup
-
 prec=4
 
 read_state () {

@@ -3,8 +3,6 @@
 # Copyright (c) 2010 Junio C Hamano.
 #
 
-. git-sh-setup
-
 case "$action" in
 continue)
 	git am --resolved --resolvemsg="$resolvemsg" &&

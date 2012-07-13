@@ -260,7 +260,7 @@ check_patch_format () {
 split_patches () {
 	case "$patch_format" in
 	mbox)
-		if test -n "$rebasing" || test t = "$keepcr"
+		if test t = "$keepcr"
 		then
 		    keep_cr=--keep-cr
 		else
@@ -413,7 +413,7 @@ do
 	--abort)
 		abort=t ;;
 	--rebasing)
-		rebasing=t threeway=t keep=t scissors=f no_inbody_headers=t ;;
+		rebasing=t threeway=t ;;
 	-d|--dotest)
 		die "$(gettext "-d option is no longer supported.  Do not use.")"
 		;;
@@ -658,32 +658,34 @@ do
 	# by the user, or the user can tell us to do so by --resolved flag.
 	case "$resume" in
 	'')
-		git mailinfo $keep $no_inbody_headers $scissors $utf8 "$dotest/msg" "$dotest/patch" \
-			<"$dotest/$msgnum" >"$dotest/info" ||
-			stop_here $this
-
-		# skip pine's internal folder data
-		sane_grep '^Author: Mail System Internal Data$' \
-			<"$dotest"/info >/dev/null &&
-			go_next && continue
-
-		test -s "$dotest/patch" || {
-			eval_gettextln "Patch is empty.  Was it split wrong?
-If you would prefer to skip this patch, instead run \"\$cmdline --skip\".
-To restore the original branch and stop patching run \"\$cmdline --abort\"."
-			stop_here $this
-		}
-		rm -f "$dotest/original-commit" "$dotest/author-script"
-		if test -f "$dotest/rebasing" &&
+		if test -f "$dotest/rebasing"
+		then
 			commit=$(sed -e 's/^From \([0-9a-f]*\) .*/\1/' \
 				-e q "$dotest/$msgnum") &&
-			test "$(git cat-file -t "$commit")" = commit
-		then
+			test "$(git cat-file -t "$commit")" = commit ||
+				stop_here $this
 			git cat-file commit "$commit" |
 			sed -e '1,/^$/d' >"$dotest/msg-clean"
-			echo "$commit" > "$dotest/original-commit"
-			get_author_ident_from_commit "$commit" > "$dotest/author-script"
+			echo "$commit" >"$dotest/original-commit"
+			get_author_ident_from_commit "$commit" >"$dotest/author-script"
+			git diff-tree --root --binary "$commit" >"$dotest/patch"
 		else
+			git mailinfo $keep $no_inbody_headers $scissors $utf8 "$dotest/msg" "$dotest/patch" \
+				<"$dotest/$msgnum" >"$dotest/info" ||
+				stop_here $this
+
+			# skip pine's internal folder data
+			sane_grep '^Author: Mail System Internal Data$' \
+				<"$dotest"/info >/dev/null &&
+				go_next && continue
+
+			test -s "$dotest/patch" || {
+				eval_gettextln "Patch is empty.  Was it split wrong?
+If you would prefer to skip this patch, instead run \"\$cmdline --skip\".
+To restore the original branch and stop patching run \"\$cmdline --abort\"."
+				stop_here $this
+			}
+			rm -f "$dotest/original-commit" "$dotest/author-script"
 			{
 				sed -n '/^Subject/ s/Subject: //p' "$dotest/info"
 				echo

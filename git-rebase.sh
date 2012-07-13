@@ -414,6 +414,7 @@ else
 	test -z "$onto" && die "You must specify --onto when using --root"
 	unset upstream_name
 	unset upstream
+	test $# -gt 1 && usage
 	upstream_arg=--root
 fi
 
@@ -464,7 +465,7 @@ case "$#" in
 		die "fatal: no such branch: $1"
 	fi
 	;;
-*)
+0)
 	# Do not need to switch branches, we are already on it.
 	if branch_name=`git symbolic-ref -q HEAD`
 	then
@@ -475,6 +476,9 @@ case "$#" in
 		branch_name=HEAD ;# detached
 	fi
 	orig_head=$(git rev-parse --verify "${branch_name}^0") || exit
+	;;
+*)
+	die "BUG: unexpected number of arguments left to parse"
 	;;
 esac
 
