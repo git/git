@@ -87,6 +87,5 @@ int main(int argc, char *argv[])
 		die("input error");
 	if (ferror(stdout))
 		die("output error");
-	buffer_reset(&stdin_buf);
 	return 0;
 }

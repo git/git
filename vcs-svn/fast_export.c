@@ -42,11 +42,6 @@ void fast_export_deinit(void)
 		die_errno("error closing fast-import feedback stream");
 }
 
-void fast_export_reset(void)
-{
-	buffer_reset(&report_buffer);
-}
-
 void fast_export_delete(const char *path)
 {
 	putchar('D');
@@ -163,7 +158,7 @@ static int parse_cat_response_line(const char *header, off_t *len)
 
 	if (ends_with(header, headerlen, " missing"))
 		return error("cat-blob reports missing blob: %s", header);
-	type = memmem(header, headerlen, " blob ", strlen(" blob "));
+	type = strstr(header, " blob ");
 	if (!type)
 		return error("cat-blob header has wrong object type: %s", header);
 	n = strtoumax(type + strlen(" blob "), (char **) &end, 10);
@@ -259,7 +254,7 @@ static int parse_ls_response(const char *response, uint32_t *mode,
 	}
 
 	/* Mode. */
-	if (response_end - response < strlen("100644") ||
+	if (response_end - response < (signed) strlen("100644") ||
 	    response[strlen("100644")] != ' ')
 		die("invalid ls response: missing mode: %s", response);
 	*mode = 0;
@@ -272,7 +267,7 @@ static int parse_ls_response(const char *response, uint32_t *mode,
 	}
 
 	/* ' blob ' or ' tree ' */
-	if (response_end - response < strlen(" blob ") ||
+	if (response_end - response < (signed) strlen(" blob ") ||
 	    (response[1] != 'b' && response[1] != 't'))
 		die("unexpected ls response: not a tree or blob: %s", response);
 	response += strlen(" blob ");

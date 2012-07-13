@@ -124,7 +124,3 @@ off_t buffer_skip_bytes(struct line_buffer *buf, off_t nbytes)
 	}
 	return done;
 }
-
-void buffer_reset(struct line_buffer *buf)
-{
-}

@@ -34,14 +34,13 @@
 #define NODE_CTX 2	/* node metadata */
 #define INTERNODE_CTX 3	/* between nodes */
 
-#define LENGTH_UNKNOWN (~0)
 #define DATE_RFC2822_LEN 31
 
 static struct line_buffer input = LINE_BUFFER_INIT;
 
 static struct {
-	uint32_t action, propLength, srcRev, type;
-	off_t text_length;
+	uint32_t action, srcRev, type;
+	off_t prop_length, text_length;
 	struct strbuf src, dst;
 	uint32_t text_delta, prop_delta;
 } node_ctx;
@@ -61,7 +60,7 @@ static void reset_node_ctx(char *fname)
 {
 	node_ctx.type = 0;
 	node_ctx.action = NODEACT_UNKNOWN;
-	node_ctx.propLength = LENGTH_UNKNOWN;
+	node_ctx.prop_length = -1;
 	node_ctx.text_length = -1;
 	strbuf_reset(&node_ctx.src);
 	node_ctx.srcRev = 0;
@@ -209,7 +208,7 @@ static void read_props(void)
 static void handle_node(void)
 {
 	const uint32_t type = node_ctx.type;
-	const int have_props = node_ctx.propLength != LENGTH_UNKNOWN;
+	const int have_props = node_ctx.prop_length != -1;
 	const int have_text = node_ctx.text_length != -1;
 	/*
 	 * Old text for this node:
@@ -273,7 +272,7 @@ static void handle_node(void)
 	if (have_props) {
 		if (!node_ctx.prop_delta)
 			node_ctx.type = type;
-		if (node_ctx.propLength)
+		if (node_ctx.prop_length)
 			read_props();
 	}
 
@@ -361,7 +360,7 @@ void svndump_read(const char *url)
 			reset_rev_ctx(atoi(val));
 			break;
 		case sizeof("Node-path"):
-			if (prefixcmp(t, "Node-"))
+			if (constcmp(t, "Node-"))
 				continue;
 			if (!constcmp(t + strlen("Node-"), "path")) {
 				if (active_ctx == NODE_CTX)
@@ -409,22 +408,26 @@ void svndump_read(const char *url)
 			node_ctx.srcRev = atoi(val);
 			break;
 		case sizeof("Text-content-length"):
-			if (!constcmp(t, "Text-content-length")) {
+			if (constcmp(t, "Text") && constcmp(t, "Prop"))
+				continue;
+			if (constcmp(t + 4, "-content-length"))
+				continue;
+			{
 				char *end;
-				uintmax_t textlen;
+				uintmax_t len;
 
-				textlen = strtoumax(val, &end, 10);
+				len = strtoumax(val, &end, 10);
 				if (!isdigit(*val) || *end)
 					die("invalid dump: non-numeric length %s", val);
-				if (textlen > maximum_signed_value_of_type(off_t))
+				if (len > maximum_signed_value_of_type(off_t))
 					die("unrepresentable length in dump: %s", val);
-				node_ctx.text_length = (off_t) textlen;
+
+				if (*t == 'T')
+					node_ctx.text_length = (off_t) len;
+				else
+					node_ctx.prop_length = (off_t) len;
 				break;
 			}
-			if (constcmp(t, "Prop-content-length"))
-				continue;
-			node_ctx.propLength = atoi(val);
-			break;
 		case sizeof("Text-delta"):
 			if (!constcmp(t, "Text-delta")) {
 				node_ctx.text_delta = !strcmp(val, "true");
@@ -499,8 +502,6 @@ void svndump_deinit(void)
 
 void svndump_reset(void)
 {
-	fast_export_reset();
-	buffer_reset(&input);
 	strbuf_release(&dump_ctx.uuid);
 	strbuf_release(&dump_ctx.url);
 	strbuf_release(&rev_ctx.log);
