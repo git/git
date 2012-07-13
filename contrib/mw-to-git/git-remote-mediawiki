@@ -13,9 +13,6 @@
 #
 # Known limitations:
 #
-# - Only wiki pages are managed, no support for [[File:...]]
-#   attachments.
-#
 # - Poor performance in the best case: it takes forever to check
 #   whether we're up-to-date (on fetch or push) or to fetch a few
 #   revisions from a large wiki, because we use exclusively a
@@ -33,11 +30,10 @@
 use strict;
 use MediaWiki::API;
 use DateTime::Format::ISO8601;
-use encoding 'utf8';
 
-# use encoding 'utf8' doesn't change STDERROR
-# but we're going to output UTF-8 filenames to STDERR
+# By default, use UTF-8 to communicate with Git and the user
 binmode STDERR, ":utf8";
+binmode STDOUT, ":utf8";
 
 use URI::Escape;
 use IPC::Open2;
@@ -69,6 +65,11 @@ chomp(@tracked_pages);
 # Just like @tracked_pages, but for MediaWiki categories.
 my @tracked_categories = split(/[ \n]/, run_git("config --get-all remote.". $remotename .".categories"));
 chomp(@tracked_categories);
+
+# Import media files too.
+my $import_media = run_git("config --get --bool remote.". $remotename .".mediaimport");
+chomp($import_media);
+$import_media = ($import_media eq "true");
 
 my $wiki_login = run_git("config --get remote.". $remotename .".mwLogin");
 # Note: mwPassword is discourraged. Use the credential system instead.
@@ -254,6 +255,70 @@ sub mw_connect_maybe {
 	}
 }
 
+## Functions for listing pages on the remote wiki
+sub get_mw_tracked_pages {
+	my $pages = shift;
+	get_mw_page_list(\@tracked_pages, $pages);
+}
+
+sub get_mw_page_list {
+	my $page_list = shift;
+	my $pages = shift;
+	my @some_pages = @$page_list;
+	while (@some_pages) {
+		my $last = 50;
+		if ($#some_pages < $last) {
+			$last = $#some_pages;
+		}
+		my @slice = @some_pages[0..$last];
+		get_mw_first_pages(\@slice, $pages);
+		@some_pages = @some_pages[51..$#some_pages];
+	}
+}
+
+sub get_mw_tracked_categories {
+	my $pages = shift;
+	foreach my $category (@tracked_categories) {
+		if (index($category, ':') < 0) {
+			# Mediawiki requires the Category
+			# prefix, but let's not force the user
+			# to specify it.
+			$category = "Category:" . $category;
+		}
+		my $mw_pages = $mediawiki->list( {
+			action => 'query',
+			list => 'categorymembers',
+			cmtitle => $category,
+			cmlimit => 'max' } )
+			|| die $mediawiki->{error}->{code} . ': '
+				. $mediawiki->{error}->{details};
+		foreach my $page (@{$mw_pages}) {
+			$pages->{$page->{title}} = $page;
+		}
+	}
+}
+
+sub get_mw_all_pages {
+	my $pages = shift;
+	# No user-provided list, get the list of pages from the API.
+	my $mw_pages = $mediawiki->list({
+		action => 'query',
+		list => 'allpages',
+		aplimit => 'max'
+	});
+	if (!defined($mw_pages)) {
+		print STDERR "fatal: could not get the list of wiki pages.\n";
+		print STDERR "fatal: '$url' does not appear to be a mediawiki\n";
+		print STDERR "fatal: make sure '$url/api.php' is a valid page.\n";
+		exit 1;
+	}
+	foreach my $page (@{$mw_pages}) {
+		$pages->{$page->{title}} = $page;
+	}
+}
+
+# queries the wiki for a set of pages. Meant to be used within a loop
+# querying the wiki for slices of page list.
 sub get_mw_first_pages {
 	my $some_pages = shift;
 	my @some_pages = @{$some_pages};
@@ -282,6 +347,7 @@ sub get_mw_first_pages {
 	}
 }
 
+# Get the list of pages to be fetched according to configuration.
 sub get_mw_pages {
 	mw_connect_maybe();
 
@@ -291,67 +357,155 @@ sub get_mw_pages {
 		$user_defined = 1;
 		# The user provided a list of pages titles, but we
 		# still need to query the API to get the page IDs.
-
-		my @some_pages = @tracked_pages;
-		while (@some_pages) {
-			my $last = 50;
-			if ($#some_pages < $last) {
-				$last = $#some_pages;
-			}
-			my @slice = @some_pages[0..$last];
-			get_mw_first_pages(\@slice, \%pages);
-			@some_pages = @some_pages[51..$#some_pages];
-		}
+		get_mw_tracked_pages(\%pages);
 	}
 	if (@tracked_categories) {
 		$user_defined = 1;
-		foreach my $category (@tracked_categories) {
-			if (index($category, ':') < 0) {
-				# Mediawiki requires the Category
-				# prefix, but let's not force the user
-				# to specify it.
-				$category = "Category:" . $category;
-			}
-			my $mw_pages = $mediawiki->list( {
-				action => 'query',
-				list => 'categorymembers',
-				cmtitle => $category,
-				cmlimit => 'max' } )
-			    || die $mediawiki->{error}->{code} . ': ' . $mediawiki->{error}->{details};
-			foreach my $page (@{$mw_pages}) {
-				$pages{$page->{title}} = $page;
-			}
-		}
+		get_mw_tracked_categories(\%pages);
 	}
 	if (!$user_defined) {
-		# No user-provided list, get the list of pages from
-		# the API.
-		my $mw_pages = $mediawiki->list({
-			action => 'query',
-			list => 'allpages',
-			aplimit => 500,
-		});
-		if (!defined($mw_pages)) {
-			print STDERR "fatal: could not get the list of wiki pages.\n";
-			print STDERR "fatal: '$url' does not appear to be a mediawiki\n";
-			print STDERR "fatal: make sure '$url/api.php' is a valid page.\n";
-			exit 1;
-		}
-		foreach my $page (@{$mw_pages}) {
-			$pages{$page->{title}} = $page;
+		get_mw_all_pages(\%pages);
+	}
+	if ($import_media) {
+		print STDERR "Getting media files for selected pages...\n";
+		if ($user_defined) {
+			get_linked_mediafiles(\%pages);
+		} else {
+			get_all_mediafiles(\%pages);
 		}
 	}
 	return values(%pages);
 }
 
+# usage: $out = run_git("command args");
+#        $out = run_git("command args", "raw"); # don't interpret output as UTF-8.
 sub run_git {
-	open(my $git, "-|:encoding(UTF-8)", "git " . $_[0]);
+	my $args = shift;
+	my $encoding = (shift || "encoding(UTF-8)");
+	open(my $git, "-|:$encoding", "git " . $args);
 	my $res = do { local $/; <$git> };
 	close($git);
 
 	return $res;
 }
 
+
+sub get_all_mediafiles {
+	my $pages = shift;
+	# Attach list of all pages for media files from the API,
+	# they are in a different namespace, only one namespace
+	# can be queried at the same moment
+	my $mw_pages = $mediawiki->list({
+		action => 'query',
+		list => 'allpages',
+		apnamespace => get_mw_namespace_id("File"),
+		aplimit => 'max'
+	});
+	if (!defined($mw_pages)) {
+		print STDERR "fatal: could not get the list of pages for media files.\n";
+		print STDERR "fatal: '$url' does not appear to be a mediawiki\n";
+		print STDERR "fatal: make sure '$url/api.php' is a valid page.\n";
+		exit 1;
+	}
+	foreach my $page (@{$mw_pages}) {
+		$pages->{$page->{title}} = $page;
+	}
+}
+
+sub get_linked_mediafiles {
+	my $pages = shift;
+	my @titles = map $_->{title}, values(%{$pages});
+
+	# The query is split in small batches because of the MW API limit of
+	# the number of links to be returned (500 links max).
+	my $batch = 10;
+	while (@titles) {
+		if ($#titles < $batch) {
+			$batch = $#titles;
+		}
+		my @slice = @titles[0..$batch];
+
+		# pattern 'page1|page2|...' required by the API
+		my $mw_titles = join('|', @slice);
+
+		# Media files could be included or linked from
+		# a page, get all related
+		my $query = {
+			action => 'query',
+			prop => 'links|images',
+			titles => $mw_titles,
+			plnamespace => get_mw_namespace_id("File"),
+			pllimit => 'max'
+		};
+		my $result = $mediawiki->api($query);
+
+		while (my ($id, $page) = each(%{$result->{query}->{pages}})) {
+			my @media_titles;
+			if (defined($page->{links})) {
+				my @link_titles = map $_->{title}, @{$page->{links}};
+				push(@media_titles, @link_titles);
+			}
+			if (defined($page->{images})) {
+				my @image_titles = map $_->{title}, @{$page->{images}};
+				push(@media_titles, @image_titles);
+			}
+			if (@media_titles) {
+				get_mw_page_list(\@media_titles, $pages);
+			}
+		}
+
+		@titles = @titles[($batch+1)..$#titles];
+	}
+}
+
+sub get_mw_mediafile_for_page_revision {
+	# Name of the file on Wiki, with the prefix.
+	my $filename = shift;
+	my $timestamp = shift;
+	my %mediafile;
+
+	# Search if on a media file with given timestamp exists on
+	# MediaWiki. In that case download the file.
+	my $query = {
+		action => 'query',
+		prop => 'imageinfo',
+		titles => "File:" . $filename,
+		iistart => $timestamp,
+		iiend => $timestamp,
+		iiprop => 'timestamp|archivename|url',
+		iilimit => 1
+	};
+	my $result = $mediawiki->api($query);
+
+	my ($fileid, $file) = each( %{$result->{query}->{pages}} );
+	# If not defined it means there is no revision of the file for
+	# given timestamp.
+	if (defined($file->{imageinfo})) {
+		$mediafile{title} = $filename;
+
+		my $fileinfo = pop(@{$file->{imageinfo}});
+		$mediafile{timestamp} = $fileinfo->{timestamp};
+		# Mediawiki::API's download function doesn't support https URLs
+		# and can't download old versions of files.
+		print STDERR "\tDownloading file $mediafile{title}, version $mediafile{timestamp}\n";
+		$mediafile{content} = download_mw_mediafile($fileinfo->{url});
+	}
+	return %mediafile;
+}
+
+sub download_mw_mediafile {
+	my $url = shift;
+
+	my $response = $mediawiki->{ua}->get($url);
+	if ($response->code == 200) {
+		return $response->decoded_content;
+	} else {
+		print STDERR "Error downloading mediafile from :\n";
+		print STDERR "URL: $url\n";
+		print STDERR "Server response: " . $response->code . " " . $response->message . "\n";
+		exit 1;
+	}
+}
 
 sub get_last_local_revision {
 	# Get note regarding last mediawiki revision
@@ -456,6 +610,16 @@ sub literal_data {
 	print STDOUT "data ", bytes::length($content), "\n", $content;
 }
 
+sub literal_data_raw {
+	# Output possibly binary content.
+	my ($content) = @_;
+	# Avoid confusion between size in bytes and in characters
+	utf8::downgrade($content);
+	binmode STDOUT, ":raw";
+	print STDOUT "data ", bytes::length($content), "\n", $content;
+	binmode STDOUT, ":utf8";
+}
+
 sub mw_capabilities {
 	# Revisions are imported to the private namespace
 	# refs/mediawiki/$remotename/ by the helper and fetched into
@@ -543,6 +707,11 @@ sub import_file_revision {
 	my %commit = %{$commit};
 	my $full_import = shift;
 	my $n = shift;
+	my $mediafile = shift;
+	my %mediafile;
+	if ($mediafile) {
+		%mediafile = %{$mediafile};
+	}
 
 	my $title = $commit{title};
 	my $comment = $commit{comment};
@@ -562,6 +731,10 @@ sub import_file_revision {
 	if ($content ne DELETED_CONTENT) {
 		print STDOUT "M 644 inline $title.mw\n";
 		literal_data($content);
+		if (%mediafile) {
+			print STDOUT "M 644 inline $mediafile{title}\n";
+			literal_data_raw($mediafile{content});
+		}
 		print STDOUT "\n\n";
 	} else {
 		print STDOUT "D $title.mw\n";
@@ -657,12 +830,11 @@ sub mw_import_ref {
 
 		$n++;
 
+		my $page_title = $result->{query}->{pages}->{$pagerevid->{pageid}}->{title};
 		my %commit;
 		$commit{author} = $rev->{user} || 'Anonymous';
 		$commit{comment} = $rev->{comment} || '*Empty MediaWiki Message*';
-		$commit{title} = mediawiki_smudge_filename(
-			$result->{query}->{pages}->{$pagerevid->{pageid}}->{title}
-		    );
+		$commit{title} = mediawiki_smudge_filename($page_title);
 		$commit{mw_revision} = $pagerevid->{revid};
 		$commit{content} = mediawiki_smudge($rev->{'*'});
 
@@ -673,9 +845,17 @@ sub mw_import_ref {
 		}
 		$commit{date} = DateTime::Format::ISO8601->parse_datetime($last_timestamp);
 
+		# Differentiates classic pages and media files.
+		my ($namespace, $filename) = $page_title =~ /^([^:]*):(.*)$/;
+		my %mediafile;
+		if ($namespace && get_mw_namespace_id($namespace) == get_mw_namespace_id("File")) {
+			%mediafile = get_mw_mediafile_for_page_revision($filename, $rev->{timestamp});
+		}
+		# If this is a revision of the media page for new version
+		# of a file do one common commit for both file and media page.
+		# Else do commit only for that page.
 		print STDERR "$n/", scalar(@revisions), ": Revision #$pagerevid->{revid} of $commit{title}\n";
-
-		import_file_revision(\%commit, ($fetch_from == 1), $n);
+		import_file_revision(\%commit, ($fetch_from == 1), $n, \%mediafile);
 	}
 
 	if ($fetch_from == 1 && $n == 0) {
@@ -701,6 +881,63 @@ sub error_non_fast_forward {
 	return 0;
 }
 
+sub mw_upload_file {
+	my $complete_file_name = shift;
+	my $new_sha1 = shift;
+	my $extension = shift;
+	my $file_deleted = shift;
+	my $summary = shift;
+	my $newrevid;
+	my $path = "File:" . $complete_file_name;
+	my %hashFiles = get_allowed_file_extensions();
+	if (!exists($hashFiles{$extension})) {
+		print STDERR "$complete_file_name is not a permitted file on this wiki.\n";
+		print STDERR "Check the configuration of file uploads in your mediawiki.\n";
+		return $newrevid;
+	}
+	# Deleting and uploading a file requires a priviledged user
+	if ($file_deleted) {
+		mw_connect_maybe();
+		my $query = {
+			action => 'delete',
+			title => $path,
+			reason => $summary
+		};
+		if (!$mediawiki->edit($query)) {
+			print STDERR "Failed to delete file on remote wiki\n";
+			print STDERR "Check your permissions on the remote site. Error code:\n";
+			print STDERR $mediawiki->{error}->{code} . ':' . $mediawiki->{error}->{details};
+			exit 1;
+		}
+	} else {
+		# Don't let perl try to interpret file content as UTF-8 => use "raw"
+		my $content = run_git("cat-file blob $new_sha1", "raw");
+		if ($content ne "") {
+			mw_connect_maybe();
+			$mediawiki->{config}->{upload_url} =
+				"$url/index.php/Special:Upload";
+			$mediawiki->edit({
+				action => 'upload',
+				filename => $complete_file_name,
+				comment => $summary,
+				file => [undef,
+					 $complete_file_name,
+					 Content => $content],
+				ignorewarnings => 1,
+			}, {
+				skip_encoding => 1
+			} ) || die $mediawiki->{error}->{code} . ':'
+				 . $mediawiki->{error}->{details};
+			my $last_file_page = $mediawiki->get_page({title => $path});
+			$newrevid = $last_file_page->{revid};
+			print STDERR "Pushed file: $new_sha1 - $complete_file_name.\n";
+		} else {
+			print STDERR "Empty file $complete_file_name not pushed.\n";
+		}
+	}
+	return $newrevid;
+}
+
 sub mw_push_file {
 	my $diff_info = shift;
 	# $diff_info contains a string in this format:
@@ -713,7 +950,8 @@ sub mw_push_file {
 	my $summary = shift;
 	# MediaWiki revision number. Keep the previous one by default,
 	# in case there's no edit to perform.
-	my $newrevid = shift;
+	my $oldrevid = shift;
+	my $newrevid;
 
 	my $new_sha1 = $diff_info_split[3];
 	my $old_sha1 = $diff_info_split[2];
@@ -721,9 +959,11 @@ sub mw_push_file {
 	my $page_deleted = ($new_sha1 eq NULL_SHA1);
 	$complete_file_name = mediawiki_clean_filename($complete_file_name);
 
-	if (substr($complete_file_name,-3) eq ".mw") {
-		my $title = substr($complete_file_name,0,-3);
-
+	my ($title, $extension) = $complete_file_name =~ /^(.*)\.([^\.]*)$/;
+	if (!defined($extension)) {
+		$extension = "";
+	}
+	if ($extension eq "mw") {
 		my $file_content;
 		if ($page_deleted) {
 			# Deleting a page usually requires
@@ -741,7 +981,7 @@ sub mw_push_file {
 			action => 'edit',
 			summary => $summary,
 			title => $title,
-			basetimestamp => $basetimestamps{$newrevid},
+			basetimestamp => $basetimestamps{$oldrevid},
 			text => mediawiki_clean($file_content, $page_created),
 				  }, {
 					  skip_encoding => 1 # Helps with names with accentuated characters
@@ -753,7 +993,7 @@ sub mw_push_file {
 				    $mediawiki->{error}->{code} .
 				    ' from mediwiki: ' . $mediawiki->{error}->{details} .
 				    ".\n";
-				return ($newrevid, "non-fast-forward");
+				return ($oldrevid, "non-fast-forward");
 			} else {
 				# Other errors. Shouldn't happen => just die()
 				die 'Fatal: Error ' .
@@ -764,8 +1004,11 @@ sub mw_push_file {
 		$newrevid = $result->{edit}->{newrevid};
 		print STDERR "Pushed file: $new_sha1 - $title\n";
 	} else {
-		print STDERR "$complete_file_name not a mediawiki file (Not pushable on this version of git-remote-mediawiki).\n"
+		$newrevid = mw_upload_file($complete_file_name, $new_sha1,
+					   $extension, $page_deleted,
+					   $summary);
 	}
+	$newrevid = ($newrevid or $oldrevid);
 	return ($newrevid, "ok");
 }
 
@@ -868,8 +1111,8 @@ sub mw_push_revision {
 		# TODO: we could detect rename, and encode them with a #redirect on the wiki.
 		# TODO: for now, it's just a delete+add
 		my @diff_info_list = split(/\0/, $diff_infos);
-		# Keep the first line of the commit message as mediawiki comment for the revision
-		my $commit_msg = (split(/\n/, run_git("show --pretty=format:\"%s\" $sha1_commit")))[0];
+		# Keep the subject line of the commit message as mediawiki comment for the revision
+		my $commit_msg = run_git("log --no-walk --format=\"%s\" $sha1_commit");
 		chomp($commit_msg);
 		# Push every blob
 		while (@diff_info_list) {
@@ -901,4 +1144,83 @@ sub mw_push_revision {
 
 	print STDOUT "ok $remote\n";
 	return 1;
+}
+
+sub get_allowed_file_extensions {
+	mw_connect_maybe();
+
+	my $query = {
+		action => 'query',
+		meta => 'siteinfo',
+		siprop => 'fileextensions'
+		};
+	my $result = $mediawiki->api($query);
+	my @file_extensions= map $_->{ext},@{$result->{query}->{fileextensions}};
+	my %hashFile = map {$_ => 1}@file_extensions;
+
+	return %hashFile;
+}
+
+# In memory cache for MediaWiki namespace ids.
+my %namespace_id;
+
+# Namespaces whose id is cached in the configuration file
+# (to avoid duplicates)
+my %cached_mw_namespace_id;
+
+# Return MediaWiki id for a canonical namespace name.
+# Ex.: "File", "Project".
+sub get_mw_namespace_id {
+	mw_connect_maybe();
+	my $name = shift;
+
+	if (!exists $namespace_id{$name}) {
+		# Look at configuration file, if the record for that namespace is
+		# already cached. Namespaces are stored in form:
+		# "Name_of_namespace:Id_namespace", ex.: "File:6".
+		my @temp = split(/[ \n]/, run_git("config --get-all remote."
+						. $remotename .".namespaceCache"));
+		chomp(@temp);
+		foreach my $ns (@temp) {
+			my ($n, $id) = split(/:/, $ns);
+			$namespace_id{$n} = $id;
+			$cached_mw_namespace_id{$n} = 1;
+		}
+	}
+
+	if (!exists $namespace_id{$name}) {
+		print STDERR "Namespace $name not found in cache, querying the wiki ...\n";
+		# NS not found => get namespace id from MW and store it in
+	        # configuration file.
+	        my $query = {
+	                action => 'query',
+	                meta => 'siteinfo',
+	                siprop => 'namespaces'
+	        };
+	        my $result = $mediawiki->api($query);
+
+	        while (my ($id, $ns) = each(%{$result->{query}->{namespaces}})) {
+	                if (defined($ns->{id}) && defined($ns->{canonical})) {
+				$namespace_id{$ns->{canonical}} = $ns->{id};
+				if ($ns->{'*'}) {
+					# alias (e.g. french Fichier: as alias for canonical File:)
+					$namespace_id{$ns->{'*'}} = $ns->{id};
+				}
+			}
+	        }
+	}
+
+	my $id = $namespace_id{$name};
+
+	if (defined $id) {
+		# Store explicitely requested namespaces on disk
+		if (!exists $cached_mw_namespace_id{$name}) {
+			run_git("config --add remote.". $remotename
+				.".namespaceCache \"". $name .":". $id ."\"");
+			$cached_mw_namespace_id{$name} = 1;
+		}
+		return $id;
+	} else {
+		die "No such namespace $name on MediaWiki.";
+	}
 }
