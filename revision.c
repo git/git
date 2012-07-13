@@ -2361,29 +2361,28 @@ static struct commit *get_revision_internal(struct rev_info *revs)
 	}
 
 	/*
-	 * Now pick up what they want to give us
+	 * If our max_count counter has reached zero, then we are done. We
+	 * don't simply return NULL because we still might need to show
+	 * boundary commits. But we want to avoid calling get_revision_1, which
+	 * might do a considerable amount of work finding the next commit only
+	 * for us to throw it away.
+	 *
+	 * If it is non-zero, then either we don't have a max_count at all
+	 * (-1), or it is still counting, in which case we decrement.
 	 */
-	c = get_revision_1(revs);
-	if (c) {
-		while (0 < revs->skip_count) {
-			revs->skip_count--;
-			c = get_revision_1(revs);
-			if (!c)
-				break;
+	if (revs->max_count) {
+		c = get_revision_1(revs);
+		if (c) {
+			while (0 < revs->skip_count) {
+				revs->skip_count--;
+				c = get_revision_1(revs);
+				if (!c)
+					break;
+			}
 		}
-	}
 
-	/*
-	 * Check the max_count.
-	 */
-	switch (revs->max_count) {
-	case -1:
-		break;
-	case 0:
-		c = NULL;
-		break;
-	default:
-		revs->max_count--;
+		if (revs->max_count > 0)
+			revs->max_count--;
 	}
 
 	if (c)
