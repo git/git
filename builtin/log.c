@@ -463,6 +463,9 @@ int cmd_show(int argc, const char **argv, const char *prefix)
 	opt.tweak = show_rev_tweak_rev;
 	cmd_log_init(argc, argv, prefix, &rev, &opt);
 
+	if (!rev.no_walk)
+		return cmd_log_walk(&rev);
+
 	count = rev.pending.nr;
 	objects = rev.pending.objects;
 	for (i = 0; i < count && !ret; i++) {
