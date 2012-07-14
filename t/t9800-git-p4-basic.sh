@@ -155,11 +155,6 @@ test_expect_success 'clone bare' '
 	)
 '
 
-marshal_dump() {
-	what=$1
-	"$PYTHON_PATH" -c 'import marshal, sys; d = marshal.load(sys.stdin); print d["'$what'"]'
-}
-
 # Sleep a bit so that the top-most p4 change did not happen "now".  Then
 # import the repo and make sure that the initial import has the same time
 # as the top-most change.
