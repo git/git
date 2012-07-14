@@ -117,7 +117,7 @@ to point at the new commit.
 
 [[def_ent]]ent::
 	Favorite synonym to "<<def_tree-ish,tree-ish>>" by some total geeks. See
-	`http://en.wikipedia.org/wiki/Ent_(Middle-earth)` for an in-depth
+	http://en.wikipedia.org/wiki/Ent_(Middle-earth) for an in-depth
 	explanation. Avoid this term, not to confuse people.
 
 [[def_evil_merge]]evil merge::
