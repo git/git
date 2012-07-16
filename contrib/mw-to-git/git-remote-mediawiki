@@ -579,6 +579,8 @@ sub get_last_remote_revision {
 
 	my $max_rev_num = 0;
 
+	print STDERR "Getting last revision id on tracked pages...\n";
+
 	foreach my $page (@pages) {
 		my $id = $page->{pageid};
 
