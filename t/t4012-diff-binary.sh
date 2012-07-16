@@ -66,13 +66,7 @@ test_expect_success 'apply --numstat understands diff --binary format' '
 test_expect_success 'apply detecting corrupt patch correctly' '
 	git diff >output &&
 	sed -e "s/-CIT/xCIT/" <output >broken &&
-	if git apply --stat --summary broken 2>detected
-	then
-		echo unhappy - should have detected an error
-		(exit 1)
-	else
-		echo happy
-	fi &&
+	test_must_fail git apply --stat --summary broken 2>detected &&
 	detected=`cat detected` &&
 	detected=`expr "$detected" : "fatal.*at line \\([0-9]*\\)\$"` &&
 	detected=`sed -ne "${detected}p" broken` &&
@@ -81,13 +75,7 @@ test_expect_success 'apply detecting corrupt patch correctly' '
 
 test_expect_success 'apply detecting corrupt patch correctly' '
 	git diff --binary | sed -e "s/-CIT/xCIT/" >broken &&
-	if git apply --stat --summary broken 2>detected
-	then
-		echo unhappy - should have detected an error
-		(exit 1)
-	else
-		echo happy
-	fi &&
+	test_must_fail git apply --stat --summary broken 2>detected &&
 	detected=`cat detected` &&
 	detected=`expr "$detected" : "fatal.*at line \\([0-9]*\\)\$"` &&
 	detected=`sed -ne "${detected}p" broken` &&
