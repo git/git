@@ -38,9 +38,9 @@ test_expect_success 'apply --stat output for binary file change' '
 '
 
 test_expect_success 'diff --shortstat output for binary file change' '
-	echo " 4 files changed, 2 insertions(+), 2 deletions(-)" >expected &&
+	tail -n 1 expected >expect &&
 	git diff --shortstat >current &&
-	test_i18ncmp expected current
+	test_i18ncmp expect current
 '
 
 test_expect_success 'diff --shortstat output for binary file change only' '
