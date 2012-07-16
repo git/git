@@ -22,6 +22,9 @@ UI, Workflows & Features
    $HOME/.config/attributes and $HOME/.config/ignore respectively when
    these files exist.
 
+ * "git apply" learned to wiggle the base version and perform three-way
+   merge when a patch does not exactly apply to the version you have.
+
  * Scripted Porcelain writers now have access to the credential API via
    the "git credential" plumbing command.
 
@@ -51,6 +54,9 @@ UI, Workflows & Features
    default location where the build procedure installs them locally;
    the variable can even point at a http:// URL.
 
+ * "git rebase [-i] --root $tip" can now be used to rewrite all the
+   history leading to "$tip" down to the root commit.
+
  * "git rebase -i" learned "-x <cmd>" to insert "exec <cmd>" after
    each commit in the resulting history.
 
@@ -70,6 +76,8 @@ Foreign Interface
 
  * "mediawiki" remote helper (in contrib/) learned to handle file
    attachments.
+
+ * "git p4" now uses "Jobs:" and "p4 move" when appropriate.
 
  * vcs-svn has been updated to clean-up compilation, lift 32-bit
    limitations, etc.
@@ -105,6 +113,32 @@ Fixes since v1.7.11
 Unless otherwise noted, all the fixes since v1.7.11 in the maintenance
 releases are contained in this release (see release notes to them for
 details).
+
+ * The error message from "git push $there :bogo" (and its equivalent
+   "git push $there --delete bogo") mentioned that we tried and failed
+   to guess what ref is being deleted based on the LHS of the refspec,
+   which we don't.
+   (merge 5742c82 jk/push-delete-ref-error-message later to maint).
+
+ * A handful of files and directories we create had tighter than
+   necessary permission bits when the user wanted to have group
+   writability (e.g. by setting "umask 002").
+   (merge 6ff2b72 ar/clone-honor-umask-at-top later to maint).
+
+ * "commit --amend" used to refuse amending a commit with an empty log
+   message, with or without "--allow-empty-message".
+   (merge d9a9357 cw/amend-commit-without-message later to maint).
+
+ * "git commit --amend --only --" was meant to allow "Clever" people to
+   rewrite the commit message without making any change even when they
+   have already changes for the next commit added to their index, but
+   it never worked as advertised since it was introduced in 1.3.0 era.
+   (merge ea2d4ed jk/maint-commit-amend-only-no-paths later to maint).
+
+ * Even though the index can record pathnames longer than 1<<12 bytes,
+   in some places we were not comparing them in full, potentially
+   replacing index entries instead of adding.
+   (merge d5f5333 tg/maint-cache-name-compare later to maint).
 
  * "git show"'s auto-walking behaviour was an unreliable and
    unpredictable hack; it now behaves just like "git log" does when it
