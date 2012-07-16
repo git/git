@@ -51,6 +51,9 @@ use constant EMPTY_CONTENT => "<!-- empty page -->\n";
 # used to reflect file creation or deletion in diff.
 use constant NULL_SHA1 => "0000000000000000000000000000000000000000";
 
+# Used on Git's side to reflect empty edit messages on the wiki
+use constant EMPTY_MESSAGE => '*Empty MediaWiki Message*';
+
 my $remotename = $ARGV[0];
 my $url = $ARGV[1];
 
@@ -935,7 +938,7 @@ sub mw_import_revids {
 
 		my %commit;
 		$commit{author} = $rev->{user} || 'Anonymous';
-		$commit{comment} = $rev->{comment} || '*Empty MediaWiki Message*';
+		$commit{comment} = $rev->{comment} || EMPTY_MESSAGE;
 		$commit{title} = mediawiki_smudge_filename($page_title);
 		$commit{mw_revision} = $rev->{revid};
 		$commit{content} = mediawiki_smudge($rev->{'*'});
@@ -1049,6 +1052,10 @@ sub mw_push_file {
 	# in case there's no edit to perform.
 	my $oldrevid = shift;
 	my $newrevid;
+
+	if ($summary eq EMPTY_MESSAGE) {
+		$summary = '';
+	}
 
 	my $new_sha1 = $diff_info_split[3];
 	my $old_sha1 = $diff_info_split[2];
