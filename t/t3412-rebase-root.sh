@@ -22,11 +22,6 @@ test_expect_success 'prepare repository' '
 	test_commit 4 B
 '
 
-test_expect_success 'rebase --root expects --onto' '
-	git checkout -B fail other &&
-	test_must_fail git rebase --root
-'
-
 test_expect_success 'rebase --root fails with too many args' '
 	git checkout -B fail other &&
 	test_must_fail git rebase --onto master --root fail fail

@@ -872,4 +872,35 @@ test_expect_success 'rebase -i --exec without <CMD>' '
 	git checkout master
 '
 
+test_expect_success 'rebase -i --root re-order and drop commits' '
+	git checkout E &&
+	FAKE_LINES="3 1 2 5" git rebase -i --root &&
+	test E = $(git cat-file commit HEAD | sed -ne \$p) &&
+	test B = $(git cat-file commit HEAD^ | sed -ne \$p) &&
+	test A = $(git cat-file commit HEAD^^ | sed -ne \$p) &&
+	test C = $(git cat-file commit HEAD^^^ | sed -ne \$p) &&
+	test 0 = $(git cat-file commit HEAD^^^ | grep -c ^parent\ )
+'
+
+test_expect_success 'rebase -i --root retain root commit author and message' '
+	git checkout A &&
+	echo B >file7 &&
+	git add file7 &&
+	GIT_AUTHOR_NAME="Twerp Snog" git commit -m "different author" &&
+	FAKE_LINES="2" git rebase -i --root &&
+	git cat-file commit HEAD | grep -q "^author Twerp Snog" &&
+	git cat-file commit HEAD | grep -q "^different author$"
+'
+
+test_expect_success 'rebase -i --root temporary sentinel commit' '
+	git checkout B &&
+	(
+		FAKE_LINES="2" &&
+		export FAKE_LINES &&
+		test_must_fail git rebase -i --root
+	) &&
+	git cat-file commit HEAD | grep "^tree 4b825dc642cb" &&
+	git rebase --abort
+'
+
 test_done
