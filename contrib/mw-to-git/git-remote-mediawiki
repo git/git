@@ -1196,16 +1196,26 @@ sub mw_push_revision {
 	if ($last_local_revid > 0) {
 		my $parsed_sha1 = $remoteorigin_sha1;
 		# Find a path from last MediaWiki commit to pushed commit
+		print STDERR "Computing path from local to remote ...\n";
+		my @local_ancestry = split(/\n/, run_git("rev-list --boundary --parents $local ^$parsed_sha1"));
+		my %local_ancestry;
+		foreach my $line (@local_ancestry) {
+			if (my ($child, $parents) = $line =~ m/^-?([a-f0-9]+) ([a-f0-9 ]+)/) {
+				foreach my $parent (split(' ', $parents)) {
+					$local_ancestry{$parent} = $child;
+				}
+			} elsif (!$line =~ m/^([a-f0-9]+)/) {
+				die "Unexpected output from git rev-list: $line";
+			}
+		}
 		while ($parsed_sha1 ne $HEAD_sha1) {
-			my @commit_info =  grep(/^$parsed_sha1/, split(/\n/, run_git("rev-list --children $local")));
-			if (!@commit_info) {
+			my $child = $local_ancestry{$parsed_sha1};
+			if (!$child) {
+				printf STDERR "Cannot find a path in history from remote commit to last commit\n";
 				return error_non_fast_forward($remote);
 			}
-			my @commit_info_split = split(/ |\n/, $commit_info[0]);
-			# $commit_info_split[1] is the sha1 of the commit to export
-			# $commit_info_split[0] is the sha1 of its direct child
-			push(@commit_pairs, \@commit_info_split);
-			$parsed_sha1 = $commit_info_split[1];
+			push(@commit_pairs, [$parsed_sha1, $child]);
+			$parsed_sha1 = $child;
 		}
 	} else {
 		# No remote mediawiki revision. Export the whole
