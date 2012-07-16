@@ -66,10 +66,15 @@ chomp(@tracked_pages);
 my @tracked_categories = split(/[ \n]/, run_git("config --get-all remote.". $remotename .".categories"));
 chomp(@tracked_categories);
 
-# Import media files too.
+# Import media files on pull
 my $import_media = run_git("config --get --bool remote.". $remotename .".mediaimport");
 chomp($import_media);
 $import_media = ($import_media eq "true");
+
+# Export media files on push
+my $export_media = run_git("config --get --bool remote.". $remotename .".mediaexport");
+chomp($export_media);
+$export_media = !($export_media eq "false");
 
 my $wiki_login = run_git("config --get remote.". $remotename .".mwLogin");
 # Note: mwPassword is discourraged. Use the credential system instead.
@@ -1068,6 +1073,11 @@ sub mw_push_file {
 		$extension = "";
 	}
 	if ($extension eq "mw") {
+		my $ns = get_mw_namespace_id_for_page($complete_file_name);
+		if ($ns && $ns == get_mw_namespace_id("File") && (!$export_media)) {
+			print STDERR "Ignoring media file related page: $complete_file_name\n";
+			return ($oldrevid, "ok");
+		}
 		my $file_content;
 		if ($page_deleted) {
 			# Deleting a page usually requires
@@ -1107,10 +1117,12 @@ sub mw_push_file {
 		}
 		$newrevid = $result->{edit}->{newrevid};
 		print STDERR "Pushed file: $new_sha1 - $title\n";
-	} else {
+	} elsif ($export_media) {
 		$newrevid = mw_upload_file($complete_file_name, $new_sha1,
 					   $extension, $page_deleted,
 					   $summary);
+	} else {
+		print STDERR "Ignoring media file $title\n";
 	}
 	$newrevid = ($newrevid or $oldrevid);
 	return ($newrevid, "ok");
@@ -1326,5 +1338,13 @@ sub get_mw_namespace_id {
 		return $id;
 	} else {
 		die "No such namespace $name on MediaWiki.";
+	}
+}
+
+sub get_mw_namespace_id_for_page {
+	if (my ($namespace) = $_[0] =~ /^([^:]*):/) {
+		return get_mw_namespace_id($namespace);
+	} else {
+		return;
 	}
 }
