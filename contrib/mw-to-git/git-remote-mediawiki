@@ -371,6 +371,8 @@ sub get_mw_first_pages {
 sub get_mw_pages {
 	mw_connect_maybe();
 
+	print STDERR "Listing pages on remote wiki...\n";
+
 	my %pages; # hash on page titles to avoid duplicates
 	my $user_defined;
 	if (@tracked_pages) {
@@ -394,6 +396,7 @@ sub get_mw_pages {
 			get_all_mediafiles(\%pages);
 		}
 	}
+	print STDERR (scalar keys %pages) . " pages found.\n";
 	return %pages;
 }
 
