@@ -77,16 +77,16 @@ test_expect_success 'detect renames' '
 		git commit -a -m "Rename file1 to file4" &&
 		git diff-tree -r -M HEAD &&
 		git p4 submit &&
-		p4 filelog //depot/file4 &&
-		p4 filelog //depot/file4 | test_must_fail grep -q "branch from" &&
+		p4 filelog //depot/file4 >filelog &&
+		! grep " from //depot" filelog &&
 
 		git mv file4 file5 &&
 		git commit -a -m "Rename file4 to file5" &&
 		git diff-tree -r -M HEAD &&
 		git config git-p4.detectRenames true &&
 		git p4 submit &&
-		p4 filelog //depot/file5 &&
-		p4 filelog //depot/file5 | grep -q "branch from //depot/file4" &&
+		p4 filelog //depot/file5 >filelog &&
+		grep " from //depot/file4" filelog &&
 
 		git mv file5 file6 &&
 		echo update >>file6 &&
@@ -97,8 +97,8 @@ test_expect_success 'detect renames' '
 		test -n "$level" && test "$level" -gt 0 && test "$level" -lt 98 &&
 		git config git-p4.detectRenames $(($level + 2)) &&
 		git p4 submit &&
-		p4 filelog //depot/file6 &&
-		p4 filelog //depot/file6 | test_must_fail grep -q "branch from" &&
+		p4 filelog //depot/file6 >filelog &&
+		! grep " from //depot" filelog &&
 
 		git mv file6 file7 &&
 		echo update >>file7 &&
@@ -109,8 +109,8 @@ test_expect_success 'detect renames' '
 		test -n "$level" && test "$level" -gt 2 && test "$level" -lt 100 &&
 		git config git-p4.detectRenames $(($level - 2)) &&
 		git p4 submit &&
-		p4 filelog //depot/file7 &&
-		p4 filelog //depot/file7 | grep -q "branch from //depot/file6"
+		p4 filelog //depot/file7 >filelog &&
+		grep " from //depot/file6" filelog
 	)
 '
 
