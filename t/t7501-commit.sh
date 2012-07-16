@@ -138,6 +138,21 @@ test_expect_success '--amend --edit' '
 	test_cmp expect msg
 '
 
+test_expect_success '--amend --edit of empty message' '
+	cat >replace <<-\EOF &&
+	#!/bin/sh
+	echo "amended" >"$1"
+	EOF
+	chmod 755 replace &&
+	git commit --allow-empty --allow-empty-message -m "" &&
+	echo more bongo >file &&
+	git add file &&
+	EDITOR=./replace git commit --edit --amend &&
+	git diff-tree -s --format=%s HEAD >msg &&
+	./replace expect &&
+	test_cmp expect msg
+'
+
 test_expect_success '-m --edit' '
 	echo amended >expect &&
 	git commit --allow-empty -m buffer &&
