@@ -16,6 +16,9 @@
 #include "dir.h"
 #include "diff.h"
 #include "parse-options.h"
+#include "xdiff-interface.h"
+#include "ll-merge.h"
+#include "rerere.h"
 
 /*
  *  --check turns on checking that the working tree matches the
@@ -46,6 +49,7 @@ static int apply_with_reject;
 static int apply_verbosely;
 static int allow_overlap;
 static int no_add;
+static int threeway;
 static const char *fake_ancestor;
 static int line_termination = '\n';
 static unsigned int p_context = UINT_MAX;
@@ -193,12 +197,17 @@ struct patch {
 	unsigned int is_copy:1;
 	unsigned int is_rename:1;
 	unsigned int recount:1;
+	unsigned int conflicted_threeway:1;
+	unsigned int direct_to_threeway:1;
 	struct fragment *fragments;
 	char *result;
 	size_t resultsize;
 	char old_sha1_prefix[41];
 	char new_sha1_prefix[41];
 	struct patch *next;
+
+	/* three-way fallback result */
+	unsigned char threeway_stage[3][20];
 };
 
 static void free_fragment_list(struct fragment *list)
@@ -371,8 +380,8 @@ static void prepare_image(struct image *image, char *buf, size_t len,
 static void clear_image(struct image *image)
 {
 	free(image->buf);
-	image->buf = NULL;
-	image->len = 0;
+	free(image->line_allocated);
+	memset(image, 0, sizeof(*image));
 }
 
 /* fmt must contain _one_ %s and no other substitution */
@@ -2937,26 +2946,30 @@ static int apply_fragments(struct image *img, struct patch *patch)
 	return 0;
 }
 
-static int read_file_or_gitlink(struct cache_entry *ce, struct strbuf *buf)
+static int read_blob_object(struct strbuf *buf, const unsigned char *sha1, unsigned mode)
 {
-	if (!ce)
-		return 0;
-
-	if (S_ISGITLINK(ce->ce_mode)) {
+	if (S_ISGITLINK(mode)) {
 		strbuf_grow(buf, 100);
-		strbuf_addf(buf, "Subproject commit %s\n", sha1_to_hex(ce->sha1));
+		strbuf_addf(buf, "Subproject commit %s\n", sha1_to_hex(sha1));
 	} else {
 		enum object_type type;
 		unsigned long sz;
 		char *result;
 
-		result = read_sha1_file(ce->sha1, &type, &sz);
+		result = read_sha1_file(sha1, &type, &sz);
 		if (!result)
 			return -1;
 		/* XXX read_sha1_file NUL-terminates */
 		strbuf_attach(buf, result, sz, sz + 1);
 	}
 	return 0;
+}
+
+static int read_file_or_gitlink(struct cache_entry *ce, struct strbuf *buf)
+{
+	if (!ce)
+		return 0;
+	return read_blob_object(buf, ce->sha1, ce->ce_mode);
 }
 
 static struct patch *in_fn_table(const char *name)
@@ -2977,9 +2990,15 @@ static struct patch *in_fn_table(const char *name)
  * item->util in the filename table records the status of the path.
  * Usually it points at a patch (whose result records the contents
  * of it after applying it), but it could be PATH_WAS_DELETED for a
- * path that a previously applied patch has already removed.
+ * path that a previously applied patch has already removed, or
+ * PATH_TO_BE_DELETED for a path that a later patch would remove.
+ *
+ * The latter is needed to deal with a case where two paths A and B
+ * are swapped by first renaming A to B and then renaming B to A;
+ * moving A to B should not be prevented due to presense of B as we
+ * will remove it in a later patch.
  */
- #define PATH_TO_BE_DELETED ((struct patch *) -2)
+#define PATH_TO_BE_DELETED ((struct patch *) -2)
 #define PATH_WAS_DELETED ((struct patch *) -1)
 
 static int to_be_deleted(struct patch *patch)
@@ -3031,82 +3050,37 @@ static void prepare_fn_table(struct patch *patch)
 	}
 }
 
-static int apply_data(struct patch *patch, struct stat *st, struct cache_entry *ce)
+static int checkout_target(struct cache_entry *ce, struct stat *st)
 {
-	struct strbuf buf = STRBUF_INIT;
-	struct image image;
-	size_t len;
-	char *img;
-	struct patch *tpatch;
+	struct checkout costate;
 
-	if (!(patch->is_copy || patch->is_rename) &&
-	    (tpatch = in_fn_table(patch->old_name)) != NULL && !to_be_deleted(tpatch)) {
-		if (was_deleted(tpatch)) {
-			return error(_("patch %s has been renamed/deleted"),
-				patch->old_name);
-		}
-		/* We have a patched copy in memory; use that. */
-		strbuf_add(&buf, tpatch->result, tpatch->resultsize);
-	} else if (cached) {
-		if (read_file_or_gitlink(ce, &buf))
-			return error(_("read of %s failed"), patch->old_name);
-	} else if (patch->old_name) {
-		if (S_ISGITLINK(patch->old_mode)) {
-			if (ce) {
-				read_file_or_gitlink(ce, &buf);
-			} else {
-				/*
-				 * There is no way to apply subproject
-				 * patch without looking at the index.
-				 * NEEDSWORK: shouldn't this be flagged
-				 * as an error???
-				 */
-				free_fragment_list(patch->fragments);
-				patch->fragments = NULL;
-			}
-		} else {
-			if (read_old_data(st, patch->old_name, &buf))
-				return error(_("read of %s failed"), patch->old_name);
-		}
-	}
-
-	img = strbuf_detach(&buf, &len);
-	prepare_image(&image, img, len, !patch->is_binary);
-
-	if (apply_fragments(&image, patch) < 0)
-		return -1; /* note with --reject this succeeds. */
-	patch->result = image.buf;
-	patch->resultsize = image.len;
-	add_to_fn_table(patch);
-	free(image.line_allocated);
-
-	if (0 < patch->is_delete && patch->resultsize)
-		return error(_("removal patch leaves file contents"));
-
+	memset(&costate, 0, sizeof(costate));
+	costate.base_dir = "";
+	costate.refresh_cache = 1;
+	if (checkout_entry(ce, &costate, NULL) || lstat(ce->name, st))
+		return error(_("cannot checkout %s"), ce->name);
 	return 0;
 }
 
-static int check_to_create_blob(const char *new_name, int ok_if_exists)
+static struct patch *previous_patch(struct patch *patch, int *gone)
 {
-	struct stat nst;
-	if (!lstat(new_name, &nst)) {
-		if (S_ISDIR(nst.st_mode) || ok_if_exists)
-			return 0;
-		/*
-		 * A leading component of new_name might be a symlink
-		 * that is going to be removed with this patch, but
-		 * still pointing at somewhere that has the path.
-		 * In such a case, path "new_name" does not exist as
-		 * far as git is concerned.
-		 */
-		if (has_symlink_leading_path(new_name, strlen(new_name)))
-			return 0;
+	struct patch *previous;
 
-		return error(_("%s: already exists in working directory"), new_name);
-	}
-	else if ((errno != ENOENT) && (errno != ENOTDIR))
-		return error("%s: %s", new_name, strerror(errno));
-	return 0;
+	*gone = 0;
+	if (patch->is_copy || patch->is_rename)
+		return NULL; /* "git" patches do not depend on the order */
+
+	previous = in_fn_table(patch->old_name);
+	if (!previous)
+		return NULL;
+
+	if (to_be_deleted(previous))
+		return NULL; /* the deletion hasn't happened yet */
+
+	if (was_deleted(previous))
+		*gone = 1;
+
+	return previous;
 }
 
 static int verify_index_match(struct cache_entry *ce, struct stat *st)
@@ -3119,39 +3093,281 @@ static int verify_index_match(struct cache_entry *ce, struct stat *st)
 	return ce_match_stat(ce, st, CE_MATCH_IGNORE_VALID|CE_MATCH_IGNORE_SKIP_WORKTREE);
 }
 
+#define SUBMODULE_PATCH_WITHOUT_INDEX 1
+
+static int load_patch_target(struct strbuf *buf,
+			     struct cache_entry *ce,
+			     struct stat *st,
+			     const char *name,
+			     unsigned expected_mode)
+{
+	if (cached) {
+		if (read_file_or_gitlink(ce, buf))
+			return error(_("read of %s failed"), name);
+	} else if (name) {
+		if (S_ISGITLINK(expected_mode)) {
+			if (ce)
+				return read_file_or_gitlink(ce, buf);
+			else
+				return SUBMODULE_PATCH_WITHOUT_INDEX;
+		} else {
+			if (read_old_data(st, name, buf))
+				return error(_("read of %s failed"), name);
+		}
+	}
+	return 0;
+}
+
+/*
+ * We are about to apply "patch"; populate the "image" with the
+ * current version we have, from the working tree or from the index,
+ * depending on the situation e.g. --cached/--index.  If we are
+ * applying a non-git patch that incrementally updates the tree,
+ * we read from the result of a previous diff.
+ */
+static int load_preimage(struct image *image,
+			 struct patch *patch, struct stat *st, struct cache_entry *ce)
+{
+	struct strbuf buf = STRBUF_INIT;
+	size_t len;
+	char *img;
+	struct patch *previous;
+	int status;
+
+	previous = previous_patch(patch, &status);
+	if (status)
+		return error(_("path %s has been renamed/deleted"),
+			     patch->old_name);
+	if (previous) {
+		/* We have a patched copy in memory; use that. */
+		strbuf_add(&buf, previous->result, previous->resultsize);
+	} else {
+		status = load_patch_target(&buf, ce, st,
+					   patch->old_name, patch->old_mode);
+		if (status < 0)
+			return status;
+		else if (status == SUBMODULE_PATCH_WITHOUT_INDEX) {
+			/*
+			 * There is no way to apply subproject
+			 * patch without looking at the index.
+			 * NEEDSWORK: shouldn't this be flagged
+			 * as an error???
+			 */
+			free_fragment_list(patch->fragments);
+			patch->fragments = NULL;
+		} else if (status) {
+			return error(_("read of %s failed"), patch->old_name);
+		}
+	}
+
+	img = strbuf_detach(&buf, &len);
+	prepare_image(image, img, len, !patch->is_binary);
+	return 0;
+}
+
+static int three_way_merge(struct image *image,
+			   char *path,
+			   const unsigned char *base,
+			   const unsigned char *ours,
+			   const unsigned char *theirs)
+{
+	mmfile_t base_file, our_file, their_file;
+	mmbuffer_t result = { NULL };
+	int status;
+
+	read_mmblob(&base_file, base);
+	read_mmblob(&our_file, ours);
+	read_mmblob(&their_file, theirs);
+	status = ll_merge(&result, path,
+			  &base_file, "base",
+			  &our_file, "ours",
+			  &their_file, "theirs", NULL);
+	free(base_file.ptr);
+	free(our_file.ptr);
+	free(their_file.ptr);
+	if (status < 0 || !result.ptr) {
+		free(result.ptr);
+		return -1;
+	}
+	clear_image(image);
+	image->buf = result.ptr;
+	image->len = result.size;
+
+	return status;
+}
+
+/*
+ * When directly falling back to add/add three-way merge, we read from
+ * the current contents of the new_name.  In no cases other than that
+ * this function will be called.
+ */
+static int load_current(struct image *image, struct patch *patch)
+{
+	struct strbuf buf = STRBUF_INIT;
+	int status, pos;
+	size_t len;
+	char *img;
+	struct stat st;
+	struct cache_entry *ce;
+	char *name = patch->new_name;
+	unsigned mode = patch->new_mode;
+
+	if (!patch->is_new)
+		die("BUG: patch to %s is not a creation", patch->old_name);
+
+	pos = cache_name_pos(name, strlen(name));
+	if (pos < 0)
+		return error(_("%s: does not exist in index"), name);
+	ce = active_cache[pos];
+	if (lstat(name, &st)) {
+		if (errno != ENOENT)
+			return error(_("%s: %s"), name, strerror(errno));
+		if (checkout_target(ce, &st))
+			return -1;
+	}
+	if (verify_index_match(ce, &st))
+		return error(_("%s: does not match index"), name);
+
+	status = load_patch_target(&buf, ce, &st, name, mode);
+	if (status < 0)
+		return status;
+	else if (status)
+		return -1;
+	img = strbuf_detach(&buf, &len);
+	prepare_image(image, img, len, !patch->is_binary);
+	return 0;
+}
+
+static int try_threeway(struct image *image, struct patch *patch,
+			struct stat *st, struct cache_entry *ce)
+{
+	unsigned char pre_sha1[20], post_sha1[20], our_sha1[20];
+	struct strbuf buf = STRBUF_INIT;
+	size_t len;
+	int status;
+	char *img;
+	struct image tmp_image;
+
+	/* No point falling back to 3-way merge in these cases */
+	if (patch->is_delete ||
+	    S_ISGITLINK(patch->old_mode) || S_ISGITLINK(patch->new_mode))
+		return -1;
+
+	/* Preimage the patch was prepared for */
+	if (patch->is_new)
+		write_sha1_file("", 0, blob_type, pre_sha1);
+	else if (get_sha1(patch->old_sha1_prefix, pre_sha1) ||
+		 read_blob_object(&buf, pre_sha1, patch->old_mode))
+		return error("repository lacks the necessary blob to fall back on 3-way merge.");
+
+	fprintf(stderr, "Falling back to three-way merge...\n");
+
+	img = strbuf_detach(&buf, &len);
+	prepare_image(&tmp_image, img, len, 1);
+	/* Apply the patch to get the post image */
+	if (apply_fragments(&tmp_image, patch) < 0) {
+		clear_image(&tmp_image);
+		return -1;
+	}
+	/* post_sha1[] is theirs */
+	write_sha1_file(tmp_image.buf, tmp_image.len, blob_type, post_sha1);
+	clear_image(&tmp_image);
+
+	/* our_sha1[] is ours */
+	if (patch->is_new) {
+		if (load_current(&tmp_image, patch))
+			return error("cannot read the current contents of '%s'",
+				     patch->new_name);
+	} else {
+		if (load_preimage(&tmp_image, patch, st, ce))
+			return error("cannot read the current contents of '%s'",
+				     patch->old_name);
+	}
+	write_sha1_file(tmp_image.buf, tmp_image.len, blob_type, our_sha1);
+	clear_image(&tmp_image);
+
+	/* in-core three-way merge between post and our using pre as base */
+	status = three_way_merge(image, patch->new_name,
+				 pre_sha1, our_sha1, post_sha1);
+	if (status < 0) {
+		fprintf(stderr, "Failed to fall back on three-way merge...\n");
+		return status;
+	}
+
+	if (status) {
+		patch->conflicted_threeway = 1;
+		if (patch->is_new)
+			hashclr(patch->threeway_stage[0]);
+		else
+			hashcpy(patch->threeway_stage[0], pre_sha1);
+		hashcpy(patch->threeway_stage[1], our_sha1);
+		hashcpy(patch->threeway_stage[2], post_sha1);
+		fprintf(stderr, "Applied patch to '%s' with conflicts.\n", patch->new_name);
+	} else {
+		fprintf(stderr, "Applied patch to '%s' cleanly.\n", patch->new_name);
+	}
+	return 0;
+}
+
+static int apply_data(struct patch *patch, struct stat *st, struct cache_entry *ce)
+{
+	struct image image;
+
+	if (load_preimage(&image, patch, st, ce) < 0)
+		return -1;
+
+	if (patch->direct_to_threeway ||
+	    apply_fragments(&image, patch) < 0) {
+		/* Note: with --reject, apply_fragments() returns 0 */
+		if (!threeway || try_threeway(&image, patch, st, ce) < 0)
+			return -1;
+	}
+	patch->result = image.buf;
+	patch->resultsize = image.len;
+	add_to_fn_table(patch);
+	free(image.line_allocated);
+
+	if (0 < patch->is_delete && patch->resultsize)
+		return error(_("removal patch leaves file contents"));
+
+	return 0;
+}
+
+/*
+ * If "patch" that we are looking at modifies or deletes what we have,
+ * we would want it not to lose any local modification we have, either
+ * in the working tree or in the index.
+ *
+ * This also decides if a non-git patch is a creation patch or a
+ * modification to an existing empty file.  We do not check the state
+ * of the current tree for a creation patch in this function; the caller
+ * check_patch() separately makes sure (and errors out otherwise) that
+ * the path the patch creates does not exist in the current tree.
+ */
 static int check_preimage(struct patch *patch, struct cache_entry **ce, struct stat *st)
 {
 	const char *old_name = patch->old_name;
-	struct patch *tpatch = NULL;
-	int stat_ret = 0;
+	struct patch *previous = NULL;
+	int stat_ret = 0, status;
 	unsigned st_mode = 0;
 
-	/*
-	 * Make sure that we do not have local modifications from the
-	 * index when we are looking at the index.  Also make sure
-	 * we have the preimage file to be patched in the work tree,
-	 * unless --cached, which tells git to apply only in the index.
-	 */
 	if (!old_name)
 		return 0;
 
 	assert(patch->is_new <= 0);
+	previous = previous_patch(patch, &status);
 
-	if (!(patch->is_copy || patch->is_rename) &&
-	    (tpatch = in_fn_table(old_name)) != NULL && !to_be_deleted(tpatch)) {
-		if (was_deleted(tpatch))
-			return error(_("%s: has been deleted/renamed"), old_name);
-		st_mode = tpatch->new_mode;
+	if (status)
+		return error(_("path %s has been renamed/deleted"), old_name);
+	if (previous) {
+		st_mode = previous->new_mode;
 	} else if (!cached) {
 		stat_ret = lstat(old_name, st);
 		if (stat_ret && errno != ENOENT)
 			return error(_("%s: %s"), old_name, strerror(errno));
 	}
 
-	if (to_be_deleted(tpatch))
-		tpatch = NULL;
-
-	if (check_index && !tpatch) {
+	if (check_index && !previous) {
 		int pos = cache_name_pos(old_name, strlen(old_name));
 		if (pos < 0) {
 			if (patch->is_new < 0)
@@ -3160,13 +3376,7 @@ static int check_preimage(struct patch *patch, struct cache_entry **ce, struct s
 		}
 		*ce = active_cache[pos];
 		if (stat_ret < 0) {
-			struct checkout costate;
-			/* checkout */
-			memset(&costate, 0, sizeof(costate));
-			costate.base_dir = "";
-			costate.refresh_cache = 1;
-			if (checkout_entry(*ce, &costate, NULL) ||
-			    lstat(old_name, st))
+			if (checkout_target(*ce, st))
 				return -1;
 		}
 		if (!cached && verify_index_match(*ce, st))
@@ -3179,7 +3389,7 @@ static int check_preimage(struct patch *patch, struct cache_entry **ce, struct s
 		return error(_("%s: %s"), old_name, strerror(errno));
 	}
 
-	if (!cached && !tpatch)
+	if (!cached && !previous)
 		st_mode = ce_mode_from_stat(*ce, st->st_mode);
 
 	if (patch->is_new < 0)
@@ -3200,6 +3410,41 @@ static int check_preimage(struct patch *patch, struct cache_entry **ce, struct s
 	patch->is_delete = 0;
 	free(patch->old_name);
 	patch->old_name = NULL;
+	return 0;
+}
+
+
+#define EXISTS_IN_INDEX 1
+#define EXISTS_IN_WORKTREE 2
+
+static int check_to_create(const char *new_name, int ok_if_exists)
+{
+	struct stat nst;
+
+	if (check_index &&
+	    cache_name_pos(new_name, strlen(new_name)) >= 0 &&
+	    !ok_if_exists)
+		return EXISTS_IN_INDEX;
+	if (cached)
+		return 0;
+
+	if (!lstat(new_name, &nst)) {
+		if (S_ISDIR(nst.st_mode) || ok_if_exists)
+			return 0;
+		/*
+		 * A leading component of new_name might be a symlink
+		 * that is going to be removed with this patch, but
+		 * still pointing at somewhere that has the path.
+		 * In such a case, path "new_name" does not exist as
+		 * far as git is concerned.
+		 */
+		if (has_symlink_leading_path(new_name, strlen(new_name)))
+			return 0;
+
+		return EXISTS_IN_WORKTREE;
+	} else if ((errno != ENOENT) && (errno != ENOTDIR)) {
+		return error("%s: %s", new_name, strerror(errno));
+	}
 	return 0;
 }
 
@@ -3225,31 +3470,45 @@ static int check_patch(struct patch *patch)
 		return status;
 	old_name = patch->old_name;
 
+	/*
+	 * A type-change diff is always split into a patch to delete
+	 * old, immediately followed by a patch to create new (see
+	 * diff.c::run_diff()); in such a case it is Ok that the entry
+	 * to be deleted by the previous patch is still in the working
+	 * tree and in the index.
+	 *
+	 * A patch to swap-rename between A and B would first rename A
+	 * to B and then rename B to A.  While applying the first one,
+	 * the presense of B should not stop A from getting renamed to
+	 * B; ask to_be_deleted() about the later rename.  Removal of
+	 * B and rename from A to B is handled the same way by asking
+	 * was_deleted().
+	 */
 	if ((tpatch = in_fn_table(new_name)) &&
-			(was_deleted(tpatch) || to_be_deleted(tpatch)))
-		/*
-		 * A type-change diff is always split into a patch to
-		 * delete old, immediately followed by a patch to
-		 * create new (see diff.c::run_diff()); in such a case
-		 * it is Ok that the entry to be deleted by the
-		 * previous patch is still in the working tree and in
-		 * the index.
-		 */
+	    (was_deleted(tpatch) || to_be_deleted(tpatch)))
 		ok_if_exists = 1;
 	else
 		ok_if_exists = 0;
 
 	if (new_name &&
 	    ((0 < patch->is_new) | (0 < patch->is_rename) | patch->is_copy)) {
-		if (check_index &&
-		    cache_name_pos(new_name, strlen(new_name)) >= 0 &&
-		    !ok_if_exists)
+		int err = check_to_create(new_name, ok_if_exists);
+
+		if (err && threeway) {
+			patch->direct_to_threeway = 1;
+		} else switch (err) {
+		case 0:
+			break; /* happy */
+		case EXISTS_IN_INDEX:
 			return error(_("%s: already exists in index"), new_name);
-		if (!cached) {
-			int err = check_to_create_blob(new_name, ok_if_exists);
-			if (err)
-				return err;
+			break;
+		case EXISTS_IN_WORKTREE:
+			return error(_("%s: already exists in working directory"),
+				     new_name);
+		default:
+			return err;
 		}
+
 		if (!patch->new_mode) {
 			if (0 < patch->is_new)
 				patch->new_mode = S_IFREG | 0644;
@@ -3612,6 +3871,32 @@ static void create_one_file(char *path, unsigned mode, const char *buf, unsigned
 	die_errno(_("unable to write file '%s' mode %o"), path, mode);
 }
 
+static void add_conflicted_stages_file(struct patch *patch)
+{
+	int stage, namelen;
+	unsigned ce_size, mode;
+	struct cache_entry *ce;
+
+	if (!update_index)
+		return;
+	namelen = strlen(patch->new_name);
+	ce_size = cache_entry_size(namelen);
+	mode = patch->new_mode ? patch->new_mode : (S_IFREG | 0644);
+
+	remove_file_from_cache(patch->new_name);
+	for (stage = 1; stage < 4; stage++) {
+		if (is_null_sha1(patch->threeway_stage[stage - 1]))
+			continue;
+		ce = xcalloc(1, ce_size);
+		memcpy(ce->name, patch->new_name, namelen);
+		ce->ce_mode = create_ce_mode(mode);
+		ce->ce_flags = create_ce_flags(namelen, stage);
+		hashcpy(ce->sha1, patch->threeway_stage[stage - 1]);
+		if (add_cache_entry(ce, ADD_CACHE_OK_TO_ADD) < 0)
+			die(_("unable to add cache entry for %s"), patch->new_name);
+	}
+}
+
 static void create_file(struct patch *patch)
 {
 	char *path = patch->new_name;
@@ -3622,7 +3907,11 @@ static void create_file(struct patch *patch)
 	if (!mode)
 		mode = S_IFREG | 0644;
 	create_one_file(path, mode, buf, size);
-	add_index_file(path, mode, buf, size);
+
+	if (patch->conflicted_threeway)
+		add_conflicted_stages_file(patch);
+	else
+		add_index_file(path, mode, buf, size);
 }
 
 /* phase zero is to remove, phase one is to create */
@@ -3724,6 +4013,7 @@ static int write_out_results(struct patch *list)
 	int phase;
 	int errs = 0;
 	struct patch *l;
+	struct string_list cpath = STRING_LIST_INIT_DUP;
 
 	for (phase = 0; phase < 2; phase++) {
 		l = list;
@@ -3732,12 +4022,30 @@ static int write_out_results(struct patch *list)
 				errs = 1;
 			else {
 				write_out_one_result(l, phase);
-				if (phase == 1 && write_out_one_reject(l))
-					errs = 1;
+				if (phase == 1) {
+					if (write_out_one_reject(l))
+						errs = 1;
+					if (l->conflicted_threeway) {
+						string_list_append(&cpath, l->new_name);
+						errs = 1;
+					}
+				}
 			}
 			l = l->next;
 		}
 	}
+
+	if (cpath.nr) {
+		struct string_list_item *item;
+
+		sort_string_list(&cpath);
+		for_each_string_list_item(item, &cpath)
+			fprintf(stderr, "U %s\n", item->string);
+		string_list_clear(&cpath, 0);
+
+		rerere(0);
+	}
+
 	return errs;
 }
 
@@ -3860,8 +4168,12 @@ static int apply_patch(int fd, const char *filename, int options)
 	    !apply_with_reject)
 		exit(1);
 
-	if (apply && write_out_results(list))
-		exit(1);
+	if (apply && write_out_results(list)) {
+		if (apply_with_reject)
+			exit(1);
+		/* with --3way, we still need to write the index out */
+		return 1;
+	}
 
 	if (fake_ancestor)
 		build_fake_ancestor(list, fake_ancestor);
@@ -3994,6 +4306,8 @@ int cmd_apply(int argc, const char **argv, const char *prefix_)
 			N_("apply a patch without touching the working tree")),
 		OPT_BOOLEAN(0, "apply", &force_apply,
 			N_("also apply the patch (use with --stat/--summary/--check)")),
+		OPT_BOOL('3', "3way", &threeway,
+			 N_( "attempt three-way merge if a patch does not apply")),
 		OPT_FILENAME(0, "build-fake-ancestor", &fake_ancestor,
 			N_("build a temporary index based on embedded index information")),
 		{ OPTION_CALLBACK, 'z', NULL, NULL, NULL,
@@ -4042,6 +4356,15 @@ int cmd_apply(int argc, const char **argv, const char *prefix_)
 	argc = parse_options(argc, argv, prefix, builtin_apply_options,
 			apply_usage, 0);
 
+	if (apply_with_reject && threeway)
+		die("--reject and --3way cannot be used together.");
+	if (cached && threeway)
+		die("--cached and --3way cannot be used together.");
+	if (threeway) {
+		if (is_not_gitdir)
+			die(_("--3way outside a repository"));
+		check_index = 1;
+	}
 	if (apply_with_reject)
 		apply = apply_verbosely = 1;
 	if (!force_apply && (diffstat || numstat || summary || check || fake_ancestor))
