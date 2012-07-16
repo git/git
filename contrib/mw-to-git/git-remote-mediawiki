@@ -910,6 +910,10 @@ sub mw_import_revids {
 	my $last_timestamp = 0; # Placeholer in case $rev->timestamp is undefined
 
 	foreach my $pagerevid (@$revision_ids) {
+	        # Count page even if we skip it, since we display
+		# $n/$total and $total includes skipped pages.
+		$n++;
+
 		# fetch the content of the pages
 		my $query = {
 			action => 'query',
@@ -924,6 +928,11 @@ sub mw_import_revids {
 			die "Failed to retrieve modified page for revision $pagerevid";
 		}
 
+		if (defined($result->{query}->{badrevids}->{$pagerevid})) {
+			# The revision id does not exist on the remote wiki.
+			next;
+		}
+
 		if (!defined($result->{query}->{pages})) {
 			die "Invalid revision $pagerevid.";
 		}
@@ -931,10 +940,6 @@ sub mw_import_revids {
 		my @result_pages = values(%{$result->{query}->{pages}});
 		my $result_page = $result_pages[0];
 		my $rev = $result_pages[0]->{revisions}->[0];
-
-	        # Count page even if we skip it, since we display
-		# $n/$total and $total includes skipped pages.
-		$n++;
 
 		my $page_title = $result_page->{title};
 
