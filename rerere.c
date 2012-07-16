@@ -524,7 +524,7 @@ static int do_plain_rerere(struct string_list *rr, int fd)
 				continue;
 			hex = xstrdup(sha1_to_hex(sha1));
 			string_list_insert(rr, path)->util = hex;
-			if (mkdir(git_path("rr-cache/%s", hex), 0755))
+			if (mkdir_in_gitdir(git_path("rr-cache/%s", hex)))
 				continue;
 			handle_file(path, NULL, rerere_path(hex, "preimage"));
 			fprintf(stderr, "Recorded preimage for '%s'\n", path);
