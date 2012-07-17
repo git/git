@@ -968,8 +968,11 @@ sub mw_import_revids {
 		# Differentiates classic pages and media files.
 		my ($namespace, $filename) = $page_title =~ /^([^:]*):(.*)$/;
 		my %mediafile;
-		if ($namespace && get_mw_namespace_id($namespace) == get_mw_namespace_id("File")) {
-			%mediafile = get_mw_mediafile_for_page_revision($filename, $rev->{timestamp});
+		if ($namespace) {
+			my $id = get_mw_namespace_id($namespace);
+			if ($id && $id == get_mw_namespace_id("File")) {
+				%mediafile = get_mw_mediafile_for_page_revision($filename, $rev->{timestamp});
+			}
 		}
 		# If this is a revision of the media page for new version
 		# of a file do one common commit for both file and media page.
@@ -1319,7 +1322,11 @@ sub get_mw_namespace_id {
 		chomp(@temp);
 		foreach my $ns (@temp) {
 			my ($n, $id) = split(/:/, $ns);
-			$namespace_id{$n} = $id;
+			if ($id eq 'notANameSpace') {
+				$namespace_id{$n} = {is_namespace => 0};
+			} else {
+				$namespace_id{$n} = {is_namespace => 1, id => $id};
+			}
 			$cached_mw_namespace_id{$n} = 1;
 		}
 	}
@@ -1337,28 +1344,38 @@ sub get_mw_namespace_id {
 
 	        while (my ($id, $ns) = each(%{$result->{query}->{namespaces}})) {
 	                if (defined($ns->{id}) && defined($ns->{canonical})) {
-				$namespace_id{$ns->{canonical}} = $ns->{id};
+				$namespace_id{$ns->{canonical}} = {is_namespace => 1, id => $ns->{id}};
 				if ($ns->{'*'}) {
 					# alias (e.g. french Fichier: as alias for canonical File:)
-					$namespace_id{$ns->{'*'}} = $ns->{id};
+					$namespace_id{$ns->{'*'}} = {is_namespace => 1, id => $ns->{id}};
 				}
 			}
 	        }
 	}
 
-	my $id = $namespace_id{$name};
+	my $ns = $namespace_id{$name};
+	my $id;
 
-	if (defined $id) {
-		# Store explicitely requested namespaces on disk
-		if (!exists $cached_mw_namespace_id{$name}) {
-			run_git("config --add remote.". $remotename
-				.".namespaceCache \"". $name .":". $id ."\"");
-			$cached_mw_namespace_id{$name} = 1;
-		}
-		return $id;
-	} else {
-		die "No such namespace $name on MediaWiki.";
+	unless (defined $ns) {
+		print STDERR "No such namespace $name on MediaWiki.\n";
+		$ns = {is_namespace => 0};
+		$namespace_id{$name} = $ns;
 	}
+
+	if ($ns->{is_namespace}) {
+		$id = $ns->{id};
+	}
+
+	# Store "notANameSpace" as special value for inexisting namespaces
+	my $store_id = ($id || 'notANameSpace');
+
+	# Store explicitely requested namespaces on disk
+	if (!exists $cached_mw_namespace_id{$name}) {
+		run_git("config --add remote.". $remotename
+			.".namespaceCache \"". $name .":". $store_id ."\"");
+		$cached_mw_namespace_id{$name} = 1;
+	}
+	return $id;
 }
 
 sub get_mw_namespace_id_for_page {
