@@ -163,32 +163,6 @@ while (<STDIN>) {
 
 ## credential API management (generic functions)
 
-sub credential_from_url {
-	my $url = shift;
-	my $parsed = URI->new($url);
-	my %credential;
-
-	if ($parsed->scheme) {
-		$credential{protocol} = $parsed->scheme;
-	}
-	if ($parsed->host) {
-		$credential{host} = $parsed->host;
-	}
-	if ($parsed->path) {
-		$credential{path} = $parsed->path;
-	}
-	if ($parsed->userinfo) {
-		if ($parsed->userinfo =~ /([^:]*):(.*)/) {
-			$credential{username} = $1;
-			$credential{password} = $2;
-		} else {
-			$credential{username} = $parsed->userinfo;
-		}
-	}
-
-	return %credential;
-}
-
 sub credential_read {
 	my %credential;
 	my $reader = shift;
@@ -206,8 +180,10 @@ sub credential_read {
 sub credential_write {
 	my $credential = shift;
 	my $writer = shift;
+	# url overwrites other fields, so it must come first
+	print $writer "url=$credential->{url}\n" if exists $credential->{url};
 	while (my ($key, $value) = each(%$credential) ) {
-		if (length $value) {
+		if (length $value && $key ne 'url') {
 			print $writer "$key=$value\n";
 		}
 	}
@@ -246,7 +222,7 @@ sub mw_connect_maybe {
 	$mediawiki = MediaWiki::API->new;
 	$mediawiki->{config}->{api_url} = "$url/api.php";
 	if ($wiki_login) {
-		my %credential = credential_from_url($url);
+		my %credential = (url => $url);
 		$credential{username} = $wiki_login;
 		$credential{password} = $wiki_passwd;
 		credential_run("fill", \%credential);
