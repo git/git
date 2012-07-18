@@ -207,7 +207,7 @@ sub credential_write {
 	my $credential = shift;
 	my $writer = shift;
 	while (my ($key, $value) = each(%$credential) ) {
-		if ($value) {
+		if (length $value) {
 			print $writer "$key=$value\n";
 		}
 	}
