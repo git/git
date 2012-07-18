@@ -48,7 +48,26 @@ test_expect_success 'GIT_EXTERNAL_DIFF environment and --no-ext-diff' '
 
 '
 
+test_expect_success SYMLINKS 'typechange diff' '
+	rm -f file &&
+	ln -s elif file &&
+	GIT_EXTERNAL_DIFF=echo git diff  | {
+		read path oldfile oldhex oldmode newfile newhex newmode &&
+		test "z$path" = zfile &&
+		test "z$oldmode" = z100644 &&
+		test "z$newhex" = "z$_z40" &&
+		test "z$newmode" = z120000 &&
+		oh=$(git rev-parse --verify HEAD:file) &&
+		test "z$oh" = "z$oldhex"
+	} &&
+	GIT_EXTERNAL_DIFF=echo git diff --no-ext-diff >actual &&
+	git diff >expect &&
+	test_cmp expect actual
+'
+
 test_expect_success 'diff attribute' '
+	git reset --hard &&
+	echo third >file &&
 
 	git config diff.parrot.command echo &&
 

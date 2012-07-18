@@ -2913,9 +2913,8 @@ static void run_diff_cmd(const char *pgm,
 	int complete_rewrite = (p->status == DIFF_STATUS_MODIFIED) && p->score;
 	int must_show_header = 0;
 
-	if (!DIFF_OPT_TST(o, ALLOW_EXTERNAL))
-		pgm = NULL;
-	else {
+
+	if (DIFF_OPT_TST(o, ALLOW_EXTERNAL)) {
 		struct userdiff_driver *drv = userdiff_find_by_path(attr_path);
 		if (drv && drv->external)
 			pgm = drv->external;
@@ -2994,6 +2993,9 @@ static void run_diff(struct diff_filepair *p, struct diff_options *o)
 	attr_path = name;
 	if (o->prefix_length)
 		strip_prefix(o->prefix_length, &name, &other);
+
+	if (!DIFF_OPT_TST(o, ALLOW_EXTERNAL))
+		pgm = NULL;
 
 	if (DIFF_PAIR_UNMERGED(p)) {
 		run_diff_cmd(pgm, name, NULL, attr_path,
