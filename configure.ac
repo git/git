@@ -203,7 +203,7 @@ AC_ARG_ENABLE([jsmin],
 [
   JSMIN=$enableval;
   AC_MSG_NOTICE([Setting JSMIN to '$JSMIN' to enable JavaScript minifying])
-  GIT_CONF_SUBST([JSMIN], [$enableval]);
+  GIT_CONF_SUBST([JSMIN], [$enableval])
 ])
 
 # Define option to enable CSS minification
@@ -213,7 +213,7 @@ AC_ARG_ENABLE([cssmin],
 [
   CSSMIN=$enableval;
   AC_MSG_NOTICE([Setting CSSMIN to '$CSSMIN' to enable CSS minifying])
-  GIT_CONF_SUBST([CSSMIN], [$enableval]);
+  GIT_CONF_SUBST([CSSMIN], [$enableval])
 ])
 
 ## Site configuration (override autodetection)
