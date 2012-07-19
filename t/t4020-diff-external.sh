@@ -65,6 +65,33 @@ test_expect_success SYMLINKS 'typechange diff' '
 	test_cmp expect actual
 '
 
+test_expect_success 'diff.external' '
+	git reset --hard &&
+	echo third >file &&
+	test_config diff.external echo &&
+	git diff | {
+		read path oldfile oldhex oldmode newfile newhex newmode &&
+		test "z$path" = zfile &&
+		test "z$oldmode" = z100644 &&
+		test "z$newhex" = "z$_z40" &&
+		test "z$newmode" = z100644 &&
+		oh=$(git rev-parse --verify HEAD:file) &&
+		test "z$oh" = "z$oldhex"
+	}
+'
+
+test_expect_success 'diff.external should apply only to diff' '
+	test_config diff.external echo &&
+	git log -p -1 HEAD |
+	grep "^diff --git a/file b/file"
+'
+
+test_expect_success 'diff.external and --no-ext-diff' '
+	test_config diff.external echo &&
+	git diff --no-ext-diff |
+	grep "^diff --git a/file b/file"
+'
+
 test_expect_success 'diff attribute' '
 	git reset --hard &&
 	echo third >file &&
@@ -130,6 +157,19 @@ test_expect_success 'diff attribute and --no-ext-diff' '
 	git diff --no-ext-diff |
 	grep "^diff --git a/file b/file"
 
+'
+
+test_expect_success 'GIT_EXTERNAL_DIFF trumps diff.external' '
+	>.gitattributes &&
+	test_config diff.external "echo ext-global" &&
+	GIT_EXTERNAL_DIFF="echo ext-env" git diff | grep ext-env
+'
+
+test_expect_success 'attributes trump GIT_EXTERNAL_DIFF and diff.external' '
+	test_config diff.foo.command "echo ext-attribute" &&
+	test_config diff.external "echo ext-global" &&
+	echo "file diff=foo" >.gitattributes &&
+	GIT_EXTERNAL_DIFF="echo ext-env" git diff | grep ext-attribute
 '
 
 test_expect_success 'no diff with -diff' '
