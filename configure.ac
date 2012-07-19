@@ -3,11 +3,11 @@
 
 ## Definitions of private macros.
 
-# GIT_CONF_APPEND_LINE(LINE)
-# --------------------------
-# Append LINE to file ${config_append}
+# GIT_CONF_APPEND_LINE(VAL, VAR)
+# ------------------------------
+# Append the line "VAR=VAL" to file ${config_append}
 AC_DEFUN([GIT_CONF_APPEND_LINE],
-         [echo "$1" >> "${config_append}"])
+         [echo "$1=$2" >> "${config_append}"])
 
 # GIT_ARG_SET_PATH(PROGRAM)
 # -------------------------
@@ -34,8 +34,8 @@ AC_DEFUN([GIT_CONF_APPEND_PATH],
 	if test -n "$2"; then
 		GIT_UC_PROGRAM[]_PATH=$withval
 		AC_MSG_NOTICE([Disabling use of ${PROGRAM}])
-		GIT_CONF_APPEND_LINE(NO_${PROGRAM}=YesPlease)
-		GIT_CONF_APPEND_LINE(${PROGRAM}_PATH=)
+		GIT_CONF_APPEND_LINE([NO_${PROGRAM}], [YesPlease])
+		GIT_CONF_APPEND_LINE([${PROGRAM}_PATH], [])
 	else
 		AC_MSG_ERROR([You cannot use git without $1])
 	fi
@@ -45,7 +45,7 @@ AC_DEFUN([GIT_CONF_APPEND_PATH],
 	else
 		GIT_UC_PROGRAM[]_PATH=$withval
 		AC_MSG_NOTICE([Setting GIT_UC_PROGRAM[]_PATH to $withval])
-		GIT_CONF_APPEND_LINE(${PROGRAM}_PATH=$withval)
+		GIT_CONF_APPEND_LINE([${PROGRAM}_PATH], [$withval])
 	fi
     fi
     m4_popdef([GIT_UC_PROGRAM])])
@@ -67,7 +67,7 @@ AC_DEFUN([GIT_PARSE_WITH],
 	NO_[]GIT_UC_PACKAGE=
 	GIT_UC_PACKAGE[]DIR=$withval
 	AC_MSG_NOTICE([Setting GIT_UC_PACKAGE[]DIR to $withval])
-	GIT_CONF_APPEND_LINE(${PACKAGE}DIR=$withval)
+	GIT_CONF_APPEND_LINE([${PACKAGE}DIR], [$withval])
     fi
     m4_popdef([GIT_UC_PACKAGE])])
 
@@ -87,7 +87,7 @@ AC_DEFUN([GIT_PARSE_WITH_SET_MAKE_VAR],
 		     [a value for $1 ($2).  Maybe you do...?])
   fi
   AC_MSG_NOTICE([Setting $2 to $withval])
-  GIT_CONF_APPEND_LINE($2=$withval)
+  GIT_CONF_APPEND_LINE([$2], [$withval])
  fi)])# GIT_PARSE_WITH_SET_MAKE_VAR
 
 #
@@ -150,7 +150,7 @@ AC_ARG_WITH([sane-tool-path],
   else
     AC_MSG_NOTICE([Setting SANE_TOOL_PATH to '$withval'])
   fi
-  GIT_CONF_APPEND_LINE([SANE_TOOL_PATH=$withval])],
+  GIT_CONF_APPEND_LINE([SANE_TOOL_PATH], [$withval])],
   [# If the "--with-sane-tool-path" option was not given, don't touch
    # SANE_TOOL_PATH here, but let defaults in Makefile take care of it.
    # This should minimize spurious differences in the behaviour of the
@@ -169,7 +169,7 @@ AC_ARG_WITH([lib],
   else
 	lib=$withval
 	AC_MSG_NOTICE([Setting lib to '$lib'])
-	GIT_CONF_APPEND_LINE(lib=$withval)
+	GIT_CONF_APPEND_LINE([lib], [$withval])
   fi])
 
 if test -z "$lib"; then
@@ -205,7 +205,7 @@ AC_ARG_ENABLE([jsmin],
 [
   JSMIN=$enableval;
   AC_MSG_NOTICE([Setting JSMIN to '$JSMIN' to enable JavaScript minifying])
-  GIT_CONF_APPEND_LINE(JSMIN=$enableval);
+  GIT_CONF_APPEND_LINE([JSMIN], [$enableval]);
 ])
 
 # Define option to enable CSS minification
@@ -215,7 +215,7 @@ AC_ARG_ENABLE([cssmin],
 [
   CSSMIN=$enableval;
   AC_MSG_NOTICE([Setting CSSMIN to '$CSSMIN' to enable CSS minifying])
-  GIT_CONF_APPEND_LINE(CSSMIN=$enableval);
+  GIT_CONF_APPEND_LINE([CSSMIN], [$enableval]);
 ])
 
 ## Site configuration (override autodetection)
@@ -256,7 +256,7 @@ AS_HELP_STRING([],           [ARG can be also prefix for libpcre library and hea
 	USE_LIBPCRE=YesPlease
 	LIBPCREDIR=$withval
 	AC_MSG_NOTICE([Setting LIBPCREDIR to $withval])
-	GIT_CONF_APPEND_LINE(LIBPCREDIR=$withval)
+	GIT_CONF_APPEND_LINE([LIBPCREDIR], [$withval])
     fi)
 #
 # Define NO_CURL if you do not have curl installed.  git-http-pull and
