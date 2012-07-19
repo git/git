@@ -29,13 +29,12 @@ AC_DEFUN([GIT_ARG_SET_PATH],
 # --without-PROGRAM is used.
 AC_DEFUN([GIT_CONF_APPEND_PATH],
     [m4_pushdef([GIT_UC_PROGRAM], m4_toupper([$1]))dnl
-    PROGRAM=GIT_UC_PROGRAM
     if test "$withval" = "no"; then
 	if test -n "$2"; then
 		GIT_UC_PROGRAM[]_PATH=$withval
-		AC_MSG_NOTICE([Disabling use of ${PROGRAM}])
-		GIT_CONF_SUBST([NO_${PROGRAM}], [YesPlease])
-		GIT_CONF_SUBST([${PROGRAM}_PATH], [])
+		AC_MSG_NOTICE([Disabling use of GIT_UC_PROGRAM])
+		GIT_CONF_SUBST([NO_]GIT_UC_PROGRAM, [YesPlease])
+		GIT_CONF_SUBST(GIT_UC_PROGRAM[]_PATH, [])
 	else
 		AC_MSG_ERROR([You cannot use git without $1])
 	fi
@@ -45,7 +44,7 @@ AC_DEFUN([GIT_CONF_APPEND_PATH],
 	else
 		GIT_UC_PROGRAM[]_PATH=$withval
 		AC_MSG_NOTICE([Setting GIT_UC_PROGRAM[]_PATH to $withval])
-		GIT_CONF_SUBST([${PROGRAM}_PATH], [$withval])
+		GIT_CONF_SUBST(GIT_UC_PROGRAM[]_PATH, [$withval])
 	fi
     fi
     m4_popdef([GIT_UC_PROGRAM])])
@@ -58,7 +57,6 @@ AC_DEFUN([GIT_CONF_APPEND_PATH],
 # * Unset NO_PACKAGE for --with-PACKAGE without ARG
 AC_DEFUN([GIT_PARSE_WITH],
     [m4_pushdef([GIT_UC_PACKAGE], m4_toupper([$1]))dnl
-    PACKAGE=GIT_UC_PACKAGE
     if test "$withval" = "no"; then
 	NO_[]GIT_UC_PACKAGE=YesPlease
     elif test "$withval" = "yes"; then
@@ -67,7 +65,7 @@ AC_DEFUN([GIT_PARSE_WITH],
 	NO_[]GIT_UC_PACKAGE=
 	GIT_UC_PACKAGE[]DIR=$withval
 	AC_MSG_NOTICE([Setting GIT_UC_PACKAGE[]DIR to $withval])
-	GIT_CONF_SUBST([${PACKAGE}DIR], [$withval])
+	GIT_CONF_SUBST(GIT_UC_PACKAGE[DIR], [$withval])
     fi
     m4_popdef([GIT_UC_PACKAGE])])
 
