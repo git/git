@@ -148,6 +148,8 @@ AC_CONFIG_SRCDIR([git.c])
 config_file=config.mak.autogen
 config_in=config.mak.in
 
+GIT_CONF_SUBST([AUTOCONFIGURED], [YesPlease])
+
 # Directories holding "saner" versions of common or POSIX binaries.
 AC_ARG_WITH([sane-tool-path],
   [AS_HELP_STRING(

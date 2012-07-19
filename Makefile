@@ -2158,6 +2158,18 @@ configure: configure.ac GIT-VERSION-FILE
 	autoconf -o $@ $<+ && \
 	$(RM) $<+
 
+ifdef AUTOCONFIGURED
+config.status: configure
+	$(QUIET_GEN)if test -f config.status; then \
+	  ./config.status --recheck; \
+	else \
+	  ./configure; \
+	fi
+reconfigure config.mak.autogen: config.status
+	$(QUIET_GEN)./config.status
+.PHONY: reconfigure # This is a convenience target.
+endif
+
 XDIFF_OBJS += xdiff/xdiffi.o
 XDIFF_OBJS += xdiff/xprepare.o
 XDIFF_OBJS += xdiff/xutils.o
