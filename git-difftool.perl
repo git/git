@@ -15,6 +15,7 @@ use strict;
 use warnings;
 use File::Basename qw(dirname);
 use File::Copy;
+use File::Compare;
 use File::Find;
 use File::stat;
 use File::Path qw(mkpath);
@@ -336,8 +337,10 @@ if (defined($dirdiff)) {
 	# files were modified during the diff, then the changes
 	# should be copied back to the working tree
 	for my $file (@working_tree) {
-		copy("$b/$file", "$workdir/$file") or die $!;
-		chmod(stat("$b/$file")->mode, "$workdir/$file") or die $!;
+		if (-e "$b/$file" && compare("$b/$file", "$workdir/$file")) {
+			copy("$b/$file", "$workdir/$file") or die $!;
+			chmod(stat("$b/$file")->mode, "$workdir/$file") or die $!;
+		}
 	}
 } else {
 	if (defined($prompt)) {
