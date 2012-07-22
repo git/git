@@ -636,4 +636,17 @@ test_expect_success 'submodule update properly revives a moved submodule' '
 	)
 '
 
+test_expect_success SYMLINKS 'submodule update can handle symbolic links in pwd' '
+	mkdir -p linked/dir &&
+	ln -s linked/dir linkto &&
+	(
+		cd linkto &&
+		git clone "$TRASH_DIRECTORY"/super_update_r2 super &&
+		(
+			cd super &&
+			git submodule update --init --recursive
+		)
+	)
+'
+
 test_done
