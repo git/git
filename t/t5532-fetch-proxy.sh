@@ -15,7 +15,7 @@ test_expect_success 'setup remote repo' '
 cat >proxy <<'EOF'
 #!/bin/sh
 echo >&2 "proxying for $*"
-cmd=`perl -e '
+cmd=`"$PERL_PATH" -e '
 	read(STDIN, $buf, 4);
 	my $n = hex($buf) - 4;
 	read(STDIN, $buf, $n);

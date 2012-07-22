@@ -76,11 +76,11 @@ test_decode_color () {
 }
 
 nul_to_q () {
-	perl -pe 'y/\000/Q/'
+	"$PERL_PATH" -pe 'y/\000/Q/'
 }
 
 q_to_nul () {
-	perl -pe 'y/Q/\000/'
+	"$PERL_PATH" -pe 'y/Q/\000/'
 }
 
 q_to_cr () {
