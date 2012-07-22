@@ -181,8 +181,11 @@ module_clone()
 		rm -f "$gitdir/index"
 	else
 		mkdir -p "$gitdir_base"
-		git clone $quiet -n ${reference:+"$reference"} \
-			--separate-git-dir "$gitdir" "$url" "$sm_path" ||
+		(
+			clear_local_git_env
+			git clone $quiet -n ${reference:+"$reference"} \
+				--separate-git-dir "$gitdir" "$url" "$sm_path"
+		) ||
 		die "$(eval_gettext "Clone of '\$url' into submodule path '\$sm_path' failed")"
 	fi
 
