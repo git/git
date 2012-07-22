@@ -204,7 +204,7 @@ receive-pack::
 	can push anything into the repository, including removal
 	of refs).  This is solely meant for a closed LAN setting
 	where everybody is friendly.  This service can be
-	enabled by `daemon.receivepack` configuration item to
+	enabled by setting `daemon.receivepack` configuration item to
 	`true`.
 
 EXAMPLES
