@@ -24,7 +24,6 @@ static char default_wt_status_colors[][COLOR_MAXLEN] = {
 	GIT_COLOR_GREEN,  /* WT_STATUS_LOCAL_BRANCH */
 	GIT_COLOR_RED,    /* WT_STATUS_REMOTE_BRANCH */
 	GIT_COLOR_NIL,    /* WT_STATUS_ONBRANCH */
-	GIT_COLOR_NORMAL, /* WT_STATUS_IN_PROGRESS */
 };
 
 static const char *color(int slot, struct wt_status *s)
@@ -931,7 +930,7 @@ static void show_bisect_in_progress(struct wt_status *s,
 
 static void wt_status_print_state(struct wt_status *s)
 {
-	const char *state_color = color(WT_STATUS_IN_PROGRESS, s);
+	const char *state_color = color(WT_STATUS_HEADER, s);
 	struct wt_status_state state;
 	struct stat st;
 
