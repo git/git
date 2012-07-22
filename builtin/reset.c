@@ -276,7 +276,7 @@ int cmd_reset(int argc, const char **argv, const char *prefix)
 		 * Otherwise, argv[i] could be either <rev> or <paths> and
 		 * has to be unambiguous.
 		 */
-		else if (!get_sha1(argv[i], sha1)) {
+		else if (!get_sha1_committish(argv[i], sha1)) {
 			/*
 			 * Ok, argv[i] looks like a rev; it should not
 			 * be a filename.
@@ -289,9 +289,15 @@ int cmd_reset(int argc, const char **argv, const char *prefix)
 		}
 	}
 
-	if (get_sha1(rev, sha1))
+	if (get_sha1_committish(rev, sha1))
 		die(_("Failed to resolve '%s' as a valid ref."), rev);
 
+	/*
+	 * NOTE: As "git reset $treeish -- $path" should be usable on
+	 * any tree-ish, this is not strictly correct. We are not
+	 * moving the HEAD to any commit; we are merely resetting the
+	 * entries in the index to that of a treeish.
+	 */
 	commit = lookup_commit_reference(sha1);
 	if (!commit)
 		die(_("Could not parse object '%s'."), rev);

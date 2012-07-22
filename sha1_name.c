@@ -9,14 +9,82 @@
 
 static int get_sha1_oneline(const char *, unsigned char *, struct commit_list *);
 
-static int find_short_object_filename(int len, const char *name, unsigned char *sha1)
+typedef int (*disambiguate_hint_fn)(const unsigned char *, void *);
+
+struct disambiguate_state {
+	disambiguate_hint_fn fn;
+	void *cb_data;
+	unsigned char candidate[20];
+	unsigned candidate_exists:1;
+	unsigned candidate_checked:1;
+	unsigned candidate_ok:1;
+	unsigned disambiguate_fn_used:1;
+	unsigned ambiguous:1;
+	unsigned always_call_fn:1;
+};
+
+static void update_candidates(struct disambiguate_state *ds, const unsigned char *current)
+{
+	if (ds->always_call_fn) {
+		ds->ambiguous = ds->fn(current, ds->cb_data) ? 1 : 0;
+		return;
+	}
+	if (!ds->candidate_exists) {
+		/* this is the first candidate */
+		hashcpy(ds->candidate, current);
+		ds->candidate_exists = 1;
+		return;
+	} else if (!hashcmp(ds->candidate, current)) {
+		/* the same as what we already have seen */
+		return;
+	}
+
+	if (!ds->fn) {
+		/* cannot disambiguate between ds->candidate and current */
+		ds->ambiguous = 1;
+		return;
+	}
+
+	if (!ds->candidate_checked) {
+		ds->candidate_ok = ds->fn(ds->candidate, ds->cb_data);
+		ds->disambiguate_fn_used = 1;
+		ds->candidate_checked = 1;
+	}
+
+	if (!ds->candidate_ok) {
+		/* discard the candidate; we know it does not satisify fn */
+		hashcpy(ds->candidate, current);
+		ds->candidate_checked = 0;
+		return;
+	}
+
+	/* if we reach this point, we know ds->candidate satisfies fn */
+	if (ds->fn(current, ds->cb_data)) {
+		/*
+		 * if both current and candidate satisfy fn, we cannot
+		 * disambiguate.
+		 */
+		ds->candidate_ok = 0;
+		ds->ambiguous = 1;
+	}
+
+	/* otherwise, current can be discarded and candidate is still good */
+}
+
+static void find_short_object_filename(int len, const char *hex_pfx, struct disambiguate_state *ds)
 {
 	struct alternate_object_database *alt;
 	char hex[40];
-	int found = 0;
 	static struct alternate_object_database *fakeent;
 
 	if (!fakeent) {
+		/*
+		 * Create a "fake" alternate object database that
+		 * points to our own object database, to make it
+		 * easier to get a temporary working space in
+		 * alt->name/alt->base while iterating over the
+		 * object databases including our own.
+		 */
 		const char *objdir = get_object_directory();
 		int objdir_len = strlen(objdir);
 		int entlen = objdir_len + 43;
@@ -27,33 +95,28 @@ static int find_short_object_filename(int len, const char *name, unsigned char *
 	}
 	fakeent->next = alt_odb_list;
 
-	sprintf(hex, "%.2s", name);
-	for (alt = fakeent; alt && found < 2; alt = alt->next) {
+	sprintf(hex, "%.2s", hex_pfx);
+	for (alt = fakeent; alt && !ds->ambiguous; alt = alt->next) {
 		struct dirent *de;
 		DIR *dir;
-		sprintf(alt->name, "%.2s/", name);
+		sprintf(alt->name, "%.2s/", hex_pfx);
 		dir = opendir(alt->base);
 		if (!dir)
 			continue;
-		while ((de = readdir(dir)) != NULL) {
+
+		while (!ds->ambiguous && (de = readdir(dir)) != NULL) {
+			unsigned char sha1[20];
+
 			if (strlen(de->d_name) != 38)
 				continue;
-			if (memcmp(de->d_name, name + 2, len - 2))
+			if (memcmp(de->d_name, hex_pfx + 2, len - 2))
 				continue;
-			if (!found) {
-				memcpy(hex + 2, de->d_name, 38);
-				found++;
-			}
-			else if (memcmp(hex + 2, de->d_name, 38)) {
-				found = 2;
-				break;
-			}
+			memcpy(hex + 2, de->d_name, 38);
+			if (!get_sha1_hex(hex, sha1))
+				update_candidates(ds, sha1);
 		}
 		closedir(dir);
 	}
-	if (found == 1)
-		return get_sha1_hex(hex, sha1) == 0;
-	return found;
 }
 
 static int match_sha(unsigned len, const unsigned char *a, const unsigned char *b)
@@ -71,103 +134,157 @@ static int match_sha(unsigned len, const unsigned char *a, const unsigned char *
 	return 1;
 }
 
-static int find_short_packed_object(int len, const unsigned char *match, unsigned char *sha1)
+static void unique_in_pack(int len,
+			  const unsigned char *bin_pfx,
+			   struct packed_git *p,
+			   struct disambiguate_state *ds)
+{
+	uint32_t num, last, i, first = 0;
+	const unsigned char *current = NULL;
+
+	open_pack_index(p);
+	num = p->num_objects;
+	last = num;
+	while (first < last) {
+		uint32_t mid = (first + last) / 2;
+		const unsigned char *current;
+		int cmp;
+
+		current = nth_packed_object_sha1(p, mid);
+		cmp = hashcmp(bin_pfx, current);
+		if (!cmp) {
+			first = mid;
+			break;
+		}
+		if (cmp > 0) {
+			first = mid+1;
+			continue;
+		}
+		last = mid;
+	}
+
+	/*
+	 * At this point, "first" is the location of the lowest object
+	 * with an object name that could match "bin_pfx".  See if we have
+	 * 0, 1 or more objects that actually match(es).
+	 */
+	for (i = first; i < num && !ds->ambiguous; i++) {
+		current = nth_packed_object_sha1(p, i);
+		if (!match_sha(len, bin_pfx, current))
+			break;
+		update_candidates(ds, current);
+	}
+}
+
+static void find_short_packed_object(int len, const unsigned char *bin_pfx,
+				     struct disambiguate_state *ds)
 {
 	struct packed_git *p;
-	const unsigned char *found_sha1 = NULL;
-	int found = 0;
 
 	prepare_packed_git();
-	for (p = packed_git; p && found < 2; p = p->next) {
-		uint32_t num, last;
-		uint32_t first = 0;
-		open_pack_index(p);
-		num = p->num_objects;
-		last = num;
-		while (first < last) {
-			uint32_t mid = (first + last) / 2;
-			const unsigned char *now;
-			int cmp;
-
-			now = nth_packed_object_sha1(p, mid);
-			cmp = hashcmp(match, now);
-			if (!cmp) {
-				first = mid;
-				break;
-			}
-			if (cmp > 0) {
-				first = mid+1;
-				continue;
-			}
-			last = mid;
-		}
-		if (first < num) {
-			const unsigned char *now, *next;
-		       now = nth_packed_object_sha1(p, first);
-			if (match_sha(len, match, now)) {
-				next = nth_packed_object_sha1(p, first+1);
-			       if (!next|| !match_sha(len, match, next)) {
-					/* unique within this pack */
-					if (!found) {
-						found_sha1 = now;
-						found++;
-					}
-					else if (hashcmp(found_sha1, now)) {
-						found = 2;
-						break;
-					}
-				}
-				else {
-					/* not even unique within this pack */
-					found = 2;
-					break;
-				}
-			}
-		}
-	}
-	if (found == 1)
-		hashcpy(sha1, found_sha1);
-	return found;
+	for (p = packed_git; p && !ds->ambiguous; p = p->next)
+		unique_in_pack(len, bin_pfx, p, ds);
 }
 
 #define SHORT_NAME_NOT_FOUND (-1)
 #define SHORT_NAME_AMBIGUOUS (-2)
 
-static int find_unique_short_object(int len, char *canonical,
-				    unsigned char *res, unsigned char *sha1)
+static int finish_object_disambiguation(struct disambiguate_state *ds,
+					unsigned char *sha1)
 {
-	int has_unpacked, has_packed;
-	unsigned char unpacked_sha1[20], packed_sha1[20];
+	if (ds->ambiguous)
+		return SHORT_NAME_AMBIGUOUS;
 
-	prepare_alt_odb();
-	has_unpacked = find_short_object_filename(len, canonical, unpacked_sha1);
-	has_packed = find_short_packed_object(len, res, packed_sha1);
-	if (!has_unpacked && !has_packed)
+	if (!ds->candidate_exists)
 		return SHORT_NAME_NOT_FOUND;
-	if (1 < has_unpacked || 1 < has_packed)
+
+	if (!ds->candidate_checked)
+		/*
+		 * If this is the only candidate, there is no point
+		 * calling the disambiguation hint callback.
+		 *
+		 * On the other hand, if the current candidate
+		 * replaced an earlier candidate that did _not_ pass
+		 * the disambiguation hint callback, then we do have
+		 * more than one objects that match the short name
+		 * given, so we should make sure this one matches;
+		 * otherwise, if we discovered this one and the one
+		 * that we previously discarded in the reverse order,
+		 * we would end up showing different results in the
+		 * same repository!
+		 */
+		ds->candidate_ok = (!ds->disambiguate_fn_used ||
+				    ds->fn(ds->candidate, ds->cb_data));
+
+	if (!ds->candidate_ok)
 		return SHORT_NAME_AMBIGUOUS;
-	if (has_unpacked != has_packed) {
-		hashcpy(sha1, (has_packed ? packed_sha1 : unpacked_sha1));
-		return 0;
-	}
-	/* Both have unique ones -- do they match? */
-	if (hashcmp(packed_sha1, unpacked_sha1))
-		return SHORT_NAME_AMBIGUOUS;
-	hashcpy(sha1, packed_sha1);
+
+	hashcpy(sha1, ds->candidate);
 	return 0;
 }
 
-static int get_short_sha1(const char *name, int len, unsigned char *sha1,
-			  int quietly)
+static int disambiguate_commit_only(const unsigned char *sha1, void *cb_data_unused)
 {
-	int i, status;
-	char canonical[40];
-	unsigned char res[20];
+	int kind = sha1_object_info(sha1, NULL);
+	return kind == OBJ_COMMIT;
+}
 
-	if (len < MINIMUM_ABBREV || len > 40)
-		return -1;
-	hashclr(res);
-	memset(canonical, 'x', 40);
+static int disambiguate_committish_only(const unsigned char *sha1, void *cb_data_unused)
+{
+	struct object *obj;
+	int kind;
+
+	kind = sha1_object_info(sha1, NULL);
+	if (kind == OBJ_COMMIT)
+		return 1;
+	if (kind != OBJ_TAG)
+		return 0;
+
+	/* We need to do this the hard way... */
+	obj = deref_tag(lookup_object(sha1), NULL, 0);
+	if (obj && obj->type == OBJ_COMMIT)
+		return 1;
+	return 0;
+}
+
+static int disambiguate_tree_only(const unsigned char *sha1, void *cb_data_unused)
+{
+	int kind = sha1_object_info(sha1, NULL);
+	return kind == OBJ_TREE;
+}
+
+static int disambiguate_treeish_only(const unsigned char *sha1, void *cb_data_unused)
+{
+	struct object *obj;
+	int kind;
+
+	kind = sha1_object_info(sha1, NULL);
+	if (kind == OBJ_TREE || kind == OBJ_COMMIT)
+		return 1;
+	if (kind != OBJ_TAG)
+		return 0;
+
+	/* We need to do this the hard way... */
+	obj = deref_tag(lookup_object(sha1), NULL, 0);
+	if (obj && (obj->type == OBJ_TREE || obj->type == OBJ_COMMIT))
+		return 1;
+	return 0;
+}
+
+static int disambiguate_blob_only(const unsigned char *sha1, void *cb_data_unused)
+{
+	int kind = sha1_object_info(sha1, NULL);
+	return kind == OBJ_BLOB;
+}
+
+static int prepare_prefixes(const char *name, int len,
+			    unsigned char *bin_pfx,
+			    char *hex_pfx)
+{
+	int i;
+
+	hashclr(bin_pfx);
+	memset(hex_pfx, 'x', 40);
 	for (i = 0; i < len ;i++) {
 		unsigned char c = name[i];
 		unsigned char val;
@@ -181,16 +298,74 @@ static int get_short_sha1(const char *name, int len, unsigned char *sha1,
 		}
 		else
 			return -1;
-		canonical[i] = c;
+		hex_pfx[i] = c;
 		if (!(i & 1))
 			val <<= 4;
-		res[i >> 1] |= val;
+		bin_pfx[i >> 1] |= val;
 	}
+	return 0;
+}
 
-	status = find_unique_short_object(i, canonical, res, sha1);
+static int get_short_sha1(const char *name, int len, unsigned char *sha1,
+			  unsigned flags)
+{
+	int status;
+	char hex_pfx[40];
+	unsigned char bin_pfx[20];
+	struct disambiguate_state ds;
+	int quietly = !!(flags & GET_SHA1_QUIETLY);
+
+	if (len < MINIMUM_ABBREV || len > 40)
+		return -1;
+	if (prepare_prefixes(name, len, bin_pfx, hex_pfx) < 0)
+		return -1;
+
+	prepare_alt_odb();
+
+	memset(&ds, 0, sizeof(ds));
+	if (flags & GET_SHA1_COMMIT)
+		ds.fn = disambiguate_commit_only;
+	else if (flags & GET_SHA1_COMMITTISH)
+		ds.fn = disambiguate_committish_only;
+	else if (flags & GET_SHA1_TREE)
+		ds.fn = disambiguate_tree_only;
+	else if (flags & GET_SHA1_TREEISH)
+		ds.fn = disambiguate_treeish_only;
+	else if (flags & GET_SHA1_BLOB)
+		ds.fn = disambiguate_blob_only;
+
+	find_short_object_filename(len, hex_pfx, &ds);
+	find_short_packed_object(len, bin_pfx, &ds);
+	status = finish_object_disambiguation(&ds, sha1);
+
 	if (!quietly && (status == SHORT_NAME_AMBIGUOUS))
-		return error("short SHA1 %.*s is ambiguous.", len, canonical);
+		return error("short SHA1 %.*s is ambiguous.", len, hex_pfx);
 	return status;
+}
+
+
+int for_each_abbrev(const char *prefix, each_abbrev_fn fn, void *cb_data)
+{
+	char hex_pfx[40];
+	unsigned char bin_pfx[20];
+	struct disambiguate_state ds;
+	int len = strlen(prefix);
+
+	if (len < MINIMUM_ABBREV || len > 40)
+		return -1;
+	if (prepare_prefixes(prefix, len, bin_pfx, hex_pfx) < 0)
+		return -1;
+
+	prepare_alt_odb();
+
+	memset(&ds, 0, sizeof(ds));
+	ds.always_call_fn = 1;
+	ds.cb_data = cb_data;
+	ds.fn = fn;
+
+	find_short_object_filename(len, hex_pfx, &ds);
+	find_short_packed_object(len, bin_pfx, &ds);
+	return ds.ambiguous;
 }
 
 const char *find_unique_abbrev(const unsigned char *sha1, int len)
@@ -204,7 +379,7 @@ const char *find_unique_abbrev(const unsigned char *sha1, int len)
 		return hex;
 	while (len < 40) {
 		unsigned char sha1_ret[20];
-		status = get_short_sha1(hex, len, sha1_ret, 1);
+		status = get_short_sha1(hex, len, sha1_ret, GET_SHA1_QUIETLY);
 		if (exists
 		    ? !status
 		    : status == SHORT_NAME_NOT_FOUND) {
@@ -255,7 +430,7 @@ static inline int upstream_mark(const char *string, int len)
 	return 0;
 }
 
-static int get_sha1_1(const char *name, int len, unsigned char *sha1);
+static int get_sha1_1(const char *name, int len, unsigned char *sha1, unsigned lookup_flags);
 
 static int get_sha1_basic(const char *str, int len, unsigned char *sha1)
 {
@@ -292,7 +467,7 @@ static int get_sha1_basic(const char *str, int len, unsigned char *sha1)
 		ret = interpret_branch_name(str+at, &buf);
 		if (ret > 0) {
 			/* substitute this branch name and restart */
-			return get_sha1_1(buf.buf, buf.len, sha1);
+			return get_sha1_1(buf.buf, buf.len, sha1, 0);
 		} else if (ret == 0) {
 			return -1;
 		}
@@ -362,7 +537,7 @@ static int get_parent(const char *name, int len,
 		      unsigned char *result, int idx)
 {
 	unsigned char sha1[20];
-	int ret = get_sha1_1(name, len, sha1);
+	int ret = get_sha1_1(name, len, sha1, GET_SHA1_COMMITTISH);
 	struct commit *commit;
 	struct commit_list *p;
 
@@ -395,7 +570,7 @@ static int get_nth_ancestor(const char *name, int len,
 	struct commit *commit;
 	int ret;
 
-	ret = get_sha1_1(name, len, sha1);
+	ret = get_sha1_1(name, len, sha1, GET_SHA1_COMMITTISH);
 	if (ret)
 		return ret;
 	commit = lookup_commit_reference(sha1);
@@ -441,6 +616,7 @@ static int peel_onion(const char *name, int len, unsigned char *sha1)
 	unsigned char outer[20];
 	const char *sp;
 	unsigned int expected_type = 0;
+	unsigned lookup_flags = 0;
 	struct object *o;
 
 	/*
@@ -476,7 +652,10 @@ static int peel_onion(const char *name, int len, unsigned char *sha1)
 	else
 		return -1;
 
-	if (get_sha1_1(name, sp - name - 2, outer))
+	if (expected_type == OBJ_COMMIT)
+		lookup_flags = GET_SHA1_COMMITTISH;
+
+	if (get_sha1_1(name, sp - name - 2, outer, lookup_flags))
 		return -1;
 
 	o = parse_object(outer);
@@ -525,6 +704,7 @@ static int peel_onion(const char *name, int len, unsigned char *sha1)
 static int get_describe_name(const char *name, int len, unsigned char *sha1)
 {
 	const char *cp;
+	unsigned flags = GET_SHA1_QUIETLY | GET_SHA1_COMMIT;
 
 	for (cp = name + len - 1; name + 2 <= cp; cp--) {
 		char ch = *cp;
@@ -535,14 +715,14 @@ static int get_describe_name(const char *name, int len, unsigned char *sha1)
 			if (ch == 'g' && cp[-1] == '-') {
 				cp++;
 				len -= cp - name;
-				return get_short_sha1(cp, len, sha1, 1);
+				return get_short_sha1(cp, len, sha1, flags);
 			}
 		}
 	}
 	return -1;
 }
 
-static int get_sha1_1(const char *name, int len, unsigned char *sha1)
+static int get_sha1_1(const char *name, int len, unsigned char *sha1, unsigned lookup_flags)
 {
 	int ret, has_suffix;
 	const char *cp;
@@ -587,7 +767,7 @@ static int get_sha1_1(const char *name, int len, unsigned char *sha1)
 	if (!ret)
 		return 0;
 
-	return get_short_sha1(name, len, sha1, 0);
+	return get_short_sha1(name, len, sha1, lookup_flags);
 }
 
 /*
@@ -769,7 +949,7 @@ int get_sha1_mb(const char *name, unsigned char *sha1)
 		struct strbuf sb;
 		strbuf_init(&sb, dots - name);
 		strbuf_add(&sb, name, dots - name);
-		st = get_sha1(sb.buf, sha1_tmp);
+		st = get_sha1_committish(sb.buf, sha1_tmp);
 		strbuf_release(&sb);
 	}
 	if (st)
@@ -778,7 +958,7 @@ int get_sha1_mb(const char *name, unsigned char *sha1)
 	if (!one)
 		return -1;
 
-	if (get_sha1(dots[3] ? (dots + 3) : "HEAD", sha1_tmp))
+	if (get_sha1_committish(dots[3] ? (dots + 3) : "HEAD", sha1_tmp))
 		return -1;
 	two = lookup_commit_reference_gently(sha1_tmp, 0);
 	if (!two)
@@ -905,7 +1085,52 @@ int strbuf_check_branch_ref(struct strbuf *sb, const char *name)
 int get_sha1(const char *name, unsigned char *sha1)
 {
 	struct object_context unused;
-	return get_sha1_with_context(name, sha1, &unused);
+	return get_sha1_with_context(name, 0, sha1, &unused);
+}
+
+/*
+ * Many callers know that the user meant to name a committish by
+ * syntactical positions where the object name appears.  Calling this
+ * function allows the machinery to disambiguate shorter-than-unique
+ * abbreviated object names between committish and others.
+ *
+ * Note that this does NOT error out when the named object is not a
+ * committish. It is merely to give a hint to the disambiguation
+ * machinery.
+ */
+int get_sha1_committish(const char *name, unsigned char *sha1)
+{
+	struct object_context unused;
+	return get_sha1_with_context(name, GET_SHA1_COMMITTISH,
+				     sha1, &unused);
+}
+
+int get_sha1_treeish(const char *name, unsigned char *sha1)
+{
+	struct object_context unused;
+	return get_sha1_with_context(name, GET_SHA1_TREEISH,
+				     sha1, &unused);
+}
+
+int get_sha1_commit(const char *name, unsigned char *sha1)
+{
+	struct object_context unused;
+	return get_sha1_with_context(name, GET_SHA1_COMMIT,
+				     sha1, &unused);
+}
+
+int get_sha1_tree(const char *name, unsigned char *sha1)
+{
+	struct object_context unused;
+	return get_sha1_with_context(name, GET_SHA1_TREE,
+				     sha1, &unused);
+}
+
+int get_sha1_blob(const char *name, unsigned char *sha1)
+{
+	struct object_context unused;
+	return get_sha1_with_context(name, GET_SHA1_BLOB,
+				     sha1, &unused);
 }
 
 /* Must be called only when object_name:filename doesn't exist. */
@@ -1004,16 +1229,6 @@ static void diagnose_invalid_index_path(int stage,
 }
 
 
-int get_sha1_with_mode_1(const char *name, unsigned char *sha1, unsigned *mode,
-			 int only_to_die, const char *prefix)
-{
-	struct object_context oc;
-	int ret;
-	ret = get_sha1_with_context_1(name, sha1, &oc, only_to_die, prefix);
-	*mode = oc.mode;
-	return ret;
-}
-
 static char *resolve_relative_path(const char *rel)
 {
 	if (prefixcmp(rel, "./") && prefixcmp(rel, "../"))
@@ -1031,20 +1246,24 @@ static char *resolve_relative_path(const char *rel)
 			   rel);
 }
 
-int get_sha1_with_context_1(const char *name, unsigned char *sha1,
-			    struct object_context *oc,
-			    int only_to_die, const char *prefix)
+static int get_sha1_with_context_1(const char *name,
+				   unsigned flags,
+				   const char *prefix,
+				   unsigned char *sha1,
+				   struct object_context *oc)
 {
 	int ret, bracket_depth;
 	int namelen = strlen(name);
 	const char *cp;
+	int only_to_die = flags & GET_SHA1_ONLY_TO_DIE;
 
 	memset(oc, 0, sizeof(*oc));
 	oc->mode = S_IFINVALID;
-	ret = get_sha1_1(name, namelen, sha1);
+	ret = get_sha1_1(name, namelen, sha1, flags);
 	if (!ret)
 		return ret;
-	/* sha1:path --> object name of path in ent sha1
+	/*
+	 * sha1:path --> object name of path in ent sha1
 	 * :path -> object name of absolute path in index
 	 * :./path -> object name of path relative to cwd in index
 	 * :[0-3]:path -> object name of path in index at stage
@@ -1119,7 +1338,7 @@ int get_sha1_with_context_1(const char *name, unsigned char *sha1,
 			strncpy(object_name, name, cp-name);
 			object_name[cp-name] = '\0';
 		}
-		if (!get_sha1_1(name, cp-name, tree_sha1)) {
+		if (!get_sha1_1(name, cp-name, tree_sha1, GET_SHA1_TREEISH)) {
 			const char *filename = cp+1;
 			char *new_filename = NULL;
 
@@ -1145,4 +1364,23 @@ int get_sha1_with_context_1(const char *name, unsigned char *sha1,
 		}
 	}
 	return ret;
+}
+
+/*
+ * Call this function when you know "name" given by the end user must
+ * name an object but it doesn't; the function _may_ die with a better
+ * diagnostic message than "no such object 'name'", e.g. "Path 'doc' does not
+ * exist in 'HEAD'" when given "HEAD:doc", or it may return in which case
+ * you have a chance to diagnose the error further.
+ */
+void maybe_die_on_misspelt_object_name(const char *name, const char *prefix)
+{
+	struct object_context oc;
+	unsigned char sha1[20];
+	get_sha1_with_context_1(name, GET_SHA1_ONLY_TO_DIE, prefix, sha1, &oc);
+}
+
+int get_sha1_with_context(const char *str, unsigned flags, unsigned char *sha1, struct object_context *orc)
+{
+	return get_sha1_with_context_1(str, flags, NULL, sha1, orc);
 }

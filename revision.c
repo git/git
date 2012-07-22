@@ -1000,7 +1000,7 @@ static int add_parents_only(struct rev_info *revs, const char *arg_, int flags)
 		flags ^= UNINTERESTING;
 		arg++;
 	}
-	if (get_sha1(arg, sha1))
+	if (get_sha1_committish(arg, sha1))
 		return 0;
 	while (1) {
 		it = get_reference(revs, arg, sha1, 0);
@@ -1114,16 +1114,16 @@ static void prepare_show_merge(struct rev_info *revs)
 	revs->limited = 1;
 }
 
-int handle_revision_arg(const char *arg_, struct rev_info *revs,
-			int flags,
-			int cant_be_filename)
+int handle_revision_arg(const char *arg_, struct rev_info *revs, int flags, unsigned revarg_opt)
 {
-	unsigned mode;
+	struct object_context oc;
 	char *dotdot;
 	struct object *object;
 	unsigned char sha1[20];
 	int local_flags;
 	const char *arg = arg_;
+	int cant_be_filename = revarg_opt & REVARG_CANNOT_BE_FILENAME;
+	unsigned get_sha1_flags = 0;
 
 	dotdot = strstr(arg, "..");
 	if (dotdot) {
@@ -1141,8 +1141,8 @@ int handle_revision_arg(const char *arg_, struct rev_info *revs,
 			next = "HEAD";
 		if (dotdot == arg)
 			this = "HEAD";
-		if (!get_sha1(this, from_sha1) &&
-		    !get_sha1(next, sha1)) {
+		if (!get_sha1_committish(this, from_sha1) &&
+		    !get_sha1_committish(next, sha1)) {
 			struct commit *a, *b;
 			struct commit_list *exclude;
 
@@ -1201,13 +1201,17 @@ int handle_revision_arg(const char *arg_, struct rev_info *revs,
 		local_flags = UNINTERESTING;
 		arg++;
 	}
-	if (get_sha1_with_mode(arg, sha1, &mode))
+
+	if (revarg_opt & REVARG_COMMITTISH)
+		get_sha1_flags = GET_SHA1_COMMITTISH;
+
+	if (get_sha1_with_context(arg, get_sha1_flags, sha1, &oc))
 		return revs->ignore_missing ? 0 : -1;
 	if (!cant_be_filename)
 		verify_non_filename(revs->prefix, arg);
 	object = get_reference(revs, arg, sha1, flags ^ local_flags);
 	add_rev_cmdline(revs, object, arg_, REV_CMD_REV, flags ^ local_flags);
-	add_pending_object_with_mode(revs, object, arg, mode);
+	add_pending_object_with_mode(revs, object, arg, oc.mode);
 	return 0;
 }
 
@@ -1257,7 +1261,7 @@ static void read_revisions_from_stdin(struct rev_info *revs,
 			}
 			die("options not supported in --stdin mode");
 		}
-		if (handle_revision_arg(sb.buf, revs, 0, 1))
+		if (handle_revision_arg(sb.buf, revs, 0, REVARG_CANNOT_BE_FILENAME))
 			die("bad revision '%s'", sb.buf);
 	}
 	if (seen_dashdash)
@@ -1708,7 +1712,7 @@ static int handle_revision_pseudo_opt(const char *submodule,
  */
 int setup_revisions(int argc, const char **argv, struct rev_info *revs, struct setup_revision_opt *opt)
 {
-	int i, flags, left, seen_dashdash, read_from_stdin, got_rev_arg = 0;
+	int i, flags, left, seen_dashdash, read_from_stdin, got_rev_arg = 0, revarg_opt;
 	struct cmdline_pathspec prune_data;
 	const char *submodule = NULL;
 
@@ -1736,6 +1740,9 @@ int setup_revisions(int argc, const char **argv, struct rev_info *revs, struct s
 
 	/* Second, deal with arguments and options */
 	flags = 0;
+	revarg_opt = opt ? opt->revarg_opt : 0;
+	if (seen_dashdash)
+		revarg_opt |= REVARG_CANNOT_BE_FILENAME;
 	read_from_stdin = 0;
 	for (left = i = 1; i < argc; i++) {
 		const char *arg = argv[i];
@@ -1771,7 +1778,8 @@ int setup_revisions(int argc, const char **argv, struct rev_info *revs, struct s
 			continue;
 		}
 
-		if (handle_revision_arg(arg, revs, flags, seen_dashdash)) {
+
+		if (handle_revision_arg(arg, revs, flags, revarg_opt)) {
 			int j;
 			if (seen_dashdash || *arg == '^')
 				die("bad revision '%s'", arg);
@@ -1822,11 +1830,11 @@ int setup_revisions(int argc, const char **argv, struct rev_info *revs, struct s
 	if (revs->def && !revs->pending.nr && !got_rev_arg) {
 		unsigned char sha1[20];
 		struct object *object;
-		unsigned mode;
-		if (get_sha1_with_mode(revs->def, sha1, &mode))
+		struct object_context oc;
+		if (get_sha1_with_context(revs->def, 0, sha1, &oc))
 			die("bad default revision '%s'", revs->def);
 		object = get_reference(revs, revs->def, sha1, 0);
-		add_pending_object_with_mode(revs, object, revs->def, mode);
+		add_pending_object_with_mode(revs, object, revs->def, oc.mode);
 	}
 
 	/* Did the user ask for any diff output? Run the diff! */

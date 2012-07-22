@@ -3589,7 +3589,7 @@ static void build_fake_ancestor(struct patch *list, const char *filename)
 		name = patch->old_name ? patch->old_name : patch->new_name;
 		if (0 < patch->is_new)
 			continue;
-		else if (get_sha1(patch->old_sha1_prefix, sha1))
+		else if (get_sha1_blob(patch->old_sha1_prefix, sha1))
 			/* git diff has no index line for mode/type changes */
 			if (!patch->lines_added && !patch->lines_deleted) {
 				if (get_current_sha1(patch->old_name, sha1))
