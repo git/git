@@ -624,7 +624,7 @@ static int match_object_header_date(const char *date, unsigned long *timestamp, 
 	unsigned long stamp;
 	int ofs;
 
-	if (*date < '0' || '9' <= *date)
+	if (*date < '0' || '9' < *date)
 		return -1;
 	stamp = strtoul(date, &end, 10);
 	if (*end != ' ' || stamp == ULONG_MAX || (end[1] != '+' && end[1] != '-'))
