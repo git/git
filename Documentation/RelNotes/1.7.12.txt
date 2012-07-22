@@ -22,6 +22,12 @@ UI, Workflows & Features
    $HOME/.config/attributes and $HOME/.config/ignore respectively when
    these files exist.
 
+ * Logic to disambiguate abbreviated object names have been taught to
+   take advantage of object types that are expected in the context,
+   e.g. XXXXXX in the "git describe" output v1.2.3-gXXXXXX must be a
+   commit object, not a blob nor a tree.  This will help us prolong
+   the lifetime of abbreviated object names.
+
  * "git apply" learned to wiggle the base version and perform three-way
    merge when a patch does not exactly apply to the version you have.
 
@@ -103,6 +109,10 @@ Performance, Internal Implementation, etc. (please report possible regressions)
    fnmatch() by comparing fixed leading substring literally when
    possible.
 
+ * "git log -n 1 -- rarely-touched-path" was spending unnecessary
+   cycles after showing the first change to find the next one, only to
+   discard it.
+
 
 Also contains minor documentation updates and code clean-ups.
 
@@ -114,59 +124,17 @@ Unless otherwise noted, all the fixes since v1.7.11 in the maintenance
 releases are contained in this release (see release notes to them for
 details).
 
- * The error message from "git push $there :bogo" (and its equivalent
-   "git push $there --delete bogo") mentioned that we tried and failed
-   to guess what ref is being deleted based on the LHS of the refspec,
-   which we don't.
-   (merge 5742c82 jk/push-delete-ref-error-message later to maint).
+ * When "git am" failed, old timers knew to check .git/rebase-apply/patch
+   to see what went wrong, but we never told the users about it.
+   (merge 14bf2d5 pg/maint-1.7.9-am-where-is-patch later to maint).
 
- * A handful of files and directories we create had tighter than
-   necessary permission bits when the user wanted to have group
-   writability (e.g. by setting "umask 002").
-   (merge 6ff2b72 ar/clone-honor-umask-at-top later to maint).
+ * When "git submodule add" clones a submodule repository, it can get
+   confused where to store the resulting submodule repository in the
+   superproject's .git/ directory when there is a symbolic link in the
+   path to the current directory.
+   (merge 6eafa6d jl/maint-1.7.10-recurse-submodules-with-symlink later to maint).
 
- * "commit --amend" used to refuse amending a commit with an empty log
-   message, with or without "--allow-empty-message".
-   (merge d9a9357 cw/amend-commit-without-message later to maint).
-
- * "git commit --amend --only --" was meant to allow "Clever" people to
-   rewrite the commit message without making any change even when they
-   have already changes for the next commit added to their index, but
-   it never worked as advertised since it was introduced in 1.3.0 era.
-   (merge ea2d4ed jk/maint-commit-amend-only-no-paths later to maint).
-
- * Even though the index can record pathnames longer than 1<<12 bytes,
-   in some places we were not comparing them in full, potentially
-   replacing index entries instead of adding.
-   (merge d5f5333 tg/maint-cache-name-compare later to maint).
-
- * "git show"'s auto-walking behaviour was an unreliable and
-   unpredictable hack; it now behaves just like "git log" does when it
-   walks.
-   (merge c5941f1 tr/maint-show-walk later to maint).
-
- * "git diff", "git status" and anything that internally uses the
-   comparison machinery was utterly broken when the difference
-   involved a file with "-" as its name.  This was due to the way "git
-   diff --no-index" was incorrectly bolted on to the system, making
-   any comparison that involves a file "-" at the root level
-   incorrectly read from the standard input.
-   (merge 4682d85 jc/refactor-diff-stdin later to maint).
-
- * We did not have test to make sure "git rebase" without extra options
-   filters out an empty commit in the original history.
-   (merge 2b5ba7b mz/empty-rebase-test later to maint).
-
- * "git fast-export" produced an input stream for fast-import without
-   properly quoting pathnames when they contain SPs in them.
-   (merge ff59f6d js/fast-export-paths-with-spaces later to maint).
-
- * "git checkout --detach", when you are still on an unborn branch,
-   should be forbidden, but it wasn't.
-   (merge 8ced1aa cw/no-detaching-an-unborn later to maint).
-
- * Some implementations of Perl terminates "lines" with CRLF even when
-   the script is operating on just a sequence of bytes.  Make sure to
-   use "$PERL_PATH", the version of Perl the user told Git to use, in
-   our tests to avoid unnecessary breakages in tests.
-   (merge ad78585 vr/use-our-perl-in-tests later to maint).
+ * In 1.7.9 era, we taught "git rebase" about the raw timestamp format
+   but we did not teach the same trick to "filter-branch", which rolled
+   a similar logic on its own.
+   (merge 44b85e89 jc/maint-filter-branch-epoch-date later to maint).
