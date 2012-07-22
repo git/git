@@ -1,15 +1,17 @@
 To: git@vger.kernel.org
-Subject: What's cooking in git.git (Jul 2012, #05; Sun, 15)
-X-master-at: 31c79549b85c6393be4f40432f5b86ebc097fc7e
-X-next-at: fdb3850c586fd1eced5e0456ef599f9c0c9191d9
+Subject: What's cooking in git.git (Jul 2012, #06; Sun, 22)
+X-master-at: e7719469154fc9bbf910df89b80a5145c7d93959
+X-next-at: 70d4bc158cb1d6d848984267f267177390e71989
 
-What's cooking in git.git (Jul 2012, #05; Sun, 15)
+What's cooking in git.git (Jul 2012, #06; Sun, 22)
 --------------------------------------------------
 
 Here are the topics that have been cooking.  Commits prefixed with '-' are
 only in 'pu' (proposed updates) while commits prefixed with '+' are in 'next'.
 
-The sixth batch of topics are now in 'master'.
+I think we are more or less done for this cycle except for a handful
+of topics that are to be rerolled, even though I haven't tagged the
+tip of the 'master' with 1.7.12-rc0 yet.
 
 You can find the changes described here in the integration branches of the
 repositories listed at
@@ -17,136 +19,264 @@ repositories listed at
     http://git-blame.blogspot.com/p/git-public-repositories.html
 
 --------------------------------------------------
-[New Topics]
-
-* sn/doc-typofix (2012-07-14) 1 commit
- - doc: A few minor copy edits.
-
---------------------------------------------------
 [Graduated to "master"]
 
-* ar/clone-honor-umask-at-top (2012-07-09) 3 commits
-  (merged to 'next' on 2012-07-10 at 680bc22)
- + add: create ADD_EDIT.patch with mode 0666
- + rerere: make rr-cache fanout directory honor umask
- + Restore umasks influence on the permissions of work tree created by clone
+* as/t4012-style-updates (2012-07-16) 8 commits
+  (merged to 'next' on 2012-07-16 at 86c14f6)
+ + t4012: Use test_must_fail instead of if-else
+ + t4012: use 'printf' instead of 'dd' to generate a binary file
+ + t4012: Re-indent test snippets
+ + t4012: Make --shortstat test more robust
+ + t4012: Break up pipe into serial redirections
+ + t4012: Actually quote the sed script
+ + t4012: Unquote git command fragment in test title
+ + t4012: modernize style for quoting
 
-A handful of files and directories we create had tighter than
-necessary permission bits when the user wanted to have group
-writability (e.g. by setting "umask 002").
+* jc/maint-filter-branch-epoch-date (2012-07-12) 3 commits
+  (merged to 'next' on 2012-07-13 at d144342)
+ + t7003: add test to filter a branch with a commit at epoch
+ + date.c: Fix off by one error in object-header date parsing
+  (merged to 'next' on 2012-07-10 at f9774ca)
+ + filter-branch: do not forget the '@' prefix to force git-timestamp
 
-* cw/amend-commit-without-message (2012-07-09) 1 commit
-  (merged to 'next' on 2012-07-10 at e7c75d5)
- + Allow edit of empty message with commit --amend
+In 1.7.9 era, we taught "git rebase" about the raw timestamp format
+but we did not teach the same trick to "filter-branch", which rolled
+a similar logic on its own.
 
-"commit --amend" used to refuse amending a commit with an empty log
-message, with or without "--allow-empty-message".
+* jc/sha1-name-more (2012-07-13) 27 commits
+  (merged to 'next' on 2012-07-13 at 534e6fe)
+ + t1512: match the "other" object names
+  (merged to 'next' on 2012-07-11 at d30ef51)
+ + t1512: ignore whitespaces in wc -l output
+  (merged to 'next' on 2012-07-10 at 669dd92)
+ + rev-parse --disambiguate=<prefix>
+ + rev-parse: A and B in "rev-parse A..B" refer to committish
+ + reset: the command takes committish
+ + commit-tree: the command wants a tree and commits
+ + apply: --build-fake-ancestor expects blobs
+ + sha1_name.c: add support for disambiguating other types
+ + revision.c: the "log" family, except for "show", takes committish
+ + revision.c: allow handle_revision_arg() to take other flags
+ + sha1_name.c: introduce get_sha1_committish()
+ + sha1_name.c: teach lookup context to get_sha1_with_context()
+ + sha1_name.c: many short names can only be committish
+ + sha1_name.c: get_sha1_1() takes lookup flags
+ + sha1_name.c: get_describe_name() by definition groks only commits
+ + sha1_name.c: teach get_short_sha1() a commit-only option
+ + sha1_name.c: allow get_short_sha1() to take other flags
+ + get_sha1(): fix error status regression
+ + sha1_name.c: restructure disambiguation of short names
+ + sha1_name.c: correct misnamed "canonical" and "res"
+ + sha1_name.c: refactor find_short_packed_object()
+ + sha1_name.c: rename "now" to "current"
+ + sha1_name.c: clarify what "fake" is for in find_short_object_filename()
+ + sha1_name.c: get rid of get_sha1_with_mode()
+ + sha1_name.c: get rid of get_sha1_with_mode_1()
+ + sha1_name.c: hide get_sha1_with_context_1() ugliness
+ + sha1_name.c: indentation fix
 
-* cw/rebase-i-root (2012-07-05) 3 commits
-  (merged to 'next' on 2012-07-05 at aeb4c56)
- + t3404: make test 57 work with dash and others
-  (merged to 'next' on 2012-07-03 at 231c0a4)
- + Add tests for rebase -i --root without --onto
- + rebase -i: support --root without --onto
+Logic to disambiguate abbreviated object names have been taught to
+take advantage of object types that are expected in the context,
+e.g. XXXXXX in the "git describe" output v1.2.3-gXXXXXX must be a
+commit object, not a blob nor a tree.  This will help us prolong the
+lifetime of abbreviated object names.
 
-"git rebase [-i] --root $tip" can now be used to rewrite all the
-history down to the root.
+* jk/revision-walk-stop-at-max-count (2012-07-13) 1 commit
+  (merged to 'next' on 2012-07-16 at 603975d)
+ + revision: avoid work after --max-count is reached
 
-* jc/apply-3way (2012-07-09) 19 commits
-  (merged to 'next' on 2012-07-10 at fb5c872)
- + apply: tests for the --3way option
- + apply: document --3way option
- + apply: allow rerere() to work on --3way results
- + apply: register conflicted stages to the index
- + apply: --3way with add/add conflict
- + apply: move verify_index_match() higher
- + apply: plug the three-way merge logic in
- + apply: fall back on three-way merge
- + apply: accept -3/--3way command line option
- + apply: move "already exists" logic to check_to_create()
- + apply: move check_to_create_blob() closer to its sole caller
- + apply: further split load_preimage()
- + apply: refactor "previous patch" logic
- + apply: split load_preimage() helper function out
- + apply: factor out checkout_target() helper function
- + apply: refactor read_file_or_gitlink()
- + apply: clear_image() clears things a bit more
- + apply: a bit more comments on PATH_TO_BE_DELETED
- + apply: fix an incomplete comment in check_patch()
+"git log -n 1 -- rarely-touched-path" was spending unnecessary
+cycles after showing the first change to find the next one, only to
+discard it.
 
-"git apply" learns to wiggle the base version and perform three-way merge
-when a patch does not exactly apply to the version you have.
+* jl/maint-1.7.10-recurse-submodules-with-symlink (2012-07-12) 1 commit
+  (merged to 'next' on 2012-07-16 at 2e10caf)
+ + submodules: don't stumble over symbolic links when cloning recursively
 
-* jk/index-pack-streaming-fix (2012-07-10) 1 commit
-  (merged to 'next' on 2012-07-13 at c575338)
- + index-pack: loop while inflating objects in unpack_data
+When "git submodule add" clones a submodule repository, it can get
+confused where to store the resulting submodule repository in the
+superproject's .git/ directory when there is a symbolic link in the
+path to the current directory.
 
-The streaming index-pack introduced in 1.7.11 had a data corruption
-bug, and this should fix it.
+* lk/more-helpful-status-hints (2012-07-16) 1 commit
+  (merged to 'next' on 2012-07-16 at 8f9b3cc)
+ + status: color in-progress message like other header messages
 
-* jk/maint-commit-amend-only-no-paths (2012-07-10) 1 commit
-  (merged to 'next' on 2012-07-10 at 1c650c2)
- + commit: fix "--amend --only" with no pathspec
+Finishing touches.
 
-"git commit --amend --only --" was meant to allow "Clever" people to
-rewrite the commit message without making any change even when they
-have already changes for the next commit added to their index, but
-it never worked as advertised since it was introduced in 1.3.0 era.
+* mm/config-xdg (2012-07-16) 1 commit
+  (merged to 'next' on 2012-07-16 at 1a75d75)
+ + config: fix several access(NULL) calls
 
-* jk/push-delete-ref-error-message (2012-07-03) 1 commit
-  (merged to 'next' on 2012-07-09 at 82c6bd2)
- + push: don't guess at qualifying remote refs on deletion
+Finishing touches.
 
-The error message from "git push $there :bogo" mentioned we tried
-and failed to guess what ref is being deleted based on the LHS of
-the refspec, which we don't.
+* ms/daemon-doc-typo (2012-07-16) 1 commit
+  (merged to 'next' on 2012-07-16 at 3976434)
+ + Documentation/git-daemon: add missing word
 
-* jn/makefile-cleanup (2012-07-09) 14 commits
-  (merged to 'next' on 2012-07-10 at f55e6a1)
- + Makefile: document ground rules for target-specific dependencies
- + Makefile: move GIT-VERSION-FILE dependencies closer to use
- + Makefile: build instaweb similar to other scripts
- + Makefile: update scripts when build-time parameters change
- + Makefile: do not replace @@GIT_VERSION@@ in shell scripts
- + Makefile: split prefix flags from GIT-CFLAGS
- + Makefile: be silent when only GIT_USER_AGENT changes
- + Makefile: split GIT_USER_AGENT from GIT-CFLAGS
- + Makefile: do not replace @@GIT_USER_AGENT@@ in scripts
- + Makefile: apply dependencies consistently to sparse/asm targets
- + Makefile: do not have git.o depend on common-cmds.h
- + Makefile: fold XDIFF_H and VCSSVN_H into LIB_H
- + Makefile: fold MISC_H into LIB_H
- + Makefile: sort LIB_H list
+* pg/maint-1.7.9-am-where-is-patch (2012-07-13) 1 commit
+  (merged to 'next' on 2012-07-16 at 32f1e30)
+ + am: indicate where a failed patch is to be found
 
-Tightens dependency rules to avoid unnecessary recompilation.
+When "git am" failed, old timers knew to check .git/rebase-apply/patch
+to see what went wrong, but we never told the users about it.
 
-* pw/git-p4-jobs (2012-07-05) 3 commits
-  (merged to 'next' on 2012-07-10 at c6ef8f9)
- + git p4: notice Jobs lines in git commit messages
- + git p4 test: refactor marshal_dump
- + git p4: remove unused P4Submit interactive setting
+--------------------------------------------------
+[New Topics]
 
-Teach "git p4" to notice "Jobs:" in the log message and relay it to
-Perforce to trigger its "jobs" support.
+* mm/mediawiki-usability (2012-07-17) 10 commits
+  (merged to 'next' on 2012-07-22 at fe66a95)
+ + git-remote-mediawiki: allow page names with a ':'
+ + git-remote-mediawiki: fix incorrect test usage in test
+ + git-remote-mediawiki: properly deal with invalid remote revisions
+ + git-remote-mediawiki: show progress information when getting last remote revision
+ + git-remote-mediawiki: show progress information when listing pages
+ + git-remote-mediawiki: use --force when adding notes
+ + git-remote-mediawiki: get rid of O(N^2) loop
+ + git-remote-mediawiki: make mediafiles export optional
+ + git-remote-mediawiki: actually send empty comment when they're empty
+ + git-remote-mediawiki: don't split namespaces with spaces
 
-* pw/git-p4-move (2012-07-12) 2 commits
-  (merged to 'next' on 2012-07-13 at 648a8ad)
- + git p4: add support for 'p4 move' in P4Submit
- + git p4: refactor diffOpts calculation
+Will merge to 'master'.
 
-* tg/maint-cache-name-compare (2012-07-11) 1 commit
-  (merged to 'next' on 2012-07-13 at 0d07ddc)
- + cache_name_compare(): do not truncate while comparing paths
- (this branch is used by tg/ce-namelen-field.)
+* jk/mediawiki-credential (2012-07-18) 4 commits
+  (merged to 'next' on 2012-07-22 at 2cb99b2)
+ + mw-to-git: use git-credential's URL parser
+ + credential: convert "url" attribute into its parsed subparts
+ + mw-to-git: check blank credential attributes via length
+ + docs/credential: minor clarity fixups
 
-Even though the index can record pathnames longer than 1<<12 bytes,
-in some places we were not comparing them in full, potentially
-replacing index entries instead of adding.
+Will merge to 'master'.
 
-Will merge down to older maintenance releases.
+* jv/maint-no-ext-diff (2012-07-19) 2 commits
+  (merged to 'next' on 2012-07-22 at eefcf45)
+ + diff: test precedence of external diff drivers
+ + diff: correctly disable external_diff with --no-ext-diff
+
+"git diff --no-ext-diff" did not output anything for a typechange
+filepair when GIT_EXTERNAL_DIFF is in effect.
+
+Will merge to 'master'.
+
+* kk/maint-1.7.9-commit-tree (2012-07-17) 1 commit
+ + commit-tree: resurrect command line parsing updates
+ (this branch is used by kk/maint-commit-tree.)
+
+A more natural-looking "git commit-tree -p <parent> <tree>" syntax
+was introduced long time ago, but we accidentally broke it in the
+1.7.9 era.
+
+* kk/maint-commit-tree (2012-07-17) 2 commits
+  (merged to 'next' on 2012-07-22 at ab15d56)
+ + Revert "git-commit-tree(1): update synopsis"
+ + Merge branch 'kk/maint-1.7.9-commit-tree' into kk/maint-commit-tree
+ (this branch uses kk/maint-1.7.9-commit-tree.)
+
+Will merge to 'master'.
+
+* mz/rebase-range (2012-07-18) 7 commits
+ - rebase (without -p): correctly calculate patches to rebase
+ - rebase -p: don't request --left-right only to ignore left side
+ - rebase -p: use --cherry-mark for todo file
+ - git-rebase--interactive.sh: look up subject in add_pick_line
+ - git-rebase--interactive: group all $preserve_merges code
+ - git-rebase--interactive.sh: extract function for adding "pick" line
+ - git-rebase--am.sh: avoid special-casing --keep-empty
+
+* sl/autoconf (2012-07-19) 7 commits
+ - build: reconfigure automatically if configure.ac changes
+ - build: "make clean" should not remove configure-generated files
+ - autoconf: use AC_CONFIG_COMMANDS instead of ad-hoc 'config.mak.append'
+ - autoconf: remove few redundant semicolons
+ - autoconf: remove some redundant shell indirections
+ - autoconf: GIT_CONF_APPEND_LINE -> GIT_CONF_SUBST
+ - autoconf: GIT_CONF_APPEND_LINE: change signature
+
+Will merge to 'next'.
+
+* jx/i18n-1.7.11 (2012-07-22) 7 commits
+ - i18n: merge-recursive: mark strings for translation
+ - Remove unused and bad gettext block from git-am
+ - i18n: am: mark more strings for translation
+ - Remove obsolete LONG_USAGE which breaks xgettext
+ - i18n: Rewrite gettext messages start with dash
+ - i18n: rebase: mark strings for translation
+ - i18n: New keywords for xgettext extraction from sh
+
+* th/difftool-diffall (2012-07-19) 1 commit
+ - difftool: only copy back files modified during directory diff
+
+Will merge to 'next'.
 
 --------------------------------------------------
 [Stalled]
+
+* jl/submodule-rm (2012-07-05) 2 commits
+ - rm: remove submodules from the index and the .gitmodules file
+ - rm: don't fail when removing populated submodules
+
+Expecting a reroll.
+
+* mh/maint-revisions-doc (2012-07-05) 2 commits
+ - Document rev^! and rev^@ as revision specifiers
+ - Make <refname> documentation more consistent.
+
+Expecting a reroll of the tip one.
+
+* ph/stash-rerere (2012-07-08) 2 commits
+ - stash: invoke rerere in case of conflict
+ - test: git-stash conflict sets up rerere
+
+Will be rerolled but is going in the right direction.
+
+* lt/commit-tree-guess-utf-8 (2012-06-28) 1 commit
+ - commit/commit-tree: correct latin1 to utf-8
+
+Teaches "git commit" and "git commit-tree" the "we are told to use
+utf-8 in log message, but this does not look like utf-8---attempt to
+pass it through convert-from-latin1-to-utf8 and see if it makes
+sense" heuristics "git mailinfo" already uses.
+
+A draft from Linus received privately without a log message.
+Expecting a reroll.
+
+* nk/maint-gitweb-log-by-lines (2012-07-05) 3 commits
+  (merged to 'next' on 2012-07-13 at 780e16a)
+ + gitweb: Add support to Link: tag
+ + gitweb: Handle other types of tag in git_print_log
+ + gitweb: Cleanup git_print_log()
+
+Teach gitweb to pay attention to various forms of credits that are
+similar to "Signed-off-by:" lines.
+
+Needs to be eyeballed for the correctness of the esc_html() in the tip one.
+
+* jc/test-lib-source-build-options-early (2012-06-24) 1 commit
+ - test-lib: reorder and include GIT-BUILD-OPTIONS a lot earlier
+
+Reorders t/test-lib.sh so that we dot-source GIT-BUILD-OPTIONS that
+records the shell and Perl the user told us to use with Git a lot
+early, so that test-lib.sh script itself can use "$PERL_PATH" in
+one of its early operations.
+
+Needs to be eyeballed by people who run tests with exotic options
+like valgrind, --root=/dev/shm/somewhere, etc.
+
+* mb/remote-default-nn-origin (2012-07-11) 6 commits
+ - Teach get_default_remote to respect remote.default.
+ - Test that plain "git fetch" uses remote.default when on a detached HEAD.
+ - Teach clone to set remote.default.
+ - Teach "git remote" about remote.default.
+ - Teach remote.c about the remote.default configuration setting.
+ - Rename remote.c's default_remote_name static variables.
+
+When the user does not specify what remote to interact with, we
+often attempt to use 'origin'.  This can now be customized via a
+configuration variable.
+
+Expecting a reroll.
+"The first remote becomes the default" bit is better done as a
+separate step.
 
 * jc/maint-push-refs-all (2012-05-04) 2 commits
  - get_fetch_map(): tighten checks on dest refs
@@ -190,176 +320,19 @@ not working :-(.
 --------------------------------------------------
 [Cooking]
 
-* as/t4012-style-updates (2012-07-12) 7 commits
- - t4012: use 'printf' instead of 'dd' to generate a binary file
- - t4012: Re-indent test snippets
- - t4012: Make --shortstat test more robust
- - t4012: Break up pipe into serial redirections
- - t4012: Actually quote the sed script
- - t4012: Unquote git command fragment in test title
- - t4012: modernize style for quoting
-
-Expecting a reroll.
-
-* jl/maint-1.7.10-recurse-submodules-with-symlink (2012-07-12) 1 commit
- - submodules: don't stumble over symbolic links when cloning recursively
-
-When "git submodule add" clones a submodule repository, it can get
-confused where to store the resulting submodule repository in the
-superproject's .git/ directory when there is a symbolic link in the
-path to the current directory.
-
-Will merge to 'next'.
-
-* mm/config-xdg (2012-07-12) 2 commits
- - fixup! config: fix several access(NULL) calls
- - config: fix several access(NULL) calls
-
-Either we do the stupid literal conversion (shown in fixup!), or the
-reason why we special case missing HOME needs to be better explained.
-
-* jk/revision-walk-stop-at-max-count (2012-07-13) 1 commit
- - revision: avoid work after --max-count is reached
-
-"git log -n 1 -- rarely-touched-path" was spending unnecessary
-cycles after showing the first change to find the next one, only to
-discard it.
-
-Will merge to 'next'.
-
-* pg/maint-1.7.9-am-where-is-patch (2012-07-13) 1 commit
- - am: indicate where a failed patch is to be found
-
-When "git am" failed, old timers knew to check .git/rebase-apply/patch
-to see what went wrong, but we never told the users about it.
-
-Will merge to 'next'.
-
-* jc/maint-filter-branch-epoch-date (2012-07-12) 3 commits
-  (merged to 'next' on 2012-07-13 at d144342)
- + t7003: add test to filter a branch with a commit at epoch
- + date.c: Fix off by one error in object-header date parsing
-  (merged to 'next' on 2012-07-10 at f9774ca)
- + filter-branch: do not forget the '@' prefix to force git-timestamp
-
-In 1.7.9 era, we taught "git rebase" about the raw timestamp format
-but we did not teach the same trick to "filter-branch", which rolled
-a similar logic on its own.
+* sn/doc-typofix (2012-07-14) 1 commit
+  (merged to 'next' on 2012-07-22 at 168bba9)
+ + doc: A few minor copy edits.
 
 Will merge to 'master'.
 
-* mb/remote-default-nn-origin (2012-07-11) 6 commits
- - Teach get_default_remote to respect remote.default.
- - Test that plain "git fetch" uses remote.default when on a detached HEAD.
- - Teach clone to set remote.default.
- - Teach "git remote" about remote.default.
- - Teach remote.c about the remote.default configuration setting.
- - Rename remote.c's default_remote_name static variables.
-
-When the user does not specify what remote to interact with, we
-often attempt to use 'origin'.  This can now be customized via a
-configuration variable.
-
-Expecting a reroll.
-"The first remote becomes the default" bit is better done as a
-separate step.
-
 * tg/ce-namelen-field (2012-07-11) 2 commits
- - Strip namelen out of ce_flags into a ce_namelen field
- - Merge branch 'tg/maint-cache-name-compare' into tg/ce-namelen-field
+  (merged to 'next' on 2012-07-22 at 2d85b05)
+ + Strip namelen out of ce_flags into a ce_namelen field
+ + Merge branch 'tg/maint-cache-name-compare' into tg/ce-namelen-field
 
 Split lower bits of ce_flags field and creates a new ce_namelen
 field in the in-core index structure.
-
-* jl/submodule-rm (2012-07-05) 2 commits
- - rm: remove submodules from the index and the .gitmodules file
- - rm: don't fail when removing populated submodules
-
-Expecting a reroll.
-
-* mh/maint-revisions-doc (2012-07-05) 2 commits
- - Document rev^! and rev^@ as revision specifiers
- - Make <refname> documentation more consistent.
-
-Expecting a reroll of the tip one.
-
-* nk/maint-gitweb-log-by-lines (2012-07-05) 3 commits
-  (merged to 'next' on 2012-07-13 at 780e16a)
- + gitweb: Add support to Link: tag
- + gitweb: Handle other types of tag in git_print_log
- + gitweb: Cleanup git_print_log()
-
-Teach gitweb to pay attention to various forms of credits that are
-similar to "Signed-off-by:" lines.
-
-Needs to be eyeballed for the correctness of the esc_html() in the tip one.
-
-* ph/stash-rerere (2012-07-08) 2 commits
- - stash: invoke rerere in case of conflict
- - test: git-stash conflict sets up rerere
-
-Will be rerolled but is going in the right direction.
-
-* lt/commit-tree-guess-utf-8 (2012-06-28) 1 commit
- - commit/commit-tree: correct latin1 to utf-8
-
-Teaches "git commit" and "git commit-tree" the "we are told to use
-utf-8 in log message, but this does not look like utf-8---attempt to
-pass it through convert-from-latin1-to-utf8 and see if it makes
-sense" heuristics "git mailinfo" already uses.
-
-A draft from Linus received privately without a log message.
-Expecting a reroll.
-
-* jc/test-lib-source-build-options-early (2012-06-24) 1 commit
- - test-lib: reorder and include GIT-BUILD-OPTIONS a lot earlier
-
-Reorders t/test-lib.sh so that we dot-source GIT-BUILD-OPTIONS that
-records the shell and Perl the user told us to use with Git a lot
-early, so that test-lib.sh script itself can use "$PERL_PATH" in
-one of its early operations.
-
-Needs to be eyeballed by people who run tests with exotic options
-like valgrind, --root=/dev/shm/somewhere, etc.
-
-Will merge to 'next'.
-
-* jc/sha1-name-more (2012-07-13) 27 commits
-  (merged to 'next' on 2012-07-13 at 534e6fe)
- + t1512: match the "other" object names
-  (merged to 'next' on 2012-07-11 at d30ef51)
- + t1512: ignore whitespaces in wc -l output
-  (merged to 'next' on 2012-07-10 at 669dd92)
- + rev-parse --disambiguate=<prefix>
- + rev-parse: A and B in "rev-parse A..B" refer to committish
- + reset: the command takes committish
- + commit-tree: the command wants a tree and commits
- + apply: --build-fake-ancestor expects blobs
- + sha1_name.c: add support for disambiguating other types
- + revision.c: the "log" family, except for "show", takes committish
- + revision.c: allow handle_revision_arg() to take other flags
- + sha1_name.c: introduce get_sha1_committish()
- + sha1_name.c: teach lookup context to get_sha1_with_context()
- + sha1_name.c: many short names can only be committish
- + sha1_name.c: get_sha1_1() takes lookup flags
- + sha1_name.c: get_describe_name() by definition groks only commits
- + sha1_name.c: teach get_short_sha1() a commit-only option
- + sha1_name.c: allow get_short_sha1() to take other flags
- + get_sha1(): fix error status regression
- + sha1_name.c: restructure disambiguation of short names
- + sha1_name.c: correct misnamed "canonical" and "res"
- + sha1_name.c: refactor find_short_packed_object()
- + sha1_name.c: rename "now" to "current"
- + sha1_name.c: clarify what "fake" is for in find_short_object_filename()
- + sha1_name.c: get rid of get_sha1_with_mode()
- + sha1_name.c: get rid of get_sha1_with_mode_1()
- + sha1_name.c: hide get_sha1_with_context_1() ugliness
- + sha1_name.c: indentation fix
-
-Teaches the object name parser things like a "git describe" output
-is always a commit object, "A" in "git log A" must be a committish,
-and "A" and "B" in "git log A...B" both must be committish, etc., to
-prolong the lifetime of abbreviated object names.
 
 Will merge to 'master'.
 
