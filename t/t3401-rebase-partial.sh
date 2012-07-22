@@ -42,4 +42,12 @@ test_expect_success 'rebase --merge topic branch that was partially merged upstr
 	test_path_is_missing .git/rebase-merge
 '
 
+test_expect_success 'rebase ignores empty commit' '
+	git reset --hard A &&
+	git commit --allow-empty -m empty &&
+	test_commit D &&
+	git rebase C &&
+	test $(git log --format=%s C..) = "D"
+'
+
 test_done
