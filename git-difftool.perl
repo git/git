@@ -264,41 +264,48 @@ sub main
 {
 	# parse command-line options. all unrecognized options and arguments
 	# are passed through to the 'git diff' command.
-	my ($difftool_cmd, $dirdiff, $extcmd, $gui, $help, $prompt, $tool_help);
-	GetOptions('g|gui!' => \$gui,
-		'd|dir-diff' => \$dirdiff,
-		'h' => \$help,
-		'prompt!' => \$prompt,
-		'y' => sub { $prompt = 0; },
-		't|tool:s' => \$difftool_cmd,
-		'tool-help' => \$tool_help,
-		'x|extcmd:s' => \$extcmd);
+	my %opts = (
+		difftool_cmd => undef,
+		dirdiff => undef,
+		extcmd => undef,
+		gui => undef,
+		help => undef,
+		prompt => undef,
+		tool_help => undef,
+	);
+	GetOptions('g|gui!' => \$opts{gui},
+		'd|dir-diff' => \$opts{dirdiff},
+		'h' => \$opts{help},
+		'prompt!' => \$opts{prompt},
+		'y' => sub { $opts{prompt} = 0; },
+		't|tool:s' => \$opts{difftool_cmd},
+		'tool-help' => \$opts{tool_help},
+		'x|extcmd:s' => \$opts{extcmd});
 
-	if (defined($help)) {
+	if (defined($opts{help})) {
 		usage(0);
 	}
-	if (defined($tool_help)) {
+	if (defined($opts{tool_help})) {
 		print_tool_help();
 	}
-	if (defined($difftool_cmd)) {
-		if (length($difftool_cmd) > 0) {
-			$ENV{GIT_DIFF_TOOL} = $difftool_cmd;
+	if (defined($opts{difftool_cmd})) {
+		if (length($opts{difftool_cmd}) > 0) {
+			$ENV{GIT_DIFF_TOOL} = $opts{difftool_cmd};
 		} else {
 			print "No <tool> given for --tool=<tool>\n";
 			usage(1);
 		}
 	}
-	if (defined($extcmd)) {
-		if (length($extcmd) > 0) {
-			$ENV{GIT_DIFFTOOL_EXTCMD} = $extcmd;
+	if (defined($opts{extcmd})) {
+		if (length($opts{extcmd}) > 0) {
+			$ENV{GIT_DIFFTOOL_EXTCMD} = $opts{extcmd};
 		} else {
 			print "No <cmd> given for --extcmd=<cmd>\n";
 			usage(1);
 		}
 	}
-	if ($gui) {
-		my $guitool = '';
-		$guitool = Git::config('diff.guitool');
+	if ($opts{gui}) {
+		my $guitool = Git::config('diff.guitool');
 		if (length($guitool) > 0) {
 			$ENV{GIT_DIFF_TOOL} = $guitool;
 		}
@@ -308,10 +315,10 @@ sub main
 	# to compare the a/b directories.  In file diff mode, 'git diff'
 	# will invoke a separate instance of 'git-difftool--helper' for
 	# each file that changed.
-	if (defined($dirdiff)) {
-		dir_diff($extcmd);
+	if (defined($opts{dirdiff})) {
+		dir_diff($opts{extcmd});
 	} else {
-		file_diff($prompt);
+		file_diff($opts{prompt});
 	}
 }
 
