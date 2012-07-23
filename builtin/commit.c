@@ -775,7 +775,7 @@ static int prepare_to_commit(const char *index_file, const char *prefix,
 	determine_author_info(author_ident);
 
 	/* This checks if committer ident is explicitly given */
-	strbuf_addstr(&committer_ident, git_committer_info(0));
+	strbuf_addstr(&committer_ident, git_committer_info(IDENT_STRICT));
 	if (use_editor && include_status) {
 		char *ai_tmp, *ci_tmp;
 		if (whence != FROM_COMMIT)
