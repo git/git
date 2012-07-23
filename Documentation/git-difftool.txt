@@ -66,6 +66,14 @@ of the diff post-image.  `$MERGED` is the name of the file which is
 being compared. `$BASE` is provided for compatibility
 with custom merge tool commands and has the same value as `$MERGED`.
 
+--symlinks::
+--no-symlinks::
+	'git difftool''s default behavior is create symlinks to the
+	working tree when run in `--dir-diff` mode.
++
+	Specifying `--no-symlinks` instructs 'git difftool' to create
+	copies instead.  `--no-symlinks` is the default on Windows.
+
 --tool-help::
 	Print a list of diff tools that may be used with `--tool`.
 

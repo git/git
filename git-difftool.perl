@@ -92,7 +92,7 @@ sub print_tool_help
 
 sub setup_dir_diff
 {
-	my ($repo, $workdir) = @_;
+	my ($repo, $workdir, $symlinks) = @_;
 
 	# Run the diff; exit immediately if no diff found
 	# 'Repository' and 'WorkingCopy' must be explicitly set to insure that
@@ -209,8 +209,13 @@ sub setup_dir_diff
 		unless (-d "$rdir/$dir") {
 			mkpath("$rdir/$dir") or die $!;
 		}
-		copy("$workdir/$file", "$rdir/$file") or die $!;
-		chmod(stat("$workdir/$file")->mode, "$rdir/$file") or die $!;
+		if ($symlinks) {
+			symlink("$workdir/$file", "$rdir/$file") or die $!;
+		} else {
+			copy("$workdir/$file", "$rdir/$file") or die $!;
+			my $mode = stat("$workdir/$file")->mode;
+			chmod($mode, "$rdir/$file") or die $!;
+		}
 	}
 
 	# Changes to submodules require special treatment. This loop writes a
@@ -271,6 +276,7 @@ sub main
 		gui => undef,
 		help => undef,
 		prompt => undef,
+		symlinks => $^O ne 'MSWin32' && $^O ne 'msys',
 		tool_help => undef,
 	);
 	GetOptions('g|gui!' => \$opts{gui},
@@ -278,6 +284,8 @@ sub main
 		'h' => \$opts{help},
 		'prompt!' => \$opts{prompt},
 		'y' => sub { $opts{prompt} = 0; },
+		'symlinks' => \$opts{symlinks},
+		'no-symlinks' => sub { $opts{symlinks} = 0; },
 		't|tool:s' => \$opts{difftool_cmd},
 		'tool-help' => \$opts{tool_help},
 		'x|extcmd:s' => \$opts{extcmd});
@@ -316,7 +324,7 @@ sub main
 	# will invoke a separate instance of 'git-difftool--helper' for
 	# each file that changed.
 	if (defined($opts{dirdiff})) {
-		dir_diff($opts{extcmd});
+		dir_diff($opts{extcmd}, $opts{symlinks});
 	} else {
 		file_diff($opts{prompt});
 	}
@@ -324,13 +332,13 @@ sub main
 
 sub dir_diff
 {
-	my ($extcmd) = @_;
+	my ($extcmd, $symlinks) = @_;
 
 	my $rc;
 	my $repo = Git->repository();
 
 	my $workdir = find_worktree($repo);
-	my ($a, $b, @working_tree) = setup_dir_diff($repo, $workdir);
+	my ($a, $b, @worktree) = setup_dir_diff($repo, $workdir, $symlinks);
 	if (defined($extcmd)) {
 		$rc = system($extcmd, $a, $b);
 	} else {
@@ -342,13 +350,18 @@ sub dir_diff
 
 	# If the diff including working copy files and those
 	# files were modified during the diff, then the changes
-	# should be copied back to the working tree
-	for my $file (@working_tree) {
-		if (-e "$b/$file" && compare("$b/$file", "$workdir/$file")) {
+	# should be copied back to the working tree.
+	# Do not copy back files when symlinks are used and the
+	# external tool did not replace the original link with a file.
+	for my $file (@worktree) {
+		next if $symlinks && -l "$b/$file";
+		if (-f "$b/$file" && compare("$b/$file", "$workdir/$file")) {
 			copy("$b/$file", "$workdir/$file") or die $!;
-			chmod(stat("$b/$file")->mode, "$workdir/$file") or die $!;
+			my $mode = stat("$b/$file")->mode;
+			chmod($mode, "$workdir/$file") or die $!;
 		}
 	}
+	exit(0);
 }
 
 sub file_diff
