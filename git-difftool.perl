@@ -104,7 +104,7 @@ sub setup_dir_diff
 	exit(0) if (length($diffrtn) == 0);
 
 	# Setup temp directories
-	my $tmpdir = tempdir('git-diffall.XXXXX', CLEANUP => 1, TMPDIR => 1);
+	my $tmpdir = tempdir('git-difftool.XXXXX', CLEANUP => 1, TMPDIR => 1);
 	my $ldir = "$tmpdir/left";
 	my $rdir = "$tmpdir/right";
 	mkpath($ldir) or die $!;
