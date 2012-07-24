@@ -181,7 +181,7 @@ final result verbatim.  When both sides made changes to the same area,
 however, git cannot randomly pick one side over the other, and asks you to
 resolve it by leaving what both sides did to that area.
 
-By default, git uses the same style as that is used by "merge" program
+By default, git uses the same style as the one used by the "merge" program
 from the RCS suite to present such a conflicted hunk, like this:
 
 ------------
