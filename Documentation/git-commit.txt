@@ -407,6 +407,15 @@ This command can run `commit-msg`, `prepare-commit-msg`, `pre-commit`,
 and `post-commit` hooks.  See linkgit:githooks[5] for more
 information.
 
+FILES
+-----
+
+`$GIT_DIR/COMMIT_EDITMSG`::
+	This file contains the commit message of a commit in progress.
+	If `git commit` exits due to an error before creating a commit,
+	any commit message that has been provided by the user (e.g., in
+	an editor session) will be available in this file, but will be
+	overwritten by the next invocation of `git commit`.
 
 SEE ALSO
 --------
