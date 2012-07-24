@@ -3769,7 +3769,8 @@ static void add_index_file(const char *path, unsigned mode, void *buf, unsigned 
 	ce = xcalloc(1, ce_size);
 	memcpy(ce->name, path, namelen);
 	ce->ce_mode = create_ce_mode(mode);
-	ce->ce_flags = namelen;
+	ce->ce_flags = create_ce_flags(0);
+	ce->ce_namelen = namelen;
 	if (S_ISGITLINK(mode)) {
 		const char *s = buf;
 
@@ -3890,7 +3891,8 @@ static void add_conflicted_stages_file(struct patch *patch)
 		ce = xcalloc(1, ce_size);
 		memcpy(ce->name, patch->new_name, namelen);
 		ce->ce_mode = create_ce_mode(mode);
-		ce->ce_flags = create_ce_flags(namelen, stage);
+		ce->ce_flags = create_ce_flags(stage);
+		ce->ce_namelen = namelen;
 		hashcpy(ce->sha1, patch->threeway_stage[stage - 1]);
 		if (add_cache_entry(ce, ADD_CACHE_OK_TO_ADD) < 0)
 			die(_("unable to add cache entry for %s"), patch->new_name);
