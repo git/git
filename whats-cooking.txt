@@ -1,17 +1,18 @@
 To: git@vger.kernel.org
-Subject: What's cooking in git.git (Jul 2012, #06; Sun, 22)
-X-master-at: e7719469154fc9bbf910df89b80a5145c7d93959
-X-next-at: 70d4bc158cb1d6d848984267f267177390e71989
+Subject: What's cooking in git.git (Jul 2012, #07; Mon, 23)
+X-master-at: ccc1188fa34cd9519185a22b13599256ccfac7e1
+X-next-at: ef256fcf12b3e3fdb5f9a5b3185d9727e9415afa
 
-What's cooking in git.git (Jul 2012, #06; Sun, 22)
+What's cooking in git.git (Jul 2012, #07; Mon, 23)
 --------------------------------------------------
 
 Here are the topics that have been cooking.  Commits prefixed with '-' are
 only in 'pu' (proposed updates) while commits prefixed with '+' are in 'next'.
 
-I think we are more or less done for this cycle except for a handful
-of topics that are to be rerolled, even though I haven't tagged the
-tip of the 'master' with 1.7.12-rc0 yet.
+The tip of 'master' has been tagged as 1.7.12-rc0; this deliberately
+contains a few topics that have been in 'next' only for a few days,
+so please make sure to spot any possible issues and report soonish
+to avoid regressions in the upcoming release.
 
 You can find the changes described here in the integration branches of the
 repositories listed at
@@ -21,124 +22,6 @@ repositories listed at
 --------------------------------------------------
 [Graduated to "master"]
 
-* as/t4012-style-updates (2012-07-16) 8 commits
-  (merged to 'next' on 2012-07-16 at 86c14f6)
- + t4012: Use test_must_fail instead of if-else
- + t4012: use 'printf' instead of 'dd' to generate a binary file
- + t4012: Re-indent test snippets
- + t4012: Make --shortstat test more robust
- + t4012: Break up pipe into serial redirections
- + t4012: Actually quote the sed script
- + t4012: Unquote git command fragment in test title
- + t4012: modernize style for quoting
-
-* jc/maint-filter-branch-epoch-date (2012-07-12) 3 commits
-  (merged to 'next' on 2012-07-13 at d144342)
- + t7003: add test to filter a branch with a commit at epoch
- + date.c: Fix off by one error in object-header date parsing
-  (merged to 'next' on 2012-07-10 at f9774ca)
- + filter-branch: do not forget the '@' prefix to force git-timestamp
-
-In 1.7.9 era, we taught "git rebase" about the raw timestamp format
-but we did not teach the same trick to "filter-branch", which rolled
-a similar logic on its own.
-
-* jc/sha1-name-more (2012-07-13) 27 commits
-  (merged to 'next' on 2012-07-13 at 534e6fe)
- + t1512: match the "other" object names
-  (merged to 'next' on 2012-07-11 at d30ef51)
- + t1512: ignore whitespaces in wc -l output
-  (merged to 'next' on 2012-07-10 at 669dd92)
- + rev-parse --disambiguate=<prefix>
- + rev-parse: A and B in "rev-parse A..B" refer to committish
- + reset: the command takes committish
- + commit-tree: the command wants a tree and commits
- + apply: --build-fake-ancestor expects blobs
- + sha1_name.c: add support for disambiguating other types
- + revision.c: the "log" family, except for "show", takes committish
- + revision.c: allow handle_revision_arg() to take other flags
- + sha1_name.c: introduce get_sha1_committish()
- + sha1_name.c: teach lookup context to get_sha1_with_context()
- + sha1_name.c: many short names can only be committish
- + sha1_name.c: get_sha1_1() takes lookup flags
- + sha1_name.c: get_describe_name() by definition groks only commits
- + sha1_name.c: teach get_short_sha1() a commit-only option
- + sha1_name.c: allow get_short_sha1() to take other flags
- + get_sha1(): fix error status regression
- + sha1_name.c: restructure disambiguation of short names
- + sha1_name.c: correct misnamed "canonical" and "res"
- + sha1_name.c: refactor find_short_packed_object()
- + sha1_name.c: rename "now" to "current"
- + sha1_name.c: clarify what "fake" is for in find_short_object_filename()
- + sha1_name.c: get rid of get_sha1_with_mode()
- + sha1_name.c: get rid of get_sha1_with_mode_1()
- + sha1_name.c: hide get_sha1_with_context_1() ugliness
- + sha1_name.c: indentation fix
-
-Logic to disambiguate abbreviated object names have been taught to
-take advantage of object types that are expected in the context,
-e.g. XXXXXX in the "git describe" output v1.2.3-gXXXXXX must be a
-commit object, not a blob nor a tree.  This will help us prolong the
-lifetime of abbreviated object names.
-
-* jk/revision-walk-stop-at-max-count (2012-07-13) 1 commit
-  (merged to 'next' on 2012-07-16 at 603975d)
- + revision: avoid work after --max-count is reached
-
-"git log -n 1 -- rarely-touched-path" was spending unnecessary
-cycles after showing the first change to find the next one, only to
-discard it.
-
-* jl/maint-1.7.10-recurse-submodules-with-symlink (2012-07-12) 1 commit
-  (merged to 'next' on 2012-07-16 at 2e10caf)
- + submodules: don't stumble over symbolic links when cloning recursively
-
-When "git submodule add" clones a submodule repository, it can get
-confused where to store the resulting submodule repository in the
-superproject's .git/ directory when there is a symbolic link in the
-path to the current directory.
-
-* lk/more-helpful-status-hints (2012-07-16) 1 commit
-  (merged to 'next' on 2012-07-16 at 8f9b3cc)
- + status: color in-progress message like other header messages
-
-Finishing touches.
-
-* mm/config-xdg (2012-07-16) 1 commit
-  (merged to 'next' on 2012-07-16 at 1a75d75)
- + config: fix several access(NULL) calls
-
-Finishing touches.
-
-* ms/daemon-doc-typo (2012-07-16) 1 commit
-  (merged to 'next' on 2012-07-16 at 3976434)
- + Documentation/git-daemon: add missing word
-
-* pg/maint-1.7.9-am-where-is-patch (2012-07-13) 1 commit
-  (merged to 'next' on 2012-07-16 at 32f1e30)
- + am: indicate where a failed patch is to be found
-
-When "git am" failed, old timers knew to check .git/rebase-apply/patch
-to see what went wrong, but we never told the users about it.
-
---------------------------------------------------
-[New Topics]
-
-* mm/mediawiki-usability (2012-07-17) 10 commits
-  (merged to 'next' on 2012-07-22 at fe66a95)
- + git-remote-mediawiki: allow page names with a ':'
- + git-remote-mediawiki: fix incorrect test usage in test
- + git-remote-mediawiki: properly deal with invalid remote revisions
- + git-remote-mediawiki: show progress information when getting last remote revision
- + git-remote-mediawiki: show progress information when listing pages
- + git-remote-mediawiki: use --force when adding notes
- + git-remote-mediawiki: get rid of O(N^2) loop
- + git-remote-mediawiki: make mediafiles export optional
- + git-remote-mediawiki: actually send empty comment when they're empty
- + git-remote-mediawiki: don't split namespaces with spaces
-
-Will merge to 'master'.
-
 * jk/mediawiki-credential (2012-07-18) 4 commits
   (merged to 'next' on 2012-07-22 at 2cb99b2)
  + mw-to-git: use git-credential's URL parser
@@ -146,7 +29,22 @@ Will merge to 'master'.
  + mw-to-git: check blank credential attributes via length
  + docs/credential: minor clarity fixups
 
-Will merge to 'master'.
+Mediawiki importer updates.
+
+* jn/block-sha1 (2012-07-23) 3 commits
+  (merged to 'next' on 2012-07-23 at a11a08b)
+ + Makefile: BLK_SHA1 does not require fast htonl() and unaligned loads
+ + block-sha1: put expanded macro parameters in parentheses
+ + block-sha1: avoid pointer conversion that violates alignment constraints
+
+The code to load a word one-byte-at-a-time was optimized into a
+word-wide load instruction even when the pointer was not aligned,
+which caused issues on architectures that do not like unaligned
+access.
+
+* jn/make-assembly-in-right-directory (2012-07-22) 1 commit
+  (merged to 'next' on 2012-07-23 at 3c155cc)
+ + Makefile: fix location of listing produced by "make subdir/foo.s"
 
 * jv/maint-no-ext-diff (2012-07-19) 2 commits
   (merged to 'next' on 2012-07-22 at eefcf45)
@@ -155,8 +53,6 @@ Will merge to 'master'.
 
 "git diff --no-ext-diff" did not output anything for a typechange
 filepair when GIT_EXTERNAL_DIFF is in effect.
-
-Will merge to 'master'.
 
 * kk/maint-1.7.9-commit-tree (2012-07-17) 1 commit
  + commit-tree: resurrect command line parsing updates
@@ -172,7 +68,125 @@ was introduced long time ago, but we accidentally broke it in the
  + Merge branch 'kk/maint-1.7.9-commit-tree' into kk/maint-commit-tree
  (this branch uses kk/maint-1.7.9-commit-tree.)
 
+The same as above, for merging to the upcoming release.
+
+* mm/mediawiki-usability (2012-07-17) 10 commits
+  (merged to 'next' on 2012-07-22 at fe66a95)
+ + git-remote-mediawiki: allow page names with a ':'
+ + git-remote-mediawiki: fix incorrect test usage in test
+ + git-remote-mediawiki: properly deal with invalid remote revisions
+ + git-remote-mediawiki: show progress information when getting last remote revision
+ + git-remote-mediawiki: show progress information when listing pages
+ + git-remote-mediawiki: use --force when adding notes
+ + git-remote-mediawiki: get rid of O(N^2) loop
+ + git-remote-mediawiki: make mediafiles export optional
+ + git-remote-mediawiki: actually send empty comment when they're empty
+ + git-remote-mediawiki: don't split namespaces with spaces
+
+Mediawiki importer updates.
+
+* nk/maint-gitweb-log-by-lines (2012-07-05) 3 commits
+  (merged to 'next' on 2012-07-13 at 780e16a)
+ + gitweb: Add support to Link: tag
+ + gitweb: Handle other types of tag in git_print_log
+ + gitweb: Cleanup git_print_log()
+
+Teach gitweb to pay attention to various forms of credits that are
+similar to "Signed-off-by:" lines.
+
+Needs to be eyeballed for the correctness of the esc_html() in the tip one.
+
+* sl/autoconf (2012-07-19) 7 commits
+  (merged to 'next' on 2012-07-23 at dc94990)
+ + build: reconfigure automatically if configure.ac changes
+ + build: "make clean" should not remove configure-generated files
+ + autoconf: use AC_CONFIG_COMMANDS instead of ad-hoc 'config.mak.append'
+ + autoconf: remove few redundant semicolons
+ + autoconf: remove some redundant shell indirections
+ + autoconf: GIT_CONF_APPEND_LINE -> GIT_CONF_SUBST
+ + autoconf: GIT_CONF_APPEND_LINE: change signature
+
+* sn/doc-typofix (2012-07-14) 1 commit
+  (merged to 'next' on 2012-07-22 at 168bba9)
+ + doc: A few minor copy edits.
+
+* tg/ce-namelen-field (2012-07-11) 2 commits
+  (merged to 'next' on 2012-07-22 at 2d85b05)
+ + Strip namelen out of ce_flags into a ce_namelen field
+ + Merge branch 'tg/maint-cache-name-compare' into tg/ce-namelen-field
+
+Split lower bits of ce_flags field and creates a new ce_namelen
+field in the in-core index structure.
+
+* th/difftool-diffall (2012-07-19) 1 commit
+  (merged to 'next' on 2012-07-23 at db62371)
+ + difftool: only copy back files modified during directory diff
+ (this branch is used by da/difftool-updates.)
+
+Finishing touches to "difftool --dir-diff".
+
+--------------------------------------------------
+[New Topics]
+
+* da/difftool-updates (2012-07-23) 5 commits
+  (merged to 'next' on 2012-07-23 at 96528a7)
+ + difftool: Use symlinks when diffing against the worktree
+ + difftool: Call the temp directory "git-difftool"
+ + difftool: Move option values into a hash
+ + difftool: Eliminate global variables
+ + difftool: Simplify print_tool_help()
+
+"git difftool --dir-diff" learned to use symbolic links to prepare
+temporary copy of the working tree when available.
+
 Will merge to 'master'.
+
+* jc/mergetool-tool-help (2012-07-23) 1 commit
+  (merged to 'next' on 2012-07-23 at ef256fc)
+ + mergetool: support --tool-help option like difftool does
+
+"git mergetool" did not support --tool-help option to give the list
+of supported backends, like "git difftool" does.
+
+Will merge to 'master'.
+
+* jk/maint-advise-vaddf (2012-07-23) 1 commit
+  (merged to 'next' on 2012-07-23 at 5b13a77)
+ + advice: pass varargs to strbuf_vaddf, not strbuf_addf
+ (this branch is used by jk/maint-commit-abandoned-message.)
+
+The advise() function did not use varargs correctly to format
+its message.
+
+Will merge to 'master' and soon to 'maint'.
+
+* jk/maint-commit-abandoned-message (2012-07-23) 2 commits
+ - commit: give a hint when a commit message has been abandoned
+ - Merge commit 'b2eda9b' into jk/maint-commit-abandoned-message
+ (this branch uses jk/maint-advise-vaddf.)
+
+Will drop.
+
+* jk/maint-commit-check-committer-early (2012-07-23) 1 commit
+  (merged to 'next' on 2012-07-23 at a2c7133)
+ + commit: check committer identity more strictly
+
+"git commit --amend" let the user edit the log message and then died
+when the human-readable committer name was given insufficiently by
+getpwent(3).
+
+Will merge to 'master' and soon to 'maint'.
+
+* jk/maint-commit-document-editmsg (2012-07-23) 1 commit
+  (merged to 'next' on 2012-07-23 at 06307fb)
+ + commit: document the temporary commit message file
+
+Document $GIT_DIR/COMMIT_EDITMSG file.
+
+Will merge to 'master' and soon to 'maint'.
+
+--------------------------------------------------
+[Stalled]
 
 * mz/rebase-range (2012-07-18) 7 commits
  - rebase (without -p): correctly calculate patches to rebase
@@ -183,45 +197,14 @@ Will merge to 'master'.
  - git-rebase--interactive.sh: extract function for adding "pick" line
  - git-rebase--am.sh: avoid special-casing --keep-empty
 
-* sl/autoconf (2012-07-19) 7 commits
- - build: reconfigure automatically if configure.ac changes
- - build: "make clean" should not remove configure-generated files
- - autoconf: use AC_CONFIG_COMMANDS instead of ad-hoc 'config.mak.append'
- - autoconf: remove few redundant semicolons
- - autoconf: remove some redundant shell indirections
- - autoconf: GIT_CONF_APPEND_LINE -> GIT_CONF_SUBST
- - autoconf: GIT_CONF_APPEND_LINE: change signature
-
-Will merge to 'next'.
-
-* jx/i18n-1.7.11 (2012-07-22) 7 commits
- - i18n: merge-recursive: mark strings for translation
- - Remove unused and bad gettext block from git-am
- - i18n: am: mark more strings for translation
- - Remove obsolete LONG_USAGE which breaks xgettext
- - i18n: Rewrite gettext messages start with dash
- - i18n: rebase: mark strings for translation
- - i18n: New keywords for xgettext extraction from sh
-
-* th/difftool-diffall (2012-07-19) 1 commit
- - difftool: only copy back files modified during directory diff
-
-Will merge to 'next'.
-
---------------------------------------------------
-[Stalled]
+Performance concerns from Windows folks.  Also the series lacks
+proper sign-offs.
 
 * jl/submodule-rm (2012-07-05) 2 commits
  - rm: remove submodules from the index and the .gitmodules file
  - rm: don't fail when removing populated submodules
 
 Expecting a reroll.
-
-* mh/maint-revisions-doc (2012-07-05) 2 commits
- - Document rev^! and rev^@ as revision specifiers
- - Make <refname> documentation more consistent.
-
-Expecting a reroll of the tip one.
 
 * ph/stash-rerere (2012-07-08) 2 commits
  - stash: invoke rerere in case of conflict
@@ -239,17 +222,6 @@ sense" heuristics "git mailinfo" already uses.
 
 A draft from Linus received privately without a log message.
 Expecting a reroll.
-
-* nk/maint-gitweb-log-by-lines (2012-07-05) 3 commits
-  (merged to 'next' on 2012-07-13 at 780e16a)
- + gitweb: Add support to Link: tag
- + gitweb: Handle other types of tag in git_print_log
- + gitweb: Cleanup git_print_log()
-
-Teach gitweb to pay attention to various forms of credits that are
-similar to "Signed-off-by:" lines.
-
-Needs to be eyeballed for the correctness of the esc_html() in the tip one.
 
 * jc/test-lib-source-build-options-early (2012-06-24) 1 commit
  - test-lib: reorder and include GIT-BUILD-OPTIONS a lot earlier
@@ -320,24 +292,26 @@ not working :-(.
 --------------------------------------------------
 [Cooking]
 
-* sn/doc-typofix (2012-07-14) 1 commit
-  (merged to 'next' on 2012-07-22 at 168bba9)
- + doc: A few minor copy edits.
+* mh/maint-revisions-doc (2012-07-23) 3 commits
+ - fixup-amend: Enumerate revision range specifiers in the documentation
+ - Document rev^! and rev^@ as revision specifiers
+ - Make <refname> documentation more consistent.
 
-Will merge to 'master'.
+Getting tired of waiting, so I rewrote the tip one.
+Waiting for some feedback.
 
-* tg/ce-namelen-field (2012-07-11) 2 commits
-  (merged to 'next' on 2012-07-22 at 2d85b05)
- + Strip namelen out of ce_flags into a ce_namelen field
- + Merge branch 'tg/maint-cache-name-compare' into tg/ce-namelen-field
-
-Split lower bits of ce_flags field and creates a new ce_namelen
-field in the in-core index structure.
-
-Will merge to 'master'.
+* jx/i18n-1.7.11 (2012-07-22) 7 commits
+ - i18n: merge-recursive: mark strings for translation
+ - Remove unused and bad gettext block from git-am
+ - i18n: am: mark more strings for translation
+ - Remove obsolete LONG_USAGE which breaks xgettext
+ - i18n: Rewrite gettext messages start with dash
+ - i18n: rebase: mark strings for translation
+ - i18n: New keywords for xgettext extraction from sh
 
 * jk/no-more-pre-exec-callback (2012-06-05) 1 commit
- - pager: drop "wait for output to run less" hack
+  (merged to 'next' on 2012-07-23 at fe59cb6)
+ + pager: drop "wait for output to run less" hack
 
 Will defer for 6 months until ancient "less" goes extinct.
 
