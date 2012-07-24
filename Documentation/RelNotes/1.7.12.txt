@@ -19,8 +19,8 @@ UI, Workflows & Features
    $HOME/.config/git/config instead, which is in line with XDG.
 
  * The value of core.attributesfile and core.excludesfile default to
-   $HOME/.config/attributes and $HOME/.config/ignore respectively when
-   these files exist.
+   $HOME/.config/git/attributes and $HOME/.config/git/ignore respectively
+   when these files exist.
 
  * Logic to disambiguate abbreviated object names have been taught to
    take advantage of object types that are expected in the context,
@@ -127,6 +127,23 @@ Fixes since v1.7.11
 Unless otherwise noted, all the fixes since v1.7.11 in the maintenance
 releases are contained in this release (see release notes to them for
 details).
+
+ * "git mergetool" did not support --tool-help option to give the list
+   of supported backends, like "git difftool" does.
+   (merge 109859e jc/mergetool-tool-help later to maint).
+
+ * "$GIT_DIR/COMMIT_EDITMSG" file that is used to hold the commit log
+   message user edits was not documented.
+   (merge 41f597d jk/maint-commit-document-editmsg later to maint).
+
+ * "git commit --amend" let the user edit the log message and then died
+   when the human-readable committer name was given insufficiently by
+   getpwent(3).
+   (merge f20f387 jk/maint-commit-check-committer-early later to maint).
+
+ * The advise() function did not use varargs correctly to format
+   its message.
+   (merge 447b99c jk/maint-advise-vaddf later to maint).
 
  * "git commit-tree" learned a more natural "-p <parent> <tree>" order
    of arguments long time ago, but recently forgot it by mistake.
