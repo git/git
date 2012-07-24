@@ -77,6 +77,10 @@ UI, Workflows & Features
    a separate "git prompting" script, to help lazy-autoloading of the
    completion part while making prompting part always available.
 
+ * "gitweb" pays attention to various forms of credits that are
+   similar to "Signed-off-by:" lines in the commit objects and
+   highlights them accordingly.
+
 
 Foreign Interface
 
@@ -123,6 +127,14 @@ Fixes since v1.7.11
 Unless otherwise noted, all the fixes since v1.7.11 in the maintenance
 releases are contained in this release (see release notes to them for
 details).
+
+ * "git commit-tree" learned a more natural "-p <parent> <tree>" order
+   of arguments long time ago, but recently forgot it by mistake.
+   (merge 4b7518a kk/maint-commit-tree later to maint).
+
+ * "git diff --no-ext-diff" did not output anything for a typechange
+   filepair when GIT_EXTERNAL_DIFF is in effect.
+   (merge c12f82a jv/maint-no-ext-diff later to maint).
 
  * When "git am" failed, old timers knew to check .git/rebase-apply/patch
    to see what went wrong, but we never told the users about it.
