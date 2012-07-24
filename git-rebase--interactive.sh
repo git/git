@@ -495,25 +495,28 @@ do_next () {
 		author_script_content=$(get_author_ident_from_commit HEAD)
 		echo "$author_script_content" > "$author_script"
 		eval "$author_script_content"
-		output git reset --soft HEAD^
-		pick_one -n $sha1 || die_failed_squash $sha1 "$rest"
+		if ! pick_one -n $sha1
+		then
+			git rev-parse --verify HEAD >"$amend"
+			die_failed_squash $sha1 "$rest"
+		fi
 		case "$(peek_next_command)" in
 		squash|s|fixup|f)
 			# This is an intermediate commit; its message will only be
 			# used in case of trouble.  So use the long version:
-			do_with_author output git commit --no-verify -F "$squash_msg" ||
+			do_with_author output git commit --amend --no-verify -F "$squash_msg" ||
 				die_failed_squash $sha1 "$rest"
 			;;
 		*)
 			# This is the final command of this squash/fixup group
 			if test -f "$fixup_msg"
 			then
-				do_with_author git commit --no-verify -F "$fixup_msg" ||
+				do_with_author git commit --amend --no-verify -F "$fixup_msg" ||
 					die_failed_squash $sha1 "$rest"
 			else
 				cp "$squash_msg" "$GIT_DIR"/SQUASH_MSG || exit
 				rm -f "$GIT_DIR"/MERGE_MSG
-				do_with_author git commit --no-verify -e ||
+				do_with_author git commit --amend --no-verify -F "$GIT_DIR"/SQUASH_MSG -e ||
 					die_failed_squash $sha1 "$rest"
 			fi
 			rm -f "$squash_msg" "$fixup_msg"
@@ -729,7 +732,6 @@ In both case, once you're done, continue with:
 		fi
 		. "$author_script" ||
 			die "Error trying to find the author identity to amend commit"
-		current_head=
 		if test -f "$amend"
 		then
 			current_head=$(git rev-parse --verify HEAD)
@@ -737,13 +739,12 @@ In both case, once you're done, continue with:
 			die "\
 You have uncommitted changes in your working tree. Please, commit them
 first and then run 'git rebase --continue' again."
-			git reset --soft HEAD^ ||
-			die "Cannot rewind the HEAD"
+			do_with_author git commit --amend --no-verify -F "$msg" -e ||
+				die "Could not commit staged changes."
+		else
+			do_with_author git commit --no-verify -F "$msg" -e ||
+				die "Could not commit staged changes."
 		fi
-		do_with_author git commit --no-verify -F "$msg" -e || {
-			test -n "$current_head" && git reset --soft $current_head
-			die "Could not commit staged changes."
-		}
 	fi
 
 	record_in_rewritten "$(cat "$state_dir"/stopped-sha)"
