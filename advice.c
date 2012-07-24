@@ -32,7 +32,7 @@ void advise(const char *advice, ...)
 	const char *cp, *np;
 
 	va_start(params, advice);
-	strbuf_addf(&buf, advice, params);
+	strbuf_vaddf(&buf, advice, params);
 	va_end(params);
 
 	for (cp = buf.buf; *cp; cp = np) {
