@@ -172,6 +172,8 @@ int credential_read(struct credential *c, FILE *fp)
 		} else if (!strcmp(key, "path")) {
 			free(c->path);
 			c->path = xstrdup(value);
+		} else if (!strcmp(key, "url")) {
+			credential_from_url(c, value);
 		}
 		/*
 		 * Ignore other lines; we don't know what they mean, but
