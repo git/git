@@ -169,6 +169,26 @@ test_expect_failure 'special character at the begining of file name from mw to g
 	test_path_is_file mw_dir_11/[char_2
 '
 
+test_expect_success 'Pull page with title containing ":" other than namespace separator' '
+	wiki_editpage Foo:Bar content false &&
+	(
+		cd mw_dir_11 &&
+		git pull
+	) &&
+	test_path_is_file mw_dir_11/Foo:Bar.mw
+'
+
+test_expect_success 'Push page with title containing ":" other than namespace separator' '
+	(
+		cd mw_dir_11 &&
+		echo content >NotANameSpace:Page.mw &&
+		git add NotANameSpace:Page.mw &&
+		git commit -m "add page with colon" &&
+		git push
+	) &&
+	wiki_page_exist NotANameSpace:Page
+'
+
 test_expect_success 'test of correct formating for file name from mw to git' '
 	wiki_reset &&
 	git clone mediawiki::'"$WIKI_URL"' mw_dir_12 &&

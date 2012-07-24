@@ -104,7 +104,7 @@ test_push_pull () {
 			git push
 		) &&
 
-		test ! wiki_page_exist Foo
+		test_must_fail wiki_page_exist Foo
 	'
 
 	test_expect_success 'Merge conflict expected and solving it' '

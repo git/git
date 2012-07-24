@@ -51,6 +51,9 @@ use constant EMPTY_CONTENT => "<!-- empty page -->\n";
 # used to reflect file creation or deletion in diff.
 use constant NULL_SHA1 => "0000000000000000000000000000000000000000";
 
+# Used on Git's side to reflect empty edit messages on the wiki
+use constant EMPTY_MESSAGE => '*Empty MediaWiki Message*';
+
 my $remotename = $ARGV[0];
 my $url = $ARGV[1];
 
@@ -63,10 +66,15 @@ chomp(@tracked_pages);
 my @tracked_categories = split(/[ \n]/, run_git("config --get-all remote.". $remotename .".categories"));
 chomp(@tracked_categories);
 
-# Import media files too.
+# Import media files on pull
 my $import_media = run_git("config --get --bool remote.". $remotename .".mediaimport");
 chomp($import_media);
 $import_media = ($import_media eq "true");
+
+# Export media files on push
+my $export_media = run_git("config --get --bool remote.". $remotename .".mediaexport");
+chomp($export_media);
+$export_media = !($export_media eq "false");
 
 my $wiki_login = run_git("config --get remote.". $remotename .".mwLogin");
 # Note: mwPassword is discourraged. Use the credential system instead.
@@ -363,6 +371,8 @@ sub get_mw_first_pages {
 sub get_mw_pages {
 	mw_connect_maybe();
 
+	print STDERR "Listing pages on remote wiki...\n";
+
 	my %pages; # hash on page titles to avoid duplicates
 	my $user_defined;
 	if (@tracked_pages) {
@@ -386,6 +396,7 @@ sub get_mw_pages {
 			get_all_mediafiles(\%pages);
 		}
 	}
+	print STDERR (scalar keys %pages) . " pages found.\n";
 	return %pages;
 }
 
@@ -567,6 +578,8 @@ sub get_last_remote_revision {
 	my @pages = values(%pages_hash);
 
 	my $max_rev_num = 0;
+
+	print STDERR "Getting last revision id on tracked pages...\n";
 
 	foreach my $page (@pages) {
 		my $id = $page->{pageid};
@@ -897,6 +910,10 @@ sub mw_import_revids {
 	my $last_timestamp = 0; # Placeholer in case $rev->timestamp is undefined
 
 	foreach my $pagerevid (@$revision_ids) {
+	        # Count page even if we skip it, since we display
+		# $n/$total and $total includes skipped pages.
+		$n++;
+
 		# fetch the content of the pages
 		my $query = {
 			action => 'query',
@@ -911,6 +928,11 @@ sub mw_import_revids {
 			die "Failed to retrieve modified page for revision $pagerevid";
 		}
 
+		if (defined($result->{query}->{badrevids}->{$pagerevid})) {
+			# The revision id does not exist on the remote wiki.
+			next;
+		}
+
 		if (!defined($result->{query}->{pages})) {
 			die "Invalid revision $pagerevid.";
 		}
@@ -918,10 +940,6 @@ sub mw_import_revids {
 		my @result_pages = values(%{$result->{query}->{pages}});
 		my $result_page = $result_pages[0];
 		my $rev = $result_pages[0]->{revisions}->[0];
-
-	        # Count page even if we skip it, since we display
-		# $n/$total and $total includes skipped pages.
-		$n++;
 
 		my $page_title = $result_page->{title};
 
@@ -935,7 +953,7 @@ sub mw_import_revids {
 
 		my %commit;
 		$commit{author} = $rev->{user} || 'Anonymous';
-		$commit{comment} = $rev->{comment} || '*Empty MediaWiki Message*';
+		$commit{comment} = $rev->{comment} || EMPTY_MESSAGE;
 		$commit{title} = mediawiki_smudge_filename($page_title);
 		$commit{mw_revision} = $rev->{revid};
 		$commit{content} = mediawiki_smudge($rev->{'*'});
@@ -950,8 +968,11 @@ sub mw_import_revids {
 		# Differentiates classic pages and media files.
 		my ($namespace, $filename) = $page_title =~ /^([^:]*):(.*)$/;
 		my %mediafile;
-		if ($namespace && get_mw_namespace_id($namespace) == get_mw_namespace_id("File")) {
-			%mediafile = get_mw_mediafile_for_page_revision($filename, $rev->{timestamp});
+		if ($namespace) {
+			my $id = get_mw_namespace_id($namespace);
+			if ($id && $id == get_mw_namespace_id("File")) {
+				%mediafile = get_mw_mediafile_for_page_revision($filename, $rev->{timestamp});
+			}
 		}
 		# If this is a revision of the media page for new version
 		# of a file do one common commit for both file and media page.
@@ -1050,6 +1071,10 @@ sub mw_push_file {
 	my $oldrevid = shift;
 	my $newrevid;
 
+	if ($summary eq EMPTY_MESSAGE) {
+		$summary = '';
+	}
+
 	my $new_sha1 = $diff_info_split[3];
 	my $old_sha1 = $diff_info_split[2];
 	my $page_created = ($old_sha1 eq NULL_SHA1);
@@ -1061,6 +1086,11 @@ sub mw_push_file {
 		$extension = "";
 	}
 	if ($extension eq "mw") {
+		my $ns = get_mw_namespace_id_for_page($complete_file_name);
+		if ($ns && $ns == get_mw_namespace_id("File") && (!$export_media)) {
+			print STDERR "Ignoring media file related page: $complete_file_name\n";
+			return ($oldrevid, "ok");
+		}
 		my $file_content;
 		if ($page_deleted) {
 			# Deleting a page usually requires
@@ -1100,10 +1130,12 @@ sub mw_push_file {
 		}
 		$newrevid = $result->{edit}->{newrevid};
 		print STDERR "Pushed file: $new_sha1 - $title\n";
-	} else {
+	} elsif ($export_media) {
 		$newrevid = mw_upload_file($complete_file_name, $new_sha1,
 					   $extension, $page_deleted,
 					   $summary);
+	} else {
+		print STDERR "Ignoring media file $title\n";
 	}
 	$newrevid = ($newrevid or $oldrevid);
 	return ($newrevid, "ok");
@@ -1177,16 +1209,26 @@ sub mw_push_revision {
 	if ($last_local_revid > 0) {
 		my $parsed_sha1 = $remoteorigin_sha1;
 		# Find a path from last MediaWiki commit to pushed commit
+		print STDERR "Computing path from local to remote ...\n";
+		my @local_ancestry = split(/\n/, run_git("rev-list --boundary --parents $local ^$parsed_sha1"));
+		my %local_ancestry;
+		foreach my $line (@local_ancestry) {
+			if (my ($child, $parents) = $line =~ m/^-?([a-f0-9]+) ([a-f0-9 ]+)/) {
+				foreach my $parent (split(' ', $parents)) {
+					$local_ancestry{$parent} = $child;
+				}
+			} elsif (!$line =~ m/^([a-f0-9]+)/) {
+				die "Unexpected output from git rev-list: $line";
+			}
+		}
 		while ($parsed_sha1 ne $HEAD_sha1) {
-			my @commit_info =  grep(/^$parsed_sha1/, split(/\n/, run_git("rev-list --children $local")));
-			if (!@commit_info) {
+			my $child = $local_ancestry{$parsed_sha1};
+			if (!$child) {
+				printf STDERR "Cannot find a path in history from remote commit to last commit\n";
 				return error_non_fast_forward($remote);
 			}
-			my @commit_info_split = split(/ |\n/, $commit_info[0]);
-			# $commit_info_split[1] is the sha1 of the commit to export
-			# $commit_info_split[0] is the sha1 of its direct child
-			push(@commit_pairs, \@commit_info_split);
-			$parsed_sha1 = $commit_info_split[1];
+			push(@commit_pairs, [$parsed_sha1, $child]);
+			$parsed_sha1 = $child;
 		}
 	} else {
 		# No remote mediawiki revision. Export the whole
@@ -1234,7 +1276,7 @@ sub mw_push_revision {
 			}
 		}
 		unless ($dumb_push) {
-			run_git("notes --ref=$remotename/mediawiki add -m \"mediawiki_revision: $mw_revision\" $sha1_commit");
+			run_git("notes --ref=$remotename/mediawiki add -f -m \"mediawiki_revision: $mw_revision\" $sha1_commit");
 			run_git("update-ref -m \"Git-MediaWiki push\" refs/mediawiki/$remotename/master $sha1_commit $sha1_child");
 		}
 	}
@@ -1275,12 +1317,16 @@ sub get_mw_namespace_id {
 		# Look at configuration file, if the record for that namespace is
 		# already cached. Namespaces are stored in form:
 		# "Name_of_namespace:Id_namespace", ex.: "File:6".
-		my @temp = split(/[ \n]/, run_git("config --get-all remote."
+		my @temp = split(/[\n]/, run_git("config --get-all remote."
 						. $remotename .".namespaceCache"));
 		chomp(@temp);
 		foreach my $ns (@temp) {
 			my ($n, $id) = split(/:/, $ns);
-			$namespace_id{$n} = $id;
+			if ($id eq 'notANameSpace') {
+				$namespace_id{$n} = {is_namespace => 0};
+			} else {
+				$namespace_id{$n} = {is_namespace => 1, id => $id};
+			}
 			$cached_mw_namespace_id{$n} = 1;
 		}
 	}
@@ -1298,26 +1344,44 @@ sub get_mw_namespace_id {
 
 	        while (my ($id, $ns) = each(%{$result->{query}->{namespaces}})) {
 	                if (defined($ns->{id}) && defined($ns->{canonical})) {
-				$namespace_id{$ns->{canonical}} = $ns->{id};
+				$namespace_id{$ns->{canonical}} = {is_namespace => 1, id => $ns->{id}};
 				if ($ns->{'*'}) {
 					# alias (e.g. french Fichier: as alias for canonical File:)
-					$namespace_id{$ns->{'*'}} = $ns->{id};
+					$namespace_id{$ns->{'*'}} = {is_namespace => 1, id => $ns->{id}};
 				}
 			}
 	        }
 	}
 
-	my $id = $namespace_id{$name};
+	my $ns = $namespace_id{$name};
+	my $id;
 
-	if (defined $id) {
-		# Store explicitely requested namespaces on disk
-		if (!exists $cached_mw_namespace_id{$name}) {
-			run_git("config --add remote.". $remotename
-				.".namespaceCache \"". $name .":". $id ."\"");
-			$cached_mw_namespace_id{$name} = 1;
-		}
-		return $id;
+	unless (defined $ns) {
+		print STDERR "No such namespace $name on MediaWiki.\n";
+		$ns = {is_namespace => 0};
+		$namespace_id{$name} = $ns;
+	}
+
+	if ($ns->{is_namespace}) {
+		$id = $ns->{id};
+	}
+
+	# Store "notANameSpace" as special value for inexisting namespaces
+	my $store_id = ($id || 'notANameSpace');
+
+	# Store explicitely requested namespaces on disk
+	if (!exists $cached_mw_namespace_id{$name}) {
+		run_git("config --add remote.". $remotename
+			.".namespaceCache \"". $name .":". $store_id ."\"");
+		$cached_mw_namespace_id{$name} = 1;
+	}
+	return $id;
+}
+
+sub get_mw_namespace_id_for_page {
+	if (my ($namespace) = $_[0] =~ /^([^:]*):/) {
+		return get_mw_namespace_id($namespace);
 	} else {
-		die "No such namespace $name on MediaWiki.";
+		return;
 	}
 }
