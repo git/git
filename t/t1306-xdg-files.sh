@@ -95,6 +95,13 @@ test_expect_success 'Exclusion in a non-XDG global ignore file' '
 	test_must_fail git add to_be_excluded
 '
 
+test_expect_success 'Checking XDG ignore file when HOME is unset' '
+	>expected &&
+	(sane_unset HOME &&
+	 git config --unset core.excludesfile &&
+	 git ls-files --exclude-standard --ignored >actual) &&
+	test_cmp expected actual
+'
 
 test_expect_success 'Checking attributes in the XDG attributes file' '
 	echo foo >f &&
