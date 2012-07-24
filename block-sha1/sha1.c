@@ -101,8 +101,8 @@
  * Where do we get the source from? The first 16 iterations get it from
  * the input data, the next mix it from the 512-bit array.
  */
-#define SHA_SRC(t) get_be32(data + t)
-#define SHA_MIX(t) SHA_ROL(W(t+13) ^ W(t+8) ^ W(t+2) ^ W(t), 1)
+#define SHA_SRC(t) get_be32((unsigned char *) block + (t)*4)
+#define SHA_MIX(t) SHA_ROL(W((t)+13) ^ W((t)+8) ^ W((t)+2) ^ W(t), 1);
 
 #define SHA_ROUND(t, input, fn, constant, A, B, C, D, E) do { \
 	unsigned int TEMP = input(t); setW(t, TEMP); \
@@ -115,7 +115,7 @@
 #define T_40_59(t, A, B, C, D, E) SHA_ROUND(t, SHA_MIX, ((B&C)+(D&(B^C))) , 0x8f1bbcdc, A, B, C, D, E )
 #define T_60_79(t, A, B, C, D, E) SHA_ROUND(t, SHA_MIX, (B^C^D) ,  0xca62c1d6, A, B, C, D, E )
 
-static void blk_SHA1_Block(blk_SHA_CTX *ctx, const unsigned int *data)
+static void blk_SHA1_Block(blk_SHA_CTX *ctx, const void *block)
 {
 	unsigned int A,B,C,D,E;
 	unsigned int array[16];
@@ -126,7 +126,7 @@ static void blk_SHA1_Block(blk_SHA_CTX *ctx, const unsigned int *data)
 	D = ctx->H[3];
 	E = ctx->H[4];
 
-	/* Round 1 - iterations 0-16 take their input from 'data' */
+	/* Round 1 - iterations 0-16 take their input from 'block' */
 	T_0_15( 0, A, B, C, D, E);
 	T_0_15( 1, E, A, B, C, D);
 	T_0_15( 2, D, E, A, B, C);
