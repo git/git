@@ -43,6 +43,10 @@ TEST_PATH="$TEST_DIRECTORY"/lib-httpd
 HTTPD_ROOT_PATH="$PWD"/httpd
 HTTPD_DOCUMENT_ROOT_PATH=$HTTPD_ROOT_PATH/www
 
+# hack to suppress apache PassEnv warnings
+GIT_VALGRIND=$GIT_VALGRIND; export GIT_VALGRIND
+GIT_VALGRIND_OPTIONS=$GIT_VALGRIND_OPTIONS; export GIT_VALGRIND_OPTIONS
+
 if ! test -x "$LIB_HTTPD_PATH"
 then
 	skip_all="skipping test, no web server found at '$LIB_HTTPD_PATH'"
