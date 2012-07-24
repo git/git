@@ -10,7 +10,7 @@ SYNOPSIS
 --------
 [verse]
 'git commit-tree' <tree> [(-p <parent>)...] < changelog
-'git commit-tree' <tree> [(-p <parent>)...] [(-m <message>)...] [(-F <file>)...]
+'git commit-tree' [(-p <parent>)...] [(-m <message>)...] [(-F <file>)...] <tree>
 
 DESCRIPTION
 -----------

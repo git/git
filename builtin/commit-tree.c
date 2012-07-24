@@ -48,9 +48,6 @@ int cmd_commit_tree(int argc, const char **argv, const char *prefix)
 	if (argc < 2 || !strcmp(argv[1], "-h"))
 		usage(commit_tree_usage);
 
-	if (get_sha1_tree(argv[1], tree_sha1))
-		die("Not a valid tree object name %s", argv[1]);
-
 	for (i = 1; i < argc; i++) {
 		const char *arg = argv[i];
 		if (!strcmp(arg, "-p")) {
