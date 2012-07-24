@@ -106,6 +106,12 @@ test_expect_success 'Checking attributes in the XDG attributes file' '
 	test_cmp expected actual
 '
 
+test_expect_success 'Checking XDG attributes when HOME is unset' '
+	>expected &&
+	(sane_unset HOME &&
+	 git check-attr -a f >actual) &&
+	test_cmp expected actual
+'
 
 test_expect_success 'Checking attributes in both XDG and local attributes files' '
 	echo "f -attr_f" >.gitattributes &&
