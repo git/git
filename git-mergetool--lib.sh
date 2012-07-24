@@ -111,7 +111,7 @@ run_merge_tool () {
 	return $status
 }
 
-guess_merge_tool () {
+list_merge_tool_candidates () {
 	if merge_mode
 	then
 		tools="tortoisemerge"
@@ -136,6 +136,10 @@ guess_merge_tool () {
 		tools="$tools emerge vimdiff"
 		;;
 	esac
+}
+
+guess_merge_tool () {
+	list_merge_tool_candidates
 	echo >&2 "merge tool candidates: $tools"
 
 	# Loop over each candidate and stop when a valid merge tool is found.
