@@ -1313,7 +1313,7 @@ void setup_standard_excludes(struct dir_struct *dir)
 	}
 	if (!access(path, R_OK))
 		add_excludes_from_file(dir, path);
-	if (!access(excludes_file, R_OK))
+	if (excludes_file && !access(excludes_file, R_OK))
 		add_excludes_from_file(dir, excludes_file);
 }
 

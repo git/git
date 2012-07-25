@@ -38,6 +38,13 @@ test_expect_success 'read with --get: xdg file exists and ~/.gitconfig doesn'\''
 	test_cmp expected actual
 '
 
+test_expect_success '"$XDG_CONFIG_HOME overrides $HOME/.config/git' '
+	mkdir -p "$HOME"/xdg/git &&
+	echo "[user]name = in_xdg" >"$HOME"/xdg/git/config &&
+	echo in_xdg >expected &&
+	XDG_CONFIG_HOME="$HOME"/xdg git config --get-all user.name >actual &&
+	test_cmp expected actual
+'
 
 test_expect_success 'read with --get: xdg file exists and ~/.gitconfig exists' '
 	>.gitconfig &&
@@ -80,6 +87,17 @@ test_expect_success 'Exclusion of a file in the XDG ignore file' '
 	test_must_fail git add to_be_excluded
 '
 
+test_expect_success '$XDG_CONFIG_HOME overrides $HOME/.config/git/ignore' '
+	mkdir -p "$HOME"/xdg/git &&
+	echo content >excluded_by_xdg_only &&
+	echo excluded_by_xdg_only >"$HOME"/xdg/git/ignore &&
+	test_when_finished "git read-tree --empty" &&
+	(XDG_CONFIG_HOME="$HOME/xdg" &&
+	 export XDG_CONFIG_HOME &&
+	 git add to_be_excluded &&
+	 test_must_fail git add excluded_by_xdg_only
+	)
+'
 
 test_expect_success 'Exclusion in both XDG and local ignore files' '
 	echo to_be_excluded >.gitignore &&
@@ -95,6 +113,13 @@ test_expect_success 'Exclusion in a non-XDG global ignore file' '
 	test_must_fail git add to_be_excluded
 '
 
+test_expect_success 'Checking XDG ignore file when HOME is unset' '
+	>expected &&
+	(sane_unset HOME &&
+	 git config --unset core.excludesfile &&
+	 git ls-files --exclude-standard --ignored >actual) &&
+	test_cmp expected actual
+'
 
 test_expect_success 'Checking attributes in the XDG attributes file' '
 	echo foo >f &&
@@ -106,6 +131,20 @@ test_expect_success 'Checking attributes in the XDG attributes file' '
 	test_cmp expected actual
 '
 
+test_expect_success 'Checking XDG attributes when HOME is unset' '
+	>expected &&
+	(sane_unset HOME &&
+	 git check-attr -a f >actual) &&
+	test_cmp expected actual
+'
+
+test_expect_success '$XDG_CONFIG_HOME overrides $HOME/.config/git/attributes' '
+	mkdir -p "$HOME"/xdg/git &&
+	echo "f attr_f=xdg" >"$HOME"/xdg/git/attributes &&
+	echo "f: attr_f: xdg" >expected &&
+	XDG_CONFIG_HOME="$HOME/xdg" git check-attr -a f >actual &&
+	test_cmp expected actual
+'
 
 test_expect_success 'Checking attributes in both XDG and local attributes files' '
 	echo "f -attr_f" >.gitattributes &&
