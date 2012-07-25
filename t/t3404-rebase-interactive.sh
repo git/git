@@ -858,7 +858,7 @@ test_expect_success 'rebase -ix with --autosquash' '
 test_expect_success 'rebase --exec without -i shows error message' '
 	git reset --hard execute &&
 	test_must_fail git rebase --exec "git show HEAD" HEAD~2 2>actual &&
-	echo "--exec option must be used with --interactive option" >expected &&
+	echo "The --exec option must be used with the --interactive option" >expected &&
 	test_i18ncmp expected actual
 '
 
