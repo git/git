@@ -64,9 +64,10 @@ void exclude_cmds(struct cmdnames *cmds, struct cmdnames *excludes)
 		cmp = strcmp(cmds->names[ci]->name, excludes->names[ei]->name);
 		if (cmp < 0)
 			cmds->names[cj++] = cmds->names[ci++];
-		else if (cmp == 0)
-			ci++, ei++;
-		else if (cmp > 0)
+		else if (cmp == 0) {
+			ei++;
+			free(cmds->names[ci++]);
+		} else if (cmp > 0)
 			ei++;
 	}
 
