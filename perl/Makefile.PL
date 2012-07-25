@@ -2,6 +2,10 @@ use strict;
 use warnings;
 use ExtUtils::MakeMaker;
 use Getopt::Long;
+use File::Find;
+
+# Don't forget to update the perl/Makefile, too.
+# Don't forget to test with NO_PERL_MAKEMAKER=YesPlease
 
 # Sanity: die at first unknown option
 Getopt::Long::Configure qw/ pass_through /;
@@ -25,19 +29,18 @@ endif
 MAKE_FRAG
 }
 
-# XXX. When editing this list:
-#
-# * Please update perl/Makefile, too.
-# * Don't forget to test with NO_PERL_MAKEMAKER=YesPlease
-my %pm = (
-	'Git.pm' => '$(INST_LIBDIR)/Git.pm',
-	'Git/I18N.pm' => '$(INST_LIBDIR)/Git/I18N.pm',
-	'Git/SVN/Memoize/YAML.pm' => '$(INST_LIBDIR)/Git/SVN/Memoize/YAML.pm',
-	'Git/SVN/Fetcher.pm' => '$(INST_LIBDIR)/Git/SVN/Fetcher.pm',
-	'Git/SVN/Editor.pm' => '$(INST_LIBDIR)/Git/SVN/Editor.pm',
-	'Git/SVN/Prompt.pm' => '$(INST_LIBDIR)/Git/SVN/Prompt.pm',
-	'Git/SVN/Ra.pm' => '$(INST_LIBDIR)/Git/SVN/Ra.pm',
-);
+# Find all the .pm files in "Git/" and Git.pm
+my %pm;
+find sub {
+	return unless /\.pm$/;
+
+	# sometimes File::Find prepends a ./  Strip it.
+	my $pm_path = $File::Find::name;
+	$pm_path =~ s{^\./}{};
+
+	$pm{$pm_path} = '$(INST_LIBDIR)/'.$pm_path;
+}, "Git", "Git.pm";
+
 
 # We come with our own bundled Error.pm. It's not in the set of default
 # Perl modules so install it if it's not available on the system yet.
