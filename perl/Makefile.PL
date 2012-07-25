@@ -41,8 +41,7 @@ my %pm = (
 
 # We come with our own bundled Error.pm. It's not in the set of default
 # Perl modules so install it if it's not available on the system yet.
-eval { require Error };
-if ($@ || $Error::VERSION < 0.15009) {
+if ( !eval { require Error } || $Error::VERSION < 0.15009) {
 	$pm{'private-Error.pm'} = '$(INST_LIBDIR)/Error.pm';
 }
 
