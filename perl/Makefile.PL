@@ -6,7 +6,8 @@ use Getopt::Long;
 # Sanity: die at first unknown option
 Getopt::Long::Configure qw/ pass_through /;
 
-GetOptions("localedir=s" => \my $localedir);
+my $localedir = '';
+GetOptions("localedir=s" => \$localedir);
 
 sub MY::postamble {
 	return <<'MAKE_FRAG';
