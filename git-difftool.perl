@@ -370,7 +370,16 @@ sub dir_diff
 	# external tool did not replace the original link with a file.
 	for my $file (@worktree) {
 		next if $symlinks && -l "$b/$file";
-		if (-f "$b/$file" && compare("$b/$file", "$workdir/$file")) {
+		next if ! -f "$b/$file";
+
+		my $diff = compare("$b/$file", "$workdir/$file");
+		if ($diff == 0) {
+			next;
+		} elsif ($diff == -1) {
+			my $errmsg = "warning: Could not compare ";
+			$errmsg += "'$b/$file' with '$workdir/$file'\n";
+			warn $errmsg;
+		} elsif ($diff == 1) {
 			copy("$b/$file", "$workdir/$file") or die $!;
 			my $mode = stat("$b/$file")->mode;
 			chmod($mode, "$workdir/$file") or die $!;
