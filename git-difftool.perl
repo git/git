@@ -13,9 +13,10 @@
 use 5.008;
 use strict;
 use warnings;
-use File::Basename qw(basename dirname);
+use File::Basename qw(dirname);
 use File::Copy;
 use File::Compare;
+use File::Find;
 use File::stat;
 use File::Path qw(mkpath);
 use File::Temp qw(tempdir);
@@ -58,13 +59,27 @@ sub find_worktree
 	return $worktree;
 }
 
+sub filter_tool_scripts
+{
+	my ($tools) = @_;
+	if (-d $_) {
+		if ($_ ne ".") {
+			# Ignore files in subdirectories
+			$File::Find::prune = 1;
+		}
+	} else {
+		if ((-f $_) && ($_ ne "defaults")) {
+			push(@$tools, $_);
+		}
+	}
+}
+
 sub print_tool_help
 {
-	my ($cmd, @found, @notfound);
+	my ($cmd, @found, @notfound, @tools);
 	my $gitpath = Git::exec_path();
 
-	my @files = map { basename($_) } glob("$gitpath/mergetools/*");
-	my @tools = sort(grep { !m{^defaults$} } @files);
+	find(sub { filter_tool_scripts(\@tools) }, "$gitpath/mergetools");
 
 	foreach my $tool (@tools) {
 		$cmd  = "TOOL_MODE=diff";
@@ -79,10 +94,10 @@ sub print_tool_help
 	}
 
 	print "'git difftool --tool=<tool>' may be set to one of the following:\n";
-	print "\t$_\n" for (@found);
+	print "\t$_\n" for (sort(@found));
 
 	print "\nThe following tools are valid, but not currently available:\n";
-	print "\t$_\n" for (@notfound);
+	print "\t$_\n" for (sort(@notfound));
 
 	print "\nNOTE: Some of the tools listed above only work in a windowed\n";
 	print "environment. If run in a terminal-only session, they will fail.\n";
