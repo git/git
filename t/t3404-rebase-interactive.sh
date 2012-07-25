@@ -903,4 +903,12 @@ test_expect_success 'rebase -i --root temporary sentinel commit' '
 	git rebase --abort
 '
 
+test_expect_success 'rebase -i --root fixup root commit' '
+	git checkout B &&
+	FAKE_LINES="1 fixup 2" git rebase -i --root &&
+	test A = $(git cat-file commit HEAD | sed -ne \$p) &&
+	test B = $(git show HEAD:file1) &&
+	test 0 = $(git cat-file commit HEAD | grep -c ^parent\ )
+'
+
 test_done
