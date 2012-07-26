@@ -670,6 +670,19 @@ test_lazy_prereq CASE_INSENSITIVE_FS '
 	test "$(cat CamelCase)" != good
 '
 
+test_lazy_prereq UTF8_NFD_TO_NFC '
+	# check whether FS converts nfd unicode to nfc
+	auml=$(printf "\303\244")
+	aumlcdiar=$(printf "\141\314\210")
+	>"$auml" &&
+	case "$(echo *)" in
+	"$aumlcdiar")
+		true ;;
+	*)
+		false ;;
+	esac
+'
+
 # When the tests are run as root, permission tests will report that
 # things are writable when they shouldn't be.
 test -w / || test_set_prereq SANITY

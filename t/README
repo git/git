@@ -629,6 +629,11 @@ use these, and "test_set_prereq" for how to define your own.
 
    Test is run on a case insensitive file system.
 
+ - UTF8_NFD_TO_NFC
+
+   Test is run on a filesystem which converts decomposed utf-8 (nfd)
+   to precomposed utf-8 (nfc).
+
 Tips for Writing Tests
 ----------------------
 

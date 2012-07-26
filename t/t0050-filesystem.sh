@@ -7,22 +7,6 @@ test_description='Various filesystem issues'
 auml=$(printf '\303\244')
 aumlcdiar=$(printf '\141\314\210')
 
-unibad=
-test_expect_success 'see what we expect' '
-
-	test_unicode=test_expect_success &&
-	mkdir junk &&
-	>junk/"$auml" &&
-	case "$(cd junk && echo *)" in
-	"$aumlcdiar")
-		test_unicode=test_expect_failure &&
-		unibad=t
-		;;
-	*)	;;
-	esac &&
-	rm -fr junk
-'
-
 if test_have_prereq CASE_INSENSITIVE_FS
 then
 	say "will test on a case insensitive filesystem"
@@ -31,8 +15,14 @@ else
 	test_case=test_expect_success
 fi
 
-test "$unibad" &&
+if test_have_prereq UTF8_NFD_TO_NFC
+then
 	say "will test on a unicode corrupting filesystem"
+	test_unicode=test_expect_failure
+else
+	test_unicode=test_expect_success
+fi
+
 test_have_prereq SYMLINKS ||
 	say "will test on a filesystem lacking symbolic links"
 
