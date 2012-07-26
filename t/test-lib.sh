@@ -659,9 +659,10 @@ test_i18ngrep () {
 	fi
 }
 
-# test whether the filesystem supports symbolic links
-ln -s x y 2>/dev/null && test -h y 2>/dev/null && test_set_prereq SYMLINKS
-rm -f y
+test_lazy_prereq SYMLINKS '
+	# test whether the filesystem supports symbolic links
+	ln -s x y && test -h y
+'
 
 # When the tests are run as root, permission tests will report that
 # things are writable when they shouldn't be.
