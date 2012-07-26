@@ -89,7 +89,7 @@ BEGIN {
 	foreach (qw/command command_oneline command_noisy command_output_pipe
 	            command_input_pipe command_close_pipe
 	            command_bidi_pipe command_close_bidi_pipe/) {
-		for my $package ( qw(Git::SVN::Migration Git::SVN::Log Git::SVN),
+		for my $package ( qw(Git::SVN::Migration Git::SVN::Log),
 			__PACKAGE__) {
 			*{"${package}::$_"} = \&{"Git::$_"};
 		}
@@ -109,6 +109,10 @@ my ($_stdin, $_help, $_edit,
 	$_merge, $_strategy, $_preserve_merges, $_dry_run, $_local,
 	$_prefix, $_no_checkout, $_url, $_verbose,
 	$_git_format, $_commit_url, $_tag, $_merge_info, $_interactive);
+
+# This is a refactoring artifact so Git::SVN can get at this git-svn switch.
+sub opt_prefix { return $_prefix || '' }
+
 $Git::SVN::_follow_parent = 1;
 $Git::SVN::Fetcher::_placeholder_filename = ".gitignore";
 $_q ||= 0;
@@ -2037,6 +2041,7 @@ sub gc_directory {
 	}
 }
 
+{
 package Git::SVN;
 use strict;
 use warnings;
@@ -2055,6 +2060,13 @@ use Memoize;  # core since 5.8.0, Jul 2002
 use Memoize::Storable;
 use POSIX qw(:signal_h);
 
+use Git qw(
+    command
+    command_oneline
+    command_noisy
+    command_output_pipe
+    command_close_pipe
+);
 use Git::SVN::Utils qw(fatal can_compress);
 
 my $can_use_yaml;
@@ -4279,12 +4291,13 @@ sub find_rev_after {
 sub _new {
 	my ($class, $repo_id, $ref_id, $path) = @_;
 	unless (defined $repo_id && length $repo_id) {
-		$repo_id = $Git::SVN::default_repo_id;
+		$repo_id = $default_repo_id;
 	}
 	unless (defined $ref_id && length $ref_id) {
-		$_prefix = '' unless defined($_prefix);
+		# Access the prefix option from the git-svn main program if it's loaded.
+		my $prefix = defined &::opt_prefix ? ::opt_prefix() : "";
 		$_[2] = $ref_id =
-		             "refs/remotes/$_prefix$Git::SVN::default_ref_id";
+		             "refs/remotes/$prefix$default_ref_id";
 	}
 	$_[1] = $repo_id;
 	my $dir = "$ENV{GIT_DIR}/svn/$ref_id";
@@ -4345,6 +4358,7 @@ sub uri_decode {
 
 sub remove_username {
 	$_[0] =~ s{^([^:]*://)[^@]+@}{$1};
+}
 }
 
 package Git::SVN::Log;
