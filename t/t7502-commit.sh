@@ -248,6 +248,8 @@ test_expect_success 'setup auto-ident prerequisite' '
 	    sane_unset GIT_COMMITTER_NAME &&
 	    git var GIT_COMMITTER_IDENT); then
 		test_set_prereq AUTOIDENT
+	else
+		test_set_prereq NOAUTOIDENT
 	fi
 '
 
@@ -268,6 +270,21 @@ write_script .git/FAKE_EDITOR <<EOF
 echo editor started > "$(pwd)/.git/result"
 exit 0
 EOF
+
+test_expect_success NOAUTOIDENT 'do not fire editor when committer is bogus' '
+	>.git/result
+	>expect &&
+
+	echo >>negative &&
+	(
+		sane_unset GIT_COMMITTER_EMAIL &&
+		sane_unset GIT_COMMITTER_NAME &&
+		GIT_EDITOR="\"$(pwd)/.git/FAKE_EDITOR\"" &&
+		export GIT_EDITOR &&
+		test_must_fail git commit -e -m sample -a
+	) &&
+	test_cmp expect .git/result
+'
 
 test_expect_success 'do not fire editor in the presence of conflicts' '
 
