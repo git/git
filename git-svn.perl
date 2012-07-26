@@ -20,10 +20,7 @@ my $cmd_dir_prefix = eval {
 
 my $git_dir_user_set = 1 if defined $ENV{GIT_DIR};
 $ENV{GIT_DIR} ||= '.git';
-$Git::SVN::default_repo_id = 'svn';
-$Git::SVN::default_ref_id = $ENV{GIT_SVN_ID} || 'git-svn';
 $Git::SVN::Ra::_log_window_size = 100;
-$Git::SVN::_minimize_url = 'unset';
 
 if (! exists $ENV{SVN_SSH} && exists $ENV{GIT_SSH}) {
 	$ENV{SVN_SSH} = $ENV{GIT_SSH};
@@ -114,7 +111,6 @@ my ($_stdin, $_help, $_edit,
 # This is a refactoring artifact so Git::SVN can get at this git-svn switch.
 sub opt_prefix { return $_prefix || '' }
 
-$Git::SVN::_follow_parent = 1;
 $Git::SVN::Fetcher::_placeholder_filename = ".gitignore";
 $_q ||= 0;
 my %remote_opts = ( 'username=s' => \$Git::SVN::Prompt::_username,

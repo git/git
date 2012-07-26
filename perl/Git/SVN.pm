@@ -3,9 +3,9 @@ use strict;
 use warnings;
 use Fcntl qw/:DEFAULT :seek/;
 use constant rev_map_fmt => 'NH40';
-use vars qw/$default_repo_id $default_ref_id $_no_metadata $_follow_parent
+use vars qw/$_no_metadata
             $_repack $_repack_flags $_use_svm_props $_head
-            $_use_svnsync_props $no_reuse_existing $_minimize_url
+            $_use_svnsync_props $no_reuse_existing
 	    $_use_log_author $_add_author_from $_localtime/;
 use Carp qw/croak/;
 use File::Path qw/mkpath/;
@@ -29,6 +29,11 @@ my $can_use_yaml;
 BEGIN {
 	$can_use_yaml = eval { require Git::SVN::Memoize::YAML; 1};
 }
+
+our $_follow_parent  = 1;
+our $_minimize_url   = 'unset';
+our $default_repo_id = 'svn';
+our $default_ref_id  = $ENV{GIT_SVN_ID} || 'git-svn';
 
 my ($_gc_nr, $_gc_period);
 
