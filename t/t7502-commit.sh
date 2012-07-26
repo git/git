@@ -235,24 +235,15 @@ test_expect_success 'cleanup commit messages (strip,-F,-e): output' '
 	test_i18ncmp expect actual
 '
 
-echo "#
-# Author:    $GIT_AUTHOR_NAME <$GIT_AUTHOR_EMAIL>
-#" >> expect
-
-test_expect_success 'author different from committer' '
+test_expect_success 'message shows author when it is not equal to committer' '
 	echo >>negative &&
 	test_might_fail git commit -e -m "sample" &&
-	head -n 7 .git/COMMIT_EDITMSG >actual &&
-	test_i18ncmp expect actual
+	test_i18ngrep \
+	  "^# Author: *A U Thor <author@example.com>\$" \
+	  .git/COMMIT_EDITMSG
 '
 
-mv expect expect.tmp
-sed '$d' < expect.tmp > expect
-rm -f expect.tmp
-echo "# Committer:
-#" >> expect
-
-test_expect_success 'committer is automatic' '
+test_expect_success 'message shows committer when it is automatic' '
 
 	echo >>negative &&
 	(
@@ -261,9 +252,9 @@ test_expect_success 'committer is automatic' '
 		# must fail because there is no change
 		test_must_fail git commit -e -m "sample"
 	) &&
-	head -n 8 .git/COMMIT_EDITMSG |	\
-	sed "s/^# Committer: .*/# Committer:/" >actual
-	test_i18ncmp expect actual
+	# the ident is calculated from the system, so we cannot
+	# check the actual value, only that it is there
+	test_i18ngrep "^# Committer: " .git/COMMIT_EDITMSG
 '
 
 write_script .git/FAKE_EDITOR <<EOF
