@@ -7,22 +7,11 @@ test_description='Various filesystem issues'
 auml=$(printf '\303\244')
 aumlcdiar=$(printf '\141\314\210')
 
-case_insensitive=
 unibad=
 no_symlinks=
 test_expect_success 'see what we expect' '
 
-	test_case=test_expect_success &&
 	test_unicode=test_expect_success &&
-	mkdir junk &&
-	echo good >junk/CamelCase &&
-	echo bad >junk/camelcase &&
-	if test "$(cat junk/CamelCase)" != good
-	then
-		test_case=test_expect_failure &&
-		case_insensitive=t
-	fi &&
-	rm -fr junk &&
 	mkdir junk &&
 	>junk/"$auml" &&
 	case "$(cd junk && echo *)" in
@@ -41,14 +30,20 @@ test_expect_success 'see what we expect' '
 	}
 '
 
-test "$case_insensitive" &&
+if test_have_prereq CASE_INSENSITIVE_FS
+then
 	say "will test on a case insensitive filesystem"
+	test_case=test_expect_failure
+else
+	test_case=test_expect_success
+fi
+
 test "$unibad" &&
 	say "will test on a unicode corrupting filesystem"
 test "$no_symlinks" &&
 	say "will test on a filesystem lacking symbolic links"
 
-if test "$case_insensitive"
+if test_have_prereq CASE_INSENSITIVE_FS
 then
 test_expect_success "detection of case insensitive filesystem during repo init" '
 
