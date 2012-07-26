@@ -266,13 +266,10 @@ test_expect_success 'committer is automatic' '
 	test_i18ncmp expect actual
 '
 
-pwd=`pwd`
-cat >> .git/FAKE_EDITOR << EOF
-#! /bin/sh
-echo editor started > "$pwd/.git/result"
+write_script .git/FAKE_EDITOR <<EOF
+echo editor started > "$(pwd)/.git/result"
 exit 0
 EOF
-chmod +x .git/FAKE_EDITOR
 
 test_expect_success 'do not fire editor in the presence of conflicts' '
 
@@ -300,9 +297,7 @@ test_expect_success 'do not fire editor in the presence of conflicts' '
 	test "$(cat .git/result)" = "editor not started"
 '
 
-pwd=`pwd`
-cat >.git/FAKE_EDITOR <<EOF
-#! $SHELL_PATH
+write_script .git/FAKE_EDITOR <<EOF
 # kill -TERM command added below.
 EOF
 
@@ -339,13 +334,12 @@ test_expect_success 'A single-liner subject with a token plus colon is not a foo
 
 '
 
-cat >.git/FAKE_EDITOR <<EOF
-#!$SHELL_PATH
-mv "\$1" "\$1.orig"
+write_script .git/FAKE_EDITOR <<\EOF
+mv "$1" "$1.orig"
 (
 	echo message
-	cat "\$1.orig"
-) >"\$1"
+	cat "$1.orig"
+) >"$1"
 EOF
 
 echo '## Custom template' >template
