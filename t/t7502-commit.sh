@@ -290,7 +290,7 @@ test_expect_success 'do not fire editor in the presence of conflicts' '
 	test_must_fail git cherry-pick -n master &&
 	echo "editor not started" >.git/result &&
 	(
-		GIT_EDITOR="$(pwd)/.git/FAKE_EDITOR" &&
+		GIT_EDITOR="\"$(pwd)/.git/FAKE_EDITOR\"" &&
 		export GIT_EDITOR &&
 		test_must_fail git commit
 	) &&
