@@ -18,7 +18,7 @@ use File::Copy;
 use File::Compare;
 use File::Find;
 use File::stat;
-use File::Path qw(mkpath);
+use File::Path qw(mkpath rmtree);
 use File::Temp qw(tempdir);
 use Getopt::Long qw(:config pass_through);
 use Git;
@@ -112,6 +112,18 @@ EOF
 	exit(0);
 }
 
+sub exit_cleanup
+{
+	my ($tmpdir, $status) = @_;
+	my $errno = $!;
+	rmtree($tmpdir);
+	if ($status and $errno) {
+		my ($package, $file, $line) = caller();
+		warn "$file line $line: $errno\n";
+	}
+	exit($status | ($status >> 8));
+}
+
 sub setup_dir_diff
 {
 	my ($repo, $workdir, $symlinks) = @_;
@@ -127,13 +139,6 @@ sub setup_dir_diff
 	my @gitargs = ('diff', '--raw', '--no-abbrev', '-z', @ARGV);
 	my $diffrtn = $diffrepo->command_oneline(@gitargs);
 	exit(0) if (length($diffrtn) == 0);
-
-	# Setup temp directories
-	my $tmpdir = tempdir('git-difftool.XXXXX', CLEANUP => 1, TMPDIR => 1);
-	my $ldir = "$tmpdir/left";
-	my $rdir = "$tmpdir/right";
-	mkpath($ldir) or die $!;
-	mkpath($rdir) or die $!;
 
 	# Build index info for left and right sides of the diff
 	my $submodule_mode = '160000';
@@ -203,6 +208,13 @@ EOF
 		}
 	}
 
+	# Setup temp directories
+	my $tmpdir = tempdir('git-difftool.XXXXX', CLEANUP => 0, TMPDIR => 1);
+	my $ldir = "$tmpdir/left";
+	my $rdir = "$tmpdir/right";
+	mkpath($ldir) or exit_cleanup($tmpdir, 1);
+	mkpath($rdir) or exit_cleanup($tmpdir, 1);
+
 	# If $GIT_DIR is not set prior to calling 'git update-index' and
 	# 'git checkout-index', then those commands will fail if difftool
 	# is called from a directory other than the repo root.
@@ -219,16 +231,18 @@ EOF
 		$repo->command_input_pipe(qw(update-index -z --index-info));
 	print($inpipe $lindex);
 	$repo->command_close_pipe($inpipe, $ctx);
+
 	my $rc = system('git', 'checkout-index', '--all', "--prefix=$ldir/");
-	exit($rc | ($rc >> 8)) if ($rc != 0);
+	exit_cleanup($tmpdir, $rc) if $rc != 0;
 
 	$ENV{GIT_INDEX_FILE} = "$tmpdir/rindex";
 	($inpipe, $ctx) =
 		$repo->command_input_pipe(qw(update-index -z --index-info));
 	print($inpipe $rindex);
 	$repo->command_close_pipe($inpipe, $ctx);
+
 	$rc = system('git', 'checkout-index', '--all', "--prefix=$rdir/");
-	exit($rc | ($rc >> 8)) if ($rc != 0);
+	exit_cleanup($tmpdir, $rc) if $rc != 0;
 
 	# If $GIT_DIR was explicitly set just for the update/checkout
 	# commands, then it should be unset before continuing.
@@ -240,14 +254,19 @@ EOF
 	for my $file (@working_tree) {
 		my $dir = dirname($file);
 		unless (-d "$rdir/$dir") {
-			mkpath("$rdir/$dir") or die $!;
+			mkpath("$rdir/$dir") or
+			exit_cleanup($tmpdir, 1);
 		}
 		if ($symlinks) {
-			symlink("$workdir/$file", "$rdir/$file") or die $!;
+			symlink("$workdir/$file", "$rdir/$file") or
+			exit_cleanup($tmpdir, 1);
 		} else {
-			copy("$workdir/$file", "$rdir/$file") or die $!;
+			copy("$workdir/$file", "$rdir/$file") or
+			exit_cleanup($tmpdir, 1);
+
 			my $mode = stat("$workdir/$file")->mode;
-			chmod($mode, "$rdir/$file") or die $!;
+			chmod($mode, "$rdir/$file") or
+			exit_cleanup($tmpdir, 1);
 		}
 	}
 
@@ -255,27 +274,35 @@ EOF
 	# temporary file to both the left and right directories to show the
 	# change in the recorded SHA1 for the submodule.
 	for my $path (keys %submodule) {
+		my $ok;
 		if (defined($submodule{$path}{left})) {
-			write_to_file("$ldir/$path", "Subproject commit $submodule{$path}{left}");
+			$ok = write_to_file("$ldir/$path",
+				"Subproject commit $submodule{$path}{left}");
 		}
 		if (defined($submodule{$path}{right})) {
-			write_to_file("$rdir/$path", "Subproject commit $submodule{$path}{right}");
+			$ok = write_to_file("$rdir/$path",
+				"Subproject commit $submodule{$path}{right}");
 		}
+		exit_cleanup($tmpdir, 1) if not $ok;
 	}
 
 	# Symbolic links require special treatment. The standard "git diff"
 	# shows only the link itself, not the contents of the link target.
 	# This loop replicates that behavior.
 	for my $path (keys %symlink) {
+		my $ok;
 		if (defined($symlink{$path}{left})) {
-			write_to_file("$ldir/$path", $symlink{$path}{left});
+			$ok = write_to_file("$ldir/$path",
+					$symlink{$path}{left});
 		}
 		if (defined($symlink{$path}{right})) {
-			write_to_file("$rdir/$path", $symlink{$path}{right});
+			$ok = write_to_file("$rdir/$path",
+					$symlink{$path}{right});
 		}
+		exit_cleanup($tmpdir, 1) if not $ok;
 	}
 
-	return ($ldir, $rdir, @working_tree);
+	return ($ldir, $rdir, $tmpdir, @working_tree);
 }
 
 sub write_to_file
@@ -286,16 +313,18 @@ sub write_to_file
 	# Make sure the path to the file exists
 	my $dir = dirname($path);
 	unless (-d "$dir") {
-		mkpath("$dir") or die $!;
+		mkpath("$dir") or return 0;
 	}
 
 	# If the file already exists in that location, delete it.  This
 	# is required in the case of symbolic links.
-	unlink("$path");
+	unlink($path);
 
-	open(my $fh, '>', "$path") or die $!;
+	open(my $fh, '>', $path) or return 0;
 	print($fh $value);
 	close($fh);
+
+	return 1;
 }
 
 sub main
@@ -366,21 +395,19 @@ sub main
 sub dir_diff
 {
 	my ($extcmd, $symlinks) = @_;
-
 	my $rc;
+	my $error = 0;
 	my $repo = Git->repository();
-
 	my $workdir = find_worktree($repo);
-	my ($a, $b, @worktree) = setup_dir_diff($repo, $workdir, $symlinks);
+	my ($a, $b, $tmpdir, @worktree) =
+		setup_dir_diff($repo, $workdir, $symlinks);
+
 	if (defined($extcmd)) {
 		$rc = system($extcmd, $a, $b);
 	} else {
 		$ENV{GIT_DIFFTOOL_DIRDIFF} = 'true';
 		$rc = system('git', 'difftool--helper', $a, $b);
 	}
-
-	exit($rc | ($rc >> 8)) if ($rc != 0);
-
 	# If the diff including working copy files and those
 	# files were modified during the diff, then the changes
 	# should be copied back to the working tree.
@@ -397,13 +424,23 @@ sub dir_diff
 			my $errmsg = "warning: Could not compare ";
 			$errmsg += "'$b/$file' with '$workdir/$file'\n";
 			warn $errmsg;
+			$error = 1;
 		} elsif ($diff == 1) {
-			copy("$b/$file", "$workdir/$file") or die $!;
 			my $mode = stat("$b/$file")->mode;
-			chmod($mode, "$workdir/$file") or die $!;
+			copy("$b/$file", "$workdir/$file") or
+			exit_cleanup($tmpdir, 1);
+
+			chmod($mode, "$workdir/$file") or
+			exit_cleanup($tmpdir, 1);
 		}
 	}
-	exit(0);
+	if ($error) {
+		warn "warning: Temporary files exist in '$tmpdir'.\n";
+		warn "warning: You may want to cleanup or recover these.\n";
+		exit(1);
+	} else {
+		exit_cleanup($tmpdir, $rc);
+	}
 }
 
 sub file_diff
