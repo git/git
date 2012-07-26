@@ -237,7 +237,7 @@ test_expect_success 'cleanup commit messages (strip,-F,-e): output' '
 
 test_expect_success 'message shows author when it is not equal to committer' '
 	echo >>negative &&
-	test_might_fail git commit -e -m "sample" &&
+	git commit -e -m "sample" -a &&
 	test_i18ngrep \
 	  "^# Author: *A U Thor <author@example.com>\$" \
 	  .git/COMMIT_EDITMSG
