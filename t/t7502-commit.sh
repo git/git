@@ -243,14 +243,21 @@ test_expect_success 'message shows author when it is not equal to committer' '
 	  .git/COMMIT_EDITMSG
 '
 
-test_expect_success 'message shows committer when it is automatic' '
+test_expect_success 'setup auto-ident prerequisite' '
+	if (sane_unset GIT_COMMITTER_EMAIL &&
+	    sane_unset GIT_COMMITTER_NAME &&
+	    git var GIT_COMMITTER_IDENT); then
+		test_set_prereq AUTOIDENT
+	fi
+'
+
+test_expect_success AUTOIDENT 'message shows committer when it is automatic' '
 
 	echo >>negative &&
 	(
 		sane_unset GIT_COMMITTER_EMAIL &&
 		sane_unset GIT_COMMITTER_NAME &&
-		# must fail because there is no change
-		test_must_fail git commit -e -m "sample"
+		git commit -e -m "sample" -a
 	) &&
 	# the ident is calculated from the system, so we cannot
 	# check the actual value, only that it is there
