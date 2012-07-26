@@ -10,6 +10,8 @@ use vars qw/	$AUTHOR $VERSION
 $AUTHOR = 'Eric Wong <normalperson@yhbt.net>';
 $VERSION = '@@GIT_VERSION@@';
 
+use Git::SVN::Utils qw(fatal can_compress);
+
 # From which subdir have we been invoked?
 my $cmd_dir_prefix = eval {
 	command_oneline([qw/rev-parse --show-prefix/], STDERR => 0)
@@ -34,8 +36,6 @@ if (exists $ENV{SVN_SSH} && $^O eq 'msys') {
 $Git::SVN::Log::TZ = $ENV{TZ};
 $ENV{TZ} = 'UTC';
 $| = 1; # unbuffer STDOUT
-
-sub fatal (@) { print STDERR "@_\n"; exit 1 }
 
 # All SVN commands do it.  Otherwise we may die on SIGPIPE when the remote
 # repository decides to close the connection which we expect to be kept alive.
@@ -66,7 +66,7 @@ sub _req_svn {
 		fatal "Need SVN::Core 1.1.0 or better (got $SVN::Core::VERSION)";
 	}
 }
-my $can_compress = eval { require Compress::Zlib; 1};
+
 use Carp qw/croak/;
 use Digest::MD5;
 use IO::File qw//;
@@ -1578,7 +1578,7 @@ sub cmd_reset {
 }
 
 sub cmd_gc {
-	if (!$can_compress) {
+	if (!can_compress()) {
 		warn "Compress::Zlib could not be found; unhandled.log " .
 		     "files will not be compressed.\n";
 	}
@@ -2013,13 +2013,13 @@ sub md5sum {
 	} elsif (!$ref) {
 		$md5->add($arg) or croak $!;
 	} else {
-		::fatal "Can't provide MD5 hash for unknown ref type: '", $ref, "'";
+		fatal "Can't provide MD5 hash for unknown ref type: '", $ref, "'";
 	}
 	return $md5->hexdigest();
 }
 
 sub gc_directory {
-	if ($can_compress && -f $_ && basename($_) eq "unhandled.log") {
+	if (can_compress() && -f $_ && basename($_) eq "unhandled.log") {
 		my $out_filename = $_ . ".gz";
 		open my $in_fh, "<", $_ or die "Unable to open $_: $!\n";
 		binmode $in_fh;
@@ -2054,6 +2054,9 @@ use Time::Local;
 use Memoize;  # core since 5.8.0, Jul 2002
 use Memoize::Storable;
 use POSIX qw(:signal_h);
+
+use Git::SVN::Utils qw(fatal can_compress);
+
 my $can_use_yaml;
 BEGIN {
 	$can_use_yaml = eval { require Git::SVN::Memoize::YAML; 1};
@@ -2879,8 +2882,8 @@ sub assert_index_clean {
 		command_noisy('read-tree', $treeish);
 		$x = command_oneline('write-tree');
 		if ($y ne $x) {
-			::fatal "trees ($treeish) $y != $x\n",
-			        "Something is seriously wrong...";
+			fatal "trees ($treeish) $y != $x\n",
+			      "Something is seriously wrong...";
 		}
 	});
 }
@@ -3235,7 +3238,7 @@ sub mkemptydirs {
 	my %empty_dirs = ();
 	my $gz_file = "$self->{dir}/unhandled.log.gz";
 	if (-f $gz_file) {
-		if (!$can_compress) {
+		if (!can_compress()) {
 			warn "Compress::Zlib could not be found; ",
 			     "empty directories in $gz_file will not be read\n";
 		} else {
@@ -3918,7 +3921,7 @@ sub set_tree {
 	my ($self, $tree) = (shift, shift);
 	my $log_entry = ::get_commit_entry($tree);
 	unless ($self->{last_rev}) {
-		::fatal("Must have an existing revision to commit");
+		fatal("Must have an existing revision to commit");
 	}
 	my %ed_opts = ( r => $self->{last_rev},
 	                log => $log_entry->{log},
@@ -4347,6 +4350,7 @@ sub remove_username {
 package Git::SVN::Log;
 use strict;
 use warnings;
+use Git::SVN::Utils qw(fatal);
 use POSIX qw/strftime/;
 use constant commit_log_separator => ('-' x 72) . "\n";
 use vars qw/$TZ $limit $color $pager $non_recursive $verbose $oneline
@@ -4445,15 +4449,15 @@ sub config_pager {
 sub run_pager {
 	return unless defined $pager;
 	pipe my ($rfd, $wfd) or return;
-	defined(my $pid = fork) or ::fatal "Can't fork: $!";
+	defined(my $pid = fork) or fatal "Can't fork: $!";
 	if (!$pid) {
 		open STDOUT, '>&', $wfd or
-		                     ::fatal "Can't redirect to stdout: $!";
+		                     fatal "Can't redirect to stdout: $!";
 		return;
 	}
-	open STDIN, '<&', $rfd or ::fatal "Can't redirect stdin: $!";
+	open STDIN, '<&', $rfd or fatal "Can't redirect stdin: $!";
 	$ENV{LESS} ||= 'FRSX';
-	exec $pager or ::fatal "Can't run pager: $! ($pager)";
+	exec $pager or fatal "Can't run pager: $! ($pager)";
 }
 
 sub format_svn_date {
@@ -4602,7 +4606,7 @@ sub cmd_show_log {
 		} elsif ($::_revision =~ /^\d+$/) {
 			$r_min = $r_max = $::_revision;
 		} else {
-			::fatal "-r$::_revision is not supported, use ",
+			fatal "-r$::_revision is not supported, use ",
 				"standard 'git log' arguments instead";
 		}
 	}
