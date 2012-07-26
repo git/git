@@ -221,9 +221,9 @@ write_script () {
 # capital letters by convention).
 
 test_set_prereq () {
-	satisfied="$satisfied$1 "
+	satisfied_prereq="$satisfied_prereq$1 "
 }
-satisfied=" "
+satisfied_prereq=" "
 
 test_have_prereq () {
 	# prerequisites can be concatenated with ','
@@ -239,7 +239,7 @@ test_have_prereq () {
 	for prerequisite
 	do
 		total_prereq=$(($total_prereq + 1))
-		case $satisfied in
+		case "$satisfied_prereq" in
 		*" $prerequisite "*)
 			ok_prereq=$(($ok_prereq + 1))
 			;;
