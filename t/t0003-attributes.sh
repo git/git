@@ -123,16 +123,6 @@ test_expect_success 'attribute matching is case insensitive when core.ignorecase
 
 '
 
-test_expect_success 'check whether FS is case-insensitive' '
-	mkdir junk &&
-	echo good >junk/CamelCase &&
-	echo bad >junk/camelcase &&
-	if test "$(cat junk/CamelCase)" != good
-	then
-		test_set_prereq CASE_INSENSITIVE_FS
-	fi
-'
-
 test_expect_success CASE_INSENSITIVE_FS 'additional case insensitivity tests' '
 	test_must_fail attr_check a/B/D/g "a/b/d/*" "-c core.ignorecase=0" &&
 	test_must_fail attr_check A/B/D/NO "a/b/d/*" "-c core.ignorecase=0" &&
