@@ -93,15 +93,22 @@ sub print_tool_help
 		}
 	}
 
-	print "'git difftool --tool=<tool>' may be set to one of the following:\n";
+	print << 'EOF';
+'git difftool --tool=<tool>' may be set to one of the following:
+EOF
 	print "\t$_\n" for (sort(@found));
 
-	print "\nThe following tools are valid, but not currently available:\n";
+	print << 'EOF';
+
+The following tools are valid, but not currently available:
+EOF
 	print "\t$_\n" for (sort(@notfound));
 
-	print "\nNOTE: Some of the tools listed above only work in a windowed\n";
-	print "environment. If run in a terminal-only session, they will fail.\n";
+	print << 'EOF';
 
+NOTE: Some of the tools listed above only work in a windowed
+environment. If run in a terminal-only session, they will fail.
+EOF
 	exit(0);
 }
 
@@ -114,8 +121,11 @@ sub setup_dir_diff
 	# if $GIT_DIR and $GIT_WORK_TREE are set in ENV, they are actually used
 	# by Git->repository->command*.
 	my $repo_path = $repo->repo_path();
-	my $diffrepo = Git->repository(Repository => $repo_path, WorkingCopy => $workdir);
-	my $diffrtn = $diffrepo->command_oneline('diff', '--raw', '--no-abbrev', '-z', @ARGV);
+	my %repo_args = (Repository => $repo_path, WorkingCopy => $workdir);
+	my $diffrepo = Git->repository(%repo_args);
+
+	my @gitargs = ('diff', '--raw', '--no-abbrev', '-z', @ARGV);
+	my $diffrtn = $diffrepo->command_oneline(@gitargs);
 	exit(0) if (length($diffrtn) == 0);
 
 	# Setup temp directories
@@ -140,11 +150,15 @@ sub setup_dir_diff
 	my $i = 0;
 	while ($i < $#rawdiff) {
 		if ($rawdiff[$i] =~ /^::/) {
-			print "Combined diff formats ('-c' and '--cc') are not supported in directory diff mode.\n";
+			warn << 'EOF';
+Combined diff formats ('-c' and '--cc') are not supported in
+directory diff mode ('-d' and '--dir-diff').
+EOF
 			exit(1);
 		}
 
-		my ($lmode, $rmode, $lsha1, $rsha1, $status) = split(' ', substr($rawdiff[$i], 1));
+		my ($lmode, $rmode, $lsha1, $rsha1, $status) =
+			split(' ', substr($rawdiff[$i], 1));
 		my $src_path = $rawdiff[$i + 1];
 		my $dst_path;
 
@@ -156,7 +170,7 @@ sub setup_dir_diff
 			$i += 2;
 		}
 
-		if (($lmode eq $submodule_mode) or ($rmode eq $submodule_mode)) {
+		if ($lmode eq $submodule_mode or $rmode eq $submodule_mode) {
 			$submodule{$src_path}{left} = $lsha1;
 			if ($lsha1 ne $rsha1) {
 				$submodule{$dst_path}{right} = $rsha1;
@@ -167,14 +181,16 @@ sub setup_dir_diff
 		}
 
 		if ($lmode eq $symlink_mode) {
-			$symlink{$src_path}{left} = $diffrepo->command_oneline('show', "$lsha1");
+			$symlink{$src_path}{left} =
+				$diffrepo->command_oneline('show', "$lsha1");
 		}
 
 		if ($rmode eq $symlink_mode) {
-			$symlink{$dst_path}{right} = $diffrepo->command_oneline('show', "$rsha1");
+			$symlink{$dst_path}{right} =
+				$diffrepo->command_oneline('show', "$rsha1");
 		}
 
-		if (($lmode ne $null_mode) and ($status !~ /^C/)) {
+		if ($lmode ne $null_mode and $status !~ /^C/) {
 			$lindex .= "$lmode $lsha1\t$src_path\0";
 		}
 
@@ -199,14 +215,16 @@ sub setup_dir_diff
 	# Populate the left and right directories based on each index file
 	my ($inpipe, $ctx);
 	$ENV{GIT_INDEX_FILE} = "$tmpdir/lindex";
-	($inpipe, $ctx) = $repo->command_input_pipe(qw/update-index -z --index-info/);
+	($inpipe, $ctx) =
+		$repo->command_input_pipe(qw(update-index -z --index-info));
 	print($inpipe $lindex);
 	$repo->command_close_pipe($inpipe, $ctx);
 	my $rc = system('git', 'checkout-index', '--all', "--prefix=$ldir/");
 	exit($rc | ($rc >> 8)) if ($rc != 0);
 
 	$ENV{GIT_INDEX_FILE} = "$tmpdir/rindex";
-	($inpipe, $ctx) = $repo->command_input_pipe(qw/update-index -z --index-info/);
+	($inpipe, $ctx) =
+		$repo->command_input_pipe(qw(update-index -z --index-info));
 	print($inpipe $rindex);
 	$repo->command_close_pipe($inpipe, $ctx);
 	$rc = system('git', 'checkout-index', '--all', "--prefix=$rdir/");
