@@ -1,18 +1,18 @@
 To: git@vger.kernel.org
-Subject: What's cooking in git.git (Jul 2012, #07; Mon, 23)
-X-master-at: ccc1188fa34cd9519185a22b13599256ccfac7e1
-X-next-at: ef256fcf12b3e3fdb5f9a5b3185d9727e9415afa
+Subject: What's cooking in git.git (Jul 2012, #08; Thu, 26)
+X-master-at: cdd159b2f56c9e69e37bbb8f5af301abd93e5407
+X-next-at: f358a28daf9cd64a842c5aac31fa79dd40c72ecc
 
-What's cooking in git.git (Jul 2012, #07; Mon, 23)
+What's cooking in git.git (Jul 2012, #08; Thu, 26)
 --------------------------------------------------
 
 Here are the topics that have been cooking.  Commits prefixed with '-' are
 only in 'pu' (proposed updates) while commits prefixed with '+' are in 'next'.
 
-The tip of 'master' has been tagged as 1.7.12-rc0; this deliberately
-contains a few topics that have been in 'next' only for a few days,
-so please make sure to spot any possible issues and report soonish
-to avoid regressions in the upcoming release.
+Please consider that the tip of 'master' is more or less feature
+complete.  Topics that are not in 'next' by the time I tag -rc1
+sometime early next week will not likely to be part of upcoming
+1.7.12 release.
 
 You can find the changes described here in the integration branches of the
 repositories listed at
@@ -20,126 +20,88 @@ repositories listed at
     http://git-blame.blogspot.com/p/git-public-repositories.html
 
 --------------------------------------------------
-[Graduated to "master"]
-
-* jk/mediawiki-credential (2012-07-18) 4 commits
-  (merged to 'next' on 2012-07-22 at 2cb99b2)
- + mw-to-git: use git-credential's URL parser
- + credential: convert "url" attribute into its parsed subparts
- + mw-to-git: check blank credential attributes via length
- + docs/credential: minor clarity fixups
-
-Mediawiki importer updates.
-
-* jn/block-sha1 (2012-07-23) 3 commits
-  (merged to 'next' on 2012-07-23 at a11a08b)
- + Makefile: BLK_SHA1 does not require fast htonl() and unaligned loads
- + block-sha1: put expanded macro parameters in parentheses
- + block-sha1: avoid pointer conversion that violates alignment constraints
-
-The code to load a word one-byte-at-a-time was optimized into a
-word-wide load instruction even when the pointer was not aligned,
-which caused issues on architectures that do not like unaligned
-access.
-
-* jn/make-assembly-in-right-directory (2012-07-22) 1 commit
-  (merged to 'next' on 2012-07-23 at 3c155cc)
- + Makefile: fix location of listing produced by "make subdir/foo.s"
-
-* jv/maint-no-ext-diff (2012-07-19) 2 commits
-  (merged to 'next' on 2012-07-22 at eefcf45)
- + diff: test precedence of external diff drivers
- + diff: correctly disable external_diff with --no-ext-diff
-
-"git diff --no-ext-diff" did not output anything for a typechange
-filepair when GIT_EXTERNAL_DIFF is in effect.
-
-* kk/maint-1.7.9-commit-tree (2012-07-17) 1 commit
- + commit-tree: resurrect command line parsing updates
- (this branch is used by kk/maint-commit-tree.)
-
-A more natural-looking "git commit-tree -p <parent> <tree>" syntax
-was introduced long time ago, but we accidentally broke it in the
-1.7.9 era.
-
-* kk/maint-commit-tree (2012-07-17) 2 commits
-  (merged to 'next' on 2012-07-22 at ab15d56)
- + Revert "git-commit-tree(1): update synopsis"
- + Merge branch 'kk/maint-1.7.9-commit-tree' into kk/maint-commit-tree
- (this branch uses kk/maint-1.7.9-commit-tree.)
-
-The same as above, for merging to the upcoming release.
-
-* mm/mediawiki-usability (2012-07-17) 10 commits
-  (merged to 'next' on 2012-07-22 at fe66a95)
- + git-remote-mediawiki: allow page names with a ':'
- + git-remote-mediawiki: fix incorrect test usage in test
- + git-remote-mediawiki: properly deal with invalid remote revisions
- + git-remote-mediawiki: show progress information when getting last remote revision
- + git-remote-mediawiki: show progress information when listing pages
- + git-remote-mediawiki: use --force when adding notes
- + git-remote-mediawiki: get rid of O(N^2) loop
- + git-remote-mediawiki: make mediafiles export optional
- + git-remote-mediawiki: actually send empty comment when they're empty
- + git-remote-mediawiki: don't split namespaces with spaces
-
-Mediawiki importer updates.
-
-* nk/maint-gitweb-log-by-lines (2012-07-05) 3 commits
-  (merged to 'next' on 2012-07-13 at 780e16a)
- + gitweb: Add support to Link: tag
- + gitweb: Handle other types of tag in git_print_log
- + gitweb: Cleanup git_print_log()
-
-Teach gitweb to pay attention to various forms of credits that are
-similar to "Signed-off-by:" lines.
-
-Needs to be eyeballed for the correctness of the esc_html() in the tip one.
-
-* sl/autoconf (2012-07-19) 7 commits
-  (merged to 'next' on 2012-07-23 at dc94990)
- + build: reconfigure automatically if configure.ac changes
- + build: "make clean" should not remove configure-generated files
- + autoconf: use AC_CONFIG_COMMANDS instead of ad-hoc 'config.mak.append'
- + autoconf: remove few redundant semicolons
- + autoconf: remove some redundant shell indirections
- + autoconf: GIT_CONF_APPEND_LINE -> GIT_CONF_SUBST
- + autoconf: GIT_CONF_APPEND_LINE: change signature
-
-* sn/doc-typofix (2012-07-14) 1 commit
-  (merged to 'next' on 2012-07-22 at 168bba9)
- + doc: A few minor copy edits.
-
-* tg/ce-namelen-field (2012-07-11) 2 commits
-  (merged to 'next' on 2012-07-22 at 2d85b05)
- + Strip namelen out of ce_flags into a ce_namelen field
- + Merge branch 'tg/maint-cache-name-compare' into tg/ce-namelen-field
-
-Split lower bits of ce_flags field and creates a new ce_namelen
-field in the in-core index structure.
-
-* th/difftool-diffall (2012-07-19) 1 commit
-  (merged to 'next' on 2012-07-23 at db62371)
- + difftool: only copy back files modified during directory diff
- (this branch is used by da/difftool-updates.)
-
-Finishing touches to "difftool --dir-diff".
-
---------------------------------------------------
 [New Topics]
 
-* da/difftool-updates (2012-07-23) 5 commits
-  (merged to 'next' on 2012-07-23 at 96528a7)
- + difftool: Use symlinks when diffing against the worktree
- + difftool: Call the temp directory "git-difftool"
- + difftool: Move option values into a hash
- + difftool: Eliminate global variables
- + difftool: Simplify print_tool_help()
-
-"git difftool --dir-diff" learned to use symbolic links to prepare
-temporary copy of the working tree when available.
+* dg/submodule-in-dismembered-working-tree (2012-07-25) 1 commit
+  (merged to 'next' on 2012-07-26 at cfa16c4)
+ + git-submodule: work with GIT_DIR/GIT_WORK_TREE
 
 Will merge to 'master'.
+
+* jk/help-plug-memleak (2012-07-25) 2 commits
+  (merged to 'next' on 2012-07-26 at bd57cb8)
+ + help.c::exclude_cmds(): plug a leak
+ + help.c::uniq: plug a leak
+
+Will merge to 'master'.
+
+* jk/maint-checkout-orphan-check-fix (2012-07-25) 1 commit
+  (merged to 'next' on 2012-07-26 at a513c5a)
+ + checkout: don't confuse ref and object flags
+
+Will merge to 'master', later down to older maintenance releases.
+
+* ms/makefile-pl (2012-07-25) 3 commits
+ - The Makefile.PL will now find .pm files itself.
+ - Don't lose Error.pm if $@ gets clobbered.
+ - Quiet warning if Makefile.PL is run with -w and no --localedir
+ (this branch is used by ms/git-svn-pm.)
+
+Will be part of larger series around git-svn, so I'll most likely
+drop this copy and wait for Eric to feed it to me later.
+
+* ms/git-svn-pm (2012-07-26) 4 commits
+ - Move initialization of Git::SVN variables into Git::SVN.
+ - Extract Git::SVN from git-svn into its own .pm file.
+ - Prepare Git::SVN for extraction into its own file.
+ - Extract some utilities from git-svn to allow extracting Git::SVN.
+ (this branch uses ms/makefile-pl.)
+
+Will be part of larger series around git-svn, so I'll most likely
+drop this copy and wait for Eric to feed it to me later.
+
+* sz/submodule-force-update (2012-07-25) 1 commit
+  (merged to 'next' on 2012-07-26 at 3bda2be)
+ + Make 'git submodule update --force' always check out submodules.
+
+We may want a documentation update and a few tests on top.
+Not urgent.
+
+* jk/autoident-test (2012-07-26) 6 commits
+  (merged to 'next' on 2012-07-26 at f358a28)
+ + t7502: test early quit from commit with bad ident
+ + t7502: handle systems where auto-identity is broken
+ + t7502: drop confusing test_might_fail call
+ + t7502: narrow checks for author/committer name in template
+ + t7502: properly quote GIT_EDITOR
+ + t7502: clean up fake_editor tests
+
+Will merge to 'master'.
+
+* jc/test-prereq (2012-07-26) 6 commits
+  (merged to 'next' on 2012-07-26 at 0e21c36)
+ + test-lib: provide UTF8 behaviour as a prerequisite
+ + t0050: use the SYMLINKS test prereq
+ + t0050: use the CASE_INSENSITIVE_FS test prereq
+ + test-lib: provide case insensitivity as a prerequisite
+ + test: allow prerequisite to be evaluated lazily
+ + test: rename $satisfied to $satisfied_prereq
+
+Teaches the test framework to probe rarely used prerequistes lazily,
+and make use of it for detecting SYMLINKS, CASE_INSENSITIVE_FS and
+NKD/NKC MacOS x gotcha.
+
+Not urgent.
+
+--------------------------------------------------
+[Graduated to "master"]
+
+* cw/rebase-i-root (2012-07-24) 1 commit
+  (merged to 'next' on 2012-07-24 at 01b7c29)
+ + rebase -i: handle fixup of root commit correctly
+
+Finishing touches to the "rebase -i --root" (new feature for
+1.7.12).
 
 * jc/mergetool-tool-help (2012-07-23) 1 commit
   (merged to 'next' on 2012-07-23 at ef256fc)
@@ -148,7 +110,14 @@ Will merge to 'master'.
 "git mergetool" did not support --tool-help option to give the list
 of supported backends, like "git difftool" does.
 
-Will merge to 'master'.
+* jc/test-lib-source-build-options-early (2012-06-24) 1 commit
+  (merged to 'next' on 2012-07-24 at 97078b5)
+ + test-lib: reorder and include GIT-BUILD-OPTIONS a lot earlier
+
+Reorders t/test-lib.sh so that we dot-source GIT-BUILD-OPTIONS that
+records the shell and Perl the user told us to use with Git a lot
+early, so that test-lib.sh script itself can use "$PERL_PATH" in
+one of its early operations.
 
 * jk/maint-advise-vaddf (2012-07-23) 1 commit
   (merged to 'next' on 2012-07-23 at 5b13a77)
@@ -158,15 +127,6 @@ Will merge to 'master'.
 The advise() function did not use varargs correctly to format
 its message.
 
-Will merge to 'master' and soon to 'maint'.
-
-* jk/maint-commit-abandoned-message (2012-07-23) 2 commits
- - commit: give a hint when a commit message has been abandoned
- - Merge commit 'b2eda9b' into jk/maint-commit-abandoned-message
- (this branch uses jk/maint-advise-vaddf.)
-
-Will drop.
-
 * jk/maint-commit-check-committer-early (2012-07-23) 1 commit
   (merged to 'next' on 2012-07-23 at a2c7133)
  + commit: check committer identity more strictly
@@ -175,15 +135,26 @@ Will drop.
 when the human-readable committer name was given insufficiently by
 getpwent(3).
 
-Will merge to 'master' and soon to 'maint'.
-
 * jk/maint-commit-document-editmsg (2012-07-23) 1 commit
   (merged to 'next' on 2012-07-23 at 06307fb)
  + commit: document the temporary commit message file
 
 Document $GIT_DIR/COMMIT_EDITMSG file.
 
-Will merge to 'master' and soon to 'maint'.
+* mh/maint-revisions-doc (2012-07-24) 2 commits
+  (merged to 'next' on 2012-07-24 at d5e286e)
+ + Enumerate revision range specifiers in the documentation
+ + Make <refname> documentation more consistent.
+
+* mm/config-xdg (2012-07-24) 4 commits
+  (merged to 'next' on 2012-07-24 at 6ab5783)
+ + t1306: check that XDG_CONFIG_HOME works
+ + ignore: make sure we have an xdg path before using it
+ + attr: make sure we have an xdg path before using it
+ + test-lib.sh: unset XDG_CONFIG_HOME
+
+Finishing touches to the XDG support (new feature for 1.7.12) and
+tests.
 
 --------------------------------------------------
 [Stalled]
@@ -196,6 +167,8 @@ Will merge to 'master' and soon to 'maint'.
  - git-rebase--interactive: group all $preserve_merges code
  - git-rebase--interactive.sh: extract function for adding "pick" line
  - git-rebase--am.sh: avoid special-casing --keep-empty
+
+Expecting a reroll.
 
 Performance concerns from Windows folks.  Also the series lacks
 proper sign-offs.
@@ -222,17 +195,6 @@ sense" heuristics "git mailinfo" already uses.
 
 A draft from Linus received privately without a log message.
 Expecting a reroll.
-
-* jc/test-lib-source-build-options-early (2012-06-24) 1 commit
- - test-lib: reorder and include GIT-BUILD-OPTIONS a lot earlier
-
-Reorders t/test-lib.sh so that we dot-source GIT-BUILD-OPTIONS that
-records the shell and Perl the user told us to use with Git a lot
-early, so that test-lib.sh script itself can use "$PERL_PATH" in
-one of its early operations.
-
-Needs to be eyeballed by people who run tests with exotic options
-like valgrind, --root=/dev/shm/somewhere, etc.
 
 * mb/remote-default-nn-origin (2012-07-11) 6 commits
  - Teach get_default_remote to respect remote.default.
@@ -280,34 +242,48 @@ Given that I heard a lot of noise that people want large files, and
 that I was asked by somebody at GitTogether'11 privately for an
 advice on how to pay developers (not me) to help adding necessary
 support, I am somewhat dissapointed that the original patch series
-that was sent almost two months ago still remains here without much
-comments and updates from the developer community. I even made the
-interface to the logic that decides where to split chunks easily
-replaceable, and I deliberately made the logic in the original patch
-extremely stupid to entice others, especially the "bup" fanboys, to
-come up with a better logic, thinking that giving people an easy
-target to shoot for, they may be encouraged to help out. The plan is
-not working :-(.
+that was sent long time ago still remains here without much comments
+and updates from the developer community. I even made the interface
+to the logic that decides where to split chunks easily replaceable,
+and I deliberately made the logic in the original patch extremely
+stupid to entice others, especially the "bup" fanbois, to come up
+with a better logic, thinking that giving people an easy target to
+shoot for, they may be encouraged to help out. The plan is not
+working :-<.
 
 --------------------------------------------------
 [Cooking]
 
-* mh/maint-revisions-doc (2012-07-23) 3 commits
- - fixup-amend: Enumerate revision range specifiers in the documentation
- - Document rev^! and rev^@ as revision specifiers
- - Make <refname> documentation more consistent.
+* da/difftool-updates (2012-07-26) 10 commits
+  (merged to 'next' on 2012-07-26 at 3263461)
+ + difftool: Disable --symlinks on cygwin
+ + difftool: Handle compare() returning -1
+ + difftool: Wrap long lines for readability
+ + difftool: Check all return codes from compare()
+ + difftool: Handle finding mergetools/ in a path with spaces
+  (merged to 'next' on 2012-07-23 at 96528a7)
+ + difftool: Use symlinks when diffing against the worktree
+ + difftool: Call the temp directory "git-difftool"
+ + difftool: Move option values into a hash
+ + difftool: Eliminate global variables
+ + difftool: Simplify print_tool_help()
 
-Getting tired of waiting, so I rewrote the tip one.
-Waiting for some feedback.
+"git difftool --dir-diff" learned to use symbolic links to prepare
+temporary copy of the working tree when available.
 
-* jx/i18n-1.7.11 (2012-07-22) 7 commits
+Not urgent.
+
+* jx/i18n-1.7.11 (2012-07-26) 7 commits
  - i18n: merge-recursive: mark strings for translation
- - Remove unused and bad gettext block from git-am
+ - Remove dead code which contains bad gettext block
  - i18n: am: mark more strings for translation
- - Remove obsolete LONG_USAGE which breaks xgettext
+ - rebase: remove obsolete and unused LONG_USAGE which breaks xgettext
  - i18n: Rewrite gettext messages start with dash
- - i18n: rebase: mark strings for translation
+ - i18n: rebase: mark messages for translation
  - i18n: New keywords for xgettext extraction from sh
+
+Is this ready for 'next'?
+Not urgent.
 
 * jk/no-more-pre-exec-callback (2012-06-05) 1 commit
   (merged to 'next' on 2012-07-23 at fe59cb6)
@@ -320,3 +296,10 @@ Will defer for 6 months until ancient "less" goes extinct.
  + push: start warning upcoming default change for push.default
 
 Will defer for another cycle.
+
+--------------------------------------------------
+[Discarded]
+
+* jk/maint-commit-abandoned-message (2012-07-23) 2 commits
+ . commit: give a hint when a commit message has been abandoned
+ . Merge commit 'b2eda9b' into jk/maint-commit-abandoned-message
