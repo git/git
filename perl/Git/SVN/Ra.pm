@@ -84,7 +84,7 @@ sub escape_url {
 sub new {
 	my ($class, $url) = @_;
 	$url =~ s!/+$!!;
-	return $RA if ($RA && $RA->{url} eq $url);
+	return $RA if ($RA && $RA->url eq $url);
 
 	::_req_svn();
 
@@ -119,13 +119,29 @@ sub new {
 	                      config => $config,
 			      pool => SVN::Pool->new,
 	                      auth_provider_callbacks => $callbacks);
-	$self->{url} = $url;
+	$RA = bless $self, $class;
+
+	# Make sure its canonicalized
+	$self->url($url);
 	$self->{svn_path} = $url;
 	$self->{repos_root} = $self->get_repos_root;
 	$self->{svn_path} =~ s#^\Q$self->{repos_root}\E(/|$)##;
 	$self->{cache} = { check_path => { r => 0, data => {} },
 	                   get_dir => { r => 0, data => {} } };
-	$RA = bless $self, $class;
+
+	return $RA;
+}
+
+sub url {
+	my $self = shift;
+
+	if (@_) {
+		my $url = shift;
+		$self->{url} = $url;
+		return;
+	}
+
+	return $self->{url};
 }
 
 sub check_path {
@@ -285,7 +301,7 @@ sub gs_do_switch {
 	my $path = $gs->{path};
 	my $pool = SVN::Pool->new;
 
-	my $full_url = $self->{url};
+	my $full_url = $self->url;
 	my $old_url = $full_url;
 	$full_url .= '/' . $path if length $path;
 	my ($ra, $reparented);
@@ -300,7 +316,7 @@ sub gs_do_switch {
 		$ra_invalid = 1;
 	} elsif ($old_url ne $full_url) {
 		SVN::_Ra::svn_ra_reparent($self->{session}, $full_url, $pool);
-		$self->{url} = $full_url;
+		$self->url($full_url);
 		$reparented = 1;
 	}
 
@@ -313,7 +329,7 @@ sub gs_do_switch {
 
 	if ($reparented) {
 		SVN::_Ra::svn_ra_reparent($self->{session}, $old_url, $pool);
-		$self->{url} = $old_url;
+		$self->url($old_url);
 	}
 
 	$pool->clear;
@@ -362,7 +378,7 @@ sub gs_fetch_loop_common {
 	my $inc = $_log_window_size;
 	my ($min, $max) = ($base, $head < $base + $inc ? $head : $base + $inc);
 	my $longest_path = longest_common_path($gsv, $globs);
-	my $ra_url = $self->{url};
+	my $ra_url = $self->url;
 	my $find_trailing_edge;
 	while (1) {
 		my %revs;
@@ -508,7 +524,7 @@ sub match_globs {
 				 ($self->check_path($p, $r) !=
 				  $SVN::Node::dir));
 			next unless $p =~ /$g->{path}->{regex}/;
-			$exists->{$p} = Git::SVN->init($self->{url}, $p, undef,
+			$exists->{$p} = Git::SVN->init($self->url, $p, undef,
 					 $g->{ref}->full_path($de), 1);
 		}
 	}
@@ -532,7 +548,7 @@ sub match_globs {
 			next if ($self->check_path($pathname, $r) !=
 			         $SVN::Node::dir);
 			$exists->{$pathname} = Git::SVN->init(
-			                      $self->{url}, $pathname, undef,
+			                      $self->url, $pathname, undef,
 			                      $g->{ref}->full_path($p), 1);
 		}
 		my $c = '';
@@ -548,7 +564,7 @@ sub match_globs {
 
 sub minimize_url {
 	my ($self) = @_;
-	return $self->{url} if ($self->{url} eq $self->{repos_root});
+	return $self->url if ($self->url eq $self->{repos_root});
 	my $url = $self->{repos_root};
 	my @components = split(m!/!, $self->{svn_path});
 	my $c = '';
@@ -568,7 +584,7 @@ sub can_do_switch {
 	unless (defined $can_do_switch) {
 		my $pool = SVN::Pool->new;
 		my $rep = eval {
-			$self->do_switch(1, '', 0, $self->{url},
+			$self->do_switch(1, '', 0, $self->url,
 			                 SVN::Delta::Editor->new, $pool);
 		};
 		if ($@) {
