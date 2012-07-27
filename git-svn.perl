@@ -14,6 +14,18 @@ use Git::SVN;
 use Git::SVN::Log;
 use Git::SVN::Utils qw(fatal can_compress);
 
+use Git qw(
+	git_cmd_try
+	command
+	command_oneline
+	command_noisy
+	command_output_pipe
+	command_close_pipe
+	command_bidi_pipe
+	command_close_bidi_pipe
+);
+
+
 # From which subdir have we been invoked?
 my $cmd_dir_prefix = eval {
 	command_oneline([qw/rev-parse --show-prefix/], STDERR => 0)
@@ -75,7 +87,6 @@ use File::Spec;
 use File::Find;
 use Getopt::Long qw/:config gnu_getopt no_ignore_case auto_abbrev/;
 use IPC::Open3;
-use Git;
 use Git::SVN::Editor qw//;
 use Git::SVN::Fetcher qw//;
 use Git::SVN::Ra qw//;
@@ -83,16 +94,6 @@ use Git::SVN::Prompt qw//;
 use Memoize;  # core since 5.8.0, Jul 2002
 
 BEGIN {
-	# import functions from Git into our packages, en masse
-	no strict 'refs';
-	foreach (qw/command command_oneline command_noisy command_output_pipe
-	            command_input_pipe command_close_pipe
-	            command_bidi_pipe command_close_bidi_pipe/) {
-		for my $package ( qw(Git::SVN::Migration),
-			__PACKAGE__) {
-			*{"${package}::$_"} = \&{"Git::$_"};
-		}
-	}
 	Memoize::memoize 'Git::config';
 	Memoize::memoize 'Git::config_bool';
 }
@@ -2079,7 +2080,14 @@ use warnings;
 use Carp qw/croak/;
 use File::Path qw/mkpath/;
 use File::Basename qw/dirname basename/;
-use vars qw/$_minimize/;
+
+our $_minimize;
+use Git qw(
+	command
+	command_noisy
+	command_output_pipe
+	command_close_pipe
+);
 
 sub migrate_from_v0 {
 	my $git_dir = $ENV{GIT_DIR};
@@ -2188,6 +2196,7 @@ sub migrate_from_v2 {
 	read_old_urls(\%l_map, '', "$ENV{GIT_DIR}/svn");
 	my $migrated = 0;
 
+	require Git::SVN;
 	foreach my $ref_id (sort keys %l_map) {
 		eval { Git::SVN->init($l_map{$ref_id}, '', undef, $ref_id) };
 		if ($@) {
@@ -2199,6 +2208,9 @@ sub migrate_from_v2 {
 }
 
 sub minimize_connections {
+	require Git::SVN;
+	require Git::SVN::Ra;
+
 	my $r = Git::SVN::read_all_remotes();
 	my $new_urls = {};
 	my $root_repos = {};
