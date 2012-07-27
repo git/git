@@ -87,7 +87,7 @@ BEGIN {
 	foreach (qw/command command_oneline command_noisy command_output_pipe
 	            command_input_pipe command_close_pipe
 	            command_bidi_pipe command_close_bidi_pipe/) {
-		for my $package ( qw(Git::SVN::Migration Git::SVN::Log),
+		for my $package ( qw(Git::SVN::Migration),
 			__PACKAGE__) {
 			*{"${package}::$_"} = \&{"Git::$_"};
 		}
@@ -106,7 +106,7 @@ my ($_stdin, $_help, $_edit,
 	$_version, $_fetch_all, $_no_rebase, $_fetch_parent,
 	$_merge, $_strategy, $_preserve_merges, $_dry_run, $_local,
 	$_prefix, $_no_checkout, $_url, $_verbose,
-	$_git_format, $_commit_url, $_tag, $_merge_info, $_interactive);
+	$_commit_url, $_tag, $_merge_info, $_interactive);
 
 # This is a refactoring artifact so Git::SVN can get at this git-svn switch.
 sub opt_prefix { return $_prefix || '' }
@@ -270,7 +270,7 @@ my %cmd = (
 		    { 'url' => \$_url, } ],
 	'blame' => [ \&Git::SVN::Log::cmd_blame,
 	            "Show what revision and author last modified each line of a file",
-		    { 'git-format' => \$_git_format } ],
+		    { 'git-format' => \$Git::SVN::Log::_git_format } ],
 	'reset' => [ \&cmd_reset,
 		     "Undo fetches back to the specified SVN revision",
 		     { 'revision|r=s' => \$_revision,
@@ -2043,11 +2043,14 @@ package Git::SVN::Log;
 use strict;
 use warnings;
 use Git::SVN::Utils qw(fatal);
+use Git qw(command command_oneline command_output_pipe command_close_pipe);
 use POSIX qw/strftime/;
 use constant commit_log_separator => ('-' x 72) . "\n";
 use vars qw/$TZ $limit $color $pager $non_recursive $verbose $oneline
             %rusers $show_commit $incremental/;
-my $l_fmt;
+
+# Option set in git-svn
+our $_git_format;
 
 sub cmt_showable {
 	my ($c) = @_;
@@ -2093,6 +2096,8 @@ sub git_svn_log_cmd {
 	}
 
 	my ($url, $rev, $uuid, $gs) = ::working_head_info($head);
+
+	require Git::SVN;
 	$gs ||= Git::SVN->_new;
 	my @cmd = (qw/log --abbrev-commit --pretty=raw --default/,
 	           $gs->refname);
@@ -2154,6 +2159,7 @@ sub run_pager {
 
 sub format_svn_date {
 	my $t = shift || time;
+	require Git::SVN;
 	my $gmoff = Git::SVN::get_tz($t);
 	return strftime("%Y-%m-%d %H:%M:%S $gmoff (%a, %d %b %Y)", localtime($t));
 }
@@ -2224,6 +2230,7 @@ sub process_commit {
 	return 1;
 }
 
+my $l_fmt;
 sub show_commit {
 	my $c = shift;
 	if ($oneline) {
