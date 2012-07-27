@@ -207,6 +207,8 @@ sub read_all_remotes {
 			    . "must start with 'refs/'\n")
 				unless $remote_ref =~ m{^refs/};
 			$local_ref = uri_decode($local_ref);
+
+			require Git::SVN::GlobSpec;
 			my $rs = {
 			    t => $t,
 			    remote => $remote,
