@@ -20,6 +20,9 @@ clean:
 	$(RM) ppport.h
 	$(RM) $(makfile)
 	$(RM) $(makfile).old
+	$(RM) PM.stamp
+
+$(makfile): PM.stamp
 
 ifdef NO_PERL_MAKEMAKER
 instdir_SQ = $(subst ','\'',$(prefix)/lib)
