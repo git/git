@@ -10,11 +10,26 @@ use vars qw/	$AUTHOR $VERSION
 $AUTHOR = 'Eric Wong <normalperson@yhbt.net>';
 $VERSION = '@@GIT_VERSION@@';
 
+use Carp qw/croak/;
+use Digest::MD5;
+use IO::File qw//;
+use File::Basename qw/dirname basename/;
+use File::Path qw/mkpath/;
+use File::Spec;
+use File::Find;
+use Getopt::Long qw/:config gnu_getopt no_ignore_case auto_abbrev/;
+use IPC::Open3;
+use Memoize;
+
 use Git::SVN;
+use Git::SVN::Editor;
+use Git::SVN::Fetcher;
+use Git::SVN::Ra;
+use Git::SVN::Prompt;
 use Git::SVN::Log;
 use Git::SVN::Migration;
-use Git::SVN::Utils qw(fatal can_compress);
 
+use Git::SVN::Utils qw(fatal can_compress);
 use Git qw(
 	git_cmd_try
 	command
@@ -25,6 +40,11 @@ use Git qw(
 	command_bidi_pipe
 	command_close_bidi_pipe
 );
+
+BEGIN {
+	Memoize::memoize 'Git::config';
+	Memoize::memoize 'Git::config_bool';
+}
 
 
 # From which subdir have we been invoked?
@@ -78,28 +98,6 @@ sub _req_svn {
 		fatal "Need SVN::Core 1.1.0 or better (got $SVN::Core::VERSION)";
 	}
 }
-
-use Carp qw/croak/;
-use Digest::MD5;
-use IO::File qw//;
-use File::Basename qw/dirname basename/;
-use File::Path qw/mkpath/;
-use File::Spec;
-use File::Find;
-use Getopt::Long qw/:config gnu_getopt no_ignore_case auto_abbrev/;
-use IPC::Open3;
-use Git::SVN::Editor qw//;
-use Git::SVN::Fetcher qw//;
-use Git::SVN::Ra qw//;
-use Git::SVN::Prompt qw//;
-use Memoize;  # core since 5.8.0, Jul 2002
-
-BEGIN {
-	Memoize::memoize 'Git::config';
-	Memoize::memoize 'Git::config_bool';
-}
-
-my ($SVN);
 
 $sha1 = qr/[a-f\d]{40}/;
 $sha1_short = qr/[a-f\d]{4,40}/;
