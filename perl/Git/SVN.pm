@@ -351,7 +351,7 @@ sub init_remote_config {
 			      "svn-remote.$self->{repo_id}.fetch",
 			      $self->path.":".$self->refname);
 	}
-	$self->{url} = $url;
+	$self->url($url);
 }
 
 sub find_by_url { # repos_root and, path are optional
@@ -453,9 +453,10 @@ sub new {
 		$path =~ s{/\z}{};
 		$self->path($path);
 	}
-	$self->{url} = command_oneline('config', '--get',
-	                               "svn-remote.$repo_id.url") or
+	my $url = command_oneline('config', '--get',
+	                          "svn-remote.$repo_id.url") or
                   die "Failed to read \"svn-remote.$repo_id.url\" in config\n";
+	$self->url($url);
 	$self->{pushurl} = eval { command_oneline('config', '--get',
 	                          "svn-remote.$repo_id.pushurl") };
 	$self->rebuild;
@@ -577,17 +578,18 @@ sub _set_svm_vars {
 	my $path = $self->path;
 	my %tried;
 	while (length $path) {
-		unless ($tried{"$self->{url}/$path"}) {
+		my $try = $self->url . "/$path";
+		unless ($tried{$try}) {
 			return $ra if $self->read_svm_props($ra, $path, $r);
-			$tried{"$self->{url}/$path"} = 1;
+			$tried{$try} = 1;
 		}
 		$path =~ s#/?[^/]+$##;
 	}
 	die "Path: '$path' should be ''\n" if $path ne '';
 	return $ra if $self->read_svm_props($ra, $path, $r);
-	$tried{"$self->{url}/$path"} = 1;
+	$tried{$self->url."/$path"} = 1;
 
-	if ($ra->{repos_root} eq $self->{url}) {
+	if ($ra->{repos_root} eq $self->url) {
 		die @err, (map { "  $_\n" } keys %tried), "\n";
 	}
 
@@ -610,7 +612,7 @@ sub _set_svm_vars {
 	if (!$ok) {
 		die @err, (map { "  $_\n" } keys %tried), "\n";
 	}
-	Git::SVN::Ra->new($self->{url});
+	Git::SVN::Ra->new($self->url);
 }
 
 sub svnsync {
@@ -677,7 +679,7 @@ sub ra_uuid {
 		if (!$@ && $uuid && $uuid =~ /^([a-f\d\-]{30,})$/i) {
 			$self->{ra_uuid} = $uuid;
 		} else {
-			die "ra_uuid called without URL\n" unless $self->{url};
+			die "ra_uuid called without URL\n" unless $self->url;
 			$self->{ra_uuid} = $self->ra->get_uuid;
 			tmp_config('--add', $key, $self->{ra_uuid});
 		}
@@ -701,7 +703,7 @@ sub repos_root {
 
 sub ra {
 	my ($self) = shift;
-	my $ra = Git::SVN::Ra->new($self->{url});
+	my $ra = Git::SVN::Ra->new($self->url);
 	$self->_set_repos_root($ra->{repos_root});
 	if ($self->use_svm_props && !$self->{svm}) {
 		if ($self->no_metadata) {
@@ -926,13 +928,13 @@ sub rewrite_uuid {
 
 sub metadata_url {
 	my ($self) = @_;
-	($self->rewrite_root || $self->{url}) .
+	($self->rewrite_root || $self->url) .
 	   (length $self->path ? '/' . $self->path : '');
 }
 
 sub full_url {
 	my ($self) = @_;
-	$self->{url} . (length $self->path ? '/' . $self->path : '');
+	$self->url . (length $self->path ? '/' . $self->path : '');
 }
 
 sub full_pushurl {
@@ -1436,7 +1438,7 @@ sub find_extra_svk_parents {
 	for my $ticket ( @tickets ) {
 		my ($uuid, $path, $rev) = split /:/, $ticket;
 		if ( $uuid eq $self->ra_uuid ) {
-			my $url = $self->{url};
+			my $url = $self->url;
 			my $repos_root = $url;
 			my $branch_from = $path;
 			$branch_from =~ s{^/}{};
@@ -1682,7 +1684,7 @@ sub find_extra_svn_parents {
 	# are now marked as merge, we can add the tip as a parent.
 	my @merges = split "\n", $mergeinfo;
 	my @merge_tips;
-	my $url = $self->{url};
+	my $url = $self->url;
 	my $uuid = $self->ra_uuid;
 	my %ranges;
 	for my $merge ( @merges ) {
@@ -2304,6 +2306,18 @@ sub path {
 	}
 
 	return $self->{path};
+}
+
+sub url {
+	my $self = shift;
+
+	if (@_) {
+		my $url = shift;
+		$self->{url} = $url;
+		return;
+	}
+
+	return $self->{url};
 }
 
 # for read-only access of old .rev_db formats
