@@ -1395,7 +1395,7 @@ sub cmd_commit_diff {
 			fatal("Needed URL or usable git-svn --id in ",
 			      "the command-line\n", $usage);
 		}
-		$url = $gs->{url};
+		$url = $gs->url;
 		$svn_path = $gs->path;
 	}
 	unless (defined $_revision) {
@@ -1663,15 +1663,16 @@ sub complete_url_ls_init {
 			      "and a separate URL is not specified");
 		}
 	}
-	my $url = $ra->{url};
+	my $url = $ra->url;
 	my $gs = Git::SVN->init($url, undef, undef, undef, 1);
 	my $k = "svn-remote.$gs->{repo_id}.url";
 	my $orig_url = eval { command_oneline(qw/config --get/, $k) };
-	if ($orig_url && ($orig_url ne $gs->{url})) {
+	if ($orig_url && ($orig_url ne $gs->url)) {
 		die "$k already set: $orig_url\n",
-		    "wanted to set to: $gs->{url}\n";
+		    "wanted to set to: $gs->url\n";
 	}
-	command_oneline('config', $k, $gs->{url}) unless $orig_url;
+	command_oneline('config', $k, $gs->url) unless $orig_url;
+
 	my $remote_path = $gs->path . "/$repo_path";
 	$remote_path =~ s{%([0-9A-F]{2})}{chr hex($1)}ieg;
 	$remote_path =~ s#/+#/#g;

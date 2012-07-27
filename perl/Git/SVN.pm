@@ -560,7 +560,7 @@ sub _set_svm_vars {
 		# username is of no interest
 		$src =~ s{(^[a-z\+]*://)[^/@]*@}{$1};
 
-		my $replace = $ra->{url};
+		my $replace = $ra->url;
 		$replace .= "/$path" if length $path;
 
 		my $section = "svn-remote.$self->{repo_id}";
@@ -599,16 +599,17 @@ sub _set_svm_vars {
 	$path = $ra->{svn_path};
 	$ra = Git::SVN::Ra->new($ra->{repos_root});
 	while (length $path) {
-		unless ($tried{"$ra->{url}/$path"}) {
+		my $try = $ra->url ."/$path";
+		unless ($tried{$try}) {
 			$ok = $self->read_svm_props($ra, $path, $r);
 			last if $ok;
-			$tried{"$ra->{url}/$path"} = 1;
+			$tried{$try} = 1;
 		}
 		$path =~ s#/?[^/]+$##;
 	}
 	die "Path: '$path' should be ''\n" if $path ne '';
 	$ok ||= $self->read_svm_props($ra, $path, $r);
-	$tried{"$ra->{url}/$path"} = 1;
+	$tried{$ra->url ."/$path"} = 1;
 	if (!$ok) {
 		die @err, (map { "  $_\n" } keys %tried), "\n";
 	}
@@ -1108,7 +1109,7 @@ sub find_parent_branch {
 	}
 	my $r = $i->{copyfrom_rev};
 	my $repos_root = $self->ra->{repos_root};
-	my $url = $self->ra->{url};
+	my $url = $self->ra->url;
 	my $new_url = $url . $branch_from;
 	print STDERR  "Found possible branch point: ",
 	              "$new_url => ", $self->full_url, ", $r\n"
