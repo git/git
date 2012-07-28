@@ -235,44 +235,56 @@ test_expect_success 'cleanup commit messages (strip,-F,-e): output' '
 	test_i18ncmp expect actual
 '
 
-echo "#
-# Author:    $GIT_AUTHOR_NAME <$GIT_AUTHOR_EMAIL>
-#" >> expect
-
-test_expect_success 'author different from committer' '
+test_expect_success 'message shows author when it is not equal to committer' '
 	echo >>negative &&
-	test_might_fail git commit -e -m "sample" &&
-	head -n 7 .git/COMMIT_EDITMSG >actual &&
-	test_i18ncmp expect actual
+	git commit -e -m "sample" -a &&
+	test_i18ngrep \
+	  "^# Author: *A U Thor <author@example.com>\$" \
+	  .git/COMMIT_EDITMSG
 '
 
-mv expect expect.tmp
-sed '$d' < expect.tmp > expect
-rm -f expect.tmp
-echo "# Committer:
-#" >> expect
+test_expect_success 'setup auto-ident prerequisite' '
+	if (sane_unset GIT_COMMITTER_EMAIL &&
+	    sane_unset GIT_COMMITTER_NAME &&
+	    git var GIT_COMMITTER_IDENT); then
+		test_set_prereq AUTOIDENT
+	else
+		test_set_prereq NOAUTOIDENT
+	fi
+'
 
-test_expect_success 'committer is automatic' '
+test_expect_success AUTOIDENT 'message shows committer when it is automatic' '
 
 	echo >>negative &&
 	(
 		sane_unset GIT_COMMITTER_EMAIL &&
 		sane_unset GIT_COMMITTER_NAME &&
-		# must fail because there is no change
-		test_must_fail git commit -e -m "sample"
+		git commit -e -m "sample" -a
 	) &&
-	head -n 8 .git/COMMIT_EDITMSG |	\
-	sed "s/^# Committer: .*/# Committer:/" >actual
-	test_i18ncmp expect actual
+	# the ident is calculated from the system, so we cannot
+	# check the actual value, only that it is there
+	test_i18ngrep "^# Committer: " .git/COMMIT_EDITMSG
 '
 
-pwd=`pwd`
-cat >> .git/FAKE_EDITOR << EOF
-#! /bin/sh
-echo editor started > "$pwd/.git/result"
+write_script .git/FAKE_EDITOR <<EOF
+echo editor started > "$(pwd)/.git/result"
 exit 0
 EOF
-chmod +x .git/FAKE_EDITOR
+
+test_expect_success NOAUTOIDENT 'do not fire editor when committer is bogus' '
+	>.git/result
+	>expect &&
+
+	echo >>negative &&
+	(
+		sane_unset GIT_COMMITTER_EMAIL &&
+		sane_unset GIT_COMMITTER_NAME &&
+		GIT_EDITOR="\"$(pwd)/.git/FAKE_EDITOR\"" &&
+		export GIT_EDITOR &&
+		test_must_fail git commit -e -m sample -a
+	) &&
+	test_cmp expect .git/result
+'
 
 test_expect_success 'do not fire editor in the presence of conflicts' '
 
@@ -293,16 +305,14 @@ test_expect_success 'do not fire editor in the presence of conflicts' '
 	test_must_fail git cherry-pick -n master &&
 	echo "editor not started" >.git/result &&
 	(
-		GIT_EDITOR="$(pwd)/.git/FAKE_EDITOR" &&
+		GIT_EDITOR="\"$(pwd)/.git/FAKE_EDITOR\"" &&
 		export GIT_EDITOR &&
 		test_must_fail git commit
 	) &&
 	test "$(cat .git/result)" = "editor not started"
 '
 
-pwd=`pwd`
-cat >.git/FAKE_EDITOR <<EOF
-#! $SHELL_PATH
+write_script .git/FAKE_EDITOR <<EOF
 # kill -TERM command added below.
 EOF
 
@@ -339,13 +349,12 @@ test_expect_success 'A single-liner subject with a token plus colon is not a foo
 
 '
 
-cat >.git/FAKE_EDITOR <<EOF
-#!$SHELL_PATH
-mv "\$1" "\$1.orig"
+write_script .git/FAKE_EDITOR <<\EOF
+mv "$1" "$1.orig"
 (
 	echo message
-	cat "\$1.orig"
-) >"\$1"
+	cat "$1.orig"
+) >"$1"
 EOF
 
 echo '## Custom template' >template
