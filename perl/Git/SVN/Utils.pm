@@ -86,6 +86,30 @@ sub _collapse_dotdot {
 
 
 sub canonicalize_path {
+	my $path = shift;
+	my $rv;
+
+	# The 1.7 way to do it
+	if ( defined &SVN::_Core::svn_dirent_canonicalize ) {
+		$path = _collapse_dotdot($path);
+		$rv = SVN::_Core::svn_dirent_canonicalize($path);
+	}
+	# The 1.6 way to do it
+	# This can return undef on subversion-perl-1.4.2-2.el5 (CentOS 5.2)
+	elsif ( defined &SVN::_Core::svn_path_canonicalize ) {
+		$path = _collapse_dotdot($path);
+		$rv = SVN::_Core::svn_path_canonicalize($path);
+	}
+
+	return $rv if defined $rv;
+
+	# No SVN API canonicalization is available, or the SVN API
+	# didn't return a successful result, do it ourselves
+	return _canonicalize_path_ourselves($path);
+}
+
+
+sub _canonicalize_path_ourselves {
 	my ($path) = @_;
 	my $dot_slash_added = 0;
 	if (substr($path, 0, 1) ne "/") {
