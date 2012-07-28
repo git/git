@@ -47,6 +47,7 @@ test_expect_success \
 
 
 test_expect_success 'flags and then non flags' '
+	test_tick &&
 	echo comment text |
 	git commit-tree $(cat treeid) >commitid &&
 	echo comment text |
