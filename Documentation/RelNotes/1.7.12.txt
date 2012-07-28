@@ -117,6 +117,8 @@ Performance, Internal Implementation, etc. (please report possible regressions)
    cycles after showing the first change to find the next one, only to
    discard it.
 
+ * "git svn" got a large-looking code reorganization at the last
+   minute before the code freeze.
 
 Also contains minor documentation updates and code clean-ups.
 
@@ -127,6 +129,19 @@ Fixes since v1.7.11
 Unless otherwise noted, all the fixes since v1.7.11 in the maintenance
 releases are contained in this release (see release notes to them for
 details).
+
+ * "git checkout <branchname>" to come back from a detached HEAD state
+   incorrectly computed reachability of the detached HEAD, resulting
+   in unnecessary warnings.
+   (merge add416a jk/maint-checkout-orphan-check-fix later to maint).
+
+ * The documentation for revision range specifiers (e.g. A..B, A^@)
+   has been updated.
+   (merge ca5ee2d mh/maint-revisions-doc later to maint).
+
+ * "git submodule add" was confused when the superproject did not have
+   its repository in its usual place in the working tree and GIT_DIR
+   and GIT_WORK_TREE was used to access it.
 
  * "git mergetool" did not support --tool-help option to give the list
    of supported backends, like "git difftool" does.
