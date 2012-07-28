@@ -5,6 +5,7 @@ use warnings;
 use SVN::Client;
 use Git::SVN::Utils qw(
 	canonicalize_url
+	canonicalize_path
 	add_path_to_url
 );
 
@@ -102,6 +103,7 @@ sub new {
 			$Git::SVN::Prompt::_no_auth_cache = 1;
 		}
 	} # no warnings 'once'
+
 	my $self = SVN::Ra->new(url => $url, auth => $baton,
 	                      config => $config,
 			      pool => SVN::Pool->new,
@@ -198,6 +200,7 @@ sub get_log {
 				qw/copyfrom_path copyfrom_rev action/;
 			if ($s{'copyfrom_path'}) {
 				$s{'copyfrom_path'} =~ s/$prefix_regex//;
+				$s{'copyfrom_path'} = canonicalize_path($s{'copyfrom_path'});
 			}
 			$_[0]{$p} = \%s;
 		}
@@ -301,7 +304,11 @@ sub gs_do_switch {
 		$ra = Git::SVN::Ra->new($full_url);
 		$ra_invalid = 1;
 	} elsif ($old_url ne $full_url) {
-		SVN::_Ra::svn_ra_reparent($self->{session}, $full_url, $pool);
+		SVN::_Ra::svn_ra_reparent(
+			$self->{session},
+			canonicalize_url($full_url),
+			$pool
+		);
 		$self->url($full_url);
 		$reparented = 1;
 	}
