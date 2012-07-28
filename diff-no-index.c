@@ -141,8 +141,8 @@ static int queue_diff(struct diff_options *o,
 			name2 = "/dev/null";
 		d1 = alloc_filespec(name1);
 		d2 = alloc_filespec(name2);
-		fill_filespec(d1, null_sha1, mode1);
-		fill_filespec(d2, null_sha1, mode2);
+		fill_filespec(d1, null_sha1, 0, mode1);
+		fill_filespec(d2, null_sha1, 0, mode2);
 
 		diff_queue(&diff_queued_diff, d1, d2);
 		return 0;

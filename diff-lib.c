@@ -206,7 +206,8 @@ int run_diff_files(struct rev_info *revs, unsigned int option)
 			if (silent_on_removed)
 				continue;
 			diff_addremove(&revs->diffopt, '-', ce->ce_mode,
-				       ce->sha1, ce->name, 0);
+				       ce->sha1, !is_null_sha1(ce->sha1),
+				       ce->name, 0);
 			continue;
 		}
 		changed = match_stat_with_submodule(&revs->diffopt, ce, &st,
@@ -220,6 +221,7 @@ int run_diff_files(struct rev_info *revs, unsigned int option)
 		newmode = ce_mode_from_stat(ce, st.st_mode);
 		diff_change(&revs->diffopt, oldmode, newmode,
 			    ce->sha1, (changed ? null_sha1 : ce->sha1),
+			    !is_null_sha1(ce->sha1), (changed ? 0 : !is_null_sha1(ce->sha1)),
 			    ce->name, 0, dirty_submodule);
 
 	}
@@ -236,11 +238,12 @@ int run_diff_files(struct rev_info *revs, unsigned int option)
 static void diff_index_show_file(struct rev_info *revs,
 				 const char *prefix,
 				 struct cache_entry *ce,
-				 const unsigned char *sha1, unsigned int mode,
+				 const unsigned char *sha1, int sha1_valid,
+				 unsigned int mode,
 				 unsigned dirty_submodule)
 {
 	diff_addremove(&revs->diffopt, prefix[0], mode,
-		       sha1, ce->name, dirty_submodule);
+		       sha1, sha1_valid, ce->name, dirty_submodule);
 }
 
 static int get_stat_data(struct cache_entry *ce,
@@ -295,7 +298,7 @@ static void show_new_file(struct rev_info *revs,
 	    &dirty_submodule, &revs->diffopt) < 0)
 		return;
 
-	diff_index_show_file(revs, "+", new, sha1, mode, dirty_submodule);
+	diff_index_show_file(revs, "+", new, sha1, !is_null_sha1(sha1), mode, dirty_submodule);
 }
 
 static int show_modified(struct rev_info *revs,
@@ -312,7 +315,7 @@ static int show_modified(struct rev_info *revs,
 			  &dirty_submodule, &revs->diffopt) < 0) {
 		if (report_missing)
 			diff_index_show_file(revs, "-", old,
-					     old->sha1, old->ce_mode, 0);
+					     old->sha1, 1, old->ce_mode, 0);
 		return -1;
 	}
 
@@ -347,7 +350,8 @@ static int show_modified(struct rev_info *revs,
 		return 0;
 
 	diff_change(&revs->diffopt, oldmode, mode,
-		    old->sha1, sha1, old->name, 0, dirty_submodule);
+		    old->sha1, sha1, 1, !is_null_sha1(sha1),
+		    old->name, 0, dirty_submodule);
 	return 0;
 }
 
@@ -380,7 +384,7 @@ static void do_oneway_diff(struct unpack_trees_options *o,
 		struct diff_filepair *pair;
 		pair = diff_unmerge(&revs->diffopt, idx->name);
 		if (tree)
-			fill_filespec(pair->one, tree->sha1, tree->ce_mode);
+			fill_filespec(pair->one, tree->sha1, 1, tree->ce_mode);
 		return;
 	}
 
@@ -396,7 +400,7 @@ static void do_oneway_diff(struct unpack_trees_options *o,
 	 * Something removed from the tree?
 	 */
 	if (!idx) {
-		diff_index_show_file(revs, "-", tree, tree->sha1, tree->ce_mode, 0);
+		diff_index_show_file(revs, "-", tree, tree->sha1, 1, tree->ce_mode, 0);
 		return;
 	}
 
