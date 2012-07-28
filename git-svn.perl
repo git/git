@@ -29,7 +29,13 @@ use Git::SVN::Prompt;
 use Git::SVN::Log;
 use Git::SVN::Migration;
 
-use Git::SVN::Utils qw(fatal can_compress);
+use Git::SVN::Utils qw(
+	fatal
+	can_compress
+	canonicalize_path
+	canonicalize_url
+);
+
 use Git qw(
 	git_cmd_try
 	command
@@ -1254,31 +1260,6 @@ sub cmd_mkdirs {
 	my ($url, $rev, $uuid, $gs) = working_head_info('HEAD');
 	$gs ||= Git::SVN->new;
 	$gs->mkemptydirs($_revision);
-}
-
-sub canonicalize_path {
-	my ($path) = @_;
-	my $dot_slash_added = 0;
-	if (substr($path, 0, 1) ne "/") {
-		$path = "./" . $path;
-		$dot_slash_added = 1;
-	}
-	# File::Spec->canonpath doesn't collapse x/../y into y (for a
-	# good reason), so let's do this manually.
-	$path =~ s#/+#/#g;
-	$path =~ s#/\.(?:/|$)#/#g;
-	$path =~ s#/[^/]+/\.\.##g;
-	$path =~ s#/$##g;
-	$path =~ s#^\./## if $dot_slash_added;
-	$path =~ s#^/##;
-	$path =~ s#^\.$##;
-	return $path;
-}
-
-sub canonicalize_url {
-	my ($url) = @_;
-	$url =~ s#^([^:]+://[^/]*/)(.*)$#$1 . canonicalize_path($2)#e;
-	return $url;
 }
 
 # get_svnprops(PATH)

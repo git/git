@@ -5,7 +5,12 @@ use warnings;
 
 use base qw(Exporter);
 
-our @EXPORT_OK = qw(fatal can_compress);
+our @EXPORT_OK = qw(
+	fatal
+	can_compress
+	canonicalize_path
+	canonicalize_url
+);
 
 
 =head1 NAME
@@ -53,6 +58,51 @@ sub can_compress {
 	return $can_compress if defined $can_compress;
 
 	return $can_compress = eval { require Compress::Zlib; };
+}
+
+
+=head3 canonicalize_path
+
+    my $canoncalized_path = canonicalize_path($path);
+
+Converts $path into a canonical form which is safe to pass to the SVN
+API as a file path.
+
+=cut
+
+sub canonicalize_path {
+	my ($path) = @_;
+	my $dot_slash_added = 0;
+	if (substr($path, 0, 1) ne "/") {
+		$path = "./" . $path;
+		$dot_slash_added = 1;
+	}
+	# File::Spec->canonpath doesn't collapse x/../y into y (for a
+	# good reason), so let's do this manually.
+	$path =~ s#/+#/#g;
+	$path =~ s#/\.(?:/|$)#/#g;
+	$path =~ s#/[^/]+/\.\.##g;
+	$path =~ s#/$##g;
+	$path =~ s#^\./## if $dot_slash_added;
+	$path =~ s#^/##;
+	$path =~ s#^\.$##;
+	return $path;
+}
+
+
+=head3 canonicalize_url
+
+    my $canonicalized_url = canonicalize_url($url);
+
+Converts $url into a canonical form which is safe to pass to the SVN
+API as a URL.
+
+=cut
+
+sub canonicalize_url {
+	my ($url) = @_;
+	$url =~ s#^([^:]+://[^/]*/)(.*)$#$1 . canonicalize_path($2)#e;
+	return $url;
 }
 
 
