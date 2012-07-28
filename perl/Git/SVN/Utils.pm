@@ -3,6 +3,8 @@ package Git::SVN::Utils;
 use strict;
 use warnings;
 
+use SVN::Core;
+
 use base qw(Exporter);
 
 our @EXPORT_OK = qw(
@@ -100,6 +102,20 @@ API as a URL.
 =cut
 
 sub canonicalize_url {
+	my $url = shift;
+
+	# The 1.7 way to do it
+	if ( defined &SVN::_Core::svn_uri_canonicalize ) {
+		return SVN::_Core::svn_uri_canonicalize($url);
+	}
+	# There wasn't a 1.6 way to do it, so we do it ourself.
+	else {
+		return _canonicalize_url_ourselves($url);
+	}
+}
+
+
+sub _canonicalize_url_ourselves {
 	my ($url) = @_;
 	$url =~ s#^([^:]+://[^/]*/)(.*)$#$1 . canonicalize_path($2)#e;
 	return $url;
