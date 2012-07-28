@@ -69,7 +69,7 @@ sub _auth_providers () {
 
 sub new {
 	my ($class, $url) = @_;
-	$url =~ s!/+$!!;
+	$url = canonicalize_url($url);
 	return $RA if ($RA && $RA->url eq $url);
 
 	::_req_svn();
@@ -101,7 +101,7 @@ sub new {
 			$Git::SVN::Prompt::_no_auth_cache = 1;
 		}
 	} # no warnings 'once'
-	my $self = SVN::Ra->new(url => canonicalize_url($url), auth => $baton,
+	my $self = SVN::Ra->new(url => $url, auth => $baton,
 	                      config => $config,
 			      pool => SVN::Pool->new,
 	                      auth_provider_callbacks => $callbacks);

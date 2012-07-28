@@ -1436,16 +1436,16 @@ sub cmd_info {
 	# canonicalize_path() will return "" to make libsvn 1.5.x happy,
 	$path = "." if $path eq "";
 
-	my $full_url = $url . ($fullpath eq "" ? "" : "/$fullpath");
+	my $full_url = canonicalize_url( $url . ($fullpath eq "" ? "" : "/$fullpath") );
 
 	if ($_url) {
-		print canonicalize_url($full_url), "\n";
+		print "$full_url\n";
 		return;
 	}
 
 	my $result = "Path: $path\n";
 	$result .= "Name: " . basename($path) . "\n" if $file_type ne "dir";
-	$result .= "URL: " . canonicalize_url($full_url) . "\n";
+	$result .= "URL: $full_url\n";
 
 	eval {
 		my $repos_root = $gs->repos_root;
