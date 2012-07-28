@@ -72,6 +72,18 @@ API as a file path.
 
 =cut
 
+# Turn foo/../bar into bar
+sub _collapse_dotdot {
+	my $path = shift;
+
+	1 while $path =~ s{/[^/]+/+\.\.}{};
+	1 while $path =~ s{[^/]+/+\.\./}{};
+	1 while $path =~ s{[^/]+/+\.\.}{};
+
+	return $path;
+}
+
+
 sub canonicalize_path {
 	my ($path) = @_;
 	my $dot_slash_added = 0;
@@ -83,7 +95,7 @@ sub canonicalize_path {
 	# good reason), so let's do this manually.
 	$path =~ s#/+#/#g;
 	$path =~ s#/\.(?:/|$)#/#g;
-	$path =~ s#/[^/]+/\.\.##g;
+	$path = _collapse_dotdot($path);
 	$path =~ s#/$##g;
 	$path =~ s#^\./## if $dot_slash_added;
 	$path =~ s#^/##;
