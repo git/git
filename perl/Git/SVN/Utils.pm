@@ -150,10 +150,25 @@ sub canonicalize_url {
 }
 
 
+sub _canonicalize_url_path {
+	my ($uri_path) = @_;
+
+	my @parts;
+	foreach my $part (split m{/+}, $uri_path) {
+		$part =~ s/([^~\w.%+-]|%(?![a-fA-F0-9]{2}))/sprintf("%%%02X",ord($1))/eg;
+		push @parts, $part;
+	}
+
+	return join('/', @parts);
+}
+
 sub _canonicalize_url_ourselves {
 	my ($url) = @_;
-	$url =~ s#^([^:]+://[^/]*/)(.*)$#$1 . canonicalize_path($2)#e;
-	return $url;
+	if ($url =~ m#^([^:]+)://([^/]*)(.*)$#) {
+		my ($scheme, $domain, $uri) = ($1, $2, _canonicalize_url_path(canonicalize_path($3)));
+		$url = "$scheme://$domain$uri";
+	}
+	$url;
 }
 
 

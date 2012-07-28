@@ -201,9 +201,9 @@ sub read_all_remotes {
 		} elsif (m!^(.+)\.usesvmprops=\s*(.*)\s*$!) {
 			$r->{$1}->{svm} = {};
 		} elsif (m!^(.+)\.url=\s*(.*)\s*$!) {
-			$r->{$1}->{url} = $2;
+			$r->{$1}->{url} = canonicalize_url($2);
 		} elsif (m!^(.+)\.pushurl=\s*(.*)\s*$!) {
-			$r->{$1}->{pushurl} = $2;
+			$r->{$1}->{pushurl} = canonicalize_url($2);
 		} elsif (m!^(.+)\.ignore-refs=\s*(.*)\s*$!) {
 			$r->{$1}->{ignore_refs_regex} = $2;
 		} elsif (m!^(.+)\.(branches|tags)=$svn_refspec$!) {
