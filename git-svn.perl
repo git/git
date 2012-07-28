@@ -35,6 +35,7 @@ use Git::SVN::Utils qw(
 	canonicalize_path
 	canonicalize_url
 	join_paths
+	add_path_to_url
 );
 
 use Git qw(
@@ -1436,7 +1437,7 @@ sub cmd_info {
 	# canonicalize_path() will return "" to make libsvn 1.5.x happy,
 	$path = "." if $path eq "";
 
-	my $full_url = canonicalize_url( $url . ($fullpath eq "" ? "" : "/$fullpath") );
+	my $full_url = canonicalize_url( add_path_to_url( $url, $fullpath ) );
 
 	if ($_url) {
 		print "$full_url\n";

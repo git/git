@@ -5,6 +5,7 @@ use warnings;
 use SVN::Client;
 use Git::SVN::Utils qw(
 	canonicalize_url
+	add_path_to_url
 );
 
 use SVN::Ra;
@@ -287,9 +288,8 @@ sub gs_do_switch {
 	my $path = $gs->path;
 	my $pool = SVN::Pool->new;
 
-	my $full_url = $self->url;
-	my $old_url = $full_url;
-	$full_url .= '/' . $path if length $path;
+	my $old_url = $self->url;
+	my $full_url = add_path_to_url( $self->url, $path );
 	my ($ra, $reparented);
 
 	if ($old_url =~ m#^svn(\+ssh)?://# ||
@@ -555,7 +555,7 @@ sub minimize_url {
 	my @components = split(m!/!, $self->{svn_path});
 	my $c = '';
 	do {
-		$url .= "/$c" if length $c;
+		$url = add_path_to_url($url, $c);
 		eval {
 			my $ra = (ref $self)->new($url);
 			my $latest = $ra->get_latest_revnum;

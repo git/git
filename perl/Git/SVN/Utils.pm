@@ -13,6 +13,7 @@ our @EXPORT_OK = qw(
 	canonicalize_path
 	canonicalize_url
 	join_paths
+	add_path_to_url
 );
 
 
@@ -201,6 +202,32 @@ sub join_paths {
 	}
 
 	return $new_path .= "/$last_path";
+}
+
+
+=head3 add_path_to_url
+
+    my $new_url = add_path_to_url($url, $path);
+
+Appends $path onto the $url.  If $path is empty, $url is returned unchanged.
+
+=cut
+
+sub add_path_to_url {
+	my($url, $path) = @_;
+
+	return $url if !defined $path or !length $path;
+
+	# Strip trailing and leading slashes so we don't
+	# wind up with http://x.com///path
+	$url  =~ s{/+$}{};
+	$path =~ s{^/+}{};
+
+	# If a path has a % in it, URI escape it so it's not
+	# mistaken for a URI escape later.
+	$path =~ s{%}{%25}g;
+
+	return join '/', $url, $path;
 }
 
 1;
