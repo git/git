@@ -66,24 +66,6 @@ sub _auth_providers () {
 	\@rv;
 }
 
-sub escape_uri_only {
-	my ($uri) = @_;
-	my @tmp;
-	foreach (split m{/}, $uri) {
-		s/([^~\w.%+-]|%(?![a-fA-F0-9]{2}))/sprintf("%%%02X",ord($1))/eg;
-		push @tmp, $_;
-	}
-	join('/', @tmp);
-}
-
-sub escape_url {
-	my ($url) = @_;
-	if ($url =~ m#^(https?)://([^/]+)(.*)$#) {
-		my ($scheme, $domain, $uri) = ($1, $2, escape_uri_only($3));
-		$url = "$scheme://$domain$uri";
-	}
-	$url;
-}
 
 sub new {
 	my ($class, $url) = @_;
@@ -119,7 +101,7 @@ sub new {
 			$Git::SVN::Prompt::_no_auth_cache = 1;
 		}
 	} # no warnings 'once'
-	my $self = SVN::Ra->new(url => escape_url($url), auth => $baton,
+	my $self = SVN::Ra->new(url => canonicalize_url($url), auth => $baton,
 	                      config => $config,
 			      pool => SVN::Pool->new,
 	                      auth_provider_callbacks => $callbacks);
@@ -312,7 +294,7 @@ sub gs_do_switch {
 
 	if ($old_url =~ m#^svn(\+ssh)?://# ||
 	    ($full_url =~ m#^https?://# &&
-	     escape_url($full_url) ne $full_url)) {
+	     canonicalize_url($full_url) ne $full_url)) {
 		$_[0] = undef;
 		$self = undef;
 		$RA = undef;
@@ -325,7 +307,7 @@ sub gs_do_switch {
 	}
 
 	$ra ||= $self;
-	$url_b = escape_url($url_b);
+	$url_b = canonicalize_url($url_b);
 	my $reporter = $ra->do_switch($rev_b, '', 1, $url_b, $editor, $pool);
 	my @lock = (::compare_svn_version('1.2.0') >= 0) ? (undef) : ();
 	$reporter->set_path('', $rev_a, 0, @lock, $pool);
@@ -580,7 +562,8 @@ sub minimize_url {
 			$ra->get_log("", $latest, 0, 1, 0, 1, sub {});
 		};
 	} while ($@ && ($c = shift @components));
-	$url;
+
+	return canonicalize_url($url);
 }
 
 sub can_do_switch {

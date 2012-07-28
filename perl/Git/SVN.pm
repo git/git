@@ -296,7 +296,7 @@ sub find_existing_remote {
 
 sub init_remote_config {
 	my ($self, $url, $no_write) = @_;
-	$url =~ s!/+$!!; # strip trailing slash
+	$url = canonicalize_url($url);
 	my $r = read_all_remotes();
 	my $existing = find_existing_remote($url, $r);
 	if ($existing) {
