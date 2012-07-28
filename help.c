@@ -44,9 +44,12 @@ static void uniq(struct cmdnames *cmds)
 	if (!cmds->cnt)
 		return;
 
-	for (i = j = 1; i < cmds->cnt; i++)
-		if (strcmp(cmds->names[i]->name, cmds->names[i-1]->name))
+	for (i = j = 1; i < cmds->cnt; i++) {
+		if (!strcmp(cmds->names[i]->name, cmds->names[j-1]->name))
+			free(cmds->names[i]);
+		else
 			cmds->names[j++] = cmds->names[i];
+	}
 
 	cmds->cnt = j;
 }
@@ -61,9 +64,10 @@ void exclude_cmds(struct cmdnames *cmds, struct cmdnames *excludes)
 		cmp = strcmp(cmds->names[ci]->name, excludes->names[ei]->name);
 		if (cmp < 0)
 			cmds->names[cj++] = cmds->names[ci++];
-		else if (cmp == 0)
-			ci++, ei++;
-		else if (cmp > 0)
+		else if (cmp == 0) {
+			ei++;
+			free(cmds->names[ci++]);
+		} else if (cmp > 0)
 			ei++;
 	}
 
