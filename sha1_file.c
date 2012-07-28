@@ -298,7 +298,7 @@ static int link_alt_odb_entry(const char * entry, int len, const char * relative
 			return -1;
 		}
 	}
-	if (!memcmp(ent->base, objdir, pfxlen)) {
+	if (!strcmp(ent->base, objdir)) {
 		free(ent);
 		return -1;
 	}
