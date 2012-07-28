@@ -92,8 +92,6 @@ sub canonicalize_path {
 		$path = "./" . $path;
 		$dot_slash_added = 1;
 	}
-	# File::Spec->canonpath doesn't collapse x/../y into y (for a
-	# good reason), so let's do this manually.
 	$path =~ s#/+#/#g;
 	$path =~ s#/\.(?:/|$)#/#g;
 	$path = _collapse_dotdot($path);
