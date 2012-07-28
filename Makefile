@@ -2090,6 +2090,13 @@ $(SCRIPT_LIB) : % : %.sh GIT-SCRIPT-DEFINES
 ifndef NO_PERL
 $(patsubst %.perl,%,$(SCRIPT_PERL)): perl/perl.mak
 
+perl/perl.mak: perl/PM.stamp
+
+perl/PM.stamp: FORCE
+	$(QUIET_GEN)find perl -type f -name '*.pm' | sort >$@+ && \
+	{ cmp $@+ $@ >/dev/null 2>/dev/null || mv $@+ $@; } && \
+	$(RM) $@+
+
 perl/perl.mak: GIT-CFLAGS GIT-PREFIX perl/Makefile perl/Makefile.PL
 	$(QUIET_SUBDIR0)perl $(QUIET_SUBDIR1) PERL_PATH='$(PERL_PATH_SQ)' prefix='$(prefix_SQ)' $(@F)
 

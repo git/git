@@ -20,17 +20,22 @@ clean:
 	$(RM) ppport.h
 	$(RM) $(makfile)
 	$(RM) $(makfile).old
+	$(RM) PM.stamp
+
+$(makfile): PM.stamp
 
 ifdef NO_PERL_MAKEMAKER
 instdir_SQ = $(subst ','\'',$(prefix)/lib)
 
 modules += Git
 modules += Git/I18N
+modules += Git/SVN
 modules += Git/SVN/Memoize/YAML
 modules += Git/SVN/Fetcher
 modules += Git/SVN/Editor
 modules += Git/SVN/Prompt
 modules += Git/SVN/Ra
+modules += Git/SVN/Utils
 
 $(makfile): ../GIT-CFLAGS Makefile
 	echo all: private-Error.pm Git.pm Git/I18N.pm > $@
