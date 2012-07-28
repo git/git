@@ -32,7 +32,7 @@ test_expect_success 'initialize old-style (v0) git svn layout' '
 	echo "$svnrepo" > "$GIT_DIR"/git-svn/info/url &&
 	echo "$svnrepo" > "$GIT_DIR"/svn/info/url &&
 	git svn migrate &&
-	! test -d "$GIT_DIR"/git svn &&
+	! test -d "$GIT_DIR"/git-svn &&
 	git rev-parse --verify refs/${remotes_git_svn}^0 &&
 	git rev-parse --verify refs/remotes/svn^0 &&
 	test "$(git config --get svn-remote.svn.url)" = "$svnrepo" &&
