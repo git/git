@@ -3,6 +3,10 @@ use vars qw/@ISA $config_dir $_ignore_refs_regex $_log_window_size/;
 use strict;
 use warnings;
 use SVN::Client;
+use Git::SVN::Utils qw(
+	canonicalize_url
+);
+
 use SVN::Ra;
 BEGIN {
 	@ISA = qw(SVN::Ra);
@@ -137,7 +141,7 @@ sub url {
 
 	if (@_) {
 		my $url = shift;
-		$self->{url} = $url;
+		$self->{url} = canonicalize_url($url);
 		return;
 	}
 
