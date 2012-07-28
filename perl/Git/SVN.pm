@@ -460,7 +460,6 @@ sub new {
 	}
 	{
 		my $path = $self->path;
-		$path =~ s{/+}{/}g;
 		$path =~ s{\A/}{};
 		$path =~ s{/\z}{};
 		$self->path($path);

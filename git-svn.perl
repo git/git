@@ -36,6 +36,7 @@ use Git::SVN::Utils qw(
 	canonicalize_url
 	join_paths
 	add_path_to_url
+	join_paths
 );
 
 use Git qw(
@@ -1598,7 +1599,7 @@ sub post_fetch_checkout {
 
 sub complete_svn_url {
 	my ($url, $path) = @_;
-	$path =~ s#/+$##;
+	$path = canonicalize_path($path);
 
 	# If the path is not a URL...
 	if ($path !~ m#^[a-z\+]+://#) {
@@ -1617,7 +1618,7 @@ sub complete_url_ls_init {
 		print STDERR "W: $switch not specified\n";
 		return;
 	}
-	$repo_path =~ s#/+$##;
+	$repo_path = canonicalize_path($repo_path);
 	if ($repo_path =~ m#^[a-z\+]+://#) {
 		$ra = Git::SVN::Ra->new($repo_path);
 		$repo_path = '';
@@ -1638,9 +1639,8 @@ sub complete_url_ls_init {
 	}
 	command_oneline('config', $k, $gs->url) unless $orig_url;
 
-	my $remote_path = $gs->path . "/$repo_path";
+	my $remote_path = join_paths( $gs->path, $repo_path );
 	$remote_path =~ s{%([0-9A-F]{2})}{chr hex($1)}ieg;
-	$remote_path =~ s#/+#/#g;
 	$remote_path =~ s#^/##g;
 	$remote_path .= "/*" if $remote_path !~ /\*/;
 	my ($n) = ($switch =~ /^--(\w+)/);
