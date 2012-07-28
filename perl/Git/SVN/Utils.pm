@@ -12,6 +12,7 @@ our @EXPORT_OK = qw(
 	can_compress
 	canonicalize_path
 	canonicalize_url
+	join_paths
 );
 
 
@@ -133,5 +134,36 @@ sub _canonicalize_url_ourselves {
 	return $url;
 }
 
+
+=head3 join_paths
+
+    my $new_path = join_paths(@paths);
+
+Appends @paths together into a single path.  Any empty paths are ignored.
+
+=cut
+
+sub join_paths {
+	my @paths = @_;
+
+	@paths = grep { defined $_ && length $_ } @paths;
+
+	return '' unless @paths;
+	return $paths[0] if @paths == 1;
+
+	my $new_path = shift @paths;
+	$new_path =~ s{/+$}{};
+
+	my $last_path = pop @paths;
+	$last_path =~ s{^/+}{};
+
+	for my $path (@paths) {
+		$path =~ s{^/+}{};
+		$path =~ s{/+$}{};
+		$new_path .= "/$path";
+	}
+
+	return $new_path .= "/$last_path";
+}
 
 1;

@@ -23,7 +23,11 @@ use Git qw(
     command_output_pipe
     command_close_pipe
 );
-use Git::SVN::Utils qw(fatal can_compress);
+use Git::SVN::Utils qw(
+	fatal
+	can_compress
+	join_paths
+);
 
 my $can_use_yaml;
 BEGIN {
@@ -316,9 +320,7 @@ sub init_remote_config {
 			}
 			my $old_path = $self->path;
 			$url =~ s!^\Q$min_url\E(/|$)!!;
-			if (length $old_path) {
-				$url .= "/$old_path";
-			}
+			$url = join_paths($url, $old_path);
 			$self->path($url);
 			$url = $min_url;
 		}
