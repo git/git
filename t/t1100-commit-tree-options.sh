@@ -7,6 +7,9 @@ test_description='git commit-tree options test
 
 This test checks that git commit-tree can create a specific commit
 object by defining all environment variables that it understands.
+
+Also make sure that command line parser understands the normal
+"flags first and then non flag arguments" command line.
 '
 
 . ./test-lib.sh
@@ -41,5 +44,19 @@ test_expect_success \
 test_expect_success \
     'compare commit' \
     'test_cmp expected commit'
+
+
+test_expect_success 'flags and then non flags' '
+	echo comment text |
+	git commit-tree $(cat treeid) >commitid &&
+	echo comment text |
+	git commit-tree $(cat treeid) -p $(cat commitid) >childid-1 &&
+	echo comment text |
+	git commit-tree -p $(cat commitid) $(cat treeid) >childid-2 &&
+	test_cmp childid-1 childid-2 &&
+	git commit-tree $(cat treeid) -m foo >childid-3 &&
+	git commit-tree -m foo $(cat treeid) >childid-4 &&
+	test_cmp childid-3 childid-4
+'
 
 test_done
