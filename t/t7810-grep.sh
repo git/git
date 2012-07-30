@@ -399,17 +399,6 @@ test_expect_success 'grep -q, silently report matches' '
 	test_cmp empty actual
 '
 
-# Create 1024 file names that sort between "y" and "z" to make sure
-# the two files are handled by different calls to an external grep.
-# This depends on MAXARGS in builtin-grep.c being 1024 or less.
-c32="0 1 2 3 4 5 6 7 8 9 a b c d e f g h i j k l m n o p q r s t u v"
-test_expect_success 'grep -C1, hunk mark between files' '
-	for a in $c32; do for b in $c32; do : >y-$a$b; done; done &&
-	git add y-?? &&
-	git grep -C1 "^[yz]" >actual &&
-	test_cmp expected actual
-'
-
 test_expect_success 'grep -C1 hunk mark between files' '
 	git grep -C1 "^[yz]" >actual &&
 	test_cmp expected actual
