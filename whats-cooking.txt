@@ -1,18 +1,17 @@
 To: git@vger.kernel.org
-Subject: What's cooking in git.git (Jul 2012, #08; Thu, 26)
-X-master-at: cdd159b2f56c9e69e37bbb8f5af301abd93e5407
-X-next-at: f358a28daf9cd64a842c5aac31fa79dd40c72ecc
+Subject: What's cooking in git.git (Jul 2012, #09; Sun, 29)
+X-master-at: 425b8a22aa14d624c807d5eed92c92f5cd32f376
+X-next-at: 3dac0f9a513f5cb0b8689ff36862dd53759d52e3
 
-What's cooking in git.git (Jul 2012, #08; Thu, 26)
+What's cooking in git.git (Jul 2012, #09; Sun, 29)
 --------------------------------------------------
 
 Here are the topics that have been cooking.  Commits prefixed with '-' are
 only in 'pu' (proposed updates) while commits prefixed with '+' are in 'next'.
 
-Please consider that the tip of 'master' is more or less feature
-complete.  Topics that are not in 'next' by the time I tag -rc1
-sometime early next week will not likely to be part of upcoming
-1.7.12 release.
+We are getting closer to 1.7.12-rc1; I do not see any topic in
+'next' (let alnoe 'pu') right now that is so urgent that cannot wait
+until the next release.
 
 You can find the changes described here in the integration branches of the
 repositories listed at
@@ -22,50 +21,61 @@ repositories listed at
 --------------------------------------------------
 [New Topics]
 
+* mz/cherry-code-cleanup (2012-07-29) 3 commits
+ - cherry: remove redundant check for merge commit
+ - cherry: don't set ignored rev_info options
+ - remove unnecessary parameter from get_patch_ids()
+
+Minor code clean-up on the cherry-pick codepath.
+Not urgent.
+
+* nd/maint-i18n-diffstat (2012-07-26) 1 commit
+ - i18n: leave \n out of translated diffstat
+
+Will merge to 'next' and then down to 'master' by 1.7.2-rc1.
+
+* hv/link-alt-odb-entry (2012-07-29) 1 commit
+ - link_alt_odb_entry: fix read over array bounds reported by valgrind
+
+The code to avoid mistaken attempt to add the object directory
+itself as its own alternate could read beyond end of a string while
+comparison.  The patch is different from what was posted by Heiko.
+
+Waiting for comments.
+
+* jc/maint-config-exit-status (2012-07-29) 1 commit
+ - config: "git config baa" should exit with status 1
+
+The exit status code from "git config" was way overspecified while
+being incorrect.  Update the implementation to give the documented
+status for a case that was documented, and introduce a new code for
+"all other errors".
+
+* jk/maint-null-in-trees (2012-07-29) 3 commits
+ - fsck: detect null sha1 in tree entries
+ - do not write null sha1s to on-disk index
+ - diff: do not use null sha1 as a sentinel value
+
+"git diff" used incorrectly an all-NUL object name as sentinel.
+
+* rj/maint-grep-remove-redundant-test (2012-07-29) 1 commit
+ - t7810-*.sh: Remove redundant test
+
+"git grep" stopped spawning an external "grep" long time ago, but a
+duplicated test to check internal and external "grep" was left
+behind.
+
+--------------------------------------------------
+[Graduated to "master"]
+
 * dg/submodule-in-dismembered-working-tree (2012-07-25) 1 commit
   (merged to 'next' on 2012-07-26 at cfa16c4)
  + git-submodule: work with GIT_DIR/GIT_WORK_TREE
 
-Will merge to 'master'.
-
-* jk/help-plug-memleak (2012-07-25) 2 commits
-  (merged to 'next' on 2012-07-26 at bd57cb8)
- + help.c::exclude_cmds(): plug a leak
- + help.c::uniq: plug a leak
-
-Will merge to 'master'.
-
-* jk/maint-checkout-orphan-check-fix (2012-07-25) 1 commit
-  (merged to 'next' on 2012-07-26 at a513c5a)
- + checkout: don't confuse ref and object flags
-
-Will merge to 'master', later down to older maintenance releases.
-
-* ms/makefile-pl (2012-07-25) 3 commits
- - The Makefile.PL will now find .pm files itself.
- - Don't lose Error.pm if $@ gets clobbered.
- - Quiet warning if Makefile.PL is run with -w and no --localedir
- (this branch is used by ms/git-svn-pm.)
-
-Will be part of larger series around git-svn, so I'll most likely
-drop this copy and wait for Eric to feed it to me later.
-
-* ms/git-svn-pm (2012-07-26) 4 commits
- - Move initialization of Git::SVN variables into Git::SVN.
- - Extract Git::SVN from git-svn into its own .pm file.
- - Prepare Git::SVN for extraction into its own file.
- - Extract some utilities from git-svn to allow extracting Git::SVN.
- (this branch uses ms/makefile-pl.)
-
-Will be part of larger series around git-svn, so I'll most likely
-drop this copy and wait for Eric to feed it to me later.
-
-* sz/submodule-force-update (2012-07-25) 1 commit
-  (merged to 'next' on 2012-07-26 at 3bda2be)
- + Make 'git submodule update --force' always check out submodules.
-
-We may want a documentation update and a few tests on top.
-Not urgent.
+In a superproject that has repository outside of its working tree,
+"git submodule add" failed to clone a new submodule, as GIT_DIR and
+GIT_WORK_TREE environment variables necessary to work in such a
+superproject interfered with access to the submodule repository.
 
 * jk/autoident-test (2012-07-26) 6 commits
   (merged to 'next' on 2012-07-26 at f358a28)
@@ -76,85 +86,23 @@ Not urgent.
  + t7502: properly quote GIT_EDITOR
  + t7502: clean up fake_editor tests
 
-Will merge to 'master'.
+Fix test breakages by a builder who does not have a valid user name
+in his /etc/password entry.
 
-* jc/test-prereq (2012-07-26) 6 commits
-  (merged to 'next' on 2012-07-26 at 0e21c36)
- + test-lib: provide UTF8 behaviour as a prerequisite
- + t0050: use the SYMLINKS test prereq
- + t0050: use the CASE_INSENSITIVE_FS test prereq
- + test-lib: provide case insensitivity as a prerequisite
- + test: allow prerequisite to be evaluated lazily
- + test: rename $satisfied to $satisfied_prereq
+* jk/help-plug-memleak (2012-07-25) 2 commits
+  (merged to 'next' on 2012-07-26 at bd57cb8)
+ + help.c::exclude_cmds(): plug a leak
+ + help.c::uniq: plug a leak
 
-Teaches the test framework to probe rarely used prerequistes lazily,
-and make use of it for detecting SYMLINKS, CASE_INSENSITIVE_FS and
-NKD/NKC MacOS x gotcha.
+Plug a few trivial memory leaks.
 
-Not urgent.
+* jk/maint-checkout-orphan-check-fix (2012-07-25) 1 commit
+  (merged to 'next' on 2012-07-26 at a513c5a)
+ + checkout: don't confuse ref and object flags
 
---------------------------------------------------
-[Graduated to "master"]
-
-* cw/rebase-i-root (2012-07-24) 1 commit
-  (merged to 'next' on 2012-07-24 at 01b7c29)
- + rebase -i: handle fixup of root commit correctly
-
-Finishing touches to the "rebase -i --root" (new feature for
-1.7.12).
-
-* jc/mergetool-tool-help (2012-07-23) 1 commit
-  (merged to 'next' on 2012-07-23 at ef256fc)
- + mergetool: support --tool-help option like difftool does
-
-"git mergetool" did not support --tool-help option to give the list
-of supported backends, like "git difftool" does.
-
-* jc/test-lib-source-build-options-early (2012-06-24) 1 commit
-  (merged to 'next' on 2012-07-24 at 97078b5)
- + test-lib: reorder and include GIT-BUILD-OPTIONS a lot earlier
-
-Reorders t/test-lib.sh so that we dot-source GIT-BUILD-OPTIONS that
-records the shell and Perl the user told us to use with Git a lot
-early, so that test-lib.sh script itself can use "$PERL_PATH" in
-one of its early operations.
-
-* jk/maint-advise-vaddf (2012-07-23) 1 commit
-  (merged to 'next' on 2012-07-23 at 5b13a77)
- + advice: pass varargs to strbuf_vaddf, not strbuf_addf
- (this branch is used by jk/maint-commit-abandoned-message.)
-
-The advise() function did not use varargs correctly to format
-its message.
-
-* jk/maint-commit-check-committer-early (2012-07-23) 1 commit
-  (merged to 'next' on 2012-07-23 at a2c7133)
- + commit: check committer identity more strictly
-
-"git commit --amend" let the user edit the log message and then died
-when the human-readable committer name was given insufficiently by
-getpwent(3).
-
-* jk/maint-commit-document-editmsg (2012-07-23) 1 commit
-  (merged to 'next' on 2012-07-23 at 06307fb)
- + commit: document the temporary commit message file
-
-Document $GIT_DIR/COMMIT_EDITMSG file.
-
-* mh/maint-revisions-doc (2012-07-24) 2 commits
-  (merged to 'next' on 2012-07-24 at d5e286e)
- + Enumerate revision range specifiers in the documentation
- + Make <refname> documentation more consistent.
-
-* mm/config-xdg (2012-07-24) 4 commits
-  (merged to 'next' on 2012-07-24 at 6ab5783)
- + t1306: check that XDG_CONFIG_HOME works
- + ignore: make sure we have an xdg path before using it
- + attr: make sure we have an xdg path before using it
- + test-lib.sh: unset XDG_CONFIG_HOME
-
-Finishing touches to the XDG support (new feature for 1.7.12) and
-tests.
+"git checkout <branchname>" to come back from a detached HEAD state
+incorrectly computed reachability of the detached HEAD, resulting in
+unnecessary warnings.
 
 --------------------------------------------------
 [Stalled]
@@ -254,6 +202,28 @@ working :-<.
 --------------------------------------------------
 [Cooking]
 
+* sz/submodule-force-update (2012-07-25) 1 commit
+  (merged to 'next' on 2012-07-26 at 3bda2be)
+ + Make 'git submodule update --force' always check out submodules.
+
+We may want a documentation update and a few tests on top.
+Not urgent.
+
+* jc/test-prereq (2012-07-27) 6 commits
+  (merged to 'next' on 2012-07-27 at 448cbbc)
+ + test-lib: provide UTF8 behaviour as a prerequisite
+ + t0050: use the SYMLINKS test prereq
+ + t0050: use the CASE_INSENSITIVE_FS test prereq
+ + test-lib: provide case insensitivity as a prerequisite
+ + test: allow prerequisite to be evaluated lazily
+ + test: rename $satisfied to $satisfied_prereq
+
+Teaches the test framework to probe rarely used prerequistes lazily,
+and make use of it for detecting SYMLINKS, CASE_INSENSITIVE_FS and
+NKD/NKC MacOS x gotcha.
+
+Not urgent.
+
 * da/difftool-updates (2012-07-26) 10 commits
   (merged to 'next' on 2012-07-26 at 3263461)
  + difftool: Disable --symlinks on cygwin
@@ -303,3 +273,20 @@ Will defer for another cycle.
 * jk/maint-commit-abandoned-message (2012-07-23) 2 commits
  . commit: give a hint when a commit message has been abandoned
  . Merge commit 'b2eda9b' into jk/maint-commit-abandoned-message
+
+* ms/git-svn-pm (2012-07-26) 4 commits
+ . Move initialization of Git::SVN variables into Git::SVN.
+ . Extract Git::SVN from git-svn into its own .pm file.
+ . Prepare Git::SVN for extraction into its own file.
+ . Extract some utilities from git-svn to allow extracting Git::SVN.
+ (this branch uses ms/makefile-pl.)
+
+Already in 'master' via Eric's git-svn tree.
+
+* ms/makefile-pl (2012-07-25) 3 commits
+ . The Makefile.PL will now find .pm files itself.
+ . Don't lose Error.pm if $@ gets clobbered.
+ . Quiet warning if Makefile.PL is run with -w and no --localedir
+ (this branch is used by ms/git-svn-pm.)
+
+Already in 'master' via Eric's git-svn tree.
