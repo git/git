@@ -5,7 +5,8 @@ test_description='git filter-branch'
 
 test_expect_success 'setup' '
 	test_commit A &&
-	test_commit B &&
+	GIT_COMMITTER_DATE="@0 +0000" GIT_AUTHOR_DATE="@0 +0000" &&
+	test_commit --notick B &&
 	git checkout -b branch B &&
 	test_commit D &&
 	mkdir dir &&
