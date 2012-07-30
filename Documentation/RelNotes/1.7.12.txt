@@ -130,6 +130,16 @@ Unless otherwise noted, all the fixes since v1.7.11 in the maintenance
 releases are contained in this release (see release notes to them for
 details).
 
+ * "git grep" stopped spawning an external "grep" long time ago, but a
+   duplicated test to check internal and external "grep" was left
+   behind.
+   (merge 4ca9453 rj/maint-grep-remove-redundant-test later to maint).
+
+ * The code to avoid mistaken attempt to add the object directory
+   itself as its own alternate could read beyond end of a string while
+   comparison.
+   (merge cb2912c hv/link-alt-odb-entry later to maint).
+
  * "git checkout <branchname>" to come back from a detached HEAD state
    incorrectly computed reachability of the detached HEAD, resulting
    in unnecessary warnings.
@@ -147,38 +157,6 @@ details).
    of supported backends, like "git difftool" does.
    (merge 109859e jc/mergetool-tool-help later to maint).
 
- * "$GIT_DIR/COMMIT_EDITMSG" file that is used to hold the commit log
-   message user edits was not documented.
-   (merge 41f597d jk/maint-commit-document-editmsg later to maint).
-
  * "git commit --amend" let the user edit the log message and then died
    when the human-readable committer name was given insufficiently by
    getpwent(3).
-   (merge f20f387 jk/maint-commit-check-committer-early later to maint).
-
- * The advise() function did not use varargs correctly to format
-   its message.
-   (merge 447b99c jk/maint-advise-vaddf later to maint).
-
- * "git commit-tree" learned a more natural "-p <parent> <tree>" order
-   of arguments long time ago, but recently forgot it by mistake.
-   (merge 4b7518a kk/maint-commit-tree later to maint).
-
- * "git diff --no-ext-diff" did not output anything for a typechange
-   filepair when GIT_EXTERNAL_DIFF is in effect.
-   (merge c12f82a jv/maint-no-ext-diff later to maint).
-
- * When "git am" failed, old timers knew to check .git/rebase-apply/patch
-   to see what went wrong, but we never told the users about it.
-   (merge 14bf2d5 pg/maint-1.7.9-am-where-is-patch later to maint).
-
- * When "git submodule add" clones a submodule repository, it can get
-   confused where to store the resulting submodule repository in the
-   superproject's .git/ directory when there is a symbolic link in the
-   path to the current directory.
-   (merge 6eafa6d jl/maint-1.7.10-recurse-submodules-with-symlink later to maint).
-
- * In 1.7.9 era, we taught "git rebase" about the raw timestamp format
-   but we did not teach the same trick to "filter-branch", which rolled
-   a similar logic on its own.
-   (merge 44b85e89 jc/maint-filter-branch-epoch-date later to maint).
