@@ -855,6 +855,11 @@ did you forget to use 'git add'?"
 	if test $apply_status != 0
 	then
 		eval_gettextln 'Patch failed at $msgnum $FIRSTLINE'
+		if test "$(git config --bool advice.amworkdir)" != false
+		then
+			eval_gettextln "The copy of the patch that failed is found in:
+   $dotest/patch"
+		fi
 		stop_here_user_resolve $this
 	fi
 
