@@ -150,8 +150,10 @@ module_clone()
 		die "$(eval_gettext "Clone of '\$url' into submodule path '\$sm_path' failed")"
 	fi
 
-	a=$(cd "$gitdir" && pwd)/
-	b=$(cd "$sm_path" && pwd)/
+	# We already are at the root of the work tree but cd_to_toplevel will
+	# resolve any symlinks that might be present in $PWD
+	a=$(cd_to_toplevel && cd "$gitdir" && pwd)/
+	b=$(cd_to_toplevel && cd "$sm_path" && pwd)/
 	# normalize Windows-style absolute paths to POSIX-style absolute paths
 	case $a in [a-zA-Z]:/*) a=/${a%%:*}${a#*:} ;; esac
 	case $b in [a-zA-Z]:/*) b=/${b%%:*}${b#*:} ;; esac
