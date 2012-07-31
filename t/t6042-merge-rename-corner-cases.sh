@@ -380,7 +380,7 @@ test_expect_success 'handle rename/rename (2to1) conflict correctly' '
 	git checkout B^0 &&
 
 	test_must_fail git merge -s recursive C^0 >out &&
-	grep "CONFLICT (rename/rename)" out &&
+	test_i18ngrep "CONFLICT (rename/rename)" out &&
 
 	test 2 -eq $(git ls-files -s | wc -l) &&
 	test 2 -eq $(git ls-files -u | wc -l) &&

@@ -68,24 +68,24 @@ test_expect_success 'rebase against master' '
 
 test_expect_success 'rebase against master twice' '
 	git rebase master >out &&
-	grep "Current branch my-topic-branch is up to date" out
+	test_i18ngrep "Current branch my-topic-branch is up to date" out
 '
 
 test_expect_success 'rebase against master twice with --force' '
 	git rebase --force-rebase master >out &&
-	grep "Current branch my-topic-branch is up to date, rebase forced" out
+	test_i18ngrep "Current branch my-topic-branch is up to date, rebase forced" out
 '
 
 test_expect_success 'rebase against master twice from another branch' '
 	git checkout my-topic-branch^ &&
 	git rebase master my-topic-branch >out &&
-	grep "Current branch my-topic-branch is up to date" out
+	test_i18ngrep "Current branch my-topic-branch is up to date" out
 '
 
 test_expect_success 'rebase fast-forward to master' '
 	git checkout my-topic-branch^ &&
 	git rebase my-topic-branch >out &&
-	grep "Fast-forwarded HEAD to my-topic-branch" out
+	test_i18ngrep "Fast-forwarded HEAD to my-topic-branch" out
 '
 
 test_expect_success 'the rebase operation should not have destroyed author information' '
