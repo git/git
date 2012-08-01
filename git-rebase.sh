@@ -348,7 +348,7 @@ then
 	cmd_clear_stale_rebase="rm -fr \"$state_dir\""
 	die "
 $(eval_gettext 'It seems that there is already a $state_dir_base directory, and
-I wonder if you ware in the middle of another rebase.  If that is the
+I wonder if you are in the middle of another rebase.  If that is the
 case, please try
 	$cmd_live_rebase
 If that is not the case, please
