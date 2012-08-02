@@ -311,6 +311,9 @@ static int run_git_commit(const char *defmsg, struct replay_opts *opts,
 	if (allow_empty)
 		argv_array_push(&array, "--allow-empty");
 
+	if (opts->allow_empty_message)
+		argv_array_push(&array, "--allow-empty-message");
+
 	rc = run_command_v_opt(array.argv, RUN_GIT_CMD);
 	argv_array_clear(&array);
 	return rc;

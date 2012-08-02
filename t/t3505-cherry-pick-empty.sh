@@ -53,6 +53,11 @@ test_expect_success 'index lockfile was removed' '
 
 '
 
+test_expect_success 'cherry-pick a commit with an empty message with --allow-empty-message' '
+	git checkout -f master &&
+	git cherry-pick --allow-empty-message empty-branch
+'
+
 test_expect_success 'cherry pick an empty non-ff commit without --allow-empty' '
 	git checkout master &&
 	echo fourth >>file2 &&
