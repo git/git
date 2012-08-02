@@ -1,18 +1,18 @@
 To: git@vger.kernel.org
-Subject: What's cooking in git.git (Jul 2012, #10; Mon, 30)
-X-master-at: 3b2d763db07f251e424d7f940938d9df1e1d4d09
-X-next-at: 9b27acc1daac188eab79350fdb996c3f148dd5ab
+Subject: What's cooking in git.git (Aug 2012, #01; Thu, 2)
+X-master-at: 05a20c87abd08441c98dfcca0606bc0f8432ab26
+X-next-at: b94da764fd895685600c79f25c9c9ca5003a2807
 
-What's cooking in git.git (Jul 2012, #10; Mon, 30)
+What's cooking in git.git (Aug 2012, #01; Thu, 2)
 --------------------------------------------------
 
 Here are the topics that have been cooking.  Commits prefixed with '-' are
 only in 'pu' (proposed updates) while commits prefixed with '+' are in 'next'.
 
-The tip of 'master' as of this writing is 1.7.12-rc1, and the tip of
-'maint' is 1.7.11.4. From now on until the final release, no further
-updates, except for the two i18n topics and obviously correct fixes
-to regressions, will be merged to 'master'.
+The series to mark strings for i18n in merge(-recursive), am and
+rebase have been merged.  From now on, until the final release, no
+further updates, except for obviously correct fixes to regressions,
+will be merged to 'master'.
 
 You can find the changes described here in the integration branches of the
 repositories listed at
@@ -20,40 +20,91 @@ repositories listed at
     http://git-blame.blogspot.com/p/git-public-repositories.html
 
 --------------------------------------------------
-[Graduated to "master"]
-
-* hv/link-alt-odb-entry (2012-07-29) 1 commit
- + link_alt_odb_entry: fix read over array bounds reported by valgrind
-
-The code to avoid mistaken attempt to add the object directory
-itself as its own alternate could read beyond end of a string while
-comparison.
-
-* rj/maint-grep-remove-redundant-test (2012-07-29) 1 commit
- + t7810-*.sh: Remove redundant test
-
-"git grep" stopped spawning an external "grep" long time ago, but a
-duplicated test to check internal and external "grep" was left
-behind.
-
---------------------------------------------------
 [New Topics]
 
-* jc/maint-t7406-rev-parse-max-count-huh (2012-07-30) 1 commit
-  (merged to 'next' on 2012-07-30 at 9b27acc)
- + t7406: fix misleading "rev-parse --max-count=1 HEAD"
+* jc/maint-sane-execvp-notdir (2012-07-31) 1 commit
+ - sane_execvp(): ignore non-directory on $PATH
 
-Test clean-up, with no behaviour change.
+"git foo" errored out with "Not a directory" when the user had a non
+directory on $PATH, and worse yet it masked an alias "foo" to run.
+
 Not urgent.
 
-* jk/maint-diff-nul40-as-sentinel (2012-07-29) 1 commit
- + diff: do not use null sha1 as a sentinel value
- (this branch is used by jk/maint-null-in-trees.)
+* jc/sanitize-nkd-lazy-iconv-open (2012-07-31) 1 commit
+ - macos: lazily initialize iconv
 
-"git diff" had a confusion between taking data from a path in the
-working tree and taking data from an object that happens to have
-name 0{40} recorded in a tree.
+Teach the code that works around NKD/NKC gotcha on MacOS to call
+iconv_open() only when it is necessary, in the hope of avoiding
+set-up overhead.
+
 Not urgent.
+
+* tr/maint-send-email-2047 (2012-07-31) 1 commit
+ - send-email: improve RFC2047 quote parsing
+
+"git send-email" did not unquote encoded words that appear on the
+header correctly, and lost "_" from strings.
+
+Not urgent.
+
+* cw/cherry-pick-allow-empty-message (2012-08-02) 1 commit
+ - cherry-pick: add --allow-empty-message option
+
+"git cherry-pick" by default stops when it sees a commit without any
+log message.  The "--allow-empty-message" option can be used to
+silently proceed.
+
+Not urgent.
+
+* ms/git-svn-1.7 (2012-08-02) 20 commits
+ - git-svn: remove ad-hoc canonicalizations
+ - git-svn: canonicalize newly-minted URLs
+ - git-svn: introduce add_path_to_url function
+ - git-svn: canonicalize earlier
+ - git-svn: replace URL escapes with canonicalization
+ - git-svn: attempt to mimic SVN 1.7 URL canonicalization
+ - t9107: fix typo
+ - t9118: workaround inconsistency between SVN versions
+ - Git::SVN{,::Ra}: canonicalize earlier
+ - git-svn: path canonicalization uses SVN API
+ - Git::SVN::Utils: remove irrelevant comment
+ - git-svn: add join_paths() to safely concatenate paths
+ - git-svn: factor out _collapse_dotdot function
+ - git-svn: use SVN 1.7 to canonicalize when possible
+ - git-svn: move canonicalization to Git::SVN::Utils
+ - use Git::SVN{,::RA}->url accessor globally
+ - use Git::SVN->path accessor globally
+ - Git::SVN::Ra: use accessor for URLs
+ - Git::SVN: use accessor for URLs internally
+ - Git::SVN: use accessors internally for path
+
+A series by Michael Schwern via Eric to update git-svn to revamp the
+way URLs are internally passed around, to make it work with SVN 1.7.
+
+--------------------------------------------------
+[Graduated to "master"]
+
+* jx/i18n-1.7.11 (2012-07-26) 7 commits
+  (merged to 'next' on 2012-07-30 at 3c00929)
+ + i18n: merge-recursive: mark strings for translation
+ + Remove dead code which contains bad gettext block
+ + i18n: am: mark more strings for translation
+ + rebase: remove obsolete and unused LONG_USAGE which breaks xgettext
+ + i18n: Rewrite gettext messages start with dash
+ + i18n: rebase: mark messages for translation
+ + i18n: New keywords for xgettext extraction from sh
+
+Will merge after 1.7.11-rc1
+together with nd/maint-i18n-diffstat topic, as they will affect i18n/l10n
+teams.
+
+* nd/maint-i18n-diffstat (2012-07-26) 1 commit
+  (merged to 'next' on 2012-07-30 at 0da57ef)
+ + i18n: leave \n out of translated diffstat
+
+Will merge after 1.7.11-rc1
+together with jx/i18n-1.7.11 topic, as they will affect i18n/l10n
+teams.
 
 --------------------------------------------------
 [Stalled]
@@ -153,6 +204,22 @@ working :-<.
 --------------------------------------------------
 [Cooking]
 
+* jc/maint-t7406-rev-parse-max-count-huh (2012-07-30) 1 commit
+  (merged to 'next' on 2012-07-30 at 9b27acc)
+ + t7406: fix misleading "rev-parse --max-count=1 HEAD"
+
+Test clean-up, with no behaviour change.
+Not urgent.
+
+* jk/maint-diff-nul40-as-sentinel (2012-07-29) 1 commit
+ + diff: do not use null sha1 as a sentinel value
+ (this branch is used by jk/maint-null-in-trees.)
+
+"git diff" had a confusion between taking data from a path in the
+working tree and taking data from an object that happens to have
+name 0{40} recorded in a tree.
+Not urgent.
+
 * mz/cherry-code-cleanup (2012-07-29) 3 commits
  - cherry: remove redundant check for merge commit
  - cherry: don't set ignored rev_info options
@@ -160,14 +227,6 @@ working :-<.
 
 Minor code clean-up on the cherry-pick codepath.
 Not urgent.
-
-* nd/maint-i18n-diffstat (2012-07-26) 1 commit
-  (merged to 'next' on 2012-07-30 at 0da57ef)
- + i18n: leave \n out of translated diffstat
-
-Will merge after 1.7.11-rc1
-together with jx/i18n-1.7.11 topic, as they will affect i18n/l10n
-teams.
 
 * jc/maint-config-exit-status (2012-07-30) 1 commit
   (merged to 'next' on 2012-07-30 at 8392da9)
@@ -233,20 +292,6 @@ Not urgent.
 temporary copy of the working tree when available.
 
 Not urgent.
-
-* jx/i18n-1.7.11 (2012-07-26) 7 commits
-  (merged to 'next' on 2012-07-30 at 3c00929)
- + i18n: merge-recursive: mark strings for translation
- + Remove dead code which contains bad gettext block
- + i18n: am: mark more strings for translation
- + rebase: remove obsolete and unused LONG_USAGE which breaks xgettext
- + i18n: Rewrite gettext messages start with dash
- + i18n: rebase: mark messages for translation
- + i18n: New keywords for xgettext extraction from sh
-
-Will merge after 1.7.11-rc1
-together with nd/maint-i18n-diffstat topic, as they will affect i18n/l10n
-teams.
 
 * jk/no-more-pre-exec-callback (2012-06-05) 1 commit
   (merged to 'next' on 2012-07-23 at fe59cb6)
