@@ -9,20 +9,7 @@
 # License: GPL v2 or later
 
 # Gateway between Git and MediaWiki.
-#   https://github.com/Bibzball/Git-Mediawiki/wiki
-#
-# Known limitations:
-#
-# - Several strategies are provided to fetch modifications from the
-#   wiki, but no automatic heuristics is provided, the user has
-#   to understand and chose which strategy is appropriate for him.
-#
-# - Git renames could be turned into MediaWiki renames (see TODO
-#   below)
-#
-# - No way to import "one page, and all pages included in it"
-#
-# - Multiple remote MediaWikis have not been very well tested.
+# Documentation & bugtracker: https://github.com/moy/Git-Mediawiki/
 
 use strict;
 use MediaWiki::API;
