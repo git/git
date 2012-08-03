@@ -530,6 +530,27 @@ test_cmp() {
 	$GIT_TEST_CMP "$@"
 }
 
+# Print a sequence of numbers or letters in increasing order.  This is
+# similar to GNU seq(1), but the latter might not be available
+# everywhere (and does not do letters).  It may be used like:
+#
+#	for i in `test_seq 100`; do
+#		for j in `test_seq 10 20`; do
+#			for k in `test_seq a z`; do
+#				echo $i-$j-$k
+#			done
+#		done
+#	done
+
+test_seq () {
+	case $# in
+	1)	set 1 "$@" ;;
+	2)	;;
+	*)	error "bug in the test script: not 1 or 2 parameters to test_seq" ;;
+	esac
+	"$PERL_PATH" -le 'print for $ARGV[0]..$ARGV[1]' -- "$@"
+}
+
 # This function can be used to schedule some commands to be run
 # unconditionally at the end of the test to restore sanity:
 #
