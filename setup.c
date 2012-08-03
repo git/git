@@ -82,7 +82,7 @@ static void NORETURN die_verify_filename(const char *prefix,
 
 	if (!diagnose_misspelt_rev)
 		die("%s: no such path in the working tree.\n"
-		    "Use '-- <path>...' to specify paths that do not exist locally.",
+		    "Use 'git <command> -- <path>...' to specify paths that do not exist locally.",
 		    arg);
 	/*
 	 * Saying "'(icase)foo' does not exist in the index" when the
@@ -96,7 +96,8 @@ static void NORETURN die_verify_filename(const char *prefix,
 
 	/* ... or fall back the most general message. */
 	die("ambiguous argument '%s': unknown revision or path not in the working tree.\n"
-	    "Use '--' to separate paths from revisions", arg);
+	    "Use '--' to separate paths from revisions, like this:\n"
+	    "'git <command> [<revision>...] -- [<file>...]'", arg);
 
 }
 
@@ -145,7 +146,8 @@ void verify_non_filename(const char *prefix, const char *arg)
 	if (!check_filename(prefix, arg))
 		return;
 	die("ambiguous argument '%s': both revision and filename\n"
-	    "Use '--' to separate filenames from revisions", arg);
+	    "Use '--' to separate paths from revisions, like this:\n"
+	    "'git <command> [<revision>...] -- [<file>...]'", arg);
 }
 
 /*
