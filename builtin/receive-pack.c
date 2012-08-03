@@ -12,6 +12,7 @@
 #include "string-list.h"
 #include "sha1-array.h"
 #include "connected.h"
+#include "version.h"
 
 static const char receive_pack_usage[] = "git receive-pack <git-dir>";
 
@@ -121,10 +122,11 @@ static void show_ref(const char *path, const unsigned char *sha1)
 	if (sent_capabilities)
 		packet_write(1, "%s %s\n", sha1_to_hex(sha1), path);
 	else
-		packet_write(1, "%s %s%c%s%s\n",
+		packet_write(1, "%s %s%c%s%s agent=%s\n",
 			     sha1_to_hex(sha1), path, 0,
 			     " report-status delete-refs side-band-64k quiet",
-			     prefer_ofs_delta ? " ofs-delta" : "");
+			     prefer_ofs_delta ? " ofs-delta" : "",
+			     git_user_agent_sanitized());
 	sent_capabilities = 1;
 }
 

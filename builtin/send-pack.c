@@ -8,6 +8,7 @@
 #include "send-pack.h"
 #include "quote.h"
 #include "transport.h"
+#include "version.h"
 
 static const char send_pack_usage[] =
 "git send-pack [--all | --mirror] [--dry-run] [--force] [--receive-pack=<git-receive-pack>] [--verbose] [--thin] [<host>:]<directory> [<ref>...]\n"
@@ -306,11 +307,13 @@ int send_pack(struct send_pack_args *args,
 			int quiet = quiet_supported && (args->quiet || !args->progress);
 
 			if (!cmds_sent && (status_report || use_sideband || args->quiet)) {
-				packet_buf_write(&req_buf, "%s %s %s%c%s%s%s",
+				packet_buf_write(&req_buf,
+						 "%s %s %s%c%s%s%s agent=%s",
 						 old_hex, new_hex, ref->name, 0,
 						 status_report ? " report-status" : "",
 						 use_sideband ? " side-band-64k" : "",
-						 quiet ? " quiet" : "");
+						 quiet ? " quiet" : "",
+						 git_user_agent_sanitized());
 			}
 			else
 				packet_buf_write(&req_buf, "%s %s %s",
