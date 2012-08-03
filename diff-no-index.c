@@ -257,8 +257,7 @@ void diff_no_index(struct rev_info *revs,
 	DIFF_OPT_SET(&revs->diffopt, NO_INDEX);
 
 	revs->max_count = -2;
-	if (diff_setup_done(&revs->diffopt) < 0)
-		die("diff_setup_done failed");
+	diff_setup_done(&revs->diffopt);
 
 	if (queue_diff(&revs->diffopt, revs->diffopt.pathspec.raw[0],
 		       revs->diffopt.pathspec.raw[1]))
