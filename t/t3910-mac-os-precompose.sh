@@ -9,7 +9,7 @@ test_description='utf-8 decomposed (nfd) converted to precomposed (nfc)'
 
 if ! test_have_prereq UTF8_NFD_TO_NFC
 then
-	skip_all="filesystem does not convert utf-8 nfd to nfc"
+	skip_all="filesystem does not corrupt utf-8"
 	test_done
 fi
 
