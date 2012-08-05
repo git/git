@@ -1915,7 +1915,10 @@ int merge_recursive(struct merge_options *o,
 	}
 
 	if (show(o, 5)) {
-		output(o, 5, _("found %u common ancestor(s):"), commit_list_count(ca));
+		unsigned cnt = commit_list_count(ca);
+
+		output(o, 5, Q_("found %u common ancestor:",
+				"found %u common ancestors:", cnt), cnt);
 		for (iter = ca; iter; iter = iter->next)
 			output_commit_title(o, iter->item);
 	}
