@@ -127,9 +127,8 @@ all::
 # specify your own (or DarwinPort's) include directories and
 # library directories by defining CFLAGS and LDFLAGS appropriately.
 #
-# Define BLK_SHA1 environment variable if you want the C version
-# of the SHA1 that assumes you can do unaligned 32-bit loads and
-# have a fast htonl() function.
+# Define BLK_SHA1 environment variable to make use of the bundled
+# optimized C SHA1 routine.
 #
 # Define PPC_SHA1 environment variable when running make to make use of
 # a bundled SHA1 routine optimized for PowerPC.
