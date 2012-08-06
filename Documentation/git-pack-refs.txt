@@ -14,7 +14,8 @@ DESCRIPTION
 -----------
 
 Traditionally, tips of branches and tags (collectively known as
-'refs') were stored one file per ref under `$GIT_DIR/refs`
+'refs') were stored one file per ref in a (sub)directory
+under `$GIT_DIR/refs`
 directory.  While many branch tips tend to be updated often,
 most tags and some branch tips are never updated.  When a
 repository has hundreds or thousands of tags, this
@@ -22,13 +23,14 @@ one-file-per-ref format both wastes storage and hurts
 performance.
 
 This command is used to solve the storage and performance
-problem by stashing the refs in a single file,
+problem by storing the refs in a single file,
 `$GIT_DIR/packed-refs`.  When a ref is missing from the
-traditional `$GIT_DIR/refs` hierarchy, it is looked up in this
+traditional `$GIT_DIR/refs` directory hierarchy, it is looked
+up in this
 file and used if found.
 
 Subsequent updates to branches always create new files under
-`$GIT_DIR/refs` hierarchy.
+`$GIT_DIR/refs` directory hierarchy.
 
 A recommended practice to deal with a repository with too many
 refs is to pack its refs with `--all --prune` once, and
@@ -56,6 +58,15 @@ a repository with many branches of historical interests.
 
 The command usually removes loose refs under `$GIT_DIR/refs`
 hierarchy after packing them.  This option tells it not to.
+
+
+BUGS
+----
+
+Older documentation written before the packed-refs mechanism was
+introduced may still say things like ".git/refs/heads/<branch> file
+exists" when it means "branch <branch> exists".
+
 
 GIT
 ---
