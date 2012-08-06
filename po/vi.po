@@ -5,10 +5,10 @@
 #
 msgid ""
 msgstr ""
-"Project-Id-Version: git-1.7.12.rc0.56.g23ff33\n"
+"Project-Id-Version: git-1.7.12.rc0.91.g338ecb7\n"
 "Report-Msgid-Bugs-To: Git Mailing List <git@vger.kernel.org>\n"
-"POT-Creation-Date: 2012-07-30 09:18+0800\n"
-"PO-Revision-Date: 2012-07-31 07:31+0700\n"
+"POT-Creation-Date: 2012-08-02 09:26+0800\n"
+"PO-Revision-Date: 2012-08-03 14:05+0700\n"
 "Last-Translator: Trần Ngọc Quân <vnwildman@gmail.com>\n"
 "Language-Team: Vietnamese <translation-team-vi@lists.sourceforge.net>\n"
 "MIME-Version: 1.0\n"
@@ -246,8 +246,8 @@ msgstr ""
 "%s"
 
 #: diff.c:1400
-msgid " 0 files changed\n"
-msgstr " 0 tập tin nào bị thay đổi\n"
+msgid " 0 files changed"
+msgstr " 0 có tập tin nào bị sửa đổi"
 
 #: diff.c:1404
 #, c-format
@@ -360,6 +360,259 @@ msgstr[0] ""
 msgstr[1] ""
 "\n"
 "Có phải ý bạn là một trong số những cái này không?"
+
+#: merge-recursive.c:190
+#, c-format
+msgid "(bad commit)\n"
+msgstr "(commit sai)\n"
+
+#: merge-recursive.c:206
+#, c-format
+msgid "addinfo_cache failed for path '%s'"
+msgstr "addinfo_cache gặp lỗi đối với đường dẫn '%s'"
+
+#: merge-recursive.c:268
+msgid "error building trees"
+msgstr "gặp lỗi khi xây dựng cây"
+
+#: merge-recursive.c:497
+msgid "diff setup failed"
+msgstr "cài đặt diff gặp lỗi"
+
+#: merge-recursive.c:627
+msgid "merge-recursive: disk full?"
+msgstr "merge-recursive: đĩa bị đầy?"
+
+#: merge-recursive.c:690
+#, c-format
+msgid "failed to create path '%s'%s"
+msgstr "gặp lỗi khi tạo đường dẫn '%s'%s"
+
+#: merge-recursive.c:701
+#, c-format
+msgid "Removing %s to make room for subdirectory\n"
+msgstr "Gỡ bỏ %s để tạo chỗ (room) cho thư mục con\n"
+
+#. something else exists
+#. .. but not some other error (who really cares what?)
+#: merge-recursive.c:715
+#: merge-recursive.c:736
+msgid ": perhaps a D/F conflict?"
+msgstr ": có lẽ là một xung đột D/F?"
+
+#: merge-recursive.c:726
+#, c-format
+msgid "refusing to lose untracked file at '%s'"
+msgstr "từ chối đóng tập tin không được theo vết tại '%s'"
+
+#: merge-recursive.c:766
+#, c-format
+msgid "cannot read object %s '%s'"
+msgstr "không thể đọc đối tượng %s '%s'"
+
+#: merge-recursive.c:768
+#, c-format
+msgid "blob expected for %s '%s'"
+msgstr "đối tượng blob được mong đợi cho %s '%s'"
+
+#: merge-recursive.c:791
+#: builtin/clone.c:302
+#, c-format
+msgid "failed to open '%s'"
+msgstr "gặp lỗi khi mở '%s'"
+
+#: merge-recursive.c:799
+#, c-format
+msgid "failed to symlink '%s'"
+msgstr "gặp lỗi khi tạo liên kết tượng trưng symlink '%s'"
+
+#: merge-recursive.c:802
+#, c-format
+msgid "do not know what to do with %06o %s '%s'"
+msgstr "không hiểu phải làm gì với %06o %s '%s'"
+
+#: merge-recursive.c:939
+msgid "Failed to execute internal merge"
+msgstr "Gặp lỗi khi thực hiện trộn nội bộ"
+
+#: merge-recursive.c:943
+#, c-format
+msgid "Unable to add %s to database"
+msgstr "Không thể thêm %s vào cơ sở dữ liệu"
+
+#: merge-recursive.c:959
+msgid "unsupported object type in the tree"
+msgstr "kiểu đối tượng không được hỗ trợ trong cây (tree)"
+
+#: merge-recursive.c:1038
+#: merge-recursive.c:1052
+#, c-format
+msgid "CONFLICT (%s/delete): %s deleted in %s and %s in %s. Version %s of %s left in tree."
+msgstr "XUNG ĐỘT (%s/xóa): %s bị xóa trong %s và %s trong %s. Phiên bản %s của %s còn lại trong cây (tree)."
+
+#: merge-recursive.c:1044
+#: merge-recursive.c:1057
+#, c-format
+msgid "CONFLICT (%s/delete): %s deleted in %s and %s in %s. Version %s of %s left in tree at %s."
+msgstr "XUNG ĐỘT (%s/xóa): %s bị xóa trong %s và %s trong %s. Phiên bản %s của %s còn lại trong cây (tree) tại %s."
+
+#: merge-recursive.c:1098
+msgid "rename"
+msgstr "đổi tên"
+
+#: merge-recursive.c:1098
+msgid "renamed"
+msgstr "đã đổi tên"
+
+#: merge-recursive.c:1154
+#, c-format
+msgid "%s is a directory in %s adding as %s instead"
+msgstr "%s là một thư mục trong %s thay vào đó thêm vào như là %s"
+
+#: merge-recursive.c:1176
+#, c-format
+msgid "CONFLICT (rename/rename): Rename \"%s\"->\"%s\" in branch \"%s\" rename \"%s\"->\"%s\" in \"%s\"%s"
+msgstr "XUNG ĐỘT (đổi tên/đổi tên): Đổi tên \"%s\"->\"%s\" trong nhánh \"%s\" đổi tên \"%s\"->\"%s\" trong \"%s\"%s"
+
+#: merge-recursive.c:1181
+msgid " (left unresolved)"
+msgstr " (cần giải quyết)"
+
+#: merge-recursive.c:1235
+#, c-format
+msgid "CONFLICT (rename/rename): Rename %s->%s in %s. Rename %s->%s in %s"
+msgstr "XUNG ĐỘT (đổi tên/đổi tên): Đổi tên %s->%s trong %s. Đổi tên %s->%s trong %s"
+
+#: merge-recursive.c:1265
+#, c-format
+msgid "Renaming %s to %s and %s to %s instead"
+msgstr "Đang đổi tên %s thành %s thay vì %s thành %s"
+
+#: merge-recursive.c:1464
+#, c-format
+msgid "CONFLICT (rename/add): Rename %s->%s in %s. %s added in %s"
+msgstr "XUNG ĐỘT (đổi tên/thêm): Đổi tên %s->%s trong %s. %s được thêm vào trong %s"
+
+#: merge-recursive.c:1474
+#, c-format
+msgid "Adding merged %s"
+msgstr "Thêm hòa trộn %s"
+
+#: merge-recursive.c:1479
+#: merge-recursive.c:1677
+#, c-format
+msgid "Adding as %s instead"
+msgstr "Thay vào đó thêm vào %s"
+
+#: merge-recursive.c:1530
+#, c-format
+msgid "cannot read object %s"
+msgstr "không thể đọc đối tượng %s"
+
+#: merge-recursive.c:1533
+#, c-format
+msgid "object %s is not a blob"
+msgstr "đối tượng %s không phải là một blob"
+
+#: merge-recursive.c:1581
+msgid "modify"
+msgstr "sửa đổi"
+
+#: merge-recursive.c:1581
+msgid "modified"
+msgstr "đã sửa"
+
+#: merge-recursive.c:1591
+msgid "content"
+msgstr "nội dung"
+
+#: merge-recursive.c:1598
+msgid "add/add"
+msgstr "thêm/thêm"
+
+#: merge-recursive.c:1632
+#, c-format
+msgid "Skipped %s (merged same as existing)"
+msgstr "Đã bỏ qua %s (đã sẵn có lần hòa trộn này)"
+
+#: merge-recursive.c:1646
+#, c-format
+msgid "Auto-merging %s"
+msgstr "Tự-động-hòa-trộn %s"
+
+#: merge-recursive.c:1650
+#: git-submodule.sh:844
+msgid "submodule"
+msgstr "mô-đun con"
+
+#: merge-recursive.c:1651
+#, c-format
+msgid "CONFLICT (%s): Merge conflict in %s"
+msgstr "XUNG ĐỘT (%s): Xung đột hòa trộn trong %s"
+
+#: merge-recursive.c:1741
+#, c-format
+msgid "Removing %s"
+msgstr "Đang xóa %s"
+
+#: merge-recursive.c:1766
+msgid "file/directory"
+msgstr "tập-tin/thư-mục"
+
+#: merge-recursive.c:1772
+msgid "directory/file"
+msgstr "thư-mục/tập tin"
+
+#: merge-recursive.c:1777
+#, c-format
+msgid "CONFLICT (%s): There is a directory with name %s in %s. Adding %s as %s"
+msgstr "XUNG ĐỘT (%s): Ở đây không có thư mục nào có tên %s trong %s. Thêm %s như là %s"
+
+#: merge-recursive.c:1787
+#, c-format
+msgid "Adding %s"
+msgstr "Đang thêm \"%s\""
+
+#: merge-recursive.c:1804
+msgid "Fatal merge failure, shouldn't happen."
+msgstr "Việc hòa trộn hỏng nghiêm trọng, không nên để xảy ra."
+
+#: merge-recursive.c:1823
+msgid "Already up-to-date!"
+msgstr "Đã cập nhật rồi!"
+
+#: merge-recursive.c:1832
+#, c-format
+msgid "merging of trees %s and %s failed"
+msgstr "hòa trộn cây (tree) %s và %s gặp lỗi"
+
+#: merge-recursive.c:1862
+#, c-format
+msgid "Unprocessed path??? %s"
+msgstr "Đường dẫn chưa được xử lý??? %s"
+
+#: merge-recursive.c:1907
+msgid "Merging:"
+msgstr "Đang trộn:"
+
+#: merge-recursive.c:1918
+#, c-format
+msgid "found %u common ancestor(s):"
+msgstr "tìm thấy %u tổ tiên chung:"
+
+#: merge-recursive.c:1954
+msgid "merge returned no commit"
+msgstr "hòa trộn không trả về lần chuyển giao (commit) nào"
+
+#: merge-recursive.c:2011
+#, c-format
+msgid "Could not parse object '%s'"
+msgstr "Không thể phân tích đối tượng '%s'"
+
+#: merge-recursive.c:2023
+#: builtin/merge.c:697
+msgid "Unable to write index."
+msgstr "Không thể ghi bảng mục lục"
 
 #: parse-options.c:494
 msgid "..."
@@ -2130,11 +2383,6 @@ msgstr "Không xóa %s\n"
 msgid "reference repository '%s' is not a local directory."
 msgstr "kho tham chiếu '%s' không phải là một thư mục nội bộ."
 
-#: builtin/clone.c:302
-#, c-format
-msgid "failed to open '%s'"
-msgstr "gặp lỗi khi mở '%s'"
-
 #: builtin/clone.c:306
 #, c-format
 msgid "failed to create directory '%s'"
@@ -3622,10 +3870,6 @@ msgstr "lệnh git write-tree gặp lỗi khi ghi một cây"
 msgid "failed to read the cache"
 msgstr "gặp lỗi khi đọc bộ nhớ tạm"
 
-#: builtin/merge.c:697
-msgid "Unable to write index."
-msgstr "Không thể ghi bảng mục lục"
-
 #: builtin/merge.c:710
 msgid "Not handling anything other than two heads merge."
 msgstr "Không cầm nắm gì ngoài hai head hòa trộn"
@@ -5036,9 +5280,9 @@ msgstr ""
 #: git-am.sh:105
 #, sh-format
 msgid ""
-"When you have resolved this problem run \"$cmdline --resolved\".\n"
-"If you would prefer to skip this patch, instead run \"$cmdline --skip\".\n"
-"To restore the original branch and stop patching run \"$cmdline --abort\"."
+"When you have resolved this problem, run \"$cmdline --resolved\".\n"
+"If you prefer to skip this patch, run \"$cmdline --skip\" instead.\n"
+"To restore the original branch and stop patching, run \"$cmdline --abort\"."
 msgstr ""
 "Khi bạn cần giải quyết vấn đề này hãy chạy lệnh \"$cmdline --resolved\".\n"
 "Nếu bạn có ý định bỏ qua miếng vá, thay vào đó bạn chạy \"$cmdline --skip\".\n"
@@ -5052,6 +5296,10 @@ msgstr "Đang trở lại để hòa trộn kiểu 'three-way'."
 msgid "Repository lacks necessary blobs to fall back on 3-way merge."
 msgstr "Kho thiếu đối tượng blob cần thiết để trở về trên '3-way merge'."
 
+#: git-am.sh:139
+msgid "Using index info to reconstruct a base tree..."
+msgstr "Sử dụng thông tin trong bảng mục lục để cấu trúc lại một cây (tree) cơ sở..."
+
 #: git-am.sh:154
 msgid ""
 "Did you hand edit your patch?\n"
@@ -5064,42 +5312,50 @@ msgstr ""
 msgid "Falling back to patching base and 3-way merge..."
 msgstr "Đang trở lại để vá cơ sở và '3-way merge'..."
 
-#: git-am.sh:275
+#: git-am.sh:179
+msgid "Failed to merge in the changes."
+msgstr "Gặp lỗi khi trộn vào các thay đổi."
+
+#: git-am.sh:274
 msgid "Only one StGIT patch series can be applied at once"
 msgstr "Chỉ có một sê-ri miếng vá StGIT được áp dụng một lúc"
 
-#: git-am.sh:362
+#: git-am.sh:361
 #, sh-format
 msgid "Patch format $patch_format is not supported."
 msgstr "Định dạng miếng vá $patch_format không được hỗ trợ."
 
-#: git-am.sh:364
+#: git-am.sh:363
 msgid "Patch format detection failed."
 msgstr "Dò tìm định dạng miếng vá gặp lỗi."
 
-#: git-am.sh:418
-msgid "-d option is no longer supported.  Do not use."
-msgstr "Tùy chọn -d không còn được hỗ trợ nữa. Xin đừng sử dụng."
+#: git-am.sh:389
+msgid ""
+"The -b/--binary option has been a no-op for long time, and\n"
+"it will be removed. Please do not use it anymore."
+msgstr ""
+"Tùy chọn -b/--binary đã không dùng từ lâu rồi, và\n"
+"nó sẽ được bỏ đi. Xin đừng sử dụng nó thêm nữa."
 
-#: git-am.sh:481
+#: git-am.sh:477
 #, sh-format
 msgid "previous rebase directory $dotest still exists but mbox given."
 msgstr "thư mục rebase trước $dotest vẫn chưa sẵn sàng nhưng mbox được đưa ra."
 
-#: git-am.sh:486
+#: git-am.sh:482
 msgid "Please make up your mind. --skip or --abort?"
 msgstr "Xin hãy rõ ràng. --skip hay --abort?"
 
-#: git-am.sh:513
+#: git-am.sh:509
 msgid "Resolve operation not in progress, we are not resuming."
 msgstr "Thao tác phân giải không đang được tiến hành, chúng ta không phục hồi lại."
 
-#: git-am.sh:579
+#: git-am.sh:575
 #, sh-format
 msgid "Dirty index: cannot apply patches (dirty: $files)"
 msgstr "Bảng mục lục sai: không thể áp dụng các miếng vá (sai: $files)"
 
-#: git-am.sh:683
+#: git-am.sh:679
 #, sh-format
 msgid ""
 "Patch is empty.  Was it split wrong?\n"
@@ -5110,31 +5366,31 @@ msgstr ""
 "Nếu bạn thích bỏ qua miếng vá này, hãy chạy lệnh sau để thay thế \"$cmdline --skip\".\n"
 "Để phục hồi lại nhánh nguyên thủy và dừng vá lại hãy chạy lệnh \"$cmdline --abort\"."
 
-#: git-am.sh:710
+#: git-am.sh:706
 msgid "Patch does not have a valid e-mail address."
 msgstr "Miếng vá không có địa chỉ e-mail hợp lệ."
 
-#: git-am.sh:757
+#: git-am.sh:753
 msgid "cannot be interactive without stdin connected to a terminal."
 msgstr "không thể được tương tác mà không có stdin kết nối với một thiết bị cuối"
 
-#: git-am.sh:761
+#: git-am.sh:757
 msgid "Commit Body is:"
 msgstr "Thân của lần chuyển giao (commit) là:"
 
 #. TRANSLATORS: Make sure to include [y], [n], [e], [v] and [a]
 #. in your translation. The program will only accept English
 #. input at this point.
-#: git-am.sh:768
+#: git-am.sh:764
 msgid "Apply? [y]es/[n]o/[e]dit/[v]iew patch/[a]ccept all "
 msgstr "Áp dụng? đồng ý [y]/không [n]/chỉnh sửa [e]/hiển thị miếng [v]á/đồng ý tất cả [a]"
 
-#: git-am.sh:804
+#: git-am.sh:800
 #, sh-format
 msgid "Applying: $FIRSTLINE"
 msgstr "Đang áp dụng (miếng vá): $FIRSTLINE"
 
-#: git-am.sh:825
+#: git-am.sh:821
 msgid ""
 "No changes - did you forget to use 'git add'?\n"
 "If there is nothing left to stage, chances are that something else\n"
@@ -5144,7 +5400,7 @@ msgstr ""
 "Nếu ở đây không có gì còn lại stage, tình cờ là có một số thứ khác\n"
 "đã sẵn được đưa vào với cùng nội dung thay đổi; bạn có lẽ muốn bỏ qua miếng vá này."
 
-#: git-am.sh:833
+#: git-am.sh:829
 msgid ""
 "You still have unmerged paths in your index\n"
 "did you forget to use 'git add'?"
@@ -5152,16 +5408,16 @@ msgstr ""
 "Bạn vẫn có những đường dẫn chưa được hòa trộn trong bảng mục lục của mình\n"
 "bạn đã quên sử dụng lệnh 'git add' à?"
 
-#: git-am.sh:849
+#: git-am.sh:845
 msgid "No changes -- Patch already applied."
 msgstr "Không thay đổi gì cả -- Miếng vá đã được áp dụng rồi."
 
-#: git-am.sh:859
+#: git-am.sh:855
 #, sh-format
 msgid "Patch failed at $msgnum $FIRSTLINE"
 msgstr "Vá gặp lỗi tại $msgnum $FIRSTLINE"
 
-#: git-am.sh:880
+#: git-am.sh:876
 msgid "applying to an empty history"
 msgstr "áp dụng vào một lịch sử trống rỗng"
 
@@ -5360,6 +5616,127 @@ msgstr "Không thể hòa trộn nhiều nhánh và trong một head trống r�
 #: git-pull.sh:257
 msgid "Cannot rebase onto multiple branches"
 msgstr "Không thể thực hiện lệnh rebase (cơ cấu lại) trên nhiều nhánh"
+
+#: git-rebase.sh:52
+msgid ""
+"When you have resolved this problem, run \"git rebase --continue\".\n"
+"If you prefer to skip this patch, run \"git rebase --skip\" instead.\n"
+"To check out the original branch and stop rebasing, run \"git rebase --abort\"."
+msgstr ""
+"Khi bạn cần giải quyết vấn đề này hãy chạy lệnh \"git rebase --continue\".\n"
+"Nếu bạn có ý định bỏ qua miếng vá, thay vào đó bạn chạy \"git rebase --skip\".\n"
+"Để phục hồi lại thành nhánh nguyên thủy và dừng việc vá lại thì chạy \"git rebase --abort\"."
+
+#: git-rebase.sh:159
+msgid "The pre-rebase hook refused to rebase."
+msgstr "hook (chương trình móc vào git) pre-rebase từ chối rebase."
+
+#: git-rebase.sh:164
+msgid "It looks like git-am is in progress. Cannot rebase."
+msgstr "Hình như đang trong quá trình thực hiện lệnh git-am. Không thể chạy lệnh rebase."
+
+#: git-rebase.sh:295
+msgid "The --exec option must be used with the --interactive option"
+msgstr "Tùy chọn --exec phải được sử dụng cùng với tùy chọn --interactive"
+
+#: git-rebase.sh:300
+msgid "No rebase in progress?"
+msgstr "Không phải đang rebase?"
+
+#: git-rebase.sh:313
+msgid "Cannot read HEAD"
+msgstr "Không thể đọc HEAD"
+
+#: git-rebase.sh:316
+msgid ""
+"You must edit all merge conflicts and then\n"
+"mark them as resolved using git add"
+msgstr ""
+"Bạn phải sửa tất cả các lần hòa trộn xung đột và sau\n"
+"đó đánh dấu chúng là cần xử lý sử dụng lệnh git add"
+
+#: git-rebase.sh:334
+#, sh-format
+msgid "Could not move back to $head_name"
+msgstr "Không thể quay trở lại $head_name"
+
+#: git-rebase.sh:350
+#, sh-format
+msgid ""
+"It seems that there is already a $state_dir_base directory, and\n"
+"I wonder if you are in the middle of another rebase.  If that is the\n"
+"case, please try\n"
+"\t$cmd_live_rebase\n"
+"If that is not the case, please\n"
+"\t$cmd_clear_stale_rebase\n"
+"and run me again.  I am stopping in case you still have something\n"
+"valuable there."
+msgstr ""
+"Hình như là ở đây sẵn có một thư mục $state_dir_base directory, và\n"
+"Tôi tự hỏi có phải bạn đang ở giữa một lệnh rebase khác.  Nếu đúng là\n"
+"như vậy, xin hãy thử\n"
+"\t$cmd_live_rebase\n"
+"Nếu không phải thế, hãy thử\n"
+"\t$cmd_clear_stale_rebase\n"
+"và chạy TÔI lần nữa.  TÔI  dừng lại trong trường hợp bạn vẫn\n"
+"có một số thứ quý giá ở đây.\n"
+"\n"
+"TÔI: là lệnh bạn vừa gọi!"
+
+#: git-rebase.sh:395
+#, sh-format
+msgid "invalid upstream $upstream_name"
+msgstr "dòng ngược không hợp lệ $upstream_name"
+
+#: git-rebase.sh:419
+#, sh-format
+msgid "$onto_name: there are more than one merge bases"
+msgstr "$onto_name: ở đây có nhiều hơn một "
+
+#: git-rebase.sh:422
+#: git-rebase.sh:426
+#, sh-format
+msgid "$onto_name: there is no merge base"
+msgstr "$onto_name: ở đây không có gì để hòa trộn"
+
+#: git-rebase.sh:431
+#, sh-format
+msgid "Does not point to a valid commit: $onto_name"
+msgstr "Không chỉ đến một lần chuyển giao (commit) không hợp lệ: $onto_name"
+
+#: git-rebase.sh:454
+#, sh-format
+msgid "fatal: no such branch: $branch_name"
+msgstr "nghiêm trọng: không có nhánh như thế: $branch_name"
+
+#: git-rebase.sh:474
+msgid "Please commit or stash them."
+msgstr "Xin hãy commit hoặc stash chúng."
+
+#: git-rebase.sh:492
+#, sh-format
+msgid "Current branch $branch_name is up to date."
+msgstr "Nhánh hiện tại $branch_name đã được cập nhật rồi."
+
+#: git-rebase.sh:495
+#, sh-format
+msgid "Current branch $branch_name is up to date, rebase forced."
+msgstr "Nhánh hiện tại $branch_name đã được cập nhật rồi, lệnh rebase ép buộc."
+
+#: git-rebase.sh:506
+#, sh-format
+msgid "Changes from $mb to $onto:"
+msgstr "Thay đổi từ $mb thành $onto:"
+
+#. Detach HEAD and reset the tree
+#: git-rebase.sh:515
+msgid "First, rewinding head to replay your work on top of it..."
+msgstr "Trước tiên, di chuyển head để xem lại các công việc trên đỉnh của nó..."
+
+#: git-rebase.sh:523
+#, sh-format
+msgid "Fast-forwarded $branch_name to $onto_name."
+msgstr "Fast-forward $branch_name thành $onto_name."
 
 #: git-stash.sh:51
 msgid "git stash clear with parameters is unimplemented"
@@ -5643,8 +6020,8 @@ msgid "Failed to recurse into submodule path '$sm_path'"
 msgstr "Gặp lỗi khi đệ quy vào trong đường dẫn mô-đun-con '$sm_path'"
 
 #: git-submodule.sh:754
-msgid "--cached cannot be used with --files"
-msgstr "--cached không thể được sử dụng cùng với --files"
+msgid "The --cached option cannot be used with the --files option"
+msgstr "Tùy chọn --cached không thể dùng cùng với tùy chọn --files"
 
 #. unexpected type
 #: git-submodule.sh:794
@@ -5671,10 +6048,6 @@ msgstr "  Cảnh báo: $name không chứa những lần chuyển giao (commit) 
 msgid "blob"
 msgstr "blob"
 
-#: git-submodule.sh:844
-msgid "submodule"
-msgstr "mô-đun con"
-
 #: git-submodule.sh:881
 msgid "# Submodules changed but not updated:"
 msgstr "# Những mô-đun-con đã bị thay đổi nhưng chưa được cập nhật:"
@@ -5687,6 +6060,9 @@ msgstr "# Những thay đổi mô-đun-con được chuyển giao (commit):"
 #, sh-format
 msgid "Synchronizing submodule url for '$name'"
 msgstr "Đang đồng bộ hóa url mô-đun-con cho '$name'"
+
+#~ msgid "-d option is no longer supported.  Do not use."
+#~ msgstr "Tùy chọn -d không còn được hỗ trợ nữa. Xin đừng sử dụng."
 
 #~ msgid "%s: has been deleted/renamed"
 #~ msgstr "%s: đã được xóa/thay-tên"

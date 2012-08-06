@@ -12,8 +12,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Git\n"
 "Report-Msgid-Bugs-To: Git Mailing List <git@vger.kernel.org>\n"
-"POT-Creation-Date: 2012-07-30 09:18+0800\n"
-"PO-Revision-Date: 2012-07-31 06:31+0800\n"
+"POT-Creation-Date: 2012-08-02 09:26+0800\n"
+"PO-Revision-Date: 2012-08-05 07:08+0800\n"
 "Last-Translator: Jiang Xin <worldhello.net@gmail.com>\n"
 "Language-Team: GitHub <https://github.com/gotgit/git/>\n"
 "Language: zh_CN\n"
@@ -237,8 +237,8 @@ msgstr ""
 "%s"
 
 #: diff.c:1400
-msgid " 0 files changed\n"
-msgstr " 0 个文件被修改\n"
+msgid " 0 files changed"
+msgstr " 0 个文件被修改"
 
 #: diff.c:1404
 #, c-format
@@ -351,6 +351,266 @@ msgstr[0] ""
 msgstr[1] ""
 "\n"
 "您指的是这些其中一个么？"
+
+#: merge-recursive.c:190
+#, c-format
+msgid "(bad commit)\n"
+msgstr "（坏提交）\n"
+
+#: merge-recursive.c:206
+#, c-format
+msgid "addinfo_cache failed for path '%s'"
+msgstr "为路径 '%s' addinfo_cache 失败"
+
+#: merge-recursive.c:268
+msgid "error building trees"
+msgstr "无法创建树"
+
+#: merge-recursive.c:497
+msgid "diff setup failed"
+msgstr "diff 设置失败"
+
+#: merge-recursive.c:627
+msgid "merge-recursive: disk full?"
+msgstr "merge-recursive：磁盘已满？"
+
+#: merge-recursive.c:690
+#, c-format
+msgid "failed to create path '%s'%s"
+msgstr "无法创建路径 '%s'%s"
+
+#: merge-recursive.c:701
+#, c-format
+msgid "Removing %s to make room for subdirectory\n"
+msgstr "删除 %s 以便为子目录留出空间\n"
+
+#. something else exists
+#. .. but not some other error (who really cares what?)
+#: merge-recursive.c:715 merge-recursive.c:736
+msgid ": perhaps a D/F conflict?"
+msgstr "：可能是一个目录/文件冲突？"
+
+#: merge-recursive.c:726
+#, c-format
+msgid "refusing to lose untracked file at '%s'"
+msgstr "拒绝丢弃 '%s' 中的未跟踪文件"
+
+#: merge-recursive.c:766
+#, c-format
+msgid "cannot read object %s '%s'"
+msgstr "不能读取对象 %s '%s'"
+
+#: merge-recursive.c:768
+#, c-format
+msgid "blob expected for %s '%s'"
+msgstr "%s '%s' 应为二进制对象（blob）"
+
+#: merge-recursive.c:791 builtin/clone.c:302
+#, c-format
+msgid "failed to open '%s'"
+msgstr "无法打开 '%s'"
+
+#: merge-recursive.c:799
+#, c-format
+msgid "failed to symlink '%s'"
+msgstr "无法创建符号链接 '%s'"
+
+#: merge-recursive.c:802
+#, c-format
+msgid "do not know what to do with %06o %s '%s'"
+msgstr "不知道如何处理 %06o %s '%s'"
+
+#: merge-recursive.c:939
+msgid "Failed to execute internal merge"
+msgstr "无法执行内部合并"
+
+#: merge-recursive.c:943
+#, c-format
+msgid "Unable to add %s to database"
+msgstr "不能添加 %s 至对象库"
+
+#: merge-recursive.c:959
+msgid "unsupported object type in the tree"
+msgstr "在树中有不支持的对象类型"
+
+#: merge-recursive.c:1038 merge-recursive.c:1052
+#, c-format
+msgid ""
+"CONFLICT (%s/delete): %s deleted in %s and %s in %s. Version %s of %s left "
+"in tree."
+msgstr ""
+"冲突（%1$s/删除）：%2$s 在 %3$s 中被删除，在 %5$s 中被 %4$s。%7$s 在 %6$s 中"
+"的版本被保留。"
+
+#: merge-recursive.c:1044 merge-recursive.c:1057
+#, c-format
+msgid ""
+"CONFLICT (%s/delete): %s deleted in %s and %s in %s. Version %s of %s left "
+"in tree at %s."
+msgstr ""
+"冲突（%1$s/删除）：%2$s 在 %3$s 中被删除，在 %5$s 中被 %4$s。%7$s 在 %6$s 中"
+"的版本保留于 %8$s 中。"
+
+#: merge-recursive.c:1098
+msgid "rename"
+msgstr "重命名"
+
+#: merge-recursive.c:1098
+msgid "renamed"
+msgstr "重命名"
+
+#: merge-recursive.c:1154
+#, c-format
+msgid "%s is a directory in %s adding as %s instead"
+msgstr "%s 是 %s 中的一个目录而以 %s 为名被添加"
+
+#: merge-recursive.c:1176
+#, c-format
+msgid ""
+"CONFLICT (rename/rename): Rename \"%s\"->\"%s\" in branch \"%s\" rename \"%s"
+"\"->\"%s\" in \"%s\"%s"
+msgstr ""
+"冲突（重命名/重命名）：在分支 \"%3$s\" 中重命名 \"%1$s\"->\"%2$s\"，在分支 "
+"\"%6$s\" 中重命名 \"%4$s\"->\"%5$s\"%7$s"
+
+#: merge-recursive.c:1181
+msgid " (left unresolved)"
+msgstr "（留下未解决）"
+
+#: merge-recursive.c:1235
+#, c-format
+msgid "CONFLICT (rename/rename): Rename %s->%s in %s. Rename %s->%s in %s"
+msgstr ""
+"冲突（重命名/重命名）：在 %3$s 中重命名 %1$s->%2$s，在 %6$s 中重命名 %4$s->"
+"%5$s"
+
+#: merge-recursive.c:1265
+#, c-format
+msgid "Renaming %s to %s and %s to %s instead"
+msgstr "而是重命名 %s 至 %s 以及 %s 至 %s"
+
+#: merge-recursive.c:1464
+#, c-format
+msgid "CONFLICT (rename/add): Rename %s->%s in %s. %s added in %s"
+msgstr "冲突（重命名/添加）：在 %3$s 中重命名 %1$s->%2$s。在 %5$s 中添加 %4$s"
+
+#: merge-recursive.c:1474
+#, c-format
+msgid "Adding merged %s"
+msgstr "添加合并后的 %s"
+
+#: merge-recursive.c:1479 merge-recursive.c:1677
+#, c-format
+msgid "Adding as %s instead"
+msgstr "而是以 %s 为名添加"
+
+#: merge-recursive.c:1530
+#, c-format
+msgid "cannot read object %s"
+msgstr "不能读取对象 %s"
+
+#: merge-recursive.c:1533
+#, c-format
+msgid "object %s is not a blob"
+msgstr "对象 %s 不是一个二进制对象（blob）"
+
+#: merge-recursive.c:1581
+msgid "modify"
+msgstr "修改"
+
+#: merge-recursive.c:1581
+msgid "modified"
+msgstr "修改"
+
+#: merge-recursive.c:1591
+msgid "content"
+msgstr "内容"
+
+#: merge-recursive.c:1598
+msgid "add/add"
+msgstr "添加/添加"
+
+#: merge-recursive.c:1632
+#, c-format
+msgid "Skipped %s (merged same as existing)"
+msgstr "略过 %s（已经做过相同合并）"
+
+#: merge-recursive.c:1646
+#, c-format
+msgid "Auto-merging %s"
+msgstr "自动合并 %s"
+
+#: merge-recursive.c:1650 git-submodule.sh:844
+msgid "submodule"
+msgstr "子模组"
+
+#: merge-recursive.c:1651
+#, c-format
+msgid "CONFLICT (%s): Merge conflict in %s"
+msgstr "冲突（%s）：合并冲突于 %s"
+
+#: merge-recursive.c:1741
+#, c-format
+msgid "Removing %s"
+msgstr "删除 %s"
+
+#: merge-recursive.c:1766
+msgid "file/directory"
+msgstr "文件/目录"
+
+#: merge-recursive.c:1772
+msgid "directory/file"
+msgstr "目录/文件"
+
+#: merge-recursive.c:1777
+#, c-format
+msgid "CONFLICT (%s): There is a directory with name %s in %s. Adding %s as %s"
+msgstr "冲突（%1$s）：在 %3$s 中有一个名为 %2$s 的目录。以 %5$s 为名添加 %4$s"
+
+#: merge-recursive.c:1787
+#, c-format
+msgid "Adding %s"
+msgstr "添加 %s"
+
+#: merge-recursive.c:1804
+msgid "Fatal merge failure, shouldn't happen."
+msgstr "严重的合并错误，不应发生。"
+
+#: merge-recursive.c:1823
+msgid "Already up-to-date!"
+msgstr "已经是最新的！"
+
+#: merge-recursive.c:1832
+#, c-format
+msgid "merging of trees %s and %s failed"
+msgstr "无法合并树 %s 和 %s"
+
+#: merge-recursive.c:1862
+#, c-format
+msgid "Unprocessed path??? %s"
+msgstr "未处理的路径??? %s"
+
+#: merge-recursive.c:1907
+msgid "Merging:"
+msgstr "合并："
+
+#: merge-recursive.c:1918
+#, c-format
+msgid "found %u common ancestor(s):"
+msgstr "发现 %u 个共同祖先："
+
+#: merge-recursive.c:1954
+msgid "merge returned no commit"
+msgstr "合并未返回提交"
+
+#: merge-recursive.c:2011
+#, c-format
+msgid "Could not parse object '%s'"
+msgstr "不能解析对象 '%s'"
+
+#: merge-recursive.c:2023 builtin/merge.c:697
+msgid "Unable to write index."
+msgstr "不能写入索引。"
 
 #: parse-options.c:494
 msgid "..."
@@ -1130,7 +1390,7 @@ msgstr "-A 和 -u 选项互斥"
 
 #: builtin/add.c:393
 msgid "Option --ignore-missing can only be used together with --dry-run"
-msgstr "选项 --ignore-missing 只能和 --dry-run 共用"
+msgstr "选项 --ignore-missing 只能和 --dry-run 同时使用"
 
 #: builtin/add.c:413
 #, c-format
@@ -1529,7 +1789,7 @@ msgstr "应用补丁而不修改工作区"
 
 #: builtin/apply.c:4310
 msgid "also apply the patch (use with --stat/--summary/--check)"
-msgstr "同时应用此补丁（和 --stat/--summary/--check 共用）"
+msgstr "还应用此补丁（使用 --stat/--summary/--check 参数）"
 
 #: builtin/apply.c:4312
 msgid "attempt three-way merge if a patch does not apply"
@@ -1683,7 +1943,7 @@ msgstr ""
 
 #: builtin/branch.c:180
 msgid "cannot use -a with -d"
-msgstr "不能将 -a 和 -d 共用"
+msgstr "不能将 -a 和 -d 同时使用"
 
 #: builtin/branch.c:186
 msgid "Couldn't look up commit object for HEAD"
@@ -2006,7 +2266,7 @@ msgstr "引用不是一个树：%s"
 
 #: builtin/checkout.c:977
 msgid "-B cannot be used with -b"
-msgstr "-B 不能和 -b 共用"
+msgstr "-B 不能和 -b 同时使用"
 
 #: builtin/checkout.c:986
 msgid "--patch is incompatible with all other options"
@@ -2014,11 +2274,11 @@ msgstr "--patch 选项和其他选项不兼容"
 
 #: builtin/checkout.c:989
 msgid "--detach cannot be used with -b/-B/--orphan"
-msgstr "--detach 不能和 -b/-B/--orphan 共用"
+msgstr "--detach 不能和 -b/-B/--orphan 同时使用"
 
 #: builtin/checkout.c:991
 msgid "--detach cannot be used with -t"
-msgstr "--detach 不能和 -t 共用"
+msgstr "--detach 不能和 -t 同时使用"
 
 #: builtin/checkout.c:997
 msgid "--track needs a branch name"
@@ -2034,7 +2294,7 @@ msgstr "--orphan 和 -b|-B 互斥"
 
 #: builtin/checkout.c:1012
 msgid "--orphan cannot be used with -t"
-msgstr "--orphan 不能和 -t 共用"
+msgstr "--orphan 不能和 -t 同时使用"
 
 #: builtin/checkout.c:1022
 msgid "git checkout: -f and -m are incompatible"
@@ -2078,7 +2338,7 @@ msgstr "--ours/--theirs 和切换分支不兼容。"
 
 #: builtin/clean.c:78
 msgid "-x and -X cannot be used together"
-msgstr "-x 和 -X 不能共用"
+msgstr "-x 和 -X 不能同时使用"
 
 #: builtin/clean.c:82
 msgid ""
@@ -2122,11 +2382,6 @@ msgstr "未删除 %s\n"
 #, c-format
 msgid "reference repository '%s' is not a local directory."
 msgstr "引用版本库 '%s' 不是一个本地目录。"
-
-#: builtin/clone.c:302
-#, c-format
-msgid "failed to open '%s'"
-msgstr "无法打开 '%s'"
 
 #: builtin/clone.c:306
 #, c-format
@@ -2391,7 +2646,7 @@ msgid ""
 "and try again.\n"
 msgstr ""
 "\n"
-"看起来您正在做一个合并提交。如果不对，请删除文件\n"
+"似乎您正在做一个合并提交。如果不对，请删除文件\n"
 "\t%s\n"
 "然后重试。\n"
 
@@ -2405,7 +2660,7 @@ msgid ""
 "and try again.\n"
 msgstr ""
 "\n"
-"看起来您正在做一个拣选提交。如果不对，请删除文件\n"
+"似乎您正在做一个拣选提交。如果不对，请删除文件\n"
 "\t%s\n"
 "然后重试。\n"
 
@@ -2479,7 +2734,7 @@ msgstr "您正处于一个拣选过程中 -- 无法修补提交。"
 
 #: builtin/commit.c:1019
 msgid "Options --squash and --fixup cannot be used together"
-msgstr "选项 --squash 和 --fixup 不能共用"
+msgstr "选项 --squash 和 --fixup 不能同时使用"
 
 #: builtin/commit.c:1029
 msgid "Only one of -c/-C/-F/--fixup can be used."
@@ -2487,11 +2742,11 @@ msgstr "只能用一个 -c/-C/-F/--fixup 选项。"
 
 #: builtin/commit.c:1031
 msgid "Option -m cannot be combined with -c/-C/-F/--fixup."
-msgstr "选项 -m 不能和 -c/-C/-F/--fixup 共用。"
+msgstr "选项 -m 不能和 -c/-C/-F/--fixup 同时使用。"
 
 #: builtin/commit.c:1039
 msgid "--reset-author can be used only with -C, -c or --amend."
-msgstr "--reset-author 只能和 -C、-c 或 --amend 共用。"
+msgstr "--reset-author 只能和 -C、-c 或 --amend 同时使用。"
 
 #: builtin/commit.c:1056
 msgid "Only one of --include/--only/--all/--interactive/--patch can be used."
@@ -2516,7 +2771,7 @@ msgstr "无效的清理模式 %s"
 
 #: builtin/commit.c:1077
 msgid "Paths with -a does not make sense."
-msgstr "路径和 -a 选项共用没有意义。"
+msgstr "路径和 -a 选项同时使用没有意义。"
 
 #: builtin/commit.c:1260
 msgid "couldn't look up newly created commit"
@@ -2671,7 +2926,7 @@ msgstr "没有发现名称，无法描述任何东西。"
 
 #: builtin/describe.c:482
 msgid "--dirty is incompatible with committishes"
-msgstr "--dirty 不能与提交共用"
+msgstr "--dirty 不能与提交同时使用"
 
 #: builtin/diff.c:77
 #, c-format
@@ -2700,7 +2955,7 @@ msgstr "提供了超过 %d 个树对象：'%s'"
 #: builtin/diff.c:356
 #, c-format
 msgid "more than two blobs given: '%s'"
-msgstr "提供了超过两个 blob 对象：'%s'"
+msgstr "提供了超过两个二进制对象（blob）：'%s'"
 
 #: builtin/diff.c:364
 #, c-format
@@ -2937,11 +3192,11 @@ msgstr "--open-files-in-pager 仅用于工作区"
 
 #: builtin/grep.c:963
 msgid "--cached or --untracked cannot be used with --no-index."
-msgstr "--cached 或 --untracked 不能与 --no-index 共用。"
+msgstr "--cached 或 --untracked 不能与 --no-index 同时使用。"
 
 #: builtin/grep.c:968
 msgid "--no-index or --untracked cannot be used with revs."
-msgstr "--no-index 或 --untracked 不能和版本共用。"
+msgstr "--no-index 或 --untracked 不能和版本同时使用。"
 
 #: builtin/grep.c:971
 msgid "--[no-]exclude-standard cannot be used for tracked contents."
@@ -3123,7 +3378,7 @@ msgstr "不能读取现存对象 %s"
 #: builtin/index-pack.c:732
 #, c-format
 msgid "invalid blob object %s"
-msgstr "无效的 blob 对象 %s"
+msgstr "无效的二进制对象（blob）%s"
 
 #: builtin/index-pack.c:747
 #, c-format
@@ -3250,7 +3505,7 @@ msgstr "错误选项 %s"
 
 #: builtin/index-pack.c:1558
 msgid "--fix-thin cannot be used without --stdin"
-msgstr "--fix-thin 不能和 --stdin 共用"
+msgstr "--fix-thin 不能和 --stdin 同时使用"
 
 #: builtin/index-pack.c:1562 builtin/index-pack.c:1572
 #, c-format
@@ -3581,10 +3836,6 @@ msgstr "git write-tree 无法写入一树对象"
 msgid "failed to read the cache"
 msgstr "无法读取缓存"
 
-#: builtin/merge.c:697
-msgid "Unable to write index."
-msgstr "不能写索引。"
-
 #: builtin/merge.c:710
 msgid "Not handling anything other than two heads merge."
 msgstr "不能处理两个头合并之外的任何操作。"
@@ -3693,11 +3944,11 @@ msgstr "您尚未结束您的拣选（存在 CHERRY_PICK_HEAD）。"
 
 #: builtin/merge.c:1249
 msgid "You cannot combine --squash with --no-ff."
-msgstr "您不能将 --squash 与 --no-ff 共用。"
+msgstr "您不能将 --squash 与 --no-ff 同时使用。"
 
 #: builtin/merge.c:1254
 msgid "You cannot combine --no-ff with --ff-only."
-msgstr "您不能将 --no-ff 与 --ff-only 共用。"
+msgstr "您不能将 --no-ff 与 --ff-only 同时使用。"
 
 #: builtin/merge.c:1261
 msgid "No commit specified and merge.defaultToUpstream not set."
@@ -4167,7 +4418,7 @@ msgstr "--all 和 --tags 不兼容"
 
 #: builtin/push.c:286
 msgid "--all can't be combined with refspecs"
-msgstr "--all 不能和引用表达式共用"
+msgstr "--all 不能和引用表达式同时使用"
 
 #: builtin/push.c:291
 msgid "--mirror and --tags are incompatible"
@@ -4175,7 +4426,7 @@ msgstr "--mirror 和 --tags 不兼容"
 
 #: builtin/push.c:292
 msgid "--mirror can't be combined with refspecs"
-msgstr "--mirror 不能和引用表达式共用"
+msgstr "--mirror 不能和引用表达式同时使用"
 
 #: builtin/push.c:297
 msgid "--all and --mirror are incompatible"
@@ -4213,7 +4464,7 @@ msgstr "指定一个 master 分支并使用 --mirror 选项没有意义"
 
 #: builtin/remote.c:187
 msgid "specifying branches to track makes sense only with fetch mirrors"
-msgstr "指定要跟踪的分支只在与获取镜像共用才有意义"
+msgstr "指定要跟踪的分支只在与获取镜像同时使用才有意义"
 
 #: builtin/remote.c:195 builtin/remote.c:646
 #, c-format
@@ -4629,7 +4880,7 @@ msgstr "不能重置索引文件至版本 '%s'。"
 #: builtin/revert.c:70 builtin/revert.c:92
 #, c-format
 msgid "%s: %s cannot be used with %s"
-msgstr "%s：%s 不能和 %s 共用"
+msgstr "%s：%s 不能和 %s 同时使用"
 
 #: builtin/revert.c:131
 msgid "program error"
@@ -4779,15 +5030,15 @@ msgstr "--column 和 -n 不兼容"
 
 #: builtin/tag.c:523
 msgid "-n option is only allowed with -l."
-msgstr "-n 选项只允许和 -l 共用。"
+msgstr "-n 选项只允许和 -l 同时使用。"
 
 #: builtin/tag.c:525
 msgid "--contains option is only allowed with -l."
-msgstr "--contains 选项只允许和 -l 共用。"
+msgstr "--contains 选项只允许和 -l 同时使用。"
 
 #: builtin/tag.c:527
 msgid "--points-at option is only allowed with -l."
-msgstr "--points-at 选项只允许和 -l 共用。"
+msgstr "--points-at 选项只允许和 -l 同时使用。"
 
 #: builtin/tag.c:535
 msgid "only one -F or -m option is allowed."
@@ -4955,9 +5206,9 @@ msgstr "您好像在上一次 'am' 失败后移动了 HEAD。未回退至 ORIG_H
 #: git-am.sh:105
 #, sh-format
 msgid ""
-"When you have resolved this problem run \"$cmdline --resolved\".\n"
-"If you would prefer to skip this patch, instead run \"$cmdline --skip\".\n"
-"To restore the original branch and stop patching run \"$cmdline --abort\"."
+"When you have resolved this problem, run \"$cmdline --resolved\".\n"
+"If you prefer to skip this patch, run \"$cmdline --skip\" instead.\n"
+"To restore the original branch and stop patching, run \"$cmdline --abort\"."
 msgstr ""
 "当您解决了此问题后，执行 \"$cmdline --resolved\"。\n"
 "如果您想跳过此补丁，则执行 \"$cmdline --skip\"。\n"
@@ -4969,7 +5220,11 @@ msgstr "无法求助于三路合并。"
 
 #: git-am.sh:137
 msgid "Repository lacks necessary blobs to fall back on 3-way merge."
-msgstr "版本库缺乏必要的 blob 数据以进行三路合并。"
+msgstr "版本库缺乏必要的二进制对象（blob）以进行三路合并。"
+
+#: git-am.sh:139
+msgid "Using index info to reconstruct a base tree..."
+msgstr "更新索引信息以重建基树..."
 
 #: git-am.sh:154
 msgid ""
@@ -4977,48 +5232,56 @@ msgid ""
 "It does not apply to blobs recorded in its index."
 msgstr ""
 "您是否曾手动编辑过您的补丁？\n"
-"无法应用补丁到索引中的数据上。"
+"无法应用补丁到索引中的二进制对象（blob）上。"
 
 #: git-am.sh:163
 msgid "Falling back to patching base and 3-way merge..."
 msgstr "转而在基础版本上打补丁及进行三路合并..."
 
-#: git-am.sh:275
+#: git-am.sh:179
+msgid "Failed to merge in the changes."
+msgstr "无法合并变更。"
+
+#: git-am.sh:274
 msgid "Only one StGIT patch series can be applied at once"
 msgstr "一次只能有一个 StGIT 补丁队列被应用"
 
-#: git-am.sh:362
+#: git-am.sh:361
 #, sh-format
 msgid "Patch format $patch_format is not supported."
 msgstr "不支持 $patch_format 补丁格式。"
 
-#: git-am.sh:364
+#: git-am.sh:363
 msgid "Patch format detection failed."
 msgstr "补丁格式检测失败。"
 
-#: git-am.sh:418
-msgid "-d option is no longer supported.  Do not use."
-msgstr "不再支持 -d 选项。不要使用。"
+#: git-am.sh:389
+msgid ""
+"The -b/--binary option has been a no-op for long time, and\n"
+"it will be removed. Please do not use it anymore."
+msgstr ""
+"参数 -b/--binary 已经很长时间不做任何实质操作了，并且将被删除。\n"
+"请不要再使用它了。"
 
-#: git-am.sh:481
+#: git-am.sh:477
 #, sh-format
 msgid "previous rebase directory $dotest still exists but mbox given."
 msgstr "之前的变基目录 $dotest 仍然存在但给出了mbox。"
 
-#: git-am.sh:486
+#: git-am.sh:482
 msgid "Please make up your mind. --skip or --abort?"
 msgstr "请下决心。--skip 或是 --abort ？"
 
-#: git-am.sh:513
+#: git-am.sh:509
 msgid "Resolve operation not in progress, we are not resuming."
 msgstr "解决操作未进行，我们不会继续。"
 
-#: git-am.sh:579
+#: git-am.sh:575
 #, sh-format
 msgid "Dirty index: cannot apply patches (dirty: $files)"
 msgstr "脏的索引：不能应用补丁（脏文件：$files）"
 
-#: git-am.sh:683
+#: git-am.sh:679
 #, sh-format
 msgid ""
 "Patch is empty.  Was it split wrong?\n"
@@ -5029,15 +5292,15 @@ msgstr ""
 "如果您想要跳过这个补丁，执行 \"$cmdline --skip\"。\n"
 "要恢复原分支并停止打补丁，执行 \"$cmdline --abort\"。"
 
-#: git-am.sh:710
+#: git-am.sh:706
 msgid "Patch does not have a valid e-mail address."
 msgstr "补丁中没有一个有效的邮件地址。"
 
-#: git-am.sh:757
+#: git-am.sh:753
 msgid "cannot be interactive without stdin connected to a terminal."
 msgstr "标准输入没有和终端关联，不能进行交互式操作。"
 
-#: git-am.sh:761
+#: git-am.sh:757
 msgid "Commit Body is:"
 msgstr "提交内容为："
 
@@ -5045,16 +5308,16 @@ msgstr "提交内容为："
 #. TRANSLATORS: Make sure to include [y], [n], [e], [v] and [a]
 #. in your translation. The program will only accept English
 #. input at this point.
-#: git-am.sh:768
+#: git-am.sh:764
 msgid "Apply? [y]es/[n]o/[e]dit/[v]iew patch/[a]ccept all "
 msgstr "应用？[y]es/[n]o/[e]dit/[v]iew patch/[a]ccept all "
 
-#: git-am.sh:804
+#: git-am.sh:800
 #, sh-format
 msgid "Applying: $FIRSTLINE"
 msgstr "正应用：$FIRSTLINE"
 
-#: git-am.sh:825
+#: git-am.sh:821
 msgid ""
 "No changes - did you forget to use 'git add'?\n"
 "If there is nothing left to stage, chances are that something else\n"
@@ -5064,22 +5327,22 @@ msgstr ""
 "如果没有什么要添加到暂存区的，则很可能是其它提交已经引入了相同的变更。\n"
 "您也许想要跳过这个补丁。"
 
-#: git-am.sh:833
+#: git-am.sh:829
 msgid ""
 "You still have unmerged paths in your index\n"
 "did you forget to use 'git add'?"
 msgstr "您的索引中仍有未合并的路径。您是否忘了执行 'git add'？"
 
-#: git-am.sh:849
+#: git-am.sh:845
 msgid "No changes -- Patch already applied."
 msgstr "没有变更 -- 补丁已经应用过。"
 
-#: git-am.sh:859
+#: git-am.sh:855
 #, sh-format
 msgid "Patch failed at $msgnum $FIRSTLINE"
 msgstr "补丁失败于 $msgnum $FIRSTLINE"
 
-#: git-am.sh:880
+#: git-am.sh:876
 msgid "applying to an empty history"
 msgstr "正应用到一个空历史上"
 
@@ -5279,6 +5542,123 @@ msgstr "无法将多个分支合并到空分支"
 #: git-pull.sh:257
 msgid "Cannot rebase onto multiple branches"
 msgstr "无法变基到多个分支"
+
+#: git-rebase.sh:52
+msgid ""
+"When you have resolved this problem, run \"git rebase --continue\".\n"
+"If you prefer to skip this patch, run \"git rebase --skip\" instead.\n"
+"To check out the original branch and stop rebasing, run \"git rebase --abort"
+"\"."
+msgstr ""
+"当您解决了此问题后，执行 \"git rebase --continue\"。\n"
+"如果您想跳过此补丁，则执行 \"git rebase --skip\"。\n"
+"要恢复原分支并停止变基，执行 \"git rebase --abort\"。"
+
+#: git-rebase.sh:159
+msgid "The pre-rebase hook refused to rebase."
+msgstr "钩子 pre-rebase 拒绝变基。"
+
+#: git-rebase.sh:164
+msgid "It looks like git-am is in progress. Cannot rebase."
+msgstr "似乎正处于在 git-am 的执行过程中。无法变基。"
+
+#: git-rebase.sh:295
+msgid "The --exec option must be used with the --interactive option"
+msgstr "选项 --exec 必须和选项 --interactive 同时使用"
+
+#: git-rebase.sh:300
+msgid "No rebase in progress?"
+msgstr "没有正在进行的变基？"
+
+#: git-rebase.sh:313
+msgid "Cannot read HEAD"
+msgstr "不能读取 HEAD"
+
+#: git-rebase.sh:316
+msgid ""
+"You must edit all merge conflicts and then\n"
+"mark them as resolved using git add"
+msgstr ""
+"您必须编辑所有的合并冲突，然后通过 git add\n"
+"命令将它们标记为已解决"
+
+#: git-rebase.sh:334
+#, sh-format
+msgid "Could not move back to $head_name"
+msgstr "无法移回 $head_name"
+
+#: git-rebase.sh:350
+#, sh-format
+msgid ""
+"It seems that there is already a $state_dir_base directory, and\n"
+"I wonder if you are in the middle of another rebase.  If that is the\n"
+"case, please try\n"
+"\t$cmd_live_rebase\n"
+"If that is not the case, please\n"
+"\t$cmd_clear_stale_rebase\n"
+"and run me again.  I am stopping in case you still have something\n"
+"valuable there."
+msgstr ""
+"好像已有一个 $state_dir_base 目录，我怀疑您正处于另外一个变基过程中。\n"
+"如果是这样，请尝试执行\n"
+"\t$cmd_live_rebase\n"
+"如果不是这样，请执行\n"
+"\t$cmd_clear_stale_rebase\n"
+"然后再重新执行变基。为避免您丢失重要数据，我已经停止当前操作。"
+
+#: git-rebase.sh:395
+#, sh-format
+msgid "invalid upstream $upstream_name"
+msgstr "无效的上游 $upstream_name"
+
+#: git-rebase.sh:419
+#, sh-format
+msgid "$onto_name: there are more than one merge bases"
+msgstr "$onto_name: 有一个以上的合并基准"
+
+#: git-rebase.sh:422 git-rebase.sh:426
+#, sh-format
+msgid "$onto_name: there is no merge base"
+msgstr "$onto_name: 没有合并基准"
+
+#: git-rebase.sh:431
+#, sh-format
+msgid "Does not point to a valid commit: $onto_name"
+msgstr "没有指向一个有效的提交：$onto_name"
+
+#: git-rebase.sh:454
+#, sh-format
+msgid "fatal: no such branch: $branch_name"
+msgstr "严重错误：无此分支：$branch_name"
+
+#: git-rebase.sh:474
+msgid "Please commit or stash them."
+msgstr "请提交或为它们保存进度。"
+
+#: git-rebase.sh:492
+#, sh-format
+msgid "Current branch $branch_name is up to date."
+msgstr "当前分支 $branch_name 是最新的。"
+
+#: git-rebase.sh:495
+#, sh-format
+msgid "Current branch $branch_name is up to date, rebase forced."
+msgstr "当前分支 $branch_name 是最新的，强制变基。"
+
+#: git-rebase.sh:506
+#, sh-format
+msgid "Changes from $mb to $onto:"
+msgstr "变更从 $mb 到 $onto："
+
+#. Detach HEAD and reset the tree
+#: git-rebase.sh:515
+msgid "First, rewinding head to replay your work on top of it..."
+msgstr "首先，重置头指针以便在上面重放您的工作..."
+
+#: git-rebase.sh:523
+#, sh-format
+msgid "Fast-forwarded $branch_name to $onto_name."
+msgstr "快进 $branch_name 至 $onto_name。"
 
 #: git-stash.sh:51
 msgid "git stash clear with parameters is unimplemented"
@@ -5560,8 +5940,8 @@ msgid "Failed to recurse into submodule path '$sm_path'"
 msgstr "无法递归进子模组路径 '$sm_path'"
 
 #: git-submodule.sh:754
-msgid "--cached cannot be used with --files"
-msgstr "--cached 不能和 --files 共用"
+msgid "The --cached option cannot be used with the --files option"
+msgstr "选项 --cached 不能和选项 --files 同时使用"
 
 #. unexpected type
 #: git-submodule.sh:794
@@ -5589,11 +5969,7 @@ msgstr "  警告：$name 未包含提交 $sha1_src 和 $sha1_dst"
 
 #: git-submodule.sh:843
 msgid "blob"
-msgstr "blob"
-
-#: git-submodule.sh:844
-msgid "submodule"
-msgstr "子模组"
+msgstr "二进制对象"
 
 #: git-submodule.sh:881
 msgid "# Submodules changed but not updated:"
@@ -5607,294 +5983,3 @@ msgstr "要提交的子模组变更："
 #, sh-format
 msgid "Synchronizing submodule url for '$name'"
 msgstr "为 '$name' 同步子模组 url"
-
-#~ msgid "(bad commit)\n"
-#~ msgstr "（坏提交）\n"
-
-#~ msgid "addinfo_cache failed for path '%s'"
-#~ msgstr "为路径 '%s' addinfo_cache 失败"
-
-#~ msgid "error building trees"
-#~ msgstr "无法创建树"
-
-#~ msgid "diff setup failed"
-#~ msgstr "diff 设置失败"
-
-#~ msgid "merge-recursive: disk full?"
-#~ msgstr "merge-recursive: 磁盘已满？"
-
-#~ msgid "failed to create path '%s'%s"
-#~ msgstr "无法创建路径 '%s'%s"
-
-#~ msgid "Removing %s to make room for subdirectory\n"
-#~ msgstr "删除 %s 以便为子目录留出空间\n"
-
-#~ msgid ": perhaps a D/F conflict?"
-#~ msgstr "：可能是一个 D/F 冲突？"
-
-#~ msgid "refusing to lose untracked file at '%s'"
-#~ msgstr "拒绝丢失 '%s' 下的未跟踪文件"
-
-#~ msgid "cannot read object %s '%s'"
-#~ msgstr "不能读取对象 %s '%s'"
-
-#~ msgid "blob expected for %s '%s'"
-#~ msgstr "%s '%s' 应为 blob"
-
-#~ msgid "failed to symlink '%s'"
-#~ msgstr "无法创建符号链接 '%s'"
-
-#~ msgid "do not know what to do with %06o %s '%s'"
-#~ msgstr "不知道如何处理 %06o %s '%s'"
-
-#~ msgid "Failed to execute internal merge"
-#~ msgstr "无法执行内部合并"
-
-#~ msgid "Unable to add %s to database"
-#~ msgstr "不能添加 %s 至对象库"
-
-#~ msgid "unsupported object type in the tree"
-#~ msgstr "在树中有不支持的对象类型"
-
-#~ msgid ""
-#~ "CONFLICT (%s/delete): %s deleted in %s and %s in %s. Version %s of %s "
-#~ "left in tree."
-#~ msgstr ""
-#~ "冲突（%1$s/删除）：%2$s 在 %3$s 中被删除，在 %5$s 中被 %4$s。%7$s 在 %6$s "
-#~ "中的版本被保留。"
-
-#~ msgid ""
-#~ "CONFLICT (%s/delete): %s deleted in %s and %s in %s. Version %s of %s "
-#~ "left in tree at %s."
-#~ msgstr ""
-#~ "冲突（%1$s/删除）：%2$s 在 %3$s 中被删除，在 %5$s 中被 %4$s。%7$s 在 %6$s "
-#~ "中的版本保留于 %8$s 中。"
-
-#~ msgid "rename"
-#~ msgstr "重命名"
-
-#~ msgid "renamed"
-#~ msgstr "重命名"
-
-#~ msgid "%s is a directory in %s adding as %s instead"
-#~ msgstr "%s 是 %s 中的一个目录而以 %s 为名被添加"
-
-#~ msgid ""
-#~ "CONFLICT (rename/rename): Rename \"%s\"->\"%s\" in branch \"%s\" rename "
-#~ "\"%s\"->\"%s\" in \"%s\"%s"
-#~ msgstr ""
-#~ "冲突（重命名/重命名）：在分支 \"%3$s\" 重命名 \"%1$s\"->\"%2$s\"，在分支 "
-#~ "\"%6$s\" 重命名 \"%4$s\"->\"%5$s\"%7$s"
-
-#~ msgid " (left unresolved)"
-#~ msgstr "（留下未解决）"
-
-#~ msgid "CONFLICT (rename/rename): Rename %s->%s in %s. Rename %s->%s in %s"
-#~ msgstr ""
-#~ "冲突（重命名/重命名）：在 %3$s 中重命名 %1$s->%2$s，在 %6$s 中重命名 %4$s-"
-#~ ">%5$s"
-
-#~ msgid "Renaming %s to %s and %s to %s instead"
-#~ msgstr "而是重命名 %s 至 %s 以及 %s 至 %s"
-
-#~ msgid "CONFLICT (rename/add): Rename %s->%s in %s. %s added in %s"
-#~ msgstr ""
-#~ "冲突（重命名/添加）：在 %3$s 中重命名 %1$s->%2$s。在 %5$s 中添加 %4$s"
-
-#~ msgid "Adding merged %s"
-#~ msgstr "添加合并后的 %s"
-
-#~ msgid "Adding as %s instead"
-#~ msgstr "而是以 %s 为名添加"
-
-#~ msgid "cannot read object %s"
-#~ msgstr "不能读取对象 %s"
-
-#~ msgid "object %s is not a blob"
-#~ msgstr "对象 %s 不是一个 blob"
-
-#~ msgid "modify"
-#~ msgstr "修改"
-
-#~ msgid "modified"
-#~ msgstr "修改"
-
-#~ msgid "content"
-#~ msgstr "内容"
-
-#~ msgid "add/add"
-#~ msgstr "添加/添加"
-
-#~ msgid "Skipped %s (merged same as existing)"
-#~ msgstr "略过 %s（已经做过相同合并）"
-
-#~ msgid "Auto-merging %s"
-#~ msgstr "自动合并 %s"
-
-#~ msgid "CONFLICT (%s): Merge conflict in %s"
-#~ msgstr "冲突（%s）：合并冲突于 %s"
-
-#~ msgid "Removing %s"
-#~ msgstr "删除 %s"
-
-#~ msgid "file/directory"
-#~ msgstr "文件/目录"
-
-#~ msgid "directory/file"
-#~ msgstr "目录/文件"
-
-#~ msgid ""
-#~ "CONFLICT (%s): There is a directory with name %s in %s. Adding %s as %s"
-#~ msgstr ""
-#~ "冲突（%1$s）：在 %3$s 中有一个名为 %2$s 的目录。以 %5$s 为名添加 %4$s"
-
-#~ msgid "Adding %s"
-#~ msgstr "添加 %s"
-
-#~ msgid "Fatal merge failure, shouldn't happen."
-#~ msgstr "严重的合并错误，不应发生。"
-
-#~ msgid "Already up-to-date!"
-#~ msgstr "已经是最新的！"
-
-#~ msgid "merging of trees %s and %s failed"
-#~ msgstr "无法合并树 %s 和 %s"
-
-#~ msgid "Unprocessed path??? %s"
-#~ msgstr "未处理的路径??? %s"
-
-#~ msgid "Merging:"
-#~ msgstr "合并："
-
-#~ msgid "found %u common ancestor(s):"
-#~ msgstr "发现 %u 个共同祖先："
-
-#~ msgid "merge returned no commit"
-#~ msgstr "合并未返回提交"
-
-#~ msgid "Could not parse object '%s'"
-#~ msgstr "不能解析对象 '%s'"
-
-#~ msgid "Using index info to reconstruct a base tree..."
-#~ msgstr "更新索引信息以重建基树..."
-
-#~ msgid "Failed to merge in the changes."
-#~ msgstr "无法合并变更。"
-
-#~ msgid ""
-#~ "The -b option has been a no-op for long time, and\n"
-#~ "it will be removed. Please do not use it anymore."
-#~ msgstr ""
-#~ "参数 -b 已经很长时间不做任何实质操作了，并且将被\n"
-#~ "删除。请不要再使用它了。"
-
-#~ msgid ""
-#~ "\n"
-#~ "When you have resolved this problem run \"git rebase --continue\".\n"
-#~ "If you would prefer to skip this patch, instead run \"git rebase --skip"
-#~ "\".\n"
-#~ "To check out the original branch and stop rebasing run \"git rebase --"
-#~ "abort\".\n"
-#~ msgstr ""
-#~ "\n"
-#~ "当您解决了此问题后，执行 \"git rebase --continue\"。\n"
-#~ "如果您想跳过此补丁，则执行 \"git rebase --skip\"。\n"
-#~ "要恢复原分支并停止变基，执行 \"git rebase --abort\"。\n"
-
-#~ msgid "The pre-rebase hook refused to rebase."
-#~ msgstr "钩子 pre-rebase 拒绝变基。"
-
-#~ msgid "It looks like git-am is in progress. Cannot rebase."
-#~ msgstr "看起来 git-am 正在进行中。无法变基。"
-
-#~ msgid "The --exec option must be used with the --interactive option"
-#~ msgstr "选项 --exec 必须和选项 --interactive 共用"
-
-#~ msgid "No rebase in progress?"
-#~ msgstr "没有正在进行的变基？"
-
-#~ msgid "Cannot read HEAD"
-#~ msgstr "不能读取 HEAD"
-
-#~ msgid ""
-#~ "You must edit all merge conflicts and then\n"
-#~ "mark them as resolved using git add"
-#~ msgstr ""
-#~ "您必须编辑所有的合并冲突，然后通过 git add\n"
-#~ "命令将它们标记为已解决"
-
-#~ msgid "Could not move back to $head_name"
-#~ msgstr "无法移回 $head_name"
-
-#~ msgid ""
-#~ "\n"
-#~ "It seems that there is already a $state_dir_base directory, and\n"
-#~ "I wonder if you are in the middle of another rebase.  If that is the\n"
-#~ "case, please try\n"
-#~ "\tgit rebase (--continue | --abort | --skip)\n"
-#~ "If that is not the case, please\n"
-#~ "\trm -fr \"$state_dir\"\n"
-#~ "and run me again.  I am stopping in case you still have something\n"
-#~ "valuable there."
-#~ msgstr ""
-#~ "\n"
-#~ "好像已有一个 $state_dir_base 目录，并且我猜您正处于另一个变基过程\n"
-#~ "中。如果是这样，请尝试执行\n"
-#~ "\tgit rebase (--continue | --abort | --skip)\n"
-#~ "如果不是这样，请执行\n"
-#~ "\trm -fr \"$state_dir\"\n"
-#~ "然后再执行我。我停止以免您在那儿仍有一些重要的数据。"
-
-#~ msgid "invalid upstream $upstream_name"
-#~ msgstr "无效的上游 $upstream_name"
-
-#~ msgid "$onto_name: there are more than one merge bases"
-#~ msgstr "$onto_name: 有一个以上的合并基准"
-
-#~ msgid "$onto_name: there is no merge base"
-#~ msgstr "$onto_name: 没有合并基准"
-
-#~ msgid "Does not point to a valid commit: $onto_name"
-#~ msgstr "没有指向一个有效的提交：$onto_name"
-
-#~ msgid "fatal: no such branch: $branch_name"
-#~ msgstr "严重：无此分支：$branch_name"
-
-#~ msgid "Please commit or stash them."
-#~ msgstr "请提交或为它们保存进度。"
-
-#~ msgid "Current branch $branch_name is up to date."
-#~ msgstr "当前分支 $branch_name 是最新的。"
-
-#~ msgid "Current branch $branch_name is up to date, rebase forced."
-#~ msgstr "当前分支 $branch_name 是最新的，强制变基。"
-
-#~ msgid "Changes from $mb to $onto:"
-#~ msgstr "变更从 $mb 到 $onto："
-
-#~ msgid "First, rewinding head to replay your work on top of it..."
-#~ msgstr "首先，重置头指针以便在上面重放您的工作..."
-
-#~ msgid "Fast-forwarded $branch_name to $onto_name."
-#~ msgstr "快进 $branch_name 至 $onto_name。"
-
-#~ msgid "The --cached option cannot be used with the --files option"
-#~ msgstr "选项 --cached 不能和选项 --files 共用"
-
-#~ msgid "BUG: There are unmerged index entries:\n"
-#~ msgstr "BUG: 有未合并的索引条目：\n"
-
-#~ msgid "Bug in merge-recursive.c"
-#~ msgstr "在 merge-recursive.c 有 bug"
-
-#~ msgid "BUG: unexpected number of arguments left to parse"
-#~ msgstr "BUG: 参数解析后留下意外数目的参数"
-
-#~ msgid "BUG: %d %.*s\n"
-#~ msgstr "BUG: %d %.*s\n"
-
-#~ msgid "%s: has been deleted/renamed"
-#~ msgstr "%s：已经被删除/重命名"
-
-#~ msgid "'%s': not a documentation directory."
-#~ msgstr "'%s'：不是一个文档目录。"
