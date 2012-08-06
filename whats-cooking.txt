@@ -1,18 +1,17 @@
 To: git@vger.kernel.org
-Subject: What's cooking in git.git (Aug 2012, #01; Thu, 2)
-X-master-at: 05a20c87abd08441c98dfcca0606bc0f8432ab26
-X-next-at: b94da764fd895685600c79f25c9c9ca5003a2807
+Subject: What's cooking in git.git (Aug 2012, #02; Mon, 6)
+X-master-at: bfbf4d477a33be413800f531c3ac0d227f46ab44
+X-next-at: 3f6917c89149cdb4eeb86d9daab3854bc3af51ef
 
-What's cooking in git.git (Aug 2012, #01; Thu, 2)
+What's cooking in git.git (Aug 2012, #02; Mon, 6)
 --------------------------------------------------
 
 Here are the topics that have been cooking.  Commits prefixed with '-' are
 only in 'pu' (proposed updates) while commits prefixed with '+' are in 'next'.
 
-The series to mark strings for i18n in merge(-recursive), am and
-rebase have been merged.  From now on, until the final release, no
-further updates, except for obviously correct fixes to regressions,
-will be merged to 'master'.
+I am planning to tag 1.7.12-rc2 tomorrow.  GSoC "index-v5" topic is
+queued in 'pu' together with quick band-aid patches to give people
+easier access than applying them individually to their tree.
 
 You can find the changes described here in the integration branches of the
 repositories listed at
@@ -22,89 +21,82 @@ repositories listed at
 --------------------------------------------------
 [New Topics]
 
-* jc/maint-sane-execvp-notdir (2012-07-31) 1 commit
- - sane_execvp(): ignore non-directory on $PATH
+* jk/version-string (2012-08-03) 1 commit
+ - include agent identifier in capability string
 
-"git foo" errored out with "Not a directory" when the user had a non
-directory on $PATH, and worse yet it masked an alias "foo" to run.
+Leftover bits from the "git version" code restructuring, that
+actually give us an ability to expose the Git version over the wire
+in the protocol exchange.
 
+* js/grep-patterntype-config (2012-08-03) 1 commit
+ - grep: add a grep.patternType configuration setting
+
+"grep" learned to use a non-standard pattern type by default if a
+configuration variable tells it to.
+
+* mm/die-with-dashdash-help (2012-08-03) 1 commit
+ - setup: clarify error messages for file/revisions ambiguity
+
+Reword error messages.
+
+* tr/merge-recursive-flush (2012-08-03) 1 commit
+ - merge-recursive: eliminate flush_buffer() in favor of write_in_full()
+
+Remove unnecessary code.
+
+* tr/void-diff-setup-done (2012-08-03) 1 commit
+ - diff_setup_done(): return void
+
+Remove unnecessary code.
+
+* mk/test-seq (2012-08-04) 1 commit
+  (merged to 'next' on 2012-08-06 at 3f6917c)
+ + tests: Introduce test_seq
+ (this branch is used by ab/diff-write-incomplete-line.)
+
+Add a compatibility/utility function to the test framework. 
+
+* ab/diff-write-incomplete-line (2012-08-05) 1 commit
+ - Fix '\ No newline...' annotation in rewrite diffs
+ (this branch uses mk/test-seq.)
+
+The output from "git diff -B" for a file that ends with an
+incomplete line did not put "\ No newline..." on a line of its own.
+
+Will merge to 'next'.
+
+* pg/maint-apply-remove-unused-variable (2012-08-05) 1 commit
+  (merged to 'next' on 2012-08-05 at aa9f5e9)
+ + apply: delete unused deflate_origlen from patch struct
+
+Remove unused field.
 Not urgent.
 
-* jc/sanitize-nkd-lazy-iconv-open (2012-07-31) 1 commit
- - macos: lazily initialize iconv
+* tg/index-v5 (2012-08-06) 18 commits
+ - band-aid! drop double close(fd)
+ - band-aid!! compilation fix
+ - p0002-index.sh: add perf test for the index formats
+ - update-index.c: add a force-rewrite option
+ - Write resolve-undo data for index-v5
+ - Write index-v5 cache-tree data
+ - Write index-v5
+ - Read cache-tree in index-v5
+ - Read resolve-undo data
+ - Read index-v5
+ - Make in-memory format aware of stat_crc
+ - Add documentation of the index-v5 file format
+ - t3700: sleep for 1 second, to avoid interfering with the racy code
+ - t2104: Don't fail for index versions other than [23]
+ - Modify write functions to prepare for other index formats
+ - Modify match_stat_basic to prepare for other index formats
+ - Modify read functions to prepare for other index formats
+ - Modify cache_header to prepare for other index formats
 
-Teach the code that works around NKD/NKC gotcha on MacOS to call
-iconv_open() only when it is necessary, in the hope of avoiding
-set-up overhead.
+A GSoC project.
 
-Not urgent.
-
-* tr/maint-send-email-2047 (2012-07-31) 1 commit
- - send-email: improve RFC2047 quote parsing
-
-"git send-email" did not unquote encoded words that appear on the
-header correctly, and lost "_" from strings.
-
-Not urgent.
-
-* cw/cherry-pick-allow-empty-message (2012-08-02) 1 commit
- - cherry-pick: add --allow-empty-message option
-
-"git cherry-pick" by default stops when it sees a commit without any
-log message.  The "--allow-empty-message" option can be used to
-silently proceed.
-
-Not urgent.
-
-* ms/git-svn-1.7 (2012-08-02) 20 commits
- - git-svn: remove ad-hoc canonicalizations
- - git-svn: canonicalize newly-minted URLs
- - git-svn: introduce add_path_to_url function
- - git-svn: canonicalize earlier
- - git-svn: replace URL escapes with canonicalization
- - git-svn: attempt to mimic SVN 1.7 URL canonicalization
- - t9107: fix typo
- - t9118: workaround inconsistency between SVN versions
- - Git::SVN{,::Ra}: canonicalize earlier
- - git-svn: path canonicalization uses SVN API
- - Git::SVN::Utils: remove irrelevant comment
- - git-svn: add join_paths() to safely concatenate paths
- - git-svn: factor out _collapse_dotdot function
- - git-svn: use SVN 1.7 to canonicalize when possible
- - git-svn: move canonicalization to Git::SVN::Utils
- - use Git::SVN{,::RA}->url accessor globally
- - use Git::SVN->path accessor globally
- - Git::SVN::Ra: use accessor for URLs
- - Git::SVN: use accessor for URLs internally
- - Git::SVN: use accessors internally for path
-
-A series by Michael Schwern via Eric to update git-svn to revamp the
-way URLs are internally passed around, to make it work with SVN 1.7.
-
---------------------------------------------------
-[Graduated to "master"]
-
-* jx/i18n-1.7.11 (2012-07-26) 7 commits
-  (merged to 'next' on 2012-07-30 at 3c00929)
- + i18n: merge-recursive: mark strings for translation
- + Remove dead code which contains bad gettext block
- + i18n: am: mark more strings for translation
- + rebase: remove obsolete and unused LONG_USAGE which breaks xgettext
- + i18n: Rewrite gettext messages start with dash
- + i18n: rebase: mark messages for translation
- + i18n: New keywords for xgettext extraction from sh
-
-Will merge after 1.7.11-rc1
-together with nd/maint-i18n-diffstat topic, as they will affect i18n/l10n
-teams.
-
-* nd/maint-i18n-diffstat (2012-07-26) 1 commit
-  (merged to 'next' on 2012-07-30 at 0da57ef)
- + i18n: leave \n out of translated diffstat
-
-Will merge after 1.7.11-rc1
-together with jx/i18n-1.7.11 topic, as they will affect i18n/l10n
-teams.
+* nd/index-errno (2012-08-06) 1 commit
+  (merged to 'next' on 2012-08-06 at a9f2101)
+ + read_index_from: remove bogus errno assignments
 
 --------------------------------------------------
 [Stalled]
@@ -204,6 +196,65 @@ working :-<.
 --------------------------------------------------
 [Cooking]
 
+* jc/maint-sane-execvp-notdir (2012-07-31) 1 commit
+ - sane_execvp(): ignore non-directory on $PATH
+
+"git foo" errored out with "Not a directory" when the user had a non
+directory on $PATH, and worse yet it masked an alias "foo" to run.
+
+Not urgent.
+
+* jc/sanitize-nkd-lazy-iconv-open (2012-07-31) 1 commit
+ - macos: lazily initialize iconv
+
+Teach the code that works around NKD/NKC gotcha on MacOS to call
+iconv_open() only when it is necessary, in the hope of avoiding
+set-up overhead.
+
+Not urgent.
+
+* tr/maint-send-email-2047 (2012-07-31) 1 commit
+ - send-email: improve RFC2047 quote parsing
+
+"git send-email" did not unquote encoded words that appear on the
+header correctly, and lost "_" from strings.
+
+Not urgent.
+
+* cw/cherry-pick-allow-empty-message (2012-08-06) 1 commit
+ - cherry-pick: add --allow-empty-message option
+
+"git cherry-pick" by default stops when it sees a commit without any
+log message.  The "--allow-empty-message" option can be used to
+silently proceed.
+
+Not urgent.
+
+* ms/git-svn-1.7 (2012-08-02) 20 commits
+ - git-svn: remove ad-hoc canonicalizations
+ - git-svn: canonicalize newly-minted URLs
+ - git-svn: introduce add_path_to_url function
+ - git-svn: canonicalize earlier
+ - git-svn: replace URL escapes with canonicalization
+ - git-svn: attempt to mimic SVN 1.7 URL canonicalization
+ - t9107: fix typo
+ - t9118: workaround inconsistency between SVN versions
+ - Git::SVN{,::Ra}: canonicalize earlier
+ - git-svn: path canonicalization uses SVN API
+ - Git::SVN::Utils: remove irrelevant comment
+ - git-svn: add join_paths() to safely concatenate paths
+ - git-svn: factor out _collapse_dotdot function
+ - git-svn: use SVN 1.7 to canonicalize when possible
+ - git-svn: move canonicalization to Git::SVN::Utils
+ - use Git::SVN{,::RA}->url accessor globally
+ - use Git::SVN->path accessor globally
+ - Git::SVN::Ra: use accessor for URLs
+ - Git::SVN: use accessor for URLs internally
+ - Git::SVN: use accessors internally for path
+
+A series by Michael Schwern via Eric to update git-svn to revamp the
+way URLs are internally passed around, to make it work with SVN 1.7.
+
 * jc/maint-t7406-rev-parse-max-count-huh (2012-07-30) 1 commit
   (merged to 'next' on 2012-07-30 at 9b27acc)
  + t7406: fix misleading "rev-parse --max-count=1 HEAD"
@@ -257,7 +308,9 @@ We may want a documentation update and a few tests on top.
 
 Not urgent.
 
-* jc/test-prereq (2012-07-30) 7 commits
+* jc/test-prereq (2012-08-04) 8 commits
+  (merged to 'next' on 2012-08-04 at 6dd9156)
+ + fixup! t3910: use the UTF8_NFD_TO_NFC test prereq
   (merged to 'next' on 2012-07-30 at b7c6949)
  + t3910: use the UTF8_NFD_TO_NFC test prereq
   (merged to 'next' on 2012-07-27 at 448cbbc)
