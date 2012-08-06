@@ -24,22 +24,22 @@ blobs contained in a commit.
   object referenced by 'refs/heads/master'.  If you
   happen to have both 'heads/master' and 'tags/master', you can
   explicitly say 'heads/master' to tell git which one you mean.
-  When ambiguous, a '<name>' is disambiguated by taking the
+  When ambiguous, a '<refname>' is disambiguated by taking the
   first match in the following rules:
 
-  . If '$GIT_DIR/<name>' exists, that is what you mean (this is usually
+  . If '$GIT_DIR/<refname>' exists, that is what you mean (this is usually
     useful only for 'HEAD', 'FETCH_HEAD', 'ORIG_HEAD', 'MERGE_HEAD'
     and 'CHERRY_PICK_HEAD');
 
-  . otherwise, 'refs/<name>' if it exists;
+  . otherwise, 'refs/<refname>' if it exists;
 
   . otherwise, 'refs/tags/<refname>' if it exists;
 
-  . otherwise, 'refs/heads/<name>' if it exists;
+  . otherwise, 'refs/heads/<refname>' if it exists;
 
-  . otherwise, 'refs/remotes/<name>' if it exists;
+  . otherwise, 'refs/remotes/<refname>' if it exists;
 
-  . otherwise, 'refs/remotes/<name>/HEAD' if it exists.
+  . otherwise, 'refs/remotes/<refname>/HEAD' if it exists.
 +
 'HEAD' names the commit on which you based the changes in the working tree.
 'FETCH_HEAD' records the branch which you fetched from a remote repository
@@ -218,13 +218,44 @@ and its parent commits exist.  The 'r1{caret}@' notation means all
 parents of 'r1'.  'r1{caret}!' includes commit 'r1' but excludes
 all of its parents.
 
+To summarize:
+
+'<rev>'::
+	Include commits that are reachable from (i.e. ancestors of)
+	<rev>.
+
+'{caret}<rev>'::
+	Exclude commits that are reachable from (i.e. ancestors of)
+	<rev>.
+
+'<rev1>..<rev2>'::
+	Include commits that are reachable from <rev2> but exclude
+	those that are reachable from <rev1>.
+
+'<rev1>\...<rev2>'::
+	Include commits that are reachable from either <rev1> or
+	<rev2> but exclude those that are reachable from both.
+
+'<rev>{caret}@', e.g. 'HEAD{caret}@'::
+  A suffix '{caret}' followed by an at sign is the same as listing
+  all parents of '<rev>' (meaning, include anything reachable from
+  its parents, but not the commit itself).
+
+'<rev>{caret}!', e.g. 'HEAD{caret}!'::
+  A suffix '{caret}' followed by an exclamation mark is the same
+  as giving commit '<rev>' and then all its parents prefixed with
+  '{caret}' to exclude them (and their ancestors).
+
 Here are a handful of examples:
 
    D                G H D
    D F              G H I J D F
    ^G D             H D
    ^D B             E I J F B
+   B..C             C
    B...C            G H D E B C
    ^D B C           E I J F B C
+   C                I J F C
    C^@              I J F
+   C^!              C
    F^! D            G H D F
