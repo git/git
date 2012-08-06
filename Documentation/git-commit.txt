@@ -101,12 +101,16 @@ OPTIONS
 	When doing a dry-run, give the output in the short-format. See
 	linkgit:git-status[1] for details. Implies `--dry-run`.
 
+--branch::
+	Show the branch and tracking info even in short-format.
+
 --porcelain::
 	When doing a dry-run, give the output in a porcelain-ready
 	format. See linkgit:git-status[1] for details. Implies
 	`--dry-run`.
 
 -z::
+--null::
 	When showing `short` or `porcelain` status output, terminate
 	entries in the status output with NUL, instead of LF. If no
 	format is given, implies the `--porcelain` output format.
@@ -189,6 +193,10 @@ OPTIONS
 	current tip -- if it was a merge, it will have the parents of
 	the current tip as parents -- so the current top commit is
 	discarded.
+
+--no-post-rewrite::
+	Bypass the post-rewrite hook.
+
 +
 --
 It is a rough equivalent for:
