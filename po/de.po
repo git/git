@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: git 1.7.12\n"
 "Report-Msgid-Bugs-To: Git Mailing List <git@vger.kernel.org>\n"
-"POT-Creation-Date: 2012-07-30 09:18+0800\n"
+"POT-Creation-Date: 2012-08-06 23:47+0800\n"
 "PO-Revision-Date: 2012-03-28 18:46+0200\n"
 "Last-Translator: Ralf Thielow <ralf.thielow@googlemail.com>\n"
 "Language-Team: German\n"
@@ -232,8 +232,8 @@ msgstr ""
 "%s"
 
 #: diff.c:1400
-msgid " 0 files changed\n"
-msgstr " 0 Dateien geändert\n"
+msgid " 0 files changed"
+msgstr " 0 Dateien geändert"
 
 #: diff.c:1404
 #, c-format
@@ -346,6 +346,272 @@ msgstr[0] ""
 msgstr[1] ""
 "\n"
 "Hast du eines von diesen gemeint?"
+
+#: merge-recursive.c:190
+#, c-format
+msgid "(bad commit)\n"
+msgstr "(ungültige Version)\n"
+
+#: merge-recursive.c:206
+#, c-format
+msgid "addinfo_cache failed for path '%s'"
+msgstr "addinfo_cache für Pfad '%s' fehlgeschlagen"
+
+#: merge-recursive.c:268
+msgid "error building trees"
+msgstr "Fehler beim Erstellen der Bäume"
+
+#: merge-recursive.c:497
+msgid "diff setup failed"
+msgstr "diff_setup_done fehlgeschlagen"
+
+#: merge-recursive.c:627
+msgid "merge-recursive: disk full?"
+msgstr "merge-recursive: Festplatte voll?"
+
+#: merge-recursive.c:690
+#, c-format
+msgid "failed to create path '%s'%s"
+msgstr "Fehler beim Erstellen des Pfades '%s'%s"
+
+#: merge-recursive.c:701
+#, c-format
+msgid "Removing %s to make room for subdirectory\n"
+msgstr "Entferne %s um Platz für Unterverzeichnis zu schaffen\n"
+
+#. something else exists
+#. .. but not some other error (who really cares what?)
+#: merge-recursive.c:715 merge-recursive.c:736
+msgid ": perhaps a D/F conflict?"
+msgstr ": vielleicht ein Verzeichnis/Datei-Konflikt?"
+
+#: merge-recursive.c:726
+#, c-format
+msgid "refusing to lose untracked file at '%s'"
+msgstr "verweigere, da unbeobachtete Dateien in '%s' verloren gehen würden"
+
+#: merge-recursive.c:766
+#, c-format
+msgid "cannot read object %s '%s'"
+msgstr "kann Objekt %s '%s' nicht lesen"
+
+#: merge-recursive.c:768
+#, c-format
+msgid "blob expected for %s '%s'"
+msgstr "Blob erwartet für %s '%s'"
+
+#: merge-recursive.c:791 builtin/clone.c:302
+#, c-format
+msgid "failed to open '%s'"
+msgstr "Fehler beim Öffnen von '%s'"
+
+#: merge-recursive.c:799
+#, c-format
+msgid "failed to symlink '%s'"
+msgstr "Fehler beim Erstellen einer symbolischen Verknüpfung für '%s'"
+
+#: merge-recursive.c:802
+#, c-format
+msgid "do not know what to do with %06o %s '%s'"
+msgstr "weiß nicht was mit %06o %s '%s' zu machen ist"
+
+#: merge-recursive.c:939
+msgid "Failed to execute internal merge"
+msgstr "Fehler bei Ausführung der internen Zusammenführung"
+
+#: merge-recursive.c:943
+#, c-format
+msgid "Unable to add %s to database"
+msgstr "Konnte %s nicht zur Datenbank hinzufügen"
+
+#: merge-recursive.c:959
+msgid "unsupported object type in the tree"
+msgstr "nicht unterstützter Objekttyp im Baum"
+
+#: merge-recursive.c:1038 merge-recursive.c:1052
+#, c-format
+msgid ""
+"CONFLICT (%s/delete): %s deleted in %s and %s in %s. Version %s of %s left "
+"in tree."
+msgstr ""
+"KONFLIKT (%s/löschen): %s gelöscht in %s und %s in %s. Stand %s von %s wurde "
+"im Arbeitsbereich gelassen."
+
+#: merge-recursive.c:1044 merge-recursive.c:1057
+#, c-format
+msgid ""
+"CONFLICT (%s/delete): %s deleted in %s and %s in %s. Version %s of %s left "
+"in tree at %s."
+msgstr ""
+"KONFLIKT (%s/löschen): %s gelöscht in %s und %s in %s. Stand %s von %s wurde "
+"im Arbeitsbereich bei %s gelassen."
+
+#: merge-recursive.c:1098
+msgid "rename"
+msgstr "umbenennen"
+
+#: merge-recursive.c:1098
+msgid "renamed"
+msgstr "umbenannt"
+
+#: merge-recursive.c:1154
+#, c-format
+msgid "%s is a directory in %s adding as %s instead"
+msgstr "%s ist ein Verzeichnis in %s, füge es stattdessen als %s hinzu"
+
+#: merge-recursive.c:1176
+#, c-format
+msgid ""
+"CONFLICT (rename/rename): Rename \"%s\"->\"%s\" in branch \"%s\" rename \"%s"
+"\"->\"%s\" in \"%s\"%s"
+msgstr ""
+"KONFLIKT (umbenennen/umbenennen): Benenne um \"%s\"->\"%s\" in Zweig \"%s\" "
+"und \"%s\"->\"%s\" in Zweig \"%s\"%s"
+
+#: merge-recursive.c:1181
+msgid " (left unresolved)"
+msgstr " (bleibt unaufgelöst)"
+
+#: merge-recursive.c:1235
+#, c-format
+msgid "CONFLICT (rename/rename): Rename %s->%s in %s. Rename %s->%s in %s"
+msgstr ""
+"KONFLIKT (umbenennen/umbenennen): Benenne um %s->%s in %s. Benenne um %s->%s "
+"in %s"
+
+#: merge-recursive.c:1265
+#, c-format
+msgid "Renaming %s to %s and %s to %s instead"
+msgstr "Benenne stattdessen %s nach %s und %s nach %s um"
+
+#: merge-recursive.c:1464
+#, c-format
+msgid "CONFLICT (rename/add): Rename %s->%s in %s. %s added in %s"
+msgstr ""
+"KONFLIKT (umbenennen/hinzufügen): Benenne um %s->%s in %s. %s hinzugefügt in "
+"%s"
+
+#: merge-recursive.c:1474
+#, c-format
+msgid "Adding merged %s"
+msgstr "Füge zusammengeführte Datei %s hinzu"
+
+#: merge-recursive.c:1479 merge-recursive.c:1677
+#, c-format
+msgid "Adding as %s instead"
+msgstr "Füge stattdessen als %s hinzu"
+
+#: merge-recursive.c:1530
+#, c-format
+msgid "cannot read object %s"
+msgstr "kann Objekt %s nicht lesen"
+
+#: merge-recursive.c:1533
+#, c-format
+msgid "object %s is not a blob"
+msgstr "Objekt %s ist kein Blob"
+
+#: merge-recursive.c:1581
+msgid "modify"
+msgstr "ändern"
+
+#: merge-recursive.c:1581
+msgid "modified"
+msgstr "geändert"
+
+#: merge-recursive.c:1591
+msgid "content"
+msgstr "Inhalt"
+
+#: merge-recursive.c:1598
+msgid "add/add"
+msgstr "hinzufügen/hinzufügen"
+
+#: merge-recursive.c:1632
+#, c-format
+msgid "Skipped %s (merged same as existing)"
+msgstr "%s ausgelassen (Ergebnis der Zusammenführung existiert bereits)"
+
+#: merge-recursive.c:1646
+#, c-format
+msgid "Auto-merging %s"
+msgstr "automatische Zusammenführung von %s"
+
+#: merge-recursive.c:1650 git-submodule.sh:844
+msgid "submodule"
+msgstr "Unterprojekt"
+
+#: merge-recursive.c:1651
+#, c-format
+msgid "CONFLICT (%s): Merge conflict in %s"
+msgstr "KONFLIKT (%s): Zusammenführungskonflikt in %s"
+
+#: merge-recursive.c:1741
+#, c-format
+msgid "Removing %s"
+msgstr "Entferne %s"
+
+#: merge-recursive.c:1766
+msgid "file/directory"
+msgstr "Datei/Verzeichnis"
+
+#: merge-recursive.c:1772
+msgid "directory/file"
+msgstr "Verzeichnis/Datei"
+
+#: merge-recursive.c:1777
+#, c-format
+msgid "CONFLICT (%s): There is a directory with name %s in %s. Adding %s as %s"
+msgstr ""
+"KONFLIKT (%s): Es existiert bereits ein Verzeichnis %s in %s. Füge %s als %s "
+"hinzu."
+
+#: merge-recursive.c:1787
+#, c-format
+msgid "Adding %s"
+msgstr "Füge %s hinzu"
+
+#: merge-recursive.c:1804
+msgid "Fatal merge failure, shouldn't happen."
+msgstr "Fataler Fehler bei der Zusammenführung. Sollte nicht passieren."
+
+#: merge-recursive.c:1823
+msgid "Already up-to-date!"
+msgstr "Bereits aktuell!"
+
+#: merge-recursive.c:1832
+#, c-format
+msgid "merging of trees %s and %s failed"
+msgstr "Zusammenführen der Bäume %s und %s fehlgeschlagen"
+
+#: merge-recursive.c:1862
+#, c-format
+msgid "Unprocessed path??? %s"
+msgstr "unverarbeiteter Pfad??? %s"
+
+#: merge-recursive.c:1907
+msgid "Merging:"
+msgstr "Zusammenführung:"
+
+#: merge-recursive.c:1920
+#, c-format
+msgid "found %u common ancestor:"
+msgid_plural "found %u common ancestors:"
+msgstr[0] "%u gemeinsamen Vorfahren gefunden"
+msgstr[1] "%u gemeinsame Vorfahren gefunden"
+
+#: merge-recursive.c:1957
+msgid "merge returned no commit"
+msgstr "Zusammenführung hat keine Version zurückgegeben"
+
+#: merge-recursive.c:2014
+#, c-format
+msgid "Could not parse object '%s'"
+msgstr "Konnte Objekt '%s' nicht parsen."
+
+#: merge-recursive.c:2026 builtin/merge.c:697
+msgid "Unable to write index."
+msgstr "Konnte Bereitstellung nicht schreiben."
 
 #: parse-options.c:494
 msgid "..."
@@ -1537,8 +1803,9 @@ msgstr "wendet den Patch an (Benutzung mit --stat/--summary/--check)"
 
 #: builtin/apply.c:4312
 msgid "attempt three-way merge if a patch does not apply"
-msgstr "versucht 3-Wege-Zusammenführung, wenn der Patch nicht angewendet "
-"werden konnte"
+msgstr ""
+"versucht 3-Wege-Zusammenführung, wenn der Patch nicht angewendet werden "
+"konnte"
 
 #: builtin/apply.c:4314
 msgid "build a temporary index based on embedded index information"
@@ -2146,11 +2413,6 @@ msgstr "Entferne nicht %s\n"
 msgid "reference repository '%s' is not a local directory."
 msgstr "Referenziertes Projektarchiv '%s' ist kein lokales Verzeichnis."
 
-#: builtin/clone.c:302
-#, c-format
-msgid "failed to open '%s'"
-msgstr "Fehler beim Öffnen von '%s'"
-
 #: builtin/clone.c:306
 #, c-format
 msgid "failed to create directory '%s'"
@@ -2629,7 +2891,7 @@ msgid ""
 "not exceeded, and then \"git reset HEAD\" to recover."
 msgstr ""
 "Das Projektarchiv wurde aktualisiert, aber die \"new_index\"-Datei\n"
-"konnte nicht geschrieben werden. Prüfe, dass dein Speicher nicht\n"
+"konnte nicht geschrieben werden. Prüfe, dass deine Festplatte nicht\n"
 "voll und Dein Kontingent nicht aufgebraucht ist und führe\n"
 "anschließend \"git reset HEAD\" zu Wiederherstellung aus."
 
@@ -3637,10 +3899,6 @@ msgstr "\"git write-tree\" schlug beim Schreiben eines Baumes fehl"
 #: builtin/merge.c:679
 msgid "failed to read the cache"
 msgstr "Lesen des Zwischenspeichers fehlgeschlagen"
-
-#: builtin/merge.c:697
-msgid "Unable to write index."
-msgstr "Konnte Bereitstellung nicht schreiben."
 
 #: builtin/merge.c:710
 msgid "Not handling anything other than two heads merge."
@@ -5075,11 +5333,11 @@ msgstr ""
 #: git-am.sh:105
 #, sh-format
 msgid ""
-"When you have resolved this problem run \"$cmdline --resolved\".\n"
-"If you would prefer to skip this patch, instead run \"$cmdline --skip\".\n"
-"To restore the original branch and stop patching run \"$cmdline --abort\"."
+"When you have resolved this problem, run \"$cmdline --resolved\".\n"
+"If you prefer to skip this patch, run \"$cmdline --skip\" instead.\n"
+"To restore the original branch and stop patching, run \"$cmdline --abort\"."
 msgstr ""
-"Wenn du das Problem aufgelöst hast, führe \"$cmdline --resolved\" aus.\n"
+"Wenn du das Problem gelöst hast, führe \"$cmdline --resolved\" aus.\n"
 "Falls du diesen Patch auslassen möchtest, führe stattdessen \"$cmdline --skip"
 "\" aus.\n"
 "Um den ursprünglichen Zweig wiederherzustellen und die Anwendung der "
@@ -5096,6 +5354,12 @@ msgstr ""
 "Dem Projektarchiv fehlen notwendige Blobs um auf eine 3-Wege-Zusammenführung "
 "zurückzufallen."
 
+#: git-am.sh:139
+msgid "Using index info to reconstruct a base tree..."
+msgstr ""
+"Verwende Informationen aus der Bereitstellung um einen Basisbaum "
+"nachzustellen"
+
 #: git-am.sh:154
 msgid ""
 "Did you hand edit your patch?\n"
@@ -5108,45 +5372,53 @@ msgstr ""
 msgid "Falling back to patching base and 3-way merge..."
 msgstr "Falle zurück zum Patchen der Basis und der 3-Wege-Zusammenführung..."
 
-#: git-am.sh:275
+#: git-am.sh:179
+msgid "Failed to merge in the changes."
+msgstr "Zusammenführung der Änderungen fehlgeschlagen"
+
+#: git-am.sh:274
 msgid "Only one StGIT patch series can be applied at once"
 msgstr "Es kann nur eine StGIT Patch-Serie auf einmal angewendet werden."
 
-#: git-am.sh:362
+#: git-am.sh:361
 #, sh-format
 msgid "Patch format $patch_format is not supported."
 msgstr "Patch-Format $patch_format wird nicht unterstützt."
 
-#: git-am.sh:364
+#: git-am.sh:363
 msgid "Patch format detection failed."
 msgstr "Patch-Formaterkennung fehlgeschlagen."
 
-#: git-am.sh:418
-msgid "-d option is no longer supported.  Do not use."
-msgstr "-d Option wird nicht länger unterstützt. Nicht benutzen."
+#: git-am.sh:389
+msgid ""
+"The -b/--binary option has been a no-op for long time, and\n"
+"it will be removed. Please do not use it anymore."
+msgstr ""
+"Die -b/--binary Option hat seit Langem keinen Effekt und wird\n"
+"entfernt. Bitte nicht mehr verwenden."
 
-#: git-am.sh:481
+#: git-am.sh:477
 #, sh-format
 msgid "previous rebase directory $dotest still exists but mbox given."
 msgstr ""
 "Vorheriges Verzeichnis des Neuaufbaus $dotest existiert noch, aber mbox "
 "gegeben."
 
-#: git-am.sh:486
+#: git-am.sh:482
 msgid "Please make up your mind. --skip or --abort?"
 msgstr "Bitte werde dir klar. --skip oder --abort?"
 
-#: git-am.sh:513
+#: git-am.sh:509
 msgid "Resolve operation not in progress, we are not resuming."
 msgstr "Es ist keine Auflösung im Gange, es wird nicht fortgesetzt."
 
-#: git-am.sh:579
+#: git-am.sh:575
 #, sh-format
 msgid "Dirty index: cannot apply patches (dirty: $files)"
 msgstr ""
 "Unsaubere Bereitstellung: kann Patches nicht anwenden (unsauber: $files)"
 
-#: git-am.sh:683
+#: git-am.sh:679
 #, sh-format
 msgid ""
 "Patch is empty.  Was it split wrong?\n"
@@ -5160,33 +5432,33 @@ msgstr ""
 "Patches\n"
 "abzubrechen, führe \"$cmdline --abort\" aus."
 
-#: git-am.sh:710
+#: git-am.sh:706
 msgid "Patch does not have a valid e-mail address."
 msgstr "Patch enthält keine gültige eMail-Adresse."
 
-#: git-am.sh:757
+#: git-am.sh:753
 msgid "cannot be interactive without stdin connected to a terminal."
 msgstr ""
 "Kann nicht interaktiv sein, ohne dass die Standard-Eingabe mit einem "
 "Terminal verbunden ist."
 
-#: git-am.sh:761
+#: git-am.sh:757
 msgid "Commit Body is:"
 msgstr "Beschreibung der Eintragung ist:"
 
 #. TRANSLATORS: Make sure to include [y], [n], [e], [v] and [a]
 #. in your translation. The program will only accept English
 #. input at this point.
-#: git-am.sh:768
+#: git-am.sh:764
 msgid "Apply? [y]es/[n]o/[e]dit/[v]iew patch/[a]ccept all "
 msgstr "Anwenden? [y]es/[n]o/[e]dit/[v]iew patch/[a]ccept all "
 
-#: git-am.sh:804
+#: git-am.sh:800
 #, sh-format
 msgid "Applying: $FIRSTLINE"
 msgstr "Wende an: $FIRSTLINE"
 
-#: git-am.sh:825
+#: git-am.sh:821
 msgid ""
 "No changes - did you forget to use 'git add'?\n"
 "If there is nothing left to stage, chances are that something else\n"
@@ -5197,7 +5469,7 @@ msgstr ""
 "diese bereits anderweitig eingefügt worden sein; du könntest diesen Patch\n"
 "auslassen."
 
-#: git-am.sh:833
+#: git-am.sh:829
 msgid ""
 "You still have unmerged paths in your index\n"
 "did you forget to use 'git add'?"
@@ -5205,16 +5477,16 @@ msgstr ""
 "Du hast immer noch nicht zusammengeführte Pfade in der Bereitstellung.\n"
 "Hast du vergessen 'git add' zu benutzen?"
 
-#: git-am.sh:849
+#: git-am.sh:845
 msgid "No changes -- Patch already applied."
 msgstr "Keine Änderungen -- Patches bereits angewendet."
 
-#: git-am.sh:859
+#: git-am.sh:855
 #, sh-format
 msgid "Patch failed at $msgnum $FIRSTLINE"
 msgstr "Anwendung des Patches fehlgeschlagen bei $msgnum $FIRSTLINE"
 
-#: git-am.sh:880
+#: git-am.sh:876
 msgid "applying to an empty history"
 msgstr "wende zu leerer Historie an"
 
@@ -5418,6 +5690,131 @@ msgstr "Kann nicht mehrere Zweige in einen ungeborenen Zweig zusammenführen"
 #: git-pull.sh:257
 msgid "Cannot rebase onto multiple branches"
 msgstr "kann nicht auf mehrere Zweige neu aufbauen"
+
+#: git-rebase.sh:52
+msgid ""
+"When you have resolved this problem, run \"git rebase --continue\".\n"
+"If you prefer to skip this patch, run \"git rebase --skip\" instead.\n"
+"To check out the original branch and stop rebasing, run \"git rebase --abort"
+"\"."
+msgstr ""
+"Wenn du das Problem aufgelöst hast, führe \"git rebase --continue\" aus.\n"
+"Falls du diesen Patch auslassen möchtest, führe stattdessen \"git rebase --"
+"skip\" aus.\n"
+"Um den ursprünglichen Zweig wiederherzustellen und den Neuaufbau "
+"abzubrechen,\n"
+"führe \"git rebase --abort\" aus."
+
+#: git-rebase.sh:159
+msgid "The pre-rebase hook refused to rebase."
+msgstr "Der \"pre-rebase hook\" hat den Neuaufbau zurückgewiesen."
+
+#: git-rebase.sh:164
+msgid "It looks like git-am is in progress. Cannot rebase."
+msgstr "\"git-am\" scheint im Gange zu sein. Kann nicht neu aufbauen."
+
+#: git-rebase.sh:295
+msgid "The --exec option must be used with the --interactive option"
+msgstr "Die --exec Option muss mit der --interactive Option benutzt werden"
+
+#: git-rebase.sh:300
+msgid "No rebase in progress?"
+msgstr "Kein Neuaufbau im Gange?"
+
+#: git-rebase.sh:313
+msgid "Cannot read HEAD"
+msgstr "Kann Zweigspitze (HEAD) nicht lesen"
+
+#: git-rebase.sh:316
+msgid ""
+"You must edit all merge conflicts and then\n"
+"mark them as resolved using git add"
+msgstr ""
+"Du musst alle Zusammenführungskonflikte editieren und diese dann\n"
+"mittels \"git add\" als aufgelöst markieren"
+
+#: git-rebase.sh:334
+#, sh-format
+msgid "Could not move back to $head_name"
+msgstr "Konnte nicht zu $head_name zurückgehen"
+
+#: git-rebase.sh:350
+#, sh-format
+msgid ""
+"It seems that there is already a $state_dir_base directory, and\n"
+"I wonder if you are in the middle of another rebase.  If that is the\n"
+"case, please try\n"
+"\t$cmd_live_rebase\n"
+"If that is not the case, please\n"
+"\t$cmd_clear_stale_rebase\n"
+"and run me again.  I am stopping in case you still have something\n"
+"valuable there."
+msgstr ""
+"Es scheint so, als gäbe es das Verzeichnis $state_dir_base bereits, und\n"
+"es wäre verwunderlich, wenn ein Neuaufbau bereits im Gange ist. Wenn das\n"
+"der Fall ist, probiere bitte\n"
+"\t$cmd_live_rebase\n"
+"Wenn das nicht der Fall ist, probiere bitte\n"
+"\t$cmd_clear_stale_rebase\n"
+"und führe dieses Kommando nochmal aus. Es wird angehalten, falls bereits\n"
+"etwas Nützliches vorhanden ist."
+
+#: git-rebase.sh:395
+#, sh-format
+msgid "invalid upstream $upstream_name"
+msgstr "ungültiger Übernahmezweig $upstream_name"
+
+#: git-rebase.sh:419
+#, sh-format
+msgid "$onto_name: there are more than one merge bases"
+msgstr "$onto_name: es gibt mehr als eine Zusammenführungsbasis"
+
+#: git-rebase.sh:422 git-rebase.sh:426
+#, sh-format
+msgid "$onto_name: there is no merge base"
+msgstr "$onto_name: es gibt keine Zusammenführungsbasis"
+
+#: git-rebase.sh:431
+#, sh-format
+msgid "Does not point to a valid commit: $onto_name"
+msgstr "$onto_name zeigt auf keine gültige Version"
+
+#: git-rebase.sh:454
+#, sh-format
+msgid "fatal: no such branch: $branch_name"
+msgstr "fatal: Zweig $branch_name nicht gefunden"
+
+#: git-rebase.sh:474
+msgid "Please commit or stash them."
+msgstr "Bitte trage die Änderungen ein oder benutze \"stash\"."
+
+#: git-rebase.sh:492
+#, sh-format
+msgid "Current branch $branch_name is up to date."
+msgstr "Aktueller Zweig $branch_name ist auf dem neusten Stand."
+
+#: git-rebase.sh:495
+#, sh-format
+msgid "Current branch $branch_name is up to date, rebase forced."
+msgstr ""
+"Aktueller Zweig $branch_name ist auf dem neusten Stand, Neuaufbau erzwungen."
+
+#: git-rebase.sh:506
+#, sh-format
+msgid "Changes from $mb to $onto:"
+msgstr "Änderungen von $mb zu $onto:"
+
+#. Detach HEAD and reset the tree
+#: git-rebase.sh:515
+msgid "First, rewinding head to replay your work on top of it..."
+msgstr ""
+"Zunächst wird die Zweigspitze zurückgespult, um deine Änderungen\n"
+"darauf neu anzuwenden..."
+
+#: git-rebase.sh:523
+#, sh-format
+msgid "Fast-forwarded $branch_name to $onto_name."
+msgstr "$branch_name zu $onto_name vorgespult."
 
 #: git-stash.sh:51
 msgid "git stash clear with parameters is unimplemented"
@@ -5707,8 +6104,8 @@ msgid "Failed to recurse into submodule path '$sm_path'"
 msgstr "Fehler bei Rekursion in Unterprojekt-Pfad '$sm_path'"
 
 #: git-submodule.sh:754
-msgid "--cached cannot be used with --files"
-msgstr "--cached kann nicht mit --files benutzt werden"
+msgid "The --cached option cannot be used with the --files option"
+msgstr "Die --cached Option kann nicht mit der --files Option benutzt werden"
 
 #. unexpected type
 #: git-submodule.sh:794
@@ -5736,10 +6133,6 @@ msgstr ""
 msgid "blob"
 msgstr "Blob"
 
-#: git-submodule.sh:844
-msgid "submodule"
-msgstr "Unterprojekt"
-
 #: git-submodule.sh:881
 msgid "# Submodules changed but not updated:"
 msgstr "# Unterprojekte geändert, aber nicht aktualisiert:"
@@ -5752,6 +6145,9 @@ msgstr "# Änderungen in Unterprojekt zum Eintragen:"
 #, sh-format
 msgid "Synchronizing submodule url for '$name'"
 msgstr "Synchronisiere Unterprojekt-URL für '$name'"
+
+#~ msgid "-d option is no longer supported.  Do not use."
+#~ msgstr "-d Option wird nicht länger unterstützt. Nicht benutzen."
 
 #~ msgid "%s: has been deleted/renamed"
 #~ msgstr "%s wurde gelöscht/umbenannt"
