@@ -886,7 +886,7 @@ msgstr "不能读取 %s：%s"
 
 #: sequencer.c:809
 msgid "unexpected end of file"
-msgstr "未预期的文件结束"
+msgstr "意外的文件结束"
 
 #: sequencer.c:815
 #, c-format
@@ -1445,7 +1445,7 @@ msgstr "不能在补丁的第 %d 行找到文件名"
 #: builtin/apply.c:946
 #, c-format
 msgid "git apply: bad git-diff - expected /dev/null, got %s on line %d"
-msgstr "git apply：错误的 git-diff - 期望 /dev/null，但在第 %2$d 行得到 %1$s"
+msgstr "git apply：错误的 git-diff - 应为 /dev/null，但在第 %2$d 行得到 %1$s"
 
 #: builtin/apply.c:950
 #, c-format
@@ -1460,7 +1460,7 @@ msgstr "git apply：错误的 git-diff - 第 %d 行上旧文件名不一致"
 #: builtin/apply.c:958
 #, c-format
 msgid "git apply: bad git-diff - expected /dev/null on line %d"
-msgstr "git apply：错误的 git-diff - 期望 /dev/null 于第 %d 行"
+msgstr "git apply：错误的 git-diff - 第 %d 行处应为 /dev/null"
 
 #: builtin/apply.c:1403
 #, c-format
@@ -1580,7 +1580,7 @@ msgstr "二进制补丁未应用到 '%s'"
 #: builtin/apply.c:2918
 #, c-format
 msgid "binary patch to '%s' creates incorrect result (expecting %s, got %s)"
-msgstr "到 '%s' 的二进制补丁产生了不正确的结果（预期 %s，得到 %s）"
+msgstr "到 '%s' 的二进制补丁产生了不正确的结果（应为 %s，却为 %s）"
 
 #: builtin/apply.c:2939
 #, c-format
@@ -1629,7 +1629,7 @@ msgstr "%s：错误类型"
 #: builtin/apply.c:3402
 #, c-format
 msgid "%s has type %o, expected %o"
-msgstr "%s 的类型是 %o，预期是 %o"
+msgstr "%s 的类型是 %o，应为 %o"
 
 #: builtin/apply.c:3503
 #, c-format
@@ -1903,7 +1903,7 @@ msgstr "git archive：未提供远程URL"
 
 #: builtin/archive.c:58
 msgid "git archive: expected ACK/NAK, got EOF"
-msgstr "git archive：期待ACK/NACK，却得到EOF"
+msgstr "git archive：应为ACK/NACK，却得到EOF"
 
 #: builtin/archive.c:63
 #, c-format
@@ -1921,7 +1921,7 @@ msgstr "git archive：协议错误"
 
 #: builtin/archive.c:71
 msgid "git archive: expected a flush"
-msgstr "git archive：预期一个刷新"
+msgstr "git archive：应为一个刷新"
 
 #  译者：保持原换行格式，在输出时 %s 的替代内容会让字符串变长
 #: builtin/branch.c:144
