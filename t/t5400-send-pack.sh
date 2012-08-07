@@ -145,7 +145,7 @@ test_expect_success 'push --all excludes remote-tracking hierarchy' '
 	)
 '
 
-test_expect_failure 'receive-pack runs auto-gc in remote repo' '
+test_expect_success 'receive-pack runs auto-gc in remote repo' '
 	rm -rf parent child &&
 	git init parent &&
 	(
