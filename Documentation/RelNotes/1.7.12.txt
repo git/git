@@ -51,10 +51,6 @@ UI, Workflows & Features
    read. The error message in this case was updated to give better
    hints to the user.
 
- * git native protocol agents learned to show software version over
-   the wire, so that the server log can be examined to see the vintage
-   distribution of clients.
-
  * "git help -w $cmd" can show HTML version of documentation for
    "git-$cmd" by setting help.htmlpath to somewhere other than the
    default location where the build procedure installs them locally;
