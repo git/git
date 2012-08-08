@@ -777,6 +777,44 @@ sub populate_merge_info {
 	return undef;
 }
 
+sub dcommit_rebase {
+	my ($is_last, $current, $fetched_ref, $svn_error) = @_;
+	my @diff;
+
+	if ($svn_error) {
+		print STDERR "\nERROR from SVN:\n",
+				$svn_error->expanded_message, "\n";
+	}
+	unless ($_no_rebase) {
+		# we always want to rebase against the current HEAD,
+		# not any head that was passed to us
+		@diff = command('diff-tree', $current,
+	                   $fetched_ref, '--');
+		my @finish;
+		if (@diff) {
+			@finish = rebase_cmd();
+			print STDERR "W: $current and ", $fetched_ref,
+			             " differ, using @finish:\n",
+			             join("\n", @diff), "\n";
+		} elsif ($is_last) {
+			print "No changes between ", $current, " and ",
+			      $fetched_ref,
+			      "\nResetting to the latest ",
+			      $fetched_ref, "\n";
+			@finish = qw/reset --mixed/;
+		}
+		command_noisy(@finish, $fetched_ref) if @finish;
+	}
+	if ($svn_error) {
+		die "ERROR: Not all changes have been committed into SVN"
+			.($_no_rebase ? ".\n" : ", however the committed\n"
+			."ones (if any) seem to be successfully integrated "
+			."into the working tree.\n")
+			."Please see the above messages for details.\n";
+	}
+	return @diff;
+}
+
 sub cmd_dcommit {
 	my $head = shift;
 	command_noisy(qw/update-index --refresh/);
@@ -904,6 +942,7 @@ sub cmd_dcommit {
 	}
 
 	my $rewritten_parent;
+	my $current_head = command_oneline(qw/rev-parse HEAD/);
 	Git::SVN::remove_username($expect_url);
 	if (defined($_merge_info)) {
 		$_merge_info =~ tr{ }{\n};
@@ -943,6 +982,14 @@ sub cmd_dcommit {
 			                },
 					mergeinfo => $_merge_info,
 			                svn_path => '');
+
+			my $err_handler = $SVN::Error::handler;
+			$SVN::Error::handler = sub {
+				my $err = shift;
+				dcommit_rebase(1, $current_head, $gs->refname,
+					$err);
+			};
+
 			if (!Git::SVN::Editor->new(\%ed_opts)->apply_diff) {
 				print "No changes\n$d~1 == $d\n";
 			} elsif ($parents->{$d} && @{$parents->{$d}}) {
@@ -950,31 +997,19 @@ sub cmd_dcommit {
 				                               $parents->{$d};
 			}
 			$_fetch_all ? $gs->fetch_all : $gs->fetch;
+			$SVN::Error::handler = $err_handler;
 			$last_rev = $cmt_rev;
 			next if $_no_rebase;
 
-			# we always want to rebase against the current HEAD,
-			# not any head that was passed to us
-			my @diff = command('diff-tree', $d,
-			                   $gs->refname, '--');
-			my @finish;
-			if (@diff) {
-				@finish = rebase_cmd();
-				print STDERR "W: $d and ", $gs->refname,
-				             " differ, using @finish:\n",
-				             join("\n", @diff), "\n";
-			} else {
-				print "No changes between current HEAD and ",
-				      $gs->refname,
-				      "\nResetting to the latest ",
-				      $gs->refname, "\n";
-				@finish = qw/reset --mixed/;
-			}
-			command_noisy(@finish, $gs->refname);
+			my @diff = dcommit_rebase(@$linear_refs == 0, $d,
+						$gs->refname, undef);
 
-			$rewritten_parent = command_oneline(qw/rev-parse HEAD/);
+			$rewritten_parent = command_oneline(qw/rev-parse/,
+							$gs->refname);
 
 			if (@diff) {
+				$current_head = command_oneline(qw/rev-parse
+								HEAD/);
 				@refs = ();
 				my ($url_, $rev_, $uuid_, $gs_) =
 				              working_head_info('HEAD', \@refs);
@@ -1019,6 +1054,7 @@ sub cmd_dcommit {
 				}
 				$parents = \%p;
 				$linear_refs = \@l;
+				undef $last_rev;
 			}
 		}
 	}
