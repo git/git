@@ -2853,6 +2853,9 @@ check-docs::
 		documented,git-bisect-lk2009 | \
 		documented,git-remote-helpers | \
 		documented,gitworkflows | \
+		documented,gitcredentials | \
+		documented,gitnamespaces | \
+		documented,gitweb.conf | \
 		sentinel,not,matching,is,ok ) continue ;; \
 		esac; \
 		case " $(ALL_PROGRAMS) $(SCRIPT_LIB) $(BUILT_INS) git gitk gitweb " in \
