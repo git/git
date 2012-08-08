@@ -2838,7 +2838,6 @@ check-docs::
 	) | while read how cmd; \
 	do \
 		case "$$how,$$cmd" in \
-		*,git-help | \
 		documented,gitattributes | \
 		documented,gitignore | \
 		documented,gitmodules | \
