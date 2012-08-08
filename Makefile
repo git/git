@@ -2804,8 +2804,12 @@ endif
 
 ### Check documentation
 #
+ALL_COMMANDS = $(ALL_PROGRAMS) $(SCRIPT_LIB) $(BUILT_INS)
+ALL_COMMANDS += git
+ALL_COMMANDS += gitk
+ALL_COMMANDS += gitweb
 check-docs::
-	@(for v in $(ALL_PROGRAMS) $(SCRIPT_LIB) $(BUILT_INS) git gitk gitweb; \
+	@(for v in $(ALL_COMMANDS); \
 	do \
 		case "$$v" in \
 		git-merge-octopus | git-merge-ours | git-merge-recursive | \
@@ -2858,7 +2862,7 @@ check-docs::
 		documented,gitweb.conf | \
 		sentinel,not,matching,is,ok ) continue ;; \
 		esac; \
-		case " $(ALL_PROGRAMS) $(SCRIPT_LIB) $(BUILT_INS) git gitk gitweb " in \
+		case " $(ALL_COMMANDS) " in \
 		*" $$cmd "*)	;; \
 		*) echo "removed but $$how: $$cmd" ;; \
 		esac; \
