@@ -2808,6 +2808,7 @@ ALL_COMMANDS = $(ALL_PROGRAMS) $(SCRIPT_LIB) $(BUILT_INS)
 ALL_COMMANDS += git
 ALL_COMMANDS += gitk
 ALL_COMMANDS += gitweb
+ALL_COMMANDS += git-gui git-citool
 check-docs::
 	@(for v in $(ALL_COMMANDS); \
 	do \
@@ -2837,8 +2838,6 @@ check-docs::
 	) | while read how cmd; \
 	do \
 		case "$$how,$$cmd" in \
-		*,git-citool | \
-		*,git-gui | \
 		*,git-help | \
 		documented,gitattributes | \
 		documented,gitignore | \
