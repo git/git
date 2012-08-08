@@ -9,7 +9,11 @@
 # you would cause "cd" to be taken to unexpected places.  If you
 # like CDPATH, define it for your interactive shell sessions without
 # exporting it.
+# But we protect ourselves from such a user mistake nevertheless.
 unset CDPATH
+
+# Similarly for IFS
+unset IFS
 
 git_broken_path_fix () {
 	case ":$PATH:" in
