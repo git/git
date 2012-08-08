@@ -2832,34 +2832,12 @@ check-docs::
 		sed -e '/^#/d' \
 		    -e 's/[ 	].*//' \
 		    -e 's/^/listed /' command-list.txt; \
-		ls -1 Documentation/git*txt | \
+		$(MAKE) -C Documentation print-man1 | \
+		grep '\.txt$$' | \
 		sed -e 's|Documentation/|documented |' \
 		    -e 's/\.txt//'; \
 	) | while read how cmd; \
 	do \
-		case "$$how,$$cmd" in \
-		documented,gitattributes | \
-		documented,gitignore | \
-		documented,gitmodules | \
-		documented,gitcli | \
-		documented,git-tools | \
-		documented,gitcore-tutorial | \
-		documented,gitcvs-migration | \
-		documented,gitdiffcore | \
-		documented,gitglossary | \
-		documented,githooks | \
-		documented,gitrepository-layout | \
-		documented,gitrevisions | \
-		documented,gittutorial | \
-		documented,gittutorial-2 | \
-		documented,git-bisect-lk2009 | \
-		documented,git-remote-helpers | \
-		documented,gitworkflows | \
-		documented,gitcredentials | \
-		documented,gitnamespaces | \
-		documented,gitweb.conf | \
-		sentinel,not,matching,is,ok ) continue ;; \
-		esac; \
 		case " $(ALL_COMMANDS) " in \
 		*" $$cmd "*)	;; \
 		*) echo "removed but $$how: $$cmd" ;; \
