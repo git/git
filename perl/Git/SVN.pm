@@ -1616,6 +1616,24 @@ sub tie_for_persistent_memoization {
 		Memoize::unmemoize 'has_no_changes';
 	}
 
+	sub clear_memoized_mergeinfo_caches {
+		die "Only call this method in non-memoized context" if ($memoized);
+
+		my $cache_path = "$ENV{GIT_DIR}/svn/.caches/";
+		return unless -d $cache_path;
+
+		for my $cache_file (("$cache_path/lookup_svn_merge",
+				     "$cache_path/check_cherry_pick",
+				     "$cache_path/has_no_changes")) {
+			for my $suffix (qw(yaml db)) {
+				my $file = "$cache_file.$suffix";
+				next unless -e $file;
+				unlink($file) or die "unlink($file) failed: $!\n";
+			}
+		}
+	}
+
+
 	Memoize::memoize 'Git::SVN::repos_root';
 }
 
@@ -2107,8 +2125,13 @@ sub rev_map_set {
 
 	sysopen(my $fh, $db_lock, O_RDWR | O_CREAT)
 	     or croak "Couldn't open $db_lock: $!\n";
-	$update_ref eq 'reset' ? _rev_map_reset($fh, $rev, $commit) :
-				 _rev_map_set($fh, $rev, $commit);
+	if ($update_ref eq 'reset') {
+		clear_memoized_mergeinfo_caches();
+		_rev_map_reset($fh, $rev, $commit);
+	} else {
+		_rev_map_set($fh, $rev, $commit);
+	}
+
 	if ($sync) {
 		$fh->flush or die "Couldn't flush $db_lock: $!\n";
 		$fh->sync or die "Couldn't sync $db_lock: $!\n";
