@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: Git Mailing List <git@vger.kernel.org>\n"
-"POT-Creation-Date: 2012-08-02 09:26+0800\n"
+"POT-Creation-Date: 2012-08-06 23:47+0800\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -565,21 +565,23 @@ msgstr ""
 msgid "Merging:"
 msgstr ""
 
-#: merge-recursive.c:1918
+#: merge-recursive.c:1920
 #, c-format
-msgid "found %u common ancestor(s):"
-msgstr ""
+msgid "found %u common ancestor:"
+msgid_plural "found %u common ancestors:"
+msgstr[0] ""
+msgstr[1] ""
 
-#: merge-recursive.c:1954
+#: merge-recursive.c:1957
 msgid "merge returned no commit"
 msgstr ""
 
-#: merge-recursive.c:2011
+#: merge-recursive.c:2014
 #, c-format
 msgid "Could not parse object '%s'"
 msgstr ""
 
-#: merge-recursive.c:2023 builtin/merge.c:697
+#: merge-recursive.c:2026 builtin/merge.c:697
 msgid "Unable to write index."
 msgstr ""
 

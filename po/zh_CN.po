@@ -12,8 +12,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Git\n"
 "Report-Msgid-Bugs-To: Git Mailing List <git@vger.kernel.org>\n"
-"POT-Creation-Date: 2012-08-02 09:26+0800\n"
-"PO-Revision-Date: 2012-08-05 07:08+0800\n"
+"POT-Creation-Date: 2012-08-06 23:47+0800\n"
+"PO-Revision-Date: 2012-08-07 01:07+0800\n"
 "Last-Translator: Jiang Xin <worldhello.net@gmail.com>\n"
 "Language-Team: GitHub <https://github.com/gotgit/git/>\n"
 "Language: zh_CN\n"
@@ -594,21 +594,23 @@ msgstr "未处理的路径??? %s"
 msgid "Merging:"
 msgstr "合并："
 
-#: merge-recursive.c:1918
+#: merge-recursive.c:1920
 #, c-format
-msgid "found %u common ancestor(s):"
-msgstr "发现 %u 个共同祖先："
+msgid "found %u common ancestor:"
+msgid_plural "found %u common ancestors:"
+msgstr[0] "发现 %u 个共同祖先："
+msgstr[1] "发现 %u 个共同祖先："
 
-#: merge-recursive.c:1954
+#: merge-recursive.c:1957
 msgid "merge returned no commit"
 msgstr "合并未返回提交"
 
-#: merge-recursive.c:2011
+#: merge-recursive.c:2014
 #, c-format
 msgid "Could not parse object '%s'"
 msgstr "不能解析对象 '%s'"
 
-#: merge-recursive.c:2023 builtin/merge.c:697
+#: merge-recursive.c:2026 builtin/merge.c:697
 msgid "Unable to write index."
 msgstr "不能写入索引。"
 
