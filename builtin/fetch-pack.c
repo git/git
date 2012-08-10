@@ -19,6 +19,7 @@ static int prefer_ofs_delta = 1;
 static int no_done;
 static int fetch_fsck_objects = -1;
 static int transfer_fsck_objects = -1;
+static int agent_supported;
 static struct fetch_pack_args args = {
 	/* .uploadpack = */ "git-upload-pack",
 };
@@ -328,7 +329,8 @@ static int find_common(int fd[2], unsigned char *result_sha1,
 			if (args.no_progress)   strbuf_addstr(&c, " no-progress");
 			if (args.include_tag)   strbuf_addstr(&c, " include-tag");
 			if (prefer_ofs_delta)   strbuf_addstr(&c, " ofs-delta");
-			strbuf_addf(&c, " agent=%s", git_user_agent_sanitized());
+			if (agent_supported)    strbuf_addf(&c, " agent=%s",
+							    git_user_agent_sanitized());
 			packet_buf_write(&req_buf, "want %s%s\n", remote_hex, c.buf);
 			strbuf_release(&c);
 		} else
@@ -821,6 +823,9 @@ static struct ref *do_fetch_pack(int fd[2],
 			fprintf(stderr, "Server supports ofs-delta\n");
 	} else
 		prefer_ofs_delta = 0;
+	if (server_supports("agent"))
+		agent_supported = 1;
+
 	if (everything_local(&ref, nr_match, match)) {
 		packet_flush(fd[1]);
 		goto all_done;
