@@ -64,6 +64,9 @@ variable `mergetool.<tool>.trustExitCode` can be set to `true`.
 Otherwise, 'git mergetool' will prompt the user to indicate the
 success of the resolution after the custom tool has exited.
 
+--tool-help::
+	Print a list of merge tools that may be used with `--tool`.
+
 -y::
 --no-prompt::
 	Don't prompt before each invocation of the merge resolution
