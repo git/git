@@ -818,6 +818,12 @@ static struct ref *do_fetch_pack(int fd[2],
 			fprintf(stderr, "Server supports side-band\n");
 		use_sideband = 1;
 	}
+	if (!server_supports("thin-pack"))
+		args.use_thin_pack = 0;
+	if (!server_supports("no-progress"))
+		args.no_progress = 0;
+	if (!server_supports("include-tag"))
+		args.include_tag = 0;
 	if (server_supports("ofs-delta")) {
 		if (args.verbose)
 			fprintf(stderr, "Server supports ofs-delta\n");
