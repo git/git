@@ -2041,10 +2041,9 @@ class P4Sync(Command, P4UserMap):
         gitStream.write(description)
         gitStream.write("\n")
 
-    def commit(self, details, files, branch, branchPrefixes, parent = ""):
+    def commit(self, details, files, branch, parent = ""):
         epoch = details["time"]
         author = details["user"]
-        self.branchPrefixes = branchPrefixes
 
         if self.verbose:
             print "commit into %s" % branch
@@ -2053,7 +2052,7 @@ class P4Sync(Command, P4UserMap):
         # create a commit.
         new_files = []
         for f in files:
-            if [p for p in branchPrefixes if p4PathStartsWith(f['path'], p)]:
+            if [p for p in self.branchPrefixes if p4PathStartsWith(f['path'], p)]:
                 new_files.append (f)
             else:
                 sys.stderr.write("Ignoring file outside of prefix: %s\n" % f['path'])
@@ -2070,8 +2069,8 @@ class P4Sync(Command, P4UserMap):
 
         self.gitStream.write("data <<EOT\n")
         self.gitStream.write(details["desc"])
-        self.gitStream.write("\n[git-p4: depot-paths = \"%s\": change = %s"
-                             % (','.join (branchPrefixes), details["change"]))
+        self.gitStream.write("\n[git-p4: depot-paths = \"%s\": change = %s" %
+                             (','.join(self.branchPrefixes), details["change"]))
         if len(details['options']) > 0:
             self.gitStream.write(": options = %s" % details['options'])
         self.gitStream.write("]\nEOT\n\n")
@@ -2094,7 +2093,7 @@ class P4Sync(Command, P4UserMap):
                 print "Change %s is labelled %s" % (change, labelDetails)
 
             files = p4CmdList(["files"] + ["%s...@%s" % (p, change)
-                                                    for p in branchPrefixes])
+                                                for p in self.branchPrefixes])
 
             if len(files) == len(labelRevisions):
 
@@ -2405,6 +2404,7 @@ class P4Sync(Command, P4UserMap):
                     for branch in branches.keys():
                         ## HACK  --hwn
                         branchPrefix = self.depotPaths[0] + branch + "/"
+                        self.branchPrefixes = [ branchPrefix ]
 
                         parent = ""
 
@@ -2449,19 +2449,19 @@ class P4Sync(Command, P4UserMap):
                             tempBranch = os.path.join(self.tempBranchLocation, "%d" % (change))
                             if self.verbose:
                                 print "Creating temporary branch: " + tempBranch
-                            self.commit(description, filesForCommit, tempBranch, [branchPrefix])
+                            self.commit(description, filesForCommit, tempBranch)
                             self.tempBranches.append(tempBranch)
                             self.checkpoint()
                             blob = self.searchParent(parent, branch, tempBranch)
                         if blob:
-                            self.commit(description, filesForCommit, branch, [branchPrefix], blob)
+                            self.commit(description, filesForCommit, branch, blob)
                         else:
                             if self.verbose:
                                 print "Parent of %s not found. Committing into head of %s" % (branch, parent)
-                            self.commit(description, filesForCommit, branch, [branchPrefix], parent)
+                            self.commit(description, filesForCommit, branch, parent)
                 else:
                     files = self.extractFilesFromCommit(description)
-                    self.commit(description, files, self.branch, self.depotPaths,
+                    self.commit(description, files, self.branch,
                                 self.initialParent)
                     self.initialParent = ""
             except IOError:
@@ -2525,7 +2525,7 @@ class P4Sync(Command, P4UserMap):
 
         self.updateOptionDict(details)
         try:
-            self.commit(details, self.extractFilesFromCommit(details), self.branch, self.depotPaths)
+            self.commit(details, self.extractFilesFromCommit(details), self.branch)
         except IOError:
             print "IO error with git fast-import. Is your git version recent enough?"
             print self.gitError.read()
@@ -2682,6 +2682,9 @@ class P4Sync(Command, P4UserMap):
             newPaths.append(p)
 
         self.depotPaths = newPaths
+
+        # --detect-branches may change this for each branch
+        self.branchPrefixes = self.depotPaths
 
         self.loadUserMapFromCache()
         self.labels = {}
