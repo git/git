@@ -438,7 +438,7 @@ test_expect_success 'use-client-spec detect-branches setup' '
 	)
 '
 
-test_expect_failure 'use-client-spec detect-branches files in top-level' '
+test_expect_success 'use-client-spec detect-branches files in top-level' '
 	test_when_finished cleanup_git &&
 	test_create_repo "$git" &&
 	(

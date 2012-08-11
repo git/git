@@ -1818,21 +1818,41 @@ class P4Sync(Command, P4UserMap):
         return files
 
     def stripRepoPath(self, path, prefixes):
+        """When streaming files, this is called to map a p4 depot path
+           to where it should go in git.  The prefixes are either
+           self.depotPaths, or self.branchPrefixes in the case of
+           branch detection."""
+
         if self.useClientSpec:
+            # branch detection moves files up a level (the branch name)
+            # from what client spec interpretation gives
             path = self.clientSpecDirs.map_in_client(path)
+            if self.detectBranches:
+                for b in self.knownBranches:
+                    if path.startswith(b + "/"):
+                        path = path[len(b)+1:]
+
+        elif self.keepRepoPath:
+            # Preserve everything in relative path name except leading
+            # //depot/; just look at first prefix as they all should
+            # be in the same depot.
+            depot = re.sub("^(//[^/]+/).*", r'\1', prefixes[0])
+            if p4PathStartsWith(path, depot):
+                path = path[len(depot):]
 
         else:
-            if self.keepRepoPath:
-                prefixes = [re.sub("^(//[^/]+/).*", r'\1', prefixes[0])]
-
             for p in prefixes:
                 if p4PathStartsWith(path, p):
                     path = path[len(p):]
+                    break
 
         path = wildcard_decode(path)
         return path
 
     def splitFilesIntoBranches(self, commit):
+        """Look at each depotFile in the commit to figure out to what
+           branch it belongs."""
+
         branches = {}
         fnum = 0
         while commit.has_key("depotFile%s" % fnum):
@@ -1850,11 +1870,16 @@ class P4Sync(Command, P4UserMap):
             file["type"] = commit["type%s" % fnum]
             fnum = fnum + 1
 
-            relPath = self.stripRepoPath(path, self.depotPaths)
+            # start with the full relative path where this file would
+            # go in a p4 client
+            if self.useClientSpec:
+                relPath = self.clientSpecDirs.map_in_client(path)
+            else:
+                relPath = self.stripRepoPath(path, self.depotPaths)
 
             for branch in self.knownBranches.keys():
-
-                # add a trailing slash so that a commit into qt/4.2foo doesn't end up in qt/4.2
+                # add a trailing slash so that a commit into qt/4.2foo
+                # doesn't end up in qt/4.2, e.g.
                 if relPath.startswith(branch + "/"):
                     if branch not in branches:
                         branches[branch] = []
