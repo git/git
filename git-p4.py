@@ -1819,15 +1819,17 @@ class P4Sync(Command, P4UserMap):
 
     def stripRepoPath(self, path, prefixes):
         if self.useClientSpec:
-            return self.clientSpecDirs.map_in_client(path)
+            path = self.clientSpecDirs.map_in_client(path)
 
-        if self.keepRepoPath:
-            prefixes = [re.sub("^(//[^/]+/).*", r'\1', prefixes[0])]
+        else:
+            if self.keepRepoPath:
+                prefixes = [re.sub("^(//[^/]+/).*", r'\1', prefixes[0])]
 
-        for p in prefixes:
-            if p4PathStartsWith(path, p):
-                path = path[len(p):]
+            for p in prefixes:
+                if p4PathStartsWith(path, p):
+                    path = path[len(p):]
 
+        path = wildcard_decode(path)
         return path
 
     def splitFilesIntoBranches(self, commit):
@@ -1849,7 +1851,6 @@ class P4Sync(Command, P4UserMap):
             fnum = fnum + 1
 
             relPath = self.stripRepoPath(path, self.depotPaths)
-            relPath = wildcard_decode(relPath)
 
             for branch in self.knownBranches.keys():
 
@@ -1867,7 +1868,6 @@ class P4Sync(Command, P4UserMap):
 
     def streamOneP4File(self, file, contents):
         relPath = self.stripRepoPath(file['depotFile'], self.branchPrefixes)
-        relPath = wildcard_decode(relPath)
         if verbose:
             sys.stderr.write("%s\n" % relPath)
 
@@ -1936,7 +1936,6 @@ class P4Sync(Command, P4UserMap):
 
     def streamOneP4Deletion(self, file):
         relPath = self.stripRepoPath(file['path'], self.branchPrefixes)
-        relPath = wildcard_decode(relPath)
         if verbose:
             sys.stderr.write("delete %s\n" % relPath)
         self.gitStream.write("D %s\n" % relPath)
