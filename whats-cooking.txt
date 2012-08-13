@@ -1,17 +1,13 @@
 To: git@vger.kernel.org
-Subject: What's cooking in git.git (Aug 2012, #02; Mon, 6)
-X-master-at: bfbf4d477a33be413800f531c3ac0d227f46ab44
-X-next-at: 3f6917c89149cdb4eeb86d9daab3854bc3af51ef
+Subject: What's cooking in git.git (Aug 2012, #03; Mon, 13)
+X-master-at: 61b472ed8b090a3e9240590c85041120a54dd268
+X-next-at: 4accbf693d5564e36b727349eebdbcb0d4f70a02
 
-What's cooking in git.git (Aug 2012, #02; Mon, 6)
+What's cooking in git.git (Aug 2012, #03; Mon, 13)
 --------------------------------------------------
 
 Here are the topics that have been cooking.  Commits prefixed with '-' are
 only in 'pu' (proposed updates) while commits prefixed with '+' are in 'next'.
-
-I am planning to tag 1.7.12-rc2 tomorrow.  GSoC "index-v5" topic is
-queued in 'pu' together with quick band-aid patches to give people
-easier access than applying them individually to their tree.
 
 You can find the changes described here in the integration branches of the
 repositories listed at
@@ -19,96 +15,118 @@ repositories listed at
     http://git-blame.blogspot.com/p/git-public-repositories.html
 
 --------------------------------------------------
+[Graduated to "master"]
+
+* bw/maint-1.7.9-solaris-getpass (2012-08-06) 2 commits
+  (merged to 'next' on 2012-08-07 at d78bc37)
+ + Enable HAVE_DEV_TTY for Solaris
+ + terminal: seek when switching between reading and writing
+
+The recent update to terminal I/O interface to get passwords &c
+interactively didn't quite work on Solaris.
+
+--------------------------------------------------
 [New Topics]
 
-* jk/version-string (2012-08-03) 1 commit
- - include agent identifier in capability string
+* bc/receive-pack-stdout-protection (2012-08-06) 2 commits
+  (merged to 'next' on 2012-08-07 at d7aa316)
+ + receive-pack: do not leak output from auto-gc to standard output
+ + t/t5400: demonstrate breakage caused by informational message from prune
 
-Leftover bits from the "git version" code restructuring, that
-actually give us an ability to expose the Git version over the wire
-in the protocol exchange.
+When "git push" triggered the automatic gc on the receiving end, a
+message from "git prune" that said it was removing cruft leaked to
+the standard output, breaking the communication protocol.
 
-* js/grep-patterntype-config (2012-08-03) 1 commit
- - grep: add a grep.patternType configuration setting
+Not urgent (non regression).
 
-"grep" learned to use a non-standard pattern type by default if a
-configuration variable tells it to.
+* bc/prune-info (2012-08-07) 1 commit
+ - prune.c: only print informational message in show_only or verbose mode
 
-* mm/die-with-dashdash-help (2012-08-03) 1 commit
- - setup: clarify error messages for file/revisions ambiguity
+Teach "git prune" without "-v" to be silent about leftover temporary files.
 
-Reword error messages.
+Not urgent (non regression).
 
-* tr/merge-recursive-flush (2012-08-03) 1 commit
- - merge-recursive: eliminate flush_buffer() in favor of write_in_full()
+* jc/tag-doc (2012-08-06) 1 commit
+ - Documentation: do not mention .git/refs/* directories
 
-Remove unnecessary code.
+Our documentation used to assume having files in .git/refs/*
+directories was the only to have branches and tags, but that is not
+true for quite some time.
 
-* tr/void-diff-setup-done (2012-08-03) 1 commit
- - diff_setup_done(): return void
+Not urgent (non regression).
 
-Remove unnecessary code.
+* jk/docs-docbook-monospace-display (2012-08-07) 1 commit
+ - docs: monospace listings in docbook output
 
-* mk/test-seq (2012-08-04) 1 commit
-  (merged to 'next' on 2012-08-06 at 3f6917c)
- + tests: Introduce test_seq
- (this branch is used by ab/diff-write-incomplete-line.)
+The documentation in the TeXinfo format was using indented output
+for materials meant to be examples that are better typeset in
+monospace.
 
-Add a compatibility/utility function to the test framework. 
+Not urgent (non regression).
 
-* ab/diff-write-incomplete-line (2012-08-05) 1 commit
- - Fix '\ No newline...' annotation in rewrite diffs
- (this branch uses mk/test-seq.)
+* jc/maint-protect-sh-from-ifs (2012-08-08) 1 commit
+ - sh-setup: protect from exported IFS
 
-The output from "git diff -B" for a file that ends with an
-incomplete line did not put "\ No newline..." on a line of its own.
+When the user exports a non-default IFS without HT, scripts that
+rely on being able to parse "ls-files -s | while read a b c..."
+start to fail.  Protect them from such a misconfiguration.
 
-Will merge to 'next'.
+* jk/check-docs-update (2012-08-08) 8 commits
+ - check-docs: get documented command list from Makefile
+ - check-docs: drop git-help special-case
+ - check-docs: list git-gui as a command
+ - check-docs: factor out command-list
+ - command-list: mention git-credential-* helpers
+ - command-list: add git-sh-i18n
+ - check-docs: update non-command documentation list
+ - check-docs: mention gitweb specially
 
-* pg/maint-apply-remove-unused-variable (2012-08-05) 1 commit
-  (merged to 'next' on 2012-08-05 at aa9f5e9)
- + apply: delete unused deflate_origlen from patch struct
+Simplify "make check-docs" implementation and update its coverage.
 
-Remove unused field.
-Not urgent.
+* js/gitweb-path-info-unquote (2012-08-09) 1 commit
+ - gitweb: URL-decode $my_url/$my_uri when stripping PATH_INFO
 
-* tg/index-v5 (2012-08-06) 18 commits
- - band-aid! drop double close(fd)
- - band-aid!! compilation fix
- - p0002-index.sh: add perf test for the index formats
- - update-index.c: add a force-rewrite option
- - Write resolve-undo data for index-v5
- - Write index-v5 cache-tree data
- - Write index-v5
- - Read cache-tree in index-v5
- - Read resolve-undo data
- - Read index-v5
- - Make in-memory format aware of stat_crc
- - Add documentation of the index-v5 file format
- - t3700: sleep for 1 second, to avoid interfering with the racy code
- - t2104: Don't fail for index versions other than [23]
- - Modify write functions to prepare for other index formats
- - Modify match_stat_basic to prepare for other index formats
- - Modify read functions to prepare for other index formats
- - Modify cache_header to prepare for other index formats
+Stripping of PATH_INFO in gitweb did not take url style quoting into
+account, failing to notice directories with funny characters e.g. SP
+in their paths.
 
-A GSoC project.
+* mg/rebase-i-onto-reflog-in-full (2012-08-10) 1 commit
+ - rebase -i: use full onto sha1 in reflog
 
-* nd/index-errno (2012-08-06) 1 commit
-  (merged to 'next' on 2012-08-06 at a9f2101)
- + read_index_from: remove bogus errno assignments
+The reflog entries left by "git rebase" and "git rebase -i" were
+inconsistent.
+
+* mz/empty-rebase-test (2012-08-09) 1 commit
+ - add tests for 'git rebase --keep-empty'
+
+* jc/capabilities (2012-08-10) 1 commit
+ - fetch-pack: do not ask for unadvertised capabilities
+ (this branch uses jk/version-string.)
+
+Some capabilities were asked by fetch-pack even when upload-pack did
+not advertise that they are available.  Fix fetch-pack not to do so.
+
+May have to be rebased to older maintenance tracks before moving
+forward.
+
+* pw/p4-use-client-spec-branch-detection (2012-08-11) 5 commits
+ - git p4: make branch detection work with --use-client-spec
+ - git p4: do wildcard decoding in stripRepoPath
+ - git p4: set self.branchPrefixes in initialization
+ - git p4 test: add broken --use-client-spec --detect-branches tests
+ - git p4 test: move client_view() function to library
 
 --------------------------------------------------
 [Stalled]
 
 * mz/rebase-range (2012-07-18) 7 commits
- - rebase (without -p): correctly calculate patches to rebase
- - rebase -p: don't request --left-right only to ignore left side
- - rebase -p: use --cherry-mark for todo file
- - git-rebase--interactive.sh: look up subject in add_pick_line
- - git-rebase--interactive: group all $preserve_merges code
- - git-rebase--interactive.sh: extract function for adding "pick" line
- - git-rebase--am.sh: avoid special-casing --keep-empty
+ . rebase (without -p): correctly calculate patches to rebase
+ . rebase -p: don't request --left-right only to ignore left side
+ . rebase -p: use --cherry-mark for todo file
+ . git-rebase--interactive.sh: look up subject in add_pick_line
+ . git-rebase--interactive: group all $preserve_merges code
+ . git-rebase--interactive.sh: extract function for adding "pick" line
+ . git-rebase--am.sh: avoid special-casing --keep-empty
 
 Expecting a reroll.
 
@@ -154,15 +172,6 @@ Expecting a reroll.
 "The first remote becomes the default" bit is better done as a
 separate step.
 
-* jc/maint-push-refs-all (2012-05-04) 2 commits
- - get_fetch_map(): tighten checks on dest refs
- - fetch/push: allow refs/*:refs/*
-
-Allows pushing and fetching refs/stash.
-There still seem to be other bugs hiding (e.g. try pushing twice).
-
-Not ready.
-
 * jc/split-blob (2012-04-03) 6 commits
  - chunked-object: streaming checkout
  - chunked-object: fallback checkout codepaths
@@ -196,39 +205,151 @@ working :-<.
 --------------------------------------------------
 [Cooking]
 
+* jc/maint-push-refs-all (2012-08-07) 2 commits
+ - get_fetch_map(): tighten checks on dest refs
+ - fetch/push: allow refs/*:refs/*
+
+Allows pushing and fetching refs/stash.
+
+* jk/version-string (2012-08-10) 3 commits
+  (merged to 'next' on 2012-08-10 at d8dcb00)
+ + do not send client agent unless server does first
+ + send-pack: fix capability-sending logic
+  (merged to 'next' on 2012-08-09 at 64dc91b)
+ + include agent identifier in capability string
+ (this branch is used by jc/capabilities.)
+
+Leftover bits from the "git version" code restructuring, that give
+us an ability to expose the Git version over the wire in the
+protocol exchange. But we do so carefully only to the other end that
+understands it.
+
+Not urgent (non regression).
+
+* js/grep-patterntype-config (2012-08-03) 1 commit
+  (merged to 'next' on 2012-08-09 at 1a08d6c)
+ + grep: add a grep.patternType configuration setting
+
+"grep" learned to use a non-standard pattern type by default if a
+configuration variable tells it to.
+
+Not urgent (non regression).
+
+* mm/die-with-dashdash-help (2012-08-03) 1 commit
+  (merged to 'next' on 2012-08-09 at 1aae096)
+ + setup: clarify error messages for file/revisions ambiguity
+
+Reword error messages.
+Not urgent (non regression).
+
+* tr/merge-recursive-flush (2012-08-03) 1 commit
+  (merged to 'next' on 2012-08-09 at da826ec)
+ + merge-recursive: eliminate flush_buffer() in favor of write_in_full()
+
+Remove unnecessary code.
+Not urgent (non regression).
+
+* tr/void-diff-setup-done (2012-08-03) 1 commit
+  (merged to 'next' on 2012-08-09 at 668a46f)
+ + diff_setup_done(): return void
+
+Remove unnecessary code.
+Not urgent (non regression).
+
+* mk/test-seq (2012-08-04) 1 commit
+  (merged to 'next' on 2012-08-06 at 3f6917c)
+ + tests: Introduce test_seq
+ (this branch is used by ab/diff-write-incomplete-line.)
+
+Add a compatibility/utility function to the test framework. 
+
+Not urgent (non regression).
+
+* ab/diff-write-incomplete-line (2012-08-05) 1 commit
+  (merged to 'next' on 2012-08-07 at dcf02ae)
+ + Fix '\ No newline...' annotation in rewrite diffs
+ (this branch uses mk/test-seq.)
+
+The output from "git diff -B" for a file that ends with an
+incomplete line did not put "\ No newline..." on a line of its own.
+
+Not urgent (non regression).
+
+* pg/maint-apply-remove-unused-variable (2012-08-05) 1 commit
+  (merged to 'next' on 2012-08-05 at aa9f5e9)
+ + apply: delete unused deflate_origlen from patch struct
+
+Remove unused field.
+Not urgent (non regression).
+
+* tg/index-v5 (2012-08-09) 15 commits
+ - fixup! Read index-v5
+ - fixup! update-index.c: always rewrite the index when index-version is given
+ - p0002-index.sh: add perf test for the index formats
+ - update-index.c: always rewrite the index when index-version is given
+ - Write resolve-undo data for index-v5
+ - Write index-v5 cache-tree data
+ - Write index-v5
+ - Read cache-tree in index-v5
+ - Read resolve-undo data
+ - Read index-v5
+ - Make in-memory format aware of stat_crc
+ - Add documentation of the index-v5 file format
+ - t3700: Avoid interfering with the racy code
+ - t2104: Don't fail for index versions other than [23]
+ - Move index v2 specific functions to their own file
+
+A GSoC project, queued here primarily to give people an easier
+access to the state of the last posted version, plus trivial
+fixups.
+
+* nd/index-errno (2012-08-06) 1 commit
+  (merged to 'next' on 2012-08-06 at a9f2101)
+ + read_index_from: remove bogus errno assignments
+
+Assignments to errno before calling system functions that used to
+matter in the old code were left behind after the code structure
+changed sufficiently to make them useless.
+
+Not urgent (non regression).
+
 * jc/maint-sane-execvp-notdir (2012-07-31) 1 commit
- - sane_execvp(): ignore non-directory on $PATH
+  (merged to 'next' on 2012-08-09 at 5dd4240)
+ + sane_execvp(): ignore non-directory on $PATH
 
 "git foo" errored out with "Not a directory" when the user had a non
 directory on $PATH, and worse yet it masked an alias "foo" to run.
 
-Not urgent.
+Not urgent (non regression).
 
 * jc/sanitize-nkd-lazy-iconv-open (2012-07-31) 1 commit
- - macos: lazily initialize iconv
+  (merged to 'next' on 2012-08-09 at 832c238)
+ + macos: lazily initialize iconv
 
 Teach the code that works around NKD/NKC gotcha on MacOS to call
 iconv_open() only when it is necessary, in the hope of avoiding
 set-up overhead.
 
-Not urgent.
+Not urgent (non regression).
 
 * tr/maint-send-email-2047 (2012-07-31) 1 commit
- - send-email: improve RFC2047 quote parsing
+  (merged to 'next' on 2012-08-09 at 17dfe57)
+ + send-email: improve RFC2047 quote parsing
 
 "git send-email" did not unquote encoded words that appear on the
 header correctly, and lost "_" from strings.
 
-Not urgent.
+Not urgent (non regression).
 
 * cw/cherry-pick-allow-empty-message (2012-08-06) 1 commit
- - cherry-pick: add --allow-empty-message option
+  (merged to 'next' on 2012-08-09 at eab95f6)
+ + cherry-pick: add --allow-empty-message option
 
 "git cherry-pick" by default stops when it sees a commit without any
 log message.  The "--allow-empty-message" option can be used to
 silently proceed.
 
-Not urgent.
+Not urgent (non regression).
 
 * ms/git-svn-1.7 (2012-08-02) 20 commits
  - git-svn: remove ad-hoc canonicalizations
@@ -260,7 +381,7 @@ way URLs are internally passed around, to make it work with SVN 1.7.
  + t7406: fix misleading "rev-parse --max-count=1 HEAD"
 
 Test clean-up, with no behaviour change.
-Not urgent.
+Not urgent (non regression).
 
 * jk/maint-diff-nul40-as-sentinel (2012-07-29) 1 commit
  + diff: do not use null sha1 as a sentinel value
@@ -269,7 +390,7 @@ Not urgent.
 "git diff" had a confusion between taking data from a path in the
 working tree and taking data from an object that happens to have
 name 0{40} recorded in a tree.
-Not urgent.
+Not urgent (non regression).
 
 * mz/cherry-code-cleanup (2012-07-29) 3 commits
  - cherry: remove redundant check for merge commit
@@ -277,7 +398,7 @@ Not urgent.
  - remove unnecessary parameter from get_patch_ids()
 
 Minor code clean-up on the cherry-pick codepath.
-Not urgent.
+Not urgent (non regression).
 
 * jc/maint-config-exit-status (2012-07-30) 1 commit
   (merged to 'next' on 2012-07-30 at 8392da9)
@@ -288,7 +409,7 @@ being incorrect.  Update the implementation to give the documented
 status for a case that was documented, and introduce a new code for
 "all other errors".
 
-Not urgent.
+Not urgent (non regression).
 
 * jk/maint-null-in-trees (2012-07-29) 2 commits
   (merged to 'next' on 2012-07-30 at 771c497)
@@ -298,7 +419,7 @@ Not urgent.
 
 We do not want a link to 0{40} object stored anywhere in our objects.
 
-Not urgent.
+Not urgent (non regression).
 
 * sz/submodule-force-update (2012-07-25) 1 commit
   (merged to 'next' on 2012-07-26 at 3bda2be)
@@ -306,7 +427,7 @@ Not urgent.
 
 We may want a documentation update and a few tests on top.
 
-Not urgent.
+Not urgent (non regression).
 
 * jc/test-prereq (2012-08-04) 8 commits
   (merged to 'next' on 2012-08-04 at 6dd9156)
@@ -325,9 +446,12 @@ Teaches the test framework to probe rarely used prerequistes lazily,
 and make use of it for detecting SYMLINKS, CASE_INSENSITIVE_FS and
 NKD/NKC MacOS x gotcha.
 
-Not urgent.
+Not urgent (non regression).
 
-* da/difftool-updates (2012-07-26) 10 commits
+* da/difftool-updates (2012-08-10) 12 commits
+  (merged to 'next' on 2012-08-10 at 4accbf6)
+ + Add Code Compare v2.80.4 as a merge / diff tool for Windows
+ + mergetool,difftool: Document --tool-help consistently
   (merged to 'next' on 2012-07-26 at 3263461)
  + difftool: Disable --symlinks on cygwin
  + difftool: Handle compare() returning -1
@@ -344,7 +468,7 @@ Not urgent.
 "git difftool --dir-diff" learned to use symbolic links to prepare
 temporary copy of the working tree when available.
 
-Not urgent.
+Not urgent (non regression).
 
 * jk/no-more-pre-exec-callback (2012-06-05) 1 commit
   (merged to 'next' on 2012-07-23 at fe59cb6)
