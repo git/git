@@ -787,6 +787,8 @@ static struct ref *do_fetch_pack(int fd[2],
 {
 	struct ref *ref = copy_ref_list(orig_ref);
 	unsigned char sha1[20];
+	const char *agent_feature;
+	int agent_len;
 
 	sort_ref_list(&ref, ref_compare_name);
 
@@ -829,8 +831,13 @@ static struct ref *do_fetch_pack(int fd[2],
 			fprintf(stderr, "Server supports ofs-delta\n");
 	} else
 		prefer_ofs_delta = 0;
-	if (server_supports("agent"))
+
+	if ((agent_feature = server_feature_value("agent", &agent_len))) {
 		agent_supported = 1;
+		if (args.verbose && agent_len)
+			fprintf(stderr, "Server version is %.*s\n",
+				agent_len, agent_feature);
+	}
 
 	if (everything_local(&ref, nr_match, match)) {
 		packet_flush(fd[1]);
