@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: git 1.7.12\n"
 "Report-Msgid-Bugs-To: Git Mailing List <git@vger.kernel.org>\n"
 "POT-Creation-Date: 2012-08-06 23:47+0800\n"
-"PO-Revision-Date: 2012-08-09 06:36+0100\n"
+"PO-Revision-Date: 2012-08-14 09:58+0100\n"
 "Last-Translator: Peter Krefting <peter@softwolves.pp.se>\n"
 "Language-Team: Swedish <tp-sv@listor.tp-sv.se>\n"
 "Language: sv\n"
@@ -995,7 +995,7 @@ msgstr "%se filer:"
 #, c-format
 msgid "  (use \"git %s <file>...\" to include in what will be committed)"
 msgstr ""
-"  (använd \"git %s <fil>...\" för att ta med i vad som skall checkas in)"
+"  (använd \"git %s <fil>...\" för att ta med i det som skall checkas in)"
 
 #: wt-status.c:244
 msgid "bug"
@@ -1231,7 +1231,7 @@ msgstr "inget köat för incheckning, men ospårade filer finns%s\n"
 
 #: wt-status.c:1033
 msgid " (use \"git add\" to track)"
-msgstr " (använd \"git add\" för att spåra)"
+msgstr " (spåra med \"git add\")"
 
 #: wt-status.c:1035 wt-status.c:1038 wt-status.c:1041
 #, c-format
@@ -1240,7 +1240,7 @@ msgstr "inget att checka in%s\n"
 
 #: wt-status.c:1036
 msgid " (create/copy files and use \"git add\" to track)"
-msgstr " (skapa/kopiera filer och använd \"git add\" för att spåra)"
+msgstr " (skapa/kopiera filer och spåra med \"git add\")"
 
 #: wt-status.c:1039
 msgid " (use -u to show untracked files)"
@@ -3381,7 +3381,7 @@ msgstr "misslyckades tillämpa delta"
 
 #: builtin/index-pack.c:986
 msgid "Receiving objects"
-msgstr "Tar bort objeckt"
+msgstr "Tar bort objekt"
 
 #: builtin/index-pack.c:986
 msgid "Indexing objects"
@@ -5192,7 +5192,7 @@ msgstr "Visa status för arbetskatalogen"
 
 #: common-cmds.h:28
 msgid "Create, list, delete or verify a tag object signed with GPG"
-msgstr "Skapa, visa, ta bort eller verifiera ett taggobjekt signerat med GPG"
+msgstr "Skapa, visa, ta bort eller verifiera GPG-signerat taggobjekt"
 
 #: git-am.sh:50
 msgid "You need to set your committer info first"
