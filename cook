@@ -287,6 +287,7 @@ EOF
 
 	$text = <<EOF;
 To: git\@vger.kernel.org
+Bcc: lwn\@lwn.net
 Subject: What's cooking in git.git ($mon $year, #$issue; $dow, $date)
 X-master-at: $master_at
 X-next-at: $next_at
@@ -301,8 +302,7 @@ EOF
 }
 
 my $blurb_match = <<'EOF';
-To: .*
-Subject: What's cooking in \S+ \((\w+) (\d+), #(\d+); (\w+), (\d+)\)
+(?i:[a-z]+: .*\n)*?Subject: What's cooking in \S+ \((\w+) (\d+), #(\d+); (\w+), (\d+)\)
 X-master-at: ([0-9a-f]{40})
 X-next-at: ([0-9a-f]{40})
 
