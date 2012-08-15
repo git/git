@@ -116,6 +116,7 @@ Performance, Internal Implementation, etc. (please report possible regressions)
  * "git svn" got a large-looking code reorganization at the last
    minute before the code freeze.
 
+
 Also contains minor documentation updates and code clean-ups.
 
 
@@ -125,16 +126,6 @@ Fixes since v1.7.11
 Unless otherwise noted, all the fixes since v1.7.11 in the maintenance
 releases are contained in this release (see release notes to them for
 details).
-
- * "git grep" stopped spawning an external "grep" long time ago, but a
-   duplicated test to check internal and external "grep" was left
-   behind.
-   (merge 4ca9453 rj/maint-grep-remove-redundant-test later to maint).
-
- * The code to avoid mistaken attempt to add the object directory
-   itself as its own alternate could read beyond end of a string while
-   comparison.
-   (merge cb2912c hv/link-alt-odb-entry later to maint).
 
  * "git submodule add" was confused when the superproject did not have
    its repository in its usual place in the working tree and GIT_DIR
