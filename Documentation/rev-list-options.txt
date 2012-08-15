@@ -578,16 +578,33 @@ Commit Ordering
 
 By default, the commits are shown in reverse chronological order.
 
---topo-order::
-
-	This option makes them appear in topological order (i.e.
-	descendant commits are shown before their parents).
-
 --date-order::
+	Show no parents before all of its children are shown, but
+	otherwise show commits in the commit timestamp order.
 
-	This option is similar to '--topo-order' in the sense that no
-	parent comes before all of its children, but otherwise things
-	are still ordered in the commit timestamp order.
+--topo-order::
+	Show no parents before all of its children are shown, and
+	avoid showing commits on multiple lines of history
+	intermixed.
++
+For example, in a commit history like this:
++
+----------------------------------------------------------------
+
+    ---1----2----4----7
+	\	       \
+	 3----5----6----8---
+
+----------------------------------------------------------------
++
+where the numbers denote the order of commit timestamps, `git
+rev-list` and friends with `--date-order` show the commits in the
+timestamp order: 8 7 6 5 4 3 2 1.
++
+With `--topo-order`, they would show 8 6 5 3 7 4 2 1 (or 8 7 4 2 6 5
+3 1); some older commits are shown before newer ones in order to
+avoid showing the commits from two parallel development track mixed
+together.
 
 --reverse::
 
