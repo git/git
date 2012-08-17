@@ -33,7 +33,7 @@ as defined in the configuration file (see linkgit:git-config[1]).
 
 Formatted and hyperlinked version of the latest git
 documentation can be viewed at
-`http://www.kernel.org/pub/software/scm/git/docs/`.
+`http://git-htmldocs.googlecode.com/git/git.html`.
 
 ifdef::stalenotes[]
 [NOTE]
