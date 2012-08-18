@@ -268,7 +268,7 @@ proc commit_commitmsg {curHEAD msg_p} {
 	    && 	[is_config_true gui.warndetachedcommit]} {
 		set msg [mc "You are about to commit on a detached head.\
 This is a potentially dangerous thing to do because if you switch\
-to another branch you will loose your changes and it can be difficult\
+to another branch you will lose your changes and it can be difficult\
 to retrieve them later from the reflog. You should probably cancel this\
 commit and create a new branch to continue.\n\
 \n\
