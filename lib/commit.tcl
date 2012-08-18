@@ -409,6 +409,7 @@ A rescan will be automatically started now.
 	catch {file delete [gitdir MERGE_MSG]}
 	catch {file delete [gitdir SQUASH_MSG]}
 	catch {file delete [gitdir GITGUI_MSG]}
+	catch {file delete [gitdir CHERRY_PICK_HEAD]}
 
 	# -- Let rerere do its thing.
 	#
