@@ -251,7 +251,7 @@ Given a .git/config like this:
 
 	; Proxy settings
 	[core]
-		gitproxy="proxy-command" for kernel.org
+		gitproxy=proxy-command for kernel.org
 		gitproxy=default-proxy ; for all the rest
 
 you can set the filemode to true with
