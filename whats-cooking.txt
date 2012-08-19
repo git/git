@@ -1,17 +1,23 @@
 To: git@vger.kernel.org
 Bcc: lwn@lwn.net
-Subject: What's cooking in git.git (Aug 2012, #04; Tue, 14)
-X-master-at: 61b472ed8b090a3e9240590c85041120a54dd268
-X-next-at: 4accbf693d5564e36b727349eebdbcb0d4f70a02
+Subject: What's cooking in git.git (Aug 2012, #05; Sat, 18)
+X-master-at: 91e4bfe96f1e72a3ce743fe032bfadfc9509fc2a
+X-next-at: f24913b098a0334d129beee428e81b2d82449265
 
-What's cooking in git.git (Aug 2012, #04; Tue, 14)
+What's cooking in git.git (Aug 2012, #05; Sat, 18)
 --------------------------------------------------
 
 Here are the topics that have been cooking.  Commits prefixed with '-' are
 only in 'pu' (proposed updates) while commits prefixed with '+' are in 'next'.
 
-Hopefully tomorrow's 1.7.12-rc3 will be the final rc before the real
-thing.
+I'll be tagging the v1.7.12 final sometime tomorrow, and following
+the tradition the next branch will be rebuilt on top of 'master'
+after a few days.  We would also eject some topics in 'next' that
+turned out to be mistakes when that rebuilding happens, but I do not
+think we have any such topics right now.  And then, post 1.7.12
+cycle opens.  I think the next cycle should start the transition of
+that much waited "push default change" topic and perhaps we may want
+to even call it 1.8.0 release.  I haven't decided yet.
 
 You can find the changes described here in the integration branches of the
 repositories listed at
@@ -21,23 +27,104 @@ repositories listed at
 --------------------------------------------------
 [New Topics]
 
-* hv/submodule-path-unmatch (2012-08-14) 1 commit
- - Let submodule command exit with error status if path does not exist
+* hv/coding-guidelines (2012-08-15) 1 commit
+  (merged to 'next' on 2012-08-18 at 5a78f2c)
+ + Documentation/CodingGuidelines: spell out more shell guidelines
 
-As the title says.
+In earlier days, "imitate the style in the neibouring code" was
+sufficient to keep the coherent style, but over time some parts of
+the codebase have drifted enough to make it ineffective.
 
-* jc/add-delete-default (2012-08-13) 1 commit
- - git add: notice removal of tracked paths by default
+* jc/daemon-access-hook (2012-08-15) 1 commit
+ - daemon: --access-hook option
 
-"git add dir/" updated modified files and added new files, but does
-not notice removed files, which may be "Huh?" to some users.  They
-can of course use "git add -A dir/", but why should they?
+Allow an external command to tell git-daemon to decline service
+based on the client address, repository path, etc.
 
-* jc/maint-rev-list-topo-doc (2012-08-13) 1 commit
- - rev-list docs: clarify --topo-order description
+* jc/send-email-reconfirm (2012-08-14) 1 commit
+ - send-email: validate & reconfirm interactive responses
 
-Further rewording suggestions by Martin and Thomas were good, but
-haven't been incorporated into this patch.
+Validate interactive input to "git send-email" to avoid common
+mistakes such as saying "y<RETURN>" to sender mail address whose
+prompt is given with a correctly guessed default.
+
+* pw/p4-submit-conflicts (2012-08-16) 12 commits
+ - git p4: add submit --prepare-p4-only option
+ - git p4: add submit --dry-run option
+ - git p4: accept -v for --verbose
+ - git p4: revert deleted files after submit cancel
+ - git p4: rearrange submit template construction
+ - git p4: test clean-up after failed submit, fix added files
+ - git p4: standardize submit cancel due to unchanged template
+ - git p4: move conflict prompt into run, use [c]ontinue and [q]uit
+ - git p4: remove submit failure options [a]pply and [w]rite
+ - git p4: gracefully fail if some commits could not be applied
+ - git p4 test: use p4d -L option to suppress log messages
+ - git p4 test: remove bash-ism of combined export/assignment
+
+* tx/relative-in-the-future (2012-08-16) 2 commits
+ - date: show relative dates in the future
+ - date: refactor the relative date logic from presentation
+
+* ef/win32-cred-helper (2012-08-16) 1 commit
+ - contrib: add win32 credential-helper
+
+* jc/maint-abbrev-option-cli (2012-08-16) 1 commit
+  (merged to 'next' on 2012-08-18 at e002006)
+ + gitcli: describe abbreviation of long options
+
+We did not document that many commands take unique prefix
+abbreviations of long options (e.g. "--option" may be the only flag
+that the command accepts that begin with "--opt", in which case you
+can give "--opt") anywhere easy to find for new people.
+
+* mv/pull-r-for-rebase (2012-08-17) 1 commit
+  (merged to 'next' on 2012-08-18 at e7d885b)
+ + man: git pull -r is a short for --rebase
+
+Minor documentation update.
+
+* rr/precompose-utf8-cleanup (2012-08-17) 1 commit
+ - cleanup precompose_utf8
+
+A style and code cleanup.
+
+* jc/doc-git-updates (2012-08-17) 1 commit
+  (merged to 'next' on 2012-08-18 at f24913b)
+ + Documentation: update the introductory section
+
+* fa/remote-svn (2012-08-17) 16 commits
+ - Add a test script for remote-svn
+ - remote-svn: add marks-file regeneration
+ - Add a svnrdump-simulator replaying a dump file for testing
+ - remote-svn: add incremental import
+ - remote-svn: Activate import/export-marks for fast-import
+ - Create a note for every imported commit containing svn metadata
+ - vcs-svn: add fast_export_note to create notes
+ - Allow reading svn dumps from files via file:// urls
+ - remote-svn, vcs-svn: Enable fetching to private refs
+ - When debug==1, start fast-import with "--stats" instead of "--quiet"
+ - Add documentation for the 'bidi-import' capability of remote-helpers
+ - Connect fast-import to the remote-helper via pipe, adding 'bidi-import' capability
+ - Add argv_array_detach and argv_array_free_detached
+ - Add svndump_init_fd to allow reading dumps from arbitrary FDs
+ - Integrate remote-svn into svn-fe/Makefile
+ - Implement a remote helper for svn in C
+ (this branch is used by fa/vcs-svn.)
+
+* fa/vcs-svn (2012-08-18) 7 commits
+ - fixup: add missing cast to vcs-svn/fast_export.c
+ - fixup - no old style defn
+ - vcs-svn: remove repo_tree
+ - vcs-svn/svndump: rewrite handle_node(), begin|end_revision()
+ - vcs-svn/svndump: restructure node_ctx, rev_ctx handling
+ - svndump: move struct definitions to .h
+ - vcs-svn: Add sha1 calculation to fast_export and line_buffer
+ (this branch uses fa/remote-svn.)
+
+* mh/maint-config-doc-proxy-command (2012-08-18) 2 commits
+ - git-config doc: unconfuse an example
+ - git-config.txt: fix example
 
 --------------------------------------------------
 [Stalled]
@@ -61,12 +148,6 @@ proper sign-offs.
  - rm: don't fail when removing populated submodules
 
 Expecting a reroll.
-
-* ph/stash-rerere (2012-07-08) 2 commits
- - stash: invoke rerere in case of conflict
- - test: git-stash conflict sets up rerere
-
-Will be rerolled but is going in the right direction.
 
 * lt/commit-tree-guess-utf-8 (2012-06-28) 1 commit
  - commit/commit-tree: correct latin1 to utf-8
@@ -128,6 +209,30 @@ working :-<.
 --------------------------------------------------
 [Cooking]
 
+* ph/stash-rerere (2012-08-17) 2 commits
+ - stash: invoke rerere in case of conflict
+ - test: git-stash conflict sets up rerere
+
+* hv/submodule-path-unmatch (2012-08-14) 1 commit
+ - Let submodule command exit with error status if path does not exist
+
+As the title says.
+
+* jc/add-delete-default (2012-08-13) 1 commit
+ - git add: notice removal of tracked paths by default
+
+"git add dir/" updated modified files and added new files, but does
+not notice removed files, which may be "Huh?" to some users.  They
+can of course use "git add -A dir/", but why should they?
+
+* jc/maint-rev-list-topo-doc (2012-08-15) 1 commit
+  (merged to 'next' on 2012-08-18 at d1f54d9)
+ + rev-list docs: clarify --topo-order description
+
+It was unclear what "--topo-order" was really about in the
+documentation. It is not just about "children before parent", but
+also about "don't mix lineages".
+
 * bc/receive-pack-stdout-protection (2012-08-06) 2 commits
   (merged to 'next' on 2012-08-07 at d7aa316)
  + receive-pack: do not leak output from auto-gc to standard output
@@ -147,7 +252,8 @@ Teach "git prune" without "-v" to be silent about leftover temporary files.
 Not urgent (non regression).
 
 * jc/tag-doc (2012-08-06) 1 commit
- - Documentation: do not mention .git/refs/* directories
+  (merged to 'next' on 2012-08-18 at 9fe64b2)
+ + Documentation: do not mention .git/refs/* directories
 
 Our documentation used to assume having files in .git/refs/*
 directories was the only to have branches and tags, but that is not
@@ -156,7 +262,8 @@ true for quite some time.
 Not urgent (non regression).
 
 * jk/docs-docbook-monospace-display (2012-08-07) 1 commit
- - docs: monospace listings in docbook output
+  (merged to 'next' on 2012-08-18 at 7e02bf8)
+ + docs: monospace listings in docbook output
 
 The documentation in the TeXinfo format was using indented output
 for materials meant to be examples that are better typeset in
@@ -172,23 +279,27 @@ rely on being able to parse "ls-files -s | while read a b c..."
 start to fail.  Protect them from such a misconfiguration.
 
 * jk/check-docs-update (2012-08-08) 8 commits
- - check-docs: get documented command list from Makefile
- - check-docs: drop git-help special-case
- - check-docs: list git-gui as a command
- - check-docs: factor out command-list
- - command-list: mention git-credential-* helpers
- - command-list: add git-sh-i18n
- - check-docs: update non-command documentation list
- - check-docs: mention gitweb specially
+  (merged to 'next' on 2012-08-18 at 4409d2e)
+ + check-docs: get documented command list from Makefile
+ + check-docs: drop git-help special-case
+ + check-docs: list git-gui as a command
+ + check-docs: factor out command-list
+ + command-list: mention git-credential-* helpers
+ + command-list: add git-sh-i18n
+ + check-docs: update non-command documentation list
+ + check-docs: mention gitweb specially
 
 Simplify "make check-docs" implementation and update its coverage.
 
-* js/gitweb-path-info-unquote (2012-08-09) 1 commit
- - gitweb: URL-decode $my_url/$my_uri when stripping PATH_INFO
+* js/gitweb-path-info-unquote (2012-08-15) 1 commit
+  (merged to 'next' on 2012-08-15 at 844da17)
+ + gitweb: URL-decode $my_url/$my_uri when stripping PATH_INFO
 
 Stripping of PATH_INFO in gitweb did not take url style quoting into
 account, failing to notice directories with funny characters e.g. SP
 in their paths.
+
+Not urgent (non regression).
 
 * mg/rebase-i-onto-reflog-in-full (2012-08-10) 1 commit
  - rebase -i: use full onto sha1 in reflog
@@ -292,11 +403,9 @@ Not urgent (non regression).
 Remove unused field.
 Not urgent (non regression).
 
-* tg/index-v5 (2012-08-09) 15 commits
- - fixup! Read index-v5
- - fixup! update-index.c: always rewrite the index when index-version is given
+* tg/index-v5 (2012-08-17) 13 commits
  - p0002-index.sh: add perf test for the index formats
- - update-index.c: always rewrite the index when index-version is given
+ - update-index.c: rewrite index when index-version is given
  - Write resolve-undo data for index-v5
  - Write index-v5 cache-tree data
  - Write index-v5
@@ -305,13 +414,12 @@ Not urgent (non regression).
  - Read index-v5
  - Make in-memory format aware of stat_crc
  - Add documentation of the index-v5 file format
- - t3700: Avoid interfering with the racy code
  - t2104: Don't fail for index versions other than [23]
+ - read-cache.c: Re-read index if index file changed
  - Move index v2 specific functions to their own file
 
 A GSoC project, queued here primarily to give people an easier
-access to the state of the last posted version, plus trivial
-fixups.
+access to the state of the last posted version.
 
 * nd/index-errno (2012-08-06) 1 commit
   (merged to 'next' on 2012-08-06 at a9f2101)
