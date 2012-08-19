@@ -60,11 +60,11 @@ setup_hook()
 		[ "$cnt" = "0" ] || exit 0
 EOF1
 	if [ "$hook_type" = "pre-commit" ]; then
-		echo "echo 'commit disallowed' >&2; exit 1" >> "$hook"
+		echo "echo 'commit disallowed' >&2; exit 1" >>"$hook"
 	else
-		echo "PATH=\"$PATH\"; export PATH" >> $hook
-		echo "svnconf=\"$svnconf\"" >> $hook
-		cat >> "$hook" <<- 'EOF2'
+		echo "PATH=\"$PATH\"; export PATH" >>"$hook"
+		echo "svnconf=\"$svnconf\"" >>"$hook"
+		cat >>"$hook" <<- 'EOF2'
 			cd work-auto-commits.svn
 			svn up --config-dir "$svnconf"
 			echo "$$" >> auto_updated_file
