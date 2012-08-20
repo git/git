@@ -184,8 +184,8 @@ int cmd_checkout_index(int argc, const char **argv, const char *prefix)
 	int force = 0, quiet = 0, not_new = 0;
 	struct option builtin_checkout_index_options[] = {
 		OPT_BOOLEAN('a', "all", &all,
-			N_("checks out all files in the index")),
-		OPT__FORCE(&force, N_("forces overwrite of existing files")),
+			N_("check out all files in the index")),
+		OPT__FORCE(&force, N_("force overwrite of existing files")),
 		OPT__QUIET(&quiet,
 			N_("no warning for existing files and files not in index")),
 		OPT_BOOLEAN('n', "no-create", &not_new,

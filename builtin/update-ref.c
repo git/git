@@ -16,7 +16,7 @@ int cmd_update_ref(int argc, const char **argv, const char *prefix)
 	int delete = 0, no_deref = 0, flags = 0;
 	struct option options[] = {
 		OPT_STRING( 'm', NULL, &msg, N_("reason"), N_("reason of the update")),
-		OPT_BOOLEAN('d', NULL, &delete, N_("deletes the reference")),
+		OPT_BOOLEAN('d', NULL, &delete, N_("delete the reference")),
 		OPT_BOOLEAN( 0 , "no-deref", &no_deref,
 					N_("update <refname> not the one it points to")),
 		OPT_END(),
