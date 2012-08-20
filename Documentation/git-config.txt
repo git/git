@@ -267,7 +267,7 @@ Given a .git/config like this:
 
 	; Proxy settings
 	[core]
-		gitproxy="proxy-command" for kernel.org
+		gitproxy=proxy-command for kernel.org
 		gitproxy=default-proxy ; for all the rest
 
 you can set the filemode to true with
@@ -342,7 +342,7 @@ To actually match only values with an exclamation mark, you have to
 To add a new proxy, without altering any of the existing ones, use
 
 ------------
-% git config core.gitproxy '"proxy-command" for example.com'
+% git config --add core.gitproxy '"proxy-command" for example.com'
 ------------
 
 An example to use customized color from the configuration in your
