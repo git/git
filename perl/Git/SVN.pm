@@ -1679,7 +1679,6 @@ sub parents_exclude {
 				if ( $commit eq $excluded ) {
 					push @excluded, $commit;
 					$found++;
-					last;
 				}
 				else {
 					push @new, $commit;
