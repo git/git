@@ -34,8 +34,8 @@ static const char *fmt_patch_subject_prefix = "PATCH";
 static const char *fmt_pretty;
 
 static const char * const builtin_log_usage[] = {
-	"git log [<options>] [<since>..<until>] [[--] <path>...]\n"
-	"   or: git show [options] <object>...",
+	N_("git log [<options>] [<since>..<until>] [[--] <path>...]\n")
+	N_("   or: git show [options] <object>..."),
 	NULL
 };
 
@@ -97,9 +97,9 @@ static void cmd_log_init_finish(int argc, const char **argv, const char *prefix,
 	int quiet = 0, source = 0;
 
 	const struct option builtin_log_options[] = {
-		OPT_BOOLEAN(0, "quiet", &quiet, "suppress diff output"),
-		OPT_BOOLEAN(0, "source", &source, "show source"),
-		{ OPTION_CALLBACK, 0, "decorate", NULL, NULL, "decorate options",
+		OPT_BOOLEAN(0, "quiet", &quiet, N_("suppress diff output")),
+		OPT_BOOLEAN(0, "source", &source, N_("show source")),
+		{ OPTION_CALLBACK, 0, "decorate", NULL, NULL, N_("decorate options"),
 		  PARSE_OPT_OPTARG, decorate_callback},
 		OPT_END()
 	};
