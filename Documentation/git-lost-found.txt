@@ -48,7 +48,8 @@ $ gitk $(cd .git/lost-found/commit && echo ??*)
 ------------
 
 After making sure you know which the object is the tag you are looking
-for, you can reconnect it to your regular .git/refs hierarchy.
+for, you can reconnect it to your regular `refs` hierarchy by using
+the `update-ref` command.
 
 ------------
 $ git cat-file -t 1ef2b196
