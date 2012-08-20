@@ -625,6 +625,15 @@ use these, and "test_set_prereq" for how to define your own.
    Git was compiled with USE_LIBPCRE=YesPlease. Wrap any tests
    that use git-grep --perl-regexp or git-grep -P in these.
 
+ - CASE_INSENSITIVE_FS
+
+   Test is run on a case insensitive file system.
+
+ - UTF8_NFD_TO_NFC
+
+   Test is run on a filesystem which converts decomposed utf-8 (nfd)
+   to precomposed utf-8 (nfc).
+
 Tips for Writing Tests
 ----------------------
 

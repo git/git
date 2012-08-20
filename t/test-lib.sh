@@ -659,9 +659,29 @@ test_i18ngrep () {
 	fi
 }
 
-# test whether the filesystem supports symbolic links
-ln -s x y 2>/dev/null && test -h y 2>/dev/null && test_set_prereq SYMLINKS
-rm -f y
+test_lazy_prereq SYMLINKS '
+	# test whether the filesystem supports symbolic links
+	ln -s x y && test -h y
+'
+
+test_lazy_prereq CASE_INSENSITIVE_FS '
+	echo good >CamelCase &&
+	echo bad >camelcase &&
+	test "$(cat CamelCase)" != good
+'
+
+test_lazy_prereq UTF8_NFD_TO_NFC '
+	# check whether FS converts nfd unicode to nfc
+	auml=$(printf "\303\244")
+	aumlcdiar=$(printf "\141\314\210")
+	>"$auml" &&
+	case "$(echo *)" in
+	"$aumlcdiar")
+		true ;;
+	*)
+		false ;;
+	esac
+'
 
 # When the tests are run as root, permission tests will report that
 # things are writable when they shouldn't be.
