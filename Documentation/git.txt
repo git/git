@@ -22,18 +22,17 @@ unusually rich command set that provides both high-level operations
 and full access to internals.
 
 See linkgit:gittutorial[7] to get started, then see
-link:everyday.html[Everyday Git] for a useful minimum set of commands, and
-"man git-commandname" for documentation of each command.  CVS users may
-also want to read linkgit:gitcvs-migration[7].  See
-the link:user-manual.html[Git User's Manual] for a more in-depth
-introduction.
+link:everyday.html[Everyday Git] for a useful minimum set of
+commands.  The link:user-manual.html[Git User's Manual] has a more
+in-depth introduction.
 
-The '<command>' is either a name of a Git command (see below) or an alias
-as defined in the configuration file (see linkgit:git-config[1]).
+After you mastered the basic concepts, you can come back to this
+page to learn what commands git offers.  You can learn more about
+individual git commands with "git help command".  linkgit:gitcli[7]
+manual page gives you an overview of the command line command syntax.
 
-Formatted and hyperlinked version of the latest git
-documentation can be viewed at
-`http://git-htmldocs.googlecode.com/git/git.html`.
+Formatted and hyperlinked version of the latest git documentation
+can be viewed at `http://git-htmldocs.googlecode.com/git/git.html`.
 
 ifdef::stalenotes[]
 [NOTE]
@@ -410,24 +409,6 @@ help ...`.
 	Do not use replacement refs to replace git objects. See
 	linkgit:git-replace[1] for more information.
 
-
-FURTHER DOCUMENTATION
----------------------
-
-See the references above to get started using git.  The following is
-probably more detail than necessary for a first-time user.
-
-The link:user-manual.html#git-concepts[git concepts chapter of the
-user-manual] and linkgit:gitcore-tutorial[7] both provide
-introductions to the underlying git architecture.
-
-See linkgit:gitworkflows[7] for an overview of recommended workflows.
-
-See also the link:howto-index.html[howto] documents for some useful
-examples.
-
-The internals are documented in the
-link:technical/api-index.html[GIT API documentation].
 
 GIT COMMANDS
 ------------
@@ -847,6 +828,29 @@ content stored in the index.
 The index is also capable of storing multiple entries (called "stages")
 for a given pathname.  These stages are used to hold the various
 unmerged version of a file when a merge is in progress.
+
+FURTHER DOCUMENTATION
+---------------------
+
+See the references in the "description" section to get started
+using git.  The following is probably more detail than necessary
+for a first-time user.
+
+The link:user-manual.html#git-concepts[git concepts chapter of the
+user-manual] and linkgit:gitcore-tutorial[7] both provide
+introductions to the underlying git architecture.
+
+See linkgit:gitworkflows[7] for an overview of recommended workflows.
+
+See also the link:howto-index.html[howto] documents for some useful
+examples.
+
+The internals are documented in the
+link:technical/api-index.html[GIT API documentation].
+
+Users migrating from CVS may also want to
+read linkgit:gitcvs-migration[7].
+
 
 Authors
 -------
