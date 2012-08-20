@@ -1,8 +1,7 @@
 /*
  * Converts filenames from decomposed unicode into precomposed unicode.
  * Used on MacOS X.
-*/
-
+ */
 
 #define PRECOMPOSE_UNICODE_C
 
@@ -11,25 +10,23 @@
 #include "precompose_utf8.h"
 
 typedef char *iconv_ibp;
-const static char *repo_encoding = "UTF-8";
-const static char *path_encoding = "UTF-8-MAC";
+static const char *repo_encoding = "UTF-8";
+static const char *path_encoding = "UTF-8-MAC";
 
-
-static size_t has_utf8(const char *s, size_t maxlen, size_t *strlen_c)
+static size_t has_non_ascii(const char *s, size_t maxlen, size_t *strlen_c)
 {
-	const uint8_t *utf8p = (const uint8_t*) s;
+	const uint8_t *ptr = (const uint8_t *)s;
 	size_t strlen_chars = 0;
 	size_t ret = 0;
 
-	if ((!utf8p) || (!*utf8p)) {
+	if (!ptr || !*ptr)
 		return 0;
-	}
 
-	while((*utf8p) && maxlen) {
-		if (*utf8p & 0x80)
+	while (*ptr && maxlen) {
+		if (*ptr & 0x80)
 			ret++;
 		strlen_chars++;
-		utf8p++;
+		ptr++;
 		maxlen--;
 	}
 	if (strlen_c)
@@ -41,26 +38,24 @@ static size_t has_utf8(const char *s, size_t maxlen, size_t *strlen_c)
 
 void probe_utf8_pathname_composition(char *path, int len)
 {
-	const static char *auml_nfc = "\xc3\xa4";
-	const static char *auml_nfd = "\x61\xcc\x88";
+	static const char *auml_nfc = "\xc3\xa4";
+	static const char *auml_nfd = "\x61\xcc\x88";
 	int output_fd;
 	if (precomposed_unicode != -1)
 		return; /* We found it defined in the global config, respect it */
-	path[len] = 0;
 	strcpy(path + len, auml_nfc);
 	output_fd = open(path, O_CREAT|O_EXCL|O_RDWR, 0600);
-	if (output_fd >=0) {
+	if (output_fd >= 0) {
 		close(output_fd);
-		path[len] = 0;
 		strcpy(path + len, auml_nfd);
 		/* Indicate to the user, that we can configure it to true */
-		if (0 == access(path, R_OK))
+		if (!access(path, R_OK))
 			git_config_set("core.precomposeunicode", "false");
-			/* To be backward compatible, set precomposed_unicode to 0 */
+		/* To be backward compatible, set precomposed_unicode to 0 */
 		precomposed_unicode = 0;
-		path[len] = 0;
 		strcpy(path + len, auml_nfc);
-		unlink(path);
+		if (unlink(path))
+			die_errno(_("failed to unlink '%s'"), path);
 	}
 }
 
@@ -82,7 +77,7 @@ void precompose_argv(int argc, const char **argv)
 	while (i < argc) {
 		size_t namelen;
 		oldarg = argv[i];
-		if (has_utf8(oldarg, (size_t)-1, &namelen)) {
+		if (has_non_ascii(oldarg, (size_t)-1, &namelen)) {
 			newarg = reencode_string_iconv(oldarg, namelen, ic_precompose);
 			if (newarg)
 				argv[i] = newarg;
@@ -135,7 +130,7 @@ struct dirent_prec_psx *precompose_utf8_readdir(PREC_DIR *prec_dir)
 		prec_dir->dirent_nfc->d_ino  = res->d_ino;
 		prec_dir->dirent_nfc->d_type = res->d_type;
 
-		if ((precomposed_unicode == 1) && has_utf8(res->d_name, (size_t)-1, NULL)) {
+		if ((precomposed_unicode == 1) && has_non_ascii(res->d_name, (size_t)-1, NULL)) {
 			if (prec_dir->ic_precompose == (iconv_t)-1) {
 				die("iconv_open(%s,%s) failed, but needed:\n"
 						"    precomposed unicode is not supported.\n"
@@ -160,8 +155,7 @@ struct dirent_prec_psx *precompose_utf8_readdir(PREC_DIR *prec_dir)
 					namelenz = 0; /* trigger strlcpy */
 				}
 			}
-		}
-		else
+		} else
 			namelenz = 0;
 
 		if (!namelenz)
