@@ -8,19 +8,19 @@ static int all_attrs;
 static int cached_attrs;
 static int stdin_paths;
 static const char * const check_attr_usage[] = {
-"git check-attr [-a | --all | attr...] [--] pathname...",
-"git check-attr --stdin [-a | --all | attr...] < <list-of-paths>",
+N_("git check-attr [-a | --all | attr...] [--] pathname..."),
+N_("git check-attr --stdin [-a | --all | attr...] < <list-of-paths>"),
 NULL
 };
 
 static int null_term_line;
 
 static const struct option check_attr_options[] = {
-	OPT_BOOLEAN('a', "all", &all_attrs, "report all attributes set on file"),
-	OPT_BOOLEAN(0,  "cached", &cached_attrs, "use .gitattributes only from the index"),
-	OPT_BOOLEAN(0 , "stdin", &stdin_paths, "read file names from stdin"),
+	OPT_BOOLEAN('a', "all", &all_attrs, N_("report all attributes set on file")),
+	OPT_BOOLEAN(0,  "cached", &cached_attrs, N_("use .gitattributes only from the index")),
+	OPT_BOOLEAN(0 , "stdin", &stdin_paths, N_("read file names from stdin")),
 	OPT_BOOLEAN('z', NULL, &null_term_line,
-		"input paths are terminated by a null character"),
+		N_("input paths are terminated by a null character")),
 	OPT_END()
 };
 
