@@ -14,7 +14,7 @@
 #include "gpg-interface.h"
 
 static const char * const verify_tag_usage[] = {
-		"git verify-tag [-v|--verbose] <tag>...",
+		N_("git verify-tag [-v|--verbose] <tag>..."),
 		NULL
 };
 
@@ -70,7 +70,7 @@ int cmd_verify_tag(int argc, const char **argv, const char *prefix)
 {
 	int i = 1, verbose = 0, had_error = 0;
 	const struct option verify_tag_options[] = {
-		OPT__VERBOSE(&verbose, "print tag contents"),
+		OPT__VERBOSE(&verbose, N_("print tag contents")),
 		OPT_END()
 	};
 
