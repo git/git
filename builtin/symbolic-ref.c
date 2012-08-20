@@ -4,7 +4,7 @@
 #include "parse-options.h"
 
 static const char * const git_symbolic_ref_usage[] = {
-	"git symbolic-ref [options] name [ref]",
+	N_("git symbolic-ref [options] name [ref]"),
 	NULL
 };
 
@@ -35,9 +35,9 @@ int cmd_symbolic_ref(int argc, const char **argv, const char *prefix)
 	const char *msg = NULL;
 	struct option options[] = {
 		OPT__QUIET(&quiet,
-			"suppress error message for non-symbolic (detached) refs"),
-		OPT_BOOL(0, "short", &shorten, "shorten ref output"),
-		OPT_STRING('m', NULL, &msg, "reason", "reason of the update"),
+			N_("suppress error message for non-symbolic (detached) refs")),
+		OPT_BOOL(0, "short", &shorten, N_("shorten ref output")),
+		OPT_STRING('m', NULL, &msg, N_("reason"), N_("reason of the update")),
 		OPT_END(),
 	};
 
