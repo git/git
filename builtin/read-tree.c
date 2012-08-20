@@ -33,7 +33,7 @@ static int list_tree(unsigned char *sha1)
 }
 
 static const char * const read_tree_usage[] = {
-	"git read-tree [[-m [--trivial] [--aggressive] | --reset | --prefix=<prefix>] [-u [--exclude-per-directory=<gitignore>] | -i]] [--no-sparse-checkout] [--index-output=<file>] (--empty | <tree-ish1> [<tree-ish2> [<tree-ish3>]])",
+	N_("git read-tree [[-m [--trivial] [--aggressive] | --reset | --prefix=<prefix>] [-u [--exclude-per-directory=<gitignore>] | -i]] [--no-sparse-checkout] [--index-output=<file>] (--empty | <tree-ish1> [<tree-ish2> [<tree-ish3>]])"),
 	NULL
 };
 
@@ -104,37 +104,37 @@ int cmd_read_tree(int argc, const char **argv, const char *unused_prefix)
 	struct unpack_trees_options opts;
 	int prefix_set = 0;
 	const struct option read_tree_options[] = {
-		{ OPTION_CALLBACK, 0, "index-output", NULL, "file",
-		  "write resulting index to <file>",
+		{ OPTION_CALLBACK, 0, "index-output", NULL, N_("file"),
+		  N_("write resulting index to <file>"),
 		  PARSE_OPT_NONEG, index_output_cb },
 		OPT_SET_INT(0, "empty", &read_empty,
-			    "only empty the index", 1),
-		OPT__VERBOSE(&opts.verbose_update, "be verbose"),
-		OPT_GROUP("Merging"),
+			    N_("only empty the index"), 1),
+		OPT__VERBOSE(&opts.verbose_update, N_("be verbose")),
+		OPT_GROUP(N_("Merging")),
 		OPT_SET_INT('m', NULL, &opts.merge,
-			    "perform a merge in addition to a read", 1),
+			    N_("perform a merge in addition to a read"), 1),
 		OPT_SET_INT(0, "trivial", &opts.trivial_merges_only,
-			    "3-way merge if no file level merging required", 1),
+			    N_("3-way merge if no file level merging required"), 1),
 		OPT_SET_INT(0, "aggressive", &opts.aggressive,
-			    "3-way merge in presence of adds and removes", 1),
+			    N_("3-way merge in presence of adds and removes"), 1),
 		OPT_SET_INT(0, "reset", &opts.reset,
-			    "same as -m, but discard unmerged entries", 1),
-		{ OPTION_STRING, 0, "prefix", &opts.prefix, "<subdirectory>/",
-		  "read the tree into the index under <subdirectory>/",
+			    N_("same as -m, but discard unmerged entries"), 1),
+		{ OPTION_STRING, 0, "prefix", &opts.prefix, N_("<subdirectory>/"),
+		  N_("read the tree into the index under <subdirectory>/"),
 		  PARSE_OPT_NONEG | PARSE_OPT_LITERAL_ARGHELP },
 		OPT_SET_INT('u', NULL, &opts.update,
-			    "update working tree with merge result", 1),
+			    N_("update working tree with merge result"), 1),
 		{ OPTION_CALLBACK, 0, "exclude-per-directory", &opts,
-		  "gitignore",
-		  "allow explicitly ignored files to be overwritten",
+		  N_("gitignore"),
+		  N_("allow explicitly ignored files to be overwritten"),
 		  PARSE_OPT_NONEG, exclude_per_directory_cb },
 		OPT_SET_INT('i', NULL, &opts.index_only,
-			    "don't check the working tree after merging", 1),
-		OPT__DRY_RUN(&opts.dry_run, "don't update the index or the work tree"),
+			    N_("don't check the working tree after merging"), 1),
+		OPT__DRY_RUN(&opts.dry_run, N_("don't update the index or the work tree")),
 		OPT_SET_INT(0, "no-sparse-checkout", &opts.skip_sparse_checkout,
-			    "skip applying sparse checkout filter", 1),
+			    N_("skip applying sparse checkout filter"), 1),
 		OPT_SET_INT(0, "debug-unpack", &opts.debug_unpack,
-			    "debug unpack-trees", 1),
+			    N_("debug unpack-trees"), 1),
 		OPT_END()
 	};
 
