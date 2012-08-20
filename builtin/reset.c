@@ -22,9 +22,9 @@
 #include "cache-tree.h"
 
 static const char * const git_reset_usage[] = {
-	"git reset [--mixed | --soft | --hard | --merge | --keep] [-q] [<commit>]",
-	"git reset [-q] <commit> [--] <paths>...",
-	"git reset --patch [<commit>] [--] [<paths>...]",
+	N_("git reset [--mixed | --soft | --hard | --merge | --keep] [-q] [<commit>]"),
+	N_("git reset [-q] <commit> [--] <paths>..."),
+	N_("git reset --patch [<commit>] [--] [<paths>...]"),
 	NULL
 };
 
@@ -235,17 +235,17 @@ int cmd_reset(int argc, const char **argv, const char *prefix)
 	struct commit *commit;
 	struct strbuf msg = STRBUF_INIT;
 	const struct option options[] = {
-		OPT__QUIET(&quiet, "be quiet, only report errors"),
+		OPT__QUIET(&quiet, N_("be quiet, only report errors")),
 		OPT_SET_INT(0, "mixed", &reset_type,
-						"reset HEAD and index", MIXED),
-		OPT_SET_INT(0, "soft", &reset_type, "reset only HEAD", SOFT),
+						N_("reset HEAD and index"), MIXED),
+		OPT_SET_INT(0, "soft", &reset_type, N_("reset only HEAD"), SOFT),
 		OPT_SET_INT(0, "hard", &reset_type,
-				"reset HEAD, index and working tree", HARD),
+				N_("reset HEAD, index and working tree"), HARD),
 		OPT_SET_INT(0, "merge", &reset_type,
-				"reset HEAD, index and working tree", MERGE),
+				N_("reset HEAD, index and working tree"), MERGE),
 		OPT_SET_INT(0, "keep", &reset_type,
-				"reset HEAD but keep local changes", KEEP),
-		OPT_BOOLEAN('p', "patch", &patch_mode, "select hunks interactively"),
+				N_("reset HEAD but keep local changes"), KEEP),
+		OPT_BOOLEAN('p', "patch", &patch_mode, N_("select hunks interactively")),
 		OPT_END()
 	};
 
