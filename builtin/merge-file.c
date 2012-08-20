@@ -5,7 +5,7 @@
 #include "parse-options.h"
 
 static const char *const merge_file_usage[] = {
-	"git merge-file [options] [-L name1 [-L orig [-L name2]]] file1 orig_file file2",
+	N_("git merge-file [options] [-L name1 [-L orig [-L name2]]] file1 orig_file file2"),
 	NULL
 };
 
@@ -30,19 +30,19 @@ int cmd_merge_file(int argc, const char **argv, const char *prefix)
 	int quiet = 0;
 	int prefixlen = 0;
 	struct option options[] = {
-		OPT_BOOLEAN('p', "stdout", &to_stdout, "send results to standard output"),
-		OPT_SET_INT(0, "diff3", &xmp.style, "use a diff3 based merge", XDL_MERGE_DIFF3),
-		OPT_SET_INT(0, "ours", &xmp.favor, "for conflicts, use our version",
+		OPT_BOOLEAN('p', "stdout", &to_stdout, N_("send results to standard output")),
+		OPT_SET_INT(0, "diff3", &xmp.style, N_("use a diff3 based merge"), XDL_MERGE_DIFF3),
+		OPT_SET_INT(0, "ours", &xmp.favor, N_("for conflicts, use our version"),
 			    XDL_MERGE_FAVOR_OURS),
-		OPT_SET_INT(0, "theirs", &xmp.favor, "for conflicts, use their version",
+		OPT_SET_INT(0, "theirs", &xmp.favor, N_("for conflicts, use their version"),
 			    XDL_MERGE_FAVOR_THEIRS),
-		OPT_SET_INT(0, "union", &xmp.favor, "for conflicts, use a union version",
+		OPT_SET_INT(0, "union", &xmp.favor, N_("for conflicts, use a union version"),
 			    XDL_MERGE_FAVOR_UNION),
 		OPT_INTEGER(0, "marker-size", &xmp.marker_size,
-			    "for conflicts, use this marker size"),
-		OPT__QUIET(&quiet, "do not warn about conflicts"),
-		OPT_CALLBACK('L', NULL, names, "name",
-			     "set labels for file1/orig_file/file2", &label_cb),
+			    N_("for conflicts, use this marker size")),
+		OPT__QUIET(&quiet, N_("do not warn about conflicts")),
+		OPT_CALLBACK('L', NULL, names, N_("name"),
+			     N_("set labels for file1/orig_file/file2"), &label_cb),
 		OPT_END(),
 	};
 
