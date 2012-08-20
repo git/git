@@ -4,7 +4,7 @@
 #include "parse-options.h"
 
 static const char * const prune_packed_usage[] = {
-	"git prune-packed [-n|--dry-run] [-q|--quiet]",
+	N_("git prune-packed [-n|--dry-run] [-q|--quiet]"),
 	NULL
 };
 
@@ -73,8 +73,8 @@ int cmd_prune_packed(int argc, const char **argv, const char *prefix)
 {
 	int opts = isatty(2) ? VERBOSE : 0;
 	const struct option prune_packed_options[] = {
-		OPT_BIT('n', "dry-run", &opts, "dry run", DRY_RUN),
-		OPT_NEGBIT('q', "quiet", &opts, "be quiet", VERBOSE),
+		OPT_BIT('n', "dry-run", &opts, N_("dry run"), DRY_RUN),
+		OPT_NEGBIT('q', "quiet", &opts, N_("be quiet"), VERBOSE),
 		OPT_END()
 	};
 
