@@ -92,7 +92,7 @@ int cmd_archive(int argc, const char **argv, const char *prefix)
 			N_("write the archive to this file")),
 		OPT_STRING(0, "remote", &remote, N_("repo"),
 			N_("retrieve the archive from remote repository <repo>")),
-		OPT_STRING(0, "exec", &exec, N_("cmd"),
+		OPT_STRING(0, "exec", &exec, N_("command"),
 			N_("path to the remote git-upload-archive command")),
 		OPT_END()
 	};

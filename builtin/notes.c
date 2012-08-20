@@ -531,7 +531,7 @@ static int add(int argc, const char **argv, const char *prefix)
 	const unsigned char *note;
 	struct msg_arg msg = { 0, 0, STRBUF_INIT };
 	struct option options[] = {
-		{ OPTION_CALLBACK, 'm', "message", &msg, N_("msg"),
+		{ OPTION_CALLBACK, 'm', "message", &msg, N_("message"),
 			N_("note contents as a string"), PARSE_OPT_NONEG,
 			parse_msg_arg},
 		{ OPTION_CALLBACK, 'F', "file", &msg, N_("file"),
@@ -688,7 +688,7 @@ static int append_edit(int argc, const char **argv, const char *prefix)
 	const char * const *usage;
 	struct msg_arg msg = { 0, 0, STRBUF_INIT };
 	struct option options[] = {
-		{ OPTION_CALLBACK, 'm', "message", &msg, N_("msg"),
+		{ OPTION_CALLBACK, 'm', "message", &msg, N_("message"),
 			N_("note contents as a string"), PARSE_OPT_NONEG,
 			parse_msg_arg},
 		{ OPTION_CALLBACK, 'F', "file", &msg, N_("file"),

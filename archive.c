@@ -343,7 +343,7 @@ static int parse_archive_args(int argc, const char **argv,
 		OPT_GROUP(""),
 		OPT_STRING(0, "remote", &remote, N_("repo"),
 			N_("retrieve the archive from remote repository <repo>")),
-		OPT_STRING(0, "exec", &exec, N_("cmd"),
+		OPT_STRING(0, "exec", &exec, N_("command"),
 			N_("path to the remote git-upload-archive command")),
 		OPT_END()
 	};
