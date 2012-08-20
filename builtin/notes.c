@@ -20,71 +20,71 @@
 #include "notes-merge.h"
 
 static const char * const git_notes_usage[] = {
-	"git notes [--ref <notes_ref>] [list [<object>]]",
-	"git notes [--ref <notes_ref>] add [-f] [-m <msg> | -F <file> | (-c | -C) <object>] [<object>]",
-	"git notes [--ref <notes_ref>] copy [-f] <from-object> <to-object>",
-	"git notes [--ref <notes_ref>] append [-m <msg> | -F <file> | (-c | -C) <object>] [<object>]",
-	"git notes [--ref <notes_ref>] edit [<object>]",
-	"git notes [--ref <notes_ref>] show [<object>]",
-	"git notes [--ref <notes_ref>] merge [-v | -q] [-s <strategy> ] <notes_ref>",
-	"git notes merge --commit [-v | -q]",
-	"git notes merge --abort [-v | -q]",
-	"git notes [--ref <notes_ref>] remove [<object>...]",
-	"git notes [--ref <notes_ref>] prune [-n | -v]",
-	"git notes [--ref <notes_ref>] get-ref",
+	N_("git notes [--ref <notes_ref>] [list [<object>]]"),
+	N_("git notes [--ref <notes_ref>] add [-f] [-m <msg> | -F <file> | (-c | -C) <object>] [<object>]"),
+	N_("git notes [--ref <notes_ref>] copy [-f] <from-object> <to-object>"),
+	N_("git notes [--ref <notes_ref>] append [-m <msg> | -F <file> | (-c | -C) <object>] [<object>]"),
+	N_("git notes [--ref <notes_ref>] edit [<object>]"),
+	N_("git notes [--ref <notes_ref>] show [<object>]"),
+	N_("git notes [--ref <notes_ref>] merge [-v | -q] [-s <strategy> ] <notes_ref>"),
+	N_("git notes merge --commit [-v | -q]"),
+	N_("git notes merge --abort [-v | -q]"),
+	N_("git notes [--ref <notes_ref>] remove [<object>...]"),
+	N_("git notes [--ref <notes_ref>] prune [-n | -v]"),
+	N_("git notes [--ref <notes_ref>] get-ref"),
 	NULL
 };
 
 static const char * const git_notes_list_usage[] = {
-	"git notes [list [<object>]]",
+	N_("git notes [list [<object>]]"),
 	NULL
 };
 
 static const char * const git_notes_add_usage[] = {
-	"git notes add [<options>] [<object>]",
+	N_("git notes add [<options>] [<object>]"),
 	NULL
 };
 
 static const char * const git_notes_copy_usage[] = {
-	"git notes copy [<options>] <from-object> <to-object>",
-	"git notes copy --stdin [<from-object> <to-object>]...",
+	N_("git notes copy [<options>] <from-object> <to-object>"),
+	N_("git notes copy --stdin [<from-object> <to-object>]..."),
 	NULL
 };
 
 static const char * const git_notes_append_usage[] = {
-	"git notes append [<options>] [<object>]",
+	N_("git notes append [<options>] [<object>]"),
 	NULL
 };
 
 static const char * const git_notes_edit_usage[] = {
-	"git notes edit [<object>]",
+	N_("git notes edit [<object>]"),
 	NULL
 };
 
 static const char * const git_notes_show_usage[] = {
-	"git notes show [<object>]",
+	N_("git notes show [<object>]"),
 	NULL
 };
 
 static const char * const git_notes_merge_usage[] = {
-	"git notes merge [<options>] <notes_ref>",
-	"git notes merge --commit [<options>]",
-	"git notes merge --abort [<options>]",
+	N_("git notes merge [<options>] <notes_ref>"),
+	N_("git notes merge --commit [<options>]"),
+	N_("git notes merge --abort [<options>]"),
 	NULL
 };
 
 static const char * const git_notes_remove_usage[] = {
-	"git notes remove [<object>]",
+	N_("git notes remove [<object>]"),
 	NULL
 };
 
 static const char * const git_notes_prune_usage[] = {
-	"git notes prune [<options>]",
+	N_("git notes prune [<options>]"),
 	NULL
 };
 
 static const char * const git_notes_get_ref_usage[] = {
-	"git notes get-ref",
+	N_("git notes get-ref"),
 	NULL
 };
 
@@ -531,19 +531,19 @@ static int add(int argc, const char **argv, const char *prefix)
 	const unsigned char *note;
 	struct msg_arg msg = { 0, 0, STRBUF_INIT };
 	struct option options[] = {
-		{ OPTION_CALLBACK, 'm', "message", &msg, "msg",
-			"note contents as a string", PARSE_OPT_NONEG,
+		{ OPTION_CALLBACK, 'm', "message", &msg, N_("msg"),
+			N_("note contents as a string"), PARSE_OPT_NONEG,
 			parse_msg_arg},
-		{ OPTION_CALLBACK, 'F', "file", &msg, "file",
-			"note contents in a file", PARSE_OPT_NONEG,
+		{ OPTION_CALLBACK, 'F', "file", &msg, N_("file"),
+			N_("note contents in a file"), PARSE_OPT_NONEG,
 			parse_file_arg},
-		{ OPTION_CALLBACK, 'c', "reedit-message", &msg, "object",
-			"reuse and edit specified note object", PARSE_OPT_NONEG,
+		{ OPTION_CALLBACK, 'c', "reedit-message", &msg, N_("object"),
+			N_("reuse and edit specified note object"), PARSE_OPT_NONEG,
 			parse_reedit_arg},
-		{ OPTION_CALLBACK, 'C', "reuse-message", &msg, "object",
-			"reuse specified note object", PARSE_OPT_NONEG,
+		{ OPTION_CALLBACK, 'C', "reuse-message", &msg, N_("object"),
+			N_("reuse specified note object"), PARSE_OPT_NONEG,
 			parse_reuse_arg},
-		OPT__FORCE(&force, "replace existing notes"),
+		OPT__FORCE(&force, N_("replace existing notes")),
 		OPT_END()
 	};
 
@@ -611,11 +611,11 @@ static int copy(int argc, const char **argv, const char *prefix)
 	struct notes_tree *t;
 	const char *rewrite_cmd = NULL;
 	struct option options[] = {
-		OPT__FORCE(&force, "replace existing notes"),
-		OPT_BOOLEAN(0, "stdin", &from_stdin, "read objects from stdin"),
-		OPT_STRING(0, "for-rewrite", &rewrite_cmd, "command",
-			   "load rewriting config for <command> (implies "
-			   "--stdin)"),
+		OPT__FORCE(&force, N_("replace existing notes")),
+		OPT_BOOLEAN(0, "stdin", &from_stdin, N_("read objects from stdin")),
+		OPT_STRING(0, "for-rewrite", &rewrite_cmd, N_("command"),
+			   N_("load rewriting config for <command> (implies "
+			      "--stdin)")),
 		OPT_END()
 	};
 
@@ -688,17 +688,17 @@ static int append_edit(int argc, const char **argv, const char *prefix)
 	const char * const *usage;
 	struct msg_arg msg = { 0, 0, STRBUF_INIT };
 	struct option options[] = {
-		{ OPTION_CALLBACK, 'm', "message", &msg, "msg",
-			"note contents as a string", PARSE_OPT_NONEG,
+		{ OPTION_CALLBACK, 'm', "message", &msg, N_("msg"),
+			N_("note contents as a string"), PARSE_OPT_NONEG,
 			parse_msg_arg},
-		{ OPTION_CALLBACK, 'F', "file", &msg, "file",
-			"note contents in a file", PARSE_OPT_NONEG,
+		{ OPTION_CALLBACK, 'F', "file", &msg, N_("file"),
+			N_("note contents in a file"), PARSE_OPT_NONEG,
 			parse_file_arg},
-		{ OPTION_CALLBACK, 'c', "reedit-message", &msg, "object",
-			"reuse and edit specified note object", PARSE_OPT_NONEG,
+		{ OPTION_CALLBACK, 'c', "reedit-message", &msg, N_("object"),
+			N_("reuse and edit specified note object"), PARSE_OPT_NONEG,
 			parse_reedit_arg},
-		{ OPTION_CALLBACK, 'C', "reuse-message", &msg, "object",
-			"reuse specified note object", PARSE_OPT_NONEG,
+		{ OPTION_CALLBACK, 'C', "reuse-message", &msg, N_("object"),
+			N_("reuse specified note object"), PARSE_OPT_NONEG,
 			parse_reuse_arg},
 		OPT_END()
 	};
@@ -861,19 +861,19 @@ static int merge(int argc, const char **argv, const char *prefix)
 	int verbosity = 0, result;
 	const char *strategy = NULL;
 	struct option options[] = {
-		OPT_GROUP("General options"),
+		OPT_GROUP(N_("General options")),
 		OPT__VERBOSITY(&verbosity),
-		OPT_GROUP("Merge options"),
-		OPT_STRING('s', "strategy", &strategy, "strategy",
-			   "resolve notes conflicts using the given strategy "
-			   "(manual/ours/theirs/union/cat_sort_uniq)"),
-		OPT_GROUP("Committing unmerged notes"),
+		OPT_GROUP(N_("Merge options")),
+		OPT_STRING('s', "strategy", &strategy, N_("strategy"),
+			   N_("resolve notes conflicts using the given strategy "
+			      "(manual/ours/theirs/union/cat_sort_uniq)")),
+		OPT_GROUP(N_("Committing unmerged notes")),
 		{ OPTION_BOOLEAN, 0, "commit", &do_commit, NULL,
-			"finalize notes merge by committing unmerged notes",
+			N_("finalize notes merge by committing unmerged notes"),
 			PARSE_OPT_NOARG | PARSE_OPT_NONEG },
-		OPT_GROUP("Aborting notes merge resolution"),
+		OPT_GROUP(N_("Aborting notes merge resolution")),
 		{ OPTION_BOOLEAN, 0, "abort", &do_abort, NULL,
-			"abort notes merge",
+			N_("abort notes merge"),
 			PARSE_OPT_NOARG | PARSE_OPT_NONEG },
 		OPT_END()
 	};
@@ -980,10 +980,10 @@ static int remove_cmd(int argc, const char **argv, const char *prefix)
 	int from_stdin = 0;
 	struct option options[] = {
 		OPT_BIT(0, "ignore-missing", &flag,
-			"attempt to remove non-existent note is not an error",
+			N_("attempt to remove non-existent note is not an error"),
 			IGNORE_MISSING),
 		OPT_BOOLEAN(0, "stdin", &from_stdin,
-			    "read object names from the standard input"),
+			    N_("read object names from the standard input")),
 		OPT_END()
 	};
 	struct notes_tree *t;
@@ -1064,8 +1064,8 @@ int cmd_notes(int argc, const char **argv, const char *prefix)
 	int result;
 	const char *override_notes_ref = NULL;
 	struct option options[] = {
-		OPT_STRING(0, "ref", &override_notes_ref, "notes_ref",
-			   "use notes from <notes_ref>"),
+		OPT_STRING(0, "ref", &override_notes_ref, N_("notes_ref"),
+			   N_("use notes from <notes_ref>")),
 		OPT_END()
 	};
 
