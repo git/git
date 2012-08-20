@@ -23,9 +23,9 @@ static int show_merge_base(struct commit **rev, int rev_nr, int show_all)
 }
 
 static const char * const merge_base_usage[] = {
-	"git merge-base [-a|--all] <commit> <commit>...",
-	"git merge-base [-a|--all] --octopus <commit>...",
-	"git merge-base --independent <commit>...",
+	N_("git merge-base [-a|--all] <commit> <commit>..."),
+	N_("git merge-base [-a|--all] --octopus <commit>..."),
+	N_("git merge-base --independent <commit>..."),
 	NULL
 };
 
@@ -79,9 +79,9 @@ int cmd_merge_base(int argc, const char **argv, const char *prefix)
 	int reduce = 0;
 
 	struct option options[] = {
-		OPT_BOOLEAN('a', "all", &show_all, "output all common ancestors"),
-		OPT_BOOLEAN(0, "octopus", &octopus, "find ancestors for a single n-way merge"),
-		OPT_BOOLEAN(0, "independent", &reduce, "list revs not reachable from others"),
+		OPT_BOOLEAN('a', "all", &show_all, N_("output all common ancestors")),
+		OPT_BOOLEAN(0, "octopus", &octopus, N_("find ancestors for a single n-way merge")),
+		OPT_BOOLEAN(0, "independent", &reduce, N_("list revs not reachable from others")),
 		OPT_END()
 	};
 
