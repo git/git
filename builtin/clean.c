@@ -16,7 +16,7 @@
 static int force = -1; /* unset */
 
 static const char *const builtin_clean_usage[] = {
-	"git clean [-d] [-f] [-n] [-q] [-e <pattern>] [-x | -X] [--] <paths>...",
+	N_("git clean [-d] [-f] [-n] [-q] [-e <pattern>] [-x | -X] [--] <paths>..."),
 	NULL
 };
 
@@ -48,16 +48,16 @@ int cmd_clean(int argc, const char **argv, const char *prefix)
 	const char *qname;
 	char *seen = NULL;
 	struct option options[] = {
-		OPT__QUIET(&quiet, "do not print names of files removed"),
-		OPT__DRY_RUN(&show_only, "dry run"),
-		OPT__FORCE(&force, "force"),
+		OPT__QUIET(&quiet, N_("do not print names of files removed")),
+		OPT__DRY_RUN(&show_only, N_("dry run")),
+		OPT__FORCE(&force, N_("force")),
 		OPT_BOOLEAN('d', NULL, &remove_directories,
-				"remove whole directories"),
-		{ OPTION_CALLBACK, 'e', "exclude", &exclude_list, "pattern",
-		  "add <pattern> to ignore rules", PARSE_OPT_NONEG, exclude_cb },
-		OPT_BOOLEAN('x', NULL, &ignored, "remove ignored files, too"),
+				N_("remove whole directories")),
+		{ OPTION_CALLBACK, 'e', "exclude", &exclude_list, N_("pattern"),
+		  N_("add <pattern> to ignore rules"), PARSE_OPT_NONEG, exclude_cb },
+		OPT_BOOLEAN('x', NULL, &ignored, N_("remove ignored files, too")),
 		OPT_BOOLEAN('X', NULL, &ignored_only,
-				"remove only ignored files"),
+				N_("remove only ignored files")),
 		OPT_END()
 	};
 
