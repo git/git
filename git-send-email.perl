@@ -862,11 +862,13 @@ $time = time - scalar $#files;
 sub unquote_rfc2047 {
 	local ($_) = @_;
 	my $encoding;
-	if (s/=\?([^?]+)\?q\?(.*)\?=/$2/g) {
+	s{=\?([^?]+)\?q\?(.*?)\?=}{
 		$encoding = $1;
-		s/_/ /g;
-		s/=([0-9A-F]{2})/chr(hex($1))/eg;
-	}
+		my $e = $2;
+		$e =~ s/_/ /g;
+		$e =~ s/=([0-9A-F]{2})/chr(hex($1))/eg;
+		$e;
+	}eg;
 	return wantarray ? ($_, $encoding) : $_;
 }
 
