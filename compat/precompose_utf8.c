@@ -13,20 +13,20 @@ typedef char *iconv_ibp;
 static const char *repo_encoding = "UTF-8";
 static const char *path_encoding = "UTF-8-MAC";
 
-static size_t has_utf8(const char *s, size_t maxlen, size_t *strlen_c)
+static size_t has_non_ascii(const char *s, size_t maxlen, size_t *strlen_c)
 {
-	const uint8_t *utf8p = (const uint8_t *)s;
+	const uint8_t *ptr = (const uint8_t *)s;
 	size_t strlen_chars = 0;
 	size_t ret = 0;
 
-	if (!utf8p || !*utf8p)
+	if (!ptr || !*ptr)
 		return 0;
 
-	while (*utf8p && maxlen) {
-		if (*utf8p & 0x80)
+	while (*ptr && maxlen) {
+		if (*ptr & 0x80)
 			ret++;
 		strlen_chars++;
-		utf8p++;
+		ptr++;
 		maxlen--;
 	}
 	if (strlen_c)
@@ -77,7 +77,7 @@ void precompose_argv(int argc, const char **argv)
 	while (i < argc) {
 		size_t namelen;
 		oldarg = argv[i];
-		if (has_utf8(oldarg, (size_t)-1, &namelen)) {
+		if (has_non_ascii(oldarg, (size_t)-1, &namelen)) {
 			newarg = reencode_string_iconv(oldarg, namelen, ic_precompose);
 			if (newarg)
 				argv[i] = newarg;
@@ -130,7 +130,7 @@ struct dirent_prec_psx *precompose_utf8_readdir(PREC_DIR *prec_dir)
 		prec_dir->dirent_nfc->d_ino  = res->d_ino;
 		prec_dir->dirent_nfc->d_type = res->d_type;
 
-		if ((precomposed_unicode == 1) && has_utf8(res->d_name, (size_t)-1, NULL)) {
+		if ((precomposed_unicode == 1) && has_non_ascii(res->d_name, (size_t)-1, NULL)) {
 			if (prec_dir->ic_precompose == (iconv_t)-1) {
 				die("iconv_open(%s,%s) failed, but needed:\n"
 						"    precomposed unicode is not supported.\n"
