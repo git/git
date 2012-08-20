@@ -367,7 +367,7 @@ test_expect_success 'submodule update continues after checkout error' '
 	 git submodule init &&
 	 git commit -am "new_submodule" &&
 	 (cd submodule2 &&
-	  git rev-parse --max-count=1 HEAD > ../expect
+	  git rev-parse --verify HEAD >../expect
 	 ) &&
 	 (cd submodule &&
 	  test_commit "update_submodule" file
@@ -384,7 +384,7 @@ test_expect_success 'submodule update continues after checkout error' '
 	 git checkout HEAD^ &&
 	 test_must_fail git submodule update &&
 	 (cd submodule2 &&
-	  git rev-parse --max-count=1 HEAD > ../actual
+	  git rev-parse --verify HEAD >../actual
 	 ) &&
 	 test_cmp expect actual
 	)
@@ -413,7 +413,7 @@ test_expect_success 'submodule update continues after recursive checkout error' 
 	  test_commit "update_submodule_again_again" file
 	 ) &&
 	 (cd submodule2 &&
-	  git rev-parse --max-count=1 HEAD > ../expect &&
+	  git rev-parse --verify HEAD >../expect &&
 	  test_commit "update_submodule2_again" file
 	 ) &&
 	 git add submodule &&
@@ -428,7 +428,7 @@ test_expect_success 'submodule update continues after recursive checkout error' 
 	 ) &&
 	 test_must_fail git submodule update --recursive &&
 	 (cd submodule2 &&
-	  git rev-parse --max-count=1 HEAD > ../actual
+	  git rev-parse --verify HEAD >../actual
 	 ) &&
 	 test_cmp expect actual
 	)
@@ -460,12 +460,12 @@ test_expect_success 'submodule update exit immediately in case of merge conflict
 	 ) &&
 	 git checkout HEAD^ &&
 	 (cd submodule2 &&
-	  git rev-parse --max-count=1 HEAD > ../expect
+	  git rev-parse --verify HEAD >../expect
 	 ) &&
 	 git config submodule.submodule.update merge &&
 	 test_must_fail git submodule update &&
 	 (cd submodule2 &&
-	  git rev-parse --max-count=1 HEAD > ../actual
+	  git rev-parse --verify HEAD >../actual
 	 ) &&
 	 test_cmp expect actual
 	)
@@ -495,12 +495,12 @@ test_expect_success 'submodule update exit immediately after recursive rebase er
 	 ) &&
 	 git checkout HEAD^ &&
 	 (cd submodule2 &&
-	  git rev-parse --max-count=1 HEAD > ../expect
+	  git rev-parse --verify HEAD >../expect
 	 ) &&
 	 git config submodule.submodule.update rebase &&
 	 test_must_fail git submodule update &&
 	 (cd submodule2 &&
-	  git rev-parse --max-count=1 HEAD > ../actual
+	  git rev-parse --verify HEAD >../actual
 	 ) &&
 	 test_cmp expect actual
 	)
