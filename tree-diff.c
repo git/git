@@ -49,12 +49,12 @@ static int compare_tree_entry(struct tree_desc *t1, struct tree_desc *t2,
 	if (DIFF_OPT_TST(opt, RECURSIVE) && S_ISDIR(mode1)) {
 		if (DIFF_OPT_TST(opt, TREE_IN_RECURSIVE)) {
 			opt->change(opt, mode1, mode2,
-				    sha1, sha2, base->buf, 0, 0);
+				    sha1, sha2, 1, 1, base->buf, 0, 0);
 		}
 		strbuf_addch(base, '/');
 		diff_tree_sha1(sha1, sha2, base->buf, opt);
 	} else {
-		opt->change(opt, mode1, mode2, sha1, sha2, base->buf, 0, 0);
+		opt->change(opt, mode1, mode2, sha1, sha2, 1, 1, base->buf, 0, 0);
 	}
 	strbuf_setlen(base, old_baselen);
 	return 0;
@@ -100,7 +100,7 @@ static void show_entry(struct diff_options *opt, const char *prefix,
 			die("corrupt tree sha %s", sha1_to_hex(sha1));
 
 		if (DIFF_OPT_TST(opt, TREE_IN_RECURSIVE))
-			opt->add_remove(opt, *prefix, mode, sha1, base->buf, 0);
+			opt->add_remove(opt, *prefix, mode, sha1, 1, base->buf, 0);
 
 		strbuf_addch(base, '/');
 
@@ -108,7 +108,7 @@ static void show_entry(struct diff_options *opt, const char *prefix,
 		show_tree(opt, prefix, &inner, base);
 		free(tree);
 	} else
-		opt->add_remove(opt, prefix[0], mode, sha1, base->buf, 0);
+		opt->add_remove(opt, prefix[0], mode, sha1, 1, base->buf, 0);
 
 	strbuf_setlen(base, old_baselen);
 }

@@ -29,4 +29,23 @@ test_expect_success 'update-index -h with corrupt index' '
 	grep "[Uu]sage: git update-index" broken/usage
 '
 
+test_expect_success '--cacheinfo does not accept blob null sha1' '
+	echo content >file &&
+	git add file &&
+	git rev-parse :file >expect &&
+	test_must_fail git update-index --cacheinfo 100644 $_z40 file &&
+	git rev-parse :file >actual &&
+	test_cmp expect actual
+'
+
+test_expect_success '--cacheinfo does not accept gitlink null sha1' '
+	git init submodule &&
+	(cd submodule && test_commit foo) &&
+	git add submodule &&
+	git rev-parse :submodule >expect &&
+	test_must_fail git update-index --cacheinfo 160000 $_z40 submodule &&
+	git rev-parse :submodule >actual &&
+	test_cmp expect actual
+'
+
 test_done
