@@ -1,6 +1,6 @@
 Subject: A note from the maintainer
 
-Welcome to git development community.
+Welcome to the Git development community.
 
 This message is written by the maintainer and talks about how Git
 project is managed, and how you can work with it.
@@ -110,8 +110,8 @@ of git: "master", "maint", "next", and "pu".
 The "master" branch is meant to contain what are very well tested and
 ready to be used in a production setting.  Every now and then, a "feature
 release" is cut from the tip of this branch and they typically are named
-with three dotted decimal digits.  The last such release was 1.7.11 done on
-Jun 17, 2012. You can expect that the tip of the "master" branch is always
+with three dotted decimal digits.  The last such release was 1.7.12 done on
+Aug 19, 2012. You can expect that the tip of the "master" branch is always
 more stable than any of the released versions.
 
 Whenever a feature release is made, "maint" branch is forked off from
@@ -119,7 +119,7 @@ Whenever a feature release is made, "maint" branch is forked off from
 release are applied to this branch and maintenance releases are cut from
 it.  The maintenance releases are named with four dotted decimal, named
 after the feature release they are updates to; the last such release was
-1.7.11.1.  New features never go to this branch.  This branch is also
+1.7.11.5.  New features never go to this branch.  This branch is also
 merged into "master" to propagate the fixes forward.
 
 A new development does not usually happen on "master". When you send a
