@@ -7,8 +7,8 @@
 #include "parse-options.h"
 
 static const char * const show_ref_usage[] = {
-	"git show-ref [-q|--quiet] [--verify] [--head] [-d|--dereference] [-s|--hash[=<n>]] [--abbrev[=<n>]] [--tags] [--heads] [--] [pattern*] ",
-	"git show-ref --exclude-existing[=pattern] < ref-list",
+	N_("git show-ref [-q|--quiet] [--verify] [--head] [-d|--dereference] [-s|--hash[=<n>]] [--abbrev[=<n>]] [--tags] [--heads] [--] [pattern*] "),
+	N_("git show-ref --exclude-existing[=pattern] < ref-list"),
 	NULL
 };
 
@@ -179,26 +179,26 @@ static int help_callback(const struct option *opt, const char *arg, int unset)
 }
 
 static const struct option show_ref_options[] = {
-	OPT_BOOLEAN(0, "tags", &tags_only, "only show tags (can be combined with heads)"),
-	OPT_BOOLEAN(0, "heads", &heads_only, "only show heads (can be combined with tags)"),
-	OPT_BOOLEAN(0, "verify", &verify, "stricter reference checking, "
-		    "requires exact ref path"),
+	OPT_BOOLEAN(0, "tags", &tags_only, N_("only show tags (can be combined with heads)")),
+	OPT_BOOLEAN(0, "heads", &heads_only, N_("only show heads (can be combined with tags)")),
+	OPT_BOOLEAN(0, "verify", &verify, N_("stricter reference checking, "
+		    "requires exact ref path")),
 	{ OPTION_BOOLEAN, 'h', NULL, &show_head, NULL,
-	  "show the HEAD reference",
+	  N_("show the HEAD reference"),
 	  PARSE_OPT_NOARG | PARSE_OPT_HIDDEN },
-	OPT_BOOLEAN(0, "head", &show_head, "show the HEAD reference"),
+	OPT_BOOLEAN(0, "head", &show_head, N_("show the HEAD reference")),
 	OPT_BOOLEAN('d', "dereference", &deref_tags,
-		    "dereference tags into object IDs"),
-	{ OPTION_CALLBACK, 's', "hash", &abbrev, "n",
-	  "only show SHA1 hash using <n> digits",
+		    N_("dereference tags into object IDs")),
+	{ OPTION_CALLBACK, 's', "hash", &abbrev, N_("n"),
+	  N_("only show SHA1 hash using <n> digits"),
 	  PARSE_OPT_OPTARG, &hash_callback },
 	OPT__ABBREV(&abbrev),
 	OPT__QUIET(&quiet,
-		   "do not print results to stdout (useful with --verify)"),
+		   N_("do not print results to stdout (useful with --verify)")),
 	{ OPTION_CALLBACK, 0, "exclude-existing", &exclude_existing_arg,
-	  "pattern", "show refs from stdin that aren't in local repository",
+	  N_("pattern"), N_("show refs from stdin that aren't in local repository"),
 	  PARSE_OPT_OPTARG | PARSE_OPT_NONEG, exclude_existing_callback },
-	{ OPTION_CALLBACK, 0, "help-all", NULL, NULL, "show usage",
+	{ OPTION_CALLBACK, 0, "help-all", NULL, NULL, N_("show usage"),
 	  PARSE_OPT_HIDDEN | PARSE_OPT_NOARG, help_callback },
 	OPT_END()
 };
