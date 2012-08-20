@@ -13,6 +13,7 @@ SYNOPSIS
 	[--column[=<options>] | --no-column]
 	[(--merged | --no-merged | --contains) [<commit>]] [<pattern>...]
 'git branch' [--set-upstream | --track | --no-track] [-l] [-f] <branchname> [<start-point>]
+'git branch' (--set-upstream-to=<upstream> | -u <upstream>) [<branchname>]
 'git branch' (-m | -M) [<oldbranch>] <newbranch>
 'git branch' (-d | -D) [-r] <branchname>...
 'git branch' --edit-description [<branchname>]
@@ -48,7 +49,7 @@ branch so that 'git pull' will appropriately merge from
 the remote-tracking branch. This behavior may be changed via the global
 `branch.autosetupmerge` configuration flag. That setting can be
 overridden by using the `--track` and `--no-track` options, and
-changed later using `git branch --set-upstream`.
+changed later using `git branch --set-upstream-to`.
 
 With a `-m` or `-M` option, <oldbranch> will be renamed to <newbranch>.
 If <oldbranch> had a corresponding reflog, it is renamed to match
@@ -172,6 +173,12 @@ start-point is either a local or remote-tracking branch.
 	given, acts exactly like `--track`. Otherwise sets up configuration
 	like `--track` would when creating the branch, except that where
 	branch points to is not changed.
+
+-u <upstream>::
+--set-upstream-to=<upstream>::
+	Set up <branchname>'s tracking information so <upstream> is
+	considered <branchname>'s upstream branch. If no <branchname>
+	is specified, then it defaults to the current branch.
 
 --edit-description::
 	Open an editor and edit the text to explain what the branch is
