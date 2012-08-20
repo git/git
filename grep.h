@@ -58,6 +58,14 @@ enum grep_expr_node {
 	GREP_NODE_OR
 };
 
+enum grep_pattern_type {
+	GREP_PATTERN_TYPE_UNSPECIFIED = 0,
+	GREP_PATTERN_TYPE_BRE,
+	GREP_PATTERN_TYPE_ERE,
+	GREP_PATTERN_TYPE_FIXED,
+	GREP_PATTERN_TYPE_PCRE
+};
+
 struct grep_expr {
 	enum grep_expr_node node;
 	unsigned hit;
@@ -103,6 +111,8 @@ struct grep_opt {
 	int max_depth;
 	int funcname;
 	int funcbody;
+	int extended_regexp_option;
+	int pattern_type_option;
 	char color_context[COLOR_MAXLEN];
 	char color_filename[COLOR_MAXLEN];
 	char color_function[COLOR_MAXLEN];

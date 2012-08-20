@@ -42,8 +42,16 @@ CONFIGURATION
 grep.lineNumber::
 	If set to true, enable '-n' option by default.
 
+grep.patternType::
+	Set the default matching behavior. Using a value of 'basic', 'extended',
+	'fixed', or 'perl' will enable the '--basic-regexp', '--extended-regexp',
+	'--fixed-strings', or '--perl-regexp' option accordingly, while the
+	value 'default' will return to the default matching behavior.
+
 grep.extendedRegexp::
-	If set to true, enable '--extended-regexp' option by default.
+	If set to true, enable '--extended-regexp' option by default. This
+	option is ignored when the 'grep.patternType' option is set to a value
+	other than 'default'.
 
 
 OPTIONS

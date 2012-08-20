@@ -260,6 +260,53 @@ static int wait_all(void)
 }
 #endif
 
+static int parse_pattern_type_arg(const char *opt, const char *arg)
+{
+	if (!strcmp(arg, "default"))
+		return GREP_PATTERN_TYPE_UNSPECIFIED;
+	else if (!strcmp(arg, "basic"))
+		return GREP_PATTERN_TYPE_BRE;
+	else if (!strcmp(arg, "extended"))
+		return GREP_PATTERN_TYPE_ERE;
+	else if (!strcmp(arg, "fixed"))
+		return GREP_PATTERN_TYPE_FIXED;
+	else if (!strcmp(arg, "perl"))
+		return GREP_PATTERN_TYPE_PCRE;
+	die("bad %s argument: %s", opt, arg);
+}
+
+static void grep_pattern_type_options(const int pattern_type, struct grep_opt *opt)
+{
+	switch (pattern_type) {
+	case GREP_PATTERN_TYPE_UNSPECIFIED:
+		/* fall through */
+
+	case GREP_PATTERN_TYPE_BRE:
+		opt->fixed = 0;
+		opt->pcre = 0;
+		opt->regflags &= ~REG_EXTENDED;
+		break;
+
+	case GREP_PATTERN_TYPE_ERE:
+		opt->fixed = 0;
+		opt->pcre = 0;
+		opt->regflags |= REG_EXTENDED;
+		break;
+
+	case GREP_PATTERN_TYPE_FIXED:
+		opt->fixed = 1;
+		opt->pcre = 0;
+		opt->regflags &= ~REG_EXTENDED;
+		break;
+
+	case GREP_PATTERN_TYPE_PCRE:
+		opt->fixed = 0;
+		opt->pcre = 1;
+		opt->regflags &= ~REG_EXTENDED;
+		break;
+	}
+}
+
 static int grep_config(const char *var, const char *value, void *cb)
 {
 	struct grep_opt *opt = cb;
@@ -270,11 +317,16 @@ static int grep_config(const char *var, const char *value, void *cb)
 
 	if (!strcmp(var, "grep.extendedregexp")) {
 		if (git_config_bool(var, value))
-			opt->regflags |= REG_EXTENDED;
+			opt->extended_regexp_option = 1;
 		else
-			opt->regflags &= ~REG_EXTENDED;
+			opt->extended_regexp_option = 0;
 		return 0;
 	}
+
+	if (!strcmp(var, "grep.patterntype")) {
+		opt->pattern_type_option = parse_pattern_type_arg(var, value);
+		return 0;
+  }
 
 	if (!strcmp(var, "grep.linenumber")) {
 		opt->linenum = git_config_bool(var, value);
@@ -669,14 +721,7 @@ int cmd_grep(int argc, const char **argv, const char *prefix)
 	int i;
 	int dummy;
 	int use_index = 1;
-	enum {
-		pattern_type_unspecified = 0,
-		pattern_type_bre,
-		pattern_type_ere,
-		pattern_type_fixed,
-		pattern_type_pcre,
-	};
-	int pattern_type = pattern_type_unspecified;
+	int pattern_type_arg = GREP_PATTERN_TYPE_UNSPECIFIED;
 
 	struct option options[] = {
 		OPT_BOOLEAN(0, "cached", &cached,
@@ -703,18 +748,18 @@ int cmd_grep(int argc, const char **argv, const char *prefix)
 			"descend at most <depth> levels", PARSE_OPT_NONEG,
 			NULL, 1 },
 		OPT_GROUP(""),
-		OPT_SET_INT('E', "extended-regexp", &pattern_type,
+		OPT_SET_INT('E', "extended-regexp", &pattern_type_arg,
 			    "use extended POSIX regular expressions",
-			    pattern_type_ere),
-		OPT_SET_INT('G', "basic-regexp", &pattern_type,
+			    GREP_PATTERN_TYPE_ERE),
+		OPT_SET_INT('G', "basic-regexp", &pattern_type_arg,
 			    "use basic POSIX regular expressions (default)",
-			    pattern_type_bre),
-		OPT_SET_INT('F', "fixed-strings", &pattern_type,
+			    GREP_PATTERN_TYPE_BRE),
+		OPT_SET_INT('F', "fixed-strings", &pattern_type_arg,
 			    "interpret patterns as fixed strings",
-			    pattern_type_fixed),
-		OPT_SET_INT('P', "perl-regexp", &pattern_type,
+			    GREP_PATTERN_TYPE_FIXED),
+		OPT_SET_INT('P', "perl-regexp", &pattern_type_arg,
 			    "use Perl-compatible regular expressions",
-			    pattern_type_pcre),
+			    GREP_PATTERN_TYPE_PCRE),
 		OPT_GROUP(""),
 		OPT_BOOLEAN('n', "line-number", &opt.linenum, "show line numbers"),
 		OPT_NEGBIT('h', NULL, &opt.pathname, "don't show filenames", 1),
@@ -799,6 +844,8 @@ int cmd_grep(int argc, const char **argv, const char *prefix)
 	opt.header_tail = &opt.header_list;
 	opt.regflags = REG_NEWLINE;
 	opt.max_depth = -1;
+	opt.pattern_type_option = GREP_PATTERN_TYPE_UNSPECIFIED;
+	opt.extended_regexp_option = 0;
 
 	strcpy(opt.color_context, "");
 	strcpy(opt.color_filename, "");
@@ -824,28 +871,13 @@ int cmd_grep(int argc, const char **argv, const char *prefix)
 			     PARSE_OPT_KEEP_DASHDASH |
 			     PARSE_OPT_STOP_AT_NON_OPTION |
 			     PARSE_OPT_NO_INTERNAL_HELP);
-	switch (pattern_type) {
-	case pattern_type_fixed:
-		opt.fixed = 1;
-		opt.pcre = 0;
-		break;
-	case pattern_type_bre:
-		opt.fixed = 0;
-		opt.pcre = 0;
-		opt.regflags &= ~REG_EXTENDED;
-		break;
-	case pattern_type_ere:
-		opt.fixed = 0;
-		opt.pcre = 0;
-		opt.regflags |= REG_EXTENDED;
-		break;
-	case pattern_type_pcre:
-		opt.fixed = 0;
-		opt.pcre = 1;
-		break;
-	default:
-		break; /* nothing */
-	}
+
+	if (pattern_type_arg != GREP_PATTERN_TYPE_UNSPECIFIED)
+		grep_pattern_type_options(pattern_type_arg, &opt);
+	else if (opt.pattern_type_option != GREP_PATTERN_TYPE_UNSPECIFIED)
+		grep_pattern_type_options(opt.pattern_type_option, &opt);
+	else if (opt.extended_regexp_option)
+		grep_pattern_type_options(GREP_PATTERN_TYPE_ERE, &opt);
 
 	if (use_index && !startup_info->have_repository)
 		/* die the same way as if we did it at the beginning */
