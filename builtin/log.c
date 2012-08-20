@@ -696,7 +696,7 @@ static int reopen_stdout(struct commit *commit, const char *subject,
 	return 0;
 }
 
-static void get_patch_ids(struct rev_info *rev, struct patch_ids *ids, const char *prefix)
+static void get_patch_ids(struct rev_info *rev, struct patch_ids *ids)
 {
 	struct rev_info check_rev;
 	struct commit *commit;
@@ -717,7 +717,8 @@ static void get_patch_ids(struct rev_info *rev, struct patch_ids *ids, const cha
 	init_patch_ids(ids);
 
 	/* given a range a..b get all patch ids for b..a */
-	init_revisions(&check_rev, prefix);
+	init_revisions(&check_rev, rev->prefix);
+	check_rev.max_parents = 1;
 	o1->flags ^= UNINTERESTING;
 	o2->flags ^= UNINTERESTING;
 	add_pending_object(&check_rev, o1, "o1");
@@ -726,10 +727,6 @@ static void get_patch_ids(struct rev_info *rev, struct patch_ids *ids, const cha
 		die(_("revision walk setup failed"));
 
 	while ((commit = get_revision(&check_rev)) != NULL) {
-		/* ignore merges */
-		if (commit->parents && commit->parents->next)
-			continue;
-
 		add_commit_patch_id(commit, ids);
 	}
 
@@ -1306,7 +1303,7 @@ int cmd_format_patch(int argc, const char **argv, const char *prefix)
 			if (hashcmp(o[0].item->sha1, o[1].item->sha1) == 0)
 				return 0;
 		}
-		get_patch_ids(&rev, &ids, prefix);
+		get_patch_ids(&rev, &ids);
 	}
 
 	if (!use_stdout)
@@ -1508,10 +1505,7 @@ int cmd_cherry(int argc, const char **argv, const char *prefix)
 	}
 
 	init_revisions(&revs, prefix);
-	revs.diff = 1;
-	revs.combine_merges = 0;
-	revs.ignore_merges = 1;
-	DIFF_OPT_SET(&revs.diffopt, RECURSIVE);
+	revs.max_parents = 1;
 
 	if (add_pending_commit(head, &revs, 0))
 		die(_("Unknown commit %s"), head);
@@ -1525,7 +1519,7 @@ int cmd_cherry(int argc, const char **argv, const char *prefix)
 			return 0;
 	}
 
-	get_patch_ids(&revs, &ids, prefix);
+	get_patch_ids(&revs, &ids);
 
 	if (limit && add_pending_commit(limit, &revs, UNINTERESTING))
 		die(_("Unknown commit %s"), limit);
@@ -1534,10 +1528,6 @@ int cmd_cherry(int argc, const char **argv, const char *prefix)
 	if (prepare_revision_walk(&revs))
 		die(_("revision walk setup failed"));
 	while ((commit = get_revision(&revs)) != NULL) {
-		/* ignore merges */
-		if (commit->parents && commit->parents->next)
-			continue;
-
 		commit_list_insert(commit, &list);
 	}
 
