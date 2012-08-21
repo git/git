@@ -398,7 +398,7 @@ int add_excludes_from_file_to_list(const char *fname,
 	fd = open(fname, O_RDONLY);
 	if (fd < 0 || fstat(fd, &st) < 0) {
 		if (errno != ENOENT)
-			warning(_("unable to access '%s': %s"), fname, strerror(errno));
+			warn_on_inaccessible(fname);
 		if (0 <= fd)
 			close(fd);
 		if (!check_index ||

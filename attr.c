@@ -354,7 +354,7 @@ static struct attr_stack *read_attr_from_file(const char *path, int macro_ok)
 
 	if (!fp) {
 		if (errno != ENOENT)
-			warning(_("unable to access '%s': %s"), path, strerror(errno));
+			warn_on_inaccessible(path);
 		return NULL;
 	}
 	res = xcalloc(1, sizeof(*res));
