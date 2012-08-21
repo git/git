@@ -461,7 +461,7 @@ cat >expected <<\EOF
 90b5ebede4899eda64893bc2a4c8f1d6fb6dfc40 <committer@example.com> refs/tags/bogo
 EOF
 
-test_expect_failure 'Verify sort with multiple keys' '
+test_expect_success 'Verify sort with multiple keys' '
 	git for-each-ref --format="%(objectname) %(taggeremail) %(refname)" --sort=objectname --sort=taggeremail \
 		refs/tags/bogo refs/tags/master > actual &&
 	test_cmp expected actual
