@@ -604,6 +604,9 @@ int rmdir_or_warn(const char *path);
  */
 int remove_or_warn(unsigned int mode, const char *path);
 
+/* Call access(2), but warn for any error besides ENOENT. */
+int access_or_warn(const char *path, int mode);
+
 /* Get the passwd entry for the UID of the current process. */
 struct passwd *xgetpwuid_self(void);
 

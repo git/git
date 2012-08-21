@@ -403,6 +403,14 @@ int remove_or_warn(unsigned int mode, const char *file)
 	return S_ISGITLINK(mode) ? rmdir_or_warn(file) : unlink_or_warn(file);
 }
 
+int access_or_warn(const char *path, int mode)
+{
+	int ret = access(path, mode);
+	if (ret && errno != ENOENT)
+		warning(_("unable to access '%s': %s"), path, strerror(errno));
+	return ret;
+}
+
 struct passwd *xgetpwuid_self(void)
 {
 	struct passwd *pw;
