@@ -138,7 +138,7 @@ sub setup_dir_diff
 
 	my @gitargs = ('diff', '--raw', '--no-abbrev', '-z', @ARGV);
 	my $diffrtn = $diffrepo->command_oneline(@gitargs);
-	exit(0) if (length($diffrtn) == 0);
+	exit(0) unless defined($diffrtn);
 
 	# Build index info for left and right sides of the diff
 	my $submodule_mode = '160000';
