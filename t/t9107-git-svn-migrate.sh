@@ -27,15 +27,17 @@ test_expect_success 'setup old-looking metadata' '
 head=`git rev-parse --verify refs/heads/git-svn-HEAD^0`
 test_expect_success 'git-svn-HEAD is a real HEAD' "test -n '$head'"
 
+svnrepo_escaped=`echo $svnrepo | sed 's/ /%20/'`
+
 test_expect_success 'initialize old-style (v0) git svn layout' '
 	mkdir -p "$GIT_DIR"/git-svn/info "$GIT_DIR"/svn/info &&
 	echo "$svnrepo" > "$GIT_DIR"/git-svn/info/url &&
 	echo "$svnrepo" > "$GIT_DIR"/svn/info/url &&
 	git svn migrate &&
-	! test -d "$GIT_DIR"/git svn &&
+	! test -d "$GIT_DIR"/git-svn &&
 	git rev-parse --verify refs/${remotes_git_svn}^0 &&
 	git rev-parse --verify refs/remotes/svn^0 &&
-	test "$(git config --get svn-remote.svn.url)" = "$svnrepo" &&
+	test "$(git config --get svn-remote.svn.url)" = "$svnrepo_escaped" &&
 	test `git config --get svn-remote.svn.fetch` = \
              ":refs/${remotes_git_svn}"
 	'

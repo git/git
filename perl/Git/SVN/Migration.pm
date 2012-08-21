@@ -177,14 +177,14 @@ sub minimize_connections {
 		my $ra = Git::SVN::Ra->new($url);
 
 		# skip existing cases where we already connect to the root
-		if (($ra->{url} eq $ra->{repos_root}) ||
+		if (($ra->url eq $ra->{repos_root}) ||
 		    ($ra->{repos_root} eq $repo_id)) {
-			$root_repos->{$ra->{url}} = $repo_id;
+			$root_repos->{$ra->url} = $repo_id;
 			next;
 		}
 
 		my $root_ra = Git::SVN::Ra->new($ra->{repos_root});
-		my $root_path = $ra->{url};
+		my $root_path = $ra->url;
 		$root_path =~ s#^\Q$ra->{repos_root}\E(/|$)##;
 		foreach my $path (keys %$fetch) {
 			my $ref_id = $fetch->{$path};

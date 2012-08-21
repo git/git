@@ -32,6 +32,11 @@ test_expect_success 'setup svnrepo' '
 	start_httpd
 	'
 
+# SVN 1.7 will truncate "not-a%40{0]" to just "not-a".
+# Look at what SVN wound up naming the branch and use that.
+# Be sure to escape the @ if it shows up.
+non_reflog=`svn_cmd ls "$svnrepo/pr ject/branches" | grep not-a | sed 's/\///' | sed 's/@/%40/'`
+
 test_expect_success 'test clone with funky branch names' '
 	git svn clone -s "$svnrepo/pr ject" project &&
 	(
@@ -42,7 +47,7 @@ test_expect_success 'test clone with funky branch names' '
 		git rev-parse "refs/remotes/%2Eleading_dot" &&
 		git rev-parse "refs/remotes/trailing_dot%2E" &&
 		git rev-parse "refs/remotes/trailing_dotlock%2Elock" &&
-		git rev-parse "refs/remotes/not-a%40{0}reflog"
+		git rev-parse "refs/remotes/$non_reflog"
 	)
 	'
 
