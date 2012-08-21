@@ -352,8 +352,11 @@ static struct attr_stack *read_attr_from_file(const char *path, int macro_ok)
 	char buf[2048];
 	int lineno = 0;
 
-	if (!fp)
+	if (!fp) {
+		if (errno != ENOENT)
+			warning(_("unable to access '%s': %s"), path, strerror(errno));
 		return NULL;
+	}
 	res = xcalloc(1, sizeof(*res));
 	while (fgets(buf, sizeof(buf), fp))
 		handle_attr_line(res, buf, path, ++lineno, macro_ok);
