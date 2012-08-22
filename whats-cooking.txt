@@ -1,14 +1,20 @@
 To: git@vger.kernel.org
 Bcc: lwn@lwn.net
-Subject: What's cooking in git.git (Aug 2012, #06; Tue, 21)
-X-master-at: 889d35899ba64640e47798681ecb34a4be043bad
-X-next-at: 332afe444c0ae4d1fa700e16c4e23b42960792b4
+Subject: What's cooking in git.git (Aug 2012, #07; Wed, 22)
+X-master-at: 851f7e689efa034701bf41c3be06c927480eaae9
+X-next-at: ff27e03d9aa951d799461ff03a3f103000d7ce88
 
-What's cooking in git.git (Aug 2012, #06; Tue, 21)
+What's cooking in git.git (Aug 2012, #07; Wed, 22)
 --------------------------------------------------
 
 Here are the topics that have been cooking.  Commits prefixed with '-' are
 only in 'pu' (proposed updates) while commits prefixed with '+' are in 'next'.
+
+As promised (threatened ;-), the first batch of topics for the next
+release are now part of 'master'.  They are mostly innocuous
+documentation updates, test clean-ups, and all should eventually go
+to the maintenance track.  The update to git-svn to make it work
+better with subversion 1.7 is also included.
 
 I'm planning to keep this cycle reasonably short and aim for tagging
 the result as 1.8.0 at the end of 9th week, on October 21st, after
@@ -23,15 +29,368 @@ repositories listed at
 --------------------------------------------------
 [New Topics]
 
+* er/doc-fast-import-done (2012-08-22) 1 commit
+ - fast-import: document the --done option
+
+Parked in 'pu' in case ESR responds with "Sorry, forgot to sign-off".
+
+* nd/am-i18n-fix (2012-08-22) 1 commit
+ - am: quote string for translation before passing to eval_gettextln
+
+"git am" wasn't marked up for i18n properly.
+Will merge to 'next', and eventually to maint-1.7.11 track.
+
+--------------------------------------------------
+[Graduated to "master"]
+
+* hv/coding-guidelines (2012-08-15) 1 commit
+  (merged to 'next' on 2012-08-20 at 4984865)
+ + Documentation/CodingGuidelines: spell out more shell guidelines
+
+(Originally merged to 'next' on 2012-08-18)
+
+In earlier days, "imitate the style in the neibouring code" was
+sufficient to keep the coherent style, but over time some parts of
+the codebase have drifted enough to make it ineffective.
+
+* jc/doc-git-updates (2012-08-17) 1 commit
+  (merged to 'next' on 2012-08-20 at ab1db71)
+ + Documentation: update the introductory section
+
+(Originally merged to 'next' on 2012-08-18)
+
+* jc/maint-abbrev-option-cli (2012-08-16) 1 commit
+  (merged to 'next' on 2012-08-20 at 54d1a5a)
+ + gitcli: describe abbreviation of long options
+
+(Originally merged to 'next' on 2012-08-18)
+
+We did not document that many commands take unique prefix
+abbreviations of long options (e.g. "--option" may be the only flag
+that the command accepts that begin with "--opt", in which case you
+can give "--opt") anywhere easy to find for new people.
+
+* jc/maint-rev-list-topo-doc (2012-08-15) 1 commit
+  (merged to 'next' on 2012-08-20 at 0f669d2)
+ + rev-list docs: clarify --topo-order description
+
+(Originally merged to 'next' on 2012-08-18)
+
+It was unclear what "--topo-order" was really about in the
+documentation. It is not just about "children before parent", but
+also about "don't mix lineages".
+
+* jc/tag-doc (2012-08-06) 1 commit
+  (merged to 'next' on 2012-08-20 at 9eb658e)
+ + Documentation: do not mention .git/refs/* directories
+
+(Originally merged to 'next' on 2012-08-18)
+
+Our documentation used to assume having files in .git/refs/*
+directories was the only to have branches and tags, but that is not
+true for quite some time.
+
+* jc/test-prereq (2012-08-04) 8 commits
+  (merged to 'next' on 2012-08-20 at dd44c4a)
+ + t3910: use the UTF8_NFD_TO_NFC test prereq
+ + test-lib: provide UTF8 behaviour as a prerequisite
+ + t0050: use the SYMLINKS test prereq
+ + t0050: use the CASE_INSENSITIVE_FS test prereq
+ + test-lib: provide case insensitivity as a prerequisite
+ + test: allow prerequisite to be evaluated lazily
+ + test: rename $satisfied to $satisfied_prereq
+
+(Originally merged to 'next' on 2012-08-04)
+
+Teaches the test framework to probe rarely used prerequistes lazily,
+and make use of it for detecting SYMLINKS, CASE_INSENSITIVE_FS and
+NKD/NKC MacOS x gotcha.
+
+* jk/check-docs-update (2012-08-08) 8 commits
+  (merged to 'next' on 2012-08-20 at d51021d)
+ + check-docs: get documented command list from Makefile
+ + check-docs: drop git-help special-case
+ + check-docs: list git-gui as a command
+ + check-docs: factor out command-list
+ + command-list: mention git-credential-* helpers
+ + command-list: add git-sh-i18n
+ + check-docs: update non-command documentation list
+ + check-docs: mention gitweb specially
+
+(Originally merged to 'next' on 2012-08-18)
+
+Simplify "make check-docs" implementation and update its coverage.
+
+* js/gitweb-path-info-unquote (2012-08-15) 1 commit
+  (merged to 'next' on 2012-08-20 at a4aa740)
+ + gitweb: URL-decode $my_url/$my_uri when stripping PATH_INFO
+
+(Originally merged to 'next' on 2012-08-15)
+
+Stripping of PATH_INFO in gitweb did not take url style quoting into
+account, failing to notice directories with funny characters e.g. SP
+in their paths.
+
+* mk/test-seq (2012-08-04) 1 commit
+  (merged to 'next' on 2012-08-20 at c373e0e)
+ + tests: Introduce test_seq
+ (this branch is used by ab/diff-write-incomplete-line.)
+
+(Originally merged to 'next' on 2012-08-06)
+
+Add a compatibility/utility function to the test framework. 
+
+* mm/die-with-dashdash-help (2012-08-03) 1 commit
+  (merged to 'next' on 2012-08-20 at ebe0e1a)
+ + setup: clarify error messages for file/revisions ambiguity
+
+(Originally merged to 'next' on 2012-08-09)
+
+Reword error messages.
+
+* ms/git-svn-1.7 (2012-08-02) 20 commits
+  (merged to 'next' on 2012-08-21 at ae8aff9)
+ + git-svn: remove ad-hoc canonicalizations
+ + git-svn: canonicalize newly-minted URLs
+ + git-svn: introduce add_path_to_url function
+ + git-svn: canonicalize earlier
+ + git-svn: replace URL escapes with canonicalization
+ + git-svn: attempt to mimic SVN 1.7 URL canonicalization
+ + t9107: fix typo
+ + t9118: workaround inconsistency between SVN versions
+ + Git::SVN{,::Ra}: canonicalize earlier
+ + git-svn: path canonicalization uses SVN API
+ + Git::SVN::Utils: remove irrelevant comment
+ + git-svn: add join_paths() to safely concatenate paths
+ + git-svn: factor out _collapse_dotdot function
+ + git-svn: use SVN 1.7 to canonicalize when possible
+ + git-svn: move canonicalization to Git::SVN::Utils
+ + use Git::SVN{,::RA}->url accessor globally
+ + use Git::SVN->path accessor globally
+ + Git::SVN::Ra: use accessor for URLs
+ + Git::SVN: use accessor for URLs internally
+ + Git::SVN: use accessors internally for path
+
+A series by Michael Schwern via Eric to update git-svn to revamp the
+way URLs are internally passed around, to make it work with SVN 1.7.
+
+* mv/pull-r-for-rebase (2012-08-17) 1 commit
+  (merged to 'next' on 2012-08-20 at 9743071)
+ + man: git pull -r is a short for --rebase
+
+(Originally merged to 'next' on 2012-08-18)
+
+A minor documentation update.
+
+* nd/index-errno (2012-08-06) 1 commit
+  (merged to 'next' on 2012-08-20 at 34076c6)
+ + read_index_from: remove bogus errno assignments
+
+(Originally merged to 'next' on 2012-08-06)
+
+Assignments to errno before calling system functions that used to
+matter in the old code were left behind after the code structure
+changed sufficiently to make them useless.
+
+* pg/maint-apply-remove-unused-variable (2012-08-05) 1 commit
+  (merged to 'next' on 2012-08-20 at 260975b)
+ + apply: delete unused deflate_origlen from patch struct
+
+(Originally merged to 'next' on 2012-08-05)
+
+Remove an unused field.
+
+* tr/maint-send-email-2047 (2012-07-31) 1 commit
+  (merged to 'next' on 2012-08-20 at cf5ee1c)
+ + send-email: improve RFC2047 quote parsing
+
+(Originally merged to 'next' on 2012-08-09)
+
+"git send-email" did not unquote encoded words that appear on the
+header correctly, and lost "_" from strings.
+
+* tr/merge-recursive-flush (2012-08-03) 1 commit
+  (merged to 'next' on 2012-08-20 at 00aeb19)
+ + merge-recursive: eliminate flush_buffer() in favor of write_in_full()
+
+(Originally merged to 'next' on 2012-08-09)
+
+Remove unnecessary code.
+
+* tr/void-diff-setup-done (2012-08-03) 1 commit
+  (merged to 'next' on 2012-08-20 at 2f21f63)
+ + diff_setup_done(): return void
+
+(Originally merged to 'next' on 2012-08-09)
+
+Remove unnecessary code.
+
+--------------------------------------------------
+[Stalled]
+
+* jc/add-delete-default (2012-08-13) 1 commit
+ - git add: notice removal of tracked paths by default
+
+"git add dir/" updated modified files and added new files, but does
+not notice removed files, which may be "Huh?" to some users.  They
+can of course use "git add -A dir/", but why should they?
+
+Resurrected from graveyard, as I thought it was a worthwhile thing
+to do in the longer term; waiting for comments.
+
+* tx/relative-in-the-future (2012-08-16) 2 commits
+ - date: show relative dates in the future
+ - date: refactor the relative date logic from presentation
+
+Not my itch; rewritten an earlier submission by Tom Xue into
+somewhat more maintainable form, though it breaks existing i18n.
+
+Anybody interested in fixing it up?  Otherwise may discard.
+
+* pw/p4-submit-conflicts (2012-08-16) 12 commits
+ - git p4: add submit --prepare-p4-only option
+ - git p4: add submit --dry-run option
+ - git p4: accept -v for --verbose
+ - git p4: revert deleted files after submit cancel
+ - git p4: rearrange submit template construction
+ - git p4: test clean-up after failed submit, fix added files
+ - git p4: standardize submit cancel due to unchanged template
+ - git p4: move conflict prompt into run, use [c]ontinue and [q]uit
+ - git p4: remove submit failure options [a]pply and [w]rite
+ - git p4: gracefully fail if some commits could not be applied
+ - git p4 test: use p4d -L option to suppress log messages
+ - git p4 test: remove bash-ism of combined export/assignment
+
+Waiting for the dust to settle.
+
+* mz/rebase-range (2012-07-18) 7 commits
+ . rebase (without -p): correctly calculate patches to rebase
+ . rebase -p: don't request --left-right only to ignore left side
+ . rebase -p: use --cherry-mark for todo file
+ . git-rebase--interactive.sh: look up subject in add_pick_line
+ . git-rebase--interactive: group all $preserve_merges code
+ . git-rebase--interactive.sh: extract function for adding "pick" line
+ . git-rebase--am.sh: avoid special-casing --keep-empty
+
+Expecting a reroll.
+
+Performance concerns from Windows folks.  Also the series lacks
+proper sign-offs.
+
+* jl/submodule-rm (2012-07-05) 2 commits
+ - rm: remove submodules from the index and the .gitmodules file
+ - rm: don't fail when removing populated submodules
+
+Expecting a reroll.
+
+* mb/remote-default-nn-origin (2012-07-11) 6 commits
+ - Teach get_default_remote to respect remote.default.
+ - Test that plain "git fetch" uses remote.default when on a detached HEAD.
+ - Teach clone to set remote.default.
+ - Teach "git remote" about remote.default.
+ - Teach remote.c about the remote.default configuration setting.
+ - Rename remote.c's default_remote_name static variables.
+
+When the user does not specify what remote to interact with, we
+often attempt to use 'origin'.  This can now be customized via a
+configuration variable.
+
+Expecting a reroll.
+
+"The first remote becomes the default" bit is better done as a
+separate step.
+
+* jc/split-blob (2012-04-03) 6 commits
+ - chunked-object: streaming checkout
+ - chunked-object: fallback checkout codepaths
+ - bulk-checkin: support chunked-object encoding
+ - bulk-checkin: allow the same data to be multiply hashed
+ - new representation types in the packstream
+ - packfile: use varint functions
+
+Not ready.
+
+I finished the streaming checkout codepath, but as explained in
+127b177 (bulk-checkin: support chunked-object encoding, 2011-11-30),
+these are still early steps of a long and painful journey. At least
+pack-objects and fsck need to learn the new encoding for the series
+to be usable locally, and then index-pack/unpack-objects needs to
+learn it to be used remotely.
+
+Given that I heard a lot of noise that people want large files, and
+that I was asked by somebody at GitTogether'11 privately for an
+advice on how to pay developers (not me) to help adding necessary
+support, I am somewhat dissapointed that the original patch series
+that was sent long time ago still remains here without much comments
+and updates from the developer community. I even made the interface
+to the logic that decides where to split chunks easily replaceable,
+and I deliberately made the logic in the original patch extremely
+stupid to entice others, especially the "bup" fanbois, to come up
+with a better logic, thinking that giving people an easy target to
+shoot for, they may be encouraged to help out. The plan is not
+working :-<.
+
+--------------------------------------------------
+[Cooking]
+
+* lt/commit-tree-guess-utf-8 (2012-08-21) 1 commit
+ - commit/commit-tree: correct latin1 to utf-8
+
+Teaches "git commit" and "git commit-tree" the "we are told to use
+utf-8 in log message, but this does not look like utf-8---attempt to
+pass it through convert-from-latin1-to-utf8 and see if it makes
+sense" heuristics "git mailinfo" already uses.
+
+Will merge to 'next'.
+
 * kk/maint-for-each-ref-multi-sort (2012-08-21) 2 commits
  - for-each-ref: Fix sort with multiple keys
  - t6300: test sort with multiple keys
 
-A small and sensible fix, even though the accompanying test seems to
-touch too many unrelated existing ones needlessly, which may want to
-be fixed by a reroll.
+"git for-each-ref" did not currectly support more than one --sort
+option.
 
-* nd/i18n-parseopt-help (2012-08-20) 54 commits
+Will merge to 'next'.
+
+* fa/remote-svn (2012-08-22) 16 commits
+ - Add a test script for remote-svn
+ - remote-svn: add marks-file regeneration
+ - Add a svnrdump-simulator replaying a dump file for testing
+ - remote-svn: add incremental import
+ - remote-svn: Activate import/export-marks for fast-import
+ - Create a note for every imported commit containing svn metadata
+ - vcs-svn: add fast_export_note to create notes
+ - Allow reading svn dumps from files via file:// urls
+ - remote-svn, vcs-svn: Enable fetching to private refs
+ - When debug==1, start fast-import with "--stats" instead of "--quiet"
+ - Add documentation for the 'bidi-import' capability of remote-helpers
+ - Connect fast-import to the remote-helper via pipe, adding 'bidi-import' capability
+ - Add argv_array_detach and argv_array_free_detached
+ - Add svndump_init_fd to allow reading dumps from arbitrary FDs
+ - Add git-remote-testsvn to Makefile
+ - Implement a remote helper for svn in C
+ (this branch is used by fa/vcs-svn.)
+
+* fa/vcs-svn (2012-08-22) 4 commits
+ - vcs-svn: remove repo_tree
+ - vcs-svn/svndump: rewrite handle_node(), begin|end_revision()
+ - vcs-svn/svndump: restructure node_ctx, rev_ctx handling
+ - svndump: move struct definitions to .h
+ (this branch uses fa/remote-svn.)
+
+* nd/i18n-parseopt-help (2012-08-22) 66 commits
+ - Use imperative form in help usage to describe an action
+ - Reduce translations by using same terminologies
+ - i18n: write-tree: mark parseopt strings for translation
+ - i18n: verify-tag: mark parseopt strings for translation
+ - i18n: verify-pack: mark parseopt strings for translation
+ - i18n: update-server-info: mark parseopt strings for translation
+ - i18n: update-ref: mark parseopt strings for translation
+ - i18n: update-index: mark parseopt strings for translation
+ - i18n: tag: mark parseopt strings for translation
+ - i18n: symbolic-ref: mark parseopt strings for translation
+ - i18n: show-ref: mark parseopt strings for translation
+ - i18n: show-branch: mark parseopt strings for translation
  - i18n: shortlog: mark parseopt strings for translation
  - i18n: rm: mark parseopt strings for translation
  - i18n: revert, cherry-pick: mark parseopt strings for translation
@@ -89,11 +448,15 @@ be fixed by a reroll.
 
 A lot of i18n mark-up for the help text from "git <cmd> -h".
 
+Will merge to 'next'.
+
 * tr/maint-parseopt-avoid-empty (2012-08-20) 1 commit
  - gettext: do not translate empty string
 
 A workaround to avoid doing _(""), which translates to magic string
 in the .po files.
+
+Will merge to 'next'.
 
 * jk/config-warn-on-inaccessible-paths (2012-08-21) 4 commits
  - warn_on_inaccessible(): a helper to warn on inaccessible paths
@@ -105,6 +468,8 @@ When looking for $HOME/.gitconfig etc., it is OK if we cannot read
 them because they do not exist, but unable to read existing ones
 need to be diagnosed.
 
+Will merge to 'next'.
+
 * nd/i18n-poison-test-updates (2012-08-21) 6 commits
  - Fix tests under GETTEXT_POISON on parseopt
  - Fix tests under GETTEXT_POISON on pack-object
@@ -115,123 +480,14 @@ need to be diagnosed.
 
 Updates to tests that can be broken with gettext-poison builds.
 
---------------------------------------------------
-[Stalled]
-
-* pw/p4-submit-conflicts (2012-08-16) 12 commits
- - git p4: add submit --prepare-p4-only option
- - git p4: add submit --dry-run option
- - git p4: accept -v for --verbose
- - git p4: revert deleted files after submit cancel
- - git p4: rearrange submit template construction
- - git p4: test clean-up after failed submit, fix added files
- - git p4: standardize submit cancel due to unchanged template
- - git p4: move conflict prompt into run, use [c]ontinue and [q]uit
- - git p4: remove submit failure options [a]pply and [w]rite
- - git p4: gracefully fail if some commits could not be applied
- - git p4 test: use p4d -L option to suppress log messages
- - git p4 test: remove bash-ism of combined export/assignment
-
-Waiting for the dust to settle.
-
-* mz/rebase-range (2012-07-18) 7 commits
- . rebase (without -p): correctly calculate patches to rebase
- . rebase -p: don't request --left-right only to ignore left side
- . rebase -p: use --cherry-mark for todo file
- . git-rebase--interactive.sh: look up subject in add_pick_line
- . git-rebase--interactive: group all $preserve_merges code
- . git-rebase--interactive.sh: extract function for adding "pick" line
- . git-rebase--am.sh: avoid special-casing --keep-empty
-
-Expecting a reroll.
-
-Performance concerns from Windows folks.  Also the series lacks
-proper sign-offs.
-
-* jl/submodule-rm (2012-07-05) 2 commits
- - rm: remove submodules from the index and the .gitmodules file
- - rm: don't fail when removing populated submodules
-
-Expecting a reroll.
-
-* lt/commit-tree-guess-utf-8 (2012-06-28) 1 commit
- - commit/commit-tree: correct latin1 to utf-8
-
-Teaches "git commit" and "git commit-tree" the "we are told to use
-utf-8 in log message, but this does not look like utf-8---attempt to
-pass it through convert-from-latin1-to-utf8 and see if it makes
-sense" heuristics "git mailinfo" already uses.
-
-A draft from Linus received privately without a log message.
-Expecting a reroll.
-
-* mb/remote-default-nn-origin (2012-07-11) 6 commits
- - Teach get_default_remote to respect remote.default.
- - Test that plain "git fetch" uses remote.default when on a detached HEAD.
- - Teach clone to set remote.default.
- - Teach "git remote" about remote.default.
- - Teach remote.c about the remote.default configuration setting.
- - Rename remote.c's default_remote_name static variables.
-
-When the user does not specify what remote to interact with, we
-often attempt to use 'origin'.  This can now be customized via a
-configuration variable.
-
-Expecting a reroll.
-"The first remote becomes the default" bit is better done as a
-separate step.
-
-* jc/split-blob (2012-04-03) 6 commits
- - chunked-object: streaming checkout
- - chunked-object: fallback checkout codepaths
- - bulk-checkin: support chunked-object encoding
- - bulk-checkin: allow the same data to be multiply hashed
- - new representation types in the packstream
- - packfile: use varint functions
-
-Not ready.
-
-I finished the streaming checkout codepath, but as explained in
-127b177 (bulk-checkin: support chunked-object encoding, 2011-11-30),
-these are still early steps of a long and painful journey. At least
-pack-objects and fsck need to learn the new encoding for the series
-to be usable locally, and then index-pack/unpack-objects needs to
-learn it to be used remotely.
-
-Given that I heard a lot of noise that people want large files, and
-that I was asked by somebody at GitTogether'11 privately for an
-advice on how to pay developers (not me) to help adding necessary
-support, I am somewhat dissapointed that the original patch series
-that was sent long time ago still remains here without much comments
-and updates from the developer community. I even made the interface
-to the logic that decides where to split chunks easily replaceable,
-and I deliberately made the logic in the original patch extremely
-stupid to entice others, especially the "bup" fanbois, to come up
-with a better logic, thinking that giving people an easy target to
-shoot for, they may be encouraged to help out. The plan is not
-working :-<.
-
---------------------------------------------------
-[Cooking]
-
-* hv/coding-guidelines (2012-08-15) 1 commit
-  (merged to 'next' on 2012-08-20 at 4984865)
- + Documentation/CodingGuidelines: spell out more shell guidelines
-
-(Originally merged to 'next' on 2012-08-18)
-
-In earlier days, "imitate the style in the neibouring code" was
-sufficient to keep the coherent style, but over time some parts of
-the codebase have drifted enough to make it ineffective.
-
-Will merge to 'master' as part of the first batch.
-
 * jc/daemon-access-hook (2012-08-15) 1 commit
   (merged to 'next' on 2012-08-20 at c8f5b2e)
  + daemon: --access-hook option
 
 Allow an external command to tell git-daemon to decline service
 based on the client address, repository path, etc.
+
+Will merge to 'master' as part of the third batch.
 
 * jc/send-email-reconfirm (2012-08-14) 1 commit
   (merged to 'next' on 2012-08-20 at dffdef6)
@@ -241,12 +497,7 @@ Validate interactive input to "git send-email" to avoid common
 mistakes such as saying "y<RETURN>" to sender mail address whose
 prompt is given with a correctly guessed default.
 
-* tx/relative-in-the-future (2012-08-16) 2 commits
- - date: show relative dates in the future
- - date: refactor the relative date logic from presentation
-
-Not my itch; rewritten an earlier submission by Tom Xue into
-somewhat more maintainable form, though it breaks existing i18n.
+Will merge to 'master' as part of the third batch.
 
 * ef/win32-cred-helper (2012-08-16) 1 commit
   (merged to 'next' on 2012-08-20 at bd5c651)
@@ -255,28 +506,7 @@ somewhat more maintainable form, though it breaks existing i18n.
 Credential helper for Win32 to allow access to the keychain of
 the logged-in user.
 
-* jc/maint-abbrev-option-cli (2012-08-16) 1 commit
-  (merged to 'next' on 2012-08-20 at 54d1a5a)
- + gitcli: describe abbreviation of long options
-
-(Originally merged to 'next' on 2012-08-18)
-
-We did not document that many commands take unique prefix
-abbreviations of long options (e.g. "--option" may be the only flag
-that the command accepts that begin with "--opt", in which case you
-can give "--opt") anywhere easy to find for new people.
-
-Will merge to 'master' as part of the first batch.
-
-* mv/pull-r-for-rebase (2012-08-17) 1 commit
-  (merged to 'next' on 2012-08-20 at 9743071)
- + man: git pull -r is a short for --rebase
-
-(Originally merged to 'next' on 2012-08-18)
-
-A minor documentation update.
-
-Will merge to 'master' as part of the first batch.
+Will merge to 'master' as part of the second batch.
 
 * rr/precompose-utf8-cleanup (2012-08-20) 2 commits
   (merged to 'next' on 2012-08-20 at a883c2a)
@@ -285,41 +515,7 @@ Will merge to 'master' as part of the first batch.
 
 A style and code cleanup.
 
-* jc/doc-git-updates (2012-08-17) 1 commit
-  (merged to 'next' on 2012-08-20 at ab1db71)
- + Documentation: update the introductory section
-
-(Originally merged to 'next' on 2012-08-18)
-
-Will merge to 'master' as part of the first batch.
-
-* fa/remote-svn (2012-08-20) 16 commits
- - Add a test script for remote-svn
- - remote-svn: add marks-file regeneration
- - Add a svnrdump-simulator replaying a dump file for testing
- - remote-svn: add incremental import
- - remote-svn: Activate import/export-marks for fast-import
- - Create a note for every imported commit containing svn metadata
- - vcs-svn: add fast_export_note to create notes
- - Allow reading svn dumps from files via file:// urls
- - remote-svn, vcs-svn: Enable fetching to private refs
- - When debug==1, start fast-import with "--stats" instead of "--quiet"
- - Add documentation for the 'bidi-import' capability of remote-helpers
- - Connect fast-import to the remote-helper via pipe, adding 'bidi-import' capability
- - Add argv_array_detach and argv_array_free_detached
- - Add svndump_init_fd to allow reading dumps from arbitrary FDs
- - Add git-remote-testsvn to Makefile
- - Implement a remote helper for svn in C
- (this branch is used by fa/vcs-svn.)
-
-* fa/vcs-svn (2012-08-20) 4 commits
- - vcs-svn: remove repo_tree
- - vcs-svn/svndump: rewrite handle_node(), begin|end_revision()
- - vcs-svn/svndump: restructure node_ctx, rev_ctx handling
- - svndump: move struct definitions to .h
- (this branch uses fa/remote-svn.)
-
-Rerolled with another round of fix-up squashed in.
+Will merge to 'master' as part of the second batch.
 
 * mh/maint-config-doc-proxy-command (2012-08-18) 2 commits
   (merged to 'next' on 2012-08-20 at a484625)
@@ -327,6 +523,8 @@ Rerolled with another round of fix-up squashed in.
  + git-config.txt: fix example
 
 A minor documentation update.
+
+Will merge to 'master' as part of the second batch.
 
 * ph/stash-rerere (2012-08-17) 2 commits
   (merged to 'next' on 2012-08-20 at ae37111)
@@ -336,33 +534,15 @@ A minor documentation update.
 "git stash" internally used "git merge-recursive" backend, which did
 not trigger "rerere" upon conflicts unlike other mergy operations.
 
+Will merge to 'master' as part of the third batch.
+
 * hv/submodule-path-unmatch (2012-08-14) 1 commit
   (merged to 'next' on 2012-08-20 at cbe6483)
  + Let submodule command exit with error status if path does not exist
 
 As the title says.
 
-* jc/add-delete-default (2012-08-13) 1 commit
- - git add: notice removal of tracked paths by default
-
-"git add dir/" updated modified files and added new files, but does
-not notice removed files, which may be "Huh?" to some users.  They
-can of course use "git add -A dir/", but why should they?
-
-Resurrected from graveyard, as I thought it was a worthwhile thing
-to do in the longer term; waiting for comments.
-
-* jc/maint-rev-list-topo-doc (2012-08-15) 1 commit
-  (merged to 'next' on 2012-08-20 at 0f669d2)
- + rev-list docs: clarify --topo-order description
-
-(Originally merged to 'next' on 2012-08-18)
-
-It was unclear what "--topo-order" was really about in the
-documentation. It is not just about "children before parent", but
-also about "don't mix lineages".
-
-Will merge to 'master' as part of the first batch.
+Will merge to 'master' as part of the second batch.
 
 * bc/receive-pack-stdout-protection (2012-08-06) 2 commits
   (merged to 'next' on 2012-08-20 at b1b0d18)
@@ -383,17 +563,7 @@ Will merge to 'master' as part of the second batch.
 
 Teach "git prune" without "-v" to be silent about leftover temporary files.
 
-* jc/tag-doc (2012-08-06) 1 commit
-  (merged to 'next' on 2012-08-20 at 9eb658e)
- + Documentation: do not mention .git/refs/* directories
-
-(Originally merged to 'next' on 2012-08-18)
-
-Our documentation used to assume having files in .git/refs/*
-directories was the only to have branches and tags, but that is not
-true for quite some time.
-
-Will merge to 'master' as part of the first batch.
+Will merge to 'master' as part of the second batch.
 
 * jk/docs-docbook-monospace-display (2012-08-07) 1 commit
   (merged to 'next' on 2012-08-20 at 0ed30dc)
@@ -415,34 +585,7 @@ When the user exports a non-default IFS without HT, scripts that
 rely on being able to parse "ls-files -s | while read a b c..."
 start to fail.  Protect them from such a misconfiguration.
 
-* jk/check-docs-update (2012-08-08) 8 commits
-  (merged to 'next' on 2012-08-20 at d51021d)
- + check-docs: get documented command list from Makefile
- + check-docs: drop git-help special-case
- + check-docs: list git-gui as a command
- + check-docs: factor out command-list
- + command-list: mention git-credential-* helpers
- + command-list: add git-sh-i18n
- + check-docs: update non-command documentation list
- + check-docs: mention gitweb specially
-
-(Originally merged to 'next' on 2012-08-18)
-
-Simplify "make check-docs" implementation and update its coverage.
-
-Will merge to 'master' as part of the first batch.
-
-* js/gitweb-path-info-unquote (2012-08-15) 1 commit
-  (merged to 'next' on 2012-08-20 at a4aa740)
- + gitweb: URL-decode $my_url/$my_uri when stripping PATH_INFO
-
-(Originally merged to 'next' on 2012-08-15)
-
-Stripping of PATH_INFO in gitweb did not take url style quoting into
-account, failing to notice directories with funny characters e.g. SP
-in their paths.
-
-Will merge to 'master' as part of the first batch.
+Will merge to 'master' as part of the second batch.
 
 * mg/rebase-i-onto-reflog-in-full (2012-08-10) 1 commit
   (merged to 'next' on 2012-08-20 at f671bd2)
@@ -451,9 +594,13 @@ Will merge to 'master' as part of the first batch.
 The reflog entries left by "git rebase" and "git rebase -i" were
 inconsistent.
 
+Will merge to 'master' as part of the second batch.
+
 * mz/empty-rebase-test (2012-08-09) 1 commit
   (merged to 'next' on 2012-08-20 at 53e2419)
  + add tests for 'git rebase --keep-empty'
+
+Will merge to 'master' as part of the second batch.
 
 * jc/capabilities (2012-08-13) 3 commits
   (merged to 'next' on 2012-08-20 at 1976e47)
@@ -464,6 +611,8 @@ inconsistent.
 
 Some capabilities were asked by fetch-pack even when upload-pack did
 not advertise that they are available.  Fix fetch-pack not to do so.
+
+Will merge to 'master' as part of the second batch.
 
 * pw/p4-use-client-spec-branch-detection (2012-08-20) 5 commits
  - git p4: make branch detection work with --use-client-spec
@@ -508,51 +657,9 @@ configuration variable tells it to.
 
 Will merge to 'master' as part of the second batch.
 
-* mm/die-with-dashdash-help (2012-08-03) 1 commit
-  (merged to 'next' on 2012-08-20 at ebe0e1a)
- + setup: clarify error messages for file/revisions ambiguity
-
-(Originally merged to 'next' on 2012-08-09)
-
-Reword error messages.
-
-Will merge to 'master' as part of the first batch.
-
-* tr/merge-recursive-flush (2012-08-03) 1 commit
-  (merged to 'next' on 2012-08-20 at 00aeb19)
- + merge-recursive: eliminate flush_buffer() in favor of write_in_full()
-
-(Originally merged to 'next' on 2012-08-09)
-
-Remove unnecessary code.
-
-Will merge to 'master' as part of the first batch.
-
-* tr/void-diff-setup-done (2012-08-03) 1 commit
-  (merged to 'next' on 2012-08-20 at 2f21f63)
- + diff_setup_done(): return void
-
-(Originally merged to 'next' on 2012-08-09)
-
-Remove unnecessary code.
-
-Will merge to 'master' as part of the first batch.
-
-* mk/test-seq (2012-08-04) 1 commit
-  (merged to 'next' on 2012-08-20 at c373e0e)
- + tests: Introduce test_seq
- (this branch is used by ab/diff-write-incomplete-line.)
-
-(Originally merged to 'next' on 2012-08-06)
-
-Add a compatibility/utility function to the test framework. 
-
-Will merge to 'master' as part of the first batch.
-
 * ab/diff-write-incomplete-line (2012-08-05) 1 commit
   (merged to 'next' on 2012-08-20 at e28b804)
  + Fix '\ No newline...' annotation in rewrite diffs
- (this branch uses mk/test-seq.)
 
 (Originally merged to 'next' on 2012-08-07)
 
@@ -560,15 +667,6 @@ The output from "git diff -B" for a file that ends with an
 incomplete line did not put "\ No newline..." on a line of its own.
 
 Will merge to 'master' as part of the second batch.
-
-* pg/maint-apply-remove-unused-variable (2012-08-05) 1 commit
-  (merged to 'next' on 2012-08-20 at 260975b)
- + apply: delete unused deflate_origlen from patch struct
-
-(Originally merged to 'next' on 2012-08-05)
-
-Remove an unused field.
-Will merge to 'master' as part of the first batch.
 
 * tg/index-v5 (2012-08-17) 13 commits
  - p0002-index.sh: add perf test for the index formats
@@ -588,18 +686,6 @@ Will merge to 'master' as part of the first batch.
 A GSoC project, queued here primarily to give people an easier
 access to the state of the last posted version.
 
-* nd/index-errno (2012-08-06) 1 commit
-  (merged to 'next' on 2012-08-20 at 34076c6)
- + read_index_from: remove bogus errno assignments
-
-(Originally merged to 'next' on 2012-08-06)
-
-Assignments to errno before calling system functions that used to
-matter in the old code were left behind after the code structure
-changed sufficiently to make them useless.
-
-Will merge to 'master' as part of the first batch.
-
 * jc/maint-sane-execvp-notdir (2012-07-31) 1 commit
   (merged to 'next' on 2012-08-20 at 0d76cf2)
  + sane_execvp(): ignore non-directory on $PATH
@@ -610,17 +696,6 @@ Will merge to 'master' as part of the first batch.
 directory on $PATH, and worse yet it masked an alias "foo" to run.
 
 Will merge to 'master' as part of the third batch.
-
-* tr/maint-send-email-2047 (2012-07-31) 1 commit
-  (merged to 'next' on 2012-08-20 at cf5ee1c)
- + send-email: improve RFC2047 quote parsing
-
-(Originally merged to 'next' on 2012-08-09)
-
-"git send-email" did not unquote encoded words that appear on the
-header correctly, and lost "_" from strings.
-
-Will merge to 'master' as part of the first batch.
 
 * cw/cherry-pick-allow-empty-message (2012-08-06) 1 commit
   (merged to 'next' on 2012-08-20 at 0dc0590)
@@ -633,34 +708,6 @@ log message.  The "--allow-empty-message" option can be used to
 silently proceed.
 
 Will merge to 'master' as part of the third batch.
-
-* ms/git-svn-1.7 (2012-08-02) 20 commits
-  (merged to 'next' on 2012-08-21 at ae8aff9)
- + git-svn: remove ad-hoc canonicalizations
- + git-svn: canonicalize newly-minted URLs
- + git-svn: introduce add_path_to_url function
- + git-svn: canonicalize earlier
- + git-svn: replace URL escapes with canonicalization
- + git-svn: attempt to mimic SVN 1.7 URL canonicalization
- + t9107: fix typo
- + t9118: workaround inconsistency between SVN versions
- + Git::SVN{,::Ra}: canonicalize earlier
- + git-svn: path canonicalization uses SVN API
- + Git::SVN::Utils: remove irrelevant comment
- + git-svn: add join_paths() to safely concatenate paths
- + git-svn: factor out _collapse_dotdot function
- + git-svn: use SVN 1.7 to canonicalize when possible
- + git-svn: move canonicalization to Git::SVN::Utils
- + use Git::SVN{,::RA}->url accessor globally
- + use Git::SVN->path accessor globally
- + Git::SVN::Ra: use accessor for URLs
- + Git::SVN: use accessor for URLs internally
- + Git::SVN: use accessors internally for path
-
-A series by Michael Schwern via Eric to update git-svn to revamp the
-way URLs are internally passed around, to make it work with SVN 1.7.
-
-Will merge to 'master' as part of the first batch.
 
 * jc/maint-t7406-rev-parse-max-count-huh (2012-07-30) 1 commit
   (merged to 'next' on 2012-08-20 at 3e2598a)
@@ -686,6 +733,8 @@ name 0{40} recorded in a tree.
  + remove unnecessary parameter from get_patch_ids()
 
 Minor code clean-up on the cherry-pick codepath.
+
+Will merge to 'master' as part of the second batch.
 
 * jc/maint-config-exit-status (2012-07-30) 1 commit
   (merged to 'next' on 2012-08-20 at e18ddd8)
@@ -718,25 +767,6 @@ Will merge to 'master' as part of the second batch.
 We may want a documentation update and a few tests.
 
 Kicked back to 'pu'.
-
-* jc/test-prereq (2012-08-04) 8 commits
-  (merged to 'next' on 2012-08-20 at dd44c4a)
- + fixup! t3910: use the UTF8_NFD_TO_NFC test prereq
- + t3910: use the UTF8_NFD_TO_NFC test prereq
- + test-lib: provide UTF8 behaviour as a prerequisite
- + t0050: use the SYMLINKS test prereq
- + t0050: use the CASE_INSENSITIVE_FS test prereq
- + test-lib: provide case insensitivity as a prerequisite
- + test: allow prerequisite to be evaluated lazily
- + test: rename $satisfied to $satisfied_prereq
-
-(Originally merged to 'next' on 2012-08-04)
-
-Teaches the test framework to probe rarely used prerequistes lazily,
-and make use of it for detecting SYMLINKS, CASE_INSENSITIVE_FS and
-NKD/NKC MacOS x gotcha.
-
-Will merge to 'master' as part of the first batch.
 
 * da/difftool-updates (2012-08-21) 13 commits
   (merged to 'next' on 2012-08-21 at 332afe4)
