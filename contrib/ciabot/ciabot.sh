@@ -3,6 +3,8 @@
 # Copyright (c) 2006 Fernando J. Pereda <ferdy@gentoo.org>
 # Copyright (c) 2008 Natanael Copa <natanael.copa@gmail.com>
 # Copyright (c) 2010 Eric S. Raymond <esr@thyrsus.com>
+# Assistance and review by Petr Baudis, author of ciabot.pl,
+# is gratefully acknowledged.
 #
 # This is a version 3.x of ciabot.sh; use -V to find the exact
 # version.  Versions 1 and 2 were shipped in 2006 and 2008 and are not
@@ -11,6 +13,7 @@
 # Note: This script should be considered obsolete.
 # There is a faster, better-documented rewrite in Python: find it as ciabot.py
 # Use this only if your hosting site forbids Python hooks.
+# It requires: git(1), hostname(1), cut(1), sendmail(1), and wget(1).
 #
 # Originally based on Git ciabot.pl by Petr Baudis.
 # This script contains porcelain and porcelain byproducts.
@@ -19,14 +22,14 @@
 #
 # This script is meant to be run either in a post-commit hook or in an
 # update hook.  If there's nothing unusual about your hosting setup,
-# you can specify the project name with a -p option and avoid having
-# to modify this script.  Try it with -n first to see the notification
-# mail dumped to stdout and verify that it looks sane.  Use -V to dump
-# the version and exit.
+# you can specify the project name and repo with config variables and
+# avoid having to modify this script.  Try it with -n to see the
+# notification mail dumped to stdout and verify that it looks
+# sane. With -V it dumps its version and exits.
 #
-# In post-commit, run it without arguments (other than possibly a -p
-# option). It will query for current HEAD and the latest commit ID to
-# get the information it needs.
+# In post-commit, run it without arguments. It will query for
+# current HEAD and the latest commit ID to get the information it
+# needs.
 #
 # In update, you have to call it once per merged commit:
 #
@@ -34,33 +37,54 @@
 #       oldhead=$2
 #       newhead=$3
 #       for merged in $(git rev-list ${oldhead}..${newhead} | tac) ; do
-#               /path/to/ciabot.bash ${refname} ${merged}
+#               /path/to/ciabot.sh ${refname} ${merged}
 #       done
 #
-# The reason for the tac call ids that git rev-list emits commits from
+# The reason for the tac call is that git rev-list emits commits from
 # most recent to least - better to ship notifactions from oldest to newest.
 #
-# Note: this script uses mail, not XML-RPC, in order to avoid stalling
-# until timeout when the CIA XML-RPC server is down.
+# Configuration variables affecting this script:
+# ciabot.project = name of the project (makes -p option unnecessary)
+# ciabot.repo = name of the project repo for gitweb/cgit purposes
+# ciabot.revformat = format in which the revision is shown
+#
+# The ciabot.repo defaults to ciabot.project lowercased.
+#
+# The revformat variable may have the following values
+# raw -> full hex ID of commit
+# short -> first 12 chars of hex ID
+# describe = -> describe relative to last tag, falling back to short
+# The default is 'describe'.
+#
+# Note: the shell ancestors of this script used mail, not XML-RPC, in
+# order to avoid stalling until timeout when the CIA XML-RPC server is
+# down. It is unknown whether this is still an issue in 2010, but
+# XML-RPC would be annoying to do from sh in any case. (XML-RPC does
+# have the advantage that it guarantees notification of multiple commits
+# shpped from an update in their actual order.)
 #
 
-#
-# The project as known to CIA. You will either want to change this
-# or set the project name with a -p option.
-#
-project=
+# The project as known to CIA. You can also hardwire this or set it with a
+# -p option.
+project=$(git config --get ciabot.project)
 
-#
-# You may not need to change these:
-#
+# Name of the repo for gitweb/cgit purposes
+repo=$(git config --get ciabot.repo)
+[ -z $repo] && repo=$(echo "${project}" | tr '[A-Z]' '[a-z]')
 
-# Name of the repository.
-# You can hardwire this to make the script faster.
-repo="`basename ${PWD}`"
+# What revision format do we want in the summary?
+revformat=$(git config --get ciabot.revformat)
 
-# Fully qualified domain name of the repo host.
-# You can hardwire this to make the script faster.
-host=`hostname --fqdn`
+# Fully qualified domain name of the repo host.  You can hardwire this
+# to make the script faster. The -f option works under Linux and FreeBSD,
+# but not OpenBSD and NetBSD. But under OpenBSD and NetBSD,
+# hostname without options gives the FQDN.
+if hostname -f >/dev/null 2>&1
+then
+    hostname=`hostname -f`
+else
+    hostname=`hostname`
+fi
 
 # Changeset URL prefix for your repo: when the commit ID is appended
 # to this, it should point at a CGI that will display the commit
@@ -73,13 +97,14 @@ urlprefix="http://${host}/cgi-bin/cgit.cgi/${repo}/commit/?id="
 # You probably will not need to change the following:
 #
 
-# Identify the script. Should change only when the script itself
-# gets a new home and maintainer.
+# Identify the script. The 'generator' variable should change only
+# when the script itself gets a new home and maintainer.
 generator="http://www.catb.org/~esr/ciabot/ciabot.sh"
+version=3.4
 
 # Addresses for the e-mail
-from="CIABOT-NOREPLY@${host}"
-to="cia@cia.navi.cx"
+from="CIABOT-NOREPLY@${hostname}"
+to="cia@cia.vc"
 
 # SMTP client to use - may need to edit the absolute pathname for your system
 sendmail="sendmail -t -f ${from}"
@@ -97,7 +122,7 @@ do
     case $opt in
 	p) project=$2; shift ; shift ;;
 	n) mode=dumpit; shift ;;
-	V) echo "ciabot.sh: version 3.2"; exit 0; shift ;;
+	V) echo "ciabot.sh: version $version"; exit 0; shift ;;
     esac
 done
 
@@ -128,33 +153,29 @@ fi
 
 refname=${refname##refs/heads/}
 
-gitver=$(git --version)
-gitver=${gitver##* }
+case $revformat in
+raw) rev=$merged ;;
+short) rev='' ;;
+*) rev=$(git describe ${merged} 2>/dev/null) ;;
+esac
+[ -z ${rev} ] && rev=$(echo "$merged" | cut -c 1-12)
 
-rev=$(git describe ${merged} 2>/dev/null)
-# ${merged:0:12} was the only bashism left in the 2008 version of this
-# script, according to checkbashisms.  Replace it with ${merged} here
-# because it was just a fallback anyway, and it's worth accepting a
-# longer fallback for faster execution and removing the bash
-# dependency.
-[ -z ${rev} ] && rev=${merged}
-
-# This discards the part of the author's address after @.
+# We discard the part of the author's address after @.
 # Might be nice to ship the full email address, if not
 # for spammers' address harvesters - getting this wrong
 # would make the freenode #commits channel into harvester heaven.
-rawcommit=$(git cat-file commit ${merged})
-author=$(echo "$rawcommit" | sed -n -e '/^author .*<\([^@]*\).*$/s--\1-p')
-logmessage=$(echo "$rawcommit" | sed -e '1,/^$/d' | head -n 1)
-logmessage=$(echo "$logmessage" | sed 's/\&/&amp\;/g; s/</&lt\;/g; s/>/&gt\;/g')
-ts=$(echo "$rawcommit" | sed -n -e '/^author .*> \([0-9]\+\).*$/s--\1-p')
+author=$(git log -1 '--pretty=format:%an <%ae>' $merged)
+author=$(echo "$author" | sed -n -e '/^.*<\([^@]*\).*$/s--\1-p')
+
+logmessage=$(git log -1 '--pretty=format:%s' $merged)
+ts=$(git log -1 '--pretty=format:%at' $merged)
 files=$(git diff-tree -r --name-only ${merged} | sed -e '1d' -e 's-.*-<file>&</file>-')
 
 out="
 <message>
   <generator>
     <name>CIA Shell client for Git</name>
-    <version>${gitver}</version>
+    <version>${version}</version>
     <url>${generator}</url>
   </generator>
   <source>
