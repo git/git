@@ -38,6 +38,10 @@ OPTIONS
 	See ``Date Formats'' below for details about which formats
 	are supported, and their syntax.
 
+-- done::
+	Terminate with error if there is no 'done' command at the
+	end of the stream.
+
 --force::
 	Force updating modified existing branches, even if doing
 	so would cause commits to be lost (as the new commit does
@@ -1030,7 +1034,9 @@ done::
 	Error out if the stream ends without a 'done' command.
 	Without this feature, errors causing the frontend to end
 	abruptly at a convenient point in the stream can go
-	undetected.
+	undetected.  This may occur, for example, if an import
+	front end dies in mid-operation without emitting SIGTERM
+	or SIGKILL at its subordinate git fast-import instance.
 
 `option`
 ~~~~~~~~
