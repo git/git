@@ -241,7 +241,7 @@ extern int git_diff_ui_config(const char *var, const char *value, void *cb);
 extern int diff_use_color_default;
 extern void diff_setup(struct diff_options *);
 extern int diff_opt_parse(struct diff_options *, const char **, int);
-extern int diff_setup_done(struct diff_options *);
+extern void diff_setup_done(struct diff_options *);
 
 #define DIFF_DETECT_RENAME	1
 #define DIFF_DETECT_COPY	2
