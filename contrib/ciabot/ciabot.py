@@ -11,43 +11,41 @@
 #
 # This script is meant to be run either in a post-commit hook or in an
 # update hook.  If there's nothing unusual about your hosting setup,
-# you can specify the project name with a -p option and avoid having
-# to modify this script.  Try it with -n to see the notification mail
-# dumped to stdout and verify that it looks sane. With -V it dumps its
-# version and exits.
+# you can specify the project name and repo with config variables and
+# avoid having to modify this script.  Try it with -n to see the
+# notification mail dumped to stdout and verify that it looks
+# sane. With -V it dumps its version and exits.
 #
-# In post-commit, run it without arguments (other than possibly a -p
-# option). It will query for current HEAD and the latest commit ID to
-# get the information it needs.
+# In post-commit, run it without arguments. It will query for
+# current HEAD and the latest commit ID to get the information it
+# needs.
 #
 # In update, call it with a refname followed by a list of commits:
-# You want to reverse the order git rev-list emits becxause it lists
+# You want to reverse the order git rev-list emits because it lists
 # from most recent to oldest.
 #
 # /path/to/ciabot.py ${refname} $(git rev-list ${oldhead}..${newhead} | tac)
 #
-# Note: this script uses mail, not XML-RPC, in order to avoid stalling
-# until timeout when the CIA XML-RPC server is down.
+# Configuration variables affecting this script:
+# ciabot.project = name of the project (required)
+# ciabot.repo = name of the project repo for gitweb/cgit purposes
+# ciabot.xmlrpc  = if true (default), ship notifications via XML-RPC
+# ciabot.revformat = format in which the revision is shown
+#
+# The ciabot.repo value defaults to ciabot.project lowercased.
+#
+# The revformat variable may have the following values
+# raw -> full hex ID of commit
+# short -> first 12 chars of hex ID
+# describe = -> describe relative to last tag, falling back to short
+# The default is 'describe'.
+#
+# Note: the CIA project now says only XML-RPC is reliable, so
+# we default to that.
 #
 
-#
-# The project as known to CIA. You will either want to change this
-# or invoke the script with a -p option to set it.
-#
-project=None
-
-#
-# You may not need to change these:
-#
 import os, sys, commands, socket, urllib
-
-# Name of the repository.
-# You can hardwire this to make the script faster.
-repo = os.path.basename(os.getcwd())
-
-# Fully-qualified domain name of this host.
-# You can hardwire this to make the script faster.
-host = socket.getfqdn()
+from xml.sax.saxutils import escape
 
 # Changeset URL prefix for your repo: when the commit ID is appended
 # to this, it should point at a CGI that will display the commit
@@ -72,7 +70,7 @@ xml = '''\
 <message>
   <generator>
     <name>CIA Python client for Git</name>
-    <version>%(gitver)s</version>
+    <version>%(version)s</version>
     <url>%(generator)s</url>
   </generator>
   <source>
@@ -98,19 +96,18 @@ xml = '''\
 # No user-serviceable parts below this line:
 #
 
-# Addresses for the e-mail. The from address is a dummy, since CIA
-# will never reply to this mail.
-fromaddr = "CIABOT-NOREPLY@" + host
-toaddr = "cia@cia.navi.cx"
+# Where to ship e-mail notifications.
+toaddr = "cia@cia.vc"
 
 # Identify the generator script.
 # Should only change when the script itself gets a new home and maintainer.
-generator="http://www.catb.org/~esr/ciabot.py"
+generator = "http://www.catb.org/~esr/ciabot.py"
+version = "3.5"
 
 def do(command):
     return commands.getstatusoutput(command)[1]
 
-def report(refname, merged):
+def report(refname, merged, xmlrpc=True):
     "Generate a commit notification to be reported to CIA"
 
     # Try to tinyfy a reference to a web view for this commit.
@@ -121,32 +118,27 @@ def report(refname, merged):
 
     branch = os.path.basename(refname)
 
-    # Compute a shortnane for the revision
-    rev = do("git describe '"+ merged +"' 2>/dev/null") or merged[:12]
+    # Compute a description for the revision
+    if revformat == 'raw':
+        rev = merged
+    elif revformat == 'short':
+        rev = ''
+    else: # revformat == 'describe'
+        rev = do("git describe %s 2>/dev/null" % merged)
+    if not rev:
+        rev = merged[:12]
 
-    # Extract the neta-information for the commit
-    rawcommit = do("git cat-file commit " + merged)
+    # Extract the meta-information for the commit
     files=do("git diff-tree -r --name-only '"+ merged +"' | sed -e '1d' -e 's-.*-<file>&</file>-'")
-    inheader = True
-    headers = {}
-    logmsg = ""
-    for line in rawcommit.split("\n"):
-        if inheader:
-            if line:
-                fields = line.split()
-                headers[fields[0]] = " ".join(fields[1:])
-            else:
-                inheader = False
-        else:
-            logmsg = line
-            break
-    (author, ts) = headers["author"].split(">")
+    metainfo = do("git log -1 '--pretty=format:%an <%ae>%n%at%n%s' " + merged)
+    (author, ts, logmsg) = metainfo.split("\n")
+    logmsg = escape(logmsg)
 
-    # This discards the part of the authors addrsss after @.
-    # Might be bnicece to ship the full email address, if not
+    # This discards the part of the author's address after @.
+    # Might be be nice to ship the full email address, if not
     # for spammers' address harvesters - getting this wrong
     # would make the freenode #commits channel into harvester heaven.
-    author = author.replace("<", "").split("@")[0].split()[-1]
+    author = escape(author.replace("<", "").split("@")[0].split()[-1])
 
     # This ignores the timezone.  Not clear what to do with it...
     ts = ts.strip().split()[0]
@@ -155,8 +147,7 @@ def report(refname, merged):
     context.update(globals())
 
     out = xml % context
-
-    message = '''\
+    mail = '''\
 Message-ID: <%(merged)s.%(author)s@%(project)s>
 From: %(fromaddr)s
 To: %(toaddr)s
@@ -165,25 +156,40 @@ Subject: DeliverXML
 
 %(out)s''' % locals()
 
-    return message
+    if xmlrpc:
+        return out
+    else:
+        return mail
 
 if __name__ == "__main__":
     import getopt
 
+    # Get all config variables
+    revformat = do("git config --get ciabot.revformat")
+    project = do("git config --get ciabot.project")
+    repo = do("git config --get ciabot.repo")
+    xmlrpc = do("git config --get ciabot.xmlrpc")
+    xmlrpc = not (xmlrpc and xmlrpc == "false")
+
+    host = socket.getfqdn()
+    fromaddr = "CIABOT-NOREPLY@" + host
+
     try:
-        (options, arguments) = getopt.getopt(sys.argv[1:], "np:V")
+        (options, arguments) = getopt.getopt(sys.argv[1:], "np:xV")
     except getopt.GetoptError, msg:
         print "ciabot.py: " + str(msg)
         raise SystemExit, 1
 
-    mailit = True
+    notify = True
     for (switch, val) in options:
         if switch == '-p':
             project = val
         elif switch == '-n':
-            mailit = False
+            notify = False
+        elif switch == '-x':
+            xmlrpc = True
         elif switch == '-V':
-            print "ciabot.py: version 3.2"
+            print "ciabot.py: version", version
             sys.exit(0)
 
     # Cough and die if user has not specified a project
@@ -191,8 +197,8 @@ if __name__ == "__main__":
         sys.stderr.write("ciabot.py: no project specified, bailing out.\n")
         sys.exit(1)
 
-    # We'll need the git version number.
-    gitver = do("git --version").split()[0]
+    if not repo:
+        repo = project.lower()
 
     urlprefix = urlprefix % globals()
 
@@ -205,18 +211,29 @@ if __name__ == "__main__":
         refname = arguments[0]
         merges = arguments[1:]
 
-    if mailit:
-        import smtplib
-        server = smtplib.SMTP('localhost')
+    if notify:
+        if xmlrpc:
+            import xmlrpclib
+            server = xmlrpclib.Server('http://cia.vc/RPC2');
+        else:
+            import smtplib
+            server = smtplib.SMTP('localhost')
 
     for merged in merges:
-        message = report(refname, merged)
-        if mailit:
-            server.sendmail(fromaddr, [toaddr], message)
-        else:
+        message = report(refname, merged, xmlrpc)
+        if not notify:
             print message
+        elif xmlrpc:
+            try:
+                # RPC server is flaky, this can fail due to timeout.
+                server.hub.deliver(message)
+            except socket.error, e:
+                sys.stderr.write("%s\n" % e)
+        else:
+            server.sendmail(fromaddr, [toaddr], message)
 
-    if mailit:
-        server.quit()
+    if notify:
+        if not xmlrpc:
+            server.quit()
 
 #End
