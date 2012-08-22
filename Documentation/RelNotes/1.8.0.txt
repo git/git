@@ -1,0 +1,44 @@
+Git v1.8.0 Release Notes
+========================
+
+Updates since v1.7.12
+---------------------
+
+UI, Workflows & Features
+
+
+Foreign Interface
+
+ * "git svn" has been updated to work with SVN 1.7.
+
+
+Performance, Internal Implementation, etc. (please report possible regressions)
+
+ * The "check-docs" build target has been updated and greatly
+   simplified.
+
+
+Also contains minor documentation updates and code clean-ups.
+
+
+Fixes since v1.7.12
+-------------------
+
+Unless otherwise noted, all the fixes since v1.7.12 in the
+maintenance track are contained in this release (see release notes
+to them for details).
+
+ * "git send-email" did not unquote encoded words that appear on the
+   header correctly, and lost "_" from strings.
+   (merge b622d4d tr/maint-send-email-2047 later to maint).
+
+ * When the user gives an argument that can be taken as both a
+   revision name and a pathname without disambiguating with "--", we
+   used to give a help message "Use '--' to separate".  The message
+   has been clarified to show where that '--' goes on the command
+   line.
+   (merge 4d4b573 mm/die-with-dashdash-help later to maint).
+
+ * "gitweb" when used with PATH_INFO failed to notice directories with
+   SP (and other characters that need URL-style quoting) in them.
+   (merge cacfc09 js/gitweb-path-info-unquote later to maint).
