@@ -26,6 +26,8 @@ git-commit-tree                         plumbingmanipulators
 git-config                              ancillarymanipulators
 git-count-objects                       ancillaryinterrogators
 git-credential                          purehelpers
+git-credential-cache                    purehelpers
+git-credential-store                    purehelpers
 git-cvsexportcommit                     foreignscminterface
 git-cvsimport                           foreignscminterface
 git-cvsserver                           foreignscminterface
@@ -114,6 +116,7 @@ git-show                                mainporcelain common
 git-show-branch                         ancillaryinterrogators
 git-show-index                          plumbinginterrogators
 git-show-ref                            plumbinginterrogators
+git-sh-i18n                             purehelpers
 git-sh-setup                            purehelpers
 git-stash                               mainporcelain
 git-status                              mainporcelain common

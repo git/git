@@ -344,4 +344,7 @@ require-htmlrepo::
 quick-install-html: require-htmlrepo
 	'$(SHELL_PATH_SQ)' ./install-doc-quick.sh $(HTML_REPO) $(DESTDIR)$(htmldir)
 
+print-man1:
+	@for i in $(MAN1_TXT); do echo $$i; done
+
 .PHONY: FORCE
