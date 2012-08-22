@@ -101,6 +101,7 @@ include::merge-options.txt[]
 
 :git-pull: 1
 
+-r::
 --rebase::
 	Rebase the current branch on top of the upstream branch after
 	fetching.  If there is a remote-tracking branch corresponding to
