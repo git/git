@@ -76,10 +76,18 @@ For shell scripts specifically (not exhaustive):
 
  - We do not use Process Substitution <(list) or >(list).
 
+ - Do not write control structures on a single line with semicolon.
+   "then" should be on the next line for if statements, and "do"
+   should be on the next line for "while" and "for".
+
  - We prefer "test" over "[ ... ]".
 
  - We do not write the noiseword "function" in front of shell
    functions.
+
+ - We prefer a space between the function name and the parentheses. The
+   opening "{" should also be on the same line.
+   E.g.: my_function () {
 
  - As to use of grep, stick to a subset of BRE (namely, no \{m,n\},
    [::], [==], nor [..]) for portability.
