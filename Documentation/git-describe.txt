@@ -36,12 +36,12 @@ OPTIONS
 
 --all::
 	Instead of using only the annotated tags, use any ref
-	found in `.git/refs/`.  This option enables matching
+	found in `refs/` namespace.  This option enables matching
 	any known branch, remote-tracking branch, or lightweight tag.
 
 --tags::
 	Instead of using only the annotated tags, use any tag
-	found in `.git/refs/tags`.  This option enables matching
+	found in `refs/tags` namespace.  This option enables matching
 	a lightweight (non-annotated) tag.
 
 --contains::
