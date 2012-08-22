@@ -7,48 +7,26 @@ test_description='Various filesystem issues'
 auml=$(printf '\303\244')
 aumlcdiar=$(printf '\141\314\210')
 
-case_insensitive=
-unibad=
-no_symlinks=
-test_expect_success 'see what we expect' '
-
-	test_case=test_expect_success &&
-	test_unicode=test_expect_success &&
-	mkdir junk &&
-	echo good >junk/CamelCase &&
-	echo bad >junk/camelcase &&
-	if test "$(cat junk/CamelCase)" != good
-	then
-		test_case=test_expect_failure &&
-		case_insensitive=t
-	fi &&
-	rm -fr junk &&
-	mkdir junk &&
-	>junk/"$auml" &&
-	case "$(cd junk && echo *)" in
-	"$aumlcdiar")
-		test_unicode=test_expect_failure &&
-		unibad=t
-		;;
-	*)	;;
-	esac &&
-	rm -fr junk &&
-	{
-		ln -s x y 2> /dev/null &&
-		test -h y 2> /dev/null ||
-		no_symlinks=1 &&
-		rm -f y
-	}
-'
-
-test "$case_insensitive" &&
+if test_have_prereq CASE_INSENSITIVE_FS
+then
 	say "will test on a case insensitive filesystem"
-test "$unibad" &&
+	test_case=test_expect_failure
+else
+	test_case=test_expect_success
+fi
+
+if test_have_prereq UTF8_NFD_TO_NFC
+then
 	say "will test on a unicode corrupting filesystem"
-test "$no_symlinks" &&
+	test_unicode=test_expect_failure
+else
+	test_unicode=test_expect_success
+fi
+
+test_have_prereq SYMLINKS ||
 	say "will test on a filesystem lacking symbolic links"
 
-if test "$case_insensitive"
+if test_have_prereq CASE_INSENSITIVE_FS
 then
 test_expect_success "detection of case insensitive filesystem during repo init" '
 
@@ -62,18 +40,18 @@ test_expect_success "detection of case insensitive filesystem during repo init" 
 '
 fi
 
-if test "$no_symlinks"
+if test_have_prereq SYMLINKS
 then
-test_expect_success "detection of filesystem w/o symlink support during repo init" '
-
-	v=$(git config --bool core.symlinks) &&
-	test "$v" = false
-'
-else
 test_expect_success "detection of filesystem w/o symlink support during repo init" '
 
 	test_must_fail git config --bool core.symlinks ||
 	test "$(git config --bool core.symlinks)" = true
+'
+else
+test_expect_success "detection of filesystem w/o symlink support during repo init" '
+
+	v=$(git config --bool core.symlinks) &&
+	test "$v" = false
 '
 fi
 
