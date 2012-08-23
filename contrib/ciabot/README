@@ -8,5 +8,15 @@ You probably want the Python version; it's faster, more capable, and
 better documented.  The shell version is maintained only as a fallback
 for use on hosting sites that don't permit Python hook scripts.
 
-You will find installation instructions for each script in its comment
-header.
+To test these scripts, your project needs to have been registered with
+the CIA site.  Here are the steps:
+
+1. Open an IRC window on irc://freenode/commits or your registered
+   project IRC channel.
+
+2. Run ciabot.py and/or ciabot.sh from any directory under git
+   control, using the -p option to pass in your project name.
+
+You should see a notification on the channel for your most recent commit.
+
+See the file INSTALL for installation instructions.
