@@ -780,7 +780,10 @@ int in_merge_bases(struct commit *commit, struct commit *reference)
 	struct commit_list *bases, *b;
 	int ret = 0;
 
-	bases = get_merge_bases(commit, reference, 1);
+	bases = merge_bases_many(commit, 1, &reference);
+	clear_commit_marks(commit, all_flags);
+	clear_commit_marks(reference, all_flags);
+
 	for (b = bases; b; b = b->next) {
 		if (!hashcmp(commit->object.sha1, b->item->object.sha1)) {
 			ret = 1;
