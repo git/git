@@ -397,6 +397,8 @@ int add_excludes_from_file_to_list(const char *fname,
 
 	fd = open(fname, O_RDONLY);
 	if (fd < 0 || fstat(fd, &st) < 0) {
+		if (errno != ENOENT)
+			warn_on_inaccessible(fname);
 		if (0 <= fd)
 			close(fd);
 		if (!check_index ||
@@ -1311,9 +1313,9 @@ void setup_standard_excludes(struct dir_struct *dir)
 		home_config_paths(NULL, &xdg_path, "ignore");
 		excludes_file = xdg_path;
 	}
-	if (!access(path, R_OK))
+	if (!access_or_warn(path, R_OK))
 		add_excludes_from_file(dir, path);
-	if (excludes_file && !access(excludes_file, R_OK))
+	if (excludes_file && !access_or_warn(excludes_file, R_OK))
 		add_excludes_from_file(dir, excludes_file);
 }
 
