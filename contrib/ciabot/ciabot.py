@@ -10,11 +10,9 @@
 # usage: ciabot.py [-V] [-n] [-p projectname]  [refname [commits...]]
 #
 # This script is meant to be run either in a post-commit hook or in an
-# update hook.  If there's nothing unusual about your hosting setup,
-# you can specify the project name and repo with config variables and
-# avoid having to modify this script.  Try it with -n to see the
-# notification mail dumped to stdout and verify that it looks
-# sane. With -V it dumps its version and exits.
+# update hook. Try it with -n to see the notification mail dumped to
+# stdout and verify that it looks sane. With -V it dumps its version
+# and exits.
 #
 # In post-commit, run it without arguments. It will query for
 # current HEAD and the latest commit ID to get the information it
@@ -27,12 +25,17 @@
 # /path/to/ciabot.py ${refname} $(git rev-list ${oldhead}..${newhead} | tac)
 #
 # Configuration variables affecting this script:
-# ciabot.project = name of the project (required)
+#
+# ciabot.project = name of the project
 # ciabot.repo = name of the project repo for gitweb/cgit purposes
 # ciabot.xmlrpc  = if true (default), ship notifications via XML-RPC
 # ciabot.revformat = format in which the revision is shown
 #
-# The ciabot.repo value defaults to ciabot.project lowercased.
+# ciabot.project defaults to the directory name of the repository toplevel.
+# ciabot.repo defaults to ciabot.project lowercased.
+#
+# This means that in the normal case you need not do any configuration at all,
+# but setting the project name will speed it up slightly.
 #
 # The revformat variable may have the following values
 # raw -> full hex ID of commit
@@ -102,7 +105,7 @@ toaddr = "cia@cia.vc"
 # Identify the generator script.
 # Should only change when the script itself gets a new home and maintainer.
 generator = "http://www.catb.org/~esr/ciabot.py"
-version = "3.5"
+version = "3.6"
 
 def do(command):
     return commands.getstatusoutput(command)[1]
@@ -192,10 +195,17 @@ if __name__ == "__main__":
             print "ciabot.py: version", version
             sys.exit(0)
 
-    # Cough and die if user has not specified a project
+    # The project variable defaults to the name of the repository toplevel.
     if not project:
-        sys.stderr.write("ciabot.py: no project specified, bailing out.\n")
-        sys.exit(1)
+        here = os.getcwd()
+        while True:
+            if os.path.exists(os.path.join(here, ".git")):
+                project = os.path.basename(here)
+                break
+            elif here == '/':
+                sys.stderr.write("ciabot.py: no .git below root!\n")
+                sys.exit(1)
+            here = os.path.dirname(here)
 
     if not repo:
         repo = project.lower()

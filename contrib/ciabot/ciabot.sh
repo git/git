@@ -21,11 +21,9 @@
 # usage: ciabot.sh [-V] [-n] [-p projectname] [refname commit]
 #
 # This script is meant to be run either in a post-commit hook or in an
-# update hook.  If there's nothing unusual about your hosting setup,
-# you can specify the project name and repo with config variables and
-# avoid having to modify this script.  Try it with -n to see the
-# notification mail dumped to stdout and verify that it looks
-# sane. With -V it dumps its version and exits.
+# update hook. Try it with -n to see the notification mail dumped to
+# stdout and verify that it looks sane. With -V it dumps its version
+# and exits.
 #
 # In post-commit, run it without arguments. It will query for
 # current HEAD and the latest commit ID to get the information it
@@ -44,11 +42,16 @@
 # most recent to least - better to ship notifactions from oldest to newest.
 #
 # Configuration variables affecting this script:
-# ciabot.project = name of the project (makes -p option unnecessary)
+#
+# ciabot.project = name of the project
 # ciabot.repo = name of the project repo for gitweb/cgit purposes
 # ciabot.revformat = format in which the revision is shown
 #
-# The ciabot.repo defaults to ciabot.project lowercased.
+# ciabot.project defaults to the directory name of the repository toplevel.
+# ciabot.repo defaults to ciabot.project lowercased.
+#
+# This means that in the normal case you need not do any configuration at all,
+# but setting the project name will speed it up slightly.
 #
 # The revformat variable may have the following values
 # raw -> full hex ID of commit
@@ -64,9 +67,26 @@
 # shpped from an update in their actual order.)
 #
 
-# The project as known to CIA. You can also hardwire this or set it with a
-# -p option.
+# The project as known to CIA. You can set this with a -p option,
+# or let it default to the directory name of the repo toplevel.
 project=$(git config --get ciabot.project)
+
+if [ -z $project ]
+then
+    here=`pwd`;
+    while :; do
+	if [ -d $here/.git ]
+	then
+	    project=`basename $here`
+	    break
+	elif [ $here = '/' ]
+	then
+	    echo "ciabot.sh: no .git below root!"
+	    exit 1
+	fi
+	here=`dirname $here`
+    done
+fi
 
 # Name of the repo for gitweb/cgit purposes
 repo=$(git config --get ciabot.repo)
@@ -100,7 +120,7 @@ urlprefix="http://${host}/cgi-bin/cgit.cgi/${repo}/commit/?id="
 # Identify the script. The 'generator' variable should change only
 # when the script itself gets a new home and maintainer.
 generator="http://www.catb.org/~esr/ciabot/ciabot.sh"
-version=3.4
+version=3.5
 
 # Addresses for the e-mail
 from="CIABOT-NOREPLY@${hostname}"

@@ -8,5 +8,4 @@ You probably want the Python version; it's faster, more capable, and
 better documented.  The shell version is maintained only as a fallback
 for use on hosting sites that don't permit Python hook scripts.
 
-You will find installation instructions for each script in its comment
-header.
+See the file INSTALL for installation instructions.
