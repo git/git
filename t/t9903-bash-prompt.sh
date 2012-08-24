@@ -248,14 +248,12 @@ test_expect_success 'prompt - inside bare repository' '
 
 test_expect_success 'prompt - interactive rebase' '
 	printf " (b1|REBASE-i 2/3)" >expected
-	echo "#!$SHELL_PATH" >fake_editor.sh &&
-	cat >>fake_editor.sh <<\EOF &&
-echo "exec echo" >"$1"
-echo "edit $(git log -1 --format="%h")" >>"$1"
-echo "exec echo" >>"$1"
-EOF
+	write_script fake_editor.sh <<-\EOF &&
+		echo "exec echo" >"$1"
+		echo "edit $(git log -1 --format="%h")" >>"$1"
+		echo "exec echo" >>"$1"
+	EOF
 	test_when_finished "rm -f fake_editor.sh" &&
-	chmod a+x fake_editor.sh &&
 	test_set_editor "$TRASH_DIRECTORY/fake_editor.sh" &&
 	git checkout b1 &&
 	test_when_finished "git checkout master" &&
