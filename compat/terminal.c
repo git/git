@@ -59,6 +59,7 @@ char *git_terminal_prompt(const char *prompt, int echo)
 
 	r = strbuf_getline(&buf, fh, '\n');
 	if (!echo) {
+		fseek(fh, SEEK_CUR, 0);
 		putc('\n', fh);
 		fflush(fh);
 	}
