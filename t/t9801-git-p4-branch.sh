@@ -410,6 +410,83 @@ test_expect_failure 'git p4 clone file subset branch' '
 		test_path_is_missing file3
 	)
 '
+
+# From a report in http://stackoverflow.com/questions/11893688
+# where --use-client-spec caused branch prefixes not to be removed;
+# every file in git appeared into a subdirectory of the branch name.
+test_expect_success 'use-client-spec detect-branches setup' '
+	rm -rf "$cli" &&
+	mkdir "$cli" &&
+	(
+		cd "$cli" &&
+		client_view "//depot/usecs/... //client/..." &&
+		mkdir b1 &&
+		echo b1/b1-file1 >b1/b1-file1 &&
+		p4 add b1/b1-file1 &&
+		p4 submit -d "b1/b1-file1" &&
+
+		p4 integrate //depot/usecs/b1/... //depot/usecs/b2/... &&
+		p4 submit -d "b1 -> b2" &&
+		p4 branch -i <<-EOF &&
+		Branch: b2
+		View: //depot/usecs/b1/... //depot/usecs/b2/...
+		EOF
+
+		echo b2/b2-file2 >b2/b2-file2 &&
+		p4 add b2/b2-file2 &&
+		p4 submit -d "b2/b2-file2"
+	)
+'
+
+test_expect_success 'use-client-spec detect-branches files in top-level' '
+	test_when_finished cleanup_git &&
+	test_create_repo "$git" &&
+	(
+		cd "$git" &&
+		git p4 sync --detect-branches --use-client-spec //depot/usecs@all &&
+		git checkout -b master p4/usecs/b1 &&
+		test_path_is_file b1-file1 &&
+		test_path_is_missing b2-file2 &&
+		test_path_is_missing b1 &&
+		test_path_is_missing b2 &&
+
+		git checkout -b b2 p4/usecs/b2 &&
+		test_path_is_file b1-file1 &&
+		test_path_is_file b2-file2 &&
+		test_path_is_missing b1 &&
+		test_path_is_missing b2
+	)
+'
+
+test_expect_success 'use-client-spec detect-branches skips branches setup' '
+	(
+		cd "$cli" &&
+
+		p4 integrate //depot/usecs/b1/... //depot/usecs/b3/... &&
+		p4 submit -d "b1 -> b3" &&
+		p4 branch -i <<-EOF &&
+		Branch: b3
+		View: //depot/usecs/b1/... //depot/usecs/b3/...
+		EOF
+
+		echo b3/b3-file3 >b3/b3-file3 &&
+		p4 add b3/b3-file3 &&
+		p4 submit -d "b3/b3-file3"
+	)
+'
+
+test_expect_success 'use-client-spec detect-branches skips branches' '
+	client_view "//depot/usecs/... //client/..." \
+		    "-//depot/usecs/b3/... //client/b3/..." &&
+	test_when_finished cleanup_git &&
+	test_create_repo "$git" &&
+	(
+		cd "$git" &&
+		git p4 sync --detect-branches --use-client-spec //depot/usecs@all &&
+		test_must_fail git rev-parse refs/remotes/p4/usecs/b3
+	)
+'
+
 test_expect_success 'kill p4d' '
 	kill_p4d
 '
