@@ -14,14 +14,13 @@ SYNOPSIS
 
 DESCRIPTION
 -----------
-Adds a 'replace' reference in `.git/refs/replace/`
+Adds a 'replace' reference in `refs/replace/` namespace.
 
 The name of the 'replace' reference is the SHA1 of the object that is
 replaced. The content of the 'replace' reference is the SHA1 of the
 replacement object.
 
-Unless `-f` is given, the 'replace' reference must not yet exist in
-`.git/refs/replace/` directory.
+Unless `-f` is given, the 'replace' reference must not yet exist.
 
 Replacement references will be used by default by all git commands
 except those doing reachability traversal (prune, pack transfer and

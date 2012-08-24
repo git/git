@@ -20,11 +20,10 @@ SYNOPSIS
 DESCRIPTION
 -----------
 
-Add a tag reference in `.git/refs/tags/`, unless `-d/-l/-v` is given
+Add a tag reference in `refs/tags/`, unless `-d/-l/-v` is given
 to delete, list or verify tags.
 
-Unless `-f` is given, the tag to be created must not yet exist in the
-`.git/refs/tags/` directory.
+Unless `-f` is given, the named tag must not yet exist.
 
 If one of `-a`, `-s`, or `-u <key-id>` is passed, the command
 creates a 'tag' object, and requires a tag message.  Unless
