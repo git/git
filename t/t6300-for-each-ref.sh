@@ -456,4 +456,14 @@ test_atom refs/tags/signed-long contents "subject line
 body contents
 $sig"
 
+cat >expected <<\EOF
+408fe76d02a785a006c2e9c669b7be5589ede96d <committer@example.com> refs/tags/master
+90b5ebede4899eda64893bc2a4c8f1d6fb6dfc40 <committer@example.com> refs/tags/bogo
+EOF
+
+test_expect_success 'Verify sort with multiple keys' '
+	git for-each-ref --format="%(objectname) %(taggeremail) %(refname)" --sort=objectname --sort=taggeremail \
+		refs/tags/bogo refs/tags/master > actual &&
+	test_cmp expected actual
+'
 test_done
