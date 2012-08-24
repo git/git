@@ -14,9 +14,9 @@
 #include "parse-options.h"
 
 static const char * const git_replace_usage[] = {
-	"git replace [-f] <object> <replacement>",
-	"git replace -d <object>...",
-	"git replace -l [<pattern>]",
+	N_("git replace [-f] <object> <replacement>"),
+	N_("git replace -d <object>..."),
+	N_("git replace -l [<pattern>]"),
 	NULL
 };
 
@@ -115,9 +115,9 @@ int cmd_replace(int argc, const char **argv, const char *prefix)
 {
 	int list = 0, delete = 0, force = 0;
 	struct option options[] = {
-		OPT_BOOLEAN('l', NULL, &list, "list replace refs"),
-		OPT_BOOLEAN('d', NULL, &delete, "delete replace refs"),
-		OPT_BOOLEAN('f', NULL, &force, "replace the ref if it exists"),
+		OPT_BOOLEAN('l', NULL, &list, N_("list replace refs")),
+		OPT_BOOLEAN('d', NULL, &delete, N_("delete replace refs")),
+		OPT_BOOLEAN('f', NULL, &force, N_("replace the ref if it exists")),
 		OPT_END()
 	};
 

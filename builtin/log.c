@@ -34,8 +34,8 @@ static const char *fmt_patch_subject_prefix = "PATCH";
 static const char *fmt_pretty;
 
 static const char * const builtin_log_usage[] = {
-	"git log [<options>] [<since>..<until>] [[--] <path>...]\n"
-	"   or: git show [options] <object>...",
+	N_("git log [<options>] [<since>..<until>] [[--] <path>...]\n")
+	N_("   or: git show [options] <object>..."),
 	NULL
 };
 
@@ -97,9 +97,9 @@ static void cmd_log_init_finish(int argc, const char **argv, const char *prefix,
 	int quiet = 0, source = 0;
 
 	const struct option builtin_log_options[] = {
-		OPT_BOOLEAN(0, "quiet", &quiet, "suppress diff output"),
-		OPT_BOOLEAN(0, "source", &source, "show source"),
-		{ OPTION_CALLBACK, 0, "decorate", NULL, NULL, "decorate options",
+		OPT_BOOLEAN(0, "quiet", &quiet, N_("suppress diff output")),
+		OPT_BOOLEAN(0, "source", &source, N_("show source")),
+		{ OPTION_CALLBACK, 0, "decorate", NULL, NULL, N_("decorate options"),
 		  PARSE_OPT_OPTARG, decorate_callback},
 		OPT_END()
 	};
@@ -887,7 +887,7 @@ static const char *set_outdir(const char *prefix, const char *output_directory)
 }
 
 static const char * const builtin_format_patch_usage[] = {
-	"git format-patch [options] [<since> | <revision range>]",
+	N_("git format-patch [options] [<since> | <revision range>]"),
 	NULL
 };
 
@@ -1060,61 +1060,61 @@ int cmd_format_patch(int argc, const char **argv, const char *prefix)
 	char *branch_name = NULL;
 	const struct option builtin_format_patch_options[] = {
 		{ OPTION_CALLBACK, 'n', "numbered", &numbered, NULL,
-			    "use [PATCH n/m] even with a single patch",
+			    N_("use [PATCH n/m] even with a single patch"),
 			    PARSE_OPT_NOARG, numbered_callback },
 		{ OPTION_CALLBACK, 'N', "no-numbered", &numbered, NULL,
-			    "use [PATCH] even with multiple patches",
+			    N_("use [PATCH] even with multiple patches"),
 			    PARSE_OPT_NOARG, no_numbered_callback },
-		OPT_BOOLEAN('s', "signoff", &do_signoff, "add Signed-off-by:"),
+		OPT_BOOLEAN('s', "signoff", &do_signoff, N_("add Signed-off-by:")),
 		OPT_BOOLEAN(0, "stdout", &use_stdout,
-			    "print patches to standard out"),
+			    N_("print patches to standard out")),
 		OPT_BOOLEAN(0, "cover-letter", &cover_letter,
-			    "generate a cover letter"),
+			    N_("generate a cover letter")),
 		OPT_BOOLEAN(0, "numbered-files", &numbered_files,
-			    "use simple number sequence for output file names"),
-		OPT_STRING(0, "suffix", &fmt_patch_suffix, "sfx",
-			    "use <sfx> instead of '.patch'"),
+			    N_("use simple number sequence for output file names")),
+		OPT_STRING(0, "suffix", &fmt_patch_suffix, N_("sfx"),
+			    N_("use <sfx> instead of '.patch'")),
 		OPT_INTEGER(0, "start-number", &start_number,
-			    "start numbering patches at <n> instead of 1"),
-		{ OPTION_CALLBACK, 0, "subject-prefix", &rev, "prefix",
-			    "Use [<prefix>] instead of [PATCH]",
+			    N_("start numbering patches at <n> instead of 1")),
+		{ OPTION_CALLBACK, 0, "subject-prefix", &rev, N_("prefix"),
+			    N_("Use [<prefix>] instead of [PATCH]"),
 			    PARSE_OPT_NONEG, subject_prefix_callback },
 		{ OPTION_CALLBACK, 'o', "output-directory", &output_directory,
-			    "dir", "store resulting files in <dir>",
+			    N_("dir"), N_("store resulting files in <dir>"),
 			    PARSE_OPT_NONEG, output_directory_callback },
 		{ OPTION_CALLBACK, 'k', "keep-subject", &rev, NULL,
-			    "don't strip/add [PATCH]",
+			    N_("don't strip/add [PATCH]"),
 			    PARSE_OPT_NOARG | PARSE_OPT_NONEG, keep_callback },
 		OPT_BOOLEAN(0, "no-binary", &no_binary_diff,
-			    "don't output binary diffs"),
+			    N_("don't output binary diffs")),
 		OPT_BOOLEAN(0, "ignore-if-in-upstream", &ignore_if_in_upstream,
-			    "don't include a patch matching a commit upstream"),
+			    N_("don't include a patch matching a commit upstream")),
 		{ OPTION_BOOLEAN, 'p', "no-stat", &use_patch_format, NULL,
-		  "show patch format instead of default (patch + stat)",
+		  N_("show patch format instead of default (patch + stat)"),
 		  PARSE_OPT_NONEG | PARSE_OPT_NOARG },
-		OPT_GROUP("Messaging"),
-		{ OPTION_CALLBACK, 0, "add-header", NULL, "header",
-			    "add email header", 0, header_callback },
-		{ OPTION_CALLBACK, 0, "to", NULL, "email", "add To: header",
+		OPT_GROUP(N_("Messaging")),
+		{ OPTION_CALLBACK, 0, "add-header", NULL, N_("header"),
+			    N_("add email header"), 0, header_callback },
+		{ OPTION_CALLBACK, 0, "to", NULL, N_("email"), N_("add To: header"),
 			    0, to_callback },
-		{ OPTION_CALLBACK, 0, "cc", NULL, "email", "add Cc: header",
+		{ OPTION_CALLBACK, 0, "cc", NULL, N_("email"), N_("add Cc: header"),
 			    0, cc_callback },
-		OPT_STRING(0, "in-reply-to", &in_reply_to, "message-id",
-			    "make first mail a reply to <message-id>"),
-		{ OPTION_CALLBACK, 0, "attach", &rev, "boundary",
-			    "attach the patch", PARSE_OPT_OPTARG,
+		OPT_STRING(0, "in-reply-to", &in_reply_to, N_("message-id"),
+			    N_("make first mail a reply to <message-id>")),
+		{ OPTION_CALLBACK, 0, "attach", &rev, N_("boundary"),
+			    N_("attach the patch"), PARSE_OPT_OPTARG,
 			    attach_callback },
-		{ OPTION_CALLBACK, 0, "inline", &rev, "boundary",
-			    "inline the patch",
+		{ OPTION_CALLBACK, 0, "inline", &rev, N_("boundary"),
+			    N_("inline the patch"),
 			    PARSE_OPT_OPTARG | PARSE_OPT_NONEG,
 			    inline_callback },
-		{ OPTION_CALLBACK, 0, "thread", &thread, "style",
-			    "enable message threading, styles: shallow, deep",
+		{ OPTION_CALLBACK, 0, "thread", &thread, N_("style"),
+			    N_("enable message threading, styles: shallow, deep"),
 			    PARSE_OPT_OPTARG, thread_callback },
-		OPT_STRING(0, "signature", &signature, "signature",
-			    "add a signature"),
+		OPT_STRING(0, "signature", &signature, N_("signature"),
+			    N_("add a signature")),
 		OPT_BOOLEAN(0, "quiet", &quiet,
-			    "don't print the patch filenames"),
+			    N_("don't print the patch filenames")),
 		OPT_END()
 	};
 
@@ -1440,7 +1440,7 @@ static int add_pending_commit(const char *arg, struct rev_info *revs, int flags)
 }
 
 static const char * const cherry_usage[] = {
-	"git cherry [-v] [<upstream> [<head> [<limit>]]]",
+	N_("git cherry [-v] [<upstream> [<head> [<limit>]]]"),
 	NULL
 };
 
@@ -1474,7 +1474,7 @@ int cmd_cherry(int argc, const char **argv, const char *prefix)
 
 	struct option options[] = {
 		OPT__ABBREV(&abbrev),
-		OPT__VERBOSE(&verbose, "be verbose"),
+		OPT__VERBOSE(&verbose, N_("be verbose")),
 		OPT_END()
 	};
 

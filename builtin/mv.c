@@ -11,7 +11,7 @@
 #include "parse-options.h"
 
 static const char * const builtin_mv_usage[] = {
-	"git mv [options] <source>... <destination>",
+	N_("git mv [options] <source>... <destination>"),
 	NULL
 };
 
@@ -59,10 +59,10 @@ int cmd_mv(int argc, const char **argv, const char *prefix)
 	int i, newfd;
 	int verbose = 0, show_only = 0, force = 0, ignore_errors = 0;
 	struct option builtin_mv_options[] = {
-		OPT__VERBOSE(&verbose, "be verbose"),
-		OPT__DRY_RUN(&show_only, "dry run"),
-		OPT__FORCE(&force, "force move/rename even if target exists"),
-		OPT_BOOLEAN('k', NULL, &ignore_errors, "skip move/rename errors"),
+		OPT__VERBOSE(&verbose, N_("be verbose")),
+		OPT__DRY_RUN(&show_only, N_("dry run")),
+		OPT__FORCE(&force, N_("force move/rename even if target exists")),
+		OPT_BOOLEAN('k', NULL, &ignore_errors, N_("skip move/rename errors")),
 		OPT_END(),
 	};
 	const char **source, **destination, **dest_path;

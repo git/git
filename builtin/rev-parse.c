@@ -324,15 +324,15 @@ static int cmd_parseopt(int argc, const char **argv, const char *prefix)
 {
 	static int keep_dashdash = 0, stop_at_non_option = 0;
 	static char const * const parseopt_usage[] = {
-		"git rev-parse --parseopt [options] -- [<args>...]",
+		N_("git rev-parse --parseopt [options] -- [<args>...]"),
 		NULL
 	};
 	static struct option parseopt_opts[] = {
 		OPT_BOOLEAN(0, "keep-dashdash", &keep_dashdash,
-					"keep the `--` passed as an arg"),
+					N_("keep the `--` passed as an arg")),
 		OPT_BOOLEAN(0, "stop-at-non-option", &stop_at_non_option,
-					"stop parsing after the "
-					"first non-option argument"),
+					N_("stop parsing after the "
+					   "first non-option argument")),
 		OPT_END(),
 	};
 
@@ -449,11 +449,11 @@ static void die_no_single_rev(int quiet)
 }
 
 static const char builtin_rev_parse_usage[] =
-"git rev-parse --parseopt [options] -- [<args>...]\n"
-"   or: git rev-parse --sq-quote [<arg>...]\n"
-"   or: git rev-parse [options] [<arg>...]\n"
-"\n"
-"Run \"git rev-parse --parseopt -h\" for more information on the first usage.";
+N_("git rev-parse --parseopt [options] -- [<args>...]\n"
+   "   or: git rev-parse --sq-quote [<arg>...]\n"
+   "   or: git rev-parse [options] [<arg>...]\n"
+   "\n"
+   "Run \"git rev-parse --parseopt -h\" for more information on the first usage.");
 
 int cmd_rev_parse(int argc, const char **argv, const char *prefix)
 {

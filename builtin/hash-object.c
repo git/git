@@ -57,8 +57,8 @@ static void hash_stdin_paths(const char *type, int write_objects)
 }
 
 static const char * const hash_object_usage[] = {
-	"git hash-object [-t <type>] [-w] [--path=<file>|--no-filters] [--stdin] [--] <file>...",
-	"git hash-object  --stdin-paths < <list-of-paths>",
+	N_("git hash-object [-t <type>] [-w] [--path=<file>|--no-filters] [--stdin] [--] <file>..."),
+	N_("git hash-object  --stdin-paths < <list-of-paths>"),
 	NULL
 };
 
@@ -69,12 +69,12 @@ static int stdin_paths;
 static const char *vpath;
 
 static const struct option hash_object_options[] = {
-	OPT_STRING('t', NULL, &type, "type", "object type"),
-	OPT_BOOLEAN('w', NULL, &write_object, "write the object into the object database"),
-	OPT_BOOLEAN( 0 , "stdin", &hashstdin, "read the object from stdin"),
-	OPT_BOOLEAN( 0 , "stdin-paths", &stdin_paths, "read file names from stdin"),
-	OPT_BOOLEAN( 0 , "no-filters", &no_filters, "store file as is without filters"),
-	OPT_STRING( 0 , "path", &vpath, "file", "process file as it were from this path"),
+	OPT_STRING('t', NULL, &type, N_("type"), N_("object type")),
+	OPT_BOOLEAN('w', NULL, &write_object, N_("write the object into the object database")),
+	OPT_BOOLEAN( 0 , "stdin", &hashstdin, N_("read the object from stdin")),
+	OPT_BOOLEAN( 0 , "stdin-paths", &stdin_paths, N_("read file names from stdin")),
+	OPT_BOOLEAN( 0 , "no-filters", &no_filters, N_("store file as is without filters")),
+	OPT_STRING( 0 , "path", &vpath, N_("file"), N_("process file as it were from this path")),
 	OPT_END()
 };
 

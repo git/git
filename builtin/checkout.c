@@ -22,8 +22,8 @@
 #include "argv-array.h"
 
 static const char * const checkout_usage[] = {
-	"git checkout [options] <branch>",
-	"git checkout [options] [<branch>] -- <file>...",
+	N_("git checkout [options] <branch>"),
+	N_("git checkout [options] [<branch>] -- <file>..."),
 	NULL,
 };
 
@@ -933,28 +933,28 @@ int cmd_checkout(int argc, const char **argv, const char *prefix)
 	int patch_mode = 0;
 	int dwim_new_local_branch = 1;
 	struct option options[] = {
-		OPT__QUIET(&opts.quiet, "suppress progress reporting"),
-		OPT_STRING('b', NULL, &opts.new_branch, "branch",
-			   "create and checkout a new branch"),
-		OPT_STRING('B', NULL, &opts.new_branch_force, "branch",
-			   "create/reset and checkout a branch"),
-		OPT_BOOLEAN('l', NULL, &opts.new_branch_log, "create reflog for new branch"),
-		OPT_BOOLEAN(0, "detach", &opts.force_detach, "detach the HEAD at named commit"),
-		OPT_SET_INT('t', "track",  &opts.track, "set upstream info for new branch",
+		OPT__QUIET(&opts.quiet, N_("suppress progress reporting")),
+		OPT_STRING('b', NULL, &opts.new_branch, N_("branch"),
+			   N_("create and checkout a new branch")),
+		OPT_STRING('B', NULL, &opts.new_branch_force, N_("branch"),
+			   N_("create/reset and checkout a branch")),
+		OPT_BOOLEAN('l', NULL, &opts.new_branch_log, N_("create reflog for new branch")),
+		OPT_BOOLEAN(0, "detach", &opts.force_detach, N_("detach the HEAD at named commit")),
+		OPT_SET_INT('t', "track",  &opts.track, N_("set upstream info for new branch"),
 			BRANCH_TRACK_EXPLICIT),
-		OPT_STRING(0, "orphan", &opts.new_orphan_branch, "new branch", "new unparented branch"),
-		OPT_SET_INT('2', "ours", &opts.writeout_stage, "checkout our version for unmerged files",
+		OPT_STRING(0, "orphan", &opts.new_orphan_branch, N_("new branch"), N_("new unparented branch")),
+		OPT_SET_INT('2', "ours", &opts.writeout_stage, N_("checkout our version for unmerged files"),
 			    2),
-		OPT_SET_INT('3', "theirs", &opts.writeout_stage, "checkout their version for unmerged files",
+		OPT_SET_INT('3', "theirs", &opts.writeout_stage, N_("checkout their version for unmerged files"),
 			    3),
-		OPT__FORCE(&opts.force, "force checkout (throw away local modifications)"),
-		OPT_BOOLEAN('m', "merge", &opts.merge, "perform a 3-way merge with the new branch"),
-		OPT_BOOLEAN(0, "overwrite-ignore", &opts.overwrite_ignore, "update ignored files (default)"),
-		OPT_STRING(0, "conflict", &conflict_style, "style",
-			   "conflict style (merge or diff3)"),
-		OPT_BOOLEAN('p', "patch", &patch_mode, "select hunks interactively"),
+		OPT__FORCE(&opts.force, N_("force checkout (throw away local modifications)")),
+		OPT_BOOLEAN('m', "merge", &opts.merge, N_("perform a 3-way merge with the new branch")),
+		OPT_BOOLEAN(0, "overwrite-ignore", &opts.overwrite_ignore, N_("update ignored files (default)")),
+		OPT_STRING(0, "conflict", &conflict_style, N_("style"),
+			   N_("conflict style (merge or diff3)")),
+		OPT_BOOLEAN('p', "patch", &patch_mode, N_("select hunks interactively")),
 		{ OPTION_BOOLEAN, 0, "guess", &dwim_new_local_branch, NULL,
-		  "second guess 'git checkout no-such-branch'",
+		  N_("second guess 'git checkout no-such-branch'"),
 		  PARSE_OPT_NOARG | PARSE_OPT_HIDDEN },
 		OPT_END(),
 	};

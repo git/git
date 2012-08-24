@@ -172,9 +172,9 @@ static void show_name(const struct object *obj,
 }
 
 static char const * const name_rev_usage[] = {
-	"git name-rev [options] <commit>...",
-	"git name-rev [options] --all",
-	"git name-rev [options] --stdin",
+	N_("git name-rev [options] <commit>..."),
+	N_("git name-rev [options] --all"),
+	N_("git name-rev [options] --stdin"),
 	NULL
 };
 
@@ -226,16 +226,16 @@ int cmd_name_rev(int argc, const char **argv, const char *prefix)
 	int all = 0, transform_stdin = 0, allow_undefined = 1, always = 0;
 	struct name_ref_data data = { 0, 0, NULL };
 	struct option opts[] = {
-		OPT_BOOLEAN(0, "name-only", &data.name_only, "print only names (no SHA-1)"),
-		OPT_BOOLEAN(0, "tags", &data.tags_only, "only use tags to name the commits"),
-		OPT_STRING(0, "refs", &data.ref_filter, "pattern",
-				   "only use refs matching <pattern>"),
+		OPT_BOOLEAN(0, "name-only", &data.name_only, N_("print only names (no SHA-1)")),
+		OPT_BOOLEAN(0, "tags", &data.tags_only, N_("only use tags to name the commits")),
+		OPT_STRING(0, "refs", &data.ref_filter, N_("pattern"),
+				   N_("only use refs matching <pattern>")),
 		OPT_GROUP(""),
-		OPT_BOOLEAN(0, "all", &all, "list all commits reachable from all refs"),
-		OPT_BOOLEAN(0, "stdin", &transform_stdin, "read from stdin"),
-		OPT_BOOLEAN(0, "undefined", &allow_undefined, "allow to print `undefined` names"),
+		OPT_BOOLEAN(0, "all", &all, N_("list all commits reachable from all refs")),
+		OPT_BOOLEAN(0, "stdin", &transform_stdin, N_("read from stdin")),
+		OPT_BOOLEAN(0, "undefined", &allow_undefined, N_("allow to print `undefined` names")),
 		OPT_BOOLEAN(0, "always",     &always,
-			   "show abbreviated commit object as fallback"),
+			   N_("show abbreviated commit object as fallback")),
 		OPT_END(),
 	};
 

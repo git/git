@@ -10,9 +10,9 @@
 #include "parse-options.h"
 
 static char const * const shortlog_usage[] = {
-	"git shortlog [-n] [-s] [-e] [-w] [rev-opts] [--] [<commit-id>... ]",
+	N_("git shortlog [-n] [-s] [-e] [-w] [rev-opts] [--] [<commit-id>... ]"),
 	"",
-	"[rev-opts] are documented in git-rev-list(1)",
+	N_("[rev-opts] are documented in git-rev-list(1)"),
 	NULL
 };
 
@@ -250,13 +250,13 @@ int cmd_shortlog(int argc, const char **argv, const char *prefix)
 
 	static const struct option options[] = {
 		OPT_BOOLEAN('n', "numbered", &log.sort_by_number,
-			    "sort output according to the number of commits per author"),
+			    N_("sort output according to the number of commits per author")),
 		OPT_BOOLEAN('s', "summary", &log.summary,
-			    "Suppress commit descriptions, only provides commit count"),
+			    N_("Suppress commit descriptions, only provides commit count")),
 		OPT_BOOLEAN('e', "email", &log.email,
-			    "Show the email address of each author"),
-		{ OPTION_CALLBACK, 'w', NULL, &log, "w[,i1[,i2]]",
-			"Linewrap output", PARSE_OPT_OPTARG, &parse_wrap_args },
+			    N_("Show the email address of each author")),
+		{ OPTION_CALLBACK, 'w', NULL, &log, N_("w[,i1[,i2]]"),
+			N_("Linewrap output"), PARSE_OPT_OPTARG, &parse_wrap_args },
 		OPT_END(),
 	};
 
