@@ -84,11 +84,11 @@ entries; instead, unmerged entries are ignored.
 	When checking out paths from the index, check out stage #2
 	('ours') or #3 ('theirs') for unmerged paths.
 
--b::
+-b <new_branch>::
 	Create a new branch named <new_branch> and start it at
 	<start_point>; see linkgit:git-branch[1] for details.
 
--B::
+-B <new_branch>::
 	Creates the branch <new_branch> and start it at <start_point>;
 	if it already exists, then reset it to <start_point>. This is
 	equivalent to running "git branch" with "-f"; see
@@ -124,7 +124,7 @@ explicitly give a name with '-b' in such a case.
 	<commit> is not a branch name.  See the "DETACHED HEAD" section
 	below for details.
 
---orphan::
+--orphan <new_branch>::
 	Create a new 'orphan' branch, named <new_branch>, started from
 	<start_point> and switch to it.  The first commit made on this
 	new branch will have no parents and it will be the root of a new
