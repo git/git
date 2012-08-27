@@ -280,7 +280,7 @@ test_expect_success 'push over smart http with auth' '
 	test_cmp expect actual
 '
 
-test_expect_failure 'push to auth-only-for-push repo' '
+test_expect_success 'push to auth-only-for-push repo' '
 	cd "$ROOT_PATH/test_repo_clone" &&
 	echo push-half-auth >expect &&
 	test_commit push-half-auth &&
