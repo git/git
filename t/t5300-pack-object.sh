@@ -416,11 +416,11 @@ test_expect_success \
 test_expect_success \
     'make sure index-pack detects the SHA1 collision' \
     'test_must_fail git index-pack -o bad.idx test-3.pack 2>msg &&
-     grep "SHA1 COLLISION FOUND" msg'
+     test_i18ngrep "SHA1 COLLISION FOUND" msg'
 
 test_expect_success \
     'make sure index-pack detects the SHA1 collision (large blobs)' \
     'test_must_fail git -c core.bigfilethreshold=1 index-pack -o bad.idx test-3.pack 2>msg &&
-     grep "SHA1 COLLISION FOUND" msg'
+     test_i18ngrep "SHA1 COLLISION FOUND" msg'
 
 test_done
