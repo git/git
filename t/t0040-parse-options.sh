@@ -51,7 +51,7 @@ EOF
 test_expect_success 'test help' '
 	test_must_fail test-parse-options -h > output 2> output.err &&
 	test ! -s output.err &&
-	test_cmp expect output
+	test_i18ncmp expect output
 '
 
 mv expect expect.err
@@ -79,6 +79,17 @@ check() {
 	test_cmp expect output
 }
 
+check_i18n() {
+	what="$1" &&
+	shift &&
+	expect="$1" &&
+	shift &&
+	sed "s/^$what .*/$what $expect/" <expect.template >expect &&
+	test-parse-options $* >output 2>output.err &&
+	test ! -s output.err &&
+	test_i18ncmp expect output
+}
+
 check_unknown() {
 	case "$1" in
 	--*)
@@ -90,6 +101,19 @@ check_unknown() {
 	test_must_fail test-parse-options $* >output 2>output.err &&
 	test ! -s output &&
 	test_cmp expect output.err
+}
+
+check_unknown_i18n() {
+	case "$1" in
+	--*)
+		echo error: unknown option \`${1#--}\' >expect ;;
+	-*)
+		echo error: unknown switch \`${1#-}\' >expect ;;
+	esac &&
+	cat expect.err >>expect &&
+	test_must_fail test-parse-options $* >output 2>output.err &&
+	test ! -s output &&
+	test_i18ncmp expect output.err
 }
 
 test_expect_success 'OPT_BOOL() #1' 'check boolean: 1 --yes'
@@ -104,8 +128,8 @@ test_expect_success 'OPT_BOOL() is idempotent #2' 'check boolean: 1 -DB'
 test_expect_success 'OPT_BOOL() negation #1' 'check boolean: 0 -D --no-yes'
 test_expect_success 'OPT_BOOL() negation #2' 'check boolean: 0 -D --no-no-doubt'
 
-test_expect_success 'OPT_BOOL() no negation #1' 'check_unknown --fear'
-test_expect_success 'OPT_BOOL() no negation #2' 'check_unknown --no-no-fear'
+test_expect_success 'OPT_BOOL() no negation #1' 'check_unknown_i18n --fear'
+test_expect_success 'OPT_BOOL() no negation #2' 'check_unknown_i18n --no-no-fear'
 
 test_expect_success 'OPT_BOOL() positivation' 'check boolean: 0 -D --doubt'
 
@@ -310,8 +334,8 @@ EOF
 
 test_expect_success 'OPT_CALLBACK() and callback errors work' '
 	test_must_fail test-parse-options --no-length > output 2> output.err &&
-	test_cmp expect output &&
-	test_cmp expect.err output.err
+	test_i18ncmp expect output &&
+	test_i18ncmp expect.err output.err
 '
 
 cat > expect <<EOF

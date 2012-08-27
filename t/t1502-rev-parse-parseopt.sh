@@ -41,7 +41,7 @@ EOF
 
 test_expect_success 'test --parseopt help output' '
 	test_expect_code 129 git rev-parse --parseopt -- -h > output < optionspec &&
-	test_cmp expect output
+	test_i18ncmp expect output
 '
 
 cat > expect <<EOF
