@@ -280,5 +280,17 @@ test_expect_success 'push over smart http with auth' '
 	test_cmp expect actual
 '
 
+test_expect_failure 'push to auth-only-for-push repo' '
+	cd "$ROOT_PATH/test_repo_clone" &&
+	echo push-half-auth >expect &&
+	test_commit push-half-auth &&
+	set_askpass user@host &&
+	git push "$HTTPD_URL"/auth-push/smart/test_repo.git &&
+	git --git-dir="$HTTPD_DOCUMENT_ROOT_PATH/test_repo.git" \
+		log -1 --format=%s >actual &&
+	expect_askpass both user@host &&
+	test_cmp expect actual
+'
+
 stop_httpd
 test_done

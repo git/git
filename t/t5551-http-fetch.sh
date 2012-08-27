@@ -120,6 +120,15 @@ test_expect_success 'clone from password-protected repository' '
 	test_cmp expect actual
 '
 
+test_expect_success 'clone from auth-only-for-push repository' '
+	echo two >expect &&
+	set_askpass wrong &&
+	git clone --bare "$HTTPD_URL/auth-push/smart/repo.git" smart-noauth &&
+	expect_askpass none &&
+	git --git-dir=smart-noauth log -1 --format=%s >actual &&
+	test_cmp expect actual
+'
+
 test -n "$GIT_TEST_LONG" && test_set_prereq EXPENSIVE
 
 test_expect_success EXPENSIVE 'create 50,000 tags in the repo' '
