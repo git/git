@@ -1610,9 +1610,8 @@ static int verify_merge_base(unsigned char *head_sha1, struct ref *remote)
 {
 	struct commit *head = lookup_commit_or_die(head_sha1, "HEAD");
 	struct commit *branch = lookup_commit_or_die(remote->old_sha1, remote->name);
-	struct commit_list *merge_bases = get_merge_bases(head, branch, 1);
 
-	return (merge_bases && !merge_bases->next && merge_bases->item == branch);
+	return in_merge_bases(branch, head);
 }
 
 static int delete_remote_branch(const char *pattern, int force)
