@@ -46,62 +46,28 @@ test_expect_success 'create password-protected repository' '
 	       "$HTTPD_DOCUMENT_ROOT_PATH/auth/dumb/repo.git"
 '
 
-test_expect_success 'setup askpass helpers' '
-	cat >askpass <<-EOF &&
-	#!/bin/sh
-	echo >>"$PWD/askpass-query" "askpass: \$*" &&
-	cat "$PWD/askpass-response"
-	EOF
-	chmod +x askpass &&
-	GIT_ASKPASS="$PWD/askpass" &&
-	export GIT_ASKPASS
-'
-
-expect_askpass() {
-	dest=$HTTPD_DEST
-	{
-		case "$1" in
-		none)
-			;;
-		pass)
-			echo "askpass: Password for 'http://$2@$dest': "
-			;;
-		both)
-			echo "askpass: Username for 'http://$dest': "
-			echo "askpass: Password for 'http://$2@$dest': "
-			;;
-		*)
-			false
-			;;
-		esac
-	} >askpass-expect &&
-	test_cmp askpass-expect askpass-query
-}
+setup_askpass_helper
 
 test_expect_success 'cloning password-protected repository can fail' '
-	>askpass-query &&
-	echo wrong >askpass-response &&
+	set_askpass wrong &&
 	test_must_fail git clone "$HTTPD_URL/auth/dumb/repo.git" clone-auth-fail &&
 	expect_askpass both wrong
 '
 
 test_expect_success 'http auth can use user/pass in URL' '
-	>askpass-query &&
-	echo wrong >askpass-response &&
+	set_askpass wrong &&
 	git clone "$HTTPD_URL_USER_PASS/auth/dumb/repo.git" clone-auth-none &&
 	expect_askpass none
 '
 
 test_expect_success 'http auth can use just user in URL' '
-	>askpass-query &&
-	echo user@host >askpass-response &&
+	set_askpass user@host &&
 	git clone "$HTTPD_URL_USER/auth/dumb/repo.git" clone-auth-pass &&
 	expect_askpass pass user@host
 '
 
 test_expect_success 'http auth can request both user and pass' '
-	>askpass-query &&
-	echo user@host >askpass-response &&
+	set_askpass user@host &&
 	git clone "$HTTPD_URL/auth/dumb/repo.git" clone-auth-both &&
 	expect_askpass both user@host
 '
@@ -112,24 +78,21 @@ test_expect_success 'http auth respects credential helper config' '
 		echo username=user@host
 		echo password=user@host
 	}; f" &&
-	>askpass-query &&
-	echo wrong >askpass-response &&
+	set_askpass wrong &&
 	git clone "$HTTPD_URL/auth/dumb/repo.git" clone-auth-helper &&
 	expect_askpass none
 '
 
 test_expect_success 'http auth can get username from config' '
 	test_config_global "credential.$HTTPD_URL.username" user@host &&
-	>askpass-query &&
-	echo user@host >askpass-response &&
+	set_askpass user@host &&
 	git clone "$HTTPD_URL/auth/dumb/repo.git" clone-auth-user &&
 	expect_askpass pass user@host
 '
 
 test_expect_success 'configured username does not override URL' '
 	test_config_global "credential.$HTTPD_URL.username" wrong &&
-	>askpass-query &&
-	echo user@host >askpass-response &&
+	set_askpass user@host &&
 	git clone "$HTTPD_URL_USER/auth/dumb/repo.git" clone-auth-user2 &&
 	expect_askpass pass user@host
 '

@@ -46,15 +46,7 @@ test_expect_success 'create password-protected repository' '
 	       "$HTTPD_DOCUMENT_ROOT_PATH/auth/dumb/test_repo.git"
 '
 
-test_expect_success 'setup askpass helper' '
-	cat >askpass <<-\EOF &&
-	#!/bin/sh
-	echo user@host
-	EOF
-	chmod +x askpass &&
-	GIT_ASKPASS="$PWD/askpass" &&
-	export GIT_ASKPASS
-'
+setup_askpass_helper
 
 test_expect_success 'clone remote repository' '
 	cd "$ROOT_PATH" &&
@@ -162,6 +154,7 @@ test_http_push_nonff "$HTTPD_DOCUMENT_ROOT_PATH"/test_repo.git \
 
 test_expect_success 'push to password-protected repository (user in URL)' '
 	test_commit pw-user &&
+	set_askpass user@host &&
 	git push "$HTTPD_URL_USER/auth/dumb/test_repo.git" HEAD &&
 	git rev-parse --verify HEAD >expect &&
 	git --git-dir="$HTTPD_DOCUMENT_ROOT_PATH/auth/dumb/test_repo.git" \
@@ -169,9 +162,15 @@ test_expect_success 'push to password-protected repository (user in URL)' '
 	test_cmp expect actual
 '
 
+test_expect_failure 'user was prompted only once for password' '
+	expect_askpass pass user@host
+'
+
 test_expect_failure 'push to password-protected repository (no user in URL)' '
 	test_commit pw-nouser &&
+	set_askpass user@host &&
 	git push "$HTTPD_URL/auth/dumb/test_repo.git" HEAD &&
+	expect_askpass both user@host
 	git rev-parse --verify HEAD >expect &&
 	git --git-dir="$HTTPD_DOCUMENT_ROOT_PATH/auth/dumb/test_repo.git" \
 		rev-parse --verify HEAD >actual &&
