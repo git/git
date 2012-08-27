@@ -1,11 +1,31 @@
 Git v1.8.0 Release Notes
 ========================
 
+Backward compatibility notes
+----------------------------
+
+In the next major release, we will change the behaviour of the "git
+push" command.  When "git push [$there]" does not say what to push, we
+have used the traditional "matching" semantics (all your branches were
+sent to the remote as long as there already are branches of the same
+name over there).  We will use the "simple" semantics, that pushes the
+current branch to the branch with the same name only when the current
+branch is set to integrate with that remote branch.  There is a user
+preference configuration variable "push.default" to change this, and
+"git push" will warn about the upcoming change until you set this
+variable.
+
+
 Updates since v1.7.12
 ---------------------
 
 UI, Workflows & Features
 
+ * "git difftool --dir-diff" learned to use symbolic links to prepare
+   temporary copy of the working tree when available.
+
+ * "git grep" learned to use a non-standard pattern type by default if
+   a configuration variable tells it to.
 
 Foreign Interface
 
@@ -17,6 +37,9 @@ Performance, Internal Implementation, etc. (please report possible regressions)
  * The "check-docs" build target has been updated and greatly
    simplified.
 
+ * The documentation in the TeXinfo format was using indented output
+   for materials meant to be examples that are better typeset in
+   monospace.
 
 Also contains minor documentation updates and code clean-ups.
 
@@ -27,6 +50,20 @@ Fixes since v1.7.12
 Unless otherwise noted, all the fixes since v1.7.12 in the
 maintenance track are contained in this release (see release notes
 to them for details).
+
+
+ * When "git push" triggered the automatic gc on the receiving end, a
+   message from "git prune" that said it was removing cruft leaked to
+   the standard output, breaking the communication protocol.
+   (merge 4b7f2fa bc/receive-pack-stdout-protection later to maint).
+
+ * "git diff" had a confusion between taking data from a path in the
+   working tree and taking data from an object that happens to have
+   name 0{40} recorded in a tree.
+   (merge c479d14 jk/maint-null-in-trees later to maint).
+
+ * The output from "git diff -B" for a file that ends with an
+   incomplete line did not put "\ No newline..." on a line of its own.
 
  * "git send-email" did not unquote encoded words that appear on the
    header correctly, and lost "_" from strings.
