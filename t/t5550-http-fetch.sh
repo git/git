@@ -41,9 +41,9 @@ test_expect_success 'clone http repository' '
 '
 
 test_expect_success 'create password-protected repository' '
-	mkdir "$HTTPD_DOCUMENT_ROOT_PATH/auth/" &&
+	mkdir -p "$HTTPD_DOCUMENT_ROOT_PATH/auth/dumb/" &&
 	cp -Rf "$HTTPD_DOCUMENT_ROOT_PATH/repo.git" \
-	       "$HTTPD_DOCUMENT_ROOT_PATH/auth/repo.git"
+	       "$HTTPD_DOCUMENT_ROOT_PATH/auth/dumb/repo.git"
 '
 
 test_expect_success 'setup askpass helpers' '
@@ -81,28 +81,28 @@ expect_askpass() {
 test_expect_success 'cloning password-protected repository can fail' '
 	>askpass-query &&
 	echo wrong >askpass-response &&
-	test_must_fail git clone "$HTTPD_URL/auth/repo.git" clone-auth-fail &&
+	test_must_fail git clone "$HTTPD_URL/auth/dumb/repo.git" clone-auth-fail &&
 	expect_askpass both wrong
 '
 
 test_expect_success 'http auth can use user/pass in URL' '
 	>askpass-query &&
 	echo wrong >askpass-response &&
-	git clone "$HTTPD_URL_USER_PASS/auth/repo.git" clone-auth-none &&
+	git clone "$HTTPD_URL_USER_PASS/auth/dumb/repo.git" clone-auth-none &&
 	expect_askpass none
 '
 
 test_expect_success 'http auth can use just user in URL' '
 	>askpass-query &&
 	echo user@host >askpass-response &&
-	git clone "$HTTPD_URL_USER/auth/repo.git" clone-auth-pass &&
+	git clone "$HTTPD_URL_USER/auth/dumb/repo.git" clone-auth-pass &&
 	expect_askpass pass user@host
 '
 
 test_expect_success 'http auth can request both user and pass' '
 	>askpass-query &&
 	echo user@host >askpass-response &&
-	git clone "$HTTPD_URL/auth/repo.git" clone-auth-both &&
+	git clone "$HTTPD_URL/auth/dumb/repo.git" clone-auth-both &&
 	expect_askpass both user@host
 '
 
@@ -114,7 +114,7 @@ test_expect_success 'http auth respects credential helper config' '
 	}; f" &&
 	>askpass-query &&
 	echo wrong >askpass-response &&
-	git clone "$HTTPD_URL/auth/repo.git" clone-auth-helper &&
+	git clone "$HTTPD_URL/auth/dumb/repo.git" clone-auth-helper &&
 	expect_askpass none
 '
 
@@ -122,7 +122,7 @@ test_expect_success 'http auth can get username from config' '
 	test_config_global "credential.$HTTPD_URL.username" user@host &&
 	>askpass-query &&
 	echo user@host >askpass-response &&
-	git clone "$HTTPD_URL/auth/repo.git" clone-auth-user &&
+	git clone "$HTTPD_URL/auth/dumb/repo.git" clone-auth-user &&
 	expect_askpass pass user@host
 '
 
@@ -130,7 +130,7 @@ test_expect_success 'configured username does not override URL' '
 	test_config_global "credential.$HTTPD_URL.username" wrong &&
 	>askpass-query &&
 	echo user@host >askpass-response &&
-	git clone "$HTTPD_URL_USER/auth/repo.git" clone-auth-user2 &&
+	git clone "$HTTPD_URL_USER/auth/dumb/repo.git" clone-auth-user2 &&
 	expect_askpass pass user@host
 '
 
