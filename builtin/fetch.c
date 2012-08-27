@@ -314,7 +314,7 @@ static int update_local_ref(struct ref *ref,
 		return r;
 	}
 
-	if (in_merge_bases(current, &updated, 1)) {
+	if (in_merge_bases(current, updated)) {
 		char quickref[83];
 		int r;
 		strcpy(quickref, find_unique_abbrev(current->object.sha1, DEFAULT_ABBREV));

@@ -96,7 +96,7 @@ static int update_local_ref(const char *name,
 	strcpy(oldh, find_unique_abbrev(current->object.sha1, DEFAULT_ABBREV));
 	strcpy(newh, find_unique_abbrev(sha1_new, DEFAULT_ABBREV));
 
-	if (in_merge_bases(current, &updated, 1)) {
+	if (in_merge_bases(current, updated)) {
 		fprintf(stderr, "* %s: fast-forward to %s\n",
 			name, note);
 		fprintf(stderr, "  old..new: %s..%s\n", oldh, newh);

@@ -754,6 +754,9 @@ struct commit_list *get_merge_bases(struct commit *one, struct commit *two,
 	return get_merge_bases_many(one, 1, &two, cleanup);
 }
 
+/*
+ * Is "commit" a decendant of one of the elements on the "with_commit" list?
+ */
 int is_descendant_of(struct commit *commit, struct commit_list *with_commit)
 {
 	if (!with_commit)
@@ -763,21 +766,21 @@ int is_descendant_of(struct commit *commit, struct commit_list *with_commit)
 
 		other = with_commit->item;
 		with_commit = with_commit->next;
-		if (in_merge_bases(other, &commit, 1))
+		if (in_merge_bases(other, commit))
 			return 1;
 	}
 	return 0;
 }
 
-int in_merge_bases(struct commit *commit, struct commit **reference, int num)
+/*
+ * Is "commit" an ancestor of (i.e. reachable from) the "reference"?
+ */
+int in_merge_bases(struct commit *commit, struct commit *reference)
 {
 	struct commit_list *bases, *b;
 	int ret = 0;
 
-	if (num == 1)
-		bases = get_merge_bases(commit, *reference, 1);
-	else
-		die("not yet");
+	bases = get_merge_bases(commit, reference, 1);
 	for (b = bases; b; b = b->next) {
 		if (!hashcmp(commit->object.sha1, b->item->object.sha1)) {
 			ret = 1;
