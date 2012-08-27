@@ -229,6 +229,7 @@ save_stash () {
 	create_stash "$stash_msg" $untracked
 
 	# Make sure the reflog for stash is kept.
+	mkdir -p "$GIT_DIR/logs/${ref_stash%/*}"
 	: >>"$GIT_DIR/logs/$ref_stash"
 
 	git update-ref -m "$stash_msg" $ref_stash $w_commit ||
