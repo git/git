@@ -806,10 +806,12 @@ static int http_request(const char *url, void *result, int target, int options)
 				ret = HTTP_REAUTH;
 			}
 		} else {
+#if LIBCURL_VERSION_NUM >= 0x070c00
 			if (!curl_errorstr[0])
 				strlcpy(curl_errorstr,
 					curl_easy_strerror(results.curl_result),
 					sizeof(curl_errorstr));
+#endif
 			ret = HTTP_ERROR;
 		}
 	} else {
