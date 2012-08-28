@@ -731,6 +731,24 @@ void free_pack_by_name(const char *pack_name)
 	}
 }
 
+static unsigned int get_max_fd_limit(void)
+{
+#ifdef RLIMIT_NOFILE
+	struct rlimit lim;
+
+	if (getrlimit(RLIMIT_NOFILE, &lim))
+		die_errno("cannot get RLIMIT_NOFILE");
+
+	return lim.rlim_cur;
+#elif defined(_SC_OPEN_MAX)
+	return sysconf(_SC_OPEN_MAX);
+#elif defined(OPEN_MAX)
+	return OPEN_MAX;
+#else
+	return 1; /* see the caller ;-) */
+#endif
+}
+
 /*
  * Do not call this directly as this leaks p->pack_fd on error return;
  * call open_packed_git() instead.
@@ -747,13 +765,7 @@ static int open_packed_git_1(struct packed_git *p)
 		return error("packfile %s index unavailable", p->pack_name);
 
 	if (!pack_max_fds) {
-		struct rlimit lim;
-		unsigned int max_fds;
-
-		if (getrlimit(RLIMIT_NOFILE, &lim))
-			die_errno("cannot get RLIMIT_NOFILE");
-
-		max_fds = lim.rlim_cur;
+		unsigned int max_fds = get_max_fd_limit();
 
 		/* Save 3 for stdin/stdout/stderr, 22 for work */
 		if (25 < max_fds)
