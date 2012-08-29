@@ -362,16 +362,17 @@ static size_t rpc_in(char *ptr, size_t eltsize,
 
 static int run_slot(struct active_request_slot *slot)
 {
-	int err = 0;
+	int err;
 	struct slot_results results;
 
 	slot->results = &results;
 	slot->curl_result = curl_easy_perform(slot->curl);
 	finish_active_slot(slot);
 
-	if (results.curl_result != CURLE_OK) {
-		err |= error("RPC failed; result=%d, HTTP code = %ld",
-			results.curl_result, results.http_code);
+	err = handle_curl_result(slot);
+	if (err != HTTP_OK && err != HTTP_REAUTH) {
+		error("RPC failed; result=%d, HTTP code = %ld",
+		      results.curl_result, results.http_code);
 	}
 
 	return err;
@@ -436,9 +437,11 @@ static int post_rpc(struct rpc_state *rpc)
 	}
 
 	if (large_request) {
-		err = probe_rpc(rpc);
-		if (err)
-			return err;
+		do {
+			err = probe_rpc(rpc);
+		} while (err == HTTP_REAUTH);
+		if (err != HTTP_OK)
+			return -1;
 	}
 
 	slot = get_active_slot();
@@ -525,7 +528,11 @@ static int post_rpc(struct rpc_state *rpc)
 	curl_easy_setopt(slot->curl, CURLOPT_WRITEFUNCTION, rpc_in);
 	curl_easy_setopt(slot->curl, CURLOPT_FILE, rpc);
 
-	err = run_slot(slot);
+	do {
+		err = run_slot(slot);
+	} while (err == HTTP_REAUTH && !large_request && !use_gzip);
+	if (err != HTTP_OK)
+		err = -1;
 
 	curl_slist_free_all(headers);
 	free(gzip_body);

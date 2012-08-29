@@ -27,6 +27,8 @@ test_expect_success 'create http-accessible bare repository' '
 	git push public master:master
 '
 
+setup_askpass_helper
+
 cat >exp <<EOF
 > GET /smart/repo.git/info/refs?service=git-upload-pack HTTP/1.1
 > Accept: */*
@@ -107,6 +109,24 @@ test_expect_success 'follow redirects (301)' '
 
 test_expect_success 'follow redirects (302)' '
 	git clone $HTTPD_URL/smart-redir-temp/repo.git --quiet repo-t
+'
+
+test_expect_success 'clone from password-protected repository' '
+	echo two >expect &&
+	set_askpass user@host &&
+	git clone --bare "$HTTPD_URL/auth/smart/repo.git" smart-auth &&
+	expect_askpass both user@host &&
+	git --git-dir=smart-auth log -1 --format=%s >actual &&
+	test_cmp expect actual
+'
+
+test_expect_success 'clone from auth-only-for-push repository' '
+	echo two >expect &&
+	set_askpass wrong &&
+	git clone --bare "$HTTPD_URL/auth-push/smart/repo.git" smart-noauth &&
+	expect_askpass none &&
+	git --git-dir=smart-noauth log -1 --format=%s >actual &&
+	test_cmp expect actual
 '
 
 test -n "$GIT_TEST_LONG" && test_set_prereq EXPENSIVE
