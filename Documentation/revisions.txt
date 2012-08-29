@@ -55,6 +55,8 @@ when you run `git cherry-pick`.
 +
 Note that any of the 'refs/*' cases above may come either from
 the '$GIT_DIR/refs' directory or from the '$GIT_DIR/packed-refs' file.
+While the ref name encoding is unspecified, UTF-8 is prefered as
+some output processing may assume ref names in UTF-8.
 
 '<refname>@\{<date>\}', e.g. 'master@\{yesterday\}', 'HEAD@\{5 minutes ago\}'::
   A ref followed by the suffix '@' with a date specification
