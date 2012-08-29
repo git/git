@@ -619,9 +619,14 @@ These options are mostly targeted for packing of git repositories.
 	Only useful with '--objects'; print the object IDs that are not
 	in packs.
 
---no-walk::
+--no-walk[=(sorted|unsorted)]::
 
-	Only show the given revs, but do not traverse their ancestors.
+	Only show the given commits, but do not traverse their ancestors.
+	This has no effect if a range is specified. If the argument
+	"unsorted" is given, the commits are show in the order they were
+	given on the command line. Otherwise (if "sorted" or no argument
+	was given), the commits are show in reverse chronological order
+	by commit time.
 
 --do-walk::
 
