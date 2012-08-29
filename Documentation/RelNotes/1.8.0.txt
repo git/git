@@ -21,6 +21,9 @@ Updates since v1.7.12
 
 UI, Workflows & Features
 
+ * A credential helper for Win32 to allow access to the keychain of
+   the logged-in user has been added.
+
  * "git difftool --dir-diff" learned to use symbolic links to prepare
    temporary copy of the working tree when available.
 
@@ -30,7 +33,6 @@ UI, Workflows & Features
 Foreign Interface
 
  * "git svn" has been updated to work with SVN 1.7.
-
 
 Performance, Internal Implementation, etc. (please report possible regressions)
 
@@ -51,6 +53,33 @@ Unless otherwise noted, all the fixes since v1.7.12 in the
 maintenance track are contained in this release (see release notes
 to them for details).
 
+ * Code to work around MacOS X UTF-8 gotcha has been cleaned up.
+   (merge 9a27f96 rr/precompose-utf8-cleanup later to maint).
+
+ * Documentation for the configuration file format had a confusing
+   example.
+   (merge d1e1fe7 mh/maint-config-doc-proxy-command later to maint).
+
+ * "git submodule <cmd> path" did not error out when the path to the
+   submodule was misspelt.
+   (merge be9d0a3 hv/submodule-path-unmatch later to maint).
+
+ * Some capabilities were asked by fetch-pack even when upload-pack
+   did not advertise that they are available.  fetch-pack has been
+   fixed not to do so.
+
+ * The reflog entries left by "git rebase" and "git rebase -i" were
+   inconsistent (the interactive one gave an abbreviated object name).
+   (merge 1af221e mg/rebase-i-onto-reflog-in-full later to maint).
+
+ * When the user exports a non-default IFS without HT, scripts that
+   rely on being able to parse "ls-files -s | while read a b c..."
+   start to fail.  Protect them from such a misconfiguration.
+   (merge 785063e jc/maint-protect-sh-from-ifs later to maint).
+
+ * "git prune" without "-v" used to warn about leftover temporary
+   files (which is an indication of an earlier aborted operation).
+   (merge 90b29cb bc/prune-info later to maint).
 
  * When "git push" triggered the automatic gc on the receiving end, a
    message from "git prune" that said it was removing cruft leaked to
