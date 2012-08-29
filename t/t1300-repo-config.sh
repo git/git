@@ -391,7 +391,7 @@ test_expect_success 'get bool variable with empty value' \
 
 test_expect_success 'no arguments, but no crash' '
 	test_must_fail git config >output 2>&1 &&
-	grep usage output
+	test_i18ngrep usage output
 '
 
 cat > .git/config << EOF

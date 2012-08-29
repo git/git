@@ -157,7 +157,7 @@ test_expect_success 'merge -h with invalid index' '
 		>.git/index &&
 		test_expect_code 129 git merge -h 2>usage
 	) &&
-	grep "[Uu]sage: git merge" broken/usage
+	test_i18ngrep "[Uu]sage: git merge" broken/usage
 '
 
 test_expect_success 'reject non-strategy with a git-merge-foo name' '

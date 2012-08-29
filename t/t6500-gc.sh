@@ -11,7 +11,7 @@ test_expect_success 'gc empty repository' '
 
 test_expect_success 'gc --gobbledegook' '
 	test_expect_code 129 git gc --nonsense 2>err &&
-	grep "[Uu]sage: git gc" err
+	test_i18ngrep "[Uu]sage: git gc" err
 '
 
 test_expect_success 'gc -h with invalid configuration' '
@@ -22,7 +22,7 @@ test_expect_success 'gc -h with invalid configuration' '
 		echo "[gc] pruneexpire = CORRUPT" >>.git/config &&
 		test_expect_code 129 git gc -h >usage 2>&1
 	) &&
-	grep "[Uu]sage" broken/usage
+	test_i18ngrep "[Uu]sage" broken/usage
 '
 
 test_done

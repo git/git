@@ -610,7 +610,7 @@ test_expect_success 'stash apply shows status same as git status (relative to cu
 		git stash apply
 	) |
 	sed -e 1,2d >actual && # drop "Saved..." and "HEAD is now..."
-	test_cmp expect actual
+	test_i18ncmp expect actual
 '
 
 cat > expect << EOF

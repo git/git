@@ -30,9 +30,9 @@ EOF
 
 test_expect_success 'apply diff with inconsistent filenames in headers' '
 	test_must_fail git apply bad1.patch 2>err &&
-	grep "inconsistent new filename" err &&
+	test_i18ngrep "inconsistent new filename" err &&
 	test_must_fail git apply bad2.patch 2>err &&
-	grep "inconsistent old filename" err
+	test_i18ngrep "inconsistent old filename" err
 '
 
 test_done

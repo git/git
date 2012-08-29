@@ -52,7 +52,7 @@ test_expect_success setup '
 
 '
 
-test_expect_success 'remote information for the origin' '
+test_expect_success C_LOCALE_OUTPUT 'remote information for the origin' '
 (
 	cd test &&
 	tokens_match origin "$(git remote)" &&
@@ -66,14 +66,20 @@ test_expect_success 'add another remote' '
 	cd test &&
 	git remote add -f second ../two &&
 	tokens_match "origin second" "$(git remote)" &&
-	check_remote_track origin master side &&
-	check_remote_track second master side another &&
 	check_tracking_branch second master side another &&
 	git for-each-ref "--format=%(refname)" refs/remotes |
 	sed -e "/^refs\/remotes\/origin\//d" \
 	    -e "/^refs\/remotes\/second\//d" >actual &&
 	>expect &&
 	test_cmp expect actual
+)
+'
+
+test_expect_success C_LOCALE_OUTPUT 'check remote tracking' '
+(
+	cd test &&
+	check_remote_track origin master side &&
+	check_remote_track second master side another
 )
 '
 
@@ -95,7 +101,7 @@ test_expect_success 'remove remote' '
 )
 '
 
-test_expect_success 'remove remote' '
+test_expect_success C_LOCALE_OUTPUT 'remove remote' '
 (
 	cd test &&
 	tokens_match origin "$(git remote)" &&
@@ -131,8 +137,8 @@ EOF
 	git remote rm oops 2>actual2 &&
 	git branch -d foobranch &&
 	git tag -d footag &&
-	test_cmp expect1 actual1 &&
-	test_cmp expect2 actual2
+	test_i18ncmp expect1 actual1 &&
+	test_i18ncmp expect2 actual2
 )
 '
 
@@ -192,7 +198,7 @@ test_expect_success 'show' '
 	 git config --add remote.two.push refs/heads/master:refs/heads/another &&
 	 git remote show origin two > output &&
 	 git branch -d rebase octopus &&
-	 test_cmp expect output)
+	 test_i18ncmp expect output)
 '
 
 cat > test/expect << EOF
@@ -217,7 +223,7 @@ test_expect_success 'show -n' '
 	 cd test &&
 	 git remote show -n origin > output &&
 	 mv ../one.unreachable ../one &&
-	 test_cmp expect output)
+	 test_i18ncmp expect output)
 '
 
 test_expect_success 'prune' '
@@ -255,7 +261,7 @@ EOF
 test_expect_success 'set-head --auto fails w/multiple HEADs' '
 	(cd test &&
 	 test_must_fail git remote set-head --auto two >output 2>&1 &&
-	test_cmp expect output)
+	test_i18ncmp expect output)
 '
 
 cat >test/expect <<EOF
@@ -285,7 +291,7 @@ test_expect_success 'prune --dry-run' '
 	 test_must_fail git rev-parse refs/remotes/origin/side &&
 	(cd ../one &&
 	 git branch -m side side2) &&
-	 test_cmp expect output)
+	 test_i18ncmp expect output)
 '
 
 test_expect_success 'add --mirror && prune' '
@@ -705,7 +711,7 @@ test_expect_success 'remote prune to cause a dangling symref' '
 		cd seven &&
 		git remote prune origin
 	) >err 2>&1 &&
-	grep "has become dangling" err &&
+	test_i18ngrep "has become dangling" err &&
 
 	: And the dangling symref will not cause other annoying errors &&
 	(

@@ -22,7 +22,7 @@ test_expect_success 'ls-files with nonexistent path' '
 
 test_expect_success 'ls-files with nonsense option' '
 	test_expect_code 129 git ls-files --nonsense 2>actual &&
-	grep "[Uu]sage: git ls-files" actual
+	test_i18ngrep "[Uu]sage: git ls-files" actual
 '
 
 test_expect_success 'ls-files -h in corrupt repository' '
@@ -33,7 +33,7 @@ test_expect_success 'ls-files -h in corrupt repository' '
 		>.git/index &&
 		test_expect_code 129 git ls-files -h >usage 2>&1
 	) &&
-	grep "[Uu]sage: git ls-files " broken/usage
+	test_i18ngrep "[Uu]sage: git ls-files " broken/usage
 '
 
 test_done
