@@ -44,7 +44,7 @@ test_expect_success 'cherry-pick first..fourth works' '
 	check_head_differs_from fourth
 '
 
-test_expect_failure 'cherry-pick three one two works' '
+test_expect_success 'cherry-pick three one two works' '
 	git checkout -f first &&
 	test_commit one &&
 	test_commit two &&

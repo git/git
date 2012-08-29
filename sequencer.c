@@ -543,7 +543,11 @@ static int do_pick_commit(struct commit *commit, struct replay_opts *opts)
 
 static void prepare_revs(struct replay_opts *opts)
 {
-	if (opts->action != REPLAY_REVERT)
+	/*
+	 * picking (but not reverting) ranges (but not individual revisions)
+	 * should be done in reverse
+	 */
+	if (opts->action == REPLAY_PICK && !opts->revs->no_walk)
 		opts->revs->reverse ^= 1;
 
 	if (prepare_revision_walk(opts->revs))

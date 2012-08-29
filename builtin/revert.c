@@ -193,7 +193,7 @@ static void parse_args(int argc, const char **argv, struct replay_opts *opts)
 		struct setup_revision_opt s_r_opt;
 		opts->revs = xmalloc(sizeof(*opts->revs));
 		init_revisions(opts->revs, NULL);
-		opts->revs->no_walk = REVISION_WALK_NO_WALK_SORTED;
+		opts->revs->no_walk = REVISION_WALK_NO_WALK_UNSORTED;
 		if (argc < 2)
 			usage_with_options(usage_str, options);
 		memset(&s_r_opt, 0, sizeof(s_r_opt));
