@@ -28,6 +28,7 @@ static const char * const checkout_usage[] = {
 };
 
 struct checkout_opts {
+	int patch_mode;
 	int quiet;
 	int merge;
 	int force;
@@ -35,15 +36,17 @@ struct checkout_opts {
 	int writeout_stage;
 	int overwrite_ignore;
 
-	/* not set by parse_options */
-	int branch_exists;
-
 	const char *new_branch;
 	const char *new_branch_force;
 	const char *new_orphan_branch;
 	int new_branch_log;
 	enum branch_track track;
 	struct diff_options diff_options;
+
+	int branch_exists;
+	const char *prefix;
+	const char **pathspec;
+	struct tree *source_tree;
 };
 
 static int post_checkout_hook(struct commit *old, struct commit *new,
@@ -214,8 +217,7 @@ static int checkout_merged(int pos, struct checkout *state)
 	return status;
 }
 
-static int checkout_paths(struct tree *source_tree, const char **pathspec,
-			  const char *prefix, const struct checkout_opts *opts)
+static int checkout_paths(const struct checkout_opts *opts)
 {
 	int pos;
 	struct checkout state;
@@ -230,34 +232,34 @@ static int checkout_paths(struct tree *source_tree, const char **pathspec,
 	struct lock_file *lock_file = xcalloc(1, sizeof(struct lock_file));
 
 	newfd = hold_locked_index(lock_file, 1);
-	if (read_cache_preload(pathspec) < 0)
+	if (read_cache_preload(opts->pathspec) < 0)
 		return error(_("corrupt index file"));
 
-	if (source_tree)
-		read_tree_some(source_tree, pathspec);
+	if (opts->source_tree)
+		read_tree_some(opts->source_tree, opts->pathspec);
 
-	for (pos = 0; pathspec[pos]; pos++)
+	for (pos = 0; opts->pathspec[pos]; pos++)
 		;
 	ps_matched = xcalloc(1, pos);
 
 	for (pos = 0; pos < active_nr; pos++) {
 		struct cache_entry *ce = active_cache[pos];
-		if (source_tree && !(ce->ce_flags & CE_UPDATE))
+		if (opts->source_tree && !(ce->ce_flags & CE_UPDATE))
 			continue;
-		match_pathspec(pathspec, ce->name, ce_namelen(ce), 0, ps_matched);
+		match_pathspec(opts->pathspec, ce->name, ce_namelen(ce), 0, ps_matched);
 	}
 
-	if (report_path_error(ps_matched, pathspec, prefix))
+	if (report_path_error(ps_matched, opts->pathspec, opts->prefix))
 		return 1;
 
 	/* "checkout -m path" to recreate conflicted state */
 	if (opts->merge)
-		unmerge_cache(pathspec);
+		unmerge_cache(opts->pathspec);
 
 	/* Any unmerged paths? */
 	for (pos = 0; pos < active_nr; pos++) {
 		struct cache_entry *ce = active_cache[pos];
-		if (match_pathspec(pathspec, ce->name, ce_namelen(ce), 0, NULL)) {
+		if (match_pathspec(opts->pathspec, ce->name, ce_namelen(ce), 0, NULL)) {
 			if (!ce_stage(ce))
 				continue;
 			if (opts->force) {
@@ -282,9 +284,9 @@ static int checkout_paths(struct tree *source_tree, const char **pathspec,
 	state.refresh_cache = 1;
 	for (pos = 0; pos < active_nr; pos++) {
 		struct cache_entry *ce = active_cache[pos];
-		if (source_tree && !(ce->ce_flags & CE_UPDATE))
+		if (opts->source_tree && !(ce->ce_flags & CE_UPDATE))
 			continue;
-		if (match_pathspec(pathspec, ce->name, ce_namelen(ce), 0, NULL)) {
+		if (match_pathspec(opts->pathspec, ce->name, ce_namelen(ce), 0, NULL)) {
 			if (!ce_stage(ce)) {
 				errs |= checkout_entry(ce, &state, NULL);
 				continue;
@@ -706,7 +708,8 @@ static void orphaned_commit_warning(struct commit *old, struct commit *new)
 	free(refs.objects);
 }
 
-static int switch_branches(const struct checkout_opts *opts, struct branch_info *new)
+static int switch_branches(const struct checkout_opts *opts,
+			   struct branch_info *new)
 {
 	int ret = 0;
 	struct branch_info old;
@@ -760,8 +763,7 @@ static int git_checkout_config(const char *var, const char *value, void *cb)
 	return git_xmerge_config(var, value, NULL);
 }
 
-static int interactive_checkout(const char *revision, const char **pathspec,
-				struct checkout_opts *opts)
+static int interactive_checkout(const char *revision, const char **pathspec)
 {
 	return run_add_interactive(revision, "--patch=checkout", pathspec);
 }
@@ -931,11 +933,8 @@ static int switch_unborn_to_new_branch(const struct checkout_opts *opts)
 int cmd_checkout(int argc, const char **argv, const char *prefix)
 {
 	struct checkout_opts opts;
-	unsigned char rev[20];
 	struct branch_info new;
-	struct tree *source_tree = NULL;
 	char *conflict_style = NULL;
-	int patch_mode = 0;
 	int dwim_new_local_branch = 1;
 	struct option options[] = {
 		OPT__QUIET(&opts.quiet, "suppress progress reporting"),
@@ -957,7 +956,7 @@ int cmd_checkout(int argc, const char **argv, const char *prefix)
 		OPT_BOOLEAN(0, "overwrite-ignore", &opts.overwrite_ignore, "update ignored files (default)"),
 		OPT_STRING(0, "conflict", &conflict_style, "style",
 			   "conflict style (merge or diff3)"),
-		OPT_BOOLEAN('p', "patch", &patch_mode, "select hunks interactively"),
+		OPT_BOOLEAN('p', "patch", &opts.patch_mode, "select hunks interactively"),
 		{ OPTION_BOOLEAN, 0, "guess", &dwim_new_local_branch, NULL,
 		  "second guess 'git checkout no-such-branch'",
 		  PARSE_OPT_NOARG | PARSE_OPT_HIDDEN },
@@ -967,6 +966,7 @@ int cmd_checkout(int argc, const char **argv, const char *prefix)
 	memset(&opts, 0, sizeof(opts));
 	memset(&new, 0, sizeof(new));
 	opts.overwrite_ignore = 1;
+	opts.prefix = prefix;
 
 	gitmodules_config();
 	git_config(git_checkout_config, &opts);
@@ -984,7 +984,7 @@ int cmd_checkout(int argc, const char **argv, const char *prefix)
 	if (opts.new_branch_force)
 		opts.new_branch = opts.new_branch_force;
 
-	if (patch_mode && (opts.track > 0 || opts.new_branch
+	if (opts.patch_mode && (opts.track > 0 || opts.new_branch
 			   || opts.new_branch_log || opts.merge || opts.force
 			   || opts.force_detach))
 		die (_("--patch is incompatible with all other options"));
@@ -1039,13 +1039,15 @@ int cmd_checkout(int argc, const char **argv, const char *prefix)
 	 * remote branches, erroring out for invalid or ambiguous cases.
 	 */
 	if (argc) {
+		unsigned char rev[20];
 		int dwim_ok =
-			!patch_mode &&
+			!opts.patch_mode &&
 			dwim_new_local_branch &&
 			opts.track == BRANCH_TRACK_UNSPECIFIED &&
 			!opts.new_branch;
 		int n = parse_branchname_arg(argc, argv, dwim_ok,
-				&new, &source_tree, rev, &opts.new_branch);
+					     &new, &opts.source_tree,
+					     rev, &opts.new_branch);
 		argv += n;
 		argc -= n;
 	}
@@ -1054,13 +1056,13 @@ int cmd_checkout(int argc, const char **argv, const char *prefix)
 		opts.track = git_branch_track;
 
 	if (argc) {
-		const char **pathspec = get_pathspec(prefix, argv);
+		opts.pathspec = get_pathspec(prefix, argv);
 
-		if (!pathspec)
+		if (!opts.pathspec)
 			die(_("invalid path specification"));
 
-		if (patch_mode)
-			return interactive_checkout(new.name, pathspec, &opts);
+		if (opts.patch_mode)
+			return interactive_checkout(new.name, opts.pathspec);
 
 		/* Checkout paths */
 		if (opts.new_branch) {
@@ -1077,11 +1079,11 @@ int cmd_checkout(int argc, const char **argv, const char *prefix)
 		if (1 < !!opts.writeout_stage + !!opts.force + !!opts.merge)
 			die(_("git checkout: --ours/--theirs, --force and --merge are incompatible when\nchecking out of the index."));
 
-		return checkout_paths(source_tree, pathspec, prefix, &opts);
+		return checkout_paths(&opts);
 	}
 
-	if (patch_mode)
-		return interactive_checkout(new.name, NULL, &opts);
+	if (opts.patch_mode)
+		return interactive_checkout(new.name, NULL);
 
 	if (opts.new_branch) {
 		struct strbuf buf = STRBUF_INIT;
