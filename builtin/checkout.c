@@ -33,7 +33,6 @@ struct checkout_opts {
 	int force;
 	int force_detach;
 	int writeout_stage;
-	int writeout_error;
 	int overwrite_ignore;
 
 	/* not set by parse_options */
@@ -216,7 +215,7 @@ static int checkout_merged(int pos, struct checkout *state)
 }
 
 static int checkout_paths(struct tree *source_tree, const char **pathspec,
-			  const char *prefix, struct checkout_opts *opts)
+			  const char *prefix, const struct checkout_opts *opts)
 {
 	int pos;
 	struct checkout state;
@@ -309,7 +308,8 @@ static int checkout_paths(struct tree *source_tree, const char **pathspec,
 	return errs;
 }
 
-static void show_local_changes(struct object *head, struct diff_options *opts)
+static void show_local_changes(struct object *head,
+			       const struct diff_options *opts)
 {
 	struct rev_info rev;
 	/* I think we want full paths, even if we're in a subdirectory. */
@@ -331,7 +331,8 @@ static void describe_detached_head(const char *msg, struct commit *commit)
 	strbuf_release(&sb);
 }
 
-static int reset_tree(struct tree *tree, struct checkout_opts *o, int worktree)
+static int reset_tree(struct tree *tree, const struct checkout_opts *o,
+		      int worktree, int *writeout_error)
 {
 	struct unpack_trees_options opts;
 	struct tree_desc tree_desc;
@@ -350,7 +351,7 @@ static int reset_tree(struct tree *tree, struct checkout_opts *o, int worktree)
 	init_tree_desc(&tree_desc, tree->buffer, tree->size);
 	switch (unpack_trees(1, &tree_desc, &opts)) {
 	case -2:
-		o->writeout_error = 1;
+		*writeout_error = 1;
 		/*
 		 * We return 0 nevertheless, as the index is all right
 		 * and more importantly we have made best efforts to
@@ -381,8 +382,10 @@ static void setup_branch_path(struct branch_info *branch)
 	branch->path = strbuf_detach(&buf, NULL);
 }
 
-static int merge_working_tree(struct checkout_opts *opts,
-			      struct branch_info *old, struct branch_info *new)
+static int merge_working_tree(const struct checkout_opts *opts,
+			      struct branch_info *old,
+			      struct branch_info *new,
+			      int *writeout_error)
 {
 	int ret;
 	struct lock_file *lock_file = xcalloc(1, sizeof(struct lock_file));
@@ -393,7 +396,7 @@ static int merge_working_tree(struct checkout_opts *opts,
 
 	resolve_undo_clear();
 	if (opts->force) {
-		ret = reset_tree(new->commit->tree, opts, 1);
+		ret = reset_tree(new->commit->tree, opts, 1, writeout_error);
 		if (ret)
 			return ret;
 	} else {
@@ -479,7 +482,8 @@ static int merge_working_tree(struct checkout_opts *opts,
 			o.verbosity = 0;
 			work = write_tree_from_memory(&o);
 
-			ret = reset_tree(new->commit->tree, opts, 1);
+			ret = reset_tree(new->commit->tree, opts, 1,
+					 writeout_error);
 			if (ret)
 				return ret;
 			o.ancestor = old->name;
@@ -487,7 +491,8 @@ static int merge_working_tree(struct checkout_opts *opts,
 			o.branch2 = "local";
 			merge_trees(&o, new->commit->tree, work,
 				old->commit->tree, &result);
-			ret = reset_tree(new->commit->tree, opts, 0);
+			ret = reset_tree(new->commit->tree, opts, 0,
+					 writeout_error);
 			if (ret)
 				return ret;
 		}
@@ -514,7 +519,7 @@ static void report_tracking(struct branch_info *new)
 	strbuf_release(&sb);
 }
 
-static void update_refs_for_switch(struct checkout_opts *opts,
+static void update_refs_for_switch(const struct checkout_opts *opts,
 				   struct branch_info *old,
 				   struct branch_info *new)
 {
@@ -701,13 +706,13 @@ static void orphaned_commit_warning(struct commit *old, struct commit *new)
 	free(refs.objects);
 }
 
-static int switch_branches(struct checkout_opts *opts, struct branch_info *new)
+static int switch_branches(const struct checkout_opts *opts, struct branch_info *new)
 {
 	int ret = 0;
 	struct branch_info old;
 	void *path_to_free;
 	unsigned char rev[20];
-	int flag;
+	int flag, writeout_error = 0;
 	memset(&old, 0, sizeof(old));
 	old.path = path_to_free = resolve_refdup("HEAD", rev, 0, &flag);
 	old.commit = lookup_commit_reference_gently(rev, 1);
@@ -725,7 +730,7 @@ static int switch_branches(struct checkout_opts *opts, struct branch_info *new)
 		parse_commit(new->commit);
 	}
 
-	ret = merge_working_tree(opts, &old, new);
+	ret = merge_working_tree(opts, &old, new, &writeout_error);
 	if (ret) {
 		free(path_to_free);
 		return ret;
@@ -738,7 +743,7 @@ static int switch_branches(struct checkout_opts *opts, struct branch_info *new)
 
 	ret = post_checkout_hook(old.commit, new->commit, 1);
 	free(path_to_free);
-	return ret || opts->writeout_error;
+	return ret || writeout_error;
 }
 
 static int git_checkout_config(const char *var, const char *value, void *cb)
@@ -910,7 +915,7 @@ static int parse_branchname_arg(int argc, const char **argv,
 	return argcount;
 }
 
-static int switch_unborn_to_new_branch(struct checkout_opts *opts)
+static int switch_unborn_to_new_branch(const struct checkout_opts *opts)
 {
 	int status;
 	struct strbuf branch_ref = STRBUF_INIT;
