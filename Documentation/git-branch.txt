@@ -14,6 +14,7 @@ SYNOPSIS
 	[(--merged | --no-merged | --contains) [<commit>]] [<pattern>...]
 'git branch' [--set-upstream | --track | --no-track] [-l] [-f] <branchname> [<start-point>]
 'git branch' (--set-upstream-to=<upstream> | -u <upstream>) [<branchname>]
+'git branch' --unset-upstream [<branchname>]
 'git branch' (-m | -M) [<oldbranch>] <newbranch>
 'git branch' (-d | -D) [-r] <branchname>...
 'git branch' --edit-description [<branchname>]
@@ -179,6 +180,10 @@ start-point is either a local or remote-tracking branch.
 	Set up <branchname>'s tracking information so <upstream> is
 	considered <branchname>'s upstream branch. If no <branchname>
 	is specified, then it defaults to the current branch.
+
+--unset-upstream::
+	Remove the upstream information for <branchname>. If no branch
+	is specified it defaults to the current branch.
 
 --edit-description::
 	Open an editor and edit the text to explain what the branch is

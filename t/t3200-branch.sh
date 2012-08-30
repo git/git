@@ -383,6 +383,28 @@ test_expect_success 'use --set-upstream-to modify a particular branch' \
      test "$(git config branch.my13.remote)" = "." &&
      test "$(git config branch.my13.merge)" = "refs/heads/master"'
 
+test_expect_success '--unset-upstream should fail if given a non-existent branch' \
+    'test_must_fail git branch --unset-upstream i-dont-exist'
+
+test_expect_success 'test --unset-upstream on HEAD' \
+    'git branch my14
+     test_config branch.master.remote foo &&
+     test_config branch.master.merge foo &&
+     git branch --set-upstream-to my14 &&
+     git branch --unset-upstream &&
+     test_must_fail git config branch.master.remote &&
+     test_must_fail git config branch.master.merge &&
+     # fail for a branch without upstream set
+     test_must_fail git branch --unset-upstream
+'
+
+test_expect_success 'test --unset-upstream on a particular branch' \
+    'git branch my15
+     git branch --set-upstream-to master my14 &&
+     git branch --unset-upstream my14 &&
+     test_must_fail git config branch.my14.remote &&
+     test_must_fail git config branch.my14.merge'
+
 # Keep this test last, as it changes the current branch
 cat >expect <<EOF
 $_z40 $HEAD $GIT_COMMITTER_NAME <$GIT_COMMITTER_EMAIL> 1117150200 +0000	branch: Created from master
