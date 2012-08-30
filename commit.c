@@ -581,27 +581,11 @@ static struct commit *interesting(struct commit_list *list)
 	return NULL;
 }
 
-static struct commit_list *merge_bases_many(struct commit *one, int n, struct commit **twos)
+static struct commit_list *paint_down_to_common(struct commit *one, int n, struct commit **twos)
 {
 	struct commit_list *list = NULL;
 	struct commit_list *result = NULL;
 	int i;
-
-	for (i = 0; i < n; i++) {
-		if (one == twos[i])
-			/*
-			 * We do not mark this even with RESULT so we do not
-			 * have to clean it up.
-			 */
-			return commit_list_insert(one, &result);
-	}
-
-	if (parse_commit(one))
-		return NULL;
-	for (i = 0; i < n; i++) {
-		if (parse_commit(twos[i]))
-			return NULL;
-	}
 
 	one->object.flags |= PARENT1;
 	commit_list_insert_by_date(one, &list);
@@ -643,9 +627,34 @@ static struct commit_list *merge_bases_many(struct commit *one, int n, struct co
 		}
 	}
 
-	/* Clean up the result to remove stale ones */
 	free_commit_list(list);
-	list = result; result = NULL;
+	return result;
+}
+
+static struct commit_list *merge_bases_many(struct commit *one, int n, struct commit **twos)
+{
+	struct commit_list *list = NULL;
+	struct commit_list *result = NULL;
+	int i;
+
+	for (i = 0; i < n; i++) {
+		if (one == twos[i])
+			/*
+			 * We do not mark this even with RESULT so we do not
+			 * have to clean it up.
+			 */
+			return commit_list_insert(one, &result);
+	}
+
+	if (parse_commit(one))
+		return NULL;
+	for (i = 0; i < n; i++) {
+		if (parse_commit(twos[i]))
+			return NULL;
+	}
+
+	list = paint_down_to_common(one, n, twos);
+
 	while (list) {
 		struct commit_list *next = list->next;
 		if (!(list->item->object.flags & STALE))
