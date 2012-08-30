@@ -786,20 +786,17 @@ int is_descendant_of(struct commit *commit, struct commit_list *with_commit)
  */
 int in_merge_bases(struct commit *commit, struct commit *reference)
 {
-	struct commit_list *bases, *b;
+	struct commit_list *bases;
 	int ret = 0;
 
-	bases = merge_bases_many(commit, 1, &reference);
+	if (parse_commit(commit) || parse_commit(reference))
+		return ret;
+
+	bases = paint_down_to_common(commit, 1, &reference);
+	if (commit->object.flags & PARENT2)
+		ret = 1;
 	clear_commit_marks(commit, all_flags);
 	clear_commit_marks(reference, all_flags);
-
-	for (b = bases; b; b = b->next) {
-		if (!hashcmp(commit->object.sha1, b->item->object.sha1)) {
-			ret = 1;
-			break;
-		}
-	}
-
 	free_commit_list(bases);
 	return ret;
 }
