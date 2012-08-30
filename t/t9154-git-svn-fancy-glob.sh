@@ -21,6 +21,15 @@ test_expect_success 'add red branch' "
 	test_must_fail git rev-parse refs/remotes/blue
 	"
 
+test_expect_success 'add gre branch' "
+	GIT_CONFIG=.git/svn/.metadata git config --unset svn-remote.svn.branches-maxRev &&
+	git config svn-remote.svn.branches 'branches/{red,gre}:refs/remotes/*' &&
+	git svn fetch &&
+	git rev-parse refs/remotes/red &&
+	test_must_fail git rev-parse refs/remotes/green &&
+	test_must_fail git rev-parse refs/remotes/blue
+	"
+
 test_expect_success 'add green branch' "
 	GIT_CONFIG=.git/svn/.metadata git config --unset svn-remote.svn.branches-maxRev &&
 	git config svn-remote.svn.branches 'branches/{red,green}:refs/remotes/*' &&

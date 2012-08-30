@@ -44,7 +44,9 @@ sub new {
 	my $right = join('/', @right);
 	$re = join('/', @patterns);
 	$re = join('\/',
-		   grep(length, quotemeta($left), "($re)", quotemeta($right)));
+		   grep(length, quotemeta($left),
+                                "($re)(?=/|\$)",
+                                quotemeta($right)));
 	my $left_re = qr/^\/\Q$left\E(\/|$)/;
 	bless { left => $left, right => $right, left_regex => $left_re,
 	        regex => qr/$re/, glob => $glob, depth => $depth }, $class;
