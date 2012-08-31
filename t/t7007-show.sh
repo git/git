@@ -108,4 +108,16 @@ test_expect_success 'showing range' '
 	test_cmp expect actual.filtered
 '
 
+test_expect_success '-s suppresses diff' '
+	echo main3 >expect &&
+	git show -s --format=%s main3 >actual &&
+	test_cmp expect actual
+'
+
+test_expect_success '--quiet suppresses diff' '
+	echo main3 >expect &&
+	git show --quiet --format=%s main3 >actual &&
+	test_cmp expect actual
+'
+
 test_done
