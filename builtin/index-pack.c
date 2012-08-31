@@ -291,7 +291,7 @@ static void parse_pack_header(void)
 	if (hdr->hdr_signature != htonl(PACK_SIGNATURE))
 		die(_("pack signature mismatch"));
 	if (!pack_version_ok(hdr->hdr_version))
-		die("pack version %"PRIu32" unsupported",
+		die(_("pack version %"PRIu32" unsupported"),
 			ntohl(hdr->hdr_version));
 
 	nr_objects = ntohl(hdr->hdr_entries);
@@ -1061,7 +1061,8 @@ static void resolve_deltas(void)
 			int ret = pthread_create(&thread_data[i].thread, NULL,
 						 threaded_second_pass, thread_data + i);
 			if (ret)
-				die("unable to create thread: %s", strerror(ret));
+				die(_("unable to create thread: %s"),
+				    strerror(ret));
 		}
 		for (i = 0; i < nr_threads; i++)
 			pthread_join(thread_data[i].thread, NULL);
@@ -1108,7 +1109,7 @@ static void conclude_pack(int fix_thin_pack, const char *curr_pack, unsigned cha
 				   * sizeof(*objects));
 		f = sha1fd(output_fd, curr_pack);
 		fix_unresolved_deltas(f, nr_unresolved);
-		sprintf(msg, "completed with %d local objects",
+		sprintf(msg, _("completed with %d local objects"),
 			nr_objects - nr_objects_initial);
 		stop_progress_msg(&progress, msg);
 		sha1close(f, tail_sha1, 0);
@@ -1117,8 +1118,8 @@ static void conclude_pack(int fix_thin_pack, const char *curr_pack, unsigned cha
 					 curr_pack, nr_objects,
 					 read_sha1, consumed_bytes-20);
 		if (hashcmp(read_sha1, tail_sha1) != 0)
-			die("Unexpected tail checksum for %s "
-			    "(disk corruption?)", curr_pack);
+			die(_("Unexpected tail checksum for %s "
+			      "(disk corruption?)"), curr_pack);
 	}
 	if (nr_deltas != nr_resolved_deltas)
 		die(Q_("pack has %d unresolved delta",
@@ -1327,17 +1328,17 @@ static int git_index_pack_config(const char *k, const char *v, void *cb)
 	if (!strcmp(k, "pack.indexversion")) {
 		opts->version = git_config_int(k, v);
 		if (opts->version > 2)
-			die("bad pack.indexversion=%"PRIu32, opts->version);
+			die(_("bad pack.indexversion=%"PRIu32), opts->version);
 		return 0;
 	}
 	if (!strcmp(k, "pack.threads")) {
 		nr_threads = git_config_int(k, v);
 		if (nr_threads < 0)
-			die("invalid number of threads specified (%d)",
+			die(_("invalid number of threads specified (%d)"),
 			    nr_threads);
 #ifdef NO_PTHREADS
 		if (nr_threads != 1)
-			warning("no threads support, ignoring %s", k);
+			warning(_("no threads support, ignoring %s"), k);
 		nr_threads = 1;
 #endif
 		return 0;
@@ -1510,8 +1511,8 @@ int cmd_index_pack(int argc, const char **argv, const char *prefix)
 					usage(index_pack_usage);
 #ifdef NO_PTHREADS
 				if (nr_threads != 1)
-					warning("no threads support, "
-						"ignoring %s", arg);
+					warning(_("no threads support, "
+						  "ignoring %s"), arg);
 				nr_threads = 1;
 #endif
 			} else if (!prefixcmp(arg, "--pack_header=")) {
