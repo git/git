@@ -714,7 +714,8 @@ int cmd_branch(int argc, const char **argv, const char *prefix)
 	int delete = 0, rename = 0, force_create = 0, list = 0;
 	int verbose = 0, abbrev = -1, detached = 0;
 	int reflog = 0, edit_description = 0;
-	int quiet = 0;
+	int quiet = 0, unset_upstream = 0;
+	const char *new_upstream = NULL;
 	enum branch_track track;
 	int kinds = REF_LOCAL_BRANCH;
 	struct commit_list *with_commit = NULL;
@@ -728,6 +729,8 @@ int cmd_branch(int argc, const char **argv, const char *prefix)
 			BRANCH_TRACK_EXPLICIT),
 		OPT_SET_INT( 0, "set-upstream",  &track, N_("change upstream info"),
 			BRANCH_TRACK_OVERRIDE),
+		OPT_STRING('u', "set-upstream-to", &new_upstream, "upstream", "change the upstream info"),
+		OPT_BOOLEAN(0, "unset-upstream", &unset_upstream, "Unset the upstream info"),
 		OPT__COLOR(&branch_use_color, N_("use colored output")),
 		OPT_SET_INT('r', "remotes",     &kinds, N_("act on remote-tracking branches"),
 			REF_REMOTE_BRANCH),
@@ -796,10 +799,10 @@ int cmd_branch(int argc, const char **argv, const char *prefix)
 	argc = parse_options(argc, argv, prefix, options, builtin_branch_usage,
 			     0);
 
-	if (!delete && !rename && !edit_description && argc == 0)
+	if (!delete && !rename && !edit_description && !new_upstream && !unset_upstream && argc == 0)
 		list = 1;
 
-	if (!!delete + !!rename + !!force_create + !!list > 1)
+	if (!!delete + !!rename + !!force_create + !!list + !!new_upstream + !!unset_upstream > 1)
 		usage_with_options(builtin_branch_usage, options);
 
 	if (abbrev == -1)
@@ -854,11 +857,62 @@ int cmd_branch(int argc, const char **argv, const char *prefix)
 			rename_branch(argv[0], argv[1], rename > 1);
 		else
 			usage_with_options(builtin_branch_usage, options);
+	} else if (new_upstream) {
+		struct branch *branch = branch_get(argv[0]);
+
+		if (!ref_exists(branch->refname))
+			die(_("branch '%s' does not exist"), branch->name);
+
+		/*
+		 * create_branch takes care of setting up the tracking
+		 * info and making sure new_upstream is correct
+		 */
+		create_branch(head, branch->name, new_upstream, 0, 0, 0, quiet, BRANCH_TRACK_OVERRIDE);
+	} else if (unset_upstream) {
+		struct branch *branch = branch_get(argv[0]);
+		struct strbuf buf = STRBUF_INIT;
+
+		if (!branch_has_merge_config(branch)) {
+			die(_("Branch '%s' has no upstream information"), branch->name);
+		}
+
+		strbuf_addf(&buf, "branch.%s.remote", branch->name);
+		git_config_set_multivar(buf.buf, NULL, NULL, 1);
+		strbuf_reset(&buf);
+		strbuf_addf(&buf, "branch.%s.merge", branch->name);
+		git_config_set_multivar(buf.buf, NULL, NULL, 1);
+		strbuf_release(&buf);
 	} else if (argc > 0 && argc <= 2) {
+		struct branch *branch = branch_get(argv[0]);
+		int branch_existed = 0, remote_tracking = 0;
+		struct strbuf buf = STRBUF_INIT;
+
 		if (kinds != REF_LOCAL_BRANCH)
 			die(_("-a and -r options to 'git branch' do not make sense with a branch name"));
+
+		if (track == BRANCH_TRACK_OVERRIDE)
+			fprintf(stderr, _("The --set-upstream flag is deprecated and will be removed. Consider using --track or --set-upstream-to\n"));
+
+		strbuf_addf(&buf, "refs/remotes/%s", branch->name);
+		remote_tracking = ref_exists(buf.buf);
+		strbuf_release(&buf);
+
+		branch_existed = ref_exists(branch->refname);
 		create_branch(head, argv[0], (argc == 2) ? argv[1] : head,
 			      force_create, reflog, 0, quiet, track);
+
+		/*
+		 * We only show the instructions if the user gave us
+		 * one branch which doesn't exist locally, but is the
+		 * name of a remote-tracking branch.
+		 */
+		if (argc == 1 && track == BRANCH_TRACK_OVERRIDE &&
+		    !branch_existed && remote_tracking) {
+			fprintf(stderr, _("\nIf you wanted to make '%s' track '%s', do this:\n\n"), head, branch->name);
+			fprintf(stderr, _("    git branch -d %s\n"), branch->name);
+			fprintf(stderr, _("    git branch --set-upstream-to %s\n"), branch->name);
+		}
+
 	} else
 		usage_with_options(builtin_branch_usage, options);
 

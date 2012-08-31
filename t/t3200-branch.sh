@@ -369,6 +369,76 @@ test_expect_success \
     'git tag foobar &&
      test_must_fail git branch --track my11 foobar'
 
+test_expect_success 'use --set-upstream-to modify HEAD' \
+    'test_config branch.master.remote foo &&
+     test_config branch.master.merge foo &&
+     git branch my12
+     git branch --set-upstream-to my12 &&
+     test "$(git config branch.master.remote)" = "." &&
+     test "$(git config branch.master.merge)" = "refs/heads/my12"'
+
+test_expect_success 'use --set-upstream-to modify a particular branch' \
+    'git branch my13
+     git branch --set-upstream-to master my13 &&
+     test "$(git config branch.my13.remote)" = "." &&
+     test "$(git config branch.my13.merge)" = "refs/heads/master"'
+
+test_expect_success '--unset-upstream should fail if given a non-existent branch' \
+    'test_must_fail git branch --unset-upstream i-dont-exist'
+
+test_expect_success 'test --unset-upstream on HEAD' \
+    'git branch my14
+     test_config branch.master.remote foo &&
+     test_config branch.master.merge foo &&
+     git branch --set-upstream-to my14 &&
+     git branch --unset-upstream &&
+     test_must_fail git config branch.master.remote &&
+     test_must_fail git config branch.master.merge &&
+     # fail for a branch without upstream set
+     test_must_fail git branch --unset-upstream
+'
+
+test_expect_success 'test --unset-upstream on a particular branch' \
+    'git branch my15
+     git branch --set-upstream-to master my14 &&
+     git branch --unset-upstream my14 &&
+     test_must_fail git config branch.my14.remote &&
+     test_must_fail git config branch.my14.merge'
+
+test_expect_success '--set-upstream shows message when creating a new branch that exists as remote-tracking' \
+    'git update-ref refs/remotes/origin/master HEAD &&
+     git branch --set-upstream origin/master 2>actual &&
+     test_when_finished git update-ref -d refs/remotes/origin/master &&
+     test_when_finished git branch -d origin/master &&
+     cat >expected <<EOF &&
+The --set-upstream flag is deprecated and will be removed. Consider using --track or --set-upstream-to
+
+If you wanted to make '"'master'"' track '"'origin/master'"', do this:
+
+    git branch -d origin/master
+    git branch --set-upstream-to origin/master
+EOF
+     test_cmp expected actual
+'
+
+test_expect_success '--set-upstream with two args only shows the deprecation message' \
+    'git branch --set-upstream master my13 2>actual &&
+     test_when_finished git branch --unset-upstream master &&
+     cat >expected <<EOF &&
+The --set-upstream flag is deprecated and will be removed. Consider using --track or --set-upstream-to
+EOF
+     test_cmp expected actual
+'
+
+test_expect_success '--set-upstream with one arg only shows the deprecation message if the branch existed' \
+    'git branch --set-upstream my13 2>actual &&
+     test_when_finished git branch --unset-upstream my13 &&
+     cat >expected <<EOF &&
+The --set-upstream flag is deprecated and will be removed. Consider using --track or --set-upstream-to
+EOF
+     test_cmp expected actual
+'
+
 # Keep this test last, as it changes the current branch
 cat >expect <<EOF
 $_z40 $HEAD $GIT_COMMITTER_NAME <$GIT_COMMITTER_EMAIL> 1117150200 +0000	branch: Created from master
