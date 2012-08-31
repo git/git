@@ -842,51 +842,31 @@ struct commit_list *reduce_heads(struct commit_list *heads)
 {
 	struct commit_list *p;
 	struct commit_list *result = NULL, **tail = &result;
-	struct commit **other;
-	size_t num_head, num_other;
+	struct commit **array;
+	int num_head, i;
 
 	if (!heads)
 		return NULL;
 
-	/* Avoid unnecessary reallocations */
-	for (p = heads, num_head = 0; p; p = p->next)
-		num_head++;
-	other = xcalloc(sizeof(*other), num_head);
-
-	/* For each commit, see if it can be reached by others */
-	for (p = heads; p; p = p->next) {
-		struct commit_list *q, *base;
-
-		/* Do we already have this in the result? */
-		for (q = result; q; q = q->next)
-			if (p->item == q->item)
-				break;
-		if (q)
+	/* Uniquify */
+	for (p = heads; p; p = p->next)
+		p->item->object.flags &= ~STALE;
+	for (p = heads, num_head = 0; p; p = p->next) {
+		if (p->item->object.flags & STALE)
 			continue;
-
-		num_other = 0;
-		for (q = heads; q; q = q->next) {
-			if (p->item == q->item)
-				continue;
-			other[num_other++] = q->item;
-		}
-		if (num_other)
-			base = get_merge_bases_many(p->item, num_other, other, 1);
-		else
-			base = NULL;
-		/*
-		 * If p->item does not have anything common with other
-		 * commits, there won't be any merge base.  If it is
-		 * reachable from some of the others, p->item will be
-		 * the merge base.  If its history is connected with
-		 * others, but p->item is not reachable by others, we
-		 * will get something other than p->item back.
-		 */
-		if (!base || (base->item != p->item))
-			tail = &(commit_list_insert(p->item, tail)->next);
-		free_commit_list(base);
+		p->item->object.flags |= STALE;
+		num_head++;
 	}
-	free(other);
+	array = xcalloc(sizeof(*array), num_head);
+	for (p = heads, i = 0; p; p = p->next) {
+		if (p->item->object.flags & STALE) {
+			array[i++] = p->item;
+			p->item->object.flags &= ~STALE;
+		}
+	}
+	num_head = remove_redundant(array, num_head);
+	for (i = 0; i < num_head; i++)
+		tail = &commit_list_insert(array[i], tail)->next;
 	return result;
 }
 
