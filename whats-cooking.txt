@@ -1,10 +1,10 @@
 To: git@vger.kernel.org
 Bcc: lwn@lwn.net
-Subject: What's cooking in git.git (Aug 2012, #09; Wed, 29)
+Subject: What's cooking in git.git (Aug 2012, #10; Fri, 31)
 X-master-at: 16d26b168b371b2f4f86b1adb61470c6b08b27b9
-X-next-at: 9b7ff7f6c17d9531b4ebeb199a70a759872c7d4f
+X-next-at: d550ecdc42bd9a5e364767da2177640724535e93
 
-What's cooking in git.git (Aug 2012, #09; Wed, 29)
+What's cooking in git.git (Aug 2012, #10; Fri, 31)
 --------------------------------------------------
 
 Here are the topics that have been cooking.  Commits prefixed with '-' are
@@ -23,130 +23,51 @@ repositories listed at
     http://git-blame.blogspot.com/p/git-public-repositories.html
 
 --------------------------------------------------
-[Graduated to "master"]
-
-* bc/prune-info (2012-08-07) 1 commit
-  (merged to 'next' on 2012-08-20 at 1bc9e66)
- + prune.c: only print informational message in show_only or verbose mode
-
-Teach "git prune" without "-v" to be silent about leftover temporary files.
-
-* ef/win32-cred-helper (2012-08-16) 1 commit
-  (merged to 'next' on 2012-08-20 at bd5c651)
- + contrib: add win32 credential-helper
- (this branch is used by ph/credential-refactor.)
-
-Credential helper for Win32 to allow access to the keychain of
-the logged-in user.
-
-* hv/submodule-path-unmatch (2012-08-14) 1 commit
-  (merged to 'next' on 2012-08-20 at cbe6483)
- + Let submodule command exit with error status if path does not exist
-
-As the title says.
-
-* jc/capabilities (2012-08-13) 3 commits
-  (merged to 'next' on 2012-08-20 at 1976e47)
- + fetch-pack: mention server version with verbose output
- + parse_feature_request: make it easier to see feature values
- + fetch-pack: do not ask for unadvertised capabilities
- (this branch uses jk/version-string.)
-
-Some capabilities were asked by fetch-pack even when upload-pack did
-not advertise that they are available.  Fix fetch-pack not to do so.
-
-* jc/maint-protect-sh-from-ifs (2012-08-08) 1 commit
-  (merged to 'next' on 2012-08-20 at 8b00562)
- + sh-setup: protect from exported IFS
-
-When the user exports a non-default IFS without HT, scripts that
-rely on being able to parse "ls-files -s | while read a b c..."
-start to fail.  Protect them from such a misconfiguration.
-
-* jk/version-string (2012-08-10) 3 commits
-  (merged to 'next' on 2012-08-20 at 6d207bb)
- + do not send client agent unless server does first
- + send-pack: fix capability-sending logic
- + include agent identifier in capability string
- (this branch is used by jc/capabilities.)
-
-(Originally merged to 'next' on 2012-08-10)
-
-Leftover bits from the "git version" code restructuring, that give
-us an ability to expose the Git version over the wire in the
-protocol exchange. But we do so carefully only to the other end that
-understands it.
-
-* mg/rebase-i-onto-reflog-in-full (2012-08-10) 1 commit
-  (merged to 'next' on 2012-08-20 at f671bd2)
- + rebase -i: use full onto sha1 in reflog
-
-The reflog entries left by "git rebase" and "git rebase -i" were
-inconsistent.
-
-* mh/maint-config-doc-proxy-command (2012-08-18) 2 commits
-  (merged to 'next' on 2012-08-20 at a484625)
- + git-config doc: unconfuse an example
- + git-config.txt: fix example
-
-A minor documentation update.
-
-* mz/cherry-code-cleanup (2012-07-29) 3 commits
-  (merged to 'next' on 2012-08-20 at bfb0457)
- + cherry: remove redundant check for merge commit
- + cherry: don't set ignored rev_info options
- + remove unnecessary parameter from get_patch_ids()
-
-Minor code clean-up on the cherry-pick codepath.
-
-* mz/empty-rebase-test (2012-08-09) 1 commit
-  (merged to 'next' on 2012-08-20 at 53e2419)
- + add tests for 'git rebase --keep-empty'
-
-* rr/precompose-utf8-cleanup (2012-08-20) 2 commits
-  (merged to 'next' on 2012-08-20 at a883c2a)
- + precompose-utf8: do not call checks for non-ascii "utf8"
- + cleanup precompose_utf8
-
-A style and code cleanup.
-
---------------------------------------------------
 [New Topics]
 
-* jk/maint-quiet-is-synonym-to-s-in-log (2012-08-28) 1 commit
- - log: fix --quiet synonym for -s
+* mz/cherry-pick-cmdline-order (2012-08-30) 3 commits
+  (merged to 'next' on 2012-08-31 at fc8eec4)
+ + cherry-pick/revert: respect order of revisions to pick
+ + demonstrate broken 'git cherry-pick three one two'
+ + teach log --no-walk=unsorted, which avoids sorting
 
-We tried to bend backwards to allow "--quiet" to be a synonym as
-"-s" when given as e.g. "git show --quiet", but did not quite
-succeed.
+"git cherry-pick A C B" used to replay changes in A and then B and
+then C if these three commits had committer timestamps in that
+order, which is not what the user who said "A C B" naturally expects.
+
+Will merge to 'master' as part of the fifth batch.
+
+* ph/credential-gnome-keyring (2012-08-24) 1 commit
+  (merged to 'next' on 2012-08-31 at 6f3b1de)
+ + contrib: add credential helper for GnomeKeyring
+ (this branch is used by ph/credential-refactor.)
+
+The later refactoring of the shared code in the original series may
+not be worth the trouble, so it is split into a separate topic that
+builds on top of this one, which independently should be useful.
+
+Will merge to 'master' as part of the fifth batch.
+
+* ms/contrib-thunderbird-updates (2012-08-31) 2 commits
+ - [SQUASH] minimum fixup
+ - Thunderbird: fix appp.sh format problems
+
+Update helper to send out format-patch output using Thunderbird.
+
+* nd/i18n-index-pack (2012-08-31) 1 commit
+ - i18n: mark more index-pack strings for translation
 
 Will merge to 'next'.
 
-* nd/checkout-option-parsing-fix (2012-08-29) 3 commits
- - checkout: reorder option handling
- - checkout: move more parameters to struct checkout_opts
- - checkout: pass "struct checkout_opts *" as const pointer
-
-The option parsing of "git checkout" had error checking, dwim and
-defaulting missing options, all mixed in the code, and issuing an
-appropriate error message with useful context was getting harder.
-Reorganize the code and allow giving a proper diagnosis when the
-user says "git checkout -b -t foo bar" (e.g. "-t" is not a good name
-for a branch).
-
-* jc/maint-name-rev (2012-08-29) 3 commits
- - name-rev: --weight option (WIP)
- - name_rev: clarify when a new tip-name is assigned to a commit
- - name-rev: lose unnecessary typedef
-
-"git name-rev" names the given revision based on a ref that can be
-reached in the smallest number of steps from the rev, but that is
-not useful when the caller wants to know which tag is the oldest one
-that contains the rev.  This teaches a new mode to the command that
-uses the oldest ref among those which contain the rev.
-
 --------------------------------------------------
 [Stalled]
+
+* jc/maint-push-refs-all (2012-08-27) 2 commits
+ - get_fetch_map(): tighten checks on dest refs
+ - [BROKEN] fetch/push: allow refs/*:refs/*
+
+Allows pushing and fetching everything including refs/stash.
+This is broken (see the log message there).
 
 * er/doc-fast-import-done (2012-08-22) 1 commit
  - fast-import: document the --done option
@@ -252,10 +173,53 @@ working :-<.
 --------------------------------------------------
 [Cooking]
 
-* cn/branch-set-upstream-to (2012-08-23) 3 commits
- - branch: deprecate --set-upstream and show help if we detect possible mistaken use
- - branch: add --unset-upstream option
- - branch: introduce --set-upstream-to
+* jk/maint-quiet-is-synonym-to-s-in-log (2012-08-28) 1 commit
+  (merged to 'next' on 2012-08-31 at 06f6953)
+ + log: fix --quiet synonym for -s
+
+We tried to bend backwards to allow "--quiet" to be a synonym as
+"-s" when given as e.g. "git show --quiet", but did not quite
+succeed.
+
+Will merge to 'master' as part of the fifth batch.
+
+* nd/checkout-option-parsing-fix (2012-08-30) 3 commits
+ - checkout: reorder option handling
+ - checkout: move more parameters to struct checkout_opts
+ - checkout: pass "struct checkout_opts *" as const pointer
+
+The option parsing of "git checkout" had error checking, dwim and
+defaulting missing options, all mixed in the code, and issuing an
+appropriate error message with useful context was getting harder.
+Reorganize the code and allow giving a proper diagnosis when the
+user says "git checkout -b -t foo bar" (e.g. "-t" is not a good name
+for a branch).
+
+* jc/maint-name-rev (2012-08-29) 6 commits
+ - describe --contains: use "name-rev --weight"
+ - name-rev --weight: tests and documentation
+ - name-rev --weight: cache the computed weight in notes
+ - name-rev: --weight option
+ - name_rev: clarify the logic to assign a new tip-name to a commit
+ - name-rev: lose unnecessary typedef
+
+"git name-rev" names the given revision based on a ref that can be
+reached in the smallest number of steps from the rev, but that is
+not useful when the caller wants to know which tag is the oldest one
+that contains the rev.  This teaches a new mode to the command that
+uses the oldest ref among those which contain the rev.
+
+I am not sure if this is worth it; for one thing, even with the help
+from notes-cache, it seems to make the "describe --contains" even
+slower. Also the command will be unusably slow for a user who does
+not have a write access (hence unable to create or update the
+notes-cache).
+
+* cn/branch-set-upstream-to (2012-08-30) 3 commits
+  (merged to 'next' on 2012-08-31 at d550ecd)
+ + branch: deprecate --set-upstream and show help if we detect possible mistaken use
+ + branch: add --unset-upstream option
+ + branch: introduce --set-upstream-to
 
 "git branch --set-upstream origin/master" is a common mistake to
 create a local branch 'origin/master' and set it to integrate with
@@ -264,8 +228,7 @@ the current branch.  With a plan to deprecate this option, introduce
 current branch to integrate with 'origin/master' remote tracking
 branch.
 
-Waiting for a reroll
-that tightens its error checking.
+Will merge to 'master' as part of the fifth batch.
 
 * jc/dotdot-is-parent-directory (2012-08-23) 1 commit
   (merged to 'next' on 2012-08-28 at 2f2ae87)
@@ -315,21 +278,16 @@ getrlimit(RLIMIT_NOFILE) and/or sysconf(_SC_OPEN_MAX).
 
 Will merge to 'master' as part of the third batch.
 
-* ph/credential-refactor (2012-08-27) 6 commits
+* ph/credential-refactor (2012-08-27) 5 commits
  - wincred: port to generic credential helper (UNTESTED)
  - Merge branch 'ef/win32-cred-helper' into ph/credential-refactor
  - osxkeychain: port to generic credential helper implementation
  - gnome-keyring: port to generic helper implementation
  - contrib: add generic credential helper
- - contrib: add credential helper for GnomeKeyring
+ (this branch uses ph/credential-gnome-keyring.)
 
-Adds a new credential helper to support Gnome keyring and attempts
-to refactor to share code among OSX keychain, Gnome keyring and
-Win32 credential helpers.
-
-Waiting for test results with the tip one
-to decide whether the series should be rerolled or reduced to only
-the first one.
+Attempts to refactor to share code among OSX keychain, Gnome keyring
+and Win32 credential helpers.
 
 * jc/apply-binary-p0 (2012-08-24) 1 commit
   (merged to 'next' on 2012-08-28 at 6fa690c)
@@ -373,6 +331,8 @@ the username in the URL to force authentication, if the server is
 configured to allow GET anonymously, while requiring authentication
 for POST.
 
+Will merge to 'master' as part of the fourth batch.
+
 * jx/test-real-path (2012-08-27) 1 commit
  - test: set the realpath of CWD as TRASH_DIRECTORY
 
@@ -415,18 +375,20 @@ were counting in bytes, not in display columns.
 
 Will merge to 'master' as part of the fourth batch.
 
-* jc/merge-bases (2012-08-28) 5 commits
+* jc/merge-bases (2012-08-31) 9 commits
+ - reduce_heads(): reimplement on top of remove_redundant()
+ - merge-base: "--is-ancestor A B"
  - get_merge_bases_many(): walk from many tips in parallel
+ - in_merge_bases(): use paint_down_to_common()
+ - merge_bases_many(): split out the logic to paint history
  - in_merge_bases(): omit unnecessary redundant common ancestor reduction
  - http-push: use in_merge_bases() for fast-forward check
  - receive-pack: use in_merge_bases() for fast-forward check
  - in_merge_bases(): support only one "other" commit
- (this branch is used by jc/xprm-merge-bases-many.)
 
-Optimises the "merge-base" computation a bit, and also updates its
+Optimise the "merge-base" computation a bit, and also update its
 users that do not need the full merge-base information to call a
-cheaper subset.  The most important one is the second from the tip
-done by Thomas.
+cheaper subset.
 
 Will merge to 'next'.
 
@@ -489,6 +451,7 @@ Will merge to 'master' as part of the fourth batch.
  - Implement a remote helper for svn in C
  (this branch is used by fa/vcs-svn.)
 
+A GSoC project.
 Waiting for comments from mentors and stakeholders.
 
 * fa/vcs-svn (2012-08-28) 4 commits
@@ -498,6 +461,7 @@ Waiting for comments from mentors and stakeholders.
  - svndump: move struct definitions to .h
  (this branch uses fa/remote-svn.)
 
+A GSoC project.
 Waiting for comments from mentors and stakeholders.
 
 * nd/i18n-parseopt-help (2012-08-22) 66 commits
@@ -652,12 +616,6 @@ used together (the command used to misdetect branches).
 
 Will merge to 'master' as part of the fourth batch.
 
-* jc/maint-push-refs-all (2012-08-27) 2 commits
- - get_fetch_map(): tighten checks on dest refs
- - [BROKEN] fetch/push: allow refs/*:refs/*
-
-Allows pushing and fetching refs/stash.
-
 * tg/index-v5 (2012-08-17) 13 commits
  - p0002-index.sh: add perf test for the index formats
  - update-index.c: rewrite index when index-version is given
@@ -673,8 +631,8 @@ Allows pushing and fetching refs/stash.
  - read-cache.c: Re-read index if index file changed
  - Move index v2 specific functions to their own file
 
-A GSoC project, queued here primarily to give people an easier
-access to the state of the last posted version.
+A GSoC project.
+Waiting for comments from mentors and stakeholders.
 
 * jc/maint-sane-execvp-notdir (2012-07-31) 1 commit
   (merged to 'next' on 2012-08-20 at 0d76cf2)
