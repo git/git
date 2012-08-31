@@ -44,6 +44,21 @@ test_expect_success 'cherry-pick first..fourth works' '
 	check_head_differs_from fourth
 '
 
+test_expect_success 'cherry-pick three one two works' '
+	git checkout -f first &&
+	test_commit one &&
+	test_commit two &&
+	test_commit three &&
+	git checkout -f master &&
+	git reset --hard first &&
+	git cherry-pick three one two &&
+	git diff --quiet three &&
+	git diff --quiet HEAD three &&
+	test "$(git log --reverse --format=%s first..)" = "three
+one
+two"
+'
+
 test_expect_success 'output to keep user entertained during multi-pick' '
 	cat <<-\EOF >expected &&
 	[master OBJID] second

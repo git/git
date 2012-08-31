@@ -41,6 +41,10 @@ struct rev_cmdline_info {
 	} *rev;
 };
 
+#define REVISION_WALK_WALK 0
+#define REVISION_WALK_NO_WALK_SORTED 1
+#define REVISION_WALK_NO_WALK_UNSORTED 2
+
 struct rev_info {
 	/* Starting list */
 	struct commit_list *commits;
@@ -62,7 +66,7 @@ struct rev_info {
 	/* Traversal flags */
 	unsigned int	dense:1,
 			prune:1,
-			no_walk:1,
+			no_walk:2,
 			show_all:1,
 			remove_empty_trees:1,
 			simplify_history:1,
