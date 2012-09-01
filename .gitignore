@@ -184,6 +184,7 @@
 /test-obj-pool
 /test-parse-options
 /test-path-utils
+/test-regex
 /test-run-command
 /test-sha1
 /test-sigchain
