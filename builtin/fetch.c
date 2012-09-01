@@ -1012,7 +1012,7 @@ int cmd_fetch(int argc, const char **argv, const char *prefix)
 		struct argv_array options = ARGV_ARRAY_INIT;
 
 		add_options_to_argv(&options);
-		result = fetch_populated_submodules(options.argc, options.argv,
+		result = fetch_populated_submodules(&options,
 						    submodule_prefix,
 						    recurse_submodules,
 						    verbosity < 0);
