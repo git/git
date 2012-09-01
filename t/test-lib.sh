@@ -391,7 +391,10 @@ test_done () {
 
 		if test $test_external_has_tap -eq 0
 		then
-			say_color pass "# passed all $msg"
+			if test $test_count -gt 0
+			then
+				say_color pass "# passed all $msg"
+			fi
 			say "1..$test_count$skip_all"
 		fi
 
