@@ -1110,6 +1110,7 @@ extern int update_server_info(int);
 #define CONFIG_NO_WRITE 4
 #define CONFIG_NOTHING_SET 5
 #define CONFIG_INVALID_PATTERN 6
+#define CONFIG_GENERIC_ERROR 7
 
 typedef int (*config_fn_t)(const char *, const char *, void *);
 extern int git_default_config(const char *, const char *, void *);

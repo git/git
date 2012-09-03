@@ -160,7 +160,7 @@ static int show_config(const char *key_, const char *value_, void *cb)
 
 static int get_value(const char *key_, const char *regex_)
 {
-	int ret = -1;
+	int ret = CONFIG_GENERIC_ERROR;
 	char *global = NULL, *xdg = NULL, *repo_config = NULL;
 	const char *system_wide = NULL, *local;
 	struct config_include_data inc = CONFIG_INCLUDE_INIT;
@@ -196,11 +196,14 @@ static int get_value(const char *key_, const char *regex_)
 		if (regcomp(key_regexp, key, REG_EXTENDED)) {
 			fprintf(stderr, "Invalid key pattern: %s\n", key_);
 			free(key);
+			ret = CONFIG_INVALID_PATTERN;
 			goto free_strings;
 		}
 	} else {
-		if (git_config_parse_key(key_, &key, NULL))
+		if (git_config_parse_key(key_, &key, NULL)) {
+			ret = CONFIG_INVALID_KEY;
 			goto free_strings;
+		}
 	}
 
 	if (regex_) {
@@ -212,6 +215,7 @@ static int get_value(const char *key_, const char *regex_)
 		regexp = (regex_t*)xmalloc(sizeof(regex_t));
 		if (regcomp(regexp, regex_, REG_EXTENDED)) {
 			fprintf(stderr, "Invalid pattern: %s\n", regex_);
+			ret = CONFIG_INVALID_PATTERN;
 			goto free_strings;
 		}
 	}
