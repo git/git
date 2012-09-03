@@ -30,6 +30,7 @@ static const char daemon_usage[] =
 "           [--interpolated-path=<path>]\n"
 "           [--reuseaddr] [--pid-file=<file>]\n"
 "           [--(enable|disable|allow-override|forbid-override)=<service>]\n"
+"           [--access-hook=<path>]\n"
 "           [--inetd | [--listen=<host_or_ipaddr>] [--port=<n>]\n"
 "                      [--detach] [--user=<user> [--group=<group>]]\n"
 "           [<directory>...]";
@@ -256,6 +257,71 @@ static int daemon_error(const char *dir, const char *msg)
 	return -1;
 }
 
+static char *access_hook;
+
+static int run_access_hook(struct daemon_service *service, const char *dir, const char *path)
+{
+	struct child_process child;
+	struct strbuf buf = STRBUF_INIT;
+	const char *argv[8];
+	const char **arg = argv;
+	char *eol;
+	int seen_errors = 0;
+
+#define STRARG(x) ((x) ? (x) : "")
+	*arg++ = access_hook;
+	*arg++ = service->name;
+	*arg++ = path;
+	*arg++ = STRARG(hostname);
+	*arg++ = STRARG(canon_hostname);
+	*arg++ = STRARG(ip_address);
+	*arg++ = STRARG(tcp_port);
+	*arg = NULL;
+#undef STRARG
+
+	memset(&child, 0, sizeof(child));
+	child.use_shell = 1;
+	child.argv = argv;
+	child.no_stdin = 1;
+	child.no_stderr = 1;
+	child.out = -1;
+	if (start_command(&child)) {
+		logerror("daemon access hook '%s' failed to start",
+			 access_hook);
+		goto error_return;
+	}
+	if (strbuf_read(&buf, child.out, 0) < 0) {
+		logerror("failed to read from pipe to daemon access hook '%s'",
+			 access_hook);
+		strbuf_reset(&buf);
+		seen_errors = 1;
+	}
+	if (close(child.out) < 0) {
+		logerror("failed to close pipe to daemon access hook '%s'",
+			 access_hook);
+		seen_errors = 1;
+	}
+	if (finish_command(&child))
+		seen_errors = 1;
+
+	if (!seen_errors) {
+		strbuf_release(&buf);
+		return 0;
+	}
+
+error_return:
+	strbuf_ltrim(&buf);
+	if (!buf.len)
+		strbuf_addstr(&buf, "service rejected");
+	eol = strchr(buf.buf, '\n');
+	if (eol)
+		*eol = '\0';
+	errno = EACCES;
+	daemon_error(dir, buf.buf);
+	strbuf_release(&buf);
+	return -1;
+}
+
 static int run_service(char *dir, struct daemon_service *service)
 {
 	const char *path;
@@ -302,6 +368,13 @@ static int run_service(char *dir, struct daemon_service *service)
 		errno = EACCES;
 		return daemon_error(dir, "service not enabled");
 	}
+
+	/*
+	 * Optionally, a hook can choose to deny access to the
+	 * repository depending on the phase of the moon.
+	 */
+	if (access_hook && run_access_hook(service, dir, path))
+		return -1;
 
 	/*
 	 * We'll ignore SIGTERM from now on, we have a
@@ -1140,6 +1213,10 @@ int main(int argc, char **argv)
 		}
 		if (!strcmp(arg, "--export-all")) {
 			export_all_trees = 1;
+			continue;
+		}
+		if (!prefixcmp(arg, "--access-hook=")) {
+			access_hook = arg + 14;
 			continue;
 		}
 		if (!prefixcmp(arg, "--timeout=")) {
