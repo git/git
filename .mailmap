@@ -18,6 +18,7 @@ David Kågedal <davidk@lysator.liu.se>
 David S. Miller <davem@davemloft.net>
 Deskin Miller <deskinm@umich.edu>
 Dirk Süsserott <newsletter@dirk.my1.cc>
+Erik Faye-Lund <kusmabite@gmail.com> <kusmabite@googlemail.com>
 Fredrik Kuivinen <freku045@student.liu.se>
 H. Peter Anvin <hpa@bonde.sc.orionmulti.com>
 H. Peter Anvin <hpa@tazenda.sc.orionmulti.com>
@@ -26,6 +27,9 @@ Horst H. von Brand <vonbrand@inf.utfsm.cl>
 İsmail Dönmez <ismail@pardus.org.tr>
 Jay Soffian <jaysoffian+git@gmail.com>
 Joachim Berdal Haga <cjhaga@fys.uio.no>
+Johannes Sixt <j6t@kdbg.org> <johannes.sixt@telecom.at>
+Johannes Sixt <j6t@kdbg.org> <j.sixt@viscovery.net>
+Johannes Sixt <j6t@kdbg.org> <J.Sixt@eudaptics.com>
 Jon Loeliger <jdl@freescale.com>
 Jon Seymour <jon@blackcubes.dyndns.org>
 Jonathan Nieder <jrnieder@uchicago.edu>
@@ -43,6 +47,7 @@ Lars Doelle <lars.doelle@on-line.de>
 Li Hong <leehong@pku.edu.cn>
 Lukas Sandström <lukass@etek.chalmers.se>
 Martin Langhoff <martin@laptop.org>
+Martin von Zweigbergk <martinvonz@gmail.com> <martin.von.zweigbergk@gmail.com>
 Michael Coleman <tutufan@gmail.com>
 Michael J Gruber <git@drmicha.warpmail.net> <michaeljgruber+gmane@fastmail.fm>
 Michael W. Olson <mwolson@gnu.org>
@@ -51,7 +56,10 @@ Nanako Shiraishi <nanako3@bluebottle.com>
 Nanako Shiraishi <nanako3@lavabit.com>
 Nguyễn Thái Ngọc Duy <pclouds@gmail.com>
 <nico@fluxnic.net> <nico@cam.org>
+Peter Krefting <peter@softwolves.pp.se> <peter@svarten.intern.softwolves.pp.se>
+Peter Krefting <peter@softwolves.pp.se> <peter@softwolves.pp.se>
 Philippe Bruhat <book@cpan.org>
+Ralf Thielow <ralf.thielow@gmail.com> <ralf.thielow@googlemail.com>
 Ramsay Allan Jones <ramsay@ramsay1.demon.co.uk>
 René Scharfe <rene.scharfe@lsrfire.ath.cx>
 Robert Fitzsimons <robfitz@273k.net>
@@ -61,6 +69,7 @@ Sean Estabrooks <seanlkml@sympatico.ca>
 Shawn O. Pearce <spearce@spearce.org>
 Steven Grimm <koreth@midwinter.com>
 Theodore Ts'o <tytso@mit.edu>
+Thomas Rast <trast@inf.ethz.ch> <trast@student.ethz.ch>
 Tony Luck <tony.luck@intel.com>
 Uwe Kleine-König <Uwe_Zeisberger@digi.com>
 Uwe Kleine-König <Uwe.Kleine-Koenig@digi.com>
