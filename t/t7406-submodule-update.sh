@@ -123,6 +123,18 @@ test_expect_success 'submodule update should throw away changes with --force ' '
 	)
 '
 
+test_expect_success 'submodule update --force forcibly checks out submodules' '
+	(cd super &&
+	 (cd submodule &&
+	  rm -f file
+	 ) &&
+	 git submodule update --force submodule &&
+	 (cd submodule &&
+	  test "$(git status -s file)" = ""
+	 )
+	)
+'
+
 test_expect_success 'submodule update --rebase staying on master' '
 	(cd super/submodule &&
 	  git checkout master
