@@ -1,16 +1,16 @@
 To: git@vger.kernel.org
 Bcc: lwn@lwn.net
-Subject: What's cooking in git.git (Aug 2012, #10; Fri, 31)
-X-master-at: 16d26b168b371b2f4f86b1adb61470c6b08b27b9
-X-next-at: d550ecdc42bd9a5e364767da2177640724535e93
+Subject: What's cooking in git.git (Sep 2012, #01; Tue, 4)
+X-master-at: 3fc0e4ca00330ce1dfd92baeda04f0aa2fbd7e68
+X-next-at: cfd4979c8f619202e04abe06b9cd742131d3422b
 
-What's cooking in git.git (Aug 2012, #10; Fri, 31)
+What's cooking in git.git (Sep 2012, #01; Tue, 4)
 --------------------------------------------------
 
 Here are the topics that have been cooking.  Commits prefixed with '-' are
 only in 'pu' (proposed updates) while commits prefixed with '+' are in 'next'.
 
-The latter half of the second batch of topics are now in 'master'.
+The third batch of topics have graduated to 'master'.
 
 I'm planning to keep this cycle reasonably short and aim for tagging
 the result as 1.8.0 at the end of 9th week, on October 21st, after
@@ -23,44 +23,178 @@ repositories listed at
     http://git-blame.blogspot.com/p/git-public-repositories.html
 
 --------------------------------------------------
+[Graduated to "master"]
+
+* cw/cherry-pick-allow-empty-message (2012-08-06) 1 commit
+  (merged to 'next' on 2012-08-20 at 0dc0590)
+ + cherry-pick: add --allow-empty-message option
+
+(Originally merged to 'next' on 2012-08-09)
+
+"git cherry-pick" by default stops when it sees a commit without any
+log message.  The "--allow-empty-message" option can be used to
+silently proceed.
+
+* jc/daemon-access-hook (2012-08-15) 1 commit
+  (merged to 'next' on 2012-08-20 at c8f5b2e)
+ + daemon: --access-hook option
+
+Allow an external command to tell git-daemon to decline service
+based on the client address, repository path, etc.
+
+* jc/maint-config-exit-status (2012-07-30) 1 commit
+  (merged to 'next' on 2012-08-20 at e18ddd8)
+ + config: "git config baa" should exit with status 1
+
+(Originally merged to 'next' on 2012-07-30)
+
+The exit status code from "git config" was way overspecified while
+being incorrect.  Update the implementation to give the documented
+status for a case that was documented, and introduce a new code for
+"all other errors".
+
+* jc/maint-mergetool-style-fix (2012-08-23) 1 commit
+  (merged to 'next' on 2012-08-28 at ced5868)
+ + mergetool: style fixes
+
+* jc/maint-sane-execvp-notdir (2012-07-31) 1 commit
+  (merged to 'next' on 2012-08-20 at 0d76cf2)
+ + sane_execvp(): ignore non-directory on $PATH
+
+(Originally merged to 'next' on 2012-08-09)
+
+"git foo" errored out with "Not a directory" when the user had a non
+directory on $PATH, and worse yet it masked an alias "foo" to run.
+
+* jc/send-email-reconfirm (2012-08-14) 1 commit
+  (merged to 'next' on 2012-08-20 at dffdef6)
+ + send-email: validate & reconfirm interactive responses
+
+Validate interactive input to "git send-email" to avoid common
+mistakes such as saying "y<RETURN>" to sender mail address whose
+prompt is given with a correctly guessed default.
+
+* js/compat-mkdir (2012-08-24) 1 commit
+  (merged to 'next' on 2012-08-28 at e92bf74)
+ + compat: some mkdir() do not like a slash at the end
+
+Some mkdir(2) implementations do not want to see trailing slash in
+its parameter.
+
+* js/no-curl-easy-strerror-on-old-curl (2012-08-23) 1 commit
+  (merged to 'next' on 2012-08-28 at 25e2e7a)
+ + http.c: don't use curl_easy_strerror prior to curl-7.12.0
+
+Done to support compilation on __TANDEM, but is independently useful
+for people with older version of libcURL.
+
+* js/use-sc-open-max (2012-08-24) 1 commit
+  (merged to 'next' on 2012-08-28 at 8b9ac7c)
+ + sha1_file.c: introduce get_max_fd_limit() helper
+
+Introduce get_max_fd_limit() to absorb platforms that do not have
+getrlimit(RLIMIT_NOFILE) and/or sysconf(_SC_OPEN_MAX).
+
+* ph/stash-rerere (2012-08-17) 2 commits
+  (merged to 'next' on 2012-08-20 at ae37111)
+ + stash: invoke rerere in case of conflict
+ + test: git-stash conflict sets up rerere
+
+"git stash" internally used "git merge-recursive" backend, which did
+not trigger "rerere" upon conflicts unlike other mergy operations.
+
+* sz/submodule-force-update (2012-08-24) 1 commit
+  (merged to 'next' on 2012-08-24 at f82b466)
+ + Make 'git submodule update --force' always check out submodules.
+
+"git submodule update --force" used to leave the working tree of the
+submodule intact when there were local changes.  It is more intiutive
+to make "--force" a sign to run "checkout -f" to overwrite them.
+
+--------------------------------------------------
 [New Topics]
 
-* mz/cherry-pick-cmdline-order (2012-08-30) 3 commits
-  (merged to 'next' on 2012-08-31 at fc8eec4)
- + cherry-pick/revert: respect order of revisions to pick
- + demonstrate broken 'git cherry-pick three one two'
- + teach log --no-walk=unsorted, which avoids sorting
+* as/check-ignore (2012-09-02) 10 commits
+ . fixup: decl-after-stmt etc.
+ . Add git-check-ignore
+ . Provide free_directory() for reclaiming dir_struct memory
+ . Extract some useful pathspec handling code from builtin/add.c into a library
+ . For each exclude pattern, store information about where it came from
+ . dir.c: refactor excluded() and path_excluded()
+ . dir.c: refactor excluded_from_list()
+ . dir.c: rename cryptic 'which' variable to more consistent name
+ . Improve documentation and comments regarding directory traversal API
+ . Update directory listing API doc to match code
 
-"git cherry-pick A C B" used to replay changes in A and then B and
-then C if these three commits had committer timestamps in that
-order, which is not what the user who said "A C B" naturally expects.
+Queued, but I think the design of the end-user experience needs to
+be discussed further to polish this topic.
 
-Will merge to 'master' as part of the fifth batch.
+* jc/maint-ident-missing-human-name (2012-08-31) 1 commit
+ - split_ident_line(): make best effort when parsing author/committer line
 
-* ph/credential-gnome-keyring (2012-08-24) 1 commit
-  (merged to 'next' on 2012-08-31 at 6f3b1de)
- + contrib: add credential helper for GnomeKeyring
- (this branch is used by ph/credential-refactor.)
+"git show --format='%ci'" did not give timestamp correctly for
+commits created without human readable name on "committer" line.
 
-The later refactoring of the shared code in the original series may
-not be worth the trouble, so it is split into a separate topic that
-builds on top of this one, which independently should be useful.
+Will merge to 'next' after eyeballing one more time.
 
-Will merge to 'master' as part of the fifth batch.
+* jk/argv-array (2012-09-02) 4 commits
+ - submodule: use argv_array instead of hand-building arrays
+ - fetch: use argv_array instead of hand-building arrays
+ - argv-array: fix bogus cast when freeing array
+ - argv-array: add pop function
 
-* ms/contrib-thunderbird-updates (2012-08-31) 2 commits
- - [SQUASH] minimum fixup
- - Thunderbird: fix appp.sh format problems
+Use argv-array API in "git fetch" implementation.
+Will merge to 'next' after eyeballing one more time.
 
-Update helper to send out format-patch output using Thunderbird.
+* rj/tap-fix (2012-09-02) 6 commits
+ - test-lib.sh: Suppress the "passed all ..." message if no tests run
+ - test-lib.sh: Add check for invalid use of 'skip_all' facility
+ - test-lib.sh: Fix some shell coding style violations
+ - t4016-*.sh: Skip all tests rather than each test
+ - t3902-*.sh: Skip all tests rather than each test
+ - t3300-*.sh: Fix a TAP parse error
 
-* nd/i18n-index-pack (2012-08-31) 1 commit
- - i18n: mark more index-pack strings for translation
+Will merge to 'next' after eyeballing one more time.
 
-Will merge to 'next'.
+* rj/test-regex (2012-09-02) 1 commit
+ - test-regex: Add a test to check for a bug in the regex routines
+
+Git ships with a fall-back regexp implementation for platforms with
+buggy regexp library; give people a tool to see if they should be
+using it on their platform.
+
+Will merge to 'next' after eyeballing one more time.
+
+* jc/maint-checkout-fileglob-doc (2012-09-04) 1 commit
+ - Document file-glob for "git checkout -- '*.c'"
+
+Will merge to 'next' after eyeballing one more time.
+
+* jc/xprm-generation (2012-09-04) 1 commit
+ - test-generation: compute generation numbers and clock skews
+
+* rj/path-cleanup (2012-09-04) 5 commits
+ - Call mkpathdup() rather than xstrdup(mkpath(...))
+ - Call git_pathdup() rather than xstrdup(git_path("..."))
+ - path.c: Use vsnpath() in the implementation of git_path()
+ - path.c: Don't discard the return value of vsnpath()
+ - path.c: Remove the 'git_' prefix from a file scope function
+
+* rs/archive-zip-utf8 (2012-09-04) 1 commit
+ - archive-zip: support UTF-8 paths
 
 --------------------------------------------------
 [Stalled]
+
+* jx/test-real-path (2012-08-27) 1 commit
+ - test: set the realpath of CWD as TRASH_DIRECTORY
+
+Running tests with the "trash" directory elsewhere with the "--root"
+option did not work well if the directory was specified by a symbolic
+link pointing at it.
+
+Seems broken as it makes $(pwd) and TRASH_DIRECTORY inconsistent.
+Needs rerolling.
 
 * jc/maint-push-refs-all (2012-08-27) 2 commits
  - get_fetch_map(): tighten checks on dest refs
@@ -92,6 +226,25 @@ Not my itch; rewritten an earlier submission by Tom Xue into
 somewhat more maintainable form, though it breaks existing i18n.
 
 Anybody interested in fixing it up?  Otherwise may discard.
+
+* tg/index-v5 (2012-08-17) 13 commits
+ . p0002-index.sh: add perf test for the index formats
+ . update-index.c: rewrite index when index-version is given
+ . Write resolve-undo data for index-v5
+ . Write index-v5 cache-tree data
+ . Write index-v5
+ . Read cache-tree in index-v5
+ . Read resolve-undo data
+ . Read index-v5
+ . Make in-memory format aware of stat_crc
+ . Add documentation of the index-v5 file format
+ . t2104: Don't fail for index versions other than [23]
+ . read-cache.c: Re-read index if index file changed
+ . Move index v2 specific functions to their own file
+
+A GSoC project.  Was waiting for comments from mentors and
+stakeholders, but nothing seems to be happening, other than breakage
+fixes on Cygwin.  May discard.
 
 * pw/p4-submit-conflicts (2012-08-16) 12 commits
  - git p4: add submit --prepare-p4-only option
@@ -173,6 +326,41 @@ working :-<.
 --------------------------------------------------
 [Cooking]
 
+* mz/cherry-pick-cmdline-order (2012-08-30) 3 commits
+  (merged to 'next' on 2012-08-31 at fc8eec4)
+ + cherry-pick/revert: respect order of revisions to pick
+ + demonstrate broken 'git cherry-pick three one two'
+ + teach log --no-walk=unsorted, which avoids sorting
+
+"git cherry-pick A C B" used to replay changes in A and then B and
+then C if these three commits had committer timestamps in that
+order, which is not what the user who said "A C B" naturally expects.
+
+Will merge to 'master' as part of the fifth batch.
+
+* ph/credential-gnome-keyring (2012-08-24) 1 commit
+  (merged to 'next' on 2012-08-31 at 6f3b1de)
+ + contrib: add credential helper for GnomeKeyring
+ (this branch is used by ph/credential-refactor.)
+
+The later refactoring of the shared code in the original series may
+not be worth the trouble, so it is split into a separate topic that
+builds on top of this one, which independently should be useful.
+
+Will merge to 'master' as part of the fifth batch.
+
+* ms/contrib-thunderbird-updates (2012-08-31) 2 commits
+ - [SQUASH] minimum fixup
+ - Thunderbird: fix appp.sh format problems
+
+Update helper to send out format-patch output using Thunderbird.
+Seems to have design regression for silent users.
+
+* nd/i18n-index-pack (2012-08-31) 1 commit
+ - i18n: mark more index-pack strings for translation
+
+Will merge to 'next'.
+
 * jk/maint-quiet-is-synonym-to-s-in-log (2012-08-28) 1 commit
   (merged to 'next' on 2012-08-31 at 06f6953)
  + log: fix --quiet synonym for -s
@@ -195,10 +383,13 @@ Reorganize the code and allow giving a proper diagnosis when the
 user says "git checkout -b -t foo bar" (e.g. "-t" is not a good name
 for a branch).
 
-* jc/maint-name-rev (2012-08-29) 6 commits
+Will merge to 'next' after eyeballing one more time.
+
+* jc/maint-name-rev (2012-09-04) 7 commits
  - describe --contains: use "name-rev --weight"
  - name-rev --weight: tests and documentation
  - name-rev --weight: cache the computed weight in notes
+ - name-rev --weight: trivial optimization
  - name-rev: --weight option
  - name_rev: clarify the logic to assign a new tip-name to a commit
  - name-rev: lose unnecessary typedef
@@ -214,6 +405,10 @@ from notes-cache, it seems to make the "describe --contains" even
 slower. Also the command will be unusably slow for a user who does
 not have a write access (hence unable to create or update the
 notes-cache).
+
+Needs another round to at least find a better name for the option,
+and possibly a cheaper but still better than the current "close to
+the tip" heuristics.
 
 * cn/branch-set-upstream-to (2012-08-30) 3 commits
   (merged to 'next' on 2012-08-31 at d550ecd)
@@ -240,46 +435,13 @@ command line parser to interpret ".." as a path in such a case.
 
 Will merge to 'master' as part of the fourth batch.
 
-* jc/maint-mergetool-style-fix (2012-08-23) 1 commit
-  (merged to 'next' on 2012-08-28 at ced5868)
- + mergetool: style fixes
-
-Will merge to 'master' as part of the third batch.
-
 * js/compat-itimer (2012-08-24) 1 commit
  - Support for setitimer() on platforms lacking it
 
 Pieces to support compilation on __TANDEM.
 
-* js/compat-mkdir (2012-08-24) 1 commit
-  (merged to 'next' on 2012-08-28 at e92bf74)
- + compat: some mkdir() do not like a slash at the end
-
-Some mkdir(2) implementations do not want to see trailing slash in
-its parameter.
-
-Will merge to 'master' as part of the third batch.
-
-* js/no-curl-easy-strerror-on-old-curl (2012-08-23) 1 commit
-  (merged to 'next' on 2012-08-28 at 25e2e7a)
- + http.c: don't use curl_easy_strerror prior to curl-7.12.0
-
-Done to support compilation on __TANDEM, but is independently useful
-for people with older version of libcURL.
-
-Will merge to 'master' as part of the third batch.
-
-* js/use-sc-open-max (2012-08-24) 1 commit
-  (merged to 'next' on 2012-08-28 at 8b9ac7c)
- + sha1_file.c: introduce get_max_fd_limit() helper
-
-Introduce get_max_fd_limit() to absorb platforms that do not have
-getrlimit(RLIMIT_NOFILE) and/or sysconf(_SC_OPEN_MAX).
-
-Will merge to 'master' as part of the third batch.
-
-* ph/credential-refactor (2012-08-27) 5 commits
- - wincred: port to generic credential helper (UNTESTED)
+* ph/credential-refactor (2012-09-02) 5 commits
+ - wincred: port to generic credential helper
  - Merge branch 'ef/win32-cred-helper' into ph/credential-refactor
  - osxkeychain: port to generic credential helper implementation
  - gnome-keyring: port to generic helper implementation
@@ -332,16 +494,6 @@ configured to allow GET anonymously, while requiring authentication
 for POST.
 
 Will merge to 'master' as part of the fourth batch.
-
-* jx/test-real-path (2012-08-27) 1 commit
- - test: set the realpath of CWD as TRASH_DIRECTORY
-
-Running tests with the "trash" directory elsewhere with the "--root"
-option did not work well if the directory was specified by a symbolic
-link pointing at it.
-
-Seems broken as it makes $(pwd) and TRASH_DIRECTORY inconsistent.
-Needs rerolling.
 
 * mh/fetch-filter-refs (2012-08-26) 17 commits
  - filter_refs(): simplify logic
@@ -451,7 +603,7 @@ Will merge to 'master' as part of the fourth batch.
  - Implement a remote helper for svn in C
  (this branch is used by fa/vcs-svn.)
 
-A GSoC project.
+A GSoC project.  Looked promising.
 Waiting for comments from mentors and stakeholders.
 
 * fa/vcs-svn (2012-08-28) 4 commits
@@ -461,7 +613,7 @@ Waiting for comments from mentors and stakeholders.
  - svndump: move struct definitions to .h
  (this branch uses fa/remote-svn.)
 
-A GSoC project.
+A GSoC project.  Looked promising.
 Waiting for comments from mentors and stakeholders.
 
 * nd/i18n-parseopt-help (2012-08-22) 66 commits
@@ -574,35 +726,6 @@ Queued with trivial fix-ups.
 
 Will merge to 'master' as part of the third batch.
 
-* jc/daemon-access-hook (2012-08-15) 1 commit
-  (merged to 'next' on 2012-08-20 at c8f5b2e)
- + daemon: --access-hook option
-
-Allow an external command to tell git-daemon to decline service
-based on the client address, repository path, etc.
-
-Will merge to 'master' as part of the third batch.
-
-* jc/send-email-reconfirm (2012-08-14) 1 commit
-  (merged to 'next' on 2012-08-20 at dffdef6)
- + send-email: validate & reconfirm interactive responses
-
-Validate interactive input to "git send-email" to avoid common
-mistakes such as saying "y<RETURN>" to sender mail address whose
-prompt is given with a correctly guessed default.
-
-Will merge to 'master' as part of the third batch.
-
-* ph/stash-rerere (2012-08-17) 2 commits
-  (merged to 'next' on 2012-08-20 at ae37111)
- + stash: invoke rerere in case of conflict
- + test: git-stash conflict sets up rerere
-
-"git stash" internally used "git merge-recursive" backend, which did
-not trigger "rerere" upon conflicts unlike other mergy operations.
-
-Will merge to 'master' as part of the third batch.
-
 * pw/p4-use-client-spec-branch-detection (2012-08-20) 5 commits
   (merged to 'next' on 2012-08-24 at 08abc61)
  + git p4: make branch detection work with --use-client-spec
@@ -615,70 +738,6 @@ Fixes "git p4" when "--use-client-spec" and "--detect-branches" are
 used together (the command used to misdetect branches).
 
 Will merge to 'master' as part of the fourth batch.
-
-* tg/index-v5 (2012-08-17) 13 commits
- - p0002-index.sh: add perf test for the index formats
- - update-index.c: rewrite index when index-version is given
- - Write resolve-undo data for index-v5
- - Write index-v5 cache-tree data
- - Write index-v5
- - Read cache-tree in index-v5
- - Read resolve-undo data
- - Read index-v5
- - Make in-memory format aware of stat_crc
- - Add documentation of the index-v5 file format
- - t2104: Don't fail for index versions other than [23]
- - read-cache.c: Re-read index if index file changed
- - Move index v2 specific functions to their own file
-
-A GSoC project.
-Waiting for comments from mentors and stakeholders.
-
-* jc/maint-sane-execvp-notdir (2012-07-31) 1 commit
-  (merged to 'next' on 2012-08-20 at 0d76cf2)
- + sane_execvp(): ignore non-directory on $PATH
-
-(Originally merged to 'next' on 2012-08-09)
-
-"git foo" errored out with "Not a directory" when the user had a non
-directory on $PATH, and worse yet it masked an alias "foo" to run.
-
-Will merge to 'master' as part of the third batch.
-
-* cw/cherry-pick-allow-empty-message (2012-08-06) 1 commit
-  (merged to 'next' on 2012-08-20 at 0dc0590)
- + cherry-pick: add --allow-empty-message option
-
-(Originally merged to 'next' on 2012-08-09)
-
-"git cherry-pick" by default stops when it sees a commit without any
-log message.  The "--allow-empty-message" option can be used to
-silently proceed.
-
-Will merge to 'master' as part of the third batch.
-
-* jc/maint-config-exit-status (2012-07-30) 1 commit
-  (merged to 'next' on 2012-08-20 at e18ddd8)
- + config: "git config baa" should exit with status 1
-
-(Originally merged to 'next' on 2012-07-30)
-
-The exit status code from "git config" was way overspecified while
-being incorrect.  Update the implementation to give the documented
-status for a case that was documented, and introduce a new code for
-"all other errors".
-
-Will merge to 'master' as part of the third batch.
-
-* sz/submodule-force-update (2012-08-24) 1 commit
-  (merged to 'next' on 2012-08-24 at f82b466)
- + Make 'git submodule update --force' always check out submodules.
-
-"git submodule update --force" used to leave the working tree of the
-submodule intact when there were local changes.  It is more intiutive
-to make "--force" a sign to run "checkout -f" to overwrite them.
-
-Will merge to 'master' as part of the third batch.
 
 * jk/no-more-pre-exec-callback (2012-06-05) 1 commit
  - pager: drop "wait for output to run less" hack
