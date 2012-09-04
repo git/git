@@ -48,7 +48,7 @@ char *mksnpath(char *buf, size_t n, const char *fmt, ...)
 	return cleanup_path(buf);
 }
 
-static char *git_vsnpath(char *buf, size_t n, const char *fmt, va_list args)
+static char *vsnpath(char *buf, size_t n, const char *fmt, va_list args)
 {
 	const char *git_dir = get_git_dir();
 	size_t len;
@@ -72,7 +72,7 @@ char *git_snpath(char *buf, size_t n, const char *fmt, ...)
 {
 	va_list args;
 	va_start(args, fmt);
-	(void)git_vsnpath(buf, n, fmt, args);
+	(void)vsnpath(buf, n, fmt, args);
 	va_end(args);
 	return buf;
 }
@@ -82,7 +82,7 @@ char *git_pathdup(const char *fmt, ...)
 	char path[PATH_MAX];
 	va_list args;
 	va_start(args, fmt);
-	(void)git_vsnpath(path, sizeof(path), fmt, args);
+	(void)vsnpath(path, sizeof(path), fmt, args);
 	va_end(args);
 	return xstrdup(path);
 }
