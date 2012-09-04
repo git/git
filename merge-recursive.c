@@ -862,14 +862,14 @@ static int merge_3way(struct merge_options *o,
 	if (strcmp(a->path, b->path) ||
 	    (o->ancestor != NULL && strcmp(a->path, one->path) != 0)) {
 		base_name = o->ancestor == NULL ? NULL :
-			xstrdup(mkpath("%s:%s", o->ancestor, one->path));
-		name1 = xstrdup(mkpath("%s:%s", branch1, a->path));
-		name2 = xstrdup(mkpath("%s:%s", branch2, b->path));
+			mkpathdup("%s:%s", o->ancestor, one->path);
+		name1 = mkpathdup("%s:%s", branch1, a->path);
+		name2 = mkpathdup("%s:%s", branch2, b->path);
 	} else {
 		base_name = o->ancestor == NULL ? NULL :
-			xstrdup(mkpath("%s", o->ancestor));
-		name1 = xstrdup(mkpath("%s", branch1));
-		name2 = xstrdup(mkpath("%s", branch2));
+			mkpathdup("%s", o->ancestor);
+		name1 = mkpathdup("%s", branch1);
+		name2 = mkpathdup("%s", branch2);
 	}
 
 	read_mmblob(&orig, one->sha1);
@@ -879,6 +879,7 @@ static int merge_3way(struct merge_options *o,
 	merge_status = ll_merge(result_buf, a->path, &orig, base_name,
 				&src1, name1, &src2, name2, &ll_opts);
 
+	free(base_name);
 	free(name1);
 	free(name2);
 	free(orig.ptr);
