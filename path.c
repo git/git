@@ -119,23 +119,14 @@ char *mkpath(const char *fmt, ...)
 
 char *git_path(const char *fmt, ...)
 {
-	const char *git_dir = get_git_dir();
 	char *pathname = get_pathname();
 	va_list args;
-	unsigned len;
+	char *ret;
 
-	len = strlen(git_dir);
-	if (len > PATH_MAX-100)
-		return bad_path;
-	memcpy(pathname, git_dir, len);
-	if (len && git_dir[len-1] != '/')
-		pathname[len++] = '/';
 	va_start(args, fmt);
-	len += vsnprintf(pathname + len, PATH_MAX - len, fmt, args);
+	ret = vsnpath(pathname, PATH_MAX, fmt, args);
 	va_end(args);
-	if (len >= PATH_MAX)
-		return bad_path;
-	return cleanup_path(pathname);
+	return ret;
 }
 
 void home_config_paths(char **global, char **xdg, char *file)
