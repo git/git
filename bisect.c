@@ -833,7 +833,7 @@ static int check_ancestors(const char *prefix)
  */
 static void check_good_are_ancestors_of_bad(const char *prefix, int no_checkout)
 {
-	char *filename = xstrdup(git_path("BISECT_ANCESTORS_OK"));
+	char *filename = git_pathdup("BISECT_ANCESTORS_OK");
 	struct stat st;
 	int fd;
 

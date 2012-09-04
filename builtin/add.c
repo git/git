@@ -260,7 +260,7 @@ int interactive_add(int argc, const char **argv, const char *prefix, int patch)
 
 static int edit_patch(int argc, const char **argv, const char *prefix)
 {
-	char *file = xstrdup(git_path("ADD_EDIT.patch"));
+	char *file = git_pathdup("ADD_EDIT.patch");
 	const char *apply_argv[] = { "apply", "--recount", "--cached",
 		NULL, NULL };
 	struct child_process child;
@@ -303,6 +303,7 @@ static int edit_patch(int argc, const char **argv, const char *prefix)
 		die (_("Could not apply '%s'"), file);
 
 	unlink(file);
+	free(file);
 	return 0;
 }
 
