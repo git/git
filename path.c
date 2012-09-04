@@ -70,21 +70,22 @@ bad:
 
 char *git_snpath(char *buf, size_t n, const char *fmt, ...)
 {
+	char *ret;
 	va_list args;
 	va_start(args, fmt);
-	(void)vsnpath(buf, n, fmt, args);
+	ret = vsnpath(buf, n, fmt, args);
 	va_end(args);
-	return buf;
+	return ret;
 }
 
 char *git_pathdup(const char *fmt, ...)
 {
-	char path[PATH_MAX];
+	char path[PATH_MAX], *ret;
 	va_list args;
 	va_start(args, fmt);
-	(void)vsnpath(path, sizeof(path), fmt, args);
+	ret = vsnpath(path, sizeof(path), fmt, args);
 	va_end(args);
-	return xstrdup(path);
+	return xstrdup(ret);
 }
 
 char *mkpathdup(const char *fmt, ...)
