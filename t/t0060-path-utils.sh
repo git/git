@@ -140,7 +140,7 @@ test_expect_success 'strip_path_suffix' '
 		c:/msysgit/libexec//git-core libexec/git-core)
 '
 
-test_expect_failure 'absolute path rejects the empty string' '
+test_expect_success 'absolute path rejects the empty string' '
 	test_must_fail test-path-utils absolute_path ""
 '
 
