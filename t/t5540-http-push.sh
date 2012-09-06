@@ -117,7 +117,7 @@ test_expect_success 'http-push fetches packed objects' '
 	# By reset, we force git to retrieve the packed object
 	(cd "$ROOT_PATH"/test_repo_clone_packed &&
 	 git reset --hard HEAD^ &&
-	 git remote rm origin &&
+	 git remote remove origin &&
 	 git reflog expire --expire=0 --all &&
 	 git prune &&
 	 git push -f -v $HTTPD_URL/dumb/test_repo_packed.git master)
