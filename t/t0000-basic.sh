@@ -450,24 +450,6 @@ test_expect_success 'update-index D/F conflict' '
 	test $numpath0 = 1
 '
 
-test_expect_success SYMLINKS 'real path works as expected' '
-	mkdir first &&
-	ln -s ../.git first/.git &&
-	mkdir second &&
-	ln -s ../first second/other &&
-	mkdir third &&
-	dir="$(cd .git; pwd -P)" &&
-	dir2=third/../second/other/.git &&
-	test "$dir" = "$(test-path-utils real_path $dir2)" &&
-	file="$dir"/index &&
-	test "$file" = "$(test-path-utils real_path $dir2/index)" &&
-	basename=blub &&
-	test "$dir/$basename" = "$(cd .git && test-path-utils real_path "$basename")" &&
-	ln -s ../first/file .git/syml &&
-	sym="$(cd first; pwd -P)"/file &&
-	test "$sym" = "$(test-path-utils real_path "$dir2/syml")"
-'
-
 test_expect_success 'very long name in the index handled sanely' '
 
 	a=a && # 1
