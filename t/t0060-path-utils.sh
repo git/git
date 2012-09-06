@@ -148,7 +148,7 @@ test_expect_success 'real path rejects the empty string' '
 	test_must_fail test-path-utils real_path ""
 '
 
-test_expect_failure POSIX 'real path works on absolute paths' '
+test_expect_success POSIX 'real path works on absolute paths' '
 	nopath="hopefully-absent-path" &&
 	test "/" = "$(test-path-utils real_path "/")" &&
 	test "/$nopath" = "$(test-path-utils real_path "/$nopath")" &&

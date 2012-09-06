@@ -45,8 +45,8 @@ const char *real_path(const char *path)
 		if (!is_directory(buf)) {
 			char *last_slash = find_last_dir_sep(buf);
 			if (last_slash) {
-				*last_slash = '\0';
 				last_elem = xstrdup(last_slash + 1);
+				last_slash[1] = '\0';
 			} else {
 				last_elem = xstrdup(buf);
 				*buf = '\0';
