@@ -8,7 +8,8 @@ ordering and formatting options, such as '--reverse'.
 
 --
 
--n 'number'::
+-<number>::
+-n <number>::
 --max-count=<number>::
 
 	Limit the number of commits to output.
