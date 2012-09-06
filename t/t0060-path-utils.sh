@@ -158,6 +158,24 @@ test_expect_success POSIX 'real path works on absolute paths' '
 	test "$d/$nopath" = "$(test-path-utils real_path "$d/$nopath")"
 '
 
+test_expect_success POSIX 'real path removes extra leading slashes' '
+	nopath="hopefully-absent-path" &&
+	test "/" = "$(test-path-utils real_path "///")" &&
+	test "/$nopath" = "$(test-path-utils real_path "///$nopath")" &&
+	# Find an existing top-level directory for the remaining tests:
+	d=$(pwd -P | sed -e "s|^\([^/]*/[^/]*\)/.*|\1|") &&
+	test "$d" = "$(test-path-utils real_path "//$d")" &&
+	test "$d/$nopath" = "$(test-path-utils real_path "//$d/$nopath")"
+'
+
+test_expect_success 'real path removes other extra slashes' '
+	nopath="hopefully-absent-path" &&
+	# Find an existing top-level directory for the remaining tests:
+	d=$(pwd -P | sed -e "s|^\([^/]*/[^/]*\)/.*|\1|") &&
+	test "$d" = "$(test-path-utils real_path "$d///")" &&
+	test "$d/$nopath" = "$(test-path-utils real_path "$d///$nopath")"
+'
+
 test_expect_success SYMLINKS 'real path works on symlinks' '
 	mkdir first &&
 	ln -s ../.git first/.git &&
