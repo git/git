@@ -148,7 +148,17 @@ test_expect_success 'real path rejects the empty string' '
 	test_must_fail test-path-utils real_path ""
 '
 
-test_expect_success SYMLINKS 'real path works as expected' '
+test_expect_failure POSIX 'real path works on absolute paths' '
+	nopath="hopefully-absent-path" &&
+	test "/" = "$(test-path-utils real_path "/")" &&
+	test "/$nopath" = "$(test-path-utils real_path "/$nopath")" &&
+	# Find an existing top-level directory for the remaining tests:
+	d=$(pwd -P | sed -e "s|^\([^/]*/[^/]*\)/.*|\1|") &&
+	test "$d" = "$(test-path-utils real_path "$d")" &&
+	test "$d/$nopath" = "$(test-path-utils real_path "$d/$nopath")"
+'
+
+test_expect_success SYMLINKS 'real path works on symlinks' '
 	mkdir first &&
 	ln -s ../.git first/.git &&
 	mkdir second &&
