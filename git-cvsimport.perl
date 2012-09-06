@@ -889,10 +889,37 @@ sub commit {
 		$xtag =~ s/\s+\*\*.*$//; # Remove stuff like ** INVALID ** and ** FUNKY **
 		$xtag =~ tr/_/\./ if ( $opt_u );
 		$xtag =~ s/[\/]/$opt_s/g;
-		$xtag =~ s/\[//g;
 
-		system('git' , 'tag', '-f', $xtag, $cid) == 0
-			or die "Cannot create tag $xtag: $!\n";
+		# See refs.c for these rules.
+		# Tag cannot contain bad chars. (See bad_ref_char in refs.c.)
+		$xtag =~ s/[ ~\^:\\\*\?\[]//g;
+		# Other bad strings for tags:
+		# (See check_refname_component in refs.c.)
+		1 while $xtag =~ s/
+			(?: \.\.        # Tag cannot contain '..'.
+			|   \@{         # Tag cannot contain '@{'.
+			| ^ -           # Tag cannot begin with '-'.
+			|   \.lock $    # Tag cannot end with '.lock'.
+			| ^ \.          # Tag cannot begin...
+			|   \. $        # ...or end with '.'
+			)//xg;
+		# Tag cannot be empty.
+		if ($xtag eq '') {
+			warn("warning: ignoring tag '$tag'",
+			" with invalid tagname\n");
+			return;
+		}
+
+		if (system('git' , 'tag', '-f', $xtag, $cid) != 0) {
+			# We did our best to sanitize the tag, but still failed
+			# for whatever reason. Bail out, and give the user
+			# enough information to understand if/how we should
+			# improve the translation in the future.
+			if ($tag ne $xtag) {
+				print "Translated '$tag' tag to '$xtag'\n";
+			}
+			die "Cannot create tag $xtag: $!\n";
+		}
 
 		print "Created tag '$xtag' on '$branch'\n" if $opt_v;
 	}
