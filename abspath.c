@@ -35,6 +35,9 @@ const char *real_path(const char *path)
 	if (path == buf || path == next_buf)
 		return path;
 
+	if (!*path)
+		die("The empty string is not a valid path");
+
 	if (strlcpy(buf, path, PATH_MAX) >= PATH_MAX)
 		die ("Too long path: %.*s", 60, path);
 
