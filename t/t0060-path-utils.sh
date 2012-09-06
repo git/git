@@ -144,6 +144,10 @@ test_expect_success 'absolute path rejects the empty string' '
 	test_must_fail test-path-utils absolute_path ""
 '
 
+test_expect_failure 'real path rejects the empty string' '
+	test_must_fail test-path-utils real_path ""
+'
+
 test_expect_success SYMLINKS 'real path works as expected' '
 	mkdir first &&
 	ln -s ../.git first/.git &&
