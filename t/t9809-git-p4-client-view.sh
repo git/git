@@ -9,23 +9,6 @@ test_expect_success 'start p4d' '
 '
 
 #
-# Construct a client with this list of View lines
-#
-client_view() {
-	(
-		cat <<-EOF &&
-		Client: client
-		Description: client
-		Root: $cli
-		View:
-		EOF
-		for arg ; do
-			printf "\t$arg\n"
-		done
-	) | p4 client -i
-}
-
-#
 # Verify these files exist, exactly.  Caller creates
 # a list of files in file "files".
 #

@@ -115,3 +115,20 @@ marshal_dump() {
 	EOF
 	"$PYTHON_PATH" "$TRASH_DIRECTORY/marshal-dump.py"
 }
+
+#
+# Construct a client with this list of View lines
+#
+client_view() {
+	(
+		cat <<-EOF &&
+		Client: client
+		Description: client
+		Root: $cli
+		View:
+		EOF
+		for arg ; do
+			printf "\t$arg\n"
+		done
+	) | p4 client -i
+}

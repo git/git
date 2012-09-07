@@ -1818,19 +1818,41 @@ class P4Sync(Command, P4UserMap):
         return files
 
     def stripRepoPath(self, path, prefixes):
+        """When streaming files, this is called to map a p4 depot path
+           to where it should go in git.  The prefixes are either
+           self.depotPaths, or self.branchPrefixes in the case of
+           branch detection."""
+
         if self.useClientSpec:
-            return self.clientSpecDirs.map_in_client(path)
+            # branch detection moves files up a level (the branch name)
+            # from what client spec interpretation gives
+            path = self.clientSpecDirs.map_in_client(path)
+            if self.detectBranches:
+                for b in self.knownBranches:
+                    if path.startswith(b + "/"):
+                        path = path[len(b)+1:]
 
-        if self.keepRepoPath:
-            prefixes = [re.sub("^(//[^/]+/).*", r'\1', prefixes[0])]
+        elif self.keepRepoPath:
+            # Preserve everything in relative path name except leading
+            # //depot/; just look at first prefix as they all should
+            # be in the same depot.
+            depot = re.sub("^(//[^/]+/).*", r'\1', prefixes[0])
+            if p4PathStartsWith(path, depot):
+                path = path[len(depot):]
 
-        for p in prefixes:
-            if p4PathStartsWith(path, p):
-                path = path[len(p):]
+        else:
+            for p in prefixes:
+                if p4PathStartsWith(path, p):
+                    path = path[len(p):]
+                    break
 
+        path = wildcard_decode(path)
         return path
 
     def splitFilesIntoBranches(self, commit):
+        """Look at each depotFile in the commit to figure out to what
+           branch it belongs."""
+
         branches = {}
         fnum = 0
         while commit.has_key("depotFile%s" % fnum):
@@ -1848,12 +1870,16 @@ class P4Sync(Command, P4UserMap):
             file["type"] = commit["type%s" % fnum]
             fnum = fnum + 1
 
-            relPath = self.stripRepoPath(path, self.depotPaths)
-            relPath = wildcard_decode(relPath)
+            # start with the full relative path where this file would
+            # go in a p4 client
+            if self.useClientSpec:
+                relPath = self.clientSpecDirs.map_in_client(path)
+            else:
+                relPath = self.stripRepoPath(path, self.depotPaths)
 
             for branch in self.knownBranches.keys():
-
-                # add a trailing slash so that a commit into qt/4.2foo doesn't end up in qt/4.2
+                # add a trailing slash so that a commit into qt/4.2foo
+                # doesn't end up in qt/4.2, e.g.
                 if relPath.startswith(branch + "/"):
                     if branch not in branches:
                         branches[branch] = []
@@ -1867,7 +1893,6 @@ class P4Sync(Command, P4UserMap):
 
     def streamOneP4File(self, file, contents):
         relPath = self.stripRepoPath(file['depotFile'], self.branchPrefixes)
-        relPath = wildcard_decode(relPath)
         if verbose:
             sys.stderr.write("%s\n" % relPath)
 
@@ -1936,7 +1961,6 @@ class P4Sync(Command, P4UserMap):
 
     def streamOneP4Deletion(self, file):
         relPath = self.stripRepoPath(file['path'], self.branchPrefixes)
-        relPath = wildcard_decode(relPath)
         if verbose:
             sys.stderr.write("delete %s\n" % relPath)
         self.gitStream.write("D %s\n" % relPath)
@@ -2041,10 +2065,9 @@ class P4Sync(Command, P4UserMap):
         gitStream.write(description)
         gitStream.write("\n")
 
-    def commit(self, details, files, branch, branchPrefixes, parent = ""):
+    def commit(self, details, files, branch, parent = ""):
         epoch = details["time"]
         author = details["user"]
-        self.branchPrefixes = branchPrefixes
 
         if self.verbose:
             print "commit into %s" % branch
@@ -2053,7 +2076,7 @@ class P4Sync(Command, P4UserMap):
         # create a commit.
         new_files = []
         for f in files:
-            if [p for p in branchPrefixes if p4PathStartsWith(f['path'], p)]:
+            if [p for p in self.branchPrefixes if p4PathStartsWith(f['path'], p)]:
                 new_files.append (f)
             else:
                 sys.stderr.write("Ignoring file outside of prefix: %s\n" % f['path'])
@@ -2070,8 +2093,8 @@ class P4Sync(Command, P4UserMap):
 
         self.gitStream.write("data <<EOT\n")
         self.gitStream.write(details["desc"])
-        self.gitStream.write("\n[git-p4: depot-paths = \"%s\": change = %s"
-                             % (','.join (branchPrefixes), details["change"]))
+        self.gitStream.write("\n[git-p4: depot-paths = \"%s\": change = %s" %
+                             (','.join(self.branchPrefixes), details["change"]))
         if len(details['options']) > 0:
             self.gitStream.write(": options = %s" % details['options'])
         self.gitStream.write("]\nEOT\n\n")
@@ -2094,7 +2117,7 @@ class P4Sync(Command, P4UserMap):
                 print "Change %s is labelled %s" % (change, labelDetails)
 
             files = p4CmdList(["files"] + ["%s...@%s" % (p, change)
-                                                    for p in branchPrefixes])
+                                                for p in self.branchPrefixes])
 
             if len(files) == len(labelRevisions):
 
@@ -2405,6 +2428,7 @@ class P4Sync(Command, P4UserMap):
                     for branch in branches.keys():
                         ## HACK  --hwn
                         branchPrefix = self.depotPaths[0] + branch + "/"
+                        self.branchPrefixes = [ branchPrefix ]
 
                         parent = ""
 
@@ -2449,19 +2473,19 @@ class P4Sync(Command, P4UserMap):
                             tempBranch = os.path.join(self.tempBranchLocation, "%d" % (change))
                             if self.verbose:
                                 print "Creating temporary branch: " + tempBranch
-                            self.commit(description, filesForCommit, tempBranch, [branchPrefix])
+                            self.commit(description, filesForCommit, tempBranch)
                             self.tempBranches.append(tempBranch)
                             self.checkpoint()
                             blob = self.searchParent(parent, branch, tempBranch)
                         if blob:
-                            self.commit(description, filesForCommit, branch, [branchPrefix], blob)
+                            self.commit(description, filesForCommit, branch, blob)
                         else:
                             if self.verbose:
                                 print "Parent of %s not found. Committing into head of %s" % (branch, parent)
-                            self.commit(description, filesForCommit, branch, [branchPrefix], parent)
+                            self.commit(description, filesForCommit, branch, parent)
                 else:
                     files = self.extractFilesFromCommit(description)
-                    self.commit(description, files, self.branch, self.depotPaths,
+                    self.commit(description, files, self.branch,
                                 self.initialParent)
                     self.initialParent = ""
             except IOError:
@@ -2525,7 +2549,7 @@ class P4Sync(Command, P4UserMap):
 
         self.updateOptionDict(details)
         try:
-            self.commit(details, self.extractFilesFromCommit(details), self.branch, self.depotPaths)
+            self.commit(details, self.extractFilesFromCommit(details), self.branch)
         except IOError:
             print "IO error with git fast-import. Is your git version recent enough?"
             print self.gitError.read()
@@ -2682,6 +2706,9 @@ class P4Sync(Command, P4UserMap):
             newPaths.append(p)
 
         self.depotPaths = newPaths
+
+        # --detect-branches may change this for each branch
+        self.branchPrefixes = self.depotPaths
 
         self.loadUserMapFromCache()
         self.labels = {}
