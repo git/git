@@ -12,8 +12,8 @@
 #define MAX_TAGS	(FLAG_BITS - 1)
 
 static const char * const describe_usage[] = {
-	"git describe [options] <committish>*",
-	"git describe [options] --dirty",
+	N_("git describe [options] <committish>*"),
+	N_("git describe [options] --dirty"),
 	NULL
 };
 
@@ -400,22 +400,22 @@ int cmd_describe(int argc, const char **argv, const char *prefix)
 {
 	int contains = 0;
 	struct option options[] = {
-		OPT_BOOLEAN(0, "contains",   &contains, "find the tag that comes after the commit"),
-		OPT_BOOLEAN(0, "debug",      &debug, "debug search strategy on stderr"),
-		OPT_BOOLEAN(0, "all",        &all, "use any ref in .git/refs"),
-		OPT_BOOLEAN(0, "tags",       &tags, "use any tag in .git/refs/tags"),
-		OPT_BOOLEAN(0, "long",       &longformat, "always use long format"),
+		OPT_BOOLEAN(0, "contains",   &contains, N_("find the tag that comes after the commit")),
+		OPT_BOOLEAN(0, "debug",      &debug, N_("debug search strategy on stderr")),
+		OPT_BOOLEAN(0, "all",        &all, N_("use any ref in .git/refs")),
+		OPT_BOOLEAN(0, "tags",       &tags, N_("use any tag in .git/refs/tags")),
+		OPT_BOOLEAN(0, "long",       &longformat, N_("always use long format")),
 		OPT__ABBREV(&abbrev),
 		OPT_SET_INT(0, "exact-match", &max_candidates,
-			    "only output exact matches", 0),
+			    N_("only output exact matches"), 0),
 		OPT_INTEGER(0, "candidates", &max_candidates,
-			    "consider <n> most recent tags (default: 10)"),
-		OPT_STRING(0, "match",       &pattern, "pattern",
-			   "only consider tags matching <pattern>"),
+			    N_("consider <n> most recent tags (default: 10)")),
+		OPT_STRING(0, "match",       &pattern, N_("pattern"),
+			   N_("only consider tags matching <pattern>")),
 		OPT_BOOLEAN(0, "always",     &always,
-			   "show abbreviated commit object as fallback"),
-		{OPTION_STRING, 0, "dirty",  &dirty, "mark",
-			   "append <mark> on dirty working tree (default: \"-dirty\")",
+			   N_("show abbreviated commit object as fallback")),
+		{OPTION_STRING, 0, "dirty",  &dirty, N_("mark"),
+			   N_("append <mark> on dirty working tree (default: \"-dirty\")"),
 		 PARSE_OPT_OPTARG, NULL, (intptr_t) "-dirty"},
 		OPT_END(),
 	};

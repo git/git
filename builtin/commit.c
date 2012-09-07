@@ -30,12 +30,12 @@
 #include "column.h"
 
 static const char * const builtin_commit_usage[] = {
-	"git commit [options] [--] <filepattern>...",
+	N_("git commit [options] [--] <filepattern>..."),
 	NULL
 };
 
 static const char * const builtin_status_usage[] = {
-	"git status [options] [--] <filepattern>...",
+	N_("git status [options] [--] <filepattern>..."),
 	NULL
 };
 
@@ -1169,26 +1169,26 @@ int cmd_status(int argc, const char **argv, const char *prefix)
 	int fd;
 	unsigned char sha1[20];
 	static struct option builtin_status_options[] = {
-		OPT__VERBOSE(&verbose, "be verbose"),
+		OPT__VERBOSE(&verbose, N_("be verbose")),
 		OPT_SET_INT('s', "short", &status_format,
-			    "show status concisely", STATUS_FORMAT_SHORT),
+			    N_("show status concisely"), STATUS_FORMAT_SHORT),
 		OPT_BOOLEAN('b', "branch", &s.show_branch,
-			    "show branch information"),
+			    N_("show branch information")),
 		OPT_SET_INT(0, "porcelain", &status_format,
-			    "machine-readable output",
+			    N_("machine-readable output"),
 			    STATUS_FORMAT_PORCELAIN),
 		OPT_BOOLEAN('z', "null", &s.null_termination,
-			    "terminate entries with NUL"),
+			    N_("terminate entries with NUL")),
 		{ OPTION_STRING, 'u', "untracked-files", &untracked_files_arg,
-		  "mode",
-		  "show untracked files, optional modes: all, normal, no. (Default: all)",
+		  N_("mode"),
+		  N_("show untracked files, optional modes: all, normal, no. (Default: all)"),
 		  PARSE_OPT_OPTARG, NULL, (intptr_t)"all" },
 		OPT_BOOLEAN(0, "ignored", &show_ignored_in_status,
-			    "show ignored files"),
-		{ OPTION_STRING, 0, "ignore-submodules", &ignore_submodule_arg, "when",
-		  "ignore changes to submodules, optional when: all, dirty, untracked. (Default: all)",
+			    N_("show ignored files")),
+		{ OPTION_STRING, 0, "ignore-submodules", &ignore_submodule_arg, N_("when"),
+		  N_("ignore changes to submodules, optional when: all, dirty, untracked. (Default: all)"),
 		  PARSE_OPT_OPTARG, NULL, (intptr_t)"all" },
-		OPT_COLUMN(0, "column", &s.colopts, "list untracked files in columns"),
+		OPT_COLUMN(0, "column", &s.colopts, N_("list untracked files in columns")),
 		OPT_END(),
 	};
 
@@ -1369,53 +1369,53 @@ int cmd_commit(int argc, const char **argv, const char *prefix)
 {
 	static struct wt_status s;
 	static struct option builtin_commit_options[] = {
-		OPT__QUIET(&quiet, "suppress summary after successful commit"),
-		OPT__VERBOSE(&verbose, "show diff in commit message template"),
+		OPT__QUIET(&quiet, N_("suppress summary after successful commit")),
+		OPT__VERBOSE(&verbose, N_("show diff in commit message template")),
 
-		OPT_GROUP("Commit message options"),
-		OPT_FILENAME('F', "file", &logfile, "read message from file"),
-		OPT_STRING(0, "author", &force_author, "author", "override author for commit"),
-		OPT_STRING(0, "date", &force_date, "date", "override date for commit"),
-		OPT_CALLBACK('m', "message", &message, "message", "commit message", opt_parse_m),
-		OPT_STRING('c', "reedit-message", &edit_message, "commit", "reuse and edit message from specified commit"),
-		OPT_STRING('C', "reuse-message", &use_message, "commit", "reuse message from specified commit"),
-		OPT_STRING(0, "fixup", &fixup_message, "commit", "use autosquash formatted message to fixup specified commit"),
-		OPT_STRING(0, "squash", &squash_message, "commit", "use autosquash formatted message to squash specified commit"),
-		OPT_BOOLEAN(0, "reset-author", &renew_authorship, "the commit is authored by me now (used with -C/-c/--amend)"),
-		OPT_BOOLEAN('s', "signoff", &signoff, "add Signed-off-by:"),
-		OPT_FILENAME('t', "template", &template_file, "use specified template file"),
-		OPT_BOOL('e', "edit", &edit_flag, "force edit of commit"),
-		OPT_STRING(0, "cleanup", &cleanup_arg, "default", "how to strip spaces and #comments from message"),
-		OPT_BOOLEAN(0, "status", &include_status, "include status in commit message template"),
-		{ OPTION_STRING, 'S', "gpg-sign", &sign_commit, "key id",
-		  "GPG sign commit", PARSE_OPT_OPTARG, NULL, (intptr_t) "" },
+		OPT_GROUP(N_("Commit message options")),
+		OPT_FILENAME('F', "file", &logfile, N_("read message from file")),
+		OPT_STRING(0, "author", &force_author, N_("author"), N_("override author for commit")),
+		OPT_STRING(0, "date", &force_date, N_("date"), N_("override date for commit")),
+		OPT_CALLBACK('m', "message", &message, N_("message"), N_("commit message"), opt_parse_m),
+		OPT_STRING('c', "reedit-message", &edit_message, N_("commit"), N_("reuse and edit message from specified commit")),
+		OPT_STRING('C', "reuse-message", &use_message, N_("commit"), N_("reuse message from specified commit")),
+		OPT_STRING(0, "fixup", &fixup_message, N_("commit"), N_("use autosquash formatted message to fixup specified commit")),
+		OPT_STRING(0, "squash", &squash_message, N_("commit"), N_("use autosquash formatted message to squash specified commit")),
+		OPT_BOOLEAN(0, "reset-author", &renew_authorship, N_("the commit is authored by me now (used with -C/-c/--amend)")),
+		OPT_BOOLEAN('s', "signoff", &signoff, N_("add Signed-off-by:")),
+		OPT_FILENAME('t', "template", &template_file, N_("use specified template file")),
+		OPT_BOOL('e', "edit", &edit_flag, N_("force edit of commit")),
+		OPT_STRING(0, "cleanup", &cleanup_arg, N_("default"), N_("how to strip spaces and #comments from message")),
+		OPT_BOOLEAN(0, "status", &include_status, N_("include status in commit message template")),
+		{ OPTION_STRING, 'S', "gpg-sign", &sign_commit, N_("key id"),
+		  N_("GPG sign commit"), PARSE_OPT_OPTARG, NULL, (intptr_t) "" },
 		/* end commit message options */
 
-		OPT_GROUP("Commit contents options"),
-		OPT_BOOLEAN('a', "all", &all, "commit all changed files"),
-		OPT_BOOLEAN('i', "include", &also, "add specified files to index for commit"),
-		OPT_BOOLEAN(0, "interactive", &interactive, "interactively add files"),
-		OPT_BOOLEAN('p', "patch", &patch_interactive, "interactively add changes"),
-		OPT_BOOLEAN('o', "only", &only, "commit only specified files"),
-		OPT_BOOLEAN('n', "no-verify", &no_verify, "bypass pre-commit hook"),
-		OPT_BOOLEAN(0, "dry-run", &dry_run, "show what would be committed"),
-		OPT_SET_INT(0, "short", &status_format, "show status concisely",
+		OPT_GROUP(N_("Commit contents options")),
+		OPT_BOOLEAN('a', "all", &all, N_("commit all changed files")),
+		OPT_BOOLEAN('i', "include", &also, N_("add specified files to index for commit")),
+		OPT_BOOLEAN(0, "interactive", &interactive, N_("interactively add files")),
+		OPT_BOOLEAN('p', "patch", &patch_interactive, N_("interactively add changes")),
+		OPT_BOOLEAN('o', "only", &only, N_("commit only specified files")),
+		OPT_BOOLEAN('n', "no-verify", &no_verify, N_("bypass pre-commit hook")),
+		OPT_BOOLEAN(0, "dry-run", &dry_run, N_("show what would be committed")),
+		OPT_SET_INT(0, "short", &status_format, N_("show status concisely"),
 			    STATUS_FORMAT_SHORT),
-		OPT_BOOLEAN(0, "branch", &s.show_branch, "show branch information"),
+		OPT_BOOLEAN(0, "branch", &s.show_branch, N_("show branch information")),
 		OPT_SET_INT(0, "porcelain", &status_format,
-			    "machine-readable output", STATUS_FORMAT_PORCELAIN),
+			    N_("machine-readable output"), STATUS_FORMAT_PORCELAIN),
 		OPT_BOOLEAN('z', "null", &s.null_termination,
-			    "terminate entries with NUL"),
-		OPT_BOOLEAN(0, "amend", &amend, "amend previous commit"),
-		OPT_BOOLEAN(0, "no-post-rewrite", &no_post_rewrite, "bypass post-rewrite hook"),
-		{ OPTION_STRING, 'u', "untracked-files", &untracked_files_arg, "mode", "show untracked files, optional modes: all, normal, no. (Default: all)", PARSE_OPT_OPTARG, NULL, (intptr_t)"all" },
+			    N_("terminate entries with NUL")),
+		OPT_BOOLEAN(0, "amend", &amend, N_("amend previous commit")),
+		OPT_BOOLEAN(0, "no-post-rewrite", &no_post_rewrite, N_("bypass post-rewrite hook")),
+		{ OPTION_STRING, 'u', "untracked-files", &untracked_files_arg, N_("mode"), N_("show untracked files, optional modes: all, normal, no. (Default: all)"), PARSE_OPT_OPTARG, NULL, (intptr_t)"all" },
 		/* end commit contents options */
 
 		{ OPTION_BOOLEAN, 0, "allow-empty", &allow_empty, NULL,
-		  "ok to record an empty change",
+		  N_("ok to record an empty change"),
 		  PARSE_OPT_NOARG | PARSE_OPT_HIDDEN },
 		{ OPTION_BOOLEAN, 0, "allow-empty-message", &allow_empty_message, NULL,
-		  "ok to record a change with an empty message",
+		  N_("ok to record a change with an empty message"),
 		  PARSE_OPT_NOARG | PARSE_OPT_HIDDEN },
 
 		OPT_END()

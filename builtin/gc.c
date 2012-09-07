@@ -19,7 +19,7 @@
 #define FAILED_RUN "failed to run %s"
 
 static const char * const builtin_gc_usage[] = {
-	"git gc [options]",
+	N_("git gc [options]"),
 	NULL
 };
 
@@ -174,12 +174,12 @@ int cmd_gc(int argc, const char **argv, const char *prefix)
 	int quiet = 0;
 
 	struct option builtin_gc_options[] = {
-		OPT__QUIET(&quiet, "suppress progress reporting"),
-		{ OPTION_STRING, 0, "prune", &prune_expire, "date",
-			"prune unreferenced objects",
+		OPT__QUIET(&quiet, N_("suppress progress reporting")),
+		{ OPTION_STRING, 0, "prune", &prune_expire, N_("date"),
+			N_("prune unreferenced objects"),
 			PARSE_OPT_OPTARG, NULL, (intptr_t)prune_expire },
-		OPT_BOOLEAN(0, "aggressive", &aggressive, "be more thorough (increased runtime)"),
-		OPT_BOOLEAN(0, "auto", &auto_gc, "enable auto-gc mode"),
+		OPT_BOOLEAN(0, "aggressive", &aggressive, N_("be more thorough (increased runtime)")),
+		OPT_BOOLEAN(0, "auto", &auto_gc, N_("enable auto-gc mode")),
 		OPT_END()
 	};
 

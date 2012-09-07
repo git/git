@@ -53,7 +53,7 @@ static int verify_one_pack(const char *path, unsigned int flags)
 }
 
 static const char * const verify_pack_usage[] = {
-	"git verify-pack [-v|--verbose] [-s|--stat-only] <pack>...",
+	N_("git verify-pack [-v|--verbose] [-s|--stat-only] <pack>..."),
 	NULL
 };
 
@@ -63,9 +63,9 @@ int cmd_verify_pack(int argc, const char **argv, const char *prefix)
 	unsigned int flags = 0;
 	int i;
 	const struct option verify_pack_options[] = {
-		OPT_BIT('v', "verbose", &flags, "verbose",
+		OPT_BIT('v', "verbose", &flags, N_("verbose"),
 			VERIFY_PACK_VERBOSE),
-		OPT_BIT('s', "stat-only", &flags, "show statistics only",
+		OPT_BIT('s', "stat-only", &flags, N_("show statistics only"),
 			VERIFY_PACK_STAT_ONLY),
 		OPT_END()
 	};

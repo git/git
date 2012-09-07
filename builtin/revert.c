@@ -19,14 +19,14 @@
  */
 
 static const char * const revert_usage[] = {
-	"git revert [options] <commit-ish>",
-	"git revert <subcommand>",
+	N_("git revert [options] <commit-ish>"),
+	N_("git revert <subcommand>"),
 	NULL
 };
 
 static const char * const cherry_pick_usage[] = {
-	"git cherry-pick [options] <commit-ish>",
-	"git cherry-pick <subcommand>",
+	N_("git cherry-pick [options] <commit-ish>"),
+	N_("git cherry-pick <subcommand>"),
 	NULL
 };
 
@@ -100,18 +100,18 @@ static void parse_args(int argc, const char **argv, struct replay_opts *opts)
 	int contin = 0;
 	int rollback = 0;
 	struct option options[] = {
-		OPT_BOOLEAN(0, "quit", &remove_state, "end revert or cherry-pick sequence"),
-		OPT_BOOLEAN(0, "continue", &contin, "resume revert or cherry-pick sequence"),
-		OPT_BOOLEAN(0, "abort", &rollback, "cancel revert or cherry-pick sequence"),
-		OPT_BOOLEAN('n', "no-commit", &opts->no_commit, "don't automatically commit"),
-		OPT_BOOLEAN('e', "edit", &opts->edit, "edit the commit message"),
+		OPT_BOOLEAN(0, "quit", &remove_state, N_("end revert or cherry-pick sequence")),
+		OPT_BOOLEAN(0, "continue", &contin, N_("resume revert or cherry-pick sequence")),
+		OPT_BOOLEAN(0, "abort", &rollback, N_("cancel revert or cherry-pick sequence")),
+		OPT_BOOLEAN('n', "no-commit", &opts->no_commit, N_("don't automatically commit")),
+		OPT_BOOLEAN('e', "edit", &opts->edit, N_("edit the commit message")),
 		OPT_NOOP_NOARG('r', NULL),
-		OPT_BOOLEAN('s', "signoff", &opts->signoff, "add Signed-off-by:"),
-		OPT_INTEGER('m', "mainline", &opts->mainline, "parent number"),
+		OPT_BOOLEAN('s', "signoff", &opts->signoff, N_("add Signed-off-by:")),
+		OPT_INTEGER('m', "mainline", &opts->mainline, N_("parent number")),
 		OPT_RERERE_AUTOUPDATE(&opts->allow_rerere_auto),
-		OPT_STRING(0, "strategy", &opts->strategy, "strategy", "merge strategy"),
-		OPT_CALLBACK('X', "strategy-option", &opts, "option",
-			"option for merge strategy", option_parse_x),
+		OPT_STRING(0, "strategy", &opts->strategy, N_("strategy"), N_("merge strategy")),
+		OPT_CALLBACK('X', "strategy-option", &opts, N_("option"),
+			N_("option for merge strategy"), option_parse_x),
 		OPT_END(),
 		OPT_END(),
 		OPT_END(),
@@ -122,11 +122,11 @@ static void parse_args(int argc, const char **argv, struct replay_opts *opts)
 
 	if (opts->action == REPLAY_PICK) {
 		struct option cp_extra[] = {
-			OPT_BOOLEAN('x', NULL, &opts->record_origin, "append commit name"),
-			OPT_BOOLEAN(0, "ff", &opts->allow_ff, "allow fast-forward"),
-			OPT_BOOLEAN(0, "allow-empty", &opts->allow_empty, "preserve initially empty commits"),
-			OPT_BOOLEAN(0, "allow-empty-message", &opts->allow_empty_message, "allow commits with empty messages"),
-			OPT_BOOLEAN(0, "keep-redundant-commits", &opts->keep_redundant_commits, "keep redundant, empty commits"),
+			OPT_BOOLEAN('x', NULL, &opts->record_origin, N_("append commit name")),
+			OPT_BOOLEAN(0, "ff", &opts->allow_ff, N_("allow fast-forward")),
+			OPT_BOOLEAN(0, "allow-empty", &opts->allow_empty, N_("preserve initially empty commits")),
+			OPT_BOOLEAN(0, "allow-empty-message", &opts->allow_empty_message, N_("allow commits with empty messages")),
+			OPT_BOOLEAN(0, "keep-redundant-commits", &opts->keep_redundant_commits, N_("keep redundant, empty commits")),
 			OPT_END(),
 		};
 		if (parse_options_concat(options, ARRAY_SIZE(options), cp_extra))

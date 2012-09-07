@@ -123,7 +123,7 @@ static void checkout_all(const char *prefix, int prefix_length)
 }
 
 static const char * const builtin_checkout_index_usage[] = {
-	"git checkout-index [options] [--] [<file>...]",
+	N_("git checkout-index [options] [--] [<file>...]"),
 	NULL
 };
 
@@ -184,27 +184,27 @@ int cmd_checkout_index(int argc, const char **argv, const char *prefix)
 	int force = 0, quiet = 0, not_new = 0;
 	struct option builtin_checkout_index_options[] = {
 		OPT_BOOLEAN('a', "all", &all,
-			"checks out all files in the index"),
-		OPT__FORCE(&force, "forces overwrite of existing files"),
+			N_("check out all files in the index")),
+		OPT__FORCE(&force, N_("force overwrite of existing files")),
 		OPT__QUIET(&quiet,
-			"no warning for existing files and files not in index"),
+			N_("no warning for existing files and files not in index")),
 		OPT_BOOLEAN('n', "no-create", &not_new,
-			"don't checkout new files"),
+			N_("don't checkout new files")),
 		{ OPTION_CALLBACK, 'u', "index", &newfd, NULL,
-			"update stat information in the index file",
+			N_("update stat information in the index file"),
 			PARSE_OPT_NOARG, option_parse_u },
 		{ OPTION_CALLBACK, 'z', NULL, NULL, NULL,
-			"paths are separated with NUL character",
+			N_("paths are separated with NUL character"),
 			PARSE_OPT_NOARG, option_parse_z },
 		OPT_BOOLEAN(0, "stdin", &read_from_stdin,
-			"read list of paths from the standard input"),
+			N_("read list of paths from the standard input")),
 		OPT_BOOLEAN(0, "temp", &to_tempfile,
-			"write the content to temporary files"),
-		OPT_CALLBACK(0, "prefix", NULL, "string",
-			"when creating files, prepend <string>",
+			N_("write the content to temporary files")),
+		OPT_CALLBACK(0, "prefix", NULL, N_("string"),
+			N_("when creating files, prepend <string>"),
 			option_parse_prefix),
 		OPT_CALLBACK(0, "stage", NULL, NULL,
-			"copy out the files from named stage",
+			N_("copy out the files from named stage"),
 			option_parse_stage),
 		OPT_END()
 	};

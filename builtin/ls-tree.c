@@ -24,7 +24,7 @@ static int chomp_prefix;
 static const char *ls_tree_prefix;
 
 static const  char * const ls_tree_usage[] = {
-	"git ls-tree [<options>] <tree-ish> [<path>...]",
+	N_("git ls-tree [<options>] <tree-ish> [<path>...]"),
 	NULL
 };
 
@@ -122,25 +122,25 @@ int cmd_ls_tree(int argc, const char **argv, const char *prefix)
 	struct tree *tree;
 	int i, full_tree = 0;
 	const struct option ls_tree_options[] = {
-		OPT_BIT('d', NULL, &ls_options, "only show trees",
+		OPT_BIT('d', NULL, &ls_options, N_("only show trees"),
 			LS_TREE_ONLY),
-		OPT_BIT('r', NULL, &ls_options, "recurse into subtrees",
+		OPT_BIT('r', NULL, &ls_options, N_("recurse into subtrees"),
 			LS_RECURSIVE),
-		OPT_BIT('t', NULL, &ls_options, "show trees when recursing",
+		OPT_BIT('t', NULL, &ls_options, N_("show trees when recursing"),
 			LS_SHOW_TREES),
 		OPT_SET_INT('z', NULL, &line_termination,
-			    "terminate entries with NUL byte", 0),
-		OPT_BIT('l', "long", &ls_options, "include object size",
+			    N_("terminate entries with NUL byte"), 0),
+		OPT_BIT('l', "long", &ls_options, N_("include object size"),
 			LS_SHOW_SIZE),
-		OPT_BIT(0, "name-only", &ls_options, "list only filenames",
+		OPT_BIT(0, "name-only", &ls_options, N_("list only filenames"),
 			LS_NAME_ONLY),
-		OPT_BIT(0, "name-status", &ls_options, "list only filenames",
+		OPT_BIT(0, "name-status", &ls_options, N_("list only filenames"),
 			LS_NAME_ONLY),
 		OPT_SET_INT(0, "full-name", &chomp_prefix,
-			    "use full path names", 0),
+			    N_("use full path names"), 0),
 		OPT_BOOLEAN(0, "full-tree", &full_tree,
-			    "list entire tree; not just current directory "
-			    "(implies --full-name)"),
+			    N_("list entire tree; not just current directory "
+			       "(implies --full-name)")),
 		OPT__ABBREV(&abbrev),
 		OPT_END()
 	};

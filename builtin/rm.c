@@ -11,7 +11,7 @@
 #include "parse-options.h"
 
 static const char * const builtin_rm_usage[] = {
-	"git rm [options] [--] <file>...",
+	N_("git rm [options] [--] <file>..."),
 	NULL
 };
 
@@ -130,13 +130,13 @@ static int show_only = 0, force = 0, index_only = 0, recursive = 0, quiet = 0;
 static int ignore_unmatch = 0;
 
 static struct option builtin_rm_options[] = {
-	OPT__DRY_RUN(&show_only, "dry run"),
-	OPT__QUIET(&quiet, "do not list removed files"),
-	OPT_BOOLEAN( 0 , "cached",         &index_only, "only remove from the index"),
-	OPT__FORCE(&force, "override the up-to-date check"),
-	OPT_BOOLEAN('r', NULL,             &recursive,  "allow recursive removal"),
+	OPT__DRY_RUN(&show_only, N_("dry run")),
+	OPT__QUIET(&quiet, N_("do not list removed files")),
+	OPT_BOOLEAN( 0 , "cached",         &index_only, N_("only remove from the index")),
+	OPT__FORCE(&force, N_("override the up-to-date check")),
+	OPT_BOOLEAN('r', NULL,             &recursive,  N_("allow recursive removal")),
 	OPT_BOOLEAN( 0 , "ignore-unmatch", &ignore_unmatch,
-				"exit with a zero status even if nothing matched"),
+				N_("exit with a zero status even if nothing matched")),
 	OPT_END(),
 };
 

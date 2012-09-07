@@ -8,66 +8,66 @@
 #include "refs.h"
 
 static const char * const builtin_remote_usage[] = {
-	"git remote [-v | --verbose]",
-	"git remote add [-t <branch>] [-m <master>] [-f] [--tags|--no-tags] [--mirror=<fetch|push>] <name> <url>",
-	"git remote rename <old> <new>",
-	"git remote rm <name>",
-	"git remote set-head <name> (-a | -d | <branch>)",
-	"git remote [-v | --verbose] show [-n] <name>",
-	"git remote prune [-n | --dry-run] <name>",
-	"git remote [-v | --verbose] update [-p | --prune] [(<group> | <remote>)...]",
-	"git remote set-branches [--add] <name> <branch>...",
-	"git remote set-url [--push] <name> <newurl> [<oldurl>]",
-	"git remote set-url --add <name> <newurl>",
-	"git remote set-url --delete <name> <url>",
+	N_("git remote [-v | --verbose]"),
+	N_("git remote add [-t <branch>] [-m <master>] [-f] [--tags|--no-tags] [--mirror=<fetch|push>] <name> <url>"),
+	N_("git remote rename <old> <new>"),
+	N_("git remote rm <name>"),
+	N_("git remote set-head <name> (-a | -d | <branch>)"),
+	N_("git remote [-v | --verbose] show [-n] <name>"),
+	N_("git remote prune [-n | --dry-run] <name>"),
+	N_("git remote [-v | --verbose] update [-p | --prune] [(<group> | <remote>)...]"),
+	N_("git remote set-branches [--add] <name> <branch>..."),
+	N_("git remote set-url [--push] <name> <newurl> [<oldurl>]"),
+	N_("git remote set-url --add <name> <newurl>"),
+	N_("git remote set-url --delete <name> <url>"),
 	NULL
 };
 
 static const char * const builtin_remote_add_usage[] = {
-	"git remote add [<options>] <name> <url>",
+	N_("git remote add [<options>] <name> <url>"),
 	NULL
 };
 
 static const char * const builtin_remote_rename_usage[] = {
-	"git remote rename <old> <new>",
+	N_("git remote rename <old> <new>"),
 	NULL
 };
 
 static const char * const builtin_remote_rm_usage[] = {
-	"git remote rm <name>",
+	N_("git remote rm <name>"),
 	NULL
 };
 
 static const char * const builtin_remote_sethead_usage[] = {
-	"git remote set-head <name> (-a | -d | <branch>])",
+	N_("git remote set-head <name> (-a | -d | <branch>])"),
 	NULL
 };
 
 static const char * const builtin_remote_setbranches_usage[] = {
-	"git remote set-branches <name> <branch>...",
-	"git remote set-branches --add <name> <branch>...",
+	N_("git remote set-branches <name> <branch>..."),
+	N_("git remote set-branches --add <name> <branch>..."),
 	NULL
 };
 
 static const char * const builtin_remote_show_usage[] = {
-	"git remote show [<options>] <name>",
+	N_("git remote show [<options>] <name>"),
 	NULL
 };
 
 static const char * const builtin_remote_prune_usage[] = {
-	"git remote prune [<options>] <name>",
+	N_("git remote prune [<options>] <name>"),
 	NULL
 };
 
 static const char * const builtin_remote_update_usage[] = {
-	"git remote update [<options>] [<group> | <remote>]...",
+	N_("git remote update [<options>] [<group> | <remote>]..."),
 	NULL
 };
 
 static const char * const builtin_remote_seturl_usage[] = {
-	"git remote set-url [--push] <name> <newurl> [<oldurl>]",
-	"git remote set-url --add <name> <newurl>",
-	"git remote set-url --delete <name> <url>",
+	N_("git remote set-url [--push] <name> <newurl> [<oldurl>]"),
+	N_("git remote set-url --add <name> <newurl>"),
+	N_("git remote set-url --delete <name> <url>"),
 	NULL
 };
 
@@ -160,17 +160,17 @@ static int add(int argc, const char **argv)
 	int i;
 
 	struct option options[] = {
-		OPT_BOOLEAN('f', "fetch", &fetch, "fetch the remote branches"),
+		OPT_BOOLEAN('f', "fetch", &fetch, N_("fetch the remote branches")),
 		OPT_SET_INT(0, "tags", &fetch_tags,
-			    "import all tags and associated objects when fetching",
+			    N_("import all tags and associated objects when fetching"),
 			    TAGS_SET),
 		OPT_SET_INT(0, NULL, &fetch_tags,
-			    "or do not fetch any tag at all (--no-tags)", TAGS_UNSET),
-		OPT_STRING_LIST('t', "track", &track, "branch",
-				"branch(es) to track"),
-		OPT_STRING('m', "master", &master, "branch", "master branch"),
-		{ OPTION_CALLBACK, 0, "mirror", &mirror, "push|fetch",
-			"set up remote as a mirror to push to or fetch from",
+			    N_("or do not fetch any tag at all (--no-tags)"), TAGS_UNSET),
+		OPT_STRING_LIST('t', "track", &track, N_("branch"),
+				N_("branch(es) to track")),
+		OPT_STRING('m', "master", &master, N_("branch"), N_("master branch")),
+		{ OPTION_CALLBACK, 0, "mirror", &mirror, N_("push|fetch"),
+			N_("set up remote as a mirror to push to or fetch from"),
 			PARSE_OPT_OPTARG, parse_mirror_opt },
 		OPT_END()
 	};
@@ -1088,7 +1088,7 @@ static int show(int argc, const char **argv)
 {
 	int no_query = 0, result = 0, query_flag = 0;
 	struct option options[] = {
-		OPT_BOOLEAN('n', NULL, &no_query, "do not query remotes"),
+		OPT_BOOLEAN('n', NULL, &no_query, N_("do not query remotes")),
 		OPT_END()
 	};
 	struct ref_states states;
@@ -1196,9 +1196,9 @@ static int set_head(int argc, const char **argv)
 
 	struct option options[] = {
 		OPT_BOOLEAN('a', "auto", &opt_a,
-			    "set refs/remotes/<name>/HEAD according to remote"),
+			    N_("set refs/remotes/<name>/HEAD according to remote")),
 		OPT_BOOLEAN('d', "delete", &opt_d,
-			    "delete refs/remotes/<name>/HEAD"),
+			    N_("delete refs/remotes/<name>/HEAD")),
 		OPT_END()
 	};
 	argc = parse_options(argc, argv, NULL, options, builtin_remote_sethead_usage,
@@ -1250,7 +1250,7 @@ static int prune(int argc, const char **argv)
 {
 	int dry_run = 0, result = 0;
 	struct option options[] = {
-		OPT__DRY_RUN(&dry_run, "dry run"),
+		OPT__DRY_RUN(&dry_run, N_("dry run")),
 		OPT_END()
 	};
 
@@ -1318,7 +1318,7 @@ static int update(int argc, const char **argv)
 	int i, prune = 0;
 	struct option options[] = {
 		OPT_BOOLEAN('p', "prune", &prune,
-			    "prune remotes after fetching"),
+			    N_("prune remotes after fetching")),
 		OPT_END()
 	};
 	const char **fetch_argv;
@@ -1404,7 +1404,7 @@ static int set_branches(int argc, const char **argv)
 {
 	int add_mode = 0;
 	struct option options[] = {
-		OPT_BOOLEAN('\0', "add", &add_mode, "add branch"),
+		OPT_BOOLEAN('\0', "add", &add_mode, N_("add branch")),
 		OPT_END()
 	};
 
@@ -1433,11 +1433,11 @@ static int set_url(int argc, const char **argv)
 	struct strbuf name_buf = STRBUF_INIT;
 	struct option options[] = {
 		OPT_BOOLEAN('\0', "push", &push_mode,
-			    "manipulate push URLs"),
+			    N_("manipulate push URLs")),
 		OPT_BOOLEAN('\0', "add", &add_mode,
-			    "add URL"),
+			    N_("add URL")),
 		OPT_BOOLEAN('\0', "delete", &delete_mode,
-			    "delete URLs"),
+			    N_("delete URLs")),
 		OPT_END()
 	};
 	argc = parse_options(argc, argv, NULL, options, builtin_remote_seturl_usage,
@@ -1566,7 +1566,7 @@ static int show_all(void)
 int cmd_remote(int argc, const char **argv, const char *prefix)
 {
 	struct option options[] = {
-		OPT__VERBOSE(&verbose, "be verbose; must be placed before a subcommand"),
+		OPT__VERBOSE(&verbose, N_("be verbose; must be placed before a subcommand")),
 		OPT_END()
 	};
 	int result;

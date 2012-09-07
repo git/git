@@ -6,8 +6,8 @@
 #include "parse-options.h"
 
 static const char* show_branch_usage[] = {
-    "git show-branch [-a|--all] [-r|--remotes] [--topo-order | --date-order] [--current] [--color[=<when>] | --no-color] [--sparse] [--more=<n> | --list | --independent | --merge-base] [--no-name | --sha1-name] [--topics] [(<rev> | <glob>)...]",
-    "git show-branch (-g|--reflog)[=<n>[,<base>]] [--list] [<ref>]",
+    N_("git show-branch [-a|--all] [-r|--remotes] [--topo-order | --date-order] [--current] [--color[=<when>] | --no-color] [--sparse] [--more=<n> | --list | --independent | --merge-base] [--no-name | --sha1-name] [--topics] [(<rev> | <glob>)...]"),
+    N_("git show-branch (-g|--reflog)[=<n>[,<base>]] [--list] [<ref>]"),
     NULL
 };
 
@@ -648,36 +648,36 @@ int cmd_show_branch(int ac, const char **av, const char *prefix)
 	const char *reflog_base = NULL;
 	struct option builtin_show_branch_options[] = {
 		OPT_BOOLEAN('a', "all", &all_heads,
-			    "show remote-tracking and local branches"),
+			    N_("show remote-tracking and local branches")),
 		OPT_BOOLEAN('r', "remotes", &all_remotes,
-			    "show remote-tracking branches"),
+			    N_("show remote-tracking branches")),
 		OPT__COLOR(&showbranch_use_color,
-			    "color '*!+-' corresponding to the branch"),
-		{ OPTION_INTEGER, 0, "more", &extra, "n",
-			    "show <n> more commits after the common ancestor",
+			    N_("color '*!+-' corresponding to the branch")),
+		{ OPTION_INTEGER, 0, "more", &extra, N_("n"),
+			    N_("show <n> more commits after the common ancestor"),
 			    PARSE_OPT_OPTARG, NULL, (intptr_t)1 },
-		OPT_SET_INT(0, "list", &extra, "synonym to more=-1", -1),
-		OPT_BOOLEAN(0, "no-name", &no_name, "suppress naming strings"),
+		OPT_SET_INT(0, "list", &extra, N_("synonym to more=-1"), -1),
+		OPT_BOOLEAN(0, "no-name", &no_name, N_("suppress naming strings")),
 		OPT_BOOLEAN(0, "current", &with_current_branch,
-			    "include the current branch"),
+			    N_("include the current branch")),
 		OPT_BOOLEAN(0, "sha1-name", &sha1_name,
-			    "name commits with their object names"),
+			    N_("name commits with their object names")),
 		OPT_BOOLEAN(0, "merge-base", &merge_base,
-			    "show possible merge bases"),
+			    N_("show possible merge bases")),
 		OPT_BOOLEAN(0, "independent", &independent,
-			    "show refs unreachable from any other ref"),
+			    N_("show refs unreachable from any other ref")),
 		OPT_BOOLEAN(0, "topo-order", &lifo,
-			    "show commits in topological order"),
+			    N_("show commits in topological order")),
 		OPT_BOOLEAN(0, "topics", &topics,
-			    "show only commits not on the first branch"),
+			    N_("show only commits not on the first branch")),
 		OPT_SET_INT(0, "sparse", &dense,
-			    "show merges reachable from only one tip", 0),
+			    N_("show merges reachable from only one tip"), 0),
 		OPT_SET_INT(0, "date-order", &lifo,
-			    "show commits where no parent comes before its "
-			    "children", 0),
-		{ OPTION_CALLBACK, 'g', "reflog", &reflog_base, "<n>[,<base>]",
-			    "show <n> most recent ref-log entries starting at "
-			    "base",
+			    N_("show commits where no parent comes before its "
+			       "children"), 0),
+		{ OPTION_CALLBACK, 'g', "reflog", &reflog_base, N_("<n>[,<base>]"),
+			    N_("show <n> most recent ref-log entries starting at "
+			       "base"),
 			    PARSE_OPT_OPTARG | PARSE_OPT_LITERAL_ARGHELP,
 			    parse_reflog_param },
 		OPT_END()

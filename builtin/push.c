@@ -11,7 +11,7 @@
 #include "submodule.h"
 
 static const char * const push_usage[] = {
-	"git push [<options>] [<repository> [<refspec>...]]",
+	N_("git push [<options>] [<repository> [<refspec>...]]"),
 	NULL,
 };
 
@@ -379,25 +379,25 @@ int cmd_push(int argc, const char **argv, const char *prefix)
 	const char *repo = NULL;	/* default repository */
 	struct option options[] = {
 		OPT__VERBOSITY(&verbosity),
-		OPT_STRING( 0 , "repo", &repo, "repository", "repository"),
-		OPT_BIT( 0 , "all", &flags, "push all refs", TRANSPORT_PUSH_ALL),
-		OPT_BIT( 0 , "mirror", &flags, "mirror all refs",
+		OPT_STRING( 0 , "repo", &repo, N_("repository"), N_("repository")),
+		OPT_BIT( 0 , "all", &flags, N_("push all refs"), TRANSPORT_PUSH_ALL),
+		OPT_BIT( 0 , "mirror", &flags, N_("mirror all refs"),
 			    (TRANSPORT_PUSH_MIRROR|TRANSPORT_PUSH_FORCE)),
-		OPT_BOOLEAN( 0, "delete", &deleterefs, "delete refs"),
-		OPT_BOOLEAN( 0 , "tags", &tags, "push tags (can't be used with --all or --mirror)"),
-		OPT_BIT('n' , "dry-run", &flags, "dry run", TRANSPORT_PUSH_DRY_RUN),
-		OPT_BIT( 0,  "porcelain", &flags, "machine-readable output", TRANSPORT_PUSH_PORCELAIN),
-		OPT_BIT('f', "force", &flags, "force updates", TRANSPORT_PUSH_FORCE),
-		{ OPTION_CALLBACK, 0, "recurse-submodules", &flags, "check",
-			"controls recursive pushing of submodules",
+		OPT_BOOLEAN( 0, "delete", &deleterefs, N_("delete refs")),
+		OPT_BOOLEAN( 0 , "tags", &tags, N_("push tags (can't be used with --all or --mirror)")),
+		OPT_BIT('n' , "dry-run", &flags, N_("dry run"), TRANSPORT_PUSH_DRY_RUN),
+		OPT_BIT( 0,  "porcelain", &flags, N_("machine-readable output"), TRANSPORT_PUSH_PORCELAIN),
+		OPT_BIT('f', "force", &flags, N_("force updates"), TRANSPORT_PUSH_FORCE),
+		{ OPTION_CALLBACK, 0, "recurse-submodules", &flags, N_("check"),
+			N_("control recursive pushing of submodules"),
 			PARSE_OPT_OPTARG, option_parse_recurse_submodules },
-		OPT_BOOLEAN( 0 , "thin", &thin, "use thin pack"),
-		OPT_STRING( 0 , "receive-pack", &receivepack, "receive-pack", "receive pack program"),
-		OPT_STRING( 0 , "exec", &receivepack, "receive-pack", "receive pack program"),
-		OPT_BIT('u', "set-upstream", &flags, "set upstream for git pull/status",
+		OPT_BOOLEAN( 0 , "thin", &thin, N_("use thin pack")),
+		OPT_STRING( 0 , "receive-pack", &receivepack, "receive-pack", N_("receive pack program")),
+		OPT_STRING( 0 , "exec", &receivepack, "receive-pack", N_("receive pack program")),
+		OPT_BIT('u', "set-upstream", &flags, N_("set upstream for git pull/status"),
 			TRANSPORT_PUSH_SET_UPSTREAM),
-		OPT_BOOL(0, "progress", &progress, "force progress reporting"),
-		OPT_BIT(0, "prune", &flags, "prune locally removed refs",
+		OPT_BOOL(0, "progress", &progress, N_("force progress reporting")),
+		OPT_BIT(0, "prune", &flags, N_("prune locally removed refs"),
 			TRANSPORT_PUSH_PRUNE),
 		OPT_END()
 	};

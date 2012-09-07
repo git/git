@@ -4,8 +4,8 @@
 #include "parse-options.h"
 
 static const char * const git_update_ref_usage[] = {
-	"git update-ref [options] -d <refname> [<oldval>]",
-	"git update-ref [options]    <refname> <newval> [<oldval>]",
+	N_("git update-ref [options] -d <refname> [<oldval>]"),
+	N_("git update-ref [options]    <refname> <newval> [<oldval>]"),
 	NULL
 };
 
@@ -15,10 +15,10 @@ int cmd_update_ref(int argc, const char **argv, const char *prefix)
 	unsigned char sha1[20], oldsha1[20];
 	int delete = 0, no_deref = 0, flags = 0;
 	struct option options[] = {
-		OPT_STRING( 'm', NULL, &msg, "reason", "reason of the update"),
-		OPT_BOOLEAN('d', NULL, &delete, "deletes the reference"),
+		OPT_STRING( 'm', NULL, &msg, N_("reason"), N_("reason of the update")),
+		OPT_BOOLEAN('d', NULL, &delete, N_("delete the reference")),
 		OPT_BOOLEAN( 0 , "no-deref", &no_deref,
-					"update <refname> not the one it points to"),
+					N_("update <refname> not the one it points to")),
 		OPT_END(),
 	};
 

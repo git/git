@@ -605,23 +605,23 @@ static int fsck_cache_tree(struct cache_tree *it)
 }
 
 static char const * const fsck_usage[] = {
-	"git fsck [options] [<object>...]",
+	N_("git fsck [options] [<object>...]"),
 	NULL
 };
 
 static struct option fsck_opts[] = {
-	OPT__VERBOSE(&verbose, "be verbose"),
-	OPT_BOOLEAN(0, "unreachable", &show_unreachable, "show unreachable objects"),
-	OPT_BOOL(0, "dangling", &show_dangling, "show dangling objects"),
-	OPT_BOOLEAN(0, "tags", &show_tags, "report tags"),
-	OPT_BOOLEAN(0, "root", &show_root, "report root nodes"),
-	OPT_BOOLEAN(0, "cache", &keep_cache_objects, "make index objects head nodes"),
-	OPT_BOOLEAN(0, "reflogs", &include_reflogs, "make reflogs head nodes (default)"),
-	OPT_BOOLEAN(0, "full", &check_full, "also consider packs and alternate objects"),
-	OPT_BOOLEAN(0, "strict", &check_strict, "enable more strict checking"),
+	OPT__VERBOSE(&verbose, N_("be verbose")),
+	OPT_BOOLEAN(0, "unreachable", &show_unreachable, N_("show unreachable objects")),
+	OPT_BOOL(0, "dangling", &show_dangling, N_("show dangling objects")),
+	OPT_BOOLEAN(0, "tags", &show_tags, N_("report tags")),
+	OPT_BOOLEAN(0, "root", &show_root, N_("report root nodes")),
+	OPT_BOOLEAN(0, "cache", &keep_cache_objects, N_("make index objects head nodes")),
+	OPT_BOOLEAN(0, "reflogs", &include_reflogs, N_("make reflogs head nodes (default)")),
+	OPT_BOOLEAN(0, "full", &check_full, N_("also consider packs and alternate objects")),
+	OPT_BOOLEAN(0, "strict", &check_strict, N_("enable more strict checking")),
 	OPT_BOOLEAN(0, "lost-found", &write_lost_and_found,
-				"write dangling objects in .git/lost-found"),
-	OPT_BOOL(0, "progress", &show_progress, "show progress"),
+				N_("write dangling objects in .git/lost-found")),
+	OPT_BOOL(0, "progress", &show_progress, N_("show progress")),
 	OPT_END(),
 };
 

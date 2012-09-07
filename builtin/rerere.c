@@ -8,7 +8,7 @@
 #include "xdiff-interface.h"
 
 static const char * const rerere_usage[] = {
-	"git rerere [clear | forget path... | status | remaining | diff | gc]",
+	N_("git rerere [clear | forget path... | status | remaining | diff | gc]"),
 	NULL,
 };
 
@@ -53,7 +53,7 @@ int cmd_rerere(int argc, const char **argv, const char *prefix)
 
 	struct option options[] = {
 		OPT_SET_INT(0, "rerere-autoupdate", &autoupdate,
-			"register clean resolutions in index", 1),
+			N_("register clean resolutions in index"), 1),
 		OPT_END(),
 	};
 

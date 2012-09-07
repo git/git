@@ -4296,7 +4296,7 @@ int cmd_apply(int argc, const char **argv, const char *prefix_)
 		OPT_NOOP_NOARG(0, "allow-binary-replacement"),
 		OPT_NOOP_NOARG(0, "binary"),
 		OPT_BOOLEAN(0, "numstat", &numstat,
-			N_("shows number of added and deleted lines in decimal notation")),
+			N_("show number of added and deleted lines in decimal notation")),
 		OPT_BOOLEAN(0, "summary", &summary,
 			N_("instead of applying the patch, output a summary for the input")),
 		OPT_BOOLEAN(0, "check", &check,
