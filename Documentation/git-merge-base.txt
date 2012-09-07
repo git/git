@@ -11,6 +11,7 @@ SYNOPSIS
 [verse]
 'git merge-base' [-a|--all] <commit> <commit>...
 'git merge-base' [-a|--all] --octopus <commit>...
+'git merge-base' --is-ancestor <commit> <commit>
 'git merge-base' --independent <commit>...
 
 DESCRIPTION
@@ -49,6 +50,12 @@ from linkgit:git-show-branch[1] when used with the `--merge-base` option.
 	among the commits given, list those which cannot be reached
 	from any other.  This mimics the behavior of 'git show-branch
 	--independent'.
+
+--is-ancestor::
+	Check if the first <commit> is an ancestor of the second <commit>,
+	and exit with status 0 if true, or with status 1 if not.
+	Errors are signaled by a non-zero status that is not 1.
+
 
 OPTIONS
 -------
@@ -109,6 +116,27 @@ When the history involves criss-cross merges, there can be more than one
 both '1' and '2' are merge-bases of A and B.  Neither one is better than
 the other (both are 'best' merge bases).  When the `--all` option is not given,
 it is unspecified which best one is output.
+
+A common idiom to check "fast-forward-ness" between two commits A
+and B is (or at least used to be) to compute the merge base between
+A and B, and check if it is the same as A, in which case, A is an
+ancestor of B.  You will see this idiom used often in older scripts.
+
+	A=$(git rev-parse --verify A)
+	if test "$A" = "$(git merge-base A B)"
+	then
+		... A is an ancestor of B ...
+	fi
+
+In modern git, you can say this in a more direct way:
+
+	if git merge-base --is-ancestor A B
+	then
+		... A is an ancestor of B ...
+	fi
+
+instead.
+
 
 See also
 --------
