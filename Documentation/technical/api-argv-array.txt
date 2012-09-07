@@ -46,6 +46,10 @@ Functions
 	Format a string and push it onto the end of the array. This is a
 	convenience wrapper combining `strbuf_addf` and `argv_array_push`.
 
+`argv_array_pop`::
+	Remove the final element from the array. If there are no
+	elements in the array, do nothing.
+
 `argv_array_clear`::
 	Free all memory associated with the array and return it to the
 	initial, empty state.
