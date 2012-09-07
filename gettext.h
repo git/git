@@ -44,6 +44,8 @@ extern int use_gettext_poison(void);
 
 static inline FORMAT_PRESERVING(1) const char *_(const char *msgid)
 {
+	if (!*msgid)
+		return "";
 	return use_gettext_poison() ? "# GETTEXT POISON #" : gettext(msgid);
 }
 
