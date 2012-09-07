@@ -57,6 +57,13 @@ Performance, Internal Implementation, etc. (please report possible regressions)
  * Compatibility wrapper around some mkdir(2) implementations that
    reject parameter with trailing slash has been introduced.
 
+ * The heuristics to detect and silently convert latin1 to utf8 when
+   we were told to use utf-8 in the log message has been transplanted
+   from "mailinfo" to "commit" and "commit-tree".
+
+ * Messages given by "git <subcommand> -h" from many subcommands have
+   been marked for translation.
+
 Also contains minor documentation updates and code clean-ups.
 
 
@@ -66,6 +73,51 @@ Fixes since v1.7.12
 Unless otherwise noted, all the fixes since v1.7.12 in the
 maintenance track are contained in this release (see release notes
 to them for details).
+
+ * "git p4", when "--use-client-spec" and "--detect-branches" are used
+   together, misdetected branches.
+   (merge 21ef5df pw/p4-use-client-spec-branch-detection later to maint).
+
+ * Output from "git branch -v" contains "(no branch)" that could be
+   localized, but the code to align it along with the names of
+   branches were counting in bytes, not in display columns.
+   (merge 1452bd6 nd/branch-v-alignment later to maint).
+
+ * "git for-each-ref" did not currectly support more than one --sort
+   option.
+   (merge 3b51222 kk/maint-for-each-ref-multi-sort later to maint).
+
+ * Pushing to smart HTTP server with recent Git fails without having
+   the username in the URL to force authentication, if the server is
+   configured to allow GET anonymously, while requiring authentication
+   for POST.
+   (merge b81401c jk/maint-http-half-auth-push later to maint).
+
+ * When looking for $HOME/.gitconfig etc., it is OK if we cannot read
+   them because they do not exist, but we did not diagnose existing
+   files that we cannot read.
+
+ * The synopsis said "checkout [-B branch]" to make it clear the
+   branch name is a parameter to the option, but the heading for the
+   option description was "-B::", not "-B branch::", making the
+   documentation misleading.  There may be room in documentation pages
+   of other commands for similar improvements (hint, hint).
+   (merge 45aaf03 jc/maint-doc-checkout-b-always-takes-branch-name later to maint).
+
+ * "git log .." errored out saying it is both rev range and a path
+   when there is no disambiguating "--" is on the command line.
+   Update the command line parser to interpret ".." as a path in such
+   a case.
+   (merge 003c84f jc/dotdot-is-parent-directory later to maint).
+
+ * "git apply -p0" did not parse pathnames on "diff --git" line
+   correctly.  This caused patches that had pathnames in no other
+   places to be mistakenly rejected (most notably, binary patch that
+   does not rename nor change mode).  Textual patches, renames or mode
+   changes have preimage and postimage pathnames in different places
+   in a form that can be parsed unambiguously and did not suffer from
+   this problem.
+   (merge 6a2abdc jc/apply-binary-p0 later to maint).
 
  * The exit status code from "git config" was way overspecified while
    being incorrect.  The implementation has been updated to give the
