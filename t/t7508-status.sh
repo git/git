@@ -80,7 +80,7 @@ test_expect_success 'status --column' '
 #	dir1/untracked dir2/untracked untracked
 #	dir2/modified  output
 EOF
-	test_cmp expect output
+	test_i18ncmp expect output
 '
 
 cat >expect <<\EOF
