@@ -167,3 +167,42 @@ test_http_push_nonff() {
 		test_i18ngrep "Updates were rejected because" output
 	'
 }
+
+setup_askpass_helper() {
+	test_expect_success 'setup askpass helper' '
+		write_script "$TRASH_DIRECTORY/askpass" <<-\EOF &&
+		echo >>"$TRASH_DIRECTORY/askpass-query" "askpass: $*" &&
+		cat "$TRASH_DIRECTORY/askpass-response"
+		EOF
+		GIT_ASKPASS="$TRASH_DIRECTORY/askpass" &&
+		export GIT_ASKPASS &&
+		export TRASH_DIRECTORY
+	'
+}
+
+set_askpass() {
+	>"$TRASH_DIRECTORY/askpass-query" &&
+	echo "$*" >"$TRASH_DIRECTORY/askpass-response"
+}
+
+expect_askpass() {
+	dest=$HTTPD_DEST
+	{
+		case "$1" in
+		none)
+			;;
+		pass)
+			echo "askpass: Password for 'http://$2@$dest': "
+			;;
+		both)
+			echo "askpass: Username for 'http://$dest': "
+			echo "askpass: Password for 'http://$2@$dest': "
+			;;
+		*)
+			false
+			;;
+		esac
+	} >"$TRASH_DIRECTORY/askpass-expect" &&
+	test_cmp "$TRASH_DIRECTORY/askpass-expect" \
+		 "$TRASH_DIRECTORY/askpass-query"
+}
