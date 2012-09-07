@@ -1,16 +1,16 @@
 To: git@vger.kernel.org
 Bcc: lwn@lwn.net
-Subject: What's cooking in git.git (Sep 2012, #01; Tue, 4)
-X-master-at: 3fc0e4ca00330ce1dfd92baeda04f0aa2fbd7e68
-X-next-at: cfd4979c8f619202e04abe06b9cd742131d3422b
+Subject: What's cooking in git.git (Sep 2012, #02; Fri, 7)
+X-master-at: 0ce986446163b37c7f663ce7a408e7f94c31ba63
+X-next-at: 6ddb849836fa53f9ed36fe74e7f1caf18e635160
 
-What's cooking in git.git (Sep 2012, #01; Tue, 4)
+What's cooking in git.git (Sep 2012, #02; Fri, 7)
 --------------------------------------------------
 
 Here are the topics that have been cooking.  Commits prefixed with '-' are
 only in 'pu' (proposed updates) while commits prefixed with '+' are in 'next'.
 
-The third batch of topics have graduated to 'master'.
+The fourth batch of topics have graduated to 'master'.
 
 I'm planning to keep this cycle reasonably short and aim for tagging
 the result as 1.8.0 at the end of 9th week, on October 21st, after
@@ -25,163 +25,252 @@ repositories listed at
 --------------------------------------------------
 [Graduated to "master"]
 
-* cw/cherry-pick-allow-empty-message (2012-08-06) 1 commit
-  (merged to 'next' on 2012-08-20 at 0dc0590)
- + cherry-pick: add --allow-empty-message option
+* jc/apply-binary-p0 (2012-08-24) 1 commit
+  (merged to 'next' on 2012-08-28 at 6fa690c)
+ + apply: compute patch->def_name correctly under -p0
 
-(Originally merged to 'next' on 2012-08-09)
+"git apply -p0" did not parse pathnames on "diff --git" line
+correctly.  This caused patches that had pathnames in no other
+places to be mistakenly rejected (most notably, binary patch that
+does not rename nor change mode).  Textual patches, renames or
+mode changes have preimage and postimage pathnames in different
+places in a form that can be parsed unambiguously and did not suffer
+from this problem.
 
-"git cherry-pick" by default stops when it sees a commit without any
-log message.  The "--allow-empty-message" option can be used to
-silently proceed.
+* jc/dotdot-is-parent-directory (2012-08-23) 1 commit
+  (merged to 'next' on 2012-08-28 at 2f2ae87)
+ + specifying ranges: we did not mean to make ".." an empty set
 
-* jc/daemon-access-hook (2012-08-15) 1 commit
-  (merged to 'next' on 2012-08-20 at c8f5b2e)
- + daemon: --access-hook option
+"git log .." errored out saying it is both rev range and a path when
+there is no disambiguating "--" is on the command line.  Update the
+command line parser to interpret ".." as a path in such a case.
 
-Allow an external command to tell git-daemon to decline service
-based on the client address, repository path, etc.
+* jc/maint-doc-checkout-b-always-takes-branch-name (2012-08-26) 1 commit
+  (merged to 'next' on 2012-08-29 at e0d0f5c)
+ + doc: "git checkout -b/-B/--orphan" always takes a branch name
 
-* jc/maint-config-exit-status (2012-07-30) 1 commit
-  (merged to 'next' on 2012-08-20 at e18ddd8)
- + config: "git config baa" should exit with status 1
+The synopsis said "checkout [-B branch]" to make it clear the branch
+name is a parameter to the option, but the heading for the option
+description was "-B::", not "-B branch::", making the documentation
+misleading.  There may be room in documentation pages of other
+commands for similar improvements (hint, hint).
 
-(Originally merged to 'next' on 2012-07-30)
+* jk/config-warn-on-inaccessible-paths (2012-08-21) 4 commits
+  (merged to 'next' on 2012-08-24 at 7470bd6)
+ + warn_on_inaccessible(): a helper to warn on inaccessible paths
+ + attr: warn on inaccessible attribute files
+ + gitignore: report access errors of exclude files
+ + config: warn on inaccessible files
 
-The exit status code from "git config" was way overspecified while
-being incorrect.  Update the implementation to give the documented
-status for a case that was documented, and introduce a new code for
-"all other errors".
+When looking for $HOME/.gitconfig etc., it is OK if we cannot read
+them because they do not exist, but we did not diagnose existing
+files that we cannot read.
 
-* jc/maint-mergetool-style-fix (2012-08-23) 1 commit
-  (merged to 'next' on 2012-08-28 at ced5868)
- + mergetool: style fixes
+* jk/maint-http-half-auth-push (2012-08-27) 8 commits
+  (merged to 'next' on 2012-08-29 at 0ed32f5)
+ + http: prompt for credentials on failed POST
+ + http: factor out http error code handling
+ + t: test http access to "half-auth" repositories
+ + t: test basic smart-http authentication
+ + t/lib-httpd: recognize */smart/* repos as smart-http
+ + t/lib-httpd: only route auth/dumb to dumb repos
+ + t5550: factor out http auth setup
+ + t5550: put auth-required repo in auth/dumb
 
-* jc/maint-sane-execvp-notdir (2012-07-31) 1 commit
-  (merged to 'next' on 2012-08-20 at 0d76cf2)
- + sane_execvp(): ignore non-directory on $PATH
+Pushing to smart HTTP server with recent Git fails without having
+the username in the URL to force authentication, if the server is
+configured to allow GET anonymously, while requiring authentication
+for POST.
 
-(Originally merged to 'next' on 2012-08-09)
+* kk/maint-for-each-ref-multi-sort (2012-08-21) 2 commits
+  (merged to 'next' on 2012-08-24 at 28a5db4)
+ + for-each-ref: Fix sort with multiple keys
+ + t6300: test sort with multiple keys
 
-"git foo" errored out with "Not a directory" when the user had a non
-directory on $PATH, and worse yet it masked an alias "foo" to run.
+"git for-each-ref" did not currectly support more than one --sort
+option.
 
-* jc/send-email-reconfirm (2012-08-14) 1 commit
-  (merged to 'next' on 2012-08-20 at dffdef6)
- + send-email: validate & reconfirm interactive responses
+* lt/commit-tree-guess-utf-8 (2012-08-21) 1 commit
+  (merged to 'next' on 2012-08-24 at d16ac69)
+ + commit/commit-tree: correct latin1 to utf-8
 
-Validate interactive input to "git send-email" to avoid common
-mistakes such as saying "y<RETURN>" to sender mail address whose
-prompt is given with a correctly guessed default.
+Teaches "git commit" and "git commit-tree" the "we are told to use
+utf-8 in log message, but this does not look like utf-8---attempt to
+pass it through convert-from-latin1-to-utf8 and see if it makes
+sense" heuristics "git mailinfo" already uses.
 
-* js/compat-mkdir (2012-08-24) 1 commit
-  (merged to 'next' on 2012-08-28 at e92bf74)
- + compat: some mkdir() do not like a slash at the end
+* nd/am-i18n-fix (2012-08-22) 1 commit
+  (merged to 'next' on 2012-08-24 at f8e9a63)
+ + am: quote string for translation before passing to eval_gettextln
 
-Some mkdir(2) implementations do not want to see trailing slash in
-its parameter.
+"git am" wasn't marked up for i18n properly.
 
-* js/no-curl-easy-strerror-on-old-curl (2012-08-23) 1 commit
-  (merged to 'next' on 2012-08-28 at 25e2e7a)
- + http.c: don't use curl_easy_strerror prior to curl-7.12.0
+* nd/branch-v-alignment (2012-08-27) 1 commit
+  (merged to 'next' on 2012-08-29 at 5c0d226)
+ + branch -v: align even when branch names are in UTF-8
 
-Done to support compilation on __TANDEM, but is independently useful
-for people with older version of libcURL.
+Output from "git branch -v" contains "(no branch)" that could be
+localized, but the code to align it along with the names of branches
+were counting in bytes, not in display columns.
 
-* js/use-sc-open-max (2012-08-24) 1 commit
-  (merged to 'next' on 2012-08-28 at 8b9ac7c)
- + sha1_file.c: introduce get_max_fd_limit() helper
+* nd/i18n-parseopt-help (2012-08-22) 66 commits
+  (merged to 'next' on 2012-08-24 at 2a04ce0)
+ + Use imperative form in help usage to describe an action
+ + Reduce translations by using same terminologies
+ + i18n: write-tree: mark parseopt strings for translation
+ + i18n: verify-tag: mark parseopt strings for translation
+ + i18n: verify-pack: mark parseopt strings for translation
+ + i18n: update-server-info: mark parseopt strings for translation
+ + i18n: update-ref: mark parseopt strings for translation
+ + i18n: update-index: mark parseopt strings for translation
+ + i18n: tag: mark parseopt strings for translation
+ + i18n: symbolic-ref: mark parseopt strings for translation
+ + i18n: show-ref: mark parseopt strings for translation
+ + i18n: show-branch: mark parseopt strings for translation
+ + i18n: shortlog: mark parseopt strings for translation
+ + i18n: rm: mark parseopt strings for translation
+ + i18n: revert, cherry-pick: mark parseopt strings for translation
+ + i18n: rev-parse: mark parseopt strings for translation
+ + i18n: reset: mark parseopt strings for translation
+ + i18n: rerere: mark parseopt strings for translation
+ + i18n: status: mark parseopt strings for translation
+ + i18n: replace: mark parseopt strings for translation
+ + i18n: remote: mark parseopt strings for translation
+ + i18n: read-tree: mark parseopt strings for translation
+ + i18n: push: mark parseopt strings for translation
+ + i18n: prune: mark parseopt strings for translation
+ + i18n: prune-packed: mark parseopt strings for translation
+ + i18n: pack-refs: mark parseopt strings for translation
+ + i18n: pack-objects: mark parseopt strings for translation
+ + i18n: notes: mark parseopt strings for translation
+ + i18n: name-rev: mark parseopt strings for translation
+ + i18n: mv: mark parseopt strings for translation
+ + i18n: mktree: mark parseopt strings for translation
+ + i18n: merge: mark parseopt strings for translation
+ + i18n: merge-file: mark parseopt strings for translation
+ + i18n: merge-base: mark parseopt strings for translation
+ + i18n: ls-tree: mark parseopt strings for translation
+ + i18n: ls-files: mark parseopt strings for translation
+ + i18n: log: mark parseopt strings for translation
+ + i18n: init-db: mark parseopt strings for translation
+ + i18n: help: mark parseopt strings for translation
+ + i18n: hash-object: mark parseopt strings for translation
+ + i18n: grep: mark parseopt strings for translation
+ + i18n: gc: mark parseopt strings for translation
+ + i18n: fsck: mark parseopt strings for translation
+ + i18n: format-patch: mark parseopt strings for translation
+ + i18n: for-each-ref: mark parseopt strings for translation
+ + i18n: fmt-merge-msg: mark parseopt strings for translation
+ + i18n: fetch: mark parseopt strings for translation
+ + i18n: fast-export: mark parseopt strings for translation
+ + i18n: describe: mark parseopt strings for translation
+ + i18n: config: mark parseopt strings for translation
+ + i18n: count-objects: mark parseopt strings for translation
+ + i18n: commit: mark parseopt strings for translation
+ + i18n: column: mark parseopt strings for translation
+ + i18n: clone: mark parseopt strings for translation
+ + i18n: clean: mark parseopt strings for translation
+ + i18n: cherry: mark parseopt strings for translation
+ + i18n: checkout: mark parseopt strings for translation
+ + i18n: checkout-index: mark parseopt strings for translation
+ + i18n: check-attr: mark parseopt strings for translation
+ + i18n: cat-file: mark parseopt strings for translation
+ + i18n: branch: mark parseopt strings for translation
+ + i18n: blame: mark parseopt strings for translation
+ + i18n: add: mark parseopt strings for translation
+ + i18n: bisect--helper: mark parseopt strings for translation
+ + i18n: archive: mark parseopt strings for translation
+ + i18n: mark "style" in OPT_COLUMN() for translation
 
-Introduce get_max_fd_limit() to absorb platforms that do not have
-getrlimit(RLIMIT_NOFILE) and/or sysconf(_SC_OPEN_MAX).
+A lot of i18n mark-up for the help text from "git <cmd> -h".
 
-* ph/stash-rerere (2012-08-17) 2 commits
-  (merged to 'next' on 2012-08-20 at ae37111)
- + stash: invoke rerere in case of conflict
- + test: git-stash conflict sets up rerere
+* nd/i18n-poison-test-updates (2012-08-27) 7 commits
+  (merged to 'next' on 2012-08-29 at 9b7ff7f)
+ + Fix tests under GETTEXT_POISON on parseopt
+ + Fix tests under GETTEXT_POISON on git-remote
+ + Fix tests under GETTEXT_POISON on pack-object
+ + Fix tests under GETTEXT_POISON on git-apply
+ + Fix tests under GETTEXT_POISON on diffstat
+ + Fix tests under GETTEXT_POISON on git-stash
+ + Fix tests under GETTEXT_POISON on relative dates
 
-"git stash" internally used "git merge-recursive" backend, which did
-not trigger "rerere" upon conflicts unlike other mergy operations.
+Update tests that can be broken with gettext-poison builds.
 
-* sz/submodule-force-update (2012-08-24) 1 commit
-  (merged to 'next' on 2012-08-24 at f82b466)
- + Make 'git submodule update --force' always check out submodules.
+* pw/p4-use-client-spec-branch-detection (2012-08-20) 5 commits
+  (merged to 'next' on 2012-08-24 at 08abc61)
+ + git p4: make branch detection work with --use-client-spec
+ + git p4: do wildcard decoding in stripRepoPath
+ + git p4: set self.branchPrefixes in initialization
+ + git p4 test: add broken --use-client-spec --detect-branches tests
+ + git p4 test: move client_view() function to library
 
-"git submodule update --force" used to leave the working tree of the
-submodule intact when there were local changes.  It is more intiutive
-to make "--force" a sign to run "checkout -f" to overwrite them.
+Fixes "git p4" when "--use-client-spec" and "--detect-branches" are
+used together (the command used to misdetect branches).
+
+* tr/maint-parseopt-avoid-empty (2012-08-20) 1 commit
+  (merged to 'next' on 2012-08-24 at cffa9a0)
+ + gettext: do not translate empty string
+
+A workaround to avoid doing _(""), which translates to unwanted
+magic string in the .po files.
 
 --------------------------------------------------
 [New Topics]
 
-* as/check-ignore (2012-09-02) 10 commits
- . fixup: decl-after-stmt etc.
- . Add git-check-ignore
- . Provide free_directory() for reclaiming dir_struct memory
- . Extract some useful pathspec handling code from builtin/add.c into a library
- . For each exclude pattern, store information about where it came from
- . dir.c: refactor excluded() and path_excluded()
- . dir.c: refactor excluded_from_list()
- . dir.c: rename cryptic 'which' variable to more consistent name
- . Improve documentation and comments regarding directory traversal API
- . Update directory listing API doc to match code
+* kd/cvsimport-avoid-invalid-tag (2012-09-06) 1 commit
+ - cvsimport: strip all inappropriate tag strings
 
-Queued, but I think the design of the end-user experience needs to
-be discussed further to polish this topic.
+"cvsimport" tried to create a tag taken from CVS without
+sufficiently sanitizing it, causing the import to fail when an
+invalid character in the tagname made underlying "git tag" to fail.
 
-* jc/maint-ident-missing-human-name (2012-08-31) 1 commit
- - split_ident_line(): make best effort when parsing author/committer line
+Will merge to 'next'.
 
-"git show --format='%ci'" did not give timestamp correctly for
-commits created without human readable name on "committer" line.
+* mh/abspath (2012-09-06) 8 commits
+ - t0060: verify that real_path() removes extra slashes
+ - real_path(): properly handle nonexistent top-level paths
+ - t0060: verify that real_path() works correctly with absolute paths
+ - real_path(): reject the empty string
+ - t0060: verify that real_path() fails if passed the empty string
+ - absolute_path(): reject the empty string
+ - t0060: verify that absolute_path() fails if passed the empty string
+ - t0060: move tests of real_path() from t0000 to here
 
-Will merge to 'next' after eyeballing one more time.
+* nd/i18n-status (2012-09-06) 1 commit
+ - status: remove i18n legos
 
-* jk/argv-array (2012-09-02) 4 commits
- - submodule: use argv_array instead of hand-building arrays
- - fetch: use argv_array instead of hand-building arrays
- - argv-array: fix bogus cast when freeing array
- - argv-array: add pop function
+Will merge to 'next'.
 
-Use argv-array API in "git fetch" implementation.
-Will merge to 'next' after eyeballing one more time.
+* nd/log-n-doc (2012-09-06) 1 commit
+ - doc: move rev-list option -<n> from git-log.txt to rev-list-options.txt
 
-* rj/tap-fix (2012-09-02) 6 commits
- - test-lib.sh: Suppress the "passed all ..." message if no tests run
- - test-lib.sh: Add check for invalid use of 'skip_all' facility
- - test-lib.sh: Fix some shell coding style violations
- - t4016-*.sh: Skip all tests rather than each test
- - t3902-*.sh: Skip all tests rather than each test
- - t3300-*.sh: Fix a TAP parse error
+Will merge to 'next'.
 
-Will merge to 'next' after eyeballing one more time.
+* nd/maint-remote-remove (2012-09-06) 1 commit
+ - remote: prefer subcommand name 'remove' to 'rm'
 
-* rj/test-regex (2012-09-02) 1 commit
- - test-regex: Add a test to check for a bug in the regex routines
+Will merge to 'next'.
 
-Git ships with a fall-back regexp implementation for platforms with
-buggy regexp library; give people a tool to see if they should be
-using it on their platform.
+* sb/send-email-reconfirm-fix (2012-09-06) 1 commit
+ - send-email: initial_to and initial_reply_to are both optional
 
-Will merge to 'next' after eyeballing one more time.
+Will merge to 'next'.
 
-* jc/maint-checkout-fileglob-doc (2012-09-04) 1 commit
- - Document file-glob for "git checkout -- '*.c'"
+* sn/ls-remote-get-url-doc (2012-09-07) 1 commit
+ - ls-remote: document the '--get-url' option
 
-Will merge to 'next' after eyeballing one more time.
+Will merge to 'next'.
 
-* jc/xprm-generation (2012-09-04) 1 commit
- - test-generation: compute generation numbers and clock skews
+* dj/fetch-all-tags (2012-09-07) 1 commit
+ - fetch --all: pass --tags/--no-tags through to each remote
+ (this branch uses jk/argv-array.)
 
-* rj/path-cleanup (2012-09-04) 5 commits
- - Call mkpathdup() rather than xstrdup(mkpath(...))
- - Call git_pathdup() rather than xstrdup(git_path("..."))
- - path.c: Use vsnpath() in the implementation of git_path()
- - path.c: Don't discard the return value of vsnpath()
- - path.c: Remove the 'git_' prefix from a file scope function
+"git fetch --all", when passed "--no-tags", did not honor the
+"--no-tags" option while fetching from individual remotes (the same
+issue existed with "--tags", but combination "--all --tags" makes
+much less sense than "--all --no-tags").
 
-* rs/archive-zip-utf8 (2012-09-04) 1 commit
- - archive-zip: support UTF-8 paths
+Will merge to 'next'.
 
 --------------------------------------------------
 [Stalled]
@@ -326,6 +415,80 @@ working :-<.
 --------------------------------------------------
 [Cooking]
 
+* as/check-ignore (2012-09-02) 10 commits
+ . fixup: decl-after-stmt etc.
+ . Add git-check-ignore
+ . Provide free_directory() for reclaiming dir_struct memory
+ . Extract some useful pathspec handling code from builtin/add.c into a library
+ . For each exclude pattern, store information about where it came from
+ . dir.c: refactor excluded() and path_excluded()
+ . dir.c: refactor excluded_from_list()
+ . dir.c: rename cryptic 'which' variable to more consistent name
+ . Improve documentation and comments regarding directory traversal API
+ . Update directory listing API doc to match code
+
+Will be rerolled.
+
+* jc/maint-ident-missing-human-name (2012-08-31) 1 commit
+  (merged to 'next' on 2012-09-07 at 0e99b20)
+ + split_ident_line(): make best effort when parsing author/committer line
+
+"git show --format='%ci'" did not give timestamp correctly for
+commits created without human readable name on "committer" line.
+
+Will merge to 'master' as part of the fifth batch.
+
+* jk/argv-array (2012-09-02) 4 commits
+  (merged to 'next' on 2012-09-07 at 98dbd14)
+ + submodule: use argv_array instead of hand-building arrays
+ + fetch: use argv_array instead of hand-building arrays
+ + argv-array: fix bogus cast when freeing array
+ + argv-array: add pop function
+ (this branch is used by dj/fetch-all-tags.)
+
+Use argv-array API in "git fetch" implementation.
+
+Will merge to 'master' as part of the fifth batch.
+
+* rj/tap-fix (2012-09-02) 6 commits
+ - test-lib.sh: Suppress the "passed all ..." message if no tests run
+ - test-lib.sh: Add check for invalid use of 'skip_all' facility
+ - test-lib.sh: Fix some shell coding style violations
+ - t4016-*.sh: Skip all tests rather than each test
+ - t3902-*.sh: Skip all tests rather than each test
+ - t3300-*.sh: Fix a TAP parse error
+
+Will merge to 'next'.
+
+* rj/test-regex (2012-09-02) 1 commit
+  (merged to 'next' on 2012-09-07 at e7e3527)
+ + test-regex: Add a test to check for a bug in the regex routines
+
+Git ships with a fall-back regexp implementation for platforms with
+buggy regexp library; give people a tool to see if they should be
+using it on their platform.
+
+Will merge to 'master' as part of the fifth batch.
+
+* jc/maint-checkout-fileglob-doc (2012-09-07) 2 commits
+ - gitcli: contrast wildcard given to shell and to git
+ - Document file-glob for "git checkout -- '*.c'"
+
+Will merge to 'next'.
+
+* jc/xprm-generation (2012-09-04) 1 commit
+ - test-generation: compute generation numbers and clock skews
+
+* rj/path-cleanup (2012-09-04) 5 commits
+ - Call mkpathdup() rather than xstrdup(mkpath(...))
+ - Call git_pathdup() rather than xstrdup(git_path("..."))
+ - path.c: Use vsnpath() in the implementation of git_path()
+ - path.c: Don't discard the return value of vsnpath()
+ - path.c: Remove the 'git_' prefix from a file scope function
+
+* rs/archive-zip-utf8 (2012-09-04) 1 commit
+ - archive-zip: support UTF-8 paths
+
 * mz/cherry-pick-cmdline-order (2012-08-30) 3 commits
   (merged to 'next' on 2012-08-31 at fc8eec4)
  + cherry-pick/revert: respect order of revisions to pick
@@ -357,9 +520,10 @@ Update helper to send out format-patch output using Thunderbird.
 Seems to have design regression for silent users.
 
 * nd/i18n-index-pack (2012-08-31) 1 commit
- - i18n: mark more index-pack strings for translation
+  (merged to 'next' on 2012-09-07 at bbcece1)
+ + i18n: mark more index-pack strings for translation
 
-Will merge to 'next'.
+Will merge to 'master' as part of the fifth batch.
 
 * jk/maint-quiet-is-synonym-to-s-in-log (2012-08-28) 1 commit
   (merged to 'next' on 2012-08-31 at 06f6953)
@@ -371,7 +535,8 @@ succeed.
 
 Will merge to 'master' as part of the fifth batch.
 
-* nd/checkout-option-parsing-fix (2012-08-30) 3 commits
+* nd/checkout-option-parsing-fix (2012-09-07) 4 commits
+ - fixup! checkout: reorder option handling
  - checkout: reorder option handling
  - checkout: move more parameters to struct checkout_opts
  - checkout: pass "struct checkout_opts *" as const pointer
@@ -383,7 +548,7 @@ Reorganize the code and allow giving a proper diagnosis when the
 user says "git checkout -b -t foo bar" (e.g. "-t" is not a good name
 for a branch).
 
-Will merge to 'next' after eyeballing one more time.
+Will merge to 'next' after squashing the tip two.
 
 * jc/maint-name-rev (2012-09-04) 7 commits
  - describe --contains: use "name-rev --weight"
@@ -425,16 +590,6 @@ branch.
 
 Will merge to 'master' as part of the fifth batch.
 
-* jc/dotdot-is-parent-directory (2012-08-23) 1 commit
-  (merged to 'next' on 2012-08-28 at 2f2ae87)
- + specifying ranges: we did not mean to make ".." an empty set
-
-"git log .." errored out saying it is both rev range and a path when
-there is no disambiguating "--" is on the command line.  Update the
-command line parser to interpret ".." as a path in such a case.
-
-Will merge to 'master' as part of the fourth batch.
-
 * js/compat-itimer (2012-08-24) 1 commit
  - Support for setitimer() on platforms lacking it
 
@@ -450,50 +605,6 @@ Pieces to support compilation on __TANDEM.
 
 Attempts to refactor to share code among OSX keychain, Gnome keyring
 and Win32 credential helpers.
-
-* jc/apply-binary-p0 (2012-08-24) 1 commit
-  (merged to 'next' on 2012-08-28 at 6fa690c)
- + apply: compute patch->def_name correctly under -p0
-
-"git apply -p0" did not parse pathnames on "diff --git" line
-correctly.  This caused patches that had pathnames in no other
-places to be mistakenly rejected (most notably, binary patch that
-does not rename nor change mode).  Textual patches, renames or
-mode changes have preimage and postimage pathnames in different
-places in a form that can be parsed unambiguously and did not suffer
-from this problem.
-
-Will merge to 'master' as part of the fourth batch.
-
-* jc/maint-doc-checkout-b-always-takes-branch-name (2012-08-26) 1 commit
-  (merged to 'next' on 2012-08-29 at e0d0f5c)
- + doc: "git checkout -b/-B/--orphan" always takes a branch name
-
-The synopsis said "checkout [-B branch]" to make it clear the branch
-name is a parameter to the option, but the heading for the option
-description was "-B::", not "-B branch::", making the documentation
-misleading.  There may be room in documentation pages of other
-commands for similar improvements (hint, hint).
-
-Will merge to 'master' as part of the fourth batch.
-
-* jk/maint-http-half-auth-push (2012-08-27) 8 commits
-  (merged to 'next' on 2012-08-29 at 0ed32f5)
- + http: prompt for credentials on failed POST
- + http: factor out http error code handling
- + t: test http access to "half-auth" repositories
- + t: test basic smart-http authentication
- + t/lib-httpd: recognize */smart/* repos as smart-http
- + t/lib-httpd: only route auth/dumb to dumb repos
- + t5550: factor out http auth setup
- + t5550: put auth-required repo in auth/dumb
-
-Pushing to smart HTTP server with recent Git fails without having
-the username in the URL to force authentication, if the server is
-configured to allow GET anonymously, while requiring authentication
-for POST.
-
-Will merge to 'master' as part of the fourth batch.
 
 * mh/fetch-filter-refs (2012-08-26) 17 commits
  - filter_refs(): simplify logic
@@ -517,32 +628,23 @@ Will merge to 'master' as part of the fourth batch.
 Code simplification and clarification.
 Waiting for a follow-up patch based on Peff's idea.
 
-* nd/branch-v-alignment (2012-08-27) 1 commit
-  (merged to 'next' on 2012-08-29 at 5c0d226)
- + branch -v: align even when branch names are in UTF-8
-
-Output from "git branch -v" contains "(no branch)" that could be
-localized, but the code to align it along with the names of branches
-were counting in bytes, not in display columns.
-
-Will merge to 'master' as part of the fourth batch.
-
 * jc/merge-bases (2012-08-31) 9 commits
- - reduce_heads(): reimplement on top of remove_redundant()
- - merge-base: "--is-ancestor A B"
- - get_merge_bases_many(): walk from many tips in parallel
- - in_merge_bases(): use paint_down_to_common()
- - merge_bases_many(): split out the logic to paint history
- - in_merge_bases(): omit unnecessary redundant common ancestor reduction
- - http-push: use in_merge_bases() for fast-forward check
- - receive-pack: use in_merge_bases() for fast-forward check
- - in_merge_bases(): support only one "other" commit
+  (merged to 'next' on 2012-09-07 at ab0974d)
+ + reduce_heads(): reimplement on top of remove_redundant()
+ + merge-base: "--is-ancestor A B"
+ + get_merge_bases_many(): walk from many tips in parallel
+ + in_merge_bases(): use paint_down_to_common()
+ + merge_bases_many(): split out the logic to paint history
+ + in_merge_bases(): omit unnecessary redundant common ancestor reduction
+ + http-push: use in_merge_bases() for fast-forward check
+ + receive-pack: use in_merge_bases() for fast-forward check
+ + in_merge_bases(): support only one "other" commit
 
 Optimise the "merge-base" computation a bit, and also update its
 users that do not need the full merge-base information to call a
 cheaper subset.
 
-Will merge to 'next'.
+Will merge to 'master' as part of the fifth batch.
 
 * jl/submodule-rm (2012-08-27) 1 commit
  - Teach rm to remove submodules unless they contain a git directory
@@ -554,35 +656,6 @@ where it is safe to remove a submodule, specifically, when there is
 no local changes in the submodule working tree, and its repository
 is not embedded in its working tree but is elsewhere and uses the
 gitfile mechanism to point at it.
-
-* nd/am-i18n-fix (2012-08-22) 1 commit
-  (merged to 'next' on 2012-08-24 at f8e9a63)
- + am: quote string for translation before passing to eval_gettextln
-
-"git am" wasn't marked up for i18n properly.
-
-Will merge to 'master' as part of the fourth batch.
-
-* lt/commit-tree-guess-utf-8 (2012-08-21) 1 commit
-  (merged to 'next' on 2012-08-24 at d16ac69)
- + commit/commit-tree: correct latin1 to utf-8
-
-Teaches "git commit" and "git commit-tree" the "we are told to use
-utf-8 in log message, but this does not look like utf-8---attempt to
-pass it through convert-from-latin1-to-utf8 and see if it makes
-sense" heuristics "git mailinfo" already uses.
-
-Will merge to 'master' as part of the fourth batch.
-
-* kk/maint-for-each-ref-multi-sort (2012-08-21) 2 commits
-  (merged to 'next' on 2012-08-24 at 28a5db4)
- + for-each-ref: Fix sort with multiple keys
- + t6300: test sort with multiple keys
-
-"git for-each-ref" did not currectly support more than one --sort
-option.
-
-Will merge to 'master' as part of the fourth batch.
 
 * fa/remote-svn (2012-08-28) 16 commits
  - Add a test script for remote-svn
@@ -615,129 +688,6 @@ Waiting for comments from mentors and stakeholders.
 
 A GSoC project.  Looked promising.
 Waiting for comments from mentors and stakeholders.
-
-* nd/i18n-parseopt-help (2012-08-22) 66 commits
-  (merged to 'next' on 2012-08-24 at 2a04ce0)
- + Use imperative form in help usage to describe an action
- + Reduce translations by using same terminologies
- + i18n: write-tree: mark parseopt strings for translation
- + i18n: verify-tag: mark parseopt strings for translation
- + i18n: verify-pack: mark parseopt strings for translation
- + i18n: update-server-info: mark parseopt strings for translation
- + i18n: update-ref: mark parseopt strings for translation
- + i18n: update-index: mark parseopt strings for translation
- + i18n: tag: mark parseopt strings for translation
- + i18n: symbolic-ref: mark parseopt strings for translation
- + i18n: show-ref: mark parseopt strings for translation
- + i18n: show-branch: mark parseopt strings for translation
- + i18n: shortlog: mark parseopt strings for translation
- + i18n: rm: mark parseopt strings for translation
- + i18n: revert, cherry-pick: mark parseopt strings for translation
- + i18n: rev-parse: mark parseopt strings for translation
- + i18n: reset: mark parseopt strings for translation
- + i18n: rerere: mark parseopt strings for translation
- + i18n: status: mark parseopt strings for translation
- + i18n: replace: mark parseopt strings for translation
- + i18n: remote: mark parseopt strings for translation
- + i18n: read-tree: mark parseopt strings for translation
- + i18n: push: mark parseopt strings for translation
- + i18n: prune: mark parseopt strings for translation
- + i18n: prune-packed: mark parseopt strings for translation
- + i18n: pack-refs: mark parseopt strings for translation
- + i18n: pack-objects: mark parseopt strings for translation
- + i18n: notes: mark parseopt strings for translation
- + i18n: name-rev: mark parseopt strings for translation
- + i18n: mv: mark parseopt strings for translation
- + i18n: mktree: mark parseopt strings for translation
- + i18n: merge: mark parseopt strings for translation
- + i18n: merge-file: mark parseopt strings for translation
- + i18n: merge-base: mark parseopt strings for translation
- + i18n: ls-tree: mark parseopt strings for translation
- + i18n: ls-files: mark parseopt strings for translation
- + i18n: log: mark parseopt strings for translation
- + i18n: init-db: mark parseopt strings for translation
- + i18n: help: mark parseopt strings for translation
- + i18n: hash-object: mark parseopt strings for translation
- + i18n: grep: mark parseopt strings for translation
- + i18n: gc: mark parseopt strings for translation
- + i18n: fsck: mark parseopt strings for translation
- + i18n: format-patch: mark parseopt strings for translation
- + i18n: for-each-ref: mark parseopt strings for translation
- + i18n: fmt-merge-msg: mark parseopt strings for translation
- + i18n: fetch: mark parseopt strings for translation
- + i18n: fast-export: mark parseopt strings for translation
- + i18n: describe: mark parseopt strings for translation
- + i18n: config: mark parseopt strings for translation
- + i18n: count-objects: mark parseopt strings for translation
- + i18n: commit: mark parseopt strings for translation
- + i18n: column: mark parseopt strings for translation
- + i18n: clone: mark parseopt strings for translation
- + i18n: clean: mark parseopt strings for translation
- + i18n: cherry: mark parseopt strings for translation
- + i18n: checkout: mark parseopt strings for translation
- + i18n: checkout-index: mark parseopt strings for translation
- + i18n: check-attr: mark parseopt strings for translation
- + i18n: cat-file: mark parseopt strings for translation
- + i18n: branch: mark parseopt strings for translation
- + i18n: blame: mark parseopt strings for translation
- + i18n: add: mark parseopt strings for translation
- + i18n: bisect--helper: mark parseopt strings for translation
- + i18n: archive: mark parseopt strings for translation
- + i18n: mark "style" in OPT_COLUMN() for translation
-
-A lot of i18n mark-up for the help text from "git <cmd> -h".
-
-Will merge to 'master' as part of the fourth batch.
-
-* tr/maint-parseopt-avoid-empty (2012-08-20) 1 commit
-  (merged to 'next' on 2012-08-24 at cffa9a0)
- + gettext: do not translate empty string
-
-A workaround to avoid doing _(""), which translates to unwanted
-magic string in the .po files.
-
-Will merge to 'master' as part of the fourth batch.
-
-* jk/config-warn-on-inaccessible-paths (2012-08-21) 4 commits
-  (merged to 'next' on 2012-08-24 at 7470bd6)
- + warn_on_inaccessible(): a helper to warn on inaccessible paths
- + attr: warn on inaccessible attribute files
- + gitignore: report access errors of exclude files
- + config: warn on inaccessible files
-
-When looking for $HOME/.gitconfig etc., it is OK if we cannot read
-them because they do not exist, but unable to read existing ones
-need to be diagnosed.
-
-Will merge to 'master' as part of the fourth batch.
-
-* nd/i18n-poison-test-updates (2012-08-27) 7 commits
-  (merged to 'next' on 2012-08-29 at 9b7ff7f)
- + Fix tests under GETTEXT_POISON on parseopt
- + Fix tests under GETTEXT_POISON on git-remote
- + Fix tests under GETTEXT_POISON on pack-object
- + Fix tests under GETTEXT_POISON on git-apply
- + Fix tests under GETTEXT_POISON on diffstat
- + Fix tests under GETTEXT_POISON on git-stash
- + Fix tests under GETTEXT_POISON on relative dates
-
-Updates to tests that can be broken with gettext-poison builds.
-Queued with trivial fix-ups.
-
-Will merge to 'master' as part of the third batch.
-
-* pw/p4-use-client-spec-branch-detection (2012-08-20) 5 commits
-  (merged to 'next' on 2012-08-24 at 08abc61)
- + git p4: make branch detection work with --use-client-spec
- + git p4: do wildcard decoding in stripRepoPath
- + git p4: set self.branchPrefixes in initialization
- + git p4 test: add broken --use-client-spec --detect-branches tests
- + git p4 test: move client_view() function to library
-
-Fixes "git p4" when "--use-client-spec" and "--detect-branches" are
-used together (the command used to misdetect branches).
-
-Will merge to 'master' as part of the fourth batch.
 
 * jk/no-more-pre-exec-callback (2012-06-05) 1 commit
  - pager: drop "wait for output to run less" hack
