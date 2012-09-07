@@ -42,6 +42,11 @@ OPTIONS
 	it successfully talked with the remote repository, whether it
 	found any matching refs.
 
+--get-url::
+	Expand the URL of the given remote repository taking into account any
+	"url.<base>.insteadOf" config setting (See linkgit:git-config[1]) and
+	exit without talking to the remote.
+
 <repository>::
 	Location of the repository.  The shorthand defined in
 	$GIT_DIR/branches/ can be used. Use "." (dot) to list references in
