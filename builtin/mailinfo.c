@@ -481,36 +481,12 @@ static struct strbuf *decode_b_segment(const struct strbuf *b_seg)
 	return out;
 }
 
-/*
- * When there is no known charset, guess.
- *
- * Right now we assume that if the target is UTF-8 (the default),
- * and it already looks like UTF-8 (which includes US-ASCII as its
- * subset, of course) then that is what it is and there is nothing
- * to do.
- *
- * Otherwise, we default to assuming it is Latin1 for historical
- * reasons.
- */
-static const char *guess_charset(const struct strbuf *line, const char *target_charset)
-{
-	if (is_encoding_utf8(target_charset)) {
-		if (is_utf8(line->buf))
-			return NULL;
-	}
-	return "ISO8859-1";
-}
-
 static void convert_to_utf8(struct strbuf *line, const char *charset)
 {
 	char *out;
 
-	if (!charset || !*charset) {
-		charset = guess_charset(line, metainfo_charset);
-		if (!charset)
-			return;
-	}
-
+	if (!charset || !*charset)
+		return;
 	if (!strcasecmp(metainfo_charset, charset))
 		return;
 	out = reencode_string(line->buf, metainfo_charset, charset);
