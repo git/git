@@ -806,4 +806,11 @@ test_expect_success 'log --graph with diff and stats' '
 	test_i18ncmp expect actual.sanitized
 '
 
+test_expect_success 'dotdot is a parent directory' '
+	mkdir -p a/b &&
+	( echo sixth && echo fifth ) >expect &&
+	( cd a/b && git log --format=%s .. ) >actual &&
+	test_cmp expect actual
+'
+
 test_done

@@ -182,4 +182,18 @@ test_expect_success '<commit>:file correctly diagnosed after a pathname' '
 	test_cmp expect actual
 '
 
+test_expect_success 'dotdot is not an empty set' '
+	( H=$(git rev-parse HEAD) && echo $H && echo ^$H ) >expect &&
+
+	git rev-parse HEAD.. >actual &&
+	test_cmp expect actual &&
+
+	git rev-parse ..HEAD >actual &&
+	test_cmp expect actual &&
+
+	echo .. >expect &&
+	git rev-parse .. >actual &&
+	test_cmp expect actual
+'
+
 test_done
