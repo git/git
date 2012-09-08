@@ -162,6 +162,17 @@
 #define probe_utf8_pathname_composition(a,b)
 #endif
 
+#ifdef NO_STRUCT_ITIMERVAL
+struct itimerval {
+	struct timeval it_interval;
+	struct timeval it_value;
+}
+#endif
+
+#ifdef NO_SETITIMER
+#define setitimer(which,value,ovalue)
+#endif
+
 #ifndef NO_LIBGEN_H
 #include <libgen.h>
 #else
