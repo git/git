@@ -10599,7 +10599,7 @@ proc movedhead {hid head} {
 }
 
 proc changedrefs {} {
-    global cached_dheads cached_dtags cached_atags
+    global cached_dheads cached_dtags cached_atags tagcontents
     global arctags archeads arcnos arcout idheads idtags
 
     foreach id [concat [array names idheads] [array names idtags]] {
@@ -10611,6 +10611,7 @@ proc changedrefs {} {
 	    }
 	}
     }
+    catch {unset tagcontents}
     catch {unset cached_dtags}
     catch {unset cached_atags}
     catch {unset cached_dheads}
