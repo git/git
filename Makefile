@@ -90,6 +90,8 @@ all::
 #
 # Define NO_MKDTEMP if you don't have mkdtemp in the C library.
 #
+# Define MKDIR_WO_TRAILING_SLASH if your mkdir() can't deal with trailing slash.
+#
 # Define NO_MKSTEMPS if you don't have mkstemps in the C library.
 #
 # Define NO_STRTOK_R if you don't have strtok_r in the C library.
@@ -1638,6 +1640,10 @@ endif
 ifdef NO_MKDTEMP
 	COMPAT_CFLAGS += -DNO_MKDTEMP
 	COMPAT_OBJS += compat/mkdtemp.o
+endif
+ifdef MKDIR_WO_TRAILING_SLASH
+	COMPAT_CFLAGS += -DMKDIR_WO_TRAILING_SLASH
+	COMPAT_OBJS += compat/mkdir.o
 endif
 ifdef NO_MKSTEMPS
 	COMPAT_CFLAGS += -DNO_MKSTEMPS
