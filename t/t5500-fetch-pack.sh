@@ -427,14 +427,14 @@ test_expect_success 'test missing ref before existing' '
 	test_cmp expect-error error-me
 '
 
-test_expect_failure 'test --all, --depth, and explicit head' '
+test_expect_success 'test --all, --depth, and explicit head' '
 	(
 		cd client &&
 		git fetch-pack --no-progress --all --depth=1 .. refs/heads/A
 	) >out-adh 2>error-adh
 '
 
-test_expect_failure 'test --all, --depth, and explicit tag' '
+test_expect_success 'test --all, --depth, and explicit tag' '
 	git tag OLDTAG refs/heads/B~5 &&
 	(
 		cd client &&

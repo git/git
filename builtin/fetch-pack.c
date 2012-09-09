@@ -549,9 +549,6 @@ static void filter_refs(struct ref **refs, struct string_list *sought)
 		if (!memcmp(ref->name, "refs/", 5) &&
 		    check_refname_format(ref->name + 5, 0))
 			; /* trash */
-		else if (args.fetch_all &&
-			 (!args.depth || prefixcmp(ref->name, "refs/tags/")))
-			keep = 1;
 		else {
 			while (sought_pos < sought->nr) {
 				int cmp = strcmp(ref->name, sought->items[sought_pos].string);
@@ -567,6 +564,10 @@ static void filter_refs(struct ref **refs, struct string_list *sought)
 			}
 		}
 
+		if (! keep && args.fetch_all &&
+		    (!args.depth || prefixcmp(ref->name, "refs/tags/")))
+			keep = 1;
+
 		if (keep) {
 			*newtail = ref;
 			ref->next = NULL;
@@ -576,8 +577,7 @@ static void filter_refs(struct ref **refs, struct string_list *sought)
 		}
 	}
 
-	if (!args.fetch_all)
-		filter_string_list(sought, 0, non_matching_ref, NULL);
+	filter_string_list(sought, 0, non_matching_ref, NULL);
 	*refs = newlist;
 }
 
