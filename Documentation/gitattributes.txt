@@ -904,7 +904,7 @@ file at the toplevel (i.e. not in any subdirectory).  The built-in
 macro attribute "binary" is equivalent to:
 
 ------------
-[attr]binary -diff -text
+[attr]binary -diff -merge -text
 ------------
 
 

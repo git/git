@@ -54,7 +54,7 @@ test_expect_success 'recursive favouring ours' '
 '
 
 test_expect_success 'binary file with -Xours/-Xtheirs' '
-	echo "file -merge" >.gitattributes &&
+	echo file binary >.gitattributes &&
 
 	git reset --hard master &&
 	git merge -s recursive -X theirs side &&
