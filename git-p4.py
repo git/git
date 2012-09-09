@@ -1202,6 +1202,9 @@ class P4Submit(Command, P4UserMap):
                 p4_revert(f)
             return False
 
+        #
+        # Apply the patch for real, and do add/delete/+x handling.
+        #
         system(applyPatchCmd)
 
         for f in filesToAdd:
@@ -1215,6 +1218,10 @@ class P4Submit(Command, P4UserMap):
             mode = filesToChangeExecBit[f]
             setP4ExecBit(f, mode)
 
+        #
+        # Build p4 change description, starting with the contents
+        # of the git commit message.
+        #
         logMessage = extractLogMessageFromGitCommit(id)
         logMessage = logMessage.strip()
         (logMessage, jobs) = self.separate_jobs_from_description(logMessage)
@@ -1223,8 +1230,16 @@ class P4Submit(Command, P4UserMap):
         submitTemplate = self.prepareLogMessage(template, logMessage, jobs)
 
         if self.preserveUser:
-           submitTemplate = submitTemplate + ("\n######## Actual user %s, modified after commit\n" % p4User)
+           submitTemplate += "\n######## Actual user %s, modified after commit\n" % p4User
 
+        if self.checkAuthorship and not self.p4UserIsMe(p4User):
+            submitTemplate += "######## git author %s does not match your p4 account.\n" % gitEmail
+            submitTemplate += "######## Use option --preserve-user to modify authorship.\n"
+            submitTemplate += "######## Variable git-p4.skipUserNameCheck hides this message.\n"
+
+        separatorLine = "######## everything below this line is just the diff #######\n"
+
+        # diff
         if os.environ.has_key("P4DIFF"):
             del(os.environ["P4DIFF"])
         diff = ""
@@ -1232,6 +1247,7 @@ class P4Submit(Command, P4UserMap):
             diff += p4_read_pipe(['diff', '-du',
                                   wildcard_encode(editedFile)])
 
+        # new file diff
         newdiff = ""
         for newFile in filesToAdd:
             newdiff += "==== new file ====\n"
@@ -1242,13 +1258,7 @@ class P4Submit(Command, P4UserMap):
                 newdiff += "+" + line
             f.close()
 
-        if self.checkAuthorship and not self.p4UserIsMe(p4User):
-            submitTemplate += "######## git author %s does not match your p4 account.\n" % gitEmail
-            submitTemplate += "######## Use option --preserve-user to modify authorship.\n"
-            submitTemplate += "######## Variable git-p4.skipUserNameCheck hides this message.\n"
-
-        separatorLine = "######## everything below this line is just the diff #######\n"
-
+        # change description file: submitTemplate, separatorLine, diff, newdiff
         (handle, fileName) = tempfile.mkstemp()
         tmpFile = os.fdopen(handle, "w+")
         if self.isWindows:
@@ -1258,6 +1268,9 @@ class P4Submit(Command, P4UserMap):
         tmpFile.write(submitTemplate + separatorLine + diff + newdiff)
         tmpFile.close()
 
+        #
+        # Let the user edit the change description, then submit it.
+        #
         if self.edit_template(fileName):
             # read the edited message and submit
             ret = True
