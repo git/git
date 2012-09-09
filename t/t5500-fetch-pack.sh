@@ -397,4 +397,34 @@ test_expect_success 'test duplicate refs from stdin' '
 	test_cmp expect actual
 '
 
+test_expect_success 'set up tests of missing reference' '
+	cat >expect-error <<-\EOF
+	error: no such remote ref refs/heads/xyzzy
+	EOF
+'
+
+test_expect_failure 'test lonely missing ref' '
+	(
+		cd client &&
+		test_must_fail git fetch-pack --no-progress .. refs/heads/xyzzy
+	) >/dev/null 2>error-m &&
+	test_cmp expect-error error-m
+'
+
+test_expect_success 'test missing ref after existing' '
+	(
+		cd client &&
+		test_must_fail git fetch-pack --no-progress .. refs/heads/A refs/heads/xyzzy
+	) >/dev/null 2>error-em &&
+	test_cmp expect-error error-em
+'
+
+test_expect_success 'test missing ref before existing' '
+	(
+		cd client &&
+		test_must_fail git fetch-pack --no-progress .. refs/heads/xyzzy refs/heads/A
+	) >/dev/null 2>error-me &&
+	test_cmp expect-error error-me
+'
+
 test_done
