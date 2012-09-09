@@ -375,6 +375,30 @@ test_expect_success 'description with Jobs section and bogus following text' '
 		make_job $(cat jobname) &&
 		test_must_fail git p4 submit 2>err &&
 		test_i18ngrep "Unknown field name" err
+	) &&
+	(
+		cd "$cli" &&
+		p4 revert desc6 &&
+		rm desc6
+	)
+'
+
+test_expect_success 'submit --prepare-p4-only' '
+	test_when_finished cleanup_git &&
+	git p4 clone --dest="$git" //depot &&
+	(
+		cd "$git" &&
+		echo prep-only-add >prep-only-add &&
+		git add prep-only-add &&
+		git commit -m "prep only add" &&
+		git p4 submit --prepare-p4-only >out &&
+		test_i18ngrep "prepared for submission" out &&
+		test_i18ngrep "must be deleted" out
+	) &&
+	(
+		cd "$cli" &&
+		test_path_is_file prep-only-add &&
+		p4 fstat -T action prep-only-add | grep -w add
 	)
 '
 

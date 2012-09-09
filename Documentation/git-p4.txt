@@ -273,6 +273,13 @@ These options can be used to modify 'git p4 submit' behavior.
 	Show just what commits would be submitted to p4; do not change
 	state in git or p4.
 
+--prepare-p4-only::
+	Apply a commit to the p4 workspace, opening, adding and deleting
+	files in p4 as for a normal submit operation.  Do not issue the
+	final "p4 submit", but instead print a message about how to
+	submit manually or revert.  This option always stops after the
+	first (oldest) commit.  Git tags are not exported to p4.
+
 Rebase options
 ~~~~~~~~~~~~~~
 These options can be used to modify 'git p4 rebase' behavior.

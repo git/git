@@ -854,6 +854,7 @@ class P4Submit(Command, P4UserMap):
                 optparse.make_option("--preserve-user", dest="preserveUser", action="store_true"),
                 optparse.make_option("--export-labels", dest="exportLabels", action="store_true"),
                 optparse.make_option("--dry-run", "-n", dest="dry_run", action="store_true"),
+                optparse.make_option("--prepare-p4-only", dest="prepare_p4_only", action="store_true"),
         ]
         self.description = "Submit changes from git to the perforce depot."
         self.usage += " [name of git branch to submit into perforce depot]"
@@ -861,6 +862,7 @@ class P4Submit(Command, P4UserMap):
         self.detectRenames = False
         self.preserveUser = gitConfig("git-p4.preserveUser").lower() == "true"
         self.dry_run = False
+        self.prepare_p4_only = False
         self.isWindows = (platform.system() == "Windows")
         self.exportLabels = False
         self.p4HasMoveCommand = p4_has_command("move")
@@ -1270,6 +1272,41 @@ class P4Submit(Command, P4UserMap):
         tmpFile.write(submitTemplate + separatorLine + diff + newdiff)
         tmpFile.close()
 
+        if self.prepare_p4_only:
+            #
+            # Leave the p4 tree prepared, and the submit template around
+            # and let the user decide what to do next
+            #
+            print
+            print "P4 workspace prepared for submission."
+            print "To submit or revert, go to client workspace"
+            print "  " + self.clientPath
+            print
+            print "To submit, use \"p4 submit\" to write a new description,"
+            print "or \"p4 submit -i %s\" to use the one prepared by" \
+                  " \"git p4\"." % fileName
+            print "You can delete the file \"%s\" when finished." % fileName
+
+            if self.preserveUser and p4User and not self.p4UserIsMe(p4User):
+                print "To preserve change ownership by user %s, you must\n" \
+                      "do \"p4 change -f <change>\" after submitting and\n" \
+                      "edit the User field."
+            if pureRenameCopy:
+                print "After submitting, renamed files must be re-synced."
+                print "Invoke \"p4 sync -f\" on each of these files:"
+                for f in pureRenameCopy:
+                    print "  " + f
+
+            print
+            print "To revert the changes, use \"p4 revert ...\", and delete"
+            print "the submit template file \"%s\"" % fileName
+            if filesToAdd:
+                print "Since the commit adds new files, they must be deleted:"
+                for f in filesToAdd:
+                    print "  " + f
+            print
+            return True
+
         #
         # Let the user edit the change description, then submit it.
         #
@@ -1370,6 +1407,9 @@ class P4Submit(Command, P4UserMap):
 
             if self.dry_run:
                 print "Would create p4 label %s for tag" % name
+            elif self.prepare_p4_only:
+                print "Not creating p4 label %s for tag due to option" \
+                      " --prepare-p4-only" % name
             else:
                 p4_write_pipe(["label", "-i"], labelTemplate)
 
@@ -1510,6 +1550,10 @@ class P4Submit(Command, P4UserMap):
             if ok:
                 applied.append(commit)
             else:
+                if self.prepare_p4_only and i < last:
+                    print "Processing only the first commit due to option" \
+                          " --prepare-p4-only"
+                    break
                 if i < last:
                     quit = False
                     while True:
@@ -1531,6 +1575,8 @@ class P4Submit(Command, P4UserMap):
         chdir(self.oldWorkingDirectory)
 
         if self.dry_run:
+            pass
+        elif self.prepare_p4_only:
             pass
         elif len(commits) == len(applied):
             print "All commits applied!"
