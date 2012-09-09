@@ -525,6 +525,16 @@ static void mark_recent_complete_commits(unsigned long cutoff)
 	}
 }
 
+static int non_matching_ref(struct string_list_item *item, void *unused)
+{
+	if (item->util) {
+		item->util = NULL;
+		return 0;
+	}
+	else
+		return 1;
+}
+
 static void filter_refs(struct ref **refs, struct string_list *sought)
 {
 	struct ref **return_refs;
@@ -566,7 +576,7 @@ static void filter_refs(struct ref **refs, struct string_list *sought)
 					break;
 				else if (cmp == 0) { /* definitely have it */
 					return_refs[sought_pos] = ref;
-					sought->items[sought_pos++].string[0] = '\0';
+					sought->items[sought_pos++].util = "matched";
 					break;
 				}
 				else /* might have it; keep looking */
@@ -590,6 +600,7 @@ static void filter_refs(struct ref **refs, struct string_list *sought)
 		}
 		if (return_refs != fastarray)
 			free(return_refs);
+		filter_string_list(sought, 0, non_matching_ref, NULL);
 	}
 	*refs = newlist;
 }
@@ -1040,13 +1051,9 @@ int cmd_fetch_pack(int argc, const char **argv, const char *prefix)
 		 * Otherwise, 'git fetch remote no-such-ref' would
 		 * silently succeed without issuing an error.
 		 */
-		for (i = 0; i < sought.nr; i++) {
-			char *s = sought.items[i].string;
-			if (s && s[0]) {
-				error("no such remote ref %s", s);
-				ret = 1;
-			}
-		}
+		for (i = 0; i < sought.nr; i++)
+			error("no such remote ref %s", sought.items[i].string);
+		ret = 1;
 	}
 	while (ref) {
 		printf("%s %s\n",
