@@ -544,37 +544,36 @@ static void filter_refs(struct ref **refs, struct string_list *sought)
 
 	sought_pos = 0;
 	for (ref = *refs; ref; ref = next) {
+		int keep = 0;
 		next = ref->next;
 		if (!memcmp(ref->name, "refs/", 5) &&
 		    check_refname_format(ref->name + 5, 0))
 			; /* trash */
 		else if (args.fetch_all &&
-			 (!args.depth || prefixcmp(ref->name, "refs/tags/") )) {
+			 (!args.depth || prefixcmp(ref->name, "refs/tags/")))
+			keep = 1;
+		else {
+			while (sought_pos < sought->nr) {
+				int cmp = strcmp(ref->name, sought->items[sought_pos].string);
+				if (cmp < 0)
+					break; /* definitely do not have it */
+				else if (cmp == 0) {
+					keep = 1; /* definitely have it */
+					sought->items[sought_pos++].util = "matched";
+					break;
+				}
+				else
+					sought_pos++; /* might have it; keep looking */
+			}
+		}
+
+		if (keep) {
 			*newtail = ref;
 			ref->next = NULL;
 			newtail = &ref->next;
-			continue;
+		} else {
+			free(ref);
 		}
-		else {
-			int cmp = -1;
-			while (sought_pos < sought->nr) {
-				cmp = strcmp(ref->name, sought->items[sought_pos].string);
-				if (cmp < 0) /* definitely do not have it */
-					break;
-				else if (cmp == 0) { /* definitely have it */
-					sought->items[sought_pos++].util = "matched";
-					*newtail = ref;
-					ref->next = NULL;
-					newtail = &ref->next;
-					break;
-				}
-				else /* might have it; keep looking */
-					sought_pos++;
-			}
-			if (!cmp)
-				continue; /* we will link it later */
-		}
-		free(ref);
 	}
 
 	if (!args.fetch_all)
