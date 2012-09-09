@@ -1082,10 +1082,10 @@ static int compare_heads(const void *a, const void *b)
 struct ref *fetch_pack(struct fetch_pack_args *my_args,
 		       int fd[], struct child_process *conn,
 		       const struct ref *ref,
-		const char *dest,
-		int nr_heads,
-		char **heads,
-		char **pack_lockfile)
+		       const char *dest,
+		       int nr_heads,
+		       char **heads,
+		       char **pack_lockfile)
 {
 	struct stat st;
 	struct ref *ref_cpy;
