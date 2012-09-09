@@ -565,8 +565,8 @@ static void filter_refs(struct ref **refs, struct string_list *sought)
 				if (cmp < 0) /* definitely do not have it */
 					break;
 				else if (cmp == 0) { /* definitely have it */
-					sought->items[sought_pos].string[0] = '\0';
 					return_refs[sought_pos] = ref;
+					sought->items[sought_pos++].string[0] = '\0';
 					break;
 				}
 				else /* might have it; keep looking */
