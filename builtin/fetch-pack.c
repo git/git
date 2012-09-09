@@ -858,19 +858,6 @@ static struct ref *do_fetch_pack(int fd[2],
 	return ref;
 }
 
-static int remove_duplicates(struct string_list *sought)
-{
-	int src, dst;
-
-	if (!sought->nr)
-		return 0;
-
-	for (src = dst = 1; src < sought->nr; src++)
-		if (strcmp(sought->items[src].string, sought->items[dst-1].string))
-			sought->items[dst++] = sought->items[src];
-	return dst;
-}
-
 static int fetch_pack_config(const char *var, const char *value, void *cb)
 {
 	if (strcmp(var, "fetch.unpacklimit") == 0) {
@@ -1090,7 +1077,7 @@ struct ref *fetch_pack(struct fetch_pack_args *my_args,
 
 	if (sought->nr) {
 		sort_string_list(sought);
-		remove_duplicates(sought);
+		string_list_remove_duplicates(sought, 0);
 	}
 
 	if (!ref) {

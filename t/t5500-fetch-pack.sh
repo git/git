@@ -391,7 +391,7 @@ test_expect_success 'fetch mixed refs from cmdline and stdin' '
 test_expect_success 'test duplicate refs from stdin' '
 	(
 	cd client &&
-	test_must_fail git fetch-pack --stdin --no-progress .. <../input.dup
+	git fetch-pack --stdin --no-progress .. <../input.dup
 	) >output &&
 	cut -d " " -f 2 <output | sort >actual &&
 	test_cmp expect actual
