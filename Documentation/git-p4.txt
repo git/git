@@ -280,6 +280,13 @@ These options can be used to modify 'git p4 submit' behavior.
 	submit manually or revert.  This option always stops after the
 	first (oldest) commit.  Git tags are not exported to p4.
 
+--conflict=(ask|skip|quit)::
+	Conflicts can occur when applying a commit to p4.  When this
+	happens, the default behavior ("ask") is to prompt whether to
+	skip this commit and continue, or quit.  This option can be used
+	to bypass the prompt, causing conflicting commits to be automatically
+	skipped, or to quit trying to apply commits, without prompting.
+
 Rebase options
 ~~~~~~~~~~~~~~
 These options can be used to modify 'git p4 rebase' behavior.
@@ -529,6 +536,10 @@ git-p4.exportLabels::
 git-p4.labelExportRegexp::
 	Only p4 labels matching this regular expression will be exported. The
 	default value is '[a-zA-Z0-9_\-.]+$'.
+
+git-p4.conflict::
+	Specify submit behavior when a conflict with p4 is found, as per
+	--conflict.  The default behavior is 'ask'.
 
 IMPLEMENTATION DETAILS
 ----------------------

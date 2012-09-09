@@ -108,6 +108,69 @@ test_expect_success 'conflict on first of two commits, quit' '
 	)
 '
 
+test_expect_success 'conflict cli and config options' '
+	test_when_finished cleanup_git &&
+	git p4 clone --dest="$git" //depot &&
+	(
+		cd "$git" &&
+		git p4 submit --conflict=ask &&
+		git p4 submit --conflict=skip &&
+		git p4 submit --conflict=quit &&
+		test_expect_code 2 git p4 submit --conflict=foo &&
+		test_expect_code 2 git p4 submit --conflict &&
+		git config git-p4.conflict foo &&
+		test_expect_code 1 git p4 submit &&
+		git config --unset git-p4.conflict &&
+		git p4 submit
+	)
+'
+
+test_expect_success 'conflict on first of two commits, --conflict=skip' '
+	test_when_finished cleanup_git &&
+	git p4 clone --dest="$git" //depot &&
+	(
+		cd "$cli" &&
+		p4 open file1 &&
+		echo line9 >>file1 &&
+		p4 submit -d "line9 in file1"
+	) &&
+	(
+		cd "$git" &&
+		git config git-p4.skipSubmitEdit true &&
+		# this submit should cause a conflict
+		echo line10 >>file1 &&
+		git add file1 &&
+		git commit -m "line10 in file1 will conflict" &&
+		# but this commit is okay
+		test_commit "okay_commit_after_auto_skip" &&
+		test_expect_code 1 git p4 submit --conflict=skip >out &&
+		test_i18ngrep "Applied only the commits" out
+	)
+'
+
+test_expect_success 'conflict on first of two commits, --conflict=quit' '
+	test_when_finished cleanup_git &&
+	git p4 clone --dest="$git" //depot &&
+	(
+		cd "$cli" &&
+		p4 open file1 &&
+		echo line11 >>file1 &&
+		p4 submit -d "line11 in file1"
+	) &&
+	(
+		cd "$git" &&
+		git config git-p4.skipSubmitEdit true &&
+		# this submit should cause a conflict
+		echo line12 >>file1 &&
+		git add file1 &&
+		git commit -m "line12 in file1 will conflict" &&
+		# but this commit is okay
+		test_commit "okay_commit_after_auto_quit" &&
+		test_expect_code 1 git p4 submit --conflict=quit >out &&
+		test_i18ngrep "No commits applied" out
+	)
+'
+
 #
 # Cleanup after submit fail, all cases.  Some modifications happen
 # before trying to apply the patch.  Make sure these are unwound

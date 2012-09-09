@@ -844,6 +844,9 @@ class P4RollBack(Command):
         return True
 
 class P4Submit(Command, P4UserMap):
+
+    conflict_behavior_choices = ("ask", "skip", "quit")
+
     def __init__(self):
         Command.__init__(self)
         P4UserMap.__init__(self)
@@ -855,6 +858,8 @@ class P4Submit(Command, P4UserMap):
                 optparse.make_option("--export-labels", dest="exportLabels", action="store_true"),
                 optparse.make_option("--dry-run", "-n", dest="dry_run", action="store_true"),
                 optparse.make_option("--prepare-p4-only", dest="prepare_p4_only", action="store_true"),
+                optparse.make_option("--conflict", dest="conflict_behavior",
+                                     choices=self.conflict_behavior_choices)
         ]
         self.description = "Submit changes from git to the perforce depot."
         self.usage += " [name of git branch to submit into perforce depot]"
@@ -863,6 +868,7 @@ class P4Submit(Command, P4UserMap):
         self.preserveUser = gitConfig("git-p4.preserveUser").lower() == "true"
         self.dry_run = False
         self.prepare_p4_only = False
+        self.conflict_behavior = None
         self.isWindows = (platform.system() == "Windows")
         self.exportLabels = False
         self.p4HasMoveCommand = p4_has_command("move")
@@ -1445,6 +1451,16 @@ class P4Submit(Command, P4UserMap):
             if not self.canChangeChangelists():
                 die("Cannot preserve user names without p4 super-user or admin permissions")
 
+        # if not set from the command line, try the config file
+        if self.conflict_behavior is None:
+            val = gitConfig("git-p4.conflict")
+            if val:
+                if val not in self.conflict_behavior_choices:
+                    die("Invalid value '%s' for config git-p4.conflict" % val)
+            else:
+                val = "ask"
+            self.conflict_behavior = val
+
         if self.verbose:
             print "Origin branch is " + self.origin
 
@@ -1557,11 +1573,21 @@ class P4Submit(Command, P4UserMap):
                 if i < last:
                     quit = False
                     while True:
-                        print "What do you want to do?"
-                        response = raw_input("[s]kip this commit but apply"
-                                             " the rest, or [q]uit? ")
-                        if not response:
-                            continue
+                        # prompt for what to do, or use the option/variable
+                        if self.conflict_behavior == "ask":
+                            print "What do you want to do?"
+                            response = raw_input("[s]kip this commit but apply"
+                                                 " the rest, or [q]uit? ")
+                            if not response:
+                                continue
+                        elif self.conflict_behavior == "skip":
+                            response = "s"
+                        elif self.conflict_behavior == "quit":
+                            response = "q"
+                        else:
+                            die("Unknown conflict_behavior '%s'" %
+                                self.conflict_behavior)
+
                         if response[0] == "s":
                             print "Skipping this commit, but applying the rest"
                             break
