@@ -537,23 +537,10 @@ static int non_matching_ref(struct string_list_item *item, void *unused)
 
 static void filter_refs(struct ref **refs, struct string_list *sought)
 {
-	struct ref **return_refs;
 	struct ref *newlist = NULL;
 	struct ref **newtail = &newlist;
 	struct ref *ref, *next;
-	struct ref *fastarray[32];
 	int sought_pos;
-
-	if (sought->nr && !args.fetch_all) {
-		if (ARRAY_SIZE(fastarray) < sought->nr)
-			return_refs = xcalloc(sought->nr, sizeof(struct ref *));
-		else {
-			return_refs = fastarray;
-			memset(return_refs, 0, sizeof(struct ref *) * sought->nr);
-		}
-	}
-	else
-		return_refs = NULL;
 
 	sought_pos = 0;
 	for (ref = *refs; ref; ref = next) {
@@ -575,8 +562,10 @@ static void filter_refs(struct ref **refs, struct string_list *sought)
 				if (cmp < 0) /* definitely do not have it */
 					break;
 				else if (cmp == 0) { /* definitely have it */
-					return_refs[sought_pos] = ref;
 					sought->items[sought_pos++].util = "matched";
+					*newtail = ref;
+					ref->next = NULL;
+					newtail = &ref->next;
 					break;
 				}
 				else /* might have it; keep looking */
@@ -588,20 +577,8 @@ static void filter_refs(struct ref **refs, struct string_list *sought)
 		free(ref);
 	}
 
-	if (!args.fetch_all) {
-		int i;
-		for (i = 0; i < sought->nr; i++) {
-			ref = return_refs[i];
-			if (ref) {
-				*newtail = ref;
-				ref->next = NULL;
-				newtail = &ref->next;
-			}
-		}
-		if (return_refs != fastarray)
-			free(return_refs);
+	if (!args.fetch_all)
 		filter_string_list(sought, 0, non_matching_ref, NULL);
-	}
 	*refs = newlist;
 }
 
