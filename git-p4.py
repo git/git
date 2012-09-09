@@ -1262,6 +1262,7 @@ class P4Submit(Command, P4UserMap):
 
         if self.edit_template(fileName):
             # read the edited message and submit
+            ret = True
             tmpFile = open(fileName, "rb")
             message = tmpFile.read()
             tmpFile.close()
@@ -1285,6 +1286,7 @@ class P4Submit(Command, P4UserMap):
 
         else:
             # skip this patch
+            ret = False
             print "Submission cancelled, undoing p4 changes."
             for f in editedFiles:
                 p4_revert(f)
@@ -1293,7 +1295,7 @@ class P4Submit(Command, P4UserMap):
                 os.remove(f)
 
         os.remove(fileName)
-        return True  # success
+        return ret
 
     # Export git tags as p4 labels. Create a p4 label and then tag
     # with that.

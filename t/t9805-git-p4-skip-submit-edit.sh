@@ -38,7 +38,7 @@ test_expect_success 'no config, unedited, say no' '
 		cd "$git" &&
 		echo line >>file1 &&
 		git commit -a -m "change 3 (not really)" &&
-		printf "bad response\nn\n" | git p4 submit &&
+		printf "bad response\nn\n" | test_expect_code 1 git p4 submit &&
 		p4 changes //depot/... >wc &&
 		test_line_count = 2 wc
 	)
