@@ -403,7 +403,7 @@ test_expect_success 'set up tests of missing reference' '
 	EOF
 '
 
-test_expect_failure 'test lonely missing ref' '
+test_expect_success 'test lonely missing ref' '
 	(
 		cd client &&
 		test_must_fail git fetch-pack --no-progress .. refs/heads/xyzzy
