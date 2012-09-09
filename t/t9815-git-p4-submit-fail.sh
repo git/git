@@ -240,6 +240,125 @@ test_expect_success 'cleanup rename after submit fail' '
 	)
 '
 
+#
+# Cleanup after deciding not to submit during editTemplate.  This
+# involves unwinding more work, because files have been added, deleted
+# and chmod-ed now.  Same approach as above.
+#
+
+test_expect_success 'cleanup edit after submit cancel' '
+	test_when_finished cleanup_git &&
+	git p4 clone --dest="$git" //depot &&
+	(
+		cd "$git" &&
+		echo line >>text &&
+		git add text &&
+		git commit -m text &&
+		echo n | test_expect_code 1 git p4 submit &&
+		git reset --hard HEAD^
+	) &&
+	(
+		cd "$cli" &&
+		! p4 fstat -T action text &&
+		test_cmp "$git"/text text
+	)
+'
+
+test_expect_success 'cleanup add after submit cancel' '
+	test_when_finished cleanup_git &&
+	git p4 clone --dest="$git" //depot &&
+	(
+		cd "$git" &&
+		echo line >textnew &&
+		git add textnew &&
+		git commit -m textnew &&
+		echo n | test_expect_code 1 git p4 submit
+	) &&
+	(
+		cd "$cli" &&
+		test_path_is_missing textnew &&
+		p4 fstat -T action textnew 2>&1 | grep "no such file"
+	)
+'
+
+test_expect_success 'cleanup delete after submit cancel' '
+	test_when_finished cleanup_git &&
+	git p4 clone --dest="$git" //depot &&
+	(
+		cd "$git" &&
+		git rm text &&
+		git commit -m "rm text" &&
+		echo n | test_expect_code 1 git p4 submit
+	) &&
+	(
+		cd "$cli" &&
+		test_path_is_file text &&
+		! p4 fstat -T action text
+	)
+'
+
+test_expect_success 'cleanup copy after submit cancel' '
+	test_when_finished cleanup_git &&
+	git p4 clone --dest="$git" //depot &&
+	(
+		cd "$git" &&
+		cp text text2 &&
+		git add text2 &&
+		git commit -m text2 &&
+		git config git-p4.detectCopies true &&
+		git config git-p4.detectCopiesHarder true &&
+		git diff-tree -r -C --find-copies-harder HEAD | grep text2 | grep C100 &&
+		echo n | test_expect_code 1 git p4 submit
+	) &&
+	(
+		cd "$cli" &&
+		test_path_is_missing text2 &&
+		p4 fstat -T action text2 2>&1 | grep "no such file"
+	)
+'
+
+test_expect_success 'cleanup rename after submit cancel' '
+	test_when_finished cleanup_git &&
+	git p4 clone --dest="$git" //depot &&
+	(
+		cd "$git" &&
+		git mv text text2 &&
+		git commit -m text2 &&
+		git config git-p4.detectRenames true &&
+		git diff-tree -r -M HEAD | grep text2 | grep R100 &&
+		echo n | test_expect_code 1 git p4 submit
+	) &&
+	(
+		cd "$cli" &&
+		test_path_is_missing text2 &&
+		p4 fstat -T action text2 2>&1 | grep "no such file"
+		test_path_is_file text &&
+		! p4 fstat -T action text
+	)
+'
+
+test_expect_success 'cleanup chmod after submit cancel' '
+	test_when_finished cleanup_git &&
+	git p4 clone --dest="$git" //depot &&
+	(
+		cd "$git" &&
+		chmod u+x text &&
+		chmod u-x text+x &&
+		git add text text+x &&
+		git commit -m "chmod texts" &&
+		echo n | test_expect_code 1 git p4 submit
+	) &&
+	(
+		cd "$cli" &&
+		test_path_is_file text &&
+		! p4 fstat -T action text &&
+		stat --format=%A text | egrep ^-r-- &&
+		test_path_is_file text+x &&
+		! p4 fstat -T action text+x &&
+		stat --format=%A text+x | egrep ^-r-x
+	)
+'
+
 test_expect_success 'kill p4d' '
 	kill_p4d
 '

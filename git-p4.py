@@ -1304,6 +1304,8 @@ class P4Submit(Command, P4UserMap):
             for f in filesToAdd:
                 p4_revert(f)
                 os.remove(f)
+            for f in filesToDelete:
+                p4_revert(f)
 
         os.remove(fileName)
         return ret
