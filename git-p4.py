@@ -3028,7 +3028,7 @@ def main():
 
     args = sys.argv[2:]
 
-    options.append(optparse.make_option("--verbose", dest="verbose", action="store_true"))
+    options.append(optparse.make_option("--verbose", "-v", dest="verbose", action="store_true"))
     if cmd.needsGit:
         options.append(optparse.make_option("--git-dir", dest="gitdir"))
 
