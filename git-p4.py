@@ -1200,8 +1200,6 @@ class P4Submit(Command, P4UserMap):
         if not patch_succeeded:
             for f in editedFiles:
                 p4_revert(f)
-            for f in filesToAdd:
-                os.remove(f)
             return False
 
         system(applyPatchCmd)

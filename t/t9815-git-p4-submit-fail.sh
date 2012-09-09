@@ -108,6 +108,138 @@ test_expect_success 'conflict on first of two commits, quit' '
 	)
 '
 
+#
+# Cleanup after submit fail, all cases.  Some modifications happen
+# before trying to apply the patch.  Make sure these are unwound
+# properly.  Put each one in a diff along with something that will
+# obviously conflict.  Make sure it is back to normal after.
+#
+
+test_expect_success 'cleanup edit p4 populate' '
+	(
+		cd "$cli" &&
+		echo text file >text &&
+		p4 add text &&
+		echo text+x file >text+x &&
+		chmod 755 text+x &&
+		p4 add text+x &&
+		p4 submit -d "populate p4"
+	)
+'
+
+setup_conflict() {
+	# clone before modifying file1 to force it to conflict
+	test_when_finished cleanup_git &&
+	git p4 clone --dest="$git" //depot &&
+	# ticks outside subshells
+	test_tick &&
+	(
+		cd "$cli" &&
+		p4 open file1 &&
+		echo $test_tick >>file1 &&
+		p4 submit -d "$test_tick in file1"
+	) &&
+	test_tick &&
+	(
+		cd "$git" &&
+		git config git-p4.skipSubmitEdit true &&
+		# easy conflict
+		echo $test_tick >>file1 &&
+		git add file1
+		# caller will add more and submit
+	)
+}
+
+test_expect_success 'cleanup edit after submit fail' '
+	setup_conflict &&
+	(
+		cd "$git" &&
+		echo another line >>text &&
+		git add text &&
+		git commit -m "conflict" &&
+		test_expect_code 1 git p4 submit
+	) &&
+	(
+		cd "$cli" &&
+		# make sure it is not open
+		! p4 fstat -T action text
+	)
+'
+
+test_expect_success 'cleanup add after submit fail' '
+	setup_conflict &&
+	(
+		cd "$git" &&
+		echo new file >textnew &&
+		git add textnew &&
+		git commit -m "conflict" &&
+		test_expect_code 1 git p4 submit
+	) &&
+	(
+		cd "$cli" &&
+		# make sure it is not there
+		# and that p4 thinks it is not added
+		#   P4 returns 0 both for "not there but added" and
+		#   "not there", so grep.
+		test_path_is_missing textnew &&
+		p4 fstat -T action textnew 2>&1 | grep "no such file"
+	)
+'
+
+test_expect_success 'cleanup delete after submit fail' '
+	setup_conflict &&
+	(
+		cd "$git" &&
+		git rm text+x &&
+		git commit -m "conflict" &&
+		test_expect_code 1 git p4 submit
+	) &&
+	(
+		cd "$cli" &&
+		# make sure it is there
+		test_path_is_file text+x &&
+		! p4 fstat -T action text+x
+	)
+'
+
+test_expect_success 'cleanup copy after submit fail' '
+	setup_conflict &&
+	(
+		cd "$git" &&
+		cp text text2 &&
+		git add text2 &&
+		git commit -m "conflict" &&
+		git config git-p4.detectCopies true &&
+		git config git-p4.detectCopiesHarder true &&
+		# make sure setup is okay
+		git diff-tree -r -C --find-copies-harder HEAD | grep text2 | grep C100 &&
+		test_expect_code 1 git p4 submit
+	) &&
+	(
+		cd "$cli" &&
+		test_path_is_missing text2 &&
+		p4 fstat -T action text2 2>&1 | grep "no such file"
+	)
+'
+
+test_expect_success 'cleanup rename after submit fail' '
+	setup_conflict &&
+	(
+		cd "$git" &&
+		git mv text text2 &&
+		git commit -m "conflict" &&
+		git config git-p4.detectRenames true &&
+		# make sure setup is okay
+		git diff-tree -r -M HEAD | grep text2 | grep R100 &&
+		test_expect_code 1 git p4 submit
+	) &&
+	(
+		cd "$cli" &&
+		test_path_is_missing text2 &&
+		p4 fstat -T action text2 2>&1 | grep "no such file"
+	)
+'
+
 test_expect_success 'kill p4d' '
 	kill_p4d
 '
