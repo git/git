@@ -1,6 +1,8 @@
 #ifndef FETCH_PACK_H
 #define FETCH_PACK_H
 
+#include "string-list.h"
+
 struct fetch_pack_args {
 	const char *uploadpack;
 	int unpacklimit;
@@ -21,8 +23,7 @@ struct ref *fetch_pack(struct fetch_pack_args *args,
 		       int fd[], struct child_process *conn,
 		       const struct ref *ref,
 		       const char *dest,
-		       int nr_heads,
-		       char **heads,
+		       struct string_list *sought,
 		       char **pack_lockfile);
 
 #endif
