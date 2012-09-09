@@ -396,7 +396,7 @@ static int fetch_indices(struct walker *walker, struct alt_base *repo)
 	return ret;
 }
 
-static int fetch_pack(struct walker *walker, struct alt_base *repo, unsigned char *sha1)
+static int http_fetch_pack(struct walker *walker, struct alt_base *repo, unsigned char *sha1)
 {
 	struct packed_git *target;
 	int ret;
@@ -524,7 +524,7 @@ static int fetch(struct walker *walker, unsigned char *sha1)
 	if (!fetch_object(walker, altbase, sha1))
 		return 0;
 	while (altbase) {
-		if (!fetch_pack(walker, altbase, sha1))
+		if (!http_fetch_pack(walker, altbase, sha1))
 			return 0;
 		fetch_alternates(walker, data->alt->base);
 		altbase = altbase->next;
