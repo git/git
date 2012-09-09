@@ -269,6 +269,10 @@ These options can be used to modify 'git p4 submit' behavior.
 	Export tags from git as p4 labels. Tags found in git are applied
 	to the perforce working directory.
 
+--dry-run, -n::
+	Show just what commits would be submitted to p4; do not change
+	state in git or p4.
+
 Rebase options
 ~~~~~~~~~~~~~~
 These options can be used to modify 'git p4 rebase' behavior.

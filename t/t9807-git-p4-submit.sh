@@ -54,6 +54,47 @@ test_expect_success 'submit --origin' '
 	)
 '
 
+test_expect_success 'submit --dry-run' '
+	test_when_finished cleanup_git &&
+	git p4 clone --dest="$git" //depot &&
+	(
+		cd "$git" &&
+		test_commit "dry-run1" &&
+		test_commit "dry-run2" &&
+		git p4 submit --dry-run >out &&
+		test_i18ngrep "Would apply" out
+	) &&
+	(
+		cd "$cli" &&
+		test_path_is_missing "dry-run1.t" &&
+		test_path_is_missing "dry-run2.t"
+	)
+'
+
+test_expect_success 'submit --dry-run --export-labels' '
+	test_when_finished cleanup_git &&
+	git p4 clone --dest="$git" //depot &&
+	(
+		cd "$git" &&
+		echo dry-run1 >dry-run1 &&
+		git add dry-run1 &&
+		git commit -m "dry-run1" dry-run1 &&
+		git config git-p4.skipSubmitEdit true &&
+		git p4 submit &&
+		echo dry-run2 >dry-run2 &&
+		git add dry-run2 &&
+		git commit -m "dry-run2" dry-run2 &&
+		git tag -m "dry-run-tag1" dry-run-tag1 HEAD^ &&
+		git p4 submit --dry-run --export-labels >out &&
+		test_i18ngrep "Would create p4 label" out
+	) &&
+	(
+		cd "$cli" &&
+		test_path_is_file "dry-run1" &&
+		test_path_is_missing "dry-run2"
+	)
+'
+
 test_expect_success 'submit with allowSubmit' '
 	test_when_finished cleanup_git &&
 	git p4 clone --dest="$git" //depot &&
