@@ -1088,7 +1088,10 @@ class P4Submit(Command, P4UserMap):
                 return False
 
     def applyCommit(self, id):
-        print "Applying %s" % (read_pipe("git log --max-count=1 --pretty=oneline %s" % id))
+        """Apply one commit, return True if it succeeded."""
+
+        print "Applying", read_pipe(["git", "show", "-s",
+                                     "--format=format:%h %s", id])
 
         (p4User, gitEmail) = self.p4UserForCommit(id)
 
@@ -1206,7 +1209,7 @@ class P4Submit(Command, P4UserMap):
                     p4_revert(f)
                 for f in filesToAdd:
                     os.remove(f)
-                return
+                return False
             elif response == "a":
                 os.system(applyPatchCmd)
                 if len(filesToAdd) > 0:
@@ -1312,6 +1315,7 @@ class P4Submit(Command, P4UserMap):
                 os.remove(f)
 
         os.remove(fileName)
+        return True  # success
 
     # Export git tags as p4 labels. Create a p4 label and then tag
     # with that.
@@ -1487,20 +1491,36 @@ class P4Submit(Command, P4UserMap):
         if gitConfig("git-p4.detectCopiesHarder", "--bool") == "true":
             self.diffOpts += " --find-copies-harder"
 
-        while len(commits) > 0:
-            commit = commits[0]
-            commits = commits[1:]
-            self.applyCommit(commit)
+        applied = []
+        for commit in commits:
+            ok = self.applyCommit(commit)
+            if ok:
+                applied.append(commit)
 
-        if len(commits) == 0:
-            print "All changes applied!"
-            chdir(self.oldWorkingDirectory)
+        chdir(self.oldWorkingDirectory)
+
+        if len(commits) == len(applied):
+            print "All commits applied!"
 
             sync = P4Sync()
             sync.run([])
 
             rebase = P4Rebase()
             rebase.rebase()
+
+        else:
+            if len(applied) == 0:
+                print "No commits applied."
+            else:
+                print "Applied only the commits marked with '*':"
+                for c in commits:
+                    if c in applied:
+                        star = "*"
+                    else:
+                        star = " "
+                    print star, read_pipe(["git", "show", "-s",
+                                           "--format=format:%h %s",  c])
+                print "You will have to do 'git p4 sync' and rebase."
 
         if gitConfig("git-p4.exportLabels", "--bool") == "true":
             self.exportLabels = True
@@ -1511,6 +1531,10 @@ class P4Submit(Command, P4UserMap):
 
             missingGitTags = gitTags - p4Labels
             self.exportGitTags(missingGitTags)
+
+        # exit with error unless everything applied perfecly
+        if len(commits) != len(applied):
+                sys.exit(1)
 
         return True
 
