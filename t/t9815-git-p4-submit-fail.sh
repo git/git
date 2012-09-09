@@ -18,7 +18,7 @@ test_expect_success 'init depot' '
 	)
 '
 
-test_expect_success 'conflict on one commit, skip' '
+test_expect_success 'conflict on one commit' '
 	test_when_finished cleanup_git &&
 	git p4 clone --dest="$git" //depot &&
 	(
@@ -34,12 +34,12 @@ test_expect_success 'conflict on one commit, skip' '
 		echo line3 >>file1 &&
 		git add file1 &&
 		git commit -m "line3 in file1 will conflict" &&
-		echo s | test_expect_code 1 git p4 submit >out &&
+		test_expect_code 1 git p4 submit >out &&
 		test_i18ngrep "No commits applied" out
 	)
 '
 
-test_expect_success 'conflict on second of two commits, skip' '
+test_expect_success 'conflict on second of two commits' '
 	test_when_finished cleanup_git &&
 	git p4 clone --dest="$git" //depot &&
 	(
@@ -57,7 +57,7 @@ test_expect_success 'conflict on second of two commits, skip' '
 		echo line4 >>file1 &&
 		git add file1 &&
 		git commit -m "line4 in file1 will conflict" &&
-		echo s | test_expect_code 1 git p4 submit >out &&
+		test_expect_code 1 git p4 submit >out &&
 		test_i18ngrep "Applied only the commits" out
 	)
 '
@@ -82,6 +82,29 @@ test_expect_success 'conflict on first of two commits, skip' '
 		test_commit "okay_commit_after_skip" &&
 		echo s | test_expect_code 1 git p4 submit >out &&
 		test_i18ngrep "Applied only the commits" out
+	)
+'
+
+test_expect_success 'conflict on first of two commits, quit' '
+	test_when_finished cleanup_git &&
+	git p4 clone --dest="$git" //depot &&
+	(
+		cd "$cli" &&
+		p4 open file1 &&
+		echo line7 >>file1 &&
+		p4 submit -d "line7 in file1"
+	) &&
+	(
+		cd "$git" &&
+		git config git-p4.skipSubmitEdit true &&
+		# this submit should cause a conflict
+		echo line8 >>file1 &&
+		git add file1 &&
+		git commit -m "line8 in file1 will conflict" &&
+		# but this commit is okay
+		test_commit "okay_commit_after_quit" &&
+		echo q | test_expect_code 1 git p4 submit >out &&
+		test_i18ngrep "No commits applied" out
 	)
 '
 

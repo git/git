@@ -1198,17 +1198,11 @@ class P4Submit(Command, P4UserMap):
                     patch_succeeded = True
 
         if not patch_succeeded:
-            print "What do you want to do?"
-            response = "x"
-            while response != "s":
-                response = raw_input("[s]kip this patch ")
-            if response == "s":
-                print "Skipping! Good luck with the next patches..."
-                for f in editedFiles:
-                    p4_revert(f)
-                for f in filesToAdd:
-                    os.remove(f)
-                return False
+            for f in editedFiles:
+                p4_revert(f)
+            for f in filesToAdd:
+                os.remove(f)
+            return False
 
         system(applyPatchCmd)
 
@@ -1475,11 +1469,34 @@ class P4Submit(Command, P4UserMap):
         if gitConfig("git-p4.detectCopiesHarder", "--bool") == "true":
             self.diffOpts += " --find-copies-harder"
 
+        #
+        # Apply the commits, one at a time.  On failure, ask if should
+        # continue to try the rest of the patches, or quit.
+        #
         applied = []
-        for commit in commits:
+        last = len(commits) - 1
+        for i, commit in enumerate(commits):
             ok = self.applyCommit(commit)
             if ok:
                 applied.append(commit)
+            else:
+                if i < last:
+                    quit = False
+                    while True:
+                        print "What do you want to do?"
+                        response = raw_input("[s]kip this commit but apply"
+                                             " the rest, or [q]uit? ")
+                        if not response:
+                            continue
+                        if response[0] == "s":
+                            print "Skipping this commit, but applying the rest"
+                            break
+                        if response[0] == "q":
+                            print "Quitting"
+                            quit = True
+                            break
+                    if quit:
+                        break
 
         chdir(self.oldWorkingDirectory)
 
