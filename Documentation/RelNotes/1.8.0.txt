@@ -165,43 +165,5 @@ to them for details).
    did not advertise that they are available.  fetch-pack has been
    fixed not to do so.
 
- * The reflog entries left by "git rebase" and "git rebase -i" were
-   inconsistent (the interactive one gave an abbreviated object name).
-   (merge 1af221e mg/rebase-i-onto-reflog-in-full later to maint).
-
- * When the user exports a non-default IFS without HT, scripts that
-   rely on being able to parse "ls-files -s | while read a b c..."
-   start to fail.  Protect them from such a misconfiguration.
-   (merge 785063e jc/maint-protect-sh-from-ifs later to maint).
-
- * "git prune" without "-v" used to warn about leftover temporary
-   files (which is an indication of an earlier aborted operation).
-   (merge 90b29cb bc/prune-info later to maint).
-
- * When "git push" triggered the automatic gc on the receiving end, a
-   message from "git prune" that said it was removing cruft leaked to
-   the standard output, breaking the communication protocol.
-   (merge 4b7f2fa bc/receive-pack-stdout-protection later to maint).
-
- * "git diff" had a confusion between taking data from a path in the
-   working tree and taking data from an object that happens to have
-   name 0{40} recorded in a tree.
-   (merge c479d14 jk/maint-null-in-trees later to maint).
-
  * The output from "git diff -B" for a file that ends with an
    incomplete line did not put "\ No newline..." on a line of its own.
-
- * "git send-email" did not unquote encoded words that appear on the
-   header correctly, and lost "_" from strings.
-   (merge b622d4d tr/maint-send-email-2047 later to maint).
-
- * When the user gives an argument that can be taken as both a
-   revision name and a pathname without disambiguating with "--", we
-   used to give a help message "Use '--' to separate".  The message
-   has been clarified to show where that '--' goes on the command
-   line.
-   (merge 4d4b573 mm/die-with-dashdash-help later to maint).
-
- * "gitweb" when used with PATH_INFO failed to notice directories with
-   SP (and other characters that need URL-style quoting) in them.
-   (merge cacfc09 js/gitweb-path-info-unquote later to maint).
