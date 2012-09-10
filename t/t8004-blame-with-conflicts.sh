@@ -66,8 +66,8 @@ test_expect_success \
 	git blame file2
 '
 
-test_expect_success 'blame runs on conflicted file in stages 1,3' '
-	git blame file1
+test_expect_success 'blame does not crash with conflicted file in stages 1,3' '
+	test_must_fail git blame file1
 '
 
 test_done
