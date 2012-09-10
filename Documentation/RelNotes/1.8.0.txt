@@ -15,6 +15,10 @@ preference configuration variable "push.default" to change this, and
 "git push" will warn about the upcoming change until you set this
 variable.
 
+"git branch --set-upstream" is deprecated and may be removed in a
+relatively distant future.  "git branch [-u|--set-upstream-to]" has
+been introduced with a saner order of arguments.
+
 
 Updates since v1.7.12
 ---------------------
@@ -23,6 +27,16 @@ UI, Workflows & Features
 
  * A credential helper for Win32 to allow access to the keychain of
    the logged-in user has been added.
+
+ * A credential helper to allow access to the Gnome keyring has been
+   added.
+
+ * It was tempting to say "git branch --set-upstream origin/master",
+   but that tells Git to arrange the local branch "origin/master" to
+   integrate with the currently checked out branch, which is highly
+   unlikely what the user meant.  The option is deprecated; use the
+   new "--set-upstream-to" (with a short-and-sweet "-u") option
+   instead.
 
  * "git cherry-pick" learned the "--allow-empty-message" option to
    allow it to replay a commit without any log message.
@@ -73,6 +87,16 @@ Fixes since v1.7.12
 Unless otherwise noted, all the fixes since v1.7.12 in the
 maintenance track are contained in this release (see release notes
 to them for details).
+
+ * "git cherry-pick A C B" used to replay changes in A and then B and
+   then C if these three commits had committer timestamps in that
+   order, which is not what the user who said "A C B" naturally
+   expects.
+   (merge a73e22e mz/cherry-pick-cmdline-order later to maint).
+
+ * "git show --quiet" ought to be a synonym for "git show -s", but
+   wasn't.
+   (merge f9c75d8 jk/maint-quiet-is-synonym-to-s-in-log later to maint).
 
  * "git p4", when "--use-client-spec" and "--detect-branches" are used
    together, misdetected branches.
