@@ -841,6 +841,19 @@ test_expect_success $PREREQ '--compose adds MIME for utf8 subject' '
 	grep "^Subject: =?UTF-8?q?utf8-s=C3=BCbj=C3=ABct?=" msgtxt1
 '
 
+test_expect_success $PREREQ 'utf8 author is correctly passed on' '
+	clean_fake_sendmail &&
+	test_commit weird_author &&
+	test_when_finished "git reset --hard HEAD^" &&
+	git commit --amend --author "Füñný Nâmé <odd_?=mail@example.com>" &&
+	git format-patch --stdout -1 >funny_name.patch &&
+	git send-email --from="Example <nobody@example.com>" \
+	  --to=nobody@example.com \
+	  --smtp-server="$(pwd)/fake.sendmail" \
+	  funny_name.patch &&
+	grep "^From: Füñný Nâmé <odd_?=mail@example.com>" msgtxt1
+'
+
 test_expect_success $PREREQ 'detects ambiguous reference/file conflict' '
 	echo master > master &&
 	git add master &&

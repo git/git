@@ -4,7 +4,8 @@ Git v1.7.11.6 Release Notes
 Fixes since v1.7.11.5
 ---------------------
 
-This is primarily documentation and low-impact code clarification.
+This consists primarily of documentation updates and low-impact code
+clarification and bugfixes.
 
  - "ciabot" script (in contrib/) has been updated with extensive
    documentation.
@@ -32,3 +33,30 @@ This is primarily documentation and low-impact code clarification.
  - "git commit --amend" let the user edit the log message and then
    died when the human-readable committer name was given
    insufficiently by getpwent(3).
+
+ - The reflog entries left by "git rebase" and "git rebase -i" were
+   inconsistent (the interactive one gave an abbreviated object name).
+
+ - When the user exports a non-default IFS without HT, scripts that
+   rely on being able to parse "ls-files -s | while read a b c..."
+   started to fail.  Protect them from such a misconfiguration.
+
+ - When "git push" triggered the automatic gc on the receiving end, a
+   message from "git prune" that said it was removing cruft leaked to
+   the standard output, breaking the communication protocol.
+
+ - "git diff" had a confusion between taking data from a path in the
+   working tree and taking data from an object that happens to have
+   name 0{40} recorded in a tree.
+
+ - "git send-email" did not unquote encoded words that appear on the
+   header correctly, and lost "_" from strings.
+
+ - When the user gives an argument that can be taken as both a
+   revision name and a pathname without disambiguating with "--", we
+   used to give a help message "Use '--' to separate".  The message
+   has been clarified to show where that '--' goes on the command
+   line.
+
+ - "gitweb" when used with PATH_INFO failed to notice directories with
+   SP (and other characters that need URL-style quoting) in them.
