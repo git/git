@@ -1,16 +1,16 @@
 To: git@vger.kernel.org
 Bcc: lwn@lwn.net
-Subject: What's cooking in git.git (Sep 2012, #02; Fri, 7)
-X-master-at: 0ce986446163b37c7f663ce7a408e7f94c31ba63
-X-next-at: 6ddb849836fa53f9ed36fe74e7f1caf18e635160
+Subject: What's cooking in git.git (Sep 2012, #03; Mon, 10)
+X-master-at: 682ce8bb37414afe87515123fc6c26f21dd35b15
+X-next-at: 5f38766e5791393ed68fd2877004482ad9e34352
 
-What's cooking in git.git (Sep 2012, #02; Fri, 7)
+What's cooking in git.git (Sep 2012, #03; Mon, 10)
 --------------------------------------------------
 
 Here are the topics that have been cooking.  Commits prefixed with '-' are
 only in 'pu' (proposed updates) while commits prefixed with '+' are in 'next'.
 
-The fourth batch of topics have graduated to 'master'.
+The fifth batch of topics have started graduating to 'master'.
 
 I'm planning to keep this cycle reasonably short and aim for tagging
 the result as 1.8.0 at the end of 9th week, on October 21st, after
@@ -23,257 +23,141 @@ repositories listed at
     http://git-blame.blogspot.com/p/git-public-repositories.html
 
 --------------------------------------------------
-[Graduated to "master"]
-
-* jc/apply-binary-p0 (2012-08-24) 1 commit
-  (merged to 'next' on 2012-08-28 at 6fa690c)
- + apply: compute patch->def_name correctly under -p0
-
-"git apply -p0" did not parse pathnames on "diff --git" line
-correctly.  This caused patches that had pathnames in no other
-places to be mistakenly rejected (most notably, binary patch that
-does not rename nor change mode).  Textual patches, renames or
-mode changes have preimage and postimage pathnames in different
-places in a form that can be parsed unambiguously and did not suffer
-from this problem.
-
-* jc/dotdot-is-parent-directory (2012-08-23) 1 commit
-  (merged to 'next' on 2012-08-28 at 2f2ae87)
- + specifying ranges: we did not mean to make ".." an empty set
-
-"git log .." errored out saying it is both rev range and a path when
-there is no disambiguating "--" is on the command line.  Update the
-command line parser to interpret ".." as a path in such a case.
-
-* jc/maint-doc-checkout-b-always-takes-branch-name (2012-08-26) 1 commit
-  (merged to 'next' on 2012-08-29 at e0d0f5c)
- + doc: "git checkout -b/-B/--orphan" always takes a branch name
-
-The synopsis said "checkout [-B branch]" to make it clear the branch
-name is a parameter to the option, but the heading for the option
-description was "-B::", not "-B branch::", making the documentation
-misleading.  There may be room in documentation pages of other
-commands for similar improvements (hint, hint).
-
-* jk/config-warn-on-inaccessible-paths (2012-08-21) 4 commits
-  (merged to 'next' on 2012-08-24 at 7470bd6)
- + warn_on_inaccessible(): a helper to warn on inaccessible paths
- + attr: warn on inaccessible attribute files
- + gitignore: report access errors of exclude files
- + config: warn on inaccessible files
-
-When looking for $HOME/.gitconfig etc., it is OK if we cannot read
-them because they do not exist, but we did not diagnose existing
-files that we cannot read.
-
-* jk/maint-http-half-auth-push (2012-08-27) 8 commits
-  (merged to 'next' on 2012-08-29 at 0ed32f5)
- + http: prompt for credentials on failed POST
- + http: factor out http error code handling
- + t: test http access to "half-auth" repositories
- + t: test basic smart-http authentication
- + t/lib-httpd: recognize */smart/* repos as smart-http
- + t/lib-httpd: only route auth/dumb to dumb repos
- + t5550: factor out http auth setup
- + t5550: put auth-required repo in auth/dumb
-
-Pushing to smart HTTP server with recent Git fails without having
-the username in the URL to force authentication, if the server is
-configured to allow GET anonymously, while requiring authentication
-for POST.
-
-* kk/maint-for-each-ref-multi-sort (2012-08-21) 2 commits
-  (merged to 'next' on 2012-08-24 at 28a5db4)
- + for-each-ref: Fix sort with multiple keys
- + t6300: test sort with multiple keys
-
-"git for-each-ref" did not currectly support more than one --sort
-option.
-
-* lt/commit-tree-guess-utf-8 (2012-08-21) 1 commit
-  (merged to 'next' on 2012-08-24 at d16ac69)
- + commit/commit-tree: correct latin1 to utf-8
-
-Teaches "git commit" and "git commit-tree" the "we are told to use
-utf-8 in log message, but this does not look like utf-8---attempt to
-pass it through convert-from-latin1-to-utf8 and see if it makes
-sense" heuristics "git mailinfo" already uses.
-
-* nd/am-i18n-fix (2012-08-22) 1 commit
-  (merged to 'next' on 2012-08-24 at f8e9a63)
- + am: quote string for translation before passing to eval_gettextln
-
-"git am" wasn't marked up for i18n properly.
-
-* nd/branch-v-alignment (2012-08-27) 1 commit
-  (merged to 'next' on 2012-08-29 at 5c0d226)
- + branch -v: align even when branch names are in UTF-8
-
-Output from "git branch -v" contains "(no branch)" that could be
-localized, but the code to align it along with the names of branches
-were counting in bytes, not in display columns.
-
-* nd/i18n-parseopt-help (2012-08-22) 66 commits
-  (merged to 'next' on 2012-08-24 at 2a04ce0)
- + Use imperative form in help usage to describe an action
- + Reduce translations by using same terminologies
- + i18n: write-tree: mark parseopt strings for translation
- + i18n: verify-tag: mark parseopt strings for translation
- + i18n: verify-pack: mark parseopt strings for translation
- + i18n: update-server-info: mark parseopt strings for translation
- + i18n: update-ref: mark parseopt strings for translation
- + i18n: update-index: mark parseopt strings for translation
- + i18n: tag: mark parseopt strings for translation
- + i18n: symbolic-ref: mark parseopt strings for translation
- + i18n: show-ref: mark parseopt strings for translation
- + i18n: show-branch: mark parseopt strings for translation
- + i18n: shortlog: mark parseopt strings for translation
- + i18n: rm: mark parseopt strings for translation
- + i18n: revert, cherry-pick: mark parseopt strings for translation
- + i18n: rev-parse: mark parseopt strings for translation
- + i18n: reset: mark parseopt strings for translation
- + i18n: rerere: mark parseopt strings for translation
- + i18n: status: mark parseopt strings for translation
- + i18n: replace: mark parseopt strings for translation
- + i18n: remote: mark parseopt strings for translation
- + i18n: read-tree: mark parseopt strings for translation
- + i18n: push: mark parseopt strings for translation
- + i18n: prune: mark parseopt strings for translation
- + i18n: prune-packed: mark parseopt strings for translation
- + i18n: pack-refs: mark parseopt strings for translation
- + i18n: pack-objects: mark parseopt strings for translation
- + i18n: notes: mark parseopt strings for translation
- + i18n: name-rev: mark parseopt strings for translation
- + i18n: mv: mark parseopt strings for translation
- + i18n: mktree: mark parseopt strings for translation
- + i18n: merge: mark parseopt strings for translation
- + i18n: merge-file: mark parseopt strings for translation
- + i18n: merge-base: mark parseopt strings for translation
- + i18n: ls-tree: mark parseopt strings for translation
- + i18n: ls-files: mark parseopt strings for translation
- + i18n: log: mark parseopt strings for translation
- + i18n: init-db: mark parseopt strings for translation
- + i18n: help: mark parseopt strings for translation
- + i18n: hash-object: mark parseopt strings for translation
- + i18n: grep: mark parseopt strings for translation
- + i18n: gc: mark parseopt strings for translation
- + i18n: fsck: mark parseopt strings for translation
- + i18n: format-patch: mark parseopt strings for translation
- + i18n: for-each-ref: mark parseopt strings for translation
- + i18n: fmt-merge-msg: mark parseopt strings for translation
- + i18n: fetch: mark parseopt strings for translation
- + i18n: fast-export: mark parseopt strings for translation
- + i18n: describe: mark parseopt strings for translation
- + i18n: config: mark parseopt strings for translation
- + i18n: count-objects: mark parseopt strings for translation
- + i18n: commit: mark parseopt strings for translation
- + i18n: column: mark parseopt strings for translation
- + i18n: clone: mark parseopt strings for translation
- + i18n: clean: mark parseopt strings for translation
- + i18n: cherry: mark parseopt strings for translation
- + i18n: checkout: mark parseopt strings for translation
- + i18n: checkout-index: mark parseopt strings for translation
- + i18n: check-attr: mark parseopt strings for translation
- + i18n: cat-file: mark parseopt strings for translation
- + i18n: branch: mark parseopt strings for translation
- + i18n: blame: mark parseopt strings for translation
- + i18n: add: mark parseopt strings for translation
- + i18n: bisect--helper: mark parseopt strings for translation
- + i18n: archive: mark parseopt strings for translation
- + i18n: mark "style" in OPT_COLUMN() for translation
-
-A lot of i18n mark-up for the help text from "git <cmd> -h".
-
-* nd/i18n-poison-test-updates (2012-08-27) 7 commits
-  (merged to 'next' on 2012-08-29 at 9b7ff7f)
- + Fix tests under GETTEXT_POISON on parseopt
- + Fix tests under GETTEXT_POISON on git-remote
- + Fix tests under GETTEXT_POISON on pack-object
- + Fix tests under GETTEXT_POISON on git-apply
- + Fix tests under GETTEXT_POISON on diffstat
- + Fix tests under GETTEXT_POISON on git-stash
- + Fix tests under GETTEXT_POISON on relative dates
-
-Update tests that can be broken with gettext-poison builds.
-
-* pw/p4-use-client-spec-branch-detection (2012-08-20) 5 commits
-  (merged to 'next' on 2012-08-24 at 08abc61)
- + git p4: make branch detection work with --use-client-spec
- + git p4: do wildcard decoding in stripRepoPath
- + git p4: set self.branchPrefixes in initialization
- + git p4 test: add broken --use-client-spec --detect-branches tests
- + git p4 test: move client_view() function to library
-
-Fixes "git p4" when "--use-client-spec" and "--detect-branches" are
-used together (the command used to misdetect branches).
-
-* tr/maint-parseopt-avoid-empty (2012-08-20) 1 commit
-  (merged to 'next' on 2012-08-24 at cffa9a0)
- + gettext: do not translate empty string
-
-A workaround to avoid doing _(""), which translates to unwanted
-magic string in the .po files.
-
---------------------------------------------------
 [New Topics]
 
-* kd/cvsimport-avoid-invalid-tag (2012-09-06) 1 commit
- - cvsimport: strip all inappropriate tag strings
+* jc/ll-merge-binary-ours (2012-09-08) 2 commits
+ - attr: "binary" attribute should choose built-in "binary" merge driver
+ - merge: teach -Xours/-Xtheirs to binary ll-merge driver
 
-"cvsimport" tried to create a tag taken from CVS without
-sufficiently sanitizing it, causing the import to fail when an
-invalid character in the tagname made underlying "git tag" to fail.
+"git merge -Xtheirs" did not help content-level merge of binary
+files; it should just take their version.  Also "*.jpg binary" in
+the attributes did not imply they should use the binary ll-merge
+driver.
 
-Will merge to 'next'.
+* jc/mailinfo-RE (2012-09-09) 1 commit
+ - mailinfo: strip "RE: " prefix
 
-* mh/abspath (2012-09-06) 8 commits
- - t0060: verify that real_path() removes extra slashes
- - real_path(): properly handle nonexistent top-level paths
- - t0060: verify that real_path() works correctly with absolute paths
- - real_path(): reject the empty string
- - t0060: verify that real_path() fails if passed the empty string
- - absolute_path(): reject the empty string
- - t0060: verify that absolute_path() fails if passed the empty string
- - t0060: move tests of real_path() from t0000 to here
+We strip the prefix from "Re: subject" and also from a less common
+"re: subject", but left even less common "RE: subject" intact.
 
-* nd/i18n-status (2012-09-06) 1 commit
- - status: remove i18n legos
+* js/compat-mkdir (2012-09-08) 1 commit
+ - Document MKDIR_WO_TRAILING_SLASH in Makefile
 
-Will merge to 'next'.
-
-* nd/log-n-doc (2012-09-06) 1 commit
- - doc: move rev-list option -<n> from git-log.txt to rev-list-options.txt
+Finishing touches to recently added wrapper for mkdir() that do not
+want to see trailing slashes.
 
 Will merge to 'next'.
 
-* nd/maint-remote-remove (2012-09-06) 1 commit
- - remote: prefer subcommand name 'remove' to 'rm'
+* mh/string-list (2012-09-10) 6 commits
+ - api-string-list.txt: initialize the string_list the easy way
+ - string_list: add a function string_list_longest_prefix()
+ - string_list: add a new function, string_list_remove_duplicates()
+ - string_list: add a new function, filter_string_list()
+ - string_list: add two new functions for splitting strings
+ - string_list: add function string_list_append_nodup()
+ (this branch is used by mh/fetch-filter-refs.)
 
-Will merge to 'next'.
+--------------------------------------------------
+[Graduated to "master"]
 
-* sb/send-email-reconfirm-fix (2012-09-06) 1 commit
- - send-email: initial_to and initial_reply_to are both optional
+* cn/branch-set-upstream-to (2012-08-30) 3 commits
+  (merged to 'next' on 2012-08-31 at d550ecd)
+ + branch: deprecate --set-upstream and show help if we detect possible mistaken use
+ + branch: add --unset-upstream option
+ + branch: introduce --set-upstream-to
 
-Will merge to 'next'.
+"git branch --set-upstream origin/master" is a common mistake to
+create a local branch 'origin/master' and set it to integrate with
+the current branch.  With a plan to deprecate this option, introduce
+"git branch (-u|--set-upstream-to) origin/master" that sets the
+current branch to integrate with 'origin/master' remote tracking
+branch.
 
-* sn/ls-remote-get-url-doc (2012-09-07) 1 commit
- - ls-remote: document the '--get-url' option
+* jk/maint-quiet-is-synonym-to-s-in-log (2012-08-28) 1 commit
+  (merged to 'next' on 2012-08-31 at 06f6953)
+ + log: fix --quiet synonym for -s
 
-Will merge to 'next'.
+We tried to bend backwards to allow "--quiet" to be a synonym as
+"-s" when given as e.g. "git show --quiet", but did not quite
+succeed.
 
-* dj/fetch-all-tags (2012-09-07) 1 commit
- - fetch --all: pass --tags/--no-tags through to each remote
- (this branch uses jk/argv-array.)
+* mz/cherry-pick-cmdline-order (2012-08-30) 3 commits
+  (merged to 'next' on 2012-08-31 at fc8eec4)
+ + cherry-pick/revert: respect order of revisions to pick
+ + demonstrate broken 'git cherry-pick three one two'
+ + teach log --no-walk=unsorted, which avoids sorting
 
-"git fetch --all", when passed "--no-tags", did not honor the
-"--no-tags" option while fetching from individual remotes (the same
-issue existed with "--tags", but combination "--all --tags" makes
-much less sense than "--all --no-tags").
+"git cherry-pick A C B" used to replay changes in A and then B and
+then C if these three commits had committer timestamps in that
+order, which is not what the user who said "A C B" naturally expects.
 
-Will merge to 'next'.
+* ph/credential-gnome-keyring (2012-08-24) 1 commit
+  (merged to 'next' on 2012-08-31 at 6f3b1de)
+ + contrib: add credential helper for GnomeKeyring
+ (this branch is used by ph/credential-refactor.)
+
+The later refactoring of the shared code in the original series may
+not be worth the trouble, so it is split into a separate topic that
+builds on top of this one, which independently should be useful.
 
 --------------------------------------------------
 [Stalled]
+
+* ph/credential-refactor (2012-09-02) 5 commits
+ - wincred: port to generic credential helper
+ - Merge branch 'ef/win32-cred-helper' into ph/credential-refactor
+ - osxkeychain: port to generic credential helper implementation
+ - gnome-keyring: port to generic helper implementation
+ - contrib: add generic credential helper
+
+Attempts to refactor to share code among OSX keychain, Gnome keyring
+and Win32 credential helpers.
+
+* jc/maint-name-rev (2012-09-04) 7 commits
+ - describe --contains: use "name-rev --weight"
+ - name-rev --weight: tests and documentation
+ - name-rev --weight: cache the computed weight in notes
+ - name-rev --weight: trivial optimization
+ - name-rev: --weight option
+ - name_rev: clarify the logic to assign a new tip-name to a commit
+ - name-rev: lose unnecessary typedef
+
+"git name-rev" names the given revision based on a ref that can be
+reached in the smallest number of steps from the rev, but that is
+not useful when the caller wants to know which tag is the oldest one
+that contains the rev.  This teaches a new mode to the command that
+uses the oldest ref among those which contain the rev.
+
+I am not sure if this is worth it; for one thing, even with the help
+from notes-cache, it seems to make the "describe --contains" even
+slower. Also the command will be unusably slow for a user who does
+not have a write access (hence unable to create or update the
+notes-cache).
+
+Needs another round to at least find a better name for the option,
+and possibly a cheaper but still better than the current "close to
+the tip" heuristics.
+
+* ms/contrib-thunderbird-updates (2012-08-31) 2 commits
+ - [SQUASH] minimum fixup
+ - Thunderbird: fix appp.sh format problems
+
+Update helper to send out format-patch output using Thunderbird.
+Seems to have design regression for silent users.
+
+* as/check-ignore (2012-09-02) 10 commits
+ . fixup: decl-after-stmt etc.
+ . Add git-check-ignore
+ . Provide free_directory() for reclaiming dir_struct memory
+ . Extract some useful pathspec handling code from builtin/add.c into a library
+ . For each exclude pattern, store information about where it came from
+ . dir.c: refactor excluded() and path_excluded()
+ . dir.c: refactor excluded_from_list()
+ . dir.c: rename cryptic 'which' variable to more consistent name
+ . Improve documentation and comments regarding directory traversal API
+ . Update directory listing API doc to match code
+
+Will be rerolled.
 
 * jx/test-real-path (2012-08-27) 1 commit
  - test: set the realpath of CWD as TRASH_DIRECTORY
@@ -334,22 +218,6 @@ Anybody interested in fixing it up?  Otherwise may discard.
 A GSoC project.  Was waiting for comments from mentors and
 stakeholders, but nothing seems to be happening, other than breakage
 fixes on Cygwin.  May discard.
-
-* pw/p4-submit-conflicts (2012-08-16) 12 commits
- - git p4: add submit --prepare-p4-only option
- - git p4: add submit --dry-run option
- - git p4: accept -v for --verbose
- - git p4: revert deleted files after submit cancel
- - git p4: rearrange submit template construction
- - git p4: test clean-up after failed submit, fix added files
- - git p4: standardize submit cancel due to unchanged template
- - git p4: move conflict prompt into run, use [c]ontinue and [q]uit
- - git p4: remove submit failure options [a]pply and [w]rite
- - git p4: gracefully fail if some commits could not be applied
- - git p4 test: use p4d -L option to suppress log messages
- - git p4 test: remove bash-ism of combined export/assignment
-
-Waiting for the dust to settle.
 
 * mz/rebase-range (2012-07-18) 7 commits
  . rebase (without -p): correctly calculate patches to rebase
@@ -415,19 +283,81 @@ working :-<.
 --------------------------------------------------
 [Cooking]
 
-* as/check-ignore (2012-09-02) 10 commits
- . fixup: decl-after-stmt etc.
- . Add git-check-ignore
- . Provide free_directory() for reclaiming dir_struct memory
- . Extract some useful pathspec handling code from builtin/add.c into a library
- . For each exclude pattern, store information about where it came from
- . dir.c: refactor excluded() and path_excluded()
- . dir.c: refactor excluded_from_list()
- . dir.c: rename cryptic 'which' variable to more consistent name
- . Improve documentation and comments regarding directory traversal API
- . Update directory listing API doc to match code
+* pw/p4-submit-conflicts (2012-09-10) 12 commits
+ - git-p4: add submit --conflict option and config varaiable
+ - git p4: add submit --prepare-p4-only option
+ - git p4: add submit --dry-run option
+ - git p4: accept -v for --verbose
+ - git p4: revert deleted files after submit cancel
+ - git p4: rearrange submit template construction
+ - git p4: test clean-up after failed submit, fix added files
+ - git p4: standardize submit cancel due to unchanged template
+ - git p4: move conflict prompt into run, add [q]uit input
+ - git p4: remove submit failure options [a]pply and [w]rite
+ - git p4: gracefully fail if some commits could not be applied
+ - git p4 test: remove bash-ism of combined export/assignment
 
-Will be rerolled.
+Rerolled.
+
+Waiting for comments.
+
+* kd/cvsimport-avoid-invalid-tag (2012-09-06) 1 commit
+ - cvsimport: strip all inappropriate tag strings
+
+"cvsimport" tried to create a tag taken from CVS without
+sufficiently sanitizing it, causing the import to fail when an
+invalid character in the tagname made underlying "git tag" to fail.
+
+Will merge to 'next'.
+
+* mh/abspath (2012-09-10) 9 commits
+ - t0060: split absolute path test in two to exercise some of it on Windows
+ - t0060: verify that real_path() removes extra slashes
+ - real_path(): properly handle nonexistent top-level paths
+ - t0060: verify that real_path() works correctly with absolute paths
+ - real_path(): reject the empty string
+ - t0060: verify that real_path() fails if passed the empty string
+ - absolute_path(): reject the empty string
+ - t0060: verify that absolute_path() fails if passed the empty string
+ - t0060: move tests of real_path() from t0000 to here
+
+Will merge to 'next'.
+
+* nd/i18n-status (2012-09-06) 1 commit
+ - status: remove i18n legos
+
+Will merge to 'next'.
+
+* nd/log-n-doc (2012-09-06) 1 commit
+ - doc: move rev-list option -<n> from git-log.txt to rev-list-options.txt
+
+Will merge to 'next'.
+
+* nd/maint-remote-remove (2012-09-06) 1 commit
+ - remote: prefer subcommand name 'remove' to 'rm'
+
+Will merge to 'next'.
+
+* sb/send-email-reconfirm-fix (2012-09-06) 1 commit
+ - send-email: initial_to and initial_reply_to are both optional
+
+Will merge to 'next'.
+
+* sn/ls-remote-get-url-doc (2012-09-07) 1 commit
+ - ls-remote: document the '--get-url' option
+
+Will merge to 'next'.
+
+* dj/fetch-all-tags (2012-09-07) 1 commit
+ - fetch --all: pass --tags/--no-tags through to each remote
+ (this branch uses jk/argv-array.)
+
+"git fetch --all", when passed "--no-tags", did not honor the
+"--no-tags" option while fetching from individual remotes (the same
+issue existed with "--tags", but combination "--all --tags" makes
+much less sense than "--all --no-tags").
+
+Will merge to 'next'.
 
 * jc/maint-ident-missing-human-name (2012-08-31) 1 commit
   (merged to 'next' on 2012-09-07 at 0e99b20)
@@ -470,9 +400,12 @@ using it on their platform.
 
 Will merge to 'master' as part of the fifth batch.
 
-* jc/maint-checkout-fileglob-doc (2012-09-07) 2 commits
+* jc/maint-checkout-fileglob-doc (2012-09-10) 3 commits
  - gitcli: contrast wildcard given to shell and to git
+ - gitcli: formatting fix
  - Document file-glob for "git checkout -- '*.c'"
+
+Updated with help from Peff.
 
 Will merge to 'next'.
 
@@ -486,52 +419,16 @@ Will merge to 'next'.
  - path.c: Don't discard the return value of vsnpath()
  - path.c: Remove the 'git_' prefix from a file scope function
 
+Will merge to 'next'.
+
 * rs/archive-zip-utf8 (2012-09-04) 1 commit
  - archive-zip: support UTF-8 paths
 
-* mz/cherry-pick-cmdline-order (2012-08-30) 3 commits
-  (merged to 'next' on 2012-08-31 at fc8eec4)
- + cherry-pick/revert: respect order of revisions to pick
- + demonstrate broken 'git cherry-pick three one two'
- + teach log --no-walk=unsorted, which avoids sorting
-
-"git cherry-pick A C B" used to replay changes in A and then B and
-then C if these three commits had committer timestamps in that
-order, which is not what the user who said "A C B" naturally expects.
-
-Will merge to 'master' as part of the fifth batch.
-
-* ph/credential-gnome-keyring (2012-08-24) 1 commit
-  (merged to 'next' on 2012-08-31 at 6f3b1de)
- + contrib: add credential helper for GnomeKeyring
- (this branch is used by ph/credential-refactor.)
-
-The later refactoring of the shared code in the original series may
-not be worth the trouble, so it is split into a separate topic that
-builds on top of this one, which independently should be useful.
-
-Will merge to 'master' as part of the fifth batch.
-
-* ms/contrib-thunderbird-updates (2012-08-31) 2 commits
- - [SQUASH] minimum fixup
- - Thunderbird: fix appp.sh format problems
-
-Update helper to send out format-patch output using Thunderbird.
-Seems to have design regression for silent users.
+Will merge to 'next'.
 
 * nd/i18n-index-pack (2012-08-31) 1 commit
   (merged to 'next' on 2012-09-07 at bbcece1)
  + i18n: mark more index-pack strings for translation
-
-Will merge to 'master' as part of the fifth batch.
-
-* jk/maint-quiet-is-synonym-to-s-in-log (2012-08-28) 1 commit
-  (merged to 'next' on 2012-08-31 at 06f6953)
- + log: fix --quiet synonym for -s
-
-We tried to bend backwards to allow "--quiet" to be a synonym as
-"-s" when given as e.g. "git show --quiet", but did not quite
-succeed.
 
 Will merge to 'master' as part of the fifth batch.
 
@@ -550,83 +447,33 @@ for a branch).
 
 Will merge to 'next' after squashing the tip two.
 
-* jc/maint-name-rev (2012-09-04) 7 commits
- - describe --contains: use "name-rev --weight"
- - name-rev --weight: tests and documentation
- - name-rev --weight: cache the computed weight in notes
- - name-rev --weight: trivial optimization
- - name-rev: --weight option
- - name_rev: clarify the logic to assign a new tip-name to a commit
- - name-rev: lose unnecessary typedef
-
-"git name-rev" names the given revision based on a ref that can be
-reached in the smallest number of steps from the rev, but that is
-not useful when the caller wants to know which tag is the oldest one
-that contains the rev.  This teaches a new mode to the command that
-uses the oldest ref among those which contain the rev.
-
-I am not sure if this is worth it; for one thing, even with the help
-from notes-cache, it seems to make the "describe --contains" even
-slower. Also the command will be unusably slow for a user who does
-not have a write access (hence unable to create or update the
-notes-cache).
-
-Needs another round to at least find a better name for the option,
-and possibly a cheaper but still better than the current "close to
-the tip" heuristics.
-
-* cn/branch-set-upstream-to (2012-08-30) 3 commits
-  (merged to 'next' on 2012-08-31 at d550ecd)
- + branch: deprecate --set-upstream and show help if we detect possible mistaken use
- + branch: add --unset-upstream option
- + branch: introduce --set-upstream-to
-
-"git branch --set-upstream origin/master" is a common mistake to
-create a local branch 'origin/master' and set it to integrate with
-the current branch.  With a plan to deprecate this option, introduce
-"git branch (-u|--set-upstream-to) origin/master" that sets the
-current branch to integrate with 'origin/master' remote tracking
-branch.
-
-Will merge to 'master' as part of the fifth batch.
-
-* js/compat-itimer (2012-08-24) 1 commit
- - Support for setitimer() on platforms lacking it
+* js/compat-itimer (2012-09-08) 1 commit
+ - Add a no-op setitimer() wrapper
 
 Pieces to support compilation on __TANDEM.
 
-* ph/credential-refactor (2012-09-02) 5 commits
- - wincred: port to generic credential helper
- - Merge branch 'ef/win32-cred-helper' into ph/credential-refactor
- - osxkeychain: port to generic credential helper implementation
- - gnome-keyring: port to generic helper implementation
- - contrib: add generic credential helper
- (this branch uses ph/credential-gnome-keyring.)
+Will merge to 'next'.
 
-Attempts to refactor to share code among OSX keychain, Gnome keyring
-and Win32 credential helpers.
-
-* mh/fetch-filter-refs (2012-08-26) 17 commits
- - filter_refs(): simplify logic
- - fetch_pack(): free matching heads
+* mh/fetch-filter-refs (2012-09-10) 14 commits
+ - fetch-pack: eliminate spurious error messages
  - cmd_fetch_pack(): simplify computation of return value
  - fetch-pack: report missing refs even if no existing refs were received
- - cmd_fetch_pack: return early if finish_connect() returns an error
- - filter_refs(): compress unmatched refs in heads array
- - filter_refs(): do not leave gaps in return_refs
- - filter_refs(): simplify by removing optimization
- - Pass nr_heads to filter_refs() by reference
- - Pass nr_heads to everything_local() by reference
- - Pass nr_heads to do_pack_ref() by reference
- - Let fetch_pack() inform caller about number of unique heads
- - filter_refs(): do not check the same head_pos twice
- - fetch-pack.c: name local variables more consistently
+ - cmd_fetch_pack(): return early if finish_connect() fails
+ - filter_refs(): simplify logic
+ - filter_refs(): build refs list as we go
+ - filter_refs(): delete matched refs from sought list
+ - fetch_pack(): update sought->nr to reflect number of unique entries
+ - filter_refs(): do not check the same sought_pos twice
+ - Change fetch_pack() and friends to take string_list arguments
  - fetch_pack(): reindent function decl and defn
  - Rename static function fetch_pack() to http_fetch_pack()
+ - t5500: add tests of fetch-pack --all --depth=N $URL $REF
  - t5500: add tests of error output for missing refs
+ (this branch uses mh/string-list.)
 
 Code simplification and clarification.
-Waiting for a follow-up patch based on Peff's idea.
+
+Waiting for the mh/string-list to settle.
 
 * jc/merge-bases (2012-08-31) 9 commits
   (merged to 'next' on 2012-09-07 at ab0974d)
@@ -656,6 +503,8 @@ where it is safe to remove a submodule, specifically, when there is
 no local changes in the submodule working tree, and its repository
 is not embedded in its working tree but is elsewhere and uses the
 gitfile mechanism to point at it.
+
+I lost track; what is the doneness of the discussion on this patch?
 
 * fa/remote-svn (2012-08-28) 16 commits
  - Add a test script for remote-svn
