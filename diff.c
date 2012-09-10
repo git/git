@@ -2541,12 +2541,12 @@ void free_filespec(struct diff_filespec *spec)
 }
 
 void fill_filespec(struct diff_filespec *spec, const unsigned char *sha1,
-		   unsigned short mode)
+		   int sha1_valid, unsigned short mode)
 {
 	if (mode) {
 		spec->mode = canon_mode(mode);
 		hashcpy(spec->sha1, sha1);
-		spec->sha1_valid = !is_null_sha1(sha1);
+		spec->sha1_valid = sha1_valid;
 	}
 }
 
@@ -4693,6 +4693,7 @@ static int is_submodule_ignored(const char *path, struct diff_options *options)
 void diff_addremove(struct diff_options *options,
 		    int addremove, unsigned mode,
 		    const unsigned char *sha1,
+		    int sha1_valid,
 		    const char *concatpath, unsigned dirty_submodule)
 {
 	struct diff_filespec *one, *two;
@@ -4724,9 +4725,9 @@ void diff_addremove(struct diff_options *options,
 	two = alloc_filespec(concatpath);
 
 	if (addremove != '+')
-		fill_filespec(one, sha1, mode);
+		fill_filespec(one, sha1, sha1_valid, mode);
 	if (addremove != '-') {
-		fill_filespec(two, sha1, mode);
+		fill_filespec(two, sha1, sha1_valid, mode);
 		two->dirty_submodule = dirty_submodule;
 	}
 
@@ -4739,6 +4740,7 @@ void diff_change(struct diff_options *options,
 		 unsigned old_mode, unsigned new_mode,
 		 const unsigned char *old_sha1,
 		 const unsigned char *new_sha1,
+		 int old_sha1_valid, int new_sha1_valid,
 		 const char *concatpath,
 		 unsigned old_dirty_submodule, unsigned new_dirty_submodule)
 {
@@ -4753,6 +4755,8 @@ void diff_change(struct diff_options *options,
 		const unsigned char *tmp_c;
 		tmp = old_mode; old_mode = new_mode; new_mode = tmp;
 		tmp_c = old_sha1; old_sha1 = new_sha1; new_sha1 = tmp_c;
+		tmp = old_sha1_valid; old_sha1_valid = new_sha1_valid;
+			new_sha1_valid = tmp;
 		tmp = old_dirty_submodule; old_dirty_submodule = new_dirty_submodule;
 			new_dirty_submodule = tmp;
 	}
@@ -4763,8 +4767,8 @@ void diff_change(struct diff_options *options,
 
 	one = alloc_filespec(concatpath);
 	two = alloc_filespec(concatpath);
-	fill_filespec(one, old_sha1, old_mode);
-	fill_filespec(two, new_sha1, new_mode);
+	fill_filespec(one, old_sha1, old_sha1_valid, old_mode);
+	fill_filespec(two, new_sha1, new_sha1_valid, new_mode);
 	one->dirty_submodule = old_dirty_submodule;
 	two->dirty_submodule = new_dirty_submodule;
 
