@@ -54,6 +54,11 @@ sub evaluate_uri {
 	# to build the base URL ourselves:
 	our $path_info = decode_utf8($ENV{"PATH_INFO"});
 	if ($path_info) {
+		# $path_info has already been URL-decoded by the web server, but
+		# $my_url and $my_uri have not. URL-decode them so we can properly
+		# strip $path_info.
+		$my_url = unescape($my_url);
+		$my_uri = unescape($my_uri);
 		if ($my_url =~ s,\Q$path_info\E$,, &&
 		    $my_uri =~ s,\Q$path_info\E$,, &&
 		    defined $ENV{'SCRIPT_NAME'}) {
