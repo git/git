@@ -788,7 +788,7 @@ static int find_first_merges(struct object_array *result, const char *path,
 		die("revision walk setup failed");
 	while ((commit = get_revision(&revs)) != NULL) {
 		struct object *o = &(commit->object);
-		if (in_merge_bases(b, &commit, 1))
+		if (in_merge_bases(b, commit))
 			add_object_array(o, NULL, &merges);
 	}
 	reset_revision_walk();
@@ -803,7 +803,7 @@ static int find_first_merges(struct object_array *result, const char *path,
 		contains_another = 0;
 		for (j = 0; j < merges.nr; j++) {
 			struct commit *m2 = (struct commit *) merges.objects[j].item;
-			if (i != j && in_merge_bases(m2, &m1, 1)) {
+			if (i != j && in_merge_bases(m2, m1)) {
 				contains_another = 1;
 				break;
 			}
@@ -865,18 +865,18 @@ int merge_submodule(unsigned char result[20], const char *path,
 	}
 
 	/* check whether both changes are forward */
-	if (!in_merge_bases(commit_base, &commit_a, 1) ||
-	    !in_merge_bases(commit_base, &commit_b, 1)) {
+	if (!in_merge_bases(commit_base, commit_a) ||
+	    !in_merge_bases(commit_base, commit_b)) {
 		MERGE_WARNING(path, "commits don't follow merge-base");
 		return 0;
 	}
 
 	/* Case #1: a is contained in b or vice versa */
-	if (in_merge_bases(commit_a, &commit_b, 1)) {
+	if (in_merge_bases(commit_a, commit_b)) {
 		hashcpy(result, b);
 		return 1;
 	}
-	if (in_merge_bases(commit_b, &commit_a, 1)) {
+	if (in_merge_bases(commit_b, commit_a)) {
 		hashcpy(result, a);
 		return 1;
 	}
