@@ -159,6 +159,11 @@ all::
 # Define NO_PREAD if you have a problem with pread() system call (e.g.
 # cygwin1.dll before v1.5.22).
 #
+# Define NO_SETITIMER if you don't have setitimer()
+#
+# Define NO_STRUCT_ITIMERVAL if you don't have struct itimerval
+# This also implies NO_SETITIMER
+#
 # Define NO_THREAD_SAFE_PREAD if your pread() implementation is not
 # thread-safe. (e.g. compat/pread.c or cygwin)
 #
@@ -1676,6 +1681,13 @@ else
 endif
 ifdef OBJECT_CREATION_USES_RENAMES
 	COMPAT_CFLAGS += -DOBJECT_CREATION_MODE=1
+endif
+ifdef NO_STRUCT_ITIMERVAL
+	COMPAT_CFLAGS += -DNO_STRUCT_ITIMERVAL
+	NO_SETITIMER=YesPlease
+endif
+ifdef NO_SETITIMER
+	COMPAT_CFLAGS += -DNO_SETITIMER
 endif
 ifdef NO_PREAD
 	COMPAT_CFLAGS += -DNO_PREAD
