@@ -1,16 +1,19 @@
 To: git@vger.kernel.org
 Bcc: lwn@lwn.net
-Subject: What's cooking in git.git (Sep 2012, #03; Mon, 10)
-X-master-at: 682ce8bb37414afe87515123fc6c26f21dd35b15
-X-next-at: 5f38766e5791393ed68fd2877004482ad9e34352
+Subject: What's cooking in git.git (Sep 2012, #04; Tue, 11)
+X-master-at: 53284de77712b2234c739afa3aa5f024fc89fc83
+X-next-at: 3d3ef136b706abc4576b503995d88da2409d0bcf
 
-What's cooking in git.git (Sep 2012, #03; Mon, 10)
+What's cooking in git.git (Sep 2012, #04; Tue, 11)
 --------------------------------------------------
 
 Here are the topics that have been cooking.  Commits prefixed with '-' are
 only in 'pu' (proposed updates) while commits prefixed with '+' are in 'next'.
 
-The fifth batch of topics have started graduating to 'master'.
+The fifth batch of topics have graduated to 'master'.  Many fixes
+that are already in 'master' have been merged to v1.7.11.6.  'maint'
+has acquired more such fixes and will be tagged as v1.7.12.1
+hopefully in a few days.
 
 I'm planning to keep this cycle reasonably short and aim for tagging
 the result as 1.8.0 at the end of 9th week, on October 21st, after
@@ -25,80 +28,75 @@ repositories listed at
 --------------------------------------------------
 [New Topics]
 
-* jc/ll-merge-binary-ours (2012-09-08) 2 commits
- - attr: "binary" attribute should choose built-in "binary" merge driver
- - merge: teach -Xours/-Xtheirs to binary ll-merge driver
+* dg/run-command-child-cleanup (2012-09-11) 1 commit
+ - run-command.c: fix broken list iteration in clear_child_for_cleanup
 
-"git merge -Xtheirs" did not help content-level merge of binary
-files; it should just take their version.  Also "*.jpg binary" in
-the attributes did not imply they should use the binary ll-merge
-driver.
+Will merge to 'next' after obtaining a Sign-off.
 
-* jc/mailinfo-RE (2012-09-09) 1 commit
- - mailinfo: strip "RE: " prefix
+* jc/maint-blame-no-such-path (2012-09-10) 1 commit
+ - blame $path: avoid getting fooled by case insensitive filesystems
 
-We strip the prefix from "Re: subject" and also from a less common
-"re: subject", but left even less common "RE: subject" intact.
+"git blame MAKEFILE" run in a history that has "Makefile" but not
+"MAKEFILE" should say "No such file MAKEFILE in HEAD", but got
+confused on a case insensitive filesystem.
 
-* js/compat-mkdir (2012-09-08) 1 commit
- - Document MKDIR_WO_TRAILING_SLASH in Makefile
+* sl/autoconf (2012-09-11) 2 commits
+ - build: don't duplicate substitution of make variables
+ - build: improve GIT_CONF_SUBST signature
 
-Finishing touches to recently added wrapper for mkdir() that do not
-want to see trailing slashes.
+* cn/branch-set-upstream-to (2012-09-11) 2 commits
+ - completion: complete branch name for "branch --set-upstream-to="
+ - completion: add --set-upstream-to and --unset-upstream
 
 Will merge to 'next'.
-
-* mh/string-list (2012-09-10) 6 commits
- - api-string-list.txt: initialize the string_list the easy way
- - string_list: add a function string_list_longest_prefix()
- - string_list: add a new function, string_list_remove_duplicates()
- - string_list: add a new function, filter_string_list()
- - string_list: add two new functions for splitting strings
- - string_list: add function string_list_append_nodup()
- (this branch is used by mh/fetch-filter-refs.)
 
 --------------------------------------------------
 [Graduated to "master"]
 
-* cn/branch-set-upstream-to (2012-08-30) 3 commits
-  (merged to 'next' on 2012-08-31 at d550ecd)
- + branch: deprecate --set-upstream and show help if we detect possible mistaken use
- + branch: add --unset-upstream option
- + branch: introduce --set-upstream-to
+* jc/maint-ident-missing-human-name (2012-08-31) 1 commit
+  (merged to 'next' on 2012-09-07 at 0e99b20)
+ + split_ident_line(): make best effort when parsing author/committer line
 
-"git branch --set-upstream origin/master" is a common mistake to
-create a local branch 'origin/master' and set it to integrate with
-the current branch.  With a plan to deprecate this option, introduce
-"git branch (-u|--set-upstream-to) origin/master" that sets the
-current branch to integrate with 'origin/master' remote tracking
-branch.
+"git show --format='%ci'" did not give timestamp correctly for
+commits created without human readable name on "committer" line.
 
-* jk/maint-quiet-is-synonym-to-s-in-log (2012-08-28) 1 commit
-  (merged to 'next' on 2012-08-31 at 06f6953)
- + log: fix --quiet synonym for -s
+* jc/merge-bases (2012-08-31) 9 commits
+  (merged to 'next' on 2012-09-07 at ab0974d)
+ + reduce_heads(): reimplement on top of remove_redundant()
+ + merge-base: "--is-ancestor A B"
+ + get_merge_bases_many(): walk from many tips in parallel
+ + in_merge_bases(): use paint_down_to_common()
+ + merge_bases_many(): split out the logic to paint history
+ + in_merge_bases(): omit unnecessary redundant common ancestor reduction
+ + http-push: use in_merge_bases() for fast-forward check
+ + receive-pack: use in_merge_bases() for fast-forward check
+ + in_merge_bases(): support only one "other" commit
 
-We tried to bend backwards to allow "--quiet" to be a synonym as
-"-s" when given as e.g. "git show --quiet", but did not quite
-succeed.
+Optimise the "merge-base" computation a bit, and also update its
+users that do not need the full merge-base information to call a
+cheaper subset.
 
-* mz/cherry-pick-cmdline-order (2012-08-30) 3 commits
-  (merged to 'next' on 2012-08-31 at fc8eec4)
- + cherry-pick/revert: respect order of revisions to pick
- + demonstrate broken 'git cherry-pick three one two'
- + teach log --no-walk=unsorted, which avoids sorting
+* jk/argv-array (2012-09-02) 4 commits
+  (merged to 'next' on 2012-09-07 at 98dbd14)
+ + submodule: use argv_array instead of hand-building arrays
+ + fetch: use argv_array instead of hand-building arrays
+ + argv-array: fix bogus cast when freeing array
+ + argv-array: add pop function
+ (this branch is used by dj/fetch-all-tags.)
 
-"git cherry-pick A C B" used to replay changes in A and then B and
-then C if these three commits had committer timestamps in that
-order, which is not what the user who said "A C B" naturally expects.
+Use argv-array API in "git fetch" implementation.
 
-* ph/credential-gnome-keyring (2012-08-24) 1 commit
-  (merged to 'next' on 2012-08-31 at 6f3b1de)
- + contrib: add credential helper for GnomeKeyring
- (this branch is used by ph/credential-refactor.)
+* nd/i18n-index-pack (2012-08-31) 1 commit
+  (merged to 'next' on 2012-09-07 at bbcece1)
+ + i18n: mark more index-pack strings for translation
 
-The later refactoring of the shared code in the original series may
-not be worth the trouble, so it is split into a separate topic that
-builds on top of this one, which independently should be useful.
+* rj/test-regex (2012-09-02) 1 commit
+  (merged to 'next' on 2012-09-07 at e7e3527)
+ + test-regex: Add a test to check for a bug in the regex routines
+
+Git ships with a fall-back regexp implementation for platforms with
+buggy regexp library; give people a tool to see if they should be
+using it on their platform.
 
 --------------------------------------------------
 [Stalled]
@@ -283,6 +281,46 @@ working :-<.
 --------------------------------------------------
 [Cooking]
 
+* jc/ll-merge-binary-ours (2012-09-08) 2 commits
+ - attr: "binary" attribute should choose built-in "binary" merge driver
+ - merge: teach -Xours/-Xtheirs to binary ll-merge driver
+
+"git merge -Xtheirs" did not help content-level merge of binary
+files; it should just take their version.  Also "*.jpg binary" in
+the attributes did not imply they should use the binary ll-merge
+driver.
+
+Will merge to 'next'.
+
+* jc/mailinfo-RE (2012-09-09) 1 commit
+ - mailinfo: strip "RE: " prefix
+
+We strip the prefix from "Re: subject" and also from a less common
+"re: subject", but left even less common "RE: subject" intact.
+
+Will merge to 'next'.
+
+* js/compat-mkdir (2012-09-08) 1 commit
+  (merged to 'next' on 2012-09-11 at 376b3d5)
+ + Document MKDIR_WO_TRAILING_SLASH in Makefile
+
+Finishing touches to recently added wrapper for mkdir() that do not
+want to see trailing slashes.
+
+Will merge to 'master' as part of the sixth batch.
+
+* mh/string-list (2012-09-10) 6 commits
+ - api-string-list.txt: initialize the string_list the easy way
+ - string_list: add a function string_list_longest_prefix()
+ - string_list: add a new function, string_list_remove_duplicates()
+ - string_list: add a new function, filter_string_list()
+ - string_list: add two new functions for splitting strings
+ - string_list: add function string_list_append_nodup()
+ (this branch is used by mh/fetch-filter-refs.)
+
+Looked sensible.
+Will merge to 'next'.
+
 * pw/p4-submit-conflicts (2012-09-10) 12 commits
  - git-p4: add submit --conflict option and config varaiable
  - git p4: add submit --prepare-p4-only option
@@ -298,145 +336,121 @@ working :-<.
  - git p4 test: remove bash-ism of combined export/assignment
 
 Rerolled.
-
 Waiting for comments.
 
 * kd/cvsimport-avoid-invalid-tag (2012-09-06) 1 commit
- - cvsimport: strip all inappropriate tag strings
+  (merged to 'next' on 2012-09-11 at 6a8f834)
+ + cvsimport: strip all inappropriate tag strings
 
 "cvsimport" tried to create a tag taken from CVS without
 sufficiently sanitizing it, causing the import to fail when an
 invalid character in the tagname made underlying "git tag" to fail.
 
-Will merge to 'next'.
+Will merge to 'master' as part of the sixth batch.
 
 * mh/abspath (2012-09-10) 9 commits
- - t0060: split absolute path test in two to exercise some of it on Windows
- - t0060: verify that real_path() removes extra slashes
- - real_path(): properly handle nonexistent top-level paths
- - t0060: verify that real_path() works correctly with absolute paths
- - real_path(): reject the empty string
- - t0060: verify that real_path() fails if passed the empty string
- - absolute_path(): reject the empty string
- - t0060: verify that absolute_path() fails if passed the empty string
- - t0060: move tests of real_path() from t0000 to here
+  (merged to 'next' on 2012-09-11 at 5e29b53)
+ + t0060: split absolute path test in two to exercise some of it on Windows
+ + t0060: verify that real_path() removes extra slashes
+ + real_path(): properly handle nonexistent top-level paths
+ + t0060: verify that real_path() works correctly with absolute paths
+ + real_path(): reject the empty string
+ + t0060: verify that real_path() fails if passed the empty string
+ + absolute_path(): reject the empty string
+ + t0060: verify that absolute_path() fails if passed the empty string
+ + t0060: move tests of real_path() from t0000 to here
 
-Will merge to 'next'.
+Will merge to 'master' as part of the sixth batch.
 
 * nd/i18n-status (2012-09-06) 1 commit
- - status: remove i18n legos
+  (merged to 'next' on 2012-09-11 at 7cfa224)
+ + status: remove i18n legos
 
-Will merge to 'next'.
+Will merge to 'master' as part of the sixth batch.
 
 * nd/log-n-doc (2012-09-06) 1 commit
- - doc: move rev-list option -<n> from git-log.txt to rev-list-options.txt
+  (merged to 'next' on 2012-09-11 at 7fba349)
+ + doc: move rev-list option -<n> from git-log.txt to rev-list-options.txt
 
-Will merge to 'next'.
+Will merge to 'master' as part of the sixth batch.
 
 * nd/maint-remote-remove (2012-09-06) 1 commit
- - remote: prefer subcommand name 'remove' to 'rm'
+  (merged to 'next' on 2012-09-11 at b1564c3)
+ + remote: prefer subcommand name 'remove' to 'rm'
 
-Will merge to 'next'.
+Will merge to 'master' as part of the sixth batch.
 
 * sb/send-email-reconfirm-fix (2012-09-06) 1 commit
- - send-email: initial_to and initial_reply_to are both optional
+  (merged to 'next' on 2012-09-11 at f868e60)
+ + send-email: initial_to and initial_reply_to are both optional
 
-Will merge to 'next'.
+Will merge to 'master' as part of the sixth batch.
 
 * sn/ls-remote-get-url-doc (2012-09-07) 1 commit
- - ls-remote: document the '--get-url' option
+  (merged to 'next' on 2012-09-11 at 9d09780)
+ + ls-remote: document the '--get-url' option
 
-Will merge to 'next'.
+Will merge to 'master' as part of the sixth batch.
 
 * dj/fetch-all-tags (2012-09-07) 1 commit
- - fetch --all: pass --tags/--no-tags through to each remote
- (this branch uses jk/argv-array.)
+  (merged to 'next' on 2012-09-11 at 083a029)
+ + fetch --all: pass --tags/--no-tags through to each remote
 
 "git fetch --all", when passed "--no-tags", did not honor the
 "--no-tags" option while fetching from individual remotes (the same
 issue existed with "--tags", but combination "--all --tags" makes
 much less sense than "--all --no-tags").
 
-Will merge to 'next'.
-
-* jc/maint-ident-missing-human-name (2012-08-31) 1 commit
-  (merged to 'next' on 2012-09-07 at 0e99b20)
- + split_ident_line(): make best effort when parsing author/committer line
-
-"git show --format='%ci'" did not give timestamp correctly for
-commits created without human readable name on "committer" line.
-
-Will merge to 'master' as part of the fifth batch.
-
-* jk/argv-array (2012-09-02) 4 commits
-  (merged to 'next' on 2012-09-07 at 98dbd14)
- + submodule: use argv_array instead of hand-building arrays
- + fetch: use argv_array instead of hand-building arrays
- + argv-array: fix bogus cast when freeing array
- + argv-array: add pop function
- (this branch is used by dj/fetch-all-tags.)
-
-Use argv-array API in "git fetch" implementation.
-
-Will merge to 'master' as part of the fifth batch.
+Will merge to 'master' as part of the sixth batch.
 
 * rj/tap-fix (2012-09-02) 6 commits
- - test-lib.sh: Suppress the "passed all ..." message if no tests run
- - test-lib.sh: Add check for invalid use of 'skip_all' facility
- - test-lib.sh: Fix some shell coding style violations
- - t4016-*.sh: Skip all tests rather than each test
- - t3902-*.sh: Skip all tests rather than each test
- - t3300-*.sh: Fix a TAP parse error
+  (merged to 'next' on 2012-09-11 at 4104358)
+ + test-lib.sh: Suppress the "passed all ..." message if no tests run
+ + test-lib.sh: Add check for invalid use of 'skip_all' facility
+ + test-lib.sh: Fix some shell coding style violations
+ + t4016-*.sh: Skip all tests rather than each test
+ + t3902-*.sh: Skip all tests rather than each test
+ + t3300-*.sh: Fix a TAP parse error
 
-Will merge to 'next'.
-
-* rj/test-regex (2012-09-02) 1 commit
-  (merged to 'next' on 2012-09-07 at e7e3527)
- + test-regex: Add a test to check for a bug in the regex routines
-
-Git ships with a fall-back regexp implementation for platforms with
-buggy regexp library; give people a tool to see if they should be
-using it on their platform.
-
-Will merge to 'master' as part of the fifth batch.
+Will merge to 'master' as part of the sixth batch.
 
 * jc/maint-checkout-fileglob-doc (2012-09-10) 3 commits
- - gitcli: contrast wildcard given to shell and to git
- - gitcli: formatting fix
- - Document file-glob for "git checkout -- '*.c'"
+  (merged to 'next' on 2012-09-11 at 929948d)
+ + gitcli: contrast wildcard given to shell and to git
+ + gitcli: formatting fix
+ + Document file-glob for "git checkout -- '*.c'"
 
 Updated with help from Peff.
 
-Will merge to 'next'.
+Will merge to 'master' as part of the sixth batch.
 
 * jc/xprm-generation (2012-09-04) 1 commit
  - test-generation: compute generation numbers and clock skews
 
 * rj/path-cleanup (2012-09-04) 5 commits
- - Call mkpathdup() rather than xstrdup(mkpath(...))
- - Call git_pathdup() rather than xstrdup(git_path("..."))
- - path.c: Use vsnpath() in the implementation of git_path()
- - path.c: Don't discard the return value of vsnpath()
- - path.c: Remove the 'git_' prefix from a file scope function
+  (merged to 'next' on 2012-09-11 at 9e8da84)
+ + Call mkpathdup() rather than xstrdup(mkpath(...))
+ + Call git_pathdup() rather than xstrdup(git_path("..."))
+ + path.c: Use vsnpath() in the implementation of git_path()
+ + path.c: Don't discard the return value of vsnpath()
+ + path.c: Remove the 'git_' prefix from a file scope function
 
-Will merge to 'next'.
+Will merge to 'master' as part of the sixth batch.
 
 * rs/archive-zip-utf8 (2012-09-04) 1 commit
- - archive-zip: support UTF-8 paths
+  (merged to 'next' on 2012-09-11 at 3b1f071)
+ + archive-zip: support UTF-8 paths
 
-Will merge to 'next'.
+Need help from people on platforms on which Zip matters to see
+compatiblity with other people's zip implementations.
 
-* nd/i18n-index-pack (2012-08-31) 1 commit
-  (merged to 'next' on 2012-09-07 at bbcece1)
- + i18n: mark more index-pack strings for translation
+Will merge to 'master' as part of the sixth batch.
 
-Will merge to 'master' as part of the fifth batch.
-
-* nd/checkout-option-parsing-fix (2012-09-07) 4 commits
- - fixup! checkout: reorder option handling
- - checkout: reorder option handling
- - checkout: move more parameters to struct checkout_opts
- - checkout: pass "struct checkout_opts *" as const pointer
+* nd/checkout-option-parsing-fix (2012-09-11) 3 commits
+  (merged to 'next' on 2012-09-11 at 3d3ef13)
+ + checkout: reorder option handling
+ + checkout: move more parameters to struct checkout_opts
+ + checkout: pass "struct checkout_opts *" as const pointer
 
 The option parsing of "git checkout" had error checking, dwim and
 defaulting missing options, all mixed in the code, and issuing an
@@ -445,14 +459,15 @@ Reorganize the code and allow giving a proper diagnosis when the
 user says "git checkout -b -t foo bar" (e.g. "-t" is not a good name
 for a branch).
 
-Will merge to 'next' after squashing the tip two.
+Will merge to 'master' as part of the sixth batch.
 
 * js/compat-itimer (2012-09-08) 1 commit
- - Add a no-op setitimer() wrapper
+  (merged to 'next' on 2012-09-11 at 1f6c3a9)
+ + Add a no-op setitimer() wrapper
 
 Pieces to support compilation on __TANDEM.
 
-Will merge to 'next'.
+Will merge to 'master' as part of the sixth batch.
 
 * mh/fetch-filter-refs (2012-09-10) 14 commits
  - fetch-pack: eliminate spurious error messages
@@ -473,25 +488,7 @@ Will merge to 'next'.
 
 Code simplification and clarification.
 
-Waiting for the mh/string-list to settle.
-
-* jc/merge-bases (2012-08-31) 9 commits
-  (merged to 'next' on 2012-09-07 at ab0974d)
- + reduce_heads(): reimplement on top of remove_redundant()
- + merge-base: "--is-ancestor A B"
- + get_merge_bases_many(): walk from many tips in parallel
- + in_merge_bases(): use paint_down_to_common()
- + merge_bases_many(): split out the logic to paint history
- + in_merge_bases(): omit unnecessary redundant common ancestor reduction
- + http-push: use in_merge_bases() for fast-forward check
- + receive-pack: use in_merge_bases() for fast-forward check
- + in_merge_bases(): support only one "other" commit
-
-Optimise the "merge-base" computation a bit, and also update its
-users that do not need the full merge-base information to call a
-cheaper subset.
-
-Will merge to 'master' as part of the fifth batch.
+Will merge to 'next'.
 
 * jl/submodule-rm (2012-08-27) 1 commit
  - Teach rm to remove submodules unless they contain a git directory
@@ -504,7 +501,7 @@ no local changes in the submodule working tree, and its repository
 is not embedded in its working tree but is elsewhere and uses the
 gitfile mechanism to point at it.
 
-I lost track; what is the doneness of the discussion on this patch?
+Replacement sent but was still iffy around conflicted merge cases.
 
 * fa/remote-svn (2012-08-28) 16 commits
  - Add a test script for remote-svn
@@ -545,27 +542,3 @@ Waiting for comments from mentors and stakeholders.
 
 Will defer until the end of the 2012.
 while waiting for older "less" to go extinct.
-
---------------------------------------------------
-[Discarded]
-
-* jc/sanitize-nkd-lazy-iconv-open (2012-07-31) 1 commit
- . macos: lazily initialize iconv
-
-Teach the code that works around NKD/NKC gotcha on MacOS to call
-iconv_open() only when it is necessary, in the hope of avoiding
-set-up overhead.  It turns out that there was no noticeable
-improvements.
-
-* nd/checkout-branch-name-check (2012-08-27) 1 commit
- . checkout: verify new branch name's validity early
-
-"git checkout -b --opt y" errors out saying that creating a new
-branch to check it out and grabbing contents for paths out of a
-commit are incompatible operations.  While it is technically correct
-(the command line wants to create a new branch whose name is "--opt"
-and check it out, and there shouldn't be anything else left on the
-command line, but there is "y"), "--opt" is not a valid name of the
-branch to begin with, so even without "y", the command will not
-succeed.  Treat this case specially to complain that "--opt" is not
-a valid branch name.
