@@ -49,12 +49,21 @@ void argv_array_pushl(struct argv_array *array, ...)
 	va_end(ap);
 }
 
+void argv_array_pop(struct argv_array *array)
+{
+	if (!array->argc)
+		return;
+	free((char *)array->argv[array->argc - 1]);
+	array->argv[array->argc - 1] = NULL;
+	array->argc--;
+}
+
 void argv_array_clear(struct argv_array *array)
 {
 	if (array->argv != empty_argv) {
 		int i;
 		for (i = 0; i < array->argc; i++)
-			free((char **)array->argv[i]);
+			free((char *)array->argv[i]);
 		free(array->argv);
 	}
 	argv_array_init(array);

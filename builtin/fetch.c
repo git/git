@@ -14,6 +14,7 @@
 #include "transport.h"
 #include "submodule.h"
 #include "connected.h"
+#include "argv-array.h"
 
 static const char * const builtin_fetch_usage[] = {
 	N_("git fetch [<options>] [<repository> [<refspec>...]]"),
@@ -841,38 +842,35 @@ static int add_remote_or_group(const char *name, struct string_list *list)
 	return 1;
 }
 
-static void add_options_to_argv(int *argc, const char **argv)
+static void add_options_to_argv(struct argv_array *argv)
 {
 	if (dry_run)
-		argv[(*argc)++] = "--dry-run";
+		argv_array_push(argv, "--dry-run");
 	if (prune)
-		argv[(*argc)++] = "--prune";
+		argv_array_push(argv, "--prune");
 	if (update_head_ok)
-		argv[(*argc)++] = "--update-head-ok";
+		argv_array_push(argv, "--update-head-ok");
 	if (force)
-		argv[(*argc)++] = "--force";
+		argv_array_push(argv, "--force");
 	if (keep)
-		argv[(*argc)++] = "--keep";
+		argv_array_push(argv, "--keep");
 	if (recurse_submodules == RECURSE_SUBMODULES_ON)
-		argv[(*argc)++] = "--recurse-submodules";
+		argv_array_push(argv, "--recurse-submodules");
 	else if (recurse_submodules == RECURSE_SUBMODULES_ON_DEMAND)
-		argv[(*argc)++] = "--recurse-submodules=on-demand";
+		argv_array_push(argv, "--recurse-submodules=on-demand");
 	if (verbosity >= 2)
-		argv[(*argc)++] = "-v";
+		argv_array_push(argv, "-v");
 	if (verbosity >= 1)
-		argv[(*argc)++] = "-v";
+		argv_array_push(argv, "-v");
 	else if (verbosity < 0)
-		argv[(*argc)++] = "-q";
+		argv_array_push(argv, "-q");
 
 }
 
 static int fetch_multiple(struct string_list *list)
 {
 	int i, result = 0;
-	const char *argv[12] = { "fetch", "--append" };
-	int argc = 2;
-
-	add_options_to_argv(&argc, argv);
+	struct argv_array argv = ARGV_ARRAY_INIT;
 
 	if (!append && !dry_run) {
 		int errcode = truncate_fetch_head();
@@ -880,18 +878,22 @@ static int fetch_multiple(struct string_list *list)
 			return errcode;
 	}
 
+	argv_array_pushl(&argv, "fetch", "--append", NULL);
+	add_options_to_argv(&argv);
+
 	for (i = 0; i < list->nr; i++) {
 		const char *name = list->items[i].string;
-		argv[argc] = name;
-		argv[argc + 1] = NULL;
+		argv_array_push(&argv, name);
 		if (verbosity >= 0)
 			printf(_("Fetching %s\n"), name);
-		if (run_command_v_opt(argv, RUN_GIT_CMD)) {
+		if (run_command_v_opt(argv.argv, RUN_GIT_CMD)) {
 			error(_("Could not fetch %s"), name);
 			result = 1;
 		}
+		argv_array_pop(&argv);
 	}
 
+	argv_array_clear(&argv);
 	return result;
 }
 
@@ -1007,13 +1009,14 @@ int cmd_fetch(int argc, const char **argv, const char *prefix)
 	}
 
 	if (!result && (recurse_submodules != RECURSE_SUBMODULES_OFF)) {
-		const char *options[10];
-		int num_options = 0;
-		add_options_to_argv(&num_options, options);
-		result = fetch_populated_submodules(num_options, options,
+		struct argv_array options = ARGV_ARRAY_INIT;
+
+		add_options_to_argv(&options);
+		result = fetch_populated_submodules(&options,
 						    submodule_prefix,
 						    recurse_submodules,
 						    verbosity < 0);
+		argv_array_clear(&options);
 	}
 
 	/* All names were strdup()ed or strndup()ed */
