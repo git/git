@@ -25,11 +25,24 @@ Fixes since v1.7.12
  * A utility shell function test_seq has been added as a replacement
    for the 'seq' utility found on some platforms.
 
+ * Compatibility wrapper to learn the maximum number of file
+   descriptors we can open around sysconf(_SC_OPEN_MAX) and
+   getrlimit(RLIMIT_NO_FILE) has been introduced for portability.
+
+ * We used curl_easy_strerror() without checking version of cURL,
+   breaking the build for versions before curl 7.12.0.
+
+ * Code to work around MacOS X UTF-8 gotcha has been cleaned up.
+
  * Fallback 'getpass' implementation made unportable use of stdio API.
 
  * "git commit --amend" let the user edit the log message and then
    died when the human-readable committer name was given
    insufficiently by getpwent(3).
+
+ * Some capabilities were asked by fetch-pack even when upload-pack
+   did not advertise that they are available.  fetch-pack has been
+   fixed not to do so.
 
  * "git prune" without "-v" used to warn about leftover temporary
    files (which is an indication of an earlier aborted operation).
