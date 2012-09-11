@@ -564,7 +564,7 @@ Maybe you want to use 'update --init'?")"
 			die "$(eval_gettext "Unable to find current revision in submodule path '\$sm_path'")"
 		fi
 
-		if test "$subsha1" != "$sha1"
+		if test "$subsha1" != "$sha1" -o -n "$force"
 		then
 			subforce=$force
 			# If we don't already have a -f flag and the submodule has never been checked out

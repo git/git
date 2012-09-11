@@ -149,6 +149,11 @@ submodule with the `--init` option.
 +
 If `--recursive` is specified, this command will recurse into the
 registered submodules, and update any nested submodules within.
++
+If `--force` is specified, the submodule will be checked out (using
+`git checkout --force` if appropriate), even if the commit specified in the
+index of the containing repository already matches the commit checked out in
+the submodule.
 
 summary::
 	Show commit summary between the given commit (defaults to HEAD) and
@@ -210,7 +215,9 @@ OPTIONS
 	This option is only valid for add and update commands.
 	When running add, allow adding an otherwise ignored submodule path.
 	When running update, throw away local changes in submodules when
-	switching to a different commit.
+	switching to a different commit; and always run a checkout operation
+	in the submodule, even if the commit listed in the index of the
+	containing repository matches the commit checked out in the submodule.
 
 --cached::
 	This option is only valid for status and summary commands.  These
