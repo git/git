@@ -63,7 +63,8 @@ do
 		done <"$tmp.both" |
 		sort -r -n |
 		sed -e 's/^[0-9]* //' \
-		    -e 's/^/git branch -d /'
+		    -e 's/^/git branch -d /' |
+		sort -V -k 6,6
 		echo
 		cat "$tmp.known" "$tmp.both" | sort >"$tmp.next"
 		mv "$tmp.next" "$tmp.known"
