@@ -875,6 +875,9 @@ _git_branch ()
 	done
 
 	case "$cur" in
+	--set-upstream-to=*)
+		__gitcomp "$(__git_refs)" "" "${cur##--set-upstream-to=}"
+		;;
 	--*)
 		__gitcomp "
 			--color --no-color --verbose --abbrev= --no-abbrev
