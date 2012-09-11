@@ -221,7 +221,7 @@ static void wt_status_print_other_header(struct wt_status *s,
 					 const char *how)
 {
 	const char *c = color(WT_STATUS_HEADER, s);
-	status_printf_ln(s, c, _("%s files:"), what);
+	status_printf_ln(s, c, "%s:", what);
 	if (!advice_status_hints)
 		return;
 	status_printf_ln(s, c, _("  (use \"git %s <file>...\" to include in what will be committed)"), how);
@@ -1008,9 +1008,9 @@ void wt_status_print(struct wt_status *s)
 		wt_status_print_submodule_summary(s, 1);  /* unstaged */
 	}
 	if (s->show_untracked_files) {
-		wt_status_print_other(s, &s->untracked, _("Untracked"), "add");
+		wt_status_print_other(s, &s->untracked, _("Untracked files"), "add");
 		if (s->show_ignored_files)
-			wt_status_print_other(s, &s->ignored, _("Ignored"), "add -f");
+			wt_status_print_other(s, &s->ignored, _("Ignored files"), "add -f");
 	} else if (s->commitable)
 		status_printf_ln(s, GIT_COLOR_NORMAL, _("Untracked files not listed%s"),
 			advice_status_hints
@@ -1023,23 +1023,31 @@ void wt_status_print(struct wt_status *s)
 			status_printf_ln(s, GIT_COLOR_NORMAL, _("No changes"));
 		else if (s->nowarn)
 			; /* nothing */
-		else if (s->workdir_dirty)
-			printf(_("no changes added to commit%s\n"),
-				advice_status_hints
-				? _(" (use \"git add\" and/or \"git commit -a\")") : "");
-		else if (s->untracked.nr)
-			printf(_("nothing added to commit but untracked files present%s\n"),
-				advice_status_hints
-				? _(" (use \"git add\" to track)") : "");
-		else if (s->is_initial)
-			printf(_("nothing to commit%s\n"), advice_status_hints
-				? _(" (create/copy files and use \"git add\" to track)") : "");
-		else if (!s->show_untracked_files)
-			printf(_("nothing to commit%s\n"), advice_status_hints
-				? _(" (use -u to show untracked files)") : "");
-		else
-			printf(_("nothing to commit%s\n"), advice_status_hints
-				? _(" (working directory clean)") : "");
+		else if (s->workdir_dirty) {
+			if (advice_status_hints)
+				printf(_("no changes added to commit "
+					 "(use \"git add\" and/or \"git commit -a\")\n"));
+			else
+				printf(_("no changes added to commit\n"));
+		} else if (s->untracked.nr) {
+			if (advice_status_hints)
+				printf(_("nothing added to commit but untracked files "
+					 "present (use \"git add\" to track)\n"));
+			else
+				printf(_("nothing added to commit but untracked files present\n"));
+		} else if (s->is_initial) {
+			if (advice_status_hints)
+				printf(_("nothing to commit (create/copy files "
+					 "and use \"git add\" to track)\n"));
+			else
+				printf(_("nothing to commit\n"));
+		} else if (!s->show_untracked_files) {
+			if (advice_status_hints)
+				printf(_("nothing to commit (use -u to show untracked files)\n"));
+			else
+				printf(_("nothing to commit\n"));
+		} else
+			printf(_("nothing to commit, working directory clean\n"));
 	}
 }
 
