@@ -139,6 +139,8 @@ int sane_execvp(const char *file, char * const argv[])
 	 */
 	if (errno == EACCES && !strchr(file, '/'))
 		errno = exists_in_PATH(file) ? EACCES : ENOENT;
+	else if (errno == ENOTDIR && !strchr(file, '/'))
+		errno = ENOENT;
 	return -1;
 }
 
