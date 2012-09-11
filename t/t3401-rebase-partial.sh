@@ -47,7 +47,23 @@ test_expect_success 'rebase ignores empty commit' '
 	git commit --allow-empty -m empty &&
 	test_commit D &&
 	git rebase C &&
-	test $(git log --format=%s C..) = "D"
+	test "$(git log --format=%s C..)" = "D"
+'
+
+test_expect_success 'rebase --keep-empty' '
+	git reset --hard D &&
+	git rebase --keep-empty C &&
+	test "$(git log --format=%s C..)" = "D
+empty"
+'
+
+test_expect_success 'rebase --keep-empty keeps empty even if already in upstream' '
+	git reset --hard A &&
+	git commit --allow-empty -m also-empty &&
+	git rebase --keep-empty D &&
+	test "$(git log --format=%s A..)" = "also-empty
+D
+empty"
 '
 
 test_done

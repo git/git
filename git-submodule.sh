@@ -109,24 +109,46 @@ resolve_relative_url ()
 #
 module_list()
 {
-	git ls-files --error-unmatch --stage -- "$@" |
+	(
+		git ls-files --error-unmatch --stage -- "$@" ||
+		echo "unmatched pathspec exists"
+	) |
 	perl -e '
 	my %unmerged = ();
 	my ($null_sha1) = ("0" x 40);
+	my @out = ();
+	my $unmatched = 0;
 	while (<STDIN>) {
+		if (/^unmatched pathspec/) {
+			$unmatched = 1;
+			next;
+		}
 		chomp;
 		my ($mode, $sha1, $stage, $path) =
 			/^([0-7]+) ([0-9a-f]{40}) ([0-3])\t(.*)$/;
 		next unless $mode eq "160000";
 		if ($stage ne "0") {
 			if (!$unmerged{$path}++) {
-				print "$mode $null_sha1 U\t$path\n";
+				push @out, "$mode $null_sha1 U\t$path\n";
 			}
 			next;
 		}
-		print "$_\n";
+		push @out, "$_\n";
+	}
+	if ($unmatched) {
+		print "#unmatched\n";
+	} else {
+		print for (@out);
 	}
 	'
+}
+
+die_if_unmatched ()
+{
+	if test "$1" = "#unmatched"
+	then
+		exit 1
+	fi
 }
 
 #
@@ -385,6 +407,7 @@ cmd_foreach()
 	module_list |
 	while read mode sha1 stage sm_path
 	do
+		die_if_unmatched "$mode"
 		if test -e "$sm_path"/.git
 		then
 			say "$(eval_gettext "Entering '\$prefix\$sm_path'")"
@@ -437,6 +460,7 @@ cmd_init()
 	module_list "$@" |
 	while read mode sha1 stage sm_path
 	do
+		die_if_unmatched "$mode"
 		name=$(module_name "$sm_path") || exit
 
 		# Copy url setting when it is not set yet
@@ -537,6 +561,7 @@ cmd_update()
 	err=
 	while read mode sha1 stage sm_path
 	do
+		die_if_unmatched "$mode"
 		if test "$stage" = U
 		then
 			echo >&2 "Skipping unmerged submodule $sm_path"
@@ -578,7 +603,7 @@ Maybe you want to use 'update --init'?")"
 			die "$(eval_gettext "Unable to find current revision in submodule path '\$sm_path'")"
 		fi
 
-		if test "$subsha1" != "$sha1"
+		if test "$subsha1" != "$sha1" -o -n "$force"
 		then
 			subforce=$force
 			# If we don't already have a -f flag and the submodule has never been checked out
@@ -932,6 +957,7 @@ cmd_status()
 	module_list "$@" |
 	while read mode sha1 stage sm_path
 	do
+		die_if_unmatched "$mode"
 		name=$(module_name "$sm_path") || exit
 		url=$(git config submodule."$name".url)
 		displaypath="$prefix$sm_path"
@@ -1000,6 +1026,7 @@ cmd_sync()
 	module_list "$@" |
 	while read mode sha1 stage sm_path
 	do
+		die_if_unmatched "$mode"
 		name=$(module_name "$sm_path")
 		url=$(git config -f .gitmodules --get submodule."$name".url)
 

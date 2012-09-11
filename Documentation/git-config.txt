@@ -54,16 +54,16 @@ configuration file by default, and options '--system', '--global',
 '--file <filename>' can be used to tell the command to write to
 that location (you can say '--local' but that is the default).
 
-This command will fail (with exit code ret) if:
+This command will fail with non-zero status upon error.  Some exit
+codes are:
 
 . The config file is invalid (ret=3),
 . can not write to the config file (ret=4),
 . no section or name was provided (ret=2),
 . the section or key is invalid (ret=1),
 . you try to unset an option which does not exist (ret=5),
-. you try to unset/set an option for which multiple lines match (ret=5),
-. you try to use an invalid regexp (ret=6), or
-. you use '--global' option without $HOME being properly set (ret=128).
+. you try to unset/set an option for which multiple lines match (ret=5), or
+. you try to use an invalid regexp (ret=6).
 
 On success, the command returns the exit code 0.
 
@@ -267,7 +267,7 @@ Given a .git/config like this:
 
 	; Proxy settings
 	[core]
-		gitproxy="proxy-command" for kernel.org
+		gitproxy=proxy-command for kernel.org
 		gitproxy=default-proxy ; for all the rest
 
 you can set the filemode to true with
@@ -342,7 +342,7 @@ To actually match only values with an exclamation mark, you have to
 To add a new proxy, without altering any of the existing ones, use
 
 ------------
-% git config core.gitproxy '"proxy-command" for example.com'
+% git config --add core.gitproxy '"proxy-command" for example.com'
 ------------
 
 An example to use customized color from the configuration in your

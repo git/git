@@ -574,6 +574,7 @@ static void emit_rewrite_lines(struct emit_callback *ecb,
 	if (!endp) {
 		const char *plain = diff_get_color(ecb->color_diff,
 						   DIFF_PLAIN);
+		putc('\n', ecb->opt->file);
 		emit_line_0(ecb->opt, plain, reset, '\\',
 			    nneof, strlen(nneof));
 	}
@@ -3187,7 +3188,7 @@ void diff_setup(struct diff_options *options)
 	}
 }
 
-int diff_setup_done(struct diff_options *options)
+void diff_setup_done(struct diff_options *options)
 {
 	int count = 0;
 
@@ -3286,8 +3287,6 @@ int diff_setup_done(struct diff_options *options)
 		options->output_format = DIFF_FORMAT_NO_OUTPUT;
 		DIFF_OPT_SET(options, EXIT_WITH_STATUS);
 	}
-
-	return 0;
 }
 
 static int opt_arg(const char *arg, int arg_short, const char *arg_long, int *val)

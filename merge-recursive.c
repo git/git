@@ -493,8 +493,7 @@ static struct string_list *get_renames(struct merge_options *o,
 	opts.rename_score = o->rename_score;
 	opts.show_rename_progress = o->show_rename_progress;
 	opts.output_format = DIFF_FORMAT_NO_OUTPUT;
-	if (diff_setup_done(&opts) < 0)
-		die(_("diff setup failed"));
+	diff_setup_done(&opts);
 	diff_tree_sha1(o_tree->object.sha1, tree->object.sha1, "", &opts);
 	diffcore_std(&opts);
 	if (opts.needed_rename_limit > o->needed_rename_limit)
@@ -612,23 +611,6 @@ static char *unique_path(struct merge_options *o, const char *path, const char *
 
 	string_list_insert(&o->current_file_set, newpath);
 	return newpath;
-}
-
-static void flush_buffer(int fd, const char *buf, unsigned long size)
-{
-	while (size > 0) {
-		long ret = write_in_full(fd, buf, size);
-		if (ret < 0) {
-			/* Ignore epipe */
-			if (errno == EPIPE)
-				break;
-			die_errno("merge-recursive");
-		} else if (!ret) {
-			die(_("merge-recursive: disk full?"));
-		}
-		size -= ret;
-		buf += ret;
-	}
 }
 
 static int dir_in_way(const char *path, int check_working_copy)
@@ -789,7 +771,7 @@ static void update_file_flags(struct merge_options *o,
 			fd = open(path, O_WRONLY | O_TRUNC | O_CREAT, mode);
 			if (fd < 0)
 				die_errno(_("failed to open '%s'"), path);
-			flush_buffer(fd, buf, size);
+			write_in_full(fd, buf, size);
 			close(fd);
 		} else if (S_ISLNK(mode)) {
 			char *lnk = xmemdupz(buf, size);
