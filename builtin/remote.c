@@ -11,7 +11,7 @@ static const char * const builtin_remote_usage[] = {
 	N_("git remote [-v | --verbose]"),
 	N_("git remote add [-t <branch>] [-m <master>] [-f] [--tags|--no-tags] [--mirror=<fetch|push>] <name> <url>"),
 	N_("git remote rename <old> <new>"),
-	N_("git remote rm <name>"),
+	N_("git remote remove <name>"),
 	N_("git remote set-head <name> (-a | -d | <branch>)"),
 	N_("git remote [-v | --verbose] show [-n] <name>"),
 	N_("git remote prune [-n | --dry-run] <name>"),
@@ -34,7 +34,7 @@ static const char * const builtin_remote_rename_usage[] = {
 };
 
 static const char * const builtin_remote_rm_usage[] = {
-	N_("git remote rm <name>"),
+	N_("git remote remove <name>"),
 	NULL
 };
 
@@ -1580,7 +1580,7 @@ int cmd_remote(int argc, const char **argv, const char *prefix)
 		result = add(argc, argv);
 	else if (!strcmp(argv[0], "rename"))
 		result = mv(argc, argv);
-	else if (!strcmp(argv[0], "rm"))
+	else if (!strcmp(argv[0], "rm") || !strcmp(argv[0], "remove"))
 		result = rm(argc, argv);
 	else if (!strcmp(argv[0], "set-head"))
 		result = set_head(argc, argv);
