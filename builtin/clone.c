@@ -236,7 +236,7 @@ static int add_one_reference(struct string_list_item *item, void *cb_data)
 	/* Beware: real_path() and mkpath() return static buffer */
 	ref_git = xstrdup(real_path(item->string));
 	if (is_directory(mkpath("%s/.git/objects", ref_git))) {
-		char *ref_git_git = xstrdup(mkpath("%s/.git", ref_git));
+		char *ref_git_git = mkpathdup("%s/.git", ref_git);
 		free(ref_git);
 		ref_git = ref_git_git;
 	} else if (!is_directory(mkpath("%s/objects", ref_git)))
@@ -700,7 +700,7 @@ int cmd_clone(int argc, const char **argv, const char *prefix)
 		git_dir = xstrdup(dir);
 	else {
 		work_tree = dir;
-		git_dir = xstrdup(mkpath("%s/.git", dir));
+		git_dir = mkpathdup("%s/.git", dir);
 	}
 
 	if (!option_bare) {

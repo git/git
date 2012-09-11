@@ -169,7 +169,7 @@ int cmd_prune(int argc, const char **argv, const char *prefix)
 
 	prune_packed_objects(show_only);
 	remove_temporary_files(get_object_directory());
-	s = xstrdup(mkpath("%s/pack", get_object_directory()));
+	s = mkpathdup("%s/pack", get_object_directory());
 	remove_temporary_files(s);
 	free(s);
 	return 0;
