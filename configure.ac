@@ -7,8 +7,9 @@
 # ------------------------
 # Cause the line "VAR=VAL" to be eventually appended to ${config_file}.
 AC_DEFUN([GIT_CONF_SUBST],
-   [AC_REQUIRE([GIT_CONF_SUBST_INIT])
-   config_appended_defs="$config_appended_defs${newline}$1=$2"])
+[AC_REQUIRE([GIT_CONF_SUBST_INIT])
+config_appended_defs="$config_appended_defs${newline}dnl
+$1=m4_if([$#],[1],[${$1}],[$2])"])
 
 # GIT_CONF_SUBST_INIT
 # -------------------
@@ -179,7 +180,7 @@ AC_ARG_WITH([lib],
   else
 	lib=$withval
 	AC_MSG_NOTICE([Setting lib to '$lib'])
-	GIT_CONF_SUBST([lib], [$withval])
+	GIT_CONF_SUBST([lib])
   fi])
 
 if test -z "$lib"; then
@@ -215,7 +216,7 @@ AC_ARG_ENABLE([jsmin],
 [
   JSMIN=$enableval;
   AC_MSG_NOTICE([Setting JSMIN to '$JSMIN' to enable JavaScript minifying])
-  GIT_CONF_SUBST([JSMIN], [$enableval])
+  GIT_CONF_SUBST([JSMIN])
 ])
 
 # Define option to enable CSS minification
@@ -225,7 +226,7 @@ AC_ARG_ENABLE([cssmin],
 [
   CSSMIN=$enableval;
   AC_MSG_NOTICE([Setting CSSMIN to '$CSSMIN' to enable CSS minifying])
-  GIT_CONF_SUBST([CSSMIN], [$enableval])
+  GIT_CONF_SUBST([CSSMIN])
 ])
 
 ## Site configuration (override autodetection)
@@ -265,8 +266,8 @@ AS_HELP_STRING([],           [ARG can be also prefix for libpcre library and hea
     else
 	USE_LIBPCRE=YesPlease
 	LIBPCREDIR=$withval
-	AC_MSG_NOTICE([Setting LIBPCREDIR to $withval])
-	GIT_CONF_SUBST([LIBPCREDIR], [$withval])
+	AC_MSG_NOTICE([Setting LIBPCREDIR to $LIBPCREDIR])
+	GIT_CONF_SUBST([LIBPCREDIR])
     fi)
 #
 # Define NO_CURL if you do not have curl installed.  git-http-pull and
