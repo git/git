@@ -184,7 +184,6 @@ struct patch {
 	int is_new, is_delete;	/* -1 = unknown, 0 = false, 1 = true */
 	int rejected;
 	unsigned ws_rule;
-	unsigned long deflate_origlen;
 	int lines_added, lines_deleted;
 	int score;
 	unsigned int is_toplevel_relative:1;
