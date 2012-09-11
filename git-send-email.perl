@@ -759,7 +759,8 @@ if (!defined $sender) {
 }
 
 if (!@initial_to && !defined $to_cmd) {
-	my $to = ask("Who should the emails be sent to? ",
+	my $to = ask("Who should the emails be sent to (if any)? ",
+		     default => "",
 		     valid_re => qr/\@.*\./, confirm_only => 1);
 	push @initial_to, parse_address_line($to) if defined $to; # sanitized/validated later
 	$prompting++;
@@ -786,7 +787,8 @@ sub expand_one_alias {
 
 if ($thread && !defined $initial_reply_to && $prompting) {
 	$initial_reply_to = ask(
-		"Message-ID to be used as In-Reply-To for the first email? ",
+		"Message-ID to be used as In-Reply-To for the first email (if any)? ",
+		default => "",
 		valid_re => qr/\@.*\./, confirm_only => 1);
 }
 if (defined $initial_reply_to) {
