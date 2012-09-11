@@ -8,6 +8,7 @@
 #include "send-pack.h"
 #include "quote.h"
 #include "transport.h"
+#include "version.h"
 
 static const char send_pack_usage[] =
 "git send-pack [--all | --mirror] [--dry-run] [--force] [--receive-pack=<git-receive-pack>] [--verbose] [--thin] [<host>:]<directory> [<ref>...]\n"
@@ -251,6 +252,7 @@ int send_pack(struct send_pack_args *args,
 	int status_report = 0;
 	int use_sideband = 0;
 	int quiet_supported = 0;
+	int agent_supported = 0;
 	unsigned cmds_sent = 0;
 	int ret;
 	struct async demux;
@@ -266,6 +268,8 @@ int send_pack(struct send_pack_args *args,
 		use_sideband = 1;
 	if (server_supports("quiet"))
 		quiet_supported = 1;
+	if (server_supports("agent"))
+		agent_supported = 1;
 
 	if (!remote_refs) {
 		fprintf(stderr, "No refs in common and none specified; doing nothing.\n"
@@ -305,12 +309,17 @@ int send_pack(struct send_pack_args *args,
 			char *new_hex = sha1_to_hex(ref->new_sha1);
 			int quiet = quiet_supported && (args->quiet || !args->progress);
 
-			if (!cmds_sent && (status_report || use_sideband || args->quiet)) {
-				packet_buf_write(&req_buf, "%s %s %s%c%s%s%s",
+			if (!cmds_sent && (status_report || use_sideband ||
+					   quiet || agent_supported)) {
+				packet_buf_write(&req_buf,
+						 "%s %s %s%c%s%s%s%s%s",
 						 old_hex, new_hex, ref->name, 0,
 						 status_report ? " report-status" : "",
 						 use_sideband ? " side-band-64k" : "",
-						 quiet ? " quiet" : "");
+						 quiet ? " quiet" : "",
+						 agent_supported ? " agent=" : "",
+						 agent_supported ? git_user_agent_sanitized() : ""
+						);
 			}
 			else
 				packet_buf_write(&req_buf, "%s %s %s",

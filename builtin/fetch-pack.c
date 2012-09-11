@@ -10,6 +10,7 @@
 #include "remote.h"
 #include "run-command.h"
 #include "transport.h"
+#include "version.h"
 
 static int transfer_unpack_limit = -1;
 static int fetch_unpack_limit = -1;
@@ -18,6 +19,7 @@ static int prefer_ofs_delta = 1;
 static int no_done;
 static int fetch_fsck_objects = -1;
 static int transfer_fsck_objects = -1;
+static int agent_supported;
 static struct fetch_pack_args args = {
 	/* .uploadpack = */ "git-upload-pack",
 };
@@ -327,6 +329,8 @@ static int find_common(int fd[2], unsigned char *result_sha1,
 			if (args.no_progress)   strbuf_addstr(&c, " no-progress");
 			if (args.include_tag)   strbuf_addstr(&c, " include-tag");
 			if (prefer_ofs_delta)   strbuf_addstr(&c, " ofs-delta");
+			if (agent_supported)    strbuf_addf(&c, " agent=%s",
+							    git_user_agent_sanitized());
 			packet_buf_write(&req_buf, "want %s%s\n", remote_hex, c.buf);
 			strbuf_release(&c);
 		} else
@@ -783,6 +787,8 @@ static struct ref *do_fetch_pack(int fd[2],
 {
 	struct ref *ref = copy_ref_list(orig_ref);
 	unsigned char sha1[20];
+	const char *agent_feature;
+	int agent_len;
 
 	sort_ref_list(&ref, ref_compare_name);
 
@@ -814,11 +820,25 @@ static struct ref *do_fetch_pack(int fd[2],
 			fprintf(stderr, "Server supports side-band\n");
 		use_sideband = 1;
 	}
+	if (!server_supports("thin-pack"))
+		args.use_thin_pack = 0;
+	if (!server_supports("no-progress"))
+		args.no_progress = 0;
+	if (!server_supports("include-tag"))
+		args.include_tag = 0;
 	if (server_supports("ofs-delta")) {
 		if (args.verbose)
 			fprintf(stderr, "Server supports ofs-delta\n");
 	} else
 		prefer_ofs_delta = 0;
+
+	if ((agent_feature = server_feature_value("agent", &agent_len))) {
+		agent_supported = 1;
+		if (args.verbose && agent_len)
+			fprintf(stderr, "Server version is %.*s\n",
+				agent_len, agent_feature);
+	}
+
 	if (everything_local(&ref, nr_match, match)) {
 		packet_flush(fd[1]);
 		goto all_done;
