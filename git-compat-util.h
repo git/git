@@ -167,6 +167,17 @@
 extern int compat_mkdir_wo_trailing_slash(const char*, mode_t);
 #endif
 
+#ifdef NO_STRUCT_ITIMERVAL
+struct itimerval {
+	struct timeval it_interval;
+	struct timeval it_value;
+}
+#endif
+
+#ifdef NO_SETITIMER
+#define setitimer(which,value,ovalue)
+#endif
+
 #ifndef NO_LIBGEN_H
 #include <libgen.h>
 #else
