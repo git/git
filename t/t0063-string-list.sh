@@ -71,4 +71,21 @@ test_expect_success "test filter_string_list" '
 	test "x-" = "x$(test-string-list filter x1:x2 y)"
 '
 
+test_expect_success "test remove_duplicates" '
+	test "x-" = "x$(test-string-list remove_duplicates -)" &&
+	test "x" = "x$(test-string-list remove_duplicates "")" &&
+	test a = "$(test-string-list remove_duplicates a)" &&
+	test a = "$(test-string-list remove_duplicates a:a)" &&
+	test a = "$(test-string-list remove_duplicates a:a:a:a:a)" &&
+	test a:b = "$(test-string-list remove_duplicates a:b)" &&
+	test a:b = "$(test-string-list remove_duplicates a:a:b)" &&
+	test a:b = "$(test-string-list remove_duplicates a:b:b)" &&
+	test a:b:c = "$(test-string-list remove_duplicates a:b:c)" &&
+	test a:b:c = "$(test-string-list remove_duplicates a:a:b:c)" &&
+	test a:b:c = "$(test-string-list remove_duplicates a:b:b:c)" &&
+	test a:b:c = "$(test-string-list remove_duplicates a:b:c:c)" &&
+	test a:b:c = "$(test-string-list remove_duplicates a:a:b:b:c:c)" &&
+	test a:b:c = "$(test-string-list remove_duplicates a:a:a:b:b:b:c:c:c)"
+'
+
 test_done

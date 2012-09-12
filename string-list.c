@@ -92,6 +92,23 @@ struct string_list_item *string_list_lookup(struct string_list *list, const char
 	return list->items + i;
 }
 
+void string_list_remove_duplicates(struct string_list *list, int free_util)
+{
+	if (list->nr > 1) {
+		int src, dst;
+		for (src = dst = 1; src < list->nr; src++) {
+			if (!strcmp(list->items[dst - 1].string, list->items[src].string)) {
+				if (list->strdup_strings)
+					free(list->items[src].string);
+				if (free_util)
+					free(list->items[src].util);
+			} else
+				list->items[dst++] = list->items[src];
+		}
+		list->nr = dst;
+	}
+}
+
 int for_each_string_list(struct string_list *list,
 			 string_list_each_func_t fn, void *cb_data)
 {

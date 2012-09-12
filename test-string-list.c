@@ -87,6 +87,16 @@ int main(int argc, char **argv)
 		return 0;
 	}
 
+	if (argc == 3 && !strcmp(argv[1], "remove_duplicates")) {
+		struct string_list list = STRING_LIST_INIT_DUP;
+
+		parse_string_list(&list, argv[2]);
+		string_list_remove_duplicates(&list, 0);
+		write_list_compact(&list);
+		string_list_clear(&list, 0);
+		return 0;
+	}
+
 	fprintf(stderr, "%s: unknown function name: %s\n", argv[0],
 		argv[1] ? argv[1] : "(there was none)");
 	return 1;

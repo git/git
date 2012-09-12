@@ -30,6 +30,9 @@ member (you need this if you add things later) and you should set the
 
 . Can sort an unsorted list using `sort_string_list`.
 
+. Can remove duplicate items from a sorted list using
+  `string_list_remove_duplicates`.
+
 . Can remove individual items of an unsorted list using
   `unsorted_string_list_delete_item`.
 
@@ -107,6 +110,12 @@ write `string_list_insert(...)->util = ...;`.
 
 	Look up a given string in the string_list, returning the containing
 	string_list_item. If the string is not found, NULL is returned.
+
+`string_list_remove_duplicates`::
+
+	Remove all but the first of consecutive entries that have the
+	same string value.  If free_util is true, call free() on the
+	util members of any items that have to be deleted.
 
 * Functions for unsorted lists only
 

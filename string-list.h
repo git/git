@@ -48,6 +48,13 @@ struct string_list_item *string_list_insert_at_index(struct string_list *list,
 						     int insert_at, const char *string);
 struct string_list_item *string_list_lookup(struct string_list *list, const char *string);
 
+/*
+ * Remove all but the first of consecutive entries with the same
+ * string value.  If free_util is true, call free() on the util
+ * members of any items that have to be deleted.
+ */
+void string_list_remove_duplicates(struct string_list *sorted_list, int free_util);
+
 
 /* Use these functions only on unsorted lists: */
 
