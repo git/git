@@ -33,6 +33,9 @@ member (you need this if you add things later) and you should set the
 . Can remove individual items of an unsorted list using
   `unsorted_string_list_delete_item`.
 
+. Can remove items not matching a criterion from a sorted or unsorted
+  list using `filter_string_list`.
+
 . Finally it should free the list using `string_list_clear`.
 
 Example:
@@ -60,6 +63,14 @@ Functions
 ---------
 
 * General ones (works with sorted and unsorted lists as well)
+
+`filter_string_list`::
+
+	Apply a function to each item in a list, retaining only the
+	items for which the function returns true.  If free_util is
+	true, call free() on the util members of any items that have
+	to be deleted.  Preserve the order of the items that are
+	retained.
 
 `print_string_list`::
 

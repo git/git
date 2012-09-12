@@ -60,4 +60,15 @@ test_split ":" ":" "-1" <<EOF
 [1]: ""
 EOF
 
+test_expect_success "test filter_string_list" '
+	test "x-" = "x$(test-string-list filter - y)" &&
+	test "x-" = "x$(test-string-list filter no y)" &&
+	test yes = "$(test-string-list filter yes y)" &&
+	test yes = "$(test-string-list filter no:yes y)" &&
+	test yes = "$(test-string-list filter yes:no y)" &&
+	test y1:y2 = "$(test-string-list filter y1:y2 y)" &&
+	test y2:y1 = "$(test-string-list filter y2:y1 y)" &&
+	test "x-" = "x$(test-string-list filter x1:x2 y)"
+'
+
 test_done
