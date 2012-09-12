@@ -21,7 +21,8 @@ member (you need this if you add things later) and you should set the
 `nr` and `alloc` members in that case, too.
 
 . Adds new items to the list, using `string_list_append`,
-  `string_list_append_nodup`, or `string_list_insert`.
+  `string_list_append_nodup`, `string_list_insert`,
+  `string_list_split`, and/or `string_list_split_in_place`.
 
 . Can check if a string is in the list using `string_list_has_string` or
   `unsorted_string_list_has_string` and get it from the list using
@@ -134,6 +135,25 @@ counterpart for sorted lists, which performs a binary search.
 	will be freed in case the `strdup_strings` member of the string_list
 	is set. The third parameter controls if the `util` pointer of the
 	items should be freed or not.
+
+`string_list_split`::
+`string_list_split_in_place`::
+
+	Split a string into substrings on a delimiter character and
+	append the substrings to a `string_list`.  If `maxsplit` is
+	non-negative, then split at most `maxsplit` times.  Return the
+	number of substrings appended to the list.
++
+`string_list_split` requires a `string_list` that has `strdup_strings`
+set to true; it leaves the input string untouched and makes copies of
+the substrings in newly-allocated memory.
+`string_list_split_in_place` requires a `string_list` that has
+`strdup_strings` set to false; it splits the input string in place,
+overwriting the delimiter characters with NULs and creating new
+string_list_items that point into the original string (the original
+string must therefore not be modified or freed while the `string_list`
+is in use).
+
 
 Data structures
 ---------------
