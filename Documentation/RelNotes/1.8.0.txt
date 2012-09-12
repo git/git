@@ -59,6 +59,7 @@ Foreign Interface
 
  * "git svn" has been updated to work with SVN 1.7.
 
+
 Performance, Internal Implementation, etc. (please report possible regressions)
 
  * Git ships with a fall-back regexp implementation for platforms with
@@ -75,6 +76,9 @@ Performance, Internal Implementation, etc. (please report possible regressions)
  * Compatibility wrapper around some mkdir(2) implementations that
    reject parameter with trailing slash has been introduced.
 
+ * Compatibility wrapper for systems that lack usable setitimer() has
+   been added.
+
  * Many internal uses of "git merge-base" equivalent were only to see
    if one commit fast-forwards to the other, which did not need the
    full set of merge bases to be computed. They have been updated to
@@ -87,6 +91,7 @@ Performance, Internal Implementation, etc. (please report possible regressions)
  * Messages given by "git <subcommand> -h" from many subcommands have
    been marked for translation.
 
+
 Also contains minor documentation updates and code clean-ups.
 
 
@@ -96,6 +101,18 @@ Fixes since v1.7.12
 Unless otherwise noted, all the fixes since v1.7.12 in the
 maintenance track are contained in this release (see release notes
 to them for details).
+
+ * The subcommand in "git remote" to remove a defined remote was
+   "rm" and the command did not take a fully-spelled "remove".
+   (merge e17dba8 nd/maint-remote-remove later to maint).
+
+ * After "gitk" showed the contents of a tag, neither "Reread
+   references" nor "Reload" did not update what is shown as the
+   contents of it, when the user overwrote the tag with "git tag -f".
+
+ * "git cvsimport" did not thoroughly cleanse tag names that it
+   inferred from the names of the tags it obtained from CVS, which
+   caused "git tag" to barf and stop the import in the middle.
 
  * "git show --format='%ci'" did not give timestamp correctly for
    commits created without human readable name on "committer" line.
@@ -120,41 +137,9 @@ to them for details).
    branches were counting in bytes, not in display columns.
    (merge 1452bd6 nd/branch-v-alignment later to maint).
 
- * "git for-each-ref" did not currectly support more than one --sort
-   option.
-   (merge 3b51222 kk/maint-for-each-ref-multi-sort later to maint).
-
- * Pushing to smart HTTP server with recent Git fails without having
-   the username in the URL to force authentication, if the server is
-   configured to allow GET anonymously, while requiring authentication
-   for POST.
-   (merge b81401c jk/maint-http-half-auth-push later to maint).
-
  * When looking for $HOME/.gitconfig etc., it is OK if we cannot read
    them because they do not exist, but we did not diagnose existing
    files that we cannot read.
-
- * The synopsis said "checkout [-B branch]" to make it clear the
-   branch name is a parameter to the option, but the heading for the
-   option description was "-B::", not "-B branch::", making the
-   documentation misleading.  There may be room in documentation pages
-   of other commands for similar improvements (hint, hint).
-   (merge 45aaf03 jc/maint-doc-checkout-b-always-takes-branch-name later to maint).
-
- * "git log .." errored out saying it is both rev range and a path
-   when there is no disambiguating "--" is on the command line.
-   Update the command line parser to interpret ".." as a path in such
-   a case.
-   (merge 003c84f jc/dotdot-is-parent-directory later to maint).
-
- * "git apply -p0" did not parse pathnames on "diff --git" line
-   correctly.  This caused patches that had pathnames in no other
-   places to be mistakenly rejected (most notably, binary patch that
-   does not rename nor change mode).  Textual patches, renames or mode
-   changes have preimage and postimage pathnames in different places
-   in a form that can be parsed unambiguously and did not suffer from
-   this problem.
-   (merge 6a2abdc jc/apply-binary-p0 later to maint).
 
  * The interactive prompt "git send-email" gives was error prone. It
    asked "What e-mail address do you want to use?" with the address it
@@ -162,4 +147,4 @@ to them for details).
    tempting the user to say "y". But the response was taken as "No,
    please use 'y' as the e-mail address instead", which is most
    certainly not what the user meant.
-   (merge 51bbccf jc/send-email-reconfirm later to maint).
+   (merge 6183749 sb/send-email-reconfirm-fix later to maint).
