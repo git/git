@@ -14,6 +14,11 @@ Fixes since v1.7.12
    subcommands can be abbreviated to the unique prefix, but it was not
    easy to find it described for new readers of the documentation set.
 
+ * The synopsis said "checkout [-B branch]" to make it clear the
+   branch name is a parameter to the option, but the heading for the
+   option description was "-B::", not "-B branch::", making the
+   documentation misleading.
+
  * The "--topo-order", "--date-order" (and the lack of either means
    the default order) options to "rev-list" and "log" family of
    commands were poorly described in the documentation.
@@ -36,6 +41,14 @@ Fixes since v1.7.12
 
  * Fallback 'getpass' implementation made unportable use of stdio API.
 
+ * "git apply -p0" did not parse pathnames on "diff --git" line
+   correctly.  This caused patches that had pathnames in no other
+   places to be mistakenly rejected (most notably, binary patch that
+   does not rename nor change mode).  Textual patches, renames or mode
+   changes have preimage and postimage pathnames in different places
+   in a form that can be parsed unambiguously and did not suffer from
+   this problem.
+
  * "git commit --amend" let the user edit the log message and then
    died when the human-readable committer name was given
    insufficiently by getpwent(3).
@@ -44,8 +57,21 @@ Fixes since v1.7.12
    did not advertise that they are available.  fetch-pack has been
    fixed not to do so.
 
+ * "git for-each-ref" did not currectly support more than one --sort
+   option.
+
+ * "git log .." errored out saying it is both rev range and a path
+   when there is no disambiguating "--" is on the command line.
+   Update the command line parser to interpret ".." as a path in such
+   a case.
+
  * "git prune" without "-v" used to warn about leftover temporary
    files (which is an indication of an earlier aborted operation).
+
+ * Pushing to smart HTTP server with recent Git fails without having
+   the username in the URL to force authentication, if the server is
+   configured to allow GET anonymously, while requiring authentication
+   for POST.
 
  * The reflog entries left by "git rebase" and "git rebase -i" were
    inconsistent (the interactive one gave an abbreviated object name).
