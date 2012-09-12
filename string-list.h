@@ -38,6 +38,14 @@ int for_each_string_list(struct string_list *list,
 void filter_string_list(struct string_list *list, int free_util,
 			string_list_each_func_t want, void *cb_data);
 
+/*
+ * Return the longest string in prefixes that is a prefix (in the
+ * sense of prefixcmp()) of string, or NULL if no such prefix exists.
+ * This function does not require the string_list to be sorted (it
+ * does a linear search).
+ */
+char *string_list_longest_prefix(const struct string_list *prefixes, const char *string);
+
 
 /* Use these functions only on sorted lists: */
 int string_list_has_string(const struct string_list *list, const char *string);
