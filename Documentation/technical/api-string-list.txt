@@ -20,8 +20,8 @@ If you need something advanced, you can manually malloc() the `items`
 member (you need this if you add things later) and you should set the
 `nr` and `alloc` members in that case, too.
 
-. Adds new items to the list, using `string_list_append` or
-  `string_list_insert`.
+. Adds new items to the list, using `string_list_append`,
+  `string_list_append_nodup`, or `string_list_insert`.
 
 . Can check if a string is in the list using `string_list_has_string` or
   `unsorted_string_list_has_string` and get it from the list using
@@ -100,7 +100,18 @@ write `string_list_insert(...)->util = ...;`.
 
 `string_list_append`::
 
-	Append a new string to the end of the string_list.
+	Append a new string to the end of the string_list.  If
+	`strdup_string` is set, then the string argument is copied;
+	otherwise the new `string_list_entry` refers to the input
+	string.
+
+`string_list_append_nodup`::
+
+	Append a new string to the end of the string_list.  The new
+	`string_list_entry` always refers to the input string, even if
+	`strdup_string` is set.  This function can be used to hand
+	ownership of a malloc()ed string to a `string_list` that has
+	`strdup_string` set.
 
 `sort_string_list`::
 

@@ -148,13 +148,23 @@ void print_string_list(const struct string_list *p, const char *text)
 		printf("%s:%p\n", p->items[i].string, p->items[i].util);
 }
 
-struct string_list_item *string_list_append(struct string_list *list, const char *string)
+struct string_list_item *string_list_append_nodup(struct string_list *list,
+						  char *string)
 {
+	struct string_list_item *retval;
 	ALLOC_GROW(list->items, list->nr + 1, list->alloc);
-	list->items[list->nr].string =
-		list->strdup_strings ? xstrdup(string) : (char *)string;
-	list->items[list->nr].util = NULL;
-	return list->items + list->nr++;
+	retval = &list->items[list->nr++];
+	retval->string = string;
+	retval->util = NULL;
+	return retval;
+}
+
+struct string_list_item *string_list_append(struct string_list *list,
+					    const char *string)
+{
+	return string_list_append_nodup(
+			list,
+			list->strdup_strings ? xstrdup(string) : (char *)string);
 }
 
 static int cmp_items(const void *a, const void *b)
