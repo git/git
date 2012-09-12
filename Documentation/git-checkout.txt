@@ -367,6 +367,18 @@ $ git checkout hello.c            <3>
 <2> take a file out of another commit
 <3> restore hello.c from the index
 +
+If you want to check out _all_ C source files out of the index,
+you can say
++
+------------
+$ git checkout -- '*.c'
+------------
++
+Note the quotes around `*.c`.  The file `hello.c` will also be
+checked out, even though it is no longer in the working tree,
+because the file globbing is used to match entries in the index
+(not in the working tree by the shell).
++
 If you have an unfortunate branch that is named `hello.c`, this
 step would be confused as an instruction to switch to that branch.
 You should instead write:
