@@ -1086,15 +1086,23 @@ static int gitdiff_unrecognized(const char *line, struct patch *patch)
 	return -1;
 }
 
-static const char *stop_at_slash(const char *line, int llen)
+/*
+ * Skip p_value leading components from "line"; as we do not accept
+ * absolute paths, return NULL in that case.
+ */
+static const char *skip_tree_prefix(const char *line, int llen)
 {
-	int nslash = p_value;
+	int nslash;
 	int i;
 
+	if (!p_value)
+		return (llen && line[0] == '/') ? NULL : line;
+
+	nslash = p_value;
 	for (i = 0; i < llen; i++) {
 		int ch = line[i];
 		if (ch == '/' && --nslash <= 0)
-			return &line[i];
+			return (i == 0) ? NULL : &line[i + 1];
 	}
 	return NULL;
 }
@@ -1124,12 +1132,11 @@ static char *git_header_name(const char *line, int llen)
 		if (unquote_c_style(&first, line, &second))
 			goto free_and_fail1;
 
-		/* advance to the first slash */
-		cp = stop_at_slash(first.buf, first.len);
-		/* we do not accept absolute paths */
-		if (!cp || cp == first.buf)
+		/* strip the a/b prefix including trailing slash */
+		cp = skip_tree_prefix(first.buf, first.len);
+		if (!cp)
 			goto free_and_fail1;
-		strbuf_remove(&first, 0, cp + 1 - first.buf);
+		strbuf_remove(&first, 0, cp - first.buf);
 
 		/*
 		 * second points at one past closing dq of name.
@@ -1143,22 +1150,21 @@ static char *git_header_name(const char *line, int llen)
 		if (*second == '"') {
 			if (unquote_c_style(&sp, second, NULL))
 				goto free_and_fail1;
-			cp = stop_at_slash(sp.buf, sp.len);
-			if (!cp || cp == sp.buf)
+			cp = skip_tree_prefix(sp.buf, sp.len);
+			if (!cp)
 				goto free_and_fail1;
 			/* They must match, otherwise ignore */
-			if (strcmp(cp + 1, first.buf))
+			if (strcmp(cp, first.buf))
 				goto free_and_fail1;
 			strbuf_release(&sp);
 			return strbuf_detach(&first, NULL);
 		}
 
 		/* unquoted second */
-		cp = stop_at_slash(second, line + llen - second);
-		if (!cp || cp == second)
+		cp = skip_tree_prefix(second, line + llen - second);
+		if (!cp)
 			goto free_and_fail1;
-		cp++;
-		if (line + llen - cp != first.len + 1 ||
+		if (line + llen - cp != first.len ||
 		    memcmp(first.buf, cp, first.len))
 			goto free_and_fail1;
 		return strbuf_detach(&first, NULL);
@@ -1170,10 +1176,9 @@ static char *git_header_name(const char *line, int llen)
 	}
 
 	/* unquoted first name */
-	name = stop_at_slash(line, llen);
-	if (!name || name == line)
+	name = skip_tree_prefix(line, llen);
+	if (!name)
 		return NULL;
-	name++;
 
 	/*
 	 * since the first name is unquoted, a dq if exists must be
@@ -1187,10 +1192,9 @@ static char *git_header_name(const char *line, int llen)
 			if (unquote_c_style(&sp, second, NULL))
 				goto free_and_fail2;
 
-			np = stop_at_slash(sp.buf, sp.len);
-			if (!np || np == sp.buf)
+			np = skip_tree_prefix(sp.buf, sp.len);
+			if (!np)
 				goto free_and_fail2;
-			np++;
 
 			len = sp.buf + sp.len - np;
 			if (len < second - name &&
@@ -1222,13 +1226,27 @@ static char *git_header_name(const char *line, int llen)
 		case '\n':
 			return NULL;
 		case '\t': case ' ':
-			second = stop_at_slash(name + len, line_len - len);
+			/*
+			 * Is this the separator between the preimage
+			 * and the postimage pathname?  Again, we are
+			 * only interested in the case where there is
+			 * no rename, as this is only to set def_name
+			 * and a rename patch has the names elsewhere
+			 * in an unambiguous form.
+			 */
+			if (!name[len + 1])
+				return NULL; /* no postimage name */
+			second = skip_tree_prefix(name + len + 1,
+						  line_len - (len + 1));
 			if (!second)
 				return NULL;
-			second++;
-			if (second[len] == '\n' && !strncmp(name, second, len)) {
+			/*
+			 * Does len bytes starting at "name" and "second"
+			 * (that are separated by one HT or SP we just
+			 * found) exactly match?
+			 */
+			if (second[len] == '\n' && !strncmp(name, second, len))
 				return xmemdupz(name, len);
-			}
 		}
 	}
 }
