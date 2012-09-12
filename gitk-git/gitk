@@ -2038,7 +2038,7 @@ proc makewindow {} {
     set file {
 	mc "File" cascade {
 	    {mc "Update" command updatecommits -accelerator F5}
-	    {mc "Reload" command reloadcommits -accelerator Meta1-F5}
+	    {mc "Reload" command reloadcommits -accelerator Shift-F5}
 	    {mc "Reread references" command rereadrefs}
 	    {mc "List references" command showrefs -accelerator F2}
 	    {xx "" separator}
@@ -2495,7 +2495,7 @@ proc makewindow {} {
     bindkey ? {dofind -1 1}
     bindkey f nextfile
     bind . <F5> updatecommits
-    bind . <$M1B-F5> reloadcommits
+    bind . <Shift-F5> reloadcommits
     bind . <F2> showrefs
     bind . <Shift-F4> {newview 0}
     catch { bind . <Shift-Key-XF86_Switch_VT_4> {newview 0} }
@@ -10599,7 +10599,7 @@ proc movedhead {hid head} {
 }
 
 proc changedrefs {} {
-    global cached_dheads cached_dtags cached_atags
+    global cached_dheads cached_dtags cached_atags cached_tagcontent
     global arctags archeads arcnos arcout idheads idtags
 
     foreach id [concat [array names idheads] [array names idtags]] {
@@ -10611,6 +10611,7 @@ proc changedrefs {} {
 	    }
 	}
     }
+    catch {unset cached_tagcontent}
     catch {unset cached_dtags}
     catch {unset cached_atags}
     catch {unset cached_dheads}
@@ -10663,7 +10664,7 @@ proc listrefs {id} {
 }
 
 proc showtag {tag isnew} {
-    global ctext tagcontents tagids linknum tagobjid
+    global ctext cached_tagcontent tagids linknum tagobjid
 
     if {$isnew} {
 	addtohistory [list showtag $tag 0] savectextpos
@@ -10672,13 +10673,13 @@ proc showtag {tag isnew} {
     clear_ctext
     settabs 0
     set linknum 0
-    if {![info exists tagcontents($tag)]} {
+    if {![info exists cached_tagcontent($tag)]} {
 	catch {
-           set tagcontents($tag) [exec git cat-file tag $tag]
+           set cached_tagcontent($tag) [exec git cat-file tag $tag]
 	}
     }
-    if {[info exists tagcontents($tag)]} {
-	set text $tagcontents($tag)
+    if {[info exists cached_tagcontent($tag)]} {
+	set text $cached_tagcontent($tag)
     } else {
 	set text "[mc "Tag"]: $tag\n[mc "Id"]:  $tagids($tag)"
     }
