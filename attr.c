@@ -353,7 +353,7 @@ static struct attr_stack *read_attr_from_file(const char *path, int macro_ok)
 	int lineno = 0;
 
 	if (!fp) {
-		if (errno != ENOENT)
+		if (errno != ENOENT && errno != ENOTDIR)
 			warn_on_inaccessible(path);
 		return NULL;
 	}
