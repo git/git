@@ -90,6 +90,7 @@ struct grep_opt {
 	int word_regexp;
 	int fixed;
 	int all_match;
+	int debug;
 #define GREP_BINARY_DEFAULT	0
 #define GREP_BINARY_NOMATCH	1
 #define GREP_BINARY_TEXT	2
