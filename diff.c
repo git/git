@@ -1397,11 +1397,11 @@ int print_stat_summary(FILE *fp, int files, int insertions, int deletions)
 
 	if (!files) {
 		assert(insertions == 0 && deletions == 0);
-		return fprintf(fp, "%s\n", _(" 0 files changed"));
+		return fprintf(fp, "%s\n", " 0 files changed");
 	}
 
 	strbuf_addf(&sb,
-		    Q_(" %d file changed", " %d files changed", files),
+		    (files == 1) ? " %d file changed" : " %d files changed",
 		    files);
 
 	/*
@@ -1418,8 +1418,7 @@ int print_stat_summary(FILE *fp, int files, int insertions, int deletions)
 		 * do not translate it.
 		 */
 		strbuf_addf(&sb,
-			    Q_(", %d insertion(+)", ", %d insertions(+)",
-			       insertions),
+			    (insertions == 1) ? ", %d insertion(+)" : ", %d insertions(+)",
 			    insertions);
 	}
 
@@ -1429,8 +1428,7 @@ int print_stat_summary(FILE *fp, int files, int insertions, int deletions)
 		 * do not translate it.
 		 */
 		strbuf_addf(&sb,
-			    Q_(", %d deletion(-)", ", %d deletions(-)",
-			       deletions),
+			    (deletions == 1) ? ", %d deletion(-)" : ", %d deletions(-)",
 			    deletions);
 	}
 	strbuf_addch(&sb, '\n');
