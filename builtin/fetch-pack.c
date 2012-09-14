@@ -525,72 +525,59 @@ static void mark_recent_complete_commits(unsigned long cutoff)
 	}
 }
 
-static void filter_refs(struct ref **refs, int nr_match, char **match)
+static int non_matching_ref(struct string_list_item *item, void *unused)
 {
-	struct ref **return_refs;
+	if (item->util) {
+		item->util = NULL;
+		return 0;
+	}
+	else
+		return 1;
+}
+
+static void filter_refs(struct ref **refs, struct string_list *sought)
+{
 	struct ref *newlist = NULL;
 	struct ref **newtail = &newlist;
 	struct ref *ref, *next;
-	struct ref *fastarray[32];
-	int match_pos;
+	int sought_pos;
 
-	if (nr_match && !args.fetch_all) {
-		if (ARRAY_SIZE(fastarray) < nr_match)
-			return_refs = xcalloc(nr_match, sizeof(struct ref *));
-		else {
-			return_refs = fastarray;
-			memset(return_refs, 0, sizeof(struct ref *) * nr_match);
-		}
-	}
-	else
-		return_refs = NULL;
-
-	match_pos = 0;
+	sought_pos = 0;
 	for (ref = *refs; ref; ref = next) {
+		int keep = 0;
 		next = ref->next;
 		if (!memcmp(ref->name, "refs/", 5) &&
 		    check_refname_format(ref->name + 5, 0))
 			; /* trash */
-		else if (args.fetch_all &&
-			 (!args.depth || prefixcmp(ref->name, "refs/tags/") )) {
+		else {
+			while (sought_pos < sought->nr) {
+				int cmp = strcmp(ref->name, sought->items[sought_pos].string);
+				if (cmp < 0)
+					break; /* definitely do not have it */
+				else if (cmp == 0) {
+					keep = 1; /* definitely have it */
+					sought->items[sought_pos++].util = "matched";
+					break;
+				}
+				else
+					sought_pos++; /* might have it; keep looking */
+			}
+		}
+
+		if (! keep && args.fetch_all &&
+		    (!args.depth || prefixcmp(ref->name, "refs/tags/")))
+			keep = 1;
+
+		if (keep) {
 			*newtail = ref;
 			ref->next = NULL;
 			newtail = &ref->next;
-			continue;
+		} else {
+			free(ref);
 		}
-		else {
-			int cmp = -1;
-			while (match_pos < nr_match) {
-				cmp = strcmp(ref->name, match[match_pos]);
-				if (cmp < 0) /* definitely do not have it */
-					break;
-				else if (cmp == 0) { /* definitely have it */
-					match[match_pos][0] = '\0';
-					return_refs[match_pos] = ref;
-					break;
-				}
-				else /* might have it; keep looking */
-					match_pos++;
-			}
-			if (!cmp)
-				continue; /* we will link it later */
-		}
-		free(ref);
 	}
 
-	if (!args.fetch_all) {
-		int i;
-		for (i = 0; i < nr_match; i++) {
-			ref = return_refs[i];
-			if (ref) {
-				*newtail = ref;
-				ref->next = NULL;
-				newtail = &ref->next;
-			}
-		}
-		if (return_refs != fastarray)
-			free(return_refs);
-	}
+	filter_string_list(sought, 0, non_matching_ref, NULL);
 	*refs = newlist;
 }
 
@@ -599,7 +586,7 @@ static void mark_alternate_complete(const struct ref *ref, void *unused)
 	mark_complete(NULL, ref->old_sha1, 0, NULL);
 }
 
-static int everything_local(struct ref **refs, int nr_match, char **match)
+static int everything_local(struct ref **refs, struct string_list *sought)
 {
 	struct ref *ref;
 	int retval;
@@ -650,7 +637,7 @@ static int everything_local(struct ref **refs, int nr_match, char **match)
 		}
 	}
 
-	filter_refs(refs, nr_match, match);
+	filter_refs(refs, sought);
 
 	for (retval = 1, ref = *refs; ref ; ref = ref->next) {
 		const unsigned char *remote = ref->old_sha1;
@@ -781,8 +768,7 @@ static int get_pack(int xd[2], char **pack_lockfile)
 
 static struct ref *do_fetch_pack(int fd[2],
 		const struct ref *orig_ref,
-		int nr_match,
-		char **match,
+		struct string_list *sought,
 		char **pack_lockfile)
 {
 	struct ref *ref = copy_ref_list(orig_ref);
@@ -839,7 +825,7 @@ static struct ref *do_fetch_pack(int fd[2],
 				agent_len, agent_feature);
 	}
 
-	if (everything_local(&ref, nr_match, match)) {
+	if (everything_local(&ref, sought)) {
 		packet_flush(fd[1]);
 		goto all_done;
 	}
@@ -857,19 +843,6 @@ static struct ref *do_fetch_pack(int fd[2],
 
  all_done:
 	return ref;
-}
-
-static int remove_duplicates(int nr_heads, char **heads)
-{
-	int src, dst;
-
-	if (!nr_heads)
-		return 0;
-
-	for (src = dst = 1; src < nr_heads; src++)
-		if (strcmp(heads[src], heads[dst-1]))
-			heads[dst++] = heads[src];
-	return dst;
 }
 
 static int fetch_pack_config(const char *var, const char *value, void *cb)
@@ -922,8 +895,7 @@ int cmd_fetch_pack(int argc, const char **argv, const char *prefix)
 	int i, ret;
 	struct ref *ref = NULL;
 	const char *dest = NULL;
-	int alloc_heads = 0, nr_heads = 0;
-	char **heads = NULL;
+	struct string_list sought = STRING_LIST_INIT_DUP;
 	int fd[2];
 	char *pack_lockfile = NULL;
 	char **pack_lockfile_ptr = NULL;
@@ -1000,9 +972,8 @@ int cmd_fetch_pack(int argc, const char **argv, const char *prefix)
 	 * Copy refs from cmdline to growable list, then append any
 	 * refs from the standard input:
 	 */
-	ALLOC_GROW(heads, argc - i, alloc_heads);
 	for (; i < argc; i++)
-		heads[nr_heads++] = xstrdup(argv[i]);
+		string_list_append(&sought, xstrdup(argv[i]));
 	if (args.stdin_refs) {
 		if (args.stateless_rpc) {
 			/* in stateless RPC mode we use pkt-line to read
@@ -1015,17 +986,14 @@ int cmd_fetch_pack(int argc, const char **argv, const char *prefix)
 					break;
 				if (line[n-1] == '\n')
 					n--;
-				ALLOC_GROW(heads, nr_heads + 1, alloc_heads);
-				heads[nr_heads++] = xmemdupz(line, n);
+				string_list_append(&sought, xmemdupz(line, n));
 			}
 		}
 		else {
 			/* read from stdin one ref per line, until EOF */
 			struct strbuf line = STRBUF_INIT;
-			while (strbuf_getline(&line, stdin, '\n') != EOF) {
-				ALLOC_GROW(heads, nr_heads + 1, alloc_heads);
-				heads[nr_heads++] = strbuf_detach(&line, NULL);
-			}
+			while (strbuf_getline(&line, stdin, '\n') != EOF)
+				string_list_append(&sought, strbuf_detach(&line, NULL));
 			strbuf_release(&line);
 		}
 	}
@@ -1042,7 +1010,7 @@ int cmd_fetch_pack(int argc, const char **argv, const char *prefix)
 	get_remote_heads(fd[0], &ref, 0, NULL);
 
 	ref = fetch_pack(&args, fd, conn, ref, dest,
-		nr_heads, heads, pack_lockfile_ptr);
+			 &sought, pack_lockfile_ptr);
 	if (pack_lockfile) {
 		printf("lock %s\n", pack_lockfile);
 		fflush(stdout);
@@ -1050,21 +1018,18 @@ int cmd_fetch_pack(int argc, const char **argv, const char *prefix)
 	close(fd[0]);
 	close(fd[1]);
 	if (finish_connect(conn))
-		ref = NULL;
-	ret = !ref;
+		return 1;
 
-	if (!ret && nr_heads) {
-		/* If the heads to pull were given, we should have
-		 * consumed all of them by matching the remote.
-		 * Otherwise, 'git fetch remote no-such-ref' would
-		 * silently succeed without issuing an error.
-		 */
-		for (i = 0; i < nr_heads; i++)
-			if (heads[i] && heads[i][0]) {
-				error("no such remote ref %s", heads[i]);
-				ret = 1;
-			}
-	}
+	ret = !ref || sought.nr;
+
+	/*
+	 * If the heads to pull were given, we should have consumed
+	 * all of them by matching the remote.  Otherwise, 'git fetch
+	 * remote no-such-ref' would silently succeed without issuing
+	 * an error.
+	 */
+	for (i = 0; i < sought.nr; i++)
+		error("no such remote ref %s", sought.items[i].string);
 	while (ref) {
 		printf("%s %s\n",
 		       sha1_to_hex(ref->old_sha1), ref->name);
@@ -1074,18 +1039,12 @@ int cmd_fetch_pack(int argc, const char **argv, const char *prefix)
 	return ret;
 }
 
-static int compare_heads(const void *a, const void *b)
-{
-	return strcmp(*(const char **)a, *(const char **)b);
-}
-
 struct ref *fetch_pack(struct fetch_pack_args *my_args,
 		       int fd[], struct child_process *conn,
 		       const struct ref *ref,
-		const char *dest,
-		int nr_heads,
-		char **heads,
-		char **pack_lockfile)
+		       const char *dest,
+		       struct string_list *sought,
+		       char **pack_lockfile)
 {
 	struct stat st;
 	struct ref *ref_cpy;
@@ -1098,16 +1057,16 @@ struct ref *fetch_pack(struct fetch_pack_args *my_args,
 			st.st_mtime = 0;
 	}
 
-	if (heads && nr_heads) {
-		qsort(heads, nr_heads, sizeof(*heads), compare_heads);
-		nr_heads = remove_duplicates(nr_heads, heads);
+	if (sought->nr) {
+		sort_string_list(sought);
+		string_list_remove_duplicates(sought, 0);
 	}
 
 	if (!ref) {
 		packet_flush(fd[1]);
 		die("no matching remote head");
 	}
-	ref_cpy = do_fetch_pack(fd, ref, nr_heads, heads, pack_lockfile);
+	ref_cpy = do_fetch_pack(fd, ref, sought, pack_lockfile);
 
 	if (args.depth > 0) {
 		struct cache_time mtime;
