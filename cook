@@ -302,7 +302,7 @@ EOF
 }
 
 my $blurb_match = <<'EOF';
-(?i:[a-z]+: .*\n)*?Subject: What's cooking in \S+ \((\w+) (\d+), #(\d+); (\w+), (\d+)\)
+(?i:\s*[a-z]+: .*\n)*?Subject: What's cooking in \S+ \((\w+) (\d+), #(\d+); (\w+), (\d+)\)
 X-master-at: ([0-9a-f]{40})
 X-next-at: ([0-9a-f]{40})
 
@@ -338,6 +338,7 @@ sub read_previous {
 	open ($fh, '<', $fn) or die "$!: open $fn";
 	while (<$fh>) {
 		chomp;
+		s/\s+$//;
 		if ($in_unedited_olde) {
 			if (/^>>$/) {
 				$in_unedited_olde = 0;
@@ -390,6 +391,7 @@ sub read_previous {
 	}
 	close($fh);
 
+	my $lead = " ";
 	for my $branch (keys %description) {
 		my $ary = $description{$branch};
 		if ($branch eq $blurb) {
@@ -407,9 +409,16 @@ sub read_previous {
 				last if ($elem eq '');
 				push @desc, $elem;
 			}
+			my @txt = map {
+				s/^\s+//;
+				$_ = "$lead$_";
+				s/\s+$//;
+				$_;
+			} @{$ary};
+
 			$description{$branch} = +{
 				desc => join("\n", @desc),
-				text => join("\n", @{$ary}),
+				text => join("\n", @txt),
 			};
 		}
 	}
@@ -435,13 +444,15 @@ sub write_cooking {
 		print $fh "\n";
 		print $fh '-' x 50, "\n";
 		print $fh "[$section_name]\n";
+		my $lead = "\n";
 		for my $topic (@{$topic_list}) {
 			my $d = $cooking->{'topic_description'}{$topic};
 
-			print $fh "\n", $d->{'desc'}, "\n";
+			print $fh $lead, $d->{'desc'}, "\n";
 			if ($d->{'text'}) {
 				print $fh "\n", $d->{'text'}, "\n";
 			}
+			$lead = "\n\n";
 		}
 	}
 	close($fh);
@@ -644,7 +655,7 @@ sub wildo_match {
 }
 
 sub wildo {
-	my (%what, $topic, $last_merge_to_next, $in_section);
+	my (%what, $topic, $last_merge_to_next, $in_section, $in_desc);
 	my $too_recent = '9999-99-99';
 	while (<>) {
 		chomp;
@@ -653,7 +664,7 @@ sub wildo {
 			my $old_section = $in_section;
 			$in_section = $1;
 			wildo_flush_topic($old_section, \%what, $topic);
-			$topic = undef;
+			$topic = $in_desc = undef;
 			next;
 		}
 
@@ -662,6 +673,7 @@ sub wildo {
 
 			# tip-date, next-date, topic, count, pu-count
 			$topic = [$2, $too_recent, $1, $3, 0];
+			$in_desc = undef;
 			next;
 		}
 
@@ -674,12 +686,18 @@ sub wildo {
 		if (defined $topic && /^ - /) {
 			$topic->[4]++;
 		}
-		next if (/^ /);
-		next unless defined $topic;
 
+		if (defined $topic && /^$/) {
+			$in_desc = 1;
+			next;
+		}
+
+		next unless defined $topic && $in_desc;
+
+		s/^\s+//;
 		if (wildo_match($_)) {
 			wildo_queue(\%what, $_, $topic);
-			$topic = undef;
+			$topic = $in_desc = undef;
 		}
 
 		if (/Originally merged to 'next' on ([-0-9]+)/) {
@@ -738,7 +756,7 @@ sub havedone {
 	my $fh;
 	my %topic = ();
 	my @topic = ();
-	my ($topic, $to_maint, %to_maint, %merged);
+	my ($topic, $to_maint, %to_maint, %merged, $in_desc);
 	if (!@ARGV) {
 		open($fh, '-|',
 		     qw(git rev-list --first-parent -1 master Documentation/RelNotes))
@@ -765,7 +783,7 @@ sub havedone {
 		chomp;
 		if (/^\[(.*)\]$/) {
 			# section header
-			$topic = undef;
+			$in_desc = $topic = undef;
 			next;
 		}
 		if (/^\* (\S+) \([-0-9]+\) \d+ commits?$/) {
@@ -773,11 +791,18 @@ sub havedone {
 				$topic = $1;
 				$to_maint = 0;
 			} else {
-				$topic = undef;
+				$in_desc = $topic = undef;
 			}
 			next;
 		}
-		next if (/^ / || !defined $topic);
+		if (defined $topic && /^$/) {
+			$in_desc = 1;
+			next;
+		}
+
+		next unless defined $topic && $in_desc;
+
+		s/^\s+//;
 		if (wildo_match($_)) {
 			next;
 		}
@@ -834,7 +859,7 @@ use Getopt::Long;
 my $wildo;
 my $havedone;
 if (!GetOptions("wildo" => \$wildo, "havedone" => \$havedone)) {
-	print STDERR "$0 [--wildo|--havedone]";
+	print STDERR "$0 [--wildo|--havedone]\n";
 	exit 1;
 }
 

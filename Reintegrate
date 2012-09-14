@@ -26,19 +26,22 @@ annotate_merge () {
 
 	perl -e '
 		my ($branch) = $ARGV[0];
-		my ($in_section) = 0;
+		my ($in_section, $in_desc);
 		my @msg = ();
 		while (<STDIN>) {
+			chomp;
 			if (/^\* $branch /) {
 				$in_section = 1;
 				next;
 			}
-			if (/^[-*\[]/) {
-				last if	$in_section;
-			}
+			last if (/^[-*\[]/ && $in_section);
 			next unless $in_section;
-			next if (/^ /);
-			push @msg, $_;
+			s/^\s+//;
+			if (/^$/) {
+				$in_desc = 1;
+			}
+			next unless ($in_section && $in_desc);
+			push @msg, "$_\n";
 		}
 
 		if ($in_section && @msg) {
