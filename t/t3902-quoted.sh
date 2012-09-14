@@ -16,9 +16,8 @@ echo foo 2>/dev/null > "Name and an${HT}HT"
 if ! test -f "Name and an${HT}HT"
 then
 	# FAT/NTFS does not allow tabs in filenames
-	say 'Your filesystem does not allow tabs in filenames'
-else
-	test_set_prereq TABS_IN_FILENAMES
+	skip_all='Your filesystem does not allow tabs in filenames'
+	test_done
 fi
 
 for_each_name () {
@@ -31,7 +30,7 @@ for_each_name () {
 	done
 }
 
-test_expect_success TABS_IN_FILENAMES 'setup' '
+test_expect_success 'setup' '
 
 	mkdir "$FN" &&
 	for_each_name "echo initial >\"\$name\"" &&
@@ -45,7 +44,7 @@ test_expect_success TABS_IN_FILENAMES 'setup' '
 
 '
 
-test_expect_success TABS_IN_FILENAMES 'setup expected files' '
+test_expect_success 'setup expected files' '
 cat >expect.quoted <<\EOF &&
 Name
 "Name and a\nLF"
@@ -75,74 +74,74 @@ With SP in it
 EOF
 '
 
-test_expect_success TABS_IN_FILENAMES 'check fully quoted output from ls-files' '
+test_expect_success 'check fully quoted output from ls-files' '
 
 	git ls-files >current && test_cmp expect.quoted current
 
 '
 
-test_expect_success TABS_IN_FILENAMES 'check fully quoted output from diff-files' '
+test_expect_success 'check fully quoted output from diff-files' '
 
 	git diff --name-only >current &&
 	test_cmp expect.quoted current
 
 '
 
-test_expect_success TABS_IN_FILENAMES 'check fully quoted output from diff-index' '
+test_expect_success 'check fully quoted output from diff-index' '
 
 	git diff --name-only HEAD >current &&
 	test_cmp expect.quoted current
 
 '
 
-test_expect_success TABS_IN_FILENAMES 'check fully quoted output from diff-tree' '
+test_expect_success 'check fully quoted output from diff-tree' '
 
 	git diff --name-only HEAD^ HEAD >current &&
 	test_cmp expect.quoted current
 
 '
 
-test_expect_success TABS_IN_FILENAMES 'check fully quoted output from ls-tree' '
+test_expect_success 'check fully quoted output from ls-tree' '
 
 	git ls-tree --name-only -r HEAD >current &&
 	test_cmp expect.quoted current
 
 '
 
-test_expect_success TABS_IN_FILENAMES 'setting core.quotepath' '
+test_expect_success 'setting core.quotepath' '
 
 	git config --bool core.quotepath false
 
 '
 
-test_expect_success TABS_IN_FILENAMES 'check fully quoted output from ls-files' '
+test_expect_success 'check fully quoted output from ls-files' '
 
 	git ls-files >current && test_cmp expect.raw current
 
 '
 
-test_expect_success TABS_IN_FILENAMES 'check fully quoted output from diff-files' '
+test_expect_success 'check fully quoted output from diff-files' '
 
 	git diff --name-only >current &&
 	test_cmp expect.raw current
 
 '
 
-test_expect_success TABS_IN_FILENAMES 'check fully quoted output from diff-index' '
+test_expect_success 'check fully quoted output from diff-index' '
 
 	git diff --name-only HEAD >current &&
 	test_cmp expect.raw current
 
 '
 
-test_expect_success TABS_IN_FILENAMES 'check fully quoted output from diff-tree' '
+test_expect_success 'check fully quoted output from diff-tree' '
 
 	git diff --name-only HEAD^ HEAD >current &&
 	test_cmp expect.raw current
 
 '
 
-test_expect_success TABS_IN_FILENAMES 'check fully quoted output from ls-tree' '
+test_expect_success 'check fully quoted output from ls-tree' '
 
 	git ls-tree --name-only -r HEAD >current &&
 	test_cmp expect.raw current
