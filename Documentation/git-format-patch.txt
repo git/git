@@ -58,10 +58,13 @@ output, unless the `--stdout` option is specified.
 If `-o` is specified, output files are created in <dir>.  Otherwise
 they are created in the current working directory.
 
-By default, the subject of a single patch is "[PATCH] First Line" and
-the subject when multiple patches are output is "[PATCH n/m] First
-Line". To force 1/1 to be added for a single patch, use `-n`.  To omit
-patch numbers from the subject, use `-N`.
+By default, the subject of a single patch is "[PATCH] " followed by
+the concatenation of lines from the commit message up to the first blank
+line (see the DISCUSSION section of linkgit:git-commit[1]).
+
+When multiple patches are output, the subject prefix will instead be
+"[PATCH n/m] ".  To force 1/1 to be added for a single patch, use `-n`.
+To omit patch numbers from the subject, use `-N`.
 
 If given `--thread`, `git-format-patch` will generate `In-Reply-To` and
 `References` headers to make the second and subsequent patch mails appear

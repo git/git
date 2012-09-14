@@ -14,8 +14,7 @@ git log --pretty=short | 'git shortlog' [-h] [-n] [-s] [-e] [-w]
 DESCRIPTION
 -----------
 Summarizes 'git log' output in a format suitable for inclusion
-in release announcements. Each commit will be grouped by author and
-the first line of the commit message will be shown.
+in release announcements. Each commit will be grouped by author and title.
 
 Additionally, "[PATCH]" will be stripped from the commit description.
 
