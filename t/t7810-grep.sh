@@ -531,12 +531,32 @@ test_expect_success 'log --grep --grep --author takes union of greps and interse
 	test_cmp expect actual
 '
 
+test_expect_success 'log ---all-match -grep --author --author still takes union of authors and intersects with grep' '
+	# grep matches only initial and third
+	# author matches all but second
+	git log --all-match --author="Thor" --author="Night" --grep=i --format=%s >actual &&
+	{
+	    echo third && echo initial
+	} >expect &&
+	test_cmp expect actual
+'
+
 test_expect_success 'log --grep --author --author takes union of authors and intersects with grep' '
 	# grep matches only initial and third
 	# author matches all but second
 	git log --author="Thor" --author="Night" --grep=i --format=%s >actual &&
 	{
 	    echo third && echo initial
+	} >expect &&
+	test_cmp expect actual
+'
+
+test_expect_success 'log --all-match --grep --grep --author takes intersection' '
+	# grep matches only third
+	# author matches only initial and third
+	git log --all-match --author="A U Thor" --grep=i --grep=r --format=%s >actual &&
+	{
+		echo third
 	} >expect &&
 	test_cmp expect actual
 '
