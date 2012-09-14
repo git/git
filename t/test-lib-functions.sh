@@ -144,11 +144,22 @@ test_pause () {
 
 test_commit () {
 	notick= &&
-	if test "z$1" = "z--notick"
-	then
-		notick=yes
+	signoff= &&
+	while test $# != 0
+	do
+		case "$1" in
+		--notick)
+			notick=yes
+			;;
+		--signoff)
+			signoff="$1"
+			;;
+		*)
+			break
+			;;
+		esac
 		shift
-	fi &&
+	done &&
 	file=${2:-"$1.t"} &&
 	echo "${3-$1}" > "$file" &&
 	git add "$file" &&
@@ -156,7 +167,7 @@ test_commit () {
 	then
 		test_tick
 	fi &&
-	git commit -m "$1" &&
+	git commit $signoff -m "$1" &&
 	git tag "$1"
 }
 

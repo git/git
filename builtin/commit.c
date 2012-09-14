@@ -28,6 +28,7 @@
 #include "submodule.h"
 #include "gpg-interface.h"
 #include "column.h"
+#include "sequencer.h"
 
 static const char * const builtin_commit_usage[] = {
 	N_("git commit [options] [--] <filepattern>..."),
@@ -466,8 +467,6 @@ static int is_a_merge(const struct commit *current_head)
 	return !!(current_head->parents && current_head->parents->next);
 }
 
-static const char sign_off_header[] = "Signed-off-by: ";
-
 static void export_one(const char *var, const char *s, const char *e, int hack)
 {
 	struct strbuf buf = STRBUF_INIT;
@@ -550,47 +549,6 @@ static void determine_author_info(struct strbuf *author_ident)
 		export_one("GIT_AUTHOR_EMAIL", author.mail_begin, author.mail_end, 0);
 		export_one("GIT_AUTHOR_DATE", author.date_begin, author.tz_end, '@');
 	}
-}
-
-static int ends_rfc2822_footer(struct strbuf *sb)
-{
-	int ch;
-	int hit = 0;
-	int i, j, k;
-	int len = sb->len;
-	int first = 1;
-	const char *buf = sb->buf;
-
-	for (i = len - 1; i > 0; i--) {
-		if (hit && buf[i] == '\n')
-			break;
-		hit = (buf[i] == '\n');
-	}
-
-	while (i < len - 1 && buf[i] == '\n')
-		i++;
-
-	for (; i < len; i = k) {
-		for (k = i; k < len && buf[k] != '\n'; k++)
-			; /* do nothing */
-		k++;
-
-		if ((buf[k] == ' ' || buf[k] == '\t') && !first)
-			continue;
-
-		first = 0;
-
-		for (j = 0; i + j < len; j++) {
-			ch = buf[i + j];
-			if (ch == ':')
-				break;
-			if (isalnum(ch) ||
-			    (ch == '-'))
-				continue;
-			return 0;
-		}
-	}
-	return 1;
 }
 
 static char *cut_ident_timestamp_part(char *string)
@@ -717,21 +675,30 @@ static int prepare_to_commit(const char *index_file, const char *prefix,
 		stripspace(&sb, 0);
 
 	if (signoff) {
-		struct strbuf sob = STRBUF_INIT;
-		int i;
+		/*
+		 * See if we have a Conflicts: block at the end. If yes, count
+		 * its size, so we can ignore it.
+		 */
+		int ignore_footer = 0;
+		int i, eol, previous = 0;
+		const char *nl;
 
-		strbuf_addstr(&sob, sign_off_header);
-		strbuf_addstr(&sob, fmt_name(getenv("GIT_COMMITTER_NAME"),
-					     getenv("GIT_COMMITTER_EMAIL")));
-		strbuf_addch(&sob, '\n');
-		for (i = sb.len - 1; i > 0 && sb.buf[i - 1] != '\n'; i--)
-			; /* do nothing */
-		if (prefixcmp(sb.buf + i, sob.buf)) {
-			if (!i || !ends_rfc2822_footer(&sb))
-				strbuf_addch(&sb, '\n');
-			strbuf_addbuf(&sb, &sob);
+		for (i = 0; i < sb.len; i++) {
+			nl = memchr(sb.buf + i, '\n', sb.len - i);
+			if (nl)
+				eol = nl - sb.buf;
+			else
+				eol = sb.len;
+			if (!prefixcmp(sb.buf + previous, "\nConflicts:\n")) {
+				ignore_footer = sb.len - previous;
+				break;
+			}
+			while (i < eol)
+				i++;
+			previous = eol;
 		}
-		strbuf_release(&sob);
+
+		append_signoff(&sb, ignore_footer);
 	}
 
 	if (fwrite(sb.buf, 1, sb.len, s->fp) < sb.len)
