@@ -79,6 +79,13 @@ Performance, Internal Implementation, etc. (please report possible regressions)
  * Compatibility wrapper for systems that lack usable setitimer() has
    been added.
 
+ * The option parsing of "git checkout" had error checking, dwim and
+   defaulting missing options, all mixed in the code, and issuing an
+   appropriate error message with useful context was getting harder.
+   The code has been reorganized to allow giving a proper diagnosis
+   when the user says "git checkout -b -t foo bar" (e.g. "-t" is not a
+   good name for a branch).
+
  * Many internal uses of "git merge-base" equivalent were only to see
    if one commit fast-forwards to the other, which did not need the
    full set of merge bases to be computed. They have been updated to
@@ -101,6 +108,12 @@ Fixes since v1.7.12
 Unless otherwise noted, all the fixes since v1.7.12 in the
 maintenance track are contained in this release (see release notes
 to them for details).
+
+ * "git fetch --all", when passed "--no-tags", did not honor the
+   "--no-tags" option while fetching from individual remotes (the same
+   issue existed with "--tags", but combination "--all --tags" makes
+   much less sense than "--all --no-tags").
+   (merge 8556646 dj/fetch-all-tags later to maint).
 
  * The subcommand in "git remote" to remove a defined remote was
    "rm" and the command did not take a fully-spelled "remove".
