@@ -513,6 +513,14 @@ test_expect_success 'log with multiple --author uses union' '
 	test_cmp expect actual
 '
 
+test_expect_success 'log --all-match with multiple --author still uses union' '
+	git log --all-match --author="Thor" --author="Aster" --format=%s >actual &&
+	{
+	    echo third && echo second && echo initial
+	} >expect &&
+	test_cmp expect actual
+'
+
 test_expect_success 'log with --grep and multiple --author uses all-match' '
 	git log --author="Thor" --author="Night" --grep=i --format=%s >actual &&
 	{
