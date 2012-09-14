@@ -35,6 +35,9 @@ const char *real_path(const char *path)
 	if (path == buf || path == next_buf)
 		return path;
 
+	if (!*path)
+		die("The empty string is not a valid path");
+
 	if (strlcpy(buf, path, PATH_MAX) >= PATH_MAX)
 		die ("Too long path: %.*s", 60, path);
 
@@ -42,8 +45,8 @@ const char *real_path(const char *path)
 		if (!is_directory(buf)) {
 			char *last_slash = find_last_dir_sep(buf);
 			if (last_slash) {
-				*last_slash = '\0';
 				last_elem = xstrdup(last_slash + 1);
+				last_slash[1] = '\0';
 			} else {
 				last_elem = xstrdup(buf);
 				*buf = '\0';
@@ -123,7 +126,9 @@ const char *absolute_path(const char *path)
 {
 	static char buf[PATH_MAX + 1];
 
-	if (is_absolute_path(path)) {
+	if (!*path) {
+		die("The empty string is not a valid path");
+	} else if (is_absolute_path(path)) {
 		if (strlcpy(buf, path, PATH_MAX) >= PATH_MAX)
 			die("Too long path: %.*s", 60, path);
 	} else {
