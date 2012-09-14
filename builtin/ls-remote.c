@@ -5,7 +5,7 @@
 
 static const char ls_remote_usage[] =
 "git ls-remote [--heads] [--tags]  [-u <exec> | --upload-pack <exec>]\n"
-"                     [-q|--quiet] [--exit-code] [<repository> [<refs>...]]";
+"                     [-q|--quiet] [--exit-code] [--get-url] [<repository> [<refs>...]]";
 
 /*
  * Is there one among the list of patterns that match the tail part
