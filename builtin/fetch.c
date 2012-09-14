@@ -858,6 +858,10 @@ static void add_options_to_argv(struct argv_array *argv)
 		argv_array_push(argv, "--recurse-submodules");
 	else if (recurse_submodules == RECURSE_SUBMODULES_ON_DEMAND)
 		argv_array_push(argv, "--recurse-submodules=on-demand");
+	if (tags == TAGS_SET)
+		argv_array_push(argv, "--tags");
+	else if (tags == TAGS_UNSET)
+		argv_array_push(argv, "--no-tags");
 	if (verbosity >= 2)
 		argv_array_push(argv, "-v");
 	if (verbosity >= 1)
