@@ -93,6 +93,15 @@ export GIT_AUTHOR_EMAIL GIT_AUTHOR_NAME
 export GIT_COMMITTER_EMAIL GIT_COMMITTER_NAME
 export EDITOR
 
+# Add libc MALLOC and MALLOC_PERTURB test
+# only if we are not executing the test with valgrind
+expr "$GIT_TEST_OPTS" : ".*\(--valgrind\)" >/dev/null || {
+	MALLOC_CHECK_=3
+	export MALLOC_CHECK_
+	MALLOC_PERTURB_="$( expr \( $$ % 255 \) + 1)"
+	export MALLOC_PERTURB_
+}
+
 # Protect ourselves from common misconfiguration to export
 # CDPATH into the environment
 unset CDPATH
