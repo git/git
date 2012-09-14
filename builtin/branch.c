@@ -197,7 +197,7 @@ static int delete_branches(int argc, const char **argv, int force, int kinds,
 
 		free(name);
 
-		name = xstrdup(mkpath(fmt, bname.buf));
+		name = mkpathdup(fmt, bname.buf);
 		if (read_ref(name, sha1)) {
 			error(remote_branch
 			      ? _("remote branch '%s' not found.")
