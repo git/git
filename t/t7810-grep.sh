@@ -479,6 +479,22 @@ test_expect_success 'log grep (6)' '
 	test_cmp expect actual
 '
 
+test_expect_success 'log with multiple --grep uses union' '
+	git log --grep=i --grep=r --format=%s >actual &&
+	{
+		echo fourth && echo third && echo initial
+	} >expect &&
+	test_cmp expect actual
+'
+
+test_expect_success 'log --all-match with multiple --grep uses intersection' '
+	git log --all-match --grep=i --grep=r --format=%s >actual &&
+	{
+		echo third
+	} >expect &&
+	test_cmp expect actual
+'
+
 test_expect_success 'log --grep --author implicitly uses all-match' '
 	# grep matches initial and second but not third
 	# author matches only initial and third
