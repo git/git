@@ -478,6 +478,20 @@ static void export_one(const char *var, const char *s, const char *e, int hack)
 	strbuf_release(&buf);
 }
 
+static int sane_ident_split(struct ident_split *person)
+{
+	if (!person->name_begin || !person->name_end ||
+	    person->name_begin == person->name_end)
+		return 0; /* no human readable name */
+	if (!person->mail_begin || !person->mail_end ||
+	    person->mail_begin == person->mail_end)
+		return 0; /* no usable mail */
+	if (!person->date_begin || !person->date_end ||
+	    !person->tz_begin || !person->tz_end)
+		return 0;
+	return 1;
+}
+
 static void determine_author_info(struct strbuf *author_ident)
 {
 	char *name, *email, *date;
@@ -530,7 +544,8 @@ static void determine_author_info(struct strbuf *author_ident)
 	if (force_date)
 		date = force_date;
 	strbuf_addstr(author_ident, fmt_ident(name, email, date, IDENT_STRICT));
-	if (!split_ident_line(&author, author_ident->buf, author_ident->len)) {
+	if (!split_ident_line(&author, author_ident->buf, author_ident->len) &&
+	    sane_ident_split(&author)) {
 		export_one("GIT_AUTHOR_NAME", author.name_begin, author.name_end, 0);
 		export_one("GIT_AUTHOR_EMAIL", author.mail_begin, author.mail_end, 0);
 		export_one("GIT_AUTHOR_DATE", author.date_begin, author.tz_end, '@');
