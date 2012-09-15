@@ -210,8 +210,10 @@ int split_ident_line(struct ident_split *split, const char *line, int len)
 			split->name_end = cp + 1;
 			break;
 		}
-	if (!split->name_end)
-		return status;
+	if (!split->name_end) {
+		/* no human readable name */
+		split->name_end = split->name_begin;
+	}
 
 	for (cp = split->mail_begin; cp < line + len; cp++)
 		if (*cp == '>') {
