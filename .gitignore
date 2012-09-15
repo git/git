@@ -186,6 +186,7 @@
 /test-mktemp
 /test-parse-options
 /test-path-utils
+/test-regex
 /test-revision-walking
 /test-run-command
 /test-sha1

@@ -25,4 +25,9 @@ test_expect_success POSIXPERM 'mktemp to unwritable directory prints filename' '
 	grep "cannotwrite/test" err
 '
 
+test_expect_success 'check for a bug in the regex routines' '
+	# if this test fails, re-build git with NO_REGEX=1
+	test-regex
+'
+
 test_done
