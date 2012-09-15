@@ -4,6 +4,8 @@
 
 #include "git-compat-util.h"
 #include "gettext.h"
+#include "strbuf.h"
+#include "utf8.h"
 
 #ifndef NO_GETTEXT
 #	include <locale.h>
@@ -27,10 +29,9 @@ int use_gettext_poison(void)
 #endif
 
 #ifndef NO_GETTEXT
+static const char *charset;
 static void init_gettext_charset(const char *domain)
 {
-	const char *charset;
-
 	/*
 	   This trick arranges for messages to be emitted in the user's
 	   requested encoding, but avoids setting LC_CTYPE from the
@@ -127,5 +128,15 @@ void git_setup_gettext(void)
 	setlocale(LC_MESSAGES, "");
 	init_gettext_charset("git");
 	textdomain("git");
+}
+
+/* return the number of columns of string 's' in current locale */
+int gettext_width(const char *s)
+{
+	static int is_utf8 = -1;
+	if (is_utf8 == -1)
+		is_utf8 = !strcmp(charset, "UTF-8");
+
+	return is_utf8 ? utf8_strwidth(s) : strlen(s);
 }
 #endif
