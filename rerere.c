@@ -25,7 +25,7 @@ const char *rerere_path(const char *hex, const char *file)
 	return git_path("rr-cache/%s/%s", hex, file);
 }
 
-int has_rerere_resolution(const char *hex)
+static int has_rerere_resolution(const char *hex)
 {
 	struct stat st;
 	return !stat(rerere_path(hex, "postimage"), &st);
