@@ -1,0 +1,46 @@
+Git v1.7.11.7 Release Notes
+===========================
+
+Fixes since v1.7.11.6
+---------------------
+
+ * The synopsis said "checkout [-B branch]" to make it clear the
+   branch name is a parameter to the option, but the heading for the
+   option description was "-B::", not "-B branch::", making the
+   documentation misleading.
+
+ * Git ships with a fall-back regexp implementation for platforms with
+   buggy regexp library, but it was easy for people to keep using their
+   platform regexp.  A new test has been added to check this.
+
+ * "git apply -p0" did not parse pathnames on "diff --git" line
+   correctly.  This caused patches that had pathnames in no other
+   places to be mistakenly rejected (most notably, binary patch that
+   does not rename nor change mode).  Textual patches, renames or mode
+   changes have preimage and postimage pathnames in different places
+   in a form that can be parsed unambiguously and did not suffer from
+   this problem.
+
+ * After "gitk" showed the contents of a tag, neither "Reread
+   references" nor "Reload" did not update what is shown as the
+   contents of it, when the user overwrote the tag with "git tag -f".
+
+ * "git for-each-ref" did not currectly support more than one --sort
+   option.
+
+ * "git log .." errored out saying it is both rev range and a path
+   when there is no disambiguating "--" is on the command line.
+   Update the command line parser to interpret ".." as a path in such
+   a case.
+
+ * Pushing to smart HTTP server with recent Git fails without having
+   the username in the URL to force authentication, if the server is
+   configured to allow GET anonymously, while requiring authentication
+   for POST.
+
+ * "git show --format='%ci'" did not give timestamp correctly for
+   commits created without human readable name on "committer" line.
+   (merge e27ddb6 jc/maint-ident-missing-human-name later to maint).
+
+ * "git show --quiet" ought to be a synonym for "git show -s", but
+   wasn't.
