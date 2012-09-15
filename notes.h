@@ -241,20 +241,6 @@ void free_notes(struct notes_tree *t);
 #define NOTES_SHOW_HEADER 1
 #define NOTES_INDENT 2
 
-/*
- * Fill the given strbuf with the notes associated with the given object.
- *
- * If the given notes_tree structure is not initialized, it will be auto-
- * initialized to the default value (see documentation for init_notes() above).
- * If the given notes_tree is NULL, the internal/default notes_tree will be
- * used instead.
- *
- * 'flags' is a bitwise combination of the above formatting flags.
- */
-void format_note(struct notes_tree *t, const unsigned char *object_sha1,
-		struct strbuf *sb, const char *output_encoding, int flags);
-
-
 struct string_list;
 
 struct display_notes_opt {
