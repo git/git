@@ -53,7 +53,19 @@ test_expect_success 'recursive favouring ours' '
 	! grep 1 file
 '
 
-test_expect_success 'pull with -X' '
+test_expect_success 'binary file with -Xours/-Xtheirs' '
+	echo file binary >.gitattributes &&
+
+	git reset --hard master &&
+	git merge -s recursive -X theirs side &&
+	git diff --exit-code side HEAD -- file &&
+
+	git reset --hard master &&
+	git merge -s recursive -X ours side &&
+	git diff --exit-code master HEAD -- file
+'
+
+test_expect_success 'pull passes -X to underlying merge' '
 	git reset --hard master && git pull -s recursive -Xours . side &&
 	git reset --hard master && git pull -s recursive -X ours . side &&
 	git reset --hard master && git pull -s recursive -Xtheirs . side &&
