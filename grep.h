@@ -149,11 +149,10 @@ struct grep_source {
 
 void grep_source_init(struct grep_source *gs, enum grep_source_type type,
 		      const char *name, const void *identifier);
-int grep_source_load(struct grep_source *gs);
 void grep_source_clear_data(struct grep_source *gs);
 void grep_source_clear(struct grep_source *gs);
 void grep_source_load_driver(struct grep_source *gs);
-int grep_source_is_binary(struct grep_source *gs);
+
 
 int grep_source(struct grep_opt *opt, struct grep_source *gs);
 

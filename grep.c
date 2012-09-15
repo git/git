@@ -3,6 +3,10 @@
 #include "userdiff.h"
 #include "xdiff-interface.h"
 
+static int grep_source_load(struct grep_source *gs);
+static int grep_source_is_binary(struct grep_source *gs);
+
+
 static struct grep_pat *create_grep_pat(const char *pat, size_t patlen,
 					const char *origin, int no,
 					enum grep_pat_token t,
@@ -403,7 +407,7 @@ static void dump_grep_expression_1(struct grep_expr *x, int in)
 	}
 }
 
-void dump_grep_expression(struct grep_opt *opt)
+static void dump_grep_expression(struct grep_opt *opt)
 {
 	struct grep_expr *x = opt->pattern_expression;
 
