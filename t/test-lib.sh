@@ -95,12 +95,24 @@ export EDITOR
 
 # Add libc MALLOC and MALLOC_PERTURB test
 # only if we are not executing the test with valgrind
-expr "$GIT_TEST_OPTS" : ".*\(--valgrind\)" >/dev/null || {
-	MALLOC_CHECK_=3
-	export MALLOC_CHECK_
-	MALLOC_PERTURB_="$( expr \( $$ % 255 \) + 1)"
-	export MALLOC_PERTURB_
-}
+if expr " $GIT_TEST_OPTS " : ".* --valgrind " >/dev/null ||
+   test -n "TEST_NO_MALLOC_"
+then
+	setup_malloc_check () {
+		: nothing
+	}
+	teardown_malloc_check () {
+		: nothing
+	}
+else
+	setup_malloc_check () {
+		MALLOC_CHECK_=3	MALLOC_PERTURB_=165
+		export MALLOC_CHECK_ MALLOC_PERTURB_
+	}
+	teardown_malloc_check () {
+		unset MALLOC_CHECK_ MALLOC_PERTURB_
+	}
+fi
 
 # Protect ourselves from common misconfiguration to export
 # CDPATH into the environment
@@ -311,7 +323,9 @@ test_run_ () {
 
 	if test -z "$immediate" || test $eval_ret = 0 || test -n "$expecting_failure"
 	then
+		setup_malloc_check
 		test_eval_ "$test_cleanup"
+		teardown_malloc_check
 	fi
 	if test "$verbose" = "t" && test -n "$HARNESS_ACTIVE"
 	then
