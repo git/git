@@ -178,11 +178,21 @@ test_expect_success 'git log --no-walk <commits> sorts by commit time' '
 	test_cmp expect actual
 '
 
+test_expect_success 'git log --no-walk=sorted <commits> sorts by commit time' '
+	git log --no-walk=sorted --oneline 5d31159 804a787 394ef78 > actual &&
+	test_cmp expect actual
+'
+
 cat > expect << EOF
 5d31159 fourth
 804a787 sixth
 394ef78 fifth
 EOF
+test_expect_success 'git log --no-walk=unsorted <commits> leaves list of commits as given' '
+	git log --no-walk=unsorted --oneline 5d31159 804a787 394ef78 > actual &&
+	test_cmp expect actual
+'
+
 test_expect_success 'git show <commits> leaves list of commits as given' '
 	git show --oneline -s 5d31159 804a787 394ef78 > actual &&
 	test_cmp expect actual
