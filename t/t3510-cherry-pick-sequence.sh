@@ -410,7 +410,7 @@ test_expect_success '--continue respects -x in first commit in multi-pick' '
 	grep "cherry picked from.*$picked" msg
 '
 
-test_expect_success '--signoff is not automatically propagated to resolved conflict' '
+test_expect_failure '--signoff is automatically propagated to resolved conflict' '
 	pristine_detach initial &&
 	test_expect_code 1 git cherry-pick --signoff base..anotherpick &&
 	echo "c" >foo &&
@@ -428,7 +428,7 @@ test_expect_success '--signoff is not automatically propagated to resolved confl
 	grep "Signed-off-by:" anotherpick_msg
 '
 
-test_expect_success '--signoff dropped for implicit commit of resolution, multi-pick case' '
+test_expect_failure '--signoff dropped for implicit commit of resolution, multi-pick case' '
 	pristine_detach initial &&
 	test_must_fail git cherry-pick -s picked anotherpick &&
 	echo c >foo &&
@@ -441,7 +441,7 @@ test_expect_success '--signoff dropped for implicit commit of resolution, multi-
 	! grep Signed-off-by: msg
 '
 
-test_expect_success 'sign-off needs to be reaffirmed after conflict resolution, single-pick case' '
+test_expect_failure 'sign-off needs to be reaffirmed after conflict resolution, single-pick case' '
 	pristine_detach initial &&
 	test_must_fail git cherry-pick -s picked &&
 	echo c >foo &&

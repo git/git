@@ -49,4 +49,8 @@ extern void remove_sequencer_state(void);
 
 int sequencer_pick_revisions(struct replay_opts *opts);
 
+extern const char sign_off_header[];
+
+void append_signoff(struct strbuf *msgbuf, int ignore_footer);
+
 #endif
