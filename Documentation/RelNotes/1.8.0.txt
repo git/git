@@ -31,6 +31,10 @@ UI, Workflows & Features
  * A credential helper to allow access to the Gnome keyring has been
    added.
 
+ * When "git am" sanitizes the Subject: line, we strip the prefix from
+   "Re: subject" and also from a less common "re: subject", but left
+   even less common "RE: subject" intact.
+
  * It was tempting to say "git branch --set-upstream origin/master",
    but that tells Git to arrange the local branch "origin/master" to
    integrate with the currently checked out branch, which is highly
@@ -53,6 +57,9 @@ UI, Workflows & Features
 
  * "git merge-base" learned "--is-ancestor A B" option to tell if A is
    an ancestor of B.  The result is indicated by its exit status code.
+
+ * The "-Xours" backend option to "git merge -s recursive" now takes
+   effect even on binary files.
 
 
 Foreign Interface
