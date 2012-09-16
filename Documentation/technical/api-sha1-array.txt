@@ -25,9 +25,6 @@ Functions
 	the array (but note that some operations below may lose this
 	ordering).
 
-`sha1_array_sort`::
-	Sort the elements in the array.
-
 `sha1_array_lookup`::
 	Perform a binary search of the array for a specific sha1.
 	If found, returns the offset (in number of elements) of the
