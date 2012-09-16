@@ -14,6 +14,15 @@ static int drivers_alloc;
 	{ name, NULL, -1, { pattern, REG_EXTENDED | REG_ICASE }, \
 	  word_regex "|[^[:space:]]|[\xc0-\xff][\x80-\xbf]+" }
 static struct userdiff_driver builtin_drivers[] = {
+IPATTERN("ada",
+	 "!^(.*[ \t])?(is new|renames|is separate)([ \t].*)?$\n"
+	 "!^[ \t]*with[ \t].*$\n"
+	 "^[ \t]*((procedure|function)[ \t]+.*)$\n"
+	 "^[ \t]*((package|protected|task)[ \t]+.*)$",
+	 /* -- */
+	 "[a-zA-Z][a-zA-Z0-9_]*"
+	 "|[0-9][-+0-9#_.eE]"
+	 "|=>|\\.\\.|\\*\\*|:=|/=|>=|<=|<<|>>|<>"),
 IPATTERN("fortran",
 	 "!^([C*]|[ \t]*!)\n"
 	 "!^[ \t]*MODULE[ \t]+PROCEDURE[ \t]\n"

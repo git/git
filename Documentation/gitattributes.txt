@@ -511,6 +511,8 @@ configuration file (you still need to enable this with the
 attribute mechanism, via `.gitattributes`).  The following built in
 patterns are available:
 
+- `ada` suitable for source code in the Ada language.
+
 - `bibtex` suitable for files with BibTeX coded references.
 
 - `cpp` suitable for source code in the C and C++ languages.
