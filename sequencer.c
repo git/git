@@ -17,7 +17,7 @@
 
 #define GIT_REFLOG_ACTION "GIT_REFLOG_ACTION"
 
-void remove_sequencer_state(void)
+static void remove_sequencer_state(void)
 {
 	struct strbuf seq_dir = STRBUF_INIT;
 
