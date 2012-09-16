@@ -1,5 +1,8 @@
 #include "cache.h"
 
+static int threaded_check_leading_path(struct cache_def *cache, const char *name, int len);
+static int threaded_has_dirs_only_path(struct cache_def *cache, const char *name, int len, int prefix_len);
+
 /*
  * Returns the length (on a path component basis) of the longest
  * common prefix match of 'name_a' and 'name_b'.
@@ -231,7 +234,7 @@ int check_leading_path(const char *name, int len)
  * Return path length if leading path exists and is neither a
  * directory nor a symlink.
  */
-int threaded_check_leading_path(struct cache_def *cache, const char *name, int len)
+static int threaded_check_leading_path(struct cache_def *cache, const char *name, int len)
 {
 	int flags;
 	int match_len = lstat_cache_matchlen(cache, name, len, &flags,
@@ -263,7 +266,7 @@ int has_dirs_only_path(const char *name, int len, int prefix_len)
  * 'prefix_len', thus we then allow for symlinks in the prefix part as
  * long as those points to real existing directories.
  */
-int threaded_has_dirs_only_path(struct cache_def *cache, const char *name, int len, int prefix_len)
+static int threaded_has_dirs_only_path(struct cache_def *cache, const char *name, int len, int prefix_len)
 {
 	return lstat_cache(cache, name, len,
 			   FL_DIR|FL_FULLPATH, prefix_len) &
