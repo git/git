@@ -93,7 +93,7 @@ static void copy_email(const struct passwd *pw, struct strbuf *email)
 	add_domainname(email);
 }
 
-const char *ident_default_name(void)
+static const char *ident_default_name(void)
 {
 	if (!git_default_name.len) {
 		copy_gecos(xgetpwuid_self(), &git_default_name);
@@ -117,7 +117,7 @@ const char *ident_default_email(void)
 	return git_default_email.buf;
 }
 
-const char *ident_default_date(void)
+static const char *ident_default_date(void)
 {
 	if (!git_default_date[0])
 		datestamp(git_default_date, sizeof(git_default_date));
