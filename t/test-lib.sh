@@ -51,6 +51,15 @@ then
 fi
 GIT_BUILD_DIR="$TEST_DIRECTORY"/..
 
+################################################################
+# It appears that people try to run tests without building...
+"$GIT_BUILD_DIR/git" >/dev/null
+if test $? != 1
+then
+	echo >&2 'error: you do not seem to have built git yet.'
+	exit 1
+fi
+
 . "$GIT_BUILD_DIR"/GIT-BUILD-OPTIONS
 export PERL_PATH SHELL_PATH
 
