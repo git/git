@@ -306,6 +306,10 @@ compute_revents (int fd, int sought, fd_set *rfds, fd_set *wfds, fd_set *efds)
 	       || socket_errno == ECONNABORTED || socket_errno == ENETRESET)
 	happened |= POLLHUP;
 
+      /* some systems can't use recv() on non-socket, including HP NonStop */
+      else if (/* (r == -1) && */ socket_errno == ENOTSOCK)
+	happened |= (POLLIN | POLLRDNORM) & sought;
+
       else
 	happened |= POLLERR;
     }
