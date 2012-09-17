@@ -683,3 +683,19 @@ index e69de29..d95f3ad 100644
 @@ -0,0 +1 @@
 +content
 
+From nobody Mon Sep 17 00:00:00 2001
+From: A U Thor <a.u.thor@example.com>
+Subject: A E I O U
+Date: Mon, 17 Sep 2012 14:23:44 -0700
+MIME-Version: 1.0
+Content-Type: text/plain; charset="iso-2022-jp"
+Content-type: text/plain; charset="UTF-8"
+
+New content here
+
+diff --git a/foo b/foo
+index e69de29..d95f3ad 100644
+--- a/foo
++++ b/foo
+@@ -0,0 +1 @@
++New content
