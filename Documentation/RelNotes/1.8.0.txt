@@ -116,6 +116,35 @@ Unless otherwise noted, all the fixes since v1.7.12 in the
 maintenance track are contained in this release (see release notes
 to them for details).
 
+ * "git blame MAKEFILE" run in a history that has "Makefile" but not
+   "MAKEFILE" should say "No such file MAKEFILE in HEAD", but got
+   confused on a case insensitive filesystem and failed to do so.
+   (merge 9aeaab6 jc/maint-blame-no-such-path later to maint).
+
+ * Even during a conflicted merge, "git blame $path" always meant to
+   blame uncommitted changes to the "working tree" version; make it
+   more useful by showing cleanly merged parts as coming from the other
+   branch that is being merged.
+   (merge 9aeaab6 jc/maint-blame-no-such-path later to maint).
+
+ * Documentation talked about "first line of commit log" when it meant
+   the title of the commit.  The description was clarified by defining
+   how the title is decided and rewording the casual mention of "first
+   line" to "title".
+   (merge 52ffe99 jw/doc-commit-title later to maint).
+
+ * The attribute system may be asked for a path that itself or its
+   leading directories no longer exists in the working tree.  Failure
+   to open per-directory .gitattributes with error status other than
+   ENOENT and ENOTDIR are diagnosed.
+   (merge 8e950da jk/config-warn-on-inaccessible-paths later to maint).
+
+ * Earlier we made the diffstat summary line that shows the number of
+   lines added/deleted localizable, but it was found irritating having
+   to see them in various languages on a list whose discussion language
+   is English.
+   (merge 218adaa nd/maint-diffstat-summary later to maint).
+
  * "git fetch --all", when passed "--no-tags", did not honor the
    "--no-tags" option while fetching from individual remotes (the same
    issue existed with "--tags", but combination "--all --tags" makes
