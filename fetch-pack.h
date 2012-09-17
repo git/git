@@ -1,6 +1,8 @@
 #ifndef FETCH_PACK_H
 #define FETCH_PACK_H
 
+#include "string-list.h"
+
 struct fetch_pack_args {
 	const char *uploadpack;
 	int unpacklimit;
@@ -17,12 +19,18 @@ struct fetch_pack_args {
 		stateless_rpc:1;
 };
 
+/*
+ * sought contains the full names of remote references that should be
+ * updated from.  On return, the names that were found on the remote
+ * will have been removed from the list.  The util members of the
+ * string_list_items are used internally; they must be NULL on entry
+ * (and will be NULL on exit).
+ */
 struct ref *fetch_pack(struct fetch_pack_args *args,
-		int fd[], struct child_process *conn,
-		const struct ref *ref,
-		const char *dest,
-		int nr_heads,
-		char **heads,
-		char **pack_lockfile);
+		       int fd[], struct child_process *conn,
+		       const struct ref *ref,
+		       const char *dest,
+		       struct string_list *sought,
+		       char **pack_lockfile);
 
 #endif
