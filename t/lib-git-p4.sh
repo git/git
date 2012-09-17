@@ -26,9 +26,10 @@ testid=${this_test#t}
 git_p4_test_start=9800
 P4DPORT=$((10669 + ($testid - $git_p4_test_start)))
 
-export P4PORT=localhost:$P4DPORT
-export P4CLIENT=client
-export P4EDITOR=:
+P4PORT=localhost:$P4DPORT
+P4CLIENT=client
+P4EDITOR=:
+export P4PORT P4CLIENT P4EDITOR
 
 db="$TRASH_DIRECTORY/db"
 cli=$(test-path-utils real_path "$TRASH_DIRECTORY/cli")
