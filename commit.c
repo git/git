@@ -9,6 +9,8 @@
 #include "gpg-interface.h"
 #include "mergesort.h"
 
+static struct commit_extra_header *read_commit_extra_header_lines(const char *buf, size_t len, const char **);
+
 int save_commit_buffer = 1;
 
 const char *commit_type = "commit";
@@ -1073,8 +1075,9 @@ static int excluded_header_field(const char *field, size_t len, const char **exc
 	return 0;
 }
 
-struct commit_extra_header *read_commit_extra_header_lines(const char *buffer, size_t size,
-							   const char **exclude)
+static struct commit_extra_header *read_commit_extra_header_lines(
+	const char *buffer, size_t size,
+	const char **exclude)
 {
 	struct commit_extra_header *extra = NULL, **tail = &extra, *it = NULL;
 	const char *line, *next, *eof, *eob;

@@ -19,7 +19,7 @@
 
 const char sign_off_header[] = "Signed-off-by: ";
 
-void remove_sequencer_state(void)
+static void remove_sequencer_state(void)
 {
 	struct strbuf seq_dir = STRBUF_INIT;
 
