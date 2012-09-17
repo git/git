@@ -2331,11 +2331,11 @@ sub path {
 
 	if (@_) {
 		my $path = shift;
-		$self->{path} = canonicalize_path($path);
+		$self->{_path} = canonicalize_path($path);
 		return;
 	}
 
-	return $self->{path};
+	return $self->{_path};
 }
 
 sub url {
