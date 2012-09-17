@@ -21,9 +21,9 @@ open_editor() {
 }
 
 mode_diff() {
-	git diff --relative "$@" |
+	git diff --no-prefix --relative "$@" |
 	perl -ne '
-	if (m{^\+\+\+ b/(.*)}) { $file = $1; next }
+	if (m{^\+\+\+ (.*)}) { $file = $1; next }
 	defined($file) or next;
 	if (m/^@@ .*\+(\d+)/) { $line = $1; next }
 	defined($line) or next;
