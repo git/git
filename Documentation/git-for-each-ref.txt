@@ -102,9 +102,10 @@ Fields that have name-email-date tuple as its value (`author`,
 and `date` to extract the named component.
 
 The complete message in a commit and tag object is `contents`.
-Its first line is `contents:subject`, the remaining lines
-are `contents:body` and the optional GPG signature
-is `contents:signature`.
+Its first line is `contents:subject`, where subject is the concatenation
+of all lines of the commit message up to the first blank line.  The next
+line is 'contents:body', where body is all of the lines after the first
+blank line.  Finally, the optional GPG signature is `contents:signature`.
 
 For sorting purposes, fields with numeric values sort in numeric
 order (`objectsize`, `authordate`, `committerdate`, `taggerdate`).
