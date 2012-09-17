@@ -20,8 +20,9 @@ If you need something advanced, you can manually malloc() the `items`
 member (you need this if you add things later) and you should set the
 `nr` and `alloc` members in that case, too.
 
-. Adds new items to the list, using `string_list_append` or
-  `string_list_insert`.
+. Adds new items to the list, using `string_list_append`,
+  `string_list_append_nodup`, `string_list_insert`,
+  `string_list_split`, and/or `string_list_split_in_place`.
 
 . Can check if a string is in the list using `string_list_has_string` or
   `unsorted_string_list_has_string` and get it from the list using
@@ -29,18 +30,23 @@ member (you need this if you add things later) and you should set the
 
 . Can sort an unsorted list using `sort_string_list`.
 
+. Can remove duplicate items from a sorted list using
+  `string_list_remove_duplicates`.
+
 . Can remove individual items of an unsorted list using
   `unsorted_string_list_delete_item`.
+
+. Can remove items not matching a criterion from a sorted or unsorted
+  list using `filter_string_list`.
 
 . Finally it should free the list using `string_list_clear`.
 
 Example:
 
 ----
-struct string_list list;
+struct string_list list = STRING_LIST_INIT_NODUP;
 int i;
 
-memset(&list, 0, sizeof(struct string_list));
 string_list_append(&list, "foo");
 string_list_append(&list, "bar");
 for (i = 0; i < list.nr; i++)
@@ -59,6 +65,22 @@ Functions
 ---------
 
 * General ones (works with sorted and unsorted lists as well)
+
+`filter_string_list`::
+
+	Apply a function to each item in a list, retaining only the
+	items for which the function returns true.  If free_util is
+	true, call free() on the util members of any items that have
+	to be deleted.  Preserve the order of the items that are
+	retained.
+
+`string_list_longest_prefix`::
+
+	Return the longest string within a string_list that is a
+	prefix (in the sense of prefixcmp()) of the specified string,
+	or NULL if no such prefix exists.  This function does not
+	require the string_list to be sorted (it does a linear
+	search).
 
 `print_string_list`::
 
@@ -96,11 +118,28 @@ write `string_list_insert(...)->util = ...;`.
 	Look up a given string in the string_list, returning the containing
 	string_list_item. If the string is not found, NULL is returned.
 
+`string_list_remove_duplicates`::
+
+	Remove all but the first of consecutive entries that have the
+	same string value.  If free_util is true, call free() on the
+	util members of any items that have to be deleted.
+
 * Functions for unsorted lists only
 
 `string_list_append`::
 
-	Append a new string to the end of the string_list.
+	Append a new string to the end of the string_list.  If
+	`strdup_string` is set, then the string argument is copied;
+	otherwise the new `string_list_entry` refers to the input
+	string.
+
+`string_list_append_nodup`::
+
+	Append a new string to the end of the string_list.  The new
+	`string_list_entry` always refers to the input string, even if
+	`strdup_string` is set.  This function can be used to hand
+	ownership of a malloc()ed string to a `string_list` that has
+	`strdup_string` set.
 
 `sort_string_list`::
 
@@ -123,6 +162,25 @@ counterpart for sorted lists, which performs a binary search.
 	will be freed in case the `strdup_strings` member of the string_list
 	is set. The third parameter controls if the `util` pointer of the
 	items should be freed or not.
+
+`string_list_split`::
+`string_list_split_in_place`::
+
+	Split a string into substrings on a delimiter character and
+	append the substrings to a `string_list`.  If `maxsplit` is
+	non-negative, then split at most `maxsplit` times.  Return the
+	number of substrings appended to the list.
++
+`string_list_split` requires a `string_list` that has `strdup_strings`
+set to true; it leaves the input string untouched and makes copies of
+the substrings in newly-allocated memory.
+`string_list_split_in_place` requires a `string_list` that has
+`strdup_strings` set to false; it splits the input string in place,
+overwriting the delimiter characters with NULs and creating new
+string_list_items that point into the original string (the original
+string must therefore not be modified or freed while the `string_list`
+is in use).
+
 
 Data structures
 ---------------
