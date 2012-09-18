@@ -1,32 +1,27 @@
 To: git@vger.kernel.org
 Bcc: lwn@lwn.net
-Subject: What's cooking in git.git (Sep 2012, #05; Fri, 14)
-X-master-at: 1084f3b844d80d84d2d318bc562b78514cd78028
-X-next-at: d6bdd97b1590ffc7218c72138a0a58a80c655529
+Subject: What's cooking in git.git (Sep 2012, #06; Mon, 17)
+X-master-at: 5976753e732186d7f8a5c6af55a8ce3e2d2b677b
+X-next-at: 3c10a18fa86d85c603e54c9c31776661e9d9fa29
 
-What's cooking in git.git (Sep 2012, #05; Fri, 14)
+What's cooking in git.git (Sep 2012, #06; Mon, 17)
 --------------------------------------------------
 
 Here are the topics that have been cooking.  Commits prefixed with
 '-' are only in 'pu' (proposed updates) while commits prefixed with
 '+' are in 'next'.
 
-The topic descriptions are indented in this issue as an experiment;
-it is slightly harder to edit for me and I personally find it harder
-to read, but perhaps that is because I am used to reading in the
-previous format. There are wider gaps between topics that may turn
-out to be sufficient to visually identify where each entry begins
-and ends. We'll see.
+The seventh wave of topics are in 'master' now.
+
+The archive-zip topic really needs help by people on platforms where
+zip archive is an important part of life (in other words, not UNIX)
+to test, in order to make sure the archive generated out of a tree
+with non-ascii filenames are usable on their platforms.
 
 I'm planning to keep this cycle reasonably short and aim for tagging
 the result as 1.8.0 at the end of 9th week, on October 21st, after
 which I'd disappear for a few weeks.  http://tinyurl.com/gitCal is
 where you can always find my rough tagging schedule at.
-
-I think we can start thinking about feature freeze once the topics
-in 'next' that are scheduled to graduate to 'master' already are
-fully cooked.  For any late-coming topic, there always is the next
-cycle ;-)
 
 You can find the changes described here in the integration branches of the
 repositories listed at
@@ -36,73 +31,66 @@ repositories listed at
 --------------------------------------------------
 [Graduated to "master"]
 
-* dj/fetch-all-tags (2012-09-07) 1 commit
-  (merged to 'next' on 2012-09-11 at 083a029)
- + fetch --all: pass --tags/--no-tags through to each remote
+* cn/branch-set-upstream-to (2012-09-11) 2 commits
+  (merged to 'next' on 2012-09-12 at e162318)
+ + completion: complete branch name for "branch --set-upstream-to="
+ + completion: add --set-upstream-to and --unset-upstream
 
- "git fetch --all", when passed "--no-tags", did not honor the
- "--no-tags" option while fetching from individual remotes (the same
- issue existed with "--tags", but combination "--all --tags" makes
- much less sense than "--all --no-tags").
-
-
-* mh/abspath (2012-09-10) 9 commits
-  (merged to 'next' on 2012-09-11 at 5e29b53)
- + t0060: split absolute path test in two to exercise some of it on Windows
- + t0060: verify that real_path() removes extra slashes
- + real_path(): properly handle nonexistent top-level paths
- + t0060: verify that real_path() works correctly with absolute paths
- + real_path(): reject the empty string
- + t0060: verify that real_path() fails if passed the empty string
- + absolute_path(): reject the empty string
- + t0060: verify that absolute_path() fails if passed the empty string
- + t0060: move tests of real_path() from t0000 to here
+ Finishing touches to the recently graduated topic to introduce
+ "git branch --set-upstream-to" option.
 
 
-* nd/checkout-option-parsing-fix (2012-09-11) 3 commits
-  (merged to 'next' on 2012-09-11 at 3d3ef13)
- + checkout: reorder option handling
- + checkout: move more parameters to struct checkout_opts
- + checkout: pass "struct checkout_opts *" as const pointer
+* dg/run-command-child-cleanup (2012-09-11) 1 commit
+  (merged to 'next' on 2012-09-12 at aa5f9e2)
+ + run-command.c: fix broken list iteration in clear_child_for_cleanup
 
- The option parsing of "git checkout" had error checking, dwim and
- defaulting missing options, all mixed in the code, and issuing an
- appropriate error message with useful context was getting harder.
- Reorganize the code and allow giving a proper diagnosis when the
- user says "git checkout -b -t foo bar" (e.g. "-t" is not a good name
- for a branch).
+ The code to wait for subprocess and remove it from our internal queue
+ wasn't quite right.
 
 
-* nd/i18n-status (2012-09-06) 1 commit
-  (merged to 'next' on 2012-09-11 at 7cfa224)
- + status: remove i18n legos
+* jc/ll-merge-binary-ours (2012-09-12) 3 commits
+  (merged to 'next' on 2012-09-12 at 9a7a6b3)
+ + ll-merge: warn about inability to merge binary files only when we can't
+ + attr: "binary" attribute should choose built-in "binary" merge driver
+ + merge: teach -Xours/-Xtheirs to binary ll-merge driver
+
+ "git merge -Xtheirs" did not help content-level merge of binary
+ files; it should just take their version.  Also "*.jpg binary" in
+ the attributes did not imply they should use the binary ll-merge
+ driver.
 
 
-* rj/path-cleanup (2012-09-04) 5 commits
-  (merged to 'next' on 2012-09-11 at 9e8da84)
- + Call mkpathdup() rather than xstrdup(mkpath(...))
- + Call git_pathdup() rather than xstrdup(git_path("..."))
- + path.c: Use vsnpath() in the implementation of git_path()
- + path.c: Don't discard the return value of vsnpath()
- + path.c: Remove the 'git_' prefix from a file scope function
+* jc/mailinfo-RE (2012-09-09) 1 commit
+  (merged to 'next' on 2012-09-12 at 131edbf)
+ + mailinfo: strip "RE: " prefix
+
+ We strip the prefix from "Re: subject" and also from a less common
+ "re: subject", but left even less common "RE: subject" intact.
 
 
-* rj/tap-fix (2012-09-02) 6 commits
-  (merged to 'next' on 2012-09-11 at 4104358)
- + test-lib.sh: Suppress the "passed all ..." message if no tests run
- + test-lib.sh: Add check for invalid use of 'skip_all' facility
- + test-lib.sh: Fix some shell coding style violations
- + t4016-*.sh: Skip all tests rather than each test
- + t3902-*.sh: Skip all tests rather than each test
- + t3300-*.sh: Fix a TAP parse error
+* jc/maint-blame-no-such-path (2012-09-11) 2 commits
+  (merged to 'next' on 2012-09-14 at 84064d5)
+ + blame: allow "blame file" in the middle of a conflicted merge
+ + blame $path: avoid getting fooled by case insensitive filesystems
+
+ "git blame MAKEFILE" run in a history that has "Makefile" but not
+ "MAKEFILE" should say "No such file MAKEFILE in HEAD", but got
+ confused on a case insensitive filesystem and failed to do so.
+
+ Even during a conflicted merge, "git blame $path" always meant to
+ blame uncommitted changes to the "working tree" version; make it
+ more useful by showing cleanly merged parts as coming from the other
+ branch that is being merged.
 
 
-* sn/ls-remote-get-url-doc (2012-09-07) 1 commit
-  (merged to 'next' on 2012-09-11 at 9d09780)
- + ls-remote: document the '--get-url' option
+* jk/config-warn-on-inaccessible-paths (2012-09-13) 1 commit
+  (merged to 'next' on 2012-09-14 at a9bba78)
+ + attr: failure to open a .gitattributes file is OK with ENOTDIR
 
---------------------------------------------------
-[New Topics]
+ The attribute system may be asked for a path whose leading
+ directories do not exist in the current working tree.  In addition
+ to ENOENT, ENOTDIR must be ignored.
+
 
 * jw/doc-commit-title (2012-09-13) 1 commit
   (merged to 'next' on 2012-09-14 at d6bdd97)
@@ -112,7 +100,39 @@ repositories listed at
  log" to say "title of commit" with definition of what that "title"
  is.
 
- Will merge to 'master' as part of the seventh batch.
+
+* mh/fetch-filter-refs (2012-09-15) 15 commits
+  (merged to 'next' on 2012-09-15 at 8767db3)
+ + test-string-list.c: Fix some sparse warnings
+  (merged to 'next' on 2012-09-14 at 567afe4)
+ + fetch-pack: eliminate spurious error messages
+ + cmd_fetch_pack(): simplify computation of return value
+ + fetch-pack: report missing refs even if no existing refs were received
+ + cmd_fetch_pack(): return early if finish_connect() fails
+ + filter_refs(): simplify logic
+ + filter_refs(): build refs list as we go
+ + filter_refs(): delete matched refs from sought list
+ + fetch_pack(): update sought->nr to reflect number of unique entries
+ + filter_refs(): do not check the same sought_pos twice
+ + Change fetch_pack() and friends to take string_list arguments
+ + fetch_pack(): reindent function decl and defn
+ + Rename static function fetch_pack() to http_fetch_pack()
+ + t5500: add tests of fetch-pack --all --depth=N $URL $REF
+ + t5500: add tests of error output for missing refs
+ (this branch uses mh/string-list.)
+
+ Code simplification and clarification.
+
+
+* mh/string-list (2012-09-12) 6 commits
+  (merged to 'next' on 2012-09-14 at b4c50bc)
+ + api-string-list.txt: initialize the string_list the easy way
+ + string_list: add a function string_list_longest_prefix()
+ + string_list: add a new function, string_list_remove_duplicates()
+ + string_list: add a new function, filter_string_list()
+ + string_list: add two new functions for splitting strings
+ + string_list: add function string_list_append_nodup()
+ (this branch is used by mh/fetch-filter-refs.)
 
 
 * nd/maint-diffstat-summary (2012-09-14) 1 commit
@@ -127,49 +147,81 @@ repositories listed at
  The original had trivial thinko in reverting Q_(), which has been
  fixed.
 
- Will merge to 'master' as part of the seventh batch.
+
+* sl/autoconf (2012-09-11) 2 commits
+  (merged to 'next' on 2012-09-12 at 6ebe199)
+ + build: don't duplicate substitution of make variables
+ + build: improve GIT_CONF_SUBST signature
+
+ Reduces repetition in configure.ac.
+
+--------------------------------------------------
+[New Topics]
+
+* rt/maint-clone-single (2012-09-16) 2 commits
+ - fixup! check what we really care about in a more direct way
+ - clone --single: limit the fetch refspec to fetched branch
+
+ Running "git fetch" in a repository made with "git clone --single"
+ slurps all the branches, defeating the point of "--single".
 
 
-* nd/fetch-status-alignment (2012-09-14) 1 commit
- - fetch: align per-ref summary report in UTF-8 locales
+* ep/malloc-check-perturb (2012-09-14) 2 commits
+ - MALLOC_CHECK: various clean-ups
+ - Add MALLOC_CHECK_ and MALLOC_PERTURB_ libc env to the test suite for detecting heap corruption
 
- Will merge to 'next'.
-
-
-* mv/cherry-pick-s (2012-09-14) 1 commit
- - cherry-pick: don't forget -s on failure
-
- Will merge to 'next'.
+ Queued with fix-ups.
+ Waiting for response from the author.
 
 
-* jc/maint-log-grep-all-match (2012-09-14) 9 commits
- - t7810-grep: test --all-match with multiple --grep and --author options
- - t7810-grep: test interaction of multiple --grep and --author options
- - t7810-grep: test multiple --author with --all-match
- - t7810-grep: test multiple --grep with and without --all-match
- - t7810-grep: bring log --grep tests in common form
-  (merged to 'next' on 2012-09-14 at 86b848c)
- + log: document use of multiple commit limiting options
- + log --grep/--author: honor --all-match honored for multiple --grep patterns
- + grep: show --debug output only once
- + grep: teach --debug option to dump the parse tree
+* jc/make-static (2012-09-15) 14 commits
+  (merged to 'next' on 2012-09-17 at 3a7d87a)
+ + sequencer.c: mark a private file-scope symbol as static
+ + ident.c: mark private file-scope symbols as static
+ + trace.c: mark a private file-scope symbol as static
+ + wt-status.c: mark a private file-scope symbol as static
+ + read-cache.c: mark a private file-scope symbol as static
+ + strbuf.c: mark a private file-scope symbol as static
+ + sha1-array.c: mark a private file-scope symbol as static
+ + symlinks.c: mark private file-scope symbols as static
+ + notes.c: mark a private file-scope symbol as static
+ + rerere.c: mark private file-scope symbols as static
+ + graph.c: mark private file-scope symbols as static
+ + diff.c: mark a private file-scope symbol as static
+ + commit.c: mark a file-scope private symbol as static
+ + builtin/notes.c: mark file-scope private symbols as static
 
- Fix a long-standing bug in "git log --grep" when multiple "--grep"
- are used together with "--all-match" and "--author" or "--committer".
-
- Will merge to 'next' after eyeballing the tests
- Help in reviewing them is appreciated.
+ Turn many file-scope private symbols to static to reduce the
+ global namespace contamination.
 
 
-* jk/config-warn-on-inaccessible-paths (2012-09-13) 1 commit
-  (merged to 'next' on 2012-09-14 at a9bba78)
- + attr: failure to open a .gitattributes file is OK with ENOTDIR
+* aj/xfuncname-ada (2012-09-16) 1 commit
+ - Add userdiff patterns for Ada
 
- The attribute system may be asked for a path whose leading
- directories do not exist in the current working tree.  In addition
- to ENOENT, ENOTDIR must be ignored.
 
- Will merge to 'master' as part of the seventh batch.
+* aw/rebase-i-edit-todo (2012-09-16) 3 commits
+ - rebase -i: Add tests for "--edit-todo"
+ - rebase -i: Teach "--edit-todo" action
+ - rebase -i: Refactor help messages for todo file
+
+
+* jc/maint-mailinfo-mime-attr (2012-09-17) 1 commit
+ - mailinfo: do not concatenate charset= attribute values from mime headers
+
+
+* js/poll-emu (2012-09-17) 4 commits
+ - make poll() work on platforms that can't recv() on a non-socket
+ - poll() exits too early with EFAULT if 1st arg is NULL
+ - fix some win32 specific dependencies in poll.c
+ - make poll available for other platforms lacking it
+
+
+* nd/wildmatch (2012-09-17) 5 commits
+ - Support "**" in .gitignore and .gitattributes patterns using wildmatch()
+ - Integrate wildmatch to git
+ - compat/wildmatch: fix case-insensitive matching
+ - compat/wildmatch: remove static variable force_lower_case
+ - Import wildmatch from rsync
 
 --------------------------------------------------
 [Stalled]
@@ -183,32 +235,6 @@ repositories listed at
 
  Attempts to refactor to share code among OSX keychain, Gnome keyring
  and Win32 credential helpers.
-
-
-* jc/maint-name-rev (2012-09-04) 7 commits
- - describe --contains: use "name-rev --weight"
- - name-rev --weight: tests and documentation
- - name-rev --weight: cache the computed weight in notes
- - name-rev --weight: trivial optimization
- - name-rev: --weight option
- - name_rev: clarify the logic to assign a new tip-name to a commit
- - name-rev: lose unnecessary typedef
-
- "git name-rev" names the given revision based on a ref that can be
- reached in the smallest number of steps from the rev, but that is
- not useful when the caller wants to know which tag is the oldest one
- that contains the rev.  This teaches a new mode to the command that
- uses the oldest ref among those which contain the rev.
-
- I am not sure if this is worth it; for one thing, even with the help
- from notes-cache, it seems to make the "describe --contains" even
- slower. Also the command will be unusably slow for a user who does
- not have a write access (hence unable to create or update the
- notes-cache).
-
- Needs another round to at least find a better name for the option,
- and possibly a cheaper but still better than the current "close to
- the tip" heuristics.
 
 
 * ms/contrib-thunderbird-updates (2012-08-31) 2 commits
@@ -253,12 +279,6 @@ repositories listed at
  This is broken (see the log message there).
 
  Not ready.
-
-
-* er/doc-fast-import-done (2012-08-22) 1 commit
- - fast-import: document the --done option
-
- Parked in 'pu' in case ESR responds with "Sorry, forgot to sign-off".
 
 
 * jc/add-delete-default (2012-08-13) 1 commit
@@ -371,110 +391,102 @@ repositories listed at
 --------------------------------------------------
 [Cooking]
 
-* dg/run-command-child-cleanup (2012-09-11) 1 commit
-  (merged to 'next' on 2012-09-12 at aa5f9e2)
- + run-command.c: fix broken list iteration in clear_child_for_cleanup
+* jc/maint-name-rev (2012-09-17) 7 commits
+ - describe --contains: use "name-rev --algorithm=weight"
+ - name-rev --algorithm=weight: tests and documentation
+ - name-rev --algorithm=weight: cache the computed weight in notes
+ - name-rev --algorithm=weight: trivial optimization
+ - name-rev: --algorithm option
+ - name_rev: clarify the logic to assign a new tip-name to a commit
+ - name-rev: lose unnecessary typedef
 
- The code to wait for subprocess and remove it from our internal queue
- wasn't quite right.
+ "git name-rev" names the given revision based on a ref that can be
+ reached in the smallest number of steps from the rev, but that is
+ not useful when the caller wants to know which tag is the oldest one
+ that contains the rev.  This teaches a new mode to the command that
+ uses the oldest ref among those which contain the rev.
 
- Will merge to 'master' as part of the seventh batch.
-
-
-* jc/maint-blame-no-such-path (2012-09-11) 2 commits
-  (merged to 'next' on 2012-09-14 at 84064d5)
- + blame: allow "blame file" in the middle of a conflicted merge
- + blame $path: avoid getting fooled by case insensitive filesystems
-
- "git blame MAKEFILE" run in a history that has "Makefile" but not
- "MAKEFILE" should say "No such file MAKEFILE in HEAD", but got
- confused on a case insensitive filesystem and failed to do so.
-
- Even during a conflicted merge, "git blame $path" always meant to
- blame uncommitted changes to the "working tree" version; make it
- more useful by showing cleanly merged parts as coming from the other
- branch that is being merged.
-
- Will merge to 'master' as part of the seventh batch.
+ I am not sure if this is worth it; for one thing, even with the help
+ from notes-cache, it seems to make the "describe --contains" even
+ slower. Also the command will be unusably slow for a user who does
+ not have a write access (hence unable to create or update the
+ notes-cache).
 
 
-* sl/autoconf (2012-09-11) 2 commits
-  (merged to 'next' on 2012-09-12 at 6ebe199)
- + build: don't duplicate substitution of make variables
- + build: improve GIT_CONF_SUBST signature
+* er/doc-fast-import-done (2012-08-22) 1 commit
+  (merged to 'next' on 2012-09-17 at bb8709a)
+ + fast-import: document the --done option
 
- Reduces repetition in configure.ac.
+ I got tired of waiting for ESR to respond with S-o-b for a trivial
+ documentation updates, so I'll be moving this forward.
 
- Will merge to 'master' as part of the seventh batch.
-
-
-* cn/branch-set-upstream-to (2012-09-11) 2 commits
-  (merged to 'next' on 2012-09-12 at e162318)
- + completion: complete branch name for "branch --set-upstream-to="
- + completion: add --set-upstream-to and --unset-upstream
-
- Finishing touches to the recently graduated topic to introduce
- "git branch --set-upstream-to" option.
-
- Will merge to 'master' as part of the seventh batch.
+ Will merge to 'master'.
 
 
-* jc/ll-merge-binary-ours (2012-09-12) 3 commits
-  (merged to 'next' on 2012-09-12 at 9a7a6b3)
- + ll-merge: warn about inability to merge binary files only when we can't
- + attr: "binary" attribute should choose built-in "binary" merge driver
- + merge: teach -Xours/-Xtheirs to binary ll-merge driver
+* nd/fetch-status-alignment (2012-09-14) 1 commit
+  (merged to 'next' on 2012-09-14 at 34237db)
+ + fetch: align per-ref summary report in UTF-8 locales
 
- "git merge -Xtheirs" did not help content-level merge of binary
- files; it should just take their version.  Also "*.jpg binary" in
- the attributes did not imply they should use the binary ll-merge
- driver.
+ The status report from "git fetch", when messages like 'up-to-date'
+ are translated, did not align the branch names well.
 
- Will merge to 'master' as part of the seventh batch.
+ Will merge to 'master'.
 
 
-* jc/mailinfo-RE (2012-09-09) 1 commit
-  (merged to 'next' on 2012-09-12 at 131edbf)
- + mailinfo: strip "RE: " prefix
+* mv/cherry-pick-s (2012-09-14) 1 commit
+  (merged to 'next' on 2012-09-14 at 2d143e1)
+ + cherry-pick: don't forget -s on failure
 
- We strip the prefix from "Re: subject" and also from a less common
- "re: subject", but left even less common "RE: subject" intact.
+ After "git cherry-pick -s" gave control back to the user asking
+ help to resolve conflicts, concluding "git commit" needs to be run
+ with "-s" if the user wants to sign it off, but people often forgot
+ to do so.
 
- Will merge to 'master' as part of the seventh batch.
-
-
-* mh/string-list (2012-09-12) 6 commits
-  (merged to 'next' on 2012-09-14 at b4c50bc)
- + api-string-list.txt: initialize the string_list the easy way
- + string_list: add a function string_list_longest_prefix()
- + string_list: add a new function, string_list_remove_duplicates()
- + string_list: add a new function, filter_string_list()
- + string_list: add two new functions for splitting strings
- + string_list: add function string_list_append_nodup()
- (this branch is used by mh/fetch-filter-refs.)
-
- Will merge to 'master' as part of the seventh batch.
+ Will merge to 'master'.
 
 
-* pw/p4-submit-conflicts (2012-09-10) 12 commits
- - git-p4: add submit --conflict option and config varaiable
- - git p4: add submit --prepare-p4-only option
- - git p4: add submit --dry-run option
- - git p4: accept -v for --verbose
- - git p4: revert deleted files after submit cancel
- - git p4: rearrange submit template construction
- - git p4: test clean-up after failed submit, fix added files
- - git p4: standardize submit cancel due to unchanged template
- - git p4: move conflict prompt into run, add [q]uit input
- - git p4: remove submit failure options [a]pply and [w]rite
- - git p4: gracefully fail if some commits could not be applied
- - git p4 test: remove bash-ism of combined export/assignment
+* jc/maint-log-grep-all-match (2012-09-15) 10 commits
+  (merged to 'next' on 2012-09-17 at 3c10a18)
+ + t7810-grep: test --all-match with multiple --grep and --author options
+ + t7810-grep: test interaction of multiple --grep and --author options
+ + t7810-grep: test multiple --author with --all-match
+ + t7810-grep: test multiple --grep with and without --all-match
+ + t7810-grep: bring log --grep tests in common form
+  (merged to 'next' on 2012-09-15 at 73fad40)
+ + grep.c: mark private file-scope symbols as static
+  (merged to 'next' on 2012-09-14 at 86b848c)
+ + log: document use of multiple commit limiting options
+ + log --grep/--author: honor --all-match honored for multiple --grep patterns
+ + grep: show --debug output only once
+ + grep: teach --debug option to dump the parse tree
 
- Waiting for comments.
+ Fix a long-standing bug in "git log --grep" when multiple "--grep"
+ are used together with "--all-match" and "--author" or "--committer".
 
 
-* jc/xprm-generation (2012-09-04) 1 commit
+* pw/p4-submit-conflicts (2012-09-16) 12 commits
+  (merged to 'next' on 2012-09-17 at 7e57551)
+ + git-p4: add submit --conflict option and config varaiable
+ + git p4: add submit --prepare-p4-only option
+ + git p4: add submit --dry-run option
+ + git p4: accept -v for --verbose
+ + git p4: revert deleted files after submit cancel
+ + git p4: rearrange submit template construction
+ + git p4: test clean-up after failed submit, fix added files
+ + git p4: standardize submit cancel due to unchanged template
+ + git p4: move conflict prompt into run, add [q]uit input
+ + git p4: remove submit failure options [a]pply and [w]rite
+ + git p4: gracefully fail if some commits could not be applied
+ + git p4 test: remove bash-ism of combined export/assignment
+
+ Will merge to 'master'.
+
+
+* jc/xprm-generation (2012-09-14) 1 commit
  - test-generation: compute generation numbers and clock skews
+
+ A toy to analyze how bad the clock skews are in histories of real
+ world projects.
 
 
 * rs/archive-zip-utf8 (2012-09-04) 1 commit
@@ -485,29 +497,6 @@ repositories listed at
  compatiblity with other people's zip implementations.
 
  Will merge to 'master' as part of the sixth batch.
-
-
-* mh/fetch-filter-refs (2012-09-12) 14 commits
-  (merged to 'next' on 2012-09-14 at 567afe4)
- + fetch-pack: eliminate spurious error messages
- + cmd_fetch_pack(): simplify computation of return value
- + fetch-pack: report missing refs even if no existing refs were received
- + cmd_fetch_pack(): return early if finish_connect() fails
- + filter_refs(): simplify logic
- + filter_refs(): build refs list as we go
- + filter_refs(): delete matched refs from sought list
- + fetch_pack(): update sought->nr to reflect number of unique entries
- + filter_refs(): do not check the same sought_pos twice
- + Change fetch_pack() and friends to take string_list arguments
- + fetch_pack(): reindent function decl and defn
- + Rename static function fetch_pack() to http_fetch_pack()
- + t5500: add tests of fetch-pack --all --depth=N $URL $REF
- + t5500: add tests of error output for missing refs
- (this branch uses mh/string-list.)
-
- Code simplification and clarification.
-
- Will merge to 'master' as part of the seventh batch.
 
 
 * jl/submodule-rm (2012-08-27) 1 commit
