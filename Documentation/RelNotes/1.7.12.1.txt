@@ -85,12 +85,21 @@ Fixes since v1.7.12
    rely on being able to parse "ls-files -s | while read a b c..."
    started to fail.  Protect them from such a misconfiguration.
 
+ * The attribute system may be asked for a path that itself or its
+   leading directories no longer exists in the working tree, and it is
+   fine if we cannot open .gitattribute file in such a case.  Failure
+   to open per-directory .gitattributes with error status other than
+   ENOENT and ENOTDIR should be diagnosed, but it wasn't.
+
  * After "gitk" showed the contents of a tag, neither "Reread
    references" nor "Reload" did not update what is shown as the
    contents of it, when the user overwrote the tag with "git tag -f".
 
  * "ciabot" script (in contrib/) has been updated with extensive
    documentation.
+
+ * "git-jump" script (in contrib/) did not work well when
+   diff.noprefix or diff.mnemonicprefix is in effect.
 
  * Older parts of the documentation described as if having a regular
    file in .git/refs/ hierarchy were the only way to have branches and
@@ -121,3 +130,5 @@ Fixes since v1.7.12
    branch name is a parameter to the option, but the heading for the
    option description was "-B::", not "-B branch::", making the
    documentation misleading.
+
+Also contains numerous documentation updates.
