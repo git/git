@@ -792,6 +792,23 @@ skip)
 
 	do_rest
 	;;
+edit-todo)
+	sed -e '/^#/d' < "$todo" > "$todo".new
+	mv -f "$todo".new "$todo"
+	append_todo_help
+	cat >> "$todo" << EOF
+#
+# You are editing the todo file of an ongoing interactive rebase.
+# To continue rebase after editing, run:
+#     git rebase --continue
+#
+EOF
+
+	git_sequence_editor "$todo" ||
+		die "Could not execute editor"
+
+	exit
+	;;
 esac
 
 git var GIT_COMMITTER_IDENT >/dev/null ||

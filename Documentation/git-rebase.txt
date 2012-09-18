@@ -12,7 +12,7 @@ SYNOPSIS
 	[<upstream>] [<branch>]
 'git rebase' [-i | --interactive] [options] [--exec <cmd>] [--onto <newbase>]
 	--root [<branch>]
-'git rebase' --continue | --skip | --abort
+'git rebase' --continue | --skip | --abort | --edit-todo
 
 DESCRIPTION
 -----------
@@ -244,6 +244,9 @@ leave out at most one of A and B, in which case it defaults to HEAD.
 
 --skip::
 	Restart the rebasing process by skipping the current patch.
+
+--edit-todo::
+	Edit the todo list during an interactive rebase.
 
 -m::
 --merge::
