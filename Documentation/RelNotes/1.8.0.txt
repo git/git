@@ -45,6 +45,11 @@ UI, Workflows & Features
  * "git cherry-pick" learned the "--allow-empty-message" option to
    allow it to replay a commit without any log message.
 
+ * After "git cherry-pick -s" gave control back to the user asking
+   help to resolve conflicts, concluding "git commit" used to need to
+   be run with "-s" if the user wants to sign it off; now the command
+   leaves the sign-off line in the log template.
+
  * "git daemon" learned the "--access-hook" option to allow an
    external command to decline service based on the client address,
    repository path, etc.
@@ -65,6 +70,9 @@ UI, Workflows & Features
 Foreign Interface
 
  * "git svn" has been updated to work with SVN 1.7.
+
+ * "git p4" learned "--conflicts" option to specify what to do when
+   encountering a conflict during "p4 submit".
 
 
 Performance, Internal Implementation, etc. (please report possible regressions)
@@ -134,10 +142,16 @@ to them for details).
    (merge 52ffe99 jw/doc-commit-title later to maint).
 
  * The attribute system may be asked for a path that itself or its
-   leading directories no longer exists in the working tree.  Failure
+   leading directories no longer exists in the working tree, and it is
+   fine if we cannot open .gitattribute file in such a case.  Failure
    to open per-directory .gitattributes with error status other than
-   ENOENT and ENOTDIR are diagnosed.
-   (merge 8e950da jk/config-warn-on-inaccessible-paths later to maint).
+   ENOENT and ENOTDIR should be diagnosed, but it wasn't.
+
+ * "git log --all-match --grep=A --grep=B" ought to show commits that
+   mention both A and B, but when these three options are used with
+   --author or --committer, it showed commits that mention either A or
+   B (or both) instead.
+   (merge 39f2e01 jc/maint-log-grep-all-match later to maint).
 
  * Earlier we made the diffstat summary line that shows the number of
    lines added/deleted localizable, but it was found irritating having
