@@ -8,7 +8,7 @@ OPTIONS_KEEPDASHDASH=
 OPTIONS_SPEC="\
 git rebase [-i] [options] [--exec <cmd>] [--onto <newbase>] [<upstream>] [<branch>]
 git rebase [-i] [options] [--exec <cmd>] [--onto <newbase>] --root [<branch>]
-git-rebase [-i] --continue | --abort | --skip
+git-rebase --continue | --abort | --skip
 --
  Available options are
 v,verbose!         display a diffstat of what changed upstream
