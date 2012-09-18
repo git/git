@@ -30,9 +30,14 @@
 
 #ifndef NO_GETTEXT
 extern void git_setup_gettext(void);
+extern int gettext_width(const char *s);
 #else
 static inline void git_setup_gettext(void)
 {
+}
+static inline int gettext_width(const char *s)
+{
+	return strlen(s);
 }
 #endif
 

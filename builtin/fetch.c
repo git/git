@@ -256,9 +256,8 @@ static int update_local_ref(struct ref *ref,
 	if (!hashcmp(ref->old_sha1, ref->new_sha1)) {
 		if (verbosity > 0)
 			strbuf_addf(display, "= %-*s %-*s -> %s",
-				    TRANSPORT_SUMMARY_WIDTH,
-				    _("[up to date]"), REFCOL_WIDTH,
-				    remote, pretty_ref);
+				    TRANSPORT_SUMMARY(_("[up to date]")),
+				    REFCOL_WIDTH, remote, pretty_ref);
 		return 0;
 	}
 
@@ -272,7 +271,7 @@ static int update_local_ref(struct ref *ref,
 		 */
 		strbuf_addf(display,
 			    _("! %-*s %-*s -> %s  (can't fetch in current branch)"),
-			    TRANSPORT_SUMMARY_WIDTH, _("[rejected]"),
+			    TRANSPORT_SUMMARY(_("[rejected]")),
 			    REFCOL_WIDTH, remote, pretty_ref);
 		return 1;
 	}
@@ -283,7 +282,7 @@ static int update_local_ref(struct ref *ref,
 		r = s_update_ref("updating tag", ref, 0);
 		strbuf_addf(display, "%c %-*s %-*s -> %s%s",
 			    r ? '!' : '-',
-			    TRANSPORT_SUMMARY_WIDTH, _("[tag update]"),
+			    TRANSPORT_SUMMARY(_("[tag update]")),
 			    REFCOL_WIDTH, remote, pretty_ref,
 			    r ? _("  (unable to update local ref)") : "");
 		return r;
@@ -318,7 +317,7 @@ static int update_local_ref(struct ref *ref,
 		r = s_update_ref(msg, ref, 0);
 		strbuf_addf(display, "%c %-*s %-*s -> %s%s",
 			    r ? '!' : '*',
-			    TRANSPORT_SUMMARY_WIDTH, what,
+			    TRANSPORT_SUMMARY(what),
 			    REFCOL_WIDTH, remote, pretty_ref,
 			    r ? _("  (unable to update local ref)") : "");
 		return r;
@@ -358,7 +357,7 @@ static int update_local_ref(struct ref *ref,
 		return r;
 	} else {
 		strbuf_addf(display, "! %-*s %-*s -> %s  %s",
-			    TRANSPORT_SUMMARY_WIDTH, _("[rejected]"),
+			    TRANSPORT_SUMMARY(_("[rejected]")),
 			    REFCOL_WIDTH, remote, pretty_ref,
 			    _("(non-fast-forward)"));
 		return 1;
@@ -555,7 +554,7 @@ static int prune_refs(struct refspec *refs, int ref_count, struct ref *ref_map)
 			result |= delete_ref(ref->name, NULL, 0);
 		if (verbosity >= 0) {
 			fprintf(stderr, " x %-*s %-*s -> %s\n",
-				TRANSPORT_SUMMARY_WIDTH, _("[deleted]"),
+				TRANSPORT_SUMMARY(_("[deleted]")),
 				REFCOL_WIDTH, _("(none)"), prettify_refname(ref->name));
 			warn_dangling_symref(stderr, dangling_msg, ref->name);
 		}
