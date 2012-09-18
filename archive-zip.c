@@ -4,8 +4,6 @@
 #include "cache.h"
 #include "archive.h"
 #include "streaming.h"
-#include "commit.h"
-#include "utf8.h"
 
 static int zip_date;
 static int zip_time;
@@ -18,8 +16,7 @@ static unsigned int zip_dir_offset;
 static unsigned int zip_dir_entries;
 
 #define ZIP_DIRECTORY_MIN_SIZE	(1024 * 1024)
-#define ZIP_STREAM	(1 <<  3)
-#define ZIP_UTF8	(1 << 11)
+#define ZIP_STREAM (8)
 
 struct zip_local_header {
 	unsigned char magic[4];
@@ -176,8 +173,7 @@ static int write_zip_entry(struct archiver_args *args,
 {
 	struct zip_local_header header;
 	struct zip_dir_header dirent;
-	unsigned int creator_version = 0;
-	unsigned long attr2 = 0;
+	unsigned long attr2;
 	unsigned long compressed_size;
 	unsigned long crc;
 	unsigned long direntsize;
@@ -190,13 +186,6 @@ static int write_zip_entry(struct archiver_args *args,
 	unsigned long size;
 
 	crc = crc32(0, NULL, 0);
-
-	if (has_non_ascii(path)) {
-		if (is_utf8(path))
-			flags |= ZIP_UTF8;
-		else
-			warning("Path is not valid UTF-8: %s", path);
-	}
 
 	if (pathlen > 0xffff) {
 		return error("path too long (%d chars, SHA1: %s): %s",
@@ -215,15 +204,10 @@ static int write_zip_entry(struct archiver_args *args,
 		enum object_type type = sha1_object_info(sha1, &size);
 
 		method = 0;
+		attr2 = S_ISLNK(mode) ? ((mode | 0777) << 16) :
+			(mode & 0111) ? ((mode) << 16) : 0;
 		if (S_ISREG(mode) && args->compression_level != 0 && size > 0)
 			method = 8;
-		if (S_ISLNK(mode) || (mode & 0111) || (flags & ZIP_UTF8)) {
-			creator_version = 0x033f;
-			attr2 = mode;
-			if (S_ISLNK(mode))
-				attr2 |= 0777;
-			attr2 <<= 16;
-		}
 		compressed_size = size;
 
 		if (S_ISREG(mode) && type == OBJ_BLOB && !args->convert &&
@@ -270,7 +254,8 @@ static int write_zip_entry(struct archiver_args *args,
 	}
 
 	copy_le32(dirent.magic, 0x02014b50);
-	copy_le16(dirent.creator_version, creator_version);
+	copy_le16(dirent.creator_version,
+		S_ISLNK(mode) || (S_ISREG(mode) && (mode & 0111)) ? 0x0317 : 0);
 	copy_le16(dirent.version, 10);
 	copy_le16(dirent.flags, flags);
 	copy_le16(dirent.compression_method, method);
