@@ -416,7 +416,7 @@ sub gs_fetch_loop_common {
 		}
 		$SVN::Error::handler = $err_handler;
 
-		my %exists = map { $_->{path} => $_ } @$gsv;
+		my %exists = map { $_->path => $_ } @$gsv;
 		foreach my $r (sort {$a <=> $b} keys %revs) {
 			my ($paths, $logged) = @{$revs{$r}};
 

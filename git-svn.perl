@@ -1314,7 +1314,7 @@ sub get_svnprops {
 	$path = $cmd_dir_prefix . $path;
 	fatal("No such file or directory: $path") unless -e $path;
 	my $is_dir = -d $path ? 1 : 0;
-	$path = join_paths($gs->{path}, $path);
+	$path = join_paths($gs->path, $path);
 
 	# canonicalize the path (otherwise libsvn will abort or fail to
 	# find the file)
