@@ -259,8 +259,10 @@ a positive depth, this step is skipped.
 ----
 
 If the client has requested a positive depth, the server will compute
-the set of commits which are no deeper than the desired depth, starting
-at the client's wants. The server writes 'shallow' lines for each
+the set of commits which are no deeper than the desired depth. The set
+of commits start at the client's wants.
+
+The server writes 'shallow' lines for each
 commit whose parents will not be sent as a result. The server writes
 an 'unshallow' line for each commit which the client has indicated is
 shallow, but is no longer shallow at the currently requested depth
