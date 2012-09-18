@@ -844,6 +844,9 @@ class P4RollBack(Command):
         return True
 
 class P4Submit(Command, P4UserMap):
+
+    conflict_behavior_choices = ("ask", "skip", "quit")
+
     def __init__(self):
         Command.__init__(self)
         P4UserMap.__init__(self)
@@ -853,12 +856,19 @@ class P4Submit(Command, P4UserMap):
                 # preserve the user, requires relevant p4 permissions
                 optparse.make_option("--preserve-user", dest="preserveUser", action="store_true"),
                 optparse.make_option("--export-labels", dest="exportLabels", action="store_true"),
+                optparse.make_option("--dry-run", "-n", dest="dry_run", action="store_true"),
+                optparse.make_option("--prepare-p4-only", dest="prepare_p4_only", action="store_true"),
+                optparse.make_option("--conflict", dest="conflict_behavior",
+                                     choices=self.conflict_behavior_choices)
         ]
         self.description = "Submit changes from git to the perforce depot."
         self.usage += " [name of git branch to submit into perforce depot]"
         self.origin = ""
         self.detectRenames = False
         self.preserveUser = gitConfig("git-p4.preserveUser").lower() == "true"
+        self.dry_run = False
+        self.prepare_p4_only = False
+        self.conflict_behavior = None
         self.isWindows = (platform.system() == "Windows")
         self.exportLabels = False
         self.p4HasMoveCommand = p4_has_command("move")
@@ -1088,7 +1098,10 @@ class P4Submit(Command, P4UserMap):
                 return False
 
     def applyCommit(self, id):
-        print "Applying %s" % (read_pipe("git log --max-count=1 --pretty=oneline %s" % id))
+        """Apply one commit, return True if it succeeded."""
+
+        print "Applying", read_pipe(["git", "show", "-s",
+                                     "--format=format:%h %s", id])
 
         (p4User, gitEmail) = self.p4UserForCommit(id)
 
@@ -1195,34 +1208,13 @@ class P4Submit(Command, P4UserMap):
                     patch_succeeded = True
 
         if not patch_succeeded:
-            print "What do you want to do?"
-            response = "x"
-            while response != "s" and response != "a" and response != "w":
-                response = raw_input("[s]kip this patch / [a]pply the patch forcibly "
-                                     "and with .rej files / [w]rite the patch to a file (patch.txt) ")
-            if response == "s":
-                print "Skipping! Good luck with the next patches..."
-                for f in editedFiles:
-                    p4_revert(f)
-                for f in filesToAdd:
-                    os.remove(f)
-                return
-            elif response == "a":
-                os.system(applyPatchCmd)
-                if len(filesToAdd) > 0:
-                    print "You may also want to call p4 add on the following files:"
-                    print " ".join(filesToAdd)
-                if len(filesToDelete):
-                    print "The following files should be scheduled for deletion with p4 delete:"
-                    print " ".join(filesToDelete)
-                die("Please resolve and submit the conflict manually and "
-                    + "continue afterwards with git p4 submit --continue")
-            elif response == "w":
-                system(diffcmd + " > patch.txt")
-                print "Patch saved to patch.txt in %s !" % self.clientPath
-                die("Please resolve and submit the conflict manually and "
-                    "continue afterwards with git p4 submit --continue")
+            for f in editedFiles:
+                p4_revert(f)
+            return False
 
+        #
+        # Apply the patch for real, and do add/delete/+x handling.
+        #
         system(applyPatchCmd)
 
         for f in filesToAdd:
@@ -1236,6 +1228,10 @@ class P4Submit(Command, P4UserMap):
             mode = filesToChangeExecBit[f]
             setP4ExecBit(f, mode)
 
+        #
+        # Build p4 change description, starting with the contents
+        # of the git commit message.
+        #
         logMessage = extractLogMessageFromGitCommit(id)
         logMessage = logMessage.strip()
         (logMessage, jobs) = self.separate_jobs_from_description(logMessage)
@@ -1244,8 +1240,16 @@ class P4Submit(Command, P4UserMap):
         submitTemplate = self.prepareLogMessage(template, logMessage, jobs)
 
         if self.preserveUser:
-           submitTemplate = submitTemplate + ("\n######## Actual user %s, modified after commit\n" % p4User)
+           submitTemplate += "\n######## Actual user %s, modified after commit\n" % p4User
 
+        if self.checkAuthorship and not self.p4UserIsMe(p4User):
+            submitTemplate += "######## git author %s does not match your p4 account.\n" % gitEmail
+            submitTemplate += "######## Use option --preserve-user to modify authorship.\n"
+            submitTemplate += "######## Variable git-p4.skipUserNameCheck hides this message.\n"
+
+        separatorLine = "######## everything below this line is just the diff #######\n"
+
+        # diff
         if os.environ.has_key("P4DIFF"):
             del(os.environ["P4DIFF"])
         diff = ""
@@ -1253,6 +1257,7 @@ class P4Submit(Command, P4UserMap):
             diff += p4_read_pipe(['diff', '-du',
                                   wildcard_encode(editedFile)])
 
+        # new file diff
         newdiff = ""
         for newFile in filesToAdd:
             newdiff += "==== new file ====\n"
@@ -1263,13 +1268,7 @@ class P4Submit(Command, P4UserMap):
                 newdiff += "+" + line
             f.close()
 
-        if self.checkAuthorship and not self.p4UserIsMe(p4User):
-            submitTemplate += "######## git author %s does not match your p4 account.\n" % gitEmail
-            submitTemplate += "######## Use option --preserve-user to modify authorship.\n"
-            submitTemplate += "######## Variable git-p4.skipUserNameCheck hides this message.\n"
-
-        separatorLine = "######## everything below this line is just the diff #######\n"
-
+        # change description file: submitTemplate, separatorLine, diff, newdiff
         (handle, fileName) = tempfile.mkstemp()
         tmpFile = os.fdopen(handle, "w+")
         if self.isWindows:
@@ -1279,8 +1278,47 @@ class P4Submit(Command, P4UserMap):
         tmpFile.write(submitTemplate + separatorLine + diff + newdiff)
         tmpFile.close()
 
+        if self.prepare_p4_only:
+            #
+            # Leave the p4 tree prepared, and the submit template around
+            # and let the user decide what to do next
+            #
+            print
+            print "P4 workspace prepared for submission."
+            print "To submit or revert, go to client workspace"
+            print "  " + self.clientPath
+            print
+            print "To submit, use \"p4 submit\" to write a new description,"
+            print "or \"p4 submit -i %s\" to use the one prepared by" \
+                  " \"git p4\"." % fileName
+            print "You can delete the file \"%s\" when finished." % fileName
+
+            if self.preserveUser and p4User and not self.p4UserIsMe(p4User):
+                print "To preserve change ownership by user %s, you must\n" \
+                      "do \"p4 change -f <change>\" after submitting and\n" \
+                      "edit the User field."
+            if pureRenameCopy:
+                print "After submitting, renamed files must be re-synced."
+                print "Invoke \"p4 sync -f\" on each of these files:"
+                for f in pureRenameCopy:
+                    print "  " + f
+
+            print
+            print "To revert the changes, use \"p4 revert ...\", and delete"
+            print "the submit template file \"%s\"" % fileName
+            if filesToAdd:
+                print "Since the commit adds new files, they must be deleted:"
+                for f in filesToAdd:
+                    print "  " + f
+            print
+            return True
+
+        #
+        # Let the user edit the change description, then submit it.
+        #
         if self.edit_template(fileName):
             # read the edited message and submit
+            ret = True
             tmpFile = open(fileName, "rb")
             message = tmpFile.read()
             tmpFile.close()
@@ -1304,14 +1342,18 @@ class P4Submit(Command, P4UserMap):
 
         else:
             # skip this patch
+            ret = False
             print "Submission cancelled, undoing p4 changes."
             for f in editedFiles:
                 p4_revert(f)
             for f in filesToAdd:
                 p4_revert(f)
                 os.remove(f)
+            for f in filesToDelete:
+                p4_revert(f)
 
         os.remove(fileName)
+        return ret
 
     # Export git tags as p4 labels. Create a p4 label and then tag
     # with that.
@@ -1369,14 +1411,20 @@ class P4Submit(Command, P4UserMap):
             for mapping in clientSpec.mappings:
                 labelTemplate += "\t%s\n" % mapping.depot_side.path
 
-            p4_write_pipe(["label", "-i"], labelTemplate)
+            if self.dry_run:
+                print "Would create p4 label %s for tag" % name
+            elif self.prepare_p4_only:
+                print "Not creating p4 label %s for tag due to option" \
+                      " --prepare-p4-only" % name
+            else:
+                p4_write_pipe(["label", "-i"], labelTemplate)
 
-            # Use the label
-            p4_system(["tag", "-l", name] +
-                      ["%s@%s" % (mapping.depot_side.path, changelist) for mapping in clientSpec.mappings])
+                # Use the label
+                p4_system(["tag", "-l", name] +
+                          ["%s@%s" % (mapping.depot_side.path, changelist) for mapping in clientSpec.mappings])
 
-            if verbose:
-                print "created p4 label for tag %s" % name
+                if verbose:
+                    print "created p4 label for tag %s" % name
 
     def run(self, args):
         if len(args) == 0:
@@ -1402,6 +1450,16 @@ class P4Submit(Command, P4UserMap):
         if self.preserveUser:
             if not self.canChangeChangelists():
                 die("Cannot preserve user names without p4 super-user or admin permissions")
+
+        # if not set from the command line, try the config file
+        if self.conflict_behavior is None:
+            val = gitConfig("git-p4.conflict")
+            if val:
+                if val not in self.conflict_behavior_choices:
+                    die("Invalid value '%s' for config git-p4.conflict" % val)
+            else:
+                val = "ask"
+            self.conflict_behavior = val
 
         if self.verbose:
             print "Origin branch is " + self.origin
@@ -1435,12 +1493,15 @@ class P4Submit(Command, P4UserMap):
             os.makedirs(self.clientPath)
 
         chdir(self.clientPath)
-        print "Synchronizing p4 checkout..."
-        if new_client_dir:
-            # old one was destroyed, and maybe nobody told p4
-            p4_sync("...", "-f")
+        if self.dry_run:
+            print "Would synchronize p4 checkout in %s" % self.clientPath
         else:
-            p4_sync("...")
+            print "Synchronizing p4 checkout..."
+            if new_client_dir:
+                # old one was destroyed, and maybe nobody told p4
+                p4_sync("...", "-f")
+            else:
+                p4_sync("...")
         self.check()
 
         commits = []
@@ -1487,20 +1548,84 @@ class P4Submit(Command, P4UserMap):
         if gitConfig("git-p4.detectCopiesHarder", "--bool") == "true":
             self.diffOpts += " --find-copies-harder"
 
-        while len(commits) > 0:
-            commit = commits[0]
-            commits = commits[1:]
-            self.applyCommit(commit)
+        #
+        # Apply the commits, one at a time.  On failure, ask if should
+        # continue to try the rest of the patches, or quit.
+        #
+        if self.dry_run:
+            print "Would apply"
+        applied = []
+        last = len(commits) - 1
+        for i, commit in enumerate(commits):
+            if self.dry_run:
+                print " ", read_pipe(["git", "show", "-s",
+                                      "--format=format:%h %s", commit])
+                ok = True
+            else:
+                ok = self.applyCommit(commit)
+            if ok:
+                applied.append(commit)
+            else:
+                if self.prepare_p4_only and i < last:
+                    print "Processing only the first commit due to option" \
+                          " --prepare-p4-only"
+                    break
+                if i < last:
+                    quit = False
+                    while True:
+                        # prompt for what to do, or use the option/variable
+                        if self.conflict_behavior == "ask":
+                            print "What do you want to do?"
+                            response = raw_input("[s]kip this commit but apply"
+                                                 " the rest, or [q]uit? ")
+                            if not response:
+                                continue
+                        elif self.conflict_behavior == "skip":
+                            response = "s"
+                        elif self.conflict_behavior == "quit":
+                            response = "q"
+                        else:
+                            die("Unknown conflict_behavior '%s'" %
+                                self.conflict_behavior)
 
-        if len(commits) == 0:
-            print "All changes applied!"
-            chdir(self.oldWorkingDirectory)
+                        if response[0] == "s":
+                            print "Skipping this commit, but applying the rest"
+                            break
+                        if response[0] == "q":
+                            print "Quitting"
+                            quit = True
+                            break
+                    if quit:
+                        break
+
+        chdir(self.oldWorkingDirectory)
+
+        if self.dry_run:
+            pass
+        elif self.prepare_p4_only:
+            pass
+        elif len(commits) == len(applied):
+            print "All commits applied!"
 
             sync = P4Sync()
             sync.run([])
 
             rebase = P4Rebase()
             rebase.rebase()
+
+        else:
+            if len(applied) == 0:
+                print "No commits applied."
+            else:
+                print "Applied only the commits marked with '*':"
+                for c in commits:
+                    if c in applied:
+                        star = "*"
+                    else:
+                        star = " "
+                    print star, read_pipe(["git", "show", "-s",
+                                           "--format=format:%h %s",  c])
+                print "You will have to do 'git p4 sync' and rebase."
 
         if gitConfig("git-p4.exportLabels", "--bool") == "true":
             self.exportLabels = True
@@ -1511,6 +1636,10 @@ class P4Submit(Command, P4UserMap):
 
             missingGitTags = gitTags - p4Labels
             self.exportGitTags(missingGitTags)
+
+        # exit with error unless everything applied perfecly
+        if len(commits) != len(applied):
+                sys.exit(1)
 
         return True
 
@@ -3015,7 +3144,7 @@ def main():
 
     args = sys.argv[2:]
 
-    options.append(optparse.make_option("--verbose", dest="verbose", action="store_true"))
+    options.append(optparse.make_option("--verbose", "-v", dest="verbose", action="store_true"))
     if cmd.needsGit:
         options.append(optparse.make_option("--git-dir", dest="gitdir"))
 
