@@ -4,6 +4,7 @@
 #include "cache.h"
 #include "archive.h"
 #include "streaming.h"
+#include "utf8.h"
 
 static int zip_date;
 static int zip_time;
@@ -16,7 +17,8 @@ static unsigned int zip_dir_offset;
 static unsigned int zip_dir_entries;
 
 #define ZIP_DIRECTORY_MIN_SIZE	(1024 * 1024)
-#define ZIP_STREAM (8)
+#define ZIP_STREAM	(1 <<  3)
+#define ZIP_UTF8	(1 << 11)
 
 struct zip_local_header {
 	unsigned char magic[4];
@@ -164,6 +166,17 @@ static void set_zip_header_data_desc(struct zip_local_header *header,
 	copy_le32(header->size, size);
 }
 
+static int has_only_ascii(const char *s)
+{
+	for (;;) {
+		int c = *s++;
+		if (c == '\0')
+			return 1;
+		if (!isascii(c))
+			return 0;
+	}
+}
+
 #define STREAM_BUFFER_SIZE (1024 * 16)
 
 static int write_zip_entry(struct archiver_args *args,
@@ -186,6 +199,13 @@ static int write_zip_entry(struct archiver_args *args,
 	unsigned long size;
 
 	crc = crc32(0, NULL, 0);
+
+	if (!has_only_ascii(path)) {
+		if (is_utf8(path))
+			flags |= ZIP_UTF8;
+		else
+			warning("Path is not valid UTF-8: %s", path);
+	}
 
 	if (pathlen > 0xffff) {
 		return error("path too long (%d chars, SHA1: %s): %s",
