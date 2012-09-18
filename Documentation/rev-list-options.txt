@@ -3,8 +3,15 @@ Commit Limiting
 
 Besides specifying a range of commits that should be listed using the
 special notations explained in the description, additional commit
-limiting may be applied. Note that they are applied before commit
-ordering and formatting options, such as '--reverse'.
+limiting may be applied.
+
+Using more options generally further limits the output (e.g.
+`--since=<date1>` limits to commits newer than `<date1>`, and using it
+with `--grep=<pattern>` further limits to commits whose log message
+has a line that matches `<pattern>`), unless otherwise noted.
+
+Note that these are applied before commit
+ordering and formatting options, such as `--reverse`.
 
 --
 
@@ -39,16 +46,22 @@ endif::git-rev-list[]
 --committer=<pattern>::
 
 	Limit the commits output to ones with author/committer
-	header lines that match the specified pattern (regular expression).
+	header lines that match the specified pattern (regular
+	expression).  With more than one `--author=<pattern>`,
+	commits whose author matches any of the given patterns are
+	chosen (similarly for multiple `--committer=<pattern>`).
 
 --grep=<pattern>::
 
 	Limit the commits output to ones with log message that
-	matches the specified pattern (regular expression).
+	matches the specified pattern (regular expression).  With
+	more than one `--grep=<pattern>`, commits whose message
+	matches any of the given patterns are chosen (but see
+	`--all-match`).
 
 --all-match::
 	Limit the commits output to ones that match all given --grep,
-	--author and --committer instead of ones that match at least one.
+	instead of ones that match at least one.
 
 -i::
 --regexp-ignore-case::
