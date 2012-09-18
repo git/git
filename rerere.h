@@ -16,7 +16,6 @@ extern void *RERERE_RESOLVED;
 extern int setup_rerere(struct string_list *, int);
 extern int rerere(int);
 extern const char *rerere_path(const char *hex, const char *file);
-extern int has_rerere_resolution(const char *hex);
 extern int rerere_forget(const char **);
 extern int rerere_remaining(struct string_list *);
 extern void rerere_clear(struct string_list *);

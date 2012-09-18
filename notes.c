@@ -1196,8 +1196,18 @@ void free_notes(struct notes_tree *t)
 	memset(t, 0, sizeof(struct notes_tree));
 }
 
-void format_note(struct notes_tree *t, const unsigned char *object_sha1,
-		struct strbuf *sb, const char *output_encoding, int flags)
+/*
+ * Fill the given strbuf with the notes associated with the given object.
+ *
+ * If the given notes_tree structure is not initialized, it will be auto-
+ * initialized to the default value (see documentation for init_notes() above).
+ * If the given notes_tree is NULL, the internal/default notes_tree will be
+ * used instead.
+ *
+ * 'flags' is a bitwise combination of the flags for format_display_notes.
+ */
+static void format_note(struct notes_tree *t, const unsigned char *object_sha1,
+			struct strbuf *sb, const char *output_encoding, int flags)
 {
 	static const char utf8[] = "utf-8";
 	const unsigned char *sha1;

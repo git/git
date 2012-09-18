@@ -243,7 +243,6 @@ extern int parse_long_opt(const char *opt, const char **argv,
 
 extern int git_diff_basic_config(const char *var, const char *value, void *cb);
 extern int git_diff_ui_config(const char *var, const char *value, void *cb);
-extern int diff_use_color_default;
 extern void diff_setup(struct diff_options *);
 extern int diff_opt_parse(struct diff_options *, const char **, int);
 extern void diff_setup_done(struct diff_options *);

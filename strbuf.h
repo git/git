@@ -99,8 +99,6 @@ __attribute__((format (printf,2,3)))
 extern void strbuf_addf(struct strbuf *sb, const char *fmt, ...);
 __attribute__((format (printf,2,0)))
 extern void strbuf_vaddf(struct strbuf *sb, const char *fmt, va_list ap);
-__attribute__((format (printf,2,3)))
-extern void strbuf_addf_ln(struct strbuf *sb, const char *fmt, ...);
 
 extern void strbuf_add_lines(struct strbuf *sb, const char *prefix, const char *buf, size_t size);
 
@@ -126,8 +124,6 @@ extern int launch_editor(const char *path, struct strbuf *buffer, const char *co
 extern int strbuf_branchname(struct strbuf *sb, const char *name);
 extern int strbuf_check_branch_ref(struct strbuf *sb, const char *name);
 
-extern void strbuf_add_urlencode(struct strbuf *, const char *, size_t,
-				 int reserved);
 extern void strbuf_addstr_urlencode(struct strbuf *, const char *,
 				    int reserved);
 
