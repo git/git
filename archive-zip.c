@@ -4,7 +4,6 @@
 #include "cache.h"
 #include "archive.h"
 #include "streaming.h"
-#include "commit.h"
 #include "utf8.h"
 
 static int zip_date;
@@ -167,6 +166,17 @@ static void set_zip_header_data_desc(struct zip_local_header *header,
 	copy_le32(header->size, size);
 }
 
+static int has_only_ascii(const char *s)
+{
+	for (;;) {
+		int c = *s++;
+		if (c == '\0')
+			return 1;
+		if (!isascii(c))
+			return 0;
+	}
+}
+
 #define STREAM_BUFFER_SIZE (1024 * 16)
 
 static int write_zip_entry(struct archiver_args *args,
@@ -191,7 +201,7 @@ static int write_zip_entry(struct archiver_args *args,
 
 	crc = crc32(0, NULL, 0);
 
-	if (has_non_ascii(path)) {
+	if (!has_only_ascii(path)) {
 		if (is_utf8(path))
 			flags |= ZIP_UTF8;
 		else
