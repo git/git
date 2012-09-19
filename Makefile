@@ -145,6 +145,12 @@ all::
 #
 # Define NEEDS_LIBICONV if linking with libc is not enough (Darwin).
 #
+# Define NEEDS_LIBINTL_BEFORE_LIBICONV if you need libintl before libiconv.
+#
+# Define NO_INTPTR_T if you don't have intptr_t nor uintptr_t.
+#
+# Define NO_UINTMAX_T if you don't have uintmax_t.
+#
 # Define NEEDS_SOCKET if linking with libc is not enough (SunOS,
 # Patrick Mauritz).
 #
@@ -1320,6 +1326,61 @@ ifeq ($(uname_S),Minix)
 	NO_CURL =
 	NO_EXPAT =
 endif
+ifeq ($(uname_S),NONSTOP_KERNEL)
+	# Needs some C99 features, "inline" is just one of them.
+	# INLINE='' would just replace one set of warnings with another and
+	# still not compile in c89 mode, due to non-const array initializations.
+	CC = cc -c99
+	# Disable all optimization, seems to result in bad code, with -O or -O2
+	# or even -O1 (default), /usr/local/libexec/git-core/git-pack-objects
+	# abends on "git push". Needs more investigation.
+	CFLAGS = -g -O0
+	# We'd want it to be here.
+	prefix = /usr/local
+	# Our's are in ${prefix}/bin (perl might also be in /usr/bin/perl).
+	PERL_PATH = ${prefix}/bin/perl
+	PYTHON_PATH = ${prefix}/bin/python
+
+	# As detected by './configure'.
+	# Missdetected, hence commented out, see below.
+	#NO_CURL = YesPlease
+	# Added manually, see above.
+	NEEDS_SSL_WITH_CURL = YesPlease
+	HAVE_LIBCHARSET_H = YesPlease
+	NEEDS_LIBICONV = YesPlease
+	NEEDS_LIBINTL_BEFORE_LIBICONV = YesPlease
+	NO_SYS_SELECT_H = UnfortunatelyYes
+	NO_D_TYPE_IN_DIRENT = YesPlease
+	NO_HSTRERROR = YesPlease
+	NO_STRCASESTR = YesPlease
+	NO_FNMATCH_CASEFOLD = YesPlease
+	NO_MEMMEM = YesPlease
+	NO_STRLCPY = YesPlease
+	NO_SETENV = YesPlease
+	NO_UNSETENV = YesPlease
+	NO_MKDTEMP = YesPlease
+	NO_MKSTEMPS = YesPlease
+	# Currently libiconv-1.9.1.
+	OLD_ICONV = UnfortunatelyYes
+	NO_REGEX = YesPlease
+	NO_PTHREADS = UnfortunatelyYes
+
+	# Not detected (nor checked for) by './configure'.
+	# We don't have SA_RESTART on NonStop, unfortunalety.
+	COMPAT_CFLAGS += -DSA_RESTART=0
+	# Apparently needed in compat/fnmatch/fnmatch.c.
+	COMPAT_CFLAGS += -DHAVE_STRING_H=1
+	NO_ST_BLOCKS_IN_STRUCT_STAT = YesPlease
+	NO_NSEC = YesPlease
+	NO_PREAD = YesPlease
+	NO_MMAP = YesPlease
+	NO_POLL = YesPlease
+	NO_INTPTR_T = UnfortunatelyYes
+	# Bug report 10-120822-4477 submitted to HP NonStop development.
+	MKDIR_WO_TRAILING_SLASH = YesPlease
+	# RFE 10-120912-4693 submitted to HP NonStop development.
+	NO_SETITIMER = UnfortunatelyYes
+endif
 ifneq (,$(findstring MINGW,$(uname_S)))
 	pathsep = ;
 	NO_PREAD = YesPlease
@@ -1556,6 +1617,9 @@ ifdef NEEDS_LIBICONV
 	else
 		ICONV_LINK =
 	endif
+	ifdef NEEDS_LIBINTL_BEFORE_LIBICONV
+		ICONV_LINK += -lintl
+	endif
 	EXTLIBS += $(ICONV_LINK) -liconv
 endif
 ifdef NEEDS_LIBGEN
@@ -1715,6 +1779,9 @@ ifdef NO_TRUSTABLE_FILEMODE
 endif
 ifdef NO_IPV6
 	BASIC_CFLAGS += -DNO_IPV6
+endif
+ifdef NO_INTPTR_T
+	COMPAT_CFLAGS += -DNO_INTPTR_T
 endif
 ifdef NO_UINTMAX_T
 	BASIC_CFLAGS += -Duintmax_t=uint32_t
