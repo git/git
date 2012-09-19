@@ -12,6 +12,7 @@ static const char *url;
 static int dump_from_file;
 static const char *private_ref;
 static const char *remote_ref = "refs/heads/master";
+static const char *marksfilename;
 
 static int cmd_capabilities(const char *line);
 static int cmd_import(const char *line);
@@ -73,6 +74,10 @@ static int cmd_import(const char *line)
 			die("Unable to start %s, code %d", svndump_proc.argv[0], code);
 		dumpin_fd = svndump_proc.out;
 	}
+	/* setup marks file import/export */
+	printf("feature import-marks-if-exists=%s\n"
+			"feature export-marks=%s\n", marksfilename, marksfilename);
+
 	svndump_init_fd(dumpin_fd, STDIN_FILENO);
 	svndump_read(url, private_ref);
 	svndump_deinit();
@@ -145,7 +150,7 @@ static int do_command(struct strbuf *line)
 int main(int argc, const char **argv)
 {
 	struct strbuf buf = STRBUF_INIT, url_sb = STRBUF_INIT,
-			private_ref_sb = STRBUF_INIT;
+			private_ref_sb = STRBUF_INIT, marksfilename_sb = STRBUF_INIT;
 	static struct remote *remote;
 	const char *url_in;
 
@@ -171,6 +176,10 @@ int main(int argc, const char **argv)
 	strbuf_addf(&private_ref_sb, "refs/svn/%s/master", remote->name);
 	private_ref = private_ref_sb.buf;
 
+	strbuf_addf(&marksfilename_sb, "%s/info/fast-import/remote-svn/%s.marks",
+		get_git_dir(), remote->name);
+	marksfilename = marksfilename_sb.buf;
+
 	while (1) {
 		if (strbuf_getline(&buf, stdin, '\n') == EOF) {
 			if (ferror(stdin))
@@ -186,5 +195,6 @@ int main(int argc, const char **argv)
 	strbuf_release(&buf);
 	strbuf_release(&url_sb);
 	strbuf_release(&private_ref_sb);
+	strbuf_release(&marksfilename_sb);
 	return 0;
 }
