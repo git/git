@@ -68,6 +68,11 @@ void fast_export_modify(const char *path, uint32_t mode, const char *dataref)
 	putchar('\n');
 }
 
+void fast_export_note(const char *committish, const char *dataref)
+{
+	printf("N %s %s\n", dataref, committish);
+}
+
 static char gitsvnline[MAX_GITSVN_LINE_LEN];
 void fast_export_begin_commit(uint32_t revision, const char *author,
 			const struct strbuf *log,
@@ -220,6 +225,13 @@ static long apply_delta(off_t len, struct line_buffer *input,
 		die("cannot read temporary file for blob retrieval");
 	strbuf_release(&preimage.buf);
 	return ret;
+}
+
+void fast_export_buf_to_data(const struct strbuf *data)
+{
+	printf("data %"PRIuMAX"\n", (uintmax_t)data->len);
+	fwrite(data->buf, data->len, 1, stdout);
+	fputc('\n', stdout);
 }
 
 void fast_export_data(uint32_t mode, off_t len, struct line_buffer *input)
