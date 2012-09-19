@@ -3,8 +3,7 @@
  * See LICENSE for details.
  */
 
-#include "git-compat-util.h"
-#include "strbuf.h"
+#include "cache.h"
 #include "quote.h"
 #include "fast_export.h"
 #include "repo_tree.h"
@@ -66,6 +65,17 @@ void fast_export_modify(const char *path, uint32_t mode, const char *dataref)
 	printf("M %06"PRIo32" %s ", mode, dataref);
 	quote_c_style(path, NULL, stdout, 0);
 	putchar('\n');
+}
+
+void fast_export_begin_note(uint32_t revision, const char *author,
+		const char *log, unsigned long timestamp)
+{
+	size_t loglen = strlen(log);
+	printf("commit refs/notes/svn/revs\n");
+	printf("committer %s <%s@%s> %ld +0000\n", author, author, "local", timestamp);
+	printf("data %"PRIuMAX"\n", (uintmax_t)loglen);
+	fwrite(log, loglen, 1, stdout);
+	fputc('\n', stdout);
 }
 
 void fast_export_note(const char *committish, const char *dataref)
