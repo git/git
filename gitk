@@ -3309,6 +3309,7 @@ proc sel_flist {w x y} {
     } else {
 	catch {$ctext yview [lindex $difffilestart [expr {$l - 2}]]}
     }
+    suppress_highlighting_file_for_current_scrollpos
 }
 
 proc pop_flist_menu {w X Y x y} {
@@ -7947,14 +7948,26 @@ proc changediffdisp {} {
     $ctext tag conf dresult -elide [lindex $diffelide 1]
 }
 
-proc highlightfile {loc cline} {
-    global ctext cflist cflist_top
+proc highlightfile {cline} {
+    global cflist cflist_top
 
-    $ctext yview $loc
     $cflist tag remove highlight $cflist_top.0 "$cflist_top.0 lineend"
     $cflist tag add highlight $cline.0 "$cline.0 lineend"
     $cflist see $cline.0
     set cflist_top $cline
+}
+
+proc highlightfile_for_scrollpos {topidx} {
+    global difffilestart
+
+    if {![info exists difffilestart]} return
+
+    set top [lindex [split $topidx .] 0]
+    if {$difffilestart eq {} || $top < [lindex $difffilestart 0]} {
+	highlightfile 0
+    } else {
+	highlightfile [expr {[bsearch $difffilestart $top] + 2}]
+    }
 }
 
 proc prevfile {} {
@@ -7962,17 +7975,15 @@ proc prevfile {} {
 
     if {$cmitmode eq "tree"} return
     set prev 0.0
-    set prevline 1
     set here [$ctext index @0,0]
     foreach loc $difffilestart {
 	if {[$ctext compare $loc >= $here]} {
-	    highlightfile $prev $prevline
+	    $ctext yview $prev
 	    return
 	}
 	set prev $loc
-	incr prevline
     }
-    highlightfile $prev $prevline
+    $ctext yview $prev
 }
 
 proc nextfile {} {
@@ -7980,11 +7991,9 @@ proc nextfile {} {
 
     if {$cmitmode eq "tree"} return
     set here [$ctext index @0,0]
-    set line 1
     foreach loc $difffilestart {
-	incr line
 	if {[$ctext compare $loc > $here]} {
-	    highlightfile $loc $line
+	    $ctext yview $loc
 	    return
 	}
     }
@@ -8046,6 +8055,8 @@ proc incrsearch {name ix op} {
 	set here [$ctext search $searchdirn -- $searchstring anchor]
 	if {$here ne {}} {
 	    $ctext see $here
+	    suppress_highlighting_file_for_current_scrollpos
+	    highlightfile_for_scrollpos $here
 	}
 	searchmarkvisible 1
     }
@@ -8071,6 +8082,8 @@ proc dosearch {} {
 	    return
 	}
 	$ctext see $match
+	suppress_highlighting_file_for_current_scrollpos
+	highlightfile_for_scrollpos $match
 	set mend "$match + $mlen c"
 	$ctext tag add sel $match $mend
 	$ctext mark unset anchor
@@ -8097,6 +8110,8 @@ proc dosearchback {} {
 	    return
 	}
 	$ctext see $match
+	suppress_highlighting_file_for_current_scrollpos
+	highlightfile_for_scrollpos $match
 	set mend "$match + $ml c"
 	$ctext tag add sel $match $mend
 	$ctext mark unset anchor
@@ -8137,8 +8152,25 @@ proc searchmarkvisible {doall} {
     }
 }
 
+proc suppress_highlighting_file_for_current_scrollpos {} {
+    global ctext suppress_highlighting_file_for_this_scrollpos
+
+    set suppress_highlighting_file_for_this_scrollpos [$ctext index @0,0]
+}
+
 proc scrolltext {f0 f1} {
-    global searchstring
+    global searchstring cmitmode ctext
+    global suppress_highlighting_file_for_this_scrollpos
+
+    if {$cmitmode ne "tree"} {
+	set topidx [$ctext index @0,0]
+	if {![info exists suppress_highlighting_file_for_this_scrollpos]
+	    || $topidx ne $suppress_highlighting_file_for_this_scrollpos} {
+	    highlightfile_for_scrollpos $topidx
+	}
+    }
+
+    catch {unset suppress_highlighting_file_for_this_scrollpos}
 
     .bleft.bottom.sb set $f0 $f1
     if {$searchstring ne {}} {
