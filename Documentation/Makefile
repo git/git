@@ -44,9 +44,10 @@ man5dir=$(mandir)/man5
 man7dir=$(mandir)/man7
 # DESTDIR=
 
-ASCIIDOC=asciidoc
+ASCIIDOC = asciidoc
 ASCIIDOC_EXTRA =
 MANPAGE_XSL = manpage-normal.xsl
+XMLTO = xmlto
 XMLTO_EXTRA =
 INSTALL?=install
 RM ?= rm -f
@@ -245,7 +246,7 @@ manpage-base-url.xsl: manpage-base-url.xsl.in
 
 %.1 %.5 %.7 : %.xml manpage-base-url.xsl
 	$(QUIET_XMLTO)$(RM) $@ && \
-	xmlto -m $(MANPAGE_XSL) $(XMLTO_EXTRA) man $<
+	$(XMLTO) -m $(MANPAGE_XSL) $(XMLTO_EXTRA) man $<
 
 %.xml : %.txt
 	$(QUIET_ASCIIDOC)$(RM) $@+ $@ && \
