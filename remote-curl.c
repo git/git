@@ -102,7 +102,8 @@ static struct discovery* discover_refs(const char *service)
 	free_discovery(last);
 
 	strbuf_addf(&buffer, "%sinfo/refs", url);
-	if (!prefixcmp(url, "http://") || !prefixcmp(url, "https://")) {
+	if ((!prefixcmp(url, "http://") || !prefixcmp(url, "https://")) &&
+	     git_env_bool("GIT_SMART_HTTP", 1)) {
 		maybe_smart = 1;
 		if (!strchr(url, '?'))
 			strbuf_addch(&buffer, '?');
