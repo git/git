@@ -125,7 +125,7 @@ EOF
 	} &&
 	git tag footag &&
 	git config --add remote.oops.fetch "+refs/*:refs/*" &&
-	git remote rm oops 2>actual1 &&
+	git remote remove oops 2>actual1 &&
 	git branch foobranch &&
 	git config --add remote.oops.fetch "+refs/*:refs/*" &&
 	git remote rm oops 2>actual2 &&
@@ -672,7 +672,7 @@ test_expect_success 'migrate a remote from named file in $GIT_DIR/remotes' '
 	git clone one five &&
 	origin_url=$(pwd)/one &&
 	(cd five &&
-	 git remote rm origin &&
+	 git remote remove origin &&
 	 mkdir -p .git/remotes &&
 	 cat ../remotes_origin > .git/remotes/origin &&
 	 git remote rename origin origin &&

@@ -2040,7 +2040,7 @@ _git_config ()
 
 _git_remote ()
 {
-	local subcommands="add rename rm set-head set-branches set-url show prune update"
+	local subcommands="add rename remove set-head set-branches set-url show prune update"
 	local subcommand="$(__git_find_on_cmdline "$subcommands")"
 	if [ -z "$subcommand" ]; then
 		__gitcomp "$subcommands"
@@ -2048,7 +2048,7 @@ _git_remote ()
 	fi
 
 	case "$subcommand" in
-	rename|rm|set-url|show|prune)
+	rename|remove|set-url|show|prune)
 		__gitcomp_nl "$(__git_remotes)"
 		;;
 	set-head|set-branches)
