@@ -95,7 +95,7 @@ static struct discovery* discover_refs(const char *service)
 	struct strbuf buffer = STRBUF_INIT;
 	struct discovery *last = last_discovery;
 	char *refs_url;
-	int http_ret, is_http = 0;
+	int http_ret, maybe_smart = 0;
 
 	if (last && !strcmp(service, last->service))
 		return last;
@@ -103,7 +103,7 @@ static struct discovery* discover_refs(const char *service)
 
 	strbuf_addf(&buffer, "%sinfo/refs", url);
 	if (!prefixcmp(url, "http://") || !prefixcmp(url, "https://")) {
-		is_http = 1;
+		maybe_smart = 1;
 		if (!strchr(url, '?'))
 			strbuf_addch(&buffer, '?');
 		else
@@ -131,7 +131,7 @@ static struct discovery* discover_refs(const char *service)
 	last->buf_alloc = strbuf_detach(&buffer, &last->len);
 	last->buf = last->buf_alloc;
 
-	if (is_http && 5 <= last->len && last->buf[4] == '#') {
+	if (maybe_smart && 5 <= last->len && last->buf[4] == '#') {
 		/* smart HTTP response; validate that the service
 		 * pkt-line matches our request.
 		 */
