@@ -66,3 +66,7 @@ being displayed. Examples: "--notes=foo" will show only notes from
 --[no-]standard-notes::
 	These options are deprecated. Use the above --notes/--no-notes
 	options instead.
+
+--show-signature::
+	Check the validity of a signed commit object by passing the signature
+	to `gpg --verify` and show the output.
