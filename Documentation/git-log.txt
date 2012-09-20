@@ -24,10 +24,6 @@ each commit introduces are shown.
 OPTIONS
 -------
 
--<n>::
-	Limits the number of commits to show.
-	Note that this is a commit limiting option, see below.
-
 <since>..<until>::
 	Show only commits between the named two commits.  When
 	either <since> or <until> is omitted, it defaults to
@@ -137,6 +133,8 @@ Examples
 	This makes sense only when following a strict policy of merging all
 	topic branches when staying on a single integration branch.
 
+`git log -3`::
+	Limits the number of commits to show to 3.
 
 Discussion
 ----------
