@@ -130,6 +130,9 @@ The placeholders are:
 - '%b': body
 - '%B': raw body (unwrapped subject and body)
 - '%N': commit notes
+- '%GG': raw verification message from GPG for a signed commit
+- '%G?': show either "G" for Good or "B" for Bad for a signed commit
+- '%GS': show the name of the signer for a signed commit
 - '%gD': reflog selector, e.g., `refs/stash@{1}`
 - '%gd': shortened reflog selector, e.g., `stash@{1}`
 - '%gn': reflog identity name
