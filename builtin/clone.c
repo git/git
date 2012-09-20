@@ -610,6 +610,54 @@ static void write_config(struct string_list *config)
 	}
 }
 
+static void write_refspec_config(const char* src_ref_prefix,
+		const struct ref* our_head_points_at,
+		const struct ref* remote_head_points_at, struct strbuf* branch_top)
+{
+	struct strbuf key = STRBUF_INIT;
+	struct strbuf value = STRBUF_INIT;
+
+	if (option_mirror || !option_bare) {
+		if (option_single_branch && !option_mirror) {
+			if (option_branch) {
+				if (strstr(our_head_points_at->name, "refs/tags/"))
+					strbuf_addf(&value, "+%s:%s", our_head_points_at->name,
+						our_head_points_at->name);
+				else
+					strbuf_addf(&value, "+%s:%s%s", our_head_points_at->name,
+						branch_top->buf, option_branch);
+			} else if (remote_head_points_at) {
+				strbuf_addf(&value, "+%s:%s%s", remote_head_points_at->name,
+						branch_top->buf,
+						skip_prefix(remote_head_points_at->name, "refs/heads/"));
+			}
+			/*
+			 * otherwise, the next "git fetch" will
+			 * simply fetch from HEAD without updating
+			 * any remote tracking branch, which is what
+			 * we want.
+			 */
+		} else {
+			strbuf_addf(&value, "+%s*:%s*", src_ref_prefix, branch_top->buf);
+		}
+		/* Configure the remote */
+		if (value.len) {
+			strbuf_addf(&key, "remote.%s.fetch", option_origin);
+			git_config_set_multivar(key.buf, value.buf, "^$", 0);
+			strbuf_reset(&key);
+
+			if (option_mirror) {
+				strbuf_addf(&key, "remote.%s.mirror", option_origin);
+				git_config_set(key.buf, "true");
+				strbuf_reset(&key);
+			}
+		}
+	}
+
+	strbuf_release(&key);
+	strbuf_release(&value);
+}
+
 int cmd_clone(int argc, const char **argv, const char *prefix)
 {
 	int is_bundle = 0, is_local;
@@ -755,20 +803,6 @@ int cmd_clone(int argc, const char **argv, const char *prefix)
 	}
 
 	strbuf_addf(&value, "+%s*:%s*", src_ref_prefix, branch_top.buf);
-
-	if (option_mirror || !option_bare) {
-		/* Configure the remote */
-		strbuf_addf(&key, "remote.%s.fetch", option_origin);
-		git_config_set_multivar(key.buf, value.buf, "^$", 0);
-		strbuf_reset(&key);
-
-		if (option_mirror) {
-			strbuf_addf(&key, "remote.%s.mirror", option_origin);
-			git_config_set(key.buf, "true");
-			strbuf_reset(&key);
-		}
-	}
-
 	strbuf_addf(&key, "remote.%s.url", option_origin);
 	git_config_set(key.buf, repo);
 	strbuf_reset(&key);
@@ -852,6 +886,9 @@ int cmd_clone(int argc, const char **argv, const char *prefix)
 			install_branch_config(0, "master", option_origin,
 					      "refs/heads/master");
 	}
+
+	write_refspec_config(src_ref_prefix, our_head_points_at,
+			remote_head_points_at, &branch_top);
 
 	if (is_local)
 		clone_local(path, git_dir);
