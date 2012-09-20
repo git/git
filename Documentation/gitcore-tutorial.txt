@@ -956,12 +956,11 @@ $ git show-branch --topo-order --more=1 master mybranch
 ------------------------------------------------
 
 The first two lines indicate that it is showing the two branches
-and the first line of the commit log message from their
-top-of-the-tree commits, you are currently on `master` branch
-(notice the asterisk `*` character), and the first column for
-the later output lines is used to show commits contained in the
+with the titles of their top-of-the-tree commits, you are currently on
+`master` branch (notice the asterisk `*` character), and the first
+column for the later output lines is used to show commits contained in the
 `master` branch, and the second column for the `mybranch`
-branch. Three commits are shown along with their log messages.
+branch. Three commits are shown along with their titles.
 All of them have non blank characters in the first column (`*`
 shows an ordinary commit on the current branch, `-` is a merge commit), which
 means they are now part of the `master` branch. Only the "Some
