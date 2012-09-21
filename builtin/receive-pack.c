@@ -701,7 +701,7 @@ static void execute_commands(struct command *commands, const char *unpacker_erro
 
 	if (unpacker_error) {
 		for (cmd = commands; cmd; cmd = cmd->next)
-			cmd->error_string = "n/a (unpacker error)";
+			cmd->error_string = "unpacker error";
 		return;
 	}
 
