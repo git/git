@@ -1,8 +1,9 @@
 string-list API
 ===============
 
-The string_list API offers a data structure and functions to handle sorted
-and unsorted string lists.
+The string_list API offers a data structure and functions to handle
+sorted and unsorted string lists.  A "sorted" list is one whose
+entries are sorted by string value in `strcmp()` order.
 
 The 'string_list' struct used to be called 'path_list', but was renamed
 because it is not specific to paths.
@@ -143,7 +144,7 @@ write `string_list_insert(...)->util = ...;`.
 
 `sort_string_list`::
 
-	Make an unsorted list sorted.
+	Sort the list's entries by string value in `strcmp()` order.
 
 `unsorted_string_list_has_string`::
 
