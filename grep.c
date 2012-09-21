@@ -1469,7 +1469,7 @@ static int grep_source_load_file(struct grep_source *gs)
 	return 0;
 }
 
-int grep_source_load(struct grep_source *gs)
+static int grep_source_load(struct grep_source *gs)
 {
 	if (gs->buf)
 		return 0;
@@ -1497,7 +1497,7 @@ void grep_source_load_driver(struct grep_source *gs)
 	grep_attr_unlock();
 }
 
-int grep_source_is_binary(struct grep_source *gs)
+static int grep_source_is_binary(struct grep_source *gs)
 {
 	grep_source_load_driver(gs);
 	if (gs->driver->binary != -1)
