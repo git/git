@@ -801,7 +801,7 @@ static const char *parse_pack_header(struct pack_header *hdr)
 
 static const char *pack_lockfile;
 
-static const char *unpack(void)
+static const char *unpack(int err_fd)
 {
 	struct pack_header hdr;
 	const char *hdr_err;
@@ -833,6 +833,7 @@ static const char *unpack(void)
 		memset(&child, 0, sizeof(child));
 		child.argv = unpacker;
 		child.no_stdout = 1;
+		child.err = err_fd;
 		child.git_cmd = 1;
 		code = run_command(&child);
 		if (!code)
@@ -859,6 +860,7 @@ static const char *unpack(void)
 		memset(&ip, 0, sizeof(ip));
 		ip.argv = keeper;
 		ip.out = -1;
+		ip.err = err_fd;
 		ip.git_cmd = 1;
 		status = start_command(&ip);
 		if (status) {
@@ -873,6 +875,26 @@ static const char *unpack(void)
 		}
 		return "index-pack abnormal exit";
 	}
+}
+
+static const char *unpack_with_sideband(void)
+{
+	struct async muxer;
+	const char *ret;
+
+	if (!use_sideband)
+		return unpack(0);
+
+	memset(&muxer, 0, sizeof(muxer));
+	muxer.proc = copy_to_sideband;
+	muxer.in = -1;
+	if (start_async(&muxer))
+		return NULL;
+
+	ret = unpack(muxer.in);
+
+	finish_async(&muxer);
+	return ret;
 }
 
 static void report(struct command *commands, const char *unpack_status)
@@ -972,7 +994,7 @@ int cmd_receive_pack(int argc, const char **argv, const char *prefix)
 		const char *unpack_status = NULL;
 
 		if (!delete_only(commands))
-			unpack_status = unpack();
+			unpack_status = unpack_with_sideband();
 		execute_commands(commands, unpack_status);
 		if (pack_lockfile)
 			unlink_or_warn(pack_lockfile);
