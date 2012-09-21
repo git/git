@@ -821,6 +821,7 @@ static const char *unpack(void)
 
 	if (ntohl(hdr.hdr_entries) < unpack_limit) {
 		int code, i = 0;
+		struct child_process child;
 		const char *unpacker[5];
 		unpacker[i++] = "unpack-objects";
 		if (quiet)
@@ -829,7 +830,11 @@ static const char *unpack(void)
 			unpacker[i++] = "--strict";
 		unpacker[i++] = hdr_arg;
 		unpacker[i++] = NULL;
-		code = run_command_v_opt(unpacker, RUN_GIT_CMD);
+		memset(&child, 0, sizeof(child));
+		child.argv = unpacker;
+		child.no_stdout = 1;
+		child.git_cmd = 1;
+		code = run_command(&child);
 		if (!code)
 			return NULL;
 		return "unpack-objects abnormal exit";
