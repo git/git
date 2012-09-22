@@ -1056,7 +1056,15 @@ do
 done
 
 # No command word defaults to "status"
-test -n "$command" || command=status
+if test -z "$command"
+then
+    if test $# = 0
+    then
+	command=status
+    else
+	usage
+    fi
+fi
 
 # "-b branch" is accepted only by "add"
 if test -n "$branch" && test "$command" != add
