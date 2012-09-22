@@ -2361,6 +2361,7 @@ proc makewindow {} {
     $ctext tag conf mresult -font textfontbold
     $ctext tag conf msep -font textfontbold
     $ctext tag conf found -back yellow
+    $ctext tag conf currentsearchhit -back orange
 
     .pwbottom add .bleft
     if {!$use_ttk} {
@@ -2523,6 +2524,7 @@ proc makewindow {} {
     bind $cflist $ctxbut {pop_flist_menu %W %X %Y %x %y}
     bind $ctext $ctxbut {pop_diff_menu %W %X %Y %x %y}
     bind $ctext <Button-1> {focus %W}
+    bind $ctext <<Selection>> rehighlight_search_results
 
     set maincursor [. cget -cursor]
     set textcursor [$ctext cget -cursor]
@@ -8039,7 +8041,6 @@ proc settabs {{firstab {}}} {
 proc incrsearch {name ix op} {
     global ctext searchstring searchdirn
 
-    $ctext tag remove found 1.0 end
     if {[catch {$ctext index anchor}]} {
 	# no anchor set, use start of selection, or of visible area
 	set sel [$ctext tag ranges sel]
@@ -8058,8 +8059,8 @@ proc incrsearch {name ix op} {
 	    suppress_highlighting_file_for_current_scrollpos
 	    highlightfile_for_scrollpos $here
 	}
-	searchmarkvisible 1
     }
+    rehighlight_search_results
 }
 
 proc dosearch {} {
@@ -8087,6 +8088,7 @@ proc dosearch {} {
 	set mend "$match + $mlen c"
 	$ctext tag add sel $match $mend
 	$ctext mark unset anchor
+	rehighlight_search_results
     }
 }
 
@@ -8115,18 +8117,36 @@ proc dosearchback {} {
 	set mend "$match + $ml c"
 	$ctext tag add sel $match $mend
 	$ctext mark unset anchor
+	rehighlight_search_results
+    }
+}
+
+proc rehighlight_search_results {} {
+    global ctext searchstring
+
+    $ctext tag remove found 1.0 end
+    $ctext tag remove currentsearchhit 1.0 end
+
+    if {$searchstring ne {}} {
+	searchmarkvisible 1
     }
 }
 
 proc searchmark {first last} {
     global ctext searchstring
 
+    set sel [$ctext tag ranges sel]
+
     set mend $first.0
     while {1} {
 	set match [$ctext search -count mlen -- $searchstring $mend $last.end]
 	if {$match eq {}} break
 	set mend "$match + $mlen c"
-	$ctext tag add found $match $mend
+	if {$sel ne {} && [$ctext compare $match == [lindex $sel 0]]} {
+	    $ctext tag add currentsearchhit $match $mend
+	} else {
+	    $ctext tag add found $match $mend
+	}
     }
 }
 
