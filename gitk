@@ -2161,7 +2161,7 @@ proc makewindow {} {
     trace add variable sha1string write sha1change
     pack $sha1entry -side left -pady 2
 
-    image create bitmap bm-left -data {
+    set bm_left_data {
 	#define left_width 16
 	#define left_height 16
 	static unsigned char left_bits[] = {
@@ -2169,7 +2169,7 @@ proc makewindow {} {
 	0x0e, 0x00, 0xff, 0x7f, 0xff, 0x7f, 0xff, 0x7f, 0x0e, 0x00, 0x1c, 0x00,
 	0x38, 0x00, 0x70, 0x00, 0xe0, 0x00, 0xc0, 0x01};
     }
-    image create bitmap bm-right -data {
+    set bm_right_data {
 	#define right_width 16
 	#define right_height 16
 	static unsigned char right_bits[] = {
@@ -2177,11 +2177,16 @@ proc makewindow {} {
 	0x00, 0x38, 0xff, 0x7f, 0xff, 0x7f, 0xff, 0x7f, 0x00, 0x38, 0x00, 0x1c,
 	0x00, 0x0e, 0x00, 0x07, 0x80, 0x03, 0xc0, 0x01};
     }
-    ${NS}::button .tf.bar.leftbut -image bm-left -command goback \
-	-state disabled -width 26
+    image create bitmap bm-left -data $bm_left_data
+    image create bitmap bm-left-gray -data $bm_left_data -foreground "#999"
+    image create bitmap bm-right -data $bm_right_data
+    image create bitmap bm-right-gray -data $bm_right_data -foreground "#999"
+
+    ${NS}::button .tf.bar.leftbut -image [list bm-left disabled bm-left-gray] \
+	-command goback -state disabled -width 26
     pack .tf.bar.leftbut -side left -fill y
-    ${NS}::button .tf.bar.rightbut -image bm-right -command goforw \
-	-state disabled -width 26
+    ${NS}::button .tf.bar.rightbut -image [list bm-right disabled bm-right-gray] \
+	-command goforw -state disabled -width 26
     pack .tf.bar.rightbut -side left -fill y
 
     ${NS}::label .tf.bar.rowlabel -text [mc "Row"]
