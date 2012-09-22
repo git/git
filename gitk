@@ -8053,9 +8053,12 @@ proc incrsearch {name ix op} {
 	}
     }
     if {$searchstring ne {}} {
-	set here [$ctext search $searchdirn -- $searchstring anchor]
+	set here [$ctext search -count mlen $searchdirn -- $searchstring anchor]
 	if {$here ne {}} {
 	    $ctext see $here
+	    set mend "$here + $mlen c"
+	    $ctext tag remove sel 1.0 end
+	    $ctext tag add sel $here $mend
 	    suppress_highlighting_file_for_current_scrollpos
 	    highlightfile_for_scrollpos $here
 	}
