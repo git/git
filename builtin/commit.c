@@ -1256,6 +1256,7 @@ int cmd_commit(int argc, const char **argv, const char *prefix)
 	struct wt_status s;
 
 	wt_status_prepare(&s);
+	gitmodules_config();
 	git_config(git_commit_config, &s);
 	in_merge = file_exists(git_path("MERGE_HEAD"));
 	s.in_merge = in_merge;
