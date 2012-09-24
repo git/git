@@ -544,6 +544,10 @@ do_next () {
 			warn
 			warn "	git rebase --continue"
 			warn
+			if test $status -eq 127		# command not found
+			then
+				status=1
+			fi
 			exit "$status"
 		elif test "$dirty" = t
 		then
