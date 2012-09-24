@@ -34,9 +34,10 @@
 #
 # If you would like to see the difference between HEAD and its upstream,
 # set GIT_PS1_SHOWUPSTREAM="auto".  A "<" indicates you are behind, ">"
-# indicates you are ahead, and "<>" indicates you have diverged.  You
-# can further control behaviour by setting GIT_PS1_SHOWUPSTREAM to a
-# space-separated list of values:
+# indicates you are ahead, "<>" indicates you have diverged and "="
+# indicates that there is no difference. You can further control
+# behaviour by setting GIT_PS1_SHOWUPSTREAM to a space-separated list
+# of values:
 #
 #     verbose       show number of commits ahead/behind (+/-) upstream
 #     legacy        don't use the '--count' option available in recent
