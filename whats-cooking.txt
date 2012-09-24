@@ -1,19 +1,18 @@
 To: git@vger.kernel.org
 Bcc: lwn@lwn.net
-Subject: What's cooking in git.git (Sep 2012, #07; Fri, 21)
-X-master-at: 16eed7c9938a65022010c3d95ada911b2fd46d25
-X-next-at: 68bd821eac8800bddb2213d2b7e4065e3e082059
+Subject: What's cooking in git.git (Sep 2012, #08; Mon, 24)
+X-master-at: b5d156c3622fa522966034c78fd6ed9a15504d46
+X-next-at: 95625d7562adfba98aa40d9772312bb3c2d92b7f
 
-What's cooking in git.git (Sep 2012, #07; Fri, 21)
+What's cooking in git.git (Sep 2012, #08; Mon, 24)
 --------------------------------------------------
 
 Here are the topics that have been cooking.  Commits prefixed with
 '-' are only in 'pu' (proposed updates) while commits prefixed with
 '+' are in 'next'.
 
-Today's tip of 'pu' has breakage in t0007 for people whose shell is
-not bash; a topic queued there needs to be fixed before moving
-forward.
+Feedback from contributors and reviewers involved in topics in the
+"stalled" category is sorely needed to help them get unstuck.
 
 I'm planning to keep this cycle reasonably short and aim for tagging
 the result as 1.8.0 at the end of 9th week, on October 21st, after
@@ -26,114 +25,61 @@ repositories listed at
     http://git-blame.blogspot.com/p/git-public-repositories.html
 
 --------------------------------------------------
-[Graduated to "master"]
-
-* er/doc-fast-import-done (2012-08-22) 1 commit
-  (merged to 'next' on 2012-09-17 at bb8709a)
- + fast-import: document the --done option
-
- I got tired of waiting for ESR to respond with S-o-b for a trivial
- documentation updates, so I'll be moving this forward.
-
-
-* jc/maint-log-grep-all-match (2012-09-15) 10 commits
-  (merged to 'next' on 2012-09-17 at 3c10a18)
- + t7810-grep: test --all-match with multiple --grep and --author options
- + t7810-grep: test interaction of multiple --grep and --author options
- + t7810-grep: test multiple --author with --all-match
- + t7810-grep: test multiple --grep with and without --all-match
- + t7810-grep: bring log --grep tests in common form
-  (merged to 'next' on 2012-09-15 at 73fad40)
- + grep.c: mark private file-scope symbols as static
-  (merged to 'next' on 2012-09-14 at 86b848c)
- + log: document use of multiple commit limiting options
- + log --grep/--author: honor --all-match honored for multiple --grep patterns
- + grep: show --debug output only once
- + grep: teach --debug option to dump the parse tree
-
- Fix a long-standing bug in "git log --grep" when multiple "--grep"
- are used together with "--all-match" and "--author" or "--committer".
-
-
-* jc/maint-log-grep-all-match-1 (2012-09-20) 1 commit
-  (merged to 'next' on 2012-09-20 at 6bf192f)
- + grep.c: make two symbols really file-scope static this time
-
- A finishing touch to the "log --all-match --grep" topic.
-
-
-* jc/make-static (2012-09-15) 14 commits
-  (merged to 'next' on 2012-09-17 at 3a7d87a)
- + sequencer.c: mark a private file-scope symbol as static
- + ident.c: mark private file-scope symbols as static
- + trace.c: mark a private file-scope symbol as static
- + wt-status.c: mark a private file-scope symbol as static
- + read-cache.c: mark a private file-scope symbol as static
- + strbuf.c: mark a private file-scope symbol as static
- + sha1-array.c: mark a private file-scope symbol as static
- + symlinks.c: mark private file-scope symbols as static
- + notes.c: mark a private file-scope symbol as static
- + rerere.c: mark private file-scope symbols as static
- + graph.c: mark private file-scope symbols as static
- + diff.c: mark a private file-scope symbol as static
- + commit.c: mark a file-scope private symbol as static
- + builtin/notes.c: mark file-scope private symbols as static
-
- Turn many file-scope private symbols to static to reduce the
- global namespace contamination.
-
-
-* mh/fetch-filter-refs (2012-09-18) 1 commit
-  (merged to 'next' on 2012-09-18 at 5dd77d8)
- + string_list API: document what "sorted" means
-
-
-* mv/cherry-pick-s (2012-09-14) 1 commit
-  (merged to 'next' on 2012-09-14 at 2d143e1)
- + cherry-pick: don't forget -s on failure
-
- After "git cherry-pick -s" gave control back to the user asking
- help to resolve conflicts, concluding "git commit" needs to be run
- with "-s" if the user wants to sign it off, but people often forgot
- to do so.
-
-
-* nd/fetch-status-alignment (2012-09-14) 1 commit
-  (merged to 'next' on 2012-09-14 at 34237db)
- + fetch: align per-ref summary report in UTF-8 locales
-
- The status report from "git fetch", when messages like 'up-to-date'
- are translated, did not align the branch names well.
-
-
-* pw/p4-submit-conflicts (2012-09-16) 12 commits
-  (merged to 'next' on 2012-09-17 at 7e57551)
- + git-p4: add submit --conflict option and config varaiable
- + git p4: add submit --prepare-p4-only option
- + git p4: add submit --dry-run option
- + git p4: accept -v for --verbose
- + git p4: revert deleted files after submit cancel
- + git p4: rearrange submit template construction
- + git p4: test clean-up after failed submit, fix added files
- + git p4: standardize submit cancel due to unchanged template
- + git p4: move conflict prompt into run, add [q]uit input
- + git p4: remove submit failure options [a]pply and [w]rite
- + git p4: gracefully fail if some commits could not be applied
- + git p4 test: remove bash-ism of combined export/assignment
-
---------------------------------------------------
 [New Topics]
 
-* js/rebase-exec-command-not-found (2012-09-18) 1 commit
- - rebase -i: fix misleading error message after 'exec no-such' instruction
+* jc/blame-no-follow (2012-09-21) 2 commits
+ - blame: pay attention to --no-follow
+ - diff: accept --no-follow option
+ (this branch uses jc/blame-follows-renames.)
+
+ Teaches "--no-follow" option to "git blame" to disable its
+ whole-file rename detection.
+
+ Any comments?
+
+
+* os/commit-submodule-ignore (2012-09-24) 1 commit
+ - commit: pay attention to submodule.$name.ignore in .gitmodules
+
+ "git status" honored the ignore=dirty settings in .gitmodules but
+ "git commit" didn't.
+
+
+* rc/maint-complete-git-p4 (2012-09-24) 1 commit
+ - Teach git-completion about git p4
 
  Will merge to 'next'.
 
 
-* rr/test-make-sure-we-have-git (2012-09-18) 1 commit
- - t/test-lib: make sure Git has already been built
+* rr/maint-submodule-unknown-cmd (2012-09-24) 2 commits
+ - [SQUASH] adjust test and doc to "git submodule no-such-subcommand"
+ - submodule: if $command was not matched, don't parse other args
 
- Will merge to 'next'.
+ Will merge to 'next' after squashing the tip.
+
+--------------------------------------------------
+[Stalled]
+
+* as/check-ignore (2012-09-24) 16 commits
+ - [SQUASH-FIX] 283d072 (Add git-check-ignore sub-command, 2012-09-20)
+ - [REROLL NEEDED] minimum compilation fix
+ - Add git-check-ignore sub-command
+ - dir.c: provide free_directory() for reclaiming dir_struct memory
+ - pathspec.c: move reusable code from builtin/add.c
+ - dir.c: refactor treat_gitlinks()
+ - dir.c: keep track of where patterns came from
+ - dir.c: refactor is_path_excluded()
+ - dir.c: refactor is_excluded()
+ - dir.c: refactor is_excluded_from_list()
+ - dir.c: rename excluded() to is_excluded()
+ - dir.c: rename excluded_from_list() to is_excluded_from_list()
+ - dir.c: rename path_excluded() to is_path_excluded()
+ - dir.c: rename cryptic 'which' variable to more consistent name
+ - Improve documentation and comments regarding directory traversal API
+ - Update directory listing API doc to match code
+
+ Rerolled.
+ Expecting a further reroll to follow-up review comments.
 
 
 * as/test-tweaks (2012-09-20) 7 commits
@@ -150,84 +96,6 @@ repositories listed at
 
  Has the "is this really blue?" issue Peff raised resolved???
 
-
-* db/doc-custom-xmlto (2012-09-19) 1 commit
- - Documentation/Makefile: Allow custom XMLTO binary
-
- Will merge to 'next'.
-
-
-* js/hp-nonstop (2012-09-19) 1 commit
- - Port to HP NonStop
- (this branch uses js/poll-emu.)
-
- Will merge to 'next'.
-
-
-* po/maint-docs (2012-09-19) 5 commits
- - Doc branch: show -vv option and alternative
- - Doc clean: add See Also link
- - Doc add: link gitignore
- - Doc: separate gitignore pattern sources
- - Doc: shallow clone deepens _to_ new depth
-
- Various documentation fixups.
-
- Will merge to 'next'.
-
-
-* sp/maint-http-info-refs-no-retry (2012-09-20) 1 commit
- - Revert "retry request without query when info/refs?query fails"
- (this branch is used by jk/smart-http-switch.)
-
- Kills an old workaround for a unlikely server misconfiguration that
- hurts debuggability.
-
- Will merge to 'next'.
-
-
-* jk/smart-http-switch (2012-09-21) 2 commits
- - remote-curl: let users turn off smart http
- - remote-curl: rename is_http variable
- (this branch uses sp/maint-http-info-refs-no-retry.)
-
- Will merge to 'next'.
-
-
-* sp/maint-http-enable-gzip (2012-09-20) 1 commit
- - Enable info/refs gzip decompression in HTTP client
-
- Allows a more common 'gzip' Accept-Encoding to be used.
-
- Will merge to 'next'.
-
-
-* nd/pretty-placeholder-with-color-option (2012-09-20) 4 commits
- - [SQUASH] do not use real-sb without initializing
- - pretty: support right alignment
- - pretty: support placeholders %C+ and %C-
- - pretty: share code between format_decoration and show_decorations
-
- The feature might be great, but the interface is iffy.
-
-
-* jk/receive-pack-unpack-error-to-pusher (2012-09-21) 3 commits
- - receive-pack: drop "n/a" on unpacker errors
- - receive-pack: send pack-processing stderr over sideband
- - receive-pack: redirect unpack-objects stdout to /dev/null
-
- Send errors from "unpack-objects" and "index-pack" back to the "git
- push" over the git and smart-http protocols, just like it is done
- for a push over the ssh protocol.
-
- Will merge to 'next'.
-
-
-* jc/blame-follows-renames (2012-09-21) 1 commit
- - git blame: document that it always follows origin across whole-file renames
-
---------------------------------------------------
-[Stalled]
 
 * fa/remote-svn (2012-09-19) 16 commits
  - Add a test script for remote-svn
@@ -248,7 +116,7 @@ repositories listed at
  - Implement a remote helper for svn in C
  (this branch is used by fa/vcs-svn.)
 
- A GSoC project.  Looked promising.
+ A GSoC project.
  Waiting for comments from mentors and stakeholders.
 
 
@@ -259,8 +127,22 @@ repositories listed at
  - svndump: move struct definitions to .h
  (this branch uses fa/remote-svn.)
 
- A GSoC project.  Looked promising.
+ A GSoC project.
  Waiting for comments from mentors and stakeholders.
+
+
+* jl/submodule-rm (2012-08-27) 1 commit
+ - Teach rm to remove submodules unless they contain a git directory
+
+ "git rm submodule" cannot blindly remove a submodule directory as
+ its working tree may have local changes, and worse yet, it may even
+ have its repository embedded in it.  Teach it some special cases
+ where it is safe to remove a submodule, specifically, when there is
+ no local changes in the submodule working tree, and its repository
+ is not embedded in its working tree but is elsewhere and uses the
+ gitfile mechanism to point at it.
+
+ Replacement sent but was still iffy around conflicted merge cases.
 
 
 * ph/credential-refactor (2012-09-02) 5 commits
@@ -327,41 +209,6 @@ repositories listed at
  Otherwise may discard.
 
 
-* tg/index-v5 (2012-08-17) 13 commits
- . p0002-index.sh: add perf test for the index formats
- . update-index.c: rewrite index when index-version is given
- . Write resolve-undo data for index-v5
- . Write index-v5 cache-tree data
- . Write index-v5
- . Read cache-tree in index-v5
- . Read resolve-undo data
- . Read index-v5
- . Make in-memory format aware of stat_crc
- . Add documentation of the index-v5 file format
- . t2104: Don't fail for index versions other than [23]
- . read-cache.c: Re-read index if index file changed
- . Move index v2 specific functions to their own file
-
- A GSoC project.  Was waiting for comments from mentors and
- stakeholders, but nothing seems to be happening, other than breakage
- fixes on Cygwin.  May discard.
-
-
-* mz/rebase-range (2012-07-18) 7 commits
- . rebase (without -p): correctly calculate patches to rebase
- . rebase -p: don't request --left-right only to ignore left side
- . rebase -p: use --cherry-mark for todo file
- . git-rebase--interactive.sh: look up subject in add_pick_line
- . git-rebase--interactive: group all $preserve_merges code
- . git-rebase--interactive.sh: extract function for adding "pick" line
- . git-rebase--am.sh: avoid special-casing --keep-empty
-
- Expecting a reroll.
-
- Performance concerns from Windows folks.  Also the series lacks
- proper sign-offs.
-
-
 * mb/remote-default-nn-origin (2012-07-11) 6 commits
  - Teach get_default_remote to respect remote.default.
  - Test that plain "git fetch" uses remote.default when on a detached HEAD.
@@ -413,25 +260,113 @@ repositories listed at
 --------------------------------------------------
 [Cooking]
 
-* as/check-ignore (2012-09-21) 15 commits
- - [REROLL NEEDED] minimum compilation fix
- - Add git-check-ignore sub-command
- - dir.c: provide free_directory() for reclaiming dir_struct memory
- - pathspec.c: move reusable code from builtin/add.c
- - dir.c: refactor treat_gitlinks()
- - dir.c: keep track of where patterns came from
- - dir.c: refactor is_path_excluded()
- - dir.c: refactor is_excluded()
- - dir.c: refactor is_excluded_from_list()
- - dir.c: rename excluded() to is_excluded()
- - dir.c: rename excluded_from_list() to is_excluded_from_list()
- - dir.c: rename path_excluded() to is_path_excluded()
- - dir.c: rename cryptic 'which' variable to more consistent name
- - Improve documentation and comments regarding directory traversal API
- - Update directory listing API doc to match code
+* js/rebase-exec-command-not-found (2012-09-18) 1 commit
+  (merged to 'next' on 2012-09-24 at ed5b048)
+ + rebase -i: fix misleading error message after 'exec no-such' instruction
 
- Rerolled.
- Expecting a further reroll to follow-up review comments.
+ Will merge to 'master'.
+
+
+* rr/test-make-sure-we-have-git (2012-09-18) 1 commit
+  (merged to 'next' on 2012-09-24 at 9e8d28d)
+ + t/test-lib: make sure Git has already been built
+
+ Only the first test t0000 in the test suite made sure we have built
+ Git to be tested; move the check to test-lib so that it applies to
+ all tests equally.
+
+ Will merge to 'master'.
+
+
+* db/doc-custom-xmlto (2012-09-19) 1 commit
+  (merged to 'next' on 2012-09-24 at efcfec1)
+ + Documentation/Makefile: Allow custom XMLTO binary
+
+ Will merge to 'master'.
+
+
+* js/hp-nonstop (2012-09-19) 1 commit
+  (merged to 'next' on 2012-09-24 at 283ac87)
+ + Port to HP NonStop
+ (this branch uses js/poll-emu.)
+
+ Port to HP NonStop aka Tandem.
+
+ Will merge to 'master'.
+
+
+* po/maint-docs (2012-09-19) 5 commits
+  (merged to 'next' on 2012-09-24 at 9df3935)
+ + Doc branch: show -vv option and alternative
+ + Doc clean: add See Also link
+ + Doc add: link gitignore
+ + Doc: separate gitignore pattern sources
+ + Doc: shallow clone deepens _to_ new depth
+
+ Various documentation fixups.
+
+ Will merge to 'master'.
+
+
+* sp/maint-http-info-refs-no-retry (2012-09-20) 1 commit
+  (merged to 'next' on 2012-09-24 at ebcce8e)
+ + Revert "retry request without query when info/refs?query fails"
+ (this branch is used by jk/smart-http-switch.)
+
+ Kills an old workaround for a unlikely server misconfiguration that
+ hurts debuggability.
+
+ Will merge to 'master'.
+
+
+* jk/smart-http-switch (2012-09-21) 2 commits
+  (merged to 'next' on 2012-09-24 at b2a2777)
+ + remote-curl: let users turn off smart http
+ + remote-curl: rename is_http variable
+ (this branch uses sp/maint-http-info-refs-no-retry.)
+
+ Allows users to turn off smart-http when talking to dumb-only
+ servers.
+
+ Will merge to 'master'.
+
+
+* sp/maint-http-enable-gzip (2012-09-20) 1 commit
+  (merged to 'next' on 2012-09-24 at 1d05142)
+ + Enable info/refs gzip decompression in HTTP client
+
+ Allows a more common 'gzip' Accept-Encoding to be used.
+
+ Will merge to 'master'.
+
+
+* nd/pretty-placeholder-with-color-option (2012-09-20) 4 commits
+ - [SQUASH] do not use real-sb without initializing
+ - pretty: support right alignment
+ - pretty: support placeholders %C+ and %C-
+ - pretty: share code between format_decoration and show_decorations
+
+ Rerolled, but haven't picked it up yet.
+
+
+* jk/receive-pack-unpack-error-to-pusher (2012-09-21) 3 commits
+ - receive-pack: drop "n/a" on unpacker errors
+ - receive-pack: send pack-processing stderr over sideband
+ - receive-pack: redirect unpack-objects stdout to /dev/null
+
+ Send errors from "unpack-objects" and "index-pack" back to the "git
+ push" over the git and smart-http protocols, just like it is done
+ for a push over the ssh protocol.
+
+ Will merge to 'next'.
+
+
+* jc/blame-follows-renames (2012-09-21) 1 commit
+ - git blame: document that it always follows origin across whole-file renames
+ (this branch is used by jc/blame-no-follow.)
+
+ Clarify the "blame" documentation to tell the users that there is
+ no need to ask for "--follow".
 
 
 * rt/maint-clone-single (2012-09-20) 1 commit
@@ -444,45 +379,53 @@ repositories listed at
 
 
 * ep/malloc-check-perturb (2012-09-17) 2 commits
- - MALLOC_CHECK: various clean-ups
- - Add MALLOC_CHECK_ and MALLOC_PERTURB_ libc env to the test suite for detecting heap corruption
+  (merged to 'next' on 2012-09-24 at c490ea5)
+ + MALLOC_CHECK: various clean-ups
+ + Add MALLOC_CHECK_ and MALLOC_PERTURB_ libc env to the test suite for detecting heap corruption
 
  Run our test scripts with MALLOC_CHECK_ and MALLOC_PERTURB_, the
  built-in memory access checking facility GNU libc has.
 
- Will merge to 'next'.
+ Will merge to 'master'.
 
 
 * aj/xfuncname-ada (2012-09-16) 1 commit
- - Add userdiff patterns for Ada
+  (merged to 'next' on 2012-09-24 at 99fcbb3)
+ + Add userdiff patterns for Ada
 
- Will merge to 'next'.
+ Will merge to 'master'.
 
 
 * aw/rebase-i-edit-todo (2012-09-19) 5 commits
- - rebase -i: suggest using --edit-todo to fix an unknown instruction
- - rebase -i: Add tests for "--edit-todo"
- - rebase -i: Teach "--edit-todo" action
- - rebase -i: Refactor help messages for todo file
- - rebase usage: subcommands can not be combined with -i
+  (merged to 'next' on 2012-09-24 at 95625d7)
+ + rebase -i: suggest using --edit-todo to fix an unknown instruction
+ + rebase -i: Add tests for "--edit-todo"
+ + rebase -i: Teach "--edit-todo" action
+ + rebase -i: Refactor help messages for todo file
+ + rebase usage: subcommands can not be combined with -i
 
- Will merge to 'next'.
+ Will merge to 'master'.
 
 
 * jc/maint-mailinfo-mime-attr (2012-09-17) 1 commit
- - mailinfo: do not concatenate charset= attribute values from mime headers
+  (merged to 'next' on 2012-09-24 at c551c9f)
+ + mailinfo: do not concatenate charset= attribute values from mime headers
 
- Will merge to 'next'.
+ When "git am" is fed an input that has multiple "Content-type: ..."
+ header, it did not grok charset= attribute correctly.
+
+ Will merge to 'master'.
 
 
 * js/poll-emu (2012-09-17) 4 commits
- - make poll() work on platforms that can't recv() on a non-socket
- - poll() exits too early with EFAULT if 1st arg is NULL
- - fix some win32 specific dependencies in poll.c
- - make poll available for other platforms lacking it
+  (merged to 'next' on 2012-09-24 at 32e1601)
+ + make poll() work on platforms that can't recv() on a non-socket
+ + poll() exits too early with EFAULT if 1st arg is NULL
+ + fix some win32 specific dependencies in poll.c
+ + make poll available for other platforms lacking it
  (this branch is used by js/hp-nonstop.)
 
- Will merge to 'next'.
+ Will merge to 'master'.
 
 
 * nd/wildmatch (2012-09-17) 5 commits
@@ -530,29 +473,18 @@ repositories listed at
  world projects.
 
 
-* rs/archive-zip-utf8 (2012-09-18) 4 commits
-  (merged to 'next' on 2012-09-18 at 8535c83)
- + archive-zip: declare creator to be Unix for UTF-8 paths
+* rs/archive-zip-utf8 (2012-09-24) 4 commits
+  (merged to 'next' on 2012-09-24 at 9b42b1c)
+ + archive-zip: write extended timestamp
  + archive-zip: support UTF-8 paths
  + Revert "archive-zip: support UTF-8 paths"
   (merged to 'next' on 2012-09-11 at 3b1f071)
  + archive-zip: support UTF-8 paths
 
+ With another reroll, it looks like the series is as polished as it
+ could be.
+
  Will merge to 'master'.
-
-
-* jl/submodule-rm (2012-08-27) 1 commit
- - Teach rm to remove submodules unless they contain a git directory
-
- "git rm submodule" cannot blindly remove a submodule directory as
- its working tree may have local changes, and worse yet, it may even
- have its repository embedded in it.  Teach it some special cases
- where it is safe to remove a submodule, specifically, when there is
- no local changes in the submodule working tree, and its repository
- is not embedded in its working tree but is elsewhere and uses the
- gitfile mechanism to point at it.
-
- Replacement sent but was still iffy around conflicted merge cases.
 
 
 * jk/no-more-pre-exec-callback (2012-06-05) 1 commit
@@ -562,3 +494,44 @@ repositories listed at
 
  Will defer until the end of the 2012.
  while waiting for older "less" to go extinct.
+
+--------------------------------------------------
+[Discarded]
+
+* tg/index-v5 (2012-08-17) 13 commits
+ . p0002-index.sh: add perf test for the index formats
+ . update-index.c: rewrite index when index-version is given
+ . Write resolve-undo data for index-v5
+ . Write index-v5 cache-tree data
+ . Write index-v5
+ . Read cache-tree in index-v5
+ . Read resolve-undo data
+ . Read index-v5
+ . Make in-memory format aware of stat_crc
+ . Add documentation of the index-v5 file format
+ . t2104: Don't fail for index versions other than [23]
+ . read-cache.c: Re-read index if index file changed
+ . Move index v2 specific functions to their own file
+
+ A GSoC project.  Was waiting for comments from mentors and
+ stakeholders, but nothing seems to be happening, other than breakage
+ fixes on Cygwin.
+
+ Discarded without prejudice.
+
+
+* mz/rebase-range (2012-07-18) 7 commits
+ . rebase (without -p): correctly calculate patches to rebase
+ . rebase -p: don't request --left-right only to ignore left side
+ . rebase -p: use --cherry-mark for todo file
+ . git-rebase--interactive.sh: look up subject in add_pick_line
+ . git-rebase--interactive: group all $preserve_merges code
+ . git-rebase--interactive.sh: extract function for adding "pick" line
+ . git-rebase--am.sh: avoid special-casing --keep-empty
+
+ Expecting a reroll.
+
+ Performance concerns from Windows folks.  Also the series lacks
+ proper sign-offs.
+
+ Discarded without prejudice.
