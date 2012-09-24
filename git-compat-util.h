@@ -74,7 +74,8 @@
 # define _XOPEN_SOURCE 500
 # endif
 #elif !defined(__APPLE__) && !defined(__FreeBSD__) && !defined(__USLC__) && \
-      !defined(_M_UNIX) && !defined(__sgi) && !defined(__DragonFly__)
+      !defined(_M_UNIX) && !defined(__sgi) && !defined(__DragonFly__) && \
+      !defined(__TANDEM)
 #define _XOPEN_SOURCE 600 /* glibc2 and AIX 5.3L need 500, OpenBSD needs 600 for S_ISLNK() */
 #define _XOPEN_SOURCE_EXTENDED 1 /* AIX 5.3L needs this */
 #endif
@@ -98,6 +99,9 @@
 #include <stdlib.h>
 #include <stdarg.h>
 #include <string.h>
+#ifdef __TANDEM /* or HAVE_STRINGS_H or !NO_STRINGS_H? */
+#include <strings.h> /* for strcasecmp() */
+#endif
 #include <errno.h>
 #include <limits.h>
 #include <sys/param.h>
@@ -140,6 +144,17 @@
 #include <inttypes.h>
 #else
 #include <stdint.h>
+#endif
+#ifdef NO_INTPTR_T
+/*
+ * On I16LP32, ILP32 and LP64 "long" is the save bet, however
+ * on LLP86, IL33LLP64 and P64 it needs to be "long long",
+ * while on IP16 and IP16L32 it is "int" (resp. "short")
+ * Size needs to match (or exceed) 'sizeof(void *)'.
+ * We can't take "long long" here as not everybody has it.
+ */
+typedef long intptr_t;
+typedef unsigned long uintptr_t;
 #endif
 #if defined(__CYGWIN__)
 #undef _XOPEN_SOURCE
