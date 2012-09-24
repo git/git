@@ -298,6 +298,7 @@ test_expect_success 'unset default driver' '
 	test_unconfig diff.wordregex
 '
 
+test_language_driver ada
 test_language_driver bibtex
 test_language_driver cpp
 test_language_driver csharp
