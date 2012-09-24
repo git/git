@@ -2069,6 +2069,55 @@ static int git_blame_config(const char *var, const char *value, void *cb)
 	return git_default_config(var, value, cb);
 }
 
+static void verify_working_tree_path(struct commit *work_tree, const char *path)
+{
+	struct commit_list *parents;
+
+	for (parents = work_tree->parents; parents; parents = parents->next) {
+		const unsigned char *commit_sha1 = parents->item->object.sha1;
+		unsigned char blob_sha1[20];
+		unsigned mode;
+
+		if (!get_tree_entry(commit_sha1, path, blob_sha1, &mode) &&
+		    sha1_object_info(blob_sha1, NULL) == OBJ_BLOB)
+			return;
+	}
+	die("no such path '%s' in HEAD", path);
+}
+
+static struct commit_list **append_parent(struct commit_list **tail, const unsigned char *sha1)
+{
+	struct commit *parent;
+
+	parent = lookup_commit_reference(sha1);
+	if (!parent)
+		die("no such commit %s", sha1_to_hex(sha1));
+	return &commit_list_insert(parent, tail)->next;
+}
+
+static void append_merge_parents(struct commit_list **tail)
+{
+	int merge_head;
+	const char *merge_head_file = git_path("MERGE_HEAD");
+	struct strbuf line = STRBUF_INIT;
+
+	merge_head = open(merge_head_file, O_RDONLY);
+	if (merge_head < 0) {
+		if (errno == ENOENT)
+			return;
+		die("cannot open '%s' for reading", merge_head_file);
+	}
+
+	while (!strbuf_getwholeline_fd(&line, merge_head, '\n')) {
+		unsigned char sha1[20];
+		if (line.len < 40 || get_sha1_hex(line.buf, sha1))
+			die("unknown line in '%s': %s", merge_head_file, line.buf);
+		tail = append_parent(tail, sha1);
+	}
+	close(merge_head);
+	strbuf_release(&line);
+}
+
 /*
  * Prepare a dummy commit that represents the work tree (or staged) item.
  * Note that annotating work tree item never works in the reverse.
@@ -2079,6 +2128,7 @@ static struct commit *fake_working_tree_commit(struct diff_options *opt,
 {
 	struct commit *commit;
 	struct origin *origin;
+	struct commit_list **parent_tail, *parent;
 	unsigned char head_sha1[20];
 	struct strbuf buf = STRBUF_INIT;
 	const char *ident;
@@ -2086,19 +2136,37 @@ static struct commit *fake_working_tree_commit(struct diff_options *opt,
 	int size, len;
 	struct cache_entry *ce;
 	unsigned mode;
-
-	if (get_sha1("HEAD", head_sha1))
-		die("No such ref: HEAD");
+	struct strbuf msg = STRBUF_INIT;
 
 	time(&now);
 	commit = xcalloc(1, sizeof(*commit));
-	commit->parents = xcalloc(1, sizeof(*commit->parents));
-	commit->parents->item = lookup_commit_reference(head_sha1);
 	commit->object.parsed = 1;
 	commit->date = now;
 	commit->object.type = OBJ_COMMIT;
+	parent_tail = &commit->parents;
+
+	if (!resolve_ref_unsafe("HEAD", head_sha1, 1, NULL))
+		die("no such ref: HEAD");
+
+	parent_tail = append_parent(parent_tail, head_sha1);
+	append_merge_parents(parent_tail);
+	verify_working_tree_path(commit, path);
 
 	origin = make_origin(commit, path);
+
+	ident = fmt_ident("Not Committed Yet", "not.committed.yet", NULL, 0);
+	strbuf_addstr(&msg, "tree 0000000000000000000000000000000000000000\n");
+	for (parent = commit->parents; parent; parent = parent->next)
+		strbuf_addf(&msg, "parent %s\n",
+			    sha1_to_hex(parent->item->object.sha1));
+	strbuf_addf(&msg,
+		    "author %s\n"
+		    "committer %s\n\n"
+		    "Version of %s from %s\n",
+		    ident, ident, path,
+		    (!contents_from ? path :
+		     (!strcmp(contents_from, "-") ? "standard input" : contents_from)));
+	commit->buffer = strbuf_detach(&msg, NULL);
 
 	if (!contents_from || strcmp("-", contents_from)) {
 		struct stat st;
@@ -2136,7 +2204,6 @@ static struct commit *fake_working_tree_commit(struct diff_options *opt,
 	}
 	else {
 		/* Reading from stdin */
-		contents_from = "standard input";
 		mode = 0;
 		if (strbuf_read(&buf, 0, 0) < 0)
 			die_errno("failed to read from stdin");
@@ -2181,16 +2248,6 @@ static struct commit *fake_working_tree_commit(struct diff_options *opt,
 	 */
 	cache_tree_invalidate_path(active_cache_tree, path);
 
-	commit->buffer = xmalloc(400);
-	ident = fmt_ident("Not Committed Yet", "not.committed.yet", NULL, 0);
-	snprintf(commit->buffer, 400,
-		"tree 0000000000000000000000000000000000000000\n"
-		"parent %s\n"
-		"author %s\n"
-		"committer %s\n\n"
-		"Version of %s from %s\n",
-		sha1_to_hex(head_sha1),
-		ident, ident, path, contents_from ? contents_from : path);
 	return commit;
 }
 
