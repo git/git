@@ -225,13 +225,6 @@ _get_comp_words_by_ref ()
 fi
 fi
 
-# Quotes the argument for shell reuse
-__git_quote()
-{
-	local quoted=${1//\'/\'\\\'\'}
-	printf "'%s'" "$quoted"
-}
-
 # Generates completion reply with compgen, appending a space to possible
 # completion words, if necessary.
 # It accepts 1 to 4 arguments:
@@ -268,7 +261,7 @@ __gitcomp ()
 __gitcomp_nl ()
 {
 	local IFS=$'\n'
-	COMPREPLY=($(compgen -P "${2-}" -S "${4- }" -W "$(__git_quote "$1")" -- "${3-$cur}"))
+	COMPREPLY=($(compgen -P "${2-}" -S "${4- }" -W "$1" -- "${3-$cur}"))
 }
 
 __git_heads ()
