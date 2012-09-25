@@ -1452,6 +1452,50 @@ _git_notes ()
 	esac
 }
 
+_git_p4 ()
+{
+	local subcommands="
+		clone sync rebase submit
+		"
+	local subcommand="$(__git_find_on_cmdline "$subcommands")"
+	if [ -z "$subcommand" ]; then
+		__gitcomp "$subcommands"
+	else
+		local common_opts="--git-dir= --verbose"
+		local sync_opts="
+			--branch= --detect-branches --changes-file=
+			--silent --detect-labels --import-labels
+			--import-local --max-changes= --keep-path
+			--use-client-spec $common_opts
+			"
+		local clone_opts="
+			--destination= --bare $sync_opts
+			"
+		local submit_opts="
+			--origin= -M --preserve-user --export-labels
+			$common_opts
+			"
+
+		case "$subcommand,$cur" in
+		clone,--*)
+			__gitcomp "$clone_opts"
+			;;
+		sync,--*)
+			__gitcomp "$sync_opts"
+			;;
+		rebase,--*)
+			__gitcomp "$common_opts --import-labels"
+			;;
+		submit,--*)
+			__gitcomp "$submit_opts"
+			;;
+		submit,*)
+			__gitcomp "$(__git_refs)"
+			;;
+		esac
+	fi
+}
+
 _git_pull ()
 {
 	__git_complete_strategy && return
