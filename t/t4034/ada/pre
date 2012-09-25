@@ -1,0 +1,13 @@
+Ada.Text_IO.Put_Line("Hello World!");
+1 1e-10 16#FE12#E2 3.141_592 'x'
+a+b a-b
+a*b a/b
+a**b
+a(b)
+a:=b
+a=b a/= b
+a<b a<=b a>b a>=b
+a,b
+a=>b
+a..b
+a<>b
