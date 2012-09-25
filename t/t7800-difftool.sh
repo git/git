@@ -76,6 +76,17 @@ test_expect_success PERL 'custom commands' '
 	test "$diff" = "branch"
 '
 
+# Ensures that a custom difftool.<tool>.cmd overrides built-ins
+test_expect_success PERL 'custom commands override built-ins' '
+	restore_test_defaults &&
+	git config difftool.defaults.cmd "cat \$REMOTE" &&
+
+	diff=$(git difftool --tool defaults --no-prompt branch) &&
+	test "$diff" = "master" &&
+
+	git config --unset difftool.defaults.cmd
+'
+
 # Ensures that git-difftool ignores bogus --tool values
 test_expect_success PERL 'difftool ignores bad --tool values' '
 	diff=$(git difftool --no-prompt --tool=bad-tool branch)

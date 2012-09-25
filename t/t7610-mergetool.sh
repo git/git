@@ -471,4 +471,17 @@ test_expect_success 'file with no base' '
     git reset --hard master >/dev/null 2>&1
 '
 
+test_expect_success 'custom commands override built-ins' '
+    git checkout -b test14 branch1 &&
+    git config mergetool.defaults.cmd "cat \"\$REMOTE\" >\"\$MERGED\"" &&
+    git config mergetool.defaults.trustExitCode true &&
+    test_must_fail git merge master &&
+    git mergetool --no-prompt --tool defaults -- both &&
+    echo master both added >expected &&
+    test_cmp both expected &&
+    git config --unset mergetool.defaults.cmd &&
+    git config --unset mergetool.defaults.trustExitCode &&
+    git reset --hard master >/dev/null 2>&1
+'
+
 test_done
