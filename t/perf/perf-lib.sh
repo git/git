@@ -42,6 +42,7 @@ else
 fi
 
 TEST_NO_CREATE_REPO=t
+TEST_NO_MALLOC_=t
 
 . ../test-lib.sh
 
