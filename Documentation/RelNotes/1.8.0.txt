@@ -28,6 +28,8 @@ UI, Workflows & Features
  * A credential helper for Win32 to allow access to the keychain of
    the logged-in user has been added.
 
+ * An initial port to HP NonStop.
+
  * A credential helper to allow access to the Gnome keyring has been
    added.
 
@@ -84,6 +86,9 @@ Performance, Internal Implementation, etc. (please report possible regressions)
  * The "check-docs" build target has been updated and greatly
    simplified.
 
+ * The test suite is run under MALLOC_CHECK_ when running with glibc
+   that supports the feature.
+
  * The documentation in the TeXinfo format was using indented output
    for materials meant to be examples that are better typeset in
    monospace.
@@ -123,6 +128,10 @@ Fixes since v1.7.12
 Unless otherwise noted, all the fixes since v1.7.12 in the
 maintenance track are contained in this release (see release notes
 to them for details).
+
+ * When "git am" is fed an input that has multiple "Content-type: ..."
+   header, it did not grok charset= attribute correctly.
+   (merge 176943b jc/maint-mailinfo-mime-attr later to maint).
 
  * "git blame MAKEFILE" run in a history that has "Makefile" but not
    "MAKEFILE" should say "No such file MAKEFILE in HEAD", but got
