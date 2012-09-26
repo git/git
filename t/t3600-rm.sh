@@ -262,4 +262,347 @@ test_expect_success 'rm removes subdirectories recursively' '
 	! test -d dir
 '
 
+cat >expect <<EOF
+D  submod
+EOF
+
+cat >expect.modified <<EOF
+ M submod
+EOF
+
+test_expect_success 'rm removes empty submodules from work tree' '
+	mkdir submod &&
+	git update-index --add --cacheinfo 160000 $(git rev-parse HEAD) submod &&
+	git config -f .gitmodules submodule.sub.url ./. &&
+	git config -f .gitmodules submodule.sub.path submod &&
+	git submodule init &&
+	git add .gitmodules &&
+	git commit -m "add submodule" &&
+	git rm submod &&
+	test ! -e submod &&
+	git status -s -uno --ignore-submodules=none > actual &&
+	test_cmp expect actual
+'
+
+test_expect_success 'rm removes removed submodule from index' '
+	git reset --hard &&
+	git submodule update &&
+	rm -rf submod &&
+	git rm submod &&
+	git status -s -uno --ignore-submodules=none > actual &&
+	test_cmp expect actual
+'
+
+test_expect_success 'rm removes work tree of unmodified submodules' '
+	git reset --hard &&
+	git submodule update &&
+	git rm submod &&
+	test ! -d submod &&
+	git status -s -uno --ignore-submodules=none > actual &&
+	test_cmp expect actual
+'
+
+test_expect_success 'rm of a populated submodule with different HEAD fails unless forced' '
+	git reset --hard &&
+	git submodule update &&
+	(cd submod &&
+		git checkout HEAD^
+	) &&
+	test_must_fail git rm submod &&
+	test -d submod &&
+	test -f submod/.git &&
+	git status -s -uno --ignore-submodules=none > actual &&
+	test_cmp expect.modified actual &&
+	git rm -f submod &&
+	test ! -d submod &&
+	git status -s -uno --ignore-submodules=none > actual &&
+	test_cmp expect actual
+'
+
+test_expect_success 'rm of a populated submodule with modifications fails unless forced' '
+	git reset --hard &&
+	git submodule update &&
+	(cd submod &&
+		echo X >empty
+	) &&
+	test_must_fail git rm submod &&
+	test -d submod &&
+	test -f submod/.git &&
+	git status -s -uno --ignore-submodules=none > actual &&
+	test_cmp expect.modified actual &&
+	git rm -f submod &&
+	test ! -d submod &&
+	git status -s -uno --ignore-submodules=none > actual &&
+	test_cmp expect actual
+'
+
+test_expect_success 'rm of a populated submodule with untracked files fails unless forced' '
+	git reset --hard &&
+	git submodule update &&
+	(cd submod &&
+		echo X >untracked
+	) &&
+	test_must_fail git rm submod &&
+	test -d submod &&
+	test -f submod/.git &&
+	git status -s -uno --ignore-submodules=none > actual &&
+	test_cmp expect.modified actual &&
+	git rm -f submod &&
+	test ! -d submod &&
+	git status -s -uno --ignore-submodules=none > actual &&
+	test_cmp expect actual
+'
+
+test_expect_success 'setup submodule conflict' '
+	git reset --hard &&
+	git submodule update &&
+	git checkout -b branch1 &&
+	echo 1 >nitfol &&
+	git add nitfol &&
+	git commit -m "added nitfol 1" &&
+	git checkout -b branch2 master &&
+	echo 2 >nitfol &&
+	git add nitfol &&
+	git commit -m "added nitfol 2" &&
+	git checkout -b conflict1 master &&
+	(cd submod &&
+		git fetch &&
+		git checkout branch1
+	) &&
+	git add submod &&
+	git commit -m "submod 1" &&
+	git checkout -b conflict2 master &&
+	(cd submod &&
+		git checkout branch2
+	) &&
+	git add submod &&
+	git commit -m "submod 2"
+'
+
+cat >expect.conflict <<EOF
+UU submod
+EOF
+
+test_expect_success 'rm removes work tree of unmodified conflicted submodule' '
+	git checkout conflict1 &&
+	git reset --hard &&
+	git submodule update &&
+	test_must_fail git merge conflict2 &&
+	git rm submod &&
+	test ! -d submod &&
+	git status -s -uno --ignore-submodules=none > actual &&
+	test_cmp expect actual
+'
+
+test_expect_success 'rm of a conflicted populated submodule with different HEAD fails unless forced' '
+	git checkout conflict1 &&
+	git reset --hard &&
+	git submodule update &&
+	(cd submod &&
+		git checkout HEAD^
+	) &&
+	test_must_fail git merge conflict2 &&
+	test_must_fail git rm submod &&
+	test -d submod &&
+	test -f submod/.git &&
+	git status -s -uno --ignore-submodules=none > actual &&
+	test_cmp expect.conflict actual &&
+	git rm -f submod &&
+	test ! -d submod &&
+	git status -s -uno --ignore-submodules=none > actual &&
+	test_cmp expect actual
+'
+
+test_expect_success 'rm of a conflicted populated submodule with modifications fails unless forced' '
+	git checkout conflict1 &&
+	git reset --hard &&
+	git submodule update &&
+	(cd submod &&
+		echo X >empty
+	) &&
+	test_must_fail git merge conflict2 &&
+	test_must_fail git rm submod &&
+	test -d submod &&
+	test -f submod/.git &&
+	git status -s -uno --ignore-submodules=none > actual &&
+	test_cmp expect.conflict actual &&
+	git rm -f submod &&
+	test ! -d submod &&
+	git status -s -uno --ignore-submodules=none > actual &&
+	test_cmp expect actual
+'
+
+test_expect_success 'rm of a conflicted populated submodule with untracked files fails unless forced' '
+	git checkout conflict1 &&
+	git reset --hard &&
+	git submodule update &&
+	(cd submod &&
+		echo X >untracked
+	) &&
+	test_must_fail git merge conflict2 &&
+	test_must_fail git rm submod &&
+	test -d submod &&
+	test -f submod/.git &&
+	git status -s -uno --ignore-submodules=none > actual &&
+	test_cmp expect.conflict actual &&
+	git rm -f submod &&
+	test ! -d submod &&
+	git status -s -uno --ignore-submodules=none > actual &&
+	test_cmp expect actual
+'
+
+test_expect_success 'rm of a conflicted populated submodule with a .git directory fails even when forced' '
+	git checkout conflict1 &&
+	git reset --hard &&
+	git submodule update &&
+	(cd submod &&
+		rm .git &&
+		cp -a ../.git/modules/sub .git &&
+		GIT_WORK_TREE=. git config --unset core.worktree
+	) &&
+	test_must_fail git merge conflict2 &&
+	test_must_fail git rm submod &&
+	test -d submod &&
+	test -d submod/.git &&
+	git status -s -uno --ignore-submodules=none > actual &&
+	test_cmp expect.conflict actual &&
+	test_must_fail git rm -f submod &&
+	test -d submod &&
+	test -d submod/.git &&
+	git status -s -uno --ignore-submodules=none > actual &&
+	test_cmp expect.conflict actual &&
+	git merge --abort &&
+	rm -rf submod
+'
+
+test_expect_success 'rm of a conflicted unpopulated submodule succeeds' '
+	git checkout conflict1 &&
+	git reset --hard &&
+	test_must_fail git merge conflict2 &&
+	git rm submod &&
+	test ! -d submod &&
+	git status -s -uno --ignore-submodules=none > actual &&
+	test_cmp expect actual
+'
+
+test_expect_success 'rm of a populated submodule with a .git directory fails even when forced' '
+	git checkout -f master &&
+	git reset --hard &&
+	git submodule update &&
+	(cd submod &&
+		rm .git &&
+		cp -a ../.git/modules/sub .git &&
+		GIT_WORK_TREE=. git config --unset core.worktree
+	) &&
+	test_must_fail git rm submod &&
+	test -d submod &&
+	test -d submod/.git &&
+	git status -s -uno --ignore-submodules=none > actual &&
+	! test -s actual &&
+	test_must_fail git rm -f submod &&
+	test -d submod &&
+	test -d submod/.git &&
+	git status -s -uno --ignore-submodules=none > actual &&
+	! test -s actual &&
+	rm -rf submod
+'
+
+cat >expect.deepmodified <<EOF
+ M submod/subsubmod
+EOF
+
+test_expect_success 'setup subsubmodule' '
+	git reset --hard &&
+	git submodule update &&
+	(cd submod &&
+		git update-index --add --cacheinfo 160000 $(git rev-parse HEAD) subsubmod &&
+		git config -f .gitmodules submodule.sub.url ../. &&
+		git config -f .gitmodules submodule.sub.path subsubmod &&
+		git submodule init &&
+		git add .gitmodules &&
+		git commit -m "add subsubmodule" &&
+		git submodule update subsubmod
+	) &&
+	git commit -a -m "added deep submodule"
+'
+
+test_expect_success 'rm recursively removes work tree of unmodified submodules' '
+	git rm submod &&
+	test ! -d submod &&
+	git status -s -uno --ignore-submodules=none > actual &&
+	test_cmp expect actual
+'
+
+test_expect_success 'rm of a populated nested submodule with different nested HEAD fails unless forced' '
+	git reset --hard &&
+	git submodule update --recursive &&
+	(cd submod/subsubmod &&
+		git checkout HEAD^
+	) &&
+	test_must_fail git rm submod &&
+	test -d submod &&
+	test -f submod/.git &&
+	git status -s -uno --ignore-submodules=none > actual &&
+	test_cmp expect.modified actual &&
+	git rm -f submod &&
+	test ! -d submod &&
+	git status -s -uno --ignore-submodules=none > actual &&
+	test_cmp expect actual
+'
+
+test_expect_success 'rm of a populated nested submodule with nested modifications fails unless forced' '
+	git reset --hard &&
+	git submodule update --recursive &&
+	(cd submod/subsubmod &&
+		echo X >empty
+	) &&
+	test_must_fail git rm submod &&
+	test -d submod &&
+	test -f submod/.git &&
+	git status -s -uno --ignore-submodules=none > actual &&
+	test_cmp expect.modified actual &&
+	git rm -f submod &&
+	test ! -d submod &&
+	git status -s -uno --ignore-submodules=none > actual &&
+	test_cmp expect actual
+'
+
+test_expect_success 'rm of a populated nested submodule with nested untracked files fails unless forced' '
+	git reset --hard &&
+	git submodule update --recursive &&
+	(cd submod/subsubmod &&
+		echo X >untracked
+	) &&
+	test_must_fail git rm submod &&
+	test -d submod &&
+	test -f submod/.git &&
+	git status -s -uno --ignore-submodules=none > actual &&
+	test_cmp expect.modified actual &&
+	git rm -f submod &&
+	test ! -d submod &&
+	git status -s -uno --ignore-submodules=none > actual &&
+	test_cmp expect actual
+'
+
+test_expect_success 'rm of a populated nested submodule with a nested .git directory fails even when forced' '
+	git reset --hard &&
+	git submodule update --recursive &&
+	(cd submod/subsubmod &&
+		rm .git &&
+		cp -a ../../.git/modules/sub/modules/sub .git &&
+		GIT_WORK_TREE=. git config --unset core.worktree
+	) &&
+	test_must_fail git rm submod &&
+	test -d submod &&
+	test -d submod/subsubmod/.git &&
+	git status -s -uno --ignore-submodules=none > actual &&
+	! test -s actual &&
+	test_must_fail git rm -f submod &&
+	test -d submod &&
+	test -d submod/subsubmod/.git &&
+	git status -s -uno --ignore-submodules=none > actual &&
+	! test -s actual &&
+	rm -rf submod
+'
+
 test_done
