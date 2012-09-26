@@ -42,7 +42,7 @@ else
 fi
 
 TEST_NO_CREATE_REPO=t
-TEST_NO_MALLOC_=t
+TEST_NO_MALLOC_CHECK=t
 
 . ../test-lib.sh
 
