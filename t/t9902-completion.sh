@@ -269,4 +269,23 @@ test_expect_success '<ref>: completes paths' '
 	EOF
 '
 
+test_expect_success 'complete tree filename with spaces' '
+	echo content >"name with spaces" &&
+	git add . &&
+	git commit -m spaces &&
+	test_completion_long "git show HEAD:nam" <<-\EOF
+	name with spaces_
+	EOF
+'
+
+test_expect_failure 'complete tree filename with metacharacters' '
+	echo content >"name with \${meta}" &&
+	git add . &&
+	git commit -m meta &&
+	test_completion_long "git show HEAD:nam" <<-\EOF
+	name with ${meta}_
+	name with spaces_
+	EOF
+'
+
 test_done
