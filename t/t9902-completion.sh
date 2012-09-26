@@ -61,6 +61,15 @@ test_completion ()
 	test_cmp expected out
 }
 
+# Like test_completion, but reads expectation from stdin,
+# which is convenient when it is multiline. We also process "_" into
+# spaces to make test vectors more readable.
+test_completion_long ()
+{
+	tr _ " " >expected &&
+	test_completion "$1"
+}
+
 newline=$'\n'
 
 test_expect_success '__gitcomp - trailing space - options' '
@@ -226,6 +235,38 @@ test_expect_success 'general options plus command' '
 	test_completion "git --paginate check" "checkout " &&
 	test_completion "git --info-path check" "checkout " &&
 	test_completion "git --no-replace-objects check" "checkout "
+'
+
+test_expect_success 'setup for ref completion' '
+	echo content >file1 &&
+	echo more >file2 &&
+	git add . &&
+	git commit -m one &&
+	git branch mybranch &&
+	git tag mytag
+'
+
+test_expect_success 'checkout completes ref names' '
+	test_completion_long "git checkout m" <<-\EOF
+	master_
+	mybranch_
+	mytag_
+	EOF
+'
+
+test_expect_success 'show completes all refs' '
+	test_completion_long "git show m" <<-\EOF
+	master_
+	mybranch_
+	mytag_
+	EOF
+'
+
+test_expect_success '<ref>: completes paths' '
+	test_completion_long "git show mytag:f" <<-\EOF
+	file1_
+	file2_
+	EOF
 '
 
 test_done
