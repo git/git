@@ -89,7 +89,7 @@ test_expect_success 'push with !receive.fsckobjects' '
 
 cat >exp <<EOF
 To dst
-!	refs/heads/master:refs/heads/test	[remote rejected] (n/a (unpacker error))
+!	refs/heads/master:refs/heads/test	[remote rejected] (unpacker error)
 EOF
 
 test_expect_success 'push with receive.fsckobjects' '
