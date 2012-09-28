@@ -104,11 +104,47 @@ run_merge_tool () {
 
 	if merge_mode
 	then
-		merge_cmd "$1"
+		run_merge_cmd "$1"
+	else
+		run_diff_cmd "$1"
+	fi
+	return $status
+}
+
+# Run a either a configured or built-in diff tool
+run_diff_cmd () {
+	merge_tool_cmd="$(get_merge_tool_cmd "$1")"
+	if test -n "$merge_tool_cmd"
+	then
+		( eval $merge_tool_cmd )
+		status=$?
+		return $status
 	else
 		diff_cmd "$1"
 	fi
-	return $status
+}
+
+# Run a either a configured or built-in merge tool
+run_merge_cmd () {
+	merge_tool_cmd="$(get_merge_tool_cmd "$1")"
+	if test -n "$merge_tool_cmd"
+	then
+		trust_exit_code="$(git config --bool \
+			mergetool."$1".trustExitCode || echo false)"
+		if test "$trust_exit_code" = "false"
+		then
+			touch "$BACKUP"
+			( eval $merge_tool_cmd )
+			status=$?
+			check_unchanged
+		else
+			( eval $merge_tool_cmd )
+			status=$?
+		fi
+		return $status
+	else
+		merge_cmd "$1"
+	fi
 }
 
 list_merge_tool_candidates () {
