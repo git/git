@@ -1,10 +1,10 @@
 To: git@vger.kernel.org
 Bcc: lwn@lwn.net
-Subject: What's cooking in git.git (Sep 2012, #08; Mon, 24)
-X-master-at: b5d156c3622fa522966034c78fd6ed9a15504d46
-X-next-at: 95625d7562adfba98aa40d9772312bb3c2d92b7f
+Subject: What's cooking in git.git (Sep 2012, #09; Thu, 27)
+X-master-at: 652398a88e7c3d18b6820a2ae369b05d26dc757f
+X-next-at: 5cd6968fc9aa20f71c937328858b2c046ca49038
 
-What's cooking in git.git (Sep 2012, #08; Mon, 24)
+What's cooking in git.git (Sep 2012, #09; Thu, 27)
 --------------------------------------------------
 
 Here are the topics that have been cooking.  Commits prefixed with
@@ -27,40 +27,140 @@ repositories listed at
 --------------------------------------------------
 [New Topics]
 
-* jc/blame-no-follow (2012-09-21) 2 commits
- - blame: pay attention to --no-follow
- - diff: accept --no-follow option
- (this branch uses jc/blame-follows-renames.)
+* da/mergetool-custom (2012-09-25) 1 commit
+  (merged to 'next' on 2012-09-27 at f910851)
+ + mergetool--lib: Allow custom commands to override built-ins
 
- Teaches "--no-follow" option to "git blame" to disable its
- whole-file rename detection.
-
- Any comments?
-
-
-* os/commit-submodule-ignore (2012-09-24) 1 commit
- - commit: pay attention to submodule.$name.ignore in .gitmodules
-
- "git status" honored the ignore=dirty settings in .gitmodules but
- "git commit" didn't.
+ The actual external command to run for mergetool backend can be
+ specified with difftool/mergetool.$name.cmd configuration
+ variables, but this mechanism was ignored for the backends we
+ natively support.
 
 
-* rc/maint-complete-git-p4 (2012-09-24) 1 commit
- - Teach git-completion about git p4
+* mk/maint-graph-infinity-loop (2012-09-25) 1 commit
+ - graph.c: infinite loop in git whatchanged --graph -m
 
- Will merge to 'next'.
+ The --graph code fell into infinite loop when asked to do what the
+ code did not expect ;-)
+
+ Anybody who worked on --graph wants to comment?
 
 
-* rr/maint-submodule-unknown-cmd (2012-09-24) 2 commits
- - [SQUASH] adjust test and doc to "git submodule no-such-subcommand"
- - submodule: if $command was not matched, don't parse other args
+* rr/test-use-shell-path-not-shell (2012-09-25) 1 commit
+  (merged to 'next' on 2012-09-27 at 3a1848f)
+ + test-lib: use $SHELL_PATH, not $SHELL
 
- Will merge to 'next' after squashing the tip.
+ Fixes a brown-paper bag bug.
+
+ Will merge to 'master'.
+
+
+* tu/gc-auto-quiet (2012-09-27) 1 commit
+ - silence git gc --auto --quiet output
+
+
+* jk/completion-tests (2012-09-27) 2 commits
+  (merged to 'next' on 2012-09-27 at 5cd6968)
+ + t9902: add completion tests for "odd" filenames
+ + t9902: add a few basic completion tests
+
+
+* jk/lua-hackery (2012-09-25) 5 commits
+ - Minimum compilation fixup
+ - Makefile: make "lua" a bit more configurable
+ - add a "lua" pretty format
+ - add basic lua infrastructure
+ - pretty: make some commit-parsing helpers more public
+
+
+* jm/diff-context-config (2012-09-27) 2 commits
+ - [SQUASH] test fixups
+ - diff: diff.context configuration gives default to -U
+
+
+* mh/ceiling (2012-09-27) 8 commits
+ - t1504: stop resolving symlinks in GIT_CEILING_DIRECTORIES
+ - longest_ancestor_length(): resolve symlinks before comparing paths
+ - longest_ancestor_length(): use string_list_longest_prefix()
+ - longest_ancestor_length(): always add a slash to the end of prefixes
+ - longest_ancestor_length(): explicitly filter list before loop
+ - longest_ancestor_length(): use string_list_split()
+ - Introduce new function real_path_if_valid()
+ - Introduce new static function real_path_internal()
+
+--------------------------------------------------
+[Graduated to "master"]
+
+* ep/malloc-check-perturb (2012-09-26) 1 commit
+  (merged to 'next' on 2012-09-27 at f115b8b)
+ + MALLOC_CHECK: enable it, unless disabled explicitly
+
+ Run our test scripts with MALLOC_CHECK_ and MALLOC_PERTURB_, the
+ built-in memory access checking facility GNU libc has.
+
+ There is a brown-paper bug, whose fix is not yet in 'master' but in
+ 'next'.
+
+
+* aj/xfuncname-ada (2012-09-16) 1 commit
+  (merged to 'next' on 2012-09-24 at 99fcbb3)
+ + Add userdiff patterns for Ada
+
+
+* db/doc-custom-xmlto (2012-09-19) 1 commit
+  (merged to 'next' on 2012-09-24 at efcfec1)
+ + Documentation/Makefile: Allow custom XMLTO binary
+
+
+* jc/maint-mailinfo-mime-attr (2012-09-17) 1 commit
+  (merged to 'next' on 2012-09-24 at c551c9f)
+ + mailinfo: do not concatenate charset= attribute values from mime headers
+
+ When "git am" is fed an input that has multiple "Content-type: ..."
+ header, it did not grok charset= attribute correctly.
+
+
+* js/hp-nonstop (2012-09-19) 1 commit
+  (merged to 'next' on 2012-09-24 at 283ac87)
+ + Port to HP NonStop
+ (this branch uses js/poll-emu.)
+
+ Port to HP NonStop aka Tandem.
+
+
+* js/poll-emu (2012-09-17) 4 commits
+  (merged to 'next' on 2012-09-24 at 32e1601)
+ + make poll() work on platforms that can't recv() on a non-socket
+ + poll() exits too early with EFAULT if 1st arg is NULL
+ + fix some win32 specific dependencies in poll.c
+ + make poll available for other platforms lacking it
+ (this branch is used by js/hp-nonstop.)
+
+
+* po/maint-docs (2012-09-19) 5 commits
+  (merged to 'next' on 2012-09-24 at 9df3935)
+ + Doc branch: show -vv option and alternative
+ + Doc clean: add See Also link
+ + Doc add: link gitignore
+ + Doc: separate gitignore pattern sources
+ + Doc: shallow clone deepens _to_ new depth
+
+ Various documentation fixups.
+
+
+* rr/test-make-sure-we-have-git (2012-09-18) 1 commit
+  (merged to 'next' on 2012-09-24 at 9e8d28d)
+ + t/test-lib: make sure Git has already been built
+
+ Only the first test t0000 in the test suite made sure we have built
+ Git to be tested; move the check to test-lib so that it applies to
+ all tests equally.
 
 --------------------------------------------------
 [Stalled]
 
-* as/check-ignore (2012-09-24) 16 commits
+* as/check-ignore (2012-09-27) 17 commits
+ - [SQUASH-FIX] 283d072 (Add git-check-ignore sub-command, 2012-09-20)
  - [SQUASH-FIX] 283d072 (Add git-check-ignore sub-command, 2012-09-20)
  - [REROLL NEEDED] minimum compilation fix
  - Add git-check-ignore sub-command
@@ -78,7 +178,6 @@ repositories listed at
  - Improve documentation and comments regarding directory traversal API
  - Update directory listing API doc to match code
 
- Rerolled.
  Expecting a further reroll to follow-up review comments.
 
 
@@ -129,20 +228,6 @@ repositories listed at
 
  A GSoC project.
  Waiting for comments from mentors and stakeholders.
-
-
-* jl/submodule-rm (2012-08-27) 1 commit
- - Teach rm to remove submodules unless they contain a git directory
-
- "git rm submodule" cannot blindly remove a submodule directory as
- its working tree may have local changes, and worse yet, it may even
- have its repository embedded in it.  Teach it some special cases
- where it is safe to remove a submodule, specifically, when there is
- no local changes in the submodule working tree, and its repository
- is not embedded in its working tree but is elsewhere and uses the
- gitfile mechanism to point at it.
-
- Replacement sent but was still iffy around conflicted merge cases.
 
 
 * ph/credential-refactor (2012-09-02) 5 commits
@@ -260,50 +345,69 @@ repositories listed at
 --------------------------------------------------
 [Cooking]
 
+* jl/submodule-rm (2012-09-27) 1 commit
+ - Teach rm to remove submodules unless they contain a git directory
+
+ "git rm submodule" cannot blindly remove a submodule directory as
+ its working tree may have local changes, and worse yet, it may even
+ have its repository embedded in it.  Teach it some special cases
+ where it is safe to remove a submodule, specifically, when there is
+ no local changes in the submodule working tree, and its repository
+ is not embedded in its working tree but is elsewhere and uses the
+ gitfile mechanism to point at it.
+
+
+* nd/wildmatch (2012-09-27) 5 commits
+ - Support "**" in .gitignore and .gitattributes patterns using wildmatch()
+ - Integrate wildmatch to git
+ - compat/wildmatch: fix case-insensitive matching
+ - compat/wildmatch: remove static variable force_lower_case
+ - Import wildmatch from rsync
+
+ Allows pathname patterns in .gitignore and .gitattributes files
+ with double-asterisks "foo/**/bar" to match any number of directory
+ hiearchies.
+
+ It was pointed out that some symbols that do not have to be global
+ are left global. I think this reroll fixed most of them.
+
+
+* jc/blame-no-follow (2012-09-21) 2 commits
+ - blame: pay attention to --no-follow
+ - diff: accept --no-follow option
+ (this branch uses jc/blame-follows-renames.)
+
+ Teaches "--no-follow" option to "git blame" to disable its
+ whole-file rename detection.
+
+ Any comments?
+
+
+* os/commit-submodule-ignore (2012-09-24) 1 commit
+  (merged to 'next' on 2012-09-27 at 9cd2cfd)
+ + commit: pay attention to submodule.$name.ignore in .gitmodules
+
+ "git status" honored the ignore=dirty settings in .gitmodules but
+ "git commit" didn't.
+
+
+* rc/maint-complete-git-p4 (2012-09-24) 1 commit
+  (merged to 'next' on 2012-09-25 at 116e58f)
+ + Teach git-completion about git p4
+
+ Comment from Pete will need to be addressed in a follow-up patch.
+
+
+* rr/maint-submodule-unknown-cmd (2012-09-25) 1 commit
+  (merged to 'next' on 2012-09-25 at 4bb1bc4)
+ + submodule: if $command was not matched, don't parse other args
+
+ Will merge to 'master'.
+
+
 * js/rebase-exec-command-not-found (2012-09-18) 1 commit
   (merged to 'next' on 2012-09-24 at ed5b048)
  + rebase -i: fix misleading error message after 'exec no-such' instruction
-
- Will merge to 'master'.
-
-
-* rr/test-make-sure-we-have-git (2012-09-18) 1 commit
-  (merged to 'next' on 2012-09-24 at 9e8d28d)
- + t/test-lib: make sure Git has already been built
-
- Only the first test t0000 in the test suite made sure we have built
- Git to be tested; move the check to test-lib so that it applies to
- all tests equally.
-
- Will merge to 'master'.
-
-
-* db/doc-custom-xmlto (2012-09-19) 1 commit
-  (merged to 'next' on 2012-09-24 at efcfec1)
- + Documentation/Makefile: Allow custom XMLTO binary
-
- Will merge to 'master'.
-
-
-* js/hp-nonstop (2012-09-19) 1 commit
-  (merged to 'next' on 2012-09-24 at 283ac87)
- + Port to HP NonStop
- (this branch uses js/poll-emu.)
-
- Port to HP NonStop aka Tandem.
-
- Will merge to 'master'.
-
-
-* po/maint-docs (2012-09-19) 5 commits
-  (merged to 'next' on 2012-09-24 at 9df3935)
- + Doc branch: show -vv option and alternative
- + Doc clean: add See Also link
- + Doc add: link gitignore
- + Doc: separate gitignore pattern sources
- + Doc: shallow clone deepens _to_ new depth
-
- Various documentation fixups.
 
  Will merge to 'master'.
 
@@ -350,19 +454,19 @@ repositories listed at
 
 
 * jk/receive-pack-unpack-error-to-pusher (2012-09-21) 3 commits
- - receive-pack: drop "n/a" on unpacker errors
- - receive-pack: send pack-processing stderr over sideband
- - receive-pack: redirect unpack-objects stdout to /dev/null
+  (merged to 'next' on 2012-09-27 at 90f0c6f)
+ + receive-pack: drop "n/a" on unpacker errors
+ + receive-pack: send pack-processing stderr over sideband
+ + receive-pack: redirect unpack-objects stdout to /dev/null
 
  Send errors from "unpack-objects" and "index-pack" back to the "git
  push" over the git and smart-http protocols, just like it is done
  for a push over the ssh protocol.
 
- Will merge to 'next'.
-
 
 * jc/blame-follows-renames (2012-09-21) 1 commit
- - git blame: document that it always follows origin across whole-file renames
+  (merged to 'next' on 2012-09-27 at 12634c1)
+ + git blame: document that it always follows origin across whole-file renames
  (this branch is used by jc/blame-no-follow.)
 
  Clarify the "blame" documentation to tell the users that there is
@@ -370,30 +474,11 @@ repositories listed at
 
 
 * rt/maint-clone-single (2012-09-20) 1 commit
- - clone --single: limit the fetch refspec to fetched branch
+  (merged to 'next' on 2012-09-27 at a47d54d)
+ + clone --single: limit the fetch refspec to fetched branch
 
  Running "git fetch" in a repository made with "git clone --single"
  slurps all the branches, defeating the point of "--single".
-
- Will merge to 'next'.
-
-
-* ep/malloc-check-perturb (2012-09-17) 2 commits
-  (merged to 'next' on 2012-09-24 at c490ea5)
- + MALLOC_CHECK: various clean-ups
- + Add MALLOC_CHECK_ and MALLOC_PERTURB_ libc env to the test suite for detecting heap corruption
-
- Run our test scripts with MALLOC_CHECK_ and MALLOC_PERTURB_, the
- built-in memory access checking facility GNU libc has.
-
- Will merge to 'master'.
-
-
-* aj/xfuncname-ada (2012-09-16) 1 commit
-  (merged to 'next' on 2012-09-24 at 99fcbb3)
- + Add userdiff patterns for Ada
-
- Will merge to 'master'.
 
 
 * aw/rebase-i-edit-todo (2012-09-19) 5 commits
@@ -405,43 +490,6 @@ repositories listed at
  + rebase usage: subcommands can not be combined with -i
 
  Will merge to 'master'.
-
-
-* jc/maint-mailinfo-mime-attr (2012-09-17) 1 commit
-  (merged to 'next' on 2012-09-24 at c551c9f)
- + mailinfo: do not concatenate charset= attribute values from mime headers
-
- When "git am" is fed an input that has multiple "Content-type: ..."
- header, it did not grok charset= attribute correctly.
-
- Will merge to 'master'.
-
-
-* js/poll-emu (2012-09-17) 4 commits
-  (merged to 'next' on 2012-09-24 at 32e1601)
- + make poll() work on platforms that can't recv() on a non-socket
- + poll() exits too early with EFAULT if 1st arg is NULL
- + fix some win32 specific dependencies in poll.c
- + make poll available for other platforms lacking it
- (this branch is used by js/hp-nonstop.)
-
- Will merge to 'master'.
-
-
-* nd/wildmatch (2012-09-17) 5 commits
- - Support "**" in .gitignore and .gitattributes patterns using wildmatch()
- - Integrate wildmatch to git
- - compat/wildmatch: fix case-insensitive matching
- - compat/wildmatch: remove static variable force_lower_case
- - Import wildmatch from rsync
-
- Allows pathname patterns in .gitignore and .gitattributes files
- with double-asterisks "foo/**/bar" to match any number of directory
- hiearchies.
-
- It was pointed out that some symbols that do not have to be global
- are left global.
- Will wait for a reroll.
 
 
 * jc/maint-name-rev (2012-09-17) 7 commits
@@ -494,44 +542,3 @@ repositories listed at
 
  Will defer until the end of the 2012.
  while waiting for older "less" to go extinct.
-
---------------------------------------------------
-[Discarded]
-
-* tg/index-v5 (2012-08-17) 13 commits
- . p0002-index.sh: add perf test for the index formats
- . update-index.c: rewrite index when index-version is given
- . Write resolve-undo data for index-v5
- . Write index-v5 cache-tree data
- . Write index-v5
- . Read cache-tree in index-v5
- . Read resolve-undo data
- . Read index-v5
- . Make in-memory format aware of stat_crc
- . Add documentation of the index-v5 file format
- . t2104: Don't fail for index versions other than [23]
- . read-cache.c: Re-read index if index file changed
- . Move index v2 specific functions to their own file
-
- A GSoC project.  Was waiting for comments from mentors and
- stakeholders, but nothing seems to be happening, other than breakage
- fixes on Cygwin.
-
- Discarded without prejudice.
-
-
-* mz/rebase-range (2012-07-18) 7 commits
- . rebase (without -p): correctly calculate patches to rebase
- . rebase -p: don't request --left-right only to ignore left side
- . rebase -p: use --cherry-mark for todo file
- . git-rebase--interactive.sh: look up subject in add_pick_line
- . git-rebase--interactive: group all $preserve_merges code
- . git-rebase--interactive.sh: extract function for adding "pick" line
- . git-rebase--am.sh: avoid special-casing --keep-empty
-
- Expecting a reroll.
-
- Performance concerns from Windows folks.  Also the series lacks
- proper sign-offs.
-
- Discarded without prejudice.
