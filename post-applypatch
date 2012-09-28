@@ -22,7 +22,7 @@ message_id=$(sed -ne '
 	}
 	# Hold this new line, and look at what is in the hold space
 	x
-	# Is it the Message-ID line?  If so, spit out and finish.
+	# Is it the Message-ID line?  If so, spit it out and finish.
 	/^[Mm][Ee][Ss][Ss][Aa][Gg][Ee]-[Ii][Dd]:[ 	]*/{
 		s///p
 		q
@@ -36,6 +36,8 @@ message_id=$(sed -ne '
 	# And start the next cycle
 	b
 : end
+	# ??? do we want to check if we held onto the last message-id line
+	# and process it here if we did???
 	q
 ' "$dotest/$msgnum") &&
 
@@ -43,7 +45,11 @@ if	test -n "$message_id" &&
 	head=$(git rev-parse --verify HEAD 2>/dev/null)
 then
 	echo "$head $message_id" >>"$GIT_DIR"/am.log &&
-	GIT_NOTES_REF=refs/notes/amlog \
+	(
+		GIT_NOTES_REF=refs/notes/amlog
+		export GIT_NOTES_REF
 		git notes add -f -m "Message-Id: $message_id" "$head"
+		blob=$(git notes list "$head") &&
+		git notes append -m "$head" $blob
+	)
 fi
-

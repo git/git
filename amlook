@@ -5,8 +5,19 @@
 # Meta/amlook --gc
 
 find_commit () {
-	in=
-	commits=$(sed -ne "s|^\([0-9a-f]\{40\}\) $1|\1|p" .git/am.log)
+	in= commits=
+
+	if test -z "$commits"
+	then
+		blob=$(echo "Message-Id: $1" | git hash-object --stdin)
+		commits=$(git notes --ref amlog show $blob | sed -e '/^$/d')
+	fi
+
+	if test -z "$commits"
+	then
+		commits=$(sed -ne "s|^\([0-9a-f]\{40\}\) $1|\1|p" .git/am.log)
+	fi
+
 	if test -z "$commits"
 	then
 		# I know I know there should be "notes grep" command...
@@ -15,11 +26,13 @@ find_commit () {
 			sed -e 's|^notes/amlog:||' -e 's|/||g'
 		)
 	fi
+
 	if test -z "$commits"
 	then
 		echo "Never applied"
 		return
 	fi
+
 	found=$(
 		echo "$commits" |
 		while read commit
