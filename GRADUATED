@@ -58,7 +58,7 @@ do
 		echo "# Graduated to both $m $and_or_thru master"
 		while read branch
 		do
-			d=$(git describe $branch)
+			d=$(git describe --always $branch)
 			echo "$(git show -s --format='%ct' "$branch") $branch ;# $d"
 		done <"$tmp.both" |
 		sort -r -n |
