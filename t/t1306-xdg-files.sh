@@ -15,7 +15,7 @@ test_expect_success 'read config: xdg file exists and ~/.gitconfig doesn'\''t' '
 	echo "	myalias = !echo in_config" >>.config/git/config &&
 	echo in_config >expected &&
 	git myalias >actual &&
-	test_cmp expected actual
+	test_cmp_text expected actual
 '
 
 
@@ -25,7 +25,7 @@ test_expect_success 'read config: xdg file exists and ~/.gitconfig exists' '
 	echo "	myalias = !echo in_gitconfig" >>.gitconfig &&
 	echo in_gitconfig >expected &&
 	git myalias >actual &&
-	test_cmp expected actual
+	test_cmp_text expected actual
 '
 
 
