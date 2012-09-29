@@ -30,6 +30,7 @@ enum grep_context {
 enum grep_header_field {
 	GREP_HEADER_AUTHOR = 0,
 	GREP_HEADER_COMMITTER,
+	GREP_HEADER_REFLOG,
 
 	/* Must be at the end of the enum */
 	GREP_HEADER_FIELD_MAX

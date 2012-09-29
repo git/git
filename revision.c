@@ -1595,6 +1595,9 @@ static int handle_revision_opt(struct rev_info *revs, int argc, const char **arg
 	} else if ((argcount = parse_long_opt("committer", argv, &optarg))) {
 		add_header_grep(revs, GREP_HEADER_COMMITTER, optarg);
 		return argcount;
+	} else if ((argcount = parse_long_opt("grep-reflog", argv, &optarg))) {
+		add_header_grep(revs, GREP_HEADER_REFLOG, optarg);
+		return argcount;
 	} else if ((argcount = parse_long_opt("grep", argv, &optarg))) {
 		add_message_grep(revs, optarg);
 		return argcount;
@@ -2210,10 +2213,23 @@ static int rewrite_parents(struct rev_info *revs, struct commit *commit)
 
 static int commit_match(struct commit *commit, struct rev_info *opt)
 {
+	int retval;
+	struct strbuf buf = STRBUF_INIT;
 	if (!opt->grep_filter.pattern_list && !opt->grep_filter.header_list)
 		return 1;
-	return grep_buffer(&opt->grep_filter,
-			   commit->buffer, strlen(commit->buffer));
+	if (opt->reflog_info) {
+		strbuf_addstr(&buf, "reflog ");
+		get_reflog_message(&buf, opt->reflog_info);
+		strbuf_addch(&buf, '\n');
+		strbuf_addstr(&buf, commit->buffer);
+	}
+	if (buf.len)
+		retval = grep_buffer(&opt->grep_filter, buf.buf, buf.len);
+	else
+		retval = grep_buffer(&opt->grep_filter,
+				     commit->buffer, strlen(commit->buffer));
+	strbuf_release(&buf);
+	return retval;
 }
 
 static inline int want_ancestry(struct rev_info *revs)

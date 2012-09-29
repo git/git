@@ -697,6 +697,7 @@ static struct {
 } header_field[] = {
 	{ "author ", 7 },
 	{ "committer ", 10 },
+	{ "reflog ", 7 },
 };
 
 static int match_one_pattern(struct grep_pat *p, char *bol, char *eol,
