@@ -1908,6 +1908,8 @@ int setup_revisions(int argc, const char **argv, struct rev_info *revs, struct s
 
 	if (revs->reflog_info && revs->graph)
 		die("cannot combine --walk-reflogs with --graph");
+	if (!revs->reflog_info && revs->grep_filter.use_reflog_filter)
+		die("cannot use --grep-reflog without --walk-reflogs");
 
 	return left;
 }
@@ -2217,12 +2219,19 @@ static int commit_match(struct commit *commit, struct rev_info *opt)
 	struct strbuf buf = STRBUF_INIT;
 	if (!opt->grep_filter.pattern_list && !opt->grep_filter.header_list)
 		return 1;
-	if (opt->reflog_info) {
+
+	/* Prepend "fake" headers as needed */
+	if (opt->grep_filter.use_reflog_filter) {
 		strbuf_addstr(&buf, "reflog ");
 		get_reflog_message(&buf, opt->reflog_info);
 		strbuf_addch(&buf, '\n');
-		strbuf_addstr(&buf, commit->buffer);
 	}
+
+	/* Copy the commit to temporary if we are using "fake" headers */
+	if (buf.len)
+		strbuf_addstr(&buf, commit->buffer);
+
+	/* Find either in the commit object, or in the temporary */
 	if (buf.len)
 		retval = grep_buffer(&opt->grep_filter, buf.buf, buf.len);
 	else

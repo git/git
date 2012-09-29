@@ -572,6 +572,10 @@ test_expect_success 'log grep (9)' '
 	test_cmp expect actual
 '
 
+test_expect_success 'log --grep-reflog can only be used under -g' '
+	test_must_fail git log --grep-reflog="commit: third"
+'
+
 test_expect_success 'log with multiple --grep uses union' '
 	git log --grep=i --grep=r --format=%s >actual &&
 	{

@@ -56,8 +56,8 @@ endif::git-rev-list[]
 	Limit the commits output to ones with reflog entries that
 	match the specified pattern (regular expression). With
 	more than one `--grep-reflog`, commits whose reflog message
-	matches any of the given patterns are chosen. Ignored unless
-	`--walk-reflogs` is given.
+	matches any of the given patterns are chosen.  It is an
+	error to use this option unless `--walk-reflogs` is in use.
 
 --grep=<pattern>::
 
