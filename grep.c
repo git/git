@@ -720,7 +720,14 @@ static int match_one_pattern(struct grep_pat *p, char *bol, char *eol,
 		if (strncmp(bol, field, len))
 			return 0;
 		bol += len;
-		saved_ch = strip_timestamp(bol, &eol);
+		switch (p->field) {
+		case GREP_HEADER_AUTHOR:
+		case GREP_HEADER_COMMITTER:
+			saved_ch = strip_timestamp(bol, &eol);
+			break;
+		default:
+			break;
+		}
 	}
 
  again:

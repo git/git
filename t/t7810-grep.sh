@@ -628,6 +628,18 @@ test_expect_success 'log --all-match --grep --grep --author takes intersection' 
 	test_cmp expect actual
 '
 
+test_expect_success 'log --author does not search in timestamp' '
+	: >expect &&
+	git log --author="$GIT_AUTHOR_DATE" >actual &&
+	test_cmp expect actual
+'
+
+test_expect_success 'log --committer does not search in timestamp' '
+	: >expect &&
+	git log --committer="$GIT_COMMITTER_DATE" >actual &&
+	test_cmp expect actual
+'
+
 test_expect_success 'grep with CE_VALID file' '
 	git update-index --assume-unchanged t/t &&
 	rm t/t &&

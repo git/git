@@ -29,9 +29,11 @@ enum grep_context {
 
 enum grep_header_field {
 	GREP_HEADER_AUTHOR = 0,
-	GREP_HEADER_COMMITTER
+	GREP_HEADER_COMMITTER,
+
+	/* Must be at the end of the enum */
+	GREP_HEADER_FIELD_MAX
 };
-#define GREP_HEADER_FIELD_MAX (GREP_HEADER_COMMITTER + 1)
 
 struct grep_pat {
 	struct grep_pat *next;
