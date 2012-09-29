@@ -681,4 +681,49 @@ test_expect_success 'moving the superproject does not break submodules' '
 	)
 '
 
+test_expect_success 'submodule add --name allows to replace a submodule with another at the same path' '
+	(
+		cd addtest2 &&
+		(
+			cd repo &&
+			echo "$submodurl/repo" >expect &&
+			git config remote.origin.url >actual &&
+			test_cmp expect actual &&
+			echo "gitdir: ../.git/modules/repo" >expect &&
+			test_cmp expect .git
+		) &&
+		rm -rf repo &&
+		git rm repo &&
+		git submodule add -q --name repo_new "$submodurl/bare.git" repo >actual &&
+		test ! -s actual &&
+		echo "gitdir: ../.git/modules/submod" >expect &&
+		test_cmp expect submod/.git &&
+		(
+			cd repo &&
+			echo "$submodurl/bare.git" >expect &&
+			git config remote.origin.url >actual &&
+			test_cmp expect actual &&
+			echo "gitdir: ../.git/modules/repo_new" >expect &&
+			test_cmp expect .git
+		) &&
+		echo "repo" >expect &&
+		git config -f .gitmodules submodule.repo.path >actual &&
+		test_cmp expect actual &&
+		git config -f .gitmodules submodule.repo_new.path >actual &&
+		test_cmp expect actual&&
+		echo "$submodurl/repo" >expect &&
+		git config -f .gitmodules submodule.repo.url >actual &&
+		test_cmp expect actual &&
+		echo "$submodurl/bare.git" >expect &&
+		git config -f .gitmodules submodule.repo_new.url >actual &&
+		test_cmp expect actual &&
+		echo "$submodurl/repo" >expect &&
+		git config submodule.repo.url >actual &&
+		test_cmp expect actual &&
+		echo "$submodurl/bare.git" >expect &&
+		git config submodule.repo_new.url >actual &&
+		test_cmp expect actual
+	)
+'
+
 test_done

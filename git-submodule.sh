@@ -5,7 +5,7 @@
 # Copyright (c) 2007 Lars Hjemli
 
 dashless=$(basename "$0" | sed -e 's/-/ /')
-USAGE="[--quiet] add [-b branch] [-f|--force] [--reference <repository>] [--] <repository> [<path>]
+USAGE="[--quiet] add [-b branch] [-f|--force] [--name <name>] [--reference <repository>] [--] <repository> [<path>]
    or: $dashless [--quiet] status [--cached] [--recursive] [--] [<path>...]
    or: $dashless [--quiet] init [--] [<path>...]
    or: $dashless [--quiet] update [--init] [-N|--no-fetch] [-f|--force] [--rebase] [--reference <repository>] [--merge] [--recursive] [--] [<path>...]
@@ -29,6 +29,7 @@ files=
 nofetch=
 update=
 prefix=
+custom_name=
 
 # The function takes at most 2 arguments. The first argument is the
 # URL that navigates to the submodule origin repo. When relative, this URL
@@ -179,8 +180,9 @@ module_name()
 module_clone()
 {
 	sm_path=$1
-	url=$2
-	reference="$3"
+	name=$2
+	url=$3
+	reference="$4"
 	quiet=
 	if test -n "$GIT_QUIET"
 	then
@@ -189,8 +191,6 @@ module_clone()
 
 	gitdir=
 	gitdir_base=
-	name=$(module_name "$sm_path" 2>/dev/null)
-	test -n "$name" || name="$sm_path"
 	base_name=$(dirname "$name")
 
 	gitdir=$(git rev-parse --git-dir)
@@ -272,6 +272,11 @@ cmd_add()
 			reference="$1"
 			shift
 			;;
+		--name)
+			case "$2" in '') usage ;; esac
+			custom_name=$2
+			shift
+			;;
 		--)
 			shift
 			break
@@ -336,6 +341,13 @@ Use -f if you really want to add it." >&2
 		exit 1
 	fi
 
+	if test -n "$custom_name"
+	then
+		sm_name="$custom_name"
+	else
+		sm_name="$sm_path"
+	fi
+
 	# perhaps the path exists and is already a git repo, else clone it
 	if test -e "$sm_path"
 	then
@@ -348,7 +360,7 @@ Use -f if you really want to add it." >&2
 
 	else
 
-		module_clone "$sm_path" "$realrepo" "$reference" || exit
+		module_clone "$sm_path" "$sm_name" "$realrepo" "$reference" || exit
 		(
 			clear_local_git_env
 			cd "$sm_path" &&
@@ -359,13 +371,13 @@ Use -f if you really want to add it." >&2
 			esac
 		) || die "$(eval_gettext "Unable to checkout submodule '\$sm_path'")"
 	fi
-	git config submodule."$sm_path".url "$realrepo"
+	git config submodule."$sm_name".url "$realrepo"
 
 	git add $force "$sm_path" ||
 	die "$(eval_gettext "Failed to add submodule '\$sm_path'")"
 
-	git config -f .gitmodules submodule."$sm_path".path "$sm_path" &&
-	git config -f .gitmodules submodule."$sm_path".url "$repo" &&
+	git config -f .gitmodules submodule."$sm_name".path "$sm_path" &&
+	git config -f .gitmodules submodule."$sm_name".url "$repo" &&
 	git add --force .gitmodules ||
 	die "$(eval_gettext "Failed to register submodule '\$sm_path'")"
 }
@@ -594,7 +606,7 @@ Maybe you want to use 'update --init'?")"
 
 		if ! test -d "$sm_path"/.git -o -f "$sm_path"/.git
 		then
-			module_clone "$sm_path" "$url" "$reference"|| exit
+			module_clone "$sm_path" "$name" "$url" "$reference" || exit
 			cloned_modules="$cloned_modules;$name"
 			subsha1=
 		else
