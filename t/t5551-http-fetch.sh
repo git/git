@@ -130,6 +130,18 @@ test_expect_success 'clone from auth-only-for-push repository' '
 	test_cmp expect actual
 '
 
+test_expect_success 'disable dumb http on server' '
+	git --git-dir="$HTTPD_DOCUMENT_ROOT_PATH/repo.git" \
+		config http.getanyfile false
+'
+
+test_expect_success 'GIT_SMART_HTTP can disable smart http' '
+	(GIT_SMART_HTTP=0 &&
+	 export GIT_SMART_HTTP &&
+	 cd clone &&
+	 test_must_fail git fetch)
+'
+
 test -n "$GIT_TEST_LONG" && test_set_prereq EXPENSIVE
 
 test_expect_success EXPENSIVE 'create 50,000 tags in the repo' '
