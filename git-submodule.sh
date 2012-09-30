@@ -359,7 +359,20 @@ Use -f if you really want to add it." >&2
 		fi
 
 	else
-
+		if test -d ".git/modules/$sm_name"
+		then
+			if test -z "$force"
+			then
+				echo >&2 "$(eval_gettext "A git directory for '\$sm_name' is found locally with remote(s):")"
+				GIT_DIR=".git/modules/$sm_name" GIT_WORK_TREE=. git remote -v | grep '(fetch)' | sed -e s,^,"  ", -e s,' (fetch)',, >&2
+				echo >&2 "$(eval_gettext "If you want to reuse this local git directory instead of cloning again from")"
+				echo >&2 "  $realrepo"
+				echo >&2 "$(eval_gettext "use the '--force' option. If the local git directory is not the correct repo")"
+				die "$(eval_gettext "or you are unsure what this means choose another name with the '--name' option.")"
+			else
+				echo "$(eval_gettext "Reactivating local git directory for submodule '\$sm_name'.")"
+			fi
+		fi
 		module_clone "$sm_path" "$sm_name" "$realrepo" "$reference" || exit
 		(
 			clear_local_git_env
