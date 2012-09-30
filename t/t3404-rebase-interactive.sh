@@ -118,6 +118,17 @@ test_expect_success 'rebase -i with the exec command checks tree cleanness' '
 	git rebase --continue
 '
 
+test_expect_success 'rebase -i with exec of inexistent command' '
+	git checkout master &&
+	test_when_finished "git rebase --abort" &&
+	(
+	FAKE_LINES="exec_this-command-does-not-exist 1" &&
+	export FAKE_LINES &&
+	test_must_fail git rebase -i HEAD^ >actual 2>&1
+	) &&
+	! grep "Maybe git-rebase is broken" actual
+'
+
 test_expect_success 'no changes are a nop' '
 	git checkout branch2 &&
 	git rebase -i F &&
