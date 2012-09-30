@@ -68,6 +68,9 @@ UI, Workflows & Features
  * The "-Xours" backend option to "git merge -s recursive" now takes
    effect even on binary files.
 
+ * "git rebase -i" learned the "--edit-todo" option to open an editor
+   to edit the insn sheet.
+
 
 Foreign Interface
 
@@ -129,89 +132,84 @@ Unless otherwise noted, all the fixes since v1.7.12 in the
 maintenance track are contained in this release (see release notes
 to them for details).
 
- * When "git am" is fed an input that has multiple "Content-type: ..."
-   header, it did not grok charset= attribute correctly.
-   (merge 176943b jc/maint-mailinfo-mime-attr later to maint).
-
- * "git blame MAKEFILE" run in a history that has "Makefile" but not
-   "MAKEFILE" should say "No such file MAKEFILE in HEAD", but got
-   confused on a case insensitive filesystem and failed to do so.
-   (merge 9aeaab6 jc/maint-blame-no-such-path later to maint).
-
- * Even during a conflicted merge, "git blame $path" always meant to
-   blame uncommitted changes to the "working tree" version; make it
-   more useful by showing cleanly merged parts as coming from the other
-   branch that is being merged.
-   (merge 9aeaab6 jc/maint-blame-no-such-path later to maint).
-
- * Documentation talked about "first line of commit log" when it meant
-   the title of the commit.  The description was clarified by defining
-   how the title is decided and rewording the casual mention of "first
-   line" to "title".
-   (merge 52ffe99 jw/doc-commit-title later to maint).
-
  * The attribute system may be asked for a path that itself or its
    leading directories no longer exists in the working tree, and it is
    fine if we cannot open .gitattribute file in such a case.  Failure
    to open per-directory .gitattributes with error status other than
    ENOENT and ENOTDIR should be diagnosed, but it wasn't.
 
- * "git log --all-match --grep=A --grep=B" ought to show commits that
-   mention both A and B, but when these three options are used with
-   --author or --committer, it showed commits that mention either A or
-   B (or both) instead.
-   (merge 39f2e01 jc/maint-log-grep-all-match later to maint).
+ * When looking for $HOME/.gitconfig etc., it is OK if we cannot read
+   them because they do not exist, but we did not diagnose existing
+   files that we cannot read.
 
- * Earlier we made the diffstat summary line that shows the number of
-   lines added/deleted localizable, but it was found irritating having
-   to see them in various languages on a list whose discussion language
-   is English.
-   (merge 218adaa nd/maint-diffstat-summary later to maint).
+ * When "git am" is fed an input that has multiple "Content-type: ..."
+   header, it did not grok charset= attribute correctly.
 
- * "git fetch --all", when passed "--no-tags", did not honor the
-   "--no-tags" option while fetching from individual remotes (the same
-   issue existed with "--tags", but combination "--all --tags" makes
-   much less sense than "--all --no-tags").
-   (merge 8556646 dj/fetch-all-tags later to maint).
+ * "git blame MAKEFILE" run in a history that has "Makefile" but not
+   "MAKEFILE" should say "No such file MAKEFILE in HEAD", but got
+   confused on a case insensitive filesystem and failed to do so.
 
- * The subcommand in "git remote" to remove a defined remote was
-   "rm" and the command did not take a fully-spelled "remove".
-   (merge e17dba8 nd/maint-remote-remove later to maint).
+ * Even during a conflicted merge, "git blame $path" always meant to
+   blame uncommitted changes to the "working tree" version; make it
+   more useful by showing cleanly merged parts as coming from the other
+   branch that is being merged.
 
- * After "gitk" showed the contents of a tag, neither "Reread
-   references" nor "Reload" did not update what is shown as the
-   contents of it, when the user overwrote the tag with "git tag -f".
-
- * "git cvsimport" did not thoroughly cleanse tag names that it
-   inferred from the names of the tags it obtained from CVS, which
-   caused "git tag" to barf and stop the import in the middle.
-
- * "git show --format='%ci'" did not give timestamp correctly for
-   commits created without human readable name on "committer" line.
-   (merge e27ddb6 jc/maint-ident-missing-human-name later to maint).
+ * Output from "git branch -v" contains "(no branch)" that could be
+   localized, but the code to align it along with the names of
+   branches were counting in bytes, not in display columns.
 
  * "git cherry-pick A C B" used to replay changes in A and then B and
    then C if these three commits had committer timestamps in that
    order, which is not what the user who said "A C B" naturally
    expects.
-   (merge a73e22e mz/cherry-pick-cmdline-order later to maint).
 
- * "git show --quiet" ought to be a synonym for "git show -s", but
-   wasn't.
-   (merge f9c75d8 jk/maint-quiet-is-synonym-to-s-in-log later to maint).
+ * Documentation talked about "first line of commit log" when it meant
+   the title of the commit.  The description was clarified by defining
+   how the title is decided and rewording the casual mention of "first
+   line" to "title".
+
+ * "git cvsimport" did not thoroughly cleanse tag names that it
+   inferred from the names of the tags it obtained from CVS, which
+   caused "git tag" to barf and stop the import in the middle.
+
+ * Earlier we made the diffstat summary line that shows the number of
+   lines added/deleted localizable, but it was found irritating having
+   to see them in various languages on a list whose discussion language
+   is English.
+
+ * "git fetch --all", when passed "--no-tags", did not honor the
+   "--no-tags" option while fetching from individual remotes (the same
+   issue existed with "--tags", but combination "--all --tags" makes
+   much less sense than "--all --no-tags").
+
+ * "git fetch" over http had an old workaround for an unlikely server
+   misconfiguration; it turns out that this hurts debuggability of the
+   configuration in general, and has been reverted.
+   (merge 6ac964a sp/maint-http-info-refs-no-retry later to maint).
+
+ * "git fetch" over http advertised that it supports "deflate", which
+   is much less common, and did not advertise more common "gzip" on
+   its Accept-Encoding header.
+   (merge aa90b96 sp/maint-http-enable-gzip later to maint).
+
+ * After "gitk" showed the contents of a tag, neither "Reread
+   references" nor "Reload" did not update what is shown as the
+   contents of it, when the user overwrote the tag with "git tag -f".
+
+ * "git log --all-match --grep=A --grep=B" ought to show commits that
+   mention both A and B, but when these three options are used with
+   --author or --committer, it showed commits that mention either A or
+   B (or both) instead.
 
  * "git p4", when "--use-client-spec" and "--detect-branches" are used
    together, misdetected branches.
-   (merge 21ef5df pw/p4-use-client-spec-branch-detection later to maint).
 
- * Output from "git branch -v" contains "(no branch)" that could be
-   localized, but the code to align it along with the names of
-   branches were counting in bytes, not in display columns.
-   (merge 1452bd6 nd/branch-v-alignment later to maint).
+ * When you misspell the command name you give to the "exec" action in
+   the "git rebase -i" insn sheet, you are told that 'rebase' is not a
+   git subcommand from "git rebase --continue".
 
- * When looking for $HOME/.gitconfig etc., it is OK if we cannot read
-   them because they do not exist, but we did not diagnose existing
-   files that we cannot read.
+ * The subcommand in "git remote" to remove a defined remote was
+   "rm" and the command did not take a fully-spelled "remove".
 
  * The interactive prompt "git send-email" gives was error prone. It
    asked "What e-mail address do you want to use?" with the address it
@@ -219,4 +217,14 @@ to them for details).
    tempting the user to say "y". But the response was taken as "No,
    please use 'y' as the e-mail address instead", which is most
    certainly not what the user meant.
-   (merge 6183749 sb/send-email-reconfirm-fix later to maint).
+
+ * "git show --format='%ci'" did not give timestamp correctly for
+   commits created without human readable name on "committer" line.
+
+ * "git show --quiet" ought to be a synonym for "git show -s", but
+   wasn't.
+
+ * "git submodule frotz" was not diagnosed as "frotz" being an unknown
+   subcommand to "git submodule"; the user instead got a complaint
+   that "git submodule status" was run with an unknown path "frotz".
+   (merge af9c9f9 rr/maint-submodule-unknown-cmd later to maint).
