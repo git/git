@@ -90,6 +90,7 @@ struct grep_opt {
 	int word_regexp;
 	int fixed;
 	int all_match;
+	int debug;
 #define GREP_BINARY_DEFAULT	0
 #define GREP_BINARY_NOMATCH	1
 #define GREP_BINARY_TEXT	2
@@ -148,11 +149,10 @@ struct grep_source {
 
 void grep_source_init(struct grep_source *gs, enum grep_source_type type,
 		      const char *name, const void *identifier);
-int grep_source_load(struct grep_source *gs);
 void grep_source_clear_data(struct grep_source *gs);
 void grep_source_clear(struct grep_source *gs);
 void grep_source_load_driver(struct grep_source *gs);
-int grep_source_is_binary(struct grep_source *gs);
+
 
 int grep_source(struct grep_opt *opt, struct grep_source *gs);
 
