@@ -4,6 +4,9 @@ Git 1.7.12.2 Release Notes
 Fixes since v1.7.12.1
 ---------------------
 
+ * When "git am" is fed an input that has multiple "Content-type: ..."
+   header, it did not grok charset= attribute correctly.
+
  * Even during a conflicted merge, "git blame $path" always meant to
    blame uncommitted changes to the "working tree" version; make it
    more useful by showing cleanly merged parts as coming from the other
@@ -23,6 +26,11 @@ Fixes since v1.7.12.1
    patches with such a line in them to projects whose project language
    is not their language, mildly irritating others. Localization to
    the line has been disabled for now.
+
+ * "git log --all-match --grep=A --grep=B" ought to show commits that
+   mention both A and B, but when these three options are used with
+   --author or --committer, it showed commits that mention either A or
+   B (or both) instead.
 
  * The subcommand to remove the definition of a remote in "git remote"
    was named "rm" even though all other subcommands were spelled out.
