@@ -350,7 +350,7 @@ msgstr[0] ""
 "您指的是这个么？"
 msgstr[1] ""
 "\n"
-"您指的是这些其中一个么？"
+"您指的是这其中的某一个么？"
 
 #: merge-recursive.c:190
 #, c-format
@@ -661,10 +661,10 @@ msgid_plural ""
 "and have %d and %d different commits each, respectively.\n"
 msgstr[0] ""
 "您的分支和 '%s' 出现了偏离，\n"
-"并且各自分别有 %d 和 %d 处不同的提交。\n"
+"并且分别有 %d 和 %d 处不同的提交。\n"
 msgstr[1] ""
 "您的分支和 '%s' 出现了偏离，\n"
-"并且各自分别有 %d 和 %d 处不同的提交。\n"
+"并且分别有 %d 和 %d 处不同的提交。\n"
 
 #: sequencer.c:121 builtin/merge.c:865 builtin/merge.c:978
 #: builtin/merge.c:1088 builtin/merge.c:1098
@@ -864,7 +864,7 @@ msgstr "错误收尾 %s。"
 
 #: sequencer.c:779 sequencer.c:913
 msgid "no cherry-pick or revert in progress"
-msgstr "没有拣选或还原操作在进行"
+msgstr "拣选或还原操作并未进行"
 
 #: sequencer.c:781
 msgid "cannot resolve HEAD"
@@ -886,7 +886,7 @@ msgstr "不能读取 %s：%s"
 
 #: sequencer.c:809
 msgid "unexpected end of file"
-msgstr "未预期的文件结束"
+msgstr "意外的文件结束"
 
 #: sequencer.c:815
 #, c-format
@@ -928,7 +928,7 @@ msgstr "上游分支 '%s' 没有存储为一个远程跟踪分支"
 #: wrapper.c:413
 #, c-format
 msgid "unable to look up current user in the passwd file: %s"
-msgstr "无法在 passwd 文件中查询到当前用户：%s"
+msgstr "无法在 passwd 文件中查询到该用户：%s"
 
 #: wrapper.c:414
 msgid "no such user"
@@ -1106,7 +1106,7 @@ msgstr "bug：未处理的差异状态 %c"
 
 #: wt-status.c:785
 msgid "You have unmerged paths."
-msgstr "您有路径尚未合并。"
+msgstr "您有尚未合并的路径。"
 
 #  译者：注意保持前导空格
 #: wt-status.c:788 wt-status.c:912
@@ -1191,7 +1191,7 @@ msgstr "  （使用 \"git commit --amend\" 修补当前提交）"
 #: wt-status.c:898
 msgid ""
 "  (use \"git rebase --continue\" once you are satisfied with your changes)"
-msgstr "  （执行 \"git rebase --continue\" 一旦您满意您的修改）"
+msgstr "  （当您对您的修改满意后执行 \"git rebase --continue\"）"
 
 #: wt-status.c:908
 msgid "You are currently cherry-picking."
@@ -1349,11 +1349,11 @@ msgstr "不能读取索引"
 #: builtin/add.c:286
 #, c-format
 msgid "Could not open '%s' for writing."
-msgstr "不能为写入打开 '%s'。"
+msgstr "不能打开 '%s' 以写入。"
 
 #: builtin/add.c:290
 msgid "Could not write patch"
-msgstr "不能写补丁"
+msgstr "不能生成补丁"
 
 #: builtin/add.c:295
 #, c-format
@@ -1371,7 +1371,7 @@ msgstr "不能应用 '%s'"
 
 #: builtin/add.c:312
 msgid "The following paths are ignored by one of your .gitignore files:\n"
-msgstr "下列路径被您的一个 .gitignore 文件所忽略：\n"
+msgstr "下列路径根据您的一个 .gitignore 文件而被忽略：\n"
 
 #: builtin/add.c:352
 #, c-format
@@ -1445,7 +1445,7 @@ msgstr "不能在补丁的第 %d 行找到文件名"
 #: builtin/apply.c:946
 #, c-format
 msgid "git apply: bad git-diff - expected /dev/null, got %s on line %d"
-msgstr "git apply：错误的 git-diff - 期望 /dev/null，但在第 %2$d 行得到 %1$s"
+msgstr "git apply：错误的 git-diff - 应为 /dev/null，但在第 %2$d 行得到 %1$s"
 
 #: builtin/apply.c:950
 #, c-format
@@ -1460,7 +1460,7 @@ msgstr "git apply：错误的 git-diff - 第 %d 行上旧文件名不一致"
 #: builtin/apply.c:958
 #, c-format
 msgid "git apply: bad git-diff - expected /dev/null on line %d"
-msgstr "git apply：错误的 git-diff - 期望 /dev/null 于第 %d 行"
+msgstr "git apply：错误的 git-diff - 第 %d 行处应为 /dev/null"
 
 #: builtin/apply.c:1403
 #, c-format
@@ -1494,7 +1494,7 @@ msgstr "删除的文件仍有内容"
 #: builtin/apply.c:1665
 #, c-format
 msgid "corrupt patch at line %d"
-msgstr "补丁损坏位于第 %d 行"
+msgstr "补丁在第 %d 行损坏"
 
 #: builtin/apply.c:1701
 #, c-format
@@ -1580,7 +1580,7 @@ msgstr "二进制补丁未应用到 '%s'"
 #: builtin/apply.c:2918
 #, c-format
 msgid "binary patch to '%s' creates incorrect result (expecting %s, got %s)"
-msgstr "到 '%s' 的二进制补丁产生了不正确的结果（预期 %s，得到 %s）"
+msgstr "到 '%s' 的二进制补丁产生了不正确的结果（应为 %s，却为 %s）"
 
 #: builtin/apply.c:2939
 #, c-format
@@ -1629,7 +1629,7 @@ msgstr "%s：错误类型"
 #: builtin/apply.c:3402
 #, c-format
 msgid "%s has type %o, expected %o"
-msgstr "%s 的类型是 %o，预期是 %o"
+msgstr "%s 的类型是 %o，应为 %o"
 
 #: builtin/apply.c:3503
 #, c-format
@@ -1715,8 +1715,8 @@ msgstr "内部错误"
 #, c-format
 msgid "Applying patch %%s with %d reject..."
 msgid_plural "Applying patch %%s with %d rejects..."
-msgstr[0] "应用补丁 %%s 时 %d 个被拒绝..."
-msgstr[1] "应用补丁 %%s 时 %d 个被拒绝..."
+msgstr[0] "应用 %%s 个补丁，其中 %d 个被拒绝..."
+msgstr[1] "应用 %%s 个补丁，其中 %d 个被拒绝..."
 
 #: builtin/apply.c:3980
 #, c-format
@@ -1791,7 +1791,7 @@ msgstr "应用补丁而不修改工作区"
 
 #: builtin/apply.c:4310
 msgid "also apply the patch (use with --stat/--summary/--check)"
-msgstr "还应用此补丁（使用 --stat/--summary/--check 参数）"
+msgstr "还应用此补丁（与 --stat/--summary/--check 选项同时使用）"
 
 #: builtin/apply.c:4312
 msgid "attempt three-way merge if a patch does not apply"
@@ -1843,7 +1843,7 @@ msgstr "冗长输出"
 
 #: builtin/apply.c:4339
 msgid "tolerate incorrectly detected missing new-line at the end of file"
-msgstr "宽容不正确的文件末尾换行符"
+msgstr "允许不正确的文件末尾换行符"
 
 #: builtin/apply.c:4342
 msgid "do not trust the line counts in the hunk headers"
@@ -1895,7 +1895,7 @@ msgstr "不能创建归档文件 '%s'"
 
 #: builtin/archive.c:20
 msgid "could not redirect output"
-msgstr "不能输出重定向"
+msgstr "不能重定向输出"
 
 #: builtin/archive.c:37
 msgid "git archive: Remote with no URL"
@@ -1903,7 +1903,7 @@ msgstr "git archive：未提供远程URL"
 
 #: builtin/archive.c:58
 msgid "git archive: expected ACK/NAK, got EOF"
-msgstr "git archive：期待ACK/NACK，却得到EOF"
+msgstr "git archive：应为ACK/NACK，却得到EOF"
 
 #: builtin/archive.c:63
 #, c-format
@@ -1921,7 +1921,7 @@ msgstr "git archive：协议错误"
 
 #: builtin/archive.c:71
 msgid "git archive: expected a flush"
-msgstr "git archive：预期一个刷新"
+msgstr "git archive：应为刷新"
 
 #  译者：保持原换行格式，在输出时 %s 的替代内容会让字符串变长
 #: builtin/branch.c:144
