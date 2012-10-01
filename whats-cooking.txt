@@ -1,18 +1,17 @@
 To: git@vger.kernel.org
 Bcc: lwn@lwn.net
-Subject: What's cooking in git.git (Sep 2012, #09; Thu, 27)
-X-master-at: 652398a88e7c3d18b6820a2ae369b05d26dc757f
-X-next-at: 5cd6968fc9aa20f71c937328858b2c046ca49038
+Subject: What's cooking in git.git (Sep 2012, #10; Sun, 30)
+X-master-at: 261b5119c7a7cb778dd812cfb006b511c5bc4065
+X-next-at: 8e89b3c30625b00571c4cbc5e5a74d8e3e442754
 
-What's cooking in git.git (Sep 2012, #09; Thu, 27)
+What's cooking in git.git (Sep 2012, #10; Sun, 30)
 --------------------------------------------------
 
 Here are the topics that have been cooking.  Commits prefixed with
 '-' are only in 'pu' (proposed updates) while commits prefixed with
 '+' are in 'next'.
 
-Feedback from contributors and reviewers involved in topics in the
-"stalled" category is sorely needed to help them get unstuck.
+The tip of 'master' will be tagged as 1.8.0-rc0 real soon now.
 
 I'm planning to keep this cycle reasonably short and aim for tagging
 the result as 1.8.0 at the end of 9th week, on October 21st, after
@@ -25,139 +24,133 @@ repositories listed at
     http://git-blame.blogspot.com/p/git-public-repositories.html
 
 --------------------------------------------------
-[New Topics]
+[Graduated to "master"]
 
-* da/mergetool-custom (2012-09-25) 1 commit
-  (merged to 'next' on 2012-09-27 at f910851)
- + mergetool--lib: Allow custom commands to override built-ins
+* aw/rebase-i-edit-todo (2012-09-19) 5 commits
+  (merged to 'next' on 2012-09-24 at 95625d7)
+ + rebase -i: suggest using --edit-todo to fix an unknown instruction
+ + rebase -i: Add tests for "--edit-todo"
+ + rebase -i: Teach "--edit-todo" action
+ + rebase -i: Refactor help messages for todo file
+ + rebase usage: subcommands can not be combined with -i
 
- The actual external command to run for mergetool backend can be
- specified with difftool/mergetool.$name.cmd configuration
- variables, but this mechanism was ignored for the backends we
- natively support.
+ Teach an option to edit the insn sheet to "git rebase -i".
 
 
-* mk/maint-graph-infinity-loop (2012-09-25) 1 commit
- - graph.c: infinite loop in git whatchanged --graph -m
+* jk/smart-http-switch (2012-09-21) 2 commits
+  (merged to 'next' on 2012-09-24 at b2a2777)
+ + remote-curl: let users turn off smart http
+ + remote-curl: rename is_http variable
+ (this branch uses sp/maint-http-info-refs-no-retry.)
 
- The --graph code fell into infinite loop when asked to do what the
- code did not expect ;-)
+ Allows users to turn off smart-http when talking to dumb-only
+ servers.
 
- Anybody who worked on --graph wants to comment?
+
+* js/rebase-exec-command-not-found (2012-09-18) 1 commit
+  (merged to 'next' on 2012-09-24 at ed5b048)
+ + rebase -i: fix misleading error message after 'exec no-such' instruction
+
+ When you misspell the command name you give to the "exec" action in
+ the "git rebase -i" insn sheet, you are told that 'rebase' is not a
+ git subcommand from "git rebase --continue".
+
+
+* rr/maint-submodule-unknown-cmd (2012-09-25) 1 commit
+  (merged to 'next' on 2012-09-25 at 4bb1bc4)
+ + submodule: if $command was not matched, don't parse other args
+
+ "git submodule frotz" was not diagnosed as "frotz" being an unknown
+ subcommand to "git submodule"; the user instead got a complaint
+ that "git submodule status" was run with an unknown path "frotz".
 
 
 * rr/test-use-shell-path-not-shell (2012-09-25) 1 commit
   (merged to 'next' on 2012-09-27 at 3a1848f)
  + test-lib: use $SHELL_PATH, not $SHELL
 
- Fixes a brown-paper bag bug.
 
- Will merge to 'master'.
+* rs/archive-zip-utf8 (2012-09-24) 4 commits
+  (merged to 'next' on 2012-09-24 at 9b42b1c)
+ + archive-zip: write extended timestamp
+ + archive-zip: support UTF-8 paths
+ + Revert "archive-zip: support UTF-8 paths"
+  (merged to 'next' on 2012-09-11 at 3b1f071)
+ + archive-zip: support UTF-8 paths
 
-
-* tu/gc-auto-quiet (2012-09-27) 1 commit
- - silence git gc --auto --quiet output
-
-
-* jk/completion-tests (2012-09-27) 2 commits
-  (merged to 'next' on 2012-09-27 at 5cd6968)
- + t9902: add completion tests for "odd" filenames
- + t9902: add a few basic completion tests
+ With another reroll, it looks like the series is as polished as it
+ could be.
 
 
-* jk/lua-hackery (2012-09-25) 5 commits
- - Minimum compilation fixup
- - Makefile: make "lua" a bit more configurable
- - add a "lua" pretty format
- - add basic lua infrastructure
- - pretty: make some commit-parsing helpers more public
+* sp/maint-http-enable-gzip (2012-09-20) 1 commit
+  (merged to 'next' on 2012-09-24 at 1d05142)
+ + Enable info/refs gzip decompression in HTTP client
+
+ Allows a more common 'gzip' Accept-Encoding to be used.
 
 
-* jm/diff-context-config (2012-09-27) 2 commits
- - [SQUASH] test fixups
- - diff: diff.context configuration gives default to -U
+* sp/maint-http-info-refs-no-retry (2012-09-20) 1 commit
+  (merged to 'next' on 2012-09-24 at ebcce8e)
+ + Revert "retry request without query when info/refs?query fails"
+ (this branch is used by jk/smart-http-switch.)
 
-
-* mh/ceiling (2012-09-27) 8 commits
- - t1504: stop resolving symlinks in GIT_CEILING_DIRECTORIES
- - longest_ancestor_length(): resolve symlinks before comparing paths
- - longest_ancestor_length(): use string_list_longest_prefix()
- - longest_ancestor_length(): always add a slash to the end of prefixes
- - longest_ancestor_length(): explicitly filter list before loop
- - longest_ancestor_length(): use string_list_split()
- - Introduce new function real_path_if_valid()
- - Introduce new static function real_path_internal()
+ Kills an old workaround for an unlikely server misconfiguration
+ that hurts debuggability.
 
 --------------------------------------------------
-[Graduated to "master"]
+[New Topics]
+
+* jl/submodule-add-by-name (2012-09-30) 2 commits
+ - submodule add: Fail when .git/modules/<name> already exists unless forced
+ - Teach "git submodule add" the --name option
+
+ If you remove a submodule, in order to keep the repository so that
+ "git checkout" to an older commit in the superproject history can
+ resurrect the submodule, the real repository will stay in $GIT_DIR
+ of the superproject.  A later "git submodule add $path" to add a
+ different submodule at the same path will fail.  Diagnose this case
+ a bit better, and if the user really wants to add an unrelated
+ submodule at the same path, give the "--name" option to give it a
+ place in $GIT_DIR of the superproject that does not conflict with
+ the original submodule.
+
+
+* nd/grep-reflog (2012-09-29) 4 commits
+ - revision: make --grep search in notes too if shown
+ - log --grep-reflog: reject the option without -g
+ - revision: add --grep-reflog to filter commits by reflog messages
+ - grep: prepare for new header field filter
+
+ Teach the commands from the "log" family the "--grep-reflog" option
+ to limit output by string that appears in the reflog entry when the
+ --walk-reflogs option is in effect.
+
 
 * ep/malloc-check-perturb (2012-09-26) 1 commit
   (merged to 'next' on 2012-09-27 at f115b8b)
  + MALLOC_CHECK: enable it, unless disabled explicitly
 
- Run our test scripts with MALLOC_CHECK_ and MALLOC_PERTURB_, the
- built-in memory access checking facility GNU libc has.
+ Fixes a brown-paper bag bug.
 
- There is a brown-paper bug, whose fix is not yet in 'master' but in
- 'next'.
+ Will merge to 'master'.
 
 
-* aj/xfuncname-ada (2012-09-16) 1 commit
-  (merged to 'next' on 2012-09-24 at 99fcbb3)
- + Add userdiff patterns for Ada
+* lt/mailinfo-handle-attachment-more-sanely (2012-09-30) 1 commit
+ - mailinfo: don't require "text" mime type for attachments
 
-
-* db/doc-custom-xmlto (2012-09-19) 1 commit
-  (merged to 'next' on 2012-09-24 at efcfec1)
- + Documentation/Makefile: Allow custom XMLTO binary
-
-
-* jc/maint-mailinfo-mime-attr (2012-09-17) 1 commit
-  (merged to 'next' on 2012-09-24 at c551c9f)
- + mailinfo: do not concatenate charset= attribute values from mime headers
-
- When "git am" is fed an input that has multiple "Content-type: ..."
- header, it did not grok charset= attribute correctly.
-
-
-* js/hp-nonstop (2012-09-19) 1 commit
-  (merged to 'next' on 2012-09-24 at 283ac87)
- + Port to HP NonStop
- (this branch uses js/poll-emu.)
-
- Port to HP NonStop aka Tandem.
-
-
-* js/poll-emu (2012-09-17) 4 commits
-  (merged to 'next' on 2012-09-24 at 32e1601)
- + make poll() work on platforms that can't recv() on a non-socket
- + poll() exits too early with EFAULT if 1st arg is NULL
- + fix some win32 specific dependencies in poll.c
- + make poll available for other platforms lacking it
- (this branch is used by js/hp-nonstop.)
-
-
-* po/maint-docs (2012-09-19) 5 commits
-  (merged to 'next' on 2012-09-24 at 9df3935)
- + Doc branch: show -vv option and alternative
- + Doc clean: add See Also link
- + Doc add: link gitignore
- + Doc: separate gitignore pattern sources
- + Doc: shallow clone deepens _to_ new depth
-
- Various documentation fixups.
-
-
-* rr/test-make-sure-we-have-git (2012-09-18) 1 commit
-  (merged to 'next' on 2012-09-24 at 9e8d28d)
- + t/test-lib: make sure Git has already been built
-
- Only the first test t0000 in the test suite made sure we have built
- Git to be tested; move the check to test-lib so that it applies to
- all tests equally.
+ A patch attached as application/octet-stream (e.g. not text/*) were
+ mishandled,not correctly honoring Content-Transfer-Encoding
+ (e.g. base64).
 
 --------------------------------------------------
 [Stalled]
+
+* rc/maint-complete-git-p4 (2012-09-24) 1 commit
+  (merged to 'next' on 2012-09-25 at 116e58f)
+ + Teach git-completion about git p4
+
+ Comment from Pete will need to be addressed in a follow-up patch.
+
 
 * as/check-ignore (2012-09-27) 17 commits
  - [SQUASH-FIX] 283d072 (Add git-check-ignore sub-command, 2012-09-20)
@@ -228,6 +221,50 @@ repositories listed at
 
  A GSoC project.
  Waiting for comments from mentors and stakeholders.
+
+
+* jc/maint-name-rev (2012-09-17) 7 commits
+ - describe --contains: use "name-rev --algorithm=weight"
+ - name-rev --algorithm=weight: tests and documentation
+ - name-rev --algorithm=weight: cache the computed weight in notes
+ - name-rev --algorithm=weight: trivial optimization
+ - name-rev: --algorithm option
+ - name_rev: clarify the logic to assign a new tip-name to a commit
+ - name-rev: lose unnecessary typedef
+
+ "git name-rev" names the given revision based on a ref that can be
+ reached in the smallest number of steps from the rev, but that is
+ not useful when the caller wants to know which tag is the oldest one
+ that contains the rev.  This teaches a new mode to the command that
+ uses the oldest ref among those which contain the rev.
+
+ I am not sure if this is worth it; for one thing, even with the help
+ from notes-cache, it seems to make the "describe --contains" even
+ slower. Also the command will be unusably slow for a user who does
+ not have a write access (hence unable to create or update the
+ notes-cache).
+
+ Stalled mostly due to lack of responses.
+
+
+* jc/xprm-generation (2012-09-14) 1 commit
+ - test-generation: compute generation numbers and clock skews
+
+ A toy to analyze how bad the clock skews are in histories of real
+ world projects.
+
+ Stalled mostly due to lack of responses.
+
+
+* jc/blame-no-follow (2012-09-21) 2 commits
+ - blame: pay attention to --no-follow
+ - diff: accept --no-follow option
+ (this branch uses jc/blame-follows-renames.)
+
+ Teaches "--no-follow" option to "git blame" to disable its
+ whole-file rename detection.
+
+ Stalled mostly due to lack of responses.
 
 
 * ph/credential-refactor (2012-09-02) 5 commits
@@ -345,8 +382,68 @@ repositories listed at
 --------------------------------------------------
 [Cooking]
 
-* jl/submodule-rm (2012-09-27) 1 commit
- - Teach rm to remove submodules unless they contain a git directory
+* da/mergetool-custom (2012-09-25) 1 commit
+  (merged to 'next' on 2012-09-27 at f910851)
+ + mergetool--lib: Allow custom commands to override built-ins
+
+ The actual external command to run for mergetool backend can be
+ specified with difftool/mergetool.$name.cmd configuration
+ variables, but this mechanism was ignored for the backends we
+ natively support.
+
+ Will merge to 'master'.
+
+
+* mk/maint-graph-infinity-loop (2012-09-25) 1 commit
+ - graph.c: infinite loop in git whatchanged --graph -m
+
+ The --graph code fell into infinite loop when asked to do what the
+ code did not expect ;-)
+
+ Anybody who worked on --graph wants to comment?
+
+
+* tu/gc-auto-quiet (2012-09-27) 1 commit
+ - silence git gc --auto --quiet output
+
+ Will merge to 'next'.
+
+
+* jk/completion-tests (2012-09-27) 2 commits
+  (merged to 'next' on 2012-09-27 at 5cd6968)
+ + t9902: add completion tests for "odd" filenames
+ + t9902: add a few basic completion tests
+
+ Will merge to 'master'.
+
+
+* jm/diff-context-config (2012-09-27) 2 commits
+ - [SQUASH] test fixups
+ - diff: diff.context configuration gives default to -U
+
+ Will merge to 'next' after squashing.
+
+
+* mh/ceiling (2012-09-29) 9 commits
+ - t1504: stop resolving symlinks in GIT_CEILING_DIRECTORIES
+ - longest_ancestor_length(): resolve symlinks before comparing paths
+ - longest_ancestor_length(): use string_list_longest_prefix()
+ - longest_ancestor_length(): always add a slash to the end of prefixes
+ - longest_ancestor_length(): explicitly filter list before loop
+ - longest_ancestor_length(): use string_list_split()
+ - Introduce new function real_path_if_valid()
+ - real_path_internal(): add comment explaining use of cwd
+ - Introduce new static function real_path_internal()
+
+ Elements of GIT_CEILING_DIRECTORIES list may not match the real
+ pathname we obtain from getcwd(), leading the GIT_DIR discovery
+ logic to escape the ceilings the user thought to have specified.
+
+ The solution felt a bit unnecessarily convoluted to me.
+
+
+* jl/submodule-rm (2012-09-29) 1 commit
+ - submodule: teach rm to remove submodules unless they contain a git directory
 
  "git rm submodule" cannot blindly remove a submodule directory as
  its working tree may have local changes, and worse yet, it may even
@@ -355,6 +452,8 @@ repositories listed at
  no local changes in the submodule working tree, and its repository
  is not embedded in its working tree but is elsewhere and uses the
  gitfile mechanism to point at it.
+
+ Will merge to 'next'.
 
 
 * nd/wildmatch (2012-09-27) 5 commits
@@ -372,17 +471,6 @@ repositories listed at
  are left global. I think this reroll fixed most of them.
 
 
-* jc/blame-no-follow (2012-09-21) 2 commits
- - blame: pay attention to --no-follow
- - diff: accept --no-follow option
- (this branch uses jc/blame-follows-renames.)
-
- Teaches "--no-follow" option to "git blame" to disable its
- whole-file rename detection.
-
- Any comments?
-
-
 * os/commit-submodule-ignore (2012-09-24) 1 commit
   (merged to 'next' on 2012-09-27 at 9cd2cfd)
  + commit: pay attention to submodule.$name.ignore in .gitmodules
@@ -390,67 +478,19 @@ repositories listed at
  "git status" honored the ignore=dirty settings in .gitmodules but
  "git commit" didn't.
 
-
-* rc/maint-complete-git-p4 (2012-09-24) 1 commit
-  (merged to 'next' on 2012-09-25 at 116e58f)
- + Teach git-completion about git p4
-
- Comment from Pete will need to be addressed in a follow-up patch.
-
-
-* rr/maint-submodule-unknown-cmd (2012-09-25) 1 commit
-  (merged to 'next' on 2012-09-25 at 4bb1bc4)
- + submodule: if $command was not matched, don't parse other args
-
  Will merge to 'master'.
 
 
-* js/rebase-exec-command-not-found (2012-09-18) 1 commit
-  (merged to 'next' on 2012-09-24 at ed5b048)
- + rebase -i: fix misleading error message after 'exec no-such' instruction
-
- Will merge to 'master'.
-
-
-* sp/maint-http-info-refs-no-retry (2012-09-20) 1 commit
-  (merged to 'next' on 2012-09-24 at ebcce8e)
- + Revert "retry request without query when info/refs?query fails"
- (this branch is used by jk/smart-http-switch.)
-
- Kills an old workaround for a unlikely server misconfiguration that
- hurts debuggability.
-
- Will merge to 'master'.
-
-
-* jk/smart-http-switch (2012-09-21) 2 commits
-  (merged to 'next' on 2012-09-24 at b2a2777)
- + remote-curl: let users turn off smart http
- + remote-curl: rename is_http variable
- (this branch uses sp/maint-http-info-refs-no-retry.)
-
- Allows users to turn off smart-http when talking to dumb-only
- servers.
-
- Will merge to 'master'.
-
-
-* sp/maint-http-enable-gzip (2012-09-20) 1 commit
-  (merged to 'next' on 2012-09-24 at 1d05142)
- + Enable info/refs gzip decompression in HTTP client
-
- Allows a more common 'gzip' Accept-Encoding to be used.
-
- Will merge to 'master'.
-
-
-* nd/pretty-placeholder-with-color-option (2012-09-20) 4 commits
- - [SQUASH] do not use real-sb without initializing
- - pretty: support right alignment
- - pretty: support placeholders %C+ and %C-
+* nd/pretty-placeholder-with-color-option (2012-09-30) 9 commits
+ - pretty: support %>> that steal trailing spaces
+ - pretty: support truncating in %>, %< and %><
+ - pretty: support padding placeholders, %< %> and %><
+ - pretty: two phase conversion for non utf-8 commits
+ - utf8.c: add utf8_strnwidth() with the ability to skip ansi sequences
+ - utf8.c: move display_mode_esc_sequence_len() for use by other functions
+ - pretty: support %C(auto[,N]) to turn on coloring on next placeholder(s)
+ - pretty: split parsing %C into a separate function
  - pretty: share code between format_decoration and show_decorations
-
- Rerolled, but haven't picked it up yet.
 
 
 * jk/receive-pack-unpack-error-to-pusher (2012-09-21) 3 commits
@@ -463,6 +503,8 @@ repositories listed at
  push" over the git and smart-http protocols, just like it is done
  for a push over the ssh protocol.
 
+ Will merge to 'master'.
+
 
 * jc/blame-follows-renames (2012-09-21) 1 commit
   (merged to 'next' on 2012-09-27 at 12634c1)
@@ -472,6 +514,8 @@ repositories listed at
  Clarify the "blame" documentation to tell the users that there is
  no need to ask for "--follow".
 
+ Will merge to 'master'.
+
 
 * rt/maint-clone-single (2012-09-20) 1 commit
   (merged to 'next' on 2012-09-27 at a47d54d)
@@ -479,58 +523,6 @@ repositories listed at
 
  Running "git fetch" in a repository made with "git clone --single"
  slurps all the branches, defeating the point of "--single".
-
-
-* aw/rebase-i-edit-todo (2012-09-19) 5 commits
-  (merged to 'next' on 2012-09-24 at 95625d7)
- + rebase -i: suggest using --edit-todo to fix an unknown instruction
- + rebase -i: Add tests for "--edit-todo"
- + rebase -i: Teach "--edit-todo" action
- + rebase -i: Refactor help messages for todo file
- + rebase usage: subcommands can not be combined with -i
-
- Will merge to 'master'.
-
-
-* jc/maint-name-rev (2012-09-17) 7 commits
- - describe --contains: use "name-rev --algorithm=weight"
- - name-rev --algorithm=weight: tests and documentation
- - name-rev --algorithm=weight: cache the computed weight in notes
- - name-rev --algorithm=weight: trivial optimization
- - name-rev: --algorithm option
- - name_rev: clarify the logic to assign a new tip-name to a commit
- - name-rev: lose unnecessary typedef
-
- "git name-rev" names the given revision based on a ref that can be
- reached in the smallest number of steps from the rev, but that is
- not useful when the caller wants to know which tag is the oldest one
- that contains the rev.  This teaches a new mode to the command that
- uses the oldest ref among those which contain the rev.
-
- I am not sure if this is worth it; for one thing, even with the help
- from notes-cache, it seems to make the "describe --contains" even
- slower. Also the command will be unusably slow for a user who does
- not have a write access (hence unable to create or update the
- notes-cache).
-
-
-* jc/xprm-generation (2012-09-14) 1 commit
- - test-generation: compute generation numbers and clock skews
-
- A toy to analyze how bad the clock skews are in histories of real
- world projects.
-
-
-* rs/archive-zip-utf8 (2012-09-24) 4 commits
-  (merged to 'next' on 2012-09-24 at 9b42b1c)
- + archive-zip: write extended timestamp
- + archive-zip: support UTF-8 paths
- + Revert "archive-zip: support UTF-8 paths"
-  (merged to 'next' on 2012-09-11 at 3b1f071)
- + archive-zip: support UTF-8 paths
-
- With another reroll, it looks like the series is as polished as it
- could be.
 
  Will merge to 'master'.
 
