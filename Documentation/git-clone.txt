@@ -29,7 +29,8 @@ currently active branch.
 After the clone, a plain `git fetch` without arguments will update
 all the remote-tracking branches, and a `git pull` without
 arguments will in addition merge the remote master branch into the
-current master branch, if any.
+current master branch, if any (this is untrue when "--single-branch"
+is given; see below).
 
 This default configuration is achieved by creating references to
 the remote branch heads under `refs/remotes/origin` and
@@ -152,9 +153,10 @@ objects from the source repository into a pack in the cloned repository.
 -b <name>::
 	Instead of pointing the newly created HEAD to the branch pointed
 	to by the cloned repository's HEAD, point to `<name>` branch
-	instead. `--branch` can also take tags and treat them like
-	detached HEAD. In a non-bare repository, this is the branch
-	that will be checked out.
+	instead. In a non-bare repository, this is the branch that will
+	be checked out.
+	`--branch` can also take tags and detaches the HEAD at that commit
+	in the resulting repository.
 
 --upload-pack <upload-pack>::
 -u <upload-pack>::
@@ -193,6 +195,11 @@ objects from the source repository into a pack in the cloned repository.
 	clone with the `--depth` option, this is the default, unless
 	`--no-single-branch` is given to fetch the histories near the
 	tips of all branches.
+	Further fetches into the resulting repository will only update the
+	remote tracking branch for the branch this option was used for the
+	initial cloning.  If the HEAD at the remote did not point at any
+	branch when `--single-branch` clone was made, no remote tracking
+	branch is created.
 
 --recursive::
 --recurse-submodules::
