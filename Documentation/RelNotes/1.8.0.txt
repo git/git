@@ -65,6 +65,10 @@ UI, Workflows & Features
  * "git merge-base" learned "--is-ancestor A B" option to tell if A is
    an ancestor of B.  The result is indicated by its exit status code.
 
+ * "git mergetool" allows users to override the actual command used
+   with the mergetool.$name.cmd configuration variable even for built-in
+   mergetool backends.
+
  * The "-Xours" backend option to "git merge -s recursive" now takes
    effect even on binary files.
 
@@ -154,6 +158,10 @@ to them for details).
    more useful by showing cleanly merged parts as coming from the other
    branch that is being merged.
 
+ * It was unclear in the documentation for "git blame" that it is
+   unnecessary for users to use the "--follow" option.
+   (merge e5dce96 jc/blame-follows-renames later to maint).
+
  * Output from "git branch -v" contains "(no branch)" that could be
    localized, but the code to align it along with the names of
    branches were counting in bytes, not in display columns.
@@ -162,6 +170,12 @@ to them for details).
    then C if these three commits had committer timestamps in that
    order, which is not what the user who said "A C B" naturally
    expects.
+
+ * A repository created with "git clone --single" had its fetch
+   refspecs set up just like a clone without "--single", leading the
+   subsequent "git fetch" to slurp all the other branches, defeating
+   the whole point of specifying "only this branch".
+   (merge 31b808a rt/maint-clone-single later to maint).
 
  * Documentation talked about "first line of commit log" when it meant
    the title of the commit.  The description was clarified by defining
@@ -204,6 +218,11 @@ to them for details).
  * "git p4", when "--use-client-spec" and "--detect-branches" are used
    together, misdetected branches.
 
+ * "git receive-pack" (the counterpart to "git push") did not give
+   progress output while processing objects it received to the puser
+   when run over the smart-http protocol.
+   (merge 74eb32d jk/receive-pack-unpack-error-to-pusher later to maint).
+
  * When you misspell the command name you give to the "exec" action in
    the "git rebase -i" insn sheet, you are told that 'rebase' is not a
    git subcommand from "git rebase --continue".
@@ -228,3 +247,7 @@ to them for details).
    subcommand to "git submodule"; the user instead got a complaint
    that "git submodule status" was run with an unknown path "frotz".
    (merge af9c9f9 rr/maint-submodule-unknown-cmd later to maint).
+
+ * "git status" honored the ignore=dirty settings in .gitmodules but
+   "git commit" didn't.
+   (merge 8f6811e os/commit-submodule-ignore later to maint).
