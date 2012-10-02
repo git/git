@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: git 1.7.12\n"
 "Report-Msgid-Bugs-To: Git Mailing List <git@vger.kernel.org>\n"
 "POT-Creation-Date: 2012-08-06 23:47+0800\n"
-"PO-Revision-Date: 2012-08-14 09:58+0100\n"
+"PO-Revision-Date: 2012-10-02 08:15+0100\n"
 "Last-Translator: Peter Krefting <peter@softwolves.pp.se>\n"
 "Language-Team: Swedish <tp-sv@listor.tp-sv.se>\n"
 "Language: sv\n"
@@ -3381,7 +3381,7 @@ msgstr "misslyckades tillämpa delta"
 
 #: builtin/index-pack.c:986
 msgid "Receiving objects"
-msgstr "Tar bort objekt"
+msgstr "Tar emot objekt"
 
 #: builtin/index-pack.c:986
 msgid "Indexing objects"
