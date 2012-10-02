@@ -818,6 +818,7 @@ static int http_request(const char *url, void *result, int target, int options)
 
 	curl_easy_setopt(slot->curl, CURLOPT_URL, url);
 	curl_easy_setopt(slot->curl, CURLOPT_HTTPHEADER, headers);
+	curl_easy_setopt(slot->curl, CURLOPT_ENCODING, "gzip");
 
 	if (start_active_slot(slot)) {
 		run_active_slot(slot);
