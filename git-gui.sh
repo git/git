@@ -3003,9 +3003,18 @@ blame {
 	set jump_spec {}
 	set is_path 0
 	foreach a $argv {
-		if {$is_path || [file exists $_prefix$a]} {
+		if {[file exists $a]} {
+			if {$path ne {}} usage
+			set path [normalize_relpath $a]
+			break
+		} elseif {[file exists $_prefix$a]} {
 			if {$path ne {}} usage
 			set path [normalize_relpath $_prefix$a]
+			break
+		}
+
+		if {$is_path} {
+			if {$path ne {}} usage
 			break
 		} elseif {$a eq {--}} {
 			if {$path ne {}} {
