@@ -2503,8 +2503,7 @@ proc makewindow {} {
     bind . <F5> updatecommits
     bind . <Shift-F5> reloadcommits
     bind . <F2> showrefs
-    bind . <Shift-F4> {newview 0}
-    catch { bind . <Shift-Key-XF86_Switch_VT_4> {newview 0} }
+    bindmodfunctionkey Shift 4 {newview 0}
     bind . <F4> edit_or_newview
     bind . <$M1B-q> doquit
     bind . <$M1B-f> {dofind 1 1}
@@ -2651,6 +2650,11 @@ proc bindkey {ev script} {
     foreach e $entries {
 	bind $e $ev "$escript; break"
     }
+}
+
+proc bindmodfunctionkey {mod n script} {
+    bind . <$mod-F$n> $script
+    catch { bind . <$mod-XF86_Switch_VT_$n> $script }
 }
 
 # set the focus back to the toplevel for any click outside
