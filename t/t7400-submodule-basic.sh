@@ -438,8 +438,8 @@ test_expect_success 'moving to a commit without submodule does not leave empty d
 	git checkout second
 '
 
-test_expect_success 'submodule <invalid-path> warns' '
-	test_failure_with_unknown_submodule
+test_expect_success 'submodule <invalid-subcommand> fails' '
+	test_must_fail git submodule no-such-subcommand
 '
 
 test_expect_success 'add submodules without specifying an explicit path' '
