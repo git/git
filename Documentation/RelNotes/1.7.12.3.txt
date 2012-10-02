@@ -1,0 +1,18 @@
+Git 1.7.12.3 Release Notes
+==========================
+
+Fixes since v1.7.12.2
+---------------------
+
+ * "git fetch" over http had an old workaround for an unlikely server
+   misconfiguration; it turns out that this hurts debuggability of the
+   configuration in general, and has been reverted.
+
+ * "git fetch" over http advertised that it supports "deflate", which
+   is much less common, and did not advertise the more common "gzip" on
+   its Accept-Encoding header.
+
+ * "git status" honored the ignore=dirty settings in .gitmodules but
+   "git commit" didn't.
+
+Also contains a handful of documentation updates.
