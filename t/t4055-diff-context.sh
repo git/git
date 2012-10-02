@@ -8,7 +8,7 @@ test_description='diff.context configuration'
 . ./test-lib.sh
 
 test_expect_success 'setup' '
-	cat >x <<-\EOF &&
+	cat >template <<-\EOF &&
 	firstline
 	b
 	c
@@ -16,6 +16,7 @@ test_expect_success 'setup' '
 	e
 	f
 	preline
+	TARGET
 	postline
 	i
 	j
@@ -24,17 +25,15 @@ test_expect_success 'setup' '
 	m
 	n
 	EOF
+	sed "/TARGET/d" >x <template &&
 	git update-index --add x &&
 	git commit -m initial &&
 
-	git cat-file blob HEAD:x |
-	sed "/preline/a\
-	ADDED" >x &&
+	sed "s/TARGET/ADDED/" >x <template &&
 	git update-index --add x &&
 	git commit -m next &&
 
-	git cat-file blob HEAD:x |
-	sed s/ADDED/MODIFIED/ >x
+	sed "s/TARGET/MODIFIED/" >x <template
 '
 
 test_expect_success 'the default number of context lines is 3' '
