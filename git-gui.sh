@@ -3037,8 +3037,13 @@ blame {
 	unset is_path
 
 	if {$head ne {} && $path eq {}} {
-		set path [normalize_relpath $_prefix$head]
-		set head {}
+		if {[string index $head 0] eq {/}} {
+			set path [normalize_relpath $head]
+			set head {}
+		} else {
+			set path [normalize_relpath $_prefix$head]
+			set head {}
+		}
 	}
 
 	if {$head eq {}} {
