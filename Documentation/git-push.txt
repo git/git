@@ -37,7 +37,9 @@ OPTIONS[[OPTIONS]]
 	`+`, followed by the source ref <src>, followed
 	by a colon `:`, followed by the destination ref <dst>.
 	It is used to specify with what <src> object the <dst> ref
-	in the remote repository is to be updated.
+	in the remote repository is to be updated.  If not specified,
+	the behavior of the command is controlled by the `push.default`
+	configuration variable.
 +
 The <src> is often the name of the branch you would want to push, but
 it can be any arbitrary "SHA-1 expression", such as `master~4` or
@@ -65,7 +67,8 @@ directs git to push "matching" branches: for every branch that exists on
 the local side, the remote side is updated if a branch of the same name
 already exists on the remote side.  This is the default operation mode
 if no explicit refspec is found (that is neither on the command line
-nor in any Push line of the corresponding remotes file---see below).
+nor in any Push line of the corresponding remotes file---see below) and
+no `push.default` configuration variable is set.
 
 --all::
 	Instead of naming each ref to push, specifies that all
@@ -357,7 +360,8 @@ Examples
 	`git push origin :`.
 +
 The default behavior of this command when no <refspec> is given can be
-configured by setting the `push` option of the remote.
+configured by setting the `push` option of the remote, or the `push.default`
+configuration variable.
 +
 For example, to default to pushing only the current branch to `origin`
 use `git config remote.origin.push HEAD`.  Any valid <refspec> (like
