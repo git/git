@@ -2501,7 +2501,7 @@ proc makewindow {} {
     bindkey ? {dofind -1 1}
     bindkey f nextfile
     bind . <F5> updatecommits
-    bind . <Shift-F5> reloadcommits
+    bindmodfunctionkey Shift 5 reloadcommits
     bind . <F2> showrefs
     bindmodfunctionkey Shift 4 {newview 0}
     bind . <F4> edit_or_newview
