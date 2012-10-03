@@ -64,6 +64,8 @@ void append_header_grep_pattern(struct grep_opt *opt,
 {
 	struct grep_pat *p = create_grep_pat(pat, strlen(pat), "header", 0,
 					     GREP_PATTERN_HEAD, field);
+	if (field == GREP_HEADER_REFLOG)
+		opt->use_reflog_filter = 1;
 	do_append_grep_pat(&opt->header_tail, p);
 }
 
@@ -697,6 +699,7 @@ static struct {
 } header_field[] = {
 	{ "author ", 7 },
 	{ "committer ", 10 },
+	{ "reflog ", 7 },
 };
 
 static int match_one_pattern(struct grep_pat *p, char *bol, char *eol,
@@ -720,7 +723,14 @@ static int match_one_pattern(struct grep_pat *p, char *bol, char *eol,
 		if (strncmp(bol, field, len))
 			return 0;
 		bol += len;
-		saved_ch = strip_timestamp(bol, &eol);
+		switch (p->field) {
+		case GREP_HEADER_AUTHOR:
+		case GREP_HEADER_COMMITTER:
+			saved_ch = strip_timestamp(bol, &eol);
+			break;
+		default:
+			break;
+		}
 	}
 
  again:

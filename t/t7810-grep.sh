@@ -546,6 +546,36 @@ test_expect_success 'log grep (6)' '
 	test_cmp expect actual
 '
 
+test_expect_success 'log grep (7)' '
+	git log -g --grep-reflog="commit: third" --pretty=tformat:%s >actual &&
+	echo third >expect &&
+	test_cmp expect actual
+'
+
+test_expect_success 'log grep (8)' '
+	git log -g --grep-reflog="commit: third" --grep-reflog="commit: second" --pretty=tformat:%s >actual &&
+	{
+		echo third && echo second
+	} >expect &&
+	test_cmp expect actual
+'
+
+test_expect_success 'log grep (9)' '
+	git log -g --grep-reflog="commit: third" --author="Thor" --pretty=tformat:%s >actual &&
+	echo third >expect &&
+	test_cmp expect actual
+'
+
+test_expect_success 'log grep (9)' '
+	git log -g --grep-reflog="commit: third" --author="non-existant" --pretty=tformat:%s >actual &&
+	: >expect &&
+	test_cmp expect actual
+'
+
+test_expect_success 'log --grep-reflog can only be used under -g' '
+	test_must_fail git log --grep-reflog="commit: third"
+'
+
 test_expect_success 'log with multiple --grep uses union' '
 	git log --grep=i --grep=r --format=%s >actual &&
 	{
@@ -625,6 +655,18 @@ test_expect_success 'log --all-match --grep --grep --author takes intersection' 
 	{
 		echo third
 	} >expect &&
+	test_cmp expect actual
+'
+
+test_expect_success 'log --author does not search in timestamp' '
+	: >expect &&
+	git log --author="$GIT_AUTHOR_DATE" >actual &&
+	test_cmp expect actual
+'
+
+test_expect_success 'log --committer does not search in timestamp' '
+	: >expect &&
+	git log --committer="$GIT_COMMITTER_DATE" >actual &&
 	test_cmp expect actual
 '
 
