@@ -62,6 +62,10 @@ UI, Workflows & Features
  * "git grep" learned to use a non-standard pattern type by default if
    a configuration variable tells it to.
 
+ * "git log -g" learned the "--grep-reflog=<pattern>" option to limit
+   its output to commits with a reflog message that matches the given
+   pattern.
+
  * "git merge-base" learned the "--is-ancestor A B" option to tell if A is
    an ancestor of B.  The result is indicated by its exit status code.
 
@@ -149,6 +153,11 @@ to them for details).
  * When "git am" is fed an input that has multiple "Content-type: ..."
    header, it did not grok charset= attribute correctly.
 
+ * A patch attached as application/octet-stream (e.g. not text/*) were
+   mishandled, not correctly honoring Content-Transfer-Encoding
+   (e.g. base64).
+   (merge 9d55b2e lt/mailinfo-handle-attachment-more-sanely later to maint).
+
  * "git blame MAKEFILE" run in a history that has "Makefile" but not
    "MAKEFILE" should say "No such file MAKEFILE in HEAD", but got
    confused on a case insensitive filesystem and failed to do so.
@@ -205,6 +214,9 @@ to them for details).
    is much less common, and did not advertise the more common "gzip" on
    its Accept-Encoding header.
    (merge aa90b96 sp/maint-http-enable-gzip later to maint).
+
+ * "git gc --auto" notified the user that auto-packing has triggered
+    even under the "--quiet" option.
 
  * After "gitk" showed the contents of a tag, neither "Reread
    references" nor "Reload" updated what is shown as the
