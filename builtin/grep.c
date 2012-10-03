@@ -261,38 +261,6 @@ static int wait_all(void)
 }
 #endif
 
-static void grep_pattern_type_options(const int pattern_type, struct grep_opt *opt)
-{
-	switch (pattern_type) {
-	case GREP_PATTERN_TYPE_UNSPECIFIED:
-		/* fall through */
-
-	case GREP_PATTERN_TYPE_BRE:
-		opt->fixed = 0;
-		opt->pcre = 0;
-		opt->regflags &= ~REG_EXTENDED;
-		break;
-
-	case GREP_PATTERN_TYPE_ERE:
-		opt->fixed = 0;
-		opt->pcre = 0;
-		opt->regflags |= REG_EXTENDED;
-		break;
-
-	case GREP_PATTERN_TYPE_FIXED:
-		opt->fixed = 1;
-		opt->pcre = 0;
-		opt->regflags &= ~REG_EXTENDED;
-		break;
-
-	case GREP_PATTERN_TYPE_PCRE:
-		opt->fixed = 0;
-		opt->pcre = 1;
-		opt->regflags &= ~REG_EXTENDED;
-		break;
-	}
-}
-
 static int grep_cmd_config(const char *var, const char *value, void *cb)
 {
 	int st = grep_config(var, value, cb);
@@ -798,13 +766,7 @@ int cmd_grep(int argc, const char **argv, const char *prefix)
 			     PARSE_OPT_KEEP_DASHDASH |
 			     PARSE_OPT_STOP_AT_NON_OPTION |
 			     PARSE_OPT_NO_INTERNAL_HELP);
-
-	if (pattern_type_arg != GREP_PATTERN_TYPE_UNSPECIFIED)
-		grep_pattern_type_options(pattern_type_arg, &opt);
-	else if (opt.pattern_type_option != GREP_PATTERN_TYPE_UNSPECIFIED)
-		grep_pattern_type_options(opt.pattern_type_option, &opt);
-	else if (opt.extended_regexp_option)
-		grep_pattern_type_options(GREP_PATTERN_TYPE_ERE, &opt);
+	grep_commit_pattern_type(pattern_type_arg, &opt);
 
 	if (use_index && !startup_info->have_repository)
 		/* die the same way as if we did it at the beginning */
