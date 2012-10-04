@@ -93,7 +93,7 @@ ENHANCED OPTION PARSER
 From the git 1.5.4 series and further, many git commands (not all of them at the
 time of the writing though) come with an enhanced option parser.
 
-Here is an exhaustive list of the facilities provided by this option parser.
+Here is a list of the facilities provided by this option parser.
 
 
 Magic Options
@@ -135,6 +135,16 @@ Aggregating short options
 Commands that support the enhanced option parser allow you to aggregate short
 options. This means that you can for example use `git rm -rf` or
 `git clean -fdx`.
+
+
+Abbreviating long options
+~~~~~~~~~~~~~~~~~~~~~~~~~
+Commands that support the enhanced option parser accepts unique
+prefix of a long option as if it is fully spelled out, but use this
+with a caution.  For example, `git commit --amen` behaves as if you
+typed `git commit --amend`, but that is true only until a later version
+of Git introduces another option that shares the same prefix,
+e.g `git commit --amenity" option.
 
 
 Separating argument from the option
