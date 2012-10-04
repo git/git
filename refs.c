@@ -1225,7 +1225,7 @@ int peel_ref(const char *refname, unsigned char *sha1)
 fallback:
 	o = parse_object(base);
 	if (o && o->type == OBJ_TAG) {
-		o = deref_tag(o, refname, 0);
+		o = deref_tag_noverify(o);
 		if (o) {
 			hashcpy(sha1, o->sha1);
 			return 0;
