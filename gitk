@@ -7970,6 +7970,8 @@ proc changediffdisp {} {
 proc highlightfile {cline} {
     global cflist cflist_top
 
+    if {![info exists cflist_top]} return
+
     $cflist tag remove highlight $cflist_top.0 "$cflist_top.0 lineend"
     $cflist tag add highlight $cline.0 "$cline.0 lineend"
     $cflist see $cline.0
