@@ -1225,8 +1225,15 @@ int peel_ref(const char *refname, unsigned char *sha1)
 	}
 
 fallback:
-	o = parse_object(base);
-	if (o && o->type == OBJ_TAG) {
+	o = lookup_unknown_object(base);
+	if (o->type == OBJ_NONE) {
+		int type = sha1_object_info(base, NULL);
+		if (type < 0)
+			return -1;
+		o->type = type;
+	}
+
+	if (o->type == OBJ_TAG) {
 		o = deref_tag_noverify(o);
 		if (o) {
 			hashcpy(sha1, o->sha1);
