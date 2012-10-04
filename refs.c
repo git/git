@@ -1202,6 +1202,8 @@ int peel_ref(const char *refname, unsigned char *sha1)
 	if (current_ref && (current_ref->name == refname
 		|| !strcmp(current_ref->name, refname))) {
 		if (current_ref->flag & REF_KNOWS_PEELED) {
+			if (is_null_sha1(current_ref->u.value.peeled))
+			    return -1;
 			hashcpy(sha1, current_ref->u.value.peeled);
 			return 0;
 		}

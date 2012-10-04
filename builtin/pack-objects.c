@@ -2033,7 +2033,6 @@ static int add_ref_tag(const char *path, const unsigned char *sha1, int flag, vo
 
 	if (!prefixcmp(path, "refs/tags/") && /* is a tag? */
 	    !peel_ref(path, peeled)        && /* peelable? */
-	    !is_null_sha1(peeled)          && /* annotated tag? */
 	    locate_object_entry(peeled))      /* object packed? */
 		add_object_entry(sha1, OBJ_TAG, NULL, 0);
 	return 0;
