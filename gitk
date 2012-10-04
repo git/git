@@ -7979,8 +7979,9 @@ proc highlightfile {cline} {
 }
 
 proc highlightfile_for_scrollpos {topidx} {
-    global difffilestart
+    global cmitmode difffilestart
 
+    if {$cmitmode eq "tree"} return
     if {![info exists difffilestart]} return
 
     set top [lindex [split $topidx .] 0]
@@ -8204,12 +8205,10 @@ proc scrolltext {f0 f1} {
     global searchstring cmitmode ctext
     global suppress_highlighting_file_for_this_scrollpos
 
-    if {$cmitmode ne "tree"} {
-	set topidx [$ctext index @0,0]
-	if {![info exists suppress_highlighting_file_for_this_scrollpos]
-	    || $topidx ne $suppress_highlighting_file_for_this_scrollpos} {
-	    highlightfile_for_scrollpos $topidx
-	}
+    set topidx [$ctext index @0,0]
+    if {![info exists suppress_highlighting_file_for_this_scrollpos]
+	|| $topidx ne $suppress_highlighting_file_for_this_scrollpos} {
+	highlightfile_for_scrollpos $topidx
     }
 
     catch {unset suppress_highlighting_file_for_this_scrollpos}
