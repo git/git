@@ -277,6 +277,7 @@ static struct match_attr *parse_attr_line(const char *line, const char *src,
 static struct attr_stack {
 	struct attr_stack *prev;
 	char *origin;
+	size_t originlen;
 	unsigned num_matches;
 	unsigned alloc;
 	struct match_attr **attrs;
@@ -527,6 +528,7 @@ static void bootstrap_attr_stack(void)
 	if (!is_bare_repository() || direction == GIT_ATTR_INDEX) {
 		elem = read_attr(GITATTRIBUTES_FILE, 1);
 		elem->origin = xstrdup("");
+		elem->originlen = 0;
 		elem->prev = attr_stack;
 		attr_stack = elem;
 		debug_push(elem);
@@ -620,7 +622,7 @@ static void prepare_attr_stack(const char *path)
 			strbuf_addstr(&pathbuf, GITATTRIBUTES_FILE);
 			elem = read_attr(pathbuf.buf, 0);
 			strbuf_setlen(&pathbuf, cp - path);
-			elem->origin = strbuf_detach(&pathbuf, NULL);
+			elem->origin = strbuf_detach(&pathbuf, &elem->originlen);
 			elem->prev = attr_stack;
 			attr_stack = elem;
 			debug_push(elem);
@@ -695,7 +697,7 @@ static int fill(const char *path, int pathlen, struct attr_stack *stk, int rem)
 		if (a->is_macro)
 			continue;
 		if (path_matches(path, pathlen,
-				 a->u.pattern, base, strlen(base)))
+				 a->u.pattern, base, stk->originlen))
 			rem = fill_one("fill", a, rem);
 	}
 	return rem;
