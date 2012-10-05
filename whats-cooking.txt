@@ -1,24 +1,18 @@
 To: git@vger.kernel.org
 Bcc: lwn@lwn.net
-Subject: What's cooking in git.git (Oct 2012, #01; Tue, 2)
-X-master-at: b65f30b6b3bf34831b32a1b209bc1955f2bf79df
-X-next-at: e57700a8bba97a7ca41f5703b8cd8de489f06c07
+Subject: What's cooking in git.git (Oct 2012, #02; Thu, 4)
+X-master-at: f84667def209e4a84e37e8488a08e9eca3f208c1
+X-next-at: dedcea6fbaf681acdfc05f123d5aac3c8749e6e1
 
-What's cooking in git.git (Oct 2012, #01; Tue, 2)
+What's cooking in git.git (Oct 2012, #02; Thu, 4)
 --------------------------------------------------
 
 Here are the topics that have been cooking.  Commits prefixed with
 '-' are only in 'pu' (proposed updates) while commits prefixed with
 '+' are in 'next'.
 
-The tip of 'master' is a bit past v1.8.0-rc0; we are more or less
-feature complete, except for a few topics marked as "Will merge to
-'master' in the list below.
-
-I do not expect the topics in the stalled category will be ready for
-the upcoming release; they may appear in the release after v1.8.0 if
-they are rerolled.  Also some of the topics that have been cooking
-in 'next' have to be deferred to the next cycle.
+The tip of 'master' is a bit past v1.8.0-rc0, and I would expect no
+more feature topic merges to 'master' until v1.8.0 final.
 
 I'm planning to keep this cycle reasonably short and aim for tagging
 the result as 1.8.0 at the end of 9th week, on October 21st, after
@@ -33,84 +27,80 @@ repositories listed at
 --------------------------------------------------
 [New Topics]
 
-* bw/config-lift-variable-name-length-limit (2012-10-01) 1 commit
- - Remove the hard coded length limit on variable names in config files
+* jc/doc-long-options (2012-10-04) 1 commit
+ - gitcli: parse-options lets you omit tail of long options
 
- The configuration parser had an unnecessary hardcoded limit on
- variable names that was not checked consistently. Lift the limit.
+ The end-user facing documentation claimed to be an "exhaustive"
+ list of features of parse-options command line parser, but it
+ didn't mention anything about abbreviating long option names to
+ their unique prefixes. Mention it, warn against relying too much on
+ it (as uniqueness may disappear in future versions of Git), and
+ drop the claim to be exhaustive.
 
- Will merge to 'next'.
+
+* jc/grep-pcre-loose-ends (2012-10-04) 6 commits
+ . log --grep: honor grep.patterntype etc. configuration variables
+ . log: pass rev_info to git_log_config()
+ . log --grep: accept --basic-regexp and --perl-regexp
+ - log --grep: use the same helper to set -E/-F options as "git grep"
+ - grep: move pattern-type bits support to top-level grep.[ch]
+ - grep: move configuration support to top-level grep.[ch]
+
+ "git log -F -E --grep='<ere>'" failed to use the given <ere>
+ pattern as extended regular expression, and instead looked for the
+ string literally.  The early part of this series is a fix for it.
 
 
-* jc/maint-t1450-fsck-order-fix (2012-10-02) 1 commit
- - t1450: the order the objects are checked is undefined
+* jc/merge-bases-paint-fix (2012-10-04) 1 commit
+ - paint_down_to_common(): parse commit before relying on its timestamp
 
- The fsck test assumed too much on what kind of error it will
- detect. The only important thing is the inconsistency is detected
- as an error.
+ "git fmt-merge-msg" (actually an internal helper reduce_heads() it
+ uses) had a severe performance regression; an empty "git pull" took
+ forever to finish as the result.
 
- Will merge to 'next'.
+ Need to be merged before 1.8.0 final.
+
+
+* jk/peel-ref (2012-10-04) 4 commits
+ - upload-pack: use peel_ref for ref advertisements
+ - peel_ref: check object type before loading
+ - peel_ref: do not return a null sha1
+ - peel_ref: use faster deref_tag_noverify
+
+ Speeds up "git upload-pack" (what is invoked by "git fetch" on the
+ other side of the connection) by reducing the cost to advertise the
+ branches and tags that are available in the repository.
 
 --------------------------------------------------
 [Graduated to "master"]
 
-* da/mergetool-custom (2012-09-25) 1 commit
-  (merged to 'next' on 2012-09-27 at f910851)
- + mergetool--lib: Allow custom commands to override built-ins
+* lt/mailinfo-handle-attachment-more-sanely (2012-09-30) 1 commit
+  (merged to 'next' on 2012-10-01 at 2a1cecc)
+ + mailinfo: don't require "text" mime type for attachments
 
- The actual external command to run for mergetool backend can be
- specified with difftool/mergetool.$name.cmd configuration
- variables, but this mechanism was ignored for the backends we
- natively support.
-
-
-* ep/malloc-check-perturb (2012-09-26) 1 commit
-  (merged to 'next' on 2012-09-27 at f115b8b)
- + MALLOC_CHECK: enable it, unless disabled explicitly
-
- Fixes a brown-paper bag bug.
+ A patch attached as application/octet-stream (e.g. not text/*) were
+ mishandled, not correctly honoring Content-Transfer-Encoding
+ (e.g. base64).
 
 
-* jc/blame-follows-renames (2012-09-21) 1 commit
-  (merged to 'next' on 2012-09-27 at 12634c1)
- + git blame: document that it always follows origin across whole-file renames
- (this branch is used by jc/blame-no-follow.)
+* nd/grep-reflog (2012-09-29) 4 commits
+  (merged to 'next' on 2012-10-01 at 57773a6)
+ + revision: make --grep search in notes too if shown
+ + log --grep-reflog: reject the option without -g
+ + revision: add --grep-reflog to filter commits by reflog messages
+ + grep: prepare for new header field filter
 
- Clarify the "blame" documentation to tell the users that there is
- no need to ask for "--follow".
-
-
-* jk/completion-tests (2012-09-27) 2 commits
-  (merged to 'next' on 2012-09-27 at 5cd6968)
- + t9902: add completion tests for "odd" filenames
- + t9902: add a few basic completion tests
+ Teach the commands from the "log" family the "--grep-reflog" option
+ to limit output by string that appears in the reflog entry when the
+ "--walk-reflogs" option is in effect.
 
 
-* jk/receive-pack-unpack-error-to-pusher (2012-09-21) 3 commits
-  (merged to 'next' on 2012-09-27 at 90f0c6f)
- + receive-pack: drop "n/a" on unpacker errors
- + receive-pack: send pack-processing stderr over sideband
- + receive-pack: redirect unpack-objects stdout to /dev/null
+* tu/gc-auto-quiet (2012-09-27) 1 commit
+  (merged to 'next' on 2012-10-01 at ad8b91b)
+ + silence git gc --auto --quiet output
 
- Send errors from "unpack-objects" and "index-pack" back to the "git
- push" over the git and smart-http protocols, just like it is done
- for a push over the ssh protocol.
-
-
-* os/commit-submodule-ignore (2012-09-24) 1 commit
-  (merged to 'next' on 2012-09-27 at 9cd2cfd)
- + commit: pay attention to submodule.$name.ignore in .gitmodules
-
- "git status" honored the ignore=dirty settings in .gitmodules but
- "git commit" didn't.
-
-
-* rt/maint-clone-single (2012-09-20) 1 commit
-  (merged to 'next' on 2012-09-27 at a47d54d)
- + clone --single: limit the fetch refspec to fetched branch
-
- Running "git fetch" in a repository made with "git clone --single"
- slurps all the branches, defeating the point of "--single".
+ "gc --auto" notified the user that auto-packing has triggered even
+ under the "--quiet" option.
 
 --------------------------------------------------
 [Stalled]
@@ -157,29 +147,6 @@ repositories listed at
  lines in colors that match what they mean better.
 
  Has the "is this really blue?" issue Peff raised resolved???
-
-
-* fa/remote-svn (2012-09-19) 16 commits
- - Add a test script for remote-svn
- - remote-svn: add marks-file regeneration
- - Add a svnrdump-simulator replaying a dump file for testing
- - remote-svn: add incremental import
- - remote-svn: Activate import/export-marks for fast-import
- - Create a note for every imported commit containing svn metadata
- - vcs-svn: add fast_export_note to create notes
- - Allow reading svn dumps from files via file:// urls
- - remote-svn, vcs-svn: Enable fetching to private refs
- - When debug==1, start fast-import with "--stats" instead of "--quiet"
- - Add documentation for the 'bidi-import' capability of remote-helpers
- - Connect fast-import to the remote-helper via pipe, adding 'bidi-import' capability
- - Add argv_array_detach and argv_array_free_detached
- - Add svndump_init_fd to allow reading dumps from arbitrary FDs
- - Add git-remote-testsvn to Makefile
- - Implement a remote helper for svn in C
- (this branch is used by fa/vcs-svn.)
-
- A GSoC project.
- Waiting for comments from mentors and stakeholders.
 
 
 * fa/vcs-svn (2012-09-19) 4 commits
@@ -361,6 +328,49 @@ repositories listed at
 --------------------------------------------------
 [Cooking]
 
+* fa/remote-svn (2012-09-19) 16 commits
+ - Add a test script for remote-svn
+ - remote-svn: add marks-file regeneration
+ - Add a svnrdump-simulator replaying a dump file for testing
+ - remote-svn: add incremental import
+ - remote-svn: Activate import/export-marks for fast-import
+ - Create a note for every imported commit containing svn metadata
+ - vcs-svn: add fast_export_note to create notes
+ - Allow reading svn dumps from files via file:// urls
+ - remote-svn, vcs-svn: Enable fetching to private refs
+ - When debug==1, start fast-import with "--stats" instead of "--quiet"
+ - Add documentation for the 'bidi-import' capability of remote-helpers
+ - Connect fast-import to the remote-helper via pipe, adding 'bidi-import' capability
+ - Add argv_array_detach and argv_array_free_detached
+ - Add svndump_init_fd to allow reading dumps from arbitrary FDs
+ - Add git-remote-testsvn to Makefile
+ - Implement a remote helper for svn in C
+ (this branch is used by fa/vcs-svn.)
+
+ A GSoC project.
+ Acked-by: David Michael Barr <b@rr-dav.id.au>
+
+
+* bw/config-lift-variable-name-length-limit (2012-10-01) 1 commit
+ - Remove the hard coded length limit on variable names in config files
+
+ The configuration parser had an unnecessary hardcoded limit on
+ variable names that was not checked consistently. Lift the limit.
+
+ Will merge to 'next'.
+
+
+* jc/maint-t1450-fsck-order-fix (2012-10-02) 1 commit
+  (merged to 'next' on 2012-10-02 at cc1a62e)
+ + t1450: the order the objects are checked is undefined
+
+ The fsck test assumed too much on what kind of error it will
+ detect. The only important thing is the inconsistency is detected
+ as an error.
+
+ Will merge to 'next'.
+
+
 * jl/submodule-add-by-name (2012-09-30) 2 commits
  - submodule add: Fail when .git/modules/<name> already exists unless forced
  - Teach "git submodule add" the --name option
@@ -376,41 +386,6 @@ repositories listed at
  the original submodule.
 
  Will merge to 'next'.
-
-
-* nd/grep-reflog (2012-09-29) 4 commits
-  (merged to 'next' on 2012-10-01 at 57773a6)
- + revision: make --grep search in notes too if shown
- + log --grep-reflog: reject the option without -g
- + revision: add --grep-reflog to filter commits by reflog messages
- + grep: prepare for new header field filter
-
- Teach the commands from the "log" family the "--grep-reflog" option
- to limit output by string that appears in the reflog entry when the
- "--walk-reflogs" option is in effect.
-
- Will merge to 'master'.
-
-
-* lt/mailinfo-handle-attachment-more-sanely (2012-09-30) 1 commit
-  (merged to 'next' on 2012-10-01 at 2a1cecc)
- + mailinfo: don't require "text" mime type for attachments
-
- A patch attached as application/octet-stream (e.g. not text/*) were
- mishandled, not correctly honoring Content-Transfer-Encoding
- (e.g. base64).
-
- Will merge to 'master'.
-
-
-* tu/gc-auto-quiet (2012-09-27) 1 commit
-  (merged to 'next' on 2012-10-01 at ad8b91b)
- + silence git gc --auto --quiet output
-
- "gc --auto" notified the user that auto-packing has triggered even
- under the "--quiet" option.
-
- Will merge to 'master'.
 
 
 * jm/diff-context-config (2012-10-02) 2 commits
@@ -473,7 +448,7 @@ repositories listed at
  It was pointed out that some symbols that do not have to be global
  are left global. I think this reroll fixed most of them.
 
- Will merge to 'next'.
+ Needs more design consideration.
 
 
 * nd/pretty-placeholder-with-color-option (2012-09-30) 9 commits
