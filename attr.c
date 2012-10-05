@@ -639,13 +639,11 @@ static void prepare_attr_stack(const char *path)
 }
 
 static int path_matches(const char *pathname, int pathlen,
+			const char *basename,
 			const char *pattern,
 			const char *base, int baselen)
 {
 	if (!strchr(pattern, '/')) {
-		/* match basename */
-		const char *basename = strrchr(pathname, '/');
-		basename = basename ? basename + 1 : pathname;
 		return (fnmatch_icase(pattern, basename, 0) == 0);
 	}
 	/*
@@ -687,7 +685,8 @@ static int fill_one(const char *what, struct match_attr *a, int rem)
 	return rem;
 }
 
-static int fill(const char *path, int pathlen, struct attr_stack *stk, int rem)
+static int fill(const char *path, int pathlen, const char *basename,
+		struct attr_stack *stk, int rem)
 {
 	int i;
 	const char *base = stk->origin ? stk->origin : "";
@@ -696,7 +695,7 @@ static int fill(const char *path, int pathlen, struct attr_stack *stk, int rem)
 		struct match_attr *a = stk->attrs[i];
 		if (a->is_macro)
 			continue;
-		if (path_matches(path, pathlen,
+		if (path_matches(path, pathlen, basename,
 				 a->u.pattern, base, stk->originlen))
 			rem = fill_one("fill", a, rem);
 	}
@@ -735,15 +734,19 @@ static void collect_all_attrs(const char *path)
 {
 	struct attr_stack *stk;
 	int i, pathlen, rem;
+	const char *basename;
 
 	prepare_attr_stack(path);
 	for (i = 0; i < attr_nr; i++)
 		check_all_attr[i].value = ATTR__UNKNOWN;
 
+	basename = strrchr(path, '/');
+	basename = basename ? basename + 1 : path;
+
 	pathlen = strlen(path);
 	rem = attr_nr;
 	for (stk = attr_stack; 0 < rem && stk; stk = stk->prev)
-		rem = fill(path, pathlen, stk, rem);
+		rem = fill(path, pathlen, basename, stk, rem);
 }
 
 int git_check_attr(const char *path, int num, struct git_attr_check *check)
