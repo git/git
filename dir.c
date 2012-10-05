@@ -288,9 +288,24 @@ int match_pathspec_depth(const struct pathspec *ps,
 	return retval;
 }
 
+/*
+ * Return the length of the "simple" part of a path match limiter.
+ */
+static int simple_length(const char *match)
+{
+	int len = -1;
+
+	for (;;) {
+		unsigned char c = *match++;
+		len++;
+		if (c == '\0' || is_glob_special(c))
+			return len;
+	}
+}
+
 static int no_wildcard(const char *string)
 {
-	return string[strcspn(string, "*?[{\\")] == '\0';
+	return string[simple_length(string)] == '\0';
 }
 
 void add_exclude(const char *string, const char *base,
@@ -326,8 +341,7 @@ void add_exclude(const char *string, const char *base,
 	x->flags = flags;
 	if (!strchr(string, '/'))
 		x->flags |= EXC_FLAG_NODIR;
-	if (no_wildcard(string))
-		x->flags |= EXC_FLAG_NOWILDCARD;
+	x->nowildcardlen = simple_length(string);
 	if (*string == '*' && no_wildcard(string+1))
 		x->flags |= EXC_FLAG_ENDSWITH;
 	ALLOC_GROW(which->excludes, which->nr + 1, which->alloc);
@@ -498,57 +512,69 @@ int excluded_from_list(const char *pathname,
 {
 	int i;
 
-	if (el->nr) {
-		for (i = el->nr - 1; 0 <= i; i--) {
-			struct exclude *x = el->excludes[i];
-			const char *exclude = x->pattern;
-			int to_exclude = x->to_exclude;
+	if (!el->nr)
+		return -1;	/* undefined */
 
-			if (x->flags & EXC_FLAG_MUSTBEDIR) {
-				if (*dtype == DT_UNKNOWN)
-					*dtype = get_dtype(NULL, pathname, pathlen);
-				if (*dtype != DT_DIR)
-					continue;
-			}
+	for (i = el->nr - 1; 0 <= i; i--) {
+		struct exclude *x = el->excludes[i];
+		const char *name, *exclude = x->pattern;
+		int to_exclude = x->to_exclude;
+		int namelen, prefix = x->nowildcardlen;
 
-			if (x->flags & EXC_FLAG_NODIR) {
-				/* match basename */
-				if (x->flags & EXC_FLAG_NOWILDCARD) {
-					if (!strcmp_icase(exclude, basename))
-						return to_exclude;
-				} else if (x->flags & EXC_FLAG_ENDSWITH) {
-					if (x->patternlen - 1 <= pathlen &&
-					    !strcmp_icase(exclude + 1, pathname + pathlen - x->patternlen + 1))
-						return to_exclude;
-				} else {
-					if (fnmatch_icase(exclude, basename, 0) == 0)
-						return to_exclude;
-				}
-			}
-			else {
-				/* match with FNM_PATHNAME:
-				 * exclude has base (baselen long) implicitly
-				 * in front of it.
-				 */
-				int baselen = x->baselen;
-				if (*exclude == '/')
-					exclude++;
-
-				if (pathlen < baselen ||
-				    (baselen && pathname[baselen-1] != '/') ||
-				    strncmp_icase(pathname, x->base, baselen))
-				    continue;
-
-				if (x->flags & EXC_FLAG_NOWILDCARD) {
-					if (!strcmp_icase(exclude, pathname + baselen))
-						return to_exclude;
-				} else {
-					if (fnmatch_icase(exclude, pathname+baselen,
-						    FNM_PATHNAME) == 0)
-					    return to_exclude;
-				}
-			}
+		if (x->flags & EXC_FLAG_MUSTBEDIR) {
+			if (*dtype == DT_UNKNOWN)
+				*dtype = get_dtype(NULL, pathname, pathlen);
+			if (*dtype != DT_DIR)
+				continue;
 		}
+
+		if (x->flags & EXC_FLAG_NODIR) {
+			/* match basename */
+			if (prefix == x->patternlen) {
+				if (!strcmp_icase(exclude, basename))
+					return to_exclude;
+			} else if (x->flags & EXC_FLAG_ENDSWITH) {
+				if (x->patternlen - 1 <= pathlen &&
+				    !strcmp_icase(exclude + 1, pathname + pathlen - x->patternlen + 1))
+					return to_exclude;
+			} else {
+				if (fnmatch_icase(exclude, basename, 0) == 0)
+					return to_exclude;
+			}
+			continue;
+		}
+
+		/* match with FNM_PATHNAME:
+		 * exclude has base (baselen long) implicitly in front of it.
+		 */
+		if (*exclude == '/') {
+			exclude++;
+			prefix--;
+		}
+
+		if (pathlen < x->baselen ||
+		    (x->baselen && pathname[x->baselen-1] != '/') ||
+		    strncmp_icase(pathname, x->base, x->baselen))
+			continue;
+
+		namelen = x->baselen ? pathlen - x->baselen : pathlen;
+		name = pathname + pathlen  - namelen;
+
+		/* if the non-wildcard part is longer than the
+		   remaining pathname, surely it cannot match */
+		if (prefix > namelen)
+			continue;
+
+		if (prefix) {
+			if (strncmp_icase(exclude, name, prefix))
+				continue;
+			exclude += prefix;
+			name    += prefix;
+			namelen -= prefix;
+		}
+
+		if (!namelen || !fnmatch_icase(exclude, name, FNM_PATHNAME))
+			return to_exclude;
 	}
 	return -1; /* undecided */
 }
@@ -1053,21 +1079,6 @@ static int cmp_name(const void *p1, const void *p2)
 
 	return cache_name_compare(e1->name, e1->len,
 				  e2->name, e2->len);
-}
-
-/*
- * Return the length of the "simple" part of a path match limiter.
- */
-static int simple_length(const char *match)
-{
-	int len = -1;
-
-	for (;;) {
-		unsigned char c = *match++;
-		len++;
-		if (c == '\0' || is_glob_special(c))
-			return len;
-	}
 }
 
 static struct path_simplify *create_simplify(const char **pathspec)
