@@ -122,7 +122,6 @@ sub _canonicalize_path_ourselves {
 	$path = _collapse_dotdot($path);
 	$path =~ s#/$##g;
 	$path =~ s#^\./## if $dot_slash_added;
-	$path =~ s#^/##;
 	$path =~ s#^\.$##;
 	return $path;
 }
