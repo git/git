@@ -2636,6 +2636,7 @@ bin-wrappers/%: wrap-for-bin.sh
 # with that.
 
 export NO_SVN_TESTS
+export TEST_NO_MALLOC_CHECK
 
 ### Testing rules
 
