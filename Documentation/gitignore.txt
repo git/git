@@ -68,11 +68,15 @@ PATTERN FORMAT
    for readability.
 
  - A line starting with # serves as a comment.
+   Put a backslash ("`\`") in front of the first hash for patterns
+   that begin with a hash.
 
- - An optional prefix '!' which negates the pattern; any
+ - An optional prefix "`!`" which negates the pattern; any
    matching file excluded by a previous pattern will become
    included again.  If a negated pattern matches, this will
    override lower precedence patterns sources.
+   Put a backslash ("`\`") in front of the first "`!`" for patterns
+   that begin with a literal "`!`", for example, "`\!important!.txt`".
 
  - If the pattern ends with a slash, it is removed for the
    purpose of the following description, but it would only find
