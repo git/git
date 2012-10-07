@@ -2182,11 +2182,19 @@ proc makewindow {} {
     image create bitmap bm-right -data $bm_right_data
     image create bitmap bm-right-gray -data $bm_right_data -foreground "#999"
 
-    ${NS}::button .tf.bar.leftbut -image [list bm-left disabled bm-left-gray] \
-	-command goback -state disabled -width 26
+    ${NS}::button .tf.bar.leftbut -command goback -state disabled -width 26
+    if {$use_ttk} {
+	.tf.bar.leftbut configure -image [list bm-left disabled bm-left-gray]
+    } else {
+	.tf.bar.leftbut configure -image bm-left
+    }
     pack .tf.bar.leftbut -side left -fill y
-    ${NS}::button .tf.bar.rightbut -image [list bm-right disabled bm-right-gray] \
-	-command goforw -state disabled -width 26
+    ${NS}::button .tf.bar.rightbut -command goforw -state disabled -width 26
+    if {$use_ttk} {
+	.tf.bar.rightbut configure -image [list bm-right disabled bm-right-gray]
+    } else {
+	.tf.bar.rightbut configure -image bm-right
+    }
     pack .tf.bar.rightbut -side left -fill y
 
     ${NS}::label .tf.bar.rowlabel -text [mc "Row"]
