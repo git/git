@@ -23,7 +23,14 @@ case "$vername" in
 *-rc[0-9]*)
 	rpmroot=testing
 	vername=$(echo "$vername" | tr "-" ".")
-	kind="A release candidate"
+	case "$vername" in
+	*-rc0)
+		kind="An early preview"
+		;;
+	*)
+		kind="A release candidate"
+		;;
+	esac
 	for_testing=" for testing"
 	;;
 *)
