@@ -1,18 +1,19 @@
 To: git@vger.kernel.org
 Bcc: lwn@lwn.net
-Subject: What's cooking in git.git (Oct 2012, #02; Thu, 4)
-X-master-at: f84667def209e4a84e37e8488a08e9eca3f208c1
-X-next-at: dedcea6fbaf681acdfc05f123d5aac3c8749e6e1
+Subject: What's cooking in git.git (Oct 2012, #03; Sun, 7)
+X-master-at: dc01f880a53e56d4a5c6f30cb2d7b9412e17bfe7
+X-next-at: 9fa34dc2edd1285517772f315bf1d7edbcfbfee6
 
-What's cooking in git.git (Oct 2012, #02; Thu, 4)
+What's cooking in git.git (Oct 2012, #03; Sun, 7)
 --------------------------------------------------
 
 Here are the topics that have been cooking.  Commits prefixed with
 '-' are only in 'pu' (proposed updates) while commits prefixed with
 '+' are in 'next'.
 
-The tip of 'master' is a bit past v1.8.0-rc0, and I would expect no
-more feature topic merges to 'master' until v1.8.0 final.
+I'll merge the regression fix jc/merge-bases-paint-fix to 'master'
+and will tag 1.8.0-rc1 tomorrow.  It would be nice if we can have
+pull requests for subsystem updates before then.
 
 I'm planning to keep this cycle reasonably short and aim for tagging
 the result as 1.8.0 at the end of 9th week, on October 21st, after
@@ -27,80 +28,49 @@ repositories listed at
 --------------------------------------------------
 [New Topics]
 
-* jc/doc-long-options (2012-10-04) 1 commit
- - gitcli: parse-options lets you omit tail of long options
+* jc/doc-default-format (2012-10-07) 2 commits
+ - [SQAUSH] allow "cd Doc* && make DEFAULT_DOC_TARGET=..."
+ - Allow generating a non-default set of documentation
 
- The end-user facing documentation claimed to be an "exhaustive"
- list of features of parse-options command line parser, but it
- didn't mention anything about abbreviating long option names to
- their unique prefixes. Mention it, warn against relying too much on
- it (as uniqueness may disappear in future versions of Git), and
- drop the claim to be exhaustive.
+ Will merge to 'next', but it is a bit too late for 1.8.0.
 
 
-* jc/grep-pcre-loose-ends (2012-10-04) 6 commits
- . log --grep: honor grep.patterntype etc. configuration variables
- . log: pass rev_info to git_log_config()
- . log --grep: accept --basic-regexp and --perl-regexp
- - log --grep: use the same helper to set -E/-F options as "git grep"
- - grep: move pattern-type bits support to top-level grep.[ch]
- - grep: move configuration support to top-level grep.[ch]
+* jk/lua-hackery (2012-10-07) 6 commits
+ - pretty: fix up one-off format_commit_message calls
+ - Minimum compilation fixup
+ - Makefile: make "lua" a bit more configurable
+ - add a "lua" pretty format
+ - add basic lua infrastructure
+ - pretty: make some commit-parsing helpers more public
 
- "git log -F -E --grep='<ere>'" failed to use the given <ere>
- pattern as extended regular expression, and instead looked for the
- string literally.  The early part of this series is a fix for it.
-
-
-* jc/merge-bases-paint-fix (2012-10-04) 1 commit
- - paint_down_to_common(): parse commit before relying on its timestamp
-
- "git fmt-merge-msg" (actually an internal helper reduce_heads() it
- uses) had a severe performance regression; an empty "git pull" took
- forever to finish as the result.
-
- Need to be merged before 1.8.0 final.
+ Interesting exercise. When we do this for real, we probably would want
+ to wrap a commit to make it more like an "object" with methods like
+ "parents", etc.
 
 
-* jk/peel-ref (2012-10-04) 4 commits
- - upload-pack: use peel_ref for ref advertisements
- - peel_ref: check object type before loading
- - peel_ref: do not return a null sha1
- - peel_ref: use faster deref_tag_noverify
+* nd/attr-match-optim (2012-10-05) 2 commits
+ - attr: avoid searching for basename on every match
+ - attr: avoid strlen() on every match
+ (this branch is used by nd/attr-match-optim-more.)
 
- Speeds up "git upload-pack" (what is invoked by "git fetch" on the
- other side of the connection) by reducing the cost to advertise the
- branches and tags that are available in the repository.
-
---------------------------------------------------
-[Graduated to "master"]
-
-* lt/mailinfo-handle-attachment-more-sanely (2012-09-30) 1 commit
-  (merged to 'next' on 2012-10-01 at 2a1cecc)
- + mailinfo: don't require "text" mime type for attachments
-
- A patch attached as application/octet-stream (e.g. not text/*) were
- mishandled, not correctly honoring Content-Transfer-Encoding
- (e.g. base64).
+ Will merge to 'next', but it is a bit too late for 1.8.0.
 
 
-* nd/grep-reflog (2012-09-29) 4 commits
-  (merged to 'next' on 2012-10-01 at 57773a6)
- + revision: make --grep search in notes too if shown
- + log --grep-reflog: reject the option without -g
- + revision: add --grep-reflog to filter commits by reflog messages
- + grep: prepare for new header field filter
+* nd/attr-match-optim-more (2012-10-05) 3 commits
+ - attr: more matching optimizations from .gitignore
+ - gitignore: make pattern parsing code a separate function
+ - Merge commit 'f9f6e2c' into nd/attr-match-optim-more
+ (this branch uses nd/attr-match-optim.)
 
- Teach the commands from the "log" family the "--grep-reflog" option
- to limit output by string that appears in the reflog entry when the
- "--walk-reflogs" option is in effect.
+ Start laying the foundation to build the "wildmatch" after we can
+ agree on its desired semantics.
 
 
-* tu/gc-auto-quiet (2012-09-27) 1 commit
-  (merged to 'next' on 2012-10-01 at ad8b91b)
- + silence git gc --auto --quiet output
+* nd/doc-ignore (2012-10-07) 1 commit
+ - gitignore.txt: suggestions how to get literal # or ! at the beginning
 
- "gc --auto" notified the user that auto-packing has triggered even
- under the "--quiet" option.
+ Will merge to 'next', but it may be a bit too late for 1.8.0.
+
 
 --------------------------------------------------
 [Stalled]
@@ -131,7 +101,7 @@ repositories listed at
  - Improve documentation and comments regarding directory traversal API
  - Update directory listing API doc to match code
 
- Expecting a reroll.
+ Waiting for a reroll.
 
 
 * as/test-tweaks (2012-09-20) 7 commits
@@ -149,15 +119,15 @@ repositories listed at
  Has the "is this really blue?" issue Peff raised resolved???
 
 
-* fa/vcs-svn (2012-09-19) 4 commits
+* fa/vcs-svn (2012-10-07) 4 commits
  - vcs-svn: remove repo_tree
  - vcs-svn/svndump: rewrite handle_node(), begin|end_revision()
  - vcs-svn/svndump: restructure node_ctx, rev_ctx handling
  - svndump: move struct definitions to .h
  (this branch uses fa/remote-svn.)
 
- A GSoC project.
- Waiting for comments from mentors and stakeholders.
+ A follow-up to a GSoC project, but seems not quite ready.
+ Will discard.
 
 
 * jc/maint-name-rev (2012-09-17) 7 commits
@@ -328,27 +298,80 @@ repositories listed at
 --------------------------------------------------
 [Cooking]
 
-* fa/remote-svn (2012-09-19) 16 commits
- - Add a test script for remote-svn
- - remote-svn: add marks-file regeneration
- - Add a svnrdump-simulator replaying a dump file for testing
- - remote-svn: add incremental import
- - remote-svn: Activate import/export-marks for fast-import
- - Create a note for every imported commit containing svn metadata
- - vcs-svn: add fast_export_note to create notes
- - Allow reading svn dumps from files via file:// urls
- - remote-svn, vcs-svn: Enable fetching to private refs
- - When debug==1, start fast-import with "--stats" instead of "--quiet"
- - Add documentation for the 'bidi-import' capability of remote-helpers
- - Connect fast-import to the remote-helper via pipe, adding 'bidi-import' capability
- - Add argv_array_detach and argv_array_free_detached
- - Add svndump_init_fd to allow reading dumps from arbitrary FDs
- - Add git-remote-testsvn to Makefile
- - Implement a remote helper for svn in C
+* jc/doc-long-options (2012-10-04) 1 commit
+ - gitcli: parse-options lets you omit tail of long options
+
+ The end-user facing documentation claimed to be an "exhaustive"
+ list of features of parse-options command line parser, but it
+ didn't mention anything about abbreviating long option names to
+ their unique prefixes. Mention it, warn against relying too much on
+ it (as uniqueness may disappear in future versions of Git), and
+ drop the claim to be exhaustive.
+
+ Will merge to 'next', but it is a bit too late for 1.8.0.
+
+
+* jc/grep-pcre-loose-ends (2012-10-04) 6 commits
+ . log --grep: honor grep.patterntype etc. configuration variables
+ . log: pass rev_info to git_log_config()
+ - log --grep: accept --basic-regexp and --perl-regexp
+ - log --grep: use the same helper to set -E/-F options as "git grep"
+ - grep: move pattern-type bits support to top-level grep.[ch]
+ - grep: move configuration support to top-level grep.[ch]
+
+ "git log -F -E --grep='<ere>'" failed to use the given <ere>
+ pattern as extended regular expression, and instead looked for the
+ string literally.  The early part of this series is a fix for it.
+
+ The last two are very wrong and need to be redone by refactoring
+ the configuration handling of "grep.*" part.
+
+
+* jc/merge-bases-paint-fix (2012-10-04) 1 commit
+  (merged to 'next' on 2012-10-07 at 9fa34dc)
+ + paint_down_to_common(): parse commit before relying on its timestamp
+
+ "git fmt-merge-msg" (actually an internal helper reduce_heads() it
+ uses) had a severe performance regression; an empty "git pull" took
+ forever to finish as the result.
+
+ Need to be merged before 1.8.0 final.
+
+
+* jk/peel-ref (2012-10-04) 4 commits
+ - upload-pack: use peel_ref for ref advertisements
+ - peel_ref: check object type before loading
+ - peel_ref: do not return a null sha1
+ - peel_ref: use faster deref_tag_noverify
+
+ Speeds up "git upload-pack" (what is invoked by "git fetch" on the
+ other side of the connection) by reducing the cost to advertise the
+ branches and tags that are available in the repository.
+
+ Will merge to 'next', but it is a bit too late for 1.8.0.
+
+
+* fa/remote-svn (2012-10-07) 16 commits
+  (merged to 'next' on 2012-10-07 at 7b90cf4)
+ + Add a test script for remote-svn
+ + remote-svn: add marks-file regeneration
+ + Add a svnrdump-simulator replaying a dump file for testing
+ + remote-svn: add incremental import
+ + remote-svn: Activate import/export-marks for fast-import
+ + Create a note for every imported commit containing svn metadata
+ + vcs-svn: add fast_export_note to create notes
+ + Allow reading svn dumps from files via file:// urls
+ + remote-svn, vcs-svn: Enable fetching to private refs
+ + When debug==1, start fast-import with "--stats" instead of "--quiet"
+ + Add documentation for the 'bidi-import' capability of remote-helpers
+ + Connect fast-import to the remote-helper via pipe, adding 'bidi-import' capability
+ + Add argv_array_detach and argv_array_free_detached
+ + Add svndump_init_fd to allow reading dumps from arbitrary FDs
+ + Add git-remote-testsvn to Makefile
+ + Implement a remote helper for svn in C
  (this branch is used by fa/vcs-svn.)
 
  A GSoC project.
- Acked-by: David Michael Barr <b@rr-dav.id.au>
 
 
 * bw/config-lift-variable-name-length-limit (2012-10-01) 1 commit
@@ -434,23 +457,6 @@ repositories listed at
  Will defer to the next cycle.
 
 
-* nd/wildmatch (2012-09-27) 5 commits
- - Support "**" in .gitignore and .gitattributes patterns using wildmatch()
- - Integrate wildmatch to git
- - compat/wildmatch: fix case-insensitive matching
- - compat/wildmatch: remove static variable force_lower_case
- - Import wildmatch from rsync
-
- Allows pathname patterns in .gitignore and .gitattributes files
- with double-asterisks "foo/**/bar" to match any number of directory
- hiearchies.
-
- It was pointed out that some symbols that do not have to be global
- are left global. I think this reroll fixed most of them.
-
- Needs more design consideration.
-
-
 * nd/pretty-placeholder-with-color-option (2012-09-30) 9 commits
  - pretty: support %>> that steal trailing spaces
  - pretty: support truncating in %>, %< and %><
@@ -469,3 +475,20 @@ repositories listed at
  (Originally merged to 'next' on 2012-07-23)
 
  Will defer to the next cycle.
+
+--------------------------------------------------
+[Discarded]
+
+* nd/wildmatch (2012-09-27) 5 commits
+ . Support "**" in .gitignore and .gitattributes patterns using wildmatch()
+ . Integrate wildmatch to git
+ . compat/wildmatch: fix case-insensitive matching
+ . compat/wildmatch: remove static variable force_lower_case
+ . Import wildmatch from rsync
+
+ Allows pathname patterns in .gitignore and .gitattributes files
+ with double-asterisks "foo/**/bar" to match any number of directory
+ hiearchies.
+
+ It was pointed out that some symbols that do not have to be global
+ are left global. I think this reroll fixed most of them.
