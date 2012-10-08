@@ -6,8 +6,12 @@ address of the remote server, and the path to the repository.
 Depending on the transport protocol, some of this information may be
 absent.
 
-Git natively supports ssh, git, http, https, ftp, ftps, and rsync
-protocols. The following syntaxes may be used with them:
+Git supports ssh, git, http, and https protocols (in addition, ftp,
+and ftps can be used for fetching and rsync can be used for fetching
+and pushing, but these are inefficient and deprecated; do not use
+them).
+
+The following syntaxes may be used with them:
 
 - ssh://{startsb}user@{endsb}host.xz{startsb}:port{endsb}/path/to/repo.git/
 - git://host.xz{startsb}:port{endsb}/path/to/repo.git/
