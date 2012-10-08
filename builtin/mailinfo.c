@@ -19,9 +19,6 @@ static struct strbuf email = STRBUF_INIT;
 static enum  {
 	TE_DONTCARE, TE_QP, TE_BASE64
 } transfer_encoding;
-static enum  {
-	TYPE_TEXT, TYPE_OTHER
-} message_type;
 
 static struct strbuf charset = STRBUF_INIT;
 static int patch_lines;
@@ -184,8 +181,6 @@ static void handle_content_type(struct strbuf *line)
 	struct strbuf *boundary = xmalloc(sizeof(struct strbuf));
 	strbuf_init(boundary, line->len);
 
-	if (!strcasestr(line->buf, "text/"))
-		 message_type = TYPE_OTHER;
 	if (slurp_attr(line->buf, "boundary=", boundary)) {
 		strbuf_insert(boundary, 0, "--", 2);
 		if (++content_top > &content[MAX_BOUNDARIES]) {
@@ -681,7 +676,6 @@ again:
 	/* set some defaults */
 	transfer_encoding = TE_DONTCARE;
 	strbuf_reset(&charset);
-	message_type = TYPE_TEXT;
 
 	/* slurp in this section's info */
 	while (read_one_header_line(&line, fin))
@@ -895,11 +889,6 @@ static void handle_body(void)
 			strbuf_insert(&line, 0, prev.buf, prev.len);
 			strbuf_reset(&prev);
 
-			/* binary data most likely doesn't have newlines */
-			if (message_type != TYPE_TEXT) {
-				handle_filter(&line);
-				break;
-			}
 			/*
 			 * This is a decoded line that may contain
 			 * multiple new lines.  Pass only one chunk
