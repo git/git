@@ -177,9 +177,7 @@ test_expect_success 'tag pointing to something else than its type' '
 	test_when_finished "remove_object $tag" &&
 	echo $tag >.git/refs/tags/wrong &&
 	test_when_finished "git update-ref -d refs/tags/wrong" &&
-	test_must_fail git fsck --tags 2>out &&
-	cat out &&
-	grep "error in tag.*broken links" out
+	test_must_fail git fsck --tags
 '
 
 test_expect_success 'cleaned up' '
