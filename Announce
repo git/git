@@ -42,6 +42,7 @@ esac
 cat <<EOF
 To: git@vger.kernel.org
 Cc: Linux Kernel <linux-kernel@vger.kernel.org>
+Bcc: lwn@lwn.net
 Subject: [ANNOUNCE] Git $relname
 
 EOF
