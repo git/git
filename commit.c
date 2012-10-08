@@ -609,6 +609,7 @@ static struct commit *interesting(struct commit_list *list)
 	return NULL;
 }
 
+/* all input commits in one and twos[] must have been parsed! */
 static struct commit_list *paint_down_to_common(struct commit *one, int n, struct commit **twos)
 {
 	struct commit_list *list = NULL;
@@ -617,6 +618,8 @@ static struct commit_list *paint_down_to_common(struct commit *one, int n, struc
 
 	one->object.flags |= PARENT1;
 	commit_list_insert_by_date(one, &list);
+	if (!n)
+		return list;
 	for (i = 0; i < n; i++) {
 		twos[i]->object.flags |= PARENT2;
 		commit_list_insert_by_date(twos[i], &list);
@@ -737,6 +740,8 @@ static int remove_redundant(struct commit **array, int cnt)
 	redundant = xcalloc(cnt, 1);
 	filled_index = xmalloc(sizeof(*filled_index) * (cnt - 1));
 
+	for (i = 0; i < cnt; i++)
+		parse_commit(array[i]);
 	for (i = 0; i < cnt; i++) {
 		struct commit_list *common;
 
