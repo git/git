@@ -153,10 +153,9 @@ to them for details).
  * When "git am" is fed an input that has multiple "Content-type: ..."
    header, it did not grok charset= attribute correctly.
 
- * A patch attached as application/octet-stream (e.g. not text/*) were
-   mishandled, not correctly honoring Content-Transfer-Encoding
-   (e.g. base64).
-   (merge 9d55b2e lt/mailinfo-handle-attachment-more-sanely later to maint).
+ * "git am" mishandled a patch attached as application/octet-stream
+   (e.g. not text/*); Content-Transfer-Encoding (e.g. base64) was not
+   honored correctly.
 
  * "git blame MAKEFILE" run in a history that has "Makefile" but not
    "MAKEFILE" should say "No such file MAKEFILE in HEAD", but got
@@ -169,7 +168,6 @@ to them for details).
 
  * It was unclear in the documentation for "git blame" that it is
    unnecessary for users to use the "--follow" option.
-   (merge e5dce96 jc/blame-follows-renames later to maint).
 
  * Output from "git branch -v" contains "(no branch)" that could be
    localized, but the code to align it along with the names of
@@ -184,7 +182,6 @@ to them for details).
    refspecs set up just like a clone without "--single", leading the
    subsequent "git fetch" to slurp all the other branches, defeating
    the whole point of specifying "only this branch".
-   (merge 31b808a rt/maint-clone-single later to maint).
 
  * Documentation talked about "first line of commit log" when it meant
    the title of the commit.  The description was clarified by defining
@@ -208,12 +205,10 @@ to them for details).
  * "git fetch" over http had an old workaround for an unlikely server
    misconfiguration; it turns out that this hurts debuggability of the
    configuration in general, and has been reverted.
-   (merge 6ac964a sp/maint-http-info-refs-no-retry later to maint).
 
  * "git fetch" over http advertised that it supports "deflate", which
    is much less common, and did not advertise the more common "gzip" on
    its Accept-Encoding header.
-   (merge aa90b96 sp/maint-http-enable-gzip later to maint).
 
  * "git gc --auto" notified the user that auto-packing has triggered
     even under the "--quiet" option.
@@ -233,7 +228,6 @@ to them for details).
  * "git receive-pack" (the counterpart to "git push") did not give
    progress output while processing objects it received to the puser
    when run over the smart-http protocol.
-   (merge 74eb32d jk/receive-pack-unpack-error-to-pusher later to maint).
 
  * When you misspell the command name you give to the "exec" action in
    the "git rebase -i" instruction sheet you were told that 'rebase' is not a
@@ -258,8 +252,6 @@ to them for details).
  * "git submodule frotz" was not diagnosed as "frotz" being an unknown
    subcommand to "git submodule"; the user instead got a complaint
    that "git submodule status" was run with an unknown path "frotz".
-   (merge af9c9f9 rr/maint-submodule-unknown-cmd later to maint).
 
  * "git status" honored the ignore=dirty settings in .gitmodules but
    "git commit" didn't.
-   (merge 8f6811e os/commit-submodule-ignore later to maint).
