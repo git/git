@@ -76,7 +76,7 @@ test_expect_success 'pushing to local repo' '
 # git-remote-testgit, but is too slow to leave in for general use.
 : test_expect_success 'racily pushing to local repo' '
 	test_when_finished "rm -rf server2 localclone2" &&
-	cp -a server server2 &&
+	cp -R server server2 &&
 	git clone "testgit::${PWD}/server2" localclone2 &&
 	(cd localclone2 &&
 	echo content >>file &&

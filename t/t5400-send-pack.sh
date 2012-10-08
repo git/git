@@ -159,7 +159,7 @@ test_expect_success 'receive-pack runs auto-gc in remote repo' '
 	    git commit -a -m "Second commit" &&
 	    git repack
 	) &&
-	cp -a parent child &&
+	cp -R parent child &&
 	(
 	    # Set the child to auto-pack if more than one pack exists
 	    cd child &&
