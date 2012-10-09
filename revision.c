@@ -1048,9 +1048,9 @@ void init_revisions(struct rev_info *revs, const char *prefix)
 
 	revs->commit_format = CMIT_FMT_DEFAULT;
 
+	init_grep_defaults();
+	grep_init(&revs->grep_filter, prefix);
 	revs->grep_filter.status_only = 1;
-	revs->grep_filter.pattern_tail = &(revs->grep_filter.pattern_list);
-	revs->grep_filter.header_tail = &(revs->grep_filter.header_list);
 	revs->grep_filter.regflags = REG_NEWLINE;
 
 	diff_setup(&revs->diffopt);
@@ -1893,6 +1893,8 @@ int setup_revisions(int argc, const char **argv, struct rev_info *revs, struct s
 	revs->diffopt.abbrev = revs->abbrev;
 	diff_setup_done(&revs->diffopt);
 
+	grep_commit_pattern_type(GREP_PATTERN_TYPE_UNSPECIFIED,
+				 &revs->grep_filter);
 	compile_grep_patterns(&revs->grep_filter);
 
 	if (revs->reverse && revs->reflog_info)

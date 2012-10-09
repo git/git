@@ -16,6 +16,11 @@ static struct grep_opt grep_defaults;
 void init_grep_defaults(void)
 {
 	struct grep_opt *opt = &grep_defaults;
+	static int run_once;
+
+	if (run_once)
+		return;
+	run_once++;
 
 	memset(opt, 0, sizeof(*opt));
 	opt->relative = 1;
