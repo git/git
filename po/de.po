@@ -55,7 +55,7 @@ msgstr "Konnte '%s' nicht öffnen"
 
 #: bundle.c:140
 msgid "Repository lacks these prerequisite commits:"
-msgstr "Dem Projektarchiv fehlen folgende vorrausgesetzte Versionen:"
+msgstr "Dem Projektarchiv fehlen folgende vorausgesetzte Versionen:"
 
 #: bundle.c:164 sequencer.c:550 sequencer.c:982 builtin/log.c:290
 #: builtin/log.c:727 builtin/log.c:1313 builtin/log.c:1529 builtin/merge.c:347
@@ -1755,7 +1755,7 @@ msgstr "Anzahl"
 #: builtin/apply.c:4290
 msgid "remove <num> leading slashes from traditional diff paths"
 msgstr ""
-"entfernt <Anzahl> vorrangestellte Schrägstriche von herkömmlichen "
+"entfernt <Anzahl> vorangestellte Schrägstriche von herkömmlichen "
 "Differenzpfaden"
 
 #: builtin/apply.c:4293
@@ -2062,7 +2062,7 @@ msgstr "Konnte einige Referenzen nicht lesen"
 #: builtin/branch.c:613
 msgid "cannot rename the current branch while not on any."
 msgstr ""
-"Kann aktuellen Zweig nicht umbennen, solange du dich auf keinem befindest."
+"Kann aktuellen Zweig nicht umbenennen, solange du dich auf keinem befindest."
 
 #: builtin/branch.c:623
 #, c-format
@@ -2346,7 +2346,7 @@ msgid ""
 "git checkout: --ours/--theirs, --force and --merge are incompatible when\n"
 "checking out of the index."
 msgstr ""
-"git checkout: --ours/--theirs, --force and --merge sind inkompatibel wenn\n"
+"git checkout: --ours/--theirs, --force und --merge sind inkompatibel wenn\n"
 "du aus der Bereitstellung auscheckst."
 
 #: builtin/checkout.c:1092
@@ -3654,7 +3654,7 @@ msgstr "Konnte %s nicht nach %s verschieben"
 #: builtin/init-db.c:363
 #, c-format
 msgid "Could not create git link %s"
-msgstr "Konnte git-Verknüfung %s nicht erstellen"
+msgstr "Konnte git-Verknüpfung %s nicht erstellen"
 
 #.
 #. * TRANSLATORS: The first '%s' is either "Reinitialized
@@ -3766,11 +3766,11 @@ msgstr "unechte Einreicher-Informationen %s"
 
 #: builtin/log.c:1202
 msgid "-n and -k are mutually exclusive."
-msgstr "-n und -k schliessen sich gegenseitig aus"
+msgstr "-n und -k schließen sich gegenseitig aus"
 
 #: builtin/log.c:1204
 msgid "--subject-prefix and -k are mutually exclusive."
-msgstr "--subject-prefix und -k schliessen sich gegenseitig aus"
+msgstr "--subject-prefix und -k schließen sich gegenseitig aus"
 
 #: builtin/log.c:1212
 msgid "--name-only does not make sense"
