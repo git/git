@@ -308,9 +308,41 @@ static void grep_pattern_type_options(const int pattern_type, struct grep_opt *o
 	}
 }
 
+static struct grep_opt grep_defaults;
+
+/*
+ * Initialize the grep_defaults template with hardcoded defaults.
+ * We could let the compiler do this, but without C99 initializers
+ * the code gets unwieldy and unreadable, so...
+ */
+static void init_grep_defaults(void)
+{
+	struct grep_opt *opt = &grep_defaults;
+
+	memset(opt, 0, sizeof(*opt));
+	opt->relative = 1;
+	opt->pathname = 1;
+	opt->regflags = REG_NEWLINE;
+	opt->max_depth = -1;
+	opt->pattern_type_option = GREP_PATTERN_TYPE_UNSPECIFIED;
+	opt->extended_regexp_option = 0;
+	strcpy(opt->color_context, "");
+	strcpy(opt->color_filename, "");
+	strcpy(opt->color_function, "");
+	strcpy(opt->color_lineno, "");
+	strcpy(opt->color_match, GIT_COLOR_BOLD_RED);
+	strcpy(opt->color_selected, "");
+	strcpy(opt->color_sep, GIT_COLOR_CYAN);
+	opt->color = -1;
+}
+
+/*
+ * Read the configuration file once and store it in
+ * the grep_defaults template.
+ */
 static int grep_config(const char *var, const char *value, void *cb)
 {
-	struct grep_opt *opt = cb;
+	struct grep_opt *opt = &grep_defaults;
 	char *color = NULL;
 
 	if (userdiff_config(var, value) < 0)
@@ -327,7 +359,7 @@ static int grep_config(const char *var, const char *value, void *cb)
 	if (!strcmp(var, "grep.patterntype")) {
 		opt->pattern_type_option = parse_pattern_type_arg(var, value);
 		return 0;
-  }
+	}
 
 	if (!strcmp(var, "grep.linenumber")) {
 		opt->linenum = git_config_bool(var, value);
@@ -350,14 +382,54 @@ static int grep_config(const char *var, const char *value, void *cb)
 		color = opt->color_selected;
 	else if (!strcmp(var, "color.grep.separator"))
 		color = opt->color_sep;
-	else
-		return git_color_default_config(var, value, cb);
+
 	if (color) {
 		if (!value)
 			return config_error_nonbool(var);
 		color_parse(value, var, color);
 	}
 	return 0;
+}
+
+/*
+ * Initialize one instance of grep_opt and copy the
+ * default values from the template we read the configuration
+ * information in an earlier call to git_config(grep_config).
+ */
+static void grep_init(struct grep_opt *opt, const char *prefix)
+{
+	struct grep_opt *def = &grep_defaults;
+
+	memset(opt, 0, sizeof(*opt));
+	opt->prefix = prefix;
+	opt->prefix_length = (prefix && *prefix) ? strlen(prefix) : 0;
+	opt->pattern_tail = &opt->pattern_list;
+	opt->header_tail = &opt->header_list;
+
+	opt->color = def->color;
+	opt->extended_regexp_option = def->extended_regexp_option;
+	opt->pattern_type_option = def->pattern_type_option;
+	opt->linenum = def->linenum;
+	opt->max_depth = def->max_depth;
+	opt->pathname = def->pathname;
+	opt->regflags = def->regflags;
+	opt->relative = def->relative;
+
+	strcpy(opt->color_context, def->color_context);
+	strcpy(opt->color_filename, def->color_filename);
+	strcpy(opt->color_function, def->color_function);
+	strcpy(opt->color_lineno, def->color_lineno);
+	strcpy(opt->color_match, def->color_match);
+	strcpy(opt->color_selected, def->color_selected);
+	strcpy(opt->color_sep, def->color_sep);
+}
+
+static int grep_cmd_config(const char *var, const char *value, void *cb)
+{
+	int st = grep_config(var, value, cb);
+	if (git_color_default_config(var, value, cb) < 0)
+		st = -1;
+	return st;
 }
 
 static void *lock_and_read_sha1_file(const unsigned char *sha1, enum object_type *type, unsigned long *size)
@@ -839,27 +911,9 @@ int cmd_grep(int argc, const char **argv, const char *prefix)
 	if (argc == 2 && !strcmp(argv[1], "-h"))
 		usage_with_options(grep_usage, options);
 
-	memset(&opt, 0, sizeof(opt));
-	opt.prefix = prefix;
-	opt.prefix_length = (prefix && *prefix) ? strlen(prefix) : 0;
-	opt.relative = 1;
-	opt.pathname = 1;
-	opt.pattern_tail = &opt.pattern_list;
-	opt.header_tail = &opt.header_list;
-	opt.regflags = REG_NEWLINE;
-	opt.max_depth = -1;
-	opt.pattern_type_option = GREP_PATTERN_TYPE_UNSPECIFIED;
-	opt.extended_regexp_option = 0;
-
-	strcpy(opt.color_context, "");
-	strcpy(opt.color_filename, "");
-	strcpy(opt.color_function, "");
-	strcpy(opt.color_lineno, "");
-	strcpy(opt.color_match, GIT_COLOR_BOLD_RED);
-	strcpy(opt.color_selected, "");
-	strcpy(opt.color_sep, GIT_COLOR_CYAN);
-	opt.color = -1;
-	git_config(grep_config, &opt);
+	init_grep_defaults();
+	git_config(grep_cmd_config, NULL);
+	grep_init(&opt, prefix);
 
 	/*
 	 * If there is no -- then the paths must exist in the working
