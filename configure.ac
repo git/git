@@ -411,7 +411,7 @@ else
       LDFLAGS="${SAVE_LDFLAGS}"
    ])
    if test "$git_cv_ld_wl_rpath" = "yes"; then
-      CC_LD_DYNPATH=-Wl,-rpath
+      CC_LD_DYNPATH=-Wl,-rpath,
    else
       AC_CACHE_CHECK([if linker supports -rpath], git_cv_ld_rpath, [
          SAVE_LDFLAGS="${LDFLAGS}"
