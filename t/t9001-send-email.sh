@@ -854,6 +854,61 @@ test_expect_success $PREREQ 'utf8 author is correctly passed on' '
 	grep "^From: Füñný Nâmé <odd_?=mail@example.com>" msgtxt1
 '
 
+test_expect_success $PREREQ 'sendemail.composeencoding works' '
+	clean_fake_sendmail &&
+	git config sendemail.composeencoding iso-8859-1 &&
+	(echo "#!$SHELL_PATH" &&
+	 echo "echo utf8 body: àéìöú >>\"\$1\""
+	) >fake-editor-utf8 &&
+	chmod +x fake-editor-utf8 &&
+	  GIT_EDITOR="\"$(pwd)/fake-editor-utf8\"" \
+	  git send-email \
+	  --compose --subject foo \
+	  --from="Example <nobody@example.com>" \
+	  --to=nobody@example.com \
+	  --smtp-server="$(pwd)/fake.sendmail" \
+	  $patches &&
+	grep "^utf8 body" msgtxt1 &&
+	grep "^Content-Type: text/plain; charset=iso-8859-1" msgtxt1
+'
+
+test_expect_success $PREREQ '--compose-encoding works' '
+	clean_fake_sendmail &&
+	(echo "#!$SHELL_PATH" &&
+	 echo "echo utf8 body: àéìöú >>\"\$1\""
+	) >fake-editor-utf8 &&
+	chmod +x fake-editor-utf8 &&
+	  GIT_EDITOR="\"$(pwd)/fake-editor-utf8\"" \
+	  git send-email \
+	  --compose-encoding iso-8859-1 \
+	  --compose --subject foo \
+	  --from="Example <nobody@example.com>" \
+	  --to=nobody@example.com \
+	  --smtp-server="$(pwd)/fake.sendmail" \
+	  $patches &&
+	grep "^utf8 body" msgtxt1 &&
+	grep "^Content-Type: text/plain; charset=iso-8859-1" msgtxt1
+'
+
+test_expect_success $PREREQ '--compose-encoding overrides sendemail.composeencoding' '
+	clean_fake_sendmail &&
+	git config sendemail.composeencoding iso-8859-1 &&
+	(echo "#!$SHELL_PATH" &&
+	 echo "echo utf8 body: àéìöú >>\"\$1\""
+	) >fake-editor-utf8 &&
+	chmod +x fake-editor-utf8 &&
+	  GIT_EDITOR="\"$(pwd)/fake-editor-utf8\"" \
+	  git send-email \
+	  --compose-encoding iso-8859-2 \
+	  --compose --subject foo \
+	  --from="Example <nobody@example.com>" \
+	  --to=nobody@example.com \
+	  --smtp-server="$(pwd)/fake.sendmail" \
+	  $patches &&
+	grep "^utf8 body" msgtxt1 &&
+	grep "^Content-Type: text/plain; charset=iso-8859-2" msgtxt1
+'
+
 test_expect_success $PREREQ 'detects ambiguous reference/file conflict' '
 	echo master > master &&
 	git add master &&

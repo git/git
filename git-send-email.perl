@@ -56,6 +56,7 @@ git send-email [options] <file | directory | rev-list options >
     --in-reply-to           <str>  * Email "In-Reply-To:"
     --annotate                     * Review each patch that will be sent in an editor.
     --compose                      * Open an editor for introduction.
+    --compose-encoding      <str>  * Encoding to assume for introduction.
     --8bit-encoding         <str>  * Encoding to assume 8bit mails if undeclared
 
   Sending:
@@ -198,6 +199,7 @@ my ($identity, $aliasfiletype, @alias_files, $smtp_domain);
 my ($validate, $confirm);
 my (@suppress_cc);
 my ($auto_8bit_encoding);
+my ($compose_encoding);
 
 my ($debug_net_smtp) = 0;		# Net::SMTP, see send_message()
 
@@ -231,6 +233,7 @@ my %config_settings = (
     "confirm"   => \$confirm,
     "from" => \$sender,
     "assume8bitencoding" => \$auto_8bit_encoding,
+    "composeencoding" => \$compose_encoding,
 );
 
 my %config_path_settings = (
@@ -315,6 +318,7 @@ my $rc = GetOptions("h" => \$help,
 		    "validate!" => \$validate,
 		    "format-patch!" => \$format_patch,
 		    "8bit-encoding=s" => \$auto_8bit_encoding,
+		    "compose-encoding=s" => \$compose_encoding,
 		    "force" => \$force,
 	 );
 
@@ -638,10 +642,13 @@ EOT
 			$summary_empty = 0 unless (/^\n$/);
 		} elsif (/^\n$/) {
 			$in_body = 1;
+			if (!defined $compose_encoding) {
+				$compose_encoding = "UTF-8";
+			}
 			if ($need_8bit_cte) {
 				print $c2 "MIME-Version: 1.0\n",
 					 "Content-Type: text/plain; ",
-					   "charset=UTF-8\n",
+					   "charset=$compose_encoding\n",
 					 "Content-Transfer-Encoding: 8bit\n";
 			}
 		} elsif (/^MIME-Version:/i) {

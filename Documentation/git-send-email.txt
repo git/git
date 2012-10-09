@@ -126,6 +126,10 @@ The --to option must be repeated for each user you want on the to list.
 +
 Note that no attempts whatsoever are made to validate the encoding.
 
+--compose-encoding=<encoding>::
+	Specify encoding of compose message. Default is the value of the
+	'sendemail.composeencoding'; if that is unspecified, UTF-8 is assumed.
+
 
 Sending
 ~~~~~~~
