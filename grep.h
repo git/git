@@ -138,6 +138,10 @@ struct grep_opt {
 	void *output_priv;
 };
 
+extern void init_grep_defaults(void);
+extern int grep_config(const char *var, const char *value, void *);
+extern void grep_init(struct grep_opt *, const char *prefix);
+
 extern void append_grep_pat(struct grep_opt *opt, const char *pat, size_t patlen, const char *origin, int no, enum grep_pat_token t);
 extern void append_grep_pattern(struct grep_opt *opt, const char *pat, const char *origin, int no, enum grep_pat_token t);
 extern void append_header_grep_pattern(struct grep_opt *, enum grep_header_field, const char *);
