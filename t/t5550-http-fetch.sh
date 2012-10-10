@@ -22,7 +22,7 @@ test_expect_success 'setup repository' '
 '
 
 test_expect_success 'create http-accessible bare repository with loose objects' '
-	cp -a .git "$HTTPD_DOCUMENT_ROOT_PATH/repo.git" &&
+	cp -R .git "$HTTPD_DOCUMENT_ROOT_PATH/repo.git" &&
 	(cd "$HTTPD_DOCUMENT_ROOT_PATH/repo.git" &&
 	 git config core.bare true &&
 	 mkdir -p hooks &&
