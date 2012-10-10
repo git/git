@@ -66,6 +66,11 @@ is from the path in question, the lower its precedence). Finally
 global and system-wide files are considered (they have the lowest
 precedence).
 
+When the `.gitattributes` file is missing from the work tree, the
+path in the index is used as a fall-back.  During checkout process,
+`.gitattributes` in the index is used and then the file in the
+working tree is used as a fall-back.
+
 If you wish to affect only a single repository (i.e., to assign
 attributes to files that are particular to
 one user's workflow for that repository), then
