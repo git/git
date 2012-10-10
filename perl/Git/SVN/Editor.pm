@@ -358,12 +358,12 @@ sub T {
 			mode_a => $m->{mode_a}, mode_b => '000000',
 			sha1_a => $m->{sha1_a}, sha1_b => '0' x 40,
 			chg => 'D', file_b => $m->{file_b}
-		});
+		}, $deletions);
 		$self->A({
 			mode_a => '000000', mode_b => $m->{mode_b},
 			sha1_a => '0' x 40, sha1_b => $m->{sha1_b},
 			chg => 'A', file_b => $m->{file_b}
-		});
+		}, $deletions);
 		return;
 	}
 
