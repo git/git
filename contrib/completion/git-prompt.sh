@@ -54,6 +54,12 @@
 # find one, or @{upstream} otherwise.  Once you have set
 # GIT_PS1_SHOWUPSTREAM, you can override it on a per-repository basis by
 # setting the bash.showUpstream config variable.
+#
+# If you would like a colored hint about the current dirty state, set
+# GIT_PS1_SHOWCOLORHINTS to a nonempty value. When tracked files are
+# modified, the branch name turns red, when all modifications are staged
+# the branch name turns yellow and when all changes are checked in, the
+# color changes to green. The colors are currently hardcoded in the function.
 
 # __gitdir accepts 0 or 1 arguments (i.e., location)
 # returns location of .git repo
@@ -207,6 +213,7 @@ __git_ps1_show_upstream ()
 # in that case it _sets_ PS1. The arguments are parts of a PS1 string.
 # when both arguments are given, the first is prepended and the second appended
 # to the state string when assigned to PS1.
+# In this mode you can request colored hints using GIT_PS1_SHOWCOLORHINTS=true
 __git_ps1 ()
 {
 	local pcmode=no
@@ -320,9 +327,36 @@ __git_ps1 ()
 		local f="$w$i$s$u"
 		if [ $pcmode = yes ]; then
 			PS1="$ps1pc_start("
-			PS1="$PS1$c${b##refs/heads/}${f:+ $f}$r$p"
+			if [ -n "${GIT_PS1_SHOWCOLORHINT-}" ]; then
+				local c_red='\e[31m'
+				local c_green='\e[32m'
+				local c_yellow='\e[33m'
+				local c_lblue='\e[1;34m'
+				local c_purple='\e[35m'
+				local c_cyan='\e[36m'
+				local c_clear='\e[0m'
+				local branchstring="$c${b##refs/heads/}"
+				local branch_color="$c_green"
+				local flags_color="$c_cyan"
+
+				if [ "$w" = "*" ]; then
+					branch_color="$c_red"
+				elif [ -n "$i" ]; then
+					branch_color="$c_yellow"
+				fi
+
+				# Setting PS1 directly with \[ and \] around colors
+				# is necessary to prevent wrapping issues!
+				PS1="$PS1\[$branch_color\]$branchstring\[$c_clear\]"
+				if [ -n "$f" ]; then
+					PS1="$PS1 \[$flags_color\]$f\[$c_clear\]"
+				fi
+			else
+				PS1="$PS1$c${b##refs/heads/}${f:+ $f}$r$p"
+			fi
 			PS1="$PS1)$ps1pc_end"
 		else
+			# NO color option unless in PROMPT_COMMAND mode
 			printf -- "$printf_format" "$c${b##refs/heads/}${f:+ $f}$r$p"
 		fi
 	fi
