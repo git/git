@@ -1,5 +1,30 @@
 diff_cmd () {
+	# p4merge does not like /dev/null
+	rm_local=
+	rm_remote=
+	if test "/dev/null" = "$LOCAL"
+	then
+		LOCAL="./p4merge-dev-null.LOCAL.$$"
+		>"$LOCAL"
+		rm_local=true
+	fi
+	if test "/dev/null" = "$REMOTE"
+	then
+		REMOTE="./p4merge-dev-null.REMOTE.$$"
+		>"$REMOTE"
+		rm_remote=true
+	fi
+
 	"$merge_tool_path" "$LOCAL" "$REMOTE"
+
+	if test -n "$rm_local"
+	then
+		rm -f "$LOCAL"
+	fi
+	if test -n "$rm_remote"
+	then
+		rm -f "$REMOTE"
+	fi
 }
 
 merge_cmd () {
