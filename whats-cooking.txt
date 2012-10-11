@@ -1,19 +1,17 @@
 To: git@vger.kernel.org
 Bcc: lwn@lwn.net
-Subject: What's cooking in git.git (Oct 2012, #03; Sun, 7)
-X-master-at: dc01f880a53e56d4a5c6f30cb2d7b9412e17bfe7
-X-next-at: 9fa34dc2edd1285517772f315bf1d7edbcfbfee6
+Subject: What's cooking in git.git (Oct 2012, #04; Thu, 11)
+X-master-at: cd46259ebf2e624bcee2aaae05c36663d414e1a2
+X-next-at: 639036db058fbb54865ae729c26c689777a96550
 
-What's cooking in git.git (Oct 2012, #03; Sun, 7)
+What's cooking in git.git (Oct 2012, #04; Thu, 11)
 --------------------------------------------------
 
 Here are the topics that have been cooking.  Commits prefixed with
 '-' are only in 'pu' (proposed updates) while commits prefixed with
 '+' are in 'next'.
 
-I'll merge the regression fix jc/merge-bases-paint-fix to 'master'
-and will tag 1.8.0-rc1 tomorrow.  It would be nice if we can have
-pull requests for subsystem updates before then.
+The tip of 'master' is 1.8.0-rc2.
 
 I'm planning to keep this cycle reasonably short and aim for tagging
 the result as 1.8.0 at the end of 9th week, on October 21st, after
@@ -28,49 +26,98 @@ repositories listed at
 --------------------------------------------------
 [New Topics]
 
-* jc/doc-default-format (2012-10-07) 2 commits
- - [SQAUSH] allow "cd Doc* && make DEFAULT_DOC_TARGET=..."
- - Allow generating a non-default set of documentation
+* js/format-2047 (2012-10-09) 5 commits
+ - format-patch: tests: check rfc822+rfc2047 in to+cc headers
+ - format-patch: fix rfc2047 address encoding with respect to rfc822 specials
+ - format-patch: introduce helper function last_line_length()
+ - format-patch: do not wrap rfc2047 encoded headers too late
+ - format-patch: do not wrap non-rfc2047 headers too early
 
- Will merge to 'next', but it is a bit too late for 1.8.0.
-
-
-* jk/lua-hackery (2012-10-07) 6 commits
- - pretty: fix up one-off format_commit_message calls
- - Minimum compilation fixup
- - Makefile: make "lua" a bit more configurable
- - add a "lua" pretty format
- - add basic lua infrastructure
- - pretty: make some commit-parsing helpers more public
-
- Interesting exercise. When we do this for real, we probably would want
- to wrap a commit to make it more like an "object" with methods like
- "parents", etc.
+ Fixes many rfc2047 quoting issues in the output from format-patch.
 
 
-* nd/attr-match-optim (2012-10-05) 2 commits
- - attr: avoid searching for basename on every match
- - attr: avoid strlen() on every match
- (this branch is used by nd/attr-match-optim-more.)
+* km/send-email-compose-encoding (2012-10-10) 1 commit
+  (merged to 'next' on 2012-10-11 at d94bd05)
+ + git-send-email: introduce compose-encoding
 
- Will merge to 'next', but it is a bit too late for 1.8.0.
+ "git send-email --compose" can let the user create a non-ascii
+ cover letter message, but there was not a way to mark it with
+ appropriate content type before sending it out.
 
 
-* nd/attr-match-optim-more (2012-10-05) 3 commits
- - attr: more matching optimizations from .gitignore
- - gitignore: make pattern parsing code a separate function
- - Merge commit 'f9f6e2c' into nd/attr-match-optim-more
- (this branch uses nd/attr-match-optim.)
+* so/prompt-command (2012-10-11) 2 commits
+  (merged to 'next' on 2012-10-11 at 1a14825)
+ + show color hints based on state of the git tree
+ + Allow __git_ps1 to be used in PROMPT_COMMAND
 
- Start laying the foundation to build the "wildmatch" after we can
- agree on its desired semantics.
+ Updates __git_ps1 so that it can be used as $PROMPT_COMMAND,
+ instead of being used for command substitution in $PS1, to embed
+ color escape sequences in its output.
+
+
+* jc/test-say-color-avoid-echo-escape (2012-10-11) 1 commit
+  (merged to 'next' on 2012-10-11 at 639036d)
+ + test-lib: Fix say_color () not to interpret \a\b\c in the message
+
+ Recent nd/wildmatch series was the first to reveal this ancient bug
+ in the test scaffolding.
+
+
+* aw/rebase-am-failure-detection (2012-10-11) 1 commit
+ - rebase: Handle cases where format-patch fails
+
+
+* da/mergetools-p4 (2012-10-11) 1 commit
+ - mergetools/p4merge: Handle "/dev/null"
+
+--------------------------------------------------
+[Graduated to "master"]
+
+* bw/cp-a-is-gnuism (2012-10-08) 1 commit
+  (merged to 'next' on 2012-10-08 at 6ddb60d)
+ + tests: "cp -a" is a GNUism
+
+
+* jc/doc-long-options (2012-10-04) 1 commit
+  (merged to 'next' on 2012-10-08 at 7183dc0)
+ + gitcli: parse-options lets you omit tail of long options
+
+ The end-user facing documentation claimed to be an "exhaustive"
+ list of features of parse-options command line parser, but it
+ didn't mention anything about abbreviating long option names to
+ their unique prefixes. Mention it, warn against relying too much on
+ it (as uniqueness may disappear in future versions of Git), and
+ drop the claim to be exhaustive.
+
+
+* jc/maint-t1450-fsck-order-fix (2012-10-02) 1 commit
+  (merged to 'next' on 2012-10-02 at cc1a62e)
+ + t1450: the order the objects are checked is undefined
+
+ The fsck test assumed too much on what kind of error it will
+ detect. The only important thing is the inconsistency is detected
+ as an error.
+
+
+* jc/merge-bases-paint-fix (2012-10-04) 1 commit
+  (merged to 'next' on 2012-10-07 at 9fa34dc)
+ + paint_down_to_common(): parse commit before relying on its timestamp
+
+ "git fmt-merge-msg" (actually an internal helper reduce_heads() it
+ uses) had a severe performance regression; an empty "git pull" took
+ forever to finish as the result.
 
 
 * nd/doc-ignore (2012-10-07) 1 commit
- - gitignore.txt: suggestions how to get literal # or ! at the beginning
+  (merged to 'next' on 2012-10-08 at 7b46836)
+ + gitignore.txt: suggestions how to get literal # or ! at the beginning
 
- Will merge to 'next', but it may be a bit too late for 1.8.0.
+ Documentation updates for excluding path whose name begin with # or !.
 
+
+* rr/git-uri-doc (2012-10-08) 1 commit
+  (merged to 'next' on 2012-10-08 at a28ae12)
+ + Git url doc: mark ftp/ftps as read-only and deprecate them
 
 --------------------------------------------------
 [Stalled]
@@ -173,6 +220,13 @@ repositories listed at
  Stalled mostly due to lack of responses.
 
 
+* jc/doc-default-format (2012-10-07) 2 commits
+ - [SQAUSH] allow "cd Doc* && make DEFAULT_DOC_TARGET=..."
+ - Allow generating a non-default set of documentation
+
+ Need to address the installation half if this is to be any useful.
+
+
 * mk/maint-graph-infinity-loop (2012-09-25) 1 commit
  - graph.c: infinite loop in git whatchanged --graph -m
 
@@ -224,7 +278,8 @@ repositories listed at
 
 
 * jc/add-delete-default (2012-08-13) 1 commit
- - git add: notice removal of tracked paths by default
+  (merged to 'next' on 2012-10-11 at bd9e5cb)
+ + git add: notice removal of tracked paths by default
 
  "git add dir/" updated modified files and added new files, but does
  not notice removed files, which may be "Huh?" to some users.  They
@@ -285,7 +340,7 @@ repositories listed at
  Given that I heard a lot of noise that people want large files, and
  that I was asked by somebody at GitTogether'11 privately for an
  advice on how to pay developers (not me) to help adding necessary
- support, I am somewhat dissapointed that the original patch series
+ support, I am somewhat disappointed that the original patch series
  that was sent long time ago still remains here without much comments
  and updates from the developer community. I even made the interface
  to the logic that decides where to split chunks easily replaceable,
@@ -298,57 +353,86 @@ repositories listed at
 --------------------------------------------------
 [Cooking]
 
-* jc/doc-long-options (2012-10-04) 1 commit
- - gitcli: parse-options lets you omit tail of long options
+* nd/wildmatch (2012-10-11) 12 commits
+ - t3070: disable two fnmatch tests that have different results on different libc
+ - Support "**" wildcard in .gitignore and .gitattributes
+ - wildmatch: make /**/ match zero or more directories
+ - wildmatch: adjust "**" behavior
+ - wildmatch: fix case-insensitive matching
+ - wildmatch: remove static variable force_lower_case
+ - wildmatch: make wildmatch's return value compatible with fnmatch
+ - Integrate wildmatch to git
+ - wildmatch: remove unnecessary functions
+ - Import wildmatch from rsync
+ - ctype: support iscntrl, ispunct, isxdigit and isprint
+ - ctype: make sane_ctype[] const array
 
- The end-user facing documentation claimed to be an "exhaustive"
- list of features of parse-options command line parser, but it
- didn't mention anything about abbreviating long option names to
- their unique prefixes. Mention it, warn against relying too much on
- it (as uniqueness may disappear in future versions of Git), and
- drop the claim to be exhaustive.
+ Allows pathname patterns in .gitignore and .gitattributes files
+ with double-asterisks "foo/**/bar" to match any number of directory
+ hiearchies.
 
- Will merge to 'next', but it is a bit too late for 1.8.0.
+ This might be missing some off-by-one fix posted on the list, and
+ needs to be checked.
 
 
-* jc/grep-pcre-loose-ends (2012-10-04) 6 commits
- . log --grep: honor grep.patterntype etc. configuration variables
- . log: pass rev_info to git_log_config()
- - log --grep: accept --basic-regexp and --perl-regexp
- - log --grep: use the same helper to set -E/-F options as "git grep"
- - grep: move pattern-type bits support to top-level grep.[ch]
- - grep: move configuration support to top-level grep.[ch]
+* jk/lua-hackery (2012-10-07) 6 commits
+ - pretty: fix up one-off format_commit_message calls
+ - Minimum compilation fixup
+ - Makefile: make "lua" a bit more configurable
+ - add a "lua" pretty format
+ - add basic lua infrastructure
+ - pretty: make some commit-parsing helpers more public
+
+ Interesting exercise. When we do this for real, we probably would want
+ to wrap a commit to make it more like an "object" with methods like
+ "parents", etc.
+
+
+* nd/attr-match-optim (2012-10-05) 2 commits
+  (merged to 'next' on 2012-10-08 at bfbdd8a)
+ + attr: avoid searching for basename on every match
+ + attr: avoid strlen() on every match
+ (this branch is used by nd/attr-match-optim-more.)
+
+ Trivial and obvious optimization for finding attributes that match
+ a given path.
+
+
+* nd/attr-match-optim-more (2012-10-11) 3 commits
+ - attr: more matching optimizations from .gitignore
+ - gitignore: make pattern parsing code a separate function
+ - Merge commit 'f9f6e2c' into nd/attr-match-optim-more
+ (this branch uses nd/attr-match-optim.)
+
+ Start laying the foundation to build the "wildmatch" after we can
+ agree on its desired semantics.
+
+
+* jc/grep-pcre-loose-ends (2012-10-09) 7 commits
+  (merged to 'next' on 2012-10-11 at fec8530)
+ + log: honor grep.* configuration
+ + log --grep: accept --basic-regexp and --perl-regexp
+ + log --grep: use the same helper to set -E/-F options as "git grep"
+ + revisions: initialize revs->grep_filter using grep_init()
+ + grep: move pattern-type bits support to top-level grep.[ch]
+ + grep: move the configuration parsing logic to grep.[ch]
+ + builtin/grep.c: make configuration callback more reusable
 
  "git log -F -E --grep='<ere>'" failed to use the given <ere>
  pattern as extended regular expression, and instead looked for the
  string literally.  The early part of this series is a fix for it.
 
- The last two are very wrong and need to be redone by refactoring
- the configuration handling of "grep.*" part.
-
-
-* jc/merge-bases-paint-fix (2012-10-04) 1 commit
-  (merged to 'next' on 2012-10-07 at 9fa34dc)
- + paint_down_to_common(): parse commit before relying on its timestamp
-
- "git fmt-merge-msg" (actually an internal helper reduce_heads() it
- uses) had a severe performance regression; an empty "git pull" took
- forever to finish as the result.
-
- Need to be merged before 1.8.0 final.
-
 
 * jk/peel-ref (2012-10-04) 4 commits
- - upload-pack: use peel_ref for ref advertisements
- - peel_ref: check object type before loading
- - peel_ref: do not return a null sha1
- - peel_ref: use faster deref_tag_noverify
+  (merged to 'next' on 2012-10-08 at 4adfa2f)
+ + upload-pack: use peel_ref for ref advertisements
+ + peel_ref: check object type before loading
+ + peel_ref: do not return a null sha1
+ + peel_ref: use faster deref_tag_noverify
 
  Speeds up "git upload-pack" (what is invoked by "git fetch" on the
  other side of the connection) by reducing the cost to advertise the
  branches and tags that are available in the repository.
-
- Will merge to 'next', but it is a bit too late for 1.8.0.
 
 
 * fa/remote-svn (2012-10-07) 16 commits
@@ -375,28 +459,17 @@ repositories listed at
 
 
 * bw/config-lift-variable-name-length-limit (2012-10-01) 1 commit
- - Remove the hard coded length limit on variable names in config files
+  (merged to 'next' on 2012-10-08 at 69f54f4)
+ + Remove the hard coded length limit on variable names in config files
 
  The configuration parser had an unnecessary hardcoded limit on
  variable names that was not checked consistently. Lift the limit.
 
- Will merge to 'next'.
-
-
-* jc/maint-t1450-fsck-order-fix (2012-10-02) 1 commit
-  (merged to 'next' on 2012-10-02 at cc1a62e)
- + t1450: the order the objects are checked is undefined
-
- The fsck test assumed too much on what kind of error it will
- detect. The only important thing is the inconsistency is detected
- as an error.
-
- Will merge to 'next'.
-
 
 * jl/submodule-add-by-name (2012-09-30) 2 commits
- - submodule add: Fail when .git/modules/<name> already exists unless forced
- - Teach "git submodule add" the --name option
+  (merged to 'next' on 2012-10-08 at 9408d8d)
+ + submodule add: Fail when .git/modules/<name> already exists unless forced
+ + Teach "git submodule add" the --name option
 
  If you remove a submodule, in order to keep the repository so that
  "git checkout" to an older commit in the superproject history can
@@ -407,8 +480,6 @@ repositories listed at
  submodule at the same path, give the "--name" option to give it a
  place in $GIT_DIR of the superproject that does not conflict with
  the original submodule.
-
- Will merge to 'next'.
 
 
 * jm/diff-context-config (2012-10-02) 2 commits
@@ -475,20 +546,3 @@ repositories listed at
  (Originally merged to 'next' on 2012-07-23)
 
  Will defer to the next cycle.
-
---------------------------------------------------
-[Discarded]
-
-* nd/wildmatch (2012-09-27) 5 commits
- . Support "**" in .gitignore and .gitattributes patterns using wildmatch()
- . Integrate wildmatch to git
- . compat/wildmatch: fix case-insensitive matching
- . compat/wildmatch: remove static variable force_lower_case
- . Import wildmatch from rsync
-
- Allows pathname patterns in .gitignore and .gitattributes files
- with double-asterisks "foo/**/bar" to match any number of directory
- hiearchies.
-
- It was pointed out that some symbols that do not have to be global
- are left global. I think this reroll fixed most of them.
