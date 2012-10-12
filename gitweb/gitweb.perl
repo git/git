@@ -8028,7 +8028,7 @@ sub git_feed {
 		%latest_commit = %{$commitlist[0]};
 		my $latest_epoch = $latest_commit{'committer_epoch'};
 		exit_if_unmodified_since($latest_epoch);
-		%latest_date = parse_date($latest_epoch, $latest_commit{'comitter_tz'});
+		%latest_date = parse_date($latest_epoch, $latest_commit{'committer_tz'});
 	}
 	print $cgi->header(
 		-type => $content_type,
