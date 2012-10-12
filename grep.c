@@ -1363,7 +1363,7 @@ int grep_buffer(struct grep_opt *opt, char *buf, unsigned long size)
 	struct grep_source gs;
 	int r;
 
-	grep_source_init(&gs, GREP_SOURCE_BUF, NULL, NULL);
+	grep_source_init(&gs, GREP_SOURCE_BUF, NULL, NULL, NULL);
 	gs.buf = buf;
 	gs.size = size;
 
@@ -1374,10 +1374,12 @@ int grep_buffer(struct grep_opt *opt, char *buf, unsigned long size)
 }
 
 void grep_source_init(struct grep_source *gs, enum grep_source_type type,
-		      const char *name, const void *identifier)
+		      const char *name, const char *path,
+		      const void *identifier)
 {
 	gs->type = type;
 	gs->name = name ? xstrdup(name) : NULL;
+	gs->path = path ? xstrdup(path) : NULL;
 	gs->buf = NULL;
 	gs->size = 0;
 	gs->driver = NULL;
@@ -1399,6 +1401,8 @@ void grep_source_clear(struct grep_source *gs)
 {
 	free(gs->name);
 	gs->name = NULL;
+	free(gs->path);
+	gs->path = NULL;
 	free(gs->identifier);
 	gs->identifier = NULL;
 	grep_source_clear_data(gs);
@@ -1491,7 +1495,8 @@ void grep_source_load_driver(struct grep_source *gs)
 		return;
 
 	grep_attr_lock();
-	gs->driver = userdiff_find_by_path(gs->name);
+	if (gs->path)
+		gs->driver = userdiff_find_by_path(gs->path);
 	if (!gs->driver)
 		gs->driver = userdiff_find_by_name("default");
 	grep_attr_unlock();

@@ -86,7 +86,7 @@ static pthread_cond_t cond_result;
 static int skip_first_line;
 
 static void add_work(struct grep_opt *opt, enum grep_source_type type,
-		     const char *name, const void *id)
+		     const char *name, const char *path, const void *id)
 {
 	grep_lock();
 
@@ -94,7 +94,7 @@ static void add_work(struct grep_opt *opt, enum grep_source_type type,
 		pthread_cond_wait(&cond_write, &grep_mutex);
 	}
 
-	grep_source_init(&todo[todo_end].source, type, name, id);
+	grep_source_init(&todo[todo_end].source, type, name, path, id);
 	if (opt->binary != GREP_BINARY_TEXT)
 		grep_source_load_driver(&todo[todo_end].source);
 	todo[todo_end].done = 0;
@@ -319,7 +319,8 @@ static void *lock_and_read_sha1_file(const unsigned char *sha1, enum object_type
 }
 
 static int grep_sha1(struct grep_opt *opt, const unsigned char *sha1,
-		     const char *filename, int tree_name_len)
+		     const char *filename, int tree_name_len,
+		     const char *path)
 {
 	struct strbuf pathbuf = STRBUF_INIT;
 
@@ -333,7 +334,7 @@ static int grep_sha1(struct grep_opt *opt, const unsigned char *sha1,
 
 #ifndef NO_PTHREADS
 	if (use_threads) {
-		add_work(opt, GREP_SOURCE_SHA1, pathbuf.buf, sha1);
+		add_work(opt, GREP_SOURCE_SHA1, pathbuf.buf, path, sha1);
 		strbuf_release(&pathbuf);
 		return 0;
 	} else
@@ -342,7 +343,7 @@ static int grep_sha1(struct grep_opt *opt, const unsigned char *sha1,
 		struct grep_source gs;
 		int hit;
 
-		grep_source_init(&gs, GREP_SOURCE_SHA1, pathbuf.buf, sha1);
+		grep_source_init(&gs, GREP_SOURCE_SHA1, pathbuf.buf, path, sha1);
 		strbuf_release(&pathbuf);
 		hit = grep_source(opt, &gs);
 
@@ -362,7 +363,7 @@ static int grep_file(struct grep_opt *opt, const char *filename)
 
 #ifndef NO_PTHREADS
 	if (use_threads) {
-		add_work(opt, GREP_SOURCE_FILE, buf.buf, filename);
+		add_work(opt, GREP_SOURCE_FILE, buf.buf, filename, filename);
 		strbuf_release(&buf);
 		return 0;
 	} else
@@ -371,7 +372,7 @@ static int grep_file(struct grep_opt *opt, const char *filename)
 		struct grep_source gs;
 		int hit;
 
-		grep_source_init(&gs, GREP_SOURCE_FILE, buf.buf, filename);
+		grep_source_init(&gs, GREP_SOURCE_FILE, buf.buf, filename, filename);
 		strbuf_release(&buf);
 		hit = grep_source(opt, &gs);
 
@@ -427,7 +428,7 @@ static int grep_cache(struct grep_opt *opt, const struct pathspec *pathspec, int
 		if (cached || (ce->ce_flags & CE_VALID) || ce_skip_worktree(ce)) {
 			if (ce_stage(ce))
 				continue;
-			hit |= grep_sha1(opt, ce->sha1, ce->name, 0);
+			hit |= grep_sha1(opt, ce->sha1, ce->name, 0, ce->name);
 		}
 		else
 			hit |= grep_file(opt, ce->name);
@@ -445,7 +446,8 @@ static int grep_cache(struct grep_opt *opt, const struct pathspec *pathspec, int
 }
 
 static int grep_tree(struct grep_opt *opt, const struct pathspec *pathspec,
-		     struct tree_desc *tree, struct strbuf *base, int tn_len)
+		     struct tree_desc *tree, struct strbuf *base, int tn_len,
+		     int check_attr)
 {
 	int hit = 0;
 	enum interesting match = entry_not_interesting;
@@ -466,7 +468,8 @@ static int grep_tree(struct grep_opt *opt, const struct pathspec *pathspec,
 		strbuf_add(base, entry.path, te_len);
 
 		if (S_ISREG(entry.mode)) {
-			hit |= grep_sha1(opt, entry.sha1, base->buf, tn_len);
+			hit |= grep_sha1(opt, entry.sha1, base->buf, tn_len,
+					 check_attr ? base->buf + tn_len : NULL);
 		}
 		else if (S_ISDIR(entry.mode)) {
 			enum object_type type;
@@ -481,7 +484,8 @@ static int grep_tree(struct grep_opt *opt, const struct pathspec *pathspec,
 
 			strbuf_addch(base, '/');
 			init_tree_desc(&sub, data, size);
-			hit |= grep_tree(opt, pathspec, &sub, base, tn_len);
+			hit |= grep_tree(opt, pathspec, &sub, base, tn_len,
+					 check_attr);
 			free(data);
 		}
 		strbuf_setlen(base, old_baselen);
@@ -496,7 +500,7 @@ static int grep_object(struct grep_opt *opt, const struct pathspec *pathspec,
 		       struct object *obj, const char *name)
 {
 	if (obj->type == OBJ_BLOB)
-		return grep_sha1(opt, obj->sha1, name, 0);
+		return grep_sha1(opt, obj->sha1, name, 0, NULL);
 	if (obj->type == OBJ_COMMIT || obj->type == OBJ_TREE) {
 		struct tree_desc tree;
 		void *data;
@@ -519,7 +523,8 @@ static int grep_object(struct grep_opt *opt, const struct pathspec *pathspec,
 			strbuf_addch(&base, ':');
 		}
 		init_tree_desc(&tree, data, size);
-		hit = grep_tree(opt, pathspec, &tree, &base, base.len);
+		hit = grep_tree(opt, pathspec, &tree, &base, base.len,
+				obj->type == OBJ_COMMIT);
 		strbuf_release(&base);
 		free(data);
 		return hit;
