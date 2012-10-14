@@ -543,8 +543,6 @@ sub req_add
     my $updater = GITCVS::updater->new($state->{CVSROOT}, $state->{module}, $log);
     $updater->update();
 
-    argsfromdir($updater);
-
     my $addcount = 0;
 
     foreach my $filename ( @{$state->{args}} )
