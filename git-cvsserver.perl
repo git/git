@@ -2444,42 +2444,14 @@ sub kopts_from_path
         }
         elsif( ($cfg->{gitcvs}{allbinary} =~ /^\s*guess\s*$/i) )
         {
-            if( $srcType eq "sha1Or-k" &&
-                !defined($name) )
+            if( is_binary($srcType,$name) )
             {
-                my ($ret)=$state->{entries}{$path}{options};
-                if( !defined($ret) )
-                {
-                    $ret=$state->{opt}{k};
-                    if(defined($ret))
-                    {
-                        $ret="-k$ret";
-                    }
-                    else
-                    {
-                        $ret="";
-                    }
-                }
-                if( ! ($ret=~/^(|-kb|-kkv|-kkvl|-kk|-ko|-kv)$/) )
-                {
-                    print "E Bad -k option\n";
-                    $log->warn("Bad -k option: $ret");
-                    die "Error: Bad -k option: $ret\n";
-                }
-
-                return $ret;
+                $log->debug("... as binary");
+                return "-kb";
             }
             else
             {
-                if( is_binary($srcType,$name) )
-                {
-                    $log->debug("... as binary");
-                    return "-kb";
-                }
-                else
-                {
-                    $log->debug("... as text");
-                }
+                $log->debug("... as text");
             }
         }
     }
@@ -2586,7 +2558,7 @@ sub open_blob_or_die
             die "Unable to open file $name: $!\n";
         }
     }
-    elsif( $srcType eq "sha1" || $srcType eq "sha1Or-k" )
+    elsif( $srcType eq "sha1" )
     {
         unless ( defined ( $name ) and $name =~ /^[a-zA-Z0-9]{40}$/ )
         {
