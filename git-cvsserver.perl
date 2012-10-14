@@ -1144,6 +1144,10 @@ sub req_update
 
         if ( $meta->{filehash} eq "deleted" )
         {
+            # TODO: If it has been modified in the sandbox, error out
+            #   with the appropriate message, rather than deleting a modified
+            #   file.
+
             my ( $filepart, $dirpart ) = filenamesplit($filename,1);
 
             $log->info("Removing '$filename' from working copy (no longer in the repo)");
