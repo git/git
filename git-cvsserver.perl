@@ -3440,19 +3440,6 @@ sub insert_head
     $insert_head->execute($name, $revision, $filehash, $commithash, $modified, $author, $mode);
 }
 
-sub _headrev
-{
-    my $self = shift;
-    my $filename = shift;
-    my $tablename = $self->tablename("head");
-
-    my $db_query = $self->{dbh}->prepare_cached("SELECT filehash, revision, mode FROM $tablename WHERE name=?",{},1);
-    $db_query->execute($filename);
-    my ( $hash, $revision, $mode ) = $db_query->fetchrow_array;
-
-    return ( $hash, $revision, $mode );
-}
-
 sub _get_prop
 {
     my $self = shift;
@@ -3511,6 +3498,8 @@ sub gethead
 }
 
 =head2 getlog
+
+See also gethistorydense().
 
 =cut
 
@@ -3597,25 +3586,6 @@ sub commitmessage
     return $message;
 }
 
-=head2 gethistory
-
-This function takes a filename (with path) argument and returns an arrayofarrays
-containing revision,filehash,commithash ordered by revision descending
-
-=cut
-sub gethistory
-{
-    my $self = shift;
-    my $filename = shift;
-    my $tablename = $self->tablename("revision");
-
-    my $db_query;
-    $db_query = $self->{dbh}->prepare_cached("SELECT revision, filehash, commithash FROM $tablename WHERE name=? ORDER BY revision DESC",{},1);
-    $db_query->execute($filename);
-
-    return $db_query->fetchall_arrayref;
-}
-
 =head2 gethistorydense
 
 This function takes a filename (with path) argument and returns an arrayofarrays
@@ -3624,6 +3594,8 @@ containing revision,filehash,commithash ordered by revision descending.
 This version of gethistory skips deleted entries -- so it is useful for annotate.
 The 'dense' part is a reference to a '--dense' option available for git-rev-list
 and other git tools that depend on it.
+
+See also getlog().
 
 =cut
 sub gethistorydense
