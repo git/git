@@ -416,6 +416,14 @@ int access_or_warn(const char *path, int mode)
 	return ret;
 }
 
+int access_or_die(const char *path, int mode)
+{
+	int ret = access(path, mode);
+	if (ret && errno != ENOENT && errno != ENOTDIR)
+		die_errno(_("unable to access '%s'"), path);
+	return ret;
+}
+
 struct passwd *xgetpwuid_self(void)
 {
 	struct passwd *pw;

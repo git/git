@@ -609,6 +609,7 @@ int remove_or_warn(unsigned int mode, const char *path);
  * (ENOENT or ENOTDIR).
  */
 int access_or_warn(const char *path, int mode);
+int access_or_die(const char *path, int mode);
 
 /* Warn on an inaccessible file that ought to be accessible */
 void warn_on_inaccessible(const char *path);
