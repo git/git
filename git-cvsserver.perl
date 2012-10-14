@@ -502,7 +502,7 @@ sub req_Entry
 
     #$log->debug("req_Entry : $data");
 
-    my @data = split(/\//, $data);
+    my @data = split(/\//, $data, -1);
 
     $state->{entries}{$state->{directory}.$data[1]} = {
         revision    => $data[2],
@@ -1681,9 +1681,25 @@ sub req_status
             print "M Repository revision:\t" .
                    $meta->{revision} .
                    "\t$state->{CVSROOT}/$state->{module}/$filename,v\n";
-            print "M Sticky Tag:\t\t(none)\n";
-            print "M Sticky Date:\t\t(none)\n";
-            print "M Sticky Options:\t\t(none)\n";
+            my($tagOrDate)=$state->{entries}{$filename}{tag_or_date};
+            my($tag)=($tagOrDate=~m/^T(.+)$/);
+            if( !defined($tag) )
+            {
+                $tag="(none)";
+            }
+            print "M Sticky Tag:\t\t$tag\n";
+            my($date)=($tagOrDate=~m/^D(.+)$/);
+            if( !defined($date) )
+            {
+                $date="(none)";
+            }
+            print "M Sticky Date:\t\t$date\n";
+            my($options)=$state->{entries}{$filename}{options};
+            if( $options eq "" )
+            {
+                $options="(none)";
+            }
+            print "M Sticky Options:\t\t$options\n";
         } else {
             print "M Repository revision:\tNo revision control file\n";
         }
