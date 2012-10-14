@@ -51,6 +51,10 @@ $| = 1;
 
 #### Definition and mappings of functions ####
 
+# NOTE: Despite the existence of req_CATCHALL and req_EMPTY unimplemented
+#  requests, this list is incomplete.  It is missing many rarer/optional
+#  requests.  Perhaps some clients require a claim of support for
+#  these specific requests for main functionality to work?
 my $methods = {
     'Root'            => \&req_Root,
     'Valid-responses' => \&req_Validresponses,
@@ -80,7 +84,6 @@ my $methods = {
     'noop'            => \&req_EMPTY,
     'annotate'        => \&req_annotate,
     'Global_option'   => \&req_Globaloption,
-    #'annotate'        => \&req_CATCHALL,
 };
 
 ##############################################
