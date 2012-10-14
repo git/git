@@ -400,7 +400,7 @@ cat >expected.C <<EOF
 Line 0
 =======
 LINE 0
->>>>>>> merge.3
+>>>>>>> merge.1.3
 EOF
 
 for i in 1 2 3 4 5 6 7 8
