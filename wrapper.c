@@ -411,7 +411,7 @@ void warn_on_inaccessible(const char *path)
 int access_or_warn(const char *path, int mode)
 {
 	int ret = access(path, mode);
-	if (ret && errno != ENOENT)
+	if (ret && errno != ENOENT && errno != ENOTDIR)
 		warn_on_inaccessible(path);
 	return ret;
 }
