@@ -3157,45 +3157,10 @@ sub update
         push @git_log_params, $self->{module};
     }
     # git-rev-list is the backend / plumbing version of git-log
-    open(GITLOG, '-|', 'git', 'rev-list', @git_log_params) or die "Cannot call git-rev-list: $!";
-
-    my @commits;
-
-    my %commit = ();
-
-    while ( <GITLOG> )
-    {
-        chomp;
-        if (m/^commit\s+(.*)$/) {
-            # on ^commit lines put the just seen commit in the stack
-            # and prime things for the next one
-            if (keys %commit) {
-                my %copy = %commit;
-                unshift @commits, \%copy;
-                %commit = ();
-            }
-            my @parents = split(m/\s+/, $1);
-            $commit{hash} = shift @parents;
-            $commit{parents} = \@parents;
-        } elsif (m/^(\w+?):\s+(.*)$/ && !exists($commit{message})) {
-            # on rfc822-like lines seen before we see any message,
-            # lowercase the entry and put it in the hash as key-value
-            $commit{lc($1)} = $2;
-        } else {
-            # message lines - skip initial empty line
-            # and trim whitespace
-            if (!exists($commit{message}) && m/^\s*$/) {
-                # define it to mark the end of headers
-                $commit{message} = '';
-                next;
-            }
-            s/^\s+//; s/\s+$//; # trim ws
-            $commit{message} .= $_ . "\n";
-        }
-    }
-    close GITLOG;
-
-    unshift @commits, \%commit if ( keys %commit );
+    open(my $gitLogPipe, '-|', 'git', 'rev-list', @git_log_params)
+                or die "Cannot call git-rev-list: $!";
+    my @commits=readCommits($gitLogPipe);
+    close $gitLogPipe;
 
     # Now all the commits are in the @commits bucket
     # ordered by time DESC. for each commit that needs processing,
@@ -3294,7 +3259,7 @@ sub update
         }
 
         # convert the date to CVS-happy format
-        $commit->{date} = "$2 $1 $4 $3 $5" if ( $commit->{date} =~ /^\w+\s+(\w+)\s+(\d+)\s+(\d+:\d+:\d+)\s+(\d+)\s+([+-]\d+)$/ );
+        my $cvsDate = convertToCvsDate($commit->{date});
 
         if ( defined ( $lastpicked ) )
         {
@@ -3303,7 +3268,7 @@ sub update
             while ( <FILELIST> )
             {
 		chomp;
-                unless ( /^:\d{6}\s+\d{3}(\d)\d{2}\s+[a-zA-Z0-9]{40}\s+([a-zA-Z0-9]{40})\s+(\w)$/o )
+                unless ( /^:\d{6}\s+([0-7]{6})\s+[a-f0-9]{40}\s+([a-f0-9]{40})\s+(\w)$/o )
                 {
                     die("Couldn't process git-diff-tree line : $_");
                 }
@@ -3313,11 +3278,7 @@ sub update
 
                 # $log->debug("File mode=$mode, hash=$hash, change=$change, name=$name");
 
-                my $git_perms = "";
-                $git_perms .= "r" if ( $mode & 4 );
-                $git_perms .= "w" if ( $mode & 2 );
-                $git_perms .= "x" if ( $mode & 1 );
-                $git_perms = "rw" if ( $git_perms eq "" );
+                my $dbMode = convertToDbMode($mode);
 
                 if ( $change eq "D" )
                 {
@@ -3327,11 +3288,11 @@ sub update
                         revision => $head->{$name}{revision} + 1,
                         filehash => "deleted",
                         commithash => $commit->{hash},
-                        modified => $commit->{date},
+                        modified => $cvsDate,
                         author => $commit->{author},
-                        mode => $git_perms,
+                        mode => $dbMode,
                     };
-                    $self->insert_rev($name, $head->{$name}{revision}, $hash, $commit->{hash}, $commit->{date}, $commit->{author}, $git_perms);
+                    $self->insert_rev($name, $head->{$name}{revision}, $hash, $commit->{hash}, $cvsDate, $commit->{author}, $dbMode);
                 }
                 elsif ( $change eq "M" || $change eq "T" )
                 {
@@ -3341,11 +3302,11 @@ sub update
                         revision => $head->{$name}{revision} + 1,
                         filehash => $hash,
                         commithash => $commit->{hash},
-                        modified => $commit->{date},
+                        modified => $cvsDate,
                         author => $commit->{author},
-                        mode => $git_perms,
+                        mode => $dbMode,
                     };
-                    $self->insert_rev($name, $head->{$name}{revision}, $hash, $commit->{hash}, $commit->{date}, $commit->{author}, $git_perms);
+                    $self->insert_rev($name, $head->{$name}{revision}, $hash, $commit->{hash}, $cvsDate, $commit->{author}, $dbMode);
                 }
                 elsif ( $change eq "A" )
                 {
@@ -3355,11 +3316,11 @@ sub update
                         revision => $head->{$name}{revision} ? $head->{$name}{revision}+1 : 1,
                         filehash => $hash,
                         commithash => $commit->{hash},
-                        modified => $commit->{date},
+                        modified => $cvsDate,
                         author => $commit->{author},
-                        mode => $git_perms,
+                        mode => $dbMode,
                     };
-                    $self->insert_rev($name, $head->{$name}{revision}, $hash, $commit->{hash}, $commit->{date}, $commit->{author}, $git_perms);
+                    $self->insert_rev($name, $head->{$name}{revision}, $hash, $commit->{hash}, $cvsDate, $commit->{author}, $dbMode);
                 }
                 else
                 {
@@ -3382,7 +3343,7 @@ sub update
                     die("Couldn't process git-ls-tree line : $_");
                 }
 
-                my ( $git_perms, $git_type, $git_hash, $git_filename ) = ( $1, $2, $3, $4 );
+                my ( $mode, $git_type, $git_hash, $git_filename ) = ( $1, $2, $3, $4 );
 
                 $seen_files->{$git_filename} = 1;
 
@@ -3392,18 +3353,10 @@ sub update
                     $head->{$git_filename}{mode}
                 );
 
-                if ( $git_perms =~ /^\d\d\d(\d)\d\d/o )
-                {
-                    $git_perms = "";
-                    $git_perms .= "r" if ( $1 & 4 );
-                    $git_perms .= "w" if ( $1 & 2 );
-                    $git_perms .= "x" if ( $1 & 1 );
-                } else {
-                    $git_perms = "rw";
-                }
+                my $dbMode = convertToDbMode($mode);
 
                 # unless the file exists with the same hash, we need to update it ...
-                unless ( defined($oldhash) and $oldhash eq $git_hash and defined($oldmode) and $oldmode eq $git_perms )
+                unless ( defined($oldhash) and $oldhash eq $git_hash and defined($oldmode) and $oldmode eq $dbMode )
                 {
                     my $newrevision = ( $oldrevision or 0 ) + 1;
 
@@ -3412,13 +3365,13 @@ sub update
                         revision => $newrevision,
                         filehash => $git_hash,
                         commithash => $commit->{hash},
-                        modified => $commit->{date},
+                        modified => $cvsDate,
                         author => $commit->{author},
-                        mode => $git_perms,
+                        mode => $dbMode,
                     };
 
 
-                    $self->insert_rev($git_filename, $newrevision, $git_hash, $commit->{hash}, $commit->{date}, $commit->{author}, $git_perms);
+                    $self->insert_rev($git_filename, $newrevision, $git_hash, $commit->{hash}, $cvsDate, $commit->{author}, $dbMode);
                 }
             }
             close FILELIST;
@@ -3431,10 +3384,10 @@ sub update
                     $head->{$file}{revision}++;
                     $head->{$file}{filehash} = "deleted";
                     $head->{$file}{commithash} = $commit->{hash};
-                    $head->{$file}{modified} = $commit->{date};
+                    $head->{$file}{modified} = $cvsDate;
                     $head->{$file}{author} = $commit->{author};
 
-                    $self->insert_rev($file, $head->{$file}{revision}, $head->{$file}{filehash}, $commit->{hash}, $commit->{date}, $commit->{author}, $head->{$file}{mode});
+                    $self->insert_rev($file, $head->{$file}{revision}, $head->{$file}{filehash}, $commit->{hash}, $cvsDate, $commit->{author}, $head->{$file}{mode});
                 }
             }
             # END : "Detect deleted files"
@@ -3470,6 +3423,87 @@ sub update
 
     # Ending exclusive lock here
     $self->{dbh}->commit() or die "Failed to commit changes to SQLite";
+}
+
+sub readCommits
+{
+    my $pipeHandle = shift;
+    my @commits;
+
+    my %commit = ();
+
+    while ( <$pipeHandle> )
+    {
+        chomp;
+        if (m/^commit\s+(.*)$/) {
+            # on ^commit lines put the just seen commit in the stack
+            # and prime things for the next one
+            if (keys %commit) {
+                my %copy = %commit;
+                unshift @commits, \%copy;
+                %commit = ();
+            }
+            my @parents = split(m/\s+/, $1);
+            $commit{hash} = shift @parents;
+            $commit{parents} = \@parents;
+        } elsif (m/^(\w+?):\s+(.*)$/ && !exists($commit{message})) {
+            # on rfc822-like lines seen before we see any message,
+            # lowercase the entry and put it in the hash as key-value
+            $commit{lc($1)} = $2;
+        } else {
+            # message lines - skip initial empty line
+            # and trim whitespace
+            if (!exists($commit{message}) && m/^\s*$/) {
+                # define it to mark the end of headers
+                $commit{message} = '';
+                next;
+            }
+            s/^\s+//; s/\s+$//; # trim ws
+            $commit{message} .= $_ . "\n";
+        }
+    }
+
+    unshift @commits, \%commit if ( keys %commit );
+
+    return @commits;
+}
+
+sub convertToCvsDate
+{
+    my $date = shift;
+    # Convert from: "git rev-list --pretty" formatted date
+    # Convert to: "the format specified by RFC822 as modified by RFC1123."
+    # Example: 26 May 1997 13:01:40 -0400
+    if( $date =~ /^\w+\s+(\w+)\s+(\d+)\s+(\d+:\d+:\d+)\s+(\d+)\s+([+-]\d+)$/ )
+    {
+        $date = "$2 $1 $4 $3 $5";
+    }
+
+    return $date;
+}
+
+sub convertToDbMode
+{
+    my $mode = shift;
+
+    # NOTE: The CVS protocol uses a string similar "u=rw,g=rw,o=rw",
+    #  but the database "mode" column historically (and currently)
+    #  only stores the "rw" (for user) part of the string.
+    #    FUTURE: It might make more sense to persist the raw
+    #  octal mode (or perhaps the final full CVS form) instead of
+    #  this half-converted form, but it isn't currently worth the
+    #  backwards compatibility headaches.
+
+    $mode=~/^\d\d(\d)\d{3}$/;
+    my $userBits=$1;
+
+    my $dbMode = "";
+    $dbMode .= "r" if ( $userBits & 4 );
+    $dbMode .= "w" if ( $userBits & 2 );
+    $dbMode .= "x" if ( $userBits & 1 );
+    $dbMode = "rw" if ( $dbMode eq "" );
+
+    return $dbMode;
 }
 
 sub insert_rev
