@@ -2309,6 +2309,9 @@ sub filenamesplit
     return ( $filepart, $dirpart );
 }
 
+# Cleanup various junk in filename (try to canonicalize it), and
+# add prependdir to accomodate running CVS client from a
+# subdirectory (so the output is relative to top directory of the project).
 sub filecleanup
 {
     my $filename = shift;
@@ -2320,9 +2323,34 @@ sub filecleanup
         return undef;
     }
 
+    if($filename eq ".")
+    {
+        $filename="";
+    }
     $filename =~ s/^\.\///g;
+    $filename =~ s%/+%/%g;
     $filename = $state->{prependdir} . $filename;
+    $filename =~ s%/$%%;
     return $filename;
+}
+
+# Remove prependdir from the path, so that is is relative to the directory
+# the CVS client was started from, rather than the top of the project.
+# Essentially the inverse of filecleanup().
+sub remove_prependdir
+{
+    my($path) = @_;
+    if(defined($state->{prependdir}) && $state->{prependdir} ne "")
+    {
+        my($pre)=$state->{prependdir};
+        $pre=~s%/$%%;
+        if(!($path=~s%^\Q$pre\E/?%%))
+        {
+            $log->fatal("internal error missing prependdir");
+            die("internal error missing prependdir");
+        }
+    }
+    return $path;
 }
 
 sub validateGitDir
