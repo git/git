@@ -3807,6 +3807,97 @@ sub gethistorydense
     return $result;
 }
 
+=head2 escapeRefName
+
+Apply an escape mechanism to compensate for characters that
+git ref names can have that CVS tags can not.
+
+=cut
+sub escapeRefName
+{
+    my($self,$refName)=@_;
+
+    # CVS officially only allows [-_A-Za-z0-9] in tag names (or in
+    # many contexts it can also be a CVS revision number).
+    #
+    # Git tags commonly use '/' and '.' as well, but also handle
+    # anything else just in case:
+    #
+    #   = "_-s-"  For '/'.
+    #   = "_-p-"  For '.'.
+    #   = "_-u-"  For underscore, in case someone wants a literal "_-" in
+    #     a tag name.
+    #   = "_-xx-" Where "xx" is the hexadecimal representation of the
+    #     desired ASCII character byte. (for anything else)
+
+    if(! $refName=~/^[1-9][0-9]*(\.[1-9][0-9]*)*$/)
+    {
+        $refName=~s/_-/_-u--/g;
+        $refName=~s/\./_-p-/g;
+        $refName=~s%/%_-s-%g;
+        $refName=~s/[^-_a-zA-Z0-9]/sprintf("_-%02x-",$1)/eg;
+    }
+}
+
+=head2 unescapeRefName
+
+Undo an escape mechanism to compensate for characters that
+git ref names can have that CVS tags can not.
+
+=cut
+sub unescapeRefName
+{
+    my($self,$refName)=@_;
+
+    # see escapeRefName() for description of escape mechanism.
+
+    $refName=~s/_-([spu]|[0-9a-f][0-9a-f])-/unescapeRefNameChar($1)/eg;
+
+    # allowed tag names
+    # TODO: Perhaps use git check-ref-format, with an in-process cache of
+    #  validated names?
+    if( !( $refName=~m%^[^-][-a-zA-Z0-9_/.]*$% ) ||
+        ( $refName=~m%[/.]$% ) ||
+        ( $refName=~/\.lock$/ ) ||
+        ( $refName=~m%\.\.|/\.|[[\\:?*~]|\@\{% ) )  # matching }
+    {
+        # Error:
+        $log->warn("illegal refName: $refName");
+        $refName=undef;
+    }
+    return $refName;
+}
+
+sub unescapeRefNameChar
+{
+    my($char)=@_;
+
+    if($char eq "s")
+    {
+        $char="/";
+    }
+    elsif($char eq "p")
+    {
+        $char=".";
+    }
+    elsif($char eq "u")
+    {
+        $char="_";
+    }
+    elsif($char=~/^[0-9a-f][0-9a-f]$/)
+    {
+        $char=chr(hex($char));
+    }
+    else
+    {
+        # Error case: Maybe it has come straight from user, and
+        # wasn't supposed to be escaped?  Restore it the way we got it:
+        $char="_-$char-";
+    }
+
+    return $char;
+}
+
 =head2 in_array()
 
 from Array::PAT - mimics the in_array() function
