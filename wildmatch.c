@@ -53,33 +53,18 @@
 #define ISUPPER(c) (ISASCII(c) && isupper(c))
 #define ISXDIGIT(c) (ISASCII(c) && isxdigit(c))
 
-#ifdef WILD_TEST_ITERATIONS
-int wildmatch_iteration_count;
-#endif
-
 static int force_lower_case = 0;
 
-/* Match pattern "p" against the a virtually-joined string consisting
- * of "text" and any strings in array "a". */
-static int dowild(const uchar *p, const uchar *text, const uchar*const *a)
+/* Match pattern "p" against "text" */
+static int dowild(const uchar *p, const uchar *text)
 {
     uchar p_ch;
-
-#ifdef WILD_TEST_ITERATIONS
-    wildmatch_iteration_count++;
-#endif
 
     for ( ; (p_ch = *p) != '\0'; text++, p++) {
 	int matched, special;
 	uchar t_ch, prev_ch;
-	while ((t_ch = *text) == '\0') {
-	    if (*a == NULL) {
-		if (p_ch != '*')
-		    return ABORT_ALL;
-		break;
-	    }
-	    text = *a++;
-	}
+	if ((t_ch = *text) == '\0' && p_ch != '*')
+		return ABORT_ALL;
 	if (force_lower_case && ISUPPER(t_ch))
 	    t_ch = tolower(t_ch);
 	switch (p_ch) {
@@ -107,21 +92,15 @@ static int dowild(const uchar *p, const uchar *text, const uchar*const *a)
 		/* Trailing "**" matches everything.  Trailing "*" matches
 		 * only if there are no more slash characters. */
 		if (!special) {
-		    do {
 			if (strchr((char*)text, '/') != NULL)
 			    return FALSE;
-		    } while ((text = *a++) != NULL);
 		}
 		return TRUE;
 	    }
 	    while (1) {
-		if (t_ch == '\0') {
-		    if ((text = *a++) == NULL)
-			break;
-		    t_ch = *text;
-		    continue;
-		}
-		if ((matched = dowild(p, text, a)) != FALSE) {
+		if (t_ch == '\0')
+		    break;
+		if ((matched = dowild(p, text)) != FALSE) {
 		    if (!special || matched != ABORT_TO_STARSTAR)
 			return matched;
 		} else if (!special && t_ch == '/')
@@ -225,144 +204,21 @@ static int dowild(const uchar *p, const uchar *text, const uchar*const *a)
 	}
     }
 
-    do {
-	if (*text)
-	    return FALSE;
-    } while ((text = *a++) != NULL);
-
-    return TRUE;
-}
-
-/* Match literal string "s" against the a virtually-joined string consisting
- * of "text" and any strings in array "a". */
-static int doliteral(const uchar *s, const uchar *text, const uchar*const *a)
-{
-    for ( ; *s != '\0'; text++, s++) {
-	while (*text == '\0') {
-	    if ((text = *a++) == NULL)
-		return FALSE;
-	}
-	if (*text != *s)
-	    return FALSE;
-    }
-
-    do {
-	if (*text)
-	    return FALSE;
-    } while ((text = *a++) != NULL);
-
-    return TRUE;
-}
-
-/* Return the last "count" path elements from the concatenated string.
- * We return a string pointer to the start of the string, and update the
- * array pointer-pointer to point to any remaining string elements. */
-static const uchar *trailing_N_elements(const uchar*const **a_ptr, int count)
-{
-    const uchar*const *a = *a_ptr;
-    const uchar*const *first_a = a;
-
-    while (*a)
-	    a++;
-
-    while (a != first_a) {
-	const uchar *s = *--a;
-	s += strlen((char*)s);
-	while (--s >= *a) {
-	    if (*s == '/' && !--count) {
-		*a_ptr = a+1;
-		return s+1;
-	    }
-	}
-    }
-
-    if (count == 1) {
-	*a_ptr = a+1;
-	return *a;
-    }
-
-    return NULL;
+    return *text ? FALSE : TRUE;
 }
 
 /* Match the "pattern" against the "text" string. */
 int wildmatch(const char *pattern, const char *text)
 {
-    static const uchar *nomore[1]; /* A NULL pointer. */
-#ifdef WILD_TEST_ITERATIONS
-    wildmatch_iteration_count = 0;
-#endif
-    return dowild((const uchar*)pattern, (const uchar*)text, nomore) == TRUE;
+    return dowild((const uchar*)pattern, (const uchar*)text) == TRUE;
 }
 
 /* Match the "pattern" against the forced-to-lower-case "text" string. */
 int iwildmatch(const char *pattern, const char *text)
 {
-    static const uchar *nomore[1]; /* A NULL pointer. */
     int ret;
-#ifdef WILD_TEST_ITERATIONS
-    wildmatch_iteration_count = 0;
-#endif
     force_lower_case = 1;
-    ret = dowild((const uchar*)pattern, (const uchar*)text, nomore) == TRUE;
+    ret = dowild((const uchar*)pattern, (const uchar*)text) == TRUE;
     force_lower_case = 0;
     return ret;
-}
-
-/* Match pattern "p" against the a virtually-joined string consisting
- * of all the pointers in array "texts" (which has a NULL pointer at the
- * end).  The int "where" can be 0 (normal matching), > 0 (match only
- * the trailing N slash-separated filename components of "texts"), or < 0
- * (match the "pattern" at the start or after any slash in "texts"). */
-int wildmatch_array(const char *pattern, const char*const *texts, int where)
-{
-    const uchar *p = (const uchar*)pattern;
-    const uchar*const *a = (const uchar*const*)texts;
-    const uchar *text;
-    int matched;
-
-#ifdef WILD_TEST_ITERATIONS
-    wildmatch_iteration_count = 0;
-#endif
-
-    if (where > 0)
-	text = trailing_N_elements(&a, where);
-    else
-	text = *a++;
-    if (!text)
-	return FALSE;
-
-    if ((matched = dowild(p, text, a)) != TRUE && where < 0
-     && matched != ABORT_ALL) {
-	while (1) {
-	    if (*text == '\0') {
-		if ((text = (uchar*)*a++) == NULL)
-		    return FALSE;
-		continue;
-	    }
-	    if (*text++ == '/' && (matched = dowild(p, text, a)) != FALSE
-	     && matched != ABORT_TO_STARSTAR)
-		break;
-	}
-    }
-    return matched == TRUE;
-}
-
-/* Match literal string "s" against the a virtually-joined string consisting
- * of all the pointers in array "texts" (which has a NULL pointer at the
- * end).  The int "where" can be 0 (normal matching), or > 0 (match
- * only the trailing N slash-separated filename components of "texts"). */
-int litmatch_array(const char *string, const char*const *texts, int where)
-{
-    const uchar *s = (const uchar*)string;
-    const uchar*const *a = (const uchar* const*)texts;
-    const uchar *text;
-
-    if (where > 0)
-	text = trailing_N_elements(&a, where);
-    else
-	text = *a++;
-    if (!text)
-	return FALSE;
-
-    return doliteral(s, text, a) == TRUE;
 }
