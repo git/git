@@ -522,6 +522,53 @@ static int match_basename(const char *basename, int basenamelen,
 	return 0;
 }
 
+static int match_pathname(const char *pathname, int pathlen,
+			  const char *base, int baselen,
+			  const char *pattern, int prefix, int patternlen,
+			  int flags)
+{
+	const char *name;
+	int namelen;
+
+	/*
+	 * match with FNM_PATHNAME; the pattern has base implicitly
+	 * in front of it.
+	 */
+	if (*pattern == '/') {
+		pattern++;
+		prefix--;
+	}
+
+	/*
+	 * baselen does not count the trailing slash. base[] may or
+	 * may not end with a trailing slash though.
+	 */
+	if (pathlen < baselen + 1 ||
+	    (baselen && pathname[baselen] != '/') ||
+	    strncmp_icase(pathname, base, baselen))
+		return 0;
+
+	namelen = baselen ? pathlen - baselen - 1 : pathlen;
+	name = pathname + pathlen - namelen;
+
+	if (prefix) {
+		/*
+		 * if the non-wildcard part is longer than the
+		 * remaining pathname, surely it cannot match.
+		 */
+		if (prefix > namelen)
+			return 0;
+
+		if (strncmp_icase(pattern, name, prefix))
+			return 0;
+		pattern += prefix;
+		name    += prefix;
+		namelen -= prefix;
+	}
+
+	return fnmatch_icase(pattern, name, FNM_PATHNAME) == 0;
+}
+
 /* Scan the list and let the last match determine the fate.
  * Return 1 for exclude, 0 for include and -1 for undecided.
  */
@@ -536,9 +583,9 @@ int excluded_from_list(const char *pathname,
 
 	for (i = el->nr - 1; 0 <= i; i--) {
 		struct exclude *x = el->excludes[i];
-		const char *name, *exclude = x->pattern;
+		const char *exclude = x->pattern;
 		int to_exclude = x->to_exclude;
-		int namelen, prefix = x->nowildcardlen;
+		int prefix = x->nowildcardlen;
 
 		if (x->flags & EXC_FLAG_MUSTBEDIR) {
 			if (*dtype == DT_UNKNOWN)
@@ -556,36 +603,10 @@ int excluded_from_list(const char *pathname,
 			continue;
 		}
 
-		/* match with FNM_PATHNAME:
-		 * exclude has base (baselen long) implicitly in front of it.
-		 */
-		if (*exclude == '/') {
-			exclude++;
-			prefix--;
-		}
-
-		if (pathlen < x->baselen ||
-		    (x->baselen && pathname[x->baselen-1] != '/') ||
-		    strncmp_icase(pathname, x->base, x->baselen))
-			continue;
-
-		namelen = x->baselen ? pathlen - x->baselen : pathlen;
-		name = pathname + pathlen  - namelen;
-
-		/* if the non-wildcard part is longer than the
-		   remaining pathname, surely it cannot match */
-		if (prefix > namelen)
-			continue;
-
-		if (prefix) {
-			if (strncmp_icase(exclude, name, prefix))
-				continue;
-			exclude += prefix;
-			name    += prefix;
-			namelen -= prefix;
-		}
-
-		if (!fnmatch_icase(exclude, name, FNM_PATHNAME))
+		assert(x->baselen == 0 || x->base[x->baselen - 1] == '/');
+		if (match_pathname(pathname, pathlen,
+				   x->base, x->baselen ? x->baselen - 1 : 0,
+				   exclude, prefix, x->patternlen, x->flags))
 			return to_exclude;
 	}
 	return -1; /* undecided */
