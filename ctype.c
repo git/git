@@ -14,7 +14,7 @@ enum {
 	P = GIT_PATHSPEC_MAGIC  /* other non-alnum, except for ] and } */
 };
 
-unsigned char sane_ctype[256] = {
+const unsigned char sane_ctype[256] = {
 	0, 0, 0, 0, 0, 0, 0, 0, 0, S, S, 0, 0, S, 0, 0,		/*   0.. 15 */
 	0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,		/*  16.. 31 */
 	S, P, P, P, R, P, P, P, R, R, G, R, P, P, R, P,		/*  32.. 47 */
