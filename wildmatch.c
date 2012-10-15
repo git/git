@@ -21,11 +21,6 @@ typedef unsigned char uchar;
 #define FALSE 0
 #define TRUE 1
 
-#define NOMATCH 1
-#define MATCH 0
-#define ABORT_ALL -1
-#define ABORT_TO_STARSTAR -2
-
 #define CC_EQ(class, len, litmatch) ((len) == sizeof (litmatch)-1 \
 				    && *(class) == *(litmatch) \
 				    && strncmp((char*)class, litmatch, len) == 0)
@@ -90,8 +85,14 @@ static int dowild(const uchar *p, const uchar *text, int force_lower_case)
 			continue;
 		case '*':
 			if (*++p == '*') {
+				const uchar *prev_p = p - 2;
 				while (*++p == '*') {}
-				special = TRUE;
+				if ((prev_p == text || *prev_p == '/') ||
+				    (*p == '\0' || *p == '/' ||
+				     (p[0] == '\\' && p[1] == '/'))) {
+					special = TRUE;
+				} else
+					return ABORT_MALFORMED;
 			} else
 				special = FALSE;
 			if (*p == '\0') {
