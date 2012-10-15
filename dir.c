@@ -534,8 +534,9 @@ int excluded_from_list(const char *pathname,
 				if (!strcmp_icase(exclude, basename))
 					return to_exclude;
 			} else if (x->flags & EXC_FLAG_ENDSWITH) {
-				if (x->patternlen - 1 <= pathlen &&
-				    !strcmp_icase(exclude + 1, pathname + pathlen - x->patternlen + 1))
+				int len = pathlen - (basename - pathname);
+				if (x->patternlen - 1 <= len &&
+				    !strcmp_icase(exclude + 1, basename + len - x->patternlen + 1))
 					return to_exclude;
 			} else {
 				if (fnmatch_icase(exclude, basename, 0) == 0)
