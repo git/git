@@ -193,6 +193,7 @@
 /test-sigchain
 /test-subprocess
 /test-svn-fe
+/test-wildmatch
 /common-cmds.h
 *.tar.gz
 *.dsc

@@ -9,7 +9,10 @@
 **  work differently than '*', and to fix the character-class code.
 */
 
-#include "rsync.h"
+#include "cache.h"
+#include "wildmatch.h"
+
+typedef unsigned char uchar;
 
 /* What character marks an inverted character class? */
 #define NEGATE_CLASS	'!'
