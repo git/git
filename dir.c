@@ -308,10 +308,10 @@ static int no_wildcard(const char *string)
 	return string[simple_length(string)] == '\0';
 }
 
-static void parse_exclude_pattern(const char **pattern,
-				  int *patternlen,
-				  int *flags,
-				  int *nowildcardlen)
+void parse_exclude_pattern(const char **pattern,
+			   int *patternlen,
+			   int *flags,
+			   int *nowildcardlen)
 {
 	const char *p = *pattern;
 	size_t i, len;
@@ -530,9 +530,9 @@ static void prep_exclude(struct dir_struct *dir, const char *base, int baselen)
 	dir->basebuf[baselen] = '\0';
 }
 
-static int match_basename(const char *basename, int basenamelen,
-			  const char *pattern, int prefix, int patternlen,
-			  int flags)
+int match_basename(const char *basename, int basenamelen,
+		   const char *pattern, int prefix, int patternlen,
+		   int flags)
 {
 	if (prefix == patternlen) {
 		if (!strcmp_icase(pattern, basename))
@@ -549,10 +549,10 @@ static int match_basename(const char *basename, int basenamelen,
 	return 0;
 }
 
-static int match_pathname(const char *pathname, int pathlen,
-			  const char *base, int baselen,
-			  const char *pattern, int prefix, int patternlen,
-			  int flags)
+int match_pathname(const char *pathname, int pathlen,
+		   const char *base, int baselen,
+		   const char *pattern, int prefix, int patternlen,
+		   int flags)
 {
 	const char *name;
 	int namelen;

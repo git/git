@@ -56,6 +56,7 @@ When more than one pattern matches the path, a later line
 overrides an earlier line.  This overriding is done per
 attribute.  The rules how the pattern matches paths are the
 same as in `.gitignore` files; see linkgit:gitignore[5].
+Unlike `.gitignore`, negative patterns are forbidden.
 
 When deciding what attributes are assigned to a path, git
 consults `$GIT_DIR/info/attributes` file (which has the highest

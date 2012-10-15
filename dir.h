@@ -81,6 +81,16 @@ extern int excluded_from_list(const char *pathname, int pathlen, const char *bas
 struct dir_entry *dir_add_ignored(struct dir_struct *dir, const char *pathname, int len);
 
 /*
+ * these implement the matching logic for dir.c:excluded_from_list and
+ * attr.c:path_matches()
+ */
+extern int match_basename(const char *, int,
+			  const char *, int, int, int);
+extern int match_pathname(const char *, int,
+			  const char *, int,
+			  const char *, int, int, int);
+
+/*
  * The excluded() API is meant for callers that check each level of leading
  * directory hierarchies with excluded() to avoid recursing into excluded
  * directories.  Callers that do not do so should use this API instead.
@@ -97,6 +107,7 @@ extern int path_excluded(struct path_exclude_check *, const char *, int namelen,
 extern int add_excludes_from_file_to_list(const char *fname, const char *base, int baselen,
 					  char **buf_p, struct exclude_list *which, int check_index);
 extern void add_excludes_from_file(struct dir_struct *, const char *fname);
+extern void parse_exclude_pattern(const char **string, int *patternlen, int *flags, int *nowildcardlen);
 extern void add_exclude(const char *string, const char *base,
 			int baselen, struct exclude_list *which);
 extern void free_excludes(struct exclude_list *el);
