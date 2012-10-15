@@ -585,7 +585,7 @@ int excluded_from_list(const char *pathname,
 			namelen -= prefix;
 		}
 
-		if (!namelen || !fnmatch_icase(exclude, name, FNM_PATHNAME))
+		if (!fnmatch_icase(exclude, name, FNM_PATHNAME))
 			return to_exclude;
 	}
 	return -1; /* undecided */
