@@ -71,6 +71,8 @@ static int dowild(const uchar *p, const uchar *text, int force_lower_case)
 			return ABORT_ALL;
 		if (force_lower_case && ISUPPER(t_ch))
 			t_ch = tolower(t_ch);
+		if (force_lower_case && ISUPPER(p_ch))
+			p_ch = tolower(p_ch);
 		switch (p_ch) {
 		case '\\':
 			/* Literal match with following character.  Note that the test
