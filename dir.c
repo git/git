@@ -308,42 +308,69 @@ static int no_wildcard(const char *string)
 	return string[simple_length(string)] == '\0';
 }
 
+static void parse_exclude_pattern(const char **pattern,
+				  int *patternlen,
+				  int *flags,
+				  int *nowildcardlen)
+{
+	const char *p = *pattern;
+	size_t i, len;
+
+	*flags = 0;
+	if (*p == '!') {
+		*flags |= EXC_FLAG_NEGATIVE;
+		p++;
+	}
+	len = strlen(p);
+	if (len && p[len - 1] == '/') {
+		len--;
+		*flags |= EXC_FLAG_MUSTBEDIR;
+	}
+	for (i = 0; i < len; i++) {
+		if (p[i] == '/')
+			break;
+	}
+	if (i == len)
+		*flags |= EXC_FLAG_NODIR;
+	*nowildcardlen = simple_length(p);
+	/*
+	 * we should have excluded the trailing slash from 'p' too,
+	 * but that's one more allocation. Instead just make sure
+	 * nowildcardlen does not exceed real patternlen
+	 */
+	if (*nowildcardlen > len)
+		*nowildcardlen = len;
+	if (*p == '*' && no_wildcard(p + 1))
+		*flags |= EXC_FLAG_ENDSWITH;
+	*pattern = p;
+	*patternlen = len;
+}
+
 void add_exclude(const char *string, const char *base,
 		 int baselen, struct exclude_list *which)
 {
 	struct exclude *x;
-	size_t len;
-	int to_exclude = 1;
-	int flags = 0;
+	int patternlen;
+	int flags;
+	int nowildcardlen;
 
-	if (*string == '!') {
-		to_exclude = 0;
-		string++;
-	}
-	len = strlen(string);
-	if (len && string[len - 1] == '/') {
+	parse_exclude_pattern(&string, &patternlen, &flags, &nowildcardlen);
+	if (flags & EXC_FLAG_MUSTBEDIR) {
 		char *s;
-		x = xmalloc(sizeof(*x) + len);
+		x = xmalloc(sizeof(*x) + patternlen + 1);
 		s = (char *)(x+1);
-		memcpy(s, string, len - 1);
-		s[len - 1] = '\0';
-		string = s;
+		memcpy(s, string, patternlen);
+		s[patternlen] = '\0';
 		x->pattern = s;
-		flags = EXC_FLAG_MUSTBEDIR;
 	} else {
 		x = xmalloc(sizeof(*x));
 		x->pattern = string;
 	}
-	x->to_exclude = to_exclude;
-	x->patternlen = strlen(string);
+	x->patternlen = patternlen;
+	x->nowildcardlen = nowildcardlen;
 	x->base = base;
 	x->baselen = baselen;
 	x->flags = flags;
-	if (!strchr(string, '/'))
-		x->flags |= EXC_FLAG_NODIR;
-	x->nowildcardlen = simple_length(string);
-	if (*string == '*' && no_wildcard(string+1))
-		x->flags |= EXC_FLAG_ENDSWITH;
 	ALLOC_GROW(which->excludes, which->nr + 1, which->alloc);
 	which->excludes[which->nr++] = x;
 }
@@ -584,7 +611,7 @@ int excluded_from_list(const char *pathname,
 	for (i = el->nr - 1; 0 <= i; i--) {
 		struct exclude *x = el->excludes[i];
 		const char *exclude = x->pattern;
-		int to_exclude = x->to_exclude;
+		int to_exclude = x->flags & EXC_FLAG_NEGATIVE ? 0 : 1;
 		int prefix = x->nowildcardlen;
 
 		if (x->flags & EXC_FLAG_MUSTBEDIR) {
