@@ -20,6 +20,9 @@ typedef unsigned char uchar;
 
 #define FALSE 0
 #define TRUE 1
+
+#define NOMATCH 1
+#define MATCH 0
 #define ABORT_ALL -1
 #define ABORT_TO_STARSTAR -2
 
@@ -78,12 +81,12 @@ static int dowild(const uchar *p, const uchar *text)
 			/* FALLTHROUGH */
 		default:
 			if (t_ch != p_ch)
-				return FALSE;
+				return NOMATCH;
 			continue;
 		case '?':
 			/* Match anything but '/'. */
 			if (t_ch == '/')
-				return FALSE;
+				return NOMATCH;
 			continue;
 		case '*':
 			if (*++p == '*') {
@@ -96,14 +99,14 @@ static int dowild(const uchar *p, const uchar *text)
 				 * only if there are no more slash characters. */
 				if (!special) {
 					if (strchr((char*)text, '/') != NULL)
-						return FALSE;
+						return NOMATCH;
 				}
-				return TRUE;
+				return MATCH;
 			}
 			while (1) {
 				if (t_ch == '\0')
 					break;
-				if ((matched = dowild(p, text)) != FALSE) {
+				if ((matched = dowild(p, text)) != NOMATCH) {
 					if (!special || matched != ABORT_TO_STARSTAR)
 						return matched;
 				} else if (!special && t_ch == '/')
@@ -202,18 +205,18 @@ static int dowild(const uchar *p, const uchar *text)
 					matched = TRUE;
 			} while (prev_ch = p_ch, (p_ch = *++p) != ']');
 			if (matched == special || t_ch == '/')
-				return FALSE;
+				return NOMATCH;
 			continue;
 		}
 	}
 
-	return *text ? FALSE : TRUE;
+	return *text ? NOMATCH : MATCH;
 }
 
 /* Match the "pattern" against the "text" string. */
 int wildmatch(const char *pattern, const char *text)
 {
-	return dowild((const uchar*)pattern, (const uchar*)text) == TRUE;
+	return dowild((const uchar*)pattern, (const uchar*)text);
 }
 
 /* Match the "pattern" against the forced-to-lower-case "text" string. */
@@ -221,7 +224,7 @@ int iwildmatch(const char *pattern, const char *text)
 {
 	int ret;
 	force_lower_case = 1;
-	ret = dowild((const uchar*)pattern, (const uchar*)text) == TRUE;
+	ret = dowild((const uchar*)pattern, (const uchar*)text);
 	force_lower_case = 0;
 	return ret;
 }
