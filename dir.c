@@ -503,6 +503,25 @@ static void prep_exclude(struct dir_struct *dir, const char *base, int baselen)
 	dir->basebuf[baselen] = '\0';
 }
 
+static int match_basename(const char *basename, int basenamelen,
+			  const char *pattern, int prefix, int patternlen,
+			  int flags)
+{
+	if (prefix == patternlen) {
+		if (!strcmp_icase(pattern, basename))
+			return 1;
+	} else if (flags & EXC_FLAG_ENDSWITH) {
+		if (patternlen - 1 <= basenamelen &&
+		    !strcmp_icase(pattern + 1,
+				  basename + basenamelen - patternlen + 1))
+			return 1;
+	} else {
+		if (fnmatch_icase(pattern, basename, 0) == 0)
+			return 1;
+	}
+	return 0;
+}
+
 /* Scan the list and let the last match determine the fate.
  * Return 1 for exclude, 0 for include and -1 for undecided.
  */
@@ -529,19 +548,11 @@ int excluded_from_list(const char *pathname,
 		}
 
 		if (x->flags & EXC_FLAG_NODIR) {
-			/* match basename */
-			if (prefix == x->patternlen) {
-				if (!strcmp_icase(exclude, basename))
-					return to_exclude;
-			} else if (x->flags & EXC_FLAG_ENDSWITH) {
-				int len = pathlen - (basename - pathname);
-				if (x->patternlen - 1 <= len &&
-				    !strcmp_icase(exclude + 1, basename + len - x->patternlen + 1))
-					return to_exclude;
-			} else {
-				if (fnmatch_icase(exclude, basename, 0) == 0)
-					return to_exclude;
-			}
+			if (match_basename(basename,
+					   pathlen - (basename - pathname),
+					   exclude, prefix, x->patternlen,
+					   x->flags))
+				return to_exclude;
 			continue;
 		}
 
