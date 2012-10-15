@@ -8,6 +8,7 @@
 #include "cache.h"
 #include "dir.h"
 #include "refs.h"
+#include "wildmatch.h"
 
 struct path_simplify {
 	int len;
@@ -593,7 +594,8 @@ int match_pathname(const char *pathname, int pathlen,
 		namelen -= prefix;
 	}
 
-	return fnmatch_icase(pattern, name, FNM_PATHNAME) == 0;
+	return wildmatch(pattern, name,
+			 ignore_case ? FNM_CASEFOLD : 0) == 0;
 }
 
 /* Scan the list and let the last match determine the fate.
