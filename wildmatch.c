@@ -90,6 +90,18 @@ static int dowild(const uchar *p, const uchar *text, int force_lower_case)
 				if ((prev_p == text || *prev_p == '/') ||
 				    (*p == '\0' || *p == '/' ||
 				     (p[0] == '\\' && p[1] == '/'))) {
+					/*
+					 * Assuming we already match 'foo/' and are at
+					 * <star star slash>, just assume it matches
+					 * nothing and go ahead match the rest of the
+					 * pattern with the remaining string. This
+					 * helps make foo/<*><*>/bar (<> because
+					 * otherwise it breaks C comment syntax) match
+					 * both foo/bar and foo/a/bar.
+					 */
+					if (p[0] == '/' &&
+					    dowild(p + 1, text, force_lower_case) == MATCH)
+						return MATCH;
 					special = TRUE;
 				} else
 					return ABORT_MALFORMED;
