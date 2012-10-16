@@ -1,5 +1,5 @@
-git-send-pack
-=============
+Git-send-pack internals
+=======================
 
 Overall operation
 -----------------
