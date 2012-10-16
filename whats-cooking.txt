@@ -1,17 +1,18 @@
 To: git@vger.kernel.org
 Bcc: lwn@lwn.net
-Subject: What's cooking in git.git (Oct 2012, #04; Thu, 11)
-X-master-at: cd46259ebf2e624bcee2aaae05c36663d414e1a2
-X-next-at: 639036db058fbb54865ae729c26c689777a96550
+Subject: What's cooking in git.git (Oct 2012, #05; Tue, 16)
+X-master-at: 4a182f6174e1b958777ba6fbc6262e5457151049
+X-next-at: 8a75ac8ee22538d824252e6f2aa1c01a120ced77
 
-What's cooking in git.git (Oct 2012, #04; Thu, 11)
+What's cooking in git.git (Oct 2012, #05; Tue, 16)
 --------------------------------------------------
 
 Here are the topics that have been cooking.  Commits prefixed with
 '-' are only in 'pu' (proposed updates) while commits prefixed with
 '+' are in 'next'.
 
-The tip of 'master' is 1.8.0-rc2.
+We are almost there for 1.8.0-rc3.  The final is expected to be
+tagged this weekend.
 
 I'm planning to keep this cycle reasonably short and aim for tagging
 the result as 1.8.0 at the end of 9th week, on October 21st, after
@@ -24,131 +25,119 @@ repositories listed at
     http://git-blame.blogspot.com/p/git-public-repositories.html
 
 --------------------------------------------------
-[New Topics]
-
-* js/format-2047 (2012-10-09) 5 commits
- - format-patch: tests: check rfc822+rfc2047 in to+cc headers
- - format-patch: fix rfc2047 address encoding with respect to rfc822 specials
- - format-patch: introduce helper function last_line_length()
- - format-patch: do not wrap rfc2047 encoded headers too late
- - format-patch: do not wrap non-rfc2047 headers too early
-
- Fixes many rfc2047 quoting issues in the output from format-patch.
-
-
-* km/send-email-compose-encoding (2012-10-10) 1 commit
-  (merged to 'next' on 2012-10-11 at d94bd05)
- + git-send-email: introduce compose-encoding
-
- "git send-email --compose" can let the user create a non-ascii
- cover letter message, but there was not a way to mark it with
- appropriate content type before sending it out.
-
-
-* so/prompt-command (2012-10-11) 2 commits
-  (merged to 'next' on 2012-10-11 at 1a14825)
- + show color hints based on state of the git tree
- + Allow __git_ps1 to be used in PROMPT_COMMAND
-
- Updates __git_ps1 so that it can be used as $PROMPT_COMMAND,
- instead of being used for command substitution in $PS1, to embed
- color escape sequences in its output.
-
-
-* jc/test-say-color-avoid-echo-escape (2012-10-11) 1 commit
-  (merged to 'next' on 2012-10-11 at 639036d)
- + test-lib: Fix say_color () not to interpret \a\b\c in the message
-
- Recent nd/wildmatch series was the first to reveal this ancient bug
- in the test scaffolding.
-
-
-* aw/rebase-am-failure-detection (2012-10-11) 1 commit
- - rebase: Handle cases where format-patch fails
-
-
-* da/mergetools-p4 (2012-10-11) 1 commit
- - mergetools/p4merge: Handle "/dev/null"
-
---------------------------------------------------
 [Graduated to "master"]
 
-* bw/cp-a-is-gnuism (2012-10-08) 1 commit
-  (merged to 'next' on 2012-10-08 at 6ddb60d)
- + tests: "cp -a" is a GNUism
+* jk/maint-http-half-auth-push (2012-10-12) 1 commit
+  (merged to 'next' on 2012-10-12 at 838ab48)
+ + http: fix segfault in handle_curl_result
+ (this branch is used by jk/maint-http-init-not-in-result-handler.)
+
+ Fixes a regression in maint-1.7.11 (v1.7.11.7), maint (v1.7.12.1)
+ and master (v1.8.0-rc0).
+
+--------------------------------------------------
+[New Topics]
+
+* jk/maint-http-init-not-in-result-handler (2012-10-12) 2 commits
+  (merged to 'next' on 2012-10-16 at cc88829)
+ + http: do not set up curl auth after a 401
+ + remote-curl: do not call run_slot repeatedly
+
+ Further clean-up to the http codepath that picks up results after
+ cURL library is done with one request slot.
+
+ Will merge to 'master' in the second batch after 1.8.0 ships.
 
 
-* jc/doc-long-options (2012-10-04) 1 commit
-  (merged to 'next' on 2012-10-08 at 7183dc0)
- + gitcli: parse-options lets you omit tail of long options
+* nd/grep-true-path (2012-10-12) 1 commit
+  (merged to 'next' on 2012-10-16 at 8a75ac8)
+ + grep: stop looking at random places for .gitattributes
 
- The end-user facing documentation claimed to be an "exhaustive"
- list of features of parse-options command line parser, but it
- didn't mention anything about abbreviating long option names to
- their unique prefixes. Mention it, warn against relying too much on
- it (as uniqueness may disappear in future versions of Git), and
- drop the claim to be exhaustive.
+ "git grep -e pattern <tree>" asked the attribute system to read
+ "<tree>:.gitattributes" file in the working tree, which was
+ nonsense.
 
-
-* jc/maint-t1450-fsck-order-fix (2012-10-02) 1 commit
-  (merged to 'next' on 2012-10-02 at cc1a62e)
- + t1450: the order the objects are checked is undefined
-
- The fsck test assumed too much on what kind of error it will
- detect. The only important thing is the inconsistency is detected
- as an error.
+ Will merge to 'master' in the second batch after 1.8.0 ships.
 
 
-* jc/merge-bases-paint-fix (2012-10-04) 1 commit
-  (merged to 'next' on 2012-10-07 at 9fa34dc)
- + paint_down_to_common(): parse commit before relying on its timestamp
+* cr/cvsimport-local-zone (2012-10-15) 1 commit
+ - git-cvsimport: allow author-specific timezones
 
- "git fmt-merge-msg" (actually an internal helper reduce_heads() it
- uses) had a severe performance regression; an empty "git pull" took
- forever to finish as the result.
+ Allows "cvsimport" to read per-author timezone from the author info
+ file.
 
 
-* nd/doc-ignore (2012-10-07) 1 commit
-  (merged to 'next' on 2012-10-08 at 7b46836)
- + gitignore.txt: suggestions how to get literal # or ! at the beginning
-
- Documentation updates for excluding path whose name begin with # or !.
+* fc/completion-send-email-with-format-patch (2012-10-16) 1 commit
+ - completion: add format-patch options to send-email
 
 
-* rr/git-uri-doc (2012-10-08) 1 commit
-  (merged to 'next' on 2012-10-08 at a28ae12)
- + Git url doc: mark ftp/ftps as read-only and deprecate them
+* fc/zsh-completion (2012-10-15) 3 commits
+ - completion: add new zsh completion
+ - tests: use __gitcompadd to simplify completion tests
+ - completion: add new __gitcompadd helper
+
+
+* jc/apply-trailing-blank-removal (2012-10-12) 1 commit
+ - apply.c:update_pre_post_images(): the preimage can be truncated
+
+ Fix to update_pre_post_images() that did not take into account the
+ possibility that whitespace fix could shrink the preimage and
+ change the number of lines in it.
+
+ Extra set of eyeballs appreciated.
+
+
+* jn/warn-on-inaccessible-loosen (2012-10-14) 4 commits
+ - config: exit on error accessing any config file
+ - doc: advertise GIT_CONFIG_NOSYSTEM
+ - config: treat user and xdg config permission problems as errors
+ - config, gitignore: failure to access with ENOTDIR is ok
+
+ An RFC to deal with a situation where .config/git is a file and we
+ notice .config/git/config is not readable due to ENOTDIR, not
+ ENOENT; I think a bit more refactored approach to consistently
+ address permission errors across config, exclude and attrs is
+ desirable.  Don't we also need a check for an opposite situation
+ where we open .config/git/config or .gitattributes for reading but
+ they turn out to be directories?
+
+
+* rs/lock-correct-ref-during-delete (2012-10-16) 1 commit
+ - refs: lock symref that is to be deleted, not its target
+
+ When "update-ref -d --no-deref SYM" tried to delete a symbolic ref
+ SYM, it incorrectly locked the underlying reference pointed by SYM,
+ not the symbolic ref itself.
+
+ Will merge to 'next'.
 
 --------------------------------------------------
 [Stalled]
+
+* mh/ceiling (2012-09-29) 9 commits
+ - t1504: stop resolving symlinks in GIT_CEILING_DIRECTORIES
+ - longest_ancestor_length(): resolve symlinks before comparing paths
+ - longest_ancestor_length(): use string_list_longest_prefix()
+ - longest_ancestor_length(): always add a slash to the end of prefixes
+ - longest_ancestor_length(): explicitly filter list before loop
+ - longest_ancestor_length(): use string_list_split()
+ - Introduce new function real_path_if_valid()
+ - real_path_internal(): add comment explaining use of cwd
+ - Introduce new static function real_path_internal()
+
+ Elements of GIT_CEILING_DIRECTORIES list may not match the real
+ pathname we obtain from getcwd(), leading the GIT_DIR discovery
+ logic to escape the ceilings the user thought to have specified.
+
+ The solution felt a bit unnecessarily convoluted to me.
+ Expecting a reroll.
+
 
 * rc/maint-complete-git-p4 (2012-09-24) 1 commit
   (merged to 'next' on 2012-09-25 at 116e58f)
  + Teach git-completion about git p4
 
  Comment from Pete will need to be addressed in a follow-up patch.
-
-
-* as/check-ignore (2012-09-27) 17 commits
- - [SQUASH-FIX] 283d072 (Add git-check-ignore sub-command, 2012-09-20)
- - [SQUASH-FIX] 283d072 (Add git-check-ignore sub-command, 2012-09-20)
- - [REROLL NEEDED] minimum compilation fix
- - Add git-check-ignore sub-command
- - dir.c: provide free_directory() for reclaiming dir_struct memory
- - pathspec.c: move reusable code from builtin/add.c
- - dir.c: refactor treat_gitlinks()
- - dir.c: keep track of where patterns came from
- - dir.c: refactor is_path_excluded()
- - dir.c: refactor is_excluded()
- - dir.c: refactor is_excluded_from_list()
- - dir.c: rename excluded() to is_excluded()
- - dir.c: rename excluded_from_list() to is_excluded_from_list()
- - dir.c: rename path_excluded() to is_path_excluded()
- - dir.c: rename cryptic 'which' variable to more consistent name
- - Improve documentation and comments regarding directory traversal API
- - Update directory listing API doc to match code
-
- Waiting for a reroll.
 
 
 * as/test-tweaks (2012-09-20) 7 commits
@@ -353,26 +342,111 @@ repositories listed at
 --------------------------------------------------
 [Cooking]
 
-* nd/wildmatch (2012-10-11) 12 commits
- - t3070: disable two fnmatch tests that have different results on different libc
+* as/check-ignore (2012-10-15) 12 commits
+ - Add git-check-ignore sub-command
+ - dir.c: provide free_directory() for reclaiming dir_struct memory
+ - pathspec.c: move reusable code from builtin/add.c
+ - dir.c: refactor treat_gitlinks()
+ - dir.c: keep track of where patterns came from
+ - dir.c: refactor is_path_excluded()
+ - dir.c: refactor is_excluded()
+ - dir.c: refactor is_excluded_from_list()
+ - dir.c: rename excluded() to is_excluded()
+ - dir.c: rename excluded_from_list() to is_excluded_from_list()
+ - dir.c: rename path_excluded() to is_path_excluded()
+ - dir.c: rename cryptic 'which' variable to more consistent name
+ (this branch uses nd/attr-match-optim and nd/attr-match-optim-more; is tangled with nd/wildmatch.)
+
+ Duy helped to reroll this.  Needs a bit of documentation updates,
+ at least.
+
+
+* js/format-2047 (2012-10-09) 5 commits
+ - format-patch: tests: check rfc822+rfc2047 in to+cc headers
+ - format-patch: fix rfc2047 address encoding with respect to rfc822 specials
+ - format-patch: introduce helper function last_line_length()
+ - format-patch: do not wrap rfc2047 encoded headers too late
+ - format-patch: do not wrap non-rfc2047 headers too early
+
+ Fixes many rfc2047 quoting issues in the output from format-patch.
+ The last patch attempts to sneak new policies in without concensus,
+ which I'd wish to see at least described as such i.e. "this fails
+ with the current codebase but we would eventually want to do X and
+ Y at which point it will pass". Then we can discuss if doing X and
+ Y is a good thing. Alternatively, the bits that adds expect-failure
+ should be removed from the patch, leaving the tests that cover what
+ this series is supposed to have fixed.
+
+ Otherwise, I think this is fit for 'next'.
+
+
+* km/send-email-compose-encoding (2012-10-10) 1 commit
+  (merged to 'next' on 2012-10-11 at d94bd05)
+ + git-send-email: introduce compose-encoding
+
+ "git send-email --compose" can let the user create a non-ascii
+ cover letter message, but there was not a way to mark it with
+ appropriate content type before sending it out.
+
+ Will merge to 'master' in the second batch after 1.8.0 ships.
+
+
+* so/prompt-command (2012-10-11) 2 commits
+  (merged to 'next' on 2012-10-11 at 1a14825)
+ + show color hints based on state of the git tree
+ + Allow __git_ps1 to be used in PROMPT_COMMAND
+
+ Updates __git_ps1 so that it can be used as $PROMPT_COMMAND,
+ instead of being used for command substitution in $PS1, to embed
+ color escape sequences in its output.
+
+
+* jc/test-say-color-avoid-echo-escape (2012-10-11) 1 commit
+  (merged to 'next' on 2012-10-11 at 639036d)
+ + test-lib: Fix say_color () not to interpret \a\b\c in the message
+
+ Recent nd/wildmatch series was the first to reveal this ancient bug
+ in the test scaffolding.
+
+ Will merge to 'master' in the first batch after 1.8.0 ships.
+
+
+* aw/rebase-am-failure-detection (2012-10-11) 1 commit
+ - rebase: Handle cases where format-patch fails
+
+ I am unhappy a bit about the possible performance implications of
+ having to store the output in a temporary file only for a rare case
+ of format-patch aborting.
+
+
+* da/mergetools-p4 (2012-10-11) 1 commit
+  (merged to 'next' on 2012-10-12 at 16f5c06)
+ + mergetools/p4merge: Handle "/dev/null"
+
+ Will merge to 'master' in the first batch after 1.8.0 ships.
+
+
+* nd/wildmatch (2012-10-15) 13 commits
  - Support "**" wildcard in .gitignore and .gitattributes
  - wildmatch: make /**/ match zero or more directories
  - wildmatch: adjust "**" behavior
  - wildmatch: fix case-insensitive matching
  - wildmatch: remove static variable force_lower_case
  - wildmatch: make wildmatch's return value compatible with fnmatch
+ - t3070: disable unreliable fnmatch tests
  - Integrate wildmatch to git
+ - wildmatch: follow Git's coding convention
  - wildmatch: remove unnecessary functions
  - Import wildmatch from rsync
  - ctype: support iscntrl, ispunct, isxdigit and isprint
  - ctype: make sane_ctype[] const array
+ (this branch uses nd/attr-match-optim and nd/attr-match-optim-more; is tangled with as/check-ignore.)
 
  Allows pathname patterns in .gitignore and .gitattributes files
  with double-asterisks "foo/**/bar" to match any number of directory
  hiearchies.
 
- This might be missing some off-by-one fix posted on the list, and
- needs to be checked.
+ Will merge to 'next'.
 
 
 * jk/lua-hackery (2012-10-07) 6 commits
@@ -392,20 +466,28 @@ repositories listed at
   (merged to 'next' on 2012-10-08 at bfbdd8a)
  + attr: avoid searching for basename on every match
  + attr: avoid strlen() on every match
- (this branch is used by nd/attr-match-optim-more.)
+ (this branch is used by as/check-ignore, nd/attr-match-optim-more and nd/wildmatch.)
 
  Trivial and obvious optimization for finding attributes that match
  a given path.
 
+ Will merge to 'master' in the first batch after 1.8.0 ships.
 
-* nd/attr-match-optim-more (2012-10-11) 3 commits
+
+* nd/attr-match-optim-more (2012-10-15) 7 commits
  - attr: more matching optimizations from .gitignore
  - gitignore: make pattern parsing code a separate function
- - Merge commit 'f9f6e2c' into nd/attr-match-optim-more
- (this branch uses nd/attr-match-optim.)
+ - exclude: split pathname matching code into a separate function
+ - exclude: fix a bug in prefix compare optimization
+ - exclude: split basename matching code into a separate function
+ - exclude: stricten a length check in EXC_FLAG_ENDSWITH case
+ + Merge commit 'f9f6e2c' into nd/attr-match-optim-more
+ (this branch is used by as/check-ignore and nd/wildmatch; uses nd/attr-match-optim.)
 
  Start laying the foundation to build the "wildmatch" after we can
  agree on its desired semantics.
+
+ Will merge to 'next'.
 
 
 * jc/grep-pcre-loose-ends (2012-10-09) 7 commits
@@ -422,6 +504,8 @@ repositories listed at
  pattern as extended regular expression, and instead looked for the
  string literally.  The early part of this series is a fix for it.
 
+ Will merge to 'master' in the second batch after 1.8.0 ships.
+
 
 * jk/peel-ref (2012-10-04) 4 commits
   (merged to 'next' on 2012-10-08 at 4adfa2f)
@@ -433,6 +517,8 @@ repositories listed at
  Speeds up "git upload-pack" (what is invoked by "git fetch" on the
  other side of the connection) by reducing the cost to advertise the
  branches and tags that are available in the repository.
+
+ Will merge to 'master' in the first batch after 1.8.0 ships.
 
 
 * fa/remote-svn (2012-10-07) 16 commits
@@ -456,6 +542,7 @@ repositories listed at
  (this branch is used by fa/vcs-svn.)
 
  A GSoC project.
+ Will merge to 'master' in the first batch after 1.8.0 ships.
 
 
 * bw/config-lift-variable-name-length-limit (2012-10-01) 1 commit
@@ -464,6 +551,20 @@ repositories listed at
 
  The configuration parser had an unnecessary hardcoded limit on
  variable names that was not checked consistently. Lift the limit.
+
+ Will merge to 'master' in the first batch after 1.8.0 ships.
+
+
+* jm/diff-context-config (2012-10-02) 2 commits
+  (merged to 'next' on 2012-10-02 at e57700a)
+ + t4055: avoid use of sed 'a' command
+  (merged to 'next' on 2012-10-01 at 509a558)
+ + diff: diff.context configuration gives default to -U
+
+ Teaches a new configuration variable to "git diff" Porcelain and
+ its friends.
+
+ Will merge to 'master' in the first batch after 1.8.0 ships.
 
 
 * jl/submodule-add-by-name (2012-09-30) 2 commits
@@ -481,36 +582,7 @@ repositories listed at
  place in $GIT_DIR of the superproject that does not conflict with
  the original submodule.
 
-
-* jm/diff-context-config (2012-10-02) 2 commits
-  (merged to 'next' on 2012-10-02 at e57700a)
- + t4055: avoid use of sed 'a' command
-  (merged to 'next' on 2012-10-01 at 509a558)
- + diff: diff.context configuration gives default to -U
-
- Teaches a new configuration variable to "git diff" Porcelain and
- its friends.
-
- Will defer to the next cycle.
-
-
-* mh/ceiling (2012-09-29) 9 commits
- - t1504: stop resolving symlinks in GIT_CEILING_DIRECTORIES
- - longest_ancestor_length(): resolve symlinks before comparing paths
- - longest_ancestor_length(): use string_list_longest_prefix()
- - longest_ancestor_length(): always add a slash to the end of prefixes
- - longest_ancestor_length(): explicitly filter list before loop
- - longest_ancestor_length(): use string_list_split()
- - Introduce new function real_path_if_valid()
- - real_path_internal(): add comment explaining use of cwd
- - Introduce new static function real_path_internal()
-
- Elements of GIT_CEILING_DIRECTORIES list may not match the real
- pathname we obtain from getcwd(), leading the GIT_DIR discovery
- logic to escape the ceilings the user thought to have specified.
-
- The solution felt a bit unnecessarily convoluted to me.
- Expecting a reroll.
+ Will merge to 'master' in the second batch after 1.8.0 ships.
 
 
 * jl/submodule-rm (2012-09-29) 1 commit
@@ -525,7 +597,7 @@ repositories listed at
  is not embedded in its working tree but is elsewhere and uses the
  gitfile mechanism to point at it.
 
- Will defer to the next cycle.
+ Will merge to 'master' in the second batch after 1.8.0 ships.
 
 
 * nd/pretty-placeholder-with-color-option (2012-09-30) 9 commits
@@ -541,8 +613,11 @@ repositories listed at
 
 
 * jk/no-more-pre-exec-callback (2012-06-05) 1 commit
- - pager: drop "wait for output to run less" hack
+  (merged to 'next' on 2012-10-12 at 69fed45)
+ + pager: drop "wait for output to run less" hack
 
  (Originally merged to 'next' on 2012-07-23)
+ Removes a workaround for buggy version of less older than version
+ 406.
 
- Will defer to the next cycle.
+ Will merge to 'master' in the first batch after 1.8.0 ships.
