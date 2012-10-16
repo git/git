@@ -45,9 +45,3 @@ Fixes since v1.5.2
   - git-fastimport --import-marks was broken; fixed.
 
   - A lot of documentation updates, clarifications and fixes.
-
---
-exec >/var/tmp/1
-O=v1.5.2-65-g996e2d6
-echo O=`git describe refs/heads/maint`
-git shortlog --no-merges $O..refs/heads/maint

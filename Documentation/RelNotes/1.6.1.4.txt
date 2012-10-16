@@ -39,6 +39,3 @@ Fixes since v1.6.1.3
   This fix was first merged to 1.6.2.3.
 
 Also includes minor documentation fixes and updates.
-
---
-git shortlog --no-merges v1.6.1.3..

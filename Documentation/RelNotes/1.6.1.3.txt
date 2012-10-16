@@ -26,7 +26,3 @@ Fixes since v1.6.1.2
 * RPM binary package installed the html manpages in a wrong place.
 
 Also includes minor documentation fixes and updates.
-
-
---
-git shortlog --no-merges v1.6.1.2-33-gc789350..
