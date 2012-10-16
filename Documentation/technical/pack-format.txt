@@ -1,7 +1,7 @@
 GIT pack format
 ===============
 
-= pack-*.pack files have the following format:
+== pack-*.pack files have the following format:
 
    - A header appears at the beginning and consists of the following:
 
@@ -34,7 +34,7 @@ GIT pack format
 
   - The trailer records 20-byte SHA1 checksum of all of the above.
 
-= Original (version 1) pack-*.idx files have the following format:
+== Original (version 1) pack-*.idx files have the following format:
 
   - The header consists of 256 4-byte network byte order
     integers.  N-th entry of this table records the number of
@@ -123,8 +123,8 @@ Pack file entry: <+
 
 
 
-= Version 2 pack-*.idx files support packs larger than 4 GiB, and
-  have some other reorganizations.  They have the format:
+== Version 2 pack-*.idx files support packs larger than 4 GiB, and
+   have some other reorganizations.  They have the format:
 
   - A 4-byte magic number '\377tOc' which is an unreasonable
     fanout[0] value.
