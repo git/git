@@ -56,11 +56,9 @@
 # setting the bash.showUpstream config variable.
 #
 # If you would like a colored hint about the current dirty state, set
-# GIT_PS1_SHOWCOLORHINTS to a nonempty value. When tracked files are
-# modified, the branch name turns red, when all modifications are staged
-# the branch name turns yellow and when all changes are checked in, the
-# color changes to green. The colors are currently hardcoded in the function.
-
+# GIT_PS1_SHOWCOLORHINTS to a nonempty value. The colors are based on
+# the colored output of "git status -sb".
+#
 # __gitdir accepts 0 or 1 arguments (i.e., location)
 # returns location of .git repo
 __gitdir ()
@@ -217,7 +215,7 @@ __git_ps1_show_upstream ()
 __git_ps1 ()
 {
 	local pcmode=no
-	#defaults/examples:
+	local detached=no
 	local ps1pc_start='\u@\h:\w '
 	local ps1pc_end='\$ '
 	local printf_format=' (%s)'
@@ -266,7 +264,7 @@ __git_ps1 ()
 			fi
 
 			b="$(git symbolic-ref HEAD 2>/dev/null)" || {
-
+				detached=yes
 				b="$(
 				case "${GIT_PS1_DESCRIBE_STYLE-}" in
 				(contains)
@@ -326,35 +324,46 @@ __git_ps1 ()
 
 		local f="$w$i$s$u"
 		if [ $pcmode = yes ]; then
-			PS1="$ps1pc_start("
-			if [ -n "${GIT_PS1_SHOWCOLORHINT-}" ]; then
+			if [ -n "${GIT_PS1_SHOWCOLORHINTS-}" ]; then
 				local c_red='\e[31m'
 				local c_green='\e[32m'
-				local c_yellow='\e[33m'
 				local c_lblue='\e[1;34m'
-				local c_purple='\e[35m'
-				local c_cyan='\e[36m'
 				local c_clear='\e[0m'
+				local bad_color=$c_red
+				local ok_color=$c_green
+				local branch_color="$c_clear"
+				local flags_color="$c_lblue"
 				local branchstring="$c${b##refs/heads/}"
-				local branch_color="$c_green"
-				local flags_color="$c_cyan"
 
-				if [ "$w" = "*" ]; then
-					branch_color="$c_red"
-				elif [ -n "$i" ]; then
-					branch_color="$c_yellow"
+				if [ $detached = yes ]; then
+					branch_color="$ok_color"
+				else
+					branch_color="$bad_color"
 				fi
 
 				# Setting PS1 directly with \[ and \] around colors
 				# is necessary to prevent wrapping issues!
-				PS1="$PS1\[$branch_color\]$branchstring\[$c_clear\]"
-				if [ -n "$f" ]; then
-					PS1="$PS1 \[$flags_color\]$f\[$c_clear\]"
+				PS1="$ps1pc_start (\[$branch_color\]$branchstring\[$c_clear\]"
+
+				if [ -n "$w$i$s$u$r$p" ]; then
+					PS1="$PS1 "
 				fi
+				if [ "$w" = "*" ]; then
+					PS1="$PS1\[$bad_color\]$w"
+				fi
+				if [ -n "$i" ]; then
+					PS1="$PS1\[$ok_color\]$i"
+				fi
+				if [ -n "$s" ]; then
+					PS1="$PS1\[$flags_color\]$s"
+				fi
+				if [ -n "$u" ]; then
+					PS1="$PS1\[$bad_color\]$u"
+				fi
+				PS1="$PS1\[$c_clear\]$r$p)$ps1pc_end"
 			else
-				PS1="$PS1$c${b##refs/heads/}${f:+ $f}$r$p"
+				PS1="$ps1pc_start ($c${b##refs/heads/}${f:+ $f}$r$p)$ps1pc_end"
 			fi
-			PS1="$PS1)$ps1pc_end"
 		else
 			# NO color option unless in PROMPT_COMMAND mode
 			printf -- "$printf_format" "$c${b##refs/heads/}${f:+ $f}$r$p"
