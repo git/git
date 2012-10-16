@@ -210,6 +210,10 @@ to them for details).
    is much less common, and did not advertise the more common "gzip" on
    its Accept-Encoding header.
 
+ * "git fetch" over the dumb-http revision walker could segfault when
+   curl's multi interface was used.
+   (merge 188923f jk/maint-http-half-auth-push later to maint).
+
  * "git gc --auto" notified the user that auto-packing has triggered
     even under the "--quiet" option.
 
@@ -255,3 +259,6 @@ to them for details).
 
  * "git status" honored the ignore=dirty settings in .gitmodules but
    "git commit" didn't.
+
+ * "gitweb" did not give the correct committer timezone in its feed
+   output due to a typo.
