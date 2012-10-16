@@ -1,6 +1,10 @@
 From: Rutger Nijlunsing <rutger@nospam.com>
 Subject: Setting up a git repository which can be pushed into and pulled from over HTTP(S).
 Date: Thu, 10 Aug 2006 22:00:26 +0200
+Content-type: text/asciidoc
+
+How to setup git server over http
+=================================
 
 Since Apache is one of those packages people like to compile
 themselves while others prefer the bureaucrat's dream Debian, it is

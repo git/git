@@ -5,6 +5,10 @@ Message-ID: <7vfypumlu3.fsf@assigned-by-dhcp.cox.net>
 Abstract: An example hooks/update script is presented to
  implement repository maintenance policies, such as who can push
  into which branch and who can make a tag.
+Content-type: text/asciidoc
+
+How to use the update hook
+==========================
 
 When your developer runs git-push into the repository,
 git-receive-pack is run (either locally or over ssh) as that
@@ -32,8 +36,7 @@ like this as your hooks/update script.
 [jc: editorial note.  This is a much improved version by Carl
 since I posted the original outline]
 
--- >8 -- beginning of script -- >8 --
-
+----------------------------------------------------
 #!/bin/bash
 
 umask 002
@@ -111,12 +114,12 @@ then
 
       info "Found matching head pattern: '$head_pattern'"
       for user_pattern in $user_patterns; do
-	info "Checking user: '$username' against pattern: '$user_pattern'"
-	matchlen=$(expr "$username" : "$user_pattern")
-	if test "$matchlen" = "${#username}"
-	then
-	  grant "Allowing user: '$username' with pattern: '$user_pattern'"
-	fi
+        info "Checking user: '$username' against pattern: '$user_pattern'"
+        matchlen=$(expr "$username" : "$user_pattern")
+        if test "$matchlen" = "${#username}"
+        then
+          grant "Allowing user: '$username' with pattern: '$user_pattern'"
+        fi
       done
       deny "The user is not in the access list for this branch"
     done
@@ -149,13 +152,13 @@ then
 
       info "Found matching head pattern: '$head_pattern'"
       for group_pattern in $group_patterns; do
-	for groupname in $groups; do
-	  info "Checking group: '$groupname' against pattern: '$group_pattern'"
-	  matchlen=$(expr "$groupname" : "$group_pattern")
-	  if test "$matchlen" = "${#groupname}"
-	  then
-	    grant "Allowing group: '$groupname' with pattern: '$group_pattern'"
-	  fi
+        for groupname in $groups; do
+          info "Checking group: '$groupname' against pattern: '$group_pattern'"
+          matchlen=$(expr "$groupname" : "$group_pattern")
+          if test "$matchlen" = "${#groupname}"
+          then
+            grant "Allowing group: '$groupname' with pattern: '$group_pattern'"
+          fi
         done
       done
       deny "None of the user's groups are in the access list for this branch"
@@ -169,24 +172,21 @@ then
 fi
 
 deny >/dev/null "There are no more rules to check.  Denying access"
-
--- >8 -- end of script -- >8 --
+----------------------------------------------------
 
 This uses two files, $GIT_DIR/info/allowed-users and
 allowed-groups, to describe which heads can be pushed into by
 whom.  The format of each file would look like this:
 
-        refs/heads/master	junio
-	+refs/heads/pu		junio
-        refs/heads/cogito$	pasky
-        refs/heads/bw/.*	linus
-        refs/heads/tmp/.*	.*
-        refs/tags/v[0-9].*	junio
+    refs/heads/master   junio
+    +refs/heads/pu      junio
+    refs/heads/cogito$  pasky
+    refs/heads/bw/.*    linus
+    refs/heads/tmp/.*   .*
+    refs/tags/v[0-9].*  junio
 
 With this, Linus can push or create "bw/penguin" or "bw/zebra"
 or "bw/panda" branches, Pasky can do only "cogito", and JC can
 do master and pu branches and make versioned tags.  And anybody
 can do tmp/blah branches. The '+' sign at the pu record means
 that JC can make non-fast-forward pushes on it.
-
-------------

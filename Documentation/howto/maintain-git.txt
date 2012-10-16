@@ -5,6 +5,10 @@ Abstract: Imagine that git development is racing along as usual, when our friend
  neighborhood maintainer is struck down by a wayward bus. Out of the
  hordes of suckers (loyal developers), you have been tricked (chosen) to
  step up as the new maintainer. This howto will show you "how to" do it.
+Content-type: text/asciidoc
+
+How to maintain Git
+===================
 
 The maintainer's git time is spent on three activities.
 
