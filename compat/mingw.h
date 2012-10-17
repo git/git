@@ -185,6 +185,9 @@ FILE *mingw_fopen (const char *filename, const char *otype);
 FILE *mingw_freopen (const char *filename, const char *otype, FILE *stream);
 #define freopen mingw_freopen
 
+int mingw_fflush(FILE *stream);
+#define fflush mingw_fflush
+
 char *mingw_getcwd(char *pointer, int len);
 #define getcwd mingw_getcwd
 
