@@ -335,7 +335,7 @@ __git_ps1 ()
 				local flags_color="$c_lblue"
 				local branchstring="$c${b##refs/heads/}"
 
-				if [ $detached = yes ]; then
+				if [ $detached = no ]; then
 					branch_color="$ok_color"
 				else
 					branch_color="$bad_color"
