@@ -18,16 +18,6 @@ swapping compression and hashing order, the person who is making the
 modification *should* take notice and update the test vectors here.
 '
 
-################################################################
-# It appears that people try to run tests without building...
-
-../git >/dev/null
-if test $? != 1
-then
-	echo >&2 'You do not seem to have built git yet.'
-	exit 1
-fi
-
 . ./test-lib.sh
 
 ################################################################
