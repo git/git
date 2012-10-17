@@ -73,9 +73,6 @@ UI, Workflows & Features
    with the mergetool.$name.cmd configuration variable even for built-in
    mergetool backends.
 
- * The "-Xours" backend option to "git merge -s recursive" now takes
-   effect even on binary files.
-
  * "git rebase -i" learned the "--edit-todo" option to open an editor
    to edit the instruction sheet.
 
@@ -212,7 +209,6 @@ to them for details).
 
  * "git fetch" over the dumb-http revision walker could segfault when
    curl's multi interface was used.
-   (merge 188923f jk/maint-http-half-auth-push later to maint).
 
  * "git gc --auto" notified the user that auto-packing has triggered
     even under the "--quiet" option.
@@ -225,6 +221,9 @@ to them for details).
    mention both A and B, but when these three options are used with
    --author or --committer, it showed commits that mention either A or
    B (or both) instead.
+
+ * The "-Xours" backend option to "git merge -s recursive" was ignored
+   for binary files.
 
  * "git p4", when "--use-client-spec" and "--detect-branches" are used
    together, misdetected branches.
