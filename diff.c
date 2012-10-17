@@ -1300,6 +1300,7 @@ struct diffstat_t {
 		unsigned is_unmerged:1;
 		unsigned is_binary:1;
 		unsigned is_renamed:1;
+		unsigned is_interesting:1;
 		uintmax_t added, deleted;
 	} **files;
 };
@@ -1469,7 +1470,7 @@ static void show_stats(struct diffstat_t *data, struct diff_options *options)
 	for (i = 0; (i < count) && (i < data->nr); i++) {
 		struct diffstat_file *file = data->files[i];
 		uintmax_t change = file->added + file->deleted;
-		if (!data->files[i]->is_renamed &&
+		if (!data->files[i]->is_interesting &&
 			 (change == 0)) {
 			count++; /* not shown == room for one more */
 			continue;
@@ -1590,7 +1591,7 @@ static void show_stats(struct diffstat_t *data, struct diff_options *options)
 		uintmax_t deleted = data->files[i]->deleted;
 		int name_len;
 
-		if (!data->files[i]->is_renamed &&
+		if (!data->files[i]->is_interesting &&
 			 (added + deleted == 0)) {
 			total_files--;
 			continue;
@@ -1669,7 +1670,7 @@ static void show_stats(struct diffstat_t *data, struct diff_options *options)
 	for (i = count; i < data->nr; i++) {
 		uintmax_t added = data->files[i]->added;
 		uintmax_t deleted = data->files[i]->deleted;
-		if (!data->files[i]->is_renamed &&
+		if (!data->files[i]->is_interesting &&
 			 (added + deleted == 0)) {
 			total_files--;
 			continue;
@@ -1697,7 +1698,7 @@ static void show_shortstats(struct diffstat_t *data, struct diff_options *option
 
 		if (data->files[i]->is_unmerged)
 			continue;
-		if (!data->files[i]->is_renamed && (added + deleted == 0)) {
+		if (!data->files[i]->is_interesting && (added + deleted == 0)) {
 			total_files--;
 		} else if (!data->files[i]->is_binary) { /* don't count bytes */
 			adds += added;
@@ -2397,13 +2398,20 @@ static void builtin_diffstat(const char *name_a, const char *name_b,
 			     struct diff_filespec *two,
 			     struct diffstat_t *diffstat,
 			     struct diff_options *o,
-			     int complete_rewrite)
+			     struct diff_filepair *p)
 {
 	mmfile_t mf1, mf2;
 	struct diffstat_file *data;
 	int same_contents;
+	int complete_rewrite = 0;
+
+	if (!DIFF_PAIR_UNMERGED(p)) {
+		if (p->status == DIFF_STATUS_MODIFIED && p->score)
+			complete_rewrite = 1;
+	}
 
 	data = diffstat_add(diffstat, name_a, name_b);
+	data->is_interesting = p->status != 0;
 
 	if (!one || !two) {
 		data->is_unmerged = 1;
@@ -3114,11 +3122,10 @@ static void run_diffstat(struct diff_filepair *p, struct diff_options *o,
 {
 	const char *name;
 	const char *other;
-	int complete_rewrite = 0;
 
 	if (DIFF_PAIR_UNMERGED(p)) {
 		/* unmerged */
-		builtin_diffstat(p->one->path, NULL, NULL, NULL, diffstat, o, 0);
+		builtin_diffstat(p->one->path, NULL, NULL, NULL, diffstat, o, p);
 		return;
 	}
 
@@ -3131,9 +3138,7 @@ static void run_diffstat(struct diff_filepair *p, struct diff_options *o,
 	diff_fill_sha1_info(p->one);
 	diff_fill_sha1_info(p->two);
 
-	if (p->status == DIFF_STATUS_MODIFIED && p->score)
-		complete_rewrite = 1;
-	builtin_diffstat(name, other, p->one, p->two, diffstat, o, complete_rewrite);
+	builtin_diffstat(name, other, p->one, p->two, diffstat, o, p);
 }
 
 static void run_checkdiff(struct diff_filepair *p, struct diff_options *o)
