@@ -35,7 +35,7 @@ struct ll_merge_driver {
  */
 static int ll_binary_merge(const struct ll_merge_driver *drv_unused,
 			   mmbuffer_t *result,
-			   const char *path_unused,
+			   const char *path,
 			   mmfile_t *orig, const char *orig_name,
 			   mmfile_t *src1, const char *name1,
 			   mmfile_t *src2, const char *name2,
@@ -46,16 +46,34 @@ static int ll_binary_merge(const struct ll_merge_driver *drv_unused,
 	assert(opts);
 
 	/*
-	 * The tentative merge result is "ours" for the final round,
-	 * or common ancestor for an internal merge.  Still return
-	 * "conflicted merge" status.
+	 * The tentative merge result is the or common ancestor for an internal merge.
 	 */
-	stolen = opts->virtual_ancestor ? orig : src1;
+	if (opts->virtual_ancestor) {
+		stolen = orig;
+	} else {
+		switch (opts->variant) {
+		default:
+			warning("Cannot merge binary files: %s (%s vs. %s)",
+				path, name1, name2);
+			/* fallthru */
+		case XDL_MERGE_FAVOR_OURS:
+			stolen = src1;
+			break;
+		case XDL_MERGE_FAVOR_THEIRS:
+			stolen = src2;
+			break;
+		}
+	}
 
 	result->ptr = stolen->ptr;
 	result->size = stolen->size;
 	stolen->ptr = NULL;
-	return 1;
+
+	/*
+	 * With -Xtheirs or -Xours, we have cleanly merged;
+	 * otherwise we got a conflict.
+	 */
+	return (opts->variant ? 0 : 1);
 }
 
 static int ll_xdl_merge(const struct ll_merge_driver *drv_unused,
@@ -73,8 +91,6 @@ static int ll_xdl_merge(const struct ll_merge_driver *drv_unused,
 	if (buffer_is_binary(orig->ptr, orig->size) ||
 	    buffer_is_binary(src1->ptr, src1->size) ||
 	    buffer_is_binary(src2->ptr, src2->size)) {
-		warning("Cannot merge binary files: %s (%s vs. %s)",
-			path, name1, name2);
 		return ll_binary_merge(drv_unused, result,
 				       path,
 				       orig, orig_name,
