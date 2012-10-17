@@ -77,6 +77,7 @@ method start {msg uds} {
 
 method update {have total} {
 	set pdone 0
+	set cdone 0
 	if {$total > 0} {
 		set pdone [expr {100 * $have / $total}]
 		set cdone [expr {[winfo width $w_c] * $have / $total}]

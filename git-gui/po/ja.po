@@ -2362,7 +2362,7 @@ msgid "Generation failed."
 msgstr "生成に失敗しました。"
 
 #: lib/sshkey.tcl:118
-msgid "Generation succeded, but no keys found."
+msgid "Generation succeeded, but no keys found."
 msgstr "生成には成功しましたが、鍵が見つかりません。"
 
 #: lib/sshkey.tcl:121

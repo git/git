@@ -12,7 +12,9 @@ if {[file tail [lindex $argv 0]] eq {gitk}} {
 } else {
 	set argv0 [file join $gitexecdir [file tail [lindex $argv 0]]]
 	set AppMain_source [file join $gitguilib git-gui.tcl]
-	if {[pwd] eq {/}} {
+	if {[info exists env(PWD)]} {
+		cd $env(PWD)
+	} elseif {[pwd] eq {/}} {
 		cd $env(HOME)
 	}
 }

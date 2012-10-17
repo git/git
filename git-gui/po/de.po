@@ -72,7 +72,7 @@ msgstr ""
 
 #: git-gui.sh:1154
 msgid "Cannot use bare repository:"
-msgstr "Leeres Projektarchiv kann nicht benutzt werden:"
+msgstr "Bloßes Projektarchiv kann nicht benutzt werden:"
 
 #: git-gui.sh:1162
 msgid "No working directory"
@@ -88,7 +88,7 @@ msgstr "Nach geänderten Dateien suchen..."
 
 #: git-gui.sh:1454
 msgid "Calling prepare-commit-msg hook..."
-msgstr "Aufrufen der Eintragen-Vorbereiten-Kontrolle..."
+msgstr "Aufrufen der Eintragen-Vorbereiten-Kontrolle (»prepare-commit hook«)..."
 
 #: git-gui.sh:1471
 msgid "Commit declined by prepare-commit-msg hook."
@@ -188,7 +188,7 @@ msgstr "Zusammenführen"
 
 #: git-gui.sh:2465 lib/choose_rev.tcl:557
 msgid "Remote"
-msgstr "Andere Archive"
+msgstr "Externe Archive"
 
 #: git-gui.sh:2468
 msgid "Tools"
@@ -478,7 +478,7 @@ msgstr "Zusammenführungswerkzeug"
 
 #: git-gui.sh:3328
 msgid "Use Remote Version"
-msgstr "Entfernte Version benutzen"
+msgstr "Externe Version benutzen"
 
 #: git-gui.sh:3332
 msgid "Use Local Version"
@@ -771,7 +771,7 @@ msgstr "Bitte wählen Sie einen Übernahmezweig."
 #: lib/branch_create.tcl:140
 #, tcl-format
 msgid "Tracking branch %s is not a branch in the remote repository."
-msgstr "Übernahmezweig »%s« ist kein Zweig im anderen Projektarchiv."
+msgstr "Übernahmezweig »%s« ist kein Zweig im externen Projektarchiv."
 
 #: lib/branch_create.tcl:153 lib/branch_rename.tcl:86
 msgid "Please supply a branch name."
@@ -1446,7 +1446,7 @@ msgstr ""
 
 #: lib/commit.tcl:234
 msgid "Calling pre-commit hook..."
-msgstr "Aufrufen der Vor-Eintragen-Kontrolle..."
+msgstr "Aufrufen der Vor-Eintragen-Kontrolle (»pre-commit hook«)..."
 
 #: lib/commit.tcl:249
 msgid "Commit declined by pre-commit hook."
@@ -1454,7 +1454,7 @@ msgstr "Eintragen abgelehnt durch Vor-Eintragen-Kontrolle (»pre-commit hook«).
 
 #: lib/commit.tcl:272
 msgid "Calling commit-msg hook..."
-msgstr "Aufrufen der Versionsbeschreibungs-Kontrolle..."
+msgstr "Aufrufen der Versionsbeschreibungs-Kontrolle (»commit-message hook«)..."
 
 #: lib/commit.tcl:287
 msgid "Commit declined by commit-msg hook."
@@ -2134,11 +2134,11 @@ msgstr "Optionen konnten nicht gespeichert werden:"
 
 #: lib/remote_add.tcl:19
 msgid "Add Remote"
-msgstr "Anderes Archiv hinzufügen"
+msgstr "Externes Archiv hinzufügen"
 
 #: lib/remote_add.tcl:24
 msgid "Add New Remote"
-msgstr "Neues anderes Archiv hinzufügen"
+msgstr "Neues externes Archiv hinzufügen"
 
 #: lib/remote_add.tcl:28 lib/tools_dlg.tcl:36
 msgid "Add"
@@ -2146,7 +2146,7 @@ msgstr "Hinzufügen"
 
 #: lib/remote_add.tcl:37
 msgid "Remote Details"
-msgstr "Einzelheiten des anderen Archivs"
+msgstr "Einzelheiten des externen Archivs"
 
 #: lib/remote_add.tcl:50
 msgid "Location:"
@@ -2162,7 +2162,7 @@ msgstr "Gleich anfordern"
 
 #: lib/remote_add.tcl:71
 msgid "Initialize Remote Repository and Push"
-msgstr "Anderes Archiv initialisieren und dahin versenden"
+msgstr "Externes Archiv initialisieren und dahin versenden"
 
 #: lib/remote_add.tcl:77
 msgid "Do Nothing Else Now"
@@ -2170,17 +2170,17 @@ msgstr "Nichts tun"
 
 #: lib/remote_add.tcl:101
 msgid "Please supply a remote name."
-msgstr "Bitte geben Sie einen Namen des anderen Archivs an."
+msgstr "Bitte geben Sie einen Namen des externen Archivs an."
 
 #: lib/remote_add.tcl:114
 #, tcl-format
 msgid "'%s' is not an acceptable remote name."
-msgstr "»%s« ist kein zulässiger Name eines anderen Archivs."
+msgstr "»%s« ist kein zulässiger Name eines externen Archivs."
 
 #: lib/remote_add.tcl:125
 #, tcl-format
 msgid "Failed to add remote '%s' of location '%s'."
-msgstr "Fehler beim Hinzufügen des anderen Archivs »%s« aus Herkunftsort »%s«."
+msgstr "Fehler beim Hinzufügen des externen Archivs »%s« aus Herkunftsort »%s«."
 
 #: lib/remote_add.tcl:133 lib/transport.tcl:6
 #, tcl-format
@@ -2195,7 +2195,7 @@ msgstr "»%s« anfordern"
 #: lib/remote_add.tcl:157
 #, tcl-format
 msgid "Do not know how to initialize repository at location '%s'."
-msgstr "Initialisieren eines anderen Archivs an Adresse »%s« ist nicht möglich."
+msgstr "Initialisieren eines externen Archivs an Adresse »%s« ist nicht möglich."
 
 #: lib/remote_add.tcl:163 lib/transport.tcl:25 lib/transport.tcl:63
 #: lib/transport.tcl:81
@@ -2210,7 +2210,7 @@ msgstr "Einrichten von »%s« an »%s«"
 
 #: lib/remote_branch_delete.tcl:29 lib/remote_branch_delete.tcl:34
 msgid "Delete Branch Remotely"
-msgstr "Zweig in anderem Archiv löschen"
+msgstr "Zweig in externem Archiv löschen"
 
 #: lib/remote_branch_delete.tcl:47
 msgid "From Repository"
@@ -2218,7 +2218,7 @@ msgstr "In Projektarchiv"
 
 #: lib/remote_branch_delete.tcl:50 lib/transport.tcl:134
 msgid "Remote:"
-msgstr "Anderes Archiv:"
+msgstr "Externes Archiv:"
 
 #: lib/remote_branch_delete.tcl:66 lib/transport.tcl:149
 msgid "Arbitrary Location:"
@@ -2281,7 +2281,7 @@ msgstr "»%s« laden..."
 
 #: lib/remote.tcl:163
 msgid "Remove Remote"
-msgstr "Anderes Archiv entfernen"
+msgstr "Externes Archiv entfernen"
 
 #: lib/remote.tcl:168
 msgid "Prune from"
@@ -2397,7 +2397,7 @@ msgid "Generation failed."
 msgstr "Schlüsselerzeugung fehlgeschlagen."
 
 #: lib/sshkey.tcl:118
-msgid "Generation succeded, but no keys found."
+msgid "Generation succeeded, but no keys found."
 msgstr "Schlüsselerzeugung erfolgreich, aber keine Schlüssel gefunden."
 
 #: lib/sshkey.tcl:121

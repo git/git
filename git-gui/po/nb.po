@@ -2286,7 +2286,7 @@ msgid "Generation failed."
 msgstr "Generering feilet."
 
 #: lib/sshkey.tcl:118
-msgid "Generation succeded, but no keys found."
+msgid "Generation succeeded, but no keys found."
 msgstr "Generering vellykket, men ingen nøkler er funnet."
 
 #: lib/sshkey.tcl:121

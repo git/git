@@ -2354,7 +2354,7 @@ msgid "Generation failed."
 msgstr "A generálás nem sikerült."
 
 #: lib/sshkey.tcl:118
-msgid "Generation succeded, but no keys found."
+msgid "Generation succeeded, but no keys found."
 msgstr "A generálás sikeres, de egy kulcs se található."
 
 #: lib/sshkey.tcl:121

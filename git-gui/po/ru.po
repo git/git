@@ -2370,7 +2370,7 @@ msgid "Generation failed."
 msgstr "Ключ не создан."
 
 #: lib/sshkey.tcl:118
-msgid "Generation succeded, but no keys found."
+msgid "Generation succeeded, but no keys found."
 msgstr "Создание ключа завершилось, но результат не был найден"
 
 #: lib/sshkey.tcl:121
