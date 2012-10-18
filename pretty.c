@@ -286,7 +286,7 @@ static void add_rfc2047(struct strbuf *sb, const char *line, int len,
 		if ((i + 1 < len) && (ch == '=' && line[i+1] == '?'))
 			goto needquote;
 	}
-	strbuf_add_wrapped_bytes(sb, line, len, 0, 1, max_length - line_len);
+	strbuf_add_wrapped_bytes(sb, line, len, -line_len, 1, max_length);
 	return;
 
 needquote:

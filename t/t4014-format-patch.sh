@@ -752,16 +752,14 @@ M64=$M8$M8$M8$M8$M8$M8$M8$M8
 M512=$M64$M64$M64$M64$M64$M64$M64$M64
 cat >expect <<'EOF'
 Subject: [PATCH] foo bar foo bar foo bar foo bar foo bar foo bar foo bar foo
- bar foo bar foo bar foo bar foo bar foo bar foo bar foo bar
- foo bar foo bar foo bar foo bar foo bar foo bar foo bar foo
- bar foo bar foo bar foo bar foo bar foo bar foo bar foo bar
- foo bar foo bar foo bar foo bar foo bar foo bar foo bar foo
- bar foo bar foo bar foo bar foo bar foo bar foo bar foo bar
- foo bar foo bar foo bar foo bar foo bar foo bar foo bar foo
- bar foo bar foo bar foo bar foo bar foo bar foo bar foo bar
- foo bar foo bar foo bar foo bar
+ bar foo bar foo bar foo bar foo bar foo bar foo bar foo bar foo bar foo bar
+ foo bar foo bar foo bar foo bar foo bar foo bar foo bar foo bar foo bar foo
+ bar foo bar foo bar foo bar foo bar foo bar foo bar foo bar foo bar foo bar
+ foo bar foo bar foo bar foo bar foo bar foo bar foo bar foo bar foo bar foo
+ bar foo bar foo bar foo bar foo bar foo bar foo bar foo bar foo bar foo bar
+ foo bar foo bar foo bar foo bar foo bar foo bar foo bar foo bar foo bar
 EOF
-test_expect_success 'format-patch wraps extremely long headers (ascii)' '
+test_expect_success 'format-patch wraps extremely long subject (ascii)' '
 	echo content >>file &&
 	git add file &&
 	git commit -m "$M512" &&
@@ -807,28 +805,12 @@ test_expect_success 'format-patch wraps extremely long headers (rfc2047)' '
 	test_cmp expect subject
 '
 
-M8="foo_bar_"
-M64=$M8$M8$M8$M8$M8$M8$M8$M8
-cat >expect <<EOF
-From: $M64
- <foobar@foo.bar>
-EOF
-test_expect_success 'format-patch wraps non-quotable headers' '
-	rm -rf patches/ &&
-	echo content >>file &&
-	git add file &&
-	git commit -mfoo --author "$M64 <foobar@foo.bar>" &&
-	git format-patch --stdout -1 >patch &&
-	sed -n "/^From: /p; /^ /p; /^$/q" <patch >from &&
-	test_cmp expect from
-'
-
 check_author() {
 	echo content >>file &&
 	git add file &&
 	GIT_AUTHOR_NAME=$1 git commit -m author-check &&
 	git format-patch --stdout -1 >patch &&
-	grep ^From: patch >actual &&
+	sed -n "/^From: /p; /^ /p; /^$/q" <patch >actual &&
 	test_cmp expect actual
 }
 
@@ -851,6 +833,32 @@ From: =?UTF-8?q?"F=C3=B6o=20B.=20Bar"?= <author@example.com>
 EOF
 test_expect_success 'rfc2047-encoded headers also double-quote 822 specials' '
 	check_author "Föo B. Bar"
+'
+
+cat >expect <<EOF
+From: foo_bar_foo_bar_foo_bar_foo_bar_foo_bar_foo_bar_foo_bar_foo_bar_
+ <author@example.com>
+EOF
+test_expect_success 'format-patch wraps moderately long from-header (ascii)' '
+	check_author "foo_bar_foo_bar_foo_bar_foo_bar_foo_bar_foo_bar_foo_bar_foo_bar_"
+'
+
+cat >expect <<'EOF'
+From: Foo Bar Foo Bar Foo Bar Foo Bar Foo Bar Foo Bar Foo Bar Foo Bar Foo Bar
+ Foo Bar Foo Bar Foo Bar Foo Bar Foo Bar Foo Bar Foo Bar Foo Bar Foo Bar Foo
+ Bar Foo Bar Foo Bar Foo Bar <author@example.com>
+EOF
+test_expect_success 'format-patch wraps extremely long from-header (ascii)' '
+	check_author "Foo Bar Foo Bar Foo Bar Foo Bar Foo Bar Foo Bar Foo Bar Foo Bar Foo Bar Foo Bar Foo Bar Foo Bar Foo Bar Foo Bar Foo Bar Foo Bar Foo Bar Foo Bar Foo Bar Foo Bar Foo Bar Foo Bar"
+'
+
+cat >expect <<'EOF'
+From: "Foo.Bar Foo Bar Foo Bar Foo Bar Foo Bar Foo Bar Foo Bar Foo Bar Foo Bar
+ Foo Bar Foo Bar Foo Bar Foo Bar Foo Bar Foo Bar Foo Bar Foo Bar Foo Bar Foo
+ Bar Foo Bar Foo Bar Foo Bar" <author@example.com>
+EOF
+test_expect_success 'format-patch wraps extremely long from-header (rfc822)' '
+	check_author "Foo.Bar Foo Bar Foo Bar Foo Bar Foo Bar Foo Bar Foo Bar Foo Bar Foo Bar Foo Bar Foo Bar Foo Bar Foo Bar Foo Bar Foo Bar Foo Bar Foo Bar Foo Bar Foo Bar Foo Bar Foo Bar Foo Bar"
 '
 
 cat >expect <<'EOF'
