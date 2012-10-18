@@ -64,37 +64,19 @@ EOF
 
 eval "$functions"
 
-# When piped a commit, output a script to set the ident of either
-# "author" or "committer
+finish_ident() {
+	# Ensure non-empty id name.
+	echo "case \"\$GIT_$1_NAME\" in \"\") GIT_$1_NAME=\"\${GIT_$1_EMAIL%%@*}\" && export GIT_$1_NAME;; esac"
+	# And make sure everything is exported.
+	echo "export GIT_$1_NAME"
+	echo "export GIT_$1_EMAIL"
+	echo "export GIT_$1_DATE"
+}
 
 set_ident () {
-	lid="$(echo "$1" | tr "[A-Z]" "[a-z]")"
-	uid="$(echo "$1" | tr "[a-z]" "[A-Z]")"
-	pick_id_script='
-		/^'$lid' /{
-			s/'\''/'\''\\'\'\''/g
-			h
-			s/^'$lid' \([^<]*\) <[^>]*> .*$/\1/
-			s/'\''/'\''\'\'\''/g
-			s/.*/GIT_'$uid'_NAME='\''&'\''; export GIT_'$uid'_NAME/p
-
-			g
-			s/^'$lid' [^<]* <\([^>]*\)> .*$/\1/
-			s/'\''/'\''\'\'\''/g
-			s/.*/GIT_'$uid'_EMAIL='\''&'\''; export GIT_'$uid'_EMAIL/p
-
-			g
-			s/^'$lid' [^<]* <[^>]*> \(.*\)$/@\1/
-			s/'\''/'\''\'\'\''/g
-			s/.*/GIT_'$uid'_DATE='\''&'\''; export GIT_'$uid'_DATE/p
-
-			q
-		}
-	'
-
-	LANG=C LC_ALL=C sed -ne "$pick_id_script"
-	# Ensure non-empty id name.
-	echo "case \"\$GIT_${uid}_NAME\" in \"\") GIT_${uid}_NAME=\"\${GIT_${uid}_EMAIL%%@*}\" && export GIT_${uid}_NAME;; esac"
+	parse_ident_from_commit author AUTHOR committer COMMITTER
+	finish_ident AUTHOR
+	finish_ident COMMITTER
 }
 
 USAGE="[--env-filter <command>] [--tree-filter <command>]
@@ -320,10 +302,8 @@ while read commit parents; do
 	git cat-file commit "$commit" >../commit ||
 		die "Cannot read commit $commit"
 
-	eval "$(set_ident AUTHOR <../commit)" ||
-		die "setting author failed for commit $commit"
-	eval "$(set_ident COMMITTER <../commit)" ||
-		die "setting committer failed for commit $commit"
+	eval "$(set_ident <../commit)" ||
+		die "setting author/committer failed for commit $commit"
 	eval "$filter_env" < /dev/null ||
 		die "env filter failed: $filter_env"
 

@@ -167,10 +167,11 @@ test_expect_success 'author information is preserved' '
 	test_tick &&
 	GIT_AUTHOR_NAME="B V Uips" git commit -m bvuips &&
 	git branch preserved-author &&
-	git filter-branch -f --msg-filter "cat; \
+	(sane_unset GIT_AUTHOR_NAME &&
+	 git filter-branch -f --msg-filter "cat; \
 			test \$GIT_COMMIT != $(git rev-parse master) || \
 			echo Hallo" \
-		preserved-author &&
+		preserved-author) &&
 	test 1 = $(git rev-list --author="B V Uips" preserved-author | wc -l)
 '
 
