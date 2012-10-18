@@ -818,21 +818,28 @@ check_author() {
 cat >expect <<'EOF'
 From: "Foo B. Bar" <author@example.com>
 EOF
-test_expect_success 'format-patch quotes dot in headers' '
+test_expect_success 'format-patch quotes dot in from-headers' '
 	check_author "Foo B. Bar"
 '
 
 cat >expect <<'EOF'
 From: "Foo \"The Baz\" Bar" <author@example.com>
 EOF
-test_expect_success 'format-patch quotes double-quote in headers' '
+test_expect_success 'format-patch quotes double-quote in from-headers' '
 	check_author "Foo \"The Baz\" Bar"
 '
 
 cat >expect <<'EOF'
-From: =?UTF-8?q?"F=C3=B6o=20B.=20Bar"?= <author@example.com>
+From: =?UTF-8?q?F=C3=B6o=20Bar?= <author@example.com>
 EOF
-test_expect_success 'rfc2047-encoded headers also double-quote 822 specials' '
+test_expect_success 'format-patch uses rfc2047-encoded from-headers when necessary' '
+	check_author "Föo Bar"
+'
+
+cat >expect <<'EOF'
+From: =?UTF-8?q?F=C3=B6o=20B=2E=20Bar?= <author@example.com>
+EOF
+test_expect_failure 'rfc2047-encoded from-headers leave no rfc822 specials' '
 	check_author "Föo B. Bar"
 '
 

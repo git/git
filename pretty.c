@@ -272,16 +272,65 @@ static void add_rfc822_quoted(struct strbuf *out, const char *s, int len)
 	strbuf_addch(out, '"');
 }
 
-static int is_rfc2047_special(char ch)
+enum rfc2047_type {
+	RFC2047_SUBJECT,
+	RFC2047_ADDRESS,
+};
+
+static int is_rfc2047_special(char ch, enum rfc2047_type type)
 {
-	if (ch == ' ' || ch == '\n')
+	/*
+	 * rfc2047, section 4.2:
+	 *
+	 *    8-bit values which correspond to printable ASCII characters other
+	 *    than "=", "?", and "_" (underscore), MAY be represented as those
+	 *    characters.  (But see section 5 for restrictions.)  In
+	 *    particular, SPACE and TAB MUST NOT be represented as themselves
+	 *    within encoded words.
+	 */
+
+	/*
+	 * rule out non-ASCII characters and non-printable characters (the
+	 * non-ASCII check should be redundant as isprint() is not localized
+	 * and only knows about ASCII, but be defensive about that)
+	 */
+	if (non_ascii(ch) || !isprint(ch))
 		return 1;
 
-	return (non_ascii(ch) || (ch == '=') || (ch == '?') || (ch == '_'));
+	/*
+	 * rule out special printable characters (' ' should be the only
+	 * whitespace character considered printable, but be defensive and use
+	 * isspace())
+	 */
+	if (isspace(ch) || ch == '=' || ch == '?' || ch == '_')
+		return 1;
+
+	/*
+	 * rfc2047, section 5.3:
+	 *
+	 *    As a replacement for a 'word' entity within a 'phrase', for example,
+	 *    one that precedes an address in a From, To, or Cc header.  The ABNF
+	 *    definition for 'phrase' from RFC 822 thus becomes:
+	 *
+	 *    phrase = 1*( encoded-word / word )
+	 *
+	 *    In this case the set of characters that may be used in a "Q"-encoded
+	 *    'encoded-word' is restricted to: <upper and lower case ASCII
+	 *    letters, decimal digits, "!", "*", "+", "-", "/", "=", and "_"
+	 *    (underscore, ASCII 95.)>.  An 'encoded-word' that appears within a
+	 *    'phrase' MUST be separated from any adjacent 'word', 'text' or
+	 *    'special' by 'linear-white-space'.
+	 */
+
+	if (type != RFC2047_ADDRESS)
+		return 0;
+
+	/* '=' and '_' are special cases and have been checked above */
+	return !(isalnum(ch) || ch == '!' || ch == '*' || ch == '+' || ch == '-' || ch == '/');
 }
 
 static void add_rfc2047(struct strbuf *sb, const char *line, int len,
-		       const char *encoding)
+		       const char *encoding, enum rfc2047_type type)
 {
 	static const int max_length = 78; /* per rfc2822 */
 	static const int max_encoded_length = 76; /* per rfc2047 */
@@ -304,7 +353,7 @@ needquote:
 	line_len += strlen(encoding) + 5; /* 5 for =??q? */
 	for (i = 0; i < len; i++) {
 		unsigned ch = line[i] & 0xFF;
-		int is_special = is_rfc2047_special(ch);
+		int is_special = is_rfc2047_special(ch, type);
 
 		/*
 		 * According to RFC 2047, we could encode the special character
@@ -358,11 +407,13 @@ void pp_user_info(const struct pretty_print_context *pp,
 		display_name_length = name_tail - line;
 		strbuf_addstr(sb, "From: ");
 		if (!has_rfc822_specials(line, display_name_length)) {
-			add_rfc2047(sb, line, display_name_length, encoding);
+			add_rfc2047(sb, line, display_name_length,
+						encoding, RFC2047_ADDRESS);
 		} else {
 			struct strbuf quoted = STRBUF_INIT;
 			add_rfc822_quoted(&quoted, line, display_name_length);
-			add_rfc2047(sb, quoted.buf, quoted.len, encoding);
+			add_rfc2047(sb, quoted.buf, quoted.len,
+						encoding, RFC2047_ADDRESS);
 			strbuf_release(&quoted);
 		}
 		if (namelen - display_name_length + last_line_length(sb) > 78) {
@@ -1294,7 +1345,7 @@ void pp_title_line(const struct pretty_print_context *pp,
 	strbuf_grow(sb, title.len + 1024);
 	if (pp->subject) {
 		strbuf_addstr(sb, pp->subject);
-		add_rfc2047(sb, title.buf, title.len, encoding);
+		add_rfc2047(sb, title.buf, title.len, encoding, RFC2047_SUBJECT);
 	} else {
 		strbuf_addbuf(sb, &title);
 	}
