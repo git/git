@@ -1417,9 +1417,6 @@ void pretty_print_commit(const struct pretty_print_context *pp,
 	if (pp->fmt == CMIT_FMT_EMAIL && sb->len <= beginning_of_body)
 		strbuf_addch(sb, '\n');
 
-	if (pp->notes_message && *pp->notes_message)
-		strbuf_addstr(sb, pp->notes_message);
-
 	free(reencoded);
 }
 
