@@ -240,6 +240,17 @@ static int has_rfc822_specials(const char *s, int len)
 	return 0;
 }
 
+static int last_line_length(struct strbuf *sb)
+{
+	int i;
+
+	/* How many bytes are already used on the last line? */
+	for (i = sb->len - 1; i >= 0; i--)
+		if (sb->buf[i] == '\n')
+			break;
+	return sb->len - (i + 1);
+}
+
 static void add_rfc822_quoted(struct strbuf *out, const char *s, int len)
 {
 	int i;
@@ -275,13 +286,7 @@ static void add_rfc2047(struct strbuf *sb, const char *line, int len,
 	static const int max_length = 78; /* per rfc2822 */
 	static const int max_encoded_length = 76; /* per rfc2047 */
 	int i;
-	int line_len;
-
-	/* How many bytes are already used on the current line? */
-	for (i = sb->len - 1; i >= 0; i--)
-		if (sb->buf[i] == '\n')
-			break;
-	line_len = sb->len - (i+1);
+	int line_len = last_line_length(sb);
 
 	for (i = 0; i < len; i++) {
 		int ch = line[i];
@@ -346,7 +351,6 @@ void pp_user_info(const struct pretty_print_context *pp,
 	if (pp->fmt == CMIT_FMT_EMAIL) {
 		char *name_tail = strchr(line, '<');
 		int display_name_length;
-		int final_line;
 		if (!name_tail)
 			return;
 		while (line < name_tail && isspace(name_tail[-1]))
@@ -361,10 +365,7 @@ void pp_user_info(const struct pretty_print_context *pp,
 			add_rfc2047(sb, quoted.buf, quoted.len, encoding);
 			strbuf_release(&quoted);
 		}
-		for (final_line = 0; final_line < sb->len; final_line++)
-			if (sb->buf[sb->len - final_line - 1] == '\n')
-				break;
-		if (namelen - display_name_length + final_line > 78) {
+		if (namelen - display_name_length + last_line_length(sb) > 78) {
 			strbuf_addch(sb, '\n');
 			if (!isspace(name_tail[0]))
 				strbuf_addch(sb, ' ');
