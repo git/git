@@ -111,6 +111,7 @@ struct rev_info {
 
 	/* Format info */
 	unsigned int	shown_one:1,
+			shown_dashes:1,
 			show_merge:1,
 			show_notes:1,
 			show_notes_given:1,

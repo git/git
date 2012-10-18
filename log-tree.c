@@ -677,8 +677,13 @@ void show_log(struct rev_info *opt)
 		append_signoff(&msgbuf, opt->add_signoff);
 
 	if ((ctx.fmt != CMIT_FMT_USERFORMAT) &&
-	    ctx.notes_message && *ctx.notes_message)
+	    ctx.notes_message && *ctx.notes_message) {
+		if (ctx.fmt == CMIT_FMT_EMAIL) {
+			strbuf_addstr(&msgbuf, "---\n");
+			opt->shown_dashes = 1;
+		}
 		strbuf_addstr(&msgbuf, ctx.notes_message);
+	}
 
 	if (opt->show_log_size) {
 		printf("log size %i\n", (int)msgbuf.len);
@@ -710,6 +715,7 @@ void show_log(struct rev_info *opt)
 
 int log_tree_diff_flush(struct rev_info *opt)
 {
+	opt->shown_dashes = 0;
 	diffcore_std(&opt->diffopt);
 
 	if (diff_queue_is_empty()) {
@@ -737,10 +743,11 @@ int log_tree_diff_flush(struct rev_info *opt)
 					opt->diffopt.output_prefix_data);
 				fwrite(msg->buf, msg->len, 1, stdout);
 			}
-			if ((pch & opt->diffopt.output_format) == pch) {
-				printf("---");
+			if (!opt->shown_dashes) {
+				if ((pch & opt->diffopt.output_format) == pch)
+					printf("---");
+				putchar('\n');
 			}
-			putchar('\n');
 		}
 	}
 	diff_flush(&opt->diffopt);
