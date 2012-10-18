@@ -231,7 +231,7 @@ static int is_rfc822_special(char ch)
 	}
 }
 
-static int has_rfc822_specials(const char *s, int len)
+static int needs_rfc822_quoting(const char *s, int len)
 {
 	int i;
 	for (i = 0; i < len; i++)
@@ -329,25 +329,29 @@ static int is_rfc2047_special(char ch, enum rfc2047_type type)
 	return !(isalnum(ch) || ch == '!' || ch == '*' || ch == '+' || ch == '-' || ch == '/');
 }
 
-static void add_rfc2047(struct strbuf *sb, const char *line, int len,
-		       const char *encoding, enum rfc2047_type type)
+static int needs_rfc2047_encoding(const char *line, int len,
+				  enum rfc2047_type type)
 {
-	static const int max_length = 78; /* per rfc2822 */
-	static const int max_encoded_length = 76; /* per rfc2047 */
 	int i;
-	int line_len = last_line_length(sb);
 
 	for (i = 0; i < len; i++) {
 		int ch = line[i];
 		if (non_ascii(ch) || ch == '\n')
-			goto needquote;
+			return 1;
 		if ((i + 1 < len) && (ch == '=' && line[i+1] == '?'))
-			goto needquote;
+			return 1;
 	}
-	strbuf_add_wrapped_bytes(sb, line, len, -line_len, 1, max_length);
-	return;
 
-needquote:
+	return 0;
+}
+
+static void add_rfc2047(struct strbuf *sb, const char *line, int len,
+		       const char *encoding, enum rfc2047_type type)
+{
+	static const int max_encoded_length = 76; /* per rfc2047 */
+	int i;
+	int line_len = last_line_length(sb);
+
 	strbuf_grow(sb, len * 3 + strlen(encoding) + 100);
 	strbuf_addf(sb, "=?%s?q?", encoding);
 	line_len += strlen(encoding) + 5; /* 5 for =??q? */
@@ -383,6 +387,7 @@ void pp_user_info(const struct pretty_print_context *pp,
 		  const char *what, struct strbuf *sb,
 		  const char *line, const char *encoding)
 {
+	int max_length = 78; /* per rfc2822 */
 	char *date;
 	int namelen;
 	unsigned long time;
@@ -406,17 +411,21 @@ void pp_user_info(const struct pretty_print_context *pp,
 			name_tail--;
 		display_name_length = name_tail - line;
 		strbuf_addstr(sb, "From: ");
-		if (!has_rfc822_specials(line, display_name_length)) {
+		if (needs_rfc2047_encoding(line, display_name_length, RFC2047_ADDRESS)) {
 			add_rfc2047(sb, line, display_name_length,
 						encoding, RFC2047_ADDRESS);
-		} else {
+			max_length = 76; /* per rfc2047 */
+		} else if (needs_rfc822_quoting(line, display_name_length)) {
 			struct strbuf quoted = STRBUF_INIT;
 			add_rfc822_quoted(&quoted, line, display_name_length);
-			add_rfc2047(sb, quoted.buf, quoted.len,
-						encoding, RFC2047_ADDRESS);
+			strbuf_add_wrapped_bytes(sb, quoted.buf, quoted.len,
+							-6, 1, max_length);
 			strbuf_release(&quoted);
+		} else {
+			strbuf_add_wrapped_bytes(sb, line, display_name_length,
+							-6, 1, max_length);
 		}
-		if (namelen - display_name_length + last_line_length(sb) > 78) {
+		if (namelen - display_name_length + last_line_length(sb) > max_length) {
 			strbuf_addch(sb, '\n');
 			if (!isspace(name_tail[0]))
 				strbuf_addch(sb, ' ');
@@ -1336,6 +1345,7 @@ void pp_title_line(const struct pretty_print_context *pp,
 		   const char *encoding,
 		   int need_8bit_cte)
 {
+	static const int max_length = 78; /* per rfc2047 */
 	struct strbuf title;
 
 	strbuf_init(&title, 80);
@@ -1345,7 +1355,12 @@ void pp_title_line(const struct pretty_print_context *pp,
 	strbuf_grow(sb, title.len + 1024);
 	if (pp->subject) {
 		strbuf_addstr(sb, pp->subject);
-		add_rfc2047(sb, title.buf, title.len, encoding, RFC2047_SUBJECT);
+		if (needs_rfc2047_encoding(title.buf, title.len, RFC2047_SUBJECT))
+			add_rfc2047(sb, title.buf, title.len,
+						encoding, RFC2047_SUBJECT);
+		else
+			strbuf_add_wrapped_bytes(sb, title.buf, title.len,
+					 -last_line_length(sb), 1, max_length);
 	} else {
 		strbuf_addbuf(sb, &title);
 	}

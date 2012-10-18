@@ -839,7 +839,7 @@ test_expect_success 'format-patch uses rfc2047-encoded from-headers when necessa
 cat >expect <<'EOF'
 From: =?UTF-8?q?F=C3=B6o=20B=2E=20Bar?= <author@example.com>
 EOF
-test_expect_failure 'rfc2047-encoded from-headers leave no rfc822 specials' '
+test_expect_success 'rfc2047-encoded from-headers leave no rfc822 specials' '
 	check_author "Föo B. Bar"
 '
 
