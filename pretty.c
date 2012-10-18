@@ -1341,16 +1341,6 @@ void pp_remainder(const struct pretty_print_context *pp,
 	}
 }
 
-char *reencode_commit_message(const struct commit *commit, const char **encoding_p)
-{
-	const char *encoding;
-
-	encoding = get_log_output_encoding();
-	if (encoding_p)
-		*encoding_p = encoding;
-	return logmsg_reencode(commit, encoding);
-}
-
 void pretty_print_commit(const struct pretty_print_context *pp,
 			 const struct commit *commit,
 			 struct strbuf *sb)
@@ -1367,7 +1357,8 @@ void pretty_print_commit(const struct pretty_print_context *pp,
 		return;
 	}
 
-	reencoded = reencode_commit_message(commit, &encoding);
+	encoding = get_log_output_encoding();
+	reencoded = logmsg_reencode(commit, encoding);
 	if (reencoded) {
 		msg = reencoded;
 	}
