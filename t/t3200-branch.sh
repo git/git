@@ -273,6 +273,15 @@ test_expect_success 'deleting a symref' '
 	test_i18ncmp expect actual
 '
 
+test_expect_success 'deleting a dangling symref' '
+	git symbolic-ref refs/heads/dangling-symref nowhere &&
+	test_path_is_file .git/refs/heads/dangling-symref &&
+	echo "Deleted branch dangling-symref (was 0000000)." >expect &&
+	git branch -d dangling-symref >actual &&
+	test_path_is_missing .git/refs/heads/dangling-symref &&
+	test_i18ncmp expect actual
+'
+
 test_expect_success 'renaming a symref is not allowed' \
 '
 	git symbolic-ref refs/heads/master2 refs/heads/master &&

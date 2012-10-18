@@ -214,6 +214,9 @@ static int delete_branches(int argc, const char **argv, int force, int kinds,
 			die(_("Couldn't look up commit object for HEAD"));
 	}
 	for (i = 0; i < argc; i++, strbuf_release(&bname)) {
+		const char *target;
+		int flags = 0;
+
 		strbuf_branchname(&bname, argv[i]);
 		if (kinds == REF_LOCAL_BRANCH && !strcmp(head, bname.buf)) {
 			error(_("Cannot delete the branch '%s' "
@@ -225,7 +228,9 @@ static int delete_branches(int argc, const char **argv, int force, int kinds,
 		free(name);
 
 		name = mkpathdup(fmt, bname.buf);
-		if (read_ref(name, sha1)) {
+		target = resolve_ref_unsafe(name, sha1, 0, &flags);
+		if (!target ||
+		    (!(flags & REF_ISSYMREF) && is_null_sha1(sha1))) {
 			error(remote_branch
 			      ? _("remote branch '%s' not found.")
 			      : _("branch '%s' not found."), bname.buf);
@@ -233,7 +238,8 @@ static int delete_branches(int argc, const char **argv, int force, int kinds,
 			continue;
 		}
 
-		if (check_branch_commit(bname.buf, name, sha1, head_rev, kinds,
+		if (!(flags & REF_ISSYMREF) &&
+		    check_branch_commit(bname.buf, name, sha1, head_rev, kinds,
 					force)) {
 			ret = 1;
 			continue;
