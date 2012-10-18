@@ -672,12 +672,14 @@ void show_log(struct rev_info *opt)
 	ctx.reflog_info = opt->reflog_info;
 	ctx.fmt = opt->commit_format;
 	pretty_print_commit(&ctx, commit, &msgbuf);
+
+	if (opt->add_signoff)
+		append_signoff(&msgbuf, opt->add_signoff);
+
 	if ((ctx.fmt != CMIT_FMT_USERFORMAT) &&
 	    ctx.notes_message && *ctx.notes_message)
 		strbuf_addstr(&msgbuf, ctx.notes_message);
 
-	if (opt->add_signoff)
-		append_signoff(&msgbuf, opt->add_signoff);
 	if (opt->show_log_size) {
 		printf("log size %i\n", (int)msgbuf.len);
 		graph_show_oneline(opt->graph);
