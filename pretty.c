@@ -1033,9 +1033,8 @@ static size_t format_commit_one(struct strbuf *sb, const char *placeholder,
 		}
 		return 0;	/* unknown %g placeholder */
 	case 'N':
-		if (c->pretty_ctx->show_notes) {
-			format_display_notes(commit->object.sha1, sb,
-					     get_log_output_encoding(), 1);
+		if (c->pretty_ctx->notes_message) {
+			strbuf_addstr(sb, c->pretty_ctx->notes_message);
 			return 1;
 		}
 		return 0;
@@ -1418,8 +1417,8 @@ void pretty_print_commit(const struct pretty_print_context *pp,
 	if (pp->fmt == CMIT_FMT_EMAIL && sb->len <= beginning_of_body)
 		strbuf_addch(sb, '\n');
 
-	if (pp->show_notes)
-		format_display_notes(commit->object.sha1, sb, encoding, 0);
+	if (pp->notes_message && *pp->notes_message)
+		strbuf_addstr(sb, pp->notes_message);
 
 	free(reencoded);
 }
