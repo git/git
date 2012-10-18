@@ -172,6 +172,15 @@ static int check_branch_commit(const char *branchname, const char *refname,
 	return 0;
 }
 
+static void delete_branch_config(const char *branchname)
+{
+	struct strbuf buf = STRBUF_INIT;
+	strbuf_addf(&buf, "branch.%s", branchname);
+	if (git_config_rename_section(buf.buf, NULL) < 0)
+		warning(_("Update of config-file failed"));
+	strbuf_release(&buf);
+}
+
 static int delete_branches(int argc, const char **argv, int force, int kinds,
 			   int quiet)
 {
@@ -237,17 +246,13 @@ static int delete_branches(int argc, const char **argv, int force, int kinds,
 			      bname.buf);
 			ret = 1;
 		} else {
-			struct strbuf buf = STRBUF_INIT;
 			if (!quiet)
 				printf(remote_branch
 				       ? _("Deleted remote branch %s (was %s).\n")
 				       : _("Deleted branch %s (was %s).\n"),
 				       bname.buf,
 				       find_unique_abbrev(sha1, DEFAULT_ABBREV));
-			strbuf_addf(&buf, "branch.%s", bname.buf);
-			if (git_config_rename_section(buf.buf, NULL) < 0)
-				warning(_("Update of config-file failed"));
-			strbuf_release(&buf);
+			delete_branch_config(bname.buf);
 		}
 	}
 
