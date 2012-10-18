@@ -262,6 +262,17 @@ test_expect_success 'config information was renamed, too' \
 	"test $(git config branch.s.dummy) = Hello &&
 	 test_must_fail git config branch.s/s/dummy"
 
+test_expect_success 'deleting a symref' '
+	git branch target &&
+	git symbolic-ref refs/heads/symref refs/heads/target &&
+	sha1=$(git rev-parse symref | cut -c 1-7) &&
+	echo "Deleted branch symref (was $sha1)." >expect &&
+	git branch -d symref >actual &&
+	test_path_is_file .git/refs/heads/target &&
+	test_path_is_missing .git/refs/heads/symref &&
+	test_i18ncmp expect actual
+'
+
 test_expect_success 'renaming a symref is not allowed' \
 '
 	git symbolic-ref refs/heads/master2 refs/heads/master &&
