@@ -1035,7 +1035,7 @@ static size_t format_commit_one(struct strbuf *sb, const char *placeholder,
 	case 'N':
 		if (c->pretty_ctx->show_notes) {
 			format_display_notes(commit->object.sha1, sb,
-				    get_log_output_encoding(), 0);
+					     get_log_output_encoding(), 1);
 			return 1;
 		}
 		return 0;
@@ -1419,8 +1419,7 @@ void pretty_print_commit(const struct pretty_print_context *pp,
 		strbuf_addch(sb, '\n');
 
 	if (pp->show_notes)
-		format_display_notes(commit->object.sha1, sb, encoding,
-				     NOTES_SHOW_HEADER | NOTES_INDENT);
+		format_display_notes(commit->object.sha1, sb, encoding, 0);
 
 	free(reencoded);
 }

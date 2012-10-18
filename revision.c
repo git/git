@@ -2236,7 +2236,7 @@ static int commit_match(struct commit *commit, struct rev_info *opt)
 		if (!buf.len)
 			strbuf_addstr(&buf, commit->buffer);
 		format_display_notes(commit->object.sha1, &buf,
-				     get_log_output_encoding(), 0);
+				     get_log_output_encoding(), 1);
 	}
 
 	/* Find either in the commit object, or in the temporary */

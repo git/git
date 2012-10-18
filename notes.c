@@ -1204,10 +1204,11 @@ void free_notes(struct notes_tree *t)
  * If the given notes_tree is NULL, the internal/default notes_tree will be
  * used instead.
  *
- * 'flags' is a bitwise combination of the flags for format_display_notes.
+ * (raw != 0) gives the %N userformat; otherwise, the note message is given
+ * for human consumption.
  */
 static void format_note(struct notes_tree *t, const unsigned char *object_sha1,
-			struct strbuf *sb, const char *output_encoding, int flags)
+			struct strbuf *sb, const char *output_encoding, int raw)
 {
 	static const char utf8[] = "utf-8";
 	const unsigned char *sha1;
@@ -1244,7 +1245,7 @@ static void format_note(struct notes_tree *t, const unsigned char *object_sha1,
 	if (msglen && msg[msglen - 1] == '\n')
 		msglen--;
 
-	if (flags & NOTES_SHOW_HEADER) {
+	if (!raw) {
 		const char *ref = t->ref;
 		if (!ref || !strcmp(ref, GIT_NOTES_DEFAULT_REF)) {
 			strbuf_addstr(sb, "\nNotes:\n");
@@ -1260,7 +1261,7 @@ static void format_note(struct notes_tree *t, const unsigned char *object_sha1,
 	for (msg_p = msg; msg_p < msg + msglen; msg_p += linelen + 1) {
 		linelen = strchrnul(msg_p, '\n') - msg_p;
 
-		if (flags & NOTES_INDENT)
+		if (!raw)
 			strbuf_addstr(sb, "    ");
 		strbuf_add(sb, msg_p, linelen);
 		strbuf_addch(sb, '\n');
@@ -1270,13 +1271,13 @@ static void format_note(struct notes_tree *t, const unsigned char *object_sha1,
 }
 
 void format_display_notes(const unsigned char *object_sha1,
-			  struct strbuf *sb, const char *output_encoding, int flags)
+			  struct strbuf *sb, const char *output_encoding, int raw)
 {
 	int i;
 	assert(display_notes_trees);
 	for (i = 0; display_notes_trees[i]; i++)
 		format_note(display_notes_trees[i], object_sha1, sb,
-			    output_encoding, flags);
+			    output_encoding, raw);
 }
 
 int copy_note(struct notes_tree *t,
