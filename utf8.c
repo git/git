@@ -353,7 +353,7 @@ retry:
 
 		c = *text;
 		if (!c || isspace(c)) {
-			if (w < width || !space) {
+			if (w <= width || !space) {
 				const char *start = bol;
 				if (!c && text == start)
 					return w;

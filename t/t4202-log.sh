@@ -72,9 +72,9 @@ cat > expect << EOF
   commit.
 EOF
 
-test_expect_success 'format %w(12,1,2)' '
+test_expect_success 'format %w(11,1,2)' '
 
-	git log -2 --format="%w(12,1,2)This is the %s commit." > actual &&
+	git log -2 --format="%w(11,1,2)This is the %s commit." > actual &&
 	test_cmp expect actual
 '
 
