@@ -507,7 +507,7 @@ static void convert_to_utf8(struct strbuf *line, const char *charset)
 			return;
 	}
 
-	if (!strcasecmp(metainfo_charset, charset))
+	if (same_encoding(metainfo_charset, charset))
 		return;
 	out = reencode_string(line->buf, metainfo_charset, charset);
 	if (!out)

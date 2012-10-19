@@ -423,6 +423,13 @@ int is_encoding_utf8(const char *name)
 	return 0;
 }
 
+int same_encoding(const char *src, const char *dst)
+{
+	if (is_encoding_utf8(src) && is_encoding_utf8(dst))
+		return 1;
+	return !strcasecmp(src, dst);
+}
+
 /*
  * Given a buffer and its encoding, return it re-encoded
  * with iconv.  If the conversion fails, returns NULL.

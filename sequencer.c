@@ -58,7 +58,7 @@ static int get_message(struct commit *commit, struct commit_message *out)
 
 	out->reencoded_message = NULL;
 	out->message = commit->buffer;
-	if (strcmp(encoding, git_commit_encoding))
+	if (same_encoding(encoding, git_commit_encoding))
 		out->reencoded_message = reencode_string(commit->buffer,
 					git_commit_encoding, encoding);
 	if (out->reencoded_message)
