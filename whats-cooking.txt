@@ -1,23 +1,19 @@
 To: git@vger.kernel.org
 Bcc: lwn@lwn.net
-Subject: What's cooking in git.git (Oct 2012, #05; Tue, 16)
-X-master-at: 4a182f6174e1b958777ba6fbc6262e5457151049
-X-next-at: 8a75ac8ee22538d824252e6f2aa1c01a120ced77
+Subject: What's cooking in git.git (Oct 2012, #06; Fri, 19)
+X-master-at: 8ead1bfe111085ef1ad7759e67340f074996b244
+X-next-at: 5b9a629a33877c671b6ebea47248afda0dc32545
 
-What's cooking in git.git (Oct 2012, #05; Tue, 16)
+What's cooking in git.git (Oct 2012, #06; Fri, 19)
 --------------------------------------------------
 
 Here are the topics that have been cooking.  Commits prefixed with
 '-' are only in 'pu' (proposed updates) while commits prefixed with
 '+' are in 'next'.
 
-We are almost there for 1.8.0-rc3.  The final is expected to be
-tagged this weekend.
-
-I'm planning to keep this cycle reasonably short and aim for tagging
-the result as 1.8.0 at the end of 9th week, on October 21st, after
-which I'd disappear for a few weeks.  http://tinyurl.com/gitCal is
-where you can always find my rough tagging schedule at.
+The 1.8.0 release is expected to be tagged this weekend, after which
+I'd disappear for a few weeks, and Git will be in steady and good
+hands of Jeff King (thanks) in the meantime.
 
 You can find the changes described here in the integration branches of the
 repositories listed at
@@ -25,91 +21,138 @@ repositories listed at
     http://git-blame.blogspot.com/p/git-public-repositories.html
 
 --------------------------------------------------
-[Graduated to "master"]
-
-* jk/maint-http-half-auth-push (2012-10-12) 1 commit
-  (merged to 'next' on 2012-10-12 at 838ab48)
- + http: fix segfault in handle_curl_result
- (this branch is used by jk/maint-http-init-not-in-result-handler.)
-
- Fixes a regression in maint-1.7.11 (v1.7.11.7), maint (v1.7.12.1)
- and master (v1.8.0-rc0).
-
---------------------------------------------------
 [New Topics]
 
-* jk/maint-http-init-not-in-result-handler (2012-10-12) 2 commits
-  (merged to 'next' on 2012-10-16 at cc88829)
- + http: do not set up curl auth after a 401
- + remote-curl: do not call run_slot repeatedly
+* js/mingw-fflush-errno (2012-10-17) 1 commit
+  (merged to 'next' on 2012-10-18 at 43d6ebb)
+ + maybe_flush_or_die: move a too-loose Windows specific error
 
- Further clean-up to the http codepath that picks up results after
- cURL library is done with one request slot.
+ Will merge to 'master' in the first batch after 1.8.0 ships.
+
+
+* mo/cvs-server-cleanup (2012-10-16) 10 commits
+  (merged to 'next' on 2012-10-18 at 5a60da1)
+ + cvsserver status: provide real sticky info
+ + cvsserver: cvs add: do not expand directory arguments
+ + cvsserver: use whole CVS rev number in-process; don't strip "1." prefix
+ + cvsserver: split up long lines in req_{status,diff,log}
+ + cvsserver: clean up client request handler map comments
+ + cvsserver: remove unused functions _headrev and gethistory
+ + cvsserver update: comment about how we shouldn't remove a user-modified file
+ + cvsserver: add comments about database schema/usage
+ + cvsserver: removed unused sha1Or-k mode from kopts_from_path
+ + cvsserver t9400: add basic 'cvs log' test
+ (this branch is used by mo/cvs-server-updates.)
+
+
+* mo/cvs-server-updates (2012-10-16) 10 commits
+ - cvsserver Documentation: new cvs ... -r support
+ - cvsserver: add t9402 to test branch and tag refs
+ - cvsserver: support -r and sticky tags for most operations
+ - cvsserver: Add version awareness to argsfromdir
+ - cvsserver: generalize getmeta() to recognize commit refs
+ - cvsserver: implement req_Sticky and related utilities
+ - cvsserver: add misc commit lookup, file meta data, and file listing functions
+ - cvsserver: define a tag name character escape mechanism
+ - cvsserver: cleanup extra slashes in filename arguments
+ - cvsserver: factor out git-log parsing logic
+ (this branch uses mo/cvs-server-cleanup.)
+
+
+* ta/doc-cleanup (2012-10-18) 5 commits
+ - Documentation/howto: convert plain text files to asciidoc
+ - Documentation/technical: convert plain text files to asciidoc
+ - Change headline of technical/send-pack-pipeline.txt to not confuse its content with content from git-send-pack.txt
+ - Shorten two over-long lines in git-bisect-lk2009.txt by abbreviating some sha1
+ - Split over-long synopsis in git-fetch-pack.txt into several lines
+
+ Misapplication of a patch fixed; the ones near the tip needs to
+ update the links to point at the html files, though.
+
+
+* lt/diff-stat-show-0-lines (2012-10-17) 1 commit
+ - Fix "git diff --stat" for interesting - but empty - file changes
+
+ We failed to mention a file without any content change but whose
+ permission bit was modified, or (worse yet) a new file without any
+ content in the "git diff --stat" output.
+
+
+* jc/prettier-pretty-note (2012-10-19) 7 commits
+ - Documentation: decribe format-patch --notes
+ - format-patch --notes: show notes after three-dashes
+ - format-patch: append --signature after notes
+ - pretty_print_commit(): do not append notes message
+ - pretty: prepare notes message at a centralized place
+ - format_note(): simplify API
+ - pretty: remove reencode_commit_message()
+
+ Needs updates to the placeholder documentation.
+
+
+* jk/sh-setup-in-filter-branch (2012-10-18) 2 commits
+  (merged to 'next' on 2012-10-18 at 3864adc)
+ + filter-branch: use git-sh-setup's ident parsing functions
+ + git-sh-setup: refactor ident-parsing functions
 
  Will merge to 'master' in the second batch after 1.8.0 ships.
 
 
-* nd/grep-true-path (2012-10-12) 1 commit
-  (merged to 'next' on 2012-10-16 at 8a75ac8)
- + grep: stop looking at random places for .gitattributes
+* jk/strbuf-detach-always-non-null (2012-10-18) 1 commit
+  (merged to 'next' on 2012-10-18 at 54561c7)
+ + strbuf: always return a non-NULL value from strbuf_detach
 
- "git grep -e pattern <tree>" asked the attribute system to read
- "<tree>:.gitattributes" file in the working tree, which was
- nonsense.
+ Will merge to 'master' in the first batch after 1.8.0 ships.
+
+
+* nd/status-long (2012-10-18) 1 commit
+  (merged to 'next' on 2012-10-18 at 53940a1)
+ + status: add --long output format option
+
+ Allow an earlier "--short" option on the command line to be
+ countermanded with the "--long" option for "git status" and "git
+ commit".
 
  Will merge to 'master' in the second batch after 1.8.0 ships.
 
 
-* cr/cvsimport-local-zone (2012-10-15) 1 commit
- - git-cvsimport: allow author-specific timezones
+* rs/branch-del-symref (2012-10-18) 5 commits
+  (merged to 'next' on 2012-10-18 at 68ee254)
+ + branch: show targets of deleted symrefs, not sha1s
+ + branch: skip commit checks when deleting symref branches
+ + branch: delete symref branch, not its target
+ + branch: factor out delete_branch_config()
+ + branch: factor out check_branch_commit()
 
- Allows "cvsimport" to read per-author timezone from the author info
- file.
+ A symbolic ref refs/heads/SYM was not correctly removed with
+ "git branch -d SYM"; the command removed the ref pointed by
+ SYM instead.
 
-
-* fc/completion-send-email-with-format-patch (2012-10-16) 1 commit
- - completion: add format-patch options to send-email
-
-
-* fc/zsh-completion (2012-10-15) 3 commits
- - completion: add new zsh completion
- - tests: use __gitcompadd to simplify completion tests
- - completion: add new __gitcompadd helper
+ Will merge to 'master' in the second batch after 1.8.0 ships.
 
 
-* jc/apply-trailing-blank-removal (2012-10-12) 1 commit
- - apply.c:update_pre_post_images(): the preimage can be truncated
+* sz/maint-curl-multi-timeout (2012-10-18) 1 commit
+ - Fix potential hang in https handshake
 
- Fix to update_pre_post_images() that did not take into account the
- possibility that whitespace fix could shrink the preimage and
- change the number of lines in it.
-
- Extra set of eyeballs appreciated.
-
-
-* jn/warn-on-inaccessible-loosen (2012-10-14) 4 commits
- - config: exit on error accessing any config file
- - doc: advertise GIT_CONFIG_NOSYSTEM
- - config: treat user and xdg config permission problems as errors
- - config, gitignore: failure to access with ENOTDIR is ok
-
- An RFC to deal with a situation where .config/git is a file and we
- notice .config/git/config is not readable due to ENOTDIR, not
- ENOENT; I think a bit more refactored approach to consistently
- address permission errors across config, exclude and attrs is
- desirable.  Don't we also need a check for an opposite situation
- where we open .config/git/config or .gitattributes for reading but
- they turn out to be directories?
+ Sometimes curl_multi_timeout() function suggested a wrong timeout
+ value when there is no file descriptors to wait on and the http
+ transport ended up sleeping for minutes in select(2) system call.
+ Detect this and reduce the wait timeout in such a case.
 
 
-* rs/lock-correct-ref-during-delete (2012-10-16) 1 commit
- - refs: lock symref that is to be deleted, not its target
+* jc/same-encoding (2012-10-18) 1 commit
+ - reencode_string(): introduce and use same_encoding()
 
- When "update-ref -d --no-deref SYM" tried to delete a symbolic ref
- SYM, it incorrectly locked the underlying reference pointed by SYM,
- not the symbolic ref itself.
+ Various codepaths checked if two encoding names are the same using
+ ad-hoc code and some of them ended up asking iconv() to convert
+ between "utf8" and "UTF-8".  The former is not a valid way to spell
+ the encoding name, but often people use it by mistake, and we
+ equated them in some but not all codepaths. Introduce a new helper
+ function to make these codepaths consistent.
 
- Will merge to 'next'.
+
+* nd/tree-walk-enum-cleanup (2012-10-19) 1 commit
+ - tree-walk: use enum interesting instead of integer
 
 --------------------------------------------------
 [Stalled]
@@ -342,7 +385,81 @@ repositories listed at
 --------------------------------------------------
 [Cooking]
 
-* as/check-ignore (2012-10-15) 12 commits
+* jk/maint-http-init-not-in-result-handler (2012-10-12) 2 commits
+  (merged to 'next' on 2012-10-16 at cc88829)
+ + http: do not set up curl auth after a 401
+ + remote-curl: do not call run_slot repeatedly
+
+ Further clean-up to the http codepath that picks up results after
+ cURL library is done with one request slot.
+
+ Will merge to 'master' in the second batch after 1.8.0 ships.
+
+
+* nd/grep-true-path (2012-10-12) 1 commit
+  (merged to 'next' on 2012-10-16 at 8a75ac8)
+ + grep: stop looking at random places for .gitattributes
+
+ "git grep -e pattern <tree>" asked the attribute system to read
+ "<tree>:.gitattributes" file in the working tree, which was
+ nonsense.
+
+ Will merge to 'master' in the second batch after 1.8.0 ships.
+
+
+* cr/cvsimport-local-zone (2012-10-16) 1 commit
+ - git-cvsimport: allow author-specific timezones
+
+ Allows "cvsimport" to read per-author timezone from the author info
+ file.
+
+
+* fc/completion-send-email-with-format-patch (2012-10-16) 1 commit
+ - completion: add format-patch options to send-email
+
+
+* fc/zsh-completion (2012-10-15) 3 commits
+ - completion: add new zsh completion
+ - tests: use __gitcompadd to simplify completion tests
+ - completion: add new __gitcompadd helper
+
+
+* jc/apply-trailing-blank-removal (2012-10-12) 1 commit
+ - apply.c:update_pre_post_images(): the preimage can be truncated
+
+ Fix to update_pre_post_images() that did not take into account the
+ possibility that whitespace fix could shrink the preimage and
+ change the number of lines in it.
+
+ Extra set of eyeballs appreciated.
+
+
+* jn/warn-on-inaccessible-loosen (2012-10-14) 4 commits
+ - config: exit on error accessing any config file
+ - doc: advertise GIT_CONFIG_NOSYSTEM
+ - config: treat user and xdg config permission problems as errors
+ - config, gitignore: failure to access with ENOTDIR is ok
+
+ An RFC to deal with a situation where .config/git is a file and we
+ notice .config/git/config is not readable due to ENOTDIR, not
+ ENOENT; I think a bit more refactored approach to consistently
+ address permission errors across config, exclude and attrs is
+ desirable.  Don't we also need a check for an opposite situation
+ where we open .config/git/config or .gitattributes for reading but
+ they turn out to be directories?
+
+
+* rs/lock-correct-ref-during-delete (2012-10-16) 1 commit
+  (merged to 'next' on 2012-10-16 at 850b5b2)
+ + refs: lock symref that is to be deleted, not its target
+
+ When "update-ref -d --no-deref SYM" tried to delete a symbolic ref
+ SYM, it incorrectly locked the underlying reference pointed by SYM,
+ not the symbolic ref itself.
+
+
+* as/check-ignore (2012-10-19) 13 commits
+ - Documentation/check-ignore: we show the deciding match, not the first
  - Add git-check-ignore sub-command
  - dir.c: provide free_directory() for reclaiming dir_struct memory
  - pathspec.c: move reusable code from builtin/add.c
@@ -357,27 +474,20 @@ repositories listed at
  - dir.c: rename cryptic 'which' variable to more consistent name
  (this branch uses nd/attr-match-optim and nd/attr-match-optim-more; is tangled with nd/wildmatch.)
 
- Duy helped to reroll this.  Needs a bit of documentation updates,
- at least.
+ Duy helped to reroll this.
 
 
-* js/format-2047 (2012-10-09) 5 commits
- - format-patch: tests: check rfc822+rfc2047 in to+cc headers
- - format-patch: fix rfc2047 address encoding with respect to rfc822 specials
- - format-patch: introduce helper function last_line_length()
- - format-patch: do not wrap rfc2047 encoded headers too late
- - format-patch: do not wrap non-rfc2047 headers too early
+* js/format-2047 (2012-10-18) 7 commits
+  (merged to 'next' on 2012-10-18 at 5b9a629)
+ + format-patch tests: check quoting/encoding in To: and Cc: headers
+ + format-patch: fix rfc2047 address encoding with respect to rfc822 specials
+ + format-patch: make rfc2047 encoding more strict
+ + format-patch: introduce helper function last_line_length()
+ + format-patch: do not wrap rfc2047 encoded headers too late
+ + format-patch: do not wrap non-rfc2047 headers too early
+ + utf8: fix off-by-one wrapping of text
 
  Fixes many rfc2047 quoting issues in the output from format-patch.
- The last patch attempts to sneak new policies in without concensus,
- which I'd wish to see at least described as such i.e. "this fails
- with the current codebase but we would eventually want to do X and
- Y at which point it will pass". Then we can discuss if doing X and
- Y is a good thing. Alternatively, the bits that adds expect-failure
- should be removed from the patch, leaving the tests that cover what
- this series is supposed to have fixed.
-
- Otherwise, I think this is fit for 'next'.
 
 
 * km/send-email-compose-encoding (2012-10-10) 1 commit
@@ -391,7 +501,11 @@ repositories listed at
  Will merge to 'master' in the second batch after 1.8.0 ships.
 
 
-* so/prompt-command (2012-10-11) 2 commits
+* so/prompt-command (2012-10-17) 4 commits
+  (merged to 'next' on 2012-10-17 at 0843a8b)
+ + coloured git-prompt: paint detached HEAD marker in red
+  (merged to 'next' on 2012-10-16 at adf81be)
+ + Fix up colored git-prompt
   (merged to 'next' on 2012-10-11 at 1a14825)
  + show color hints based on state of the git tree
  + Allow __git_ps1 to be used in PROMPT_COMMAND
@@ -427,26 +541,30 @@ repositories listed at
 
 
 * nd/wildmatch (2012-10-15) 13 commits
- - Support "**" wildcard in .gitignore and .gitattributes
- - wildmatch: make /**/ match zero or more directories
- - wildmatch: adjust "**" behavior
- - wildmatch: fix case-insensitive matching
- - wildmatch: remove static variable force_lower_case
- - wildmatch: make wildmatch's return value compatible with fnmatch
- - t3070: disable unreliable fnmatch tests
- - Integrate wildmatch to git
- - wildmatch: follow Git's coding convention
- - wildmatch: remove unnecessary functions
- - Import wildmatch from rsync
- - ctype: support iscntrl, ispunct, isxdigit and isprint
- - ctype: make sane_ctype[] const array
+  (merged to 'next' on 2012-10-16 at 5eaf3a4)
+ + Support "**" wildcard in .gitignore and .gitattributes
+ + wildmatch: make /**/ match zero or more directories
+ + wildmatch: adjust "**" behavior
+ + wildmatch: fix case-insensitive matching
+ + wildmatch: remove static variable force_lower_case
+ + wildmatch: make wildmatch's return value compatible with fnmatch
+ + t3070: disable unreliable fnmatch tests
+ + Integrate wildmatch to git
+ + wildmatch: follow Git's coding convention
+ + wildmatch: remove unnecessary functions
+ + Import wildmatch from rsync
+ + ctype: support iscntrl, ispunct, isxdigit and isprint
+ + ctype: make sane_ctype[] const array
  (this branch uses nd/attr-match-optim and nd/attr-match-optim-more; is tangled with as/check-ignore.)
 
  Allows pathname patterns in .gitignore and .gitattributes files
  with double-asterisks "foo/**/bar" to match any number of directory
- hiearchies.
+ hierarchies.
 
- Will merge to 'next'.
+ I suspect that this needs to be plugged to pathspec matching code;
+ otherwise "git log -- 'Docum*/**/*.txt'" would not show the log for
+ commits that touch Documentation/git.txt, which would be confusing
+ to the users.
 
 
 * jk/lua-hackery (2012-10-07) 6 commits
@@ -475,19 +593,18 @@ repositories listed at
 
 
 * nd/attr-match-optim-more (2012-10-15) 7 commits
- - attr: more matching optimizations from .gitignore
- - gitignore: make pattern parsing code a separate function
- - exclude: split pathname matching code into a separate function
- - exclude: fix a bug in prefix compare optimization
- - exclude: split basename matching code into a separate function
- - exclude: stricten a length check in EXC_FLAG_ENDSWITH case
+  (merged to 'next' on 2012-10-16 at 9baac99)
+ + attr: more matching optimizations from .gitignore
+ + gitignore: make pattern parsing code a separate function
+ + exclude: split pathname matching code into a separate function
+ + exclude: fix a bug in prefix compare optimization
+ + exclude: split basename matching code into a separate function
+ + exclude: stricten a length check in EXC_FLAG_ENDSWITH case
  + Merge commit 'f9f6e2c' into nd/attr-match-optim-more
  (this branch is used by as/check-ignore and nd/wildmatch; uses nd/attr-match-optim.)
 
  Start laying the foundation to build the "wildmatch" after we can
  agree on its desired semantics.
-
- Will merge to 'next'.
 
 
 * jc/grep-pcre-loose-ends (2012-10-09) 7 commits
