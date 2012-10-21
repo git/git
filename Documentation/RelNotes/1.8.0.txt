@@ -4,16 +4,18 @@ Git v1.8.0 Release Notes
 Backward compatibility notes
 ----------------------------
 
-In the next major release, we will change the behavior of the "git
-push" command.  When "git push [$there]" does not say what to push, we
-have used the traditional "matching" semantics so far (all your branches were
-sent to the remote as long as there already are branches of the same
-name over there).  We will now use the "simple" semantics, that pushes the
-current branch to the branch with the same name only when the current
+In the next major release (not *this* one), we will change the
+behavior of the "git push" command.
+
+When "git push [$there]" does not say what to push, we have used the
+traditional "matching" semantics so far (all your branches were sent
+to the remote as long as there already are branches of the same name
+over there).  We will use the "simple" semantics that pushes the
+current branch to the branch with the same name, only when the current
 branch is set to integrate with that remote branch.  There is a user
 preference configuration variable "push.default" to change this, and
 "git push" will warn about the upcoming change until you set this
-variable.
+variable in this release.
 
 "git branch --set-upstream" is deprecated and may be removed in a
 relatively distant future.  "git branch [-u|--set-upstream-to]" has
@@ -35,7 +37,7 @@ UI, Workflows & Features
 
  * When "git am" sanitizes the "Subject:" line, we strip the prefix from
    "Re: subject" and also from a less common "re: subject", but left
-   the even less common "RE: subject" intact. We strip that now, too.
+   the even less common "RE: subject" intact.  Now we strip that too.
 
  * It was tempting to say "git branch --set-upstream origin/master",
    but that tells Git to arrange the local branch "origin/master" to
@@ -62,6 +64,8 @@ UI, Workflows & Features
  * "git grep" learned to use a non-standard pattern type by default if
    a configuration variable tells it to.
 
+ * Accumulated updates to "git gui" has been merged.
+
  * "git log -g" learned the "--grep-reflog=<pattern>" option to limit
    its output to commits with a reflog message that matches the given
    pattern.
@@ -85,7 +89,7 @@ Foreign Interface
    encountering a conflict during "p4 submit".
 
 
-Performance, Internal Implementation, etc. (please report possible regressions)
+Performance, Internal Implementation, etc.
 
  * Git ships with a fall-back regexp implementation for platforms with
    buggy regexp library, but it was easy for people to keep using their
