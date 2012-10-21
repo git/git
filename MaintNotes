@@ -110,8 +110,8 @@ of git: "master", "maint", "next", and "pu".
 The "master" branch is meant to contain what are very well tested and
 ready to be used in a production setting.  Every now and then, a "feature
 release" is cut from the tip of this branch and they typically are named
-with three dotted decimal digits.  The last such release was 1.7.12 done on
-Aug 19, 2012. You can expect that the tip of the "master" branch is always
+with three dotted decimal digits.  The last such release was 1.8.0 done on
+Oct 21, 2012. You can expect that the tip of the "master" branch is always
 more stable than any of the released versions.
 
 Whenever a feature release is made, "maint" branch is forked off from
@@ -119,8 +119,8 @@ Whenever a feature release is made, "maint" branch is forked off from
 release are applied to this branch and maintenance releases are cut from
 it.  The maintenance releases are named with four dotted decimal, named
 after the feature release they are updates to; the last such release was
-1.7.12.3.  New features never go to this branch.  This branch is also
-merged into "master" to propagate the fixes forward.
+1.7.12.4.  New features never go to this branch.  This branch is also
+merged into "master" to propagate the fixes forward as needed.
 
 A new development does not usually happen on "master". When you send a
 series of patches, after review on the mailing list, a separate topic
@@ -135,10 +135,10 @@ breakage. The "next" branch is where new and exciting things take place. A
 topic that is in "next" is expected to be polished to perfection before it
 is merged to "master".
 
-The "pu" (proposed updates) branch bundles all the remaining topic
-branches. The topics on the branch are not complete, well tested, nor well
-documented and need further work. When a topic that was in "pu" proves to
-be in testable shape, it is merged to "next".
+The "pu" (proposed updates) branch bundles all the remaining topic branches.
+The topics on the branch are not complete, well tested, nor well documented
+and need further work. When a topic that was in "pu" proves to be in a
+testable shape, it is merged to "next".
 
 You can run "git log --first-parent master..pu" to see what topics are
 currently in flight.  Sometimes, an idea that looked promising turns out
