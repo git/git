@@ -1,19 +1,19 @@
 To: git@vger.kernel.org
 Bcc: lwn@lwn.net
-Subject: What's cooking in git.git (Oct 2012, #06; Fri, 19)
+Subject: What's cooking in git.git (Oct 2012, #07; Sun, 21)
 X-master-at: 8ead1bfe111085ef1ad7759e67340f074996b244
 X-next-at: 5b9a629a33877c671b6ebea47248afda0dc32545
 
-What's cooking in git.git (Oct 2012, #06; Fri, 19)
+What's cooking in git.git (Oct 2012, #07; Sun, 21)
 --------------------------------------------------
 
 Here are the topics that have been cooking.  Commits prefixed with
 '-' are only in 'pu' (proposed updates) while commits prefixed with
 '+' are in 'next'.
 
-The 1.8.0 release is expected to be tagged this weekend, after which
-I'd disappear for a few weeks, and Git will be in steady and good
-hands of Jeff King (thanks) in the meantime.
+The 1.8.0 release has been tagged.  I'd disappear for a few weeks
+without carrying a computer, and Git will be in steady hands of Jeff
+King (thanks) in the meantime.
 
 You can find the changes described here in the integration branches of the
 repositories listed at
@@ -22,6 +22,164 @@ repositories listed at
 
 --------------------------------------------------
 [New Topics]
+
+* jc/maint-fetch-tighten-refname-check (2012-10-19) 1 commit
+ - get_fetch_map(): tighten checks on dest refs
+
+ This was split out from discarded jc/maint-push-refs-all topic.
+
+
+* jh/symbolic-ref-d (2012-10-21) 1 commit
+ - git symbolic-ref --delete $symref
+
+ Add "symbolic-ref -d SYM" to delete a symbolic ref SYM.
+
+ It is already possible to remove a symbolic ref with "update-ref -d
+ --no-deref", but it may be a good addition for completeness.
+
+
+* jh/update-ref-d-through-symref (2012-10-21) 2 commits
+ - Fix failure to delete a packed ref through a symref
+ - t1400-update-ref: Add test verifying bug with symrefs in delete_ref()
+ (this branch uses rs/branch-del-symref.)
+
+ "update-ref -d --deref SYM" to delete a ref through a symbolic ref
+ that points to it did not remove it correctly.
+
+
+--------------------------------------------------
+[Stalled]
+
+* rc/maint-complete-git-p4 (2012-09-24) 1 commit
+  (merged to 'next' on 2012-09-25 at 116e58f)
+ + Teach git-completion about git p4
+
+ Comment from Pete will need to be addressed in a follow-up patch.
+
+
+* as/test-tweaks (2012-09-20) 7 commits
+ - tests: paint unexpectedly fixed known breakages in bold red
+ - tests: test the test framework more thoroughly
+ - [SQUASH] t/t0000-basic.sh: quoting of TEST_DIRECTORY is screwed up
+ - tests: refactor mechanics of testing in a sub test-lib
+ - tests: paint skipped tests in bold blue
+ - tests: test number comes first in 'not ok $count - $message'
+ - tests: paint known breakages in bold yellow
+
+ Various minor tweaks to the test framework to paint its output
+ lines in colors that match what they mean better.
+
+ Has the "is this really blue?" issue Peff raised resolved???
+
+
+* jc/maint-name-rev (2012-09-17) 7 commits
+ - describe --contains: use "name-rev --algorithm=weight"
+ - name-rev --algorithm=weight: tests and documentation
+ - name-rev --algorithm=weight: cache the computed weight in notes
+ - name-rev --algorithm=weight: trivial optimization
+ - name-rev: --algorithm option
+ - name_rev: clarify the logic to assign a new tip-name to a commit
+ - name-rev: lose unnecessary typedef
+
+ "git name-rev" names the given revision based on a ref that can be
+ reached in the smallest number of steps from the rev, but that is
+ not useful when the caller wants to know which tag is the oldest one
+ that contains the rev.  This teaches a new mode to the command that
+ uses the oldest ref among those which contain the rev.
+
+ I am not sure if this is worth it; for one thing, even with the help
+ from notes-cache, it seems to make the "describe --contains" even
+ slower. Also the command will be unusably slow for a user who does
+ not have a write access (hence unable to create or update the
+ notes-cache).
+
+ Stalled mostly due to lack of responses.
+
+
+* jc/xprm-generation (2012-09-14) 1 commit
+ - test-generation: compute generation numbers and clock skews
+
+ A toy to analyze how bad the clock skews are in histories of real
+ world projects.
+
+ Stalled mostly due to lack of responses.
+
+
+* jc/blame-no-follow (2012-09-21) 2 commits
+ - blame: pay attention to --no-follow
+ - diff: accept --no-follow option
+
+ Teaches "--no-follow" option to "git blame" to disable its
+ whole-file rename detection.
+
+ Stalled mostly due to lack of responses.
+
+
+* jc/doc-default-format (2012-10-07) 2 commits
+ - [SQAUSH] allow "cd Doc* && make DEFAULT_DOC_TARGET=..."
+ - Allow generating a non-default set of documentation
+
+ Need to address the installation half if this is to be any useful.
+
+
+* mk/maint-graph-infinity-loop (2012-09-25) 1 commit
+ - graph.c: infinite loop in git whatchanged --graph -m
+
+ The --graph code fell into infinite loop when asked to do what the
+ code did not expect ;-)
+
+ Anybody who worked on "--graph" wants to comment?
+ Stalled mostly due to lack of responses.
+
+
+* jc/add-delete-default (2012-08-13) 1 commit
+  (merged to 'next' on 2012-10-11 at bd9e5cb)
+ + git add: notice removal of tracked paths by default
+
+ "git add dir/" updated modified files and added new files, but does
+ not notice removed files, which may be "Huh?" to some users.  They
+ can of course use "git add -A dir/", but why should they?
+
+ Resurrected from graveyard, as I thought it was a worthwhile thing
+ to do in the longer term.
+
+ Waiting for comments.
+
+
+* mb/remote-default-nn-origin (2012-07-11) 6 commits
+ - Teach get_default_remote to respect remote.default.
+ - Test that plain "git fetch" uses remote.default when on a detached HEAD.
+ - Teach clone to set remote.default.
+ - Teach "git remote" about remote.default.
+ - Teach remote.c about the remote.default configuration setting.
+ - Rename remote.c's default_remote_name static variables.
+
+ When the user does not specify what remote to interact with, we
+ often attempt to use 'origin'.  This can now be customized via a
+ configuration variable.
+
+ Expecting a reroll.
+
+ "The first remote becomes the default" bit is better done as a
+ separate step.
+
+--------------------------------------------------
+[Cooking]
+
+* mh/ceiling (2012-10-21) 8 commits
+ - string_list_longest_prefix(): remove function
+ - normalize_ceiling_entry(): resolve symlinks
+ - longest_ancestor_length(): require prefix list entries to be normalized
+ - longest_ancestor_length(): take a string_list argument for prefixes
+ - longest_ancestor_length(): use string_list_split()
+ - Introduce new function real_path_if_valid()
+ - real_path_internal(): add comment explaining use of cwd
+ - Introduce new static function real_path_internal()
+
+ Elements of GIT_CEILING_DIRECTORIES list may not match the real
+ pathname we obtain from getcwd(), leading the GIT_DIR discovery
+ logic to escape the ceilings the user thought to have specified.
+
 
 * js/mingw-fflush-errno (2012-10-17) 1 commit
   (merged to 'next' on 2012-10-18 at 43d6ebb)
@@ -123,6 +281,7 @@ repositories listed at
  + branch: delete symref branch, not its target
  + branch: factor out delete_branch_config()
  + branch: factor out check_branch_commit()
+ (this branch is used by jh/update-ref-d-through-symref.)
 
  A symbolic ref refs/heads/SYM was not correctly removed with
  "git branch -d SYM"; the command removed the ref pointed by
@@ -131,7 +290,7 @@ repositories listed at
  Will merge to 'master' in the second batch after 1.8.0 ships.
 
 
-* sz/maint-curl-multi-timeout (2012-10-18) 1 commit
+* sz/maint-curl-multi-timeout (2012-10-19) 1 commit
  - Fix potential hang in https handshake
 
  Sometimes curl_multi_timeout() function suggested a wrong timeout
@@ -154,236 +313,6 @@ repositories listed at
 * nd/tree-walk-enum-cleanup (2012-10-19) 1 commit
  - tree-walk: use enum interesting instead of integer
 
---------------------------------------------------
-[Stalled]
-
-* mh/ceiling (2012-09-29) 9 commits
- - t1504: stop resolving symlinks in GIT_CEILING_DIRECTORIES
- - longest_ancestor_length(): resolve symlinks before comparing paths
- - longest_ancestor_length(): use string_list_longest_prefix()
- - longest_ancestor_length(): always add a slash to the end of prefixes
- - longest_ancestor_length(): explicitly filter list before loop
- - longest_ancestor_length(): use string_list_split()
- - Introduce new function real_path_if_valid()
- - real_path_internal(): add comment explaining use of cwd
- - Introduce new static function real_path_internal()
-
- Elements of GIT_CEILING_DIRECTORIES list may not match the real
- pathname we obtain from getcwd(), leading the GIT_DIR discovery
- logic to escape the ceilings the user thought to have specified.
-
- The solution felt a bit unnecessarily convoluted to me.
- Expecting a reroll.
-
-
-* rc/maint-complete-git-p4 (2012-09-24) 1 commit
-  (merged to 'next' on 2012-09-25 at 116e58f)
- + Teach git-completion about git p4
-
- Comment from Pete will need to be addressed in a follow-up patch.
-
-
-* as/test-tweaks (2012-09-20) 7 commits
- - tests: paint unexpectedly fixed known breakages in bold red
- - tests: test the test framework more thoroughly
- - [SQUASH] t/t0000-basic.sh: quoting of TEST_DIRECTORY is screwed up
- - tests: refactor mechanics of testing in a sub test-lib
- - tests: paint skipped tests in bold blue
- - tests: test number comes first in 'not ok $count - $message'
- - tests: paint known breakages in bold yellow
-
- Various minor tweaks to the test framework to paint its output
- lines in colors that match what they mean better.
-
- Has the "is this really blue?" issue Peff raised resolved???
-
-
-* fa/vcs-svn (2012-10-07) 4 commits
- - vcs-svn: remove repo_tree
- - vcs-svn/svndump: rewrite handle_node(), begin|end_revision()
- - vcs-svn/svndump: restructure node_ctx, rev_ctx handling
- - svndump: move struct definitions to .h
- (this branch uses fa/remote-svn.)
-
- A follow-up to a GSoC project, but seems not quite ready.
- Will discard.
-
-
-* jc/maint-name-rev (2012-09-17) 7 commits
- - describe --contains: use "name-rev --algorithm=weight"
- - name-rev --algorithm=weight: tests and documentation
- - name-rev --algorithm=weight: cache the computed weight in notes
- - name-rev --algorithm=weight: trivial optimization
- - name-rev: --algorithm option
- - name_rev: clarify the logic to assign a new tip-name to a commit
- - name-rev: lose unnecessary typedef
-
- "git name-rev" names the given revision based on a ref that can be
- reached in the smallest number of steps from the rev, but that is
- not useful when the caller wants to know which tag is the oldest one
- that contains the rev.  This teaches a new mode to the command that
- uses the oldest ref among those which contain the rev.
-
- I am not sure if this is worth it; for one thing, even with the help
- from notes-cache, it seems to make the "describe --contains" even
- slower. Also the command will be unusably slow for a user who does
- not have a write access (hence unable to create or update the
- notes-cache).
-
- Stalled mostly due to lack of responses.
-
-
-* jc/xprm-generation (2012-09-14) 1 commit
- - test-generation: compute generation numbers and clock skews
-
- A toy to analyze how bad the clock skews are in histories of real
- world projects.
-
- Stalled mostly due to lack of responses.
-
-
-* jc/blame-no-follow (2012-09-21) 2 commits
- - blame: pay attention to --no-follow
- - diff: accept --no-follow option
-
- Teaches "--no-follow" option to "git blame" to disable its
- whole-file rename detection.
-
- Stalled mostly due to lack of responses.
-
-
-* jc/doc-default-format (2012-10-07) 2 commits
- - [SQAUSH] allow "cd Doc* && make DEFAULT_DOC_TARGET=..."
- - Allow generating a non-default set of documentation
-
- Need to address the installation half if this is to be any useful.
-
-
-* mk/maint-graph-infinity-loop (2012-09-25) 1 commit
- - graph.c: infinite loop in git whatchanged --graph -m
-
- The --graph code fell into infinite loop when asked to do what the
- code did not expect ;-)
-
- Anybody who worked on "--graph" wants to comment?
- Stalled mostly due to lack of responses.
-
-
-* ph/credential-refactor (2012-09-02) 5 commits
- - wincred: port to generic credential helper
- - Merge branch 'ef/win32-cred-helper' into ph/credential-refactor
- - osxkeychain: port to generic credential helper implementation
- - gnome-keyring: port to generic helper implementation
- - contrib: add generic credential helper
-
- Attempts to refactor to share code among OSX keychain, Gnome keyring
- and Win32 credential helpers.
-
-
-* ms/contrib-thunderbird-updates (2012-08-31) 2 commits
- - [SQUASH] minimum fixup
- - Thunderbird: fix appp.sh format problems
-
- Update helper to send out format-patch output using Thunderbird.
- Seems to have design regression for silent users.
-
-
-* jx/test-real-path (2012-08-27) 1 commit
- - test: set the realpath of CWD as TRASH_DIRECTORY
-
- Running tests with the "trash" directory elsewhere with the "--root"
- option did not work well if the directory was specified by a symbolic
- link pointing at it.
-
- Seems broken as it makes $(pwd) and TRASH_DIRECTORY inconsistent.
- Will discard.
-
-
-* jc/maint-push-refs-all (2012-08-27) 2 commits
- - get_fetch_map(): tighten checks on dest refs
- - [BROKEN] fetch/push: allow refs/*:refs/*
-
- Allows pushing and fetching everything including refs/stash.
- This is broken (see the log message there).
-
- Not ready.
-
-
-* jc/add-delete-default (2012-08-13) 1 commit
-  (merged to 'next' on 2012-10-11 at bd9e5cb)
- + git add: notice removal of tracked paths by default
-
- "git add dir/" updated modified files and added new files, but does
- not notice removed files, which may be "Huh?" to some users.  They
- can of course use "git add -A dir/", but why should they?
-
- Resurrected from graveyard, as I thought it was a worthwhile thing
- to do in the longer term.
-
- Waiting for comments.
-
-
-* tx/relative-in-the-future (2012-08-16) 2 commits
- - date: show relative dates in the future
- - date: refactor the relative date logic from presentation
-
- Not my itch; rewritten an earlier submission by Tom Xue into
- somewhat more maintainable form, though it breaks existing i18n.
-
- Waiting for a voluteer to fix it up.
- Otherwise may discard.
-
-
-* mb/remote-default-nn-origin (2012-07-11) 6 commits
- - Teach get_default_remote to respect remote.default.
- - Test that plain "git fetch" uses remote.default when on a detached HEAD.
- - Teach clone to set remote.default.
- - Teach "git remote" about remote.default.
- - Teach remote.c about the remote.default configuration setting.
- - Rename remote.c's default_remote_name static variables.
-
- When the user does not specify what remote to interact with, we
- often attempt to use 'origin'.  This can now be customized via a
- configuration variable.
-
- Expecting a reroll.
-
- "The first remote becomes the default" bit is better done as a
- separate step.
-
-
-* jc/split-blob (2012-04-03) 6 commits
- - chunked-object: streaming checkout
- - chunked-object: fallback checkout codepaths
- - bulk-checkin: support chunked-object encoding
- - bulk-checkin: allow the same data to be multiply hashed
- - new representation types in the packstream
- - packfile: use varint functions
-
- Not ready.
-
- I finished the streaming checkout codepath, but as explained in
- 127b177 (bulk-checkin: support chunked-object encoding, 2011-11-30),
- these are still early steps of a long and painful journey. At least
- pack-objects and fsck need to learn the new encoding for the series
- to be usable locally, and then index-pack/unpack-objects needs to
- learn it to be used remotely.
-
- Given that I heard a lot of noise that people want large files, and
- that I was asked by somebody at GitTogether'11 privately for an
- advice on how to pay developers (not me) to help adding necessary
- support, I am somewhat disappointed that the original patch series
- that was sent long time ago still remains here without much comments
- and updates from the developer community. I even made the interface
- to the logic that decides where to split chunks easily replaceable,
- and I deliberately made the logic in the original patch extremely
- stupid to entice others, especially the "bup" fanbois, to come up
- with a better logic, thinking that giving people an easy target to
- shoot for, they may be encouraged to help out. The plan is not
- working :-<.
-
---------------------------------------------------
-[Cooking]
 
 * jk/maint-http-init-not-in-result-handler (2012-10-12) 2 commits
   (merged to 'next' on 2012-10-16 at cc88829)
@@ -656,7 +585,6 @@ repositories listed at
  + Add svndump_init_fd to allow reading dumps from arbitrary FDs
  + Add git-remote-testsvn to Makefile
  + Implement a remote helper for svn in C
- (this branch is used by fa/vcs-svn.)
 
  A GSoC project.
  Will merge to 'master' in the first batch after 1.8.0 ships.
@@ -738,3 +666,95 @@ repositories listed at
  406.
 
  Will merge to 'master' in the first batch after 1.8.0 ships.
+
+--------------------------------------------------
+[Discarded]
+
+* fa/vcs-svn (2012-10-07) 4 commits
+ - vcs-svn: remove repo_tree
+ - vcs-svn/svndump: rewrite handle_node(), begin|end_revision()
+ - vcs-svn/svndump: restructure node_ctx, rev_ctx handling
+ - svndump: move struct definitions to .h
+ (this branch uses fa/remote-svn.)
+
+ A follow-up to a GSoC project, but seems not quite ready.
+
+
+* ph/credential-refactor (2012-09-02) 5 commits
+ - wincred: port to generic credential helper
+ - Merge branch 'ef/win32-cred-helper' into ph/credential-refactor
+ - osxkeychain: port to generic credential helper implementation
+ - gnome-keyring: port to generic helper implementation
+ - contrib: add generic credential helper
+
+ Attempts to refactor to share code among OSX keychain, Gnome keyring
+ and Win32 credential helpers.  Turns out that the sharing wasn't
+ big enough to worth the churn.
+
+
+* ms/contrib-thunderbird-updates (2012-08-31) 2 commits
+ - [SQUASH] minimum fixup
+ - Thunderbird: fix appp.sh format problems
+
+ Update helper to send out format-patch output using Thunderbird.
+ Seems to have design regression for silent users.
+
+
+* jx/test-real-path (2012-08-27) 1 commit
+ - test: set the realpath of CWD as TRASH_DIRECTORY
+
+ Running tests with the "trash" directory elsewhere with the "--root"
+ option did not work well if the directory was specified by a symbolic
+ link pointing at it.
+
+ Seems broken as it makes $(pwd) and TRASH_DIRECTORY inconsistent.
+
+
+* jc/maint-push-refs-all (2012-08-27) 2 commits
+ - get_fetch_map(): tighten checks on dest refs
+ - [BROKEN] fetch/push: allow refs/*:refs/*
+
+  This is broken (see the log message there).  "git fetch/push
+  $there 'refs/*:refs/*'" already propagates heads, tags, notes,
+  etc. hierarchies; an attempt to propagate refs/stash will fail
+  against an older version of the other side and is not worth
+  supporting.
+
+
+* tx/relative-in-the-future (2012-08-16) 2 commits
+ - date: show relative dates in the future
+ - date: refactor the relative date logic from presentation
+
+ Not my itch; rewritten an earlier submission by Tom Xue into
+ somewhat more maintainable form, though it breaks existing i18n.
+
+ Was waiting for a voluteer to fix it up, which never happend.
+
+
+* jc/split-blob (2012-04-03) 6 commits
+ - chunked-object: streaming checkout
+ - chunked-object: fallback checkout codepaths
+ - bulk-checkin: support chunked-object encoding
+ - bulk-checkin: allow the same data to be multiply hashed
+ - new representation types in the packstream
+ - packfile: use varint functions
+
+ I finished the streaming checkout codepath, but as explained in
+ 127b177 (bulk-checkin: support chunked-object encoding, 2011-11-30),
+ these are still early steps of a long and painful journey. At least
+ pack-objects and fsck need to learn the new encoding for the series
+ to be usable locally, and then index-pack/unpack-objects needs to
+ learn it to be used remotely.
+
+ Given that I heard a lot of noise that people want large files, and
+ that I was asked by somebody at GitTogether'11 privately for an
+ advice on how to pay developers (not me) to help adding necessary
+ support, I am somewhat disappointed that the original patch series
+ that was sent long time ago still remains here without much comments
+ and updates from the developer community. I even made the interface
+ to the logic that decides where to split chunks easily replaceable,
+ and I deliberately made the logic in the original patch extremely
+ stupid to entice others, especially the "bup" fanbois, to come up
+ with a better logic, thinking that giving people an easy target to
+ shoot for, they may be encouraged to help out. The plan is not
+ working :-<.
