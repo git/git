@@ -85,7 +85,7 @@ test_expect_success \
 	"move $m (by HEAD)" \
 	"git update-ref HEAD $B $A &&
 	 test $B"' = $(cat .git/'"$m"')'
-test_expect_failure "delete $m (by HEAD) should remove both packed and loose $m" '
+test_expect_success "delete $m (by HEAD) should remove both packed and loose $m" '
 	git update-ref -d HEAD $B &&
 	! grep "$m" .git/packed-refs &&
 	! test -f .git/$m
