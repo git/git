@@ -1,0 +1,69 @@
+#!/bin/sh
+# How much of the very original version from Linus survive?
+
+_x40='[0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f]'
+_x40="$_x40$_x40$_x40$_x40$_x40$_x40$_x40$_x40"
+
+initial=$(git rev-parse --verify e83c5163316f89bfbde7d9ab23ca2e25604af290) &&
+this=$(git rev-parse --verify ${1-HEAD}^0) || exit
+
+tmp="/var/tmp/Linus.$$"
+trap 'rm -f "$tmp".*' 0
+
+# We blame each file in the initial revision pretending as if it is a
+# direct descendant of the given version, and also pretend that the
+# latter is a root commit.  This way, lines in the initial revision
+# that survived to the other version can be identified (they will be
+# attributed to the other version).
+graft="$tmp.graft" &&
+{
+	echo "$initial $this"
+	echo "$this"
+} >"$graft" || exit
+
+opts='-C -C -C -w'
+
+show () {
+	s=$1 t=$2 n=$3
+	p=$(($s * 100 / $t))
+	c=$(($s * 10000 / $t - $p * 100))
+	printf "%12d %12d %s (%d.%02d%%)\n" $s $t $n $p $c
+}
+
+git ls-tree -r "$initial" |
+while read mode type sha1 name
+do
+	git blame $opts --porcelain -S "$graft" "$initial" -- "$name" |
+	sed -ne "s/^\($_x40\) .*/\1/p" |
+	sort |
+	uniq -c | {
+		# There are only two commits in the fake history, so
+		# there will be at most two output from the above.
+		read cnt1 commit1
+		read cnt2 commit2
+		if test -z "$commit2"
+		then
+			cnt2=0
+		fi
+		if test "$initial" != "$commit1"
+		then
+			cnt_surviving=$cnt1
+		else
+			cnt_surviving=$cnt2
+		fi
+		cnt_total=$(( $cnt1 + $cnt2 ))
+		echo "$cnt_surviving $cnt_total	$name"
+	}
+done | {
+	total=0
+	surviving=0
+	printf "%12s %12s %s (survival%%)\n" surviving original path
+	while read s t n
+	do
+		total=$(( $total + $t )) surviving=$(( $surviving + $s ))
+		# printf "%12d %12d %s\n" $s $t $n
+		show $s $t $n
+	done
+	# printf "%12d %12d %s\n" $surviving $total Total
+	show $surviving $total Total
+}
