@@ -636,15 +636,15 @@ EOT
 	my $need_8bit_cte = file_has_nonascii($compose_filename);
 	my $in_body = 0;
 	my $summary_empty = 1;
+	if (!defined $compose_encoding) {
+		$compose_encoding = "UTF-8";
+	}
 	while(<$c>) {
 		next if m/^GIT:/;
 		if ($in_body) {
 			$summary_empty = 0 unless (/^\n$/);
 		} elsif (/^\n$/) {
 			$in_body = 1;
-			if (!defined $compose_encoding) {
-				$compose_encoding = "UTF-8";
-			}
 			if ($need_8bit_cte) {
 				print $c2 "MIME-Version: 1.0\n",
 					 "Content-Type: text/plain; ",
@@ -658,7 +658,7 @@ EOT
 			my $subject = $initial_subject;
 			$_ = "Subject: " .
 				($subject =~ /[^[:ascii:]]/ ?
-				 quote_rfc2047($subject) :
+				 quote_rfc2047($subject, $compose_encoding) :
 				 $subject) .
 				"\n";
 		} elsif (/^In-Reply-To:\s*(.+)\s*$/i) {

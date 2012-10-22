@@ -909,6 +909,20 @@ test_expect_success $PREREQ '--compose-encoding overrides sendemail.composeencod
 	grep "^Content-Type: text/plain; charset=iso-8859-2" msgtxt1
 '
 
+test_expect_success $PREREQ '--compose-encoding adds correct MIME for subject' '
+	clean_fake_sendmail &&
+	  GIT_EDITOR="\"$(pwd)/fake-editor\"" \
+	  git send-email \
+	  --compose-encoding iso-8859-2 \
+	  --compose --subject utf8-sübjëct \
+	  --from="Example <nobody@example.com>" \
+	  --to=nobody@example.com \
+	  --smtp-server="$(pwd)/fake.sendmail" \
+	  $patches &&
+	grep "^fake edit" msgtxt1 &&
+	grep "^Subject: =?iso-8859-2?q?utf8-s=C3=BCbj=C3=ABct?=" msgtxt1
+'
+
 test_expect_success $PREREQ 'detects ambiguous reference/file conflict' '
 	echo master > master &&
 	git add master &&
