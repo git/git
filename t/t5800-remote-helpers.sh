@@ -145,4 +145,25 @@ test_expect_failure 'push new branch with old:new refspec' '
 	compare_refs clone HEAD server refs/heads/new-refspec
 '
 
+test_expect_success 'proper failure checks for fetching' '
+	(GIT_REMOTE_TESTGIT_FAILURE=1 &&
+	export GIT_REMOTE_TESTGIT_FAILURE &&
+	cd localclone &&
+	test_must_fail git fetch 2>&1 | \
+		grep "Error while running fast-import"
+	)
+'
+
+# We sleep to give fast-export a chance to catch the SIGPIPE
+test_expect_failure 'proper failure checks for pushing' '
+	(GIT_REMOTE_TESTGIT_FAILURE=1 &&
+	export GIT_REMOTE_TESTGIT_FAILURE &&
+	GIT_REMOTE_TESTGIT_SLEEPY=1 &&
+	export GIT_REMOTE_TESTGIT_SLEEPY &&
+	cd localclone &&
+	test_must_fail git push --all 2>&1 | \
+		grep "Error while running fast-export"
+	)
+'
+
 test_done
