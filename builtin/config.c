@@ -15,7 +15,6 @@ static int show_keys;
 static int use_key_regexp;
 static int do_all;
 static int do_not_match;
-static int seen;
 static char delim = '=';
 static char key_delim = ' ';
 static char term = '\n';
@@ -95,8 +94,16 @@ static int show_all_config(const char *key_, const char *value_, void *cb)
 	return 0;
 }
 
-static int show_config(const char *key_, const char *value_, void *cb)
+struct strbuf_list {
+	struct strbuf *items;
+	int nr;
+	int alloc;
+};
+
+static int collect_config(const char *key_, const char *value_, void *cb)
 {
+	struct strbuf_list *values = cb;
+	struct strbuf *buf;
 	char value[256];
 	const char *vptr = value;
 	int must_free_vptr = 0;
@@ -111,11 +118,15 @@ static int show_config(const char *key_, const char *value_, void *cb)
 	    (do_not_match ^ !!regexec(regexp, (value_?value_:""), 0, NULL, 0)))
 		return 0;
 
+	ALLOC_GROW(values->items, values->nr + 1, values->alloc);
+	buf = &values->items[values->nr++];
+	strbuf_init(buf, 0);
+
 	if (show_keys) {
-		printf("%s", key_);
+		strbuf_addstr(buf, key_);
 		must_print_delim = 1;
 	}
-	if (seen && !do_all)
+	if (values->nr > 1 && !do_all)
 		dup_error = 1;
 	if (types == TYPE_INT)
 		sprintf(value, "%d", git_config_int(key_, value_?value_:""));
@@ -138,15 +149,15 @@ static int show_config(const char *key_, const char *value_, void *cb)
 		vptr = "";
 		must_print_delim = 0;
 	}
-	seen++;
 	if (dup_error) {
 		error("More than one value for the key %s: %s",
 				key_, vptr);
 	}
 	else {
 		if (must_print_delim)
-			printf("%c", key_delim);
-		printf("%s%c", vptr, term);
+			strbuf_addch(buf, key_delim);
+		strbuf_addstr(buf, vptr);
+		strbuf_addch(buf, term);
 	}
 	if (must_free_vptr)
 		/* If vptr must be freed, it's a pointer to a
@@ -166,6 +177,8 @@ static int get_value(const char *key_, const char *regex_)
 	struct config_include_data inc = CONFIG_INCLUDE_INIT;
 	config_fn_t fn;
 	void *data;
+	struct strbuf_list values = {0};
+	int i;
 
 	local = given_config_file;
 	if (!local) {
@@ -223,8 +236,8 @@ static int get_value(const char *key_, const char *regex_)
 		}
 	}
 
-	fn = show_config;
-	data = NULL;
+	fn = collect_config;
+	data = &values;
 	if (respect_includes) {
 		inc.fn = fn;
 		inc.data = data;
@@ -241,19 +254,26 @@ static int get_value(const char *key_, const char *regex_)
 	if (do_all)
 		git_config_from_file(fn, local, data);
 	git_config_from_parameters(fn, data);
-	if (!do_all && !seen)
+	if (!do_all && !values.nr)
 		git_config_from_file(fn, local, data);
-	if (!do_all && !seen && global)
+	if (!do_all && !values.nr && global)
 		git_config_from_file(fn, global, data);
-	if (!do_all && !seen && xdg)
+	if (!do_all && !values.nr && xdg)
 		git_config_from_file(fn, xdg, data);
-	if (!do_all && !seen && system_wide)
+	if (!do_all && !values.nr && system_wide)
 		git_config_from_file(fn, system_wide, data);
 
 	if (do_all)
-		ret = !seen;
+		ret = !values.nr;
 	else
-		ret = (seen == 1) ? 0 : seen > 1 ? 2 : 1;
+		ret = (values.nr == 1) ? 0 : values.nr > 1 ? 2 : 1;
+
+	for (i = 0; i < values.nr; i++) {
+		struct strbuf *buf = values.items + i;
+		fwrite(buf->buf, 1, buf->len, stdout);
+		strbuf_release(buf);
+	}
+	free(values.items);
 
 free_strings:
 	free(repo_config);
