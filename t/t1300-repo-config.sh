@@ -258,8 +258,13 @@ test_expect_success 'ambiguous get' '
 	test_must_fail git config --get nextsection.nonewline
 '
 
-test_expect_success 'get multivar' '
-	git config --get-all nextsection.nonewline
+test_expect_success 'multi-valued get-all returns all' '
+	cat >expect <<-\EOF &&
+	wow
+	wow2 for me
+	EOF
+	git config --get-all nextsection.nonewline >actual &&
+	test_cmp expect actual
 '
 
 cat > expect << EOF
