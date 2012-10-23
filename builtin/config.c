@@ -195,7 +195,8 @@ static int get_value(const char *key_, const char *regex_)
 		key_regexp = (regex_t*)xmalloc(sizeof(regex_t));
 		if (regcomp(key_regexp, key, REG_EXTENDED)) {
 			fprintf(stderr, "Invalid key pattern: %s\n", key_);
-			free(key);
+			free(key_regexp);
+			key_regexp = NULL;
 			ret = CONFIG_INVALID_PATTERN;
 			goto free_strings;
 		}
@@ -215,6 +216,8 @@ static int get_value(const char *key_, const char *regex_)
 		regexp = (regex_t*)xmalloc(sizeof(regex_t));
 		if (regcomp(regexp, regex_, REG_EXTENDED)) {
 			fprintf(stderr, "Invalid pattern: %s\n", regex_);
+			free(regexp);
+			regexp = NULL;
 			ret = CONFIG_INVALID_PATTERN;
 			goto free_strings;
 		}
@@ -247,6 +250,15 @@ static int get_value(const char *key_, const char *regex_)
 	if (!do_all && !seen && system_wide)
 		git_config_from_file(fn, system_wide, data);
 
+	if (do_all)
+		ret = !seen;
+	else
+		ret = (seen == 1) ? 0 : seen > 1 ? 2 : 1;
+
+free_strings:
+	free(repo_config);
+	free(global);
+	free(xdg);
 	free(key);
 	if (key_regexp) {
 		regfree(key_regexp);
@@ -257,15 +269,6 @@ static int get_value(const char *key_, const char *regex_)
 		free(regexp);
 	}
 
-	if (do_all)
-		ret = !seen;
-	else
-		ret = (seen == 1) ? 0 : seen > 1 ? 2 : 1;
-
-free_strings:
-	free(repo_config);
-	free(global);
-	free(xdg);
 	return ret;
 }
 
