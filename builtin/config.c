@@ -248,6 +248,10 @@ static int get_value(const char *key_, const char *regex_)
 		git_config_from_file(fn, system_wide, data);
 
 	free(key);
+	if (key_regexp) {
+		regfree(key_regexp);
+		free(key_regexp);
+	}
 	if (regexp) {
 		regfree(regexp);
 		free(regexp);
