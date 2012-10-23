@@ -165,21 +165,8 @@ static int collect_config(const char *key_, const char *value_, void *cb)
 static int get_value(const char *key_, const char *regex_)
 {
 	int ret = CONFIG_GENERIC_ERROR;
-	char *global = NULL, *xdg = NULL, *repo_config = NULL;
-	const char *system_wide = NULL, *local;
-	struct config_include_data inc = CONFIG_INCLUDE_INIT;
-	config_fn_t fn;
-	void *data;
 	struct strbuf_list values = {0};
 	int i;
-
-	local = given_config_file;
-	if (!local) {
-		local = repo_config = git_pathdup("config");
-		if (git_config_system())
-			system_wide = git_etc_gitconfig();
-		home_config_paths(&global, &xdg, "config");
-	}
 
 	if (use_key_regexp) {
 		char *tl;
@@ -229,32 +216,8 @@ static int get_value(const char *key_, const char *regex_)
 		}
 	}
 
-	fn = collect_config;
-	data = &values;
-	if (respect_includes) {
-		inc.fn = fn;
-		inc.data = data;
-		fn = git_config_include;
-		data = &inc;
-	}
-
-	if (do_all && system_wide)
-		git_config_from_file(fn, system_wide, data);
-	if (do_all && xdg)
-		git_config_from_file(fn, xdg, data);
-	if (do_all && global)
-		git_config_from_file(fn, global, data);
-	if (do_all)
-		git_config_from_file(fn, local, data);
-	git_config_from_parameters(fn, data);
-	if (!do_all && !values.nr)
-		git_config_from_file(fn, local, data);
-	if (!do_all && !values.nr && global)
-		git_config_from_file(fn, global, data);
-	if (!do_all && !values.nr && xdg)
-		git_config_from_file(fn, xdg, data);
-	if (!do_all && !values.nr && system_wide)
-		git_config_from_file(fn, system_wide, data);
+	git_config_with_options(collect_config, &values,
+				given_config_file, respect_includes);
 
 	ret = !values.nr;
 
@@ -267,9 +230,6 @@ static int get_value(const char *key_, const char *regex_)
 	free(values.items);
 
 free_strings:
-	free(repo_config);
-	free(global);
-	free(xdg);
 	free(key);
 	if (key_regexp) {
 		regfree(key_regexp);
