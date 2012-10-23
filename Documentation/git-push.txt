@@ -172,7 +172,7 @@ useful if you write an alias or script around 'git push'.
 
 --recurse-submodules=check|on-demand::
 	Make sure all submodule commits used by the revisions to be
-	pushed are available on a remote tracking branch. If 'check' is
+	pushed are available on a remote-tracking branch. If 'check' is
 	used git will verify that all submodule commits that changed in
 	the revisions to be pushed are available on at least one remote
 	of the submodule. If any commits are missing the push will be
