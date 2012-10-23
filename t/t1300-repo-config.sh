@@ -277,10 +277,6 @@ test_expect_success 'multivar replace' '
 	test_cmp expect .git/config
 '
 
-test_expect_success 'ambiguous value' '
-	test_must_fail git config nextsection.nonewline
-'
-
 test_expect_success 'ambiguous unset' '
 	test_must_fail git config --unset nextsection.nonewline
 '
