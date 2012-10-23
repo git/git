@@ -107,7 +107,6 @@ static int collect_config(const char *key_, const char *value_, void *cb)
 	char value[256];
 	const char *vptr = value;
 	int must_free_vptr = 0;
-	int dup_error = 0;
 	int must_print_delim = 0;
 
 	if (!use_key_regexp && strcmp(key_, key))
@@ -126,8 +125,6 @@ static int collect_config(const char *key_, const char *value_, void *cb)
 		strbuf_addstr(buf, key_);
 		must_print_delim = 1;
 	}
-	if (values->nr > 1 && !do_all)
-		dup_error = 1;
 	if (types == TYPE_INT)
 		sprintf(value, "%d", git_config_int(key_, value_?value_:""));
 	else if (types == TYPE_BOOL)
@@ -149,16 +146,12 @@ static int collect_config(const char *key_, const char *value_, void *cb)
 		vptr = "";
 		must_print_delim = 0;
 	}
-	if (dup_error) {
-		error("More than one value for the key %s: %s",
-				key_, vptr);
-	}
-	else {
-		if (must_print_delim)
-			strbuf_addch(buf, key_delim);
-		strbuf_addstr(buf, vptr);
-		strbuf_addch(buf, term);
-	}
+
+	if (must_print_delim)
+		strbuf_addch(buf, key_delim);
+	strbuf_addstr(buf, vptr);
+	strbuf_addch(buf, term);
+
 	if (must_free_vptr)
 		/* If vptr must be freed, it's a pointer to a
 		 * dynamically allocated buffer, it's safe to cast to
@@ -263,14 +256,12 @@ static int get_value(const char *key_, const char *regex_)
 	if (!do_all && !values.nr && system_wide)
 		git_config_from_file(fn, system_wide, data);
 
-	if (do_all)
-		ret = !values.nr;
-	else
-		ret = (values.nr == 1) ? 0 : values.nr > 1 ? 2 : 1;
+	ret = !values.nr;
 
 	for (i = 0; i < values.nr; i++) {
 		struct strbuf *buf = values.items + i;
-		fwrite(buf->buf, 1, buf->len, stdout);
+		if (do_all || i == values.nr - 1)
+			fwrite(buf->buf, 1, buf->len, stdout);
 		strbuf_release(buf);
 	}
 	free(values.items);

@@ -254,8 +254,10 @@ test_expect_success 'non-match value' '
 	test_cmp expect actual
 '
 
-test_expect_success 'ambiguous get' '
-	test_must_fail git config --get nextsection.nonewline
+test_expect_success 'multi-valued get returns final one' '
+	echo "wow2 for me" >expect &&
+	git config --get nextsection.nonewline >actual &&
+	test_cmp expect actual
 '
 
 test_expect_success 'multi-valued get-all returns all' '
