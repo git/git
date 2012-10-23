@@ -1,11 +1,11 @@
 all: git-credential-wincred.exe
 
-CC = gcc
-RM = rm -f
-CFLAGS = -O2 -Wall
-
 -include ../../../config.mak.autogen
 -include ../../../config.mak
+
+CC ?= gcc
+RM ?= rm -f
+CFLAGS ?= -O2 -Wall
 
 prefix ?= /usr/local
 libexecdir ?= $(prefix)/libexec/git-core
