@@ -908,7 +908,7 @@ sub is_rfc2047_quoted {
 sub subject_needs_rfc2047_quoting {
 	my $s = shift;
 
-	return ($s =~ /[^[:ascii:]]/);
+	return ($s =~ /[^[:ascii:]]/) || ($s =~ /=\?/);
 }
 
 sub quote_subject {
