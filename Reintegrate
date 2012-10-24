@@ -182,7 +182,7 @@ generate () {
 	echo "	exec $PROGRAM" '"$1" "$0"'
 	echo 'esac'
 	echo "$PROGRAM" '"$@" <<\EOF'
-	git log --pretty=oneline --first-parent "$1" |
+	git log --no-decorate --pretty=oneline --first-parent "$1" |
 	{
 		series=
 		while read commit msg
