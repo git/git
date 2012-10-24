@@ -1143,6 +1143,23 @@ EOF
 '
 
 test_expect_success $PREREQ 'setup expect' '
+cat >expected <<EOF
+Subject: subject goes here
+EOF
+'
+
+test_expect_success $PREREQ 'ASCII subject is not RFC2047 quoted' '
+	clean_fake_sendmail &&
+	echo bogus |
+	git send-email --from=author@example.com --to=nobody@example.com \
+			--smtp-server="$(pwd)/fake.sendmail" \
+			--8bit-encoding=UTF-8 \
+			email-using-8bit >stdout &&
+	grep "Subject" msgtxt1 >actual &&
+	test_cmp expected actual
+'
+
+test_expect_success $PREREQ 'setup expect' '
 cat >content-type-decl <<EOF
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8

@@ -1327,7 +1327,8 @@ foreach my $t (@files) {
 		$body_encoding = $auto_8bit_encoding;
 	}
 
-	if ($broken_encoding{$t} && !is_rfc2047_quoted($subject)) {
+	if ($broken_encoding{$t} && !is_rfc2047_quoted($subject) &&
+			($subject =~ /[^[:ascii:]]/)) {
 		$subject = quote_rfc2047($subject, $auto_8bit_encoding);
 	}
 
