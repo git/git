@@ -1015,7 +1015,7 @@ elif test -z "$PTHREAD_CFLAGS"; then
   for opt in -mt -pthread -lpthread; do
      old_CFLAGS="$CFLAGS"
      CFLAGS="$opt $CFLAGS"
-     AC_MSG_CHECKING([Checking for POSIX Threads with '$opt'])
+     AC_MSG_CHECKING([for POSIX Threads with '$opt'])
      AC_LINK_IFELSE([PTHREADTEST_SRC],
 	[AC_MSG_RESULT([yes])
 		NO_PTHREADS=
@@ -1035,7 +1035,7 @@ elif test -z "$PTHREAD_CFLAGS"; then
 else
   old_CFLAGS="$CFLAGS"
   CFLAGS="$PTHREAD_CFLAGS $CFLAGS"
-  AC_MSG_CHECKING([Checking for POSIX Threads with '$PTHREAD_CFLAGS'])
+  AC_MSG_CHECKING([for POSIX Threads with '$PTHREAD_CFLAGS'])
   AC_LINK_IFELSE([PTHREADTEST_SRC],
 	[AC_MSG_RESULT([yes])
 		NO_PTHREADS=
