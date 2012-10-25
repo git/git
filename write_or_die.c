@@ -34,12 +34,7 @@ void maybe_flush_or_die(FILE *f, const char *desc)
 			return;
 	}
 	if (fflush(f)) {
-		/*
-		 * On Windows, EPIPE is returned only by the first write()
-		 * after the reading end has closed its handle; subsequent
-		 * write()s return EINVAL.
-		 */
-		if (errno == EPIPE || errno == EINVAL)
+		if (errno == EPIPE)
 			exit(0);
 		die_errno("write failure on '%s'", desc);
 	}
