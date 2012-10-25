@@ -3,8 +3,7 @@
  * See LICENSE for details.
  */
 
-#include "git-compat-util.h"
-#include "strbuf.h"
+#include "cache.h"
 #include "quote.h"
 #include "fast_export.h"
 #include "repo_tree.h"
@@ -68,11 +67,33 @@ void fast_export_modify(const char *path, uint32_t mode, const char *dataref)
 	putchar('\n');
 }
 
+void fast_export_begin_note(uint32_t revision, const char *author,
+		const char *log, unsigned long timestamp, const char *note_ref)
+{
+	static int firstnote = 1;
+	size_t loglen = strlen(log);
+	printf("commit %s\n", note_ref);
+	printf("committer %s <%s@%s> %ld +0000\n", author, author, "local", timestamp);
+	printf("data %"PRIuMAX"\n", (uintmax_t)loglen);
+	fwrite(log, loglen, 1, stdout);
+	if (firstnote) {
+		if (revision > 1)
+			printf("from %s^0", note_ref);
+		firstnote = 0;
+	}
+	fputc('\n', stdout);
+}
+
+void fast_export_note(const char *committish, const char *dataref)
+{
+	printf("N %s %s\n", dataref, committish);
+}
+
 static char gitsvnline[MAX_GITSVN_LINE_LEN];
 void fast_export_begin_commit(uint32_t revision, const char *author,
 			const struct strbuf *log,
 			const char *uuid, const char *url,
-			unsigned long timestamp)
+			unsigned long timestamp, const char *local_ref)
 {
 	static const struct strbuf empty = STRBUF_INIT;
 	if (!log)
@@ -84,7 +105,7 @@ void fast_export_begin_commit(uint32_t revision, const char *author,
 	} else {
 		*gitsvnline = '\0';
 	}
-	printf("commit refs/heads/master\n");
+	printf("commit %s\n", local_ref);
 	printf("mark :%"PRIu32"\n", revision);
 	printf("committer %s <%s@%s> %ld +0000\n",
 		   *author ? author : "nobody",
@@ -220,6 +241,13 @@ static long apply_delta(off_t len, struct line_buffer *input,
 		die("cannot read temporary file for blob retrieval");
 	strbuf_release(&preimage.buf);
 	return ret;
+}
+
+void fast_export_buf_to_data(const struct strbuf *data)
+{
+	printf("data %"PRIuMAX"\n", (uintmax_t)data->len);
+	fwrite(data->buf, data->len, 1, stdout);
+	fputc('\n', stdout);
 }
 
 void fast_export_data(uint32_t mode, off_t len, struct line_buffer *input)
