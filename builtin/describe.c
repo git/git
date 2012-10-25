@@ -144,7 +144,7 @@ static int get_name(const char *path, const unsigned char *sha1, int flag, void 
 	if (!all && !might_be_tag)
 		return 0;
 
-	if (!peel_ref(path, peeled) && !is_null_sha1(peeled)) {
+	if (!peel_ref(path, peeled)) {
 		is_tag = !!hashcmp(sha1, peeled);
 	} else {
 		hashcpy(peeled, sha1);

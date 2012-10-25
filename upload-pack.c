@@ -727,12 +727,7 @@ static int send_ref(const char *refname, const unsigned char *sha1, int flag, vo
 		" include-tag multi_ack_detailed";
 	struct object *o = lookup_unknown_object(sha1);
 	const char *refname_nons = strip_namespace(refname);
-
-	if (o->type == OBJ_NONE) {
-		o->type = sha1_object_info(sha1, NULL);
-		if (o->type < 0)
-		    die("git upload-pack: cannot find object %s:", sha1_to_hex(sha1));
-	}
+	unsigned char peeled[20];
 
 	if (capabilities)
 		packet_write(1, "%s %s%c%s%s agent=%s\n",
@@ -747,11 +742,8 @@ static int send_ref(const char *refname, const unsigned char *sha1, int flag, vo
 		o->flags |= OUR_REF;
 		nr_our_refs++;
 	}
-	if (o->type == OBJ_TAG) {
-		o = deref_tag_noverify(o);
-		if (o)
-			packet_write(1, "%s %s^{}\n", sha1_to_hex(o->sha1), refname_nons);
-	}
+	if (!peel_ref(refname, peeled))
+		packet_write(1, "%s %s^{}\n", sha1_to_hex(peeled), refname_nons);
 	return 0;
 }
 
