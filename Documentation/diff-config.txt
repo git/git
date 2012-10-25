@@ -56,6 +56,10 @@ diff.statGraphWidth::
 	Limit the width of the graph part in --stat output. If set, applies
 	to all commands generating --stat output except format-patch.
 
+diff.context::
+	Generate diffs with <n> lines of context instead of the default of
+	3. This value is overridden by the -U option.
+
 diff.external::
 	If this config variable is set, diff generation is not
 	performed using the internal diff machinery, but using the
