@@ -397,16 +397,6 @@ fail_pipe:
 					unsetenv(*cmd->env);
 			}
 		}
-		if (cmd->preexec_cb) {
-			/*
-			 * We cannot predict what the pre-exec callback does.
-			 * Forgo parent notification.
-			 */
-			close(child_notifier);
-			child_notifier = -1;
-
-			cmd->preexec_cb();
-		}
 		if (cmd->git_cmd) {
 			execv_git_cmd(cmd->argv);
 		} else if (cmd->use_shell) {
