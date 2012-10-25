@@ -1,58 +1,192 @@
 To: git@vger.kernel.org
 Bcc: lwn@lwn.net
-Subject: What's cooking in git.git (Oct 2012, #07; Sun, 21)
-X-master-at: 8ead1bfe111085ef1ad7759e67340f074996b244
-X-next-at: 5b9a629a33877c671b6ebea47248afda0dc32545
+Subject: What's cooking in git.git (Oct 2012, #08; Thu, 25)
+X-master-at: 2cfceefaca16d64baecf0ba9bcd4e05229d9c31b
+X-next-at: 73d9d14c037055c674779c1538fc7bfddf428db0
 
-What's cooking in git.git (Oct 2012, #07; Sun, 21)
+What's cooking in git.git (Oct 2012, #08; Thu, 25)
 --------------------------------------------------
 
 Here are the topics that have been cooking.  Commits prefixed with
 '-' are only in 'pu' (proposed updates) while commits prefixed with
 '+' are in 'next'.
 
-The 1.8.0 release has been tagged.  I'd disappear for a few weeks
-without carrying a computer, and Git will be in steady hands of Jeff
-King (thanks) in the meantime.
+Now that 1.8.0 is out, I've graduated the first batch of topics to
+master. I've also picked up some topics from the list, mostly
+documentation fixes that went straight to next. I haven't yet moved any
+of the cooking topics up to next.
 
-You can find the changes described here in the integration branches of the
-repositories listed at
+You can find the changes described here in the integration branches of
+my repository at:
 
-    http://git-blame.blogspot.com/p/git-public-repositories.html
+  git://github.com/peff/git.git
+
+Until Junio returns, kernel.org and the other "usual" places will not be
+updated.
 
 --------------------------------------------------
 [New Topics]
 
-* jc/maint-fetch-tighten-refname-check (2012-10-19) 1 commit
- - get_fetch_map(): tighten checks on dest refs
+* gb/maint-doc-svn-log-window-size (2012-10-25) 1 commit
+ - Document git-svn fetch --log-window-size parameter
 
- This was split out from discarded jc/maint-push-refs-all topic.
-
-
-* jh/symbolic-ref-d (2012-10-21) 1 commit
- - git symbolic-ref --delete $symref
-
- Add "symbolic-ref -d SYM" to delete a symbolic ref SYM.
-
- It is already possible to remove a symbolic ref with "update-ref -d
- --no-deref", but it may be a good addition for completeness.
+Looks good to me, but I'd like to get an ack from svn folks.
 
 
-* jh/update-ref-d-through-symref (2012-10-21) 2 commits
- - Fix failure to delete a packed ref through a symref
- - t1400-update-ref: Add test verifying bug with symrefs in delete_ref()
- (this branch uses rs/branch-del-symref.)
+* jk/config-ignore-duplicates (2012-10-24) 8 commits
+  (merged to 'next' on 2012-10-25 at 233df08)
+ + git-config: use git_config_with_options
+ + git-config: do not complain about duplicate entries
+ + git-config: collect values instead of immediately printing
+ + git-config: fix regexp memory leaks on error conditions
+ + git-config: remove memory leak of key regexp
+ + t1300: test "git config --get-all" more thoroughly
+ + t1300: remove redundant test
+ + t1300: style updates
 
- "update-ref -d --deref SYM" to delete a ref through a symbolic ref
- that points to it did not remove it correctly.
+Drop duplicate detection from git-config; this lets it
+better match the internal config callbacks, which clears up
+some corner cases with includes.
 
+
+* mm/maint-doc-remote-tracking (2012-10-25) 1 commit
+  (merged to 'next' on 2012-10-25 at 80f1592)
+ + Documentation: remote tracking branch -> remote-tracking branch
+
+We long ago hyphenated "remote-tracking branch"; this
+catches some new instances added since then.
+
+
+* ph/pull-rebase-detached (2012-10-25) 1 commit
+  (merged to 'next' on 2012-10-25 at 73d9d14)
+ + git-pull: Avoid merge-base on detached head
+
+Avoids spewing error messages when using "pull --rebase" on a
+detached HEAD.
+
+
+* ph/submodule-sync-recursive (2012-10-24) 2 commits
+ - Add tests for submodule sync --recursive
+ - Teach --recursive to submodule sync
+
+I'd like review from submodule folks on this one.
+
+
+* po/maint-refs-replace-docs (2012-10-25) 1 commit
+  (merged to 'next' on 2012-10-25 at 3874c9d)
+ + Doc repository-layout: Show refs/replace
+
+The refs/replace hierarchy was not mentioned in the
+repository-layout docs.
+
+
+* sl/maint-configure-messages (2012-10-25) 1 commit
+  (merged to 'next' on 2012-10-25 at e1d7ecd)
+ + configure: fix some output message
+
+Minor message fixes for the configure script.
+
+--------------------------------------------------
+[Graduated to "master"]
+
+* bw/config-lift-variable-name-length-limit (2012-10-01) 1 commit
+  (merged to 'next' on 2012-10-08 at 69f54f4)
+ + Remove the hard coded length limit on variable names in config files
+
+ The configuration parser had an unnecessary hardcoded limit on
+ variable names that was not checked consistently. Lift the limit.
+
+
+* da/mergetools-p4 (2012-10-11) 1 commit
+  (merged to 'next' on 2012-10-12 at 16f5c06)
+ + mergetools/p4merge: Handle "/dev/null"
+
+
+* fa/remote-svn (2012-10-07) 16 commits
+  (merged to 'next' on 2012-10-07 at 7b90cf4)
+ + Add a test script for remote-svn
+ + remote-svn: add marks-file regeneration
+ + Add a svnrdump-simulator replaying a dump file for testing
+ + remote-svn: add incremental import
+ + remote-svn: Activate import/export-marks for fast-import
+ + Create a note for every imported commit containing svn metadata
+ + vcs-svn: add fast_export_note to create notes
+ + Allow reading svn dumps from files via file:// urls
+ + remote-svn, vcs-svn: Enable fetching to private refs
+ + When debug==1, start fast-import with "--stats" instead of "--quiet"
+ + Add documentation for the 'bidi-import' capability of remote-helpers
+ + Connect fast-import to the remote-helper via pipe, adding 'bidi-import' capability
+ + Add argv_array_detach and argv_array_free_detached
+ + Add svndump_init_fd to allow reading dumps from arbitrary FDs
+ + Add git-remote-testsvn to Makefile
+ + Implement a remote helper for svn in C
+
+ A GSoC project.
+
+
+* jc/test-say-color-avoid-echo-escape (2012-10-11) 1 commit
+  (merged to 'next' on 2012-10-11 at 639036d)
+ + test-lib: Fix say_color () not to interpret \a\b\c in the message
+
+ Recent nd/wildmatch series was the first to reveal this ancient bug
+ in the test scaffolding.
+
+
+* jk/no-more-pre-exec-callback (2012-06-05) 1 commit
+  (merged to 'next' on 2012-10-12 at 69fed45)
+ + pager: drop "wait for output to run less" hack
+
+ (Originally merged to 'next' on 2012-07-23)
+ Removes a workaround for buggy version of less older than version
+ 406.
+
+
+* jk/peel-ref (2012-10-04) 4 commits
+  (merged to 'next' on 2012-10-08 at 4adfa2f)
+ + upload-pack: use peel_ref for ref advertisements
+ + peel_ref: check object type before loading
+ + peel_ref: do not return a null sha1
+ + peel_ref: use faster deref_tag_noverify
+
+ Speeds up "git upload-pack" (what is invoked by "git fetch" on the
+ other side of the connection) by reducing the cost to advertise the
+ branches and tags that are available in the repository.
+
+
+* jk/strbuf-detach-always-non-null (2012-10-18) 1 commit
+  (merged to 'next' on 2012-10-18 at 54561c7)
+ + strbuf: always return a non-NULL value from strbuf_detach
+
+
+* jm/diff-context-config (2012-10-02) 2 commits
+  (merged to 'next' on 2012-10-02 at e57700a)
+ + t4055: avoid use of sed 'a' command
+  (merged to 'next' on 2012-10-01 at 509a558)
+ + diff: diff.context configuration gives default to -U
+
+ Teaches a new configuration variable to "git diff" Porcelain and
+ its friends.
+
+
+* js/mingw-fflush-errno (2012-10-17) 1 commit
+  (merged to 'next' on 2012-10-18 at 43d6ebb)
+ + maybe_flush_or_die: move a too-loose Windows specific error
+
+
+* nd/attr-match-optim (2012-10-05) 2 commits
+  (merged to 'next' on 2012-10-08 at bfbdd8a)
+ + attr: avoid searching for basename on every match
+ + attr: avoid strlen() on every match
+ (this branch is used by as/check-ignore, nd/attr-match-optim-more and nd/wildmatch.)
+
+ Trivial and obvious optimization for finding attributes that match
+ a given path.
 
 --------------------------------------------------
 [Stalled]
 
 * rc/maint-complete-git-p4 (2012-09-24) 1 commit
-  (merged to 'next' on 2012-09-25 at 116e58f)
- + Teach git-completion about git p4
+ - Teach git-completion about git p4
 
  Comment from Pete will need to be addressed in a follow-up patch.
 
@@ -133,8 +267,7 @@ repositories listed at
 
 
 * jc/add-delete-default (2012-08-13) 1 commit
-  (merged to 'next' on 2012-10-11 at bd9e5cb)
- + git add: notice removal of tracked paths by default
+ - git add: notice removal of tracked paths by default
 
  "git add dir/" updated modified files and added new files, but does
  not notice removed files, which may be "Huh?" to some users.  They
@@ -181,15 +314,8 @@ repositories listed at
  logic to escape the ceilings the user thought to have specified.
 
 
-* js/mingw-fflush-errno (2012-10-17) 1 commit
-  (merged to 'next' on 2012-10-18 at 43d6ebb)
- + maybe_flush_or_die: move a too-loose Windows specific error
-
- Will merge to 'master' in the first batch after 1.8.0 ships.
-
-
 * mo/cvs-server-cleanup (2012-10-16) 10 commits
-  (merged to 'next' on 2012-10-18 at 5a60da1)
+  (merged to 'next' on 2012-10-25 at c70881d)
  + cvsserver status: provide real sticky info
  + cvsserver: cvs add: do not expand directory arguments
  + cvsserver: use whole CVS rev number in-process; don't strip "1." prefix
@@ -217,7 +343,8 @@ repositories listed at
  (this branch uses mo/cvs-server-cleanup.)
 
 
-* ta/doc-cleanup (2012-10-18) 5 commits
+* ta/doc-cleanup (2012-10-25) 6 commits
+ - Documentation: build html for all files in technical and howto
  - Documentation/howto: convert plain text files to asciidoc
  - Documentation/technical: convert plain text files to asciidoc
  - Change headline of technical/send-pack-pipeline.txt to not confuse its content with content from git-send-pack.txt
@@ -236,7 +363,11 @@ repositories listed at
  content in the "git diff --stat" output.
 
 
-* jc/prettier-pretty-note (2012-10-19) 7 commits
+* jc/prettier-pretty-note (2012-10-25) 11 commits
+ - Doc User-Manual: Patch cover letter, three dashes, and --notes
+ - Doc format-patch: clarify --notes use case
+ - Doc notes: Include the format-patch --notes option
+ - Doc SubmittingPatches: Mention --notes option after "cover letter"
  - Documentation: decribe format-patch --notes
  - format-patch --notes: show notes after three-dashes
  - format-patch: append --signature after notes
@@ -249,22 +380,15 @@ repositories listed at
 
 
 * jk/sh-setup-in-filter-branch (2012-10-18) 2 commits
-  (merged to 'next' on 2012-10-18 at 3864adc)
+  (merged to 'next' on 2012-10-25 at 3879f0e)
  + filter-branch: use git-sh-setup's ident parsing functions
  + git-sh-setup: refactor ident-parsing functions
 
  Will merge to 'master' in the second batch after 1.8.0 ships.
 
 
-* jk/strbuf-detach-always-non-null (2012-10-18) 1 commit
-  (merged to 'next' on 2012-10-18 at 54561c7)
- + strbuf: always return a non-NULL value from strbuf_detach
-
- Will merge to 'master' in the first batch after 1.8.0 ships.
-
-
 * nd/status-long (2012-10-18) 1 commit
-  (merged to 'next' on 2012-10-18 at 53940a1)
+  (merged to 'next' on 2012-10-25 at ff1b3a0)
  + status: add --long output format option
 
  Allow an earlier "--short" option on the command line to be
@@ -275,7 +399,7 @@ repositories listed at
 
 
 * rs/branch-del-symref (2012-10-18) 5 commits
-  (merged to 'next' on 2012-10-18 at 68ee254)
+  (merged to 'next' on 2012-10-25 at c2cd358)
  + branch: show targets of deleted symrefs, not sha1s
  + branch: skip commit checks when deleting symref branches
  + branch: delete symref branch, not its target
@@ -315,7 +439,7 @@ repositories listed at
 
 
 * jk/maint-http-init-not-in-result-handler (2012-10-12) 2 commits
-  (merged to 'next' on 2012-10-16 at cc88829)
+  (merged to 'next' on 2012-10-25 at 59d3687)
  + http: do not set up curl auth after a 401
  + remote-curl: do not call run_slot repeatedly
 
@@ -326,7 +450,7 @@ repositories listed at
 
 
 * nd/grep-true-path (2012-10-12) 1 commit
-  (merged to 'next' on 2012-10-16 at 8a75ac8)
+  (merged to 'next' on 2012-10-25 at 1c7d320)
  + grep: stop looking at random places for .gitattributes
 
  "git grep -e pattern <tree>" asked the attribute system to read
@@ -379,7 +503,7 @@ repositories listed at
 
 
 * rs/lock-correct-ref-during-delete (2012-10-16) 1 commit
-  (merged to 'next' on 2012-10-16 at 850b5b2)
+  (merged to 'next' on 2012-10-25 at 9341eea)
  + refs: lock symref that is to be deleted, not its target
 
  When "update-ref -d --no-deref SYM" tried to delete a symbolic ref
@@ -401,13 +525,13 @@ repositories listed at
  - dir.c: rename excluded_from_list() to is_excluded_from_list()
  - dir.c: rename path_excluded() to is_path_excluded()
  - dir.c: rename cryptic 'which' variable to more consistent name
- (this branch uses nd/attr-match-optim and nd/attr-match-optim-more; is tangled with nd/wildmatch.)
+ (this branch uses nd/attr-match-optim-more; is tangled with nd/wildmatch.)
 
  Duy helped to reroll this.
 
 
 * js/format-2047 (2012-10-18) 7 commits
-  (merged to 'next' on 2012-10-18 at 5b9a629)
+  (merged to 'next' on 2012-10-25 at 76d91fe)
  + format-patch tests: check quoting/encoding in To: and Cc: headers
  + format-patch: fix rfc2047 address encoding with respect to rfc822 specials
  + format-patch: make rfc2047 encoding more strict
@@ -419,8 +543,12 @@ repositories listed at
  Fixes many rfc2047 quoting issues in the output from format-patch.
 
 
-* km/send-email-compose-encoding (2012-10-10) 1 commit
-  (merged to 'next' on 2012-10-11 at d94bd05)
+* km/send-email-compose-encoding (2012-10-25) 5 commits
+ - git-send-email: add rfc2047 quoting for "=?"
+ - git-send-email: introduce quote_subject()
+ - git-send-email: skip RFC2047 quoting for ASCII subjects
+ - git-send-email: use compose-encoding for Subject
+  (merged to 'next' on 2012-10-25 at 5447367)
  + git-send-email: introduce compose-encoding
 
  "git send-email --compose" can let the user create a non-ascii
@@ -431,27 +559,15 @@ repositories listed at
 
 
 * so/prompt-command (2012-10-17) 4 commits
-  (merged to 'next' on 2012-10-17 at 0843a8b)
+  (merged to 'next' on 2012-10-25 at 79565a1)
  + coloured git-prompt: paint detached HEAD marker in red
-  (merged to 'next' on 2012-10-16 at adf81be)
  + Fix up colored git-prompt
-  (merged to 'next' on 2012-10-11 at 1a14825)
  + show color hints based on state of the git tree
  + Allow __git_ps1 to be used in PROMPT_COMMAND
 
  Updates __git_ps1 so that it can be used as $PROMPT_COMMAND,
  instead of being used for command substitution in $PS1, to embed
  color escape sequences in its output.
-
-
-* jc/test-say-color-avoid-echo-escape (2012-10-11) 1 commit
-  (merged to 'next' on 2012-10-11 at 639036d)
- + test-lib: Fix say_color () not to interpret \a\b\c in the message
-
- Recent nd/wildmatch series was the first to reveal this ancient bug
- in the test scaffolding.
-
- Will merge to 'master' in the first batch after 1.8.0 ships.
 
 
 * aw/rebase-am-failure-detection (2012-10-11) 1 commit
@@ -462,15 +578,8 @@ repositories listed at
  of format-patch aborting.
 
 
-* da/mergetools-p4 (2012-10-11) 1 commit
-  (merged to 'next' on 2012-10-12 at 16f5c06)
- + mergetools/p4merge: Handle "/dev/null"
-
- Will merge to 'master' in the first batch after 1.8.0 ships.
-
-
 * nd/wildmatch (2012-10-15) 13 commits
-  (merged to 'next' on 2012-10-16 at 5eaf3a4)
+  (merged to 'next' on 2012-10-25 at 510e8df)
  + Support "**" wildcard in .gitignore and .gitattributes
  + wildmatch: make /**/ match zero or more directories
  + wildmatch: adjust "**" behavior
@@ -484,7 +593,7 @@ repositories listed at
  + Import wildmatch from rsync
  + ctype: support iscntrl, ispunct, isxdigit and isprint
  + ctype: make sane_ctype[] const array
- (this branch uses nd/attr-match-optim and nd/attr-match-optim-more; is tangled with as/check-ignore.)
+ (this branch uses nd/attr-match-optim-more; is tangled with as/check-ignore.)
 
  Allows pathname patterns in .gitignore and .gitattributes files
  with double-asterisks "foo/**/bar" to match any number of directory
@@ -509,20 +618,8 @@ repositories listed at
  "parents", etc.
 
 
-* nd/attr-match-optim (2012-10-05) 2 commits
-  (merged to 'next' on 2012-10-08 at bfbdd8a)
- + attr: avoid searching for basename on every match
- + attr: avoid strlen() on every match
- (this branch is used by as/check-ignore, nd/attr-match-optim-more and nd/wildmatch.)
-
- Trivial and obvious optimization for finding attributes that match
- a given path.
-
- Will merge to 'master' in the first batch after 1.8.0 ships.
-
-
 * nd/attr-match-optim-more (2012-10-15) 7 commits
-  (merged to 'next' on 2012-10-16 at 9baac99)
+  (merged to 'next' on 2012-10-25 at 09f70ce)
  + attr: more matching optimizations from .gitignore
  + gitignore: make pattern parsing code a separate function
  + exclude: split pathname matching code into a separate function
@@ -530,14 +627,14 @@ repositories listed at
  + exclude: split basename matching code into a separate function
  + exclude: stricten a length check in EXC_FLAG_ENDSWITH case
  + Merge commit 'f9f6e2c' into nd/attr-match-optim-more
- (this branch is used by as/check-ignore and nd/wildmatch; uses nd/attr-match-optim.)
+ (this branch is used by as/check-ignore and nd/wildmatch.)
 
  Start laying the foundation to build the "wildmatch" after we can
  agree on its desired semantics.
 
 
 * jc/grep-pcre-loose-ends (2012-10-09) 7 commits
-  (merged to 'next' on 2012-10-11 at fec8530)
+  (merged to 'next' on 2012-10-25 at 2ea9b27)
  + log: honor grep.* configuration
  + log --grep: accept --basic-regexp and --perl-regexp
  + log --grep: use the same helper to set -E/-F options as "git grep"
@@ -553,67 +650,8 @@ repositories listed at
  Will merge to 'master' in the second batch after 1.8.0 ships.
 
 
-* jk/peel-ref (2012-10-04) 4 commits
-  (merged to 'next' on 2012-10-08 at 4adfa2f)
- + upload-pack: use peel_ref for ref advertisements
- + peel_ref: check object type before loading
- + peel_ref: do not return a null sha1
- + peel_ref: use faster deref_tag_noverify
-
- Speeds up "git upload-pack" (what is invoked by "git fetch" on the
- other side of the connection) by reducing the cost to advertise the
- branches and tags that are available in the repository.
-
- Will merge to 'master' in the first batch after 1.8.0 ships.
-
-
-* fa/remote-svn (2012-10-07) 16 commits
-  (merged to 'next' on 2012-10-07 at 7b90cf4)
- + Add a test script for remote-svn
- + remote-svn: add marks-file regeneration
- + Add a svnrdump-simulator replaying a dump file for testing
- + remote-svn: add incremental import
- + remote-svn: Activate import/export-marks for fast-import
- + Create a note for every imported commit containing svn metadata
- + vcs-svn: add fast_export_note to create notes
- + Allow reading svn dumps from files via file:// urls
- + remote-svn, vcs-svn: Enable fetching to private refs
- + When debug==1, start fast-import with "--stats" instead of "--quiet"
- + Add documentation for the 'bidi-import' capability of remote-helpers
- + Connect fast-import to the remote-helper via pipe, adding 'bidi-import' capability
- + Add argv_array_detach and argv_array_free_detached
- + Add svndump_init_fd to allow reading dumps from arbitrary FDs
- + Add git-remote-testsvn to Makefile
- + Implement a remote helper for svn in C
-
- A GSoC project.
- Will merge to 'master' in the first batch after 1.8.0 ships.
-
-
-* bw/config-lift-variable-name-length-limit (2012-10-01) 1 commit
-  (merged to 'next' on 2012-10-08 at 69f54f4)
- + Remove the hard coded length limit on variable names in config files
-
- The configuration parser had an unnecessary hardcoded limit on
- variable names that was not checked consistently. Lift the limit.
-
- Will merge to 'master' in the first batch after 1.8.0 ships.
-
-
-* jm/diff-context-config (2012-10-02) 2 commits
-  (merged to 'next' on 2012-10-02 at e57700a)
- + t4055: avoid use of sed 'a' command
-  (merged to 'next' on 2012-10-01 at 509a558)
- + diff: diff.context configuration gives default to -U
-
- Teaches a new configuration variable to "git diff" Porcelain and
- its friends.
-
- Will merge to 'master' in the first batch after 1.8.0 ships.
-
-
 * jl/submodule-add-by-name (2012-09-30) 2 commits
-  (merged to 'next' on 2012-10-08 at 9408d8d)
+  (merged to 'next' on 2012-10-25 at a322082)
  + submodule add: Fail when .git/modules/<name> already exists unless forced
  + Teach "git submodule add" the --name option
 
@@ -631,7 +669,7 @@ repositories listed at
 
 
 * jl/submodule-rm (2012-09-29) 1 commit
-  (merged to 'next' on 2012-10-01 at 4e5c4fc)
+  (merged to 'next' on 2012-10-25 at 0fb5876)
  + submodule: teach rm to remove submodules unless they contain a git directory
 
  "git rm submodule" cannot blindly remove a submodule directory as
@@ -646,26 +684,43 @@ repositories listed at
 
 
 * nd/pretty-placeholder-with-color-option (2012-09-30) 9 commits
- - pretty: support %>> that steal trailing spaces
- - pretty: support truncating in %>, %< and %><
- - pretty: support padding placeholders, %< %> and %><
- - pretty: two phase conversion for non utf-8 commits
- - utf8.c: add utf8_strnwidth() with the ability to skip ansi sequences
- - utf8.c: move display_mode_esc_sequence_len() for use by other functions
- - pretty: support %C(auto[,N]) to turn on coloring on next placeholder(s)
- - pretty: split parsing %C into a separate function
- - pretty: share code between format_decoration and show_decorations
+ . pretty: support %>> that steal trailing spaces
+ . pretty: support truncating in %>, %< and %><
+ . pretty: support padding placeholders, %< %> and %><
+ . pretty: two phase conversion for non utf-8 commits
+ . utf8.c: add utf8_strnwidth() with the ability to skip ansi sequences
+ . utf8.c: move display_mode_esc_sequence_len() for use by other functions
+ . pretty: support %C(auto[,N]) to turn on coloring on next placeholder(s)
+ . pretty: split parsing %C into a separate function
+ . pretty: share code between format_decoration and show_decorations
+
+ This causes warnings with -Wuninitialized, so I've ejected it from pu
+ for the time being.
 
 
-* jk/no-more-pre-exec-callback (2012-06-05) 1 commit
-  (merged to 'next' on 2012-10-12 at 69fed45)
- + pager: drop "wait for output to run less" hack
+* jc/maint-fetch-tighten-refname-check (2012-10-19) 1 commit
+ - get_fetch_map(): tighten checks on dest refs
 
- (Originally merged to 'next' on 2012-07-23)
- Removes a workaround for buggy version of less older than version
- 406.
+ This was split out from discarded jc/maint-push-refs-all topic.
 
- Will merge to 'master' in the first batch after 1.8.0 ships.
+
+* jh/symbolic-ref-d (2012-10-21) 1 commit
+ - git symbolic-ref --delete $symref
+
+ Add "symbolic-ref -d SYM" to delete a symbolic ref SYM.
+
+ It is already possible to remove a symbolic ref with "update-ref -d
+ --no-deref", but it may be a good addition for completeness.
+
+
+* jh/update-ref-d-through-symref (2012-10-21) 2 commits
+ - Fix failure to delete a packed ref through a symref
+ - t1400-update-ref: Add test verifying bug with symrefs in delete_ref()
+ (this branch uses rs/branch-del-symref.)
+
+ "update-ref -d --deref SYM" to delete a ref through a symbolic ref
+ that points to it did not remove it correctly.
+
 
 --------------------------------------------------
 [Discarded]
@@ -714,11 +769,11 @@ repositories listed at
  - get_fetch_map(): tighten checks on dest refs
  - [BROKEN] fetch/push: allow refs/*:refs/*
 
-  This is broken (see the log message there).  "git fetch/push
-  $there 'refs/*:refs/*'" already propagates heads, tags, notes,
-  etc. hierarchies; an attempt to propagate refs/stash will fail
-  against an older version of the other side and is not worth
-  supporting.
+ This is broken (see the log message there).  "git fetch/push
+ $there 'refs/*:refs/*'" already propagates heads, tags, notes,
+ etc. hierarchies; an attempt to propagate refs/stash will fail
+ against an older version of the other side and is not worth
+ supporting.
 
 
 * tx/relative-in-the-future (2012-08-16) 2 commits
