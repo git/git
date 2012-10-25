@@ -270,7 +270,6 @@ cmd_add()
 			;;
 		--reference=*)
 			reference="$1"
-			shift
 			;;
 		--)
 			shift
