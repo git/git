@@ -46,7 +46,7 @@ check_status_options() {
 	echo "Error from cvs status: $1 $2" >> "${WORKDIR}/marked.log"
 	return 1;
     fi
-    got="$(sed -n -e 's/^\s*Sticky Options:\s*//p' "${WORKDIR}/status.out")"
+    got="$(sed -n -e 's/^[ 	]*Sticky Options:[ 	]*//p' "${WORKDIR}/status.out")"
     expect="$3"
     if [ x"$expect" = x"" ] ; then
 	expect="(none)"
