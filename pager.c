@@ -6,6 +6,12 @@
 #define DEFAULT_PAGER "less"
 #endif
 
+struct pager_config {
+	const char *cmd;
+	int want;
+	char *value;
+};
+
 /*
  * This is split up from the rest of git so that we can do
  * something different on Windows.
@@ -140,4 +146,32 @@ int decimal_width(int number)
 	for (width = 1, i = 10; i <= number; width++)
 		i *= 10;
 	return width;
+}
+
+static int pager_command_config(const char *var, const char *value, void *data)
+{
+	struct pager_config *c = data;
+	if (!prefixcmp(var, "pager.") && !strcmp(var + 6, c->cmd)) {
+		int b = git_config_maybe_bool(var, value);
+		if (b >= 0)
+			c->want = b;
+		else {
+			c->want = 1;
+			c->value = xstrdup(value);
+		}
+	}
+	return 0;
+}
+
+/* returns 0 for "no pager", 1 for "use pager", and -1 for "not specified" */
+int check_pager_config(const char *cmd)
+{
+	struct pager_config c;
+	c.cmd = cmd;
+	c.want = -1;
+	c.value = NULL;
+	git_config(pager_command_config, &c);
+	if (c.value)
+		pager_program = c.value;
+	return c.want;
 }
