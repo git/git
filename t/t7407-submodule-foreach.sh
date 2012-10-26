@@ -226,14 +226,14 @@ test_expect_success 'test "status --recursive"' '
 	test_cmp expect actual
 '
 
-sed -e "/nested1 /s/.*/+$nested1sha1 nested1 (file2~1)/;/sub[1-3]/d" < expect > expect2
+sed -e "/nested2 /s/.*/+$nested2sha1 nested1\/nested2 (file2~1)/;/sub[1-3]/d" < expect > expect2
 mv -f expect2 expect
 
 test_expect_success 'ensure "status --cached --recursive" preserves the --cached flag' '
 	(
 		cd clone3 &&
 		(
-			cd nested1 &&
+			cd nested1/nested2 &&
 			test_commit file2
 		) &&
 		git submodule status --cached --recursive -- nested1 > ../actual
