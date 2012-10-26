@@ -201,16 +201,6 @@ static void show_edge(struct commit *commit)
 	printf("-%s\n", sha1_to_hex(commit->object.sha1));
 }
 
-void print_commit_list(struct commit_list *list,
-		       const char *format_cur,
-		       const char *format_last)
-{
-	for ( ; list; list = list->next) {
-		const char *format = list->next ? format_cur : format_last;
-		printf(format, sha1_to_hex(list->item->object.sha1));
-	}
-}
-
 static void print_var_str(const char *var, const char *val)
 {
 	printf("%s='%s'\n", var, val);
