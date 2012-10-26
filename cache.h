@@ -1265,8 +1265,15 @@ struct startup_info {
 };
 extern struct startup_info *startup_info;
 
-/* builtin/merge.c */
-int checkout_fast_forward(const unsigned char *from, const unsigned char *to);
+/* merge.c */
+struct commit_list;
+int try_merge_command(const char *strategy, size_t xopts_nr,
+		const char **xopts, struct commit_list *common,
+		const char *head_arg, struct commit_list *remotes);
+int checkout_fast_forward(const unsigned char *from,
+			  const unsigned char *to,
+			  int overwrite_ignore);
+
 
 int sane_execvp(const char *file, char *const argv[]);
 
