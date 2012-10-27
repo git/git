@@ -118,7 +118,7 @@ static char *parse_name_and_email(char *buffer, char **name,
 	while (isspace(*nstart) && nstart < left)
 		++nstart;
 	nend = left-1;
-	while (isspace(*nend) && nend > nstart)
+	while (nend > nstart && isspace(*nend))
 		--nend;
 
 	*name = (nstart < nend ? nstart : NULL);
