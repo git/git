@@ -622,6 +622,28 @@ static dev_t get_device_or_die(const char *path, const char *prefix, int prefix_
 }
 
 /*
+ * A "string_list_each_func_t" function that normalizes an entry from
+ * GIT_CEILING_DIRECTORIES or discards it if unusable.
+ */
+static int normalize_ceiling_entry(struct string_list_item *item, void *unused)
+{
+	const char *ceil = item->string;
+	int len = strlen(ceil);
+	char buf[PATH_MAX+1];
+
+	if (len == 0 || len > PATH_MAX || !is_absolute_path(ceil))
+		return 0;
+	if (normalize_path_copy(buf, ceil) < 0)
+		return 0;
+	len = strlen(buf);
+	if (len > 1 && buf[len-1] == '/')
+		buf[--len] = '\0';
+	free(item->string);
+	item->string = xstrdup(buf);
+	return 1;
+}
+
+/*
  * We cannot decide in this function whether we are in the work tree or
  * not, since the config can only be read _after_ this function was called.
  */
@@ -659,6 +681,7 @@ static const char *setup_git_directory_gently_1(int *nongit_ok)
 
 	if (env_ceiling_dirs) {
 		string_list_split(&ceiling_dirs, env_ceiling_dirs, PATH_SEP, -1);
+		filter_string_list(&ceiling_dirs, 0, normalize_ceiling_entry, NULL);
 		ceil_offset = longest_ancestor_length(cwd, &ceiling_dirs);
 		string_list_clear(&ceiling_dirs, 0);
 	}
