@@ -12,6 +12,7 @@
  */
 #include "cache.h"
 #include "strbuf.h"
+#include "string-list.h"
 
 static char bad_path[] = "/bad-path/";
 
@@ -582,20 +583,22 @@ int normalize_path_copy(char *dst, const char *src)
  */
 int longest_ancestor_length(const char *path, const char *prefix_list)
 {
+	struct string_list prefixes = STRING_LIST_INIT_DUP;
 	char buf[PATH_MAX+1];
-	const char *ceil, *colon;
-	int len, max_len = -1;
+	int i, max_len = -1;
 
 	if (prefix_list == NULL || !strcmp(path, "/"))
 		return -1;
 
-	for (colon = ceil = prefix_list; *colon; ceil = colon+1) {
-		for (colon = ceil; *colon && *colon != PATH_SEP; colon++);
-		len = colon - ceil;
+	string_list_split(&prefixes, prefix_list, PATH_SEP, -1);
+
+	for (i = 0; i < prefixes.nr; i++) {
+		const char *ceil = prefixes.items[i].string;
+		int len = strlen(ceil);
+
 		if (len == 0 || len > PATH_MAX || !is_absolute_path(ceil))
 			continue;
-		strlcpy(buf, ceil, len+1);
-		if (normalize_path_copy(buf, buf) < 0)
+		if (normalize_path_copy(buf, ceil) < 0)
 			continue;
 		len = strlen(buf);
 		if (len > 0 && buf[len-1] == '/')
@@ -608,6 +611,7 @@ int longest_ancestor_length(const char *path, const char *prefix_list)
 		}
 	}
 
+	string_list_clear(&prefixes, 0);
 	return max_len;
 }
 
