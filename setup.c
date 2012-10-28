@@ -1,5 +1,6 @@
 #include "cache.h"
 #include "dir.h"
+#include "string-list.h"
 
 static int inside_git_dir = -1;
 static int inside_work_tree = -1;
@@ -627,10 +628,11 @@ static dev_t get_device_or_die(const char *path, const char *prefix, int prefix_
 static const char *setup_git_directory_gently_1(int *nongit_ok)
 {
 	const char *env_ceiling_dirs = getenv(CEILING_DIRECTORIES_ENVIRONMENT);
+	struct string_list ceiling_dirs = STRING_LIST_INIT_DUP;
 	static char cwd[PATH_MAX+1];
 	const char *gitdirenv, *ret;
 	char *gitfile;
-	int len, offset, offset_parent, ceil_offset;
+	int len, offset, offset_parent, ceil_offset = -1;
 	dev_t current_device = 0;
 	int one_filesystem = 1;
 
@@ -655,7 +657,12 @@ static const char *setup_git_directory_gently_1(int *nongit_ok)
 	if (gitdirenv)
 		return setup_explicit_git_dir(gitdirenv, cwd, len, nongit_ok);
 
-	ceil_offset = longest_ancestor_length(cwd, env_ceiling_dirs);
+	if (env_ceiling_dirs) {
+		string_list_split(&ceiling_dirs, env_ceiling_dirs, PATH_SEP, -1);
+		ceil_offset = longest_ancestor_length(cwd, &ceiling_dirs);
+		string_list_clear(&ceiling_dirs, 0);
+	}
+
 	if (ceil_offset < 0 && has_dos_drive_prefix(cwd))
 		ceil_offset = 1;
 

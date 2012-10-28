@@ -570,30 +570,27 @@ int normalize_path_copy(char *dst, const char *src)
 
 /*
  * path = Canonical absolute path
- * prefix_list = Colon-separated list of absolute paths
+ * prefixes = string_list containing absolute paths
  *
- * Determines, for each path in prefix_list, whether the "prefix" really
+ * Determines, for each path in prefixes, whether the "prefix" really
  * is an ancestor directory of path.  Returns the length of the longest
  * ancestor directory, excluding any trailing slashes, or -1 if no prefix
- * is an ancestor.  (Note that this means 0 is returned if prefix_list is
- * "/".) "/foo" is not considered an ancestor of "/foobar".  Directories
+ * is an ancestor.  (Note that this means 0 is returned if prefixes is
+ * ["/"].) "/foo" is not considered an ancestor of "/foobar".  Directories
  * are not considered to be their own ancestors.  path must be in a
  * canonical form: empty components, or "." or ".." components are not
- * allowed.  prefix_list may be null, which is like "".
+ * allowed.  Empty strings in prefixes are ignored.
  */
-int longest_ancestor_length(const char *path, const char *prefix_list)
+int longest_ancestor_length(const char *path, struct string_list *prefixes)
 {
-	struct string_list prefixes = STRING_LIST_INIT_DUP;
 	char buf[PATH_MAX+1];
 	int i, max_len = -1;
 
-	if (prefix_list == NULL || !strcmp(path, "/"))
+	if (!strcmp(path, "/"))
 		return -1;
 
-	string_list_split(&prefixes, prefix_list, PATH_SEP, -1);
-
-	for (i = 0; i < prefixes.nr; i++) {
-		const char *ceil = prefixes.items[i].string;
+	for (i = 0; i < prefixes->nr; i++) {
+		const char *ceil = prefixes->items[i].string;
 		int len = strlen(ceil);
 
 		if (len == 0 || len > PATH_MAX || !is_absolute_path(ceil))
@@ -611,7 +608,6 @@ int longest_ancestor_length(const char *path, const char *prefix_list)
 		}
 	}
 
-	string_list_clear(&prefixes, 0);
 	return max_len;
 }
 

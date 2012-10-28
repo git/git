@@ -1,4 +1,5 @@
 #include "cache.h"
+#include "string-list.h"
 
 int main(int argc, char **argv)
 {
@@ -30,7 +31,12 @@ int main(int argc, char **argv)
 	}
 
 	if (argc == 4 && !strcmp(argv[1], "longest_ancestor_length")) {
-		int len = longest_ancestor_length(argv[2], argv[3]);
+		int len;
+		struct string_list ceiling_dirs = STRING_LIST_INIT_DUP;
+
+		string_list_split(&ceiling_dirs, argv[3], PATH_SEP, -1);
+		len = longest_ancestor_length(argv[2], &ceiling_dirs);
+		string_list_clear(&ceiling_dirs, 0);
 		printf("%d\n", len);
 		return 0;
 	}
