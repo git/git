@@ -104,10 +104,10 @@ static int diff_grep(struct diff_filepair *p, struct diff_options *o,
 		if (!mf2.ptr)
 			return 0; /* ignore unmerged */
 		/* created "two" -- does it have what we are looking for? */
-		hit = !regexec(regexp, p->two->data, 1, &regmatch, 0);
+		hit = !regexec(regexp, mf2.ptr, 1, &regmatch, 0);
 	} else if (!mf2.ptr) {
 		/* removed "one" -- did it have what we are looking for? */
-		hit = !regexec(regexp, p->one->data, 1, &regmatch, 0);
+		hit = !regexec(regexp, mf1.ptr, 1, &regmatch, 0);
 	} else {
 		/*
 		 * We have both sides; need to run textual diff and see if
