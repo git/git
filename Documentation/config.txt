@@ -538,14 +538,14 @@ core.pager::
 	`LESS` variable to some other value.  Alternately,
 	these settings can be overridden on a project or
 	global basis by setting the `core.pager` option.
-	Setting `core.pager` has no affect on the `LESS`
+	Setting `core.pager` has no effect on the `LESS`
 	environment variable behaviour above, so if you want
 	to override git's default settings this way, you need
 	to be explicit.  For example, to disable the S option
 	in a backward compatible manner, set `core.pager`
-	to `less -+$LESS -FRX`.  This will be passed to the
-	shell by git, which will translate the final command to
-	`LESS=FRSX less -+FRSX -FRX`.
+	to `less -+S`.  This will be passed to the shell by
+	git, which will translate the final command to
+	`LESS=FRSX less -+S`.
 
 core.whitespace::
 	A comma separated list of common whitespace problems to
