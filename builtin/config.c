@@ -165,7 +165,7 @@ static int collect_config(const char *key_, const char *value_, void *cb)
 static int get_value(const char *key_, const char *regex_)
 {
 	int ret = CONFIG_GENERIC_ERROR;
-	struct strbuf_list values = {0};
+	struct strbuf_list values = {NULL};
 	int i;
 
 	if (use_key_regexp) {
