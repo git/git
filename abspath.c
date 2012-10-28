@@ -35,7 +35,14 @@ static const char *real_path_internal(const char *path, int die_on_error)
 {
 	static char bufs[2][PATH_MAX + 1], *buf = bufs[0], *next_buf = bufs[1];
 	char *retval = NULL;
+
+	/*
+	 * If we have to temporarily chdir(), store the original CWD
+	 * here so that we can chdir() back to it at the end of the
+	 * function:
+	 */
 	char cwd[1024] = "";
+
 	int buf_index = 1;
 
 	int depth = MAXDEPTH;
