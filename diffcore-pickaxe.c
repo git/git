@@ -163,8 +163,6 @@ static unsigned int contains(struct diff_filespec *one, struct diff_options *o,
 	unsigned int cnt;
 	unsigned long sz;
 	const char *data;
-	if (!o->pickaxe[0])
-		return 0;
 	if (diff_populate_filespec(one, 0))
 		return 0;
 
@@ -206,6 +204,9 @@ static unsigned int contains(struct diff_filespec *one, struct diff_options *o,
 static int has_changes(struct diff_filepair *p, struct diff_options *o,
 		       regex_t *regexp, kwset_t kws)
 {
+	if (!o->pickaxe[0])
+		return 0;
+
 	if (!DIFF_FILE_VALID(p->one)) {
 		if (!DIFF_FILE_VALID(p->two))
 			return 0; /* ignore unmerged */
