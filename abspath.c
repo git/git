@@ -153,6 +153,11 @@ const char *real_path(const char *path)
 	return real_path_internal(path, 1);
 }
 
+const char *real_path_if_valid(const char *path)
+{
+	return real_path_internal(path, 0);
+}
+
 static const char *get_pwd_cwd(void)
 {
 	static char cwd[PATH_MAX + 1];
