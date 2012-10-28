@@ -136,26 +136,6 @@ void filter_string_list(struct string_list *list, int free_util,
 	list->nr = dst;
 }
 
-char *string_list_longest_prefix(const struct string_list *prefixes,
-				 const char *string)
-{
-	int i, max_len = -1;
-	char *retval = NULL;
-
-	for (i = 0; i < prefixes->nr; i++) {
-		char *prefix = prefixes->items[i].string;
-		if (!prefixcmp(string, prefix)) {
-			int len = strlen(prefix);
-			if (len > max_len) {
-				retval = prefix;
-				max_len = len;
-			}
-		}
-	}
-
-	return retval;
-}
-
 void string_list_clear(struct string_list *list, int free_util)
 {
 	if (list->items) {
