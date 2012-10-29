@@ -109,6 +109,10 @@ OPTIONS
 	format. See linkgit:git-status[1] for details. Implies
 	`--dry-run`.
 
+--long::
+	When doing a dry-run, give the output in a the long-format.
+	Implies `--dry-run`.
+
 -z::
 --null::
 	When showing `short` or `porcelain` status output, terminate

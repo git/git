@@ -112,10 +112,11 @@ static const char *only_include_assumed;
 static struct strbuf message = STRBUF_INIT;
 
 static enum {
+	STATUS_FORMAT_NONE = 0,
 	STATUS_FORMAT_LONG,
 	STATUS_FORMAT_SHORT,
 	STATUS_FORMAT_PORCELAIN
-} status_format = STATUS_FORMAT_LONG;
+} status_format;
 
 static int opt_parse_m(const struct option *opt, const char *arg, int unset)
 {
@@ -454,6 +455,7 @@ static int run_status(FILE *fp, const char *index_file, const char *prefix, int 
 	case STATUS_FORMAT_PORCELAIN:
 		wt_porcelain_print(s);
 		break;
+	case STATUS_FORMAT_NONE:
 	case STATUS_FORMAT_LONG:
 		wt_status_print(s);
 		break;
@@ -1058,9 +1060,13 @@ static int parse_and_validate_options(int argc, const char *argv[],
 	if (all && argc > 0)
 		die(_("Paths with -a does not make sense."));
 
-	if (s->null_termination && status_format == STATUS_FORMAT_LONG)
-		status_format = STATUS_FORMAT_PORCELAIN;
-	if (status_format != STATUS_FORMAT_LONG)
+	if (s->null_termination) {
+		if (status_format == STATUS_FORMAT_NONE)
+			status_format = STATUS_FORMAT_PORCELAIN;
+		else if (status_format == STATUS_FORMAT_LONG)
+			die(_("--long and -z are incompatible"));
+	}
+	if (status_format != STATUS_FORMAT_NONE)
 		dry_run = 1;
 
 	return argc;
@@ -1159,6 +1165,9 @@ int cmd_status(int argc, const char **argv, const char *prefix)
 		OPT_SET_INT(0, "porcelain", &status_format,
 			    N_("machine-readable output"),
 			    STATUS_FORMAT_PORCELAIN),
+		OPT_SET_INT(0, "long", &status_format,
+			    N_("show status in long format (default)"),
+			    STATUS_FORMAT_LONG),
 		OPT_BOOLEAN('z', "null", &s.null_termination,
 			    N_("terminate entries with NUL")),
 		{ OPTION_STRING, 'u', "untracked-files", &untracked_files_arg,
@@ -1186,8 +1195,12 @@ int cmd_status(int argc, const char **argv, const char *prefix)
 			     builtin_status_usage, 0);
 	finalize_colopts(&s.colopts, -1);
 
-	if (s.null_termination && status_format == STATUS_FORMAT_LONG)
-		status_format = STATUS_FORMAT_PORCELAIN;
+	if (s.null_termination) {
+		if (status_format == STATUS_FORMAT_NONE)
+			status_format = STATUS_FORMAT_PORCELAIN;
+		else if (status_format == STATUS_FORMAT_LONG)
+			die(_("--long and -z are incompatible"));
+	}
 
 	handle_untracked_files_arg(&s);
 	if (show_ignored_in_status)
@@ -1216,6 +1229,7 @@ int cmd_status(int argc, const char **argv, const char *prefix)
 	case STATUS_FORMAT_PORCELAIN:
 		wt_porcelain_print(&s);
 		break;
+	case STATUS_FORMAT_NONE:
 	case STATUS_FORMAT_LONG:
 		s.verbose = verbose;
 		s.ignore_submodule_arg = ignore_submodule_arg;
@@ -1386,6 +1400,9 @@ int cmd_commit(int argc, const char **argv, const char *prefix)
 		OPT_BOOLEAN(0, "branch", &s.show_branch, N_("show branch information")),
 		OPT_SET_INT(0, "porcelain", &status_format,
 			    N_("machine-readable output"), STATUS_FORMAT_PORCELAIN),
+		OPT_SET_INT(0, "long", &status_format,
+			    N_("show status in long format (default)"),
+			    STATUS_FORMAT_LONG),
 		OPT_BOOLEAN('z', "null", &s.null_termination,
 			    N_("terminate entries with NUL")),
 		OPT_BOOLEAN(0, "amend", &amend, N_("amend previous commit")),

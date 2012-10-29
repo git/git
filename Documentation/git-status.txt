@@ -38,6 +38,9 @@ OPTIONS
 	across git versions and regardless of user configuration. See
 	below for details.
 
+--long::
+	Give the output in the long-format. This is the default.
+
 -u[<mode>]::
 --untracked-files[=<mode>]::
 	Show untracked files.
