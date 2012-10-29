@@ -262,6 +262,25 @@ test_expect_success 'config information was renamed, too' \
 	"test $(git config branch.s.dummy) = Hello &&
 	 test_must_fail git config branch.s/s/dummy"
 
+test_expect_success 'deleting a symref' '
+	git branch target &&
+	git symbolic-ref refs/heads/symref refs/heads/target &&
+	echo "Deleted branch symref (was refs/heads/target)." >expect &&
+	git branch -d symref >actual &&
+	test_path_is_file .git/refs/heads/target &&
+	test_path_is_missing .git/refs/heads/symref &&
+	test_i18ncmp expect actual
+'
+
+test_expect_success 'deleting a dangling symref' '
+	git symbolic-ref refs/heads/dangling-symref nowhere &&
+	test_path_is_file .git/refs/heads/dangling-symref &&
+	echo "Deleted branch dangling-symref (was nowhere)." >expect &&
+	git branch -d dangling-symref >actual &&
+	test_path_is_missing .git/refs/heads/dangling-symref &&
+	test_i18ncmp expect actual
+'
+
 test_expect_success 'renaming a symref is not allowed' \
 '
 	git symbolic-ref refs/heads/master2 refs/heads/master &&

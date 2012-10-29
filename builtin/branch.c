@@ -154,10 +154,37 @@ static int branch_merged(int kind, const char *name,
 	return merged;
 }
 
+static int check_branch_commit(const char *branchname, const char *refname,
+			       unsigned char *sha1, struct commit *head_rev,
+			       int kinds, int force)
+{
+	struct commit *rev = lookup_commit_reference(sha1);
+	if (!rev) {
+		error(_("Couldn't look up commit object for '%s'"), refname);
+		return -1;
+	}
+	if (!force && !branch_merged(kinds, branchname, rev, head_rev)) {
+		error(_("The branch '%s' is not fully merged.\n"
+		      "If you are sure you want to delete it, "
+		      "run 'git branch -D %s'."), branchname, branchname);
+		return -1;
+	}
+	return 0;
+}
+
+static void delete_branch_config(const char *branchname)
+{
+	struct strbuf buf = STRBUF_INIT;
+	strbuf_addf(&buf, "branch.%s", branchname);
+	if (git_config_rename_section(buf.buf, NULL) < 0)
+		warning(_("Update of config-file failed"));
+	strbuf_release(&buf);
+}
+
 static int delete_branches(int argc, const char **argv, int force, int kinds,
 			   int quiet)
 {
-	struct commit *rev, *head_rev = NULL;
+	struct commit *head_rev = NULL;
 	unsigned char sha1[20];
 	char *name = NULL;
 	const char *fmt;
@@ -187,6 +214,9 @@ static int delete_branches(int argc, const char **argv, int force, int kinds,
 			die(_("Couldn't look up commit object for HEAD"));
 	}
 	for (i = 0; i < argc; i++, strbuf_release(&bname)) {
+		const char *target;
+		int flags = 0;
+
 		strbuf_branchname(&bname, argv[i]);
 		if (kinds == REF_LOCAL_BRANCH && !strcmp(head, bname.buf)) {
 			error(_("Cannot delete the branch '%s' "
@@ -198,7 +228,9 @@ static int delete_branches(int argc, const char **argv, int force, int kinds,
 		free(name);
 
 		name = mkpathdup(fmt, bname.buf);
-		if (read_ref(name, sha1)) {
+		target = resolve_ref_unsafe(name, sha1, 0, &flags);
+		if (!target ||
+		    (!(flags & REF_ISSYMREF) && is_null_sha1(sha1))) {
 			error(remote_branch
 			      ? _("remote branch '%s' not found.")
 			      : _("branch '%s' not found."), bname.buf);
@@ -206,40 +238,31 @@ static int delete_branches(int argc, const char **argv, int force, int kinds,
 			continue;
 		}
 
-		rev = lookup_commit_reference(sha1);
-		if (!rev) {
-			error(_("Couldn't look up commit object for '%s'"), name);
+		if (!(flags & REF_ISSYMREF) &&
+		    check_branch_commit(bname.buf, name, sha1, head_rev, kinds,
+					force)) {
 			ret = 1;
 			continue;
 		}
 
-		if (!force && !branch_merged(kinds, bname.buf, rev, head_rev)) {
-			error(_("The branch '%s' is not fully merged.\n"
-			      "If you are sure you want to delete it, "
-			      "run 'git branch -D %s'."), bname.buf, bname.buf);
-			ret = 1;
-			continue;
-		}
-
-		if (delete_ref(name, sha1, 0)) {
+		if (delete_ref(name, sha1, REF_NODEREF)) {
 			error(remote_branch
 			      ? _("Error deleting remote branch '%s'")
 			      : _("Error deleting branch '%s'"),
 			      bname.buf);
 			ret = 1;
-		} else {
-			struct strbuf buf = STRBUF_INIT;
-			if (!quiet)
-				printf(remote_branch
-				       ? _("Deleted remote branch %s (was %s).\n")
-				       : _("Deleted branch %s (was %s).\n"),
-				       bname.buf,
-				       find_unique_abbrev(sha1, DEFAULT_ABBREV));
-			strbuf_addf(&buf, "branch.%s", bname.buf);
-			if (git_config_rename_section(buf.buf, NULL) < 0)
-				warning(_("Update of config-file failed"));
-			strbuf_release(&buf);
+			continue;
 		}
+		if (!quiet) {
+			printf(remote_branch
+			       ? _("Deleted remote branch %s (was %s).\n")
+			       : _("Deleted branch %s (was %s).\n"),
+			       bname.buf,
+			       (flags & REF_ISSYMREF)
+			       ? target
+			       : find_unique_abbrev(sha1, DEFAULT_ABBREV));
+		}
+		delete_branch_config(bname.buf);
 	}
 
 	free(name);
