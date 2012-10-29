@@ -191,28 +191,52 @@ require_clean_work_tree () {
 	fi
 }
 
+# Generate a sed script to parse identities from a commit.
+#
+# Reads the commit from stdin, which should be in raw format (e.g., from
+# cat-file or "--pretty=raw").
+#
+# The first argument specifies the ident line to parse (e.g., "author"), and
+# the second specifies the environment variable to put it in (e.g., "AUTHOR"
+# for "GIT_AUTHOR_*"). Multiple pairs can be given to parse author and
+# committer.
+pick_ident_script () {
+	while test $# -gt 0
+	do
+		lid=$1; shift
+		uid=$1; shift
+		printf '%s' "
+		/^$lid /{
+			s/'/'\\\\''/g
+			h
+			s/^$lid "'\([^<]*\) <[^>]*> .*$/\1/'"
+			s/.*/GIT_${uid}_NAME='&'/p
+
+			g
+			s/^$lid "'[^<]* <\([^>]*\)> .*$/\1/'"
+			s/.*/GIT_${uid}_EMAIL='&'/p
+
+			g
+			s/^$lid "'[^<]* <[^>]*> \(.*\)$/@\1/'"
+			s/.*/GIT_${uid}_DATE='&'/p
+		}
+		"
+	done
+	echo '/^$/q'
+}
+
+# Create a pick-script as above and feed it to sed. Stdout is suitable for
+# feeding to eval.
+parse_ident_from_commit () {
+	LANG=C LC_ALL=C sed -ne "$(pick_ident_script "$@")"
+}
+
+# Parse the author from a commit given as an argument. Stdout is suitable for
+# feeding to eval to set the usual GIT_* ident variables.
 get_author_ident_from_commit () {
-	pick_author_script='
-	/^author /{
-		s/'\''/'\''\\'\'\''/g
-		h
-		s/^author \([^<]*\) <[^>]*> .*$/\1/
-		s/.*/GIT_AUTHOR_NAME='\''&'\''/p
-
-		g
-		s/^author [^<]* <\([^>]*\)> .*$/\1/
-		s/.*/GIT_AUTHOR_EMAIL='\''&'\''/p
-
-		g
-		s/^author [^<]* <[^>]*> \(.*\)$/@\1/
-		s/.*/GIT_AUTHOR_DATE='\''&'\''/p
-
-		q
-	}
-	'
 	encoding=$(git config i18n.commitencoding || echo UTF-8)
 	git show -s --pretty=raw --encoding="$encoding" "$1" -- |
-	LANG=C LC_ALL=C sed -ne "$pick_author_script"
+	parse_ident_from_commit author AUTHOR
 }
 
 # Clear repo-local GIT_* environment variables. Useful when switching to
