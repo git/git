@@ -356,7 +356,7 @@ static int run_slot(struct active_request_slot *slot)
 	slot->curl_result = curl_easy_perform(slot->curl);
 	finish_active_slot(slot);
 
-	err = handle_curl_result(slot, &results);
+	err = handle_curl_result(&results);
 	if (err != HTTP_OK && err != HTTP_REAUTH) {
 		error("RPC failed; result=%d, HTTP code = %ld",
 		      results.curl_result, results.http_code);
@@ -431,16 +431,17 @@ static int post_rpc(struct rpc_state *rpc)
 			return -1;
 	}
 
+	headers = curl_slist_append(headers, rpc->hdr_content_type);
+	headers = curl_slist_append(headers, rpc->hdr_accept);
+	headers = curl_slist_append(headers, "Expect:");
+
+retry:
 	slot = get_active_slot();
 
 	curl_easy_setopt(slot->curl, CURLOPT_NOBODY, 0);
 	curl_easy_setopt(slot->curl, CURLOPT_POST, 1);
 	curl_easy_setopt(slot->curl, CURLOPT_URL, rpc->service_url);
 	curl_easy_setopt(slot->curl, CURLOPT_ENCODING, "gzip");
-
-	headers = curl_slist_append(headers, rpc->hdr_content_type);
-	headers = curl_slist_append(headers, rpc->hdr_accept);
-	headers = curl_slist_append(headers, "Expect:");
 
 	if (large_request) {
 		/* The request body is large and the size cannot be predicted.
@@ -515,9 +516,9 @@ static int post_rpc(struct rpc_state *rpc)
 	curl_easy_setopt(slot->curl, CURLOPT_WRITEFUNCTION, rpc_in);
 	curl_easy_setopt(slot->curl, CURLOPT_FILE, rpc);
 
-	do {
-		err = run_slot(slot);
-	} while (err == HTTP_REAUTH && !large_request && !use_gzip);
+	err = run_slot(slot);
+	if (err == HTTP_REAUTH && !large_request && !use_gzip)
+		goto retry;
 	if (err != HTTP_OK)
 		err = -1;
 
