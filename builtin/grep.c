@@ -261,103 +261,12 @@ static int wait_all(void)
 }
 #endif
 
-static int parse_pattern_type_arg(const char *opt, const char *arg)
+static int grep_cmd_config(const char *var, const char *value, void *cb)
 {
-	if (!strcmp(arg, "default"))
-		return GREP_PATTERN_TYPE_UNSPECIFIED;
-	else if (!strcmp(arg, "basic"))
-		return GREP_PATTERN_TYPE_BRE;
-	else if (!strcmp(arg, "extended"))
-		return GREP_PATTERN_TYPE_ERE;
-	else if (!strcmp(arg, "fixed"))
-		return GREP_PATTERN_TYPE_FIXED;
-	else if (!strcmp(arg, "perl"))
-		return GREP_PATTERN_TYPE_PCRE;
-	die("bad %s argument: %s", opt, arg);
-}
-
-static void grep_pattern_type_options(const int pattern_type, struct grep_opt *opt)
-{
-	switch (pattern_type) {
-	case GREP_PATTERN_TYPE_UNSPECIFIED:
-		/* fall through */
-
-	case GREP_PATTERN_TYPE_BRE:
-		opt->fixed = 0;
-		opt->pcre = 0;
-		opt->regflags &= ~REG_EXTENDED;
-		break;
-
-	case GREP_PATTERN_TYPE_ERE:
-		opt->fixed = 0;
-		opt->pcre = 0;
-		opt->regflags |= REG_EXTENDED;
-		break;
-
-	case GREP_PATTERN_TYPE_FIXED:
-		opt->fixed = 1;
-		opt->pcre = 0;
-		opt->regflags &= ~REG_EXTENDED;
-		break;
-
-	case GREP_PATTERN_TYPE_PCRE:
-		opt->fixed = 0;
-		opt->pcre = 1;
-		opt->regflags &= ~REG_EXTENDED;
-		break;
-	}
-}
-
-static int grep_config(const char *var, const char *value, void *cb)
-{
-	struct grep_opt *opt = cb;
-	char *color = NULL;
-
-	if (userdiff_config(var, value) < 0)
-		return -1;
-
-	if (!strcmp(var, "grep.extendedregexp")) {
-		if (git_config_bool(var, value))
-			opt->extended_regexp_option = 1;
-		else
-			opt->extended_regexp_option = 0;
-		return 0;
-	}
-
-	if (!strcmp(var, "grep.patterntype")) {
-		opt->pattern_type_option = parse_pattern_type_arg(var, value);
-		return 0;
-  }
-
-	if (!strcmp(var, "grep.linenumber")) {
-		opt->linenum = git_config_bool(var, value);
-		return 0;
-	}
-
-	if (!strcmp(var, "color.grep"))
-		opt->color = git_config_colorbool(var, value);
-	else if (!strcmp(var, "color.grep.context"))
-		color = opt->color_context;
-	else if (!strcmp(var, "color.grep.filename"))
-		color = opt->color_filename;
-	else if (!strcmp(var, "color.grep.function"))
-		color = opt->color_function;
-	else if (!strcmp(var, "color.grep.linenumber"))
-		color = opt->color_lineno;
-	else if (!strcmp(var, "color.grep.match"))
-		color = opt->color_match;
-	else if (!strcmp(var, "color.grep.selected"))
-		color = opt->color_selected;
-	else if (!strcmp(var, "color.grep.separator"))
-		color = opt->color_sep;
-	else
-		return git_color_default_config(var, value, cb);
-	if (color) {
-		if (!value)
-			return config_error_nonbool(var);
-		color_parse(value, var, color);
-	}
-	return 0;
+	int st = grep_config(var, value, cb);
+	if (git_color_default_config(var, value, cb) < 0)
+		st = -1;
+	return st;
 }
 
 static void *lock_and_read_sha1_file(const unsigned char *sha1, enum object_type *type, unsigned long *size)
@@ -839,27 +748,9 @@ int cmd_grep(int argc, const char **argv, const char *prefix)
 	if (argc == 2 && !strcmp(argv[1], "-h"))
 		usage_with_options(grep_usage, options);
 
-	memset(&opt, 0, sizeof(opt));
-	opt.prefix = prefix;
-	opt.prefix_length = (prefix && *prefix) ? strlen(prefix) : 0;
-	opt.relative = 1;
-	opt.pathname = 1;
-	opt.pattern_tail = &opt.pattern_list;
-	opt.header_tail = &opt.header_list;
-	opt.regflags = REG_NEWLINE;
-	opt.max_depth = -1;
-	opt.pattern_type_option = GREP_PATTERN_TYPE_UNSPECIFIED;
-	opt.extended_regexp_option = 0;
-
-	strcpy(opt.color_context, "");
-	strcpy(opt.color_filename, "");
-	strcpy(opt.color_function, "");
-	strcpy(opt.color_lineno, "");
-	strcpy(opt.color_match, GIT_COLOR_BOLD_RED);
-	strcpy(opt.color_selected, "");
-	strcpy(opt.color_sep, GIT_COLOR_CYAN);
-	opt.color = -1;
-	git_config(grep_config, &opt);
+	init_grep_defaults();
+	git_config(grep_cmd_config, NULL);
+	grep_init(&opt, prefix);
 
 	/*
 	 * If there is no -- then the paths must exist in the working
@@ -875,13 +766,7 @@ int cmd_grep(int argc, const char **argv, const char *prefix)
 			     PARSE_OPT_KEEP_DASHDASH |
 			     PARSE_OPT_STOP_AT_NON_OPTION |
 			     PARSE_OPT_NO_INTERNAL_HELP);
-
-	if (pattern_type_arg != GREP_PATTERN_TYPE_UNSPECIFIED)
-		grep_pattern_type_options(pattern_type_arg, &opt);
-	else if (opt.pattern_type_option != GREP_PATTERN_TYPE_UNSPECIFIED)
-		grep_pattern_type_options(opt.pattern_type_option, &opt);
-	else if (opt.extended_regexp_option)
-		grep_pattern_type_options(GREP_PATTERN_TYPE_ERE, &opt);
+	grep_commit_pattern_type(pattern_type_arg, &opt);
 
 	if (use_index && !startup_info->have_repository)
 		/* die the same way as if we did it at the beginning */

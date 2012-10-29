@@ -79,6 +79,11 @@ if it is part of the log message.
 
 	Match the regexp limiting patterns without regard to letters case.
 
+--basic-regexp::
+
+	Consider the limiting patterns to be basic regular expressions;
+	this is the default.
+
 -E::
 --extended-regexp::
 
@@ -90,6 +95,11 @@ if it is part of the log message.
 
 	Consider the limiting patterns to be fixed strings (don't interpret
 	pattern as a regular expression).
+
+--perl-regexp::
+
+	Consider the limiting patterns to be Perl-compatible regexp.
+	Requires libpcre to be compiled in.
 
 --remove-empty::
 
