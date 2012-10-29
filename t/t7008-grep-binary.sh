@@ -111,6 +111,28 @@ test_expect_success 'grep respects binary diff attribute' '
 	test_cmp expect actual
 '
 
+test_expect_success 'grep --cached respects binary diff attribute' '
+	git grep --cached text t >actual &&
+	test_cmp expect actual
+'
+
+test_expect_success 'grep --cached respects binary diff attribute (2)' '
+	git add .gitattributes &&
+	rm .gitattributes &&
+	git grep --cached text t >actual &&
+	test_when_finished "git rm --cached .gitattributes" &&
+	test_when_finished "git checkout .gitattributes" &&
+	test_cmp expect actual
+'
+
+test_expect_success 'grep revision respects binary diff attribute' '
+	git commit -m new &&
+	echo "Binary file HEAD:t matches" >expect &&
+	git grep text HEAD -- t >actual &&
+	test_when_finished "git reset HEAD^" &&
+	test_cmp expect actual
+'
+
 test_expect_success 'grep respects not-binary diff attribute' '
 	echo binQary | q_to_nul >b &&
 	git add b &&
