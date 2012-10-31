@@ -474,6 +474,15 @@ retry:
 			fflush(stderr);
 		}
 
+	} else if (gzip_body) {
+		/*
+		 * If we are looping to retry authentication, then the previous
+		 * run will have set up the headers and gzip buffer already,
+		 * and we just need to send it.
+		 */
+		curl_easy_setopt(slot->curl, CURLOPT_POSTFIELDS, gzip_body);
+		curl_easy_setopt(slot->curl, CURLOPT_POSTFIELDSIZE, gzip_size);
+
 	} else if (use_gzip && 1024 < rpc->len) {
 		/* The client backend isn't giving us compressed data so
 		 * we can try to deflate it ourselves, this may save on.
@@ -530,7 +539,7 @@ retry:
 	curl_easy_setopt(slot->curl, CURLOPT_FILE, rpc);
 
 	err = run_slot(slot);
-	if (err == HTTP_REAUTH && !large_request && !use_gzip)
+	if (err == HTTP_REAUTH && !large_request)
 		goto retry;
 	if (err != HTTP_OK)
 		err = -1;
