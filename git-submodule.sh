@@ -6,6 +6,7 @@
 
 dashless=$(basename "$0" | sed -e 's/-/ /')
 USAGE="[--quiet] add [-b branch] [-f|--force] [--reference <repository>] [--] <repository> [<path>]
+   or: $dashless [--quiet] rm [-b branch] [-f|--force] [--] [<path>]
    or: $dashless [--quiet] status [--cached] [--recursive] [--] [<path>...]
    or: $dashless [--quiet] init [--] [<path>...]
    or: $dashless [--quiet] update [--init] [-N|--no-fetch] [-f|--force] [--rebase] [--reference <repository>] [--merge] [--recursive] [--] [<path>...]
@@ -370,6 +371,69 @@ Use -f if you really want to add it." >&2
 	die "$(eval_gettext "Failed to register submodule '\$sm_path'")"
 }
 
+cmd_rm()
+{
+	# parse $args after "submodule ... rm".
+	while test $# -ne 0
+	do
+		case "$1" in
+		-b | --branch)
+			case "$2" in '') usage ;; esac
+			branch=$2
+			shift
+			;;
+		-f | --force)
+			force=$1
+			;;
+		-q|--quiet)
+			GIT_QUIET=1
+			;;
+		--)
+			shift
+			break
+			;;
+		-*)
+			usage
+			;;
+		*)
+			break
+			;;
+		esac
+		shift
+	done
+	
+	sm_path=$1
+
+	# normalize path:
+	# multiple //; leading ./; /./; /../; trailing /
+	sm_path=$(printf '%s/\n' "$sm_path" |
+		sed -e '
+			s|//*|/|g
+			s|^\(\./\)*||
+			s|/\./|/|g
+			:start
+			s|\([^/]*\)/\.\./||
+			tstart
+			s|/*$||
+		')
+
+
+	#edit .gitmodules
+	git config -f .gitmodules --unset-all submodule."$sm_path".url || 
+	die "$(eval_gettext "Failed to rm submodule '\$sm_path' url")" 
+	git config -f .gitmodules --unset-all submodule."$sm_path".path ||
+	die "$(eval_gettext "Failed to rm submodule '\$sm_path' path")"
+	git config -f .gitmodules --remove-section submodule."$sm_path" ||
+	die "$(eval_gettext "Failed to rm submodule '\$sm_path' section")"
+
+	#get rid of the submodule
+	git rm --cached $force "$sm_path" ||
+	die "$(eval_gettext "Failed to rm submodule '\$sm_path'")"
+	
+	#now add the .gitmodules change
+	git add ${force} .gitmodules ||
+	die "$(eval_gettext "Failed to remove submodule '\$sm_path'")"
+}
 #
 # Execute an arbitrary command sequence in each checked out
 # submodule
@@ -1076,7 +1140,7 @@ cmd_sync()
 while test $# != 0 && test -z "$command"
 do
 	case "$1" in
-	add | foreach | init | update | status | summary | sync)
+	add | rm | foreach | init | update | status | summary | sync)
 		command=$1
 		;;
 	-q|--quiet)
