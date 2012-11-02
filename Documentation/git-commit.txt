@@ -193,10 +193,6 @@ OPTIONS
 	current tip -- if it was a merge, it will have the parents of
 	the current tip as parents -- so the current top commit is
 	discarded.
-
---no-post-rewrite::
-	Bypass the post-rewrite hook.
-
 +
 --
 It is a rough equivalent for:
@@ -212,6 +208,9 @@ but can be used to amend a merge commit.
 You should understand the implications of rewriting history if you
 amend a commit that has already been published.  (See the "RECOVERING
 FROM UPSTREAM REBASE" section in linkgit:git-rebase[1].)
+
+--no-post-rewrite::
+	Bypass the post-rewrite hook.
 
 -i::
 --include::
