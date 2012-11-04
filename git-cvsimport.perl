@@ -24,11 +24,11 @@ use File::Basename qw(basename dirname);
 use Time::Local;
 use IO::Socket;
 use IO::Pipe;
-use POSIX qw(strftime dup2 ENOENT);
+use POSIX qw(strftime tzset dup2 ENOENT);
 use IPC::Open2;
 
 $SIG{'PIPE'}="IGNORE";
-$ENV{'TZ'}="UTC";
+set_timezone('UTC');
 
 our ($opt_h,$opt_o,$opt_v,$opt_k,$opt_u,$opt_d,$opt_p,$opt_C,$opt_z,$opt_i,$opt_P, $opt_s,$opt_m,@opt_M,$opt_A,$opt_S,$opt_L, $opt_a, $opt_r, $opt_R);
 my (%conv_author_name, %conv_author_email, %conv_author_tz);
@@ -97,6 +97,15 @@ sub write_author_info($) {
 		print $f "\n";
 	}
 	close ($f);
+}
+
+# Versions of perl before 5.10.0 may not automatically check $TZ each
+# time localtime is run (most platforms will do so only the first time).
+# We can work around this by using tzset() to update the internal
+# variable whenever we change the environment.
+sub set_timezone {
+	$ENV{TZ} = shift;
+	tzset();
 }
 
 # convert getopts specs for use by git config
@@ -854,9 +863,9 @@ sub commit {
 		}
 	}
 
-	$ENV{'TZ'}=$author_tz;
+	set_timezone($author_tz);
 	my $commit_date = strftime("%s %z", localtime($date));
-	$ENV{'TZ'}="UTC";
+	set_timezone('UTC');
 	$ENV{GIT_AUTHOR_NAME} = $author_name;
 	$ENV{GIT_AUTHOR_EMAIL} = $author_email;
 	$ENV{GIT_AUTHOR_DATE} = $commit_date;
