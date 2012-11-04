@@ -9,12 +9,13 @@
 # Then you can clone with:
 # git clone hg::/path/to/mercurial/repo/
 
-from mercurial import hg, ui, bookmarks, context
+from mercurial import hg, ui, bookmarks, context, util
 
 import re
 import sys
 import os
 import json
+import shutil
 
 NAME_RE = re.compile('^([^<>]+)')
 AUTHOR_RE = re.compile('^([^<>]+?)? ?<([^<>]+)>$')
@@ -574,6 +575,12 @@ def main(args):
     url = args[2]
     peer = None
 
+    if alias[4:] == url:
+        is_tmp = True
+        alias = util.sha1(alias).hexdigest()
+    else:
+        is_tmp = False
+
     gitdir = os.environ['GIT_DIR']
     dirname = os.path.join(gitdir, 'hg', alias)
     branches = {}
@@ -604,6 +611,9 @@ def main(args):
             die('unhandled command: %s' % line)
         sys.stdout.flush()
 
-    marks.store()
+    if not is_tmp:
+        marks.store()
+    else:
+        shutil.rmtree(dirname)
 
 sys.exit(main(sys.argv))
