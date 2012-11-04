@@ -1,19 +1,17 @@
 To: git@vger.kernel.org
 Bcc: lwn@lwn.net
-Subject: What's cooking in git.git (Oct 2012, #09; Mon, 29)
-X-master-at: 9c50374497d5a3259907e32455f228cfbda85ddf
-X-next-at: 62af90c6ff5fe91113e2f69a60caae6ef7d54614
+Subject: What's cooking in git.git (Nov 2012, #01; Sun, 4)
+X-master-at: f07e5551a845b45076bf5c45118e16efa69610c4
+X-next-at: 54991f2bb33a966609ff94ac4f8824bf9091ad7d
 
-What's cooking in git.git (Oct 2012, #09; Mon, 29)
+What's cooking in git.git (Nov 2012, #01; Sun, 4)
 --------------------------------------------------
 
 Here are the topics that have been cooking.  Commits prefixed with
 '-' are only in 'pu' (proposed updates) while commits prefixed with
 '+' are in 'next'.
 
-The second batch of topics has graduated to master. Most of the new
-topics have been minor bugfixes or documentation updates, so I've merged
-a lot of those to master.
+The third batch of topics has graduated to master.
 
 You can find the changes described here in the integration branches of
 my repository at:
@@ -26,36 +24,112 @@ updated.
 --------------------------------------------------
 [New Topics]
 
-* fc/completion-test-simplification (2012-10-29) 2 commits
- - completion: simplify __gitcomp test helper
- - completion: refactor __gitcomp related tests
-
- Clean up completion tests.
+* as/maint-doc-fix-no-post-rewrite (2012-11-02) 1 commit
+ - commit: fixup misplacement of --no-post-rewrite description
 
  Will merge to 'next'.
 
 
-* fc/remote-testgit-feature-done (2012-10-29) 1 commit
- - remote-testgit: properly check for errors
+* fc/remote-bzr (2012-11-04) 3 commits
+ - remote-bzr: add simple tests
+ - remote-bzr: add support for pushing
+ - Add new remote-bzr transport helper
+
+ New remote helper for bzr.
 
 
-* jk/maint-diff-grep-textconv (2012-10-28) 1 commit
- - diff_grep: use textconv buffers for add/deleted files
- (this branch is used by jk/pickaxe-textconv.)
+* fc/remote-hg (2012-11-04) 16 commits
+ - remote-hg: the author email can be null
+ - remote-hg: add option to not track branches
+ - remote-hg: add extra author test
+ - remote-hg: add tests to compare with hg-git
+ - remote-hg: add bidirectional tests
+ - test-lib: avoid full path to store test results
+ - remote-hg: add basic tests
+ - remote-hg: fake bookmark when there's none
+ - remote-hg: add compat for hg-git author fixes
+ - remote-hg: add support for hg-git compat mode
+ - remote-hg: match hg merge behavior
+ - remote-hg: make sure the encoding is correct
+ - remote-hg: add support to push URLs
+ - remote-hg: add support for remote pushing
+ - remote-hg: add support for pushing
+ - Add new remote-hg transport helper
 
- Fixes inconsistent use of textconv with "git log -G".
+ New remote helper for hg.
+
+ May want to do one more round of review on the list.
+
+ Most of the discussion so far has been on whether to pursue this versus
+ what's in msysgit, and not on the specifics of the code. I'd like to
+ put this in next soon, but it probably makes sense for everybody to
+ give it a final look-over.
+
+
+* jk/maint-http-half-auth-fetch (2012-10-31) 2 commits
+ - remote-curl: retry failed requests for auth even with gzip
+ - remote-curl: hoist gzip buffer size to top of post_rpc
+
+ Fixes fetch from servers that ask for auth only during the actual
+ packing phase. This is not really a recommended configuration, but it
+ cleans up the code at the same time.
 
  Will merge to 'next'.
 
 
-* jk/pickaxe-textconv (2012-10-28) 2 commits
- - pickaxe: use textconv for -S counting
- - pickaxe: hoist empty needle check
- (this branch uses jk/maint-diff-grep-textconv.)
+* js/hp-nonstop (2012-10-30) 1 commit
+ - fix 'make test' for HP NonStop
 
- Use textconv filters when searching with "log -S".
+ Will merge to 'next'.
 
- Waiting for a sanity check and review from Junio.
+
+* kb/preload-index-more (2012-11-02) 1 commit
+ - update-index/diff-index: use core.preloadindex to improve performance
+
+ Use preloadindex in more places, which has a nice speedup on systems
+ with slow stat calls (and even on Linux).
+
+ Will merge to 'next'.
+
+
+* mh/notes-string-list (2012-11-04) 5 commits
+ - string_list_add_refs_from_colon_sep(): use string_list_split()
+ - notes: fix handling of colon-separated values
+ - combine_notes_cat_sort_uniq(): sort and dedup lines all at once
+ - Initialize sort_uniq_list using named constant
+ - string_list: add a function string_list_remove_empty_items()
+
+ Improve the asymptotic performance of the cat_sort_uniq notes merge
+ strategy.
+
+ Will merge to 'next'.
+
+
+* mh/strbuf-split (2012-11-04) 4 commits
+ - strbuf_split*(): document functions
+ - strbuf_split*(): rename "delim" parameter to "terminator"
+ - strbuf_split_buf(): simplify iteration
+ - strbuf_split_buf(): use ALLOC_GROW()
+
+ Cleanups and documentation for strbuf_split.
+
+ Will merge to 'next'.
+
+
+* mm/maint-doc-commit-edit (2012-11-02) 1 commit
+ - Document 'git commit --no-edit' explicitly
+
+ Will merge to 'next'.
+
+
+--------------------------------------------------
+[Graduated to "master"]
+
+* gb/maint-doc-svn-log-window-size (2012-10-26) 1 commit
+  (merged to 'next' on 2012-10-29 at ee50b22)
+ + Document git-svn fetch --log-window-size parameter
+
+ Will merge to 'master' in the third batch.
 
 
 * km/maint-doc-git-reset (2012-10-29) 1 commit
@@ -65,39 +139,34 @@ updated.
  Will merge to 'master' in the third batch.
 
 
-* mh/maint-parse-dirstat-fix (2012-10-29) 1 commit
- - parse_dirstat_params(): use string_list to split comma-separated string
+* mm/maint-doc-remote-tracking (2012-10-25) 1 commit
+  (merged to 'next' on 2012-10-25 at 80f1592)
+ + Documentation: remote tracking branch -> remote-tracking branch
 
- Cleans up some code and avoids a potential bug.
+ We long ago hyphenated "remote-tracking branch"; this
+ catches some new instances added since then.
 
- Will merge to 'next'.
-
-
-* nd/builtin-to-libgit (2012-10-29) 7 commits
- - fetch-pack: move core code to libgit.a
- - fetch-pack: remove global (static) configuration variable "args"
- - send-pack: move core code to libgit.a
- - Move setup_diff_pager to libgit.a
- - Move print_commit_list to libgit.a
- - Move estimate_bisect_steps to libgit.a
- - Move try_merge_command and checkout_fast_forward to libgit.a
-
- Code cleanups so that libgit.a does not depend on anything in the
- builtin/ directory.
-
- Some of the code movement is pretty big, but there doesn't seem to be
- any conflicts with topics in flight.
-
- Will merge to 'next'.
+ Will merge to 'master' in the third batch.
 
 
-* ph/maint-submodule-status-fix (2012-10-29) 2 commits
- - submodule status: remove unused orig_* variables
- - t7407: Fix recursive submodule test
+* ph/pull-rebase-detached (2012-10-25) 1 commit
+  (merged to 'next' on 2012-10-25 at 73d9d14)
+ + git-pull: Avoid merge-base on detached head
 
- Cleans up some leftover bits from an earlier submodule change.
+ Avoids spewing error messages when using "pull --rebase" on a
+ detached HEAD.
 
- Will merge to 'next'.
+ Will merge to 'master' in the third batch.
+
+
+* po/maint-refs-replace-docs (2012-10-25) 1 commit
+  (merged to 'next' on 2012-10-25 at 3874c9d)
+ + Doc repository-layout: Show refs/replace
+
+ The refs/replace hierarchy was not mentioned in the
+ repository-layout docs.
+
+ Will merge to 'master' in the third batch.
 
 
 * pp/maint-doc-pager-config (2012-10-29) 1 commit
@@ -110,6 +179,15 @@ updated.
 * rf/maint-mailmap-off-by-one (2012-10-28) 1 commit
   (merged to 'next' on 2012-10-29 at 8c2214b)
  + mailmap: avoid out-of-bounds memory access
+
+ Will merge to 'master' in the third batch.
+
+
+* sl/maint-configure-messages (2012-10-25) 1 commit
+  (merged to 'next' on 2012-10-25 at e1d7ecd)
+ + configure: fix some output message
+
+ Minor message fixes for the configure script.
 
  Will merge to 'master' in the third batch.
 
@@ -133,116 +211,6 @@ updated.
  + Add -S, --gpg-sign option to manpage of "git commit"
 
  Will merge to 'master' in the third batch.
-
-
---------------------------------------------------
-[Graduated to "master"]
-
-* jc/grep-pcre-loose-ends (2012-10-09) 7 commits
-  (merged to 'next' on 2012-10-25 at 2ea9b27)
- + log: honor grep.* configuration
- + log --grep: accept --basic-regexp and --perl-regexp
- + log --grep: use the same helper to set -E/-F options as "git grep"
- + revisions: initialize revs->grep_filter using grep_init()
- + grep: move pattern-type bits support to top-level grep.[ch]
- + grep: move the configuration parsing logic to grep.[ch]
- + builtin/grep.c: make configuration callback more reusable
-
- "git log -F -E --grep='<ere>'" failed to use the given <ere>
- pattern as extended regular expression, and instead looked for the
- string literally.  The early part of this series is a fix for it.
-
- Will merge to 'master' in the second batch after 1.8.0 ships.
-
-
-* jk/maint-http-init-not-in-result-handler (2012-10-12) 2 commits
-  (merged to 'next' on 2012-10-25 at 59d3687)
- + http: do not set up curl auth after a 401
- + remote-curl: do not call run_slot repeatedly
-
- Further clean-up to the http codepath that picks up results after
- cURL library is done with one request slot.
-
- Will merge to 'master' in the second batch after 1.8.0 ships.
-
-
-* jk/sh-setup-in-filter-branch (2012-10-18) 2 commits
-  (merged to 'next' on 2012-10-25 at 3879f0e)
- + filter-branch: use git-sh-setup's ident parsing functions
- + git-sh-setup: refactor ident-parsing functions
-
- Will merge to 'master' in the second batch after 1.8.0 ships.
-
-
-* jl/submodule-add-by-name (2012-09-30) 2 commits
-  (merged to 'next' on 2012-10-25 at a322082)
- + submodule add: Fail when .git/modules/<name> already exists unless forced
- + Teach "git submodule add" the --name option
-
- If you remove a submodule, in order to keep the repository so that
- "git checkout" to an older commit in the superproject history can
- resurrect the submodule, the real repository will stay in $GIT_DIR
- of the superproject.  A later "git submodule add $path" to add a
- different submodule at the same path will fail.  Diagnose this case
- a bit better, and if the user really wants to add an unrelated
- submodule at the same path, give the "--name" option to give it a
- place in $GIT_DIR of the superproject that does not conflict with
- the original submodule.
-
- Will merge to 'master' in the second batch after 1.8.0 ships.
-
-
-* jl/submodule-rm (2012-09-29) 1 commit
-  (merged to 'next' on 2012-10-25 at 0fb5876)
- + submodule: teach rm to remove submodules unless they contain a git directory
-
- "git rm submodule" cannot blindly remove a submodule directory as
- its working tree may have local changes, and worse yet, it may even
- have its repository embedded in it.  Teach it some special cases
- where it is safe to remove a submodule, specifically, when there is
- no local changes in the submodule working tree, and its repository
- is not embedded in its working tree but is elsewhere and uses the
- gitfile mechanism to point at it.
-
- Will merge to 'master' in the second batch after 1.8.0 ships.
-
-
-* nd/grep-true-path (2012-10-12) 1 commit
-  (merged to 'next' on 2012-10-25 at 1c7d320)
- + grep: stop looking at random places for .gitattributes
-
- "git grep -e pattern <tree>" asked the attribute system to read
- "<tree>:.gitattributes" file in the working tree, which was
- nonsense.
-
- Will merge to 'master' in the second batch after 1.8.0 ships.
-
-
-* nd/status-long (2012-10-18) 1 commit
-  (merged to 'next' on 2012-10-25 at ff1b3a0)
- + status: add --long output format option
-
- Allow an earlier "--short" option on the command line to be
- countermanded with the "--long" option for "git status" and "git
- commit".
-
- Will merge to 'master' in the second batch after 1.8.0 ships.
-
-
-* rs/branch-del-symref (2012-10-18) 5 commits
-  (merged to 'next' on 2012-10-25 at c2cd358)
- + branch: show targets of deleted symrefs, not sha1s
- + branch: skip commit checks when deleting symref branches
- + branch: delete symref branch, not its target
- + branch: factor out delete_branch_config()
- + branch: factor out check_branch_commit()
- (this branch is used by jh/update-ref-d-through-symref.)
-
- A symbolic ref refs/heads/SYM was not correctly removed with
- "git branch -d SYM"; the command removed the ref pointed by
- SYM instead.
-
- Will merge to 'master' in the second batch after 1.8.0 ships.
 
 --------------------------------------------------
 [Stalled]
@@ -376,6 +344,8 @@ updated.
  pathname we obtain from getcwd(), leading the GIT_DIR discovery
  logic to escape the ceilings the user thought to have specified.
 
+ Need to look at v4 which made it to the list.
+
 
 * mo/cvs-server-cleanup (2012-10-26) 11 commits
   (merged to 'next' on 2012-10-29 at 4e70622)
@@ -450,37 +420,40 @@ updated.
 
 
 * jc/prettier-pretty-note (2012-10-26) 11 commits
- - Doc User-Manual: Patch cover letter, three dashes, and --notes
- - Doc format-patch: clarify --notes use case
- - Doc notes: Include the format-patch --notes option
- - Doc SubmittingPatches: Mention --notes option after "cover letter"
- - Documentation: decribe format-patch --notes
- - format-patch --notes: show notes after three-dashes
- - format-patch: append --signature after notes
- - pretty_print_commit(): do not append notes message
- - pretty: prepare notes message at a centralized place
- - format_note(): simplify API
- - pretty: remove reencode_commit_message()
+  (merged to 'next' on 2012-11-04 at 40e3e48)
+ + Doc User-Manual: Patch cover letter, three dashes, and --notes
+ + Doc format-patch: clarify --notes use case
+ + Doc notes: Include the format-patch --notes option
+ + Doc SubmittingPatches: Mention --notes option after "cover letter"
+ + Documentation: decribe format-patch --notes
+ + format-patch --notes: show notes after three-dashes
+ + format-patch: append --signature after notes
+ + pretty_print_commit(): do not append notes message
+ + pretty: prepare notes message at a centralized place
+ + format_note(): simplify API
+ + pretty: remove reencode_commit_message()
 
  Now that Philip has submitted some documentation updates, this is
  looking more ready.
 
- Will merge to 'next'.
+ Will merge to master in the fifth batch.
 
 
 * sz/maint-curl-multi-timeout (2012-10-19) 1 commit
- - Fix potential hang in https handshake
+  (merged to 'next' on 2012-11-04 at f696dd8)
+ + Fix potential hang in https handshake
 
  Sometimes curl_multi_timeout() function suggested a wrong timeout
  value when there is no file descriptors to wait on and the http
  transport ended up sleeping for minutes in select(2) system call.
  Detect this and reduce the wait timeout in such a case.
 
- Will merge to 'next'.
+ Will merge to master in the fourth batch.
 
 
-* jc/same-encoding (2012-10-18) 1 commit
- - reencode_string(): introduce and use same_encoding()
+* jc/same-encoding (2012-11-04) 1 commit
+  (merged to 'next' on 2012-11-04 at 54991f2)
+ + reencode_string(): introduce and use same_encoding()
 
  Various codepaths checked if two encoding names are the same using
  ad-hoc code and some of them ended up asking iconv() to convert
@@ -489,28 +462,32 @@ updated.
  equated them in some but not all codepaths. Introduce a new helper
  function to make these codepaths consistent.
 
- Will merge to 'next' after fixing up commit message.
+ will merge to master in the fourth batch.
 
 
 * nd/tree-walk-enum-cleanup (2012-10-19) 1 commit
- - tree-walk: use enum interesting instead of integer
+  (merged to 'next' on 2012-11-04 at 8ccdf98)
+ + tree-walk: use enum interesting instead of integer
 
- Will merge to 'next'.
+ Will merge to master in the fourth batch.
 
 
-* cr/cvsimport-local-zone (2012-10-16) 1 commit
- - git-cvsimport: allow author-specific timezones
+* cr/cvsimport-local-zone (2012-11-04) 2 commits
+  (merged to 'next' on 2012-11-04 at 292f0b4)
+ + cvsimport: work around perl tzset issue
+ + git-cvsimport: allow author-specific timezones
 
  Allows "cvsimport" to read per-author timezone from the author info
  file.
 
- Will merge to 'next'.
+ Will merge to master in the fifth batch.
 
 
 * fc/completion-send-email-with-format-patch (2012-10-16) 1 commit
- - completion: add format-patch options to send-email
+  (merged to 'next' on 2012-11-04 at 0a6366e)
+ + completion: add format-patch options to send-email
 
- Will merge to 'next'.
+ Will merge to master in the fourth batch.
 
 
 * fc/zsh-completion (2012-10-29) 3 commits
@@ -708,22 +685,24 @@ updated.
 
 
 * jc/maint-fetch-tighten-refname-check (2012-10-19) 1 commit
- - get_fetch_map(): tighten checks on dest refs
+  (merged to 'next' on 2012-11-04 at eda85ef)
+ + get_fetch_map(): tighten checks on dest refs
 
  This was split out from discarded jc/maint-push-refs-all topic.
 
- Will merge to 'next'.
+ Will merge to master in the fifth batch.
 
 
 * jh/symbolic-ref-d (2012-10-21) 1 commit
- - git symbolic-ref --delete $symref
+  (merged to 'next' on 2012-11-04 at b0762f5)
+ + git symbolic-ref --delete $symref
 
  Add "symbolic-ref -d SYM" to delete a symbolic ref SYM.
 
  It is already possible to remove a symbolic ref with "update-ref -d
  --no-deref", but it may be a good addition for completeness.
 
- Will merge to 'next'.
+ Will merge to master in the fifth batch.
 
 
 * jh/update-ref-d-through-symref (2012-10-21) 2 commits
@@ -732,13 +711,6 @@ updated.
 
  "update-ref -d --deref SYM" to delete a ref through a symbolic ref
  that points to it did not remove it correctly.
-
-
-* gb/maint-doc-svn-log-window-size (2012-10-26) 1 commit
-  (merged to 'next' on 2012-10-29 at ee50b22)
- + Document git-svn fetch --log-window-size parameter
-
- Will merge to 'master' in the third batch.
 
 
 * jk/config-ignore-duplicates (2012-10-29) 9 commits
@@ -761,51 +733,88 @@ updated.
  Will cook in 'next'.
 
 
-* mm/maint-doc-remote-tracking (2012-10-25) 1 commit
-  (merged to 'next' on 2012-10-25 at 80f1592)
- + Documentation: remote tracking branch -> remote-tracking branch
-
- We long ago hyphenated "remote-tracking branch"; this
- catches some new instances added since then.
-
- Will merge to 'master' in the third batch.
-
-
-* ph/pull-rebase-detached (2012-10-25) 1 commit
-  (merged to 'next' on 2012-10-25 at 73d9d14)
- + git-pull: Avoid merge-base on detached head
-
- Avoids spewing error messages when using "pull --rebase" on a
- detached HEAD.
-
- Will merge to 'master' in the third batch.
-
-
 * ph/submodule-sync-recursive (2012-10-29) 2 commits
- - Add tests for submodule sync --recursive
- - Teach --recursive to submodule sync
+  (merged to 'next' on 2012-11-04 at a000f78)
+ + Add tests for submodule sync --recursive
+ + Teach --recursive to submodule sync
 
  Adds "--recursive" option to submodule sync.
 
- Will merge to 'next'.
+ Will merge to master in the fifth batch.
 
 
-* po/maint-refs-replace-docs (2012-10-25) 1 commit
-  (merged to 'next' on 2012-10-25 at 3874c9d)
- + Doc repository-layout: Show refs/replace
+* fc/completion-test-simplification (2012-10-29) 2 commits
+ - completion: simplify __gitcomp test helper
+ - completion: refactor __gitcomp related tests
 
- The refs/replace hierarchy was not mentioned in the
- repository-layout docs.
+ Clean up completion tests.
 
- Will merge to 'master' in the third batch.
+ There were some comments on the list.
+
+ Expecting a re-roll.
 
 
-* sl/maint-configure-messages (2012-10-25) 1 commit
-  (merged to 'next' on 2012-10-25 at e1d7ecd)
- + configure: fix some output message
+* fc/remote-testgit-feature-done (2012-10-29) 1 commit
+ - remote-testgit: properly check for errors
 
- Minor message fixes for the configure script.
+ Needs review.
 
- Will merge to 'master' in the third batch.
+
+* jk/maint-diff-grep-textconv (2012-10-28) 1 commit
+  (merged to 'next' on 2012-11-04 at 790337b)
+ + diff_grep: use textconv buffers for add/deleted files
+ (this branch is used by jk/pickaxe-textconv.)
+
+ Fixes inconsistent use of textconv with "git log -G".
+
+ Will merge to 'master' in the fifth batch.
+
+
+* jk/pickaxe-textconv (2012-10-28) 2 commits
+ - pickaxe: use textconv for -S counting
+ - pickaxe: hoist empty needle check
+ (this branch uses jk/maint-diff-grep-textconv.)
+
+ Use textconv filters when searching with "log -S".
+
+ Waiting for a sanity check and review from Junio.
+
+
+* mh/maint-parse-dirstat-fix (2012-10-29) 1 commit
+  (merged to 'next' on 2012-11-04 at 852d609)
+ + parse_dirstat_params(): use string_list to split comma-separated string
+
+ Cleans up some code and avoids a potential bug.
+
+ Will merge master in the fourth batch.
+
+
+* nd/builtin-to-libgit (2012-10-29) 7 commits
+  (merged to 'next' on 2012-11-04 at 06cbf9b)
+ + fetch-pack: move core code to libgit.a
+ + fetch-pack: remove global (static) configuration variable "args"
+ + send-pack: move core code to libgit.a
+ + Move setup_diff_pager to libgit.a
+ + Move print_commit_list to libgit.a
+ + Move estimate_bisect_steps to libgit.a
+ + Move try_merge_command and checkout_fast_forward to libgit.a
+
+ Code cleanups so that libgit.a does not depend on anything in the
+ builtin/ directory.
+
+ Some of the code movement is pretty big, but there doesn't seem to be
+ any conflicts with topics in flight.
+
+ Will merge to master in the fourth batch.
+
+
+* ph/maint-submodule-status-fix (2012-10-29) 2 commits
+  (merged to 'next' on 2012-11-04 at d700e02)
+ + submodule status: remove unused orig_* variables
+ + t7407: Fix recursive submodule test
+
+ Cleans up some leftover bits from an earlier submodule change.
+
+ Will merge to master in the fourth batch.
 
 
