@@ -110,25 +110,22 @@ struct strbuf **strbuf_split_buf(const char *str, size_t slen, int delim, int ma
 {
 	struct strbuf **ret = NULL;
 	size_t nr = 0, alloc = 0;
-	const char *n, *p;
 	struct strbuf *t;
 
-	p = n = str;
-	while (n < str + slen) {
-		int len;
-		if (max <= 0 || nr + 1 < max)
-			n = memchr(n, delim, slen - (n - str));
-		else
-			n = NULL;
-		if (!n)
-			n = str + slen - 1;
-		len = n - p + 1;
+	while (slen) {
+		int len = slen;
+		if (max <= 0 || nr + 1 < max) {
+			const char *end = memchr(str, delim, slen);
+			if (end)
+				len = end - str + 1;
+		}
 		t = xmalloc(sizeof(struct strbuf));
 		strbuf_init(t, len);
-		strbuf_add(t, p, len);
+		strbuf_add(t, str, len);
 		ALLOC_GROW(ret, nr + 2, alloc);
 		ret[nr++] = t;
-		p = ++n;
+		str += len;
+		slen -= len;
 	}
 	ALLOC_GROW(ret, nr + 1, alloc); /* In case string was empty */
 	ret[nr] = NULL;
