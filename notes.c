@@ -943,23 +943,18 @@ void string_list_add_refs_by_glob(struct string_list *list, const char *glob)
 void string_list_add_refs_from_colon_sep(struct string_list *list,
 					 const char *globs)
 {
-	struct strbuf globbuf = STRBUF_INIT;
-	struct strbuf **split;
+	struct string_list split = STRING_LIST_INIT_NODUP;
+	char *globs_copy = xstrdup(globs);
 	int i;
 
-	strbuf_addstr(&globbuf, globs);
-	split = strbuf_split(&globbuf, ':');
+	string_list_split_in_place(&split, globs_copy, ':', -1);
+	string_list_remove_empty_items(&split, 0);
 
-	for (i = 0; split[i]; i++) {
-		if (split[i]->len && split[i]->buf[split[i]->len-1] == ':')
-			strbuf_setlen(split[i], split[i]->len-1);
-		if (!split[i]->len)
-			continue;
-		string_list_add_refs_by_glob(list, split[i]->buf);
-	}
+	for (i = 0; i < split.nr; i++)
+		string_list_add_refs_by_glob(list, split.items[i].string);
 
-	strbuf_list_free(split);
-	strbuf_release(&globbuf);
+	string_list_clear(&split, 0);
+	free(globs_copy);
 }
 
 static int notes_display_config(const char *k, const char *v, void *cb)
