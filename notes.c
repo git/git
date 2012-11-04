@@ -951,10 +951,10 @@ void string_list_add_refs_from_colon_sep(struct string_list *list,
 	split = strbuf_split(&globbuf, ':');
 
 	for (i = 0; split[i]; i++) {
+		if (split[i]->len && split[i]->buf[split[i]->len-1] == ':')
+			strbuf_setlen(split[i], split[i]->len-1);
 		if (!split[i]->len)
 			continue;
-		if (split[i]->buf[split[i]->len-1] == ':')
-			strbuf_setlen(split[i], split[i]->len-1);
 		string_list_add_refs_by_glob(list, split[i]->buf);
 	}
 
