@@ -197,7 +197,7 @@ def fixup_user(user):
     return '%s <%s>' % (name, mail)
 
 def get_repo(url, alias):
-    global dirname
+    global dirname, peer
 
     myui = ui.ui()
     myui.setconfig('ui', 'interactive', 'off')
@@ -526,7 +526,7 @@ def parse_tag(parser):
     # nothing to do
 
 def do_export(parser):
-    global parsed_refs, bmarks
+    global parsed_refs, bmarks, peer
 
     parser.next()
 
@@ -562,12 +562,17 @@ def do_export(parser):
 
     print
 
+    if peer:
+        parser.repo.push(peer, force=False)
+
 def main(args):
     global prefix, dirname, branches, bmarks
     global marks, blob_marks, parsed_refs
+    global peer
 
     alias = args[1]
     url = args[2]
+    peer = None
 
     gitdir = os.environ['GIT_DIR']
     dirname = os.path.join(gitdir, 'hg', alias)
