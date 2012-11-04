@@ -427,6 +427,14 @@ def parse_blob(parser):
     parser.next()
     return
 
+def get_merge_files(repo, p1, p2, files):
+    for e in repo[p1].files():
+        if e not in files:
+            if e not in repo[p1].manifest():
+                continue
+            f = { 'ctx' : repo[p1][e] }
+            files[e] = f
+
 def parse_commit(parser):
     global marks, blob_marks, bmarks, parsed_refs
 
@@ -470,6 +478,8 @@ def parse_commit(parser):
         of = files[f]
         if 'deleted' in of:
             raise IOError
+        if 'ctx' in of:
+            return of['ctx']
         is_exec = of['mode'] == 'x'
         is_link = of['mode'] == 'l'
         return context.memfilectx(f, of['data'], is_link, is_exec, None)
@@ -491,6 +501,13 @@ def parse_commit(parser):
         p2 = repo.changelog.node(mark_to_rev(merge_mark))
     else:
         p2 = '\0' * 20
+
+    #
+    # If files changed from any of the parents, hg wants to know, but in git if
+    # nothing changed from the first parent, nothing changed.
+    #
+    if merge_mark:
+        get_merge_files(repo, p1, p2, files)
 
     ctx = context.memctx(repo, (p1, p2), data,
             files.keys(), getfilectx,
