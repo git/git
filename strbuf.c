@@ -108,33 +108,30 @@ void strbuf_ltrim(struct strbuf *sb)
 
 struct strbuf **strbuf_split_buf(const char *str, size_t slen, int delim, int max)
 {
-	int alloc = 2, pos = 0;
+	struct strbuf **ret = NULL;
+	size_t nr = 0, alloc = 0;
 	const char *n, *p;
-	struct strbuf **ret;
 	struct strbuf *t;
 
-	ret = xcalloc(alloc, sizeof(struct strbuf *));
 	p = n = str;
 	while (n < str + slen) {
 		int len;
-		if (max <= 0 || pos + 1 < max)
+		if (max <= 0 || nr + 1 < max)
 			n = memchr(n, delim, slen - (n - str));
 		else
 			n = NULL;
-		if (pos + 1 >= alloc) {
-			alloc = alloc * 2;
-			ret = xrealloc(ret, sizeof(struct strbuf *) * alloc);
-		}
 		if (!n)
 			n = str + slen - 1;
 		len = n - p + 1;
 		t = xmalloc(sizeof(struct strbuf));
 		strbuf_init(t, len);
 		strbuf_add(t, p, len);
-		ret[pos] = t;
-		ret[++pos] = NULL;
+		ALLOC_GROW(ret, nr + 2, alloc);
+		ret[nr++] = t;
 		p = ++n;
 	}
+	ALLOC_GROW(ret, nr + 1, alloc); /* In case string was empty */
+	ret[nr] = NULL;
 	return ret;
 }
 
