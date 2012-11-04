@@ -370,7 +370,11 @@ test_expect_success 'hg author' '
 
 		echo theta > theta &&
 		hg add theta &&
-		hg commit -u "test >test@example.com>" -m "add theta"
+		hg commit -u "test >test@example.com>" -m "add theta" &&
+
+		echo iota > iota &&
+		hg add iota &&
+		hg commit -u "test <test <at> example <dot> com>" -m "add iota"
 		) &&
 
 		hg_push_$x hgrepo-$x gitrepo-$x &&
