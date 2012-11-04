@@ -39,6 +39,13 @@ void filter_string_list(struct string_list *list, int free_util,
 			string_list_each_func_t want, void *cb_data);
 
 /*
+ * Remove any empty strings from the list.  If free_util is true, call
+ * free() on the util members of any items that have to be deleted.
+ * Preserve the order of the items that are retained.
+ */
+void string_list_remove_empty_items(struct string_list *list, int free_util);
+
+/*
  * Return the longest string in prefixes that is a prefix (in the
  * sense of prefixcmp()) of string, or NULL if no such prefix exists.
  * This function does not require the string_list to be sorted (it

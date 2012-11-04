@@ -136,6 +136,15 @@ void filter_string_list(struct string_list *list, int free_util,
 	list->nr = dst;
 }
 
+static int item_is_not_empty(struct string_list_item *item, void *unused)
+{
+	return *item->string != '\0';
+}
+
+void string_list_remove_empty_items(struct string_list *list, int free_util) {
+	filter_string_list(list, free_util, item_is_not_empty, NULL);
+}
+
 char *string_list_longest_prefix(const struct string_list *prefixes,
 				 const char *string)
 {
