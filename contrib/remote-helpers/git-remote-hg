@@ -26,7 +26,7 @@ import urllib
 # git:
 # Sensible defaults for git.
 # hg bookmarks are exported as git branches, hg branches are prefixed
-# with 'branches/'.
+# with 'branches/', HEAD is a special case.
 #
 # hg:
 # Emulate hg-git.
@@ -430,12 +430,21 @@ def get_branch_tip(repo, branch):
     return heads[0]
 
 def list_head(repo, cur):
-    global g_head
+    global g_head, bmarks
 
     head = bookmarks.readcurrent(repo)
-    if not head:
-        return
-    node = repo[head]
+    if head:
+        node = repo[head]
+    else:
+        # fake bookmark from current branch
+        head = cur
+        node = repo['.']
+        if not node:
+            return
+        if head == 'default':
+            head = 'master'
+        bmarks[head] = node
+
     print "@refs/heads/%s HEAD" % head
     g_head = (head, node)
 
