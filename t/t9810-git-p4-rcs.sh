@@ -155,6 +155,25 @@ test_expect_success 'cleanup after failure' '
 	)
 '
 
+# perl $File:: bug check
+test_expect_success 'ktext expansion should not expand multi-line $File::' '
+	(
+		cd "$cli" &&
+		cat >lv.pm <<-\EOF
+		my $wanted = sub { my $f = $File::Find::name;
+				    if ( -f && $f =~ /foo/ ) {
+		EOF
+		p4 add -t ktext lv.pm &&
+		p4 submit -d "lv.pm"
+	) &&
+	test_when_finished cleanup_git &&
+	git p4 clone --dest="$git" //depot &&
+	(
+		cd "$git" &&
+		test_cmp "$cli/lv.pm" lv.pm
+	)
+'
+
 #
 # Do not scrub anything but +k or +ko files.  Sneak a change into
 # the cli file so that submit will get a conflict.  Make sure that
