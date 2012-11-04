@@ -848,15 +848,16 @@ int combine_notes_ignore(unsigned char *cur_sha1,
 	return 0;
 }
 
-static int string_list_add_note_lines(struct string_list *sort_uniq_list,
+/*
+ * Add the lines from the named object to list, with trailing
+ * newlines removed.
+ */
+static int string_list_add_note_lines(struct string_list *list,
 				      const unsigned char *sha1)
 {
 	char *data;
 	unsigned long len;
 	enum object_type t;
-	struct strbuf buf = STRBUF_INIT;
-	struct strbuf **lines = NULL;
-	int i, list_index;
 
 	if (is_null_sha1(sha1))
 		return 0;
@@ -868,24 +869,14 @@ static int string_list_add_note_lines(struct string_list *sort_uniq_list,
 		return t != OBJ_BLOB || !data;
 	}
 
-	strbuf_attach(&buf, data, len, len + 1);
-	lines = strbuf_split(&buf, '\n');
-
-	for (i = 0; lines[i]; i++) {
-		if (lines[i]->buf[lines[i]->len - 1] == '\n')
-			strbuf_setlen(lines[i], lines[i]->len - 1);
-		if (!lines[i]->len)
-			continue; /* skip empty lines */
-		list_index = string_list_find_insert_index(sort_uniq_list,
-							   lines[i]->buf, 0);
-		if (list_index < 0)
-			continue; /* skip duplicate lines */
-		string_list_insert_at_index(sort_uniq_list, list_index,
-					    lines[i]->buf);
-	}
-
-	strbuf_list_free(lines);
-	strbuf_release(&buf);
+	/*
+	 * If the last line of the file is EOL-terminated, this will
+	 * add an empty string to the list.  But it will be removed
+	 * later, along with any empty strings that came from empty
+	 * lines within the file.
+	 */
+	string_list_split(list, data, '\n', -1);
+	free(data);
 	return 0;
 }
 
@@ -910,6 +901,9 @@ int combine_notes_cat_sort_uniq(unsigned char *cur_sha1,
 		goto out;
 	if (string_list_add_note_lines(&sort_uniq_list, new_sha1))
 		goto out;
+	string_list_remove_empty_items(&sort_uniq_list, 0);
+	sort_string_list(&sort_uniq_list);
+	string_list_remove_duplicates(&sort_uniq_list, 0);
 
 	/* create a new blob object from sort_uniq_list */
 	if (for_each_string_list(&sort_uniq_list,
