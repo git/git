@@ -200,6 +200,7 @@ test true = "$rebase" && {
 		require_clean_work_tree "pull with rebase" "Please commit or stash them."
 	fi
 	oldremoteref= &&
+	test -n "$curr_branch" &&
 	. git-parse-remote &&
 	remoteref="$(get_remote_merge_branch "$@" 2>/dev/null)" &&
 	oldremoteref="$(git rev-parse -q --verify "$remoteref")" &&
