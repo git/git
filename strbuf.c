@@ -106,7 +106,8 @@ void strbuf_ltrim(struct strbuf *sb)
 	sb->buf[sb->len] = '\0';
 }
 
-struct strbuf **strbuf_split_buf(const char *str, size_t slen, int delim, int max)
+struct strbuf **strbuf_split_buf(const char *str, size_t slen,
+				 int terminator, int max)
 {
 	struct strbuf **ret = NULL;
 	size_t nr = 0, alloc = 0;
@@ -115,7 +116,7 @@ struct strbuf **strbuf_split_buf(const char *str, size_t slen, int delim, int ma
 	while (slen) {
 		int len = slen;
 		if (max <= 0 || nr + 1 < max) {
-			const char *end = memchr(str, delim, slen);
+			const char *end = memchr(str, terminator, slen);
 			if (end)
 				len = end - str + 1;
 		}
