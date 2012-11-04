@@ -19,7 +19,7 @@ then
     test_done
 fi
 
-CVSROOT=$PWD/cvsroot
+CVSROOT=$PWD/tmpcvsroot
 CVSWORK=$PWD/cvswork
 GIT_DIR=$PWD/.git
 export CVSROOT CVSWORK GIT_DIR
