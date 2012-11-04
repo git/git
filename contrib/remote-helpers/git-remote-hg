@@ -17,6 +17,7 @@ import os
 import json
 import shutil
 import subprocess
+import urllib
 
 #
 # If you want to switch to hg-git compatibility mode:
@@ -35,6 +36,7 @@ import subprocess
 
 NAME_RE = re.compile('^([^<>]+)')
 AUTHOR_RE = re.compile('^([^<>]+?)? ?<([^<>]+)>$')
+AUTHOR_HG_RE = re.compile('^(.*?) ?<(.+?)(?:>(.+)?)?$')
 RAW_AUTHOR_RE = re.compile('^(\w+) (?:(.+)? )?<(.+)> (\d+) ([+-]\d+)')
 
 def die(msg, *args):
@@ -152,18 +154,29 @@ class Parser:
         return sys.stdin.read(size)
 
     def get_author(self):
+        global bad_mail
+
+        ex = None
         m = RAW_AUTHOR_RE.match(self.line)
         if not m:
             return None
         _, name, email, date, tz = m.groups()
+        if name and 'ext:' in name:
+            m = re.match('^(.+?) ext:\((.+)\)$', name)
+            if m:
+                name = m.group(1)
+                ex = urllib.unquote(m.group(2))
 
-        if email != 'unknown':
+        if email != bad_mail:
             if name:
                 user = '%s <%s>' % (name, email)
             else:
                 user = '<%s>' % (email)
         else:
             user = name
+
+        if ex:
+            user += ex
 
         tz = int(tz)
         tz = ((tz / 100) * 3600) + ((tz % 100) * 60)
@@ -194,9 +207,9 @@ def get_filechanges(repo, ctx, parent):
 
     return added | modified, removed
 
-def fixup_user(user):
-    user = user.replace('"', '')
+def fixup_user_git(user):
     name = mail = None
+    user = user.replace('"', '')
     m = AUTHOR_RE.match(user)
     if m:
         name = m.group(1)
@@ -205,11 +218,41 @@ def fixup_user(user):
         m = NAME_RE.match(user)
         if m:
             name = m.group(1).strip()
+    return (name, mail)
+
+def fixup_user_hg(user):
+    def sanitize(name):
+        # stole this from hg-git
+        return re.sub('[<>\n]', '?', name.lstrip('< ').rstrip('> '))
+
+    m = AUTHOR_HG_RE.match(user)
+    if m:
+        name = sanitize(m.group(1))
+        mail = sanitize(m.group(2))
+        ex = m.group(3)
+        if ex:
+            name += ' ext:(' + urllib.quote(ex) + ')'
+    else:
+        name = sanitize(user)
+        if '@' in user:
+            mail = name
+        else:
+            mail = None
+
+    return (name, mail)
+
+def fixup_user(user):
+    global mode, bad_mail
+
+    if mode == 'git':
+        name, mail = fixup_user_git(user)
+    else:
+        name, mail = fixup_user_hg(user)
 
     if not name:
-        name = 'Unknown'
+        name = bad_name
     if not mail:
-        mail = 'unknown'
+        mail = bad_mail
 
     return '%s <%s>' % (name, mail)
 
@@ -660,7 +703,7 @@ def do_export(parser):
 def main(args):
     global prefix, dirname, branches, bmarks
     global marks, blob_marks, parsed_refs
-    global peer, mode
+    global peer, mode, bad_mail, bad_name
 
     alias = args[1]
     url = args[2]
@@ -676,8 +719,12 @@ def main(args):
 
     if hg_git_compat:
         mode = 'hg'
+        bad_mail = 'none@none'
+        bad_name = ''
     else:
         mode = 'git'
+        bad_mail = 'unknown'
+        bad_name = 'Unknown'
 
     if alias[4:] == url:
         is_tmp = True
