@@ -901,7 +901,7 @@ static int string_list_join_lines_helper(struct string_list_item *item,
 int combine_notes_cat_sort_uniq(unsigned char *cur_sha1,
 		const unsigned char *new_sha1)
 {
-	struct string_list sort_uniq_list = { NULL, 0, 0, 1 };
+	struct string_list sort_uniq_list = STRING_LIST_INIT_DUP;
 	struct strbuf buf = STRBUF_INIT;
 	int ret = 1;
 
