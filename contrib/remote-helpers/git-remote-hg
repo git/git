@@ -9,7 +9,7 @@
 # Then you can clone with:
 # git clone hg::/path/to/mercurial/repo/
 
-from mercurial import hg, ui, bookmarks, context, util
+from mercurial import hg, ui, bookmarks, context, util, encoding
 
 import re
 import sys
@@ -391,6 +391,9 @@ def do_import(parser):
     print "feature export-marks=%s" % path
     sys.stdout.flush()
 
+    tmp = encoding.encoding
+    encoding.encoding = 'utf-8'
+
     # lets get all the import lines
     while parser.check('import'):
         ref = parser[1]
@@ -408,6 +411,8 @@ def do_import(parser):
             export_tag(repo, tag)
 
         parser.next()
+
+    encoding.encoding = tmp
 
     print 'done'
 
@@ -491,7 +496,12 @@ def parse_commit(parser):
             files.keys(), getfilectx,
             user, (date, tz), extra)
 
+    tmp = encoding.encoding
+    encoding.encoding = 'utf-8'
+
     node = repo.commitctx(ctx)
+
+    encoding.encoding = tmp
 
     rev = repo[node].rev()
 
