@@ -317,7 +317,7 @@ static int link_alt_odb_entry(const char *entry, const char *relative_base, int 
 	return 0;
 }
 
-static void link_alt_odb_entries(const char *alt, const char *ep, int sep,
+static void link_alt_odb_entries(const char *alt, int len, int sep,
 				 const char *relative_base, int depth)
 {
 	struct string_list entries = STRING_LIST_INIT_NODUP;
@@ -330,7 +330,7 @@ static void link_alt_odb_entries(const char *alt, const char *ep, int sep,
 		return;
 	}
 
-	alt_copy = xmemdupz(alt, ep - alt);
+	alt_copy = xmemdupz(alt, len);
 	string_list_split_in_place(&entries, alt_copy, sep, -1);
 	for (i = 0; i < entries.nr; i++) {
 		const char *entry = entries.items[i].string;
@@ -371,7 +371,7 @@ void read_info_alternates(const char * relative_base, int depth)
 	map = xmmap(NULL, mapsz, PROT_READ, MAP_PRIVATE, fd, 0);
 	close(fd);
 
-	link_alt_odb_entries(map, map + mapsz, '\n', relative_base, depth);
+	link_alt_odb_entries(map, mapsz, '\n', relative_base, depth);
 
 	munmap(map, mapsz);
 }
@@ -385,7 +385,7 @@ void add_to_alternates_file(const char *reference)
 	if (commit_lock_file(lock))
 		die("could not close alternates file");
 	if (alt_odb_tail)
-		link_alt_odb_entries(alt, alt + strlen(alt), '\n', NULL, 0);
+		link_alt_odb_entries(alt, strlen(alt), '\n', NULL, 0);
 }
 
 void foreach_alt_odb(alt_odb_fn fn, void *cb)
@@ -409,7 +409,7 @@ void prepare_alt_odb(void)
 	if (!alt) alt = "";
 
 	alt_odb_tail = &alt_odb_list;
-	link_alt_odb_entries(alt, alt + strlen(alt), PATH_SEP, NULL, 0);
+	link_alt_odb_entries(alt, strlen(alt), PATH_SEP, NULL, 0);
 
 	read_info_alternates(get_object_directory(), 0);
 }
