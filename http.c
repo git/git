@@ -631,6 +631,18 @@ void run_active_slot(struct active_request_slot *slot)
 			FD_ZERO(&excfds);
 			curl_multi_fdset(curlm, &readfds, &writefds, &excfds, &max_fd);
 
+			/*
+			 * It can happen that curl_multi_timeout returns a pathologically
+			 * long timeout when curl_multi_fdset returns no file descriptors
+			 * to read.  See commit message for more details.
+			 */
+			if (max_fd < 0 &&
+			    (select_timeout.tv_sec > 0 ||
+			     select_timeout.tv_usec > 50000)) {
+				select_timeout.tv_sec  = 0;
+				select_timeout.tv_usec = 50000;
+			}
+
 			select(max_fd+1, &readfds, &writefds, &excfds, &select_timeout);
 		}
 	}
