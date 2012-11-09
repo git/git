@@ -1183,6 +1183,7 @@ extern int pager_in_use(void);
 extern int pager_use_color;
 extern int term_columns(void);
 extern int decimal_width(int);
+extern int check_pager_config(const char *cmd);
 
 extern const char *editor_program;
 extern const char *askpass_program;
@@ -1265,8 +1266,15 @@ struct startup_info {
 };
 extern struct startup_info *startup_info;
 
-/* builtin/merge.c */
-int checkout_fast_forward(const unsigned char *from, const unsigned char *to);
+/* merge.c */
+struct commit_list;
+int try_merge_command(const char *strategy, size_t xopts_nr,
+		const char **xopts, struct commit_list *common,
+		const char *head_arg, struct commit_list *remotes);
+int checkout_fast_forward(const unsigned char *from,
+			  const unsigned char *to,
+			  int overwrite_ignore);
+
 
 int sane_execvp(const char *file, char *const argv[]);
 

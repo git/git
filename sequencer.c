@@ -191,7 +191,7 @@ static int fast_forward_to(const unsigned char *to, const unsigned char *from)
 	struct ref_lock *ref_lock;
 
 	read_cache();
-	if (checkout_fast_forward(from, to))
+	if (checkout_fast_forward(from, to, 1))
 		exit(1); /* the callee should have complained already */
 	ref_lock = lock_any_ref_for_update("HEAD", from, 0);
 	return write_ref_sha1(ref_lock, to, "cherry-pick");

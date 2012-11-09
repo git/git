@@ -11,10 +11,6 @@ extern struct commit_list *filter_skipped(struct commit_list *list,
 					  int *count,
 					  int *skipped_first);
 
-extern void print_commit_list(struct commit_list *list,
-			      const char *format_cur,
-			      const char *format_last);
-
 #define BISECT_SHOW_ALL		(1<<0)
 #define REV_LIST_QUIET		(1<<1)
 
