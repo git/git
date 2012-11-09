@@ -799,6 +799,16 @@ _git_apply ()
 	COMPREPLY=()
 }
 
+__git_addable ()
+{
+	local dir="$(__gitdir)"
+	if [ -d "$dir" ]; then
+		git --git-dir="$dir" status --short --untracked=all |\
+			egrep '^.[UM?] ' | sed 's/^.. //'
+		return
+	fi
+}
+
 _git_add ()
 {
 	__git_has_doubledash && return
@@ -810,6 +820,11 @@ _git_add ()
 			--ignore-errors --intent-to-add
 			"
 		return
+		;;
+	*)
+		__gitcomp "$(__git_addable)"
+		return
+		;;
 	esac
 	COMPREPLY=()
 }
