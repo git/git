@@ -51,6 +51,10 @@ $| = 1;
 
 #### Definition and mappings of functions ####
 
+# NOTE: Despite the existence of req_CATCHALL and req_EMPTY unimplemented
+#  requests, this list is incomplete.  It is missing many rarer/optional
+#  requests.  Perhaps some clients require a claim of support for
+#  these specific requests for main functionality to work?
 my $methods = {
     'Root'            => \&req_Root,
     'Valid-responses' => \&req_Validresponses,
@@ -80,7 +84,6 @@ my $methods = {
     'noop'            => \&req_EMPTY,
     'annotate'        => \&req_annotate,
     'Global_option'   => \&req_Globaloption,
-    #'annotate'        => \&req_CATCHALL,
 };
 
 ##############################################
@@ -499,7 +502,7 @@ sub req_Entry
 
     #$log->debug("req_Entry : $data");
 
-    my @data = split(/\//, $data);
+    my @data = split(/\//, $data, -1);
 
     $state->{entries}{$state->{directory}.$data[1]} = {
         revision    => $data[2],
@@ -540,8 +543,6 @@ sub req_add
     my $updater = GITCVS::updater->new($state->{CVSROOT}, $state->{module}, $log);
     $updater->update();
 
-    argsfromdir($updater);
-
     my $addcount = 0;
 
     foreach my $filename ( @{$state->{args}} )
@@ -551,10 +552,10 @@ sub req_add
         my $meta = $updater->getmeta($filename);
         my $wrev = revparse($filename);
 
-        if ($wrev && $meta && ($wrev < 0))
+        if ($wrev && $meta && ($wrev=~/^-/))
         {
             # previously removed file, add back
-            $log->info("added file $filename was previously removed, send 1.$meta->{revision}");
+            $log->info("added file $filename was previously removed, send $meta->{revision}");
 
             print "MT +updated\n";
             print "MT text U \n";
@@ -571,8 +572,8 @@ sub req_add
 
                 # this is an "entries" line
                 my $kopts = kopts_from_path($filename,"sha1",$meta->{filehash});
-                $log->debug("/$filepart/1.$meta->{revision}//$kopts/");
-                print "/$filepart/1.$meta->{revision}//$kopts/\n";
+                $log->debug("/$filepart/$meta->{revision}//$kopts/");
+                print "/$filepart/$meta->{revision}//$kopts/\n";
                 # permissions
                 $log->debug("SEND : u=$meta->{mode},g=$meta->{mode},o=$meta->{mode}");
                 print "u=$meta->{mode},g=$meta->{mode},o=$meta->{mode}\n";
@@ -680,13 +681,13 @@ sub req_remove
             next;
         }
 
-        if ( defined($wrev) and $wrev < 0 )
+        if ( defined($wrev) and ($wrev=~/^-/) )
         {
             print "E cvs remove: file `$filename' already scheduled for removal\n";
             next;
         }
 
-        unless ( $wrev == $meta->{revision} )
+        unless ( $wrev eq $meta->{revision} )
         {
             # TODO : not sure if the format of this message is quite correct.
             print "E cvs remove: Up to date check failed for `$filename'\n";
@@ -701,7 +702,7 @@ sub req_remove
         print "Checked-in $dirpart\n";
         print "$filename\n";
         my $kopts = kopts_from_path($filename,"sha1",$meta->{filehash});
-        print "/$filepart/-1.$wrev//$kopts/\n";
+        print "/$filepart/-$wrev//$kopts/\n";
 
         $rmcount++;
     }
@@ -992,7 +993,7 @@ sub req_co
 
         # this is an "entries" line
         my $kopts = kopts_from_path($fullName,"sha1",$git->{filehash});
-        print "/$git->{name}/1.$git->{revision}//$kopts/\n";
+        print "/$git->{name}/$git->{revision}//$kopts/\n";
         # permissions
         print "u=$git->{mode},g=$git->{mode},o=$git->{mode}\n";
 
@@ -1080,7 +1081,7 @@ sub req_update
         }
 
         my $meta;
-        if ( defined($state->{opt}{r}) and $state->{opt}{r} =~ /^1\.(\d+)/ )
+        if ( defined($state->{opt}{r}) and $state->{opt}{r} =~ /^(1\.\d+)$/ )
         {
             $meta = $updater->getmeta($filename, $1);
         } else {
@@ -1102,7 +1103,7 @@ sub req_update
 	{
 	    $meta = {
 	        name => $filename,
-	        revision => 0,
+	        revision => '0',
 	        filehash => 'added'
 	    };
 	}
@@ -1112,7 +1113,7 @@ sub req_update
         my $wrev = revparse($filename);
 
         # If the working copy is an old revision, lets get that version too for comparison.
-        if ( defined($wrev) and $wrev != $meta->{revision} )
+        if ( defined($wrev) and $wrev ne $meta->{revision} )
         {
             $oldmeta = $updater->getmeta($filename, $wrev);
         }
@@ -1123,7 +1124,7 @@ sub req_update
         # and the working copy is unmodified _and_ the user hasn't specified -C
         next if ( defined ( $wrev )
                   and defined($meta->{revision})
-                  and $wrev == $meta->{revision}
+                  and $wrev eq $meta->{revision}
                   and $state->{entries}{$filename}{unchanged}
                   and not exists ( $state->{opt}{C} ) );
 
@@ -1131,7 +1132,7 @@ sub req_update
         # but the working copy is modified, tell the client it's modified
         if ( defined ( $wrev )
              and defined($meta->{revision})
-             and $wrev == $meta->{revision}
+             and $wrev eq $meta->{revision}
              and defined($state->{entries}{$filename}{modified_hash})
              and not exists ( $state->{opt}{C} ) )
         {
@@ -1144,6 +1145,10 @@ sub req_update
 
         if ( $meta->{filehash} eq "deleted" )
         {
+            # TODO: If it has been modified in the sandbox, error out
+            #   with the appropriate message, rather than deleting a modified
+            #   file.
+
             my ( $filepart, $dirpart ) = filenamesplit($filename,1);
 
             $log->info("Removing '$filename' from working copy (no longer in the repo)");
@@ -1161,7 +1166,7 @@ sub req_update
         {
             # normal update, just send the new revision (either U=Update,
             # or A=Add, or R=Remove)
-	    if ( defined($wrev) && $wrev < 0 )
+	    if ( defined($wrev) && ($wrev=~/^-/) )
 	    {
 	        $log->info("Tell the client the file is scheduled for removal");
 		print "MT text R \n";
@@ -1169,7 +1174,8 @@ sub req_update
                 print "MT newline\n";
 		next;
 	    }
-	    elsif ( (!defined($wrev) || $wrev == 0) && (!defined($meta->{revision}) || $meta->{revision} == 0) )
+	    elsif ( (!defined($wrev) || $wrev eq '0') &&
+                    (!defined($meta->{revision}) || $meta->{revision} eq '0') )
 	    {
 	        $log->info("Tell the client the file is scheduled for addition");
 		print "MT text A \n";
@@ -1179,7 +1185,7 @@ sub req_update
 
 	    }
 	    else {
-                $log->info("Updating '$filename' to ".$meta->{revision});
+                $log->info("UpdatingX3 '$filename' to ".$meta->{revision});
                 print "MT +updated\n";
                 print "MT text U \n";
                 print "MT fname $filename\n";
@@ -1211,8 +1217,8 @@ sub req_update
 
 		# this is an "entries" line
 		my $kopts = kopts_from_path($filename,"sha1",$meta->{filehash});
-		$log->debug("/$filepart/1.$meta->{revision}//$kopts/");
-		print "/$filepart/1.$meta->{revision}//$kopts/\n";
+		$log->debug("/$filepart/$meta->{revision}//$kopts/");
+		print "/$filepart/$meta->{revision}//$kopts/\n";
 
 		# permissions
 		$log->debug("SEND : u=$meta->{mode},g=$meta->{mode},o=$meta->{mode}");
@@ -1222,7 +1228,6 @@ sub req_update
 		transmitfile($meta->{filehash});
 	    }
         } else {
-            $log->info("Updating '$filename'");
             my ( $filepart, $dirpart ) = filenamesplit($meta->{name},1);
 
             my $mergeDir = setupTmpDir();
@@ -1237,7 +1242,7 @@ sub req_update
 
             # we need to merge with the local changes ( M=successful merge, C=conflict merge )
             $log->info("Merging $file_local, $file_old, $file_new");
-            print "M Merging differences between 1.$oldmeta->{revision} and 1.$meta->{revision} into $filename\n";
+            print "M Merging differences between $oldmeta->{revision} and $meta->{revision} into $filename\n";
 
             $log->debug("Temporary directory for merge is $mergeDir");
 
@@ -1260,8 +1265,8 @@ sub req_update
                     print $state->{CVSROOT} . "/$state->{module}/$filename\n";
                     my $kopts = kopts_from_path("$dirpart/$filepart",
                                                 "file",$mergedFile);
-                    $log->debug("/$filepart/1.$meta->{revision}//$kopts/");
-                    print "/$filepart/1.$meta->{revision}//$kopts/\n";
+                    $log->debug("/$filepart/$meta->{revision}//$kopts/");
+                    print "/$filepart/$meta->{revision}//$kopts/\n";
                 }
             }
             elsif ( $return == 1 )
@@ -1277,7 +1282,7 @@ sub req_update
                     print $state->{CVSROOT} . "/$state->{module}/$filename\n";
                     my $kopts = kopts_from_path("$dirpart/$filepart",
                                                 "file",$mergedFile);
-                    print "/$filepart/1.$meta->{revision}/+/$kopts/\n";
+                    print "/$filepart/$meta->{revision}/+/$kopts/\n";
                 }
             }
             else
@@ -1380,11 +1385,12 @@ sub req_ci
 
         my $addflag = 0;
         my $rmflag = 0;
-        $rmflag = 1 if ( defined($wrev) and $wrev < 0 );
+        $rmflag = 1 if ( defined($wrev) and ($wrev=~/^-/) );
         $addflag = 1 unless ( -e $filename );
 
         # Do up to date checking
-        unless ( $addflag or $wrev == $meta->{revision} or ( $rmflag and -$wrev == $meta->{revision} ) )
+        unless ( $addflag or $wrev eq $meta->{revision} or
+                 ( $rmflag and $wrev eq "-$meta->{revision}" ) )
         {
             # fail everything if an up to date check fails
             print "error 1 Up to date check failed for $filename\n";
@@ -1421,7 +1427,7 @@ sub req_ci
             $log->info("Adding file '$filename'");
             system("git", "update-index", "--add", $filename);
         } else {
-            $log->info("Updating file '$filename'");
+            $log->info("UpdatingX2 file '$filename'");
             system("git", "update-index", $filename);
         }
     }
@@ -1512,7 +1518,7 @@ sub req_ci
 
         my $meta = $updater->getmeta($filename);
 	unless (defined $meta->{revision}) {
-	  $meta->{revision} = 1;
+	  $meta->{revision} = "1.1";
 	}
 
         my ( $filepart, $dirpart ) = filenamesplit($filename, 1);
@@ -1522,19 +1528,19 @@ sub req_ci
 	print "M $state->{CVSROOT}/$state->{module}/$filename,v  <--  $dirpart$filepart\n";
         if ( defined $meta->{filehash} && $meta->{filehash} eq "deleted" )
         {
-            print "M new revision: delete; previous revision: 1.$oldmeta{$filename}{revision}\n";
+            print "M new revision: delete; previous revision: $oldmeta{$filename}{revision}\n";
             print "Remove-entry $dirpart\n";
             print "$filename\n";
         } else {
-            if ($meta->{revision} == 1) {
+            if ($meta->{revision} eq "1.1") {
 	        print "M initial revision: 1.1\n";
             } else {
-	        print "M new revision: 1.$meta->{revision}; previous revision: 1.$oldmeta{$filename}{revision}\n";
+	        print "M new revision: $meta->{revision}; previous revision: $oldmeta{$filename}{revision}\n";
             }
             print "Checked-in $dirpart\n";
             print "$filename\n";
             my $kopts = kopts_from_path($filename,"sha1",$meta->{filehash});
-            print "/$filepart/1.$meta->{revision}//$kopts/\n";
+            print "/$filepart/$meta->{revision}//$kopts/\n";
         }
     }
 
@@ -1552,10 +1558,12 @@ sub req_status
     #$log->debug("status state : " . Dumper($state));
 
     # Grab a handle to the SQLite db and do any necessary updates
-    my $updater = GITCVS::updater->new($state->{CVSROOT}, $state->{module}, $log);
+    my $updater;
+    $updater = GITCVS::updater->new($state->{CVSROOT}, $state->{module}, $log);
     $updater->update();
 
-    # if no files were specified, we need to work out what files we should be providing status on ...
+    # if no files were specified, we need to work out what files we should
+    # be providing status on ...
     argsfromdir($updater);
 
     # foreach file specified on the command line ...
@@ -1563,67 +1571,135 @@ sub req_status
     {
         $filename = filecleanup($filename);
 
-        next if exists($state->{opt}{l}) && index($filename, '/', length($state->{prependdir})) >= 0;
+        if ( exists($state->{opt}{l}) &&
+             index($filename, '/', length($state->{prependdir})) >= 0 )
+        {
+           next;
+        }
 
         my $meta = $updater->getmeta($filename);
         my $oldmeta = $meta;
 
         my $wrev = revparse($filename);
 
-        # If the working copy is an old revision, lets get that version too for comparison.
-        if ( defined($wrev) and $wrev != $meta->{revision} )
+        # If the working copy is an old revision, lets get that
+        # version too for comparison.
+        if ( defined($wrev) and $wrev ne $meta->{revision} )
         {
             $oldmeta = $updater->getmeta($filename, $wrev);
         }
 
         # TODO : All possible statuses aren't yet implemented
         my $status;
-        # Files are up to date if the working copy and repo copy have the same revision, and the working copy is unmodified
-        $status = "Up-to-date" if ( defined ( $wrev ) and defined($meta->{revision}) and $wrev == $meta->{revision}
-                                    and
-                                    ( ( $state->{entries}{$filename}{unchanged} and ( not defined ( $state->{entries}{$filename}{conflict} ) or $state->{entries}{$filename}{conflict} !~ /^\+=/ ) )
-                                      or ( defined($state->{entries}{$filename}{modified_hash}) and $state->{entries}{$filename}{modified_hash} eq $meta->{filehash} ) )
-                                   );
+        # Files are up to date if the working copy and repo copy have
+        # the same revision, and the working copy is unmodified
+        if ( defined ( $wrev ) and defined($meta->{revision}) and
+             $wrev eq $meta->{revision} and
+             ( ( $state->{entries}{$filename}{unchanged} and
+                 ( not defined ( $state->{entries}{$filename}{conflict} ) or
+                   $state->{entries}{$filename}{conflict} !~ /^\+=/ ) ) or
+               ( defined($state->{entries}{$filename}{modified_hash}) and
+                 $state->{entries}{$filename}{modified_hash} eq
+                        $meta->{filehash} ) ) )
+        {
+            $status = "Up-to-date"
+        }
 
-        # Need checkout if the working copy has an older revision than the repo copy, and the working copy is unmodified
-        $status ||= "Needs Checkout" if ( defined ( $wrev ) and defined ( $meta->{revision} ) and $meta->{revision} > $wrev
-                                          and
-                                          ( $state->{entries}{$filename}{unchanged}
-                                            or ( defined($state->{entries}{$filename}{modified_hash}) and $state->{entries}{$filename}{modified_hash} eq $oldmeta->{filehash} ) )
-                                        );
+        # Need checkout if the working copy has a different (usually
+        # older) revision than the repo copy, and the working copy is
+        # unmodified
+        if ( defined ( $wrev ) and defined ( $meta->{revision} ) and
+             $meta->{revision} ne $wrev and
+             ( $state->{entries}{$filename}{unchanged} or
+               ( defined($state->{entries}{$filename}{modified_hash}) and
+                 $state->{entries}{$filename}{modified_hash} eq
+                                $oldmeta->{filehash} ) ) )
+        {
+            $status ||= "Needs Checkout";
+        }
 
-        # Need checkout if it exists in the repo but doesn't have a working copy
-        $status ||= "Needs Checkout" if ( not defined ( $wrev ) and defined ( $meta->{revision} ) );
+        # Need checkout if it exists in the repo but doesn't have a working
+        # copy
+        if ( not defined ( $wrev ) and defined ( $meta->{revision} ) )
+        {
+            $status ||= "Needs Checkout";
+        }
 
-        # Locally modified if working copy and repo copy have the same revision but there are local changes
-        $status ||= "Locally Modified" if ( defined ( $wrev ) and defined($meta->{revision}) and $wrev == $meta->{revision} and $state->{entries}{$filename}{modified_filename} );
+        # Locally modified if working copy and repo copy have the
+        # same revision but there are local changes
+        if ( defined ( $wrev ) and defined($meta->{revision}) and
+             $wrev eq $meta->{revision} and
+             $state->{entries}{$filename}{modified_filename} )
+        {
+            $status ||= "Locally Modified";
+        }
 
-        # Needs Merge if working copy revision is less than repo copy and there are local changes
-        $status ||= "Needs Merge" if ( defined ( $wrev ) and defined ( $meta->{revision} ) and $meta->{revision} > $wrev and $state->{entries}{$filename}{modified_filename} );
+        # Needs Merge if working copy revision is different
+        # (usually older) than repo copy and there are local changes
+        if ( defined ( $wrev ) and defined ( $meta->{revision} ) and
+             $meta->{revision} ne $wrev and
+             $state->{entries}{$filename}{modified_filename} )
+        {
+            $status ||= "Needs Merge";
+        }
 
-        $status ||= "Locally Added" if ( defined ( $state->{entries}{$filename}{revision} ) and not defined ( $meta->{revision} ) );
-        $status ||= "Locally Removed" if ( defined ( $wrev ) and defined ( $meta->{revision} ) and -$wrev == $meta->{revision} );
-        $status ||= "Unresolved Conflict" if ( defined ( $state->{entries}{$filename}{conflict} ) and $state->{entries}{$filename}{conflict} =~ /^\+=/ );
-        $status ||= "File had conflicts on merge" if ( 0 );
+        if ( defined ( $state->{entries}{$filename}{revision} ) and
+             not defined ( $meta->{revision} ) )
+        {
+            $status ||= "Locally Added";
+        }
+        if ( defined ( $wrev ) and defined ( $meta->{revision} ) and
+             $wrev eq "-$meta->{revision}" )
+        {
+            $status ||= "Locally Removed";
+        }
+        if ( defined ( $state->{entries}{$filename}{conflict} ) and
+             $state->{entries}{$filename}{conflict} =~ /^\+=/ )
+        {
+            $status ||= "Unresolved Conflict";
+        }
+        if ( 0 )
+        {
+            $status ||= "File had conflicts on merge";
+        }
 
         $status ||= "Unknown";
 
         my ($filepart) = filenamesplit($filename);
 
-        print "M ===================================================================\n";
+        print "M =======" . ( "=" x 60 ) . "\n";
         print "M File: $filepart\tStatus: $status\n";
         if ( defined($state->{entries}{$filename}{revision}) )
         {
-            print "M Working revision:\t" . $state->{entries}{$filename}{revision} . "\n";
+            print "M Working revision:\t" .
+                  $state->{entries}{$filename}{revision} . "\n";
         } else {
             print "M Working revision:\tNo entry for $filename\n";
         }
         if ( defined($meta->{revision}) )
         {
-            print "M Repository revision:\t1." . $meta->{revision} . "\t$state->{CVSROOT}/$state->{module}/$filename,v\n";
-            print "M Sticky Tag:\t\t(none)\n";
-            print "M Sticky Date:\t\t(none)\n";
-            print "M Sticky Options:\t\t(none)\n";
+            print "M Repository revision:\t" .
+                   $meta->{revision} .
+                   "\t$state->{CVSROOT}/$state->{module}/$filename,v\n";
+            my($tagOrDate)=$state->{entries}{$filename}{tag_or_date};
+            my($tag)=($tagOrDate=~m/^T(.+)$/);
+            if( !defined($tag) )
+            {
+                $tag="(none)";
+            }
+            print "M Sticky Tag:\t\t$tag\n";
+            my($date)=($tagOrDate=~m/^D(.+)$/);
+            if( !defined($date) )
+            {
+                $date="(none)";
+            }
+            print "M Sticky Date:\t\t$date\n";
+            my($options)=$state->{entries}{$filename}{options};
+            if( $options eq "" )
+            {
+                $options="(none)";
+            }
+            print "M Sticky Options:\t\t$options\n";
         } else {
             print "M Repository revision:\tNo revision control file\n";
         }
@@ -1651,16 +1727,17 @@ sub req_diff
         $revision1 = $state->{opt}{r};
     }
 
-    $revision1 =~ s/^1\.// if ( defined ( $revision1 ) );
-    $revision2 =~ s/^1\.// if ( defined ( $revision2 ) );
-
-    $log->debug("Diffing revisions " . ( defined($revision1) ? $revision1 : "[NULL]" ) . " and " . ( defined($revision2) ? $revision2 : "[NULL]" ) );
+    $log->debug("Diffing revisions " .
+                ( defined($revision1) ? $revision1 : "[NULL]" ) .
+                " and " . ( defined($revision2) ? $revision2 : "[NULL]" ) );
 
     # Grab a handle to the SQLite db and do any necessary updates
-    my $updater = GITCVS::updater->new($state->{CVSROOT}, $state->{module}, $log);
+    my $updater;
+    $updater = GITCVS::updater->new($state->{CVSROOT}, $state->{module}, $log);
     $updater->update();
 
-    # if no files were specified, we need to work out what files we should be providing status on ...
+    # if no files were specified, we need to work out what files we should
+    # be providing status on ...
     argsfromdir($updater);
 
     # foreach file specified on the command line ...
@@ -1682,7 +1759,7 @@ sub req_diff
             $meta1 = $updater->getmeta($filename, $revision1);
             unless ( defined ( $meta1 ) and $meta1->{filehash} ne "deleted" )
             {
-                print "E File $filename at revision 1.$revision1 doesn't exist\n";
+                print "E File $filename at revision $revision1 doesn't exist\n";
                 next;
             }
             transmitfile($meta1->{filehash}, { targetfile => $file1 });
@@ -1703,7 +1780,7 @@ sub req_diff
 
             unless ( defined ( $meta2 ) and $meta2->{filehash} ne "deleted" )
             {
-                print "E File $filename at revision 1.$revision2 doesn't exist\n";
+                print "E File $filename at revision $revision2 doesn't exist\n";
                 next;
             }
 
@@ -1715,7 +1792,8 @@ sub req_diff
             $file2 = $state->{entries}{$filename}{modified_filename};
         }
 
-        # if we have been given -r, and we don't have a $file2 yet, lets get one
+        # if we have been given -r, and we don't have a $file2 yet, lets
+        # get one
         if ( defined ( $revision1 ) and not defined ( $file2 ) )
         {
             ( undef, $file2 ) = tempfile( DIR => $TEMP_DIR, OPEN => 0 );
@@ -1726,21 +1804,37 @@ sub req_diff
         # We need to have retrieved something useful
         next unless ( defined ( $meta1 ) );
 
-        # Files to date if the working copy and repo copy have the same revision, and the working copy is unmodified
-        next if ( not defined ( $meta2 ) and $wrev == $meta1->{revision}
-                  and
-                   ( ( $state->{entries}{$filename}{unchanged} and ( not defined ( $state->{entries}{$filename}{conflict} ) or $state->{entries}{$filename}{conflict} !~ /^\+=/ ) )
-                     or ( defined($state->{entries}{$filename}{modified_hash}) and $state->{entries}{$filename}{modified_hash} eq $meta1->{filehash} ) )
-                  );
+        # Files to date if the working copy and repo copy have the same
+        # revision, and the working copy is unmodified
+        if ( not defined ( $meta2 ) and $wrev eq $meta1->{revision} and
+             ( ( $state->{entries}{$filename}{unchanged} and
+                 ( not defined ( $state->{entries}{$filename}{conflict} ) or
+                   $state->{entries}{$filename}{conflict} !~ /^\+=/ ) ) or
+               ( defined($state->{entries}{$filename}{modified_hash}) and
+                 $state->{entries}{$filename}{modified_hash} eq
+                        $meta1->{filehash} ) ) )
+        {
+            next;
+        }
 
         # Apparently we only show diffs for locally modified files
-        next unless ( defined($meta2) or defined ( $state->{entries}{$filename}{modified_filename} ) );
+        unless ( defined($meta2) or
+                 defined ( $state->{entries}{$filename}{modified_filename} ) )
+        {
+            next;
+        }
 
         print "M Index: $filename\n";
-        print "M ===================================================================\n";
+        print "M =======" . ( "=" x 60 ) . "\n";
         print "M RCS file: $state->{CVSROOT}/$state->{module}/$filename,v\n";
-        print "M retrieving revision 1.$meta1->{revision}\n" if ( defined ( $meta1 ) );
-        print "M retrieving revision 1.$meta2->{revision}\n" if ( defined ( $meta2 ) );
+        if ( defined ( $meta1 ) )
+        {
+            print "M retrieving revision $meta1->{revision}\n"
+        }
+        if ( defined ( $meta2 ) )
+        {
+            print "M retrieving revision $meta2->{revision}\n"
+        }
         print "M diff ";
         foreach my $opt ( keys %{$state->{opt}} )
         {
@@ -1752,18 +1846,27 @@ sub req_diff
                 }
             } else {
                 print "-$opt ";
-                print "$state->{opt}{$opt} " if ( defined ( $state->{opt}{$opt} ) );
+                if ( defined ( $state->{opt}{$opt} ) )
+                {
+                    print "$state->{opt}{$opt} "
+                }
             }
         }
         print "$filename\n";
 
-        $log->info("Diffing $filename -r $meta1->{revision} -r " . ( $meta2->{revision} or "workingcopy" ));
+        $log->info("Diffing $filename -r $meta1->{revision} -r " .
+                   ( $meta2->{revision} or "workingcopy" ));
 
         ( $fh, $filediff ) = tempfile ( DIR => $TEMP_DIR );
 
         if ( exists $state->{opt}{u} )
         {
-            system("diff -u -L '$filename revision 1.$meta1->{revision}' -L '$filename " . ( defined($meta2->{revision}) ? "revision 1.$meta2->{revision}" : "working copy" ) . "' $file1 $file2 > $filediff");
+            system("diff -u -L '$filename revision $meta1->{revision}'" .
+                        " -L '$filename " .
+                        ( defined($meta2->{revision}) ?
+                                "revision $meta2->{revision}" :
+                                "working copy" ) .
+                        "' $file1 $file2 > $filediff" );
         } else {
             system("diff $file1 $file2 > $filediff");
         }
@@ -1787,22 +1890,19 @@ sub req_log
     $log->debug("req_log : " . ( defined($data) ? $data : "[NULL]" ));
     #$log->debug("log state : " . Dumper($state));
 
-    my ( $minrev, $maxrev );
-    if ( defined ( $state->{opt}{r} ) and $state->{opt}{r} =~ /([\d.]+)?(::?)([\d.]+)?/ )
+    my ( $revFilter );
+    if ( defined ( $state->{opt}{r} ) )
     {
-        my $control = $2;
-        $minrev = $1;
-        $maxrev = $3;
-        $minrev =~ s/^1\.// if ( defined ( $minrev ) );
-        $maxrev =~ s/^1\.// if ( defined ( $maxrev ) );
-        $minrev++ if ( defined($minrev) and $control eq "::" );
+        $revFilter = $state->{opt}{r};
     }
 
     # Grab a handle to the SQLite db and do any necessary updates
-    my $updater = GITCVS::updater->new($state->{CVSROOT}, $state->{module}, $log);
+    my $updater;
+    $updater = GITCVS::updater->new($state->{CVSROOT}, $state->{module}, $log);
     $updater->update();
 
-    # if no files were specified, we need to work out what files we should be providing status on ...
+    # if no files were specified, we need to work out what files we
+    # should be providing status on ...
     argsfromdir($updater);
 
     # foreach file specified on the command line ...
@@ -1812,53 +1912,46 @@ sub req_log
 
         my $headmeta = $updater->getmeta($filename);
 
-        my $revisions = $updater->getlog($filename);
-        my $totalrevisions = scalar(@$revisions);
-
-        if ( defined ( $minrev ) )
-        {
-            $log->debug("Removing revisions less than $minrev");
-            while ( scalar(@$revisions) > 0 and $revisions->[-1]{revision} < $minrev )
-            {
-                pop @$revisions;
-            }
-        }
-        if ( defined ( $maxrev ) )
-        {
-            $log->debug("Removing revisions greater than $maxrev");
-            while ( scalar(@$revisions) > 0 and $revisions->[0]{revision} > $maxrev )
-            {
-                shift @$revisions;
-            }
-        }
+        my ($revisions,$totalrevisions) = $updater->getlog($filename,
+                                                           $revFilter);
 
         next unless ( scalar(@$revisions) );
 
         print "M \n";
         print "M RCS file: $state->{CVSROOT}/$state->{module}/$filename,v\n";
         print "M Working file: $filename\n";
-        print "M head: 1.$headmeta->{revision}\n";
+        print "M head: $headmeta->{revision}\n";
         print "M branch:\n";
         print "M locks: strict\n";
         print "M access list:\n";
         print "M symbolic names:\n";
         print "M keyword substitution: kv\n";
-        print "M total revisions: $totalrevisions;\tselected revisions: " . scalar(@$revisions) . "\n";
+        print "M total revisions: $totalrevisions;\tselected revisions: " .
+              scalar(@$revisions) . "\n";
         print "M description:\n";
 
         foreach my $revision ( @$revisions )
         {
             print "M ----------------------------\n";
-            print "M revision 1.$revision->{revision}\n";
+            print "M revision $revision->{revision}\n";
             # reformat the date for log output
-            $revision->{modified} = sprintf('%04d/%02d/%02d %s', $3, $DATE_LIST->{$2}, $1, $4 ) if ( $revision->{modified} =~ /(\d+)\s+(\w+)\s+(\d+)\s+(\S+)/ and defined($DATE_LIST->{$2}) );
+            if ( $revision->{modified} =~ /(\d+)\s+(\w+)\s+(\d+)\s+(\S+)/ and
+                 defined($DATE_LIST->{$2}) )
+            {
+                $revision->{modified} = sprintf('%04d/%02d/%02d %s',
+                                            $3, $DATE_LIST->{$2}, $1, $4 );
+            }
             $revision->{author} = cvs_author($revision->{author});
-            print "M date: $revision->{modified};  author: $revision->{author};  state: " . ( $revision->{filehash} eq "deleted" ? "dead" : "Exp" ) . ";  lines: +2 -3\n";
-            my $commitmessage = $updater->commitmessage($revision->{commithash});
+            print "M date: $revision->{modified};" .
+                  "  author: $revision->{author};  state: " .
+                  ( $revision->{filehash} eq "deleted" ? "dead" : "Exp" ) .
+                  ";  lines: +2 -3\n";
+            my $commitmessage;
+            $commitmessage = $updater->commitmessage($revision->{commithash});
             $commitmessage =~ s/^/M /mg;
             print $commitmessage . "\n";
         }
-        print "M =============================================================================\n";
+        print "M =======" . ( "=" x 70 ) . "\n";
     }
 
     print "ok\n";
@@ -1964,7 +2057,7 @@ sub req_annotate
                     $metadata->{$commithash}{author} = cvs_author($metadata->{$commithash}{author});
                     $metadata->{$commithash}{modified} = sprintf("%02d-%s-%02d", $1, $2, $3) if ( $metadata->{$commithash}{modified} =~ /^(\d+)\s(\w+)\s\d\d(\d\d)/ );
                 }
-                printf("M 1.%-5d      (%-8s %10s): %s\n",
+                printf("M %-7s      (%-8s %10s): %s\n",
                     $metadata->{$commithash}{revision},
                     $metadata->{$commithash}{author},
                     $metadata->{$commithash}{modified},
@@ -2085,7 +2178,7 @@ sub argsfromdir
     # push added files
     foreach my $file (keys %{$state->{entries}}) {
 	if ( exists $state->{entries}{$file}{revision} &&
-		$state->{entries}{$file}{revision} == 0 )
+		$state->{entries}{$file}{revision} eq '0' )
 	{
 	    push @gethead, { name => $file, filehash => 'added' };
 	}
@@ -2129,16 +2222,15 @@ sub statecleanup
     $state->{entries} = {};
 }
 
+# Return working directory CVS revision "1.X" out
+# of the the working directory "entries" state, for the given filename.
+# This is prefixed with a dash if the file is scheduled for removal
+# when it is committed.
 sub revparse
 {
     my $filename = shift;
 
-    return undef unless ( defined ( $state->{entries}{$filename}{revision} ) );
-
-    return $1 if ( $state->{entries}{$filename}{revision} =~ /^1\.(\d+)/ );
-    return -$1 if ( $state->{entries}{$filename}{revision} =~ /^-1\.(\d+)/ );
-
-    return undef;
+    return $state->{entries}{$filename}{revision};
 }
 
 # This method takes a file hash and does a CVS "file transfer".  Its
@@ -2444,42 +2536,14 @@ sub kopts_from_path
         }
         elsif( ($cfg->{gitcvs}{allbinary} =~ /^\s*guess\s*$/i) )
         {
-            if( $srcType eq "sha1Or-k" &&
-                !defined($name) )
+            if( is_binary($srcType,$name) )
             {
-                my ($ret)=$state->{entries}{$path}{options};
-                if( !defined($ret) )
-                {
-                    $ret=$state->{opt}{k};
-                    if(defined($ret))
-                    {
-                        $ret="-k$ret";
-                    }
-                    else
-                    {
-                        $ret="";
-                    }
-                }
-                if( ! ($ret=~/^(|-kb|-kkv|-kkvl|-kk|-ko|-kv)$/) )
-                {
-                    print "E Bad -k option\n";
-                    $log->warn("Bad -k option: $ret");
-                    die "Error: Bad -k option: $ret\n";
-                }
-
-                return $ret;
+                $log->debug("... as binary");
+                return "-kb";
             }
             else
             {
-                if( is_binary($srcType,$name) )
-                {
-                    $log->debug("... as binary");
-                    return "-kb";
-                }
-                else
-                {
-                    $log->debug("... as text");
-                }
+                $log->debug("... as text");
             }
         }
     }
@@ -2586,7 +2650,7 @@ sub open_blob_or_die
             die "Unable to open file $name: $!\n";
         }
     }
-    elsif( $srcType eq "sha1" || $srcType eq "sha1Or-k" )
+    elsif( $srcType eq "sha1" )
     {
         unless ( defined ( $name ) and $name =~ /^[a-zA-Z0-9]{40}$/ )
         {
@@ -2929,6 +2993,16 @@ sub new
     }
 
     # Construct the revision table if required
+    # The revision table stores an entry for each file, each time that file
+    # changes.
+    #   numberOfRecords = O( numCommits * averageNumChangedFilesPerCommit )
+    # This is not sufficient to support "-r {commithash}" for any
+    # files except files that were modified by that commit (also,
+    # some places in the code ignore/effectively strip out -r in
+    # some cases, before it gets passed to getmeta()).
+    # The "filehash" field typically has a git blob hash, but can also
+    # be set to "dead" to indicate that the given version of the file
+    # should not exist in the sandbox.
     unless ( $self->{tables}{$self->tablename("revision")} )
     {
         my $tablename = $self->tablename("revision");
@@ -2956,6 +3030,15 @@ sub new
     }
 
     # Construct the head table if required
+    # The head table (along with the "last_commit" entry in the property
+    # table) is the persisted working state of the "sub update" subroutine.
+    # All of it's data is read entirely first, and completely recreated
+    # last, every time "sub update" runs.
+    # This is also used by "sub getmeta" when it is asked for the latest
+    # version of a file (as opposed to some specific version).
+    # Another way of thinking about it is as a single slice out of
+    # "revisions", giving just the most recent revision information for
+    # each file.
     unless ( $self->{tables}{$self->tablename("head")} )
     {
         my $tablename = $self->tablename("head");
@@ -2978,6 +3061,7 @@ sub new
     }
 
     # Construct the properties table if required
+    #  - "last_commit" - Used by "sub update".
     unless ( $self->{tables}{$self->tablename("properties")} )
     {
         my $tablename = $self->tablename("properties");
@@ -2990,6 +3074,11 @@ sub new
     }
 
     # Construct the commitmsgs table if required
+    # The commitmsgs table is only used for merge commits, since
+    # "sub update" will only keep one branch of parents.  Shortlogs
+    # for ignored commits (i.e. not on the chosen branch) will be used
+    # to construct a replacement "collapsed" merge commit message,
+    # which will be stored in this table.  See also "sub commitmessage".
     unless ( $self->{tables}{$self->tablename("commitmsgs")} )
     {
         my $tablename = $self->tablename("commitmsgs");
@@ -3020,6 +3109,14 @@ sub tablename
 }
 
 =head2 update
+
+Bring the database up to date with the latest changes from
+the git repository.
+
+Internal working state is read out of the "head" table and the
+"last_commit" property, then it updates "revisions" based on that, and
+finally it writes the new internal state back to the "head" table
+so it can be used as a starting point the next time update is called.
 
 =cut
 sub update
@@ -3116,7 +3213,7 @@ sub update
     my $commitcount = 0;
 
     # Load the head table into $head (for cached lookups during the update process)
-    foreach my $file ( @{$self->gethead()} )
+    foreach my $file ( @{$self->gethead(1)} )
     {
         $head->{$file->{name}} = $file;
     }
@@ -3134,17 +3231,18 @@ sub update
                 next;
             } elsif (@{$commit->{parents}} > 1) {
                 # it is a merge commit, for each parent that is
-                # not $lastpicked, see if we can get a log
+                # not $lastpicked (not given a CVS revision number),
+                # see if we can get a log
                 # from the merge-base to that parent to put it
                 # in the message as a merge summary.
                 my @parents = @{$commit->{parents}};
                 foreach my $parent (@parents) {
-                    # git-merge-base can potentially (but rarely) throw
-                    # several candidate merge bases. let's assume
-                    # that the first one is the best one.
                     if ($parent eq $lastpicked) {
                         next;
                     }
+                    # git-merge-base can potentially (but rarely) throw
+                    # several candidate merge bases. let's assume
+                    # that the first one is the best one.
 		    my $base = eval {
 			    safe_pipe_capture('git', 'merge-base',
 						 $lastpicked, $parent);
@@ -3426,19 +3524,6 @@ sub insert_head
     $insert_head->execute($name, $revision, $filehash, $commithash, $modified, $author, $mode);
 }
 
-sub _headrev
-{
-    my $self = shift;
-    my $filename = shift;
-    my $tablename = $self->tablename("head");
-
-    my $db_query = $self->{dbh}->prepare_cached("SELECT filehash, revision, mode FROM $tablename WHERE name=?",{},1);
-    $db_query->execute($filename);
-    my ( $hash, $revision, $mode ) = $db_query->fetchrow_array;
-
-    return ( $hash, $revision, $mode );
-}
-
 sub _get_prop
 {
     my $self = shift;
@@ -3478,6 +3563,7 @@ sub _set_prop
 sub gethead
 {
     my $self = shift;
+    my $intRev = shift;
     my $tablename = $self->tablename("head");
 
     return $self->{gethead_cache} if ( defined ( $self->{gethead_cache} ) );
@@ -3488,6 +3574,10 @@ sub gethead
     my $tree = [];
     while ( my $file = $db_query->fetchrow_hashref )
     {
+        if(!$intRev)
+        {
+            $file->{revision} = "1.$file->{revision}"
+        }
         push @$tree, $file;
     }
 
@@ -3498,24 +3588,57 @@ sub gethead
 
 =head2 getlog
 
+See also gethistorydense().
+
 =cut
 
 sub getlog
 {
     my $self = shift;
     my $filename = shift;
+    my $revFilter = shift;
+
     my $tablename = $self->tablename("revision");
+
+    # Filters:
+    # TODO: date, state, or by specific logins filters?
+    # TODO: Handle comma-separated list of revFilter items, each item
+    #   can be a range [only case currently handled] or individual
+    #   rev or branch or "branch.".
+    # TODO: Adjust $db_query WHERE clause based on revFilter, instead of
+    #   manually filtering the results of the query?
+    my ( $minrev, $maxrev );
+    if( defined($revFilter) and
+        $state->{opt}{r} =~ /^(1.(\d+))?(::?)(1.(\d.+))?$/ )
+    {
+        my $control = $3;
+        $minrev = $2;
+        $maxrev = $5;
+        $minrev++ if ( defined($minrev) and $control eq "::" );
+    }
 
     my $db_query = $self->{dbh}->prepare_cached("SELECT name, filehash, author, mode, revision, modified, commithash FROM $tablename WHERE name=? ORDER BY revision DESC",{},1);
     $db_query->execute($filename);
 
+    my $totalRevs=0;
     my $tree = [];
     while ( my $file = $db_query->fetchrow_hashref )
     {
+        $totalRevs++;
+        if( defined($minrev) and $file->{revision} < $minrev )
+        {
+            next;
+        }
+        if( defined($maxrev) and $file->{revision} > $maxrev )
+        {
+            next;
+        }
+
+        $file->{revision} = "1." . $file->{revision};
         push @$tree, $file;
     }
 
-    return $tree;
+    return ($tree,$totalRevs);
 }
 
 =head2 getmeta
@@ -3534,10 +3657,11 @@ sub getmeta
     my $tablename_head = $self->tablename("head");
 
     my $db_query;
-    if ( defined($revision) and $revision =~ /^\d+$/ )
+    if ( defined($revision) and $revision =~ /^1\.(\d+)$/ )
     {
+        my ($intRev) = $1;
         $db_query = $self->{dbh}->prepare_cached("SELECT * FROM $tablename_rev WHERE name=? AND revision=?",{},1);
-        $db_query->execute($filename, $revision);
+        $db_query->execute($filename, $intRev);
     }
     elsif ( defined($revision) and $revision =~ /^[a-zA-Z0-9]{40}$/ )
     {
@@ -3548,7 +3672,12 @@ sub getmeta
         $db_query->execute($filename);
     }
 
-    return $db_query->fetchrow_hashref;
+    my $meta = $db_query->fetchrow_hashref;
+    if($meta)
+    {
+        $meta->{revision} = "1.$meta->{revision}";
+    }
+    return $meta;
 }
 
 =head2 commitmessage
@@ -3583,25 +3712,6 @@ sub commitmessage
     return $message;
 }
 
-=head2 gethistory
-
-This function takes a filename (with path) argument and returns an arrayofarrays
-containing revision,filehash,commithash ordered by revision descending
-
-=cut
-sub gethistory
-{
-    my $self = shift;
-    my $filename = shift;
-    my $tablename = $self->tablename("revision");
-
-    my $db_query;
-    $db_query = $self->{dbh}->prepare_cached("SELECT revision, filehash, commithash FROM $tablename WHERE name=? ORDER BY revision DESC",{},1);
-    $db_query->execute($filename);
-
-    return $db_query->fetchall_arrayref;
-}
-
 =head2 gethistorydense
 
 This function takes a filename (with path) argument and returns an arrayofarrays
@@ -3610,6 +3720,8 @@ containing revision,filehash,commithash ordered by revision descending.
 This version of gethistory skips deleted entries -- so it is useful for annotate.
 The 'dense' part is a reference to a '--dense' option available for git-rev-list
 and other git tools that depend on it.
+
+See also getlog().
 
 =cut
 sub gethistorydense
@@ -3622,7 +3734,15 @@ sub gethistorydense
     $db_query = $self->{dbh}->prepare_cached("SELECT revision, filehash, commithash FROM $tablename WHERE name=? AND filehash!='deleted' ORDER BY revision DESC",{},1);
     $db_query->execute($filename);
 
-    return $db_query->fetchall_arrayref;
+    my $result = $db_query->fetchall_arrayref;
+
+    my $i;
+    for($i=0 ; $i<scalar(@$result) ; $i++)
+    {
+        $result->[$i][0]="1." . $result->[$i][0];
+    }
+
+    return $result;
 }
 
 =head2 in_array()

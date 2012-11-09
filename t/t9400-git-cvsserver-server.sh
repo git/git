@@ -400,7 +400,7 @@ cat >expected.C <<EOF
 Line 0
 =======
 LINE 0
->>>>>>> merge.3
+>>>>>>> merge.1.3
 EOF
 
 for i in 1 2 3 4 5 6 7 8
@@ -502,6 +502,76 @@ test_expect_success 'cvs co -c (shows module database)' '
     GIT_CONFIG="$git_config" cvs co -c > out &&
     grep "^master[	 ][ 	]*master$" <out &&
     ! grep -v "^master[	 ][ 	]*master$" <out
+'
+
+#------------
+# CVS LOG
+#------------
+
+# Known issues with git-cvsserver current log output:
+#  - Hard coded "lines: +2 -3" placeholder, instead of real numbers.
+#  - CVS normally does not internally add a blank first line
+#    nor a last line with nothing but a space to log messages.
+#  - The latest cvs 1.12.x server sends +0000 timezone (with some hidden "MT"
+#    tagging in the protocol), and if cvs 1.12.x client sees the MT tags,
+#    it converts to local time zone.  git-cvsserver doesn't do the +0000
+#    or the MT tags...
+#  - The latest 1.12.x releases add a "commitid:" field on to the end of the
+#    "date:" line (after "lines:").  Maybe we could stick git's commit id
+#    in it?  Or does CVS expect a certain number of bits (too few for
+#    a full sha1)?
+#
+# Given the above, expect the following test to break if git-cvsserver's
+# log output is improved.  The test is just to ensure it doesn't
+# accidentally get worse.
+
+sed -e 's/^x//' -e 's/SP$/ /' > "$WORKDIR/expect" <<EOF
+x
+xRCS file: $WORKDIR/gitcvs.git/master/merge,v
+xWorking file: merge
+xhead: 1.4
+xbranch:
+xlocks: strict
+xaccess list:
+xsymbolic names:
+xkeyword substitution: kv
+xtotal revisions: 4;	selected revisions: 4
+xdescription:
+x----------------------------
+xrevision 1.4
+xdate: __DATE__;  author: author;  state: Exp;  lines: +2 -3
+x
+xMerge test (no-op)
+xSP
+x----------------------------
+xrevision 1.3
+xdate: __DATE__;  author: author;  state: Exp;  lines: +2 -3
+x
+xMerge test (conflict)
+xSP
+x----------------------------
+xrevision 1.2
+xdate: __DATE__;  author: author;  state: Exp;  lines: +2 -3
+x
+xMerge test (merge)
+xSP
+x----------------------------
+xrevision 1.1
+xdate: __DATE__;  author: author;  state: Exp;  lines: +2 -3
+x
+xMerge test (pre-merge)
+xSP
+x=============================================================================
+EOF
+expectStat="$?"
+
+cd "$WORKDIR"
+test_expect_success 'cvs log' '
+    cd cvswork &&
+    test x"$expectStat" = x"0" &&
+    GIT_CONFIG="$git_config" cvs log merge >../out &&
+    sed -e "s%2[0-9][0-9][0-9]/[01][0-9]/[0-3][0-9] [0-2][0-9]:[0-5][0-9]:[0-5][0-9]%__DATE__%" ../out > ../actual &&
+    test_cmp ../expect ../actual
 '
 
 #------------
