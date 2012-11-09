@@ -490,11 +490,11 @@ int get_tree_entry(const unsigned char *tree_sha1, const char *name, unsigned ch
 
 static int match_entry(const struct name_entry *entry, int pathlen,
 		       const char *match, int matchlen,
-		       int *never_interesting)
+		       enum interesting *never_interesting)
 {
 	int m = -1; /* signals that we haven't called strncmp() */
 
-	if (*never_interesting) {
+	if (*never_interesting != entry_not_interesting) {
 		/*
 		 * We have not seen any match that sorts later
 		 * than the current path.
@@ -522,7 +522,7 @@ static int match_entry(const struct name_entry *entry, int pathlen,
 		 * the variable to -1 and that is what will be
 		 * returned, allowing the caller to terminate early.
 		 */
-		*never_interesting = 0;
+		*never_interesting = entry_not_interesting;
 	}
 
 	if (pathlen > matchlen)
@@ -584,7 +584,7 @@ enum interesting tree_entry_interesting(const struct name_entry *entry,
 {
 	int i;
 	int pathlen, baselen = base->len - base_offset;
-	int never_interesting = ps->has_wildcard ?
+	enum interesting never_interesting = ps->has_wildcard ?
 		entry_not_interesting : all_entries_not_interesting;
 
 	if (!ps->nr) {
