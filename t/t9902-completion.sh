@@ -288,4 +288,15 @@ test_expect_failure 'complete tree filename with metacharacters' '
 	EOF
 '
 
+test_expect_success 'add completes untracked and modified names' '
+	echo other content >file1 &&
+	echo content >file2 &&
+	echo more >file3 &&
+	git add file1 &&
+	test_completion_long "git add f" <<-\EOF
+	file2_
+	file3_
+	EOF
+'
+
 test_done
