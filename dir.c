@@ -308,42 +308,69 @@ static int no_wildcard(const char *string)
 	return string[simple_length(string)] == '\0';
 }
 
+void parse_exclude_pattern(const char **pattern,
+			   int *patternlen,
+			   int *flags,
+			   int *nowildcardlen)
+{
+	const char *p = *pattern;
+	size_t i, len;
+
+	*flags = 0;
+	if (*p == '!') {
+		*flags |= EXC_FLAG_NEGATIVE;
+		p++;
+	}
+	len = strlen(p);
+	if (len && p[len - 1] == '/') {
+		len--;
+		*flags |= EXC_FLAG_MUSTBEDIR;
+	}
+	for (i = 0; i < len; i++) {
+		if (p[i] == '/')
+			break;
+	}
+	if (i == len)
+		*flags |= EXC_FLAG_NODIR;
+	*nowildcardlen = simple_length(p);
+	/*
+	 * we should have excluded the trailing slash from 'p' too,
+	 * but that's one more allocation. Instead just make sure
+	 * nowildcardlen does not exceed real patternlen
+	 */
+	if (*nowildcardlen > len)
+		*nowildcardlen = len;
+	if (*p == '*' && no_wildcard(p + 1))
+		*flags |= EXC_FLAG_ENDSWITH;
+	*pattern = p;
+	*patternlen = len;
+}
+
 void add_exclude(const char *string, const char *base,
 		 int baselen, struct exclude_list *which)
 {
 	struct exclude *x;
-	size_t len;
-	int to_exclude = 1;
-	int flags = 0;
+	int patternlen;
+	int flags;
+	int nowildcardlen;
 
-	if (*string == '!') {
-		to_exclude = 0;
-		string++;
-	}
-	len = strlen(string);
-	if (len && string[len - 1] == '/') {
+	parse_exclude_pattern(&string, &patternlen, &flags, &nowildcardlen);
+	if (flags & EXC_FLAG_MUSTBEDIR) {
 		char *s;
-		x = xmalloc(sizeof(*x) + len);
+		x = xmalloc(sizeof(*x) + patternlen + 1);
 		s = (char *)(x+1);
-		memcpy(s, string, len - 1);
-		s[len - 1] = '\0';
-		string = s;
+		memcpy(s, string, patternlen);
+		s[patternlen] = '\0';
 		x->pattern = s;
-		flags = EXC_FLAG_MUSTBEDIR;
 	} else {
 		x = xmalloc(sizeof(*x));
 		x->pattern = string;
 	}
-	x->to_exclude = to_exclude;
-	x->patternlen = strlen(string);
+	x->patternlen = patternlen;
+	x->nowildcardlen = nowildcardlen;
 	x->base = base;
 	x->baselen = baselen;
 	x->flags = flags;
-	if (!strchr(string, '/'))
-		x->flags |= EXC_FLAG_NODIR;
-	x->nowildcardlen = simple_length(string);
-	if (*string == '*' && no_wildcard(string+1))
-		x->flags |= EXC_FLAG_ENDSWITH;
 	ALLOC_GROW(which->excludes, which->nr + 1, which->alloc);
 	which->excludes[which->nr++] = x;
 }
@@ -505,6 +532,72 @@ static void prep_exclude(struct dir_struct *dir, const char *base, int baselen)
 	dir->basebuf[baselen] = '\0';
 }
 
+int match_basename(const char *basename, int basenamelen,
+		   const char *pattern, int prefix, int patternlen,
+		   int flags)
+{
+	if (prefix == patternlen) {
+		if (!strcmp_icase(pattern, basename))
+			return 1;
+	} else if (flags & EXC_FLAG_ENDSWITH) {
+		if (patternlen - 1 <= basenamelen &&
+		    !strcmp_icase(pattern + 1,
+				  basename + basenamelen - patternlen + 1))
+			return 1;
+	} else {
+		if (fnmatch_icase(pattern, basename, 0) == 0)
+			return 1;
+	}
+	return 0;
+}
+
+int match_pathname(const char *pathname, int pathlen,
+		   const char *base, int baselen,
+		   const char *pattern, int prefix, int patternlen,
+		   int flags)
+{
+	const char *name;
+	int namelen;
+
+	/*
+	 * match with FNM_PATHNAME; the pattern has base implicitly
+	 * in front of it.
+	 */
+	if (*pattern == '/') {
+		pattern++;
+		prefix--;
+	}
+
+	/*
+	 * baselen does not count the trailing slash. base[] may or
+	 * may not end with a trailing slash though.
+	 */
+	if (pathlen < baselen + 1 ||
+	    (baselen && pathname[baselen] != '/') ||
+	    strncmp_icase(pathname, base, baselen))
+		return 0;
+
+	namelen = baselen ? pathlen - baselen - 1 : pathlen;
+	name = pathname + pathlen - namelen;
+
+	if (prefix) {
+		/*
+		 * if the non-wildcard part is longer than the
+		 * remaining pathname, surely it cannot match.
+		 */
+		if (prefix > namelen)
+			return 0;
+
+		if (strncmp_icase(pattern, name, prefix))
+			return 0;
+		pattern += prefix;
+		name    += prefix;
+		namelen -= prefix;
+	}
+
+	return fnmatch_icase(pattern, name, FNM_PATHNAME) == 0;
+}
+
 /* Scan the list and let the last match determine the fate.
  * Return 1 for exclude, 0 for include and -1 for undecided.
  */
@@ -519,9 +612,9 @@ int excluded_from_list(const char *pathname,
 
 	for (i = el->nr - 1; 0 <= i; i--) {
 		struct exclude *x = el->excludes[i];
-		const char *name, *exclude = x->pattern;
-		int to_exclude = x->to_exclude;
-		int namelen, prefix = x->nowildcardlen;
+		const char *exclude = x->pattern;
+		int to_exclude = x->flags & EXC_FLAG_NEGATIVE ? 0 : 1;
+		int prefix = x->nowildcardlen;
 
 		if (x->flags & EXC_FLAG_MUSTBEDIR) {
 			if (*dtype == DT_UNKNOWN)
@@ -531,51 +624,18 @@ int excluded_from_list(const char *pathname,
 		}
 
 		if (x->flags & EXC_FLAG_NODIR) {
-			/* match basename */
-			if (prefix == x->patternlen) {
-				if (!strcmp_icase(exclude, basename))
-					return to_exclude;
-			} else if (x->flags & EXC_FLAG_ENDSWITH) {
-				if (x->patternlen - 1 <= pathlen &&
-				    !strcmp_icase(exclude + 1, pathname + pathlen - x->patternlen + 1))
-					return to_exclude;
-			} else {
-				if (fnmatch_icase(exclude, basename, 0) == 0)
-					return to_exclude;
-			}
+			if (match_basename(basename,
+					   pathlen - (basename - pathname),
+					   exclude, prefix, x->patternlen,
+					   x->flags))
+				return to_exclude;
 			continue;
 		}
 
-		/* match with FNM_PATHNAME:
-		 * exclude has base (baselen long) implicitly in front of it.
-		 */
-		if (*exclude == '/') {
-			exclude++;
-			prefix--;
-		}
-
-		if (pathlen < x->baselen ||
-		    (x->baselen && pathname[x->baselen-1] != '/') ||
-		    strncmp_icase(pathname, x->base, x->baselen))
-			continue;
-
-		namelen = x->baselen ? pathlen - x->baselen : pathlen;
-		name = pathname + pathlen  - namelen;
-
-		/* if the non-wildcard part is longer than the
-		   remaining pathname, surely it cannot match */
-		if (prefix > namelen)
-			continue;
-
-		if (prefix) {
-			if (strncmp_icase(exclude, name, prefix))
-				continue;
-			exclude += prefix;
-			name    += prefix;
-			namelen -= prefix;
-		}
-
-		if (!namelen || !fnmatch_icase(exclude, name, FNM_PATHNAME))
+		assert(x->baselen == 0 || x->base[x->baselen - 1] == '/');
+		if (match_pathname(pathname, pathlen,
+				   x->base, x->baselen ? x->baselen - 1 : 0,
+				   exclude, prefix, x->patternlen, x->flags))
 			return to_exclude;
 	}
 	return -1; /* undecided */

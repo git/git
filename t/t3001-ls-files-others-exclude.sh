@@ -214,4 +214,10 @@ test_expect_success 'subdirectory ignore (l1)' '
 	test_cmp expect actual
 '
 
+test_expect_success 'pattern matches prefix completely' '
+	: >expect &&
+	git ls-files -i -o --exclude "/three/a.3[abc]" >actual &&
+	test_cmp expect actual
+'
+
 test_done

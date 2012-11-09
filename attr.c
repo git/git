@@ -115,6 +115,13 @@ struct attr_state {
 	const char *setto;
 };
 
+struct pattern {
+	const char *pattern;
+	int patternlen;
+	int nowildcardlen;
+	int flags;		/* EXC_FLAG_* */
+};
+
 /*
  * One rule, as from a .gitattributes file.
  *
@@ -131,7 +138,7 @@ struct attr_state {
  */
 struct match_attr {
 	union {
-		char *pattern;
+		struct pattern pat;
 		struct git_attr *attr;
 	} u;
 	char is_macro;
@@ -241,9 +248,16 @@ static struct match_attr *parse_attr_line(const char *line, const char *src,
 	if (is_macro)
 		res->u.attr = git_attr_internal(name, namelen);
 	else {
-		res->u.pattern = (char *)&(res->state[num_attr]);
-		memcpy(res->u.pattern, name, namelen);
-		res->u.pattern[namelen] = 0;
+		char *p = (char *)&(res->state[num_attr]);
+		memcpy(p, name, namelen);
+		res->u.pat.pattern = p;
+		parse_exclude_pattern(&res->u.pat.pattern,
+				      &res->u.pat.patternlen,
+				      &res->u.pat.flags,
+				      &res->u.pat.nowildcardlen);
+		if (res->u.pat.flags & EXC_FLAG_NEGATIVE)
+			die(_("Negative patterns are forbidden in git attributes\n"
+			      "Use '\\!' for literal leading exclamation."));
 	}
 	res->is_macro = is_macro;
 	res->num_attr = num_attr;
@@ -648,25 +662,21 @@ static void prepare_attr_stack(const char *path)
 
 static int path_matches(const char *pathname, int pathlen,
 			const char *basename,
-			const char *pattern,
+			const struct pattern *pat,
 			const char *base, int baselen)
 {
-	if (!strchr(pattern, '/')) {
-		return (fnmatch_icase(pattern, basename, 0) == 0);
+	const char *pattern = pat->pattern;
+	int prefix = pat->nowildcardlen;
+
+	if (pat->flags & EXC_FLAG_NODIR) {
+		return match_basename(basename,
+				      pathlen - (basename - pathname),
+				      pattern, prefix,
+				      pat->patternlen, pat->flags);
 	}
-	/*
-	 * match with FNM_PATHNAME; the pattern has base implicitly
-	 * in front of it.
-	 */
-	if (*pattern == '/')
-		pattern++;
-	if (pathlen < baselen ||
-	    (baselen && pathname[baselen] != '/') ||
-	    strncmp(pathname, base, baselen))
-		return 0;
-	if (baselen != 0)
-		baselen++;
-	return fnmatch_icase(pattern, pathname + baselen, FNM_PATHNAME) == 0;
+	return match_pathname(pathname, pathlen,
+			      base, baselen,
+			      pattern, prefix, pat->patternlen, pat->flags);
 }
 
 static int macroexpand_one(int attr_nr, int rem);
@@ -704,7 +714,7 @@ static int fill(const char *path, int pathlen, const char *basename,
 		if (a->is_macro)
 			continue;
 		if (path_matches(path, pathlen, basename,
-				 a->u.pattern, base, stk->originlen))
+				 &a->u.pat, base, stk->originlen))
 			rem = fill_one("fill", a, rem);
 	}
 	return rem;
