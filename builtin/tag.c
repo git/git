@@ -73,11 +73,13 @@ static int in_commit_list(const struct commit_list *want, struct commit *c)
 	return 0;
 }
 
-static int contains_recurse(struct commit *candidate,
+/*
+ * Test whether the candidate or one of its parents is contained in the list.
+ * Do not recurse to find out, though, but return -1 if inconclusive.
+ */
+static int contains_test(struct commit *candidate,
 			    const struct commit_list *want)
 {
-	struct commit_list *p;
-
 	/* was it previously marked as containing a want commit? */
 	if (candidate->object.flags & TMP_MARK)
 		return 1;
@@ -85,26 +87,78 @@ static int contains_recurse(struct commit *candidate,
 	if (candidate->object.flags & UNINTERESTING)
 		return 0;
 	/* or are we it? */
-	if (in_commit_list(want, candidate))
+	if (in_commit_list(want, candidate)) {
+		candidate->object.flags |= TMP_MARK;
 		return 1;
+	}
 
 	if (parse_commit(candidate) < 0)
 		return 0;
 
-	/* Otherwise recurse and mark ourselves for future traversals. */
-	for (p = candidate->parents; p; p = p->next) {
-		if (contains_recurse(p->item, want)) {
-			candidate->object.flags |= TMP_MARK;
-			return 1;
-		}
-	}
-	candidate->object.flags |= UNINTERESTING;
-	return 0;
+	return -1;
+}
+
+/*
+ * This stack on the heap mimics the real stack in the previous implementation
+ * of contains_recurse() that had to be replaced because it easily led to a
+ * stack overflow.
+ *
+ * Every stack item points at a certain commit whose parents are iterated over.
+ * Each item's current parent is the current next stack item's commit.
+ */
+struct stack {
+	int nr, alloc;
+	struct stack_entry {
+		struct commit *commit;
+		struct commit_list *parents;
+	} *stack;
+};
+
+static void push_to_stack(struct commit *candidate, struct stack *stack)
+{
+	int index = stack->nr++;
+	ALLOC_GROW(stack->stack, stack->nr, stack->alloc);
+	stack->stack[index].commit = candidate;
+	stack->stack[index].parents = candidate->parents;
 }
 
 static int contains(struct commit *candidate, const struct commit_list *want)
 {
-	return contains_recurse(candidate, want);
+	struct stack stack = { 0, 0, NULL };
+	int result = contains_test(candidate, want);
+
+	if (result >= 0)
+		return result;
+
+	push_to_stack(candidate, &stack);
+	while (stack.nr) {
+		struct stack_entry *entry = &stack.stack[stack.nr - 1];
+		struct commit *commit = entry->commit;
+		struct commit_list *parents = entry->parents;
+
+		if (!parents) {
+			commit->object.flags = UNINTERESTING;
+			stack.nr--;
+		}
+		/*
+		 * If we just popped the stack, parents->item has been marked,
+		 * therefore contains_test will return a meaningful 0 or 1.
+		 */
+		else switch (contains_test(parents->item, want)) {
+		case 1:
+			commit->object.flags |= TMP_MARK;
+			stack.nr--;
+			break;
+		case 0:
+			entry->parents = parents->next;
+			break;
+		default:
+			push_to_stack(parents->item, &stack);
+			break;
+		}
+	}
+	free(stack.stack);
+	return contains_test(candidate, want);
 }
 
 static void show_tag_lines(const unsigned char *sha1, int lines)
