@@ -1380,4 +1380,26 @@ test_expect_success 'multiple --points-at are OR-ed together' '
 	test_cmp expect actual
 '
 
+# what about a deep repo ?
+
+>expect
+test_expect_success MINGW '--contains works in a deep repo' '
+	ulimit -s 64
+	i=1 &&
+	while test $i -lt 1000
+	do
+		echo "commit refs/heads/master
+committer A U Thor <author@example.com> $((1000000000 + $i * 100)) +0200
+data <<EOF
+commit #$i
+EOF"
+		test $i = 1 && echo "from refs/heads/master^0"
+		i=$(($i + 1))
+	done | git fast-import &&
+	git checkout master &&
+	git tag far-far-away HEAD^ &&
+	git tag --contains HEAD >actual &&
+	test_cmp expect actual
+'
+
 test_done
