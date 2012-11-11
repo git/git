@@ -172,7 +172,7 @@ test_expect_success 'basic' '
 '
 
 test_expect_success 'double dash "git" itself' '
-	sed -e "s/Z$//" >expected <<-\EOF &&
+	test_completion_long "git --" <<-\EOF
 	--paginate Z
 	--no-pager Z
 	--git-dir=
@@ -187,11 +187,10 @@ test_expect_success 'double dash "git" itself' '
 	--no-replace-objects Z
 	--help Z
 	EOF
-	test_completion "git --"
 '
 
 test_expect_success 'double dash "git checkout"' '
-	sed -e "s/Z$//" >expected <<-\EOF &&
+	test_completion_long "git checkout --" <<-\EOF
 	--quiet Z
 	--ours Z
 	--theirs Z
@@ -202,17 +201,15 @@ test_expect_success 'double dash "git checkout"' '
 	--orphan Z
 	--patch Z
 	EOF
-	test_completion "git checkout --"
 '
 
 test_expect_success 'general options' '
 	test_completion "git --ver" "--version " &&
 	test_completion "git --hel" "--help " &&
-	sed -e "s/Z$//" >expected <<-\EOF &&
+	test_completion_long "git --exe" <<-\EOF &&
 	--exec-path Z
 	--exec-path=
 	EOF
-	test_completion "git --exe" &&
 	test_completion "git --htm" "--html-path " &&
 	test_completion "git --pag" "--paginate " &&
 	test_completion "git --no-p" "--no-pager " &&
