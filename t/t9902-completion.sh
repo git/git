@@ -54,10 +54,14 @@ run_completion ()
 	__git_wrap__git_main && print_comp
 }
 
+# Test high-level completion
+# Arguments are:
+# 1: typed text so far (cur)
+# 2: expected completion
 test_completion ()
 {
 	test $# -gt 1 && echo "$2" > expected
-	run_completion "$@" &&
+	run_completion "$1" &&
 	test_cmp expected out
 }
 
