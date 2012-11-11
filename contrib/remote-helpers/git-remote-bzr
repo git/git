@@ -370,7 +370,7 @@ class CustomTree():
         self.repo = repo
         self.revid = revid
         self.parents = parents
-        self.updates = files
+        self.updates = {}
 
         def copy_tree(revid):
             files = files_cache[revid] = {}
@@ -394,6 +394,13 @@ class CustomTree():
 
         self.files = files_cache[revid] = self.base_files.copy()
 
+        for path, f in files.iteritems():
+            fid = self.files.get(path, None)
+            if not fid:
+                fid = bzrlib.generate_ids.gen_file_id(path)
+            f['path'] = path
+            self.updates[fid] = f
+
     def last_revision(self):
         return self.base_id
 
@@ -409,13 +416,20 @@ class CustomTree():
                 return parent_fid
             if basename == '':
                 return None
-            d = add_entry(dirname, 'directory')
-            return d[0]
+            fid = bzrlib.generate_ids.gen_file_id(path)
+            d = add_entry(fid, dirname, 'directory')
+            return fid
 
-        def add_entry(path, kind):
+        def add_entry(fid, path, kind, mode = None):
             dirname, basename = os.path.split(path)
             parent_fid = get_parent(dirname, basename)
-            fid = bzrlib.generate_ids.gen_file_id(path)
+
+            executable = False
+            if mode == '100755':
+                executable = True
+            elif mode == '120000':
+                kind = 'symlink'
+
             change = (fid,
                     (None, path),
                     True,
@@ -423,15 +437,21 @@ class CustomTree():
                     (None, parent_fid),
                     (None, basename),
                     (None, kind),
-                    (None, False))
+                    (None, executable))
             self.files[path] = change[0]
             changes.append(change)
             return change
 
-        def update_entry(path, kind):
+        def update_entry(fid, path, kind, mode = None):
             dirname, basename = os.path.split(path)
-            fid = self.base_files[path]
             parent_fid = get_parent(dirname, basename)
+
+            executable = False
+            if mode == '100755':
+                executable = True
+            elif mode == '120000':
+                kind = 'symlink'
+
             change = (fid,
                     (path, path),
                     True,
@@ -439,14 +459,13 @@ class CustomTree():
                     (None, parent_fid),
                     (None, basename),
                     (None, kind),
-                    (None, False))
+                    (None, executable))
             self.files[path] = change[0]
             changes.append(change)
             return change
 
-        def remove_entry(path, kind):
+        def remove_entry(fid, path, kind):
             dirname, basename = os.path.split(path)
-            fid = self.base_files[path]
             parent_fid = get_parent(dirname, basename)
             change = (fid,
                     (path, None),
@@ -460,18 +479,25 @@ class CustomTree():
             changes.append(change)
             return change
 
-        for path, f in self.updates.iteritems():
+        for fid, f in self.updates.iteritems():
+            path = f['path']
+
             if 'deleted' in f:
-                remove_entry(path, 'file')
-            elif path in self.base_files:
-                update_entry(path, 'file')
+                remove_entry(fid, path, 'file')
+                continue
+
+            if path in self.base_files:
+                update_entry(fid, path, 'file', f['mode'])
             else:
-                add_entry(path, 'file')
+                add_entry(fid, path, 'file', f['mode'])
 
         return changes
 
     def get_file_with_stat(self, file_id, path=None):
-        return (StringIO.StringIO(self.updates[path]['data']), None)
+        return (StringIO.StringIO(self.updates[file_id]['data']), None)
+
+    def get_symlink_target(self, file_id):
+        return self.updates[file_id]['data']
 
 def parse_commit(parser):
     global marks, blob_marks, bmarks, parsed_refs
