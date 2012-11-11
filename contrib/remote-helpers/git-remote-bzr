@@ -546,7 +546,7 @@ def parse_reset(parser):
     parsed_refs[ref] = mark_to_rev(from_mark)
 
 def do_export(parser):
-    global parsed_refs, dirname
+    global parsed_refs, dirname, peer
 
     parser.next()
 
@@ -569,6 +569,8 @@ def do_export(parser):
     for ref, revid in parsed_refs.iteritems():
         if ref == 'refs/heads/master':
             repo.generate_revision_history(revid, marks.get_tip('master'))
+            revno, revid = repo.last_revision_info()
+            peer.import_last_revision_info_and_tags(repo, revno, revid)
         print "ok %s" % ref
     print
 
@@ -597,8 +599,28 @@ def do_list(parser):
     print
 
 def get_repo(url, alias):
+    global dirname, peer
+
+    clone_path = os.path.join(dirname, 'clone')
     origin = bzrlib.controldir.ControlDir.open(url)
-    return origin.open_branch()
+    remote_branch = origin.open_branch()
+
+    if os.path.exists(clone_path):
+        # pull
+        d = bzrlib.controldir.ControlDir.open(clone_path)
+        branch = d.open_branch()
+        result = branch.pull(remote_branch, [], None, False)
+    else:
+        # clone
+        d = origin.sprout(clone_path, None,
+                hardlink=True, create_tree_if_local=False,
+                source_branch=remote_branch)
+        branch = d.open_branch()
+        branch.bind(remote_branch)
+
+    peer = remote_branch
+
+    return branch
 
 def main(args):
     global marks, prefix, dirname
