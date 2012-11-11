@@ -60,17 +60,14 @@ run_completion ()
 # 2: expected completion
 test_completion ()
 {
-	test $# -gt 1 && echo "$2" > expected
+	if test $# -gt 1
+	then
+		printf '%s\n' "$2" >expected
+	else
+		sed -e 's/Z$//' >expected
+	fi &&
 	run_completion "$1" &&
 	test_cmp expected out
-}
-
-# Like test_completion, but reads expectation from stdin,
-# which is convenient when it is multiline.
-test_completion_long ()
-{
-	sed -e 's/Z$//' >expected &&
-	test_completion "$1"
 }
 
 newline=$'\n'
@@ -172,7 +169,7 @@ test_expect_success 'basic' '
 '
 
 test_expect_success 'double dash "git" itself' '
-	test_completion_long "git --" <<-\EOF
+	test_completion "git --" <<-\EOF
 	--paginate Z
 	--no-pager Z
 	--git-dir=
@@ -190,7 +187,7 @@ test_expect_success 'double dash "git" itself' '
 '
 
 test_expect_success 'double dash "git checkout"' '
-	test_completion_long "git checkout --" <<-\EOF
+	test_completion "git checkout --" <<-\EOF
 	--quiet Z
 	--ours Z
 	--theirs Z
@@ -206,7 +203,7 @@ test_expect_success 'double dash "git checkout"' '
 test_expect_success 'general options' '
 	test_completion "git --ver" "--version " &&
 	test_completion "git --hel" "--help " &&
-	test_completion_long "git --exe" <<-\EOF &&
+	test_completion "git --exe" <<-\EOF &&
 	--exec-path Z
 	--exec-path=
 	EOF
@@ -247,7 +244,7 @@ test_expect_success 'setup for ref completion' '
 '
 
 test_expect_success 'checkout completes ref names' '
-	test_completion_long "git checkout m" <<-\EOF
+	test_completion "git checkout m" <<-\EOF
 	master Z
 	mybranch Z
 	mytag Z
@@ -255,7 +252,7 @@ test_expect_success 'checkout completes ref names' '
 '
 
 test_expect_success 'show completes all refs' '
-	test_completion_long "git show m" <<-\EOF
+	test_completion "git show m" <<-\EOF
 	master Z
 	mybranch Z
 	mytag Z
@@ -263,7 +260,7 @@ test_expect_success 'show completes all refs' '
 '
 
 test_expect_success '<ref>: completes paths' '
-	test_completion_long "git show mytag:f" <<-\EOF
+	test_completion "git show mytag:f" <<-\EOF
 	file1 Z
 	file2 Z
 	EOF
@@ -273,7 +270,7 @@ test_expect_success 'complete tree filename with spaces' '
 	echo content >"name with spaces" &&
 	git add . &&
 	git commit -m spaces &&
-	test_completion_long "git show HEAD:nam" <<-\EOF
+	test_completion "git show HEAD:nam" <<-\EOF
 	name with spaces Z
 	EOF
 '
@@ -282,7 +279,7 @@ test_expect_failure 'complete tree filename with metacharacters' '
 	echo content >"name with \${meta}" &&
 	git add . &&
 	git commit -m meta &&
-	test_completion_long "git show HEAD:nam" <<-\EOF
+	test_completion "git show HEAD:nam" <<-\EOF
 	name with ${meta} Z
 	name with spaces Z
 	EOF
