@@ -571,6 +571,8 @@ def do_export(parser):
             repo.generate_revision_history(revid, marks.get_tip('master'))
             revno, revid = repo.last_revision_info()
             peer.import_last_revision_info_and_tags(repo, revno, revid)
+            wt = peer.bzrdir.open_workingtree()
+            wt.update()
         print "ok %s" % ref
     print
 
