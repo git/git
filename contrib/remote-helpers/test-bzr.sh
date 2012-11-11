@@ -108,4 +108,36 @@ test_expect_success 'roundtrip' '
   test_cmp expected actual
 '
 
+cat > expected <<EOF
+100644 blob 54f9d6da5c91d556e6b54340b1327573073030af	content
+100755 blob 68769579c3eaadbe555379b9c3538e6628bae1eb	executable
+120000 blob 6b584e8ece562ebffc15d38808cd6b98fc3d97ea	link
+EOF
+
+test_expect_success 'special modes' '
+  (cd bzrrepo &&
+  echo exec > executable
+  chmod +x executable &&
+  bzr add executable
+  bzr commit -m exec &&
+  ln -s content link
+  bzr add link
+  bzr commit -m link &&
+  mkdir dir &&
+  bzr add dir &&
+  bzr commit -m dir) &&
+
+  (cd gitrepo &&
+  git pull
+  git ls-tree HEAD > ../actual) &&
+
+  test_cmp expected actual &&
+
+  (cd gitrepo &&
+  git cat-file -p HEAD:link > ../actual) &&
+
+  echo -n content > expected &&
+  test_cmp expected actual
+'
+
 test_done
