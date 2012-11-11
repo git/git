@@ -66,11 +66,10 @@ test_completion ()
 }
 
 # Like test_completion, but reads expectation from stdin,
-# which is convenient when it is multiline. We also process "_" into
-# spaces to make test vectors more readable.
+# which is convenient when it is multiline.
 test_completion_long ()
 {
-	tr _ " " >expected &&
+	sed -e 's/Z$//' >expected &&
 	test_completion "$1"
 }
 
@@ -252,24 +251,24 @@ test_expect_success 'setup for ref completion' '
 
 test_expect_success 'checkout completes ref names' '
 	test_completion_long "git checkout m" <<-\EOF
-	master_
-	mybranch_
-	mytag_
+	master Z
+	mybranch Z
+	mytag Z
 	EOF
 '
 
 test_expect_success 'show completes all refs' '
 	test_completion_long "git show m" <<-\EOF
-	master_
-	mybranch_
-	mytag_
+	master Z
+	mybranch Z
+	mytag Z
 	EOF
 '
 
 test_expect_success '<ref>: completes paths' '
 	test_completion_long "git show mytag:f" <<-\EOF
-	file1_
-	file2_
+	file1 Z
+	file2 Z
 	EOF
 '
 
@@ -278,7 +277,7 @@ test_expect_success 'complete tree filename with spaces' '
 	git add . &&
 	git commit -m spaces &&
 	test_completion_long "git show HEAD:nam" <<-\EOF
-	name with spaces_
+	name with spaces Z
 	EOF
 '
 
@@ -287,8 +286,8 @@ test_expect_failure 'complete tree filename with metacharacters' '
 	git add . &&
 	git commit -m meta &&
 	test_completion_long "git show HEAD:nam" <<-\EOF
-	name with ${meta}_
-	name with spaces_
+	name with ${meta} Z
+	name with spaces Z
 	EOF
 '
 
