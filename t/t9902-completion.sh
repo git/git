@@ -70,23 +70,18 @@ test_completion ()
 	test_cmp expected out
 }
 
-newline=$'\n'
-
 # Test __gitcomp.
 # The first argument is the typed text so far (cur); the rest are
 # passed to __gitcomp.  Expected output comes is read from the
 # standard input, like test_completion().
 test_gitcomp ()
 {
+	local -a COMPREPLY &&
 	sed -e 's/Z$//' >expected &&
-	(
-		local -a COMPREPLY &&
-		cur="$1" &&
-		shift &&
-		__gitcomp "$@" &&
-		IFS="$newline" &&
-		echo "${COMPREPLY[*]}" >out
-	) &&
+	cur="$1" &&
+	shift &&
+	__gitcomp "$@" &&
+	print_comp &&
 	test_cmp expected out
 }
 
