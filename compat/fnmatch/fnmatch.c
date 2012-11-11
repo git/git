@@ -345,7 +345,7 @@ internal_fnmatch (pattern, string, no_leading_period, flags)
 
 		    for (;;)
 		      {
-			if (c1 == CHAR_CLASS_MAX_LENGTH)
+			if (c1 > CHAR_CLASS_MAX_LENGTH)
 			  /* The name is too long and therefore the pattern
 			     is ill-formed.  */
 			  return FNM_NOMATCH;
