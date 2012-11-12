@@ -704,6 +704,9 @@ def do_export(parser):
         elif ref.startswith('refs/tags/'):
             tag = ref[len('refs/tags/'):]
             parser.repo.tag([tag], node, None, True, None, {})
+        else:
+            # transport-helper/fast-export bugs
+            continue
         print "ok %s" % ref
 
     print
