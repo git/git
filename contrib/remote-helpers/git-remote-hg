@@ -294,7 +294,7 @@ def export_ref(repo, name, kind, head):
     if tip and tip == head.rev():
         # nothing to do
         return
-    revs = repo.revs('%u:%u' % (tip, head))
+    revs = xrange(tip, head.rev() + 1)
     count = 0
 
     revs = [rev for rev in revs if not marks.is_marked(rev)]
