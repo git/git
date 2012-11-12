@@ -440,6 +440,8 @@ def list_head(repo, cur):
         head = cur
         node = repo['.']
         if not node:
+            node = repo['tip']
+        if not node:
             return
         if head == 'default':
             head = 'master'
