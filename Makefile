@@ -1086,6 +1086,7 @@ ifeq ($(uname_O),Cygwin)
 		NO_SYMLINK_HEAD = YesPlease
 		NO_IPV6 = YesPlease
 		OLD_ICONV = UnfortunatelyYes
+		V15_MINGW_HEADERS = YesPlease
 	endif
 	NO_THREAD_SAFE_PREAD = YesPlease
 	NEEDS_LIBICONV = YesPlease
@@ -1892,6 +1893,9 @@ endif
 ifdef NO_REGEX
 	COMPAT_CFLAGS += -Icompat/regex
 	COMPAT_OBJS += compat/regex/regex.o
+endif
+ifdef V15_MINGW_HEADERS
+	COMPAT_CFLAGS += -DV15_MINGW_HEADERS
 endif
 
 ifdef USE_NED_ALLOCATOR
