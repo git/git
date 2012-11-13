@@ -140,6 +140,17 @@ test_expect_success '"git replace" replacing' '
      test "$HASH2" = "$(git replace)"
 '
 
+test_expect_success '"git replace" resolves sha1' '
+     SHORTHASH2=$(git rev-parse --short=8 $HASH2) &&
+     git replace -d $SHORTHASH2 &&
+     git replace $SHORTHASH2 $R &&
+     git show $HASH2 | grep "O Thor" &&
+     test_must_fail git replace $HASH2 $R &&
+     git replace -f $HASH2 $R &&
+     test_must_fail git replace -f &&
+     test "$HASH2" = "$(git replace)"
+'
+
 # This creates a side branch where the bug in H2
 # does not appear because P2 is created by applying
 # H2 and squashing H5 into it.
