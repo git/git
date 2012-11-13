@@ -1,19 +1,19 @@
 To: git@vger.kernel.org
 Bcc: lwn@lwn.net
-Subject: What's cooking in git.git (Nov 2012, #02; Fri, 9)
+Subject: What's cooking in git.git (Nov 2012, #03; Tue, 13)
 X-master-at: b0b00a3ee43b4813eb85728a482500f6422499fd
-X-next-at: 7a4c58c4d7b270e7e6bea673b5515cd0babe9508
+X-next-at: c57d8567839e5251e59fe5bdbd421c59cfe4a9ae
 
-What's cooking in git.git (Nov 2012, #02; Fri, 9)
+What's cooking in git.git (Nov 2012, #03; Tue, 13)
 --------------------------------------------------
 
 Here are the topics that have been cooking.  Commits prefixed with
 '-' are only in 'pu' (proposed updates) while commits prefixed with
 '+' are in 'next'.
 
-The fourth batch of topics has graduated to master. This should be my
-last integration cycle, as Junio will be back to take over before the
-next one.
+This is my final "what's cooking" as interim maintainer. I didn't
+graduate anything to master, but I updated my plans for each topic to
+give Junio an idea of where I was.
 
 You can find the changes described here in the integration branches of
 my repository at:
@@ -26,265 +26,42 @@ updated.
 --------------------------------------------------
 [New Topics]
 
-* cr/push-force-tag-update (2012-11-09) 5 commits
- - push: update remote tags only with force
- - push: flag updates that require force
- - push: flag updates
- - push: add advice for rejected tag reference
- - push: return reject reasons via a mask
+* jk/maint-gitweb-xss (2012-11-12) 1 commit
+ - gitweb: escape html in rss title
 
- Require "-f" for push to update a tag, even if it is a fast-forward.
+ Fixes an XSS vulnerability in gitweb.
 
- Needs review.
-
- I'm undecided yet on whether the goal is the right thing to do, but it
- does prevent some potential mistakes. I haven't looked closely at the
- implementation itself; review from interested parties would be helpful.
+ Will merge to 'next'.
 
 
-* fc/fast-export-fixes (2012-11-08) 14 commits
- - fast-export: don't handle uninteresting refs
- - fast-export: make sure updated refs get updated
- - fast-export: fix comparison in tests
- - fast-export: trivial cleanup
- - remote-testgit: make clear the 'done' feature
- - remote-testgit: report success after an import
- - remote-testgit: exercise more features
- - remote-testgit: cleanup tests
- - remote-testgit: remove irrelevant test
- - remote-testgit: get rid of non-local functionality
- - Add new simplified git-remote-testgit
- - Rename git-remote-testgit to git-remote-testpy
- - remote-testgit: fix direction of marks
- - fast-export: avoid importing blob marks
+* jk/send-email-sender-prompt (2012-11-13) 6 commits
+ - send-email: do not prompt for explicit repo ident
+ - Git.pm: teach "ident" to query explicitness
+ - var: provide explicit/implicit ident information
+ - var: accept multiple variables on the command line
+ - ident: keep separate "explicit" flags for author and committer
+ - ident: make user_ident_explicitly_given private
 
- Improvements to fix fast-export bugs, including how refs pointing to
- already-seen commits are handled. An earlier 4-commit version of this
- series looked good to me, but this much-expanded version has not seen
- any comments.
+ Avoid annoying sender prompt in git-send-email, but only when it is
+ safe to do so.
 
  Needs review.
 
 
-* mg/maint-pull-suggest-upstream-to (2012-11-08) 1 commit
- - push/pull: adjust missing upstream help text to changed interface
+* mg/replace-resolve-delete (2012-11-13) 1 commit
+ - replace: parse revision argument for -d
 
- Follow-on to the new "--set-upstream-to" topic from v1.8.0 to avoid
- suggesting the deprecated "--set-upstream".
-
- Will merge to 'next'.
-
-
-* mh/alt-odb-string-list-cleanup (2012-11-08) 2 commits
- - link_alt_odb_entries(): take (char *, len) rather than two pointers
- - link_alt_odb_entries(): use string_list_split_in_place()
-
- Cleanups in the alternates code. Fixes a potential bug and makes the
- code much cleaner.
+ Be more user friendly to people using "git replace -d".
 
  Will merge to 'next'.
 
 
-* pf/editor-ignore-sigint (2012-11-08) 1 commit
- - launch_editor: ignore SIGINT while the editor has control
+* ml/cygwin-mingw-headers (2012-11-12) 1 commit
+ - Update cygwin.c for new mingw-64 win32 api headers
 
- Avoid confusing cases where the user hits Ctrl-C while in the editor
- session, not realizing git will receive the signal. Since most editors
- will take over the terminal and will block SIGINT, this is not likely
- to confuse anyone.
-
- Comments welcome from people using unusual editors (e.g., a script that
- starts an editor in another window then blocks, waiting for the user to
- finish).
-
-
-* pp/gitweb-config-underscore (2012-11-08) 1 commit
- - gitweb: make remote_heads config setting work
-
- The key "gitweb.remote_heads" is not legal git config; this maps it to
- "gitweb.remoteheads".
-
- Junio raised a good point about the implementation for three-level
- variables.
-
- Expecting a re-roll.
-
-
-* pw/maint-p4-rcs-expansion-newline (2012-11-08) 1 commit
- - git p4: RCS expansion should not span newlines
-
- I do not have p4 to play with, but looks obviously correct to me.
+ Make git work on newer cygwin.
 
  Will merge to 'next'.
-
-
-* rh/maint-gitweb-highlight-ext (2012-11-08) 1 commit
- - gitweb.perl: fix %highlight_ext mappings
-
- Fixes a clever misuse of perl's list interpretation.
-
- Will merge to 'next'.
-
-
-* rr/submodule-diff-config (2012-11-08) 3 commits
- - submodule: display summary header in bold
- - diff: introduce diff.submodule configuration variable
- - Documentation: move diff.wordRegex from config.txt to diff-config.txt
-
- Lets "git diff --submodule=log" become the default via configuration.
-
- Seems like a good direction, though I had a few comments.
-
- Expecting a re-roll.
-
-
---------------------------------------------------
-[Graduated to "master"]
-
-* fc/completion-send-email-with-format-patch (2012-10-16) 1 commit
-  (merged to 'next' on 2012-11-04 at 0a6366e)
- + completion: add format-patch options to send-email
-
- Will merge to 'master' in the fourth batch.
-
-
-* js/format-2047 (2012-10-18) 7 commits
-  (merged to 'next' on 2012-10-25 at 76d91fe)
- + format-patch tests: check quoting/encoding in To: and Cc: headers
- + format-patch: fix rfc2047 address encoding with respect to rfc822 specials
- + format-patch: make rfc2047 encoding more strict
- + format-patch: introduce helper function last_line_length()
- + format-patch: do not wrap rfc2047 encoded headers too late
- + format-patch: do not wrap non-rfc2047 headers too early
- + utf8: fix off-by-one wrapping of text
-
- Fixes many rfc2047 quoting issues in the output from format-patch.
-
- Will merge to 'master' in the fourth batch.
-
-
-* km/send-email-compose-encoding (2012-10-25) 5 commits
-  (merged to 'next' on 2012-10-29 at d7d2bb4)
- + git-send-email: add rfc2047 quoting for "=?"
- + git-send-email: introduce quote_subject()
- + git-send-email: skip RFC2047 quoting for ASCII subjects
- + git-send-email: use compose-encoding for Subject
-  (merged to 'next' on 2012-10-25 at 5447367)
- + git-send-email: introduce compose-encoding
-
- "git send-email --compose" can let the user create a non-ascii
- cover letter message, but there was not a way to mark it with
- appropriate content type before sending it out.
-
- Further updates fix subject quoting.
-
- Will merge to 'master' in the fourth batch.
-
-
-* mh/maint-parse-dirstat-fix (2012-10-29) 1 commit
-  (merged to 'next' on 2012-11-04 at 852d609)
- + parse_dirstat_params(): use string_list to split comma-separated string
-
- Cleans up some code and avoids a potential bug.
-
- Will merge to 'master' in the fourth batch.
-
-
-* mo/cvs-server-cleanup (2012-10-26) 11 commits
-  (merged to 'next' on 2012-10-29 at 4e70622)
- + Use character class for sed expression instead of \s
-  (merged to 'next' on 2012-10-25 at c70881d)
- + cvsserver status: provide real sticky info
- + cvsserver: cvs add: do not expand directory arguments
- + cvsserver: use whole CVS rev number in-process; don't strip "1." prefix
- + cvsserver: split up long lines in req_{status,diff,log}
- + cvsserver: clean up client request handler map comments
- + cvsserver: remove unused functions _headrev and gethistory
- + cvsserver update: comment about how we shouldn't remove a user-modified file
- + cvsserver: add comments about database schema/usage
- + cvsserver: removed unused sha1Or-k mode from kopts_from_path
- + cvsserver t9400: add basic 'cvs log' test
- (this branch is tangled with mo/cvs-server-updates.)
-
- Cleanups to prepare for mo/cvs-server-updates.
-
- Will merge to 'master' in the fourth batch.
-
-
-* nd/attr-match-optim-more (2012-10-15) 7 commits
-  (merged to 'next' on 2012-10-25 at 09f70ce)
- + attr: more matching optimizations from .gitignore
- + gitignore: make pattern parsing code a separate function
- + exclude: split pathname matching code into a separate function
- + exclude: fix a bug in prefix compare optimization
- + exclude: split basename matching code into a separate function
- + exclude: stricten a length check in EXC_FLAG_ENDSWITH case
- + Merge commit 'f9f6e2c' into nd/attr-match-optim-more
- (this branch is used by as/check-ignore and nd/wildmatch.)
-
- Start laying the foundation to build the "wildmatch" after we can
- agree on its desired semantics.
-
- Will merge to 'master' in the fourth batch.
-
-
-* nd/builtin-to-libgit (2012-10-29) 7 commits
-  (merged to 'next' on 2012-11-04 at 06cbf9b)
- + fetch-pack: move core code to libgit.a
- + fetch-pack: remove global (static) configuration variable "args"
- + send-pack: move core code to libgit.a
- + Move setup_diff_pager to libgit.a
- + Move print_commit_list to libgit.a
- + Move estimate_bisect_steps to libgit.a
- + Move try_merge_command and checkout_fast_forward to libgit.a
-
- Code cleanups so that libgit.a does not depend on anything in the
- builtin/ directory.
-
- Some of the code movement is pretty big, but there doesn't seem to be
- any conflicts with topics in flight.
-
- Will merge to 'master' in the fourth batch.
-
-
-* nd/tree-walk-enum-cleanup (2012-10-19) 1 commit
-  (merged to 'next' on 2012-11-04 at 8ccdf98)
- + tree-walk: use enum interesting instead of integer
-
- Will merge to 'master' in the fourth batch.
-
-
-* ph/maint-submodule-status-fix (2012-10-29) 2 commits
-  (merged to 'next' on 2012-11-04 at d700e02)
- + submodule status: remove unused orig_* variables
- + t7407: Fix recursive submodule test
-
- Cleans up some leftover bits from an earlier submodule change.
-
- Will merge to 'master' in the fourth batch.
-
-
-* rs/lock-correct-ref-during-delete (2012-10-16) 1 commit
-  (merged to 'next' on 2012-10-25 at 9341eea)
- + refs: lock symref that is to be deleted, not its target
-
- When "update-ref -d --no-deref SYM" tried to delete a symbolic ref
- SYM, it incorrectly locked the underlying reference pointed by SYM,
- not the symbolic ref itself.
-
- Will merge to 'master' in the fourth batch.
-
-
-* sz/maint-curl-multi-timeout (2012-10-19) 1 commit
-  (merged to 'next' on 2012-11-04 at f696dd8)
- + Fix potential hang in https handshake
-
- Sometimes curl_multi_timeout() function suggested a wrong timeout
- value when there is no file descriptors to wait on and the http
- transport ended up sleeping for minutes in select(2) system call.
- Detect this and reduce the wait timeout in such a case.
-
- Will merge to 'master' in the fourth batch.
 
 --------------------------------------------------
 [Stalled]
@@ -416,7 +193,6 @@ updated.
  pathname we obtain from getcwd(), leading the GIT_DIR discovery
  logic to escape the ceilings the user thought to have specified.
 
-
 --------------------------------------------------
 [Cooking]
 
@@ -436,14 +212,15 @@ updated.
 
 
 * ta/doc-cleanup (2012-10-25) 6 commits
- - Documentation: build html for all files in technical and howto
- - Documentation/howto: convert plain text files to asciidoc
- - Documentation/technical: convert plain text files to asciidoc
- - Change headline of technical/send-pack-pipeline.txt to not confuse its content with content from git-send-pack.txt
- - Shorten two over-long lines in git-bisect-lk2009.txt by abbreviating some sha1
- - Split over-long synopsis in git-fetch-pack.txt into several lines
+  (merged to 'next' on 2012-11-13 at e11fafd)
+ + Documentation: build html for all files in technical and howto
+ + Documentation/howto: convert plain text files to asciidoc
+ + Documentation/technical: convert plain text files to asciidoc
+ + Change headline of technical/send-pack-pipeline.txt to not confuse its content with content from git-send-pack.txt
+ + Shorten two over-long lines in git-bisect-lk2009.txt by abbreviating some sha1
+ + Split over-long synopsis in git-fetch-pack.txt into several lines
 
- Will merge to 'next'.
+ Will merge to 'master' in the sixth batch.
 
 
 * lt/diff-stat-show-0-lines (2012-10-17) 1 commit
@@ -663,6 +440,8 @@ updated.
  "update-ref -d --deref SYM" to delete a ref through a symbolic ref
  that points to it did not remove it correctly.
 
+ Need to check reviews, but is probably ready for 'next'.
+
 
 * jk/config-ignore-duplicates (2012-10-29) 9 commits
   (merged to 'next' on 2012-10-29 at 67fa0a2)
@@ -681,7 +460,7 @@ updated.
  better match the internal config callbacks, which clears up
  some corner cases with includes.
 
- Will cook in 'next'.
+ Will merge to 'master' in the sixth batch.
 
 
 * ph/submodule-sync-recursive (2012-10-29) 2 commits
@@ -750,7 +529,11 @@ updated.
  Will merge to 'next'.
 
 
-* fc/remote-hg (2012-11-04) 16 commits
+* fc/remote-hg (2012-11-12) 20 commits
+ - remote-hg: avoid bad refs
+ - remote-hg: try the 'tip' if no checkout present
+ - remote-hg: fix compatibility with older versions of hg
+ - remote-hg: add missing config for basic tests
  - remote-hg: the author email can be null
  - remote-hg: add option to not track branches
  - remote-hg: add extra author test
@@ -834,3 +617,127 @@ updated.
 
  Will merge to 'master' in the fifth batch.
 
+
+* cr/push-force-tag-update (2012-11-12) 5 commits
+ - push: update remote tags only with force
+ - push: flag updates that require force
+ - push: flag updates
+ - push: add advice for rejected tag reference
+ - push: return reject reasons via a mask
+
+ Require "-f" for push to update a tag, even if it is a fast-forward.
+
+ Needs review.
+
+ I'm undecided yet on whether the goal is the right thing to do, but it
+ does prevent some potential mistakes. I haven't looked closely at the
+ implementation itself; review from interested parties would be helpful.
+
+
+* fc/fast-export-fixes (2012-11-08) 14 commits
+ - fast-export: don't handle uninteresting refs
+ - fast-export: make sure updated refs get updated
+ - fast-export: fix comparison in tests
+ - fast-export: trivial cleanup
+ - remote-testgit: make clear the 'done' feature
+ - remote-testgit: report success after an import
+ - remote-testgit: exercise more features
+ - remote-testgit: cleanup tests
+ - remote-testgit: remove irrelevant test
+ - remote-testgit: get rid of non-local functionality
+ - Add new simplified git-remote-testgit
+ - Rename git-remote-testgit to git-remote-testpy
+ - remote-testgit: fix direction of marks
+ - fast-export: avoid importing blob marks
+
+ Improvements to fix fast-export bugs, including how refs pointing to
+ already-seen commits are handled. An earlier 4-commit version of this
+ series looked good to me, but this much-expanded version has not seen
+ any comments.
+
+ Looks like it has been re-rolled, but I haven't checked it out yet.
+
+ Needs review.
+
+
+* mg/maint-pull-suggest-upstream-to (2012-11-08) 1 commit
+  (merged to 'next' on 2012-11-13 at bd74252)
+ + push/pull: adjust missing upstream help text to changed interface
+
+ Follow-on to the new "--set-upstream-to" topic from v1.8.0 to avoid
+ suggesting the deprecated "--set-upstream".
+
+ Will merge to 'master' in the fifth batch.
+
+
+* mh/alt-odb-string-list-cleanup (2012-11-08) 2 commits
+  (merged to 'next' on 2012-11-13 at 2bf41d9)
+ + link_alt_odb_entries(): take (char *, len) rather than two pointers
+ + link_alt_odb_entries(): use string_list_split_in_place()
+
+ Cleanups in the alternates code. Fixes a potential bug and makes the
+ code much cleaner.
+
+ Will merge to 'master' in the sixth batch.
+
+
+* pf/editor-ignore-sigint (2012-11-11) 5 commits
+ - launch_editor: propagate SIGINT from editor to git
+ - run-command: do not warn about child death by SIGINT
+ - run-command: drop silent_exec_failure arg from wait_or_whine
+ - launch_editor: ignore SIGINT while the editor has control
+ - launch_editor: refactor to use start/finish_command
+
+ Avoid confusing cases where the user hits Ctrl-C while in the editor
+ session, not realizing git will receive the signal. Since most editors
+ will take over the terminal and will block SIGINT, this is not likely
+ to confuse anyone.
+
+ Some people raised issues with emacsclient, which are addressed by this
+ re-roll. It should probably also handle SIGQUIT, and there were a
+ handful of other review comments.
+
+ Expecting a re-roll.
+
+
+* pp/gitweb-config-underscore (2012-11-08) 1 commit
+ - gitweb: make remote_heads config setting work
+
+ The key "gitweb.remote_heads" is not legal git config; this maps it to
+ "gitweb.remoteheads".
+
+ Junio raised a good point about the implementation for three-level
+ variables.
+
+ Expecting a re-roll.
+
+
+* pw/maint-p4-rcs-expansion-newline (2012-11-08) 1 commit
+  (merged to 'next' on 2012-11-13 at e90cc7c)
+ + git p4: RCS expansion should not span newlines
+
+ I do not have p4 to play with, but looks obviously correct to me.
+
+ Will merge to 'master' in the sixth batch.
+
+
+* rh/maint-gitweb-highlight-ext (2012-11-08) 1 commit
+  (merged to 'next' on 2012-11-13 at c57d856)
+ + gitweb.perl: fix %highlight_ext mappings
+
+ Fixes a clever misuse of perl's list interpretation.
+
+ Will merge to 'master' in the sixth batch.
+
+
+* rr/submodule-diff-config (2012-11-08) 3 commits
+ - submodule: display summary header in bold
+ - diff: introduce diff.submodule configuration variable
+ - Documentation: move diff.wordRegex from config.txt to diff-config.txt
+
+ Lets "git diff --submodule=log" become the default via configuration.
+
+ Almost there. Looks like a new version has been posted, but I haven't
+ picked it up yet.
+
+ Needs review.
