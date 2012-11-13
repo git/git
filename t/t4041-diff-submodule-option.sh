@@ -71,6 +71,21 @@ EOF
 	test_cmp expected actual
 "
 
+test_expect_success 'diff.submodule does not affect plumbing' '
+	test_config diff.submodule log &&
+	git diff-index -p HEAD >actual &&
+	cat >expected <<-EOF &&
+	diff --git a/sm1 b/sm1
+	new file mode 160000
+	index 0000000..a2c4dab
+	--- /dev/null
+	+++ b/sm1
+	@@ -0,0 +1 @@
+	+Subproject commit $fullhead1
+	EOF
+	test_cmp expected actual
+'
+
 commit_file sm1 &&
 head2=$(add_file sm1 foo3)
 
