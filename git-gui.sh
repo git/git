@@ -3015,6 +3015,7 @@ blame {
 
 		if {$is_path} {
 			if {$path ne {}} usage
+			set path [normalize_relpath $_prefix$a]
 			break
 		} elseif {$a eq {--}} {
 			if {$path ne {}} {
