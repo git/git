@@ -33,12 +33,40 @@ test_create_repo sm1 &&
 add_file . foo >/dev/null
 
 head1=$(add_file sm1 foo1 foo2)
+fullhead1=$(cd sm1; git rev-list --max-count=1 $head1)
 
 test_expect_success 'added submodule' "
 	git add sm1 &&
 	git diff-index -p --submodule=log HEAD >actual &&
 	cat >expected <<-EOF &&
 Submodule sm1 0000000...$head1 (new submodule)
+EOF
+	test_cmp expected actual
+"
+
+test_expect_success 'added submodule, set diff.submodule' "
+	git config diff.submodule log &&
+	git add sm1 &&
+	git diff --cached >actual &&
+	cat >expected <<-EOF &&
+Submodule sm1 0000000...$head1 (new submodule)
+EOF
+	git config --unset diff.submodule &&
+	test_cmp expected actual
+"
+
+test_expect_success '--submodule=short overrides diff.submodule' "
+	test_config diff.submodule log &&
+	git add sm1 &&
+	git diff --submodule=short --cached >actual &&
+	cat >expected <<-EOF &&
+diff --git a/sm1 b/sm1
+new file mode 160000
+index 0000000..a2c4dab
+--- /dev/null
++++ b/sm1
+@@ -0,0 +1 @@
++Subproject commit $fullhead1
 EOF
 	test_cmp expected actual
 "
@@ -73,7 +101,6 @@ EOF
 	test_cmp expected actual
 "
 
-fullhead1=$(cd sm1; git rev-list --max-count=1 $head1)
 fullhead2=$(cd sm1; git rev-list --max-count=1 $head2)
 test_expect_success 'modified submodule(forward) --submodule=short' "
 	git diff --submodule=short >actual &&

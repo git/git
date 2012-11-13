@@ -170,7 +170,8 @@ any of those replacements occurred.
 	the commits in the range like linkgit:git-submodule[1] `summary` does.
 	Omitting the `--submodule` option or specifying `--submodule=short`,
 	uses the 'short' format. This format just shows the names of the commits
-	at the beginning and end of the range.
+	at the beginning and end of the range.  Can be tweaked via the
+	`diff.submodule` configuration variable.
 
 --color[=<when>]::
 	Show colored diff.
