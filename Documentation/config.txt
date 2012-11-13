@@ -962,12 +962,6 @@ difftool.<tool>.cmd::
 difftool.prompt::
 	Prompt before each invocation of the diff tool.
 
-diff.wordRegex::
-	A POSIX Extended Regular Expression used to determine what is a "word"
-	when performing word-by-word difference calculations.  Character
-	sequences that match the regular expression are "words", all other
-	characters are *ignorable* whitespace.
-
 fetch.recurseSubmodules::
 	This option can be either set to a boolean value or to 'on-demand'.
 	Setting it to a boolean changes the behavior of fetch and pull to
