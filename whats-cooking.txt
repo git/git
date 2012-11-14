@@ -1,70 +1,53 @@
 To: git@vger.kernel.org
 Bcc: lwn@lwn.net
-Subject: What's cooking in git.git (Nov 2012, #03; Tue, 13)
+Subject: What's cooking in git.git (Nov 2012, #04; Wed, 14)
 X-master-at: b0b00a3ee43b4813eb85728a482500f6422499fd
-X-next-at: c57d8567839e5251e59fe5bdbd421c59cfe4a9ae
+X-next-at: 7a667bc8d11125a8f74ecadedd74c71c91f5c0d4
 
-What's cooking in git.git (Nov 2012, #03; Tue, 13)
+What's cooking in git.git (Nov 2012, #04; Wed, 14)
 --------------------------------------------------
 
 Here are the topics that have been cooking.  Commits prefixed with
 '-' are only in 'pu' (proposed updates) while commits prefixed with
 '+' are in 'next'.
 
-This is my final "what's cooking" as interim maintainer. I didn't
-graduate anything to master, but I updated my plans for each topic to
-give Junio an idea of where I was.
+Big thanks go to Jeff who curated topics in flight while I was on
+vacation.  I merged a couple of topics to 'next', and will start
+merging what he marked for 'master' after giving them a final look
+by the end of the week.
 
-You can find the changes described here in the integration branches of
-my repository at:
+You can find the changes described here in the integration branches of the
+repositories listed at
 
-  git://github.com/peff/git.git
-
-Until Junio returns, kernel.org and the other "usual" places will not be
-updated.
+    http://git-blame.blogspot.com/p/git-public-repositories.html
 
 --------------------------------------------------
 [New Topics]
 
-* jk/maint-gitweb-xss (2012-11-12) 1 commit
- - gitweb: escape html in rss title
-
- Fixes an XSS vulnerability in gitweb.
-
- Will merge to 'next'.
+* jl/submodule-rm (2012-11-14) 1 commit
+ - docs: move submodule section
 
 
-* jk/send-email-sender-prompt (2012-11-13) 6 commits
- - send-email: do not prompt for explicit repo ident
- - Git.pm: teach "ident" to query explicitness
- - var: provide explicit/implicit ident information
- - var: accept multiple variables on the command line
- - ident: keep separate "explicit" flags for author and committer
- - ident: make user_ident_explicitly_given private
-
- Avoid annoying sender prompt in git-send-email, but only when it is
- safe to do so.
-
- Needs review.
-
-
-* mg/replace-resolve-delete (2012-11-13) 1 commit
- - replace: parse revision argument for -d
-
- Be more user friendly to people using "git replace -d".
-
- Will merge to 'next'.
-
-
-* ml/cygwin-mingw-headers (2012-11-12) 1 commit
- - Update cygwin.c for new mingw-64 win32 api headers
-
- Make git work on newer cygwin.
-
- Will merge to 'next'.
+* sg/complete-help-undup (2012-11-14) 1 commit
+ - completion: remove 'help' duplicate from porcelain commands
 
 --------------------------------------------------
 [Stalled]
+
+* nd/pretty-placeholder-with-color-option (2012-09-30) 9 commits
+ . pretty: support %>> that steal trailing spaces
+ . pretty: support truncating in %>, %< and %><
+ . pretty: support padding placeholders, %< %> and %><
+ . pretty: two phase conversion for non utf-8 commits
+ . utf8.c: add utf8_strnwidth() with the ability to skip ansi sequences
+ . utf8.c: move display_mode_esc_sequence_len() for use by other functions
+ . pretty: support %C(auto[,N]) to turn on coloring on next placeholder(s)
+ . pretty: split parsing %C into a separate function
+ . pretty: share code between format_decoration and show_decorations
+
+ This causes warnings with -Wuninitialized, so I've ejected it from pu
+ for the time being.
+
 
 * rc/maint-complete-git-p4 (2012-09-24) 1 commit
   (merged to 'next' on 2012-10-29 at af52cef)
@@ -196,6 +179,42 @@ updated.
 --------------------------------------------------
 [Cooking]
 
+* jk/maint-gitweb-xss (2012-11-12) 1 commit
+  (merged to 'next' on 2012-11-14 at 7a667bc)
+ + gitweb: escape html in rss title
+
+ Fixes an XSS vulnerability in gitweb.
+
+
+* jk/send-email-sender-prompt (2012-11-13) 6 commits
+ - send-email: do not prompt for explicit repo ident
+ - Git.pm: teach "ident" to query explicitness
+ - var: provide explicit/implicit ident information
+ - var: accept multiple variables on the command line
+ - ident: keep separate "explicit" flags for author and committer
+ - ident: make user_ident_explicitly_given private
+
+ Avoid annoying sender prompt in git-send-email, but only when it is
+ safe to do so.
+
+ Needs review.
+
+
+* mg/replace-resolve-delete (2012-11-13) 1 commit
+  (merged to 'next' on 2012-11-14 at fa785ae)
+ + replace: parse revision argument for -d
+
+ Be more user friendly to people using "git replace -d".
+
+
+* ml/cygwin-mingw-headers (2012-11-12) 1 commit
+ - Update cygwin.c for new mingw-64 win32 api headers
+
+ Make git work on newer cygwin.
+
+ Will merge to 'next'.
+
+
 * mo/cvs-server-updates (2012-10-16) 10 commits
  - cvsserver Documentation: new cvs ... -r support
  - cvsserver: add t9402 to test branch and tag refs
@@ -233,7 +252,9 @@ updated.
  Needs some test updates.
 
 
-* jc/prettier-pretty-note (2012-10-26) 11 commits
+* jc/prettier-pretty-note (2012-11-13) 12 commits
+  (merged to 'next' on 2012-11-14 at 7230f26)
+ + format-patch: add a blank line between notes and diffstat
   (merged to 'next' on 2012-11-04 at 40e3e48)
  + Doc User-Manual: Patch cover letter, three dashes, and --notes
  + Doc format-patch: clarify --notes use case
@@ -247,8 +268,8 @@ updated.
  + format_note(): simplify API
  + pretty: remove reencode_commit_message()
 
- Now that Philip has submitted some documentation updates, this is
- looking more ready.
+ Emit the notes attached to the commit in "format-patch --notes"
+ output after three-dashes.
 
  Will merge to 'master' in the fifth batch.
 
@@ -395,21 +416,6 @@ updated.
  Interesting exercise. When we do this for real, we probably would want
  to wrap a commit to make it more like an "object" with methods like
  "parents", etc.
-
-
-* nd/pretty-placeholder-with-color-option (2012-09-30) 9 commits
- . pretty: support %>> that steal trailing spaces
- . pretty: support truncating in %>, %< and %><
- . pretty: support padding placeholders, %< %> and %><
- . pretty: two phase conversion for non utf-8 commits
- . utf8.c: add utf8_strnwidth() with the ability to skip ansi sequences
- . utf8.c: move display_mode_esc_sequence_len() for use by other functions
- . pretty: support %C(auto[,N]) to turn on coloring on next placeholder(s)
- . pretty: split parsing %C into a separate function
- . pretty: share code between format_decoration and show_decorations
-
- This causes warnings with -Wuninitialized, so I've ejected it from pu
- for the time being.
 
 
 * jc/maint-fetch-tighten-refname-check (2012-10-19) 1 commit
