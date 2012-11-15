@@ -6,6 +6,8 @@
 #include "git-compat-util.h"
 #include "cache.h"
 
+static int dying;
+
 void vreportf(const char *prefix, const char *err, va_list params)
 {
 	char msg[4096];
@@ -82,6 +84,12 @@ void NORETURN die(const char *err, ...)
 {
 	va_list params;
 
+	if (dying) {
+		fputs("fatal: recursion detected in die handler\n", stderr);
+		exit(128);
+	}
+	dying = 1;
+
 	va_start(params, err);
 	die_routine(err, params);
 	va_end(params);
@@ -93,6 +101,13 @@ void NORETURN die_errno(const char *fmt, ...)
 	char fmt_with_err[1024];
 	char str_error[256], *err;
 	int i, j;
+
+	if (dying) {
+		fputs("fatal: recursion detected in die_errno handler\n",
+			stderr);
+		exit(128);
+	}
+	dying = 1;
 
 	err = strerror(errno);
 	for (i = j = 0; err[i] && j < sizeof(str_error) - 1; ) {
