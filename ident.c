@@ -10,7 +10,11 @@
 static struct strbuf git_default_name = STRBUF_INIT;
 static struct strbuf git_default_email = STRBUF_INIT;
 static char git_default_date[50];
-int user_ident_explicitly_given;
+
+#define IDENT_NAME_GIVEN 01
+#define IDENT_MAIL_GIVEN 02
+#define IDENT_ALL_GIVEN (IDENT_NAME_GIVEN|IDENT_MAIL_GIVEN)
+static int user_ident_explicitly_given;
 
 #ifdef NO_GECOS_IN_PWENT
 #define get_gecos(ignored) "&"
