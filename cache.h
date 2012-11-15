@@ -1149,7 +1149,8 @@ struct config_include_data {
 #define CONFIG_INCLUDE_INIT { 0 }
 extern int git_config_include(const char *name, const char *value, void *data);
 
-extern int user_ident_sufficiently_given(void);
+extern int committer_ident_sufficiently_given(void);
+extern int author_ident_sufficiently_given(void);
 
 extern const char *git_commit_encoding;
 extern const char *git_log_output_encoding;
