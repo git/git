@@ -11,7 +11,7 @@ USAGE="[--quiet] add [-b branch] [-f|--force] [--name <name>] [--reference <repo
    or: $dashless [--quiet] update [--init] [-N|--no-fetch] [-f|--force] [--rebase] [--reference <repository>] [--merge] [--recursive] [--] [<path>...]
    or: $dashless [--quiet] summary [--cached|--files] [--summary-limit <n>] [commit] [--] [<path>...]
    or: $dashless [--quiet] foreach [--recursive] <command>
-   or: $dashless [--quiet] sync [--] [<path>...]"
+   or: $dashless [--quiet] sync [--recursive] [--] [<path>...]"
 OPTIONS_SPEC=
 . git-sh-setup
 . git-sh-i18n
@@ -1032,6 +1032,10 @@ cmd_sync()
 			GIT_QUIET=1
 			shift
 			;;
+		--recursive)
+			recursive=1
+			shift
+			;;
 		--)
 			shift
 			break
@@ -1073,7 +1077,7 @@ cmd_sync()
 
 		if git config "submodule.$name.url" >/dev/null 2>/dev/null
 		then
-			say "$(eval_gettext "Synchronizing submodule url for '\$name'")"
+			say "$(eval_gettext "Synchronizing submodule url for '\$prefix\$sm_path'")"
 			git config submodule."$name".url "$super_config_url"
 
 			if test -e "$sm_path"/.git
@@ -1083,6 +1087,12 @@ cmd_sync()
 				cd "$sm_path"
 				remote=$(get_default_remote)
 				git config remote."$remote".url "$sub_origin_url"
+
+				if test -n "$recursive"
+				then
+					prefix="$prefix$sm_path/"
+					eval cmd_sync
+				fi
 			)
 			fi
 		fi

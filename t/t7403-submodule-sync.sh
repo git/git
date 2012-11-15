@@ -17,18 +17,25 @@ test_expect_success setup '
 	git commit -m upstream &&
 	git clone . super &&
 	git clone super submodule &&
+	(cd submodule &&
+	 git submodule add ../submodule sub-submodule &&
+	 test_tick &&
+	 git commit -m "sub-submodule"
+	) &&
 	(cd super &&
 	 git submodule add ../submodule submodule &&
 	 test_tick &&
 	 git commit -m "submodule"
 	) &&
 	git clone super super-clone &&
-	(cd super-clone && git submodule update --init) &&
+	(cd super-clone && git submodule update --init --recursive) &&
 	git clone super empty-clone &&
 	(cd empty-clone && git submodule init) &&
 	git clone super top-only-clone &&
 	git clone super relative-clone &&
-	(cd relative-clone && git submodule update --init)
+	(cd relative-clone && git submodule update --init --recursive) &&
+	git clone super recursive-clone &&
+	(cd recursive-clone && git submodule update --init --recursive)
 '
 
 test_expect_success 'change submodule' '
@@ -46,6 +53,11 @@ test_expect_success 'change submodule url' '
 	 git pull
 	) &&
 	mv submodule moved-submodule &&
+	(cd moved-submodule &&
+	 git config -f .gitmodules submodule.sub-submodule.url ../moved-submodule &&
+	 test_tick &&
+	 git commit -a -m moved-sub-submodule
+	) &&
 	(cd super &&
 	 git config -f .gitmodules submodule.submodule.url ../moved-submodule &&
 	 test_tick &&
@@ -61,12 +73,34 @@ test_expect_success '"git submodule sync" should update submodule URLs' '
 	test -d "$(cd super-clone/submodule &&
 	 git config remote.origin.url
 	)" &&
+	test ! -d "$(cd super-clone/submodule/sub-submodule &&
+	 git config remote.origin.url
+	)" &&
 	(cd super-clone/submodule &&
 	 git checkout master &&
 	 git pull
 	) &&
 	(cd super-clone &&
 	 test -d "$(git config submodule.submodule.url)"
+	)
+'
+
+test_expect_success '"git submodule sync --recursive" should update all submodule URLs' '
+	(cd super-clone &&
+	 (cd submodule &&
+	  git pull --no-recurse-submodules
+	 ) &&
+	 git submodule sync --recursive
+	) &&
+	test -d "$(cd super-clone/submodule &&
+	 git config remote.origin.url
+	)" &&
+	test -d "$(cd super-clone/submodule/sub-submodule &&
+	 git config remote.origin.url
+	)" &&
+	(cd super-clone/submodule/sub-submodule &&
+	 git checkout master &&
+	 git pull
 	)
 '
 
@@ -106,6 +140,23 @@ test_expect_success '"git submodule sync" handles origin URL of the form foo/bar
 	(cd submodule &&
 	 #actual foo/submodule
 	 test "$(git config remote.origin.url)" = "../foo/submodule"
+	)
+	(cd submodule/sub-submodule &&
+	 test "$(git config remote.origin.url)" != "../../foo/submodule"
+	)
+	)
+'
+
+test_expect_success '"git submodule sync --recursive" propagates changes in origin' '
+	(cd recursive-clone &&
+	 git remote set-url origin foo/bar &&
+	 git submodule sync --recursive &&
+	(cd submodule &&
+	 #actual foo/submodule
+	 test "$(git config remote.origin.url)" = "../foo/submodule"
+	)
+	(cd submodule/sub-submodule &&
+	 test "$(git config remote.origin.url)" = "../../foo/submodule"
 	)
 	)
 '
