@@ -38,7 +38,8 @@ member (you need this if you add things later) and you should set the
   `unsorted_string_list_delete_item`.
 
 . Can remove items not matching a criterion from a sorted or unsorted
-  list using `filter_string_list`.
+  list using `filter_string_list`, or remove empty strings using
+  `string_list_remove_empty_items`.
 
 . Finally it should free the list using `string_list_clear`.
 
@@ -74,6 +75,12 @@ Functions
 	true, call free() on the util members of any items that have
 	to be deleted.  Preserve the order of the items that are
 	retained.
+
+`string_list_remove_empty_items`::
+
+	Remove any empty strings from the list.  If free_util is true,
+	call free() on the util members of any items that have to be
+	deleted.  Preserve the order of the items that are retained.
 
 `string_list_longest_prefix`::
 
