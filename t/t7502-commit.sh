@@ -243,16 +243,6 @@ test_expect_success 'message shows author when it is not equal to committer' '
 	  .git/COMMIT_EDITMSG
 '
 
-test_expect_success 'setup auto-ident prerequisite' '
-	if (sane_unset GIT_COMMITTER_EMAIL &&
-	    sane_unset GIT_COMMITTER_NAME &&
-	    git var GIT_COMMITTER_IDENT); then
-		test_set_prereq AUTOIDENT
-	else
-		test_set_prereq NOAUTOIDENT
-	fi
-'
-
 test_expect_success AUTOIDENT 'message shows committer when it is automatic' '
 
 	echo >>negative &&
@@ -271,7 +261,7 @@ echo editor started > "$(pwd)/.git/result"
 exit 0
 EOF
 
-test_expect_success NOAUTOIDENT 'do not fire editor when committer is bogus' '
+test_expect_success !AUTOIDENT 'do not fire editor when committer is bogus' '
 	>.git/result
 	>expect &&
 
