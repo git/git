@@ -44,22 +44,56 @@ extern void strbuf_rtrim(struct strbuf *);
 extern void strbuf_ltrim(struct strbuf *);
 extern int strbuf_cmp(const struct strbuf *, const struct strbuf *);
 
+/*
+ * Split str (of length slen) at the specified terminator character.
+ * Return a null-terminated array of pointers to strbuf objects
+ * holding the substrings.  The substrings include the terminator,
+ * except for the last substring, which might be unterminated if the
+ * original string did not end with a terminator.  If max is positive,
+ * then split the string into at most max substrings (with the last
+ * substring containing everything following the (max-1)th terminator
+ * character).
+ *
+ * For lighter-weight alternatives, see string_list_split() and
+ * string_list_split_in_place().
+ */
 extern struct strbuf **strbuf_split_buf(const char *, size_t,
-					int delim, int max);
+					int terminator, int max);
+
+/*
+ * Split a NUL-terminated string at the specified terminator
+ * character.  See strbuf_split_buf() for more information.
+ */
 static inline struct strbuf **strbuf_split_str(const char *str,
-					       int delim, int max)
+					       int terminator, int max)
 {
-	return strbuf_split_buf(str, strlen(str), delim, max);
+	return strbuf_split_buf(str, strlen(str), terminator, max);
 }
+
+/*
+ * Split a strbuf at the specified terminator character.  See
+ * strbuf_split_buf() for more information.
+ */
 static inline struct strbuf **strbuf_split_max(const struct strbuf *sb,
-						int delim, int max)
+						int terminator, int max)
 {
-	return strbuf_split_buf(sb->buf, sb->len, delim, max);
+	return strbuf_split_buf(sb->buf, sb->len, terminator, max);
 }
-static inline struct strbuf **strbuf_split(const struct strbuf *sb, int delim)
+
+/*
+ * Split a strbuf at the specified terminator character.  See
+ * strbuf_split_buf() for more information.
+ */
+static inline struct strbuf **strbuf_split(const struct strbuf *sb,
+					   int terminator)
 {
-	return strbuf_split_max(sb, delim, 0);
+	return strbuf_split_max(sb, terminator, 0);
 }
+
+/*
+ * Free a NULL-terminated list of strbufs (for example, the return
+ * values of the strbuf_split*() functions).
+ */
 extern void strbuf_list_free(struct strbuf **);
 
 /*----- add data in your buffer -----*/

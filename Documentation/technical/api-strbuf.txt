@@ -279,6 +279,22 @@ same behaviour as well.
 	Strip whitespace from a buffer. The second parameter controls if
 	comments are considered contents to be removed or not.
 
+`strbuf_split_buf`::
+`strbuf_split_str`::
+`strbuf_split_max`::
+`strbuf_split`::
+
+	Split a string or strbuf into a list of strbufs at a specified
+	terminator character.  The returned substrings include the
+	terminator characters.  Some of these functions take a `max`
+	parameter, which, if positive, limits the output to that
+	number of substrings.
+
+`strbuf_list_free`::
+
+	Free a list of strbufs (for example, the return values of the
+	`strbuf_split()` functions).
+
 `launch_editor`::
 
 	Launch the user preferred editor to edit a file and fill the buffer

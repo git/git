@@ -106,35 +106,30 @@ void strbuf_ltrim(struct strbuf *sb)
 	sb->buf[sb->len] = '\0';
 }
 
-struct strbuf **strbuf_split_buf(const char *str, size_t slen, int delim, int max)
+struct strbuf **strbuf_split_buf(const char *str, size_t slen,
+				 int terminator, int max)
 {
-	int alloc = 2, pos = 0;
-	const char *n, *p;
-	struct strbuf **ret;
+	struct strbuf **ret = NULL;
+	size_t nr = 0, alloc = 0;
 	struct strbuf *t;
 
-	ret = xcalloc(alloc, sizeof(struct strbuf *));
-	p = n = str;
-	while (n < str + slen) {
-		int len;
-		if (max <= 0 || pos + 1 < max)
-			n = memchr(n, delim, slen - (n - str));
-		else
-			n = NULL;
-		if (pos + 1 >= alloc) {
-			alloc = alloc * 2;
-			ret = xrealloc(ret, sizeof(struct strbuf *) * alloc);
+	while (slen) {
+		int len = slen;
+		if (max <= 0 || nr + 1 < max) {
+			const char *end = memchr(str, terminator, slen);
+			if (end)
+				len = end - str + 1;
 		}
-		if (!n)
-			n = str + slen - 1;
-		len = n - p + 1;
 		t = xmalloc(sizeof(struct strbuf));
 		strbuf_init(t, len);
-		strbuf_add(t, p, len);
-		ret[pos] = t;
-		ret[++pos] = NULL;
-		p = ++n;
+		strbuf_add(t, str, len);
+		ALLOC_GROW(ret, nr + 2, alloc);
+		ret[nr++] = t;
+		str += len;
+		slen -= len;
 	}
+	ALLOC_GROW(ret, nr + 1, alloc); /* In case string was empty */
+	ret[nr] = NULL;
 	return ret;
 }
 
