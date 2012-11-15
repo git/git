@@ -1627,13 +1627,15 @@ int format_tracking_info(struct branch *branch, struct strbuf *sb)
 
 	base = branch->merge[0]->dst;
 	base = shorten_unambiguous_ref(base, 0);
-	if (!num_theirs)
+	if (!num_theirs) {
 		strbuf_addf(sb,
 			Q_("Your branch is ahead of '%s' by %d commit.\n",
 			   "Your branch is ahead of '%s' by %d commits.\n",
 			   num_ours),
 			base, num_ours);
-	else if (!num_ours)
+		strbuf_addf(sb,
+			_("  (use \"git push\" to publish your local commits)\n"));
+	} else if (!num_ours) {
 		strbuf_addf(sb,
 			Q_("Your branch is behind '%s' by %d commit, "
 			       "and can be fast-forwarded.\n",
@@ -1641,7 +1643,9 @@ int format_tracking_info(struct branch *branch, struct strbuf *sb)
 			       "and can be fast-forwarded.\n",
 			   num_theirs),
 			base, num_theirs);
-	else
+		strbuf_addf(sb,
+			_("  (use \"git pull\" to update your local branch)\n"));
+	} else {
 		strbuf_addf(sb,
 			Q_("Your branch and '%s' have diverged,\n"
 			       "and have %d and %d different commit each, "
@@ -1651,6 +1655,9 @@ int format_tracking_info(struct branch *branch, struct strbuf *sb)
 			       "respectively.\n",
 			   num_theirs),
 			base, num_ours, num_theirs);
+		strbuf_addf(sb,
+			_("  (use \"git pull\" to merge the remote branch into yours)\n"));
+	}
 	return 1;
 }
 
