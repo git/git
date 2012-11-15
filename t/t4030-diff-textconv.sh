@@ -84,6 +84,18 @@ test_expect_success 'status -v produces text' '
 	git reset --soft HEAD@{1}
 '
 
+test_expect_success 'grep-diff (-G) operates on textconv data (add)' '
+	echo one >expect &&
+	git log --root --format=%s -G0 >actual &&
+	test_cmp expect actual
+'
+
+test_expect_success 'grep-diff (-G) operates on textconv data (modification)' '
+	echo two >expect &&
+	git log --root --format=%s -G1 >actual &&
+	test_cmp expect actual
+'
+
 cat >expect.stat <<'EOF'
  file | Bin 2 -> 4 bytes
  1 file changed, 0 insertions(+), 0 deletions(-)
