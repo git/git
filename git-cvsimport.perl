@@ -24,14 +24,14 @@ use File::Basename qw(basename dirname);
 use Time::Local;
 use IO::Socket;
 use IO::Pipe;
-use POSIX qw(strftime dup2 ENOENT);
+use POSIX qw(strftime tzset dup2 ENOENT);
 use IPC::Open2;
 
 $SIG{'PIPE'}="IGNORE";
-$ENV{'TZ'}="UTC";
+set_timezone('UTC');
 
 our ($opt_h,$opt_o,$opt_v,$opt_k,$opt_u,$opt_d,$opt_p,$opt_C,$opt_z,$opt_i,$opt_P, $opt_s,$opt_m,@opt_M,$opt_A,$opt_S,$opt_L, $opt_a, $opt_r, $opt_R);
-my (%conv_author_name, %conv_author_email);
+my (%conv_author_name, %conv_author_email, %conv_author_tz);
 
 sub usage(;$) {
 	my $msg = shift;
@@ -59,6 +59,14 @@ sub read_author_info($) {
 			$conv_author_name{$user} = $2;
 			$conv_author_email{$user} = $3;
 		}
+		# or with an optional timezone:
+		#   spawn=Simon Pawn <spawn@frog-pond.org> America/Chicago
+		elsif (m/^(\S+?)\s*=\s*(.+?)\s*<(.+)>\s*(\S+?)\s*$/) {
+			$user = $1;
+			$conv_author_name{$user} = $2;
+			$conv_author_email{$user} = $3;
+			$conv_author_tz{$user} = $4;
+		}
 		# However, we also read from CVSROOT/users format
 		# to ease migration.
 		elsif (/^(\w+):(['"]?)(.+?)\2\s*$/) {
@@ -84,9 +92,20 @@ sub write_author_info($) {
 	  die("Failed to open $file for writing: $!");
 
 	foreach (keys %conv_author_name) {
-		print $f "$_=$conv_author_name{$_} <$conv_author_email{$_}>\n";
+		print $f "$_=$conv_author_name{$_} <$conv_author_email{$_}>";
+		print $f " $conv_author_tz{$_}" if ($conv_author_tz{$_});
+		print $f "\n";
 	}
 	close ($f);
+}
+
+# Versions of perl before 5.10.0 may not automatically check $TZ each
+# time localtime is run (most platforms will do so only the first time).
+# We can work around this by using tzset() to update the internal
+# variable whenever we change the environment.
+sub set_timezone {
+	$ENV{TZ} = shift;
+	tzset();
 }
 
 # convert getopts specs for use by git config
@@ -795,7 +814,7 @@ sub write_tree () {
 	return $tree;
 }
 
-my ($patchset,$date,$author_name,$author_email,$branch,$ancestor,$tag,$logmsg);
+my ($patchset,$date,$author_name,$author_email,$author_tz,$branch,$ancestor,$tag,$logmsg);
 my (@old,@new,@skipped,%ignorebranch,@commit_revisions);
 
 # commits that cvsps cannot place anywhere...
@@ -844,7 +863,9 @@ sub commit {
 		}
 	}
 
-	my $commit_date = strftime("+0000 %Y-%m-%d %H:%M:%S",gmtime($date));
+	set_timezone($author_tz);
+	my $commit_date = strftime("%s %z", localtime($date));
+	set_timezone('UTC');
 	$ENV{GIT_AUTHOR_NAME} = $author_name;
 	$ENV{GIT_AUTHOR_EMAIL} = $author_email;
 	$ENV{GIT_AUTHOR_DATE} = $commit_date;
@@ -945,12 +966,14 @@ while (<CVS>) {
 		}
 		$state=3;
 	} elsif ($state == 3 and s/^Author:\s+//) {
+		$author_tz = "UTC";
 		s/\s+$//;
 		if (/^(.*?)\s+<(.*)>/) {
 		    ($author_name, $author_email) = ($1, $2);
 		} elsif ($conv_author_name{$_}) {
 			$author_name = $conv_author_name{$_};
 			$author_email = $conv_author_email{$_};
+			$author_tz = $conv_author_tz{$_} if ($conv_author_tz{$_});
 		} else {
 		    $author_name = $author_email = $_;
 		}
