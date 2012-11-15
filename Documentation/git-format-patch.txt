@@ -20,7 +20,7 @@ SYNOPSIS
 		   [--ignore-if-in-upstream]
 		   [--subject-prefix=Subject-Prefix]
 		   [--to=<email>] [--cc=<email>]
-		   [--cover-letter] [--quiet]
+		   [--cover-letter] [--quiet] [--notes[=<ref>]]
 		   [<common diff options>]
 		   [ <since> | <revision range> ]
 
@@ -190,6 +190,18 @@ will want to ensure that threading is disabled for `git send-email`.
 	In addition to the patches, generate a cover letter file
 	containing the shortlog and the overall diffstat.  You can
 	fill in a description in the file before sending it out.
+
+--notes[=<ref>]::
+	Append the notes (see linkgit:git-notes[1]) for the commit
+	after the three-dash line.
++
+The expected use case of this is to write supporting explanation for
+the commit that does not belong to the commit log message proper,
+and include it with the patch submission. While one can simply write
+these explanations after `format-patch` has run but before sending,
+keeping them as git notes allows them to be maintained between versions
+of the patch series (but see the discussion of the `notes.rewrite`
+configuration options in linkgit:git-notes[1] to use this workflow).
 
 --[no]-signature=<signature>::
 	Add a signature to each message produced. Per RFC 3676 the signature

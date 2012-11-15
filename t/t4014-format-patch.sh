@@ -650,8 +650,19 @@ test_expect_success 'format-patch --in-reply-to' '
 '
 
 test_expect_success 'format-patch --signoff' '
-	git format-patch -1 --signoff --stdout |
-	grep "^Signed-off-by: $GIT_COMMITTER_NAME <$GIT_COMMITTER_EMAIL>"
+	git format-patch -1 --signoff --stdout >out &&
+	grep "^Signed-off-by: $GIT_COMMITTER_NAME <$GIT_COMMITTER_EMAIL>" out
+'
+
+test_expect_success 'format-patch --notes --signoff' '
+	git notes --ref test add -m "test message" HEAD &&
+	git format-patch -1 --signoff --stdout --notes=test >out &&
+	# Three dashes must come after S-o-b
+	! sed "/^Signed-off-by: /q" out | grep "test message" &&
+	sed "1,/^Signed-off-by: /d" out | grep "test message" &&
+	# Notes message must come after three dashes
+	! sed "/^---$/q" out | grep "test message" &&
+	sed "1,/^---$/d" out | grep "test message"
 '
 
 echo "fatal: --name-only does not make sense" > expect.name-only

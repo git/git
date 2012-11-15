@@ -1787,6 +1787,13 @@ $ git format-patch origin
 will produce a numbered series of files in the current directory, one
 for each patch in the current branch but not in origin/HEAD.
 
+`git format-patch` can include an initial "cover letter". You can insert
+commentary on individual patches after the three dash line which
+`format-patch` places after the commit message but before the patch
+itself.  If you use `git notes` to track your cover letter material,
+`git format-patch --notes` will include the commit's notes in a similar
+manner.
+
 You can then import these into your mail client and send them by
 hand.  However, if you have a lot to send at once, you may prefer to
 use the linkgit:git-send-email[1] script to automate the process.

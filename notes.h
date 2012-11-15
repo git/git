@@ -237,10 +237,6 @@ void prune_notes(struct notes_tree *t, int flags);
  */
 void free_notes(struct notes_tree *t);
 
-/* Flags controlling how notes are formatted */
-#define NOTES_SHOW_HEADER 1
-#define NOTES_INDENT 2
-
 struct string_list;
 
 struct display_notes_opt {
@@ -274,7 +270,7 @@ void init_display_notes(struct display_notes_opt *opt);
  * You *must* call init_display_notes() before using this function.
  */
 void format_display_notes(const unsigned char *object_sha1,
-			  struct strbuf *sb, const char *output_encoding, int flags);
+			  struct strbuf *sb, const char *output_encoding, int raw);
 
 /*
  * Load the notes tree from each ref listed in 'refs'.  The output is

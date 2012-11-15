@@ -540,7 +540,6 @@ void show_log(struct rev_info *opt)
 	struct pretty_print_context ctx = {0};
 
 	opt->loginfo = NULL;
-	ctx.show_notes = opt->show_notes;
 	if (!opt->verbose_header) {
 		graph_show_commit(opt->graph);
 
@@ -648,6 +647,18 @@ void show_log(struct rev_info *opt)
 	if (!commit->buffer)
 		return;
 
+	if (opt->show_notes) {
+		int raw;
+		struct strbuf notebuf = STRBUF_INIT;
+
+		raw = (opt->commit_format == CMIT_FMT_USERFORMAT);
+		format_display_notes(commit->object.sha1, &notebuf,
+				     get_log_output_encoding(), raw);
+		ctx.notes_message = notebuf.len
+			? strbuf_detach(&notebuf, NULL)
+			: xcalloc(1, 1);
+	}
+
 	/*
 	 * And then the pretty-printed message itself
 	 */
@@ -664,6 +675,16 @@ void show_log(struct rev_info *opt)
 
 	if (opt->add_signoff)
 		append_signoff(&msgbuf, opt->add_signoff);
+
+	if ((ctx.fmt != CMIT_FMT_USERFORMAT) &&
+	    ctx.notes_message && *ctx.notes_message) {
+		if (ctx.fmt == CMIT_FMT_EMAIL) {
+			strbuf_addstr(&msgbuf, "---\n");
+			opt->shown_dashes = 1;
+		}
+		strbuf_addstr(&msgbuf, ctx.notes_message);
+	}
+
 	if (opt->show_log_size) {
 		printf("log size %i\n", (int)msgbuf.len);
 		graph_show_oneline(opt->graph);
@@ -689,10 +710,12 @@ void show_log(struct rev_info *opt)
 	}
 
 	strbuf_release(&msgbuf);
+	free(ctx.notes_message);
 }
 
 int log_tree_diff_flush(struct rev_info *opt)
 {
+	opt->shown_dashes = 0;
 	diffcore_std(&opt->diffopt);
 
 	if (diff_queue_is_empty()) {
@@ -704,15 +727,16 @@ int log_tree_diff_flush(struct rev_info *opt)
 	}
 
 	if (opt->loginfo && !opt->no_commit_id) {
-		/* When showing a verbose header (i.e. log message),
-		 * and not in --pretty=oneline format, we would want
-		 * an extra newline between the end of log and the
-		 * output for readability.
-		 */
 		show_log(opt);
 		if ((opt->diffopt.output_format & ~DIFF_FORMAT_NO_OUTPUT) &&
 		    opt->verbose_header &&
 		    opt->commit_format != CMIT_FMT_ONELINE) {
+			/*
+			 * When showing a verbose header (i.e. log message),
+			 * and not in --pretty=oneline format, we would want
+			 * an extra newline between the end of log and the
+			 * diff/diffstat output for readability.
+			 */
 			int pch = DIFF_FORMAT_DIFFSTAT | DIFF_FORMAT_PATCH;
 			if (opt->diffopt.output_prefix) {
 				struct strbuf *msg = NULL;
@@ -720,9 +744,20 @@ int log_tree_diff_flush(struct rev_info *opt)
 					opt->diffopt.output_prefix_data);
 				fwrite(msg->buf, msg->len, 1, stdout);
 			}
-			if ((pch & opt->diffopt.output_format) == pch) {
+
+			/*
+			 * We may have shown three-dashes line early
+			 * between notes and the log message, in which
+			 * case we only want a blank line after the
+			 * notes without (an extra) three-dashes line.
+			 * Otherwise, we show the three-dashes line if
+			 * we are showing the patch with diffstat, but
+			 * in that case, there is no extra blank line
+			 * after the three-dashes line.
+			 */
+			if (!opt->shown_dashes &&
+			    (pch & opt->diffopt.output_format) == pch)
 				printf("---");
-			}
 			putchar('\n');
 		}
 	}

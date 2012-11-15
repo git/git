@@ -86,7 +86,7 @@ struct pretty_print_context {
 	enum date_mode date_mode;
 	unsigned date_mode_explicit:1;
 	int need_8bit_cte;
-	int show_notes;
+	char *notes_message;
 	struct reflog_walk_info *reflog_info;
 	const char *output_encoding;
 };
@@ -99,8 +99,6 @@ extern int has_non_ascii(const char *text);
 struct rev_info; /* in revision.h, it circularly uses enum cmit_fmt */
 extern char *logmsg_reencode(const struct commit *commit,
 			     const char *output_encoding);
-extern char *reencode_commit_message(const struct commit *commit,
-				     const char **encoding_p);
 extern void get_commit_format(const char *arg, struct rev_info *);
 extern const char *format_subject(struct strbuf *sb, const char *msg,
 				  const char *line_separator);
