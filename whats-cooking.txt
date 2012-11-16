@@ -1,10 +1,10 @@
 To: git@vger.kernel.org
 Bcc: lwn@lwn.net
-Subject: What's cooking in git.git (Nov 2012, #04; Wed, 14)
-X-master-at: b0b00a3ee43b4813eb85728a482500f6422499fd
-X-next-at: 7a667bc8d11125a8f74ecadedd74c71c91f5c0d4
+Subject: What's cooking in git.git (Nov 2012, #05; Fri, 16)
+X-master-at: 5a90748f2856f587a948148a9b6fad50a43df57c
+X-next-at: e7909caa037a3472e4c34fa47f04758920bd6c91
 
-What's cooking in git.git (Nov 2012, #04; Wed, 14)
+What's cooking in git.git (Nov 2012, #05; Fri, 16)
 --------------------------------------------------
 
 Here are the topics that have been cooking.  Commits prefixed with
@@ -12,9 +12,10 @@ Here are the topics that have been cooking.  Commits prefixed with
 '+' are in 'next'.
 
 Big thanks go to Jeff who curated topics in flight while I was on
-vacation.  I merged a couple of topics to 'next', and will start
-merging what he marked for 'master' after giving them a final look
-by the end of the week.
+vacation.  I merged a couple of topics to 'next', and made the fifth
+batch of topics graduate to 'master'.  Over the weekend, I'll start
+merging maintenance topics to 'maint' in preparation for cutting
+1.8.1, hopefully sometime late next week.
 
 You can find the changes described here in the integration branches of the
 repositories listed at
@@ -22,14 +23,175 @@ repositories listed at
     http://git-blame.blogspot.com/p/git-public-repositories.html
 
 --------------------------------------------------
+[Graduated to "master"]
+
+* as/maint-doc-fix-no-post-rewrite (2012-11-02) 1 commit
+  (merged to 'next' on 2012-11-09 at 117a91e)
+ + commit: fixup misplacement of --no-post-rewrite description
+
+
+* cr/cvsimport-local-zone (2012-11-04) 2 commits
+  (merged to 'next' on 2012-11-04 at 292f0b4)
+ + cvsimport: work around perl tzset issue
+ + git-cvsimport: allow author-specific timezones
+
+ Allows "cvsimport" to read per-author timezone from the author info
+ file.
+
+
+* jc/maint-fetch-tighten-refname-check (2012-10-19) 1 commit
+  (merged to 'next' on 2012-11-04 at eda85ef)
+ + get_fetch_map(): tighten checks on dest refs
+
+ This was split out from discarded jc/maint-push-refs-all topic.
+
+
+* jc/prettier-pretty-note (2012-11-13) 12 commits
+  (merged to 'next' on 2012-11-14 at 7230f26)
+ + format-patch: add a blank line between notes and diffstat
+  (merged to 'next' on 2012-11-04 at 40e3e48)
+ + Doc User-Manual: Patch cover letter, three dashes, and --notes
+ + Doc format-patch: clarify --notes use case
+ + Doc notes: Include the format-patch --notes option
+ + Doc SubmittingPatches: Mention --notes option after "cover letter"
+ + Documentation: decribe format-patch --notes
+ + format-patch --notes: show notes after three-dashes
+ + format-patch: append --signature after notes
+ + pretty_print_commit(): do not append notes message
+ + pretty: prepare notes message at a centralized place
+ + format_note(): simplify API
+ + pretty: remove reencode_commit_message()
+
+ Emit the notes attached to the commit in "format-patch --notes"
+ output after three-dashes.
+
+
+* jc/same-encoding (2012-11-04) 1 commit
+  (merged to 'next' on 2012-11-04 at 54991f2)
+ + reencode_string(): introduce and use same_encoding()
+
+ Various codepaths checked if two encoding names are the same using
+ ad-hoc code and some of them ended up asking iconv() to convert
+ between "utf8" and "UTF-8".  The former is not a valid way to spell
+ the encoding name, but often people use it by mistake, and we
+ equated them in some but not all codepaths. Introduce a new helper
+ function to make these codepaths consistent.
+
+
+* jh/symbolic-ref-d (2012-10-21) 1 commit
+  (merged to 'next' on 2012-11-04 at b0762f5)
+ + git symbolic-ref --delete $symref
+
+ Add "symbolic-ref -d SYM" to delete a symbolic ref SYM.
+
+ It is already possible to remove a symbolic ref with "update-ref -d
+ --no-deref", but it may be a good addition for completeness.
+
+
+* jk/maint-diff-grep-textconv (2012-10-28) 1 commit
+  (merged to 'next' on 2012-11-04 at 790337b)
+ + diff_grep: use textconv buffers for add/deleted files
+ (this branch is used by jk/pickaxe-textconv.)
+
+ Fixes inconsistent use of textconv with "git log -G".
+
+
+* js/hp-nonstop (2012-10-30) 1 commit
+  (merged to 'next' on 2012-11-09 at fe58205)
+ + fix 'make test' for HP NonStop
+
+
+* mg/maint-pull-suggest-upstream-to (2012-11-08) 1 commit
+  (merged to 'next' on 2012-11-13 at bd74252)
+ + push/pull: adjust missing upstream help text to changed interface
+
+ Follow-on to the new "--set-upstream-to" topic from v1.8.0 to avoid
+ suggesting the deprecated "--set-upstream".
+
+
+* mh/notes-string-list (2012-11-08) 5 commits
+  (merged to 'next' on 2012-11-09 at 7a4c58c)
+ + string_list_add_refs_from_colon_sep(): use string_list_split()
+ + notes: fix handling of colon-separated values
+ + combine_notes_cat_sort_uniq(): sort and dedup lines all at once
+ + Initialize sort_uniq_list using named constant
+ + string_list: add a function string_list_remove_empty_items()
+
+ Improve the asymptotic performance of the cat_sort_uniq notes merge
+ strategy.
+
+
+* mh/strbuf-split (2012-11-04) 4 commits
+  (merged to 'next' on 2012-11-09 at fa984b1)
+ + strbuf_split*(): document functions
+ + strbuf_split*(): rename "delim" parameter to "terminator"
+ + strbuf_split_buf(): simplify iteration
+ + strbuf_split_buf(): use ALLOC_GROW()
+
+ Cleanups and documentation for strbuf_split.
+
+
+* mm/maint-doc-commit-edit (2012-11-02) 1 commit
+  (merged to 'next' on 2012-11-09 at 8dab7f5)
+ + Document 'git commit --no-edit' explicitly
+
+
+* ph/submodule-sync-recursive (2012-10-29) 2 commits
+  (merged to 'next' on 2012-11-04 at a000f78)
+ + Add tests for submodule sync --recursive
+ + Teach --recursive to submodule sync
+
+ Adds "--recursive" option to submodule sync.
+
+--------------------------------------------------
 [New Topics]
 
 * jl/submodule-rm (2012-11-14) 1 commit
  - docs: move submodule section
 
+ Documentation correction for d21240f (Merge branch
+ 'jl/submodule-rm', 2012-10-29) that needs to be fast-tracked.
+
+ Will merge to 'next' and soon to 'master'.
+
 
 * sg/complete-help-undup (2012-11-14) 1 commit
  - completion: remove 'help' duplicate from porcelain commands
+
+ Will merge to 'next' and soon to 'master'.
+
+
+* bc/do-not-recurse-in-die (2012-11-15) 1 commit
+ - usage.c: detect recursion in die routines and bail out immediately
+
+ Will merge to 'next'.
+
+
+* cn/config-missing-path (2012-11-15) 1 commit
+ - config: don't segfault when given --path with a missing value
+
+ Will merge to 'next' and soon to 'master'.
+
+
+* jk/checkout-out-of-unborn (2012-11-15) 1 commit
+ - checkout: print a message when switching unborn branches
+
+ Will merge to 'next'.
+
+
+* mk/complete-tcsh (2012-11-16) 1 commit
+ - tcsh-completion re-using git-completion.bash
+
+
+* mm/status-push-pull-advise (2012-11-16) 1 commit
+ - status: add advice on how to push/pull to tracking branch
+
+
+* nd/unify-appending-of-s-o-b (2012-11-15) 1 commit
+ - Unify appending signoff in format-patch, commit and sequencer
+
+ I am not sure if the logic to refrain from adding a sign-off based
+ on the existing run of sign-offs is done correctly in this change.
 
 --------------------------------------------------
 [Stalled]
@@ -186,18 +348,23 @@ repositories listed at
  Fixes an XSS vulnerability in gitweb.
 
 
-* jk/send-email-sender-prompt (2012-11-13) 6 commits
+* jk/send-email-sender-prompt (2012-11-15) 8 commits
  - send-email: do not prompt for explicit repo ident
  - Git.pm: teach "ident" to query explicitness
  - var: provide explicit/implicit ident information
  - var: accept multiple variables on the command line
  - ident: keep separate "explicit" flags for author and committer
- - ident: make user_ident_explicitly_given private
+ - ident: make user_ident_explicitly_given static
+ - t7502: factor out autoident prerequisite
+ - test-lib: allow negation of prerequisites
 
  Avoid annoying sender prompt in git-send-email, but only when it is
  safe to do so.
 
- Needs review.
+ Perhaps keep only the first three patches, and replace the rest
+ with the one from Felipe that takes a much simpler approach (the
+ rationale of that patch needs to be cleaned up first, along the
+ lines Jeff outlined, though). 
 
 
 * mg/replace-resolve-delete (2012-11-13) 1 commit
@@ -208,11 +375,10 @@ repositories listed at
 
 
 * ml/cygwin-mingw-headers (2012-11-12) 1 commit
- - Update cygwin.c for new mingw-64 win32 api headers
+  (merged to 'next' on 2012-11-15 at 22e11b3)
+ + Update cygwin.c for new mingw-64 win32 api headers
 
  Make git work on newer cygwin.
-
- Will merge to 'next'.
 
 
 * mo/cvs-server-updates (2012-10-16) 10 commits
@@ -250,53 +416,6 @@ repositories listed at
  content in the "git diff --stat" output.
 
  Needs some test updates.
-
-
-* jc/prettier-pretty-note (2012-11-13) 12 commits
-  (merged to 'next' on 2012-11-14 at 7230f26)
- + format-patch: add a blank line between notes and diffstat
-  (merged to 'next' on 2012-11-04 at 40e3e48)
- + Doc User-Manual: Patch cover letter, three dashes, and --notes
- + Doc format-patch: clarify --notes use case
- + Doc notes: Include the format-patch --notes option
- + Doc SubmittingPatches: Mention --notes option after "cover letter"
- + Documentation: decribe format-patch --notes
- + format-patch --notes: show notes after three-dashes
- + format-patch: append --signature after notes
- + pretty_print_commit(): do not append notes message
- + pretty: prepare notes message at a centralized place
- + format_note(): simplify API
- + pretty: remove reencode_commit_message()
-
- Emit the notes attached to the commit in "format-patch --notes"
- output after three-dashes.
-
- Will merge to 'master' in the fifth batch.
-
-
-* jc/same-encoding (2012-11-04) 1 commit
-  (merged to 'next' on 2012-11-04 at 54991f2)
- + reencode_string(): introduce and use same_encoding()
-
- Various codepaths checked if two encoding names are the same using
- ad-hoc code and some of them ended up asking iconv() to convert
- between "utf8" and "UTF-8".  The former is not a valid way to spell
- the encoding name, but often people use it by mistake, and we
- equated them in some but not all codepaths. Introduce a new helper
- function to make these codepaths consistent.
-
- Will merge to 'master' in the fifth batch.
-
-
-* cr/cvsimport-local-zone (2012-11-04) 2 commits
-  (merged to 'next' on 2012-11-04 at 292f0b4)
- + cvsimport: work around perl tzset issue
- + git-cvsimport: allow author-specific timezones
-
- Allows "cvsimport" to read per-author timezone from the author info
- file.
-
- Will merge to 'master' in the fifth batch.
 
 
 * fc/zsh-completion (2012-10-29) 3 commits
@@ -418,27 +537,6 @@ repositories listed at
  "parents", etc.
 
 
-* jc/maint-fetch-tighten-refname-check (2012-10-19) 1 commit
-  (merged to 'next' on 2012-11-04 at eda85ef)
- + get_fetch_map(): tighten checks on dest refs
-
- This was split out from discarded jc/maint-push-refs-all topic.
-
- Will merge to 'master' in the fifth batch.
-
-
-* jh/symbolic-ref-d (2012-10-21) 1 commit
-  (merged to 'next' on 2012-11-04 at b0762f5)
- + git symbolic-ref --delete $symref
-
- Add "symbolic-ref -d SYM" to delete a symbolic ref SYM.
-
- It is already possible to remove a symbolic ref with "update-ref -d
- --no-deref", but it may be a good addition for completeness.
-
- Will merge to 'master' in the fifth batch.
-
-
 * jh/update-ref-d-through-symref (2012-10-21) 2 commits
  - Fix failure to delete a packed ref through a symref
  - t1400-update-ref: Add test verifying bug with symrefs in delete_ref()
@@ -469,25 +567,18 @@ repositories listed at
  Will merge to 'master' in the sixth batch.
 
 
-* ph/submodule-sync-recursive (2012-10-29) 2 commits
-  (merged to 'next' on 2012-11-04 at a000f78)
- + Add tests for submodule sync --recursive
- + Teach --recursive to submodule sync
-
- Adds "--recursive" option to submodule sync.
-
- Will merge to 'master' in the fifth batch.
-
-
-* fc/completion-test-simplification (2012-10-29) 2 commits
- - completion: simplify __gitcomp test helper
+* fc/completion-test-simplification (2012-11-16) 6 commits
+ - completion: simplify __gitcomp() test helper
  - completion: refactor __gitcomp related tests
+ - completion: consolidate test_completion*() tests
+ - completion: simplify tests using test_completion_long()
+ - completion: standardize final space marker in tests
+ - completion: add comment for test_completion()
 
- Clean up completion tests.
-
- There were some comments on the list.
-
- Expecting a re-roll.
+ Clean up completion tests.  Use of conslidated helper may make
+ instrumenting one particular test during debugging of the test
+ itself, but I think that issue should be addressed in some other
+ way (e.g. making sure individual tests in 9902 can be skipped).
 
 
 * fc/remote-testgit-feature-done (2012-10-29) 1 commit
@@ -496,31 +587,11 @@ repositories listed at
  Needs review.
 
 
-* jk/maint-diff-grep-textconv (2012-10-28) 1 commit
-  (merged to 'next' on 2012-11-04 at 790337b)
- + diff_grep: use textconv buffers for add/deleted files
- (this branch is used by jk/pickaxe-textconv.)
-
- Fixes inconsistent use of textconv with "git log -G".
-
- Will merge to 'master' in the fifth batch.
-
-
 * jk/pickaxe-textconv (2012-10-28) 2 commits
  - pickaxe: use textconv for -S counting
  - pickaxe: hoist empty needle check
- (this branch uses jk/maint-diff-grep-textconv.)
 
  Use textconv filters when searching with "log -S".
-
- Waiting for a sanity check and review from Junio.
-
-
-* as/maint-doc-fix-no-post-rewrite (2012-11-02) 1 commit
-  (merged to 'next' on 2012-11-09 at 117a91e)
- + commit: fixup misplacement of --no-post-rewrite description
-
- Will merge to 'master' in the fifth batch.
 
 
 * fc/remote-bzr (2012-11-08) 5 commits
@@ -574,13 +645,6 @@ repositories listed at
  Will merge to 'master' in the sixth batch.
 
 
-* js/hp-nonstop (2012-10-30) 1 commit
-  (merged to 'next' on 2012-11-09 at fe58205)
- + fix 'make test' for HP NonStop
-
- Will merge to 'master' in the fifth batch.
-
-
 * kb/preload-index-more (2012-11-02) 1 commit
   (merged to 'next' on 2012-11-09 at a750ebd)
  + update-index/diff-index: use core.preloadindex to improve performance
@@ -589,39 +653,6 @@ repositories listed at
  with slow stat calls (and even on Linux).
 
  Will merge to 'master' in the sixth batch.
-
-
-* mh/notes-string-list (2012-11-08) 5 commits
-  (merged to 'next' on 2012-11-09 at 7a4c58c)
- + string_list_add_refs_from_colon_sep(): use string_list_split()
- + notes: fix handling of colon-separated values
- + combine_notes_cat_sort_uniq(): sort and dedup lines all at once
- + Initialize sort_uniq_list using named constant
- + string_list: add a function string_list_remove_empty_items()
-
- Improve the asymptotic performance of the cat_sort_uniq notes merge
- strategy.
-
- Will merge to 'master' in the fifth batch.
-
-
-* mh/strbuf-split (2012-11-04) 4 commits
-  (merged to 'next' on 2012-11-09 at fa984b1)
- + strbuf_split*(): document functions
- + strbuf_split*(): rename "delim" parameter to "terminator"
- + strbuf_split_buf(): simplify iteration
- + strbuf_split_buf(): use ALLOC_GROW()
-
- Cleanups and documentation for strbuf_split.
-
- Will merge to 'master' in the fifth batch.
-
-
-* mm/maint-doc-commit-edit (2012-11-02) 1 commit
-  (merged to 'next' on 2012-11-09 at 8dab7f5)
- + Document 'git commit --no-edit' explicitly
-
- Will merge to 'master' in the fifth batch.
 
 
 * cr/push-force-tag-update (2012-11-12) 5 commits
@@ -664,16 +695,6 @@ repositories listed at
  Looks like it has been re-rolled, but I haven't checked it out yet.
 
  Needs review.
-
-
-* mg/maint-pull-suggest-upstream-to (2012-11-08) 1 commit
-  (merged to 'next' on 2012-11-13 at bd74252)
- + push/pull: adjust missing upstream help text to changed interface
-
- Follow-on to the new "--set-upstream-to" topic from v1.8.0 to avoid
- suggesting the deprecated "--set-upstream".
-
- Will merge to 'master' in the fifth batch.
 
 
 * mh/alt-odb-string-list-cleanup (2012-11-08) 2 commits
