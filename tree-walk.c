@@ -626,7 +626,7 @@ enum interesting tree_entry_interesting(const struct name_entry *entry,
 					&never_interesting))
 				return entry_interesting;
 
-			if (item->use_wildcard) {
+			if (item->nowildcard_len < item->len) {
 				if (!fnmatch(match + baselen, entry->path, 0))
 					return entry_interesting;
 
@@ -642,7 +642,7 @@ enum interesting tree_entry_interesting(const struct name_entry *entry,
 		}
 
 match_wildcards:
-		if (!item->use_wildcard)
+		if (item->nowildcard_len == item->len)
 			continue;
 
 		/*

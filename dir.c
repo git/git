@@ -230,7 +230,7 @@ static int match_pathspec_item(const struct pathspec_item *item, int prefix,
 			return MATCHED_RECURSIVELY;
 	}
 
-	if (item->use_wildcard && !fnmatch(match, name, 0))
+	if (item->nowildcard_len < item->len && !fnmatch(match, name, 0))
 		return MATCHED_FNMATCH;
 
 	return 0;
@@ -1429,8 +1429,8 @@ int init_pathspec(struct pathspec *pathspec, const char **paths)
 
 		item->match = path;
 		item->len = strlen(path);
-		item->use_wildcard = !no_wildcard(path);
-		if (item->use_wildcard)
+		item->nowildcard_len = simple_length(path);
+		if (item->nowildcard_len < item->len)
 			pathspec->has_wildcard = 1;
 	}
 
