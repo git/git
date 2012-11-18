@@ -1,5 +1,5 @@
 #define WIN32_LEAN_AND_MEAN
-#ifdef V15_MINGW_HEADERS
+#ifdef CYGWIN_V15_WIN32API
 #include "../git-compat-util.h"
 #include "win32.h"
 #else
