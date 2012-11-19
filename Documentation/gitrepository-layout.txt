@@ -93,6 +93,12 @@ refs/remotes/`name`::
 	records tip-of-the-tree commit objects of branches copied
 	from a remote repository.
 
+refs/replace/`<obj-sha1>`::
+	records the SHA1 of the object that replaces `<obj-sha1>`.
+	This is similar to info/grafts and is internally used and
+	maintained by linkgit:git-replace[1]. Such refs can be exchanged
+	between repositories while grafts are not.
+
 packed-refs::
 	records the same information as refs/heads/, refs/tags/,
 	and friends record in a more efficient way.  See
