@@ -1,21 +1,23 @@
 To: git@vger.kernel.org
 Bcc: lwn@lwn.net
-Subject: What's cooking in git.git (Nov 2012, #05; Fri, 16)
-X-master-at: 5a90748f2856f587a948148a9b6fad50a43df57c
-X-next-at: e7909caa037a3472e4c34fa47f04758920bd6c91
+Subject: What's cooking in git.git (Nov 2012, #06; Mon, 19)
+X-master-at: f3828dc0669826660f5034a468913115675ff501
+X-next-at: 0037290f177c95a7fd401d8dfe453851e0840c9d
 
-What's cooking in git.git (Nov 2012, #05; Fri, 16)
+What's cooking in git.git (Nov 2012, #06; Mon, 19)
 --------------------------------------------------
 
 Here are the topics that have been cooking.  Commits prefixed with
 '-' are only in 'pu' (proposed updates) while commits prefixed with
 '+' are in 'next'.
 
-Big thanks go to Jeff who curated topics in flight while I was on
-vacation.  I merged a couple of topics to 'next', and made the fifth
-batch of topics graduate to 'master'.  Over the weekend, I'll start
-merging maintenance topics to 'maint' in preparation for cutting
-1.8.1, hopefully sometime late next week.
+Bunch of topics have been merged to 'next'.
+
+We are at the beginning of the 5th week of this release cycle
+(cf. http://tinyurl.com/gitcal), and I've moved many topics to the
+Stalled category, which will be discarded without prejudice soonish
+unless there are some updates.  I am still a bit behind on some
+topics and already posted rerolls may have to be pulled in.
 
 You can find the changes described here in the integration branches of the
 repositories listed at
@@ -23,168 +25,154 @@ repositories listed at
     http://git-blame.blogspot.com/p/git-public-repositories.html
 
 --------------------------------------------------
-[Graduated to "master"]
-
-* as/maint-doc-fix-no-post-rewrite (2012-11-02) 1 commit
-  (merged to 'next' on 2012-11-09 at 117a91e)
- + commit: fixup misplacement of --no-post-rewrite description
-
-
-* cr/cvsimport-local-zone (2012-11-04) 2 commits
-  (merged to 'next' on 2012-11-04 at 292f0b4)
- + cvsimport: work around perl tzset issue
- + git-cvsimport: allow author-specific timezones
-
- Allows "cvsimport" to read per-author timezone from the author info
- file.
-
-
-* jc/maint-fetch-tighten-refname-check (2012-10-19) 1 commit
-  (merged to 'next' on 2012-11-04 at eda85ef)
- + get_fetch_map(): tighten checks on dest refs
-
- This was split out from discarded jc/maint-push-refs-all topic.
-
-
-* jc/prettier-pretty-note (2012-11-13) 12 commits
-  (merged to 'next' on 2012-11-14 at 7230f26)
- + format-patch: add a blank line between notes and diffstat
-  (merged to 'next' on 2012-11-04 at 40e3e48)
- + Doc User-Manual: Patch cover letter, three dashes, and --notes
- + Doc format-patch: clarify --notes use case
- + Doc notes: Include the format-patch --notes option
- + Doc SubmittingPatches: Mention --notes option after "cover letter"
- + Documentation: decribe format-patch --notes
- + format-patch --notes: show notes after three-dashes
- + format-patch: append --signature after notes
- + pretty_print_commit(): do not append notes message
- + pretty: prepare notes message at a centralized place
- + format_note(): simplify API
- + pretty: remove reencode_commit_message()
-
- Emit the notes attached to the commit in "format-patch --notes"
- output after three-dashes.
-
-
-* jc/same-encoding (2012-11-04) 1 commit
-  (merged to 'next' on 2012-11-04 at 54991f2)
- + reencode_string(): introduce and use same_encoding()
-
- Various codepaths checked if two encoding names are the same using
- ad-hoc code and some of them ended up asking iconv() to convert
- between "utf8" and "UTF-8".  The former is not a valid way to spell
- the encoding name, but often people use it by mistake, and we
- equated them in some but not all codepaths. Introduce a new helper
- function to make these codepaths consistent.
-
-
-* jh/symbolic-ref-d (2012-10-21) 1 commit
-  (merged to 'next' on 2012-11-04 at b0762f5)
- + git symbolic-ref --delete $symref
-
- Add "symbolic-ref -d SYM" to delete a symbolic ref SYM.
-
- It is already possible to remove a symbolic ref with "update-ref -d
- --no-deref", but it may be a good addition for completeness.
-
-
-* jk/maint-diff-grep-textconv (2012-10-28) 1 commit
-  (merged to 'next' on 2012-11-04 at 790337b)
- + diff_grep: use textconv buffers for add/deleted files
- (this branch is used by jk/pickaxe-textconv.)
-
- Fixes inconsistent use of textconv with "git log -G".
-
-
-* js/hp-nonstop (2012-10-30) 1 commit
-  (merged to 'next' on 2012-11-09 at fe58205)
- + fix 'make test' for HP NonStop
-
-
-* mg/maint-pull-suggest-upstream-to (2012-11-08) 1 commit
-  (merged to 'next' on 2012-11-13 at bd74252)
- + push/pull: adjust missing upstream help text to changed interface
-
- Follow-on to the new "--set-upstream-to" topic from v1.8.0 to avoid
- suggesting the deprecated "--set-upstream".
-
-
-* mh/notes-string-list (2012-11-08) 5 commits
-  (merged to 'next' on 2012-11-09 at 7a4c58c)
- + string_list_add_refs_from_colon_sep(): use string_list_split()
- + notes: fix handling of colon-separated values
- + combine_notes_cat_sort_uniq(): sort and dedup lines all at once
- + Initialize sort_uniq_list using named constant
- + string_list: add a function string_list_remove_empty_items()
-
- Improve the asymptotic performance of the cat_sort_uniq notes merge
- strategy.
-
-
-* mh/strbuf-split (2012-11-04) 4 commits
-  (merged to 'next' on 2012-11-09 at fa984b1)
- + strbuf_split*(): document functions
- + strbuf_split*(): rename "delim" parameter to "terminator"
- + strbuf_split_buf(): simplify iteration
- + strbuf_split_buf(): use ALLOC_GROW()
-
- Cleanups and documentation for strbuf_split.
-
-
-* mm/maint-doc-commit-edit (2012-11-02) 1 commit
-  (merged to 'next' on 2012-11-09 at 8dab7f5)
- + Document 'git commit --no-edit' explicitly
-
-
-* ph/submodule-sync-recursive (2012-10-29) 2 commits
-  (merged to 'next' on 2012-11-04 at a000f78)
- + Add tests for submodule sync --recursive
- + Teach --recursive to submodule sync
-
- Adds "--recursive" option to submodule sync.
-
---------------------------------------------------
 [New Topics]
 
-* jl/submodule-rm (2012-11-14) 1 commit
- - docs: move submodule section
+* nd/pathspec-wildcard (2012-11-19) 4 commits
+ - tree_entry_interesting: do basedir compare on wildcard patterns when possible
+ - pathspec: apply "*.c" optimization from exclude
+ - pathspec: do exact comparison on the leading non-wildcard part
+ - pathspec: save the non-wildcard length part
 
- Documentation correction for d21240f (Merge branch
- 'jl/submodule-rm', 2012-10-29) that needs to be fast-tracked.
+--------------------------------------------------
+[Stalled]
 
- Will merge to 'next' and soon to 'master'.
+* pf/editor-ignore-sigint (2012-11-11) 5 commits
+ - launch_editor: propagate SIGINT from editor to git
+ - run-command: do not warn about child death by SIGINT
+ - run-command: drop silent_exec_failure arg from wait_or_whine
+ - launch_editor: ignore SIGINT while the editor has control
+ - launch_editor: refactor to use start/finish_command
 
+ Avoid confusing cases where the user hits Ctrl-C while in the editor
+ session, not realizing git will receive the signal. Since most editors
+ will take over the terminal and will block SIGINT, this is not likely
+ to confuse anyone.
 
-* sg/complete-help-undup (2012-11-14) 1 commit
- - completion: remove 'help' duplicate from porcelain commands
+ Some people raised issues with emacsclient, which are addressed by this
+ re-roll. It should probably also handle SIGQUIT, and there were a
+ handful of other review comments.
 
- Will merge to 'next' and soon to 'master'.
-
-
-* bc/do-not-recurse-in-die (2012-11-15) 1 commit
- - usage.c: detect recursion in die routines and bail out immediately
-
- Will merge to 'next'.
-
-
-* cn/config-missing-path (2012-11-15) 1 commit
- - config: don't segfault when given --path with a missing value
-
- Will merge to 'next' and soon to 'master'.
-
-
-* jk/checkout-out-of-unborn (2012-11-15) 1 commit
- - checkout: print a message when switching unborn branches
-
- Will merge to 'next'.
+ Expecting a re-roll.
 
 
-* mk/complete-tcsh (2012-11-16) 1 commit
- - tcsh-completion re-using git-completion.bash
+* pp/gitweb-config-underscore (2012-11-08) 1 commit
+ - gitweb: make remote_heads config setting work
+
+ The key "gitweb.remote_heads" is not legal git config; this maps it to
+ "gitweb.remoteheads".
+
+ Junio raised a good point about the implementation for three-level
+ variables.
+
+ Expecting a re-roll.
 
 
-* mm/status-push-pull-advise (2012-11-16) 1 commit
- - status: add advice on how to push/pull to tracking branch
+* mo/cvs-server-updates (2012-10-16) 10 commits
+ - cvsserver Documentation: new cvs ... -r support
+ - cvsserver: add t9402 to test branch and tag refs
+ - cvsserver: support -r and sticky tags for most operations
+ - cvsserver: Add version awareness to argsfromdir
+ - cvsserver: generalize getmeta() to recognize commit refs
+ - cvsserver: implement req_Sticky and related utilities
+ - cvsserver: add misc commit lookup, file meta data, and file listing functions
+ - cvsserver: define a tag name character escape mechanism
+ - cvsserver: cleanup extra slashes in filename arguments
+ - cvsserver: factor out git-log parsing logic
+
+ Needs review by folks interested in cvsserver.
+
+
+* jc/apply-trailing-blank-removal (2012-10-12) 1 commit
+ - apply.c:update_pre_post_images(): the preimage can be truncated
+
+ Fix to update_pre_post_images() that did not take into account the
+ possibility that whitespace fix could shrink the preimage and
+ change the number of lines in it.
+
+ Extra set of eyeballs appreciated.
+
+
+* jn/warn-on-inaccessible-loosen (2012-10-14) 4 commits
+ - config: exit on error accessing any config file
+ - doc: advertise GIT_CONFIG_NOSYSTEM
+ - config: treat user and xdg config permission problems as errors
+ - config, gitignore: failure to access with ENOTDIR is ok
+
+ An RFC to deal with a situation where .config/git is a file and we
+ notice .config/git/config is not readable due to ENOTDIR, not
+ ENOENT; I think a bit more refactored approach to consistently
+ address permission errors across config, exclude and attrs is
+ desirable.  Don't we also need a check for an opposite situation
+ where we open .config/git/config or .gitattributes for reading but
+ they turn out to be directories?
+
+
+* as/check-ignore (2012-11-08) 14 commits
+ - t0007: fix tests on Windows
+ - Documentation/check-ignore: we show the deciding match, not the first
+ - Add git-check-ignore sub-command
+ - dir.c: provide free_directory() for reclaiming dir_struct memory
+ - pathspec.c: move reusable code from builtin/add.c
+ - dir.c: refactor treat_gitlinks()
+ - dir.c: keep track of where patterns came from
+ - dir.c: refactor is_path_excluded()
+ - dir.c: refactor is_excluded()
+ - dir.c: refactor is_excluded_from_list()
+ - dir.c: rename excluded() to is_excluded()
+ - dir.c: rename excluded_from_list() to is_excluded_from_list()
+ - dir.c: rename path_excluded() to is_path_excluded()
+ - dir.c: rename cryptic 'which' variable to more consistent name
+
+ Duy helped to reroll this.
+
+ Expecting a re-roll.
+
+
+* aw/rebase-am-failure-detection (2012-10-11) 1 commit
+ - rebase: Handle cases where format-patch fails
+
+ I am unhappy a bit about the possible performance implications of
+ having to store the output in a temporary file only for a rare case
+ of format-patch aborting.
+
+
+* jk/lua-hackery (2012-10-07) 6 commits
+ - pretty: fix up one-off format_commit_message calls
+ - Minimum compilation fixup
+ - Makefile: make "lua" a bit more configurable
+ - add a "lua" pretty format
+ - add basic lua infrastructure
+ - pretty: make some commit-parsing helpers more public
+
+ Interesting exercise. When we do this for real, we probably would want
+ to wrap a commit to make it more like an "object" with methods like
+ "parents", etc.
+
+
+* fc/remote-testgit-feature-done (2012-10-29) 1 commit
+ - remote-testgit: properly check for errors
+
+ Is this still in "Needs review" state?  Are poeple involved in the
+ remote interface happy with this change?
+
+
+* jk/send-email-sender-prompt (2012-11-15) 8 commits
+ - send-email: do not prompt for explicit repo ident
+ - Git.pm: teach "ident" to query explicitness
+ - var: provide explicit/implicit ident information
+ - var: accept multiple variables on the command line
+ - ident: keep separate "explicit" flags for author and committer
+ - ident: make user_ident_explicitly_given static
+ - t7502: factor out autoident prerequisite
+ - test-lib: allow negation of prerequisites
+
+ Avoid annoying sender prompt in git-send-email, but only when it is
+ safe to do so.
+
+ Perhaps keep only the first three patches, and replace the rest
+ with the one from Felipe that takes a much simpler approach (the
+ rationale of that patch needs to be cleaned up first, along the
+ lines Jeff outlined, though).  Frozen until that happens.
 
 
 * nd/unify-appending-of-s-o-b (2012-11-15) 1 commit
@@ -193,8 +181,6 @@ repositories listed at
  I am not sure if the logic to refrain from adding a sign-off based
  on the existing run of sign-offs is done correctly in this change.
 
---------------------------------------------------
-[Stalled]
 
 * nd/pretty-placeholder-with-color-option (2012-09-30) 9 commits
  . pretty: support %>> that steal trailing spaces
@@ -341,30 +327,64 @@ repositories listed at
 --------------------------------------------------
 [Cooking]
 
+* jl/submodule-rm (2012-11-14) 1 commit
+  (merged to 'next' on 2012-11-18 at bf4525d)
+ + docs: move submodule section
+
+ Documentation correction for d21240f (Merge branch
+ 'jl/submodule-rm', 2012-10-29) that needs to be fast-tracked.
+
+ Will merge to 'master' in the sixth batch.
+
+
+* sg/complete-help-undup (2012-11-14) 1 commit
+  (merged to 'next' on 2012-11-18 at eadd0f3)
+ + completion: remove 'help' duplicate from porcelain commands
+
+ Will merge to 'master' in the seventh batch.
+
+
+* bc/do-not-recurse-in-die (2012-11-15) 1 commit
+  (merged to 'next' on 2012-11-18 at 79d62a8)
+ + usage.c: detect recursion in die routines and bail out immediately
+
+ Will merge to 'master' in the seventh batch.
+
+
+* cn/config-missing-path (2012-11-15) 1 commit
+  (merged to 'next' on 2012-11-18 at c08b73c)
+ + config: don't segfault when given --path with a missing value
+
+ Will merge to 'master' in the sixth batch.
+
+
+* jk/checkout-out-of-unborn (2012-11-15) 1 commit
+  (merged to 'next' on 2012-11-18 at 7d2aa24)
+ + checkout: print a message when switching unborn branches
+
+ Will merge to 'master' in the sixth batch.
+
+
+* mk/complete-tcsh (2012-11-16) 1 commit
+  (merged to 'next' on 2012-11-19 at 8309029)
+ + tcsh-completion re-using git-completion.bash
+
+ Will merge to 'master' in the seventh batch.
+
+
+* mm/status-push-pull-advise (2012-11-16) 1 commit
+ - status: add advice on how to push/pull to tracking branch
+
+ Will merge to 'next'.
+
+
 * jk/maint-gitweb-xss (2012-11-12) 1 commit
   (merged to 'next' on 2012-11-14 at 7a667bc)
  + gitweb: escape html in rss title
 
  Fixes an XSS vulnerability in gitweb.
 
-
-* jk/send-email-sender-prompt (2012-11-15) 8 commits
- - send-email: do not prompt for explicit repo ident
- - Git.pm: teach "ident" to query explicitness
- - var: provide explicit/implicit ident information
- - var: accept multiple variables on the command line
- - ident: keep separate "explicit" flags for author and committer
- - ident: make user_ident_explicitly_given static
- - t7502: factor out autoident prerequisite
- - test-lib: allow negation of prerequisites
-
- Avoid annoying sender prompt in git-send-email, but only when it is
- safe to do so.
-
- Perhaps keep only the first three patches, and replace the rest
- with the one from Felipe that takes a much simpler approach (the
- rationale of that patch needs to be cleaned up first, along the
- lines Jeff outlined, though). 
+ Will merge to 'master' in the sixth batch.
 
 
 * mg/replace-resolve-delete (2012-11-13) 1 commit
@@ -373,27 +393,18 @@ repositories listed at
 
  Be more user friendly to people using "git replace -d".
 
+ Will merge to 'master' in the sixth batch.
 
-* ml/cygwin-mingw-headers (2012-11-12) 1 commit
+
+* ml/cygwin-mingw-headers (2012-11-18) 2 commits
+  (merged to 'next' on 2012-11-19 at f9964da)
+ + USE CGYWIN_V15_WIN32API as macro to select api for cygwin
   (merged to 'next' on 2012-11-15 at 22e11b3)
  + Update cygwin.c for new mingw-64 win32 api headers
 
  Make git work on newer cygwin.
 
-
-* mo/cvs-server-updates (2012-10-16) 10 commits
- - cvsserver Documentation: new cvs ... -r support
- - cvsserver: add t9402 to test branch and tag refs
- - cvsserver: support -r and sticky tags for most operations
- - cvsserver: Add version awareness to argsfromdir
- - cvsserver: generalize getmeta() to recognize commit refs
- - cvsserver: implement req_Sticky and related utilities
- - cvsserver: add misc commit lookup, file meta data, and file listing functions
- - cvsserver: define a tag name character escape mechanism
- - cvsserver: cleanup extra slashes in filename arguments
- - cvsserver: factor out git-log parsing logic
-
- Needs review by folks interested in cvsserver.
+ Will merge to 'master' in the sixth batch.
 
 
 * ta/doc-cleanup (2012-10-25) 6 commits
@@ -409,69 +420,22 @@ repositories listed at
 
 
 * lt/diff-stat-show-0-lines (2012-10-17) 1 commit
- - Fix "git diff --stat" for interesting - but empty - file changes
+  (merged to 'next' on 2012-11-19 at 0037290)
+ + Fix "git diff --stat" for interesting - but empty - file changes
 
  We failed to mention a file without any content change but whose
  permission bit was modified, or (worse yet) a new file without any
  content in the "git diff --stat" output.
 
- Needs some test updates.
+ Will merge to 'master' in the seventh batch.
 
 
-* fc/zsh-completion (2012-10-29) 3 commits
+* fc/zsh-completion (2012-11-19) 2 commits
+ - completion: start moving to the new zsh completion
  - completion: add new zsh completion
- - completion: add new __gitcompadd helper
- - completion: get rid of empty COMPREPLY assignments
 
- There were some comments on this, but I wasn't clear on the outcome.
-
- Need to take a closer look.
-
-
-* jc/apply-trailing-blank-removal (2012-10-12) 1 commit
- - apply.c:update_pre_post_images(): the preimage can be truncated
-
- Fix to update_pre_post_images() that did not take into account the
- possibility that whitespace fix could shrink the preimage and
- change the number of lines in it.
-
- Extra set of eyeballs appreciated.
-
-
-* jn/warn-on-inaccessible-loosen (2012-10-14) 4 commits
- - config: exit on error accessing any config file
- - doc: advertise GIT_CONFIG_NOSYSTEM
- - config: treat user and xdg config permission problems as errors
- - config, gitignore: failure to access with ENOTDIR is ok
-
- An RFC to deal with a situation where .config/git is a file and we
- notice .config/git/config is not readable due to ENOTDIR, not
- ENOENT; I think a bit more refactored approach to consistently
- address permission errors across config, exclude and attrs is
- desirable.  Don't we also need a check for an opposite situation
- where we open .config/git/config or .gitattributes for reading but
- they turn out to be directories?
-
-
-* as/check-ignore (2012-11-08) 14 commits
- - t0007: fix tests on Windows
- - Documentation/check-ignore: we show the deciding match, not the first
- - Add git-check-ignore sub-command
- - dir.c: provide free_directory() for reclaiming dir_struct memory
- - pathspec.c: move reusable code from builtin/add.c
- - dir.c: refactor treat_gitlinks()
- - dir.c: keep track of where patterns came from
- - dir.c: refactor is_path_excluded()
- - dir.c: refactor is_excluded()
- - dir.c: refactor is_excluded_from_list()
- - dir.c: rename excluded() to is_excluded()
- - dir.c: rename excluded_from_list() to is_excluded_from_list()
- - dir.c: rename path_excluded() to is_path_excluded()
- - dir.c: rename cryptic 'which' variable to more consistent name
-
- Duy helped to reroll this.
-
- Expecting a re-roll.
+ Replaced by shedding large changes to other independent topics.
+ Any comments from zsh users?
 
 
 * so/prompt-command (2012-10-17) 4 commits
@@ -486,14 +450,6 @@ repositories listed at
  color escape sequences in its output.
 
  Will cook in 'next'.
-
-
-* aw/rebase-am-failure-detection (2012-10-11) 1 commit
- - rebase: Handle cases where format-patch fails
-
- I am unhappy a bit about the possible performance implications of
- having to store the output in a temporary file only for a rare case
- of format-patch aborting.
 
 
 * nd/wildmatch (2012-10-15) 13 commits
@@ -524,27 +480,15 @@ repositories listed at
  Will cook in 'next'.
 
 
-* jk/lua-hackery (2012-10-07) 6 commits
- - pretty: fix up one-off format_commit_message calls
- - Minimum compilation fixup
- - Makefile: make "lua" a bit more configurable
- - add a "lua" pretty format
- - add basic lua infrastructure
- - pretty: make some commit-parsing helpers more public
-
- Interesting exercise. When we do this for real, we probably would want
- to wrap a commit to make it more like an "object" with methods like
- "parents", etc.
-
-
 * jh/update-ref-d-through-symref (2012-10-21) 2 commits
- - Fix failure to delete a packed ref through a symref
- - t1400-update-ref: Add test verifying bug with symrefs in delete_ref()
+  (merged to 'next' on 2012-11-19 at 6bcca4c)
+ + Fix failure to delete a packed ref through a symref
+ + t1400-update-ref: Add test verifying bug with symrefs in delete_ref()
 
  "update-ref -d --deref SYM" to delete a ref through a symbolic ref
  that points to it did not remove it correctly.
 
- Need to check reviews, but is probably ready for 'next'.
+ Will merge to 'master' in the seventh batch.
 
 
 * jk/config-ignore-duplicates (2012-10-29) 9 commits
@@ -581,56 +525,55 @@ repositories listed at
  way (e.g. making sure individual tests in 9902 can be skipped).
 
 
-* fc/remote-testgit-feature-done (2012-10-29) 1 commit
- - remote-testgit: properly check for errors
-
- Needs review.
-
-
 * jk/pickaxe-textconv (2012-10-28) 2 commits
  - pickaxe: use textconv for -S counting
  - pickaxe: hoist empty needle check
 
  Use textconv filters when searching with "log -S".
 
+ It probably should lose "are the textconv on the two sides the
+ same?" check.
+
 
 * fc/remote-bzr (2012-11-08) 5 commits
- - remote-bzr: update working tree
- - remote-bzr: add support for remote repositories
- - remote-bzr: add support for pushing
- - remote-bzr: add simple tests
- - Add new remote-bzr transport helper
+  (merged to 'next' on 2012-11-18 at 86add07)
+ + remote-bzr: update working tree
+ + remote-bzr: add support for remote repositories
+ + remote-bzr: add support for pushing
+ + remote-bzr: add simple tests
+ + Add new remote-bzr transport helper
 
  New remote helper for bzr.
 
- Will merge to 'next'.
+ Will merge to 'master' in the seventh batch.
 
 
 * fc/remote-hg (2012-11-12) 20 commits
- - remote-hg: avoid bad refs
- - remote-hg: try the 'tip' if no checkout present
- - remote-hg: fix compatibility with older versions of hg
- - remote-hg: add missing config for basic tests
- - remote-hg: the author email can be null
- - remote-hg: add option to not track branches
- - remote-hg: add extra author test
- - remote-hg: add tests to compare with hg-git
- - remote-hg: add bidirectional tests
- - test-lib: avoid full path to store test results
- - remote-hg: add basic tests
- - remote-hg: fake bookmark when there's none
- - remote-hg: add compat for hg-git author fixes
- - remote-hg: add support for hg-git compat mode
- - remote-hg: match hg merge behavior
- - remote-hg: make sure the encoding is correct
- - remote-hg: add support to push URLs
- - remote-hg: add support for remote pushing
- - remote-hg: add support for pushing
- - Add new remote-hg transport helper
+  (merged to 'next' on 2012-11-18 at 4a4f2e4)
+ + remote-hg: avoid bad refs
+ + remote-hg: try the 'tip' if no checkout present
+ + remote-hg: fix compatibility with older versions of hg
+ + remote-hg: add missing config for basic tests
+ + remote-hg: the author email can be null
+ + remote-hg: add option to not track branches
+ + remote-hg: add extra author test
+ + remote-hg: add tests to compare with hg-git
+ + remote-hg: add bidirectional tests
+ + test-lib: avoid full path to store test results
+ + remote-hg: add basic tests
+ + remote-hg: fake bookmark when there's none
+ + remote-hg: add compat for hg-git author fixes
+ + remote-hg: add support for hg-git compat mode
+ + remote-hg: match hg merge behavior
+ + remote-hg: make sure the encoding is correct
+ + remote-hg: add support to push URLs
+ + remote-hg: add support for remote pushing
+ + remote-hg: add support for pushing
+ + Add new remote-hg transport helper
 
  New remote helper for hg.
 
- Will merge to 'next'.
+ Will merge to 'master' in the seventh batch.
 
 
 * jk/maint-http-half-auth-fetch (2012-10-31) 2 commits
@@ -655,20 +598,14 @@ repositories listed at
  Will merge to 'master' in the sixth batch.
 
 
-* cr/push-force-tag-update (2012-11-12) 5 commits
+* cr/push-force-tag-update (2012-11-19) 5 commits
  - push: update remote tags only with force
  - push: flag updates that require force
- - push: flag updates
+ - push: keep track of "update" state separately
  - push: add advice for rejected tag reference
  - push: return reject reasons via a mask
 
  Require "-f" for push to update a tag, even if it is a fast-forward.
-
- Needs review.
-
- I'm undecided yet on whether the goal is the right thing to do, but it
- does prevent some potential mistakes. I haven't looked closely at the
- implementation itself; review from interested parties would be helpful.
 
 
 * fc/fast-export-fixes (2012-11-08) 14 commits
@@ -708,37 +645,6 @@ repositories listed at
  Will merge to 'master' in the sixth batch.
 
 
-* pf/editor-ignore-sigint (2012-11-11) 5 commits
- - launch_editor: propagate SIGINT from editor to git
- - run-command: do not warn about child death by SIGINT
- - run-command: drop silent_exec_failure arg from wait_or_whine
- - launch_editor: ignore SIGINT while the editor has control
- - launch_editor: refactor to use start/finish_command
-
- Avoid confusing cases where the user hits Ctrl-C while in the editor
- session, not realizing git will receive the signal. Since most editors
- will take over the terminal and will block SIGINT, this is not likely
- to confuse anyone.
-
- Some people raised issues with emacsclient, which are addressed by this
- re-roll. It should probably also handle SIGQUIT, and there were a
- handful of other review comments.
-
- Expecting a re-roll.
-
-
-* pp/gitweb-config-underscore (2012-11-08) 1 commit
- - gitweb: make remote_heads config setting work
-
- The key "gitweb.remote_heads" is not legal git config; this maps it to
- "gitweb.remoteheads".
-
- Junio raised a good point about the implementation for three-level
- variables.
-
- Expecting a re-roll.
-
-
 * pw/maint-p4-rcs-expansion-newline (2012-11-08) 1 commit
   (merged to 'next' on 2012-11-13 at e90cc7c)
  + git p4: RCS expansion should not span newlines
@@ -757,14 +663,13 @@ repositories listed at
  Will merge to 'master' in the sixth batch.
 
 
-* rr/submodule-diff-config (2012-11-08) 3 commits
- - submodule: display summary header in bold
- - diff: introduce diff.submodule configuration variable
- - Documentation: move diff.wordRegex from config.txt to diff-config.txt
+* rr/submodule-diff-config (2012-11-18) 4 commits
+  (merged to 'next' on 2012-11-19 at 355319e)
+ + submodule: display summary header in bold
+ + diff: rename "set" variable
+ + diff: introduce diff.submodule configuration variable
+ + Documentation: move diff.wordRegex from config.txt to diff-config.txt
 
  Lets "git diff --submodule=log" become the default via configuration.
 
- Almost there. Looks like a new version has been posted, but I haven't
- picked it up yet.
-
- Needs review.
+ Will merge to 'master' in the seventh batch.
