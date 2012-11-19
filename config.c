@@ -10,8 +10,6 @@
 #include "strbuf.h"
 #include "quote.h"
 
-#define MAXNAME (256)
-
 typedef struct config_file {
 	struct config_file *prev;
 	FILE *f;
@@ -19,7 +17,7 @@ typedef struct config_file {
 	int linenr;
 	int eof;
 	struct strbuf value;
-	char var[MAXNAME];
+	struct strbuf var;
 } config_file;
 
 static config_file *cf;
@@ -260,7 +258,7 @@ static inline int iskeychar(int c)
 	return isalnum(c) || c == '-';
 }
 
-static int get_value(config_fn_t fn, void *data, char *name, unsigned int len)
+static int get_value(config_fn_t fn, void *data, struct strbuf *name)
 {
 	int c;
 	char *value;
@@ -272,11 +270,9 @@ static int get_value(config_fn_t fn, void *data, char *name, unsigned int len)
 			break;
 		if (!iskeychar(c))
 			break;
-		name[len++] = tolower(c);
-		if (len >= MAXNAME)
-			return -1;
+		strbuf_addch(name, tolower(c));
 	}
-	name[len] = 0;
+
 	while (c == ' ' || c == '\t')
 		c = get_next_char();
 
@@ -288,10 +284,10 @@ static int get_value(config_fn_t fn, void *data, char *name, unsigned int len)
 		if (!value)
 			return -1;
 	}
-	return fn(name, value, data);
+	return fn(name->buf, value, data);
 }
 
-static int get_extended_base_var(char *name, int baselen, int c)
+static int get_extended_base_var(struct strbuf *name, int c)
 {
 	do {
 		if (c == '\n')
@@ -302,7 +298,7 @@ static int get_extended_base_var(char *name, int baselen, int c)
 	/* We require the format to be '[base "extension"]' */
 	if (c != '"')
 		return -1;
-	name[baselen++] = '.';
+	strbuf_addch(name, '.');
 
 	for (;;) {
 		int c = get_next_char();
@@ -315,37 +311,31 @@ static int get_extended_base_var(char *name, int baselen, int c)
 			if (c == '\n')
 				goto error_incomplete_line;
 		}
-		name[baselen++] = c;
-		if (baselen > MAXNAME / 2)
-			return -1;
+		strbuf_addch(name, c);
 	}
 
 	/* Final ']' */
 	if (get_next_char() != ']')
 		return -1;
-	return baselen;
+	return 0;
 error_incomplete_line:
 	cf->linenr--;
 	return -1;
 }
 
-static int get_base_var(char *name)
+static int get_base_var(struct strbuf *name)
 {
-	int baselen = 0;
-
 	for (;;) {
 		int c = get_next_char();
 		if (cf->eof)
 			return -1;
 		if (c == ']')
-			return baselen;
+			return 0;
 		if (isspace(c))
-			return get_extended_base_var(name, baselen, c);
+			return get_extended_base_var(name, c);
 		if (!iskeychar(c) && c != '.')
 			return -1;
-		if (baselen > MAXNAME / 2)
-			return -1;
-		name[baselen++] = tolower(c);
+		strbuf_addch(name, tolower(c));
 	}
 }
 
@@ -353,7 +343,7 @@ static int git_parse_file(config_fn_t fn, void *data)
 {
 	int comment = 0;
 	int baselen = 0;
-	char *var = cf->var;
+	struct strbuf *var = &cf->var;
 
 	/* U+FEFF Byte Order Mark in UTF8 */
 	static const unsigned char *utf8_bom = (unsigned char *) "\xef\xbb\xbf";
@@ -389,17 +379,24 @@ static int git_parse_file(config_fn_t fn, void *data)
 			continue;
 		}
 		if (c == '[') {
-			baselen = get_base_var(var);
-			if (baselen <= 0)
+			/* Reset prior to determining a new stem */
+			strbuf_reset(var);
+			if (get_base_var(var) < 0 || var->len < 1)
 				break;
-			var[baselen++] = '.';
-			var[baselen] = 0;
+			strbuf_addch(var, '.');
+			baselen = var->len;
 			continue;
 		}
 		if (!isalpha(c))
 			break;
-		var[baselen] = tolower(c);
-		if (get_value(fn, data, var, baselen+1) < 0)
+		/*
+		 * Truncate the var name back to the section header
+		 * stem prior to grabbing the suffix part of the name
+		 * and the value.
+		 */
+		strbuf_setlen(var, baselen);
+		strbuf_addch(var, tolower(c));
+		if (get_value(fn, data, var) < 0)
 			break;
 	}
 	die("bad config file line %d in %s", cf->linenr, cf->name);
@@ -899,12 +896,14 @@ int git_config_from_file(config_fn_t fn, const char *filename, void *data)
 		top.linenr = 1;
 		top.eof = 0;
 		strbuf_init(&top.value, 1024);
+		strbuf_init(&top.var, 1024);
 		cf = &top;
 
 		ret = git_parse_file(fn, data);
 
 		/* pop config-file parsing state stack */
 		strbuf_release(&top.value);
+		strbuf_release(&top.var);
 		cf = top.prev;
 
 		fclose(f);
