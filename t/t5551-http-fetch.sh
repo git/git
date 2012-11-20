@@ -130,6 +130,21 @@ test_expect_success 'clone from auth-only-for-push repository' '
 	test_cmp expect actual
 '
 
+test_expect_success 'clone from auth-only-for-objects repository' '
+	echo two >expect &&
+	set_askpass user@host &&
+	git clone --bare "$HTTPD_URL/auth-fetch/smart/repo.git" half-auth &&
+	expect_askpass both user@host &&
+	git --git-dir=half-auth log -1 --format=%s >actual &&
+	test_cmp expect actual
+'
+
+test_expect_success 'no-op half-auth fetch does not require a password' '
+	set_askpass wrong &&
+	git --git-dir=half-auth fetch &&
+	expect_askpass none
+'
+
 test_expect_success 'disable dumb http on server' '
 	git --git-dir="$HTTPD_DOCUMENT_ROOT_PATH/repo.git" \
 		config http.getanyfile false

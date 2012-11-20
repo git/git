@@ -400,6 +400,7 @@ static int post_rpc(struct rpc_state *rpc)
 	struct curl_slist *headers = NULL;
 	int use_gzip = rpc->gzip_request;
 	char *gzip_body = NULL;
+	size_t gzip_size;
 	int err, large_request = 0;
 
 	/* Try to load the entire request, if we can fit it into the
@@ -460,24 +461,32 @@ retry:
 			fflush(stderr);
 		}
 
+	} else if (gzip_body) {
+		/*
+		 * If we are looping to retry authentication, then the previous
+		 * run will have set up the headers and gzip buffer already,
+		 * and we just need to send it.
+		 */
+		curl_easy_setopt(slot->curl, CURLOPT_POSTFIELDS, gzip_body);
+		curl_easy_setopt(slot->curl, CURLOPT_POSTFIELDSIZE, gzip_size);
+
 	} else if (use_gzip && 1024 < rpc->len) {
 		/* The client backend isn't giving us compressed data so
 		 * we can try to deflate it ourselves, this may save on.
 		 * the transfer time.
 		 */
-		size_t size;
 		git_zstream stream;
 		int ret;
 
 		memset(&stream, 0, sizeof(stream));
 		git_deflate_init_gzip(&stream, Z_BEST_COMPRESSION);
-		size = git_deflate_bound(&stream, rpc->len);
-		gzip_body = xmalloc(size);
+		gzip_size = git_deflate_bound(&stream, rpc->len);
+		gzip_body = xmalloc(gzip_size);
 
 		stream.next_in = (unsigned char *)rpc->buf;
 		stream.avail_in = rpc->len;
 		stream.next_out = (unsigned char *)gzip_body;
-		stream.avail_out = size;
+		stream.avail_out = gzip_size;
 
 		ret = git_deflate(&stream, Z_FINISH);
 		if (ret != Z_STREAM_END)
@@ -487,16 +496,16 @@ retry:
 		if (ret != Z_OK)
 			die("cannot deflate request; zlib end error %d", ret);
 
-		size = stream.total_out;
+		gzip_size = stream.total_out;
 
 		headers = curl_slist_append(headers, "Content-Encoding: gzip");
 		curl_easy_setopt(slot->curl, CURLOPT_POSTFIELDS, gzip_body);
-		curl_easy_setopt(slot->curl, CURLOPT_POSTFIELDSIZE, size);
+		curl_easy_setopt(slot->curl, CURLOPT_POSTFIELDSIZE, gzip_size);
 
 		if (options.verbosity > 1) {
 			fprintf(stderr, "POST %s (gzip %lu to %lu bytes)\n",
 				rpc->service_name,
-				(unsigned long)rpc->len, (unsigned long)size);
+				(unsigned long)rpc->len, (unsigned long)gzip_size);
 			fflush(stderr);
 		}
 	} else {
@@ -517,7 +526,7 @@ retry:
 	curl_easy_setopt(slot->curl, CURLOPT_FILE, rpc);
 
 	err = run_slot(slot);
-	if (err == HTTP_REAUTH && !large_request && !use_gzip)
+	if (err == HTTP_REAUTH && !large_request)
 		goto retry;
 	if (err != HTTP_OK)
 		err = -1;
