@@ -7,6 +7,7 @@
  * creation etc.
  */
 #include "cache.h"
+#include "string-list.h"
 #include "delta.h"
 #include "pack.h"
 #include "blob.h"
@@ -246,7 +247,7 @@ static int git_open_noatime(const char *name);
  * SHA1, an extra slash for the first level indirection, and the
  * terminating NUL.
  */
-static int link_alt_odb_entry(const char * entry, int len, const char * relative_base, int depth)
+static int link_alt_odb_entry(const char *entry, const char *relative_base, int depth)
 {
 	const char *objdir = get_object_directory();
 	struct alternate_object_database *ent;
@@ -258,7 +259,7 @@ static int link_alt_odb_entry(const char * entry, int len, const char * relative
 		strbuf_addstr(&pathbuf, real_path(relative_base));
 		strbuf_addch(&pathbuf, '/');
 	}
-	strbuf_add(&pathbuf, entry, len);
+	strbuf_addstr(&pathbuf, entry);
 
 	normalize_path_copy(pathbuf.buf, pathbuf.buf);
 
@@ -316,10 +317,12 @@ static int link_alt_odb_entry(const char * entry, int len, const char * relative
 	return 0;
 }
 
-static void link_alt_odb_entries(const char *alt, const char *ep, int sep,
+static void link_alt_odb_entries(const char *alt, int len, int sep,
 				 const char *relative_base, int depth)
 {
-	const char *cp, *last;
+	struct string_list entries = STRING_LIST_INIT_NODUP;
+	char *alt_copy;
+	int i;
 
 	if (depth > 5) {
 		error("%s: ignoring alternate object stores, nesting too deep.",
@@ -327,30 +330,21 @@ static void link_alt_odb_entries(const char *alt, const char *ep, int sep,
 		return;
 	}
 
-	last = alt;
-	while (last < ep) {
-		cp = last;
-		if (cp < ep && *cp == '#') {
-			while (cp < ep && *cp != sep)
-				cp++;
-			last = cp + 1;
+	alt_copy = xmemdupz(alt, len);
+	string_list_split_in_place(&entries, alt_copy, sep, -1);
+	for (i = 0; i < entries.nr; i++) {
+		const char *entry = entries.items[i].string;
+		if (entry[0] == '\0' || entry[0] == '#')
 			continue;
+		if (!is_absolute_path(entry) && depth) {
+			error("%s: ignoring relative alternate object store %s",
+					relative_base, entry);
+		} else {
+			link_alt_odb_entry(entry, relative_base, depth);
 		}
-		while (cp < ep && *cp != sep)
-			cp++;
-		if (last != cp) {
-			if (!is_absolute_path(last) && depth) {
-				error("%s: ignoring relative alternate object store %s",
-						relative_base, last);
-			} else {
-				link_alt_odb_entry(last, cp - last,
-						relative_base, depth);
-			}
-		}
-		while (cp < ep && *cp == sep)
-			cp++;
-		last = cp;
 	}
+	string_list_clear(&entries, 0);
+	free(alt_copy);
 }
 
 void read_info_alternates(const char * relative_base, int depth)
@@ -377,7 +371,7 @@ void read_info_alternates(const char * relative_base, int depth)
 	map = xmmap(NULL, mapsz, PROT_READ, MAP_PRIVATE, fd, 0);
 	close(fd);
 
-	link_alt_odb_entries(map, map + mapsz, '\n', relative_base, depth);
+	link_alt_odb_entries(map, mapsz, '\n', relative_base, depth);
 
 	munmap(map, mapsz);
 }
@@ -391,7 +385,7 @@ void add_to_alternates_file(const char *reference)
 	if (commit_lock_file(lock))
 		die("could not close alternates file");
 	if (alt_odb_tail)
-		link_alt_odb_entries(alt, alt + strlen(alt), '\n', NULL, 0);
+		link_alt_odb_entries(alt, strlen(alt), '\n', NULL, 0);
 }
 
 void foreach_alt_odb(alt_odb_fn fn, void *cb)
@@ -415,7 +409,7 @@ void prepare_alt_odb(void)
 	if (!alt) alt = "";
 
 	alt_odb_tail = &alt_odb_list;
-	link_alt_odb_entries(alt, alt + strlen(alt), PATH_SEP, NULL, 0);
+	link_alt_odb_entries(alt, strlen(alt), PATH_SEP, NULL, 0);
 
 	read_info_alternates(get_object_directory(), 0);
 }
