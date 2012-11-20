@@ -43,4 +43,10 @@ Fixes since v1.8.0
    transport ended up sleeping for minutes in select(2) system call.
    A workaround has been added for this.
 
-Also contains minor fixes and documentation updates.
+ * Various rfc2047 quoting issues around a non-ASCII name on the
+   From: line in the output from format-patch have been corrected.
+
+ * "git diff -G<pattern>" did not honor textconv filter when looking
+   for changes.
+
+Also contains other minor fixes and documentation updates.
