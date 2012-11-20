@@ -1086,6 +1086,7 @@ ifeq ($(uname_O),Cygwin)
 		NO_SYMLINK_HEAD = YesPlease
 		NO_IPV6 = YesPlease
 		OLD_ICONV = UnfortunatelyYes
+		CYGWIN_V15_WIN32API = YesPlease
 	endif
 	NO_THREAD_SAFE_PREAD = YesPlease
 	NEEDS_LIBICONV = YesPlease
@@ -1896,6 +1897,9 @@ endif
 ifdef NO_REGEX
 	COMPAT_CFLAGS += -Icompat/regex
 	COMPAT_OBJS += compat/regex/regex.o
+endif
+ifdef CYGWIN_V15_WIN32API
+	COMPAT_CFLAGS += -DCYGWIN_V15_WIN32API
 endif
 
 ifdef USE_NED_ALLOCATOR

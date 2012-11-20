@@ -1,6 +1,13 @@
 #define WIN32_LEAN_AND_MEAN
+#ifdef CYGWIN_V15_WIN32API
 #include "../git-compat-util.h"
 #include "win32.h"
+#else
+#include <sys/stat.h>
+#include <sys/errno.h>
+#include "win32.h"
+#include "../git-compat-util.h"
+#endif
 #include "../cache.h" /* to read configuration */
 
 static inline void filetime_to_timespec(const FILETIME *ft, struct timespec *ts)
