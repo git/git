@@ -32,15 +32,21 @@ UI, Workflows & Features
    The bug has been fixed in "less" version 406 (June 2007), and the
    workaround has been removed in this release.
 
+ * Some documentation pages that used to ship only in the plain text
+   format are now formatted in HTML as well.
+
  * A new configuration variable "diff.context" can be used to
    give the default number of context lines in the patch output, to
    override the hardcoded default of 3 lines.
 
- * "git format-patch" leraned the "--notes=<ref>" option to give
+ * "git format-patch" learned the "--notes=<ref>" option to give
    notes for the commit after the three-dash lines in its output.
 
  * "git log --grep=<pcre>" learned to honor the "grep.patterntype"
    configuration set to "perl".
+
+ * "git replace -d <object>" now interprets <object>, instead of only
+   accepting full hex object name.
 
  * "git rm $submodule" used to punt on removing a submodule working
    tree to avoid losing the repository embedded in it.  Because
@@ -70,6 +76,8 @@ Foreign Interface
 
 Performance, Internal Implementation, etc.
 
+ * Compilation on Cygwin with newer header files are supported now.
+
  * The logic to generate the initial advertisement from
    "upload-pack" (what is invoked by "git fetch" on the other side
    of the connection) to list what refs are available in the
@@ -77,6 +85,10 @@ Performance, Internal Implementation, etc.
 
  * The logic to find set of attributes that match a given path has
    been optimized.
+
+ * Use preloadindex in "git diff-index" and "git update-index", which
+   has a nice speedup on systems with slow stat calls (and even on
+   Linux).
 
 
 Also contains minor documentation updates and code clean-ups.
@@ -132,11 +144,11 @@ details).
    (merge 11fbe18 po/maint-refs-replace-docs later to maint).
 
  * Various rfc2047 quoting issues around a non-ASCII name on the
-   From: line in the output from format-patch has been corrected.
+   From: line in the output from format-patch have been corrected.
    (merge 25dc8da js/format-2047 later to maint).
 
  * Sometimes curl_multi_timeout() function suggested a wrong timeout
-   value when there is no file descriptors to wait on and the http
+   value when there is no file descriptor to wait on and the http
    transport ended up sleeping for minutes in select(2) system call.
    A workaround has been added for this.
    (merge 7202b81 sz/maint-curl-multi-timeout later to maint).
@@ -149,3 +161,27 @@ details).
  * "git diff -G<pattern>" did not honor textconv filter when looking
    for changes.
    (merge b1c2f57 jk/maint-diff-grep-textconv later to maint).
+
+ * Some HTTP servers ask for auth only during the actual packing phase
+   (not in ls-remote phase); this is not really a recommended
+   configuration, but the clients used to fail to authenticate with
+   such servers.
+   (merge 2e736fd jk/maint-http-half-auth-fetch later to maint).
+
+ * "git p4" used to try expanding malformed "$keyword$" that spans
+   across multiple lines.
+   (merge 6b2bf41 pw/maint-p4-rcs-expansion-newline later to maint).
+
+ * Syntax highlighting in "gitweb" was not quite working.
+   (merge 048b399 rh/maint-gitweb-highlight-ext later to maint).
+
+ * RSS feed from "gitweb" had a xss hole in its title output.
+   (merge 0f0ecf6 jk/maint-gitweb-xss later to maint).
+
+ * "git config --path $key" segfaulted on "[section] key" (a boolean
+   "true" spelled without "=", not "[section] key = true").
+   (merge 962c38e cn/config-missing-path later to maint).
+
+ * "git checkout -b foo" while on an unborn branch did not say
+   "Switched to a new branch 'foo'" like other cases.
+   (merge afa8c07 jk/checkout-out-of-unborn later to maint).
