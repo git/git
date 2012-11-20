@@ -1,6 +1,10 @@
 From: Junio C Hamano <gitster@pobox.com>
 Subject: Separating topic branches
 Abstract: In this article, JC describes how to separate topic branches.
+Content-type: text/asciidoc
+
+How to separate topic branches
+==============================
 
 This text was originally a footnote to a discussion about the
 behaviour of the git diff commands.

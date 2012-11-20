@@ -8,7 +8,12 @@ Abstract: In this article, JC talks about how he rebases the
  the "master" branch, and how "rebase" works.  Also discussed
  is how this applies to individual developers who sends patches
  upstream.
+Content-type: text/asciidoc
 
+How to rebase from an internal branch
+=====================================
+
+--------------------------------------
 Petr Baudis <pasky@suse.cz> writes:
 
 > Dear diary, on Sun, Aug 14, 2005 at 09:57:13AM CEST, I got a letter
@@ -19,6 +24,7 @@ Petr Baudis <pasky@suse.cz> writes:
 >> > branch to the real branches.
 >>
 > Actually, wouldn't this be also precisely for what StGIT is intended to?
+--------------------------------------
 
 Exactly my feeling.  I was sort of waiting for Catalin to speak
 up.  With its basing philosophical ancestry on quilt, this is
@@ -156,8 +162,3 @@ you continue on starting from the new "master" head, which is
 the #1' commit.
 
 -jc
-
--
-To unsubscribe from this list: send the line "unsubscribe git" in
-the body of a message to majordomo@vger.kernel.org
-More majordomo info at  http://vger.kernel.org/majordomo-info.html

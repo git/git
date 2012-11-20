@@ -257,7 +257,7 @@ Date:   Sat May 3 11:59:44 2008 -0700
 
     Linux 2.6.26-rc1
 
-:100644 100644 5cf8258195331a4dbdddff08b8d68642638eea57 4492984efc09ab72ff6219a7bc21fb6a957c4cd5 M      Makefile
+:100644 100644 5cf82581... 4492984e... M      Makefile
 -------------
 
 At this point we can see what the commit does, check it out (if it's
@@ -331,7 +331,7 @@ Date:   Sat May 3 11:59:44 2008 -0700
 
     Linux 2.6.26-rc1
 
-:100644 100644 5cf8258195331a4dbdddff08b8d68642638eea57 4492984efc09ab72ff6219a7bc21fb6a957c4cd5 M      Makefile
+:100644 100644 5cf82581... 4492984e... M      Makefile
 bisect run success
 -------------
 

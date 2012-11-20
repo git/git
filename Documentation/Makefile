@@ -24,8 +24,30 @@ SP_ARTICLES = user-manual
 SP_ARTICLES += howto/revert-branch-rebase
 SP_ARTICLES += howto/using-merge-subtree
 SP_ARTICLES += howto/using-signed-tag-in-pull-request
+SP_ARTICLES += howto/use-git-daemon
+SP_ARTICLES += howto/update-hook-example
+SP_ARTICLES += howto/setup-git-server-over-http
+SP_ARTICLES += howto/separating-topic-branches
+SP_ARTICLES += howto/revert-a-faulty-merge
+SP_ARTICLES += howto/recover-corrupted-blob-object
+SP_ARTICLES += howto/rebuild-from-update-hook
+SP_ARTICLES += howto/rebuild-from-update-hook
+SP_ARTICLES += howto/rebase-from-internal-branch
+SP_ARTICLES += howto/maintain-git
 API_DOCS = $(patsubst %.txt,%,$(filter-out technical/api-index-skel.txt technical/api-index.txt, $(wildcard technical/api-*.txt)))
 SP_ARTICLES += $(API_DOCS)
+
+TECH_DOCS = technical/index-format
+TECH_DOCS += technical/pack-format
+TECH_DOCS += technical/pack-heuristics
+TECH_DOCS += technical/pack-protocol
+TECH_DOCS += technical/protocol-capabilities
+TECH_DOCS += technical/protocol-common
+TECH_DOCS += technical/racy-git
+TECH_DOCS += technical/send-pack-pipeline
+TECH_DOCS += technical/shallow
+TECH_DOCS += technical/trivial-merge
+SP_ARTICLES += $(TECH_DOCS)
 SP_ARTICLES += technical/api-index
 
 DOC_HTML += $(patsubst %,%.html,$(ARTICLES) $(SP_ARTICLES))
@@ -231,7 +253,7 @@ clean:
 	$(RM) *.texi *.texi+ *.texi++ git.info gitman.info
 	$(RM) *.pdf
 	$(RM) howto-index.txt howto/*.html doc.dep
-	$(RM) technical/api-*.html technical/api-index.txt
+	$(RM) technical/*.html technical/api-index.txt
 	$(RM) $(cmds_txt) *.made
 	$(RM) manpage-base-url.xsl
 
@@ -264,7 +286,7 @@ technical/api-index.txt: technical/api-index-skel.txt \
 	$(QUIET_GEN)cd technical && '$(SHELL_PATH_SQ)' ./api-index.sh
 
 technical/%.html: ASCIIDOC_EXTRA += -a git-relative-html-prefix=../
-$(patsubst %,%.html,$(API_DOCS) technical/api-index): %.html : %.txt
+$(patsubst %,%.html,$(API_DOCS) technical/api-index $(TECH_DOCS)): %.html : %.txt
 	$(QUIET_ASCIIDOC)$(ASCIIDOC) -b xhtml11 -f asciidoc.conf \
 		$(ASCIIDOC_EXTRA) -agit_version=$(GIT_VERSION) $*.txt
 
