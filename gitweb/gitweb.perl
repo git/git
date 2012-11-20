@@ -8054,6 +8054,7 @@ sub git_feed {
 		$feed_type = 'history';
 	}
 	$title .= " $feed_type";
+	$title = esc_html($title);
 	my $descr = git_get_project_description($project);
 	if (defined $descr) {
 		$descr = esc_html($descr);
