@@ -184,6 +184,11 @@ OPTIONS
 	commit log message unmodified.  This option lets you
 	further edit the message taken from these sources.
 
+--no-edit::
+	Use the selected commit message without launching an editor.
+	For example, `git commit --amend --no-edit` amends a commit
+	without changing its commit message.
+
 --amend::
 	Used to amend the tip of the current branch. Prepare the tree
 	object you would want to replace the latest commit as usual
