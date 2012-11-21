@@ -413,7 +413,7 @@ static int post_rpc(struct rpc_state *rpc)
 	struct curl_slist *headers = NULL;
 	int use_gzip = rpc->gzip_request;
 	char *gzip_body = NULL;
-	size_t gzip_size;
+	size_t gzip_size = 0;
 	int err, large_request = 0;
 
 	/* Try to load the entire request, if we can fit it into the
