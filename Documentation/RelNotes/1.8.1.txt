@@ -35,9 +35,19 @@ UI, Workflows & Features
  * Some documentation pages that used to ship only in the plain text
    format are now formatted in HTML as well.
 
+ * "git-prompt" scriptlet (in contrib/completion) can be told to paint
+   pieces of the hints in the prompt string in colors.
+
  * A new configuration variable "diff.context" can be used to
    give the default number of context lines in the patch output, to
    override the hardcoded default of 3 lines.
+
+ * "git config --get" used to diagnose presence of multiple
+   definitions of the same variable in the same configuration file as
+   an error, but it now applies the "last one wins" rule used by the
+   internal configuration logic.  Strictly speaking, this may be an
+   API regression but it is expected that nobody will notice it in
+   practice.
 
  * "git format-patch" learned the "--notes=<ref>" option to give
    notes for the commit after the three-dash lines in its output.
