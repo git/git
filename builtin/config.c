@@ -15,7 +15,6 @@ static int show_keys;
 static int use_key_regexp;
 static int do_all;
 static int do_not_match;
-static int seen;
 static char delim = '=';
 static char key_delim = ' ';
 static char term = '\n';
@@ -95,12 +94,19 @@ static int show_all_config(const char *key_, const char *value_, void *cb)
 	return 0;
 }
 
-static int show_config(const char *key_, const char *value_, void *cb)
+struct strbuf_list {
+	struct strbuf *items;
+	int nr;
+	int alloc;
+};
+
+static int collect_config(const char *key_, const char *value_, void *cb)
 {
+	struct strbuf_list *values = cb;
+	struct strbuf *buf;
 	char value[256];
 	const char *vptr = value;
 	int must_free_vptr = 0;
-	int dup_error = 0;
 	int must_print_delim = 0;
 
 	if (!use_key_regexp && strcmp(key_, key))
@@ -111,12 +117,14 @@ static int show_config(const char *key_, const char *value_, void *cb)
 	    (do_not_match ^ !!regexec(regexp, (value_?value_:""), 0, NULL, 0)))
 		return 0;
 
+	ALLOC_GROW(values->items, values->nr + 1, values->alloc);
+	buf = &values->items[values->nr++];
+	strbuf_init(buf, 0);
+
 	if (show_keys) {
-		printf("%s", key_);
+		strbuf_addstr(buf, key_);
 		must_print_delim = 1;
 	}
-	if (seen && !do_all)
-		dup_error = 1;
 	if (types == TYPE_INT)
 		sprintf(value, "%d", git_config_int(key_, value_?value_:""));
 	else if (types == TYPE_BOOL)
@@ -139,16 +147,12 @@ static int show_config(const char *key_, const char *value_, void *cb)
 		vptr = "";
 		must_print_delim = 0;
 	}
-	seen++;
-	if (dup_error) {
-		error("More than one value for the key %s: %s",
-				key_, vptr);
-	}
-	else {
-		if (must_print_delim)
-			printf("%c", key_delim);
-		printf("%s%c", vptr, term);
-	}
+
+	if (must_print_delim)
+		strbuf_addch(buf, key_delim);
+	strbuf_addstr(buf, vptr);
+	strbuf_addch(buf, term);
+
 	if (must_free_vptr)
 		/* If vptr must be freed, it's a pointer to a
 		 * dynamically allocated buffer, it's safe to cast to
@@ -162,19 +166,8 @@ static int show_config(const char *key_, const char *value_, void *cb)
 static int get_value(const char *key_, const char *regex_)
 {
 	int ret = CONFIG_GENERIC_ERROR;
-	char *global = NULL, *xdg = NULL, *repo_config = NULL;
-	const char *system_wide = NULL, *local;
-	struct config_include_data inc = CONFIG_INCLUDE_INIT;
-	config_fn_t fn;
-	void *data;
-
-	local = given_config_file;
-	if (!local) {
-		local = repo_config = git_pathdup("config");
-		if (git_config_system())
-			system_wide = git_etc_gitconfig();
-		home_config_paths(&global, &xdg, "config");
-	}
+	struct strbuf_list values = {NULL};
+	int i;
 
 	if (use_key_regexp) {
 		char *tl;
@@ -196,7 +189,8 @@ static int get_value(const char *key_, const char *regex_)
 		key_regexp = (regex_t*)xmalloc(sizeof(regex_t));
 		if (regcomp(key_regexp, key, REG_EXTENDED)) {
 			fprintf(stderr, "Invalid key pattern: %s\n", key_);
-			free(key);
+			free(key_regexp);
+			key_regexp = NULL;
 			ret = CONFIG_INVALID_PATTERN;
 			goto free_strings;
 		}
@@ -216,53 +210,37 @@ static int get_value(const char *key_, const char *regex_)
 		regexp = (regex_t*)xmalloc(sizeof(regex_t));
 		if (regcomp(regexp, regex_, REG_EXTENDED)) {
 			fprintf(stderr, "Invalid pattern: %s\n", regex_);
+			free(regexp);
+			regexp = NULL;
 			ret = CONFIG_INVALID_PATTERN;
 			goto free_strings;
 		}
 	}
 
-	fn = show_config;
-	data = NULL;
-	if (respect_includes) {
-		inc.fn = fn;
-		inc.data = data;
-		fn = git_config_include;
-		data = &inc;
+	git_config_with_options(collect_config, &values,
+				given_config_file, respect_includes);
+
+	ret = !values.nr;
+
+	for (i = 0; i < values.nr; i++) {
+		struct strbuf *buf = values.items + i;
+		if (do_all || i == values.nr - 1)
+			fwrite(buf->buf, 1, buf->len, stdout);
+		strbuf_release(buf);
 	}
+	free(values.items);
 
-	if (do_all && system_wide)
-		git_config_from_file(fn, system_wide, data);
-	if (do_all && xdg)
-		git_config_from_file(fn, xdg, data);
-	if (do_all && global)
-		git_config_from_file(fn, global, data);
-	if (do_all)
-		git_config_from_file(fn, local, data);
-	git_config_from_parameters(fn, data);
-	if (!do_all && !seen)
-		git_config_from_file(fn, local, data);
-	if (!do_all && !seen && global)
-		git_config_from_file(fn, global, data);
-	if (!do_all && !seen && xdg)
-		git_config_from_file(fn, xdg, data);
-	if (!do_all && !seen && system_wide)
-		git_config_from_file(fn, system_wide, data);
-
+free_strings:
 	free(key);
+	if (key_regexp) {
+		regfree(key_regexp);
+		free(key_regexp);
+	}
 	if (regexp) {
 		regfree(regexp);
 		free(regexp);
 	}
 
-	if (do_all)
-		ret = !seen;
-	else
-		ret = (seen == 1) ? 0 : seen > 1 ? 2 : 1;
-
-free_strings:
-	free(repo_config);
-	free(global);
-	free(xdg);
 	return ret;
 }
 

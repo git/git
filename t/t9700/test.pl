@@ -46,8 +46,7 @@ is($r->get_color("color.test.slot1", "red"), $ansi_green, "get_color");
 # Save and restore STDERR; we will probably extract this into a
 # "dies_ok" method and possibly move the STDERR handling to Git.pm.
 open our $tmpstderr, ">&STDERR" or die "cannot save STDERR"; close STDERR;
-eval { $r->config("test.dupstring") };
-ok($@, "config: duplicate entry in scalar context fails");
+is($r->config("test.dupstring"), "value2", "config: multivar");
 eval { $r->config_bool("test.boolother") };
 ok($@, "config_bool: non-boolean values fail");
 open STDERR, ">&", $tmpstderr or die "cannot restore STDERR";

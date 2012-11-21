@@ -1279,6 +1279,7 @@ int git_config_parse_key(const char *key, char **store_key, int *baselen_)
 
 out_free_ret_1:
 	free(*store_key);
+	*store_key = NULL;
 	return -CONFIG_INVALID_KEY;
 }
 
