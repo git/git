@@ -10,9 +10,14 @@
 #    1) Copy this file to somewhere (e.g. ~/.git-prompt.sh).
 #    2) Add the following line to your .bashrc/.zshrc:
 #        source ~/.git-prompt.sh
-#    3) Change your PS1 to also show the current branch:
-#         Bash: PS1='[\u@\h \W$(__git_ps1 " (%s)")]\$ '
-#         ZSH:  PS1='[%n@%m %c$(__git_ps1 " (%s)")]\$ '
+#    3a) In ~/.bashrc set PROMPT_COMMAND=__git_ps1
+#        To customize the prompt, provide start/end arguments
+#        PROMPT_COMMAND='__git_ps1 "\u@\h:\w" "\\\$ "'
+#    3b) Alternatively change your PS1 to call __git_ps1 as
+#        command-substitution:
+#        Bash: PS1='[\u@\h \W$(__git_ps1 " (%s)")]\$ '
+#        ZSH:  PS1='[%n@%m %c$(__git_ps1 " (%s)")]\$ '
+#        the optional argument will be used as format string
 #
 # The argument to __git_ps1 will be displayed only if you are currently
 # in a git repository.  The %s token will be the name of the current
@@ -49,7 +54,11 @@
 # find one, or @{upstream} otherwise.  Once you have set
 # GIT_PS1_SHOWUPSTREAM, you can override it on a per-repository basis by
 # setting the bash.showUpstream config variable.
-
+#
+# If you would like a colored hint about the current dirty state, set
+# GIT_PS1_SHOWCOLORHINTS to a nonempty value. The colors are based on
+# the colored output of "git status -sb".
+#
 # __gitdir accepts 0 or 1 arguments (i.e., location)
 # returns location of .git repo
 __gitdir ()
@@ -195,11 +204,40 @@ __git_ps1_show_upstream ()
 
 
 # __git_ps1 accepts 0 or 1 arguments (i.e., format string)
-# returns text to add to bash PS1 prompt (includes branch name)
+# when called from PS1 using command substitution
+# in this mode it prints text to add to bash PS1 prompt (includes branch name)
+#
+# __git_ps1 requires 2 arguments when called from PROMPT_COMMAND (pc)
+# in that case it _sets_ PS1. The arguments are parts of a PS1 string.
+# when both arguments are given, the first is prepended and the second appended
+# to the state string when assigned to PS1.
+# In this mode you can request colored hints using GIT_PS1_SHOWCOLORHINTS=true
 __git_ps1 ()
 {
+	local pcmode=no
+	local detached=no
+	local ps1pc_start='\u@\h:\w '
+	local ps1pc_end='\$ '
+	local printf_format=' (%s)'
+
+	case "$#" in
+		2)	pcmode=yes
+			ps1pc_start="$1"
+			ps1pc_end="$2"
+		;;
+		0|1)	printf_format="${1:-$printf_format}"
+		;;
+		*)	return
+		;;
+	esac
+
 	local g="$(__gitdir)"
-	if [ -n "$g" ]; then
+	if [ -z "$g" ]; then
+		if [ $pcmode = yes ]; then
+			#In PC mode PS1 always needs to be set
+			PS1="$ps1pc_start$ps1pc_end"
+		fi
+	else
 		local r=""
 		local b=""
 		if [ -f "$g/rebase-merge/interactive" ]; then
@@ -226,7 +264,7 @@ __git_ps1 ()
 			fi
 
 			b="$(git symbolic-ref HEAD 2>/dev/null)" || {
-
+				detached=yes
 				b="$(
 				case "${GIT_PS1_DESCRIBE_STYLE-}" in
 				(contains)
@@ -285,6 +323,50 @@ __git_ps1 ()
 		fi
 
 		local f="$w$i$s$u"
-		printf -- "${1:- (%s)}" "$c${b##refs/heads/}${f:+ $f}$r$p"
+		if [ $pcmode = yes ]; then
+			if [ -n "${GIT_PS1_SHOWCOLORHINTS-}" ]; then
+				local c_red='\e[31m'
+				local c_green='\e[32m'
+				local c_lblue='\e[1;34m'
+				local c_clear='\e[0m'
+				local bad_color=$c_red
+				local ok_color=$c_green
+				local branch_color="$c_clear"
+				local flags_color="$c_lblue"
+				local branchstring="$c${b##refs/heads/}"
+
+				if [ $detached = no ]; then
+					branch_color="$ok_color"
+				else
+					branch_color="$bad_color"
+				fi
+
+				# Setting PS1 directly with \[ and \] around colors
+				# is necessary to prevent wrapping issues!
+				PS1="$ps1pc_start (\[$branch_color\]$branchstring\[$c_clear\]"
+
+				if [ -n "$w$i$s$u$r$p" ]; then
+					PS1="$PS1 "
+				fi
+				if [ "$w" = "*" ]; then
+					PS1="$PS1\[$bad_color\]$w"
+				fi
+				if [ -n "$i" ]; then
+					PS1="$PS1\[$ok_color\]$i"
+				fi
+				if [ -n "$s" ]; then
+					PS1="$PS1\[$flags_color\]$s"
+				fi
+				if [ -n "$u" ]; then
+					PS1="$PS1\[$bad_color\]$u"
+				fi
+				PS1="$PS1\[$c_clear\]$r$p)$ps1pc_end"
+			else
+				PS1="$ps1pc_start ($c${b##refs/heads/}${f:+ $f}$r$p)$ps1pc_end"
+			fi
+		else
+			# NO color option unless in PROMPT_COMMAND mode
+			printf -- "$printf_format" "$c${b##refs/heads/}${f:+ $f}$r$p"
+		fi
 	fi
 }
