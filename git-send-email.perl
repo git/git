@@ -852,8 +852,16 @@ sub extract_valid_address_or_die {
 sub validate_address {
 	my $address = shift;
 	if (!extract_valid_address($address)) {
-		print STDERR "W: unable to extract a valid address from: $address\n";
-		return undef;
+		print STDERR "error: unable to extract a valid address from: $address\n";
+		$_ = ask("What to do with this address? ([q]uit|[d]rop): ",
+			valid_re => qr/^(?:quit|q|drop|d)/i,
+			default => 'q');
+		if (/^d/i) {
+			return undef;
+		} elsif (/^q/i) {
+			cleanup_compose_files();
+			exit(0);
+		}
 	}
 	return $address;
 }
