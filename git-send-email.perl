@@ -851,10 +851,10 @@ sub extract_valid_address_or_die {
 
 sub validate_address {
 	my $address = shift;
-	if (!extract_valid_address($address)) {
+	while (!extract_valid_address($address)) {
 		print STDERR "error: unable to extract a valid address from: $address\n";
-		$_ = ask("What to do with this address? ([q]uit|[d]rop): ",
-			valid_re => qr/^(?:quit|q|drop|d)/i,
+		$_ = ask("What to do with this address? ([q]uit|[d]rop|[e]dit): ",
+			valid_re => qr/^(?:quit|q|drop|d|edit|e)/i,
 			default => 'q');
 		if (/^d/i) {
 			return undef;
@@ -862,6 +862,9 @@ sub validate_address {
 			cleanup_compose_files();
 			exit(0);
 		}
+		$address = ask("Who should the email be sent to (if any)? ",
+			default => "",
+			valid_re => qr/\@.*\./, confirm_only => 1);
 	}
 	return $address;
 }
