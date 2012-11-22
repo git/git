@@ -302,6 +302,23 @@ test_expect_success 'rm removes work tree of unmodified submodules' '
 	test_cmp expect actual
 '
 
+test_expect_success 'rm removes a submodule with a trailing /' '
+	git reset --hard &&
+	git submodule update &&
+	git rm submod/ &&
+	test ! -d submod &&
+	git status -s -uno --ignore-submodules=none > actual &&
+	test_cmp expect actual
+'
+
+test_expect_success 'rm fails when given a file with a trailing /' '
+	test_must_fail git rm empty/
+'
+
+test_expect_success 'rm succeeds when given a directory with a trailing /' '
+	git rm -r frotz/
+'
+
 test_expect_success 'rm of a populated submodule with different HEAD fails unless forced' '
 	git reset --hard &&
 	git submodule update &&
