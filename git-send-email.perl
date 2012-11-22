@@ -924,6 +924,10 @@ sub quote_subject {
 # use the simplest quoting being able to handle the recipient
 sub sanitize_address {
 	my ($recipient) = @_;
+
+	# remove garbage after email address
+	$recipient =~ s/(.*>).*$/$1/;
+
 	my ($recipient_name, $recipient_addr) = ($recipient =~ /^(.*?)\s*(<.*)/);
 
 	if (not $recipient_name) {
