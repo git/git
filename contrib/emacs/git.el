@@ -1671,7 +1671,7 @@ Commands:
   "Entry point into git-status mode."
   (interactive "DSelect directory: ")
   (setq dir (git-get-top-dir dir))
-  (if (file-directory-p (concat (file-name-as-directory dir) ".git"))
+  (if (file-exists-p (concat (file-name-as-directory dir) ".git"))
       (let ((buffer (or (and git-reuse-status-buffer (git-find-status-buffer dir))
                         (create-file-buffer (expand-file-name "*git-status*" dir)))))
         (switch-to-buffer buffer)
