@@ -831,12 +831,12 @@ sub extract_valid_address {
 	$address =~ s/^\s*<(.*)>\s*$/$1/;
 	if ($have_email_valid) {
 		return scalar Email::Valid->address($address);
-	} else {
-		# less robust/correct than the monster regexp in Email::Valid,
-		# but still does a 99% job, and one less dependency
-		$address =~ /($local_part_regexp\@$domain_regexp)/;
-		return $1;
 	}
+
+	# less robust/correct than the monster regexp in Email::Valid,
+	# but still does a 99% job, and one less dependency
+	return $1 if $address =~ /($local_part_regexp\@$domain_regexp)/;
+	return undef;
 }
 
 # Usually don't need to change anything below here.
