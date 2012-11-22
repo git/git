@@ -786,9 +786,11 @@ sub expand_one_alias {
 }
 
 @initial_to = expand_aliases(@initial_to);
-@initial_to = (map { sanitize_address($_) } @initial_to);
+@initial_to = validate_address_list(sanitize_address_list(@initial_to));
 @initial_cc = expand_aliases(@initial_cc);
+@initial_cc = validate_address_list(sanitize_address_list(@initial_cc));
 @bcclist = expand_aliases(@bcclist);
+@bcclist = validate_address_list(sanitize_address_list(@bcclist));
 
 if ($thread && !defined $initial_reply_to && $prompting) {
 	$initial_reply_to = ask(
@@ -837,6 +839,28 @@ sub extract_valid_address {
 	# but still does a 99% job, and one less dependency
 	return $1 if $address =~ /($local_part_regexp\@$domain_regexp)/;
 	return undef;
+}
+
+sub extract_valid_address_or_die {
+	my $address = shift;
+	$address = extract_valid_address($address);
+	die "error: unable to extract a valid address from: $address\n"
+		if !$address;
+	return $address;
+}
+
+sub validate_address {
+	my $address = shift;
+	if (!extract_valid_address($address)) {
+		print STDERR "W: unable to extract a valid address from: $address\n";
+		return undef;
+	}
+	return $address;
+}
+
+sub validate_address_list {
+	return (grep { defined $_ }
+		map { validate_address($_) } @_);
 }
 
 # Usually don't need to change anything below here.
@@ -955,6 +979,10 @@ sub sanitize_address {
 
 }
 
+sub sanitize_address_list {
+	return (map { sanitize_address($_) } @_);
+}
+
 # Returns the local Fully Qualified Domain Name (FQDN) if available.
 #
 # Tightly configured MTAa require that a caller sends a real DNS
@@ -1017,14 +1045,13 @@ sub maildomain {
 
 sub send_message {
 	my @recipients = unique_email_list(@to);
-	@cc = (grep { my $cc = extract_valid_address($_);
+	@cc = (grep { my $cc = extract_valid_address_or_die($_);
 		      not grep { $cc eq $_ || $_ =~ /<\Q${cc}\E>$/ } @recipients
 		    }
-	       map { sanitize_address($_) }
 	       @cc);
 	my $to = join (",\n\t", @recipients);
 	@recipients = unique_email_list(@recipients,@cc,@bcclist);
-	@recipients = (map { extract_valid_address($_) } @recipients);
+	@recipients = (map { extract_valid_address_or_die($_) } @recipients);
 	my $date = format_2822_time($time++);
 	my $gitversion = '@@GIT_VERSION@@';
 	if ($gitversion =~ m/..GIT_VERSION../) {
@@ -1267,7 +1294,7 @@ foreach my $t (@files) {
 				foreach my $addr (parse_address_line($1)) {
 					printf("(mbox) Adding to: %s from line '%s'\n",
 						$addr, $_) unless $quiet;
-					push @to, sanitize_address($addr);
+					push @to, $addr;
 				}
 			}
 			elsif (/^Cc:\s+(.*)$/) {
@@ -1376,6 +1403,9 @@ foreach my $t (@files) {
 		($confirm =~ /^(?:auto|compose)$/ && $compose && $message_num == 1));
 	$needs_confirm = "inform" if ($needs_confirm && $confirm_unconfigured && @cc);
 
+	@to = validate_address_list(sanitize_address_list(@to));
+	@cc = validate_address_list(sanitize_address_list(@cc));
+
 	@to = (@initial_to, @to);
 	@cc = (@initial_cc, @cc);
 
@@ -1431,14 +1461,10 @@ sub unique_email_list {
 	my @emails;
 
 	foreach my $entry (@_) {
-		if (my $clean = extract_valid_address($entry)) {
-			$seen{$clean} ||= 0;
-			next if $seen{$clean}++;
-			push @emails, $entry;
-		} else {
-			print STDERR "W: unable to extract a valid address",
-					" from: $entry\n";
-		}
+		my $clean = extract_valid_address_or_die($entry);
+		$seen{$clean} ||= 0;
+		next if $seen{$clean}++;
+		push @emails, $entry;
 	}
 	return @emails;
 }
