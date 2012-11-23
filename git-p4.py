@@ -2406,7 +2406,7 @@ class P4Sync(Command, P4UserMap):
                     try:
                         tmwhen = time.strptime(labelDetails['Update'], "%Y/%m/%d %H:%M:%S")
                     except ValueError:
-                        print "Could not convert label time %s" % labelDetail['Update']
+                        print "Could not convert label time %s" % labelDetails['Update']
                         tmwhen = 1
 
                     when = int(time.mktime(tmwhen))
