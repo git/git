@@ -169,6 +169,29 @@ def p4_reopen(type, f):
 def p4_move(src, dest):
     p4_system(["move", "-k", wildcard_encode(src), wildcard_encode(dest)])
 
+def p4_describe(change):
+    """Make sure it returns a valid result by checking for
+       the presence of field "time".  Return a dict of the
+       results."""
+
+    ds = p4CmdList(["describe", "-s", str(change)])
+    if len(ds) != 1:
+        die("p4 describe -s %d did not return 1 result: %s" % (change, str(ds)))
+
+    d = ds[0]
+
+    if "p4ExitCode" in d:
+        die("p4 describe -s %d exited with %d: %s" % (change, d["p4ExitCode"],
+                                                      str(d)))
+    if "code" in d:
+        if d["code"] == "error":
+            die("p4 describe -s %d returned error code: %s" % (change, str(d)))
+
+    if "time" not in d:
+        die("p4 describe -s %d returned no \"time\": %s" % (change, str(d)))
+
+    return d
+
 #
 # Canonicalize the p4 type and return a tuple of the
 # base type, plus any modifiers.  See "p4 help filetypes"
@@ -2543,7 +2566,7 @@ class P4Sync(Command, P4UserMap):
     def importChanges(self, changes):
         cnt = 1
         for change in changes:
-            description = p4Cmd(["describe", str(change)])
+            description = p4_describe(change)
             self.updateOptionDict(description)
 
             if not self.silent:
@@ -2667,14 +2690,8 @@ class P4Sync(Command, P4UserMap):
 
         # Use time from top-most change so that all git p4 clones of
         # the same p4 repo have the same commit SHA1s.
-        res = p4CmdList("describe -s %d" % newestRevision)
-        newestTime = None
-        for r in res:
-            if r.has_key('time'):
-                newestTime = int(r['time'])
-        if newestTime is None:
-            die("\"describe -s\" on newest change %d did not give a time")
-        details["time"] = newestTime
+        res = p4_describe(newestRevision)
+        details["time"] = res["time"]
 
         self.updateOptionDict(details)
         try:
