@@ -129,6 +129,25 @@ def p4_has_command(cmd):
     p.communicate()
     return p.returncode == 0
 
+def p4_has_move_command():
+    """See if the move command exists, that it supports -k, and that
+       it has not been administratively disabled.  The arguments
+       must be correct, but the filenames do not have to exist.  Use
+       ones with wildcards so even if they exist, it will fail."""
+
+    if not p4_has_command("move"):
+        return False
+    cmd = p4_build_cmd(["move", "-k", "@from", "@to"])
+    p = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    (out, err) = p.communicate()
+    # return code will be 1 in either case
+    if err.find("Invalid option") >= 0:
+        return False
+    if err.find("disabled") >= 0:
+        return False
+    # assume it failed because @... was invalid changelist
+    return True
+
 def system(cmd):
     expand = isinstance(cmd,basestring)
     if verbose:
@@ -894,7 +913,7 @@ class P4Submit(Command, P4UserMap):
         self.conflict_behavior = None
         self.isWindows = (platform.system() == "Windows")
         self.exportLabels = False
-        self.p4HasMoveCommand = p4_has_command("move")
+        self.p4HasMoveCommand = p4_has_move_command()
 
     def check(self):
         if len(p4CmdList("opened ...")) > 0:
