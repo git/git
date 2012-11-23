@@ -183,6 +183,18 @@ test_expect_success 'initial import time from top change time' '
 	)
 '
 
+test_expect_success 'unresolvable host in P4PORT should display error' '
+	test_when_finished cleanup_git &&
+	git p4 clone --dest="$git" //depot &&
+	(
+		cd "$git" &&
+		P4PORT=nosuchhost:65537 &&
+		export P4PORT &&
+		test_expect_code 1 git p4 sync >out 2>err &&
+		grep "connect to nosuchhost" err
+	)
+'
+
 test_expect_success 'kill p4d' '
 	kill_p4d
 '
