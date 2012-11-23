@@ -960,6 +960,12 @@ the possible corner cases (git doesn't do it, either).  Committing
 renamed and copied files is fully supported if they're similar enough
 for git to detect them.
 
+In SVN, it is possible (though discouraged) to commit changes to a tag
+(because a tag is just a directory copy, thus technically the same as a
+branch). When cloning an SVN repository, 'git svn' cannot know if such a
+commit to a tag will happen in the future. Thus it acts conservatively
+and imports all SVN tags as branches, prefixing the tag name with 'tags/'.
+
 CONFIGURATION
 -------------
 
