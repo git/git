@@ -3188,7 +3188,6 @@ def main():
         printUsage(commands.keys())
         sys.exit(2)
 
-    cmd = ""
     cmdName = sys.argv[1]
     try:
         klass = commands[cmdName]
