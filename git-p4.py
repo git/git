@@ -2139,6 +2139,29 @@ class P4Sync(Command, P4UserMap):
     # handle another chunk of streaming data
     def streamP4FilesCb(self, marshalled):
 
+        # catch p4 errors and complain
+        err = None
+        if "code" in marshalled:
+            if marshalled["code"] == "error":
+                if "data" in marshalled:
+                    err = marshalled["data"].rstrip()
+        if err:
+            f = None
+            if self.stream_have_file_info:
+                if "depotFile" in self.stream_file:
+                    f = self.stream_file["depotFile"]
+            # force a failure in fast-import, else an empty
+            # commit will be made
+            self.gitStream.write("\n")
+            self.gitStream.write("die-now\n")
+            self.gitStream.close()
+            # ignore errors, but make sure it exits first
+            self.importProcess.wait()
+            if f:
+                die("Error from p4 print for %s: %s" % (f, err))
+            else:
+                die("Error from p4 print: %s" % err)
+
         if marshalled.has_key('depotFile') and self.stream_have_file_info:
             # start of a new file - output the old one first
             self.streamOneP4File(self.stream_file, self.stream_contents)
@@ -2900,12 +2923,13 @@ class P4Sync(Command, P4UserMap):
 
         self.tz = "%+03d%02d" % (- time.timezone / 3600, ((- time.timezone % 3600) / 60))
 
-        importProcess = subprocess.Popen(["git", "fast-import"],
-                                         stdin=subprocess.PIPE, stdout=subprocess.PIPE,
-                                         stderr=subprocess.PIPE);
-        self.gitOutput = importProcess.stdout
-        self.gitStream = importProcess.stdin
-        self.gitError = importProcess.stderr
+        self.importProcess = subprocess.Popen(["git", "fast-import"],
+                                              stdin=subprocess.PIPE,
+                                              stdout=subprocess.PIPE,
+                                              stderr=subprocess.PIPE);
+        self.gitOutput = self.importProcess.stdout
+        self.gitStream = self.importProcess.stdin
+        self.gitError = self.importProcess.stderr
 
         if revision:
             self.importHeadRevision(revision)
@@ -2965,7 +2989,7 @@ class P4Sync(Command, P4UserMap):
             self.importP4Labels(self.gitStream, missingP4Labels)
 
         self.gitStream.close()
-        if importProcess.wait() != 0:
+        if self.importProcess.wait() != 0:
             die("fast-import failed: %s" % self.gitError.read())
         self.gitOutput.close()
         self.gitError.close()
