@@ -614,6 +614,10 @@ static void import_marks(char *input_file)
 		if (object->flags & SHOWN)
 			error("Object %s already has a mark", sha1_to_hex(sha1));
 
+		if (object->type != OBJ_COMMIT)
+			/* only commits */
+			continue;
+
 		mark_object(object, mark);
 		if (last_idnum < mark)
 			last_idnum = mark;
