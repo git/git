@@ -8,7 +8,7 @@ test_description='Test remote-helper import and export commands'
 . ./test-lib.sh
 
 if ! test_have_prereq PYTHON ; then
-	skip_all='skipping git-remote-hg tests, python not available'
+	skip_all='skipping remote-testgit tests, python not available'
 	test_done
 fi
 
@@ -17,7 +17,7 @@ import sys
 if sys.hexversion < 0x02040000:
     sys.exit(1)
 ' || {
-	skip_all='skipping git-remote-hg tests, python version < 2.4'
+	skip_all='skipping remote-testgit tests, python version < 2.4'
 	test_done
 }
 
