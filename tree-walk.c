@@ -628,7 +628,8 @@ enum interesting tree_entry_interesting(const struct name_entry *entry,
 
 			if (item->nowildcard_len < item->len) {
 				if (!git_fnmatch(match + baselen, entry->path,
-						 0, item->nowildcard_len - baselen))
+						 item->flags & PATHSPEC_ONESTAR ? GFNM_ONESTAR : 0,
+						 item->nowildcard_len - baselen))
 					return entry_interesting;
 
 				/*
@@ -654,7 +655,8 @@ match_wildcards:
 		strbuf_add(base, entry->path, pathlen);
 
 		if (!git_fnmatch(match, base->buf + base_offset,
-				 0, item->nowildcard_len)) {
+				 item->flags & PATHSPEC_ONESTAR ? GFNM_ONESTAR : 0,
+				 item->nowildcard_len)) {
 			strbuf_setlen(base, base_offset + baselen);
 			return entry_interesting;
 		}
