@@ -39,7 +39,7 @@ class GitImporter(object):
             gitdir = self.repo.gitpath
         else:
             gitdir = os.path.abspath(os.path.join(dirname, '.git'))
-        path = os.path.abspath(os.path.join(dirname, 'git.marks'))
+        path = os.path.abspath(os.path.join(dirname, 'testgit.marks'))
 
         if not os.path.exists(dirname):
             os.makedirs(dirname)
