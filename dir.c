@@ -34,6 +34,21 @@ int fnmatch_icase(const char *pattern, const char *string, int flags)
 	return fnmatch(pattern, string, flags | (ignore_case ? FNM_CASEFOLD : 0));
 }
 
+inline int git_fnmatch(const char *pattern, const char *string,
+		       int flags, int prefix)
+{
+	int fnm_flags = 0;
+	if (flags & GFNM_PATHNAME)
+		fnm_flags |= FNM_PATHNAME;
+	if (prefix > 0) {
+		if (strncmp(pattern, string, prefix))
+			return FNM_NOMATCH;
+		pattern += prefix;
+		string += prefix;
+	}
+	return fnmatch(pattern, string, fnm_flags);
+}
+
 static size_t common_prefix_len(const char **pathspec)
 {
 	const char *n, *first;
@@ -230,7 +245,8 @@ static int match_pathspec_item(const struct pathspec_item *item, int prefix,
 			return MATCHED_RECURSIVELY;
 	}
 
-	if (item->nowildcard_len < item->len && !fnmatch(match, name, 0))
+	if (item->nowildcard_len < item->len &&
+	    !git_fnmatch(match, name, 0, item->nowildcard_len - prefix))
 		return MATCHED_FNMATCH;
 
 	return 0;

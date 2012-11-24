@@ -627,7 +627,8 @@ enum interesting tree_entry_interesting(const struct name_entry *entry,
 				return entry_interesting;
 
 			if (item->nowildcard_len < item->len) {
-				if (!fnmatch(match + baselen, entry->path, 0))
+				if (!git_fnmatch(match + baselen, entry->path,
+						 0, item->nowildcard_len - baselen))
 					return entry_interesting;
 
 				/*
@@ -652,7 +653,8 @@ match_wildcards:
 
 		strbuf_add(base, entry->path, pathlen);
 
-		if (!fnmatch(match, base->buf + base_offset, 0)) {
+		if (!git_fnmatch(match, base->buf + base_offset,
+				 0, item->nowildcard_len)) {
 			strbuf_setlen(base, base_offset + baselen);
 			return entry_interesting;
 		}
