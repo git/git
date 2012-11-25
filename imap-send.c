@@ -69,12 +69,7 @@ struct store {
 };
 
 struct msg_data {
-	/* NUL-terminated data: */
-	char *data;
-
-	/* length of data (not including NUL): */
-	int len;
-
+	struct strbuf data;
 	unsigned char flags;
 };
 
@@ -1268,46 +1263,49 @@ static int imap_make_flags(int flags, char *buf)
 	return d;
 }
 
-static void lf_to_crlf(struct msg_data *msg)
+static void lf_to_crlf(struct strbuf *msg)
 {
+	size_t new_len;
 	char *new;
 	int i, j, lfnum = 0;
 
-	if (msg->data[0] == '\n')
+	if (msg->buf[0] == '\n')
 		lfnum++;
 	for (i = 1; i < msg->len; i++) {
-		if (msg->data[i - 1] != '\r' && msg->data[i] == '\n')
+		if (msg->buf[i - 1] != '\r' && msg->buf[i] == '\n')
 			lfnum++;
 	}
 
-	new = xmalloc(msg->len + lfnum + 1);
-	if (msg->data[0] == '\n') {
+	new_len = msg->len + lfnum;
+	new = xmalloc(new_len + 1);
+	if (msg->buf[0] == '\n') {
 		new[0] = '\r';
 		new[1] = '\n';
 		i = 1;
 		j = 2;
 	} else {
-		new[0] = msg->data[0];
+		new[0] = msg->buf[0];
 		i = 1;
 		j = 1;
 	}
 	for ( ; i < msg->len; i++) {
-		if (msg->data[i] != '\n') {
-			new[j++] = msg->data[i];
+		if (msg->buf[i] != '\n') {
+			new[j++] = msg->buf[i];
 			continue;
 		}
-		if (msg->data[i - 1] != '\r')
+		if (msg->buf[i - 1] != '\r')
 			new[j++] = '\r';
 		/* otherwise it already had CR before */
 		new[j++] = '\n';
 	}
-	new[j] = '\0';
-	msg->len += lfnum;
-	free(msg->data);
-	msg->data = new;
+	strbuf_attach(msg, new, new_len, new_len + 1);
 }
 
-static int imap_store_msg(struct store *gctx, struct msg_data *data)
+/*
+ * Store msg to IMAP.  Also detach and free the data from msg->data,
+ * leaving msg->data empty.
+ */
+static int imap_store_msg(struct store *gctx, struct msg_data *msg)
 {
 	struct imap_store *ctx = (struct imap_store *)gctx;
 	struct imap *imap = ctx->imap;
@@ -1316,16 +1314,15 @@ static int imap_store_msg(struct store *gctx, struct msg_data *data)
 	int ret, d;
 	char flagstr[128];
 
-	lf_to_crlf(data);
+	lf_to_crlf(&msg->data);
 	memset(&cb, 0, sizeof(cb));
 
-	cb.dlen = data->len;
-	cb.data = xmalloc(cb.dlen);
-	memcpy(cb.data, data->data, data->len);
+	cb.dlen = msg->data.len;
+	cb.data = strbuf_detach(&msg->data, NULL);
 
 	d = 0;
-	if (data->flags) {
-		d = imap_make_flags(data->flags, flagstr);
+	if (msg->flags) {
+		d = imap_make_flags(msg->flags, flagstr);
 		flagstr[d++] = ' ';
 	}
 	flagstr[d] = 0;
@@ -1356,7 +1353,8 @@ static void encode_html_chars(struct strbuf *p)
 			strbuf_splice(p, i, 1, "&quot;", 6);
 	}
 }
-static void wrap_in_html(struct msg_data *msg)
+
+static void wrap_in_html(struct strbuf *msg)
 {
 	struct strbuf buf = STRBUF_INIT;
 	struct strbuf **lines;
@@ -1366,9 +1364,7 @@ static void wrap_in_html(struct msg_data *msg)
 	static char *pre_close = "</pre>\n";
 	int added_header = 0;
 
-	strbuf_attach(&buf, msg->data, msg->len, msg->len);
-	lines = strbuf_split(&buf, '\n');
-	strbuf_release(&buf);
+	lines = strbuf_split(msg, '\n');
 	for (p = lines; *p; p++) {
 		if (! added_header) {
 			if ((*p)->len == 1 && *((*p)->buf) == '\n') {
@@ -1385,8 +1381,8 @@ static void wrap_in_html(struct msg_data *msg)
 	}
 	strbuf_addstr(&buf, pre_close);
 	strbuf_list_free(lines);
-	msg->len  = buf.len;
-	msg->data = strbuf_detach(&buf, NULL);
+	strbuf_release(msg);
+	*msg = buf;
 }
 
 #define CHUNKSIZE 0x1000
@@ -1425,34 +1421,39 @@ static int count_messages(struct strbuf *all_msgs)
 	return count;
 }
 
-static int split_msg(struct strbuf *all_msgs, struct msg_data *msg, int *ofs)
+/*
+ * Copy the next message from all_msgs, starting at offset *ofs, to
+ * msg.  Update *ofs to the start of the following message.  Return
+ * true iff a message was successfully copied.
+ */
+static int split_msg(struct strbuf *all_msgs, struct strbuf *msg, int *ofs)
 {
 	char *p, *data;
+	size_t len;
 
-	memset(msg, 0, sizeof *msg);
 	if (*ofs >= all_msgs->len)
 		return 0;
 
 	data = &all_msgs->buf[*ofs];
-	msg->len = all_msgs->len - *ofs;
+	len = all_msgs->len - *ofs;
 
-	if (msg->len < 5 || prefixcmp(data, "From "))
+	if (len < 5 || prefixcmp(data, "From "))
 		return 0;
 
 	p = strchr(data, '\n');
 	if (p) {
-		p = &p[1];
-		msg->len -= p-data;
-		*ofs += p-data;
+		p++;
+		len -= p - data;
+		*ofs += p - data;
 		data = p;
 	}
 
 	p = strstr(data, "\nFrom ");
 	if (p)
-		msg->len = &p[1] - data;
+		len = &p[1] - data;
 
-	msg->data = xmemdupz(data, msg->len);
-	*ofs += msg->len;
+	strbuf_add(msg, data, len);
+	*ofs += len;
 	return 1;
 }
 
@@ -1504,7 +1505,7 @@ static int git_imap_config(const char *key, const char *val, void *cb)
 int main(int argc, char **argv)
 {
 	struct strbuf all_msgs = STRBUF_INIT;
-	struct msg_data msg;
+	struct msg_data msg = {STRBUF_INIT, 0};
 	struct store *ctx = NULL;
 	int ofs = 0;
 	int r;
@@ -1564,11 +1565,12 @@ int main(int argc, char **argv)
 	ctx->name = imap_folder;
 	while (1) {
 		unsigned percent = n * 100 / total;
+
 		fprintf(stderr, "%4u%% (%d/%d) done\r", percent, n, total);
-		if (!split_msg(&all_msgs, &msg, &ofs))
+		if (!split_msg(&all_msgs, &msg.data, &ofs))
 			break;
 		if (server.use_html)
-			wrap_in_html(&msg);
+			wrap_in_html(&msg.data);
 		r = imap_store_msg(ctx, &msg);
 		if (r != DRV_OK)
 			break;
