@@ -69,8 +69,12 @@ struct store {
 };
 
 struct msg_data {
+	/* NUL-terminated data: */
 	char *data;
+
+	/* length of data (not including NUL): */
 	int len;
+
 	unsigned char flags;
 };
 
@@ -1276,7 +1280,7 @@ static void lf_to_crlf(struct msg_data *msg)
 			lfnum++;
 	}
 
-	new = xmalloc(msg->len + lfnum);
+	new = xmalloc(msg->len + lfnum + 1);
 	if (msg->data[0] == '\n') {
 		new[0] = '\r';
 		new[1] = '\n';
@@ -1297,6 +1301,7 @@ static void lf_to_crlf(struct msg_data *msg)
 		/* otherwise it already had CR before */
 		new[j++] = '\n';
 	}
+	new[j] = '\0';
 	msg->len += lfnum;
 	free(msg->data);
 	msg->data = new;
