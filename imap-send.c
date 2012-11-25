@@ -1342,30 +1342,23 @@ static int imap_store_msg(struct store *gctx, struct msg_data *msg)
 static void wrap_in_html(struct strbuf *msg)
 {
 	struct strbuf buf = STRBUF_INIT;
-	struct strbuf **lines;
-	struct strbuf **p;
 	static char *content_type = "Content-Type: text/html;\n";
 	static char *pre_open = "<pre>\n";
 	static char *pre_close = "</pre>\n";
-	int added_header = 0;
+	const char *body = strstr(msg->buf, "\n\n");
 
-	lines = strbuf_split(msg, '\n');
-	for (p = lines; *p; p++) {
-		if (! added_header) {
-			if ((*p)->len == 1 && *((*p)->buf) == '\n') {
-				strbuf_addstr(&buf, content_type);
-				strbuf_addbuf(&buf, *p);
-				strbuf_addstr(&buf, pre_open);
-				added_header = 1;
-			} else {
-				strbuf_addbuf(&buf, *p);
-			}
-		} else {
-			strbuf_addstr_xml_quoted(&buf, (*p)->buf);
-		}
-	}
+	if (!body)
+		return; /* Headers but no body; no wrapping needed */
+
+	body += 2;
+
+	strbuf_add(&buf, msg->buf, body - msg->buf - 1);
+	strbuf_addstr(&buf, content_type);
+	strbuf_addch(&buf, '\n');
+	strbuf_addstr(&buf, pre_open);
+	strbuf_addstr_xml_quoted(&buf, body);
 	strbuf_addstr(&buf, pre_close);
-	strbuf_list_free(lines);
+
 	strbuf_release(msg);
 	*msg = buf;
 }
