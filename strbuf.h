@@ -102,6 +102,12 @@ extern void strbuf_vaddf(struct strbuf *sb, const char *fmt, va_list ap);
 
 extern void strbuf_add_lines(struct strbuf *sb, const char *prefix, const char *buf, size_t size);
 
+/*
+ * Append s to sb, with the characters '<', '>', '&' and '"' converted
+ * into XML entities.
+ */
+extern void strbuf_addstr_xml_quoted(struct strbuf *sb, const char *s);
+
 static inline void strbuf_complete_line(struct strbuf *sb)
 {
 	if (sb->len && sb->buf[sb->len - 1] != '\n')
