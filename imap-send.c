@@ -1391,26 +1391,20 @@ static void wrap_in_html(struct msg_data *msg)
 
 #define CHUNKSIZE 0x1000
 
-static int read_message(FILE *f, struct msg_data *msg)
+static int read_message(FILE *f, struct strbuf *all_msgs)
 {
-	struct strbuf buf = STRBUF_INIT;
-
-	memset(msg, 0, sizeof(*msg));
-
 	do {
-		if (strbuf_fread(&buf, CHUNKSIZE, f) <= 0)
+		if (strbuf_fread(all_msgs, CHUNKSIZE, f) <= 0)
 			break;
 	} while (!feof(f));
 
-	msg->len  = buf.len;
-	msg->data = strbuf_detach(&buf, NULL);
-	return msg->len;
+	return all_msgs->len;
 }
 
-static int count_messages(struct msg_data *msg)
+static int count_messages(struct strbuf *all_msgs)
 {
 	int count = 0;
-	char *p = msg->data;
+	char *p = all_msgs->buf;
 
 	while (1) {
 		if (!prefixcmp(p, "From ")) {
@@ -1431,7 +1425,7 @@ static int count_messages(struct msg_data *msg)
 	return count;
 }
 
-static int split_msg(struct msg_data *all_msgs, struct msg_data *msg, int *ofs)
+static int split_msg(struct strbuf *all_msgs, struct msg_data *msg, int *ofs)
 {
 	char *p, *data;
 
@@ -1439,7 +1433,7 @@ static int split_msg(struct msg_data *all_msgs, struct msg_data *msg, int *ofs)
 	if (*ofs >= all_msgs->len)
 		return 0;
 
-	data = &all_msgs->data[*ofs];
+	data = &all_msgs->buf[*ofs];
 	msg->len = all_msgs->len - *ofs;
 
 	if (msg->len < 5 || prefixcmp(data, "From "))
@@ -1509,7 +1503,8 @@ static int git_imap_config(const char *key, const char *val, void *cb)
 
 int main(int argc, char **argv)
 {
-	struct msg_data all_msgs, msg;
+	struct strbuf all_msgs = STRBUF_INIT;
+	struct msg_data msg;
 	struct store *ctx = NULL;
 	int ofs = 0;
 	int r;
