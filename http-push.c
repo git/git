@@ -172,28 +172,7 @@ enum dav_header_flag {
 static char *xml_entities(const char *s)
 {
 	struct strbuf buf = STRBUF_INIT;
-	while (*s) {
-		size_t len = strcspn(s, "\"<>&");
-		strbuf_add(&buf, s, len);
-		s += len;
-		switch (*s) {
-		case '"':
-			strbuf_addstr(&buf, "&quot;");
-			break;
-		case '<':
-			strbuf_addstr(&buf, "&lt;");
-			break;
-		case '>':
-			strbuf_addstr(&buf, "&gt;");
-			break;
-		case '&':
-			strbuf_addstr(&buf, "&amp;");
-			break;
-		case 0:
-			return strbuf_detach(&buf, NULL);
-		}
-		s++;
-	}
+	strbuf_addstr_xml_quoted(&buf, s);
 	return strbuf_detach(&buf, NULL);
 }
 
