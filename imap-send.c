@@ -1398,7 +1398,7 @@ static int read_message(FILE *f, struct strbuf *all_msgs)
 			break;
 	} while (!feof(f));
 
-	return all_msgs->len;
+	return ferror(f) ? -1 : 0;
 }
 
 static int count_messages(struct strbuf *all_msgs)
@@ -1537,7 +1537,12 @@ int main(int argc, char **argv)
 	}
 
 	/* read the messages */
-	if (!read_message(stdin, &all_msgs)) {
+	if (read_message(stdin, &all_msgs)) {
+		fprintf(stderr, "error reading input\n");
+		return 1;
+	}
+
+	if (all_msgs.len == 0) {
 		fprintf(stderr, "nothing to send\n");
 		return 1;
 	}
