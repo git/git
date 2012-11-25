@@ -1339,21 +1339,6 @@ static int imap_store_msg(struct store *gctx, struct msg_data *msg)
 	return DRV_OK;
 }
 
-static void encode_html_chars(struct strbuf *p)
-{
-	int i;
-	for (i = 0; i < p->len; i++) {
-		if (p->buf[i] == '&')
-			strbuf_splice(p, i, 1, "&amp;", 5);
-		if (p->buf[i] == '<')
-			strbuf_splice(p, i, 1, "&lt;", 4);
-		if (p->buf[i] == '>')
-			strbuf_splice(p, i, 1, "&gt;", 4);
-		if (p->buf[i] == '"')
-			strbuf_splice(p, i, 1, "&quot;", 6);
-	}
-}
-
 static void wrap_in_html(struct strbuf *msg)
 {
 	struct strbuf buf = STRBUF_INIT;
@@ -1372,12 +1357,12 @@ static void wrap_in_html(struct strbuf *msg)
 				strbuf_addbuf(&buf, *p);
 				strbuf_addstr(&buf, pre_open);
 				added_header = 1;
-				continue;
+			} else {
+				strbuf_addbuf(&buf, *p);
 			}
+		} else {
+			strbuf_addstr_xml_quoted(&buf, (*p)->buf);
 		}
-		else
-			encode_html_chars(*p);
-		strbuf_addbuf(&buf, *p);
 	}
 	strbuf_addstr(&buf, pre_close);
 	strbuf_list_free(lines);
