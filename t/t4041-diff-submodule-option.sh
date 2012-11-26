@@ -62,7 +62,7 @@ test_expect_success '--submodule=short overrides diff.submodule' "
 	cat >expected <<-EOF &&
 diff --git a/sm1 b/sm1
 new file mode 160000
-index 0000000..a2c4dab
+index 0000000..$head1
 --- /dev/null
 +++ b/sm1
 @@ -0,0 +1 @@
@@ -77,7 +77,7 @@ test_expect_success 'diff.submodule does not affect plumbing' '
 	cat >expected <<-EOF &&
 	diff --git a/sm1 b/sm1
 	new file mode 160000
-	index 0000000..a2c4dab
+	index 0000000..$head1
 	--- /dev/null
 	+++ b/sm1
 	@@ -0,0 +1 @@
@@ -173,10 +173,10 @@ mv sm1-bak sm1
 test_expect_success 'typechanged submodule(submodule->blob), --cached' "
 	git diff --submodule=log --cached >actual &&
 	cat >expected <<-EOF &&
-Submodule sm1 41fbea9...0000000 (submodule deleted)
+Submodule sm1 $head4...0000000 (submodule deleted)
 diff --git a/sm1 b/sm1
 new file mode 100644
-index 0000000..9da5fb8
+index 0000000..$head5
 --- /dev/null
 +++ b/sm1
 @@ -0,0 +1 @@
@@ -190,7 +190,7 @@ test_expect_success 'typechanged submodule(submodule->blob)' "
 	cat >expected <<-EOF &&
 diff --git a/sm1 b/sm1
 deleted file mode 100644
-index 9da5fb8..0000000
+index $head5..0000000
 --- a/sm1
 +++ /dev/null
 @@ -1 +0,0 @@
