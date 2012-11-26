@@ -39,7 +39,7 @@ static const char * const builtin_remote_rm_usage[] = {
 };
 
 static const char * const builtin_remote_sethead_usage[] = {
-	N_("git remote set-head <name> (-a | -d | <branch>])"),
+	N_("git remote set-head <name> (-a | -d | <branch>)"),
 	NULL
 };
 
