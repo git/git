@@ -1779,7 +1779,7 @@ int delete_ref(const char *refname, const unsigned char *sha1, int delopt)
 	 * packed one.  Also, if it was not loose we need to repack
 	 * without it.
 	 */
-	ret |= repack_without_ref(refname);
+	ret |= repack_without_ref(lock->ref_name);
 
 	unlink_or_warn(git_path("logs/%s", lock->ref_name));
 	invalidate_ref_cache(NULL);

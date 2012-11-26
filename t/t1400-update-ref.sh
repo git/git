@@ -74,6 +74,24 @@ test_expect_success "delete $m (by HEAD)" '
 '
 rm -f .git/$m
 
+test_expect_success \
+	"create $m (by HEAD)" \
+	"git update-ref HEAD $A &&
+	 test $A"' = $(cat .git/'"$m"')'
+test_expect_success \
+	"pack refs" \
+	"git pack-refs --all"
+test_expect_success \
+	"move $m (by HEAD)" \
+	"git update-ref HEAD $B $A &&
+	 test $B"' = $(cat .git/'"$m"')'
+test_expect_success "delete $m (by HEAD) should remove both packed and loose $m" '
+	git update-ref -d HEAD $B &&
+	! grep "$m" .git/packed-refs &&
+	! test -f .git/$m
+'
+rm -f .git/$m
+
 cp -f .git/HEAD .git/HEAD.orig
 test_expect_success "delete symref without dereference" '
 	git update-ref --no-deref -d HEAD &&
