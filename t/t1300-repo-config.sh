@@ -803,6 +803,11 @@ test_expect_success NOT_MINGW 'get --path copes with unset $HOME' '
 	test_cmp expect result
 '
 
+test_expect_success 'get --path barfs on boolean variable' '
+	echo "[path]bool" >.git/config &&
+	test_must_fail git config --get --path path.bool
+'
+
 cat > expect << EOF
 [quote]
 	leading = " test"
