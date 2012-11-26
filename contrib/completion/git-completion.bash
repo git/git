@@ -585,7 +585,7 @@ __git_list_porcelain_commands ()
 {
 	local i IFS=" "$'\n'
 	__git_compute_all_commands
-	for i in "help" $__git_all_commands
+	for i in $__git_all_commands
 	do
 		case $i in
 		*--*)             : helper pattern;;
