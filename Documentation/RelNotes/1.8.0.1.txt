@@ -49,4 +49,16 @@ Fixes since v1.8.0
  * "git diff -G<pattern>" did not honor textconv filter when looking
    for changes.
 
+ * Bash completion script (in contrib/) did not correctly complete a
+   lazy "git checkout $name_of_remote_tracking_branch_that_is_unique"
+   command line.
+
+ * RSS feed from "gitweb" had a xss hole in its title output.
+
+ * "git config --path $key" segfaulted on "[section] key" (a boolean
+   "true" spelled without "=", not "[section] key = true").
+
+ * "git checkout -b foo" while on an unborn branch did not say
+   "Switched to a new branch 'foo'" like other cases.
+
 Also contains other minor fixes and documentation updates.
