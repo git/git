@@ -8,6 +8,20 @@ has_cr() {
 	tr '\015' Q <"$1" | grep Q >/dev/null
 }
 
+# core.eol crlf and core.autocrlf input are not permitted.
+# this lets us check for the core.eol native being crlf.
+set_native_eol_prereq() {
+	rm -rf eol && mkdir eol &&
+	( cd eol &&
+	git init --quiet &&
+	git config core.autocrlf input &&
+	git config core.eol native &&
+	git var core.eol 2> /dev/null
+	) ||
+	test_set_prereq NATIVE_EOL_IS_CRLF
+}
+set_native_eol_prereq
+
 test_expect_success setup '
 
 	git config core.autocrlf false &&
@@ -78,6 +92,24 @@ test_expect_success 'autocrlf=true overrides unset eol' '
 	onediff=`git diff one` &&
 	twodiff=`git diff two` &&
 	test -z "$onediff" -a -z "$twodiff"
+'
+
+test_expect_success NATIVE_EOL_IS_CRLF 'eol native is crlf' '
+
+	rm -rf native_eol && mkdir native_eol &&
+	( cd native_eol &&
+	printf "*.txt text\n" > .gitattributes
+	printf "one\r\ntwo\r\nthree\r\n" > filedos.txt
+	printf "one\ntwo\nthree\n" > fileunix.txt
+	git init &&
+	git config core.autocrlf false &&
+	git config core.eol native &&
+	git add filedos.txt fileunix.txt &&
+	git commit -m "first" &&
+	rm file*.txt &&
+	git reset --hard HEAD &&
+	has_cr filedos.txt && has_cr fileunix.txt
+	)
 '
 
 test_done
