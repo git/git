@@ -1,20 +1,18 @@
 To: git@vger.kernel.org
 Bcc: lwn@lwn.net
-Subject: What's cooking in git.git (Nov 2012, #07; Wed, 21)
-X-master-at: 2d242fb3fc19fc9ba046accdd9210be8b9913f64
-X-next-at: ce6fbe5b9dc5e1e8ce1499bd8f7fb982e0c68289
+Subject: What's cooking in git.git (Nov 2012, #08; Sun, 25)
+X-master-at: e8a1f5a2ae53805986b1b965e036450bdfc0c460
+X-next-at: 9942e54037a4342f619d609da15329417569d00b
 
-What's cooking in git.git (Nov 2012, #07; Wed, 21)
+What's cooking in git.git (Nov 2012, #08; Sun, 25)
 --------------------------------------------------
 
 Here are the topics that have been cooking.  Commits prefixed with
 '-' are only in 'pu' (proposed updates) while commits prefixed with
 '+' are in 'next'.
 
-Many topics have been merged to 'maint' in preparation for 1.8.0.1;
-and some more dormant topics have been moved to the stalled category
-(to be discarded without prejudice unless they see some activities).
-The upcoming 1.8.1 release is slowly taking shape.
+The tip of 'maint' has been tagged as 1.8.0.1 with many fixes since
+the 1.8.0 release.
 
 You can find the changes described here in the integration branches of the
 repositories listed at
@@ -22,139 +20,54 @@ repositories listed at
     http://git-blame.blogspot.com/p/git-public-repositories.html
 
 --------------------------------------------------
-[New Topics]
+[Graduated to "master"]
+
+* bc/do-not-recurse-in-die (2012-11-15) 1 commit
+  (merged to 'next' on 2012-11-18 at 79d62a8)
+ + usage.c: detect recursion in die routines and bail out immediately
+
+
+* jh/update-ref-d-through-symref (2012-10-21) 2 commits
+  (merged to 'next' on 2012-11-19 at 6bcca4c)
+ + Fix failure to delete a packed ref through a symref
+ + t1400-update-ref: Add test verifying bug with symrefs in delete_ref()
+
+ "update-ref -d --deref SYM" to delete a ref through a symbolic ref
+ that points to it did not remove it correctly.
+
+
+* lt/diff-stat-show-0-lines (2012-10-17) 1 commit
+  (merged to 'next' on 2012-11-19 at 0037290)
+ + Fix "git diff --stat" for interesting - but empty - file changes
+
+ We failed to mention a file without any content change but whose
+ permission bit was modified, or (worse yet) a new file without any
+ content in the "git diff --stat" output.
+
+
+* mk/complete-tcsh (2012-11-16) 1 commit
+  (merged to 'next' on 2012-11-19 at 8309029)
+ + tcsh-completion re-using git-completion.bash
+
 
 * nd/maint-compat-fnmatch-fix (2012-11-20) 1 commit
   (merged to 'next' on 2012-11-21 at ce6fbe5)
  + compat/fnmatch: fix off-by-one character class's length check
 
- Will merge to 'master' and then 'maint'.
 
---------------------------------------------------
-[Graduated to "master"]
+* rr/submodule-diff-config (2012-11-18) 4 commits
+  (merged to 'next' on 2012-11-19 at 355319e)
+ + submodule: display summary header in bold
+ + diff: rename "set" variable
+ + diff: introduce diff.submodule configuration variable
+ + Documentation: move diff.wordRegex from config.txt to diff-config.txt
 
-* cn/config-missing-path (2012-11-15) 1 commit
-  (merged to 'next' on 2012-11-18 at c08b73c)
- + config: don't segfault when given --path with a missing value
-
-
-* jk/checkout-out-of-unborn (2012-11-15) 1 commit
-  (merged to 'next' on 2012-11-18 at 7d2aa24)
- + checkout: print a message when switching unborn branches
+ Lets "git diff --submodule=log" become the default via configuration.
 
 
-* jk/config-ignore-duplicates (2012-10-29) 9 commits
-  (merged to 'next' on 2012-10-29 at 67fa0a2)
- + builtin/config.c: Fix a sparse warning
-  (merged to 'next' on 2012-10-25 at 233df08)
- + git-config: use git_config_with_options
- + git-config: do not complain about duplicate entries
- + git-config: collect values instead of immediately printing
- + git-config: fix regexp memory leaks on error conditions
- + git-config: remove memory leak of key regexp
- + t1300: test "git config --get-all" more thoroughly
- + t1300: remove redundant test
- + t1300: style updates
-
- Drop duplicate detection from git-config; this lets it better match
- the internal config callbacks, which clears up some corner cases
- with includes.  This is an API breakage, though.
-
-
-* jk/maint-gitweb-xss (2012-11-12) 1 commit
-  (merged to 'next' on 2012-11-14 at 7a667bc)
- + gitweb: escape html in rss title
-
- Fixes an XSS vulnerability in gitweb.
-
-
-* jk/maint-http-half-auth-fetch (2012-10-31) 2 commits
-  (merged to 'next' on 2012-11-09 at af69926)
- + remote-curl: retry failed requests for auth even with gzip
- + remote-curl: hoist gzip buffer size to top of post_rpc
-
- Fixes fetch from servers that ask for auth only during the actual
- packing phase. This is not really a recommended configuration, but it
- cleans up the code at the same time.
-
-
-* jl/submodule-rm (2012-11-14) 1 commit
-  (merged to 'next' on 2012-11-18 at bf4525d)
- + docs: move submodule section
-
- Documentation correction for d21240f (Merge branch
- 'jl/submodule-rm', 2012-10-29) that needs to be fast-tracked.
-
-
-* kb/preload-index-more (2012-11-02) 1 commit
-  (merged to 'next' on 2012-11-09 at a750ebd)
- + update-index/diff-index: use core.preloadindex to improve performance
-
- Use preloadindex in more places, which has a nice speedup on systems
- with slow stat calls (and even on Linux).
-
-
-* mg/replace-resolve-delete (2012-11-13) 1 commit
-  (merged to 'next' on 2012-11-14 at fa785ae)
- + replace: parse revision argument for -d
-
- Be more user friendly to people using "git replace -d".
-
-
-* mh/alt-odb-string-list-cleanup (2012-11-08) 2 commits
-  (merged to 'next' on 2012-11-13 at 2bf41d9)
- + link_alt_odb_entries(): take (char *, len) rather than two pointers
- + link_alt_odb_entries(): use string_list_split_in_place()
-
- Cleanups in the alternates code. Fixes a potential bug and makes the
- code much cleaner.
-
-
-* ml/cygwin-mingw-headers (2012-11-18) 2 commits
-  (merged to 'next' on 2012-11-19 at f9964da)
- + USE CGYWIN_V15_WIN32API as macro to select api for cygwin
-  (merged to 'next' on 2012-11-15 at 22e11b3)
- + Update cygwin.c for new mingw-64 win32 api headers
-
- Make git work on newer cygwin.
-
-
-* pw/maint-p4-rcs-expansion-newline (2012-11-08) 1 commit
-  (merged to 'next' on 2012-11-13 at e90cc7c)
- + git p4: RCS expansion should not span newlines
-
- I do not have p4 to play with, but looks obviously correct to me.
-
-
-* rh/maint-gitweb-highlight-ext (2012-11-08) 1 commit
-  (merged to 'next' on 2012-11-13 at c57d856)
- + gitweb.perl: fix %highlight_ext mappings
-
- Fixes a clever misuse of perl's list interpretation.
-
-
-* so/prompt-command (2012-10-17) 4 commits
-  (merged to 'next' on 2012-10-25 at 79565a1)
- + coloured git-prompt: paint detached HEAD marker in red
- + Fix up colored git-prompt
- + show color hints based on state of the git tree
- + Allow __git_ps1 to be used in PROMPT_COMMAND
-
- Updates __git_ps1 so that it can be used as $PROMPT_COMMAND,
- instead of being used for command substitution in $PS1, to embed
- color escape sequences in its output.
-
- Will merge to 'master' in the seventh batch.
-
-
-* ta/doc-cleanup (2012-10-25) 6 commits
-  (merged to 'next' on 2012-11-13 at e11fafd)
- + Documentation: build html for all files in technical and howto
- + Documentation/howto: convert plain text files to asciidoc
- + Documentation/technical: convert plain text files to asciidoc
- + Change headline of technical/send-pack-pipeline.txt to not confuse its content with content from git-send-pack.txt
- + Shorten two over-long lines in git-bisect-lk2009.txt by abbreviating some sha1
- + Split over-long synopsis in git-fetch-pack.txt into several lines
+* sg/complete-help-undup (2012-11-14) 1 commit
+  (merged to 'next' on 2012-11-18 at eadd0f3)
+ + completion: remove 'help' duplicate from porcelain commands
 
 --------------------------------------------------
 [Stalled]
@@ -478,42 +391,10 @@ repositories listed at
  - pathspec: save the non-wildcard length part
 
 
-* sg/complete-help-undup (2012-11-14) 1 commit
-  (merged to 'next' on 2012-11-18 at eadd0f3)
- + completion: remove 'help' duplicate from porcelain commands
-
- Will merge to 'master' in the seventh batch.
-
-
-* bc/do-not-recurse-in-die (2012-11-15) 1 commit
-  (merged to 'next' on 2012-11-18 at 79d62a8)
- + usage.c: detect recursion in die routines and bail out immediately
-
- Will merge to 'master' in the seventh batch.
-
-
-* mk/complete-tcsh (2012-11-16) 1 commit
-  (merged to 'next' on 2012-11-19 at 8309029)
- + tcsh-completion re-using git-completion.bash
-
- Will merge to 'master' in the seventh batch.
-
-
 * mm/status-push-pull-advise (2012-11-16) 1 commit
  - status: add advice on how to push/pull to tracking branch
 
  Will merge to 'next'.
-
-
-* lt/diff-stat-show-0-lines (2012-10-17) 1 commit
-  (merged to 'next' on 2012-11-19 at 0037290)
- + Fix "git diff --stat" for interesting - but empty - file changes
-
- We failed to mention a file without any content change but whose
- permission bit was modified, or (worse yet) a new file without any
- content in the "git diff --stat" output.
-
- Will merge to 'master' in the seventh batch.
 
 
 * fc/zsh-completion (2012-11-19) 2 commits
@@ -552,17 +433,6 @@ repositories listed at
  to the users.
 
  Will cook in 'next'.
-
-
-* jh/update-ref-d-through-symref (2012-10-21) 2 commits
-  (merged to 'next' on 2012-11-19 at 6bcca4c)
- + Fix failure to delete a packed ref through a symref
- + t1400-update-ref: Add test verifying bug with symrefs in delete_ref()
-
- "update-ref -d --deref SYM" to delete a ref through a symbolic ref
- that points to it did not remove it correctly.
-
- Will merge to 'master' in the seventh batch.
 
 
 * fc/completion-test-simplification (2012-11-16) 6 commits
@@ -637,15 +507,3 @@ repositories listed at
  - push: return reject reasons via a mask
 
  Require "-f" for push to update a tag, even if it is a fast-forward.
-
-
-* rr/submodule-diff-config (2012-11-18) 4 commits
-  (merged to 'next' on 2012-11-19 at 355319e)
- + submodule: display summary header in bold
- + diff: rename "set" variable
- + diff: introduce diff.submodule configuration variable
- + Documentation: move diff.wordRegex from config.txt to diff-config.txt
-
- Lets "git diff --submodule=log" become the default via configuration.
-
- Will merge to 'master' in the seventh batch.
