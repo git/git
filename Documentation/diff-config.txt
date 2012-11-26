@@ -107,6 +107,19 @@ diff.suppressBlankEmpty::
 	A boolean to inhibit the standard behavior of printing a space
 	before each empty output line. Defaults to false.
 
+diff.submodule::
+	Specify the format in which differences in submodules are
+	shown.  The "log" format lists the commits in the range like
+	linkgit:git-submodule[1] `summary` does.  The "short" format
+	format just shows the names of the commits at the beginning
+	and end of the range.  Defaults to short.
+
+diff.wordRegex::
+	A POSIX Extended Regular Expression used to determine what is a "word"
+	when performing word-by-word difference calculations.  Character
+	sequences that match the regular expression are "words", all other
+	characters are *ignorable* whitespace.
+
 diff.<driver>.command::
 	The custom diff driver command.  See linkgit:gitattributes[5]
 	for details.

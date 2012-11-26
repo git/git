@@ -123,6 +123,17 @@ static int parse_dirstat_params(struct diff_options *options, const char *params
 	return ret;
 }
 
+static int parse_submodule_params(struct diff_options *options, const char *value)
+{
+	if (!strcmp(value, "log"))
+		DIFF_OPT_SET(options, SUBMODULE_LOG);
+	else if (!strcmp(value, "short"))
+		DIFF_OPT_CLR(options, SUBMODULE_LOG);
+	else
+		return -1;
+	return 0;
+}
+
 static int git_config_rename(const char *var, const char *value)
 {
 	if (!value)
@@ -177,6 +188,13 @@ int git_diff_ui_config(const char *var, const char *value, void *cb)
 
 	if (!strcmp(var, "diff.ignoresubmodules"))
 		handle_ignore_submodules_arg(&default_diff_options, value);
+
+	if (!strcmp(var, "diff.submodule")) {
+		if (parse_submodule_params(&default_diff_options, value))
+			warning(_("Unknown value for 'diff.submodule' config variable: '%s'"),
+				value);
+		return 0;
+	}
 
 	if (git_color_config(var, value, cb) < 0)
 		return -1;
@@ -2223,7 +2241,7 @@ static void builtin_diff(const char *name_a,
 	mmfile_t mf1, mf2;
 	const char *lbl[2];
 	char *a_one, *b_two;
-	const char *set = diff_get_color_opt(o, DIFF_METAINFO);
+	const char *meta = diff_get_color_opt(o, DIFF_METAINFO);
 	const char *reset = diff_get_color_opt(o, DIFF_RESET);
 	const char *a_prefix, *b_prefix;
 	struct userdiff_driver *textconv_one = NULL;
@@ -2244,7 +2262,7 @@ static void builtin_diff(const char *name_a,
 		const char *add = diff_get_color_opt(o, DIFF_FILE_NEW);
 		show_submodule_summary(o->file, one ? one->path : two->path,
 				one->sha1, two->sha1, two->dirty_submodule,
-				del, add, reset);
+				meta, del, add, reset);
 		return;
 	}
 
@@ -2270,24 +2288,24 @@ static void builtin_diff(const char *name_a,
 	b_two = quote_two(b_prefix, name_b + (*name_b == '/'));
 	lbl[0] = DIFF_FILE_VALID(one) ? a_one : "/dev/null";
 	lbl[1] = DIFF_FILE_VALID(two) ? b_two : "/dev/null";
-	strbuf_addf(&header, "%s%sdiff --git %s %s%s\n", line_prefix, set, a_one, b_two, reset);
+	strbuf_addf(&header, "%s%sdiff --git %s %s%s\n", line_prefix, meta, a_one, b_two, reset);
 	if (lbl[0][0] == '/') {
 		/* /dev/null */
-		strbuf_addf(&header, "%s%snew file mode %06o%s\n", line_prefix, set, two->mode, reset);
+		strbuf_addf(&header, "%s%snew file mode %06o%s\n", line_prefix, meta, two->mode, reset);
 		if (xfrm_msg)
 			strbuf_addstr(&header, xfrm_msg);
 		must_show_header = 1;
 	}
 	else if (lbl[1][0] == '/') {
-		strbuf_addf(&header, "%s%sdeleted file mode %06o%s\n", line_prefix, set, one->mode, reset);
+		strbuf_addf(&header, "%s%sdeleted file mode %06o%s\n", line_prefix, meta, one->mode, reset);
 		if (xfrm_msg)
 			strbuf_addstr(&header, xfrm_msg);
 		must_show_header = 1;
 	}
 	else {
 		if (one->mode != two->mode) {
-			strbuf_addf(&header, "%s%sold mode %06o%s\n", line_prefix, set, one->mode, reset);
-			strbuf_addf(&header, "%s%snew mode %06o%s\n", line_prefix, set, two->mode, reset);
+			strbuf_addf(&header, "%s%sold mode %06o%s\n", line_prefix, meta, one->mode, reset);
+			strbuf_addf(&header, "%s%snew mode %06o%s\n", line_prefix, meta, two->mode, reset);
 			must_show_header = 1;
 		}
 		if (xfrm_msg)
@@ -3480,6 +3498,14 @@ static int parse_dirstat_opt(struct diff_options *options, const char *params)
 	return 1;
 }
 
+static int parse_submodule_opt(struct diff_options *options, const char *value)
+{
+	if (parse_submodule_params(options, value))
+		die(_("Failed to parse --submodule option parameter: '%s'"),
+			value);
+	return 1;
+}
+
 int diff_opt_parse(struct diff_options *options, const char **av, int ac)
 {
 	const char *arg = av[0];
@@ -3660,10 +3686,8 @@ int diff_opt_parse(struct diff_options *options, const char **av, int ac)
 		handle_ignore_submodules_arg(options, arg + 20);
 	} else if (!strcmp(arg, "--submodule"))
 		DIFF_OPT_SET(options, SUBMODULE_LOG);
-	else if (!prefixcmp(arg, "--submodule=")) {
-		if (!strcmp(arg + 12, "log"))
-			DIFF_OPT_SET(options, SUBMODULE_LOG);
-	}
+	else if (!prefixcmp(arg, "--submodule="))
+		return parse_submodule_opt(options, arg + 12);
 
 	/* misc options */
 	else if (!strcmp(arg, "-z"))
