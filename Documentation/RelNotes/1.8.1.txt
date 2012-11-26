@@ -27,6 +27,8 @@ Updates since v1.8.0
 
 UI, Workflows & Features
 
+ * Command-line completion for tcsh has been added.
+
  * We used to have a workaround for a bug in ancient "less" that
    causes it to exit without any output when the terminal is resized.
    The bug has been fixed in "less" version 406 (June 2007), and the
@@ -69,6 +71,9 @@ UI, Workflows & Features
    existing revision via the "--name" option.
 
  * "git submodule sync" learned the "--recursive" option.
+
+ * "diff.submodule" configuration variable can be used to give custom
+   default value to the "git diff --submodule" option.
 
  * "git symbolic-ref" learned the "-d $symref" option to delete the
    named symbolic ref, which is more intuitive way to spell it than
@@ -195,3 +200,12 @@ details).
  * "git checkout -b foo" while on an unborn branch did not say
    "Switched to a new branch 'foo'" like other cases.
    (merge afa8c07 jk/checkout-out-of-unborn later to maint).
+
+ * We failed to mention a file without any content change but whose
+   permission bit was modified, or (worse yet) a new file without any
+   content in the "git diff --stat" output.
+   (merge 74faaa1 lt/diff-stat-show-0-lines later to maint).
+
+ * "update-ref -d --deref SYM" to delete a ref through a symbolic ref
+   that points to it did not remove it correctly.
+   (merge b274a71 jh/update-ref-d-through-symref later to maint).
