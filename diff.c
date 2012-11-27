@@ -2411,7 +2411,7 @@ static void builtin_diffstat(const char *name_a, const char *name_b,
 	}
 
 	data = diffstat_add(diffstat, name_a, name_b);
-	data->is_interesting = p->status != 0;
+	data->is_interesting = p->status != DIFF_STATUS_UNKNOWN;
 
 	if (!one || !two) {
 		data->is_unmerged = 1;
