@@ -227,6 +227,8 @@ Support for this command is mandatory.
 	the name; unrecognized attributes are ignored. The list ends
 	with a blank line.
 +
+See REF LIST ATTRIBUTES for a list of currently defined attributes.
++
 Supported if the helper has the "fetch" or "import" capability.
 
 'list for-push'::
@@ -248,6 +250,8 @@ Supported if the helper has the "push" or "export" capability.
 	for it).  Options should be set before other commands,
 	and may influence the behavior of those commands.
 +
+See OPTIONS for a list of currently defined options.
++
 Supported if the helper has the "option" capability.
 
 'fetch' <sha1> <name>::
@@ -256,7 +260,7 @@ Supported if the helper has the "option" capability.
 	per line, terminated with a blank line.
 	Outputs a single blank line when all fetch commands in the
 	same batch are complete. Only objects which were reported
-	in the ref list with a sha1 may be fetched this way.
+	in the output of 'list' with a sha1 may be fetched this way.
 +
 Optionally may output a 'lock <file>' line indicating a file under
 GIT_DIR/objects/pack which is keeping a pack until refs can be
@@ -360,10 +364,9 @@ capabilities reported by the helper.
 REF LIST ATTRIBUTES
 -------------------
 
-'for-push'::
-	The caller wants to use the ref list to prepare push
-	commands.  A helper might chose to acquire the ref list by
-	opening a different type of connection to the destination.
+The 'list' command produces a list of refs in which each ref
+may be followed by a list of attributes. The following ref list
+attributes are defined.
 
 'unchanged'::
 	This ref is unchanged since the last import or fetch, although
@@ -371,6 +374,10 @@ REF LIST ATTRIBUTES
 
 OPTIONS
 -------
+
+The following options are defined and (under suitable circumstances)
+set by git if the remote helper has the 'option' capability.
+
 'option verbosity' <n>::
 	Changes the verbosity of messages displayed by the helper.
 	A value of 0 for <n> means that processes operate
