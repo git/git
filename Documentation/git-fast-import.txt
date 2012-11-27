@@ -442,7 +442,9 @@ their syntax.
 ^^^^^^
 The `from` command is used to specify the commit to initialize
 this branch from.  This revision will be the first ancestor of the
-new commit.
+new commit.  The state of the tree built at this commit will begin
+with the state at the `from` commit, and be altered by the content
+modifications in this commit.
 
 Omitting the `from` command in the first commit of a new branch
 will cause fast-import to create that commit with no ancestor. This
@@ -492,7 +494,9 @@ existing value of the branch.
 
 `merge`
 ^^^^^^^
-Includes one additional ancestor commit.  If the `from` command is
+Includes one additional ancestor commit.  The additional ancestry
+link does not change the way the tree state is built at this commit.
+If the `from` command is
 omitted when creating a new branch, the first `merge` commit will be
 the first ancestor of the current commit, and the branch will start
 out with no files.  An unlimited number of `merge` commands per
