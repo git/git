@@ -286,7 +286,8 @@ leading to commit A.  The history looks like this:
 ----------------
 
 Further suppose that the other person already pushed changes leading to A
-back to the original repository you two obtained the original commit X.
+back to the original repository from which you two obtained the original
+commit X.
 
 The push done by the other person updated the branch that used to point at
 commit X to point at commit A.  It is a fast-forward.
