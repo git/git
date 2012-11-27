@@ -1470,8 +1470,8 @@ static void show_stats(struct diffstat_t *data, struct diff_options *options)
 	for (i = 0; (i < count) && (i < data->nr); i++) {
 		struct diffstat_file *file = data->files[i];
 		uintmax_t change = file->added + file->deleted;
-		if (!data->files[i]->is_interesting &&
-			 (change == 0)) {
+
+		if (!file->is_interesting && (change == 0)) {
 			count++; /* not shown == room for one more */
 			continue;
 		}
@@ -1586,13 +1586,13 @@ static void show_stats(struct diffstat_t *data, struct diff_options *options)
 	 */
 	for (i = 0; i < count; i++) {
 		const char *prefix = "";
-		char *name = data->files[i]->print_name;
-		uintmax_t added = data->files[i]->added;
-		uintmax_t deleted = data->files[i]->deleted;
+		struct diffstat_file *file = data->files[i];
+		char *name = file->print_name;
+		uintmax_t added = file->added;
+		uintmax_t deleted = file->deleted;
 		int name_len;
 
-		if (!data->files[i]->is_interesting &&
-			 (added + deleted == 0)) {
+		if (!file->is_interesting && (added + deleted == 0)) {
 			total_files--;
 			continue;
 		}
@@ -1611,7 +1611,7 @@ static void show_stats(struct diffstat_t *data, struct diff_options *options)
 				name = slash;
 		}
 
-		if (data->files[i]->is_binary) {
+		if (file->is_binary) {
 			fprintf(options->file, "%s", line_prefix);
 			show_name(options->file, prefix, name, len);
 			fprintf(options->file, " %*s", number_width, "Bin");
@@ -1628,7 +1628,7 @@ static void show_stats(struct diffstat_t *data, struct diff_options *options)
 			fprintf(options->file, "\n");
 			continue;
 		}
-		else if (data->files[i]->is_unmerged) {
+		else if (file->is_unmerged) {
 			fprintf(options->file, "%s", line_prefix);
 			show_name(options->file, prefix, name, len);
 			fprintf(options->file, " Unmerged\n");
@@ -1668,10 +1668,10 @@ static void show_stats(struct diffstat_t *data, struct diff_options *options)
 		fprintf(options->file, "\n");
 	}
 	for (i = count; i < data->nr; i++) {
-		uintmax_t added = data->files[i]->added;
-		uintmax_t deleted = data->files[i]->deleted;
-		if (!data->files[i]->is_interesting &&
-			 (added + deleted == 0)) {
+		struct diffstat_file *file = data->files[i];
+		uintmax_t added = file->added;
+		uintmax_t deleted = file->deleted;
+		if (!file->is_interesting && (added + deleted == 0)) {
 			total_files--;
 			continue;
 		}
