@@ -1498,7 +1498,7 @@ static void show_stats(struct diffstat_t *data, struct diff_options *options)
 		if (max_change < change)
 			max_change = change;
 	}
-	count = i; /* min(count, data->nr) */
+	count = i; /* where we can stop scanning in data->files[] */
 
 	/*
 	 * We have width = stat_width or term_columns() columns total.
@@ -1592,10 +1592,9 @@ static void show_stats(struct diffstat_t *data, struct diff_options *options)
 		uintmax_t deleted = file->deleted;
 		int name_len;
 
-		if (!file->is_interesting && (added + deleted == 0)) {
-			total_files--;
+		if (!file->is_interesting && (added + deleted == 0))
 			continue;
-		}
+
 		/*
 		 * "scale" the filename
 		 */
@@ -1640,8 +1639,6 @@ static void show_stats(struct diffstat_t *data, struct diff_options *options)
 		 */
 		add = added;
 		del = deleted;
-		adds += add;
-		dels += del;
 
 		if (graph_width <= max_change) {
 			int total = add + del;
@@ -1667,7 +1664,8 @@ static void show_stats(struct diffstat_t *data, struct diff_options *options)
 		show_graph(options->file, '-', del, del_c, reset);
 		fprintf(options->file, "\n");
 	}
-	for (i = count; i < data->nr; i++) {
+
+	for (i = 0; i < data->nr; i++) {
 		struct diffstat_file *file = data->files[i];
 		uintmax_t added = file->added;
 		uintmax_t deleted = file->deleted;
@@ -1675,8 +1673,13 @@ static void show_stats(struct diffstat_t *data, struct diff_options *options)
 			total_files--;
 			continue;
 		}
-		adds += added;
-		dels += deleted;
+
+		if (!file->is_binary && !file->is_unmerged) {
+			adds += added;
+			dels += deleted;
+		}
+		if (i < count)
+			continue;
 		if (!extra_shown)
 			fprintf(options->file, "%s ...\n", line_prefix);
 		extra_shown = 1;

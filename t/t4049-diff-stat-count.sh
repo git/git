@@ -28,7 +28,7 @@ test_expect_success 'limit output to 2 (simple)' '
 	test_i18ncmp expect actual
 '
 
-test_expect_failure 'binary changes do not count in lines' '
+test_expect_success 'binary changes do not count in lines' '
 	git reset --hard &&
 	chmod +x c d &&
 	echo a >a &&
