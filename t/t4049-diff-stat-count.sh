@@ -44,7 +44,7 @@ test_expect_success 'binary changes do not count in lines' '
 	test_i18ncmp expect actual
 '
 
-test_expect_failure 'exclude unmerged entries from total file count' '
+test_expect_success 'exclude unmerged entries from total file count' '
 	git reset --hard &&
 	echo a >a &&
 	echo b >b &&

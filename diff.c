@@ -1669,12 +1669,14 @@ static void show_stats(struct diffstat_t *data, struct diff_options *options)
 		struct diffstat_file *file = data->files[i];
 		uintmax_t added = file->added;
 		uintmax_t deleted = file->deleted;
-		if (!file->is_interesting && (added + deleted == 0)) {
+
+		if (file->is_unmerged ||
+		    (!file->is_interesting && (added + deleted == 0))) {
 			total_files--;
 			continue;
 		}
 
-		if (!file->is_binary && !file->is_unmerged) {
+		if (!file->is_binary) {
 			adds += added;
 			dels += deleted;
 		}
