@@ -385,11 +385,23 @@ the ones in the examples below) can be configured as the default for
 	A handy way to push the current branch to the same name on the
 	remote.
 
-`git push origin master:satellite/master dev:satellite/dev`::
+`git push mothership master:satellite/master dev:satellite/dev`::
 	Use the source ref that matches `master` (e.g. `refs/heads/master`)
 	to update the ref that matches `satellite/master` (most probably
-	`refs/remotes/satellite/master`) in the `origin` repository, then
+	`refs/remotes/satellite/master`) in the `mothership` repository;
 	do the same for `dev` and `satellite/dev`.
++
+This is to emulate `git fetch` run on the `mothership` using `git
+push` that is run in the opposite direction in order to integrate
+the work done on `satellite`, and is often necessary when you can
+only make connection in one way (i.e. satellite can ssh into
+mothership but mothership cannot initiate connection to satellite
+because the latter is behind a firewall or does not run sshd).
++
+After running this `git push` on the `satellite` machine, you would
+ssh into the `mothership` and run `git merge` there to complete the
+emulation of `git pull` that were run on `mothership` to pull changes
+made on `satellite`.
 
 `git push origin HEAD:master`::
 	Push the current branch to the remote ref matching `master` in the
