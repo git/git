@@ -216,6 +216,8 @@ Commands are given by the caller on the helper's standard input, one per line.
 	which marks them mandatory for git versions using the remote
 	helper to understand. Any unknown mandatory capability is a
 	fatal error.
++
+Support for this command is mandatory.
 
 'list'::
 	Lists the refs, one per line, in the format "<value> <name>
@@ -225,9 +227,18 @@ Commands are given by the caller on the helper's standard input, one per line.
 	the name; unrecognized attributes are ignored. The list ends
 	with a blank line.
 +
-If 'push' is supported this may be called as 'list for-push'
-to obtain the current refs prior to sending one or more 'push'
-commands to the helper.
+Supported if the helper has the "fetch" or "import" capability.
+
+'list for-push'::
+	Similar to 'list', except that it is used if and only if
+	the caller wants to the resulting ref list to prepare
+	push commands.
+	A helper supporting both push and fetch can use this
+	to distinguish for which operation the output of 'list'
+	is going to be used, possibly reducing the amount
+	of work that needs to be performed.
++
+Supported if the helper has the "push" or "export" capability.
 
 'option' <name> <value>::
 	Sets the transport helper option <name> to <value>.  Outputs a
@@ -306,7 +317,7 @@ sequence has to be buffered before starting to send data to fast-import
 to prevent mixing of commands and fast-import responses on the helper's
 stdin.
 +
-Supported if the helper has the 'import' capability.
+Supported if the helper has the "import" capability.
 
 'export'::
 	Instructs the remote helper that any subsequent input is
@@ -322,7 +333,7 @@ fast-export', which then will load/store a table of marks for
 local objects. This can be used to implement for incremental
 operations.
 +
-Supported if the helper has the 'export' capability.
+Supported if the helper has the "export" capability.
 
 'connect' <service>::
 	Connects to given service. Standard input and standard output
