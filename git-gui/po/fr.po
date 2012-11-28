@@ -1139,7 +1139,7 @@ msgstr "Standard (rapide, semi-redondant, liens durs)"
 
 #: lib/choose_repository.tcl:514
 msgid "Full Copy (Slower, Redundant Backup)"
-msgstr "Copy complète (plus lent, sauvegarde redondante)"
+msgstr "Copie complète (plus lent, sauvegarde redondante)"
 
 #: lib/choose_repository.tcl:520
 msgid "Shared (Fastest, Not Recommended, No Backup)"
