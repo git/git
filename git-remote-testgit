@@ -6,17 +6,25 @@ url=$2
 
 dir="$GIT_DIR/testgit/$alias"
 prefix="refs/testgit/$alias"
-refspec="refs/heads/*:${prefix}/heads/*"
 
-gitmarks="$dir/git.marks"
-testgitmarks="$dir/testgit.marks"
+default_refspec="refs/heads/*:${prefix}/heads/*"
+
+refspec="${GIT_REMOTE_TESTGIT_REFSPEC-$default_refspec}"
+
+test -z "$refspec" && prefix="refs"
 
 export GIT_DIR="$url/.git"
 
 mkdir -p "$dir"
 
-test -e "$gitmarks" || > "$gitmarks"
-test -e "$testgitmarks" || > "$testgitmarks"
+if test -z "$GIT_REMOTE_TESTGIT_NO_MARKS"
+then
+	gitmarks="$dir/git.marks"
+	testgitmarks="$dir/testgit.marks"
+	test -e "$gitmarks" || >"$gitmarks"
+	test -e "$testgitmarks" || >"$testgitmarks"
+	testgitmarks_args=( "--"{import,export}"-marks=$testgitmarks" )
+fi
 
 while read line
 do
@@ -24,9 +32,12 @@ do
 	capabilities)
 		echo 'import'
 		echo 'export'
-		echo "refspec $refspec"
-		echo "*import-marks $gitmarks"
-		echo "*export-marks $gitmarks"
+		test -n "$refspec" && echo "refspec $refspec"
+		if test -n "$gitmarks"
+		then
+			echo "*import-marks $gitmarks"
+			echo "*export-marks $gitmarks"
+		fi
 		echo
 		;;
 	list)
@@ -45,13 +56,16 @@ do
 			test "${line%% *}" != "import" && break
 		done
 
-		echo "feature import-marks=$gitmarks"
-		echo "feature export-marks=$gitmarks"
-		git fast-export --use-done-feature --{import,export}-marks="$testgitmarks" $refs |
+		if test -n "$gitmarks"
+		then
+			echo "feature import-marks=$gitmarks"
+			echo "feature export-marks=$gitmarks"
+		fi
+		git fast-export --use-done-feature "${testgitmarks_args[@]}" $refs |
 		sed -e "s#refs/heads/#${prefix}/heads/#g"
 		;;
 	export)
-		git fast-import --{import,export}-marks="$testgitmarks" --quiet
+		git fast-import "${testgitmarks_args[@]}" --quiet
 		echo
 		;;
 	'')
