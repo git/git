@@ -201,6 +201,34 @@ test_expect_success $PREREQ 'Prompting works' '
 		grep "^To: to@example.com\$" msgtxt1
 '
 
+test_expect_success $PREREQ,AUTOIDENT 'implicit ident is allowed' '
+	clean_fake_sendmail &&
+	(sane_unset GIT_AUTHOR_NAME &&
+	sane_unset GIT_AUTHOR_EMAIL &&
+	sane_unset GIT_COMMITTER_NAME &&
+	sane_unset GIT_COMMITTER_EMAIL &&
+	GIT_SEND_EMAIL_NOTTY=1 git send-email \
+		--smtp-server="$(pwd)/fake.sendmail" \
+		--to=to@example.com \
+		$patches </dev/null 2>errors
+	)
+'
+
+test_expect_success $PREREQ,!AUTOIDENT 'broken implicit ident aborts send-email' '
+	clean_fake_sendmail &&
+	(sane_unset GIT_AUTHOR_NAME &&
+	sane_unset GIT_AUTHOR_EMAIL &&
+	sane_unset GIT_COMMITTER_NAME &&
+	sane_unset GIT_COMMITTER_EMAIL &&
+	GIT_SEND_EMAIL_NOTTY=1 && export GIT_SEND_EMAIL_NOTTY &&
+	test_must_fail git send-email \
+		--smtp-server="$(pwd)/fake.sendmail" \
+		--to=to@example.com \
+		$patches </dev/null 2>errors &&
+	test_i18ngrep "tell me who you are" errors
+	)
+'
+
 test_expect_success $PREREQ 'tocmd works' '
 	clean_fake_sendmail &&
 	cp $patches tocmd.patch &&
