@@ -65,7 +65,20 @@ do
 		sed -e "s#refs/heads/#${prefix}/heads/#g"
 		;;
 	export)
+		before=$(git for-each-ref --format='%(refname) %(objectname)')
+
 		git fast-import "${testgitmarks_args[@]}" --quiet
+
+		after=$(git for-each-ref --format='%(refname) %(objectname)')
+
+		# figure out which refs were updated
+		join -e 0 -o '0 1.2 2.2' -a 2 <(echo "$before") <(echo "$after") |
+		while read ref a b
+		do
+			test $a == $b && continue
+			echo "ok $ref"
+		done
+
 		echo
 		;;
 	'')
