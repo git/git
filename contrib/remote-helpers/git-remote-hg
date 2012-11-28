@@ -565,7 +565,7 @@ def parse_commit(parser):
 
     for line in parser:
         if parser.check('M'):
-            t, m, mark_ref, path = line.split(' ')
+            t, m, mark_ref, path = line.split(' ', 3)
             mark = int(mark_ref[1:])
             f = { 'mode' : hgmode(m), 'data' : blob_marks[mark] }
         elif parser.check('D'):
