@@ -474,17 +474,20 @@ static void handle_tag(const char *name, struct tag *tag)
 	       (int)message_size, (int)message_size, message ? message : "");
 }
 
-static void get_tags_and_duplicates(struct object_array *pending,
+static void get_tags_and_duplicates(struct rev_cmdline_info *info,
 				    struct string_list *extra_refs)
 {
 	struct tag *tag;
 	int i;
 
-	for (i = 0; i < pending->nr; i++) {
-		struct object_array_entry *e = pending->objects + i;
+	for (i = 0; i < info->nr; i++) {
+		struct rev_cmdline_entry *e = info->rev + i;
 		unsigned char sha1[20];
 		struct commit *commit;
 		char *full_name;
+
+		if (e->flags & UNINTERESTING)
+			continue;
 
 		if (dwim_ref(e->name, strlen(e->name), sha1, &full_name) != 1)
 			continue;
@@ -681,7 +684,7 @@ int cmd_fast_export(int argc, const char **argv, const char *prefix)
 	if (import_filename && revs.prune_data.nr)
 		full_tree = 1;
 
-	get_tags_and_duplicates(&revs.pending, &extra_refs);
+	get_tags_and_duplicates(&revs.cmdline, &extra_refs);
 
 	if (prepare_revision_walk(&revs))
 		die("revision walk setup failed");

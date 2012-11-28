@@ -162,4 +162,12 @@ test_expect_failure 'pushing without marks' '
 	compare_refs local2 HEAD server HEAD
 '
 
+test_expect_success 'push all with existing object' '
+	(cd local &&
+	git branch dup2 master &&
+	git push origin --all
+	) &&
+	compare_refs local dup2 server dup2
+'
+
 test_done

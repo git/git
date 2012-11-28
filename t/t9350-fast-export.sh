@@ -454,4 +454,34 @@ test_expect_success 'test bidirectionality' '
 	git fast-import --export-marks=marks-cur --import-marks=marks-cur
 '
 
+cat > expected << EOF
+blob
+mark :13
+data 5
+bump
+
+commit refs/heads/master
+mark :14
+author A U Thor <author@example.com> 1112912773 -0700
+committer C O Mitter <committer@example.com> 1112912773 -0700
+data 5
+bump
+from :12
+M 100644 :13 file
+
+EOF
+
+test_expect_success 'avoid uninteresting refs' '
+	> tmp-marks &&
+	git fast-export --import-marks=tmp-marks \
+		--export-marks=tmp-marks master > /dev/null &&
+	git tag v1.0 &&
+	git branch uninteresting &&
+	echo bump > file &&
+	git commit -a -m bump &&
+	git fast-export --import-marks=tmp-marks \
+		--export-marks=tmp-marks ^uninteresting ^v1.0 master > actual &&
+	test_cmp expected actual
+'
+
 test_done
