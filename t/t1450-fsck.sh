@@ -237,4 +237,20 @@ test_expect_success 'fsck notices submodule entry pointing to null sha1' '
 	)
 '
 
+test_expect_success 'fsck notices "." and ".." in trees' '
+	(
+		git init dots &&
+		cd dots &&
+		blob=$(echo foo | git hash-object -w --stdin) &&
+		tab=$(printf "\\t") &&
+		git mktree <<-EOF &&
+		100644 blob $blob$tab.
+		100644 blob $blob$tab..
+		EOF
+		git fsck 2>out &&
+		cat out &&
+		grep "warning.*\\." out
+	)
+'
+
 test_done
