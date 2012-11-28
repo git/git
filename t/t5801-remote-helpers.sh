@@ -33,11 +33,6 @@ test_expect_success 'cloning from local repo' '
 	test_cmp public/file localclone/file
 '
 
-test_expect_success 'cloning from remote repo' '
-	git clone "testgit::file://${PWD}/server" clone &&
-	test_cmp public/file clone/file
-'
-
 test_expect_success 'create new commit on remote' '
 	(cd public &&
 	 echo content >>file &&
@@ -48,11 +43,6 @@ test_expect_success 'create new commit on remote' '
 test_expect_success 'pulling from local repo' '
 	(cd localclone && git pull) &&
 	test_cmp public/file localclone/file
-'
-
-test_expect_success 'pulling from remote remote' '
-	(cd clone && git pull) &&
-	test_cmp public/file clone/file
 '
 
 test_expect_success 'pushing to local repo' '
@@ -76,19 +66,6 @@ test_expect_success 'pushing to local repo' '
 	compare_refs localclone2 HEAD server2 HEAD
 '
 
-test_expect_success 'synch with changes from localclone' '
-	(cd clone &&
-	 git pull)
-'
-
-test_expect_success 'pushing remote local repo' '
-	(cd clone &&
-	echo content >>file &&
-	git commit -a -m four &&
-	git push) &&
-	compare_refs clone HEAD server HEAD
-'
-
 test_expect_success 'fetch new branch' '
 	(cd public &&
 	 git checkout -b new &&
@@ -102,6 +79,20 @@ test_expect_success 'fetch new branch' '
 	compare_refs public HEAD localclone FETCH_HEAD
 '
 
+#
+# This is only needed because of a bug not detected by this script. It will be
+# fixed shortly, but for now lets not cause regressions.
+#
+test_expect_success 'bump commit in public' '
+	(cd public &&
+	git checkout master &&
+	git pull &&
+	echo content >>file &&
+	git commit -a -m four &&
+	git push) &&
+	compare_refs public HEAD server HEAD
+'
+
 test_expect_success 'fetch multiple branches' '
 	(cd localclone &&
 	 git fetch
@@ -111,29 +102,30 @@ test_expect_success 'fetch multiple branches' '
 '
 
 test_expect_success 'push when remote has extra refs' '
-	(cd clone &&
+	(cd localclone &&
+	 git reset --hard origin/master &&
 	 echo content >>file &&
 	 git commit -a -m six &&
 	 git push
 	) &&
-	compare_refs clone master server master
+	compare_refs localclone master server master
 '
 
 test_expect_success 'push new branch by name' '
-	(cd clone &&
+	(cd localclone &&
 	 git checkout -b new-name  &&
 	 echo content >>file &&
 	 git commit -a -m seven &&
 	 git push origin new-name
 	) &&
-	compare_refs clone HEAD server refs/heads/new-name
+	compare_refs localclone HEAD server refs/heads/new-name
 '
 
 test_expect_failure 'push new branch with old:new refspec' '
-	(cd clone &&
+	(cd localclone &&
 	 git push origin new-name:new-refspec
 	) &&
-	compare_refs clone HEAD server refs/heads/new-refspec
+	compare_refs localclone HEAD server refs/heads/new-refspec
 '
 
 test_done

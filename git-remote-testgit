@@ -4,9 +4,6 @@
 alias=$1
 url=$2
 
-# huh?
-url="${url#file://}"
-
 dir="$GIT_DIR/testgit/$alias"
 prefix="refs/testgit/$alias"
 refspec="refs/heads/*:${prefix}/heads/*"
