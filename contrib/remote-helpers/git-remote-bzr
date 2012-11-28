@@ -17,7 +17,8 @@
 import sys
 
 import bzrlib
-bzrlib.initialize()
+if hasattr(bzrlib, "initialize"):
+    bzrlib.initialize()
 
 import bzrlib.plugin
 bzrlib.plugin.load_plugins()
@@ -553,7 +554,7 @@ def parse_commit(parser):
 
     repo.lock_write()
     try:
-        builder = repo.get_commit_builder(parents, None, date, tz, committer, props, revid, False)
+        builder = repo.get_commit_builder(parents, None, date, tz, committer, props, revid)
         try:
             list(builder.record_iter_changes(mtree, mtree.last_revision(), changes))
             builder.finish_inventory()
@@ -612,7 +613,10 @@ def do_export(parser):
         if ref == 'refs/heads/master':
             repo.generate_revision_history(revid, marks.get_tip('master'))
             revno, revid = repo.last_revision_info()
-            peer.import_last_revision_info_and_tags(repo, revno, revid)
+            if hasattr(peer, "import_last_revision_info_and_tags"):
+                peer.import_last_revision_info_and_tags(repo, revno, revid)
+            else:
+                peer.import_last_revision_info(repo.repository, revno, revid)
             wt = peer.bzrdir.open_workingtree()
             wt.update()
         print "ok %s" % ref
@@ -646,12 +650,12 @@ def get_repo(url, alias):
     global dirname, peer
 
     clone_path = os.path.join(dirname, 'clone')
-    origin = bzrlib.controldir.ControlDir.open(url)
+    origin = bzrlib.bzrdir.BzrDir.open(url)
     remote_branch = origin.open_branch()
 
     if os.path.exists(clone_path):
         # pull
-        d = bzrlib.controldir.ControlDir.open(clone_path)
+        d = bzrlib.bzrdir.BzrDir.open(clone_path)
         branch = d.open_branch()
         result = branch.pull(remote_branch, [], None, False)
     else:
