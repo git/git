@@ -23,10 +23,6 @@
 #    3) Consider changing your PS1 to also show the current branch,
 #       see git-prompt.sh for details.
 
-if [[ -n ${ZSH_VERSION-} ]]; then
-	autoload -U +X bashcompinit && bashcompinit
-fi
-
 case "$COMP_WORDBREAKS" in
 *:*) : great ;;
 *)   COMP_WORDBREAKS="$COMP_WORDBREAKS:"
@@ -169,7 +165,6 @@ __git_reassemble_comp_words_by_ref()
 }
 
 if ! type _get_comp_words_by_ref >/dev/null 2>&1; then
-if [[ -z ${ZSH_VERSION:+set} ]]; then
 _get_comp_words_by_ref ()
 {
 	local exclude cur_ words_ cword_
@@ -197,32 +192,6 @@ _get_comp_words_by_ref ()
 		shift
 	done
 }
-else
-_get_comp_words_by_ref ()
-{
-	while [ $# -gt 0 ]; do
-		case "$1" in
-		cur)
-			cur=${COMP_WORDS[COMP_CWORD]}
-			;;
-		prev)
-			prev=${COMP_WORDS[COMP_CWORD-1]}
-			;;
-		words)
-			words=("${COMP_WORDS[@]}")
-			;;
-		cword)
-			cword=$COMP_CWORD
-			;;
-		-n)
-			# assume COMP_WORDBREAKS is already set sanely
-			shift
-			;;
-		esac
-		shift
-	done
-}
-fi
 fi
 
 # Generates completion reply with compgen, appending a space to possible
@@ -2430,20 +2399,69 @@ __gitk_main ()
 	__git_complete_revlist
 }
 
+if [[ -n ${ZSH_VERSION-} ]]; then
+	echo "WARNING: this script is deprecated, please see git-completion.zsh" 1>&2
+
+	__gitcomp ()
+	{
+		emulate -L zsh
+
+		local cur_="${3-$cur}"
+
+		case "$cur_" in
+		--*=)
+			;;
+		*)
+			local c IFS=$' \t\n'
+			local -a array
+			for c in ${=1}; do
+				c="$c${4-}"
+				case $c in
+				--*=*|*.) ;;
+				*) c="$c " ;;
+				esac
+				array+=("$c")
+			done
+			compset -P '*[=:]'
+			compadd -Q -S '' -p "${2-}" -a -- array && _ret=0
+			;;
+		esac
+	}
+
+	__gitcomp_nl ()
+	{
+		emulate -L zsh
+
+		local IFS=$'\n'
+		compset -P '*[=:]'
+		compadd -Q -S "${4- }" -p "${2-}" -- ${=1} && _ret=0
+	}
+
+	__git_zsh_helper ()
+	{
+		emulate -L ksh
+		local cur cword prev
+		cur=${words[CURRENT-1]}
+		prev=${words[CURRENT-2]}
+		let cword=CURRENT-1
+		__${service}_main
+	}
+
+	_git ()
+	{
+		emulate -L zsh
+		local _ret=1
+		__git_zsh_helper
+		let _ret && _default -S '' && _ret=0
+		return _ret
+	}
+
+	compdef _git git gitk
+	return
+fi
+
 __git_func_wrap ()
 {
-	if [[ -n ${ZSH_VERSION-} ]]; then
-		emulate -L bash
-		setopt KSH_TYPESET
-
-		# workaround zsh's bug that leaves 'words' as a special
-		# variable in versions < 4.3.12
-		typeset -h words
-
-		# workaround zsh's bug that quotes spaces in the COMPREPLY
-		# array if IFS doesn't contain spaces.
-		typeset -h IFS
-	fi
 	local cur words cword prev
 	_get_comp_words_by_ref -n =: cur words cword prev
 	$1
