@@ -253,4 +253,19 @@ test_expect_success 'fsck notices "." and ".." in trees' '
 	)
 '
 
+test_expect_success 'fsck notices ".git" in trees' '
+	(
+		git init dotgit &&
+		cd dotgit &&
+		blob=$(echo foo | git hash-object -w --stdin) &&
+		tab=$(printf "\\t") &&
+		git mktree <<-EOF &&
+		100644 blob $blob$tab.git
+		EOF
+		git fsck 2>out &&
+		cat out &&
+		grep "warning.*\\.git" out
+	)
+'
+
 test_done

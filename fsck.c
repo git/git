@@ -144,6 +144,7 @@ static int fsck_tree(struct tree *item, int strict, fsck_error error_func)
 	int has_empty_name = 0;
 	int has_dot = 0;
 	int has_dotdot = 0;
+	int has_dotgit = 0;
 	int has_zero_pad = 0;
 	int has_bad_modes = 0;
 	int has_dup_entries = 0;
@@ -174,6 +175,8 @@ static int fsck_tree(struct tree *item, int strict, fsck_error error_func)
 			has_dot = 1;
 		if (!strcmp(name, ".."))
 			has_dotdot = 1;
+		if (!strcmp(name, ".git"))
+			has_dotgit = 1;
 		has_zero_pad |= *(char *)desc.buffer == '0';
 		update_tree_entry(&desc);
 
@@ -227,6 +230,8 @@ static int fsck_tree(struct tree *item, int strict, fsck_error error_func)
 		retval += error_func(&item->object, FSCK_WARN, "contains '.'");
 	if (has_dotdot)
 		retval += error_func(&item->object, FSCK_WARN, "contains '..'");
+	if (has_dotgit)
+		retval += error_func(&item->object, FSCK_WARN, "contains '.git'");
 	if (has_zero_pad)
 		retval += error_func(&item->object, FSCK_WARN, "contains zero-padded file modes");
 	if (has_bad_modes)
