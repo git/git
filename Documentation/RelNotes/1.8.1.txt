@@ -27,7 +27,7 @@ Updates since v1.8.0
 
 UI, Workflows & Features
 
- * Command-line completion for tcsh has been added.
+ * Command-line completion scripts for tcsh and zsh have been added.
 
  * We used to have a workaround for a bug in ancient "less" that
    causes it to exit without any output when the terminal is resized.
@@ -44,12 +44,21 @@ UI, Workflows & Features
    give the default number of context lines in the patch output, to
    override the hardcoded default of 3 lines.
 
+ * When "git checkout" checks out a branch, it tells the user how far
+   behind (or ahead) the new branch is relative to the remote tracking
+   branch it builds upon.  The message now also advises how to sync
+   them up by pushing or pulling.
+
  * "git config --get" used to diagnose presence of multiple
    definitions of the same variable in the same configuration file as
    an error, but it now applies the "last one wins" rule used by the
    internal configuration logic.  Strictly speaking, this may be an
    API regression but it is expected that nobody will notice it in
    practice.
+
+ * "git log -p -S<string>" now looks for the <string> after applying
+   the textconv filter (if defined); earlier it inspected the contents
+   of the blobs without filtering.
 
  * "git format-patch" learned the "--notes=<ref>" option to give
    notes for the commit after the three-dash lines in its output.
