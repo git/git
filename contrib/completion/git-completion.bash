@@ -958,6 +958,8 @@ _git_clone ()
 			--upload-pack
 			--template=
 			--depth
+			--single-branch
+			--branch
 			"
 		return
 		;;

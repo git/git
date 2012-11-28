@@ -1,0 +1,15 @@
+Git v1.8.0.2 Release Notes
+==========================
+
+Fixes since v1.8.0.1
+--------------------
+
+ * "git p4" used to try expanding malformed "$keyword$" that spans
+   across multiple lines.
+
+ * "git update-ref -d --deref SYM" to delete a ref through a symbolic
+   ref that points to it did not remove it correctly.
+
+ * Syntax highlighting in "gitweb" was not quite working.
+
+Also contains other minor fixes and documentation updates.
