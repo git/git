@@ -3,12 +3,12 @@
 # Copyright (c) 2010 Sverre Rabbelier
 #
 
-test_description='Test remote-helper import and export commands'
+test_description='Test python remote-helper framework'
 
 . ./test-lib.sh
 
 if ! test_have_prereq PYTHON ; then
-	skip_all='skipping remote-testgit tests, python not available'
+	skip_all='skipping python remote-helper tests, python not available'
 	test_done
 fi
 
@@ -17,7 +17,7 @@ import sys
 if sys.hexversion < 0x02040000:
     sys.exit(1)
 ' || {
-	skip_all='skipping remote-testgit tests, python version < 2.4'
+	skip_all='skipping python remote-helper tests, python version < 2.4'
 	test_done
 }
 
@@ -38,12 +38,12 @@ test_expect_success 'setup repository' '
 '
 
 test_expect_success 'cloning from local repo' '
-	git clone "testgit::${PWD}/server" localclone &&
+	git clone "testpy::${PWD}/server" localclone &&
 	test_cmp public/file localclone/file
 '
 
 test_expect_success 'cloning from remote repo' '
-	git clone "testgit::file://${PWD}/server" clone &&
+	git clone "testpy::file://${PWD}/server" clone &&
 	test_cmp public/file clone/file
 '
 
@@ -73,11 +73,11 @@ test_expect_success 'pushing to local repo' '
 '
 
 # Generally, skip this test.  It demonstrates a now-fixed race in
-# git-remote-testgit, but is too slow to leave in for general use.
+# git-remote-testpy, but is too slow to leave in for general use.
 : test_expect_success 'racily pushing to local repo' '
 	test_when_finished "rm -rf server2 localclone2" &&
 	cp -R server server2 &&
-	git clone "testgit::${PWD}/server2" localclone2 &&
+	git clone "testpy::${PWD}/server2" localclone2 &&
 	(cd localclone2 &&
 	echo content >>file &&
 	git commit -a -m three &&
