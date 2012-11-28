@@ -1,0 +1,64 @@
+#!/usr/bin/env bash
+# Copyright (c) 2012 Felipe Contreras
+
+alias=$1
+url=$2
+
+# huh?
+url="${url#file://}"
+
+dir="$GIT_DIR/testgit/$alias"
+prefix="refs/testgit/$alias"
+refspec="refs/heads/*:${prefix}/heads/*"
+
+gitmarks="$dir/git.marks"
+testgitmarks="$dir/testgit.marks"
+
+export GIT_DIR="$url/.git"
+
+mkdir -p "$dir"
+
+test -e "$gitmarks" || > "$gitmarks"
+test -e "$testgitmarks" || > "$testgitmarks"
+
+while read line
+do
+	case $line in
+	capabilities)
+		echo 'import'
+		echo 'export'
+		echo "refspec $refspec"
+		echo "*import-marks $gitmarks"
+		echo "*export-marks $gitmarks"
+		echo
+		;;
+	list)
+		git for-each-ref --format='? %(refname)' 'refs/heads/'
+		head=$(git symbolic-ref HEAD)
+		echo "@$head HEAD"
+		echo
+		;;
+	import*)
+		# read all import lines
+		while true
+		do
+			ref="${line#* }"
+			refs="$refs $ref"
+			read line
+			test "${line%% *}" != "import" && break
+		done
+
+		echo "feature import-marks=$gitmarks"
+		echo "feature export-marks=$gitmarks"
+		git fast-export --use-done-feature --{import,export}-marks="$testgitmarks" $refs |
+		sed -e "s#refs/heads/#${prefix}/heads/#g"
+		;;
+	export)
+		git fast-import --{import,export}-marks="$testgitmarks" --quiet
+		echo
+		;;
+	'')
+		exit
+		;;
+	esac
+done
