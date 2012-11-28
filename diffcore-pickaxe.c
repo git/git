@@ -157,19 +157,15 @@ static void diffcore_pickaxe_grep(struct diff_options *o)
 	return;
 }
 
-static unsigned int contains(struct diff_filespec *one, struct diff_options *o,
+static unsigned int contains(mmfile_t *mf, struct diff_options *o,
 			     regex_t *regexp, kwset_t kws)
 {
 	unsigned int cnt;
 	unsigned long sz;
 	const char *data;
-	if (!o->pickaxe[0])
-		return 0;
-	if (diff_populate_filespec(one, 0))
-		return 0;
 
-	sz = one->size;
-	data = one->data;
+	sz = mf->size;
+	data = mf->ptr;
 	cnt = 0;
 
 	if (regexp) {
@@ -199,26 +195,53 @@ static unsigned int contains(struct diff_filespec *one, struct diff_options *o,
 			cnt++;
 		}
 	}
-	diff_free_filespec_data(one);
 	return cnt;
 }
 
 static int has_changes(struct diff_filepair *p, struct diff_options *o,
 		       regex_t *regexp, kwset_t kws)
 {
-	if (!DIFF_FILE_VALID(p->one)) {
-		if (!DIFF_FILE_VALID(p->two))
-			return 0; /* ignore unmerged */
+	struct userdiff_driver *textconv_one = get_textconv(p->one);
+	struct userdiff_driver *textconv_two = get_textconv(p->two);
+	mmfile_t mf1, mf2;
+	int ret;
+
+	if (!o->pickaxe[0])
+		return 0;
+
+	/*
+	 * If we have an unmodified pair, we know that the count will be the
+	 * same and don't even have to load the blobs. Unless textconv is in
+	 * play, _and_ we are using two different textconv filters (e.g.,
+	 * because a pair is an exact rename with different textconv attributes
+	 * for each side, which might generate different content).
+	 */
+	if (textconv_one == textconv_two && diff_unmodified_pair(p))
+		return 0;
+
+	fill_one(p->one, &mf1, &textconv_one);
+	fill_one(p->two, &mf2, &textconv_two);
+
+	if (!mf1.ptr) {
+		if (!mf2.ptr)
+			ret = 0; /* ignore unmerged */
 		/* created */
-		return contains(p->two, o, regexp, kws) != 0;
+		ret = contains(&mf2, o, regexp, kws) != 0;
 	}
-	if (!DIFF_FILE_VALID(p->two))
-		return contains(p->one, o, regexp, kws) != 0;
-	if (!diff_unmodified_pair(p)) {
-		return contains(p->one, o, regexp, kws) !=
-		       contains(p->two, o, regexp, kws);
-	}
-	return 0;
+	else if (!mf2.ptr) /* removed */
+		ret = contains(&mf1, o, regexp, kws) != 0;
+	else
+		ret = contains(&mf1, o, regexp, kws) !=
+		      contains(&mf2, o, regexp, kws);
+
+	if (textconv_one)
+		free(mf1.ptr);
+	if (textconv_two)
+		free(mf2.ptr);
+	diff_free_filespec_data(p->one);
+	diff_free_filespec_data(p->two);
+
+	return ret;
 }
 
 static void diffcore_pickaxe_count(struct diff_options *o)
