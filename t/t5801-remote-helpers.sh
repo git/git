@@ -63,18 +63,6 @@ test_expect_success 'fetch new branch' '
 	compare_refs server HEAD local FETCH_HEAD
 '
 
-#
-# This is only needed because of a bug not detected by this script. It will be
-# fixed shortly, but for now lets not cause regressions.
-#
-test_expect_success 'bump commit in server' '
-	(cd server &&
-	git checkout master &&
-	echo content >>file &&
-	git commit -a -m four) &&
-	compare_refs server HEAD server HEAD
-'
-
 test_expect_success 'fetch multiple branches' '
 	(cd local &&
 	 git fetch
@@ -168,6 +156,14 @@ test_expect_success 'push all with existing object' '
 	git push origin --all
 	) &&
 	compare_refs local dup2 server dup2
+'
+
+test_expect_success 'push ref with existing object' '
+	(cd local &&
+	git branch dup master &&
+	git push origin dup
+	) &&
+	compare_refs local dup server dup
 '
 
 test_done
