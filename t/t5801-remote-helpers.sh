@@ -19,100 +19,95 @@ compare_refs() {
 }
 
 test_expect_success 'setup repository' '
-	git init --bare server/.git &&
-	git clone server public &&
-	(cd public &&
+	git init server &&
+	(cd server &&
 	 echo content >file &&
 	 git add file &&
-	 git commit -m one &&
-	 git push origin master)
+	 git commit -m one)
 '
 
 test_expect_success 'cloning from local repo' '
-	git clone "testgit::${PWD}/server" localclone &&
-	test_cmp public/file localclone/file
+	git clone "testgit::${PWD}/server" local &&
+	test_cmp server/file local/file
 '
 
 test_expect_success 'create new commit on remote' '
-	(cd public &&
+	(cd server &&
 	 echo content >>file &&
-	 git commit -a -m two &&
-	 git push)
+	 git commit -a -m two)
 '
 
 test_expect_success 'pulling from local repo' '
-	(cd localclone && git pull) &&
-	test_cmp public/file localclone/file
+	(cd local && git pull) &&
+	test_cmp server/file local/file
 '
 
 test_expect_success 'pushing to local repo' '
-	(cd localclone &&
+	(cd local &&
 	echo content >>file &&
 	git commit -a -m three &&
 	git push) &&
-	compare_refs localclone HEAD server HEAD
+	compare_refs local HEAD server HEAD
 '
 
 test_expect_success 'fetch new branch' '
-	(cd public &&
+	(cd server &&
+	 git reset --hard &&
 	 git checkout -b new &&
 	 echo content >>file &&
-	 git commit -a -m five &&
-	 git push origin new
+	 git commit -a -m five
 	) &&
-	(cd localclone &&
+	(cd local &&
 	 git fetch origin new
 	) &&
-	compare_refs public HEAD localclone FETCH_HEAD
+	compare_refs server HEAD local FETCH_HEAD
 '
 
 #
 # This is only needed because of a bug not detected by this script. It will be
 # fixed shortly, but for now lets not cause regressions.
 #
-test_expect_success 'bump commit in public' '
-	(cd public &&
+test_expect_success 'bump commit in server' '
+	(cd server &&
 	git checkout master &&
-	git pull &&
 	echo content >>file &&
-	git commit -a -m four &&
-	git push) &&
-	compare_refs public HEAD server HEAD
+	git commit -a -m four) &&
+	compare_refs server HEAD server HEAD
 '
 
 test_expect_success 'fetch multiple branches' '
-	(cd localclone &&
+	(cd local &&
 	 git fetch
 	) &&
-	compare_refs server master localclone refs/remotes/origin/master &&
-	compare_refs server new localclone refs/remotes/origin/new
+	compare_refs server master local refs/remotes/origin/master &&
+	compare_refs server new local refs/remotes/origin/new
 '
 
 test_expect_success 'push when remote has extra refs' '
-	(cd localclone &&
+	(cd local &&
 	 git reset --hard origin/master &&
 	 echo content >>file &&
 	 git commit -a -m six &&
 	 git push
 	) &&
-	compare_refs localclone master server master
+	compare_refs local master server master
 '
 
 test_expect_success 'push new branch by name' '
-	(cd localclone &&
+	(cd local &&
 	 git checkout -b new-name  &&
 	 echo content >>file &&
 	 git commit -a -m seven &&
 	 git push origin new-name
 	) &&
-	compare_refs localclone HEAD server refs/heads/new-name
+	compare_refs local HEAD server refs/heads/new-name
 '
 
 test_expect_failure 'push new branch with old:new refspec' '
-	(cd localclone &&
+	(cd local &&
 	 git push origin new-name:new-refspec
 	) &&
-	compare_refs localclone HEAD server refs/heads/new-refspec
+	compare_refs local HEAD server refs/heads/new-refspec
 '
 
 test_done
