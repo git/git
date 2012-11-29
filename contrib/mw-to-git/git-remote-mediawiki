@@ -711,6 +711,14 @@ sub fetch_mw_revisions {
 	return ($n, @revisions);
 }
 
+sub fe_escape_path {
+    my $path = shift;
+    $path =~ s/\\/\\\\/g;
+    $path =~ s/"/\\"/g;
+    $path =~ s/\n/\\n/g;
+    return '"' . $path . '"';
+}
+
 sub import_file_revision {
 	my $commit = shift;
 	my %commit = %{$commit};
@@ -738,15 +746,17 @@ sub import_file_revision {
 		print STDOUT "from refs/mediawiki/$remotename/master^0\n";
 	}
 	if ($content ne DELETED_CONTENT) {
-		print STDOUT "M 644 inline $title.mw\n";
+		print STDOUT "M 644 inline " .
+		    fe_escape_path($title . ".mw") . "\n";
 		literal_data($content);
 		if (%mediafile) {
-			print STDOUT "M 644 inline $mediafile{title}\n";
+			print STDOUT "M 644 inline "
+			    . fe_escape_path($mediafile{title}) . "\n";
 			literal_data_raw($mediafile{content});
 		}
 		print STDOUT "\n\n";
 	} else {
-		print STDOUT "D $title.mw\n";
+		print STDOUT "D " . fe_escape_path($title . ".mw") . "\n";
 	}
 
 	# mediawiki revision number in the git note

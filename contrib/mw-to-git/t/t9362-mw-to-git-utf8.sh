@@ -318,4 +318,30 @@ test_expect_success 'git push with \ in format control' '
 '
 
 
+test_expect_success 'fast-import meta-characters in page name (mw -> git)' '
+	wiki_reset &&
+	wiki_editpage \"file\"_\\_foo "expect to be called \"file\"_\\_foo" false &&
+	git clone mediawiki::'"$WIKI_URL"' mw_dir_21 &&
+	test_path_is_file mw_dir_21/\"file\"_\\_foo.mw &&
+	wiki_getallpage ref_page_21 &&
+	test_diff_directories mw_dir_21 ref_page_21
+'
+
+
+test_expect_success 'fast-import meta-characters in page name (git -> mw) ' '
+	wiki_reset &&
+	git clone mediawiki::'"$WIKI_URL"' mw_dir_22 &&
+	(
+		cd mw_dir_22 &&
+		echo "this file is called \"file\"_\\_foo.mw" >\"file\"_\\_foo &&
+		git add . &&
+		git commit -am "file \"file\"_\\_foo" &&
+		git pull &&
+		git push
+	) &&
+	wiki_getallpage ref_page_22 &&
+	test_diff_directories mw_dir_22 ref_page_22
+'
+
+
 test_done
