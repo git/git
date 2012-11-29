@@ -1,10 +1,10 @@
 To: git@vger.kernel.org
 Bcc: lwn@lwn.net
-Subject: What's cooking in git.git (Nov 2012, #09; Wed, 28)
-X-master-at: b7973fbbc3f8f72df352f4ef1a2ff325db92c36f
-X-next-at: 0e4115f14e74f5bdd623ce876941a254499f6c9d
+Subject: What's cooking in git.git (Nov 2012, #10; Thu, 29)
+X-master-at: f94c3251e1400c3cf349f7f84fea4db66b540113
+X-next-at: 19e1b0a2032ea70977d8d774ed994913f067038b
 
-What's cooking in git.git (Nov 2012, #09; Wed, 28)
+What's cooking in git.git (Nov 2012, #10; Thu, 29)
 --------------------------------------------------
 
 Here are the topics that have been cooking.  Commits prefixed with
@@ -23,135 +23,181 @@ repositories listed at
 --------------------------------------------------
 [New Topics]
 
-* bc/append-signed-off-by (2012-11-26) 11 commits
- - Unify appending signoff in format-patch, commit and sequencer
- - format-patch: update append_signoff prototype
- - format-patch: stricter S-o-b detection
- - t4014: more tests about appending s-o-b lines
- - sequencer.c: teach append_signoff to avoid adding a duplicate newline
- - sequencer.c: teach append_signoff how to detect duplicate s-o-b
- - sequencer.c: always separate "(cherry picked from" from commit body
- - sequencer.c: recognize "(cherry picked from ..." as part of s-o-b footer
- - t/t3511: add some tests of 'cherry-pick -s' functionality
- - t/test-lib-functions.sh: allow to specify the tag name to test_commit
- - sequencer.c: remove broken support for rfc2822 continuation in footer
+* wk/submodule-update-remote (2012-11-28) 2 commits
+ - submodule add: If --branch is given, record it in .gitmodules
+ - submodule update: add --remote for submodule's upstream changes
 
- Will merge to 'next'.
+ Still under active discussion.
 
+--------------------------------------------------
+[Graduated to "master"]
 
 * er/doc-add-new-commands (2012-11-26) 1 commit
- - Documentation: how to add a new command
+  (merged to 'next' on 2012-11-28 at 2daf755)
+ + Documentation: how to add a new command
 
- Will merge to 'next'.
+
+* fc/completion-test-simplification (2012-11-16) 6 commits
+  (merged to 'next' on 2012-11-28 at b7b2f67)
+ + completion: simplify __gitcomp() test helper
+ + completion: refactor __gitcomp related tests
+ + completion: consolidate test_completion*() tests
+ + completion: simplify tests using test_completion_long()
+ + completion: standardize final space marker in tests
+ + completion: add comment for test_completion()
+
+ Clean up completion tests.  Use of conslidated helper may make
+ instrumenting one particular test during debugging of the test
+ itself, but I think that issue should be addressed in some other
+ way (e.g. making sure individual tests in 9902 can be skipped).
+
+
+* fc/remote-hg (2012-11-27) 22 commits
+  (merged to 'next' on 2012-11-28 at f805784)
+ + remote-hg: fix for older versions of python
+ + remote-hg: fix for files with spaces
+  (merged to 'next' on 2012-11-18 at 4a4f2e4)
+ + remote-hg: avoid bad refs
+ + remote-hg: try the 'tip' if no checkout present
+ + remote-hg: fix compatibility with older versions of hg
+ + remote-hg: add missing config for basic tests
+ + remote-hg: the author email can be null
+ + remote-hg: add option to not track branches
+ + remote-hg: add extra author test
+ + remote-hg: add tests to compare with hg-git
+ + remote-hg: add bidirectional tests
+ + test-lib: avoid full path to store test results
+ + remote-hg: add basic tests
+ + remote-hg: fake bookmark when there's none
+ + remote-hg: add compat for hg-git author fixes
+ + remote-hg: add support for hg-git compat mode
+ + remote-hg: match hg merge behavior
+ + remote-hg: make sure the encoding is correct
+ + remote-hg: add support to push URLs
+ + remote-hg: add support for remote pushing
+ + remote-hg: add support for pushing
+ + Add new remote-hg transport helper
+
+ New remote helper for hg.
 
 
 * fc/send-email-no-sender-prompt (2012-11-26) 1 commit
- - send-email: avoid questions when user has an ident
+  (merged to 'next' on 2012-11-28 at 690d525)
+ + send-email: avoid questions when user has an ident
  (this branch is used by jk/send-email-sender-prompt.)
 
- Will merge to 'next'.
+ In cases the sender ident is sufficiently specified, there is no
+ need to prompt the user before sending the series out.
+
+
+* fc/zsh-completion (2012-11-19) 2 commits
+  (merged to 'next' on 2012-11-26 at 48ebdc9)
+ + completion: start moving to the new zsh completion
+ + completion: add new zsh completion
+
+ Completion script revamped for zsh users.
+
+
+* jc/doc-push-satellite (2012-11-27) 1 commit
+  (merged to 'next' on 2012-11-28 at 7114637)
+ + Documentation/git-push.txt: clarify the "push from satellite" workflow
+
+ Clarify what the example that pushes branches into remote-tracking
+ branches of another repository is trying to achieve (i.e. emulating
+ a fetch in reverse).
+
+
+* jk/pickaxe-textconv (2012-10-28) 2 commits
+  (merged to 'next' on 2012-11-26 at 2c5b5c9)
+ + pickaxe: use textconv for -S counting
+ + pickaxe: hoist empty needle check
+
+ Use textconv filters when searching with "log -S".
+
+
+* jk/send-email-sender-prompt (2012-11-28) 7 commits
+  (merged to 'next' on 2012-11-28 at a808921)
+ + t9001: check send-email behavior with implicit sender
+ + Merge branch 'fc/send-email-no-sender-prompt' into jk/send-email-sender-prompt
+ + t: add tests for "git var"
+ + ident: keep separate "explicit" flags for author and committer
+ + ident: make user_ident_explicitly_given static
+ + t7502: factor out autoident prerequisite
+ + test-lib: allow negation of prerequisites
+ (this branch uses fc/send-email-no-sender-prompt.)
+
+ General clean-ups in various areas, originally written to support a
+ patch that later turned out to be unneeded.
 
 
 * jl/submodule-rm (2012-11-23) 1 commit
   (merged to 'next' on 2012-11-28 at 0e4115f)
  + Teach rm to remove submodules when given with a trailing '/'
 
- Finishing touches to the topic already in 'master'.
- Will merge to 'master'.
+ Finishing touches to "git rm $submodule" that removes the working
+ tree of a submodule.
 
 
 * km/send-email-remove-cruft-in-address (2012-11-26) 5 commits
- - git-send-email: allow edit invalid email address
- - git-send-email: ask what to do with an invalid email address
- - git-send-email: remove invalid addresses earlier
- - git-send-email: fix fallback code in extract_valid_address()
- - git-send-email: remove garbage after email address
+  (merged to 'next' on 2012-11-28 at 2688772)
+ + git-send-email: allow edit invalid email address
+ + git-send-email: ask what to do with an invalid email address
+ + git-send-email: remove invalid addresses earlier
+ + git-send-email: fix fallback code in extract_valid_address()
+ + git-send-email: remove garbage after email address
 
- Will merge to 'next'.
-
-
-* mh/unify-xml-in-imap-send-and-http-push (2012-11-26) 8 commits
- - wrap_in_html(): process message in bulk rather than line-by-line
- - wrap_in_html(): use strbuf_addstr_xml_quoted()
- - imap-send: change msg_data from storing (char *, len) to storing strbuf
- - imap-send: correctly report errors reading from stdin
- - imap-send: store all_msgs as a strbuf
- - lf_to_crlf(): NUL-terminate msg_data::data
- - xml_entities(): use function strbuf_addstr_xml_quoted()
- - Add new function strbuf_add_xml_quoted()
-
-
-* pw/p4-various-fixes (2012-11-26) 6 commits
- - git p4: remove unneeded cmd initialization
- - git p4: fix labelDetails typo in exception
- - git p4 test: display unresolvable host error
- - git p4: catch p4 errors when streaming file contents
- - git p4: handle servers without move support
- - git p4: catch p4 describe errors
-
- Will merge to 'next'.
-
-
-* rr/t4041-cleanup (2012-11-27) 4 commits
- - t4041 (diff-submodule-option): modernize style
- - t4041 (diff-submodule-option): rewrite add_file() routine
- - t4041 (diff-submodule-option): parse digests sensibly
- - t4041 (diff-submodule-option): don't hardcode SHA-1 in expected outputs
-
- As a clean-up, it still misses some.
-
-
-* jc/doc-maintainer (2012-11-27) 1 commit
- - update "howto maintain git"
-
- An early draft that is still incomplete.
-
-
-* jc/doc-push-satellite (2012-11-27) 1 commit
- - Documentation/git-push.txt: clarify the "push from satellite" workflow
-
- Will merge to 'next'.
-
-
-* jk/fsck-dot-in-trees (2012-11-28) 1 commit
- - fsck: warn about '.' and '..' in trees
-
- Will merge to 'next'.
+ Garbage after e-mail address on Cc: in the patch breaks the
+ transmission of it over send-email.
 
 
 * lt/diff-stat-show-0-lines (2012-11-27) 6 commits
- - diff --shortstat: do not count "unmerged" entries
- - diff --stat: do not count "unmerged" entries
- - diff --stat: move the "total count" logic to the last loop
- - diff --stat: use "file" temporary variable to refer to data->files[i]
- - diff --stat: status of unmodified pair in diff-q is not zero
- - test: add failing tests for "diff --stat" to t4049
+  (merged to 'next' on 2012-11-28 at de89eed)
+ + diff --shortstat: do not count "unmerged" entries
+ + diff --stat: do not count "unmerged" entries
+ + diff --stat: move the "total count" logic to the last loop
+ + diff --stat: use "file" temporary variable to refer to data->files[i]
+ + diff --stat: status of unmodified pair in diff-q is not zero
+ + test: add failing tests for "diff --stat" to t4049
 
- Will merge to 'next'.
-
-
-* mh/doc-remote-helpers (2012-11-27) 6 commits
- - git-remote-helpers.txt: clarify options & ref list attributes
- - git-remote-helpers.txt: clarify command <-> capability correspondences
- - git-remote-helpers.txt: rearrange description of capabilities
- - git-remote-helpers.txt: minor grammar fix
- - git-remote-helpers.txt: document missing capabilities
- - git-remote-helpers.txt: document invocation before input format
-
- Need comment and Ack from people who have worked on remote-helpers
- before this goes forward.
-
-
-* mh/pthreads-autoconf (2012-11-27) 1 commit
- - configure.ac: fix pthreads detection on Mac OS X
-
- Will merge to 'next'.
+ "git diff --stat" miscounted the total number of changed lines when
+ binary files were involved and hidden beyond --stat-count.  It also
+ miscounted the total number of changed files when there were
+ unmerged paths.
 
 
 * mk/complete-tcsh (2012-11-27) 1 commit
- - Support for git aliasing for tcsh completion
+  (merged to 'next' on 2012-11-28 at 5528439)
+ + Support for git aliasing for tcsh completion
 
- Will merge to 'next'.
+ Completion script revamped for tcsh users.
+
+
+* mm/status-push-pull-advise (2012-11-16) 1 commit
+  (merged to 'next' on 2012-11-26 at ed40d5e)
+ + status: add advice on how to push/pull to tracking branch
+
+ When "git checkout" checks out a branch, it tells the user how far
+ behind (or ahead) the new branch is relative to the remote tracking
+ branch it builds upon.  The message now also advises how to sync
+ them up by pushing or pulling.
+
+
+* pp/gitweb-config-underscore (2012-11-21) 1 commit
+  (merged to 'next' on 2012-11-28 at fc9bf5f)
+ + gitweb: make remote_heads config setting work
+
+ The key "gitweb.remote_heads" is not legal git config; this maps it to
+ "gitweb.remoteheads".
+
+
+* pw/p4-various-fixes (2012-11-26) 6 commits
+  (merged to 'next' on 2012-11-28 at 1a6f9a9)
+ + git p4: remove unneeded cmd initialization
+ + git p4: fix labelDetails typo in exception
+ + git p4 test: display unresolvable host error
+ + git p4: catch p4 errors when streaming file contents
+ + git p4: handle servers without move support
+ + git p4: catch p4 describe errors
 
 --------------------------------------------------
 [Stalled]
@@ -188,21 +234,6 @@ repositories listed at
  - cvsserver: factor out git-log parsing logic
 
  Needs review by folks interested in cvsserver.
-
-
-* jn/warn-on-inaccessible-loosen (2012-10-14) 4 commits
- - config: exit on error accessing any config file
- - doc: advertise GIT_CONFIG_NOSYSTEM
- - config: treat user and xdg config permission problems as errors
- - config, gitignore: failure to access with ENOTDIR is ok
-
- An RFC to deal with a situation where .config/git is a file and we
- notice .config/git/config is not readable due to ENOTDIR, not
- ENOENT; I think a bit more refactored approach to consistently
- address permission errors across config, exclude and attrs is
- desirable.  Don't we also need a check for an opposite situation
- where we open .config/git/config or .gitattributes for reading but
- they turn out to be directories?
 
 
 * as/check-ignore (2012-11-08) 14 commits
@@ -250,8 +281,8 @@ repositories listed at
 * fc/remote-testgit-feature-done (2012-10-29) 1 commit
  - remote-testgit: properly check for errors
 
- Is this still in "Needs review" state?  Are people involved in the
- remote interface happy with this change?
+ Needs review and Ack (or Nack) from people involved in the remote
+ helper interface for this to move forward.
 
 
 * rc/maint-complete-git-p4 (2012-09-24) 1 commit
@@ -369,6 +400,92 @@ repositories listed at
 --------------------------------------------------
 [Cooking]
 
+* bc/append-signed-off-by (2012-11-26) 11 commits
+ - Unify appending signoff in format-patch, commit and sequencer
+ - format-patch: update append_signoff prototype
+ - format-patch: stricter S-o-b detection
+ - t4014: more tests about appending s-o-b lines
+ - sequencer.c: teach append_signoff to avoid adding a duplicate newline
+ - sequencer.c: teach append_signoff how to detect duplicate s-o-b
+ - sequencer.c: always separate "(cherry picked from" from commit body
+ - sequencer.c: recognize "(cherry picked from ..." as part of s-o-b footer
+ - t/t3511: add some tests of 'cherry-pick -s' functionality
+ - t/test-lib-functions.sh: allow to specify the tag name to test_commit
+ - sequencer.c: remove broken support for rfc2822 continuation in footer
+
+ Expecting a re-roll after a review.
+
+
+* mh/unify-xml-in-imap-send-and-http-push (2012-11-29) 8 commits
+ - wrap_in_html(): process message in bulk rather than line-by-line
+ - wrap_in_html(): use strbuf_addstr_xml_quoted()
+ - imap-send: change msg_data from storing (ptr, len) to storing strbuf
+ - imap-send: correctly report errors reading from stdin
+ - imap-send: store all_msgs as a strbuf
+ - lf_to_crlf(): NUL-terminate msg_data::data
+ - xml_entities(): use function strbuf_addstr_xml_quoted()
+ - Add new function strbuf_add_xml_quoted()
+
+ Will merge to 'next'.
+
+
+* rr/t4041-cleanup (2012-11-27) 4 commits
+ - t4041 (diff-submodule-option): modernize style
+ - t4041 (diff-submodule-option): rewrite add_file() routine
+ - t4041 (diff-submodule-option): parse digests sensibly
+ - t4041 (diff-submodule-option): don't hardcode SHA-1 in expected outputs
+
+ As a clean-up, it still misses some.
+ Expecting a re-roll.
+
+
+* jc/doc-maintainer (2012-11-27) 1 commit
+ - update "howto maintain git"
+
+ An early draft that is still incomplete.
+
+
+* jk/fsck-dot-in-trees (2012-11-28) 2 commits
+  (merged to 'next' on 2012-11-28 at 519dabc)
+ + fsck: warn about ".git" in trees
+ + fsck: warn about '.' and '..' in trees
+
+ Will cook in 'next'.
+
+
+* mh/doc-remote-helpers (2012-11-27) 6 commits
+ - git-remote-helpers.txt: clarify options & ref list attributes
+ - git-remote-helpers.txt: clarify command <-> capability correspondences
+ - git-remote-helpers.txt: rearrange description of capabilities
+ - git-remote-helpers.txt: minor grammar fix
+ - git-remote-helpers.txt: document missing capabilities
+ - git-remote-helpers.txt: document invocation before input format
+
+ Need comment and Ack from people who have worked on remote-helpers
+ before this goes forward.
+
+
+* mh/pthreads-autoconf (2012-11-27) 1 commit
+  (merged to 'next' on 2012-11-28 at 780600e)
+ + configure.ac: fix pthreads detection on Mac OS X
+
+ Will cook in 'next'.
+
+
+* jn/warn-on-inaccessible-loosen (2012-10-14) 4 commits
+  (merged to 'next' on 2012-11-28 at 43d51c2)
+ + config: exit on error accessing any config file
+ + doc: advertise GIT_CONFIG_NOSYSTEM
+ + config: treat user and xdg config permission problems as errors
+ + config, gitignore: failure to access with ENOTDIR is ok
+
+ An RFC to deal with a situation where .config/git is a file and we
+ notice .config/git/config is not readable due to ENOTDIR, not
+ ENOENT.
+
+ Will cook in 'next'.
+
+
 * mh/ceiling (2012-10-29) 8 commits
   (merged to 'next' on 2012-11-26 at d1ce76a)
  + string_list_longest_prefix(): remove function
@@ -390,34 +507,9 @@ repositories listed at
  Will cook in 'next'.
 
 
-* jk/send-email-sender-prompt (2012-11-28) 7 commits
- - t9001: check send-email behavior with implicit sender
- - Merge branch 'fc/send-email-no-sender-prompt' into jk/send-email-sender-prompt
- - t: add tests for "git var"
- - ident: keep separate "explicit" flags for author and committer
- - ident: make user_ident_explicitly_given static
- - t7502: factor out autoident prerequisite
- - test-lib: allow negation of prerequisites
- (this branch uses fc/send-email-no-sender-prompt.)
-
- Resurrected only the internal clean-up part.
-
- Will merge to 'next'.
-
-
-* fc/fast-export-fixes (2012-11-27) 25 commits
- - fast-export: trivial cleanups
- - fast-export: refactor get_tags_and_duplicates()
- - fast-export: make extra_refs global
- - transport-helper: fix push without marks
- - transport-helper: fix pushing with straight refspec
- - transport-helper: fix push without refspec
- - transport-helper: trivial code shuffle
- - [squash] earlier breakages in t5800 fixed by the previous
- - fast-export: don't handle uninteresting refs
- - transport-helper: update remote helper namespace
- - [squash] previous breaks t5800
+* fc/fast-export-fixes (2012-11-29) 15 commits
  - fast-export: make sure updated refs get updated
+ - fast-export: don't handle uninteresting refs
  - fast-export: fix comparison in tests
  - fast-export: trivial cleanup
  - remote-testgit: implement the "done" feature manually
@@ -432,19 +524,7 @@ repositories listed at
  - remote-testgit: fix direction of marks
  - fast-export: avoid importing blob marks
 
- It needs a bit of re-roll or reorder to keep things bisectable, at
- least, and with log message here and there to justify non-trivial
- bits with something better than unsubstantiated "this is trivial"
- claim.  Overall, the series looked OK.
-
-
-* pp/gitweb-config-underscore (2012-11-21) 1 commit
- - gitweb: make remote_heads config setting work
-
- The key "gitweb.remote_heads" is not legal git config; this maps it to
- "gitweb.remoteheads".
-
- Will merge to 'next'.
+ Will merge to (and cook in) 'next'.
 
 
 * jc/apply-trailing-blank-removal (2012-10-12) 1 commit
@@ -465,21 +545,6 @@ repositories listed at
  - pathspec: save the non-wildcard length part
 
  Will merge to 'next'.
-
-
-* mm/status-push-pull-advise (2012-11-16) 1 commit
-  (merged to 'next' on 2012-11-26 at ed40d5e)
- + status: add advice on how to push/pull to tracking branch
-
- Will merge to 'master' in the seventh batch.
-
-
-* fc/zsh-completion (2012-11-19) 2 commits
-  (merged to 'next' on 2012-11-26 at 48ebdc9)
- + completion: start moving to the new zsh completion
- + completion: add new zsh completion
-
- Will merge to 'master' in the seventh batch.
 
 
 * nd/wildmatch (2012-11-20) 14 commits
@@ -512,32 +577,6 @@ repositories listed at
  Will cook in 'next'.
 
 
-* fc/completion-test-simplification (2012-11-16) 6 commits
- - completion: simplify __gitcomp() test helper
- - completion: refactor __gitcomp related tests
- - completion: consolidate test_completion*() tests
- - completion: simplify tests using test_completion_long()
- - completion: standardize final space marker in tests
- - completion: add comment for test_completion()
-
- Clean up completion tests.  Use of conslidated helper may make
- instrumenting one particular test during debugging of the test
- itself, but I think that issue should be addressed in some other
- way (e.g. making sure individual tests in 9902 can be skipped).
-
- Will merge to 'next'.
-
-
-* jk/pickaxe-textconv (2012-10-28) 2 commits
-  (merged to 'next' on 2012-11-26 at 2c5b5c9)
- + pickaxe: use textconv for -S counting
- + pickaxe: hoist empty needle check
-
- Use textconv filters when searching with "log -S".
-
- Will merge to 'master' in the seventh batch.
-
-
 * fc/remote-bzr (2012-11-28) 10 commits
  - (fixup) test-bzr.sh: fix multi-line string assignment
  - remote-bzr: detect local repositories
@@ -550,39 +589,8 @@ repositories listed at
  - remote-bzr: add support for pushing
  - Add new remote-bzr transport helper
 
- New remote helper for bzr (v3).  With minor fixes this may be ready
+ New remote helper for bzr (v3).  With minor fixes, this may be ready
  for 'next'.
-
-
-* fc/remote-hg (2012-11-27) 22 commits
-  (merged to 'next' on 2012-11-28 at f805784)
- + remote-hg: fix for older versions of python
- + remote-hg: fix for files with spaces
-  (merged to 'next' on 2012-11-18 at 4a4f2e4)
- + remote-hg: avoid bad refs
- + remote-hg: try the 'tip' if no checkout present
- + remote-hg: fix compatibility with older versions of hg
- + remote-hg: add missing config for basic tests
- + remote-hg: the author email can be null
- + remote-hg: add option to not track branches
- + remote-hg: add extra author test
- + remote-hg: add tests to compare with hg-git
- + remote-hg: add bidirectional tests
- + test-lib: avoid full path to store test results
- + remote-hg: add basic tests
- + remote-hg: fake bookmark when there's none
- + remote-hg: add compat for hg-git author fixes
- + remote-hg: add support for hg-git compat mode
- + remote-hg: match hg merge behavior
- + remote-hg: make sure the encoding is correct
- + remote-hg: add support to push URLs
- + remote-hg: add support for remote pushing
- + remote-hg: add support for pushing
- + Add new remote-hg transport helper
-
- New remote helper for hg.
-
- Will merge to 'master'.
 
 
 * cr/push-force-tag-update (2012-11-26) 7 commits
@@ -597,6 +605,7 @@ repositories listed at
  Require "-f" for push to update a tag, even if it is a fast-forward.
 
  With a minor tweak, I think this is getting ready for 'next'.
+ Expecting a re-roll.
 
 --------------------------------------------------
 [Discarded]
