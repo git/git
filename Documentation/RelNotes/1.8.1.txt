@@ -29,6 +29,9 @@ UI, Workflows & Features
 
  * Command-line completion scripts for tcsh and zsh have been added.
 
+ * A new remote-helper interface for Mercurial has been added to
+   contrib/remote-helpers.
+
  * We used to have a workaround for a bug in ancient "less" that
    causes it to exit without any output when the terminal is resized.
    The bug has been fixed in "less" version 406 (June 2007), and the
@@ -74,6 +77,20 @@ UI, Workflows & Features
    recent git uses a mechanism to separate the submodule repository
    from the submodule working tree, "git rm" learned to detect this
    case and removes the submodule working tree when it is safe.
+
+ * "git send-email" used to prompt for the sender address, even when
+   the committer identify is well specified (e.g. via user.name and
+   user.email configuration variables).  The command no longer gives
+   this prompt when not necessary.
+
+ * "git send-email" did not allow non-address garbage strings to
+   appear after addresses on Cc: lines in the patch files (and when
+   told to pick them up to find more recipients), e.g.
+
+     Cc: Stable Kernel <stable@k.org> # for v3.2 and up
+
+   The command now strips " # for v3.2 and up" part before adding the
+   remainder of this line to the list of recipients.
 
  * "git submodule add" learned to add a new submodule at the same
    path as the path where an unrelated submodule was bound to in an
@@ -213,7 +230,21 @@ details).
  * We failed to mention a file without any content change but whose
    permission bit was modified, or (worse yet) a new file without any
    content in the "git diff --stat" output.
-   (merge 74faaa1 lt/diff-stat-show-0-lines later to maint).
+   (merge de9095955 lt/diff-stat-show-0-lines later to maint).
+
+ * When "--stat-count" hides a diffstat for binary contents, the total
+   number of added and removed lines at the bottom was computed
+   incorrectly.
+   (merge de9095955 lt/diff-stat-show-0-lines later to maint).
+
+ * When "--stat-count" hides a diffstat for unmerged paths, the total
+   number of affected files at the bottom of the "diff --stat" output
+   was computed incorrectly.
+   (merge de9095955 lt/diff-stat-show-0-lines later to maint).
+
+ * "diff --shortstat" miscounted the total number of affected files
+   when there were unmerged paths.
+   (merge de9095955 lt/diff-stat-show-0-lines later to maint).
 
  * "update-ref -d --deref SYM" to delete a ref through a symbolic ref
    that points to it did not remove it correctly.
