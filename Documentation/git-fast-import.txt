@@ -562,8 +562,12 @@ A `<path>` string must use UNIX-style directory separators (forward
 slash `/`), may contain any byte other than `LF`, and must not
 start with double quote (`"`).
 
-If an `LF` or double quote must be encoded into `<path>` shell-style
-quoting should be used, e.g. `"path/with\n and \" in it"`.
+A path can use C-style string quoting; this is accepted in all cases
+and mandatory if the filename starts with double quote or contains
+`LF`. In C-style quoting, the complete name should be surrounded with
+double quotes, and any `LF`, backslash, or double quote characters
+must be escaped by preceding them with a backslash (e.g.,
+`"path/with\n, \\ and \" in it"`).
 
 The value of `<path>` must be in canonical form. That is it must not:
 
