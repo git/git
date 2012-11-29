@@ -1497,8 +1497,8 @@ static void show_stats(struct diffstat_t *data, struct diff_options *options)
 	for (i = 0; (i < count) && (i < data->nr); i++) {
 		struct diffstat_file *file = data->files[i];
 		uintmax_t change = file->added + file->deleted;
-		if (!data->files[i]->is_interesting &&
-			 (change == 0)) {
+
+		if (!file->is_interesting && (change == 0)) {
 			count++; /* not shown == room for one more */
 			continue;
 		}
@@ -1525,7 +1525,7 @@ static void show_stats(struct diffstat_t *data, struct diff_options *options)
 		if (max_change < change)
 			max_change = change;
 	}
-	count = i; /* min(count, data->nr) */
+	count = i; /* where we can stop scanning in data->files[] */
 
 	/*
 	 * We have width = stat_width or term_columns() columns total.
@@ -1613,16 +1613,15 @@ static void show_stats(struct diffstat_t *data, struct diff_options *options)
 	 */
 	for (i = 0; i < count; i++) {
 		const char *prefix = "";
-		char *name = data->files[i]->print_name;
-		uintmax_t added = data->files[i]->added;
-		uintmax_t deleted = data->files[i]->deleted;
+		struct diffstat_file *file = data->files[i];
+		char *name = file->print_name;
+		uintmax_t added = file->added;
+		uintmax_t deleted = file->deleted;
 		int name_len;
 
-		if (!data->files[i]->is_interesting &&
-			 (added + deleted == 0)) {
-			total_files--;
+		if (!file->is_interesting && (added + deleted == 0))
 			continue;
-		}
+
 		/*
 		 * "scale" the filename
 		 */
@@ -1638,7 +1637,7 @@ static void show_stats(struct diffstat_t *data, struct diff_options *options)
 				name = slash;
 		}
 
-		if (data->files[i]->is_binary) {
+		if (file->is_binary) {
 			fprintf(options->file, "%s", line_prefix);
 			show_name(options->file, prefix, name, len);
 			fprintf(options->file, " %*s", number_width, "Bin");
@@ -1655,7 +1654,7 @@ static void show_stats(struct diffstat_t *data, struct diff_options *options)
 			fprintf(options->file, "\n");
 			continue;
 		}
-		else if (data->files[i]->is_unmerged) {
+		else if (file->is_unmerged) {
 			fprintf(options->file, "%s", line_prefix);
 			show_name(options->file, prefix, name, len);
 			fprintf(options->file, " Unmerged\n");
@@ -1667,8 +1666,6 @@ static void show_stats(struct diffstat_t *data, struct diff_options *options)
 		 */
 		add = added;
 		del = deleted;
-		adds += add;
-		dels += del;
 
 		if (graph_width <= max_change) {
 			int total = add + del;
@@ -1694,16 +1691,24 @@ static void show_stats(struct diffstat_t *data, struct diff_options *options)
 		show_graph(options->file, '-', del, del_c, reset);
 		fprintf(options->file, "\n");
 	}
-	for (i = count; i < data->nr; i++) {
-		uintmax_t added = data->files[i]->added;
-		uintmax_t deleted = data->files[i]->deleted;
-		if (!data->files[i]->is_interesting &&
-			 (added + deleted == 0)) {
+
+	for (i = 0; i < data->nr; i++) {
+		struct diffstat_file *file = data->files[i];
+		uintmax_t added = file->added;
+		uintmax_t deleted = file->deleted;
+
+		if (file->is_unmerged ||
+		    (!file->is_interesting && (added + deleted == 0))) {
 			total_files--;
 			continue;
 		}
-		adds += added;
-		dels += deleted;
+
+		if (!file->is_binary) {
+			adds += added;
+			dels += deleted;
+		}
+		if (i < count)
+			continue;
 		if (!extra_shown)
 			fprintf(options->file, "%s ...\n", line_prefix);
 		extra_shown = 1;
@@ -1723,9 +1728,8 @@ static void show_shortstats(struct diffstat_t *data, struct diff_options *option
 		int added = data->files[i]->added;
 		int deleted= data->files[i]->deleted;
 
-		if (data->files[i]->is_unmerged)
-			continue;
-		if (!data->files[i]->is_interesting && (added + deleted == 0)) {
+		if (data->files[i]->is_unmerged ||
+		    (!data->files[i]->is_interesting && (added + deleted == 0))) {
 			total_files--;
 		} else if (!data->files[i]->is_binary) { /* don't count bytes */
 			adds += added;
@@ -2438,7 +2442,7 @@ static void builtin_diffstat(const char *name_a, const char *name_b,
 	}
 
 	data = diffstat_add(diffstat, name_a, name_b);
-	data->is_interesting = p->status != 0;
+	data->is_interesting = p->status != DIFF_STATUS_UNKNOWN;
 
 	if (!one || !two) {
 		data->is_unmerged = 1;
