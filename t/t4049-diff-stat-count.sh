@@ -13,32 +13,31 @@ test_expect_success 'setup' '
 	git commit -m initial
 '
 
-test_expect_success 'limit output to 2 (simple)' '
+test_expect_success 'mode-only change show as a 0-line change' '
 	git reset --hard &&
-	chmod +x c d &&
+	test_chmod +x b d &&
 	echo a >a &&
-	echo b >b &&
+	echo c >c &&
 	cat >expect <<-\EOF
 	 a | 1 +
-	 b | 1 +
+	 b | 0
 	 ...
 	 4 files changed, 2 insertions(+)
 	EOF
-	git diff --stat --stat-count=2 >actual &&
+	git diff --stat --stat-count=2 HEAD >actual &&
 	test_i18ncmp expect actual
 '
 
 test_expect_success 'binary changes do not count in lines' '
 	git reset --hard &&
-	chmod +x c d &&
 	echo a >a &&
-	echo b >b &&
+	echo c >c &&
 	cat "$TEST_DIRECTORY"/test-binary-1.png >d &&
 	cat >expect <<-\EOF
 	 a | 1 +
-	 b | 1 +
+	 c | 1 +
 	 ...
-	 4 files changed, 2 insertions(+)
+	 3 files changed, 2 insertions(+)
 	EOF
 	git diff --stat --stat-count=2 >actual &&
 	test_i18ncmp expect actual
@@ -56,12 +55,11 @@ test_expect_success 'exclude unmerged entries from total file count' '
 	done |
 	git update-index --index-info &&
 	echo d >d &&
-	chmod +x c d &&
 	cat >expect <<-\EOF
 	 a | 1 +
 	 b | 1 +
 	 ...
-	 4 files changed, 3 insertions(+)
+	 3 files changed, 3 insertions(+)
 	EOF
 	git diff --stat --stat-count=2 >actual &&
 	test_i18ncmp expect actual
