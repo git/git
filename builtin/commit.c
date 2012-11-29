@@ -755,7 +755,7 @@ static int prepare_to_commit(const char *index_file, const char *prefix,
 				ident_shown++ ? "" : "\n",
 				author_ident->buf);
 
-		if (!user_ident_sufficiently_given())
+		if (!committer_ident_sufficiently_given())
 			status_printf_ln(s, GIT_COLOR_NORMAL,
 				_("%s"
 				"Committer: %s"),
@@ -1265,7 +1265,7 @@ static void print_summary(const char *prefix, const unsigned char *sha1,
 		strbuf_addstr(&format, "\n Author: ");
 		strbuf_addbuf_percentquote(&format, &author_ident);
 	}
-	if (!user_ident_sufficiently_given()) {
+	if (!committer_ident_sufficiently_given()) {
 		strbuf_addstr(&format, "\n Committer: ");
 		strbuf_addbuf_percentquote(&format, &committer_ident);
 		if (advice_implicit_identity) {

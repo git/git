@@ -10,7 +10,12 @@
 static struct strbuf git_default_name = STRBUF_INIT;
 static struct strbuf git_default_email = STRBUF_INIT;
 static char git_default_date[50];
-int user_ident_explicitly_given;
+
+#define IDENT_NAME_GIVEN 01
+#define IDENT_MAIL_GIVEN 02
+#define IDENT_ALL_GIVEN (IDENT_NAME_GIVEN|IDENT_MAIL_GIVEN)
+static int committer_ident_explicitly_given;
+static int author_ident_explicitly_given;
 
 #ifdef NO_GECOS_IN_PWENT
 #define get_gecos(ignored) "&"
@@ -109,7 +114,8 @@ const char *ident_default_email(void)
 
 		if (email && email[0]) {
 			strbuf_addstr(&git_default_email, email);
-			user_ident_explicitly_given |= IDENT_MAIL_GIVEN;
+			committer_ident_explicitly_given |= IDENT_MAIL_GIVEN;
+			author_ident_explicitly_given |= IDENT_MAIL_GIVEN;
 		} else
 			copy_email(xgetpwuid_self(), &git_default_email);
 		strbuf_trim(&git_default_email);
@@ -327,6 +333,10 @@ const char *fmt_name(const char *name, const char *email)
 
 const char *git_author_info(int flag)
 {
+	if (getenv("GIT_AUTHOR_NAME"))
+		author_ident_explicitly_given |= IDENT_NAME_GIVEN;
+	if (getenv("GIT_AUTHOR_EMAIL"))
+		author_ident_explicitly_given |= IDENT_MAIL_GIVEN;
 	return fmt_ident(getenv("GIT_AUTHOR_NAME"),
 			 getenv("GIT_AUTHOR_EMAIL"),
 			 getenv("GIT_AUTHOR_DATE"),
@@ -336,22 +346,32 @@ const char *git_author_info(int flag)
 const char *git_committer_info(int flag)
 {
 	if (getenv("GIT_COMMITTER_NAME"))
-		user_ident_explicitly_given |= IDENT_NAME_GIVEN;
+		committer_ident_explicitly_given |= IDENT_NAME_GIVEN;
 	if (getenv("GIT_COMMITTER_EMAIL"))
-		user_ident_explicitly_given |= IDENT_MAIL_GIVEN;
+		committer_ident_explicitly_given |= IDENT_MAIL_GIVEN;
 	return fmt_ident(getenv("GIT_COMMITTER_NAME"),
 			 getenv("GIT_COMMITTER_EMAIL"),
 			 getenv("GIT_COMMITTER_DATE"),
 			 flag);
 }
 
-int user_ident_sufficiently_given(void)
+static int ident_is_sufficient(int user_ident_explicitly_given)
 {
 #ifndef WINDOWS
 	return (user_ident_explicitly_given & IDENT_MAIL_GIVEN);
 #else
 	return (user_ident_explicitly_given == IDENT_ALL_GIVEN);
 #endif
+}
+
+int committer_ident_sufficiently_given(void)
+{
+	return ident_is_sufficient(committer_ident_explicitly_given);
+}
+
+int author_ident_sufficiently_given(void)
+{
+	return ident_is_sufficient(author_ident_explicitly_given);
 }
 
 int git_ident_config(const char *var, const char *value, void *data)
@@ -361,7 +381,8 @@ int git_ident_config(const char *var, const char *value, void *data)
 			return config_error_nonbool(var);
 		strbuf_reset(&git_default_name);
 		strbuf_addstr(&git_default_name, value);
-		user_ident_explicitly_given |= IDENT_NAME_GIVEN;
+		committer_ident_explicitly_given |= IDENT_NAME_GIVEN;
+		author_ident_explicitly_given |= IDENT_NAME_GIVEN;
 		return 0;
 	}
 
@@ -370,7 +391,8 @@ int git_ident_config(const char *var, const char *value, void *data)
 			return config_error_nonbool(var);
 		strbuf_reset(&git_default_email);
 		strbuf_addstr(&git_default_email, value);
-		user_ident_explicitly_given |= IDENT_MAIL_GIVEN;
+		committer_ident_explicitly_given |= IDENT_MAIL_GIVEN;
+		author_ident_explicitly_given |= IDENT_MAIL_GIVEN;
 		return 0;
 	}
 
