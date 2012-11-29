@@ -23,6 +23,12 @@
 set __git_tcsh_completion_original_script = ${HOME}/.git-completion.bash
 set __git_tcsh_completion_script = ${HOME}/.git-completion.tcsh.bash
 
+# Check that the user put the script in the right place
+if ( ! -e ${__git_tcsh_completion_original_script} ) then
+       echo "git-completion.tcsh: Cannot find: ${__git_tcsh_completion_original_script}.  Git completion will not work."
+       exit
+endif
+
 cat << EOF > ${__git_tcsh_completion_script}
 #!bash
 #
@@ -34,13 +40,13 @@ cat << EOF > ${__git_tcsh_completion_script}
 source ${__git_tcsh_completion_original_script}
 
 # Set COMP_WORDS in a way that can be handled by the bash script.
-COMP_WORDS=(\$1)
+COMP_WORDS=(\$2)
 
 # The cursor is at the end of parameter #1.
 # We must check for a space as the last character which will
 # tell us that the previous word is complete and the cursor
 # is on the next word.
-if [ "\${1: -1}" == " " ]; then
+if [ "\${2: -1}" == " " ]; then
        # The last character is a space, so our location is at the end
        # of the command-line array
        COMP_CWORD=\${#COMP_WORDS[@]}
@@ -51,13 +57,12 @@ else
        COMP_CWORD=\$((\${#COMP_WORDS[@]}-1))
 fi
 
-# Call _git() or _gitk() of the bash script, based on the first
-# element of the command-line
-_\${COMP_WORDS[0]}
+# Call _git() or _gitk() of the bash script, based on the first argument
+_\${1}
 
 IFS=\$'\n'
 echo "\${COMPREPLY[*]}" | sort | uniq
 EOF
 
-complete git  'p/*/`bash ${__git_tcsh_completion_script} "${COMMAND_LINE}"`/'
-complete gitk 'p/*/`bash ${__git_tcsh_completion_script} "${COMMAND_LINE}"`/'
+complete git  'p/*/`bash ${__git_tcsh_completion_script} git "${COMMAND_LINE}"`/'
+complete gitk 'p/*/`bash ${__git_tcsh_completion_script} gitk "${COMMAND_LINE}"`/'
