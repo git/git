@@ -540,7 +540,7 @@ our %feature = (
 	# $feature{'remote_heads'}{'default'} = [1];
 	# To have project specific config enable override in $GITWEB_CONFIG
 	# $feature{'remote_heads'}{'override'} = 1;
-	# and in project config gitweb.remote_heads = 0|1;
+	# and in project config gitweb.remoteheads = 0|1;
 	'remote_heads' => {
 		'sub' => sub { feature_bool('remote_heads', @_) },
 		'override' => 0,
@@ -2696,12 +2696,15 @@ sub git_get_project_config {
 	# only subsection, if exists, is case sensitive,
 	# and not lowercased by 'git config -z -l'
 	if (my ($hi, $mi, $lo) = ($key =~ /^([^.]*)\.(.*)\.([^.]*)$/)) {
+		$lo =~ s/_//g;
 		$key = join(".", lc($hi), $mi, lc($lo));
+		return if ($lo =~ /\W/ || $hi =~ /\W/);
 	} else {
 		$key = lc($key);
+		$key =~ s/_//g;
+		return if ($key =~ /\W/);
 	}
 	$key =~ s/^gitweb\.//;
-	return if ($key =~ m/\W/);
 
 	# type sanity check
 	if (defined $type) {
