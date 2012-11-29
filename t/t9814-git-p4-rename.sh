@@ -199,6 +199,41 @@ test_expect_success 'detect copies' '
 	)
 '
 
+# See if configurables can be set, and in particular if the run.move.allow
+# variable exists, which allows admins to disable the "p4 move" command.
+test_expect_success 'p4 configure command and run.move.allow are available' '
+	p4 configure show run.move.allow >out ; retval=$? &&
+	test $retval = 0 &&
+	{
+		egrep ^run.move.allow: out &&
+		test_set_prereq P4D_HAVE_CONFIGURABLE_RUN_MOVE_ALLOW ||
+		true
+	} || true
+'
+
+# If move can be disabled, turn it off and test p4 move handling
+test_expect_success P4D_HAVE_CONFIGURABLE_RUN_MOVE_ALLOW \
+		    'do not use p4 move when administratively disabled' '
+	test_when_finished "p4 configure set run.move.allow=1" &&
+	p4 configure set run.move.allow=0 &&
+	(
+		cd "$cli" &&
+		echo move-disallow-file >move-disallow-file &&
+		p4 add move-disallow-file &&
+		p4 submit -d "add move-disallow-file"
+	) &&
+	test_when_finished cleanup_git &&
+	git p4 clone --dest="$git" //depot &&
+	(
+		cd "$git" &&
+		git config git-p4.skipSubmitEdit true &&
+		git config git-p4.detectRenames true &&
+		git mv move-disallow-file move-disallow-file-moved &&
+		git commit -m "move move-disallow-file" &&
+		git p4 submit
+	)
+'
+
 test_expect_success 'kill p4d' '
 	kill_p4d
 '

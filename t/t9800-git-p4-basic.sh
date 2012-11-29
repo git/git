@@ -143,7 +143,18 @@ test_expect_success 'exit when p4 fails to produce marshaled output' '
 	! test_i18ngrep Traceback errs
 '
 
-test_expect_success 'clone bare' '
+# Hide a file from p4d, make sure we catch its complaint.  This won't fail in
+# p4 changes, files, or describe; just in p4 print.  If P4CLIENT is unset, the
+# message will include "Librarian checkout".
+test_expect_success 'exit gracefully for p4 server errors' '
+	test_when_finished "mv \"$db\"/depot/file1,v,hidden \"$db\"/depot/file1,v" &&
+	mv "$db"/depot/file1,v "$db"/depot/file1,v,hidden &&
+	test_when_finished cleanup_git &&
+	test_expect_code 1 git p4 clone --dest="$git" //depot@1 >out 2>err &&
+	test_i18ngrep "Error from p4 print" err
+'
+
+test_expect_success 'clone --bare should make a bare repository' '
 	rm -rf "$git" &&
 	git p4 clone --dest="$git" --bare //depot &&
 	test_when_finished cleanup_git &&
@@ -169,6 +180,18 @@ test_expect_success 'initial import time from top change time' '
 		gittime=$(git show -s --raw --pretty=format:%at HEAD) &&
 		echo $p4time $gittime &&
 		test $p4time = $gittime
+	)
+'
+
+test_expect_success 'unresolvable host in P4PORT should display error' '
+	test_when_finished cleanup_git &&
+	git p4 clone --dest="$git" //depot &&
+	(
+		cd "$git" &&
+		P4PORT=nosuchhost:65537 &&
+		export P4PORT &&
+		test_expect_code 1 git p4 sync >out 2>err &&
+		grep "connect to nosuchhost" err
 	)
 '
 

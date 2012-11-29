@@ -129,6 +129,25 @@ def p4_has_command(cmd):
     p.communicate()
     return p.returncode == 0
 
+def p4_has_move_command():
+    """See if the move command exists, that it supports -k, and that
+       it has not been administratively disabled.  The arguments
+       must be correct, but the filenames do not have to exist.  Use
+       ones with wildcards so even if they exist, it will fail."""
+
+    if not p4_has_command("move"):
+        return False
+    cmd = p4_build_cmd(["move", "-k", "@from", "@to"])
+    p = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    (out, err) = p.communicate()
+    # return code will be 1 in either case
+    if err.find("Invalid option") >= 0:
+        return False
+    if err.find("disabled") >= 0:
+        return False
+    # assume it failed because @... was invalid changelist
+    return True
+
 def system(cmd):
     expand = isinstance(cmd,basestring)
     if verbose:
@@ -168,6 +187,29 @@ def p4_reopen(type, f):
 
 def p4_move(src, dest):
     p4_system(["move", "-k", wildcard_encode(src), wildcard_encode(dest)])
+
+def p4_describe(change):
+    """Make sure it returns a valid result by checking for
+       the presence of field "time".  Return a dict of the
+       results."""
+
+    ds = p4CmdList(["describe", "-s", str(change)])
+    if len(ds) != 1:
+        die("p4 describe -s %d did not return 1 result: %s" % (change, str(ds)))
+
+    d = ds[0]
+
+    if "p4ExitCode" in d:
+        die("p4 describe -s %d exited with %d: %s" % (change, d["p4ExitCode"],
+                                                      str(d)))
+    if "code" in d:
+        if d["code"] == "error":
+            die("p4 describe -s %d returned error code: %s" % (change, str(d)))
+
+    if "time" not in d:
+        die("p4 describe -s %d returned no \"time\": %s" % (change, str(d)))
+
+    return d
 
 #
 # Canonicalize the p4 type and return a tuple of the
@@ -871,7 +913,7 @@ class P4Submit(Command, P4UserMap):
         self.conflict_behavior = None
         self.isWindows = (platform.system() == "Windows")
         self.exportLabels = False
-        self.p4HasMoveCommand = p4_has_command("move")
+        self.p4HasMoveCommand = p4_has_move_command()
 
     def check(self):
         if len(p4CmdList("opened ...")) > 0:
@@ -2097,6 +2139,29 @@ class P4Sync(Command, P4UserMap):
     # handle another chunk of streaming data
     def streamP4FilesCb(self, marshalled):
 
+        # catch p4 errors and complain
+        err = None
+        if "code" in marshalled:
+            if marshalled["code"] == "error":
+                if "data" in marshalled:
+                    err = marshalled["data"].rstrip()
+        if err:
+            f = None
+            if self.stream_have_file_info:
+                if "depotFile" in self.stream_file:
+                    f = self.stream_file["depotFile"]
+            # force a failure in fast-import, else an empty
+            # commit will be made
+            self.gitStream.write("\n")
+            self.gitStream.write("die-now\n")
+            self.gitStream.close()
+            # ignore errors, but make sure it exits first
+            self.importProcess.wait()
+            if f:
+                die("Error from p4 print for %s: %s" % (f, err))
+            else:
+                die("Error from p4 print: %s" % err)
+
         if marshalled.has_key('depotFile') and self.stream_have_file_info:
             # start of a new file - output the old one first
             self.streamOneP4File(self.stream_file, self.stream_contents)
@@ -2341,7 +2406,7 @@ class P4Sync(Command, P4UserMap):
                     try:
                         tmwhen = time.strptime(labelDetails['Update'], "%Y/%m/%d %H:%M:%S")
                     except ValueError:
-                        print "Could not convert label time %s" % labelDetail['Update']
+                        print "Could not convert label time %s" % labelDetails['Update']
                         tmwhen = 1
 
                     when = int(time.mktime(tmwhen))
@@ -2543,7 +2608,7 @@ class P4Sync(Command, P4UserMap):
     def importChanges(self, changes):
         cnt = 1
         for change in changes:
-            description = p4Cmd(["describe", str(change)])
+            description = p4_describe(change)
             self.updateOptionDict(description)
 
             if not self.silent:
@@ -2667,14 +2732,8 @@ class P4Sync(Command, P4UserMap):
 
         # Use time from top-most change so that all git p4 clones of
         # the same p4 repo have the same commit SHA1s.
-        res = p4CmdList("describe -s %d" % newestRevision)
-        newestTime = None
-        for r in res:
-            if r.has_key('time'):
-                newestTime = int(r['time'])
-        if newestTime is None:
-            die("\"describe -s\" on newest change %d did not give a time")
-        details["time"] = newestTime
+        res = p4_describe(newestRevision)
+        details["time"] = res["time"]
 
         self.updateOptionDict(details)
         try:
@@ -2864,12 +2923,13 @@ class P4Sync(Command, P4UserMap):
 
         self.tz = "%+03d%02d" % (- time.timezone / 3600, ((- time.timezone % 3600) / 60))
 
-        importProcess = subprocess.Popen(["git", "fast-import"],
-                                         stdin=subprocess.PIPE, stdout=subprocess.PIPE,
-                                         stderr=subprocess.PIPE);
-        self.gitOutput = importProcess.stdout
-        self.gitStream = importProcess.stdin
-        self.gitError = importProcess.stderr
+        self.importProcess = subprocess.Popen(["git", "fast-import"],
+                                              stdin=subprocess.PIPE,
+                                              stdout=subprocess.PIPE,
+                                              stderr=subprocess.PIPE);
+        self.gitOutput = self.importProcess.stdout
+        self.gitStream = self.importProcess.stdin
+        self.gitError = self.importProcess.stderr
 
         if revision:
             self.importHeadRevision(revision)
@@ -2929,7 +2989,7 @@ class P4Sync(Command, P4UserMap):
             self.importP4Labels(self.gitStream, missingP4Labels)
 
         self.gitStream.close()
-        if importProcess.wait() != 0:
+        if self.importProcess.wait() != 0:
             die("fast-import failed: %s" % self.gitError.read())
         self.gitOutput.close()
         self.gitError.close()
@@ -3128,7 +3188,6 @@ def main():
         printUsage(commands.keys())
         sys.exit(2)
 
-    cmd = ""
     cmdName = sys.argv[1]
     try:
         klass = commands[cmdName]
