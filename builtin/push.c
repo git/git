@@ -220,6 +220,10 @@ static const char message_advice_checkout_pull_push[] =
 	   "(e.g. 'git pull') before pushing again.\n"
 	   "See the 'Note about fast-forwards' in 'git push --help' for details.");
 
+static const char message_advice_ref_already_exists[] =
+	N_("Updates were rejected because the destination reference already exists\n"
+	   "in the remote and the update is not a fast-forward.");
+
 static void advise_pull_before_push(void)
 {
 	if (!advice_push_non_ff_current || !advice_push_nonfastforward)
@@ -239,6 +243,11 @@ static void advise_checkout_pull_push(void)
 	if (!advice_push_non_ff_matching || !advice_push_nonfastforward)
 		return;
 	advise(_(message_advice_checkout_pull_push));
+}
+
+static void advise_ref_already_exists(void)
+{
+	advise(_(message_advice_ref_already_exists));
 }
 
 static int push_with_options(struct transport *transport, int flags)
@@ -272,6 +281,8 @@ static int push_with_options(struct transport *transport, int flags)
 			advise_use_upstream();
 		else
 			advise_checkout_pull_push();
+	} else if (reject_reasons & REJECT_ALREADY_EXISTS) {
+		advise_ref_already_exists();
 	}
 
 	return 1;

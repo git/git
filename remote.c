@@ -1279,6 +1279,14 @@ int match_push_refs(struct ref *src, struct ref **dst,
 	return 0;
 }
 
+static inline int is_forwardable(struct ref* ref)
+{
+	if (!prefixcmp(ref->name, "refs/tags/"))
+		return 0;
+
+	return 1;
+}
+
 void set_ref_status_for_push(struct ref *remote_refs, int send_mirror,
 	int force_update)
 {
@@ -1315,6 +1323,8 @@ void set_ref_status_for_push(struct ref *remote_refs, int send_mirror,
 		 * (4) regardless of all of the above, removing :B is
 		 *     always allowed.
 		 */
+
+		ref->not_forwardable = !is_forwardable(ref);
 
 		ref->nonfastforward =
 			!ref->deletion &&
