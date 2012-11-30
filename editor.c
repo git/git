@@ -1,6 +1,7 @@
 #include "cache.h"
 #include "strbuf.h"
 #include "run-command.h"
+#include "sigchain.h"
 
 #ifndef DEFAULT_EDITOR
 #define DEFAULT_EDITOR "vi"
@@ -38,6 +39,7 @@ int launch_editor(const char *path, struct strbuf *buffer, const char *const *en
 	if (strcmp(editor, ":")) {
 		const char *args[] = { editor, path, NULL };
 		struct child_process p;
+		int ret;
 
 		memset(&p, 0, sizeof(p));
 		p.argv = args;
@@ -46,7 +48,12 @@ int launch_editor(const char *path, struct strbuf *buffer, const char *const *en
 		if (start_command(&p) < 0)
 			return error("unable to start editor '%s'", editor);
 
-		if (finish_command(&p))
+		sigchain_push(SIGINT, SIG_IGN);
+		sigchain_push(SIGQUIT, SIG_IGN);
+		ret = finish_command(&p);
+		sigchain_pop(SIGINT);
+		sigchain_pop(SIGQUIT);
+		if (ret)
 			return error("There was a problem with the editor '%s'.",
 					editor);
 	}
