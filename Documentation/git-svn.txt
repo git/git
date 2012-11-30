@@ -823,6 +823,52 @@ inside git back upstream to SVN users.  Therefore it is advised that
 users keep history as linear as possible inside git to ease
 compatibility with SVN (see the CAVEATS section below).
 
+HANDLING OF SVN BRANCHES
+------------------------
+If 'git svn' is configured to fetch branches (and --follow-branches
+is in effect), it sometimes creates multiple git branches for one
+SVN branch, where the addtional branches have names of the form
+'branchname@nnn' (with nnn an SVN revision number).  These additional
+branches are created if 'git svn' cannot find a parent commit for the
+first commit in an SVN branch, to connect the branch to the history of
+the other branches.
+
+Normally, the first commit in an SVN branch consists
+of a copy operation. 'git svn' will read this commit to get the SVN
+revision the branch was created from. It will then try to find the
+git commit that corresponds to this SVN revision, and use that as the
+parent of the branch. However, it is possible that there is no suitable
+git commit to serve as parent.  This will happen, among other reasons,
+if the SVN branch is a copy of a revision that was not fetched by 'git
+svn' (e.g. because it is an old revision that was skipped with
+'--revision'), or if in SVN a directory was copied that is not tracked
+by 'git svn' (such as a branch that is not tracked at all, or a
+subdirectory of a tracked branch). In these cases, 'git svn' will still
+create a git branch, but instead of using an existing git commit as the
+parent of the branch, it will read the SVN history of the directory the
+branch was copied from and create appropriate git commits.  This is
+indicated by the message "Initializing parent: <branchname>".
+
+Additionally, it will create a special branch named
+'<branchname>@<SVN-Revision>', where <SVN-Revision> is the SVN revision
+number the branch was copied from.  This branch will point to the newly
+created parent commit of the branch.  If in SVN the branch was deleted
+and later recreated from a different version, there will be multiple
+such branches with an '@'.
+
+Note that this may mean that multiple git commits are created for a
+single SVN revision.
+
+An example: in an SVN repository with a standard
+trunk/tags/branches layout, a directory trunk/sub is created in r.100.
+In r.200, trunk/sub is branched by copying it to branches/. 'git svn
+clone -s' will then create a branch 'sub'. It will also create new git
+commits for r.100 through r.199 and use these as the history of branch
+'sub'. Thus there will be two git commits for each revision from r.100
+to r.199 (one containing trunk/, one containing trunk/sub/). Finally,
+it will create a branch 'sub@200' pointing to the new parent commit of
+branch 'sub' (i.e. the commit for r.200 and trunk/sub/).
+
 CAVEATS
 -------
 
