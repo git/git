@@ -739,7 +739,8 @@ for rewriteRoot and rewriteUUID which can be used together.
 BASIC EXAMPLES
 --------------
 
-Tracking and contributing to the trunk of a Subversion-managed project:
+Tracking and contributing to the trunk of a Subversion-managed project
+(ignoring tags and branches):
 
 ------------------------------------------------------------------------
 # Clone a repo (like git clone):
@@ -764,8 +765,10 @@ Tracking and contributing to an entire Subversion-managed project
 (complete with a trunk, tags and branches):
 
 ------------------------------------------------------------------------
-# Clone a repo (like git clone):
-	git svn clone http://svn.example.com/project -T trunk -b branches -t tags
+# Clone a repo with standard SVN directory layout (like git clone):
+	git svn clone http://svn.example.com/project --stdlayout
+# Or, if the repo uses a non-standard directory layout:
+	git svn clone http://svn.example.com/project -T tr -b branch -t tag
 # View all branches and tags you have cloned:
 	git branch -r
 # Create a new branch in SVN
@@ -916,6 +919,21 @@ Do not use the --amend option of linkgit:git-commit[1] on a change you've
 already dcommitted.  It is considered bad practice to --amend commits
 you've already pushed to a remote repository for other users, and
 dcommit with SVN is analogous to that.
+
+When cloning an SVN repository, if none of the options for describing
+the repository layout is used (--trunk, --tags, --branches,
+--stdlayout), 'git svn clone' will create a git repository with
+completely linear history, where branches and tags appear as separate
+directories in the working copy.  While this is the easiest way to get a
+copy of a complete repository, for projects with many branches it will
+lead to a working copy many times larger than just the trunk. Thus for
+projects using the standard directory structure (trunk/branches/tags),
+it is recommended to clone with option '--stdlayout'. If the project
+uses a non-standard structure, and/or if branches and tags are not
+required, it is easiest to only clone one directory (typically trunk),
+without giving any repository layout options.  If the full history with
+branches and tags is required, the options '--trunk' / '--branches' /
+'--tags' must be used.
 
 When using multiple --branches or --tags, 'git svn' does not automatically
 handle name collisions (for example, if two branches from different paths have
