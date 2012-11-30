@@ -1281,7 +1281,14 @@ int match_push_refs(struct ref *src, struct ref **dst,
 
 static inline int is_forwardable(struct ref* ref)
 {
+	struct object *o;
+
 	if (!prefixcmp(ref->name, "refs/tags/"))
+		return 0;
+
+	/* old object must be a commit */
+	o = parse_object(ref->old_sha1);
+	if (!o || o->type != OBJ_COMMIT)
 		return 0;
 
 	return 1;
@@ -1323,8 +1330,8 @@ void set_ref_status_for_push(struct ref *remote_refs, int send_mirror,
 		 *     to overwrite it; you would not know what you are losing
 		 *     otherwise.
 		 *
-		 * (4) if both new and old are commit-ish, and new is a
-		 *     descendant of old, it is OK.
+		 * (4) if old is a commit and new is a descendant of old
+		 *     (implying new is commit-ish), it is OK.
 		 *
 		 * (5) regardless of all of the above, removing :B is
 		 *     always allowed.
