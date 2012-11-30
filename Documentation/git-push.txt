@@ -51,11 +51,12 @@ be named. If `:`<dst> is omitted, the same ref as <src> will be
 updated.
 +
 The object referenced by <src> is used to update the <dst> reference
-on the remote side, but by default this is only allowed if the
-update can fast-forward <dst>.  By having the optional leading `+`,
-you can tell git to update the <dst> ref even when the update is not a
-fast-forward.  This does *not* attempt to merge <src> into <dst>.  See
-EXAMPLES below for details.
+on the remote side.  By default this is only allowed if <dst> is not
+under refs/tags/, and then only if it can fast-forward <dst>.  By having
+the optional leading `+`, you can tell git to update the <dst> ref even
+if it is not allowed by default (e.g., it is not a fast-forward.)  This
+does *not* attempt to merge <src> into <dst>.  See EXAMPLES below for
+details.
 +
 `tag <tag>` means the same as `refs/tags/<tag>:refs/tags/<tag>`.
 +

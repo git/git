@@ -1315,14 +1315,18 @@ void set_ref_status_for_push(struct ref *remote_refs, int send_mirror,
 		 *
 		 * (1) if the old thing does not exist, it is OK.
 		 *
-		 * (2) if you do not have the old thing, you are not allowed
+		 * (2) if the destination is under refs/tags/ you are
+		 *     not allowed to overwrite it; tags are expected
+		 *     to be static once created
+		 *
+		 * (3) if you do not have the old thing, you are not allowed
 		 *     to overwrite it; you would not know what you are losing
 		 *     otherwise.
 		 *
-		 * (3) if both new and old are commit-ish, and new is a
+		 * (4) if both new and old are commit-ish, and new is a
 		 *     descendant of old, it is OK.
 		 *
-		 * (4) regardless of all of the above, removing :B is
+		 * (5) regardless of all of the above, removing :B is
 		 *     always allowed.
 		 */
 
@@ -1337,7 +1341,13 @@ void set_ref_status_for_push(struct ref *remote_refs, int send_mirror,
 				!has_sha1_file(ref->old_sha1)
 				  || !ref_newer(ref->new_sha1, ref->old_sha1);
 
-			if (ref->nonfastforward) {
+			if (ref->not_forwardable) {
+				ref->requires_force = 1;
+				if (!force_ref_update) {
+					ref->status = REF_STATUS_REJECT_ALREADY_EXISTS;
+					continue;
+				}
+			} else if (ref->nonfastforward) {
 				ref->requires_force = 1;
 				if (!force_ref_update) {
 					ref->status = REF_STATUS_REJECT_NONFASTFORWARD;

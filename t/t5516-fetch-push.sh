@@ -368,7 +368,7 @@ test_expect_success 'push with colon-less refspec (2)' '
 		git branch -D frotz
 	fi &&
 	git tag -f frotz &&
-	git push testrepo frotz &&
+	git push -f testrepo frotz &&
 	check_push_result $the_commit tags/frotz &&
 	check_push_result $the_first_commit heads/frotz
 
@@ -926,6 +926,27 @@ test_expect_success 'push into aliased refs (inconsistent)' '
 		git branch bar &&
 		test_must_fail git push ../child1 foo bar 2>stderr &&
 		grep "refusing inconsistent update" stderr
+	)
+'
+
+test_expect_success 'push requires --force to update lightweight tag' '
+	mk_test heads/master &&
+	mk_child child1 &&
+	mk_child child2 &&
+	(
+		cd child1 &&
+		git tag Tag &&
+		git push ../child2 Tag &&
+		git push ../child2 Tag &&
+		>file1 &&
+		git add file1 &&
+		git commit -m "file1" &&
+		git tag -f Tag &&
+		test_must_fail git push ../child2 Tag &&
+		git push --force ../child2 Tag &&
+		git tag -f Tag &&
+		test_must_fail git push ../child2 Tag HEAD~ &&
+		git push --force ../child2 Tag
 	)
 '
 
