@@ -621,10 +621,19 @@ ADVANCED OPTIONS
 	Default: "svn"
 
 --follow-parent::
+	This option is only relevant if we are tracking branches (using
+	one of the repository layout options --trunk, --tags,
+	--branches, --stdlayout). For each tracked branch, try to find
+	out where its revision was copied from, and set
+	a suitable parent in the first git commit for the branch.
 	This is especially helpful when we're tracking a directory
-	that has been moved around within the repository, or if we
-	started tracking a branch and never tracked the trunk it was
-	descended from. This feature is enabled by default, use
+	that has been moved around within the repository.  If this
+	feature is disabled, the branches created by 'git svn' will all
+	be linear and not share any history, meaning that there will be
+	no information on where branches were branched off or merged.
+	However, following long/convoluted histories can take a long
+	time, so disabling this feature may speed up the cloning
+	process. This feature is enabled by default, use
 	--no-follow-parent to disable it.
 +
 [verse]
