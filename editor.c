@@ -39,7 +39,7 @@ int launch_editor(const char *path, struct strbuf *buffer, const char *const *en
 	if (strcmp(editor, ":")) {
 		const char *args[] = { editor, path, NULL };
 		struct child_process p;
-		int ret;
+		int ret, sig;
 
 		memset(&p, 0, sizeof(p));
 		p.argv = args;
@@ -51,8 +51,11 @@ int launch_editor(const char *path, struct strbuf *buffer, const char *const *en
 		sigchain_push(SIGINT, SIG_IGN);
 		sigchain_push(SIGQUIT, SIG_IGN);
 		ret = finish_command(&p);
+		sig = ret + 128;
 		sigchain_pop(SIGINT);
 		sigchain_pop(SIGQUIT);
+		if (sig == SIGINT || sig == SIGQUIT)
+			raise(sig);
 		if (ret)
 			return error("There was a problem with the editor '%s'.",
 					editor);
