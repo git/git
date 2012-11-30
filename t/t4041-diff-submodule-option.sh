@@ -21,7 +21,7 @@ add_file () {
 		test_tick &&
 		git commit -m "Add $name"
 	done >/dev/null
-	git rev-parse --verify HEAD | cut -c1-7
+	git rev-parse --short --verify HEAD
 	cd "$owd"
 }
 commit_file () {
@@ -33,7 +33,7 @@ test_create_repo sm1 &&
 add_file . foo >/dev/null
 
 head1=$(add_file sm1 foo1 foo2)
-fullhead1=$(cd sm1; git rev-list --max-count=1 $head1)
+fullhead1=$(cd sm1; git rev-parse --verify HEAD)
 
 test_expect_success 'added submodule' "
 	git add sm1 &&
@@ -116,8 +116,8 @@ EOF
 	test_cmp expected actual
 "
 
-fullhead2=$(cd sm1; git rev-list --max-count=1 $head2)
 test_expect_success 'modified submodule(forward) --submodule=short' "
+fullhead2=$(cd sm1; git rev-parse --verify HEAD)
 	git diff --submodule=short >actual &&
 	cat >expected <<-EOF &&
 diff --git a/sm1 b/sm1
@@ -135,7 +135,7 @@ commit_file sm1 &&
 head3=$(
 	cd sm1 &&
 	git reset --hard HEAD~2 >/dev/null &&
-	git rev-parse --verify HEAD | cut -c1-7
+	git rev-parse --short --verify HEAD
 )
 
 test_expect_success 'modified submodule(backward)' "
@@ -220,8 +220,8 @@ EOF
 rm -f sm1 &&
 test_create_repo sm1 &&
 head6=$(add_file sm1 foo6 foo7)
-fullhead6=$(cd sm1; git rev-list --max-count=1 $head6)
 test_expect_success 'nonexistent commit' "
+fullhead6=$(cd sm1; git rev-parse --verify HEAD)
 	git diff-index -p --submodule=log HEAD >actual &&
 	cat >expected <<-EOF &&
 Submodule sm1 $head4...$head6 (commits not present)
@@ -318,8 +318,8 @@ EOF
 "
 
 (cd sm1; git commit -mchange foo6 >/dev/null) &&
-head8=$(cd sm1; git rev-parse --verify HEAD | cut -c1-7) &&
 test_expect_success 'submodule is modified' "
+head8=$(cd sm1; git rev-parse --short --verify HEAD) &&
 	git diff-index -p --submodule=log HEAD >actual &&
 	cat >expected <<-EOF &&
 Submodule sm1 $head6..$head8:
@@ -461,7 +461,7 @@ EOF
 	test_cmp expected actual
 "
 
-fullhead7=$(cd sm2; git rev-list --max-count=1 $head7)
+fullhead7=$(cd sm2; git rev-parse --verify HEAD)
 
 test_expect_success 'given commit --submodule=short' "
 	git diff-index -p --submodule=short HEAD^ >actual &&
