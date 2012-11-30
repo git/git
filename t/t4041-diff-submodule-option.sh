@@ -11,18 +11,18 @@ This test tries to verify the sanity of the --submodule option of git diff.
 . ./test-lib.sh
 
 add_file () {
-	sm=$1
-	shift
-	owd=$(pwd)
-	cd "$sm"
-	for name; do
-		echo "$name" > "$name" &&
-		git add "$name" &&
-		test_tick &&
-		git commit -m "Add $name"
-	done >/dev/null
-	git rev-parse --short --verify HEAD
-	cd "$owd"
+	(
+		cd "$1" &&
+		shift &&
+		for name
+		do
+			echo "$name" >"$name" &&
+			git add "$name" &&
+			test_tick &&
+			git commit -m "Add $name" || exit
+		done >/dev/null &&
+		git rev-parse --short --verify HEAD
+	)
 }
 commit_file () {
 	test_tick &&
