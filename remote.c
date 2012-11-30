@@ -1291,6 +1291,11 @@ static inline int is_forwardable(struct ref* ref)
 	if (!o || o->type != OBJ_COMMIT)
 		return 0;
 
+	/* new object must be commit-ish */
+	o = deref_tag(parse_object(ref->new_sha1), NULL, 0);
+	if (!o || o->type != OBJ_COMMIT)
+		return 0;
+
 	return 1;
 }
 
