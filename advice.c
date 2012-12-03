@@ -1,6 +1,6 @@
 #include "cache.h"
 
-int advice_push_nonfastforward = 1;
+int advice_push_update_rejected = 1;
 int advice_push_non_ff_current = 1;
 int advice_push_non_ff_default = 1;
 int advice_push_non_ff_matching = 1;
@@ -14,7 +14,7 @@ static struct {
 	const char *name;
 	int *preference;
 } advice_config[] = {
-	{ "pushnonfastforward", &advice_push_nonfastforward },
+	{ "pushupdaterejected", &advice_push_update_rejected },
 	{ "pushnonffcurrent", &advice_push_non_ff_current },
 	{ "pushnonffdefault", &advice_push_non_ff_default },
 	{ "pushnonffmatching", &advice_push_non_ff_matching },
@@ -23,6 +23,9 @@ static struct {
 	{ "resolveconflict", &advice_resolve_conflict },
 	{ "implicitidentity", &advice_implicit_identity },
 	{ "detachedhead", &advice_detached_head },
+
+	/* make this an alias for backward compatibility */
+	{ "pushnonfastforward", &advice_push_update_rejected }
 };
 
 void advise(const char *advice, ...)
