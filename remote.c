@@ -1633,8 +1633,9 @@ int format_tracking_info(struct branch *branch, struct strbuf *sb)
 			   "Your branch is ahead of '%s' by %d commits.\n",
 			   num_ours),
 			base, num_ours);
-		strbuf_addf(sb,
-			_("  (use \"git push\" to publish your local commits)\n"));
+		if (advice_status_hints)
+			strbuf_addf(sb,
+				_("  (use \"git push\" to publish your local commits)\n"));
 	} else if (!num_ours) {
 		strbuf_addf(sb,
 			Q_("Your branch is behind '%s' by %d commit, "
@@ -1643,8 +1644,9 @@ int format_tracking_info(struct branch *branch, struct strbuf *sb)
 			       "and can be fast-forwarded.\n",
 			   num_theirs),
 			base, num_theirs);
-		strbuf_addf(sb,
-			_("  (use \"git pull\" to update your local branch)\n"));
+		if (advice_status_hints)
+			strbuf_addf(sb,
+				_("  (use \"git pull\" to update your local branch)\n"));
 	} else {
 		strbuf_addf(sb,
 			Q_("Your branch and '%s' have diverged,\n"
@@ -1655,8 +1657,9 @@ int format_tracking_info(struct branch *branch, struct strbuf *sb)
 			       "respectively.\n",
 			   num_theirs),
 			base, num_ours, num_theirs);
-		strbuf_addf(sb,
-			_("  (use \"git pull\" to merge the remote branch into yours)\n"));
+		if (advice_status_hints)
+			strbuf_addf(sb,
+				_("  (use \"git pull\" to merge the remote branch into yours)\n"));
 	}
 	return 1;
 }
