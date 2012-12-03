@@ -19,7 +19,7 @@ variable in this release.
 
 "git branch --set-upstream" is deprecated and may be removed in a
 relatively distant future.  "git branch [-u|--set-upstream-to]" has
-been introduced with a saner order of arguments.
+been introduced with a saner order of arguments to replace it.
 
 
 Updates since v1.8.0
@@ -50,7 +50,8 @@ UI, Workflows & Features
  * When "git checkout" checks out a branch, it tells the user how far
    behind (or ahead) the new branch is relative to the remote tracking
    branch it builds upon.  The message now also advises how to sync
-   them up by pushing or pulling.
+   them up by pushing or pulling.  This can be disabled with the
+   advice.statusHints configuration variable.
 
  * "git config --get" used to diagnose presence of multiple
    definitions of the same variable in the same configuration file as
@@ -69,17 +70,18 @@ UI, Workflows & Features
  * "git log --grep=<pcre>" learned to honor the "grep.patterntype"
    configuration set to "perl".
 
- * "git replace -d <object>" now interprets <object>, instead of only
-   accepting full hex object name.
+ * "git replace -d <object>" now interprets <object> as an extended
+   SHA-1 (e.g. HEAD~4 is allowed), instead of only accepting full hex
+   object name.
 
  * "git rm $submodule" used to punt on removing a submodule working
    tree to avoid losing the repository embedded in it.  Because
    recent git uses a mechanism to separate the submodule repository
    from the submodule working tree, "git rm" learned to detect this
-   case and removes the submodule working tree when it is safe.
+   case and removes the submodule working tree when it is safe to do so.
 
  * "git send-email" used to prompt for the sender address, even when
-   the committer identify is well specified (e.g. via user.name and
+   the committer identity is well specified (e.g. via user.name and
    user.email configuration variables).  The command no longer gives
    this prompt when not necessary.
 
@@ -103,7 +105,7 @@ UI, Workflows & Features
 
  * "git symbolic-ref" learned the "-d $symref" option to delete the
    named symbolic ref, which is more intuitive way to spell it than
-   "update-ref -d --no-deref".
+   "update-ref -d --no-deref $symref".
 
 
 Foreign Interface
@@ -119,10 +121,10 @@ Performance, Internal Implementation, etc.
 
  * Compilation on Cygwin with newer header files are supported now.
 
- * The logic to generate the initial advertisement from
-   "upload-pack" (what is invoked by "git fetch" on the other side
-   of the connection) to list what refs are available in the
-   repository has been optimized.
+ * The logic to generate the initial advertisement from "upload-pack"
+   (i.e. what is invoked by "git fetch" on the other side of the
+   connection) to list what refs are available in the repository has
+   been optimized.
 
  * The logic to find set of attributes that match a given path has
    been optimized.
