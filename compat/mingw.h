@@ -55,8 +55,6 @@ struct passwd {
 	char *pw_dir;
 };
 
-extern char *getpass(const char *prompt);
-
 typedef void (__cdecl *sig_handler_t)(int);
 struct sigaction {
 	sig_handler_t sa_handler;
