@@ -778,7 +778,7 @@ test_expect_success 'running "git rebase -i --exec git show HEAD"' '
 		git rebase -i HEAD~2 >expect
 	) &&
 	sed -e "1,9d" expect >expected &&
-	test_cmp expected actual
+	test_cmp_text expected actual
 '
 
 
@@ -791,7 +791,7 @@ test_expect_success 'running "git rebase --exec git show HEAD -i"' '
 		git rebase -i HEAD~2 >expect
 	) &&
 	sed -e "1,9d" expect >expected &&
-	test_cmp expected actual
+	test_cmp_text expected actual
 '
 
 
@@ -804,7 +804,7 @@ test_expect_success 'running "git rebase -ix git show HEAD"' '
 		git rebase -i HEAD~2 >expect
 	) &&
 	sed -e "1,9d" expect >expected &&
-	test_cmp expected actual
+	test_cmp_text expected actual
 '
 
 
@@ -817,7 +817,7 @@ test_expect_success 'rebase -ix with several <CMD>' '
 		git rebase -i HEAD~2 >expect
 	) &&
 	sed -e "1,9d" expect >expected &&
-	test_cmp expected actual
+	test_cmp_text expected actual
 '
 
 
@@ -831,7 +831,7 @@ test_expect_success 'rebase -ix with several instances of --exec' '
 		git rebase -i HEAD~2 >expect
 	) &&
 	sed -e "1,11d" expect >expected &&
-	test_cmp expected actual
+	test_cmp_text expected actual
 '
 
 
@@ -856,7 +856,7 @@ test_expect_success 'rebase -ix with --autosquash' '
 		git rebase -i HEAD~4 >expect
 	) &&
 	sed -e "1,13d" expect >expected &&
-	test_cmp expected actual
+	test_cmp_text expected actual
 '
 
 
