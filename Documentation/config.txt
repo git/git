@@ -160,9 +160,10 @@ advice.*::
 		it resulted in a non-fast-forward error.
 	statusHints::
 		Show directions on how to proceed from the current
-		state in the output of linkgit:git-status[1] and in
+		state in the output of linkgit:git-status[1], in
 		the template shown when writing commit messages in
-		linkgit:git-commit[1].
+		linkgit:git-commit[1], and in the help message shown
+		by linkgit:git-checkout[1] when switching branch.
 	commitBeforeMerge::
 		Advice shown when linkgit:git-merge[1] refuses to
 		merge to avoid overwriting local changes.
