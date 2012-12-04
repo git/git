@@ -14,6 +14,7 @@ static void restore_term(void)
 		return;
 
 	tcsetattr(term_fd, TCSAFLUSH, &old_term);
+	close(term_fd);
 	term_fd = -1;
 }
 
@@ -22,6 +23,27 @@ static void restore_term_on_signal(int sig)
 	restore_term();
 	sigchain_pop(sig);
 	raise(sig);
+}
+
+static int disable_echo(void)
+{
+	struct termios t;
+
+	term_fd = open("/dev/tty", O_RDWR);
+	if (tcgetattr(term_fd, &t) < 0)
+		goto error;
+
+	old_term = t;
+	sigchain_push_common(restore_term_on_signal);
+
+	t.c_lflag &= ~ECHO;
+	if (!tcsetattr(term_fd, TCSAFLUSH, &t))
+		return 0;
+
+error:
+	close(term_fd);
+	term_fd = -1;
+	return -1;
 }
 
 char *git_terminal_prompt(const char *prompt, int echo)
@@ -34,24 +56,9 @@ char *git_terminal_prompt(const char *prompt, int echo)
 	if (!fh)
 		return NULL;
 
-	if (!echo) {
-		struct termios t;
-
-		if (tcgetattr(fileno(fh), &t) < 0) {
-			fclose(fh);
-			return NULL;
-		}
-
-		old_term = t;
-		term_fd = fileno(fh);
-		sigchain_push_common(restore_term_on_signal);
-
-		t.c_lflag &= ~ECHO;
-		if (tcsetattr(fileno(fh), TCSAFLUSH, &t) < 0) {
-			term_fd = -1;
-			fclose(fh);
-			return NULL;
-		}
+	if (!echo && disable_echo()) {
+		fclose(fh);
+		return NULL;
 	}
 
 	fputs(prompt, fh);
