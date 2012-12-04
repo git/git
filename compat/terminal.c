@@ -50,29 +50,36 @@ char *git_terminal_prompt(const char *prompt, int echo)
 {
 	static struct strbuf buf = STRBUF_INIT;
 	int r;
-	FILE *fh;
+	FILE *input_fh, *output_fh;
 
-	fh = fopen("/dev/tty", "w+");
-	if (!fh)
+	input_fh = fopen("/dev/tty", "r");
+	if (!input_fh)
 		return NULL;
 
-	if (!echo && disable_echo()) {
-		fclose(fh);
+	output_fh = fopen("/dev/tty", "w");
+	if (!output_fh) {
+		fclose(input_fh);
 		return NULL;
 	}
 
-	fputs(prompt, fh);
-	fflush(fh);
+	if (!echo && disable_echo()) {
+		fclose(input_fh);
+		fclose(output_fh);
+		return NULL;
+	}
 
-	r = strbuf_getline(&buf, fh, '\n');
+	fputs(prompt, output_fh);
+	fflush(output_fh);
+
+	r = strbuf_getline(&buf, input_fh, '\n');
 	if (!echo) {
-		fseek(fh, SEEK_CUR, 0);
-		putc('\n', fh);
-		fflush(fh);
+		putc('\n', output_fh);
+		fflush(output_fh);
 	}
 
 	restore_term();
-	fclose(fh);
+	fclose(input_fh);
+	fclose(output_fh);
 
 	if (r == EOF)
 		return NULL;
