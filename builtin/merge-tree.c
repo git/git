@@ -12,8 +12,7 @@ struct merge_list {
 	struct merge_list *next;
 	struct merge_list *link;	/* other stages for this object */
 
-	unsigned int stage : 2,
-		     flags : 30;
+	unsigned int stage : 2;
 	unsigned int mode;
 	const char *path;
 	struct blob *blob;
