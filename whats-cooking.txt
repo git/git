@@ -1,19 +1,15 @@
 To: git@vger.kernel.org
 Bcc: lwn@lwn.net
-Subject: What's cooking in git.git (Nov 2012, #10; Thu, 29)
-X-master-at: f94c3251e1400c3cf349f7f84fea4db66b540113
-X-next-at: 19e1b0a2032ea70977d8d774ed994913f067038b
+Subject: What's cooking in git.git (Dec 2012, #01; Thu, 6)
+X-master-at: fb4c62235fee8008d99ef55c4adcb1f7ea9508a3
+X-next-at: af2e3a9095a73e8f4f0dea403998204b8ff7dee1
 
-What's cooking in git.git (Nov 2012, #10; Thu, 29)
+What's cooking in git.git (Dec 2012, #01; Thu, 6)
 --------------------------------------------------
 
 Here are the topics that have been cooking.  Commits prefixed with
 '-' are only in 'pu' (proposed updates) while commits prefixed with
 '+' are in 'next'.
-
-Hopefully 1.8.1-rc0 preview will be tagged this weekend.  Many
-topics are marked to be cooked in 'next' during the feature freeze,
-but some topics in flight should be in 'master' before -rc1 happens.
 
 You can find the changes described here in the integration branches of the
 repositories listed at
@@ -23,203 +19,38 @@ repositories listed at
 --------------------------------------------------
 [New Topics]
 
-* wk/submodule-update-remote (2012-11-28) 2 commits
- - submodule add: If --branch is given, record it in .gitmodules
- - submodule update: add --remote for submodule's upstream changes
+* ef/mingw-tty-getpass (2012-12-04) 6 commits
+ - mingw: get rid of getpass implementation
+ - mingw: reuse tty-version of git_terminal_prompt
+ - compat/terminal: separate input and output handles
+ - compat/terminal: factor out echo-disabling
+ - mingw: make fgetc raise SIGINT if apropriate
+ - mingw: correct exit-code for SIGALRM's SIG_DFL
 
- Still under active discussion.
-
---------------------------------------------------
-[Graduated to "master"]
-
-* er/doc-add-new-commands (2012-11-26) 1 commit
-  (merged to 'next' on 2012-11-28 at 2daf755)
- + Documentation: how to add a new command
+ Update getpass() emulation for MinGW.
+ Will merge to 'next'.
 
 
-* fc/completion-test-simplification (2012-11-16) 6 commits
-  (merged to 'next' on 2012-11-28 at b7b2f67)
- + completion: simplify __gitcomp() test helper
- + completion: refactor __gitcomp related tests
- + completion: consolidate test_completion*() tests
- + completion: simplify tests using test_completion_long()
- + completion: standardize final space marker in tests
- + completion: add comment for test_completion()
+* jl/submodule-deinit (2012-12-04) 1 commit
+ - submodule: add 'deinit' command
 
- Clean up completion tests.  Use of conslidated helper may make
- instrumenting one particular test during debugging of the test
- itself, but I think that issue should be addressed in some other
- way (e.g. making sure individual tests in 9902 can be skipped).
+ There was no Porcelain way to say "I no longer am interested in
+ this submodule", once you express your interest in a submodule with
+ "submodule init".  "submodule deinit" is the way to do so.
+
+ Will merge to 'next'.
 
 
-* fc/remote-hg (2012-11-27) 22 commits
-  (merged to 'next' on 2012-11-28 at f805784)
- + remote-hg: fix for older versions of python
- + remote-hg: fix for files with spaces
-  (merged to 'next' on 2012-11-18 at 4a4f2e4)
- + remote-hg: avoid bad refs
- + remote-hg: try the 'tip' if no checkout present
- + remote-hg: fix compatibility with older versions of hg
- + remote-hg: add missing config for basic tests
- + remote-hg: the author email can be null
- + remote-hg: add option to not track branches
- + remote-hg: add extra author test
- + remote-hg: add tests to compare with hg-git
- + remote-hg: add bidirectional tests
- + test-lib: avoid full path to store test results
- + remote-hg: add basic tests
- + remote-hg: fake bookmark when there's none
- + remote-hg: add compat for hg-git author fixes
- + remote-hg: add support for hg-git compat mode
- + remote-hg: match hg merge behavior
- + remote-hg: make sure the encoding is correct
- + remote-hg: add support to push URLs
- + remote-hg: add support for remote pushing
- + remote-hg: add support for pushing
- + Add new remote-hg transport helper
+* sl/git-svn-docs (2012-12-05) 4 commits
+ - git-svn: Note about tags.
+ - git-svn: Expand documentation for --follow-parent
+ - git-svn: Recommend use of structure options.
+ - git-svn: Document branches with at-sign(@).
 
- New remote helper for hg.
-
-
-* fc/send-email-no-sender-prompt (2012-11-26) 1 commit
-  (merged to 'next' on 2012-11-28 at 690d525)
- + send-email: avoid questions when user has an ident
- (this branch is used by jk/send-email-sender-prompt.)
-
- In cases the sender ident is sufficiently specified, there is no
- need to prompt the user before sending the series out.
-
-
-* fc/zsh-completion (2012-11-19) 2 commits
-  (merged to 'next' on 2012-11-26 at 48ebdc9)
- + completion: start moving to the new zsh completion
- + completion: add new zsh completion
-
- Completion script revamped for zsh users.
-
-
-* jc/doc-push-satellite (2012-11-27) 1 commit
-  (merged to 'next' on 2012-11-28 at 7114637)
- + Documentation/git-push.txt: clarify the "push from satellite" workflow
-
- Clarify what the example that pushes branches into remote-tracking
- branches of another repository is trying to achieve (i.e. emulating
- a fetch in reverse).
-
-
-* jk/pickaxe-textconv (2012-10-28) 2 commits
-  (merged to 'next' on 2012-11-26 at 2c5b5c9)
- + pickaxe: use textconv for -S counting
- + pickaxe: hoist empty needle check
-
- Use textconv filters when searching with "log -S".
-
-
-* jk/send-email-sender-prompt (2012-11-28) 7 commits
-  (merged to 'next' on 2012-11-28 at a808921)
- + t9001: check send-email behavior with implicit sender
- + Merge branch 'fc/send-email-no-sender-prompt' into jk/send-email-sender-prompt
- + t: add tests for "git var"
- + ident: keep separate "explicit" flags for author and committer
- + ident: make user_ident_explicitly_given static
- + t7502: factor out autoident prerequisite
- + test-lib: allow negation of prerequisites
- (this branch uses fc/send-email-no-sender-prompt.)
-
- General clean-ups in various areas, originally written to support a
- patch that later turned out to be unneeded.
-
-
-* jl/submodule-rm (2012-11-23) 1 commit
-  (merged to 'next' on 2012-11-28 at 0e4115f)
- + Teach rm to remove submodules when given with a trailing '/'
-
- Finishing touches to "git rm $submodule" that removes the working
- tree of a submodule.
-
-
-* km/send-email-remove-cruft-in-address (2012-11-26) 5 commits
-  (merged to 'next' on 2012-11-28 at 2688772)
- + git-send-email: allow edit invalid email address
- + git-send-email: ask what to do with an invalid email address
- + git-send-email: remove invalid addresses earlier
- + git-send-email: fix fallback code in extract_valid_address()
- + git-send-email: remove garbage after email address
-
- Garbage after e-mail address on Cc: in the patch breaks the
- transmission of it over send-email.
-
-
-* lt/diff-stat-show-0-lines (2012-11-27) 6 commits
-  (merged to 'next' on 2012-11-28 at de89eed)
- + diff --shortstat: do not count "unmerged" entries
- + diff --stat: do not count "unmerged" entries
- + diff --stat: move the "total count" logic to the last loop
- + diff --stat: use "file" temporary variable to refer to data->files[i]
- + diff --stat: status of unmodified pair in diff-q is not zero
- + test: add failing tests for "diff --stat" to t4049
-
- "git diff --stat" miscounted the total number of changed lines when
- binary files were involved and hidden beyond --stat-count.  It also
- miscounted the total number of changed files when there were
- unmerged paths.
-
-
-* mk/complete-tcsh (2012-11-27) 1 commit
-  (merged to 'next' on 2012-11-28 at 5528439)
- + Support for git aliasing for tcsh completion
-
- Completion script revamped for tcsh users.
-
-
-* mm/status-push-pull-advise (2012-11-16) 1 commit
-  (merged to 'next' on 2012-11-26 at ed40d5e)
- + status: add advice on how to push/pull to tracking branch
-
- When "git checkout" checks out a branch, it tells the user how far
- behind (or ahead) the new branch is relative to the remote tracking
- branch it builds upon.  The message now also advises how to sync
- them up by pushing or pulling.
-
-
-* pp/gitweb-config-underscore (2012-11-21) 1 commit
-  (merged to 'next' on 2012-11-28 at fc9bf5f)
- + gitweb: make remote_heads config setting work
-
- The key "gitweb.remote_heads" is not legal git config; this maps it to
- "gitweb.remoteheads".
-
-
-* pw/p4-various-fixes (2012-11-26) 6 commits
-  (merged to 'next' on 2012-11-28 at 1a6f9a9)
- + git p4: remove unneeded cmd initialization
- + git p4: fix labelDetails typo in exception
- + git p4 test: display unresolvable host error
- + git p4: catch p4 errors when streaming file contents
- + git p4: handle servers without move support
- + git p4: catch p4 describe errors
+ Will merge to 'next'.
 
 --------------------------------------------------
 [Stalled]
-
-* pf/editor-ignore-sigint (2012-11-11) 5 commits
- - launch_editor: propagate SIGINT from editor to git
- - run-command: do not warn about child death by SIGINT
- - run-command: drop silent_exec_failure arg from wait_or_whine
- - launch_editor: ignore SIGINT while the editor has control
- - launch_editor: refactor to use start/finish_command
-
- Avoid confusing cases where the user hits Ctrl-C while in the editor
- session, not realizing git will receive the signal. Since most editors
- will take over the terminal and will block SIGINT, this is not likely
- to confuse anyone.
-
- Some people raised issues with emacsclient, which are addressed by this
- re-roll. It should probably also handle SIGQUIT, and there were a
- handful of other review comments.
-
- Expecting a re-roll.
-
 
 * mo/cvs-server-updates (2012-10-16) 10 commits
  - cvsserver Documentation: new cvs ... -r support
@@ -400,6 +231,21 @@ repositories listed at
 --------------------------------------------------
 [Cooking]
 
+* pf/editor-ignore-sigint (2012-12-02) 5 commits
+ - launch_editor: propagate signals from editor to git
+ - run-command: do not warn about child death from terminal
+ - launch_editor: ignore terminal signals while editor has control
+ - launch_editor: refactor to use start/finish_command
+ - run-command: drop silent_exec_failure arg from wait_or_whine
+
+ Avoid confusing cases where the user hits Ctrl-C while in the editor
+ session, not realizing git will receive the signal. Since most editors
+ will take over the terminal and will block SIGINT, this is not likely
+ to confuse anyone.
+
+ Will merge to 'next'.
+
+
 * bc/append-signed-off-by (2012-11-26) 11 commits
  - Unify appending signoff in format-patch, commit and sequencer
  - format-patch: update append_signoff prototype
@@ -416,27 +262,29 @@ repositories listed at
  Expecting a re-roll after a review.
 
 
-* mh/unify-xml-in-imap-send-and-http-push (2012-11-29) 8 commits
- - wrap_in_html(): process message in bulk rather than line-by-line
- - wrap_in_html(): use strbuf_addstr_xml_quoted()
- - imap-send: change msg_data from storing (ptr, len) to storing strbuf
- - imap-send: correctly report errors reading from stdin
- - imap-send: store all_msgs as a strbuf
- - lf_to_crlf(): NUL-terminate msg_data::data
- - xml_entities(): use function strbuf_addstr_xml_quoted()
- - Add new function strbuf_add_xml_quoted()
+* mh/unify-xml-in-imap-send-and-http-push (2012-12-02) 8 commits
+  (merged to 'next' on 2012-12-03 at d677090)
+ + wrap_in_html(): process message in bulk rather than line-by-line
+ + wrap_in_html(): use strbuf_addstr_xml_quoted()
+ + imap-send: change msg_data from storing (ptr, len) to storing strbuf
+ + imap-send: correctly report errors reading from stdin
+ + imap-send: store all_msgs as a strbuf
+ + lf_to_crlf(): NUL-terminate msg_data::data
+ + xml_entities(): use function strbuf_addstr_xml_quoted()
+ + Add new function strbuf_add_xml_quoted()
 
- Will merge to 'next'.
+ Update imap-send to reuse xml quoting code from http-push codepath,
+ clean up some code, and fix a small bug.
 
 
-* rr/t4041-cleanup (2012-11-27) 4 commits
- - t4041 (diff-submodule-option): modernize style
- - t4041 (diff-submodule-option): rewrite add_file() routine
- - t4041 (diff-submodule-option): parse digests sensibly
- - t4041 (diff-submodule-option): don't hardcode SHA-1 in expected outputs
+* rr/t4041-cleanup (2012-12-02) 4 commits
+  (merged to 'next' on 2012-12-04 at ecee35d)
+ + t4041 (diff-submodule-option): modernize style
+ + t4041 (diff-submodule-option): rewrite add_file() routine
+ + t4041 (diff-submodule-option): parse digests sensibly
+ + t4041 (diff-submodule-option): don't hardcode SHA-1 in expected outputs
 
- As a clean-up, it still misses some.
- Expecting a re-roll.
+ Test clean-up.
 
 
 * jc/doc-maintainer (2012-11-27) 1 commit
@@ -507,24 +355,25 @@ repositories listed at
  Will cook in 'next'.
 
 
-* fc/fast-export-fixes (2012-11-29) 15 commits
- - fast-export: make sure updated refs get updated
- - fast-export: don't handle uninteresting refs
- - fast-export: fix comparison in tests
- - fast-export: trivial cleanup
- - remote-testgit: implement the "done" feature manually
- - remote-testgit: report success after an import
- - remote-testgit: exercise more features
- - remote-testgit: cleanup tests
- - remote-testgit: remove irrelevant test
- - remote-testgit: remove non-local functionality
- - Add new simplified git-remote-testgit
- - Rename git-remote-testgit to git-remote-testpy
- - remote-helpers: fix failure message
- - remote-testgit: fix direction of marks
- - fast-export: avoid importing blob marks
+* fc/fast-export-fixes (2012-12-03) 15 commits
+  (merged to 'next' on 2012-12-03 at f9df523)
+ + fast-export: make sure updated refs get updated
+ + fast-export: don't handle uninteresting refs
+ + fast-export: fix comparison in tests
+ + fast-export: trivial cleanup
+ + remote-testgit: implement the "done" feature manually
+ + remote-testgit: report success after an import
+ + remote-testgit: exercise more features
+ + remote-testgit: cleanup tests
+ + remote-testgit: remove irrelevant test
+ + remote-testgit: remove non-local functionality
+ + Add new simplified git-remote-testgit
+ + Rename git-remote-testgit to git-remote-testpy
+ + remote-helpers: fix failure message
+ + remote-testgit: fix direction of marks
+ + fast-export: avoid importing blob marks
 
- Will merge to (and cook in) 'next'.
+ Will cook in 'next'.
 
 
 * jc/apply-trailing-blank-removal (2012-10-12) 1 commit
@@ -539,12 +388,13 @@ repositories listed at
 
 
 * nd/pathspec-wildcard (2012-11-26) 4 commits
- - tree_entry_interesting: do basedir compare on wildcard patterns when possible
- - pathspec: apply "*.c" optimization from exclude
- - pathspec: do exact comparison on the leading non-wildcard part
- - pathspec: save the non-wildcard length part
+  (merged to 'next' on 2012-12-03 at eca0fcb)
+ + tree_entry_interesting: do basedir compare on wildcard patterns when possible
+ + pathspec: apply "*.c" optimization from exclude
+ + pathspec: do exact comparison on the leading non-wildcard part
+ + pathspec: save the non-wildcard length part
 
- Will merge to 'next'.
+ Will cook in 'next'.
 
 
 * nd/wildmatch (2012-11-20) 14 commits
@@ -593,43 +443,17 @@ repositories listed at
  for 'next'.
 
 
-* cr/push-force-tag-update (2012-11-26) 7 commits
- - push: clarify rejection of update to non-commit-ish
- - push: require force for annotated tags
- - push: require force for refs under refs/tags/
- - push: flag updates that require force
- - push: keep track of "update" state separately
- - push: add advice for rejected tag reference
- - push: return reject reasons via a mask
+* cr/push-force-tag-update (2012-12-03) 10 commits
+  (merged to 'next' on 2012-12-04 at af2e3a9)
+ + push: allow already-exists advice to be disabled
+ + push: rename config variable for more general use
+ + push: cleanup push rules comment
+ + push: clarify rejection of update to non-commit-ish
+ + push: require force for annotated tags
+ + push: require force for refs under refs/tags/
+ + push: flag updates that require force
+ + push: keep track of "update" state separately
+ + push: add advice for rejected tag reference
+ + push: return reject reasons as a bitset
 
  Require "-f" for push to update a tag, even if it is a fast-forward.
-
- With a minor tweak, I think this is getting ready for 'next'.
- Expecting a re-roll.
-
---------------------------------------------------
-[Discarded]
-
-* nd/unify-appending-of-s-o-b (2012-11-15) 1 commit
- . Unify appending signoff in format-patch, commit and sequencer
-
- I am not sure if the logic to refrain from adding a sign-off based
- on the existing run of sign-offs is done correctly in this change.
-
- Brandon's series attempts the same thing and seemed to be more
- cleanly done.
-
-
-* nd/pretty-placeholder-with-color-option (2012-09-30) 9 commits
- . pretty: support %>> that steal trailing spaces
- . pretty: support truncating in %>, %< and %><
- . pretty: support padding placeholders, %< %> and %><
- . pretty: two phase conversion for non utf-8 commits
- . utf8.c: add utf8_strnwidth() with the ability to skip ansi sequences
- . utf8.c: move display_mode_esc_sequence_len() for use by other functions
- . pretty: support %C(auto[,N]) to turn on coloring on next placeholder(s)
- . pretty: split parsing %C into a separate function
- . pretty: share code between format_decoration and show_decorations
-
- This causes warnings with -Wuninitialized, so I've ejected it from pu
- for the time being.
