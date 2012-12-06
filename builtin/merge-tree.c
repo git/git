@@ -3,7 +3,7 @@
 #include "xdiff-interface.h"
 #include "blob.h"
 #include "exec_cmd.h"
-#include "merge-file.h"
+#include "merge-blobs.h"
 
 static const char merge_tree_usage[] = "git merge-tree <base-tree> <branch1> <branch2>";
 static int resolve_directories = 1;
@@ -76,7 +76,7 @@ static void *result(struct merge_list *entry, unsigned long *size)
 	their = NULL;
 	if (entry)
 		their = entry->blob;
-	return merge_file(path, base, our, their, size);
+	return merge_blobs(path, base, our, their, size);
 }
 
 static void *origin(struct merge_list *entry, unsigned long *size)
