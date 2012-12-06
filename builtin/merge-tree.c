@@ -6,7 +6,6 @@
 #include "merge-blobs.h"
 
 static const char merge_tree_usage[] = "git merge-tree <base-tree> <branch1> <branch2>";
-static int resolve_directories = 1;
 
 struct merge_list {
 	struct merge_list *next;
@@ -198,8 +197,6 @@ static int unresolved_directory(const struct traverse_info *info, struct name_en
 	struct tree_desc t[3];
 	void *buf0, *buf1, *buf2;
 
-	if (!resolve_directories)
-		return 0;
 	p = n;
 	if (!p->mode) {
 		p++;
