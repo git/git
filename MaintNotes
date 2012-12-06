@@ -171,7 +171,7 @@ own authoritative repository and maintainers:
 
  - gitk-git/ comes from Paul Mackerras's gitk project:
 
-        git://git.kernel.org/pub/scm/gitk/gitk.git
+        git://ozlabs.org/~paulus/gitk
 
  - po/ comes from the localization coordinator, Jiang Xin:
 
