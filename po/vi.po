@@ -6,10 +6,10 @@
 #
 msgid ""
 msgstr ""
-"Project-Id-Version: git-v1.8.0-273-g2d242\n"
+"Project-Id-Version: git-v1.8.0.1-347-gf94c3\n"
 "Report-Msgid-Bugs-To: Git Mailing List <git@vger.kernel.org>\n"
-"POT-Creation-Date: 2012-11-23 14:27+0800\n"
-"PO-Revision-Date: 2012-11-24 07:34+0700\n"
+"POT-Creation-Date: 2012-11-30 12:40+0800\n"
+"PO-Revision-Date: 2012-11-30 13:40+0700\n"
 "Last-Translator: Trần Ngọc Quân <vnwildman@gmail.com>\n"
 "Language-Team: Vietnamese <translation-team-vi@lists.sourceforge.net>\n"
 "Language: vi\n"
@@ -98,7 +98,7 @@ msgstr "liệt kê các tập tin được lưu trữ vào stderr (đầu ra l�
 
 #: archive.c:330
 msgid "store only"
-msgstr "chỉ lưu"
+msgstr "chỉ lưu (không nén)"
 
 #: archive.c:331
 msgid "compress faster"
@@ -139,7 +139,7 @@ msgstr ""
 #: bundle.c:36
 #, c-format
 msgid "'%s' does not look like a v2 bundle file"
-msgstr "“%s” không giống như tập tin v2 bundle (cụm)"
+msgstr "“%s” không giống như tập tin v2 bundle (định dạng dump của git)"
 
 #: bundle.c:63
 #, c-format
@@ -181,7 +181,7 @@ msgstr[1] "Lệnh bundle yêu cầu %d tham chiếu (refs) này"
 
 #: bundle.c:294
 msgid "rev-list died"
-msgstr "rev-list bị chết"
+msgstr "rev-list đã chết"
 
 #: bundle.c:300 builtin/log.c:1215 builtin/shortlog.c:284
 #, c-format
@@ -191,7 +191,7 @@ msgstr "đối số không được thừa nhận: %s"
 #: bundle.c:335
 #, c-format
 msgid "ref '%s' is excluded by the rev-list options"
-msgstr "tham chiếu “%s” bị loại trừ bởi các tùy chọn rev-list"
+msgstr "th.chiếu “%s” bị loại trừ bởi các tùy chọn rev-list"
 
 #: bundle.c:380
 msgid "Refusing to create empty bundle."
@@ -319,7 +319,12 @@ msgstr "  Gặp lỗi khi phân tích dirstat cắt bỏ phần trăm '%s'\n"
 msgid "  Unknown dirstat parameter '%s'\n"
 msgstr "  Không hiểu đối số dirstat '%s'\n"
 
-#: diff.c:219
+#: diff.c:194
+#, c-format
+msgid "Unknown value for 'diff.submodule' config variable: '%s'"
+msgstr "Không hiểu giá trị cho biến cấu hình “diff.submodule”: `%s'"
+
+#: diff.c:237
 #, c-format
 msgid ""
 "Found errors in 'diff.dirstat' config variable:\n"
@@ -328,7 +333,7 @@ msgstr ""
 "Tìm thấy các lỗi trong biến cấu hình “diff.dirstat”:\n"
 "%s"
 
-#: diff.c:3467
+#: diff.c:3494
 #, c-format
 msgid ""
 "Failed to parse --dirstat/-X option parameter:\n"
@@ -336,6 +341,11 @@ msgid ""
 msgstr ""
 "Gặp lỗi khi phân tích đối số tùy chọn --dirstat/-X:\n"
 "%s"
+
+#: diff.c:3508
+#, c-format
+msgid "Failed to parse --submodule option parameter: '%s'"
+msgstr "Gặp lỗi khi phân tích đối số tùy chọn --submodule: `%s'"
 
 #: gpg-interface.c:59
 msgid "could not run gpg."
@@ -712,7 +722,11 @@ msgid_plural "Your branch is ahead of '%s' by %d commits.\n"
 msgstr[0] "Nhánh của bạn là đầu của “%s” bởi %d lần chuyển giao (commit).\n"
 msgstr[1] "Nhánh của bạn là đầu của “%s” bởi %d lần chuyển giao (commit).\n"
 
-#: remote.c:1638
+#: remote.c:1637
+msgid "  (use \"git push\" to publish your local commits)\n"
+msgstr "  (dùng \"git push\" để xuất bản các lần chuyển giao nội bộ của bạn)\n"
+
+#: remote.c:1640
 #, c-format
 msgid "Your branch is behind '%s' by %d commit, and can be fast-forwarded.\n"
 msgid_plural ""
@@ -724,7 +738,11 @@ msgstr[1] ""
 "Nhánh của bạn thì ở đằng sau “%s” bởi %d lần chuyển giao (commit), và có thể "
 "được fast-forward.\n"
 
-#: remote.c:1646
+#: remote.c:1647
+msgid "  (use \"git pull\" to update your local branch)\n"
+msgstr "  (dùng \"git pull\" để cập nhật nhánh nội bộ của bạn)\n"
+
+#: remote.c:1650
 #, c-format
 msgid ""
 "Your branch and '%s' have diverged,\n"
@@ -739,6 +757,12 @@ msgstr[0] ""
 msgstr[1] ""
 "Your branch and “%s” have diverged,\n"
 "and have %d and %d different commit each, respectively.\n"
+
+#: remote.c:1659
+msgid "  (use \"git pull\" to merge the remote branch into yours)\n"
+msgstr ""
+"  (dùng \"git pull\" để hòa trộn nhánh trên máy chủ vào trong nhánh của "
+"bạn)\n"
 
 #: sequencer.c:123 builtin/merge.c:761 builtin/merge.c:874 builtin/merge.c:984
 #: builtin/merge.c:994
@@ -1415,7 +1439,7 @@ msgid "Unstaged changes after refreshing the index:"
 msgstr ""
 "Các thay đổi không được lưu trạng thái sau khi làm tươi mới lại bảng mục lục:"
 
-#: builtin/add.c:195 builtin/add.c:460 builtin/rm.c:260
+#: builtin/add.c:195 builtin/add.c:460 builtin/rm.c:275
 #, c-format
 msgid "pathspec '%s' did not match any files"
 msgstr "pathspec “%s” không khớp với bất kỳ tập tin nào"
@@ -1549,7 +1573,7 @@ msgstr "Có lẽ bạn muốn là “git add .” phải không?\n"
 msgid "index file corrupt"
 msgstr "tập tin ghi bảng mục lục bị hỏng"
 
-#: builtin/add.c:481 builtin/apply.c:4450 builtin/mv.c:229 builtin/rm.c:355
+#: builtin/add.c:481 builtin/apply.c:4450 builtin/mv.c:229 builtin/rm.c:370
 msgid "Unable to write new index file"
 msgstr "Không thể ghi tập tin lưu bảng mục lục mới"
 
@@ -7208,7 +7232,7 @@ msgstr "git remote rename <tên-cũ> <tên-mới>"
 msgid "git remote remove <name>"
 msgstr "git remote remove <tên>"
 
-#: builtin/remote.c:15
+#: builtin/remote.c:15 builtin/remote.c:42
 msgid "git remote set-head <name> (-a | -d | <branch>)"
 msgstr "git remote set-head <tên> (-a | -d | <nhánh>)"
 
@@ -7245,10 +7269,6 @@ msgstr "git remote set-url --delete <tên> <url>"
 #: builtin/remote.c:27
 msgid "git remote add [<options>] <name> <url>"
 msgstr "git remote add [<các-tùy-chọn>] <tên> <url>"
-
-#: builtin/remote.c:42
-msgid "git remote set-head <name> (-a | -d | <branch>])"
-msgstr "git remote set-head <tên> (-a | -d | <nhánh>])"
 
 #: builtin/remote.c:47
 msgid "git remote set-branches <name> <branch>..."
@@ -8015,12 +8035,12 @@ msgstr "cho phép gỡ bỏ đệ qui"
 msgid "exit with a zero status even if nothing matched"
 msgstr "thoát ra với trạng thái khác không thậm chí nếu không có gì khớp"
 
-#: builtin/rm.c:268
+#: builtin/rm.c:283
 #, c-format
 msgid "not removing '%s' recursively without -r"
 msgstr "không thể gỡ bỏ “%s” một cách đệ qui mà không có tùy chọn -r"
 
-#: builtin/rm.c:307
+#: builtin/rm.c:322
 #, c-format
 msgid "git rm: unable to remove %s"
 msgstr "git rm: không thể gỡ bỏ %s"
@@ -9595,6 +9615,9 @@ msgstr "# Những thay đổi mô-đun-con được chuyển giao (commit):"
 #, sh-format
 msgid "Synchronizing submodule url for '$prefix$sm_path'"
 msgstr "Url Mô-đun-con đồng bộ hóa cho '$prefix$sm_path'"
+
+#~ msgid "git remote set-head <name> (-a | -d | <branch>])"
+#~ msgstr "git remote set-head <tên> (-a | -d | <nhánh>])"
 
 #~ msgid " 0 files changed"
 #~ msgstr " 0 có tập tin nào thay đổi cả"

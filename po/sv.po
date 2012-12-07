@@ -5,10 +5,10 @@
 #
 msgid ""
 msgstr ""
-"Project-Id-Version: git 1.7.12\n"
+"Project-Id-Version: git 1.8.1\n"
 "Report-Msgid-Bugs-To: Git Mailing List <git@vger.kernel.org>\n"
-"POT-Creation-Date: 2012-11-23 14:27+0800\n"
-"PO-Revision-Date: 2012-11-23 08:53+0100\n"
+"POT-Creation-Date: 2012-11-30 12:40+0800\n"
+"PO-Revision-Date: 2012-11-30 10:49+0100\n"
 "Last-Translator: Peter Krefting <peter@softwolves.pp.se>\n"
 "Language-Team: Swedish <tp-sv@listor.tp-sv.se>\n"
 "Language: sv\n"
@@ -316,7 +316,12 @@ msgstr "  Misslyckades tolka dirstat-avskärningsprocentandel \"%s\"\n"
 msgid "  Unknown dirstat parameter '%s'\n"
 msgstr "  Okänd dirstat-parameter \"%s\"\n"
 
-#: diff.c:219
+#: diff.c:194
+#, c-format
+msgid "Unknown value for 'diff.submodule' config variable: '%s'"
+msgstr "Okänt värde för konfigurationsvariabeln \"diff.submodule\": \"%s\""
+
+#: diff.c:237
 #, c-format
 msgid ""
 "Found errors in 'diff.dirstat' config variable:\n"
@@ -325,7 +330,7 @@ msgstr ""
 "Hittade fel i konfigurationsvariabeln \"diff.dirstat\":\n"
 "%s"
 
-#: diff.c:3467
+#: diff.c:3494
 #, c-format
 msgid ""
 "Failed to parse --dirstat/-X option parameter:\n"
@@ -333,6 +338,11 @@ msgid ""
 msgstr ""
 "Misslyckades tolka argument till flaggan --dirstat/-X;\n"
 "%s"
+
+#: diff.c:3508
+#, c-format
+msgid "Failed to parse --submodule option parameter: '%s'"
+msgstr "Misslyckades tolka argument till flaggan --submodule: \"%s\""
 
 #: gpg-interface.c:59
 msgid "could not run gpg."
@@ -707,7 +717,11 @@ msgid_plural "Your branch is ahead of '%s' by %d commits.\n"
 msgstr[0] "Din gren ligger före \"%s\" med %d incheckning.\n"
 msgstr[1] "Din gren ligger före \"%s\" med %d incheckningar.\n"
 
-#: remote.c:1638
+#: remote.c:1637
+msgid "  (use \"git push\" to publish your local commits)\n"
+msgstr "  (använd \"git push\" för att publicera dina lokala incheckningar)\n"
+
+#: remote.c:1640
 #, c-format
 msgid "Your branch is behind '%s' by %d commit, and can be fast-forwarded.\n"
 msgid_plural ""
@@ -717,7 +731,11 @@ msgstr[0] ""
 msgstr[1] ""
 "Din gren ligger efter \"%s\" med %d incheckningar, och kan snabbspolas.\n"
 
-#: remote.c:1646
+#: remote.c:1647
+msgid "  (use \"git pull\" to update your local branch)\n"
+msgstr "  (använd \"git pull\" för att uppdatera din lokala gren)\n"
+
+#: remote.c:1650
 #, c-format
 msgid ""
 "Your branch and '%s' have diverged,\n"
@@ -731,6 +749,10 @@ msgstr[0] ""
 msgstr[1] ""
 "Din gren och \"%s\" har divergerat,\n"
 "och har %d respektive %d olika incheckningar.\n"
+
+#: remote.c:1659
+msgid "  (use \"git pull\" to merge the remote branch into yours)\n"
+msgstr "  (använd \"git pull\" för att slå ihop fjärrgrenen med din egen)\n"
 
 #: sequencer.c:123 builtin/merge.c:761 builtin/merge.c:874 builtin/merge.c:984
 #: builtin/merge.c:994
@@ -1383,7 +1405,7 @@ msgstr "Sökvägen \"%s\" är i undermodulen \"%.*s\""
 msgid "Unstaged changes after refreshing the index:"
 msgstr "Ospårade ändringar efter att ha uppdaterat indexet:"
 
-#: builtin/add.c:195 builtin/add.c:460 builtin/rm.c:260
+#: builtin/add.c:195 builtin/add.c:460 builtin/rm.c:275
 #, c-format
 msgid "pathspec '%s' did not match any files"
 msgstr "sökvägsangivelsen \"%s\" motsvarade inte några filer"
@@ -1512,7 +1534,7 @@ msgstr "Kanske menade du att skriva \"git add .\"?\n"
 msgid "index file corrupt"
 msgstr "indexfilen trasig"
 
-#: builtin/add.c:481 builtin/apply.c:4450 builtin/mv.c:229 builtin/rm.c:355
+#: builtin/add.c:481 builtin/apply.c:4450 builtin/mv.c:229 builtin/rm.c:370
 msgid "Unable to write new index file"
 msgstr "Kunde inte skriva ny indexfil"
 
@@ -7082,7 +7104,7 @@ msgstr "git remote rename <gammal> <ny>"
 msgid "git remote remove <name>"
 msgstr "git remote remove <namn>"
 
-#: builtin/remote.c:15
+#: builtin/remote.c:15 builtin/remote.c:42
 msgid "git remote set-head <name> (-a | -d | <branch>)"
 msgstr "git remote set-head <namn> (-a | -d | <gren>)"
 
@@ -7119,10 +7141,6 @@ msgstr "git remote set-url --delete <namn> <url>"
 #: builtin/remote.c:27
 msgid "git remote add [<options>] <name> <url>"
 msgstr "git remote add [<flaggor>] <namn> <url>"
-
-#: builtin/remote.c:42
-msgid "git remote set-head <name> (-a | -d | <branch>])"
-msgstr "git remote set-head <namn> (-a | -d | <gren>])"
 
 #: builtin/remote.c:47
 msgid "git remote set-branches <name> <branch>..."
@@ -7887,12 +7905,12 @@ msgstr "tillåt rekursiv borttagning"
 msgid "exit with a zero status even if nothing matched"
 msgstr "avsluta med nollstatus även om inget träffades"
 
-#: builtin/rm.c:268
+#: builtin/rm.c:283
 #, c-format
 msgid "not removing '%s' recursively without -r"
 msgstr "tar inte bort \"%s\" rekursivt utan -r"
 
-#: builtin/rm.c:307
+#: builtin/rm.c:322
 #, c-format
 msgid "git rm: unable to remove %s"
 msgstr "git rm: kan inte ta bort %s"
@@ -9422,6 +9440,9 @@ msgstr "# Undermodulers ändringar att checka in:"
 #, sh-format
 msgid "Synchronizing submodule url for '$prefix$sm_path'"
 msgstr "Synkroniserar undermodul-url för \"$prefix$sm_path\""
+
+#~ msgid "git remote set-head <name> (-a | -d | <branch>])"
+#~ msgstr "git remote set-head <namn> (-a | -d | <gren>])"
 
 #~ msgid " 0 files changed"
 #~ msgstr " 0 filer ändrade"
