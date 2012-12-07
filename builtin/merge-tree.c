@@ -172,17 +172,17 @@ static char *traverse_path(const struct traverse_info *info, const struct name_e
 	return make_traverse_path(path, info, n);
 }
 
-static void resolve(const struct traverse_info *info, struct name_entry *branch1, struct name_entry *result)
+static void resolve(const struct traverse_info *info, struct name_entry *ours, struct name_entry *result)
 {
 	struct merge_list *orig, *final;
 	const char *path;
 
-	/* If it's already branch1, don't bother showing it */
-	if (!branch1)
+	/* If it's already ours, don't bother showing it */
+	if (!ours)
 		return;
 
 	path = traverse_path(info, result);
-	orig = create_entry(2, branch1->mode, branch1->sha1, path);
+	orig = create_entry(2, ours->mode, ours->sha1, path);
 	final = create_entry(0, result->mode, result->sha1, path);
 
 	final->link = orig;
@@ -205,6 +205,15 @@ static int unresolved_directory(const struct traverse_info *info, struct name_en
 	}
 	if (!S_ISDIR(p->mode))
 		return 0;
+	/*
+	 * NEEDSWORK: this is broken. The path can originally be a file
+	 * and then one side may have turned it into a directory, in which
+	 * case we return and let the three-way merge as if the tree were
+	 * a regular file.  If the path that was originally a tree is
+	 * now a file in either branch, fill_tree_descriptor() below will
+	 * die when fed a blob sha1.
+	 */
+
 	newbase = traverse_path(info, p);
 	buf0 = fill_tree_descriptor(t+0, n[0].sha1);
 	buf1 = fill_tree_descriptor(t+1, n[1].sha1);
@@ -288,20 +297,29 @@ static int threeway_callback(int n, unsigned long mask, unsigned long dirmask, s
 	/* Same in both? */
 	if (same_entry(entry+1, entry+2)) {
 		if (entry[0].sha1) {
+			/* Modified identically */
 			resolve(info, NULL, entry+1);
 			return mask;
 		}
+		/* "Both added the same" is left unresolved */
 	}
 
 	if (same_entry(entry+0, entry+1)) {
 		if (entry[2].sha1 && !S_ISDIR(entry[2].mode)) {
+			/* We did not touch, they modified -- take theirs */
 			resolve(info, entry+1, entry+2);
 			return mask;
 		}
+		/*
+		 * If we did not touch a directory but they made it
+		 * into a file, we fall through and unresolved()
+		 * recurses down.  Likewise for the opposite case.
+		 */
 	}
 
 	if (same_entry(entry+0, entry+2)) {
 		if (entry[1].sha1 && !S_ISDIR(entry[1].mode)) {
+			/* We modified, they did not touch -- take ours */
 			resolve(info, NULL, entry+1);
 			return mask;
 		}

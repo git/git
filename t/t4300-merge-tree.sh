@@ -254,4 +254,48 @@ EXPECTED
 	test_cmp expected actual
 '
 
+test_expect_failure 'turn file to tree' '
+	git reset --hard initial &&
+	rm initial-file &&
+	mkdir initial-file &&
+	test_commit "turn-file-to-tree" "initial-file/ONE" "CCC" &&
+	git merge-tree initial initial turn-file-to-tree >actual &&
+	cat >expect <<-\EOF &&
+	added in remote
+	  their  100644 43aa4fdec31eb92e1fdc2f0ce6ea9ddb7c32bcf7 initial-file/ONE
+	@@ -0,0 +1 @@
+	+CCC
+	removed in remote
+	  base   100644 e79c5e8f964493290a409888d5413a737e8e5dd5 initial-file
+	  our    100644 e79c5e8f964493290a409888d5413a737e8e5dd5 initial-file
+	@@ -1 +0,0 @@
+	-initial
+	EOF
+	test_cmp expect actual
+'
+
+test_expect_failure 'turn tree to file' '
+	git reset --hard initial &&
+	mkdir dir &&
+	test_commit "add-tree" "dir/path" "AAA" &&
+	test_commit "add-another-tree" "dir/another" "BBB" &&
+	rm -fr dir &&
+	test_commit "make-file" "dir" "CCC" &&
+	git merge-tree add-tree add-another-tree make-file >actual &&
+	cat >expect <<-\EOF &&
+	added in local
+	  our    100644 ba629238ca89489f2b350e196ca445e09d8bb834 dir/another
+	removed in remote
+	  base   100644 43d5a8ed6ef6c00ff775008633f95787d088285d dir/path
+	  our    100644 43d5a8ed6ef6c00ff775008633f95787d088285d dir/path
+	@@ -1 +0,0 @@
+	-AAA
+	added in remote
+	  their  100644 43aa4fdec31eb92e1fdc2f0ce6ea9ddb7c32bcf7 dir
+	@@ -0,0 +1 @@
+	+CCC
+	EOF
+	test_cmp expect actual
+'
+
 test_done
