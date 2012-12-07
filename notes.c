@@ -1231,7 +1231,7 @@ static void format_note(struct notes_tree *t, const unsigned char *object_sha1,
 	}
 
 	if (output_encoding && *output_encoding &&
-			strcmp(utf8, output_encoding)) {
+	    !is_encoding_utf8(output_encoding)) {
 		char *reencoded = reencode_string(msg, output_encoding, utf8);
 		if (reencoded) {
 			free(msg);
