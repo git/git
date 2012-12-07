@@ -57,8 +57,8 @@ diff.statGraphWidth::
 	to all commands generating --stat output except format-patch.
 
 diff.context::
-	Generate diffs with <n> lines of context instead of the default of
-	3. This value is overridden by the -U option.
+	Generate diffs with <n> lines of context instead of the default
+	of 3. This value is overridden by the -U option.
 
 diff.external::
 	If this config variable is set, diff generation is not
