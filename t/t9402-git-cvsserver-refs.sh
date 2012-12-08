@@ -155,7 +155,8 @@ test_expect_success 'cvs co b1 [cvswork3]' '
 
 test_expect_success 'edit cvswork3 and save diff' '
     ( cd cvswork3 &&
-      sed -i -e "s/line1/line1 - data/" adir/afile &&
+      sed -e "s/line1/line1 - data/" adir/afile >adir/afileNEW &&
+			mv -f adir/afileNEW adir/afile &&
       echo "afile5" > adir/afile5 &&
       rm t2 &&
       cvs -f add adir/afile5 &&
@@ -168,7 +169,8 @@ test_expect_success 'setup v1.2 on b1' '
     git checkout b1 &&
     echo "new v1.2" > t3 &&
     rm t2 &&
-    sed -i -e "s/line3/line3 - more data/" adir/afile &&
+    sed -e "s/line3/line3 - more data/" adir/afile >adir/afileNEW &&
+		mv -f adir/afileNEW adir/afile &&
     rm adir/a2file &&
     echo "a3file" >> adir/a3file &&
     echo "bfile line 3" >> adir/bdir/bfile &&
@@ -300,7 +302,8 @@ test_expect_success 'root dir rm file [cvswork2]' '
 
 test_expect_success 'subdir edit/add/rm files [cvswork2' '
     ( cd cvswork2 &&
-      sed -i -e "s/line 1/line 1 (v2)/" adir/bdir/bfile &&
+      sed -e "s/line 1/line 1 (v2)/" adir/bdir/bfile >adir/bdir/bfileNEW &&
+      mv -f adir/bdir/bfileNEW adir/bdir/bfile &&
       rm adir/bdir/b2file &&
       cd adir &&
       cvs -f rm bdir/b2file &&
