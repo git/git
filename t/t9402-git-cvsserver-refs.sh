@@ -28,27 +28,22 @@ check_file() {
 }
 
 check_end_tree() {
-    sandbox="$1"
-    expectCount=$(wc -l < "$WORKDIR/check.list")
-    cvsCount=$(find "$sandbox" -name CVS -prune -o -type f -print | wc -l)
-    test x"$cvsCount" = x"$expectCount"
-    stat=$?
-    echo "check_end $sandbox : $stat cvs=$cvsCount expect=$expectCount" \
-	>> "$WORKDIR/check.log"
-    return $stat
+    sandbox="$1" &&
+    find "$sandbox" -name CVS -prune -o -type f -print >"$WORKDIR/check.cvsCount" &&
+		sort <"$WORKDIR/check.list" >expected &&
+		sort <"$WORKDIR/check.cvsCount" | sed -e "s%cvswork/%%" >actual &&
+    test_cmp expected actual &&
+		rm expected actual
 }
 
 check_end_full_tree() {
-    sandbox="$1"
-    ver="$2"
-    expectCount=$(wc -l < "$WORKDIR/check.list")
-    cvsCount=$(find "$sandbox" -name CVS -prune -o -type f -print | wc -l)
-    gitCount=$(git ls-tree -r "$2" | wc -l)
-    test x"$cvsCount" = x"$expectCount" -a x"$gitCount" = x"$expectCount"
-    stat=$?
-    echo "check_end $sandbox : $stat cvs=$cvsCount git=$gitCount expect=$expectCount" \
-	>> "$WORKDIR/check.log"
-    return $stat
+    sandbox="$1" &&
+    sort <"$WORKDIR/check.list" >expected &&
+    find "$sandbox" -name CVS -prune -o -type f -print | sed -e "s%$sandbox/%%" | sort >act1 &&
+		test_cmp expected act1 &&
+    git ls-tree -r "$2" | sed -e "s/^.*blob [0-9a-fA-F]*[	 ]*//" | sort >act2 &&
+		test_cmp expected act2 &&
+    rm expected act1 act2
 }
 
 #########
