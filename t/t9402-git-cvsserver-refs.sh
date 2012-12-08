@@ -41,7 +41,7 @@ check_end_full_tree() {
     sort <"$WORKDIR/check.list" >expected &&
     find "$sandbox" -name CVS -prune -o -type f -print | sed -e "s%$sandbox/%%" | sort >act1 &&
 		test_cmp expected act1 &&
-    git ls-tree -r "$2" | sed -e "s/^.*blob [0-9a-fA-F]*[	 ]*//" | sort >act2 &&
+    git ls-tree --name-only -r "$2" | sort >act2 &&
 		test_cmp expected act2 &&
     rm expected act1 act2
 }
