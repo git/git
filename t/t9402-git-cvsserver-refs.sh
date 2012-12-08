@@ -11,7 +11,7 @@ tags, branches and other git refspecs'
 
 check_start_tree() {
     rm -f "$WORKDIR/check.list"
-    echo "start $1" >> "${WORKDIR}/check.log"
+    echo "start $1" >>"${WORKDIR}/check.log"
 }
 
 check_file() {
@@ -19,11 +19,11 @@ check_file() {
     file="$2"
     ver="$3"
     GIT_DIR=$SERVERDIR git show "${ver}:${file}" \
-	> "$WORKDIR/check.got" 2> "$WORKDIR/check.stderr"
+	>"$WORKDIR/check.got" 2>"$WORKDIR/check.stderr"
     test_cmp "$WORKDIR/check.got" "$sandbox/$file"
     stat=$?
-    echo "check_file $sandbox $file $ver : $stat" >> "$WORKDIR/check.log"
-    echo "$file" >> "$WORKDIR/check.list"
+    echo "check_file $sandbox $file $ver : $stat" >>"$WORKDIR/check.log"
+    echo "$file" >>"$WORKDIR/check.list"
     return $stat
 }
 
@@ -57,7 +57,7 @@ check_diff() {
     ( cd diffSandbox &&
       git checkout "$vOld" &&
       git apply -p0 --index <"../$diffFile" &&
-      git diff --exit-code "$vNew" ) > check_diff_apply.out 2>&1
+      git diff --exit-code "$vNew" ) >check_diff_apply.out 2>&1
 }
 
 #########
@@ -89,18 +89,18 @@ export CVSROOT CVS_SERVER
 
 rm -rf "$CVSWORK" "$SERVERDIR"
 test_expect_success 'setup v1, b1' '
-    echo "Simple text file" > textfile.c &&
-    echo "t2" > t2 &&
+    echo "Simple text file" >textfile.c &&
+    echo "t2" >t2 &&
     mkdir adir &&
-    echo "adir/afile line1" > adir/afile &&
-    echo "adir/afile line2" >> adir/afile &&
-    echo "adir/afile line3" >> adir/afile &&
-    echo "adir/afile line4" >> adir/afile &&
-    echo "adir/a2file" >> adir/a2file &&
+    echo "adir/afile line1" >adir/afile &&
+    echo "adir/afile line2" >>adir/afile &&
+    echo "adir/afile line3" >>adir/afile &&
+    echo "adir/afile line4" >>adir/afile &&
+    echo "adir/a2file" >>adir/a2file &&
     mkdir adir/bdir &&
-    echo "adir/bdir/bfile line 1" > adir/bdir/bfile &&
-    echo "adir/bdir/bfile line 2" >> adir/bdir/bfile &&
-    echo "adir/bdir/b2file" > adir/bdir/b2file &&
+    echo "adir/bdir/bfile line 1" >adir/bdir/bfile &&
+    echo "adir/bdir/bfile line 2" >>adir/bdir/bfile &&
+    echo "adir/bdir/b2file" >adir/bdir/b2file &&
     git add textfile.c t2 adir &&
     git commit -q -m "First Commit (v1)" &&
     git tag v1 &&
@@ -152,7 +152,7 @@ test_expect_success 'edit cvswork3 and save diff' '
     ( cd cvswork3 &&
       sed -e "s/line1/line1 - data/" adir/afile >adir/afileNEW &&
 			mv -f adir/afileNEW adir/afile &&
-      echo "afile5" > adir/afile5 &&
+      echo "afile5" >adir/afile5 &&
       rm t2 &&
       cvs -f add adir/afile5 &&
       cvs -f rm t2 &&
@@ -162,17 +162,17 @@ test_expect_success 'edit cvswork3 and save diff' '
 
 test_expect_success 'setup v1.2 on b1' '
     git checkout b1 &&
-    echo "new v1.2" > t3 &&
+    echo "new v1.2" >t3 &&
     rm t2 &&
     sed -e "s/line3/line3 - more data/" adir/afile >adir/afileNEW &&
 		mv -f adir/afileNEW adir/afile &&
     rm adir/a2file &&
-    echo "a3file" >> adir/a3file &&
-    echo "bfile line 3" >> adir/bdir/bfile &&
+    echo "a3file" >>adir/a3file &&
+    echo "bfile line 3" >>adir/bdir/bfile &&
     rm adir/bdir/b2file &&
-    echo "b3file" > adir/bdir/b3file &&
+    echo "b3file" >adir/bdir/b3file &&
     mkdir cdir &&
-    echo "cdir/cfile" > cdir/cfile &&
+    echo "cdir/cfile" >cdir/cfile &&
     git add -A cdir adir t3 t2 &&
     git commit -q -m 'v1.2' &&
     git tag v1.2 &&
@@ -280,7 +280,7 @@ test_expect_success 'cvs co b2 [into cvswork2]' '
 
 test_expect_success 'root dir edit [cvswork2]' '
     ( cd cvswork2 &&
-      echo "Line 2" >> textfile.c &&
+      echo "Line 2" >>textfile.c &&
       ! cvs -f diff -u >"$WORKDIR/cvsEdit1.diff" &&
       cvs -f commit -m "edit textfile.c" textfile.c
     ) >cvsEdit1.log 2>&1
@@ -289,10 +289,10 @@ test_expect_success 'root dir edit [cvswork2]' '
 test_expect_success 'root dir rm file [cvswork2]' '
     ( cd cvswork2 &&
       cvs -f rm -f t2 &&
-      cvs -f diff -u > ../cvsEdit2-empty.diff &&
+      cvs -f diff -u >../cvsEdit2-empty.diff &&
       ! cvs -f diff -N -u >"$WORKDIR/cvsEdit2-N.diff" &&
       cvs -f commit -m "rm t2"
-    ) > cvsEdit2.log 2>&1
+    ) >cvsEdit2.log 2>&1
 '
 
 test_expect_success 'subdir edit/add/rm files [cvswork2' '
@@ -302,7 +302,7 @@ test_expect_success 'subdir edit/add/rm files [cvswork2' '
       rm adir/bdir/b2file &&
       cd adir &&
       cvs -f rm bdir/b2file &&
-      echo "4th file" > bdir/b4file &&
+      echo "4th file" >bdir/b4file &&
       cvs -f add bdir/b4file &&
       ! cvs -f diff -N -u >"$WORKDIR/cvsEdit3.diff" &&
       git fetch gitcvs.git b2:b2 &&
@@ -471,7 +471,7 @@ test_expect_success 'cvs diff -N -r v2 -u' '
       ! cvs -f diff -N -r v2 -u ) >cvsDiff.out 2>cvs.log &&
     test ! -s cvs.log &&
     test -s cvsDiff.out &&
-    check_diff cvsDiff.out v2 v1 > check_diff.out 2>&1
+    check_diff cvsDiff.out v2 v1 >check_diff.out 2>&1
 '
 
 test_expect_success 'cvs diff -N -r v2 -r v1.2' '
@@ -479,7 +479,7 @@ test_expect_success 'cvs diff -N -r v2 -r v1.2' '
       ! cvs -f diff -N -r v2 -r v1.2 -u ) >cvsDiff.out 2>cvs.log &&
     test ! -s cvs.log &&
     test -s cvsDiff.out &&
-    check_diff cvsDiff.out v2 v1.2 > check_diff.out 2>&1
+    check_diff cvsDiff.out v2 v1.2 >check_diff.out 2>&1
 '
 
 test_expect_success 'apply early [cvswork3] diff to b3' '
@@ -499,7 +499,7 @@ test_expect_success 'check [cvswork3] diff' '
     test -s cvsDiff.out &&
     test $(grep Index: cvsDiff.out | wc -l) = 3 &&
     test_cmp cvsDiff.out cvswork3edit.diff &&
-    check_diff cvsDiff.out v1 v3 > check_diff.out 2>&1
+    check_diff cvsDiff.out v1 v3 >check_diff.out 2>&1
 '
 
 test_expect_success 'merge early [cvswork3] b3 with b1' '
@@ -537,7 +537,7 @@ test_expect_success 'cvs up dirty [cvswork3]' '
 test_expect_success 'cvs commit [cvswork3' '
     ( cd cvswork3 &&
       cvs -f commit -m "dirty sandbox after auto-merge"
-    ) > cvs.log 2>&1 &&
+    ) >cvs.log 2>&1 &&
     check_start_tree cvswork3 &&
     check_file cvswork3 textfile.c v3merged &&
     check_file cvswork3 t3 v3merged &&
@@ -550,7 +550,7 @@ test_expect_success 'cvs commit [cvswork3' '
     check_end_full_tree cvswork3 v3merged &&
     git fetch gitcvs.git b3:b4 &&
     git tag v4.1 b4 &&
-    git diff --exit-code v4.1 v3merged > check_diff_apply.out 2>&1
+    git diff --exit-code v4.1 v3merged >check_diff_apply.out 2>&1
 '
 
 test_done
