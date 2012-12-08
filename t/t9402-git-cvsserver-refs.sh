@@ -156,7 +156,7 @@ test_expect_success 'edit cvswork3 and save diff' '
       rm t2 &&
       cvs -f add adir/afile5 &&
       cvs -f rm t2 &&
-      test_must_fail cvs -f diff -N -u >"$WORKDIR/cvswork3edit.diff"
+      ! cvs -f diff -N -u >"$WORKDIR/cvswork3edit.diff"
     )
 '
 
@@ -281,7 +281,7 @@ test_expect_success 'cvs co b2 [into cvswork2]' '
 test_expect_success 'root dir edit [cvswork2]' '
     ( cd cvswork2 &&
       echo "Line 2" >> textfile.c &&
-      test_must_fail cvs -f diff -u >"$WORKDIR/cvsEdit1.diff" &&
+      ! cvs -f diff -u >"$WORKDIR/cvsEdit1.diff" &&
       cvs -f commit -m "edit textfile.c" textfile.c
     ) >cvsEdit1.log 2>&1
 '
@@ -290,7 +290,7 @@ test_expect_success 'root dir rm file [cvswork2]' '
     ( cd cvswork2 &&
       cvs -f rm -f t2 &&
       cvs -f diff -u > ../cvsEdit2-empty.diff &&
-      test_must_fail cvs -f diff -N -u >"$WORKDIR/cvsEdit2-N.diff" &&
+      ! cvs -f diff -N -u >"$WORKDIR/cvsEdit2-N.diff" &&
       cvs -f commit -m "rm t2"
     ) > cvsEdit2.log 2>&1
 '
@@ -304,11 +304,11 @@ test_expect_success 'subdir edit/add/rm files [cvswork2' '
       cvs -f rm bdir/b2file &&
       echo "4th file" > bdir/b4file &&
       cvs -f add bdir/b4file &&
-      test_must_fail cvs -f diff -N -u >"$WORKDIR/cvsEdit3.diff" &&
+      ! cvs -f diff -N -u >"$WORKDIR/cvsEdit3.diff" &&
       git fetch gitcvs.git b2:b2 &&
       ( cd .. &&
-	test_must_fail cvs -f diff -u -N -r v1.2 >"$WORKDIR/cvsEdit3-v1.2.diff" &&
-	test_must_fail cvs -f diff -u -N -r v1.2 -r v1 >"$WORKDIR/cvsEdit3-v1.2-v1.diff"
+	! cvs -f diff -u -N -r v1.2 >"$WORKDIR/cvsEdit3-v1.2.diff" &&
+	! cvs -f diff -u -N -r v1.2 -r v1 >"$WORKDIR/cvsEdit3-v1.2-v1.diff"
       ) &&
       cvs -f commit -m "various add/rm/edit"
     ) >cvs.log 2>&1
@@ -468,7 +468,7 @@ test_expect_success 'cvs diff -r v1 -u' '
 
 test_expect_success 'cvs diff -N -r v2 -u' '
     ( cd cvswork &&
-      test_must_fail cvs -f diff -N -r v2 -u ) >cvsDiff.out 2>cvs.log &&
+      ! cvs -f diff -N -r v2 -u ) >cvsDiff.out 2>cvs.log &&
     test ! -s cvs.log &&
     test -s cvsDiff.out &&
     check_diff cvsDiff.out v2 v1 > check_diff.out 2>&1
@@ -476,7 +476,7 @@ test_expect_success 'cvs diff -N -r v2 -u' '
 
 test_expect_success 'cvs diff -N -r v2 -r v1.2' '
     ( cd cvswork &&
-      test_must_fail cvs -f diff -N -r v2 -r v1.2 -u ) >cvsDiff.out 2>cvs.log &&
+      ! cvs -f diff -N -r v2 -r v1.2 -u ) >cvsDiff.out 2>cvs.log &&
     test ! -s cvs.log &&
     test -s cvsDiff.out &&
     check_diff cvsDiff.out v2 v1.2 > check_diff.out 2>&1
@@ -494,7 +494,7 @@ test_expect_success 'apply early [cvswork3] diff to b3' '
 
 test_expect_success 'check [cvswork3] diff' '
     ( cd cvswork3 &&
-      test_must_fail cvs -f diff -N -u ) >"$WORKDIR/cvsDiff.out" 2>cvs.log &&
+      ! cvs -f diff -N -u ) >"$WORKDIR/cvsDiff.out" 2>cvs.log &&
     test ! -s cvs.log &&
     test -s cvsDiff.out &&
     test $(grep Index: cvsDiff.out | wc -l) = 3 &&
@@ -517,7 +517,7 @@ test_expect_success 'merge early [cvswork3] b3 with b1' '
 test_expect_success 'cvs up dirty [cvswork3]' '
     ( cd cvswork3 &&
       cvs -f up &&
-      test_must_fail cvs -f diff -N -u >"$WORKDIR/cvsDiff.out" ) >cvs.log 2>&1 &&
+      ! cvs -f diff -N -u >"$WORKDIR/cvsDiff.out" ) >cvs.log 2>&1 &&
     test -s cvsDiff.out &&
     test $(grep Index: cvsDiff.out | wc -l) = 2
     check_start_tree cvswork3 &&
