@@ -10,7 +10,7 @@ tags, branches and other git refspecs'
 #########
 
 check_start_tree() {
-    rm -f "$WORKDIR/check.list"
+    rm -f "$WORKDIR/list.expected"
     echo "start $1" >>"${WORKDIR}/check.log"
 }
 
@@ -23,22 +23,22 @@ check_file() {
     test_cmp "$WORKDIR/check.got" "$sandbox/$file"
     stat=$?
     echo "check_file $sandbox $file $ver : $stat" >>"$WORKDIR/check.log"
-    echo "$file" >>"$WORKDIR/check.list"
+    echo "$file" >>"$WORKDIR/list.expected"
     return $stat
 }
 
 check_end_tree() {
     sandbox="$1" &&
-    find "$sandbox" -name CVS -prune -o -type f -print >"$WORKDIR/check.cvsCount" &&
-		sort <"$WORKDIR/check.list" >expected &&
-		sort <"$WORKDIR/check.cvsCount" | sed -e "s%cvswork/%%" >actual &&
+    find "$sandbox" -name CVS -prune -o -type f -print >"$WORKDIR/list.actual" &&
+		sort <"$WORKDIR/list.expected" >expected &&
+		sort <"$WORKDIR/list.actual" | sed -e "s%cvswork/%%" >actual &&
     test_cmp expected actual &&
 		rm expected actual
 }
 
 check_end_full_tree() {
     sandbox="$1" &&
-    sort <"$WORKDIR/check.list" >expected &&
+    sort <"$WORKDIR/list.expected" >expected &&
     find "$sandbox" -name CVS -prune -o -type f -print | sed -e "s%$sandbox/%%" | sort >act1 &&
 		test_cmp expected act1 &&
     git ls-tree --name-only -r "$2" | sort >act2 &&
