@@ -374,7 +374,7 @@ htmldir = share/doc/git-doc
 ETC_GITCONFIG = $(sysconfdir)/gitconfig
 ETC_GITATTRIBUTES = $(sysconfdir)/gitattributes
 lib = lib
-# DESTDIR=
+# DESTDIR =
 pathsep = :
 
 export prefix bindir sharedir sysconfdir gitwebdir localedir
@@ -575,9 +575,9 @@ endif
 export PERL_PATH
 export PYTHON_PATH
 
-LIB_FILE=libgit.a
-XDIFF_LIB=xdiff/lib.a
-VCSSVN_LIB=vcs-svn/lib.a
+LIB_FILE = libgit.a
+XDIFF_LIB = xdiff/lib.a
+VCSSVN_LIB = vcs-svn/lib.a
 
 LIB_H += xdiff/xinclude.h
 LIB_H += xdiff/xmacros.h
@@ -1139,7 +1139,7 @@ ifeq ($(uname_S),NetBSD)
 endif
 ifeq ($(uname_S),AIX)
 	DEFAULT_PAGER = more
-	NO_STRCASESTR=YesPlease
+	NO_STRCASESTR = YesPlease
 	NO_MEMMEM = YesPlease
 	NO_MKDTEMP = YesPlease
 	NO_MKSTEMPS = YesPlease
@@ -1147,7 +1147,7 @@ ifeq ($(uname_S),AIX)
 	NO_NSEC = YesPlease
 	FREAD_READS_DIRECTORIES = UnfortunatelyYes
 	INTERNAL_QSORT = UnfortunatelyYes
-	NEEDS_LIBICONV=YesPlease
+	NEEDS_LIBICONV = YesPlease
 	BASIC_CFLAGS += -D_LARGE_FILES
 	ifeq ($(shell expr "$(uname_V)" : '[1234]'),1)
 		NO_PTHREADS = YesPlease
@@ -1155,13 +1155,13 @@ ifeq ($(uname_S),AIX)
 		PTHREAD_LIBS = -lpthread
 	endif
 	ifeq ($(shell expr "$(uname_V).$(uname_R)" : '5\.1'),3)
-		INLINE=''
+		INLINE = ''
 	endif
 	GIT_TEST_CMP = cmp
 endif
 ifeq ($(uname_S),GNU)
 	# GNU/Hurd
-	NO_STRLCPY=YesPlease
+	NO_STRLCPY = YesPlease
 	NO_MKSTEMPS = YesPlease
 	HAVE_PATHS_H = YesPlease
 	LIBC_CONTAINS_LIBINTL = YesPlease
@@ -1187,9 +1187,9 @@ ifeq ($(uname_S),IRIX)
 	NEEDS_LIBGEN = YesPlease
 endif
 ifeq ($(uname_S),IRIX64)
-	NO_SETENV=YesPlease
+	NO_SETENV = YesPlease
 	NO_UNSETENV = YesPlease
-	NO_STRCASESTR=YesPlease
+	NO_STRCASESTR = YesPlease
 	NO_MEMMEM = YesPlease
 	NO_MKSTEMPS = YesPlease
 	NO_MKDTEMP = YesPlease
@@ -1203,14 +1203,14 @@ ifeq ($(uname_S),IRIX64)
 	NO_REGEX = YesPlease
 	NO_FNMATCH_CASEFOLD = YesPlease
 	SNPRINTF_RETURNS_BOGUS = YesPlease
-	SHELL_PATH=/usr/gnu/bin/bash
+	SHELL_PATH = /usr/gnu/bin/bash
 	NEEDS_LIBGEN = YesPlease
 endif
 ifeq ($(uname_S),HP-UX)
 	INLINE = __inline
-	NO_IPV6=YesPlease
-	NO_SETENV=YesPlease
-	NO_STRCASESTR=YesPlease
+	NO_IPV6 = YesPlease
+	NO_SETENV = YesPlease
+	NO_STRCASESTR = YesPlease
 	NO_MEMMEM = YesPlease
 	NO_MKSTEMPS = YesPlease
 	NO_STRLCPY = YesPlease
@@ -1386,10 +1386,10 @@ ifeq ($(uname_S),NONSTOP_KERNEL)
 	MKDIR_WO_TRAILING_SLASH = YesPlease
 	# RFE 10-120912-4693 submitted to HP NonStop development.
 	NO_SETITIMER = UnfortunatelyYes
-	SANE_TOOL_PATH=/usr/coreutils/bin:/usr/local/bin
-	SHELL_PATH=/usr/local/bin/bash
+	SANE_TOOL_PATH = /usr/coreutils/bin:/usr/local/bin
+	SHELL_PATH = /usr/local/bin/bash
 	# as of H06.25/J06.14, we might better use this
-	#SHELL_PATH=/usr/coreutils/bin/bash
+	#SHELL_PATH = /usr/coreutils/bin/bash
 endif
 ifneq (,$(findstring MINGW,$(uname_S)))
 	pathsep = ;
@@ -1437,7 +1437,7 @@ ifneq (,$(findstring MINGW,$(uname_S)))
 	X = .exe
 	SPARSE_FLAGS = -Wno-one-bit-signed-bitfield
 ifneq (,$(wildcard ../THIS_IS_MSYSGIT))
-	htmldir=doc/git/html/
+	htmldir = doc/git/html/
 	prefix =
 	INSTALL = /bin/install
 	EXTLIBS += /mingw/lib/libz.a
@@ -1559,7 +1559,7 @@ else
 		CURL_LIBCURL = -lcurl
 	endif
 	ifdef NEEDS_SSL_WITH_CURL
-		CURL_LIBCURL +=	-lssl
+		CURL_LIBCURL += -lssl
 		ifdef NEEDS_CRYPTO_WITH_SSL
 			CURL_LIBCURL += -lcrypto
 		endif
@@ -1768,7 +1768,7 @@ ifdef OBJECT_CREATION_USES_RENAMES
 endif
 ifdef NO_STRUCT_ITIMERVAL
 	COMPAT_CFLAGS += -DNO_STRUCT_ITIMERVAL
-	NO_SETITIMER=YesPlease
+	NO_SETITIMER = YesPlease
 endif
 ifdef NO_SETITIMER
 	COMPAT_CFLAGS += -DNO_SETITIMER
@@ -1920,15 +1920,15 @@ ifneq (,$(XDL_FAST_HASH))
 endif
 
 ifeq ($(TCLTK_PATH),)
-NO_TCLTK=NoThanks
+NO_TCLTK = NoThanks
 endif
 
 ifeq ($(PERL_PATH),)
-NO_PERL=NoThanks
+NO_PERL = NoThanks
 endif
 
 ifeq ($(PYTHON_PATH),)
-NO_PYTHON=NoThanks
+NO_PYTHON = NoThanks
 endif
 
 QUIET_SUBDIR0  = +$(MAKE) -C # space to separate -C and subdir
@@ -1975,13 +1975,13 @@ PROFILE_DIR := $(CURDIR)
 ifeq ("$(PROFILE)","GEN")
 	CFLAGS += -fprofile-generate=$(PROFILE_DIR) -DNO_NORETURN=1
 	EXTLIBS += -lgcov
-	export CCACHE_DISABLE=t
-	V=1
+	export CCACHE_DISABLE = t
+	V = 1
 else
 ifneq ("$(PROFILE)","")
 	CFLAGS += -fprofile-use=$(PROFILE_DIR) -fprofile-correction -DNO_NORETURN=1
-	export CCACHE_DISABLE=t
-	V=1
+	export CCACHE_DISABLE = t
+	V = 1
 endif
 endif
 
@@ -2830,7 +2830,7 @@ git.spec: git.spec.in GIT-VERSION-FILE
 	sed -e 's/@@VERSION@@/$(GIT_VERSION)/g' < $< > $@+
 	mv $@+ $@
 
-GIT_TARNAME=git-$(GIT_VERSION)
+GIT_TARNAME = git-$(GIT_VERSION)
 dist: git.spec git-archive$(X) configure
 	./git-archive --format=tar \
 		--prefix=$(GIT_TARNAME)/ HEAD^{tree} > $(GIT_TARNAME).tar

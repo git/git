@@ -6,7 +6,7 @@
 -include ../config.mak.autogen
 -include ../config.mak
 
-#GIT_TEST_OPTS=--verbose --debug
+#GIT_TEST_OPTS = --verbose --debug
 SHELL_PATH ?= $(SHELL)
 PERL_PATH ?= /usr/bin/perl
 TAR ?= $(TAR)

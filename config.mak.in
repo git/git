@@ -18,7 +18,7 @@ datarootdir = @datarootdir@
 template_dir = @datadir@/git-core/templates
 sysconfdir = @sysconfdir@
 
-mandir=@mandir@
+mandir = @mandir@
 
 srcdir = @srcdir@
 VPATH = @srcdir@
