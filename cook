@@ -646,7 +646,7 @@ sub wildo_flush_topic {
 }
 
 sub wildo_match {
-	if (/^Will (?:\S+ ){0,2}(keep|merge|drop|discard|cook|kick|defer|be re-?rolled)[,. ]/ ||
+	if (/^Will (?:\S+ ){0,2}(fast-track|keep|merge|drop|discard|cook|kick|defer|be re-?rolled)[,. ]/ ||
 	    /^Not urgent/ || /^Not ready/ || /^Waiting for / ||
 	    /^Needs? / || /^Expecting / || /^May want to /) {
 		return 1;
