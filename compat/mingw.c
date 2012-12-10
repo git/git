@@ -256,6 +256,8 @@ int mingw_rmdir(const char *pathname)
 
 	while ((ret = rmdir(pathname)) == -1 && tries < ARRAY_SIZE(delay)) {
 		if (!is_file_in_use_error(GetLastError()))
+			errno = err_win_to_posix(GetLastError());
+		if (errno != EACCES)
 			break;
 		if (!is_dir_empty(pathname)) {
 			errno = ENOTEMPTY;
@@ -271,7 +273,7 @@ int mingw_rmdir(const char *pathname)
 		Sleep(delay[tries]);
 		tries++;
 	}
-	while (ret == -1 && is_file_in_use_error(GetLastError()) &&
+	while (ret == -1 && errno == EACCES && is_file_in_use_error(GetLastError()) &&
 	       ask_yes_no_if_possible("Deletion of directory '%s' failed. "
 			"Should I try again?", pathname))
 	       ret = rmdir(pathname);
