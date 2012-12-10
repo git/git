@@ -144,7 +144,7 @@ drop [-q|--quiet] [<stash>]::
 
 	Remove a single stashed state from the stash list. When no `<stash>`
 	is given, it removes the latest one. i.e. `stash@{0}`, otherwise
-	`<stash>` must a valid stash log reference of the form
+	`<stash>` must be a valid stash log reference of the form
 	`stash@{<revision>}`.
 
 create::
