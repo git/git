@@ -1,15 +1,21 @@
 To: git@vger.kernel.org
 Bcc: lwn@lwn.net
-Subject: What's cooking in git.git (Dec 2012, #01; Thu, 6)
-X-master-at: fb4c62235fee8008d99ef55c4adcb1f7ea9508a3
-X-next-at: af2e3a9095a73e8f4f0dea403998204b8ff7dee1
+Subject: What's cooking in git.git (Dec 2012, #02; Mon, 10)
+X-master-at: 7e0651a6302b50db4bac1e65da61c4036cc64d2a
+X-next-at: ec797b35843d725053c28368548623cc5e602814
 
-What's cooking in git.git (Dec 2012, #01; Thu, 6)
+What's cooking in git.git (Dec 2012, #02; Mon, 10)
 --------------------------------------------------
 
 Here are the topics that have been cooking.  Commits prefixed with
 '-' are only in 'pu' (proposed updates) while commits prefixed with
 '+' are in 'next'.
+
+A new maintenance release 1.8.0.2 was tagged with accumulated fixes
+we have already been using on the 'master' front for a while.  The
+tip of the 'master' is a bit beyond 1.8.1-rc1 and many topics are
+getting into good shape in 'next', hopefully ready to be merged soon
+after the 1.8.1 final.
 
 You can find the changes described here in the integration branches of the
 repositories listed at
@@ -19,40 +25,85 @@ repositories listed at
 --------------------------------------------------
 [New Topics]
 
-* ef/mingw-tty-getpass (2012-12-04) 6 commits
- - mingw: get rid of getpass implementation
- - mingw: reuse tty-version of git_terminal_prompt
- - compat/terminal: separate input and output handles
- - compat/terminal: factor out echo-disabling
- - mingw: make fgetc raise SIGINT if apropriate
- - mingw: correct exit-code for SIGALRM's SIG_DFL
+* ef/mingw-rmdir (2012-12-10) 1 commit
+ - mingw_rmdir: do not prompt for retry when non-empty
 
- Update getpass() emulation for MinGW.
- Will merge to 'next'.
+ MinGW has a workaround when rmdir unnecessarily fails to retry with
+ a prompt, but the logic was kicking in when the rmdir failed with
+ ENOTEMPTY, i.e. was expected to fail and there is no point retrying.
+
+ Will fast-track to 'master'.
 
 
-* jl/submodule-deinit (2012-12-04) 1 commit
- - submodule: add 'deinit' command
-
- There was no Porcelain way to say "I no longer am interested in
- this submodule", once you express your interest in a submodule with
- "submodule init".  "submodule deinit" is the way to do so.
+* jc/maint-fbsd-sh-ifs-workaround (2012-12-10) 1 commit
+ - sh-setup: work around "unset IFS" bug in some shells
 
  Will merge to 'next'.
 
 
-* sl/git-svn-docs (2012-12-05) 4 commits
- - git-svn: Note about tags.
- - git-svn: Expand documentation for --follow-parent
- - git-svn: Recommend use of structure options.
- - git-svn: Document branches with at-sign(@).
+* jc/merge-blobs (2012-12-09) 4 commits
+ - merge-tree: add comments to clarify what these functions are doing
+ - merge-tree: lose unused "resolve_directories"
+ - merge-tree: lose unused "flags" from merge_list
+ - Which merge_file() function do you mean?
 
- Will merge to 'next'.
+ A beginning of a new merge strategy based on the disused merge-tree
+ proof-of-concept code.
+
+
+* jc/same-encoding (2012-12-10) 1 commit
+ - format_commit_message(): simplify calls to logmsg_reencode()
+
+ Finishing touches to the series to unify "Do we need to reencode
+ between these two encodings?" logic.
+
+
+* nd/invalidate-i-t-a-cache-tree (2012-12-09) 1 commit
+ - cache-tree: invalidate i-t-a paths after generating trees
+
+ Writing out a tree object when you still have intent-to-add entries
+ in the index left an incorrect cache-tree data there.
+
+--------------------------------------------------
+[Graduated to "master"]
+
+* rr/t4041-cleanup (2012-12-02) 4 commits
+  (merged to 'next' on 2012-12-04 at ecee35d)
+ + t4041 (diff-submodule-option): modernize style
+ + t4041 (diff-submodule-option): rewrite add_file() routine
+ + t4041 (diff-submodule-option): parse digests sensibly
+ + t4041 (diff-submodule-option): don't hardcode SHA-1 in expected outputs
+
+ Test clean-up.
 
 --------------------------------------------------
 [Stalled]
 
-* mo/cvs-server-updates (2012-10-16) 10 commits
+* fc/remote-bzr (2012-11-28) 10 commits
+ - (fixup) test-bzr.sh: fix multi-line string assignment
+ - remote-bzr: detect local repositories
+ - remote-bzr: add support for older versions of bzr
+ - remote-bzr: add support to push special modes
+ - remote-bzr: add support for fecthing special modes
+ - remote-bzr: add simple tests
+ - remote-bzr: update working tree
+ - remote-bzr: add support for remote repositories
+ - remote-bzr: add support for pushing
+ - Add new remote-bzr transport helper
+
+ New remote helper for bzr (v3).  With minor fixes, this may be ready
+ for 'next'.
+
+
+* mo/cvs-server-updates (2012-12-09) 18 commits
+ - t9402: Use TABs for indentation
+ - t9402: Rename check.cvsCount and check.list
+ - t9402: Simplify git ls-tree
+ - t9402: Add missing &&; Code style
+ - t9402: No space after IO-redirection
+ - t9402: Dont use test_must_fail cvs
+ - t9402: improve check_end_tree() and check_end_full_tree()
+ - t9402: sed -i is not portable
  - cvsserver Documentation: new cvs ... -r support
  - cvsserver: add t9402 to test branch and tag refs
  - cvsserver: support -r and sticky tags for most operations
@@ -231,19 +282,55 @@ repositories listed at
 --------------------------------------------------
 [Cooking]
 
+* ef/mingw-tty-getpass (2012-12-04) 6 commits
+  (merged to 'next' on 2012-12-07 at 1737ff1)
+ + mingw: get rid of getpass implementation
+ + mingw: reuse tty-version of git_terminal_prompt
+ + compat/terminal: separate input and output handles
+ + compat/terminal: factor out echo-disabling
+ + mingw: make fgetc raise SIGINT if apropriate
+ + mingw: correct exit-code for SIGALRM's SIG_DFL
+
+ Update getpass() emulation for MinGW.
+
+ Will fast-track to 'master'.
+
+
+* jl/submodule-deinit (2012-12-04) 1 commit
+  (merged to 'next' on 2012-12-07 at ea772f0)
+ + submodule: add 'deinit' command
+
+ There was no Porcelain way to say "I no longer am interested in
+ this submodule", once you express your interest in a submodule with
+ "submodule init".  "submodule deinit" is the way to do so.
+
+ Will cook in 'next'.
+
+
+* sl/git-svn-docs (2012-12-05) 4 commits
+  (merged to 'next' on 2012-12-07 at 5bfbb73)
+ + git-svn: Note about tags.
+ + git-svn: Expand documentation for --follow-parent
+ + git-svn: Recommend use of structure options.
+ + git-svn: Document branches with at-sign(@).
+
+ Will cook in 'next'.
+
+
 * pf/editor-ignore-sigint (2012-12-02) 5 commits
- - launch_editor: propagate signals from editor to git
- - run-command: do not warn about child death from terminal
- - launch_editor: ignore terminal signals while editor has control
- - launch_editor: refactor to use start/finish_command
- - run-command: drop silent_exec_failure arg from wait_or_whine
+  (merged to 'next' on 2012-12-07 at 6b04419)
+ + launch_editor: propagate signals from editor to git
+ + run-command: do not warn about child death from terminal
+ + launch_editor: ignore terminal signals while editor has control
+ + launch_editor: refactor to use start/finish_command
+ + run-command: drop silent_exec_failure arg from wait_or_whine
 
  Avoid confusing cases where the user hits Ctrl-C while in the editor
  session, not realizing git will receive the signal. Since most editors
  will take over the terminal and will block SIGINT, this is not likely
  to confuse anyone.
 
- Will merge to 'next'.
+ Will cook in 'next'.
 
 
 * bc/append-signed-off-by (2012-11-26) 11 commits
@@ -276,15 +363,7 @@ repositories listed at
  Update imap-send to reuse xml quoting code from http-push codepath,
  clean up some code, and fix a small bug.
 
-
-* rr/t4041-cleanup (2012-12-02) 4 commits
-  (merged to 'next' on 2012-12-04 at ecee35d)
- + t4041 (diff-submodule-option): modernize style
- + t4041 (diff-submodule-option): rewrite add_file() routine
- + t4041 (diff-submodule-option): parse digests sensibly
- + t4041 (diff-submodule-option): don't hardcode SHA-1 in expected outputs
-
- Test clean-up.
+ Will cook in 'next'.
 
 
 * jc/doc-maintainer (2012-11-27) 1 commit
@@ -301,16 +380,16 @@ repositories listed at
  Will cook in 'next'.
 
 
-* mh/doc-remote-helpers (2012-11-27) 6 commits
- - git-remote-helpers.txt: clarify options & ref list attributes
- - git-remote-helpers.txt: clarify command <-> capability correspondences
- - git-remote-helpers.txt: rearrange description of capabilities
- - git-remote-helpers.txt: minor grammar fix
- - git-remote-helpers.txt: document missing capabilities
- - git-remote-helpers.txt: document invocation before input format
+* mh/doc-remote-helpers (2012-12-07) 6 commits
+  (merged to 'next' on 2012-12-07 at 7ac8c25)
+ + git-remote-helpers.txt: clarify options & ref list attributes
+ + git-remote-helpers.txt: clarify command <-> capability correspondences
+ + git-remote-helpers.txt: rearrange description of capabilities
+ + git-remote-helpers.txt: minor grammar fix
+ + git-remote-helpers.txt: document missing capabilities
+ + git-remote-helpers.txt: document invocation before input format
 
- Need comment and Ack from people who have worked on remote-helpers
- before this goes forward.
+ Will cook in 'next'.
 
 
 * mh/pthreads-autoconf (2012-11-27) 1 commit
@@ -427,22 +506,6 @@ repositories listed at
  Will cook in 'next'.
 
 
-* fc/remote-bzr (2012-11-28) 10 commits
- - (fixup) test-bzr.sh: fix multi-line string assignment
- - remote-bzr: detect local repositories
- - remote-bzr: add support for older versions of bzr
- - remote-bzr: add support to push special modes
- - remote-bzr: add support for fecthing special modes
- - remote-bzr: add simple tests
- - remote-bzr: update working tree
- - remote-bzr: add support for remote repositories
- - remote-bzr: add support for pushing
- - Add new remote-bzr transport helper
-
- New remote helper for bzr (v3).  With minor fixes, this may be ready
- for 'next'.
-
-
 * cr/push-force-tag-update (2012-12-03) 10 commits
   (merged to 'next' on 2012-12-04 at af2e3a9)
  + push: allow already-exists advice to be disabled
@@ -457,3 +520,5 @@ repositories listed at
  + push: return reject reasons as a bitset
 
  Require "-f" for push to update a tag, even if it is a fast-forward.
+
+ Will cook in 'next'.
