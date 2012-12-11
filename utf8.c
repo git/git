@@ -323,7 +323,7 @@ static size_t display_mode_esc_sequence_len(const char *s)
  * If indent is negative, assume that already -indent columns have been
  * consumed (and no extra indent is necessary for the first line).
  */
-int strbuf_add_wrapped_text(struct strbuf *buf,
+void strbuf_add_wrapped_text(struct strbuf *buf,
 		const char *text, int indent1, int indent2, int width)
 {
 	int indent, w, assume_utf8 = 1;
@@ -332,7 +332,7 @@ int strbuf_add_wrapped_text(struct strbuf *buf,
 
 	if (width <= 0) {
 		strbuf_add_indented_text(buf, text, indent1, indent2);
-		return 1;
+		return;
 	}
 
 retry:
@@ -356,14 +356,14 @@ retry:
 			if (w <= width || !space) {
 				const char *start = bol;
 				if (!c && text == start)
-					return w;
+					return;
 				if (space)
 					start = space;
 				else
 					strbuf_addchars(buf, ' ', indent);
 				strbuf_add(buf, start, text - start);
 				if (!c)
-					return w;
+					return;
 				space = text;
 				if (c == '\t')
 					w |= 0x07;
@@ -405,13 +405,12 @@ new_line:
 	}
 }
 
-int strbuf_add_wrapped_bytes(struct strbuf *buf, const char *data, int len,
+void strbuf_add_wrapped_bytes(struct strbuf *buf, const char *data, int len,
 			     int indent, int indent2, int width)
 {
 	char *tmp = xstrndup(data, len);
-	int r = strbuf_add_wrapped_text(buf, tmp, indent, indent2, width);
+	strbuf_add_wrapped_text(buf, tmp, indent, indent2, width);
 	free(tmp);
-	return r;
 }
 
 int is_encoding_utf8(const char *name)
