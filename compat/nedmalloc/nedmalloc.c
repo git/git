@@ -603,7 +603,10 @@ static NOINLINE mstate FindMSpace(nedpool *p, threadcache *tc, int *lastUsed, si
 		}
 		/* We really want to make sure this goes into memory now but we
 		have to be careful of breaking aliasing rules, so write it twice */
-		*((volatile struct malloc_state **) &p->m[end])=p->m[end]=temp;
+		{
+			volatile struct malloc_state **_m=(volatile struct malloc_state **) &p->m[end];
+			*_m=(p->m[end]=temp);
+		}
 		ACQUIRE_LOCK(&p->m[end]->mutex);
 		/*printf("Created mspace idx %d\n", end);*/
 		RELEASE_LOCK(&p->mutex);
