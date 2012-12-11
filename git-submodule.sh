@@ -153,6 +153,32 @@ die_if_unmatched ()
 }
 
 #
+# Print a submodule configuration setting
+#
+# $1 = submodule name
+# $2 = option name
+# $3 = default value
+#
+# Checks in the usual git-config places first (for overrides),
+# otherwise it falls back on .gitmodules.  This allows you to
+# distribute project-wide defaults in .gitmodules, while still
+# customizing individual repositories if necessary.  If the option is
+# not in .gitmodules either, print a default value.
+#
+get_submodule_config () {
+	name="$1"
+	option="$2"
+	default="$3"
+	value=$(git config submodule."$name"."$option")
+	if test -z "$value"
+	then
+		value=$(git config -f .gitmodules submodule."$name"."$option")
+	fi
+	printf '%s' "${value:-$default}"
+}
+
+
+#
 # Map submodule path to submodule name
 #
 # $1 = path
