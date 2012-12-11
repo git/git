@@ -19,23 +19,26 @@
 #       (e.g. ~/.git-completion.tcsh and ~/.git-completion.bash).
 #    2) Add the following line to your .tcshrc/.cshrc:
 #        source ~/.git-completion.tcsh
+#    3) For completion similar to bash, it is recommended to also
+#       add the following line to your .tcshrc/.cshrc:
+#        set autolist=ambiguous
+#       It will tell tcsh to list the possible completion choices.
 
 set __git_tcsh_completion_original_script = ${HOME}/.git-completion.bash
 set __git_tcsh_completion_script = ${HOME}/.git-completion.tcsh.bash
 
 # Check that the user put the script in the right place
 if ( ! -e ${__git_tcsh_completion_original_script} ) then
-       echo "git-completion.tcsh: Cannot find: ${__git_tcsh_completion_original_script}.  Git completion will not work."
-       exit
+	echo "git-completion.tcsh: Cannot find: ${__git_tcsh_completion_original_script}.  Git completion will not work."
+	exit
 endif
 
 cat << EOF > ${__git_tcsh_completion_script}
 #!bash
 #
 # This script is GENERATED and will be overwritten automatically.
-# Do not modify it directly.  Instead, modify the git-completion.tcsh
-# script provided by Git core.
-#
+# Do not modify it directly.  Instead, modify git-completion.tcsh
+# and source it again.
 
 source ${__git_tcsh_completion_original_script}
 
@@ -47,22 +50,58 @@ COMP_WORDS=(\$2)
 # tell us that the previous word is complete and the cursor
 # is on the next word.
 if [ "\${2: -1}" == " " ]; then
-       # The last character is a space, so our location is at the end
-       # of the command-line array
-       COMP_CWORD=\${#COMP_WORDS[@]}
+	# The last character is a space, so our location is at the end
+	# of the command-line array
+	COMP_CWORD=\${#COMP_WORDS[@]}
 else
-       # The last character is not a space, so our location is on the
-       # last word of the command-line array, so we must decrement the
-       # count by 1
-       COMP_CWORD=\$((\${#COMP_WORDS[@]}-1))
+	# The last character is not a space, so our location is on the
+	# last word of the command-line array, so we must decrement the
+	# count by 1
+	COMP_CWORD=\$((\${#COMP_WORDS[@]}-1))
 fi
 
 # Call _git() or _gitk() of the bash script, based on the first argument
 _\${1}
 
 IFS=\$'\n'
-echo "\${COMPREPLY[*]}" | sort | uniq
+if [ \${#COMPREPLY[*]} -gt 0 ]; then
+	echo "\${COMPREPLY[*]}" | sort | uniq
+else
+	# No completions suggested.  In this case, we want tcsh to perform
+	# standard file completion.  However, there does not seem to be way
+	# to tell tcsh to do that.  To help the user, we try to simulate
+	# file completion directly in this script.
+	#
+	# Known issues:
+	#     - Possible completions are shown with their directory prefix.
+	#     - Completions containing shell variables are not handled.
+	#     - Completions with ~ as the first character are not handled.
+
+	# No file completion should be done unless we are completing beyond
+	# the git sub-command.  An improvement on the bash completion :)
+	if [ \${COMP_CWORD} -gt 1 ]; then
+		TO_COMPLETE="\${COMP_WORDS[\${COMP_CWORD}]}"
+
+		# We don't support ~ expansion: too tricky.
+		if [ "\${TO_COMPLETE:0:1}" != "~" ]; then
+			# Use ls so as to add the '/' at the end of directories.
+			RESULT=(\`ls -dp \${TO_COMPLETE}* 2> /dev/null\`)
+			echo \${RESULT[*]}
+
+			# If there is a single completion and it is a directory,
+			# we output it a second time to trick tcsh into not adding a space
+			# after it.
+			if [ \${#RESULT[*]} -eq 1 ] && [ "\${RESULT[0]: -1}" == "/" ]; then
+				echo \${RESULT[*]}
+			fi
+		fi
+	fi
+fi
+
 EOF
 
-complete git  'p/*/`bash ${__git_tcsh_completion_script} git "${COMMAND_LINE}"`/'
-complete gitk 'p/*/`bash ${__git_tcsh_completion_script} gitk "${COMMAND_LINE}"`/'
+# Don't need this variable anymore, so don't pollute the users environment
+unset __git_tcsh_completion_original_script
+
+complete git  'p,*,`bash ${__git_tcsh_completion_script} git "${COMMAND_LINE}"`,'
+complete gitk 'p,*,`bash ${__git_tcsh_completion_script} gitk "${COMMAND_LINE}"`,'
