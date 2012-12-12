@@ -1,10 +1,10 @@
 To: git@vger.kernel.org
 Bcc: lwn@lwn.net
-Subject: What's cooking in git.git (Dec 2012, #02; Mon, 10)
-X-master-at: 7e0651a6302b50db4bac1e65da61c4036cc64d2a
-X-next-at: ec797b35843d725053c28368548623cc5e602814
+Subject: What's cooking in git.git (Dec 2012, #03; Wed, 12)
+X-master-at: 24a62db7bbcbd8083bd0070ecd434205489629ed
+X-next-at: 70b2edd6ac003ed3d25092c2bb3c31ce4a502ac4
 
-What's cooking in git.git (Dec 2012, #02; Mon, 10)
+What's cooking in git.git (Dec 2012, #03; Wed, 12)
 --------------------------------------------------
 
 Here are the topics that have been cooking.  Commits prefixed with
@@ -25,56 +25,85 @@ repositories listed at
 --------------------------------------------------
 [New Topics]
 
+* sp/shortlog-missing-lf (2012-12-11) 2 commits
+  (merged to 'next' on 2012-12-11 at 64b8429)
+ + strbuf_add_wrapped*(): Remove unused return value
+ + shortlog: fix wrapping lines of wraplen
+
+ When a line to be wrapped has a solid run of non space characters
+ whose length exactly is the wrap width, "git shortlog -w" failed to
+ add a newline after such a line.
+
+ Will cook in 'next'.
+
+
+* ap/log-mailmap (2012-12-11) 6 commits
+ - [DO NOT MERGE] seems to break t4013 & t4014 among other things
+ - log: Add --use-mailmap option
+ - pretty: Use mailmap to display username and email
+ - mailmap: Add mailmap structure to rev_info and pp
+ - mailmap: Remove buffer length limit in map_user
+ - Use split_ident_line to parse author and committer
+
+ Clean up various codepaths around mailmap and teach the "log"
+ machinery to use it.
+
+
+* jc/fetch-ignore-symref (2012-12-11) 1 commit
+ - fetch: ignore wildcarded refspecs that update local symbolic refs
+
+ Avoid false error from an attempt to update local symbolic ref via
+ fetch.
+
+
+* md/gitweb-sort-by-age (2012-12-11) 1 commit
+ - gitweb: Sort projects with undefined ages last
+
+ Will merge to 'next'.
+
+
+* ss/nedmalloc-compilation (2012-12-11) 1 commit
+ - nedmalloc: Fix a compile warning (exposed as error) with GCC 4.7.2
+
+ Will merge to 'next'.
+
+
+* wk/submodule-update-remote (2012-12-12) 3 commits
+ - submodule add: If --branch is given, record it in .gitmodules
+ - submodule update: add --remote for submodule's upstream changes
+ - submodule: add get_submodule_config helper funtion
+
+ Expecting a re-roll.
+
+--------------------------------------------------
+[Graduated to "master"]
+
 * ef/mingw-rmdir (2012-12-10) 1 commit
- - mingw_rmdir: do not prompt for retry when non-empty
+ + mingw_rmdir: do not prompt for retry when non-empty
 
  MinGW has a workaround when rmdir unnecessarily fails to retry with
  a prompt, but the logic was kicking in when the rmdir failed with
  ENOTEMPTY, i.e. was expected to fail and there is no point retrying.
 
- Will fast-track to 'master'.
+
+* ef/mingw-tty-getpass (2012-12-04) 6 commits
+  (merged to 'next' on 2012-12-07 at 1737ff1)
+ + mingw: get rid of getpass implementation
+ + mingw: reuse tty-version of git_terminal_prompt
+ + compat/terminal: separate input and output handles
+ + compat/terminal: factor out echo-disabling
+ + mingw: make fgetc raise SIGINT if apropriate
+ + mingw: correct exit-code for SIGALRM's SIG_DFL
+
+ Update getpass() emulation for MinGW.
 
 
-* jc/maint-fbsd-sh-ifs-workaround (2012-12-10) 1 commit
- - sh-setup: work around "unset IFS" bug in some shells
+* jc/prompt-command-doc (2012-12-11) 1 commit
+ - git-prompt.sh: update PROMPT_COMMAND documentation
 
- Will merge to 'next'.
-
-
-* jc/merge-blobs (2012-12-09) 4 commits
- - merge-tree: add comments to clarify what these functions are doing
- - merge-tree: lose unused "resolve_directories"
- - merge-tree: lose unused "flags" from merge_list
- - Which merge_file() function do you mean?
-
- A beginning of a new merge strategy based on the disused merge-tree
- proof-of-concept code.
-
-
-* jc/same-encoding (2012-12-10) 1 commit
- - format_commit_message(): simplify calls to logmsg_reencode()
-
- Finishing touches to the series to unify "Do we need to reencode
- between these two encodings?" logic.
-
-
-* nd/invalidate-i-t-a-cache-tree (2012-12-09) 1 commit
- - cache-tree: invalidate i-t-a paths after generating trees
-
- Writing out a tree object when you still have intent-to-add entries
- in the index left an incorrect cache-tree data there.
-
---------------------------------------------------
-[Graduated to "master"]
-
-* rr/t4041-cleanup (2012-12-02) 4 commits
-  (merged to 'next' on 2012-12-04 at ecee35d)
- + t4041 (diff-submodule-option): modernize style
- + t4041 (diff-submodule-option): rewrite add_file() routine
- + t4041 (diff-submodule-option): parse digests sensibly
- + t4041 (diff-submodule-option): don't hardcode SHA-1 in expected outputs
-
- Test clean-up.
+ Recently graduated git-prompt topic to use PROMPT_COMMAND was
+ confusingly documented.  With a quick review, it may be a good
+ idea to fast-track this to the 'master branch.
 
 --------------------------------------------------
 [Stalled]
@@ -282,18 +311,35 @@ repositories listed at
 --------------------------------------------------
 [Cooking]
 
-* ef/mingw-tty-getpass (2012-12-04) 6 commits
-  (merged to 'next' on 2012-12-07 at 1737ff1)
- + mingw: get rid of getpass implementation
- + mingw: reuse tty-version of git_terminal_prompt
- + compat/terminal: separate input and output handles
- + compat/terminal: factor out echo-disabling
- + mingw: make fgetc raise SIGINT if apropriate
- + mingw: correct exit-code for SIGALRM's SIG_DFL
+* jc/maint-fbsd-sh-ifs-workaround (2012-12-10) 1 commit
+  (merged to 'next' on 2012-12-11 at 6659fdc)
+ + sh-setup: work around "unset IFS" bug in some shells
 
- Update getpass() emulation for MinGW.
+ Will cook in 'next'.
 
- Will fast-track to 'master'.
+
+* jc/merge-blobs (2012-12-09) 4 commits
+ - merge-tree: add comments to clarify what these functions are doing
+ - merge-tree: lose unused "resolve_directories"
+ - merge-tree: lose unused "flags" from merge_list
+ - Which merge_file() function do you mean?
+
+ A beginning of a new merge strategy based on the disused merge-tree
+ proof-of-concept code.
+
+
+* jc/same-encoding (2012-12-10) 1 commit
+ - format_commit_message(): simplify calls to logmsg_reencode()
+
+ Finishing touches to the series to unify "Do we need to reencode
+ between these two encodings?" logic.
+
+
+* nd/invalidate-i-t-a-cache-tree (2012-12-09) 1 commit
+ - cache-tree: invalidate i-t-a paths after generating trees
+
+ Writing out a tree object when you still have intent-to-add entries
+ in the index left an incorrect cache-tree data there.
 
 
 * jl/submodule-deinit (2012-12-04) 1 commit
@@ -389,7 +435,7 @@ repositories listed at
  + git-remote-helpers.txt: document missing capabilities
  + git-remote-helpers.txt: document invocation before input format
 
- Will cook in 'next'.
+ Will merge to 'master'.
 
 
 * mh/pthreads-autoconf (2012-11-27) 1 commit
