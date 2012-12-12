@@ -1,38 +1,70 @@
-#!/usr/bin/perl -w
-my %mailmap = ();
-open I, "<", ".mailmap";
-while (<I>) {
-	chomp;
-	next if /^#/;
-	if (my ($author, $mail) = /^(.*?)\s+<(.+)>$/) {
-		$mailmap{$mail} = $author;
-	}
-}
-close I;
+#!/usr/bin/perl
 
-my %mail2author = ();
-open I, "git log --pretty='format:%ae	%an' |";
-while (<I>) {
-	chomp;
-	my ($mail, $author) = split(/\t/, $_);
-	next if exists $mailmap{$mail};
-	$mail2author{$mail} ||= {};
-	$mail2author{$mail}{$author} ||= 0;
-	$mail2author{$mail}{$author}++;
-}
-close I;
+use warnings 'all';
+use strict;
+use Getopt::Long;
 
-while (my ($mail, $authorcount) = each %mail2author) {
-	# %$authorcount is ($author => $count);
-	# sort and show the names from the most frequent ones.
-	my @names = (map { $_->[0] }
-		sort { $b->[1] <=> $a->[1] }
-		map { [$_, $authorcount->{$_}] }
-		keys %$authorcount);
-	if (1 < @names) {
-		for (@names) {
-			print "$_ <$mail>\n";
+my $match_emails;
+my $match_names;
+my $order_by = 'count';
+Getopt::Long::Configure(qw(bundling));
+GetOptions(
+	'emails|e!' => \$match_emails,
+	'names|n!'  => \$match_names,
+	'count|c'   => sub { $order_by = 'count' },
+	'time|t'    => sub { $order_by = 'stamp' },
+) or exit 1;
+$match_emails = 1 unless $match_names;
+
+my $email = {};
+my $name = {};
+
+open(my $fh, '-|', "git log --format='%at <%aE> %aN'");
+while(<$fh>) {
+	my ($t, $e, $n) = /(\S+) <(\S+)> (.*)/;
+	mark($email, $e, $n, $t);
+	mark($name, $n, $e, $t);
+}
+close($fh);
+
+if ($match_emails) {
+	foreach my $e (dups($email)) {
+		foreach my $n (vals($email->{$e})) {
+			show($n, $e, $email->{$e}->{$n});
 		}
+		print "\n";
 	}
 }
+if ($match_names) {
+	foreach my $n (dups($name)) {
+		foreach my $e (vals($name->{$n})) {
+			show($n, $e, $name->{$n}->{$e});
+		}
+		print "\n";
+	}
+}
+exit 0;
 
+sub mark {
+	my ($h, $k, $v, $t) = @_;
+	my $e = $h->{$k}->{$v} ||= { count => 0, stamp => 0 };
+	$e->{count}++;
+	$e->{stamp} = $t unless $t < $e->{stamp};
+}
+
+sub dups {
+	my $h = shift;
+	return grep { keys($h->{$_}) > 1 } keys($h);
+}
+
+sub vals {
+	my $h = shift;
+	return sort {
+		$h->{$b}->{$order_by} <=> $h->{$a}->{$order_by}
+	} keys($h);
+}
+
+sub show {
+	my ($n, $e, $h) = @_;
+	print "$n <$e> ($h->{$order_by})\n";
+}
