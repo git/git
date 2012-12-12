@@ -10,6 +10,7 @@ static inline void debug_mm(const char *format, ...) {}
 #endif
 
 const char *git_mailmap_file;
+const char *git_mailmap_blob;
 
 struct mailmap_info {
 	char *name;
@@ -177,12 +178,56 @@ static int read_mailmap_file(struct string_list *map, const char *filename,
 	return 0;
 }
 
+static void read_mailmap_buf(struct string_list *map,
+			     const char *buf, unsigned long len,
+			     char **repo_abbrev)
+{
+	while (len) {
+		const char *end = strchrnul(buf, '\n');
+		unsigned long linelen = end - buf + 1;
+		char *line = xmemdupz(buf, linelen);
+
+		read_mailmap_line(map, line, repo_abbrev);
+
+		free(line);
+		buf += linelen;
+		len -= linelen;
+	}
+}
+
+static int read_mailmap_blob(struct string_list *map,
+			     const char *name,
+			     char **repo_abbrev)
+{
+	unsigned char sha1[20];
+	char *buf;
+	unsigned long size;
+	enum object_type type;
+
+	if (!name)
+		return 1;
+	if (get_sha1(name, sha1) < 0)
+		return 1;
+
+	buf = read_sha1_file(sha1, &type, &size);
+	if (!buf)
+		return 1;
+	if (type != OBJ_BLOB)
+		return 1;
+
+	read_mailmap_buf(map, buf, size, repo_abbrev);
+
+	free(buf);
+	return 0;
+}
+
 int read_mailmap(struct string_list *map, char **repo_abbrev)
 {
 	map->strdup_strings = 1;
-	/* each failure returns 1, so >1 means both calls failed */
+	/* each failure returns 1, so >2 means all calls failed */
 	return read_mailmap_file(map, ".mailmap", repo_abbrev) +
-	       read_mailmap_file(map, git_mailmap_file, repo_abbrev) > 1;
+	       read_mailmap_blob(map, git_mailmap_blob, repo_abbrev) +
+	       read_mailmap_file(map, git_mailmap_file, repo_abbrev) > 2;
 }
 
 void clear_mailmap(struct string_list *map)

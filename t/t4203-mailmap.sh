@@ -149,6 +149,79 @@ test_expect_success 'No mailmap files, but configured' '
 	test_cmp expect actual
 '
 
+test_expect_success 'setup mailmap blob tests' '
+	git checkout -b map &&
+	test_when_finished "git checkout master" &&
+	cat >just-bugs <<-\EOF &&
+	Blob Guy <bugs@company.xx>
+	EOF
+	cat >both <<-\EOF &&
+	Blob Guy <author@example.com>
+	Blob Guy <bugs@company.xx>
+	EOF
+	git add just-bugs both &&
+	git commit -m "my mailmaps" &&
+	echo "Repo Guy <author@example.com>" >.mailmap &&
+	echo "Internal Guy <author@example.com>" >internal.map
+'
+
+test_expect_success 'mailmap.blob set' '
+	cat >expect <<-\EOF &&
+	Blob Guy (1):
+	      second
+
+	Repo Guy (1):
+	      initial
+
+	EOF
+	git -c mailmap.blob=map:just-bugs shortlog HEAD >actual &&
+	test_cmp expect actual
+'
+
+test_expect_success 'mailmap.blob overrides .mailmap' '
+	cat >expect <<-\EOF &&
+	Blob Guy (2):
+	      initial
+	      second
+
+	EOF
+	git -c mailmap.blob=map:both shortlog HEAD >actual &&
+	test_cmp expect actual
+'
+
+test_expect_success 'mailmap.file overrides mailmap.blob' '
+	cat >expect <<-\EOF &&
+	Blob Guy (1):
+	      second
+
+	Internal Guy (1):
+	      initial
+
+	EOF
+	git \
+	  -c mailmap.blob=map:both \
+	  -c mailmap.file=internal.map \
+	  shortlog HEAD >actual &&
+	test_cmp expect actual
+'
+
+test_expect_success 'mailmap.blob can be missing' '
+	cat >expect <<-\EOF &&
+	Repo Guy (1):
+	      initial
+
+	nick1 (1):
+	      second
+
+	EOF
+	git -c mailmap.blob=map:nonexistent shortlog HEAD >actual &&
+	test_cmp expect actual
+'
+
+test_expect_success 'cleanup after mailmap.blob tests' '
+	rm -f .mailmap
+'
+
 # Extended mailmap configurations should give us the following output for shortlog
 cat >expect <<\EOF
 A U Thor <author@example.com> (1):
