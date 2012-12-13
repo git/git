@@ -218,6 +218,31 @@ test_expect_success 'mailmap.blob can be missing' '
 	test_cmp expect actual
 '
 
+test_expect_success 'mailmap.blob defaults to off in non-bare repo' '
+	git init non-bare &&
+	(
+		cd non-bare &&
+		test_commit one .mailmap "Fake Name <author@example.com>" &&
+		echo "     1	Fake Name" >expect &&
+		git shortlog -ns HEAD >actual &&
+		test_cmp expect actual &&
+		rm .mailmap &&
+		echo "     1	A U Thor" >expect &&
+		git shortlog -ns HEAD >actual &&
+		test_cmp expect actual
+	)
+'
+
+test_expect_success 'mailmap.blob defaults to HEAD:.mailmap in bare repo' '
+	git clone --bare non-bare bare &&
+	(
+		cd bare &&
+		echo "     1	Fake Name" >expect &&
+		git shortlog -ns HEAD >actual &&
+		test_cmp expect actual
+	)
+'
+
 test_expect_success 'cleanup after mailmap.blob tests' '
 	rm -f .mailmap
 '
