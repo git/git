@@ -167,7 +167,7 @@ log.showroot::
 	`git log -p` output would be shown without a diff attached.
 	The default is `true`.
 
-mailmap.file::
+mailmap.*::
 	See linkgit:git-shortlog[1].
 
 notes.displayRef::
