@@ -25,7 +25,7 @@ static void add_merge_entry(struct merge_list *entry)
 	merge_result_end = &entry->next;
 }
 
-static void merge_trees(struct tree_desc t[3], const char *base);
+static void merge_trees_recursive(struct tree_desc t[3], const char *base, int df_conflict);
 
 static const char *explanation(struct merge_list *entry)
 {
@@ -190,41 +190,35 @@ static void resolve(const struct traverse_info *info, struct name_entry *ours, s
 	add_merge_entry(final);
 }
 
-static int unresolved_directory(const struct traverse_info *info, struct name_entry n[3])
+static void unresolved_directory(const struct traverse_info *info, struct name_entry n[3],
+				 int df_conflict)
 {
 	char *newbase;
 	struct name_entry *p;
 	struct tree_desc t[3];
 	void *buf0, *buf1, *buf2;
 
-	p = n;
-	if (!p->mode) {
-		p++;
-		if (!p->mode)
-			p++;
+	for (p = n; p < n + 3; p++) {
+		if (p->mode && S_ISDIR(p->mode))
+			break;
 	}
-	if (!S_ISDIR(p->mode))
-		return 0;
-	/*
-	 * NEEDSWORK: this is broken. The path can originally be a file
-	 * and then one side may have turned it into a directory, in which
-	 * case we return and let the three-way merge as if the tree were
-	 * a regular file.  If the path that was originally a tree is
-	 * now a file in either branch, fill_tree_descriptor() below will
-	 * die when fed a blob sha1.
-	 */
+	if (n + 3 <= p)
+		return; /* there is no tree here */
 
 	newbase = traverse_path(info, p);
-	buf0 = fill_tree_descriptor(t+0, n[0].sha1);
-	buf1 = fill_tree_descriptor(t+1, n[1].sha1);
-	buf2 = fill_tree_descriptor(t+2, n[2].sha1);
-	merge_trees(t, newbase);
+
+#define ENTRY_SHA1(e) (((e)->mode && S_ISDIR((e)->mode)) ? (e)->sha1 : NULL)
+	buf0 = fill_tree_descriptor(t+0, ENTRY_SHA1(n + 0));
+	buf1 = fill_tree_descriptor(t+1, ENTRY_SHA1(n + 1));
+	buf2 = fill_tree_descriptor(t+2, ENTRY_SHA1(n + 2));
+#undef ENTRY_SHA1
+
+	merge_trees_recursive(t, newbase, df_conflict);
 
 	free(buf0);
 	free(buf1);
 	free(buf2);
 	free(newbase);
-	return 1;
 }
 
 
@@ -247,18 +241,26 @@ static struct merge_list *link_entry(unsigned stage, const struct traverse_info 
 static void unresolved(const struct traverse_info *info, struct name_entry n[3])
 {
 	struct merge_list *entry = NULL;
+	int i;
+	unsigned dirmask = 0, mask = 0;
 
-	if (unresolved_directory(info, n))
+	for (i = 0; i < 3; i++) {
+		mask |= (1 << 1);
+		if (n[i].mode && S_ISDIR(n[i].mode))
+			dirmask |= (1 << i);
+	}
+
+	unresolved_directory(info, n, dirmask && (dirmask != mask));
+
+	if (dirmask == mask)
 		return;
 
-	/*
-	 * Do them in reverse order so that the resulting link
-	 * list has the stages in order - link_entry adds new
-	 * links at the front.
-	 */
-	entry = link_entry(3, info, n + 2, entry);
-	entry = link_entry(2, info, n + 1, entry);
-	entry = link_entry(1, info, n + 0, entry);
+	if (n[2].mode && !S_ISDIR(n[2].mode))
+		entry = link_entry(3, info, n + 2, entry);
+	if (n[1].mode && !S_ISDIR(n[1].mode))
+		entry = link_entry(2, info, n + 1, entry);
+	if (n[0].mode && !S_ISDIR(n[0].mode))
+		entry = link_entry(1, info, n + 0, entry);
 
 	add_merge_entry(entry);
 }
@@ -329,13 +331,19 @@ static int threeway_callback(int n, unsigned long mask, unsigned long dirmask, s
 	return mask;
 }
 
-static void merge_trees(struct tree_desc t[3], const char *base)
+static void merge_trees_recursive(struct tree_desc t[3], const char *base, int df_conflict)
 {
 	struct traverse_info info;
 
 	setup_traverse_info(&info, base);
+	info.data = &df_conflict;
 	info.fn = threeway_callback;
 	traverse_trees(3, t, &info);
+}
+
+static void merge_trees(struct tree_desc t[3], const char *base)
+{
+	merge_trees_recursive(t, base, 0);
 }
 
 static void *get_tree_descriptor(struct tree_desc *desc, const char *rev)

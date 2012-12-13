@@ -254,7 +254,7 @@ EXPECTED
 	test_cmp expected actual
 '
 
-test_expect_failure 'turn file to tree' '
+test_expect_success 'turn file to tree' '
 	git reset --hard initial &&
 	rm initial-file &&
 	mkdir initial-file &&
@@ -274,7 +274,7 @@ test_expect_failure 'turn file to tree' '
 	test_cmp expect actual
 '
 
-test_expect_failure 'turn tree to file' '
+test_expect_success 'turn tree to file' '
 	git reset --hard initial &&
 	mkdir dir &&
 	test_commit "add-tree" "dir/path" "AAA" &&
