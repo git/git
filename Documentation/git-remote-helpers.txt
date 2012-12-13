@@ -35,144 +35,6 @@ transport protocols, such as 'git-remote-http', 'git-remote-https',
 'git-remote-ftp' and 'git-remote-ftps'. They implement the capabilities
 'fetch', 'option', and 'push'.
 
-INPUT FORMAT
-------------
-
-Git sends the remote helper a list of commands on standard input, one
-per line.  The first command is always the 'capabilities' command, in
-response to which the remote helper must print a list of the
-capabilities it supports (see below) followed by a blank line.  The
-response to the capabilities command determines what commands Git uses
-in the remainder of the command stream.
-
-The command stream is terminated by a blank line.  In some cases
-(indicated in the documentation of the relevant commands), this blank
-line is followed by a payload in some other protocol (e.g., the pack
-protocol), while in others it indicates the end of input.
-
-Capabilities
-~~~~~~~~~~~~
-
-Each remote helper is expected to support only a subset of commands.
-The operations a helper supports are declared to git in the response
-to the `capabilities` command (see COMMANDS, below).
-
-'option'::
-	For specifying settings like `verbosity` (how much output to
-	write to stderr) and `depth` (how much history is wanted in the
-	case of a shallow clone) that affect how other commands are
-	carried out.
-
-'connect'::
-	For fetching and pushing using git's native packfile protocol
-	that requires a bidirectional, full-duplex connection.
-
-'push'::
-	For listing remote refs and pushing specified objects from the
-	local object store to remote refs.
-
-'fetch'::
-	For listing remote refs and fetching the associated history to
-	the local object store.
-
-'import'::
-	For listing remote refs and fetching the associated history as
-	a fast-import stream.
-
-'refspec' <refspec>::
-	This modifies the 'import' capability, allowing the produced
-	fast-import stream to modify refs in a private namespace
-	instead of writing to refs/heads or refs/remotes directly.
-	It is recommended that all importers providing the 'import'
-	capability use this.
-+
-A helper advertising the capability
-`refspec refs/heads/*:refs/svn/origin/branches/*`
-is saying that, when it is asked to `import refs/heads/topic`, the
-stream it outputs will update the `refs/svn/origin/branches/topic`
-ref.
-+
-This capability can be advertised multiple times.  The first
-applicable refspec takes precedence.  The left-hand of refspecs
-advertised with this capability must cover all refs reported by
-the list command.  If no 'refspec' capability is advertised,
-there is an implied `refspec *:*`.
-
-'bidi-import'::
-	The fast-import commands 'cat-blob' and 'ls' can be used by remote-helpers
-	to retrieve information about blobs and trees that already exist in
-	fast-import's memory. This requires a channel from fast-import to the
-	remote-helper.
-	If it is advertised in addition to "import", git establishes a pipe from
-	fast-import to the remote-helper's stdin.
-	It follows that git and fast-import are both connected to the
-	remote-helper's stdin. Because git can send multiple commands to
-	the remote-helper it is required that helpers that use 'bidi-import'
-	buffer all 'import' commands of a batch before sending data to fast-import.
-	This is to prevent mixing commands and fast-import responses on the
-	helper's stdin.
-
-Capabilities for Pushing
-~~~~~~~~~~~~~~~~~~~~~~~~
-'connect'::
-	Can attempt to connect to 'git receive-pack' (for pushing),
-	'git upload-pack', etc for communication using the
-	packfile protocol.
-+
-Supported commands: 'connect'.
-
-'push'::
-	Can discover remote refs and push local commits and the
-	history leading up to them to new or existing remote refs.
-+
-Supported commands: 'list for-push', 'push'.
-
-If a helper advertises both 'connect' and 'push', git will use
-'connect' if possible and fall back to 'push' if the helper requests
-so when connecting (see the 'connect' command under COMMANDS).
-
-Capabilities for Fetching
-~~~~~~~~~~~~~~~~~~~~~~~~~
-'connect'::
-	Can try to connect to 'git upload-pack' (for fetching),
-	'git receive-pack', etc for communication using the
-	packfile protocol.
-+
-Supported commands: 'connect'.
-
-'fetch'::
-	Can discover remote refs and transfer objects reachable from
-	them to the local object store.
-+
-Supported commands: 'list', 'fetch'.
-
-'import'::
-	Can discover remote refs and output objects reachable from
-	them as a stream in fast-import format.
-+
-Supported commands: 'list', 'import'.
-
-If a helper advertises 'connect', git will use it if possible and
-fall back to another capability if the helper requests so when
-connecting (see the 'connect' command under COMMANDS).
-When choosing between 'fetch' and 'import', git prefers 'fetch'.
-Other frontends may have some other order of preference.
-
-'refspec' <refspec>::
-	This modifies the 'import' capability.
-+
-A helper advertising
-`refspec refs/heads/*:refs/svn/origin/branches/*`
-in its capabilities is saying that, when it handles
-`import refs/heads/topic`, the stream it outputs will update the
-`refs/svn/origin/branches/topic` ref.
-+
-This capability can be advertised multiple times.  The first
-applicable refspec takes precedence.  The left-hand of refspecs
-advertised with this capability must cover all refs reported by
-the list command.  If no 'refspec' capability is advertised,
-there is an implied `refspec *:*`.
-
 INVOCATION
 ----------
 
@@ -204,6 +66,145 @@ Additionally, when a configured remote has 'remote.<name>.vcs' set to
 '<name>' as the first argument. If set, the second argument is
 'remote.<name>.url'; otherwise, the second argument is omitted.
 
+INPUT FORMAT
+------------
+
+Git sends the remote helper a list of commands on standard input, one
+per line.  The first command is always the 'capabilities' command, in
+response to which the remote helper must print a list of the
+capabilities it supports (see below) followed by a blank line.  The
+response to the capabilities command determines what commands Git uses
+in the remainder of the command stream.
+
+The command stream is terminated by a blank line.  In some cases
+(indicated in the documentation of the relevant commands), this blank
+line is followed by a payload in some other protocol (e.g., the pack
+protocol), while in others it indicates the end of input.
+
+Capabilities
+~~~~~~~~~~~~
+
+Each remote helper is expected to support only a subset of commands.
+The operations a helper supports are declared to git in the response
+to the `capabilities` command (see COMMANDS, below).
+
+In the following, we list all defined capabilities and for
+each we list which commands a helper with that capability
+must provide.
+
+Capabilities for Pushing
+^^^^^^^^^^^^^^^^^^^^^^^^
+'connect'::
+	Can attempt to connect to 'git receive-pack' (for pushing),
+	'git upload-pack', etc for communication using
+	git's native packfile protocol. This
+	requires a bidirectional, full-duplex connection.
++
+Supported commands: 'connect'.
+
+'push'::
+	Can discover remote refs and push local commits and the
+	history leading up to them to new or existing remote refs.
++
+Supported commands: 'list for-push', 'push'.
+
+'export'::
+	Can discover remote refs and push specified objects from a
+	fast-import stream to remote refs.
++
+Supported commands: 'list for-push', 'export'.
+
+If a helper advertises 'connect', git will use it if possible and
+fall back to another capability if the helper requests so when
+connecting (see the 'connect' command under COMMANDS).
+When choosing between 'push' and 'export', git prefers 'push'.
+Other frontends may have some other order of preference.
+
+
+Capabilities for Fetching
+^^^^^^^^^^^^^^^^^^^^^^^^^
+'connect'::
+	Can try to connect to 'git upload-pack' (for fetching),
+	'git receive-pack', etc for communication using the
+	git's native packfile protocol. This
+	requires a bidirectional, full-duplex connection.
++
+Supported commands: 'connect'.
+
+'fetch'::
+	Can discover remote refs and transfer objects reachable from
+	them to the local object store.
++
+Supported commands: 'list', 'fetch'.
+
+'import'::
+	Can discover remote refs and output objects reachable from
+	them as a stream in fast-import format.
++
+Supported commands: 'list', 'import'.
+
+If a helper advertises 'connect', git will use it if possible and
+fall back to another capability if the helper requests so when
+connecting (see the 'connect' command under COMMANDS).
+When choosing between 'fetch' and 'import', git prefers 'fetch'.
+Other frontends may have some other order of preference.
+
+Miscellaneous capabilities
+^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+'option'::
+	For specifying settings like `verbosity` (how much output to
+	write to stderr) and `depth` (how much history is wanted in the
+	case of a shallow clone) that affect how other commands are
+	carried out.
+
+'refspec' <refspec>::
+	This modifies the 'import' capability, allowing the produced
+	fast-import stream to modify refs in a private namespace
+	instead of writing to refs/heads or refs/remotes directly.
+	It is recommended that all importers providing the 'import'
+	capability use this.
++
+A helper advertising the capability
+`refspec refs/heads/*:refs/svn/origin/branches/*`
+is saying that, when it is asked to `import refs/heads/topic`, the
+stream it outputs will update the `refs/svn/origin/branches/topic`
+ref.
++
+This capability can be advertised multiple times.  The first
+applicable refspec takes precedence.  The left-hand of refspecs
+advertised with this capability must cover all refs reported by
+the list command.  If no 'refspec' capability is advertised,
+there is an implied `refspec *:*`.
+
+'bidi-import'::
+	This modifies the 'import' capability.
+	The fast-import commands 'cat-blob' and 'ls' can be used by remote-helpers
+	to retrieve information about blobs and trees that already exist in
+	fast-import's memory. This requires a channel from fast-import to the
+	remote-helper.
+	If it is advertised in addition to "import", git establishes a pipe from
+	fast-import to the remote-helper's stdin.
+	It follows that git and fast-import are both connected to the
+	remote-helper's stdin. Because git can send multiple commands to
+	the remote-helper it is required that helpers that use 'bidi-import'
+	buffer all 'import' commands of a batch before sending data to fast-import.
+	This is to prevent mixing commands and fast-import responses on the
+	helper's stdin.
+
+'export-marks' <file>::
+	This modifies the 'export' capability, instructing git to dump the
+	internal marks table to <file> when complete. For details,
+	read up on '--export-marks=<file>' in linkgit:git-fast-export[1].
+
+'import-marks' <file>::
+	This modifies the 'export' capability, instructing git to load the
+	marks specified in <file> before processing any input. For details,
+	read up on '--import-marks=<file>' in linkgit:git-fast-export[1].
+
+
+
+
 COMMANDS
 --------
 
@@ -212,9 +213,11 @@ Commands are given by the caller on the helper's standard input, one per line.
 'capabilities'::
 	Lists the capabilities of the helper, one per line, ending
 	with a blank line. Each capability may be preceded with '*',
-	which marks them mandatory for git version using the remote
-	helper to understand (unknown mandatory capability is fatal
-	error).
+	which marks them mandatory for git versions using the remote
+	helper to understand. Any unknown mandatory capability is a
+	fatal error.
++
+Support for this command is mandatory.
 
 'list'::
 	Lists the refs, one per line, in the format "<value> <name>
@@ -224,9 +227,20 @@ Commands are given by the caller on the helper's standard input, one per line.
 	the name; unrecognized attributes are ignored. The list ends
 	with a blank line.
 +
-If 'push' is supported this may be called as 'list for-push'
-to obtain the current refs prior to sending one or more 'push'
-commands to the helper.
+See REF LIST ATTRIBUTES for a list of currently defined attributes.
++
+Supported if the helper has the "fetch" or "import" capability.
+
+'list for-push'::
+	Similar to 'list', except that it is used if and only if
+	the caller wants to the resulting ref list to prepare
+	push commands.
+	A helper supporting both push and fetch can use this
+	to distinguish for which operation the output of 'list'
+	is going to be used, possibly reducing the amount
+	of work that needs to be performed.
++
+Supported if the helper has the "push" or "export" capability.
 
 'option' <name> <value>::
 	Sets the transport helper option <name> to <value>.  Outputs a
@@ -236,6 +250,8 @@ commands to the helper.
 	for it).  Options should be set before other commands,
 	and may influence the behavior of those commands.
 +
+See OPTIONS for a list of currently defined options.
++
 Supported if the helper has the "option" capability.
 
 'fetch' <sha1> <name>::
@@ -244,7 +260,7 @@ Supported if the helper has the "option" capability.
 	per line, terminated with a blank line.
 	Outputs a single blank line when all fetch commands in the
 	same batch are complete. Only objects which were reported
-	in the ref list with a sha1 may be fetched this way.
+	in the output of 'list' with a sha1 may be fetched this way.
 +
 Optionally may output a 'lock <file>' line indicating a file under
 GIT_DIR/objects/pack which is keeping a pack until refs can be
@@ -305,7 +321,23 @@ sequence has to be buffered before starting to send data to fast-import
 to prevent mixing of commands and fast-import responses on the helper's
 stdin.
 +
-Supported if the helper has the 'import' capability.
+Supported if the helper has the "import" capability.
+
+'export'::
+	Instructs the remote helper that any subsequent input is
+	part of a fast-import stream (generated by 'git fast-export')
+	containing objects which should be pushed to the remote.
++
+Especially useful for interoperability with a foreign versioning
+system.
++
+The 'export-marks' and 'import-marks' capabilities, if specified,
+affect this command in so far as they are passed on to 'git
+fast-export', which then will load/store a table of marks for
+local objects. This can be used to implement for incremental
+operations.
++
+Supported if the helper has the "export" capability.
 
 'connect' <service>::
 	Connects to given service. Standard input and standard output
@@ -332,10 +364,9 @@ capabilities reported by the helper.
 REF LIST ATTRIBUTES
 -------------------
 
-'for-push'::
-	The caller wants to use the ref list to prepare push
-	commands.  A helper might chose to acquire the ref list by
-	opening a different type of connection to the destination.
+The 'list' command produces a list of refs in which each ref
+may be followed by a list of attributes. The following ref list
+attributes are defined.
 
 'unchanged'::
 	This ref is unchanged since the last import or fetch, although
@@ -343,6 +374,10 @@ REF LIST ATTRIBUTES
 
 OPTIONS
 -------
+
+The following options are defined and (under suitable circumstances)
+set by git if the remote helper has the 'option' capability.
+
 'option verbosity' <n>::
 	Changes the verbosity of messages displayed by the helper.
 	A value of 0 for <n> means that processes operate
