@@ -650,6 +650,7 @@ git so take care if using Cogito etc.
 	If the 'GIT_DIR' environment variable is set then it
 	specifies a path to use instead of the default `.git`
 	for the base of the repository.
+	The '--git-dir' command-line option also sets this value.
 
 'GIT_WORK_TREE'::
 	Set the path to the working tree.  The value will not be
