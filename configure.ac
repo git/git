@@ -759,6 +759,14 @@ AC_CHECK_MEMBER(struct dirent.d_type,
 [#include <dirent.h>])
 GIT_CONF_SUBST([NO_D_TYPE_IN_DIRENT])
 #
+# Define NO_GECOS_IN_PWENT if you don't have pw_gecos in struct passwd
+# in the C library.
+AC_CHECK_MEMBER(struct passwd.pw_gecos,
+[NO_GECOS_IN_PWENT=],
+[NO_GECOS_IN_PWENT=YesPlease],
+[#include <pwd.h>])
+GIT_CONF_SUBST([NO_GECOS_IN_PWENT])
+#
 # Define NO_SOCKADDR_STORAGE if your platform does not have struct
 # sockaddr_storage.
 AC_CHECK_TYPE(struct sockaddr_storage,
