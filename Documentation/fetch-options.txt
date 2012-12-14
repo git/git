@@ -57,14 +57,11 @@ endif::git-pull[]
 ifndef::git-pull[]
 -t::
 --tags::
-	Most of the tags are fetched automatically as branch
-	heads are downloaded, but tags that do not point at
-	objects reachable from the branch heads that are being
-	tracked will not be fetched by this mechanism.  This
-	flag lets all tags and their associated objects be
-	downloaded. The default behavior for a remote may be
-	specified with the remote.<name>.tagopt setting. See
-	linkgit:git-config[1].
+	This is a short-hand for giving "refs/tags/*:refs/tags/*"
+	refspec from the command line, to ask all tags to be fetched
+	and stored locally.  Because this acts as an explicit
+	refspec, the default refspecs (configured with the
+	remote.$name.fetch variable) are overridden and not used.
 
 --recurse-submodules[=yes|on-demand|no]::
 	This option controls if and under what conditions new commits of
