@@ -90,10 +90,12 @@ static int parse_rev_note(const char *msg, struct rev_note *res)
 			if (end == value || i < 0 || i > UINT32_MAX)
 				return -1;
 			res->rev_nr = i;
+			return 0;
 		}
 		msg += len + 1;
 	}
-	return 0;
+	/* didn't find it */
+	return -1;
 }
 
 static int note2mark_cb(const unsigned char *object_sha1,
