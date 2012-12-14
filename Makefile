@@ -165,6 +165,8 @@ all::
 # Define NO_POLL if you do not have or don't want to use poll().
 # This also implies NO_SYS_POLL_H.
 #
+# Define NO_SYS_PARAM_H if you don't have sys/param.h.
+#
 # Define NO_PTHREADS if you do not have or do not want to use Pthreads.
 #
 # Define NO_PREAD if you have a problem with pread() system call (e.g.
@@ -1738,6 +1740,9 @@ ifdef NO_SYS_SELECT_H
 endif
 ifdef NO_SYS_POLL_H
 	BASIC_CFLAGS += -DNO_SYS_POLL_H
+endif
+ifdef NO_SYS_PARAM_H
+	BASIC_CFLAGS += -DNO_SYS_PARAM_H
 endif
 ifdef NO_INTTYPES_H
 	BASIC_CFLAGS += -DNO_INTTYPES_H
