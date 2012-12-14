@@ -74,6 +74,8 @@ all::
 # Define NO_D_TYPE_IN_DIRENT if your platform defines DT_UNKNOWN but lacks
 # d_type in struct dirent (Cygwin 1.5, fixed in Cygwin 1.7).
 #
+# Define HAVE_STRINGS_H if you have strings.h and need it for strcasecmp.
+#
 # Define NO_STRCASESTR if you don't have strcasestr.
 #
 # Define NO_MEMMEM if you don't have memmem.
@@ -1350,6 +1352,7 @@ ifeq ($(uname_S),NONSTOP_KERNEL)
 	# Added manually, see above.
 	NEEDS_SSL_WITH_CURL = YesPlease
 	HAVE_LIBCHARSET_H = YesPlease
+	HAVE_STRINGS_H = YesPlease
 	NEEDS_LIBICONV = YesPlease
 	NEEDS_LIBINTL_BEFORE_LIBICONV = YesPlease
 	NO_SYS_SELECT_H = UnfortunatelyYes
@@ -1881,6 +1884,10 @@ endif
 ifdef HAVE_LIBCHARSET_H
 	BASIC_CFLAGS += -DHAVE_LIBCHARSET_H
 	EXTLIBS += $(CHARSET_LIB)
+endif
+
+ifdef HAVE_STRINGS_H
+	BASIC_CFLAGS += -DHAVE_STRINGS_H
 endif
 
 ifdef HAVE_DEV_TTY

@@ -99,7 +99,7 @@
 #include <stdlib.h>
 #include <stdarg.h>
 #include <string.h>
-#ifdef __TANDEM /* or HAVE_STRINGS_H or !NO_STRINGS_H? */
+#ifdef HAVE_STRINGS_H
 #include <strings.h> /* for strcasecmp() */
 #endif
 #include <errno.h>

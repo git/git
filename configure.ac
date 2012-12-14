@@ -886,6 +886,12 @@ AC_CHECK_HEADER([libcharset.h],
 [HAVE_LIBCHARSET_H=YesPlease],
 [HAVE_LIBCHARSET_H=])
 GIT_CONF_SUBST([HAVE_LIBCHARSET_H])
+#
+# Define HAVE_STRINGS_H if you have strings.h
+AC_CHECK_HEADER([strings.h],
+[HAVE_STRINGS_H=YesPlease],
+[HAVE_STRINGS_H=])
+GIT_CONF_SUBST([HAVE_STRINGS_H])
 # Define CHARSET_LIB if libiconv does not export the locale_charset symbol
 # and libcharset does
 CHARSET_LIB=
