@@ -71,28 +71,28 @@ Integrating a command
 Here are the things you need to do when you want to merge a new
 subcommand into the git tree.
 
-0. Don't forget to sign off your patch!
+1. Don't forget to sign off your patch!
 
-1. Append your command name to one of the variables BUILTIN_OBJS,
+2. Append your command name to one of the variables BUILTIN_OBJS,
 EXTRA_PROGRAMS, SCRIPT_SH, SCRIPT_PERL or SCRIPT_PYTHON.
 
-2. Drop its test in the t directory.
+3. Drop its test in the t directory.
 
-3. If your command is implemented in an interpreted language with a
+4. If your command is implemented in an interpreted language with a
 p-code intermediate form, make sure .gitignore in the main directory
 includes a pattern entry that ignores such files.  Python .pyc and
 .pyo files will already be covered.
 
-4. If your command has any dependency on a particular version of
+5. If your command has any dependency on a particular version of
 your language, document it in the INSTALL file.
 
-5. There is a file command-list.txt in the distribution main directory
+6. There is a file command-list.txt in the distribution main directory
 that categorizes commands by type, so they can be listed in appropriate
 subsections in the documentation's summary command list.  Add an entry
 for yours.  To understand the categories, look at git-cmmands.txt
 in the main directory.
 
-6. Give the maintainer one paragraph to include in the RelNotes file
+7. Give the maintainer one paragraph to include in the RelNotes file
 to describe the new feature; a good place to do so is in the cover
 letter [PATCH 0/n].
 
