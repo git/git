@@ -130,6 +130,7 @@ void NORETURN die_errno(const char *fmt, ...)
 	va_end(params);
 }
 
+#undef error
 int error(const char *err, ...)
 {
 	va_list params;
