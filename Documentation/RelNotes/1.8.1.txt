@@ -116,10 +116,16 @@ Foreign Interface
  * The remote helper interface to interact with subversion
    repositories (one of the GSoC 2012 projects) has been merged.
 
+ * The documentation for git(1) was pointing at a page at an external
+   site for the list of authors that no longer existed.  The link has
+   been updated to point at an alternative site.
+
 
 Performance, Internal Implementation, etc.
 
  * Compilation on Cygwin with newer header files are supported now.
+
+ * A couple of low-level implementation updates on MinGW.
 
  * The logic to generate the initial advertisement from "upload-pack"
    (i.e. what is invoked by "git fetch" on the other side of the
