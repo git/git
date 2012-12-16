@@ -183,6 +183,8 @@ then
 			tput bold; tput setaf 1;; # bold red
 		skip)
 			tput bold; tput setaf 2;; # bold green
+		warn)
+			tput setaf 3;; # brown/yellow
 		pass)
 			tput setaf 2;;            # green
 		info)
@@ -281,7 +283,7 @@ test_known_broken_ok_ () {
 
 test_known_broken_failure_ () {
 	test_broken=$(($test_broken+1))
-	say_color skip "not ok $test_count - $@ # TODO known breakage"
+	say_color warn "not ok $test_count - $@ # TODO known breakage"
 }
 
 test_debug () {
@@ -375,7 +377,7 @@ test_done () {
 	fi
 	if test "$test_broken" != 0
 	then
-		say_color error "# still have $test_broken known breakage(s)"
+		say_color warn "# still have $test_broken known breakage(s)"
 		msg="remaining $(($test_count-$test_broken)) test(s)"
 	else
 		msg="$test_count test(s)"
