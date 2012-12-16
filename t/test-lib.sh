@@ -186,9 +186,9 @@ then
 		warn)
 			tput setaf 3;; # brown/yellow
 		pass)
-			tput setaf 2;;            # green
+			tput setaf 2;; # green
 		info)
-			tput setaf 3;;            # brown
+			tput setaf 6;; # cyan
 		*)
 			test -n "$quiet" && return;;
 		esac
@@ -584,7 +584,7 @@ for skp in $GIT_SKIP_TESTS
 do
 	case "$this_test" in
 	$skp)
-		say_color skip >&3 "skipping test $this_test altogether"
+		say_color info >&3 "skipping test $this_test altogether"
 		skip_all="skip all tests in $this_test"
 		test_done
 	esac
