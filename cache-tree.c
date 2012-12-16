@@ -244,6 +244,7 @@ static int update_one(struct cache_tree *it,
 	struct strbuf buffer;
 	int missing_ok = flags & WRITE_TREE_MISSING_OK;
 	int dryrun = flags & WRITE_TREE_DRY_RUN;
+	int to_invalidate = 0;
 	int i;
 
 	*skip_count = 0;
@@ -333,6 +334,8 @@ static int update_one(struct cache_tree *it,
 			i += sub->count;
 			sha1 = sub->cache_tree->sha1;
 			mode = S_IFDIR;
+			if (sub->cache_tree->entry_count < 0)
+				to_invalidate = 1;
 		}
 		else {
 			sha1 = ce->sha1;
@@ -356,8 +359,15 @@ static int update_one(struct cache_tree *it,
 			continue;
 		}
 
-		if (ce->ce_flags & CE_INTENT_TO_ADD)
+		/*
+		 * CE_INTENT_TO_ADD entries exist on on-disk index but
+		 * they are not part of generated trees. Invalidate up
+		 * to root to force cache-tree users to read elsewhere.
+		 */
+		if (ce->ce_flags & CE_INTENT_TO_ADD) {
+			to_invalidate = 1;
 			continue;
+		}
 
 		strbuf_grow(&buffer, entlen + 100);
 		strbuf_addf(&buffer, "%o %.*s%c", mode, entlen, path + baselen, '\0');
@@ -377,7 +387,7 @@ static int update_one(struct cache_tree *it,
 	}
 
 	strbuf_release(&buffer);
-	it->entry_count = i - *skip_count;
+	it->entry_count = to_invalidate ? -1 : i - *skip_count;
 #if DEBUG
 	fprintf(stderr, "cache-tree update-one (%d ent, %d subtree) %s\n",
 		it->entry_count, it->subtree_nr,
