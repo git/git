@@ -182,7 +182,7 @@ then
 		error)
 			tput bold; tput setaf 1;; # bold red
 		skip)
-			tput bold; tput setaf 2;; # bold green
+			tput setaf 4;; # blue
 		warn)
 			tput setaf 3;; # brown/yellow
 		pass)
