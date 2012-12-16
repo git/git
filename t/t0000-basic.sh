@@ -167,13 +167,13 @@ test_expect_success 'tests clean up even on failures' "
 	! test -s err &&
 	! test -f \"trash directory.failing-cleanup/clean-after-failure\" &&
 	sed -e 's/Z$//' -e 's/^> //' >expect <<-\\EOF &&
-	> not ok - 1 tests clean up even after a failure
+	> not ok 1 - tests clean up even after a failure
 	> #	Z
 	> #	touch clean-after-failure &&
 	> #	test_when_finished rm clean-after-failure &&
 	> #	(exit 1)
 	> #	Z
-	> not ok - 2 failure to clean up causes the test to fail
+	> not ok 2 - failure to clean up causes the test to fail
 	> #	Z
 	> #	test_when_finished \"(exit 2)\"
 	> #	Z
