@@ -145,10 +145,28 @@ test_expect_success 'pretend we have fixed a known breakage' "
 	test_done
 	EOF
 	check_sub_test_lib_test passing-todo <<-\\EOF
-	> ok 1 - pretend we have fixed a known breakage # TODO known breakage
-	> # fixed 1 known breakage(s)
-	> # passed all 1 test(s)
+	> ok 1 - pretend we have fixed a known breakage # TODO known breakage vanished
+	> # 1 known breakage(s) vanished; please update test(s)
 	> 1..1
+	EOF
+"
+
+test_expect_success 'pretend we have fixed one of two known breakages (run in sub test-lib)' "
+	run_sub_test_lib_test partially-passing-todos \
+		'2 TODO tests, one passing' <<-\\EOF &&
+	test_expect_failure 'pretend we have a known breakage' 'false'
+	test_expect_success 'pretend we have a passing test' 'true'
+	test_expect_failure 'pretend we have fixed another known breakage' 'true'
+	test_done
+	EOF
+	check_sub_test_lib_test partially-passing-todos <<-\\EOF
+	> not ok 1 - pretend we have a known breakage # TODO known breakage
+	> ok 2 - pretend we have a passing test
+	> ok 3 - pretend we have fixed another known breakage # TODO known breakage vanished
+	> # 1 known breakage(s) vanished; please update test(s)
+	> # still have 1 known breakage(s)
+	> # passed all remaining 1 test(s)
+	> 1..3
 	EOF
 "
 
@@ -199,10 +217,10 @@ test_expect_success 'pretend we have a mix of all possible results' "
 	> #	false
 	> not ok 8 - pretend we have a known breakage # TODO known breakage
 	> not ok 9 - pretend we have a known breakage # TODO known breakage
-	> ok 10 - pretend we have fixed a known breakage # TODO known breakage
-	> # fixed 1 known breakage(s)
+	> ok 10 - pretend we have fixed a known breakage # TODO known breakage vanished
+	> # 1 known breakage(s) vanished; please update test(s)
 	> # still have 2 known breakage(s)
-	> # failed 3 among remaining 8 test(s)
+	> # failed 3 among remaining 7 test(s)
 	> 1..10
 	EOF
 "
