@@ -89,6 +89,56 @@ check_sub_test_lib_test () {
 	)
 }
 
+test_expect_success 'pretend we have a fully passing test suite' "
+	run_sub_test_lib_test full-pass '3 passing tests' <<-\\EOF &&
+	for i in 1 2 3
+	do
+		test_expect_success \"passing test #\$i\" 'true'
+	done
+	test_done
+	EOF
+	check_sub_test_lib_test full-pass <<-\\EOF
+	> ok 1 - passing test #1
+	> ok 2 - passing test #2
+	> ok 3 - passing test #3
+	> # passed all 3 test(s)
+	> 1..3
+	EOF
+"
+
+test_expect_success 'pretend we have a partially passing test suite' "
+	test_must_fail run_sub_test_lib_test \
+		partial-pass '2/3 tests passing' <<-\\EOF &&
+	test_expect_success 'passing test #1' 'true'
+	test_expect_success 'failing test #2' 'false'
+	test_expect_success 'passing test #3' 'true'
+	test_done
+	EOF
+	check_sub_test_lib_test partial-pass <<-\\EOF
+	> ok 1 - passing test #1
+	> not ok 2 - failing test #2
+	#	false
+	> ok 3 - passing test #3
+	> # failed 1 among 3 test(s)
+	> 1..3
+	EOF
+"
+
+test_expect_success 'pretend we have a known breakage' "
+	run_sub_test_lib_test failing-todo 'A failing TODO test' <<-\\EOF &&
+	test_expect_success 'passing test' 'true'
+	test_expect_failure 'pretend we have a known breakage' 'false'
+	test_done
+	EOF
+	check_sub_test_lib_test failing-todo <<-\\EOF
+	> ok 1 - passing test
+	> not ok 2 - pretend we have a known breakage # TODO known breakage
+	> # still have 1 known breakage(s)
+	> # passed all remaining 1 test(s)
+	> 1..2
+	EOF
+"
+
 test_expect_success 'pretend we have fixed a known breakage' "
 	run_sub_test_lib_test passing-todo 'A passing TODO test' <<-\\EOF &&
 	test_expect_failure 'pretend we have fixed a known breakage' 'true'
@@ -99,6 +149,61 @@ test_expect_success 'pretend we have fixed a known breakage' "
 	> # fixed 1 known breakage(s)
 	> # passed all 1 test(s)
 	> 1..1
+	EOF
+"
+
+test_expect_success 'pretend we have a pass, fail, and known breakage' "
+	test_must_fail run_sub_test_lib_test \
+		mixed-results1 'mixed results #1' <<-\\EOF &&
+	test_expect_success 'passing test' 'true'
+	test_expect_success 'failing test' 'false'
+	test_expect_failure 'pretend we have a known breakage' 'false'
+	test_done
+	EOF
+	check_sub_test_lib_test mixed-results1 <<-\\EOF
+	> ok 1 - passing test
+	> not ok 2 - failing test
+	> #	false
+	> not ok 3 - pretend we have a known breakage # TODO known breakage
+	> # still have 1 known breakage(s)
+	> # failed 1 among remaining 2 test(s)
+	> 1..3
+	EOF
+"
+
+test_expect_success 'pretend we have a mix of all possible results' "
+	test_must_fail run_sub_test_lib_test \
+		mixed-results2 'mixed results #2' <<-\\EOF &&
+	test_expect_success 'passing test' 'true'
+	test_expect_success 'passing test' 'true'
+	test_expect_success 'passing test' 'true'
+	test_expect_success 'passing test' 'true'
+	test_expect_success 'failing test' 'false'
+	test_expect_success 'failing test' 'false'
+	test_expect_success 'failing test' 'false'
+	test_expect_failure 'pretend we have a known breakage' 'false'
+	test_expect_failure 'pretend we have a known breakage' 'false'
+	test_expect_failure 'pretend we have fixed a known breakage' 'true'
+	test_done
+	EOF
+	check_sub_test_lib_test mixed-results2 <<-\\EOF
+	> ok 1 - passing test
+	> ok 2 - passing test
+	> ok 3 - passing test
+	> ok 4 - passing test
+	> not ok 5 - failing test
+	> #	false
+	> not ok 6 - failing test
+	> #	false
+	> not ok 7 - failing test
+	> #	false
+	> not ok 8 - pretend we have a known breakage # TODO known breakage
+	> not ok 9 - pretend we have a known breakage # TODO known breakage
+	> ok 10 - pretend we have fixed a known breakage # TODO known breakage
+	> # fixed 1 known breakage(s)
+	> # still have 2 known breakage(s)
+	> # failed 3 among remaining 8 test(s)
+	> 1..10
 	EOF
 "
 
