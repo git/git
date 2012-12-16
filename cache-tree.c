@@ -259,7 +259,8 @@ static int update_one(struct cache_tree *it,
 	/*
 	 * Find the subtrees and update them.
 	 */
-	for (i = 0; i < entries; i++) {
+	i = 0;
+	while (i < entries) {
 		struct cache_entry *ce = cache[i];
 		struct cache_tree_sub *sub;
 		const char *path, *slash;
@@ -271,8 +272,10 @@ static int update_one(struct cache_tree *it,
 			break; /* at the end of this level */
 
 		slash = strchr(path + baselen, '/');
-		if (!slash)
+		if (!slash) {
+			i++;
 			continue;
+		}
 		/*
 		 * a/bbb/c (base = a/, slash = /c)
 		 * ==>
@@ -289,7 +292,7 @@ static int update_one(struct cache_tree *it,
 				    flags);
 		if (subcnt < 0)
 			return subcnt;
-		i += subcnt - 1;
+		i += subcnt;
 		sub->used = 1;
 	}
 
@@ -300,7 +303,8 @@ static int update_one(struct cache_tree *it,
 	 */
 	strbuf_init(&buffer, 8192);
 
-	for (i = 0; i < entries; i++) {
+	i = 0;
+	while (i < entries) {
 		struct cache_entry *ce = cache[i];
 		struct cache_tree_sub *sub;
 		const char *path, *slash;
@@ -320,7 +324,7 @@ static int update_one(struct cache_tree *it,
 			if (!sub)
 				die("cache-tree.c: '%.*s' in '%s' not found",
 				    entlen, path + baselen, path);
-			i += sub->cache_tree->entry_count - 1;
+			i += sub->cache_tree->entry_count;
 			sha1 = sub->cache_tree->sha1;
 			mode = S_IFDIR;
 		}
@@ -328,6 +332,7 @@ static int update_one(struct cache_tree *it,
 			sha1 = ce->sha1;
 			mode = ce->ce_mode;
 			entlen = pathlen - baselen;
+			i++;
 		}
 		if (mode != S_IFGITLINK && !missing_ok && !has_sha1_file(sha1)) {
 			strbuf_release(&buffer);
