@@ -9,6 +9,14 @@ Checklist (and a short version for the impatient):
 	- the first line of the commit message should be a short
 	  description (50 characters is the soft limit, see DISCUSSION
 	  in git-commit(1)), and should skip the full stop
+	- it is also conventional in most cases to prefix the
+	  first line with "area: " where the area is a filename
+	  or identifier for the general area of the code being
+	  modified, e.g.
+	  . archive: ustar header checksum is computed unsigned
+	  . git-cherry-pick.txt: clarify the use of revision range notation
+	  (if in doubt which identifier to use, run "git log --no-merges"
+	  on the files you are modifying to see the current conventions)
 	- the body should provide a meaningful commit message, which:
 	  . explains the problem the change tries to solve, iow, what
 	    is wrong with the current code without the change.
