@@ -112,6 +112,14 @@ For C programs:
 
  - We try to keep to at most 80 characters per line.
 
+ - We try to support a wide range of C compilers to compile git with,
+   including old ones. That means that you should not use C99
+   initializers, even if a lot of compilers grok it.
+
+ - Variables have to be declared at the beginning of the block.
+
+ - NULL pointers shall be written as NULL, not as 0.
+
  - When declaring pointers, the star sides with the variable
    name, i.e. "char *string", not "char* string" or
    "char * string".  This makes it easier to understand code
