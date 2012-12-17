@@ -28,6 +28,14 @@ branch.
 	working tree are kept, so that they can be committed to the
 	<branch>.
 +
+If <branch> is not found but there does exist a tracking branch in
+exactly one remote (call it <remote>) with a matching name, treat as
+equivalent to
++
+------------
+$ git checkout -b <branch> --track <remote>/<branch>
+------------
++
 You could omit <branch>, in which case the command degenerates to
 "check out the current branch", which is a glorified no-op with a
 rather expensive side-effects to show only the tracking information,
