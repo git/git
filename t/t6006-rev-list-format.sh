@@ -11,12 +11,12 @@ touch foo && git add foo && git commit -m "added foo" &&
 '
 
 # usage: test_format name format_string <expected_output
-test_format() {
+test_format () {
 	cat >expect.$1
 	test_expect_success "format $1" "
-git rev-list --pretty=format:'$2' master >output.$1 &&
-test_cmp expect.$1 output.$1
-"
+		git rev-list --pretty=format:'$2' master >output.$1 &&
+		test_cmp expect.$1 output.$1
+	"
 }
 
 test_format percent %%h <<'EOF'
