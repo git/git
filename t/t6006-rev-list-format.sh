@@ -3,6 +3,7 @@
 test_description='git rev-list --pretty=format test'
 
 . ./test-lib.sh
+. "$TEST_DIRECTORY"/lib-terminal.sh
 
 test_tick
 test_expect_success 'setup' '
@@ -17,6 +18,18 @@ test_format () {
 		git rev-list --pretty=format:'$2' master >output.$1 &&
 		test_cmp expect.$1 output.$1
 	"
+}
+
+# Feed to --format to provide predictable colored sequences.
+AUTO_COLOR='%C(auto,red)foo%C(auto,reset)'
+has_color () {
+	printf '\033[31mfoo\033[m\n' >expect &&
+	test_cmp expect "$1"
+}
+
+has_no_color () {
+	echo foo >expect &&
+	test_cmp expect "$1"
 }
 
 test_format percent %%h <<'EOF'
@@ -123,6 +136,48 @@ commit 131a310eb913d107dd3c09a65d1651175898735d
 commit 86c75cfd708a0e5868dc876ed5b8bb66c80b4873
 [1;31;43mfoo[m
 EOF
+
+test_expect_success '%C(auto) does not enable color by default' '
+	git log --format=$AUTO_COLOR -1 >actual &&
+	has_no_color actual
+'
+
+test_expect_success '%C(auto) enables colors for color.diff' '
+	git -c color.diff=always log --format=$AUTO_COLOR -1 >actual &&
+	has_color actual
+'
+
+test_expect_success '%C(auto) enables colors for color.ui' '
+	git -c color.ui=always log --format=$AUTO_COLOR -1 >actual &&
+	has_color actual
+'
+
+test_expect_success '%C(auto) respects --color' '
+	git log --format=$AUTO_COLOR -1 --color >actual &&
+	has_color actual
+'
+
+test_expect_success '%C(auto) respects --no-color' '
+	git -c color.ui=always log --format=$AUTO_COLOR -1 --no-color >actual &&
+	has_no_color actual
+'
+
+test_expect_success TTY '%C(auto) respects --color=auto (stdout is tty)' '
+	(
+		TERM=vt100 && export TERM &&
+		test_terminal \
+			git log --format=$AUTO_COLOR -1 --color=auto >actual &&
+		has_color actual
+	)
+'
+
+test_expect_success '%C(auto) respects --color=auto (stdout not tty)' '
+	(
+		TERM=vt100 && export TERM &&
+		git log --format=$AUTO_COLOR -1 --color=auto >actual &&
+		has_no_color actual
+	)
+'
 
 cat >commit-msg <<'EOF'
 Test printing of complex bodies

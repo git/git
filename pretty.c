@@ -960,12 +960,19 @@ static size_t format_commit_one(struct strbuf *sb, const char *placeholder,
 	switch (placeholder[0]) {
 	case 'C':
 		if (placeholder[1] == '(') {
-			const char *end = strchr(placeholder + 2, ')');
+			const char *begin = placeholder + 2;
+			const char *end = strchr(begin, ')');
 			char color[COLOR_MAXLEN];
+
 			if (!end)
 				return 0;
-			color_parse_mem(placeholder + 2,
-					end - (placeholder + 2),
+			if (!memcmp(begin, "auto,", 5)) {
+				if (!want_color(c->pretty_ctx->color))
+					return end - placeholder + 1;
+				begin += 5;
+			}
+			color_parse_mem(begin,
+					end - begin,
 					"--pretty format", color);
 			strbuf_addstr(sb, color);
 			return end - placeholder + 1;

@@ -89,6 +89,7 @@ struct pretty_print_context {
 	int show_notes;
 	struct reflog_walk_info *reflog_info;
 	const char *output_encoding;
+	int color;
 };
 
 struct userformat_want {
