@@ -1,21 +1,21 @@
 To: git@vger.kernel.org
 Bcc: lwn@lwn.net
-Subject: What's cooking in git.git (Dec 2012, #03; Wed, 12)
-X-master-at: 24a62db7bbcbd8083bd0070ecd434205489629ed
-X-next-at: 70b2edd6ac003ed3d25092c2bb3c31ce4a502ac4
+Subject: What's cooking in git.git (Dec 2012, #04; Sun, 16)
+X-master-at: 2e900297dbb9d5bd086ea56eed07027374759791
+X-next-at: c7347146c5a6525cce87e5be8258cb86f32485c4
 
-What's cooking in git.git (Dec 2012, #03; Wed, 12)
+What's cooking in git.git (Dec 2012, #04; Sun, 16)
 --------------------------------------------------
 
 Here are the topics that have been cooking.  Commits prefixed with
 '-' are only in 'pu' (proposed updates) while commits prefixed with
 '+' are in 'next'.
 
-A new maintenance release 1.8.0.2 was tagged with accumulated fixes
-we have already been using on the 'master' front for a while.  The
-tip of the 'master' is a bit beyond 1.8.1-rc1 and many topics are
-getting into good shape in 'next', hopefully ready to be merged soon
-after the 1.8.1 final.
+The tip of the 'master' branch is 1.8.1-rc2; hopefully we can go
+final around the end of next week.
+
+Many topics are getting into good shape in 'next', hopefully ready
+to be merged soon after the 1.8.1 final.
 
 You can find the changes described here in the integration branches of the
 repositories listed at
@@ -25,97 +25,189 @@ repositories listed at
 --------------------------------------------------
 [New Topics]
 
-* sp/shortlog-missing-lf (2012-12-11) 2 commits
-  (merged to 'next' on 2012-12-11 at 64b8429)
- + strbuf_add_wrapped*(): Remove unused return value
- + shortlog: fix wrapping lines of wraplen
+* ja/directory-attrs (2012-12-13) 2 commits
+ - [squash] simplify find-basename in attr.c
+ - Add directory pattern matching to attributes
 
- When a line to be wrapped has a solid run of non space characters
- whose length exactly is the wrap width, "git shortlog -w" failed to
- add a newline after such a line.
+ The attribute mechanism didn't allow limiting attributes to be
+ applied to only a single directory itself with "path/" like the
+ exclude mechanism does.
 
- Will cook in 'next'.
-
-
-* ap/log-mailmap (2012-12-11) 6 commits
- - [DO NOT MERGE] seems to break t4013 & t4014 among other things
- - log: Add --use-mailmap option
- - pretty: Use mailmap to display username and email
- - mailmap: Add mailmap structure to rev_info and pp
- - mailmap: Remove buffer length limit in map_user
- - Use split_ident_line to parse author and committer
-
- Clean up various codepaths around mailmap and teach the "log"
- machinery to use it.
+ Will merge to 'next' after squashing the microfix.
 
 
-* jc/fetch-ignore-symref (2012-12-11) 1 commit
- - fetch: ignore wildcarded refspecs that update local symbolic refs
+* jk/mailmap-cleanup (2012-12-12) 5 commits
+ - contrib: update stats/mailmap script
+ - .mailmap: normalize emails for Linus Torvalds
+ - .mailmap: normalize emails for Jeff King
+ - .mailmap: fix broken entry for Martin Langhoff
+ - .mailmap: match up some obvious names/emails
 
- Avoid false error from an attempt to update local symbolic ref via
- fetch.
-
-
-* md/gitweb-sort-by-age (2012-12-11) 1 commit
- - gitweb: Sort projects with undefined ages last
+ Update various entries in our .mailmap file.
 
  Will merge to 'next'.
 
 
-* ss/nedmalloc-compilation (2012-12-11) 1 commit
- - nedmalloc: Fix a compile warning (exposed as error) with GCC 4.7.2
+* jk/mailmap-from-blob (2012-12-13) 5 commits
+ - mailmap: default mailmap.blob in bare repositories
+ - mailmap: fix some documentation loose-ends for mailmap.blob
+ - mailmap: clean up read_mailmap error handling
+ - mailmap: support reading mailmap from blobs
+ - mailmap: refactor mailmap parsing for non-file sources
+
+ Allow us to read, and default to read, mailmap files from the tip
+ of the history in bare repositories.  This will help running tools
+ like shortlog in server settings.
 
  Will merge to 'next'.
 
 
-* wk/submodule-update-remote (2012-12-12) 3 commits
- - submodule add: If --branch is given, record it in .gitmodules
- - submodule update: add --remote for submodule's upstream changes
- - submodule: add get_submodule_config helper funtion
+* nd/index-format-doc (2012-12-13) 1 commit
+ - index-format.txt: clarify what is "invalid"
 
- Expecting a re-roll.
+ Will merge to 'next'.
+
+
+* as/doc-for-devs (2012-12-16) 2 commits
+ - Documentation: move support for old compilers to CodingGuidelines
+ - SubmittingPatches: add convention of prefixing commit messages
+
+ It might be a better idea to move the text the bottom one adds to
+ the extended description from the quick checklist part.
+
+
+* cc/no-git-gui-rebuild-depend (2012-12-16) 2 commits
+ - Makefile: detect when PYTHON_PATH changes
+ - Makefile: remove tracking of TCLTK_PATH
+
+ The bottom one associates the issue with git-gui, but what it
+ removes is a remnant of gitk support when it did not have a
+ separate Makefile; we may need to add the logic there.
+
+
+* dm/port (2012-12-15) 3 commits
+ - Generalize the inclusion of strings.h
+ - Detect when the passwd struct is missing pw_gecos
+ - Support builds when sys/param.h is missing
+
+ It could turn out that we may be able to get rid of sys/param.h
+ altogether, but one step at a time.  Inputs from people on minority
+ platforms are very much appreciated---does your platform build fine
+ when the inclusion of the file is removed from git-compat-util.h?
+
+ Will merge to 'next'.
+
+
+* jc/fetch-tags-doc (2012-12-13) 1 commit
+ - fetch --tags: clarify documentation
+
+ The explanation for "fetch --tags" was actually talking more about
+ "fetch --no-tags".  Clariify what "--tags" really means.
+
+ Will merge to 'next'.
+
+
+* jk/avoid-mailto-invalid-in-doc (2012-12-16) 1 commit
+ - Documentation: don't link to example mail addresses
+
+ Avoids invalid sample e-mail addresses from becoming mailto links
+ in the formatted output, which by itself is "Meh" for me (who
+ cares?) but it highlights some issues with ``pretty quotes''.
+
+ Will merge to 'next'.
+
+
+* jk/complete-commit-c (2012-12-15) 1 commit
+ - completion: complete refs for "git commit -c"
+
+ Complete "git commmit -c foo<TAB>" into a refname that begins with
+ "foo".
+
+ Will merge to 'next'.
+
+
+* jk/error-const-return (2012-12-15) 2 commits
+ - silence some -Wuninitialized false positives
+ - make error()'s constant return value more visible
+
+ Help compilers' flow analysis by making it more explicit that
+ error() always returns -1, to reduce false "variable used
+ uninitialized" warnings.
+
+ This is still an RFC.
+
+
+* mk/qnx (2012-12-15) 2 commits
+ - Port to QNX
+ - Make lock local to fetch_pack
+
+ Port to QNX; we may want to rebase this on top of dm/port topic as
+ it also wants to use the HAVE_STRINGS_H mechanism it introduces.
+
+
+* rj/maint-cygwin-say-color (2012-12-15) 1 commit
+ - tests: Allow customization of how say_color() prints
+
+ Even though I do not think of a cleaner way to do this, I am not
+ happy with the way how $GIT_TEST_PRINT and $GIT_TEST_PRINT_LN are
+ interpolated into the command line with token splitting at $IFS.
+
+
+* sl/readme-gplv2 (2012-12-15) 2 commits
+ - README: it does not matter who the current maintainer is
+ - README: Git is released under the GPLv2, not just "the GPL"
+
+ Clarify that the project as a whole is GPLv2 only, with some parts
+ borrowed under different licenses that are compatible with GPLv2.
+
+ Will merge to 'next'.
+
+
+* ta/api-index-doc (2012-12-16) 1 commit
+ - Remove misleading date from api-index-skel.txt
+
+ Will merge to 'next'.
 
 --------------------------------------------------
 [Graduated to "master"]
 
-* ef/mingw-rmdir (2012-12-10) 1 commit
- + mingw_rmdir: do not prompt for retry when non-empty
-
- MinGW has a workaround when rmdir unnecessarily fails to retry with
- a prompt, but the logic was kicking in when the rmdir failed with
- ENOTEMPTY, i.e. was expected to fail and there is no point retrying.
-
-
-* ef/mingw-tty-getpass (2012-12-04) 6 commits
-  (merged to 'next' on 2012-12-07 at 1737ff1)
- + mingw: get rid of getpass implementation
- + mingw: reuse tty-version of git_terminal_prompt
- + compat/terminal: separate input and output handles
- + compat/terminal: factor out echo-disabling
- + mingw: make fgetc raise SIGINT if apropriate
- + mingw: correct exit-code for SIGALRM's SIG_DFL
-
- Update getpass() emulation for MinGW.
-
-
-* jc/prompt-command-doc (2012-12-11) 1 commit
- - git-prompt.sh: update PROMPT_COMMAND documentation
-
- Recently graduated git-prompt topic to use PROMPT_COMMAND was
- confusingly documented.  With a quick review, it may be a good
- idea to fast-track this to the 'master branch.
+* mh/doc-remote-helpers (2012-12-07) 6 commits
+  (merged to 'next' on 2012-12-07 at 7ac8c25)
+ + git-remote-helpers.txt: clarify options & ref list attributes
+ + git-remote-helpers.txt: clarify command <-> capability correspondences
+ + git-remote-helpers.txt: rearrange description of capabilities
+ + git-remote-helpers.txt: minor grammar fix
+ + git-remote-helpers.txt: document missing capabilities
+ + git-remote-helpers.txt: document invocation before input format
 
 --------------------------------------------------
 [Stalled]
 
-* fc/remote-bzr (2012-11-28) 10 commits
+* jc/merge-blobs (2012-12-13) 5 commits
+ - [broken] wip to fix d/f conflicts
+ - merge-tree: add comments to clarify what these functions are doing
+ - merge-tree: lose unused "resolve_directories"
+ - merge-tree: lose unused "flags" from merge_list
+ - Which merge_file() function do you mean?
+
+ A beginning of a new merge strategy based on the disused merge-tree
+ proof-of-concept code.
+
+
+* jc/doc-maintainer (2012-11-27) 1 commit
+ - update "howto maintain git"
+
+ An early draft that is still incomplete.
+
+
+* fc/remote-bzr (2012-12-13) 10 commits
  - (fixup) test-bzr.sh: fix multi-line string assignment
  - remote-bzr: detect local repositories
  - remote-bzr: add support for older versions of bzr
  - remote-bzr: add support to push special modes
  - remote-bzr: add support for fecthing special modes
  - remote-bzr: add simple tests
- - remote-bzr: update working tree
+ - remote-bzr: update working tree upon pushing
  - remote-bzr: add support for remote repositories
  - remote-bzr: add support for pushing
  - Add new remote-bzr transport helper
@@ -201,21 +293,6 @@ repositories listed at
  + Teach git-completion about git p4
 
  Comment from Pete will need to be addressed in a follow-up patch.
-
-
-* as/test-tweaks (2012-09-20) 7 commits
- - tests: paint unexpectedly fixed known breakages in bold red
- - tests: test the test framework more thoroughly
- - [SQUASH] t/t0000-basic.sh: quoting of TEST_DIRECTORY is screwed up
- - tests: refactor mechanics of testing in a sub test-lib
- - tests: paint skipped tests in bold blue
- - tests: test number comes first in 'not ok $count - $message'
- - tests: paint known breakages in bold yellow
-
- Various minor tweaks to the test framework to paint its output
- lines in colors that match what they mean better.
-
- Has the "is this really blue?" issue Peff raised resolved???
 
 
 * jc/maint-name-rev (2012-09-17) 7 commits
@@ -311,21 +388,89 @@ repositories listed at
 --------------------------------------------------
 [Cooking]
 
+* as/test-tweaks (2012-12-16) 8 commits
+ - tests: paint unexpectedly fixed known breakages in bold red
+ - tests: test the test framework more thoroughly
+ - (squash) dq $name
+ - tests: refactor mechanics of testing in a sub test-lib
+ - tests: change info messages from yellow/brown to bold cyan
+ - tests: paint skipped tests in bold blue
+ - tests: paint known breakages in bold yellow
+ - tests: test number comes first in 'not ok $count - $message'
+
+ Various minor tweaks to the test framework to paint its output
+ lines in colors that match what they mean better.
+
+ Will merge to 'next' after squashing the microfix.
+
+
+* sp/shortlog-missing-lf (2012-12-11) 2 commits
+  (merged to 'next' on 2012-12-11 at 64b8429)
+ + strbuf_add_wrapped*(): Remove unused return value
+ + shortlog: fix wrapping lines of wraplen
+
+ When a line to be wrapped has a solid run of non space characters
+ whose length exactly is the wrap width, "git shortlog -w" failed to
+ add a newline after such a line.
+
+ Will cook in 'next'.
+
+
+* ap/log-mailmap (2012-12-15) 7 commits
+ - test: Add test for --use-mailmap option
+ - log: Add --use-mailmap option
+ - pretty: Use mailmap to display username and email
+ - mailmap: Add mailmap structure to rev_info and pp
+ - mailmap: Simplify map_user() interface
+ - mailmap: Remove buffer length limit in map_user
+ - Use split_ident_line to parse author and committer
+
+ Clean up various codepaths around mailmap and teach the "log"
+ machinery to use it.
+
+ Will merge to 'next' after reading it over once again.
+
+
+* jc/fetch-ignore-symref (2012-12-11) 1 commit
+ - fetch: ignore wildcarded refspecs that update local symbolic refs
+
+ Avoid false error from an attempt to update local symbolic ref via
+ fetch.
+
+ Will merge to 'next'.
+
+
+* md/gitweb-sort-by-age (2012-12-11) 1 commit
+  (merged to 'next' on 2012-12-13 at 9f39410)
+ + gitweb: Sort projects with undefined ages last
+
+ Gitweb showed repositories without any commit at the top in its
+ age-sorted view, in which the users are interested in looking at
+ active projects; sorting them at the bottom makes it more useful.
+
+ Will cook in 'next'.
+
+
+* ss/nedmalloc-compilation (2012-12-11) 1 commit
+  (merged to 'next' on 2012-12-13 at c1f0d7f)
+ + nedmalloc: Fix a compile warning (exposed as error) with GCC 4.7.2
+
+ Will cook in 'next'.
+
+
+* wk/submodule-update-remote (2012-12-12) 3 commits
+ - submodule add: If --branch is given, record it in .gitmodules
+ - submodule update: add --remote for submodule's upstream changes
+ - submodule: add get_submodule_config helper funtion
+
+ Expecting a re-roll.
+
+
 * jc/maint-fbsd-sh-ifs-workaround (2012-12-10) 1 commit
   (merged to 'next' on 2012-12-11 at 6659fdc)
  + sh-setup: work around "unset IFS" bug in some shells
 
  Will cook in 'next'.
-
-
-* jc/merge-blobs (2012-12-09) 4 commits
- - merge-tree: add comments to clarify what these functions are doing
- - merge-tree: lose unused "resolve_directories"
- - merge-tree: lose unused "flags" from merge_list
- - Which merge_file() function do you mean?
-
- A beginning of a new merge strategy based on the disused merge-tree
- proof-of-concept code.
 
 
 * jc/same-encoding (2012-12-10) 1 commit
@@ -334,12 +479,19 @@ repositories listed at
  Finishing touches to the series to unify "Do we need to reencode
  between these two encodings?" logic.
 
+ Will merge to 'next'.
 
-* nd/invalidate-i-t-a-cache-tree (2012-12-09) 1 commit
+
+* nd/invalidate-i-t-a-cache-tree (2012-12-15) 4 commits
  - cache-tree: invalidate i-t-a paths after generating trees
+ - cache-tree: fix writing cache-tree when CE_REMOVE is present
+ - cache-tree: replace "for" loops in update_one with "while" loops
+ - cache-tree: remove dead i-t-a code in verify_cache()
 
  Writing out a tree object when you still have intent-to-add entries
  in the index left an incorrect cache-tree data there.
+
+ Will merge to 'next'.
 
 
 * jl/submodule-deinit (2012-12-04) 1 commit
@@ -412,30 +564,12 @@ repositories listed at
  Will cook in 'next'.
 
 
-* jc/doc-maintainer (2012-11-27) 1 commit
- - update "howto maintain git"
-
- An early draft that is still incomplete.
-
-
 * jk/fsck-dot-in-trees (2012-11-28) 2 commits
   (merged to 'next' on 2012-11-28 at 519dabc)
  + fsck: warn about ".git" in trees
  + fsck: warn about '.' and '..' in trees
 
  Will cook in 'next'.
-
-
-* mh/doc-remote-helpers (2012-12-07) 6 commits
-  (merged to 'next' on 2012-12-07 at 7ac8c25)
- + git-remote-helpers.txt: clarify options & ref list attributes
- + git-remote-helpers.txt: clarify command <-> capability correspondences
- + git-remote-helpers.txt: rearrange description of capabilities
- + git-remote-helpers.txt: minor grammar fix
- + git-remote-helpers.txt: document missing capabilities
- + git-remote-helpers.txt: document invocation before input format
-
- Will merge to 'master'.
 
 
 * mh/pthreads-autoconf (2012-11-27) 1 commit
@@ -522,7 +656,9 @@ repositories listed at
  Will cook in 'next'.
 
 
-* nd/wildmatch (2012-11-20) 14 commits
+* nd/wildmatch (2012-12-15) 15 commits
+  (merged to 'next' on 2012-12-15 at c734714)
+ + t3070: Disable some failing fnmatch tests
   (merged to 'next' on 2012-11-21 at 151288f)
  + test-wildmatch: avoid Windows path mangling
   (merged to 'next' on 2012-10-25 at 510e8df)
