@@ -21,18 +21,26 @@ or the specified tree.  If no paths are given, 'git checkout' will
 also update `HEAD` to set the specified branch as the current
 branch.
 
-'git checkout' [<branch>]::
-'git checkout' -b|-B <new_branch> [<start point>]::
-'git checkout' [--detach] [<commit>]::
-
-	This form switches branches by updating the index, working
-	tree, and HEAD to reflect the specified branch or commit.
+'git checkout' <branch>::
+	To prepare for working on <branch>, switch to it by updating
+	the index and the files in the working tree, and by pointing
+	HEAD at the branch. Local modifications to the files in the
+	working tree are kept, so that they can be committed to the
+	<branch>.
 +
-If `-b` is given, a new branch is created as if linkgit:git-branch[1]
-were called and then checked out; in this case you can
-use the `--track` or `--no-track` options, which will be passed to
-'git branch'.  As a convenience, `--track` without `-b` implies branch
-creation; see the description of `--track` below.
+You could omit <branch>, in which case the command degenerates to
+"check out the current branch", which is a glorified no-op with a
+rather expensive side-effects to show only the tracking information,
+if exists, for the current branch.
+
+'git checkout' -b|-B <new_branch> [<start point>]::
+
+	Specifying `-b` causes a new branch to be created as if
+	linkgit:git-branch[1] were called and then checked out.  In
+	this case you can use the `--track` or `--no-track` options,
+	which will be passed to 'git branch'.  As a convenience,
+	`--track` without `-b` implies branch creation; see the
+	description of `--track` below.
 +
 If `-B` is given, <new_branch> is created if it doesn't exist; otherwise, it
 is reset. This is the transactional equivalent of
@@ -44,6 +52,21 @@ $ git checkout <branch>
 +
 that is to say, the branch is not reset/created unless "git checkout" is
 successful.
+
+'git checkout' --detach [<branch>]::
+'git checkout' <commit>::
+
+	Prepare to work on top of <commit>, by detaching HEAD at it
+	(see "DETACHED HEAD" section), and updating the index and the
+	files in the working tree.  Local modifications to the files
+	in the working tree are kept, so that the resulting working
+	tree will be the state recorded in the commit plus the local
+	modifications.
++
+Passing `--detach` forces this behavior in the case of a <branch> (without
+the option, giving a branch name to the command would check out the branch,
+instead of detaching HEAD at it), or the current commit,
+if no <branch> is specified.
 
 'git checkout' [-p|--patch] [<tree-ish>] [--] <pathspec>...::
 
