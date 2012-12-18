@@ -875,8 +875,6 @@ static int fetch_pack_config(const char *var, const char *value, void *cb)
 	return git_default_config(var, value, cb);
 }
 
-static struct lock_file lock;
-
 static void fetch_pack_setup(void)
 {
 	static int did_setup;
@@ -1069,6 +1067,7 @@ struct ref *fetch_pack(struct fetch_pack_args *my_args,
 	ref_cpy = do_fetch_pack(fd, ref, sought, pack_lockfile);
 
 	if (args.depth > 0) {
+		static struct lock_file lock;
 		struct cache_time mtime;
 		struct strbuf sb = STRBUF_INIT;
 		char *shallow = git_path("shallow");
