@@ -2171,7 +2171,7 @@ endef
 GIT-SCRIPT-DEFINES: FORCE
 	@FLAGS='$(SCRIPT_DEFINES)'; \
 	    if test x"$$FLAGS" != x"`cat $@ 2>/dev/null`" ; then \
-		echo 1>&2 "    * new script parameters"; \
+		echo >&2 "    * new script parameters"; \
 		echo "$$FLAGS" >$@; \
             fi
 
@@ -2548,7 +2548,7 @@ TRACK_PREFIX = $(bindir_SQ):$(gitexecdir_SQ):$(template_dir_SQ):$(prefix_SQ):\
 GIT-PREFIX: FORCE
 	@FLAGS='$(TRACK_PREFIX)'; \
 	if test x"$$FLAGS" != x"`cat GIT-PREFIX 2>/dev/null`" ; then \
-		echo 1>&2 "    * new prefix flags"; \
+		echo >&2 "    * new prefix flags"; \
 		echo "$$FLAGS" >GIT-PREFIX; \
 	fi
 
@@ -2557,7 +2557,7 @@ TRACK_CFLAGS = $(CC):$(subst ','\'',$(ALL_CFLAGS)):$(USE_GETTEXT_SCHEME)
 GIT-CFLAGS: FORCE
 	@FLAGS='$(TRACK_CFLAGS)'; \
 	    if test x"$$FLAGS" != x"`cat GIT-CFLAGS 2>/dev/null`" ; then \
-		echo 1>&2 "    * new build flags"; \
+		echo >&2 "    * new build flags"; \
 		echo "$$FLAGS" >GIT-CFLAGS; \
             fi
 
@@ -2566,7 +2566,7 @@ TRACK_LDFLAGS = $(subst ','\'',$(ALL_LDFLAGS))
 GIT-LDFLAGS: FORCE
 	@FLAGS='$(TRACK_LDFLAGS)'; \
 	    if test x"$$FLAGS" != x"`cat GIT-LDFLAGS 2>/dev/null`" ; then \
-		echo 1>&2 "    * new link flags"; \
+		echo >&2 "    * new link flags"; \
 		echo "$$FLAGS" >GIT-LDFLAGS; \
             fi
 
@@ -2615,7 +2615,7 @@ TRACK_PYTHON = $(subst ','\'',-DPYTHON_PATH='$(PYTHON_PATH_SQ)')
 GIT-PYTHON-VARS: FORCE
 	@VARS='$(TRACK_PYTHON)'; \
 	    if test x"$$VARS" != x"`cat $@ 2>/dev/null`" ; then \
-		echo 1>&2 "    * new Python interpreter location"; \
+		echo >&2 "    * new Python interpreter location"; \
 		echo "$$VARS" >$@; \
             fi
 endif
