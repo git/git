@@ -12,6 +12,7 @@ SYNOPSIS
 'git diff' [options] [<commit>] [--] [<path>...]
 'git diff' [options] --cached [<commit>] [--] [<path>...]
 'git diff' [options] <commit> <commit> [--] [<path>...]
+'git diff' [options] <blob> <blob>
 'git diff' [options] [--no-index] [--] <path> <path>
 
 DESCRIPTION
@@ -55,6 +56,11 @@ directories. This behavior can be forced by --no-index.
 	This is to view the changes between two arbitrary
 	<commit>.
 
+'git diff' [options] <blob> <blob>::
+
+	This form is to view the differences between the raw
+	contents of two blob objects.
+
 'git diff' [--options] <commit>..<commit> [--] [<path>...]::
 
 	This is synonymous to the previous form.  If <commit> on
@@ -72,8 +78,7 @@ directories. This behavior can be forced by --no-index.
 Just in case if you are doing something exotic, it should be
 noted that all of the <commit> in the above description, except
 in the last two forms that use ".." notations, can be any
-<tree>.  The third form ('git diff <commit> <commit>') can also
-be used to compare two <blob> objects.
+<tree>.
 
 For a more complete list of ways to spell <commit>, see
 "SPECIFYING REVISIONS" section in linkgit:gitrevisions[7].
