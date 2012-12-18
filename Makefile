@@ -167,7 +167,9 @@ all::
 # Define NO_POLL if you do not have or don't want to use poll().
 # This also implies NO_SYS_POLL_H.
 #
-# Define NO_SYS_PARAM_H if you don't have sys/param.h.
+# Define NEEDS_SYS_PARAM_H if you need to include sys/param.h to compile,
+# *PLEASE* REPORT to git@vger.kernel.org if your platform needs this;
+# we want to know more about the issue.
 #
 # Define NO_PTHREADS if you do not have or do not want to use Pthreads.
 #
@@ -1747,8 +1749,8 @@ endif
 ifdef NO_SYS_POLL_H
 	BASIC_CFLAGS += -DNO_SYS_POLL_H
 endif
-ifdef NO_SYS_PARAM_H
-	BASIC_CFLAGS += -DNO_SYS_PARAM_H
+ifdef NEEDS_SYS_PARAM_H
+	BASIC_CFLAGS += -DNEEDS_SYS_PARAM_H
 endif
 ifdef NO_INTTYPES_H
 	BASIC_CFLAGS += -DNO_INTTYPES_H

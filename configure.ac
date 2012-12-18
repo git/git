@@ -699,12 +699,6 @@ AC_CHECK_HEADER([sys/poll.h],
 [NO_SYS_POLL_H=UnfortunatelyYes])
 GIT_CONF_SUBST([NO_SYS_POLL_H])
 #
-# Define NO_SYS_PARAM_H if you don't have sys/param.h
-AC_CHECK_HEADER([sys/param.h],
-[NO_SYS_PARAM_H=],
-[NO_SYS_PARAM_H=UnfortunatelyYes])
-GIT_CONF_SUBST([NO_SYS_PARAM_H])
-#
 # Define NO_INTTYPES_H if you don't have inttypes.h
 AC_CHECK_HEADER([inttypes.h],
 [NO_INTTYPES_H=],

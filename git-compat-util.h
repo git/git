@@ -104,7 +104,7 @@
 #endif
 #include <errno.h>
 #include <limits.h>
-#ifndef NO_SYS_PARAM_H
+#ifdef NEEDS_SYS_PARAM_H
 #include <sys/param.h>
 #endif
 #include <sys/types.h>
