@@ -1,18 +1,18 @@
 To: git@vger.kernel.org
 Bcc: lwn@lwn.net
-Subject: What's cooking in git.git (Dec 2012, #04; Sun, 16)
-X-master-at: 2e900297dbb9d5bd086ea56eed07027374759791
-X-next-at: c7347146c5a6525cce87e5be8258cb86f32485c4
+Subject: What's cooking in git.git (Dec 2012, #05; Tue, 18)
+X-master-at: b7cd0c9b692af7728a1d876a3e4fe760956e00c3
+X-next-at: c92fcd913d6db915141f6e28e838c7976a746786
 
-What's cooking in git.git (Dec 2012, #04; Sun, 16)
+What's cooking in git.git (Dec 2012, #05; Tue, 18)
 --------------------------------------------------
 
 Here are the topics that have been cooking.  Commits prefixed with
 '-' are only in 'pu' (proposed updates) while commits prefixed with
 '+' are in 'next'.
 
-The tip of the 'master' branch is 1.8.1-rc2; hopefully we can go
-final around the end of next week.
+The tip of the 'master' branch is a bit past 1.8.1-rc2; hopefully we
+can go final around the end of the week.
 
 Many topics are getting into good shape in 'next', hopefully ready
 to be merged soon after the 1.8.1 final.
@@ -25,166 +25,78 @@ repositories listed at
 --------------------------------------------------
 [New Topics]
 
-* ja/directory-attrs (2012-12-13) 2 commits
- - [squash] simplify find-basename in attr.c
- - Add directory pattern matching to attributes
-
- The attribute mechanism didn't allow limiting attributes to be
- applied to only a single directory itself with "path/" like the
- exclude mechanism does.
-
- Will merge to 'next' after squashing the microfix.
-
-
-* jk/mailmap-cleanup (2012-12-12) 5 commits
- - contrib: update stats/mailmap script
- - .mailmap: normalize emails for Linus Torvalds
- - .mailmap: normalize emails for Jeff King
- - .mailmap: fix broken entry for Martin Langhoff
- - .mailmap: match up some obvious names/emails
-
- Update various entries in our .mailmap file.
-
- Will merge to 'next'.
-
-
-* jk/mailmap-from-blob (2012-12-13) 5 commits
- - mailmap: default mailmap.blob in bare repositories
- - mailmap: fix some documentation loose-ends for mailmap.blob
- - mailmap: clean up read_mailmap error handling
- - mailmap: support reading mailmap from blobs
- - mailmap: refactor mailmap parsing for non-file sources
-
- Allow us to read, and default to read, mailmap files from the tip
- of the history in bare repositories.  This will help running tools
- like shortlog in server settings.
-
- Will merge to 'next'.
-
-
-* nd/index-format-doc (2012-12-13) 1 commit
- - index-format.txt: clarify what is "invalid"
-
- Will merge to 'next'.
-
-
-* as/doc-for-devs (2012-12-16) 2 commits
- - Documentation: move support for old compilers to CodingGuidelines
- - SubmittingPatches: add convention of prefixing commit messages
-
- It might be a better idea to move the text the bottom one adds to
- the extended description from the quick checklist part.
-
-
-* cc/no-git-gui-rebuild-depend (2012-12-16) 2 commits
+* cc/no-gitk-build-dependency (2012-12-18) 3 commits
+ - Makefile: replace "echo 1>..." with "echo >..."
  - Makefile: detect when PYTHON_PATH changes
  - Makefile: remove tracking of TCLTK_PATH
 
- The bottom one associates the issue with git-gui, but what it
- removes is a remnant of gitk support when it did not have a
- separate Makefile; we may need to add the logic there.
+ Remove leftover bits from an earlier change to move gitk in its own
+ subdirectory.  Reimplementing the dependency tracking rules needs
+ to be done in gitk history separately.
 
 
-* dm/port (2012-12-15) 3 commits
- - Generalize the inclusion of strings.h
- - Detect when the passwd struct is missing pw_gecos
- - Support builds when sys/param.h is missing
+* cr/doc-checkout-branch (2012-12-18) 2 commits
+ - Documentation/git-checkout.txt: document 70c9ac2 behavior
+ - Documentation/git-checkout.txt: clarify usage
 
- It could turn out that we may be able to get rid of sys/param.h
- altogether, but one step at a time.  Inputs from people on minority
- platforms are very much appreciated---does your platform build fine
- when the inclusion of the file is removed from git-compat-util.h?
+ Document the magic "git checkout <no-such-branch>" hack to create
+ local branch out of a remote tracking branch that hasn't been
+ documented so far.
 
  Will merge to 'next'.
 
 
-* jc/fetch-tags-doc (2012-12-13) 1 commit
- - fetch --tags: clarify documentation
+* jc/format-color-auto (2012-12-17) 2 commits
+ - log --format: teach %C(auto,black) to respect color config
+ - t6006: clean up whitespace
 
- The explanation for "fetch --tags" was actually talking more about
- "fetch --no-tags".  Clariify what "--tags" really means.
-
- Will merge to 'next'.
-
-
-* jk/avoid-mailto-invalid-in-doc (2012-12-16) 1 commit
- - Documentation: don't link to example mail addresses
-
- Avoids invalid sample e-mail addresses from becoming mailto links
- in the formatted output, which by itself is "Meh" for me (who
- cares?) but it highlights some issues with ``pretty quotes''.
+ Introduce "log --format=%C(auto,blue)Foo%C(auto,reset)" that does
+ not color its output when writing to a non-terminal.
 
  Will merge to 'next'.
 
 
-* jk/complete-commit-c (2012-12-15) 1 commit
- - completion: complete refs for "git commit -c"
+* ss/svn-prompt (2012-12-17) 3 commits
+ - git-svn, perl/Git.pm: extend and use Git->prompt method for querying users
+ - perl/Git.pm: Honor SSH_ASKPASS as fallback if GIT_ASKPASS is not set
+ - git-svn, perl/Git.pm: add central method for prompting passwords
 
- Complete "git commmit -c foo<TAB>" into a refname that begins with
- "foo".
-
- Will merge to 'next'.
-
-
-* jk/error-const-return (2012-12-15) 2 commits
- - silence some -Wuninitialized false positives
- - make error()'s constant return value more visible
-
- Help compilers' flow analysis by making it more explicit that
- error() always returns -1, to reduce false "variable used
- uninitialized" warnings.
-
- This is still an RFC.
+ Waiting for an Ack from the area export.
 
 
-* mk/qnx (2012-12-15) 2 commits
- - Port to QNX
- - Make lock local to fetch_pack
+* zk/clean-report-failure (2012-12-17) 1 commit
+ - git-clean: Display more accurate delete messages
 
- Port to QNX; we may want to rebase this on top of dm/port topic as
- it also wants to use the HAVE_STRINGS_H mechanism it introduces.
+ "git clean" states what it is going to remove and then goes on to
+ remove it, but sometimes it only discovers things that cannot be
+ removed after recursing into a directory, which makes the output
+ confusing and even wrong.
 
-
-* rj/maint-cygwin-say-color (2012-12-15) 1 commit
- - tests: Allow customization of how say_color() prints
-
- Even though I do not think of a cleaner way to do this, I am not
- happy with the way how $GIT_TEST_PRINT and $GIT_TEST_PRINT_LN are
- interpolated into the command line with token splitting at $IFS.
+ Waiting for responses to review comments.
 
 
-* sl/readme-gplv2 (2012-12-15) 2 commits
- - README: it does not matter who the current maintainer is
- - README: Git is released under the GPLv2, not just "the GPL"
+* jc/doc-diff-blobs (2012-12-18) 1 commit
+ - Documentation: Describe "git diff <blob> <blob>" separately
 
- Clarify that the project as a whole is GPLv2 only, with some parts
- borrowed under different licenses that are compatible with GPLv2.
+ "git diff <blob> <blob>" was not documented and was only hinted as
+ an extension to "git diff <commit> <commit> -- <pathspec>", but
+ comparison between two blobs are more special than that.  It does
+ not take any pathspec to begin with.
 
- Will merge to 'next'.
 
+* mp/complete-paths (2012-12-18) 1 commit
+ - git-completion.bash: add support for path completion
 
-* ta/api-index-doc (2012-12-16) 1 commit
- - Remove misleading date from api-index-skel.txt
-
- Will merge to 'next'.
-
---------------------------------------------------
-[Graduated to "master"]
-
-* mh/doc-remote-helpers (2012-12-07) 6 commits
-  (merged to 'next' on 2012-12-07 at 7ac8c25)
- + git-remote-helpers.txt: clarify options & ref list attributes
- + git-remote-helpers.txt: clarify command <-> capability correspondences
- + git-remote-helpers.txt: rearrange description of capabilities
- + git-remote-helpers.txt: minor grammar fix
- + git-remote-helpers.txt: document missing capabilities
- + git-remote-helpers.txt: document invocation before input format
+ The completion script used to let the default completer to suggest
+ pathnames, which gave too many irrelevant choices (e.g. "git add"
+ would not want to add an unmodified path).  Teach it to use a more
+ git-aware logic to enumerate only relevant ones.
 
 --------------------------------------------------
 [Stalled]
 
 * jc/merge-blobs (2012-12-13) 5 commits
- - [broken] wip to fix d/f conflicts
+ . [broken] wip to fix d/f conflicts
  - merge-tree: add comments to clarify what these functions are doing
  - merge-tree: lose unused "resolve_directories"
  - merge-tree: lose unused "flags" from merge_list
@@ -388,10 +300,138 @@ repositories listed at
 --------------------------------------------------
 [Cooking]
 
-* as/test-tweaks (2012-12-16) 8 commits
+* ja/directory-attrs (2012-12-17) 1 commit
+  (merged to 'next' on 2012-12-17 at ced8e73)
+ + Add directory pattern matching to attributes
+
+ The attribute mechanism didn't allow limiting attributes to be
+ applied to only a single directory itself with "path/" like the
+ exclude mechanism does.
+
+ Will cook in 'next'.
+
+
+* jk/mailmap-cleanup (2012-12-12) 5 commits
+  (merged to 'next' on 2012-12-17 at 07c1a11)
+ + contrib: update stats/mailmap script
+ + .mailmap: normalize emails for Linus Torvalds
+ + .mailmap: normalize emails for Jeff King
+ + .mailmap: fix broken entry for Martin Langhoff
+ + .mailmap: match up some obvious names/emails
+
+ Update various entries in our .mailmap file.
+
+
+* jk/mailmap-from-blob (2012-12-13) 5 commits
+  (merged to 'next' on 2012-12-17 at 14b7cdc)
+ + mailmap: default mailmap.blob in bare repositories
+ + mailmap: fix some documentation loose-ends for mailmap.blob
+ + mailmap: clean up read_mailmap error handling
+ + mailmap: support reading mailmap from blobs
+ + mailmap: refactor mailmap parsing for non-file sources
+
+ Allow us to read, and default to read, mailmap files from the tip
+ of the history in bare repositories.  This will help running tools
+ like shortlog in server settings.
+
+
+* nd/index-format-doc (2012-12-13) 1 commit
+  (merged to 'next' on 2012-12-17 at 7984924)
+ + index-format.txt: clarify what is "invalid"
+
+
+* as/doc-for-devs (2012-12-16) 2 commits
+ - Documentation: move support for old compilers to CodingGuidelines
+ - SubmittingPatches: add convention of prefixing commit messages
+
+ It might be a better idea to move the text the bottom one adds to
+ the extended description from the quick checklist part.
+
+ Will merge to 'next'.
+
+
+* dm/port (2012-12-18) 4 commits
+ - git-compat-util.h: do not #include <sys/param.h> by default
+ - Generalize the inclusion of strings.h
+ - Detect when the passwd struct is missing pw_gecos
+ - Support builds when sys/param.h is missing
+
+ Will merge to 'next'.
+
+
+* jc/fetch-tags-doc (2012-12-13) 1 commit
+  (merged to 'next' on 2012-12-17 at 857413a)
+ + fetch --tags: clarify documentation
+
+ The explanation for "fetch --tags" was actually talking more about
+ "fetch --no-tags".  Clariify what "--tags" really means.
+
+
+* jk/avoid-mailto-invalid-in-doc (2012-12-16) 1 commit
+ - Documentation: don't link to example mail addresses
+
+ Avoids invalid sample e-mail addresses from becoming mailto links
+ in the formatted output, which by itself is "Meh" for me (who
+ cares?) but it highlights some issues with ``pretty quotes''.
+
+ Will merge to 'next'.
+
+
+* jk/complete-commit-c (2012-12-15) 1 commit
+ - completion: complete refs for "git commit -c"
+
+ Complete "git commmit -c foo<TAB>" into a refname that begins with
+ "foo".
+
+ Will merge to 'next'.
+
+
+* jk/error-const-return (2012-12-15) 2 commits
+ - silence some -Wuninitialized false positives
+ - make error()'s constant return value more visible
+
+ Help compilers' flow analysis by making it more explicit that
+ error() always returns -1, to reduce false "variable used
+ uninitialized" warnings.
+
+ This is still an RFC.
+
+
+* mk/qnx (2012-12-15) 2 commits
+ - Port to QNX
+ - Make lock local to fetch_pack
+
+ Port to QNX; we may want to rebase this on top of dm/port topic as
+ it also wants to use the HAVE_STRINGS_H mechanism it introduces.
+
+
+* rj/maint-cygwin-say-color (2012-12-15) 1 commit
+ - tests: Allow customization of how say_color() prints
+
+ Even though I do not think of a cleaner way to do this, I am not
+ happy with the way how $GIT_TEST_PRINT and $GIT_TEST_PRINT_LN are
+ interpolated into the command line with token splitting at $IFS.
+
+
+* sl/readme-gplv2 (2012-12-15) 2 commits
+ - README: it does not matter who the current maintainer is
+ - README: Git is released under the GPLv2, not just "the GPL"
+
+ Clarify that the project as a whole is GPLv2 only, with some parts
+ borrowed under different licenses that are compatible with GPLv2.
+
+ Will merge to 'next'.
+
+
+* ta/api-index-doc (2012-12-16) 1 commit
+ - Remove misleading date from api-index-skel.txt
+
+ Will merge to 'next'.
+
+
+* as/test-tweaks (2012-12-17) 7 commits
  - tests: paint unexpectedly fixed known breakages in bold red
  - tests: test the test framework more thoroughly
- - (squash) dq $name
  - tests: refactor mechanics of testing in a sub test-lib
  - tests: change info messages from yellow/brown to bold cyan
  - tests: paint skipped tests in bold blue
@@ -401,7 +441,7 @@ repositories listed at
  Various minor tweaks to the test framework to paint its output
  lines in colors that match what they mean better.
 
- Will merge to 'next' after squashing the microfix.
+ Will merge to 'next'.
 
 
 * sp/shortlog-missing-lf (2012-12-11) 2 commits
@@ -432,12 +472,13 @@ repositories listed at
 
 
 * jc/fetch-ignore-symref (2012-12-11) 1 commit
- - fetch: ignore wildcarded refspecs that update local symbolic refs
+  (merged to 'next' on 2012-12-17 at 370e2c8)
+ + fetch: ignore wildcarded refspecs that update local symbolic refs
 
  Avoid false error from an attempt to update local symbolic ref via
  fetch.
 
- Will merge to 'next'.
+ Will cook in 'next'.
 
 
 * md/gitweb-sort-by-age (2012-12-11) 1 commit
@@ -474,12 +515,11 @@ repositories listed at
 
 
 * jc/same-encoding (2012-12-10) 1 commit
- - format_commit_message(): simplify calls to logmsg_reencode()
+  (merged to 'next' on 2012-12-17 at 86b41c7)
+ + format_commit_message(): simplify calls to logmsg_reencode()
 
  Finishing touches to the series to unify "Do we need to reencode
  between these two encodings?" logic.
-
- Will merge to 'next'.
 
 
 * nd/invalidate-i-t-a-cache-tree (2012-12-15) 4 commits
