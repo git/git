@@ -515,8 +515,8 @@ sub html_path { command_oneline('--html-path') }
 
 Query user C<PROMPT> and return answer from user.
 
-Honours GIT_ASKPASS environment variable for querying
-the user. If no GIT_ASKPASS variable is set or an error occoured,
+Honours GIT_ASKPASS and SSH_ASKPASS environment variables for querying
+the user. If no *_ASKPASS variable is set or an error occoured,
 the terminal is tried as a fallback.
 
 =cut
@@ -526,6 +526,9 @@ sub prompt {
 	my $ret;
 	if (exists $ENV{'GIT_ASKPASS'}) {
 		$ret = _prompt($ENV{'GIT_ASKPASS'}, $prompt);
+	}
+	if (!defined $ret && exists $ENV{'SSH_ASKPASS'}) {
+		$ret = _prompt($ENV{'SSH_ASKPASS'}, $prompt);
 	}
 	if (!defined $ret) {
 		print STDERR $prompt;
