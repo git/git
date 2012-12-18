@@ -62,16 +62,16 @@ sub ssl_server_trust {
 	                               issuer_dname fingerprint);
 	my $choice;
 prompt:
-	print STDERR $may_save ?
+	my $options = $may_save ?
 	      "(R)eject, accept (t)emporarily or accept (p)ermanently? " :
 	      "(R)eject or accept (t)emporarily? ";
 	STDERR->flush;
-	$choice = lc(substr(<STDIN> || 'R', 0, 1));
-	if ($choice =~ /^t$/i) {
+	$choice = lc(substr(Git::prompt("Certificate problem.\n" . $options) || 'R', 0, 1));
+	if ($choice eq 't') {
 		$cred->may_save(undef);
-	} elsif ($choice =~ /^r$/i) {
+	} elsif ($choice eq 'r') {
 		return -1;
-	} elsif ($may_save && $choice =~ /^p$/i) {
+	} elsif ($may_save && $choice eq 'p') {
 		$cred->may_save($may_save);
 	} else {
 		goto prompt;
@@ -109,9 +109,7 @@ sub username {
 	if (defined $_username) {
 		$username = $_username;
 	} else {
-		print STDERR "Username: ";
-		STDERR->flush;
-		chomp($username = <STDIN>);
+		$username = Git::prompt("Username: ");
 	}
 	$cred->username($username);
 	$cred->may_save($may_save);
@@ -120,7 +118,7 @@ sub username {
 
 sub _read_password {
 	my ($prompt, $realm) = @_;
-	my $password = Git::prompt($prompt);
+	my $password = Git::prompt($prompt, 1);
 	$password;
 }
 

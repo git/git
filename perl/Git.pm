@@ -511,18 +511,19 @@ C<git --html-path>). Useful mostly only internally.
 
 sub html_path { command_oneline('--html-path') }
 
-=item prompt ( PROMPT )
+=item prompt ( PROMPT , ISPASSWORD  )
 
 Query user C<PROMPT> and return answer from user.
 
 Honours GIT_ASKPASS and SSH_ASKPASS environment variables for querying
 the user. If no *_ASKPASS variable is set or an error occoured,
 the terminal is tried as a fallback.
+If C<ISPASSWORD> is set and true, the terminal disables echo.
 
 =cut
 
 sub prompt {
-	my ($prompt) = @_;
+	my ($prompt, $isPassword) = @_;
 	my $ret;
 	if (exists $ENV{'GIT_ASKPASS'}) {
 		$ret = _prompt($ENV{'GIT_ASKPASS'}, $prompt);
@@ -533,16 +534,20 @@ sub prompt {
 	if (!defined $ret) {
 		print STDERR $prompt;
 		STDERR->flush;
-		require Term::ReadKey;
-		Term::ReadKey::ReadMode('noecho');
-		$ret = '';
-		while (defined(my $key = Term::ReadKey::ReadKey(0))) {
-			last if $key =~ /[\012\015]/; # \n\r
-			$ret .= $key;
+		if (defined $isPassword && $isPassword) {
+			require Term::ReadKey;
+			Term::ReadKey::ReadMode('noecho');
+			$ret = '';
+			while (defined(my $key = Term::ReadKey::ReadKey(0))) {
+				last if $key =~ /[\012\015]/; # \n\r
+				$ret .= $key;
+			}
+			Term::ReadKey::ReadMode('restore');
+			print STDERR "\n";
+			STDERR->flush;
+		} else {
+			chomp($ret = <STDIN>);
 		}
-		Term::ReadKey::ReadMode('restore');
-		print STDERR "\n";
-		STDERR->flush;
 	}
 	return $ret;
 }
@@ -550,6 +555,7 @@ sub prompt {
 sub _prompt {
 	my ($askpass, $prompt) = @_;
 	return unless length $askpass;
+	$prompt =~ s/\n/ /g;
 	my $ret;
 	open my $fh, "-|", $askpass, $prompt or return;
 	$ret = <$fh>;
