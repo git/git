@@ -58,7 +58,7 @@ require Exporter;
                 command_output_pipe command_input_pipe command_close_pipe
                 command_bidi_pipe command_close_bidi_pipe
                 version exec_path html_path hash_object git_cmd_try
-                remote_refs
+                remote_refs prompt
                 temp_acquire temp_release temp_reset temp_path);
 
 
@@ -511,6 +511,49 @@ C<git --html-path>). Useful mostly only internally.
 
 sub html_path { command_oneline('--html-path') }
 
+=item prompt ( PROMPT )
+
+Query user C<PROMPT> and return answer from user.
+
+Honours GIT_ASKPASS environment variable for querying
+the user. If no GIT_ASKPASS variable is set or an error occoured,
+the terminal is tried as a fallback.
+
+=cut
+
+sub prompt {
+	my ($prompt) = @_;
+	my $ret;
+	if (exists $ENV{'GIT_ASKPASS'}) {
+		$ret = _prompt($ENV{'GIT_ASKPASS'}, $prompt);
+	}
+	if (!defined $ret) {
+		print STDERR $prompt;
+		STDERR->flush;
+		require Term::ReadKey;
+		Term::ReadKey::ReadMode('noecho');
+		$ret = '';
+		while (defined(my $key = Term::ReadKey::ReadKey(0))) {
+			last if $key =~ /[\012\015]/; # \n\r
+			$ret .= $key;
+		}
+		Term::ReadKey::ReadMode('restore');
+		print STDERR "\n";
+		STDERR->flush;
+	}
+	return $ret;
+}
+
+sub _prompt {
+	my ($askpass, $prompt) = @_;
+	return unless length $askpass;
+	my $ret;
+	open my $fh, "-|", $askpass, $prompt or return;
+	$ret = <$fh>;
+	$ret =~ s/[\015\012]//g; # strip \r\n, chomp does not work on all systems (i.e. windows) as expected
+	close ($fh);
+	return $ret;
+}
 
 =item repo_path ()
 
