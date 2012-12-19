@@ -474,7 +474,7 @@ test_expect_success 'rm of a conflicted populated submodule with a .git director
 	git submodule update &&
 	(cd submod &&
 		rm .git &&
-		cp -a ../.git/modules/sub .git &&
+		cp -R ../.git/modules/sub .git &&
 		GIT_WORK_TREE=. git config --unset core.worktree
 	) &&
 	test_must_fail git merge conflict2 &&
@@ -508,7 +508,7 @@ test_expect_success 'rm of a populated submodule with a .git directory fails eve
 	git submodule update &&
 	(cd submod &&
 		rm .git &&
-		cp -a ../.git/modules/sub .git &&
+		cp -R ../.git/modules/sub .git &&
 		GIT_WORK_TREE=. git config --unset core.worktree
 	) &&
 	test_must_fail git rm submod &&
@@ -606,7 +606,7 @@ test_expect_success 'rm of a populated nested submodule with a nested .git direc
 	git submodule update --recursive &&
 	(cd submod/subsubmod &&
 		rm .git &&
-		cp -a ../../.git/modules/sub/modules/sub .git &&
+		cp -R ../../.git/modules/sub/modules/sub .git &&
 		GIT_WORK_TREE=. git config --unset core.worktree
 	) &&
 	test_must_fail git rm submod &&
