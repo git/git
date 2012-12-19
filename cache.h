@@ -362,6 +362,7 @@ static inline enum object_type object_type(unsigned int mode)
 #define GIT_NOTES_DISPLAY_REF_ENVIRONMENT "GIT_NOTES_DISPLAY_REF"
 #define GIT_NOTES_REWRITE_REF_ENVIRONMENT "GIT_NOTES_REWRITE_REF"
 #define GIT_NOTES_REWRITE_MODE_ENVIRONMENT "GIT_NOTES_REWRITE_MODE"
+#define GIT_LITERAL_PATHSPECS_ENVIRONMENT "GIT_LITERAL_PATHSPECS"
 
 /*
  * Repository-local GIT_* environment variables
@@ -489,6 +490,8 @@ struct pathspec {
 extern int init_pathspec(struct pathspec *, const char **);
 extern void free_pathspec(struct pathspec *);
 extern int ce_path_match(const struct cache_entry *ce, const struct pathspec *pathspec);
+
+extern int limit_pathspec_to_literal(void);
 
 #define HASH_WRITE_OBJECT 1
 #define HASH_FORMAT_CHECK 2
