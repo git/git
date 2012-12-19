@@ -133,6 +133,7 @@ test_expect_success 'submodule add --branch' '
 	(
 		cd addtest &&
 		git submodule add -b initial "$submodurl" submod-branch &&
+		test "initial" = "$(git config -f .gitmodules submodule.submod-branch.branch)" &&
 		git submodule init
 	) &&
 
