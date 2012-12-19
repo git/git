@@ -8,7 +8,7 @@ dashless=$(basename "$0" | sed -e 's/-/ /')
 USAGE="[--quiet] add [-b <branch>] [-f|--force] [--name <name>] [--reference <repository>] [--] <repository> [<path>]
    or: $dashless [--quiet] status [--cached] [--recursive] [--] [<path>...]
    or: $dashless [--quiet] init [--] [<path>...]
-   or: $dashless [--quiet] update [--init] [-N|--no-fetch] [-f|--force] [--rebase] [--reference <repository>] [--merge] [--recursive] [--] [<path>...]
+   or: $dashless [--quiet] update [--init] [--remote] [-N|--no-fetch] [-f|--force] [--rebase] [--reference <repository>] [--merge] [--recursive] [--] [<path>...]
    or: $dashless [--quiet] summary [--cached|--files] [--summary-limit <n>] [commit] [--] [<path>...]
    or: $dashless [--quiet] foreach [--recursive] <command>
    or: $dashless [--quiet] sync [--recursive] [--] [<path>...]"
@@ -26,6 +26,7 @@ cached=
 recursive=
 init=
 files=
+remote=
 nofetch=
 update=
 prefix=
@@ -559,6 +560,9 @@ cmd_update()
 		-i|--init)
 			init=1
 			;;
+		--remote)
+			remote=1
+			;;
 		-N|--no-fetch)
 			nofetch=1
 			;;
@@ -619,6 +623,7 @@ cmd_update()
 		fi
 		name=$(module_name "$sm_path") || exit
 		url=$(git config submodule."$name".url)
+		branch=$(get_submodule_config "$name" branch master)
 		if ! test -z "$update"
 		then
 			update_module=$update
@@ -651,6 +656,20 @@ Maybe you want to use 'update --init'?")"
 			subsha1=$(clear_local_git_env; cd "$sm_path" &&
 				git rev-parse --verify HEAD) ||
 			die "$(eval_gettext "Unable to find current revision in submodule path '\$sm_path'")"
+		fi
+
+		if test -n "$remote"
+		then
+			if test -z "$nofetch"
+			then
+				# Fetch remote before determining tracking $sha1
+				(clear_local_git_env; cd "$sm_path" && git-fetch) ||
+				die "$(eval_gettext "Unable to fetch in submodule path '\$sm_path'")"
+			fi
+			remote_name=$(clear_local_git_env; cd "$sm_path" && get_default_remote)
+			sha1=$(clear_local_git_env; cd "$sm_path" &&
+				git rev-parse --verify "${remote_name}/${branch}") ||
+			die "$(eval_gettext "Unable to find current ${remote_name}/${branch} revision in submodule path '\$sm_path'")"
 		fi
 
 		if test "$subsha1" != "$sha1" -o -n "$force"
