@@ -1834,7 +1834,7 @@ int oneway_merge(struct cache_entry **src, struct unpack_trees_options *o)
 
 	if (old && same(old, a)) {
 		int update = 0;
-		if (o->reset && !ce_uptodate(old) && !ce_skip_worktree(old)) {
+		if (o->reset && o->update && !ce_uptodate(old) && !ce_skip_worktree(old)) {
 			struct stat st;
 			if (lstat(old->name, &st) ||
 			    ie_match_stat(o->src_index, old, &st, CE_MATCH_IGNORE_VALID|CE_MATCH_IGNORE_SKIP_WORKTREE))
