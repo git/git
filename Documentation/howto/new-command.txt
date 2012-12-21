@@ -1,5 +1,10 @@
-Integrating new subcommands
-===========================
+From: Eric S. Raymond <esr@thyrsus.com>
+Abstract: This is how-to documentation for people who want to add extension
+ commands to git.  It should be read alongside api-builtin.txt.
+Content-type: text/asciidoc
+
+How to integrate new subcommands
+================================
 
 This is how-to documentation for people who want to add extension
 commands to git.  It should be read alongside api-builtin.txt.
