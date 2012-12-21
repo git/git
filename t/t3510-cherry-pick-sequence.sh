@@ -24,12 +24,6 @@ pristine_detach () {
 	git clean -d -f -f -q -x
 }
 
-test_cmp_rev () {
-	git rev-parse --verify "$1" >expect.rev &&
-	git rev-parse --verify "$2" >actual.rev &&
-	test_cmp expect.rev actual.rev
-}
-
 test_expect_success setup '
 	git config advice.detachedhead false &&
 	echo unrelated >unrelated &&
