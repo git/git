@@ -1,10 +1,10 @@
 To: git@vger.kernel.org
 Bcc: lwn@lwn.net
-Subject: What's cooking in git.git (Dec 2012, #06; Wed, 19)
-X-master-at: 18499ba694711c02a5bc729b7f8e362dd760b10a
-X-next-at: 82c5000aef763fdc977dac25e6b06ac4de5787dd
+Subject: What's cooking in git.git (Dec 2012, #06; Fri, 21)
+X-master-at: b10c4add03044b7be358ff7231b9ec50016ded4b
+X-next-at: 808bd156aa134430a4d540ebae18639447253ec0
 
-What's cooking in git.git (Dec 2012, #06; Wed, 19)
+What's cooking in git.git (Dec 2012, #06; Fri, 21)
 --------------------------------------------------
 
 Here are the topics that have been cooking.  Commits prefixed with
@@ -17,6 +17,118 @@ repositories listed at
     http://git-blame.blogspot.com/p/git-public-repositories.html
 
 --------------------------------------------------
+[Graduated to "master"]
+
+* as/doc-for-devs (2012-12-16) 2 commits
+  (merged to 'next' on 2012-12-18 at ff1f37e)
+ + Documentation: move support for old compilers to CodingGuidelines
+ + SubmittingPatches: add convention of prefixing commit messages
+
+ It might be a better idea to move the text the bottom one adds to
+ the extended description from the quick checklist part.
+
+ Will fast-track to the upcoming release.
+
+
+* cr/doc-checkout-branch (2012-12-18) 2 commits
+  (merged to 'next' on 2012-12-19 at e14b6c4)
+ + Documentation/git-checkout.txt: document 70c9ac2 behavior
+ + Documentation/git-checkout.txt: clarify usage
+
+ Document the magic "git checkout <no-such-branch>" hack to create
+ local branch out of a remote tracking branch that hasn't been
+ documented so far.
+
+ Will fast-track to the upcoming release.
+
+
+* jc/doc-diff-blobs (2012-12-18) 1 commit
+  (merged to 'next' on 2012-12-19 at 82c5000)
+ + Documentation: Describe "git diff <blob> <blob>" separately
+
+ "git diff <blob> <blob>" was not documented and was only hinted as
+ an extension to "git diff <commit> <commit> -- <pathspec>", but
+ comparison between two blobs are more special than that.  It does
+ not take any pathspec to begin with.
+
+ Will fast-track to the upcoming release.
+
+
+* jc/fetch-tags-doc (2012-12-13) 1 commit
+  (merged to 'next' on 2012-12-17 at 857413a)
+ + fetch --tags: clarify documentation
+
+ "git fetch --tags" was explained as if it were "git fetch
+ --no-no-tags", which is not the case, causing confusion.
+
+ Will fast-track to the upcoming release.
+
+
+* jk/avoid-mailto-invalid-in-doc (2012-12-16) 1 commit
+  (merged to 'next' on 2012-12-18 at 81dac40)
+ + Documentation: don't link to example mail addresses
+
+ Avoids invalid sample e-mail addresses from becoming mailto links
+ in the formatted output.
+
+ Will fast-track to the upcoming release.
+
+
+* jk/mailmap-cleanup (2012-12-12) 5 commits
+  (merged to 'next' on 2012-12-17 at 07c1a11)
+ + contrib: update stats/mailmap script
+ + .mailmap: normalize emails for Linus Torvalds
+ + .mailmap: normalize emails for Jeff King
+ + .mailmap: fix broken entry for Martin Langhoff
+ + .mailmap: match up some obvious names/emails
+
+ Update various entries in our .mailmap file.
+
+ Will fast-track to the upcoming release.
+
+
+* nd/index-format-doc (2012-12-13) 1 commit
+  (merged to 'next' on 2012-12-17 at 7984924)
+ + index-format.txt: clarify what is "invalid"
+
+ Will fast-track to the upcoming release.
+
+
+* sl/git-svn-docs (2012-12-05) 4 commits
+  (merged to 'next' on 2012-12-07 at 5bfbb73)
+ + git-svn: Note about tags.
+ + git-svn: Expand documentation for --follow-parent
+ + git-svn: Recommend use of structure options.
+ + git-svn: Document branches with at-sign(@).
+
+ Will fast-track to the upcoming release.
+
+
+* sl/readme-gplv2 (2012-12-15) 2 commits
+  (merged to 'next' on 2012-12-18 at c839810)
+ + README: it does not matter who the current maintainer is
+ + README: Git is released under the GPLv2, not just "the GPL"
+
+ Clarify that the project as a whole is GPLv2 only, with some parts
+ borrowed under different licenses that are compatible with GPLv2.
+
+ Will fast-track to the upcoming release.
+
+
+* ta/api-index-doc (2012-12-16) 1 commit
+  (merged to 'next' on 2012-12-18 at a251888)
+ + Remove misleading date from api-index-skel.txt
+
+ Will fast-track to the upcoming release.
+
+
+* ta/new-command-howto (2012-12-21) 1 commit
+  (merged to 'next' on 2012-12-21 at 5d0f65f)
+ + Move ./technical/api-command.txt to ./howto/new-command.txt
+
+ Will fast-track to the upcoming release.
+
+--------------------------------------------------
 [New Topics]
 
 * jc/mkstemp-more-careful-error-reporting (2012-12-18) 1 commit
@@ -25,6 +137,8 @@ repositories listed at
  An earlier patch to save original arguments to mkstemp() away and
  use it to report what filename we failed to create incorrectly used
  the buffer munged by failing mkstemp().
+
+ Will merge to 'next'.
 
 
 * jc/maint-test-portability (2012-12-19) 3 commits
@@ -36,6 +150,8 @@ repositories listed at
  Minor test fixes noticed while running our tests on OpenBSD 5.2,
  applicable to 'maint'.
 
+ Will merge to 'next'.
+
 
 * jc/test-portability (2012-12-19) 3 commits
  - t9020: use configured Python to run the test helper
@@ -45,6 +161,8 @@ repositories listed at
 
  The remainder of jc/maint-test-portability, applicable to 'master'.
 
+ Will merge to 'next'.
+
 
 * jc/maint-fnmatch-old-style-definition (2012-12-19) 1 commit
  - compat/fnmatch: update old-style definition to ANSI
@@ -52,12 +170,70 @@ repositories listed at
  Update old-style function definition "int foo(bar) int bar; {}"
  to "int foo(int bar) {}".
 
+ Will merge to 'next'.
+
 
 * jk/pathspec-literal (2012-12-19) 1 commit
  - add global --literal-pathspecs option
 
  Allow scripts to feed literal paths to commands that take
  pathspecs, by disabling wildcard globbing.
+
+ Will merge to 'next'.
+
+
+* da/p4merge-mktemp (2012-12-21) 1 commit
+ - mergetools/p4merge: Honor $TMPDIR for the /dev/null placeholder
+
+ Create an empty file in $TMPDIR instead of using an empty file in
+ the local directory (but why?).
+
+
+* er/python-version-requirements (2012-12-20) 2 commits
+ - (squash???) remote-helpers/git/__init__.py needs sys before checking sys.hexversion
+ - Python scripts: check minimum compatible version after auditing
+
+ Will merge to 'next' after getting an Ack on the top-squash.
+
+
+* jc/unpack-file-in-tmpdir (2012-12-19) 1 commit
+ - unpack-file: allow output to be in $TMPDIR
+
+ Throw-away "how about this" to teach unpack-file to use $TMPDIR to
+ store its output.
+
+ Will discard.
+
+
+* mb/gitweb-highlight-link-target (2012-12-20) 1 commit
+ - Highlight the link target line in Gitweb using CSS
+
+ Expecting a reroll.
+
+
+* mz/oneway-merge-wo-u-no-lstat (2012-12-20) 1 commit
+ - oneway_merge(): only lstat() when told to update worktree
+
+ Optimize "read-tree -m <tree-ish>" without "-u".
+
+ Will merge to 'next'.
+
+
+* jk/repack-ref-racefix (2012-12-21) 1 commit
+ - refs: do not use cached refs in repack_without_ref
+
+ Race-fix for pack-refs running in parallel to ref creation.
+
+ Will merge to 'next'.
+
+
+* rb/http-cert-cred-no-username-prompt (2012-12-21) 1 commit
+ - http.c: Avoid username prompt for certifcate credentials
+
+ There is no need to ask for username if the authentication is done
+ by certificate identity.
+
+ Will merge to 'next'.
 
 --------------------------------------------------
 [Stalled]
@@ -275,6 +451,8 @@ repositories listed at
  The beginning of 'integrate with the tip of the remote branch, not
  the commit recorded in the superproject gitlink' support.
 
+ Will merge to 'next'.
+
 
 * cc/no-gitk-build-dependency (2012-12-18) 3 commits
  - Makefile: replace "echo 1>..." with "echo >..."
@@ -285,17 +463,7 @@ repositories listed at
  subdirectory.  Reimplementing the dependency tracking rules needs
  to be done in gitk history separately.
 
-
-* cr/doc-checkout-branch (2012-12-18) 2 commits
-  (merged to 'next' on 2012-12-19 at e14b6c4)
- + Documentation/git-checkout.txt: document 70c9ac2 behavior
- + Documentation/git-checkout.txt: clarify usage
-
- Document the magic "git checkout <no-such-branch>" hack to create
- local branch out of a remote tracking branch that hasn't been
- documented so far.
-
- May want to fast-track to the upcoming release.
+ Will merge to 'next'.
 
 
 * jc/format-color-auto (2012-12-17) 2 commits
@@ -305,6 +473,8 @@ repositories listed at
 
  Introduce "log --format=%C(auto,blue)Foo%C(auto,reset)" that does
  not color its output when writing to a non-terminal.
+
+ Will cook in 'next'.
 
 
 * ss/svn-prompt (2012-12-17) 3 commits
@@ -323,28 +493,16 @@ repositories listed at
  removed after recursing into a directory, which makes the output
  confusing and even wrong.
 
- Waiting for responses to review comments.
 
-
-* jc/doc-diff-blobs (2012-12-18) 1 commit
-  (merged to 'next' on 2012-12-19 at 82c5000)
- + Documentation: Describe "git diff <blob> <blob>" separately
-
- "git diff <blob> <blob>" was not documented and was only hinted as
- an extension to "git diff <commit> <commit> -- <pathspec>", but
- comparison between two blobs are more special than that.  It does
- not take any pathspec to begin with.
-
- May want to fast-track to the upcoming release.
-
-
-* mp/complete-paths (2012-12-19) 1 commit
+* mp/complete-paths (2012-12-21) 1 commit
  - git-completion.bash: add support for path completion
 
  The completion script used to let the default completer to suggest
  pathnames, which gave too many irrelevant choices (e.g. "git add"
  would not want to add an unmodified path).  Teach it to use a more
  git-aware logic to enumerate only relevant ones.
+
+ Waiting for area-experts review.
 
 
 * ja/directory-attrs (2012-12-17) 1 commit
@@ -356,19 +514,6 @@ repositories listed at
  exclude mechanism does.
 
  Will cook in 'next'.
-
-
-* jk/mailmap-cleanup (2012-12-12) 5 commits
-  (merged to 'next' on 2012-12-17 at 07c1a11)
- + contrib: update stats/mailmap script
- + .mailmap: normalize emails for Linus Torvalds
- + .mailmap: normalize emails for Jeff King
- + .mailmap: fix broken entry for Martin Langhoff
- + .mailmap: match up some obvious names/emails
-
- Update various entries in our .mailmap file.
-
- May want to fast-track to the upcoming release.
 
 
 * jk/mailmap-from-blob (2012-12-13) 5 commits
@@ -383,23 +528,7 @@ repositories listed at
  of the history in bare repositories.  This will help running tools
  like shortlog in server settings.
 
-
-* nd/index-format-doc (2012-12-13) 1 commit
-  (merged to 'next' on 2012-12-17 at 7984924)
- + index-format.txt: clarify what is "invalid"
-
- May want to fast-track to the upcoming release.
-
-
-* as/doc-for-devs (2012-12-16) 2 commits
-  (merged to 'next' on 2012-12-18 at ff1f37e)
- + Documentation: move support for old compilers to CodingGuidelines
- + SubmittingPatches: add convention of prefixing commit messages
-
- It might be a better idea to move the text the bottom one adds to
- the extended description from the quick checklist part.
-
- May want to fast-track to the upcoming release.
+ Will cook in 'next'.
 
 
 * dm/port (2012-12-19) 4 commits
@@ -412,32 +541,14 @@ repositories listed at
  Will merge to 'next'.
 
 
-* jc/fetch-tags-doc (2012-12-13) 1 commit
-  (merged to 'next' on 2012-12-17 at 857413a)
- + fetch --tags: clarify documentation
-
- "git fetch --tags" was explained as if it were "git fetch
- --no-no-tags", which is not the case, causing confusion.
-
- May want to fast-track to the upcoming release.
-
-
-* jk/avoid-mailto-invalid-in-doc (2012-12-16) 1 commit
-  (merged to 'next' on 2012-12-18 at 81dac40)
- + Documentation: don't link to example mail addresses
-
- Avoids invalid sample e-mail addresses from becoming mailto links
- in the formatted output.
-
- May want to fast-track to the upcoming release.
-
-
 * jk/complete-commit-c (2012-12-15) 1 commit
   (merged to 'next' on 2012-12-18 at 75b5f21)
  + completion: complete refs for "git commit -c"
 
  Complete "git commmit -c foo<TAB>" into a refname that begins with
  "foo".
+
+ Will cook in 'next'.
 
 
 * jk/error-const-return (2012-12-15) 2 commits
@@ -469,32 +580,16 @@ repositories listed at
  happy with the way how $GIT_TEST_PRINT and $GIT_TEST_PRINT_LN are
  interpolated into the command line with token splitting at $IFS.
 
-
-* sl/readme-gplv2 (2012-12-15) 2 commits
-  (merged to 'next' on 2012-12-18 at c839810)
- + README: it does not matter who the current maintainer is
- + README: Git is released under the GPLv2, not just "the GPL"
-
- Clarify that the project as a whole is GPLv2 only, with some parts
- borrowed under different licenses that are compatible with GPLv2.
-
- May want to fast-track to the upcoming release.
+ Will discard, per discussion with the author.
 
 
-* ta/api-index-doc (2012-12-16) 1 commit
-  (merged to 'next' on 2012-12-18 at a251888)
- + Remove misleading date from api-index-skel.txt
-
- May want to fast-track to the upcoming release.
-
-
-* as/test-tweaks (2012-12-17) 7 commits
+* as/test-tweaks (2012-12-20) 7 commits
  - tests: paint unexpectedly fixed known breakages in bold red
  - tests: test the test framework more thoroughly
  - tests: refactor mechanics of testing in a sub test-lib
- - tests: change info messages from yellow/brown to bold cyan
- - tests: paint skipped tests in bold blue
- - tests: paint known breakages in bold yellow
+ - tests: change info messages from yellow/brown to cyan
+ - tests: paint skipped tests in blue
+ - tests: paint known breakages in yellow
  - tests: test number comes first in 'not ok $count - $message'
 
  Various minor tweaks to the test framework to paint its output
@@ -572,6 +667,8 @@ repositories listed at
  Finishing touches to the series to unify "Do we need to reencode
  between these two encodings?" logic.
 
+ Will cook in 'next'.
+
 
 * nd/invalidate-i-t-a-cache-tree (2012-12-15) 4 commits
   (merged to 'next' on 2012-12-18 at 33e4488)
@@ -583,6 +680,8 @@ repositories listed at
  Writing out a tree object when you still have intent-to-add entries
  in the index left an incorrect cache-tree data there.
 
+ Will cook in 'next'.
+
 
 * jl/submodule-deinit (2012-12-04) 1 commit
   (merged to 'next' on 2012-12-07 at ea772f0)
@@ -593,16 +692,6 @@ repositories listed at
  "submodule init".  "submodule deinit" is the way to do so.
 
  Will cook in 'next'.
-
-
-* sl/git-svn-docs (2012-12-05) 4 commits
-  (merged to 'next' on 2012-12-07 at 5bfbb73)
- + git-svn: Note about tags.
- + git-svn: Expand documentation for --follow-parent
- + git-svn: Recommend use of structure options.
- + git-svn: Document branches with at-sign(@).
-
- May want to fast-track to the upcoming release.
 
 
 * pf/editor-ignore-sigint (2012-12-02) 5 commits
