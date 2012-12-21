@@ -628,10 +628,19 @@ ADVANCED OPTIONS
 	Default: "svn"
 
 --follow-parent::
+	This option is only relevant if we are tracking branches (using
+	one of the repository layout options --trunk, --tags,
+	--branches, --stdlayout). For each tracked branch, try to find
+	out where its revision was copied from, and set
+	a suitable parent in the first git commit for the branch.
 	This is especially helpful when we're tracking a directory
-	that has been moved around within the repository, or if we
-	started tracking a branch and never tracked the trunk it was
-	descended from. This feature is enabled by default, use
+	that has been moved around within the repository.  If this
+	feature is disabled, the branches created by 'git svn' will all
+	be linear and not share any history, meaning that there will be
+	no information on where branches were branched off or merged.
+	However, following long/convoluted histories can take a long
+	time, so disabling this feature may speed up the cloning
+	process. This feature is enabled by default, use
 	--no-follow-parent to disable it.
 +
 [verse]
@@ -739,7 +748,8 @@ for rewriteRoot and rewriteUUID which can be used together.
 BASIC EXAMPLES
 --------------
 
-Tracking and contributing to the trunk of a Subversion-managed project:
+Tracking and contributing to the trunk of a Subversion-managed project
+(ignoring tags and branches):
 
 ------------------------------------------------------------------------
 # Clone a repo (like git clone):
@@ -764,8 +774,10 @@ Tracking and contributing to an entire Subversion-managed project
 (complete with a trunk, tags and branches):
 
 ------------------------------------------------------------------------
-# Clone a repo (like git clone):
-	git svn clone http://svn.example.com/project -T trunk -b branches -t tags
+# Clone a repo with standard SVN directory layout (like git clone):
+	git svn clone http://svn.example.com/project --stdlayout
+# Or, if the repo uses a non-standard directory layout:
+	git svn clone http://svn.example.com/project -T tr -b branch -t tag
 # View all branches and tags you have cloned:
 	git branch -r
 # Create a new branch in SVN
@@ -830,6 +842,52 @@ inside git back upstream to SVN users.  Therefore it is advised that
 users keep history as linear as possible inside git to ease
 compatibility with SVN (see the CAVEATS section below).
 
+HANDLING OF SVN BRANCHES
+------------------------
+If 'git svn' is configured to fetch branches (and --follow-branches
+is in effect), it sometimes creates multiple git branches for one
+SVN branch, where the addtional branches have names of the form
+'branchname@nnn' (with nnn an SVN revision number).  These additional
+branches are created if 'git svn' cannot find a parent commit for the
+first commit in an SVN branch, to connect the branch to the history of
+the other branches.
+
+Normally, the first commit in an SVN branch consists
+of a copy operation. 'git svn' will read this commit to get the SVN
+revision the branch was created from. It will then try to find the
+git commit that corresponds to this SVN revision, and use that as the
+parent of the branch. However, it is possible that there is no suitable
+git commit to serve as parent.  This will happen, among other reasons,
+if the SVN branch is a copy of a revision that was not fetched by 'git
+svn' (e.g. because it is an old revision that was skipped with
+'--revision'), or if in SVN a directory was copied that is not tracked
+by 'git svn' (such as a branch that is not tracked at all, or a
+subdirectory of a tracked branch). In these cases, 'git svn' will still
+create a git branch, but instead of using an existing git commit as the
+parent of the branch, it will read the SVN history of the directory the
+branch was copied from and create appropriate git commits.  This is
+indicated by the message "Initializing parent: <branchname>".
+
+Additionally, it will create a special branch named
+'<branchname>@<SVN-Revision>', where <SVN-Revision> is the SVN revision
+number the branch was copied from.  This branch will point to the newly
+created parent commit of the branch.  If in SVN the branch was deleted
+and later recreated from a different version, there will be multiple
+such branches with an '@'.
+
+Note that this may mean that multiple git commits are created for a
+single SVN revision.
+
+An example: in an SVN repository with a standard
+trunk/tags/branches layout, a directory trunk/sub is created in r.100.
+In r.200, trunk/sub is branched by copying it to branches/. 'git svn
+clone -s' will then create a branch 'sub'. It will also create new git
+commits for r.100 through r.199 and use these as the history of branch
+'sub'. Thus there will be two git commits for each revision from r.100
+to r.199 (one containing trunk/, one containing trunk/sub/). Finally,
+it will create a branch 'sub@200' pointing to the new parent commit of
+branch 'sub' (i.e. the commit for r.200 and trunk/sub/).
+
 CAVEATS
 -------
 
@@ -871,6 +929,21 @@ already dcommitted.  It is considered bad practice to --amend commits
 you've already pushed to a remote repository for other users, and
 dcommit with SVN is analogous to that.
 
+When cloning an SVN repository, if none of the options for describing
+the repository layout is used (--trunk, --tags, --branches,
+--stdlayout), 'git svn clone' will create a git repository with
+completely linear history, where branches and tags appear as separate
+directories in the working copy.  While this is the easiest way to get a
+copy of a complete repository, for projects with many branches it will
+lead to a working copy many times larger than just the trunk. Thus for
+projects using the standard directory structure (trunk/branches/tags),
+it is recommended to clone with option '--stdlayout'. If the project
+uses a non-standard structure, and/or if branches and tags are not
+required, it is easiest to only clone one directory (typically trunk),
+without giving any repository layout options.  If the full history with
+branches and tags is required, the options '--trunk' / '--branches' /
+'--tags' must be used.
+
 When using multiple --branches or --tags, 'git svn' does not automatically
 handle name collisions (for example, if two branches from different paths have
 the same name, or if a branch and a tag have the same name).  In these cases,
@@ -893,6 +966,12 @@ this as it's quite difficult and time-consuming to get working for all
 the possible corner cases (git doesn't do it, either).  Committing
 renamed and copied files is fully supported if they're similar enough
 for git to detect them.
+
+In SVN, it is possible (though discouraged) to commit changes to a tag
+(because a tag is just a directory copy, thus technically the same as a
+branch). When cloning an SVN repository, 'git svn' cannot know if such a
+commit to a tag will happen in the future. Thus it acts conservatively
+and imports all SVN tags as branches, prefixing the tag name with 'tags/'.
 
 CONFIGURATION
 -------------
