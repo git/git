@@ -69,14 +69,19 @@ dd='
 	GNU_ROFF=YesPlease
 '
 
-case "$NID" in
-?*-?*) ;;
-?*)
+if test -z "$DOC_FROM_SCRATCH"
+then
+	case "$NID" in
+	?*-?*) ;;
+	?*) DOC_FROM_SCRATCH=yes ;;
+	esac
+fi
+if test -n "$DOC_FROM_SCRATCH"
+then
 	make clean &&
 	rm -fr doc-html-inst doc-man-inst &&
 	mkdir doc-html-inst doc-man-inst || exit
-	;;
-esac
+fi
 
 DIFF=diff
 export DIFF
