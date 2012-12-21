@@ -9,6 +9,14 @@ Checklist (and a short version for the impatient):
 	- the first line of the commit message should be a short
 	  description (50 characters is the soft limit, see DISCUSSION
 	  in git-commit(1)), and should skip the full stop
+	- it is also conventional in most cases to prefix the
+	  first line with "area: " where the area is a filename
+	  or identifier for the general area of the code being
+	  modified, e.g.
+	  . archive: ustar header checksum is computed unsigned
+	  . git-cherry-pick.txt: clarify the use of revision range notation
+	  (if in doubt which identifier to use, run "git log --no-merges"
+	  on the files you are modifying to see the current conventions)
 	- the body should provide a meaningful commit message, which:
 	  . explains the problem the change tries to solve, iow, what
 	    is wrong with the current code without the change.
@@ -117,19 +125,6 @@ Oh, another thing.  I am picky about whitespaces.  Make sure your
 changes do not trigger errors with the sample pre-commit hook shipped
 in templates/hooks--pre-commit.  To help ensure this does not happen,
 run git diff --check on your changes before you commit.
-
-
-(1a) Try to be nice to older C compilers
-
-We try to support a wide range of C compilers to compile
-git with. That means that you should not use C99 initializers, even
-if a lot of compilers grok it.
-
-Also, variables have to be declared at the beginning of the block
-(you can check this with gcc, using the -Wdeclaration-after-statement
-option).
-
-Another thing: NULL pointers shall be written as NULL, not as 0.
 
 
 (2) Generate your patch using git tools out of your commits.
