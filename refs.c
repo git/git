@@ -1735,7 +1735,8 @@ static struct lock_file packlock;
 static int repack_without_ref(const char *refname)
 {
 	struct repack_without_ref_sb data;
-	struct ref_dir *packed = get_packed_refs(get_ref_cache(NULL));
+	struct ref_cache *refs = get_ref_cache(NULL);
+	struct ref_dir *packed = get_packed_refs(refs);
 	if (find_ref(packed, refname) == NULL)
 		return 0;
 	data.refname = refname;
@@ -1744,6 +1745,8 @@ static int repack_without_ref(const char *refname)
 		unable_to_lock_error(git_path("packed-refs"), errno);
 		return error("cannot delete '%s' from packed refs", refname);
 	}
+	clear_packed_ref_cache(refs);
+	packed = get_packed_refs(refs);
 	do_for_each_ref_in_dir(packed, 0, "", repack_without_ref_fn, 0, 0, &data);
 	return commit_lock_file(&packlock);
 }
