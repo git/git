@@ -21,6 +21,7 @@ ARTICLES += git-tools
 ARTICLES += git-bisect-lk2009
 # with their own formatting rules.
 SP_ARTICLES = user-manual
+SP_ARTICLES += howto/new-command
 SP_ARTICLES += howto/revert-branch-rebase
 SP_ARTICLES += howto/using-merge-subtree
 SP_ARTICLES += howto/using-signed-tag-in-pull-request
