@@ -59,11 +59,8 @@ done
 Wall='-Wall -Wdeclaration-after-statement' tests= jobs= skip= oldtest=
 case `uname` in
 OpenBSD)
-	NEEDS_CRYPTO_WITH_SSL=YesPlease ; export NEEDS_CRYPTO_WITH_SSL
-	skip="t9200 t9502"
-	SHELL_PATH=/usr/local/bin/bash; export SHELL_PATH
-	NO_PEDANTIC=CannotDo NO_JOBS=CannotDo
-	Wall=
+	O="-fgnu89-inline"
+	skip="t9402"
 	;;
 FreeBSD)
 	OLD_ICONV=YesPlease; export OLD_ICONV
