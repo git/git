@@ -673,7 +673,7 @@ static int reopen_stdout(struct commit *commit, const char *subject,
 			 struct rev_info *rev, int quiet)
 {
 	struct strbuf filename = STRBUF_INIT;
-	int suffix_len = strlen(fmt_patch_suffix) + 1;
+	int suffix_len = strlen(rev->patch_suffix) + 1;
 
 	if (output_directory) {
 		strbuf_addstr(&filename, output_directory);
@@ -684,7 +684,7 @@ static int reopen_stdout(struct commit *commit, const char *subject,
 			strbuf_addch(&filename, '/');
 	}
 
-	get_patch_filename(commit, subject, rev->nr, fmt_patch_suffix, &filename);
+	get_patch_filename(commit, subject, rev->nr, rev->patch_suffix, &filename);
 
 	if (!quiet)
 		fprintf(realstdout, "%s\n", filename.buf + outdir_offset);
