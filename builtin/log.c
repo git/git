@@ -768,7 +768,6 @@ static void add_branch_description(struct strbuf *buf, const char *branch_name)
 }
 
 static void make_cover_letter(struct rev_info *rev, int use_stdout,
-			      int numbered_files,
 			      struct commit *origin,
 			      int nr, struct commit **list, struct commit *head,
 			      const char *branch_name,
@@ -791,7 +790,7 @@ static void make_cover_letter(struct rev_info *rev, int use_stdout,
 	committer = git_committer_info(0);
 
 	if (!use_stdout &&
-	    reopen_stdout(NULL, numbered_files ? NULL : "cover-letter", rev, quiet))
+	    reopen_stdout(NULL, rev->numbered_files ? NULL : "cover-letter", rev, quiet))
 		return;
 
 	log_write_email_headers(rev, head, &pp.subject, &pp.after_subject,
@@ -1045,7 +1044,7 @@ int cmd_format_patch(int argc, const char **argv, const char *prefix)
 	int nr = 0, total, i;
 	int use_stdout = 0;
 	int start_number = -1;
-	int numbered_files = 0;		/* _just_ numbers */
+	int just_numbers = 0;
 	int ignore_if_in_upstream = 0;
 	int cover_letter = 0;
 	int boundary_count = 0;
@@ -1070,7 +1069,7 @@ int cmd_format_patch(int argc, const char **argv, const char *prefix)
 			    N_("print patches to standard out")),
 		OPT_BOOLEAN(0, "cover-letter", &cover_letter,
 			    N_("generate a cover letter")),
-		OPT_BOOLEAN(0, "numbered-files", &numbered_files,
+		OPT_BOOLEAN(0, "numbered-files", &just_numbers,
 			    N_("use simple number sequence for output file names")),
 		OPT_STRING(0, "suffix", &fmt_patch_suffix, N_("sfx"),
 			    N_("use <sfx> instead of '.patch'")),
@@ -1338,12 +1337,12 @@ int cmd_format_patch(int argc, const char **argv, const char *prefix)
 		const char *msgid = clean_message_id(in_reply_to);
 		string_list_append(rev.ref_message_ids, msgid);
 	}
-	rev.numbered_files = numbered_files;
+	rev.numbered_files = just_numbers;
 	rev.patch_suffix = fmt_patch_suffix;
 	if (cover_letter) {
 		if (thread)
 			gen_message_id(&rev, "cover");
-		make_cover_letter(&rev, use_stdout, numbered_files,
+		make_cover_letter(&rev, use_stdout,
 				  origin, nr, list, head, branch_name, quiet);
 		total++;
 		start_number--;
@@ -1390,7 +1389,7 @@ int cmd_format_patch(int argc, const char **argv, const char *prefix)
 		}
 
 		if (!use_stdout &&
-		    reopen_stdout(numbered_files ? NULL : commit, NULL, &rev, quiet))
+		    reopen_stdout(rev.numbered_files ? NULL : commit, NULL, &rev, quiet))
 			die(_("Failed to create output files"));
 		shown = log_tree_commit(&rev, commit);
 		free(commit->buffer);
