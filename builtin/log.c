@@ -1061,6 +1061,7 @@ int cmd_format_patch(int argc, const char **argv, const char *prefix)
 	struct strbuf buf = STRBUF_INIT;
 	int use_patch_format = 0;
 	int quiet = 0;
+	int reroll_count = -1;
 	char *branch_name = NULL;
 	const struct option builtin_format_patch_options[] = {
 		{ OPTION_CALLBACK, 'n', "numbered", &numbered, NULL,
@@ -1080,6 +1081,8 @@ int cmd_format_patch(int argc, const char **argv, const char *prefix)
 			    N_("use <sfx> instead of '.patch'")),
 		OPT_INTEGER(0, "start-number", &start_number,
 			    N_("start numbering patches at <n> instead of 1")),
+		OPT_INTEGER(0, "reroll-count", &reroll_count,
+			    N_("mark the series as Nth re-roll")),
 		{ OPTION_CALLBACK, 0, "subject-prefix", &rev, N_("prefix"),
 			    N_("Use [<prefix>] instead of [PATCH]"),
 			    PARSE_OPT_NONEG, subject_prefix_callback },
@@ -1151,6 +1154,14 @@ int cmd_format_patch(int argc, const char **argv, const char *prefix)
 			     builtin_format_patch_usage,
 			     PARSE_OPT_KEEP_ARGV0 | PARSE_OPT_KEEP_UNKNOWN |
 			     PARSE_OPT_KEEP_DASHDASH);
+
+	if (0 < reroll_count) {
+		struct strbuf sprefix = STRBUF_INIT;
+		strbuf_addf(&sprefix, "%s v%d",
+			    rev.subject_prefix, reroll_count);
+		rev.reroll_count = reroll_count;
+		rev.subject_prefix = strbuf_detach(&sprefix, NULL);
+	}
 
 	if (do_signoff) {
 		const char *committer;

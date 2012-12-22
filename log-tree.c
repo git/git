@@ -308,6 +308,8 @@ void fmt_output_subject(struct strbuf *filename,
 	int start_len = filename->len;
 	int max_len = start_len + FORMAT_PATCH_NAME_MAX - (strlen(suffix) + 1);
 
+	if (0 < info->reroll_count)
+		strbuf_addf(filename, "v%d-", info->reroll_count);
 	strbuf_addf(filename, "%04d-%s", nr, subject);
 
 	if (max_len < filename->len)
