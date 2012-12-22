@@ -684,7 +684,7 @@ static int reopen_stdout(struct commit *commit, const char *subject,
 			strbuf_addch(&filename, '/');
 	}
 
-	get_patch_filename(commit, subject, rev->nr, rev->patch_suffix, &filename);
+	get_patch_filename(&filename, commit, subject, rev);
 
 	if (!quiet)
 		fprintf(realstdout, "%s\n", filename.buf + outdir_offset);

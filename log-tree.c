@@ -299,9 +299,12 @@ static unsigned int digits_in_number(unsigned int number)
 	return result;
 }
 
-void get_patch_filename(struct commit *commit, const char *subject, int nr,
-			const char *suffix, struct strbuf *buf)
+void get_patch_filename(struct strbuf *buf,
+			struct commit *commit, const char *subject,
+			struct rev_info *info)
 {
+	const char *suffix = info->patch_suffix;
+	int nr = info->nr;
 	int suffix_len = strlen(suffix) + 1;
 	int start_len = buf->len;
 
@@ -387,8 +390,9 @@ void log_write_email_headers(struct rev_info *opt, struct commit *commit,
 			 mime_boundary_leader, opt->mime_boundary);
 		extra_headers = subject_buffer;
 
-		get_patch_filename(opt->numbered_files ? NULL : commit, NULL,
-				   opt->nr, opt->patch_suffix, &filename);
+		get_patch_filename(&filename,
+				   opt->numbered_files ? NULL : commit, NULL,
+				   opt);
 		snprintf(buffer, sizeof(buffer) - 1,
 			 "\n--%s%s\n"
 			 "Content-Type: text/x-patch;"
