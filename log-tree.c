@@ -307,21 +307,18 @@ void get_patch_filename(struct strbuf *buf,
 	int nr = info->nr;
 	int suffix_len = strlen(suffix) + 1;
 	int start_len = buf->len;
+	int max_len = start_len + FORMAT_PATCH_NAME_MAX - suffix_len;
 
-	strbuf_addf(buf, commit || subject ? "%04d-" : "%d", nr);
-	if (commit || subject) {
-		int max_len = start_len + FORMAT_PATCH_NAME_MAX - suffix_len;
+	strbuf_addf(buf, "%04d-", nr);
+	if (subject)
+		strbuf_addstr(buf, subject);
+	else if (commit) {
 		struct pretty_print_context ctx = {0};
-
-		if (subject)
-			strbuf_addstr(buf, subject);
-		else if (commit)
-			format_commit_message(commit, "%f", buf, &ctx);
-
-		if (max_len < buf->len)
-			strbuf_setlen(buf, max_len);
-		strbuf_addstr(buf, suffix);
+		format_commit_message(commit, "%f", buf, &ctx);
 	}
+	if (max_len < buf->len)
+		strbuf_setlen(buf, max_len);
+	strbuf_addstr(buf, suffix);
 }
 
 void log_write_email_headers(struct rev_info *opt, struct commit *commit,
@@ -390,9 +387,11 @@ void log_write_email_headers(struct rev_info *opt, struct commit *commit,
 			 mime_boundary_leader, opt->mime_boundary);
 		extra_headers = subject_buffer;
 
-		get_patch_filename(&filename,
-				   opt->numbered_files ? NULL : commit, NULL,
-				   opt);
+		if (opt->numbered_files)
+			strbuf_addf(&filename, "%d", opt->nr);
+		else
+			get_patch_filename(&filename, commit, NULL,
+					   opt);
 		snprintf(buffer, sizeof(buffer) - 1,
 			 "\n--%s%s\n"
 			 "Content-Type: text/x-patch;"
