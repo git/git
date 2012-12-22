@@ -768,7 +768,7 @@ static void add_branch_description(struct strbuf *buf, const char *branch_name)
 }
 
 static void make_cover_letter(struct rev_info *rev, int use_stdout,
-			      int numbered, int numbered_files,
+			      int numbered_files,
 			      struct commit *origin,
 			      int nr, struct commit **list, struct commit *head,
 			      const char *branch_name,
@@ -1343,7 +1343,7 @@ int cmd_format_patch(int argc, const char **argv, const char *prefix)
 	if (cover_letter) {
 		if (thread)
 			gen_message_id(&rev, "cover");
-		make_cover_letter(&rev, use_stdout, numbered, numbered_files,
+		make_cover_letter(&rev, use_stdout, numbered_files,
 				  origin, nr, list, head, branch_name, quiet);
 		total++;
 		start_number--;
