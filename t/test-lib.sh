@@ -867,6 +867,11 @@ case $(uname -s) in
 		(cd "$1" ; pwd -P | sed 's+^/\([a-z]\)\/+\1:/+')
 	}
 
+	check_symlink() {
+		check_symlink_LINK="$(cmd /c "dir $1" | grep \<SYMLINK\> | sed 's/^.*\[\([^]]*\)\].*$/\1/')"
+		test "$check_symlink_LINK" = "$2"
+	}
+
 	# no POSIX permissions
 	# backslashes in pathspec are converted to '/'
 	# exec does not inherit the PID
