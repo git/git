@@ -798,6 +798,10 @@ abspath_of_dir () {
 	(cd "$1" ; pwd -P)
 }
 
+check_symlink() {
+	case "$(ls -l $1)" in *" $1 -> $2") :;; *) false;; esac
+}
+
 # Fix some commands on Windows
 case $(uname -s) in
 *MINGW*)
