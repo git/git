@@ -7,8 +7,8 @@ Abstract: Beginning v1.7.9, a contributor can push a signed tag to her
  later validate it.
 Content-type: text/asciidoc
 
-Using signed tag in pull requests
-=================================
+How to use a signed tag in pull requests
+========================================
 
 A typical distributed workflow using Git is for a contributor to fork a
 project, build on it, publish the result to her public repository, and ask

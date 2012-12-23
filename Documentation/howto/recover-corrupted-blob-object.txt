@@ -3,11 +3,17 @@ From: Linus Torvalds <torvalds@linux-foundation.org>
 Subject: corrupt object on git-gc
 Abstract: Some tricks to reconstruct blob objects in order to fix
  a corrupted repository.
+Content-type: text/asciidoc
 
+How to recover a corrupted blob object
+======================================
+
+-----------------------------------------------------------
 On Fri, 9 Nov 2007, Yossi Leybovich wrote:
 >
 > Did not help still the repository look for this object?
 > Any one know how can I track this object and understand which file is it
+-----------------------------------------------------------
 
 So exactly *because* the SHA1 hash is cryptographically secure, the hash
 itself doesn't actually tell you anything, in order to fix a corrupt
@@ -31,19 +37,23 @@ original object, so right now the corrupt object is useless, but it's very
 interesting for the future, in the hope that you can re-create a
 non-corrupt version.
 
+-----------------------------------------------------------
 So:
 
 > ib]$ mv .git/objects/4b/9458b3786228369c63936db65827de3cc06200 ../
+-----------------------------------------------------------
 
 This is the right thing to do, although it's usually best to save it under
 it's full SHA1 name (you just dropped the "4b" from the result ;).
 
 Let's see what that tells us:
 
+-----------------------------------------------------------
 > ib]$ git-fsck --full
 > broken link from    tree 2d9263c6d23595e7cb2a21e5ebbb53655278dff8
 >              to    blob 4b9458b3786228369c63936db65827de3cc06200
 > missing blob 4b9458b3786228369c63936db65827de3cc06200
+-----------------------------------------------------------
 
 Ok, I removed the "dangling commit" messages, because they are just
 messages about the fact that you probably have rebased etc, so they're not

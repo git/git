@@ -1,7 +1,7 @@
 GIT index format
 ================
 
-= The git index file has the following format
+== The git index file has the following format
 
   All binary numbers are in network byte order. Version 2 is described
   here unless stated otherwise.

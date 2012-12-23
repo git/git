@@ -8,8 +8,8 @@ Date: Mon, 29 Aug 2005 21:39:02 -0700
 Content-type: text/asciidoc
 Message-ID: <7voe7g3uop.fsf@assigned-by-dhcp.cox.net>
 
-Reverting an existing commit
-============================
+How to revert an existing commit
+================================
 
 One of the changes I pulled into the 'master' branch turns out to
 break building GIT with GCC 2.95.  While they were well intentioned

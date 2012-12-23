@@ -74,24 +74,24 @@ For multiple ancestors, a '+' means that this case applies even if
 only one ancestor or remote fits; a '^' means all of the ancestors
 must be the same.
 
-case  ancest    head    remote    result
-----------------------------------------
-1     (empty)+  (empty) (empty)   (empty)
-2ALT  (empty)+  *empty* remote    remote
-2     (empty)^  (empty) remote    no merge
-3ALT  (empty)+  head    *empty*   head
-3     (empty)^  head    (empty)   no merge
-4     (empty)^  head    remote    no merge
-5ALT  *         head    head      head
-6     ancest+   (empty) (empty)   no merge
-8     ancest^   (empty) ancest    no merge
-7     ancest+   (empty) remote    no merge
-10    ancest^   ancest  (empty)   no merge
-9     ancest+   head    (empty)   no merge
-16    anc1/anc2 anc1    anc2      no merge
-13    ancest+   head    ancest    head
-14    ancest+   ancest  remote    remote
-11    ancest+   head    remote    no merge
+ case  ancest    head    remote    result
+ ----------------------------------------
+ 1     (empty)+  (empty) (empty)   (empty)
+ 2ALT  (empty)+  *empty* remote    remote
+ 2     (empty)^  (empty) remote    no merge
+ 3ALT  (empty)+  head    *empty*   head
+ 3     (empty)^  head    (empty)   no merge
+ 4     (empty)^  head    remote    no merge
+ 5ALT  *         head    head      head
+ 6     ancest+   (empty) (empty)   no merge
+ 8     ancest^   (empty) ancest    no merge
+ 7     ancest+   (empty) remote    no merge
+ 10    ancest^   ancest  (empty)   no merge
+ 9     ancest+   head    (empty)   no merge
+ 16    anc1/anc2 anc1    anc2      no merge
+ 13    ancest+   head    ancest    head
+ 14    ancest+   ancest  remote    remote
+ 11    ancest+   head    remote    no merge
 
 Only #2ALT and #3ALT use *empty*, because these are the only cases
 where there can be conflicts that didn't exist before. Note that we

@@ -1,6 +1,12 @@
-Def.: Shallow commits do have parents, but not in the shallow
+Shallow commits
+===============
+
+.Definition
+*********************************************************
+Shallow commits do have parents, but not in the shallow
 repo, and therefore grafts are introduced pretending that
 these commits have no parents.
+*********************************************************
 
 The basic idea is to write the SHA1s of shallow commits into
 $GIT_DIR/shallow, and handle its contents like the contents

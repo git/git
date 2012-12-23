@@ -7,6 +7,10 @@ Abstract: Sometimes a branch that was already merged to the mainline
  after the offending branch is fixed.
 Message-ID: <7vocz8a6zk.fsf@gitster.siamese.dyndns.org>
 References: <alpine.LFD.2.00.0812181949450.14014@localhost.localdomain>
+Content-type: text/asciidoc
+
+How to revert a faulty merge
+============================
 
 Alan <alan@clueserver.org> said:
 

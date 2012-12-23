@@ -1,4 +1,7 @@
+Content-type: text/asciidoc
+
 How to use git-daemon
+=====================
 
 Git can be run in inetd mode and in stand alone mode. But all you want is
 let a coworker pull from you, and therefore need to set up a git server
