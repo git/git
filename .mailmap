@@ -9,7 +9,9 @@ Alex Bennée <kernel-hacker@bennee.com>
 Alexander Gavrilov <angavrilov@gmail.com>
 Aneesh Kumar K.V <aneesh.kumar@gmail.com>
 Brian M. Carlson <sandals@crustytoothpaste.ath.cx>
+Cheng Renquan <crquan@gmail.com>
 Chris Shoemaker <c.shoemaker@cox.net>
+Dan Johnson <computerdruid@gmail.com>
 Dana L. How <danahow@gmail.com>
 Dana L. How <how@deathvalley.cswitch.com>
 Daniel Barkalow <barkalow@iabervon.org>
@@ -18,14 +20,18 @@ David Kågedal <davidk@lysator.liu.se>
 David S. Miller <davem@davemloft.net>
 Deskin Miller <deskinm@umich.edu>
 Dirk Süsserott <newsletter@dirk.my1.cc>
+Eric S. Raymond <esr@thyrsus.com>
 Erik Faye-Lund <kusmabite@gmail.com> <kusmabite@googlemail.com>
 Fredrik Kuivinen <freku045@student.liu.se>
+Frédéric Heitzmann <frederic.heitzmann@gmail.com>
 H. Peter Anvin <hpa@bonde.sc.orionmulti.com>
 H. Peter Anvin <hpa@tazenda.sc.orionmulti.com>
 H. Peter Anvin <hpa@trantor.hos.anvin.org>
 Horst H. von Brand <vonbrand@inf.utfsm.cl>
 İsmail Dönmez <ismail@pardus.org.tr>
+Jakub Narębski <jnareb@gmail.com>
 Jay Soffian <jaysoffian+git@gmail.com>
+Jeff King <peff@peff.net> <peff@github.com>
 Joachim Berdal Haga <cjhaga@fys.uio.no>
 Johannes Sixt <j6t@kdbg.org> <johannes.sixt@telecom.at>
 Johannes Sixt <j6t@kdbg.org> <j.sixt@viscovery.net>
@@ -41,12 +47,21 @@ Junio C Hamano <gitster@pobox.com> <junio@hera.kernel.org>
 Junio C Hamano <gitster@pobox.com> <junio@kernel.org>
 Junio C Hamano <gitster@pobox.com> <junkio@cox.net>
 Karl Hasselström <kha@treskal.com>
+Kevin Leung <kevinlsk@gmail.com>
 Kent Engstrom <kent@lysator.liu.se>
 Lars Doelle <lars.doelle@on-line ! de>
 Lars Doelle <lars.doelle@on-line.de>
 Li Hong <leehong@pku.edu.cn>
+Linus Torvalds <torvalds@linux-foundation.org> <torvalds@woody.linux-foundation.org>
+Linus Torvalds <torvalds@linux-foundation.org> <torvalds@osdl.org>
+Linus Torvalds <torvalds@linux-foundation.org> <torvalds@g5.osdl.org>
+Linus Torvalds <torvalds@linux-foundation.org> <torvalds@evo.osdl.org>
+Linus Torvalds <torvalds@linux-foundation.org> <torvalds@ppc970.osdl.org>
+Linus Torvalds <torvalds@linux-foundation.org> <torvalds@ppc970.osdl.org.(none)>
 Lukas Sandström <lukass@etek.chalmers.se>
-Martin Langhoff <martin@laptop.org>
+Marc-André Lureau <marcandre.lureau@gmail.com>
+Mark Rada <marada@uwaterloo.ca>
+Martin Langhoff <martin@laptop.org> <martin@catalyst.net.nz>
 Martin von Zweigbergk <martinvonz@gmail.com> <martin.von.zweigbergk@gmail.com>
 Michael Coleman <tutufan@gmail.com>
 Michael J Gruber <git@drmicha.warpmail.net> <michaeljgruber+gmane@fastmail.fm>
@@ -63,11 +78,13 @@ Ralf Thielow <ralf.thielow@gmail.com> <ralf.thielow@googlemail.com>
 Ramsay Allan Jones <ramsay@ramsay1.demon.co.uk>
 René Scharfe <rene.scharfe@lsrfire.ath.cx>
 Robert Fitzsimons <robfitz@273k.net>
+Robert Zeh <robert.a.zeh@gmail.com>
 Sam Vilain <sam@vilain.net>
 Santi Béjar <sbejar@gmail.com>
 Sean Estabrooks <seanlkml@sympatico.ca>
 Shawn O. Pearce <spearce@spearce.org>
 Steven Grimm <koreth@midwinter.com>
+Tay Ray Chuan <rctay89@gmail.com>
 Theodore Ts'o <tytso@mit.edu>
 Thomas Rast <trast@inf.ethz.ch> <trast@student.ethz.ch>
 Tony Luck <tony.luck@intel.com>
