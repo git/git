@@ -1,10 +1,10 @@
 To: git@vger.kernel.org
 Bcc: lwn@lwn.net
-Subject: What's cooking in git.git (Dec 2012, #06; Fri, 21)
-X-master-at: b10c4add03044b7be358ff7231b9ec50016ded4b
-X-next-at: 808bd156aa134430a4d540ebae18639447253ec0
+Subject: What's cooking in git.git (Dec 2012, #07; Wed, 26)
+X-master-at: 86c3e6ed515d5e3bfca1d515c607db55ba032d71
+X-next-at: 3b93f37cbe43cae3e38334ca5dd4acf52ee3bfde
 
-What's cooking in git.git (Dec 2012, #06; Fri, 21)
+What's cooking in git.git (Dec 2012, #07; Wed, 26)
 --------------------------------------------------
 
 Here are the topics that have been cooking.  Commits prefixed with
@@ -17,237 +17,77 @@ repositories listed at
     http://git-blame.blogspot.com/p/git-public-repositories.html
 
 --------------------------------------------------
-[Graduated to "master"]
-
-* as/doc-for-devs (2012-12-16) 2 commits
-  (merged to 'next' on 2012-12-18 at ff1f37e)
- + Documentation: move support for old compilers to CodingGuidelines
- + SubmittingPatches: add convention of prefixing commit messages
-
- It might be a better idea to move the text the bottom one adds to
- the extended description from the quick checklist part.
-
- Will fast-track to the upcoming release.
-
-
-* cr/doc-checkout-branch (2012-12-18) 2 commits
-  (merged to 'next' on 2012-12-19 at e14b6c4)
- + Documentation/git-checkout.txt: document 70c9ac2 behavior
- + Documentation/git-checkout.txt: clarify usage
-
- Document the magic "git checkout <no-such-branch>" hack to create
- local branch out of a remote tracking branch that hasn't been
- documented so far.
-
- Will fast-track to the upcoming release.
-
-
-* jc/doc-diff-blobs (2012-12-18) 1 commit
-  (merged to 'next' on 2012-12-19 at 82c5000)
- + Documentation: Describe "git diff <blob> <blob>" separately
-
- "git diff <blob> <blob>" was not documented and was only hinted as
- an extension to "git diff <commit> <commit> -- <pathspec>", but
- comparison between two blobs are more special than that.  It does
- not take any pathspec to begin with.
-
- Will fast-track to the upcoming release.
-
-
-* jc/fetch-tags-doc (2012-12-13) 1 commit
-  (merged to 'next' on 2012-12-17 at 857413a)
- + fetch --tags: clarify documentation
-
- "git fetch --tags" was explained as if it were "git fetch
- --no-no-tags", which is not the case, causing confusion.
-
- Will fast-track to the upcoming release.
-
-
-* jk/avoid-mailto-invalid-in-doc (2012-12-16) 1 commit
-  (merged to 'next' on 2012-12-18 at 81dac40)
- + Documentation: don't link to example mail addresses
-
- Avoids invalid sample e-mail addresses from becoming mailto links
- in the formatted output.
-
- Will fast-track to the upcoming release.
-
-
-* jk/mailmap-cleanup (2012-12-12) 5 commits
-  (merged to 'next' on 2012-12-17 at 07c1a11)
- + contrib: update stats/mailmap script
- + .mailmap: normalize emails for Linus Torvalds
- + .mailmap: normalize emails for Jeff King
- + .mailmap: fix broken entry for Martin Langhoff
- + .mailmap: match up some obvious names/emails
-
- Update various entries in our .mailmap file.
-
- Will fast-track to the upcoming release.
-
-
-* nd/index-format-doc (2012-12-13) 1 commit
-  (merged to 'next' on 2012-12-17 at 7984924)
- + index-format.txt: clarify what is "invalid"
-
- Will fast-track to the upcoming release.
-
-
-* sl/git-svn-docs (2012-12-05) 4 commits
-  (merged to 'next' on 2012-12-07 at 5bfbb73)
- + git-svn: Note about tags.
- + git-svn: Expand documentation for --follow-parent
- + git-svn: Recommend use of structure options.
- + git-svn: Document branches with at-sign(@).
-
- Will fast-track to the upcoming release.
-
-
-* sl/readme-gplv2 (2012-12-15) 2 commits
-  (merged to 'next' on 2012-12-18 at c839810)
- + README: it does not matter who the current maintainer is
- + README: Git is released under the GPLv2, not just "the GPL"
-
- Clarify that the project as a whole is GPLv2 only, with some parts
- borrowed under different licenses that are compatible with GPLv2.
-
- Will fast-track to the upcoming release.
-
-
-* ta/api-index-doc (2012-12-16) 1 commit
-  (merged to 'next' on 2012-12-18 at a251888)
- + Remove misleading date from api-index-skel.txt
-
- Will fast-track to the upcoming release.
-
-
-* ta/new-command-howto (2012-12-21) 1 commit
-  (merged to 'next' on 2012-12-21 at 5d0f65f)
- + Move ./technical/api-command.txt to ./howto/new-command.txt
-
- Will fast-track to the upcoming release.
-
---------------------------------------------------
 [New Topics]
 
-* jc/mkstemp-more-careful-error-reporting (2012-12-18) 1 commit
- - xmkstemp(): avoid showing truncated template more carefully
+* jc/format-patch-reroll (2012-12-22) 7 commits
+ - format-patch: add --reroll-count=$N option
+ - get_patch_filename(): split into two functions
+ - get_patch_filename(): drop "just-numbers" hack
+ - get_patch_filename(): simplify function signature
+ - builtin/log.c: stop using global patch_suffix
+ - builtin/log.c: drop redundant "numbered_files" parameter from make_cover_letter()
+ - builtin/log.c: drop unused "numbered" parameter from make_cover_letter()
 
- An earlier patch to save original arguments to mkstemp() away and
- use it to report what filename we failed to create incorrectly used
- the buffer munged by failing mkstemp().
+ Teach "format-patch" to prefix v4- to its output files for the
+ fourth iteration of a patch series, to make it easier for the
+ submitter to keep separate copies for iterations.
 
- Will merge to 'next'.
-
-
-* jc/maint-test-portability (2012-12-19) 3 commits
- - t4014: fix arguments to grep
- - t9502: do not assume GNU tar
- - t0200: "locale" may not exist
- (this branch is used by jc/test-portability.)
-
- Minor test fixes noticed while running our tests on OpenBSD 5.2,
- applicable to 'maint'.
-
- Will merge to 'next'.
+ Needs tests and documentation updates.
 
 
-* jc/test-portability (2012-12-19) 3 commits
- - t9020: use configured Python to run the test helper
- - t3600: Avoid "cp -a", which is a GNUism
- - Merge branch 'jc/maint-test-portability' into 'jc/test-portability'
- (this branch uses jc/maint-test-portability.)
+* ms/subtree-fixlets (2012-12-22) 2 commits
+  (merged to 'next' on 2012-12-26 at 1cb26eb)
+ + git-subtree: fix typo in manpage
+ + git-subtree: ignore git-subtree executable
 
- The remainder of jc/maint-test-portability, applicable to 'master'.
+ Will cook in 'next'.
+
+
+* mz/pick-unborn (2012-12-23) 2 commits
+ - learn to pick/revert into unborn branch
+ - tests: move test_cmp_rev to test-lib-functions
 
  Will merge to 'next'.
 
 
-* jc/maint-fnmatch-old-style-definition (2012-12-19) 1 commit
- - compat/fnmatch: update old-style definition to ANSI
+* nd/retire-fnmatch (2012-12-22) 8 commits
+ - wildmatch: advance faster in <asterisk> + <literal> patterns
+ - wildmatch: make a special case for "*/" with FNM_PATHNAME
+ - Makefile: add USE_WILDMATCH to use wildmatch as fnmatch
+ - test-wildmatch: add "perf" command to compare wildmatch and fnmatch
+ - wildmatch: support "no FNM_PATHNAME" mode
+ - wildmatch: make dowild() take arbitrary flags
+ - wildmatch: rename constants and update prototype
+ - compat/fnmatch: respect NO_FNMATCH* even on glibc
+ (this branch uses nd/wildmatch.)
 
- Update old-style function definition "int foo(bar) int bar; {}"
- to "int foo(int bar) {}".
-
- Will merge to 'next'.
-
-
-* jk/pathspec-literal (2012-12-19) 1 commit
- - add global --literal-pathspecs option
-
- Allow scripts to feed literal paths to commands that take
- pathspecs, by disabling wildcard globbing.
-
- Will merge to 'next'.
+ Replace our use of fnmatch(3) with a more feature-rich wildmatch.
 
 
-* da/p4merge-mktemp (2012-12-21) 1 commit
- - mergetools/p4merge: Honor $TMPDIR for the /dev/null placeholder
+* jc/test-cvs-no-init-in-existing-dir (2012-12-24) 1 commit
+  (merged to 'next' on 2012-12-26 at 3b93f37)
+ + t9200: let "cvs init" create the test repository
 
- Create an empty file in $TMPDIR instead of using an empty file in
- the local directory (but why?).
-
-
-* er/python-version-requirements (2012-12-20) 2 commits
- - (squash???) remote-helpers/git/__init__.py needs sys before checking sys.hexversion
- - Python scripts: check minimum compatible version after auditing
-
- Will merge to 'next' after getting an Ack on the top-squash.
+ Will cook in 'next'.
 
 
-* jc/unpack-file-in-tmpdir (2012-12-19) 1 commit
- - unpack-file: allow output to be in $TMPDIR
-
- Throw-away "how about this" to teach unpack-file to use $TMPDIR to
- store its output.
-
- Will discard.
-
-
-* mb/gitweb-highlight-link-target (2012-12-20) 1 commit
- - Highlight the link target line in Gitweb using CSS
-
- Expecting a reroll.
-
-
-* mz/oneway-merge-wo-u-no-lstat (2012-12-20) 1 commit
- - oneway_merge(): only lstat() when told to update worktree
-
- Optimize "read-tree -m <tree-ish>" without "-u".
+* os/gitweb-highlight-uncaptured (2012-12-26) 1 commit
+ - gitweb: fix error when highlight is enabled
 
  Will merge to 'next'.
 
 
-* jk/repack-ref-racefix (2012-12-21) 1 commit
- - refs: do not use cached refs in repack_without_ref
+* so/prompt-command (2012-12-26) 1 commit
+  (merged to 'next' on 2012-12-26 at 27c5683)
+ + make __git_ps1 accept a third parameter in pcmode
 
- Race-fix for pack-refs running in parallel to ref creation.
+ Gives the same degree of customizability to the new prompt command
+ mode users as the command substitution mode has.
 
- Will merge to 'next'.
-
-
-* rb/http-cert-cred-no-username-prompt (2012-12-21) 1 commit
- - http.c: Avoid username prompt for certifcate credentials
-
- There is no need to ask for username if the authentication is done
- by certificate identity.
-
- Will merge to 'next'.
+ Will fast-track to 'master' before 1.8.1 final.
 
 --------------------------------------------------
 [Stalled]
-
-* jc/merge-blobs (2012-12-13) 5 commits
- . [broken] wip to fix d/f conflicts
- - merge-tree: add comments to clarify what these functions are doing
- - merge-tree: lose unused "resolve_directories"
- - merge-tree: lose unused "flags" from merge_list
- - Which merge_file() function do you mean?
-
- A beginning of a new merge strategy based on the disused merge-tree
- proof-of-concept code.
-
 
 * jc/doc-maintainer (2012-11-27) 1 commit
  - update "howto maintain git"
@@ -400,16 +240,6 @@ repositories listed at
  Need to address the installation half if this is to be any useful.
 
 
-* mk/maint-graph-infinity-loop (2012-09-25) 1 commit
- - graph.c: infinite loop in git whatchanged --graph -m
-
- The --graph code fell into infinite loop when asked to do what the
- code did not expect ;-)
-
- Anybody who worked on "--graph" wants to comment?
- Stalled mostly due to lack of responses.
-
-
 * jc/add-delete-default (2012-08-13) 1 commit
  - git add: notice removal of tracked paths by default
 
@@ -443,27 +273,132 @@ repositories listed at
 --------------------------------------------------
 [Cooking]
 
+* jc/merge-blobs (2012-12-26) 5 commits
+ - merge-tree: fix d/f conflicts
+ - merge-tree: add comments to clarify what these functions are doing
+ - merge-tree: lose unused "resolve_directories"
+ - merge-tree: lose unused "flags" from merge_list
+ - Which merge_file() function do you mean?
+
+ A beginning of a new merge strategy based on the disused merge-tree
+ proof-of-concept code.
+
+
+* mk/maint-graph-infinity-loop (2012-09-25) 1 commit
+  (merged to 'next' on 2012-12-26 at 2ff59ab)
+ + graph.c: infinite loop in git whatchanged --graph -m
+
+ The --graph code fell into infinite loop when asked to do what the
+ code did not expect ;-)
+
+
+* jc/mkstemp-more-careful-error-reporting (2012-12-18) 1 commit
+  (merged to 'next' on 2012-12-22 at 18cdaf0)
+ + xmkstemp(): avoid showing truncated template more carefully
+
+ An earlier patch to save original arguments to mkstemp() away and
+ use it to report what filename we failed to create incorrectly used
+ the buffer munged by failing mkstemp().
+
+
+* jc/maint-test-portability (2012-12-19) 3 commits
+  (merged to 'next' on 2012-12-22 at daeed53)
+ + t4014: fix arguments to grep
+ + t9502: do not assume GNU tar
+ + t0200: "locale" may not exist
+ (this branch is used by jc/test-portability.)
+
+ Minor test fixes noticed while running our tests on OpenBSD 5.2,
+ applicable to 'maint'.
+
+
+* jc/test-portability (2012-12-19) 3 commits
+  (merged to 'next' on 2012-12-22 at 123041b)
+ + t9020: use configured Python to run the test helper
+ + t3600: Avoid "cp -a", which is a GNUism
+ + Merge branch 'jc/maint-test-portability' into 'jc/test-portability'
+ (this branch uses jc/maint-test-portability.)
+
+ The remainder of jc/maint-test-portability, applicable to 'master'.
+
+
+* jc/maint-fnmatch-old-style-definition (2012-12-19) 1 commit
+  (merged to 'next' on 2012-12-22 at 540df2c)
+ + compat/fnmatch: update old-style definition to ANSI
+
+ Update old-style function definition "int foo(bar) int bar; {}"
+ to "int foo(int bar) {}".
+
+
+* jk/pathspec-literal (2012-12-19) 1 commit
+  (merged to 'next' on 2012-12-22 at c794bd6)
+ + add global --literal-pathspecs option
+
+ Allow scripts to feed literal paths to commands that take
+ pathspecs, by disabling wildcard globbing.
+
+
+* da/p4merge-mktemp (2012-12-21) 1 commit
+  (merged to 'next' on 2012-12-26 at bb680a9)
+ + mergetools/p4merge: Honor $TMPDIR for the /dev/null placeholder
+
+ Create an empty file in $TMPDIR instead of using an empty file in
+ the local directory.
+
+
+* er/python-version-requirements (2012-12-25) 1 commit
+ - Python scripts: check minimum compatible version after auditing
+
+ Expecting a reroll.
+
+
+* mb/gitweb-highlight-link-target (2012-12-20) 1 commit
+ - Highlight the link target line in Gitweb using CSS
+
+ Expecting a reroll.
+
+
+* mz/oneway-merge-wo-u-no-lstat (2012-12-20) 1 commit
+  (merged to 'next' on 2012-12-22 at 87bd30e)
+ + oneway_merge(): only lstat() when told to update worktree
+
+ Optimize "read-tree -m <tree-ish>" without "-u".
+
+
+* jk/repack-ref-racefix (2012-12-21) 1 commit
+  (merged to 'next' on 2012-12-22 at 03e1ca9)
+ + refs: do not use cached refs in repack_without_ref
+
+ Race-fix for pack-refs running in parallel to ref creation.
+
+
+* rb/http-cert-cred-no-username-prompt (2012-12-21) 1 commit
+  (merged to 'next' on 2012-12-22 at 9fc28ed)
+ + http.c: Avoid username prompt for certifcate credentials
+
+ It is wrong to ask for username if the authentication is done by
+ certificate identity.
+
+
 * wk/submodule-update-remote (2012-12-19) 3 commits
- - submodule add: If --branch is given, record it in .gitmodules
- - submodule update: add --remote for submodule's upstream changes
- - submodule: add get_submodule_config helper funtion
+  (merged to 'next' on 2012-12-22 at 7ddf897)
+ + submodule add: If --branch is given, record it in .gitmodules
+ + submodule update: add --remote for submodule's upstream changes
+ + submodule: add get_submodule_config helper funtion
 
  The beginning of 'integrate with the tip of the remote branch, not
  the commit recorded in the superproject gitlink' support.
 
- Will merge to 'next'.
-
 
 * cc/no-gitk-build-dependency (2012-12-18) 3 commits
- - Makefile: replace "echo 1>..." with "echo >..."
- - Makefile: detect when PYTHON_PATH changes
- - Makefile: remove tracking of TCLTK_PATH
+  (merged to 'next' on 2012-12-22 at da7b2cf)
+ + Makefile: replace "echo 1>..." with "echo >..."
+ + Makefile: detect when PYTHON_PATH changes
+ + Makefile: remove tracking of TCLTK_PATH
 
  Remove leftover bits from an earlier change to move gitk in its own
  subdirectory.  Reimplementing the dependency tracking rules needs
  to be done in gitk history separately.
-
- Will merge to 'next'.
 
 
 * jc/format-color-auto (2012-12-17) 2 commits
@@ -478,11 +413,13 @@ repositories listed at
 
 
 * ss/svn-prompt (2012-12-17) 3 commits
- - git-svn, perl/Git.pm: extend and use Git->prompt method for querying users
- - perl/Git.pm: Honor SSH_ASKPASS as fallback if GIT_ASKPASS is not set
- - git-svn, perl/Git.pm: add central method for prompting passwords
+  (merged to 'next' on 2012-12-26 at 1012ae2)
+ + git-svn, perl/Git.pm: extend and use Git->prompt method for querying users
+ + perl/Git.pm: Honor SSH_ASKPASS as fallback if GIT_ASKPASS is not set
+ + git-svn, perl/Git.pm: add central method for prompting passwords
 
- Waiting for an Ack from the area export.
+ Tweak the way "git svn" asks for password to be in line with the
+ rest of the system, so that the same SSH/GIT_ASKPASS can be used.
 
 
 * zk/clean-report-failure (2012-12-17) 1 commit
@@ -493,6 +430,8 @@ repositories listed at
  removed after recursing into a directory, which makes the output
  confusing and even wrong.
 
+ Expecting a reroll.
+
 
 * mp/complete-paths (2012-12-21) 1 commit
  - git-completion.bash: add support for path completion
@@ -502,7 +441,7 @@ repositories listed at
  would not want to add an unmodified path).  Teach it to use a more
  git-aware logic to enumerate only relevant ones.
 
- Waiting for area-experts review.
+ Waiting for area-experts' review.
 
 
 * ja/directory-attrs (2012-12-17) 1 commit
@@ -532,13 +471,14 @@ repositories listed at
 
 
 * dm/port (2012-12-19) 4 commits
- - git-compat-util.h: do not #include <sys/param.h> by default
- - Generalize the inclusion of strings.h
- - Detect when the passwd struct is missing pw_gecos
- - Support builds when sys/param.h is missing
+  (merged to 'next' on 2012-12-22 at 8adc198)
+ + git-compat-util.h: do not #include <sys/param.h> by default
+ + Generalize the inclusion of strings.h
+ + Detect when the passwd struct is missing pw_gecos
+ + Support builds when sys/param.h is missing
  (this branch is used by mk/qnx.)
 
- Will merge to 'next'.
+ Add a few more knobs for new platform ports can tweak.
 
 
 * jk/complete-commit-c (2012-12-15) 1 commit
@@ -552,50 +492,37 @@ repositories listed at
 
 
 * jk/error-const-return (2012-12-15) 2 commits
- - silence some -Wuninitialized false positives
- - make error()'s constant return value more visible
+  (merged to 'next' on 2012-12-22 at bf2b1cd)
+ + silence some -Wuninitialized false positives
+ + make error()'s constant return value more visible
 
  Help compilers' flow analysis by making it more explicit that
  error() always returns -1, to reduce false "variable used
  uninitialized" warnings.  Looks somewhat ugly but not too much.
 
- Will merge to 'next'.
-
 
 * mk/qnx (2012-12-19) 2 commits
- - Port to QNX
- - Make lock local to fetch_pack
+  (merged to 'next' on 2012-12-22 at 0473197)
+ + Port to QNX
+ + Make lock local to fetch_pack
  (this branch uses dm/port.)
 
  Port to QNX; we may want to rebase this on top of dm/port topic as
  it also wants to use the HAVE_STRINGS_H mechanism it introduces.
 
- Will merge to 'next'.
-
-
-* rj/maint-cygwin-say-color (2012-12-15) 1 commit
- - tests: Allow customization of how say_color() prints
-
- Even though I do not think of a cleaner way to do this, I am not
- happy with the way how $GIT_TEST_PRINT and $GIT_TEST_PRINT_LN are
- interpolated into the command line with token splitting at $IFS.
-
- Will discard, per discussion with the author.
-
 
 * as/test-tweaks (2012-12-20) 7 commits
- - tests: paint unexpectedly fixed known breakages in bold red
- - tests: test the test framework more thoroughly
- - tests: refactor mechanics of testing in a sub test-lib
- - tests: change info messages from yellow/brown to cyan
- - tests: paint skipped tests in blue
- - tests: paint known breakages in yellow
- - tests: test number comes first in 'not ok $count - $message'
+  (merged to 'next' on 2012-12-22 at 7312c6c)
+ + tests: paint unexpectedly fixed known breakages in bold red
+ + tests: test the test framework more thoroughly
+ + tests: refactor mechanics of testing in a sub test-lib
+ + tests: change info messages from yellow/brown to cyan
+ + tests: paint skipped tests in blue
+ + tests: paint known breakages in yellow
+ + tests: test number comes first in 'not ok $count - $message'
 
  Various minor tweaks to the test framework to paint its output
  lines in colors that match what they mean better.
-
- Will merge to 'next'.
 
 
 * sp/shortlog-missing-lf (2012-12-11) 2 commits
@@ -610,7 +537,9 @@ repositories listed at
  Will cook in 'next'.
 
 
-* ap/log-mailmap (2012-12-15) 7 commits
+* ap/log-mailmap (2012-12-26) 9 commits
+ - log: add log.mailmap configuration option
+ - log: grep author/committer using mailmap
  - test: Add test for --use-mailmap option
  - log: Add --use-mailmap option
  - pretty: Use mailmap to display username and email
@@ -622,7 +551,8 @@ repositories listed at
  Clean up various codepaths around mailmap and teach the "log"
  machinery to use it.
 
- Will merge to 'next' after reading it over once again.
+ I think this is almost ready for 'next' with minor fix-ups to avoid
+ unnecessary copying.
 
 
 * jc/fetch-ignore-symref (2012-12-11) 1 commit
@@ -854,6 +784,7 @@ repositories listed at
  + Import wildmatch from rsync
  + ctype: support iscntrl, ispunct, isxdigit and isprint
  + ctype: make sane_ctype[] const array
+ (this branch is used by nd/retire-fnmatch.)
 
  Allows pathname patterns in .gitignore and .gitattributes files
  with double-asterisks "foo/**/bar" to match any number of directory
@@ -883,3 +814,24 @@ repositories listed at
  Require "-f" for push to update a tag, even if it is a fast-forward.
 
  Will cook in 'next'.
+
+--------------------------------------------------
+[Discarded]
+
+* jc/unpack-file-in-tmpdir (2012-12-19) 1 commit
+ . unpack-file: allow output to be in $TMPDIR
+
+ Throw-away "how about this" to teach unpack-file to use $TMPDIR to
+ store its output.
+
+ Discarded, as da/p4merge-mktemp was rewritten not to require mktemp.
+
+
+* rj/maint-cygwin-say-color (2012-12-15) 1 commit
+ . tests: Allow customization of how say_color() prints
+
+ Even though I do not think of a cleaner way to do this, I am not
+ happy with the way how $GIT_TEST_PRINT and $GIT_TEST_PRINT_LN are
+ interpolated into the command line with token splitting at $IFS.
+
+ Discarded, per discussion with the author.
