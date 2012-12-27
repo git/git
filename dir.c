@@ -602,22 +602,26 @@ int match_pathname(const char *pathname, int pathlen,
 	return fnmatch_icase(pattern, name, FNM_PATHNAME) == 0;
 }
 
-/* Scan the list and let the last match determine the fate.
- * Return 1 for exclude, 0 for include and -1 for undecided.
+/*
+ * Scan the given exclude list in reverse to see whether pathname
+ * should be ignored.  The first match (i.e. the last on the list), if
+ * any, determines the fate.  Returns the exclude_list element which
+ * matched, or NULL for undecided.
  */
-int is_excluded_from_list(const char *pathname,
-			  int pathlen, const char *basename, int *dtype,
-			  struct exclude_list *el)
+static struct exclude *last_exclude_matching_from_list(const char *pathname,
+						       int pathlen,
+						       const char *basename,
+						       int *dtype,
+						       struct exclude_list *el)
 {
 	int i;
 
 	if (!el->nr)
-		return -1;	/* undefined */
+		return NULL;	/* undefined */
 
 	for (i = el->nr - 1; 0 <= i; i--) {
 		struct exclude *x = el->excludes[i];
 		const char *exclude = x->pattern;
-		int to_exclude = x->flags & EXC_FLAG_NEGATIVE ? 0 : 1;
 		int prefix = x->nowildcardlen;
 
 		if (x->flags & EXC_FLAG_MUSTBEDIR) {
@@ -632,7 +636,7 @@ int is_excluded_from_list(const char *pathname,
 					   pathlen - (basename - pathname),
 					   exclude, prefix, x->patternlen,
 					   x->flags))
-				return to_exclude;
+				return x;
 			continue;
 		}
 
@@ -640,8 +644,23 @@ int is_excluded_from_list(const char *pathname,
 		if (match_pathname(pathname, pathlen,
 				   x->base, x->baselen ? x->baselen - 1 : 0,
 				   exclude, prefix, x->patternlen, x->flags))
-			return to_exclude;
+			return x;
 	}
+	return NULL; /* undecided */
+}
+
+/*
+ * Scan the list and let the last match determine the fate.
+ * Return 1 for exclude, 0 for include and -1 for undecided.
+ */
+int is_excluded_from_list(const char *pathname,
+			  int pathlen, const char *basename, int *dtype,
+			  struct exclude_list *el)
+{
+	struct exclude *exclude;
+	exclude = last_exclude_matching_from_list(pathname, pathlen, basename, dtype, el);
+	if (exclude)
+		return exclude->flags & EXC_FLAG_NEGATIVE ? 0 : 1;
 	return -1; /* undecided */
 }
 
