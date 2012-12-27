@@ -685,8 +685,8 @@ void path_exclude_check_clear(struct path_exclude_check *check)
  * A path to a directory known to be excluded is left in check->path to
  * optimize for repeated checks for files in the same excluded directory.
  */
-int path_excluded(struct path_exclude_check *check,
-		  const char *name, int namelen, int *dtype)
+int is_path_excluded(struct path_exclude_check *check,
+		     const char *name, int namelen, int *dtype)
 {
 	int i;
 	struct strbuf *path = &check->path;

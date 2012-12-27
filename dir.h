@@ -123,7 +123,7 @@ struct path_exclude_check {
 };
 extern void path_exclude_check_init(struct path_exclude_check *, struct dir_struct *);
 extern void path_exclude_check_clear(struct path_exclude_check *);
-extern int path_excluded(struct path_exclude_check *, const char *, int namelen, int *dtype);
+extern int is_path_excluded(struct path_exclude_check *, const char *, int namelen, int *dtype);
 
 
 extern int add_excludes_from_file_to_list(const char *fname, const char *base, int baselen,
