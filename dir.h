@@ -1,6 +1,8 @@
 #ifndef DIR_H
 #define DIR_H
 
+/* See Documentation/technical/api-directory-listing.txt */
+
 #include "strbuf.h"
 
 struct dir_entry {
@@ -13,6 +15,12 @@ struct dir_entry {
 #define EXC_FLAG_MUSTBEDIR 8
 #define EXC_FLAG_NEGATIVE 16
 
+/*
+ * Each .gitignore file will be parsed into patterns which are then
+ * appended to the relevant exclude_list (either EXC_DIRS or
+ * EXC_FILE).  exclude_lists are also used to represent the list of
+ * --exclude values passed via CLI args (EXC_CMDL).
+ */
 struct exclude_list {
 	int nr;
 	int alloc;
@@ -26,9 +34,15 @@ struct exclude_list {
 	} **excludes;
 };
 
+/*
+ * The contents of the per-directory exclude files are lazily read on
+ * demand and then cached in memory, one per exclude_stack struct, in
+ * order to avoid opening and parsing each one every time that
+ * directory is traversed.
+ */
 struct exclude_stack {
-	struct exclude_stack *prev;
-	char *filebuf;
+	struct exclude_stack *prev; /* the struct exclude_stack for the parent directory */
+	char *filebuf; /* remember pointer to per-directory exclude file contents so we can free() */
 	int baselen;
 	int exclude_ix;
 };
@@ -59,6 +73,14 @@ struct dir_struct {
 #define EXC_DIRS 1
 #define EXC_FILE 2
 
+	/*
+	 * Temporary variables which are used during loading of the
+	 * per-directory exclude lists.
+	 *
+	 * exclude_stack points to the top of the exclude_stack, and
+	 * basebuf contains the full path to the current
+	 * (sub)directory in the traversal.
+	 */
 	struct exclude_stack *exclude_stack;
 	char basebuf[PATH_MAX];
 };

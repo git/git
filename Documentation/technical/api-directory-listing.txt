@@ -9,8 +9,11 @@ Data structure
 --------------
 
 `struct dir_struct` structure is used to pass directory traversal
-options to the library and to record the paths discovered.  The notable
-options are:
+options to the library and to record the paths discovered.  A single
+`struct dir_struct` is used regardless of whether or not the traversal
+recursively descends into subdirectories.
+
+The notable options are:
 
 `exclude_per_dir`::
 
@@ -39,7 +42,7 @@ options are:
 	If set, recurse into a directory that looks like a git
 	directory.  Otherwise it is shown as a directory.
 
-The result of the enumeration is left in these fields::
+The result of the enumeration is left in these fields:
 
 `entries[]`::
 

@@ -2,6 +2,8 @@
  * This handles recursive filename detection with exclude
  * files, index knowledge etc..
  *
+ * See Documentation/technical/api-directory-listing.txt
+ *
  * Copyright (C) Linus Torvalds, 2005-2006
  *		 Junio Hamano, 2005-2006
  */
@@ -476,6 +478,10 @@ void add_excludes_from_file(struct dir_struct *dir, const char *fname)
 		die("cannot use %s as an exclude file", fname);
 }
 
+/*
+ * Loads the per-directory exclude list for the substring of base
+ * which has a char length of baselen.
+ */
 static void prep_exclude(struct dir_struct *dir, const char *base, int baselen)
 {
 	struct exclude_list *el;
@@ -486,7 +492,7 @@ static void prep_exclude(struct dir_struct *dir, const char *base, int baselen)
 	    (baselen + strlen(dir->exclude_per_dir) >= PATH_MAX))
 		return; /* too long a path -- ignore */
 
-	/* Pop the ones that are not the prefix of the path being checked. */
+	/* Pop the directories that are not the prefix of the path being checked. */
 	el = &dir->exclude_list[EXC_DIRS];
 	while ((stk = dir->exclude_stack) != NULL) {
 		if (stk->baselen <= baselen &&
