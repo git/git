@@ -185,7 +185,7 @@ GNU_ROFF=YesPlease'
 # Platform hack
 if test -z "${make:+set}" && {
 	test -x /usr/local/bin/gmake ||
-	test -x /usr/pkg/bin/gmake
+	test -x /usr/pkg/bin/gmake ||
 	test -x /usr/bin/gmake
 }
 then
