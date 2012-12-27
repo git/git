@@ -113,8 +113,8 @@ extern int match_pathname(const char *, int,
 			  const char *, int, int, int);
 
 /*
- * The excluded() API is meant for callers that check each level of leading
- * directory hierarchies with excluded() to avoid recursing into excluded
+ * The is_excluded() API is meant for callers that check each level of leading
+ * directory hierarchies with is_excluded() to avoid recursing into excluded
  * directories.  Callers that do not do so should use this API instead.
  */
 struct path_exclude_check {

@@ -284,7 +284,7 @@ static struct match_attr *parse_attr_line(const char *line, const char *src,
  * (reading the file from top to bottom), .gitattribute of the root
  * directory (again, reading the file from top to bottom) down to the
  * current directory, and then scan the list backwards to find the first match.
- * This is exactly the same as what excluded() does in dir.c to deal with
+ * This is exactly the same as what is_excluded() does in dir.c to deal with
  * .gitignore
  */
 

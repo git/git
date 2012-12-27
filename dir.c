@@ -645,7 +645,7 @@ int is_excluded_from_list(const char *pathname,
 	return -1; /* undecided */
 }
 
-static int excluded(struct dir_struct *dir, const char *pathname, int *dtype_p)
+static int is_excluded(struct dir_struct *dir, const char *pathname, int *dtype_p)
 {
 	int pathlen = strlen(pathname);
 	int st;
@@ -695,7 +695,7 @@ int is_path_excluded(struct path_exclude_check *check,
 	/*
 	 * we allow the caller to pass namelen as an optimization; it
 	 * must match the length of the name, as we eventually call
-	 * excluded() on the whole name string.
+	 * is_excluded() on the whole name string.
 	 */
 	if (namelen < 0)
 		namelen = strlen(name);
@@ -712,7 +712,7 @@ int is_path_excluded(struct path_exclude_check *check,
 
 		if (ch == '/') {
 			int dt = DT_DIR;
-			if (excluded(check->dir, path->buf, &dt))
+			if (is_excluded(check->dir, path->buf, &dt))
 				return 1;
 		}
 		strbuf_addch(path, ch);
@@ -721,7 +721,7 @@ int is_path_excluded(struct path_exclude_check *check,
 	/* An entry in the index; cannot be a directory with subentries */
 	strbuf_setlen(path, 0);
 
-	return excluded(check->dir, name, dtype);
+	return is_excluded(check->dir, name, dtype);
 }
 
 static struct dir_entry *dir_entry_new(const char *pathname, int len)
@@ -1021,7 +1021,7 @@ static enum path_treatment treat_one_path(struct dir_struct *dir,
 					  const struct path_simplify *simplify,
 					  int dtype, struct dirent *de)
 {
-	int exclude = excluded(dir, path->buf, &dtype);
+	int exclude = is_excluded(dir, path->buf, &dtype);
 	if (exclude && (dir->flags & DIR_COLLECT_IGNORED)
 	    && exclude_matches_pathspec(path->buf, path->len, simplify))
 		dir_add_ignored(dir, path->buf, path->len);
