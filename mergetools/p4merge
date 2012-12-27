@@ -1,29 +1,21 @@
 diff_cmd () {
+	empty_file=
+
 	# p4merge does not like /dev/null
-	rm_local=
-	rm_remote=
 	if test "/dev/null" = "$LOCAL"
 	then
-		LOCAL="./p4merge-dev-null.LOCAL.$$"
-		>"$LOCAL"
-		rm_local=true
+		LOCAL="$(create_empty_file)"
 	fi
 	if test "/dev/null" = "$REMOTE"
 	then
-		REMOTE="./p4merge-dev-null.REMOTE.$$"
-		>"$REMOTE"
-		rm_remote=true
+		REMOTE="$(create_empty_file)"
 	fi
 
 	"$merge_tool_path" "$LOCAL" "$REMOTE"
 
-	if test -n "$rm_local"
+	if test -n "$empty_file"
 	then
-		rm -f "$LOCAL"
-	fi
-	if test -n "$rm_remote"
-	then
-		rm -f "$REMOTE"
+		rm -f "$empty_file"
 	fi
 }
 
@@ -32,4 +24,11 @@ merge_cmd () {
 	$base_present || >"$BASE"
 	"$merge_tool_path" "$BASE" "$LOCAL" "$REMOTE" "$MERGED"
 	check_unchanged
+}
+
+create_empty_file () {
+	empty_file="${TMPDIR:-/tmp}/git-difftool-p4merge-empty-file.$$"
+	>"$empty_file"
+
+	printf "$empty_file"
 }
