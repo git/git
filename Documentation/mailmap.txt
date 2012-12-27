@@ -46,7 +46,7 @@ Jane Doe         <jane@desktop.(none)>
 Joe R. Developer <joe@example.com>
 ------------
 
-Note how there is no need for an entry for <jane@laptop.(none)>, because the
+Note how there is no need for an entry for `<jane@laptop.(none)>`, because the
 real name of that author is already correct.
 
 Example 2: Your repository contains commits from the following
