@@ -664,24 +664,44 @@ int is_excluded_from_list(const char *pathname,
 	return -1; /* undecided */
 }
 
-static int is_excluded(struct dir_struct *dir, const char *pathname, int *dtype_p)
+/*
+ * Loads the exclude lists for the directory containing pathname, then
+ * scans all exclude lists to determine whether pathname is excluded.
+ * Returns the exclude_list element which matched, or NULL for
+ * undecided.
+ */
+static struct exclude *last_exclude_matching(struct dir_struct *dir,
+					     const char *pathname,
+					     int *dtype_p)
 {
 	int pathlen = strlen(pathname);
 	int st;
+	struct exclude *exclude;
 	const char *basename = strrchr(pathname, '/');
 	basename = (basename) ? basename+1 : pathname;
 
 	prep_exclude(dir, pathname, basename-pathname);
 	for (st = EXC_CMDL; st <= EXC_FILE; st++) {
-		switch (is_excluded_from_list(pathname, pathlen,
-					      basename, dtype_p,
-					      &dir->exclude_list[st])) {
-		case 0:
-			return 0;
-		case 1:
-			return 1;
-		}
+		exclude = last_exclude_matching_from_list(
+			pathname, pathlen, basename, dtype_p,
+			&dir->exclude_list[st]);
+		if (exclude)
+			return exclude;
 	}
+	return NULL;
+}
+
+/*
+ * Loads the exclude lists for the directory containing pathname, then
+ * scans all exclude lists to determine whether pathname is excluded.
+ * Returns 1 if true, otherwise 0.
+ */
+static int is_excluded(struct dir_struct *dir, const char *pathname, int *dtype_p)
+{
+	struct exclude *exclude =
+		last_exclude_matching(dir, pathname, dtype_p);
+	if (exclude)
+		return exclude->flags & EXC_FLAG_NEGATIVE ? 0 : 1;
 	return 0;
 }
 
