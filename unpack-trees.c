@@ -1153,7 +1153,7 @@ int unpack_trees(unsigned len, struct tree_desc *t, struct unpack_trees_options 
 		*o->dst_index = o->result;
 
 done:
-	free_excludes(&el);
+	clear_exclude_list(&el);
 	if (o->path_exclude_check) {
 		path_exclude_check_clear(o->path_exclude_check);
 		free(o->path_exclude_check);

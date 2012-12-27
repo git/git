@@ -400,7 +400,11 @@ static void *read_skip_worktree_file_from_index(const char *path, size_t *size)
 	return data;
 }
 
-void free_excludes(struct exclude_list *el)
+/*
+ * Frees memory within el which was allocated for exclude patterns and
+ * the file buffer.  Does not free el itself.
+ */
+void clear_exclude_list(struct exclude_list *el)
 {
 	int i;
 

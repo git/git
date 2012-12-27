@@ -135,7 +135,7 @@ extern void add_excludes_from_file(struct dir_struct *, const char *fname);
 extern void parse_exclude_pattern(const char **string, int *patternlen, int *flags, int *nowildcardlen);
 extern void add_exclude(const char *string, const char *base,
 			int baselen, struct exclude_list *el);
-extern void free_excludes(struct exclude_list *el);
+extern void clear_exclude_list(struct exclude_list *el);
 extern int file_exists(const char *);
 
 extern int is_inside_dir(const char *dir);
