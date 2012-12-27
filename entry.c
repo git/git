@@ -136,6 +136,126 @@ static int streaming_write_entry(const struct cache_entry *ce, char *path,
 	return result;
 }
 
+/*
+ * Does 'match' match the given name?
+ * A match is found if
+ *
+ * (1) the 'match' string is leading directory of 'name', or
+ * (2) the 'match' string is exactly the same as 'name'.
+ *
+ * and the return value tells which case it was.
+ *
+ * It returns 0 when there is no match.
+ *
+ * Preserved and simplified from dir.c for use here (without glob special matching)
+ */
+static int match_one(const char *match, const char *name, int namelen)
+{
+	int matchlen;
+
+	/* If the match was just the prefix, we matched */
+	if (!*match)
+		return MATCHED_RECURSIVELY;
+
+	if (ignore_case) {
+		for (;;) {
+			unsigned char c1 = tolower(*match);
+			unsigned char c2 = tolower(*name);
+			if (c1 == '\0' )
+				break;
+			if (c1 != c2)
+				return 0;
+			match++;
+			name++;
+			namelen--;
+		}
+		/* We don't match the matchstring exactly, */
+		matchlen = strlen(match);
+		if (strncmp_icase(match, name, matchlen))
+			return 0;
+	} else {
+		for (;;) {
+			unsigned char c1 = *match;
+			unsigned char c2 = *name;
+			if (c1 == '\0' )
+				break;
+			if (c1 != c2)
+				return 0;
+			match++;
+			name++;
+			namelen--;
+		}
+		/* We don't match the matchstring exactly, */
+		matchlen = strlen(match);
+		if (strncmp(match, name, matchlen))
+			return 0;
+	}
+
+	if (namelen == matchlen)
+		return MATCHED_EXACTLY;
+	if (match[matchlen-1] == '/' || name[matchlen] == '/')
+		return MATCHED_RECURSIVELY;
+	return 0;
+}
+
+static enum git_target_type get_symlink_type(const char *filepath, const char *symlinkpath)
+{
+	/* For certain O/S and file-systems, symlinks need to know before-hand whether it
+	 * is a directory or a file being pointed to.
+	 *
+	 * This allows us to use index information for relative paths that lie
+	 * within the working directory.
+	 *
+	 * This function is not interested in interrogating the file-system.
+	 */
+	char *sanitized;
+	const char *fpos, *last;
+	enum git_target_type ret;
+	int len, pos;
+
+	/* This is an absolute path, so git doesn't know.
+	 */
+	if (is_absolute_path(symlinkpath))
+		return GIT_TARGET_UNKNOWN;
+
+	/* Work on a sanitized version of the path that can be
+	 * matched against the index.
+	 */
+	last = NULL;
+	for (fpos = filepath; *fpos; ++fpos)
+		if (is_dir_sep(*fpos))
+			last = fpos;
+
+	if (last) {
+		len = (1+last-filepath);
+		sanitized = xmalloc(len + strlen(symlinkpath)+1);
+		memcpy(sanitized, filepath, 1+last-filepath);
+	} else {
+		len = 0;
+		sanitized = xmalloc(strlen(symlinkpath)+1);
+	}
+	strcpy(sanitized+len, symlinkpath);
+
+	ret = GIT_TARGET_UNKNOWN;
+	if (!normalize_path_copy(sanitized, sanitized)) {
+		for (pos = 0; pos < active_nr; pos++) {
+			struct cache_entry *ce = active_cache[pos];
+			switch (match_one(sanitized, ce->name, ce_namelen(ce))) {
+				case MATCHED_EXACTLY:
+				case MATCHED_FNMATCH:
+					ret = GIT_TARGET_ISFILE;
+					break;
+				case MATCHED_RECURSIVELY:
+					ret = GIT_TARGET_ISDIR;
+					break;
+			}
+		}
+	}
+
+	free(sanitized);
+	return ret;
+}
+
 static int write_entry(struct cache_entry *ce,
 		       char *path, const struct checkout *state, int to_tempfile)
 {
@@ -165,7 +285,10 @@ static int write_entry(struct cache_entry *ce,
 				path, sha1_to_hex(ce->sha1));
 
 		if (ce_mode_s_ifmt == S_IFLNK && has_symlinks && !to_tempfile) {
-			ret = symlink(new, path);
+			/* Note that symlink_with_type is a macro, and that for filesystems that
+			 * don't care, get_symlink_type will not be called.
+			 */
+			ret = symlink_with_type(new, path, get_symlink_type(path, new));
 			free(new);
 			if (ret)
 				return error("unable to create symlink %s (%s)",
