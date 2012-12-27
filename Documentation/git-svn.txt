@@ -146,6 +146,13 @@ Skip "branches" and "tags" of first level directories;;
 ------------------------------------------------------------------------
 --
 
+--log-window-size=<n>;;
+    Fetch <n> log entries per request when scanning Subversion history.
+    The default is 100. For very large Subversion repositories, larger
+    values may be needed for 'clone'/'fetch' to complete in reasonable
+    time. But overly large values may lead to higher memory usage and
+    request timeouts.
+
 'clone'::
 	Runs 'init' and 'fetch'.  It will automatically create a
 	directory based on the basename of the URL passed to it;
