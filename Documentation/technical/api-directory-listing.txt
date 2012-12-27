@@ -17,24 +17,24 @@ options are:
 	The name of the file to be read in each directory for excluded
 	files (typically `.gitignore`).
 
-`collect_ignored`::
+`flags`::
 
-	Include paths that are to be excluded in the result.
+	A bit-field of options:
 
-`show_ignored`::
+`DIR_SHOW_IGNORED`:::
 
 	The traversal is for finding just ignored files, not unignored
 	files.
 
-`show_other_directories`::
+`DIR_SHOW_OTHER_DIRECTORIES`:::
 
 	Include a directory that is not tracked.
 
-`hide_empty_directories`::
+`DIR_HIDE_EMPTY_DIRECTORIES`:::
 
 	Do not include a directory that is not tracked and is empty.
 
-`no_gitlinks`::
+`DIR_NO_GITLINKS`:::
 
 	If set, recurse into a directory that looks like a git
 	directory.  Otherwise it is shown as a directory.
