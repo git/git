@@ -62,6 +62,10 @@ OpenBSD)
 	O="-fgnu89-inline"
 	skip="t9402"
 	;;
+NetBSD)
+	OLD_ICONV=YesPlease; export OLD_ICONV
+	skip="t5000 t9402"
+	;;
 FreeBSD)
 	OLD_ICONV=YesPlease; export OLD_ICONV
 	skip="t5560"
@@ -180,6 +184,7 @@ GNU_ROFF=YesPlease'
 # Platform hack
 if test -z "${make:+set}" && {
 	test -x /usr/local/bin/gmake ||
+	test -x /usr/pkg/bin/gmake
 	test -x /usr/bin/gmake
 }
 then
