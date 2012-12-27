@@ -137,7 +137,8 @@ done
 
 if test -z "$tests" && test -n "$skip"
 then
-	: GIT_SKIP_TESTS="${GIT_SKIP_TESTS:-$skip}"
+	GIT_SKIP_TESTS="${GIT_SKIP_TESTS:-$skip}"
+	export GIT_SKIP_TESTS
 fi
 if test -z "$oldtest" &&
    sh -c 'prove --version >/dev/null 2>&1' &&
