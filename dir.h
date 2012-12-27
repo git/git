@@ -119,10 +119,13 @@ extern int match_pathname(const char *, int,
  */
 struct path_exclude_check {
 	struct dir_struct *dir;
+	struct exclude *exclude;
 	struct strbuf path;
 };
 extern void path_exclude_check_init(struct path_exclude_check *, struct dir_struct *);
 extern void path_exclude_check_clear(struct path_exclude_check *);
+extern struct exclude *last_exclude_matching_path(struct path_exclude_check *, const char *,
+						  int namelen, int *dtype);
 extern int is_path_excluded(struct path_exclude_check *, const char *, int namelen, int *dtype);
 
 
