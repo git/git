@@ -7,6 +7,10 @@ to the highest revision that should be available.
 """
 import sys, os
 
+if sys.hexversion < 0x02040000:
+        # The limiter is the ValueError() calls. This may be too conservative
+        sys.stderr.write("svnrdump-sim.py: requires Python 2.4 or later.\n")
+        sys.exit(1)
 
 def getrevlimit():
         var = 'SVNRMAX'
