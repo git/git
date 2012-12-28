@@ -24,6 +24,8 @@
 #        will show username, at-sign, host, colon, cwd, then
 #        various status string, followed by dollar and SP, as
 #        your prompt.
+#        Optionally, you can supply a third argument with a printf
+#        format string to finetune the output of the branch status
 #
 # The argument to __git_ps1 will be displayed only if you are currently
 # in a git repository.  The %s token will be the name of the current
@@ -222,10 +224,12 @@ __git_ps1_show_upstream ()
 # when called from PS1 using command substitution
 # in this mode it prints text to add to bash PS1 prompt (includes branch name)
 #
-# __git_ps1 requires 2 arguments when called from PROMPT_COMMAND (pc)
+# __git_ps1 requires 2 or 3 arguments when called from PROMPT_COMMAND (pc)
 # in that case it _sets_ PS1. The arguments are parts of a PS1 string.
-# when both arguments are given, the first is prepended and the second appended
+# when two arguments are given, the first is prepended and the second appended
 # to the state string when assigned to PS1.
+# The optional third parameter will be used as printf format string to further
+# customize the output of the git-status string.
 # In this mode you can request colored hints using GIT_PS1_SHOWCOLORHINTS=true
 __git_ps1 ()
 {
@@ -236,9 +240,10 @@ __git_ps1 ()
 	local printf_format=' (%s)'
 
 	case "$#" in
-		2)	pcmode=yes
+		2|3)	pcmode=yes
 			ps1pc_start="$1"
 			ps1pc_end="$2"
+			printf_format="${3:-$printf_format}"
 		;;
 		0|1)	printf_format="${1:-$printf_format}"
 		;;
@@ -339,6 +344,7 @@ __git_ps1 ()
 
 		local f="$w$i$s$u"
 		if [ $pcmode = yes ]; then
+			local gitstring=
 			if [ -n "${GIT_PS1_SHOWCOLORHINTS-}" ]; then
 				local c_red='\e[31m'
 				local c_green='\e[32m'
@@ -356,29 +362,31 @@ __git_ps1 ()
 					branch_color="$bad_color"
 				fi
 
-				# Setting PS1 directly with \[ and \] around colors
+				# Setting gitstring directly with \[ and \] around colors
 				# is necessary to prevent wrapping issues!
-				PS1="$ps1pc_start (\[$branch_color\]$branchstring\[$c_clear\]"
+				gitstring="\[$branch_color\]$branchstring\[$c_clear\]"
 
 				if [ -n "$w$i$s$u$r$p" ]; then
-					PS1="$PS1 "
+					gitstring="$gitstring "
 				fi
 				if [ "$w" = "*" ]; then
-					PS1="$PS1\[$bad_color\]$w"
+					gitstring="$gitstring\[$bad_color\]$w"
 				fi
 				if [ -n "$i" ]; then
-					PS1="$PS1\[$ok_color\]$i"
+					gitstring="$gitstring\[$ok_color\]$i"
 				fi
 				if [ -n "$s" ]; then
-					PS1="$PS1\[$flags_color\]$s"
+					gitstring="$gitstring\[$flags_color\]$s"
 				fi
 				if [ -n "$u" ]; then
-					PS1="$PS1\[$bad_color\]$u"
+					gitstring="$gitstring\[$bad_color\]$u"
 				fi
-				PS1="$PS1\[$c_clear\]$r$p)$ps1pc_end"
+				gitstring="$gitstring\[$c_clear\]$r$p"
 			else
-				PS1="$ps1pc_start ($c${b##refs/heads/}${f:+ $f}$r$p)$ps1pc_end"
+				gitstring="$c${b##refs/heads/}${f:+ $f}$r$p"
 			fi
+			gitstring=$(printf -- "$printf_format" "$gitstring")
+			PS1="$ps1pc_start$gitstring$ps1pc_end"
 		else
 			# NO color option unless in PROMPT_COMMAND mode
 			printf -- "$printf_format" "$c${b##refs/heads/}${f:+ $f}$r$p"
