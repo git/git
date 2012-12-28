@@ -232,8 +232,9 @@ static void record_person(int which, struct string_list *people,
 {
 	char *name_buf, *name, *name_end;
 	struct string_list_item *elem;
-	const char *field = (which == 'a') ? "\nauthor " : "\ncommitter ";
+	const char *field;
 
+	field = (which == 'a') ? "\nauthor " : "\ncommitter ";
 	name = strstr(commit->buffer, field);
 	if (!name)
 		return;
@@ -323,7 +324,8 @@ static void add_people_info(struct strbuf *out,
 static void shortlog(const char *name,
 		     struct origin_data *origin_data,
 		     struct commit *head,
-		     struct rev_info *rev, int limit,
+		     struct rev_info *rev,
+		     struct fmt_merge_msg_opts *opts,
 		     struct strbuf *out)
 {
 	int i, count = 0;
@@ -335,6 +337,7 @@ static void shortlog(const char *name,
 	int flags = UNINTERESTING | TREESAME | SEEN | SHOWN | ADDED;
 	struct strbuf sb = STRBUF_INIT;
 	const unsigned char *sha1 = origin_data->sha1;
+	int limit = opts->shortlog_len;
 
 	branch = deref_tag(parse_object(sha1), sha1_to_hex(sha1), 40);
 	if (!branch || branch->type != OBJ_COMMIT)
@@ -351,13 +354,15 @@ static void shortlog(const char *name,
 
 		if (commit->parents && commit->parents->next) {
 			/* do not list a merge but count committer */
-			record_person('c', &committers, commit);
+			if (opts->credit_people)
+				record_person('c', &committers, commit);
 			continue;
 		}
-		if (!count)
+		if (!count && opts->credit_people)
 			/* the 'tip' committer */
 			record_person('c', &committers, commit);
-		record_person('a', &authors, commit);
+		if (opts->credit_people)
+			record_person('a', &authors, commit);
 		count++;
 		if (subjects.nr > limit)
 			continue;
@@ -372,7 +377,8 @@ static void shortlog(const char *name,
 			string_list_append(&subjects, strbuf_detach(&sb, NULL));
 	}
 
-	add_people_info(out, &authors, &committers);
+	if (opts->credit_people)
+		add_people_info(out, &authors, &committers);
 	if (count > limit)
 		strbuf_addf(out, "\n* %s: (%d commits)\n", name, count);
 	else
@@ -635,7 +641,7 @@ int fmt_merge_msg(struct strbuf *in, struct strbuf *out,
 		for (i = 0; i < origins.nr; i++)
 			shortlog(origins.items[i].string,
 				 origins.items[i].util,
-				 head, &rev, opts->shortlog_len, out);
+				 head, &rev, opts, out);
 	}
 
 	strbuf_complete_line(out);
@@ -690,6 +696,7 @@ int cmd_fmt_merge_msg(int argc, const char **argv, const char *prefix)
 
 	memset(&opts, 0, sizeof(opts));
 	opts.add_title = !message;
+	opts.credit_people = 1;
 	opts.shortlog_len = shortlog_len;
 
 	ret = fmt_merge_msg(&input, &output, &opts);
