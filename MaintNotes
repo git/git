@@ -108,18 +108,20 @@ There are four branches in git.git repository that track the source tree
 of git: "master", "maint", "next", and "pu".
 
 The "master" branch is meant to contain what are very well tested and
-ready to be used in a production setting.  Every now and then, a "feature
-release" is cut from the tip of this branch and they typically are named
-with three dotted decimal digits.  The last such release was 1.8.0 done on
-Oct 21, 2012. You can expect that the tip of the "master" branch is always
-more stable than any of the released versions.
+ready to be used in a production setting.  Every now and then, a
+"feature release" is cut from the tip of this branch and they
+typically are named with three dotted decimal digits.  The last such
+release was 1.8.1 done on Dec 31, 2012 (or Jan 1, 2013, depending on
+where you were when it happened). You can expect that the tip of the
+"master" branch is always more stable than any of the released
+versions.
 
 Whenever a feature release is made, "maint" branch is forked off from
 "master" at that point.  Obvious, safe and urgent fixes after a feature
 release are applied to this branch and maintenance releases are cut from
 it.  The maintenance releases are named with four dotted decimal, named
 after the feature release they are updates to; the last such release was
-1.8.0.2.  New features never go to this branch.  This branch is also
+1.8.0.3.  New features never go to this branch.  This branch is also
 merged into "master" to propagate the fixes forward as needed.
 
 A new development does not usually happen on "master". When you send a
