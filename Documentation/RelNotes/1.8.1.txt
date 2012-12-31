@@ -29,23 +29,16 @@ UI, Workflows & Features
 
  * Command-line completion scripts for tcsh and zsh have been added.
 
- * A new remote-helper interface for Mercurial has been added to
-   contrib/remote-helpers.
+ * "git-prompt" scriptlet (in contrib/completion) can be told to paint
+   pieces of the hints in the prompt string in colors.
+
+ * Some documentation pages that used to ship only in the plain text
+   format are now formatted in HTML as well.
 
  * We used to have a workaround for a bug in ancient "less" that
    causes it to exit without any output when the terminal is resized.
    The bug has been fixed in "less" version 406 (June 2007), and the
    workaround has been removed in this release.
-
- * Some documentation pages that used to ship only in the plain text
-   format are now formatted in HTML as well.
-
- * "git-prompt" scriptlet (in contrib/completion) can be told to paint
-   pieces of the hints in the prompt string in colors.
-
- * A new configuration variable "diff.context" can be used to
-   give the default number of context lines in the patch output, to
-   override the hardcoded default of 3 lines.
 
  * When "git checkout" checks out a branch, it tells the user how far
    behind (or ahead) the new branch is relative to the remote tracking
@@ -60,12 +53,16 @@ UI, Workflows & Features
    API regression but it is expected that nobody will notice it in
    practice.
 
- * "git log -p -S<string>" now looks for the <string> after applying
-   the textconv filter (if defined); earlier it inspected the contents
-   of the blobs without filtering.
+ * A new configuration variable "diff.context" can be used to
+   give the default number of context lines in the patch output, to
+   override the hardcoded default of 3 lines.
 
  * "git format-patch" learned the "--notes=<ref>" option to give
    notes for the commit after the three-dash lines in its output.
+
+ * "git log -p -S<string>" now looks for the <string> after applying
+   the textconv filter (if defined); earlier it inspected the contents
+   of the blobs without filtering.
 
  * "git log --grep=<pcre>" learned to honor the "grep.patterntype"
    configuration set to "perl".
@@ -115,6 +112,9 @@ Foreign Interface
 
  * The remote helper interface to interact with subversion
    repositories (one of the GSoC 2012 projects) has been merged.
+
+ * A new remote-helper interface for Mercurial has been added to
+   contrib/remote-helpers.
 
  * The documentation for git(1) was pointing at a page at an external
    site for the list of authors that no longer existed.  The link has
