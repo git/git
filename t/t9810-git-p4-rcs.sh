@@ -26,10 +26,8 @@ test_expect_success 'init depot' '
 		line7
 		line8
 		EOF
-		cp filek fileko &&
-		sed -i "s/Revision/Revision: do not scrub me/" fileko
-		cp fileko file_text &&
-		sed -i "s/Id/Id: do not scrub me/" file_text
+		sed "s/Revision/Revision: do not scrub me/" <filek >fileko &&
+		sed "s/Id/Id: do not scrub me/" <fileko >file_text &&
 		p4 add -t text+k filek &&
 		p4 submit -d "filek" &&
 		p4 add -t text+ko fileko &&
@@ -88,7 +86,8 @@ test_expect_success 'edit far away from RCS lines' '
 	(
 		cd "$git" &&
 		git config git-p4.skipSubmitEdit true &&
-		sed -i "s/^line7/line7 edit/" filek &&
+		sed "s/^line7/line7 edit/" <filek >filek.tmp &&
+		mv -f filek.tmp filek &&
 		git commit -m "filek line7 edit" filek &&
 		git p4 submit &&
 		scrub_k_check filek
@@ -105,7 +104,8 @@ test_expect_success 'edit near RCS lines' '
 		cd "$git" &&
 		git config git-p4.skipSubmitEdit true &&
 		git config git-p4.attemptRCSCleanup true &&
-		sed -i "s/^line4/line4 edit/" filek &&
+		sed "s/^line4/line4 edit/" <filek >filek.tmp &&
+		mv -f filek.tmp filek &&
 		git commit -m "filek line4 edit" filek &&
 		git p4 submit &&
 		scrub_k_check filek
@@ -122,7 +122,8 @@ test_expect_success 'edit keyword lines' '
 		cd "$git" &&
 		git config git-p4.skipSubmitEdit true &&
 		git config git-p4.attemptRCSCleanup true &&
-		sed -i "/Revision/d" filek &&
+		sed "/Revision/d" <filek >filek.tmp &&
+		mv -f filek.tmp filek &&
 		git commit -m "filek remove Revision line" filek &&
 		git p4 submit &&
 		scrub_k_check filek
@@ -139,7 +140,8 @@ test_expect_success 'scrub ko files differently' '
 		cd "$git" &&
 		git config git-p4.skipSubmitEdit true &&
 		git config git-p4.attemptRCSCleanup true &&
-		sed -i "s/^line4/line4 edit/" fileko &&
+		sed "s/^line4/line4 edit/" <fileko >fileko.tmp &&
+		mv -f fileko.tmp fileko &&
 		git commit -m "fileko line4 edit" fileko &&
 		git p4 submit &&
 		scrub_ko_check fileko &&
@@ -189,12 +191,14 @@ test_expect_success 'do not scrub plain text' '
 		cd "$git" &&
 		git config git-p4.skipSubmitEdit true &&
 		git config git-p4.attemptRCSCleanup true &&
-		sed -i "s/^line4/line4 edit/" file_text &&
+		sed "s/^line4/line4 edit/" <file_text >file_text.tmp &&
+		mv -f file_text.tmp file_text &&
 		git commit -m "file_text line4 edit" file_text &&
 		(
 			cd "$cli" &&
 			p4 open file_text &&
-			sed -i "s/^line5/line5 p4 edit/" file_text &&
+			sed "s/^line5/line5 p4 edit/" <file_text >file_text.tmp &&
+			mv -f file_text.tmp file_text &&
 			p4 submit -d "file5 p4 edit"
 		) &&
 		echo s | test_expect_code 1 git p4 submit &&
