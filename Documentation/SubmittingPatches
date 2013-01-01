@@ -88,6 +88,10 @@ change is relevant to.
    wait until some of the dependent topics graduate to 'master', and
    rebase your work.
 
+ - Some parts of the system have dedicated maintainers with their own
+   repositories (see the section "Subsystems" below).  Changes to
+   these parts should be based on their trees.
+
 To find the tip of a topic branch, run "git log --first-parent
 master..pu" and look for the merge commit. The second parent of this
 commit is the tip of the topic branch.
@@ -277,6 +281,26 @@ If you like, you can put extra tags at the end:
 
 You can also create your own tag or use one that's in common usage
 such as "Thanks-to:", "Based-on-patch-by:", or "Mentored-by:".
+
+------------------------------------------------
+Subsystems with dedicated maintainers
+
+Some parts of the system have dedicated maintainers with their own
+repositories.
+
+ - git-gui/ comes from git-gui project, maintained by Pat Thoyts:
+
+        git://repo.or.cz/git-gui.git
+
+ - gitk-git/ comes from Paul Mackerras's gitk project:
+
+        git://ozlabs.org/~paulus/gitk
+
+ - po/ comes from the localization coordinator, Jiang Xin:
+
+	https://github.com/git-l10n/git-po/
+
+Patches to these parts should be based on their trees.
 
 ------------------------------------------------
 An ideal patch flow
