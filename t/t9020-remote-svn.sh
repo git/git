@@ -32,8 +32,8 @@ fi
 
 test_debug '
 	git --version
-	which git
-	which svnrdump
+	type git
+	type svnrdump
 '
 
 test_expect_success REMOTE_SVN 'simple fetch' '
