@@ -61,7 +61,7 @@ static int dowild(const uchar *p, const uchar *text, int force_lower_case)
 	const uchar *pattern = p;
 
 	for ( ; (p_ch = *p) != '\0'; text++, p++) {
-		int matched, special;
+		int matched, match_slash, negated;
 		uchar t_ch, prev_ch;
 		if ((t_ch = *text) == '\0' && p_ch != '*')
 			return ABORT_ALL;
@@ -103,15 +103,15 @@ static int dowild(const uchar *p, const uchar *text, int force_lower_case)
 					if (p[0] == '/' &&
 					    dowild(p + 1, text, force_lower_case) == MATCH)
 						return MATCH;
-					special = TRUE;
+					match_slash = TRUE;
 				} else
 					return ABORT_MALFORMED;
 			} else
-				special = FALSE;
+				match_slash = FALSE;
 			if (*p == '\0') {
 				/* Trailing "**" matches everything.  Trailing "*" matches
 				 * only if there are no more slash characters. */
-				if (!special) {
+				if (!match_slash) {
 					if (strchr((char*)text, '/') != NULL)
 						return NOMATCH;
 				}
@@ -121,9 +121,9 @@ static int dowild(const uchar *p, const uchar *text, int force_lower_case)
 				if (t_ch == '\0')
 					break;
 				if ((matched = dowild(p, text,  force_lower_case)) != NOMATCH) {
-					if (!special || matched != ABORT_TO_STARSTAR)
+					if (!match_slash || matched != ABORT_TO_STARSTAR)
 						return matched;
-				} else if (!special && t_ch == '/')
+				} else if (!match_slash && t_ch == '/')
 					return ABORT_TO_STARSTAR;
 				t_ch = *++text;
 			}
@@ -135,8 +135,8 @@ static int dowild(const uchar *p, const uchar *text, int force_lower_case)
 				p_ch = NEGATE_CLASS;
 #endif
 			/* Assign literal TRUE/FALSE because of "matched" comparison. */
-			special = p_ch == NEGATE_CLASS? TRUE : FALSE;
-			if (special) {
+			negated = p_ch == NEGATE_CLASS? TRUE : FALSE;
+			if (negated) {
 				/* Inverted character class. */
 				p_ch = *++p;
 			}
@@ -218,7 +218,7 @@ static int dowild(const uchar *p, const uchar *text, int force_lower_case)
 				} else if (t_ch == p_ch)
 					matched = TRUE;
 			} while (prev_ch = p_ch, (p_ch = *++p) != ']');
-			if (matched == special || t_ch == '/')
+			if (matched == negated || t_ch == '/')
 				return NOMATCH;
 			continue;
 		}
