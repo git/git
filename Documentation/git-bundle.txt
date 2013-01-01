@@ -118,7 +118,7 @@ were a remote repository instead of creating an empty repository and then
 pulling or fetching objects from the bundle:
 
 ----------------
-machineB$ git clone /home/me/tmp/file.bundle R2
+machineB$ git clone -b master /home/me/tmp/file.bundle R2
 ----------------
 
 This will define a remote called "origin" in the resulting repository that
