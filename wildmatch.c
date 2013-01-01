@@ -52,7 +52,7 @@ typedef unsigned char uchar;
 #define ISXDIGIT(c) (ISASCII(c) && isxdigit(c))
 
 /* Match pattern "p" against "text" */
-static int dowild(const uchar *p, const uchar *text, int force_lower_case)
+static int dowild(const uchar *p, const uchar *text, unsigned int flags)
 {
 	uchar p_ch;
 	const uchar *pattern = p;
@@ -62,9 +62,9 @@ static int dowild(const uchar *p, const uchar *text, int force_lower_case)
 		uchar t_ch, prev_ch;
 		if ((t_ch = *text) == '\0' && p_ch != '*')
 			return WM_ABORT_ALL;
-		if (force_lower_case && ISUPPER(t_ch))
+		if ((flags & WM_CASEFOLD) && ISUPPER(t_ch))
 			t_ch = tolower(t_ch);
-		if (force_lower_case && ISUPPER(p_ch))
+		if ((flags & WM_CASEFOLD) && ISUPPER(p_ch))
 			p_ch = tolower(p_ch);
 		switch (p_ch) {
 		case '\\':
@@ -98,7 +98,7 @@ static int dowild(const uchar *p, const uchar *text, int force_lower_case)
 					 * both foo/bar and foo/a/bar.
 					 */
 					if (p[0] == '/' &&
-					    dowild(p + 1, text, force_lower_case) == WM_MATCH)
+					    dowild(p + 1, text, flags) == WM_MATCH)
 						return WM_MATCH;
 					match_slash = 1;
 				} else
@@ -117,7 +117,7 @@ static int dowild(const uchar *p, const uchar *text, int force_lower_case)
 			while (1) {
 				if (t_ch == '\0')
 					break;
-				if ((matched = dowild(p, text,  force_lower_case)) != WM_NOMATCH) {
+				if ((matched = dowild(p, text, flags)) != WM_NOMATCH) {
 					if (!match_slash || matched != WM_ABORT_TO_STARSTAR)
 						return matched;
 				} else if (!match_slash && t_ch == '/')
@@ -228,6 +228,5 @@ static int dowild(const uchar *p, const uchar *text, int force_lower_case)
 int wildmatch(const char *pattern, const char *text,
 	      unsigned int flags, struct wildopts *wo)
 {
-	return dowild((const uchar*)pattern, (const uchar*)text,
-		      flags & WM_CASEFOLD ? 1 :0);
+	return dowild((const uchar*)pattern, (const uchar*)text, flags);
 }
