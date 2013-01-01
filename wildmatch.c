@@ -117,6 +117,18 @@ static int dowild(const uchar *p, const uchar *text, unsigned int flags)
 						return WM_NOMATCH;
 				}
 				return WM_MATCH;
+			} else if (!match_slash && *p == '/') {
+				/*
+				 * _one_ asterisk followed by a slash
+				 * with WM_PATHNAME matches the next
+				 * directory
+				 */
+				const char *slash = strchr((char*)text, '/');
+				if (!slash)
+					return WM_NOMATCH;
+				text = (const uchar*)slash;
+				/* the slash is consumed by the top-level for loop */
+				break;
 			}
 			while (1) {
 				if (t_ch == '\0')

@@ -203,6 +203,10 @@ match 1 1 'XXX/adobe/courier/bold/o/normal//12/120/75/75/m/70/iso8859/1' 'XXX/*/
 match 0 0 'XXX/adobe/courier/bold/o/normal//12/120/75/75/X/70/iso8859/1' 'XXX/*/*/*/*/*/*/12/*/*/*/m/*/*/*'
 match 1 0 'abcd/abcdefg/abcdefghijk/abcdefghijklmnop.txt' '**/*a*b*g*n*t'
 match 0 0 'abcd/abcdefg/abcdefghijk/abcdefghijklmnop.txtz' '**/*a*b*g*n*t'
+match 0 x foo '*/*/*'
+match 0 x foo/bar '*/*/*'
+match 1 x foo/bba/arr '*/*/*'
+match 0 x foo/bb/aa/rr '*/*/*'
 
 pathmatch 1 foo foo
 pathmatch 0 foo fo
@@ -218,5 +222,9 @@ pathmatch 0 foo/bba/arr 'foo/*z'
 pathmatch 0 foo/bba/arr 'foo/**z'
 pathmatch 1 foo/bar 'foo?bar'
 pathmatch 1 foo/bar 'foo[/]bar'
+pathmatch 0 foo '*/*/*'
+pathmatch 0 foo/bar '*/*/*'
+pathmatch 1 foo/bba/arr '*/*/*'
+pathmatch 1 foo/bb/aa/rr '*/*/*'
 
 test_done
