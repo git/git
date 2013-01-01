@@ -595,7 +595,8 @@ int match_pathname(const char *pathname, int pathlen,
 	}
 
 	return wildmatch(pattern, name,
-			 ignore_case ? FNM_CASEFOLD : 0) == 0;
+			 ignore_case ? WM_CASEFOLD : 0,
+			 NULL) == 0;
 }
 
 /* Scan the list and let the last match determine the fate.

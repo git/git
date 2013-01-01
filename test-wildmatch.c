@@ -12,9 +12,9 @@ int main(int argc, char **argv)
 			argv[i] += 3;
 	}
 	if (!strcmp(argv[1], "wildmatch"))
-		return !!wildmatch(argv[3], argv[2], 0);
+		return !!wildmatch(argv[3], argv[2], 0, NULL);
 	else if (!strcmp(argv[1], "iwildmatch"))
-		return !!wildmatch(argv[3], argv[2], FNM_CASEFOLD);
+		return !!wildmatch(argv[3], argv[2], WM_CASEFOLD, NULL);
 	else if (!strcmp(argv[1], "fnmatch"))
 		return !!fnmatch(argv[3], argv[2], FNM_PATHNAME);
 	else
