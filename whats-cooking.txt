@@ -1,15 +1,21 @@
 To: git@vger.kernel.org
 Bcc: lwn@lwn.net
-Subject: What's cooking in git.git (Dec 2012, #07; Wed, 26)
-X-master-at: 86c3e6ed515d5e3bfca1d515c607db55ba032d71
-X-next-at: 3b93f37cbe43cae3e38334ca5dd4acf52ee3bfde
+Subject: What's cooking in git.git (Dec 2012, #08; Mon, 31)
+X-master-at: 5d417842efeafb6e109db7574196901c4e95d273
+X-next-at: 5c4490978f33dace9da10b75b75e415967d34b0f
 
-What's cooking in git.git (Dec 2012, #07; Wed, 26)
+What's cooking in git.git (Dec 2012, #08; Mon, 31)
 --------------------------------------------------
 
 Here are the topics that have been cooking.  Commits prefixed with
 '-' are only in 'pu' (proposed updates) while commits prefixed with
 '+' are in 'next'.
+
+The tip of the 'master' branch is at 1.8.1; the tip of 'next' will
+be rewound soonish to reorder topics that are already well cooked
+during the pre-release freeze earlier than the others so that they
+can orderly be merged to 'master' after the dust settles, probably
+towards the end of this week.
 
 You can find the changes described here in the integration branches of the
 repositories listed at
@@ -17,65 +23,7 @@ repositories listed at
     http://git-blame.blogspot.com/p/git-public-repositories.html
 
 --------------------------------------------------
-[New Topics]
-
-* jc/format-patch-reroll (2012-12-22) 7 commits
- - format-patch: add --reroll-count=$N option
- - get_patch_filename(): split into two functions
- - get_patch_filename(): drop "just-numbers" hack
- - get_patch_filename(): simplify function signature
- - builtin/log.c: stop using global patch_suffix
- - builtin/log.c: drop redundant "numbered_files" parameter from make_cover_letter()
- - builtin/log.c: drop unused "numbered" parameter from make_cover_letter()
-
- Teach "format-patch" to prefix v4- to its output files for the
- fourth iteration of a patch series, to make it easier for the
- submitter to keep separate copies for iterations.
-
- Needs tests and documentation updates.
-
-
-* ms/subtree-fixlets (2012-12-22) 2 commits
-  (merged to 'next' on 2012-12-26 at 1cb26eb)
- + git-subtree: fix typo in manpage
- + git-subtree: ignore git-subtree executable
-
- Will cook in 'next'.
-
-
-* mz/pick-unborn (2012-12-23) 2 commits
- - learn to pick/revert into unborn branch
- - tests: move test_cmp_rev to test-lib-functions
-
- Will merge to 'next'.
-
-
-* nd/retire-fnmatch (2012-12-22) 8 commits
- - wildmatch: advance faster in <asterisk> + <literal> patterns
- - wildmatch: make a special case for "*/" with FNM_PATHNAME
- - Makefile: add USE_WILDMATCH to use wildmatch as fnmatch
- - test-wildmatch: add "perf" command to compare wildmatch and fnmatch
- - wildmatch: support "no FNM_PATHNAME" mode
- - wildmatch: make dowild() take arbitrary flags
- - wildmatch: rename constants and update prototype
- - compat/fnmatch: respect NO_FNMATCH* even on glibc
- (this branch uses nd/wildmatch.)
-
- Replace our use of fnmatch(3) with a more feature-rich wildmatch.
-
-
-* jc/test-cvs-no-init-in-existing-dir (2012-12-24) 1 commit
-  (merged to 'next' on 2012-12-26 at 3b93f37)
- + t9200: let "cvs init" create the test repository
-
- Will cook in 'next'.
-
-
-* os/gitweb-highlight-uncaptured (2012-12-26) 1 commit
- - gitweb: fix error when highlight is enabled
-
- Will merge to 'next'.
-
+[Graduated to "master"]
 
 * so/prompt-command (2012-12-26) 1 commit
   (merged to 'next' on 2012-12-26 at 27c5683)
@@ -84,7 +32,39 @@ repositories listed at
  Gives the same degree of customizability to the new prompt command
  mode users as the command substitution mode has.
 
- Will fast-track to 'master' before 1.8.1 final.
+--------------------------------------------------
+[New Topics]
+
+* ap/status-ignored-in-ignored-directory (2012-12-26) 1 commit
+ - wt-status: Show ignored files in untracked dirs
+
+ A topic still in flux; will be redone.
+
+
+* ta/remove-stale-translated-tut (2012-12-27) 1 commit
+ - Remove Documentation/pt_BR/gittutorial.txt
+
+ Remove a translation of a document that was left stale.
+
+
+* er/stop-recommending-parsecvs (2012-12-28) 1 commit
+ - Remove the suggestion to use parsecvs, which is currently broken.
+
+ Stop recommending a defunct third-party software.
+
+
+* as/test-name-alias-uniquely (2012-12-28) 1 commit
+ - Use longer alias names in subdirectory tests
+
+ A few short-and-bland aliases used in the tests were interfering
+ with git-custom command in user's $PATH.
+
+
+* jc/maint-fmt-merge-msg-no-edit-lose-credit (2012-12-28) 1 commit
+ - merge --no-edit: do not credit people involved in the side branch
+
+ Stop spending cycles to compute information to be placed on
+ commented lines in "merge --no-edit".
 
 --------------------------------------------------
 [Stalled]
@@ -132,27 +112,6 @@ repositories listed at
  - cvsserver: factor out git-log parsing logic
 
  Needs review by folks interested in cvsserver.
-
-
-* as/check-ignore (2012-11-08) 14 commits
- - t0007: fix tests on Windows
- - Documentation/check-ignore: we show the deciding match, not the first
- - Add git-check-ignore sub-command
- - dir.c: provide free_directory() for reclaiming dir_struct memory
- - pathspec.c: move reusable code from builtin/add.c
- - dir.c: refactor treat_gitlinks()
- - dir.c: keep track of where patterns came from
- - dir.c: refactor is_path_excluded()
- - dir.c: refactor is_excluded()
- - dir.c: refactor is_excluded_from_list()
- - dir.c: rename excluded() to is_excluded()
- - dir.c: rename excluded_from_list() to is_excluded_from_list()
- - dir.c: rename path_excluded() to is_path_excluded()
- - dir.c: rename cryptic 'which' variable to more consistent name
-
- Duy helped to reroll this.
-
- Expecting a re-roll.
 
 
 * aw/rebase-am-failure-detection (2012-10-11) 1 commit
@@ -273,6 +232,89 @@ repositories listed at
 --------------------------------------------------
 [Cooking]
 
+* as/check-ignore (2012-12-28) 19 commits
+ - Add git-check-ignore sub-command
+ - setup.c: document get_pathspec()
+ - pathspec.c: extract new validate_path() for reuse
+ - pathspec.c: move reusable code from builtin/add.c
+ - add.c: remove unused argument from validate_pathspec()
+ - add.c: refactor treat_gitlinks()
+ - dir.c: provide clear_directory() for reclaiming dir_struct memory
+ - dir.c: keep track of where patterns came from
+ - dir.c: use a single struct exclude_list per source of excludes
+ - dir.c: rename free_excludes() to clear_exclude_list()
+ - dir.c: refactor is_path_excluded()
+ - dir.c: refactor is_excluded()
+ - dir.c: refactor is_excluded_from_list()
+ - dir.c: rename excluded() to is_excluded()
+ - dir.c: rename excluded_from_list() to is_excluded_from_list()
+ - dir.c: rename path_excluded() to is_path_excluded()
+ - dir.c: rename cryptic 'which' variable to more consistent name
+ - Improve documentation and comments regarding directory traversal API
+ - api-directory-listing.txt: update to match code
+
+ Rerolled.  The early parts looked mostly fine; we may want to split
+ this into two topics and have the early half progress earlier.
+
+
+* jc/format-patch-reroll (2012-12-22) 7 commits
+ - format-patch: add --reroll-count=$N option
+ - get_patch_filename(): split into two functions
+ - get_patch_filename(): drop "just-numbers" hack
+ - get_patch_filename(): simplify function signature
+ - builtin/log.c: stop using global patch_suffix
+ - builtin/log.c: drop redundant "numbered_files" parameter from make_cover_letter()
+ - builtin/log.c: drop unused "numbered" parameter from make_cover_letter()
+
+ Teach "format-patch" to prefix v4- to its output files for the
+ fourth iteration of a patch series, to make it easier for the
+ submitter to keep separate copies for iterations.
+
+ Needs tests and documentation updates.
+
+
+* ms/subtree-fixlets (2012-12-22) 2 commits
+  (merged to 'next' on 2012-12-26 at 1cb26eb)
+ + git-subtree: fix typo in manpage
+ + git-subtree: ignore git-subtree executable
+
+ Will cook in 'next'.
+
+
+* mz/pick-unborn (2012-12-23) 2 commits
+ - learn to pick/revert into unborn branch
+ - tests: move test_cmp_rev to test-lib-functions
+
+ Will merge to 'next'.
+
+
+* nd/retire-fnmatch (2012-12-22) 8 commits
+ - wildmatch: advance faster in <asterisk> + <literal> patterns
+ - wildmatch: make a special case for "*/" with FNM_PATHNAME
+ - Makefile: add USE_WILDMATCH to use wildmatch as fnmatch
+ - test-wildmatch: add "perf" command to compare wildmatch and fnmatch
+ - wildmatch: support "no FNM_PATHNAME" mode
+ - wildmatch: make dowild() take arbitrary flags
+ - wildmatch: rename constants and update prototype
+ - compat/fnmatch: respect NO_FNMATCH* even on glibc
+ (this branch uses nd/wildmatch.)
+
+ Replace our use of fnmatch(3) with a more feature-rich wildmatch.
+
+
+* jc/test-cvs-no-init-in-existing-dir (2012-12-24) 1 commit
+  (merged to 'next' on 2012-12-26 at 3b93f37)
+ + t9200: let "cvs init" create the test repository
+
+ Will cook in 'next'.
+
+
+* os/gitweb-highlight-uncaptured (2012-12-26) 1 commit
+ - gitweb: fix error when highlight is enabled
+
+ Will merge to 'next'.
+
+
 * jc/merge-blobs (2012-12-26) 5 commits
  - merge-tree: fix d/f conflicts
  - merge-tree: add comments to clarify what these functions are doing
@@ -338,18 +380,16 @@ repositories listed at
  pathspecs, by disabling wildcard globbing.
 
 
-* da/p4merge-mktemp (2012-12-21) 1 commit
-  (merged to 'next' on 2012-12-26 at bb680a9)
+* da/p4merge-mktemp (2012-12-26) 1 commit
+  (merged to 'next' on 2012-12-26 at 036938a)
  + mergetools/p4merge: Honor $TMPDIR for the /dev/null placeholder
 
  Create an empty file in $TMPDIR instead of using an empty file in
  the local directory.
 
 
-* er/python-version-requirements (2012-12-25) 1 commit
- - Python scripts: check minimum compatible version after auditing
-
- Expecting a reroll.
+* er/python-version-requirements (2012-12-28) 1 commit
+ - Add checks to Python scripts for version dependencies.
 
 
 * mb/gitweb-highlight-link-target (2012-12-20) 1 commit
@@ -537,7 +577,8 @@ repositories listed at
  Will cook in 'next'.
 
 
-* ap/log-mailmap (2012-12-26) 9 commits
+* ap/log-mailmap (2012-12-27) 10 commits
+ - log --use-mailmap: optimize for cases without --author/--committer search
  - log: add log.mailmap configuration option
  - log: grep author/committer using mailmap
  - test: Add test for --use-mailmap option
@@ -547,12 +588,12 @@ repositories listed at
  - mailmap: Simplify map_user() interface
  - mailmap: Remove buffer length limit in map_user
  - Use split_ident_line to parse author and committer
+ (this branch is used by jc/mailmap.)
 
  Clean up various codepaths around mailmap and teach the "log"
  machinery to use it.
 
- I think this is almost ready for 'next' with minor fix-ups to avoid
- unnecessary copying.
+ Will merge to 'next'.
 
 
 * jc/fetch-ignore-symref (2012-12-11) 1 commit
