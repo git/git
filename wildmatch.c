@@ -133,6 +133,29 @@ static int dowild(const uchar *p, const uchar *text, unsigned int flags)
 			while (1) {
 				if (t_ch == '\0')
 					break;
+				/*
+				 * Try to advance faster when an asterisk is
+				 * followed by a literal. We know in this case
+				 * that the the string before the literal
+				 * must belong to "*".
+				 * If match_slash is false, do not look past
+				 * the first slash as it cannot belong to '*'.
+				 */
+				if (!is_glob_special(*p)) {
+					p_ch = *p;
+					if ((flags & WM_CASEFOLD) && ISUPPER(p_ch))
+						p_ch = tolower(p_ch);
+					while ((t_ch = *text) != '\0' &&
+					       (match_slash || t_ch != '/')) {
+						if ((flags & WM_CASEFOLD) && ISUPPER(t_ch))
+							t_ch = tolower(t_ch);
+						if (t_ch == p_ch)
+							break;
+						text++;
+					}
+					if (t_ch != p_ch)
+						return WM_NOMATCH;
+				}
 				if ((matched = dowild(p, text, flags)) != WM_NOMATCH) {
 					if (!match_slash || matched != WM_ABORT_TO_STARSTAR)
 						return matched;

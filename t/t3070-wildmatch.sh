@@ -207,6 +207,11 @@ match 0 x foo '*/*/*'
 match 0 x foo/bar '*/*/*'
 match 1 x foo/bba/arr '*/*/*'
 match 0 x foo/bb/aa/rr '*/*/*'
+match 1 x foo/bb/aa/rr '**/**/**'
+match 1 x abcXdefXghi '*X*i'
+match 0 x ab/cXd/efXg/hi '*X*i'
+match 1 x ab/cXd/efXg/hi '*/*X*/*/*i'
+match 1 x ab/cXd/efXg/hi '**/*X*/**/*i'
 
 pathmatch 1 foo foo
 pathmatch 0 foo fo
@@ -226,5 +231,8 @@ pathmatch 0 foo '*/*/*'
 pathmatch 0 foo/bar '*/*/*'
 pathmatch 1 foo/bba/arr '*/*/*'
 pathmatch 1 foo/bb/aa/rr '*/*/*'
+pathmatch 1 abcXdefXghi '*X*i'
+pathmatch 1 ab/cXd/efXg/hi '*/*X*/*/*i'
+pathmatch 1 ab/cXd/efXg/hi '*Xg*i'
 
 test_done
