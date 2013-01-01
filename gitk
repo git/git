@@ -10582,13 +10582,13 @@ proc anctags {id} {
 # including id itself if it has a head.
 proc descheads {id} {
     global arcnos arcstart arcids archeads idheads cached_dheads
-    global allparents
+    global allparents arcout
 
     if {![info exists allparents($id)]} {
 	return {}
     }
     set aret {}
-    if {[llength $arcnos($id)] == 1 && [llength $allparents($id)] == 1} {
+    if {![info exists arcout($id)]} {
 	# part-way along an arc; check it first
 	set a [lindex $arcnos($id) 0]
 	if {$archeads($a) ne {}} {
