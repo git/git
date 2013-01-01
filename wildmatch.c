@@ -58,6 +58,7 @@ typedef unsigned char uchar;
 static int dowild(const uchar *p, const uchar *text, int force_lower_case)
 {
 	uchar p_ch;
+	const uchar *pattern = p;
 
 	for ( ; (p_ch = *p) != '\0'; text++, p++) {
 		int matched, special;
@@ -87,7 +88,7 @@ static int dowild(const uchar *p, const uchar *text, int force_lower_case)
 			if (*++p == '*') {
 				const uchar *prev_p = p - 2;
 				while (*++p == '*') {}
-				if ((prev_p == text || *prev_p == '/') ||
+				if ((prev_p < pattern || *prev_p == '/') &&
 				    (*p == '\0' || *p == '/' ||
 				     (p[0] == '\\' && p[1] == '/'))) {
 					/*
