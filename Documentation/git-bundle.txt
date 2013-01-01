@@ -112,10 +112,9 @@ machineA$ git bundle create file.bundle master
 machineA$ git tag -f lastR2bundle master
 ----------------
 
-Then you transfer file.bundle to the target machine B. If you are creating
-the repository on machine B, then you can clone from the bundle as if it
-were a remote repository instead of creating an empty repository and then
-pulling or fetching objects from the bundle:
+Then you transfer file.bundle to the target machine B. Because this
+bundle does not require any existing object to be extracted, you can
+create a new repository on machine B by cloning from it:
 
 ----------------
 machineB$ git clone -b master /home/me/tmp/file.bundle R2
