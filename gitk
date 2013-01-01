@@ -2375,6 +2375,7 @@ proc makewindow {} {
     $ctext tag conf msep -font textfontbold
     $ctext tag conf found -back yellow
     $ctext tag conf currentsearchhit -back orange
+    $ctext tag conf wwrap -wrap word
 
     .pwbottom add .bleft
     if {!$use_ttk} {
@@ -2721,7 +2722,7 @@ proc savestuff {w} {
     global cmitmode wrapcomment datetimeformat limitdiffs
     global colors uicolor bgcolor fgcolor diffcolors diffcontext selectbgcolor
     global autoselect autosellen extdifftool perfile_attrs markbgcolor use_ttk
-    global hideremotes want_ttk
+    global hideremotes want_ttk maxrefs
 
     if {$stuffsaved} return
     if {![winfo viewable .]} return
@@ -2743,6 +2744,7 @@ proc savestuff {w} {
 	puts $f [list set autoselect $autoselect]
 	puts $f [list set autosellen $autosellen]
 	puts $f [list set showneartags $showneartags]
+	puts $f [list set maxrefs $maxrefs]
 	puts $f [list set hideremotes $hideremotes]
 	puts $f [list set showlocalchanges $showlocalchanges]
 	puts $f [list set datetimeformat $datetimeformat]
@@ -6906,6 +6908,7 @@ proc appendrefs {pos ids var} {
 	    set sep ", "
 	}
     }
+    $ctext tag add wwrap "$pos linestart" "$pos lineend"
     $ctext conf -state disabled
     return [llength $tags]
 }
@@ -10937,7 +10940,7 @@ proc create_prefs_page {w} {
 proc prefspage_general {notebook} {
     global NS maxwidth maxgraphpct showneartags showlocalchanges
     global tabstop limitdiffs autoselect autosellen extdifftool perfile_attrs
-    global hideremotes want_ttk have_ttk
+    global hideremotes want_ttk have_ttk maxrefs
 
     set page [create_prefs_page $notebook.general]
 
@@ -10966,9 +10969,12 @@ proc prefspage_general {notebook} {
     ${NS}::label $page.tabstopl -text [mc "Tab spacing"]
     spinbox $page.tabstop -from 1 -to 20 -width 4 -textvariable tabstop
     grid x $page.tabstopl $page.tabstop -sticky w
-    ${NS}::checkbutton $page.ntag -text [mc "Display nearby tags"] \
+    ${NS}::checkbutton $page.ntag -text [mc "Display nearby tags/heads"] \
 	-variable showneartags
     grid x $page.ntag -sticky w
+    ${NS}::label $page.maxrefsl -text [mc "Maximum # tags/heads to show"]
+    spinbox $page.maxrefs -from 1 -to 1000 -width 4 -textvariable maxrefs
+    grid x $page.maxrefsl $page.maxrefs -sticky w
     ${NS}::checkbutton $page.ldiff -text [mc "Limit diffs to listed paths"] \
 	-variable limitdiffs
     grid x $page.ldiff -sticky w
