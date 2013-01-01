@@ -60,14 +60,8 @@ Checklist (and a short version for the impatient):
 
 Long version:
 
-I started reading over the SubmittingPatches document for Linux
-kernel, primarily because I wanted to have a document similar to
-it for the core GIT to make sure people understand what they are
-doing when they write "Signed-off-by" line.
-
-But the patch submission requirements are a lot more relaxed
-here on the technical/contents front, because the core GIT is
-thousand times smaller ;-).  So here is only the relevant bits.
+Here are some guidelines for people who want to contribute their code
+to this software.
 
 (0) Decide what to base your work on.
 
