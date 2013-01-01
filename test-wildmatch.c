@@ -1,3 +1,6 @@
+#ifdef USE_WILDMATCH
+#undef USE_WILDMATCH  /* We need real fnmatch implementation here */
+#endif
 #include "cache.h"
 #include "wildmatch.h"
 
