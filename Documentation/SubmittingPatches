@@ -189,12 +189,16 @@ people who are involved in the area you are touching (the output from
 identify them), to solicit comments and reviews.
 
 After the list reached a consensus that it is a good idea to apply the
-patch, re-send it with "To:" set to the maintainer and "cc:" the
-list for inclusion.
+patch, re-send it with "To:" set to the maintainer [*1*] and "cc:" the
+list [*2*] for inclusion.
 
 Do not forget to add trailers such as "Acked-by:", "Reviewed-by:" and
 "Tested-by:" lines as necessary to credit people who helped your
 patch.
+
+    [Addresses]
+     *1* The current maintainer: gitster@pobox.com
+     *2* The mailing list: git@vger.kernel.org
 
 
 (5) Sign your work
