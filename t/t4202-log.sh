@@ -280,6 +280,16 @@ test_expect_success 'log --graph with merge' '
 	test_cmp expect actual
 '
 
+test_expect_success 'log --raw --graph -m with merge' '
+	git log --raw --graph --oneline -m master | head -n 500 >actual &&
+	grep "initial" actual
+'
+
+test_expect_success 'diff-tree --graph' '
+	git diff-tree --graph master^ | head -n 500 >actual &&
+	grep "one" actual
+'
+
 cat > expect <<\EOF
 *   commit master
 |\  Merge: A B

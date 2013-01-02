@@ -33,11 +33,11 @@ The following utility functions are wrappers around `graph_next_line()` and
 They can all be called with a NULL graph argument, in which case no graph
 output will be printed.
 
-* `graph_show_commit()` calls `graph_next_line()` until it returns non-zero.
-  This prints all graph lines up to, and including, the line containing this
-  commit.  Output is printed to stdout.  The last line printed does not contain
-  a terminating newline.  This should not be called if the commit line has
-  already been printed, or it will loop forever.
+* `graph_show_commit()` calls `graph_next_line()` and
+  `graph_is_commit_finished()` until one of them return non-zero.  This prints
+  all graph lines up to, and including, the line containing this commit.
+  Output is printed to stdout.  The last line printed does not contain a
+  terminating newline.
 
 * `graph_show_oneline()` calls `graph_next_line()` and prints the result to
   stdout.  The line printed does not contain a terminating newline.

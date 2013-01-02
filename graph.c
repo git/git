@@ -1227,7 +1227,7 @@ void graph_show_commit(struct git_graph *graph)
 	if (!graph)
 		return;
 
-	while (!shown_commit_line) {
+	while (!shown_commit_line && !graph_is_commit_finished(graph)) {
 		shown_commit_line = graph_next_line(graph, &msgbuf);
 		fwrite(msgbuf.buf, sizeof(char), msgbuf.len, stdout);
 		if (!shown_commit_line)
