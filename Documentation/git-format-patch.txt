@@ -18,7 +18,7 @@ SYNOPSIS
 		   [--start-number <n>] [--numbered-files]
 		   [--in-reply-to=Message-Id] [--suffix=.<sfx>]
 		   [--ignore-if-in-upstream]
-		   [--subject-prefix=Subject-Prefix] [--reroll-count <n>]
+		   [--subject-prefix=Subject-Prefix] [(--reroll-count|-v) <n>]
 		   [--to=<email>] [--cc=<email>]
 		   [--cover-letter] [--quiet]
 		   [<common diff options>]
@@ -166,6 +166,7 @@ will want to ensure that threading is disabled for `git send-email`.
 	allows for useful naming of a patch series, and can be
 	combined with the `--numbered` option.
 
+-v <n>::
 --reroll-count=<n>::
 	Mark the series as the <n>-th iteration of the topic. The
 	output filenames have `v<n>` pretended to them, and the
