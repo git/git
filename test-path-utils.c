@@ -1,4 +1,32 @@
 #include "cache.h"
+#include "string-list.h"
+
+/*
+ * A "string_list_each_func_t" function that normalizes an entry from
+ * GIT_CEILING_DIRECTORIES.  If the path is unusable for some reason,
+ * die with an explanation.
+ */
+static int normalize_ceiling_entry(struct string_list_item *item, void *unused)
+{
+	const char *ceil = item->string;
+	int len = strlen(ceil);
+	char buf[PATH_MAX+1];
+
+	if (len == 0)
+		die("Empty path is not supported");
+	if (len > PATH_MAX)
+		die("Path \"%s\" is too long", ceil);
+	if (!is_absolute_path(ceil))
+		die("Path \"%s\" is not absolute", ceil);
+	if (normalize_path_copy(buf, ceil) < 0)
+		die("Path \"%s\" could not be normalized", ceil);
+	len = strlen(buf);
+	if (len > 1 && buf[len-1] == '/')
+		die("Normalized path \"%s\" ended with slash", buf);
+	free(item->string);
+	item->string = xstrdup(buf);
+	return 1;
+}
 
 int main(int argc, char **argv)
 {
@@ -30,7 +58,28 @@ int main(int argc, char **argv)
 	}
 
 	if (argc == 4 && !strcmp(argv[1], "longest_ancestor_length")) {
-		int len = longest_ancestor_length(argv[2], argv[3]);
+		int len;
+		struct string_list ceiling_dirs = STRING_LIST_INIT_DUP;
+		char *path = xstrdup(argv[2]);
+
+		/*
+		 * We have to normalize the arguments because under
+		 * Windows, bash mangles arguments that look like
+		 * absolute POSIX paths or colon-separate lists of
+		 * absolute POSIX paths into DOS paths (e.g.,
+		 * "/foo:/foo/bar" might be converted to
+		 * "D:\Src\msysgit\foo;D:\Src\msysgit\foo\bar"),
+		 * whereas longest_ancestor_length() requires paths
+		 * that use forward slashes.
+		 */
+		if (normalize_path_copy(path, path))
+			die("Path \"%s\" could not be normalized", argv[2]);
+		string_list_split(&ceiling_dirs, argv[3], PATH_SEP, -1);
+		filter_string_list(&ceiling_dirs, 0,
+				   normalize_ceiling_entry, NULL);
+		len = longest_ancestor_length(path, &ceiling_dirs);
+		string_list_clear(&ceiling_dirs, 0);
+		free(path);
 		printf("%d\n", len);
 		return 0;
 	}
