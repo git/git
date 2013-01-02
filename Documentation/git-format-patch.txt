@@ -18,7 +18,7 @@ SYNOPSIS
 		   [--start-number <n>] [--numbered-files]
 		   [--in-reply-to=Message-Id] [--suffix=.<sfx>]
 		   [--ignore-if-in-upstream]
-		   [--subject-prefix=Subject-Prefix]
+		   [--subject-prefix=Subject-Prefix] [--reroll-count <n>]
 		   [--to=<email>] [--cc=<email>]
 		   [--cover-letter] [--quiet]
 		   [<common diff options>]
@@ -165,6 +165,14 @@ will want to ensure that threading is disabled for `git send-email`.
 	line, instead use '[<Subject-Prefix>]'. This
 	allows for useful naming of a patch series, and can be
 	combined with the `--numbered` option.
+
+--reroll-count=<n>::
+	Mark the series as the <n>-th iteration of the topic. The
+	output filenames have `v<n>` pretended to them, and the
+	subject prefix ("PATCH" by default, but configurable via the
+	`--subject-prefix` option) has ` v<n>` appended to it.  E.g.
+	`--reroll-count=4` may produce `v4-0001-add-makefile.patch`
+	file that has "Subject: [PATCH v4 1/20] Add makefile" in it.
 
 --to=<email>::
 	Add a `To:` header to the email headers. This is in addition
