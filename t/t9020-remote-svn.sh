@@ -12,9 +12,13 @@ then
 	test_done
 fi
 
-# We override svnrdump by placing a symlink to the svnrdump-emulator in .
-export PATH="$HOME:$PATH"
-ln -sf $GIT_BUILD_DIR/contrib/svn-fe/svnrdump_sim.py "$HOME/svnrdump"
+# Override svnrdump with our simulator
+PATH="$HOME:$PATH"
+export PATH PYTHON_PATH GIT_BUILD_DIR
+
+write_script "$HOME/svnrdump" <<\EOF
+exec "$PYTHON_PATH" "$GIT_BUILD_DIR/contrib/svn-fe/svnrdump_sim.py" "$@"
+EOF
 
 init_git () {
 	rm -fr .git &&
