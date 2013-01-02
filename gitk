@@ -6879,7 +6879,7 @@ proc viewnextline {dir} {
 # add a list of tag or branch names at position pos
 # returns the number of names inserted
 proc appendrefs {pos ids var} {
-    global ctext linknum curview $var maxrefs
+    global ctext linknum curview $var maxrefs mainheadid
 
     if {[catch {$ctext index $pos}]} {
 	return 0
@@ -6892,25 +6892,54 @@ proc appendrefs {pos ids var} {
 	    lappend tags [list $tag $id]
 	}
     }
+
+    set sep {}
+    set tags [lsort -index 0 -decreasing $tags]
+    set nutags 0
+
     if {[llength $tags] > $maxrefs} {
-	$ctext insert $pos "[mc "many"] ([llength $tags])"
-    } else {
-	set tags [lsort -index 0 -decreasing $tags]
-	set sep {}
-	foreach ti $tags {
-	    set id [lindex $ti 1]
-	    set lk link$linknum
-	    incr linknum
-	    $ctext tag delete $lk
-	    $ctext insert $pos $sep
-	    $ctext insert $pos [lindex $ti 0] $lk
-	    setlink $id $lk
-	    set sep ", "
+	# If we are displaying heads, and there are too many,
+	# see if there are some important heads to display.
+	# Currently this means "master" and the current head.
+	set itags {}
+	if {$var eq "idheads"} {
+	    set utags {}
+	    foreach ti $tags {
+		set hname [lindex $ti 0]
+		set id [lindex $ti 1]
+		if {($hname eq "master" || $id eq $mainheadid) &&
+		    [llength $itags] < $maxrefs} {
+		    lappend itags $ti
+		} else {
+		    lappend utags $ti
+		}
+	    }
+	    set tags $utags
 	}
+	if {$itags ne {}} {
+	    set str [mc "and many more"]
+	    set sep " "
+	} else {
+	    set str [mc "many"]
+	}
+	$ctext insert $pos "$str ([llength $tags])"
+	set nutags [llength $tags]
+	set tags $itags
+    }
+
+    foreach ti $tags {
+	set id [lindex $ti 1]
+	set lk link$linknum
+	incr linknum
+	$ctext tag delete $lk
+	$ctext insert $pos $sep
+	$ctext insert $pos [lindex $ti 0] $lk
+	setlink $id $lk
+	set sep ", "
     }
     $ctext tag add wwrap "$pos linestart" "$pos lineend"
     $ctext conf -state disabled
-    return [llength $tags]
+    return [expr {[llength $tags] + $nutags}]
 }
 
 # called when we have finished computing the nearby tags
