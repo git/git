@@ -1014,6 +1014,7 @@ static char *find_branch_name(struct rev_info *rev)
 {
 	int i, positive = -1;
 	unsigned char branch_sha1[20];
+	const unsigned char *tip_sha1;
 	const char *ref;
 	char *full_ref, *branch = NULL;
 
@@ -1025,12 +1026,24 @@ static char *find_branch_name(struct rev_info *rev)
 		else
 			return NULL;
 	}
-	if (positive < 0)
+	if (0 <= positive) {
+		ref = rev->cmdline.rev[positive].name;
+		tip_sha1 = rev->cmdline.rev[positive].item->sha1;
+	} else if (!rev->cmdline.nr && rev->pending.nr == 1 &&
+		   !strcmp(rev->pending.objects[0].name, "HEAD")) {
+		/*
+		 * No actual ref from command line, but "HEAD" from
+		 * rev->def was added in setup_revisions()
+		 * e.g. format-patch --cover-letter -12
+		 */
+		ref = "HEAD";
+		tip_sha1 = rev->pending.objects[0].item->sha1;
+	} else {
 		return NULL;
-	ref = rev->cmdline.rev[positive].name;
+	}
 	if (dwim_ref(ref, strlen(ref), branch_sha1, &full_ref) &&
 	    !prefixcmp(full_ref, "refs/heads/") &&
-	    !hashcmp(rev->cmdline.rev[positive].item->sha1, branch_sha1))
+	    !hashcmp(tip_sha1, branch_sha1))
 		branch = xstrdup(full_ref + strlen("refs/heads/"));
 	free(full_ref);
 	return branch;

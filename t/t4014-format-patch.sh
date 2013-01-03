@@ -926,4 +926,11 @@ test_expect_success 'cover letter using branch description (5)' '
 	grep hello actual >/dev/null
 '
 
+test_expect_success 'cover letter using branch description (6)' '
+	git checkout rebuild-1 &&
+	test_config branch.rebuild-1.description hello &&
+	git format-patch --stdout --cover-letter -2 >actual &&
+	grep hello actual >/dev/null
+'
+
 test_done
