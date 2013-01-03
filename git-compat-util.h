@@ -99,12 +99,14 @@
 #include <stdlib.h>
 #include <stdarg.h>
 #include <string.h>
-#ifdef __TANDEM /* or HAVE_STRINGS_H or !NO_STRINGS_H? */
+#ifdef HAVE_STRINGS_H
 #include <strings.h> /* for strcasecmp() */
 #endif
 #include <errno.h>
 #include <limits.h>
+#ifdef NEEDS_SYS_PARAM_H
 #include <sys/param.h>
+#endif
 #include <sys/types.h>
 #include <dirent.h>
 #include <sys/time.h>

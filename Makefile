@@ -74,6 +74,8 @@ all::
 # Define NO_D_TYPE_IN_DIRENT if your platform defines DT_UNKNOWN but lacks
 # d_type in struct dirent (Cygwin 1.5, fixed in Cygwin 1.7).
 #
+# Define HAVE_STRINGS_H if you have strings.h and need it for strcasecmp.
+#
 # Define NO_STRCASESTR if you don't have strcasestr.
 #
 # Define NO_MEMMEM if you don't have memmem.
@@ -164,6 +166,10 @@ all::
 #
 # Define NO_POLL if you do not have or don't want to use poll().
 # This also implies NO_SYS_POLL_H.
+#
+# Define NEEDS_SYS_PARAM_H if you need to include sys/param.h to compile,
+# *PLEASE* REPORT to git@vger.kernel.org if your platform needs this;
+# we want to know more about the issue.
 #
 # Define NO_PTHREADS if you do not have or do not want to use Pthreads.
 #
@@ -1353,6 +1359,7 @@ ifeq ($(uname_S),NONSTOP_KERNEL)
 	# Added manually, see above.
 	NEEDS_SSL_WITH_CURL = YesPlease
 	HAVE_LIBCHARSET_H = YesPlease
+	HAVE_STRINGS_H = YesPlease
 	NEEDS_LIBICONV = YesPlease
 	NEEDS_LIBINTL_BEFORE_LIBICONV = YesPlease
 	NO_SYS_SELECT_H = UnfortunatelyYes
@@ -1655,6 +1662,9 @@ endif
 ifdef NO_D_INO_IN_DIRENT
 	BASIC_CFLAGS += -DNO_D_INO_IN_DIRENT
 endif
+ifdef NO_GECOS_IN_PWENT
+	BASIC_CFLAGS += -DNO_GECOS_IN_PWENT
+endif
 ifdef NO_ST_BLOCKS_IN_STRUCT_STAT
 	BASIC_CFLAGS += -DNO_ST_BLOCKS_IN_STRUCT_STAT
 endif
@@ -1747,6 +1757,9 @@ ifdef NO_SYS_SELECT_H
 endif
 ifdef NO_SYS_POLL_H
 	BASIC_CFLAGS += -DNO_SYS_POLL_H
+endif
+ifdef NEEDS_SYS_PARAM_H
+	BASIC_CFLAGS += -DNEEDS_SYS_PARAM_H
 endif
 ifdef NO_INTTYPES_H
 	BASIC_CFLAGS += -DNO_INTTYPES_H
@@ -1882,6 +1895,10 @@ endif
 ifdef HAVE_LIBCHARSET_H
 	BASIC_CFLAGS += -DHAVE_LIBCHARSET_H
 	EXTLIBS += $(CHARSET_LIB)
+endif
+
+ifdef HAVE_STRINGS_H
+	BASIC_CFLAGS += -DHAVE_STRINGS_H
 endif
 
 ifdef HAVE_DEV_TTY
