@@ -93,7 +93,7 @@ pull::
 	repository.
 	
 push::
-	Does a 'split' (see above) using the <prefix> supplied
+	Does a 'split' (see below) using the <prefix> supplied
 	and then does a 'git push' to push the result to the 
 	repository and refspec. This can be used to push your
 	subtree to different branches of the remote repository.
