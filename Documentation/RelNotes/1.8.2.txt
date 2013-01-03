@@ -21,7 +21,10 @@ Updates since v1.8.1
 
 UI, Workflows & Features
 
- *
+ * Initial ports to QNX and z/OS UNIX System Services have started.
+
+ * Output from the tests is coloured using "green is okay, yellow is
+   questionable, red is bad and blue is informative" scheme.
 
 Foreign Interface
 
@@ -57,6 +60,12 @@ details).
    platform can configure this fail for the current user (e.g. you
    need to be in the cvsadmin group on NetBSD 6.0).
    (merge 8666df0 jc/test-cvs-no-init-in-existing-dir later to maint).
+
+ * The behaviour visible to the end users was confusing, when they
+   attempt to kill a process spawned in the editor that was in turn
+   launched by Git with SIGINT (or SIGQUIT), as Git would catch that
+   signal and die.  We ignore these signals now.
+   (merge 1250857 pf/editor-ignore-sigint later to maint).
 
  * After failing to create a temporary file using mkstemp(), failing
    pathname was not reported correctly on some platforms.
