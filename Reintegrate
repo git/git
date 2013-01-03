@@ -92,7 +92,13 @@ no)
 			continue
 		fi
 
-		case "$branch" in '#'* | '') continue ;; esac
+		case "$branch" in
+		'###')
+			echo >&2 "$branch"
+			continue ;;
+		'#'* | '')
+			continue ;;
+		esac
 
 		case "$eh" in
 		"" | "#"*)
