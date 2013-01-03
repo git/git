@@ -1,27 +1,23 @@
 To: git@vger.kernel.org
 Bcc: lwn@lwn.net
-Subject: What's cooking in git.git (Jan 2013, #01; Tue, 1)
-X-master-at: 5d417842efeafb6e109db7574196901c4e95d273
-X-next-at: 8c633a54c4512b0a738750d9713cb0b5370100ba
+Subject: What's cooking in git.git (Jan 2013, #02; Thu, 3)
+X-master-at: 3e293fba627e254b2c7d196bb7563c6c9d2e6f8a
+X-next-at: 64b3e71d071ea592b3e4e52272e50cf5909226b6
 
-What's cooking in git.git (Jan 2013, #01; Tue, 1)
+What's cooking in git.git (Jan 2013, #02; Thu, 3)
 --------------------------------------------------
 
 Here are the topics that have been cooking.  Commits prefixed with
 '-' are only in 'pu' (proposed updates) while commits prefixed with
 '+' are in 'next'.
 
-The tip of the 'master' branch is at 1.8.1; the tip of 'next' will
-be rewound soonish to reorder topics that are already well cooked
-during the pre-release freeze earlier than the others so that they
-can orderly be merged to 'master' after the dust settles, probably
-towards the end of this week.
+The post 1.8.1 cycle has started, and about a dozen topics (mostly
+fixes) have graduated to the 'master' branch.  The second batch will
+follow shortly.
 
-Note that many topics that have been marked as "Will cook in next"
-have been recategorized to be merged to 'master' soonish, and a few
-topics have been marked to be kicked back to 'pu'.  Please holler if
-a topic that still has unresolved issues is marked to be merged to
-'master' by mistake.
+As usual, this cycle is expected to last for 8 to 10 weeks.  To
+ensure the quality of the end result, let's merge topics in flight
+earlier than previous cycles to 'next' and fix issues in-tree.
 
 You can find the changes described here in the integration branches of the
 repositories listed at
@@ -31,39 +27,258 @@ repositories listed at
 --------------------------------------------------
 [New Topics]
 
-* jc/submittingpatches (2013-01-01) 3 commits
- - SubmittingPatches: remove overlong checklist
- - SubmittingPatches: mention subsystems with dedicated repositories
- - SubmittingPatches: who am I and who cares?
+* jn/less-reconfigure (2013-01-02) 1 commit
+  (merged to 'next' on 2013-01-02 at e5cd6cf)
+ + build: do not automatically reconfigure unless configure.ac changed
 
- Will reroll.
-
-
-* kb/maint-bundle-doc (2013-01-01) 2 commits
- - Documentation: full-ness of a bundle is significant for cloning
- - Documentation: correct example restore from bundle
-
- Will merge to 'next'.
+ When autoconf is used, any build on a different commit always ran
+ "config.status --recheck" even when unnecessary.
 
 
-* nd/maint-branch-desc-doc (2013-01-01) 3 commits
- - branch: delete branch description if it's empty
- - format-patch: pick up branch description when no ref is specified
- - config.txt: a few lines about branch.<name>.description
+* ap/merge-stop-at-prepare-commit-msg-failure (2013-01-03) 1 commit
+ - merge: Honor prepare-commit-msg return code
 
- Waiting for a reroll.
-
-
-* tb/test-t9020-no-which (2013-01-01) 1 commit
- - t9020: which is not portable
+ "git merge" started calling prepare-commit-msg hook like "git
+ commit" does some time ago, but forgot to pay attention to the exit
+ status of the hook.  t7505 may want a general clean-up but that is
+ a different topic.
 
  Will merge to 'next'.
 
 
-* tb/test-t9810-no-sed-i (2013-01-01) 1 commit
- - t9810: Do not use sed -i
+* tb/test-shell-lint (2013-01-02) 1 commit
+ - test: Add check-non-portable-shell.pl
+
+ Check for common mistakes in the test scripts, based on simple
+ pattern-matching.
 
  Will merge to 'next'.
+
+
+* jk/enable-test-lint-by-default (2013-01-03) 1 commit
+ - tests: turn on test-lint by default
+
+ We had two simple and quick tests to catch common mistakes when
+ writing test scripts, but they weren't run by default when running
+ tests.
+
+ Will merge to 'next'.
+
+--------------------------------------------------
+[Graduated to "master"]
+
+* as/test-tweaks (2012-12-20) 7 commits
+  (merged to 'next' on 2012-12-22 at 7312c6c)
+ + tests: paint unexpectedly fixed known breakages in bold red
+ + tests: test the test framework more thoroughly
+ + tests: refactor mechanics of testing in a sub test-lib
+ + tests: change info messages from yellow/brown to cyan
+ + tests: paint skipped tests in blue
+ + tests: paint known breakages in yellow
+ + tests: test number comes first in 'not ok $count - $message'
+
+ Output from the tests is coloured using "green is okay, yellow is
+ questionable, red is bad and blue is informative" scheme.
+
+
+* da/p4merge-mktemp (2012-12-26) 1 commit
+  (merged to 'next' on 2012-12-26 at 036938a)
+ + mergetools/p4merge: Honor $TMPDIR for the /dev/null placeholder
+
+ Create an empty file in $TMPDIR instead of using an empty file in
+ the local directory.
+
+
+* dm/port (2012-12-19) 4 commits
+  (merged to 'next' on 2012-12-22 at 8adc198)
+ + git-compat-util.h: do not #include <sys/param.h> by default
+ + Generalize the inclusion of strings.h
+ + Detect when the passwd struct is missing pw_gecos
+ + Support builds when sys/param.h is missing
+ (this branch is used by mk/qnx.)
+
+ Add a few more knobs for new platform ports can tweak.
+
+
+* jc/maint-fbsd-sh-ifs-workaround (2012-12-10) 1 commit
+  (merged to 'next' on 2012-12-11 at 6659fdc)
+ + sh-setup: work around "unset IFS" bug in some shells
+
+ Some shells do not behave correctly when IFS is unset; work it
+ around by explicitly setting it to the default value.
+
+
+* jc/maint-fnmatch-old-style-definition (2012-12-19) 1 commit
+  (merged to 'next' on 2012-12-22 at 540df2c)
+ + compat/fnmatch: update old-style definition to ANSI
+
+ Update old-style function definition "int foo(bar) int bar; {}"
+ to "int foo(int bar) {}".
+
+
+* jc/maint-test-portability (2012-12-19) 3 commits
+  (merged to 'next' on 2012-12-22 at daeed53)
+ + t4014: fix arguments to grep
+ + t9502: do not assume GNU tar
+ + t0200: "locale" may not exist
+ (this branch is used by jc/test-portability.)
+
+ Minor test fixes noticed while running our tests on OpenBSD 5.2,
+ applicable to 'maint'.
+
+
+* jc/mkstemp-more-careful-error-reporting (2012-12-18) 1 commit
+  (merged to 'next' on 2012-12-22 at 18cdaf0)
+ + xmkstemp(): avoid showing truncated template more carefully
+
+ After failing to create a temporary file using mkstemp(), failing
+ pathname was not reported correctly on some platforms.
+
+
+* jc/same-encoding (2012-12-10) 1 commit
+  (merged to 'next' on 2012-12-17 at 86b41c7)
+ + format_commit_message(): simplify calls to logmsg_reencode()
+
+ Finishing touches to the series to unify "Do we need to reencode
+ between these two encodings?" logic.
+
+
+* jc/test-cvs-no-init-in-existing-dir (2012-12-24) 1 commit
+  (merged to 'next' on 2012-12-26 at 3b93f37)
+ + t9200: let "cvs init" create the test repository
+
+ t9200 runs "cvs init" on a directory that already exists, but a
+ platform can configure this fail for the current user (e.g. you
+ need to be in the cvsadmin group on NetBSD 6.0).
+
+
+* jc/test-portability (2012-12-19) 3 commits
+  (merged to 'next' on 2012-12-22 at 123041b)
+ + t9020: use configured Python to run the test helper
+ + t3600: Avoid "cp -a", which is a GNUism
+ + Merge branch 'jc/maint-test-portability' into 'jc/test-portability'
+ (this branch uses jc/maint-test-portability.)
+
+ The remainder of jc/maint-test-portability, applicable to 'master'.
+
+
+* jk/repack-ref-racefix (2012-12-21) 1 commit
+  (merged to 'next' on 2012-12-22 at 03e1ca9)
+ + refs: do not use cached refs in repack_without_ref
+
+ "git pack-refs" that ran in parallel to another process that
+ created new refs had a nasty race.
+
+
+* md/gitweb-sort-by-age (2012-12-11) 1 commit
+  (merged to 'next' on 2012-12-13 at 9f39410)
+ + gitweb: Sort projects with undefined ages last
+
+ Gitweb showed repositories without any commit at the top in its
+ age-sorted view, in which the users are interested in looking at
+ active projects; sorting them at the bottom makes it more useful.
+
+
+* mh/ceiling (2012-10-29) 8 commits
+  (merged to 'next' on 2012-11-26 at d1ce76a)
+ + string_list_longest_prefix(): remove function
+ + setup_git_directory_gently_1(): resolve symlinks in ceiling paths
+ + longest_ancestor_length(): require prefix list entries to be normalized
+ + longest_ancestor_length(): take a string_list argument for prefixes
+ + longest_ancestor_length(): use string_list_split()
+ + Introduce new function real_path_if_valid()
+ + real_path_internal(): add comment explaining use of cwd
+ + Introduce new static function real_path_internal()
+
+ Elements of GIT_CEILING_DIRECTORIES list may not match the real
+ pathname we obtain from getcwd(), leading the GIT_DIR discovery
+ logic to escape the ceilings the user thought to have specified.
+
+
+* mh/pthreads-autoconf (2012-11-27) 1 commit
+  (merged to 'next' on 2012-11-28 at 780600e)
+ + configure.ac: fix pthreads detection on Mac OS X
+
+
+* mk/maint-graph-infinity-loop (2012-09-25) 1 commit
+  (merged to 'next' on 2012-12-26 at 2ff59ab)
+ + graph.c: infinite loop in git whatchanged --graph -m
+
+ The --graph code fell into infinite loop when asked to do what the
+ code did not expect ;-)
+
+
+* mk/qnx (2012-12-19) 2 commits
+  (merged to 'next' on 2012-12-22 at 0473197)
+ + Port to QNX
+ + Make lock local to fetch_pack
+ (this branch uses dm/port.)
+
+ Port to QNX.
+
+
+* ms/subtree-fixlets (2012-12-22) 2 commits
+  (merged to 'next' on 2012-12-26 at 1cb26eb)
+ + git-subtree: fix typo in manpage
+ + git-subtree: ignore git-subtree executable
+
+
+* nd/invalidate-i-t-a-cache-tree (2012-12-15) 4 commits
+  (merged to 'next' on 2012-12-18 at 33e4488)
+ + cache-tree: invalidate i-t-a paths after generating trees
+ + cache-tree: fix writing cache-tree when CE_REMOVE is present
+ + cache-tree: replace "for" loops in update_one with "while" loops
+ + cache-tree: remove dead i-t-a code in verify_cache()
+
+ Writing out a tree object when you still have intent-to-add entries
+ in the index left an incorrect cache-tree data there.
+
+
+* pf/editor-ignore-sigint (2012-12-02) 5 commits
+  (merged to 'next' on 2012-12-07 at 6b04419)
+ + launch_editor: propagate signals from editor to git
+ + run-command: do not warn about child death from terminal
+ + launch_editor: ignore terminal signals while editor has control
+ + launch_editor: refactor to use start/finish_command
+ + run-command: drop silent_exec_failure arg from wait_or_whine
+
+ The behaviour visible to the end users was confusing, when they
+ attempt to kill a process spawned in the editor that was in turn
+ launched by Git with SIGINT (or SIGQUIT), as Git would catch that
+ signal and die.  We ignore these signals now.
+
+
+* rb/http-cert-cred-no-username-prompt (2012-12-21) 1 commit
+  (merged to 'next' on 2012-12-22 at 9fc28ed)
+ + http.c: Avoid username prompt for certifcate credentials
+
+ It is wrong to ask for username if the authentication is done by
+ certificate identity.
+
+
+* sp/shortlog-missing-lf (2012-12-11) 2 commits
+  (merged to 'next' on 2012-12-11 at 64b8429)
+ + strbuf_add_wrapped*(): Remove unused return value
+ + shortlog: fix wrapping lines of wraplen
+
+ When a line to be wrapped has a solid run of non space characters
+ whose length exactly is the wrap width, "git shortlog -w" failed to
+ add a newline after such a line.
+
+
+* ss/nedmalloc-compilation (2012-12-11) 1 commit
+  (merged to 'next' on 2012-12-13 at c1f0d7f)
+ + nedmalloc: Fix a compile warning (exposed as error) with GCC 4.7.2
+
+
+* ss/svn-prompt (2012-12-17) 3 commits
+  (merged to 'next' on 2012-12-26 at 1012ae2)
+ + git-svn, perl/Git.pm: extend and use Git->prompt method for querying users
+ + perl/Git.pm: Honor SSH_ASKPASS as fallback if GIT_ASKPASS is not set
+ + git-svn, perl/Git.pm: add central method for prompting passwords
+
+ Tweak the way "git svn" asks for password to be in line with the
+ rest of the system, so that the same SSH/GIT_ASKPASS can be used.
 
 --------------------------------------------------
 [Stalled]
@@ -90,54 +305,6 @@ repositories listed at
  An early draft that is still incomplete.
 
 
-* fc/remote-bzr (2012-12-13) 10 commits
- - (fixup) test-bzr.sh: fix multi-line string assignment
- - remote-bzr: detect local repositories
- - remote-bzr: add support for older versions of bzr
- - remote-bzr: add support to push special modes
- - remote-bzr: add support for fecthing special modes
- - remote-bzr: add simple tests
- - remote-bzr: update working tree upon pushing
- - remote-bzr: add support for remote repositories
- - remote-bzr: add support for pushing
- - Add new remote-bzr transport helper
-
- New remote helper for bzr (v3).  With minor fixes, this may be ready
- for 'next'.
-
-
-* mo/cvs-server-updates (2012-12-09) 18 commits
- - t9402: Use TABs for indentation
- - t9402: Rename check.cvsCount and check.list
- - t9402: Simplify git ls-tree
- - t9402: Add missing &&; Code style
- - t9402: No space after IO-redirection
- - t9402: Dont use test_must_fail cvs
- - t9402: improve check_end_tree() and check_end_full_tree()
- - t9402: sed -i is not portable
- - cvsserver Documentation: new cvs ... -r support
- - cvsserver: add t9402 to test branch and tag refs
- - cvsserver: support -r and sticky tags for most operations
- - cvsserver: Add version awareness to argsfromdir
- - cvsserver: generalize getmeta() to recognize commit refs
- - cvsserver: implement req_Sticky and related utilities
- - cvsserver: add misc commit lookup, file meta data, and file listing functions
- - cvsserver: define a tag name character escape mechanism
- - cvsserver: cleanup extra slashes in filename arguments
- - cvsserver: factor out git-log parsing logic
-
- Needs review by folks interested in cvsserver.
-
-
-* aw/rebase-am-failure-detection (2012-10-11) 1 commit
- - rebase: Handle cases where format-patch fails
-
- Save output from format-patch command in a temporary file, just in
- case it aborts, to give a better failure-case behaviour.
-
- Will merge to 'next'.
-
-
 * jk/lua-hackery (2012-10-07) 6 commits
  - pretty: fix up one-off format_commit_message calls
  - Minimum compilation fixup
@@ -151,18 +318,11 @@ repositories listed at
  "parents", etc.
 
 
-* fc/remote-testgit-feature-done (2012-10-29) 1 commit
- - remote-testgit: properly check for errors
-
- Needs review and Ack (or Nack) from people involved in the remote
- helper interface for this to move forward.
-
-
 * rc/maint-complete-git-p4 (2012-09-24) 1 commit
   (merged to 'next' on 2012-10-29 at af52cef)
  + Teach git-completion about git p4
 
- Comment from Pete will need to be addressed in a follow-up patch.
+ Comment from Pete will need to be addressed ($gmane/206172).
 
  Will kick back to 'pu'.
 
@@ -210,13 +370,6 @@ repositories listed at
  Stalled mostly due to lack of responses.
 
 
-* jc/doc-default-format (2012-11-26) 2 commits
- - [SQAUSH] allow "cd Doc* && make DEFAULT_DOC_TARGET=..."
- - Allow generating a non-default set of documentation
-
- Need to address the installation half if this is to be any useful.
-
-
 * jc/add-delete-default (2012-08-13) 1 commit
  - git add: notice removal of tracked paths by default
 
@@ -243,12 +396,120 @@ repositories listed at
  configuration variable.
 
  Expecting a reroll.
+ $gmane/210151
 
  "The first remote becomes the default" bit is better done as a
  separate step.
 
 --------------------------------------------------
 [Cooking]
+
+* jc/doc-default-format (2013-01-03) 2 commits
+ - Allow installing a non-default set of documentation
+ - Allow generating a non-default set of documentation
+
+ Instead of the default of generating html/man and installing man,
+ you can control what "make doc" and "make install-doc" do via two
+ make variables.
+
+ Will merge to 'next'.
+
+
+* fc/remote-testgit-feature-done (2012-10-29) 1 commit
+ - remote-testgit: properly check for errors
+
+ In the longer term, tightening rules is a good thing to do, and
+ because nobody who has worked in the remote helper area seems to be
+ interested in reviewing this, I would assume they do not think
+ such a retroactive tightening will affect their remote helpers.  So
+ let's advance this topic to see what happens.
+
+
+* fc/remote-bzr (2013-01-02) 9 commits
+ - remote-bzr: detect local repositories
+ - remote-bzr: add support for older versions of bzr
+ - remote-bzr: add support to push special modes
+ - remote-bzr: add support for fecthing special modes
+ - remote-bzr: add simple tests
+ - remote-bzr: update working tree upon pushing
+ - remote-bzr: add support for remote repositories
+ - remote-bzr: add support for pushing
+ - Add new remote-bzr transport helper
+
+ New remote helper for bzr, with minimum fix squashed in.
+
+ Will merge to 'next'.
+
+
+* mo/cvs-server-updates (2012-12-09) 18 commits
+ - t9402: Use TABs for indentation
+ - t9402: Rename check.cvsCount and check.list
+ - t9402: Simplify git ls-tree
+ - t9402: Add missing &&; Code style
+ - t9402: No space after IO-redirection
+ - t9402: Dont use test_must_fail cvs
+ - t9402: improve check_end_tree() and check_end_full_tree()
+ - t9402: sed -i is not portable
+ - cvsserver Documentation: new cvs ... -r support
+ - cvsserver: add t9402 to test branch and tag refs
+ - cvsserver: support -r and sticky tags for most operations
+ - cvsserver: Add version awareness to argsfromdir
+ - cvsserver: generalize getmeta() to recognize commit refs
+ - cvsserver: implement req_Sticky and related utilities
+ - cvsserver: add misc commit lookup, file meta data, and file listing functions
+ - cvsserver: define a tag name character escape mechanism
+ - cvsserver: cleanup extra slashes in filename arguments
+ - cvsserver: factor out git-log parsing logic
+
+ As nobody seems to be stepping up to review this, I am tempted to
+ merge this to 'next and see who screams.
+
+
+* jc/submittingpatches (2013-01-02) 4 commits
+ - SubmittingPatches: give list and maintainer addresses
+ - SubmittingPatches: remove overlong checklist
+ - SubmittingPatches: mention subsystems with dedicated repositories
+ - SubmittingPatches: who am I and who cares?
+
+ Will merge to 'next'.
+
+
+* kb/maint-bundle-doc (2013-01-01) 2 commits
+ - Documentation: full-ness of a bundle is significant for cloning
+ - Documentation: correct example restore from bundle
+
+ Will merge to 'next'.
+
+
+* nd/maint-branch-desc-doc (2013-01-03) 5 commits
+ - format-patch: pick up branch description when no ref is specified
+ - format-patch: pick up correct branch name from symbolic ref
+ - t4014: a few more tests on cover letter using branch description
+ - branch: delete branch description if it's empty
+ - config.txt: a few lines about branch.<name>.description
+
+ Will merge to 'next'.
+
+
+* tb/test-t9020-no-which (2013-01-01) 1 commit
+ - t9020: which is not portable
+
+ Will merge to 'next'.
+
+
+* tb/test-t9810-no-sed-i (2013-01-01) 1 commit
+ - t9810: Do not use sed -i
+
+ Will merge to 'next'.
+
+
+* aw/rebase-am-failure-detection (2012-10-11) 1 commit
+  (merged to 'next' on 2013-01-02 at b9db3a2)
+ + rebase: Handle cases where format-patch fails
+
+ Save output from format-patch command in a temporary file, just in
+ case it aborts, to give a better failure-case behaviour.
+
 
 * ap/status-ignored-in-ignored-directory (2013-01-01) 2 commits
  - git-status: Test --ignored behavior
@@ -258,37 +519,33 @@ repositories listed at
 
 
 * ta/remove-stale-translated-tut (2012-12-27) 1 commit
- - Remove Documentation/pt_BR/gittutorial.txt
+  (merged to 'next' on 2013-01-02 at e70df8e)
+ + Remove Documentation/pt_BR/gittutorial.txt
 
  Remove a translation of a document that was left stale.
 
- Will merge to 'next'.
-
 
 * er/stop-recommending-parsecvs (2012-12-28) 1 commit
- - Remove the suggestion to use parsecvs, which is currently broken.
+  (merged to 'next' on 2013-01-02 at fd816dd)
+ + Remove the suggestion to use parsecvs, which is currently broken.
 
  Stop recommending a defunct third-party software.
 
- Will merge to 'next'.
-
 
 * as/test-name-alias-uniquely (2012-12-28) 1 commit
- - Use longer alias names in subdirectory tests
+  (merged to 'next' on 2013-01-02 at e297810)
+ + Use longer alias names in subdirectory tests
 
  A few short-and-bland aliases used in the tests were interfering
  with git-custom command in user's $PATH.
 
- Will merge to 'next'.
-
 
 * jc/maint-fmt-merge-msg-no-edit-lose-credit (2012-12-28) 1 commit
- - merge --no-edit: do not credit people involved in the side branch
+  (merged to 'next' on 2013-01-02 at 8795e87)
+ + merge --no-edit: do not credit people involved in the side branch
 
  Stop spending cycles to compute information to be placed on
  commented lines in "merge --no-edit".
-
- Will merge to 'next'.
 
 
 * as/check-ignore (2012-12-28) 19 commits
@@ -313,10 +570,12 @@ repositories listed at
  - api-directory-listing.txt: update to match code
 
  Rerolled.  The early parts looked mostly fine; we may want to split
- this into two topics and have the early half progress earlier.
+ this into two topics and have the early half graduate sooner.
 
 
-* jc/format-patch-reroll (2012-12-22) 7 commits
+* jc/format-patch-reroll (2013-01-02) 9 commits
+ - format-patch: give --reroll-count a short synonym -v
+ - format-patch: document and test --reroll-count
  - format-patch: add --reroll-count=$N option
  - get_patch_filename(): split into two functions
  - get_patch_filename(): drop "just-numbers" hack
@@ -329,22 +588,16 @@ repositories listed at
  fourth iteration of a patch series, to make it easier for the
  submitter to keep separate copies for iterations.
 
- Needs tests and documentation updates.
-
-
-* ms/subtree-fixlets (2012-12-22) 2 commits
-  (merged to 'next' on 2012-12-26 at 1cb26eb)
- + git-subtree: fix typo in manpage
- + git-subtree: ignore git-subtree executable
-
- Will merge to 'master' in the first batch.
+ Will merge to 'next'.
 
 
 * mz/pick-unborn (2012-12-23) 2 commits
- - learn to pick/revert into unborn branch
- - tests: move test_cmp_rev to test-lib-functions
+  (merged to 'next' on 2013-01-02 at 22b9951)
+ + learn to pick/revert into unborn branch
+ + tests: move test_cmp_rev to test-lib-functions
 
- Will merge to 'next'.
+ Allows "git cherry-pick $commit" when you do not have any history
+ behind HEAD yet.
 
 
 * nd/retire-fnmatch (2013-01-01) 7 commits
@@ -364,13 +617,6 @@ repositories listed at
  Will merge to 'next'.
 
 
-* jc/test-cvs-no-init-in-existing-dir (2012-12-24) 1 commit
-  (merged to 'next' on 2012-12-26 at 3b93f37)
- + t9200: let "cvs init" create the test repository
-
- Will merge to 'master' in the first batch.
-
-
 * os/gitweb-highlight-uncaptured (2013-01-01) 1 commit
  - gitweb: fix error in sanitize when highlight is enabled
 
@@ -388,62 +634,6 @@ repositories listed at
  proof-of-concept code.
 
 
-* mk/maint-graph-infinity-loop (2012-09-25) 1 commit
-  (merged to 'next' on 2012-12-26 at 2ff59ab)
- + graph.c: infinite loop in git whatchanged --graph -m
-
- The --graph code fell into infinite loop when asked to do what the
- code did not expect ;-)
-
- Will merge to 'master' in the first batch.
-
-
-* jc/mkstemp-more-careful-error-reporting (2012-12-18) 1 commit
-  (merged to 'next' on 2012-12-22 at 18cdaf0)
- + xmkstemp(): avoid showing truncated template more carefully
-
- An earlier patch to save original arguments to mkstemp() away and
- use it to report what filename we failed to create incorrectly used
- the buffer munged by failing mkstemp().
-
- Will merge to 'master' in the first batch.
-
-
-* jc/maint-test-portability (2012-12-19) 3 commits
-  (merged to 'next' on 2012-12-22 at daeed53)
- + t4014: fix arguments to grep
- + t9502: do not assume GNU tar
- + t0200: "locale" may not exist
- (this branch is used by jc/test-portability.)
-
- Minor test fixes noticed while running our tests on OpenBSD 5.2,
- applicable to 'maint'.
-
- Will merge to 'master' in the first batch.
-
-
-* jc/test-portability (2012-12-19) 3 commits
-  (merged to 'next' on 2012-12-22 at 123041b)
- + t9020: use configured Python to run the test helper
- + t3600: Avoid "cp -a", which is a GNUism
- + Merge branch 'jc/maint-test-portability' into 'jc/test-portability'
- (this branch uses jc/maint-test-portability.)
-
- The remainder of jc/maint-test-portability, applicable to 'master'.
-
- Will merge to 'master' in the first batch.
-
-
-* jc/maint-fnmatch-old-style-definition (2012-12-19) 1 commit
-  (merged to 'next' on 2012-12-22 at 540df2c)
- + compat/fnmatch: update old-style definition to ANSI
-
- Update old-style function definition "int foo(bar) int bar; {}"
- to "int foo(int bar) {}".
-
- Will merge to 'master' in the first batch.
-
-
 * jk/pathspec-literal (2012-12-19) 1 commit
   (merged to 'next' on 2012-12-22 at c794bd6)
  + add global --literal-pathspecs option
@@ -451,29 +641,22 @@ repositories listed at
  Allow scripts to feed literal paths to commands that take
  pathspecs, by disabling wildcard globbing.
 
- Will merge to 'master' in the first batch.
-
-
-* da/p4merge-mktemp (2012-12-26) 1 commit
-  (merged to 'next' on 2012-12-26 at 036938a)
- + mergetools/p4merge: Honor $TMPDIR for the /dev/null placeholder
-
- Create an empty file in $TMPDIR instead of using an empty file in
- the local directory.
-
- Will merge to 'master' in the first batch.
+ Will merge to 'master'.
 
 
 * er/python-version-requirements (2012-12-28) 1 commit
- - Add checks to Python scripts for version dependencies.
+  (merged to 'next' on 2013-01-02 at 1023a3f)
+ + Add checks to Python scripts for version dependencies.
 
- Will merge to 'next'.
+ Some python scripts we ship cannot be run with old versions of the
+ interpreter.
 
 
 * mb/gitweb-highlight-link-target (2012-12-20) 1 commit
  - Highlight the link target line in Gitweb using CSS
 
  Expecting a reroll.
+ $gmane/211935
 
 
 * mz/oneway-merge-wo-u-no-lstat (2012-12-20) 1 commit
@@ -481,27 +664,6 @@ repositories listed at
  + oneway_merge(): only lstat() when told to update worktree
 
  Optimize "read-tree -m <tree-ish>" without "-u".
-
- Will cook in 'next'.
-
-
-* jk/repack-ref-racefix (2012-12-21) 1 commit
-  (merged to 'next' on 2012-12-22 at 03e1ca9)
- + refs: do not use cached refs in repack_without_ref
-
- Race-fix for pack-refs running in parallel to ref creation.
-
- Will merge to 'master' in the first batch.
-
-
-* rb/http-cert-cred-no-username-prompt (2012-12-21) 1 commit
-  (merged to 'next' on 2012-12-22 at 9fc28ed)
- + http.c: Avoid username prompt for certifcate credentials
-
- It is wrong to ask for username if the authentication is done by
- certificate identity.
-
- Will merge to 'master' in the first batch.
 
 
 * wk/submodule-update-remote (2012-12-19) 3 commits
@@ -513,7 +675,7 @@ repositories listed at
  The beginning of 'integrate with the tip of the remote branch, not
  the commit recorded in the superproject gitlink' support.
 
- Will merge to 'master' in the first batch.
+ Will merge to 'master'.
 
 
 * cc/no-gitk-build-dependency (2012-12-18) 3 commits
@@ -526,7 +688,7 @@ repositories listed at
  subdirectory.  Reimplementing the dependency tracking rules needs
  to be done in gitk history separately.
 
- Will merge to 'master' in the first batch.
+ Will merge to 'master'.
 
 
 * jc/format-color-auto (2012-12-17) 2 commits
@@ -537,22 +699,11 @@ repositories listed at
  Introduce "log --format=%C(auto,blue)Foo%C(auto,reset)" that does
  not color its output when writing to a non-terminal.
 
- Will merge to 'master' in the first batch.
+ Will merge to 'master'.
 
 
-* ss/svn-prompt (2012-12-17) 3 commits
-  (merged to 'next' on 2012-12-26 at 1012ae2)
- + git-svn, perl/Git.pm: extend and use Git->prompt method for querying users
- + perl/Git.pm: Honor SSH_ASKPASS as fallback if GIT_ASKPASS is not set
- + git-svn, perl/Git.pm: add central method for prompting passwords
-
- Tweak the way "git svn" asks for password to be in line with the
- rest of the system, so that the same SSH/GIT_ASKPASS can be used.
-
- Will merge to 'master' in the first batch.
-
-
-* zk/clean-report-failure (2012-12-17) 1 commit
+* zk/clean-report-failure (2013-01-02) 2 commits
+ - (SQUASH???) fix-up only the trivial bits
  - git-clean: Display more accurate delete messages
 
  "git clean" states what it is going to remove and then goes on to
@@ -560,7 +711,7 @@ repositories listed at
  removed after recursing into a directory, which makes the output
  confusing and even wrong.
 
- Expecting a reroll.
+ Rerolled, and comments sent.
 
 
 * mp/complete-paths (2012-12-21) 1 commit
@@ -582,7 +733,7 @@ repositories listed at
  applied to only a single directory itself with "path/" like the
  exclude mechanism does.
 
- Will merge to 'master' in the first batch.
+ Will merge to 'master'.
 
 
 * jk/mailmap-from-blob (2012-12-13) 5 commits
@@ -597,20 +748,7 @@ repositories listed at
  of the history in bare repositories.  This will help running tools
  like shortlog in server settings.
 
- Will merge to 'master' in the first batch.
-
-
-* dm/port (2012-12-19) 4 commits
-  (merged to 'next' on 2012-12-22 at 8adc198)
- + git-compat-util.h: do not #include <sys/param.h> by default
- + Generalize the inclusion of strings.h
- + Detect when the passwd struct is missing pw_gecos
- + Support builds when sys/param.h is missing
- (this branch is used by mk/qnx.)
-
- Add a few more knobs for new platform ports can tweak.
-
- Will merge to 'master' in the first batch.
+ Will merge to 'master'.
 
 
 * jk/complete-commit-c (2012-12-15) 1 commit
@@ -620,7 +758,7 @@ repositories listed at
  Complete "git commmit -c foo<TAB>" into a refname that begins with
  "foo".
 
- Will merge to 'master' in the first batch.
+ Will merge to 'master'.
 
 
 * jk/error-const-return (2012-12-15) 2 commits
@@ -632,46 +770,7 @@ repositories listed at
  error() always returns -1, to reduce false "variable used
  uninitialized" warnings.  Looks somewhat ugly but not too much.
 
- Will merge to 'master' in the first batch.
-
-
-* mk/qnx (2012-12-19) 2 commits
-  (merged to 'next' on 2012-12-22 at 0473197)
- + Port to QNX
- + Make lock local to fetch_pack
- (this branch uses dm/port.)
-
- Port to QNX.
-
- Will merge to 'master' in the first batch.
-
-
-* as/test-tweaks (2012-12-20) 7 commits
-  (merged to 'next' on 2012-12-22 at 7312c6c)
- + tests: paint unexpectedly fixed known breakages in bold red
- + tests: test the test framework more thoroughly
- + tests: refactor mechanics of testing in a sub test-lib
- + tests: change info messages from yellow/brown to cyan
- + tests: paint skipped tests in blue
- + tests: paint known breakages in yellow
- + tests: test number comes first in 'not ok $count - $message'
-
- Various minor tweaks to the test framework to paint its output
- lines in colors that match what they mean better.
-
- Will merge to 'master' in the first batch.
-
-
-* sp/shortlog-missing-lf (2012-12-11) 2 commits
-  (merged to 'next' on 2012-12-11 at 64b8429)
- + strbuf_add_wrapped*(): Remove unused return value
- + shortlog: fix wrapping lines of wraplen
-
- When a line to be wrapped has a solid run of non space characters
- whose length exactly is the wrap width, "git shortlog -w" failed to
- add a newline after such a line.
-
- Will merge to 'master' in the first batch.
+ Will merge to 'master'.
 
 
 * ap/log-mailmap (2012-12-27) 10 commits
@@ -690,7 +789,8 @@ repositories listed at
  Clean up various codepaths around mailmap and teach the "log"
  machinery to use it.
 
- Waiting for further tweaks.
+ Expecting a reroll.
+ $gmane/212426
 
 
 * jc/fetch-ignore-symref (2012-12-11) 1 commit
@@ -700,71 +800,7 @@ repositories listed at
  Avoid false error from an attempt to update local symbolic ref via
  fetch.
 
- Will merge to 'master' in the first batch.
-
-
-* md/gitweb-sort-by-age (2012-12-11) 1 commit
-  (merged to 'next' on 2012-12-13 at 9f39410)
- + gitweb: Sort projects with undefined ages last
-
- Gitweb showed repositories without any commit at the top in its
- age-sorted view, in which the users are interested in looking at
- active projects; sorting them at the bottom makes it more useful.
-
- Will merge to 'master' in the first batch.
-
-
-* ss/nedmalloc-compilation (2012-12-11) 1 commit
-  (merged to 'next' on 2012-12-13 at c1f0d7f)
- + nedmalloc: Fix a compile warning (exposed as error) with GCC 4.7.2
-
- Will merge to 'master' in the first batch.
-
-
-* jc/maint-fbsd-sh-ifs-workaround (2012-12-10) 1 commit
-  (merged to 'next' on 2012-12-11 at 6659fdc)
- + sh-setup: work around "unset IFS" bug in some shells
-
- Will merge to 'master' in the first batch.
-
-
-* jc/same-encoding (2012-12-10) 1 commit
-  (merged to 'next' on 2012-12-17 at 86b41c7)
- + format_commit_message(): simplify calls to logmsg_reencode()
-
- Finishing touches to the series to unify "Do we need to reencode
- between these two encodings?" logic.
-
- Will merge to 'master' in the first batch.
-
-
-* nd/invalidate-i-t-a-cache-tree (2012-12-15) 4 commits
-  (merged to 'next' on 2012-12-18 at 33e4488)
- + cache-tree: invalidate i-t-a paths after generating trees
- + cache-tree: fix writing cache-tree when CE_REMOVE is present
- + cache-tree: replace "for" loops in update_one with "while" loops
- + cache-tree: remove dead i-t-a code in verify_cache()
-
- Writing out a tree object when you still have intent-to-add entries
- in the index left an incorrect cache-tree data there.
-
- Will merge to 'master' in the first batch.
-
-
-* pf/editor-ignore-sigint (2012-12-02) 5 commits
-  (merged to 'next' on 2012-12-07 at 6b04419)
- + launch_editor: propagate signals from editor to git
- + run-command: do not warn about child death from terminal
- + launch_editor: ignore terminal signals while editor has control
- + launch_editor: refactor to use start/finish_command
- + run-command: drop silent_exec_failure arg from wait_or_whine
-
- Avoid confusing cases where the user hits Ctrl-C while in the editor
- session, not realizing git will receive the signal. Since most editors
- will take over the terminal and will block SIGINT, this is not likely
- to confuse anyone.
-
- Will merge to 'master' in the first batch.
+ Will merge to 'master'.
 
 
 * bc/append-signed-off-by (2013-01-01) 12 commits
@@ -782,6 +818,7 @@ repositories listed at
  - sequencer.c: remove broken support for rfc2822 continuation in footer
 
  Expecting a reroll.
+ $gmane/212507
 
 
 * mh/unify-xml-in-imap-send-and-http-push (2012-12-02) 8 commits
@@ -798,7 +835,7 @@ repositories listed at
  Update imap-send to reuse xml quoting code from http-push codepath,
  clean up some code, and fix a small bug.
 
- Will merge to 'master' in the first batch.
+ Will merge to 'master'.
 
 
 * jk/fsck-dot-in-trees (2012-11-28) 2 commits
@@ -806,14 +843,7 @@ repositories listed at
  + fsck: warn about ".git" in trees
  + fsck: warn about '.' and '..' in trees
 
- Will merge to 'master' in the first batch.
-
-
-* mh/pthreads-autoconf (2012-11-27) 1 commit
-  (merged to 'next' on 2012-11-28 at 780600e)
- + configure.ac: fix pthreads detection on Mac OS X
-
- Will merge to 'master' in the first batch.
+ Will merge to 'master'.
 
 
 * jn/warn-on-inaccessible-loosen (2012-10-14) 4 commits
@@ -825,29 +855,6 @@ repositories listed at
 
  Deal with a situation where .config/git is a file and we notice
  .config/git/config is not readable due to ENOTDIR, not ENOENT.
-
- Will cook in 'next'.
-
-
-* mh/ceiling (2012-10-29) 8 commits
-  (merged to 'next' on 2012-11-26 at d1ce76a)
- + string_list_longest_prefix(): remove function
- + setup_git_directory_gently_1(): resolve symlinks in ceiling paths
- + longest_ancestor_length(): require prefix list entries to be normalized
- + longest_ancestor_length(): take a string_list argument for prefixes
- + longest_ancestor_length(): use string_list_split()
- + Introduce new function real_path_if_valid()
- + real_path_internal(): add comment explaining use of cwd
- + Introduce new static function real_path_internal()
-
- Elements of GIT_CEILING_DIRECTORIES list may not match the real
- pathname we obtain from getcwd(), leading the GIT_DIR discovery
- logic to escape the ceilings the user thought to have specified.
-
- Resurrected from Stalled; the earlier performance fear was
- unwarranted.
-
- Will merge to 'master' in the first batch.
 
 
 * fc/fast-export-fixes (2012-12-03) 15 commits
@@ -868,7 +875,7 @@ repositories listed at
  + remote-testgit: fix direction of marks
  + fast-export: avoid importing blob marks
 
- Will merge to 'master' in the first batch.
+ Will merge to 'master'.
 
 
 * jc/apply-trailing-blank-removal (2012-10-12) 1 commit
@@ -879,8 +886,6 @@ repositories listed at
  possibility that whitespace fix could shrink the preimage and
  change the number of lines in it.
 
- Will cook in 'next'.
-
 
 * nd/pathspec-wildcard (2012-11-26) 4 commits
   (merged to 'next' on 2012-12-03 at eca0fcb)
@@ -889,7 +894,7 @@ repositories listed at
  + pathspec: do exact comparison on the leading non-wildcard part
  + pathspec: save the non-wildcard length part
 
- Will merge to 'master' in the first batch.
+ Will merge to 'master'.
 
 
 * nd/wildmatch (2013-01-01) 18 commits
@@ -921,8 +926,6 @@ repositories listed at
  with double-asterisks "foo/**/bar" to match any number of directory
  hierarchies.
 
- Will cook in 'next'.
-
 
 * cr/push-force-tag-update (2012-12-03) 10 commits
   (merged to 'next' on 2012-12-04 at af2e3a9)
@@ -939,4 +942,4 @@ repositories listed at
 
  Require "-f" for push to update a tag, even if it is a fast-forward.
 
- Will merge to 'master' in the first batch.
+ Will merge to 'master'.
