@@ -1014,8 +1014,8 @@ static char *find_branch_name(struct rev_info *rev)
 {
 	int i, positive = -1;
 	unsigned char branch_sha1[20];
-	struct strbuf buf = STRBUF_INIT;
-	const char *branch;
+	const char *ref;
+	char *full_ref, *branch = NULL;
 
 	for (i = 0; i < rev->cmdline.nr; i++) {
 		if (rev->cmdline.rev[i].flags & UNINTERESTING)
@@ -1027,16 +1027,13 @@ static char *find_branch_name(struct rev_info *rev)
 	}
 	if (positive < 0)
 		return NULL;
-	strbuf_addf(&buf, "refs/heads/%s", rev->cmdline.rev[positive].name);
-	branch = resolve_ref_unsafe(buf.buf, branch_sha1, 1, NULL);
-	if (!branch ||
-	    prefixcmp(branch, "refs/heads/") ||
-	    hashcmp(rev->cmdline.rev[positive].item->sha1, branch_sha1))
-		branch = NULL;
-	strbuf_release(&buf);
-	if (branch)
-		return xstrdup(rev->cmdline.rev[positive].name);
-	return NULL;
+	ref = rev->cmdline.rev[positive].name;
+	if (dwim_ref(ref, strlen(ref), branch_sha1, &full_ref) &&
+	    !prefixcmp(full_ref, "refs/heads/") &&
+	    !hashcmp(rev->cmdline.rev[positive].item->sha1, branch_sha1))
+		branch = xstrdup(full_ref + strlen("refs/heads/"));
+	free(full_ref);
+	return branch;
 }
 
 int cmd_format_patch(int argc, const char **argv, const char *prefix)
