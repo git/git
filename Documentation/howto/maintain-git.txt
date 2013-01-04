@@ -6,6 +6,9 @@ Abstract: Imagine that git development is racing along as usual, when our friend
  hordes of suckers (loyal developers), you have been tricked (chosen) to
  step up as the new maintainer. This howto will show you "how to" do it.
 
+Activities
+----------
+
 The maintainer's git time is spent on three activities.
 
  - Communication (45%)
@@ -25,11 +28,12 @@ The maintainer's git time is spent on three activities.
 
    Scratching my own itch and sending proposed patch series out.
 
+The Policy
+----------
+
 The policy on Integration is informally mentioned in "A Note
 from the maintainer" message, which is periodically posted to
 this mailing list after each feature release is made.
-
-The policy.
 
  - Feature releases are numbered as vX.Y.Z and are meant to
    contain bugfixes and enhancements in any area, including
@@ -78,6 +82,9 @@ The policy.
    users are encouraged to test it so that regressions and bugs
    are found before new topics are merged to 'master'.
 
+
+A Typical Git Day
+-----------------
 
 A typical git day for the maintainer implements the above policy
 by doing the following:
@@ -320,6 +327,9 @@ by doing the following:
  - Push the integration branches out to public places; Meta/pushall
    script may aid this step.
 
+Observations
+------------
+
 Some observations to be made.
 
  * Each topic is tested individually, and also together with other
@@ -353,9 +363,11 @@ Some observations to be made.
    'master' branch typically is.
 
 
-[Appendix]
+Appendix
+--------
 
 Preparing a "merge-fix"
+~~~~~~~~~~~~~~~~~~~~~~~
 
 A merge of two topics may not textually conflict but still have
 conflict at the semantic level. A classic example is for one topic
