@@ -461,7 +461,7 @@ sub write_cooking {
 my $graduated = 'Graduated to "master"';
 my $new_topics = 'New Topics';
 my $discarded = 'Discarded';
-my $old_new_topics = 'Old New Topics';
+my $cooking_topics = 'Cooking';
 
 sub update_issue {
 	my ($cooking) = @_;
@@ -512,20 +512,13 @@ sub update_issue {
 	if (!$incremental) {
 		my $sd = $cooking->{'section_data'};
 		my $sl = $cooking->{'section_list'};
-		# Rename "New" to "Old New" and insert "New".
-		# Move "New" to "Old New"
-		my $i;
-		my $doneso;
-		for ($i = 0; $i < @{$sl}; $i++) {
-			if ($sl->[$i] eq $new_topics) {
-				$sl->[$i] = $old_new_topics;
-				unshift @{$sl}, $new_topics;
-				$doneso = 1;
-				last;
+
+		if (exists $sd->{$new_topics}) {
+			if (!exists $sd->{$cooking_topics}) {
+				$sd->{$cooking_topics} = [];
+				unshift @{$sl}, $cooking_topics;
 			}
-		}
-		if ($doneso) {
-			$sd->{$old_new_topics} = $sd->{$new_topics};
+			unshift @{$sd->{$cooking_topics}}, @{$sd->{$new_topics}};
 		}
 		$sd->{$new_topics} = [];
 	}
