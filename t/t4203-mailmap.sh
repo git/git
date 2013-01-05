@@ -255,12 +255,36 @@ test_expect_success 'Log output with --use-mailmap' '
 '
 
 cat >expect <<\EOF
+Author: CTO <cto@company.xx>
+Author: Santa Claus <santa.claus@northpole.xx>
+Author: Santa Claus <santa.claus@northpole.xx>
+Author: Other Author <other@author.xx>
+Author: Other Author <other@author.xx>
+Author: Some Dude <some@dude.xx>
+Author: A U Thor <author@example.com>
+EOF
+
+test_expect_success 'Log output with log.mailmap' '
+	git -c log.mailmap=True log | grep Author >actual &&
+	test_cmp expect actual
+'
+
+cat >expect <<\EOF
 Author: Santa Claus <santa.claus@northpole.xx>
 Author: Santa Claus <santa.claus@northpole.xx>
 EOF
 
 test_expect_success 'Grep author with --use-mailmap' '
 	git log --use-mailmap --author Santa | grep Author >actual &&
+	test_cmp expect actual
+'
+cat >expect <<\EOF
+Author: Santa Claus <santa.claus@northpole.xx>
+Author: Santa Claus <santa.claus@northpole.xx>
+EOF
+
+test_expect_success 'Grep author with log.mailmap' '
+	git -c log.mailmap=True log --author Santa | grep Author >actual &&
 	test_cmp expect actual
 '
 
