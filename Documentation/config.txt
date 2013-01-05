@@ -142,17 +142,11 @@ advice.*::
 --
 	pushNonFastForward::
 		Set this variable to 'false' if you want to disable
-		'pushNonFFCurrent', 'pushNonFFDefault', and
+		'pushNonFFCurrent', and
 		'pushNonFFMatching' simultaneously.
 	pushNonFFCurrent::
 		Advice shown when linkgit:git-push[1] fails due to a
 		non-fast-forward update to the current branch.
-	pushNonFFDefault::
-		Advice to set 'push.default' to 'upstream' or 'current'
-		when you ran linkgit:git-push[1] and pushed 'matching
-		refs' by default (i.e. you did not provide an explicit
-		refspec, and no 'push.default' configuration was set)
-		and it resulted in a non-fast-forward error.
 	pushNonFFMatching::
 		Advice shown when you ran linkgit:git-push[1] and pushed
 		'matching refs' explicitly (i.e. you used ':', or
@@ -1750,15 +1744,15 @@ push.default::
   since locally stalled branches will attempt a non-fast forward push
   if other users updated the branch.
   +
-  This is currently the default, but Git 2.0 will change the default
-  to `simple`.
+  This used to be the default, and stale web sites may still say so,
+  but Git 2.0 has changed the default to `simple`.
 * `upstream` - push the current branch to its upstream branch.
   With this, `git push` will update the same remote ref as the one which
   is merged by `git pull`, making `push` and `pull` symmetrical.
   See "branch.<name>.merge" for how to configure the upstream branch.
 * `simple` - like `upstream`, but refuses to push if the upstream
   branch's name is different from the local one. This is the safest
-  option and is well-suited for beginners. It will become the default
+  option and is well-suited for beginners. It has become the default
   in Git 2.0.
 * `current` - push the current branch to a branch of the same name.
 --

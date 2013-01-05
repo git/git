@@ -36,10 +36,14 @@ OPTIONS[[OPTIONS]]
 	The format of a <refspec> parameter is an optional plus
 	`+`, followed by the source ref <src>, followed
 	by a colon `:`, followed by the destination ref <dst>.
-	It is used to specify with what <src> object the <dst> ref
-	in the remote repository is to be updated.  If not specified,
+	It is used to specify what <src> object the <dst> ref
+	in the remote repository is to be updated to.  If no
+	<refspec> is specified on the command line, and if no
+	<refspec> is configured for the <repository>,
 	the behavior of the command is controlled by the `push.default`
-	configuration variable.
+	configuration variable, and if it is unset, the `simple`
+	behaviour is used (see lingit:git-config[1] and look
+	for `push.default`).
 +
 The <src> is often the name of the branch you would want to push, but
 it can be any arbitrary "SHA-1 expression", such as `master~4` or
@@ -65,14 +69,11 @@ the remote repository.
 The special refspec `:` (or `+:` to allow non-fast-forward updates)
 directs git to push "matching" branches: for every branch that exists on
 the local side, the remote side is updated if a branch of the same name
-already exists on the remote side.  This is the default operation mode
-if no explicit refspec is found (that is neither on the command line
-nor in any Push line of the corresponding remotes file---see below) and
-no `push.default` configuration variable is set.
+already exists on the remote side.
 
 --all::
-	Instead of naming each ref to push, specifies that all
-	refs under `refs/heads/` be pushed.
+	Push all branches (i.e. refs under `refs/heads/`); cannot be
+	used with other <refspec>.
 
 --prune::
 	Remove remote branches that don't have a local counterpart. For example
@@ -357,8 +358,10 @@ Examples
 	configured for the current branch).
 
 `git push origin`::
-	Without additional configuration, works like
-	`git push origin :`.
+	Without additional configuration, pushes the current branch to
+	the configured upstream (`remote.origin.merge` configuration
+	variable) if it has the same name as the current branch, and
+	errors out without pushing otherwise.
 +
 The default behavior of this command when no <refspec> is given can be
 configured by setting the `push` option of the remote, or the `push.default`
