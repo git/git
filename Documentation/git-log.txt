@@ -47,6 +47,11 @@ OPTIONS
 	Print out the ref name given on the command line by which each
 	commit was reached.
 
+--use-mailmap::
+	Use mailmap file to map author and committer names and email
+	to canonical real names and email addresses. See
+	linkgit:git-shortlog[1].
+
 --full-diff::
 	Without this flag, "git log -p <path>..." shows commits that
 	touch the specified paths, and diffs about the same specified
