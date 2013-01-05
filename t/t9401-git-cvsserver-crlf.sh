@@ -84,6 +84,7 @@ export CVSROOT CVS_SERVER
 
 rm -rf "$CVSWORK" "$SERVERDIR"
 test_expect_success 'setup' '
+    git config push.default matching &&
     echo "Simple text file" >textfile.c &&
     echo "File with embedded NUL: Q <- there" | q_to_nul > binfile.bin &&
     mkdir subdir &&
