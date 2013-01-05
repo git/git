@@ -115,6 +115,8 @@ static unsigned int ustar_header_chksum(const struct ustar_header *header)
 static size_t get_path_prefix(const char *path, size_t pathlen, size_t maxlen)
 {
 	size_t i = pathlen;
+	if (i > 1 && path[i - 1] == '/')
+		i--;
 	if (i > maxlen)
 		i = maxlen;
 	do {
