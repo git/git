@@ -240,50 +240,43 @@ static struct string_list_item *lookup_prefix(struct string_list *map,
 }
 
 int map_user(struct string_list *map,
-	     char *email, int maxlen_email, char *name, int maxlen_name)
+			 const char **email, size_t *emaillen,
+			 const char **name, size_t *namelen)
 {
-	char *end_of_email;
 	struct string_list_item *item;
 	struct mailmap_entry *me;
-	size_t maillen;
 
-	/* figure out space requirement for email */
-	end_of_email = strchr(email, '>');
-	if (!end_of_email) {
-		/* email passed in might not be wrapped in <>, but end with a \0 */
-		end_of_email = memchr(email, '\0', maxlen_email);
-		if (!end_of_email)
-			return 0;
-	}
+	debug_mm("map_user: map '%.*s' <%.*s>\n",
+		 *name, *namelen, *emaillen, *email);
 
-	maillen = end_of_email - email;
-
-	debug_mm("map_user: map '%s' <%.*s>\n", name, maillen, email);
-
-	item = lookup_prefix(map, email, maillen);
+	item = lookup_prefix(map, *email, *emaillen);
 	if (item != NULL) {
 		me = (struct mailmap_entry *)item->util;
 		if (me->namemap.nr) {
 			/* The item has multiple items, so we'll look up on name too */
 			/* If the name is not found, we choose the simple entry      */
-			struct string_list_item *subitem = string_list_lookup(&me->namemap, name);
+			struct string_list_item *subitem;
+			subitem = lookup_prefix(&me->namemap, *name, *namelen);
 			if (subitem)
 				item = subitem;
 		}
 	}
 	if (item != NULL) {
 		struct mailmap_info *mi = (struct mailmap_info *)item->util;
-		if (mi->name == NULL && (mi->email == NULL || maxlen_email == 0)) {
+		if (mi->name == NULL && mi->email == NULL) {
 			debug_mm("map_user:  -- (no simple mapping)\n");
 			return 0;
 		}
-		if (maxlen_email && mi->email)
-			strlcpy(email, mi->email, maxlen_email);
-		else
-			*end_of_email = '\0';
-		if (maxlen_name && mi->name)
-			strlcpy(name, mi->name, maxlen_name);
-		debug_mm("map_user:  to '%s' <%s>\n", name, mi->email ? mi->email : "");
+		if (mi->email) {
+				*email = mi->email;
+				*emaillen = strlen(*email);
+		}
+		if (mi->name) {
+				*name = mi->name;
+				*namelen = strlen(*name);
+		}
+		debug_mm("map_user:  to '%.*s' <.*%s>\n", *namelen, *name,
+				 *emaillen, *email);
 		return 1;
 	}
 	debug_mm("map_user:  --\n");
