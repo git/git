@@ -256,7 +256,7 @@ test_expect_success 'remote.foo.mirror=no has no effect' '
 		git branch keep master &&
 		git push --mirror up &&
 		git branch -D keep &&
-		git push up
+		git push up :
 	) &&
 	(
 		cd mirror &&
