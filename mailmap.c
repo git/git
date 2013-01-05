@@ -174,6 +174,7 @@ static int read_single_mailmap(struct string_list *map, const char *filename, ch
 int read_mailmap(struct string_list *map, char **repo_abbrev)
 {
 	map->strdup_strings = 1;
+	map->cmp = strcasecmp;
 	/* each failure returns 1, so >1 means both calls failed */
 	return read_single_mailmap(map, ".mailmap", repo_abbrev) +
 	       read_single_mailmap(map, git_mailmap_file, repo_abbrev) > 1;
@@ -187,14 +188,64 @@ void clear_mailmap(struct string_list *map)
 	debug_mm("mailmap: cleared\n");
 }
 
+/*
+ * Look for an entry in map that match string[0:len]; string[len]
+ * does not have to be NUL (but it could be).
+ */
+static struct string_list_item *lookup_prefix(struct string_list *map,
+					      const char *string, size_t len)
+{
+	int i = string_list_find_insert_index(map, string, 1);
+	if (i < 0) {
+		/* exact match */
+		i = -1 - i;
+		if (!string[len])
+			return &map->items[i];
+		/*
+		 * that map entry matches exactly to the string, including
+		 * the cruft at the end beyond "len".  That is not a match
+		 * with string[0:len] that we are looking for.
+		 */
+	} else if (!string[len]) {
+		/*
+		 * asked with the whole string, and got nothing.  No
+		 * matching entry can exist in the map.
+		 */
+		return NULL;
+	}
+
+	/*
+	 * i is at the exact match to an overlong key, or location the
+	 * overlong key would be inserted, which must come after the
+	 * real location of the key if one exists.
+	 */
+	while (0 <= --i && i < map->nr) {
+		int cmp = strncasecmp(map->items[i].string, string, len);
+		if (cmp < 0)
+			/*
+			 * "i" points at a key definitely below the prefix;
+			 * the map does not have string[0:len] in it.
+			 */
+			break;
+		else if (!cmp && !map->items[i].string[len])
+			/* found it */
+			return &map->items[i];
+		/*
+		 * otherwise, the string at "i" may be string[0:len]
+		 * followed by a string that sorts later than string[len:];
+		 * keep trying.
+		 */
+	}
+	return NULL;
+}
+
 int map_user(struct string_list *map,
 	     char *email, int maxlen_email, char *name, int maxlen_name)
 {
 	char *end_of_email;
 	struct string_list_item *item;
 	struct mailmap_entry *me;
-	char buf[1024], *mailbuf;
-	int i;
+	size_t maillen;
 
 	/* figure out space requirement for email */
 	end_of_email = strchr(email, '>');
@@ -204,18 +255,12 @@ int map_user(struct string_list *map,
 		if (!end_of_email)
 			return 0;
 	}
-	if (end_of_email - email + 1 < sizeof(buf))
-		mailbuf = buf;
-	else
-		mailbuf = xmalloc(end_of_email - email + 1);
 
-	/* downcase the email address */
-	for (i = 0; i < end_of_email - email; i++)
-		mailbuf[i] = tolower(email[i]);
-	mailbuf[i] = 0;
+	maillen = end_of_email - email;
 
-	debug_mm("map_user: map '%s' <%s>\n", name, mailbuf);
-	item = string_list_lookup(map, mailbuf);
+	debug_mm("map_user: map '%s' <%.*s>\n", name, maillen, email);
+
+	item = lookup_prefix(map, email, maillen);
 	if (item != NULL) {
 		me = (struct mailmap_entry *)item->util;
 		if (me->namemap.nr) {
@@ -226,8 +271,6 @@ int map_user(struct string_list *map,
 				item = subitem;
 		}
 	}
-	if (mailbuf != buf)
-		free(mailbuf);
 	if (item != NULL) {
 		struct mailmap_info *mi = (struct mailmap_info *)item->util;
 		if (mi->name == NULL && (mi->email == NULL || maxlen_email == 0)) {
