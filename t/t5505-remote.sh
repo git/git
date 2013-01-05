@@ -345,7 +345,7 @@ test_expect_success 'fetch mirrors do not act as mirrors during push' '
 	) &&
 	(cd mirror-fetch/child &&
 	 git branch -m renamed renamed2 &&
-	 git push parent
+	 git push parent :
 	) &&
 	(cd mirror-fetch/parent &&
 	 git rev-parse --verify renamed &&
