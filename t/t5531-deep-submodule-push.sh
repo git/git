@@ -16,6 +16,7 @@ test_expect_success setup '
 		(
 			cd gar/bage &&
 			git init &&
+			git config push.default matching &&
 			>junk &&
 			git add junk &&
 			git commit -m "Initial junk"
