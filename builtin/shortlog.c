@@ -40,40 +40,24 @@ static void insert_one_record(struct shortlog *log,
 	char emailbuf[1024];
 	size_t len;
 	const char *eol;
-	const char *boemail, *eoemail;
 	struct strbuf subject = STRBUF_INIT;
+	struct ident_split ident;
 
-	boemail = strchr(author, '<');
-	if (!boemail)
-		return;
-	eoemail = strchr(boemail, '>');
-	if (!eoemail)
+	if (split_ident_line(&ident, author, strlen(author)))
 		return;
 
 	/* copy author name to namebuf, to support matching on both name and email */
-	memcpy(namebuf, author, boemail - author);
-	len = boemail - author;
-	while (len > 0 && isspace(namebuf[len-1]))
-		len--;
+	len = ident.name_end - ident.name_begin;
+	memcpy(namebuf, ident.name_begin, len);
 	namebuf[len] = 0;
 
 	/* copy email name to emailbuf, to allow email replacement as well */
-	memcpy(emailbuf, boemail+1, eoemail - boemail);
-	emailbuf[eoemail - boemail - 1] = 0;
+	len = ident.mail_end - ident.mail_begin;
+	memcpy(emailbuf, ident.mail_begin, len);
+	emailbuf[len] = 0;
 
-	if (!map_user(&log->mailmap, emailbuf, sizeof(emailbuf), namebuf, sizeof(namebuf))) {
-		while (author < boemail && isspace(*author))
-			author++;
-		for (len = 0;
-		     len < sizeof(namebuf) - 1 && author + len < boemail;
-		     len++)
-			namebuf[len] = author[len];
-		while (0 < len && isspace(namebuf[len-1]))
-			len--;
-		namebuf[len] = '\0';
-	}
-	else
-		len = strlen(namebuf);
+	map_user(&log->mailmap, emailbuf, sizeof(emailbuf), namebuf, sizeof(namebuf));
+	len = strlen(namebuf);
 
 	if (log->email) {
 		size_t room = sizeof(namebuf) - len - 1;

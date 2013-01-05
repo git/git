@@ -387,29 +387,36 @@ void pp_user_info(const struct pretty_print_context *pp,
 		  const char *what, struct strbuf *sb,
 		  const char *line, const char *encoding)
 {
+	struct ident_split ident;
+	int linelen, namelen;
+	char *line_end, *date;
 	int max_length = 78; /* per rfc2822 */
-	char *date;
-	int namelen;
 	unsigned long time;
 	int tz;
 
 	if (pp->fmt == CMIT_FMT_ONELINE)
 		return;
-	date = strchr(line, '>');
-	if (!date)
+
+	line_end = strchr(line, '\n');
+	if (!line_end) {
+		line_end = strchr(line, '\0');
+		if (!line_end)
+			return;
+	}
+
+	linelen = ++line_end - line;
+	if (split_ident_line(&ident, line, linelen))
 		return;
-	namelen = ++date - line;
-	time = strtoul(date, &date, 10);
+
+	namelen = ident.mail_end - ident.name_begin + 1;
+	time = strtoul(ident.date_begin, &date, 10);
 	tz = strtol(date, NULL, 10);
 
 	if (pp->fmt == CMIT_FMT_EMAIL) {
-		char *name_tail = strchr(line, '<');
 		int display_name_length;
-		if (!name_tail)
-			return;
-		while (line < name_tail && isspace(name_tail[-1]))
-			name_tail--;
-		display_name_length = name_tail - line;
+
+		display_name_length = ident.name_end - ident.name_begin;
+
 		strbuf_addstr(sb, "From: ");
 		if (needs_rfc2047_encoding(line, display_name_length, RFC2047_ADDRESS)) {
 			add_rfc2047(sb, line, display_name_length,
@@ -427,10 +434,10 @@ void pp_user_info(const struct pretty_print_context *pp,
 		}
 		if (namelen - display_name_length + last_line_length(sb) > max_length) {
 			strbuf_addch(sb, '\n');
-			if (!isspace(name_tail[0]))
+			if (!isspace(ident.name_end[0]))
 				strbuf_addch(sb, ' ');
 		}
-		strbuf_add(sb, name_tail, namelen - display_name_length);
+		strbuf_add(sb, ident.name_end, namelen - display_name_length);
 		strbuf_addch(sb, '\n');
 	} else {
 		strbuf_addf(sb, "%s: %.*s%.*s\n", what,
