@@ -40,7 +40,7 @@ test_expect_success 'alice works and pushes' '
 		cd alice-work &&
 		echo more >file &&
 		git commit -a -m second &&
-		git push ../alice-pub
+		git push ../alice-pub :
 	)
 '
 
@@ -57,7 +57,7 @@ test_expect_success 'bob fetches from alice, works and pushes' '
 		git pull ../alice-pub master &&
 		echo more bob >file &&
 		git commit -a -m third &&
-		git push ../bob-pub
+		git push ../bob-pub :
 	) &&
 
 	# Check that the second commit by Alice is not sent
@@ -86,7 +86,7 @@ test_expect_success 'alice works and pushes again' '
 		cd alice-work &&
 		echo more alice >file &&
 		git commit -a -m fourth &&
-		git push ../alice-pub
+		git push ../alice-pub :
 	)
 '
 
@@ -99,7 +99,7 @@ test_expect_success 'bob works and pushes' '
 		cd bob-work &&
 		echo yet more bob >file &&
 		git commit -a -m fifth &&
-		git push ../bob-pub
+		git push ../bob-pub :
 	)
 '
 
@@ -115,7 +115,7 @@ test_expect_success 'alice works and pushes yet again' '
 		git commit -a -m sixth.2 &&
 		echo more and more alice >>file &&
 		git commit -a -m sixth.3 &&
-		git push ../alice-pub
+		git push ../alice-pub :
 	)
 '
 
@@ -136,7 +136,7 @@ test_expect_success 'bob works and pushes again' '
 		git hash-object -t commit -w commit &&
 		echo even more bob >file &&
 		git commit -a -m seventh &&
-		git push ../bob-pub
+		git push ../bob-pub :
 	)
 '
 
