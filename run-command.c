@@ -725,7 +725,7 @@ error:
 int finish_async(struct async *async)
 {
 #ifdef NO_PTHREADS
-	return wait_or_whine(async->pid, "child process", 0);
+	return wait_or_whine(async->pid, "child process");
 #else
 	void *ret = (void *)(intptr_t)(-1);
 
