@@ -25,36 +25,10 @@ commit id embedding:
 '
 
 . ./test-lib.sh
-GIT_UNZIP=${GIT_UNZIP:-unzip}
 GZIP=${GZIP:-gzip}
 GUNZIP=${GUNZIP:-gzip -d}
 
 SUBSTFORMAT=%H%n
-
-test_lazy_prereq UNZIP '
-	"$GIT_UNZIP" -v
-	test $? -ne 127
-'
-
-check_zip() {
-	zipfile=$1.zip
-	listfile=$1.lst
-	dir=$1
-	dir_with_prefix=$dir/$2
-
-	test_expect_success UNZIP " extract ZIP archive" '
-		(mkdir $dir && cd $dir && "$GIT_UNZIP" ../$zipfile)
-	'
-
-	test_expect_success UNZIP " validate filenames" "
-		(cd ${dir_with_prefix}a && find .) | sort >$listfile &&
-		test_cmp a.lst $listfile
-	"
-
-	test_expect_success UNZIP " validate file contents" "
-		diff -r a ${dir_with_prefix}a
-	"
-}
 
 test_expect_success \
     'populate workdir' \
@@ -206,53 +180,10 @@ test_expect_success \
       test_cmp a/substfile2 g/prefix/a/substfile2
 '
 
-test_expect_success \
-    'git archive --format=zip' \
-    'git archive --format=zip HEAD >d.zip'
-
-check_zip d
-
-test_expect_success \
-    'git archive --format=zip in a bare repo' \
-    '(cd bare.git && git archive --format=zip HEAD) >d1.zip'
-
-test_expect_success \
-    'git archive --format=zip vs. the same in a bare repo' \
-    'test_cmp d.zip d1.zip'
-
-test_expect_success 'git archive --format=zip with --output' \
-    'git archive --format=zip --output=d2.zip HEAD &&
-    test_cmp d.zip d2.zip'
-
-test_expect_success 'git archive with --output, inferring format' '
-	git archive --output=d3.zip HEAD &&
-	test_cmp d.zip d3.zip
-'
-
 test_expect_success 'git archive with --output, override inferred format' '
 	git archive --format=tar --output=d4.zip HEAD &&
 	test_cmp b.tar d4.zip
 '
-
-test_expect_success \
-    'git archive --format=zip with prefix' \
-    'git archive --format=zip --prefix=prefix/ HEAD >e.zip'
-
-check_zip e prefix/
-
-test_expect_success 'git archive -0 --format=zip on large files' '
-	test_config core.bigfilethreshold 1 &&
-	git archive -0 --format=zip HEAD >large.zip
-'
-
-check_zip large
-
-test_expect_success 'git archive --format=zip on large files' '
-	test_config core.bigfilethreshold 1 &&
-	git archive --format=zip HEAD >large-compressed.zip
-'
-
-check_zip large-compressed
 
 test_expect_success \
     'git archive --list outside of a git repo' \
