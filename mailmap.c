@@ -10,6 +10,7 @@ static inline void debug_mm(const char *format, ...) {}
 #endif
 
 const char *git_mailmap_file;
+const char *git_mailmap_blob;
 
 struct mailmap_info {
 	char *name;
@@ -129,54 +130,119 @@ static char *parse_name_and_email(char *buffer, char **name,
 	return (*right == '\0' ? NULL : right);
 }
 
-static int read_single_mailmap(struct string_list *map, const char *filename, char **repo_abbrev)
+static void read_mailmap_line(struct string_list *map, char *buffer,
+			      char **repo_abbrev)
+{
+	char *name1 = NULL, *email1 = NULL, *name2 = NULL, *email2 = NULL;
+	if (buffer[0] == '#') {
+		static const char abbrev[] = "# repo-abbrev:";
+		int abblen = sizeof(abbrev) - 1;
+		int len = strlen(buffer);
+
+		if (!repo_abbrev)
+			return;
+
+		if (len && buffer[len - 1] == '\n')
+			buffer[--len] = 0;
+		if (!strncmp(buffer, abbrev, abblen)) {
+			char *cp;
+
+			if (repo_abbrev)
+				free(*repo_abbrev);
+			*repo_abbrev = xmalloc(len);
+
+			for (cp = buffer + abblen; isspace(*cp); cp++)
+				; /* nothing */
+			strcpy(*repo_abbrev, cp);
+		}
+		return;
+	}
+	if ((name2 = parse_name_and_email(buffer, &name1, &email1, 0)) != NULL)
+		parse_name_and_email(name2, &name2, &email2, 1);
+
+	if (email1)
+		add_mapping(map, name1, email1, name2, email2);
+}
+
+static int read_mailmap_file(struct string_list *map, const char *filename,
+			     char **repo_abbrev)
 {
 	char buffer[1024];
-	FILE *f = (filename == NULL ? NULL : fopen(filename, "r"));
+	FILE *f;
 
-	if (f == NULL)
-		return 1;
-	while (fgets(buffer, sizeof(buffer), f) != NULL) {
-		char *name1 = NULL, *email1 = NULL, *name2 = NULL, *email2 = NULL;
-		if (buffer[0] == '#') {
-			static const char abbrev[] = "# repo-abbrev:";
-			int abblen = sizeof(abbrev) - 1;
-			int len = strlen(buffer);
+	if (!filename)
+		return 0;
 
-			if (!repo_abbrev)
-				continue;
-
-			if (len && buffer[len - 1] == '\n')
-				buffer[--len] = 0;
-			if (!strncmp(buffer, abbrev, abblen)) {
-				char *cp;
-
-				if (repo_abbrev)
-					free(*repo_abbrev);
-				*repo_abbrev = xmalloc(len);
-
-				for (cp = buffer + abblen; isspace(*cp); cp++)
-					; /* nothing */
-				strcpy(*repo_abbrev, cp);
-			}
-			continue;
-		}
-		if ((name2 = parse_name_and_email(buffer, &name1, &email1, 0)) != NULL)
-			parse_name_and_email(name2, &name2, &email2, 1);
-
-		if (email1)
-			add_mapping(map, name1, email1, name2, email2);
+	f = fopen(filename, "r");
+	if (!f) {
+		if (errno == ENOENT)
+			return 0;
+		return error("unable to open mailmap at %s: %s",
+			     filename, strerror(errno));
 	}
+
+	while (fgets(buffer, sizeof(buffer), f) != NULL)
+		read_mailmap_line(map, buffer, repo_abbrev);
 	fclose(f);
+	return 0;
+}
+
+static void read_mailmap_buf(struct string_list *map,
+			     const char *buf, unsigned long len,
+			     char **repo_abbrev)
+{
+	while (len) {
+		const char *end = strchrnul(buf, '\n');
+		unsigned long linelen = end - buf + 1;
+		char *line = xmemdupz(buf, linelen);
+
+		read_mailmap_line(map, line, repo_abbrev);
+
+		free(line);
+		buf += linelen;
+		len -= linelen;
+	}
+}
+
+static int read_mailmap_blob(struct string_list *map,
+			     const char *name,
+			     char **repo_abbrev)
+{
+	unsigned char sha1[20];
+	char *buf;
+	unsigned long size;
+	enum object_type type;
+
+	if (!name)
+		return 0;
+	if (get_sha1(name, sha1) < 0)
+		return 0;
+
+	buf = read_sha1_file(sha1, &type, &size);
+	if (!buf)
+		return error("unable to read mailmap object at %s", name);
+	if (type != OBJ_BLOB)
+		return error("mailmap is not a blob: %s", name);
+
+	read_mailmap_buf(map, buf, size, repo_abbrev);
+
+	free(buf);
 	return 0;
 }
 
 int read_mailmap(struct string_list *map, char **repo_abbrev)
 {
+	int err = 0;
+
 	map->strdup_strings = 1;
-	/* each failure returns 1, so >1 means both calls failed */
-	return read_single_mailmap(map, ".mailmap", repo_abbrev) +
-	       read_single_mailmap(map, git_mailmap_file, repo_abbrev) > 1;
+
+	if (!git_mailmap_blob && is_bare_repository())
+		git_mailmap_blob = "HEAD:.mailmap";
+
+	err |= read_mailmap_file(map, ".mailmap", repo_abbrev);
+	err |= read_mailmap_blob(map, git_mailmap_blob, repo_abbrev);
+	err |= read_mailmap_file(map, git_mailmap_file, repo_abbrev);
+	return err;
 }
 
 void clear_mailmap(struct string_list *map)

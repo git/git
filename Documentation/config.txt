@@ -1521,6 +1521,14 @@ mailmap.file::
 	subdirectory, or somewhere outside of the repository itself.
 	See linkgit:git-shortlog[1] and linkgit:git-blame[1].
 
+mailmap.blob::
+	Like `mailmap.file`, but consider the value as a reference to a
+	blob in the repository. If both `mailmap.file` and
+	`mailmap.blob` are given, both are parsed, with entries from
+	`mailmap.file` taking precedence. In a bare repository, this
+	defaults to `HEAD:.mailmap`. In a non-bare repository, it
+	defaults to empty.
+
 man.viewer::
 	Specify the programs that may be used to display help in the
 	'man' format. See linkgit:git-help[1].
