@@ -81,6 +81,6 @@ marked. If you to exclude files, make sure you have loaded index first.
 
 * Use `dir.entries[]`.
 
-* Call `free_directory()` when none of the contained elements are no longer in use.
+* Call `clear_directory()` when none of the contained elements are no longer in use.
 
 (JC)
