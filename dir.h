@@ -25,16 +25,32 @@ struct dir_entry {
 struct exclude_list {
 	int nr;
 	int alloc;
+
 	/* remember pointer to exclude file contents so we can free() */
 	char *filebuf;
 
+	/* origin of list, e.g. path to filename, or descriptive string */
+	const char *src;
+
 	struct exclude {
+		/*
+		 * This allows callers of last_exclude_matching() etc.
+		 * to determine the origin of the matching pattern.
+		 */
+		struct exclude_list *el;
+
 		const char *pattern;
 		int patternlen;
 		int nowildcardlen;
 		const char *base;
 		int baselen;
 		int flags;
+
+		/*
+		 * Counting starts from 1 for line numbers in ignore files,
+		 * and from -1 decrementing for patterns from CLI args.
+		 */
+		int srcpos;
 	} **excludes;
 };
 
@@ -144,13 +160,14 @@ extern struct exclude *last_exclude_matching_path(struct path_exclude_check *, c
 extern int is_path_excluded(struct path_exclude_check *, const char *, int namelen, int *dtype);
 
 
-extern struct exclude_list *add_exclude_list(struct dir_struct *dir, int group_type);
+extern struct exclude_list *add_exclude_list(struct dir_struct *dir,
+					     int group_type, const char *src);
 extern int add_excludes_from_file_to_list(const char *fname, const char *base, int baselen,
 					  struct exclude_list *el, int check_index);
 extern void add_excludes_from_file(struct dir_struct *, const char *fname);
 extern void parse_exclude_pattern(const char **string, int *patternlen, int *flags, int *nowildcardlen);
 extern void add_exclude(const char *string, const char *base,
-			int baselen, struct exclude_list *el);
+			int baselen, struct exclude_list *el, int srcpos);
 extern void clear_exclude_list(struct exclude_list *el);
 extern int file_exists(const char *);
 

@@ -97,10 +97,10 @@ int cmd_clean(int argc, const char **argv, const char *prefix)
 	if (!ignored)
 		setup_standard_excludes(&dir);
 
-	add_exclude_list(&dir, EXC_CMDL);
+	add_exclude_list(&dir, EXC_CMDL, "--exclude option");
 	for (i = 0; i < exclude_list.nr; i++)
 		add_exclude(exclude_list.items[i].string, "", 0,
-			    &dir.exclude_list_group[EXC_CMDL].el[0]);
+			    &dir.exclude_list_group[EXC_CMDL].el[0], -(i+1));
 
 	pathspec = get_pathspec(prefix, argv);
 

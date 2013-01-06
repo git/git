@@ -35,6 +35,7 @@ static int error_unmatch;
 static char *ps_matched;
 static const char *with_tree;
 static int exc_given;
+static int exclude_args;
 
 static const char *tag_cached = "";
 static const char *tag_unmerged = "";
@@ -423,7 +424,7 @@ static int option_parse_exclude(const struct option *opt,
 	struct exclude_list_group *group = opt->value;
 
 	exc_given = 1;
-	add_exclude(arg, "", 0, &group->el[0]);
+	add_exclude(arg, "", 0, &group->el[0], --exclude_args);
 
 	return 0;
 }
@@ -524,7 +525,7 @@ int cmd_ls_files(int argc, const char **argv, const char *cmd_prefix)
 	if (read_cache() < 0)
 		die("index file corrupt");
 
-	add_exclude_list(&dir, EXC_CMDL);
+	add_exclude_list(&dir, EXC_CMDL, "--exclude option");
 	argc = parse_options(argc, argv, prefix, builtin_ls_files_options,
 			ls_files_usage, 0);
 	if (show_tag || show_valid_bit) {
