@@ -26,13 +26,49 @@ UI, Workflows & Features
  * Output from the tests is coloured using "green is okay, yellow is
    questionable, red is bad and blue is informative" scheme.
 
+ * In bare repositories, "git shortlog" and other commands now read
+   mailmap files from the tip of the history, to help running these
+   tools in server settings.
+
+ * Color specifiers, e.g. "%C(blue)Hello%C(reset)", used in the
+   "--format=" option of "git log" and friends can be disabled when
+   the output is not sent to a terminal by prefixing them with
+   "auto,", e.g. "%C(auto,blue)Hello%C(auto,reset)".
+
+ * Scripts can ask Git that wildcard patterns in pathspecs they give do
+   not have any significance, i.e. take them as literal strings.
+
+ * "git fetch --mirror" and fetch that uses other forms of refspec
+   with wildcard used to attempt to update a symbolic ref that match
+   the wildcard on the receiving end, which made little sense (the
+   real ref that is pointed at by the symbolic ref would be updated
+   anyway).  Symbolic refs no longer are affected by such a fetch.
+
+ * "git push" now requires "-f" to update a tag, even if it is a
+   fast-forward, as tags are meant to be fixed points.
+
+ * "git submodule" started learning a new mode to integrate with the
+   tip of the remote branch (as opposed to integrating with the commit
+   recorded in the superproject's gitlink).
+
+
 Foreign Interface
 
- *
+ * "git fast-export" has been updated for its use in the context of
+   the remote helper interface.
+
 
 Performance, Internal Implementation, etc.
 
- *
+ * "git fsck" has been taught to be pickier about entries in tree
+   objects that should not be there, e.g. ".", ".git", and "..".
+
+ * Matching paths with common forms of pathspecs that contain wildcard
+   characters has been optimized further.
+
+ * The implementation of "imap-send" has been updated to reuse xml
+   quoting code from http-push codepath.
+
 
 Also contains minor documentation updates and code clean-ups.
 
@@ -70,6 +106,11 @@ details).
  * After failing to create a temporary file using mkstemp(), failing
    pathname was not reported correctly on some platforms.
    (merge f7be59b jc/mkstemp-more-careful-error-reporting later to maint).
+
+ * The attribute mechanism didn't allow limiting attributes to be
+   applied to only a single directory itself with "path/" like the
+   exclude mechanism does.
+   (merge 94bc671 ja/directory-attrs later to maint).
 
  * The way "git svn" asked for password using SSH_ASKPASS and
    GIT_ASKPASS was not in line with the rest of the system.
