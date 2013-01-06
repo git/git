@@ -208,7 +208,7 @@ static int write_zip_entry(struct archiver_args *args,
 			(mode & 0111) ? ((mode) << 16) : 0;
 		if (S_ISREG(mode) && args->compression_level != 0 && size > 0)
 			method = 8;
-		compressed_size = size;
+		compressed_size = (method == 0) ? size : 0;
 
 		if (S_ISREG(mode) && type == OBJ_BLOB && !args->convert &&
 		    size > big_file_threshold) {
@@ -276,10 +276,7 @@ static int write_zip_entry(struct archiver_args *args,
 	copy_le16(header.compression_method, method);
 	copy_le16(header.mtime, zip_time);
 	copy_le16(header.mdate, zip_date);
-	if (flags & ZIP_STREAM)
-		set_zip_header_data_desc(&header, 0, 0, 0);
-	else
-		set_zip_header_data_desc(&header, size, compressed_size, crc);
+	set_zip_header_data_desc(&header, size, compressed_size, crc);
 	copy_le16(header.filename_length, pathlen);
 	copy_le16(header.extra_length, 0);
 	write_or_die(1, &header, ZIP_LOCAL_HEADER_SIZE);
