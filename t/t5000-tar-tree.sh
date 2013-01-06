@@ -31,6 +31,11 @@ GUNZIP=${GUNZIP:-gzip -d}
 
 SUBSTFORMAT=%H%n
 
+test_lazy_prereq UNZIP '
+	"$GIT_UNZIP" -v
+	test $? -ne 127
+'
+
 check_zip() {
 	zipfile=$1.zip
 	listfile=$1.lst
@@ -200,13 +205,6 @@ test_expect_success \
       test_cmp g/prefix/a/substfile1.expected g/prefix/a/substfile1 &&
       test_cmp a/substfile2 g/prefix/a/substfile2
 '
-
-"$GIT_UNZIP" -v >/dev/null 2>&1
-if [ $? -eq 127 ]; then
-	say "Skipping ZIP tests, because unzip was not found"
-else
-	test_set_prereq UNZIP
-fi
 
 test_expect_success \
     'git archive --format=zip' \
