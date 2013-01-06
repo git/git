@@ -6,7 +6,13 @@ test_description='test globbing (and noglob) of pathspec limiting'
 test_expect_success 'create commits with glob characters' '
 	test_commit unrelated bar &&
 	test_commit vanilla foo &&
-	test_commit star "f*" &&
+	# insert file "f*" in the commit, but in a way that avoids
+	# the name "f*" in the worktree, because it is not allowed
+	# on Windows (the tests below do not depend on the presence
+	# of the file in the worktree)
+	git update-index --add --cacheinfo 100644 "$(git rev-parse HEAD:foo)" "f*" &&
+	test_tick &&
+	git commit -m star &&
 	test_commit bracket "f[o][o]"
 '
 
