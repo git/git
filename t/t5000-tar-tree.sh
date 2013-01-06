@@ -25,7 +25,7 @@ commit id embedding:
 '
 
 . ./test-lib.sh
-UNZIP=${UNZIP:-unzip}
+GIT_UNZIP=${GIT_UNZIP:-unzip}
 GZIP=${GZIP:-gzip}
 GUNZIP=${GUNZIP:-gzip -d}
 
@@ -37,9 +37,9 @@ check_zip() {
 	dir=$1
 	dir_with_prefix=$dir/$2
 
-	test_expect_success UNZIP " extract ZIP archive" "
-		(mkdir $dir && cd $dir && $UNZIP ../$zipfile)
-	"
+	test_expect_success UNZIP " extract ZIP archive" '
+		(mkdir $dir && cd $dir && "$GIT_UNZIP" ../$zipfile)
+	'
 
 	test_expect_success UNZIP " validate filenames" "
 		(cd ${dir_with_prefix}a && find .) | sort >$listfile &&
@@ -201,7 +201,7 @@ test_expect_success \
       test_cmp a/substfile2 g/prefix/a/substfile2
 '
 
-$UNZIP -v >/dev/null 2>&1
+"$GIT_UNZIP" -v >/dev/null 2>&1
 if [ $? -eq 127 ]; then
 	say "Skipping ZIP tests, because unzip was not found"
 else
