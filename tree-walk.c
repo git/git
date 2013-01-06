@@ -573,6 +573,54 @@ static int match_dir_prefix(const char *base,
 }
 
 /*
+ * Perform matching on the leading non-wildcard part of
+ * pathspec. item->nowildcard_len must be greater than zero. Return
+ * non-zero if base is matched.
+ */
+static int match_wildcard_base(const struct pathspec_item *item,
+			       const char *base, int baselen,
+			       int *matched)
+{
+	const char *match = item->match;
+	/* the wildcard part is not considered in this function */
+	int matchlen = item->nowildcard_len;
+
+	if (baselen) {
+		int dirlen;
+		/*
+		 * Return early if base is longer than the
+		 * non-wildcard part but it does not match.
+		 */
+		if (baselen >= matchlen) {
+			*matched = matchlen;
+			return !strncmp(base, match, matchlen);
+		}
+
+		dirlen = matchlen;
+		while (dirlen && match[dirlen - 1] != '/')
+			dirlen--;
+
+		/*
+		 * Return early if base is shorter than the
+		 * non-wildcard part but it does not match. Note that
+		 * base ends with '/' so we are sure it really matches
+		 * directory
+		 */
+		if (strncmp(base, match, baselen))
+			return 0;
+		*matched = baselen;
+	} else
+		*matched = 0;
+	/*
+	 * we could have checked entry against the non-wildcard part
+	 * that is not in base and does similar never_interesting
+	 * optimization as in match_entry. For now just be happy with
+	 * base comparison.
+	 */
+	return entry_interesting;
+}
+
+/*
  * Is a tree entry interesting given the pathspec we have?
  *
  * Pre-condition: either baselen == base_offset (i.e. empty path)
@@ -602,7 +650,7 @@ enum interesting tree_entry_interesting(const struct name_entry *entry,
 		const struct pathspec_item *item = ps->items+i;
 		const char *match = item->match;
 		const char *base_str = base->buf + base_offset;
-		int matchlen = item->len;
+		int matchlen = item->len, matched = 0;
 
 		if (baselen >= matchlen) {
 			/* If it doesn't match, move along... */
@@ -626,8 +674,10 @@ enum interesting tree_entry_interesting(const struct name_entry *entry,
 					&never_interesting))
 				return entry_interesting;
 
-			if (item->use_wildcard) {
-				if (!fnmatch(match + baselen, entry->path, 0))
+			if (item->nowildcard_len < item->len) {
+				if (!git_fnmatch(match + baselen, entry->path,
+						 item->flags & PATHSPEC_ONESTAR ? GFNM_ONESTAR : 0,
+						 item->nowildcard_len - baselen))
 					return entry_interesting;
 
 				/*
@@ -642,17 +692,34 @@ enum interesting tree_entry_interesting(const struct name_entry *entry,
 		}
 
 match_wildcards:
-		if (!item->use_wildcard)
+		if (item->nowildcard_len == item->len)
 			continue;
+
+		if (item->nowildcard_len &&
+		    !match_wildcard_base(item, base_str, baselen, &matched))
+			return entry_not_interesting;
 
 		/*
 		 * Concatenate base and entry->path into one and do
 		 * fnmatch() on it.
+		 *
+		 * While we could avoid concatenation in certain cases
+		 * [1], which saves a memcpy and potentially a
+		 * realloc, it turns out not worth it. Measurement on
+		 * linux-2.6 does not show any clear improvements,
+		 * partly because of the nowildcard_len optimization
+		 * in git_fnmatch(). Avoid micro-optimizations here.
+		 *
+		 * [1] if match_wildcard_base() says the base
+		 * directory is already matched, we only need to match
+		 * the rest, which is shorter so _in theory_ faster.
 		 */
 
 		strbuf_add(base, entry->path, pathlen);
 
-		if (!fnmatch(match, base->buf + base_offset, 0)) {
+		if (!git_fnmatch(match, base->buf + base_offset,
+				 item->flags & PATHSPEC_ONESTAR ? GFNM_ONESTAR : 0,
+				 item->nowildcard_len)) {
 			strbuf_setlen(base, base_offset + baselen);
 			return entry_interesting;
 		}

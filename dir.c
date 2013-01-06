@@ -34,6 +34,28 @@ int fnmatch_icase(const char *pattern, const char *string, int flags)
 	return fnmatch(pattern, string, flags | (ignore_case ? FNM_CASEFOLD : 0));
 }
 
+inline int git_fnmatch(const char *pattern, const char *string,
+		       int flags, int prefix)
+{
+	int fnm_flags = 0;
+	if (flags & GFNM_PATHNAME)
+		fnm_flags |= FNM_PATHNAME;
+	if (prefix > 0) {
+		if (strncmp(pattern, string, prefix))
+			return FNM_NOMATCH;
+		pattern += prefix;
+		string += prefix;
+	}
+	if (flags & GFNM_ONESTAR) {
+		int pattern_len = strlen(++pattern);
+		int string_len = strlen(string);
+		return string_len < pattern_len ||
+		       strcmp(pattern,
+			      string + string_len - pattern_len);
+	}
+	return fnmatch(pattern, string, fnm_flags);
+}
+
 static size_t common_prefix_len(const char **pathspec)
 {
 	const char *n, *first;
@@ -230,7 +252,10 @@ static int match_pathspec_item(const struct pathspec_item *item, int prefix,
 			return MATCHED_RECURSIVELY;
 	}
 
-	if (item->use_wildcard && !fnmatch(match, name, 0))
+	if (item->nowildcard_len < item->len &&
+	    !git_fnmatch(match, name,
+			 item->flags & PATHSPEC_ONESTAR ? GFNM_ONESTAR : 0,
+			 item->nowildcard_len - prefix))
 		return MATCHED_FNMATCH;
 
 	return 0;
@@ -1429,9 +1454,14 @@ int init_pathspec(struct pathspec *pathspec, const char **paths)
 
 		item->match = path;
 		item->len = strlen(path);
-		item->use_wildcard = !no_wildcard(path);
-		if (item->use_wildcard)
+		item->nowildcard_len = simple_length(path);
+		item->flags = 0;
+		if (item->nowildcard_len < item->len) {
 			pathspec->has_wildcard = 1;
+			if (path[item->nowildcard_len] == '*' &&
+			    no_wildcard(path + item->nowildcard_len + 1))
+				item->flags |= PATHSPEC_ONESTAR;
+		}
 	}
 
 	qsort(pathspec->items, pathspec->nr,
