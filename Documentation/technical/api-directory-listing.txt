@@ -67,11 +67,13 @@ marked. If you to exclude files, make sure you have loaded index first.
 * Prepare `struct dir_struct dir` and clear it with `memset(&dir, 0,
   sizeof(dir))`.
 
-* Call `add_exclude()` to add single exclude pattern,
-  `add_excludes_from_file()` to add patterns from a file
-  (e.g. `.git/info/exclude`), and/or set `dir.exclude_per_dir`.  A
-  short-hand function `setup_standard_excludes()` can be used to set up
-  the standard set of exclude settings.
+* To add single exclude pattern, call `add_exclude_list()` and then
+  `add_exclude()`.
+
+* To add patterns from a file (e.g. `.git/info/exclude`), call
+  `add_excludes_from_file()` , and/or set `dir.exclude_per_dir`.  A
+  short-hand function `setup_standard_excludes()` can be used to set
+  up the standard set of exclude settings.
 
 * Set options described in the Data Structure section above.
 

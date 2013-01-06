@@ -420,10 +420,10 @@ static int option_parse_z(const struct option *opt,
 static int option_parse_exclude(const struct option *opt,
 				const char *arg, int unset)
 {
-	struct exclude_list *list = opt->value;
+	struct exclude_list_group *group = opt->value;
 
 	exc_given = 1;
-	add_exclude(arg, "", 0, list);
+	add_exclude(arg, "", 0, &group->el[0]);
 
 	return 0;
 }
@@ -488,7 +488,8 @@ int cmd_ls_files(int argc, const char **argv, const char *cmd_prefix)
 			"show unmerged files in the output"),
 		OPT_BOOLEAN(0, "resolve-undo", &show_resolve_undo,
 			    "show resolve-undo information"),
-		{ OPTION_CALLBACK, 'x', "exclude", &dir.exclude_list[EXC_CMDL], "pattern",
+		{ OPTION_CALLBACK, 'x', "exclude",
+			&dir.exclude_list_group[EXC_CMDL], "pattern",
 			"skip files matching pattern",
 			0, option_parse_exclude },
 		{ OPTION_CALLBACK, 'X', "exclude-from", &dir, "file",
@@ -523,6 +524,7 @@ int cmd_ls_files(int argc, const char **argv, const char *cmd_prefix)
 	if (read_cache() < 0)
 		die("index file corrupt");
 
+	add_exclude_list(&dir, EXC_CMDL);
 	argc = parse_options(argc, argv, prefix, builtin_ls_files_options,
 			ls_files_usage, 0);
 	if (show_tag || show_valid_bit) {
