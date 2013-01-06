@@ -564,17 +564,24 @@ static void bootstrap_attr_stack(void)
 	attr_stack = elem;
 }
 
+static const char *find_basename(const char *path)
+{
+	const char *cp, *last_slash = NULL;
+
+	for (cp = path; *cp; cp++) {
+		if (*cp == '/' && cp[1])
+			last_slash = cp;
+	}
+	return last_slash ? last_slash + 1 : path;
+}
+
 static void prepare_attr_stack(const char *path)
 {
 	struct attr_stack *elem, *info;
 	int dirlen, len;
 	const char *cp;
 
-	cp = strrchr(path, '/');
-	if (!cp)
-		dirlen = 0;
-	else
-		dirlen = cp - path;
+	dirlen = find_basename(path) - path;
 
 	/*
 	 * At the bottom of the attribute stack is the built-in
@@ -668,6 +675,10 @@ static int path_matches(const char *pathname, int pathlen,
 	const char *pattern = pat->pattern;
 	int prefix = pat->nowildcardlen;
 
+	if ((pat->flags & EXC_FLAG_MUSTBEDIR) &&
+	    ((!pathlen) || (pathname[pathlen-1] != '/')))
+		return 0;
+
 	if (pat->flags & EXC_FLAG_NODIR) {
 		return match_basename(basename,
 				      pathlen - (basename - pathname),
@@ -758,9 +769,7 @@ static void collect_all_attrs(const char *path)
 	for (i = 0; i < attr_nr; i++)
 		check_all_attr[i].value = ATTR__UNKNOWN;
 
-	basename = strrchr(path, '/');
-	basename = basename ? basename + 1 : path;
-
+	basename = find_basename(path);
 	pathlen = strlen(path);
 	rem = attr_nr;
 	for (stk = attr_stack; 0 < rem && stk; stk = stk->prev)
