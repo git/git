@@ -19,7 +19,7 @@ testcase for the remote-helper functionality, and as an example to
 show remote-helper authors one possible implementation.
 
 The best way to learn more is to read the comments and source code in
-'git-remote-testgit.py'.
+'git-remote-testgit'.
 
 SEE ALSO
 --------
