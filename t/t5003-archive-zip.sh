@@ -12,6 +12,15 @@ test_lazy_prereq UNZIP '
 	test $? -ne 127
 '
 
+test_lazy_prereq UNZIP_SYMLINKS '
+	(
+		mkdir unzip-symlinks &&
+		cd unzip-symlinks &&
+		"$GIT_UNZIP" "$TEST_DIRECTORY"/t5003/infozip-symlinks.zip &&
+		test -h symlink
+	)
+'
+
 check_zip() {
 	zipfile=$1.zip
 	listfile=$1.lst
@@ -40,15 +49,18 @@ test_expect_success \
      cp /bin/sh a/bin &&
      printf "A\$Format:%s\$O" "$SUBSTFORMAT" >a/substfile1 &&
      printf "A not substituted O" >a/substfile2 &&
-     if test_have_prereq SYMLINKS; then
-	ln -s a a/l1
-     else
-	printf %s a > a/l1
-     fi &&
      (p=long_path_to_a_file && cd a &&
       for depth in 1 2 3 4 5; do mkdir $p && cd $p; done &&
-      echo text >file_with_long_path) &&
-     (cd a && find .) | sort >a.lst'
+      echo text >file_with_long_path)
+'
+
+test_expect_success SYMLINKS,UNZIP_SYMLINKS 'add symlink' '
+	ln -s a a/symlink_to_a
+'
+
+test_expect_success 'prepare file list' '
+	(cd a && find .) | sort >a.lst
+'
 
 test_expect_success \
     'add ignored file' \
