@@ -13,7 +13,7 @@ SYNOPSIS
 	      [--reference <repository>] [--] <repository> [<path>]
 'git submodule' [--quiet] status [--cached] [--recursive] [--] [<path>...]
 'git submodule' [--quiet] init [--] [<path>...]
-'git submodule' [--quiet] update [--init] [-N|--no-fetch] [--rebase]
+'git submodule' [--quiet] update [--init] [--remote] [-N|--no-fetch] [--rebase]
 	      [--reference <repository>] [--merge] [--recursive] [--] [<path>...]
 'git submodule' [--quiet] summary [--cached|--files] [(-n|--summary-limit) <n>]
 	      [commit] [--] [<path>...]
@@ -208,6 +208,8 @@ OPTIONS
 -b::
 --branch::
 	Branch of repository to add as submodule.
+	The name of the branch is recorded as `submodule.<path>.branch` in
+	`.gitmodules` for `update --remote`.
 
 -f::
 --force::
@@ -235,6 +237,27 @@ OPTIONS
 	Giving 0 will disable the summary; a negative number means unlimited
 	(the default). This limit only applies to modified submodules. The
 	size is always limited to 1 for added/deleted/typechanged submodules.
+
+--remote::
+	This option is only valid for the update command.  Instead of using
+	the superproject's recorded SHA-1 to update the submodule, use the
+	status of the submodule's remote tracking branch.  The remote used
+	is branch's remote (`branch.<name>.remote`), defaulting to `origin`.
+	The remote branch used defaults to `master`, but the branch name may
+	be overridden by setting the `submodule.<name>.branch` option in
+	either `.gitmodules` or `.git/config` (with `.git/config` taking
+	precedence).
++
+This works for any of the supported update procedures (`--checkout`,
+`--rebase`, etc.).  The only change is the source of the target SHA-1.
+For example, `submodule update --remote --merge` will merge upstream
+submodule changes into the submodules, while `submodule update
+--merge` will merge superproject gitlink changes into the submodules.
++
+In order to ensure a current tracking branch state, `update --remote`
+fetches the submodule's remote repository before calculating the
+SHA-1.  If you don't want to fetch, you should use `submodule update
+--remote --no-fetch`.
 
 -N::
 --no-fetch::
