@@ -140,10 +140,11 @@ advice.*::
 	can tell Git that you do not need help by setting these to 'false':
 +
 --
-	pushNonFastForward::
+	pushUpdateRejected::
 		Set this variable to 'false' if you want to disable
-		'pushNonFFCurrent', 'pushNonFFDefault', and
-		'pushNonFFMatching' simultaneously.
+		'pushNonFFCurrent', 'pushNonFFDefault',
+		'pushNonFFMatching', and 'pushAlreadyExists'
+		simultaneously.
 	pushNonFFCurrent::
 		Advice shown when linkgit:git-push[1] fails due to a
 		non-fast-forward update to the current branch.
@@ -158,6 +159,9 @@ advice.*::
 		'matching refs' explicitly (i.e. you used ':', or
 		specified a refspec that isn't your current branch) and
 		it resulted in a non-fast-forward error.
+	pushAlreadyExists::
+		Shown when linkgit:git-push[1] rejects an update that
+		does not qualify for fast-forwarding (e.g., a tag.)
 	statusHints::
 		Show directions on how to proceed from the current
 		state in the output of linkgit:git-status[1], in

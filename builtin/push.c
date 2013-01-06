@@ -220,31 +220,42 @@ static const char message_advice_checkout_pull_push[] =
 	   "(e.g. 'git pull') before pushing again.\n"
 	   "See the 'Note about fast-forwards' in 'git push --help' for details.");
 
+static const char message_advice_ref_already_exists[] =
+	N_("Updates were rejected because the destination reference already exists\n"
+	   "in the remote.");
+
 static void advise_pull_before_push(void)
 {
-	if (!advice_push_non_ff_current || !advice_push_nonfastforward)
+	if (!advice_push_non_ff_current || !advice_push_update_rejected)
 		return;
 	advise(_(message_advice_pull_before_push));
 }
 
 static void advise_use_upstream(void)
 {
-	if (!advice_push_non_ff_default || !advice_push_nonfastforward)
+	if (!advice_push_non_ff_default || !advice_push_update_rejected)
 		return;
 	advise(_(message_advice_use_upstream));
 }
 
 static void advise_checkout_pull_push(void)
 {
-	if (!advice_push_non_ff_matching || !advice_push_nonfastforward)
+	if (!advice_push_non_ff_matching || !advice_push_update_rejected)
 		return;
 	advise(_(message_advice_checkout_pull_push));
+}
+
+static void advise_ref_already_exists(void)
+{
+	if (!advice_push_already_exists || !advice_push_update_rejected)
+		return;
+	advise(_(message_advice_ref_already_exists));
 }
 
 static int push_with_options(struct transport *transport, int flags)
 {
 	int err;
-	int nonfastforward;
+	unsigned int reject_reasons;
 
 	transport_set_verbosity(transport, verbosity, progress);
 
@@ -257,7 +268,7 @@ static int push_with_options(struct transport *transport, int flags)
 	if (verbosity > 0)
 		fprintf(stderr, _("Pushing to %s\n"), transport->url);
 	err = transport_push(transport, refspec_nr, refspec, flags,
-			     &nonfastforward);
+			     &reject_reasons);
 	if (err != 0)
 		error(_("failed to push some refs to '%s'"), transport->url);
 
@@ -265,18 +276,15 @@ static int push_with_options(struct transport *transport, int flags)
 	if (!err)
 		return 0;
 
-	switch (nonfastforward) {
-	default:
-		break;
-	case NON_FF_HEAD:
+	if (reject_reasons & REJECT_NON_FF_HEAD) {
 		advise_pull_before_push();
-		break;
-	case NON_FF_OTHER:
+	} else if (reject_reasons & REJECT_NON_FF_OTHER) {
 		if (default_matching_used)
 			advise_use_upstream();
 		else
 			advise_checkout_pull_push();
-		break;
+	} else if (reject_reasons & REJECT_ALREADY_EXISTS) {
+		advise_ref_already_exists();
 	}
 
 	return 1;
