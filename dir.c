@@ -672,7 +672,8 @@ static struct dir_entry *dir_entry_new(const char *pathname, int len)
 
 static struct dir_entry *dir_add_name(struct dir_struct *dir, const char *pathname, int len)
 {
-	if (cache_name_exists(pathname, len, ignore_case))
+	if (!(dir->flags & DIR_SHOW_IGNORED) &&
+	    cache_name_exists(pathname, len, ignore_case))
 		return NULL;
 
 	ALLOC_GROW(dir->entries, dir->nr+1, dir->alloc);
@@ -877,11 +878,7 @@ static int treat_file(struct dir_struct *dir, struct strbuf *path, int exclude, 
 	if (exclude)
 		exclude_file = !(dir->flags & DIR_SHOW_IGNORED);
 	else if (dir->flags & DIR_SHOW_IGNORED) {
-		/*
-		 * Optimization:
-		 * Don't spend time on indexed files, they won't be
-		 * added to the list anyway
-		 */
+		/* Always exclude indexed files */
 		struct cache_entry *ce = index_name_exists(&the_index,
 		    path->buf, path->len, ignore_case);
 
