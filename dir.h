@@ -116,6 +116,12 @@ struct dir_struct {
 	char basebuf[PATH_MAX];
 };
 
+/*
+ * The ordering of these constants is significant, with
+ * higher-numbered match types signifying "closer" (i.e. more
+ * specific) matches which will override lower-numbered match types
+ * when populating the seen[] array.
+ */
 #define MATCHED_RECURSIVELY 1
 #define MATCHED_FNMATCH 2
 #define MATCHED_EXACTLY 3
