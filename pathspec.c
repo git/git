@@ -13,9 +13,10 @@
  * altogether if seen[] already only contains non-zero entries.
  *
  * If seen[] has not already been written to, it may make sense
- * to use find_used_pathspec() instead.
+ * to use find_pathspecs_matching_against_index() instead.
  */
-void fill_pathspec_matches(const char **pathspec, char *seen, int specs)
+void add_pathspec_matches_against_index(const char **pathspec,
+					char *seen, int specs)
 {
 	int num_unmatched = 0, i;
 
@@ -39,12 +40,12 @@ void fill_pathspec_matches(const char **pathspec, char *seen, int specs)
 /*
  * Finds which of the given pathspecs match items in the index.
  *
- * This is a one-shot wrapper around fill_pathspec_matches() which
- * allocates, populates, and returns a seen[] array indicating the
- * nature of the "closest" (i.e. most specific) matches which each of
- * the given pathspecs achieves against all items in the index.
+ * This is a one-shot wrapper around add_pathspec_matches_against_index()
+ * which allocates, populates, and returns a seen[] array indicating the
+ * nature of the "closest" (i.e. most specific) matches which each of the
+ * given pathspecs achieves against all items in the index.
  */
-char *find_used_pathspec(const char **pathspec)
+char *find_pathspecs_matching_against_index(const char **pathspec)
 {
 	char *seen;
 	int i;
@@ -52,6 +53,6 @@ char *find_used_pathspec(const char **pathspec)
 	for (i = 0; pathspec[i];  i++)
 		; /* just counting */
 	seen = xcalloc(i, 1);
-	fill_pathspec_matches(pathspec, seen, i);
+	add_pathspec_matches_against_index(pathspec, seen, i);
 	return seen;
 }

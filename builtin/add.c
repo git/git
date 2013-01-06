@@ -117,7 +117,7 @@ static char *prune_directory(struct dir_struct *dir, const char **pathspec, int 
 			*dst++ = entry;
 	}
 	dir->nr = dst - dir->entries;
-	fill_pathspec_matches(pathspec, seen, specs);
+	add_pathspec_matches_against_index(pathspec, seen, specs);
 	return seen;
 }
 
@@ -415,7 +415,7 @@ int cmd_add(int argc, const char **argv, const char *prefix)
 
 		path_exclude_check_init(&check, &dir);
 		if (!seen)
-			seen = find_used_pathspec(pathspec);
+			seen = find_pathspecs_matching_against_index(pathspec);
 		for (i = 0; pathspec[i]; i++) {
 			if (!seen[i] && pathspec[i][0]
 			    && !file_exists(pathspec[i])) {
