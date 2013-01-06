@@ -428,6 +428,11 @@ help ...`.
 	Do not use replacement refs to replace git objects. See
 	linkgit:git-replace[1] for more information.
 
+--literal-pathspecs::
+	Treat pathspecs literally, rather than as glob patterns. This is
+	equivalent to setting the `GIT_LITERAL_PATHSPECS` environment
+	variable to `1`.
+
 
 GIT COMMANDS
 ------------
@@ -795,6 +800,16 @@ for further details.
 	(starting with a '/' character), git will interpret this
 	as a file path and will try to write the trace messages
 	into it.
+
+GIT_LITERAL_PATHSPECS::
+	Setting this variable to `1` will cause git to treat all
+	pathspecs literally, rather than as glob patterns. For example,
+	running `GIT_LITERAL_PATHSPECS=1 git log -- '*.c'` will search
+	for commits that touch the path `*.c`, not any paths that the
+	glob `*.c` matches. You might want this if you are feeding
+	literal paths to git (e.g., paths previously given to you by
+	`git ls-tree`, `--raw` diff output, etc).
+
 
 Discussion[[Discussion]]
 ------------------------

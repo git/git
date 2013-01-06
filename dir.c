@@ -60,6 +60,7 @@ static size_t common_prefix_len(const char **pathspec)
 {
 	const char *n, *first;
 	size_t max = 0;
+	int literal = limit_pathspec_to_literal();
 
 	if (!pathspec)
 		return max;
@@ -69,7 +70,7 @@ static size_t common_prefix_len(const char **pathspec)
 		size_t i, len = 0;
 		for (i = 0; first == n || i < max; i++) {
 			char c = n[i];
-			if (!c || c != first[i] || is_glob_special(c))
+			if (!c || c != first[i] || (!literal && is_glob_special(c)))
 				break;
 			if (c == '/')
 				len = i + 1;
@@ -139,6 +140,7 @@ int within_depth(const char *name, int namelen,
 static int match_one(const char *match, const char *name, int namelen)
 {
 	int matchlen;
+	int literal = limit_pathspec_to_literal();
 
 	/* If the match was just the prefix, we matched */
 	if (!*match)
@@ -148,7 +150,7 @@ static int match_one(const char *match, const char *name, int namelen)
 		for (;;) {
 			unsigned char c1 = tolower(*match);
 			unsigned char c2 = tolower(*name);
-			if (c1 == '\0' || is_glob_special(c1))
+			if (c1 == '\0' || (!literal && is_glob_special(c1)))
 				break;
 			if (c1 != c2)
 				return 0;
@@ -160,7 +162,7 @@ static int match_one(const char *match, const char *name, int namelen)
 		for (;;) {
 			unsigned char c1 = *match;
 			unsigned char c2 = *name;
-			if (c1 == '\0' || is_glob_special(c1))
+			if (c1 == '\0' || (!literal && is_glob_special(c1)))
 				break;
 			if (c1 != c2)
 				return 0;
@@ -170,14 +172,16 @@ static int match_one(const char *match, const char *name, int namelen)
 		}
 	}
 
-
 	/*
 	 * If we don't match the matchstring exactly,
 	 * we need to match by fnmatch
 	 */
 	matchlen = strlen(match);
-	if (strncmp_icase(match, name, matchlen))
+	if (strncmp_icase(match, name, matchlen)) {
+		if (literal)
+			return 0;
 		return !fnmatch_icase(match, name, 0) ? MATCHED_FNMATCH : 0;
+	}
 
 	if (namelen == matchlen)
 		return MATCHED_EXACTLY;
@@ -1454,13 +1458,17 @@ int init_pathspec(struct pathspec *pathspec, const char **paths)
 
 		item->match = path;
 		item->len = strlen(path);
-		item->nowildcard_len = simple_length(path);
 		item->flags = 0;
-		if (item->nowildcard_len < item->len) {
-			pathspec->has_wildcard = 1;
-			if (path[item->nowildcard_len] == '*' &&
-			    no_wildcard(path + item->nowildcard_len + 1))
-				item->flags |= PATHSPEC_ONESTAR;
+		if (limit_pathspec_to_literal()) {
+			item->nowildcard_len = item->len;
+		} else {
+			item->nowildcard_len = simple_length(path);
+			if (item->nowildcard_len < item->len) {
+				pathspec->has_wildcard = 1;
+				if (path[item->nowildcard_len] == '*' &&
+				    no_wildcard(path + item->nowildcard_len + 1))
+					item->flags |= PATHSPEC_ONESTAR;
+			}
 		}
 	}
 
@@ -1474,4 +1482,12 @@ void free_pathspec(struct pathspec *pathspec)
 {
 	free(pathspec->items);
 	pathspec->items = NULL;
+}
+
+int limit_pathspec_to_literal(void)
+{
+	static int flag = -1;
+	if (flag < 0)
+		flag = git_env_bool(GIT_LITERAL_PATHSPECS_ENVIRONMENT, 0);
+	return flag;
 }
