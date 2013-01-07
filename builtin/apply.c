@@ -2095,7 +2095,7 @@ static void update_pre_post_images(struct image *preimage,
 				   char *buf,
 				   size_t len, size_t postlen)
 {
-	int i, ctx;
+	int i, ctx, reduced;
 	char *new, *old, *fixed;
 	struct image fixed_preimage;
 
@@ -2105,8 +2105,10 @@ static void update_pre_post_images(struct image *preimage,
 	 * free "oldlines".
 	 */
 	prepare_image(&fixed_preimage, buf, len, 1);
-	assert(fixed_preimage.nr == preimage->nr);
-	for (i = 0; i < preimage->nr; i++)
+	assert(postlen
+	       ? fixed_preimage.nr == preimage->nr
+	       : fixed_preimage.nr <= preimage->nr);
+	for (i = 0; i < fixed_preimage.nr; i++)
 		fixed_preimage.line[i].flag = preimage->line[i].flag;
 	free(preimage->line_allocated);
 	*preimage = fixed_preimage;
@@ -2126,7 +2128,8 @@ static void update_pre_post_images(struct image *preimage,
 	else
 		new = old;
 	fixed = preimage->buf;
-	for (i = ctx = 0; i < postimage->nr; i++) {
+
+	for (i = reduced = ctx = 0; i < postimage->nr; i++) {
 		size_t len = postimage->line[i].len;
 		if (!(postimage->line[i].flag & LINE_COMMON)) {
 			/* an added line -- no counterparts in preimage */
@@ -2145,8 +2148,15 @@ static void update_pre_post_images(struct image *preimage,
 			fixed += preimage->line[ctx].len;
 			ctx++;
 		}
-		if (preimage->nr <= ctx)
-			die(_("oops"));
+
+		/*
+		 * preimage is expected to run out, if the caller
+		 * fixed addition of trailing blank lines.
+		 */
+		if (preimage->nr <= ctx) {
+			reduced++;
+			continue;
+		}
 
 		/* and copy it in, while fixing the line length */
 		len = preimage->line[ctx].len;
@@ -2159,6 +2169,7 @@ static void update_pre_post_images(struct image *preimage,
 
 	/* Fix the length of the whole thing */
 	postimage->len = new - postimage->buf;
+	postimage->nr -= reduced;
 }
 
 static int match_fragment(struct image *img,
