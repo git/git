@@ -38,10 +38,6 @@ OPTIONS
 	See ``Date Formats'' below for details about which formats
 	are supported, and their syntax.
 
--- done::
-	Terminate with error if there is no 'done' command at the
-	end of the stream.
-
 --force::
 	Force updating modified existing branches, even if doing
 	so would cause commits to be lost (as the new commit does
@@ -106,7 +102,8 @@ OPTIONS
 	The default behaviour is to write to `stdout`.
 
 --done::
-	Require a `done` command at the end of the stream.
+	Terminate with error if there is no `done` command at the
+	end of the stream.
 	This option might be useful for detecting errors that
 	cause the frontend to terminate before it has started to
 	write a stream.
