@@ -777,6 +777,14 @@ for further details.
 	and read the password from its STDOUT. See also the 'core.askpass'
 	option in linkgit:git-config[1].
 
+'GIT_CONFIG_NOSYSTEM'::
+	Whether to skip reading settings from the system-wide
+	`$(prefix)/etc/gitconfig` file.  This environment variable can
+	be used along with `$HOME` and `$XDG_CONFIG_HOME` to create a
+	predictable environment for a picky script, or you can set it
+	temporarily to avoid using a buggy `/etc/gitconfig` file while
+	waiting for someone with sufficient permissions to fix it.
+
 'GIT_FLUSH'::
 	If this environment variable is set to "1", then commands such
 	as 'git blame' (in incremental mode), 'git rev-list', 'git log',
