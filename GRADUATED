@@ -1,141 +1,95 @@
 #!/bin/sh
 
-# Older first!
-old_maint=$(
-	git for-each-ref --format='%(refname)' 'refs/heads/maint-*' |
-	sed -e 's|^refs/heads/||'
-)
-
-# Are older maint branches all included in newer ones?
-and_or_thru=thru prev=
-for m in $old_maint maint
+base=
+while :
 do
-	if test -n "$prev"
-	then
-		test "$(git rev-list $m..$prev | wc -l)" = 0 || {
-			and_or_thru=and
-			break
-		}
-	fi
-	prev=$m
+	case "$1" in
+	--base=*)
+		base=${1#*=} ;;
+	-*)
+		echo >&2 "Eh? $1"
+		exit 1 ;;
+	*)
+		break ;;
+	esac
+	shift
 done
 
-_x40='[0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f]'
-_x40="$_x40$_x40$_x40$_x40$_x40$_x40$_x40$_x40"
+if test -z "$base"
+then
+	describe=$(git describe "master")
+	base=$(expr "$describe" : '\(.*\)-\([0-9]*\)-g[0-9a-f]*$') ||
+	base="$describe"
+
+	git rev-parse --verify "$base^0" >/dev/null 2>/dev/null || {
+	    echo >&2 "Eh? where is your base?"
+	    exit 1
+	}
+fi
+
+topics=
+leftover=
+dothis=
 LF='
 '
 
-# disable pager
-GIT_PAGER=cat
-export GIT_PAGER
-
-find_last_tip () {
-	topic="$(git rev-parse --verify "$1")" integrate="$2"
-	git rev-list --first-parent --parents "$2" |
-	sed -n -e "
-		/^$_x40 $_x40 $topic$/{
-			s/^\($_x40\) $_x40 $topic$/\1/p
-			q
-		}
-	"
+defer () {
+	leftover="$leftover$1$LF"
 }
 
+dothis () {
+	dothis="$1$LF$LF$dothis"
+}
 
-tmp=/tmp/GR.$$
+one_topic () {
+	topic="$1" tip="$2" date="$3"
+	case " $topics" in *" $topic "*) return ;; esac
+	topics="$topic$topic "
 
-trap 'rm -f "$tmp".*' 0
+	mergeable=no ready=no label=
 
-git branch --merged master | sed -n -e '/\//s/^. //p' | sort >"$tmp.master"
+	master_count=$(git rev-list "$base..$tip" | wc -l)
+	maint_count=$(git rev-list "maint..$tip" | wc -l)
 
->"$tmp.known"
-for m in $old_maint maint
-do
-	git branch --merged $m | sed -n -e '/\//s/^. //p' | sort >"$tmp.$m"
-	comm -12 "$tmp.$m" "$tmp.master" >"$tmp.both0"
-	comm -23 "$tmp.both0" "$tmp.known" >"$tmp.both"
-	if test -s "$tmp.both"
+	test $master_count = $maint_count && mergeable=yes
+
+	if current=$(git rev-parse --verify -q "$topic^0") &&
+	   test "$current" = "$tip"
 	then
-		echo "# Graduated to both $m $and_or_thru master"
-		while read branch
-		do
-			d=$(git describe --always $branch)
-			echo "$(git show -s --format='%ct' "$branch") $branch ;# $d"
-		done <"$tmp.both" |
-		sort -r -n |
-		sed -e 's/^[0-9]* //' \
-		    -e 's/^/git branch -d /' |
-		sort -V -k 6,6
-		echo
-		cat "$tmp.known" "$tmp.both" | sort >"$tmp.next"
-		mv "$tmp.next" "$tmp.known"
+		ready=yes
+		label="$topic"
+	elif test -z "$current"
+	then
+		ready=yes
+		label="$tip"
 	fi
-done
 
-comm -13 "$tmp.maint" "$tmp.master" |
-{
-	while read topic
+	case "$mergeable,$ready" in
+	no,*)
+		defer "# $topic: not mergeable ($master_count vs $maint_count)"
+		;;
+	yes,no)
+		topic_count=$(git rev-list "$base..$current" | wc -l)
+		defer "# $topic: not ready ($master_count vs $topic_count)"
+		;;
+	yes,yes)
+		insn="$label # $master_count ($date)"
+		insn="$insn$LF$(git log --oneline "maint..$tip" | sed -e "s/^/# /")"
+		dothis "$insn"
+		;;
+	esac
+}
+
+git log --first-parent --min-parents=2 --max-parents=2 \
+	--format='%ci %H %P %s' "$base..master" | {
+	while read date time zone commit parent tip subject
 	do
-		t=$(find_last_tip $topic master) &&
-		test -n "$t" &&
-		m=$(git rev-parse --verify "$t^1") &&
-		test -n "$m" || continue
-
-		# NEEDSWORK: this misses repeated merges
-		#
-		#        o---o---maint
-		#       /
-		#      .---o---o topic
-		#     /     \   \
-		# ---o---o---*---*---master
-
-		tsize=$(git rev-list "$m..$topic" | wc -l)
-		rsize=$(git rev-list "maint..$topic" | wc -l)
-
-		if test $tsize -eq $rsize
-		then
-			s=$(git show -s --pretty="tformat:%ct %H" $t)
-			echo "$s $topic"
-		else
-			s=$(git show -s --pretty="tformat:%ct %H" $t)
-			echo >&3 "$s $topic"
-		fi
-	done 3>"$tmp.unmergeable" >"$tmp.mergeable"
-
-	if test -s "$tmp.unmergeable"
-	then
-		echo ": # Graduated to master; unmergeable to maint"
-		sort -n "$tmp.unmergeable" |
-		while read timestamp merge topic
-		do
-			git show -s --pretty="format:: # %h %cd" $merge
-			echo "git branch -d $topic"
-		done
-		echo
-	fi
-	if test -s "$tmp.mergeable"
-	then
-		sort -n  "$tmp.mergeable" |
-		while read timestamp merge topic
-		do
-			{
-				git show -s --pretty="format:%h %cd" $merge
-				git log --pretty=oneline --abbrev-commit maint..$topic 
-			} |
-			sed -e 's/^/: # /'
-			maint=maint
-			these=$(git rev-list maint..$topic)
-			for m in $old_maint maint
-			do
-				those=$(git rev-list $m..$topic)
-				if test "z$these" = "z$those"
-				then
-					maint=$m
-					break
-				fi
-			done
-
-			echo "git checkout $maint && git merge $topic"
-			echo
-		done
-	fi
+		topic=$(expr "$subject" : "Merge branch '\(.*\)'$") || {
+			echo >&2 "Cannot parse $commit ($subject)"
+			continue
+		}
+		one_topic "$topic" "$tip" "$date"
+	done
+	echo "$leftover"
+	echo "$dothis"
 }
