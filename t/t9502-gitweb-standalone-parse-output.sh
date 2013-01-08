@@ -40,7 +40,7 @@ check_snapshot () {
 	echo "basename=$basename"
 	grep "filename=.*$basename.tar" gitweb.headers >/dev/null 2>&1 &&
 	"$TAR" tf gitweb.body >file_list &&
-	! grep -v "^$prefix/" file_list
+	! grep -v -e "^$prefix$" -e "^$prefix/" -e "^pax_global_header$" file_list
 }
 
 test_expect_success setup '

@@ -14,12 +14,14 @@ export GIT_TEXTDOMAINDIR GIT_PO_PATH
 if test_have_prereq GETTEXT && ! test_have_prereq GETTEXT_POISON
 then
 	# is_IS.UTF-8 on Solaris and FreeBSD, is_IS.utf8 on Debian
-	is_IS_locale=$(locale -a | sed -n '/^is_IS\.[uU][tT][fF]-*8$/{
+	is_IS_locale=$(locale -a 2>/dev/null |
+		sed -n '/^is_IS\.[uU][tT][fF]-*8$/{
 		p
 		q
 	}')
 	# is_IS.ISO8859-1 on Solaris and FreeBSD, is_IS.iso88591 on Debian
-	is_IS_iso_locale=$(locale -a | sed -n '/^is_IS\.[iI][sS][oO]8859-*1$/{
+	is_IS_iso_locale=$(locale -a 2>/dev/null |
+		sed -n '/^is_IS\.[iI][sS][oO]8859-*1$/{
 		p
 		q
 	}')
