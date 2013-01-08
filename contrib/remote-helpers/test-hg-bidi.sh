@@ -6,7 +6,7 @@
 # https://bitbucket.org/durin42/hg-git/src
 #
 
-test_description='Test biridectionality of remote-hg'
+test_description='Test bidirectionality of remote-hg'
 
 . ./test-lib.sh
 
