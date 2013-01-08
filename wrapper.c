@@ -229,7 +229,7 @@ int xmkstemp(char *template)
 		int saved_errno = errno;
 		const char *nonrelative_template;
 
-		if (!template[0])
+		if (strlen(template) != strlen(origtemplate))
 			template = origtemplate;
 
 		nonrelative_template = absolute_path(template);
