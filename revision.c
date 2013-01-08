@@ -2283,7 +2283,7 @@ static int commit_match(struct commit *commit, struct rev_info *opt)
 	if (buf.len)
 		strbuf_addstr(&buf, commit->buffer);
 
-	if (opt->mailmap) {
+	if (opt->grep_filter.header_list && opt->mailmap) {
 		if (!buf.len)
 			strbuf_addstr(&buf, commit->buffer);
 
