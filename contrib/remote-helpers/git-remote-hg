@@ -31,7 +31,7 @@ import urllib
 # hg:
 # Emulate hg-git.
 # Only hg bookmarks are exported as git branches.
-# Commits are modified to preserve hg information and allow biridectionality.
+# Commits are modified to preserve hg information and allow bidirectionality.
 #
 
 NAME_RE = re.compile('^([^<>]+)')
