@@ -12,8 +12,11 @@
 # But we protect ourselves from such a user mistake nevertheless.
 unset CDPATH
 
-# Similarly for IFS
-unset IFS
+# Similarly for IFS, but some shells (e.g. FreeBSD 7.2) are buggy and
+# do not equate an unset IFS with IFS with the default, so here is
+# an explicit SP HT LF.
+IFS=' 	
+'
 
 git_broken_path_fix () {
 	case ":$PATH:" in
