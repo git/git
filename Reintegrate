@@ -83,18 +83,25 @@ no)
 		fi
 	}
 
-	cut_seen=0
+	mark_cut () {
+		test -z "$prev_cut" && return
+		git commit --allow-empty -m "$prev_cut"
+		prev_cut=
+	}
+
+	cut_seen=0 prev_cut=
 	while read branch eh
 	do
 		case "$branch" in '###') cut_seen=$(( $cut_seen + 1 )) ;; esac
 		if test -n "$stop_at_cut" && test $stop_at_cut -le $cut_seen
 		then
-			continue
+			continue ;# slurp the remainder and skip
 		fi
 
 		case "$branch" in
 		'###')
-			echo >&2 "$branch"
+			echo >&2 "$branch $eh"
+			prev_cut="$branch $eh"
 			continue ;;
 		'#'* | '')
 			continue ;;
@@ -108,6 +115,8 @@ no)
 			tip=$(git rev-parse --verify "$branch^0")
 			mb=$(git merge-base "$tip" "$save")
 			test "$mb" = "$tip" && continue
+
+			mark_cut
 
 			EDITOR=: git merge $accept_rerere --edit "$branch" ||
 			accept_rerere ||
@@ -130,6 +139,9 @@ no)
 			;;
 		pick" "*)
 			echo >&2 "* $eh"
+
+			mark_cut
+
 			git cherry-pick "$branch" || exit ;;
 		*) echo >&2 "Eh? $branch $eh"; exit ;;
 		esac
@@ -175,7 +187,15 @@ show_merge () {
 }
 
 show_pick () {
-	merged="$(git rev-parse --verify "$commit") pick $msg" 
+	case "$msg" in
+	"### "* | "###")
+		merged="$msg"
+		;;
+	*)
+		merged="$(git rev-parse --verify "$commit") pick $msg"
+		;;
+	esac
+
 }
 
 generate () {
