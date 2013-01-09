@@ -33,10 +33,10 @@ msgid ""
 "appropriate to mark resolution and make a commit,\n"
 "or use 'git commit -a'."
 msgstr ""
-"Korrigiere dies im Arbeitsbaum,\n"
-"und benutze dann 'git add/rm <Datei>'\n"
+"Korrigieren Sie dies im Arbeitsbaum,\n"
+"und benutzen Sie dann 'git add/rm <Datei>'\n"
 "um die Auflösung entsprechend zu markieren und einzutragen,\n"
-"oder benutze 'git commit -a'."
+"oder benutzen Sie 'git commit -a'."
 
 #: archive.c:10
 msgid "git archive [options] <tree-ish> [<path>...]"
@@ -131,7 +131,7 @@ msgid ""
 "Use '\\!' for literal leading exclamation."
 msgstr ""
 "Verneinende Muster sind in Git-Attributen verboten.\n"
-"Benutze '\\!' für führende Ausrufezeichen."
+"Benutzen Sie '\\!' für führende Ausrufezeichen."
 
 #: bundle.c:36
 #, c-format
@@ -381,7 +381,7 @@ msgstr "Vorhandene Git-Kommandos in '%s'"
 
 #: help.c:219
 msgid "git commands available from elsewhere on your $PATH"
-msgstr "Vorhandene Git-Kommandos irgendwo in deinem $PATH"
+msgstr "Vorhandene Git-Kommandos irgendwo in Ihrem $PATH"
 
 #: help.c:275
 #, c-format
@@ -394,7 +394,7 @@ msgstr ""
 
 #: help.c:332
 msgid "Uh oh. Your system reports no Git commands at all."
-msgstr "Uh oh. Keine Git-Kommandos auf deinem System vorhanden."
+msgstr "Uh oh. Keine Git-Kommandos auf Ihrem System vorhanden."
 
 #: help.c:354
 #, c-format
@@ -402,8 +402,8 @@ msgid ""
 "WARNING: You called a Git command named '%s', which does not exist.\n"
 "Continuing under the assumption that you meant '%s'"
 msgstr ""
-"Warnung: Du hast das nicht existierende Git-Kommando '%s' ausgeführt.\n"
-"Setze fort unter der Annahme das du '%s' gemeint hast"
+"Warnung: Sie haben das nicht existierende Git-Kommando '%s' ausgeführt.\n"
+"Setze fort unter der Annahme, dass Sie '%s' gemeint haben"
 
 #: help.c:359
 #, c-format
@@ -424,10 +424,10 @@ msgid_plural ""
 "Did you mean one of these?"
 msgstr[0] ""
 "\n"
-"Hast du das gemeint?"
+"Haben Sie das gemeint?"
 msgstr[1] ""
 "\n"
-"Hast du eines von diesen gemeint?"
+"Haben Sie eines von diesen gemeint?"
 
 #: merge.c:56
 msgid "failed to read the cache"
@@ -721,12 +721,12 @@ msgstr "    %s"
 #, c-format
 msgid "Your branch is ahead of '%s' by %d commit.\n"
 msgid_plural "Your branch is ahead of '%s' by %d commits.\n"
-msgstr[0] "Dein Zweig ist vor '%s' um %d Version.\n"
-msgstr[1] "Dein Zweig ist vor '%s' um %d Versionen.\n"
+msgstr[0] "Ihr Zweig ist vor '%s' um %d Version.\n"
+msgstr[1] "Ihr Zweig ist vor '%s' um %d Versionen.\n"
 
 #: remote.c:1637
 msgid "  (use \"git push\" to publish your local commits)\n"
-msgstr "  (benutze \"git push\" um deine lokalen Versionen herauszubringen)\n"
+msgstr "  (benutzen Sie \"git push\" um lokalen Versionen herauszubringen)\n"
 
 #: remote.c:1640
 #, c-format
@@ -734,15 +734,15 @@ msgid "Your branch is behind '%s' by %d commit, and can be fast-forwarded.\n"
 msgid_plural ""
 "Your branch is behind '%s' by %d commits, and can be fast-forwarded.\n"
 msgstr[0] ""
-"Dein Zweig ist zu '%s' um %d Version hinterher, und kann vorgespult werden.\n"
+"Ihr Zweig ist zu '%s' um %d Version hinterher, und kann vorgespult werden.\n"
 msgstr[1] ""
-"Dein Zweig ist zu '%s' um %d Versionen hinterher, und kann vorgespult "
+"Ihr Zweig ist zu '%s' um %d Versionen hinterher, und kann vorgespult "
 "werden.\n"
 
 #: remote.c:1647
 msgid "  (use \"git pull\" to update your local branch)\n"
 msgstr ""
-"  (benutze \"git pull\" um deinen lokalen Zweig zu aktualisieren)\n"
+"  (benutzen Sie \"git pull\" um Ihren lokalen Zweig zu aktualisieren)\n"
 
 #: remote.c:1650
 #, c-format
@@ -753,16 +753,16 @@ msgid_plural ""
 "Your branch and '%s' have diverged,\n"
 "and have %d and %d different commits each, respectively.\n"
 msgstr[0] ""
-"Dein Zweig und '%s' sind divergiert,\n"
+"Ihr Zweig und '%s' sind divergiert,\n"
 "und haben jeweils %d und %d unterschiedliche Versionen.\n"
 msgstr[1] ""
-"Dein Zweig und '%s' sind divergiert,\n"
+"Ihr Zweig und '%s' sind divergiert,\n"
 "und haben jeweils %d und %d unterschiedliche Versionen.\n"
 
 #: remote.c:1659
 msgid "  (use \"git pull\" to merge the remote branch into yours)\n"
 msgstr ""
-"  (benutze \"git pull\" um deinen Zweig mit dem externen zusammenzuführen)\n"
+"  (benutzen Sie \"git pull\" um Ihren Zweig mit dem externen zusammenzuführen)\n"
 
 #: sequencer.c:123 builtin/merge.c:761 builtin/merge.c:874 builtin/merge.c:984
 #: builtin/merge.c:994
@@ -781,7 +781,7 @@ msgid ""
 "after resolving the conflicts, mark the corrected paths\n"
 "with 'git add <paths>' or 'git rm <paths>'"
 msgstr ""
-"nach Auflösung der Konflikte, markiere die korrigierten Pfade\n"
+"nach Auflösung der Konflikte, markieren Sie die korrigierten Pfade\n"
 "mit 'git add <Pfade>' oder 'git rm <Pfade>'"
 
 #: sequencer.c:149
@@ -790,9 +790,9 @@ msgid ""
 "with 'git add <paths>' or 'git rm <paths>'\n"
 "and commit the result with 'git commit'"
 msgstr ""
-"nach Auflösung der Konflikte, markiere die korrigierten Pfade\n"
-"mit 'git add <Pfade>' oder 'git rm <Pfade>'und trage das Ergebnis ein mit "
-"'git commit'"
+"nach Auflösung der Konflikte, markieren Sie die korrigierten Pfade\n"
+"mit 'git add <Pfade>' oder 'git rm <Pfade>'und tragen Sie das Ergebnis mit\n"
+"'git commit' ein"
 
 #: sequencer.c:162 sequencer.c:770 sequencer.c:853
 #, c-format
@@ -807,15 +807,15 @@ msgstr "Fehler bei Nachbereitung von %s"
 #: sequencer.c:180
 msgid "Your local changes would be overwritten by cherry-pick."
 msgstr ""
-"Deine lokalen Änderungen würden von \"cherry-pick\" überschrieben werden."
+"Ihre lokalen Änderungen würden von \"cherry-pick\" überschrieben werden."
 
 #: sequencer.c:182
 msgid "Your local changes would be overwritten by revert."
-msgstr "Deine lokalen Änderungen würden von \"revert\" überschrieben werden."
+msgstr "Ihre lokalen Änderungen würden von \"revert\" überschrieben werden."
 
 #: sequencer.c:185
 msgid "Commit your changes or stash them to proceed."
-msgstr "Trage deine Änderungen ein oder benutze \"stash\" um fortzufahren."
+msgstr "Tragen Sie Ihre Änderungen ein oder benutzen Sie \"stash\" um fortzufahren."
 
 #. TRANSLATORS: %s will be "revert" or "cherry-pick"
 #: sequencer.c:235
@@ -843,11 +843,11 @@ msgstr "Konnte Elternversion %s nicht parsen\n"
 
 #: sequencer.c:403
 msgid "Your index file is unmerged."
-msgstr "Deine Bereitstellungsdatei ist nicht zusammengeführt."
+msgstr "Ihre Bereitstellungsdatei ist nicht zusammengeführt."
 
 #: sequencer.c:406
 msgid "You do not have a valid HEAD"
-msgstr "Du hast keine gültige Zweigspitze (HEAD)"
+msgstr "Sie haben keine gültige Zweigspitze (HEAD)"
 
 #: sequencer.c:421
 #, c-format
@@ -953,7 +953,7 @@ msgstr "\"cherry-pick\" oder \"revert\" ist bereits im Gang"
 
 #: sequencer.c:752
 msgid "try \"git cherry-pick (--continue | --quit | --abort)\""
-msgstr "versuche \"git cherry-pick (--continue | --quit | --abort)\""
+msgstr "versuchen Sie \"git cherry-pick (--continue | --quit | --abort)\""
 
 #: sequencer.c:756
 #, c-format
@@ -1053,28 +1053,28 @@ msgstr "Nicht zusammengeführte Pfade:"
 #, c-format
 msgid "  (use \"git reset %s <file>...\" to unstage)"
 msgstr ""
-"  (benutze \"git reset %s <Datei>...\" zum Herausnehmen aus der "
+"  (benutzen Sie \"git reset %s <Datei>...\" zum Herausnehmen aus der "
 "Bereitstellung)"
 
 #: wt-status.c:169 wt-status.c:196
 msgid "  (use \"git rm --cached <file>...\" to unstage)"
 msgstr ""
-"  (benutze \"git rm --cached <Datei>...\" zum Herausnehmen aus der "
+"  (benutzen Sie \"git rm --cached <Datei>...\" zum Herausnehmen aus der "
 "Bereitstellung)"
 
 #: wt-status.c:173
 msgid "  (use \"git add <file>...\" to mark resolution)"
-msgstr "  (benutze \"git add/rm <Datei>...\" um die Auflösung zu markieren)"
+msgstr "  (benutzen Sie \"git add/rm <Datei>...\" um die Auflösung zu markieren)"
 
 #: wt-status.c:175 wt-status.c:179
 msgid "  (use \"git add/rm <file>...\" as appropriate to mark resolution)"
 msgstr ""
-"  (benutze \"git add/rm <Datei>...\" um die Auflösung entsprechend zu "
+"  (benutzen Sie \"git add/rm <Datei>...\" um die Auflösung entsprechend zu "
 "markieren)"
 
 #: wt-status.c:177
 msgid "  (use \"git rm <file>...\" to mark resolution)"
-msgstr "  (benutze \"git add/rm <Datei>...\" um die Auflösung zu markieren)"
+msgstr "  (benutzen Sie \"git add/rm <Datei>...\" um die Auflösung zu markieren)"
 
 #: wt-status.c:188
 msgid "Changes to be committed:"
@@ -1086,29 +1086,29 @@ msgstr "Änderungen, die nicht zum Eintragen bereitgestellt sind:"
 
 #: wt-status.c:210
 msgid "  (use \"git add <file>...\" to update what will be committed)"
-msgstr "  (benutze \"git add <Datei>...\" zum Bereitstellen)"
+msgstr "  (benutzen Sie \"git add <Datei>...\" zum Bereitstellen)"
 
 #: wt-status.c:212
 msgid "  (use \"git add/rm <file>...\" to update what will be committed)"
-msgstr "  (benutze \"git add/rm <Datei>...\" zum Bereitstellen)"
+msgstr "  (benutzen Sie \"git add/rm <Datei>...\" zum Bereitstellen)"
 
 #: wt-status.c:213
 msgid ""
 "  (use \"git checkout -- <file>...\" to discard changes in working directory)"
 msgstr ""
-"  (benutze \"git checkout -- <Datei>...\" um die Änderungen im "
+"  (benutzen Sie \"git checkout -- <Datei>...\" um die Änderungen im "
 "Arbeitsverzeichnis zu verwerfen)"
 
 #: wt-status.c:215
 msgid "  (commit or discard the untracked or modified content in submodules)"
 msgstr ""
-"  (trage ein oder verwerfe den unbeobachteten oder geänderten Inhalt in den "
+"  (tragen Sie ein oder verwerfen Sie den unbeobachteten oder geänderten Inhalt in den "
 "Unterprojekten)"
 
 #: wt-status.c:227
 #, c-format
 msgid "  (use \"git %s <file>...\" to include in what will be committed)"
-msgstr "  (benutze \"git %s <Datei>...\" zum Einfügen in die Eintragung)"
+msgstr "  (benutzen Sie \"git %s <Datei>...\" zum Einfügen in die Eintragung)"
 
 #: wt-status.c:244
 msgid "bug"
@@ -1201,20 +1201,20 @@ msgstr "Fehler: unbehandelter Differenz-Status %c"
 
 #: wt-status.c:785
 msgid "You have unmerged paths."
-msgstr "Du hast nicht zusammengeführte Pfade."
+msgstr "Sie haben nicht zusammengeführte Pfade."
 
 #: wt-status.c:788 wt-status.c:912
 msgid "  (fix conflicts and run \"git commit\")"
-msgstr " (behebe die Konflikte und führe \"git commit\" aus)"
+msgstr " (beheben Sie die Konflikte und führen Sie \"git commit\" aus)"
 
 #: wt-status.c:791
 msgid "All conflicts fixed but you are still merging."
 msgstr ""
-"Alle Konflikte sind behoben, aber du bist immer noch beim Zusammenführen."
+"Alle Konflikte sind behoben, aber Sie sind immer noch beim Zusammenführen."
 
 #: wt-status.c:794
 msgid "  (use \"git commit\" to conclude merge)"
-msgstr "  (benutze \"git commit\" um die Zusammenführung abzuschließen)"
+msgstr "  (benutzen Sie \"git commit\" um die Zusammenführung abzuschließen)"
 
 #: wt-status.c:804
 msgid "You are in the middle of an am session."
@@ -1226,80 +1226,80 @@ msgstr "Der aktuelle Patch ist leer."
 
 #: wt-status.c:811
 msgid "  (fix conflicts and then run \"git am --resolved\")"
-msgstr "  (behebe die Konflikte und führe dann \"git am --resolved\" aus)"
+msgstr "  (beheben Sie die Konflikte und führen Sie dann \"git am --resolved\" aus)"
 
 #: wt-status.c:813
 msgid "  (use \"git am --skip\" to skip this patch)"
-msgstr " (benutze \"git am --skip\" um diesen Patch auszulassen)"
+msgstr " (benutzen Sie \"git am --skip\" um diesen Patch auszulassen)"
 
 #: wt-status.c:815
 msgid "  (use \"git am --abort\" to restore the original branch)"
 msgstr ""
-"  (benutze \"git am --abort\" um den ursprünglichen Zweig wiederherzustellen)"
+"  (benutzen Sie \"git am --abort\" um den ursprünglichen Zweig wiederherzustellen)"
 
 #: wt-status.c:873 wt-status.c:883
 msgid "You are currently rebasing."
-msgstr "Du bist gerade beim Neuaufbau."
+msgstr "Sie sind gerade beim Neuaufbau."
 
 #: wt-status.c:876
 msgid "  (fix conflicts and then run \"git rebase --continue\")"
-msgstr "  (behebe die Konflikte und führe dann \"git rebase --continue\" aus)"
+msgstr "  (beheben Sie die Konflikte und führen Sie dann \"git rebase --continue\" aus)"
 
 #: wt-status.c:878
 msgid "  (use \"git rebase --skip\" to skip this patch)"
-msgstr "  (benutze \"git rebase --skip\" um diesen Patch auszulassen)"
+msgstr "  (benutzen Sie \"git rebase --skip\" um diesen Patch auszulassen)"
 
 #: wt-status.c:880
 msgid "  (use \"git rebase --abort\" to check out the original branch)"
 msgstr ""
-"  (benutze \"git rebase --abort\" um den ursprünglichen Zweig auszuchecken)"
+"  (benutzen Sie \"git rebase --abort\" um den ursprünglichen Zweig auszuchecken)"
 
 #: wt-status.c:886
 msgid "  (all conflicts fixed: run \"git rebase --continue\")"
-msgstr "  (alle Konflikte behoben: führe \"git rebase --continue\" aus)"
+msgstr "  (alle Konflikte behoben: führen Sie \"git rebase --continue\" aus)"
 
 #: wt-status.c:888
 msgid "You are currently splitting a commit during a rebase."
-msgstr "Du teilst gerade eine Version während eines Neuaufbaus auf."
+msgstr "Sie teilen gerade eine Version während eines Neuaufbaus auf."
 
 #: wt-status.c:891
 msgid "  (Once your working directory is clean, run \"git rebase --continue\")"
 msgstr ""
-"  (Sobald dein Arbeitsverzeichnis sauber ist, führe \"git rebase --continue"
+"  (Sobald Ihr Arbeitsverzeichnis sauber ist, führen Sie \"git rebase --continue"
 "\" aus)"
 
 #: wt-status.c:893
 msgid "You are currently editing a commit during a rebase."
-msgstr "Du editierst gerade eine Version während eines Neuaufbaus."
+msgstr "Sie editieren gerade eine Version während eines Neuaufbaus."
 
 #: wt-status.c:896
 msgid "  (use \"git commit --amend\" to amend the current commit)"
 msgstr ""
-"  (benutze \"git commit --amend\" um die aktuelle Version nachzubessern)"
+"  (benutzen Sie \"git commit --amend\" um die aktuelle Version nachzubessern)"
 
 #: wt-status.c:898
 msgid ""
 "  (use \"git rebase --continue\" once you are satisfied with your changes)"
 msgstr ""
-"  (benutze \"git rebase --continue\" sobald deine Änderungen abgeschlossen "
+"  (benutzen Sie \"git rebase --continue\" sobald Ihre Änderungen abgeschlossen "
 "sind)"
 
 #: wt-status.c:908
 msgid "You are currently cherry-picking."
-msgstr "Du führst gerade \"cherry-pick\" aus."
+msgstr "Sie führen gerade \"cherry-pick\" aus."
 
 #: wt-status.c:915
 msgid "  (all conflicts fixed: run \"git commit\")"
-msgstr "  (alle Konflikte behoben: führe \"git commit\" aus)"
+msgstr "  (alle Konflikte behoben: führen Sie \"git commit\" aus)"
 
 #: wt-status.c:924
 msgid "You are currently bisecting."
-msgstr "Du bist gerade beim Halbieren."
+msgstr "Sie sind gerade beim Halbieren."
 
 #: wt-status.c:927
 msgid "  (use \"git bisect reset\" to get back to the original branch)"
 msgstr ""
-"  (benutze \"git bisect reset\" um zum ursprünglichen Zweig zurückzukehren)"
+"  (benutzen Sie \"git bisect reset\" um zum ursprünglichen Zweig zurückzukehren)"
 
 #: wt-status.c:978
 msgid "On branch "
@@ -1328,7 +1328,7 @@ msgstr "Unbeobachtete Dateien nicht aufgelistet%s"
 
 #: wt-status.c:1017
 msgid " (use -u option to show untracked files)"
-msgstr " (benutze die Option -u um unbeobachteten Dateien anzuzeigen)"
+msgstr " (benutzen Sie die Option -u um unbeobachteten Dateien anzuzeigen)"
 
 #: wt-status.c:1023
 msgid "No changes"
@@ -1338,7 +1338,7 @@ msgstr "Keine Änderungen"
 #, c-format
 msgid "no changes added to commit (use \"git add\" and/or \"git commit -a\")\n"
 msgstr ""
-"keine Änderungen zum Eintragen hinzugefügt (benutze \"git add\" und/oder "
+"keine Änderungen zum Eintragen hinzugefügt (benutzen Sie \"git add\" und/oder "
 "\"git commit -a\")\n"
 
 #: wt-status.c:1031
@@ -1353,7 +1353,7 @@ msgid ""
 "track)\n"
 msgstr ""
 "nichts zum Eintragen hinzugefügt, aber es gibt unbeobachtete Dateien "
-"(benutze \"git add\" zum Beobachten)\n"
+"(benutzen Sie \"git add\" zum Beobachten)\n"
 
 #: wt-status.c:1037
 #, c-format
@@ -1364,8 +1364,8 @@ msgstr "nichts zum Eintragen hinzugefügt, aber es gibt unbeobachtete Dateien\n"
 #, c-format
 msgid "nothing to commit (create/copy files and use \"git add\" to track)\n"
 msgstr ""
-"nichts einzutragen (Erstelle/Kopiere Dateien und benutze \"git add\" zum "
-"Beobachten)\n"
+"nichts einzutragen (Erstellen/Kopieren Sie Dateien und benutzen Sie \"git add\" "
+"zum Beobachten)\n"
 
 #: wt-status.c:1043 wt-status.c:1048
 #, c-format
@@ -1376,7 +1376,7 @@ msgstr "nichts einzutragen\n"
 #, c-format
 msgid "nothing to commit (use -u to show untracked files)\n"
 msgstr ""
-"nichts einzutragen (benutze die Option -u, um unbeobachtete Dateien "
+"nichts einzutragen (benutzen Sie die Option -u, um unbeobachtete Dateien "
 "anzuzeigen)\n"
 
 #: wt-status.c:1050
@@ -1477,7 +1477,7 @@ msgstr "Konnte '%s' nicht anwenden."
 #: builtin/add.c:313
 msgid "The following paths are ignored by one of your .gitignore files:\n"
 msgstr ""
-"Die folgenden Pfade werden durch eine deiner \".gitignore\" Dateien "
+"Die folgenden Pfade werden durch eine Ihrer \".gitignore\" Dateien "
 "ignoriert:\n"
 
 #: builtin/add.c:319 builtin/clean.c:52 builtin/fetch.c:78 builtin/mv.c:63
@@ -1538,7 +1538,7 @@ msgstr "prüft ob - auch fehlende - Dateien im Probelauf ignoriert werden"
 #: builtin/add.c:353
 #, c-format
 msgid "Use -f if you really want to add them.\n"
-msgstr "Verwende -f wenn du diese wirklich hinzufügen möchtest.\n"
+msgstr "Verwenden Sie -f wenn Sie diese wirklich hinzufügen möchten.\n"
 
 #: builtin/add.c:354
 msgid "no files added"
@@ -1565,7 +1565,7 @@ msgstr "Nichts spezifiziert, nichts hinzugefügt.\n"
 #: builtin/add.c:415
 #, c-format
 msgid "Maybe you wanted to say 'git add .'?\n"
-msgstr "Wolltest du vielleicht 'git add .' sagen?\n"
+msgstr "Wollten Sie vielleicht 'git add .' sagen?\n"
 
 #: builtin/add.c:421 builtin/clean.c:95 builtin/commit.c:291 builtin/mv.c:82
 #: builtin/rm.c:235
@@ -2269,7 +2269,7 @@ msgid ""
 "If you are sure you want to delete it, run 'git branch -D %s'."
 msgstr ""
 "Der Zweig '%s' ist nicht vollständig zusammengeführt.\n"
-"Wenn du sicher bist diesen Zweig zu entfernen, führe 'git branch -D %s' aus."
+"Wenn Sie sicher sind diesen Zweig zu entfernen, führen Sie 'git branch -D %s' aus."
 
 #: builtin/branch.c:180
 msgid "Update of config-file failed"
@@ -2287,7 +2287,7 @@ msgstr "Konnte Versionsobjekt für Zweigspitze (HEAD) nicht nachschlagen."
 #, c-format
 msgid "Cannot delete the branch '%s' which you are currently on."
 msgstr ""
-"Kann Zweig '%s' nicht entfernen, da du dich gerade auf diesem befindest."
+"Kann Zweig '%s' nicht entfernen, da Sie sich gerade auf diesem befinden."
 
 #: builtin/branch.c:235
 #, c-format
@@ -2365,7 +2365,7 @@ msgstr "Konnte einige Referenzen nicht lesen"
 #: builtin/branch.c:638
 msgid "cannot rename the current branch while not on any."
 msgstr ""
-"Kann aktuellen Zweig nicht umbenennen, solange du dich auf keinem befindest."
+"Kann aktuellen Zweig nicht umbenennen, solange Sie sich auf keinem befinden."
 
 #: builtin/branch.c:648
 #, c-format
@@ -2527,8 +2527,8 @@ msgid ""
 "The --set-upstream flag is deprecated and will be removed. Consider using --"
 "track or --set-upstream-to\n"
 msgstr ""
-"Die --set-upstream Option ist veraltet und wird entfernt. Benutze --track "
-"oder --set-upstream-to\n"
+"Die --set-upstream Option ist veraltet und wird entfernt. Benutzen Sie "
+"--track oder --set-upstream-to\n"
 
 #: builtin/branch.c:934
 #, c-format
@@ -2538,8 +2538,8 @@ msgid ""
 "\n"
 msgstr ""
 "\n"
-"Wenn du wolltest, dass '%s' den Zweig '%s' als externen Übernahmezweig hat, "
-"führe aus:\n"
+"Wenn Sie wollten, dass '%s' den Zweig '%s' als externen Übernahmezweig hat, "
+"führen Sie aus:\n"
 
 #: builtin/branch.c:935
 #, c-format
@@ -2743,7 +2743,7 @@ msgstr "Pfad '%s' ist nicht zusammengeführt."
 
 #: builtin/checkout.c:448
 msgid "you need to resolve your current index first"
-msgstr "Du musst zuerst deine aktuelle Bereitstellung auflösen."
+msgstr "Sie müssen zuerst Ihre aktuelle Bereitstellung auflösen."
 
 #: builtin/checkout.c:569
 #, c-format
@@ -2798,13 +2798,13 @@ msgid_plural ""
 "\n"
 "%s\n"
 msgstr[0] ""
-"Warnung: Du bist um %d Version hinterher, nicht verbunden zu\n"
-"einem deiner Zweige:\n"
+"Warnung: Sie sind um %d Version hinterher, nicht verbunden zu\n"
+"einem Ihrer Zweige:\n"
 "\n"
 "%s\n"
 msgstr[1] ""
-"Warnung: Du bist um %d Versionen hinterher, nicht verbunden zu\n"
-"einem deiner Zweige:\n"
+"Warnung: Sie sind um %d Versionen hinterher, nicht verbunden zu\n"
+"einem Ihrer Zweige:\n"
 "\n"
 "%s\n"
 
@@ -2817,7 +2817,7 @@ msgid ""
 " git branch new_branch_name %s\n"
 "\n"
 msgstr ""
-"Wenn du diese durch einen neuen Zweig behalten möchtest, dann könnte jetzt\n"
+"Wenn Sie diese durch einen neuen Zweig behalten möchten, dann könnte jetzt\n"
 "ein guter Zeitpunkt sein dies zu tun mit:\n"
 "\n"
 " git branch neuer_zweig_name %s\n"
@@ -2833,7 +2833,7 @@ msgstr "Vorherige Position der Zweigspitze (HEAD) war"
 
 #: builtin/checkout.c:761 builtin/checkout.c:950
 msgid "You are on a branch yet to be born"
-msgstr "du bist auf einem Zweig, der noch geboren wird"
+msgstr "Sie sind auf einem Zweig, der noch geboren wird"
 
 #. case (1)
 #: builtin/checkout.c:886
@@ -2946,7 +2946,7 @@ msgstr "--track benötigt einen Zweignamen"
 
 #: builtin/checkout.c:1081
 msgid "Missing branch name; try -b"
-msgstr "Vermisse Zweignamen; versuche -b"
+msgstr "Vermisse Zweignamen; versuchen Sie -b"
 
 #: builtin/checkout.c:1116
 msgid "invalid path specification"
@@ -2959,7 +2959,7 @@ msgid ""
 "Did you intend to checkout '%s' which can not be resolved as commit?"
 msgstr ""
 "Kann nicht gleichzeitig Pfade aktualisieren und zu Zweig '%s' wechseln.\n"
-"Hast du beabsichtigt '%s' auszuchecken, welcher nicht als Version aufgelöst "
+"Haben Sie beabsichtigt '%s' auszuchecken, welcher nicht als Version aufgelöst "
 "werden kann?"
 
 #: builtin/checkout.c:1128
@@ -2973,7 +2973,7 @@ msgid ""
 "checking out of the index."
 msgstr ""
 "git checkout: --ours/--theirs, --force und --merge sind inkompatibel wenn\n"
-"du aus der Bereitstellung auscheckst."
+"Sie aus der Bereitstellung auschecken."
 
 #: builtin/clean.c:19
 msgid "git clean [-d] [-f] [-n] [-q] [-e <pattern>] [-x | -X] [--] <paths>..."
@@ -3203,7 +3203,7 @@ msgstr "Zu viele Argumente."
 
 #: builtin/clone.c:694
 msgid "You must specify a repository to clone."
-msgstr "Du musst ein Projektarchiv zum Klonen angeben."
+msgstr "Sie müssen ein Projektarchiv zum Klonen angeben."
 
 #: builtin/clone.c:705
 #, c-format
@@ -3217,7 +3217,7 @@ msgstr "Projektarchiv '%s' existiert nicht."
 
 #: builtin/clone.c:724
 msgid "--depth is ignored in local clones; use file:// instead."
-msgstr "--depth wird in lokalen Klonen ignoriert; benutze stattdessen file://."
+msgstr "--depth wird in lokalen Klonen ignoriert; benutzen Sie stattdessen file://."
 
 #: builtin/clone.c:734
 #, c-format
@@ -3261,7 +3261,7 @@ msgstr "externer Zweig %s nicht im anderen Projektarchiv %s gefunden"
 
 #: builtin/clone.c:879
 msgid "You appear to have cloned an empty repository."
-msgstr "Du scheinst ein leeres Projektarchiv geklont zu haben."
+msgstr "Sie scheinen ein leeres Projektarchiv geklont zu haben."
 
 #: builtin/column.c:9
 msgid "git column [options]"
@@ -3316,15 +3316,15 @@ msgid ""
 "\n"
 "    git commit --amend --reset-author\n"
 msgstr ""
-"Dein Name und E-Mail Adresse wurden automatisch auf Basis\n"
-"deines Benutzer- und Rechnernamens konfiguriert. Bitte prüfe, dass diese\n"
-"zutreffend sind. Du kannst diese Meldung unterdrücken, indem du diese\n"
-"explizit setzt:\n"
+"Ihr Name und E-Mail Adresse wurden automatisch auf Basis\n"
+"Ihres Benutzer- und Rechnernamens konfiguriert. Bitte prüfen Sie, dass\n"
+"diese zutreffend sind. Sie können diese Meldung unterdrücken, indem Sie\n"
+"diese explizit setzen:\n"
 "\n"
-"    git config --global user.name \"Dein Name\"\n"
-"    git config --global user.email deine@emailadresse.de\n"
+"    git config --global user.name \"Ihr Name\"\n"
+"    git config --global user.email ihre@emailadresse.de\n"
 "\n"
-"Nachdem du das getan hast, kannst du deine Identität für diese Version "
+"Nachdem Sie das getan hast, können Sie Ihre Identität für diese Version "
 "ändern mit:\n"
 "\n"
 "    git commit --amend --reset-author\n"
@@ -3335,8 +3335,8 @@ msgid ""
 "it empty. You can repeat your command with --allow-empty, or you can\n"
 "remove the commit entirely with \"git reset HEAD^\".\n"
 msgstr ""
-"Du fragtest die jüngste Version nachzubessern, aber das würde diese leer\n"
-"machen. Du kannst Dein Kommando mit --allow-empty wiederholen, oder die\n"
+"Sie fragten die jüngste Version nachzubessern, aber das würde diese leer\n"
+"machen. Sie können Ihr Kommando mit --allow-empty wiederholen, oder die\n"
 "Version mit \"git reset HEAD^\" vollständig entfernen.\n"
 
 #: builtin/commit.c:61
@@ -3350,11 +3350,11 @@ msgid ""
 msgstr ""
 "Der letzte \"cherry-pick\" ist jetzt leer, möglicherweise durch eine "
 "Konfliktauflösung.\n"
-"Wenn du dies trotzdem eintragen willst, benutze:\n"
+"Wenn Sie dies trotzdem eintragen wollen, benutzen Sie:\n"
 "\n"
 "    git commit --allow-empty\n"
 "\n"
-"Andernfalls benutze bitte 'git reset'\n"
+"Andernfalls benutzen Sie bitte 'git reset'\n"
 
 #: builtin/commit.c:258
 msgid "failed to unpack HEAD tree object"
@@ -3456,10 +3456,10 @@ msgid ""
 "and try again.\n"
 msgstr ""
 "\n"
-"Es sieht so aus, als trägst du eine Zusammenführung ein.\n"
-"Falls das nicht korrekt ist, lösche bitte die Datei\n"
+"Es sieht so aus, als tragen Sie eine Zusammenführung ein.\n"
+"Falls das nicht korrekt ist, löschen Sie bitte die Datei\n"
 "\t%s\n"
-"und versuche es erneut.\n"
+"und versuchen Sie es erneut.\n"
 
 #: builtin/commit.c:723
 #, c-format
@@ -3471,17 +3471,17 @@ msgid ""
 "and try again.\n"
 msgstr ""
 "\n"
-"Es sieht so aus, als trägst du ein \"cherry-pick\" ein.\n"
-"Falls das nicht korrekt ist, lösche bitte die Datei\n"
+"Es sieht so aus, als tragen Sie ein \"cherry-pick\" ein.\n"
+"Falls das nicht korrekt ist, löschen Sie bitte die Datei\n"
 "\t%s\n"
-"und versuche es erneut.\n"
+"und versuchen Sie es erneut.\n"
 
 #: builtin/commit.c:735
 msgid ""
 "Please enter the commit message for your changes. Lines starting\n"
 "with '#' will be ignored, and an empty message aborts the commit.\n"
 msgstr ""
-"Bitte gebe eine Versionsbeschreibung für deine Änderungen ein. Zeilen,\n"
+"Bitte geben Sie eine Versionsbeschreibung für Ihre Änderungen ein. Zeilen,\n"
 "die mit '#' beginnen, werden ignoriert, und eine leere Versionsbeschreibung\n"
 "bricht die Eintragung ab.\n"
 
@@ -3491,8 +3491,8 @@ msgid ""
 "with '#' will be kept; you may remove them yourself if you want to.\n"
 "An empty message aborts the commit.\n"
 msgstr ""
-"Bitte gebe eine Versionsbeschreibung für deine Änderungen ein. Zeilen, die\n"
-"mit '#' beginnen, werden beibehalten; wenn du möchtest, kannst du diese "
+"Bitte geben Sie eine Versionsbeschreibung für Ihre Änderungen ein. Zeilen, die\n"
+"mit '#' beginnen, werden beibehalten; wenn Sie möchten, können Sie diese "
 "entfernen.\n"
 "Eine leere Versionsbeschreibung bricht die Eintragung ab.\n"
 
@@ -3535,7 +3535,7 @@ msgstr "Verwendung von --reset-author und --author macht keinen Sinn."
 
 #: builtin/commit.c:995
 msgid "You have nothing to amend."
-msgstr "Du hast nichts zum nachbessern."
+msgstr "Sie haben nichts zum nachbessern."
 
 #: builtin/commit.c:998
 msgid "You are in the middle of a merge -- cannot amend."
@@ -3726,7 +3726,7 @@ msgstr ""
 
 #: builtin/commit.c:1380
 msgid "the commit is authored by me now (used with -C/-c/--amend)"
-msgstr "Setze mich als Autor der Version (benutzt mit -C/-c/--amend)"
+msgstr "Setzt Sie als Autor der Version (benutzt mit -C/-c/--amend)"
 
 #: builtin/commit.c:1381 builtin/log.c:1073 builtin/revert.c:109
 msgid "add Signed-off-by:"
@@ -3836,7 +3836,7 @@ msgstr "Konnte Versionsbeschreibung nicht lesen: %s"
 #: builtin/commit.c:1534
 #, c-format
 msgid "Aborting commit; you did not edit the message.\n"
-msgstr "Eintragung abgebrochen; du hast die Beschreibung nicht editiert.\n"
+msgstr "Eintragung abgebrochen; Sie haben die Beschreibung nicht editiert.\n"
 
 #: builtin/commit.c:1539
 #, c-format
@@ -3862,8 +3862,8 @@ msgid ""
 "not exceeded, and then \"git reset HEAD\" to recover."
 msgstr ""
 "Das Projektarchiv wurde aktualisiert, aber die \"new_index\"-Datei\n"
-"konnte nicht geschrieben werden. Prüfe, dass deine Festplatte nicht\n"
-"voll und Dein Kontingent nicht aufgebraucht ist und führe\n"
+"konnte nicht geschrieben werden. Prüfen Sie, dass Ihre Festplatte nicht\n"
+"voll und Ihr Kontingent nicht aufgebraucht ist und führen Sie\n"
 "anschließend \"git reset HEAD\" zu Wiederherstellung aus."
 
 #: builtin/config.c:7
@@ -4041,7 +4041,7 @@ msgid ""
 "However, there were unannotated tags: try --tags."
 msgstr ""
 "Keine annotierten Markierungen können '%s' beschreiben.\n"
-"Jedoch gab es nicht annotierte Markierungen: versuche --tags."
+"Jedoch gab es nicht annotierte Markierungen: versuchen Sie --tags."
 
 #: builtin/describe.c:357
 #, c-format
@@ -4050,7 +4050,7 @@ msgid ""
 "Try --always, or create some tags."
 msgstr ""
 "Keine Markierungen können '%s' beschreiben.\n"
-"Versuche --always oder erstelle einige Markierungen."
+"Versuchen Sie --always oder erstellen Sie einige Markierungen."
 
 #: builtin/describe.c:378
 #, c-format
@@ -4354,7 +4354,7 @@ msgid ""
 "some local refs could not be updated; try running\n"
 " 'git remote prune %s' to remove any old, conflicting branches"
 msgstr ""
-"Einige lokale Referenzen konnten nicht aktualisiert werden; versuche\n"
+"Einige lokale Referenzen konnten nicht aktualisiert werden; versuchen Sie\n"
 "'git remote prune %s' um jeden älteren, widersprüchlichen Zweig zu löschen."
 
 #: builtin/fetch.c:549
@@ -4412,13 +4412,13 @@ msgid ""
 "No remote repository specified.  Please, specify either a URL or a\n"
 "remote name from which new revisions should be fetched."
 msgstr ""
-"Kein externes Projektarchiv angegeben. Bitte gebe entweder eine URL\n"
+"Kein externes Projektarchiv angegeben. Bitte geben Sie entweder eine URL\n"
 "oder den Namen des externen Archivs an, von welchem neue\n"
 "Versionen angefordert werden sollen."
 
 #: builtin/fetch.c:932
 msgid "You need to specify a tag name."
-msgstr "Du musst den Namen der Markierung angeben."
+msgstr "Sie müssen den Namen der Markierung angeben."
 
 #: builtin/fetch.c:984
 msgid "fetch --all does not take a repository argument"
@@ -4587,15 +4587,15 @@ msgid ""
 "run \"git gc\" manually. See \"git help gc\" for more information.\n"
 msgstr ""
 "Die Datenbank des Projektarchivs wird für eine optimale Performance\n"
-"komprimiert. Du kannst auch \"git gc\" manuell ausführen.\n"
+"komprimiert. Sie können auch \"git gc\" manuell ausführen.\n"
 "Siehe \"git help gc\" für weitere Informationen.\n"
 
 #: builtin/gc.c:249
 msgid ""
 "There are too many unreachable loose objects; run 'git prune' to remove them."
 msgstr ""
-"Es gibt zu viele unerreichbare lose Objekte; führe 'git prune' aus, um diese "
-"zu löschen."
+"Es gibt zu viele unerreichbare lose Objekte; führen Sie 'git prune' aus, um "
+"diese zu löschen."
 
 #: builtin/grep.c:22
 msgid "git grep [options] [-e] <pattern> [<rev>...] [[--] <path>...]"
@@ -4918,7 +4918,7 @@ msgid ""
 "Please consider using 'man.<tool>.cmd' instead."
 msgstr ""
 "'%s': Pfad für nicht unterstützten Handbuchbetrachter.\n"
-"Du könntest stattdessen 'man.<Werkzeug>.cmd' benutzen."
+"Sie könnten stattdessen 'man.<Werkzeug>.cmd' benutzen."
 
 #: builtin/help.c:229
 #, c-format
@@ -4927,7 +4927,7 @@ msgid ""
 "Please consider using 'man.<tool>.path' instead."
 msgstr ""
 "'%s': Kommando für unterstützten Handbuchbetrachter.\n"
-"Du könntest stattdessen 'man.<Werkzeug>.path' benutzen."
+"Sie könnten stattdessen 'man.<Werkzeug>.path' benutzen."
 
 #: builtin/help.c:299
 msgid "The most commonly used git commands are:"
@@ -5636,8 +5636,8 @@ msgstr "git cherry [-v] [<Übernahmezweig> [<Arbeitszweig> [<Limit>]]]"
 msgid ""
 "Could not find a tracked remote branch, please specify <upstream> manually.\n"
 msgstr ""
-"Konnte gefolgten, externen Zweig nicht finden, bitte gebe <upstream> manuell "
-"an.\n"
+"Konnte gefolgten, externen Zweig nicht finden, bitte geben Sie <upstream> "
+"manuell an.\n"
 
 #: builtin/log.c:1517 builtin/log.c:1519 builtin/log.c:1531
 #, c-format
@@ -5956,7 +5956,7 @@ msgstr "konnte nicht von '%s' lesen"
 #, c-format
 msgid "Not committing merge; use 'git commit' to complete the merge.\n"
 msgstr ""
-"Zusammenführung wurde nicht eingetragen; benutze 'git commit' um die "
+"Zusammenführung wurde nicht eingetragen; benutzen Sie 'git commit' um die "
 "Zusammenführung abzuschließen.\n"
 
 #: builtin/merge.c:788
@@ -5967,7 +5967,7 @@ msgid ""
 "Lines starting with '#' will be ignored, and an empty message aborts\n"
 "the commit.\n"
 msgstr ""
-"Bitte gebe eine Versionsbeschreibung ein um zu erklären, warum diese "
+"Bitte geben Sie eine Versionsbeschreibung ein um zu erklären, warum diese "
 "Zusammenführung erforderlich ist,\n"
 "insbesondere wenn es einen aktualisierten, externen Zweig mit einem Thema-"
 "Zweig zusammenführt.\n"
@@ -5988,8 +5988,8 @@ msgstr "Wunderbar.\n"
 #, c-format
 msgid "Automatic merge failed; fix conflicts and then commit the result.\n"
 msgstr ""
-"Automatische Zusammenführung fehlgeschlagen; behebe die Konflikte und trage "
-"dann das Ergebnis ein.\n"
+"Automatische Zusammenführung fehlgeschlagen; beheben Sie die Konflikte und tragen "
+"Sie dann das Ergebnis ein.\n"
 
 #: builtin/merge.c:905
 #, c-format
@@ -5998,7 +5998,7 @@ msgstr "'%s' ist keine Version"
 
 #: builtin/merge.c:946
 msgid "No current branch."
-msgstr "Du befindest dich auf keinem Zweig."
+msgstr "Sie befinden sich auf keinem Zweig."
 
 #: builtin/merge.c:948
 msgid "No remote for the current branch."
@@ -6029,34 +6029,34 @@ msgid ""
 "You have not concluded your merge (MERGE_HEAD exists).\n"
 "Please, commit your changes before you can merge."
 msgstr ""
-"Du hast deine Zusammenführung nicht abgeschlossen (MERGE_HEAD existiert).\n"
-"Bitte trage deine Änderungen ein, bevor du zusammenführen kannst."
+"Sie haben Ihre Zusammenführung nicht abgeschlossen (MERGE_HEAD existiert).\n"
+"Bitte tragen Sie Ihre Änderungen ein, bevor Sie zusammenführen können."
 
 #: builtin/merge.c:1129 git-pull.sh:34
 msgid "You have not concluded your merge (MERGE_HEAD exists)."
 msgstr ""
-"Du hast deine Zusammenführung nicht abgeschlossen (MERGE_HEAD existiert)."
+"Sie haben Ihre Zusammenführung nicht abgeschlossen (MERGE_HEAD existiert)."
 
 #: builtin/merge.c:1133
 msgid ""
 "You have not concluded your cherry-pick (CHERRY_PICK_HEAD exists).\n"
 "Please, commit your changes before you can merge."
 msgstr ""
-"Du hast \"cherry-pick\" nicht abgeschlossen (CHERRY_PICK_HEAD existiert).\n"
-"Bitte trage deine Änderungen ein, bevor du zusammenführen kannst."
+"Sie haben \"cherry-pick\" nicht abgeschlossen (CHERRY_PICK_HEAD existiert).\n"
+"Bitte tragen Sie Ihre Änderungen ein, bevor Sie zusammenführen können."
 
 #: builtin/merge.c:1136
 msgid "You have not concluded your cherry-pick (CHERRY_PICK_HEAD exists)."
 msgstr ""
-"Du hast \"cherry-pick\" nicht abgeschlossen (CHERRY_PICK_HEAD existiert)."
+"Sie haben \"cherry-pick\" nicht abgeschlossen (CHERRY_PICK_HEAD existiert)."
 
 #: builtin/merge.c:1145
 msgid "You cannot combine --squash with --no-ff."
-msgstr "Du kannst --squash nicht mit --no-ff kombinieren."
+msgstr "Sie können --squash nicht mit --no-ff kombinieren."
 
 #: builtin/merge.c:1150
 msgid "You cannot combine --no-ff with --ff-only."
-msgstr "Du kannst --no-ff nicht mit --ff--only kombinieren."
+msgstr "Sie können --no-ff nicht mit --ff--only kombinieren."
 
 #: builtin/merge.c:1157
 msgid "No commit specified and merge.defaultToUpstream not set."
@@ -6116,7 +6116,7 @@ msgstr "Zusammenführung mit Strategie %s fehlgeschlagen.\n"
 #: builtin/merge.c:1491
 #, c-format
 msgid "Using the %s to prepare resolving by hand.\n"
-msgstr "Benutze \"%s\" um die Auflösung per Hand vorzubereiten.\n"
+msgstr "Benutzen Sie \"%s\" um die Auflösung per Hand vorzubereiten.\n"
 
 #: builtin/merge.c:1503
 #, c-format
@@ -6461,7 +6461,7 @@ msgstr "konnte Datei '%s' nicht erstellen"
 
 #: builtin/notes.c:192
 msgid "Please supply the note contents using either -m or -F option"
-msgstr "Bitte liefere den Notiz-Inhalt unter Verwendung der Option -m oder -F."
+msgstr "Bitte liefern Sie den Notiz-Inhalt unter Verwendung der Option -m oder -F."
 
 #: builtin/notes.c:213 builtin/notes.c:976
 #, c-format
@@ -6575,7 +6575,7 @@ msgid ""
 "existing notes"
 msgstr ""
 "Konnte Notizen nicht hinzufügen. Existierende Notizen für Objekt %s "
-"gefunden. Verwende '-f' um die existierenden Notizen zu überschreiben."
+"gefunden. Verwenden Sie '-f' um die existierenden Notizen zu überschreiben."
 
 #: builtin/notes.c:588 builtin/notes.c:665
 #, c-format
@@ -6603,7 +6603,7 @@ msgid ""
 "existing notes"
 msgstr ""
 "Kann Notizen nicht kopieren. Existierende Notizen für Objekt %s gefunden. "
-"Verwende '-f' um die existierenden Notizen zu überschreiben."
+"Verwenden Sie '-f' um die existierenden Notizen zu überschreiben."
 
 #: builtin/notes.c:671
 #, c-format
@@ -6617,7 +6617,7 @@ msgid ""
 "Please use 'git notes add -f -m/-F/-c/-C' instead.\n"
 msgstr ""
 "Die Optionen -m/-F/-c/-C sind für das Unterkommando 'edit' veraltet.\n"
-"Bitte benutze stattdessen 'git notes add -f -m/-F/-c/-C'.\n"
+"Bitte benutzen Sie stattdessen 'git notes add -f -m/-F/-c/-C'.\n"
 
 #: builtin/notes.c:867
 msgid "General options"
@@ -6908,14 +6908,14 @@ msgid ""
 "    git push %s %s\n"
 "%s"
 msgstr ""
-"Der Name des externen Übernahmezweiges stimmt nicht mit dem Namen deines\n"
+"Der Name des externen Übernahmezweiges stimmt nicht mit dem Namen Ihres\n"
 "aktuellen Zweiges überein. Um auf den Übernahmezweig in dem externen\n"
-"Projektarchiv zu versenden, benutze:\n"
+"Projektarchiv zu versenden, benutzen Sie:\n"
 "\n"
 "    git push %s HEAD:%s\n"
 "\n"
 "Um auf den Zweig mit dem selben Namen in dem externen Projekarchiv\n"
-"zu versenden, benutze:\n"
+"zu versenden, benutzen Sie:\n"
 "\n"
 "    git push %s %s\n"
 "%s"
@@ -6929,9 +6929,9 @@ msgid ""
 "\n"
 "    git push %s HEAD:<name-of-remote-branch>\n"
 msgstr ""
-"Du befindest dich sich im Moment auf keinem Zweig.\n"
+"Sie befinden sich im Moment auf keinem Zweig.\n"
 "Um die Historie, führend zum aktuellen (freistehende Zweigspitze (HEAD))\n"
-"Status zu versenden, benutze\n"
+"Status zu versenden, benutzen Sie\n"
 "\n"
 "    git push %s HEAD:<Name-des-externen-Zweiges>\n"
 
@@ -6945,7 +6945,7 @@ msgid ""
 msgstr ""
 "Der aktuelle Zweig %s hat keinen Zweig im externen Projektarchiv.\n"
 "Um den aktuellen Zweig zu versenden und das Fernarchiv als externes\n"
-"Projektarchiv zu verwenden, benutze\n"
+"Projektarchiv zu verwenden, benutzen Sie\n"
 "\n"
 "    git push --set-upstream %s %s\n"
 
@@ -6961,7 +6961,7 @@ msgid ""
 "your current branch '%s', without telling me what to push\n"
 "to update which remote branch."
 msgstr ""
-"Du versendest nach '%s', welches kein externes Projektarchiv deines\n"
+"Sie versenden nach '%s', welches kein externes Projektarchiv Ihres\n"
 "aktuellen Zweiges '%s' ist, ohne mir mitzuteilen, was ich versenden\n"
 "soll, um welchen externen Zweig zu aktualisieren."
 
@@ -6985,26 +6985,25 @@ msgstr ""
 "'push.default' ist nicht gesetzt; der implizit gesetzte Wert\n"
 "wird in Git 2.0 von 'matching' nach 'simple' geändert. Um diese Meldung zu\n"
 "unterdrücken und das aktuelle Verhalten nach Änderung des Standardwertes\n"
-"beizubehalten, benutze:\n"
+"beizubehalten, benutzen Sie:\n"
 "  git config --global push.default matching\n"
 "\n"
 "Um diese Meldung zu unterdrücken und das neue Verhalten jetzt zu "
-"übernehmen,\n"
-"benutze:\n"
+"übernehmen, benutzen Sie:\n"
 "\n"
 "  git config --global push.default simple\n"
 "\n"
-"Führe 'git help config' aus und suche nach 'push.default' für weitere "
-"Informationen.\n"
+"Führen Sie 'git help config' aus und suchen Sie nach 'push.default' für "
+"weitere Informationen.\n"
 "(Der Modus 'simple' wurde in Git 1.7.11 eingeführt. Benutze den ähnlichen "
-"Modus 'current' anstatt 'simple', falls du gelegentlich ältere Versionen von "
-"Git benutzt.)"
+"Modus 'current' anstatt 'simple', falls Sie gelegentlich ältere Versionen von "
+"Git benutzen.)"
 
 #: builtin/push.c:199
 msgid ""
 "You didn't specify any refspecs to push, and push.default is \"nothing\"."
 msgstr ""
-"Du hast keine Referenzspezifikationen zum Versenden angegeben, und push."
+"Sie haben keine Referenzspezifikationen zum Versenden angegeben, und push."
 "default ist \"nothing\"."
 
 #: builtin/push.c:206
@@ -7014,9 +7013,10 @@ msgid ""
 "before pushing again.\n"
 "See the 'Note about fast-forwards' in 'git push --help' for details."
 msgstr ""
-"Aktualisierungen wurden zurückgewiesen, weil die Spitze deines aktuellen\n"
-"Zweiges hinter seinem externen Gegenstück zurückgefallen ist. Führe die\n"
-"externen Änderungen zusammen (z.B. 'git pull') bevor du erneut versendest.\n"
+"Aktualisierungen wurden zurückgewiesen, weil die Spitze Ihres aktuellen\n"
+"Zweiges hinter seinem externen Gegenstück zurückgefallen ist. Führen Sie\n"
+"die externen Änderungen zusammen (z.B. 'git pull') bevor Sie erneut\n"
+"versenden.\n"
 "Siehe auch die Sektion 'Note about fast-forwards' in 'git push --help'\n"
 "für weitere Details."
 
@@ -7028,8 +7028,8 @@ msgid ""
 "to 'simple', 'current' or 'upstream' to push only the current branch."
 msgstr ""
 "Aktualisierungen wurden zurückgewiesen, weil die Spitze eines versendeten\n"
-"Zweiges hinter seinem externen Gegenstück zurückgefallen ist. Wenn du nicht\n"
-"beabsichtigt hast, diesen Zweig zu versenden, kannst du auch den zu "
+"Zweiges hinter seinem externen Gegenstück zurückgefallen ist. Wenn Sie nicht\n"
+"beabsichtigt haben, diesen Zweig zu versenden, können Sie auch den zu "
 "versendenden\n"
 "Zweig spezifizieren oder die Konfigurationsvariable 'push.default' zu "
 "'simple', 'current'\n"
@@ -7043,9 +7043,9 @@ msgid ""
 "See the 'Note about fast-forwards' in 'git push --help' for details."
 msgstr ""
 "Aktualisierungen wurden zurückgewiesen, weil die Spitze eines versendeten\n"
-"Zweiges hinter seinem externen Gegenstück zurückgefallen ist. Checke diesen\n"
-"Zweig aus und führe die externen Änderungen zusammen (z.B. 'git pull')\n"
-"bevor du erneut versendest.\n"
+"Zweiges hinter seinem externen Gegenstück zurückgefallen ist. Checken Sie\n"
+"diesen Zweig aus und führen Sie die externen Änderungen zusammen\n"
+"(z.B. 'git pull') bevor Sie erneut versenden.\n"
 "Siehe auch die Sektion 'Note about fast-forwards' in 'git push --help'\n"
 "für weitere Details."
 
@@ -7077,12 +7077,12 @@ msgid ""
 "    git push <name>\n"
 msgstr ""
 "Kein Ziel zum Versenden konfiguriert.\n"
-"Entweder spezifizierst du die URL von der Kommandozeile oder konfigurierst "
+"Entweder spezifizieren Sie die URL von der Kommandozeile oder konfigurieren "
 "ein externes Projektarchiv unter Benutzung von\n"
 "\n"
 "    git remote add <Name> <URL>\n"
 "\n"
-"und versendest dann unter Benutzung dieses Namens\n"
+"und versenden dann unter Benutzung dieses Namens\n"
 "\n"
 "    git push <Name>\n"
 
@@ -7331,7 +7331,7 @@ msgid ""
 "\t use --mirror=fetch or --mirror=push instead"
 msgstr ""
 "--mirror ist gefährlich und veraltet; bitte\n"
-"\t benutze stattdessen --mirror=fetch oder --mirror=push"
+"\t benutzen Sie stattdessen --mirror=fetch oder --mirror=push"
 
 #: builtin/remote.c:147
 #, c-format
@@ -7440,7 +7440,7 @@ msgstr ""
 "Keine Aktualisierung der nicht standardmäßigen Referenzspezifikation zum "
 "Abholen\n"
 "\t%s\n"
-"\tBitte aktualisiere, falls notwendig, die Konfiguration manuell."
+"\tBitte aktualisieren Sie, falls notwendig, die Konfiguration manuell."
 
 #: builtin/remote.c:683
 #, c-format
@@ -7477,11 +7477,11 @@ msgid_plural ""
 msgstr[0] ""
 "Hinweis: Ein Zweig außerhalb der /refs/remotes/ Hierachie wurde nicht "
 "gelöscht;\n"
-"um diesen zu löschen, benutze:"
+"um diesen zu löschen, benutzen Sie:"
 msgstr[1] ""
 "Hinweis: Einige Zweige außer der /refs/remotes/ Hierarchie wurden nicht "
 "entfernt;\n"
-"um diese zu entfernen, benutze:"
+"um diese zu entfernen, benutzen Sie:"
 
 #: builtin/remote.c:943
 #, c-format
@@ -7494,7 +7494,7 @@ msgstr " gefolgt"
 
 #: builtin/remote.c:948
 msgid " stale (use 'git remote prune' to remove)"
-msgstr " veraltet (benutze 'git remote prune' zum Löschen)"
+msgstr " veraltet (benutzen Sie 'git remote prune' zum Löschen)"
 
 #: builtin/remote.c:950
 msgid " ???"
@@ -7647,8 +7647,8 @@ msgstr "Kann Hauptzweig des externen Projektarchivs nicht bestimmen"
 #: builtin/remote.c:1218
 msgid "Multiple remote HEAD branches. Please choose one explicitly with:"
 msgstr ""
-"Mehrere Hauptzweige im externen Projektarchiv. Bitte wähle explizit einen "
-"aus mit:"
+"Mehrere Hauptzweige im externen Projektarchiv. Bitte wählen Sie explizit "
+"einen aus mit:"
 
 #: builtin/remote.c:1228
 #, c-format
@@ -7814,7 +7814,7 @@ msgstr "keep"
 
 #: builtin/reset.c:77
 msgid "You do not have a valid HEAD."
-msgstr "Du hast keine gültige Zweigspitze (HEAD)."
+msgstr "Sie haben keine gültige Zweigspitze (HEAD)."
 
 #: builtin/reset.c:79
 msgid "Failed to find tree of HEAD."
@@ -7881,7 +7881,8 @@ msgstr "--patch ist inkompatibel mit --{hard,mixed,soft}"
 #: builtin/reset.c:317
 msgid "--mixed with paths is deprecated; use 'git reset -- <paths>' instead."
 msgstr ""
-"--mixed mit Pfaden ist veraltet; benutze stattdessen 'git reset -- <Pfade>'."
+"--mixed mit Pfaden ist veraltet; benutzen Sie stattdessen "
+"'git reset -- <Pfade>'."
 
 #: builtin/reset.c:319
 #, c-format
@@ -7922,7 +7923,7 @@ msgstr ""
 "   oder: git rev-parse --sq-quote [<Argumente>...]\n"
 "   oder: git rev-parse [Optionen] [<Argumente>...]\n"
 "\n"
-"Führe \"git rev-parse --parseopt -h\" für weitere Informationen bei erster "
+"Führen Sie \"git rev-parse --parseopt -h\" für weitere Informationen bei erster "
 "Verwendung aus."
 
 #: builtin/revert.c:22
@@ -8025,8 +8026,8 @@ msgid ""
 "(use 'rm -rf' if you really want to remove it including all of its history)"
 msgstr ""
 "Unterprojekt '%s' (oder ein geschachteltes Unterprojekt hiervon) verwendet\n"
-"ein .git-Verzeichnis (benutze 'rm -rf' wenn du dieses wirklich mitsamt\n"
-"seiner Historie löschen möchtest)"
+"ein .git-Verzeichnis (benutzen Sie 'rm -rf' wenn Sie dieses wirklich mitsamt\n"
+"seiner Historie löschen möchten)"
 
 #: builtin/rm.c:174
 #, c-format
@@ -8035,7 +8036,7 @@ msgid ""
 "(use -f to force removal)"
 msgstr ""
 "'%s' hat bereitgestellten Inhalt unterschiedlich zu der Datei und der\n"
-"Zweigspitze (HEAD) (benutze -f um die Entfernung zu erzwingen)"
+"Zweigspitze (HEAD) (benutzen Sie -f um die Entfernung zu erzwingen)"
 
 #: builtin/rm.c:180
 #, c-format
@@ -8044,7 +8045,7 @@ msgid ""
 "(use --cached to keep the file, or -f to force removal)"
 msgstr ""
 "'%s' hat Änderungen in der Bereitstellung\n"
-"(benutze --cached um die Datei zu behalten, oder -f um die Entfernung zu "
+"(benutzen Sie --cached um die Datei zu behalten, oder -f um die Entfernung zu "
 "erzwingen)"
 
 #: builtin/rm.c:191
@@ -8054,7 +8055,7 @@ msgid ""
 "(use --cached to keep the file, or -f to force removal)"
 msgstr ""
 "'%s' hat lokale Modifikationen\n"
-"(benutze --cached um die Datei zu behalten, oder -f um die Entfernung zu "
+"(benutzen Sie --cached um die Datei zu behalten, oder -f um die Entfernung zu "
 "erzwingen)"
 
 #: builtin/rm.c:207
@@ -8334,7 +8335,7 @@ msgid ""
 msgstr ""
 "\n"
 "#\n"
-"# Gebe eine Markierungsbeschreibung ein\n"
+"# Geben Sie eine Markierungsbeschreibung ein.\n"
 "# Zeilen, die mit '#' beginnen, werden ignoriert.\n"
 "#\n"
 
@@ -8349,9 +8350,9 @@ msgid ""
 msgstr ""
 "\n"
 "#\n"
-"# Gebe eine Markierungsbeschreibung ein\n"
-"# Zeilen, die mit '#' beginnen, werden behalten; du darfst diese\n"
-"# selbst entfernen wenn du möchtest.\n"
+"# Geben Sie eine Markierungsbeschreibung ein.\n"
+"# Zeilen, die mit '#' beginnen, werden behalten; Sie dürfen diese\n"
+"# selbst entfernen wenn Sie möchten.\n"
 "#\n"
 
 #: builtin/tag.c:298
@@ -8790,14 +8791,14 @@ msgstr ""
 
 #: git-am.sh:50
 msgid "You need to set your committer info first"
-msgstr "Du musst zuerst die Informationen des Eintragenden setzen."
+msgstr "Sie müssen zuerst die Informationen des Eintragenden setzen."
 
 #: git-am.sh:95
 msgid ""
 "You seem to have moved HEAD since the last 'am' failure.\n"
 "Not rewinding to ORIG_HEAD"
 msgstr ""
-"Du scheinst seit dem letzten gescheiterten 'am' die Zweigspitze (HEAD)\n"
+"Sie scheinen seit dem letzten gescheiterten 'am' die Zweigspitze (HEAD)\n"
 "geändert zu haben.\n"
 "Keine Zurücksetzung zu ORIG_HEAD."
 
@@ -8808,12 +8809,11 @@ msgid ""
 "If you prefer to skip this patch, run \"$cmdline --skip\" instead.\n"
 "To restore the original branch and stop patching, run \"$cmdline --abort\"."
 msgstr ""
-"Wenn du das Problem gelöst hast, führe \"$cmdline --resolved\" aus.\n"
-"Falls du diesen Patch auslassen möchtest, führe stattdessen \"$cmdline --skip"
-"\" aus.\n"
-"Um den ursprünglichen Zweig wiederherzustellen und die Anwendung der "
-"Patches\n"
-"abzubrechen, führe \"$cmdline --abort\" aus."
+"Wenn Sie das Problem gelöst haben, führen Sie \"$cmdline --resolved\" aus.\n"
+"Falls Sie diesen Patch auslassen möchten, führen Sie stattdessen\n"
+"\"$cmdline --skip\" aus.\n"
+"Um den ursprünglichen Zweig wiederherzustellen und die Anwendung der\n"
+"Patches abzubrechen, führen Sie \"$cmdline --abort\" aus."
 
 #: git-am.sh:121
 msgid "Cannot fall back to three-way merge."
@@ -8836,7 +8836,7 @@ msgid ""
 "Did you hand edit your patch?\n"
 "It does not apply to blobs recorded in its index."
 msgstr ""
-"Hast du den Patch per Hand editiert?\n"
+"Haben Sie den Patch per Hand editiert?\n"
 "Er kann nicht auf die Blobs in seiner 'index' Zeile angewendet werden."
 
 #: git-am.sh:163
@@ -8877,7 +8877,7 @@ msgstr ""
 
 #: git-am.sh:482
 msgid "Please make up your mind. --skip or --abort?"
-msgstr "Bitte werde dir klar. --skip oder --abort?"
+msgstr "Bitte werden Sie sich klar. --skip oder --abort?"
 
 #: git-am.sh:509
 msgid "Resolve operation not in progress, we are not resuming."
@@ -8897,11 +8897,11 @@ msgid ""
 "To restore the original branch and stop patching run \"$cmdline --abort\"."
 msgstr ""
 "Patch ist leer. Wurde er falsch aufgeteilt?\n"
-"Wenn du diesen Patch auslassen möchtest, führe stattdessen \"$cmdline --skip"
-"\" aus.\n"
+"Wenn Sie diesen Patch auslassen möchten, führen Sie stattdessen\n"
+"\"$cmdline --skip\" aus.\n"
 "Um den ursprünglichen Zweig wiederherzustellen und die Anwendung der "
 "Patches\n"
-"abzubrechen, führe \"$cmdline --abort\" aus."
+"abzubrechen, führen Sie \"$cmdline --abort\" aus."
 
 #: git-am.sh:706
 msgid "Patch does not have a valid e-mail address."
@@ -8935,9 +8935,9 @@ msgid ""
 "If there is nothing left to stage, chances are that something else\n"
 "already introduced the same changes; you might want to skip this patch."
 msgstr ""
-"Keine Änderungen - hast du vergessen 'git add' zu benutzen?\n"
+"Keine Änderungen - haben Sie vergessen 'git add' zu benutzen?\n"
 "Wenn keine Änderungen mehr zum Bereitstellen vorhanden sind, könnten\n"
-"diese bereits anderweitig eingefügt worden sein; du könntest diesen Patch\n"
+"diese bereits anderweitig eingefügt worden sein; Sie könnten diesen Patch\n"
 "auslassen."
 
 #: git-am.sh:829
@@ -8945,8 +8945,8 @@ msgid ""
 "You still have unmerged paths in your index\n"
 "did you forget to use 'git add'?"
 msgstr ""
-"Du hast immer noch nicht zusammengeführte Pfade in der Bereitstellung.\n"
-"Hast du vergessen 'git add' zu benutzen?"
+"Sie haben immer noch nicht zusammengeführte Pfade in der Bereitstellung.\n"
+"Haben Sie vergessen 'git add' zu benutzen?"
 
 #: git-am.sh:845
 msgid "No changes -- Patch already applied."
@@ -8972,14 +8972,14 @@ msgstr "wende zu leerer Historie an"
 
 #: git-bisect.sh:48
 msgid "You need to start by \"git bisect start\""
-msgstr "Du musst mit \"git bisect start\" beginnen."
+msgstr "Sie müssen mit \"git bisect start\" beginnen."
 
 #. TRANSLATORS: Make sure to include [Y] and [n] in your
 #. translation. The program will only accept English input
 #. at this point.
 #: git-bisect.sh:54
 msgid "Do you want me to do it for you [Y/n]? "
-msgstr "Willst du, dass ich es für dich mache [Y/n]? "
+msgstr "Wollen Sie, dass ich es für Sie mache [Y/n]? "
 
 #: git-bisect.sh:95
 #, sh-format
@@ -9000,7 +9000,7 @@ msgstr "Ungültige Zweigspitze (HEAD) - Zweigspitze (HEAD) wird benötigt"
 msgid ""
 "Checking out '$start_head' failed. Try 'git bisect reset <validbranch>'."
 msgstr ""
-"Auschecken von '$start_head' fehlgeschlagen. Versuche 'git bisect reset "
+"Auschecken von '$start_head' fehlgeschlagen. Versuchen Sie 'git bisect reset "
 "<gueltigerzweig>'."
 
 #: git-bisect.sh:140
@@ -9023,7 +9023,7 @@ msgstr "Ungültige Referenz-Eingabe: $arg"
 
 #: git-bisect.sh:232
 msgid "Please call 'bisect_state' with at least one argument."
-msgstr "Bitte rufe 'bisect_state' mit mindestens einem Argument auf."
+msgstr "Bitte rufen Sie 'bisect_state' mit mindestens einem Argument auf."
 
 #: git-bisect.sh:244
 #, sh-format
@@ -9045,15 +9045,15 @@ msgstr "Warnung: halbiere nur mit einer fehlerhaften Version"
 #. at this point.
 #: git-bisect.sh:279
 msgid "Are you sure [Y/n]? "
-msgstr "Bist du sicher [Y/n]? "
+msgstr "Sind Sie sicher [Y/n]? "
 
 #: git-bisect.sh:289
 msgid ""
 "You need to give me at least one good and one bad revisions.\n"
 "(You can use \"git bisect bad\" and \"git bisect good\" for that.)"
 msgstr ""
-"Du musst mindestens eine korrekte und eine fehlerhafte Version angeben.\n"
-"(Du kannst dafür \"git bisect bad\" und \"git bisect good\" benutzen.)"
+"Sie müssen mindestens eine korrekte und eine fehlerhafte Version angeben.\n"
+"(Sie können dafür \"git bisect bad\" und \"git bisect good\" benutzen.)"
 
 #: git-bisect.sh:292
 msgid ""
@@ -9061,10 +9061,10 @@ msgid ""
 "You then need to give me at least one good and one bad revisions.\n"
 "(You can use \"git bisect bad\" and \"git bisect good\" for that.)"
 msgstr ""
-"Du musst mit \"git bisect start\" beginnen.\n"
-"Danach musst du mindestens eine korrekte und eine fehlerhafte Version "
+"Sie müssen mit \"git bisect start\" beginnen.\n"
+"Danach müssen Sie mindestens eine korrekte und eine fehlerhafte Version "
 "angeben.\n"
-"(Du kannst dafür \"git bisect bad\" und \"git bisect good\" benutzen.)"
+"(Sie können dafür \"git bisect bad\" und \"git bisect good\" benutzen.)"
 
 #: git-bisect.sh:347 git-bisect.sh:474
 msgid "We are not bisecting."
@@ -9082,7 +9082,7 @@ msgid ""
 "Try 'git bisect reset <commit>'."
 msgstr ""
 "Konnte die ursprüngliche Zweigspitze (HEAD) '$branch' nicht auschecken.\n"
-"Versuche 'git bisect reset <Version>'."
+"Versuchen Sie 'git bisect reset <Version>'."
 
 #: git-bisect.sh:390
 msgid "No logfile given"
@@ -9095,7 +9095,7 @@ msgstr "kann $file nicht für das Abspielen lesen"
 
 #: git-bisect.sh:408
 msgid "?? what are you talking about?"
-msgstr "?? Was redest du da?"
+msgstr "?? Was reden Sie da?"
 
 #: git-bisect.sh:420
 #, sh-format
@@ -9134,14 +9134,14 @@ msgid ""
 "Please, fix them up in the work tree, and then use 'git add/rm <file>'\n"
 "as appropriate to mark resolution, or use 'git commit -a'."
 msgstr ""
-"\"pull\" ist nicht möglich, weil du nicht zusammengeführte Dateien hast.\n"
-"Bitte korrigiere dies im Arbeitsbaum und benutze dann 'git add/rm <Datei>'\n"
-"um die Auflösung entsprechend zu markieren, oder benutze 'git commit -a'."
+"\"pull\" ist nicht möglich, weil Sie nicht zusammengeführte Dateien haben.\n"
+"Bitte korrigieren Sie dies im Arbeitsbaum und benutzen Sie dann 'git add/rm <Datei>'\n"
+"um die Auflösung entsprechend zu markieren, oder benutzen Sie 'git commit -a'."
 
 #: git-pull.sh:25
 msgid "Pull is not possible because you have unmerged files."
 msgstr ""
-"\"pull\" ist nicht möglich, weil du nicht zusammengeführte Dateien hast."
+"\"pull\" ist nicht möglich, weil Sie nicht zusammengeführte Dateien haben."
 
 #: git-pull.sh:197
 msgid "updating an unborn branch with changes added to the index"
@@ -9161,7 +9161,7 @@ msgid ""
 "Warning: commit $orig_head."
 msgstr ""
 "Warnung: Die Anforderung aktualisierte die Spitze des aktuellen Zweiges.\n"
-"Warnung: Spule deinen Arbeitszweig von Version $orig_head vor."
+"Warnung: Spule Ihren Arbeitszweig von Version $orig_head vor."
 
 #: git-pull.sh:254
 msgid "Cannot merge multiple branches into empty head"
@@ -9178,12 +9178,12 @@ msgid ""
 "To check out the original branch and stop rebasing, run \"git rebase --abort"
 "\"."
 msgstr ""
-"Wenn du das Problem aufgelöst hast, führe \"git rebase --continue\" aus.\n"
-"Falls du diesen Patch auslassen möchtest, führe stattdessen \"git rebase --"
+"Wenn Sie das Problem aufgelöst haben, führen Sie \"git rebase --continue\" aus.\n"
+"Falls Sie diesen Patch auslassen möchten, führen Sie stattdessen \"git rebase --"
 "skip\" aus.\n"
 "Um den ursprünglichen Zweig wiederherzustellen und den Neuaufbau "
 "abzubrechen,\n"
-"führe \"git rebase --abort\" aus."
+"führen Sie \"git rebase --abort\" aus."
 
 #: git-rebase.sh:160
 msgid "The pre-rebase hook refused to rebase."
@@ -9215,7 +9215,7 @@ msgid ""
 "You must edit all merge conflicts and then\n"
 "mark them as resolved using git add"
 msgstr ""
-"Du musst alle Zusammenführungskonflikte editieren und diese dann\n"
+"Sie müssen alle Zusammenführungskonflikte editieren und diese dann\n"
 "mittels \"git add\" als aufgelöst markieren"
 
 #: git-rebase.sh:340
@@ -9237,11 +9237,11 @@ msgid ""
 msgstr ""
 "Es sieht so aus, als ob es das Verzeichnis $state_dir_base bereits gibt\n"
 "und es könnte ein anderer Neuaufbau im Gange sein. Wenn das der Fall ist,\n"
-"probiere bitte\n"
+"probieren Sie bitte\n"
 "\t$cmd_live_rebase\n"
-"Wenn das nicht der Fall ist, probiere bitte\n"
+"Wenn das nicht der Fall ist, probieren Sie bitte\n"
 "\t$cmd_clear_stale_rebase\n"
-"und führe dieses Kommando nochmal aus. Es wird angehalten, falls noch\n"
+"und führen Sie dieses Kommando nochmal aus. Es wird angehalten, falls noch\n"
 "etwas Schützenswertes vorhanden ist."
 
 #: git-rebase.sh:404
@@ -9271,7 +9271,7 @@ msgstr "fatal: Zweig $branch_name nicht gefunden"
 
 #: git-rebase.sh:483
 msgid "Please commit or stash them."
-msgstr "Bitte trage die Änderungen ein oder benutze \"stash\"."
+msgstr "Bitte tragen Sie die Änderungen ein oder benutzen Sie \"stash\"."
 
 #: git-rebase.sh:501
 #, sh-format
@@ -9293,7 +9293,7 @@ msgstr "Änderungen von $mb zu $onto:"
 #: git-rebase.sh:524
 msgid "First, rewinding head to replay your work on top of it..."
 msgstr ""
-"Zunächst wird die Zweigspitze zurückgespult, um deine Änderungen\n"
+"Zunächst wird die Zweigspitze zurückgespult, um Ihre Änderungen\n"
 "darauf neu anzuwenden..."
 
 #: git-rebase.sh:532
@@ -9307,7 +9307,7 @@ msgstr "git stash clear mit Parametern ist nicht implementiert"
 
 #: git-stash.sh:74
 msgid "You do not have the initial commit yet"
-msgstr "Du hast bisher noch keine initiale Version"
+msgstr "Sie haben bisher noch keine initiale Version"
 
 #: git-stash.sh:89
 msgid "Cannot save the current index state"
@@ -9346,7 +9346,7 @@ msgid ""
 "       To provide a message, use git stash save -- '$option'"
 msgstr ""
 "Fehler: unbekannte Option für 'stash save': $option\n"
-"        Um eine Beschreibung anzugeben, benutze \"git stash save -- "
+"        Um eine Beschreibung anzugeben, benutzen Sie \"git stash save -- "
 "'$option'\""
 
 #: git-stash.sh:223
@@ -9400,7 +9400,7 @@ msgstr ""
 
 #: git-stash.sh:424
 msgid "Conflicts in index. Try without --index."
-msgstr "Konflikte in der Bereitstellung. Versuche es ohne --index."
+msgstr "Konflikte in der Bereitstellung. Versuchen Sie es ohne --index."
 
 #: git-stash.sh:426
 msgid "Could not save index tree"
@@ -9430,7 +9430,7 @@ msgstr "Kein Zweigname spezifiziert"
 
 #: git-stash.sh:571
 msgid "(To restore them type \"git stash apply\")"
-msgstr "(Zur Wiederherstellung gebe \"git stash apply\" ein)"
+msgstr "(Zur Wiederherstellung geben Sie \"git stash apply\" ein)"
 
 #: git-submodule.sh:89
 #, sh-format
@@ -9471,9 +9471,9 @@ msgid ""
 "$sm_path\n"
 "Use -f if you really want to add it."
 msgstr ""
-"Der folgende Pfad wird durch eine deiner \".gitignore\" Dateien ignoriert:\n"
+"Der folgende Pfad wird durch eine Ihrer \".gitignore\" Dateien ignoriert:\n"
 "$sm_path\n"
-"Benutze -f wenn du diesen wirklich hinzufügen möchtest."
+"Benutzen Sie -f wenn Sie diesen wirklich hinzufügen möchten."
 
 #: git-submodule.sh:355
 #, sh-format
@@ -9497,7 +9497,7 @@ msgstr "Ein Git-Verzeichnis für '$sm_name' wurde lokal gefunden mit den "
 msgid ""
 "If you want to reuse this local git directory instead of cloning again from"
 msgstr ""
-"Wenn du dieses lokale Git-Verzeichnis wiederverwenden möchtest, anstatt "
+"Wenn Sie dieses lokale Git-Verzeichnis wiederverwenden möchtest, anstatt "
 "erneut zu klonen"
 
 #: git-submodule.sh:369
@@ -9505,7 +9505,7 @@ msgstr ""
 msgid ""
 "use the '--force' option. If the local git directory is not the correct repo"
 msgstr ""
-"benutze die Option '--force'. Wenn das lokale Git-Verzeichnis nicht das "
+"benutzen Sie die Option '--force'. Wenn das lokale Git-Verzeichnis nicht das "
 "korrekte Projektarchiv ist"
 
 #: git-submodule.sh:370
@@ -9514,8 +9514,8 @@ msgid ""
 "or you are unsure what this means choose another name with the '--name' "
 "option."
 msgstr ""
-"oder du dir unsicher bist, was das bedeutet, wähle einen anderen Namen mit "
-"der Option '--name'."
+"oder Sie sich unsicher sind, was das bedeutet, wählen Sie einen anderen Namen"
+"mit der Option '--name'."
 
 #: git-submodule.sh:372
 #, sh-format
@@ -9576,7 +9576,7 @@ msgid ""
 "Maybe you want to use 'update --init'?"
 msgstr ""
 "Unterprojekt-Pfad '$sm_path' ist nicht initialisiert\n"
-"Vielleicht möchtest du 'update --init' benutzen?"
+"Vielleicht möchten Sie 'update --init' benutzen?"
 
 #: git-submodule.sh:627
 #, sh-format
