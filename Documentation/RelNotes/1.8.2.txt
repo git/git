@@ -44,6 +44,10 @@ UI, Workflows & Features
    real ref that is pointed at by the symbolic ref would be updated
    anyway).  Symbolic refs no longer are affected by such a fetch.
 
+ * "git format-patch" now detects more cases in which a whole branch
+   is being exported, and uses the description for the branch, when
+   asked to write a cover letter for the series.
+
  * "git push" now requires "-f" to update a tag, even if it is a
    fast-forward, as tags are meant to be fixed points.
 
@@ -56,6 +60,8 @@ Foreign Interface
 
  * "git fast-export" has been updated for its use in the context of
    the remote helper interface.
+
+ * A new remote helper to interact with bzr has been added to contrib/.
 
 
 Performance, Internal Implementation, etc.
@@ -85,17 +91,11 @@ details).
    the GIT_DIR discovery logic to escape the ceiling.
    (merge 059b379 mh/ceiling later to maint).
 
- * t4014, t9502 and t0200 tests had various portability issues that
-   broke on OpenBSD.
-   (merge 27f6342 jc/maint-test-portability later to maint).
-
- * t9020 and t3600 tests had various portability issues.
-   (merge 5a02966 jc/test-portability later to maint).
-
- * t9200 runs "cvs init" on a directory that already exists, but a
-   platform can configure this fail for the current user (e.g. you
-   need to be in the cvsadmin group on NetBSD 6.0).
-   (merge 8666df0 jc/test-cvs-no-init-in-existing-dir later to maint).
+ * When attempting to read the XDG-style $HOME/.config/git/config and
+   finding that $HOME/.config/git is a file, we gave a wrong error
+   message, instead of treating the case as "a custom config file does
+   not exist there" and moving on.
+   (merge 8f2bbe4 jn/warn-on-inaccessible-loosen later to maint).
 
  * The behaviour visible to the end users was confusing, when they
    attempt to kill a process spawned in the editor that was in turn
@@ -111,6 +111,10 @@ details).
    applied to only a single directory itself with "path/" like the
    exclude mechanism does.
    (merge 94bc671 ja/directory-attrs later to maint).
+
+ * "git apply" misbehaved when fixing whitespace breakages by removing
+   excess trailing blank lines.
+   (merge 5de7166 jc/apply-trailing-blank-removal later to maint).
 
  * The way "git svn" asked for password using SSH_ASKPASS and
    GIT_ASKPASS was not in line with the rest of the system.
@@ -132,10 +136,20 @@ details).
    index, the cache-tree data structure got corrupted.
    (merge eec3e7e nd/invalidate-i-t-a-cache-tree later to maint).
 
+ * "git merge" started calling prepare-commit-msg hook like "git
+   commit" does some time ago, but forgot to pay attention to the exit
+   status of the hook.
+   (merge 3e4141d ap/merge-stop-at-prepare-commit-msg-failure later to maint).
+
  * "gitweb", when sorting by age to show repositories with new
    activities first, used to sort repositories with absolutely
    nothing in it early, which was not very useful.
    (merge 28dae18 md/gitweb-sort-by-age later to maint).
+
+ * "gitweb"'s code to sanitize control characters before passing it to
+   "highlight" filter lost known-to-be-safe control characters by
+   mistake.
+   (merge 0e901d2 os/gitweb-highlight-uncaptured later to maint).
 
  * When a line to be wrapped has a solid run of non space characters
    whose length exactly is the wrap width, "git shortlog -w" failed
@@ -145,3 +159,31 @@ details).
  * Some shells do not behave correctly when IFS is unset; work it
    around by explicitly setting it to the default value.
    (merge 393050c jc/maint-fbsd-sh-ifs-workaround later to maint).
+
+ * Some scripted programs written in Python did not get updated when
+   PYTHON_PATH changed.
+   (cherry-pick 96a4647fca54031974cd6ad1 later to maint).
+
+ * When autoconf is used, any build on a different commit always ran
+   "config.status --recheck" even when unnecessary.
+   (merge 1226504 jn/less-reconfigure later to maint).
+
+ * We have been carrying a translated and long-unmaintained copy of an
+   old version of the tutorial; removed.
+   (merge 0a85441 ta/remove-stale-translated-tut later to maint).
+
+ * t4014, t9502 and t0200 tests had various portability issues that
+   broke on OpenBSD.
+   (merge 27f6342 jc/maint-test-portability later to maint).
+
+ * t9020 and t3600 tests had various portability issues.
+   (merge 5a02966 jc/test-portability later to maint).
+
+ * t9200 runs "cvs init" on a directory that already exists, but a
+   platform can configure this fail for the current user (e.g. you
+   need to be in the cvsadmin group on NetBSD 6.0).
+   (merge 8666df0 jc/test-cvs-no-init-in-existing-dir later to maint).
+
+ * t9020 and t9810 had a few non-portable shell script construct.
+   (merge 2797914 tb/test-t9020-no-which later to maint).
+   (merge 6f4e505 tb/test-t9810-no-sed-i later to maint).
