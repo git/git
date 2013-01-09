@@ -48,8 +48,12 @@ one_topic () {
 
 	mergeable=no ready=no label=
 
-	master_count=$(git rev-list "$base..$tip" | wc -l)
 	maint_count=$(git rev-list "maint..$tip" | wc -l)
+	if test "$maint_count" = 0
+	then
+		return ;# already merged
+	fi
+	master_count=$(git rev-list "$base..$tip" | wc -l)
 
 	test $master_count = $maint_count && mergeable=yes
 
