@@ -739,6 +739,12 @@ branch.<name>.rebase::
 it unless you understand the implications (see linkgit:git-rebase[1]
 for details).
 
+branch.<name>.description::
+	Branch description, can be edited with
+	`git branch --edit-description`. Branch description is
+	automatically added in the format-patch cover letter or
+	request-pull summary.
+
 browser.<tool>.cmd::
 	Specify the command to invoke the specified browser. The
 	specified command is evaluated in shell with the URLs passed

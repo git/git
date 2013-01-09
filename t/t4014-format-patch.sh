@@ -963,4 +963,46 @@ test_expect_success 'format patch ignores color.ui' '
 	test_cmp expect actual
 '
 
+test_expect_success 'cover letter using branch description (1)' '
+	git checkout rebuild-1 &&
+	test_config branch.rebuild-1.description hello &&
+	git format-patch --stdout --cover-letter master >actual &&
+	grep hello actual >/dev/null
+'
+
+test_expect_success 'cover letter using branch description (2)' '
+	git checkout rebuild-1 &&
+	test_config branch.rebuild-1.description hello &&
+	git format-patch --stdout --cover-letter rebuild-1~2..rebuild-1 >actual &&
+	grep hello actual >/dev/null
+'
+
+test_expect_success 'cover letter using branch description (3)' '
+	git checkout rebuild-1 &&
+	test_config branch.rebuild-1.description hello &&
+	git format-patch --stdout --cover-letter ^master rebuild-1 >actual &&
+	grep hello actual >/dev/null
+'
+
+test_expect_success 'cover letter using branch description (4)' '
+	git checkout rebuild-1 &&
+	test_config branch.rebuild-1.description hello &&
+	git format-patch --stdout --cover-letter master.. >actual &&
+	grep hello actual >/dev/null
+'
+
+test_expect_success 'cover letter using branch description (5)' '
+	git checkout rebuild-1 &&
+	test_config branch.rebuild-1.description hello &&
+	git format-patch --stdout --cover-letter -2 HEAD >actual &&
+	grep hello actual >/dev/null
+'
+
+test_expect_success 'cover letter using branch description (6)' '
+	git checkout rebuild-1 &&
+	test_config branch.rebuild-1.description hello &&
+	git format-patch --stdout --cover-letter -2 >actual &&
+	grep hello actual >/dev/null
+'
+
 test_done
