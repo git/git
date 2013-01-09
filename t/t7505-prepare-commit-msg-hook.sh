@@ -167,5 +167,19 @@ test_expect_success 'with failing hook (--no-verify)' '
 
 '
 
+test_expect_success 'with failing hook (merge)' '
+
+	git checkout -B other HEAD@{1} &&
+	echo "more" >> file &&
+	git add file &&
+	rm -f "$HOOK" &&
+	git commit -m other &&
+	write_script "$HOOK" <<-EOF
+	exit 1
+	EOF
+	git checkout - &&
+	test_must_fail git merge other
+
+'
 
 test_done
