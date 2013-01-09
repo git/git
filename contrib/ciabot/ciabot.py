@@ -47,7 +47,13 @@
 # we default to that.
 #
 
-import os, sys, commands, socket, urllib
+import sys
+if sys.hexversion < 0x02000000:
+        # The limiter is the xml.sax module
+        sys.stderr.write("ciabot.py: requires Python 2.0.0 or later.\n")
+        sys.exit(1)
+
+import os, commands, socket, urllib
 from xml.sax.saxutils import escape
 
 # Changeset URL prefix for your repo: when the commit ID is appended

@@ -23,6 +23,11 @@ import os, os.path, sys
 import tempfile, pickle, getopt
 import re
 
+if sys.hexversion < 0x02030000:
+   # The behavior of the pickle module changed significantly in 2.3
+   sys.stderr.write("hg-to-git.py: requires Python 2.3 or later.\n")
+   sys.exit(1)
+
 # Maps hg version -> git version
 hgvers = {}
 # List of children for each hg revision

@@ -31,6 +31,11 @@ from git_remote_helpers.git.exporter import GitExporter
 from git_remote_helpers.git.importer import GitImporter
 from git_remote_helpers.git.non_local import NonLocalGit
 
+if sys.hexversion < 0x01050200:
+    # os.makedirs() is the limiter
+    sys.stderr.write("git-remote-testgit: requires Python 1.5.2 or later.\n")
+    sys.exit(1)
+
 def get_repo(alias, url):
     """Returns a git repository object initialized for usage.
     """

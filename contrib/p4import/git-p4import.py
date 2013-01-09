@@ -14,6 +14,11 @@ import sys
 import time
 import getopt
 
+if sys.hexversion < 0x02020000:
+   # The behavior of the marshal module changed significantly in 2.2
+   sys.stderr.write("git-p4import.py: requires Python 2.2 or later.\n")
+   sys.exit(1)
+
 from signal import signal, \
    SIGPIPE, SIGINT, SIG_DFL, \
    default_int_handler
