@@ -284,10 +284,13 @@ static void read_credential(void)
 
 	while (fgets(buf, sizeof(buf), stdin)) {
 		char *v;
+		int len = strlen(buf);
+		/* strip trailing CR / LF */
+		while (len && strchr("\r\n", buf[len - 1]))
+			buf[--len] = 0;
 
-		if (!strcmp(buf, "\n"))
+		if (!*buf)
 			break;
-		buf[strlen(buf)-1] = '\0';
 
 		v = strchr(buf, '=');
 		if (!v)
