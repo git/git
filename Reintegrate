@@ -84,12 +84,15 @@ no)
 	}
 
 	mark_cut () {
+		test -n "$stop_at_cut" && return
+
+		count_since_last_cut=$(( $count_since_last_cut + 1 ))
 		test -z "$prev_cut" && return
 		git commit --allow-empty -m "$prev_cut"
 		prev_cut=
 	}
 
-	cut_seen=0 prev_cut=
+	cut_seen=0 prev_cut= count_since_last_cut=0
 	while read branch eh
 	do
 		case "$branch" in '###') cut_seen=$(( $cut_seen + 1 )) ;; esac
@@ -100,8 +103,14 @@ no)
 
 		case "$branch" in
 		'###')
-			echo >&2 "$branch $eh"
-			prev_cut="$branch $eh"
+			if test "$count_since_last_cut" = 0
+			then
+				prev_cut=
+			else
+				echo >&2 "$branch $eh"
+				prev_cut="$branch $eh"
+				count_since_last_cut=0
+			fi
 			continue ;;
 		'#'* | '')
 			continue ;;
