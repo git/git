@@ -2313,8 +2313,14 @@ configure: configure.ac GIT-VERSION-FILE
 	$(RM) $<+
 
 ifdef AUTOCONFIGURED
-config.status: configure
-	$(QUIET_GEN)if test -f config.status; then \
+# We avoid depending on 'configure' here, because it gets rebuilt
+# every time GIT-VERSION-FILE is modified, only to update the embedded
+# version number string, which config.status does not care about.  We
+# do want to recheck when the platform/environment detection logic
+# changes, hence this depends on configure.ac.
+config.status: configure.ac
+	$(QUIET_GEN)$(MAKE) configure && \
+	if test -f config.status; then \
 	  ./config.status --recheck; \
 	else \
 	  ./configure; \
