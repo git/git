@@ -82,19 +82,17 @@ OPTIONS
 	Like --import-marks but instead of erroring out, silently
 	skips the file if it does not exist.
 
---relative-marks::
+--[no-]relative-marks::
 	After specifying --relative-marks the paths specified
 	with --import-marks= and --export-marks= are relative
 	to an internal directory in the current repository.
 	In git-fast-import this means that the paths are relative
 	to the .git/info/fast-import directory. However, other
 	importers may use a different location.
++
+Relative and non-relative marks may be combined by interweaving
+--(no-)-relative-marks with the --(import|export)-marks= options.
 
---no-relative-marks::
-	Negates a previous --relative-marks. Allows for combining
-	relative and non-relative marks by interweaving
-	--(no-)-relative-marks with the --(import|export)-marks=
-	options.
 
 --cat-blob-fd=<fd>::
 	Specify the file descriptor that will be written to
