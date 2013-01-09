@@ -44,7 +44,7 @@ dothis () {
 one_topic () {
 	topic="$1" tip="$2" date="$3"
 	case " $topics" in *" $topic "*) return ;; esac
-	topics="$topic$topic "
+	topics="$topics$topic "
 
 	mergeable=no ready=no label=
 
