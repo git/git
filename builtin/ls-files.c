@@ -203,7 +203,7 @@ static void show_ru_info(void)
 static int ce_excluded(struct path_exclude_check *check, struct cache_entry *ce)
 {
 	int dtype = ce_to_dtype(ce);
-	return path_excluded(check, ce->name, ce_namelen(ce), &dtype);
+	return is_path_excluded(check, ce->name, ce_namelen(ce), &dtype);
 }
 
 static void show_files(struct dir_struct *dir)
