@@ -38,6 +38,12 @@ UI, Workflows & Features
  * Scripts can ask Git that wildcard patterns in pathspecs they give do
    not have any significance, i.e. take them as literal strings.
 
+ * The pathspec code learned to grok "foo/**/bar" as a pattern that
+   matches "bar" in 0-or-more levels of subdirectory in "foo".
+
+ * "git cherry-pick" can be used to replay a root commit to an unborn
+   branch.
+
  * "git fetch --mirror" and fetch that uses other forms of refspec
    with wildcard used to attempt to update a symbolic ref that match
    the wildcard on the receiving end, which made little sense (the
@@ -50,6 +56,12 @@ UI, Workflows & Features
 
  * "git push" now requires "-f" to update a tag, even if it is a
    fast-forward, as tags are meant to be fixed points.
+
+ * When "git rebase" fails to generate patches to be applied (e.g. due
+   to oom), it failed to detect the failure and instead behaved as if
+   there were nothing to do.  A workaround to use a temporary file has
+   been applied, but we probably would want to revisit this later, as
+   it hurts the common case of not failing at all.
 
  * "git submodule" started learning a new mode to integrate with the
    tip of the remote branch (as opposed to integrating with the commit
@@ -74,6 +86,10 @@ Performance, Internal Implementation, etc.
 
  * The implementation of "imap-send" has been updated to reuse xml
    quoting code from http-push codepath.
+
+ * There is a simple-minded checker for the test scripts in t/
+   directory to catch most common mistakes (it is not enabled by
+   default).
 
 
 Also contains minor documentation updates and code clean-ups.
@@ -116,6 +132,15 @@ details).
    excess trailing blank lines.
    (merge 5de7166 jc/apply-trailing-blank-removal later to maint).
 
+ * A tar archive created by "git archive" recorded a directory in a
+   way that made NetBSD's implementation of "tar" sometimes unhappy.
+   (merge 22f0dcd rs/leave-base-name-in-name-field-of-tar later to maint).
+
+ * When "git clone --separate-git-dir=$over_there" is interrupted, it
+   failed to remove the real location of the $GIT_DIR it created.
+   This was most visible when interrupting a submodule update.
+   (merge 9be1980 jl/interrupt-clone-remove-separate-git-dir later to maint).
+
  * The way "git svn" asked for password using SSH_ASKPASS and
    GIT_ASKPASS was not in line with the rest of the system.
    (merge e9263e4 ss/svn-prompt later to maint).
@@ -135,6 +160,11 @@ details).
  * After "git add -N" and then writing a tree object out of the
    index, the cache-tree data structure got corrupted.
    (merge eec3e7e nd/invalidate-i-t-a-cache-tree later to maint).
+
+ * "git merge --no-edit" computed who were involved in the work done
+   on the side branch, even though that information is to be discarded
+   without getting seen in the editor.
+   (merge 9bcbb1c jc/maint-fmt-merge-msg-no-edit-lose-credit later to maint).
 
  * "git merge" started calling prepare-commit-msg hook like "git
    commit" does some time ago, but forgot to pay attention to the exit
