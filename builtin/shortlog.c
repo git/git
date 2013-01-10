@@ -306,9 +306,8 @@ parse_done:
 static void add_wrapped_shortlog_msg(struct strbuf *sb, const char *s,
 				     const struct shortlog *log)
 {
-	int col = strbuf_add_wrapped_text(sb, s, log->in1, log->in2, log->wrap);
-	if (col != log->wrap)
-		strbuf_addch(sb, '\n');
+	strbuf_add_wrapped_text(sb, s, log->in1, log->in2, log->wrap);
+	strbuf_addch(sb, '\n');
 }
 
 void shortlog_output(struct shortlog *log)

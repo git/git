@@ -120,6 +120,30 @@ test_expect_success 'shortlog from non-git directory' '
 	test_cmp expect out
 '
 
+test_expect_success 'shortlog should add newline when input line matches wraplen' '
+	cat >expect <<\EOF &&
+A U Thor (2):
+      bbbbbbbbbbbbbbbbbb: bbbbbbbb bbb bbbb bbbbbbb bb bbbb bbb bbbbb bbbbbb
+      aaaaaaaaaaaaaaaaaaaaaa: aaaaaa aaaaaaaaaa aaaa aaaaaaaa aa aaaa aa aaa
+
+EOF
+	git shortlog -w >out <<\EOF &&
+commit 0000000000000000000000000000000000000001
+Author: A U Thor <author@example.com>
+Date:   Thu Apr 7 15:14:13 2005 -0700
+
+    aaaaaaaaaaaaaaaaaaaaaa: aaaaaa aaaaaaaaaa aaaa aaaaaaaa aa aaaa aa aaa
+
+commit 0000000000000000000000000000000000000002
+Author: A U Thor <author@example.com>
+Date:   Thu Apr 7 15:14:13 2005 -0700
+
+    bbbbbbbbbbbbbbbbbb: bbbbbbbb bbb bbbb bbbbbbb bb bbbb bbb bbbbb bbbbbb
+
+EOF
+	test_cmp expect out
+'
+
 iconvfromutf8toiso88591() {
 	printf "%s" "$*" | iconv -f UTF-8 -t ISO8859-1
 }
