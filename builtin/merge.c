@@ -1222,6 +1222,7 @@ int cmd_merge(int argc, const char **argv, const char *prefix)
 			memset(&opts, 0, sizeof(opts));
 			opts.add_title = !have_message;
 			opts.shortlog_len = shortlog_len;
+			opts.credit_people = (0 < option_edit);
 
 			fmt_merge_msg(&merge_names, &merge_msg, &opts);
 			if (merge_msg.len)
