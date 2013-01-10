@@ -129,8 +129,13 @@ test_expect_success 'setup' '
 		one
 		ignored-*
 	EOF
-	touch {,a/}{not-ignored,ignored-{and-untracked,but-in-index}} &&
-	git add -f {,a/}ignored-but-in-index
+	for dir in . a
+	do
+		: >$dir/not-ignored &&
+		: >$dir/ignored-and-untracked &&
+		: >$dir/ignored-but-in-index
+	done &&
+	git add -f ignored-but-in-index a/ignored-but-in-index &&
 	cat <<-\EOF >a/.gitignore &&
 		two*
 		*three
