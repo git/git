@@ -17,6 +17,7 @@ TEST_LINT ?= test-lint-duplicates test-lint-executable
 
 # Shell quote;
 SHELL_PATH_SQ = $(subst ','\'',$(SHELL_PATH))
+PERL_PATH_SQ = $(subst ','\'',$(PERL_PATH))
 
 T = $(sort $(wildcard t[0-9][0-9][0-9][0-9]-*.sh))
 TSVN = $(sort $(wildcard t91[0-9][0-9]-*.sh))
@@ -44,7 +45,7 @@ clean-except-prove-cache:
 clean: clean-except-prove-cache
 	$(RM) .prove
 
-test-lint: test-lint-duplicates test-lint-executable
+test-lint: test-lint-duplicates test-lint-executable test-lint-shell-syntax
 
 test-lint-duplicates:
 	@dups=`echo $(T) | tr ' ' '\n' | sed 's/-.*//' | sort | uniq -d` && \
@@ -55,6 +56,9 @@ test-lint-executable:
 	@bad=`for i in $(T); do test -x "$$i" || echo $$i; done` && \
 		test -z "$$bad" || { \
 		echo >&2 "non-executable tests:" $$bad; exit 1; }
+
+test-lint-shell-syntax:
+	@'$(PERL_PATH_SQ)' check-non-portable-shell.pl $(T)
 
 aggregate-results-and-cleanup: $(T)
 	$(MAKE) aggregate-results
@@ -88,7 +92,7 @@ test-results:
 	mkdir -p test-results
 
 test-results/git-smoke.tar.gz: test-results
-	$(PERL_PATH) ./harness \
+	'$(PERL_PATH_SQ)' ./harness \
 		--archive="test-results/git-smoke.tar.gz" \
 		$(T)
 
