@@ -37,6 +37,16 @@ test_expect_success \
 
 test_expect_success \
     'successful clone must leave the directory' \
-    'cd bar'
+    'test -d bar'
+
+test_expect_success 'failed clone --separate-git-dir should not leave any directories' '
+	mkdir foo/.git/objects.bak/ &&
+	mv foo/.git/objects/* foo/.git/objects.bak/ &&
+	test_must_fail git clone --separate-git-dir gitdir foo worktree &&
+	test_must_fail test -e gitdir &&
+	test_must_fail test -e worktree &&
+	mv foo/.git/objects.bak/* foo/.git/objects/ &&
+	rmdir foo/.git/objects.bak
+'
 
 test_done

@@ -771,8 +771,10 @@ int cmd_clone(int argc, const char **argv, const char *prefix)
 		die(_("could not create leading directories of '%s'"), git_dir);
 
 	set_git_dir_init(git_dir, real_git_dir, 0);
-	if (real_git_dir)
+	if (real_git_dir) {
 		git_dir = real_git_dir;
+		junk_git_dir = real_git_dir;
+	}
 
 	if (0 <= option_verbosity) {
 		if (option_bare)
