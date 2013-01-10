@@ -11,12 +11,6 @@ test_description='test cherry-pick and revert with conflicts
 
 . ./test-lib.sh
 
-test_cmp_rev () {
-	git rev-parse --verify "$1" >expect.rev &&
-	git rev-parse --verify "$2" >actual.rev &&
-	test_cmp expect.rev actual.rev
-}
-
 pristine_detach () {
 	git checkout -f "$1^0" &&
 	git read-tree -u --reset HEAD &&

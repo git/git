@@ -676,9 +676,7 @@ test_expect_success 'bisect fails if tree is broken on trial commit' '
 check_same()
 {
 	echo "Checking $1 is the same as $2" &&
-	git rev-parse "$1" > expected.same &&
-	git rev-parse "$2" > expected.actual &&
-	test_cmp expected.same expected.actual
+	test_cmp_rev "$1" "$2"
 }
 
 test_expect_success 'bisect: --no-checkout - start commit bad' '
