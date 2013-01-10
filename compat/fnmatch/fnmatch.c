@@ -55,7 +55,8 @@
    program understand `configure --with-gnu-libc' and omit the object files,
    it is simpler to just do this in the source for each such file.  */
 
-#if defined _LIBC || !defined __GNU_LIBRARY__
+#if defined NO_FNMATCH || defined NO_FNMATCH_CASEFOLD || \
+    defined _LIBC || !defined __GNU_LIBRARY__
 
 
 # if defined STDC_HEADERS || !defined isascii
