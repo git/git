@@ -166,12 +166,8 @@ static int verify_cache(struct cache_entry **cache,
 				fprintf(stderr, "...\n");
 				break;
 			}
-			if (ce_stage(ce))
-				fprintf(stderr, "%s: unmerged (%s)\n",
-					ce->name, sha1_to_hex(ce->sha1));
-			else
-				fprintf(stderr, "%s: not added yet\n",
-					ce->name);
+			fprintf(stderr, "%s: unmerged (%s)\n",
+				ce->name, sha1_to_hex(ce->sha1));
 		}
 	}
 	if (funny)
@@ -242,12 +238,16 @@ static int update_one(struct cache_tree *it,
 		      int entries,
 		      const char *base,
 		      int baselen,
+		      int *skip_count,
 		      int flags)
 {
 	struct strbuf buffer;
 	int missing_ok = flags & WRITE_TREE_MISSING_OK;
 	int dryrun = flags & WRITE_TREE_DRY_RUN;
+	int to_invalidate = 0;
 	int i;
+
+	*skip_count = 0;
 
 	if (0 <= it->entry_count && has_sha1_file(it->sha1))
 		return it->entry_count;
@@ -263,11 +263,12 @@ static int update_one(struct cache_tree *it,
 	/*
 	 * Find the subtrees and update them.
 	 */
-	for (i = 0; i < entries; i++) {
+	i = 0;
+	while (i < entries) {
 		struct cache_entry *ce = cache[i];
 		struct cache_tree_sub *sub;
 		const char *path, *slash;
-		int pathlen, sublen, subcnt;
+		int pathlen, sublen, subcnt, subskip;
 
 		path = ce->name;
 		pathlen = ce_namelen(ce);
@@ -275,8 +276,10 @@ static int update_one(struct cache_tree *it,
 			break; /* at the end of this level */
 
 		slash = strchr(path + baselen, '/');
-		if (!slash)
+		if (!slash) {
+			i++;
 			continue;
+		}
 		/*
 		 * a/bbb/c (base = a/, slash = /c)
 		 * ==>
@@ -290,10 +293,13 @@ static int update_one(struct cache_tree *it,
 				    cache + i, entries - i,
 				    path,
 				    baselen + sublen + 1,
+				    &subskip,
 				    flags);
 		if (subcnt < 0)
 			return subcnt;
-		i += subcnt - 1;
+		i += subcnt;
+		sub->count = subcnt; /* to be used in the next loop */
+		*skip_count += subskip;
 		sub->used = 1;
 	}
 
@@ -304,7 +310,8 @@ static int update_one(struct cache_tree *it,
 	 */
 	strbuf_init(&buffer, 8192);
 
-	for (i = 0; i < entries; i++) {
+	i = 0;
+	while (i < entries) {
 		struct cache_entry *ce = cache[i];
 		struct cache_tree_sub *sub;
 		const char *path, *slash;
@@ -324,14 +331,17 @@ static int update_one(struct cache_tree *it,
 			if (!sub)
 				die("cache-tree.c: '%.*s' in '%s' not found",
 				    entlen, path + baselen, path);
-			i += sub->cache_tree->entry_count - 1;
+			i += sub->count;
 			sha1 = sub->cache_tree->sha1;
 			mode = S_IFDIR;
+			if (sub->cache_tree->entry_count < 0)
+				to_invalidate = 1;
 		}
 		else {
 			sha1 = ce->sha1;
 			mode = ce->ce_mode;
 			entlen = pathlen - baselen;
+			i++;
 		}
 		if (mode != S_IFGITLINK && !missing_ok && !has_sha1_file(sha1)) {
 			strbuf_release(&buffer);
@@ -339,8 +349,25 @@ static int update_one(struct cache_tree *it,
 				mode, sha1_to_hex(sha1), entlen+baselen, path);
 		}
 
-		if (ce->ce_flags & (CE_REMOVE | CE_INTENT_TO_ADD))
-			continue; /* entry being removed or placeholder */
+		/*
+		 * CE_REMOVE entries are removed before the index is
+		 * written to disk. Skip them to remain consistent
+		 * with the future on-disk index.
+		 */
+		if (ce->ce_flags & CE_REMOVE) {
+			*skip_count = *skip_count + 1;
+			continue;
+		}
+
+		/*
+		 * CE_INTENT_TO_ADD entries exist on on-disk index but
+		 * they are not part of generated trees. Invalidate up
+		 * to root to force cache-tree users to read elsewhere.
+		 */
+		if (ce->ce_flags & CE_INTENT_TO_ADD) {
+			to_invalidate = 1;
+			continue;
+		}
 
 		strbuf_grow(&buffer, entlen + 100);
 		strbuf_addf(&buffer, "%o %.*s%c", mode, entlen, path + baselen, '\0');
@@ -360,7 +387,7 @@ static int update_one(struct cache_tree *it,
 	}
 
 	strbuf_release(&buffer);
-	it->entry_count = i;
+	it->entry_count = to_invalidate ? -1 : i - *skip_count;
 #if DEBUG
 	fprintf(stderr, "cache-tree update-one (%d ent, %d subtree) %s\n",
 		it->entry_count, it->subtree_nr,
@@ -374,11 +401,11 @@ int cache_tree_update(struct cache_tree *it,
 		      int entries,
 		      int flags)
 {
-	int i;
+	int i, skip;
 	i = verify_cache(cache, entries, flags);
 	if (i)
 		return i;
-	i = update_one(it, cache, entries, "", 0, flags);
+	i = update_one(it, cache, entries, "", 0, &skip, flags);
 	if (i < 0)
 		return i;
 	return 0;

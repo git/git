@@ -7,6 +7,7 @@
 struct cache_tree;
 struct cache_tree_sub {
 	struct cache_tree *cache_tree;
+	int count;		/* internally used by update_one() */
 	int namelen;
 	int used;
 	char name[FLEX_ARRAY];
