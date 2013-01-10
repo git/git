@@ -18,6 +18,7 @@ esac
 
 test -n "$rebase_root" && root_flag=--root
 
+ret=0
 if test -n "$keep_empty"
 then
 	# we have to do this the hard way.  git format-patch completely squashes
@@ -25,13 +26,49 @@ then
 	# itself well to recording empty patches.  fortunately, cherry-pick
 	# makes this easy
 	git cherry-pick --allow-empty "$revisions"
+	ret=$?
 else
+	rm -f "$GIT_DIR/rebased-patches"
+
 	git format-patch -k --stdout --full-index --ignore-if-in-upstream \
 		--src-prefix=a/ --dst-prefix=b/ \
-		--no-renames $root_flag "$revisions" |
-	git am $git_am_opt --rebasing --resolvemsg="$resolvemsg"
-fi && move_to_original_branch
+		--no-renames $root_flag "$revisions" >"$GIT_DIR/rebased-patches"
+	ret=$?
 
-ret=$?
-test 0 != $ret -a -d "$state_dir" && write_basic_state
-exit $ret
+	if test 0 != $ret
+	then
+		rm -f "$GIT_DIR/rebased-patches"
+		case "$head_name" in
+		refs/heads/*)
+			git checkout -q "$head_name"
+			;;
+		*)
+			git checkout -q "$orig_head"
+			;;
+		esac
+
+		cat >&2 <<-EOF
+
+		git encountered an error while preparing the patches to replay
+		these revisions:
+
+		    $revisions
+
+		As a result, git cannot rebase them.
+		EOF
+		exit $?
+	fi
+
+	git am $git_am_opt --rebasing --resolvemsg="$resolvemsg" <"$GIT_DIR/rebased-patches"
+	ret=$?
+
+	rm -f "$GIT_DIR/rebased-patches"
+fi
+
+if test 0 != $ret
+then
+	test -d "$state_dir" && write_basic_state
+	exit $ret
+fi
+
+move_to_original_branch
