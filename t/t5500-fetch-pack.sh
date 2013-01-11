@@ -264,6 +264,26 @@ test_expect_success 'clone shallow object count' '
 	grep "^count: 52" count.shallow
 '
 
+test_expect_success 'fetch --no-shallow on full repo' '
+	test_must_fail git fetch --noshallow
+'
+
+test_expect_success 'fetch --depth --no-shallow' '
+	(
+		cd shallow &&
+		test_must_fail git fetch --depth=1 --noshallow
+	)
+'
+
+test_expect_success 'turn shallow to complete repository' '
+	(
+		cd shallow &&
+		git fetch --unshallow &&
+		! test -f .git/shallow &&
+		git fsck --full
+	)
+'
+
 test_expect_success 'clone shallow without --no-single-branch' '
 	git clone --depth 1 "file://$(pwd)/." shallow2
 '

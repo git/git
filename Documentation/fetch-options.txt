@@ -13,6 +13,10 @@
 	to the specified number of commits from the tip of each remote
 	branch history. Tags for the deepened commits are not fetched.
 
+--unshallow::
+	Convert a shallow repository to a complete one, removing all
+	the limitations imposed by shallow repositories.
+
 ifndef::git-pull[]
 --dry-run::
 	Show what would be done, without making any changes.
