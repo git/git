@@ -130,8 +130,17 @@ test_expect_success 'single given branch clone' '
 	test_must_fail git --git-dir=branch-a/.git rev-parse origin/B
 '
 
+test_expect_success 'clone shallow depth 1' '
+	git clone --no-single-branch --depth 1 "file://$(pwd)/." shallow0 &&
+	test "`git --git-dir=shallow0/.git rev-list --count HEAD`" = 1
+'
+
 test_expect_success 'clone shallow' '
 	git clone --no-single-branch --depth 2 "file://$(pwd)/." shallow
+'
+
+test_expect_success 'clone shallow depth count' '
+	test "`git --git-dir=shallow/.git rev-list --count HEAD`" = 2
 '
 
 test_expect_success 'clone shallow object count' '
@@ -139,7 +148,7 @@ test_expect_success 'clone shallow object count' '
 		cd shallow &&
 		git count-objects -v
 	) > count.shallow &&
-	grep "^in-pack: 18" count.shallow
+	grep "^in-pack: 12" count.shallow
 '
 
 test_expect_success 'clone shallow object count (part 2)' '
@@ -256,12 +265,16 @@ test_expect_success 'additional simple shallow deepenings' '
 	)
 '
 
+test_expect_success 'clone shallow depth count' '
+	test "`git --git-dir=shallow/.git rev-list --count HEAD`" = 11
+'
+
 test_expect_success 'clone shallow object count' '
 	(
 		cd shallow &&
 		git count-objects -v
 	) > count.shallow &&
-	grep "^count: 52" count.shallow
+	grep "^count: 55" count.shallow
 '
 
 test_expect_success 'fetch --no-shallow on full repo' '
@@ -293,7 +306,7 @@ test_expect_success 'clone shallow object count' '
 		cd shallow2 &&
 		git count-objects -v
 	) > count.shallow2 &&
-	grep "^in-pack: 6" count.shallow2
+	grep "^in-pack: 3" count.shallow2
 '
 
 test_expect_success 'clone shallow with --branch' '
@@ -301,7 +314,7 @@ test_expect_success 'clone shallow with --branch' '
 '
 
 test_expect_success 'clone shallow object count' '
-	echo "in-pack: 6" > count3.expected &&
+	echo "in-pack: 3" > count3.expected &&
 	GIT_DIR=shallow3/.git git count-objects -v |
 		grep "^in-pack" > count3.actual &&
 	test_cmp count3.expected count3.actual
@@ -330,7 +343,7 @@ EOF
 	GIT_DIR=shallow6/.git git tag -l >taglist.actual &&
 	test_cmp taglist.expected taglist.actual &&
 
-	echo "in-pack: 7" > count6.expected &&
+	echo "in-pack: 4" > count6.expected &&
 	GIT_DIR=shallow6/.git git count-objects -v |
 		grep "^in-pack" > count6.actual &&
 	test_cmp count6.expected count6.actual
@@ -345,7 +358,7 @@ EOF
 	GIT_DIR=shallow7/.git git tag -l >taglist.actual &&
 	test_cmp taglist.expected taglist.actual &&
 
-	echo "in-pack: 7" > count7.expected &&
+	echo "in-pack: 4" > count7.expected &&
 	GIT_DIR=shallow7/.git git count-objects -v |
 		grep "^in-pack" > count7.actual &&
 	test_cmp count7.expected count7.actual
