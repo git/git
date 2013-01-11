@@ -8,7 +8,7 @@
 	option old data in `.git/FETCH_HEAD` will be overwritten.
 
 --depth=<depth>::
-	Deepen the history of a 'shallow' repository created by
+	Deepen or shorten the history of a 'shallow' repository created by
 	`git clone` with `--depth=<depth>` option (see linkgit:git-clone[1])
 	to the specified number of commits from the tip of each remote
 	branch history. Tags for the deepened commits are not fetched.
