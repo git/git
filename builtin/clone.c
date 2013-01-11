@@ -714,8 +714,6 @@ int cmd_clone(int argc, const char **argv, const char *prefix)
 	atexit(remove_junk);
 	sigchain_push_common(remove_junk_on_signal);
 
-	setenv(CONFIG_ENVIRONMENT, mkpath("%s/config", git_dir), 1);
-
 	if (safe_create_leading_directories_const(git_dir) < 0)
 		die(_("could not create leading directories of '%s'"), git_dir);
 
@@ -731,13 +729,6 @@ int cmd_clone(int argc, const char **argv, const char *prefix)
 	}
 	init_db(option_template, INIT_DB_QUIET);
 	write_config(&option_config);
-
-	/*
-	 * At this point, the config exists, so we do not need the
-	 * environment variable.  We actually need to unset it, too, to
-	 * re-enable parsing of the global configs.
-	 */
-	unsetenv(CONFIG_ENVIRONMENT);
 
 	git_config(git_default_config, NULL);
 
