@@ -111,19 +111,19 @@ test_expect_success 'read-tree' '
 
 test_expect_success 'alias expansion' '
 	(
-		git config alias.ss status &&
+		git config alias.test-status-alias status &&
 		cd dir &&
 		git status &&
-		git ss
+		git test-status-alias
 	)
 '
 
 test_expect_success NOT_MINGW '!alias expansion' '
 	pwd >expect &&
 	(
-		git config alias.test !pwd &&
+		git config alias.test-alias-directory !pwd &&
 		cd dir &&
-		git test >../actual
+		git test-alias-directory >../actual
 	) &&
 	test_cmp expect actual
 '
@@ -131,9 +131,9 @@ test_expect_success NOT_MINGW '!alias expansion' '
 test_expect_success 'GIT_PREFIX for !alias' '
 	printf "dir/" >expect &&
 	(
-		git config alias.test "!sh -c \"printf \$GIT_PREFIX\"" &&
+		git config alias.test-alias-directory "!sh -c \"printf \$GIT_PREFIX\"" &&
 		cd dir &&
-		git test >../actual
+		git test-alias-directory >../actual
 	) &&
 	test_cmp expect actual
 '
