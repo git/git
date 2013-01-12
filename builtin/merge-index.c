@@ -42,7 +42,7 @@ static int merge_entry(int pos, const char *path)
 	return found;
 }
 
-static void merge_file(const char *path)
+static void merge_one_path(const char *path)
 {
 	int pos = cache_name_pos(path, strlen(path));
 
@@ -102,7 +102,7 @@ int cmd_merge_index(int argc, const char **argv, const char *prefix)
 			}
 			die("git merge-index: unknown option %s", arg);
 		}
-		merge_file(arg);
+		merge_one_path(arg);
 	}
 	if (err && !quiet)
 		die("merge program failed");
