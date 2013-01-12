@@ -135,6 +135,7 @@ struct rev_info {
 	const char	*mime_boundary;
 	const char	*patch_suffix;
 	int		numbered_files;
+	int		reroll_count;
 	char		*message_id;
 	struct string_list *ref_message_ids;
 	const char	*add_signoff;

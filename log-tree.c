@@ -299,26 +299,34 @@ static unsigned int digits_in_number(unsigned int number)
 	return result;
 }
 
-void get_patch_filename(struct commit *commit, const char *subject, int nr,
-			const char *suffix, struct strbuf *buf)
+void fmt_output_subject(struct strbuf *filename,
+			const char *subject,
+			struct rev_info *info)
 {
-	int suffix_len = strlen(suffix) + 1;
-	int start_len = buf->len;
+	const char *suffix = info->patch_suffix;
+	int nr = info->nr;
+	int start_len = filename->len;
+	int max_len = start_len + FORMAT_PATCH_NAME_MAX - (strlen(suffix) + 1);
 
-	strbuf_addf(buf, commit || subject ? "%04d-" : "%d", nr);
-	if (commit || subject) {
-		int max_len = start_len + FORMAT_PATCH_NAME_MAX - suffix_len;
-		struct pretty_print_context ctx = {0};
+	if (0 < info->reroll_count)
+		strbuf_addf(filename, "v%d-", info->reroll_count);
+	strbuf_addf(filename, "%04d-%s", nr, subject);
 
-		if (subject)
-			strbuf_addstr(buf, subject);
-		else if (commit)
-			format_commit_message(commit, "%f", buf, &ctx);
+	if (max_len < filename->len)
+		strbuf_setlen(filename, max_len);
+	strbuf_addstr(filename, suffix);
+}
 
-		if (max_len < buf->len)
-			strbuf_setlen(buf, max_len);
-		strbuf_addstr(buf, suffix);
-	}
+void fmt_output_commit(struct strbuf *filename,
+		       struct commit *commit,
+		       struct rev_info *info)
+{
+	struct pretty_print_context ctx = {0};
+	struct strbuf subject = STRBUF_INIT;
+
+	format_commit_message(commit, "%f", &subject, &ctx);
+	fmt_output_subject(filename, subject.buf, info);
+	strbuf_release(&subject);
 }
 
 void log_write_email_headers(struct rev_info *opt, struct commit *commit,
@@ -387,8 +395,10 @@ void log_write_email_headers(struct rev_info *opt, struct commit *commit,
 			 mime_boundary_leader, opt->mime_boundary);
 		extra_headers = subject_buffer;
 
-		get_patch_filename(opt->numbered_files ? NULL : commit, NULL,
-				   opt->nr, opt->patch_suffix, &filename);
+		if (opt->numbered_files)
+			strbuf_addf(&filename, "%d", opt->nr);
+		else
+			fmt_output_commit(&filename, commit, opt);
 		snprintf(buffer, sizeof(buffer) - 1,
 			 "\n--%s%s\n"
 			 "Content-Type: text/x-patch;"
