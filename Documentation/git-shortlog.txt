@@ -56,6 +56,9 @@ OPTIONS
 	line of each entry is indented by `indent1` spaces, and the second
 	and subsequent lines are indented by `indent2` spaces. `width`,
 	`indent1`, and `indent2` default to 76, 6 and 9 respectively.
++
+If width is `0` (zero) then indent the lines of the output without wrapping
+them.
 
 
 MAPPING AUTHORS
