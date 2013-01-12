@@ -54,6 +54,12 @@ UI, Workflows & Features
    is being exported, and uses the description for the branch, when
    asked to write a cover letter for the series.
 
+ * "git format-patch" learned "-v $count" option, and prepends a
+   string "v$count-" to the names of its output files, and also
+   automatically sets the subject prefix to "PATCH v$count". This
+   allows patches from rerolled series to be stored under different
+   names and makes it easier to reuse cover letter messsages.
+
  * "git push" now requires "-f" to update a tag, even if it is a
    fast-forward, as tags are meant to be fixed points.
 
@@ -119,6 +125,11 @@ details).
    signal and die.  We ignore these signals now.
    (merge 1250857 pf/editor-ignore-sigint later to maint).
 
+ * A child process that was killed by a signal (e.g. SIGINT) was
+   reported in an inconsistent way depending on how the process was
+   spawned by us, with or without a shell in between.
+   (merge 709ca73 jk/unify-exit-code-by-receiving-signal later to maint).
+
  * After failing to create a temporary file using mkstemp(), failing
    pathname was not reported correctly on some platforms.
    (merge f7be59b jc/mkstemp-more-careful-error-reporting later to maint).
@@ -135,6 +146,10 @@ details).
  * A tar archive created by "git archive" recorded a directory in a
    way that made NetBSD's implementation of "tar" sometimes unhappy.
    (merge 22f0dcd rs/leave-base-name-in-name-field-of-tar later to maint).
+
+ * "git archive" did not record uncompressed size in the header when
+   streaming a zip archive, which confused some implementations of unzip.
+   (merge 5ea2c84 rs/zip-with-uncompressed-size-in-the-header later to maint).
 
  * When "git clone --separate-git-dir=$over_there" is interrupted, it
    failed to remove the real location of the $GIT_DIR it created.
