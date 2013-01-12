@@ -1370,6 +1370,16 @@ int branch_merge_matches(struct branch *branch,
 	return refname_match(branch->merge[i]->src, refname, ref_fetch_rules);
 }
 
+static int ignore_symref_update(const char *refname)
+{
+	unsigned char sha1[20];
+	int flag;
+
+	if (!resolve_ref_unsafe(refname, sha1, 0, &flag))
+		return 0; /* non-existing refs are OK */
+	return (flag & REF_ISSYMREF);
+}
+
 static struct ref *get_expanded_map(const struct ref *remote_refs,
 				    const struct refspec *refspec)
 {
@@ -1383,7 +1393,8 @@ static struct ref *get_expanded_map(const struct ref *remote_refs,
 		if (strchr(ref->name, '^'))
 			continue; /* a dereference item */
 		if (match_name_with_pattern(refspec->src, ref->name,
-					    refspec->dst, &expn_name)) {
+					    refspec->dst, &expn_name) &&
+		    !ignore_symref_update(expn_name)) {
 			struct ref *cpy = copy_ref(ref);
 
 			cpy->peer_ref = alloc_ref(expn_name);
