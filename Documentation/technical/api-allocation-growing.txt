@@ -5,7 +5,9 @@ Dynamically growing an array using realloc() is error prone and boring.
 
 Define your array with:
 
-* a pointer (`ary`) that points at the array, initialized to `NULL`;
+* a pointer (`item`) that points at the array, initialized to `NULL`
+  (although please name the variable based on its contents, not on its
+  type);
 
 * an integer variable (`alloc`) that keeps track of how big the current
   allocation is, initialized to `0`;
@@ -13,22 +15,22 @@ Define your array with:
 * another integer variable (`nr`) to keep track of how many elements the
   array currently has, initialized to `0`.
 
-Then before adding `n`th element to the array, call `ALLOC_GROW(ary, n,
+Then before adding `n`th element to the item, call `ALLOC_GROW(item, n,
 alloc)`.  This ensures that the array can hold at least `n` elements by
 calling `realloc(3)` and adjusting `alloc` variable.
 
 ------------
-sometype *ary;
+sometype *item;
 size_t nr;
 size_t alloc
 
 for (i = 0; i < nr; i++)
-	if (we like ary[i] already)
+	if (we like item[i] already)
 		return;
 
 /* we did not like any existing one, so add one */
-ALLOC_GROW(ary, nr + 1, alloc);
-ary[nr++] = value you like;
+ALLOC_GROW(item, nr + 1, alloc);
+item[nr++] = value you like;
 ------------
 
 You are responsible for updating the `nr` variable.
