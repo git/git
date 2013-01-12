@@ -3,7 +3,12 @@
 test_description='respect crlf in git archive'
 
 . ./test-lib.sh
-UNZIP=${UNZIP:-unzip}
+GIT_UNZIP=${GIT_UNZIP:-unzip}
+
+test_lazy_prereq UNZIP '
+	"$GIT_UNZIP" -v
+	test $? -ne 127
+'
 
 test_expect_success setup '
 
@@ -26,18 +31,11 @@ test_expect_success 'tar archive' '
 
 '
 
-"$UNZIP" -v >/dev/null 2>&1
-if [ $? -eq 127 ]; then
-	say "Skipping ZIP test, because unzip was not found"
-else
-	test_set_prereq UNZIP
-fi
-
 test_expect_success UNZIP 'zip archive' '
 
 	git archive --format=zip HEAD >test.zip &&
 
-	( mkdir unzipped && cd unzipped && unzip ../test.zip ) &&
+	( mkdir unzipped && cd unzipped && "$GIT_UNZIP" ../test.zip ) &&
 
 	test_cmp sample unzipped/sample
 
