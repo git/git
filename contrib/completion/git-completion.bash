@@ -1031,7 +1031,7 @@ __git_diff_common_options="--stat --numstat --shortstat --summary
 			--no-ext-diff
 			--no-prefix --src-prefix= --dst-prefix=
 			--inter-hunk-context=
-			--patience
+			--patience --histogram --minimal
 			--raw
 			--dirstat --dirstat= --dirstat-by-file
 			--dirstat-by-file= --cumulative
