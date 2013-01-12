@@ -249,7 +249,7 @@ static int wait_or_whine(pid_t pid, const char *argv0)
 		 * mimics the exit code that a POSIX shell would report for
 		 * a program that died from this signal.
 		 */
-		code -= 128;
+		code += 128;
 	} else if (WIFEXITED(status)) {
 		code = WEXITSTATUS(status);
 		/*

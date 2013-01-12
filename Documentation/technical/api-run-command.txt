@@ -55,10 +55,8 @@ The functions above do the following:
   non-zero.
 
 . If the program terminated due to a signal, then the return value is the
-  signal number - 128, ie. it is negative and so indicates an unusual
-  condition; a diagnostic is printed. This return value can be passed to
-  exit(2), which will report the same code to the parent process that a
-  POSIX shell's $? would report for a program that died from the signal.
+  signal number + 128, ie. the same value that a POSIX shell's $? would
+  report.  A diagnostic is printed.
 
 
 `start_async`::

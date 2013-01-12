@@ -31,7 +31,7 @@ sub finish_child {
 	} elsif ($? & 127) {
 		my $code = $? & 127;
 		warn "died of signal $code";
-		return $code - 128;
+		return $code + 128;
 	} else {
 		return $? >> 8;
 	}
