@@ -120,6 +120,8 @@ static int write_archive_entry(const unsigned char *sha1, const char *base,
 	strbuf_add(&path, args->base, args->baselen);
 	strbuf_add(&path, base, baselen);
 	strbuf_addstr(&path, filename);
+	if (S_ISDIR(mode) || S_ISGITLINK(mode))
+		strbuf_addch(&path, '/');
 	path_without_prefix = path.buf + args->baselen;
 
 	setup_archive_check(check);
@@ -130,7 +132,6 @@ static int write_archive_entry(const unsigned char *sha1, const char *base,
 	}
 
 	if (S_ISDIR(mode) || S_ISGITLINK(mode)) {
-		strbuf_addch(&path, '/');
 		if (args->verbose)
 			fprintf(stderr, "%.*s\n", (int)path.len, path.buf);
 		err = write_entry(args, sha1, path.buf, path.len, mode);
