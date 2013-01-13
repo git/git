@@ -1327,8 +1327,6 @@ static int git_commit_config(const char *k, const char *v, void *cb)
 	return git_status_config(k, v, s);
 }
 
-static const char post_rewrite_hook[] = "hooks/post-rewrite";
-
 static int run_rewrite_hook(const unsigned char *oldsha1,
 			    const unsigned char *newsha1)
 {
@@ -1339,10 +1337,10 @@ static int run_rewrite_hook(const unsigned char *oldsha1,
 	int code;
 	size_t n;
 
-	if (access(git_path(post_rewrite_hook), X_OK) < 0)
+	argv[0] = find_hook("post-rewrite");
+	if (!argv[0])
 		return 0;
 
-	argv[0] = git_path(post_rewrite_hook);
 	argv[1] = "amend";
 	argv[2] = NULL;
 
