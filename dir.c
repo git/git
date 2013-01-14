@@ -842,7 +842,8 @@ static struct dir_entry *dir_entry_new(const char *pathname, int len)
 
 static struct dir_entry *dir_add_name(struct dir_struct *dir, const char *pathname, int len)
 {
-	if (cache_name_exists(pathname, len, ignore_case))
+	if (!(dir->flags & DIR_SHOW_IGNORED) &&
+	    cache_name_exists(pathname, len, ignore_case))
 		return NULL;
 
 	ALLOC_GROW(dir->entries, dir->nr+1, dir->alloc);
@@ -944,8 +945,9 @@ static enum exist_status directory_exists_in_index(const char *dirname, int len)
  * traversal routine.
  *
  * Case 1: If we *already* have entries in the index under that
- * directory name, we always recurse into the directory to see
- * all the files.
+ * directory name, we recurse into the directory to see all the files,
+ * unless the directory is excluded and we want to show ignored
+ * directories
  *
  * Case 2: If we *already* have that directory name as a gitlink,
  * we always continue to see it as a gitlink, regardless of whether
@@ -959,6 +961,9 @@ static enum exist_status directory_exists_in_index(const char *dirname, int len)
  *      just a directory, unless "hide_empty_directories" is
  *      also true and the directory is empty, in which case
  *      we just ignore it entirely.
+ *      if we are looking for ignored directories, look if it
+ *      contains only ignored files to decide if it must be shown as
+ *      ignored or not.
  *  (b) if it looks like a git directory, and we don't have
  *      'no_gitlinks' set we treat it as a gitlink, and show it
  *      as a directory.
@@ -971,12 +976,15 @@ enum directory_treatment {
 };
 
 static enum directory_treatment treat_directory(struct dir_struct *dir,
-	const char *dirname, int len,
+	const char *dirname, int len, int exclude,
 	const struct path_simplify *simplify)
 {
 	/* The "len-1" is to strip the final '/' */
 	switch (directory_exists_in_index(dirname, len-1)) {
 	case index_directory:
+		if ((dir->flags & DIR_SHOW_OTHER_DIRECTORIES) && exclude)
+			break;
+
 		return recurse_into_directory;
 
 	case index_gitdir:
@@ -996,11 +1004,66 @@ static enum directory_treatment treat_directory(struct dir_struct *dir,
 	}
 
 	/* This is the "show_other_directories" case */
-	if (!(dir->flags & DIR_HIDE_EMPTY_DIRECTORIES))
+
+	/*
+	 * We are looking for ignored files and our directory is not ignored,
+	 * check if it contains only ignored files
+	 */
+	if ((dir->flags & DIR_SHOW_IGNORED) && !exclude) {
+		int ignored;
+		dir->flags &= ~DIR_SHOW_IGNORED;
+		dir->flags |= DIR_HIDE_EMPTY_DIRECTORIES;
+		ignored = read_directory_recursive(dir, dirname, len, 1, simplify);
+		dir->flags &= ~DIR_HIDE_EMPTY_DIRECTORIES;
+		dir->flags |= DIR_SHOW_IGNORED;
+
+		return ignored ? ignore_directory : show_directory;
+	}
+	if (!(dir->flags & DIR_SHOW_IGNORED) &&
+	    !(dir->flags & DIR_HIDE_EMPTY_DIRECTORIES))
 		return show_directory;
 	if (!read_directory_recursive(dir, dirname, len, 1, simplify))
 		return ignore_directory;
 	return show_directory;
+}
+
+/*
+ * Decide what to do when we find a file while traversing the
+ * filesystem. Mostly two cases:
+ *
+ *  1. We are looking for ignored files
+ *   (a) File is ignored, include it
+ *   (b) File is in ignored path, include it
+ *   (c) File is not ignored, exclude it
+ *
+ *  2. Other scenarios, include the file if not excluded
+ *
+ * Return 1 for exclude, 0 for include.
+ */
+static int treat_file(struct dir_struct *dir, struct strbuf *path, int exclude, int *dtype)
+{
+	struct path_exclude_check check;
+	int exclude_file = 0;
+
+	if (exclude)
+		exclude_file = !(dir->flags & DIR_SHOW_IGNORED);
+	else if (dir->flags & DIR_SHOW_IGNORED) {
+		/* Always exclude indexed files */
+		struct cache_entry *ce = index_name_exists(&the_index,
+		    path->buf, path->len, ignore_case);
+
+		if (ce)
+			return 1;
+
+		path_exclude_check_init(&check, dir);
+
+		if (!is_path_excluded(&check, path->buf, path->len, dtype))
+			exclude_file = 1;
+
+		path_exclude_check_clear(&check);
+	}
+
+	return exclude_file;
 }
 
 /*
@@ -1141,27 +1204,14 @@ static enum path_treatment treat_one_path(struct dir_struct *dir,
 	if (dtype == DT_UNKNOWN)
 		dtype = get_dtype(de, path->buf, path->len);
 
-	/*
-	 * Do we want to see just the ignored files?
-	 * We still need to recurse into directories,
-	 * even if we don't ignore them, since the
-	 * directory may contain files that we do..
-	 */
-	if (!exclude && (dir->flags & DIR_SHOW_IGNORED)) {
-		if (dtype != DT_DIR)
-			return path_ignored;
-	}
-
 	switch (dtype) {
 	default:
 		return path_ignored;
 	case DT_DIR:
 		strbuf_addch(path, '/');
-		switch (treat_directory(dir, path->buf, path->len, simplify)) {
+
+		switch (treat_directory(dir, path->buf, path->len, exclude, simplify)) {
 		case show_directory:
-			if (exclude != !!(dir->flags
-					  & DIR_SHOW_IGNORED))
-				return path_ignored;
 			break;
 		case recurse_into_directory:
 			return path_recurse;
@@ -1171,7 +1221,12 @@ static enum path_treatment treat_one_path(struct dir_struct *dir,
 		break;
 	case DT_REG:
 	case DT_LNK:
-		break;
+		switch (treat_file(dir, path, exclude, &dtype)) {
+		case 1:
+			return path_ignored;
+		default:
+			break;
+		}
 	}
 	return path_handled;
 }
