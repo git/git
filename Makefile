@@ -273,6 +273,10 @@ all::
 #
 # Define NO_REGEX if you have no or inferior regex support in your C library.
 #
+# Define CYGWIN_V15_WIN32API if you are using Cygwin v1.7.x but are not
+# using the current w32api packages. The recommended approach, however,
+# is to update your installation if compilation errors occur.
+#
 # Define HAVE_DEV_TTY if your system can open /dev/tty to interact with the
 # user.
 #
