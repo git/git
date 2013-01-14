@@ -1285,10 +1285,10 @@ foreach my $t (@files) {
 		}
 
 		if (defined $input_format && $input_format eq 'mbox') {
-			if (/^Subject:\s+(.*)$/) {
+			if (/^Subject:\s+(.*)$/i) {
 				$subject = $1;
 			}
-			elsif (/^From:\s+(.*)$/) {
+			elsif (/^From:\s+(.*)$/i) {
 				($author, $author_encoding) = unquote_rfc2047($1);
 				next if $suppress_cc{'author'};
 				next if $suppress_cc{'self'} and $author eq $sender;
@@ -1296,14 +1296,14 @@ foreach my $t (@files) {
 					$1, $_) unless $quiet;
 				push @cc, $1;
 			}
-			elsif (/^To:\s+(.*)$/) {
+			elsif (/^To:\s+(.*)$/i) {
 				foreach my $addr (parse_address_line($1)) {
 					printf("(mbox) Adding to: %s from line '%s'\n",
 						$addr, $_) unless $quiet;
 					push @to, $addr;
 				}
 			}
-			elsif (/^Cc:\s+(.*)$/) {
+			elsif (/^Cc:\s+(.*)$/i) {
 				foreach my $addr (parse_address_line($1)) {
 					if (unquote_rfc2047($addr) eq $sender) {
 						next if ($suppress_cc{'self'});
@@ -1325,7 +1325,7 @@ foreach my $t (@files) {
 			elsif (/^Message-Id: (.*)/i) {
 				$message_id = $1;
 			}
-			elsif (!/^Date:\s/ && /^[-A-Za-z]+:\s+\S/) {
+			elsif (!/^Date:\s/i && /^[-A-Za-z]+:\s+\S/) {
 				push @xh, $_;
 			}
 
