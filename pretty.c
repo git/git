@@ -966,7 +966,7 @@ static size_t format_commit_one(struct strbuf *sb, const char *placeholder,
 
 			if (!end)
 				return 0;
-			if (!memcmp(begin, "auto,", 5)) {
+			if (!prefixcmp(begin, "auto,")) {
 				if (!want_color(c->pretty_ctx->color))
 					return end - placeholder + 1;
 				begin += 5;
@@ -1310,7 +1310,7 @@ static void pp_header(const struct pretty_print_context *pp,
 			continue;
 		}
 
-		if (!memcmp(line, "parent ", 7)) {
+		if (!prefixcmp(line, "parent ")) {
 			if (linelen != 48)
 				die("bad parent line in commit");
 			continue;
@@ -1334,11 +1334,11 @@ static void pp_header(const struct pretty_print_context *pp,
 		 * FULL shows both authors but not dates.
 		 * FULLER shows both authors and dates.
 		 */
-		if (!memcmp(line, "author ", 7)) {
+		if (!prefixcmp(line, "author ")) {
 			strbuf_grow(sb, linelen + 80);
 			pp_user_info(pp, "Author", sb, line + 7, encoding);
 		}
-		if (!memcmp(line, "committer ", 10) &&
+		if (!prefixcmp(line, "committer ") &&
 		    (pp->fmt == CMIT_FMT_FULL || pp->fmt == CMIT_FMT_FULLER)) {
 			strbuf_grow(sb, linelen + 80);
 			pp_user_info(pp, "Commit", sb, line + 10, encoding);
