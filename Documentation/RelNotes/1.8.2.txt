@@ -41,6 +41,8 @@ UI, Workflows & Features
  * The pathspec code learned to grok "foo/**/bar" as a pattern that
    matches "bar" in 0-or-more levels of subdirectory in "foo".
 
+ * "git blame" (and "git diff") learned the "--no-follow" option.
+
  * "git cherry-pick" can be used to replay a root commit to an unborn
    branch.
 
@@ -185,6 +187,16 @@ details).
    commit" does some time ago, but forgot to pay attention to the exit
    status of the hook.
    (merge 3e4141d ap/merge-stop-at-prepare-commit-msg-failure later to maint).
+
+ * When users spell "cc:" in lowercase in the fake "header" in the
+   trailer part, "git send-email" failed to pick up the addresses from
+   there. As e-mail headers field names are case insensitive, this
+   script should follow suit and treat "cc:" and "Cc:" the same way.
+   (merge 6310071 nz/send-email-headers-are-case-insensitive later to maint).
+
+ * Output from "git status --ignored" showed an unexpected interaction
+   with "--untracked".
+   (merge a45fb69 ap/status-ignored-in-ignored-directory later to maint).
 
  * "gitweb", when sorting by age to show repositories with new
    activities first, used to sort repositories with absolutely
