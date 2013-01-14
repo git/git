@@ -226,7 +226,7 @@ static inline void set_cloexec(int fd)
 		fcntl(fd, F_SETFD, flags | FD_CLOEXEC);
 }
 
-static int wait_or_whine(pid_t pid, const char *argv0, int silent_exec_failure)
+static int wait_or_whine(pid_t pid, const char *argv0)
 {
 	int status, code = -1;
 	pid_t waiting;
@@ -242,7 +242,8 @@ static int wait_or_whine(pid_t pid, const char *argv0, int silent_exec_failure)
 		error("waitpid is confused (%s)", argv0);
 	} else if (WIFSIGNALED(status)) {
 		code = WTERMSIG(status);
-		error("%s died of signal %d", argv0, code);
+		if (code != SIGINT && code != SIGQUIT)
+			error("%s died of signal %d", argv0, code);
 		/*
 		 * This return value is chosen so that code & 0xff
 		 * mimics the exit code that a POSIX shell would report for
@@ -432,8 +433,7 @@ fail_pipe:
 		 * At this point we know that fork() succeeded, but execvp()
 		 * failed. Errors have been reported to our stderr.
 		 */
-		wait_or_whine(cmd->pid, cmd->argv[0],
-			      cmd->silent_exec_failure);
+		wait_or_whine(cmd->pid, cmd->argv[0]);
 		failed_errno = errno;
 		cmd->pid = -1;
 	}
@@ -538,7 +538,7 @@ fail_pipe:
 
 int finish_command(struct child_process *cmd)
 {
-	return wait_or_whine(cmd->pid, cmd->argv[0], cmd->silent_exec_failure);
+	return wait_or_whine(cmd->pid, cmd->argv[0]);
 }
 
 int run_command(struct child_process *cmd)
@@ -725,7 +725,7 @@ error:
 int finish_async(struct async *async)
 {
 #ifdef NO_PTHREADS
-	return wait_or_whine(async->pid, "child process", 0);
+	return wait_or_whine(async->pid, "child process");
 #else
 	void *ret = (void *)(intptr_t)(-1);
 
