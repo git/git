@@ -2683,6 +2683,7 @@ class P4Sync(Command, P4UserMap):
                     files = self.extractFilesFromCommit(description)
                     self.commit(description, files, self.branch,
                                 self.initialParent)
+                    # only needed once, to connect to the previous commit
                     self.initialParent = ""
             except IOError:
                 print self.gitError.read()
@@ -2748,7 +2749,6 @@ class P4Sync(Command, P4UserMap):
     def run(self, args):
         self.depotPaths = []
         self.changeRange = ""
-        self.initialParent = ""
         self.previousDepotPaths = []
         self.hasOrigin = False
 
@@ -2836,8 +2836,6 @@ class P4Sync(Command, P4UserMap):
             if p4Change > 0:
                 self.depotPaths = sorted(self.previousDepotPaths)
                 self.changeRange = "@%s,#head" % p4Change
-                if not self.detectBranches:
-                    self.initialParent = parseRevision(self.branch)
                 if not self.silent and not self.detectBranches:
                     print "Performing incremental import into %s git branch" % self.branch
 
@@ -2981,6 +2979,14 @@ class P4Sync(Command, P4UserMap):
                     print "Import destination: %s" % self.branch
 
                 self.updatedBranches = set()
+
+                if not self.detectBranches:
+                    if args:
+                        # start a new branch
+                        self.initialParent = ""
+                    else:
+                        # build on a previous revision
+                        self.initialParent = parseRevision(self.branch)
 
                 self.importChanges(changes)
 
