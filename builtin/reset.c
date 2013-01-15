@@ -153,26 +153,15 @@ static void update_index_from_diff(struct diff_queue_struct *q,
 	}
 }
 
-static int interactive_reset(const char *revision, const char **argv,
-			     const char *prefix)
-{
-	const char **pathspec = NULL;
-
-	if (*argv)
-		pathspec = get_pathspec(prefix, argv);
-
-	return run_add_interactive(revision, "--patch=reset", pathspec);
-}
-
-static int read_from_tree(const char *prefix, const char **argv,
-		unsigned char *tree_sha1, int refresh_flags)
+static int read_from_tree(const char **pathspec, unsigned char *tree_sha1,
+			  int refresh_flags)
 {
 	struct lock_file *lock = xcalloc(1, sizeof(struct lock_file));
 	int index_fd;
 	struct diff_options opt;
 
 	memset(&opt, 0, sizeof(opt));
-	diff_tree_setup_paths(get_pathspec(prefix, (const char **)argv), &opt);
+	diff_tree_setup_paths(pathspec, &opt);
 	opt.output_format = DIFF_FORMAT_CALLBACK;
 	opt.format_callback = update_index_from_diff;
 
@@ -216,6 +205,7 @@ int cmd_reset(int argc, const char **argv, const char *prefix)
 	const char *rev = "HEAD";
 	unsigned char sha1[20], *orig = NULL, sha1_orig[20],
 				*old_orig = NULL, sha1_old_orig[20];
+	const char **pathspec = NULL;
 	struct commit *commit;
 	struct strbuf msg = STRBUF_INIT;
 	const struct option options[] = {
@@ -287,22 +277,25 @@ int cmd_reset(int argc, const char **argv, const char *prefix)
 		die(_("Could not parse object '%s'."), rev);
 	hashcpy(sha1, commit->object.sha1);
 
+	if (i < argc)
+		pathspec = get_pathspec(prefix, argv + i);
+
 	if (patch_mode) {
 		if (reset_type != NONE)
 			die(_("--patch is incompatible with --{hard,mixed,soft}"));
-		return interactive_reset(rev, argv + i, prefix);
+		return run_add_interactive(rev, "--patch=reset", pathspec);
 	}
 
 	/* git reset tree [--] paths... can be used to
 	 * load chosen paths from the tree into the index without
 	 * affecting the working tree nor HEAD. */
-	if (i < argc) {
+	if (pathspec) {
 		if (reset_type == MIXED)
 			warning(_("--mixed with paths is deprecated; use 'git reset -- <paths>' instead."));
 		else if (reset_type != NONE)
 			die(_("Cannot do %s reset with paths."),
 					_(reset_type_names[reset_type]));
-		return read_from_tree(prefix, argv + i, sha1,
+		return read_from_tree(pathspec, sha1,
 				quiet ? REFRESH_QUIET : REFRESH_IN_PORCELAIN);
 	}
 	if (reset_type == NONE)
