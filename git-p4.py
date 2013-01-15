@@ -2772,10 +2772,7 @@ class P4Sync(Command, P4UserMap):
             self.branch = self.refPrefix + "master"
             if gitBranchExists("refs/heads/p4") and self.importIntoRemotes:
                 system("git update-ref %s refs/heads/p4" % self.branch)
-                system("git branch -D p4");
-            # create it /after/ importing, when master exists
-            if not gitBranchExists(self.refPrefix + "HEAD") and self.importIntoRemotes and gitBranchExists(self.branch):
-                system("git symbolic-ref %sHEAD %s" % (self.refPrefix, self.branch))
+                system("git branch -D p4")
 
         # accept either the command-line option, or the configuration variable
         if self.useClientSpec:
@@ -3006,6 +3003,13 @@ class P4Sync(Command, P4UserMap):
             for branch in self.tempBranches:
                 read_pipe("git update-ref -d %s" % branch)
             os.rmdir(os.path.join(os.environ.get("GIT_DIR", ".git"), self.tempBranchLocation))
+
+        # Create a symbolic ref p4/HEAD pointing to p4/<branch> to allow
+        # a convenient shortcut refname "p4".
+        if self.importIntoRemotes:
+            head_ref = self.refPrefix + "HEAD"
+            if not gitBranchExists(head_ref) and gitBranchExists(self.branch):
+                system(["git", "symbolic-ref", head_ref, self.branch])
 
         return True
 

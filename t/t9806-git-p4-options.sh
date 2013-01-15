@@ -83,6 +83,29 @@ test_expect_failure 'sync --branch updates specified branch' '
 	)
 '
 
+# allows using the refname "p4" as a short name for p4/master
+test_expect_success 'clone creates HEAD symbolic reference' '
+	git p4 clone --dest="$git" //depot &&
+	test_when_finished cleanup_git &&
+	(
+		cd "$git" &&
+		git rev-parse --verify refs/remotes/p4/master >master &&
+		git rev-parse --verify p4 >p4 &&
+		test_cmp master p4
+	)
+'
+
+test_expect_success 'clone --branch creates HEAD symbolic reference' '
+	git p4 clone --branch=refs/remotes/p4/sb --dest="$git" //depot &&
+	test_when_finished cleanup_git &&
+	(
+		cd "$git" &&
+		git rev-parse --verify refs/remotes/p4/sb >sb &&
+		git rev-parse --verify p4 >p4 &&
+		test_cmp sb p4
+	)
+'
+
 test_expect_success 'clone --changesfile' '
 	test_when_finished "rm cf" &&
 	printf "1\n3\n" >cf &&
