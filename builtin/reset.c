@@ -309,19 +309,6 @@ int cmd_reset(int argc, const char **argv, const char *prefix)
 		die(_("%s reset is not allowed in a bare repository"),
 		    _(reset_type_names[reset_type]));
 
-	if (pathspec) {
-		struct lock_file *lock = xcalloc(1, sizeof(struct lock_file));
-		int index_fd = hold_locked_index(lock, 1);
-		if (read_from_tree(pathspec, sha1))
-			return 1;
-		update_index_refresh(
-			quiet ? REFRESH_QUIET : REFRESH_IN_PORCELAIN);
-		if (write_cache(index_fd, active_cache, active_nr) ||
-		    commit_locked_index(lock))
-			return error("Could not write new index file.");
-		return 0;
-	}
-
 	/* Soft reset does not touch the index file nor the working tree
 	 * at all, but requires them in a good order.  Other resets reset
 	 * the index file to the tree object we are switching to. */
@@ -331,11 +318,16 @@ int cmd_reset(int argc, const char **argv, const char *prefix)
 	if (reset_type != SOFT) {
 		struct lock_file *lock = xcalloc(1, sizeof(struct lock_file));
 		int newfd = hold_locked_index(lock, 1);
-		int err = reset_index(sha1, reset_type, quiet);
-		if (reset_type == KEEP && !err)
-			err = reset_index(sha1, MIXED, quiet);
-		if (err)
-			die(_("Could not reset index file to revision '%s'."), rev);
+		if (pathspec) {
+			if (read_from_tree(pathspec, sha1))
+				return 1;
+		} else {
+			int err = reset_index(sha1, reset_type, quiet);
+			if (reset_type == KEEP && !err)
+				err = reset_index(sha1, MIXED, quiet);
+			if (err)
+				die(_("Could not reset index file to revision '%s'."), rev);
+		}
 
 		if (reset_type == MIXED) /* Report what has not been updated. */
 			update_index_refresh(
@@ -346,14 +338,16 @@ int cmd_reset(int argc, const char **argv, const char *prefix)
 			die(_("Could not write new index file."));
 	}
 
-	/* Any resets update HEAD to the head being switched to,
-	 * saving the previous head in ORIG_HEAD before. */
-	update_ref_status = update_refs(rev, sha1);
+	if (!pathspec) {
+		/* Any resets without paths update HEAD to the head being
+		 * switched to, saving the previous head in ORIG_HEAD before. */
+		update_ref_status = update_refs(rev, sha1);
 
-	if (reset_type == HARD && !update_ref_status && !quiet)
-		print_new_head_line(commit);
+		if (reset_type == HARD && !update_ref_status && !quiet)
+			print_new_head_line(commit);
 
-	remove_branch_state();
+		remove_branch_state();
+	}
 
 	return update_ref_status;
 }
