@@ -584,6 +584,13 @@ static void prepare_attr_stack(const char *path)
 	dirlen = find_basename(path) - path;
 
 	/*
+	 * find_basename() includes the trailing slash, but we do
+	 * _not_ want it.
+	 */
+	if (dirlen)
+		dirlen--;
+
+	/*
 	 * At the bottom of the attribute stack is the built-in
 	 * set of attribute definitions, followed by the contents
 	 * of $(prefix)/etc/gitattributes and a file specified by
