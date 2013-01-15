@@ -109,19 +109,10 @@ static void print_new_head_line(struct commit *commit)
 		printf("\n");
 }
 
-static int update_index_refresh(int fd, struct lock_file *index_lock, int flags)
+static void update_index_refresh(int flags)
 {
-	if (!index_lock) {
-		index_lock = xcalloc(1, sizeof(struct lock_file));
-		fd = hold_locked_index(index_lock, 1);
-	}
-
 	refresh_index(&the_index, (flags), NULL, NULL,
 		      _("Unstaged changes after reset:"));
-	if (write_cache(fd, active_cache, active_nr) ||
-			commit_locked_index(index_lock))
-		return error ("Could not refresh index");
-	return 0;
 }
 
 static void update_index_from_diff(struct diff_queue_struct *q,
@@ -321,9 +312,14 @@ int cmd_reset(int argc, const char **argv, const char *prefix)
 	if (pathspec) {
 		struct lock_file *lock = xcalloc(1, sizeof(struct lock_file));
 		int index_fd = hold_locked_index(lock, 1);
-		return read_from_tree(pathspec, sha1) ||
-			update_index_refresh(index_fd, lock,
-					quiet ? REFRESH_QUIET : REFRESH_IN_PORCELAIN);
+		if (read_from_tree(pathspec, sha1))
+			return 1;
+		update_index_refresh(
+			quiet ? REFRESH_QUIET : REFRESH_IN_PORCELAIN);
+		if (write_cache(index_fd, active_cache, active_nr) ||
+		    commit_locked_index(lock))
+			return error("Could not write new index file.");
+		return 0;
 	}
 
 	/* Soft reset does not touch the index file nor the working tree
@@ -351,9 +347,15 @@ int cmd_reset(int argc, const char **argv, const char *prefix)
 
 	if (reset_type == HARD && !update_ref_status && !quiet)
 		print_new_head_line(commit);
-	else if (reset_type == MIXED) /* Report what has not been updated. */
-		update_index_refresh(0, NULL,
-				quiet ? REFRESH_QUIET : REFRESH_IN_PORCELAIN);
+	else if (reset_type == MIXED) { /* Report what has not been updated. */
+		struct lock_file *index_lock = xcalloc(1, sizeof(struct lock_file));
+		int fd = hold_locked_index(index_lock, 1);
+		update_index_refresh(
+			quiet ? REFRESH_QUIET : REFRESH_IN_PORCELAIN);
+		if (write_cache(fd, active_cache, active_nr) ||
+		    commit_locked_index(index_lock))
+			error("Could not refresh index");
+	}
 
 	remove_branch_state();
 
