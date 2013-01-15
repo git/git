@@ -792,9 +792,9 @@ static void imap_close_server(struct imap_store *ictx)
 	free(imap);
 }
 
-static void imap_close_store(struct store *ctx)
+static void imap_close_store(struct imap_store *ctx)
 {
-	imap_close_server((struct imap_store *)ctx);
+	imap_close_server(ctx);
 	free(ctx);
 }
 
@@ -879,7 +879,7 @@ static int auth_cram_md5(struct imap_store *ctx, struct imap_cmd *cmd, const cha
 	return 0;
 }
 
-static struct store *imap_open_store(struct imap_server_conf *srvc)
+static struct imap_store *imap_open_store(struct imap_server_conf *srvc)
 {
 	struct imap_store *ctx;
 	struct imap *imap;
@@ -1089,10 +1089,10 @@ static struct store *imap_open_store(struct imap_server_conf *srvc)
 	} /* !preauth */
 
 	ctx->prefix = "";
-	return (struct store *)ctx;
+	return ctx;
 
 bail:
-	imap_close_store(&ctx->gen);
+	imap_close_store(ctx);
 	return NULL;
 }
 
@@ -1138,9 +1138,8 @@ static void lf_to_crlf(struct strbuf *msg)
  * Store msg to IMAP.  Also detach and free the data from msg->data,
  * leaving msg->data empty.
  */
-static int imap_store_msg(struct store *gctx, struct strbuf *msg)
+static int imap_store_msg(struct imap_store *ctx, struct strbuf *msg)
 {
-	struct imap_store *ctx = (struct imap_store *)gctx;
 	struct imap *imap = ctx->imap;
 	struct imap_cmd_cb cb;
 	const char *prefix, *box;
@@ -1152,7 +1151,7 @@ static int imap_store_msg(struct store *gctx, struct strbuf *msg)
 	cb.dlen = msg->len;
 	cb.data = strbuf_detach(msg, NULL);
 
-	box = gctx->name;
+	box = ctx->gen.name;
 	prefix = !strcmp(box, "INBOX") ? "" : ctx->prefix;
 	cb.create = 0;
 	ret = imap_exec_m(ctx, &cb, "APPEND \"%s%s\" ", prefix, box);
@@ -1308,7 +1307,7 @@ int main(int argc, char **argv)
 {
 	struct strbuf all_msgs = STRBUF_INIT;
 	struct strbuf msg = STRBUF_INIT;
-	struct store *ctx = NULL;
+	struct imap_store *ctx = NULL;
 	int ofs = 0;
 	int r;
 	int total, n = 0;
@@ -1364,7 +1363,7 @@ int main(int argc, char **argv)
 	}
 
 	fprintf(stderr, "sending %d message%s\n", total, (total != 1) ? "s" : "");
-	ctx->name = imap_folder;
+	ctx->gen.name = imap_folder;
 	while (1) {
 		unsigned percent = n * 100 / total;
 
