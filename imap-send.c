@@ -130,11 +130,6 @@ static struct imap_server_conf server = {
 	NULL,	/* auth_method */
 };
 
-struct imap_store_conf {
-	struct store_conf gen;
-	struct imap_server_conf *server;
-};
-
 #define NIL	(void *)0x1
 #define LIST	(void *)0x2
 
