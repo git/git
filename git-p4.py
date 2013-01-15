@@ -547,27 +547,36 @@ def gitConfigList(key):
         _gitConfig[key] = read_pipe("git config --get-all %s" % key, ignore_error=True).strip().split(os.linesep)
     return _gitConfig[key]
 
-def p4BranchesInGit(branchesAreInRemotes = True):
+def p4BranchesInGit(branchesAreInRemotes=True):
+    """Find all the branches whose names start with "p4/", looking
+       in remotes or heads as specified by the argument.  Return
+       a dictionary of { branch: revision } for each one found.
+       The branch names are the short names, without any
+       "p4/" prefix."""
+
     branches = {}
 
     cmdline = "git rev-parse --symbolic "
     if branchesAreInRemotes:
-        cmdline += " --remotes"
+        cmdline += "--remotes"
     else:
-        cmdline += " --branches"
+        cmdline += "--branches"
 
     for line in read_pipe_lines(cmdline):
         line = line.strip()
 
-        ## only import to p4/
-        if not line.startswith('p4/') or line == "p4/HEAD":
+        # only import to p4/
+        if not line.startswith('p4/'):
             continue
-        branch = line
+        # special symbolic ref to p4/master
+        if line == "p4/HEAD":
+            continue
 
-        # strip off p4
-        branch = re.sub ("^p4/", "", line)
+        # strip off p4/ prefix
+        branch = line[len("p4/"):]
 
         branches[branch] = parseRevision(line)
+
     return branches
 
 def findUpstreamBranchPoint(head = "HEAD"):
