@@ -1091,42 +1091,36 @@ bail:
 	return NULL;
 }
 
+/*
+ * Insert CR characters as necessary in *msg to ensure that every LF
+ * character in *msg is preceded by a CR.
+ */
 static void lf_to_crlf(struct strbuf *msg)
 {
-	size_t new_len;
 	char *new;
-	int i, j, lfnum = 0;
+	size_t i, j;
+	char lastc;
 
-	if (msg->buf[0] == '\n')
-		lfnum++;
-	for (i = 1; i < msg->len; i++) {
-		if (msg->buf[i - 1] != '\r' && msg->buf[i] == '\n')
-			lfnum++;
+	/* First pass: tally, in j, the size of the new string: */
+	for (i = j = 0, lastc = '\0'; i < msg->len; i++) {
+		if (msg->buf[i] == '\n' && lastc != '\r')
+			j++; /* a CR will need to be added here */
+		lastc = msg->buf[i];
+		j++;
 	}
 
-	new_len = msg->len + lfnum;
-	new = xmalloc(new_len + 1);
-	if (msg->buf[0] == '\n') {
-		new[0] = '\r';
-		new[1] = '\n';
-		i = 1;
-		j = 2;
-	} else {
-		new[0] = msg->buf[0];
-		i = 1;
-		j = 1;
-	}
-	for ( ; i < msg->len; i++) {
-		if (msg->buf[i] != '\n') {
-			new[j++] = msg->buf[i];
-			continue;
-		}
-		if (msg->buf[i - 1] != '\r')
+	new = xmalloc(j + 1);
+
+	/*
+	 * Second pass: write the new string.  Note that this loop is
+	 * otherwise identical to the first pass.
+	 */
+	for (i = j = 0, lastc = '\0'; i < msg->len; i++) {
+		if (msg->buf[i] == '\n' && lastc != '\r')
 			new[j++] = '\r';
-		/* otherwise it already had CR before */
-		new[j++] = '\n';
+		lastc = new[j++] = msg->buf[i];
 	}
-	strbuf_attach(msg, new, new_len, new_len + 1);
+	strbuf_attach(msg, new, j, j + 1);
 }
 
 /*
