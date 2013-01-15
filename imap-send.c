@@ -36,12 +36,7 @@ typedef void *SSL;
 struct store {
 	/* currently open mailbox */
 	const char *name; /* foreign! maybe preset? */
-	char *path; /* own */
 	int uidvalidity;
-	unsigned char opts; /* maybe preset? */
-	/* note that the following do _not_ reflect stats from msgs, but mailbox totals */
-	int count; /* # of messages */
-	int recent; /* # of recent messages - don't trust this beyond the initial read */
 };
 
 static const char imap_send_usage[] = "git imap-send < <mbox>";
@@ -772,13 +767,20 @@ static int get_cmd_result(struct imap_store *ctx, struct imap_cmd *tcmd)
 				   !strcmp("NO", arg) || !strcmp("BYE", arg)) {
 				if ((resp = parse_response_code(ctx, NULL, cmd)) != RESP_OK)
 					return resp;
-			} else if (!strcmp("CAPABILITY", arg))
+			} else if (!strcmp("CAPABILITY", arg)) {
 				parse_capability(imap, cmd);
-			else if ((arg1 = next_arg(&cmd))) {
-				if (!strcmp("EXISTS", arg1))
-					ctx->gen.count = atoi(arg);
-				else if (!strcmp("RECENT", arg1))
-					ctx->gen.recent = atoi(arg);
+			} else if ((arg1 = next_arg(&cmd))) {
+				; /*
+				   * Unhandled response-data with at least two words.
+				   * Ignore it.
+				   *
+				   * NEEDSWORK: Previously this case handled '<num> EXISTS'
+				   * and '<num> RECENT' but as a probably-unintended side
+				   * effect it ignores other unrecognized two-word
+				   * responses.  imap-send doesn't ever try to read
+				   * messages or mailboxes these days, so consider
+				   * eliminating this case.
+				   */
 			} else {
 				fprintf(stderr, "IMAP error: unable to parse untagged response\n");
 				return RESP_BAD;
@@ -1254,7 +1256,6 @@ static int imap_store_msg(struct store *gctx, struct strbuf *msg)
 	imap->caps = imap->rcaps;
 	if (ret != DRV_OK)
 		return ret;
-	gctx->count++;
 
 	return DRV_OK;
 }
