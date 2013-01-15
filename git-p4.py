@@ -2748,23 +2748,23 @@ class P4Sync(Command, P4UserMap):
         self.changeRange = ""
         self.initialParent = ""
         self.previousDepotPaths = []
+        self.hasOrigin = False
 
         # map from branch depot path to parent branch
         self.knownBranches = {}
         self.initialParents = {}
-        self.hasOrigin = originP4BranchesExist()
-        if not self.syncWithOrigin:
-            self.hasOrigin = False
 
         if self.importIntoRemotes:
             self.refPrefix = "refs/remotes/p4/"
         else:
             self.refPrefix = "refs/heads/p4/"
 
-        if self.syncWithOrigin and self.hasOrigin:
-            if not self.silent:
-                print "Syncing with origin first by calling git fetch origin"
-            system("git fetch origin")
+        if self.syncWithOrigin:
+            self.hasOrigin = originP4BranchesExist()
+            if self.hasOrigin:
+                if not self.silent:
+                    print 'Syncing with origin first, using "git fetch origin"'
+                system("git fetch origin")
 
         if len(self.branch) == 0:
             self.branch = self.refPrefix + "master"
