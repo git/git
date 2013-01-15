@@ -40,14 +40,13 @@ test_expect_success 'clone --branch should checkout master' '
 	)
 '
 
-test_expect_failure 'sync when branch is not called master should work' '
-	git p4 clone --branch=refs/remotes/p4/sb --dest="$git" //depot@2 &&
+test_expect_success 'sync when no master branch prints a nice error' '
 	test_when_finished cleanup_git &&
+	git p4 clone --branch=refs/remotes/p4/sb --dest="$git" //depot@2 &&
 	(
 		cd "$git" &&
-		git p4 sync &&
-		git show -s --format=%s refs/remotes/p4/sb >show &&
-		grep "change 3" show
+		test_must_fail git p4 sync 2>err &&
+		grep "Error: no branch refs/remotes/p4/master" err
 	)
 '
 
