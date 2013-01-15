@@ -322,7 +322,7 @@ int cmd_reset(int argc, const char **argv, const char *prefix)
 	if (reset_type != SOFT) {
 		struct lock_file *lock = xcalloc(1, sizeof(struct lock_file));
 		int newfd = hold_locked_index(lock, 1);
-		if (pathspec) {
+		if (reset_type == MIXED) {
 			if (read_from_tree(pathspec, sha1))
 				return 1;
 		} else {
