@@ -578,11 +578,10 @@ static void free_list(struct imap_list *list)
 	}
 }
 
-static int parse_imap_list_l(struct imap *imap, char **sp, struct imap_list **curp, int level)
+static int parse_imap_list_l(char **sp, struct imap_list **curp, int level)
 {
 	struct imap_list *cur;
 	char *s = *sp, *p;
-	int n, bytes;
 
 	for (;;) {
 		while (isspace((unsigned char)*s))
@@ -598,39 +597,7 @@ static int parse_imap_list_l(struct imap *imap, char **sp, struct imap_list **cu
 			/* sublist */
 			s++;
 			cur->val = LIST;
-			if (parse_imap_list_l(imap, &s, &cur->child, level + 1))
-				goto bail;
-		} else if (imap && *s == '{') {
-			/* literal */
-			bytes = cur->len = strtol(s + 1, &s, 10);
-			if (*s != '}')
-				goto bail;
-
-			s = cur->val = xmalloc(cur->len);
-
-			/* dump whats left over in the input buffer */
-			n = imap->buf.bytes - imap->buf.offset;
-
-			if (n > bytes)
-				/* the entire message fit in the buffer */
-				n = bytes;
-
-			memcpy(s, imap->buf.buf + imap->buf.offset, n);
-			s += n;
-			bytes -= n;
-
-			/* mark that we used part of the buffer */
-			imap->buf.offset += n;
-
-			/* now read the rest of the message */
-			while (bytes > 0) {
-				if ((n = socket_read(&imap->buf.sock, s, bytes)) <= 0)
-					goto bail;
-				s += n;
-				bytes -= n;
-			}
-
-			if (buffer_gets(&imap->buf, &s))
+			if (parse_imap_list_l(&s, &cur->child, level + 1))
 				goto bail;
 		} else if (*s == '"') {
 			/* quoted string */
@@ -673,7 +640,7 @@ static struct imap_list *parse_list(char **sp)
 {
 	struct imap_list *head;
 
-	if (!parse_imap_list_l(NULL, sp, &head, 0))
+	if (!parse_imap_list_l(sp, &head, 0))
 		return head;
 	free_list(head);
 	return NULL;
