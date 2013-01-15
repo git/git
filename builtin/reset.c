@@ -109,12 +109,6 @@ static void print_new_head_line(struct commit *commit)
 		printf("\n");
 }
 
-static void update_index_refresh(int flags)
-{
-	refresh_index(&the_index, (flags), NULL, NULL,
-		      _("Unstaged changes after reset:"));
-}
-
 static void update_index_from_diff(struct diff_queue_struct *q,
 		struct diff_options *opt, void *data)
 {
@@ -329,9 +323,11 @@ int cmd_reset(int argc, const char **argv, const char *prefix)
 				die(_("Could not reset index file to revision '%s'."), rev);
 		}
 
-		if (reset_type == MIXED) /* Report what has not been updated. */
-			update_index_refresh(
-				quiet ? REFRESH_QUIET : REFRESH_IN_PORCELAIN);
+		if (reset_type == MIXED) { /* Report what has not been updated. */
+			int flags = quiet ? REFRESH_QUIET : REFRESH_IN_PORCELAIN;
+			refresh_index(&the_index, flags, NULL, NULL,
+				      _("Unstaged changes after reset:"));
+		}
 
 		if (write_cache(newfd, active_cache, active_nr) ||
 		    commit_locked_index(lock))
