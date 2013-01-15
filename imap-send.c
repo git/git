@@ -68,10 +68,6 @@ struct store {
 	int recent; /* # of recent messages - don't trust this beyond the initial read */
 };
 
-struct msg_data {
-	struct strbuf data;
-};
-
 static const char imap_send_usage[] = "git imap-send < <mbox>";
 
 #undef DRV_OK
@@ -1279,7 +1275,7 @@ static void lf_to_crlf(struct strbuf *msg)
  * Store msg to IMAP.  Also detach and free the data from msg->data,
  * leaving msg->data empty.
  */
-static int imap_store_msg(struct store *gctx, struct msg_data *msg)
+static int imap_store_msg(struct store *gctx, struct strbuf *msg)
 {
 	struct imap_store *ctx = (struct imap_store *)gctx;
 	struct imap *imap = ctx->imap;
@@ -1287,11 +1283,11 @@ static int imap_store_msg(struct store *gctx, struct msg_data *msg)
 	const char *prefix, *box;
 	int ret;
 
-	lf_to_crlf(&msg->data);
+	lf_to_crlf(msg);
 	memset(&cb, 0, sizeof(cb));
 
-	cb.dlen = msg->data.len;
-	cb.data = strbuf_detach(&msg->data, NULL);
+	cb.dlen = msg->len;
+	cb.data = strbuf_detach(msg, NULL);
 
 	box = gctx->name;
 	prefix = !strcmp(box, "INBOX") ? "" : ctx->prefix;
@@ -1449,7 +1445,7 @@ static int git_imap_config(const char *key, const char *val, void *cb)
 int main(int argc, char **argv)
 {
 	struct strbuf all_msgs = STRBUF_INIT;
-	struct msg_data msg = {STRBUF_INIT};
+	struct strbuf msg = STRBUF_INIT;
 	struct store *ctx = NULL;
 	int ofs = 0;
 	int r;
@@ -1511,10 +1507,10 @@ int main(int argc, char **argv)
 		unsigned percent = n * 100 / total;
 
 		fprintf(stderr, "%4u%% (%d/%d) done\r", percent, n, total);
-		if (!split_msg(&all_msgs, &msg.data, &ofs))
+		if (!split_msg(&all_msgs, &msg, &ofs))
 			break;
 		if (server.use_html)
-			wrap_in_html(&msg.data);
+			wrap_in_html(&msg);
 		r = imap_store_msg(ctx, &msg);
 		if (r != DRV_OK)
 			break;
