@@ -145,11 +145,8 @@ static void update_index_from_diff(struct diff_queue_struct *q,
 	}
 }
 
-static int read_from_tree(const char **pathspec, unsigned char *tree_sha1,
-			  int refresh_flags)
+static int read_from_tree(const char **pathspec, unsigned char *tree_sha1)
 {
-	struct lock_file *lock = xcalloc(1, sizeof(struct lock_file));
-	int index_fd;
 	struct diff_options opt;
 
 	memset(&opt, 0, sizeof(opt));
@@ -157,7 +154,6 @@ static int read_from_tree(const char **pathspec, unsigned char *tree_sha1,
 	opt.output_format = DIFF_FORMAT_CALLBACK;
 	opt.format_callback = update_index_from_diff;
 
-	index_fd = hold_locked_index(lock, 1);
 	read_cache();
 	if (do_diff_cache(tree_sha1, &opt))
 		return 1;
@@ -165,7 +161,7 @@ static int read_from_tree(const char **pathspec, unsigned char *tree_sha1,
 	diff_flush(&opt);
 	diff_tree_release_paths(&opt);
 
-	return update_index_refresh(index_fd, lock, refresh_flags);
+	return 0;
 }
 
 static void set_reflog_message(struct strbuf *sb, const char *action,
@@ -322,9 +318,13 @@ int cmd_reset(int argc, const char **argv, const char *prefix)
 		die(_("%s reset is not allowed in a bare repository"),
 		    _(reset_type_names[reset_type]));
 
-	if (pathspec)
-		return read_from_tree(pathspec, sha1,
-				quiet ? REFRESH_QUIET : REFRESH_IN_PORCELAIN);
+	if (pathspec) {
+		struct lock_file *lock = xcalloc(1, sizeof(struct lock_file));
+		int index_fd = hold_locked_index(lock, 1);
+		return read_from_tree(pathspec, sha1) ||
+			update_index_refresh(index_fd, lock,
+					quiet ? REFRESH_QUIET : REFRESH_IN_PORCELAIN);
+	}
 
 	/* Soft reset does not touch the index file nor the working tree
 	 * at all, but requires them in a good order.  Other resets reset
