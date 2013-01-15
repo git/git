@@ -669,19 +669,14 @@ bail:
 	return -1;
 }
 
-static struct imap_list *parse_imap_list(struct imap *imap, char **sp)
+static struct imap_list *parse_list(char **sp)
 {
 	struct imap_list *head;
 
-	if (!parse_imap_list_l(imap, sp, &head, 0))
+	if (!parse_imap_list_l(NULL, sp, &head, 0))
 		return head;
 	free_list(head);
 	return NULL;
-}
-
-static struct imap_list *parse_list(char **sp)
-{
-	return parse_imap_list(NULL, sp);
 }
 
 static void parse_capability(struct imap *imap, char *cmd)
