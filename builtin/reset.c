@@ -295,8 +295,6 @@ int cmd_reset(int argc, const char **argv, const char *prefix)
 		else if (reset_type != NONE)
 			die(_("Cannot do %s reset with paths."),
 					_(reset_type_names[reset_type]));
-		return read_from_tree(pathspec, sha1,
-				quiet ? REFRESH_QUIET : REFRESH_IN_PORCELAIN);
 	}
 	if (reset_type == NONE)
 		reset_type = MIXED; /* by default */
@@ -307,6 +305,10 @@ int cmd_reset(int argc, const char **argv, const char *prefix)
 	if (reset_type == MIXED && is_bare_repository())
 		die(_("%s reset is not allowed in a bare repository"),
 		    _(reset_type_names[reset_type]));
+
+	if (pathspec)
+		return read_from_tree(pathspec, sha1,
+				quiet ? REFRESH_QUIET : REFRESH_IN_PORCELAIN);
 
 	/* Soft reset does not touch the index file nor the working tree
 	 * at all, but requires them in a good order.  Other resets reset
