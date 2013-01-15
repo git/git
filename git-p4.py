@@ -2512,13 +2512,6 @@ class P4Sync(Command, P4UserMap):
                 branch = branch[len(self.projectName):]
             self.knownBranches[branch] = branch
 
-    def listExistingP4GitBranches(self):
-        # branches holds mapping from name to commit
-        branches = p4BranchesInGit(self.importIntoRemotes)
-        self.p4BranchesInGit = branches.keys()
-        for branch in branches.keys():
-            self.initialParents[self.refPrefix + branch] = branches[branch]
-
     def updateOptionDict(self, d):
         option_keys = {}
         if self.keepRepoPath:
@@ -2799,7 +2792,12 @@ class P4Sync(Command, P4UserMap):
         if args == []:
             if self.hasOrigin:
                 createOrUpdateBranchesFromOrigin(self.refPrefix, self.silent)
-            self.listExistingP4GitBranches()
+
+            # branches holds mapping from branch name to sha1
+            branches = p4BranchesInGit(self.importIntoRemotes)
+            self.p4BranchesInGit = branches.keys()
+            for branch in branches.keys():
+                self.initialParents[self.refPrefix + branch] = branches[branch]
 
             if len(self.p4BranchesInGit) > 1:
                 if not self.silent:
