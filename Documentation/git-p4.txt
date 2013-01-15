@@ -174,8 +174,7 @@ subsequent 'sync' operations.
 --branch <branch>::
 	Import changes into given branch.  If the branch starts with
 	'refs/', it will be used as is, otherwise the path 'refs/heads/'
-	will be prepended.  The default branch is 'master'.  If used
-	with an initial clone, no HEAD will be checked out.
+	will be prepended.  The default branch is 'p4/master'.
 +
 This example imports a new remote "p4/proj2" into an existing
 git repository:

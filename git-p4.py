@@ -3118,17 +3118,15 @@ class P4Clone(P4Sync):
 
         if not P4Sync.run(self, depotPaths):
             return False
-        if self.branch != "master":
-            if self.importIntoRemotes:
-                masterbranch = "refs/remotes/p4/master"
-            else:
-                masterbranch = "refs/heads/p4/master"
-            if gitBranchExists(masterbranch):
-                system("git branch master %s" % masterbranch)
-                if not self.cloneBare:
-                    system("git checkout -f")
-            else:
-                print "Could not detect main branch. No checkout/master branch created."
+
+        # create a master branch and check out a work tree
+        if gitBranchExists(self.branch):
+            system([ "git", "branch", "master", self.branch ])
+            if not self.cloneBare:
+                system([ "git", "checkout", "-f" ])
+        else:
+            print 'Not checking out any branch, use ' \
+                  '"git checkout -q -b master <branch>"'
 
         # auto-set this variable if invoked with --use-client-spec
         if self.useClientSpec_from_options:
