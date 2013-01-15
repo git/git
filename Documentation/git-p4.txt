@@ -112,6 +112,11 @@ will be fetched and consulted first during a 'git p4 sync'.  Since
 importing directly from p4 is considerably slower than pulling changes
 from a git remote, this can be useful in a multi-developer environment.
 
+If there are multiple branches, doing 'git p4 sync' will automatically
+use the "BRANCH DETECTION" algorithm to try to partition new changes
+into the right branch.  This can be overridden with the '--branch'
+option to specify just a single branch to update.
+
 
 Rebase
 ~~~~~~

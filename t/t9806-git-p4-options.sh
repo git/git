@@ -88,14 +88,14 @@ test_expect_success 'sync when two branches but no master should noop' '
 	)
 '
 
-test_expect_failure 'sync --branch updates specified branch' '
+test_expect_success 'sync --branch updates specific branch, no detection' '
 	test_when_finished cleanup_git &&
 	(
 		cd "$git" &&
 		git init &&
-		git p4 sync --branch=refs/remotes/p4/b1 //depot@2 &&
-		git p4 sync --branch=refs/remotes/p4/b2 //depot@2 &&
-		git p4 sync --branch=refs/remotes/p4/b2 &&
+		git p4 sync --branch=b1 //depot@2 &&
+		git p4 sync --branch=b2 //depot@2 &&
+		git p4 sync --branch=b2 &&
 		git show -s --format=%s refs/remotes/p4/b1 >show &&
 		grep "Initial import" show &&
 		git show -s --format=%s refs/remotes/p4/b2 >show &&

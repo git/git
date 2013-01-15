@@ -2804,14 +2804,22 @@ class P4Sync(Command, P4UserMap):
 
             # branches holds mapping from branch name to sha1
             branches = p4BranchesInGit(self.importIntoRemotes)
-            self.p4BranchesInGit = branches.keys()
-            for branch in branches.keys():
-                self.initialParents[self.refPrefix + branch] = branches[branch]
+
+            # restrict to just this one, disabling detect-branches
+            if branch_arg_given:
+                short = self.branch.split("/")[-1]
+                if short in branches:
+                    self.p4BranchesInGit = [ short ]
+            else:
+                self.p4BranchesInGit = branches.keys()
 
             if len(self.p4BranchesInGit) > 1:
                 if not self.silent:
                     print "Importing from/into multiple branches"
                 self.detectBranches = True
+                for branch in branches.keys():
+                    self.initialParents[self.refPrefix + branch] = \
+                        branches[branch]
 
             if self.verbose:
                 print "branches: %s" % self.p4BranchesInGit
