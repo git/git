@@ -178,9 +178,10 @@ static const char **parse_args(const char **argv, const char *prefix, const char
 	/*
 	 * Possible arguments are:
 	 *
-	 * git reset [-opts] <rev> <paths>...
-	 * git reset [-opts] <rev> -- <paths>...
-	 * git reset [-opts] -- <paths>...
+	 * git reset [-opts] [<rev>]
+	 * git reset [-opts] <tree> [<paths>...]
+	 * git reset [-opts] <tree> -- [<paths>...]
+	 * git reset [-opts] -- [<paths>...]
 	 * git reset [-opts] <paths>...
 	 *
 	 * At this point, argv points immediately after [-opts].
@@ -195,11 +196,13 @@ static const char **parse_args(const char **argv, const char *prefix, const char
 		}
 		/*
 		 * Otherwise, argv[0] could be either <rev> or <paths> and
-		 * has to be unambiguous.
+		 * has to be unambiguous. If there is a single argument, it
+		 * can not be a tree
 		 */
-		else if (!get_sha1_committish(argv[0], unused)) {
+		else if ((!argv[1] && !get_sha1_committish(argv[0], unused)) ||
+			 (argv[1] && !get_sha1_treeish(argv[0], unused))) {
 			/*
-			 * Ok, argv[0] looks like a rev; it should not
+			 * Ok, argv[0] looks like a commit/tree; it should not
 			 * be a filename.
 			 */
 			verify_non_filename(prefix, argv[0]);
@@ -241,7 +244,6 @@ int cmd_reset(int argc, const char **argv, const char *prefix)
 	const char *rev;
 	unsigned char sha1[20];
 	const char **pathspec = NULL;
-	struct commit *commit;
 	const struct option options[] = {
 		OPT__QUIET(&quiet, N_("be quiet, only report errors")),
 		OPT_SET_INT(0, "mixed", &reset_type,
@@ -263,19 +265,23 @@ int cmd_reset(int argc, const char **argv, const char *prefix)
 						PARSE_OPT_KEEP_DASHDASH);
 	pathspec = parse_args(argv, prefix, &rev);
 
-	if (get_sha1_committish(rev, sha1))
-		die(_("Failed to resolve '%s' as a valid ref."), rev);
-
-	/*
-	 * NOTE: As "git reset $treeish -- $path" should be usable on
-	 * any tree-ish, this is not strictly correct. We are not
-	 * moving the HEAD to any commit; we are merely resetting the
-	 * entries in the index to that of a treeish.
-	 */
-	commit = lookup_commit_reference(sha1);
-	if (!commit)
-		die(_("Could not parse object '%s'."), rev);
-	hashcpy(sha1, commit->object.sha1);
+	if (!pathspec) {
+		struct commit *commit;
+		if (get_sha1_committish(rev, sha1))
+			die(_("Failed to resolve '%s' as a valid revision."), rev);
+		commit = lookup_commit_reference(sha1);
+		if (!commit)
+			die(_("Could not parse object '%s'."), rev);
+		hashcpy(sha1, commit->object.sha1);
+	} else {
+		struct tree *tree;
+		if (get_sha1_treeish(rev, sha1))
+			die(_("Failed to resolve '%s' as a valid tree."), rev);
+		tree = parse_tree_indirect(sha1);
+		if (!tree)
+			die(_("Could not parse object '%s'."), rev);
+		hashcpy(sha1, tree->object.sha1);
+	}
 
 	if (patch_mode) {
 		if (reset_type != NONE)
@@ -340,7 +346,7 @@ int cmd_reset(int argc, const char **argv, const char *prefix)
 		update_ref_status = update_refs(rev, sha1);
 
 		if (reset_type == HARD && !update_ref_status && !quiet)
-			print_new_head_line(commit);
+			print_new_head_line(lookup_commit_reference(sha1));
 
 		remove_branch_state();
 	}

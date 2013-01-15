@@ -497,4 +497,12 @@ test_expect_success 'disambiguation (4)' '
 	test ! -f secondfile
 '
 
+test_expect_success 'reset with paths accepts tree' '
+	# for simpler tests, drop last commit containing added files
+	git reset --hard HEAD^ &&
+	git reset HEAD^^{tree} -- . &&
+	git diff --cached HEAD^ --exit-code &&
+	git diff HEAD --exit-code
+'
+
 test_done
