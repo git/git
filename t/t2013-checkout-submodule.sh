@@ -23,7 +23,7 @@ test_expect_success '"reset <submodule>" updates the index' '
 	git update-index --refresh &&
 	git diff-files --quiet &&
 	git diff-index --quiet --cached HEAD &&
-	test_must_fail git reset HEAD^ submodule &&
+	git reset HEAD^ submodule &&
 	test_must_fail git diff-files --quiet &&
 	git reset submodule &&
 	git diff-files --quiet
