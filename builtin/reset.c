@@ -240,7 +240,7 @@ static int update_refs(const char *rev, const unsigned char *sha1)
 int cmd_reset(int argc, const char **argv, const char *prefix)
 {
 	int reset_type = NONE, update_ref_status = 0, quiet = 0;
-	int patch_mode = 0;
+	int patch_mode = 0, unborn;
 	const char *rev;
 	unsigned char sha1[20];
 	const char **pathspec = NULL;
@@ -265,7 +265,11 @@ int cmd_reset(int argc, const char **argv, const char *prefix)
 						PARSE_OPT_KEEP_DASHDASH);
 	pathspec = parse_args(argv, prefix, &rev);
 
-	if (!pathspec) {
+	unborn = !strcmp(rev, "HEAD") && get_sha1("HEAD", sha1);
+	if (unborn) {
+		/* reset on unborn branch: treat as reset to empty tree */
+		hashcpy(sha1, EMPTY_TREE_SHA1_BIN);
+	} else if (!pathspec) {
 		struct commit *commit;
 		if (get_sha1_committish(rev, sha1))
 			die(_("Failed to resolve '%s' as a valid revision."), rev);
@@ -286,7 +290,7 @@ int cmd_reset(int argc, const char **argv, const char *prefix)
 	if (patch_mode) {
 		if (reset_type != NONE)
 			die(_("--patch is incompatible with --{hard,mixed,soft}"));
-		return run_add_interactive(rev, "--patch=reset", pathspec);
+		return run_add_interactive(sha1_to_hex(sha1), "--patch=reset", pathspec);
 	}
 
 	/* git reset tree [--] paths... can be used to
@@ -340,16 +344,16 @@ int cmd_reset(int argc, const char **argv, const char *prefix)
 			die(_("Could not write new index file."));
 	}
 
-	if (!pathspec) {
+	if (!pathspec && !unborn) {
 		/* Any resets without paths update HEAD to the head being
 		 * switched to, saving the previous head in ORIG_HEAD before. */
 		update_ref_status = update_refs(rev, sha1);
 
 		if (reset_type == HARD && !update_ref_status && !quiet)
 			print_new_head_line(lookup_commit_reference(sha1));
-
-		remove_branch_state();
 	}
+	if (!pathspec)
+		remove_branch_state();
 
 	return update_ref_status;
 }
