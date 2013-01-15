@@ -99,15 +99,6 @@ static struct imap_server_conf server = {
 	NULL,	/* auth_method */
 };
 
-#define NIL	(void *)0x1
-#define LIST	(void *)0x2
-
-struct imap_list {
-	struct imap_list *next, *child;
-	char *val;
-	int len;
-};
-
 struct imap_socket {
 	int fd[2];
 	SSL *ssl;
@@ -124,7 +115,6 @@ struct imap_cmd;
 
 struct imap {
 	int uidnext; /* from SELECT responses */
-	struct imap_list *ns_personal, *ns_other, *ns_shared; /* NAMESPACE info */
 	unsigned caps, rcaps; /* CAPABILITY results */
 	/* command queue */
 	int nexttag, num_in_progress, literal_pending;
@@ -554,34 +544,9 @@ static int imap_exec_m(struct imap_store *ctx, struct imap_cmd_cb *cb,
 	}
 }
 
-static int is_atom(struct imap_list *list)
+static int skip_imap_list_l(char **sp, int level)
 {
-	return list && list->val && list->val != NIL && list->val != LIST;
-}
-
-static int is_list(struct imap_list *list)
-{
-	return list && list->val == LIST;
-}
-
-static void free_list(struct imap_list *list)
-{
-	struct imap_list *tmp;
-
-	for (; list; list = tmp) {
-		tmp = list->next;
-		if (is_list(list))
-			free_list(list->child);
-		else if (is_atom(list))
-			free(list->val);
-		free(list);
-	}
-}
-
-static int parse_imap_list_l(char **sp, struct imap_list **curp, int level)
-{
-	struct imap_list *cur;
-	char *s = *sp, *p;
+	char *s = *sp;
 
 	for (;;) {
 		while (isspace((unsigned char)*s))
@@ -590,36 +555,23 @@ static int parse_imap_list_l(char **sp, struct imap_list **curp, int level)
 			s++;
 			break;
 		}
-		*curp = cur = xmalloc(sizeof(*cur));
-		curp = &cur->next;
-		cur->val = NULL; /* for clean bail */
 		if (*s == '(') {
 			/* sublist */
 			s++;
-			cur->val = LIST;
-			if (parse_imap_list_l(&s, &cur->child, level + 1))
+			if (skip_imap_list_l(&s, level + 1))
 				goto bail;
 		} else if (*s == '"') {
 			/* quoted string */
 			s++;
-			p = s;
 			for (; *s != '"'; s++)
 				if (!*s)
 					goto bail;
-			cur->len = s - p;
 			s++;
-			cur->val = xmemdupz(p, cur->len);
 		} else {
 			/* atom */
-			p = s;
 			for (; *s && !isspace((unsigned char)*s); s++)
 				if (level && *s == ')')
 					break;
-			cur->len = s - p;
-			if (cur->len == 3 && !memcmp("NIL", p, 3))
-				cur->val = NIL;
-			else
-				cur->val = xmemdupz(p, cur->len);
 		}
 
 		if (!level)
@@ -628,22 +580,15 @@ static int parse_imap_list_l(char **sp, struct imap_list **curp, int level)
 			goto bail;
 	}
 	*sp = s;
-	*curp = NULL;
 	return 0;
 
 bail:
-	*curp = NULL;
 	return -1;
 }
 
-static struct imap_list *parse_list(char **sp)
+static void skip_list(char **sp)
 {
-	struct imap_list *head;
-
-	if (!parse_imap_list_l(sp, &head, 0))
-		return head;
-	free_list(head);
-	return NULL;
+	skip_imap_list_l(sp, 0);
 }
 
 static void parse_capability(struct imap *imap, char *cmd)
@@ -722,9 +667,10 @@ static int get_cmd_result(struct imap_store *ctx, struct imap_cmd *tcmd)
 			}
 
 			if (!strcmp("NAMESPACE", arg)) {
-				imap->ns_personal = parse_list(&cmd);
-				imap->ns_other = parse_list(&cmd);
-				imap->ns_shared = parse_list(&cmd);
+				/* rfc2342 NAMESPACE response. */
+				skip_list(&cmd); /* Personal mailboxes */
+				skip_list(&cmd); /* Others' mailboxes */
+				skip_list(&cmd); /* Shared mailboxes */
 			} else if (!strcmp("OK", arg) || !strcmp("BAD", arg) ||
 				   !strcmp("NO", arg) || !strcmp("BYE", arg)) {
 				if ((resp = parse_response_code(ctx, NULL, cmd)) != RESP_OK)
@@ -844,9 +790,6 @@ static void imap_close_server(struct imap_store *ictx)
 		imap_exec(ictx, NULL, "LOGOUT");
 		socket_shutdown(&imap->buf.sock);
 	}
-	free_list(imap->ns_personal);
-	free_list(imap->ns_other);
-	free_list(imap->ns_shared);
 	free(imap);
 }
 
