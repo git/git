@@ -393,8 +393,10 @@ the path elements in the p4 repository.  The example above relied on the
 presence of the p4 branch.  Without p4 branches, the same result will
 occur with:
 ----
+git init depot
+cd depot
 git config git-p4.branchList main:branch1
-git p4 clone --detect-branches //depot@all
+git p4 clone --detect-branches //depot@all .
 ----
 
 
