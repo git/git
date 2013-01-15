@@ -126,9 +126,6 @@ static int update_index_refresh(int fd, struct lock_file *index_lock, int flags)
 		fd = hold_locked_index(index_lock, 1);
 	}
 
-	if (read_cache() < 0)
-		return error(_("Could not read index"));
-
 	result = refresh_index(&the_index, (flags), NULL, NULL,
 			       _("Unstaged changes after reset:")) ? 1 : 0;
 	if (write_cache(fd, active_cache, active_nr) ||
@@ -141,12 +138,6 @@ static void update_index_from_diff(struct diff_queue_struct *q,
 		struct diff_options *opt, void *data)
 {
 	int i;
-	int *discard_flag = data;
-
-	/* do_diff_cache() mangled the index */
-	discard_cache();
-	*discard_flag = 1;
-	read_cache();
 
 	for (i = 0; i < q->nr; i++) {
 		struct diff_filespec *one = q->queue[i]->one;
@@ -179,17 +170,15 @@ static int read_from_tree(const char *prefix, const char **argv,
 		unsigned char *tree_sha1, int refresh_flags)
 {
 	struct lock_file *lock = xcalloc(1, sizeof(struct lock_file));
-	int index_fd, index_was_discarded = 0;
+	int index_fd;
 	struct diff_options opt;
 
 	memset(&opt, 0, sizeof(opt));
 	diff_tree_setup_paths(get_pathspec(prefix, (const char **)argv), &opt);
 	opt.output_format = DIFF_FORMAT_CALLBACK;
 	opt.format_callback = update_index_from_diff;
-	opt.format_callback_data = &index_was_discarded;
 
 	index_fd = hold_locked_index(lock, 1);
-	index_was_discarded = 0;
 	read_cache();
 	if (do_diff_cache(tree_sha1, &opt))
 		return 1;
@@ -197,9 +186,6 @@ static int read_from_tree(const char *prefix, const char **argv,
 	diff_flush(&opt);
 	diff_tree_release_paths(&opt);
 
-	if (!index_was_discarded)
-		/* The index is still clobbered from do_diff_cache() */
-		discard_cache();
 	return update_index_refresh(index_fd, lock, refresh_flags);
 }
 
