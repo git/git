@@ -27,14 +27,59 @@ test_expect_success 'clone no --git-dir' '
 	test_must_fail git p4 clone --git-dir=xx //depot
 '
 
-test_expect_success 'clone --branch' '
+test_expect_failure 'clone --branch should checkout master' '
 	git p4 clone --branch=refs/remotes/p4/sb --dest="$git" //depot &&
 	test_when_finished cleanup_git &&
 	(
 		cd "$git" &&
-		git ls-files >files &&
-		test_line_count = 0 files &&
-		test_path_is_file .git/refs/remotes/p4/sb
+		git rev-parse refs/remotes/p4/sb >sb &&
+		git rev-parse refs/heads/master >master &&
+		test_cmp sb master &&
+		git rev-parse HEAD >head &&
+		test_cmp sb head
+	)
+'
+
+test_expect_failure 'sync when branch is not called master should work' '
+	git p4 clone --branch=refs/remotes/p4/sb --dest="$git" //depot@2 &&
+	test_when_finished cleanup_git &&
+	(
+		cd "$git" &&
+		git p4 sync &&
+		git show -s --format=%s refs/remotes/p4/sb >show &&
+		grep "change 3" show
+	)
+'
+
+# engages --detect-branches code, which will do filename filtering so
+# no sync to either b1 or b2
+test_expect_success 'sync when two branches but no master should noop' '
+	test_when_finished cleanup_git &&
+	(
+		cd "$git" &&
+		git init &&
+		git p4 sync --branch=refs/remotes/p4/b1 //depot@2 &&
+		git p4 sync --branch=refs/remotes/p4/b2 //depot@2 &&
+		git p4 sync &&
+		git show -s --format=%s refs/remotes/p4/b1 >show &&
+		grep "Initial import" show &&
+		git show -s --format=%s refs/remotes/p4/b2 >show &&
+		grep "Initial import" show
+	)
+'
+
+test_expect_failure 'sync --branch updates specified branch' '
+	test_when_finished cleanup_git &&
+	(
+		cd "$git" &&
+		git init &&
+		git p4 sync --branch=refs/remotes/p4/b1 //depot@2 &&
+		git p4 sync --branch=refs/remotes/p4/b2 //depot@2 &&
+		git p4 sync --branch=refs/remotes/p4/b2 &&
+		git show -s --format=%s refs/remotes/p4/b1 >show &&
+		grep "Initial import" show &&
+		git show -s --format=%s refs/remotes/p4/b2 >show &&
+		grep "change 3" show
 	)
 '
 
