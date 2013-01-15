@@ -33,12 +33,6 @@ typedef void *SSL;
 #include <openssl/hmac.h>
 #endif
 
-struct store {
-	/* currently open mailbox */
-	const char *name; /* foreign! maybe preset? */
-	int uidvalidity;
-};
-
 static const char imap_send_usage[] = "git imap-send < <mbox>";
 
 #undef DRV_OK
@@ -123,7 +117,9 @@ struct imap {
 };
 
 struct imap_store {
-	struct store gen;
+	/* currently open mailbox */
+	const char *name; /* foreign! maybe preset? */
+	int uidvalidity;
 	struct imap *imap;
 	const char *prefix;
 };
@@ -618,7 +614,7 @@ static int parse_response_code(struct imap_store *ctx, struct imap_cmd_cb *cb,
 	*p++ = 0;
 	arg = next_arg(&s);
 	if (!strcmp("UIDVALIDITY", arg)) {
-		if (!(arg = next_arg(&s)) || !(ctx->gen.uidvalidity = atoi(arg))) {
+		if (!(arg = next_arg(&s)) || !(ctx->uidvalidity = atoi(arg))) {
 			fprintf(stderr, "IMAP error: malformed UIDVALIDITY status\n");
 			return RESP_BAD;
 		}
@@ -636,7 +632,7 @@ static int parse_response_code(struct imap_store *ctx, struct imap_cmd_cb *cb,
 		for (; isspace((unsigned char)*p); p++);
 		fprintf(stderr, "*** IMAP ALERT *** %s\n", p);
 	} else if (cb && cb->ctx && !strcmp("APPENDUID", arg)) {
-		if (!(arg = next_arg(&s)) || !(ctx->gen.uidvalidity = atoi(arg)) ||
+		if (!(arg = next_arg(&s)) || !(ctx->uidvalidity = atoi(arg)) ||
 		    !(arg = next_arg(&s)) || !(*(int *)cb->ctx = atoi(arg))) {
 			fprintf(stderr, "IMAP error: malformed APPENDUID status\n");
 			return RESP_BAD;
@@ -1150,7 +1146,7 @@ static int imap_store_msg(struct imap_store *ctx, struct strbuf *msg)
 	cb.dlen = msg->len;
 	cb.data = strbuf_detach(msg, NULL);
 
-	box = ctx->gen.name;
+	box = ctx->name;
 	prefix = !strcmp(box, "INBOX") ? "" : ctx->prefix;
 	cb.create = 0;
 	ret = imap_exec_m(ctx, &cb, "APPEND \"%s%s\" ", prefix, box);
@@ -1362,7 +1358,7 @@ int main(int argc, char **argv)
 	}
 
 	fprintf(stderr, "sending %d message%s\n", total, (total != 1) ? "s" : "");
-	ctx->gen.name = imap_folder;
+	ctx->name = imap_folder;
 	while (1) {
 		unsigned percent = n * 100 / total;
 
