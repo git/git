@@ -198,11 +198,54 @@ static void die_if_unmerged_cache(int reset_type)
 
 }
 
+static const char **parse_args(int argc, const char **argv, const char *prefix, const char **rev_ret)
+{
+	int i = 0;
+	const char *rev = "HEAD";
+	unsigned char unused[20];
+	/*
+	 * Possible arguments are:
+	 *
+	 * git reset [-opts] <rev> <paths>...
+	 * git reset [-opts] <rev> -- <paths>...
+	 * git reset [-opts] -- <paths>...
+	 * git reset [-opts] <paths>...
+	 *
+	 * At this point, argv[i] points immediately after [-opts].
+	 */
+
+	if (i < argc) {
+		if (!strcmp(argv[i], "--")) {
+			i++; /* reset to HEAD, possibly with paths */
+		} else if (i + 1 < argc && !strcmp(argv[i+1], "--")) {
+			rev = argv[i];
+			i += 2;
+		}
+		/*
+		 * Otherwise, argv[i] could be either <rev> or <paths> and
+		 * has to be unambiguous.
+		 */
+		else if (!get_sha1_committish(argv[i], unused)) {
+			/*
+			 * Ok, argv[i] looks like a rev; it should not
+			 * be a filename.
+			 */
+			verify_non_filename(prefix, argv[i]);
+			rev = argv[i++];
+		} else {
+			/* Otherwise we treat this as a filename */
+			verify_filename(prefix, argv[i], 1);
+		}
+	}
+	*rev_ret = rev;
+	return i < argc ? get_pathspec(prefix, argv + i) : NULL;
+}
+
 int cmd_reset(int argc, const char **argv, const char *prefix)
 {
-	int i = 0, reset_type = NONE, update_ref_status = 0, quiet = 0;
+	int reset_type = NONE, update_ref_status = 0, quiet = 0;
 	int patch_mode = 0;
-	const char *rev = "HEAD";
+	const char *rev;
 	unsigned char sha1[20], *orig = NULL, sha1_orig[20],
 				*old_orig = NULL, sha1_old_orig[20];
 	const char **pathspec = NULL;
@@ -227,41 +270,7 @@ int cmd_reset(int argc, const char **argv, const char *prefix)
 
 	argc = parse_options(argc, argv, prefix, options, git_reset_usage,
 						PARSE_OPT_KEEP_DASHDASH);
-
-	/*
-	 * Possible arguments are:
-	 *
-	 * git reset [-opts] <rev> <paths>...
-	 * git reset [-opts] <rev> -- <paths>...
-	 * git reset [-opts] -- <paths>...
-	 * git reset [-opts] <paths>...
-	 *
-	 * At this point, argv[i] points immediately after [-opts].
-	 */
-
-	if (i < argc) {
-		if (!strcmp(argv[i], "--")) {
-			i++; /* reset to HEAD, possibly with paths */
-		} else if (i + 1 < argc && !strcmp(argv[i+1], "--")) {
-			rev = argv[i];
-			i += 2;
-		}
-		/*
-		 * Otherwise, argv[i] could be either <rev> or <paths> and
-		 * has to be unambiguous.
-		 */
-		else if (!get_sha1_committish(argv[i], sha1)) {
-			/*
-			 * Ok, argv[i] looks like a rev; it should not
-			 * be a filename.
-			 */
-			verify_non_filename(prefix, argv[i]);
-			rev = argv[i++];
-		} else {
-			/* Otherwise we treat this as a filename */
-			verify_filename(prefix, argv[i], 1);
-		}
-	}
+	pathspec = parse_args(argc, argv, prefix, &rev);
 
 	if (get_sha1_committish(rev, sha1))
 		die(_("Failed to resolve '%s' as a valid ref."), rev);
@@ -276,9 +285,6 @@ int cmd_reset(int argc, const char **argv, const char *prefix)
 	if (!commit)
 		die(_("Could not parse object '%s'."), rev);
 	hashcpy(sha1, commit->object.sha1);
-
-	if (i < argc)
-		pathspec = get_pathspec(prefix, argv + i);
 
 	if (patch_mode) {
 		if (reset_type != NONE)
