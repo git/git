@@ -38,14 +38,12 @@ static inline int is_merge(void)
 	return !access(git_path("MERGE_HEAD"), F_OK);
 }
 
-static int reset_index_file(const unsigned char *sha1, int reset_type, int quiet)
+static int reset_index(const unsigned char *sha1, int reset_type, int quiet)
 {
 	int nr = 1;
-	int newfd;
 	struct tree_desc desc[2];
 	struct tree *tree;
 	struct unpack_trees_options opts;
-	struct lock_file *lock = xcalloc(1, sizeof(struct lock_file));
 
 	memset(&opts, 0, sizeof(opts));
 	opts.head_idx = 1;
@@ -66,8 +64,6 @@ static int reset_index_file(const unsigned char *sha1, int reset_type, int quiet
 	default:
 		opts.reset = 1;
 	}
-
-	newfd = hold_locked_index(lock, 1);
 
 	read_cache_unmerged();
 
@@ -90,10 +86,6 @@ static int reset_index_file(const unsigned char *sha1, int reset_type, int quiet
 		tree = parse_tree_indirect(sha1);
 		prime_cache_tree(&active_cache_tree, tree);
 	}
-
-	if (write_cache(newfd, active_cache, active_nr) ||
-	    commit_locked_index(lock))
-		return error(_("Could not write new index file."));
 
 	return 0;
 }
@@ -341,9 +333,16 @@ int cmd_reset(int argc, const char **argv, const char *prefix)
 		die_if_unmerged_cache(reset_type);
 
 	if (reset_type != SOFT) {
-		int err = reset_index_file(sha1, reset_type, quiet);
+		struct lock_file *lock = xcalloc(1, sizeof(struct lock_file));
+		int newfd = hold_locked_index(lock, 1);
+		int err = reset_index(sha1, reset_type, quiet);
 		if (reset_type == KEEP && !err)
-			err = reset_index_file(sha1, MIXED, quiet);
+			err = reset_index(sha1, MIXED, quiet);
+		if (!err &&
+		    (write_cache(newfd, active_cache, active_nr) ||
+		     commit_locked_index(lock))) {
+			err = error(_("Could not write new index file."));
+		}
 		if (err)
 			die(_("Could not reset index file to revision '%s'."), rev);
 	}
