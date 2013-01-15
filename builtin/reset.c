@@ -349,18 +349,11 @@ int cmd_reset(int argc, const char **argv, const char *prefix)
 	 * saving the previous head in ORIG_HEAD before. */
 	update_ref_status = update_refs(rev, sha1);
 
-	switch (reset_type) {
-	case HARD:
-		if (!update_ref_status && !quiet)
-			print_new_head_line(commit);
-		break;
-	case SOFT: /* Nothing else to do. */
-		break;
-	case MIXED: /* Report what has not been updated. */
+	if (reset_type == HARD && !update_ref_status && !quiet)
+		print_new_head_line(commit);
+	else if (reset_type == MIXED) /* Report what has not been updated. */
 		update_index_refresh(0, NULL,
 				quiet ? REFRESH_QUIET : REFRESH_IN_PORCELAIN);
-		break;
-	}
 
 	remove_branch_state();
 
