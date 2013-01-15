@@ -33,23 +33,10 @@ typedef void *SSL;
 #include <openssl/hmac.h>
 #endif
 
-/* For message->status */
-#define M_RECENT       (1<<0) /* unsyncable flag; maildir_* depend on this being 1<<0 */
-#define M_DEAD         (1<<1) /* expunged */
-#define M_FLAGS        (1<<2) /* flags fetched */
-
-struct message {
-	struct message *next;
-	size_t size; /* zero implies "not fetched" */
-	int uid;
-	unsigned char flags, status;
-};
-
 struct store {
 	/* currently open mailbox */
 	const char *name; /* foreign! maybe preset? */
 	char *path; /* own */
-	struct message *msgs; /* own */
 	int uidvalidity;
 	unsigned char opts; /* maybe preset? */
 	/* note that the following do _not_ reflect stats from msgs, but mailbox totals */
@@ -73,8 +60,6 @@ __attribute__((format (printf, 1, 2)))
 static void imap_warn(const char *, ...);
 
 static char *next_arg(char **);
-
-static void free_generic_messages(struct message *);
 
 __attribute__((format (printf, 3, 4)))
 static int nfsnprintf(char *buf, int blen, const char *fmt, ...);
@@ -445,16 +430,6 @@ static char *next_arg(char **s)
 			*s = NULL;
 	}
 	return ret;
-}
-
-static void free_generic_messages(struct message *msgs)
-{
-	struct message *tmsg;
-
-	for (; msgs; msgs = tmsg) {
-		tmsg = msgs->next;
-		free(msgs);
-	}
 }
 
 static int nfsnprintf(char *buf, int blen, const char *fmt, ...)
@@ -914,7 +889,6 @@ static void imap_close_server(struct imap_store *ictx)
 static void imap_close_store(struct store *ctx)
 {
 	imap_close_server((struct imap_store *)ctx);
-	free_generic_messages(ctx->msgs);
 	free(ctx);
 }
 
