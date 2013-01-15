@@ -109,6 +109,74 @@ setup () {
 
 setup
 
+test_expect_success 'executable bit' '
+	mkdir -p tmp && cd tmp &&
+	test_when_finished "cd .. && rm -rf tmp" &&
+
+	(
+	git init -q gitrepo &&
+	cd gitrepo &&
+	echo alpha > alpha &&
+	chmod 0644 alpha &&
+	git add alpha &&
+	git commit -m "add alpha" &&
+	chmod 0755 alpha &&
+	git add alpha &&
+	git commit -m "set executable bit" &&
+	chmod 0644 alpha &&
+	git add alpha &&
+	git commit -m "clear executable bit"
+	) &&
+
+	for x in hg git; do
+		(
+		hg_clone_$x gitrepo hgrepo-$x &&
+		cd hgrepo-$x &&
+		hg_log . &&
+		hg manifest -r 1 -v &&
+		hg manifest -v
+		) > output-$x &&
+
+		git_clone_$x hgrepo-$x gitrepo2-$x &&
+		git_log gitrepo2-$x > log-$x
+	done &&
+	cp -r log-* output-* /tmp/foo/ &&
+
+	test_cmp output-hg output-git &&
+	test_cmp log-hg log-git
+'
+
+test_expect_success 'symlink' '
+	mkdir -p tmp && cd tmp &&
+	test_when_finished "cd .. && rm -rf tmp" &&
+
+	(
+	git init -q gitrepo &&
+	cd gitrepo &&
+	echo alpha > alpha &&
+	git add alpha &&
+	git commit -m "add alpha" &&
+	ln -s alpha beta &&
+	git add beta &&
+	git commit -m "add beta"
+	) &&
+
+	for x in hg git; do
+		(
+		hg_clone_$x gitrepo hgrepo-$x &&
+		cd hgrepo-$x &&
+		hg_log . &&
+		hg manifest -v
+		) > output-$x &&
+
+		git_clone_$x hgrepo-$x gitrepo2-$x &&
+		git_log gitrepo2-$x > log-$x
+	done &&
+
+	test_cmp output-hg output-git &&
+	test_cmp log-hg log-git
+'
+
 test_expect_success 'merge conflict 1' '
 	mkdir -p tmp && cd tmp &&
 	test_when_finished "cd .. && rm -rf tmp" &&

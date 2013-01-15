@@ -53,7 +53,7 @@ def gittz(tz):
     return '%+03d%02d' % (-tz / 3600, -tz % 3600 / 60)
 
 def hgmode(mode):
-    m = { '0100755': 'x', '0120000': 'l' }
+    m = { '100755': 'x', '120000': 'l' }
     return m.get(mode, '')
 
 def get_config(config):
