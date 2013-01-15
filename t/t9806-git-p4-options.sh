@@ -226,9 +226,11 @@ test_expect_success 'clone --use-client-spec' '
 		View: //depot/sub/... //client2/bus/...
 		EOF
 	) &&
-	P4CLIENT=client2 &&
 	test_when_finished cleanup_git &&
-	git p4 clone --dest="$git" --use-client-spec //depot/... &&
+	(
+		P4CLIENT=client2 &&
+		git p4 clone --dest="$git" --use-client-spec //depot/...
+	) &&
 	(
 		cd "$git" &&
 		test_path_is_file bus/dir/f4 &&
@@ -241,6 +243,7 @@ test_expect_success 'clone --use-client-spec' '
 		cd "$git" &&
 		git init &&
 		git config git-p4.useClientSpec true &&
+		P4CLIENT=client2 &&
 		git p4 sync //depot/... &&
 		git checkout -b master p4/master &&
 		test_path_is_file bus/dir/f4 &&
