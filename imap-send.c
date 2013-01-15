@@ -70,7 +70,6 @@ struct store {
 
 struct msg_data {
 	struct strbuf data;
-	unsigned char flags;
 };
 
 static const char imap_send_usage[] = "git imap-send < <mbox>";
@@ -224,14 +223,6 @@ static const char *cap_list[] = {
 
 static int get_cmd_result(struct imap_store *ctx, struct imap_cmd *tcmd);
 
-
-static const char *Flags[] = {
-	"Draft",
-	"Flagged",
-	"Answered",
-	"Seen",
-	"Deleted",
-};
 
 #ifndef NO_OPENSSL
 static void ssl_socket_perror(const char *func)
@@ -1246,23 +1237,6 @@ bail:
 	return NULL;
 }
 
-static int imap_make_flags(int flags, char *buf)
-{
-	const char *s;
-	unsigned i, d;
-
-	for (i = d = 0; i < ARRAY_SIZE(Flags); i++)
-		if (flags & (1 << i)) {
-			buf[d++] = ' ';
-			buf[d++] = '\\';
-			for (s = Flags[i]; *s; s++)
-				buf[d++] = *s;
-		}
-	buf[0] = '(';
-	buf[d++] = ')';
-	return d;
-}
-
 static void lf_to_crlf(struct strbuf *msg)
 {
 	size_t new_len;
@@ -1311,8 +1285,7 @@ static int imap_store_msg(struct store *gctx, struct msg_data *msg)
 	struct imap *imap = ctx->imap;
 	struct imap_cmd_cb cb;
 	const char *prefix, *box;
-	int ret, d;
-	char flagstr[128];
+	int ret;
 
 	lf_to_crlf(&msg->data);
 	memset(&cb, 0, sizeof(cb));
@@ -1320,17 +1293,10 @@ static int imap_store_msg(struct store *gctx, struct msg_data *msg)
 	cb.dlen = msg->data.len;
 	cb.data = strbuf_detach(&msg->data, NULL);
 
-	d = 0;
-	if (msg->flags) {
-		d = imap_make_flags(msg->flags, flagstr);
-		flagstr[d++] = ' ';
-	}
-	flagstr[d] = 0;
-
 	box = gctx->name;
 	prefix = !strcmp(box, "INBOX") ? "" : ctx->prefix;
 	cb.create = 0;
-	ret = imap_exec_m(ctx, &cb, "APPEND \"%s%s\" %s", prefix, box, flagstr);
+	ret = imap_exec_m(ctx, &cb, "APPEND \"%s%s\" ", prefix, box);
 	imap->caps = imap->rcaps;
 	if (ret != DRV_OK)
 		return ret;
@@ -1483,7 +1449,7 @@ static int git_imap_config(const char *key, const char *val, void *cb)
 int main(int argc, char **argv)
 {
 	struct strbuf all_msgs = STRBUF_INIT;
-	struct msg_data msg = {STRBUF_INIT, 0};
+	struct msg_data msg = {STRBUF_INIT};
 	struct store *ctx = NULL;
 	int ofs = 0;
 	int r;
