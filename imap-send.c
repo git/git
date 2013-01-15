@@ -124,7 +124,6 @@ struct imap {
 
 struct imap_store {
 	struct store gen;
-	int uidvalidity;
 	struct imap *imap;
 	const char *prefix;
 };
