@@ -127,7 +127,6 @@ struct imap_store {
 	int uidvalidity;
 	struct imap *imap;
 	const char *prefix;
-	unsigned /*currentnc:1,*/ trashnc:1;
 };
 
 struct imap_cmd_cb {
@@ -1090,7 +1089,6 @@ static struct store *imap_open_store(struct imap_server_conf *srvc)
 	} /* !preauth */
 
 	ctx->prefix = "";
-	ctx->trashnc = 1;
 	return (struct store *)ctx;
 
 bail:
