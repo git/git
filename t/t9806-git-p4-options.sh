@@ -51,6 +51,27 @@ test_expect_failure 'sync when branch is not called master should work' '
 	)
 '
 
+test_expect_success 'sync --branch builds the full ref name correctly' '
+	test_when_finished cleanup_git &&
+	(
+		cd "$git" &&
+		git init &&
+
+		git p4 sync --branch=b1 //depot &&
+		git rev-parse --verify refs/remotes/p4/b1 &&
+		git p4 sync --branch=p4/b2 //depot &&
+		git rev-parse --verify refs/remotes/p4/b2 &&
+
+		git p4 sync --import-local --branch=h1 //depot &&
+		git rev-parse --verify refs/heads/p4/h1 &&
+		git p4 sync --import-local --branch=p4/h2 //depot &&
+		git rev-parse --verify refs/heads/p4/h2 &&
+
+		git p4 sync --branch=refs/stuff //depot &&
+		git rev-parse --verify refs/stuff
+	)
+'
+
 # engages --detect-branches code, which will do filename filtering so
 # no sync to either b1 or b2
 test_expect_success 'sync when two branches but no master should noop' '

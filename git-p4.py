@@ -2841,8 +2841,18 @@ class P4Sync(Command, P4UserMap):
                 if not self.silent and not self.detectBranches:
                     print "Performing incremental import into %s git branch" % self.branch
 
+        # accept multiple ref name abbreviations:
+        #    refs/foo/bar/branch -> use it exactly
+        #    p4/branch -> prepend refs/remotes/ or refs/heads/
+        #    branch -> prepend refs/remotes/p4/ or refs/heads/p4/
         if not self.branch.startswith("refs/"):
-            self.branch = "refs/heads/" + self.branch
+            if self.importIntoRemotes:
+                prepend = "refs/remotes/"
+            else:
+                prepend = "refs/heads/"
+            if not self.branch.startswith("p4/"):
+                prepend += "p4/"
+            self.branch = prepend + self.branch
 
         if len(args) == 0 and self.depotPaths:
             if not self.silent:

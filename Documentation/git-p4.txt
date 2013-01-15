@@ -173,8 +173,11 @@ subsequent 'sync' operations.
 
 --branch <branch>::
 	Import changes into given branch.  If the branch starts with
-	'refs/', it will be used as is, otherwise the path 'refs/heads/'
-	will be prepended.  The default branch is 'p4/master'.
+	'refs/', it will be used as is.  Otherwise if it does not start
+	with 'p4/', that prefix is added.  The branch is assumed to
+	name a remote tracking, but this can be modified using
+	'--import-local', or by giving a full ref name.  The default
+	branch is 'master'.
 +
 This example imports a new remote "p4/proj2" into an existing
 git repository:
