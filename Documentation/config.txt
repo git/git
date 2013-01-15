@@ -1348,6 +1348,12 @@ help.autocorrect::
 	value is 0 - the command will be just shown but not executed.
 	This is the default.
 
+help.htmlpath::
+	Specify the path where the HTML documentation resides. File system paths
+	and URLs are supported. HTML pages will be prefixed with this path when
+	help is displayed in the 'web' format. This defaults to the documentation
+	path of your Git installation.
+
 http.proxy::
 	Override the HTTP proxy, normally configured using the 'http_proxy',
 	'https_proxy', and 'all_proxy' environment variables (see
