@@ -921,7 +921,8 @@ class P4Submit(Command, P4UserMap):
                 optparse.make_option("--dry-run", "-n", dest="dry_run", action="store_true"),
                 optparse.make_option("--prepare-p4-only", dest="prepare_p4_only", action="store_true"),
                 optparse.make_option("--conflict", dest="conflict_behavior",
-                                     choices=self.conflict_behavior_choices)
+                                     choices=self.conflict_behavior_choices),
+                optparse.make_option("--branch", dest="branch"),
         ]
         self.description = "Submit changes from git to the perforce depot."
         self.usage += " [name of git branch to submit into perforce depot]"
@@ -934,6 +935,7 @@ class P4Submit(Command, P4UserMap):
         self.isWindows = (platform.system() == "Windows")
         self.exportLabels = False
         self.p4HasMoveCommand = p4_has_move_command()
+        self.branch = None
 
     def check(self):
         if len(p4CmdList("opened ...")) > 0:
@@ -1670,6 +1672,8 @@ class P4Submit(Command, P4UserMap):
             print "All commits applied!"
 
             sync = P4Sync()
+            if self.branch:
+                sync.branch = self.branch
             sync.run([])
 
             rebase = P4Rebase()

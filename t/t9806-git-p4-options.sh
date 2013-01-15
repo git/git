@@ -251,6 +251,31 @@ test_expect_success 'clone --use-client-spec' '
 	)
 '
 
+test_expect_success 'submit works with no p4/master' '
+	test_when_finished cleanup_git &&
+	git p4 clone --branch=b1 //depot@1,2 --destination="$git" &&
+	(
+		cd "$git" &&
+		test_commit submit-1-branch &&
+		git config git-p4.skipSubmitEdit true &&
+		git p4 submit --branch=b1
+	)
+'
+
+# The sync/rebase part post-submit will engage detect-branches
+# machinery which will not do anything in this particular test.
+test_expect_success 'submit works with two branches' '
+	test_when_finished cleanup_git &&
+	git p4 clone --branch=b1 //depot@1,2 --destination="$git" &&
+	(
+		cd "$git" &&
+		git p4 sync --branch=b2 //depot@1,3 &&
+		test_commit submit-2-branches &&
+		git config git-p4.skipSubmitEdit true &&
+		git p4 submit
+	)
+'
+
 test_expect_success 'kill p4d' '
 	kill_p4d
 '
