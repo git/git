@@ -8,6 +8,7 @@ LIB_GIT_DAEMON_PORT=${LIB_GIT_DAEMON_PORT-5570}
 start_git_daemon
 
 test_expect_success 'setup repository' '
+	git config push.default matching &&
 	echo content >file &&
 	git add file &&
 	git commit -m one
