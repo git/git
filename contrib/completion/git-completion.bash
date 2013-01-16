@@ -1839,6 +1839,7 @@ _git_config ()
 		diff.suppressBlankEmpty
 		diff.tool
 		diff.wordRegex
+		diff.algorithm
 		difftool.
 		difftool.prompt
 		fetch.recurseSubmodules

@@ -36,6 +36,7 @@ static int diff_no_prefix;
 static int diff_stat_graph_width;
 static int diff_dirstat_permille_default = 30;
 static struct diff_options default_diff_options;
+static long diff_algorithm;
 
 static char diff_colors[][COLOR_MAXLEN] = {
 	GIT_COLOR_RESET,
@@ -143,6 +144,21 @@ static int git_config_rename(const char *var, const char *value)
 	return git_config_bool(var,value) ? DIFF_DETECT_RENAME : 0;
 }
 
+static long parse_algorithm_value(const char *value)
+{
+	if (!value)
+		return -1;
+	else if (!strcasecmp(value, "myers") || !strcasecmp(value, "default"))
+		return 0;
+	else if (!strcasecmp(value, "minimal"))
+		return XDF_NEED_MINIMAL;
+	else if (!strcasecmp(value, "patience"))
+		return XDF_PATIENCE_DIFF;
+	else if (!strcasecmp(value, "histogram"))
+		return XDF_HISTOGRAM_DIFF;
+	return -1;
+}
+
 /*
  * These are to give UI layer defaults.
  * The core-level commands such as git-diff-files should
@@ -193,6 +209,13 @@ int git_diff_ui_config(const char *var, const char *value, void *cb)
 		if (parse_submodule_params(&default_diff_options, value))
 			warning(_("Unknown value for 'diff.submodule' config variable: '%s'"),
 				value);
+		return 0;
+	}
+
+	if (!strcmp(var, "diff.algorithm")) {
+		diff_algorithm = parse_algorithm_value(value);
+		if (diff_algorithm < 0)
+			return -1;
 		return 0;
 	}
 
@@ -3213,6 +3236,7 @@ void diff_setup(struct diff_options *options)
 	options->add_remove = diff_addremove;
 	options->use_color = diff_use_color_default;
 	options->detect_rename = diff_detect_rename_default;
+	options->xdl_opts |= diff_algorithm;
 
 	if (diff_no_prefix) {
 		options->a_prefix = options->b_prefix = "";
