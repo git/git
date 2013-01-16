@@ -1279,26 +1279,6 @@ int match_push_refs(struct ref *src, struct ref **dst,
 	return 0;
 }
 
-static inline int is_forwardable(struct ref* ref)
-{
-	struct object *o;
-
-	if (!prefixcmp(ref->name, "refs/tags/"))
-		return 0;
-
-	/* old object must be a commit */
-	o = parse_object(ref->old_sha1);
-	if (!o || o->type != OBJ_COMMIT)
-		return 0;
-
-	/* new object must be commit-ish */
-	o = deref_tag(parse_object(ref->new_sha1), NULL, 0);
-	if (!o || o->type != OBJ_COMMIT)
-		return 0;
-
-	return 1;
-}
-
 void set_ref_status_for_push(struct ref *remote_refs, int send_mirror,
 	int force_update)
 {
@@ -1320,31 +1300,22 @@ void set_ref_status_for_push(struct ref *remote_refs, int send_mirror,
 		}
 
 		/*
-		 * The below logic determines whether an individual
-		 * refspec A:B can be pushed.  The push will succeed
-		 * if any of the following are true:
+		 * Decide whether an individual refspec A:B can be
+		 * pushed.  The push will succeed if any of the
+		 * following are true:
 		 *
 		 * (1) the remote reference B does not exist
 		 *
 		 * (2) the remote reference B is being removed (i.e.,
 		 *     pushing :B where no source is specified)
 		 *
-		 * (3) the update meets all fast-forwarding criteria:
-		 *
-		 *     (a) the destination is not under refs/tags/
-		 *     (b) the old is a commit
-		 *     (c) the new is a descendant of the old
-		 *
-		 *     NOTE: We must actually have the old object in
-		 *     order to overwrite it in the remote reference,
-		 *     and the new object must be commit-ish.  These are
-		 *     implied by (b) and (c) respectively.
+		 * (3) the destination is not under refs/tags/, and
+		 *     if the old and new value is a commit, the new
+		 *     is a descendant of the old.
 		 *
 		 * (4) it is forced using the +A:B notation, or by
 		 *     passing the --force argument
 		 */
-
-		ref->not_forwardable = !is_forwardable(ref);
 
 		ref->update =
 			!ref->deletion &&
@@ -1355,7 +1326,7 @@ void set_ref_status_for_push(struct ref *remote_refs, int send_mirror,
 				!has_sha1_file(ref->old_sha1)
 				  || !ref_newer(ref->new_sha1, ref->old_sha1);
 
-			if (ref->not_forwardable) {
+			if (!prefixcmp(ref->name, "refs/tags/")) {
 				ref->requires_force = 1;
 				if (!force_ref_update) {
 					ref->status = REF_STATUS_REJECT_ALREADY_EXISTS;

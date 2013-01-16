@@ -950,27 +950,6 @@ test_expect_success 'push requires --force to update lightweight tag' '
 	)
 '
 
-test_expect_success 'push requires --force to update annotated tag' '
-	mk_test heads/master &&
-	mk_child child1 &&
-	mk_child child2 &&
-	(
-		cd child1 &&
-		git tag -a -m "message 1" Tag &&
-		git push ../child2 Tag:refs/tmp/Tag &&
-		git push ../child2 Tag:refs/tmp/Tag &&
-		>file1 &&
-		git add file1 &&
-		git commit -m "file1" &&
-		git tag -f -a -m "message 2" Tag &&
-		test_must_fail git push ../child2 Tag:refs/tmp/Tag &&
-		git push --force ../child2 Tag:refs/tmp/Tag &&
-		git tag -f -a -m "message 3" Tag HEAD~ &&
-		test_must_fail git push ../child2 Tag:refs/tmp/Tag &&
-		git push --force ../child2 Tag:refs/tmp/Tag
-	)
-'
-
 test_expect_success 'push --porcelain' '
 	mk_empty &&
 	echo >.git/foo  "To testrepo" &&
