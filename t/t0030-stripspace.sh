@@ -397,4 +397,39 @@ test_expect_success 'strip comments, too' '
 	test -z "$(echo "# comment" | git stripspace -s)"
 '
 
+test_expect_success 'strip comments with changed comment char' '
+	test ! -z "$(echo "; comment" | git -c core.commentchar=";" stripspace)" &&
+	test -z "$(echo "; comment" | git -c core.commentchar=";" stripspace -s)"
+'
+
+test_expect_success '-c with single line' '
+	printf "# foo\n" >expect &&
+	printf "foo" | git stripspace -c >actual &&
+	test_cmp expect actual
+'
+
+test_expect_success '-c with single line followed by empty line' '
+	printf "# foo\n#\n" >expect &&
+	printf "foo\n\n" | git stripspace -c >actual &&
+	test_cmp expect actual
+'
+
+test_expect_success '-c with newline only' '
+	printf "#\n" >expect &&
+	printf "\n" | git stripspace -c >actual &&
+	test_cmp expect actual
+'
+
+test_expect_success '--comment-lines with single line' '
+	printf "# foo\n" >expect &&
+	printf "foo" | git stripspace -c >actual &&
+	test_cmp expect actual
+'
+
+test_expect_success '-c with changed comment char' '
+	printf "; foo\n" >expect &&
+	printf "foo" | git -c core.commentchar=";" stripspace -c >actual &&
+	test_cmp expect actual
+'
+
 test_done

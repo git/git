@@ -45,7 +45,7 @@ static void status_vprintf(struct wt_status *s, int at_bol, const char *color,
 
 	strbuf_vaddf(&sb, fmt, ap);
 	if (!sb.len) {
-		strbuf_addch(&sb, '#');
+		strbuf_addch(&sb, comment_line_char);
 		if (!trail)
 			strbuf_addch(&sb, ' ');
 		color_print_strbuf(s->fp, color, &sb);
@@ -59,7 +59,7 @@ static void status_vprintf(struct wt_status *s, int at_bol, const char *color,
 
 		strbuf_reset(&linebuf);
 		if (at_bol) {
-			strbuf_addch(&linebuf, '#');
+			strbuf_addch(&linebuf, comment_line_char);
 			if (*line != '\n' && *line != '\t')
 				strbuf_addch(&linebuf, ' ');
 		}
@@ -760,8 +760,10 @@ static void wt_status_print_tracking(struct wt_status *s)
 
 	for (cp = sb.buf; (ep = strchr(cp, '\n')) != NULL; cp = ep + 1)
 		color_fprintf_ln(s->fp, color(WT_STATUS_HEADER, s),
-				 "# %.*s", (int)(ep - cp), cp);
-	color_fprintf_ln(s->fp, color(WT_STATUS_HEADER, s), "#");
+				 "%c %.*s", comment_line_char,
+				 (int)(ep - cp), cp);
+	color_fprintf_ln(s->fp, color(WT_STATUS_HEADER, s), "%c",
+			 comment_line_char);
 }
 
 static int has_unmerged(struct wt_status *s)
