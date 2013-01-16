@@ -13,6 +13,7 @@ LIB_HTTPD_PORT=${LIB_HTTPD_PORT-'5550'}
 start_httpd
 
 test_expect_success 'setup repository' '
+	git config push.default matching &&
 	echo content1 >file &&
 	git add file &&
 	git commit -m one
