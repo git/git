@@ -346,6 +346,16 @@ Any other arguments are passed directly to 'git log'
 	corresponding git commit hash (this can optionally be followed by a
 	tree-ish to specify which branch should be searched).  When given a
 	tree-ish, returns the corresponding SVN revision number.
++
+--before;;
+	Don't require an exact match if given an SVN revision, instead find
+	the commit corresponding to the state of the SVN repository (on the
+	current branch) at the specified revision.
++
+--after;;
+	Don't require an exact match if given an SVN revision; if there is
+	not an exact match return the closest match searching forward in the
+	history.
 
 'set-tree'::
 	You should consider using 'dcommit' instead of this command.
