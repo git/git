@@ -86,7 +86,7 @@ unset VISUAL EMAIL LANGUAGE COLUMNS $("$PERL_PATH" -e '
 		PROVE
 		VALGRIND
 		UNZIP
-		PERF_AGGREGATING_LATER
+		PERF_
 	));
 	my @vars = grep(/^GIT_/ && !/^GIT_($ok)/o, @env);
 	print join("\n", @vars);
