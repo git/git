@@ -213,6 +213,14 @@ details).
    to add a newline after such a line.
    (merge e0db176 sp/shortlog-missing-lf later to maint).
 
+ * Command line completion leaked an unnecessary error message while
+   looking for possible matches with paths in <tree-ish>.
+   (merge ca87dd6 ds/completion-silence-in-tree-path-probe later to maint).
+
+ * Command line completion for "tcsh" emitted an unwanted space
+   after completing a single directory name.
+   (merge 92f1c04 mk/complete-tcsh later to maint).
+
  * Some shells do not behave correctly when IFS is unset; work it
    around by explicitly setting it to the default value.
    (merge 393050c jc/maint-fbsd-sh-ifs-workaround later to maint).
