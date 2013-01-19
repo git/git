@@ -12,6 +12,7 @@
 #include "run-command.h"
 #include "sigchain.h"
 #include "version.h"
+#include "string-list.h"
 
 static const char upload_pack_usage[] = "git upload-pack [--strict] [--timeout=<n>] <dir>";
 
@@ -719,9 +720,13 @@ static void receive_needs(void)
 	free(shallows.objects);
 }
 
+/* return non-zero if the ref is hidden, otherwise 0 */
 static int mark_our_ref(const char *refname, const unsigned char *sha1, int flag, void *cb_data)
 {
 	struct object *o = lookup_unknown_object(sha1);
+
+	if (ref_is_hidden(refname))
+		return 1;
 	if (!o)
 		die("git upload-pack: cannot find object %s:", sha1_to_hex(sha1));
 	o->flags |= OUR_REF;
@@ -736,7 +741,8 @@ static int send_ref(const char *refname, const unsigned char *sha1, int flag, vo
 	const char *refname_nons = strip_namespace(refname);
 	unsigned char peeled[20];
 
-	mark_our_ref(refname, sha1, flag, cb_data);
+	if (mark_our_ref(refname, sha1, flag, cb_data))
+		return 0;
 
 	if (capabilities)
 		packet_write(1, "%s %s%c%s%s agent=%s\n",
@@ -771,6 +777,11 @@ static void upload_pack(void)
 		get_common_commits();
 		create_pack_file();
 	}
+}
+
+static int upload_pack_config(const char *var, const char *value, void *unused)
+{
+	return parse_hide_refs_config(var, value, "uploadpack");
 }
 
 int main(int argc, char **argv)
@@ -824,6 +835,7 @@ int main(int argc, char **argv)
 		die("'%s' does not appear to be a git repository", dir);
 	if (is_repository_shallow())
 		die("attempt to fetch/clone from a shallow repository");
+	git_config(upload_pack_config, NULL);
 	if (getenv("GIT_DEBUG_SEND_PACK"))
 		debug_fd = atoi(getenv("GIT_DEBUG_SEND_PACK"));
 	upload_pack();

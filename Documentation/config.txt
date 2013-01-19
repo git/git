@@ -1845,6 +1845,15 @@ receive.denyNonFastForwards::
 	even if that push is forced. This configuration variable is
 	set when initializing a shared repository.
 
+receive.hiderefs::
+	String(s) `receive-pack` uses to decide which refs to omit
+	from its initial advertisement.  Use more than one
+	definitions to specify multiple prefix strings. A ref that
+	are under the hierarchies listed on the value of this
+	variable is excluded, and is hidden when responding to `git
+	push`, and an attempt to update or delete a hidden ref by
+	`git push` is rejected.
+
 receive.updateserverinfo::
 	If set to true, git-receive-pack will run git-update-server-info
 	after receiving data from git-push and updating refs.
@@ -2057,10 +2066,24 @@ transfer.fsckObjects::
 	not set, the value of this variable is used instead.
 	Defaults to false.
 
+transfer.hiderefs::
+	This variable can be used to set both `receive.hiderefs`
+	and `uploadpack.hiderefs` at the same time to the same
+	values.  See entries for these other variables.
+
 transfer.unpackLimit::
 	When `fetch.unpackLimit` or `receive.unpackLimit` are
 	not set, the value of this variable is used instead.
 	The default value is 100.
+
+uploadpack.hiderefs::
+	String(s) `upload-pack` uses to decide which refs to omit
+	from its initial advertisement.  Use more than one
+	definitions to specify multiple prefix strings. A ref that
+	are under the hierarchies listed on the value of this
+	variable is excluded, and is hidden from `git ls-remote`,
+	`git fetch`, etc.  An attempt to fetch a hidden ref by `git
+	fetch` will fail.
 
 url.<base>.insteadOf::
 	Any URL that starts with this value will be rewritten to
