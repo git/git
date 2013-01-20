@@ -14,7 +14,7 @@ if sys.hexversion < 0x02040000:
 
 def getrevlimit():
         var = 'SVNRMAX'
-        if os.environ.has_key(var):
+        if var in os.environ:
                 return os.environ[var]
         return None
 
@@ -44,7 +44,7 @@ def writedump(url, lower, upper):
 
 if __name__ == "__main__":
         if not (len(sys.argv) in (3, 4, 5)):
-                print "usage: %s dump URL -rLOWER:UPPER"
+                print("usage: %s dump URL -rLOWER:UPPER")
                 sys.exit(1)
         if not sys.argv[1] == 'dump': raise NotImplementedError('only "dump" is suppported.')
         url = sys.argv[2]
