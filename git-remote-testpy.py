@@ -154,7 +154,7 @@ def do_import(repo, args):
     refs = [ref]
 
     while True:
-        line = sys.stdin.readline()
+        line = sys.stdin.readline().decode()
         if line == '\n':
             break
         if not line.startswith('import '):
@@ -225,7 +225,7 @@ def read_one_line(repo):
 
     line = sys.stdin.readline()
 
-    cmdline = line
+    cmdline = line.decode()
 
     if not cmdline:
         warn("Unexpected EOF")
@@ -277,7 +277,11 @@ def main(args):
 
     more = True
 
-    sys.stdin = os.fdopen(sys.stdin.fileno(), 'r', 0)
+    # Use binary mode since Python 3 does not permit unbuffered I/O in text
+    # mode.  Unbuffered I/O is required to avoid data that should be going
+    # to git-fast-import after an "export" command getting caught in our
+    # stdin buffer instead.
+    sys.stdin = os.fdopen(sys.stdin.fileno(), 'rb', 0)
     while (more):
         more = read_one_line(repo)
 
