@@ -23,7 +23,7 @@ endif
 
 PYLIBDIR=$(shell $(PYTHON_PATH) -c \
 	 "import sys; \
-	 print 'lib/python%i.%i/site-packages' % sys.version_info[:2]")
+	 print('lib/python%i.%i/site-packages' % sys.version_info[:2])")
 
 all: $(pysetupfile)
 	$(QUIET)$(PYTHON_PATH) $(pysetupfile) $(QUIETSETUP) build
