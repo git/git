@@ -18,13 +18,16 @@ class GitImporter(object):
 
     def get_refs(self, gitdir):
         """Returns a dictionary with refs.
+
+        Note that the keys in the returned dictionary are byte strings as
+        read from git.
         """
         args = ["git", "--git-dir=" + gitdir, "for-each-ref", "refs/heads"]
-        lines = check_output(args).strip().split('\n')
+        lines = check_output(args).strip().split('\n'.encode('ascii'))
         refs = {}
         for line in lines:
-            value, name = line.split(' ')
-            name = name.strip('commit\t')
+            value, name = line.split(' '.encode('ascii'))
+            name = name.strip('commit\t'.encode('ascii'))
             refs[name] = value
         return refs
 
