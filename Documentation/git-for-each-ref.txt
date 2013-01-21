@@ -117,7 +117,7 @@ returns an empty string instead.
 
 As a special case for the date-type fields, you may specify a format for
 the date by adding one of `:default`, `:relative`, `:short`, `:local`,
-`:iso8601` or `:rfc2822` to the end of the fieldname; e.g.
+`:iso8601`, `:rfc2822` or `:raw` to the end of the fieldname; e.g.
 `%(taggerdate:relative)`.
 
 
