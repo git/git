@@ -46,6 +46,9 @@ UI, Workflows & Features
  * "git cherry-pick" can be used to replay a root commit to an unborn
    branch.
 
+ * "git commit" can be told to use --cleanup=whitespace by setting the
+   configuration variable commit.cleanup to 'whitespace'.
+
  * "git fetch --mirror" and fetch that uses other forms of refspec
    with wildcard used to attempt to update a symbolic ref that match
    the wildcard on the receiving end, which made little sense (the
@@ -61,6 +64,10 @@ UI, Workflows & Features
    automatically sets the subject prefix to "PATCH v$count". This
    allows patches from rerolled series to be stored under different
    names and makes it easier to reuse cover letter messsages.
+
+ * "git log" and friends can be told with --use-mailmap option to
+   rewrite the names and email addresses of people using the mailmap
+   mechanism.
 
  * "git push" now requires "-f" to update a tag, even if it is a
    fast-forward, as tags are meant to be fixed points.
