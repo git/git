@@ -7,10 +7,11 @@ static int get_entry_index(const struct string_list *list, const char *string,
 		int *exact_match)
 {
 	int left = -1, right = list->nr;
+	compare_strings_fn cmp = list->cmp ? list->cmp : strcmp;
 
 	while (left + 1 < right) {
 		int middle = (left + right) / 2;
-		int compare = strcmp(string, list->items[middle].string);
+		int compare = cmp(string, list->items[middle].string);
 		if (compare < 0)
 			right = middle;
 		else if (compare > 0)
@@ -96,8 +97,9 @@ void string_list_remove_duplicates(struct string_list *list, int free_util)
 {
 	if (list->nr > 1) {
 		int src, dst;
+		compare_strings_fn cmp = list->cmp ? list->cmp : strcmp;
 		for (src = dst = 1; src < list->nr; src++) {
-			if (!strcmp(list->items[dst - 1].string, list->items[src].string)) {
+			if (!cmp(list->items[dst - 1].string, list->items[src].string)) {
 				if (list->strdup_strings)
 					free(list->items[src].string);
 				if (free_util)
@@ -210,15 +212,20 @@ struct string_list_item *string_list_append(struct string_list *list,
 			list->strdup_strings ? xstrdup(string) : (char *)string);
 }
 
+/* Yuck */
+static compare_strings_fn compare_for_qsort;
+
+/* Only call this from inside sort_string_list! */
 static int cmp_items(const void *a, const void *b)
 {
 	const struct string_list_item *one = a;
 	const struct string_list_item *two = b;
-	return strcmp(one->string, two->string);
+	return compare_for_qsort(one->string, two->string);
 }
 
 void sort_string_list(struct string_list *list)
 {
+	compare_for_qsort = list->cmp ? list->cmp : strcmp;
 	qsort(list->items, list->nr, sizeof(*list->items), cmp_items);
 }
 
@@ -226,8 +233,10 @@ struct string_list_item *unsorted_string_list_lookup(struct string_list *list,
 						     const char *string)
 {
 	int i;
+	compare_strings_fn cmp = list->cmp ? list->cmp : strcmp;
+
 	for (i = 0; i < list->nr; i++)
-		if (!strcmp(string, list->items[i].string))
+		if (!cmp(string, list->items[i].string))
 			return list->items + i;
 	return NULL;
 }

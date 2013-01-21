@@ -4,7 +4,7 @@
 int read_mailmap(struct string_list *map, char **repo_abbrev);
 void clear_mailmap(struct string_list *map);
 
-int map_user(struct string_list *mailmap,
-	     char *email, int maxlen_email, char *name, int maxlen_name);
+int map_user(struct string_list *map,
+			 const char **email, size_t *emaillen, const char **name, size_t *namelen);
 
 #endif

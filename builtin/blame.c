@@ -1322,30 +1322,31 @@ static void pass_blame(struct scoreboard *sb, struct origin *origin, int opt)
  * Information on commits, used for output.
  */
 struct commit_info {
-	const char *author;
-	const char *author_mail;
+	struct strbuf author;
+	struct strbuf author_mail;
 	unsigned long author_time;
-	const char *author_tz;
+	struct strbuf author_tz;
 
 	/* filled only when asked for details */
-	const char *committer;
-	const char *committer_mail;
+	struct strbuf committer;
+	struct strbuf committer_mail;
 	unsigned long committer_time;
-	const char *committer_tz;
+	struct strbuf committer_tz;
 
-	const char *summary;
+	struct strbuf summary;
 };
 
 /*
  * Parse author/committer line in the commit object buffer
  */
 static void get_ac_line(const char *inbuf, const char *what,
-			int person_len, char *person,
-			int mail_len, char *mail,
-			unsigned long *time, const char **tz)
+	struct strbuf *name, struct strbuf *mail,
+	unsigned long *time, struct strbuf *tz)
 {
-	int len, tzlen, maillen;
-	char *tmp, *endp, *timepos, *mailpos;
+	struct ident_split ident;
+	size_t len, maillen, namelen;
+	char *tmp, *endp;
+	const char *namebuf, *mailbuf;
 
 	tmp = strstr(inbuf, what);
 	if (!tmp)
@@ -1356,69 +1357,61 @@ static void get_ac_line(const char *inbuf, const char *what,
 		len = strlen(tmp);
 	else
 		len = endp - tmp;
-	if (person_len <= len) {
+
+	if (split_ident_line(&ident, tmp, len)) {
 	error_out:
 		/* Ugh */
-		*tz = "(unknown)";
-		strcpy(person, *tz);
-		strcpy(mail, *tz);
+		tmp = "(unknown)";
+		strbuf_addstr(name, tmp);
+		strbuf_addstr(mail, tmp);
+		strbuf_addstr(tz, tmp);
 		*time = 0;
 		return;
 	}
-	memcpy(person, tmp, len);
 
-	tmp = person;
-	tmp += len;
-	*tmp = 0;
-	while (person < tmp && *tmp != ' ')
-		tmp--;
-	if (tmp <= person)
-		goto error_out;
-	*tz = tmp+1;
-	tzlen = (person+len)-(tmp+1);
+	namelen = ident.name_end - ident.name_begin;
+	namebuf = ident.name_begin;
 
-	*tmp = 0;
-	while (person < tmp && *tmp != ' ')
-		tmp--;
-	if (tmp <= person)
-		goto error_out;
-	*time = strtoul(tmp, NULL, 10);
-	timepos = tmp;
+	maillen = ident.mail_end - ident.mail_begin;
+	mailbuf = ident.mail_begin;
 
-	*tmp = 0;
-	while (person < tmp && !(*tmp == ' ' && tmp[1] == '<'))
-		tmp--;
-	if (tmp <= person)
-		return;
-	mailpos = tmp + 1;
-	*tmp = 0;
-	maillen = timepos - tmp;
-	memcpy(mail, mailpos, maillen);
+	*time = strtoul(ident.date_begin, NULL, 10);
 
-	if (!mailmap.nr)
-		return;
-
-	/*
-	 * mailmap expansion may make the name longer.
-	 * make room by pushing stuff down.
-	 */
-	tmp = person + person_len - (tzlen + 1);
-	memmove(tmp, *tz, tzlen);
-	tmp[tzlen] = 0;
-	*tz = tmp;
+	len = ident.tz_end - ident.tz_begin;
+	strbuf_add(tz, ident.tz_begin, len);
 
 	/*
 	 * Now, convert both name and e-mail using mailmap
 	 */
-	if (map_user(&mailmap, mail+1, mail_len-1, person, tmp-person-1)) {
-		/* Add a trailing '>' to email, since map_user returns plain emails
-		   Note: It already has '<', since we replace from mail+1 */
-		mailpos = memchr(mail, '\0', mail_len);
-		if (mailpos && mailpos-mail < mail_len - 1) {
-			*mailpos = '>';
-			*(mailpos+1) = '\0';
-		}
-	}
+	map_user(&mailmap, &mailbuf, &maillen,
+		 &namebuf, &namelen);
+
+	strbuf_addf(mail, "<%.*s>", (int)maillen, mailbuf);
+	strbuf_add(name, namebuf, namelen);
+}
+
+static void commit_info_init(struct commit_info *ci)
+{
+
+	strbuf_init(&ci->author, 0);
+	strbuf_init(&ci->author_mail, 0);
+	strbuf_init(&ci->author_tz, 0);
+	strbuf_init(&ci->committer, 0);
+	strbuf_init(&ci->committer_mail, 0);
+	strbuf_init(&ci->committer_tz, 0);
+	strbuf_init(&ci->summary, 0);
+}
+
+static void commit_info_destroy(struct commit_info *ci)
+{
+
+	strbuf_release(&ci->author);
+	strbuf_release(&ci->author_mail);
+	strbuf_release(&ci->author_tz);
+	strbuf_release(&ci->committer);
+	strbuf_release(&ci->committer_mail);
+	strbuf_release(&ci->committer_tz);
+	strbuf_release(&ci->summary);
 }
 
 static void get_commit_info(struct commit *commit,
@@ -1428,11 +1421,8 @@ static void get_commit_info(struct commit *commit,
 	int len;
 	const char *subject, *encoding;
 	char *reencoded, *message;
-	static char author_name[1024];
-	static char author_mail[1024];
-	static char committer_name[1024];
-	static char committer_mail[1024];
-	static char summary_buf[1024];
+
+	commit_info_init(ret);
 
 	/*
 	 * We've operated without save_commit_buffer, so
@@ -1450,11 +1440,8 @@ static void get_commit_info(struct commit *commit,
 	encoding = get_log_output_encoding();
 	reencoded = logmsg_reencode(commit, encoding);
 	message   = reencoded ? reencoded : commit->buffer;
-	ret->author = author_name;
-	ret->author_mail = author_mail;
 	get_ac_line(message, "\nauthor ",
-		    sizeof(author_name), author_name,
-		    sizeof(author_mail), author_mail,
+		    &ret->author, &ret->author_mail,
 		    &ret->author_time, &ret->author_tz);
 
 	if (!detailed) {
@@ -1462,21 +1449,16 @@ static void get_commit_info(struct commit *commit,
 		return;
 	}
 
-	ret->committer = committer_name;
-	ret->committer_mail = committer_mail;
 	get_ac_line(message, "\ncommitter ",
-		    sizeof(committer_name), committer_name,
-		    sizeof(committer_mail), committer_mail,
+		    &ret->committer, &ret->committer_mail,
 		    &ret->committer_time, &ret->committer_tz);
 
-	ret->summary = summary_buf;
 	len = find_commit_subject(message, &subject);
-	if (len && len < sizeof(summary_buf)) {
-		memcpy(summary_buf, subject, len);
-		summary_buf[len] = 0;
-	} else {
-		sprintf(summary_buf, "(%s)", sha1_to_hex(commit->object.sha1));
-	}
+	if (len)
+		strbuf_add(&ret->summary, subject, len);
+	else
+		strbuf_addf(&ret->summary, "(%s)", sha1_to_hex(commit->object.sha1));
+
 	free(reencoded);
 }
 
@@ -1505,15 +1487,15 @@ static int emit_one_suspect_detail(struct origin *suspect, int repeat)
 
 	suspect->commit->object.flags |= METAINFO_SHOWN;
 	get_commit_info(suspect->commit, &ci, 1);
-	printf("author %s\n", ci.author);
-	printf("author-mail %s\n", ci.author_mail);
+	printf("author %s\n", ci.author.buf);
+	printf("author-mail %s\n", ci.author_mail.buf);
 	printf("author-time %lu\n", ci.author_time);
-	printf("author-tz %s\n", ci.author_tz);
-	printf("committer %s\n", ci.committer);
-	printf("committer-mail %s\n", ci.committer_mail);
+	printf("author-tz %s\n", ci.author_tz.buf);
+	printf("committer %s\n", ci.committer.buf);
+	printf("committer-mail %s\n", ci.committer_mail.buf);
 	printf("committer-time %lu\n", ci.committer_time);
-	printf("committer-tz %s\n", ci.committer_tz);
-	printf("summary %s\n", ci.summary);
+	printf("committer-tz %s\n", ci.committer_tz.buf);
+	printf("summary %s\n", ci.summary.buf);
 	if (suspect->commit->object.flags & UNINTERESTING)
 		printf("boundary\n");
 	if (suspect->previous) {
@@ -1521,6 +1503,9 @@ static int emit_one_suspect_detail(struct origin *suspect, int repeat)
 		printf("previous %s ", sha1_to_hex(prev->commit->object.sha1));
 		write_name_quoted(prev->path, stdout, '\n');
 	}
+
+	commit_info_destroy(&ci);
+
 	return 1;
 }
 
@@ -1707,11 +1692,11 @@ static void emit_other(struct scoreboard *sb, struct blame_entry *ent, int opt)
 		if (opt & OUTPUT_ANNOTATE_COMPAT) {
 			const char *name;
 			if (opt & OUTPUT_SHOW_EMAIL)
-				name = ci.author_mail;
+				name = ci.author_mail.buf;
 			else
-				name = ci.author;
+				name = ci.author.buf;
 			printf("\t(%10s\t%10s\t%d)", name,
-			       format_time(ci.author_time, ci.author_tz,
+			       format_time(ci.author_time, ci.author_tz.buf,
 					   show_raw_time),
 			       ent->lno + 1 + cnt);
 		} else {
@@ -1730,14 +1715,14 @@ static void emit_other(struct scoreboard *sb, struct blame_entry *ent, int opt)
 				const char *name;
 				int pad;
 				if (opt & OUTPUT_SHOW_EMAIL)
-					name = ci.author_mail;
+					name = ci.author_mail.buf;
 				else
-					name = ci.author;
+					name = ci.author.buf;
 				pad = longest_author - utf8_strwidth(name);
 				printf(" (%s%*s %10s",
 				       name, pad, "",
 				       format_time(ci.author_time,
-						   ci.author_tz,
+						   ci.author_tz.buf,
 						   show_raw_time));
 			}
 			printf(" %*d) ",
@@ -1752,6 +1737,8 @@ static void emit_other(struct scoreboard *sb, struct blame_entry *ent, int opt)
 
 	if (sb->final_buf_size && cp[-1] != '\n')
 		putchar('\n');
+
+	commit_info_destroy(&ci);
 }
 
 static void output(struct scoreboard *sb, int option)
@@ -1876,9 +1863,9 @@ static void find_alignment(struct scoreboard *sb, int *option)
 			suspect->commit->object.flags |= METAINFO_SHOWN;
 			get_commit_info(suspect->commit, &ci, 1);
 			if (*option & OUTPUT_SHOW_EMAIL)
-				num = utf8_strwidth(ci.author_mail);
+				num = utf8_strwidth(ci.author_mail.buf);
 			else
-				num = utf8_strwidth(ci.author);
+				num = utf8_strwidth(ci.author.buf);
 			if (longest_author < num)
 				longest_author = num;
 		}
@@ -1890,6 +1877,8 @@ static void find_alignment(struct scoreboard *sb, int *option)
 			longest_dst_lines = num;
 		if (largest_score < ent_score(sb, e))
 			largest_score = ent_score(sb, e);
+
+		commit_info_destroy(&ci);
 	}
 	max_orig_digits = decimal_width(longest_src_lines);
 	max_digits = decimal_width(longest_dst_lines);
