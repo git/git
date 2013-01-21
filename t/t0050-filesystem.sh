@@ -77,7 +77,7 @@ $test_case 'rename (case change)' '
 
 '
 
-$test_case 'merge (case change)' '
+test_expect_success 'merge (case change)' '
 
 	rm -f CamelCase &&
 	rm -f camelcase &&
