@@ -1,0 +1,13 @@
+Git 1.8.1.2 Release Notes
+=========================
+
+Fixes since v1.8.1.1
+--------------------
+
+ * "git archive" did not record uncompressed size in the header when
+   streaming a zip archive, which confused some implementations of unzip.
+
+ * When users spelled "cc:" in lowercase in the fake "header" in the
+   trailer part, "git send-email" failed to pick up the addresses from
+   there. As e-mail headers field names are case insensitive, this
+   script should follow suit and treat "cc:" and "Cc:" the same way.
