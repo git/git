@@ -88,7 +88,7 @@ test_expect_success 'merge (case change)' '
 
 
 
-test_expect_failure 'add (with different case)' '
+test_expect_failure CASE_INSENSITIVE_FS 'add (with different case)' '
 
 	git reset --hard initial &&
 	rm camelcase &&
