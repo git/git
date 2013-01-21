@@ -1,4 +1,4 @@
-GIT pack format
+Git pack format
 ===============
 
 == pack-*.pack files have the following format:
@@ -9,7 +9,7 @@ GIT pack format
          The signature is: {'P', 'A', 'C', 'K'}
 
      4-byte version number (network byte order):
-         GIT currently accepts version number 2 or 3 but
+	 Git currently accepts version number 2 or 3 but
          generates version 2 only.
 
      4-byte number of objects contained in the pack (network byte order)

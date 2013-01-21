@@ -890,7 +890,7 @@ See also the link:howto-index.html[howto] documents for some useful
 examples.
 
 The internals are documented in the
-link:technical/api-index.html[GIT API documentation].
+link:technical/api-index.html[Git API documentation].
 
 Users migrating from CVS may also want to
 read linkgit:gitcvs-migration[7].

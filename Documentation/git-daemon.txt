@@ -51,7 +51,7 @@ OPTIONS
 
 --base-path=<path>::
 	Remap all the path requests as relative to the given path.
-	This is sort of "GIT root" - if you run 'git daemon' with
+	This is sort of "Git root" - if you run 'git daemon' with
 	'--base-path=/srv/git' on example.com, then if you later try to pull
 	'git://example.com/hello.git', 'git daemon' will interpret the path
 	as '/srv/git/hello.git'.
@@ -73,7 +73,7 @@ OPTIONS
 	whitelist.
 
 --export-all::
-	Allow pulling from all directories that look like GIT repositories
+	Allow pulling from all directories that look like Git repositories
 	(have the 'objects' and 'refs' subdirectories), even if they
 	do not have the 'git-daemon-export-ok' file.
 

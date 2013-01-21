@@ -53,10 +53,10 @@ In effect, this means you're going to be root, or that you're using a
 preconfigured WebDAV server.
 
 
-Step 1: setup a bare GIT repository
+Step 1: setup a bare Git repository
 -----------------------------------
 
-At the time of writing, git-http-push cannot remotely create a GIT
+At the time of writing, git-http-push cannot remotely create a Git
 repository. So we have to do that at the server side with git. Another
 option is to generate an empty bare repository at the client and copy
 it to the server with a WebDAV client (which is the only option if Git

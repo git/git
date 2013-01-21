@@ -1,7 +1,7 @@
 #!/bin/sh
 
 cat <<\EOF
-GIT Howto Index
+Git Howto Index
 ===============
 
 Here is a collection of mailing list postings made by various

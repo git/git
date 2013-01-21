@@ -1,4 +1,4 @@
-GIT index format
+Git index format
 ================
 
 == The git index file has the following format
@@ -21,9 +21,9 @@ GIT index format
    - Extensions
 
      Extensions are identified by signature. Optional extensions can
-     be ignored if GIT does not understand them.
+     be ignored if Git does not understand them.
 
-     GIT currently supports cached tree and resolve undo extensions.
+     Git currently supports cached tree and resolve undo extensions.
 
      4-byte extension signature. If the first byte is 'A'..'Z' the
      extension is optional and can be ignored.

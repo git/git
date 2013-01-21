@@ -230,3 +230,8 @@ Writing Documentation:
    valid usage.  "*" has its own pair of brackets, because it can
    (optionally) be specified only when one or more of the letters is
    also provided.
+
+  A note on notation:
+   Use 'git' (all lowercase) when talking about commands i.e. something
+   the user would type into a shell and use 'Git' (uppercase first letter)
+   when talking about the version control system and its properties.

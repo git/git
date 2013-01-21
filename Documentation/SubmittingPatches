@@ -206,7 +206,7 @@ patch.
 
 To improve tracking of who did what, we've borrowed the
 "sign-off" procedure from the Linux kernel project on patches
-that are being emailed around.  Although core GIT is a lot
+that are being emailed around.  Although core Git is a lot
 smaller project it is a good discipline to follow it.
 
 The sign-off is a simple line at the end of the explanation for

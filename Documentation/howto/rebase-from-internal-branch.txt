@@ -4,7 +4,7 @@ Cc:	Petr Baudis <pasky@suse.cz>, Linus Torvalds <torvalds@osdl.org>
 Subject: Re: sending changesets from the middle of a git tree
 Date:	Sun, 14 Aug 2005 18:37:39 -0700
 Abstract: In this article, JC talks about how he rebases the
- public "pu" branch using the core GIT tools when he updates
+ public "pu" branch using the core Git tools when he updates
  the "master" branch, and how "rebase" works.  Also discussed
  is how this applies to individual developers who sends patches
  upstream.
@@ -31,7 +31,7 @@ up.  With its basing philosophical ancestry on quilt, this is
 the kind of task StGIT is designed to do.
 
 I just have done a simpler one, this time using only the core
-GIT tools.
+Git tools.
 
 I had a handful of commits that were ahead of master in pu, and I
 wanted to add some documentation bypassing my usual habit of
@@ -96,7 +96,7 @@ you ran fsck-cache, which is normal.  After testing "pu", you
 can run "git prune" to get rid of those original three commits.
 
 While I am talking about "git rebase", I should talk about how
-to do cherrypicking using only the core GIT tools.
+to do cherrypicking using only the core Git tools.
 
 Let's go back to the earlier picture, with different labels.
 

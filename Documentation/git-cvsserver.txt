@@ -72,9 +72,9 @@ plugin. Most functionality works fine with both of these clients.
 LIMITATIONS
 -----------
 
-CVS clients cannot tag, branch or perform GIT merges.
+CVS clients cannot tag, branch or perform Git merges.
 
-'git-cvsserver' maps GIT branches to CVS modules. This is very different
+'git-cvsserver' maps Git branches to CVS modules. This is very different
 from what most CVS users would expect since in CVS modules usually represent
 one or more directories.
 
@@ -130,7 +130,7 @@ Then provide your password via the pserver method, for example:
 ------
    cvs -d:pserver:someuser:somepassword <at> server/path/repo.git co <HEAD_name>
 ------
-No special setup is needed for SSH access, other than having GIT tools
+No special setup is needed for SSH access, other than having Git tools
 in the PATH. If you have clients that do not accept the CVS_SERVER
 environment variable, you can rename 'git-cvsserver' to `cvs`.
 
@@ -197,7 +197,7 @@ allowing access over SSH.
    shell is bash, .bashrc may be a reasonable alternative.
 
 5. Clients should now be able to check out the project. Use the CVS 'module'
-   name to indicate what GIT 'head' you want to check out.  This also sets the
+   name to indicate what Git 'head' you want to check out.  This also sets the
    name of your newly checked-out directory, unless you tell it otherwise with
    `-d <dir_name>`.  For example, this checks out 'master' branch to the
    `project-master` directory:

@@ -52,7 +52,7 @@
 [[def_cherry-picking]]cherry-picking::
 	In <<def_SCM,SCM>> jargon, "cherry pick" means to choose a subset of
 	changes out of a series of changes (typically commits) and record them
-	as a new series of changes on top of a different codebase. In GIT, this is
+	as a new series of changes on top of a different codebase. In Git, this is
 	performed by the "git cherry-pick" command to extract the change introduced
 	by an existing <<def_commit,commit>> and to record it based on the tip
 	of the current <<def_branch,branch>> as a new commit.

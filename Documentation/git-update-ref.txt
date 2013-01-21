@@ -73,7 +73,7 @@ in ref value.  Log lines are formatted as:
 Where "oldsha1" is the 40 character hexadecimal value previously
 stored in <ref>, "newsha1" is the 40 character hexadecimal value of
 <newvalue> and "committer" is the committer's name, email address
-and date in the standard GIT committer ident format.
+and date in the standard Git committer ident format.
 
 Optionally with -m:
 

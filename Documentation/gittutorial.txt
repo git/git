@@ -656,7 +656,7 @@ digressions that may be interesting at this point are:
   * linkgit:gitworkflows[7]: Gives an overview of recommended
     workflows.
 
-  * link:everyday.html[Everyday GIT with 20 Commands Or So]
+  * link:everyday.html[Everyday Git with 20 Commands Or So]
 
   * linkgit:gitcvs-migration[7]: Git for CVS users.
 

@@ -2299,7 +2299,7 @@ Here are some of the scripts that simplify all this even further.
 
 -------------------------------------------------
 ==== update script ====
-# Update a branch in my GIT tree.  If the branch to be updated
+# Update a branch in my Git tree.  If the branch to be updated
 # is origin, then pull from kernel.org.  Otherwise merge
 # origin/master branch into test|release branch
 
@@ -2357,7 +2357,7 @@ esac
 
 -------------------------------------------------
 ==== status script ====
-# report on status of my ia64 GIT tree
+# report on status of my ia64 Git tree
 
 gb=$(tput setab 2)
 rb=$(tput setab 1)

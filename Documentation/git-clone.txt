@@ -125,7 +125,7 @@ objects from the source repository into a pack in the cloned repository.
 	No checkout of HEAD is performed after the clone is complete.
 
 --bare::
-	Make a 'bare' GIT repository.  That is, instead of
+	Make a 'bare' Git repository.  That is, instead of
 	creating `<directory>` and placing the administrative
 	files in `<directory>/.git`, make the `<directory>`
 	itself the `$GIT_DIR`. This obviously implies the `-n`

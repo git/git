@@ -242,7 +242,7 @@ tag to the tip of 'master' indicating the release version:
 .Release tagging
 [caption="Recipe: "]
 =====================================
-`git tag -s -m "GIT X.Y.Z" vX.Y.Z master`
+`git tag -s -m "Git X.Y.Z" vX.Y.Z master`
 =====================================
 
 You need to push the new tag to a public git server (see

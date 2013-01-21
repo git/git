@@ -1,4 +1,4 @@
-Everyday GIT With 20 Commands Or So
+Everyday Git With 20 Commands Or So
 ===================================
 
 <<Individual Developer (Standalone)>> commands are essential for
@@ -229,7 +229,7 @@ commands in addition to the ones needed by participants.
 Examples
 ~~~~~~~~
 
-My typical GIT day.::
+My typical Git day.::
 +
 ------------
 $ git status <1>

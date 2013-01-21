@@ -16,8 +16,8 @@ This tutorial explains how to use the "core" git commands to set up and
 work with a git repository.
 
 If you just need to use git as a revision control system you may prefer
-to start with "A Tutorial Introduction to GIT" (linkgit:gittutorial[7]) or
-link:user-manual.html[the GIT User Manual].
+to start with "A Tutorial Introduction to Git" (linkgit:gittutorial[7]) or
+link:user-manual.html[the Git User Manual].
 
 However, an understanding of these low-level tools can be helpful if
 you want to understand git's internals.

@@ -3,7 +3,7 @@ gitglossary(7)
 
 NAME
 ----
-gitglossary - A GIT Glossary
+gitglossary - A Git Glossary
 
 SYNOPSIS
 --------
