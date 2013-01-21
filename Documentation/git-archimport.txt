@@ -3,7 +3,7 @@ git-archimport(1)
 
 NAME
 ----
-git-archimport - Import an Arch repository into git
+git-archimport - Import an Arch repository into Git
 
 
 SYNOPSIS
@@ -40,13 +40,13 @@ directory. To follow the development of a project that uses Arch, rerun
 incremental imports.
 
 While 'git archimport' will try to create sensible branch names for the
-archives that it imports, it is also possible to specify git branch names
-manually.  To do so, write a git branch name after each <archive/branch>
+archives that it imports, it is also possible to specify Git branch names
+manually.  To do so, write a Git branch name after each <archive/branch>
 parameter, separated by a colon.  This way, you can shorten the Arch
-branch names and convert Arch jargon to git jargon, for example mapping a
+branch names and convert Arch jargon to Git jargon, for example mapping a
 "PROJECT{litdd}devo{litdd}VERSION" branch to "master".
 
-Associating multiple Arch branches to one git branch is possible; the
+Associating multiple Arch branches to one Git branch is possible; the
 result will make the most sense only if no commits are made to the first
 branch, after the second branch is created.  Still, this is useful to
 convert Arch repositories that had been rotated periodically.
@@ -54,14 +54,14 @@ convert Arch repositories that had been rotated periodically.
 
 MERGES
 ------
-Patch merge data from Arch is used to mark merges in git as well. git
+Patch merge data from Arch is used to mark merges in Git as well. Git
 does not care much about tracking patches, and only considers a merge when a
 branch incorporates all the commits since the point they forked. The end result
-is that git will have a good idea of how far branches have diverged. So the
+is that Git will have a good idea of how far branches have diverged. So the
 import process does lose some patch-trading metadata.
 
 Fortunately, when you try and merge branches imported from Arch,
-git will find a good merge base, and it has a good chance of identifying
+Git will find a good merge base, and it has a good chance of identifying
 patches that have been traded out-of-sequence between the branches.
 
 OPTIONS

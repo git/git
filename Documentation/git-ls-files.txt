@@ -92,7 +92,7 @@ OPTIONS
 	directory and its subdirectories in <file>.
 
 --exclude-standard::
-	Add the standard git exclusions: .git/info/exclude, .gitignore
+	Add the standard Git exclusions: .git/info/exclude, .gitignore
 	in each directory, and the user's global exclusion file.
 
 --error-unmatch::

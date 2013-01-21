@@ -3,7 +3,7 @@ gitweb.conf(5)
 
 NAME
 ----
-gitweb.conf - Gitweb (git web interface) configuration file
+gitweb.conf - Gitweb (Git web interface) configuration file
 
 SYNOPSIS
 --------
@@ -79,7 +79,7 @@ stops declaring it.
 You can include other configuration file using read_config_file()
 subroutine.  For example, one might want to put gitweb configuration
 related to access control for viewing repositories via Gitolite (one
-of git repository management tools) in a separate file, e.g. in
+of Git repository management tools) in a separate file, e.g. in
 '/etc/gitweb-gitolite.conf'.  To include it, put
 
 --------------------------------------------------
@@ -111,7 +111,7 @@ and installing gitweb.
 Location of repositories
 ~~~~~~~~~~~~~~~~~~~~~~~~
 The configuration variables described below control how gitweb finds
-git repositories, and how repositories are displayed and accessed.
+Git repositories, and how repositories are displayed and accessed.
 
 See also "Repositories" and later subsections in linkgit:gitweb[1] manpage.
 
@@ -159,7 +159,7 @@ will fall back to scanning the `$projectroot` directory for repositories.
 
 $project_maxdepth::
 	If `$projects_list` variable is unset, gitweb will recursively
-	scan filesystem for git repositories.  The `$project_maxdepth`
+	scan filesystem for Git repositories.  The `$project_maxdepth`
 	is used to limit traversing depth, relative to `$projectroot`
 	(starting point); it means that directories which are further
 	from `$projectroot` than `$project_maxdepth` will be skipped.
@@ -200,7 +200,7 @@ our $export_ok = "git-daemon-export-ok";
 +
 If not set (default), it means that this feature is disabled.
 +
-See also more involved example in "Controlling access to git repositories"
+See also more involved example in "Controlling access to Git repositories"
 subsection on linkgit:gitweb[1] manpage.
 
 $strict_export::
@@ -222,18 +222,18 @@ The values of these variables are paths on the filesystem.
 
 $GIT::
 	Core git executable to use.  By default set to `$GIT_BINDIR/git`, which
-	in turn is by default set to `$(bindir)/git`.  If you use git installed
+	in turn is by default set to `$(bindir)/git`.  If you use Git installed
 	from a binary package, you should usually set this to "/usr/bin/git".
 	This can just be "git" if your web server has a sensible PATH; from
 	security point of view it is better to use absolute path to git binary.
-	If you have multiple git versions installed it can be used to choose
+	If you have multiple Git versions installed it can be used to choose
 	which one to use.  Must be (correctly) set for gitweb to be able to
 	work.
 
 $mimetypes_file::
 	File to use for (filename extension based) guessing of MIME types before
 	trying '/etc/mime.types'.  *NOTE* that this path, if relative, is taken
-	as relative to the current git repository, not to CGI script.  If unset,
+	as relative to the current Git repository, not to CGI script.  If unset,
 	only '/etc/mime.types' is used (if present on filesystem).  If no mimetypes
 	file is found, mimetype guessing based on extension of file is disabled.
 	Unset by default.
@@ -343,8 +343,8 @@ $logo_url::
 $logo_label::
 	URI and label (title) for the Git logo link (or your site logo,
 	if you chose to use different logo image). By default, these both
-	refer to git homepage, http://git-scm.com[]; in the past, they pointed
-	to git documentation at http://www.kernel.org[].
+	refer to Git homepage, http://git-scm.com[]; in the past, they pointed
+	to Git documentation at http://www.kernel.org[].
 
 
 Changing gitweb's look
@@ -436,7 +436,7 @@ $fallback_encoding::
 	detection.
 +
 *Note* that rename and especially copy detection can be quite
-CPU-intensive.  Note also that non git tools can have problems with
+CPU-intensive.  Note also that non Git tools can have problems with
 patches generated with options mentioned above, especially when they
 involve file copies (\'-C') or criss-cross renames (\'-B').
 
@@ -451,7 +451,7 @@ looks does contain variables configuring administrative side of gitweb
 affects how "summary" pages look like, or load limiting).
 
 @git_base_url_list::
-	List of git base URLs.  These URLs are used to generate URLs
+	List of Git base URLs.  These URLs are used to generate URLs
 	describing from where to fetch a project, which are shown on
 	project summary page.  The full fetch URL is "`$git_base_url/$project`",
 	for each element of this list. You can set up multiple base URLs
@@ -616,7 +616,7 @@ override::
 	(or enabled/disabled) on a per-repository basis.
 +
 Usually given "<feature>" is configurable via the `gitweb.<feature>`
-config variable in the per-repository git configuration file.
+config variable in the per-repository Git configuration file.
 +
 *Note* that no feature is overriddable by default.
 
@@ -782,7 +782,7 @@ filesystem (i.e. "$projectroot/$project"), `%h` to the current hash
 (\'hb' gitweb parameter); `%%` expands to \'%'.
 +
 For example, at the time this page was written, the http://repo.or.cz[]
-git hosting site set it to the following to enable graphical log
+Git hosting site set it to the following to enable graphical log
 (using the third party tool *git-browser*):
 +
 ----------------------------------------------------------------------
@@ -796,10 +796,10 @@ This adds a link titled "graphiclog" after the "summary" link, leading to
 Project specific override is not supported.
 
 timed::
-	Enable displaying how much time and how many git commands it took to
+	Enable displaying how much time and how many Git commands it took to
 	generate and display each page in the page footer (at the bottom of
 	page).  For example the footer might contain: "This page took 6.53325
-	seconds and 13 git commands to generate."  Disabled by default.
+	seconds and 13 Git commands to generate."  Disabled by default.
 +
 Project specific override is not supported.
 

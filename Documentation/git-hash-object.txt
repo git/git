@@ -40,7 +40,7 @@ OPTIONS
 --path::
 	Hash object as it were located at the given path. The location of
 	file does not directly influence on the hash value, but path is
-	used to determine what git filters should be applied to the object
+	used to determine what Git filters should be applied to the object
 	before it can be placed to the object database, and, as result of
 	applying filters, the actual blob put into the object database may
 	differ from the given file. This option is mainly useful for hashing

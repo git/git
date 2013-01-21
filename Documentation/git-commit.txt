@@ -32,7 +32,7 @@ The content to be added can be specified in several ways:
 3. by listing files as arguments to the 'commit' command, in which
    case the commit will ignore changes staged in the index, and instead
    record the current content of the listed files (which must already
-   be known to git);
+   be known to Git);
 
 4. by using the -a switch with the 'commit' command to automatically
    "add" changes from all known files (i.e. all files that are already
@@ -59,7 +59,7 @@ OPTIONS
 --all::
 	Tell the command to automatically stage files that have
 	been modified and deleted, but new files you have not
-	told git about are not affected.
+	told Git about are not affected.
 
 -p::
 --patch::
@@ -404,7 +404,7 @@ Though not required, it's a good idea to begin the commit message
 with a single short (less than 50 character) line summarizing the
 change, followed by a blank line and then a more thorough description.
 The text up to the first blank line in a commit message is treated
-as the commit title, and that title is used throughout git.
+as the commit title, and that title is used throughout Git.
 For example, linkgit:git-format-patch[1] turns a commit into email, and it uses
 the title on the Subject line and the rest of the commit in the body.
 

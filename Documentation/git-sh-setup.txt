@@ -3,7 +3,7 @@ git-sh-setup(1)
 
 NAME
 ----
-git-sh-setup - Common git shell script setup code
+git-sh-setup - Common Git shell script setup code
 
 SYNOPSIS
 --------
@@ -19,7 +19,7 @@ Porcelain-ish scripts and/or are writing new ones.
 
 The 'git sh-setup' scriptlet is designed to be sourced (using
 `.`) by other shell scripts to set up some variables pointing at
-the normal git directories and a few helper shell functions.
+the normal Git directories and a few helper shell functions.
 
 Before sourcing it, your script should set up a few variables;
 `USAGE` (and `LONG_USAGE`, if any) is used to define message

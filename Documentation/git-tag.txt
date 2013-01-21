@@ -242,7 +242,7 @@ $ git pull git://git..../proj.git master
 In such a case, you do not want to automatically follow the other
 person's tags.
 
-One important aspect of git is its distributed nature, which
+One important aspect of Git is its distributed nature, which
 largely means there is no inherent "upstream" or
 "downstream" in the system.  On the face of it, the above
 example might seem to indicate that the tag namespace is owned

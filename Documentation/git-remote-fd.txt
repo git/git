@@ -11,14 +11,14 @@ SYNOPSIS
 
 DESCRIPTION
 -----------
-This helper uses specified file descriptors to connect to a remote git server.
+This helper uses specified file descriptors to connect to a remote Git server.
 This is not meant for end users but for programs and scripts calling git
 fetch, push or archive.
 
 If only <infd> is given, it is assumed to be a bidirectional socket connected
-to remote git server (git-upload-pack, git-receive-pack or
+to remote Git server (git-upload-pack, git-receive-pack or
 git-upload-achive). If both <infd> and <outfd> are given, they are assumed
-to be pipes connected to a remote git server (<infd> being the inbound pipe
+to be pipes connected to a remote Git server (<infd> being the inbound pipe
 and <outfd> being the outbound pipe.
 
 It is assumed that any handshaking procedures have already been completed
@@ -52,7 +52,7 @@ EXAMPLES
 
 Documentation
 --------------
-Documentation by Ilari Liusvaara and the git list <git@vger.kernel.org>
+Documentation by Ilari Liusvaara and the Git list <git@vger.kernel.org>
 
 GIT
 ---

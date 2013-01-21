@@ -35,7 +35,7 @@ A pack index file (.idx) is generated for fast, random access to the
 objects in the pack. Placing both the index file (.idx) and the packed
 archive (.pack) in the pack/ subdirectory of $GIT_OBJECT_DIRECTORY (or
 any of the directories on $GIT_ALTERNATE_OBJECT_DIRECTORIES)
-enables git to read from the pack archive.
+enables Git to read from the pack archive.
 
 The 'git unpack-objects' command can read the packed archive and
 expand the objects contained in the pack into "one-file
@@ -80,7 +80,7 @@ base-name::
 --include-tag::
 	Include unasked-for annotated tags if the object they
 	reference was included in the resulting packfile.  This
-	can be useful to send new tags to native git clients.
+	can be useful to send new tags to native Git clients.
 
 --window=<n>::
 --depth=<n>::
@@ -185,14 +185,14 @@ base-name::
 	option only makes sense in conjunction with --stdout.
 +
 Note: A thin pack violates the packed archive format by omitting
-required objects and is thus unusable by git without making it
+required objects and is thus unusable by Git without making it
 self-contained. Use `git index-pack --fix-thin`
 (see linkgit:git-index-pack[1]) to restore the self-contained property.
 
 --delta-base-offset::
 	A packed archive can express the base object of a delta as
 	either a 20-byte object name or as an offset in the
-	stream, but ancient versions of git don't understand the
+	stream, but ancient versions of Git don't understand the
 	latter.  By default, 'git pack-objects' only uses the
 	former format for better compatibility.  This option
 	allows the command to use the latter format for
@@ -202,7 +202,7 @@ self-contained. Use `git index-pack --fix-thin`
 +
 Note: Porcelain commands such as `git gc` (see linkgit:git-gc[1]),
 `git repack` (see linkgit:git-repack[1]) pass this option by default
-in modern git when they put objects in your repository into pack files.
+in modern Git when they put objects in your repository into pack files.
 So does `git bundle` (see linkgit:git-bundle[1]) when it creates a bundle.
 
 --threads=<n>::
@@ -212,7 +212,7 @@ So does `git bundle` (see linkgit:git-bundle[1]) when it creates a bundle.
 	This is meant to reduce packing time on multiprocessor machines.
 	The required amount of memory for the delta search window is
 	however multiplied by the number of threads.
-	Specifying 0 will cause git to auto-detect the number of CPU's
+	Specifying 0 will cause Git to auto-detect the number of CPU's
 	and set the number of threads accordingly.
 
 --index-version=<version>[,<offset>]::

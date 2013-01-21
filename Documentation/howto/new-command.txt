@@ -1,25 +1,25 @@
 From: Eric S. Raymond <esr@thyrsus.com>
 Abstract: This is how-to documentation for people who want to add extension
- commands to git.  It should be read alongside api-builtin.txt.
+ commands to Git.  It should be read alongside api-builtin.txt.
 Content-type: text/asciidoc
 
 How to integrate new subcommands
 ================================
 
 This is how-to documentation for people who want to add extension
-commands to git.  It should be read alongside api-builtin.txt.
+commands to Git.  It should be read alongside api-builtin.txt.
 
 Runtime environment
 -------------------
 
-git subcommands are standalone executables that live in the git exec
+Git subcommands are standalone executables that live in the Git exec
 path, normally /usr/lib/git-core.  The git executable itself is a
 thin wrapper that knows where the subcommands live, and runs them by
 passing command-line arguments to them.
 
-(If "git foo" is not found in the git exec path, the wrapper
+(If "git foo" is not found in the Git exec path, the wrapper
 will look in the rest of your $PATH for it.  Thus, it's possible
-to write local git extensions that don't live in system space.)
+to write local Git extensions that don't live in system space.)
 
 Implementation languages
 ------------------------
@@ -30,13 +30,13 @@ Perl.
 While we strongly encourage coding in portable C for portability,
 these specific scripting languages are also acceptable.  We won't
 accept more without a very strong technical case, as we don't want
-to broaden the git suite's required dependencies.  Import utilities,
+to broaden the Git suite's required dependencies.  Import utilities,
 surgical tools, remote helpers and other code at the edges of the
-git suite are more lenient and we allow Python (and even Tcl/tk),
+Git suite are more lenient and we allow Python (and even Tcl/tk),
 but they should not be used for core functions.
 
 This may change in the future.  Especially Python is not allowed in
-core because we need better Python integration in the git Windows
+core because we need better Python integration in the Git Windows
 installer before we can be confident people in that environment
 won't experience an unacceptably large loss of capability.
 
@@ -54,7 +54,7 @@ functions available to built-in commands written in C.
 What every extension command needs
 ----------------------------------
 
-You must have a man page, written in asciidoc (this is what git help
+You must have a man page, written in asciidoc (this is what Git help
 followed by your subcommand name will display).  Be aware that there is
 a local asciidoc configuration and macros which you should use.  It's
 often helpful to start by cloning an existing page and replacing the
@@ -74,7 +74,7 @@ Integrating a command
 ---------------------
 
 Here are the things you need to do when you want to merge a new
-subcommand into the git tree.
+subcommand into the Git tree.
 
 1. Don't forget to sign off your patch!
 

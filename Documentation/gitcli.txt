@@ -3,7 +3,7 @@ gitcli(7)
 
 NAME
 ----
-gitcli - git command line interface and conventions
+gitcli - Git command line interface and conventions
 
 SYNOPSIS
 --------
@@ -13,7 +13,7 @@ gitcli
 DESCRIPTION
 -----------
 
-This manual describes the convention used throughout git CLI.
+This manual describes the convention used throughout Git CLI.
 
 Many commands take revisions (most often "commits", but sometimes
 "tree-ish", depending on the context and command) and paths as their
@@ -32,7 +32,7 @@ arguments.  Here are the rules:
    between the HEAD commit and the work tree as a whole".  You can say
    `git diff HEAD --` to ask for the latter.
 
- * Without disambiguating `--`, git makes a reasonable guess, but errors
+ * Without disambiguating `--`, Git makes a reasonable guess, but errors
    out and asking you to disambiguate when ambiguous.  E.g. if you have a
    file called HEAD in your work tree, `git diff HEAD` is ambiguous, and
    you have to say either `git diff HEAD --` or `git diff -- HEAD` to
@@ -60,9 +60,9 @@ see `hello.c` in your working tree with the former, but with the latter
 you will.
 
 Here are the rules regarding the "flags" that you should follow when you are
-scripting git:
+scripting Git:
 
- * it's preferred to use the non dashed form of git commands, which means that
+ * it's preferred to use the non dashed form of Git commands, which means that
    you should prefer `git foo` to `git-foo`.
 
  * splitting short options to separate words (prefer `git foo -a -b`
@@ -90,7 +90,7 @@ scripting git:
 
 ENHANCED OPTION PARSER
 ----------------------
-From the git 1.5.4 series and further, many git commands (not all of them at the
+From the Git 1.5.4 series and further, many Git commands (not all of them at the
 time of the writing though) come with an enhanced option parser.
 
 Here is a list of the facilities provided by this option parser.
@@ -117,7 +117,7 @@ usage: git describe [options] <committish>*
 ---------------------------------------------
 
 --help-all::
-	Some git commands take options that are only used for plumbing or that
+	Some Git commands take options that are only used for plumbing or that
 	are deprecated, and such options are hidden from the default usage. This
 	option gives the full list of options.
 

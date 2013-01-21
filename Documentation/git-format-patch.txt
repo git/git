@@ -208,14 +208,14 @@ The expected use case of this is to write supporting explanation for
 the commit that does not belong to the commit log message proper,
 and include it with the patch submission. While one can simply write
 these explanations after `format-patch` has run but before sending,
-keeping them as git notes allows them to be maintained between versions
+keeping them as Git notes allows them to be maintained between versions
 of the patch series (but see the discussion of the `notes.rewrite`
 configuration options in linkgit:git-notes[1] to use this workflow).
 
 --[no]-signature=<signature>::
 	Add a signature to each message produced. Per RFC 3676 the signature
 	is separated from the body by a line with '-- ' on it. If the
-	signature option is omitted the signature defaults to the git version
+	signature option is omitted the signature defaults to the Git version
 	number.
 
 --suffix=.<sfx>::
@@ -389,7 +389,7 @@ Thunderbird
 ~~~~~~~~~~~
 By default, Thunderbird will both wrap emails as well as flag
 them as being 'format=flowed', both of which will make the
-resulting email unusable by git.
+resulting email unusable by Git.
 
 There are three different approaches: use an add-on to turn off line wraps,
 configure Thunderbird to not mangle patches, or use
@@ -525,8 +525,8 @@ $ git format-patch -M -B origin
 Additionally, it detects and handles renames and complete rewrites
 intelligently to produce a renaming patch.  A renaming patch reduces
 the amount of text output, and generally makes it easier to review.
-Note that non-git "patch" programs won't understand renaming patches, so
-use it only when you know the recipient uses git to apply your patch.
+Note that non-Git "patch" programs won't understand renaming patches, so
+use it only when you know the recipient uses Git to apply your patch.
 
 * Extract three topmost commits from the current branch and format them
 as e-mailable patches:

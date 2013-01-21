@@ -1,7 +1,7 @@
 config API
 ==========
 
-The config API gives callers a way to access git configuration files
+The config API gives callers a way to access Git configuration files
 (and files which have the same syntax). See linkgit:git-config[1] for a
 discussion of the config file syntax.
 
@@ -12,7 +12,7 @@ Config files are parsed linearly, and each variable found is passed to a
 caller-provided callback function. The callback function is responsible
 for any actions to be taken on the config option, and is free to ignore
 some options. It is not uncommon for the configuration to be parsed
-several times during the run of a git program, with different callbacks
+several times during the run of a Git program, with different callbacks
 picking out different variables useful to themselves.
 
 A config callback function takes three parameters:
@@ -36,7 +36,7 @@ Basic Config Querying
 ---------------------
 
 Most programs will simply want to look up variables in all config files
-that git knows about, using the normal precedence rules. To do this,
+that Git knows about, using the normal precedence rules. To do this,
 call `git_config` with a callback function and void data pointer.
 
 `git_config` will read all config sources in order of increasing
@@ -49,7 +49,7 @@ value is left at the end).
 
 The `git_config_with_options` function lets the caller examine config
 while adjusting some of the default behavior of `git_config`. It should
-almost never be used by "regular" git code that is looking up
+almost never be used by "regular" Git code that is looking up
 configuration variables. It is intended for advanced callers like
 `git-config`, which are intentionally tweaking the normal config-lookup
 process. It takes two extra parameters:
@@ -66,7 +66,7 @@ Regular `git_config` defaults to `1`.
 There is a special version of `git_config` called `git_config_early`.
 This version takes an additional parameter to specify the repository
 config, instead of having it looked up via `git_path`. This is useful
-early in a git program before the repository has been found. Unless
+early in a Git program before the repository has been found. Unless
 you're working with early setup code, you probably don't want to use
 this.
 

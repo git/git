@@ -3,7 +3,7 @@ gitrevisions(7)
 
 NAME
 ----
-gitrevisions - specifying revisions and ranges for git
+gitrevisions - specifying revisions and ranges for Git
 
 SYNOPSIS
 --------

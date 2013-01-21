@@ -23,7 +23,7 @@ blobs contained in a commit.
   A symbolic ref name.  E.g. 'master' typically means the commit
   object referenced by 'refs/heads/master'.  If you
   happen to have both 'heads/master' and 'tags/master', you can
-  explicitly say 'heads/master' to tell git which one you mean.
+  explicitly say 'heads/master' to tell Git which one you mean.
   When ambiguous, a '<refname>' is disambiguated by taking the
   first match in the following rules:
 

@@ -24,7 +24,7 @@ This manual page describes only the most frequently used options.
 OPTIONS
 -------
 -p::
-	Show textual diffs, instead of the git internal diff
+	Show textual diffs, instead of the Git internal diff
 	output format that is useful only to tell the changed
 	paths and their nature of changes.
 
@@ -36,7 +36,7 @@ OPTIONS
 	exclusive, top inclusive).
 
 -r::
-	Show git internal diff output, but for the whole tree,
+	Show Git internal diff output, but for the whole tree,
 	not just the top level.
 
 -m::

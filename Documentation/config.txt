@@ -1,14 +1,14 @@
 CONFIGURATION FILE
 ------------------
 
-The git configuration file contains a number of variables that affect
-the git command's behavior. The `.git/config` file in each repository
+The Git configuration file contains a number of variables that affect
+the Git commands' behavior. The `.git/config` file in each repository
 is used to store the configuration for that repository, and
 `$HOME/.gitconfig` is used to store a per-user configuration as
 fallback values for the `.git/config` file. The file `/etc/gitconfig`
 can be used to store a system-wide default configuration.
 
-The configuration variables are used by both the git plumbing
+The configuration variables are used by both the Git plumbing
 and the porcelains. The variables are divided into sections, wherein
 the fully qualified variable name of the variable itself is the last
 dot-separated segment and the section name is everything before the last
@@ -209,9 +209,9 @@ core.ignoreCygwinFSTricks::
 
 core.ignorecase::
 	If true, this option enables various workarounds to enable
-	git to work better on filesystems that are not case sensitive,
+	Git to work better on filesystems that are not case sensitive,
 	like FAT. For example, if a directory listing finds
-	"makefile" when git expects "Makefile", git will assume
+	"makefile" when Git expects "Makefile", Git will assume
 	it is really the same file, and continue to remember it as
 	"Makefile".
 +
@@ -220,13 +220,13 @@ will probe and set core.ignorecase true if appropriate when the repository
 is created.
 
 core.precomposeunicode::
-	This option is only used by Mac OS implementation of git.
-	When core.precomposeunicode=true, git reverts the unicode decomposition
+	This option is only used by Mac OS implementation of Git.
+	When core.precomposeunicode=true, Git reverts the unicode decomposition
 	of filenames done by Mac OS. This is useful when sharing a repository
 	between Mac OS and Linux or Windows.
-	(Git for Windows 1.7.10 or higher is needed, or git under cygwin 1.7).
-	When false, file names are handled fully transparent by git,
-	which is backward compatible with older versions of git.
+	(Git for Windows 1.7.10 or higher is needed, or Git under cygwin 1.7).
+	When false, file names are handled fully transparent by Git,
+	which is backward compatible with older versions of Git.
 
 core.trustctime::
 	If false, the ctime differences between the index and the
@@ -256,20 +256,20 @@ core.eol::
 	conversion.
 
 core.safecrlf::
-	If true, makes git check if converting `CRLF` is reversible when
+	If true, makes Git check if converting `CRLF` is reversible when
 	end-of-line conversion is active.  Git will verify if a command
 	modifies a file in the work tree either directly or indirectly.
 	For example, committing a file followed by checking out the
 	same file should yield the original file in the work tree.  If
 	this is not the case for the current setting of
-	`core.autocrlf`, git will reject the file.  The variable can
-	be set to "warn", in which case git will only warn about an
+	`core.autocrlf`, Git will reject the file.  The variable can
+	be set to "warn", in which case Git will only warn about an
 	irreversible conversion but continue the operation.
 +
 CRLF conversion bears a slight chance of corrupting data.
-When it is enabled, git will convert CRLF to LF during commit and LF to
+When it is enabled, Git will convert CRLF to LF during commit and LF to
 CRLF during checkout.  A file that contains a mixture of LF and
-CRLF before the commit cannot be recreated by git.  For text
+CRLF before the commit cannot be recreated by Git.  For text
 files this is the right thing to do: it corrects line endings
 such that we have only LF line endings in the repository.
 But for binary files that are accidentally classified as text the
@@ -279,7 +279,7 @@ If you recognize such corruption early you can easily fix it by
 setting the conversion type explicitly in .gitattributes.  Right
 after committing you still have the original file in your work
 tree and this file is not yet corrupted.  You can explicitly tell
-git that this file is binary and git will handle the file
+Git that this file is binary and Git will handle the file
 appropriately.
 +
 Unfortunately, the desired effect of cleaning up text files with
@@ -324,7 +324,7 @@ is created.
 core.gitProxy::
 	A "proxy command" to execute (as 'command host port') instead
 	of establishing direct connection to the remote server when
-	using the git protocol for fetching. If the variable value is
+	using the Git protocol for fetching. If the variable value is
 	in the "COMMAND for DOMAIN" format, the command is applied only
 	on hostnames ending with the specified domain string. This variable
 	may be set multiple times and is matched in the given order;
@@ -383,7 +383,7 @@ Note that this variable is honored even when set in a configuration
 file in a ".git" subdirectory of a directory and its value differs
 from the latter directory (e.g. "/path/to/.git/config" has
 core.worktree set to "/different/path"), which is most likely a
-misconfiguration.  Running git commands in the "/path/to" directory will
+misconfiguration.  Running Git commands in the "/path/to" directory will
 still use "/different/path" as the root of the work tree and can cause
 confusion unless you know what you are doing (e.g. you are creating a
 read-only snapshot of the same index to a location different from the
@@ -415,7 +415,7 @@ core.sharedRepository::
 	several users in a group (making sure all the files and objects are
 	group-writable). When 'all' (or 'world' or 'everybody'), the
 	repository will be readable by all users, additionally to being
-	group-shareable. When 'umask' (or 'false'), git will use permissions
+	group-shareable. When 'umask' (or 'false'), Git will use permissions
 	reported by umask(2). When '0xxx', where '0xxx' is an octal number,
 	files in the repository will have this mode value. '0xxx' will override
 	user's umask value (whereas the other options will only override
@@ -426,7 +426,7 @@ core.sharedRepository::
 	See linkgit:git-init[1]. False by default.
 
 core.warnAmbiguousRefs::
-	If true, git will warn you if the ref name you passed it is ambiguous
+	If true, Git will warn you if the ref name you passed it is ambiguous
 	and might match multiple refs in the .git/refs/ tree. True by default.
 
 core.compression::
@@ -498,7 +498,7 @@ Common unit suffixes of 'k', 'm', or 'g' are supported.
 
 core.excludesfile::
 	In addition to '.gitignore' (per-directory) and
-	'.git/info/exclude', git looks into this file for patterns
+	'.git/info/exclude', Git looks into this file for patterns
 	of files which are not meant to be tracked.  "`~/`" is expanded
 	to the value of `$HOME` and "`~user/`" to the specified user's
 	home directory. Its default value is $XDG_CONFIG_HOME/git/ignore.
@@ -516,7 +516,7 @@ core.askpass::
 
 core.attributesfile::
 	In addition to '.gitattributes' (per-directory) and
-	'.git/info/attributes', git looks into this file for attributes
+	'.git/info/attributes', Git looks into this file for attributes
 	(see linkgit:gitattributes[5]). Path expansions are made the same
 	way as for `core.excludesfile`. Its default value is
 	$XDG_CONFIG_HOME/git/attributes. If $XDG_CONFIG_HOME is either not
@@ -535,9 +535,9 @@ sequence.editor::
 	When not configured the default commit message editor is used instead.
 
 core.pager::
-	The command that git will use to paginate output.  Can
+	The command that Git will use to paginate output.  Can
 	be overridden with the `GIT_PAGER` environment
-	variable.  Note that git sets the `LESS` environment
+	variable.  Note that Git sets the `LESS` environment
 	variable to `FRSX` if it is unset when it runs the
 	pager.  One can change these settings by setting the
 	`LESS` variable to some other value.  Alternately,
@@ -545,11 +545,11 @@ core.pager::
 	global basis by setting the `core.pager` option.
 	Setting `core.pager` has no effect on the `LESS`
 	environment variable behaviour above, so if you want
-	to override git's default settings this way, you need
+	to override Git's default settings this way, you need
 	to be explicit.  For example, to disable the S option
 	in a backward compatible manner, set `core.pager`
 	to `less -+S`.  This will be passed to the shell by
-	git, which will translate the final command to
+	Git, which will translate the final command to
 	`LESS=FRSX less -+S`.
 
 core.whitespace::
@@ -578,7 +578,7 @@ core.whitespace::
   does not trigger if the character before such a carriage-return
   is not a whitespace (not enabled by default).
 * `tabwidth=<n>` tells how many character positions a tab occupies; this
-  is relevant for `indent-with-non-tab` and when git fixes `tab-in-indent`
+  is relevant for `indent-with-non-tab` and when Git fixes `tab-in-indent`
   errors. The default tab width is 8. Allowed values are 1 to 63.
 
 core.fsyncobjectfiles::
@@ -594,7 +594,7 @@ core.preloadindex::
 +
 This can speed up operations like 'git diff' and 'git status' especially
 on filesystems like NFS that have weak caching semantics and thus
-relatively high IO latencies.  With this set to 'true', git will do the
+relatively high IO latencies.  With this set to 'true', Git will do the
 index comparison to the filesystem data in parallel, allowing
 overlapping IO's.
 
@@ -630,9 +630,9 @@ add.ignore-errors::
 add.ignoreErrors::
 	Tells 'git add' to continue adding files when some files cannot be
 	added due to indexing errors. Equivalent to the '--ignore-errors'
-	option of linkgit:git-add[1].  Older versions of git accept only
+	option of linkgit:git-add[1].  Older versions of Git accept only
 	`add.ignore-errors`, which does not follow the usual naming
-	convention for configuration variables.  Newer versions of git
+	convention for configuration variables.  Newer versions of Git
 	honor `add.ignoreErrors` as well.
 
 alias.*::
@@ -640,7 +640,7 @@ alias.*::
 	after defining "alias.last = cat-file commit HEAD", the invocation
 	"git last" is equivalent to "git cat-file commit HEAD". To avoid
 	confusion and troubles with script usage, aliases that
-	hide existing git commands are ignored. Arguments are split by
+	hide existing Git commands are ignored. Arguments are split by
 	spaces, the usual shell quoting and escaping is supported.
 	quote pair and a backslash can be used to quote them.
 +
@@ -687,7 +687,7 @@ branch.autosetupmerge::
 
 branch.autosetuprebase::
 	When a new branch is created with 'git branch' or 'git checkout'
-	that tracks another branch, this variable tells git to set
+	that tracks another branch, this variable tells Git to set
 	up pull to rebase instead of merge (see "branch.<name>.rebase").
 	When `never`, rebase is never automatically set to true.
 	When `local`, rebase is set to true for tracked branches of
@@ -868,7 +868,7 @@ color.status.<slot>::
 	one of `header` (the header text of the status message),
 	`added` or `updated` (files which are added but not committed),
 	`changed` (files which are changed but not added in the index),
-	`untracked` (files which are not tracked by git),
+	`untracked` (files which are not tracked by Git),
 	`branch` (the current branch), or
 	`nobranch` (the color the 'no branch' warning is shown in, defaulting
 	to red). The values of these variables may be specified as in
@@ -882,7 +882,7 @@ color.ui::
 	to `always` if you want all output not intended for machine
 	consumption to use color, to `true` or `auto` if you want such
 	output to use color when written to the terminal, or to `false` or
-	`never` if you prefer git commands not to use color unless enabled
+	`never` if you prefer Git commands not to use color unless enabled
 	explicitly with some other configuration or the `--color` option.
 
 column.ui::
@@ -999,7 +999,7 @@ fetch.fsckObjects::
 	is used instead.
 
 fetch.unpackLimit::
-	If the number of objects fetched over the git native
+	If the number of objects fetched over the Git native
 	transfer is below this
 	limit, then the objects will be unpacked into loose object
 	files. However if the number of received objects equals or
@@ -1039,7 +1039,7 @@ format.subjectprefix::
 
 format.signature::
 	The default for format-patch is to output a signature containing
-	the git version number. Use this variable to change that default.
+	the Git version number. Use this variable to change that default.
 	Set this variable to the empty string ("") to suppress
 	signature generation.
 
@@ -1152,7 +1152,7 @@ gitcvs.logfile::
 gitcvs.usecrlfattr::
 	If true, the server will look up the end-of-line conversion
 	attributes for files to determine the '-k' modes to use. If
-	the attributes force git to treat a file as text,
+	the attributes force Git to treat a file as text,
 	the '-k' mode will be left blank so CVS clients will
 	treat it as text. If they suppress text conversion, the file
 	will be set with '-kb' mode, which suppresses any newline munging
@@ -1172,7 +1172,7 @@ gitcvs.allbinary::
 
 gitcvs.dbname::
 	Database used by git-cvsserver to cache revision information
-	derived from the git repository. The exact meaning depends on the
+	derived from the Git repository. The exact meaning depends on the
 	used database driver, for SQLite (which is the default driver) this
 	is a filename. Supports variable substitution (see
 	linkgit:git-cvsserver[1] for details). May not contain semicolons (`;`).
@@ -1384,7 +1384,7 @@ http.proxy::
 
 http.cookiefile::
 	File containing previously stored cookie lines which should be used
-	in the git http session, if they match the server. The file format
+	in the Git http session, if they match the server. The file format
 	of the file to read cookies from should be plain HTTP headers or
 	the Netscape/Mozilla cookie file format (see linkgit:curl[1]).
 	NOTE that the file specified with http.cookiefile is only used as
@@ -1406,7 +1406,7 @@ http.sslKey::
 	variable.
 
 http.sslCertPasswordProtected::
-	Enable git's password prompt for the SSL certificate.  Otherwise
+	Enable Git's password prompt for the SSL certificate.  Otherwise
 	OpenSSL will prompt the user, possibly many times, if the
 	certificate or private key is encrypted.  Can be overridden by the
 	'GIT_SSL_CERT_PASSWORD_PROTECTED' environment variable.
@@ -1453,7 +1453,7 @@ http.noEPSV::
 
 http.useragent::
 	The HTTP USER_AGENT string presented to an HTTP server.  The default
-	value represents the version of the client git such as git/1.7.1.
+	value represents the version of the client Git such as git/1.7.1.
 	This option allows you to override this value to a more common value
 	such as Mozilla/4.0.  This may be necessary, for instance, if
 	connecting through a firewall that restricts HTTP connections to a set
@@ -1461,7 +1461,7 @@ http.useragent::
 	Can be overridden by the 'GIT_HTTP_USER_AGENT' environment variable.
 
 i18n.commitEncoding::
-	Character encoding the commit messages are stored in; git itself
+	Character encoding the commit messages are stored in; Git itself
 	does not care per se, but this information is necessary e.g. when
 	importing commits from emails or in the gitk graphical history
 	browser (and possibly at other places in the future or in other
@@ -1599,7 +1599,7 @@ mergetool.keepBackup::
 	`true` (i.e. keep the backup files).
 
 mergetool.keepTemporaries::
-	When invoking a custom merge tool, git uses a set of temporary
+	When invoking a custom merge tool, Git uses a set of temporary
 	files to pass to the tool. If the tool returns an error and this
 	variable is set to `true`, then these temporary files will be
 	preserved, otherwise they will be removed after the tool has
@@ -1627,7 +1627,7 @@ displayed.
 
 notes.rewrite.<command>::
 	When rewriting commits with <command> (currently `amend` or
-	`rebase`) and this variable is set to `true`, git
+	`rebase`) and this variable is set to `true`, Git
 	automatically copies your notes from the original to the
 	rewritten commit.  Defaults to `true`, but see
 	"notes.rewriteRef" below.
@@ -1707,7 +1707,7 @@ pack.threads::
 	warning. This is meant to reduce packing time on multiprocessor
 	machines. The required amount of memory for the delta search window
 	is however multiplied by the number of threads.
-	Specifying 0 will cause git to auto-detect the number of CPU's
+	Specifying 0 will cause Git to auto-detect the number of CPU's
 	and set the number of threads accordingly.
 
 pack.indexVersion::
@@ -1719,11 +1719,11 @@ pack.indexVersion::
 	and this config option ignored whenever the corresponding pack is
 	larger than 2 GB.
 +
-If you have an old git that does not understand the version 2 `*.idx` file,
+If you have an old Git that does not understand the version 2 `*.idx` file,
 cloning or fetching over a non native protocol (e.g. "http" and "rsync")
 that will copy both `*.pack` file and corresponding `*.idx` file from the
 other side may give you a repository that cannot be accessed with your
-older version of git. If the `*.pack` file is smaller than 2 GB, however,
+older version of Git. If the `*.pack` file is smaller than 2 GB, however,
 you can use linkgit:git-index-pack[1] on the *.pack file to regenerate
 the `*.idx` file.
 
@@ -1738,7 +1738,7 @@ pack.packSizeLimit::
 
 pager.<cmd>::
 	If the value is boolean, turns on or off pagination of the
-	output of a particular git subcommand when writing to a tty.
+	output of a particular Git subcommand when writing to a tty.
 	Otherwise, turns on pagination for the subcommand using the
 	pager specified by the value of `pager.<cmd>`.  If `--paginate`
 	or `--no-pager` is specified on the command line, it takes
@@ -1773,7 +1773,7 @@ pull.twohead::
 	The default merge strategy to use when pulling a single branch.
 
 push.default::
-	Defines the action git push should take if no refspec is given
+	Defines the action `git push` should take if no refspec is given
 	on the command line, no refspec is configured in the remote, and
 	no refspec is implied by any of the options given on the command
 	line. Possible values are:
@@ -1913,7 +1913,7 @@ remote.<name>.tagopt::
 	linkgit:git-fetch[1].
 
 remote.<name>.vcs::
-	Setting this to a value <vcs> will cause git to interact with
+	Setting this to a value <vcs> will cause Git to interact with
 	the remote with the git-remote-<vcs> helper.
 
 remotes.<group>::
@@ -1923,9 +1923,9 @@ remotes.<group>::
 repack.usedeltabaseoffset::
 	By default, linkgit:git-repack[1] creates packs that use
 	delta-base offset. If you need to share your repository with
-	git older than version 1.4.4, either directly or via a dumb
+	Git older than version 1.4.4, either directly or via a dumb
 	protocol such as http, then you need to set this option to
-	"false" and repack. Access from old git versions over the
+	"false" and repack. Access from old Git versions over the
 	native protocol are unaffected by this option.
 
 rerere.autoupdate::
@@ -1994,7 +1994,7 @@ showbranch.default::
 status.relativePaths::
 	By default, linkgit:git-status[1] shows paths relative to the
 	current directory. Setting this variable to `false` shows paths
-	relative to the repository root (this was the default for git
+	relative to the repository root (this was the default for Git
 	prior to v1.5.4).
 
 status.showUntrackedFiles::
@@ -2081,7 +2081,7 @@ url.<base>.insteadOf::
 	large number of repositories, and serves them with multiple
 	access methods, and some users need to use different access
 	methods, this feature allows people to specify any of the
-	equivalent URLs and have git automatically rewrite the URL to
+	equivalent URLs and have Git automatically rewrite the URL to
 	the best alternative for the particular user, even for a
 	never-before-seen repository on the site.  When more than one
 	insteadOf strings match a given URL, the longest match is used.
@@ -2092,11 +2092,11 @@ url.<base>.pushInsteadOf::
 	resulting URL will be pushed to. In cases where some site serves
 	a large number of repositories, and serves them with multiple
 	access methods, some of which do not allow push, this feature
-	allows people to specify a pull-only URL and have git
+	allows people to specify a pull-only URL and have Git
 	automatically use an appropriate URL to push, even for a
 	never-before-seen repository on the site.  When more than one
 	pushInsteadOf strings match a given URL, the longest match is
-	used.  If a remote has an explicit pushurl, git will ignore this
+	used.  If a remote has an explicit pushurl, Git will ignore this
 	setting for that remote.
 
 user.email::

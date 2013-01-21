@@ -3,7 +3,7 @@ gitk(1)
 
 NAME
 ----
-gitk - The git repository browser
+gitk - The Git repository browser
 
 SYNOPSIS
 --------
@@ -18,7 +18,7 @@ the files in the trees of each revision.
 
 Historically, gitk was the first repository browser. It's written in tcl/tk
 and started off in a separate repository but was later merged into the main
-git repository.
+Git repository.
 
 OPTIONS
 -------
@@ -108,10 +108,10 @@ SEE ALSO
 
 'gitview(1)'::
 	A repository browser written in Python using Gtk. It's based on
-	'bzrk(1)' and distributed in the contrib area of the git repository.
+	'bzrk(1)' and distributed in the contrib area of the Git repository.
 
 'tig(1)'::
-	A minimal repository browser and git tool output highlighter written
+	A minimal repository browser and Git tool output highlighter written
 	in C using Ncurses.
 
 GIT

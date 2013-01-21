@@ -18,7 +18,7 @@ SYNOPSIS
 
 DESCRIPTION
 -----------
-Lets you rewrite git revision history by rewriting the branches mentioned
+Lets you rewrite Git revision history by rewriting the branches mentioned
 in the <rev-list options>, applying custom filters on each revision.
 Those filters can modify each tree (e.g. removing a file or running
 a perl rewrite on all files) or information about each commit.
@@ -29,7 +29,7 @@ The command will only rewrite the _positive_ refs mentioned in the
 command line (e.g. if you pass 'a..b', only 'b' will be rewritten).
 If you specify no filters, the commits will be recommitted without any
 changes, which would normally have no effect.  Nevertheless, this may be
-useful in the future for compensating for some git bugs or such,
+useful in the future for compensating for some Git bugs or such,
 therefore such a usage is permitted.
 
 *NOTE*: This command honors `.git/info/grafts` file and refs in
@@ -374,7 +374,7 @@ git-filter-branch is often used to get rid of a subset of files,
 usually with some combination of `--index-filter` and
 `--subdirectory-filter`.  People expect the resulting repository to
 be smaller than the original, but you need a few more steps to
-actually make it smaller, because git tries hard not to lose your
+actually make it smaller, because Git tries hard not to lose your
 objects until you tell it to.  First make sure that:
 
 * You really removed all variants of a filename, if a blob was moved

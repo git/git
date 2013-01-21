@@ -3,7 +3,7 @@ git-init-db(1)
 
 NAME
 ----
-git-init-db - Creates an empty git repository
+git-init-db - Creates an empty Git repository
 
 
 SYNOPSIS

@@ -179,7 +179,7 @@ parameter can be any valid commit-ish.
 In case of conflict, 'git rebase' will stop at the first problematic commit
 and leave conflict markers in the tree.  You can use 'git diff' to locate
 the markers (<<<<<<) and make edits to resolve the conflict.  For each
-file you edit, you need to tell git that the conflict has been resolved,
+file you edit, you need to tell Git that the conflict has been resolved,
 typically this would be done with
 
 

@@ -3,7 +3,7 @@ Message-ID: <7vy86o6usx.fsf@assigned-by-dhcp.cox.net>
 From: Junio C Hamano <gitster@pobox.com>
 Date: Fri, 26 Aug 2005 18:19:10 -0700
 Abstract: In this how-to article, JC talks about how he
- uses the post-update hook to automate git documentation page
+ uses the post-update hook to automate Git documentation page
  shown at http://www.kernel.org/pub/software/scm/git/docs/.
 Content-type: text/asciidoc
 
@@ -15,11 +15,11 @@ are built from Documentation/ directory of the git.git project
 and needed to be kept up-to-date.  The www.kernel.org/ servers
 are mirrored and I was told that the origin of the mirror is on
 the machine $some.kernel.org, on which I was given an account
-when I took over git maintainership from Linus.
+when I took over Git maintainership from Linus.
 
 The directories relevant to this how-to are these two:
 
-    /pub/scm/git/git.git/	The public git repository.
+    /pub/scm/git/git.git/	The public Git repository.
     /pub/software/scm/git/docs/	The HTML documentation page.
 
 So I made a repository to generate the documentation under my
@@ -46,7 +46,7 @@ script:
     EOF
 
 Initially I used to run this by hand whenever I push into the
-public git repository.  Then I did a cron job that ran twice a
+public Git repository.  Then I did a cron job that ran twice a
 day.  The current round uses the post-update hook mechanism,
 like this:
 

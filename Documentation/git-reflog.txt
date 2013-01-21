@@ -38,7 +38,7 @@ The reflog will cover all recent actions (HEAD reflog records branch switching
 as well).  It is an alias for `git log -g --abbrev-commit --pretty=oneline`;
 see linkgit:git-log[1].
 
-The reflog is useful in various git commands, to specify the old value
+The reflog is useful in various Git commands, to specify the old value
 of a reference. For example, `HEAD@{2}` means "where HEAD used to be
 two moves ago", `master@{one.week.ago}` means "where master used to
 point to one week ago", and so on. See linkgit:gitrevisions[7] for

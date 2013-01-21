@@ -20,7 +20,7 @@ itself doesn't actually tell you anything, in order to fix a corrupt
 object you basically have to find the "original source" for it.
 
 The easiest way to do that is almost always to have backups, and find the
-same object somewhere else. Backups really are a good idea, and git makes
+same object somewhere else. Backups really are a good idea, and Git makes
 it pretty easy (if nothing else, just clone the repository somewhere else,
 and make sure that you do *not* use a hard-linked clone, and preferably
 not the same disk/machine).
@@ -134,7 +134,7 @@ and your repository is good again!
 	git log --raw --all
 
 and just looked for the sha of the missing object (4b9458b..) in that
-whole thing. It's up to you - git does *have* a lot of information, it is
+whole thing. It's up to you - Git does *have* a lot of information, it is
 just missing one particular blob version.
 
 Trying to recreate trees and especially commits is *much* harder. So you

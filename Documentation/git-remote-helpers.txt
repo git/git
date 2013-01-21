@@ -14,17 +14,17 @@ DESCRIPTION
 -----------
 
 Remote helper programs are normally not used directly by end users,
-but they are invoked by git when it needs to interact with remote
-repositories git does not support natively.  A given helper will
-implement a subset of the capabilities documented here. When git
+but they are invoked by Git when it needs to interact with remote
+repositories Git does not support natively.  A given helper will
+implement a subset of the capabilities documented here. When Git
 needs to interact with a repository using a remote helper, it spawns
 the helper as an independent process, sends commands to the helper's
 standard input, and expects results from the helper's standard
 output. Because a remote helper runs as an independent process from
-git, there is no need to re-link git to add a new helper, nor any
-need to link the helper with the implementation of git.
+Git, there is no need to re-link Git to add a new helper, nor any
+need to link the helper with the implementation of Git.
 
-Every helper must support the "capabilities" command, which git
+Every helper must support the "capabilities" command, which Git
 uses to determine what other commands the helper will accept.  Those
 other commands can be used to discover and update remote refs,
 transport objects between the object database and the remote repository,
@@ -39,15 +39,15 @@ INVOCATION
 ----------
 
 Remote helper programs are invoked with one or (optionally) two
-arguments. The first argument specifies a remote repository as in git;
+arguments. The first argument specifies a remote repository as in Git;
 it is either the name of a configured remote or a URL. The second
 argument specifies a URL; it is usually of the form
 '<transport>://<address>', but any arbitrary string is possible.
 The 'GIT_DIR' environment variable is set up for the remote helper
 and can be used to determine where to store additional data or from
-which directory to invoke auxiliary git commands.
+which directory to invoke auxiliary Git commands.
 
-When git encounters a URL of the form '<transport>://<address>', where
+When Git encounters a URL of the form '<transport>://<address>', where
 '<transport>' is a protocol that it cannot handle natively, it
 automatically invokes 'git remote-<transport>' with the full URL as
 the second argument. If such a URL is encountered directly on the
@@ -55,14 +55,14 @@ command line, the first argument is the same as the second, and if it
 is encountered in a configured remote, the first argument is the name
 of that remote.
 
-A URL of the form '<transport>::<address>' explicitly instructs git to
+A URL of the form '<transport>::<address>' explicitly instructs Git to
 invoke 'git remote-<transport>' with '<address>' as the second
 argument. If such a URL is encountered directly on the command line,
 the first argument is '<address>', and if it is encountered in a
 configured remote, the first argument is the name of that remote.
 
 Additionally, when a configured remote has 'remote.<name>.vcs' set to
-'<transport>', git explicitly invokes 'git remote-<transport>' with
+'<transport>', Git explicitly invokes 'git remote-<transport>' with
 '<name>' as the first argument. If set, the second argument is
 'remote.<name>.url'; otherwise, the second argument is omitted.
 
@@ -85,7 +85,7 @@ Capabilities
 ~~~~~~~~~~~~
 
 Each remote helper is expected to support only a subset of commands.
-The operations a helper supports are declared to git in the response
+The operations a helper supports are declared to Git in the response
 to the `capabilities` command (see COMMANDS, below).
 
 In the following, we list all defined capabilities and for
@@ -114,10 +114,10 @@ Supported commands: 'list for-push', 'push'.
 +
 Supported commands: 'list for-push', 'export'.
 
-If a helper advertises 'connect', git will use it if possible and
+If a helper advertises 'connect', Git will use it if possible and
 fall back to another capability if the helper requests so when
 connecting (see the 'connect' command under COMMANDS).
-When choosing between 'push' and 'export', git prefers 'push'.
+When choosing between 'push' and 'export', Git prefers 'push'.
 Other frontends may have some other order of preference.
 
 
@@ -126,7 +126,7 @@ Capabilities for Fetching
 'connect'::
 	Can try to connect to 'git upload-pack' (for fetching),
 	'git receive-pack', etc for communication using the
-	git's native packfile protocol. This
+	Git's native packfile protocol. This
 	requires a bidirectional, full-duplex connection.
 +
 Supported commands: 'connect'.
@@ -143,10 +143,10 @@ Supported commands: 'list', 'fetch'.
 +
 Supported commands: 'list', 'import'.
 
-If a helper advertises 'connect', git will use it if possible and
+If a helper advertises 'connect', Git will use it if possible and
 fall back to another capability if the helper requests so when
 connecting (see the 'connect' command under COMMANDS).
-When choosing between 'fetch' and 'import', git prefers 'fetch'.
+When choosing between 'fetch' and 'import', Git prefers 'fetch'.
 Other frontends may have some other order of preference.
 
 Miscellaneous capabilities
@@ -183,22 +183,22 @@ there is an implied `refspec *:*`.
 	to retrieve information about blobs and trees that already exist in
 	fast-import's memory. This requires a channel from fast-import to the
 	remote-helper.
-	If it is advertised in addition to "import", git establishes a pipe from
+	If it is advertised in addition to "import", Git establishes a pipe from
 	fast-import to the remote-helper's stdin.
-	It follows that git and fast-import are both connected to the
-	remote-helper's stdin. Because git can send multiple commands to
+	It follows that Git and fast-import are both connected to the
+	remote-helper's stdin. Because Git can send multiple commands to
 	the remote-helper it is required that helpers that use 'bidi-import'
 	buffer all 'import' commands of a batch before sending data to fast-import.
 	This is to prevent mixing commands and fast-import responses on the
 	helper's stdin.
 
 'export-marks' <file>::
-	This modifies the 'export' capability, instructing git to dump the
+	This modifies the 'export' capability, instructing Git to dump the
 	internal marks table to <file> when complete. For details,
 	read up on '--export-marks=<file>' in linkgit:git-fast-export[1].
 
 'import-marks' <file>::
-	This modifies the 'export' capability, instructing git to load the
+	This modifies the 'export' capability, instructing Git to load the
 	marks specified in <file> before processing any input. For details,
 	read up on '--import-marks=<file>' in linkgit:git-fast-export[1].
 
@@ -213,7 +213,7 @@ Commands are given by the caller on the helper's standard input, one per line.
 'capabilities'::
 	Lists the capabilities of the helper, one per line, ending
 	with a blank line. Each capability may be preceded with '*',
-	which marks them mandatory for git versions using the remote
+	which marks them mandatory for Git versions using the remote
 	helper to understand. Any unknown mandatory capability is a
 	fatal error.
 +
@@ -376,7 +376,7 @@ OPTIONS
 -------
 
 The following options are defined and (under suitable circumstances)
-set by git if the remote helper has the 'option' capability.
+set by Git if the remote helper has the 'option' capability.
 
 'option verbosity' <n>::
 	Changes the verbosity of messages displayed by the helper.

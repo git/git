@@ -1,21 +1,21 @@
-Use of index and Racy git problem
+Use of index and Racy Git problem
 =================================
 
 Background
 ----------
 
-The index is one of the most important data structures in git.
+The index is one of the most important data structures in Git.
 It represents a virtual working tree state by recording list of
 paths and their object names and serves as a staging area to
 write out the next tree object to be committed.  The state is
 "virtual" in the sense that it does not necessarily have to, and
 often does not, match the files in the working tree.
 
-There are cases git needs to examine the differences between the
+There are cases Git needs to examine the differences between the
 virtual working tree state in the index and the files in the
 working tree.  The most obvious case is when the user asks `git
 diff` (or its low level implementation, `git diff-files`) or
-`git-ls-files --modified`.  In addition, git internally checks
+`git-ls-files --modified`.  In addition, Git internally checks
 if the files in the working tree are different from what are
 recorded in the index to avoid stomping on local changes in them
 during patch application, switching branches, and merging.
@@ -24,16 +24,16 @@ In order to speed up this comparison between the files in the
 working tree and the index entries, the index entries record the
 information obtained from the filesystem via `lstat(2)` system
 call when they were last updated.  When checking if they differ,
-git first runs `lstat(2)` on the files and compares the result
+Git first runs `lstat(2)` on the files and compares the result
 with this information (this is what was originally done by the
 `ce_match_stat()` function, but the current code does it in
 `ce_match_stat_basic()` function).  If some of these "cached
-stat information" fields do not match, git can tell that the
+stat information" fields do not match, Git can tell that the
 files are modified without even looking at their contents.
 
 Note: not all members in `struct stat` obtained via `lstat(2)`
 are used for this comparison.  For example, `st_atime` obviously
-is not useful.  Currently, git compares the file type (regular
+is not useful.  Currently, Git compares the file type (regular
 files vs symbolic links) and executable bits (only for regular
 files) from `st_mode` member, `st_mtime` and `st_ctime`
 timestamps, `st_uid`, `st_gid`, `st_ino`, and `st_size` members.
@@ -49,7 +49,7 @@ of git://git.kernel.org/pub/scm/linux/kernel/git/tglx/history.git
 ([PATCH] Sync in core time granuality with filesystems,
 2005-01-04).
 
-Racy git
+Racy Git
 --------
 
 There is one slight problem with the optimization based on the
@@ -67,13 +67,13 @@ timestamp does not change, after this sequence, the cached stat
 information the index entry records still exactly match what you
 would see in the filesystem, even though the file `foo` is now
 different.
-This way, git can incorrectly think files in the working tree
+This way, Git can incorrectly think files in the working tree
 are unmodified even though they actually are.  This is called
-the "racy git" problem (discovered by Pasky), and the entries
+the "racy Git" problem (discovered by Pasky), and the entries
 that appear clean when they may not be because of this problem
 are called "racily clean".
 
-To avoid this problem, git does two things:
+To avoid this problem, Git does two things:
 
 . When the cached stat information says the file has not been
   modified, and the `st_mtime` is the same as (or newer than)
@@ -116,7 +116,7 @@ timestamp comparison check done with the former logic anymore.
 The latter makes sure that the cached stat information for `foo`
 would never match with the file in the working tree, so later
 checks by `ce_match_stat_basic()` would report that the index entry
-does not match the file and git does not have to fall back on more
+does not match the file and Git does not have to fall back on more
 expensive `ce_modified_check_fs()`.
 
 
@@ -159,7 +159,7 @@ of the cached stat information.
 Avoiding runtime penalty
 ------------------------
 
-In order to avoid the above runtime penalty, post 1.4.2 git used
+In order to avoid the above runtime penalty, post 1.4.2 Git used
 to have a code that made sure the index file
 got timestamp newer than the youngest files in the index when
 there are many young files with the same timestamp as the

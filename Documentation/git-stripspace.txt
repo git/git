@@ -14,7 +14,7 @@ SYNOPSIS
 DESCRIPTION
 -----------
 
-Clean the input in the manner used by 'git' for text such as commit
+Clean the input in the manner used by Git for text such as commit
 messages, notes, tags and branch descriptions.
 
 With no arguments, this will:

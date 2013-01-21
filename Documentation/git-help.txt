@@ -3,7 +3,7 @@ git-help(1)
 
 NAME
 ----
-git-help - display help information about git
+git-help - Display help information about Git
 
 SYNOPSIS
 --------
@@ -14,13 +14,13 @@ DESCRIPTION
 -----------
 
 With no options and no COMMAND given, the synopsis of the 'git'
-command and a list of the most commonly used git commands are printed
+command and a list of the most commonly used Git commands are printed
 on the standard output.
 
 If the option '--all' or '-a' is given, then all available commands are
 printed on the standard output.
 
-If a git command is named, a manual page for that command is brought
+If a Git subcommand is named, a manual page for that subcommand is brought
 up. The 'man' program is used by default for this purpose, but this
 can be overridden by other options or configuration variables.
 

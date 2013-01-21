@@ -3,7 +3,7 @@ git-init(1)
 
 NAME
 ----
-git-init - Create an empty git repository or reinitialize an existing one
+git-init - Create an empty Git repository or reinitialize an existing one
 
 
 SYNOPSIS
@@ -17,7 +17,7 @@ SYNOPSIS
 DESCRIPTION
 -----------
 
-This command creates an empty git repository - basically a `.git`
+This command creates an empty Git repository - basically a `.git`
 directory with subdirectories for `objects`, `refs/heads`,
 `refs/tags`, and template files.  An initial `HEAD` file that
 references the HEAD of the master branch is also created.
@@ -58,19 +58,19 @@ DIRECTORY" section below.)
 --separate-git-dir=<git dir>::
 
 Instead of initializing the repository where it is supposed to be,
-place a filesytem-agnostic git symbolic link there, pointing to the
-specified git path, and initialize a git repository at the path. The
-result is git repository can be separated from working tree. If this
+place a filesytem-agnostic Git symbolic link there, pointing to the
+specified path, and initialize a Git repository at the path. The
+result is Git repository can be separated from working tree. If this
 is reinitialization, the repository will be moved to the specified
 path.
 
 --shared[=(false|true|umask|group|all|world|everybody|0xxx)]::
 
-Specify that the git repository is to be shared amongst several users.  This
+Specify that the Git repository is to be shared amongst several users.  This
 allows users belonging to the same group to push into that
 repository.  When specified, the config variable "core.sharedRepository" is
 set so that files and directories under `$GIT_DIR` are created with the
-requested permissions.  When not specified, git will use permissions reported
+requested permissions.  When not specified, Git will use permissions reported
 by umask(2).
 
 The option can have the following values, defaulting to 'group' if no value
@@ -130,7 +130,7 @@ The suggested patterns and hook files are all modifiable and extensible.
 EXAMPLES
 --------
 
-Start a new git repository for an existing code base::
+Start a new Git repository for an existing code base::
 +
 ----------------
 $ cd /path/to/my/codebase

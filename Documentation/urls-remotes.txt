@@ -6,7 +6,7 @@ REMOTES[[REMOTES]]
 The name of one of the following can be used instead
 of a URL as `<repository>` argument:
 
-* a remote in the git configuration file: `$GIT_DIR/config`,
+* a remote in the Git configuration file: `$GIT_DIR/config`,
 * a file in the `$GIT_DIR/remotes` directory, or
 * a file in the `$GIT_DIR/branches` directory.
 

@@ -1,11 +1,11 @@
-A short git tools survey
+A short Git tools survey
 ========================
 
 
 Introduction
 ------------
 
-Apart from git contrib/ area there are some others third-party tools
+Apart from Git contrib/ area there are some others third-party tools
 you may want to look.
 
 This document presents a brief summary of each tool and the corresponding
@@ -17,7 +17,7 @@ Alternative/Augmentative Porcelains
 
    - *Cogito* (http://www.kernel.org/pub/software/scm/cogito/)
 
-   Cogito is a version control system layered on top of the git tree history
+   Cogito is a version control system layered on top of the Git tree history
    storage system. It aims at seamless user interface and ease of use,
    providing generally smoother user experience than the "raw" Core Git
    itself and indeed many other version control systems.
@@ -50,7 +50,7 @@ History Viewers
 
    - *gitview*  (contrib/)
 
-   gitview is a GTK based repository browser for git
+   gitview is a GTK based repository browser for Git
 
 
    - *gitweb* (shipped with git-core)
@@ -63,15 +63,15 @@ History Viewers
    QGit is a git/StGIT GUI viewer built on Qt/C++. QGit could be used
    to browse history and directory tree, view annotated files, commit
    changes cherry picking single files or applying patches.
-   Currently it is the fastest and most feature rich among the git
+   Currently it is the fastest and most feature rich among the Git
    viewers and commit tools.
 
    - *tig* (http://jonas.nitro.dk/tig/)
 
-   tig by Jonas Fonseca is a simple git repository browser
+   tig by Jonas Fonseca is a simple Git repository browser
    written using ncurses. Basically, it just acts as a front-end
    for git-log and git-show/git-diff. Additionally, you can also
-   use it as a pager for git commands.
+   use it as a pager for Git commands.
 
 
 Foreign SCM interface
@@ -80,20 +80,20 @@ Foreign SCM interface
    - *git-svn* (shipped with git-core)
 
    git-svn is a simple conduit for changesets between a single Subversion
-   branch and git.
+   branch and Git.
 
 
    - *quilt2git / git2quilt* (http://home-tj.org/wiki/index.php/Misc)
 
    These utilities convert patch series in a quilt repository and commit
-   series in git back and forth.
+   series in Git back and forth.
 
 
    - *hg-to-git* (contrib/)
 
-   hg-to-git converts a Mercurial repository into a git one, and
+   hg-to-git converts a Mercurial repository into a Git one, and
    preserves the full branch history in the process. hg-to-git can
-   also be used in an incremental way to keep the git repository
+   also be used in an incremental way to keep the Git repository
    in sync with the master Mercurial repository.
 
 
@@ -102,14 +102,14 @@ Others
 
    - *(h)gct* (http://www.cyd.liu.se/users/~freku045/gct/)
 
-   Commit Tool or (h)gct is a GUI enabled commit tool for git and
+   Commit Tool or (h)gct is a GUI enabled commit tool for Git and
    Mercurial (hg). It allows the user to view diffs, select which files
    to committed (or ignored / reverted) write commit messages and
    perform the commit itself.
 
    - *git.el* (contrib/)
 
-   This is an Emacs interface for git. The user interface is modeled on
+   This is an Emacs interface for Git. The user interface is modeled on
    pcl-cvs. It has been developed on Emacs 21 and will probably need some
    tweaking to work on XEmacs.
 

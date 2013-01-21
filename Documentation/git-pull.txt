@@ -59,8 +59,8 @@ and a log message from the user describing the changes.
 See linkgit:git-merge[1] for details, including how conflicts
 are presented and handled.
 
-In git 1.7.0 or later, to cancel a conflicting merge, use
-`git reset --merge`.  *Warning*: In older versions of git, running 'git pull'
+In Git 1.7.0 or later, to cancel a conflicting merge, use
+`git reset --merge`.  *Warning*: In older versions of Git, running 'git pull'
 with uncommitted changes is discouraged: while possible, it leaves you
 in a state that may be hard to back out of in the case of a conflict.
 
@@ -89,7 +89,7 @@ must be given before the options meant for 'git fetch'.
 	This option controls if new commits of all populated submodules should
 	be fetched too (see linkgit:git-config[1] and linkgit:gitmodules[5]).
 	That might be necessary to get the data needed for merging submodule
-	commits, a feature git learned in 1.7.3. Notice that the result of a
+	commits, a feature Git learned in 1.7.3. Notice that the result of a
 	merge will not be checked out in the submodule, "git submodule update"
 	has to be called afterwards to bring the work tree up to date with the
 	merge result.
@@ -228,7 +228,7 @@ Using --recurse-submodules can only fetch new commits in already checked
 out submodules right now. When e.g. upstream added a new submodule in the
 just fetched commits of the superproject the submodule itself can not be
 fetched, making it impossible to check out that submodule later without
-having to do a fetch again. This is expected to be fixed in a future git
+having to do a fetch again. This is expected to be fixed in a future Git
 version.
 
 SEE ALSO

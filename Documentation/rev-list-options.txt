@@ -649,7 +649,7 @@ together.
 Object Traversal
 ~~~~~~~~~~~~~~~~
 
-These options are mostly targeted for packing of git repositories.
+These options are mostly targeted for packing of Git repositories.
 
 --objects::
 
@@ -717,7 +717,7 @@ format, often found in E-mail messages.
 +
 `--date=short` shows only date but not time, in `YYYY-MM-DD` format.
 +
-`--date=raw` shows the date in the internal raw git format `%s %z` format.
+`--date=raw` shows the date in the internal raw Git format `%s %z` format.
 +
 `--date=default` shows timestamps in the original timezone
 (either committer's or author's).

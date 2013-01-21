@@ -18,13 +18,13 @@ SYNOPSIS
 DESCRIPTION
 -----------
 This command provides a way to interact with p4 repositories
-using git.
+using Git.
 
-Create a new git repository from an existing p4 repository using
+Create a new Git repository from an existing p4 repository using
 'git p4 clone', giving it one or more p4 depot paths.  Incorporate
 new commits from p4 changes with 'git p4 sync'.  The 'sync' command
 is also used to include new branches from other p4 depot paths.
-Submit git changes back to p4 using 'git p4 submit'.  The command
+Submit Git changes back to p4 using 'git p4 submit'.  The command
 'git p4 rebase' does a sync plus rebases the current branch onto
 the updated p4 remote branch.
 
@@ -37,7 +37,7 @@ EXAMPLE
 $ git p4 clone //depot/path/project
 ------------
 
-* Do some work in the newly created git repository:
+* Do some work in the newly created Git repository:
 +
 ------------
 $ cd project
@@ -45,7 +45,7 @@ $ vi foo.h
 $ git commit -a -m "edited foo.h"
 ------------
 
-* Update the git repository with recent changes from p4, rebasing your
+* Update the Git repository with recent changes from p4, rebasing your
   work on top:
 +
 ------------
@@ -64,21 +64,21 @@ COMMANDS
 
 Clone
 ~~~~~
-Generally, 'git p4 clone' is used to create a new git directory
+Generally, 'git p4 clone' is used to create a new Git directory
 from an existing p4 repository:
 ------------
 $ git p4 clone //depot/path/project
 ------------
 This:
 
-1.   Creates an empty git repository in a subdirectory called 'project'.
+1.   Creates an empty Git repository in a subdirectory called 'project'.
 +
 2.   Imports the full contents of the head revision from the given p4
-depot path into a single commit in the git branch 'refs/remotes/p4/master'.
+depot path into a single commit in the Git branch 'refs/remotes/p4/master'.
 +
 3.   Creates a local branch, 'master' from this remote and checks it out.
 
-To reproduce the entire p4 history in git, use the '@all' modifier on
+To reproduce the entire p4 history in Git, use the '@all' modifier on
 the depot path:
 ------------
 $ git p4 clone //depot/path/project@all
@@ -88,13 +88,13 @@ $ git p4 clone //depot/path/project@all
 Sync
 ~~~~
 As development continues in the p4 repository, those changes can
-be included in the git repository using:
+be included in the Git repository using:
 ------------
 $ git p4 sync
 ------------
-This command finds new changes in p4 and imports them as git commits.
+This command finds new changes in p4 and imports them as Git commits.
 
-P4 repositories can be added to an existing git repository using
+P4 repositories can be added to an existing Git repository using
 'git p4 sync' too:
 ------------
 $ mkdir repo-git
@@ -103,14 +103,14 @@ $ git init
 $ git p4 sync //path/in/your/perforce/depot
 ------------
 This imports the specified depot into
-'refs/remotes/p4/master' in an existing git repository.  The
+'refs/remotes/p4/master' in an existing Git repository.  The
 '--branch' option can be used to specify a different branch to
 be used for the p4 content.
 
-If a git repository includes branches 'refs/remotes/origin/p4', these
+If a Git repository includes branches 'refs/remotes/origin/p4', these
 will be fetched and consulted first during a 'git p4 sync'.  Since
 importing directly from p4 is considerably slower than pulling changes
-from a git remote, this can be useful in a multi-developer environment.
+from a Git remote, this can be useful in a multi-developer environment.
 
 
 Rebase
@@ -127,13 +127,13 @@ $ git p4 rebase
 
 Submit
 ~~~~~~
-Submitting changes from a git repository back to the p4 repository
+Submitting changes from a Git repository back to the p4 repository
 requires a separate p4 client workspace.  This should be specified
-using the 'P4CLIENT' environment variable or the git configuration
+using the 'P4CLIENT' environment variable or the Git configuration
 variable 'git-p4.client'.  The p4 client must exist, but the client root
 will be created and populated if it does not already exist.
 
-To submit all changes that are in the current git branch but not in
+To submit all changes that are in the current Git branch but not in
 the 'p4/master' branch, use:
 ------------
 $ git p4 submit
@@ -149,7 +149,7 @@ be overridden using the '--origin=' command-line option.
 
 The p4 changes will be created as the user invoking 'git p4 submit'. The
 '--preserve-user' option will cause ownership to be modified
-according to the author of the git commit.  This option requires admin
+according to the author of the Git commit.  This option requires admin
 privileges in p4, which can be granted using 'p4 protect'.
 
 
@@ -178,7 +178,7 @@ subsequent 'sync' operations.
 	with an initial clone, no HEAD will be checked out.
 +
 This example imports a new remote "p4/proj2" into an existing
-git repository:
+Git repository:
 +
 ----
     $ git init
@@ -199,11 +199,11 @@ git repository:
 
 --detect-labels::
 	Query p4 for labels associated with the depot paths, and add
-	them as tags in git. Limited usefulness as only imports labels
+	them as tags in Git. Limited usefulness as only imports labels
 	associated with new changelists. Deprecated.
 
 --import-labels::
-	Import labels from p4 into git.
+	Import labels from p4 into Git.
 
 --import-local::
 	By default, p4 branches are stored in 'refs/remotes/p4/',
@@ -219,12 +219,12 @@ git repository:
 	specifier.
 
 --keep-path::
-	The mapping of file names from the p4 depot path to git, by
+	The mapping of file names from the p4 depot path to Git, by
 	default, involves removing the entire depot path.  With this
-	option, the full p4 depot path is retained in git.  For example,
+	option, the full p4 depot path is retained in Git.  For example,
 	path '//depot/main/foo/bar.c', when imported from
 	'//depot/main/', becomes 'foo/bar.c'.  With '--keep-path', the
-	git path is instead 'depot/main/foo/bar.c'.
+	Git path is instead 'depot/main/foo/bar.c'.
 
 --use-client-spec::
 	Use a client spec to find the list of interesting files in p4.
@@ -236,7 +236,7 @@ These options can be used in an initial 'clone', along with the 'sync'
 options described above.
 
 --destination <directory>::
-	Where to create the git repository.  If not provided, the last
+	Where to create the Git repository.  If not provided, the last
 	component in the p4 depot path is used to create a new
 	directory.
 
@@ -266,12 +266,12 @@ These options can be used to modify 'git p4 submit' behavior.
 	requires p4 admin privileges.
 
 --export-labels::
-	Export tags from git as p4 labels. Tags found in git are applied
+	Export tags from Git as p4 labels. Tags found in Git are applied
 	to the perforce working directory.
 
 --dry-run, -n::
 	Show just what commits would be submitted to p4; do not change
-	state in git or p4.
+	state in Git or p4.
 
 --prepare-p4-only::
 	Apply a commit to the p4 workspace, opening, adding and deleting
@@ -312,12 +312,12 @@ p4 revision specifier on the end:
 "//depot/proj1@all //depot/proj2@all"::
     Import all changes from both named depot paths into a single
     repository.  Only files below these directories are included.
-    There is not a subdirectory in git for each "proj1" and "proj2".
+    There is not a subdirectory in Git for each "proj1" and "proj2".
     You must use the '--destination' option when specifying more
     than one depot path.  The revision specifier must be specified
     identically on each depot path.  If there are files in the
     depot paths with the same name, the path with the most recently
-    updated version of the file is the one that appears in git.
+    updated version of the file is the one that appears in Git.
 
 See 'p4 help revisions' for the full syntax of p4 revision specifiers.
 
@@ -334,11 +334,11 @@ configuration file.  This allows future 'git p4 submit' commands to
 work properly; the submit command looks only at the variable and does
 not have a command-line option.
 
-The full syntax for a p4 view is documented in 'p4 help views'.  'Git p4'
+The full syntax for a p4 view is documented in 'p4 help views'.  'git p4'
 knows only a subset of the view syntax.  It understands multi-line
 mappings, overlays with '+', exclusions with '-' and double-quotes
 around whitespace.  Of the possible wildcards, 'git p4' only handles
-'...', and only when it is at the end of the path.  'Git p4' will complain
+'...', and only when it is at the end of the path.  'git p4' will complain
 if it encounters an unhandled wildcard.
 
 Bugs in the implementation of overlap mappings exist.  If multiple depot
@@ -354,7 +354,7 @@ variable P4CLIENT, a file referenced by P4CONFIG, or the local host name.
 
 BRANCH DETECTION
 ----------------
-P4 does not have the same concept of a branch as git.  Instead,
+P4 does not have the same concept of a branch as Git.  Instead,
 p4 organizes its content as a directory tree, where by convention
 different logical branches are in different locations in the tree.
 The 'p4 branch' command is used to maintain mappings between
@@ -364,7 +364,7 @@ can use these mappings to determine branch relationships.
 If you have a repository where all the branches of interest exist as
 subdirectories of a single depot path, you can use '--detect-branches'
 when cloning or syncing to have 'git p4' automatically find
-subdirectories in p4, and to generate these as branches in git.
+subdirectories in p4, and to generate these as branches in Git.
 
 For example, if the P4 repository structure is:
 ----
@@ -386,7 +386,7 @@ called 'master', and one for //depot/branch1 called 'depot/branch1'.
 
 However, it is not necessary to create branches in p4 to be able to use
 them like branches.  Because it is difficult to infer branch
-relationships automatically, a git configuration setting
+relationships automatically, a Git configuration setting
 'git-p4.branchList' can be used to explicitly identify branch
 relationships.  It is a list of "source:destination" pairs, like a
 simple p4 branch specification, where the "source" and "destination" are
@@ -402,7 +402,7 @@ git p4 clone --detect-branches //depot@all
 PERFORMANCE
 -----------
 The fast-import mechanism used by 'git p4' creates one pack file for
-each invocation of 'git p4 sync'.  Normally, git garbage compression
+each invocation of 'git p4 sync'.  Normally, Git garbage compression
 (linkgit:git-gc[1]) automatically compresses these to fewer pack files,
 but explicit invocation of 'git repack -adf' may improve performance.
 
@@ -440,9 +440,9 @@ git-p4.client::
 Clone and sync variables
 ~~~~~~~~~~~~~~~~~~~~~~~~
 git-p4.syncFromOrigin::
-	Because importing commits from other git repositories is much faster
+	Because importing commits from other Git repositories is much faster
 	than importing them from p4, a mechanism exists to find p4 changes
-	first in git remotes.  If branches exist under 'refs/remote/origin/p4',
+	first in Git remotes.  If branches exist under 'refs/remote/origin/p4',
 	those will be fetched and used when syncing from p4.  This
 	variable can be set to 'false' to disable this behavior.
 
@@ -494,7 +494,7 @@ git-p4.detectCopiesHarder::
 	Detect copies harder.  See linkgit:git-diff[1].  A boolean.
 
 git-p4.preserveUser::
-	On submit, re-author changes to reflect the git author,
+	On submit, re-author changes to reflect the Git author,
 	regardless of who invokes 'git p4 submit'.
 
 git-p4.allowMissingP4Users::
@@ -531,7 +531,7 @@ git-p4.attemptRCSCleanup::
 	present.
 
 git-p4.exportLabels::
-	Export git tags to p4 labels, as per --export-labels.
+	Export Git tags to p4 labels, as per --export-labels.
 
 git-p4.labelExportRegexp::
 	Only p4 labels matching this regular expression will be exported. The
@@ -543,11 +543,11 @@ git-p4.conflict::
 
 IMPLEMENTATION DETAILS
 ----------------------
-* Changesets from p4 are imported using git fast-import.
+* Changesets from p4 are imported using Git fast-import.
 * Cloning or syncing does not require a p4 client; file contents are
   collected using 'p4 print'.
 * Submitting requires a p4 client, which is not in the same location
-  as the git repository.  Patches are applied, one at a time, to
+  as the Git repository.  Patches are applied, one at a time, to
   this p4 client and submitted from there.
 * Each commit imported by 'git p4' has a line at the end of the log
   message indicating the p4 depot location and change number.  This

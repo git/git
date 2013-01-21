@@ -102,7 +102,7 @@ Examples
 SEE ALSO
 --------
 linkgit:gitk[1]::
-	The git repository browser.  Shows branches, commit history
+	The Git repository browser.  Shows branches, commit history
 	and file differences.  gitk is the utility started by
 	'git gui''s Repository Visualize actions.
 

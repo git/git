@@ -1,7 +1,7 @@
 parse-options API
 =================
 
-The parse-options API is used to parse and massage options in git
+The parse-options API is used to parse and massage options in Git
 and to provide a usage help with consistent look.
 
 Basics

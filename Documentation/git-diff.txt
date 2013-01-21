@@ -25,7 +25,7 @@ between two files on disk.
 
 	This form is to view the changes you made relative to
 	the index (staging area for the next commit).  In other
-	words, the differences are what you _could_ tell git to
+	words, the differences are what you _could_ tell Git to
 	further add to the index but you still haven't.  You can
 	stage these changes by using linkgit:git-add[1].
 +

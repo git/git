@@ -12,7 +12,7 @@ SYNOPSIS
 
 DESCRIPTION
 -----------
-'git difftool' is a git command that allows you to compare and edit files
+'git difftool' is a Git command that allows you to compare and edit files
 between revisions using common diff tools.  'git difftool' is a frontend
 to 'git diff' and accepts the same options and arguments. See
 linkgit:git-diff[1].

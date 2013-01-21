@@ -1,5 +1,5 @@
 Like other projects, we also have some guidelines to keep to the
-code.  For git in general, three rough rules are:
+code.  For Git in general, three rough rules are:
 
  - Most importantly, we never say "It's in POSIX; we'll happily
    ignore your needs should your system not conform to it."
@@ -22,7 +22,7 @@ code.  For git in general, three rough rules are:
 As for more concrete guidelines, just imitate the existing code
 (this is a good guideline, no matter which project you are
 contributing to). It is always preferable to match the _local_
-convention. New code added to git suite is expected to match
+convention. New code added to Git suite is expected to match
 the overall style of existing code. Modifications to existing
 code is expected to match the style the surrounding code already
 uses (even if it doesn't match the overall style of existing code).
@@ -112,7 +112,7 @@ For C programs:
 
  - We try to keep to at most 80 characters per line.
 
- - We try to support a wide range of C compilers to compile git with,
+ - We try to support a wide range of C compilers to compile Git with,
    including old ones. That means that you should not use C99
    initializers, even if a lot of compilers grok it.
 
@@ -164,14 +164,14 @@ For C programs:
 
  - If you are planning a new command, consider writing it in shell
    or perl first, so that changes in semantics can be easily
-   changed and discussed.  Many git commands started out like
+   changed and discussed.  Many Git commands started out like
    that, and a few are still scripts.
 
- - Avoid introducing a new dependency into git. This means you
+ - Avoid introducing a new dependency into Git. This means you
    usually should stay away from scripting languages not already
-   used in the git core command set (unless your command is clearly
+   used in the Git core command set (unless your command is clearly
    separate from it, such as an importer to convert random-scm-X
-   repositories to git).
+   repositories to Git).
 
  - When we pass <string, length> pair to functions, we should try to
    pass them in that order.

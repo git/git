@@ -169,14 +169,14 @@ the revision as good or bad in the usual manner.
 Bisect skip
 ~~~~~~~~~~~~
 
-Instead of choosing by yourself a nearby commit, you can ask git
+Instead of choosing by yourself a nearby commit, you can ask Git
 to do it for you by issuing the command:
 
 ------------
 $ git bisect skip                 # Current version cannot be tested
 ------------
 
-But git may eventually be unable to tell the first bad commit among
+But Git may eventually be unable to tell the first bad commit among
 a bad commit and one or more skipped commits.
 
 You can even skip a range of commits, instead of just one commit,

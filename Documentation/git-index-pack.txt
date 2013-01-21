@@ -19,7 +19,7 @@ DESCRIPTION
 Reads a packed archive (.pack) from the specified file, and
 builds a pack index file (.idx) for it.  The packed archive
 together with the pack index can then be placed in the
-objects/pack/ directory of a git repository.
+objects/pack/ directory of a Git repository.
 
 
 OPTIONS
@@ -39,7 +39,7 @@ OPTIONS
 	When this flag is provided, the pack is read from stdin
 	instead and a copy is then written to <pack-file>. If
 	<pack-file> is not specified, the pack is written to
-	objects/pack/ directory of the current git repository with
+	objects/pack/ directory of the current Git repository with
 	a default name determined from the pack content.  If
 	<pack-file> is not specified consider using --keep to
 	prevent a race condition between this process and
@@ -81,7 +81,7 @@ OPTIONS
 	This is meant to reduce packing time on multiprocessor
 	machines. The required amount of memory for the delta search
 	window is however multiplied by the number of threads.
-	Specifying 0 will cause git to auto-detect the number of CPU's
+	Specifying 0 will cause Git to auto-detect the number of CPU's
 	and use maximum 3 threads.
 
 

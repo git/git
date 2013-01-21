@@ -61,7 +61,7 @@ OPTIONS
 	blobs registered in the index file.
 
 --no-index::
-	Search files in the current directory that is not managed by git.
+	Search files in the current directory that is not managed by Git.
 
 --untracked::
 	In addition to searching in the tracked files in the working

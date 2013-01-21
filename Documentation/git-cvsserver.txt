@@ -3,7 +3,7 @@ git-cvsserver(1)
 
 NAME
 ----
-git-cvsserver - A CVS server emulator for git
+git-cvsserver - A CVS server emulator for Git
 
 SYNOPSIS
 --------
@@ -60,7 +60,7 @@ unless '--export-all' was given, too.
 DESCRIPTION
 -----------
 
-This application is a CVS emulation layer for git.
+This application is a CVS emulation layer for Git.
 
 It is highly functional. However, not all methods are implemented,
 and for those methods that are implemented,
@@ -160,9 +160,9 @@ with CVS_SERVER (and shouldn't) as 'git-shell' understands `cvs` to mean
 Note: you need to ensure each user that is going to invoke 'git-cvsserver' has
 write access to the log file and to the database (see
 <<dbbackend,Database Backend>>. If you want to offer write access over
-SSH, the users of course also need write access to the git repository itself.
+SSH, the users of course also need write access to the Git repository itself.
 
-You also need to ensure that each repository is "bare" (without a git index
+You also need to ensure that each repository is "bare" (without a Git index
 file) for `cvs commit` to work. See linkgit:gitcvs-migration[7].
 
 [[configaccessmethod]]
@@ -181,7 +181,7 @@ allowing access over SSH.
 3. If you didn't specify the CVSROOT/CVS_SERVER directly in the checkout command,
    automatically saving it in your 'CVS/Root' files, then you need to set them
    explicitly in your environment.  CVSROOT should be set as per normal, but the
-   directory should point at the appropriate git repo.  As above, for SSH clients
+   directory should point at the appropriate Git repo.  As above, for SSH clients
    _not_ restricted to 'git-shell', CVS_SERVER should be set to 'git-cvsserver'.
 +
 --
@@ -210,7 +210,7 @@ allowing access over SSH.
 Database Backend
 ----------------
 
-'git-cvsserver' uses one database per git head (i.e. CVS module) to
+'git-cvsserver' uses one database per Git head (i.e. CVS module) to
 store information about the repository to maintain consistent
 CVS revision numbers. The database needs to be
 updated (i.e. written to) after every commit.
@@ -225,7 +225,7 @@ the pserver method), 'git-cvsserver' should have write access to
 the database to work reliably (otherwise you need to make sure
 that the database is up-to-date any time 'git-cvsserver' is executed).
 
-By default it uses SQLite databases in the git directory, named
+By default it uses SQLite databases in the Git directory, named
 `gitcvs.<module_name>.sqlite`. Note that the SQLite backend creates
 temporary files in the same directory as the database file on
 write so it might not be enough to grant the users using
@@ -291,14 +291,14 @@ Variable substitution
 In `dbdriver` and `dbuser` you can use the following variables:
 
 %G::
-	git directory name
+	Git directory name
 %g::
-	git directory name, where all characters except for
+	Git directory name, where all characters except for
 	alpha-numeric ones, `.`, and `-` are replaced with
 	`_` (this should make it easier to use the directory
 	name in a filename if wanted)
 %m::
-	CVS module/git head name
+	CVS module/Git head name
 %a::
 	access method (one of "ext" or "pserver")
 %u::

@@ -5,7 +5,7 @@ Adding a new built-in
 ---------------------
 
 There are 4 things to do to add a built-in command implementation to
-git:
+Git:
 
 . Define the implementation of the built-in command `foo` with
   signature:
@@ -23,7 +23,7 @@ where options is the bitwise-or of:
 
 `RUN_SETUP`::
 
-	Make sure there is a git directory to work on, and if there is a
+	Make sure there is a Git directory to work on, and if there is a
 	work tree, chdir to the top of it if the command was invoked
 	in a subdirectory.  If there is no work tree, no chdir() is
 	done.

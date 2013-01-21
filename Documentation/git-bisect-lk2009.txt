@@ -224,7 +224,7 @@ Note that the example that we will use is really a toy example, we
 will be looking for the first commit that has a version like
 "2.6.26-something", that is the commit that has a "SUBLEVEL = 26" line
 in the top level Makefile. This is a toy example because there are
-better ways to find this commit with git than using "git bisect" (for
+better ways to find this commit with Git than using "git bisect" (for
 example "git blame" or "git log -S<string>").
 
 Driving a bisection manually
@@ -455,7 +455,7 @@ So only the W and B commits will be kept. Because commits X and Y will
 have been removed by rules a) and b) respectively, and because commits
 G are removed by rule b) too.
 
-Note for git users, that it is equivalent as keeping only the commit
+Note for Git users, that it is equivalent as keeping only the commit
 given by:
 
 -------------
@@ -710,8 +710,8 @@ Skip algorithm discussed
 After step 7) (in the skip algorithm), we could check if the second
 commit has been skipped and return it if it is not the case. And in
 fact that was the algorithm we used from when "git bisect skip" was
-developed in git version 1.5.4 (released on February 1st 2008) until
-git version 1.6.4 (released July 29th 2009).
+developed in Git version 1.5.4 (released on February 1st 2008) until
+Git version 1.6.4 (released July 29th 2009).
 
 But Ingo Molnar and H. Peter Anvin (another well known linux kernel
 developer) both complained that sometimes the best bisection points
@@ -1025,10 +1025,10 @@ And here is what Andreas said about this work-flow <<5>>:
 _____________
 To give some hard figures, we used to have an average report-to-fix
 cycle of 142.6 hours (according to our somewhat weird bug-tracker
-which just measures wall-clock time). Since we moved to git, we've
+which just measures wall-clock time). Since we moved to Git, we've
 lowered that to 16.2 hours. Primarily because we can stay on top of
 the bug fixing now, and because everyone's jockeying to get to fix
-bugs (we're quite proud of how lazy we are to let git find the bugs
+bugs (we're quite proud of how lazy we are to let Git find the bugs
 for us). Each new release results in ~40% fewer bugs (almost certainly
 due to how we now feel about writing tests).
 _____________
@@ -1228,9 +1228,9 @@ commits in already released history, for example to change the commit
 message or the author. And it can also be used instead of git "grafts"
 to link a repository with another old repository.
 
-In fact it's this last feature that "sold" it to the git community, so
-it is now in the "master" branch of git's git repository and it should
-be released in git 1.6.5 in October or November 2009.
+In fact it's this last feature that "sold" it to the Git community, so
+it is now in the "master" branch of Git's Git repository and it should
+be released in Git 1.6.5 in October or November 2009.
 
 One problem with "git replace" is that currently it stores all the
 replacements refs in "refs/replace/", but it would be perhaps better
@@ -1324,7 +1324,7 @@ Acknowledgements
 ----------------
 
 Many thanks to Junio Hamano for his help in reviewing this paper, for
-reviewing the patches I sent to the git mailing list, for discussing
+reviewing the patches I sent to the Git mailing list, for discussing
 some ideas and helping me improve them, for improving "git bisect" a
 lot and for his awesome work in maintaining and developing Git.
 
@@ -1337,7 +1337,7 @@ Many thanks to Linus Torvalds for inventing, developing and
 evangelizing "git bisect", Git and Linux.
 
 Many thanks to the many other great people who helped one way or
-another when I worked on git, especially to Andreas Ericsson, Johannes
+another when I worked on Git, especially to Andreas Ericsson, Johannes
 Schindelin, H. Peter Anvin, Daniel Barkalow, Bill Lear, John Hawley,
 Shawn O. Pierce, Jeff King, Sam Vilain, Jon Seymour.
 

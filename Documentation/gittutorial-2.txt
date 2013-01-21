@@ -3,7 +3,7 @@ gittutorial-2(7)
 
 NAME
 ----
-gittutorial-2 - A tutorial introduction to git: part two
+gittutorial-2 - A tutorial introduction to Git: part two
 
 SYNOPSIS
 --------
@@ -16,11 +16,11 @@ DESCRIPTION
 You should work through linkgit:gittutorial[7] before reading this tutorial.
 
 The goal of this tutorial is to introduce two fundamental pieces of
-git's architecture--the object database and the index file--and to
+Git's architecture--the object database and the index file--and to
 provide the reader with everything necessary to understand the rest
-of the git documentation.
+of the Git documentation.
 
-The git object database
+The Git object database
 -----------------------
 
 Let's start a new project and create a small amount of history:
@@ -42,14 +42,14 @@ $ git commit -a -m "add emphasis"
  1 file changed, 1 insertion(+), 1 deletion(-)
 ------------------------------------------------
 
-What are the 7 digits of hex that git responded to the commit with?
+What are the 7 digits of hex that Git responded to the commit with?
 
 We saw in part one of the tutorial that commits have names like this.
-It turns out that every object in the git history is stored under
+It turns out that every object in the Git history is stored under
 a 40-digit hex name.  That name is the SHA1 hash of the object's
-contents; among other things, this ensures that git will never store
+contents; among other things, this ensures that Git will never store
 the same data twice (since identical data is given an identical SHA1
-name), and that the contents of a git object will never change (since
+name), and that the contents of a Git object will never change (since
 that would change the object's name as well). The 7 char hex strings
 here are simply the abbreviation of such 40 character long strings.
 Abbreviations can be used everywhere where the 40 character strings
@@ -60,7 +60,7 @@ following the example above generates a different SHA1 hash than
 the one shown above because the commit object records the time when
 it was created and the name of the person performing the commit.
 
-We can ask git about this particular object with the `cat-file`
+We can ask Git about this particular object with the `cat-file`
 command. Don't copy the 40 hex digits from this example but use those
 from your own version. Note that you can shorten it to only a few
 characters to save yourself typing all 40 hex digits:
@@ -102,11 +102,11 @@ $ git cat-file blob 3b18e512
 hello world
 ------------------------------------------------
 
-Note that this is the old file data; so the object that git named in
+Note that this is the old file data; so the object that Git named in
 its response to the initial tree was a tree with a snapshot of the
 directory state that was recorded by the first commit.
 
-All of these objects are stored under their SHA1 names inside the git
+All of these objects are stored under their SHA1 names inside the Git
 directory:
 
 ------------------------------------------------
@@ -191,7 +191,7 @@ Besides blobs, trees, and commits, the only remaining type of object
 is a "tag", which we won't discuss here; refer to linkgit:git-tag[1]
 for details.
 
-So now we know how git uses the object database to represent a
+So now we know how Git uses the object database to represent a
 project's history:
 
   * "commit" objects refer to "tree" objects representing the
@@ -403,21 +403,21 @@ What next?
 
 At this point you should know everything necessary to read the man
 pages for any of the git commands; one good place to start would be
-with the commands mentioned in link:everyday.html[Everyday git].  You
+with the commands mentioned in link:everyday.html[Everyday Git].  You
 should be able to find any unknown jargon in linkgit:gitglossary[7].
 
 The link:user-manual.html[Git User's Manual] provides a more
-comprehensive introduction to git.
+comprehensive introduction to Git.
 
 linkgit:gitcvs-migration[7] explains how to
-import a CVS repository into git, and shows how to use git in a
+import a CVS repository into Git, and shows how to use Git in a
 CVS-like way.
 
-For some interesting examples of git use, see the
+For some interesting examples of Git use, see the
 link:howto-index.html[howtos].
 
-For git developers, linkgit:gitcore-tutorial[7] goes
-into detail on the lower-level git mechanisms involved in, for
+For Git developers, linkgit:gitcore-tutorial[7] goes
+into detail on the lower-level Git mechanisms involved in, for
 example, creating a new commit.
 
 SEE ALSO
@@ -427,7 +427,7 @@ linkgit:gitcvs-migration[7],
 linkgit:gitcore-tutorial[7],
 linkgit:gitglossary[7],
 linkgit:git-help[1],
-link:everyday.html[Everyday git],
+link:everyday.html[Everyday Git],
 link:user-manual.html[The Git User's Manual]
 
 GIT

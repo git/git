@@ -346,8 +346,8 @@ $(patsubst %.txt,%.html,$(wildcard howto/*.txt)): %.html : %.txt
 install-webdoc : html
 	'$(SHELL_PATH_SQ)' ./install-webdoc.sh $(WEBDOC_DEST)
 
-# You must have a clone of git-htmldocs and git-manpages repositories
-# next to the git repository itself for the following to work.
+# You must have a clone of 'git-htmldocs' and 'git-manpages' repositories
+# next to the 'git' repository itself for the following to work.
 
 quick-install: quick-install-man
 
