@@ -388,7 +388,8 @@ test_expect_success 'test --mixed <paths>' '
 	echo 4 > file4 &&
 	echo 5 > file1 &&
 	git add file1 file3 file4 &&
-	test_must_fail git reset HEAD -- file1 file2 file3 &&
+	git reset HEAD -- file1 file2 file3 &&
+	test_must_fail git diff --quiet &&
 	git diff > output &&
 	test_cmp output expect &&
 	git diff --cached > output &&
@@ -402,7 +403,8 @@ test_expect_success 'test resetting the index at give paths' '
 	>sub/file2 &&
 	git update-index --add sub/file1 sub/file2 &&
 	T=$(git write-tree) &&
-	test_must_fail git reset HEAD sub/file2 &&
+	git reset HEAD sub/file2 &&
+	test_must_fail git diff --quiet &&
 	U=$(git write-tree) &&
 	echo "$T" &&
 	echo "$U" &&
@@ -440,7 +442,8 @@ test_expect_success 'resetting specific path that is unmerged' '
 		echo "100644 $F3 3	file2"
 	} | git update-index --index-info &&
 	git ls-files -u &&
-	test_must_fail git reset HEAD file2 &&
+	git reset HEAD file2 &&
+	test_must_fail git diff --quiet &&
 	git diff-index --exit-code --cached HEAD
 '
 
@@ -449,7 +452,8 @@ test_expect_success 'disambiguation (1)' '
 	git reset --hard &&
 	>secondfile &&
 	git add secondfile &&
-	test_must_fail git reset secondfile &&
+	git reset secondfile &&
+	test_must_fail git diff --quiet -- secondfile &&
 	test -z "$(git diff --cached --name-only)" &&
 	test -f secondfile &&
 	test ! -s secondfile
@@ -474,7 +478,8 @@ test_expect_success 'disambiguation (3)' '
 	>secondfile &&
 	git add secondfile &&
 	rm -f secondfile &&
-	test_must_fail git reset HEAD secondfile &&
+	git reset HEAD secondfile &&
+	test_must_fail git diff --quiet &&
 	test -z "$(git diff --cached --name-only)" &&
 	test ! -f secondfile
 
@@ -486,9 +491,18 @@ test_expect_success 'disambiguation (4)' '
 	>secondfile &&
 	git add secondfile &&
 	rm -f secondfile &&
-	test_must_fail git reset -- secondfile &&
+	git reset -- secondfile &&
+	test_must_fail git diff --quiet &&
 	test -z "$(git diff --cached --name-only)" &&
 	test ! -f secondfile
+'
+
+test_expect_success 'reset with paths accepts tree' '
+	# for simpler tests, drop last commit containing added files
+	git reset --hard HEAD^ &&
+	git reset HEAD^^{tree} -- . &&
+	git diff --cached HEAD^ --exit-code &&
+	git diff HEAD --exit-code
 '
 
 test_done
