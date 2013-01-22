@@ -4,7 +4,10 @@ use warnings;
 use strict;
 use Getopt::Long;
 
-my $byline = undef;
+sub parsing () { 1; }
+sub waiting () { 2; }
+my $state = parsing;
+
 my @more;
 my $append;
 my $debug;
@@ -44,7 +47,7 @@ sub accumulate {
 }
 
 sub add_more_bylines {
-	if (@more && !defined $append) {
+	if (!defined $append) {
 		my %names = map { $_->[1] => 1 } @more;
 		my %map = ();
 		my @append;
@@ -80,16 +83,17 @@ if ($check_only) {
 }
 
 while (<>) {
-      if (/^[-A-Za-z]+-by: /) {
-	      $byline = 1;
-      } elsif ($byline) {
-	      add_more_bylines();
-	      $byline = undef;
-      } else {
-	      $byline = undef;
-      }
-      print;
-}
-if ($byline) {
-	add_more_bylines();
+	if ($state == parsing) {
+		if (/^[-A-Za-z]+-by: /i || /^Cc: /i) {
+			$state = waiting;
+		}
+	} elsif ($state == waiting) {
+		if (/^[-A-Za-z]+-by: /i || /^Cc: /i) {
+			$state = waiting;
+		} else {
+			add_more_bylines();
+			$state = parsing;
+		}
+	}
+	print;
 }
