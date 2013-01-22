@@ -190,6 +190,11 @@ is_empty_commit() {
 	test "$tree" = "$ptree"
 }
 
+is_merge_commit()
+{
+	git rev-parse --verify --quiet "$1"^2 >/dev/null 2>&1
+}
+
 # Run command with GIT_AUTHOR_NAME, GIT_AUTHOR_EMAIL, and
 # GIT_AUTHOR_DATE exported from the current environment.
 do_with_author () {
@@ -874,7 +879,7 @@ git rev-list $merges_option --pretty=oneline --abbrev-commit \
 while read -r shortsha1 rest
 do
 
-	if test -z "$keep_empty" && is_empty_commit $shortsha1
+	if test -z "$keep_empty" && is_empty_commit $shortsha1 && ! is_merge_commit $shortsha1
 	then
 		comment_out="# "
 	else
