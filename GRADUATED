@@ -1,11 +1,13 @@
 #!/bin/sh
 
-base=
+base= ignore_file=
 while :
 do
 	case "$1" in
 	--base=*)
 		base=${1#*=} ;;
+	--ignore=*)
+		ignore_file=${1#*=} ;;
 	-*)
 		echo >&2 "Eh? $1"
 		exit 1 ;;
@@ -27,11 +29,28 @@ then
 	}
 fi
 
-topics=
-leftover=
-dothis=
+topics= leftover= dothis=
 LF='
 '
+
+ignores=
+if test -f "$ignore_file"
+then
+	while read ignore rest
+	do
+		test -n "$ignore" &&
+		if ignore=$(git rev-parse -q --verify $ignore)
+		then
+			:
+		elif ignore=$(expr "$rest" : '.* \([0-9a-f]\{40\}\)$')
+		then
+			:
+		else
+			continue
+		fi
+		ignores="$ignores$ignore "
+	done <"$ignore_file"
+fi
 
 defer () {
 	leftover="$leftover$1$LF"
@@ -42,20 +61,26 @@ dothis () {
 }
 
 one_topic () {
-	topic="$1" tip="$2" date="$3"
+	topic="$2" tip="$3" date="$4" merged="$1"
 	case " $topics" in *" $topic "*) return ;; esac
 	topics="$topics$topic "
-
-	mergeable=no ready=no label=
 
 	maint_count=$(git rev-list "maint..$tip" | wc -l)
 	if test "$maint_count" = 0
 	then
+		echo "**** already merged $topic ****"
 		return ;# already merged
 	fi
-	master_count=$(git rev-list "$base..$tip" | wc -l)
 
-	test $master_count = $maint_count && mergeable=yes
+	ready=no label=
+
+	master_count=$(git rev-list "$base..$tip" | wc -l)
+	if test $maint_count -le $master_count
+	then
+		mergeable=yes
+	else
+		mergeable=no
+	fi
 
 	if current=$(git rev-parse --verify -q "$topic^0") &&
 	   test "$current" = "$tip"
@@ -70,14 +95,25 @@ one_topic () {
 
 	case "$mergeable,$ready" in
 	no,*)
-		defer "# $topic: not mergeable ($master_count vs $maint_count)"
+		comment="# $topic: not mergeable ($master_count vs $maint_count)"
+		comment="$comment$LF# $merged"
+		defer "$comment"
 		;;
 	yes,no)
 		topic_count=$(git rev-list "$base..$current" | wc -l)
-		defer "# $topic: not ready ($master_count vs $topic_count)"
+
+		comment="# $topic: not ready ($master_count vs $topic_count)"
+		comment="$comment$LF# $merged"
+		defer "$comment"
 		;;
 	yes,yes)
-		insn="$label # $master_count ($date)"
+		insn="$label"
+		if test $maint_count = $master_count
+		then
+			insn="$insn # $master_count ($date) $merged"
+		else
+			insn="$insn # $maint_count/$master_count ($date) $merged"
+		fi
 		insn="$insn$LF$(git log --oneline "maint..$tip" | sed -e "s/^/# /")"
 		dothis "$insn"
 		;;
@@ -88,11 +124,12 @@ git log --first-parent --min-parents=2 --max-parents=2 \
 	--format='%ci %H %P %s' "$base..master" | {
 	while read date time zone commit parent tip subject
 	do
+		case " $ignores" in *" $commit "*) continue ;; esac
 		topic=$(expr "$subject" : "Merge branch '\(.*\)'$") || {
-			echo >&2 "Cannot parse $commit ($subject)"
+			defer "# ignoring $commit ($subject)"
 			continue
 		}
-		one_topic "$topic" "$tip" "$date"
+		one_topic "$commit" "$topic" "$tip" "$date"
 	done
 	echo "$leftover"
 	echo "$dothis"
