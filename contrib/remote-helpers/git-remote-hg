@@ -720,6 +720,14 @@ def do_export(parser):
     if peer:
         parser.repo.push(peer, force=False)
 
+def fix_path(alias, repo, orig_url):
+    repo_url = util.url(repo.url())
+    url = util.url(orig_url)
+    if str(url) == str(repo_url):
+        return
+    cmd = ['git', 'config', 'remote.%s.url' % alias, "hg::%s" % repo_url]
+    subprocess.call(cmd)
+
 def main(args):
     global prefix, dirname, branches, bmarks
     global marks, blob_marks, parsed_refs
@@ -765,6 +773,9 @@ def main(args):
 
     repo = get_repo(url, alias)
     prefix = 'refs/hg/%s' % alias
+
+    if not is_tmp:
+        fix_path(alias, peer or repo, url)
 
     if not os.path.exists(dirname):
         os.makedirs(dirname)
