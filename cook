@@ -648,9 +648,10 @@ sub wildo_match {
 }
 
 sub wildo {
+	my $fd = shift;
 	my (%what, $topic, $last_merge_to_next, $in_section, $in_desc);
 	my $too_recent = '9999-99-99';
-	while (<>) {
+	while (<$fd>) {
 		chomp;
 
 		if (/^\[(.*)\]$/) {
@@ -849,18 +850,27 @@ sub doit {
 
 use Getopt::Long;
 
-my $wildo;
-my $havedone;
-if (!GetOptions("wildo" => \$wildo, "havedone" => \$havedone)) {
+my ($wildo, $havedone);
+if (!GetOptions("wildo" => \$wildo,
+		"havedone" => \$havedone)) {
 	print STDERR "$0 [--wildo|--havedone]\n";
 	exit 1;
 }
 
 if ($wildo) {
+	my $fd;
 	if (!@ARGV) {
-		push @ARGV, "Meta/whats-cooking.txt";
+		open($fd, "<", "Meta/whats-cooking.txt");
+	} elsif (@ARGV != 1) {
+		print STDERR "$0 --wildo [filename|HEAD]\n";
+		exit 1;
+	} elsif ($ARGV[0] eq "HEAD") {
+		open($fd, "-|",
+		     qw(git --git-dir=Meta/.git cat-file -p HEAD:whats-cooking.txt));
+	} else {
+		open($fd, "<", $ARGV[0]);
 	}
-	wildo();
+	wildo($fd);
 } elsif ($havedone) {
 	havedone();
 } else {
