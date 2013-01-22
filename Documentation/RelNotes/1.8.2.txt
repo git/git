@@ -78,6 +78,13 @@ UI, Workflows & Features
    been applied, but we probably would want to revisit this later, as
    it hurts the common case of not failing at all.
 
+ * Input and preconditions to "git reset" has been loosened where
+   appropriate.  "git reset $fromtree Makefile" requires $fromtree to
+   be any tree (it used to require it to be a commit), for example.
+   "git reset" (without options or parameters) used to error out when
+   you do not have any commits in your history, but it now gives you
+   an empty index (to match non-existent commit you are not even on).
+
  * "git submodule" started learning a new mode to integrate with the
    tip of the remote branch (as opposed to integrating with the commit
    recorded in the superproject's gitlink).
@@ -90,6 +97,11 @@ Foreign Interface
 
  * A new remote helper to interact with bzr has been added to contrib/.
 
+ * "git p4" got various bugfixes around its branch handling.
+
+ * The remote helper to interact with Hg in contrib/ has seen a few
+   fixes.
+
 
 Performance, Internal Implementation, etc.
 
@@ -98,6 +110,11 @@ Performance, Internal Implementation, etc.
 
  * Matching paths with common forms of pathspecs that contain wildcard
    characters has been optimized further.
+
+ * "git reset" internals has been reworked and should be faster in
+   general. We tried to be careful not to break any behaviour but
+   there could be corner cases, especially when running the command
+   from a conflicted state, that we may have missed.
 
  * The implementation of "imap-send" has been updated to reuse xml
    quoting code from http-push codepath.
@@ -145,8 +162,10 @@ details).
 
  * The attribute mechanism didn't allow limiting attributes to be
    applied to only a single directory itself with "path/" like the
-   exclude mechanism does.
-   (merge 94bc671 ja/directory-attrs later to maint).
+   exclude mechanism does.  The initial implementation of this that
+   was merged to 'maint' and 1.8.1.2 was with a severe performance
+   degradations and needs to merge a fix-up topic.
+   (merge 9db9eec nd/fix-directory-attrs-off-by-one later to maint).
 
  * "git apply" misbehaved when fixing whitespace breakages by removing
    excess trailing blank lines.
@@ -159,6 +178,14 @@ details).
  * "git archive" did not record uncompressed size in the header when
    streaming a zip archive, which confused some implementations of unzip.
    (merge 5ea2c84 rs/zip-with-uncompressed-size-in-the-header later to maint).
+
+ * "git clean" showed what it was going to do, but sometimes end up
+   finding that it was not allowed to do so, which resulted in a
+   confusing output (e.g. after saying that it will remove an
+   untracked directory, it found an embedded git repository there
+   which it is not allowed to remove).  It now performs the actions
+   and then reports the outcome more faithfully.
+   (merge f538a91 zk/clean-report-failure later to maint).
 
  * When "git clone --separate-git-dir=$over_there" is interrupted, it
    failed to remove the real location of the $GIT_DIR it created.
@@ -184,6 +211,14 @@ details).
  * After "git add -N" and then writing a tree object out of the
    index, the cache-tree data structure got corrupted.
    (merge eec3e7e nd/invalidate-i-t-a-cache-tree later to maint).
+
+ * "git clone" used to allow --bare and --separate-git-dir=$there
+   options at the same time, which was nonsensical.
+   (merge 95b63f1 nd/clone-no-separate-git-dir-with-bare later to maint).
+
+ * "git rebase --preserve-merges" lost empty merges in recent versions
+   of Git.
+   (merge 9869778 ph/rebase-preserve-all-merges later to maint).
 
  * "git merge --no-edit" computed who were involved in the work done
    on the side branch, even though that information is to be discarded
