@@ -112,6 +112,11 @@ will be fetched and consulted first during a 'git p4 sync'.  Since
 importing directly from p4 is considerably slower than pulling changes
 from a git remote, this can be useful in a multi-developer environment.
 
+If there are multiple branches, doing 'git p4 sync' will automatically
+use the "BRANCH DETECTION" algorithm to try to partition new changes
+into the right branch.  This can be overridden with the '--branch'
+option to specify just a single branch to update.
+
 
 Rebase
 ~~~~~~
@@ -173,9 +178,11 @@ subsequent 'sync' operations.
 
 --branch <branch>::
 	Import changes into given branch.  If the branch starts with
-	'refs/', it will be used as is, otherwise the path 'refs/heads/'
-	will be prepended.  The default branch is 'master'.  If used
-	with an initial clone, no HEAD will be checked out.
+	'refs/', it will be used as is.  Otherwise if it does not start
+	with 'p4/', that prefix is added.  The branch is assumed to
+	name a remote tracking, but this can be modified using
+	'--import-local', or by giving a full ref name.  The default
+	branch is 'master'.
 +
 This example imports a new remote "p4/proj2" into an existing
 git repository:
@@ -287,6 +294,11 @@ These options can be used to modify 'git p4 submit' behavior.
 	to bypass the prompt, causing conflicting commits to be automatically
 	skipped, or to quit trying to apply commits, without prompting.
 
+--branch <branch>::
+	After submitting, sync this named branch instead of the default
+	p4/master.  See the "Sync options" section above for more
+	information.
+
 Rebase options
 ~~~~~~~~~~~~~~
 These options can be used to modify 'git p4 rebase' behavior.
@@ -394,8 +406,10 @@ the path elements in the p4 repository.  The example above relied on the
 presence of the p4 branch.  Without p4 branches, the same result will
 occur with:
 ----
+git init depot
+cd depot
 git config git-p4.branchList main:branch1
-git p4 clone --detect-branches //depot@all
+git p4 clone --detect-branches //depot@all .
 ----
 
 
