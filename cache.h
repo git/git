@@ -1001,10 +1001,8 @@ struct ref {
 	char *symref;
 	unsigned int
 		force:1,
-		requires_force:1,
+		forced_update:1,
 		merge:1,
-		nonfastforward:1,
-		update:1,
 		deletion:1;
 	enum {
 		REF_STATUS_NONE = 0,
