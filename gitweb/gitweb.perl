@@ -7239,6 +7239,11 @@ sub git_snapshot {
 	my %co = parse_commit($hash);
 	exit_if_unmodified_since($co{'committer_epoch'}) if %co;
 
+        # to allow snapshot of subdirectories
+        if ($file_name) {
+                $hash = $hash . ":" .  $file_name
+        }
+
 	my $cmd = quote_command(
 		git_cmd(), 'archive',
 		"--format=$known_snapshot_formats{$format}{'format'}",
