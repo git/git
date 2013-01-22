@@ -1,10 +1,10 @@
 To: git@vger.kernel.org
 Bcc: lwn@lwn.net
-Subject: What's cooking in git.git (Jan 2013, #07; Thu, 17)
-X-master-at: eacf0117752780bf418d352a6ad2f033aeda1cce
-X-next-at: 99bfae2c22d58cfa0db9262c774d3f61a8d0dc1a
+Subject: What's cooking in git.git (Jan 2013, #08; Tue, 22)
+X-master-at: 9591fcc6d66fd213c8c9f73553b7684b73daf4cb
+X-next-at: 9bc26b8f63ccfb0316023621731bc14191a8b436
 
-What's cooking in git.git (Jan 2013, #07; Thu, 17)
+What's cooking in git.git (Jan 2013, #08; Tue, 22)
 --------------------------------------------------
 
 Here are the topics that have been cooking.  Commits prefixed with
@@ -22,13 +22,126 @@ repositories listed at
 --------------------------------------------------
 [New Topics]
 
+* bc/fix-array-syntax-for-3.0-in-completion-bash (2013-01-18) 1 commit
+ - git-completion.bash: replace zsh notation that breaks bash 3.X
+
+ Fix use of an array notation that older versions of bash do not
+ understand.
+
+ Will merge to 'next'.
+
+
+* jc/help (2013-01-18) 1 commit
+ - help: include <common-cmds.h> only in one file
+
+ A header file that has the definition of a static array was
+ included in two places, wasting the space.
+
+ Will merge to 'next'.
+
+
+* jc/hidden-refs (2013-01-18) 2 commits
+ - upload-pack: allow hiding ref hiearchies
+ - upload-pack: share more code
+
+ Allow the server side to unclutter the refs/ namespace it shows by
+ default, while still allowing requests for histories leading to the
+ tips of hidden refs by updated clients (which are not written yet).
+
+
+* jk/update-install-for-p4 (2013-01-20) 1 commit
+ - INSTALL: git-p4 doesn't support Python 3
+
+ Will merge to 'next'.
+
+
+* tb/t0050-maint (2013-01-21) 3 commits
+ - t0050: Use TAB for indentation
+ - t0050: honor CASE_INSENSITIVE_FS in add (with different case)
+ - t0050: known breakage vanished in merge (case change)
+
+ Will merge to 'next'.
+
+
+* nd/magic-pathspec-from-root (2013-01-21) 2 commits
+ - grep: avoid accepting ambiguous revision
+ - Update :/abc ambiguity check
+
+ Will merge to 'next'.
+
+
+* ta/doc-no-small-caps (2013-01-21) 7 commits
+ - Add rule for when to use 'git' and when to use 'Git'
+ - Change 'git' to 'Git' whenever the whole system is referred to #4
+ - Change 'git' to 'Git' whenever the whole system is referred to #3
+ - Change 'git' to 'Git' whenever the whole system is referred to #2
+ - Change 'git' to 'Git' whenever the whole system is referred to #1
+ - Documentation: update two leftover small caps
+ - Documentation: avoid poor-man's small caps
+
+ Update documentation to change "GIT" which was a poor-man's small
+ caps to "Git" which was the intended spelling.  Also change "git"
+ spelled in all-lowercase to "Git" when it refers to the system as
+ the whole or the concept it embodies, as opposed to the command the
+ end users would type.
+
+
+* rr/minimal-stat (2013-01-22) 1 commit
+ - Enable minimal stat checking
+
+ Some reimplementations of Git does not write all the stat info back
+ to the index due to their implementation limitations (e.g. jgit
+ running on Java).  A configuration option can tell Git to ignore
+ changes to most of the stat fields and only pay attention to mtime
+ and size, which these implementations can reliably update.  This
+ avoids excessive revalidation of contents.
+
+ Will merge to 'next'.
+
+--------------------------------------------------
+[Graduated to "master"]
+
+* ap/log-mailmap (2013-01-10) 11 commits
+  (merged to 'next' on 2013-01-10 at 8544084)
+ + log --use-mailmap: optimize for cases without --author/--committer search
+ + log: add log.mailmap configuration option
+ + log: grep author/committer using mailmap
+ + test: add test for --use-mailmap option
+ + log: add --use-mailmap option
+ + pretty: use mailmap to display username and email
+ + mailmap: add mailmap structure to rev_info and pp
+ + mailmap: simplify map_user() interface
+ + mailmap: remove email copy and length limitation
+ + Use split_ident_line to parse author and committer
+ + string-list: allow case-insensitive string list
+
+ Teach commands in the "log" family to optionally pay attention to
+ the mailmap.
+
+
+* ds/completion-silence-in-tree-path-probe (2013-01-11) 1 commit
+  (merged to 'next' on 2013-01-15 at 7542d21)
+ + git-completion.bash: silence "not a valid object" errors
+
+ An internal ls-tree call made by completion code only to probe if
+ a path exists in the tree recorded in a commit object leaked error
+ messages when the path is not there.  It is not an error at all and
+ should not be shown to the end user.
+
+
 * fc/remote-hg-fixup-url (2013-01-15) 1 commit
   (merged to 'next' on 2013-01-15 at d2acb2d)
  + remote-hg: store converted URL
 
  Update to the Hg remote helper (in contrib/).
 
- Will merge to 'master'.
+
+* jn/maint-trim-vim-contrib (2013-01-10) 1 commit
+  (merged to 'next' on 2013-01-15 at ad80a9d)
+ + contrib/vim: simplify instructions for old vim support
+
+ Remove stale insn to support older versions of vim and point users
+ to the upstream resources.
 
 
 * mh/remote-hg-mode-bits-fix (2013-01-15) 1 commit
@@ -37,38 +150,41 @@ repositories listed at
 
  Update to the Hg remote helper (in contrib/).
 
- Will merge to 'master'.
+
+* mk/complete-tcsh (2013-01-07) 1 commit
+  (merged to 'next' on 2013-01-11 at b8b30b1)
+ + Prevent space after directories in tcsh completion
+
+ Update tcsh command line completion so that an unwanted space is
+ not added to a single directory name.
 
 
-* jc/valgrind-memcmp-bsearch (2013-01-14) 1 commit
- - ignore memcmp() overreading in bsearch() callback
+* mz/reset-misc (2013-01-16) 20 commits
+  (merged to 'next' on 2013-01-16 at 937bc20)
+ + reset: update documentation to require only tree-ish with paths
+  (merged to 'next' on 2013-01-15 at a93b394)
+ + reset [--mixed]: use diff-based reset whether or not pathspec was given
+ + reset: allow reset on unborn branch
+ + reset $sha1 $pathspec: require $sha1 only to be treeish
+ + reset.c: inline update_index_refresh()
+ + reset.c: finish entire cmd_reset() whether or not pathspec is given
+ + reset [--mixed]: only write index file once
+ + reset.c: move lock, write and commit out of update_index_refresh()
+ + reset.c: move update_index_refresh() call out of read_from_tree()
+ + reset.c: replace switch by if-else
+ + reset: avoid redundant error message
+ + reset --keep: only write index file once
+ + reset.c: share call to die_if_unmerged_cache()
+ + reset.c: extract function for updating {ORIG_,}HEAD
+ + reset.c: remove unnecessary variable 'i'
+ + reset.c: extract function for parsing arguments
+ + reset: don't allow "git reset -- $pathspec" in bare repo
+ + reset.c: pass pathspec around instead of (prefix, argv) pair
+ + reset $pathspec: exit with code 0 if successful
+ + reset $pathspec: no need to discard index
 
- Squelch false positive in valgrind tests
-
- Will discard.
-
-
-* mh/imap-send-shrinkage (2013-01-15) 14 commits
- - imap-send.c: simplify logic in lf_to_crlf()
- - imap-send.c: fold struct store into struct imap_store
- - imap-send.c: remove unused field imap_store::uidvalidity
- - imap-send.c: use struct imap_store instead of struct store
- - imap-send.c: remove unused field imap_store::trashnc
- - imap-send.c: remove namespace fields from struct imap
- - imap-send.c: remove struct imap argument to parse_imap_list_l()
- - imap-send.c: inline parse_imap_list() in parse_list()
- - imap-send.c: remove some unused fields from struct store
- - imap-send.c: remove struct message
- - imap-send.c: remove struct store_conf
- - iamp-send.c: remove unused struct imap_store_conf
- - imap-send.c: remove struct msg_data
- - imap-send.c: remove msg_data::flags, which was always zero
-
- Remove a lot of unused code from "git imap-send".
-
- With a further comment fixup in patch #6, this seems ready for
- 'next'.
- Expecting a reroll.
+ Various 'reset' optimizations and clean-ups, followed by a change
+ to allow "git reset" to work even on an unborn branch.
 
 
 * nd/attr-debug-fix (2013-01-15) 1 commit
@@ -77,7 +193,12 @@ repositories listed at
 
  Fix debugging support that was broken in earlier change.
 
- Will merge to 'master'.
+
+* nd/clone-no-separate-git-dir-with-bare (2013-01-10) 1 commit
+  (merged to 'next' on 2013-01-15 at 64f441a)
+ + clone: forbid --bare --separate-git-dir <dir>
+
+ Forbid a useless combination of options to "git clone".
 
 
 * nd/fix-directory-attrs-off-by-one (2013-01-16) 2 commits
@@ -89,8 +210,6 @@ repositories listed at
  Fix performance regression introduced by an earlier change to let
  attributes apply to directories.
 
- Will merge to 'master'.
-
 
 * nd/fix-perf-parameters-in-tests (2013-01-15) 1 commit
   (merged to 'next' on 2013-01-15 at fedbdb9)
@@ -99,7 +218,25 @@ repositories listed at
  Allow GIT_PERF_* environment variables to be passed through the
  test framework.
 
- Will merge to 'master'.
+
+* pe/doc-email-env-is-trumped-by-config (2013-01-10) 1 commit
+  (merged to 'next' on 2013-01-14 at 6b4d555)
+ + git-commit-tree(1): correct description of defaults
+
+ In the precedence order, the environment variable $EMAIL comes
+ between the built-in default (i.e. taking value by asking the
+ system's gethostname() etc.) and the user.email configuration
+ variable; the documentation implied that it is stronger than the
+ configuration like $GIT_COMMITTER_EMAIL is, which is wrong.
+
+
+* ph/rebase-preserve-all-merges (2013-01-14) 1 commit
+  (merged to 'next' on 2013-01-15 at 3a67878)
+ + rebase --preserve-merges: keep all merge commits including empty ones
+
+ An earlier change to add --keep-empty option broke "git rebase
+ --preserve-merges" and lost merge commits that end up being the
+ same as its parent.
 
 
 * pw/p4-branch-fixes (2013-01-15) 14 commits
@@ -121,7 +258,18 @@ repositories listed at
 
  Fix "git p4" around branch handling.
 
- Will merge to 'master'.
+
+* rs/pretty-use-prefixcmp (2013-01-14) 1 commit
+  (merged to 'next' on 2013-01-15 at d76452d)
+ + pretty: use prefixcmp instead of memcmp on NUL-terminated strings
+
+
+* rt/commit-cleanup-config (2013-01-10) 1 commit
+  (merged to 'next' on 2013-01-15 at c4742ae)
+ + commit: make default of "cleanup" option configurable
+
+ Add a configuration variable to set default clean-up mode other
+ than "strip".
 
 
 * ss/help-htmlpath-config-doc (2013-01-15) 1 commit
@@ -130,64 +278,15 @@ repositories listed at
 
  Add missing doc.
 
- Will merge to 'master'.
 
+* zk/clean-report-failure (2013-01-14) 1 commit
+  (merged to 'next' on 2013-01-15 at 5b31614)
+ + git-clean: Display more accurate delete messages
 
-* cr/push-force-tag-update (2013-01-16) 1 commit
- - push: fix "refs/tags/ hierarchy cannot be updated without --force"
-
- Regression fix.
-
- Will merge to 'next' and then to 'master' soonish.
-
-
-* jk/suppress-clang-warning (2013-01-16) 1 commit
- - fix clang -Wunused-value warnings for error functions
-
- Will merge to 'next'.
-
-
-* rs/clarify-entry-cmp-sslice (2013-01-16) 1 commit
- - refs: use strncmp() instead of strlen() and memcmp()
-
- Will merge to 'next'.
-
-
-* ch/add-auto-submitted-in-sample-post-receive-email (2013-01-17) 1 commit
- - Add Auto-Submitted header to post-receive-email
-
- Will merge to 'next'.
-
-
-* jc/remove-treesame-parent-in-simplify-merges (2013-01-17) 1 commit
- - simplify-merges: drop merge from irrelevant side branch
-
- The --simplify-merges logic did not cull irrelevant parents from a
- merge that is otherwise not interesting with respect to the paths
- we are following.
-
- As this touches a fairly core part of the revision traversal
- infrastructure, it is appreciated to have an extra set of eyes for
- sanity check.
-
- Waiting for comments.
-
-
-* jk/remote-helpers-in-python-3 (2013-01-17) 8 commits
- - git-remote-testpy: call print as a function
- - git-remote-testpy: don't do unbuffered text I/O
- - git-remote-testpy: hash bytes explicitly
- - svn-fe: allow svnrdump_sim.py to run with Python 3
- - git_remote_helpers: use 2to3 if building with Python 3
- - git_remote_helpers: force rebuild if python version changes
- - git_remote_helpers: fix input when running under Python 3
- - git_remote_helpers: allow building with Python 3
-
- Except for one instance of <user-generated-string>.encode('utf-8'),
- nothing looked wrong.  People who have worked on git_remote_helpers
- should review and Ack, though.
-
- Waiting for further comments.
+ "git clean" states what it is going to remove and then goes on to
+ remove it, but sometimes it only discovers things that cannot be
+ removed after recursing into a directory, which makes the output
+ confusing and even wrong.
 
 --------------------------------------------------
 [Stalled]
@@ -300,6 +399,92 @@ repositories listed at
 --------------------------------------------------
 [Cooking]
 
+* mh/imap-send-shrinkage (2013-01-15) 14 commits
+  (merged to 'next' on 2013-01-18 at 1b7c5ba)
+ + imap-send.c: simplify logic in lf_to_crlf()
+ + imap-send.c: fold struct store into struct imap_store
+ + imap-send.c: remove unused field imap_store::uidvalidity
+ + imap-send.c: use struct imap_store instead of struct store
+ + imap-send.c: remove unused field imap_store::trashnc
+ + imap-send.c: remove namespace fields from struct imap
+ + imap-send.c: remove struct imap argument to parse_imap_list_l()
+ + imap-send.c: inline parse_imap_list() in parse_list()
+ + imap-send.c: remove some unused fields from struct store
+ + imap-send.c: remove struct message
+ + imap-send.c: remove struct store_conf
+ + iamp-send.c: remove unused struct imap_store_conf
+ + imap-send.c: remove struct msg_data
+ + imap-send.c: remove msg_data::flags, which was always zero
+
+ Remove a lot of unused code from "git imap-send".
+
+ Will merge to 'master'.
+
+
+* cr/push-force-tag-update (2013-01-21) 4 commits
+ - push: further simplify the logic to assign rejection status
+ - push: introduce REJECT_FETCH_FIRST and REJECT_NEEDS_FORCE
+ - push: further clean up fields of "struct ref"
+  (merged to 'next' on 2013-01-18 at c9091d5)
+ + push: fix "refs/tags/ hierarchy cannot be updated without --force"
+
+ Regression fix (the bottom one), and error/advice message
+ improvements (the rest).
+
+ Will merge to 'master' the bottom one soonish.
+ The remainder can cook in 'next' like any other topic.
+
+
+* jk/suppress-clang-warning (2013-01-16) 1 commit
+  (merged to 'next' on 2013-01-18 at 7c0bda7)
+ + fix clang -Wunused-value warnings for error functions
+
+ Will merge to 'master'.
+
+
+* rs/clarify-entry-cmp-sslice (2013-01-16) 1 commit
+  (merged to 'next' on 2013-01-18 at d584dc6)
+ + refs: use strncmp() instead of strlen() and memcmp()
+
+ Will merge to 'master'.
+
+
+* ch/add-auto-submitted-in-sample-post-receive-email (2013-01-17) 1 commit
+  (merged to 'next' on 2013-01-18 at e3205db)
+ + Add Auto-Submitted header to post-receive-email
+
+ Will merge to 'master'.
+
+
+* jc/remove-treesame-parent-in-simplify-merges (2013-01-17) 1 commit
+ - simplify-merges: drop merge from irrelevant side branch
+
+ The --simplify-merges logic did not cull irrelevant parents from a
+ merge that is otherwise not interesting with respect to the paths
+ we are following.
+
+ As this touches a fairly core part of the revision traversal
+ infrastructure, it is appreciated to have an extra set of eyes for
+ sanity check.
+
+ Waiting for comments.
+
+
+* jk/remote-helpers-in-python-3 (2013-01-20) 8 commits
+ - git-remote-testpy: call print as a function
+ - git-remote-testpy: don't do unbuffered text I/O
+ - git-remote-testpy: hash bytes explicitly
+ - svn-fe: allow svnrdump_sim.py to run with Python 3
+ - git_remote_helpers: use 2to3 if building with Python 3
+ - git_remote_helpers: force rebuild if python version changes
+ - git_remote_helpers: fix input when running under Python 3
+ - git_remote_helpers: allow building with Python 3
+
+ Prepare remote-helper test written in Python to be run with Python3.
+
+ Will merge to 'next'.
+
+
 * jc/cvsimport-upgrade (2013-01-14) 8 commits
  - t9600: adjust for new cvsimport
  - t9600: further prepare for sharing
@@ -320,36 +505,30 @@ repositories listed at
  old one in due time" strategy that we used successfully in the
  past.
 
- Both folks on the Git side and Chris Rorvick (contributor to cvsps
- 3.0 and new cvsimport) seem happy with the new layout, so let's
- wait for a few days to see how it evolves and merge it to 'next'.
-
- Waiting for Eric to say something, but otherwise will merge to 'next'.
+ Will merge to 'next'.
 
 
-* as/pre-push-hook (2013-01-14) 4 commits
- - Add sample pre-push hook script
- - [SQUASH???] t5571 sample hooks should consume their input
- - push: Add support for pre-push hooks
- - hooks: Add function to check if a hook exists
+* as/pre-push-hook (2013-01-18) 3 commits
+  (merged to 'next' on 2013-01-18 at 37fc4e8)
+ + Add sample pre-push hook script
+ + push: Add support for pre-push hooks
+ + hooks: Add function to check if a hook exists
 
  Add an extra hook so that "git push" that is run without making
  sure what is being pushed is sane can be checked and rejected (as
  opposed to the user deciding not pushing).
 
- Will merge to 'next' after squashing the fix in.
+ Will merge to 'master'.
 
 
-* dl/am-hg-locale (2013-01-14) 1 commit
+* dl/am-hg-locale (2013-01-18) 1 commit
  - am: invoke perl's strftime in C locale
 
  Datestamp recorded in "Hg" format patch was reformatted incorrectly
  to an e-mail looking date using locale dependant strftime, causing
  patch application to fail.
 
- This is an original "everything in C locale" version; the later one
- that uses LC_TIME may technically be more correct, so I may replace
- this with it later ($gmane/213660).
+ Will merge to 'next'.
 
 
 * jk/config-parsing-cleanup (2013-01-14) 7 commits
@@ -375,16 +554,7 @@ repositories listed at
  Looking better; may want tests to protect it from future breakages,
  but otherwise it looks ready for 'next'.
 
-
-* ph/rebase-preserve-all-merges (2013-01-14) 1 commit
-  (merged to 'next' on 2013-01-15 at 3a67878)
- + rebase --preserve-merges: keep all merge commits including empty ones
-
- An earlier change to add --keep-empty option broke "git rebase
- --preserve-merges" and lost merge commits that end up being the
- same as its parent.
-
- Will merge to 'master'.
+ Waiting for a follow-up to add tests.
 
 
 * rs/archive-tar-config-parsing-fix (2013-01-14) 1 commit
@@ -394,22 +564,7 @@ repositories listed at
  broken; Peff's config parsing clean-up topic will address the same
  breakage, so this may be superseded by that other topic.
 
-
-* rs/pretty-use-prefixcmp (2013-01-14) 1 commit
-  (merged to 'next' on 2013-01-15 at d76452d)
- + pretty: use prefixcmp instead of memcmp on NUL-terminated strings
-
- Will merge to 'master'.
-
-
-* rt/commit-cleanup-config (2013-01-10) 1 commit
-  (merged to 'next' on 2013-01-15 at c4742ae)
- + commit: make default of "cleanup" option configurable
-
- Add a configuration variable to set default clean-up mode other
- than "strip".
-
- Will merge to 'master'.
+ Waiting for the other topic to make this unneeded.
 
 
 * jc/custom-comment-char (2013-01-16) 1 commit
@@ -427,69 +582,7 @@ repositories listed at
 
  I don't know how useful this will be in real life, though.
 
- Waiting for bug reports and user feedback.
-
-
-* jn/maint-trim-vim-contrib (2013-01-10) 1 commit
-  (merged to 'next' on 2013-01-15 at ad80a9d)
- + contrib/vim: simplify instructions for old vim support
-
- Will merge to 'master'.
-
-
-* mz/reset-misc (2013-01-16) 20 commits
-  (merged to 'next' on 2013-01-16 at 937bc20)
- + reset: update documentation to require only tree-ish with paths
-  (merged to 'next' on 2013-01-15 at a93b394)
- + reset [--mixed]: use diff-based reset whether or not pathspec was given
- + reset: allow reset on unborn branch
- + reset $sha1 $pathspec: require $sha1 only to be treeish
- + reset.c: inline update_index_refresh()
- + reset.c: finish entire cmd_reset() whether or not pathspec is given
- + reset [--mixed]: only write index file once
- + reset.c: move lock, write and commit out of update_index_refresh()
- + reset.c: move update_index_refresh() call out of read_from_tree()
- + reset.c: replace switch by if-else
- + reset: avoid redundant error message
- + reset --keep: only write index file once
- + reset.c: share call to die_if_unmerged_cache()
- + reset.c: extract function for updating {ORIG_,}HEAD
- + reset.c: remove unnecessary variable 'i'
- + reset.c: extract function for parsing arguments
- + reset: don't allow "git reset -- $pathspec" in bare repo
- + reset.c: pass pathspec around instead of (prefix, argv) pair
- + reset $pathspec: exit with code 0 if successful
- + reset $pathspec: no need to discard index
-
- Various 'reset' optimizations and clean-ups, followed by a change
- to allow "git reset" to work even on an unborn branch.
-
- Will merge to 'master'.
-
-
-* pe/doc-email-env-is-trumped-by-config (2013-01-10) 1 commit
-  (merged to 'next' on 2013-01-14 at 6b4d555)
- + git-commit-tree(1): correct description of defaults
-
- In the precedence order, the environment variable $EMAIL comes
- between the built-in default (i.e. taking value by asking the
- system's gethostname() etc.) and the user.email configuration
- variable; the documentation implied that it is stronger than the
- configuration like $GIT_COMMITTER_EMAIL is, which is wrong.
-
- Will merge to 'master'.
-
-
-* ds/completion-silence-in-tree-path-probe (2013-01-11) 1 commit
-  (merged to 'next' on 2013-01-15 at 7542d21)
- + git-completion.bash: silence "not a valid object" errors
-
- An internal ls-tree call made by completion code only to probe if
- a path exists in the tree recorded in a commit object leaked error
- messages when the path is not there.  It is not an error at all and
- should not be shown to the end user.
-
- Will merge to 'master'.
+ Will merge to 'next'.
 
 
 * nd/fetch-depth-is-broken (2013-01-11) 3 commits
@@ -518,16 +611,6 @@ repositories listed at
  Will cook in 'next'.
 
 
-* mk/complete-tcsh (2013-01-07) 1 commit
-  (merged to 'next' on 2013-01-11 at b8b30b1)
- + Prevent space after directories in tcsh completion
-
- Update tcsh command line completion so that an unwanted space is
- not added to a single directory name.
-
- Will merge to 'master'.
-
-
 * dg/subtree-fixes (2013-01-08) 7 commits
  - contrib/subtree: mkdir the manual directory if needed
  - contrib/subtree: honor $(DESTDIR)
@@ -541,26 +624,6 @@ repositories listed at
  were posted separately, with an overlap.
 
  Expecting a reroll.
-
-
-* ap/log-mailmap (2013-01-10) 11 commits
-  (merged to 'next' on 2013-01-10 at 8544084)
- + log --use-mailmap: optimize for cases without --author/--committer search
- + log: add log.mailmap configuration option
- + log: grep author/committer using mailmap
- + test: add test for --use-mailmap option
- + log: add --use-mailmap option
- + pretty: use mailmap to display username and email
- + mailmap: add mailmap structure to rev_info and pp
- + mailmap: simplify map_user() interface
- + mailmap: remove email copy and length limitation
- + Use split_ident_line to parse author and committer
- + string-list: allow case-insensitive string list
-
- Teach commands in the "log" family to optionally pay attention to
- the mailmap.
-
- Will merge to 'master'.
 
 
 * jc/push-2.0-default-to-simple (2013-01-16) 14 commits
@@ -582,15 +645,6 @@ repositories listed at
  + t5404: do not assume the "matching" push is the default
 
  Will cook in 'next' until Git 2.0 ;-).
-
-
-* nd/clone-no-separate-git-dir-with-bare (2013-01-10) 1 commit
-  (merged to 'next' on 2013-01-15 at 64f441a)
- + clone: forbid --bare --separate-git-dir <dir>
-
- Forbid a useless combination of options to "git clone".
-
- Will merge to 'master'.
 
 
 * nd/parse-pathspec (2013-01-11) 20 commits
@@ -654,11 +708,12 @@ repositories listed at
 
  Various git-cvsserver updates.
 
- Will cook in 'next' for a while to see if anybody screams.
+ Will merge to 'master'.
 
 
 * as/check-ignore (2013-01-16) 13 commits
- - clean.c, ls-files.c: respect encapsulation of exclude_list_groups
+  (merged to 'next' on 2013-01-18 at ef45aff)
+ + clean.c, ls-files.c: respect encapsulation of exclude_list_groups
   (merged to 'next' on 2013-01-14 at 9df2afc)
  + t0008: avoid brace expansion
  + add git-check-ignore sub-command
@@ -679,7 +734,7 @@ repositories listed at
  The variable names may want to get cleaned up but that can be done
  in-tree.
 
- Will merge to 'next'.
+ Will merge to 'master'.
 
 
 * nd/retire-fnmatch (2013-01-01) 7 commits
@@ -698,7 +753,7 @@ repositories listed at
  A handful patches at the bottom have been moved to nd/wildmatch to
  graduate as part of that branch, before this series solidifies.
 
- Will cook in 'next' a bit longer than other topics.
+ Will merge to 'master'.
 
 
 * mb/gitweb-highlight-link-target (2012-12-20) 1 commit
@@ -708,23 +763,9 @@ repositories listed at
  $gmane/211935
 
 
-* zk/clean-report-failure (2013-01-14) 1 commit
-  (merged to 'next' on 2013-01-15 at 5b31614)
- + git-clean: Display more accurate delete messages
-
- "git clean" states what it is going to remove and then goes on to
- remove it, but sometimes it only discovers things that cannot be
- removed after recursing into a directory, which makes the output
- confusing and even wrong.
-
- Will merge to 'master'.
-
-
-* bc/append-signed-off-by (2013-01-01) 12 commits
- - t4014: do not use echo -n
+* bc/append-signed-off-by (2013-01-21) 10 commits
  - Unify appending signoff in format-patch, commit and sequencer
  - format-patch: update append_signoff prototype
- - format-patch: stricter S-o-b detection
  - t4014: more tests about appending s-o-b lines
  - sequencer.c: teach append_signoff to avoid adding a duplicate newline
  - sequencer.c: teach append_signoff how to detect duplicate s-o-b
@@ -734,8 +775,9 @@ repositories listed at
  - t/test-lib-functions.sh: allow to specify the tag name to test_commit
  - sequencer.c: remove broken support for rfc2822 continuation in footer
 
- Expecting a reroll.
- $gmane/212507
+ Rerolled.
+
+ Seems that we will see another round.
 
 --------------------------------------------------
 [Discarded]
@@ -750,3 +792,10 @@ repositories listed at
  . cvsimport: rewrite to use cvsps 3.x to fix major bugs
 
  Rerolled as jc/cvsimport-upgrade.
+
+
+* jc/valgrind-memcmp-bsearch (2013-01-14) 1 commit
+ . ignore memcmp() overreading in bsearch() callback
+
+ Squelch false positive in valgrind tests; made unnecessary by
+ rewriting the callsite that confuses the tool.
