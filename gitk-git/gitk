@@ -2161,7 +2161,7 @@ proc makewindow {} {
     trace add variable sha1string write sha1change
     pack $sha1entry -side left -pady 2
 
-    image create bitmap bm-left -data {
+    set bm_left_data {
 	#define left_width 16
 	#define left_height 16
 	static unsigned char left_bits[] = {
@@ -2169,7 +2169,7 @@ proc makewindow {} {
 	0x0e, 0x00, 0xff, 0x7f, 0xff, 0x7f, 0xff, 0x7f, 0x0e, 0x00, 0x1c, 0x00,
 	0x38, 0x00, 0x70, 0x00, 0xe0, 0x00, 0xc0, 0x01};
     }
-    image create bitmap bm-right -data {
+    set bm_right_data {
 	#define right_width 16
 	#define right_height 16
 	static unsigned char right_bits[] = {
@@ -2177,11 +2177,24 @@ proc makewindow {} {
 	0x00, 0x38, 0xff, 0x7f, 0xff, 0x7f, 0xff, 0x7f, 0x00, 0x38, 0x00, 0x1c,
 	0x00, 0x0e, 0x00, 0x07, 0x80, 0x03, 0xc0, 0x01};
     }
-    ${NS}::button .tf.bar.leftbut -image bm-left -command goback \
-	-state disabled -width 26
+    image create bitmap bm-left -data $bm_left_data
+    image create bitmap bm-left-gray -data $bm_left_data -foreground "#999"
+    image create bitmap bm-right -data $bm_right_data
+    image create bitmap bm-right-gray -data $bm_right_data -foreground "#999"
+
+    ${NS}::button .tf.bar.leftbut -command goback -state disabled -width 26
+    if {$use_ttk} {
+	.tf.bar.leftbut configure -image [list bm-left disabled bm-left-gray]
+    } else {
+	.tf.bar.leftbut configure -image bm-left
+    }
     pack .tf.bar.leftbut -side left -fill y
-    ${NS}::button .tf.bar.rightbut -image bm-right -command goforw \
-	-state disabled -width 26
+    ${NS}::button .tf.bar.rightbut -command goforw -state disabled -width 26
+    if {$use_ttk} {
+	.tf.bar.rightbut configure -image [list bm-right disabled bm-right-gray]
+    } else {
+	.tf.bar.rightbut configure -image bm-right
+    }
     pack .tf.bar.rightbut -side left -fill y
 
     ${NS}::label .tf.bar.rowlabel -text [mc "Row"]
@@ -2361,6 +2374,8 @@ proc makewindow {} {
     $ctext tag conf mresult -font textfontbold
     $ctext tag conf msep -font textfontbold
     $ctext tag conf found -back yellow
+    $ctext tag conf currentsearchhit -back orange
+    $ctext tag conf wwrap -wrap word
 
     .pwbottom add .bleft
     if {!$use_ttk} {
@@ -2495,10 +2510,9 @@ proc makewindow {} {
     bindkey ? {dofind -1 1}
     bindkey f nextfile
     bind . <F5> updatecommits
-    bind . <Shift-F5> reloadcommits
+    bindmodfunctionkey Shift 5 reloadcommits
     bind . <F2> showrefs
-    bind . <Shift-F4> {newview 0}
-    catch { bind . <Shift-Key-XF86_Switch_VT_4> {newview 0} }
+    bindmodfunctionkey Shift 4 {newview 0}
     bind . <F4> edit_or_newview
     bind . <$M1B-q> doquit
     bind . <$M1B-f> {dofind 1 1}
@@ -2523,6 +2537,7 @@ proc makewindow {} {
     bind $cflist $ctxbut {pop_flist_menu %W %X %Y %x %y}
     bind $ctext $ctxbut {pop_diff_menu %W %X %Y %x %y}
     bind $ctext <Button-1> {focus %W}
+    bind $ctext <<Selection>> rehighlight_search_results
 
     set maincursor [. cget -cursor]
     set textcursor [$ctext cget -cursor]
@@ -2646,6 +2661,11 @@ proc bindkey {ev script} {
     }
 }
 
+proc bindmodfunctionkey {mod n script} {
+    bind . <$mod-F$n> $script
+    catch { bind . <$mod-XF86_Switch_VT_$n> $script }
+}
+
 # set the focus back to the toplevel for any click outside
 # the entry widgets
 proc click {w} {
@@ -2702,7 +2722,7 @@ proc savestuff {w} {
     global cmitmode wrapcomment datetimeformat limitdiffs
     global colors uicolor bgcolor fgcolor diffcolors diffcontext selectbgcolor
     global autoselect autosellen extdifftool perfile_attrs markbgcolor use_ttk
-    global hideremotes want_ttk
+    global hideremotes want_ttk maxrefs
 
     if {$stuffsaved} return
     if {![winfo viewable .]} return
@@ -2724,6 +2744,7 @@ proc savestuff {w} {
 	puts $f [list set autoselect $autoselect]
 	puts $f [list set autosellen $autosellen]
 	puts $f [list set showneartags $showneartags]
+	puts $f [list set maxrefs $maxrefs]
 	puts $f [list set hideremotes $hideremotes]
 	puts $f [list set showlocalchanges $showlocalchanges]
 	puts $f [list set datetimeformat $datetimeformat]
@@ -3309,6 +3330,7 @@ proc sel_flist {w x y} {
     } else {
 	catch {$ctext yview [lindex $difffilestart [expr {$l - 2}]]}
     }
+    suppress_highlighting_file_for_current_scrollpos
 }
 
 proc pop_flist_menu {w X Y x y} {
@@ -6857,7 +6879,7 @@ proc viewnextline {dir} {
 # add a list of tag or branch names at position pos
 # returns the number of names inserted
 proc appendrefs {pos ids var} {
-    global ctext linknum curview $var maxrefs
+    global ctext linknum curview $var maxrefs mainheadid
 
     if {[catch {$ctext index $pos}]} {
 	return 0
@@ -6870,24 +6892,54 @@ proc appendrefs {pos ids var} {
 	    lappend tags [list $tag $id]
 	}
     }
+
+    set sep {}
+    set tags [lsort -index 0 -decreasing $tags]
+    set nutags 0
+
     if {[llength $tags] > $maxrefs} {
-	$ctext insert $pos "[mc "many"] ([llength $tags])"
-    } else {
-	set tags [lsort -index 0 -decreasing $tags]
-	set sep {}
-	foreach ti $tags {
-	    set id [lindex $ti 1]
-	    set lk link$linknum
-	    incr linknum
-	    $ctext tag delete $lk
-	    $ctext insert $pos $sep
-	    $ctext insert $pos [lindex $ti 0] $lk
-	    setlink $id $lk
-	    set sep ", "
+	# If we are displaying heads, and there are too many,
+	# see if there are some important heads to display.
+	# Currently this means "master" and the current head.
+	set itags {}
+	if {$var eq "idheads"} {
+	    set utags {}
+	    foreach ti $tags {
+		set hname [lindex $ti 0]
+		set id [lindex $ti 1]
+		if {($hname eq "master" || $id eq $mainheadid) &&
+		    [llength $itags] < $maxrefs} {
+		    lappend itags $ti
+		} else {
+		    lappend utags $ti
+		}
+	    }
+	    set tags $utags
 	}
+	if {$itags ne {}} {
+	    set str [mc "and many more"]
+	    set sep " "
+	} else {
+	    set str [mc "many"]
+	}
+	$ctext insert $pos "$str ([llength $tags])"
+	set nutags [llength $tags]
+	set tags $itags
     }
+
+    foreach ti $tags {
+	set id [lindex $ti 1]
+	set lk link$linknum
+	incr linknum
+	$ctext tag delete $lk
+	$ctext insert $pos $sep
+	$ctext insert $pos [lindex $ti 0] $lk
+	setlink $id $lk
+	set sep ", "
+    }
+    $ctext tag add wwrap "$pos linestart" "$pos lineend"
     $ctext conf -state disabled
-    return [llength $tags]
+    return [expr {[llength $tags] + $nutags}]
 }
 
 # called when we have finished computing the nearby tags
@@ -7947,14 +7999,29 @@ proc changediffdisp {} {
     $ctext tag conf dresult -elide [lindex $diffelide 1]
 }
 
-proc highlightfile {loc cline} {
-    global ctext cflist cflist_top
+proc highlightfile {cline} {
+    global cflist cflist_top
 
-    $ctext yview $loc
+    if {![info exists cflist_top]} return
+
     $cflist tag remove highlight $cflist_top.0 "$cflist_top.0 lineend"
     $cflist tag add highlight $cline.0 "$cline.0 lineend"
     $cflist see $cline.0
     set cflist_top $cline
+}
+
+proc highlightfile_for_scrollpos {topidx} {
+    global cmitmode difffilestart
+
+    if {$cmitmode eq "tree"} return
+    if {![info exists difffilestart]} return
+
+    set top [lindex [split $topidx .] 0]
+    if {$difffilestart eq {} || $top < [lindex $difffilestart 0]} {
+	highlightfile 0
+    } else {
+	highlightfile [expr {[bsearch $difffilestart $top] + 2}]
+    }
 }
 
 proc prevfile {} {
@@ -7962,17 +8029,15 @@ proc prevfile {} {
 
     if {$cmitmode eq "tree"} return
     set prev 0.0
-    set prevline 1
     set here [$ctext index @0,0]
     foreach loc $difffilestart {
 	if {[$ctext compare $loc >= $here]} {
-	    highlightfile $prev $prevline
+	    $ctext yview $prev
 	    return
 	}
 	set prev $loc
-	incr prevline
     }
-    highlightfile $prev $prevline
+    $ctext yview $prev
 }
 
 proc nextfile {} {
@@ -7980,11 +8045,9 @@ proc nextfile {} {
 
     if {$cmitmode eq "tree"} return
     set here [$ctext index @0,0]
-    set line 1
     foreach loc $difffilestart {
-	incr line
 	if {[$ctext compare $loc > $here]} {
-	    highlightfile $loc $line
+	    $ctext yview $loc
 	    return
 	}
     }
@@ -8030,7 +8093,6 @@ proc settabs {{firstab {}}} {
 proc incrsearch {name ix op} {
     global ctext searchstring searchdirn
 
-    $ctext tag remove found 1.0 end
     if {[catch {$ctext index anchor}]} {
 	# no anchor set, use start of selection, or of visible area
 	set sel [$ctext tag ranges sel]
@@ -8043,12 +8105,17 @@ proc incrsearch {name ix op} {
 	}
     }
     if {$searchstring ne {}} {
-	set here [$ctext search $searchdirn -- $searchstring anchor]
+	set here [$ctext search -count mlen $searchdirn -- $searchstring anchor]
 	if {$here ne {}} {
 	    $ctext see $here
+	    set mend "$here + $mlen c"
+	    $ctext tag remove sel 1.0 end
+	    $ctext tag add sel $here $mend
+	    suppress_highlighting_file_for_current_scrollpos
+	    highlightfile_for_scrollpos $here
 	}
-	searchmarkvisible 1
     }
+    rehighlight_search_results
 }
 
 proc dosearch {} {
@@ -8071,9 +8138,12 @@ proc dosearch {} {
 	    return
 	}
 	$ctext see $match
+	suppress_highlighting_file_for_current_scrollpos
+	highlightfile_for_scrollpos $match
 	set mend "$match + $mlen c"
 	$ctext tag add sel $match $mend
 	$ctext mark unset anchor
+	rehighlight_search_results
     }
 }
 
@@ -8097,21 +8167,41 @@ proc dosearchback {} {
 	    return
 	}
 	$ctext see $match
+	suppress_highlighting_file_for_current_scrollpos
+	highlightfile_for_scrollpos $match
 	set mend "$match + $ml c"
 	$ctext tag add sel $match $mend
 	$ctext mark unset anchor
+	rehighlight_search_results
+    }
+}
+
+proc rehighlight_search_results {} {
+    global ctext searchstring
+
+    $ctext tag remove found 1.0 end
+    $ctext tag remove currentsearchhit 1.0 end
+
+    if {$searchstring ne {}} {
+	searchmarkvisible 1
     }
 }
 
 proc searchmark {first last} {
     global ctext searchstring
 
+    set sel [$ctext tag ranges sel]
+
     set mend $first.0
     while {1} {
 	set match [$ctext search -count mlen -- $searchstring $mend $last.end]
 	if {$match eq {}} break
 	set mend "$match + $mlen c"
-	$ctext tag add found $match $mend
+	if {$sel ne {} && [$ctext compare $match == [lindex $sel 0]]} {
+	    $ctext tag add currentsearchhit $match $mend
+	} else {
+	    $ctext tag add found $match $mend
+	}
     }
 }
 
@@ -8137,8 +8227,23 @@ proc searchmarkvisible {doall} {
     }
 }
 
+proc suppress_highlighting_file_for_current_scrollpos {} {
+    global ctext suppress_highlighting_file_for_this_scrollpos
+
+    set suppress_highlighting_file_for_this_scrollpos [$ctext index @0,0]
+}
+
 proc scrolltext {f0 f1} {
-    global searchstring
+    global searchstring cmitmode ctext
+    global suppress_highlighting_file_for_this_scrollpos
+
+    set topidx [$ctext index @0,0]
+    if {![info exists suppress_highlighting_file_for_this_scrollpos]
+	|| $topidx ne $suppress_highlighting_file_for_this_scrollpos} {
+	highlightfile_for_scrollpos $topidx
+    }
+
+    catch {unset suppress_highlighting_file_for_this_scrollpos}
 
     .bleft.bottom.sb set $f0 $f1
     if {$searchstring ne {}} {
@@ -10509,13 +10614,13 @@ proc anctags {id} {
 # including id itself if it has a head.
 proc descheads {id} {
     global arcnos arcstart arcids archeads idheads cached_dheads
-    global allparents
+    global allparents arcout
 
     if {![info exists allparents($id)]} {
 	return {}
     }
     set aret {}
-    if {[llength $arcnos($id)] == 1 && [llength $allparents($id)] == 1} {
+    if {![info exists arcout($id)]} {
 	# part-way along an arc; check it first
 	set a [lindex $arcnos($id) 0]
 	if {$archeads($a) ne {}} {
@@ -10864,7 +10969,7 @@ proc create_prefs_page {w} {
 proc prefspage_general {notebook} {
     global NS maxwidth maxgraphpct showneartags showlocalchanges
     global tabstop limitdiffs autoselect autosellen extdifftool perfile_attrs
-    global hideremotes want_ttk have_ttk
+    global hideremotes want_ttk have_ttk maxrefs
 
     set page [create_prefs_page $notebook.general]
 
@@ -10893,9 +10998,12 @@ proc prefspage_general {notebook} {
     ${NS}::label $page.tabstopl -text [mc "Tab spacing"]
     spinbox $page.tabstop -from 1 -to 20 -width 4 -textvariable tabstop
     grid x $page.tabstopl $page.tabstop -sticky w
-    ${NS}::checkbutton $page.ntag -text [mc "Display nearby tags"] \
+    ${NS}::checkbutton $page.ntag -text [mc "Display nearby tags/heads"] \
 	-variable showneartags
     grid x $page.ntag -sticky w
+    ${NS}::label $page.maxrefsl -text [mc "Maximum # tags/heads to show"]
+    spinbox $page.maxrefs -from 1 -to 1000 -width 4 -textvariable maxrefs
+    grid x $page.maxrefsl $page.maxrefs -sticky w
     ${NS}::checkbutton $page.ldiff -text [mc "Limit diffs to listed paths"] \
 	-variable limitdiffs
     grid x $page.ldiff -sticky w
