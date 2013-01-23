@@ -1318,23 +1318,18 @@ void set_ref_status_for_push(struct ref *remote_refs, int send_mirror,
 		 */
 
 		if (!ref->deletion && !is_null_sha1(ref->old_sha1)) {
-			int nonfastforward =
-				!has_sha1_file(ref->old_sha1)
-				|| !ref_newer(ref->new_sha1, ref->old_sha1);
+			int why = 0; /* why would this push require --force? */
 
-			if (!prefixcmp(ref->name, "refs/tags/")) {
-				if (!force_ref_update) {
-					ref->status = REF_STATUS_REJECT_ALREADY_EXISTS;
-					continue;
-				}
+			if (!prefixcmp(ref->name, "refs/tags/"))
+				why = REF_STATUS_REJECT_ALREADY_EXISTS;
+			else if (!has_sha1_file(ref->old_sha1)
+				 || !ref_newer(ref->new_sha1, ref->old_sha1))
+				why = REF_STATUS_REJECT_NONFASTFORWARD;
+
+			if (!force_ref_update)
+				ref->status = why;
+			else if (why)
 				ref->forced_update = 1;
-			} else if (nonfastforward) {
-				if (!force_ref_update) {
-					ref->status = REF_STATUS_REJECT_NONFASTFORWARD;
-					continue;
-				}
-				ref->forced_update = 1;
-			}
 		}
 	}
 }
