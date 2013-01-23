@@ -220,9 +220,21 @@ static const char message_advice_checkout_pull_push[] =
 	   "(e.g. 'git pull') before pushing again.\n"
 	   "See the 'Note about fast-forwards' in 'git push --help' for details.");
 
+static const char message_advice_ref_fetch_first[] =
+	N_("Updates were rejected because the remote contains work that you do\n"
+	   "not have locally. This is usually caused by another repository pushing\n"
+	   "to the same ref. You may want to first merge the remote changes (e.g.,\n"
+	   "'git pull') before pushing again.\n"
+	   "See the 'Note about fast-forwards' in 'git push --help' for details.");
+
 static const char message_advice_ref_already_exists[] =
 	N_("Updates were rejected because the destination reference already exists\n"
 	   "in the remote.");
+
+static const char message_advice_ref_needs_force[] =
+	N_("You cannot update a remote ref that points at a non-commit object,\n"
+	   "or update a remote ref to make it point at a non-commit object,\n"
+	   "without using the '--force' option.\n");
 
 static void advise_pull_before_push(void)
 {
@@ -250,6 +262,20 @@ static void advise_ref_already_exists(void)
 	if (!advice_push_already_exists || !advice_push_update_rejected)
 		return;
 	advise(_(message_advice_ref_already_exists));
+}
+
+static void advise_ref_fetch_first(void)
+{
+	if (!advice_push_fetch_first || !advice_push_update_rejected)
+		return;
+	advise(_(message_advice_ref_fetch_first));
+}
+
+static void advise_ref_needs_force(void)
+{
+	if (!advice_push_needs_force || !advice_push_update_rejected)
+		return;
+	advise(_(message_advice_ref_needs_force));
 }
 
 static int push_with_options(struct transport *transport, int flags)
@@ -285,6 +311,10 @@ static int push_with_options(struct transport *transport, int flags)
 			advise_checkout_pull_push();
 	} else if (reject_reasons & REJECT_ALREADY_EXISTS) {
 		advise_ref_already_exists();
+	} else if (reject_reasons & REJECT_FETCH_FIRST) {
+		advise_ref_fetch_first();
+	} else if (reject_reasons & REJECT_NEEDS_FORCE) {
+		advise_ref_needs_force();
 	}
 
 	return 1;

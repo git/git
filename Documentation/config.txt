@@ -143,7 +143,8 @@ advice.*::
 	pushUpdateRejected::
 		Set this variable to 'false' if you want to disable
 		'pushNonFFCurrent', 'pushNonFFDefault',
-		'pushNonFFMatching', and 'pushAlreadyExists'
+		'pushNonFFMatching', 'pushAlreadyExists',
+		'pushFetchFirst', and 'pushNeedsForce'
 		simultaneously.
 	pushNonFFCurrent::
 		Advice shown when linkgit:git-push[1] fails due to a
@@ -162,6 +163,15 @@ advice.*::
 	pushAlreadyExists::
 		Shown when linkgit:git-push[1] rejects an update that
 		does not qualify for fast-forwarding (e.g., a tag.)
+	pushFetchFirst::
+		Shown when linkgit:git-push[1] rejects an update that
+		tries to overwrite a remote ref that points at an
+		object we do not have.
+	pushNeedsForce::
+		Shown when linkgit:git-push[1] rejects an update that
+		tries to overwrite a remote ref that points at an
+		object that is not a committish, or make the remote
+		ref point at an object that is not a committish.
 	statusHints::
 		Show directions on how to proceed from the current
 		state in the output of linkgit:git-status[1] and in

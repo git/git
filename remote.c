@@ -1322,8 +1322,12 @@ void set_ref_status_for_push(struct ref *remote_refs, int send_mirror,
 
 			if (!prefixcmp(ref->name, "refs/tags/"))
 				why = REF_STATUS_REJECT_ALREADY_EXISTS;
-			else if (!has_sha1_file(ref->old_sha1)
-				 || !ref_newer(ref->new_sha1, ref->old_sha1))
+			else if (!has_sha1_file(ref->old_sha1))
+				why = REF_STATUS_REJECT_FETCH_FIRST;
+			else if (!lookup_commit_reference_gently(ref->old_sha1, 1) ||
+				 !lookup_commit_reference_gently(ref->new_sha1, 1))
+				why = REF_STATUS_REJECT_NEEDS_FORCE;
+			else if (!ref_newer(ref->new_sha1, ref->old_sha1))
 				why = REF_STATUS_REJECT_NONFASTFORWARD;
 
 			if (!force_ref_update)
@@ -1512,7 +1516,8 @@ int ref_newer(const unsigned char *new_sha1, const unsigned char *old_sha1)
 	struct commit_list *list, *used;
 	int found = 0;
 
-	/* Both new and old must be commit-ish and new is descendant of
+	/*
+	 * Both new and old must be commit-ish and new is descendant of
 	 * old.  Otherwise we require --force.
 	 */
 	o = deref_tag(parse_object(old_sha1), NULL, 0);

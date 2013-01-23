@@ -230,6 +230,8 @@ int send_pack(struct send_pack_args *args,
 		switch (ref->status) {
 		case REF_STATUS_REJECT_NONFASTFORWARD:
 		case REF_STATUS_REJECT_ALREADY_EXISTS:
+		case REF_STATUS_REJECT_FETCH_FIRST:
+		case REF_STATUS_REJECT_NEEDS_FORCE:
 		case REF_STATUS_UPTODATE:
 			continue;
 		default:
