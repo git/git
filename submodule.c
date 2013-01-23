@@ -126,15 +126,16 @@ void gitmodules_config(void)
 
 int parse_submodule_config_option(const char *var, const char *value)
 {
-	int len;
 	struct string_list_item *config;
 	struct strbuf submodname = STRBUF_INIT;
+	const char *name, *key;
+	int namelen;
 
-	var += 10;		/* Skip "submodule." */
+	if (parse_config_key(var, "submodule", &name, &namelen, &key) < 0 || !name)
+		return 0;
 
-	len = strlen(var);
-	if ((len > 5) && !strcmp(var + len - 5, ".path")) {
-		strbuf_add(&submodname, var, len - 5);
+	if (!strcmp(key, "path")) {
+		strbuf_add(&submodname, name, namelen);
 		config = unsorted_string_list_lookup(&config_name_for_path, value);
 		if (config)
 			free(config->util);
@@ -142,22 +143,22 @@ int parse_submodule_config_option(const char *var, const char *value)
 			config = string_list_append(&config_name_for_path, xstrdup(value));
 		config->util = strbuf_detach(&submodname, NULL);
 		strbuf_release(&submodname);
-	} else if ((len > 23) && !strcmp(var + len - 23, ".fetchrecursesubmodules")) {
-		strbuf_add(&submodname, var, len - 23);
+	} else if (!strcmp(key, "fetchrecursesubmodules")) {
+		strbuf_add(&submodname, name, namelen);
 		config = unsorted_string_list_lookup(&config_fetch_recurse_submodules_for_name, submodname.buf);
 		if (!config)
 			config = string_list_append(&config_fetch_recurse_submodules_for_name,
 						    strbuf_detach(&submodname, NULL));
 		config->util = (void *)(intptr_t)parse_fetch_recurse_submodules_arg(var, value);
 		strbuf_release(&submodname);
-	} else if ((len > 7) && !strcmp(var + len - 7, ".ignore")) {
+	} else if (!strcmp(key, "ignore")) {
 		if (strcmp(value, "untracked") && strcmp(value, "dirty") &&
 		    strcmp(value, "all") && strcmp(value, "none")) {
 			warning("Invalid parameter \"%s\" for config option \"submodule.%s.ignore\"", value, var);
 			return 0;
 		}
 
-		strbuf_add(&submodname, var, len - 7);
+		strbuf_add(&submodname, name, namelen);
 		config = unsorted_string_list_lookup(&config_ignore_for_name, submodname.buf);
 		if (config)
 			free(config->util);
