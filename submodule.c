@@ -127,7 +127,6 @@ void gitmodules_config(void)
 int parse_submodule_config_option(const char *var, const char *value)
 {
 	struct string_list_item *config;
-	struct strbuf submodname = STRBUF_INIT;
 	const char *name, *key;
 	int namelen;
 
@@ -135,37 +134,36 @@ int parse_submodule_config_option(const char *var, const char *value)
 		return 0;
 
 	if (!strcmp(key, "path")) {
-		strbuf_add(&submodname, name, namelen);
 		config = unsorted_string_list_lookup(&config_name_for_path, value);
 		if (config)
 			free(config->util);
 		else
 			config = string_list_append(&config_name_for_path, xstrdup(value));
-		config->util = strbuf_detach(&submodname, NULL);
-		strbuf_release(&submodname);
+		config->util = xmemdupz(name, namelen);
 	} else if (!strcmp(key, "fetchrecursesubmodules")) {
-		strbuf_add(&submodname, name, namelen);
-		config = unsorted_string_list_lookup(&config_fetch_recurse_submodules_for_name, submodname.buf);
+		char *name_cstr = xmemdupz(name, namelen);
+		config = unsorted_string_list_lookup(&config_fetch_recurse_submodules_for_name, name_cstr);
 		if (!config)
-			config = string_list_append(&config_fetch_recurse_submodules_for_name,
-						    strbuf_detach(&submodname, NULL));
+			config = string_list_append(&config_fetch_recurse_submodules_for_name, name_cstr);
+		else
+			free(name_cstr);
 		config->util = (void *)(intptr_t)parse_fetch_recurse_submodules_arg(var, value);
-		strbuf_release(&submodname);
 	} else if (!strcmp(key, "ignore")) {
+		char *name_cstr;
+
 		if (strcmp(value, "untracked") && strcmp(value, "dirty") &&
 		    strcmp(value, "all") && strcmp(value, "none")) {
 			warning("Invalid parameter \"%s\" for config option \"submodule.%s.ignore\"", value, var);
 			return 0;
 		}
 
-		strbuf_add(&submodname, name, namelen);
-		config = unsorted_string_list_lookup(&config_ignore_for_name, submodname.buf);
-		if (config)
+		name_cstr = xmemdupz(name, namelen);
+		config = unsorted_string_list_lookup(&config_ignore_for_name, name_cstr);
+		if (config) {
 			free(config->util);
-		else
-			config = string_list_append(&config_ignore_for_name,
-						    strbuf_detach(&submodname, NULL));
-		strbuf_release(&submodname);
+			free(name_cstr);
+		} else
+			config = string_list_append(&config_ignore_for_name, name_cstr);
 		config->util = xstrdup(value);
 		return 0;
 	}
