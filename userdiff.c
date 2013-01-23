@@ -188,20 +188,13 @@ static struct userdiff_driver *parse_driver(const char *var,
 		const char *value, const char *type)
 {
 	struct userdiff_driver *drv;
-	const char *dot;
-	const char *name;
+	const char *name, *key;
 	int namelen;
 
-	if (prefixcmp(var, "diff."))
-		return NULL;
-	dot = strrchr(var, '.');
-	if (dot == var + 4)
-		return NULL;
-	if (strcmp(type, dot+1))
+	if (parse_config_key(var, "diff", &name, &namelen, &key) < 0 ||
+	    !name || strcmp(type, key))
 		return NULL;
 
-	name = var + 5;
-	namelen = dot - name;
 	drv = userdiff_find_by_namelen(name, namelen);
 	if (!drv) {
 		ALLOC_GROW(drivers, ndrivers+1, drivers_alloc);
