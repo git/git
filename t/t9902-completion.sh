@@ -13,6 +13,25 @@ complete ()
 	return 0
 }
 
+# Be careful when updating this list:
+#
+# (1) The build tree may have build artifact from different branch, or
+#     the user's $PATH may have a random executable that may begin
+#     with "git-check" that are not part of the subcommands this build
+#     will ship, e.g.  "check-ignore".  The tests for completion for
+#     subcommand names tests how "check" is expanded; we limit the
+#     possible candidates to "checkout" and "check-attr" to make sure
+#     "check-attr", which is known by the filter function as a
+#     subcommand to be thrown out, while excluding other random files
+#     that happen to begin with "check" to avoid letting them get in
+#     the way.
+#
+# (2) A test makes sure that common subcommands are included in the
+#     completion for "git <TAB>", and a plumbing is excluded.  "add",
+#     "filter-branch" and "ls-files" are listed for this.
+
+GIT_TESTING_COMMAND_COMPLETION='add checkout check-attr filter-branch ls-files'
+
 . "$GIT_BUILD_DIR/contrib/completion/git-completion.bash"
 
 # We don't need this function to actually join words or do anything special.
@@ -196,7 +215,6 @@ test_expect_success 'general options plus command' '
 	test_completion "git --paginate check" "checkout " &&
 	test_completion "git --git-dir=foo check" "checkout " &&
 	test_completion "git --bare check" "checkout " &&
-	test_completion "git --help des" "describe " &&
 	test_completion "git --exec-path=foo check" "checkout " &&
 	test_completion "git --html-path check" "checkout " &&
 	test_completion "git --no-pager check" "checkout " &&
@@ -205,6 +223,11 @@ test_expect_success 'general options plus command' '
 	test_completion "git --paginate check" "checkout " &&
 	test_completion "git --info-path check" "checkout " &&
 	test_completion "git --no-replace-objects check" "checkout "
+'
+
+test_expect_success 'git --help completion' '
+	test_completion "git --help ad" "add " &&
+	test_completion "git --help core" "core-tutorial "
 '
 
 test_expect_success 'setup for ref completion' '
