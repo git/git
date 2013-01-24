@@ -297,7 +297,7 @@ extern void warning(const char *err, ...) __attribute__((format (printf, 1, 2)))
  * behavior. But since we're only trying to help gcc, anyway, it's OK; other
  * compilers will fall back to using the function as usual.
  */
-#ifdef __GNUC__
+#if defined(__GNUC__) && ! defined(__clang__)
 #define error(fmt, ...) (error((fmt), ##__VA_ARGS__), -1)
 #endif
 

@@ -177,7 +177,7 @@ extern NORETURN void usage_msg_opt(const char *msg,
 
 extern int optbug(const struct option *opt, const char *reason);
 extern int opterror(const struct option *opt, const char *reason, int flags);
-#ifdef __GNUC__
+#if defined(__GNUC__) && ! defined(clang)
 #define opterror(o,r,f) (opterror((o),(r),(f)), -1)
 #endif
 
