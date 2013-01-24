@@ -184,8 +184,10 @@ The second .gitignore prevents git from ignoring
 
 SEE ALSO
 --------
-linkgit:git-rm[1], linkgit:git-update-index[1],
-linkgit:gitrepository-layout[5]
+linkgit:git-rm[1],
+linkgit:git-update-index[1],
+linkgit:gitrepository-layout[5],
+linkgit:git-check-ignore[1]
 
 GIT
 ---

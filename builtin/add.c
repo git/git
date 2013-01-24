@@ -6,6 +6,7 @@
 #include "cache.h"
 #include "builtin.h"
 #include "dir.h"
+#include "pathspec.h"
 #include "exec_cmd.h"
 #include "cache-tree.h"
 #include "run-command.h"
@@ -97,39 +98,6 @@ int add_files_to_cache(const char *prefix, const char **pathspec, int flags)
 	return !!data.add_errors;
 }
 
-static void fill_pathspec_matches(const char **pathspec, char *seen, int specs)
-{
-	int num_unmatched = 0, i;
-
-	/*
-	 * Since we are walking the index as if we were walking the directory,
-	 * we have to mark the matched pathspec as seen; otherwise we will
-	 * mistakenly think that the user gave a pathspec that did not match
-	 * anything.
-	 */
-	for (i = 0; i < specs; i++)
-		if (!seen[i])
-			num_unmatched++;
-	if (!num_unmatched)
-		return;
-	for (i = 0; i < active_nr; i++) {
-		struct cache_entry *ce = active_cache[i];
-		match_pathspec(pathspec, ce->name, ce_namelen(ce), 0, seen);
-	}
-}
-
-static char *find_used_pathspec(const char **pathspec)
-{
-	char *seen;
-	int i;
-
-	for (i = 0; pathspec[i];  i++)
-		; /* just counting */
-	seen = xcalloc(i, 1);
-	fill_pathspec_matches(pathspec, seen, i);
-	return seen;
-}
-
 static char *prune_directory(struct dir_struct *dir, const char **pathspec, int prefix)
 {
 	char *seen;
@@ -149,10 +117,14 @@ static char *prune_directory(struct dir_struct *dir, const char **pathspec, int 
 			*dst++ = entry;
 	}
 	dir->nr = dst - dir->entries;
-	fill_pathspec_matches(pathspec, seen, specs);
+	add_pathspec_matches_against_index(pathspec, seen, specs);
 	return seen;
 }
 
+/*
+ * Checks the index to see whether any path in pathspec refers to
+ * something inside a submodule.  If so, dies with an error message.
+ */
 static void treat_gitlinks(const char **pathspec)
 {
 	int i;
@@ -160,24 +132,8 @@ static void treat_gitlinks(const char **pathspec)
 	if (!pathspec || !*pathspec)
 		return;
 
-	for (i = 0; i < active_nr; i++) {
-		struct cache_entry *ce = active_cache[i];
-		if (S_ISGITLINK(ce->ce_mode)) {
-			int len = ce_namelen(ce), j;
-			for (j = 0; pathspec[j]; j++) {
-				int len2 = strlen(pathspec[j]);
-				if (len2 <= len || pathspec[j][len] != '/' ||
-				    memcmp(ce->name, pathspec[j], len))
-					continue;
-				if (len2 == len + 1)
-					/* strip trailing slash */
-					pathspec[j] = xstrndup(ce->name, len);
-				else
-					die (_("Path '%s' is in submodule '%.*s'"),
-						pathspec[j], len, ce->name);
-			}
-		}
-	}
+	for (i = 0; pathspec[i]; i++)
+		pathspec[i] = check_path_for_gitlink(pathspec[i]);
 }
 
 static void refresh(int verbose, const char **pathspec)
@@ -197,17 +153,19 @@ static void refresh(int verbose, const char **pathspec)
         free(seen);
 }
 
-static const char **validate_pathspec(int argc, const char **argv, const char *prefix)
+/*
+ * Normalizes argv relative to prefix, via get_pathspec(), and then
+ * runs die_if_path_beyond_symlink() on each path in the normalized
+ * list.
+ */
+static const char **validate_pathspec(const char **argv, const char *prefix)
 {
 	const char **pathspec = get_pathspec(prefix, argv);
 
 	if (pathspec) {
 		const char **p;
 		for (p = pathspec; *p; p++) {
-			if (has_symlink_leading_path(*p, strlen(*p))) {
-				int len = prefix ? strlen(prefix) : 0;
-				die(_("'%s' is beyond a symbolic link"), *p + len);
-			}
+			die_if_path_beyond_symlink(*p, prefix);
 		}
 	}
 
@@ -248,7 +206,7 @@ int interactive_add(int argc, const char **argv, const char *prefix, int patch)
 	const char **pathspec = NULL;
 
 	if (argc) {
-		pathspec = validate_pathspec(argc, argv, prefix);
+		pathspec = validate_pathspec(argv, prefix);
 		if (!pathspec)
 			return -1;
 	}
@@ -415,7 +373,7 @@ int cmd_add(int argc, const char **argv, const char *prefix)
 		fprintf(stderr, _("Maybe you wanted to say 'git add .'?\n"));
 		return 0;
 	}
-	pathspec = validate_pathspec(argc, argv, prefix);
+	pathspec = validate_pathspec(argv, prefix);
 
 	if (read_cache() < 0)
 		die(_("index file corrupt"));
@@ -448,7 +406,7 @@ int cmd_add(int argc, const char **argv, const char *prefix)
 
 		path_exclude_check_init(&check, &dir);
 		if (!seen)
-			seen = find_used_pathspec(pathspec);
+			seen = find_pathspecs_matching_against_index(pathspec);
 		for (i = 0; pathspec[i]; i++) {
 			if (!seen[i] && pathspec[i][0]
 			    && !file_exists(pathspec[i])) {

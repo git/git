@@ -194,12 +194,19 @@ static int match_one(const char *match, const char *name, int namelen)
 }
 
 /*
- * Given a name and a list of pathspecs, see if the name matches
- * any of the pathspecs.  The caller is also interested in seeing
- * all pathspec matches some names it calls this function with
- * (otherwise the user could have mistyped the unmatched pathspec),
- * and a mark is left in seen[] array for pathspec element that
- * actually matched anything.
+ * Given a name and a list of pathspecs, returns the nature of the
+ * closest (i.e. most specific) match of the name to any of the
+ * pathspecs.
+ *
+ * The caller typically calls this multiple times with the same
+ * pathspec and seen[] array but with different name/namelen
+ * (e.g. entries from the index) and is interested in seeing if and
+ * how each pathspec matches all the names it calls this function
+ * with.  A mark is left in the seen[] array for each pathspec element
+ * indicating the closest type of match that element achieved, so if
+ * seen[n] remains zero after multiple invocations, that means the nth
+ * pathspec did not match any names, which could indicate that the
+ * user mistyped the nth pathspec.
  */
 int match_pathspec(const char **pathspec, const char *name, int namelen,
 		int prefix, char *seen)
@@ -269,12 +276,19 @@ static int match_pathspec_item(const struct pathspec_item *item, int prefix,
 }
 
 /*
- * Given a name and a list of pathspecs, see if the name matches
- * any of the pathspecs.  The caller is also interested in seeing
- * all pathspec matches some names it calls this function with
- * (otherwise the user could have mistyped the unmatched pathspec),
- * and a mark is left in seen[] array for pathspec element that
- * actually matched anything.
+ * Given a name and a list of pathspecs, returns the nature of the
+ * closest (i.e. most specific) match of the name to any of the
+ * pathspecs.
+ *
+ * The caller typically calls this multiple times with the same
+ * pathspec and seen[] array but with different name/namelen
+ * (e.g. entries from the index) and is interested in seeing if and
+ * how each pathspec matches all the names it calls this function
+ * with.  A mark is left in the seen[] array for each pathspec element
+ * indicating the closest type of match that element achieved, so if
+ * seen[n] remains zero after multiple invocations, that means the nth
+ * pathspec did not match any names, which could indicate that the
+ * user mistyped the nth pathspec.
  */
 int match_pathspec_depth(const struct pathspec *ps,
 			 const char *name, int namelen,
@@ -379,7 +393,7 @@ void parse_exclude_pattern(const char **pattern,
 }
 
 void add_exclude(const char *string, const char *base,
-		 int baselen, struct exclude_list *el)
+		 int baselen, struct exclude_list *el, int srcpos)
 {
 	struct exclude *x;
 	int patternlen;
@@ -403,8 +417,10 @@ void add_exclude(const char *string, const char *base,
 	x->base = base;
 	x->baselen = baselen;
 	x->flags = flags;
+	x->srcpos = srcpos;
 	ALLOC_GROW(el->excludes, el->nr + 1, el->alloc);
 	el->excludes[el->nr++] = x;
+	x->el = el;
 }
 
 static void *read_skip_worktree_file_from_index(const char *path, size_t *size)
@@ -441,20 +457,21 @@ void clear_exclude_list(struct exclude_list *el)
 	for (i = 0; i < el->nr; i++)
 		free(el->excludes[i]);
 	free(el->excludes);
+	free(el->filebuf);
 
 	el->nr = 0;
 	el->excludes = NULL;
+	el->filebuf = NULL;
 }
 
 int add_excludes_from_file_to_list(const char *fname,
 				   const char *base,
 				   int baselen,
-				   char **buf_p,
 				   struct exclude_list *el,
 				   int check_index)
 {
 	struct stat st;
-	int fd, i;
+	int fd, i, lineno = 1;
 	size_t size = 0;
 	char *buf, *entry;
 
@@ -492,25 +509,43 @@ int add_excludes_from_file_to_list(const char *fname,
 		close(fd);
 	}
 
-	if (buf_p)
-		*buf_p = buf;
+	el->filebuf = buf;
 	entry = buf;
 	for (i = 0; i < size; i++) {
 		if (buf[i] == '\n') {
 			if (entry != buf + i && entry[0] != '#') {
 				buf[i - (i && buf[i-1] == '\r')] = 0;
-				add_exclude(entry, base, baselen, el);
+				add_exclude(entry, base, baselen, el, lineno);
 			}
+			lineno++;
 			entry = buf + i + 1;
 		}
 	}
 	return 0;
 }
 
+struct exclude_list *add_exclude_list(struct dir_struct *dir,
+				      int group_type, const char *src)
+{
+	struct exclude_list *el;
+	struct exclude_list_group *group;
+
+	group = &dir->exclude_list_group[group_type];
+	ALLOC_GROW(group->el, group->nr + 1, group->alloc);
+	el = &group->el[group->nr++];
+	memset(el, 0, sizeof(*el));
+	el->src = src;
+	return el;
+}
+
+/*
+ * Used to set up core.excludesfile and .git/info/exclude lists.
+ */
 void add_excludes_from_file(struct dir_struct *dir, const char *fname)
 {
-	if (add_excludes_from_file_to_list(fname, "", 0, NULL,
-					   &dir->exclude_list[EXC_FILE], 0) < 0)
+	struct exclude_list *el;
+	el = add_exclude_list(dir, EXC_FILE, fname);
+	if (add_excludes_from_file_to_list(fname, "", 0, el, 0) < 0)
 		die("cannot use %s as an exclude file", fname);
 }
 
@@ -520,6 +555,7 @@ void add_excludes_from_file(struct dir_struct *dir, const char *fname)
  */
 static void prep_exclude(struct dir_struct *dir, const char *base, int baselen)
 {
+	struct exclude_list_group *group;
 	struct exclude_list *el;
 	struct exclude_stack *stk = NULL;
 	int current;
@@ -528,17 +564,21 @@ static void prep_exclude(struct dir_struct *dir, const char *base, int baselen)
 	    (baselen + strlen(dir->exclude_per_dir) >= PATH_MAX))
 		return; /* too long a path -- ignore */
 
-	/* Pop the directories that are not the prefix of the path being checked. */
-	el = &dir->exclude_list[EXC_DIRS];
+	group = &dir->exclude_list_group[EXC_DIRS];
+
+	/* Pop the exclude lists from the EXCL_DIRS exclude_list_group
+	 * which originate from directories not in the prefix of the
+	 * path being checked. */
 	while ((stk = dir->exclude_stack) != NULL) {
 		if (stk->baselen <= baselen &&
 		    !strncmp(dir->basebuf, base, stk->baselen))
 			break;
+		el = &group->el[dir->exclude_stack->exclude_ix];
 		dir->exclude_stack = stk->prev;
-		while (stk->exclude_ix < el->nr)
-			free(el->excludes[--el->nr]);
-		free(stk->filebuf);
+		free((char *)el->src); /* see strdup() below */
+		clear_exclude_list(el);
 		free(stk);
+		group->nr--;
 	}
 
 	/* Read from the parent directories and push them down. */
@@ -559,13 +599,22 @@ static void prep_exclude(struct dir_struct *dir, const char *base, int baselen)
 		}
 		stk->prev = dir->exclude_stack;
 		stk->baselen = cp - base;
-		stk->exclude_ix = el->nr;
 		memcpy(dir->basebuf + current, base + current,
 		       stk->baselen - current);
 		strcpy(dir->basebuf + stk->baselen, dir->exclude_per_dir);
+		/*
+		 * dir->basebuf gets reused by the traversal, but we
+		 * need fname to remain unchanged to ensure the src
+		 * member of each struct exclude correctly
+		 * back-references its source file.  Other invocations
+		 * of add_exclude_list provide stable strings, so we
+		 * strdup() and free() here in the caller.
+		 */
+		el = add_exclude_list(dir, EXC_DIRS, strdup(dir->basebuf));
+		stk->exclude_ix = group->nr - 1;
 		add_excludes_from_file_to_list(dir->basebuf,
 					       dir->basebuf, stk->baselen,
-					       &stk->filebuf, el, 1);
+					       el, 1);
 		dir->exclude_stack = stk;
 		current = stk->baselen;
 	}
@@ -712,18 +761,23 @@ static struct exclude *last_exclude_matching(struct dir_struct *dir,
 					     int *dtype_p)
 {
 	int pathlen = strlen(pathname);
-	int st;
+	int i, j;
+	struct exclude_list_group *group;
 	struct exclude *exclude;
 	const char *basename = strrchr(pathname, '/');
 	basename = (basename) ? basename+1 : pathname;
 
 	prep_exclude(dir, pathname, basename-pathname);
-	for (st = EXC_CMDL; st <= EXC_FILE; st++) {
-		exclude = last_exclude_matching_from_list(
-			pathname, pathlen, basename, dtype_p,
-			&dir->exclude_list[st]);
-		if (exclude)
-			return exclude;
+
+	for (i = EXC_CMDL; i <= EXC_FILE; i++) {
+		group = &dir->exclude_list_group[i];
+		for (j = group->nr - 1; j >= 0; j--) {
+			exclude = last_exclude_matching_from_list(
+				pathname, pathlen, basename, dtype_p,
+				&group->el[j]);
+			if (exclude)
+				return exclude;
+		}
 	}
 	return NULL;
 }
@@ -1626,4 +1680,34 @@ int limit_pathspec_to_literal(void)
 	if (flag < 0)
 		flag = git_env_bool(GIT_LITERAL_PATHSPECS_ENVIRONMENT, 0);
 	return flag;
+}
+
+/*
+ * Frees memory within dir which was allocated for exclude lists and
+ * the exclude_stack.  Does not free dir itself.
+ */
+void clear_directory(struct dir_struct *dir)
+{
+	int i, j;
+	struct exclude_list_group *group;
+	struct exclude_list *el;
+	struct exclude_stack *stk;
+
+	for (i = EXC_CMDL; i <= EXC_FILE; i++) {
+		group = &dir->exclude_list_group[i];
+		for (j = 0; j < group->nr; j++) {
+			el = &group->el[j];
+			if (i == EXC_DIRS)
+				free((char *)el->src);
+			clear_exclude_list(el);
+		}
+		free(group->el);
+	}
+
+	stk = dir->exclude_stack;
+	while (stk) {
+		struct exclude_stack *prev = stk->prev;
+		free(stk);
+		stk = prev;
+	}
 }
