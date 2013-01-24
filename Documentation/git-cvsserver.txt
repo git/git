@@ -359,6 +359,43 @@ Operations supported
 
 All the operations required for normal use are supported, including
 checkout, diff, status, update, log, add, remove, commit.
+
+Most CVS command arguments that read CVS tags or revision numbers
+(typically -r) work, and also support any git refspec
+(tag, branch, commit ID, etc).
+However, CVS revision numbers for non-default branches are not well
+emulated, and cvs log does not show tags or branches at
+all.  (Non-main-branch CVS revision numbers superficially resemble CVS
+revision numbers, but they actually encode a git commit ID directly,
+rather than represent the number of revisions since the branch point.)
+
+Note that there are two ways to checkout a particular branch.
+As described elsewhere on this page, the "module" parameter
+of cvs checkout is interpreted as a branch name, and it becomes
+the main branch.  It remains the main branch for a given sandbox
+even if you temporarily make another branch sticky with
+cvs update -r.  Alternatively, the -r argument can indicate
+some other branch to actually checkout, even though the module
+is still the "main" branch.  Tradeoffs (as currently
+implemented): Each new "module" creates a new database on disk with
+a history for the given module, and after the database is created,
+operations against that main branch are fast.  Or alternatively,
+-r doesn't take any extra disk space, but may be significantly slower for
+many operations, like cvs update.
+
+If you want to refer to a git refspec that has characters that are
+not allowed by CVS, you have two options.  First, it may just work
+to supply the git refspec directly to the appropriate CVS -r argument;
+some CVS clients don't seem to do much sanity checking of the argument.
+Second, if that fails, you can use a special character escape mechanism
+that only uses characters that are valid in CVS tags.  A sequence
+of 4 or 5 characters of the form (underscore (`"_"`), dash (`"-"`),
+one or two characters, and dash (`"-"`)) can encode various characters based
+on the one or two letters: `"s"` for slash (`"/"`), `"p"` for
+period (`"."`), `"u"` for underscore (`"_"`), or two hexadecimal digits
+for any byte value at all (typically an ASCII number, or perhaps a part
+of a UTF-8 encoded character).
+
 Legacy monitoring operations are not supported (edit, watch and related).
 Exports and tagging (tags and branches) are not supported at this stage.
 

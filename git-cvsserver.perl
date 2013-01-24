@@ -60,6 +60,7 @@ my $methods = {
     'Valid-responses' => \&req_Validresponses,
     'valid-requests'  => \&req_validrequests,
     'Directory'       => \&req_Directory,
+    'Sticky'          => \&req_Sticky,
     'Entry'           => \&req_Entry,
     'Modified'        => \&req_Modified,
     'Unchanged'       => \&req_Unchanged,
@@ -470,11 +471,19 @@ sub req_Directory
     {
         $log->info("Setting prepend to '$state->{path}'");
         $state->{prependdir} = $state->{path};
+        my %entries;
         foreach my $entry ( keys %{$state->{entries}} )
         {
-            $state->{entries}{$state->{prependdir} . $entry} = $state->{entries}{$entry};
-            delete $state->{entries}{$entry};
+            $entries{$state->{prependdir} . $entry} = $state->{entries}{$entry};
         }
+        $state->{entries}=\%entries;
+
+        my %dirMap;
+        foreach my $dir ( keys %{$state->{dirMap}} )
+        {
+            $dirMap{$state->{prependdir} . $dir} = $state->{dirMap}{$dir};
+        }
+        $state->{dirMap}=\%dirMap;
     }
 
     if ( defined ( $state->{prependdir} ) )
@@ -482,7 +491,58 @@ sub req_Directory
         $log->debug("Prepending '$state->{prependdir}' to state|directory");
         $state->{directory} = $state->{prependdir} . $state->{directory}
     }
+
+    if ( ! defined($state->{dirMap}{$state->{directory}}) )
+    {
+        $state->{dirMap}{$state->{directory}} =
+            {
+                'names' => {}
+                #'tagspec' => undef
+            };
+    }
+
     $log->debug("req_Directory : localdir=$data repository=$repository path=$state->{path} directory=$state->{directory} module=$state->{module}");
+}
+
+# Sticky tagspec \n
+#     Response expected: no. Tell the server that the directory most
+#     recently specified with Directory has a sticky tag or date
+#     tagspec. The first character of tagspec is T for a tag, D for
+#     a date, or some other character supplied by a Set-sticky
+#     response from a previous request to the server. The remainder
+#     of tagspec contains the actual tag or date, again as supplied
+#     by Set-sticky.
+#          The server should remember Static-directory and Sticky requests
+#     for a particular directory; the client need not resend them each
+#     time it sends a Directory request for a given directory. However,
+#     the server is not obliged to remember them beyond the context
+#     of a single command.
+sub req_Sticky
+{
+    my ( $cmd, $tagspec ) = @_;
+
+    my ( $stickyInfo );
+    if($tagspec eq "")
+    {
+        # nothing
+    }
+    elsif($tagspec=~/^T([^ ]+)\s*$/)
+    {
+        $stickyInfo = { 'tag' => $1 };
+    }
+    elsif($tagspec=~/^D([0-9.]+)\s*$/)
+    {
+        $stickyInfo= { 'date' => $1 };
+    }
+    else
+    {
+        die "Unknown tag_or_date format\n";
+    }
+    $state->{dirMap}{$state->{directory}}{stickyInfo}=$stickyInfo;
+
+    $log->debug("req_Sticky : tagspec=$tagspec repository=$state->{repository}"
+                . " path=$state->{path} directory=$state->{directory}"
+                . " module=$state->{module}");
 }
 
 # Entry entry-line \n
@@ -510,6 +570,8 @@ sub req_Entry
         options     => $data[4],
         tag_or_date => $data[5],
     };
+
+    $state->{dirMap}{$state->{directory}}{names}{$data[1]} = 'F';
 
     $log->info("Received entry line '$data' => '" . $state->{directory} . $data[1] . "'");
 }
@@ -549,7 +611,10 @@ sub req_add
     {
         $filename = filecleanup($filename);
 
-        my $meta = $updater->getmeta($filename);
+        # no -r, -A, or -D with add
+        my $stickyInfo = resolveStickyInfo($filename);
+
+        my $meta = $updater->getmeta($filename,$stickyInfo);
         my $wrev = revparse($filename);
 
         if ($wrev && $meta && ($wrev=~/^-/))
@@ -572,8 +637,10 @@ sub req_add
 
                 # this is an "entries" line
                 my $kopts = kopts_from_path($filename,"sha1",$meta->{filehash});
-                $log->debug("/$filepart/$meta->{revision}//$kopts/");
-                print "/$filepart/$meta->{revision}//$kopts/\n";
+                my $entryLine = "/$filepart/$meta->{revision}//$kopts/";
+                $entryLine .= getStickyTagOrDate($stickyInfo);
+                $log->debug($entryLine);
+                print "$entryLine\n";
                 # permissions
                 $log->debug("SEND : u=$meta->{mode},g=$meta->{mode},o=$meta->{mode}");
                 print "u=$meta->{mode},g=$meta->{mode},o=$meta->{mode}\n";
@@ -604,7 +671,8 @@ sub req_add
         print "$filename\n";
         my $kopts = kopts_from_path($filename,"file",
                         $state->{entries}{$filename}{modified_filename});
-        print "/$filepart/0//$kopts/\n";
+        print "/$filepart/0//$kopts/" .
+              getStickyTagOrDate($stickyInfo) . "\n";
 
         my $requestedKopts = $state->{opt}{k};
         if(defined($requestedKopts))
@@ -672,7 +740,10 @@ sub req_remove
             next;
         }
 
-        my $meta = $updater->getmeta($filename);
+        # only from entries
+        my $stickyInfo = resolveStickyInfo($filename);
+
+        my $meta = $updater->getmeta($filename,$stickyInfo);
         my $wrev = revparse($filename);
 
         unless ( defined ( $wrev ) )
@@ -702,7 +773,7 @@ sub req_remove
         print "Checked-in $dirpart\n";
         print "$filename\n";
         my $kopts = kopts_from_path($filename,"sha1",$meta->{filehash});
-        print "/$filepart/-$wrev//$kopts/\n";
+        print "/$filepart/-$wrev//$kopts/" . getStickyTagOrDate($stickyInfo) . "\n";
 
         $rmcount++;
     }
@@ -882,6 +953,9 @@ sub req_co
         return 1;
     }
 
+    my $stickyInfo = { 'tag' => $state->{opt}{r},
+                       'date' => $state->{opt}{D} };
+
     my $module = $state->{args}[0];
     $state->{module} = $module;
     my $checkout_path = $module;
@@ -899,64 +973,32 @@ sub req_co
     my $updater = GITCVS::updater->new($state->{CVSROOT}, $module, $log);
     $updater->update();
 
+    my $headHash;
+    if( defined($stickyInfo) && defined($stickyInfo->{tag}) )
+    {
+        $headHash = $updater->lookupCommitRef($stickyInfo->{tag});
+        if( !defined($headHash) )
+        {
+            print "error 1 no such tag `$stickyInfo->{tag}'\n";
+            cleanupWorkTree();
+            exit;
+        }
+    }
+
     $checkout_path =~ s|/$||; # get rid of trailing slashes
-
-    # Eclipse seems to need the Clear-sticky command
-    # to prepare the 'Entries' file for the new directory.
-    print "Clear-sticky $checkout_path/\n";
-    print $state->{CVSROOT} . "/$module/\n";
-    print "Clear-static-directory $checkout_path/\n";
-    print $state->{CVSROOT} . "/$module/\n";
-    print "Clear-sticky $checkout_path/\n"; # yes, twice
-    print $state->{CVSROOT} . "/$module/\n";
-    print "Template $checkout_path/\n";
-    print $state->{CVSROOT} . "/$module/\n";
-    print "0\n";
-
-    # instruct the client that we're checking out to $checkout_path
-    print "E cvs checkout: Updating $checkout_path\n";
 
     my %seendirs = ();
     my $lastdir ='';
 
-    # recursive
-    sub prepdir {
-       my ($dir, $repodir, $remotedir, $seendirs) = @_;
-       my $parent = dirname($dir);
-       $dir       =~ s|/+$||;
-       $repodir   =~ s|/+$||;
-       $remotedir =~ s|/+$||;
-       $parent    =~ s|/+$||;
-       $log->debug("announcedir $dir, $repodir, $remotedir" );
+    prepDirForOutput(
+            ".",
+            $state->{CVSROOT} . "/$module",
+            $checkout_path,
+            \%seendirs,
+            'checkout',
+            $state->{dirArgs} );
 
-       if ($parent eq '.' || $parent eq './') {
-           $parent = '';
-       }
-       # recurse to announce unseen parents first
-       if (length($parent) && !exists($seendirs->{$parent})) {
-           prepdir($parent, $repodir, $remotedir, $seendirs);
-       }
-       # Announce that we are going to modify at the parent level
-       if ($parent) {
-           print "E cvs checkout: Updating $remotedir/$parent\n";
-       } else {
-           print "E cvs checkout: Updating $remotedir\n";
-       }
-       print "Clear-sticky $remotedir/$parent/\n";
-       print "$repodir/$parent/\n";
-
-       print "Clear-static-directory $remotedir/$dir/\n";
-       print "$repodir/$dir/\n";
-       print "Clear-sticky $remotedir/$parent/\n"; # yes, twice
-       print "$repodir/$parent/\n";
-       print "Template $remotedir/$dir/\n";
-       print "$repodir/$dir/\n";
-       print "0\n";
-
-       $seendirs->{$dir} = 1;
-    }
-
-    foreach my $git ( @{$updater->gethead} )
+    foreach my $git ( @{$updater->getAnyHead($headHash)} )
     {
         # Don't want to check out deleted files
         next if ( $git->{filehash} eq "deleted" );
@@ -964,16 +1006,13 @@ sub req_co
         my $fullName = $git->{name};
         ( $git->{name}, $git->{dir} ) = filenamesplit($git->{name});
 
-       if (length($git->{dir}) && $git->{dir} ne './'
-           && $git->{dir} ne $lastdir ) {
-           unless (exists($seendirs{$git->{dir}})) {
-               prepdir($git->{dir}, $state->{CVSROOT} . "/$module/",
-                       $checkout_path, \%seendirs);
-               $lastdir = $git->{dir};
-               $seendirs{$git->{dir}} = 1;
-           }
-           print "E cvs checkout: Updating /$checkout_path/$git->{dir}\n";
-       }
+        unless (exists($seendirs{$git->{dir}})) {
+            prepDirForOutput($git->{dir}, $state->{CVSROOT} . "/$module/",
+                             $checkout_path, \%seendirs, 'checkout',
+                             $state->{dirArgs} );
+            $lastdir = $git->{dir};
+            $seendirs{$git->{dir}} = 1;
+        }
 
         # modification time of this file
         print "Mod-time $git->{modified}\n";
@@ -993,7 +1032,8 @@ sub req_co
 
         # this is an "entries" line
         my $kopts = kopts_from_path($fullName,"sha1",$git->{filehash});
-        print "/$git->{name}/$git->{revision}//$kopts/\n";
+        print "/$git->{name}/$git->{revision}//$kopts/" .
+                        getStickyTagOrDate($stickyInfo) . "\n";
         # permissions
         print "u=$git->{mode},g=$git->{mode},o=$git->{mode}\n";
 
@@ -1004,6 +1044,119 @@ sub req_co
     print "ok\n";
 
     statecleanup();
+}
+
+# used by req_co and req_update to set up directories for files
+# recursively handles parents
+sub prepDirForOutput
+{
+    my ($dir, $repodir, $remotedir, $seendirs, $request, $dirArgs) = @_;
+
+    my $parent = dirname($dir);
+    $dir       =~ s|/+$||;
+    $repodir   =~ s|/+$||;
+    $remotedir =~ s|/+$||;
+    $parent    =~ s|/+$||;
+
+    if ($parent eq '.' || $parent eq './')
+    {
+        $parent = '';
+    }
+    # recurse to announce unseen parents first
+    if( length($parent) &&
+        !exists($seendirs->{$parent}) &&
+        ( $request eq "checkout" ||
+          exists($dirArgs->{$parent}) ) )
+    {
+        prepDirForOutput($parent, $repodir, $remotedir,
+                         $seendirs, $request, $dirArgs);
+    }
+    # Announce that we are going to modify at the parent level
+    if ($dir eq '.' || $dir eq './')
+    {
+        $dir = '';
+    }
+    if(exists($seendirs->{$dir}))
+    {
+        return;
+    }
+    $log->debug("announcedir $dir, $repodir, $remotedir" );
+    my($thisRemoteDir,$thisRepoDir);
+    if ($dir ne "")
+    {
+        $thisRepoDir="$repodir/$dir";
+        if($remotedir eq ".")
+        {
+            $thisRemoteDir=$dir;
+        }
+        else
+        {
+            $thisRemoteDir="$remotedir/$dir";
+        }
+    }
+    else
+    {
+        $thisRepoDir=$repodir;
+        $thisRemoteDir=$remotedir;
+    }
+    unless ( $state->{globaloptions}{-Q} || $state->{globaloptions}{-q} )
+    {
+        print "E cvs $request: Updating $thisRemoteDir\n";
+    }
+
+    my ($opt_r)=$state->{opt}{r};
+    my $stickyInfo;
+    if(exists($state->{opt}{A}))
+    {
+        # $stickyInfo=undef;
+    }
+    elsif( defined($opt_r) && $opt_r ne "" )
+           # || ( defined($state->{opt}{D}) && $state->{opt}{D} ne "" ) # TODO
+    {
+        $stickyInfo={ 'tag' => (defined($opt_r)?$opt_r:undef) };
+
+        # TODO: Convert -D value into the form 2011.04.10.04.46.57,
+        #   similar to an entry line's sticky date, without the D prefix.
+        #   It sometimes (always?) arrives as something more like
+        #   '10 Apr 2011 04:46:57 -0000'...
+        # $stickyInfo={ 'date' => (defined($stickyDate)?$stickyDate:undef) };
+    }
+    else
+    {
+        $stickyInfo=getDirStickyInfo($state->{prependdir} . $dir);
+    }
+
+    my $stickyResponse;
+    if(defined($stickyInfo))
+    {
+        $stickyResponse = "Set-sticky $thisRemoteDir/\n" .
+                          "$thisRepoDir/\n" .
+                          getStickyTagOrDate($stickyInfo) . "\n";
+    }
+    else
+    {
+        $stickyResponse = "Clear-sticky $thisRemoteDir/\n" .
+                          "$thisRepoDir/\n";
+    }
+
+    unless ( $state->{globaloptions}{-n} )
+    {
+        print $stickyResponse;
+
+        print "Clear-static-directory $thisRemoteDir/\n";
+        print "$thisRepoDir/\n";
+        print $stickyResponse; # yes, twice
+        print "Template $thisRemoteDir/\n";
+        print "$thisRepoDir/\n";
+        print "0\n";
+    }
+
+    $seendirs->{$dir} = 1;
+
+    # FUTURE: This would more accurately emulate CVS by sending
+    #   another copy of sticky after processing the files in that
+    #   directory.  Or intermediate: perhaps send all sticky's for
+    #   $seendirs after after processing all files.
 }
 
 # update \n
@@ -1049,28 +1202,18 @@ sub req_update
 
     #$log->debug("update state : " . Dumper($state));
 
-    my $last_dirname = "///";
+    my($repoDir);
+    $repoDir=$state->{CVSROOT} . "/$state->{module}/$state->{prependdir}";
+
+    my %seendirs = ();
 
     # foreach file specified on the command line ...
-    foreach my $filename ( @{$state->{args}} )
+    foreach my $argsFilename ( @{$state->{args}} )
     {
-        $filename = filecleanup($filename);
+        my $filename;
+        $filename = filecleanup($argsFilename);
 
         $log->debug("Processing file $filename");
-
-        unless ( $state->{globaloptions}{-Q} || $state->{globaloptions}{-q} )
-        {
-            my $cur_dirname = dirname($filename);
-            if ( $cur_dirname ne $last_dirname )
-            {
-                $last_dirname = $cur_dirname;
-                if ( $cur_dirname eq "" )
-                {
-                    $cur_dirname = ".";
-                }
-                print "E cvs update: Updating $cur_dirname\n";
-            }
-        }
 
         # if we have a -C we should pretend we never saw modified stuff
         if ( exists ( $state->{opt}{C} ) )
@@ -1080,13 +1223,11 @@ sub req_update
             $state->{entries}{$filename}{unchanged} = 1;
         }
 
-        my $meta;
-        if ( defined($state->{opt}{r}) and $state->{opt}{r} =~ /^(1\.\d+)$/ )
-        {
-            $meta = $updater->getmeta($filename, $1);
-        } else {
-            $meta = $updater->getmeta($filename);
-        }
+        my $stickyInfo = resolveStickyInfo($filename,
+                                           $state->{opt}{r},
+                                           $state->{opt}{D},
+                                           exists($state->{opt}{A}));
+        my $meta = $updater->getmeta($filename, $stickyInfo);
 
         # If -p was given, "print" the contents of the requested revision.
         if ( exists ( $state->{opt}{p} ) ) {
@@ -1099,6 +1240,17 @@ sub req_update
             next;
         }
 
+        # Directories:
+        prepDirForOutput(
+                dirname($argsFilename),
+                $repoDir,
+                ".",
+                \%seendirs,
+                "update",
+                $state->{dirArgs} );
+
+        my $wrev = revparse($filename);
+
 	if ( ! defined $meta )
 	{
 	    $meta = {
@@ -1106,16 +1258,23 @@ sub req_update
 	        revision => '0',
 	        filehash => 'added'
 	    };
+	    if($wrev ne "0")
+	    {
+	        $meta->{filehash}='deleted';
+	    }
 	}
 
         my $oldmeta = $meta;
 
-        my $wrev = revparse($filename);
-
         # If the working copy is an old revision, lets get that version too for comparison.
-        if ( defined($wrev) and $wrev ne $meta->{revision} )
+        my $oldWrev=$wrev;
+        if(defined($oldWrev))
         {
-            $oldmeta = $updater->getmeta($filename, $wrev);
+            $oldWrev=~s/^-//;
+            if($oldWrev ne $meta->{revision})
+            {
+                $oldmeta = $updater->getmeta($filename, $oldWrev);
+            }
         }
 
         #$log->debug("Target revision is $meta->{revision}, current working revision is $wrev");
@@ -1133,6 +1292,7 @@ sub req_update
         if ( defined ( $wrev )
              and defined($meta->{revision})
              and $wrev eq $meta->{revision}
+             and $wrev ne "0"
              and defined($state->{entries}{$filename}{modified_hash})
              and not exists ( $state->{opt}{C} ) )
         {
@@ -1143,7 +1303,7 @@ sub req_update
             next;
         }
 
-        if ( $meta->{filehash} eq "deleted" )
+        if ( $meta->{filehash} eq "deleted" && $wrev ne "0" )
         {
             # TODO: If it has been modified in the sandbox, error out
             #   with the appropriate message, rather than deleting a modified
@@ -1205,10 +1365,6 @@ sub req_update
 		    $log->debug("Updating existing file 'Update-existing $dirpart'");
 		} else {
 		    # instruct client we're sending a file to put in this path as a new file
-		    print "Clear-static-directory $dirpart\n";
-		    print $state->{CVSROOT} . "/$state->{module}/$dirpart\n";
-		    print "Clear-sticky $dirpart\n";
-		    print $state->{CVSROOT} . "/$state->{module}/$dirpart\n";
 
 		    $log->debug("Creating new file 'Created $dirpart'");
 		    print "Created $dirpart\n";
@@ -1217,8 +1373,10 @@ sub req_update
 
 		# this is an "entries" line
 		my $kopts = kopts_from_path($filename,"sha1",$meta->{filehash});
-		$log->debug("/$filepart/$meta->{revision}//$kopts/");
-		print "/$filepart/$meta->{revision}//$kopts/\n";
+                my $entriesLine = "/$filepart/$meta->{revision}//$kopts/";
+                $entriesLine .= getStickyTagOrDate($stickyInfo);
+		$log->debug($entriesLine);
+		print "$entriesLine\n";
 
 		# permissions
 		$log->debug("SEND : u=$meta->{mode},g=$meta->{mode},o=$meta->{mode}");
@@ -1266,7 +1424,9 @@ sub req_update
                     my $kopts = kopts_from_path("$dirpart/$filepart",
                                                 "file",$mergedFile);
                     $log->debug("/$filepart/$meta->{revision}//$kopts/");
-                    print "/$filepart/$meta->{revision}//$kopts/\n";
+                    my $entriesLine="/$filepart/$meta->{revision}//$kopts/";
+                    $entriesLine .= getStickyTagOrDate($stickyInfo);
+                    print "$entriesLine\n";
                 }
             }
             elsif ( $return == 1 )
@@ -1282,7 +1442,9 @@ sub req_update
                     print $state->{CVSROOT} . "/$state->{module}/$filename\n";
                     my $kopts = kopts_from_path("$dirpart/$filepart",
                                                 "file",$mergedFile);
-                    print "/$filepart/$meta->{revision}/+/$kopts/\n";
+                    my $entriesLine = "/$filepart/$meta->{revision}/+/$kopts/";
+                    $entriesLine .= getStickyTagOrDate($stickyInfo);
+                    print "$entriesLine\n";
                 }
             }
             else
@@ -1308,6 +1470,43 @@ sub req_update
             }
         }
 
+    }
+
+    # prepDirForOutput() any other existing directories unless they already
+    # have the right sticky tag:
+    unless ( $state->{globaloptions}{n} )
+    {
+        my $dir;
+        foreach $dir (keys(%{$state->{dirMap}}))
+        {
+            if( ! $seendirs{$dir} &&
+                exists($state->{dirArgs}{$dir}) )
+            {
+                my($oldTag);
+                $oldTag=$state->{dirMap}{$dir}{tagspec};
+
+                unless( ( exists($state->{opt}{A}) &&
+                          defined($oldTag) ) ||
+                          ( defined($state->{opt}{r}) &&
+                            ( !defined($oldTag) ||
+                              $state->{opt}{r} ne $oldTag ) ) )
+                        # TODO?: OR sticky dir is different...
+                {
+                    next;
+                }
+
+                prepDirForOutput(
+                        $dir,
+                        $repoDir,
+                        ".",
+                        \%seendirs,
+                        'update',
+                        $state->{dirArgs} );
+            }
+
+            # TODO?: Consider sending a final duplicate Sticky response
+            #   to more closely mimic real CVS.
+        }
     }
 
     print "ok\n";
@@ -1342,23 +1541,11 @@ sub req_ci
     my $updater = GITCVS::updater->new($state->{CVSROOT}, $state->{module}, $log);
     $updater->update();
 
-    # Remember where the head was at the beginning.
-    my $parenthash = `git show-ref -s refs/heads/$state->{module}`;
-    chomp $parenthash;
-    if ($parenthash !~ /^[0-9a-f]{40}$/) {
-	    print "error 1 pserver cannot find the current HEAD of module";
-	    cleanupWorkTree();
-	    exit;
-    }
-
-    setupWorkTree($parenthash);
-
-    $log->info("Lockless commit start, basing commit on '$work->{workDir}', index file is '$work->{index}'");
-
-    $log->info("Created index '$work->{index}' for head $state->{module} - exit status $?");
-
     my @committedfiles = ();
     my %oldmeta;
+    my $stickyInfo;
+    my $branchRef;
+    my $parenthash;
 
     # foreach file specified on the command line ...
     foreach my $filename ( @{$state->{args}} )
@@ -1368,7 +1555,67 @@ sub req_ci
 
         next unless ( exists $state->{entries}{$filename}{modified_filename} or not $state->{entries}{$filename}{unchanged} );
 
-        my $meta = $updater->getmeta($filename);
+        #####
+        # Figure out which branch and parenthash we are committing
+        # to, and setup worktree:
+
+        # should always come from entries:
+        my $fileStickyInfo = resolveStickyInfo($filename);
+        if( !defined($branchRef) )
+        {
+            $stickyInfo = $fileStickyInfo;
+            if( defined($stickyInfo) &&
+                ( defined($stickyInfo->{date}) ||
+                  !defined($stickyInfo->{tag}) ) )
+            {
+                print "error 1 cannot commit with sticky date for file `$filename'\n";
+                cleanupWorkTree();
+                exit;
+            }
+
+            $branchRef = "refs/heads/$state->{module}";
+            if ( defined($stickyInfo) && defined($stickyInfo->{tag}) )
+            {
+                $branchRef = "refs/heads/$stickyInfo->{tag}";
+            }
+
+            $parenthash = `git show-ref -s $branchRef`;
+            chomp $parenthash;
+            if ($parenthash !~ /^[0-9a-f]{40}$/)
+            {
+                if ( defined($stickyInfo) && defined($stickyInfo->{tag}) )
+                {
+                    print "error 1 sticky tag `$stickyInfo->{tag}' for file `$filename' is not a branch\n";
+                }
+                else
+                {
+                    print "error 1 pserver cannot find the current HEAD of module";
+                }
+                cleanupWorkTree();
+                exit;
+            }
+
+            setupWorkTree($parenthash);
+
+            $log->info("Lockless commit start, basing commit on '$work->{workDir}', index file is '$work->{index}'");
+
+            $log->info("Created index '$work->{index}' for head $state->{module} - exit status $?");
+        }
+        elsif( !refHashEqual($stickyInfo,$fileStickyInfo) )
+        {
+            #TODO: We could split the cvs commit into multiple
+            #  git commits by distinct stickyTag values, but that
+            #  is lowish priority.
+            print "error 1 Committing different files to different"
+                  . " branches is not currently supported\n";
+            cleanupWorkTree();
+            exit;
+        }
+
+        #####
+        # Process this file:
+
+        my $meta = $updater->getmeta($filename,$stickyInfo);
 	$oldmeta{$filename} = $meta;
 
         my $wrev = revparse($filename);
@@ -1470,7 +1717,7 @@ sub req_ci
     }
 
 	### Emulate git-receive-pack by running hooks/update
-	my @hook = ( $ENV{GIT_DIR}.'hooks/update', "refs/heads/$state->{module}",
+	my @hook = ( $ENV{GIT_DIR}.'hooks/update', $branchRef,
 			$parenthash, $commithash );
 	if( -x $hook[0] ) {
 		unless( system( @hook ) == 0 )
@@ -1484,7 +1731,7 @@ sub req_ci
 
 	### Update the ref
 	if (system(qw(git update-ref -m), "cvsserver ci",
-			"refs/heads/$state->{module}", $commithash, $parenthash)) {
+			$branchRef, $commithash, $parenthash)) {
 		$log->warn("update-ref for $state->{module} failed.");
 		print "error 1 Cannot commit -- update first\n";
 		cleanupWorkTree();
@@ -1498,7 +1745,7 @@ sub req_ci
 
 		local $SIG{PIPE} = sub { die 'pipe broke' };
 
-		print $pipe "$parenthash $commithash refs/heads/$state->{module}\n";
+		print $pipe "$parenthash $commithash $branchRef\n";
 
 		close $pipe || die "bad pipe: $! $?";
 	}
@@ -1508,7 +1755,7 @@ sub req_ci
 	### Then hooks/post-update
 	$hook = $ENV{GIT_DIR}.'hooks/post-update';
 	if (-x $hook) {
-		system($hook, "refs/heads/$state->{module}");
+		system($hook, $branchRef);
 	}
 
     # foreach file specified on the command line ...
@@ -1516,7 +1763,7 @@ sub req_ci
     {
         $filename = filecleanup($filename);
 
-        my $meta = $updater->getmeta($filename);
+        my $meta = $updater->getmeta($filename,$stickyInfo);
 	unless (defined $meta->{revision}) {
 	  $meta->{revision} = "1.1";
 	}
@@ -1540,7 +1787,8 @@ sub req_ci
             print "Checked-in $dirpart\n";
             print "$filename\n";
             my $kopts = kopts_from_path($filename,"sha1",$meta->{filehash});
-            print "/$filepart/$meta->{revision}//$kopts/\n";
+            print "/$filepart/$meta->{revision}//$kopts/" .
+                  getStickyTagOrDate($stickyInfo) . "\n";
         }
     }
 
@@ -1577,16 +1825,19 @@ sub req_status
            next;
         }
 
-        my $meta = $updater->getmeta($filename);
-        my $oldmeta = $meta;
-
         my $wrev = revparse($filename);
+
+        my $stickyInfo = resolveStickyInfo($filename);
+        my $meta = $updater->getmeta($filename,$stickyInfo);
+        my $oldmeta = $meta;
 
         # If the working copy is an old revision, lets get that
         # version too for comparison.
         if ( defined($wrev) and $wrev ne $meta->{revision} )
         {
-            $oldmeta = $updater->getmeta($filename, $wrev);
+            my($rmRev)=$wrev;
+            $rmRev=~s/^-//;
+            $oldmeta = $updater->getmeta($filename, $rmRev);
         }
 
         # TODO : All possible statuses aren't yet implemented
@@ -1629,6 +1880,7 @@ sub req_status
         # same revision but there are local changes
         if ( defined ( $wrev ) and defined($meta->{revision}) and
              $wrev eq $meta->{revision} and
+             $wrev ne "0" and
              $state->{entries}{$filename}{modified_filename} )
         {
             $status ||= "Locally Modified";
@@ -1644,7 +1896,8 @@ sub req_status
         }
 
         if ( defined ( $state->{entries}{$filename}{revision} ) and
-             not defined ( $meta->{revision} ) )
+             ( !defined($meta->{revision}) ||
+               $meta->{revision} eq "0" ) )
         {
             $status ||= "Locally Added";
         }
@@ -1740,98 +1993,133 @@ sub req_diff
     # be providing status on ...
     argsfromdir($updater);
 
+    my($foundDiff);
+
     # foreach file specified on the command line ...
-    foreach my $filename ( @{$state->{args}} )
+    foreach my $argFilename ( @{$state->{args}} )
     {
-        $filename = filecleanup($filename);
+        my($filename) = filecleanup($argFilename);
 
         my ( $fh, $file1, $file2, $meta1, $meta2, $filediff );
 
         my $wrev = revparse($filename);
 
-        # We need _something_ to diff against
-        next unless ( defined ( $wrev ) );
+        # Priority for revision1:
+        #  1. First -r (missing file: check -N)
+        #  2. wrev from client's Entry line
+        #      - missing line/file: check -N
+        #      - "0": added file not committed (empty contents for rev1)
+        #      - Prefixed with dash (to be removed): check -N
 
-        # if we have a -r switch, use it
         if ( defined ( $revision1 ) )
         {
-            ( undef, $file1 ) = tempfile( DIR => $TEMP_DIR, OPEN => 0 );
             $meta1 = $updater->getmeta($filename, $revision1);
-            unless ( defined ( $meta1 ) and $meta1->{filehash} ne "deleted" )
+        }
+        elsif( defined($wrev) && $wrev ne "0" )
+        {
+            my($rmRev)=$wrev;
+            $rmRev=~s/^-//;
+            $meta1 = $updater->getmeta($filename, $rmRev);
+        }
+        if ( !defined($meta1) ||
+             $meta1->{filehash} eq "deleted" )
+        {
+            if( !exists($state->{opt}{N}) )
             {
-                print "E File $filename at revision $revision1 doesn't exist\n";
+                if(!defined($revision1))
+                {
+                    print "E File $filename at revision $revision1 doesn't exist\n";
+                }
                 next;
             }
-            transmitfile($meta1->{filehash}, { targetfile => $file1 });
+            elsif( !defined($meta1) )
+            {
+                $meta1 = {
+                    name => $filename,
+                    revision => '0',
+                    filehash => 'deleted'
+                };
+            }
         }
-        # otherwise we just use the working copy revision
-        else
-        {
-            ( undef, $file1 ) = tempfile( DIR => $TEMP_DIR, OPEN => 0 );
-            $meta1 = $updater->getmeta($filename, $wrev);
-            transmitfile($meta1->{filehash}, { targetfile => $file1 });
-        }
+
+        # Priority for revision2:
+        #  1. Second -r (missing file: check -N)
+        #  2. Modified file contents from client
+        #  3. wrev from client's Entry line
+        #      - missing line/file: check -N
+        #      - Prefixed with dash (to be removed): check -N
 
         # if we have a second -r switch, use it too
         if ( defined ( $revision2 ) )
         {
-            ( undef, $file2 ) = tempfile( DIR => $TEMP_DIR, OPEN => 0 );
             $meta2 = $updater->getmeta($filename, $revision2);
-
-            unless ( defined ( $meta2 ) and $meta2->{filehash} ne "deleted" )
-            {
-                print "E File $filename at revision $revision2 doesn't exist\n";
-                next;
-            }
-
-            transmitfile($meta2->{filehash}, { targetfile => $file2 });
         }
-        # otherwise we just use the working copy
-        else
+        elsif(defined($state->{entries}{$filename}{modified_filename}))
         {
             $file2 = $state->{entries}{$filename}{modified_filename};
+	    $meta2 = {
+                name => $filename,
+	        revision => '0',
+	        filehash => 'modified'
+            };
+        }
+        elsif( defined($wrev) && ($wrev!~/^-/) )
+        {
+            if(!defined($revision1))  # no revision and no modifications:
+            {
+                next;
+            }
+            $meta2 = $updater->getmeta($filename, $wrev);
+        }
+        if(!defined($file2))
+        {
+            if ( !defined($meta2) ||
+                 $meta2->{filehash} eq "deleted" )
+            {
+                if( !exists($state->{opt}{N}) )
+                {
+                    if(!defined($revision2))
+                    {
+                        print "E File $filename at revision $revision2 doesn't exist\n";
+                    }
+                    next;
+                }
+                elsif( !defined($meta2) )
+                {
+	            $meta2 = {
+                        name => $filename,
+	                revision => '0',
+	                filehash => 'deleted'
+                    };
+                }
+            }
         }
 
-        # if we have been given -r, and we don't have a $file2 yet, lets
-        # get one
-        if ( defined ( $revision1 ) and not defined ( $file2 ) )
+        if( $meta1->{filehash} eq $meta2->{filehash} )
+        {
+            $log->info("unchanged $filename");
+            next;
+        }
+
+        # Retrieve revision contents:
+        ( undef, $file1 ) = tempfile( DIR => $TEMP_DIR, OPEN => 0 );
+        transmitfile($meta1->{filehash}, { targetfile => $file1 });
+
+        if(!defined($file2))
         {
             ( undef, $file2 ) = tempfile( DIR => $TEMP_DIR, OPEN => 0 );
-            $meta2 = $updater->getmeta($filename, $wrev);
             transmitfile($meta2->{filehash}, { targetfile => $file2 });
         }
 
-        # We need to have retrieved something useful
-        next unless ( defined ( $meta1 ) );
-
-        # Files to date if the working copy and repo copy have the same
-        # revision, and the working copy is unmodified
-        if ( not defined ( $meta2 ) and $wrev eq $meta1->{revision} and
-             ( ( $state->{entries}{$filename}{unchanged} and
-                 ( not defined ( $state->{entries}{$filename}{conflict} ) or
-                   $state->{entries}{$filename}{conflict} !~ /^\+=/ ) ) or
-               ( defined($state->{entries}{$filename}{modified_hash}) and
-                 $state->{entries}{$filename}{modified_hash} eq
-                        $meta1->{filehash} ) ) )
-        {
-            next;
-        }
-
-        # Apparently we only show diffs for locally modified files
-        unless ( defined($meta2) or
-                 defined ( $state->{entries}{$filename}{modified_filename} ) )
-        {
-            next;
-        }
-
-        print "M Index: $filename\n";
+        # Generate the actual diff:
+        print "M Index: $argFilename\n";
         print "M =======" . ( "=" x 60 ) . "\n";
         print "M RCS file: $state->{CVSROOT}/$state->{module}/$filename,v\n";
-        if ( defined ( $meta1 ) )
+        if ( defined ( $meta1 ) && $meta1->{revision} ne "0" )
         {
             print "M retrieving revision $meta1->{revision}\n"
         }
-        if ( defined ( $meta2 ) )
+        if ( defined ( $meta2 ) && $meta2->{revision} ne "0" )
         {
             print "M retrieving revision $meta2->{revision}\n"
         }
@@ -1852,33 +2140,73 @@ sub req_diff
                 }
             }
         }
-        print "$filename\n";
+        print "$argFilename\n";
 
         $log->info("Diffing $filename -r $meta1->{revision} -r " .
                    ( $meta2->{revision} or "workingcopy" ));
 
-        ( $fh, $filediff ) = tempfile ( DIR => $TEMP_DIR );
+        # TODO: Use --label instead of -L because -L is no longer
+        #  documented and may go away someday.  Not sure if there there are
+        #  versions that only support -L, which would make this change risky?
+        #  http://osdir.com/ml/bug-gnu-utils-gnu/2010-12/msg00060.html
+        #    ("man diff" should actually document the best migration strategy,
+        #  [current behavior, future changes, old compatibility issues
+        #  or lack thereof, etc], not just stop mentioning the option...)
+        # TODO: Real CVS seems to include a date in the label, before
+        #  the revision part, without the keyword "revision".  The following
+        #  has minimal changes compared to original versions of
+        #  git-cvsserver.perl.  (Mostly tab vs space after filename.)
 
+        my (@diffCmd) = ( 'diff' );
+        if ( exists($state->{opt}{N}) )
+        {
+            push @diffCmd,"-N";
+        }
         if ( exists $state->{opt}{u} )
         {
-            system("diff -u -L '$filename revision $meta1->{revision}'" .
-                        " -L '$filename " .
-                        ( defined($meta2->{revision}) ?
-                                "revision $meta2->{revision}" :
-                                "working copy" ) .
-                        "' $file1 $file2 > $filediff" );
-        } else {
-            system("diff $file1 $file2 > $filediff");
-        }
+            push @diffCmd,("-u","-L");
+            if( $meta1->{filehash} eq "deleted" )
+            {
+                push @diffCmd,"/dev/null";
+            } else {
+                push @diffCmd,("$argFilename\trevision $meta1->{revision}");
+            }
 
-        while ( <$fh> )
-        {
-            print "M $_";
+            if( defined($meta2->{filehash}) )
+            {
+                if( $meta2->{filehash} eq "deleted" )
+                {
+                    push @diffCmd,("-L","/dev/null");
+                } else {
+                    push @diffCmd,("-L",
+                                   "$argFilename\trevision $meta2->{revision}");
+                }
+            } else {
+                push @diffCmd,("-L","$argFilename\tworking copy");
+            }
         }
-        close $fh;
+        push @diffCmd,($file1,$file2);
+        if(!open(DIFF,"-|",@diffCmd))
+        {
+            $log->warn("Unable to run diff: $!");
+        }
+        my($diffLine);
+        while(defined($diffLine=<DIFF>))
+        {
+            print "M $diffLine";
+            $foundDiff=1;
+        }
+        close(DIFF);
     }
 
-    print "ok\n";
+    if($foundDiff)
+    {
+        print "error  \n";
+    }
+    else
+    {
+        print "ok\n";
+    }
 }
 
 sub req_log
@@ -2098,7 +2426,7 @@ sub argsplit
         $opt = { A => 0, N => 0, P => 0, R => 0, c => 0, f => 0, l => 0, n => 0, p => 0, s => 0, r => 1, D => 1, d => 1, k => 1, j => 1, } if ( $type eq "co" );
         $opt = { v => 0, l => 0, R => 0 } if ( $type eq "status" );
         $opt = { A => 0, P => 0, C => 0, d => 0, f => 0, l => 0, R => 0, p => 0, k => 1, r => 1, D => 1, j => 1, I => 1, W => 1 } if ( $type eq "update" );
-        $opt = { l => 0, R => 0, k => 1, D => 1, D => 1, r => 2 } if ( $type eq "diff" );
+        $opt = { l => 0, R => 0, k => 1, D => 1, D => 1, r => 2, N => 0 } if ( $type eq "diff" );
         $opt = { c => 0, R => 0, l => 0, f => 0, F => 1, m => 1, r => 1 } if ( $type eq "ci" );
         $opt = { k => 1, m => 1 } if ( $type eq "add" );
         $opt = { f => 0, l => 0, R => 0 } if ( $type eq "remove" );
@@ -2164,62 +2492,335 @@ sub argsplit
     }
 }
 
-# This method uses $state->{directory} to populate $state->{args} with a list of filenames
+# Used by argsfromdir
+sub expandArg
+{
+    my ($updater,$outNameMap,$outDirMap,$path,$isDir) = @_;
+
+    my $fullPath = filecleanup($path);
+
+      # Is it a directory?
+    if( defined($state->{dirMap}{$fullPath}) ||
+        defined($state->{dirMap}{"$fullPath/"}) )
+    {
+          # It is a directory in the user's sandbox.
+        $isDir=1;
+
+        if(defined($state->{entries}{$fullPath}))
+        {
+            $log->fatal("Inconsistent file/dir type");
+            die "Inconsistent file/dir type";
+        }
+    }
+    elsif(defined($state->{entries}{$fullPath}))
+    {
+          # It is a file in the user's sandbox.
+        $isDir=0;
+    }
+    my($revDirMap,$otherRevDirMap);
+    if(!defined($isDir) || $isDir)
+    {
+          # Resolve version tree for sticky tag:
+          # (for now we only want list of files for the version, not
+          # particular versions of those files: assume it is a directory
+          # for the moment; ignore Entry's stick tag)
+
+          # Order of precedence of sticky tags:
+          #    -A       [head]
+          #    -r /tag/
+          #    [file entry sticky tag, but that is only relevant to files]
+          #    [the tag specified in dir req_Sticky]
+          #    [the tag specified in a parent dir req_Sticky]
+          #    [head]
+          # Also, -r may appear twice (for diff).
+          #
+          # FUTURE: When/if -j (merges) are supported, we also
+          #  need to add relevant files from one or two
+          #  versions specified with -j.
+
+        if(exists($state->{opt}{A}))
+        {
+            $revDirMap=$updater->getRevisionDirMap();
+        }
+        elsif( defined($state->{opt}{r}) and
+               ref $state->{opt}{r} eq "ARRAY" )
+        {
+            $revDirMap=$updater->getRevisionDirMap($state->{opt}{r}[0]);
+            $otherRevDirMap=$updater->getRevisionDirMap($state->{opt}{r}[1]);
+        }
+        elsif(defined($state->{opt}{r}))
+        {
+            $revDirMap=$updater->getRevisionDirMap($state->{opt}{r});
+        }
+        else
+        {
+            my($sticky)=getDirStickyInfo($fullPath);
+            $revDirMap=$updater->getRevisionDirMap($sticky->{tag});
+        }
+
+          # Is it a directory?
+        if( defined($revDirMap->{$fullPath}) ||
+            defined($otherRevDirMap->{$fullPath}) )
+        {
+            $isDir=1;
+        }
+    }
+
+      # What to do with it?
+    if(!$isDir)
+    {
+        $outNameMap->{$fullPath}=1;
+    }
+    else
+    {
+        $outDirMap->{$fullPath}=1;
+
+        if(defined($revDirMap->{$fullPath}))
+        {
+            addDirMapFiles($updater,$outNameMap,$outDirMap,
+                           $revDirMap->{$fullPath});
+        }
+        if( defined($otherRevDirMap) &&
+            defined($otherRevDirMap->{$fullPath}) )
+        {
+            addDirMapFiles($updater,$outNameMap,$outDirMap,
+                           $otherRevDirMap->{$fullPath});
+        }
+    }
+}
+
+# Used by argsfromdir
+# Add entries from dirMap to outNameMap.  Also recurse into entries
+# that are subdirectories.
+sub addDirMapFiles
+{
+    my($updater,$outNameMap,$outDirMap,$dirMap)=@_;
+
+    my($fullName);
+    foreach $fullName (keys(%$dirMap))
+    {
+        my $cleanName=$fullName;
+        if(defined($state->{prependdir}))
+        {
+            if(!($cleanName=~s/^\Q$state->{prependdir}\E//))
+            {
+                $log->fatal("internal error stripping prependdir");
+                die "internal error stripping prependdir";
+            }
+        }
+
+        if($dirMap->{$fullName} eq "F")
+        {
+            $outNameMap->{$cleanName}=1;
+        }
+        elsif($dirMap->{$fullName} eq "D")
+        {
+            if(!$state->{opt}{l})
+            {
+                expandArg($updater,$outNameMap,$outDirMap,$cleanName,1);
+            }
+        }
+        else
+        {
+            $log->fatal("internal error in addDirMapFiles");
+            die "internal error in addDirMapFiles";
+        }
+    }
+}
+
+# This method replaces $state->{args} with a directory-expanded
+# list of all relevant filenames (recursively unless -d), based
+# on $state->{entries}, and the "current" list of files in
+# each directory.  "Current" files as determined by
+# either the requested (-r/-A) or "req_Sticky" version of
+# that directory.
+#    Both the input args and the new output args are relative
+# to the cvs-client's CWD, although some of the internal
+# computations are relative to the top of the project.
 sub argsfromdir
 {
     my $updater = shift;
 
-    $state->{args} = [] if ( scalar(@{$state->{args}}) == 1 and $state->{args}[0] eq "." );
+    # Notes about requirements for specific callers:
+    #   update # "standard" case (entries; a single -r/-A/default; -l)
+    #          # Special case: -d for create missing directories.
+    #   diff # 0 or 1 -r's: "standard" case.
+    #        # 2 -r's: We could ignore entries (just use the two -r's),
+    #        # but it doesn't really matter.
+    #   annotate # "standard" case
+    #   log # Punting: log -r has a more complex non-"standard"
+    #       # meaning, and we don't currently try to support log'ing
+    #       # branches at all (need a lot of work to
+    #       # support CVS-consistent branch relative version
+    #       # numbering).
+#HERE: But we still want to expand directories.  Maybe we should
+#  essentially force "-A".
+    #   status # "standard", except that -r/-A/default are not possible.
+    #          # Mostly only used to expand entries only)
+    #
+    # Don't use argsfromdir at all:
+    #   add # Explicit arguments required.  Directory args imply add
+    #       # the directory itself, not the files in it.
+    #   co  # Obtain list directly.
+    #   remove # HERE: TEST: MAYBE client does the recursion for us,
+    #          # since it only makes sense to remove stuff already in
+    #          # the sandobx?
+    #   ci # HERE: Similar to remove...
+    #      # Don't try to implement the confusing/weird
+    #      # ci -r bug er.."feature".
 
-    return if ( scalar ( @{$state->{args}} ) > 1 );
-
-    my @gethead = @{$updater->gethead};
-
-    # push added files
-    foreach my $file (keys %{$state->{entries}}) {
-	if ( exists $state->{entries}{$file}{revision} &&
-		$state->{entries}{$file}{revision} eq '0' )
-	{
-	    push @gethead, { name => $file, filehash => 'added' };
-	}
-    }
-
-    if ( scalar(@{$state->{args}}) == 1 )
+    if(scalar(@{$state->{args}})==0)
     {
-        my $arg = $state->{args}[0];
-        $arg .= $state->{prependdir} if ( defined ( $state->{prependdir} ) );
+        $state->{args} = [ "." ];
+    }
+    my %allArgs;
+    my %allDirs;
+    for my $file (@{$state->{args}})
+    {
+        expandArg($updater,\%allArgs,\%allDirs,$file);
+    }
 
-        $log->info("Only one arg specified, checking for directory expansion on '$arg'");
+    # Include any entries from sandbox.  Generally client won't
+    # send entries that shouldn't be used.
+    foreach my $file (keys %{$state->{entries}})
+    {
+        $allArgs{remove_prependdir($file)} = 1;
+    }
 
-        foreach my $file ( @gethead )
+    $state->{dirArgs} = \%allDirs;
+    $state->{args} = [
+        sort {
+                # Sort priority: by directory depth, then actual file name:
+            my @piecesA=split('/',$a);
+            my @piecesB=split('/',$b);
+
+            my $count=scalar(@piecesA);
+            my $tmp=scalar(@piecesB);
+            return $count<=>$tmp if($count!=$tmp);
+
+            for($tmp=0;$tmp<$count;$tmp++)
+            {
+                if($piecesA[$tmp] ne $piecesB[$tmp])
+                {
+                    return $piecesA[$tmp] cmp $piecesB[$tmp]
+                }
+            }
+            return 0;
+        } keys(%allArgs) ];
+}
+
+## look up directory sticky tag, of either fullPath or a parent:
+sub getDirStickyInfo
+{
+    my($fullPath)=@_;
+
+    $fullPath=~s%/+$%%;
+    while($fullPath ne "" && !defined($state->{dirMap}{"$fullPath/"}))
+    {
+        $fullPath=~s%/?[^/]*$%%;
+    }
+
+    if( !defined($state->{dirMap}{"$fullPath/"}) &&
+        ( $fullPath eq "" ||
+          $fullPath eq "." ) )
+    {
+        return $state->{dirMap}{""}{stickyInfo};
+    }
+    else
+    {
+        return $state->{dirMap}{"$fullPath/"}{stickyInfo};
+    }
+}
+
+# Resolve precedence of various ways of specifying which version of
+# a file you want.  Returns undef (for default head), or a ref to a hash
+# that contains "tag" and/or "date" keys.
+sub resolveStickyInfo
+{
+    my($filename,$stickyTag,$stickyDate,$reset) = @_;
+
+    # Order of precedence of sticky tags:
+    #    -A       [head]
+    #    -r /tag/
+    #    [file entry sticky tag]
+    #    [the tag specified in dir req_Sticky]
+    #    [the tag specified in a parent dir req_Sticky]
+    #    [head]
+
+    my $result;
+    if($reset)
+    {
+        # $result=undef;
+    }
+    elsif( defined($stickyTag) && $stickyTag ne "" )
+           # || ( defined($stickyDate) && $stickyDate ne "" )   # TODO
+    {
+        $result={ 'tag' => (defined($stickyTag)?$stickyTag:undef) };
+
+        # TODO: Convert -D value into the form 2011.04.10.04.46.57,
+        #   similar to an entry line's sticky date, without the D prefix.
+        #   It sometimes (always?) arrives as something more like
+        #   '10 Apr 2011 04:46:57 -0000'...
+        # $result={ 'date' => (defined($stickyDate)?$stickyDate:undef) };
+    }
+    elsif( defined($state->{entries}{$filename}) &&
+           defined($state->{entries}{$filename}{tag_or_date}) &&
+           $state->{entries}{$filename}{tag_or_date} ne "" )
+    {
+        my($tagOrDate)=$state->{entries}{$filename}{tag_or_date};
+        if($tagOrDate=~/^T([^ ]+)\s*$/)
         {
-            next if ( $file->{filehash} eq "deleted" and not defined ( $state->{entries}{$file->{name}} ) );
-            next unless ( $file->{name} =~ /^$arg\// or $file->{name} eq $arg  );
-            push @{$state->{args}}, $file->{name};
+            $result = { 'tag' => $1 };
         }
-
-        shift @{$state->{args}} if ( scalar(@{$state->{args}}) > 1 );
-    } else {
-        $log->info("Only one arg specified, populating file list automatically");
-
-        $state->{args} = [];
-
-        foreach my $file ( @gethead )
+        elsif($tagOrDate=~/^D([0-9.]+)\s*$/)
         {
-            next if ( $file->{filehash} eq "deleted" and not defined ( $state->{entries}{$file->{name}} ) );
-            next unless ( $file->{name} =~ s/^$state->{prependdir}// );
-            push @{$state->{args}}, $file->{name};
+            $result= { 'date' => $1 };
+        }
+        else
+        {
+            die "Unknown tag_or_date format\n";
         }
     }
+    else
+    {
+        $result=getDirStickyInfo($filename);
+    }
+
+    return $result;
+}
+
+# Convert a stickyInfo (ref to a hash) as returned by resolveStickyInfo into
+# a form appropriate for the sticky tag field of an Entries
+# line (field index 5, 0-based).
+sub getStickyTagOrDate
+{
+    my($stickyInfo)=@_;
+
+    my $result;
+    if(defined($stickyInfo) && defined($stickyInfo->{tag}))
+    {
+        $result="T$stickyInfo->{tag}";
+    }
+    # TODO: When/if we actually pick versions by {date} properly,
+    #   also handle it here:
+    #   "D$stickyInfo->{date}" (example: "D2011.04.13.20.37.07").
+    else
+    {
+        $result="";
+    }
+
+    return $result;
 }
 
 # This method cleans up the $state variable after a command that uses arguments has run
 sub statecleanup
 {
     $state->{files} = [];
+    $state->{dirArgs} = {};
     $state->{args} = [];
     $state->{arguments} = [];
     $state->{entries} = {};
+    $state->{dirMap} = {};
 }
 
 # Return working directory CVS revision "1.X" out
@@ -2309,6 +2910,9 @@ sub filenamesplit
     return ( $filepart, $dirpart );
 }
 
+# Cleanup various junk in filename (try to canonicalize it), and
+# add prependdir to accomodate running CVS client from a
+# subdirectory (so the output is relative to top directory of the project).
 sub filecleanup
 {
     my $filename = shift;
@@ -2320,9 +2924,34 @@ sub filecleanup
         return undef;
     }
 
+    if($filename eq ".")
+    {
+        $filename="";
+    }
     $filename =~ s/^\.\///g;
+    $filename =~ s%/+%/%g;
     $filename = $state->{prependdir} . $filename;
+    $filename =~ s%/$%%;
     return $filename;
+}
+
+# Remove prependdir from the path, so that is is relative to the directory
+# the CVS client was started from, rather than the top of the project.
+# Essentially the inverse of filecleanup().
+sub remove_prependdir
+{
+    my($path) = @_;
+    if(defined($state->{prependdir}) && $state->{prependdir} ne "")
+    {
+        my($pre)=$state->{prependdir};
+        $pre=~s%/$%%;
+        if(!($path=~s%^\Q$pre\E/?%%))
+        {
+            $log->fatal("internal error missing prependdir");
+            die("internal error missing prependdir");
+        }
+    }
+    return $path;
 }
 
 sub validateGitDir
@@ -2738,6 +3367,45 @@ sub descramble
     return $ret;
 }
 
+# Test if the (deep) values of two references to a hash are the same.
+sub refHashEqual
+{
+    my($v1,$v2) = @_;
+
+    my $out;
+    if(!defined($v1))
+    {
+        if(!defined($v2))
+        {
+            $out=1;
+        }
+    }
+    elsif( !defined($v2) ||
+           scalar(keys(%{$v1})) != scalar(keys(%{$v2})) )
+    {
+        # $out=undef;
+    }
+    else
+    {
+        $out=1;
+
+        my $key;
+        foreach $key (keys(%{$v1}))
+        {
+            if( !exists($v2->{$key}) ||
+                defined($v1->{$key}) ne defined($v2->{$key}) ||
+                ( defined($v1->{$key}) &&
+                  $v1->{$key} ne $v2->{$key} ) )
+            {
+               $out=undef;
+               last;
+            }
+        }
+    }
+
+    return $out;
+}
+
 
 package GITCVS::log;
 
@@ -2958,6 +3626,9 @@ sub new
 
     die "Git repo '$self->{git_path}' doesn't exist" unless ( -d $self->{git_path} );
 
+    # Stores full sha1's for various branch/tag names, abbreviations, etc:
+    $self->{commitRefCache} = {};
+
     $self->{dbdriver} = $cfg->{gitcvs}{$state->{method}}{dbdriver} ||
         $cfg->{gitcvs}{dbdriver} || "SQLite";
     $self->{dbname} = $cfg->{gitcvs}{$state->{method}}{dbname} ||
@@ -3140,6 +3811,8 @@ sub update
     my $lastcommit = $self->_get_prop("last_commit");
 
     if (defined $lastcommit && $lastcommit eq $commitsha1) { # up-to-date
+         # invalidate the gethead cache
+         $self->clearCommitRefCaches();
          return 1;
     }
 
@@ -3157,45 +3830,10 @@ sub update
         push @git_log_params, $self->{module};
     }
     # git-rev-list is the backend / plumbing version of git-log
-    open(GITLOG, '-|', 'git', 'rev-list', @git_log_params) or die "Cannot call git-rev-list: $!";
-
-    my @commits;
-
-    my %commit = ();
-
-    while ( <GITLOG> )
-    {
-        chomp;
-        if (m/^commit\s+(.*)$/) {
-            # on ^commit lines put the just seen commit in the stack
-            # and prime things for the next one
-            if (keys %commit) {
-                my %copy = %commit;
-                unshift @commits, \%copy;
-                %commit = ();
-            }
-            my @parents = split(m/\s+/, $1);
-            $commit{hash} = shift @parents;
-            $commit{parents} = \@parents;
-        } elsif (m/^(\w+?):\s+(.*)$/ && !exists($commit{message})) {
-            # on rfc822-like lines seen before we see any message,
-            # lowercase the entry and put it in the hash as key-value
-            $commit{lc($1)} = $2;
-        } else {
-            # message lines - skip initial empty line
-            # and trim whitespace
-            if (!exists($commit{message}) && m/^\s*$/) {
-                # define it to mark the end of headers
-                $commit{message} = '';
-                next;
-            }
-            s/^\s+//; s/\s+$//; # trim ws
-            $commit{message} .= $_ . "\n";
-        }
-    }
-    close GITLOG;
-
-    unshift @commits, \%commit if ( keys %commit );
+    open(my $gitLogPipe, '-|', 'git', 'rev-list', @git_log_params)
+                or die "Cannot call git-rev-list: $!";
+    my @commits=readCommits($gitLogPipe);
+    close $gitLogPipe;
 
     # Now all the commits are in the @commits bucket
     # ordered by time DESC. for each commit that needs processing,
@@ -3294,7 +3932,7 @@ sub update
         }
 
         # convert the date to CVS-happy format
-        $commit->{date} = "$2 $1 $4 $3 $5" if ( $commit->{date} =~ /^\w+\s+(\w+)\s+(\d+)\s+(\d+:\d+:\d+)\s+(\d+)\s+([+-]\d+)$/ );
+        my $cvsDate = convertToCvsDate($commit->{date});
 
         if ( defined ( $lastpicked ) )
         {
@@ -3303,7 +3941,7 @@ sub update
             while ( <FILELIST> )
             {
 		chomp;
-                unless ( /^:\d{6}\s+\d{3}(\d)\d{2}\s+[a-zA-Z0-9]{40}\s+([a-zA-Z0-9]{40})\s+(\w)$/o )
+                unless ( /^:\d{6}\s+([0-7]{6})\s+[a-f0-9]{40}\s+([a-f0-9]{40})\s+(\w)$/o )
                 {
                     die("Couldn't process git-diff-tree line : $_");
                 }
@@ -3313,11 +3951,7 @@ sub update
 
                 # $log->debug("File mode=$mode, hash=$hash, change=$change, name=$name");
 
-                my $git_perms = "";
-                $git_perms .= "r" if ( $mode & 4 );
-                $git_perms .= "w" if ( $mode & 2 );
-                $git_perms .= "x" if ( $mode & 1 );
-                $git_perms = "rw" if ( $git_perms eq "" );
+                my $dbMode = convertToDbMode($mode);
 
                 if ( $change eq "D" )
                 {
@@ -3327,11 +3961,11 @@ sub update
                         revision => $head->{$name}{revision} + 1,
                         filehash => "deleted",
                         commithash => $commit->{hash},
-                        modified => $commit->{date},
+                        modified => $cvsDate,
                         author => $commit->{author},
-                        mode => $git_perms,
+                        mode => $dbMode,
                     };
-                    $self->insert_rev($name, $head->{$name}{revision}, $hash, $commit->{hash}, $commit->{date}, $commit->{author}, $git_perms);
+                    $self->insert_rev($name, $head->{$name}{revision}, $hash, $commit->{hash}, $cvsDate, $commit->{author}, $dbMode);
                 }
                 elsif ( $change eq "M" || $change eq "T" )
                 {
@@ -3341,11 +3975,11 @@ sub update
                         revision => $head->{$name}{revision} + 1,
                         filehash => $hash,
                         commithash => $commit->{hash},
-                        modified => $commit->{date},
+                        modified => $cvsDate,
                         author => $commit->{author},
-                        mode => $git_perms,
+                        mode => $dbMode,
                     };
-                    $self->insert_rev($name, $head->{$name}{revision}, $hash, $commit->{hash}, $commit->{date}, $commit->{author}, $git_perms);
+                    $self->insert_rev($name, $head->{$name}{revision}, $hash, $commit->{hash}, $cvsDate, $commit->{author}, $dbMode);
                 }
                 elsif ( $change eq "A" )
                 {
@@ -3355,11 +3989,11 @@ sub update
                         revision => $head->{$name}{revision} ? $head->{$name}{revision}+1 : 1,
                         filehash => $hash,
                         commithash => $commit->{hash},
-                        modified => $commit->{date},
+                        modified => $cvsDate,
                         author => $commit->{author},
-                        mode => $git_perms,
+                        mode => $dbMode,
                     };
-                    $self->insert_rev($name, $head->{$name}{revision}, $hash, $commit->{hash}, $commit->{date}, $commit->{author}, $git_perms);
+                    $self->insert_rev($name, $head->{$name}{revision}, $hash, $commit->{hash}, $cvsDate, $commit->{author}, $dbMode);
                 }
                 else
                 {
@@ -3382,7 +4016,7 @@ sub update
                     die("Couldn't process git-ls-tree line : $_");
                 }
 
-                my ( $git_perms, $git_type, $git_hash, $git_filename ) = ( $1, $2, $3, $4 );
+                my ( $mode, $git_type, $git_hash, $git_filename ) = ( $1, $2, $3, $4 );
 
                 $seen_files->{$git_filename} = 1;
 
@@ -3392,18 +4026,10 @@ sub update
                     $head->{$git_filename}{mode}
                 );
 
-                if ( $git_perms =~ /^\d\d\d(\d)\d\d/o )
-                {
-                    $git_perms = "";
-                    $git_perms .= "r" if ( $1 & 4 );
-                    $git_perms .= "w" if ( $1 & 2 );
-                    $git_perms .= "x" if ( $1 & 1 );
-                } else {
-                    $git_perms = "rw";
-                }
+                my $dbMode = convertToDbMode($mode);
 
                 # unless the file exists with the same hash, we need to update it ...
-                unless ( defined($oldhash) and $oldhash eq $git_hash and defined($oldmode) and $oldmode eq $git_perms )
+                unless ( defined($oldhash) and $oldhash eq $git_hash and defined($oldmode) and $oldmode eq $dbMode )
                 {
                     my $newrevision = ( $oldrevision or 0 ) + 1;
 
@@ -3412,13 +4038,13 @@ sub update
                         revision => $newrevision,
                         filehash => $git_hash,
                         commithash => $commit->{hash},
-                        modified => $commit->{date},
+                        modified => $cvsDate,
                         author => $commit->{author},
-                        mode => $git_perms,
+                        mode => $dbMode,
                     };
 
 
-                    $self->insert_rev($git_filename, $newrevision, $git_hash, $commit->{hash}, $commit->{date}, $commit->{author}, $git_perms);
+                    $self->insert_rev($git_filename, $newrevision, $git_hash, $commit->{hash}, $cvsDate, $commit->{author}, $dbMode);
                 }
             }
             close FILELIST;
@@ -3431,10 +4057,10 @@ sub update
                     $head->{$file}{revision}++;
                     $head->{$file}{filehash} = "deleted";
                     $head->{$file}{commithash} = $commit->{hash};
-                    $head->{$file}{modified} = $commit->{date};
+                    $head->{$file}{modified} = $cvsDate;
                     $head->{$file}{author} = $commit->{author};
 
-                    $self->insert_rev($file, $head->{$file}{revision}, $head->{$file}{filehash}, $commit->{hash}, $commit->{date}, $commit->{author}, $head->{$file}{mode});
+                    $self->insert_rev($file, $head->{$file}{revision}, $head->{$file}{filehash}, $commit->{hash}, $cvsDate, $commit->{author}, $head->{$file}{mode});
                 }
             }
             # END : "Detect deleted files"
@@ -3465,11 +4091,92 @@ sub update
         );
     }
     # invalidate the gethead cache
-    $self->{gethead_cache} = undef;
+    $self->clearCommitRefCaches();
 
 
     # Ending exclusive lock here
     $self->{dbh}->commit() or die "Failed to commit changes to SQLite";
+}
+
+sub readCommits
+{
+    my $pipeHandle = shift;
+    my @commits;
+
+    my %commit = ();
+
+    while ( <$pipeHandle> )
+    {
+        chomp;
+        if (m/^commit\s+(.*)$/) {
+            # on ^commit lines put the just seen commit in the stack
+            # and prime things for the next one
+            if (keys %commit) {
+                my %copy = %commit;
+                unshift @commits, \%copy;
+                %commit = ();
+            }
+            my @parents = split(m/\s+/, $1);
+            $commit{hash} = shift @parents;
+            $commit{parents} = \@parents;
+        } elsif (m/^(\w+?):\s+(.*)$/ && !exists($commit{message})) {
+            # on rfc822-like lines seen before we see any message,
+            # lowercase the entry and put it in the hash as key-value
+            $commit{lc($1)} = $2;
+        } else {
+            # message lines - skip initial empty line
+            # and trim whitespace
+            if (!exists($commit{message}) && m/^\s*$/) {
+                # define it to mark the end of headers
+                $commit{message} = '';
+                next;
+            }
+            s/^\s+//; s/\s+$//; # trim ws
+            $commit{message} .= $_ . "\n";
+        }
+    }
+
+    unshift @commits, \%commit if ( keys %commit );
+
+    return @commits;
+}
+
+sub convertToCvsDate
+{
+    my $date = shift;
+    # Convert from: "git rev-list --pretty" formatted date
+    # Convert to: "the format specified by RFC822 as modified by RFC1123."
+    # Example: 26 May 1997 13:01:40 -0400
+    if( $date =~ /^\w+\s+(\w+)\s+(\d+)\s+(\d+:\d+:\d+)\s+(\d+)\s+([+-]\d+)$/ )
+    {
+        $date = "$2 $1 $4 $3 $5";
+    }
+
+    return $date;
+}
+
+sub convertToDbMode
+{
+    my $mode = shift;
+
+    # NOTE: The CVS protocol uses a string similar "u=rw,g=rw,o=rw",
+    #  but the database "mode" column historically (and currently)
+    #  only stores the "rw" (for user) part of the string.
+    #    FUTURE: It might make more sense to persist the raw
+    #  octal mode (or perhaps the final full CVS form) instead of
+    #  this half-converted form, but it isn't currently worth the
+    #  backwards compatibility headaches.
+
+    $mode=~/^\d\d(\d)\d{3}$/;
+    my $userBits=$1;
+
+    my $dbMode = "";
+    $dbMode .= "r" if ( $userBits & 4 );
+    $dbMode .= "w" if ( $userBits & 2 );
+    $dbMode .= "x" if ( $userBits & 1 );
+    $dbMode = "rw" if ( $dbMode eq "" );
+
+    return $dbMode;
 }
 
 sub insert_rev
@@ -3586,6 +4293,169 @@ sub gethead
     return $tree;
 }
 
+=head2 getAnyHead
+
+Returns a reference to an array of getmeta structures, one
+per file in the specified tree hash.
+
+=cut
+
+sub getAnyHead
+{
+    my ($self,$hash) = @_;
+
+    if(!defined($hash))
+    {
+        return $self->gethead();
+    }
+
+    my @files;
+    {
+        open(my $filePipe, '-|', 'git', 'ls-tree', '-z', '-r', $hash)
+                or die("Cannot call git-ls-tree : $!");
+        local $/ = "\0";
+        @files=<$filePipe>;
+        close $filePipe;
+    }
+
+    my $tree=[];
+    my($line);
+    foreach $line (@files)
+    {
+        $line=~s/\0$//;
+        unless ( $line=~/^(\d+)\s+(\w+)\s+([a-zA-Z0-9]+)\t(.*)$/o )
+        {
+            die("Couldn't process git-ls-tree line : $_");
+        }
+
+        my($mode, $git_type, $git_hash, $git_filename) = ($1, $2, $3, $4);
+        push @$tree, $self->getMetaFromCommithash($git_filename,$hash);
+    }
+
+    return $tree;
+}
+
+=head2 getRevisionDirMap
+
+A "revision dir map" contains all the plain-file filenames associated
+with a particular revision (treeish), organized by directory:
+
+  $type = $out->{$dir}{$fullName}
+
+The type of each is "F" (for ordinary file) or "D" (for directory,
+for which the map $out->{$fullName} will also exist).
+
+=cut
+
+sub getRevisionDirMap
+{
+    my ($self,$ver)=@_;
+
+    if(!defined($self->{revisionDirMapCache}))
+    {
+        $self->{revisionDirMapCache}={};
+    }
+
+        # Get file list (previously cached results are dependent on HEAD,
+        # but are early in each case):
+    my $cacheKey;
+    my (@fileList);
+    if( !defined($ver) || $ver eq "" )
+    {
+        $cacheKey="";
+        if( defined($self->{revisionDirMapCache}{$cacheKey}) )
+        {
+            return $self->{revisionDirMapCache}{$cacheKey};
+        }
+
+        my @head = @{$self->gethead()};
+        foreach my $file ( @head )
+        {
+            next if ( $file->{filehash} eq "deleted" );
+
+            push @fileList,$file->{name};
+        }
+    }
+    else
+    {
+        my ($hash)=$self->lookupCommitRef($ver);
+        if( !defined($hash) )
+        {
+            return undef;
+        }
+
+        $cacheKey=$hash;
+        if( defined($self->{revisionDirMapCache}{$cacheKey}) )
+        {
+            return $self->{revisionDirMapCache}{$cacheKey};
+        }
+
+        open(my $filePipe, '-|', 'git', 'ls-tree', '-z', '-r', $hash)
+                or die("Cannot call git-ls-tree : $!");
+        local $/ = "\0";
+        while ( <$filePipe> )
+        {
+            chomp;
+            unless ( /^(\d+)\s+(\w+)\s+([a-zA-Z0-9]+)\t(.*)$/o )
+            {
+                die("Couldn't process git-ls-tree line : $_");
+            }
+
+            my($mode, $git_type, $git_hash, $git_filename) = ($1, $2, $3, $4);
+
+            push @fileList, $git_filename;
+        }
+        close $filePipe;
+    }
+
+        # Convert to normalized form:
+    my %revMap;
+    my $file;
+    foreach $file (@fileList)
+    {
+        my($dir) = ($file=~m%^(?:(.*)/)?([^/]*)$%);
+        $dir='' if(!defined($dir));
+
+            # parent directories:
+            # ... create empty dir maps for parent dirs:
+        my($td)=$dir;
+        while(!defined($revMap{$td}))
+        {
+            $revMap{$td}={};
+
+            my($tp)=($td=~m%^(?:(.*)/)?([^/]*)$%);
+            $tp='' if(!defined($tp));
+            $td=$tp;
+        }
+            # ... add children to parent maps (now that they exist):
+        $td=$dir;
+        while($td ne "")
+        {
+            my($tp)=($td=~m%^(?:(.*)/)?([^/]*)$%);
+            $tp='' if(!defined($tp));
+
+            if(defined($revMap{$tp}{$td}))
+            {
+                if($revMap{$tp}{$td} ne 'D')
+                {
+                    die "Weird file/directory inconsistency in $cacheKey";
+                }
+                last;   # loop exit
+            }
+            $revMap{$tp}{$td}='D';
+
+            $td=$tp;
+        }
+
+            # file
+        $revMap{$dir}{$file}='F';
+    }
+
+        # Save in cache:
+    $self->{revisionDirMapCache}{$cacheKey}=\%revMap;
+    return $self->{revisionDirMapCache}{$cacheKey};
+}
+
 =head2 getlog
 
 See also gethistorydense().
@@ -3646,6 +4516,19 @@ sub getlog
 This function takes a filename (with path) argument and returns a hashref of
 metadata for that file.
 
+There are several ways $revision can be specified:
+
+   - A reference to hash that contains a "tag" that is the
+     actual revision (one of the below).  TODO: Also allow it to
+     specify a "date" in the hash.
+   - undef, to refer to the latest version on the main branch.
+   - Full CVS client revision number (mapped to integer in DB, without the
+     "1." prefix),
+   - Complex CVS-compatible "special" revision number for
+     non-linear history (see comment below)
+   - git commit sha1 hash
+   - branch or tag name
+
 =cut
 
 sub getmeta
@@ -3656,28 +4539,347 @@ sub getmeta
     my $tablename_rev = $self->tablename("revision");
     my $tablename_head = $self->tablename("head");
 
-    my $db_query;
-    if ( defined($revision) and $revision =~ /^1\.(\d+)$/ )
+    if ( ref($revision) eq "HASH" )
     {
-        my ($intRev) = $1;
-        $db_query = $self->{dbh}->prepare_cached("SELECT * FROM $tablename_rev WHERE name=? AND revision=?",{},1);
-        $db_query->execute($filename, $intRev);
-    }
-    elsif ( defined($revision) and $revision =~ /^[a-zA-Z0-9]{40}$/ )
-    {
-        $db_query = $self->{dbh}->prepare_cached("SELECT * FROM $tablename_rev WHERE name=? AND commithash=?",{},1);
-        $db_query->execute($filename, $revision);
-    } else {
-        $db_query = $self->{dbh}->prepare_cached("SELECT * FROM $tablename_head WHERE name=?",{},1);
-        $db_query->execute($filename);
+        $revision = $revision->{tag};
     }
 
-    my $meta = $db_query->fetchrow_hashref;
+    # Overview of CVS revision numbers:
+    #
+    # General CVS numbering scheme:
+    #   - Basic mainline branch numbers: "1.1", "1.2", "1.3", etc.
+    #   - Result of "cvs checkin -r" (possible, but not really
+    #     recommended): "2.1", "2.2", etc
+    #   - Branch tag: "1.2.0.n", where "1.2" is revision it was branched
+    #     from, "0" is a magic placeholder that identifies it as a
+    #     branch tag instead of a version tag, and n is 2 times the
+    #     branch number off of "1.2", starting with "2".
+    #   - Version on a branch: "1.2.n.x", where "1.2" is branch-from, "n"
+    #     is branch number off of "1.2" (like n above), and "x" is
+    #     the version number on the branch.
+    #   - Branches can branch off of branches: "1.3.2.7.4.1" (even number
+    #     of components).
+    #   - Odd "n"s are used by "vendor branches" that result
+    #     from "cvs import".  Vendor branches have additional
+    #     strangeness in the sense that the main rcs "head" of the main
+    #     branch will (temporarily until first normal commit) point
+    #     to the version on the vendor branch, rather than the actual
+    #     main branch.  (FUTURE: This may provide an opportunity
+    #     to use "strange" revision numbers for fast-forward-merged
+    #     branch tip when CVS client is asking for the main branch.)
+    #
+    # git-cvsserver CVS-compatible special numbering schemes:
+    #   - Currently git-cvsserver only tries to be identical to CVS for
+    #     simple "1.x" numbers on the "main" branch (as identified
+    #     by the module name that was originally cvs checkout'ed).
+    #   - The database only stores the "x" part, for historical reasons.
+    #     But most of the rest of the cvsserver preserves
+    #     and thinks using the full revision number.
+    #   - To handle non-linear history, it uses a version of the form
+    #     "2.1.1.2000.b.b.b."..., where the 2.1.1.2000 is to help uniquely
+    #     identify this as a special revision number, and there are
+    #     20 b's that together encode the sha1 git commit from which
+    #     this version of this file originated.  Each b is
+    #     the numerical value of the corresponding byte plus
+    #     100.
+    #      - "plus 100" avoids "0"s, and also reduces the
+    #        likelyhood of a collision in the case that someone someday
+    #        writes an import tool that tries to preserve original
+    #        CVS revision numbers, and the original CVS data had done
+    #        lots of branches off of branches and other strangeness to
+    #        end up with a real version number that just happens to look
+    #        like this special revision number form.  Also, if needed
+    #        there are several ways to extend/identify alternative encodings
+    #        within the "2.1.1.2000" part if necessary.
+    #      - Unlike real CVS revisions, you can't really reconstruct what
+    #        relation a revision of this form has to other revisions.
+    #   - FUTURE: TODO: Rework database somehow to make up and remember
+    #     fully-CVS-compatible branches and branch version numbers.
+
+    my $meta;
+    if ( defined($revision) )
+    {
+        if ( $revision =~ /^1\.(\d+)$/ )
+        {
+            my ($intRev) = $1;
+            my $db_query;
+            $db_query = $self->{dbh}->prepare_cached(
+                "SELECT * FROM $tablename_rev WHERE name=? AND revision=?",
+                {},1);
+            $db_query->execute($filename, $intRev);
+            $meta = $db_query->fetchrow_hashref;
+        }
+        elsif ( $revision =~ /^2\.1\.1\.2000(\.[1-3][0-9][0-9]){20}$/ )
+        {
+            my ($commitHash)=($revision=~/^2\.1\.1\.2000(.*)$/);
+            $commitHash=~s/\.([0-9]+)/sprintf("%02x",$1-100)/eg;
+            if($commitHash=~/^[0-9a-f]{40}$/)
+            {
+                return $self->getMetaFromCommithash($filename,$commitHash);
+            }
+
+            # error recovery: fall back on head version below
+            print "E Failed to find $filename version=$revision or commit=$commitHash\n";
+            $log->warning("failed get $revision with commithash=$commitHash");
+            undef $revision;
+        }
+        elsif ( $revision =~ /^[0-9a-f]{40}$/ )
+        {
+            # Try DB first.  This is mostly only useful for req_annotate(),
+            # which only calls this for stuff that should already be in
+            # the DB.  It is fairly likely to be a waste of time
+            # in most other cases [unless the file happened to be
+            # modified in $revision specifically], but
+            # it is probably in the noise compared to how long
+            # getMetaFromCommithash() will take.
+            my $db_query;
+            $db_query = $self->{dbh}->prepare_cached(
+                "SELECT * FROM $tablename_rev WHERE name=? AND commithash=?",
+                {},1);
+            $db_query->execute($filename, $revision);
+            $meta = $db_query->fetchrow_hashref;
+
+            if(! $meta)
+            {
+                my($revCommit)=$self->lookupCommitRef($revision);
+                if($revCommit=~/^[0-9a-f]{40}$/)
+                {
+                    return $self->getMetaFromCommithash($filename,$revCommit);
+                }
+
+                # error recovery: nothing found:
+                print "E Failed to find $filename version=$revision\n";
+                $log->warning("failed get $revision");
+                return $meta;
+            }
+        }
+        else
+        {
+            my($revCommit)=$self->lookupCommitRef($revision);
+            if($revCommit=~/^[0-9a-f]{40}$/)
+            {
+                return $self->getMetaFromCommithash($filename,$revCommit);
+            }
+
+            # error recovery: fall back on head version below
+            print "E Failed to find $filename version=$revision\n";
+            $log->warning("failed get $revision");
+            undef $revision;  # Allow fallback
+        }
+    }
+
+    if(!defined($revision))
+    {
+        my $db_query;
+        $db_query = $self->{dbh}->prepare_cached(
+                "SELECT * FROM $tablename_head WHERE name=?",{},1);
+        $db_query->execute($filename);
+        $meta = $db_query->fetchrow_hashref;
+    }
+
     if($meta)
     {
         $meta->{revision} = "1.$meta->{revision}";
     }
     return $meta;
+}
+
+sub getMetaFromCommithash
+{
+    my $self = shift;
+    my $filename = shift;
+    my $revCommit = shift;
+
+    # NOTE: This function doesn't scale well (lots of forks), especially
+    #   if you have many files that have not been modified for many commits
+    #   (each git-rev-parse redoes a lot of work for each file
+    #   that theoretically could be done in parallel by smarter
+    #   graph traversal).
+    #
+    # TODO: Possible optimization strategies:
+    #   - Solve the issue of assigning and remembering "real" CVS
+    #     revision numbers for branches, and ensure the
+    #     data structure can do this efficiently.  Perhaps something
+    #     similar to "git notes", and carefully structured to take
+    #     advantage same-sha1-is-same-contents, to roll the same
+    #     unmodified subdirectory data onto multiple commits?
+    #   - Write and use a C tool that is like git-blame, but
+    #     operates on multiple files with file granularity, instead
+    #     of one file with line granularity.  Cache
+    #     most-recently-modified in $self->{commitRefCache}{$revCommit}.
+    #     Try to be intelligent about how many files we do with
+    #     one fork (perhaps one directory at a time, without recursion,
+    #     and/or include directory as one line item, recurse from here
+    #     instead of in C tool?).
+    #   - Perhaps we could ask the DB for (filename,fileHash),
+    #     and just guess that it is correct (that the file hadn't
+    #     changed between $revCommit and the found commit, then
+    #     changed back, confusing anything trying to interpret
+    #     history).  Probably need to add another index to revisions
+    #     DB table for this.
+    #   - NOTE: Trying to store all (commit,file) keys in DB [to
+    #     find "lastModfiedCommit] (instead of
+    #     just files that changed in each commit as we do now) is
+    #     probably not practical from a disk space perspective.
+
+        # Does the file exist in $revCommit?
+    # TODO: Include file hash in dirmap cache.
+    my($dirMap)=$self->getRevisionDirMap($revCommit);
+    my($dir,$file)=($filename=~m%^(?:(.*)/)?([^/]*$)%);
+    if(!defined($dir))
+    {
+        $dir="";
+    }
+    if( !defined($dirMap->{$dir}) ||
+        !defined($dirMap->{$dir}{$filename}) )
+    {
+        my($fileHash)="deleted";
+
+        my($retVal)={};
+        $retVal->{name}=$filename;
+        $retVal->{filehash}=$fileHash;
+
+            # not needed and difficult to compute:
+        $retVal->{revision}="0";  # $revision;
+        $retVal->{commithash}=$revCommit;
+        #$retVal->{author}=$commit->{author};
+        #$retVal->{modified}=convertToCvsDate($commit->{date});
+        #$retVal->{mode}=convertToDbMode($mode);
+
+        return $retVal;
+    }
+
+    my($fileHash)=safe_pipe_capture("git","rev-parse","$revCommit:$filename");
+    chomp $fileHash;
+    if(!($fileHash=~/^[0-9a-f]{40}$/))
+    {
+        die "Invalid fileHash '$fileHash' looking up"
+                    ." '$revCommit:$filename'\n";
+    }
+
+    # information about most recent commit to modify $filename:
+    open(my $gitLogPipe, '-|', 'git', 'rev-list',
+         '--max-count=1', '--pretty', '--parents',
+         $revCommit, '--', $filename)
+                or die "Cannot call git-rev-list: $!";
+    my @commits=readCommits($gitLogPipe);
+    close $gitLogPipe;
+    if(scalar(@commits)!=1)
+    {
+        die "Can't find most recent commit changing $filename\n";
+    }
+    my($commit)=$commits[0];
+    if( !defined($commit) || !defined($commit->{hash}) )
+    {
+        return undef;
+    }
+
+    # does this (commit,file) have a real assigned CVS revision number?
+    my $tablename_rev = $self->tablename("revision");
+    my $db_query;
+    $db_query = $self->{dbh}->prepare_cached(
+        "SELECT * FROM $tablename_rev WHERE name=? AND commithash=?",
+        {},1);
+    $db_query->execute($filename, $commit->{hash});
+    my($meta)=$db_query->fetchrow_hashref;
+    if($meta)
+    {
+        $meta->{revision} = "1.$meta->{revision}";
+        return $meta;
+    }
+
+    # fall back on special revision number
+    my($revision)=$commit->{hash};
+    $revision=~s/(..)/'.' . (hex($1)+100)/eg;
+    $revision="2.1.1.2000$revision";
+
+    # meta data about $filename:
+    open(my $filePipe, '-|', 'git', 'ls-tree', '-z',
+                $commit->{hash}, '--', $filename)
+            or die("Cannot call git-ls-tree : $!");
+    local $/ = "\0";
+    my $line;
+    $line=<$filePipe>;
+    if(defined(<$filePipe>))
+    {
+        die "Expected only a single file for git-ls-tree $filename\n";
+    }
+    close $filePipe;
+
+    chomp $line;
+    unless ( $line=~m/^(\d+)\s+(\w+)\s+([a-zA-Z0-9]+)\t(.*)$/o )
+    {
+        die("Couldn't process git-ls-tree line : $line\n");
+    }
+    my ( $mode, $git_type, $git_hash, $git_filename ) = ( $1, $2, $3, $4 );
+
+    # save result:
+    my($retVal)={};
+    $retVal->{name}=$filename;
+    $retVal->{revision}=$revision;
+    $retVal->{filehash}=$fileHash;
+    $retVal->{commithash}=$revCommit;
+    $retVal->{author}=$commit->{author};
+    $retVal->{modified}=convertToCvsDate($commit->{date});
+    $retVal->{mode}=convertToDbMode($mode);
+
+    return $retVal;
+}
+
+=head2 lookupCommitRef
+
+Convert tag/branch/abbreviation/etc into a commit sha1 hash.  Caches
+the result so looking it up again is fast.
+
+=cut
+
+sub lookupCommitRef
+{
+    my $self = shift;
+    my $ref = shift;
+
+    my $commitHash = $self->{commitRefCache}{$ref};
+    if(defined($commitHash))
+    {
+        return $commitHash;
+    }
+
+    $commitHash=safe_pipe_capture("git","rev-parse","--verify","--quiet",
+                                  $self->unescapeRefName($ref));
+    $commitHash=~s/\s*$//;
+    if(!($commitHash=~/^[0-9a-f]{40}$/))
+    {
+        $commitHash=undef;
+    }
+
+    if( defined($commitHash) )
+    {
+        my $type=safe_pipe_capture("git","cat-file","-t",$commitHash);
+        if( ! ($type=~/^commit\s*$/ ) )
+        {
+            $commitHash=undef;
+        }
+    }
+    if(defined($commitHash))
+    {
+        $self->{commitRefCache}{$ref}=$commitHash;
+    }
+    return $commitHash;
+}
+
+=head2 clearCommitRefCaches
+
+Clears cached commit cache (sha1's for various tags/abbeviations/etc),
+and related caches.
+
+=cut
+
+sub clearCommitRefCaches
+{
+    my $self = shift;
+    $self->{commitRefCache} = {};
+    $self->{revisionDirMapCache} = undef;
+    $self->{gethead_cache} = undef;
 }
 
 =head2 commitmessage
@@ -3743,6 +4945,97 @@ sub gethistorydense
     }
 
     return $result;
+}
+
+=head2 escapeRefName
+
+Apply an escape mechanism to compensate for characters that
+git ref names can have that CVS tags can not.
+
+=cut
+sub escapeRefName
+{
+    my($self,$refName)=@_;
+
+    # CVS officially only allows [-_A-Za-z0-9] in tag names (or in
+    # many contexts it can also be a CVS revision number).
+    #
+    # Git tags commonly use '/' and '.' as well, but also handle
+    # anything else just in case:
+    #
+    #   = "_-s-"  For '/'.
+    #   = "_-p-"  For '.'.
+    #   = "_-u-"  For underscore, in case someone wants a literal "_-" in
+    #     a tag name.
+    #   = "_-xx-" Where "xx" is the hexadecimal representation of the
+    #     desired ASCII character byte. (for anything else)
+
+    if(! $refName=~/^[1-9][0-9]*(\.[1-9][0-9]*)*$/)
+    {
+        $refName=~s/_-/_-u--/g;
+        $refName=~s/\./_-p-/g;
+        $refName=~s%/%_-s-%g;
+        $refName=~s/[^-_a-zA-Z0-9]/sprintf("_-%02x-",$1)/eg;
+    }
+}
+
+=head2 unescapeRefName
+
+Undo an escape mechanism to compensate for characters that
+git ref names can have that CVS tags can not.
+
+=cut
+sub unescapeRefName
+{
+    my($self,$refName)=@_;
+
+    # see escapeRefName() for description of escape mechanism.
+
+    $refName=~s/_-([spu]|[0-9a-f][0-9a-f])-/unescapeRefNameChar($1)/eg;
+
+    # allowed tag names
+    # TODO: Perhaps use git check-ref-format, with an in-process cache of
+    #  validated names?
+    if( !( $refName=~m%^[^-][-a-zA-Z0-9_/.]*$% ) ||
+        ( $refName=~m%[/.]$% ) ||
+        ( $refName=~/\.lock$/ ) ||
+        ( $refName=~m%\.\.|/\.|[[\\:?*~]|\@\{% ) )  # matching }
+    {
+        # Error:
+        $log->warn("illegal refName: $refName");
+        $refName=undef;
+    }
+    return $refName;
+}
+
+sub unescapeRefNameChar
+{
+    my($char)=@_;
+
+    if($char eq "s")
+    {
+        $char="/";
+    }
+    elsif($char eq "p")
+    {
+        $char=".";
+    }
+    elsif($char eq "u")
+    {
+        $char="_";
+    }
+    elsif($char=~/^[0-9a-f][0-9a-f]$/)
+    {
+        $char=chr(hex($char));
+    }
+    else
+    {
+        # Error case: Maybe it has come straight from user, and
+        # wasn't supposed to be escaped?  Restore it the way we got it:
+        $char="_-$char-";
+    }
+
+    return $char;
 }
 
 =head2 in_array()
