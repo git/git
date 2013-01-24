@@ -333,14 +333,12 @@ struct string_slice {
 
 static int ref_entry_cmp_sslice(const void *key_, const void *ent_)
 {
-	struct string_slice *key = (struct string_slice *)key_;
-	struct ref_entry *ent = *(struct ref_entry **)ent_;
-	int entlen = strlen(ent->name);
-	int cmplen = key->len < entlen ? key->len : entlen;
-	int cmp = memcmp(key->str, ent->name, cmplen);
+	const struct string_slice *key = key_;
+	const struct ref_entry *ent = *(const struct ref_entry * const *)ent_;
+	int cmp = strncmp(key->str, ent->name, key->len);
 	if (cmp)
 		return cmp;
-	return key->len - entlen;
+	return '\0' - (unsigned char)ent->name[key->len];
 }
 
 /*
