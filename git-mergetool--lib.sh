@@ -175,7 +175,6 @@ list_merge_tool_candidates () {
 }
 
 show_tool_help () {
-	TOOL_MODE=merge
 	list_merge_tool_candidates
 	unavailable= available= LF='
 '
