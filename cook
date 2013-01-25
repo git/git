@@ -864,9 +864,10 @@ if ($wildo) {
 	} elsif (@ARGV != 1) {
 		print STDERR "$0 --wildo [filename|HEAD]\n";
 		exit 1;
-	} elsif ($ARGV[0] eq "HEAD") {
+	} elsif ($ARGV[0] =~ /^HEAD/) {
 		open($fd, "-|",
-		     qw(git --git-dir=Meta/.git cat-file -p HEAD:whats-cooking.txt));
+		     qw(git --git-dir=Meta/.git cat-file -p),
+		     "$ARGV[0]:whats-cooking.txt");
 	} else {
 		open($fd, "<", $ARGV[0]);
 	}
