@@ -306,5 +306,13 @@ test_expect_success 'git-svn works in a bare repository' '
 	git svn fetch ) &&
 	rm -rf bare-repo
 	'
+test_expect_success 'git-svn works in in a repository with a gitdir: link' '
+	mkdir worktree gitdir &&
+	( cd worktree &&
+	git svn init "$svnrepo" &&
+	git init --separate-git-dir ../gitdir &&
+	git svn fetch ) &&
+	rm -rf worktree gitdir
+	'
 
 test_done

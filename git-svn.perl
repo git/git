@@ -61,8 +61,6 @@ my $cmd_dir_prefix = eval {
 	command_oneline([qw/rev-parse --show-prefix/], STDERR => 0)
 } || '';
 
-my $git_dir_user_set = 1 if defined $ENV{GIT_DIR};
-$ENV{GIT_DIR} ||= '.git';
 $Git::SVN::Ra::_log_window_size = 100;
 
 if (! exists $ENV{SVN_SSH} && exists $ENV{GIT_SSH}) {
@@ -327,27 +325,20 @@ for (my $i = 0; $i < @ARGV; $i++) {
 };
 
 # make sure we're always running at the top-level working directory
-unless ($cmd && $cmd =~ /(?:clone|init|multi-init)$/) {
-	unless (-d $ENV{GIT_DIR}) {
-		if ($git_dir_user_set) {
-			die "GIT_DIR=$ENV{GIT_DIR} explicitly set, ",
-			    "but it is not a directory\n";
-		}
-		my $git_dir = delete $ENV{GIT_DIR};
-		my $cdup = undef;
-		git_cmd_try {
-			$cdup = command_oneline(qw/rev-parse --show-cdup/);
-			$git_dir = '.' unless ($cdup);
-			chomp $cdup if ($cdup);
-			$cdup = "." unless ($cdup && length $cdup);
-		} "Already at toplevel, but $git_dir not found\n";
-		chdir $cdup or die "Unable to chdir up to '$cdup'\n";
-		unless (-d $git_dir) {
-			die "$git_dir still not found after going to ",
-			    "'$cdup'\n";
-		}
-		$ENV{GIT_DIR} = $git_dir;
-	}
+if ($cmd && $cmd =~ /(?:clone|init|multi-init)$/) {
+	$ENV{GIT_DIR} ||= ".git";
+} else {
+	my ($git_dir, $cdup);
+	git_cmd_try {
+		$git_dir = command_oneline([qw/rev-parse --git-dir/]);
+	} "Unable to find .git directory\n";
+	git_cmd_try {
+		$cdup = command_oneline(qw/rev-parse --show-cdup/);
+		chomp $cdup if ($cdup);
+		$cdup = "." unless ($cdup && length $cdup);
+	} "Already at toplevel, but $git_dir not found\n";
+	$ENV{GIT_DIR} = $git_dir;
+	chdir $cdup or die "Unable to chdir up to '$cdup'\n";
 	$_repository = Git->repository(Repository => $ENV{GIT_DIR});
 }
 
