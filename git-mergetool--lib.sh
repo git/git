@@ -188,12 +188,14 @@ show_tool_help () {
 			unavailable="$unavailable$i$LF"
 		fi
 	done
+
+	cmd_name=${TOOL_MODE}tool
 	if test -n "$available"
 	then
-		echo "'git mergetool --tool=<tool>' may be set to one of the following:"
+		echo "'git $cmd_name --tool=<tool>' may be set to one of the following:"
 		echo "$available" | sort | sed -e 's/^/	/'
 	else
-		echo "No suitable tool for 'git mergetool --tool=<tool>' found."
+		echo "No suitable tool for 'git $cmd_name --tool=<tool>' found."
 	fi
 	if test -n "$unavailable"
 	then
