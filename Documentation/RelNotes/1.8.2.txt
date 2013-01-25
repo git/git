@@ -15,6 +15,13 @@ current branch to the branch with the same name, only when the current
 branch is set to integrate with that remote branch.  There is a user
 preference configuration variable "push.default" to change this.
 
+"git push $there tag v1.2.3" used to allow replacing a tag v1.2.3
+that already exists in the repository $there, if the rewritten tag
+you are pushing points at a commit that is a decendant of a commit
+that the old tag v1.2.3 points at.  This was found to be error prone
+and starting with this release, any attempt to update an existing
+ref under refs/tags/ hierarchy will fail, without "--force".
+
 
 Updates since v1.8.1
 --------------------
@@ -38,10 +45,15 @@ UI, Workflows & Features
  * Scripts can ask Git that wildcard patterns in pathspecs they give do
    not have any significance, i.e. take them as literal strings.
 
- * The pathspec code learned to grok "foo/**/bar" as a pattern that
-   matches "bar" in 0-or-more levels of subdirectory in "foo".
+ * The patterns in .gitignore and .gitattributes files can have **/,
+   as a pattern that matches 0 or more levels of subdirectory.
+   E.g. "foo/**/bar" matches "bar" in "foo" itself or in a
+   subdirectory of "foo".
 
  * "git blame" (and "git diff") learned the "--no-follow" option.
+
+ * "git check-ignore" command to help debugging .gitignore files has
+   been added.
 
  * "git cherry-pick" can be used to replay a root commit to an unborn
    branch.
@@ -71,6 +83,9 @@ UI, Workflows & Features
 
  * "git push" now requires "-f" to update a tag, even if it is a
    fast-forward, as tags are meant to be fixed points.
+
+ * "git push" will stop without doing anything if the new "pre-push"
+   hook exists and exits with a failure.
 
  * When "git rebase" fails to generate patches to be applied (e.g. due
    to oom), it failed to detect the failure and instead behaved as if
@@ -117,11 +132,26 @@ Performance, Internal Implementation, etc.
    from a conflicted state, that we may have missed.
 
  * The implementation of "imap-send" has been updated to reuse xml
-   quoting code from http-push codepath.
+   quoting code from http-push codepath, and lost a lot of unused
+   code.
 
  * There is a simple-minded checker for the test scripts in t/
    directory to catch most common mistakes (it is not enabled by
    default).
+
+ * You can build with USE_WILDMATCH=YesPlease to use a replacement
+   implementation of pattern matching logic used for pathname-like
+   things, e.g. refnames and paths in the repository.  This new
+   implementation is not expected change the existing behaviour of Git
+   in this release, except for "git for-each-ref" where you can now
+   say "refs/**/master" and match with both refs/heads/master and
+   refs/remotes/origin/master.  We plan to use this new implementation
+   in wider places (e.g. "git ls-files '**/Makefile' may find Makefile
+   at the top-level, and "git log '**/t*.sh'" may find commits that
+   touch a shell script whose name begins with "t" at any level) in
+   future versions of Git, but we are not there yet.  By building with
+   USE_WILDMATCH, using the resulting Git daily and reporting when you
+   find breakages, you can help us get closer to that goal.
 
 
 Also contains minor documentation updates and code clean-ups.
