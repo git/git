@@ -59,57 +59,16 @@ sub find_worktree
 	return $worktree;
 }
 
-sub filter_tool_scripts
-{
-	my ($tools) = @_;
-	if (-d $_) {
-		if ($_ ne ".") {
-			# Ignore files in subdirectories
-			$File::Find::prune = 1;
-		}
-	} else {
-		if ((-f $_) && ($_ ne "defaults")) {
-			push(@$tools, $_);
-		}
-	}
-}
-
 sub print_tool_help
 {
-	my ($cmd, @found, @notfound, @tools);
-	my $gitpath = Git::exec_path();
+	my $cmd = 'TOOL_MODE=diff';
+	$cmd .= ' && . "$(git --exec-path)/git-mergetool--lib"';
+	$cmd .= ' && show_tool_help';
 
-	find(sub { filter_tool_scripts(\@tools) }, "$gitpath/mergetools");
-
-	foreach my $tool (@tools) {
-		$cmd  = "TOOL_MODE=diff";
-		$cmd .= ' && . "$(git --exec-path)/git-mergetool--lib"';
-		$cmd .= " && get_merge_tool_path $tool >/dev/null 2>&1";
-		$cmd .= " && can_diff >/dev/null 2>&1";
-		if (system('sh', '-c', $cmd) == 0) {
-			push(@found, $tool);
-		} else {
-			push(@notfound, $tool);
-		}
-	}
-
-	print << 'EOF';
-'git difftool --tool=<tool>' may be set to one of the following:
-EOF
-	print "\t$_\n" for (sort(@found));
-
-	print << 'EOF';
-
-The following tools are valid, but not currently available:
-EOF
-	print "\t$_\n" for (sort(@notfound));
-
-	print << 'EOF';
-
-NOTE: Some of the tools listed above only work in a windowed
-environment. If run in a terminal-only session, they will fail.
-EOF
-	exit(0);
+	# See the comment at the bottom of file_diff() for the reason behind
+	# using system() followed by exit() instead of exec().
+	my $rc = system('sh', '-c', $cmd);
+	exit($rc | ($rc >> 8));
 }
 
 sub exit_cleanup
