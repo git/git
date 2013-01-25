@@ -210,8 +210,8 @@ by doing the following:
    The result is a script that lists topics to be merged in order to
    rebuild 'pu' as the input to Meta/Reintegrate script.  Remove
    later topics that should not be in 'jch' yet.  Add a line that
-   consists of '###' before the name of the first topic in the output
-   that should be in 'jch' but not in 'next' yet.
+   consists of '### match next' before the name of the first topic
+   in the output that should be in 'jch' but not in 'next' yet.
 
  - Now we are ready to start merging topics to 'next'.  For each
    branch whose tip is not merged to 'next', one of three things can
@@ -233,7 +233,8 @@ by doing the following:
      $ Meta/redo-jch.sh -c1
 
    to rebuild the 'jch' branch from scratch.  "-c1" tells the script
-   to stop merging at the '###' line you added earlier.
+   to stop merging at the first line that begins with '###'
+   (i.e. the "### match next" line you added earlier).
 
    At this point, build-test the result.  It may reveal semantic
    conflicts (e.g. a topic renamed a variable, another added a new
@@ -261,8 +262,8 @@ by doing the following:
      $ sh Meta/redo-jch.sh -u
 
    This removes topics listed in the script that have already been
-   merged to 'master'.  This unfortunately loses the "###" marker,
-   so add it again to the appropriate place.
+   merged to 'master'.  This may lose '### match next' marker;
+   add it again to the appropriate place when it happens.
 
  - Rebuild 'pu'.
 
