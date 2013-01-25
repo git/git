@@ -228,8 +228,7 @@ static const char message_advice_ref_fetch_first[] =
 	   "See the 'Note about fast-forwards' in 'git push --help' for details.");
 
 static const char message_advice_ref_already_exists[] =
-	N_("Updates were rejected because the destination reference already exists\n"
-	   "in the remote.");
+	N_("Updates were rejected because the tag already exists in the remote.");
 
 static const char message_advice_ref_needs_force[] =
 	N_("You cannot update a remote ref that points at a non-commit object,\n"
