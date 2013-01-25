@@ -175,17 +175,33 @@ list_merge_tool_candidates () {
 }
 
 show_tool_help () {
-	list_merge_tool_candidates
 	unavailable= available= LF='
 '
-	for i in $tools
+
+	scriptlets="$(git --exec-path)"/mergetools
+	for i in "$scriptlets"/*
 	do
-		merge_tool_path=$(translate_merge_tool_path "$i")
+		. "$scriptlets"/defaults
+		. "$i"
+
+		tool="$(basename "$i")"
+		if test "$tool" = "defaults"
+		then
+			continue
+		elif merge_mode && ! can_merge
+		then
+			continue
+		elif diff_mode && ! can_diff
+		then
+			continue
+		fi
+
+		merge_tool_path=$(translate_merge_tool_path "$tool")
 		if type "$merge_tool_path" >/dev/null 2>&1
 		then
-			available="$available$i$LF"
+			available="$available$tool$LF"
 		else
-			unavailable="$unavailable$i$LF"
+			unavailable="$unavailable$tool$LF"
 		fi
 	done
 
