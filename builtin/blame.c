@@ -1420,7 +1420,7 @@ static void get_commit_info(struct commit *commit,
 {
 	int len;
 	const char *subject, *encoding;
-	char *reencoded, *message;
+	char *message;
 
 	commit_info_init(ret);
 
@@ -1438,14 +1438,13 @@ static void get_commit_info(struct commit *commit,
 			    sha1_to_hex(commit->object.sha1));
 	}
 	encoding = get_log_output_encoding();
-	reencoded = logmsg_reencode(commit, encoding);
-	message   = reencoded ? reencoded : commit->buffer;
+	message = logmsg_reencode(commit, encoding);
 	get_ac_line(message, "\nauthor ",
 		    &ret->author, &ret->author_mail,
 		    &ret->author_time, &ret->author_tz);
 
 	if (!detailed) {
-		free(reencoded);
+		logmsg_free(message, commit);
 		return;
 	}
 
@@ -1459,7 +1458,7 @@ static void get_commit_info(struct commit *commit,
 	else
 		strbuf_addf(&ret->summary, "(%s)", sha1_to_hex(commit->object.sha1));
 
-	free(reencoded);
+	logmsg_free(message, commit);
 }
 
 /*
