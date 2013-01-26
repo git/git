@@ -742,7 +742,8 @@ def wildcard_encode(path):
     return path
 
 def wildcard_present(path):
-    return path.translate(None, "*#@%") != path
+    m = re.search("[*#@%]", path)
+    return m is not None
 
 class Command:
     def __init__(self):
