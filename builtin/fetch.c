@@ -960,6 +960,9 @@ int cmd_fetch(int argc, const char **argv, const char *prefix)
 	struct string_list list = STRING_LIST_INIT_NODUP;
 	struct remote *remote;
 	int result = 0;
+	static const char *argv_gc_auto[] = {
+		"gc", "--auto", NULL,
+	};
 
 	packet_trace_identity("fetch");
 
@@ -1026,6 +1029,8 @@ int cmd_fetch(int argc, const char **argv, const char *prefix)
 	/* All names were strdup()ed or strndup()ed */
 	list.strdup_strings = 1;
 	string_list_clear(&list, 0);
+
+	run_command_v_opt(argv_gc_auto, RUN_GIT_CMD);
 
 	return result;
 }
