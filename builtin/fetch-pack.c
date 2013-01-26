@@ -610,6 +610,9 @@ static int everything_local(struct ref **refs, int nr_match, char **match)
 	for (ref = *refs; ref; ref = ref->next) {
 		struct object *o;
 
+		if (!has_sha1_file(ref->old_sha1))
+			continue;
+
 		o = parse_object(ref->old_sha1);
 		if (!o)
 			continue;
