@@ -962,7 +962,7 @@ static const char *read_commit_message(const char *name)
 	 * encodings are identical.
 	 */
 	if (out == NULL)
-		out = xstrdup(commit->buffer);
+		out = commit->buffer;
 	return out;
 }
 
