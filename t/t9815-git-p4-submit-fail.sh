@@ -405,8 +405,8 @@ test_expect_success 'cleanup chmod after submit cancel' '
 	git p4 clone --dest="$git" //depot &&
 	(
 		cd "$git" &&
-		chmod u+x text &&
-		chmod u-x text+x &&
+		test_chmod +x text &&
+		test_chmod -x text+x &&
 		git add text text+x &&
 		git commit -m "chmod texts" &&
 		echo n | test_expect_code 1 git p4 submit
@@ -415,10 +415,13 @@ test_expect_success 'cleanup chmod after submit cancel' '
 		cd "$cli" &&
 		test_path_is_file text &&
 		! p4 fstat -T action text &&
-		stat --format=%A text | egrep ^-r-- &&
 		test_path_is_file text+x &&
 		! p4 fstat -T action text+x &&
-		stat --format=%A text+x | egrep ^-r-x
+		if test_have_prereq NOT_CYGWIN
+		then
+			stat --format=%A text | egrep ^-r-- &&
+			stat --format=%A text+x | egrep ^-r-x
+		fi
 	)
 '
 
