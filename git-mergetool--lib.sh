@@ -1,5 +1,7 @@
 #!/bin/sh
 # git-mergetool--lib is a library for common merge tool functions
+MERGE_TOOLS_DIR=$(git --exec-path)/mergetools
+
 diff_mode() {
 	test "$TOOL_MODE" = diff
 }
@@ -44,19 +46,32 @@ valid_tool () {
 }
 
 setup_tool () {
-	case "$1" in
-	vim*|gvim*)
-		tool=vim
-		;;
-	*)
-		tool="$1"
-		;;
-	esac
-	mergetools="$(git --exec-path)/mergetools"
+	tool="$1"
 
-	# Load the default definitions
-	. "$mergetools/defaults"
-	if ! test -f "$mergetools/$tool"
+	# Fallback definitions, to be overriden by tools.
+	can_merge () {
+		return 0
+	}
+
+	can_diff () {
+		return 0
+	}
+
+	diff_cmd () {
+		status=1
+		return $status
+	}
+
+	merge_cmd () {
+		status=1
+		return $status
+	}
+
+	translate_merge_tool_path () {
+		echo "$1"
+	}
+
+	if ! test -f "$MERGE_TOOLS_DIR/$tool"
 	then
 		# Use a special return code for this case since we want to
 		# source "defaults" even when an explicit tool path is
@@ -66,7 +81,7 @@ setup_tool () {
 	fi
 
 	# Load the redefined functions
-	. "$mergetools/$tool"
+	. "$MERGE_TOOLS_DIR/$tool"
 
 	if merge_mode && ! can_merge
 	then
@@ -194,24 +209,10 @@ list_merge_tool_candidates () {
 show_tool_help () {
 	unavailable= available= LF='
 '
-
-	scriptlets="$(git --exec-path)"/mergetools
-	for i in "$scriptlets"/*
+	for i in "$MERGE_TOOLS_DIR"/*
 	do
-		. "$scriptlets"/defaults
-		. "$i"
-
-		tool="$(basename "$i")"
-		if test "$tool" = "defaults"
-		then
-			continue
-		elif merge_mode && ! can_merge
-		then
-			continue
-		elif diff_mode && ! can_diff
-		then
-			continue
-		fi
+		tool=$(basename "$i")
+		setup_tool "$tool" 2>/dev/null || continue
 
 		merge_tool_path=$(translate_merge_tool_path "$tool")
 		if type "$merge_tool_path" >/dev/null 2>&1
