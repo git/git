@@ -142,6 +142,7 @@ client_view() {
 		Description: $P4CLIENT
 		Root: $cli
 		AltRoots: $(native_path "$cli")
+		LineEnd: unix
 		View:
 		EOF
 		printf "\t%s\n" "$@"
