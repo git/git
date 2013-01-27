@@ -333,7 +333,7 @@ test_expect_success 'subdir clone, submit copy' '
 	(
 		cd "$cli" &&
 		test_path_is_file dir1/file11a &&
-		test ! -w dir1/file11a
+		! is_cli_file_writeable dir1/file11a
 	)
 '
 
@@ -353,7 +353,7 @@ test_expect_success 'subdir clone, submit rename' '
 		cd "$cli" &&
 		test_path_is_missing dir1/file13 &&
 		test_path_is_file dir1/file13a &&
-		test ! -w dir1/file13a
+		! is_cli_file_writeable dir1/file13a
 	)
 '
 

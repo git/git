@@ -148,3 +148,16 @@ client_view() {
 		printf "\t%s\n" "$@"
 	) | p4 client -i
 }
+
+is_cli_file_writeable() {
+	# cygwin version of p4 does not set read-only attr,
+	# will be marked 444 but -w is true
+	file="$1" &&
+	if test_have_prereq CYGWIN && p4 -V | grep -q CYGWIN
+	then
+		stat=$(stat --format=%a "$file") &&
+		test $stat = 644
+	else
+		test -w "$file"
+	fi
+}
