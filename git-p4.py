@@ -170,6 +170,22 @@ def p4_system(cmd):
     expand = isinstance(real_cmd, basestring)
     subprocess.check_call(real_cmd, shell=expand)
 
+_p4_version_string = None
+def p4_version_string():
+    """Read the version string, showing just the last line, which
+       hopefully is the interesting version bit.
+
+       $ p4 -V
+       Perforce - The Fast Software Configuration Management System.
+       Copyright 1995-2011 Perforce Software.  All rights reserved.
+       Rev. P4/NTX86/2011.1/393975 (2011/12/16).
+    """
+    global _p4_version_string
+    if not _p4_version_string:
+        a = p4_read_pipe_lines(["-V"])
+        _p4_version_string = a[-1].rstrip()
+    return _p4_version_string
+
 def p4_integrate(src, dest):
     p4_system(["integrate", "-Dt", wildcard_encode(src), wildcard_encode(dest)])
 
@@ -1973,7 +1989,6 @@ class P4Sync(Command, P4UserMap):
         self.syncWithOrigin = True
         self.importIntoRemotes = True
         self.maxChanges = ""
-        self.isWindows = (platform.system() == "Windows")
         self.keepRepoPath = False
         self.depotPaths = None
         self.p4BranchesInGit = []
@@ -2118,7 +2133,14 @@ class P4Sync(Command, P4UserMap):
             # operations.  utf16 is converted to ascii or utf8, perhaps.
             # But ascii text saved as -t utf16 is completely mangled.
             # Invoke print -o to get the real contents.
+            #
+            # On windows, the newlines will always be mangled by print, so put
+            # them back too.  This is not needed to the cygwin windows version,
+            # just the native "NT" type.
+            #
             text = p4_read_pipe(['print', '-q', '-o', '-', file['depotFile']])
+            if p4_version_string().find("/NT") >= 0:
+                text = text.replace("\r\n", "\n")
             contents = [ text ]
 
         if type_base == "apple":
