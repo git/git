@@ -3163,6 +3163,7 @@ class P4Clone(P4Sync):
         self.cloneExclude = ["/"+p for p in self.cloneExclude]
         for p in depotPaths:
             if not p.startswith("//"):
+                sys.stderr.write('Depot paths must start with "//": %s\n' % p)
                 return False
 
         if not self.cloneDestination:
