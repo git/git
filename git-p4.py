@@ -571,7 +571,8 @@ def gitConfig(key, args = None): # set args to "--bool", for instance
 
 def gitConfigList(key):
     if not _gitConfig.has_key(key):
-        _gitConfig[key] = read_pipe("git config --get-all %s" % key, ignore_error=True).strip().split(os.linesep)
+        s = read_pipe(["git", "config", "--get-all", key], ignore_error=True)
+        _gitConfig[key] = s.strip().split(os.linesep)
     return _gitConfig[key]
 
 def p4BranchesInGit(branchesAreInRemotes=True):
