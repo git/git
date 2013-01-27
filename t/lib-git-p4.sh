@@ -116,8 +116,8 @@ marshal_dump() {
 client_view() {
 	(
 		cat <<-EOF &&
-		Client: client
-		Description: client
+		Client: $P4CLIENT
+		Description: $P4CLIENT
 		Root: $cli
 		View:
 		EOF
