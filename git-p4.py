@@ -2134,15 +2134,6 @@ class P4Sync(Command, P4UserMap):
             print "\nIgnoring apple filetype file %s" % file['depotFile']
             return
 
-        # Perhaps windows wants unicode, utf16 newlines translated too;
-        # but this is not doing it.
-        if self.isWindows and type_base == "text":
-            mangled = []
-            for data in contents:
-                data = data.replace("\r\n", "\n")
-                mangled.append(data)
-            contents = mangled
-
         # Note that we do not try to de-mangle keywords on utf16 files,
         # even though in theory somebody may want that.
         pattern = p4_keywords_regexp_for_type(type_base, type_mods)
