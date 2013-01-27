@@ -21,6 +21,7 @@ import time
 import platform
 import re
 import shutil
+import stat
 
 verbose = False
 
@@ -1231,6 +1232,9 @@ class P4Submit(Command, P4UserMap):
                     p4_edit(dest)
                     pureRenameCopy.discard(dest)
                     filesToChangeExecBit[dest] = diff['dst_mode']
+                if self.isWindows:
+                    # turn off read-only attribute
+                    os.chmod(dest, stat.S_IWRITE)
                 os.unlink(dest)
                 editedFiles.add(dest)
             elif modifier == "R":
@@ -1249,6 +1253,8 @@ class P4Submit(Command, P4UserMap):
                         p4_edit(dest)   # with move: already open, writable
                     filesToChangeExecBit[dest] = diff['dst_mode']
                 if not self.p4HasMoveCommand:
+                    if self.isWindows:
+                        os.chmod(dest, stat.S_IWRITE)
                     os.unlink(dest)
                     filesToDelete.add(src)
                 editedFiles.add(dest)
@@ -1289,6 +1295,10 @@ class P4Submit(Command, P4UserMap):
                 for file in kwfiles:
                     if verbose:
                         print "zapping %s with %s" % (line,pattern)
+                    # File is being deleted, so not open in p4.  Must
+                    # disable the read-only bit on windows.
+                    if self.isWindows and file not in editedFiles:
+                        os.chmod(file, stat.S_IWRITE)
                     self.patchRCSKeywords(file, kwfiles[file])
                     fixed_rcs_keywords = True
 
