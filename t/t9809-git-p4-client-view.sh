@@ -196,7 +196,7 @@ test_expect_success 'exclusion single file' '
 
 test_expect_success 'overlay wildcard' '
 	client_view "//depot/dir1/... //client/cli/..." \
-		    "+//depot/dir2/... //client/cli/...\n" &&
+		    "+//depot/dir2/... //client/cli/..." &&
 	files="cli/file11 cli/file12 cli/file21 cli/file22" &&
 	client_verify $files &&
 	test_when_finished cleanup_git &&

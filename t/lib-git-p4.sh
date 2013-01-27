@@ -121,8 +121,6 @@ client_view() {
 		Root: $cli
 		View:
 		EOF
-		for arg ; do
-			printf "\t$arg\n"
-		done
+		printf "\t%s\n" "$@"
 	) | p4 client -i
 }
