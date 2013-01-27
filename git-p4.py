@@ -7,16 +7,20 @@
 #            2007 Trolltech ASA
 # License: MIT <http://www.opensource.org/licenses/mit-license.php>
 #
-
 import sys
 if sys.hexversion < 0x02040000:
     # The limiter is the subprocess module
     sys.stderr.write("git-p4: requires Python 2.4 or later.\n")
     sys.exit(1)
-
-import optparse, os, marshal, subprocess, shelve
-import tempfile, getopt, os.path, time, platform
-import re, shutil
+import os
+import optparse
+import marshal
+import subprocess
+import tempfile
+import time
+import platform
+import re
+import shutil
 
 verbose = False
 
