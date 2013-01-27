@@ -1050,7 +1050,8 @@ class P4Submit(Command, P4UserMap):
     def p4UserForCommit(self,id):
         # Return the tuple (perforce user,git email) for a given git commit id
         self.getUserMapFromPerforceServer()
-        gitEmail = read_pipe("git log --max-count=1 --format='%%ae' %s" % id)
+        gitEmail = read_pipe(["git", "log", "--max-count=1",
+                              "--format=%ae", id])
         gitEmail = gitEmail.strip()
         if not self.emails.has_key(gitEmail):
             return (None,gitEmail)
