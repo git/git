@@ -560,13 +560,16 @@ def gitBranchExists(branch):
     return proc.wait() == 0;
 
 _gitConfig = {}
-def gitConfig(key, args = None): # set args to "--bool", for instance
+
+def gitConfig(key, args=None): # set args to "--bool", for instance
     if not _gitConfig.has_key(key):
-        argsFilter = ""
-        if args != None:
-            argsFilter = "%s " % args
-        cmd = "git config %s%s" % (argsFilter, key)
-        _gitConfig[key] = read_pipe(cmd, ignore_error=True).strip()
+        cmd = [ "git", "config" ]
+        if args:
+            assert(args == "--bool")
+            cmd.append(args)
+        cmd.append(key)
+        s = read_pipe(cmd, ignore_error=True)
+        _gitConfig[key] = s.strip()
     return _gitConfig[key]
 
 def gitConfigList(key):
