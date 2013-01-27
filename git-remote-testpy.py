@@ -36,6 +36,22 @@ if sys.hexversion < 0x02000000:
     sys.stderr.write("git-remote-testgit: requires Python 2.0 or later.\n")
     sys.exit(1)
 
+
+def encode_filepath(path):
+    """Encodes a Unicode file path to a byte string.
+
+    On Python 2 this is a no-op; on Python 3 we encode the string as
+    suggested by [1] which allows an exact round-trip from the command line
+    to the filesystem.
+
+    [1] http://docs.python.org/3/c-api/unicode.html#file-system-encoding
+
+    """
+    if sys.hexversion < 0x03000000:
+        return path
+    return path.encode(sys.getfilesystemencoding(), 'surrogateescape')
+
+
 def get_repo(alias, url):
     """Returns a git repository object initialized for usage.
     """
@@ -45,7 +61,7 @@ def get_repo(alias, url):
     repo.get_head()
 
     hasher = _digest()
-    hasher.update(repo.path.encode('hex'))
+    hasher.update(encode_filepath(repo.path))
     repo.hash = hasher.hexdigest()
 
     repo.get_base_path = lambda base: os.path.join(
