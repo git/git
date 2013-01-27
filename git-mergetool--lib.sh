@@ -58,7 +58,11 @@ setup_tool () {
 	. "$mergetools/defaults"
 	if ! test -f "$mergetools/$tool"
 	then
-		return 1
+		# Use a special return code for this case since we want to
+		# source "defaults" even when an explicit tool path is
+		# configured since the user can use that to override the
+		# default path in the scriptlet.
+		return 2
 	fi
 
 	# Load the redefined functions
@@ -67,11 +71,11 @@ setup_tool () {
 	if merge_mode && ! can_merge
 	then
 		echo "error: '$tool' can not be used to resolve merges" >&2
-		exit 1
+		return 1
 	elif diff_mode && ! can_diff
 	then
 		echo "error: '$tool' can only be used to resolve merges" >&2
-		exit 1
+		return 1
 	fi
 	return 0
 }
@@ -101,6 +105,19 @@ run_merge_tool () {
 
 	# Bring tool-specific functions into scope
 	setup_tool "$1"
+	exitcode=$?
+	case $exitcode in
+	0)
+		:
+		;;
+	2)
+		# The configured tool is not a built-in tool.
+		test -n "$merge_tool_path" || return 1
+		;;
+	*)
+		return $exitcode
+		;;
+	esac
 
 	if merge_mode
 	then
