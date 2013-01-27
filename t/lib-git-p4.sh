@@ -40,8 +40,11 @@ start_p4d() {
 	mkdir -p "$db" "$cli" "$git" &&
 	rm -f "$pidfile" &&
 	(
-		p4d -q -r "$db" -p $P4DPORT &
-		echo $! >"$pidfile"
+		cd "$db" &&
+		{
+			p4d -q -p $P4DPORT &
+			echo $! >"$pidfile"
+		}
 	) &&
 
 	# This gives p4d a long time to start up, as it can be
