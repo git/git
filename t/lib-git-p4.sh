@@ -74,15 +74,8 @@ start_p4d() {
 	fi
 
 	# build a client
-	(
-		cd "$cli" &&
-		p4 client -i <<-EOF
-		Client: client
-		Description: client
-		Root: $cli
-		View: //depot/... //client/...
-		EOF
-	)
+	client_view "//depot/... //client/..." &&
+
 	return 0
 }
 
