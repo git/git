@@ -365,7 +365,10 @@ test_expect_success 'wildcard files submit back to p4, client-spec case' '
 	(
 		cd "$git" &&
 		echo git-wild-hash >dir1/git-wild#hash &&
-		echo git-wild-star >dir1/git-wild\*star &&
+		if test_have_prereq NOT_MINGW NOT_CYGWIN
+		then
+			echo git-wild-star >dir1/git-wild\*star
+		fi &&
 		echo git-wild-at >dir1/git-wild@at &&
 		echo git-wild-percent >dir1/git-wild%percent &&
 		git add dir1/git-wild* &&
@@ -376,7 +379,10 @@ test_expect_success 'wildcard files submit back to p4, client-spec case' '
 	(
 		cd "$cli" &&
 		test_path_is_file dir1/git-wild#hash &&
-		test_path_is_file dir1/git-wild\*star &&
+		if test_have_prereq NOT_MINGW NOT_CYGWIN
+		then
+			test_path_is_file dir1/git-wild\*star
+		fi &&
 		test_path_is_file dir1/git-wild@at &&
 		test_path_is_file dir1/git-wild%percent
 	) &&
