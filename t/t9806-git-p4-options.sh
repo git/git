@@ -215,7 +215,7 @@ test_expect_success 'clone --use-client-spec' '
 		test_must_fail git p4 clone --dest="$git" --use-client-spec
 	) &&
 	# build a different client
-	cli2=$(test-path-utils real_path "$TRASH_DIRECTORY/cli2") &&
+	cli2="$TRASH_DIRECTORY/cli2" &&
 	mkdir -p "$cli2" &&
 	test_when_finished "rmdir \"$cli2\"" &&
 	test_when_finished cleanup_git &&
