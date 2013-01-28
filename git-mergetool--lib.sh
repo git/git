@@ -240,7 +240,13 @@ show_tool_help () {
 
 guess_merge_tool () {
 	list_merge_tool_candidates
-	echo >&2 "merge tool candidates: $tools"
+	cat >&2 <<-EOF
+
+	This message is displayed because '$TOOL_MODE.tool' is not configured.
+	See 'git ${TOOL_MODE}tool --tool-help' or 'git help config' for more details.
+	'git ${TOOL_MODE}tool' will now attempt to use one of the following tools:
+	$tools
+	EOF
 
 	# Loop over each candidate and stop when a valid merge tool is found.
 	for i in $tools
