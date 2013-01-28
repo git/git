@@ -4438,7 +4438,7 @@ msgid ""
 msgstr ""
 "Kein externes Projektarchiv angegeben. Bitte geben Sie entweder eine URL\n"
 "oder den Namen des externen Archivs an, von welchem neue\n"
-"Versionen angefordert werden sollen."
+"Revisionen angefordert werden sollen."
 
 #: builtin/fetch.c:932
 msgid "You need to specify a tag name."
@@ -4623,7 +4623,7 @@ msgstr ""
 
 #: builtin/grep.c:22
 msgid "git grep [options] [-e] <pattern> [<rev>...] [[--] <path>...]"
-msgstr "git grep [Optionen] [-e] <Muster> [<Version>...] [[--] <Pfad>...]"
+msgstr "git grep [Optionen] [-e] <Muster> [<Revision>...] [[--] <Pfad>...]"
 
 #: builtin/grep.c:217
 #, c-format
@@ -5501,7 +5501,7 @@ msgstr "ungültiges in-reply-to: %s"
 
 #: builtin/log.c:913
 msgid "git format-patch [options] [<since> | <revision range>]"
-msgstr "git format-patch [Optionen] [<seit> | <Versionsbereich>]"
+msgstr "git format-patch [Optionen] [<seit> | <Revisionsbereich>]"
 
 #: builtin/log.c:958
 msgid "Two output directories?"
@@ -6193,7 +6193,7 @@ msgstr "findet Vorfahren für eine einzelne n-Wege-Zusammenführung"
 
 #: builtin/merge-base.c:100
 msgid "list revs not reachable from others"
-msgstr "listet Revisionen auf, die nicht durch Andere erreichbar sind"
+msgstr "listet Versionen auf, die nicht durch Andere erreichbar sind"
 
 #: builtin/merge-base.c:102
 msgid "is the first one ancestor of the other?"
@@ -7952,7 +7952,7 @@ msgstr "'%s' Zurücksetzung ist in einem bloßen Projektarchiv nicht erlaubt"
 #: builtin/reset.c:333
 #, c-format
 msgid "Could not reset index file to revision '%s'."
-msgstr "Konnte Bereitstellungsdatei nicht zu Version '%s' zurücksetzen."
+msgstr "Konnte Bereitstellungsdatei nicht zu Revision '%s' zurücksetzen."
 
 #: builtin/reset.c:339
 msgid "Unstaged changes after reset:"
@@ -9053,7 +9053,7 @@ msgstr "nicht erkannte Option: '$arg'"
 #: git-bisect.sh:99
 #, sh-format
 msgid "'$arg' does not appear to be a valid revision"
-msgstr "'$arg' scheint keine gültige Version zu sein"
+msgstr "'$arg' scheint keine gültige Revision zu sein"
 
 #: git-bisect.sh:117
 msgid "Bad HEAD - I need a HEAD"
@@ -9116,7 +9116,7 @@ msgid ""
 "You need to give me at least one good and one bad revisions.\n"
 "(You can use \"git bisect bad\" and \"git bisect good\" for that.)"
 msgstr ""
-"Sie müssen mindestens eine korrekte und eine fehlerhafte Version angeben.\n"
+"Sie müssen mindestens eine korrekte und eine fehlerhafte Revision angeben.\n"
 "(Sie können dafür \"git bisect bad\" und \"git bisect good\" benutzen.)"
 
 #: git-bisect.sh:292
@@ -9126,7 +9126,7 @@ msgid ""
 "(You can use \"git bisect bad\" and \"git bisect good\" for that.)"
 msgstr ""
 "Sie müssen mit \"git bisect start\" beginnen.\n"
-"Danach müssen Sie mindestens eine korrekte und eine fehlerhafte Version "
+"Danach müssen Sie mindestens eine korrekte und eine fehlerhafte Revision "
 "angeben.\n"
 "(Sie können dafür \"git bisect bad\" und \"git bisect good\" benutzen.)"
 
@@ -9650,7 +9650,7 @@ msgstr ""
 #: git-submodule.sh:662
 #, sh-format
 msgid "Unable to find current revision in submodule path '$sm_path'"
-msgstr "Konnte aktuelle Version in Unterprojekt-Pfad '$sm_path' nicht finden"
+msgstr "Konnte aktuelle Revision in Unterprojekt-Pfad '$sm_path' nicht finden"
 
 #: git-submodule.sh:671 git-submodule.sh:695
 #, sh-format
