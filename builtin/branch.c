@@ -466,7 +466,7 @@ static void add_verbose_info(struct strbuf *out, struct ref_item *item,
 			     int verbose, int abbrev)
 {
 	struct strbuf subject = STRBUF_INIT, stat = STRBUF_INIT;
-	const char *sub = " **** invalid ref ****";
+	const char *sub = _(" **** invalid ref ****");
 	struct commit *commit = item->commit;
 
 	if (commit && !parse_commit(commit)) {
@@ -590,7 +590,7 @@ static int print_ref_list(int kinds, int detached, int verbose, int abbrev, stru
 		struct commit *filter;
 		filter = lookup_commit_reference_gently(merge_filter_ref, 0);
 		if (!filter)
-			die("object '%s' does not point to a commit",
+			die(_("object '%s' does not point to a commit"),
 			    sha1_to_hex(merge_filter_ref));
 
 		filter->object.flags |= UNINTERESTING;
@@ -854,7 +854,7 @@ int cmd_branch(int argc, const char **argv, const char *prefix)
 
 		if (!argc) {
 			if (detached)
-				die("Cannot give description to detached HEAD");
+				die(_("Cannot give description to detached HEAD"));
 			branch_name = head;
 		} else if (argc == 1)
 			branch_name = argv[0];
@@ -866,10 +866,11 @@ int cmd_branch(int argc, const char **argv, const char *prefix)
 			strbuf_release(&branch_ref);
 
 			if (!argc)
-				return error("No commit on branch '%s' yet.",
+				return error(_("No commit on branch '%s' yet."),
 					     branch_name);
 			else
-				return error("No such branch '%s'.", branch_name);
+				return error(_("No branch named '%s'."),
+					     branch_name);
 		}
 		strbuf_release(&branch_ref);
 
