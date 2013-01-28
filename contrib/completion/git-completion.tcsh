@@ -13,6 +13,7 @@
 #
 # To use this completion script:
 #
+#    0) You need tcsh 6.16.00 or newer.
 #    1) Copy both this file and the bash completion script to ${HOME}.
 #       You _must_ use the name ${HOME}/.git-completion.bash for the
 #       bash script.
@@ -23,6 +24,15 @@
 #       add the following line to your .tcshrc/.cshrc:
 #        set autolist=ambiguous
 #       It will tell tcsh to list the possible completion choices.
+
+set __git_tcsh_completion_version = `\echo ${tcsh} | \sed 's/\./ /g'`
+if ( ${__git_tcsh_completion_version[1]} < 6 || \
+     ( ${__git_tcsh_completion_version[1]} == 6 && \
+       ${__git_tcsh_completion_version[2]} < 16 ) ) then
+	echo "git-completion.tcsh: Your version of tcsh is too old, you need version 6.16.00 or newer.  Git completion will not work."
+	exit
+endif
+unset __git_tcsh_completion_version
 
 set __git_tcsh_completion_original_script = ${HOME}/.git-completion.bash
 set __git_tcsh_completion_script = ${HOME}/.git-completion.tcsh.bash
@@ -64,9 +74,7 @@ fi
 _\${1}
 
 IFS=\$'\n'
-if [ \${#COMPREPLY[*]} -gt 0 ]; then
-	echo "\${COMPREPLY[*]}" | sort | uniq
-else
+if [ \${#COMPREPLY[*]} -eq 0 ]; then
 	# No completions suggested.  In this case, we want tcsh to perform
 	# standard file completion.  However, there does not seem to be way
 	# to tell tcsh to do that.  To help the user, we try to simulate
@@ -85,17 +93,18 @@ else
 		# We don't support ~ expansion: too tricky.
 		if [ "\${TO_COMPLETE:0:1}" != "~" ]; then
 			# Use ls so as to add the '/' at the end of directories.
-			RESULT=(\`ls -dp \${TO_COMPLETE}* 2> /dev/null\`)
-			echo \${RESULT[*]}
-
-			# If there is a single completion and it is a directory,
-			# we output it a second time to trick tcsh into not adding a space
-			# after it.
-			if [ \${#RESULT[*]} -eq 1 ] && [ "\${RESULT[0]: -1}" == "/" ]; then
-				echo \${RESULT[*]}
-			fi
+			COMPREPLY=(\`ls -dp \${TO_COMPLETE}* 2> /dev/null\`)
 		fi
 	fi
+fi
+
+# tcsh does not automatically remove duplicates, so we do it ourselves
+echo "\${COMPREPLY[*]}" | sort | uniq
+
+# If there is a single completion and it is a directory, we output it
+# a second time to trick tcsh into not adding a space after it.
+if [ \${#COMPREPLY[*]} -eq 1 ] && [ "\${COMPREPLY[0]: -1}" == "/" ]; then
+	echo "\${COMPREPLY[*]}"
 fi
 
 EOF
