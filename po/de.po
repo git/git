@@ -2764,7 +2764,7 @@ msgstr "Zweigspitze (HEAD) ist jetzt bei"
 #: builtin/checkout.c:609
 #, c-format
 msgid "Reset branch '%s'\n"
-msgstr "Setze Zweig '%s' zurück\n"
+msgstr "Setze Zweig '%s' neu\n"
 
 #: builtin/checkout.c:612
 #, c-format
@@ -2774,7 +2774,7 @@ msgstr "Bereits auf '%s'\n"
 #: builtin/checkout.c:616
 #, c-format
 msgid "Switched to and reset branch '%s'\n"
-msgstr "Gewechselt zu zurückgesetztem Zweig '%s'\n"
+msgstr "Gewechselt zu neu gesetztem Zweig '%s'\n"
 
 #: builtin/checkout.c:618 builtin/checkout.c:955
 #, c-format
@@ -7900,19 +7900,19 @@ msgstr "weniger Ausgaben, meldet nur Fehler"
 
 #: builtin/reset.c:250
 msgid "reset HEAD and index"
-msgstr "setzt Zweigspitze (HEAD) und Bereitstellung zurück"
+msgstr "setzt Zweigspitze (HEAD) und Bereitstellung neu"
 
 #: builtin/reset.c:251
 msgid "reset only HEAD"
-msgstr "setzt nur Zweigspitze (HEAD) zurück"
+msgstr "setzt nur Zweigspitze (HEAD) neu"
 
 #: builtin/reset.c:253 builtin/reset.c:255
 msgid "reset HEAD, index and working tree"
-msgstr "setzt Zweigspitze (HEAD), Bereitstellung und Arbeitsbaum zurück"
+msgstr "setzt Zweigspitze (HEAD), Bereitstellung und Arbeitsbaum neu"
 
 #: builtin/reset.c:257
 msgid "reset HEAD but keep local changes"
-msgstr "setzt Zweigspitze (HEAD) zurück, behält aber lokale Änderungen"
+msgstr "setzt Zweigspitze (HEAD) neu, behält aber lokale Änderungen"
 
 #: builtin/reset.c:275
 #, c-format
@@ -7952,7 +7952,7 @@ msgstr "'%s' Zurücksetzung ist in einem bloßen Projektarchiv nicht erlaubt"
 #: builtin/reset.c:333
 #, c-format
 msgid "Could not reset index file to revision '%s'."
-msgstr "Konnte Bereitstellungsdatei nicht zu Revision '%s' zurücksetzen."
+msgstr "Konnte Bereitstellungsdatei nicht zu Revision '%s' setzen."
 
 #: builtin/reset.c:339
 msgid "Unstaged changes after reset:"
@@ -8833,7 +8833,7 @@ msgstr "Baut lokale Versionen auf einem aktuellerem externen Zweig neu auf"
 #: common-cmds.h:24
 msgid "Reset current HEAD to the specified state"
 msgstr ""
-"Setzt die aktuelle Zweigspitze (HEAD) zu einem spezifizierten Zustand zurück"
+"Setzt die aktuelle Zweigspitze (HEAD) zu einem spezifizierten Zustand"
 
 #: common-cmds.h:25
 msgid "Remove files from the working tree and from the index"
