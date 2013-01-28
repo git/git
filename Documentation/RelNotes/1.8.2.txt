@@ -167,13 +167,11 @@ details).
  * An element on GIT_CEILING_DIRECTORIES list that does not name the
    real path to a directory (i.e. a symbolic link) could have caused
    the GIT_DIR discovery logic to escape the ceiling.
-   (merge 059b379 mh/ceiling later to maint).
 
  * When attempting to read the XDG-style $HOME/.config/git/config and
    finding that $HOME/.config/git is a file, we gave a wrong error
    message, instead of treating the case as "a custom config file does
    not exist there" and moving on.
-   (merge 8f2bbe4 jn/warn-on-inaccessible-loosen later to maint).
 
  * The behaviour visible to the end users was confusing, when they
    attempt to kill a process spawned in the editor that was in turn
@@ -184,11 +182,9 @@ details).
  * A child process that was killed by a signal (e.g. SIGINT) was
    reported in an inconsistent way depending on how the process was
    spawned by us, with or without a shell in between.
-   (merge 709ca73 jk/unify-exit-code-by-receiving-signal later to maint).
 
  * After failing to create a temporary file using mkstemp(), failing
    pathname was not reported correctly on some platforms.
-   (merge f7be59b jc/mkstemp-more-careful-error-reporting later to maint).
 
  * The attribute mechanism didn't allow limiting attributes to be
    applied to only a single directory itself with "path/" like the
@@ -197,17 +193,18 @@ details).
    degradations and needs to merge a fix-up topic.
    (merge 9db9eec nd/fix-directory-attrs-off-by-one later to maint).
 
+ * "git am" did not parse datestamp correctly from Hg generated patch,
+   when it is run in a locale outside C (or en).
+   (merge 5185b97 dl/am-hg-locale later to maint).
+
  * "git apply" misbehaved when fixing whitespace breakages by removing
    excess trailing blank lines.
-   (merge 5de7166 jc/apply-trailing-blank-removal later to maint).
 
  * A tar archive created by "git archive" recorded a directory in a
    way that made NetBSD's implementation of "tar" sometimes unhappy.
-   (merge 22f0dcd rs/leave-base-name-in-name-field-of-tar later to maint).
 
  * "git archive" did not record uncompressed size in the header when
    streaming a zip archive, which confused some implementations of unzip.
-   (merge 5ea2c84 rs/zip-with-uncompressed-size-in-the-header later to maint).
 
  * "git clean" showed what it was going to do, but sometimes end up
    finding that it was not allowed to do so, which resulted in a
@@ -220,27 +217,21 @@ details).
  * When "git clone --separate-git-dir=$over_there" is interrupted, it
    failed to remove the real location of the $GIT_DIR it created.
    This was most visible when interrupting a submodule update.
-   (merge 9be1980 jl/interrupt-clone-remove-separate-git-dir later to maint).
 
  * The way "git svn" asked for password using SSH_ASKPASS and
    GIT_ASKPASS was not in line with the rest of the system.
-   (merge e9263e4 ss/svn-prompt later to maint).
 
  * The --graph code fell into infinite loop when asked to do what the
    code did not expect.
-   (merge 656197a mk/maint-graph-infinity-loop later to maint).
 
  * http transport was wrong to ask for the username when the
    authentication is done by certificate identity.
-   (merge 75e9a40 rb/http-cert-cred-no-username-prompt later to maint).
 
  * "git pack-refs" that ran in parallel to another process that
    created new refs had a nasty race.
-   (merge b3f1280 jk/repack-ref-racefix later to maint).
 
  * After "git add -N" and then writing a tree object out of the
    index, the cache-tree data structure got corrupted.
-   (merge eec3e7e nd/invalidate-i-t-a-cache-tree later to maint).
 
  * "git clone" used to allow --bare and --separate-git-dir=$there
    options at the same time, which was nonsensical.
@@ -253,49 +244,43 @@ details).
  * "git merge --no-edit" computed who were involved in the work done
    on the side branch, even though that information is to be discarded
    without getting seen in the editor.
-   (merge 9bcbb1c jc/maint-fmt-merge-msg-no-edit-lose-credit later to maint).
 
  * "git merge" started calling prepare-commit-msg hook like "git
    commit" does some time ago, but forgot to pay attention to the exit
    status of the hook.
-   (merge 3e4141d ap/merge-stop-at-prepare-commit-msg-failure later to maint).
 
  * When users spell "cc:" in lowercase in the fake "header" in the
    trailer part, "git send-email" failed to pick up the addresses from
    there. As e-mail headers field names are case insensitive, this
    script should follow suit and treat "cc:" and "Cc:" the same way.
-   (merge 6310071 nz/send-email-headers-are-case-insensitive later to maint).
 
  * Output from "git status --ignored" showed an unexpected interaction
    with "--untracked".
-   (merge a45fb69 ap/status-ignored-in-ignored-directory later to maint).
 
  * "gitweb", when sorting by age to show repositories with new
    activities first, used to sort repositories with absolutely
    nothing in it early, which was not very useful.
-   (merge 28dae18 md/gitweb-sort-by-age later to maint).
 
  * "gitweb"'s code to sanitize control characters before passing it to
    "highlight" filter lost known-to-be-safe control characters by
    mistake.
-   (merge 0e901d2 os/gitweb-highlight-uncaptured later to maint).
 
  * When a line to be wrapped has a solid run of non space characters
    whose length exactly is the wrap width, "git shortlog -w" failed
    to add a newline after such a line.
-   (merge e0db176 sp/shortlog-missing-lf later to maint).
 
  * Command line completion leaked an unnecessary error message while
    looking for possible matches with paths in <tree-ish>.
-   (merge ca87dd6 ds/completion-silence-in-tree-path-probe later to maint).
 
  * Command line completion for "tcsh" emitted an unwanted space
    after completing a single directory name.
-   (merge 92f1c04 mk/complete-tcsh later to maint).
+
+ * Command line completion code was inadvertently made incompatible with
+   older versions of bash by using a newer array notation.
+   (merge 50c5885 bc/fix-array-syntax-for-3.0-in-completion-bash later to maint).
 
  * Some shells do not behave correctly when IFS is unset; work it
    around by explicitly setting it to the default value.
-   (merge 393050c jc/maint-fbsd-sh-ifs-workaround later to maint).
 
  * Some scripted programs written in Python did not get updated when
    PYTHON_PATH changed.
@@ -303,24 +288,21 @@ details).
 
  * When autoconf is used, any build on a different commit always ran
    "config.status --recheck" even when unnecessary.
-   (merge 1226504 jn/less-reconfigure later to maint).
 
  * We have been carrying a translated and long-unmaintained copy of an
    old version of the tutorial; removed.
-   (merge 0a85441 ta/remove-stale-translated-tut later to maint).
+
+ * t0050 had tests expecting failures from a bug that was fixed some
+   time ago.
+   (merge 336e2e2 tb/t0050-maint later to maint).
 
  * t4014, t9502 and t0200 tests had various portability issues that
    broke on OpenBSD.
-   (merge 27f6342 jc/maint-test-portability later to maint).
 
  * t9020 and t3600 tests had various portability issues.
-   (merge 5a02966 jc/test-portability later to maint).
 
  * t9200 runs "cvs init" on a directory that already exists, but a
    platform can configure this fail for the current user (e.g. you
    need to be in the cvsadmin group on NetBSD 6.0).
-   (merge 8666df0 jc/test-cvs-no-init-in-existing-dir later to maint).
 
  * t9020 and t9810 had a few non-portable shell script construct.
-   (merge 2797914 tb/test-t9020-no-which later to maint).
-   (merge 6f4e505 tb/test-t9810-no-sed-i later to maint).
