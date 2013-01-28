@@ -73,8 +73,8 @@ test_expect_success \
 
 test_expect_success \
     'git branch -m dumps usage' \
-       'test_expect_code 129 git branch -m 2>err &&
-	test_i18ngrep "[Uu]sage: git branch" err'
+       'test_expect_code 128 git branch -m 2>err &&
+	test_i18ngrep "too many branches for a rename operation" err'
 
 test_expect_success \
     'git branch -m m m/m should work' \
