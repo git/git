@@ -202,7 +202,11 @@ install-html: html
 #
 # Determine "include::" file references in asciidoc files.
 #
-doc.dep : $(wildcard *.txt) build-docdep.perl
+docdep_prereqs = \
+	mergetools-list.made $(mergetools_txt) \
+	cmd-list.made $(cmds_txt)
+
+doc.dep : $(docdep_prereqs) $(wildcard *.txt) build-docdep.perl
 	$(QUIET_GEN)$(RM) $@+ $@ && \
 	$(PERL_PATH) ./build-docdep.perl >$@+ $(QUIET_STDERR) && \
 	mv $@+ $@
@@ -226,13 +230,27 @@ cmd-list.made: cmd-list.perl ../command-list.txt $(MAN1_TXT)
 	$(PERL_PATH) ./cmd-list.perl ../command-list.txt $(QUIET_STDERR) && \
 	date >$@
 
+mergetools_txt = mergetools-diff.txt mergetools-merge.txt
+
+$(mergetools_txt): mergetools-list.made
+
+mergetools-list.made: ../git-mergetool--lib.sh $(wildcard ../mergetools/*)
+	$(QUIET_GEN)$(RM) $@ && \
+	$(SHELL_PATH) -c 'MERGE_TOOLS_DIR=../mergetools && \
+		. ../git-mergetool--lib.sh && \
+		show_tool_names can_diff "* " || :' >mergetools-diff.txt && \
+	$(SHELL_PATH) -c 'MERGE_TOOLS_DIR=../mergetools && \
+		. ../git-mergetool--lib.sh && \
+		show_tool_names can_merge "* " || :' >mergetools-merge.txt && \
+	date >$@
+
 clean:
 	$(RM) *.xml *.xml+ *.html *.html+ *.1 *.5 *.7
 	$(RM) *.texi *.texi+ *.texi++ git.info gitman.info
 	$(RM) *.pdf
 	$(RM) howto-index.txt howto/*.html doc.dep
 	$(RM) technical/api-*.html technical/api-index.txt
-	$(RM) $(cmds_txt) *.made
+	$(RM) $(cmds_txt) $(mergetools_txt) *.made
 	$(RM) manpage-base-url.xsl
 
 $(MAN_HTML): %.html : %.txt

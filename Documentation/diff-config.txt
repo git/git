@@ -132,9 +132,10 @@ diff.<driver>.cachetextconv::
 	conversion outputs.  See linkgit:gitattributes[5] for details.
 
 diff.tool::
-	The diff tool to be used by linkgit:git-difftool[1].  This
-	option overrides `merge.tool`, and has the same valid built-in
-	values as `merge.tool` minus "tortoisemerge" and plus
-	"kompare".  Any other value is treated as a custom diff tool,
-	and there must be a corresponding `difftool.<tool>.cmd`
-	option.
+	Controls which diff tool is used by linkgit:git-difftool[1].
+	This variable overrides the value configured in `merge.tool`.
+	The list below shows the valid built-in values.
+	Any other value is treated as a custom diff tool and requires
+	that a corresponding difftool.<tool>.cmd variable is defined.
+
+include::mergetools-diff.txt[]

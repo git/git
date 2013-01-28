@@ -1,6 +1,7 @@
 #!/bin/sh
 # git-mergetool--lib is a library for common merge tool functions
-MERGE_TOOLS_DIR=$(git --exec-path)/mergetools
+
+: ${MERGE_TOOLS_DIR=$(git --exec-path)/mergetools}
 
 mode_ok () {
 	if diff_mode

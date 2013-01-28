@@ -9,4 +9,5 @@ gitman.info
 howto-index.txt
 doc.dep
 cmds-*.txt
+mergetools-*.txt
 manpage-base-url.xsl
