@@ -1,10 +1,10 @@
 To: git@vger.kernel.org
 Bcc: lwn@lwn.net
-Subject: What's cooking in git.git (Jan 2013, #09; Fri, 25)
+Subject: What's cooking in git.git (Jan 2013, #10; Sun, 27)
 X-master-at: 50a6b54c03219ad74b9f3f839e0321be18daeaf6
 X-next-at: acf9419c4c1775dd98c80ac4ecc3b5dd89df9fb4
 
-What's cooking in git.git (Jan 2013, #09; Fri, 25)
+What's cooking in git.git (Jan 2013, #10; Sun, 27)
 --------------------------------------------------
 
 Here are the topics that have been cooking.  Commits prefixed with
@@ -20,211 +20,116 @@ repositories listed at
     http://git-blame.blogspot.com/p/git-public-repositories.html
 
 --------------------------------------------------
-[Graduated to "master"]
-
-* as/check-ignore (2013-01-16) 13 commits
-  (merged to 'next' on 2013-01-18 at ef45aff)
- + clean.c, ls-files.c: respect encapsulation of exclude_list_groups
-  (merged to 'next' on 2013-01-14 at 9df2afc)
- + t0008: avoid brace expansion
- + add git-check-ignore sub-command
- + setup.c: document get_pathspec()
- + add.c: extract new die_if_path_beyond_symlink() for reuse
- + add.c: extract check_path_for_gitlink() from treat_gitlinks() for reuse
- + pathspec.c: rename newly public functions for clarity
- + add.c: move pathspec matchers into new pathspec.c for reuse
- + add.c: remove unused argument from validate_pathspec()
- + dir.c: improve docs for match_pathspec() and match_pathspec_depth()
- + dir.c: provide clear_directory() for reclaiming dir_struct memory
- + dir.c: keep track of where patterns came from
- + dir.c: use a single struct exclude_list per source of excludes
-
- Add a new command "git check-ignore" for debugging .gitignore
- files.  The variable names may want to get cleaned up but that can
- be done in-tree.
-
-
-* as/pre-push-hook (2013-01-18) 3 commits
-  (merged to 'next' on 2013-01-18 at 37fc4e8)
- + Add sample pre-push hook script
- + push: Add support for pre-push hooks
- + hooks: Add function to check if a hook exists
-
- Add an extra hook so that "git push" that is run without making
- sure what is being pushed is sane can be checked and rejected (as
- opposed to the user deciding not pushing).
-
-
-* ch/add-auto-submitted-in-sample-post-receive-email (2013-01-17) 1 commit
-  (merged to 'next' on 2013-01-18 at e3205db)
- + Add Auto-Submitted header to post-receive-email
-
- Mark e-mails coming from automated processes should be marked as
- such; update a sample hook to do so.
-
-
-* cr/push-force-tag-update (2013-01-16) 1 commit
-  (merged to 'next' on 2013-01-18 at c9091d5)
- + push: fix "refs/tags/ hierarchy cannot be updated without --force"
- (this branch is used by jc/push-reject-reasons.)
-
- Regression fix, not to say "already exists" when we traditionally
- said "non fast-forward'.
-
-
-* jc/doc-maintainer (2013-01-03) 2 commits
-  (merged to 'next' on 2013-01-11 at f35d582)
- + howto/maintain: mark titles for asciidoc
- + Documentation: update "howto maintain git"
-
- Describe tools for automation that were invented since this
- document was originally written.
-
-
-* jk/suppress-clang-warning (2013-01-16) 1 commit
-  (merged to 'next' on 2013-01-18 at 7c0bda7)
- + fix clang -Wunused-value warnings for error functions
-
-
-* mh/imap-send-shrinkage (2013-01-15) 14 commits
-  (merged to 'next' on 2013-01-18 at 1b7c5ba)
- + imap-send.c: simplify logic in lf_to_crlf()
- + imap-send.c: fold struct store into struct imap_store
- + imap-send.c: remove unused field imap_store::uidvalidity
- + imap-send.c: use struct imap_store instead of struct store
- + imap-send.c: remove unused field imap_store::trashnc
- + imap-send.c: remove namespace fields from struct imap
- + imap-send.c: remove struct imap argument to parse_imap_list_l()
- + imap-send.c: inline parse_imap_list() in parse_list()
- + imap-send.c: remove some unused fields from struct store
- + imap-send.c: remove struct message
- + imap-send.c: remove struct store_conf
- + iamp-send.c: remove unused struct imap_store_conf
- + imap-send.c: remove struct msg_data
- + imap-send.c: remove msg_data::flags, which was always zero
-
- Remove a lot of unused code from "git imap-send".
-
-
-* mo/cvs-server-updates (2012-12-09) 18 commits
-  (merged to 'next' on 2013-01-08 at 75e2d11)
- + t9402: Use TABs for indentation
- + t9402: Rename check.cvsCount and check.list
- + t9402: Simplify git ls-tree
- + t9402: Add missing &&; Code style
- + t9402: No space after IO-redirection
- + t9402: Dont use test_must_fail cvs
- + t9402: improve check_end_tree() and check_end_full_tree()
- + t9402: sed -i is not portable
- + cvsserver Documentation: new cvs ... -r support
- + cvsserver: add t9402 to test branch and tag refs
- + cvsserver: support -r and sticky tags for most operations
- + cvsserver: Add version awareness to argsfromdir
- + cvsserver: generalize getmeta() to recognize commit refs
- + cvsserver: implement req_Sticky and related utilities
- + cvsserver: add misc commit lookup, file meta data, and file listing functions
- + cvsserver: define a tag name character escape mechanism
- + cvsserver: cleanup extra slashes in filename arguments
- + cvsserver: factor out git-log parsing logic
-
- Various git-cvsserver updates.
-
-
-* nd/retire-fnmatch (2013-01-01) 7 commits
-  (merged to 'next' on 2013-01-07 at ab31f9b)
- + Makefile: add USE_WILDMATCH to use wildmatch as fnmatch
- + wildmatch: advance faster in <asterisk> + <literal> patterns
- + wildmatch: make a special case for "*/" with FNM_PATHNAME
- + test-wildmatch: add "perf" command to compare wildmatch and fnmatch
- + wildmatch: support "no FNM_PATHNAME" mode
- + wildmatch: make dowild() take arbitrary flags
- + wildmatch: rename constants and update prototype
-
- Replace our use of fnmatch(3) with a more feature-rich wildmatch.
- A handful patches at the bottom have been moved to nd/wildmatch to
- graduate as part of that branch, before this series solidifies.
-
-
-* rs/clarify-entry-cmp-sslice (2013-01-16) 1 commit
-  (merged to 'next' on 2013-01-18 at d584dc6)
- + refs: use strncmp() instead of strlen() and memcmp()
-
---------------------------------------------------
 [New Topics]
 
-* jc/push-reject-reasons (2013-01-24) 4 commits
- - push: finishing touches to explain REJECT_ALREADY_EXISTS better
- - push: introduce REJECT_FETCH_FIRST and REJECT_NEEDS_FORCE
- - push: further simplify the logic to assign rejection reason
- - push: further clean up fields of "struct ref"
+* bc/git-p4-for-python-2.4 (2013-01-26) 2 commits
+ - git-p4.py: support Python 2.4
+ - git-p4.py: support Python 2.5
 
- Improve error and advice messages given locally when "git push"
- refuses when it cannot compute fast-forwardness by separating these
- cases from the normal "not a fast-forward; merge first and push
- again" case.
+ With small updates to remove dependency on newer features of
+ Python, keep git-p4 usable with older Python.
 
  Will merge to 'next'.
 
 
-* as/test-cleanup (2013-01-24) 1 commit
- - t7102 (reset): don't hardcode SHA-1 in expected outputs
+* jk/gc-auto-after-fetch (2013-01-26) 1 commit
+ - Merge branch 'jk/maint-gc-auto-after-fetch' into jk/gc-auto-after-fetch
+ (this branch uses jk/maint-gc-auto-after-fetch.)
+
+ This is to resolve merge conflicts early for the same topic to
+ recent codebase.
 
  Will merge to 'next'.
 
 
-* jc/do-not-let-random-file-interfere-with-completion-tests (2013-01-24) 1 commit
- - t9902: protect test from stray build artifacts
+* jk/maint-gc-auto-after-fetch (2013-01-26) 2 commits
+ - fetch-pack: avoid repeatedly re-scanning pack directory
+ - fetch: run gc --auto after fetching
+ (this branch is used by jk/gc-auto-after-fetch.)
 
- Scripts to test bash completion was inherently flaky as it was
- affected by whatever random things the user may have on $PATH.
+ Help "fetch only" repositories that does not trigger "gc --auto"
+ often enough.
 
- Will merge to 'next'.
-
-
-* jk/cvsimport-does-not-work-with-cvsps3 (2013-01-24) 1 commit
- - git-cvsimport.txt: cvsps-2 is deprecated
-
- Warn people that other tools are more recommendable over
- cvsimport+cvsps2 combo when doing a one-shot import, and cvsimport
- will not work with cvsps3.
-
- Will merge to 'next'.
+ Will merge to 'next' via jk/gc-auto-after-fetch.
 
 
-* jk/mergetool (2013-01-25) 6 commits
- - mergetool--lib: Improve show_tool_help() output
- - mergetools/vim: Remove redundant diff command
- - git-difftool: use git-mergetool--lib for "--tool-help"
- - git-mergetool: don't hardcode 'mergetool' in show_tool_help
- - git-mergetool: remove redundant assignment
- - git-mergetool: move show_tool_help to mergetool--lib
+* jk/read-commit-buffer-data-after-free (2013-01-26) 3 commits
+ - logmsg_reencode: lazily load missing commit buffers
+ - logmsg_reencode: never return NULL
+ - commit: drop useless xstrdup of commit message
 
- Cleans up mergetool/difftool combo.
-
- It seems John Keeping has some more updates but the version posted
- breaks the tests rather badly.
-
- Expecting some follow-ups.
-
-
-* jn/do-not-drop-username-when-reading-from-etc-mailname (2013-01-25) 1 commit
- - ident: do not drop username when reading from /etc/mailname
-
- We used to stuff "user@" and then append what we read from
- /etc/mailname to come up with a default e-mail ident, but a bug
- lost the "user@" part.  This is to fix it.
+ Clarify the ownership rule for commit->buffer field, which some
+ callers incorrectly accessed without making sure the data is
+ available there.
 
  Will merge to 'next'.
 
 
-* mm/add-u-A-sans-pathspec (2013-01-25) 1 commit
- - add: warn when -u or -A is used without pathspec
+* pw/git-p4-on-cygwin (2013-01-26) 21 commits
+ - git p4: introduce gitConfigBool
+ - git p4: avoid shell when calling git config
+ - git p4: avoid shell when invoking git config --get-all
+ - git p4: avoid shell when invoking git rev-list
+ - git p4: avoid shell when mapping users
+ - git p4: disable read-only attribute before deleting
+ - git p4 test: use test_chmod for cygwin
+ - git p4: cygwin p4 client does not mark read-only
+ - git p4 test: avoid wildcard * in windows
+ - git p4 test: use LineEnd unix in windows tests too
+ - git p4 test: newline handling
+ - git p4: scrub crlf for utf16 files on windows
+ - git p4: remove unreachable windows \r\n conversion code
+ - git p4 test: translate windows paths for cygwin
+ - git p4 test: start p4d inside its db dir
+ - git p4 test: use client_view in t9806
+ - git p4 test: avoid loop in client_view
+ - git p4 test: use client_view to build the initial client
+ - git p4: generate better error message for bad depot path
+ - git p4: remove unused imports
+ - git p4: temp branch name should use / even on windows
 
- Forbid "git add -u" and "git add -A" without pathspec run from a
- subdirectory, to train people to type "." (or ":/") to make the
- choice of default does not matter.
+ Improve "git p4" on Cygwin.  The cover letter said it is not yet
+ ready for full Windows support so I won't move this to 'next' until
+ told by the author (the area maintainer) otherwise.
+
+
+* ss/mergetools-tortoise (2013-01-26) 2 commits
+ - mergetools: allow passing pathnames with SP in them to TortoiseGitMerge
+ - mergetools: support TortoiseGitMerge
+
+ Update mergetools to work better with newer merge helper tortoise ships.
 
  Will merge to 'next'.
+
+
+* da/mergetool-docs (2013-01-27) 4 commits
+ - doc: generate a list of valid merge tools
+ - mergetool--lib: add functions for finding available tools
+ - mergetool--lib: improve the help text in guess_merge_tool()
+ - mergetool--lib: simplify command expressions
+ (this branch uses jk/mergetool.)
+
+ Build on top of the clean-up done by jk/mergetool and automatically
+ generate the list of mergetool and difftool backends the build
+ supports to be included in the documentation.
+
+ This may still need to be fixed up at minor details; I'd like to
+ see a review from John Keeping on these.
+
+
+* nd/branch-error-cases (2013-01-27) 4 commits
+ - branch: mark more strings for translation
+ - branch: give a more helpful message on redundant arguments
+ - branch: reject -D/-d without branch name
+ - branch: no detached HEAD check when editing another branch's description
+
+ Fix various error messages and conditions in "git branch", e.g. we
+ advertised "branch -d/-D" to remove one or more branches but actually
+ implemented removal of zero or more branches---request to remove no
+ branches was not rejected.
+
+ Will merge to 'next', perhaps after rebasing on an older base
+ so that this can later be merged to the maintenance track.
 
 --------------------------------------------------
 [Stalled]
@@ -366,12 +271,89 @@ repositories listed at
 --------------------------------------------------
 [Cooking]
 
+* jc/push-reject-reasons (2013-01-24) 4 commits
+ - push: finishing touches to explain REJECT_ALREADY_EXISTS better
+ - push: introduce REJECT_FETCH_FIRST and REJECT_NEEDS_FORCE
+ - push: further simplify the logic to assign rejection reason
+ - push: further clean up fields of "struct ref"
+
+ Improve error and advice messages given locally when "git push"
+ refuses when it cannot compute fast-forwardness by separating these
+ cases from the normal "not a fast-forward; merge first and push
+ again" case.
+
+ Will merge to 'next'.
+
+
+* as/test-cleanup (2013-01-24) 1 commit
+ - t7102 (reset): don't hardcode SHA-1 in expected outputs
+
+ Will merge to 'next'.
+
+
+* jc/do-not-let-random-file-interfere-with-completion-tests (2013-01-24) 1 commit
+ - t9902: protect test from stray build artifacts
+
+ Scripts to test bash completion was inherently flaky as it was
+ affected by whatever random things the user may have on $PATH.
+
+ Will merge to 'next'.
+
+
+* jk/cvsimport-does-not-work-with-cvsps3 (2013-01-24) 1 commit
+ - git-cvsimport.txt: cvsps-2 is deprecated
+
+ Warn people that other tools are more recommendable over
+ cvsimport+cvsps2 combo when doing a one-shot import, and cvsimport
+ will not work with cvsps3.
+
+ Will merge to 'next'.
+
+
+* jk/mergetool (2013-01-27) 8 commits
+ - mergetools: simplify how we handle "vim" and "defaults"
+ - mergetool--lib: don't call "exit" in setup_tool
+ - mergetool--lib: improve show_tool_help() output
+ - mergetools/vim: remove redundant diff command
+ - git-difftool: use git-mergetool--lib for "--tool-help"
+ - git-mergetool: don't hardcode 'mergetool' in show_tool_help
+ - git-mergetool: remove redundant assignment
+ - git-mergetool: move show_tool_help to mergetool--lib
+ (this branch is used by da/mergetool-docs.)
+
+ Cleans up mergetool/difftool combo.
+
+ Will merge to 'next'.
+
+
+* jn/do-not-drop-username-when-reading-from-etc-mailname (2013-01-25) 1 commit
+ - ident: do not drop username when reading from /etc/mailname
+
+ We used to stuff "user@" and then append what we read from
+ /etc/mailname to come up with a default e-mail ident, but a bug
+ lost the "user@" part.  This is to fix it.
+
+ Will merge to 'next'.
+
+
+* mm/add-u-A-sans-pathspec (2013-01-25) 1 commit
+ - add: warn when -u or -A is used without pathspec
+
+ Forbid "git add -u" and "git add -A" without pathspec run from a
+ subdirectory, to train people to type "." (or ":/") to make the
+ choice of default does not matter.
+
+ Will merge to 'next'.
+
+
 * bc/fix-array-syntax-for-3.0-in-completion-bash (2013-01-18) 1 commit
   (merged to 'next' on 2013-01-25 at d113c1a)
  + git-completion.bash: replace zsh notation that breaks bash 3.X
 
  Fix use of an array notation that older versions of bash do not
  understand.
+
+ Will merge to 'master'.
 
 
 * jc/help (2013-01-18) 1 commit
@@ -380,6 +362,8 @@ repositories listed at
 
  A header file that has the definition of a static array was
  included in two places, wasting the space.
+
+ Will merge to 'master'.
 
 
 * jc/hidden-refs (2013-01-18) 2 commits
@@ -406,6 +390,8 @@ repositories listed at
  Update tests that were expecting to fail due to a bug that was
  fixed earlier.
 
+ Will merge to 'master'.
+
 
 * nd/magic-pathspec-from-root (2013-01-21) 2 commits
   (merged to 'next' on 2013-01-25 at b056b57)
@@ -418,6 +404,8 @@ repositories listed at
  not be interpretable as object names.  Tweak the disambiguation
  rule so that ":/" (no other string before or after) is always
  interpreted as a pathspec, to avoid having to say "git cmd -- :/".
+
+ Will merge to 'master'.
 
 
 * ta/doc-no-small-caps (2013-01-22) 10 commits
@@ -454,6 +442,8 @@ repositories listed at
  and size, which these implementations can reliably update.  This
  avoids excessive revalidation of contents.
 
+ Will merge to 'master'.
+
 
 * jc/remove-treesame-parent-in-simplify-merges (2013-01-17) 1 commit
  - simplify-merges: drop merge from irrelevant side branch
@@ -466,10 +456,11 @@ repositories listed at
  infrastructure, it is appreciated to have an extra set of eyes for
  sanity check.
 
- Waiting for reviews and comments.
+ Will merge to 'next'.
 
 
-* jk/remote-helpers-in-python-3 (2013-01-24) 8 commits
+* jk/remote-helpers-in-python-3 (2013-01-27) 9 commits
+ - git-remote-testpy: fix path hashing on Python 3
   (merged to 'next' on 2013-01-25 at acf9419)
  + git-remote-testpy: call print as a function
  + git-remote-testpy: don't do unbuffered text I/O
@@ -482,6 +473,8 @@ repositories listed at
 
  Prepare remote-helper test written in Python to be run with Python3.
 
+ Waiting for the final review and Ack, perhaps from Michael.
+
 
 * dl/am-hg-locale (2013-01-18) 1 commit
   (merged to 'next' on 2013-01-25 at 3419019)
@@ -490,6 +483,8 @@ repositories listed at
  Datestamp recorded in "Hg" format patch was reformatted incorrectly
  to an e-mail looking date using locale dependant strftime, causing
  patch application to fail.
+
+ Will merge to 'master'.
 
 
 * jk/config-parsing-cleanup (2013-01-23) 8 commits
@@ -609,7 +604,7 @@ repositories listed at
  $gmane/211935
 
 
-* bc/append-signed-off-by (2013-01-21) 10 commits
+* bc/append-signed-off-by (2013-01-27) 11 commits
  - Unify appending signoff in format-patch, commit and sequencer
  - format-patch: update append_signoff prototype
  - t4014: more tests about appending s-o-b lines
@@ -619,54 +614,9 @@ repositories listed at
  - sequencer.c: recognize "(cherry picked from ..." as part of s-o-b footer
  - t/t3511: add some tests of 'cherry-pick -s' functionality
  - t/test-lib-functions.sh: allow to specify the tag name to test_commit
- - sequencer.c: remove broken support for rfc2822 continuation in footer
+ - commit, cherry-pick -s: remove broken support for multiline rfc2822 fields
+ - sequencer.c: rework search for start of footer to improve clarity
 
- Rerolled.
-
- Expecting another reroll.
- $gmane/214231
-
---------------------------------------------------
-[Discarded]
-
-* er/replace-cvsimport (2013-01-12) 7 commits
- . t/lib-cvs: cvsimport no longer works without Python >= 2.7
- . t9605: test for cvsps commit ordering bug
- . t9604: fixup for new cvsimport
- . t9600: fixup for new cvsimport
- . t/lib-cvs.sh: allow cvsps version 3.x.
- . t/t960[123]: remove leftover scripts
- . cvsimport: rewrite to use cvsps 3.x to fix major bugs
-
- Rerolled as jc/cvsimport-upgrade.
+ Rerolled.  With help from Jonathan, I think this is getting closer.
 
 
-* jc/valgrind-memcmp-bsearch (2013-01-14) 1 commit
- . ignore memcmp() overreading in bsearch() callback
-
- Squelch false positive in valgrind tests; made unnecessary by
- rewriting the callsite that confuses the tool.
-
-
-* rs/archive-tar-config-parsing-fix (2013-01-14) 1 commit
- . archive-tar: fix sanity check in config parsing
-
- jk/config-parsing-cleanup made this topic unneeded.
-
-
-* jc/cvsimport-upgrade (2013-01-14) 8 commits
- - t9600: adjust for new cvsimport
- - t9600: further prepare for sharing
- - cvsimport-3: add a sample test
- - cvsimport: make tests reusable for cvsimport-3
- - cvsimport: start adding cvsps 3.x support
- - cvsimport: introduce a version-switch wrapper
- - cvsimport: allow setting a custom cvsps (2.x) program name
- - Makefile: add description on PERL/PYTHON_PATH
-
- People involved in cvsimport-3 say that the combination of it and
- cvsps3 does not work with incremental import all that well.  For
- now, let's discard this and replace it with a documeentation update
- that says "cvsimport will not work if you do not have cvsps2".
-
- Will discard.
