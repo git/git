@@ -17,16 +17,6 @@ To install:
 
   1. Copy these files to vim's syntax directory $HOME/.vim/syntax
   2. To auto-detect the editing of various git-related filetypes:
-	$ cat >>$HOME/.vim/filetype.vim <<'EOF'
-	autocmd BufNewFile,BufRead *.git/COMMIT_EDITMSG    setf gitcommit
-	autocmd BufNewFile,BufRead *.git/config,.gitconfig setf gitconfig
-	autocmd BufNewFile,BufRead git-rebase-todo         setf gitrebase
-	autocmd BufNewFile,BufRead .msg.[0-9]*
-		\ if getline(1) =~ '^From.*# This line is ignored.$' |
-		\   setf gitsendemail |
-		\ endif
-	autocmd BufNewFile,BufRead *.git/**
-		\ if getline(1) =~ '^\x\{40\}\>\|^ref: ' |
-		\   setf git |
-		\ endif
-	EOF
+
+	$ curl http://ftp.vim.org/pub/vim/runtime/filetype.vim |
+		sed -ne '/^" Git$/, /^$/ p' >>$HOME/.vim/filetype.vim
