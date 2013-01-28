@@ -15,16 +15,34 @@ int is_directory(const char *path)
 #define MAXDEPTH 5
 
 /*
- * Use this to get the real path, i.e. resolve links. If you want an
- * absolute path but don't mind links, use absolute_path.
+ * Return the real path (i.e., absolute path, with symlinks resolved
+ * and extra slashes removed) equivalent to the specified path.  (If
+ * you want an absolute path but don't mind links, use
+ * absolute_path().)  The return value is a pointer to a static
+ * buffer.
+ *
+ * The input and all intermediate paths must be shorter than MAX_PATH.
+ * The directory part of path (i.e., everything up to the last
+ * dir_sep) must denote a valid, existing directory, but the last
+ * component need not exist.  If die_on_error is set, then die with an
+ * informative error message if there is a problem.  Otherwise, return
+ * NULL on errors (without generating any output).
  *
  * If path is our buffer, then return path, as it's already what the
  * user wants.
  */
-const char *real_path(const char *path)
+static const char *real_path_internal(const char *path, int die_on_error)
 {
 	static char bufs[2][PATH_MAX + 1], *buf = bufs[0], *next_buf = bufs[1];
+	char *retval = NULL;
+
+	/*
+	 * If we have to temporarily chdir(), store the original CWD
+	 * here so that we can chdir() back to it at the end of the
+	 * function:
+	 */
 	char cwd[1024] = "";
+
 	int buf_index = 1;
 
 	int depth = MAXDEPTH;
@@ -35,11 +53,19 @@ const char *real_path(const char *path)
 	if (path == buf || path == next_buf)
 		return path;
 
-	if (!*path)
-		die("The empty string is not a valid path");
+	if (!*path) {
+		if (die_on_error)
+			die("The empty string is not a valid path");
+		else
+			goto error_out;
+	}
 
-	if (strlcpy(buf, path, PATH_MAX) >= PATH_MAX)
-		die ("Too long path: %.*s", 60, path);
+	if (strlcpy(buf, path, PATH_MAX) >= PATH_MAX) {
+		if (die_on_error)
+			die("Too long path: %.*s", 60, path);
+		else
+			goto error_out;
+	}
 
 	while (depth--) {
 		if (!is_directory(buf)) {
@@ -54,20 +80,36 @@ const char *real_path(const char *path)
 		}
 
 		if (*buf) {
-			if (!*cwd && !getcwd(cwd, sizeof(cwd)))
-				die_errno ("Could not get current working directory");
+			if (!*cwd && !getcwd(cwd, sizeof(cwd))) {
+				if (die_on_error)
+					die_errno("Could not get current working directory");
+				else
+					goto error_out;
+			}
 
-			if (chdir(buf))
-				die_errno ("Could not switch to '%s'", buf);
+			if (chdir(buf)) {
+				if (die_on_error)
+					die_errno("Could not switch to '%s'", buf);
+				else
+					goto error_out;
+			}
 		}
-		if (!getcwd(buf, PATH_MAX))
-			die_errno ("Could not get current working directory");
+		if (!getcwd(buf, PATH_MAX)) {
+			if (die_on_error)
+				die_errno("Could not get current working directory");
+			else
+				goto error_out;
+		}
 
 		if (last_elem) {
 			size_t len = strlen(buf);
-			if (len + strlen(last_elem) + 2 > PATH_MAX)
-				die ("Too long path name: '%s/%s'",
-						buf, last_elem);
+			if (len + strlen(last_elem) + 2 > PATH_MAX) {
+				if (die_on_error)
+					die("Too long path name: '%s/%s'",
+					    buf, last_elem);
+				else
+					goto error_out;
+			}
 			if (len && !is_dir_sep(buf[len-1]))
 				buf[len++] = '/';
 			strcpy(buf + len, last_elem);
@@ -77,10 +119,18 @@ const char *real_path(const char *path)
 
 		if (!lstat(buf, &st) && S_ISLNK(st.st_mode)) {
 			ssize_t len = readlink(buf, next_buf, PATH_MAX);
-			if (len < 0)
-				die_errno ("Invalid symlink '%s'", buf);
-			if (PATH_MAX <= len)
-				die("symbolic link too long: %s", buf);
+			if (len < 0) {
+				if (die_on_error)
+					die_errno("Invalid symlink '%s'", buf);
+				else
+					goto error_out;
+			}
+			if (PATH_MAX <= len) {
+				if (die_on_error)
+					die("symbolic link too long: %s", buf);
+				else
+					goto error_out;
+			}
 			next_buf[len] = '\0';
 			buf = next_buf;
 			buf_index = 1 - buf_index;
@@ -89,10 +139,23 @@ const char *real_path(const char *path)
 			break;
 	}
 
+	retval = buf;
+error_out:
+	free(last_elem);
 	if (*cwd && chdir(cwd))
 		die_errno ("Could not change back to '%s'", cwd);
 
-	return buf;
+	return retval;
+}
+
+const char *real_path(const char *path)
+{
+	return real_path_internal(path, 1);
+}
+
+const char *real_path_if_valid(const char *path)
+{
+	return real_path_internal(path, 0);
 }
 
 static const char *get_pwd_cwd(void)

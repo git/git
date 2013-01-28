@@ -45,15 +45,6 @@ void filter_string_list(struct string_list *list, int free_util,
  */
 void string_list_remove_empty_items(struct string_list *list, int free_util);
 
-/*
- * Return the longest string in prefixes that is a prefix (in the
- * sense of prefixcmp()) of string, or NULL if no such prefix exists.
- * This function does not require the string_list to be sorted (it
- * does a linear search).
- */
-char *string_list_longest_prefix(const struct string_list *prefixes, const char *string);
-
-
 /* Use these functions only on sorted lists: */
 int string_list_has_string(const struct string_list *list, const char *string);
 int string_list_find_insert_index(const struct string_list *list, const char *string,

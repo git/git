@@ -82,14 +82,6 @@ Functions
 	call free() on the util members of any items that have to be
 	deleted.  Preserve the order of the items that are retained.
 
-`string_list_longest_prefix`::
-
-	Return the longest string within a string_list that is a
-	prefix (in the sense of prefixcmp()) of the specified string,
-	or NULL if no such prefix exists.  This function does not
-	require the string_list to be sorted (it does a linear
-	search).
-
 `print_string_list`::
 
 	Dump a string_list to stdout, useful mainly for debugging purposes. It
