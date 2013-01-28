@@ -862,8 +862,10 @@ if ($wildo) {
 	if (!@ARGV) {
 		open($fd, "<", "Meta/whats-cooking.txt");
 	} elsif (@ARGV != 1) {
-		print STDERR "$0 --wildo [filename|HEAD]\n";
+		print STDERR "$0 --wildo [filename|HEAD|-]\n";
 		exit 1;
+	} elsif ($ARGV[0] eq '-') {
+		$fd = \*STDIN;
 	} elsif ($ARGV[0] =~ /^HEAD/) {
 		open($fd, "-|",
 		     qw(git --git-dir=Meta/.git cat-file -p),
