@@ -72,13 +72,13 @@ if set:
 	GIT_COMMITTER_NAME
 	GIT_COMMITTER_EMAIL
 	GIT_COMMITTER_DATE
-	EMAIL
 
 (nb "<", ">" and "\n"s are stripped)
 
 In case (some of) these environment variables are not set, the information
 is taken from the configuration items user.name and user.email, or, if not
-present, system user name and the hostname used for outgoing mail (taken
+present, the environment variable EMAIL, or, if that is not set,
+system user name and the hostname used for outgoing mail (taken
 from `/etc/mailname` and falling back to the fully qualified hostname when
 that file does not exist).
 
