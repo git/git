@@ -36,7 +36,7 @@ static int marked;
 #define MAX_IN_VAIN 256
 
 static struct commit_list *rev_list;
-static int non_common_revs, multi_ack, use_sideband;
+static int non_common_revs, multi_ack, use_sideband, allow_tip_sha1_in_want;
 
 static void rev_list_push(struct commit *commit, int mark)
 {
@@ -563,6 +563,21 @@ static void filter_refs(struct fetch_pack_args *args,
 		}
 	}
 
+	/* Append unmatched requests to the list */
+	if (allow_tip_sha1_in_want) {
+		for (i = 0; i < nr_sought; i++) {
+			ref = sought[i];
+			if (ref->matched)
+				continue;
+			if (get_sha1_hex(ref->name, ref->old_sha1))
+				continue;
+
+			ref->matched = 1;
+			*newtail = ref;
+			ref->next = NULL;
+			newtail = &ref->next;
+		}
+	}
 	*refs = newlist;
 }
 
@@ -802,6 +817,11 @@ static struct ref *do_fetch_pack(struct fetch_pack_args *args,
 		if (args->verbose)
 			fprintf(stderr, "Server supports side-band\n");
 		use_sideband = 1;
+	}
+	if (server_supports("allow-tip-sha1-in-want")) {
+		if (args->verbose)
+			fprintf(stderr, "Server supports allow-tip-sha1-in-want\n");
+		allow_tip_sha1_in_want = 1;
 	}
 	if (!server_supports("thin-pack"))
 		args->use_thin_pack = 0;

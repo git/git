@@ -15,6 +15,7 @@ static struct refspec s_tag_refspec = {
 	0,
 	1,
 	0,
+	0,
 	"refs/tags/*",
 	"refs/tags/*"
 };
@@ -565,9 +566,13 @@ static struct refspec *parse_refspec_internal(int nr_refspec, const char **refsp
 		flags = REFNAME_ALLOW_ONELEVEL | (is_glob ? REFNAME_REFSPEC_PATTERN : 0);
 
 		if (fetch) {
+			unsigned char unused[40];
+
 			/* LHS */
 			if (!*rs[i].src)
 				; /* empty is ok; it means "HEAD" */
+			else if (llen == 40 && !get_sha1_hex(rs[i].src, unused))
+				rs[i].exact_sha1 = 1; /* ok */
 			else if (!check_refname_format(rs[i].src, flags))
 				; /* valid looking ref is ok */
 			else
@@ -1495,7 +1500,12 @@ int get_fetch_map(const struct ref *remote_refs,
 	} else {
 		const char *name = refspec->src[0] ? refspec->src : "HEAD";
 
-		ref_map = get_remote_ref(remote_refs, name);
+		if (refspec->exact_sha1) {
+			ref_map = alloc_ref(name);
+			get_sha1_hex(name, ref_map->old_sha1);
+		} else {
+			ref_map = get_remote_ref(remote_refs, name);
+		}
 		if (!missing_ok && !ref_map)
 			die("Couldn't find remote ref %s", name);
 		if (ref_map) {

@@ -62,6 +62,7 @@ struct refspec {
 	unsigned force : 1;
 	unsigned pattern : 1;
 	unsigned matching : 1;
+	unsigned exact_sha1 : 1;
 
 	char *src;
 	char *dst;
