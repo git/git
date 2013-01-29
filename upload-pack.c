@@ -28,7 +28,7 @@ static const char upload_pack_usage[] = "git upload-pack [--strict] [--timeout=<
 
 static unsigned long oldest_have;
 
-static int multi_ack, nr_our_refs;
+static int multi_ack;
 static int no_done;
 static int use_thin_pack, use_ofs_delta, use_include_tag;
 static int no_progress, daemon_mode;
@@ -139,7 +139,6 @@ static void create_pack_file(void)
 {
 	struct async rev_list;
 	struct child_process pack_objects;
-	int create_full_pack = (nr_our_refs == want_obj.nr && !have_obj.nr);
 	char data[8193], progress[128];
 	char abort_msg[] = "aborting due to possible repository "
 		"corruption on the remote side.";
@@ -151,9 +150,7 @@ static void create_pack_file(void)
 	argv[arg++] = "pack-objects";
 	if (!shallow_nr) {
 		argv[arg++] = "--revs";
-		if (create_full_pack)
-			argv[arg++] = "--all";
-		else if (use_thin_pack)
+		if (use_thin_pack)
 			argv[arg++] = "--thin";
 	}
 
@@ -185,15 +182,15 @@ static void create_pack_file(void)
 	}
 	else {
 		FILE *pipe_fd = xfdopen(pack_objects.in, "w");
-		if (!create_full_pack) {
-			int i;
-			for (i = 0; i < want_obj.nr; i++)
-				fprintf(pipe_fd, "%s\n", sha1_to_hex(want_obj.objects[i].item->sha1));
-			fprintf(pipe_fd, "--not\n");
-			for (i = 0; i < have_obj.nr; i++)
-				fprintf(pipe_fd, "%s\n", sha1_to_hex(have_obj.objects[i].item->sha1));
-		}
+		int i;
 
+		for (i = 0; i < want_obj.nr; i++)
+			fprintf(pipe_fd, "%s\n",
+				sha1_to_hex(want_obj.objects[i].item->sha1));
+		fprintf(pipe_fd, "--not\n");
+		for (i = 0; i < have_obj.nr; i++)
+			fprintf(pipe_fd, "%s\n",
+				sha1_to_hex(have_obj.objects[i].item->sha1));
 		fprintf(pipe_fd, "\n");
 		fflush(pipe_fd);
 		fclose(pipe_fd);
@@ -727,10 +724,7 @@ static int mark_our_ref(const char *refname, const unsigned char *sha1, int flag
 	struct object *o = lookup_unknown_object(sha1);
 	if (!o)
 		die("git upload-pack: cannot find object %s:", sha1_to_hex(sha1));
-	if (!(o->flags & OUR_REF)) {
-		o->flags |= OUR_REF;
-		nr_our_refs++;
-	}
+	o->flags |= OUR_REF;
 	return 0;
 }
 
