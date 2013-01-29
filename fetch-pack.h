@@ -20,17 +20,16 @@ struct fetch_pack_args {
 };
 
 /*
- * sought contains the full names of remote references that should be
- * updated from.  On return, the names that were found on the remote
- * will have been removed from the list.  The util members of the
- * string_list_items are used internally; they must be NULL on entry
- * (and will be NULL on exit).
+ * sought represents remote references that should be updated from.
+ * On return, the names that were found on the remote will have been
+ * marked as such.
  */
 struct ref *fetch_pack(struct fetch_pack_args *args,
 		       int fd[], struct child_process *conn,
 		       const struct ref *ref,
 		       const char *dest,
-		       struct string_list *sought,
+		       struct ref **sought,
+		       int nr_sought,
 		       char **pack_lockfile);
 
 #endif

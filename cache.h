@@ -1013,7 +1013,8 @@ struct ref {
 		nonfastforward:1,
 		not_forwardable:1,
 		update:1,
-		deletion:1;
+		deletion:1,
+		matched:1;
 	enum {
 		REF_STATUS_NONE = 0,
 		REF_STATUS_OK,
