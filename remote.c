@@ -538,7 +538,7 @@ static struct refspec *parse_refspec_internal(int nr_refspec, const char **refsp
 
 		/*
 		 * Before going on, special case ":" (or "+:") as a refspec
-		 * for matching refs.
+		 * for pushing matching refs.
 		 */
 		if (!fetch && rhs == lhs && rhs[1] == '\0') {
 			rs[i].matching = 1;
@@ -565,26 +565,21 @@ static struct refspec *parse_refspec_internal(int nr_refspec, const char **refsp
 		flags = REFNAME_ALLOW_ONELEVEL | (is_glob ? REFNAME_REFSPEC_PATTERN : 0);
 
 		if (fetch) {
-			/*
-			 * LHS
-			 * - empty is allowed; it means HEAD.
-			 * - otherwise it must be a valid looking ref.
-			 */
+			/* LHS */
 			if (!*rs[i].src)
-				; /* empty is ok */
-			else if (check_refname_format(rs[i].src, flags))
+				; /* empty is ok; it means "HEAD" */
+			else if (!check_refname_format(rs[i].src, flags))
+				; /* valid looking ref is ok */
+			else
 				goto invalid;
-			/*
-			 * RHS
-			 * - missing is ok, and is same as empty.
-			 * - empty is ok; it means not to store.
-			 * - otherwise it must be a valid looking ref.
-			 */
+			/* RHS */
 			if (!rs[i].dst)
-				; /* ok */
+				; /* missing is ok; it is the same as empty */
 			else if (!*rs[i].dst)
-				; /* ok */
-			else if (check_refname_format(rs[i].dst, flags))
+				; /* empty is ok; it means "do not store" */
+			else if (!check_refname_format(rs[i].dst, flags))
+				; /* valid looking ref is ok */
+			else
 				goto invalid;
 		} else {
 			/*
