@@ -42,4 +42,4 @@ instlibdir: $(pysetupfile)
 
 clean:
 	$(QUIET)$(PYTHON_PATH) $(pysetupfile) $(QUIETSETUP) clean -a
-	$(RM) *.pyo *.pyc
+	$(RM) *.pyo *.pyc GIT-PYTHON-VERSION
