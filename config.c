@@ -566,6 +566,12 @@ static int git_default_core_config(const char *var, const char *value)
 		trust_ctime = git_config_bool(var, value);
 		return 0;
 	}
+	if (!strcmp(var, "core.statinfo")) {
+		if (!strcasecmp(value, "default"))
+			check_stat = 1;
+		else if (!strcasecmp(value, "minimal"))
+			check_stat = 0;
+	}
 
 	if (!strcmp(var, "core.quotepath")) {
 		quote_path_fully = git_config_bool(var, value);

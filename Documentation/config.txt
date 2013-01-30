@@ -235,6 +235,12 @@ core.trustctime::
 	crawlers and some backup systems).
 	See linkgit:git-update-index[1]. True by default.
 
+core.checkstat::
+	Determines which stat fields to match between the index
+	and work tree. The user can set this to 'default' or
+	'minimal'. Default (or explicitly 'default'), is to check
+	all fields, including the sub-second part of mtime and ctime.
+
 core.quotepath::
 	The commands that output paths (e.g. 'ls-files',
 	'diff'), when not given the `-z` option, will quote

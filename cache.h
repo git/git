@@ -536,6 +536,7 @@ extern int delete_ref(const char *, const unsigned char *sha1, int delopt);
 /* Environment bits from configuration mechanism */
 extern int trust_executable_bit;
 extern int trust_ctime;
+extern int check_stat;
 extern int quote_path_fully;
 extern int has_symlinks;
 extern int minimum_abbrev, default_abbrev;
