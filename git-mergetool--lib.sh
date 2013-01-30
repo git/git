@@ -19,9 +19,24 @@ is_available () {
 	type "$merge_tool_path" >/dev/null 2>&1
 }
 
+list_config_tools () {
+	section=$1
+	line_prefix=${2:-}
+
+	git config --get-regexp $section'\..*\.cmd' |
+	while read -r key value
+	do
+		toolname=${key#$section.}
+		toolname=${toolname%.cmd}
+
+		printf "%s%s\n" "$line_prefix" "$toolname"
+	done
+}
+
 show_tool_names () {
 	condition=${1:-true} per_line_prefix=${2:-} preamble=${3:-}
 	not_found_msg=${4:-}
+	extra_content=${5:-}
 
 	shown_any=
 	( cd "$MERGE_TOOLS_DIR" && ls ) | {
@@ -39,6 +54,19 @@ show_tool_names () {
 				printf "%s%s\n" "$per_line_prefix" "$toolname"
 			fi
 		done
+
+		if test -n "$extra_content"
+		then
+			if test -n "$preamble"
+			then
+				# Note: no '\n' here since we don't want a
+				# blank line if there is no initial content.
+				printf "%s" "$preamble"
+				preamble=
+			fi
+			shown_any=yes
+			printf "\n%s\n" "$extra_content"
+		fi
 
 		if test -n "$preamble" && test -n "$not_found_msg"
 		then
@@ -254,9 +282,20 @@ show_tool_help () {
 	any_shown=no
 
 	cmd_name=${TOOL_MODE}tool
+	config_tools=$({
+		diff_mode && list_config_tools difftool "$tab$tab"
+		list_config_tools mergetool "$tab$tab"
+	} | sort)
+	extra_content=
+	if test -n "$config_tools"
+	then
+		extra_content="${tab}user-defined:${LF}$config_tools"
+	fi
+
 	show_tool_names 'mode_ok && is_available' "$tab$tab" \
 		"$tool_opt may be set to one of the following:" \
-		"No suitable tool for 'git $cmd_name --tool=<tool>' found." &&
+		"No suitable tool for 'git $cmd_name --tool=<tool>' found." \
+		"$extra_content" &&
 		any_shown=yes
 
 	show_tool_names 'mode_ok && ! is_available' "$tab$tab" \
