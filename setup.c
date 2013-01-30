@@ -66,7 +66,14 @@ int check_filename(const char *prefix, const char *arg)
 	const char *name;
 	struct stat st;
 
-	name = prefix ? prefix_filename(prefix, strlen(prefix), arg) : arg;
+	if (!prefixcmp(arg, ":/")) {
+		if (arg[2] == '\0') /* ":/" is root dir, always exists */
+			return 1;
+		name = arg + 2;
+	} else if (prefix)
+		name = prefix_filename(prefix, strlen(prefix), arg);
+	else
+		name = arg;
 	if (!lstat(name, &st))
 		return 1; /* file exists */
 	if (errno == ENOENT || errno == ENOTDIR)

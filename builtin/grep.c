@@ -823,6 +823,8 @@ int cmd_grep(int argc, const char **argv, const char *prefix)
 			struct object *object = parse_object(sha1);
 			if (!object)
 				die(_("bad object %s"), arg);
+			if (!seen_dashdash)
+				verify_non_filename(prefix, arg);
 			add_object_array(object, arg, &list);
 			continue;
 		}
