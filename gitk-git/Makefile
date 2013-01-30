@@ -17,6 +17,16 @@ DESTDIR_SQ = $(subst ','\'',$(DESTDIR))
 bindir_SQ = $(subst ','\'',$(bindir))
 TCLTK_PATH_SQ = $(subst ','\'',$(TCLTK_PATH))
 
+### Detect Tck/Tk interpreter path changes
+TRACK_TCLTK = $(subst ','\'',-DTCLTK_PATH='$(TCLTK_PATH_SQ)')
+
+GIT-TCLTK-VARS: FORCE
+	@VARS='$(TRACK_TCLTK)'; \
+		if test x"$$VARS" != x"`cat $@ 2>/dev/null`" ; then \
+			echo 1>&2 "    * new Tcl/Tk interpreter location"; \
+			echo "$$VARS" >$@; \
+		fi
+
 ## po-file creation rules
 XGETTEXT   ?= xgettext
 ifdef NO_MSGFMT
@@ -49,9 +59,9 @@ uninstall::
 	$(RM) '$(DESTDIR_SQ)$(bindir_SQ)'/gitk
 
 clean::
-	$(RM) gitk-wish po/*.msg
+	$(RM) gitk-wish po/*.msg GIT-TCLTK-VARS
 
-gitk-wish: gitk
+gitk-wish: gitk GIT-TCLTK-VARS
 	$(QUIET_GEN)$(RM) $@ $@+ && \
 	sed -e '1,3s|^exec .* "$$0"|exec $(subst |,'\|',$(TCLTK_PATH_SQ)) "$$0"|' <gitk >$@+ && \
 	chmod +x $@+ && \
@@ -65,3 +75,5 @@ $(ALL_MSGFILES): %.msg : %.po
 	@echo Generating catalog $@
 	$(MSGFMT) --statistics --tcl $< -l $(basename $(notdir $<)) -d $(dir $@)
 
+.PHONY: all install uninstall clean update-po
+.PHONY: FORCE
