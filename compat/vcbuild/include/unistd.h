@@ -49,6 +49,9 @@ typedef int64_t off64_t;
 #define INTMAX_MAX  _I64_MAX
 #define UINTMAX_MAX _UI64_MAX
 
+#define UINT32_MAX 0xffffffff  /* 4294967295U */
+
+#define STDIN_FILENO  0
 #define STDOUT_FILENO 1
 #define STDERR_FILENO 2
 
