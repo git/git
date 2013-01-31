@@ -744,7 +744,7 @@ void transport_print_push_status(const char *dest, struct ref *refs,
 			n += print_one_push_status(ref, dest, n, porcelain);
 		if (ref->status == REF_STATUS_REJECT_NONFASTFORWARD &&
 		    *nonfastforward != NON_FF_HEAD) {
-			if (!strcmp(head, ref->name))
+			if (head != NULL && !strcmp(head, ref->name))
 				*nonfastforward = NON_FF_HEAD;
 			else
 				*nonfastforward = NON_FF_OTHER;
