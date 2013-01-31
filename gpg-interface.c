@@ -128,8 +128,10 @@ int verify_signed_buffer(const char *payload, size_t payload_size,
 	write_in_full(gpg.in, payload, payload_size);
 	close(gpg.in);
 
-	if (gpg_output)
+	if (gpg_output) {
 		strbuf_read(gpg_output, gpg.err, 0);
+		close(gpg.err);
+	}
 	ret = finish_command(&gpg);
 
 	unlink_or_warn(path);
