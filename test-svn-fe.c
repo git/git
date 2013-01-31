@@ -24,7 +24,7 @@ static int apply_delta(int argc, char *argv[])
 		die_errno("cannot open preimage");
 	if (buffer_init(&delta, argv[3]))
 		die_errno("cannot open delta");
-	if (svndiff0_apply(&delta, (off_t) strtoull(argv[4], NULL, 0),
+	if (svndiff0_apply(&delta, (off_t) strtoumax(argv[4], NULL, 0),
 					&preimage_view, stdout))
 		return 1;
 	if (buffer_deinit(&preimage))

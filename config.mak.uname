@@ -327,7 +327,6 @@ ifeq ($(uname_S),Windows)
 	# NEEDS_LIBICONV = YesPlease
 	NO_ICONV = YesPlease
 	NO_STRTOUMAX = YesPlease
-	NO_STRTOULL = YesPlease
 	NO_MKDTEMP = YesPlease
 	NO_MKSTEMPS = YesPlease
 	SNPRINTF_RETURNS_BOGUS = YesPlease
