@@ -1,9 +1,9 @@
-git-remote-helpers(1)
-=====================
+gitremote-helpers(1)
+====================
 
 NAME
 ----
-git-remote-helpers - Helper programs to interact with remote repositories
+gitremote-helpers - Helper programs to interact with remote repositories
 
 SYNOPSIS
 --------
