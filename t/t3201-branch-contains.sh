@@ -55,12 +55,32 @@ test_expect_success 'branch --contains=side' '
 
 '
 
+test_expect_success 'branch --contains with pattern implies --list' '
+
+	git branch --contains=master master >actual &&
+	{
+		echo "  master"
+	} >expect &&
+	test_cmp expect actual
+
+'
+
 test_expect_success 'side: branch --merged' '
 
 	git branch --merged >actual &&
 	{
 		echo "  master" &&
 		echo "* side"
+	} >expect &&
+	test_cmp expect actual
+
+'
+
+test_expect_success 'branch --merged with pattern implies --list' '
+
+	git branch --merged=side master >actual &&
+	{
+		echo "  master"
 	} >expect &&
 	test_cmp expect actual
 
@@ -92,6 +112,21 @@ test_expect_success 'master: branch --no-merged' '
 		echo "  side"
 	} >expect &&
 	test_cmp expect actual
+
+'
+
+test_expect_success 'branch --no-merged with pattern implies --list' '
+
+	git branch --no-merged=master master >actual &&
+	>expect &&
+	test_cmp expect actual
+
+'
+
+test_expect_success 'implicit --list conflicts with modification options' '
+
+	test_must_fail git branch --contains=master -d &&
+	test_must_fail git branch --contains=master -m foo
 
 '
 

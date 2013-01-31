@@ -195,15 +195,15 @@ start-point is either a local or remote-tracking branch.
 
 --contains [<commit>]::
 	Only list branches which contain the specified commit (HEAD
-	if not specified).
+	if not specified). Implies `--list`.
 
 --merged [<commit>]::
 	Only list branches whose tips are reachable from the
-	specified commit (HEAD if not specified).
+	specified commit (HEAD if not specified). Implies `--list`.
 
 --no-merged [<commit>]::
 	Only list branches whose tips are not reachable from the
-	specified commit (HEAD if not specified).
+	specified commit (HEAD if not specified). Implies `--list`.
 
 <branchname>::
 	The name of the branch to create or delete.

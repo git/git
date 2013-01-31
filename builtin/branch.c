@@ -825,6 +825,9 @@ int cmd_branch(int argc, const char **argv, const char *prefix)
 	if (!delete && !rename && !edit_description && !new_upstream && !unset_upstream && argc == 0)
 		list = 1;
 
+	if (with_commit || merge_filter != NO_FILTER)
+		list = 1;
+
 	if (!!delete + !!rename + !!force_create + !!list + !!new_upstream + !!unset_upstream > 1)
 		usage_with_options(builtin_branch_usage, options);
 
