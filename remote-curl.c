@@ -92,6 +92,8 @@ static void free_discovery(struct discovery *d)
 
 static struct discovery* discover_refs(const char *service)
 {
+	struct strbuf exp = STRBUF_INIT;
+	struct strbuf type = STRBUF_INIT;
 	struct strbuf buffer = STRBUF_INIT;
 	struct discovery *last = last_discovery;
 	char *refs_url;
@@ -113,7 +115,7 @@ static struct discovery* discover_refs(const char *service)
 	}
 	refs_url = strbuf_detach(&buffer, NULL);
 
-	http_ret = http_get_strbuf(refs_url, &buffer, HTTP_NO_CACHE);
+	http_ret = http_get_strbuf(refs_url, &type, &buffer, HTTP_NO_CACHE);
 	switch (http_ret) {
 	case HTTP_OK:
 		break;
@@ -132,17 +134,20 @@ static struct discovery* discover_refs(const char *service)
 	last->buf_alloc = strbuf_detach(&buffer, &last->len);
 	last->buf = last->buf_alloc;
 
-	if (maybe_smart && 5 <= last->len && last->buf[4] == '#') {
-		/* smart HTTP response; validate that the service
+	strbuf_addf(&exp, "application/x-%s-advertisement", service);
+	if (maybe_smart &&
+	    (5 <= last->len && last->buf[4] == '#') &&
+	    !strbuf_cmp(&exp, &type)) {
+		/*
+		 * smart HTTP response; validate that the service
 		 * pkt-line matches our request.
 		 */
-		struct strbuf exp = STRBUF_INIT;
-
 		if (packet_get_line(&buffer, &last->buf, &last->len) <= 0)
 			die("%s has invalid packet header", refs_url);
 		if (buffer.len && buffer.buf[buffer.len - 1] == '\n')
 			strbuf_setlen(&buffer, buffer.len - 1);
 
+		strbuf_reset(&exp);
 		strbuf_addf(&exp, "# service=%s", service);
 		if (strbuf_cmp(&exp, &buffer))
 			die("invalid server response; got '%s'", buffer.buf);
@@ -160,6 +165,8 @@ static struct discovery* discover_refs(const char *service)
 	}
 
 	free(refs_url);
+	strbuf_release(&exp);
+	strbuf_release(&type);
 	strbuf_release(&buffer);
 	last_discovery = last;
 	return last;

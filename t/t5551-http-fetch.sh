@@ -157,6 +157,12 @@ test_expect_success 'GIT_SMART_HTTP can disable smart http' '
 	 test_must_fail git fetch)
 '
 
+test_expect_success 'invalid Content-Type rejected' '
+	echo "fatal: invalid content-type text/html" >expect
+	test_must_fail git clone $HTTPD_URL/broken_smart/repo.git 2>actual
+	test_cmp expect actual
+'
+
 test -n "$GIT_TEST_LONG" && test_set_prereq EXPENSIVE
 
 test_expect_success EXPENSIVE 'create 50,000 tags in the repo' '
