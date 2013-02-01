@@ -672,10 +672,17 @@ static void receive_needs(void)
 	if (depth == 0 && shallows.nr == 0)
 		return;
 	if (depth > 0) {
-		struct commit_list *result, *backup;
+		struct commit_list *result = NULL, *backup = NULL;
 		int i;
-		backup = result = get_shallow_commits(&want_obj, depth,
-			SHALLOW, NOT_SHALLOW);
+		if (depth == INFINITE_DEPTH)
+			for (i = 0; i < shallows.nr; i++) {
+				struct object *object = shallows.objects[i].item;
+				object->flags |= NOT_SHALLOW;
+			}
+		else
+			backup = result =
+				get_shallow_commits(&want_obj, depth,
+						    SHALLOW, NOT_SHALLOW);
 		while (result) {
 			struct object *object = &result->item->object;
 			if (!(object->flags & (CLIENT_SHALLOW|NOT_SHALLOW))) {

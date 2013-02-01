@@ -84,6 +84,8 @@ be in a separate packet, and the list must end with a flush packet.
 
 --depth=<n>::
 	Limit fetching to ancestor-chains not longer than n.
+	'git-upload-pack' treats the special depth 2147483647 as
+	infinite even if there is an ancestor-chain that long.
 
 --no-progress::
 	Do not show the progress.

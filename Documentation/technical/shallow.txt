@@ -53,3 +53,6 @@ It also writes an appropriate $GIT_DIR/shallow.
 You can deepen a shallow repository with "git-fetch --depth 20
 repo branch", which will fetch branch from repo, but stop at depth
 20, updating $GIT_DIR/shallow.
+
+The special depth 2147483647 (or 0x7fffffff, the largest positive
+number a signed 32-bit integer can contain) means infinite depth.

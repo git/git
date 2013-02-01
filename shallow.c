@@ -72,8 +72,14 @@ struct commit_list *get_shallow_commits(struct object_array *heads, int depth,
 		}
 		if (parse_commit(commit))
 			die("invalid commit");
-		commit->object.flags |= not_shallow_flag;
 		cur_depth++;
+		if (cur_depth >= depth) {
+			commit_list_insert(commit, &result);
+			commit->object.flags |= shallow_flag;
+			commit = NULL;
+			continue;
+		}
+		commit->object.flags |= not_shallow_flag;
 		for (p = commit->parents, commit = NULL; p; p = p->next) {
 			if (!p->item->util) {
 				int *pointer = xmalloc(sizeof(int));
