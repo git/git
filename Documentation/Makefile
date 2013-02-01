@@ -1,13 +1,33 @@
-MAN1_TXT= \
-	$(filter-out $(addsuffix .txt, $(ARTICLES) $(SP_ARTICLES)), \
-		$(wildcard git-*.txt)) \
-	gitk.txt gitweb.txt git.txt
-MAN5_TXT=gitattributes.txt gitignore.txt gitmodules.txt githooks.txt \
-	gitrepository-layout.txt gitweb.conf.txt
-MAN7_TXT=gitcli.txt gittutorial.txt gittutorial-2.txt \
-	gitcvs-migration.txt gitcore-tutorial.txt gitglossary.txt \
-	gitdiffcore.txt gitnamespaces.txt gitrevisions.txt gitworkflows.txt
+# Guard against environment variables
+MAN1_TXT =
+MAN5_TXT =
+MAN7_TXT =
+
+MAN1_TXT += $(filter-out \
+		$(addsuffix .txt, $(ARTICLES) $(SP_ARTICLES)), \
+		$(wildcard git-*.txt))
+MAN1_TXT += git.txt
+MAN1_TXT += gitk.txt
+MAN1_TXT += gitweb.txt
+
+MAN5_TXT += gitattributes.txt
+MAN5_TXT += githooks.txt
+MAN5_TXT += gitignore.txt
+MAN5_TXT += gitmodules.txt
+MAN5_TXT += gitrepository-layout.txt
+MAN5_TXT += gitweb.conf.txt
+
+MAN7_TXT += gitcli.txt
+MAN7_TXT += gitcore-tutorial.txt
 MAN7_TXT += gitcredentials.txt
+MAN7_TXT += gitcvs-migration.txt
+MAN7_TXT += gitdiffcore.txt
+MAN7_TXT += gitglossary.txt
+MAN7_TXT += gitnamespaces.txt
+MAN7_TXT += gitrevisions.txt
+MAN7_TXT += gittutorial-2.txt
+MAN7_TXT += gittutorial.txt
+MAN7_TXT += gitworkflows.txt
 
 MAN_TXT = $(MAN1_TXT) $(MAN5_TXT) $(MAN7_TXT)
 MAN_XML=$(patsubst %.txt,%.xml,$(MAN_TXT))
