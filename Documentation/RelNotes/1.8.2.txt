@@ -50,6 +50,14 @@ UI, Workflows & Features
    E.g. "foo/**/bar" matches "bar" in "foo" itself or in a
    subdirectory of "foo".
 
+ * When giving arguments without "--" disambiguation, object names
+   that come earlier on the command line must not be interpretable as
+   pathspecs and pathspecs that come later on the command line must
+   not be interpretable as object names.  This disambiguation rule has
+   been tweaked so that ":/" (no other string before or after) is
+   always interpreted as a pathspec; "git cmd -- :/" is no longer
+   needed, you can just say "git cmd :/".
+
  * "git blame" (and "git diff") learned the "--no-follow" option.
 
  * "git check-ignore" command to help debugging .gitignore files has
@@ -112,7 +120,8 @@ Foreign Interface
 
  * A new remote helper to interact with bzr has been added to contrib/.
 
- * "git p4" got various bugfixes around its branch handling.
+ * "git p4" got various bugfixes around its branch handling.  It is
+   also made usable with Python 2.4/2.5.
 
  * The remote helper to interact with Hg in contrib/ has seen a few
    fixes.
@@ -125,6 +134,11 @@ Performance, Internal Implementation, etc.
 
  * Matching paths with common forms of pathspecs that contain wildcard
    characters has been optimized further.
+
+ * We stopped paying attention to $GIT_CONFIG environment that points
+   at a single configuration file from any command other than "git config"
+   quite a while ago, but "git clone" internally set, exported, and
+   then unexported the variable during its operation unnecessarily.
 
  * "git reset" internals has been reworked and should be faster in
    general. We tried to be careful not to break any behaviour but
@@ -152,6 +166,13 @@ Performance, Internal Implementation, etc.
    future versions of Git, but we are not there yet.  By building with
    USE_WILDMATCH, using the resulting Git daily and reporting when you
    find breakages, you can help us get closer to that goal.
+
+ * Some reimplementations of Git do not write all the stat info back
+   to the index due to their implementation limitations (e.g. jgit).
+   A configuration option can tell Git to ignore changes to most of
+   the stat fields and only pay attention to mtime and size, which
+   these implementations can reliably update.  This can be used to
+   avoid excessive revalidation of contents.
 
 
 Also contains minor documentation updates and code clean-ups.
@@ -186,6 +207,11 @@ details).
  * After failing to create a temporary file using mkstemp(), failing
    pathname was not reported correctly on some platforms.
 
+ * We used to stuff "user@" and then append what we read from
+   /etc/mailname to come up with a default e-mail ident, but a bug
+   lost the "user@" part.
+   (merge dc342a2 jn/do-not-drop-username-when-reading-from-etc-mailname later to maint).
+
  * The attribute mechanism didn't allow limiting attributes to be
    applied to only a single directory itself with "path/" like the
    exclude mechanism does.  The initial implementation of this that
@@ -206,6 +232,10 @@ details).
  * "git archive" did not record uncompressed size in the header when
    streaming a zip archive, which confused some implementations of unzip.
 
+ * Attempt to "branch --edit-description" an existing branch, while
+   being on a detached HEAD, errored out.
+   (merge 75135b2 nd/edit-branch-desc-while-detached later to maint).
+
  * "git clean" showed what it was going to do, but sometimes end up
    finding that it was not allowed to do so, which resulted in a
    confusing output (e.g. after saying that it will remove an
@@ -217,6 +247,12 @@ details).
  * When "git clone --separate-git-dir=$over_there" is interrupted, it
    failed to remove the real location of the $GIT_DIR it created.
    This was most visible when interrupting a submodule update.
+
+ * "git fetch --depth" was broken in at least three ways.  The
+   resulting history was deeper than specified by one commit, it was
+   unclear how to wipe the shallowness of the repository with the
+   command, and documentation was misleading.
+   (merge cfb70e1 nd/fetch-depth-is-broken later to maint).
 
  * The way "git svn" asked for password using SSH_ASKPASS and
    GIT_ASKPASS was not in line with the rest of the system.
@@ -306,3 +342,7 @@ details).
    need to be in the cvsadmin group on NetBSD 6.0).
 
  * t9020 and t9810 had a few non-portable shell script construct.
+
+ * Scripts to test bash completion was inherently flaky as it was
+   affected by whatever random things the user may have on $PATH.
+   (merge 5047822 jc/do-not-let-random-file-interfere-with-completion-tests later to maint).
