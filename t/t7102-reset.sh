@@ -28,7 +28,8 @@ test_expect_success 'creating initial files and commits' '
 
 	echo "1st line 2nd file" >secondfile &&
 	echo "2nd line 2nd file" >>secondfile &&
-	git commit -a -m "modify 2nd file"
+	git commit -a -m "modify 2nd file" &&
+	head5=$(git rev-parse --verify HEAD)
 '
 # git log --pretty=oneline # to see those SHA1 involved
 
@@ -56,7 +57,7 @@ test_expect_success 'giving a non existing revision should fail' '
 	test_must_fail git reset --mixed aaaaaa &&
 	test_must_fail git reset --soft aaaaaa &&
 	test_must_fail git reset --hard aaaaaa &&
-	check_changes 3ec39651e7f44ea531a5de18a9fa791c0fd370fc
+	check_changes $head5
 '
 
 test_expect_success 'reset --soft with unmerged index should fail' '
@@ -74,7 +75,7 @@ test_expect_success \
 	test_must_fail git reset --hard -- first &&
 	test_must_fail git reset --soft HEAD^ -- first &&
 	test_must_fail git reset --hard HEAD^ -- first &&
-	check_changes 3ec39651e7f44ea531a5de18a9fa791c0fd370fc
+	check_changes $head5
 '
 
 test_expect_success 'giving unrecognized options should fail' '
@@ -86,7 +87,7 @@ test_expect_success 'giving unrecognized options should fail' '
 	test_must_fail git reset --soft -o &&
 	test_must_fail git reset --hard --other &&
 	test_must_fail git reset --hard -o &&
-	check_changes 3ec39651e7f44ea531a5de18a9fa791c0fd370fc
+	check_changes $head5
 '
 
 test_expect_success \
@@ -110,7 +111,7 @@ test_expect_success \
 
 	git checkout master &&
 	git branch -D branch1 branch2 &&
-	check_changes 3ec39651e7f44ea531a5de18a9fa791c0fd370fc
+	check_changes $head5
 '
 
 test_expect_success \
@@ -133,27 +134,27 @@ test_expect_success \
 
 	git checkout master &&
 	git branch -D branch3 branch4 &&
-	check_changes 3ec39651e7f44ea531a5de18a9fa791c0fd370fc
+	check_changes $head5
 '
 
 test_expect_success \
 	'resetting to HEAD with no changes should succeed and do nothing' '
 	git reset --hard &&
-		check_changes 3ec39651e7f44ea531a5de18a9fa791c0fd370fc &&
+		check_changes $head5 &&
 	git reset --hard HEAD &&
-		check_changes 3ec39651e7f44ea531a5de18a9fa791c0fd370fc &&
+		check_changes $head5 &&
 	git reset --soft &&
-		check_changes 3ec39651e7f44ea531a5de18a9fa791c0fd370fc &&
+		check_changes $head5 &&
 	git reset --soft HEAD &&
-		check_changes 3ec39651e7f44ea531a5de18a9fa791c0fd370fc &&
+		check_changes $head5 &&
 	git reset --mixed &&
-		check_changes 3ec39651e7f44ea531a5de18a9fa791c0fd370fc &&
+		check_changes $head5 &&
 	git reset --mixed HEAD &&
-		check_changes 3ec39651e7f44ea531a5de18a9fa791c0fd370fc &&
+		check_changes $head5 &&
 	git reset &&
-		check_changes 3ec39651e7f44ea531a5de18a9fa791c0fd370fc &&
+		check_changes $head5 &&
 	git reset HEAD &&
-		check_changes 3ec39651e7f44ea531a5de18a9fa791c0fd370fc
+		check_changes $head5
 '
 
 >.diff_expect
@@ -176,7 +177,7 @@ test_expect_success '--soft reset only should show changes in diff --cached' '
 	git reset --soft HEAD^ &&
 	check_changes d1a4bc3abce4829628ae2dcb0d60ef3d1a78b1c4 &&
 	test "$(git rev-parse ORIG_HEAD)" = \
-			3ec39651e7f44ea531a5de18a9fa791c0fd370fc
+			$head5
 '
 
 >.diff_expect
@@ -193,7 +194,7 @@ test_expect_success \
 	git commit -a -C ORIG_HEAD &&
 	check_changes 3d3b7be011a58ca0c179ae45d94e6c83c0b0cd0d &&
 	test "$(git rev-parse ORIG_HEAD)" = \
-			3ec39651e7f44ea531a5de18a9fa791c0fd370fc
+			$head5
 '
 
 >.diff_expect
@@ -303,7 +304,7 @@ test_expect_success 'redoing the last two commits should succeed' '
 	echo "1st line 2nd file" >secondfile &&
 	echo "2nd line 2nd file" >>secondfile &&
 	git commit -a -m "modify 2nd file" &&
-	check_changes 3ec39651e7f44ea531a5de18a9fa791c0fd370fc
+	check_changes $head5
 '
 
 >.diff_expect
@@ -341,15 +342,15 @@ EOF
 test_expect_success \
 	'--hard reset to ORIG_HEAD should clear a fast-forward merge' '
 	git reset --hard HEAD^ &&
-	check_changes 3ec39651e7f44ea531a5de18a9fa791c0fd370fc &&
+	check_changes $head5 &&
 
 	git pull . branch1 &&
 	git reset --hard ORIG_HEAD &&
-	check_changes 3ec39651e7f44ea531a5de18a9fa791c0fd370fc &&
+	check_changes $head5 &&
 
 	git checkout master &&
 	git branch -D branch1 branch2 &&
-	check_changes 3ec39651e7f44ea531a5de18a9fa791c0fd370fc
+	check_changes $head5
 '
 
 cat > expect << EOF
