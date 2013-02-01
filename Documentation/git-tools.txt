@@ -29,7 +29,7 @@ Alternative/Augmentative Porcelains
    - *pg* (http://www.spearce.org/category/projects/scm/pg/)
 
    pg is a shell script wrapper around Git to help the user manage a set of
-   patches to files. pg is somewhat like quilt or StGIT, but it does have a
+   patches to files. pg is somewhat like quilt or StGit, but it does have a
    slightly different feature set.
 
 
@@ -60,7 +60,7 @@ History Viewers
 
    - *qgit* (http://digilander.libero.it/mcostalba/)
 
-   QGit is a git/StGIT GUI viewer built on Qt/C++. QGit could be used
+   QGit is a git/StGit GUI viewer built on Qt/C++. QGit could be used
    to browse history and directory tree, view annotated files, commit
    changes cherry picking single files or applying patches.
    Currently it is the fastest and most feature rich among the Git
