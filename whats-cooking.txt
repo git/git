@@ -1,10 +1,10 @@
 To: git@vger.kernel.org
 Bcc: lwn@lwn.net
-Subject: What's cooking in git.git (Jan 2013, #11; Wed, 30)
-X-master-at: 070c57df42ea4eadcc43d0456d114560124326c3
-X-next-at: 7d3a2ef96c8474fb18c8a5ca045cdbeb6180ac4f
+Subject: What's cooking in git.git (Feb 2013, #01; Fri, 1)
+X-master-at: bcd45b4085f9269a536c8fb1963ac8380bfac0e8
+X-next-at: d83cc6ec328c2d32e7699b6436e01deade4cc994
 
-What's cooking in git.git (Jan 2013, #11; Wed, 30)
+What's cooking in git.git (Feb 2013, #01; Fri, 1)
 --------------------------------------------------
 
 Here are the topics that have been cooking.  Commits prefixed with
@@ -12,7 +12,7 @@ Here are the topics that have been cooking.  Commits prefixed with
 '+' are in 'next'.
 
 As usual, this cycle is expected to last for 8 to 10 weeks, with a
-preview -rc0 sometime in the middle of next month.
+preview -rc0 sometime in the middle of this month.
 
 You can find the changes described here in the integration branches of the
 repositories listed at
@@ -20,29 +20,76 @@ repositories listed at
     http://git-blame.blogspot.com/p/git-public-repositories.html
 
 --------------------------------------------------
-[New Topics]
+[Graduated to "master"]
 
-* ab/gitweb-use-same-scheme (2013-01-28) 1 commit
- - gitweb: refer to picon/gravatar images over the same scheme
-
- Avoid mixed contents on a page coming via http and https when
- gitweb is hosted on a https server.
-
- Will merge to 'next'.
+* as/test-cleanup (2013-01-24) 1 commit
+  (merged to 'next' on 2013-01-28 at cc1147d)
+ + t7102 (reset): don't hardcode SHA-1 in expected outputs
 
 
-* jk/python-styles (2013-01-29) 1 commit
- - CodingGuidelines: add Python coding guidelines
+* bc/git-p4-for-python-2.4 (2013-01-30) 3 commits
+  (merged to 'next' on 2013-01-31 at 1096db1)
+ + INSTALL: git-p4 does not support Python 3
+  (merged to 'next' on 2013-01-30 at 5d81ed2)
+ + git-p4.py: support Python 2.4
+ + git-p4.py: support Python 2.5
 
- Expecting a reroll.
- $gmane/215007.
+ With small updates to remove dependency on newer features of
+ Python, keep git-p4 usable with older Python.
 
 
-* mn/send-email-authinfo (2013-01-29) 1 commit
- - git-send-email: add ~/.authinfo parsing
+* jc/do-not-let-random-file-interfere-with-completion-tests (2013-01-24) 1 commit
+  (merged to 'next' on 2013-01-28 at df27f53)
+ + t9902: protect test from stray build artifacts
 
- Expecting a reroll.
- $gmane/215004, $gmane/215024.
+ Scripts to test bash completion was inherently flaky as it was
+ affected by whatever random things the user may have on $PATH.
+
+
+* jc/no-git-config-in-clone (2013-01-11) 1 commit
+  (merged to 'next' on 2013-01-15 at feeffe1)
+ + clone: do not export and unexport GIT_CONFIG
+
+ We stopped paying attention to $GIT_CONFIG environment that points
+ at a single configuration file from any command other than "git config"
+ quite a while ago, but "git clone" internally set, exported, and
+ then unexported the variable during its operation unnecessarily.
+
+
+* jk/cvsimport-does-not-work-with-cvsps3 (2013-01-24) 1 commit
+  (merged to 'next' on 2013-01-28 at fef4eb2)
+ + git-cvsimport.txt: cvsps-2 is deprecated
+
+ Warn people that other tools are more recommendable over
+ cvsimport+cvsps2 combo when doing a one-shot import, and cvsimport
+ will not work with cvsps3.
+
+
+* jk/gc-auto-after-fetch (2013-01-26) 1 commit
+  (merged to 'next' on 2013-01-30 at 472d07b)
+ + Merge branch 'jk/maint-gc-auto-after-fetch' into jk/gc-auto-after-fetch
+ (this branch uses jk/maint-gc-auto-after-fetch.)
+
+ This is to resolve merge conflicts early for the same topic to
+ recent codebase.
+
+
+* jk/maint-gc-auto-after-fetch (2013-01-26) 2 commits
+ + fetch-pack: avoid repeatedly re-scanning pack directory
+ + fetch: run gc --auto after fetching
+ (this branch is used by jk/gc-auto-after-fetch.)
+
+ Help "fetch only" repositories that do not trigger "gc --auto"
+ often enough.
+
+
+* jn/do-not-drop-username-when-reading-from-etc-mailname (2013-01-25) 1 commit
+  (merged to 'next' on 2013-01-28 at e0a8222)
+ + ident: do not drop username when reading from /etc/mailname
+
+ We used to stuff "user@" and then append what we read from
+ /etc/mailname to come up with a default e-mail ident, but a bug
+ lost the "user@" part.  This is to fix it.
 
 
 * nd/edit-branch-desc-while-detached (2013-01-30) 1 commit
@@ -53,69 +100,96 @@ repositories listed at
  Attempt to "branch --edit-description" an existing branch, while
  being on a detached HEAD, errored out.
 
- Will merge to 'master'.
+
+* nd/fetch-depth-is-broken (2013-01-11) 3 commits
+  (merged to 'next' on 2013-01-15 at 70a5ca7)
+ + fetch: elaborate --depth action
+ + upload-pack: fix off-by-one depth calculation in shallow clone
+ + fetch: add --unshallow for turning shallow repo into complete one
+
+ "git fetch --depth" was broken in at least three ways.  The
+ resulting history was deeper than specified by one commit, it was
+ unclear how to wipe the shallowness of the repository with the
+ command, and documentation was misleading.
 
 --------------------------------------------------
-[Graduated to "master"]
+[New Topics]
 
-* bc/fix-array-syntax-for-3.0-in-completion-bash (2013-01-18) 1 commit
-  (merged to 'next' on 2013-01-25 at d113c1a)
- + git-completion.bash: replace zsh notation that breaks bash 3.X
+* ft/transport-report-segv (2013-01-31) 1 commit
+ - push: fix segfault when HEAD points nowhere
 
- Fix use of an array notation that older versions of bash do not
- understand.
+ A failure to push due to non-ff while on an unborn branch
+ dereferenced a NULL pointer while showing an error message.
 
-
-* dl/am-hg-locale (2013-01-18) 1 commit
-  (merged to 'next' on 2013-01-25 at 3419019)
- + am: invoke perl's strftime in C locale
-
- Datestamp recorded in "Hg" format patch was reformatted incorrectly
- to an e-mail looking date using locale dependant strftime, causing
- patch application to fail.
+ Will merge to 'next'.
 
 
-* jc/help (2013-01-18) 1 commit
-  (merged to 'next' on 2013-01-25 at b2b087e)
- + help: include <common-cmds.h> only in one file
+* sb/gpg-i18n (2013-01-31) 1 commit
+ - gpg: allow translation of more error messages
 
- A header file that has the definition of a static array was
- included in two places, wasting the space.
+ Will merge to 'next'.
 
 
-* nd/magic-pathspec-from-root (2013-01-21) 2 commits
-  (merged to 'next' on 2013-01-25 at b056b57)
- + grep: avoid accepting ambiguous revision
- + Update :/abc ambiguity check
+* sb/gpg-plug-fd-leak (2013-01-31) 1 commit
+ - gpg: close stderr once finished with it in verify_signed_buffer()
 
- When giving arguments without "--" disambiguation, object names
- that come  earlier on the command line must not be interpretable as
- pathspecs and pathspecs that come later on the command line must
- not be interpretable as object names.  Tweak the disambiguation
- rule so that ":/" (no other string before or after) is always
- interpreted as a pathspec, to avoid having to say "git cmd -- :/".
+ Will merge to 'next'.
 
 
-* rr/minimal-stat (2013-01-22) 1 commit
-  (merged to 'next' on 2013-01-25 at 11c4453)
- + Enable minimal stat checking
+* sb/run-command-fd-error-reporting (2013-01-31) 1 commit
+ - run-command: be more informative about what failed
 
- Some reimplementations of Git does not write all the stat info back
- to the index due to their implementation limitations (e.g. jgit
- running on Java).  A configuration option can tell Git to ignore
- changes to most of the stat fields and only pay attention to mtime
- and size, which these implementations can reliably update.  This
- avoids excessive revalidation of contents.
+ Will merge to 'next' after spelling stdout, etc. out.
 
 
-* tb/t0050-maint (2013-01-21) 3 commits
-  (merged to 'next' on 2013-01-25 at 682b1e2)
- + t0050: Use TAB for indentation
- + t0050: honor CASE_INSENSITIVE_FS in add (with different case)
- + t0050: known breakage vanished in merge (case change)
+* jk/remote-helpers-doc (2013-01-31) 2 commits
+ - [SQUASH] simplify maintenance of redirection pages
+ - Rename {git- => git}remote-helpers.txt
 
- Update tests that were expecting to fail due to a bug that was
- fixed earlier.
+ "git help remote-helpers" did not work; 'remote-helpers' is not
+ a subcommand name but a concept, so its documentation should have
+ been in gitremote-helpers, not git-remote-helpers.
+
+ Will merge to 'next' after squashing the fix in.
+
+
+* sp/smart-http-content-type-check (2013-01-31) 1 commit
+ - Verify Content-Type from smart HTTP servers
+
+ The smart HTTP clients forgot to verify the content-type that comes
+ back from the server side to make sure that the request is being
+ handled properly.
+
+ Will merge to 'next'.
+
+
+* jc/mention-tracking-for-pull-default (2013-01-31) 1 commit
+ - doc: mention tracking for pull.default
+
+ We stopped mentioning `tracking` is a deprecated but supported
+ synonym for `upstream` in pull.default even though we have no
+ intention of removing the support for it.
+
+ This is my "don't list it to catch readers' eyes, but make sure it
+ can be found if the reader looks for it" version; I'm not married
+ to the layout and am willing to take a replacement patch.
+
+
+* jc/fake-ancestor-with-non-blobs (2013-01-31) 3 commits
+ - apply: diagnose incomplete submodule object name better
+ - apply: simplify build_fake_ancestor()
+ - git-am: record full index line in the patch used while rebasing
+
+ Rebasing the history of superproject with change in the submodule
+ has been broken since v1.7.12.
+
+ Will merge to 'next'.
+
+
+* jk/doc-makefile-cleanup (2013-02-01) 1 commit
+ - Documentation/Makefile: clean up MAN*_TXT lists
+
+ Will merge to 'next'.
 
 --------------------------------------------------
 [Stalled]
@@ -282,6 +356,28 @@ repositories listed at
 --------------------------------------------------
 [Cooking]
 
+* ab/gitweb-use-same-scheme (2013-01-28) 1 commit
+ - gitweb: refer to picon/gravatar images over the same scheme
+
+ Avoid mixed contents on a page coming via http and https when
+ gitweb is hosted on a https server.
+
+ Will merge to 'next'.
+
+
+* jk/python-styles (2013-01-30) 1 commit
+ - CodingGuidelines: add Python coding guidelines
+
+ Will merge to 'next'.
+
+
+* mn/send-email-authinfo (2013-01-29) 1 commit
+ - git-send-email: add ~/.authinfo parsing
+
+ Expecting a reroll.
+ $gmane/215004, $gmane/215024.
+
+
 * mp/complete-paths (2013-01-11) 1 commit
   (merged to 'next' on 2013-01-30 at 70e4f1a)
  + git-completion.bash: add support for path completion
@@ -296,39 +392,6 @@ repositories listed at
  and comment on the implementation.
 
  Will cook in 'next' to see if anybody screams.
-
-
-* bc/git-p4-for-python-2.4 (2013-01-26) 2 commits
-  (merged to 'next' on 2013-01-30 at 5d81ed2)
- + git-p4.py: support Python 2.4
- + git-p4.py: support Python 2.5
-
- With small updates to remove dependency on newer features of
- Python, keep git-p4 usable with older Python.
-
- Will merge to 'master'.
-
-
-* jk/gc-auto-after-fetch (2013-01-26) 1 commit
-  (merged to 'next' on 2013-01-30 at 472d07b)
- + Merge branch 'jk/maint-gc-auto-after-fetch' into jk/gc-auto-after-fetch
- (this branch uses jk/maint-gc-auto-after-fetch.)
-
- This is to resolve merge conflicts early for the same topic to
- recent codebase.
-
- Will merge to 'master'.
-
-
-* jk/maint-gc-auto-after-fetch (2013-01-26) 2 commits
- + fetch-pack: avoid repeatedly re-scanning pack directory
- + fetch: run gc --auto after fetching
- (this branch is used by jk/gc-auto-after-fetch.)
-
- Help "fetch only" repositories that do not trigger "gc --auto"
- often enough.
-
- Will merge to 'master' via jk/gc-auto-after-fetch and later merge to 'maint'.
 
 
 * jk/read-commit-buffer-data-after-free (2013-01-26) 3 commits
@@ -372,8 +435,8 @@ repositories listed at
  Will merge to 'master'.
 
 
-* ss/mergetools-tortoise (2013-01-26) 2 commits
- - mergetools: allow passing pathnames with SP in them to TortoiseGitMerge
+* ss/mergetools-tortoise (2013-02-01) 2 commits
+ - mergetools: teach tortoisemerge to handle filenames with SP correctly
  - mergetools: support TortoiseGitMerge
 
  Update mergetools to work better with newer merge helper tortoise ships.
@@ -381,8 +444,11 @@ repositories listed at
  Will merge to 'next'.
 
 
-* da/mergetool-docs (2013-01-30) 4 commits
+* da/mergetool-docs (2013-01-30) 7 commits
  - doc: generate a list of valid merge tools
+ - mergetool--lib: list user configured tools in '--tool-help'
+ - fixup! doc: generate a list of valid merge tools
+ - fixup! mergetool--lib: add functions for finding available tools
  - mergetool--lib: add functions for finding available tools
  - mergetool--lib: improve the help text in guess_merge_tool()
  - mergetool--lib: simplify command expressions
@@ -392,15 +458,17 @@ repositories listed at
  generate the list of mergetool and difftool backends the build
  supports to be included in the documentation.
 
- This is looking ready for 'next'.
+ Will merge to 'next', after squashing the fixup! commits from John
+ Keeping.
 
 
-* nd/branch-error-cases (2013-01-30) 4 commits
+* nd/branch-error-cases (2013-01-31) 6 commits
+ - branch: let branch filters imply --list
+ - docs: clarify git-branch --list behavior
  - branch: mark more strings for translation
  - Merge branch 'nd/edit-branch-desc-while-detached' into HEAD
  - branch: give a more helpful message on redundant arguments
  - branch: reject -D/-d without branch name
- (this branch uses nd/edit-branch-desc-while-detached.)
 
  Fix various error messages and conditions in "git branch", e.g. we
  advertised "branch -d/-D" to remove one or more branches but actually
@@ -425,34 +493,6 @@ repositories listed at
  Will merge to 'master'.
 
 
-* as/test-cleanup (2013-01-24) 1 commit
-  (merged to 'next' on 2013-01-28 at cc1147d)
- + t7102 (reset): don't hardcode SHA-1 in expected outputs
-
- Will merge to 'master'.
-
-
-* jc/do-not-let-random-file-interfere-with-completion-tests (2013-01-24) 1 commit
-  (merged to 'next' on 2013-01-28 at df27f53)
- + t9902: protect test from stray build artifacts
-
- Scripts to test bash completion was inherently flaky as it was
- affected by whatever random things the user may have on $PATH.
-
- Will merge to 'master'.
-
-
-* jk/cvsimport-does-not-work-with-cvsps3 (2013-01-24) 1 commit
-  (merged to 'next' on 2013-01-28 at fef4eb2)
- + git-cvsimport.txt: cvsps-2 is deprecated
-
- Warn people that other tools are more recommendable over
- cvsimport+cvsps2 combo when doing a one-shot import, and cvsimport
- will not work with cvsps3.
-
- Will merge to 'master'.
-
-
 * jk/mergetool (2013-01-28) 8 commits
  - mergetools: simplify how we handle "vim" and "defaults"
  - mergetool--lib: don't call "exit" in setup_tool
@@ -467,17 +507,6 @@ repositories listed at
  Cleans up mergetool/difftool combo.
 
  This is looking ready for 'next'.
-
-
-* jn/do-not-drop-username-when-reading-from-etc-mailname (2013-01-25) 1 commit
-  (merged to 'next' on 2013-01-28 at e0a8222)
- + ident: do not drop username when reading from /etc/mailname
-
- We used to stuff "user@" and then append what we read from
- /etc/mailname to come up with a default e-mail ident, but a bug
- lost the "user@" part.  This is to fix it.
-
- Will merge to 'master'.
 
 
 * mm/add-u-A-sans-pathspec (2013-01-28) 1 commit
@@ -506,17 +535,13 @@ repositories listed at
  tips of hidden refs by updated clients.
 
 
-* ta/doc-no-small-caps (2013-01-22) 10 commits
- - fixup! Change 'git' to 'Git' whenever the whole system is referred to #4
- - Change 'git' to 'Git' whenever the whole system is referred to #4
- - fixup! Change 'git' to 'Git' whenever the whole system is referred to #3
- - Change 'git' to 'Git' whenever the whole system is referred to #3
- - fixup! Change 'git' to 'Git' whenever the whole system is referred to #2
- - Change 'git' to 'Git' whenever the whole system is referred to #2
- - fixup! fixup! Change 'git' to 'Git' whenever the whole system is referred to #1
- - fixup! Change 'git' to 'Git' whenever the whole system is referred to #1
- - Change 'git' to 'Git' whenever the whole system is referred to #1
- - Documentation: avoid poor-man's small caps
+* ta/doc-no-small-caps (2013-02-01) 6 commits
+ - Documentation: StGit is the right spelling, not StGIT
+ - Documentation: describe the "repository" in repository-layout
+ - Documentation: add a description for 'gitfile' to glossary
+ - Documentation: do not use undefined terms git-dir and git-file
+ - Documentation: the name of the system is 'Git', not 'git'
+ - Documentation: avoid poor-man's small caps GIT
 
  Update documentation to change "GIT" which was a poor-man's small
  caps to "Git" which was the intended spelling.  Also change "git"
@@ -524,9 +549,7 @@ repositories listed at
  the whole or the concept it embodies, as opposed to the command the
  end users would type.
 
- Will wait for a week or so (say, til end of January) for Thomas to
- collect fix-ups, squash the result into two patches and then merge
- to 'next'.
+ Will merge to 'next'.
 
 
 * jc/remove-treesame-parent-in-simplify-merges (2013-01-17) 1 commit
@@ -544,7 +567,9 @@ repositories listed at
  Will merge to 'next'.
 
 
-* jk/remote-helpers-in-python-3 (2013-01-28) 9 commits
+* jk/remote-helpers-in-python-3 (2013-01-30) 10 commits
+  (merged to 'next' on 2013-01-31 at 5a948aa)
+ + git_remote_helpers: remove GIT-PYTHON-VERSION upon "clean"
   (merged to 'next' on 2013-01-28 at d898471)
  + git-remote-testpy: fix path hashing on Python 3
   (merged to 'next' on 2013-01-25 at acf9419)
@@ -597,32 +622,6 @@ repositories listed at
  Will merge to 'master'.
 
 
-* nd/fetch-depth-is-broken (2013-01-11) 3 commits
-  (merged to 'next' on 2013-01-15 at 70a5ca7)
- + fetch: elaborate --depth action
- + upload-pack: fix off-by-one depth calculation in shallow clone
- + fetch: add --unshallow for turning shallow repo into complete one
-
- "git fetch --depth" was broken in at least three ways.  The
- resulting history was deeper than specified by one commit, it was
- unclear how to wipe the shallowness of the repository with the
- command, and documentation was misleading.
-
- Will merge to 'master'.
-
-
-* jc/no-git-config-in-clone (2013-01-11) 1 commit
-  (merged to 'next' on 2013-01-15 at feeffe1)
- + clone: do not export and unexport GIT_CONFIG
-
- We stopped paying attention to $GIT_CONFIG environment that points
- at a single configuration file from any command other than "git config"
- quite a while ago, but "git clone" internally set, exported, and
- then unexported the variable during its operation unnecessarily.
-
- Will merge to 'master'.
-
-
 * jc/push-2.0-default-to-simple (2013-01-16) 14 commits
   (merged to 'next' on 2013-01-16 at 23f5df2)
  + t5570: do not assume the "matching" push is the default
@@ -657,7 +656,8 @@ repositories listed at
  - commit, cherry-pick -s: remove broken support for multiline rfc2822 fields
  - sequencer.c: rework search for start of footer to improve clarity
 
- Rerolled.  With help from Jonathan, I think this is getting closer.
+ Waiting for the final round of reroll before merging to 'next'.
+ After that we will go incremental.
 
 --------------------------------------------------
 [Discarded]
