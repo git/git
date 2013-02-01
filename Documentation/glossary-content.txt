@@ -149,6 +149,10 @@ to point at the new commit.
 [[def_git_archive]]Git archive::
 	Synonym for <<def_repository,repository>> (for arch people).
 
+[[def_gitfile]]gitfile::
+	A plain file `.git` at the root of a working tree that
+	points at the directory that is the real repository.
+
 [[def_grafts]]grafts::
 	Grafts enables two otherwise different lines of development to be joined
 	together by recording fake ancestry information for commits. This way
