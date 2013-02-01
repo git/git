@@ -18,6 +18,21 @@ import optparse, os, marshal, subprocess, shelve
 import tempfile, getopt, os.path, time, platform
 import re, shutil
 
+try:
+    from subprocess import CalledProcessError
+except ImportError:
+    # from python2.7:subprocess.py
+    # Exception classes used by this module.
+    class CalledProcessError(Exception):
+        """This exception is raised when a process run by check_call() returns
+        a non-zero exit status.  The exit status will be stored in the
+        returncode attribute."""
+        def __init__(self, returncode, cmd):
+            self.returncode = returncode
+            self.cmd = cmd
+        def __str__(self):
+            return "Command '%s' returned non-zero exit status %d" % (self.cmd, self.returncode)
+
 verbose = False
 
 # Only labels/tags matching this will be imported/exported
@@ -158,13 +173,17 @@ def system(cmd):
     expand = isinstance(cmd,basestring)
     if verbose:
         sys.stderr.write("executing %s\n" % str(cmd))
-    subprocess.check_call(cmd, shell=expand)
+    retcode = subprocess.call(cmd, shell=expand)
+    if retcode:
+        raise CalledProcessError(retcode, cmd)
 
 def p4_system(cmd):
     """Specifically invoke p4 as the system command. """
     real_cmd = p4_build_cmd(cmd)
     expand = isinstance(real_cmd, basestring)
-    subprocess.check_call(real_cmd, shell=expand)
+    retcode = subprocess.call(real_cmd, shell=expand)
+    if retcode:
+        raise CalledProcessError(retcode, real_cmd)
 
 def p4_integrate(src, dest):
     p4_system(["integrate", "-Dt", wildcard_encode(src), wildcard_encode(dest)])
@@ -768,7 +787,8 @@ def wildcard_encode(path):
     return path
 
 def wildcard_present(path):
-    return path.translate(None, "*#@%") != path
+    m = re.search("[*#@%]", path)
+    return m is not None
 
 class Command:
     def __init__(self):
@@ -3173,7 +3193,9 @@ class P4Clone(P4Sync):
         init_cmd = [ "git", "init" ]
         if self.cloneBare:
             init_cmd.append("--bare")
-        subprocess.check_call(init_cmd)
+        retcode = subprocess.call(init_cmd)
+        if retcode:
+            raise CalledProcessError(retcode, init_cmd)
 
         if not P4Sync.run(self, depotPaths):
             return False

@@ -105,12 +105,13 @@ build_gendouble() {
 	cat >gendouble.py <<-\EOF
 	import sys
 	import struct
-	import array
 
-	s = array.array("c", '\0' * 26)
-	struct.pack_into(">L", s,  0, 0x00051607)  # AppleDouble
-	struct.pack_into(">L", s,  4, 0x00020000)  # version 2
-	s.tofile(sys.stdout)
+	s = struct.pack(">LL18s",
+			0x00051607,  # AppleDouble
+			0x00020000,  # version 2
+			""           # pad to 26 bytes
+	)
+	sys.stdout.write(s)
 	EOF
 }
 
