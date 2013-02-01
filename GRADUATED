@@ -65,6 +65,13 @@ one_topic () {
 	case " $topics" in *" $topic "*) return ;; esac
 	topics="$topics$topic "
 
+	contam_count=$(git rev-list "maint..$tip" | grep -F "$merges_to_master" | wc -l)
+	if test "$contam_count" != 0
+	then
+		echo "**** forked from master $topic ****"
+		return
+	fi
+
 	maint_count=$(git rev-list "maint..$tip" | wc -l)
 	if test "$maint_count" = 0
 	then
@@ -119,6 +126,8 @@ one_topic () {
 		;;
 	esac
 }
+
+merges_to_master="$(git rev-list --merges $base..master)"
 
 git log --first-parent --min-parents=2 --max-parents=2 \
 	--format='%ci %H %P %s' "$base..master" | {
