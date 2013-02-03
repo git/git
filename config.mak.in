@@ -13,7 +13,6 @@ DIFF = @DIFF@
 TCLTK_PATH = @TCLTK_PATH@
 
 prefix = @prefix@
-exec_prefix = @exec_prefix@
 bindir = @bindir@
 gitexecdir = @libexecdir@/git-core
 datarootdir = @datarootdir@
@@ -21,12 +20,6 @@ template_dir = @datadir@/git-core/templates
 sysconfdir = @sysconfdir@
 
 mandir=@mandir@
-
-srcdir = @srcdir@
-VPATH = @srcdir@
-
-export exec_prefix mandir
-export srcdir VPATH
 
 NEEDS_SSL_WITH_CRYPTO=@NEEDS_SSL_WITH_CRYPTO@
 NO_OPENSSL=@NO_OPENSSL@

@@ -359,7 +359,7 @@ lib = lib
 # DESTDIR=
 pathsep = :
 
-export prefix bindir sharedir sysconfdir gitwebdir localedir
+export prefix bindir sharedir mandir htmldir sysconfdir gitwebdir localedir
 
 CC = cc
 AR = ar
