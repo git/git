@@ -31,10 +31,26 @@ from git_remote_helpers.git.exporter import GitExporter
 from git_remote_helpers.git.importer import GitImporter
 from git_remote_helpers.git.non_local import NonLocalGit
 
-if sys.hexversion < 0x01050200:
-    # os.makedirs() is the limiter
-    sys.stderr.write("git-remote-testgit: requires Python 1.5.2 or later.\n")
+if sys.hexversion < 0x02000000:
+    # string.encode() is the limiter
+    sys.stderr.write("git-remote-testgit: requires Python 2.0 or later.\n")
     sys.exit(1)
+
+
+def encode_filepath(path):
+    """Encodes a Unicode file path to a byte string.
+
+    On Python 2 this is a no-op; on Python 3 we encode the string as
+    suggested by [1] which allows an exact round-trip from the command line
+    to the filesystem.
+
+    [1] http://docs.python.org/3/c-api/unicode.html#file-system-encoding
+
+    """
+    if sys.hexversion < 0x03000000:
+        return path
+    return path.encode(sys.getfilesystemencoding(), 'surrogateescape')
+
 
 def get_repo(alias, url):
     """Returns a git repository object initialized for usage.
@@ -45,7 +61,7 @@ def get_repo(alias, url):
     repo.get_head()
 
     hasher = _digest()
-    hasher.update(repo.path)
+    hasher.update(encode_filepath(repo.path))
     repo.hash = hasher.hexdigest()
 
     repo.get_base_path = lambda base: os.path.join(
@@ -87,9 +103,9 @@ def do_capabilities(repo, args):
     """Prints the supported capabilities.
     """
 
-    print "import"
-    print "export"
-    print "refspec refs/heads/*:%s*" % repo.prefix
+    print("import")
+    print("export")
+    print("refspec refs/heads/*:%s*" % repo.prefix)
 
     dirname = repo.get_base_path(repo.gitdir)
 
@@ -98,11 +114,11 @@ def do_capabilities(repo, args):
 
     path = os.path.join(dirname, 'git.marks')
 
-    print "*export-marks %s" % path
+    print("*export-marks %s" % path)
     if os.path.exists(path):
-        print "*import-marks %s" % path
+        print("*import-marks %s" % path)
 
-    print # end capabilities
+    print('') # end capabilities
 
 
 def do_list(repo, args):
@@ -115,16 +131,16 @@ def do_list(repo, args):
 
     for ref in repo.revs:
         debug("? refs/heads/%s", ref)
-        print "? refs/heads/%s" % ref
+        print("? refs/heads/%s" % ref)
 
     if repo.head:
         debug("@refs/heads/%s HEAD" % repo.head)
-        print "@refs/heads/%s HEAD" % repo.head
+        print("@refs/heads/%s HEAD" % repo.head)
     else:
         debug("@refs/heads/master HEAD")
-        print "@refs/heads/master HEAD"
+        print("@refs/heads/master HEAD")
 
-    print # end list
+    print('') # end list
 
 
 def update_local_repo(repo):
@@ -154,7 +170,7 @@ def do_import(repo, args):
     refs = [ref]
 
     while True:
-        line = sys.stdin.readline()
+        line = sys.stdin.readline().decode()
         if line == '\n':
             break
         if not line.startswith('import '):
@@ -164,7 +180,7 @@ def do_import(repo, args):
         ref = line[7:].strip()
         refs.append(ref)
 
-    print "feature done"
+    print("feature done")
 
     if os.environ.get("GIT_REMOTE_TESTGIT_FAILURE"):
         die('Told to fail')
@@ -172,7 +188,7 @@ def do_import(repo, args):
     repo = update_local_repo(repo)
     repo.exporter.export_repo(repo.gitdir, refs)
 
-    print "done"
+    print("done")
 
 
 def do_export(repo, args):
@@ -192,8 +208,8 @@ def do_export(repo, args):
         repo.non_local.push(repo.gitdir)
 
     for ref in changed:
-        print "ok %s" % ref
-    print
+        print("ok %s" % ref)
+    print('')
 
 
 COMMANDS = {
@@ -225,7 +241,7 @@ def read_one_line(repo):
 
     line = sys.stdin.readline()
 
-    cmdline = line
+    cmdline = line.decode()
 
     if not cmdline:
         warn("Unexpected EOF")
@@ -277,7 +293,11 @@ def main(args):
 
     more = True
 
-    sys.stdin = os.fdopen(sys.stdin.fileno(), 'r', 0)
+    # Use binary mode since Python 3 does not permit unbuffered I/O in text
+    # mode.  Unbuffered I/O is required to avoid data that should be going
+    # to git-fast-import after an "export" command getting caught in our
+    # stdin buffer instead.
+    sys.stdin = os.fdopen(sys.stdin.fileno(), 'rb', 0)
     while (more):
         more = read_one_line(repo)
 

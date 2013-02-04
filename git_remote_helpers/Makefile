@@ -23,10 +23,16 @@ endif
 
 PYLIBDIR=$(shell $(PYTHON_PATH) -c \
 	 "import sys; \
-	 print 'lib/python%i.%i/site-packages' % sys.version_info[:2]")
+	 print('lib/python%i.%i/site-packages' % sys.version_info[:2])")
+
+py_version=$(shell $(PYTHON_PATH) -c \
+	'import sys; print("%i.%i" % sys.version_info[:2])')
 
 all: $(pysetupfile)
-	$(QUIET)$(PYTHON_PATH) $(pysetupfile) $(QUIETSETUP) build
+	$(QUIET)test "$$(cat GIT-PYTHON-VERSION 2>/dev/null)" = "$(py_version)" || \
+	flags=--force; \
+	$(PYTHON_PATH) $(pysetupfile) $(QUIETSETUP) build $$flags
+	$(QUIET)echo "$(py_version)" >GIT-PYTHON-VERSION
 
 install: $(pysetupfile)
 	$(PYTHON_PATH) $(pysetupfile) install --prefix $(DESTDIR_SQ)$(prefix)
@@ -36,4 +42,4 @@ instlibdir: $(pysetupfile)
 
 clean:
 	$(QUIET)$(PYTHON_PATH) $(pysetupfile) $(QUIETSETUP) clean -a
-	$(RM) *.pyo *.pyc
+	$(RM) *.pyo *.pyc GIT-PYTHON-VERSION
