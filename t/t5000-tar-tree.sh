@@ -212,7 +212,8 @@ test_expect_success 'git-archive --prefix=olde-' '
 test_expect_success 'setup tar filters' '
 	git config tar.tar.foo.command "tr ab ba" &&
 	git config tar.bar.command "tr ab ba" &&
-	git config tar.bar.remote true
+	git config tar.bar.remote true &&
+	git config tar.invalid baz
 '
 
 test_expect_success 'archive --list mentions user filter' '

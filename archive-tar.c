@@ -327,20 +327,12 @@ static struct archiver *find_tar_filter(const char *name, int len)
 static int tar_filter_config(const char *var, const char *value, void *data)
 {
 	struct archiver *ar;
-	const char *dot;
 	const char *name;
 	const char *type;
 	int namelen;
 
-	if (prefixcmp(var, "tar."))
+	if (parse_config_key(var, "tar", &name, &namelen, &type) < 0 || !name)
 		return 0;
-	dot = strrchr(var, '.');
-	if (dot == var + 9)
-		return 0;
-
-	name = var + 4;
-	namelen = dot - name;
-	type = dot + 1;
 
 	ar = find_tar_filter(name, namelen);
 	if (!ar) {

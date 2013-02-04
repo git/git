@@ -222,7 +222,7 @@ static const char *default_ll_merge;
 static int read_merge_config(const char *var, const char *value, void *cb)
 {
 	struct ll_merge_driver *fn;
-	const char *ep, *name;
+	const char *key, *name;
 	int namelen;
 
 	if (!strcmp(var, "merge.default")) {
@@ -236,15 +236,13 @@ static int read_merge_config(const char *var, const char *value, void *cb)
 	 * especially, we do not want to look at variables such as
 	 * "merge.summary", "merge.tool", and "merge.verbosity".
 	 */
-	if (prefixcmp(var, "merge.") || (ep = strrchr(var, '.')) == var + 5)
+	if (parse_config_key(var, "merge", &name, &namelen, &key) < 0 || !name)
 		return 0;
 
 	/*
 	 * Find existing one as we might be processing merge.<name>.var2
 	 * after seeing merge.<name>.var1.
 	 */
-	name = var + 6;
-	namelen = ep - name;
 	for (fn = ll_user_merge; fn; fn = fn->next)
 		if (!strncmp(fn->name, name, namelen) && !fn->name[namelen])
 			break;
@@ -256,16 +254,14 @@ static int read_merge_config(const char *var, const char *value, void *cb)
 		ll_user_merge_tail = &(fn->next);
 	}
 
-	ep++;
-
-	if (!strcmp("name", ep)) {
+	if (!strcmp("name", key)) {
 		if (!value)
 			return error("%s: lacks value", var);
 		fn->description = xstrdup(value);
 		return 0;
 	}
 
-	if (!strcmp("driver", ep)) {
+	if (!strcmp("driver", key)) {
 		if (!value)
 			return error("%s: lacks value", var);
 		/*
@@ -289,7 +285,7 @@ static int read_merge_config(const char *var, const char *value, void *cb)
 		return 0;
 	}
 
-	if (!strcmp("recursive", ep)) {
+	if (!strcmp("recursive", key)) {
 		if (!value)
 			return error("%s: lacks value", var);
 		fn->recursive = xstrdup(value);

@@ -457,7 +457,7 @@ static struct convert_driver {
 
 static int read_convert_config(const char *var, const char *value, void *cb)
 {
-	const char *ep, *name;
+	const char *key, *name;
 	int namelen;
 	struct convert_driver *drv;
 
@@ -465,10 +465,8 @@ static int read_convert_config(const char *var, const char *value, void *cb)
 	 * External conversion drivers are configured using
 	 * "filter.<name>.variable".
 	 */
-	if (prefixcmp(var, "filter.") || (ep = strrchr(var, '.')) == var + 6)
+	if (parse_config_key(var, "filter", &name, &namelen, &key) < 0 || !name)
 		return 0;
-	name = var + 7;
-	namelen = ep - name;
 	for (drv = user_convert; drv; drv = drv->next)
 		if (!strncmp(drv->name, name, namelen) && !drv->name[namelen])
 			break;
@@ -479,8 +477,6 @@ static int read_convert_config(const char *var, const char *value, void *cb)
 		user_convert_tail = &(drv->next);
 	}
 
-	ep++;
-
 	/*
 	 * filter.<name>.smudge and filter.<name>.clean specifies
 	 * the command line:
@@ -490,13 +486,13 @@ static int read_convert_config(const char *var, const char *value, void *cb)
 	 * The command-line will not be interpolated in any way.
 	 */
 
-	if (!strcmp("smudge", ep))
+	if (!strcmp("smudge", key))
 		return git_config_string(&drv->smudge, var, value);
 
-	if (!strcmp("clean", ep))
+	if (!strcmp("clean", key))
 		return git_config_string(&drv->clean, var, value);
 
-	if (!strcmp("required", ep)) {
+	if (!strcmp("required", key)) {
 		drv->required = git_config_bool(var, value);
 		return 0;
 	}
