@@ -1,10 +1,10 @@
 To: git@vger.kernel.org
 Bcc: lwn@lwn.net
-Subject: What's cooking in git.git (Feb 2013, #01; Fri, 1)
-X-master-at: bcd45b4085f9269a536c8fb1963ac8380bfac0e8
-X-next-at: d83cc6ec328c2d32e7699b6436e01deade4cc994
+Subject: What's cooking in git.git (Feb 2013, #02; Mon, 4)
+X-master-at: f51a757fafc1e1ca9565381a13109932acd81dba
+X-next-at: 3b7952273237a5df57414b4a5327ce7e64e63255
 
-What's cooking in git.git (Feb 2013, #01; Fri, 1)
+What's cooking in git.git (Feb 2013, #02; Mon, 4)
 --------------------------------------------------
 
 Here are the topics that have been cooking.  Commits prefixed with
@@ -22,174 +22,181 @@ repositories listed at
 --------------------------------------------------
 [Graduated to "master"]
 
-* as/test-cleanup (2013-01-24) 1 commit
-  (merged to 'next' on 2013-01-28 at cc1147d)
- + t7102 (reset): don't hardcode SHA-1 in expected outputs
+* jc/custom-comment-char (2013-01-16) 1 commit
+  (merged to 'next' on 2013-01-25 at 91d8a5d)
+ + Allow custom "comment char"
+
+ Allow a configuration variable core.commentchar to customize the
+ character used to comment out the hint lines in the edited text
+ from the default '#'.
+
+ This is half my work and half by Ralf Thielow.  There may still be
+ leftover '#' lurking around, though.  My "git grep" says C code
+ should be already fine, but git-rebase--interactive.sh could be
+ converted (it should not matter, as the file is not really a
+ free-form text).
 
 
-* bc/git-p4-for-python-2.4 (2013-01-30) 3 commits
-  (merged to 'next' on 2013-01-31 at 1096db1)
- + INSTALL: git-p4 does not support Python 3
-  (merged to 'next' on 2013-01-30 at 5d81ed2)
- + git-p4.py: support Python 2.4
- + git-p4.py: support Python 2.5
+* jc/push-reject-reasons (2013-01-24) 4 commits
+  (merged to 'next' on 2013-01-28 at b60be93)
+ + push: finishing touches to explain REJECT_ALREADY_EXISTS better
+ + push: introduce REJECT_FETCH_FIRST and REJECT_NEEDS_FORCE
+ + push: further simplify the logic to assign rejection reason
+ + push: further clean up fields of "struct ref"
 
- With small updates to remove dependency on newer features of
- Python, keep git-p4 usable with older Python.
-
-
-* jc/do-not-let-random-file-interfere-with-completion-tests (2013-01-24) 1 commit
-  (merged to 'next' on 2013-01-28 at df27f53)
- + t9902: protect test from stray build artifacts
-
- Scripts to test bash completion was inherently flaky as it was
- affected by whatever random things the user may have on $PATH.
+ Improve error and advice messages given locally when "git push"
+ refuses when it cannot compute fast-forwardness by separating these
+ cases from the normal "not a fast-forward; merge first and push
+ again" case.
 
 
-* jc/no-git-config-in-clone (2013-01-11) 1 commit
-  (merged to 'next' on 2013-01-15 at feeffe1)
- + clone: do not export and unexport GIT_CONFIG
+* jk/config-parsing-cleanup (2013-01-23) 8 commits
+  (merged to 'next' on 2013-01-28 at 9bc9411)
+ + reflog: use parse_config_key in config callback
+ + help: use parse_config_key for man config
+ + submodule: simplify memory handling in config parsing
+ + submodule: use parse_config_key when parsing config
+ + userdiff: drop parse_driver function
+ + convert some config callbacks to parse_config_key
+ + archive-tar: use parse_config_key when parsing config
+ + config: add helper function for parsing key names
 
- We stopped paying attention to $GIT_CONFIG environment that points
- at a single configuration file from any command other than "git config"
- quite a while ago, but "git clone" internally set, exported, and
- then unexported the variable during its operation unnecessarily.
-
-
-* jk/cvsimport-does-not-work-with-cvsps3 (2013-01-24) 1 commit
-  (merged to 'next' on 2013-01-28 at fef4eb2)
- + git-cvsimport.txt: cvsps-2 is deprecated
-
- Warn people that other tools are more recommendable over
- cvsimport+cvsps2 combo when doing a one-shot import, and cvsimport
- will not work with cvsps3.
+ Configuration parsing for tar.* configuration variables were
+ broken. Introduce a new config-keyname parser API to make the
+ callers much less error prone.
 
 
-* jk/gc-auto-after-fetch (2013-01-26) 1 commit
-  (merged to 'next' on 2013-01-30 at 472d07b)
- + Merge branch 'jk/maint-gc-auto-after-fetch' into jk/gc-auto-after-fetch
- (this branch uses jk/maint-gc-auto-after-fetch.)
+* jk/read-commit-buffer-data-after-free (2013-01-26) 3 commits
+  (merged to 'next' on 2013-01-30 at c6d7e16)
+ + logmsg_reencode: lazily load missing commit buffers
+ + logmsg_reencode: never return NULL
+ + commit: drop useless xstrdup of commit message
 
- This is to resolve merge conflicts early for the same topic to
- recent codebase.
-
-
-* jk/maint-gc-auto-after-fetch (2013-01-26) 2 commits
- + fetch-pack: avoid repeatedly re-scanning pack directory
- + fetch: run gc --auto after fetching
- (this branch is used by jk/gc-auto-after-fetch.)
-
- Help "fetch only" repositories that do not trigger "gc --auto"
- often enough.
+ Clarify the ownership rule for commit->buffer field, which some
+ callers incorrectly accessed without making sure it is populated.
 
 
-* jn/do-not-drop-username-when-reading-from-etc-mailname (2013-01-25) 1 commit
-  (merged to 'next' on 2013-01-28 at e0a8222)
- + ident: do not drop username when reading from /etc/mailname
+* jk/remote-helpers-in-python-3 (2013-01-30) 10 commits
+  (merged to 'next' on 2013-01-31 at 5a948aa)
+ + git_remote_helpers: remove GIT-PYTHON-VERSION upon "clean"
+  (merged to 'next' on 2013-01-28 at d898471)
+ + git-remote-testpy: fix path hashing on Python 3
+  (merged to 'next' on 2013-01-25 at acf9419)
+ + git-remote-testpy: call print as a function
+ + git-remote-testpy: don't do unbuffered text I/O
+ + git-remote-testpy: hash bytes explicitly
+ + svn-fe: allow svnrdump_sim.py to run with Python 3
+ + git_remote_helpers: use 2to3 if building with Python 3
+ + git_remote_helpers: force rebuild if python version changes
+ + git_remote_helpers: fix input when running under Python 3
+ + git_remote_helpers: allow building with Python 3
 
- We used to stuff "user@" and then append what we read from
- /etc/mailname to come up with a default e-mail ident, but a bug
- lost the "user@" part.  This is to fix it.
+ Prepare remote-helper test written in Python to be run with Python3.
 
 
-* nd/edit-branch-desc-while-detached (2013-01-30) 1 commit
-  (merged to 'next' on 2013-01-30 at 69307d6)
- + branch: no detached HEAD check when editing another branch's description
- (this branch is used by nd/branch-error-cases.)
+* mm/add-u-A-sans-pathspec (2013-01-28) 1 commit
+  (merged to 'next' on 2013-01-28 at fe762a6)
+ + add: warn when -u or -A is used without pathspec
 
- Attempt to "branch --edit-description" an existing branch, while
- being on a detached HEAD, errored out.
+ Forbid "git add -u" and "git add -A" without pathspec run from a
+ subdirectory, to train people to type "." (or ":/") to make the
+ choice of default does not matter.
 
 
-* nd/fetch-depth-is-broken (2013-01-11) 3 commits
-  (merged to 'next' on 2013-01-15 at 70a5ca7)
- + fetch: elaborate --depth action
- + upload-pack: fix off-by-one depth calculation in shallow clone
- + fetch: add --unshallow for turning shallow repo into complete one
+* pw/git-p4-on-cygwin (2013-01-26) 21 commits
+  (merged to 'next' on 2013-01-30 at 958ae3a)
+ + git p4: introduce gitConfigBool
+ + git p4: avoid shell when calling git config
+ + git p4: avoid shell when invoking git config --get-all
+ + git p4: avoid shell when invoking git rev-list
+ + git p4: avoid shell when mapping users
+ + git p4: disable read-only attribute before deleting
+ + git p4 test: use test_chmod for cygwin
+ + git p4: cygwin p4 client does not mark read-only
+ + git p4 test: avoid wildcard * in windows
+ + git p4 test: use LineEnd unix in windows tests too
+ + git p4 test: newline handling
+ + git p4: scrub crlf for utf16 files on windows
+ + git p4: remove unreachable windows \r\n conversion code
+ + git p4 test: translate windows paths for cygwin
+ + git p4 test: start p4d inside its db dir
+ + git p4 test: use client_view in t9806
+ + git p4 test: avoid loop in client_view
+ + git p4 test: use client_view to build the initial client
+ + git p4: generate better error message for bad depot path
+ + git p4: remove unused imports
+ + git p4: temp branch name should use / even on windows
 
- "git fetch --depth" was broken in at least three ways.  The
- resulting history was deeper than specified by one commit, it was
- unclear how to wipe the shallowness of the repository with the
- command, and documentation was misleading.
+ Improve "git p4" on Cygwin.
 
 --------------------------------------------------
 [New Topics]
 
-* ft/transport-report-segv (2013-01-31) 1 commit
- - push: fix segfault when HEAD points nowhere
+* jn/auto-depend-workaround-buggy-ccache (2013-02-01) 1 commit
+  (merged to 'next' on 2013-02-02 at db5940a)
+ + Makefile: explicitly set target name for autogenerated dependencies
 
- A failure to push due to non-ff while on an unborn branch
- dereferenced a NULL pointer while showing an error message.
+ An age-old workaround to prevent buggy versions of ccache from
+ breaking the auto-generation of dependencies, which unfortunately
+ is still relevant because some people use ancient distros.
 
- Will merge to 'next'.
-
-
-* sb/gpg-i18n (2013-01-31) 1 commit
- - gpg: allow translation of more error messages
-
- Will merge to 'next'.
+ Will merge to 'master'.
 
 
-* sb/gpg-plug-fd-leak (2013-01-31) 1 commit
- - gpg: close stderr once finished with it in verify_signed_buffer()
+* ct/autoconf-htmldir (2013-02-02) 1 commit
+ - Honor configure's htmldir switch
 
- Will merge to 'next'.
-
-
-* sb/run-command-fd-error-reporting (2013-01-31) 1 commit
- - run-command: be more informative about what failed
-
- Will merge to 'next' after spelling stdout, etc. out.
-
-
-* jk/remote-helpers-doc (2013-01-31) 2 commits
- - [SQUASH] simplify maintenance of redirection pages
- - Rename {git- => git}remote-helpers.txt
-
- "git help remote-helpers" did not work; 'remote-helpers' is not
- a subcommand name but a concept, so its documentation should have
- been in gitremote-helpers, not git-remote-helpers.
-
- Will merge to 'next' after squashing the fix in.
-
-
-* sp/smart-http-content-type-check (2013-01-31) 1 commit
- - Verify Content-Type from smart HTTP servers
-
- The smart HTTP clients forgot to verify the content-type that comes
- back from the server side to make sure that the request is being
- handled properly.
+ The autoconf subsystem passed --mandir down to generated
+ config.mak.autogen but forgot to do the same for --htmldir.
 
  Will merge to 'next'.
 
 
-* jc/mention-tracking-for-pull-default (2013-01-31) 1 commit
- - doc: mention tracking for pull.default
+* mk/tcsh-complete-only-known-paths (2013-02-03) 1 commit
+ - completion: handle path completion and colon for tcsh script
+ (this branch uses mp/complete-paths.)
 
- We stopped mentioning `tracking` is a deprecated but supported
- synonym for `upstream` in pull.default even though we have no
- intention of removing the support for it.
-
- This is my "don't list it to catch readers' eyes, but make sure it
- can be found if the reader looks for it" version; I'm not married
- to the layout and am willing to take a replacement patch.
-
-
-* jc/fake-ancestor-with-non-blobs (2013-01-31) 3 commits
- - apply: diagnose incomplete submodule object name better
- - apply: simplify build_fake_ancestor()
- - git-am: record full index line in the patch used while rebasing
-
- Rebasing the history of superproject with change in the submodule
- has been broken since v1.7.12.
+ Manlio's "complete with known paths only" update to completion
+ scripts returns directory names without trailing slash to
+ compensate the addition of '/' done by bash that reads from our
+ completion result.  tcsh completion code that reads from our
+ internal completion result does not add '/', so let it ask our
+ complletion code to keep the '/' at the end.
 
  Will merge to 'next'.
 
 
-* jk/doc-makefile-cleanup (2013-02-01) 1 commit
- - Documentation/Makefile: clean up MAN*_TXT lists
+* jc/combine-diff-many-parents (2013-02-03) 1 commit
+ - combine-diff: lift 32-way limit of combined diff
+
+ We used to have an arbitrary 32 limit for combined diff input,
+ resulting in incorrect number of leading colons shown when showing
+ the "--raw --cc" output.
+
+ May want a couple of new tests.
+
+
+* jc/remove-export-from-config-mak-in (2013-02-03) 1 commit
+ - config.mak.in: remove unused definitions
+
+ config.mak.in template had an "export" line to cause a few
+ common makefile variables to be exported; if they need to be
+ expoted for autoconf/configure users, they should also be exported
+ for people who write config.mak the same way.  Move the "export" to
+ the main Makefile.
+
+
+* jk/apply-similaritly-parsing (2013-02-03) 1 commit
+ - builtin/apply: tighten (dis)similarity index parsing
+
+ Make sure the similarity value shown in the "apply --summary"
+ output is sensible, even when the input had a bogus value.
 
  Will merge to 'next'.
+
+
+* nd/status-show-in-progress (2013-02-03) 1 commit
+ - status: show the branch name if possible in in-progress info
 
 --------------------------------------------------
 [Stalled]
@@ -356,19 +363,108 @@ repositories listed at
 --------------------------------------------------
 [Cooking]
 
+* ft/transport-report-segv (2013-01-31) 1 commit
+  (merged to 'next' on 2013-02-02 at 6c450a7)
+ + push: fix segfault when HEAD points nowhere
+
+ A failure to push due to non-ff while on an unborn branch
+ dereferenced a NULL pointer when showing an error message.
+
+ Will merge to 'master'.
+
+
+* sb/gpg-i18n (2013-01-31) 1 commit
+  (merged to 'next' on 2013-02-02 at 7a54574)
+ + gpg: allow translation of more error messages
+
+ Will merge to 'master'.
+
+
+* sb/gpg-plug-fd-leak (2013-01-31) 1 commit
+  (merged to 'next' on 2013-02-02 at c271a31)
+ + gpg: close stderr once finished with it in verify_signed_buffer()
+
+ We forgot to close the file descriptor reading from "gpg" output,
+ killing "git log --show-signature" on a long history.
+
+ Will merge to 'master'.
+
+
+* sb/run-command-fd-error-reporting (2013-02-01) 1 commit
+  (merged to 'next' on 2013-02-02 at be7e970)
+ + run-command: be more informative about what failed
+
+ Will merge to 'master'.
+
+
+* jk/remote-helpers-doc (2013-02-01) 1 commit
+  (merged to 'next' on 2013-02-02 at ce1461a)
+ + Rename {git- => git}remote-helpers.txt
+
+ "git help remote-helpers" did not work; 'remote-helpers' is not
+ a subcommand name but a concept, so its documentation should have
+ been in gitremote-helpers, not git-remote-helpers.
+
+ Will merge to 'master'.
+
+
+* sp/smart-http-content-type-check (2013-02-04) 1 commit
+  (merged to 'next' on 2013-02-04 at d0759cb)
+ + Verify Content-Type from smart HTTP servers
+
+ The smart HTTP clients forgot to verify the content-type that comes
+ back from the server side to make sure that the request is being
+ handled properly.
+
+ Will merge to 'master'.
+
+
+* jc/mention-tracking-for-pull-default (2013-01-31) 1 commit
+ - doc: mention tracking for pull.default
+
+ We stopped mentioning `tracking` is a deprecated but supported
+ synonym for `upstream` in pull.default even though we have no
+ intention of removing the support for it.
+
+ This is my "don't list it to catch readers' eyes, but make sure it
+ can be found if the reader looks for it" version; I'm not married
+ to the layout and am willing to take a replacement patch.
+
+
+* jc/fake-ancestor-with-non-blobs (2013-01-31) 3 commits
+  (merged to 'next' on 2013-02-02 at 86d457a)
+ + apply: diagnose incomplete submodule object name better
+ + apply: simplify build_fake_ancestor()
+ + git-am: record full index line in the patch used while rebasing
+
+ Rebasing the history of superproject with change in the submodule
+ has been broken since v1.7.12.
+
+ Will merge to 'master'.
+
+
+* jk/doc-makefile-cleanup (2013-02-01) 1 commit
+  (merged to 'next' on 2013-02-02 at 86ff373)
+ + Documentation/Makefile: clean up MAN*_TXT lists
+
+ Will merge to 'master'.
+
+
 * ab/gitweb-use-same-scheme (2013-01-28) 1 commit
- - gitweb: refer to picon/gravatar images over the same scheme
+  (merged to 'next' on 2013-02-02 at 7e4a108)
+ + gitweb: refer to picon/gravatar images over the same scheme
 
  Avoid mixed contents on a page coming via http and https when
  gitweb is hosted on a https server.
 
- Will merge to 'next'.
+ Will merge to 'master'.
 
 
 * jk/python-styles (2013-01-30) 1 commit
- - CodingGuidelines: add Python coding guidelines
+  (merged to 'next' on 2013-02-02 at 293edc1)
+ + CodingGuidelines: add Python coding guidelines
 
- Will merge to 'next'.
+ Will merge to 'master'.
 
 
 * mn/send-email-authinfo (2013-01-29) 1 commit
@@ -381,6 +477,7 @@ repositories listed at
 * mp/complete-paths (2013-01-11) 1 commit
   (merged to 'next' on 2013-01-30 at 70e4f1a)
  + git-completion.bash: add support for path completion
+ (this branch is used by mk/tcsh-complete-only-known-paths.)
 
  The completion script used to let the default completer to suggest
  pathnames, which gave too many irrelevant choices (e.g. "git add"
@@ -394,128 +491,62 @@ repositories listed at
  Will cook in 'next' to see if anybody screams.
 
 
-* jk/read-commit-buffer-data-after-free (2013-01-26) 3 commits
-  (merged to 'next' on 2013-01-30 at c6d7e16)
- + logmsg_reencode: lazily load missing commit buffers
- + logmsg_reencode: never return NULL
- + commit: drop useless xstrdup of commit message
-
- Clarify the ownership rule for commit->buffer field, which some
- callers incorrectly accessed without making sure it is populated.
-
- Will merge to 'master'.
-
-
-* pw/git-p4-on-cygwin (2013-01-26) 21 commits
-  (merged to 'next' on 2013-01-30 at 958ae3a)
- + git p4: introduce gitConfigBool
- + git p4: avoid shell when calling git config
- + git p4: avoid shell when invoking git config --get-all
- + git p4: avoid shell when invoking git rev-list
- + git p4: avoid shell when mapping users
- + git p4: disable read-only attribute before deleting
- + git p4 test: use test_chmod for cygwin
- + git p4: cygwin p4 client does not mark read-only
- + git p4 test: avoid wildcard * in windows
- + git p4 test: use LineEnd unix in windows tests too
- + git p4 test: newline handling
- + git p4: scrub crlf for utf16 files on windows
- + git p4: remove unreachable windows \r\n conversion code
- + git p4 test: translate windows paths for cygwin
- + git p4 test: start p4d inside its db dir
- + git p4 test: use client_view in t9806
- + git p4 test: avoid loop in client_view
- + git p4 test: use client_view to build the initial client
- + git p4: generate better error message for bad depot path
- + git p4: remove unused imports
- + git p4: temp branch name should use / even on windows
-
- Improve "git p4" on Cygwin.
-
- Will merge to 'master'.
-
-
 * ss/mergetools-tortoise (2013-02-01) 2 commits
- - mergetools: teach tortoisemerge to handle filenames with SP correctly
- - mergetools: support TortoiseGitMerge
+  (merged to 'next' on 2013-02-03 at d306b83)
+ + mergetools: teach tortoisemerge to handle filenames with SP correctly
+ + mergetools: support TortoiseGitMerge
 
  Update mergetools to work better with newer merge helper tortoise ships.
 
- Will merge to 'next'.
+ Will merge to 'master'.
 
 
-* da/mergetool-docs (2013-01-30) 7 commits
- - doc: generate a list of valid merge tools
- - mergetool--lib: list user configured tools in '--tool-help'
- - fixup! doc: generate a list of valid merge tools
- - fixup! mergetool--lib: add functions for finding available tools
- - mergetool--lib: add functions for finding available tools
- - mergetool--lib: improve the help text in guess_merge_tool()
- - mergetool--lib: simplify command expressions
+* da/mergetool-docs (2013-02-02) 5 commits
+  (merged to 'next' on 2013-02-03 at f822dcf)
+ + doc: generate a list of valid merge tools
+ + mergetool--lib: list user configured tools in '--tool-help'
+ + mergetool--lib: add functions for finding available tools
+ + mergetool--lib: improve the help text in guess_merge_tool()
+ + mergetool--lib: simplify command expressions
  (this branch uses jk/mergetool.)
 
  Build on top of the clean-up done by jk/mergetool and automatically
  generate the list of mergetool and difftool backends the build
  supports to be included in the documentation.
 
- Will merge to 'next', after squashing the fixup! commits from John
- Keeping.
+ Will merge to 'master'.
 
 
 * nd/branch-error-cases (2013-01-31) 6 commits
- - branch: let branch filters imply --list
- - docs: clarify git-branch --list behavior
- - branch: mark more strings for translation
- - Merge branch 'nd/edit-branch-desc-while-detached' into HEAD
- - branch: give a more helpful message on redundant arguments
- - branch: reject -D/-d without branch name
+  (merged to 'next' on 2013-02-02 at cf5e745)
+ + branch: let branch filters imply --list
+ + docs: clarify git-branch --list behavior
+ + branch: mark more strings for translation
+ + Merge branch 'nd/edit-branch-desc-while-detached' into HEAD
+ + branch: give a more helpful message on redundant arguments
+ + branch: reject -D/-d without branch name
 
  Fix various error messages and conditions in "git branch", e.g. we
  advertised "branch -d/-D" to remove one or more branches but actually
  implemented removal of zero or more branches---request to remove no
  branches was not rejected.
 
- Will merge to 'next'.
-
-
-* jc/push-reject-reasons (2013-01-24) 4 commits
-  (merged to 'next' on 2013-01-28 at b60be93)
- + push: finishing touches to explain REJECT_ALREADY_EXISTS better
- + push: introduce REJECT_FETCH_FIRST and REJECT_NEEDS_FORCE
- + push: further simplify the logic to assign rejection reason
- + push: further clean up fields of "struct ref"
-
- Improve error and advice messages given locally when "git push"
- refuses when it cannot compute fast-forwardness by separating these
- cases from the normal "not a fast-forward; merge first and push
- again" case.
-
  Will merge to 'master'.
 
 
 * jk/mergetool (2013-01-28) 8 commits
- - mergetools: simplify how we handle "vim" and "defaults"
- - mergetool--lib: don't call "exit" in setup_tool
- - mergetool--lib: improve show_tool_help() output
- - mergetools/vim: remove redundant diff command
- - git-difftool: use git-mergetool--lib for "--tool-help"
- - git-mergetool: don't hardcode 'mergetool' in show_tool_help
- - git-mergetool: remove redundant assignment
- - git-mergetool: move show_tool_help to mergetool--lib
+  (merged to 'next' on 2013-02-03 at 2ff5dee)
+ + mergetools: simplify how we handle "vim" and "defaults"
+ + mergetool--lib: don't call "exit" in setup_tool
+ + mergetool--lib: improve show_tool_help() output
+ + mergetools/vim: remove redundant diff command
+ + git-difftool: use git-mergetool--lib for "--tool-help"
+ + git-mergetool: don't hardcode 'mergetool' in show_tool_help
+ + git-mergetool: remove redundant assignment
+ + git-mergetool: move show_tool_help to mergetool--lib
  (this branch is used by da/mergetool-docs.)
 
  Cleans up mergetool/difftool combo.
-
- This is looking ready for 'next'.
-
-
-* mm/add-u-A-sans-pathspec (2013-01-28) 1 commit
-  (merged to 'next' on 2013-01-28 at fe762a6)
- + add: warn when -u or -A is used without pathspec
-
- Forbid "git add -u" and "git add -A" without pathspec run from a
- subdirectory, to train people to type "." (or ":/") to make the
- choice of default does not matter.
 
  Will merge to 'master'.
 
@@ -534,22 +565,26 @@ repositories listed at
  the client.  Optionally allow requests for histories leading to the
  tips of hidden refs by updated clients.
 
+ Will merge to 'next' after dropping the tip.
+
 
 * ta/doc-no-small-caps (2013-02-01) 6 commits
- - Documentation: StGit is the right spelling, not StGIT
- - Documentation: describe the "repository" in repository-layout
- - Documentation: add a description for 'gitfile' to glossary
- - Documentation: do not use undefined terms git-dir and git-file
- - Documentation: the name of the system is 'Git', not 'git'
- - Documentation: avoid poor-man's small caps GIT
+  (merged to 'next' on 2013-02-02 at 77cbd0e)
+ + Documentation: StGit is the right spelling, not StGIT
+ + Documentation: describe the "repository" in repository-layout
+ + Documentation: add a description for 'gitfile' to glossary
+ + Documentation: do not use undefined terms git-dir and git-file
+ + Documentation: the name of the system is 'Git', not 'git'
+ + Documentation: avoid poor-man's small caps GIT
 
  Update documentation to change "GIT" which was a poor-man's small
- caps to "Git" which was the intended spelling.  Also change "git"
- spelled in all-lowercase to "Git" when it refers to the system as
- the whole or the concept it embodies, as opposed to the command the
- end users would type.
+ caps to "Git".  The latter was the intended spelling.
 
- Will merge to 'next'.
+ Also change "git" spelled in all-lowercase to "Git" when it refers
+ to the system as the whole or the concept it embodies, as opposed to
+ the command the end users would type.
+
+ Will merge to 'master'.
 
 
 * jc/remove-treesame-parent-in-simplify-merges (2013-01-17) 1 commit
@@ -564,62 +599,7 @@ repositories listed at
  infrastructure; even though I think this change is correct, please
  report immediately if you find any unintended side effect.
 
- Will merge to 'next'.
-
-
-* jk/remote-helpers-in-python-3 (2013-01-30) 10 commits
-  (merged to 'next' on 2013-01-31 at 5a948aa)
- + git_remote_helpers: remove GIT-PYTHON-VERSION upon "clean"
-  (merged to 'next' on 2013-01-28 at d898471)
- + git-remote-testpy: fix path hashing on Python 3
-  (merged to 'next' on 2013-01-25 at acf9419)
- + git-remote-testpy: call print as a function
- + git-remote-testpy: don't do unbuffered text I/O
- + git-remote-testpy: hash bytes explicitly
- + svn-fe: allow svnrdump_sim.py to run with Python 3
- + git_remote_helpers: use 2to3 if building with Python 3
- + git_remote_helpers: force rebuild if python version changes
- + git_remote_helpers: fix input when running under Python 3
- + git_remote_helpers: allow building with Python 3
-
- Prepare remote-helper test written in Python to be run with Python3.
-
- Will merge to 'master'.
-
-
-* jk/config-parsing-cleanup (2013-01-23) 8 commits
-  (merged to 'next' on 2013-01-28 at 9bc9411)
- + reflog: use parse_config_key in config callback
- + help: use parse_config_key for man config
- + submodule: simplify memory handling in config parsing
- + submodule: use parse_config_key when parsing config
- + userdiff: drop parse_driver function
- + convert some config callbacks to parse_config_key
- + archive-tar: use parse_config_key when parsing config
- + config: add helper function for parsing key names
-
- Configuration parsing for tar.* configuration variables were
- broken. Introduce a new config-keyname parser API to make the
- callers much less error prone.
-
- Will merge to 'master'.
-
-
-* jc/custom-comment-char (2013-01-16) 1 commit
-  (merged to 'next' on 2013-01-25 at 91d8a5d)
- + Allow custom "comment char"
-
- An illustration to show codepaths that need to be touched to change
- the hint lines in the edited text to begin with something other
- than '#'.
-
- This is half my work and half by Ralf Thielow.  There may still be
- leftover '#' lurking around, though.  My "git grep" says C code
- should be already fine, but git-rebase--interactive.sh could be
- converted (it should not matter, as the file is not really a
- free-form text).
-
- Will merge to 'master'.
+ Will cook in 'next'.
 
 
 * jc/push-2.0-default-to-simple (2013-01-16) 14 commits
@@ -658,11 +638,3 @@ repositories listed at
 
  Waiting for the final round of reroll before merging to 'next'.
  After that we will go incremental.
-
---------------------------------------------------
-[Discarded]
-
-* jk/update-install-for-p4 (2013-01-20) 1 commit
- . INSTALL: git-p4 doesn't support Python 3
-
- Made obsolete by bc/git-p4-for-python-2.4 topic.
