@@ -92,10 +92,7 @@ static const char * const git_notes_get_ref_usage[] = {
 };
 
 static const char note_template[] =
-	"\n"
-	"#\n"
-	"# Write/edit the notes for the following object:\n"
-	"#\n";
+	"\nWrite/edit the notes for the following object:\n";
 
 struct msg_arg {
 	int given;
@@ -129,7 +126,7 @@ static void write_commented_object(int fd, const unsigned char *object)
 		{"show", "--stat", "--no-notes", sha1_to_hex(object), NULL};
 	struct child_process show;
 	struct strbuf buf = STRBUF_INIT;
-	FILE *show_out;
+	struct strbuf cbuf = STRBUF_INIT;
 
 	/* Invoke "git show --stat --no-notes $object" */
 	memset(&show, 0, sizeof(show));
@@ -142,21 +139,14 @@ static void write_commented_object(int fd, const unsigned char *object)
 		die(_("unable to start 'show' for object '%s'"),
 		    sha1_to_hex(object));
 
-	/* Open the output as FILE* so strbuf_getline() can be used. */
-	show_out = xfdopen(show.out, "r");
-	if (show_out == NULL)
-		die_errno(_("can't fdopen 'show' output fd"));
+	if (strbuf_read(&buf, show.out, 0) < 0)
+		die_errno(_("could not read 'show' output"));
+	strbuf_add_commented_lines(&cbuf, buf.buf, buf.len);
+	write_or_die(fd, cbuf.buf, cbuf.len);
 
-	/* Prepend "# " to each output line and write result to 'fd' */
-	while (strbuf_getline(&buf, show_out, '\n') != EOF) {
-		write_or_die(fd, "# ", 2);
-		write_or_die(fd, buf.buf, buf.len);
-		write_or_die(fd, "\n", 1);
-	}
+	strbuf_release(&cbuf);
 	strbuf_release(&buf);
-	if (fclose(show_out))
-		die_errno(_("failed to close pipe to 'show' for object '%s'"),
-			  sha1_to_hex(object));
+
 	if (finish_command(&show))
 		die(_("failed to finish 'show' for object '%s'"),
 		    sha1_to_hex(object));
@@ -170,6 +160,7 @@ static void create_note(const unsigned char *object, struct msg_arg *msg,
 
 	if (msg->use_editor || !msg->given) {
 		int fd;
+		struct strbuf buf = STRBUF_INIT;
 
 		/* write the template message before editing: */
 		path = git_pathdup("NOTES_EDITMSG");
@@ -181,11 +172,16 @@ static void create_note(const unsigned char *object, struct msg_arg *msg,
 			write_or_die(fd, msg->buf.buf, msg->buf.len);
 		else if (prev && !append_only)
 			write_note_data(fd, prev);
-		write_or_die(fd, note_template, strlen(note_template));
+
+		strbuf_addch(&buf, '\n');
+		strbuf_add_commented_lines(&buf, note_template, strlen(note_template));
+		strbuf_addch(&buf, '\n');
+		write_or_die(fd, buf.buf, buf.len);
 
 		write_commented_object(fd, object);
 
 		close(fd);
+		strbuf_release(&buf);
 		strbuf_reset(&(msg->buf));
 
 		if (launch_editor(path, &(msg->buf), NULL)) {

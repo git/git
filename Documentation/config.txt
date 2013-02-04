@@ -534,6 +534,12 @@ core.editor::
 	variable when it is set, and the environment variable
 	`GIT_EDITOR` is not set.  See linkgit:git-var[1].
 
+core.commentchar::
+	Commands such as `commit` and `tag` that lets you edit
+	messages consider a line that begins with this character
+	commented, and removes them after the editor returns
+	(default '#').
+
 sequence.editor::
 	Text editor used by `git rebase -i` for editing the rebase insn file.
 	The value is meant to be interpreted by the shell when it is used.

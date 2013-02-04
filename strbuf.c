@@ -204,6 +204,54 @@ void strbuf_addf(struct strbuf *sb, const char *fmt, ...)
 	va_end(ap);
 }
 
+static void add_lines(struct strbuf *out,
+			const char *prefix1,
+			const char *prefix2,
+			const char *buf, size_t size)
+{
+	while (size) {
+		const char *prefix;
+		const char *next = memchr(buf, '\n', size);
+		next = next ? (next + 1) : (buf + size);
+
+		prefix = (prefix2 && buf[0] == '\n') ? prefix2 : prefix1;
+		strbuf_addstr(out, prefix);
+		strbuf_add(out, buf, next - buf);
+		size -= next - buf;
+		buf = next;
+	}
+	strbuf_complete_line(out);
+}
+
+void strbuf_add_commented_lines(struct strbuf *out, const char *buf, size_t size)
+{
+	static char prefix1[3];
+	static char prefix2[2];
+
+	if (prefix1[0] != comment_line_char) {
+		sprintf(prefix1, "%c ", comment_line_char);
+		sprintf(prefix2, "%c", comment_line_char);
+	}
+	add_lines(out, prefix1, prefix2, buf, size);
+}
+
+void strbuf_commented_addf(struct strbuf *sb, const char *fmt, ...)
+{
+	va_list params;
+	struct strbuf buf = STRBUF_INIT;
+	int incomplete_line = sb->len && sb->buf[sb->len - 1] != '\n';
+
+	va_start(params, fmt);
+	strbuf_vaddf(&buf, fmt, params);
+	va_end(params);
+
+	strbuf_add_commented_lines(sb, buf.buf, buf.len);
+	if (incomplete_line)
+		sb->buf[--sb->len] = '\0';
+
+	strbuf_release(&buf);
+}
+
 void strbuf_vaddf(struct strbuf *sb, const char *fmt, va_list ap)
 {
 	int len;
@@ -414,15 +462,7 @@ int strbuf_read_file(struct strbuf *sb, const char *path, size_t hint)
 void strbuf_add_lines(struct strbuf *out, const char *prefix,
 		      const char *buf, size_t size)
 {
-	while (size) {
-		const char *next = memchr(buf, '\n', size);
-		next = next ? (next + 1) : (buf + size);
-		strbuf_addstr(out, prefix);
-		strbuf_add(out, buf, next - buf);
-		size -= next - buf;
-		buf = next;
-	}
-	strbuf_complete_line(out);
+	add_lines(out, prefix, NULL, buf, size);
 }
 
 void strbuf_addstr_xml_quoted(struct strbuf *buf, const char *s)

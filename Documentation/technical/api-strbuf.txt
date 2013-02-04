@@ -156,6 +156,11 @@ then they will free() it.
 	Remove the bytes between `pos..pos+len` and replace it with the given
 	data.
 
+`strbuf_add_commented_lines`::
+
+	Add a NUL-terminated string to the buffer. Each line will be prepended
+	by a comment character and a blank.
+
 `strbuf_add`::
 
 	Add data of given length to the buffer.
@@ -228,6 +233,11 @@ which can be used by the programmer of the callback as she sees fit.
 `strbuf_addf`::
 
 	Add a formatted string to the buffer.
+
+`strbuf_commented_addf`::
+
+	Add a formatted string prepended by a comment character and a
+	blank to the buffer.
 
 `strbuf_fread`::
 

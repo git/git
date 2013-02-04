@@ -976,12 +976,12 @@ cmd_summary() {
 	done |
 	if test -n "$for_status"; then
 		if [ -n "$files" ]; then
-			gettextln "# Submodules changed but not updated:"
+			gettextln "Submodules changed but not updated:" | git stripspace -c
 		else
-			gettextln "# Submodule changes to be committed:"
+			gettextln "Submodule changes to be committed:" | git stripspace -c
 		fi
-		echo "#"
-		sed -e 's|^|# |' -e 's|^# $|#|'
+		printf "\n" | git stripspace -c
+		git stripspace -c
 	else
 		cat
 	fi

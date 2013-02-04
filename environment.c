@@ -63,6 +63,12 @@ int precomposed_unicode = -1; /* see probe_utf8_pathname_composition() */
 struct startup_info *startup_info;
 unsigned long pack_size_limit_cfg;
 
+/*
+ * The character that begins a commented line in user-editable file
+ * that is subject to stripspace.
+ */
+char comment_line_char = '#';
+
 /* Parallel index stat data preload? */
 int core_preload_index = 0;
 

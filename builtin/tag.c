@@ -246,19 +246,13 @@ static int do_sign(struct strbuf *buffer)
 }
 
 static const char tag_template[] =
-	N_("\n"
-	"#\n"
-	"# Write a tag message\n"
-	"# Lines starting with '#' will be ignored.\n"
-	"#\n");
+	N_("\nWrite a tag message\n"
+	"Lines starting with '%c' will be ignored.\n");
 
 static const char tag_template_nocleanup[] =
-	N_("\n"
-	"#\n"
-	"# Write a tag message\n"
-	"# Lines starting with '#' will be kept; you may remove them"
-	" yourself if you want to.\n"
-	"#\n");
+	N_("\nWrite a tag message\n"
+	"Lines starting with '%c' will be kept; you may remove them"
+	" yourself if you want to.\n");
 
 static int git_tag_config(const char *var, const char *value, void *cb)
 {
@@ -346,14 +340,18 @@ static void create_tag(const unsigned char *object, const char *tag,
 		if (fd < 0)
 			die_errno(_("could not create file '%s'"), path);
 
-		if (!is_null_sha1(prev))
+		if (!is_null_sha1(prev)) {
 			write_tag_body(fd, prev);
-		else if (opt->cleanup_mode == CLEANUP_ALL)
-			write_or_die(fd, _(tag_template),
-					strlen(_(tag_template)));
-		else
-			write_or_die(fd, _(tag_template_nocleanup),
-					strlen(_(tag_template_nocleanup)));
+		} else {
+			struct strbuf buf = STRBUF_INIT;
+			strbuf_addch(&buf, '\n');
+			if (opt->cleanup_mode == CLEANUP_ALL)
+				strbuf_commented_addf(&buf, _(tag_template), comment_line_char);
+			else
+				strbuf_commented_addf(&buf, _(tag_template_nocleanup), comment_line_char);
+			write_or_die(fd, buf.buf, buf.len);
+			strbuf_release(&buf);
+		}
 		close(fd);
 
 		if (launch_editor(path, buf, NULL)) {

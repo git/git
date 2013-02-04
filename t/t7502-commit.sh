@@ -517,4 +517,11 @@ use_template="-t template"
 
 try_commit_status_combo
 
+test_expect_success 'commit --status with custom comment character' '
+	test_when_finished "git config --unset core.commentchar" &&
+	git config core.commentchar ";" &&
+	try_commit --status &&
+	test_i18ngrep "^; Changes to be committed:" .git/COMMIT_EDITMSG
+'
+
 test_done
