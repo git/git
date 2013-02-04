@@ -144,6 +144,8 @@ void transport_set_verbosity(struct transport *transport, int verbosity,
 #define REJECT_NON_FF_HEAD     0x01
 #define REJECT_NON_FF_OTHER    0x02
 #define REJECT_ALREADY_EXISTS  0x04
+#define REJECT_FETCH_FIRST     0x08
+#define REJECT_NEEDS_FORCE     0x10
 
 int transport_push(struct transport *connection,
 		   int refspec_nr, const char **refspec, int flags,

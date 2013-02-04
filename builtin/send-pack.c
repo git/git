@@ -44,6 +44,16 @@ static void print_helper_status(struct ref *ref)
 			msg = "non-fast forward";
 			break;
 
+		case REF_STATUS_REJECT_FETCH_FIRST:
+			res = "error";
+			msg = "fetch first";
+			break;
+
+		case REF_STATUS_REJECT_NEEDS_FORCE:
+			res = "error";
+			msg = "needs force";
+			break;
+
 		case REF_STATUS_REJECT_ALREADY_EXISTS:
 			res = "error";
 			msg = "already exists";
