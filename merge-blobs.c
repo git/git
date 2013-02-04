@@ -3,7 +3,7 @@
 #include "xdiff-interface.h"
 #include "ll-merge.h"
 #include "blob.h"
-#include "merge-file.h"
+#include "merge-blobs.h"
 
 static int fill_mmfile_blob(mmfile_t *f, struct blob *obj)
 {
@@ -80,7 +80,7 @@ static int generate_common_file(mmfile_t *res, mmfile_t *f1, mmfile_t *f2)
 	return xdi_diff(f1, f2, &xpp, &xecfg, &ecb);
 }
 
-void *merge_file(const char *path, struct blob *base, struct blob *our, struct blob *their, unsigned long *size)
+void *merge_blobs(const char *path, struct blob *base, struct blob *our, struct blob *their, unsigned long *size)
 {
 	void *res = NULL;
 	mmfile_t f1, f2, common;

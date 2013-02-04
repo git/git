@@ -976,7 +976,7 @@ merge_file_special_markers(struct merge_options *o,
 	return mfi;
 }
 
-static struct merge_file_info merge_file(struct merge_options *o,
+static struct merge_file_info merge_file_one(struct merge_options *o,
 					 const char *path,
 					 const unsigned char *o_sha, int o_mode,
 					 const unsigned char *a_sha, int a_mode,
@@ -1166,7 +1166,7 @@ static void conflict_rename_rename_1to2(struct merge_options *o,
 		struct merge_file_info mfi;
 		struct diff_filespec other;
 		struct diff_filespec *add;
-		mfi = merge_file(o, one->path,
+		mfi = merge_file_one(o, one->path,
 				 one->sha1, one->mode,
 				 a->sha1, a->mode,
 				 b->sha1, b->mode,
@@ -1450,7 +1450,7 @@ static int process_renames(struct merge_options *o,
 				       ren1_dst, branch2);
 				if (o->call_depth) {
 					struct merge_file_info mfi;
-					mfi = merge_file(o, ren1_dst, null_sha1, 0,
+					mfi = merge_file_one(o, ren1_dst, null_sha1, 0,
 							 ren1->pair->two->sha1, ren1->pair->two->mode,
 							 dst_other.sha1, dst_other.mode,
 							 branch1, branch2);
