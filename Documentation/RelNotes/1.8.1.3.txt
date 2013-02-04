@@ -1,0 +1,28 @@
+Git 1.8.1.3 Release Notes
+=========================
+
+Fixes since v1.8.1.2
+--------------------
+
+ * The attribute mechanism didn't allow limiting attributes to be
+   applied to only a single directory itself with "path/" like the
+   exclude mechanism does.  The fix for this in 1.8.1.2 had
+   performance degradations.
+
+ * Command line completion code was inadvertently made incompatible with
+   older versions of bash by using a newer array notation.
+
+ * We used to stuff "user@" and then append what we read from
+   /etc/mailname to come up with a default e-mail ident, but a bug
+   lost the "user@" part.
+
+ * "git am" did not parse datestamp correctly from Hg generated patch,
+   when it is run in a locale outside C (or en).
+
+ * Attempt to "branch --edit-description" an existing branch, while
+   being on a detached HEAD, errored out.
+
+ * "git rebase --preserve-merges" lost empty merges in recent versions
+   of Git.
+
+Also contains various documentation fixes.
