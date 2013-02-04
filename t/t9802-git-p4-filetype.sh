@@ -8,6 +8,123 @@ test_expect_success 'start p4d' '
 	start_p4d
 '
 
+#
+# This series of tests checks newline handling  Both p4 and
+# git store newlines as \n, and have options to choose how
+# newlines appear in checked-out files.
+#
+test_expect_success 'p4 client newlines, unix' '
+	(
+		cd "$cli" &&
+		p4 client -o | sed "/LineEnd/s/:.*/:unix/" | p4 client -i &&
+		printf "unix\ncrlf\n" >f-unix &&
+		printf "unix\r\ncrlf\r\n" >f-unix-as-crlf &&
+		p4 add -t text f-unix &&
+		p4 submit -d f-unix &&
+
+		# LineEnd: unix; should be no change after sync
+		cp f-unix f-unix-orig &&
+		p4 sync -f &&
+		test_cmp f-unix-orig f-unix &&
+
+		# make sure stored in repo as unix newlines
+		# use sed to eat python-appened newline
+		p4 -G print //depot/f-unix | marshal_dump data 2 |\
+		    sed \$d >f-unix-p4-print &&
+		test_cmp f-unix-orig f-unix-p4-print &&
+
+		# switch to win, make sure lf -> crlf
+		p4 client -o | sed "/LineEnd/s/:.*/:win/" | p4 client -i &&
+		p4 sync -f &&
+		test_cmp f-unix-as-crlf f-unix
+	)
+'
+
+test_expect_success 'p4 client newlines, win' '
+	(
+		cd "$cli" &&
+		p4 client -o | sed "/LineEnd/s/:.*/:win/" | p4 client -i &&
+		printf "win\r\ncrlf\r\n" >f-win &&
+		printf "win\ncrlf\n" >f-win-as-lf &&
+		p4 add -t text f-win &&
+		p4 submit -d f-win &&
+
+		# LineEnd: win; should be no change after sync
+		cp f-win f-win-orig &&
+		p4 sync -f &&
+		test_cmp f-win-orig f-win &&
+
+		# make sure stored in repo as unix newlines
+		# use sed to eat python-appened newline
+		p4 -G print //depot/f-win | marshal_dump data 2 |\
+		    sed \$d >f-win-p4-print &&
+		test_cmp f-win-as-lf f-win-p4-print &&
+
+		# switch to unix, make sure lf -> crlf
+		p4 client -o | sed "/LineEnd/s/:.*/:unix/" | p4 client -i &&
+		p4 sync -f &&
+		test_cmp f-win-as-lf f-win
+	)
+'
+
+test_expect_success 'ensure blobs store only lf newlines' '
+	test_when_finished cleanup_git &&
+	(
+		cd "$git" &&
+		git init &&
+		git p4 sync //depot@all &&
+
+		# verify the files in .git are stored only with newlines
+		o=$(git ls-tree p4/master -- f-unix | cut -f1 | cut -d\  -f3) &&
+		git cat-file blob $o >f-unix-blob &&
+		test_cmp "$cli"/f-unix-orig f-unix-blob &&
+
+		o=$(git ls-tree p4/master -- f-win | cut -f1 | cut -d\  -f3) &&
+		git cat-file blob $o >f-win-blob &&
+		test_cmp "$cli"/f-win-as-lf f-win-blob &&
+
+		rm f-unix-blob f-win-blob
+	)
+'
+
+test_expect_success 'gitattributes setting eol=lf produces lf newlines' '
+	test_when_finished cleanup_git &&
+	(
+		# checkout the files and make sure core.eol works as planned
+		cd "$git" &&
+		git init &&
+		echo "* eol=lf" >.gitattributes &&
+		git p4 sync //depot@all &&
+		git checkout master &&
+		test_cmp "$cli"/f-unix-orig f-unix &&
+		test_cmp "$cli"/f-win-as-lf f-win
+	)
+'
+
+test_expect_success 'gitattributes setting eol=crlf produces crlf newlines' '
+	test_when_finished cleanup_git &&
+	(
+		# checkout the files and make sure core.eol works as planned
+		cd "$git" &&
+		git init &&
+		echo "* eol=crlf" >.gitattributes &&
+		git p4 sync //depot@all &&
+		git checkout master &&
+		test_cmp "$cli"/f-unix-as-crlf f-unix &&
+		test_cmp "$cli"/f-win-orig f-win
+	)
+'
+
+test_expect_success 'crlf cleanup' '
+	(
+		cd "$cli" &&
+		rm f-unix-orig f-unix-as-crlf &&
+		rm f-win-orig f-win-as-lf &&
+		p4 client -o | sed "/LineEnd/s/:.*/:unix/" | p4 client -i &&
+		p4 sync -f
+	)
+'
+
 test_expect_success 'utf-16 file create' '
 	(
 		cd "$cli" &&

@@ -8,13 +8,32 @@ TEST_NO_CREATE_REPO=NoThanks
 
 . ./test-lib.sh
 
-if ! test_have_prereq PYTHON; then
+if ! test_have_prereq PYTHON
+then
 	skip_all='skipping git p4 tests; python not available'
 	test_done
 fi
 ( p4 -h && p4d -h ) >/dev/null 2>&1 || {
 	skip_all='skipping git p4 tests; no p4 or p4d'
 	test_done
+}
+
+# On cygwin, the NT version of Perforce can be used.  When giving
+# it paths, either on the command-line or in client specifications,
+# be sure to use the native windows form.
+#
+# Older versions of perforce were available compiled natively for
+# cygwin.  Those do not accept native windows paths, so make sure
+# not to convert for them.
+native_path() {
+	path="$1" &&
+	if test_have_prereq CYGWIN && ! p4 -V | grep -q CYGWIN
+	then
+		path=$(cygpath --windows "$path")
+	else
+		path=$(test-path-utils real_path "$path")
+	fi &&
+	echo "$path"
 }
 
 # Try to pick a unique port: guess a large number, then hope
@@ -32,7 +51,7 @@ P4EDITOR=:
 export P4PORT P4CLIENT P4EDITOR
 
 db="$TRASH_DIRECTORY/db"
-cli=$(test-path-utils real_path "$TRASH_DIRECTORY/cli")
+cli="$TRASH_DIRECTORY/cli"
 git="$TRASH_DIRECTORY/git"
 pidfile="$TRASH_DIRECTORY/p4d.pid"
 
@@ -40,8 +59,11 @@ start_p4d() {
 	mkdir -p "$db" "$cli" "$git" &&
 	rm -f "$pidfile" &&
 	(
-		p4d -q -r "$db" -p $P4DPORT &
-		echo $! >"$pidfile"
+		cd "$db" &&
+		{
+			p4d -q -p $P4DPORT &
+			echo $! >"$pidfile"
+		}
 	) &&
 
 	# This gives p4d a long time to start up, as it can be
@@ -74,15 +96,8 @@ start_p4d() {
 	fi
 
 	# build a client
-	(
-		cd "$cli" &&
-		p4 client -i <<-EOF
-		Client: client
-		Description: client
-		Root: $cli
-		View: //depot/... //client/...
-		EOF
-	)
+	client_view "//depot/... //client/..." &&
+
 	return 0
 }
 
@@ -123,13 +138,26 @@ marshal_dump() {
 client_view() {
 	(
 		cat <<-EOF &&
-		Client: client
-		Description: client
+		Client: $P4CLIENT
+		Description: $P4CLIENT
 		Root: $cli
+		AltRoots: $(native_path "$cli")
+		LineEnd: unix
 		View:
 		EOF
-		for arg ; do
-			printf "\t$arg\n"
-		done
+		printf "\t%s\n" "$@"
 	) | p4 client -i
+}
+
+is_cli_file_writeable() {
+	# cygwin version of p4 does not set read-only attr,
+	# will be marked 444 but -w is true
+	file="$1" &&
+	if test_have_prereq CYGWIN && p4 -V | grep -q CYGWIN
+	then
+		stat=$(stat --format=%a "$file") &&
+		test $stat = 644
+	else
+		test -w "$file"
+	fi
 }

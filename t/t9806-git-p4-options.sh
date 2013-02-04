@@ -214,40 +214,33 @@ test_expect_success 'clone --use-client-spec' '
 		exec >/dev/null &&
 		test_must_fail git p4 clone --dest="$git" --use-client-spec
 	) &&
-	cli2=$(test-path-utils real_path "$TRASH_DIRECTORY/cli2") &&
+	# build a different client
+	cli2="$TRASH_DIRECTORY/cli2" &&
 	mkdir -p "$cli2" &&
 	test_when_finished "rmdir \"$cli2\"" &&
-	(
-		cd "$cli2" &&
-		p4 client -i <<-EOF
-		Client: client2
-		Description: client2
-		Root: $cli2
-		View: //depot/sub/... //client2/bus/...
-		EOF
-	) &&
 	test_when_finished cleanup_git &&
 	(
+		# group P4CLIENT and cli changes in a sub-shell
 		P4CLIENT=client2 &&
-		git p4 clone --dest="$git" --use-client-spec //depot/...
-	) &&
-	(
-		cd "$git" &&
-		test_path_is_file bus/dir/f4 &&
-		test_path_is_missing file1
-	) &&
-	cleanup_git &&
-
-	# same thing again, this time with variable instead of option
-	(
-		cd "$git" &&
-		git init &&
-		git config git-p4.useClientSpec true &&
-		P4CLIENT=client2 &&
-		git p4 sync //depot/... &&
-		git checkout -b master p4/master &&
-		test_path_is_file bus/dir/f4 &&
-		test_path_is_missing file1
+		cli="$cli2" &&
+		client_view "//depot/sub/... //client2/bus/..." &&
+		git p4 clone --dest="$git" --use-client-spec //depot/... &&
+		(
+			cd "$git" &&
+			test_path_is_file bus/dir/f4 &&
+			test_path_is_missing file1
+		) &&
+		cleanup_git &&
+		# same thing again, this time with variable instead of option
+		(
+			cd "$git" &&
+			git init &&
+			git config git-p4.useClientSpec true &&
+			git p4 sync //depot/... &&
+			git checkout -b master p4/master &&
+			test_path_is_file bus/dir/f4 &&
+			test_path_is_missing file1
+		)
 	)
 '
 

@@ -30,6 +30,11 @@ test_expect_success 'basic git p4 clone' '
 	)
 '
 
+test_expect_success 'depot typo error' '
+	test_must_fail git p4 clone --dest="$git" /depot 2>errs &&
+	grep "Depot paths must start with" errs
+'
+
 test_expect_success 'git p4 clone @all' '
 	git p4 clone --dest="$git" //depot@all &&
 	test_when_finished cleanup_git &&
