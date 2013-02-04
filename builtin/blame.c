@@ -1420,32 +1420,18 @@ static void get_commit_info(struct commit *commit,
 {
 	int len;
 	const char *subject, *encoding;
-	char *reencoded, *message;
+	char *message;
 
 	commit_info_init(ret);
 
-	/*
-	 * We've operated without save_commit_buffer, so
-	 * we now need to populate them for output.
-	 */
-	if (!commit->buffer) {
-		enum object_type type;
-		unsigned long size;
-		commit->buffer =
-			read_sha1_file(commit->object.sha1, &type, &size);
-		if (!commit->buffer)
-			die("Cannot read commit %s",
-			    sha1_to_hex(commit->object.sha1));
-	}
 	encoding = get_log_output_encoding();
-	reencoded = logmsg_reencode(commit, encoding);
-	message   = reencoded ? reencoded : commit->buffer;
+	message = logmsg_reencode(commit, encoding);
 	get_ac_line(message, "\nauthor ",
 		    &ret->author, &ret->author_mail,
 		    &ret->author_time, &ret->author_tz);
 
 	if (!detailed) {
-		free(reencoded);
+		logmsg_free(message, commit);
 		return;
 	}
 
@@ -1459,7 +1445,7 @@ static void get_commit_info(struct commit *commit,
 	else
 		strbuf_addf(&ret->summary, "(%s)", sha1_to_hex(commit->object.sha1));
 
-	free(reencoded);
+	logmsg_free(message, commit);
 }
 
 /*

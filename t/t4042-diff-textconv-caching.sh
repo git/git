@@ -106,4 +106,12 @@ test_expect_success 'switching diff driver produces correct results' '
 	test_cmp expect actual
 '
 
+# The point here is to test that we can log the notes cache and still use it to
+# produce a diff later (older versions of git would segfault on this). It's
+# much more likely to come up in the real world with "log --all -p", but using
+# --no-walk lets us reliably reproduce the order of traversal.
+test_expect_success 'log notes cache and still use cache for -p' '
+	git log --no-walk -p refs/notes/textconv/magic HEAD
+'
+
 test_done

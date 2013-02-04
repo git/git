@@ -524,10 +524,11 @@ static void add_merge_info(const struct pretty_print_context *pp,
 	strbuf_addch(sb, '\n');
 }
 
-static char *get_header(const struct commit *commit, const char *key)
+static char *get_header(const struct commit *commit, const char *msg,
+			const char *key)
 {
 	int key_len = strlen(key);
-	const char *line = commit->buffer;
+	const char *line = msg;
 
 	while (line) {
 		const char *eol = strchr(line, '\n'), *next;
@@ -588,25 +589,77 @@ char *logmsg_reencode(const struct commit *commit,
 	static const char *utf8 = "UTF-8";
 	const char *use_encoding;
 	char *encoding;
+	char *msg = commit->buffer;
 	char *out;
 
+	if (!msg) {
+		enum object_type type;
+		unsigned long size;
+
+		msg = read_sha1_file(commit->object.sha1, &type, &size);
+		if (!msg)
+			die("Cannot read commit object %s",
+			    sha1_to_hex(commit->object.sha1));
+		if (type != OBJ_COMMIT)
+			die("Expected commit for '%s', got %s",
+			    sha1_to_hex(commit->object.sha1), typename(type));
+	}
+
 	if (!output_encoding || !*output_encoding)
-		return NULL;
-	encoding = get_header(commit, "encoding");
+		return msg;
+	encoding = get_header(commit, msg, "encoding");
 	use_encoding = encoding ? encoding : utf8;
-	if (same_encoding(use_encoding, output_encoding))
-		if (encoding) /* we'll strip encoding header later */
-			out = xstrdup(commit->buffer);
-		else
-			return NULL; /* nothing to do */
-	else
-		out = reencode_string(commit->buffer,
-				      output_encoding, use_encoding);
+	if (same_encoding(use_encoding, output_encoding)) {
+		/*
+		 * No encoding work to be done. If we have no encoding header
+		 * at all, then there's nothing to do, and we can return the
+		 * message verbatim (whether newly allocated or not).
+		 */
+		if (!encoding)
+			return msg;
+
+		/*
+		 * Otherwise, we still want to munge the encoding header in the
+		 * result, which will be done by modifying the buffer. If we
+		 * are using a fresh copy, we can reuse it. But if we are using
+		 * the cached copy from commit->buffer, we need to duplicate it
+		 * to avoid munging commit->buffer.
+		 */
+		out = msg;
+		if (out == commit->buffer)
+			out = xstrdup(out);
+	}
+	else {
+		/*
+		 * There's actual encoding work to do. Do the reencoding, which
+		 * still leaves the header to be replaced in the next step. At
+		 * this point, we are done with msg. If we allocated a fresh
+		 * copy, we can free it.
+		 */
+		out = reencode_string(msg, output_encoding, use_encoding);
+		if (out && msg != commit->buffer)
+			free(msg);
+	}
+
+	/*
+	 * This replacement actually consumes the buffer we hand it, so we do
+	 * not have to worry about freeing the old "out" here.
+	 */
 	if (out)
 		out = replace_encoding_header(out, output_encoding);
 
 	free(encoding);
-	return out;
+	/*
+	 * If the re-encoding failed, out might be NULL here; in that
+	 * case we just return the commit message verbatim.
+	 */
+	return out ? out : msg;
+}
+
+void logmsg_free(char *msg, const struct commit *commit)
+{
+	if (msg != commit->buffer)
+		free(msg);
 }
 
 static int mailmap_name(const char **email, size_t *email_len,
@@ -1278,14 +1331,11 @@ void format_commit_message(const struct commit *commit,
 	context.pretty_ctx = pretty_ctx;
 	context.wrap_start = sb->len;
 	context.message = logmsg_reencode(commit, output_enc);
-	if (!context.message)
-		context.message = commit->buffer;
 
 	strbuf_expand(sb, format, format_commit_item, &context);
 	rewrap_message_tail(sb, &context, 0, 0, 0);
 
-	if (context.message != commit->buffer)
-		free(context.message);
+	logmsg_free(context.message, commit);
 	free(context.signature.gpg_output);
 	free(context.signature.signer);
 }
@@ -1432,7 +1482,7 @@ void pretty_print_commit(const struct pretty_print_context *pp,
 {
 	unsigned long beginning_of_body;
 	int indent = 4;
-	const char *msg = commit->buffer;
+	const char *msg;
 	char *reencoded;
 	const char *encoding;
 	int need_8bit_cte = pp->need_8bit_cte;
@@ -1443,10 +1493,7 @@ void pretty_print_commit(const struct pretty_print_context *pp,
 	}
 
 	encoding = get_log_output_encoding();
-	reencoded = logmsg_reencode(commit, encoding);
-	if (reencoded) {
-		msg = reencoded;
-	}
+	msg = reencoded = logmsg_reencode(commit, encoding);
 
 	if (pp->fmt == CMIT_FMT_ONELINE || pp->fmt == CMIT_FMT_EMAIL)
 		indent = 0;
@@ -1503,7 +1550,7 @@ void pretty_print_commit(const struct pretty_print_context *pp,
 	if (pp->fmt == CMIT_FMT_EMAIL && sb->len <= beginning_of_body)
 		strbuf_addch(sb, '\n');
 
-	free(reencoded);
+	logmsg_free(reencoded, commit);
 }
 
 void pp_commit_easy(enum cmit_fmt fmt, const struct commit *commit,
