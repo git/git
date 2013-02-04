@@ -58,6 +58,16 @@ UI, Workflows & Features
    always interpreted as a pathspec; "git cmd -- :/" is no longer
    needed, you can just say "git cmd :/".
 
+ * Various "hint" lines Git gives when it asks the user to edit
+   messages in the editor are commented out with '#' by default. The
+   core.commentchar configuration variable can be used to customize
+   this '#' to a different character.
+
+ * "git add -u" and "git add -A" without pathspec issues warning to
+   make users aware that they are only operating on paths inside the
+   subdirectory they are in.  Use ":/" (everything from the top) or
+   "." (everything from the $cwd) to disambiguate.
+
  * "git blame" (and "git diff") learned the "--no-follow" option.
 
  * "git check-ignore" command to help debugging .gitignore files has
@@ -92,6 +102,10 @@ UI, Workflows & Features
  * "git push" now requires "-f" to update a tag, even if it is a
    fast-forward, as tags are meant to be fixed points.
 
+ * Error messages from "git push" when it stops to prevent remote refs
+   from getting overwritten by mistake have been improved to explain
+   various situations separately.
+
  * "git push" will stop without doing anything if the new "pre-push"
    hook exists and exits with a failure.
 
@@ -121,7 +135,8 @@ Foreign Interface
  * A new remote helper to interact with bzr has been added to contrib/.
 
  * "git p4" got various bugfixes around its branch handling.  It is
-   also made usable with Python 2.4/2.5.
+   also made usable with Python 2.4/2.5.  In addition, its various
+   portability issues for Cygwin have been addressed.
 
  * The remote helper to interact with Hg in contrib/ has seen a few
    fixes.
@@ -198,7 +213,7 @@ details).
    attempt to kill a process spawned in the editor that was in turn
    launched by Git with SIGINT (or SIGQUIT), as Git would catch that
    signal and die.  We ignore these signals now.
-   (merge 1250857 pf/editor-ignore-sigint later to maint).
+   (merge 0398fc34 pf/editor-ignore-sigint later to maint).
 
  * A child process that was killed by a signal (e.g. SIGINT) was
    reported in an inconsistent way depending on how the process was
@@ -210,18 +225,15 @@ details).
  * We used to stuff "user@" and then append what we read from
    /etc/mailname to come up with a default e-mail ident, but a bug
    lost the "user@" part.
-   (merge dc342a2 jn/do-not-drop-username-when-reading-from-etc-mailname later to maint).
 
  * The attribute mechanism didn't allow limiting attributes to be
    applied to only a single directory itself with "path/" like the
    exclude mechanism does.  The initial implementation of this that
    was merged to 'maint' and 1.8.1.2 was with a severe performance
    degradations and needs to merge a fix-up topic.
-   (merge 9db9eec nd/fix-directory-attrs-off-by-one later to maint).
 
  * "git am" did not parse datestamp correctly from Hg generated patch,
    when it is run in a locale outside C (or en).
-   (merge 5185b97 dl/am-hg-locale later to maint).
 
  * "git apply" misbehaved when fixing whitespace breakages by removing
    excess trailing blank lines.
@@ -232,9 +244,12 @@ details).
  * "git archive" did not record uncompressed size in the header when
    streaming a zip archive, which confused some implementations of unzip.
 
+ * "git archive" did not parse configuration values in tar.* namespace
+   correctly.
+   (merge b3873c3 jk/config-parsing-cleanup later to maint).
+
  * Attempt to "branch --edit-description" an existing branch, while
    being on a detached HEAD, errored out.
-   (merge 75135b2 nd/edit-branch-desc-while-detached later to maint).
 
  * "git clean" showed what it was going to do, but sometimes end up
    finding that it was not allowed to do so, which resulted in a
@@ -253,6 +268,10 @@ details).
    unclear how to wipe the shallowness of the repository with the
    command, and documentation was misleading.
    (merge cfb70e1 nd/fetch-depth-is-broken later to maint).
+
+ * "git log --all -p" that walked refs/notes/textconv/ ref can later
+   try to use the textconv data incorrectly after it gets freed.
+   (merge be5c9fb jk/read-commit-buffer-data-after-free later to maint).
 
  * The way "git svn" asked for password using SSH_ASKPASS and
    GIT_ASKPASS was not in line with the rest of the system.
@@ -275,7 +294,6 @@ details).
 
  * "git rebase --preserve-merges" lost empty merges in recent versions
    of Git.
-   (merge 9869778 ph/rebase-preserve-all-merges later to maint).
 
  * "git merge --no-edit" computed who were involved in the work done
    on the side branch, even though that information is to be discarded
@@ -313,7 +331,6 @@ details).
 
  * Command line completion code was inadvertently made incompatible with
    older versions of bash by using a newer array notation.
-   (merge 50c5885 bc/fix-array-syntax-for-3.0-in-completion-bash later to maint).
 
  * Some shells do not behave correctly when IFS is unset; work it
    around by explicitly setting it to the default value.
@@ -330,7 +347,6 @@ details).
 
  * t0050 had tests expecting failures from a bug that was fixed some
    time ago.
-   (merge 336e2e2 tb/t0050-maint later to maint).
 
  * t4014, t9502 and t0200 tests had various portability issues that
    broke on OpenBSD.
