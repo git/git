@@ -107,9 +107,10 @@ apply to the index. See EDITING PATCHES below.
 	from the index if the corresponding files in the working tree
 	have been removed.
 +
-If no <filepattern> is given, default to "."; in other words,
-update all tracked files in the current directory and its
-subdirectories.
+If no <filepattern> is given, the current version of Git defaults to
+"."; in other words, update all tracked files in the current directory
+and its subdirectories. This default will change in a future version
+of Git, hence the form without <filepattern> should not be used.
 
 -A::
 --all::
