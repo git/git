@@ -46,6 +46,7 @@ static void copy_gecos(const struct passwd *w, struct strbuf *name)
 static int add_mailname_host(struct strbuf *buf)
 {
 	FILE *mailname;
+	struct strbuf mailnamebuf = STRBUF_INIT;
 
 	mailname = fopen("/etc/mailname", "r");
 	if (!mailname) {
@@ -54,14 +55,17 @@ static int add_mailname_host(struct strbuf *buf)
 				strerror(errno));
 		return -1;
 	}
-	if (strbuf_getline(buf, mailname, '\n') == EOF) {
+	if (strbuf_getline(&mailnamebuf, mailname, '\n') == EOF) {
 		if (ferror(mailname))
 			warning("cannot read /etc/mailname: %s",
 				strerror(errno));
+		strbuf_release(&mailnamebuf);
 		fclose(mailname);
 		return -1;
 	}
 	/* success! */
+	strbuf_addbuf(buf, &mailnamebuf);
+	strbuf_release(&mailnamebuf);
 	fclose(mailname);
 	return 0;
 }
