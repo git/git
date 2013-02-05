@@ -89,4 +89,28 @@ test_expect_success 'diagnose truncated file' '
 	grep "diff --cc file" out
 '
 
+test_expect_success 'setup for --cc --raw' '
+	blob=$(echo file | git hash-object --stdin -w) &&
+	base_tree=$(echo "100644 blob $blob	file" | git mktree) &&
+	trees= &&
+	for i in `test_seq 1 40`
+	do
+		blob=$(echo file$i | git hash-object --stdin -w) &&
+		trees="$trees$(echo "100644 blob $blob	file" | git mktree)$LF"
+	done
+'
+
+test_expect_success 'check --cc --raw with four trees' '
+	four_trees=$(echo "$trees" | sed -e 4q) &&
+	git diff --cc --raw $four_trees $base_tree >out &&
+	# Check for four leading colons in the output:
+	grep "^::::[^:]" out
+'
+
+test_expect_success 'check --cc --raw with forty trees' '
+	git diff --cc --raw $trees $base_tree >out &&
+	# Check for forty leading colons in the output:
+	grep "^::::::::::::::::::::::::::::::::::::::::[^:]" out
+'
+
 test_done
