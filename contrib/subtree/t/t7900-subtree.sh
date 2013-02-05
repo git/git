@@ -74,6 +74,10 @@ test_expect_success 'add sub1' '
         git branch -m master subproj
 '
 
+# Save this hash for testing later.
+
+subdir_hash=`git rev-parse HEAD`
+
 test_expect_success 'add sub2' '
         create sub2 &&
         git commit -m "sub2" &&
@@ -205,10 +209,21 @@ test_expect_success 'check if --message works for split+rejoin' '
 '
 
 test_expect_success 'check split with --branch' '
-        spl1=$(git subtree split --annotate='"'*'"' --prefix subdir --onto FETCH_HEAD --message "Split & rejoin" --rejoin) &&
-        undo &&
-        git subtree split --annotate='"'*'"' --prefix subdir --onto FETCH_HEAD --branch splitbr1 &&
-        check_equal ''"$(git rev-parse splitbr1)"'' "$spl1"
+	spl1=$(git subtree split --annotate='"'*'"' --prefix subdir --onto FETCH_HEAD --message "Split & rejoin" --rejoin) &&
+	undo &&
+	git subtree split --annotate='"'*'"' --prefix subdir --onto FETCH_HEAD --branch splitbr1 &&
+	check_equal ''"$(git rev-parse splitbr1)"'' "$spl1"
+'
+
+test_expect_success 'check hash of split' '
+	spl1=$(git subtree split --prefix subdir) &&
+	undo &&
+	git subtree split --prefix subdir --branch splitbr1test &&
+	check_equal ''"$(git rev-parse splitbr1test)"'' "$spl1"
+	git checkout splitbr1test &&
+	new_hash=$(git rev-parse HEAD~2) &&
+	git checkout mainline &&
+	check_equal ''"$new_hash"'' "$subdir_hash"
 '
 
 test_expect_success 'check split with --branch for an existing branch' '
