@@ -3587,6 +3587,40 @@ static int get_current_sha1(const char *path, unsigned char *sha1)
 	return 0;
 }
 
+static int preimage_sha1_in_gitlink_patch(struct patch *p, unsigned char sha1[20])
+{
+	/*
+	 * A usable gitlink patch has only one fragment (hunk) that looks like:
+	 * @@ -1 +1 @@
+	 * -Subproject commit <old sha1>
+	 * +Subproject commit <new sha1>
+	 * or
+	 * @@ -1 +0,0 @@
+	 * -Subproject commit <old sha1>
+	 * for a removal patch.
+	 */
+	struct fragment *hunk = p->fragments;
+	static const char heading[] = "-Subproject commit ";
+	char *preimage;
+
+	if (/* does the patch have only one hunk? */
+	    hunk && !hunk->next &&
+	    /* is its preimage one line? */
+	    hunk->oldpos == 1 && hunk->oldlines == 1 &&
+	    /* does preimage begin with the heading? */
+	    (preimage = memchr(hunk->patch, '\n', hunk->size)) != NULL &&
+	    !prefixcmp(++preimage, heading) &&
+	    /* does it record full SHA-1? */
+	    !get_sha1_hex(preimage + sizeof(heading) - 1, sha1) &&
+	    preimage[sizeof(heading) + 40 - 1] == '\n' &&
+	    /* does the abbreviated name on the index line agree with it? */
+	    !prefixcmp(preimage + sizeof(heading) - 1, p->old_sha1_prefix))
+		return 0; /* it all looks fine */
+
+	/* we may have full object name on the index line */
+	return get_sha1_hex(p->old_sha1_prefix, sha1);
+}
+
 /* Build an index that contains the just the files needed for a 3way merge */
 static void build_fake_ancestor(struct patch *list, const char *filename)
 {
@@ -3607,8 +3641,10 @@ static void build_fake_ancestor(struct patch *list, const char *filename)
 			continue;
 
 		if (S_ISGITLINK(patch->old_mode)) {
-			if (get_sha1_hex(patch->old_sha1_prefix, sha1))
-				die("submoule change for %s without full index name",
+			if (!preimage_sha1_in_gitlink_patch(patch, sha1))
+				; /* ok, the textual part looks sane */
+			else
+				die("sha1 information is lacking or useless for submoule %s",
 				    name);
 		} else if (!get_sha1_blob(patch->old_sha1_prefix, sha1)) {
 			; /* ok */
