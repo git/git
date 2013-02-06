@@ -973,7 +973,8 @@ endif
 
 ifeq ($(COMPUTE_HEADER_DEPENDENCIES),auto)
 dep_check = $(shell $(CC) $(ALL_CFLAGS) \
-	-c -MF /dev/null -MMD -MP -x c /dev/null -o /dev/null 2>&1; \
+	-c -MF /dev/null -MQ /dev/null -MMD -MP \
+	-x c /dev/null -o /dev/null 2>&1; \
 	echo $$?)
 ifeq ($(dep_check),0)
 override COMPUTE_HEADER_DEPENDENCIES = yes
@@ -1843,7 +1844,7 @@ $(dep_dirs):
 
 missing_dep_dirs := $(filter-out $(wildcard $(dep_dirs)),$(dep_dirs))
 dep_file = $(dir $@).depend/$(notdir $@).d
-dep_args = -MF $(dep_file) -MMD -MP
+dep_args = -MF $(dep_file) -MQ $@ -MMD -MP
 ifdef CHECK_HEADER_DEPENDENCIES
 $(error cannot compute header dependencies outside a normal build. \
 Please unset CHECK_HEADER_DEPENDENCIES and try again)
