@@ -1,10 +1,10 @@
 To: git@vger.kernel.org
 Bcc: lwn@lwn.net
-Subject: What's cooking in git.git (Feb 2013, #02; Mon, 4)
-X-master-at: f51a757fafc1e1ca9565381a13109932acd81dba
-X-next-at: 3b7952273237a5df57414b4a5327ce7e64e63255
+Subject: What's cooking in git.git (Feb 2013, #03; Wed, 6)
+X-master-at: 2f19ada7f8a5bb768816cf7334f65ae0ab03c8a7
+X-next-at: 8bc64348c96661c4cb37542730b0df4dd12eb8c2
 
-What's cooking in git.git (Feb 2013, #02; Mon, 4)
+What's cooking in git.git (Feb 2013, #03; Wed, 6)
 --------------------------------------------------
 
 Here are the topics that have been cooking.  Commits prefixed with
@@ -22,115 +22,24 @@ repositories listed at
 --------------------------------------------------
 [Graduated to "master"]
 
-* jc/custom-comment-char (2013-01-16) 1 commit
-  (merged to 'next' on 2013-01-25 at 91d8a5d)
- + Allow custom "comment char"
+* ft/transport-report-segv (2013-01-31) 1 commit
+  (merged to 'next' on 2013-02-02 at 6c450a7)
+ + push: fix segfault when HEAD points nowhere
 
- Allow a configuration variable core.commentchar to customize the
- character used to comment out the hint lines in the edited text
- from the default '#'.
-
- This is half my work and half by Ralf Thielow.  There may still be
- leftover '#' lurking around, though.  My "git grep" says C code
- should be already fine, but git-rebase--interactive.sh could be
- converted (it should not matter, as the file is not really a
- free-form text).
+ A failure to push due to non-ff while on an unborn branch
+ dereferenced a NULL pointer when showing an error message.
 
 
-* jc/push-reject-reasons (2013-01-24) 4 commits
-  (merged to 'next' on 2013-01-28 at b60be93)
- + push: finishing touches to explain REJECT_ALREADY_EXISTS better
- + push: introduce REJECT_FETCH_FIRST and REJECT_NEEDS_FORCE
- + push: further simplify the logic to assign rejection reason
- + push: further clean up fields of "struct ref"
+* jc/fake-ancestor-with-non-blobs (2013-01-31) 3 commits
+  (merged to 'next' on 2013-02-02 at 86d457a)
+ + apply: diagnose incomplete submodule object name better
+ + apply: simplify build_fake_ancestor()
+ + git-am: record full index line in the patch used while rebasing
+ (this branch is used by jc/extended-fake-ancestor-for-gitlink.)
 
- Improve error and advice messages given locally when "git push"
- refuses when it cannot compute fast-forwardness by separating these
- cases from the normal "not a fast-forward; merge first and push
- again" case.
+ Rebasing the history of superproject with change in the submodule
+ has been broken since v1.7.12.
 
-
-* jk/config-parsing-cleanup (2013-01-23) 8 commits
-  (merged to 'next' on 2013-01-28 at 9bc9411)
- + reflog: use parse_config_key in config callback
- + help: use parse_config_key for man config
- + submodule: simplify memory handling in config parsing
- + submodule: use parse_config_key when parsing config
- + userdiff: drop parse_driver function
- + convert some config callbacks to parse_config_key
- + archive-tar: use parse_config_key when parsing config
- + config: add helper function for parsing key names
-
- Configuration parsing for tar.* configuration variables were
- broken. Introduce a new config-keyname parser API to make the
- callers much less error prone.
-
-
-* jk/read-commit-buffer-data-after-free (2013-01-26) 3 commits
-  (merged to 'next' on 2013-01-30 at c6d7e16)
- + logmsg_reencode: lazily load missing commit buffers
- + logmsg_reencode: never return NULL
- + commit: drop useless xstrdup of commit message
-
- Clarify the ownership rule for commit->buffer field, which some
- callers incorrectly accessed without making sure it is populated.
-
-
-* jk/remote-helpers-in-python-3 (2013-01-30) 10 commits
-  (merged to 'next' on 2013-01-31 at 5a948aa)
- + git_remote_helpers: remove GIT-PYTHON-VERSION upon "clean"
-  (merged to 'next' on 2013-01-28 at d898471)
- + git-remote-testpy: fix path hashing on Python 3
-  (merged to 'next' on 2013-01-25 at acf9419)
- + git-remote-testpy: call print as a function
- + git-remote-testpy: don't do unbuffered text I/O
- + git-remote-testpy: hash bytes explicitly
- + svn-fe: allow svnrdump_sim.py to run with Python 3
- + git_remote_helpers: use 2to3 if building with Python 3
- + git_remote_helpers: force rebuild if python version changes
- + git_remote_helpers: fix input when running under Python 3
- + git_remote_helpers: allow building with Python 3
-
- Prepare remote-helper test written in Python to be run with Python3.
-
-
-* mm/add-u-A-sans-pathspec (2013-01-28) 1 commit
-  (merged to 'next' on 2013-01-28 at fe762a6)
- + add: warn when -u or -A is used without pathspec
-
- Forbid "git add -u" and "git add -A" without pathspec run from a
- subdirectory, to train people to type "." (or ":/") to make the
- choice of default does not matter.
-
-
-* pw/git-p4-on-cygwin (2013-01-26) 21 commits
-  (merged to 'next' on 2013-01-30 at 958ae3a)
- + git p4: introduce gitConfigBool
- + git p4: avoid shell when calling git config
- + git p4: avoid shell when invoking git config --get-all
- + git p4: avoid shell when invoking git rev-list
- + git p4: avoid shell when mapping users
- + git p4: disable read-only attribute before deleting
- + git p4 test: use test_chmod for cygwin
- + git p4: cygwin p4 client does not mark read-only
- + git p4 test: avoid wildcard * in windows
- + git p4 test: use LineEnd unix in windows tests too
- + git p4 test: newline handling
- + git p4: scrub crlf for utf16 files on windows
- + git p4: remove unreachable windows \r\n conversion code
- + git p4 test: translate windows paths for cygwin
- + git p4 test: start p4d inside its db dir
- + git p4 test: use client_view in t9806
- + git p4 test: avoid loop in client_view
- + git p4 test: use client_view to build the initial client
- + git p4: generate better error message for bad depot path
- + git p4: remove unused imports
- + git p4: temp branch name should use / even on windows
-
- Improve "git p4" on Cygwin.
-
---------------------------------------------------
-[New Topics]
 
 * jn/auto-depend-workaround-buggy-ccache (2013-02-01) 1 commit
   (merged to 'next' on 2013-02-02 at db5940a)
@@ -140,80 +49,70 @@ repositories listed at
  breaking the auto-generation of dependencies, which unfortunately
  is still relevant because some people use ancient distros.
 
- Will merge to 'master'.
+
+* sb/gpg-plug-fd-leak (2013-01-31) 1 commit
+  (merged to 'next' on 2013-02-02 at c271a31)
+ + gpg: close stderr once finished with it in verify_signed_buffer()
+
+ We forgot to close the file descriptor reading from "gpg" output,
+ killing "git log --show-signature" on a long history.
 
 
-* ct/autoconf-htmldir (2013-02-02) 1 commit
- - Honor configure's htmldir switch
+* ta/doc-no-small-caps (2013-02-01) 6 commits
+  (merged to 'next' on 2013-02-02 at 77cbd0e)
+ + Documentation: StGit is the right spelling, not StGIT
+ + Documentation: describe the "repository" in repository-layout
+ + Documentation: add a description for 'gitfile' to glossary
+ + Documentation: do not use undefined terms git-dir and git-file
+ + Documentation: the name of the system is 'Git', not 'git'
+ + Documentation: avoid poor-man's small caps GIT
 
- The autoconf subsystem passed --mandir down to generated
- config.mak.autogen but forgot to do the same for --htmldir.
+ Update documentation to change "GIT" which was a poor-man's small
+ caps to "Git".  The latter was the intended spelling.
 
- Will merge to 'next'.
+ Also change "git" spelled in all-lowercase to "Git" when it refers
+ to the system as the whole or the concept it embodies, as opposed to
+ the command the end users would type.
 
+--------------------------------------------------
+[New Topics]
 
-* mk/tcsh-complete-only-known-paths (2013-02-03) 1 commit
- - completion: handle path completion and colon for tcsh script
- (this branch uses mp/complete-paths.)
+* jc/extended-fake-ancestor-for-gitlink (2013-02-05) 1 commit
+ - apply: verify submodule commit object name better
 
- Manlio's "complete with known paths only" update to completion
- scripts returns directory names without trailing slash to
- compensate the addition of '/' done by bash that reads from our
- completion result.  tcsh completion code that reads from our
- internal completion result does not add '/', so let it ask our
- complletion code to keep the '/' at the end.
-
- Will merge to 'next'.
-
-
-* jc/combine-diff-many-parents (2013-02-03) 1 commit
- - combine-diff: lift 32-way limit of combined diff
-
- We used to have an arbitrary 32 limit for combined diff input,
- resulting in incorrect number of leading colons shown when showing
- the "--raw --cc" output.
-
- May want a couple of new tests.
-
-
-* jc/remove-export-from-config-mak-in (2013-02-03) 1 commit
- - config.mak.in: remove unused definitions
-
- config.mak.in template had an "export" line to cause a few
- common makefile variables to be exported; if they need to be
- expoted for autoconf/configure users, they should also be exported
- for people who write config.mak the same way.  Move the "export" to
- the main Makefile.
-
-
-* jk/apply-similaritly-parsing (2013-02-03) 1 commit
- - builtin/apply: tighten (dis)similarity index parsing
-
- Make sure the similarity value shown in the "apply --summary"
- output is sensible, even when the input had a bogus value.
+ Instead of requiring the full 40-hex object names on the index
+ line, we can read submodule commit object names from the textual
+ diff when synthesizing a fake ancestore tree for "git am -3".
 
  Will merge to 'next'.
 
 
-* nd/status-show-in-progress (2013-02-03) 1 commit
- - status: show the branch name if possible in in-progress info
+* tz/credential-authinfo (2013-02-05) 1 commit
+ - Add contrib/credentials/netrc with GPG support
+
+ A new read-only credential helper (in contrib/) to interact with
+ the .netrc/.authinfo files.  Hopefully mn/send-email-authinfo topic
+ can rebuild on top of something like this.
+
+ Waiting for further reviews.
+
+
+* jx/utf8-printf-width (2013-02-05) 1 commit
+ - Add utf8_fprintf helper which returns correct columns
+
+ Use a new helper that prints a message and counts its display width
+ to align the help messages parse-options produces.
 
 --------------------------------------------------
 [Stalled]
 
-* dg/subtree-fixes (2013-01-08) 7 commits
- - contrib/subtree: mkdir the manual directory if needed
- - contrib/subtree: honor $(DESTDIR)
- - contrib/subtree: fix synopsis and command help
- - contrib/subtree: better error handling for "add"
- - contrib/subtree: add --unannotate option
- - contrib/subtree: use %B for split Subject/Body
- - t7900: remove test number comments
+* mn/send-email-authinfo (2013-01-29) 1 commit
+ - git-send-email: add ~/.authinfo parsing
 
- contrib/subtree updates; there are a few more from T. Zheng that
- were posted separately, with an overlap.
-
- Expecting a reroll.
+ This triggered a subtopic to add a credential helper for
+ authinfo/netrc files (with or without GPG encryption), but nobody
+ seems to be working on connecting send-email to the credential
+ framework.
 
 
 * mp/diff-algo-config (2013-01-16) 3 commits
@@ -235,17 +134,6 @@ repositories listed at
 
  Expecting a reroll.
  $gmane/211935
-
-
-* jl/submodule-deinit (2012-12-04) 1 commit
- - submodule: add 'deinit' command
-
- There was no Porcelain way to say "I no longer am interested in
- this submodule", once you express your interest in a submodule with
- "submodule init".  "submodule deinit" is the way to do so.
-
- Expecting a reroll.
- $gmane/212884
 
 
 * jk/lua-hackery (2012-10-07) 6 commits
@@ -363,29 +251,97 @@ repositories listed at
 --------------------------------------------------
 [Cooking]
 
-* ft/transport-report-segv (2013-01-31) 1 commit
-  (merged to 'next' on 2013-02-02 at 6c450a7)
- + push: fix segfault when HEAD points nowhere
+* dg/subtree-fixes (2013-02-05) 6 commits
+ - contrib/subtree: make the manual directory if needed
+ - contrib/subtree: honor DESTDIR
+ - contrib/subtree: fix synopsis
+ - contrib/subtree: better error handling for 'subtree add'
+ - contrib/subtree: use %B for split subject/body
+ - contrib/subtree: remove test number comments
 
- A failure to push due to non-ff while on an unborn branch
- dereferenced a NULL pointer when showing an error message.
+ contrib/subtree updates, but here are only the ones that looked
+ ready to be merged to 'next'.  For the remainder, they will have
+ another day.
+
+ Will merge to 'next'.
+
+
+* jl/submodule-deinit (2013-02-04) 1 commit
+ - submodule: add 'deinit' command
+
+ There was no Porcelain way to say "I no longer am interested in
+ this submodule", once you express your interest in a submodule with
+ "submodule init".  "submodule deinit" is the way to do so.
+
+ Will merge to 'next'.
+
+
+* ct/autoconf-htmldir (2013-02-02) 1 commit
+  (merged to 'next' on 2013-02-05 at bba4f8c)
+ + Honor configure's htmldir switch
+
+ The autoconf subsystem passed --mandir down to generated
+ config.mak.autogen but forgot to do the same for --htmldir.
 
  Will merge to 'master'.
+
+
+* mk/tcsh-complete-only-known-paths (2013-02-03) 1 commit
+  (merged to 'next' on 2013-02-05 at 4409b08)
+ + completion: handle path completion and colon for tcsh script
+ (this branch uses mp/complete-paths.)
+
+ Manlio's "complete with known paths only" update to completion
+ scripts returns directory names without trailing slash to
+ compensate the addition of '/' done by bash that reads from our
+ completion result.  tcsh completion code that reads from our
+ internal completion result does not add '/', so let it ask our
+ complletion code to keep the '/' at the end.
+
+ Will merge to 'master'.
+
+
+* jc/combine-diff-many-parents (2013-02-05) 2 commits
+  (merged to 'next' on 2013-02-05 at e382aa6)
+ + t4038: add tests for "diff --cc --raw <trees>"
+ + combine-diff: lift 32-way limit of combined diff
+
+ We used to have an arbitrary 32 limit for combined diff input,
+ resulting in incorrect number of leading colons shown when showing
+ the "--raw --cc" output.
+
+ Will merge to 'master'.
+
+
+* jc/remove-export-from-config-mak-in (2013-02-03) 1 commit
+ - config.mak.in: remove unused definitions
+
+ config.mak.in template had an "export" line to cause a few
+ common makefile variables to be exported; if they need to be
+ expoted for autoconf/configure users, they should also be exported
+ for people who write config.mak the same way.  Move the "export" to
+ the main Makefile.
+
+
+* jk/apply-similaritly-parsing (2013-02-03) 1 commit
+  (merged to 'next' on 2013-02-05 at ccf1c97)
+ + builtin/apply: tighten (dis)similarity index parsing
+
+ Make sure the similarity value shown in the "apply --summary"
+ output is sensible, even when the input had a bogus value.
+
+ Will merge to 'master'.
+
+
+* nd/status-show-in-progress (2013-02-05) 1 commit
+ - status: show the branch name if possible in in-progress info
+
+ Will merge to 'next'.
 
 
 * sb/gpg-i18n (2013-01-31) 1 commit
   (merged to 'next' on 2013-02-02 at 7a54574)
  + gpg: allow translation of more error messages
-
- Will merge to 'master'.
-
-
-* sb/gpg-plug-fd-leak (2013-01-31) 1 commit
-  (merged to 'next' on 2013-02-02 at c271a31)
- + gpg: close stderr once finished with it in verify_signed_buffer()
-
- We forgot to close the file descriptor reading from "gpg" output,
- killing "git log --show-signature" on a long history.
 
  Will merge to 'master'.
 
@@ -408,15 +364,17 @@ repositories listed at
  Will merge to 'master'.
 
 
-* sp/smart-http-content-type-check (2013-02-04) 1 commit
+* sp/smart-http-content-type-check (2013-02-06) 3 commits
+  (merged to 'next' on 2013-02-06 at 8bc6434)
+ + http_request: reset "type" strbuf before adding
+  (merged to 'next' on 2013-02-05 at 157812c)
+ + t5551: fix expected error output
   (merged to 'next' on 2013-02-04 at d0759cb)
  + Verify Content-Type from smart HTTP servers
 
  The smart HTTP clients forgot to verify the content-type that comes
  back from the server side to make sure that the request is being
  handled properly.
-
- Will merge to 'master'.
 
 
 * jc/mention-tracking-for-pull-default (2013-01-31) 1 commit
@@ -428,19 +386,9 @@ repositories listed at
 
  This is my "don't list it to catch readers' eyes, but make sure it
  can be found if the reader looks for it" version; I'm not married
- to the layout and am willing to take a replacement patch.
+ to the layout and will be happy to take a replacement patch.
 
-
-* jc/fake-ancestor-with-non-blobs (2013-01-31) 3 commits
-  (merged to 'next' on 2013-02-02 at 86d457a)
- + apply: diagnose incomplete submodule object name better
- + apply: simplify build_fake_ancestor()
- + git-am: record full index line in the patch used while rebasing
-
- Rebasing the history of superproject with change in the submodule
- has been broken since v1.7.12.
-
- Will merge to 'master'.
+ Waiting for couter-proposal patches.
 
 
 * jk/doc-makefile-cleanup (2013-02-01) 1 commit
@@ -465,13 +413,6 @@ repositories listed at
  + CodingGuidelines: add Python coding guidelines
 
  Will merge to 'master'.
-
-
-* mn/send-email-authinfo (2013-01-29) 1 commit
- - git-send-email: add ~/.authinfo parsing
-
- Expecting a reroll.
- $gmane/215004, $gmane/215024.
 
 
 * mp/complete-paths (2013-01-11) 1 commit
@@ -551,8 +492,7 @@ repositories listed at
  Will merge to 'master'.
 
 
-* jc/hidden-refs (2013-01-30) 8 commits
- - WIP: receive.allowupdatestohidden
+* jc/hidden-refs (2013-01-30) 7 commits
  - fetch: fetch objects by their exact SHA-1 object names
  - upload-pack: optionally allow fetching from the tips of hidden refs
  - fetch: use struct ref to represent refs to be fetched
@@ -565,26 +505,10 @@ repositories listed at
  the client.  Optionally allow requests for histories leading to the
  tips of hidden refs by updated clients.
 
- Will merge to 'next' after dropping the tip.
-
-
-* ta/doc-no-small-caps (2013-02-01) 6 commits
-  (merged to 'next' on 2013-02-02 at 77cbd0e)
- + Documentation: StGit is the right spelling, not StGIT
- + Documentation: describe the "repository" in repository-layout
- + Documentation: add a description for 'gitfile' to glossary
- + Documentation: do not use undefined terms git-dir and git-file
- + Documentation: the name of the system is 'Git', not 'git'
- + Documentation: avoid poor-man's small caps GIT
-
- Update documentation to change "GIT" which was a poor-man's small
- caps to "Git".  The latter was the intended spelling.
-
- Also change "git" spelled in all-lowercase to "Git" when it refers
- to the system as the whole or the concept it embodies, as opposed to
- the command the end users would type.
-
- Will merge to 'master'.
+ Need to split the configuration into three (one for sending, one
+ for receiving, and then another to cover both for convenience)
+ before this topic can go forward. Perhaps people involved in the
+ review cycle can help.
 
 
 * jc/remove-treesame-parent-in-simplify-merges (2013-01-17) 1 commit
