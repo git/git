@@ -33,6 +33,12 @@ UI, Workflows & Features
  * Output from the tests is coloured using "green is okay, yellow is
    questionable, red is bad and blue is informative" scheme.
 
+ * Mention of "GIT/Git/git" in the documentation have been updated to
+   be more uniform and consistent.  The name of the system and the
+   concept it embodies is "Git"; the command the users type is "git".
+   All-caps "GIT" was merely a way to imitate "Git" typeset in small
+   caps in our ASCII text only documentation and to be avoided.
+
  * In bare repositories, "git shortlog" and other commands now read
    mailmap files from the tip of the history, to help running these
    tools in server settings.
@@ -273,6 +279,10 @@ details).
    try to use the textconv data incorrectly after it gets freed.
    (merge be5c9fb jk/read-commit-buffer-data-after-free later to maint).
 
+ * We forgot to close the file descriptor reading from "gpg" output,
+   killing "git log --show-signature" on a long history.
+   (merge 7dac3f8 sb/gpg-plug-fd-leak later to maint).
+
  * The way "git svn" asked for password using SSH_ASKPASS and
    GIT_ASKPASS was not in line with the rest of the system.
 
@@ -284,6 +294,10 @@ details).
 
  * "git pack-refs" that ran in parallel to another process that
    created new refs had a nasty race.
+
+ * Rebasing the history of superproject with change in the submodule
+   has been broken since v1.7.12.
+   (merge e28efb1 jc/fake-ancestor-with-non-blobs later to maint).
 
  * After "git add -N" and then writing a tree object out of the
    index, the cache-tree data structure got corrupted.
@@ -302,6 +316,10 @@ details).
  * "git merge" started calling prepare-commit-msg hook like "git
    commit" does some time ago, but forgot to pay attention to the exit
    status of the hook.
+
+ * A failure to push due to non-ff while on an unborn branch
+   dereferenced a NULL pointer when showing an error message.
+   (merge 1d2c14d ft/transport-report-segv later to maint).
 
  * When users spell "cc:" in lowercase in the fake "header" in the
    trailer part, "git send-email" failed to pick up the addresses from
@@ -341,6 +359,12 @@ details).
 
  * When autoconf is used, any build on a different commit always ran
    "config.status --recheck" even when unnecessary.
+
+ * A fix was added to the build procedure to work around buggy
+   versions of ccache broke the auto-generation of dependencies, which
+   unfortunately is still relevant because some people use ancient
+   distros.
+   (merge 6978934 jn/auto-depend-workaround-buggy-ccache later to maint).
 
  * We have been carrying a translated and long-unmaintained copy of an
    old version of the tutorial; removed.
