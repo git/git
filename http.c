@@ -841,6 +841,7 @@ static int http_request(const char *url, struct strbuf *type,
 
 	if (type) {
 		char *t;
+		strbuf_reset(type);
 		curl_easy_getinfo(slot->curl, CURLINFO_CONTENT_TYPE, &t);
 		if (t)
 			strbuf_addstr(type, t);
