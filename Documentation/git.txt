@@ -27,11 +27,11 @@ commands.  The link:user-manual.html[Git User's Manual] has a more
 in-depth introduction.
 
 After you mastered the basic concepts, you can come back to this
-page to learn what commands git offers.  You can learn more about
-individual git commands with "git help command".  linkgit:gitcli[7]
+page to learn what commands Git offers.  You can learn more about
+individual Git commands with "git help command".  linkgit:gitcli[7]
 manual page gives you an overview of the command line command syntax.
 
-Formatted and hyperlinked version of the latest git documentation
+Formatted and hyperlinked version of the latest Git documentation
 can be viewed at `http://git-htmldocs.googlecode.com/git/git.html`.
 
 ifdef::stalenotes[]
@@ -39,7 +39,7 @@ ifdef::stalenotes[]
 ============
 
 You are reading the documentation for the latest (possibly
-unreleased) version of git, that is available from 'master'
+unreleased) version of Git, that is available from 'master'
 branch of the `git.git` repository.
 Documentation for older releases are available here:
 
@@ -355,12 +355,12 @@ endif::stalenotes[]
 OPTIONS
 -------
 --version::
-	Prints the git suite version that the 'git' program came from.
+	Prints the Git suite version that the 'git' program came from.
 
 --help::
 	Prints the synopsis and a list of the most commonly used
 	commands. If the option '--all' or '-a' is given then all
-	available commands are printed. If a git command is named this
+	available commands are printed. If a Git command is named this
 	option will bring up the manual page for that command.
 +
 Other options are available to control how the manual page is
@@ -375,22 +375,22 @@ help ...`.
 	'git config' (subkeys separated by dots).
 
 --exec-path[=<path>]::
-	Path to wherever your core git programs are installed.
+	Path to wherever your core Git programs are installed.
 	This can also be controlled by setting the GIT_EXEC_PATH
 	environment variable. If no path is given, 'git' will print
 	the current setting and then exit.
 
 --html-path::
-	Print the path, without trailing slash, where git's HTML
+	Print the path, without trailing slash, where Git's HTML
 	documentation is installed and exit.
 
 --man-path::
 	Print the manpath (see `man(1)`) for the man pages for
-	this version of git and exit.
+	this version of Git and exit.
 
 --info-path::
 	Print the path where the Info files documenting this
-	version of git are installed and exit.
+	version of Git are installed and exit.
 
 -p::
 --paginate::
@@ -400,7 +400,7 @@ help ...`.
 	below).
 
 --no-pager::
-	Do not pipe git output into a pager.
+	Do not pipe Git output into a pager.
 
 --git-dir=<path>::
 	Set the path to the repository. This can also be controlled by
@@ -416,7 +416,7 @@ help ...`.
 	more detailed discussion).
 
 --namespace=<path>::
-	Set the git namespace.  See linkgit:gitnamespaces[7] for more
+	Set the Git namespace.  See linkgit:gitnamespaces[7] for more
 	details.  Equivalent to setting the `GIT_NAMESPACE` environment
 	variable.
 
@@ -426,7 +426,7 @@ help ...`.
 	directory.
 
 --no-replace-objects::
-	Do not use replacement refs to replace git objects. See
+	Do not use replacement refs to replace Git objects. See
 	linkgit:git-replace[1] for more information.
 
 --literal-pathspecs::
@@ -438,7 +438,7 @@ help ...`.
 GIT COMMANDS
 ------------
 
-We divide git into high level ("porcelain") commands and low level
+We divide Git into high level ("porcelain") commands and low level
 ("plumbing") commands.
 
 High-level commands (porcelain)
@@ -475,7 +475,7 @@ include::cmds-foreignscminterface.txt[]
 Low-level commands (plumbing)
 -----------------------------
 
-Although git includes its
+Although Git includes its
 own porcelain layer, its low-level commands are sufficient to support
 development of alternative porcelains.  Developers of such porcelains
 might start by reading about linkgit:git-update-index[1] and
@@ -596,7 +596,7 @@ Identifier Terminology
 
 Symbolic Identifiers
 --------------------
-Any git command accepting any <object> can also use the following
+Any Git command accepting any <object> can also use the following
 symbolic notation:
 
 HEAD::
@@ -632,13 +632,13 @@ Please see linkgit:gitglossary[7].
 
 Environment Variables
 ---------------------
-Various git commands use the following environment variables:
+Various Git commands use the following environment variables:
 
-The git Repository
+The Git Repository
 ~~~~~~~~~~~~~~~~~~
-These environment variables apply to 'all' core git commands. Nb: it
+These environment variables apply to 'all' core Git commands. Nb: it
 is worth noting that they may be used/overridden by SCMS sitting above
-git so take care if using Cogito etc.
+Git so take care if using Cogito etc.
 
 'GIT_INDEX_FILE'::
 	This environment allows the specification of an alternate
@@ -652,10 +652,10 @@ git so take care if using Cogito etc.
 	directory is used.
 
 'GIT_ALTERNATE_OBJECT_DIRECTORIES'::
-	Due to the immutable nature of git objects, old objects can be
+	Due to the immutable nature of Git objects, old objects can be
 	archived into shared, read-only directories. This variable
 	specifies a ":" separated (on Windows ";" separated) list
-	of git object directories which can be used to search for git
+	of Git object directories which can be used to search for Git
 	objects. New objects will not be written to these directories.
 
 'GIT_DIR'::
@@ -672,12 +672,12 @@ git so take care if using Cogito etc.
 	option and the core.worktree configuration variable.
 
 'GIT_NAMESPACE'::
-	Set the git namespace; see linkgit:gitnamespaces[7] for details.
+	Set the Git namespace; see linkgit:gitnamespaces[7] for details.
 	The '--namespace' command-line option also sets this value.
 
 'GIT_CEILING_DIRECTORIES'::
 	This should be a colon-separated list of absolute paths.
-	If set, it is a list of directories that git should not chdir
+	If set, it is a list of directories that Git should not chdir
 	up into while looking for a repository directory.
 	It will not exclude the current working directory or
 	a GIT_DIR set on the command line or in the environment.
@@ -685,15 +685,15 @@ git so take care if using Cogito etc.
 
 'GIT_DISCOVERY_ACROSS_FILESYSTEM'::
 	When run in a directory that does not have ".git" repository
-	directory, git tries to find such a directory in the parent
+	directory, Git tries to find such a directory in the parent
 	directories to find the top of the working tree, but by default it
 	does not cross filesystem boundaries.  This environment variable
-	can be set to true to tell git not to stop at filesystem
+	can be set to true to tell Git not to stop at filesystem
 	boundaries.  Like 'GIT_CEILING_DIRECTORIES', this will not affect
 	an explicit repository directory set via 'GIT_DIR' or on the
 	command line.
 
-git Commits
+Git Commits
 ~~~~~~~~~~~
 'GIT_AUTHOR_NAME'::
 'GIT_AUTHOR_EMAIL'::
@@ -704,13 +704,13 @@ git Commits
 'EMAIL'::
 	see linkgit:git-commit-tree[1]
 
-git Diffs
+Git Diffs
 ~~~~~~~~~
 'GIT_DIFF_OPTS'::
 	Only valid setting is "--unified=??" or "-u??" to set the
 	number of context lines shown when a unified diff is created.
 	This takes precedence over any "-U" or "--unified" option
-	value passed on the git diff command line.
+	value passed on the Git diff command line.
 
 'GIT_EXTERNAL_DIFF'::
 	When the environment variable 'GIT_EXTERNAL_DIFF' is set, the
@@ -745,13 +745,13 @@ other
 
 'GIT_PAGER'::
 	This environment variable overrides `$PAGER`. If it is set
-	to an empty string or to the value "cat", git will not launch
+	to an empty string or to the value "cat", Git will not launch
 	a pager.  See also the `core.pager` option in
 	linkgit:git-config[1].
 
 'GIT_EDITOR'::
 	This environment variable overrides `$EDITOR` and `$VISUAL`.
-	It is used by several git commands when, on interactive mode,
+	It is used by several Git commands when, on interactive mode,
 	an editor is to be launched. See also linkgit:git-var[1]
 	and the `core.editor` option in linkgit:git-config[1].
 
@@ -772,7 +772,7 @@ personal `.ssh/config` file.  Please consult your ssh documentation
 for further details.
 
 'GIT_ASKPASS'::
-	If this environment variable is set, then git commands which need to
+	If this environment variable is set, then Git commands which need to
 	acquire passwords or passphrases (e.g. for HTTP or IMAP authentication)
 	will call this program with a suitable prompt as command line argument
 	and read the password from its STDOUT. See also the 'core.askpass'
@@ -793,30 +793,30 @@ for further details.
 	after each commit-oriented record have been flushed.   If this
 	variable is set to "0", the output of these commands will be done
 	using completely buffered I/O.   If this environment variable is
-	not set, git will choose buffered or record-oriented flushing
+	not set, Git will choose buffered or record-oriented flushing
 	based on whether stdout appears to be redirected to a file or not.
 
 'GIT_TRACE'::
 	If this variable is set to "1", "2" or "true" (comparison
-	is case insensitive), git will print `trace:` messages on
+	is case insensitive), Git will print `trace:` messages on
 	stderr telling about alias expansion, built-in command
 	execution and external command execution.
 	If this variable is set to an integer value greater than 1
-	and lower than 10 (strictly) then git will interpret this
+	and lower than 10 (strictly) then Git will interpret this
 	value as an open file descriptor and will try to write the
 	trace messages into this file descriptor.
 	Alternatively, if this variable is set to an absolute path
-	(starting with a '/' character), git will interpret this
+	(starting with a '/' character), Git will interpret this
 	as a file path and will try to write the trace messages
 	into it.
 
 GIT_LITERAL_PATHSPECS::
-	Setting this variable to `1` will cause git to treat all
+	Setting this variable to `1` will cause Git to treat all
 	pathspecs literally, rather than as glob patterns. For example,
 	running `GIT_LITERAL_PATHSPECS=1 git log -- '*.c'` will search
 	for commits that touch the path `*.c`, not any paths that the
 	glob `*.c` matches. You might want this if you are feeding
-	literal paths to git (e.g., paths previously given to you by
+	literal paths to Git (e.g., paths previously given to you by
 	`git ls-tree`, `--raw` diff output, etc).
 
 
@@ -824,10 +824,10 @@ Discussion[[Discussion]]
 ------------------------
 
 More detail on the following is available from the
-link:user-manual.html#git-concepts[git concepts chapter of the
+link:user-manual.html#git-concepts[Git concepts chapter of the
 user-manual] and linkgit:gitcore-tutorial[7].
 
-A git project normally consists of a working directory with a ".git"
+A Git project normally consists of a working directory with a ".git"
 subdirectory at the top level.  The .git directory contains, among other
 things, a compressed object database representing the complete history
 of the project, an "index" file which links that history to the current
@@ -877,12 +877,12 @@ FURTHER DOCUMENTATION
 ---------------------
 
 See the references in the "description" section to get started
-using git.  The following is probably more detail than necessary
+using Git.  The following is probably more detail than necessary
 for a first-time user.
 
-The link:user-manual.html#git-concepts[git concepts chapter of the
+The link:user-manual.html#git-concepts[Git concepts chapter of the
 user-manual] and linkgit:gitcore-tutorial[7] both provide
-introductions to the underlying git architecture.
+introductions to the underlying Git architecture.
 
 See linkgit:gitworkflows[7] for an overview of recommended workflows.
 
@@ -890,7 +890,7 @@ See also the link:howto-index.html[howto] documents for some useful
 examples.
 
 The internals are documented in the
-link:technical/api-index.html[GIT API documentation].
+link:technical/api-index.html[Git API documentation].
 
 Users migrating from CVS may also want to
 read linkgit:gitcvs-migration[7].
@@ -899,7 +899,7 @@ read linkgit:gitcvs-migration[7].
 Authors
 -------
 Git was started by Linus Torvalds, and is currently maintained by Junio
-C Hamano. Numerous contributions have come from the git mailing list
+C Hamano. Numerous contributions have come from the Git mailing list
 <git@vger.kernel.org>.  http://www.ohloh.net/p/git/contributors/summary
 gives you a more complete list of contributors.
 

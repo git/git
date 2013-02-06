@@ -29,7 +29,7 @@ prevent duplication between new objects added to the repositories
 without ongoing maintenance, while namespaces do.
 
 To specify a namespace, set the `GIT_NAMESPACE` environment variable to
-the namespace.  For each ref namespace, git stores the corresponding
+the namespace.  For each ref namespace, Git stores the corresponding
 refs in a directory under `refs/namespaces/`.  For example,
 `GIT_NAMESPACE=foo` will store refs under `refs/namespaces/foo/`.  You
 can also specify namespaces via the `--namespace` option to

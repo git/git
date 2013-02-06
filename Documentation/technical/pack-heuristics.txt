@@ -5,11 +5,11 @@
 
                   Where do I go
                to learn the details
-	    of git's packing heuristics?
+	    of Git's packing heuristics?
 
 Be careful what you ask!
 
-Followers of the git, please open the git IRC Log and turn to
+Followers of the Git, please open the Git IRC Log and turn to
 February 10, 2006.
 
 It's a rare occasion, and we are joined by the King Git Himself,
@@ -19,7 +19,7 @@ and seeks enlightenment.  Others are present, but silent.
 Let's listen in!
 
     <njs`> Oh, here's a really stupid question -- where do I go to
-        learn the details of git's packing heuristics?  google avails
+	learn the details of Git's packing heuristics?  google avails
         me not, reading the source didn't help a lot, and wading
         through the whole mailing list seems less efficient than any
         of that.
@@ -37,7 +37,7 @@ Ah!  Modesty after all.
 
     <linus> njs, I don't think the docs exist. That's something where
 	 I don't think anybody else than me even really got involved.
-	 Most of the rest of git others have been busy with (especially
+	 Most of the rest of Git others have been busy with (especially
 	 Junio), but packing nobody touched after I did it.
 
 It's cryptic, yet vague.  Linus in style for sure.  Wise men
@@ -57,7 +57,7 @@ Bait...
 
 And switch.  That ought to do it!
 
-    <linus> Remember: git really doesn't follow files. So what it does is
+    <linus> Remember: Git really doesn't follow files. So what it does is
         - generate a list of all objects
         - sort the list according to magic heuristics
         - walk the list, using a sliding window, seeing if an object
@@ -382,7 +382,7 @@ The 'net never forgets, so that should be good until the end of time.
     <njs`> (if only it happened more...)
 
     <linus> Anyway, the pack-file could easily be denser still, but
-        because it's used both for streaming (the git protocol) and
+	because it's used both for streaming (the Git protocol) and
         for on-disk, it has a few pessimizations.
 
 Actually, it is a made-up word. But it is a made-up word being
@@ -432,12 +432,12 @@ Gasp!  OK, saved.  That's a fair Engineering trade off.  Close call!
 In fact, Linus reflects on some Basic Engineering Fundamentals,
 design options, etc.
 
-    <linus> More importantly, they allow git to still _conceptually_
+    <linus> More importantly, they allow Git to still _conceptually_
         never deal with deltas at all, and be a "whole object" store.
 
         Which has some problems (we discussed bad huge-file
-        behaviour on the git lists the other day), but it does mean
-        that the basic git concepts are really really simple and
+	behaviour on the Git lists the other day), but it does mean
+	that the basic Git concepts are really really simple and
         straightforward.
 
         It's all been quite stable.
@@ -461,6 +461,6 @@ Nuff said.
     <njs`> :-)
 
     <njs`> appreciate the infodump, I really was failing to find the
-        details on git packs :-)
+	details on Git packs :-)
 
 And now you know the rest of the story.

@@ -67,7 +67,7 @@ The --cc option must be repeated for each user you want on the cc list.
 When '--compose' is used, git send-email will use the From, Subject, and
 In-Reply-To headers specified in the message. If the body of the message
 (what you type after the headers and a blank line) only contains blank
-(or GIT: prefixed) lines the summary won't be sent, but From, Subject,
+(or Git: prefixed) lines the summary won't be sent, but From, Subject,
 and In-Reply-To headers will be used unless they are removed.
 +
 Missing From or In-Reply-To headers will be prompted for.

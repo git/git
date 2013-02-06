@@ -56,7 +56,7 @@ index file, all SHA1 references in `refs` namespace, and all reflogs
 	($GIT_DIR/objects), but also the ones found in alternate
 	object pools listed in GIT_ALTERNATE_OBJECT_DIRECTORIES
 	or $GIT_DIR/objects/info/alternates,
-	and in packed git archives found in $GIT_DIR/objects/pack
+	and in packed Git archives found in $GIT_DIR/objects/pack
 	and corresponding pack subdirectories in alternate
 	object pools.  This is now default; you can turn it off
 	with --no-full.
@@ -64,8 +64,8 @@ index file, all SHA1 references in `refs` namespace, and all reflogs
 --strict::
 	Enable more strict checking, namely to catch a file mode
 	recorded with g+w bit set, which was created by older
-	versions of git.  Existing repositories, including the
-	Linux kernel, git itself, and sparse repository have old
+	versions of Git.  Existing repositories, including the
+	Linux kernel, Git itself, and sparse repository have old
 	objects that triggers this check, but it is recommended
 	to check new projects with this flag.
 

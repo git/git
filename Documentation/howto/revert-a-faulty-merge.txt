@@ -164,7 +164,7 @@ merged. So it's debugging hell, because now you don't have lots of small
 changes that you can try to pinpoint which _part_ of it changes.
 
 But does it all work? Sure it does. You can revert a merge, and from a
-purely technical angle, git did it very naturally and had no real
+purely technical angle, Git did it very naturally and had no real
 troubles. It just considered it a change from "state before merge" to
 "state after merge", and that was it. Nothing complicated, nothing odd,
 nothing really dangerous. Git will do it without even thinking about it.

@@ -13,7 +13,7 @@ $GIT_WORK_DIR/.gitmodules
 DESCRIPTION
 -----------
 
-The `.gitmodules` file, located in the top-level directory of a git
+The `.gitmodules` file, located in the top-level directory of a Git
 working tree, is a text file with a syntax matching the requirements
 of linkgit:git-config[1].
 
@@ -24,7 +24,7 @@ option of 'git submodule add'. Each submodule section also contains the
 following required keys:
 
 submodule.<name>.path::
-	Defines the path, relative to the top-level directory of the git
+	Defines the path, relative to the top-level directory of the Git
 	working tree, where the submodule is expected to be checked out.
 	The path name must not end with a `/`. All submodule paths must
 	be unique within the .gitmodules file.

@@ -39,7 +39,7 @@ The notable options are:
 
 `DIR_NO_GITLINKS`:::
 
-	If set, recurse into a directory that looks like a git
+	If set, recurse into a directory that looks like a Git
 	directory.  Otherwise it is shown as a directory.
 
 The result of the enumeration is left in these fields:

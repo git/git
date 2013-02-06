@@ -3,7 +3,7 @@ gitworkflows(7)
 
 NAME
 ----
-gitworkflows - An overview of recommended workflows with git
+gitworkflows - An overview of recommended workflows with Git
 
 SYNOPSIS
 --------
@@ -242,10 +242,10 @@ tag to the tip of 'master' indicating the release version:
 .Release tagging
 [caption="Recipe: "]
 =====================================
-`git tag -s -m "GIT X.Y.Z" vX.Y.Z master`
+`git tag -s -m "Git X.Y.Z" vX.Y.Z master`
 =====================================
 
-You need to push the new tag to a public git server (see
+You need to push the new tag to a public Git server (see
 "DISTRIBUTED WORKFLOWS" below). This makes the tag available to
 others tracking your project. The push could also trigger a
 post-update hook to perform release-related items such as building

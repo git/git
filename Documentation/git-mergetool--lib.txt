@@ -3,7 +3,7 @@ git-mergetool{litdd}lib(1)
 
 NAME
 ----
-git-mergetool--lib - Common git merge tool shell scriptlets
+git-mergetool--lib - Common Git merge tool shell scriptlets
 
 SYNOPSIS
 --------
@@ -19,7 +19,7 @@ Porcelain-ish scripts and/or are writing new ones.
 
 The 'git-mergetool{litdd}lib' scriptlet is designed to be sourced (using
 `.`) by other shell scripts to set up functions for working
-with git merge tools.
+with Git merge tools.
 
 Before sourcing 'git-mergetool{litdd}lib', your script must set `TOOL_MODE`
 to define the operation mode for the functions listed below.

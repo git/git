@@ -14,7 +14,7 @@ SYNOPSIS
 
 DESCRIPTION
 -----------
-Applies a quilt patchset onto the current git branch, preserving
+Applies a quilt patchset onto the current Git branch, preserving
 the patch boundaries, patch order, and patch descriptions present
 in the quilt patchset.
 
@@ -25,7 +25,7 @@ the patch description is displayed and the user is asked to
 interactively enter the author of the patch.
 
 If a subject is not found in the patch description the patch name is
-preserved as the 1 line subject in the git description.
+preserved as the 1 line subject in the Git description.
 
 OPTIONS
 -------

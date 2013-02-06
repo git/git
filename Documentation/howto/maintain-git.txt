@@ -1,7 +1,7 @@
 From: Junio C Hamano <gitster@pobox.com>
 Date: Wed, 21 Nov 2007 16:32:55 -0800
 Subject: Addendum to "MaintNotes"
-Abstract: Imagine that git development is racing along as usual, when our friendly
+Abstract: Imagine that Git development is racing along as usual, when our friendly
  neighborhood maintainer is struck down by a wayward bus. Out of the
  hordes of suckers (loyal developers), you have been tricked (chosen) to
  step up as the new maintainer. This howto will show you "how to" do it.
@@ -13,7 +13,7 @@ How to maintain Git
 Activities
 ----------
 
-The maintainer's git time is spent on three activities.
+The maintainer's Git time is spent on three activities.
 
  - Communication (45%)
 
@@ -90,7 +90,7 @@ this mailing list after each feature release is made.
 A Typical Git Day
 -----------------
 
-A typical git day for the maintainer implements the above policy
+A typical Git day for the maintainer implements the above policy
 by doing the following:
 
  - Scan mailing list.  Respond with review comments, suggestions

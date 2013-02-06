@@ -3,7 +3,7 @@ git-web{litdd}browse(1)
 
 NAME
 ----
-git-web--browse - git helper script to launch a web browser
+git-web--browse - Git helper script to launch a web browser
 
 SYNOPSIS
 --------
@@ -50,7 +50,7 @@ OPTIONS
 
 -c <conf.var>::
 --config=<conf.var>::
-	CONF.VAR is looked up in the git config files. If it's set,
+	CONF.VAR is looked up in the Git config files. If it's set,
 	then its value specifies the browser that should be used.
 
 CONFIGURATION VARIABLES

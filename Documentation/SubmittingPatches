@@ -103,9 +103,9 @@ without external resources. Instead of giving a URL to a mailing list
 archive, summarize the relevant points of the discussion.
 
 
-(3) Generate your patch using git tools out of your commits.
+(3) Generate your patch using Git tools out of your commits.
 
-git based diff tools generate unidiff which is the preferred format.
+Git based diff tools generate unidiff which is the preferred format.
 
 You do not have to be afraid to use -M option to "git diff" or
 "git format-patch", if your patch involves file renames.  The
@@ -122,7 +122,7 @@ that is fine, but please mark it as such.
 
 (4) Sending your patches.
 
-People on the git mailing list need to be able to read and
+People on the Git mailing list need to be able to read and
 comment on the changes you are submitting.  It is important for
 a developer to be able to "quote" your changes, using standard
 e-mail tools, so that they may comment on specific portions of
@@ -206,7 +206,7 @@ patch.
 
 To improve tracking of who did what, we've borrowed the
 "sign-off" procedure from the Linux kernel project on patches
-that are being emailed around.  Although core GIT is a lot
+that are being emailed around.  Although core Git is a lot
 smaller project it is a good discipline to follow it.
 
 The sign-off is a simple line at the end of the explanation for
@@ -244,7 +244,7 @@ then you just add a line saying
 
 	Signed-off-by: Random J Developer <random@developer.example.org>
 
-This line can be automatically added by git if you run the git-commit
+This line can be automatically added by Git if you run the git-commit
 command with the -s option.
 
 Notice that you can place your own Signed-off-by: line when
@@ -337,7 +337,7 @@ Know the status of your patch after submission
   tell you if your patch is merged in pu if you rebase on top of
   master).
 
-* Read the git mailing list, the maintainer regularly posts messages
+* Read the Git mailing list, the maintainer regularly posts messages
   entitled "What's cooking in git.git" and "What's in git.git" giving
   the status of various proposed changes.
 

@@ -3,7 +3,7 @@ git-send-pack(1)
 
 NAME
 ----
-git-send-pack - Push objects over git protocol to another repository
+git-send-pack - Push objects over Git protocol to another repository
 
 
 SYNOPSIS

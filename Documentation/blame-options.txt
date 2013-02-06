@@ -95,7 +95,7 @@ of lines before or after the line given by <start>.
 	running extra passes of inspection.
 +
 <num> is optional but it is the lower bound on the number of
-alphanumeric characters that git must detect as moving/copying
+alphanumeric characters that Git must detect as moving/copying
 within a file for it to associate those lines with the parent
 commit. The default value is 20.
 
@@ -110,7 +110,7 @@ commit. The default value is 20.
 	looks for copies from other files in any commit.
 +
 <num> is optional but it is the lower bound on the number of
-alphanumeric characters that git must detect as moving/copying
+alphanumeric characters that Git must detect as moving/copying
 between files for it to associate those lines with the parent
 commit. And the default value is 40. If there are more than one
 `-C` options given, the <num> argument of the last `-C` will

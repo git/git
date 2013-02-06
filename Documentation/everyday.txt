@@ -1,4 +1,4 @@
-Everyday GIT With 20 Commands Or So
+Everyday Git With 20 Commands Or So
 ===================================
 
 <<Individual Developer (Standalone)>> commands are essential for
@@ -12,7 +12,7 @@ commands in addition to the above.
 
 <<Repository Administration>> commands are for system
 administrators who are responsible for the care and feeding
-of git repositories.
+of Git repositories.
 
 
 Individual Developer (Standalone)[[Individual Developer (Standalone)]]
@@ -87,7 +87,7 @@ $ git log v2.43.. curses/ <12>
 +
 <1> create a new topic branch.
 <2> revert your botched changes in `curses/ux_audio_oss.c`.
-<3> you need to tell git if you added a new file; removal and
+<3> you need to tell Git if you added a new file; removal and
 modification will be caught if you do `git commit -a` later.
 <4> to see what changes you are committing.
 <5> commit everything as you have tested, with your sign-off.
@@ -229,7 +229,7 @@ commands in addition to the ones needed by participants.
 Examples
 ~~~~~~~~
 
-My typical GIT day.::
+My typical Git day.::
 +
 ------------
 $ git status <1>
@@ -332,7 +332,7 @@ Run git-daemon to serve /pub/scm from xinetd.::
 ------------
 $ cat /etc/xinetd.d/git-daemon
 # default: off
-# description: The git server offers access to git repositories
+# description: The Git server offers access to Git repositories
 service git
 {
         disable = no

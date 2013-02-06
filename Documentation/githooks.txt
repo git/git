@@ -3,7 +3,7 @@ githooks(5)
 
 NAME
 ----
-githooks - Hooks used by git
+githooks - Hooks used by Git
 
 SYNOPSIS
 --------
@@ -108,7 +108,7 @@ it is not suppressed by the `--no-verify` option.  A non-zero exit
 means a failure of the hook and aborts the commit.  It should not
 be used as replacement for pre-commit hook.
 
-The sample `prepare-commit-msg` hook that comes with git comments
+The sample `prepare-commit-msg` hook that comes with Git comments
 out the `Conflicts:` part of a merge's commit message.
 
 commit-msg
@@ -304,7 +304,7 @@ for the user.
 
 The default 'post-receive' hook is empty, but there is
 a sample script `post-receive-email` provided in the `contrib/hooks`
-directory in git distribution, which implements sending commit
+directory in Git distribution, which implements sending commit
 emails.
 
 [[post-update]]
@@ -332,7 +332,7 @@ them.
 When enabled, the default 'post-update' hook runs
 'git update-server-info' to keep the information used by dumb
 transports (e.g., HTTP) up-to-date.  If you are publishing
-a git repository that is accessible via HTTP, you should
+a Git repository that is accessible via HTTP, you should
 probably enable this hook.
 
 Both standard output and standard error output are forwarded to

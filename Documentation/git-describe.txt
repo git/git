@@ -131,7 +131,7 @@ closest tagname without any suffix:
 
 Note that the suffix you get if you type these commands today may be
 longer than what Linus saw above when he ran these commands, as your
-git repository may have new commits whose object names begin with
+Git repository may have new commits whose object names begin with
 975b that did not exist back then, and "-g975b" suffix alone may not
 be sufficient to disambiguate these commits.
 

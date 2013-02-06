@@ -12,12 +12,24 @@ $GIT_DIR/*
 DESCRIPTION
 -----------
 
-You may find these things in your git repository (`.git`
-directory for a repository associated with your working tree, or
-`<project>.git` directory for a public 'bare' repository. It is
-also possible to have a working tree where `.git` is a plain
-ASCII file containing `gitdir: <path>`, i.e. the path to the
-real git repository).
+A Git repository comes in two different flavours:
+
+ * a `.git` directory at the root of the working tree;
+
+ * a `<project>.git` directory that is a 'bare' repository
+   (i.e. without its own working tree), that is typically used for
+   exchanging histories with others by pushing into it and fetching
+   from it.
+
+*Note*: Also you can have a plain text file `.git` at the root of
+your working tree, containing `gitdir: <path>` to point at the real
+directory that has the repository.  This mechanism is often used for
+a working tree of a submodule checkout, to allow you in the
+containing superproject to `git checkout` a branch that does not
+have the submodule.  The `checkout` has to remove the entire
+submodule working tree, without losing the submodule repository.
+
+These things may exist in a Git repository.
 
 objects::
 	Object store associated with this repository.  Usually
@@ -108,7 +120,7 @@ HEAD::
 	A symref (see glossary) to the `refs/heads/` namespace
 	describing the currently active branch.  It does not mean
 	much if the repository is not associated with any working tree
-	(i.e. a 'bare' repository), but a valid git repository
+	(i.e. a 'bare' repository), but a valid Git repository
 	*must* have the HEAD file; some porcelains may use it to
 	guess the designated "default" branch of the repository
 	(usually 'master').  It is legal if the named branch
@@ -131,7 +143,7 @@ branches::
 	and not likely to be found in modern repositories.
 
 hooks::
-	Hooks are customization scripts used by various git
+	Hooks are customization scripts used by various Git
 	commands.  A handful of sample hooks are installed when
 	'git init' is run, but all of them are disabled by
 	default.  To enable, the `.sample` suffix has to be
@@ -169,7 +181,7 @@ info/exclude::
 	This file, by convention among Porcelains, stores the
 	exclude pattern list. `.gitignore` is the per-directory
 	ignore file.  'git status', 'git add', 'git rm' and
-	'git clean' look at it but the core git commands do not look
+	'git clean' look at it but the core Git commands do not look
 	at it.  See also: linkgit:gitignore[5].
 
 remotes::

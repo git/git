@@ -178,10 +178,10 @@ of the merge.  Among the changes made to the common ancestor's version,
 non-overlapping ones (that is, you changed an area of the file while the
 other side left that area intact, or vice versa) are incorporated in the
 final result verbatim.  When both sides made changes to the same area,
-however, git cannot randomly pick one side over the other, and asks you to
+however, Git cannot randomly pick one side over the other, and asks you to
 resolve it by leaving what both sides did to that area.
 
-By default, git uses the same style as the one used by the "merge" program
+By default, Git uses the same style as the one used by the "merge" program
 from the RCS suite to present such a conflicted hunk, like this:
 
 ------------

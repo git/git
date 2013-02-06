@@ -283,7 +283,7 @@ few lines that happen to match textually as the context, but as a
 single deletion of everything old followed by a single insertion of
 everything new, and the number `m` controls this aspect of the -B
 option (defaults to 60%). `-B/70%` specifies that less than 30% of the
-original should remain in the result for git to consider it a total
+original should remain in the result for Git to consider it a total
 rewrite (i.e. otherwise the resulting patch will be a series of
 deletion and insertion mixed together with context lines).
 +
@@ -307,7 +307,7 @@ ifdef::git-log[]
 endif::git-log[]
 	If `n` is specified, it is a threshold on the similarity
 	index (i.e. amount of addition/deletions compared to the
-	file's size). For example, `-M90%` means git should consider a
+	file's size). For example, `-M90%` means Git should consider a
 	delete/add pair to be a rename if more than 90% of the file
 	hasn't changed.  Without a `%` sign, the number is to be read as
 	a fraction, with a decimal point before it.  I.e., `-M5` becomes

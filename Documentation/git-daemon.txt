@@ -3,7 +3,7 @@ git-daemon(1)
 
 NAME
 ----
-git-daemon - A really simple server for git repositories
+git-daemon - A really simple server for Git repositories
 
 SYNOPSIS
 --------
@@ -22,12 +22,12 @@ SYNOPSIS
 
 DESCRIPTION
 -----------
-A really simple TCP git daemon that normally listens on port "DEFAULT_GIT_PORT"
+A really simple TCP Git daemon that normally listens on port "DEFAULT_GIT_PORT"
 aka 9418.  It waits for a connection asking for a service, and will serve
 that service if it is enabled.
 
 It verifies that the directory has the magic file "git-daemon-export-ok", and
-it will refuse to export any git directory that hasn't explicitly been marked
+it will refuse to export any Git directory that hasn't explicitly been marked
 for export this way (unless the '--export-all' parameter is specified). If you
 pass some directory paths as 'git daemon' arguments, you can further restrict
 the offers to a whitelist comprising of those.
@@ -37,7 +37,7 @@ By default, only `upload-pack` service is enabled, which serves
 from 'git fetch', 'git pull', and 'git clone'.
 
 This is ideally suited for read-only updates, i.e., pulling from
-git repositories.
+Git repositories.
 
 An `upload-archive` also exists to serve 'git archive'.
 
@@ -51,7 +51,7 @@ OPTIONS
 
 --base-path=<path>::
 	Remap all the path requests as relative to the given path.
-	This is sort of "GIT root" - if you run 'git daemon' with
+	This is sort of "Git root" - if you run 'git daemon' with
 	'--base-path=/srv/git' on example.com, then if you later try to pull
 	'git://example.com/hello.git', 'git daemon' will interpret the path
 	as '/srv/git/hello.git'.
@@ -73,7 +73,7 @@ OPTIONS
 	whitelist.
 
 --export-all::
-	Allow pulling from all directories that look like GIT repositories
+	Allow pulling from all directories that look like Git repositories
 	(have the 'objects' and 'refs' subdirectories), even if they
 	do not have the 'git-daemon-export-ok' file.
 

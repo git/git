@@ -64,7 +64,7 @@ produced by --stat etc.
 
 --log-size::
 	Before the log message print out its size in bytes. Intended
-	mainly for porcelain tools consumption. If git is unable to
+	mainly for porcelain tools consumption. If Git is unable to
 	produce a valid value size is set to zero.
 	Note that only message is considered, if also a diff is shown
 	its size is not included.

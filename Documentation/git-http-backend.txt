@@ -19,7 +19,7 @@ and the backwards-compatible dumb HTTP protocol, as well as clients
 pushing using the smart HTTP protocol.
 
 It verifies that the directory has the magic file
-"git-daemon-export-ok", and it will refuse to export any git directory
+"git-daemon-export-ok", and it will refuse to export any Git directory
 that hasn't explicitly been marked for export this way (unless the
 GIT_HTTP_EXPORT_ALL environmental variable is set).
 

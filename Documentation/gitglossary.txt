@@ -3,7 +3,7 @@ gitglossary(7)
 
 NAME
 ----
-gitglossary - A GIT Glossary
+gitglossary - A Git Glossary
 
 SYNOPSIS
 --------
@@ -19,7 +19,7 @@ SEE ALSO
 linkgit:gittutorial[7],
 linkgit:gittutorial-2[7],
 linkgit:gitcvs-migration[7],
-link:everyday.html[Everyday git],
+link:everyday.html[Everyday Git],
 link:user-manual.html[The Git User's Manual]
 
 GIT

@@ -13,7 +13,7 @@ git remote add <nick> "ext::<command>[ <arguments>...]"
 DESCRIPTION
 -----------
 This remote helper uses the specified '<command>' to connect
-to a remote git server.
+to a remote Git server.
 
 Data written to stdin of the specified '<command>' is assumed
 to be sent to a git:// server, git-upload-pack, git-receive-pack
@@ -33,12 +33,12 @@ The following sequences have a special meaning:
 
 '%s'::
 	Replaced with name (receive-pack, upload-pack, or
-	upload-archive) of the service git wants to invoke.
+	upload-archive) of the service Git wants to invoke.
 
 '%S'::
 	Replaced with long name (git-receive-pack,
 	git-upload-pack, or git-upload-archive) of the service
-	git wants to invoke.
+	Git wants to invoke.
 
 '%G' (must be the first characters in an argument)::
 	This argument will not be passed to '<command>'. Instead, it
@@ -75,7 +75,7 @@ GIT_EXT_SERVICE_NOPREFIX::
 
 EXAMPLES:
 ---------
-This remote helper is transparently used by git when
+This remote helper is transparently used by Git when
 you use commands such as "git fetch <URL>", "git clone <URL>",
 , "git push <URL>" or "git remote add <nick> <URL>", where <URL>
 begins with `ext::`.  Examples:
@@ -100,14 +100,14 @@ begins with `ext::`.  Examples:
 	Represents a repository with path /repo accessed using the
 	helper program "git-server-alias foo".  The hostname for the
 	remote server passed in the protocol stream will be "foo"
-	(this allows multiple virtual git servers to share a
+	(this allows multiple virtual Git servers to share a
 	link-level address).
 
 "ext::git-server-alias foo %G/repo% with% spaces %Vfoo"::
 	Represents a repository with path '/repo with spaces' accessed
 	using the helper program "git-server-alias foo".  The hostname for
 	the remote server passed in the protocol stream will be "foo"
-	(this allows multiple virtual git servers to share a
+	(this allows multiple virtual Git servers to share a
 	link-level address).
 
 "ext::git-ssl foo.example /bar"::
@@ -118,7 +118,7 @@ begins with `ext::`.  Examples:
 
 Documentation
 --------------
-Documentation by Ilari Liusvaara, Jonathan Nieder and the git list
+Documentation by Ilari Liusvaara, Jonathan Nieder and the Git list
 <git@vger.kernel.org>
 
 GIT

@@ -254,7 +254,7 @@ pattern.  Filepairs that match a glob pattern on an earlier line
 in the file are output before ones that match a later line, and
 filepairs that do not match any glob pattern are output last.
 
-As an example, a typical orderfile for the core git probably
+As an example, a typical orderfile for the core Git probably
 would look like this:
 
 ------------------------------------------------

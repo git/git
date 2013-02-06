@@ -99,7 +99,7 @@ diff.renameLimit::
 	detection; equivalent to the 'git diff' option '-l'.
 
 diff.renames::
-	Tells git to detect renames.  If set to any boolean value, it
+	Tells Git to detect renames.  If set to any boolean value, it
 	will enable basic rename detection.  If set to "copies" or
 	"copy", it will detect copies, as well.
 

@@ -7,7 +7,7 @@
 	A bare repository is normally an appropriately
 	named <<def_directory,directory>> with a `.git` suffix that does not
 	have a locally checked-out copy of any of the files under
-	revision control. That is, all of the `git`
+	revision control. That is, all of the Git
 	administrative and control files that would normally be present in the
 	hidden `.git` sub-directory are directly present in the
 	`repository.git` directory instead,
@@ -22,7 +22,7 @@
 	<<def_commit,commit>> on a branch is referred to as the tip of
 	that branch.  The tip of the branch is referenced by a branch
 	<<def_head,head>>, which moves forward as additional development
-	is done on the branch.  A single git
+	is done on the branch.  A single Git
 	<<def_repository,repository>> can track an arbitrary number of
 	branches, but your <<def_working_tree,working tree>> is
 	associated with just one of them (the "current" or "checked out"
@@ -37,9 +37,9 @@
 	<<def_commit,commit>> could be one of its <<def_parent,parents>>).
 
 [[def_changeset]]changeset::
-	BitKeeper/cvsps speak for "<<def_commit,commit>>". Since git does not
+	BitKeeper/cvsps speak for "<<def_commit,commit>>". Since Git does not
 	store changes, but states, it really does not make sense to use the term
-	"changesets" with git.
+	"changesets" with Git.
 
 [[def_checkout]]checkout::
 	The action of updating all or part of the
@@ -52,7 +52,7 @@
 [[def_cherry-picking]]cherry-picking::
 	In <<def_SCM,SCM>> jargon, "cherry pick" means to choose a subset of
 	changes out of a series of changes (typically commits) and record them
-	as a new series of changes on top of a different codebase. In GIT, this is
+	as a new series of changes on top of a different codebase. In Git, this is
 	performed by the "git cherry-pick" command to extract the change introduced
 	by an existing <<def_commit,commit>> and to record it based on the tip
 	of the current <<def_branch,branch>> as a new commit.
@@ -64,14 +64,14 @@
 
 [[def_commit]]commit::
 	As a noun: A single point in the
-	git history; the entire history of a project is represented as a
+	Git history; the entire history of a project is represented as a
 	set of interrelated commits.  The word "commit" is often
-	used by git in the same places other revision control systems
+	used by Git in the same places other revision control systems
 	use the words "revision" or "version".  Also used as a short
 	hand for <<def_commit_object,commit object>>.
 +
 As a verb: The action of storing a new snapshot of the project's
-state in the git history, by creating a new commit representing the current
+state in the Git history, by creating a new commit representing the current
 state of the <<def_index,index>> and advancing <<def_HEAD,HEAD>>
 to point at the new commit.
 
@@ -82,8 +82,8 @@ to point at the new commit.
 	to the top <<def_directory,directory>> of the stored
 	revision.
 
-[[def_core_git]]core git::
-	Fundamental data structures and utilities of git. Exposes only limited
+[[def_core_git]]core Git::
+	Fundamental data structures and utilities of Git. Exposes only limited
 	source code management tools.
 
 [[def_DAG]]DAG::
@@ -100,7 +100,7 @@ to point at the new commit.
 
 [[def_detached_HEAD]]detached HEAD::
 	Normally the <<def_HEAD,HEAD>> stores the name of a
-	<<def_branch,branch>>.  However, git also allows you to <<def_checkout,check out>>
+	<<def_branch,branch>>.  However, Git also allows you to <<def_checkout,check out>>
 	an arbitrary <<def_commit,commit>> that isn't necessarily the tip of any
 	particular branch.  In this case HEAD is said to be "detached".
 
@@ -142,22 +142,26 @@ to point at the new commit.
 	and to get them, too.  See also linkgit:git-fetch[1].
 
 [[def_file_system]]file system::
-	Linus Torvalds originally designed git to be a user space file system,
+	Linus Torvalds originally designed Git to be a user space file system,
 	i.e. the infrastructure to hold files and directories. That ensured the
-	efficiency and speed of git.
+	efficiency and speed of Git.
 
-[[def_git_archive]]git archive::
+[[def_git_archive]]Git archive::
 	Synonym for <<def_repository,repository>> (for arch people).
+
+[[def_gitfile]]gitfile::
+	A plain file `.git` at the root of a working tree that
+	points at the directory that is the real repository.
 
 [[def_grafts]]grafts::
 	Grafts enables two otherwise different lines of development to be joined
 	together by recording fake ancestry information for commits. This way
-	you can make git pretend the set of <<def_parent,parents>> a <<def_commit,commit>> has
+	you can make Git pretend the set of <<def_parent,parents>> a <<def_commit,commit>> has
 	is different from what was recorded when the commit was
 	created. Configured via the `.git/info/grafts` file.
 
 [[def_hash]]hash::
-	In git's context, synonym to <<def_object_name,object name>>.
+	In Git's context, synonym to <<def_object_name,object name>>.
 
 [[def_head]]head::
 	A <<def_ref,named reference>> to the <<def_commit,commit>> at the tip of a
@@ -177,14 +181,14 @@ to point at the new commit.
 	A synonym for <<def_head,head>>.
 
 [[def_hook]]hook::
-	During the normal execution of several git commands, call-outs are made
+	During the normal execution of several Git commands, call-outs are made
 	to optional scripts that allow a developer to add functionality or
 	checking. Typically, the hooks allow for a command to be pre-verified
 	and potentially aborted, and allow for a post-notification after the
 	operation is done. The hook scripts are found in the
 	`$GIT_DIR/hooks/` directory, and are enabled by simply
 	removing the `.sample` suffix from the filename. In earlier versions
-	of git you had to make them executable.
+	of Git you had to make them executable.
 
 [[def_index]]index::
 	A collection of files with stat information, whose contents are stored
@@ -201,7 +205,7 @@ to point at the new commit.
 
 [[def_master]]master::
 	The default development <<def_branch,branch>>. Whenever you
-	create a git <<def_repository,repository>>, a branch named
+	create a Git <<def_repository,repository>>, a branch named
 	"master" is created, and becomes the active branch. In most
 	cases, this contains the local development, though that is
 	purely by convention and is not required.
@@ -228,7 +232,7 @@ This commit is referred to as a "merge commit", or sometimes just a
 "merge".
 
 [[def_object]]object::
-	The unit of storage in git. It is uniquely identified by the
+	The unit of storage in Git. It is uniquely identified by the
 	<<def_SHA1,SHA1>> of its contents. Consequently, an
 	object can not be changed.
 
@@ -323,7 +327,7 @@ top `/`;;
 +
 Currently only the slash `/` is recognized as the "magic signature",
 but it is envisioned that we will support more types of magic in later
-versions of git.
+versions of Git.
 +
 A pathspec with only a colon means "there is no pathspec". This form
 should not be combined with other pathspec.
@@ -341,12 +345,12 @@ should not be combined with other pathspec.
 	particular line of text. See linkgit:git-diff[1].
 
 [[def_plumbing]]plumbing::
-	Cute name for <<def_core_git,core git>>.
+	Cute name for <<def_core_git,core Git>>.
 
 [[def_porcelain]]porcelain::
 	Cute name for programs and program suites depending on
-	<<def_core_git,core git>>, presenting a high level access to
-	core git. Porcelains expose more of a <<def_SCM,SCM>>
+	<<def_core_git,core Git>>, presenting a high level access to
+	core Git. Porcelains expose more of a <<def_SCM,SCM>>
 	interface than the <<def_plumbing,plumbing>>.
 
 [[def_pull]]pull::
@@ -406,7 +410,7 @@ should not be combined with other pathspec.
 	linkgit:git-push[1].
 
 [[def_remote_tracking_branch]]remote-tracking branch::
-	A regular git <<def_branch,branch>> that is used to follow changes from
+	A regular Git <<def_branch,branch>> that is used to follow changes from
 	another <<def_repository,repository>>. A remote-tracking
 	branch should not contain direct modifications or have local commits
 	made to it. A remote-tracking branch can usually be
@@ -443,7 +447,7 @@ should not be combined with other pathspec.
 [[def_shallow_repository]]shallow repository::
 	A shallow <<def_repository,repository>> has an incomplete
 	history some of whose <<def_commit,commits>> have <<def_parent,parents>> cauterized away (in other
-	words, git is told to pretend that these commits do not have the
+	words, Git is told to pretend that these commits do not have the
 	parents, even though they are recorded in the <<def_commit_object,commit
 	object>>). This is sometimes useful when you are interested only in the
 	recent history of a project even though the real history recorded in the
@@ -464,9 +468,9 @@ should not be combined with other pathspec.
 	object of an arbitrary type (typically a tag points to either a
 	<<def_tag_object,tag>> or a <<def_commit_object,commit object>>).
 	In contrast to a <<def_head,head>>, a tag is not updated by
-	the `commit` command. A git tag has nothing to do with a Lisp
+	the `commit` command. A Git tag has nothing to do with a Lisp
 	tag (which would be called an <<def_object_type,object type>>
-	in git's context). A tag is most typically used to mark a particular
+	in Git's context). A tag is most typically used to mark a particular
 	point in the commit ancestry <<def_chain,chain>>.
 
 [[def_tag_object]]tag object::
@@ -476,7 +480,7 @@ should not be combined with other pathspec.
 	signature, in which case it is called a "signed tag object".
 
 [[def_topic_branch]]topic branch::
-	A regular git <<def_branch,branch>> that is used by a developer to
+	A regular Git <<def_branch,branch>> that is used by a developer to
 	identify a conceptual line of development. Since branches are very easy
 	and inexpensive, it is often desirable to have several small branches
 	that each contain very well defined concepts or small incremental yet

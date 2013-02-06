@@ -17,10 +17,10 @@ merge.defaultToUpstream::
 	these tracking branches are merged.
 
 merge.ff::
-	By default, git does not create an extra merge commit when merging
+	By default, Git does not create an extra merge commit when merging
 	a commit that is a descendant of the current commit. Instead, the
 	tip of the current branch is fast-forwarded. When set to `false`,
-	this variable tells git to create an extra merge commit in such
+	this variable tells Git to create an extra merge commit in such
 	a case (equivalent to giving the `--no-ff` option from the command
 	line). When set to `only`, only such fast-forward merges are
 	allowed (equivalent to giving the `--ff-only` option from the
@@ -38,10 +38,10 @@ merge.renameLimit::
 	diff.renameLimit.
 
 merge.renormalize::
-	Tell git that canonical representation of files in the
+	Tell Git that canonical representation of files in the
 	repository has changed over time (e.g. earlier commits record
 	text files with CRLF line endings, but recent ones use LF line
-	endings).  In such a repository, git can convert the data
+	endings).  In such a repository, Git can convert the data
 	recorded in commits to a canonical form before performing a
 	merge to reduce unnecessary conflicts.  For more information,
 	see section "Merging branches with differing checkin/checkout

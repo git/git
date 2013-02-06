@@ -30,7 +30,7 @@ The report does not tell you anything about lines which have been deleted or
 replaced; you need to use a tool such as 'git diff' or the "pickaxe"
 interface briefly mentioned in the following paragraph.
 
-Apart from supporting file annotation, git also supports searching the
+Apart from supporting file annotation, Git also supports searching the
 development history for when a code snippet occurred in a change. This makes it
 possible to track when a code snippet was added to a file, moved or copied
 between files, and eventually deleted or replaced. It works by searching for

@@ -128,7 +128,7 @@ export-ignore::
 	added to archive files.  See linkgit:gitattributes[5] for details.
 
 export-subst::
-	If the attribute export-subst is set for a file then git will
+	If the attribute export-subst is set for a file then Git will
 	expand several placeholders when adding this file to an archive.
 	See linkgit:gitattributes[5] for details.
 

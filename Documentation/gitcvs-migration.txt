@@ -3,7 +3,7 @@ gitcvs-migration(7)
 
 NAME
 ----
-gitcvs-migration - git for CVS users
+gitcvs-migration - Git for CVS users
 
 SYNOPSIS
 --------
@@ -19,7 +19,7 @@ important than any other.  However, you can emulate the CVS model by
 designating a single shared repository which people can synchronize with;
 this document explains how to do that.
 
-Some basic familiarity with git is required. Having gone through
+Some basic familiarity with Git is required. Having gone through
 linkgit:gittutorial[7] and
 linkgit:gitglossary[7] should be sufficient.
 
@@ -81,7 +81,7 @@ other than `master`.
 Setting Up a Shared Repository
 ------------------------------
 
-We assume you have already created a git repository for your project,
+We assume you have already created a Git repository for your project,
 possibly created from scratch or from a tarball (see
 linkgit:gittutorial[7]), or imported from an already existing CVS
 repository (see the next section).
@@ -101,7 +101,7 @@ Next, give every team member read/write access to this repository.  One
 easy way to do this is to give all the team members ssh access to the
 machine where the repository is hosted.  If you don't want to give them a
 full shell on the machine, there is a restricted shell which only allows
-users to do git pushes and pulls; see linkgit:git-shell[1].
+users to do Git pushes and pulls; see linkgit:git-shell[1].
 
 Put all the committers in the same group, and make the repository
 writable by that group:
@@ -125,7 +125,7 @@ of the project you are interested in and run linkgit:git-cvsimport[1]:
 $ git cvsimport -C <destination> <module>
 -------------------------------------------
 
-This puts a git archive of the named CVS module in the directory
+This puts a Git archive of the named CVS module in the directory
 <destination>, which will be created if necessary.
 
 The import checks out from CVS every revision of every file.  Reportedly
@@ -133,8 +133,8 @@ cvsimport can average some twenty revisions per second, so for a
 medium-sized project this should not take more than a couple of minutes.
 Larger projects or remote repositories may take longer.
 
-The main trunk is stored in the git branch named `origin`, and additional
-CVS branches are stored in git branches with the same names.  The most
+The main trunk is stored in the Git branch named `origin`, and additional
+CVS branches are stored in Git branches with the same names.  The most
 recent version of the main trunk is also left checked out on the `master`
 branch, so you can start adding your own changes right away.
 
@@ -160,10 +160,10 @@ You can enforce finer grained permissions using update hooks.  See
 link:howto/update-hook-example.txt[Controlling access to branches using
 update hooks].
 
-Providing CVS Access to a git Repository
+Providing CVS Access to a Git Repository
 ----------------------------------------
 
-It is also possible to provide true CVS access to a git repository, so
+It is also possible to provide true CVS access to a Git repository, so
 that developers can still use CVS; see linkgit:git-cvsserver[1] for
 details.
 
@@ -171,8 +171,8 @@ Alternative Development Models
 ------------------------------
 
 CVS users are accustomed to giving a group of developers commit access to
-a common repository.  As we've seen, this is also possible with git.
-However, the distributed nature of git allows other development models,
+a common repository.  As we've seen, this is also possible with Git.
+However, the distributed nature of Git allows other development models,
 and you may want to first consider whether one of them might be a better
 fit for your project.
 

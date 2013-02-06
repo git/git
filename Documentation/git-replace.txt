@@ -22,7 +22,7 @@ replacement object.
 
 Unless `-f` is given, the 'replace' reference must not yet exist.
 
-Replacement references will be used by default by all git commands
+Replacement references will be used by default by all Git commands
 except those doing reachability traversal (prune, pack transfer and
 fsck).
 

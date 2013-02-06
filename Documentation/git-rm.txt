@@ -28,7 +28,7 @@ OPTIONS
 -------
 <file>...::
 	Files to remove.  Fileglobs (e.g. `*.c`) can be given to
-	remove all matching files.  If you want git to expand
+	remove all matching files.  If you want Git to expand
 	file glob characters, you may need to shell-escape them.
 	A leading directory name
 	(e.g. `dir` to remove `dir/file1` and `dir/file2`) can be
@@ -74,8 +74,8 @@ DISCUSSION
 
 The <file> list given to the command can be exact pathnames,
 file glob patterns, or leading directory names.  The command
-removes only the paths that are known to git.  Giving the name of
-a file that you have not told git about does not remove that file.
+removes only the paths that are known to Git.  Giving the name of
+a file that you have not told Git about does not remove that file.
 
 File globbing matches across directory boundaries.  Thus, given
 two directories `d` and `d2`, there is a difference between
@@ -137,7 +137,7 @@ git diff --name-only --diff-filter=D -z | xargs -0 git rm --cached
 Submodules
 ~~~~~~~~~~
 Only submodules using a gitfile (which means they were cloned
-with a git version 1.7.8 or newer) will be removed from the work
+with a Git version 1.7.8 or newer) will be removed from the work
 tree, as their repository lives inside the .git directory of the
 superproject. If a submodule (or one of those nested inside it)
 still uses a .git directory, `git rm` will fail - no matter if forced
@@ -156,7 +156,7 @@ EXAMPLES
 	`Documentation` directory and any of its subdirectories.
 +
 Note that the asterisk `*` is quoted from the shell in this
-example; this lets git, and not the shell, expand the pathnames
+example; this lets Git, and not the shell, expand the pathnames
 of files and subdirectories under the `Documentation/` directory.
 
 `git rm -f git-*.sh`::

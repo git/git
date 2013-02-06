@@ -1,9 +1,9 @@
 From: Rutger Nijlunsing <rutger@nospam.com>
-Subject: Setting up a git repository which can be pushed into and pulled from over HTTP(S).
+Subject: Setting up a Git repository which can be pushed into and pulled from over HTTP(S).
 Date: Thu, 10 Aug 2006 22:00:26 +0200
 Content-type: text/asciidoc
 
-How to setup git server over http
+How to setup Git server over http
 =================================
 
 Since Apache is one of those packages people like to compile
@@ -44,20 +44,20 @@ What's needed:
 
 - have permissions to chown a directory
 
-- have git installed on the client, and
+- have Git installed on the client, and
 
-- either have git installed on the server or have a webdav client on
+- either have Git installed on the server or have a webdav client on
   the client.
 
 In effect, this means you're going to be root, or that you're using a
 preconfigured WebDAV server.
 
 
-Step 1: setup a bare GIT repository
+Step 1: setup a bare Git repository
 -----------------------------------
 
-At the time of writing, git-http-push cannot remotely create a GIT
-repository. So we have to do that at the server side with git. Another
+At the time of writing, git-http-push cannot remotely create a Git
+repository. So we have to do that at the server side with Git. Another
 option is to generate an empty bare repository at the client and copy
 it to the server with a WebDAV client (which is the only option if Git
 is not installed on the server).
@@ -189,7 +189,7 @@ http://<servername>/my-new-repo.git [x] Open as webfolder -> login .
 Step 3: setup the client
 ------------------------
 
-Make sure that you have HTTP support, i.e. your git was built with
+Make sure that you have HTTP support, i.e. your Git was built with
 libcurl (version more recent than 7.10). The command 'git http-push' with
 no argument should display a usage message.
 
@@ -268,7 +268,7 @@ Reading /usr/local/apache2/logs/error_log is often helpful.
 
   On Debian: Read /var/log/apache2/error.log instead.
 
-If you access HTTPS locations, git may fail verifying the SSL
+If you access HTTPS locations, Git may fail verifying the SSL
 certificate (this is return code 60). Setting http.sslVerify=false can
 help diagnosing the problem, but removes security checks.
 

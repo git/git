@@ -333,7 +333,7 @@ a---b---c---d  branch 'master' (refers to commit 'd')
   tag 'v2.0' (refers to commit 'b')
 ------------
 
-In fact, we can perform all the normal git operations. But, let's look
+In fact, we can perform all the normal Git operations. But, let's look
 at what happens when we then checkout master:
 
 ------------
@@ -350,7 +350,7 @@ a---b---c---d  branch 'master' (refers to commit 'd')
 
 It is important to realize that at this point nothing refers to commit
 'f'. Eventually commit 'f' (and by extension commit 'e') will be deleted
-by the routine git garbage collection process, unless we create a reference
+by the routine Git garbage collection process, unless we create a reference
 before that happens. If we have not yet moved away from commit 'f',
 any of these will create a reference to it:
 

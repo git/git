@@ -3,7 +3,7 @@ Remotes configuration API
 
 The API in remote.h gives access to the configuration related to
 remotes. It handles all three configuration mechanisms historically
-and currently used by git, and presents the information in a uniform
+and currently used by Git, and presents the information in a uniform
 fashion. Note that the code also handles plain URLs without any
 configuration, giving them just the default information.
 
@@ -45,7 +45,7 @@ struct remote
 `receivepack`, `uploadpack`::
 
 	The configured helper programs to run on the remote side, for
-	git-native protocols.
+	Git-native protocols.
 
 `http_proxy`::
 

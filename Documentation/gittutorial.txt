@@ -3,7 +3,7 @@ gittutorial(7)
 
 NAME
 ----
-gittutorial - A tutorial introduction to git (for version 1.5.1 or newer)
+gittutorial - A tutorial introduction to Git (for version 1.5.1 or newer)
 
 SYNOPSIS
 --------
@@ -13,10 +13,10 @@ git *
 DESCRIPTION
 -----------
 
-This tutorial explains how to import a new project into git, make
+This tutorial explains how to import a new project into Git, make
 changes to it, and share changes with other developers.
 
-If you are instead primarily interested in using git to fetch a project,
+If you are instead primarily interested in using Git to fetch a project,
 for example, to test the latest version, you may prefer to start with
 the first two chapters of link:user-manual.html[The Git User's Manual].
 
@@ -36,7 +36,7 @@ $ git help log
 With the latter, you can use the manual viewer of your choice; see
 linkgit:git-help[1] for more information.
 
-It is a good idea to introduce yourself to git with your name and
+It is a good idea to introduce yourself to Git with your name and
 public email address before doing any operation.  The easiest
 way to do so is:
 
@@ -50,7 +50,7 @@ Importing a new project
 -----------------------
 
 Assume you have a tarball project.tar.gz with your initial work.  You
-can place it under git revision control as follows.
+can place it under Git revision control as follows.
 
 ------------------------------------------------
 $ tar xzf project.tar.gz
@@ -67,14 +67,14 @@ Initialized empty Git repository in .git/
 You've now initialized the working directory--you may notice a new
 directory created, named ".git".
 
-Next, tell git to take a snapshot of the contents of all files under the
+Next, tell Git to take a snapshot of the contents of all files under the
 current directory (note the '.'), with 'git add':
 
 ------------------------------------------------
 $ git add .
 ------------------------------------------------
 
-This snapshot is now stored in a temporary staging area which git calls
+This snapshot is now stored in a temporary staging area which Git calls
 the "index".  You can permanently store the contents of the index in the
 repository with 'git commit':
 
@@ -83,7 +83,7 @@ $ git commit
 ------------------------------------------------
 
 This will prompt you for a commit message.  You've now stored the first
-version of your project in git.
+version of your project in Git.
 
 Making changes
 --------------
@@ -141,7 +141,7 @@ begin the commit message with a single short (less than 50 character)
 line summarizing the change, followed by a blank line and then a more
 thorough description. The text up to the first blank line in a commit
 message is treated as the commit title, and that title is used
-throughout git.  For example, linkgit:git-format-patch[1] turns a
+throughout Git.  For example, linkgit:git-format-patch[1] turns a
 commit into email, and it uses the title on the Subject line and the
 rest of the commit in the body.
 
@@ -180,7 +180,7 @@ $ git log --stat --summary
 Managing branches
 -----------------
 
-A single git repository can maintain multiple branches of
+A single Git repository can maintain multiple branches of
 development.  To create a new branch named "experimental", use
 
 ------------------------------------------------
@@ -276,10 +276,10 @@ $ git branch -D crazy-idea
 Branches are cheap and easy, so this is a good way to try something
 out.
 
-Using git for collaboration
+Using Git for collaboration
 ---------------------------
 
-Suppose that Alice has started a new project with a git repository in
+Suppose that Alice has started a new project with a Git repository in
 /home/alice/project, and that Bob, who has a home directory on the
 same machine, wants to contribute.
 
@@ -320,7 +320,7 @@ Note that in general, Alice would want her local changes committed before
 initiating this "pull".  If Bob's work conflicts with what Alice did since
 their histories forked, Alice will use her working tree and the index to
 resolve conflicts, and existing local changes will interfere with the
-conflict resolution process (git will still perform the fetch but will
+conflict resolution process (Git will still perform the fetch but will
 refuse to merge --- Alice will have to get rid of her local changes in
 some way and pull again when this happens).
 
@@ -422,7 +422,7 @@ bob$ git pull
 -------------------------------------
 
 Note that he doesn't need to give the path to Alice's repository;
-when Bob cloned Alice's repository, git stored the location of her
+when Bob cloned Alice's repository, Git stored the location of her
 repository in the repository configuration, and that location is
 used for pulls:
 
@@ -450,7 +450,7 @@ perform clones and pulls using the ssh protocol:
 bob$ git clone alice.org:/home/alice/project myrepo
 -------------------------------------
 
-Alternatively, git has a native protocol, or can use rsync or http;
+Alternatively, Git has a native protocol, or can use rsync or http;
 see linkgit:git-pull[1] for details.
 
 Git can also be used in a CVS-like mode, with a central repository
@@ -518,7 +518,7 @@ share this name with other people (for example, to identify a release
 version), you should create a "tag" object, and perhaps sign it; see
 linkgit:git-tag[1] for details.
 
-Any git command that needs to know a commit can take any of these
+Any Git command that needs to know a commit can take any of these
 names.  For example:
 
 -------------------------------------
@@ -554,9 +554,9 @@ files it manages in your current directory.  So
 $ git grep "hello"
 -------------------------------------
 
-is a quick way to search just the files that are tracked by git.
+is a quick way to search just the files that are tracked by Git.
 
-Many git commands also take sets of commits, which can be specified
+Many Git commands also take sets of commits, which can be specified
 in a number of ways.  Here are some examples with 'git log':
 
 -------------------------------------
@@ -592,7 +592,7 @@ then merged back together, the order in which 'git log' presents
 those commits is meaningless.
 
 Most projects with multiple contributors (such as the Linux kernel,
-or git itself) have frequent merges, and 'gitk' does a better job of
+or Git itself) have frequent merges, and 'gitk' does a better job of
 visualizing their history.  For example,
 
 -------------------------------------
@@ -623,7 +623,7 @@ Next Steps
 
 This tutorial should be enough to perform basic distributed revision
 control for your projects.  However, to fully understand the depth
-and power of git you need to understand two simple ideas on which it
+and power of Git you need to understand two simple ideas on which it
 is based:
 
   * The object database is the rather elegant system used to
@@ -636,7 +636,7 @@ is based:
 
 Part two of this tutorial explains the object
 database, the index file, and a few other odds and ends that you'll
-need to make the most of git. You can find it at linkgit:gittutorial-2[7].
+need to make the most of Git. You can find it at linkgit:gittutorial-2[7].
 
 If you don't want to continue with that right away, a few other
 digressions that may be interesting at this point are:
@@ -656,7 +656,7 @@ digressions that may be interesting at this point are:
   * linkgit:gitworkflows[7]: Gives an overview of recommended
     workflows.
 
-  * link:everyday.html[Everyday GIT with 20 Commands Or So]
+  * link:everyday.html[Everyday Git with 20 Commands Or So]
 
   * linkgit:gitcvs-migration[7]: Git for CVS users.
 
@@ -668,7 +668,7 @@ linkgit:gitcore-tutorial[7],
 linkgit:gitglossary[7],
 linkgit:git-help[1],
 linkgit:gitworkflows[7],
-link:everyday.html[Everyday git],
+link:everyday.html[Everyday Git],
 link:user-manual.html[The Git User's Manual]
 
 GIT

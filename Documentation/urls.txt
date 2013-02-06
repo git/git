@@ -29,7 +29,7 @@ The ssh and git protocols additionally support ~username expansion:
 - git://host.xz{startsb}:port{endsb}/~{startsb}user{endsb}/path/to/repo.git/
 - {startsb}user@{endsb}host.xz:/~{startsb}user{endsb}/path/to/repo.git/
 
-For local repositories, also supported by git natively, the following
+For local repositories, also supported by Git natively, the following
 syntaxes may be used:
 
 - /path/to/repo.git/
@@ -46,7 +46,7 @@ These two syntaxes are mostly equivalent, except the former implies
 --local option.
 endif::git-clone[]
 
-When git doesn't know how to handle a certain transport protocol, it
+When Git doesn't know how to handle a certain transport protocol, it
 attempts to use the 'remote-<transport>' remote helper, if one
 exists. To explicitly request a remote helper, the following syntax
 may be used:

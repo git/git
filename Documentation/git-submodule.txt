@@ -91,7 +91,7 @@ working directory is used instead.
 <path> is the relative location for the cloned submodule to
 exist in the superproject. If <path> does not exist, then the
 submodule is created by cloning from the named URL. If <path> does
-exist and is already a valid git repository, then this is added
+exist and is already a valid Git repository, then this is added
 to the changeset without cloning. This second form is provided
 to ease creating a new submodule from scratch, and presumes
 the user will later push the submodule to the given URL.

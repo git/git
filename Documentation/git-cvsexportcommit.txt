@@ -15,8 +15,8 @@ SYNOPSIS
 
 DESCRIPTION
 -----------
-Exports a commit from GIT to a CVS checkout, making it easier
-to merge patches from a git repository into a CVS repository.
+Exports a commit from Git to a CVS checkout, making it easier
+to merge patches from a Git repository into a CVS repository.
 
 Specify the name of a CVS checkout using the -w switch or execute it
 from the root of the CVS working copy. In the latter case GIT_DIR must
@@ -71,7 +71,7 @@ OPTIONS
 -w::
 	Specify the location of the CVS checkout to use for the export. This
 	option does not require GIT_DIR to be set before execution if the
-	current directory is within a git repository.  The default is the
+	current directory is within a Git repository.  The default is the
 	value of 'cvsexportcommit.cvsdir'.
 
 -W::
