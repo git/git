@@ -2123,7 +2123,8 @@ static unsigned char *deflate_it(char *data,
 	return deflated;
 }
 
-static void emit_binary_diff_body(FILE *file, mmfile_t *one, mmfile_t *two, char *prefix)
+static void emit_binary_diff_body(FILE *file, mmfile_t *one, mmfile_t *two,
+				  const char *prefix)
 {
 	void *cp;
 	void *delta;
@@ -2184,7 +2185,8 @@ static void emit_binary_diff_body(FILE *file, mmfile_t *one, mmfile_t *two, char
 	free(data);
 }
 
-static void emit_binary_diff(FILE *file, mmfile_t *one, mmfile_t *two, char *prefix)
+static void emit_binary_diff(FILE *file, mmfile_t *one, mmfile_t *two,
+			     const char *prefix)
 {
 	fprintf(file, "%sGIT binary patch\n", prefix);
 	emit_binary_diff_body(file, one, two, prefix);
