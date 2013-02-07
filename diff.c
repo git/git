@@ -4483,7 +4483,7 @@ void diff_flush(struct diff_options *options)
 				struct strbuf *msg = NULL;
 				msg = options->output_prefix(options,
 					options->output_prefix_data);
-				fwrite(msg->buf, msg->len, 1, stdout);
+				fwrite(msg->buf, msg->len, 1, options->file);
 			}
 			putc(options->line_termination, options->file);
 			if (options->stat_sep) {
