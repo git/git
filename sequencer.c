@@ -186,14 +186,15 @@ static int error_dirty_index(struct replay_opts *opts)
 	return -1;
 }
 
-static int fast_forward_to(const unsigned char *to, const unsigned char *from)
+static int fast_forward_to(const unsigned char *to, const unsigned char *from,
+			   int unborn)
 {
 	struct ref_lock *ref_lock;
 
 	read_cache();
 	if (checkout_fast_forward(from, to, 1))
 		exit(1); /* the callee should have complained already */
-	ref_lock = lock_any_ref_for_update("HEAD", from, 0);
+	ref_lock = lock_any_ref_for_update("HEAD", unborn ? null_sha1 : from, 0);
 	return write_ref_sha1(ref_lock, to, "cherry-pick");
 }
 
@@ -390,7 +391,7 @@ static int do_pick_commit(struct commit *commit, struct replay_opts *opts)
 	struct commit_message msg = { NULL, NULL, NULL, NULL, NULL };
 	char *defmsg = NULL;
 	struct strbuf msgbuf = STRBUF_INIT;
-	int res;
+	int res, unborn = 0;
 
 	if (opts->no_commit) {
 		/*
@@ -402,9 +403,10 @@ static int do_pick_commit(struct commit *commit, struct replay_opts *opts)
 		if (write_cache_as_tree(head, 0, NULL))
 			die (_("Your index file is unmerged."));
 	} else {
-		if (get_sha1("HEAD", head))
-			return error(_("You do not have a valid HEAD"));
-		if (index_differs_from("HEAD", 0))
+		unborn = get_sha1("HEAD", head);
+		if (unborn)
+			hashcpy(head, EMPTY_TREE_SHA1_BIN);
+		if (index_differs_from(unborn ? EMPTY_TREE_SHA1_HEX : "HEAD", 0))
 			return error_dirty_index(opts);
 	}
 	discard_cache();
@@ -435,8 +437,10 @@ static int do_pick_commit(struct commit *commit, struct replay_opts *opts)
 	else
 		parent = commit->parents->item;
 
-	if (opts->allow_ff && parent && !hashcmp(parent->object.sha1, head))
-		return fast_forward_to(commit->object.sha1, head);
+	if (opts->allow_ff &&
+	    ((parent && !hashcmp(parent->object.sha1, head)) ||
+	     (!parent && unborn)))
+	     return fast_forward_to(commit->object.sha1, head, unborn);
 
 	if (parent && parse_commit(parent) < 0)
 		/* TRANSLATORS: The first %s will be "revert" or

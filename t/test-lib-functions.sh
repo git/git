@@ -602,6 +602,13 @@ test_cmp() {
 	$GIT_TEST_CMP "$@"
 }
 
+# Tests that its two parameters refer to the same revision
+test_cmp_rev () {
+	git rev-parse --verify "$1" >expect.rev &&
+	git rev-parse --verify "$2" >actual.rev &&
+	test_cmp expect.rev actual.rev
+}
+
 # Print a sequence of numbers or letters in increasing order.  This is
 # similar to GNU seq(1), but the latter might not be available
 # everywhere (and does not do letters).  It may be used like:

@@ -5,15 +5,11 @@ test_description='test cherry-picking many commits'
 . ./test-lib.sh
 
 check_head_differs_from() {
-	head=$(git rev-parse --verify HEAD) &&
-	arg=$(git rev-parse --verify "$1") &&
-	test "$head" != "$arg"
+	! test_cmp_rev HEAD "$1"
 }
 
 check_head_equals() {
-	head=$(git rev-parse --verify HEAD) &&
-	arg=$(git rev-parse --verify "$1") &&
-	test "$head" = "$arg"
+	test_cmp_rev HEAD "$1"
 }
 
 test_expect_success setup '
