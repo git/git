@@ -1,6 +1,82 @@
 #!/bin/sh
 # git-mergetool--lib is a library for common merge tool functions
-MERGE_TOOLS_DIR=$(git --exec-path)/mergetools
+
+: ${MERGE_TOOLS_DIR=$(git --exec-path)/mergetools}
+
+mode_ok () {
+	if diff_mode
+	then
+		can_diff
+	elif merge_mode
+	then
+		can_merge
+	else
+		false
+	fi
+}
+
+is_available () {
+	merge_tool_path=$(translate_merge_tool_path "$1") &&
+	type "$merge_tool_path" >/dev/null 2>&1
+}
+
+list_config_tools () {
+	section=$1
+	line_prefix=${2:-}
+
+	git config --get-regexp $section'\..*\.cmd' |
+	while read -r key value
+	do
+		toolname=${key#$section.}
+		toolname=${toolname%.cmd}
+
+		printf "%s%s\n" "$line_prefix" "$toolname"
+	done
+}
+
+show_tool_names () {
+	condition=${1:-true} per_line_prefix=${2:-} preamble=${3:-}
+	not_found_msg=${4:-}
+	extra_content=${5:-}
+
+	shown_any=
+	( cd "$MERGE_TOOLS_DIR" && ls ) | {
+		while read toolname
+		do
+			if setup_tool "$toolname" 2>/dev/null &&
+				(eval "$condition" "$toolname")
+			then
+				if test -n "$preamble"
+				then
+					printf "%s\n" "$preamble"
+					preamble=
+				fi
+				shown_any=yes
+				printf "%s%s\n" "$per_line_prefix" "$toolname"
+			fi
+		done
+
+		if test -n "$extra_content"
+		then
+			if test -n "$preamble"
+			then
+				# Note: no '\n' here since we don't want a
+				# blank line if there is no initial content.
+				printf "%s" "$preamble"
+				preamble=
+			fi
+			shown_any=yes
+			printf "\n%s\n" "$extra_content"
+		fi
+
+		if test -n "$preamble" && test -n "$not_found_msg"
+		then
+			printf "%s\n" "$not_found_msg"
+		fi
+
+		test -n "$shown_any"
+	}
+}
 
 diff_mode() {
 	test "$TOOL_MODE" = diff
@@ -32,17 +108,10 @@ check_unchanged () {
 	fi
 }
 
-valid_tool_config () {
-	if test -n "$(get_merge_tool_cmd "$1")"
-	then
-		return 0
-	else
-		return 1
-	fi
-}
-
 valid_tool () {
-	setup_tool "$1" || valid_tool_config "$1"
+	setup_tool "$1" && return 0
+	cmd=$(get_merge_tool_cmd "$1")
+	test -n "$cmd"
 }
 
 setup_tool () {
@@ -96,14 +165,13 @@ setup_tool () {
 }
 
 get_merge_tool_cmd () {
-	# Prints the custom command for a merge tool
 	merge_tool="$1"
 	if diff_mode
 	then
-		echo "$(git config difftool.$merge_tool.cmd ||
-			git config mergetool.$merge_tool.cmd)"
+		git config "difftool.$merge_tool.cmd" ||
+		git config "mergetool.$merge_tool.cmd"
 	else
-		echo "$(git config mergetool.$merge_tool.cmd)"
+		git config "mergetool.$merge_tool.cmd"
 	fi
 }
 
@@ -114,7 +182,7 @@ run_merge_tool () {
 	GIT_PREFIX=${GIT_PREFIX:-.}
 	export GIT_PREFIX
 
-	merge_tool_path="$(get_merge_tool_path "$1")" || exit
+	merge_tool_path=$(get_merge_tool_path "$1") || exit
 	base_present="$2"
 	status=0
 
@@ -145,7 +213,7 @@ run_merge_tool () {
 
 # Run a either a configured or built-in diff tool
 run_diff_cmd () {
-	merge_tool_cmd="$(get_merge_tool_cmd "$1")"
+	merge_tool_cmd=$(get_merge_tool_cmd "$1")
 	if test -n "$merge_tool_cmd"
 	then
 		( eval $merge_tool_cmd )
@@ -158,11 +226,11 @@ run_diff_cmd () {
 
 # Run a either a configured or built-in merge tool
 run_merge_cmd () {
-	merge_tool_cmd="$(get_merge_tool_cmd "$1")"
+	merge_tool_cmd=$(get_merge_tool_cmd "$1")
 	if test -n "$merge_tool_cmd"
 	then
-		trust_exit_code="$(git config --bool \
-			mergetool."$1".trustExitCode || echo false)"
+		trust_exit_code=$(git config --bool \
+			"mergetool.$1.trustExitCode" || echo false)
 		if test "$trust_exit_code" = "false"
 		then
 			touch "$BACKUP"
@@ -207,37 +275,35 @@ list_merge_tool_candidates () {
 }
 
 show_tool_help () {
-	unavailable= available= LF='
-'
-	for i in "$MERGE_TOOLS_DIR"/*
-	do
-		tool=$(basename "$i")
-		setup_tool "$tool" 2>/dev/null || continue
+	tool_opt="'git ${TOOL_MODE}tool --tool-<tool>'"
 
-		merge_tool_path=$(translate_merge_tool_path "$tool")
-		if type "$merge_tool_path" >/dev/null 2>&1
-		then
-			available="$available$tool$LF"
-		else
-			unavailable="$unavailable$tool$LF"
-		fi
-	done
+	tab='	'
+	LF='
+'
+	any_shown=no
 
 	cmd_name=${TOOL_MODE}tool
-	if test -n "$available"
+	config_tools=$({
+		diff_mode && list_config_tools difftool "$tab$tab"
+		list_config_tools mergetool "$tab$tab"
+	} | sort)
+	extra_content=
+	if test -n "$config_tools"
 	then
-		echo "'git $cmd_name --tool=<tool>' may be set to one of the following:"
-		echo "$available" | sort | sed -e 's/^/	/'
-	else
-		echo "No suitable tool for 'git $cmd_name --tool=<tool>' found."
+		extra_content="${tab}user-defined:${LF}$config_tools"
 	fi
-	if test -n "$unavailable"
-	then
-		echo
-		echo 'The following tools are valid, but not currently available:'
-		echo "$unavailable" | sort | sed -e 's/^/	/'
-	fi
-	if test -n "$unavailable$available"
+
+	show_tool_names 'mode_ok && is_available' "$tab$tab" \
+		"$tool_opt may be set to one of the following:" \
+		"No suitable tool for 'git $cmd_name --tool=<tool>' found." \
+		"$extra_content" &&
+		any_shown=yes
+
+	show_tool_names 'mode_ok && ! is_available' "$tab$tab" \
+		"${LF}The following tools are valid, but not currently available:" &&
+		any_shown=yes
+
+	if test "$any_shown" = yes
 	then
 		echo
 		echo "Some of the tools listed above only work in a windowed"
@@ -248,20 +314,21 @@ show_tool_help () {
 
 guess_merge_tool () {
 	list_merge_tool_candidates
-	echo >&2 "merge tool candidates: $tools"
+	cat >&2 <<-EOF
+
+	This message is displayed because '$TOOL_MODE.tool' is not configured.
+	See 'git ${TOOL_MODE}tool --tool-help' or 'git help config' for more details.
+	'git ${TOOL_MODE}tool' will now attempt to use one of the following tools:
+	$tools
+	EOF
 
 	# Loop over each candidate and stop when a valid merge tool is found.
-	for i in $tools
+	for tool in $tools
 	do
-		merge_tool_path="$(translate_merge_tool_path "$i")"
-		if type "$merge_tool_path" >/dev/null 2>&1
-		then
-			echo "$i"
-			return 0
-		fi
+		is_available "$tool" && echo "$tool" && return 0
 	done
 
-	echo >&2 "No known merge resolution program available."
+	echo >&2 "No known ${TOOL_MODE} tool is available."
 	return 1
 }
 
@@ -300,7 +367,7 @@ get_merge_tool_path () {
 	fi
 	if test -z "$merge_tool_path"
 	then
-		merge_tool_path="$(translate_merge_tool_path "$merge_tool")"
+		merge_tool_path=$(translate_merge_tool_path "$merge_tool")
 	fi
 	if test -z "$(get_merge_tool_cmd "$merge_tool")" &&
 		! type "$merge_tool_path" >/dev/null 2>&1
@@ -314,11 +381,11 @@ get_merge_tool_path () {
 
 get_merge_tool () {
 	# Check if a merge tool has been configured
-	merge_tool="$(get_configured_merge_tool)"
+	merge_tool=$(get_configured_merge_tool)
 	# Try to guess an appropriate merge tool if no tool has been set.
 	if test -z "$merge_tool"
 	then
-		merge_tool="$(guess_merge_tool)" || exit
+		merge_tool=$(guess_merge_tool) || exit
 	fi
 	echo "$merge_tool"
 }
