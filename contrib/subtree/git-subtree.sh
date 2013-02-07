@@ -110,9 +110,9 @@ if [ -z "$prefix" ]; then
 fi
 
 case "$command" in
-	add) [ -e "$prefix" ] && 
+	add) [ -e "$prefix" ] &&
 		die "prefix '$prefix' already exists." ;;
-	*)   [ -e "$prefix" ] || 
+	*)   [ -e "$prefix" ] ||
 		die "'$prefix' does not exist; use 'git subtree add'" ;;
 esac
 
@@ -327,7 +327,7 @@ add_msg()
 	fi
 	cat <<-EOF
 		$commit_message
-		
+
 		git-subtree-dir: $dir
 		git-subtree-mainline: $latest_old
 		git-subtree-split: $latest_new
@@ -355,7 +355,7 @@ rejoin_msg()
 	fi
 	cat <<-EOF
 		$commit_message
-		
+
 		git-subtree-dir: $dir
 		git-subtree-mainline: $latest_old
 		git-subtree-split: $latest_new
@@ -368,7 +368,7 @@ squash_msg()
 	oldsub="$2"
 	newsub="$3"
 	newsub_short=$(git rev-parse --short "$newsub")
-	
+
 	if [ -n "$oldsub" ]; then
 		oldsub_short=$(git rev-parse --short "$oldsub")
 		echo "Squashed '$dir/' changes from $oldsub_short..$newsub_short"
@@ -378,7 +378,7 @@ squash_msg()
 	else
 		echo "Squashed '$dir/' content from commit $newsub_short"
 	fi
-	
+
 	echo
 	echo "git-subtree-dir: $dir"
 	echo "git-subtree-split: $newsub"
@@ -427,7 +427,7 @@ new_squash_commit()
 	newsub="$3"
 	tree=$(toptree_for_commit $newsub) || exit $?
 	if [ -n "$old" ]; then
-		squash_msg "$dir" "$oldsub" "$newsub" | 
+		squash_msg "$dir" "$oldsub" "$newsub" |
 			git commit-tree "$tree" -p "$old" || exit $?
 	else
 		squash_msg "$dir" "" "$newsub" |
@@ -455,7 +455,7 @@ copy_or_skip()
 		else
 			nonidentical="$parent"
 		fi
-		
+
 		# sometimes both old parents map to the same newparent;
 		# eliminate duplicates
 		is_new=1
@@ -470,7 +470,7 @@ copy_or_skip()
 			p="$p -p $parent"
 		fi
 	done
-	
+
 	if [ -n "$identical" ]; then
 		echo $identical
 	else
@@ -495,7 +495,7 @@ cmd_add()
 	fi
 
 	ensure_clean
-	
+
 	if [ $# -eq 1 ]; then
 		"cmd_add_commit" "$@"
 	elif [ $# -eq 2 ]; then
@@ -522,19 +522,19 @@ cmd_add_commit()
 	revs=$(git rev-parse $default --revs-only "$@") || exit $?
 	set -- $revs
 	rev="$1"
-	
+
 	debug "Adding $dir as '$rev'..."
 	git read-tree --prefix="$dir" $rev || exit $?
 	git checkout -- "$dir" || exit $?
 	tree=$(git write-tree) || exit $?
-	
+
 	headrev=$(git rev-parse HEAD) || exit $?
 	if [ -n "$headrev" -a "$headrev" != "$rev" ]; then
 		headp="-p $headrev"
 	else
 		headp=
 	fi
-	
+
 	if [ -n "$squash" ]; then
 		rev=$(new_squash_commit "" "" "$rev") || exit $?
 		commit=$(add_squashed_msg "$rev" "$dir" |
@@ -544,7 +544,7 @@ cmd_add_commit()
 			 git commit-tree $tree $headp -p "$rev") || exit $?
 	fi
 	git reset "$commit" || exit $?
-	
+
 	say "Added dir '$dir'"
 }
 
@@ -552,7 +552,7 @@ cmd_split()
 {
 	debug "Splitting $dir..."
 	cache_setup || exit $?
-	
+
 	if [ -n "$onto" ]; then
 		debug "Reading history for --onto=$onto..."
 		git rev-list $onto |
@@ -563,13 +563,13 @@ cmd_split()
 			cache_set $rev $rev
 		done
 	fi
-	
+
 	if [ -n "$ignore_joins" ]; then
 		unrevs=
 	else
 		unrevs="$(find_existing_splits "$dir" "$revs")"
 	fi
-	
+
 	# We can't restrict rev-list to only $dir here, because some of our
 	# parents have the $dir contents the root, and those won't match.
 	# (and rev-list --follow doesn't seem to solve this)
@@ -591,12 +591,12 @@ cmd_split()
 		debug "  parents: $parents"
 		newparents=$(cache_get $parents)
 		debug "  newparents: $newparents"
-		
+
 		tree=$(subtree_for_commit $rev "$dir")
 		debug "  tree is: $tree"
 
 		check_parents $parents
-		
+
 		# ugly.  is there no better way to tell if this is a subtree
 		# vs. a mainline commit?  Does it matter?
 		if [ -z $tree ]; then
@@ -617,7 +617,7 @@ cmd_split()
 	if [ -z "$latest_new" ]; then
 		die "No new revisions were found"
 	fi
-	
+
 	if [ -n "$rejoin" ]; then
 		debug "Merging split branch into HEAD..."
 		latest_old=$(cache_get latest_old)
@@ -645,13 +645,13 @@ cmd_merge()
 {
 	revs=$(git rev-parse $default --revs-only "$@") || exit $?
 	ensure_clean
-	
+
 	set -- $revs
 	if [ $# -ne 1 ]; then
 		die "You must provide exactly one revision.  Got: '$revs'"
 	fi
 	rev="$1"
-	
+
 	if [ -n "$squash" ]; then
 		first_split="$(find_latest_squash "$dir")"
 		if [ -z "$first_split" ]; then
@@ -703,7 +703,7 @@ cmd_push()
 	    repository=$1
 	    refspec=$2
 	    echo "git push using: " $repository $refspec
-	    git push $repository $(git subtree split --prefix=$prefix):refs/heads/$refspec
+	    git push $repository $(git subtree split --prefix=$prefix 2>/dev/null):refs/heads/$refspec
 	else
 	    die "'$dir' must already exist. Try 'git subtree add'."
 	fi
