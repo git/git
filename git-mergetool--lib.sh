@@ -1,5 +1,7 @@
 #!/bin/sh
 # git-mergetool--lib is a library for common merge tool functions
+MERGE_TOOLS_DIR=$(git --exec-path)/mergetools
+
 diff_mode() {
 	test "$TOOL_MODE" = diff
 }
@@ -44,34 +46,51 @@ valid_tool () {
 }
 
 setup_tool () {
-	case "$1" in
-	vim*|gvim*)
-		tool=vim
-		;;
-	*)
-		tool="$1"
-		;;
-	esac
-	mergetools="$(git --exec-path)/mergetools"
+	tool="$1"
 
-	# Load the default definitions
-	. "$mergetools/defaults"
-	if ! test -f "$mergetools/$tool"
+	# Fallback definitions, to be overriden by tools.
+	can_merge () {
+		return 0
+	}
+
+	can_diff () {
+		return 0
+	}
+
+	diff_cmd () {
+		status=1
+		return $status
+	}
+
+	merge_cmd () {
+		status=1
+		return $status
+	}
+
+	translate_merge_tool_path () {
+		echo "$1"
+	}
+
+	if ! test -f "$MERGE_TOOLS_DIR/$tool"
 	then
-		return 1
+		# Use a special return code for this case since we want to
+		# source "defaults" even when an explicit tool path is
+		# configured since the user can use that to override the
+		# default path in the scriptlet.
+		return 2
 	fi
 
 	# Load the redefined functions
-	. "$mergetools/$tool"
+	. "$MERGE_TOOLS_DIR/$tool"
 
 	if merge_mode && ! can_merge
 	then
 		echo "error: '$tool' can not be used to resolve merges" >&2
-		exit 1
+		return 1
 	elif diff_mode && ! can_diff
 	then
 		echo "error: '$tool' can only be used to resolve merges" >&2
-		exit 1
+		return 1
 	fi
 	return 0
 }
@@ -101,6 +120,19 @@ run_merge_tool () {
 
 	# Bring tool-specific functions into scope
 	setup_tool "$1"
+	exitcode=$?
+	case $exitcode in
+	0)
+		:
+		;;
+	2)
+		# The configured tool is not a built-in tool.
+		test -n "$merge_tool_path" || return 1
+		;;
+	*)
+		return $exitcode
+		;;
+	esac
 
 	if merge_mode
 	then
@@ -172,6 +204,46 @@ list_merge_tool_candidates () {
 		tools="$tools emerge vimdiff"
 		;;
 	esac
+}
+
+show_tool_help () {
+	unavailable= available= LF='
+'
+	for i in "$MERGE_TOOLS_DIR"/*
+	do
+		tool=$(basename "$i")
+		setup_tool "$tool" 2>/dev/null || continue
+
+		merge_tool_path=$(translate_merge_tool_path "$tool")
+		if type "$merge_tool_path" >/dev/null 2>&1
+		then
+			available="$available$tool$LF"
+		else
+			unavailable="$unavailable$tool$LF"
+		fi
+	done
+
+	cmd_name=${TOOL_MODE}tool
+	if test -n "$available"
+	then
+		echo "'git $cmd_name --tool=<tool>' may be set to one of the following:"
+		echo "$available" | sort | sed -e 's/^/	/'
+	else
+		echo "No suitable tool for 'git $cmd_name --tool=<tool>' found."
+	fi
+	if test -n "$unavailable"
+	then
+		echo
+		echo 'The following tools are valid, but not currently available:'
+		echo "$unavailable" | sort | sed -e 's/^/	/'
+	fi
+	if test -n "$unavailable$available"
+	then
+		echo
+		echo "Some of the tools listed above only work in a windowed"
+		echo "environment. If run in a terminal-only session, they will fail."
+	fi
+	exit 0
 }
 
 guess_merge_tool () {

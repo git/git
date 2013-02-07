@@ -1,14 +1,6 @@
 diff_cmd () {
-	case "$1" in
-	gvimdiff|vimdiff)
-		"$merge_tool_path" -R -f -d \
-			-c 'wincmd l' -c 'cd $GIT_PREFIX' "$LOCAL" "$REMOTE"
-		;;
-	gvimdiff2|vimdiff2)
-		"$merge_tool_path" -R -f -d \
-			-c 'wincmd l' -c 'cd $GIT_PREFIX' "$LOCAL" "$REMOTE"
-		;;
-	esac
+	"$merge_tool_path" -R -f -d \
+		-c 'wincmd l' -c 'cd $GIT_PREFIX' "$LOCAL" "$REMOTE"
 }
 
 merge_cmd () {
