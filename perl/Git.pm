@@ -430,7 +430,7 @@ have more complicated structure.
 
 sub command_close_bidi_pipe {
 	local $?;
-	my ($pid, $in, $out, $ctx) = @_;
+	my ($self, $pid, $in, $out, $ctx) = _maybe_self(@_);
 	foreach my $fh ($in, $out) {
 		unless (close $fh) {
 			if ($!) {
