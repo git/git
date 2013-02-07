@@ -76,6 +76,10 @@ UI, Workflows & Features
 
  * "git blame" (and "git diff") learned the "--no-follow" option.
 
+ * "git branch" now rejects some nonsense combinations of command line
+   arguments (e.g. giving more than one branch name to rename) with
+   more case-specific error messages.
+
  * "git check-ignore" command to help debugging .gitignore files has
    been added.
 
@@ -104,6 +108,12 @@ UI, Workflows & Features
  * "git log" and friends can be told with --use-mailmap option to
    rewrite the names and email addresses of people using the mailmap
    mechanism.
+
+ * "git mergetool" and "git difftool" learned to list the available
+   tool backends in a more consistent manner.
+
+ * "git mergetool" is aware of TortoiseGitMerge now and uses it over
+   TortoiseMerge when available.
 
  * "git push" now requires "-f" to update a tag, even if it is a
    fast-forward, as tags are meant to be fixed points.
@@ -281,7 +291,6 @@ details).
 
  * We forgot to close the file descriptor reading from "gpg" output,
    killing "git log --show-signature" on a long history.
-   (merge 7dac3f8 sb/gpg-plug-fd-leak later to maint).
 
  * The way "git svn" asked for password using SSH_ASKPASS and
    GIT_ASKPASS was not in line with the rest of the system.
@@ -297,7 +306,6 @@ details).
 
  * Rebasing the history of superproject with change in the submodule
    has been broken since v1.7.12.
-   (merge e28efb1 jc/fake-ancestor-with-non-blobs later to maint).
 
  * After "git add -N" and then writing a tree object out of the
    index, the cache-tree data structure got corrupted.
@@ -319,7 +327,6 @@ details).
 
  * A failure to push due to non-ff while on an unborn branch
    dereferenced a NULL pointer when showing an error message.
-   (merge 1d2c14d ft/transport-report-segv later to maint).
 
  * When users spell "cc:" in lowercase in the fake "header" in the
    trailer part, "git send-email" failed to pick up the addresses from
@@ -336,6 +343,11 @@ details).
  * "gitweb"'s code to sanitize control characters before passing it to
    "highlight" filter lost known-to-be-safe control characters by
    mistake.
+
+ * "gitweb" pages served over HTTPS, when configured to show picon or
+   gravatar, referred to these external resources to be fetched via
+   HTTP, resulting in mixed contents warning in browsers.
+   (merge 5748558 ab/gitweb-use-same-scheme later to maint).
 
  * When a line to be wrapped has a solid run of non space characters
    whose length exactly is the wrap width, "git shortlog -w" failed
@@ -364,7 +376,6 @@ details).
    versions of ccache broke the auto-generation of dependencies, which
    unfortunately is still relevant because some people use ancient
    distros.
-   (merge 6978934 jn/auto-depend-workaround-buggy-ccache later to maint).
 
  * We have been carrying a translated and long-unmaintained copy of an
    old version of the tutorial; removed.
@@ -385,4 +396,3 @@ details).
 
  * Scripts to test bash completion was inherently flaky as it was
    affected by whatever random things the user may have on $PATH.
-   (merge 5047822 jc/do-not-let-random-file-interfere-with-completion-tests later to maint).
