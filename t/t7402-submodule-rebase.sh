@@ -3,7 +3,7 @@
 # Copyright (c) 2008 Johannes Schindelin
 #
 
-test_description='Test rebasing and stashing with dirty submodules'
+test_description='Test rebasing, stashing, etc. with submodules'
 
 . ./test-lib.sh
 
@@ -20,7 +20,8 @@ test_expect_success setup '
 	echo second line >> file &&
 	(cd submodule && git pull) &&
 	test_tick &&
-	git commit -m file-and-submodule -a
+	git commit -m file-and-submodule -a &&
+	git branch added-submodule
 
 '
 
@@ -87,6 +88,31 @@ test_expect_success 'stash with a dirty submodule' '
 	test new = $(cat file) &&
 	test $CURRENT = $(cd submodule && git rev-parse HEAD)
 
+'
+
+test_expect_success 'rebasing submodule that should conflict' '
+	git reset --hard &&
+	git checkout added-submodule &&
+	git add submodule &&
+	test_tick &&
+	git commit -m third &&
+	(
+		cd submodule &&
+		git commit --allow-empty -m extra
+	) &&
+	git add submodule &&
+	test_tick &&
+	git commit -m fourth &&
+
+	test_must_fail git rebase --onto HEAD^^ HEAD^ HEAD^0 &&
+	git ls-files -s submodule >actual &&
+	(
+		cd submodule &&
+		echo "160000 $(git rev-parse HEAD^) 1	submodule" &&
+		echo "160000 $(git rev-parse HEAD^^) 2	submodule" &&
+		echo "160000 $(git rev-parse HEAD) 3	submodule"
+	) >expect &&
+	test_cmp expect actual
 '
 
 test_done
