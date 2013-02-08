@@ -440,7 +440,7 @@ then
 fi
 
 printf "Merging:\n"
-printf "$files\n"
+printf "%s\n" "$files"
 
 IFS='
 '
