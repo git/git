@@ -1041,15 +1041,17 @@ static int gitdiff_renamedst(const char *line, struct patch *patch)
 
 static int gitdiff_similarity(const char *line, struct patch *patch)
 {
-	if ((patch->score = strtoul(line, NULL, 10)) == ULONG_MAX)
-		patch->score = 0;
+	unsigned long val = strtoul(line, NULL, 10);
+	if (val <= 100)
+		patch->score = val;
 	return 0;
 }
 
 static int gitdiff_dissimilarity(const char *line, struct patch *patch)
 {
-	if ((patch->score = strtoul(line, NULL, 10)) == ULONG_MAX)
-		patch->score = 0;
+	unsigned long val = strtoul(line, NULL, 10);
+	if (val <= 100)
+		patch->score = val;
 	return 0;
 }
 
