@@ -1,47 +1,17 @@
 #
-# Copyright (C) 2012
-#     Charles Roussel <charles.roussel@ensimag.imag.fr>
-#     Simon Cathebras <simon.cathebras@ensimag.imag.fr>
-#     Julien Khayat <julien.khayat@ensimag.imag.fr>
-#     Guillaume Sasdy <guillaume.sasdy@ensimag.imag.fr>
-#     Simon Perrat <simon.perrat@ensimag.imag.fr>
+# Copyright (C) 2013
+#     Matthieu Moy <Matthieu.Moy@imag.fr>
 #
 ## Build git-remote-mediawiki
 
--include ../../config.mak.autogen
--include ../../config.mak
+SCRIPT_PERL=git-remote-mediawiki.perl
+GIT_ROOT_DIR=../..
+HERE=contrib/mw-to-git/
 
-ifndef PERL_PATH
-	PERL_PATH = /usr/bin/perl
-endif
-ifndef gitexecdir
-	gitexecdir = $(shell git --exec-path)
-endif
+SCRIPT_PERL_FULL=$(patsubst %,$(HERE)/%,$(SCRIPT_PERL))
 
-PERL_PATH_SQ = $(subst ','\'',$(PERL_PATH))
-gitexecdir_SQ = $(subst ','\'',$(gitexecdir))
-SCRIPT = git-remote-mediawiki
+all: build
 
-.PHONY: install help doc test clean
-
-help:
-	@echo 'This is the help target of the Makefile. Current configuration:'
-	@echo '  gitexecdir = $(gitexecdir_SQ)'
-	@echo '  PERL_PATH = $(PERL_PATH_SQ)'
-	@echo 'Run "$(MAKE) install" to install $(SCRIPT) in gitexecdir'
-	@echo 'Run "$(MAKE) test" to run the testsuite'
-
-install:
-	sed -e '1s|#!.*/perl|#!$(PERL_PATH_SQ)|' $(SCRIPT) \
-		> '$(gitexecdir_SQ)/$(SCRIPT)'
-	chmod +x '$(gitexecdir)/$(SCRIPT)'
-
-doc:
-	@echo 'Sorry, "make doc" is not implemented yet for $(SCRIPT)'
-
-test:
-	$(MAKE) -C t/ test
-
-clean:
-	$(RM) '$(gitexecdir)/$(SCRIPT)'
-	$(MAKE) -C t/ clean
+build install clean:
+	$(MAKE) -C $(GIT_ROOT_DIR) SCRIPT_PERL=$(SCRIPT_PERL_FULL) \
+                $@-perl-script
