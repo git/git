@@ -103,7 +103,7 @@ use Error qw(:try);
 use Cwd qw(abs_path cwd);
 use IPC::Open2 qw(open2);
 use Fcntl qw(SEEK_SET SEEK_CUR);
-use Time::Local qw(timelocal);
+use Time::Local qw(timegm);
 }
 
 
@@ -528,8 +528,8 @@ If TIME is not supplied, the current local time is used.
 sub get_tz_offset {
 	# some systmes don't handle or mishandle %z, so be creative.
 	my $t = shift || time;
-	my $gm = timelocal(gmtime($t));
-	my $sign = qw( + + - )[ $t <=> $gm ];
+	my $gm = timegm(localtime($t));
+	my $sign = qw( + + - )[ $gm <=> $t ];
 	return sprintf("%s%02d%02d", $sign, (gmtime(abs($t - $gm)))[2,1]);
 }
 
