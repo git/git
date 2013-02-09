@@ -59,6 +59,7 @@ require Exporter;
                 command_bidi_pipe command_close_bidi_pipe
                 version exec_path html_path hash_object git_cmd_try
                 remote_refs prompt
+                get_tz_offset
                 temp_acquire temp_release temp_reset temp_path);
 
 
@@ -102,6 +103,7 @@ use Error qw(:try);
 use Cwd qw(abs_path cwd);
 use IPC::Open2 qw(open2);
 use Fcntl qw(SEEK_SET SEEK_CUR);
+use Time::Local qw(timelocal);
 }
 
 
@@ -510,6 +512,27 @@ C<git --html-path>). Useful mostly only internally.
 =cut
 
 sub html_path { command_oneline('--html-path') }
+
+
+=item get_tz_offset ( TIME )
+
+Return the time zone offset from GMT in the form +/-HHMM where HH is
+the number of hours from GMT and MM is the number of minutes.  This is
+the equivalent of what strftime("%z", ...) would provide on a GNU
+platform.
+
+If TIME is not supplied, the current local time is used.
+
+=cut
+
+sub get_tz_offset {
+	# some systmes don't handle or mishandle %z, so be creative.
+	my $t = shift || time;
+	my $gm = timelocal(gmtime($t));
+	my $sign = qw( + + - )[ $t <=> $gm ];
+	return sprintf("%s%02d%02d", $sign, (gmtime(abs($t - $gm)))[2,1]);
+}
+
 
 =item prompt ( PROMPT , ISPASSWORD  )
 
