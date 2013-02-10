@@ -782,7 +782,7 @@ e05db0fd4f31dde7005f075a84f96b360d05984b
 
 Or you could recall that the ... operator selects all commits
 contained reachable from either one reference or the other but not
-both: so
+both; so
 
 -------------------------------------------------
 $ git log origin...master
