@@ -3396,7 +3396,7 @@ $ git log --raw --all
 ------------------------------------------------
 
 and just looked for the sha of the missing object (4b9458b..) in that
-whole thing. It's up to you - git does *have* a lot of information, it is
+whole thing. It's up to you--Git does *have* a lot of information, it is
 just missing one particular blob version.
 
 [[the-index]]
