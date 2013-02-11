@@ -43,6 +43,9 @@ all::
 # Define EXPATDIR=/foo/bar if your expat header and library files are in
 # /foo/bar/include and /foo/bar/lib directories.
 #
+# Define EXPAT_NEEDS_XMLPARSE_H if you have an old version of expat (e.g.,
+# 1.1 or 1.2) that provides xmlparse.h instead of expat.h.
+#
 # Define NO_GETTEXT if you don't want Git output to be translated.
 # A translated Git requires GNU libintl or another gettext implementation,
 # plus libintl-perl at runtime.
@@ -1088,6 +1091,9 @@ else
 			EXPAT_LIBEXPAT = -L$(EXPATDIR)/$(lib) $(CC_LD_DYNPATH)$(EXPATDIR)/$(lib) -lexpat
 		else
 			EXPAT_LIBEXPAT = -lexpat
+		endif
+		ifdef EXPAT_NEEDS_XMLPARSE_H
+			BASIC_CFLAGS += -DEXPAT_NEEDS_XMLPARSE_H
 		endif
 	endif
 endif
