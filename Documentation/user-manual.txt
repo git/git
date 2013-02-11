@@ -782,7 +782,7 @@ e05db0fd4f31dde7005f075a84f96b360d05984b
 
 Or you could recall that the ... operator selects all commits
 contained reachable from either one reference or the other but not
-both: so
+both; so
 
 -------------------------------------------------
 $ git log origin...master
@@ -1562,17 +1562,11 @@ Ensuring good performance
 -------------------------
 
 On large repositories, Git depends on compression to keep the history
-information from taking up too much space on disk or in memory.
-
-This compression is not performed automatically.  Therefore you
-should occasionally run linkgit:git-gc[1]:
-
--------------------------------------------------
-$ git gc
--------------------------------------------------
-
-to recompress the archive.  This can be very time-consuming, so
-you may prefer to run `git gc` when you are not doing other work.
+information from taking up too much space on disk or in memory.  Some
+Git commands may automatically run linkgit:git-gc[1], so you don't
+have to worry about running it manually.  However, compressing a large
+repository may take a while, so you may want to call `gc` explicitly
+to avoid automatic compression kicking in when it is not convenient.
 
 
 [[ensuring-reliability]]
@@ -1931,11 +1925,11 @@ linkgit:git-daemon[1] man page for details.  (See especially the
 examples section.)
 
 [[exporting-via-http]]
-Exporting a Git repository via http
+Exporting a git repository via HTTP
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 The Git protocol gives better performance and reliability, but on a
-host with a web server set up, http exports may be simpler to set up.
+host with a web server set up, HTTP exports may be simpler to set up.
 
 All you need to do is place the newly created bare Git repository in
 a directory that is exported by the web server, and make some
@@ -1961,7 +1955,7 @@ $ git clone http://yourserver.com/~you/proj.git
 (See also
 link:howto/setup-git-server-over-http.txt[setup-git-server-over-http]
 for a slightly more sophisticated setup using WebDAV which also
-allows pushing over http.)
+allows pushing over HTTP.)
 
 [[pushing-changes-to-a-public-repository]]
 Pushing changes to a public repository
@@ -3396,7 +3390,7 @@ $ git log --raw --all
 ------------------------------------------------
 
 and just looked for the sha of the missing object (4b9458b..) in that
-whole thing. It's up to you - Git does *have* a lot of information, it is
+whole thing. It's up to you--Git does *have* a lot of information, it is
 just missing one particular blob version.
 
 [[the-index]]
