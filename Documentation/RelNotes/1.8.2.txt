@@ -39,6 +39,12 @@ UI, Workflows & Features
    All-caps "GIT" was merely a way to imitate "Git" typeset in small
    caps in our ASCII text only documentation and to be avoided.
 
+ * The completion script (in contrib/completion) used to let the
+   default completer to suggest pathnames, which gave too many
+   irrelevant choices (e.g. "git add" would not want to add an
+   unmodified path).  It learnt to use a more git-aware logic to
+   enumerate only relevant ones.
+
  * In bare repositories, "git shortlog" and other commands now read
    mailmap files from the tip of the history, to help running these
    tools in server settings.
@@ -248,11 +254,21 @@ details).
    was merged to 'maint' and 1.8.1.2 was with a severe performance
    degradations and needs to merge a fix-up topic.
 
+ * The smart HTTP clients forgot to verify the content-type that comes
+   back from the server side to make sure that the request is being
+   handled properly.
+   (merge 3443db5 sp/smart-http-content-type-check later to maint).
+
  * "git am" did not parse datestamp correctly from Hg generated patch,
    when it is run in a locale outside C (or en).
 
  * "git apply" misbehaved when fixing whitespace breakages by removing
    excess trailing blank lines.
+
+ * "git apply --summary" has been taught to make sure the similarity
+   value shown in its output is sensible, even when the input had a
+   bogus value.
+   (merge afcb6ac jk/apply-similaritly-parsing later to maint).
 
  * A tar archive created by "git archive" recorded a directory in a
    way that made NetBSD's implementation of "tar" sometimes unhappy.
@@ -278,6 +294,11 @@ details).
  * When "git clone --separate-git-dir=$over_there" is interrupted, it
    failed to remove the real location of the $GIT_DIR it created.
    This was most visible when interrupting a submodule update.
+
+ * We used to have an arbitrary 32 limit for combined diff input,
+   resulting in incorrect number of leading colons shown when showing
+   the "--raw --cc" output.
+   (merge edbc00e jc/combine-diff-many-parents later to maint).
 
  * "git fetch --depth" was broken in at least three ways.  The
    resulting history was deeper than specified by one commit, it was
@@ -376,6 +397,10 @@ details).
    versions of ccache broke the auto-generation of dependencies, which
    unfortunately is still relevant because some people use ancient
    distros.
+
+ * The autoconf subsystem passed --mandir down to generated
+   config.mak.autogen but forgot to do the same for --htmldir.
+   (merge fc1c541 ct/autoconf-htmldir later to maint).
 
  * We have been carrying a translated and long-unmaintained copy of an
    old version of the tutorial; removed.
