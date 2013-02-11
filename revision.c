@@ -2268,7 +2268,10 @@ static int commit_rewrite_person(struct strbuf *buf, const char *what, struct st
 static int commit_match(struct commit *commit, struct rev_info *opt)
 {
 	int retval;
+	const char *encoding;
+	char *message;
 	struct strbuf buf = STRBUF_INIT;
+
 	if (!opt->grep_filter.pattern_list && !opt->grep_filter.header_list)
 		return 1;
 
@@ -2279,13 +2282,23 @@ static int commit_match(struct commit *commit, struct rev_info *opt)
 		strbuf_addch(&buf, '\n');
 	}
 
+	/*
+	 * We grep in the user's output encoding, under the assumption that it
+	 * is the encoding they are most likely to write their grep pattern
+	 * for. In addition, it means we will match the "notes" encoding below,
+	 * so we will not end up with a buffer that has two different encodings
+	 * in it.
+	 */
+	encoding = get_log_output_encoding();
+	message = logmsg_reencode(commit, encoding);
+
 	/* Copy the commit to temporary if we are using "fake" headers */
 	if (buf.len)
-		strbuf_addstr(&buf, commit->buffer);
+		strbuf_addstr(&buf, message);
 
 	if (opt->grep_filter.header_list && opt->mailmap) {
 		if (!buf.len)
-			strbuf_addstr(&buf, commit->buffer);
+			strbuf_addstr(&buf, message);
 
 		commit_rewrite_person(&buf, "\nauthor ", opt->mailmap);
 		commit_rewrite_person(&buf, "\ncommitter ", opt->mailmap);
@@ -2294,18 +2307,18 @@ static int commit_match(struct commit *commit, struct rev_info *opt)
 	/* Append "fake" message parts as needed */
 	if (opt->show_notes) {
 		if (!buf.len)
-			strbuf_addstr(&buf, commit->buffer);
-		format_display_notes(commit->object.sha1, &buf,
-				     get_log_output_encoding(), 1);
+			strbuf_addstr(&buf, message);
+		format_display_notes(commit->object.sha1, &buf, encoding, 1);
 	}
 
-	/* Find either in the commit object, or in the temporary */
+	/* Find either in the original commit message, or in the temporary */
 	if (buf.len)
 		retval = grep_buffer(&opt->grep_filter, buf.buf, buf.len);
 	else
 		retval = grep_buffer(&opt->grep_filter,
-				     commit->buffer, strlen(commit->buffer));
+				     message, strlen(message));
 	strbuf_release(&buf);
+	logmsg_free(message, commit);
 	return retval;
 }
 
