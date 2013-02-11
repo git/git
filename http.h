@@ -132,7 +132,7 @@ extern char *get_remote_object_url(const char *url, const char *hex,
  *
  * If the result pointer is NULL, a HTTP HEAD request is made instead of GET.
  */
-int http_get_strbuf(const char *url, struct strbuf *result, int options);
+int http_get_strbuf(const char *url, struct strbuf *content_type, struct strbuf *result, int options);
 
 /*
  * Prints an error message using error() containing url and curl_errorstr,

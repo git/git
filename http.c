@@ -788,7 +788,8 @@ int handle_curl_result(struct slot_results *results)
 #define HTTP_REQUEST_STRBUF	0
 #define HTTP_REQUEST_FILE	1
 
-static int http_request(const char *url, void *result, int target, int options)
+static int http_request(const char *url, struct strbuf *type,
+			void *result, int target, int options)
 {
 	struct active_request_slot *slot;
 	struct slot_results results;
@@ -838,24 +839,37 @@ static int http_request(const char *url, void *result, int target, int options)
 		ret = HTTP_START_FAILED;
 	}
 
+	if (type) {
+		char *t;
+		strbuf_reset(type);
+		curl_easy_getinfo(slot->curl, CURLINFO_CONTENT_TYPE, &t);
+		if (t)
+			strbuf_addstr(type, t);
+	}
+
 	curl_slist_free_all(headers);
 	strbuf_release(&buf);
 
 	return ret;
 }
 
-static int http_request_reauth(const char *url, void *result, int target,
+static int http_request_reauth(const char *url,
+			       struct strbuf *type,
+			       void *result, int target,
 			       int options)
 {
-	int ret = http_request(url, result, target, options);
+	int ret = http_request(url, type, result, target, options);
 	if (ret != HTTP_REAUTH)
 		return ret;
-	return http_request(url, result, target, options);
+	return http_request(url, type, result, target, options);
 }
 
-int http_get_strbuf(const char *url, struct strbuf *result, int options)
+int http_get_strbuf(const char *url,
+		    struct strbuf *type,
+		    struct strbuf *result, int options)
 {
-	return http_request_reauth(url, result, HTTP_REQUEST_STRBUF, options);
+	return http_request_reauth(url, type, result,
+				   HTTP_REQUEST_STRBUF, options);
 }
 
 /*
@@ -878,7 +892,7 @@ static int http_get_file(const char *url, const char *filename, int options)
 		goto cleanup;
 	}
 
-	ret = http_request_reauth(url, result, HTTP_REQUEST_FILE, options);
+	ret = http_request_reauth(url, NULL, result, HTTP_REQUEST_FILE, options);
 	fclose(result);
 
 	if ((ret == HTTP_OK) && move_temp_to_file(tmpfile.buf, filename))
@@ -904,7 +918,7 @@ int http_fetch_ref(const char *base, struct ref *ref)
 	int ret = -1;
 
 	url = quote_ref_url(base, ref->name);
-	if (http_get_strbuf(url, &buffer, HTTP_NO_CACHE) == HTTP_OK) {
+	if (http_get_strbuf(url, NULL, &buffer, HTTP_NO_CACHE) == HTTP_OK) {
 		strbuf_rtrim(&buffer);
 		if (buffer.len == 40)
 			ret = get_sha1_hex(buffer.buf, ref->old_sha1);
@@ -997,7 +1011,7 @@ int http_get_info_packs(const char *base_url, struct packed_git **packs_head)
 	strbuf_addstr(&buf, "objects/info/packs");
 	url = strbuf_detach(&buf, NULL);
 
-	ret = http_get_strbuf(url, &buf, HTTP_NO_CACHE);
+	ret = http_get_strbuf(url, NULL, &buf, HTTP_NO_CACHE);
 	if (ret != HTTP_OK)
 		goto cleanup;
 
