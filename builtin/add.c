@@ -16,7 +16,7 @@
 #include "bulk-checkin.h"
 
 static const char * const builtin_add_usage[] = {
-	N_("git add [options] [--] <filepattern>..."),
+	N_("git add [options] [--] <pathspec>..."),
 	NULL
 };
 static int patch_interactive, add_interactive, edit_interactive;
