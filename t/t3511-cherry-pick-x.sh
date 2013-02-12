@@ -57,6 +57,19 @@ test_expect_success setup '
 	test_commit conflicting unrelated
 '
 
+test_expect_success 'cherry-pick -x inserts blank line after one line subject' '
+	pristine_detach initial &&
+	sha1=`git rev-parse mesg-one-line^0` &&
+	git cherry-pick -x mesg-one-line &&
+	cat <<-EOF >expect &&
+		$mesg_one_line
+
+		(cherry picked from commit $sha1)
+	EOF
+	git log -1 --pretty=format:%B >actual &&
+	test_cmp expect actual
+'
+
 test_expect_success 'cherry-pick -s inserts blank line after one line subject' '
 	pristine_detach initial &&
 	git cherry-pick -s mesg-one-line &&
@@ -81,12 +94,39 @@ test_expect_failure 'cherry-pick -s inserts blank line after non-conforming foot
 	test_cmp expect actual
 '
 
+test_expect_success 'cherry-pick -x inserts blank line when conforming footer not found' '
+	pristine_detach initial &&
+	sha1=`git rev-parse mesg-no-footer^0` &&
+	git cherry-pick -x mesg-no-footer &&
+	cat <<-EOF >expect &&
+		$mesg_no_footer
+
+		(cherry picked from commit $sha1)
+	EOF
+	git log -1 --pretty=format:%B >actual &&
+	test_cmp expect actual
+'
+
 test_expect_success 'cherry-pick -s inserts blank line when conforming footer not found' '
 	pristine_detach initial &&
 	git cherry-pick -s mesg-no-footer &&
 	cat <<-EOF >expect &&
 		$mesg_no_footer
 
+		Signed-off-by: $GIT_COMMITTER_NAME <$GIT_COMMITTER_EMAIL>
+	EOF
+	git log -1 --pretty=format:%B >actual &&
+	test_cmp expect actual
+'
+
+test_expect_success 'cherry-pick -x -s inserts blank line when conforming footer not found' '
+	pristine_detach initial &&
+	sha1=`git rev-parse mesg-no-footer^0` &&
+	git cherry-pick -x -s mesg-no-footer &&
+	cat <<-EOF >expect &&
+		$mesg_no_footer
+
+		(cherry picked from commit $sha1)
 		Signed-off-by: $GIT_COMMITTER_NAME <$GIT_COMMITTER_EMAIL>
 	EOF
 	git log -1 --pretty=format:%B >actual &&
@@ -157,6 +197,19 @@ test_expect_success 'cherry-pick -s treats "(cherry picked from..." line as part
 	git cherry-pick -s mesg-with-cherry-footer &&
 	cat <<-EOF >expect &&
 		$mesg_with_cherry_footer
+		Signed-off-by: $GIT_COMMITTER_NAME <$GIT_COMMITTER_EMAIL>
+	EOF
+	git log -1 --pretty=format:%B >actual &&
+	test_cmp expect actual
+'
+
+test_expect_success 'cherry-pick -x -s treats "(cherry picked from..." line as part of footer' '
+	pristine_detach initial &&
+	sha1=`git rev-parse mesg-with-cherry-footer^0` &&
+	git cherry-pick -x -s mesg-with-cherry-footer &&
+	cat <<-EOF >expect &&
+		$mesg_with_cherry_footer
+		(cherry picked from commit $sha1)
 		Signed-off-by: $GIT_COMMITTER_NAME <$GIT_COMMITTER_EMAIL>
 	EOF
 	git log -1 --pretty=format:%B >actual &&
