@@ -31,12 +31,12 @@
 #include "sequencer.h"
 
 static const char * const builtin_commit_usage[] = {
-	N_("git commit [options] [--] <filepattern>..."),
+	N_("git commit [options] [--] <pathspec>..."),
 	NULL
 };
 
 static const char * const builtin_status_usage[] = {
-	N_("git status [options] [--] <filepattern>..."),
+	N_("git status [options] [--] <pathspec>..."),
 	NULL
 };
 
