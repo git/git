@@ -59,6 +59,7 @@ require Exporter;
                 command_bidi_pipe command_close_bidi_pipe
                 version exec_path html_path hash_object git_cmd_try
                 remote_refs prompt
+                credential credential_read credential_write
                 temp_acquire temp_release temp_reset temp_path);
 
 
@@ -1002,6 +1003,156 @@ sub _close_cat_blob {
 	delete @$self{@vars};
 }
 
+
+=item credential_read( FILEHANDLE )
+
+Reads credential key-value pairs from C<FILEHANDLE>.  Reading stops at EOF or
+when an empty line is encountered.  Each line must be of the form C<key=value>
+with a non-empty key.  Function returns hash with all read values.  Any white
+space (other than new-line character) is preserved.
+
+=cut
+
+sub credential_read {
+	my ($self, $reader) = _maybe_self(@_);
+	my %credential;
+	while (<$reader>) {
+		chomp;
+		if ($_ eq '') {
+			last;
+		} elsif (!/^([^=]+)=(.*)$/) {
+			throw Error::Simple("unable to parse git credential data:\n$_");
+		}
+		$credential{$1} = $2;
+	}
+	return %credential;
+}
+
+=item credential_write( FILEHANDLE, CREDENTIAL_HASHREF )
+
+Writes credential key-value pairs from hash referenced by
+C<CREDENTIAL_HASHREF> to C<FILEHANDLE>.  Keys and values cannot contain
+new-lines or NUL bytes characters, and key cannot contain equal signs nor be
+empty (if they do Error::Simple is thrown).  Any white space is preserved.  If
+value for a key is C<undef>, it will be skipped.
+
+If C<'url'> key exists it will be written first.  (All the other key-value
+pairs are written in sorted order but you should not depend on that).  Once
+all lines are written, an empty line is printed.
+
+=cut
+
+sub credential_write {
+	my ($self, $writer, $credential) = _maybe_self(@_);
+	my ($key, $value);
+
+	# Check if $credential is valid prior to writing anything
+	while (($key, $value) = each %$credential) {
+		if (!defined $key || !length $key) {
+			throw Error::Simple("credential key empty or undefined");
+		} elsif ($key =~ /[=\n\0]/) {
+			throw Error::Simple("credential key contains invalid characters: $key");
+		} elsif (defined $value && $value =~ /[\n\0]/) {
+			throw Error::Simple("credential value for key=$key contains invalid characters: $value");
+		}
+	}
+
+	for $key (sort {
+		# url overwrites other fields, so it must come first
+		return -1 if $a eq 'url';
+		return  1 if $b eq 'url';
+		return $a cmp $b;
+	} keys %$credential) {
+		if (defined $credential->{$key}) {
+			print $writer $key, '=', $credential->{$key}, "\n";
+		}
+	}
+	print $writer "\n";
+}
+
+sub _credential_run {
+	my ($self, $credential, $op) = _maybe_self(@_);
+	my ($pid, $reader, $writer, $ctx) = command_bidi_pipe('credential', $op);
+
+	credential_write $writer, $credential;
+	close $writer;
+
+	if ($op eq "fill") {
+		%$credential = credential_read $reader;
+	}
+	if (<$reader>) {
+		throw Error::Simple("unexpected output from git credential $op response:\n$_\n");
+	}
+
+	command_close_bidi_pipe($pid, $reader, undef, $ctx);
+}
+
+=item credential( CREDENTIAL_HASHREF [, OPERATION ] )
+
+=item credential( CREDENTIAL_HASHREF, CODE )
+
+Executes C<git credential> for a given set of credentials and specified
+operation.  In both forms C<CREDENTIAL_HASHREF> needs to be a reference to
+a hash which stores credentials.  Under certain conditions the hash can
+change.
+
+In the first form, C<OPERATION> can be C<'fill'>, C<'approve'> or C<'reject'>,
+and function will execute corresponding C<git credential> sub-command.  If
+it's omitted C<'fill'> is assumed.  In case of C<'fill'> the values stored in
+C<CREDENTIAL_HASHREF> will be changed to the ones returned by the C<git
+credential fill> command.  The usual usage would look something like:
+
+	my %cred = (
+		'protocol' => 'https',
+		'host' => 'example.com',
+		'username' => 'bob'
+	);
+	Git::credential \%cred;
+	if (try_to_authenticate($cred{'username'}, $cred{'password'})) {
+		Git::credential \%cred, 'approve';
+		... do more stuff ...
+	} else {
+		Git::credential \%cred, 'reject';
+	}
+
+In the second form, C<CODE> needs to be a reference to a subroutine.  The
+function will execute C<git credential fill> to fill the provided credential
+hash, then call C<CODE> with C<CREDENTIAL_HASHREF> as the sole argument.  If
+C<CODE>'s return value is defined, the function will execute C<git credential
+approve> (if return value yields true) or C<git credential reject> (if return
+value is false).  If the return value is undef, nothing at all is executed;
+this is useful, for example, if the credential could neither be verified nor
+rejected due to an unrelated network error.  The return value is the same as
+what C<CODE> returns.  With this form, the usage might look as follows:
+
+	if (Git::credential {
+		'protocol' => 'https',
+		'host' => 'example.com',
+		'username' => 'bob'
+	}, sub {
+		my $cred = shift;
+		return !!try_to_authenticate($cred->{'username'},
+		                             $cred->{'password'});
+	}) {
+		... do more stuff ...
+	}
+
+=cut
+
+sub credential {
+	my ($self, $credential, $op_or_code) = (_maybe_self(@_), 'fill');
+
+	if ('CODE' eq ref $op_or_code) {
+		_credential_run $credential, 'fill';
+		my $ret = $op_or_code->($credential);
+		if (defined $ret) {
+			_credential_run $credential, $ret ? 'approve' : 'reject';
+		}
+		return $ret;
+	} else {
+		_credential_run $credential, $op_or_code;
+	}
+}
 
 { # %TEMP_* Lexical Context
 
