@@ -1045,6 +1045,47 @@ sub maildomain {
 	return maildomain_net() || maildomain_mta() || 'localhost.localdomain';
 }
 
+sub smtp_host_string {
+	if (defined $smtp_server_port) {
+		return "$smtp_server:$smtp_server_port";
+	} else {
+		return $smtp_server;
+	}
+}
+
+# Returns 1 if authentication succeeded or was not necessary
+# (smtp_user was not specified), and 0 otherwise.
+
+sub smtp_auth_maybe {
+	if (!defined $smtp_authuser || $auth) {
+		return 1;
+	}
+
+	# Workaround AUTH PLAIN/LOGIN interaction defect
+	# with Authen::SASL::Cyrus
+	eval {
+		require Authen::SASL;
+		Authen::SASL->import(qw(Perl));
+	};
+
+	# TODO: Authentication may fail not because credentials were
+	# invalid but due to other reasons, in which we should not
+	# reject credentials.
+	$auth = Git::credential({
+		'protocol' => 'smtp',
+		'host' => smtp_host_string(),
+		'username' => $smtp_authuser,
+		# if there's no password, "git credential fill" will
+		# give us one, otherwise it'll just pass this one.
+		'password' => $smtp_authpass
+	}, sub {
+		my $cred = shift;
+		return !!$smtp->auth($cred->{'username'}, $cred->{'password'});
+	});
+
+	return $auth;
+}
+
 # Returns 1 if the message was sent, and 0 otherwise.
 # In actuality, the whole program dies when there
 # is an error sending a message.
@@ -1155,9 +1196,7 @@ X-Mailer: git-send-email $gitversion
 		else {
 			require Net::SMTP;
 			$smtp_domain ||= maildomain();
-			$smtp ||= Net::SMTP->new((defined $smtp_server_port)
-						 ? "$smtp_server:$smtp_server_port"
-						 : $smtp_server,
+			$smtp ||= Net::SMTP->new(smtp_host_string(),
 						 Hello => $smtp_domain,
 						 Debug => $debug_net_smtp);
 			if ($smtp_encryption eq 'tls' && $smtp) {
@@ -1185,31 +1224,7 @@ X-Mailer: git-send-email $gitversion
 			    defined $smtp_server_port ? " port=$smtp_server_port" : "";
 		}
 
-		if (defined $smtp_authuser) {
-			# Workaround AUTH PLAIN/LOGIN interaction defect
-			# with Authen::SASL::Cyrus
-			eval {
-				require Authen::SASL;
-				Authen::SASL->import(qw(Perl));
-			};
-
-			if (!defined $smtp_authpass) {
-
-				system "stty -echo";
-
-				do {
-					print "Password: ";
-					$_ = <STDIN>;
-					print "\n";
-				} while (!defined $_);
-
-				chomp($smtp_authpass = $_);
-
-				system "stty echo";
-			}
-
-			$auth ||= $smtp->auth( $smtp_authuser, $smtp_authpass ) or die $smtp->message;
-		}
+		smtp_auth_maybe or die $smtp->message;
 
 		$smtp->mail( $raw_from ) or die $smtp->message;
 		$smtp->to( @recipients ) or die $smtp->message;
