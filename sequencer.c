@@ -1061,6 +1061,10 @@ static int has_conforming_footer(struct strbuf *sb, int ignore_footer)
 		prev = ch;
 	}
 
+	/* require at least one blank line */
+	if (prev != '\n' || buf[i] != '\n')
+		return 0;
+
 	/* advance to start of last paragraph */
 	while (i < len - 1 && buf[i] == '\n')
 		i++;
@@ -1089,7 +1093,7 @@ void append_signoff(struct strbuf *msgbuf, int ignore_footer)
 	for (i = msgbuf->len - 1 - ignore_footer; i > 0 && msgbuf->buf[i - 1] != '\n'; i--)
 		; /* do nothing */
 	if (prefixcmp(msgbuf->buf + i, sob.buf)) {
-		if (!i || !has_conforming_footer(msgbuf, ignore_footer))
+		if (!has_conforming_footer(msgbuf, ignore_footer))
 			strbuf_splice(msgbuf, msgbuf->len - ignore_footer, 0, "\n", 1);
 		strbuf_splice(msgbuf, msgbuf->len - ignore_footer, 0, sob.buf, sob.len);
 	}
