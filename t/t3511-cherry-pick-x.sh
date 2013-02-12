@@ -32,6 +32,10 @@ Signed-off-by: $GIT_COMMITTER_NAME <$GIT_COMMITTER_EMAIL>"
 mesg_with_footer_sob="$mesg_with_footer
 Signed-off-by: $GIT_COMMITTER_NAME <$GIT_COMMITTER_EMAIL>"
 
+mesg_with_cherry_footer="$mesg_with_footer_sob
+(cherry picked from commit da39a3ee5e6b4b0d3255bfef95601890afd80709)
+Tested-by: C.U. Thor <cuthor@example.com>"
+
 
 test_expect_success setup '
 	git config advice.detachedhead false &&
@@ -47,6 +51,8 @@ test_expect_success setup '
 	test_commit "$mesg_with_footer" foo b mesg-with-footer &&
 	git reset --hard initial &&
 	test_commit "$mesg_with_footer_sob" foo b mesg-with-footer-sob &&
+	git reset --hard initial &&
+	test_commit "$mesg_with_cherry_footer" foo b mesg-with-cherry-footer &&
 	pristine_detach initial &&
 	test_commit conflicting unrelated
 '
@@ -98,11 +104,60 @@ test_expect_success 'cherry-pick -s adds sob when last sob doesnt match committe
 	test_cmp expect actual
 '
 
+test_expect_success 'cherry-pick -x -s adds sob when last sob doesnt match committer' '
+	pristine_detach initial &&
+	sha1=`git rev-parse mesg-with-footer^0` &&
+	git cherry-pick -x -s mesg-with-footer &&
+	cat <<-EOF >expect &&
+		$mesg_with_footer
+		(cherry picked from commit $sha1)
+		Signed-off-by: $GIT_COMMITTER_NAME <$GIT_COMMITTER_EMAIL>
+	EOF
+	git log -1 --pretty=format:%B >actual &&
+	test_cmp expect actual
+'
+
 test_expect_success 'cherry-pick -s refrains from adding duplicate trailing sob' '
 	pristine_detach initial &&
 	git cherry-pick -s mesg-with-footer-sob &&
 	cat <<-EOF >expect &&
 		$mesg_with_footer_sob
+	EOF
+	git log -1 --pretty=format:%B >actual &&
+	test_cmp expect actual
+'
+
+test_expect_success 'cherry-pick -x -s adds sob even when trailing sob exists for committer' '
+	pristine_detach initial &&
+	sha1=`git rev-parse mesg-with-footer-sob^0` &&
+	git cherry-pick -x -s mesg-with-footer-sob &&
+	cat <<-EOF >expect &&
+		$mesg_with_footer_sob
+		(cherry picked from commit $sha1)
+		Signed-off-by: $GIT_COMMITTER_NAME <$GIT_COMMITTER_EMAIL>
+	EOF
+	git log -1 --pretty=format:%B >actual &&
+	test_cmp expect actual
+'
+
+test_expect_success 'cherry-pick -x treats "(cherry picked from..." line as part of footer' '
+	pristine_detach initial &&
+	sha1=`git rev-parse mesg-with-cherry-footer^0` &&
+	git cherry-pick -x mesg-with-cherry-footer &&
+	cat <<-EOF >expect &&
+		$mesg_with_cherry_footer
+		(cherry picked from commit $sha1)
+	EOF
+	git log -1 --pretty=format:%B >actual &&
+	test_cmp expect actual
+'
+
+test_expect_success 'cherry-pick -s treats "(cherry picked from..." line as part of footer' '
+	pristine_detach initial &&
+	git cherry-pick -s mesg-with-cherry-footer &&
+	cat <<-EOF >expect &&
+		$mesg_with_cherry_footer
+		Signed-off-by: $GIT_COMMITTER_NAME <$GIT_COMMITTER_EMAIL>
 	EOF
 	git log -1 --pretty=format:%B >actual &&
 	test_cmp expect actual
