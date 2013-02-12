@@ -267,13 +267,13 @@ sub command {
 
 	if (not defined wantarray) {
 		# Nothing to pepper the possible exception with.
-		_cmd_close($fh, $ctx);
+		_cmd_close($ctx, $fh);
 
 	} elsif (not wantarray) {
 		local $/;
 		my $text = <$fh>;
 		try {
-			_cmd_close($fh, $ctx);
+			_cmd_close($ctx, $fh);
 		} catch Git::Error::Command with {
 			# Pepper with the output:
 			my $E = shift;
@@ -286,7 +286,7 @@ sub command {
 		my @lines = <$fh>;
 		defined and chomp for @lines;
 		try {
-			_cmd_close($fh, $ctx);
+			_cmd_close($ctx, $fh);
 		} catch Git::Error::Command with {
 			my $E = shift;
 			$E->{'-outputref'} = \@lines;
@@ -313,7 +313,7 @@ sub command_oneline {
 	my $line = <$fh>;
 	defined $line and chomp $line;
 	try {
-		_cmd_close($fh, $ctx);
+		_cmd_close($ctx, $fh);
 	} catch Git::Error::Command with {
 		# Pepper with the output:
 		my $E = shift;
@@ -381,7 +381,7 @@ have more complicated structure.
 sub command_close_pipe {
 	my ($self, $fh, $ctx) = _maybe_self(@_);
 	$ctx ||= '<unknown>';
-	_cmd_close($fh, $ctx);
+	_cmd_close($ctx, $fh);
 }
 
 =item command_bidi_pipe ( COMMAND [, ARGUMENTS... ] )
@@ -431,18 +431,8 @@ have more complicated structure.
 sub command_close_bidi_pipe {
 	local $?;
 	my ($self, $pid, $in, $out, $ctx) = _maybe_self(@_);
-	foreach my $fh ($in, $out) {
-		unless (close $fh) {
-			if ($!) {
-				carp "error closing pipe: $!";
-			} elsif ($? >> 8) {
-				throw Git::Error::Command($ctx, $? >>8);
-			}
-		}
-	}
-
+	_cmd_close($ctx, $in, $out);
 	waitpid $pid, 0;
-
 	if ($? >> 8) {
 		throw Git::Error::Command($ctx, $? >>8);
 	}
@@ -1355,9 +1345,11 @@ sub _execv_git_cmd { exec('git', @_); }
 
 # Close pipe to a subprocess.
 sub _cmd_close {
-	my ($fh, $ctx) = @_;
-	if (not close $fh) {
-		if ($!) {
+	my $ctx = shift @_;
+	foreach my $fh (@_) {
+		if (close $fh) {
+			# nop
+		} elsif ($!) {
 			# It's just close, no point in fatalities
 			carp "error closing pipe: $!";
 		} elsif ($? >> 8) {
