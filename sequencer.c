@@ -1019,19 +1019,21 @@ int sequencer_pick_revisions(struct replay_opts *opts)
 
 static int ends_rfc2822_footer(struct strbuf *sb, int ignore_footer)
 {
-	int ch;
-	int hit = 0;
+	char ch, prev;
 	int i, j, k;
 	int len = sb->len - ignore_footer;
 	int first = 1;
 	const char *buf = sb->buf;
 
+	prev = '\0';
 	for (i = len - 1; i > 0; i--) {
-		if (hit && buf[i] == '\n')
+		ch = buf[i];
+		if (prev == '\n' && ch == '\n') /* paragraph break */
 			break;
-		hit = (buf[i] == '\n');
+		prev = ch;
 	}
 
+	/* advance to start of last paragraph */
 	while (i < len - 1 && buf[i] == '\n')
 		i++;
 
