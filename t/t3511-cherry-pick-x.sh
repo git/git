@@ -82,7 +82,7 @@ test_expect_success 'cherry-pick -s inserts blank line after one line subject' '
 	test_cmp expect actual
 '
 
-test_expect_failure 'cherry-pick -s inserts blank line after non-conforming footer' '
+test_expect_success 'cherry-pick -s inserts blank line after non-conforming footer' '
 	pristine_detach initial &&
 	git cherry-pick -s mesg-broken-footer &&
 	cat <<-EOF >expect &&
