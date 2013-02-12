@@ -1123,8 +1123,19 @@ void append_signoff(struct strbuf *msgbuf, int ignore_footer, unsigned flag)
 	else
 		has_footer = has_conforming_footer(msgbuf, &sob, ignore_footer);
 
-	if (!has_footer)
-		strbuf_splice(msgbuf, msgbuf->len - ignore_footer, 0, "\n", 1);
+	if (!has_footer) {
+		const char *append_newlines = NULL;
+		size_t len = msgbuf->len - ignore_footer;
+
+		if (len && msgbuf->buf[len - 1] != '\n')
+			append_newlines = "\n\n";
+		else if (len > 1 && msgbuf->buf[len - 2] != '\n')
+			append_newlines = "\n";
+
+		if (append_newlines)
+			strbuf_splice(msgbuf, msgbuf->len - ignore_footer, 0,
+				append_newlines, strlen(append_newlines));
+	}
 
 	if (has_footer != 3 && (!no_dup_sob || has_footer != 2))
 		strbuf_splice(msgbuf, msgbuf->len - ignore_footer, 0,
