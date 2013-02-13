@@ -35,6 +35,8 @@ the packs. These objects could be pruned using `git prune-packed`.
 +
 garbage: the number of files in object database that are not valid
 loose objects nor valid packs
++
+size-garbage: disk space consumed by garbage files, in KiB
 
 GIT
 ---

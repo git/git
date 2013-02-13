@@ -10,9 +10,13 @@
 #include "parse-options.h"
 
 static unsigned long garbage;
+static off_t size_garbage;
 
 static void real_report_garbage(const char *desc, const char *path)
 {
+	struct stat st;
+	if (!stat(path, &st))
+		size_garbage += st.st_size;
 	warning("%s: %s", desc, path);
 	garbage++;
 }
@@ -20,8 +24,7 @@ static void real_report_garbage(const char *desc, const char *path)
 static void count_objects(DIR *d, char *path, int len, int verbose,
 			  unsigned long *loose,
 			  off_t *loose_size,
-			  unsigned long *packed_loose,
-			  unsigned long *garbage)
+			  unsigned long *packed_loose)
 {
 	struct dirent *ent;
 	while ((ent = readdir(d)) != NULL) {
@@ -54,9 +57,11 @@ static void count_objects(DIR *d, char *path, int len, int verbose,
 		}
 		if (bad) {
 			if (verbose) {
-				error("garbage found: %.*s/%s",
-				      len + 2, path, ent->d_name);
-				(*garbage)++;
+				struct strbuf sb = STRBUF_INIT;
+				strbuf_addf(&sb, "%.*s/%s",
+					    len + 2, path, ent->d_name);
+				report_garbage("garbage found", sb.buf);
+				strbuf_release(&sb);
 			}
 			continue;
 		}
@@ -107,7 +112,7 @@ int cmd_count_objects(int argc, const char **argv, const char *prefix)
 		if (!d)
 			continue;
 		count_objects(d, path, len, verbose,
-			      &loose, &loose_size, &packed_loose, &garbage);
+			      &loose, &loose_size, &packed_loose);
 		closedir(d);
 	}
 	if (verbose) {
@@ -132,6 +137,7 @@ int cmd_count_objects(int argc, const char **argv, const char *prefix)
 		printf("size-pack: %lu\n", (unsigned long) (size_pack / 1024));
 		printf("prune-packable: %lu\n", packed_loose);
 		printf("garbage: %lu\n", garbage);
+		printf("size-garbage: %lu\n", (unsigned long) (size_garbage / 1024));
 	}
 	else
 		printf("%lu objects, %lu kilobytes\n",
