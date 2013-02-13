@@ -437,6 +437,46 @@ test_expect_success 'prompt - untracked files status indicator - untracked files
 	test_cmp expected "$actual"
 '
 
+test_expect_success 'prompt - untracked files status indicator - shell variable unset with config disabled' '
+	printf " (master)" > expected &&
+	test_config bash.showUntrackedFiles false &&
+	(
+		sane_unset GIT_PS1_SHOWUNTRACKEDFILES &&
+		__git_ps1 > "$actual"
+	) &&
+	test_cmp expected "$actual"
+'
+
+test_expect_success 'prompt - untracked files status indicator - shell variable unset with config enabled' '
+	printf " (master)" > expected &&
+	test_config bash.showUntrackedFiles true &&
+	(
+		sane_unset GIT_PS1_SHOWUNTRACKEDFILES &&
+		__git_ps1 > "$actual"
+	) &&
+	test_cmp expected "$actual"
+'
+
+test_expect_success 'prompt - untracked files status indicator - shell variable set with config disabled' '
+	printf " (master)" > expected &&
+	test_config bash.showUntrackedFiles false &&
+	(
+		GIT_PS1_SHOWUNTRACKEDFILES=y &&
+		__git_ps1 > "$actual"
+	) &&
+	test_cmp expected "$actual"
+'
+
+test_expect_success 'prompt - untracked files status indicator - shell variable set with config enabled' '
+	printf " (master %%)" > expected &&
+	test_config bash.showUntrackedFiles true &&
+	(
+		GIT_PS1_SHOWUNTRACKEDFILES=y &&
+		__git_ps1 > "$actual"
+	) &&
+	test_cmp expected "$actual"
+'
+
 test_expect_success 'prompt - untracked files status indicator - not shown inside .git directory' '
 	printf " (GIT_DIR!)" > expected &&
 	(
