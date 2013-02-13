@@ -43,7 +43,10 @@
 #
 # If you would like to see if there're untracked files, then you can set
 # GIT_PS1_SHOWUNTRACKEDFILES to a nonempty value. If there're untracked
-# files, then a '%' will be shown next to the branch name.
+# files, then a '%' will be shown next to the branch name.  You can
+# configure this per-repository with the bash.showUntrackedFiles
+# variable, which defaults to true once GIT_PS1_SHOWUNTRACKEDFILES is
+# enabled.
 #
 # If you would like to see the difference between HEAD and its upstream,
 # set GIT_PS1_SHOWUPSTREAM="auto".  A "<" indicates you are behind, ">"
@@ -332,8 +335,10 @@ __git_ps1 ()
 			fi
 
 			if [ -n "${GIT_PS1_SHOWUNTRACKEDFILES-}" ]; then
-				if [ -n "$(git ls-files --others --exclude-standard)" ]; then
-					u="%"
+				if [ "$(git config --bool bash.showUntrackedFiles)" != "false" ]; then
+					if [ -n "$(git ls-files --others --exclude-standard)" ]; then
+						u="%"
+					fi
 				fi
 			fi
 
