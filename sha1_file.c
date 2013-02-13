@@ -1024,27 +1024,25 @@ static void prepare_packed_git_one(char *objdir, int local)
 		int namelen = strlen(de->d_name);
 		struct packed_git *p;
 
-		if (!has_extension(de->d_name, ".idx"))
-			continue;
-
 		if (len + namelen + 1 > sizeof(path))
 			continue;
 
-		/* Don't reopen a pack we already have. */
 		strcpy(path + len, de->d_name);
-		for (p = packed_git; p; p = p->next) {
-			if (!memcmp(path, p->pack_name, len + namelen - 4))
-				break;
+
+		if (has_extension(de->d_name, ".idx")) {
+			/* Don't reopen a pack we already have. */
+			for (p = packed_git; p; p = p->next) {
+				if (!memcmp(path, p->pack_name, len + namelen - 4))
+					break;
+			}
+			if (p == NULL &&
+			    /*
+			     * See if it really is a valid .idx file with
+			     * corresponding .pack file that we can map.
+			     */
+			    (p = add_packed_git(path, len + namelen, local)) != NULL)
+				install_packed_git(p);
 		}
-		if (p)
-			continue;
-		/* See if it really is a valid .idx file with corresponding
-		 * .pack file that we can map.
-		 */
-		p = add_packed_git(path, len + namelen, local);
-		if (!p)
-			continue;
-		install_packed_git(p);
 	}
 	closedir(dir);
 }
