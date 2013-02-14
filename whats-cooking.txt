@@ -1,10 +1,10 @@
 To: git@vger.kernel.org
 Bcc: lwn@lwn.net
-Subject: What's cooking in git.git (Feb 2013, #05; Tue, 12)
-X-master-at: 5bf72ed2e7ef82d5ef7a35c978dc72576fdb0efc
-X-next-at: eb8af04df752f55c917e7cc25b82840b4b6083f7
+Subject: What's cooking in git.git (Feb 2013, #06; Thu, 14)
+X-master-at: 02339dd5295d7add78ab409300b985e5888af0ee
+X-next-at: ffa3c6506ad4ad51b33a54dee5c10a07cee019f0
 
-What's cooking in git.git (Feb 2013, #05; Tue, 12)
+What's cooking in git.git (Feb 2013, #06; Thu, 14)
 --------------------------------------------------
 
 Here are the topics that have been cooking.  Commits prefixed with
@@ -12,7 +12,8 @@ Here are the topics that have been cooking.  Commits prefixed with
 '+' are in 'next'.
 
 A preview of the upcoming release 1.8.2-rc0 is expected to be tagged
-late this week.
+late this week.  At around that time, we may want to discard
+long-stalled topics that did not see activities as well.
 
 You can find the changes described here in the integration branches of the
 repositories listed at
@@ -22,79 +23,133 @@ repositories listed at
 --------------------------------------------------
 [Graduated to "master"]
 
-* sp/smart-http-content-type-check (2013-02-06) 3 commits
-  (merged to 'next' on 2013-02-06 at 8bc6434)
- + http_request: reset "type" strbuf before adding
-  (merged to 'next' on 2013-02-05 at 157812c)
- + t5551: fix expected error output
-  (merged to 'next' on 2013-02-04 at d0759cb)
- + Verify Content-Type from smart HTTP servers
+* al/mergetool-printf-fix (2013-02-10) 2 commits
+  (merged to 'next' on 2013-02-11 at 5f9bc4e)
+ + difftool--helper: fix printf usage
+ + git-mergetool: print filename when it contains %
 
- The smart HTTP clients forgot to verify the content-type that comes
- back from the server side to make sure that the request is being
- handled properly.
+
+* bw/get-tz-offset-perl (2013-02-09) 3 commits
+  (merged to 'next' on 2013-02-11 at b9c8893)
+ + cvsimport: format commit timestamp ourselves without using strftime
+ + perl/Git.pm: fix get_tz_offset to properly handle DST boundary cases
+ + Move Git::SVN::get_tz to Git::get_tz_offset
+
+ "git-cvsimport" and "git-svn" miscomputed TZ offset at DST boundary.
+
+
+* dg/subtree-fixes (2013-02-05) 6 commits
+  (merged to 'next' on 2013-02-09 at 8f19ebe)
+ + contrib/subtree: make the manual directory if needed
+ + contrib/subtree: honor DESTDIR
+ + contrib/subtree: fix synopsis
+ + contrib/subtree: better error handling for 'subtree add'
+ + contrib/subtree: use %B for split subject/body
+ + contrib/subtree: remove test number comments
+
+ contrib/subtree updates, but here are only the ones that looked
+ ready.
+
+
+* jc/extended-fake-ancestor-for-gitlink (2013-02-05) 1 commit
+  (merged to 'next' on 2013-02-09 at 2d3547b)
+ + apply: verify submodule commit object name better
+
+ Instead of requiring the full 40-hex object names on the index
+ line, we can read submodule commit object names from the textual
+ diff when synthesizing a fake ancestore tree for "git am -3".
+
+
+* jk/diff-graph-cleanup (2013-02-12) 6 commits
+  (merged to 'next' on 2013-02-12 at 6e764c1)
+ + combine-diff.c: teach combined diffs about line prefix
+ + diff.c: use diff_line_prefix() where applicable
+ + diff: add diff_line_prefix function
+ + diff.c: make constant string arguments const
+ + diff: write prefix to the correct file
+ + graph: output padding for merge subsequent parents
+
+ Refactors a lot of repetitive code sequence from the graph drawing
+ code and adds it to the combined diff output.
+
+
+* jk/error-const-return (2013-02-08) 1 commit
+  (merged to 'next' on 2013-02-11 at ba8dba3)
+ + Use __VA_ARGS__ for all of error's arguments
+
+
+* jx/utf8-printf-width (2013-02-11) 1 commit
+  (merged to 'next' on 2013-02-11 at 968b4e2)
+ + Add utf8_fprintf helper that returns correct number of columns
+
+ Use a new helper that prints a message and counts its display width
+ to align the help messages parse-options produces.
+
+
+* mg/bisect-doc (2013-02-11) 1 commit
+  (merged to 'next' on 2013-02-11 at 6125304)
+ + git-bisect.txt: clarify that reset quits bisect
+
+
+* mm/remote-mediawiki-build (2013-02-08) 2 commits
+  (merged to 'next' on 2013-02-11 at 4ebb902)
+ + git-remote-mediawiki: use toplevel's Makefile
+ + Makefile: make script-related rules usable from subdirectories
+
+
+* nd/status-show-in-progress (2013-02-05) 1 commit
+  (merged to 'next' on 2013-02-11 at 5ffcbc2)
+ + status: show the branch name if possible in in-progress info
+
+
+* tz/perl-styles (2013-02-06) 1 commit
+  (merged to 'next' on 2013-02-09 at c8cff17)
+ + Update CodingGuidelines for Perl
+
+ Add coding guidelines for writing Perl scripts for Git.
 
 --------------------------------------------------
 [New Topics]
 
-* da/p4merge-mktemp-fix (2013-02-10) 1 commit
- - p4merge: fix printf usage
+* mk/make-rm-depdirs-could-be-empty (2013-02-13) 1 commit
+  (merged to 'next' on 2013-02-14 at d966248)
+ + Makefile: don't run "rm" without any files
 
- Will merge to 'next'.
+ "make COMPUTE_HEADER_DEPENDENCIES=no clean" would try to run "rm
+ -rf $(dep_dirs)" with an empty dep_dir, but some implementations of
+ "rm -rf" barf on an empty argument list.
 
-
-* jn/shell-disable-interactive (2013-02-11) 2 commits
- - shell: pay attention to exit status from 'help' command
- - shell doc: emphasize purpose and security model
-
- Will merge to 'next'.
+ Will merge to 'master'.
 
 
-* jk/read-commit-buffer-data-after-free (2013-02-11) 1 commit
- - log: re-encode commit messages before grepping
+* mw/bash-prompt-show-untracked-config (2013-02-13) 3 commits
+  (merged to 'next' on 2013-02-14 at 809dbcf)
+ + t9903: add extra tests for bash.showDirtyState
+ + t9903: add tests for bash.showUntrackedFiles
+ + shell prompt: add bash.showUntrackedFiles option
 
- Will merge to 'next'.
+ Allows skipping the untracked check GIT_PS1_SHOWUNTRACKEDFILES
+ asks for the git-prompt (in contrib/) per repository.
 
-
-* mk/old-expat (2013-02-11) 1 commit
- - Allow building with xmlparse.h
-
- Will merge to 'next'.
-
-
-* ef/non-ascii-parse-options-error-diag (2013-02-11) 1 commit
- - parse-options: report uncorrupted multi-byte options
-
- Will merge to 'next'.
+ Will merge to 'master'.
 
 
-* jk/rebase-i-comment-char (2013-02-12) 1 commit
- - rebase -i: respect core.commentchar
+* mg/gpg-interface-using-status (2013-02-14) 5 commits
+ - pretty: make %GK output the signing key for signed commits
+ - pretty: parse the gpg status lines rather than the output
+ - gpg_interface: allow to request status return
+ - log-tree: rely upon the check in the gpg_interface
+ - gpg-interface: check good signature in a reliable way
 
- Will merge to 'next'.
+ Call "gpg" using the right API when validating the signature on
+ tags.
 
 
-* mm/config-local-completion (2013-02-12) 1 commit
- - completion: support 'git config --local'
-
- Will merge to 'next'.
+* mm/config-intro-in-git-doc (2013-02-14) 1 commit
+ - git.txt: update description of the configuration mechanism
 
 --------------------------------------------------
 [Stalled]
-
-* mp/diff-algo-config (2013-01-16) 3 commits
- - diff: Introduce --diff-algorithm command line option
- - config: Introduce diff.algorithm variable
- - git-completion.bash: Autocomplete --minimal and --histogram for git-diff
-
- Add diff.algorithm configuration so that the user does not type
- "diff --histogram".
-
- Looking better; may want tests to protect it from future breakages,
- but otherwise it looks ready for 'next'.
-
- Expecting a follow-up to add tests.
-
 
 * mb/gitweb-highlight-link-target (2012-12-20) 1 commit
  - Highlight the link target line in Gitweb using CSS
@@ -189,31 +244,79 @@ repositories listed at
 --------------------------------------------------
 [Cooking]
 
+* mp/diff-algo-config (2013-01-16) 3 commits
+  (merged to 'next' on 2013-02-14 at cd765dc)
+ + diff: Introduce --diff-algorithm command line option
+ + config: Introduce diff.algorithm variable
+ + git-completion.bash: Autocomplete --minimal and --histogram for git-diff
+
+ Add diff.algorithm configuration so that the user does not type
+ "diff --histogram".
+
+ Will merge to 'master'.
+
+
+* da/p4merge-mktemp-fix (2013-02-10) 1 commit
+  (merged to 'next' on 2013-02-14 at c5fc5ba)
+ + p4merge: fix printf usage
+
+ Will merge to 'master'.
+
+
+* jn/shell-disable-interactive (2013-02-11) 2 commits
+ - shell: pay attention to exit status from 'help' command
+ - shell doc: emphasize purpose and security model
+
+ Expecting a reroll.
+ $gmane/216229
+
+
+* jk/read-commit-buffer-data-after-free (2013-02-11) 1 commit
+  (merged to 'next' on 2013-02-14 at 220e3a8)
+ + log: re-encode commit messages before grepping
+
+ Will merge to 'master'.
+
+
+* mk/old-expat (2013-02-11) 1 commit
+  (merged to 'next' on 2013-02-14 at 5fb47ce)
+ + Allow building with xmlparse.h
+
+ Will merge to 'master'.
+
+
+* ef/non-ascii-parse-options-error-diag (2013-02-11) 1 commit
+  (merged to 'next' on 2013-02-14 at 10cbdf8)
+ + parse-options: report uncorrupted multi-byte options
+
+ Will merge to 'master'.
+
+
+* jk/rebase-i-comment-char (2013-02-12) 1 commit
+  (merged to 'next' on 2013-02-14 at 0ed2f48)
+ + rebase -i: respect core.commentchar
+
+ Will merge to 'master'.
+
+
+* mm/config-local-completion (2013-02-12) 1 commit
+  (merged to 'next' on 2013-02-14 at 26bf6c2)
+ + completion: support 'git config --local'
+
+ Will merge to 'master'.
+
+
 * jc/fetch-raw-sha1 (2013-02-07) 4 commits
- - fetch: fetch objects by their exact SHA-1 object names
- - upload-pack: optionally allow fetching from the tips of hidden refs
- - fetch: use struct ref to represent refs to be fetched
- - parse_fetch_refspec(): clarify the codeflow a bit
+  (merged to 'next' on 2013-02-14 at ffa3c65)
+ + fetch: fetch objects by their exact SHA-1 object names
+ + upload-pack: optionally allow fetching from the tips of hidden refs
+ + fetch: use struct ref to represent refs to be fetched
+ + parse_fetch_refspec(): clarify the codeflow a bit
  (this branch uses jc/hidden-refs.)
 
  Allows requests to fetch objects at any tip of refs (including
  hidden ones).  It seems that there may be use cases even outside
  Gerrit (e.g. $gmane/215701).
-
-
-* jk/diff-graph-cleanup (2013-02-12) 6 commits
-  (merged to 'next' on 2013-02-12 at 6e764c1)
- + combine-diff.c: teach combined diffs about line prefix
- + diff.c: use diff_line_prefix() where applicable
- + diff: add diff_line_prefix function
- + diff.c: make constant string arguments const
- + diff: write prefix to the correct file
- + graph: output padding for merge subsequent parents
-
- Refactors a lot of repetitive code sequence from the graph drawing
- code and adds it to the combined diff output.
-
- Will merge to 'master'.
 
 
 * mn/send-email-works-with-credential (2013-02-12) 6 commits
@@ -229,38 +332,6 @@ repositories listed at
  Waiting for a review.
 
 
-* tz/perl-styles (2013-02-06) 1 commit
-  (merged to 'next' on 2013-02-09 at c8cff17)
- + Update CodingGuidelines for Perl
-
- Add coding guidelines for writing Perl scripts for Git.
-
- Will merge to 'master'.
-
-
-* al/mergetool-printf-fix (2013-02-10) 2 commits
-  (merged to 'next' on 2013-02-11 at 5f9bc4e)
- + difftool--helper: fix printf usage
- + git-mergetool: print filename when it contains %
-
- Will merge to 'master'.
-
-
-* jk/error-const-return (2013-02-08) 1 commit
-  (merged to 'next' on 2013-02-11 at ba8dba3)
- + Use __VA_ARGS__ for all of error's arguments
-
- Will merge to 'master'.
-
-
-* mm/remote-mediawiki-build (2013-02-08) 2 commits
-  (merged to 'next' on 2013-02-11 at 4ebb902)
- + git-remote-mediawiki: use toplevel's Makefile
- + Makefile: make script-related rules usable from subdirectories
-
- Will merge to 'master'.
-
-
 * nd/branch-show-rebase-bisect-state (2013-02-08) 1 commit
  - branch: show rebase/bisect info when possible instead of "(no branch)"
 
@@ -268,44 +339,19 @@ repositories listed at
  $gmane/215771
 
 
-* nd/count-garbage (2013-02-08) 3 commits
+* nd/count-garbage (2013-02-13) 4 commits
  - count-objects: report how much disk space taken by garbage files
  - count-objects: report garbage files in pack directory too
+ - sha1_file: reorder code in prepare_packed_git_one()
  - git-count-objects.txt: describe each line in -v output
 
- Expecting a reroll.
- $gmane/216127
+ Looked good, but the handling of files with known-corrupt .idx
+ counterparts could be improved.
 
 
-* wk/man-deny-current-branch-is-default-these-days (2013-02-08) 1 commit
- - user-manual: Update for receive.denyCurrentBranch=refuse
-
- Will merge to 'next'.
-
-
-* bw/get-tz-offset-perl (2013-02-09) 3 commits
-  (merged to 'next' on 2013-02-11 at b9c8893)
- + cvsimport: format commit timestamp ourselves without using strftime
- + perl/Git.pm: fix get_tz_offset to properly handle DST boundary cases
- + Move Git::SVN::get_tz to Git::get_tz_offset
-
- Will merge to 'master'.
-
-
-* mg/bisect-doc (2013-02-11) 1 commit
-  (merged to 'next' on 2013-02-11 at 6125304)
- + git-bisect.txt: clarify that reset quits bisect
-
- Will merge to 'master'.
-
-
-* jc/extended-fake-ancestor-for-gitlink (2013-02-05) 1 commit
-  (merged to 'next' on 2013-02-09 at 2d3547b)
- + apply: verify submodule commit object name better
-
- Instead of requiring the full 40-hex object names on the index
- line, we can read submodule commit object names from the textual
- diff when synthesizing a fake ancestore tree for "git am -3".
+* wk/man-deny-current-branch-is-default-these-days (2013-02-14) 1 commit
+  (merged to 'next' on 2013-02-14 at 6fab9d4)
+ + user-manual: Update for receive.denyCurrentBranch=refuse
 
  Will merge to 'master'.
 
@@ -321,32 +367,6 @@ repositories listed at
  $gmane/215556
 
 
-* jx/utf8-printf-width (2013-02-11) 1 commit
-  (merged to 'next' on 2013-02-11 at 968b4e2)
- + Add utf8_fprintf helper that returns correct number of columns
-
- Use a new helper that prints a message and counts its display width
- to align the help messages parse-options produces.
-
- Will merge to 'master'.
-
-
-* dg/subtree-fixes (2013-02-05) 6 commits
-  (merged to 'next' on 2013-02-09 at 8f19ebe)
- + contrib/subtree: make the manual directory if needed
- + contrib/subtree: honor DESTDIR
- + contrib/subtree: fix synopsis
- + contrib/subtree: better error handling for 'subtree add'
- + contrib/subtree: use %B for split subject/body
- + contrib/subtree: remove test number comments
-
- contrib/subtree updates, but here are only the ones that looked
- ready to be merged to 'next'.  For the remainder, they will have
- another day.
-
- Will merge to 'master'.
-
-
 * jl/submodule-deinit (2013-02-06) 1 commit
  - submodule: add 'deinit' command
 
@@ -354,7 +374,8 @@ repositories listed at
  this submodule", once you express your interest in a submodule with
  "submodule init".  "submodule deinit" is the way to do so.
 
- Will merge to 'next'.
+ Expecting another reroll.
+ $gmane/216276
 
 
 * jc/remove-export-from-config-mak-in (2013-02-12) 2 commits
@@ -372,12 +393,7 @@ repositories listed at
  broken installation of manpages (but not other documentation
  formats).
 
-
-* nd/status-show-in-progress (2013-02-05) 1 commit
-  (merged to 'next' on 2013-02-11 at 5ffcbc2)
- + status: show the branch name if possible in in-progress info
-
- Will merge to 'master'.
+ Will cook in 'next'.
 
 
 * jc/mention-tracking-for-pull-default (2013-01-31) 1 commit
@@ -395,15 +411,16 @@ repositories listed at
 
 
 * jc/hidden-refs (2013-02-07) 3 commits
- - upload/receive-pack: allow hiding ref hierarchies
- - upload-pack: simplify request validation
- - upload-pack: share more code
+  (merged to 'next' on 2013-02-14 at b69f9cc)
+ + upload/receive-pack: allow hiding ref hierarchies
+ + upload-pack: simplify request validation
+ + upload-pack: share more code
  (this branch is used by jc/fetch-raw-sha1.)
 
  Allow the server side to redact the refs/ namespace it shows to the
  client.
 
- Will merge to 'next'.
+ Will merge to 'master'.
 
 
 * jc/remove-treesame-parent-in-simplify-merges (2013-01-17) 1 commit
@@ -456,22 +473,5 @@ repositories listed at
  - commit, cherry-pick -s: remove broken support for multiline rfc2822 fields
  - sequencer.c: rework search for start of footer to improve clarity
 
- Will merge to 'next'.
-
---------------------------------------------------
-[Discarded]
-
-* mn/send-email-authinfo (2013-01-29) 1 commit
- . git-send-email: add ~/.authinfo parsing
-
- Instead of making send-email directly read from .netrc/.authinfo,
- mn/send-email-works-with-credential topic hooks the program to our
- credential framework, and tz/credential-authinfo topic gives access
- to these file formats to credential consumers.
-
-
-* mm/allow-contrib-build (2013-02-07) 2 commits
- . perl.mak: introduce $(GIT_ROOT_DIR) to allow inclusion from other directories
- . Makefile: extract perl-related rules to make them available from other dirs
-
- Superseded by mm/remote-mediawiki-build.
+ Waiting for further reviews.
+ $gmane/216327 may need to be addressed.
