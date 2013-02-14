@@ -29,7 +29,7 @@ static int run_gpg_verify(const char *buf, unsigned long size, int verbose)
 	if (size == len)
 		return error("no signature found");
 
-	return verify_signed_buffer(buf, len, buf + len, size - len, NULL);
+	return verify_signed_buffer(buf, len, buf + len, size - len, NULL, NULL);
 }
 
 static int verify_tag(const char *name, int verbose)

@@ -434,7 +434,7 @@ static void show_signature(struct rev_info *opt, struct commit *commit)
 
 	status = verify_signed_buffer(payload.buf, payload.len,
 				      signature.buf, signature.len,
-				      &gpg_output);
+				      &gpg_output, NULL);
 	if (status && !gpg_output.len)
 		strbuf_addstr(&gpg_output, "No signature\n");
 
@@ -503,7 +503,7 @@ static void show_one_mergetag(struct rev_info *opt,
 		if (verify_signed_buffer(extra->value, payload_size,
 					 extra->value + payload_size,
 					 extra->len - payload_size,
-					 &verify_message)) {
+					 &verify_message, NULL)) {
 			if (verify_message.len <= gpg_message_offset)
 				strbuf_addstr(&verify_message, "No signature\n");
 			else

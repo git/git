@@ -917,7 +917,7 @@ static void parse_commit_signature(struct format_commit_context *ctx)
 		goto out;
 	status = verify_signed_buffer(payload.buf, payload.len,
 				      signature.buf, signature.len,
-				      &gpg_output);
+				      &gpg_output, NULL);
 	if (status && !gpg_output.len)
 		goto out;
 	ctx->signature.gpg_output = strbuf_detach(&gpg_output, NULL);

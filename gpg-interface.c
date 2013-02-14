@@ -100,13 +100,14 @@ int sign_buffer(struct strbuf *buffer, struct strbuf *signature, const char *sig
  */
 int verify_signed_buffer(const char *payload, size_t payload_size,
 			 const char *signature, size_t signature_size,
-			 struct strbuf *gpg_output)
+			 struct strbuf *gpg_output, struct strbuf *gpg_status)
 {
 	struct child_process gpg;
 	const char *args_gpg[] = {NULL, "--status-fd=1", "--verify", "FILE", "-", NULL};
 	char path[PATH_MAX];
 	int fd, ret;
 	struct strbuf buf = STRBUF_INIT;
+	struct strbuf *pbuf = &buf;
 
 	args_gpg[0] = gpg_program;
 	fd = git_mkstemp(path, PATH_MAX, ".git_vtag_tmpXXXXXX");
@@ -137,15 +138,17 @@ int verify_signed_buffer(const char *payload, size_t payload_size,
 		strbuf_read(gpg_output, gpg.err, 0);
 		close(gpg.err);
 	}
-	strbuf_read(&buf, gpg.out, 0);
+	if (gpg_status)
+		pbuf = gpg_status;
+	strbuf_read(pbuf, gpg.out, 0);
 	close(gpg.out);
 
 	ret = finish_command(&gpg);
 
 	unlink_or_warn(path);
 
-	ret |= !strstr(buf.buf, "\n[GNUPG:] GOODSIG ");
-	strbuf_release(&buf);
+	ret |= !strstr(pbuf->buf, "\n[GNUPG:] GOODSIG ");
+	strbuf_release(&buf); /* no matter it was used or not */
 
 	return ret;
 }
