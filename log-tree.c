@@ -498,20 +498,17 @@ static void show_one_mergetag(struct rev_info *opt,
 	gpg_message_offset = verify_message.len;
 
 	payload_size = parse_signature(extra->value, extra->len);
-	if ((extra->len <= payload_size) ||
-	    (verify_signed_buffer(extra->value, payload_size,
-				  extra->value + payload_size,
-				  extra->len - payload_size,
-				  &verify_message) &&
-	     verify_message.len <= gpg_message_offset)) {
-		strbuf_addstr(&verify_message, "No signature\n");
-		status = -1;
-	}
-	else if (strstr(verify_message.buf + gpg_message_offset,
-			": Good signature from "))
-		status = 0;
-	else
-		status = -1;
+	status = -1;
+	if (extra->len > payload_size)
+		if (verify_signed_buffer(extra->value, payload_size,
+					 extra->value + payload_size,
+					 extra->len - payload_size,
+					 &verify_message)) {
+			if (verify_message.len <= gpg_message_offset)
+				strbuf_addstr(&verify_message, "No signature\n");
+			else
+				status = 0;
+		}
 
 	show_sig_lines(opt, status, verify_message.buf);
 	strbuf_release(&verify_message);
