@@ -2,7 +2,11 @@ package Git::SVN::Log;
 use strict;
 use warnings;
 use Git::SVN::Utils qw(fatal);
-use Git qw(command command_oneline command_output_pipe command_close_pipe);
+use Git qw(command
+           command_oneline
+           command_output_pipe
+           command_close_pipe
+           get_tz_offset);
 use POSIX qw/strftime/;
 use constant commit_log_separator => ('-' x 72) . "\n";
 use vars qw/$TZ $limit $color $pager $non_recursive $verbose $oneline
@@ -119,7 +123,7 @@ sub run_pager {
 sub format_svn_date {
 	my $t = shift || time;
 	require Git::SVN;
-	my $gmoff = Git::SVN::get_tz($t);
+	my $gmoff = get_tz_offset($t);
 	return strftime("%Y-%m-%d %H:%M:%S $gmoff (%a, %d %b %Y)", localtime($t));
 }
 

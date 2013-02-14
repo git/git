@@ -26,6 +26,7 @@ use IO::Socket;
 use IO::Pipe;
 use POSIX qw(strftime tzset dup2 ENOENT);
 use IPC::Open2;
+use Git qw(get_tz_offset);
 
 $SIG{'PIPE'}="IGNORE";
 set_timezone('UTC');
@@ -864,7 +865,9 @@ sub commit {
 	}
 
 	set_timezone($author_tz);
-	my $commit_date = strftime("%s %z", localtime($date));
+	# $date is in the seconds since epoch format
+	my $tz_offset = get_tz_offset($date);
+	my $commit_date = "$date $tz_offset";
 	set_timezone('UTC');
 	$ENV{GIT_AUTHOR_NAME} = $author_name;
 	$ENV{GIT_AUTHOR_EMAIL} = $author_email;
