@@ -83,7 +83,7 @@ Bisect reset
 ~~~~~~~~~~~~
 
 After a bisect session, to clean up the bisection state and return to
-the original HEAD, issue the following command:
+the original HEAD (i.e., to quit bisecting), issue the following command:
 
 ------------------------------------------------
 $ git bisect reset
@@ -284,6 +284,7 @@ EXAMPLES
 ------------
 $ git bisect start HEAD v1.2 --      # HEAD is bad, v1.2 is good
 $ git bisect run make                # "make" builds the app
+$ git bisect reset                   # quit the bisect session
 ------------
 
 * Automatically bisect a test failure between origin and HEAD:
@@ -291,6 +292,7 @@ $ git bisect run make                # "make" builds the app
 ------------
 $ git bisect start HEAD origin --    # HEAD is bad, origin is good
 $ git bisect run make test           # "make test" builds and tests
+$ git bisect reset                   # quit the bisect session
 ------------
 
 * Automatically bisect a broken test case:
@@ -302,6 +304,7 @@ make || exit 125                     # this skips broken builds
 ~/check_test_case.sh                 # does the test case pass?
 $ git bisect start HEAD HEAD~10 --   # culprit is among the last 10
 $ git bisect run ~/test.sh
+$ git bisect reset                   # quit the bisect session
 ------------
 +
 Here we use a "test.sh" custom script. In this script, if "make"
@@ -351,6 +354,7 @@ use `git cherry-pick` instead of `git merge`.)
 ------------
 $ git bisect start HEAD HEAD~10 --   # culprit is among the last 10
 $ git bisect run sh -c "make || exit 125; ~/check_test_case.sh"
+$ git bisect reset                   # quit the bisect session
 ------------
 +
 This shows that you can do without a run script if you write the test
@@ -368,6 +372,7 @@ $ git bisect run sh -c '
 	rm -f tmp.$$
 	test $rc = 0'
 
+$ git bisect reset                   # quit the bisect session
 ------------
 +
 In this case, when 'git bisect run' finishes, bisect/bad will refer to a commit that
