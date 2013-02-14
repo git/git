@@ -115,6 +115,9 @@ UI, Workflows & Features
    rewrite the names and email addresses of people using the mailmap
    mechanism.
 
+ * "git log --cc --graph" now shows the combined diff output with the
+   ancestry graph.
+
  * "git mergetool" and "git difftool" learned to list the available
    tool backends in a more consistent manner.
 
@@ -143,6 +146,9 @@ UI, Workflows & Features
    "git reset" (without options or parameters) used to error out when
    you do not have any commits in your history, but it now gives you
    an empty index (to match non-existent commit you are not even on).
+
+ * "git status" says what branch is being bisected or rebased when
+   able, not just "bisecting" or "rebasing".
 
  * "git submodule" started learning a new mode to integrate with the
    tip of the remote branch (as opposed to integrating with the commit
@@ -294,6 +300,9 @@ details).
  * When "git clone --separate-git-dir=$over_there" is interrupted, it
    failed to remove the real location of the $GIT_DIR it created.
    This was most visible when interrupting a submodule update.
+
+ * "git cvsimport" mishandled timestamps at DST boundary.
+   (merge 48c9162 bw/get-tz-offset-perl later to maint).
 
  * We used to have an arbitrary 32 limit for combined diff input,
    resulting in incorrect number of leading colons shown when showing
