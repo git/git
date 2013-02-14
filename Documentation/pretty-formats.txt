@@ -133,6 +133,7 @@ The placeholders are:
 - '%GG': raw verification message from GPG for a signed commit
 - '%G?': show either "G" for Good or "B" for Bad for a signed commit
 - '%GS': show the name of the signer for a signed commit
+- '%GK': show the key used to sign a signed commit
 - '%gD': reflog selector, e.g., `refs/stash@{1}`
 - '%gd': shortened reflog selector, e.g., `stash@{1}`
 - '%gn': reflog identity name

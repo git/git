@@ -695,6 +695,7 @@ struct format_commit_context {
 		char *gpg_status;
 		char good_bad;
 		char *signer;
+		char *key;
 	} signature;
 	char *message;
 	size_t width, indent1, indent2;
@@ -897,7 +898,9 @@ static void parse_signature_lines(struct format_commit_context *ctx)
 		if (!found)
 			continue;
 		ctx->signature.good_bad = signature_check[i].result;
-		found += strlen(signature_check[i].check)+17;
+		found += strlen(signature_check[i].check);
+		ctx->signature.key = xmemdupz(found, 16);
+		found += 17;
 		next = strchrnul(found, '\n');
 		ctx->signature.signer = xmemdupz(found, next - found);
 		break;
@@ -1129,6 +1132,10 @@ static size_t format_commit_one(struct strbuf *sb, const char *placeholder,
 		case 'S':
 			if (c->signature.signer)
 				strbuf_addstr(sb, c->signature.signer);
+			break;
+		case 'K':
+			if (c->signature.key)
+				strbuf_addstr(sb, c->signature.key);
 			break;
 		}
 		return 2;
