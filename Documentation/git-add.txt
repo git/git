@@ -110,7 +110,7 @@ apply to the index. See EDITING PATCHES below.
 If no <pathspec> is given, the current version of Git defaults to
 "."; in other words, update all tracked files in the current directory
 and its subdirectories. This default will change in a future version
-of Git, hence the form without <filepattern> should not be used.
+of Git, hence the form without <pathspec> should not be used.
 
 -A::
 --all::
