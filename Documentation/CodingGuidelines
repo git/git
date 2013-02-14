@@ -18,6 +18,7 @@ code.  For Git in general, three rough rules are:
    judgement call, the decision based more on real world
    constraints people face than what the paper standard says.
 
+Make your code readable and sensible, and don't try to be clever.
 
 As for more concrete guidelines, just imitate the existing code
 (this is a good guideline, no matter which project you are
@@ -178,6 +179,47 @@ For C programs:
 
  - Use Git's gettext wrappers to make the user interface
    translatable. See "Marking strings for translation" in po/README.
+
+For Perl programs:
+
+ - Most of the C guidelines above apply.
+
+ - We try to support Perl 5.8 and later ("use Perl 5.008").
+
+ - use strict and use warnings are strongly preferred.
+
+ - Don't overuse statement modifiers unless using them makes the
+   result easier to follow.
+
+	... do something ...
+	do_this() unless (condition);
+        ... do something else ...
+
+   is more readable than:
+
+	... do something ...
+	unless (condition) {
+		do_this();
+	}
+        ... do something else ...
+
+   *only* when the condition is so rare that do_this() will be almost
+   always called.
+
+ - We try to avoid assignments inside "if ()" conditions.
+
+ - Learn and use Git.pm if you need that functionality.
+
+ - For Emacs, it's useful to put the following in
+   GIT_CHECKOUT/.dir-locals.el, assuming you use cperl-mode:
+
+    ;; note the first part is useful for C editing, too
+    ((nil . ((indent-tabs-mode . t)
+                  (tab-width . 8)
+                  (fill-column . 80)))
+     (cperl-mode . ((cperl-indent-level . 8)
+                    (cperl-extra-newline-before-brace . nil)
+                    (cperl-merge-trailing-else . t))))
 
 For Python scripts:
 
