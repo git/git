@@ -9,6 +9,7 @@ if [ $# -eq 0 ]; then
 fi
 OPTS_SPEC="\
 git subtree add   --prefix=<prefix> <commit>
+git subtree add   --prefix=<prefix> <repository> <commit>
 git subtree merge --prefix=<prefix> <commit>
 git subtree pull  --prefix=<prefix> <repository> <refspec...>
 git subtree push  --prefix=<prefix> <repository> <refspec...>
@@ -296,7 +297,7 @@ copy_commit()
 	# We're going to set some environment vars here, so
 	# do it in a subshell to get rid of them safely later
 	debug copy_commit "{$1}" "{$2}" "{$3}"
-	git log -1 --pretty=format:'%an%n%ae%n%ad%n%cn%n%ce%n%cd%n%s%n%n%b' "$1" |
+	git log -1 --pretty=format:'%an%n%ae%n%ad%n%cn%n%ce%n%cd%n%B' "$1" |
 	(
 		read GIT_AUTHOR_NAME
 		read GIT_AUTHOR_EMAIL
@@ -497,12 +498,23 @@ cmd_add()
 	ensure_clean
 	
 	if [ $# -eq 1 ]; then
-		"cmd_add_commit" "$@"
+	    git rev-parse -q --verify "$1^{commit}" >/dev/null ||
+	    die "'$1' does not refer to a commit"
+
+	    "cmd_add_commit" "$@"
 	elif [ $# -eq 2 ]; then
-		"cmd_add_repository" "$@"
+	    # Technically we could accept a refspec here but we're
+	    # just going to turn around and add FETCH_HEAD under the
+	    # specified directory.  Allowing a refspec might be
+	    # misleading because we won't do anything with any other
+	    # branches fetched via the refspec.
+	    git rev-parse -q --verify "$2^{commit}" >/dev/null ||
+	    die "'$2' does not refer to a commit"
+
+	    "cmd_add_repository" "$@"
 	else
 	    say "error: parameters were '$@'"
-	    die "Provide either a refspec or a repository and refspec."
+	    die "Provide either a commit or a repository and commit."
 	fi
 }
 
