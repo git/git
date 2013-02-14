@@ -96,15 +96,17 @@ int sign_buffer(struct strbuf *buffer, struct strbuf *signature, const char *sig
 /*
  * Run "gpg" to see if the payload matches the detached signature.
  * gpg_output, when set, receives the diagnostic output from GPG.
+ * gpg_status, when set, receives the status output from GPG.
  */
 int verify_signed_buffer(const char *payload, size_t payload_size,
 			 const char *signature, size_t signature_size,
 			 struct strbuf *gpg_output)
 {
 	struct child_process gpg;
-	const char *args_gpg[] = {NULL, "--verify", "FILE", "-", NULL};
+	const char *args_gpg[] = {NULL, "--status-fd=1", "--verify", "FILE", "-", NULL};
 	char path[PATH_MAX];
 	int fd, ret;
+	struct strbuf buf = STRBUF_INIT;
 
 	args_gpg[0] = gpg_program;
 	fd = git_mkstemp(path, PATH_MAX, ".git_vtag_tmpXXXXXX");
@@ -119,9 +121,10 @@ int verify_signed_buffer(const char *payload, size_t payload_size,
 	memset(&gpg, 0, sizeof(gpg));
 	gpg.argv = args_gpg;
 	gpg.in = -1;
+	gpg.out = -1;
 	if (gpg_output)
 		gpg.err = -1;
-	args_gpg[2] = path;
+	args_gpg[3] = path;
 	if (start_command(&gpg)) {
 		unlink(path);
 		return error("could not run gpg.");
@@ -134,9 +137,15 @@ int verify_signed_buffer(const char *payload, size_t payload_size,
 		strbuf_read(gpg_output, gpg.err, 0);
 		close(gpg.err);
 	}
+	strbuf_read(&buf, gpg.out, 0);
+	close(gpg.out);
+
 	ret = finish_command(&gpg);
 
 	unlink_or_warn(path);
+
+	ret |= !strstr(buf.buf, "\n[GNUPG:] GOODSIG ");
+	strbuf_release(&buf);
 
 	return ret;
 }
