@@ -526,7 +526,8 @@ static void show_line_to_eol(const char *line, int len, const char *reset)
 	       saw_cr_at_eol ? "\r" : "");
 }
 
-static void dump_sline(struct sline *sline, unsigned long cnt, int num_parent,
+static void dump_sline(struct sline *sline, const char *line_prefix,
+		       unsigned long cnt, int num_parent,
 		       int use_color, int result_deleted)
 {
 	unsigned long mark = (1UL<<num_parent);
@@ -582,7 +583,7 @@ static void dump_sline(struct sline *sline, unsigned long cnt, int num_parent,
 			rlines -= null_context;
 		}
 
-		fputs(c_frag, stdout);
+		printf("%s%s", line_prefix, c_frag);
 		for (i = 0; i <= num_parent; i++) putchar(combine_marker);
 		for (i = 0; i < num_parent; i++)
 			show_parent_lno(sline, lno, hunk_end, i, null_context);
@@ -614,7 +615,7 @@ static void dump_sline(struct sline *sline, unsigned long cnt, int num_parent,
 			struct sline *sl = &sline[lno++];
 			ll = (sl->flag & no_pre_delete) ? NULL : sl->lost_head;
 			while (ll) {
-				fputs(c_old, stdout);
+				printf("%s%s", line_prefix, c_old);
 				for (j = 0; j < num_parent; j++) {
 					if (ll->parent_map & (1UL<<j))
 						putchar('-');
@@ -627,6 +628,7 @@ static void dump_sline(struct sline *sline, unsigned long cnt, int num_parent,
 			if (cnt < lno)
 				break;
 			p_mask = 1;
+			fputs(line_prefix, stdout);
 			if (!(sl->flag & (mark-1))) {
 				/*
 				 * This sline was here to hang the
@@ -680,11 +682,13 @@ static void reuse_combine_diff(struct sline *sline, unsigned long cnt,
 static void dump_quoted_path(const char *head,
 			     const char *prefix,
 			     const char *path,
+			     const char *line_prefix,
 			     const char *c_meta, const char *c_reset)
 {
 	static struct strbuf buf = STRBUF_INIT;
 
 	strbuf_reset(&buf);
+	strbuf_addstr(&buf, line_prefix);
 	strbuf_addstr(&buf, c_meta);
 	strbuf_addstr(&buf, head);
 	quote_two_c_style(&buf, prefix, path, 0);
@@ -696,6 +700,7 @@ static void show_combined_header(struct combine_diff_path *elem,
 				 int num_parent,
 				 int dense,
 				 struct rev_info *rev,
+				 const char *line_prefix,
 				 int mode_differs,
 				 int show_file_header)
 {
@@ -714,8 +719,8 @@ static void show_combined_header(struct combine_diff_path *elem,
 		show_log(rev);
 
 	dump_quoted_path(dense ? "diff --cc " : "diff --combined ",
-			 "", elem->path, c_meta, c_reset);
-	printf("%sindex ", c_meta);
+			 "", elem->path, line_prefix, c_meta, c_reset);
+	printf("%s%sindex ", line_prefix, c_meta);
 	for (i = 0; i < num_parent; i++) {
 		abb = find_unique_abbrev(elem->parent[i].sha1,
 					 abbrev);
@@ -734,11 +739,12 @@ static void show_combined_header(struct combine_diff_path *elem,
 			    DIFF_STATUS_ADDED)
 				added = 0;
 		if (added)
-			printf("%snew file mode %06o",
-			       c_meta, elem->mode);
+			printf("%s%snew file mode %06o",
+			       line_prefix, c_meta, elem->mode);
 		else {
 			if (deleted)
-				printf("%sdeleted file ", c_meta);
+				printf("%s%sdeleted file ",
+				       line_prefix, c_meta);
 			printf("mode ");
 			for (i = 0; i < num_parent; i++) {
 				printf("%s%06o", i ? "," : "",
@@ -755,16 +761,16 @@ static void show_combined_header(struct combine_diff_path *elem,
 
 	if (added)
 		dump_quoted_path("--- ", "", "/dev/null",
-				 c_meta, c_reset);
+				 line_prefix, c_meta, c_reset);
 	else
 		dump_quoted_path("--- ", a_prefix, elem->path,
-				 c_meta, c_reset);
+				 line_prefix, c_meta, c_reset);
 	if (deleted)
 		dump_quoted_path("+++ ", "", "/dev/null",
-				 c_meta, c_reset);
+				 line_prefix, c_meta, c_reset);
 	else
 		dump_quoted_path("+++ ", b_prefix, elem->path,
-				 c_meta, c_reset);
+				 line_prefix, c_meta, c_reset);
 }
 
 static void show_patch_diff(struct combine_diff_path *elem, int num_parent,
@@ -782,6 +788,7 @@ static void show_patch_diff(struct combine_diff_path *elem, int num_parent,
 	struct userdiff_driver *userdiff;
 	struct userdiff_driver *textconv = NULL;
 	int is_binary;
+	const char *line_prefix = diff_line_prefix(opt);
 
 	context = opt->context;
 	userdiff = userdiff_find_by_path(elem->path);
@@ -901,7 +908,7 @@ static void show_patch_diff(struct combine_diff_path *elem, int num_parent,
 	}
 	if (is_binary) {
 		show_combined_header(elem, num_parent, dense, rev,
-				     mode_differs, 0);
+				     line_prefix, mode_differs, 0);
 		printf("Binary files differ\n");
 		free(result);
 		return;
@@ -962,8 +969,8 @@ static void show_patch_diff(struct combine_diff_path *elem, int num_parent,
 
 	if (show_hunks || mode_differs || working_tree_file) {
 		show_combined_header(elem, num_parent, dense, rev,
-				     mode_differs, 1);
-		dump_sline(sline, cnt, num_parent,
+				     line_prefix, mode_differs, 1);
+		dump_sline(sline, line_prefix, cnt, num_parent,
 			   opt->use_color, result_deleted);
 	}
 	free(result);
@@ -986,6 +993,7 @@ static void show_raw_diff(struct combine_diff_path *p, int num_parent, struct re
 {
 	struct diff_options *opt = &rev->diffopt;
 	int line_termination, inter_name_termination, i;
+	const char *line_prefix = diff_line_prefix(opt);
 
 	line_termination = opt->line_termination;
 	inter_name_termination = '\t';
@@ -995,7 +1003,10 @@ static void show_raw_diff(struct combine_diff_path *p, int num_parent, struct re
 	if (rev->loginfo && !rev->no_commit_id)
 		show_log(rev);
 
+
 	if (opt->output_format & DIFF_FORMAT_RAW) {
+		printf("%s", line_prefix);
+
 		/* As many colons as there are parents */
 		for (i = 0; i < num_parent; i++)
 			putchar(':');
@@ -1033,6 +1044,7 @@ void show_combined_diff(struct combine_diff_path *p,
 		       struct rev_info *rev)
 {
 	struct diff_options *opt = &rev->diffopt;
+
 	if (!p->len)
 		return;
 	if (opt->output_format & (DIFF_FORMAT_RAW |
@@ -1143,8 +1155,10 @@ void diff_tree_combined(const unsigned char *sha1,
 
 		if (show_log_first && i == 0) {
 			show_log(rev);
+
 			if (rev->verbose_header && opt->output_format)
-				putchar(opt->line_termination);
+				printf("%s%c", diff_line_prefix(opt),
+				       opt->line_termination);
 		}
 		diff_flush(&diffopts);
 	}
@@ -1172,7 +1186,8 @@ void diff_tree_combined(const unsigned char *sha1,
 
 		if (opt->output_format & DIFF_FORMAT_PATCH) {
 			if (needsep)
-				putchar(opt->line_termination);
+				printf("%s%c", diff_line_prefix(opt),
+				       opt->line_termination);
 			for (p = paths; p; p = p->next) {
 				if (p->len)
 					show_patch_diff(p, num_parent, dense,
