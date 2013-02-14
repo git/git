@@ -692,6 +692,7 @@ struct format_commit_context {
 	unsigned commit_signature_parsed:1;
 	struct {
 		char *gpg_output;
+		char *gpg_status;
 		char good_bad;
 		char *signer;
 	} signature;
@@ -881,13 +882,13 @@ static struct {
 	char result;
 	const char *check;
 } signature_check[] = {
-	{ 'G', ": Good signature from " },
-	{ 'B', ": BAD signature from " },
+	{ 'G', "\n[GNUPG:] GOODSIG " },
+	{ 'B', "\n[GNUPG:] BADSIG " },
 };
 
 static void parse_signature_lines(struct format_commit_context *ctx)
 {
-	const char *buf = ctx->signature.gpg_output;
+	const char *buf = ctx->signature.gpg_status;
 	int i;
 
 	for (i = 0; i < ARRAY_SIZE(signature_check); i++) {
@@ -896,7 +897,7 @@ static void parse_signature_lines(struct format_commit_context *ctx)
 		if (!found)
 			continue;
 		ctx->signature.good_bad = signature_check[i].result;
-		found += strlen(signature_check[i].check);
+		found += strlen(signature_check[i].check)+17;
 		next = strchrnul(found, '\n');
 		ctx->signature.signer = xmemdupz(found, next - found);
 		break;
@@ -908,6 +909,7 @@ static void parse_commit_signature(struct format_commit_context *ctx)
 	struct strbuf payload = STRBUF_INIT;
 	struct strbuf signature = STRBUF_INIT;
 	struct strbuf gpg_output = STRBUF_INIT;
+	struct strbuf gpg_status = STRBUF_INIT;
 	int status;
 
 	ctx->commit_signature_parsed = 1;
@@ -917,13 +919,15 @@ static void parse_commit_signature(struct format_commit_context *ctx)
 		goto out;
 	status = verify_signed_buffer(payload.buf, payload.len,
 				      signature.buf, signature.len,
-				      &gpg_output, NULL);
+				      &gpg_output, &gpg_status);
 	if (status && !gpg_output.len)
 		goto out;
 	ctx->signature.gpg_output = strbuf_detach(&gpg_output, NULL);
+	ctx->signature.gpg_status = strbuf_detach(&gpg_status, NULL);
 	parse_signature_lines(ctx);
 
  out:
+	strbuf_release(&gpg_status);
 	strbuf_release(&gpg_output);
 	strbuf_release(&payload);
 	strbuf_release(&signature);
