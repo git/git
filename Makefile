@@ -480,9 +480,38 @@ SCRIPT_PERL += git-svn.perl
 SCRIPT_PYTHON += git-remote-testpy.py
 SCRIPT_PYTHON += git-p4.py
 
-SCRIPTS = $(patsubst %.sh,%,$(SCRIPT_SH)) \
-	  $(patsubst %.perl,%,$(SCRIPT_PERL)) \
-	  $(patsubst %.py,%,$(SCRIPT_PYTHON)) \
+# Generated files for scripts
+SCRIPT_SH_GEN = $(patsubst %.sh,%,$(SCRIPT_SH))
+SCRIPT_PERL_GEN = $(patsubst %.perl,%,$(SCRIPT_PERL))
+SCRIPT_PYTHON_GEN = $(patsubst %.py,%,$(SCRIPT_PYTHON))
+
+# Individual rules to allow e.g.
+# "make -C ../.. SCRIPT_PERL=contrib/foo/bar.perl build-perl-script"
+# from subdirectories like contrib/*/
+.PHONY: build-perl-script build-sh-script build-python-script
+build-perl-script: $(SCRIPT_PERL_GEN)
+build-sh-script: $(SCRIPT_SH_GEN)
+build-python-script: $(SCRIPT_PYTHON_GEN)
+
+.PHONY: install-perl-script install-sh-script install-python-script
+install-sh-script: $(SCRIPT_SH_GEN)
+	$(INSTALL) $(SCRIPT_SH_GEN) '$(DESTDIR_SQ)$(gitexec_instdir_SQ)'
+install-perl-script: $(SCRIPT_PERL_GEN)
+	$(INSTALL) $(SCRIPT_PERL_GEN) '$(DESTDIR_SQ)$(gitexec_instdir_SQ)'
+install-python-script: $(SCRIPT_PYTHON_GEN)
+	$(INSTALL) $(SCRIPT_PYTHON_GEN) '$(DESTDIR_SQ)$(gitexec_instdir_SQ)'
+
+.PHONY: clean-perl-script clean-sh-script clean-python-script
+clean-sh-script:
+	$(RM) $(SCRIPT_SH_GEN)
+clean-perl-script:
+	$(RM) $(SCRIPT_PERL_GEN)
+clean-python-script:
+	$(RM) $(SCRIPT_PYTHON_GEN)
+
+SCRIPTS = $(SCRIPT_SH_GEN) \
+	  $(SCRIPT_PERL_GEN) \
+	  $(SCRIPT_PYTHON_GEN) \
 	  git-instaweb
 
 ETAGS_TARGET = TAGS
