@@ -1057,6 +1057,9 @@ extern const char *parse_feature_value(const char *feature_list, const char *fea
 
 extern struct packed_git *parse_pack_index(unsigned char *sha1, const char *idx_path);
 
+/* A hook for count-objects to report invalid files in pack directory */
+extern void (*report_garbage)(const char *desc, const char *path);
+
 extern void prepare_packed_git(void);
 extern void reprepare_packed_git(void);
 extern void install_packed_git(struct packed_git *pack);

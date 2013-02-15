@@ -9,6 +9,14 @@
 #include "builtin.h"
 #include "parse-options.h"
 
+static unsigned long garbage;
+
+static void real_report_garbage(const char *desc, const char *path)
+{
+	warning("%s: %s", desc, path);
+	garbage++;
+}
+
 static void count_objects(DIR *d, char *path, int len, int verbose,
 			  unsigned long *loose,
 			  off_t *loose_size,
@@ -76,7 +84,7 @@ int cmd_count_objects(int argc, const char **argv, const char *prefix)
 	const char *objdir = get_object_directory();
 	int len = strlen(objdir);
 	char *path = xmalloc(len + 50);
-	unsigned long loose = 0, packed = 0, packed_loose = 0, garbage = 0;
+	unsigned long loose = 0, packed = 0, packed_loose = 0;
 	off_t loose_size = 0;
 	struct option opts[] = {
 		OPT__VERBOSE(&verbose, N_("be verbose")),
@@ -87,6 +95,8 @@ int cmd_count_objects(int argc, const char **argv, const char *prefix)
 	/* we do not take arguments other than flags for now */
 	if (argc)
 		usage_with_options(count_objects_usage, opts);
+	if (verbose)
+		report_garbage = real_report_garbage;
 	memcpy(path, objdir, len);
 	if (len && objdir[len-1] != '/')
 		path[len++] = '/';

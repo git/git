@@ -21,6 +21,7 @@
 #include "sha1-lookup.h"
 #include "bulk-checkin.h"
 #include "streaming.h"
+#include "dir.h"
 
 #ifndef O_NOATIME
 #if defined(__linux__) && (defined(__i386__) || defined(__PPC__))
@@ -1000,6 +1001,63 @@ void install_packed_git(struct packed_git *pack)
 	packed_git = pack;
 }
 
+void (*report_garbage)(const char *desc, const char *path);
+
+static void report_helper(const struct string_list *list,
+			  int seen_bits, int first, int last)
+{
+	const char *msg;
+	switch (seen_bits) {
+	case 0:
+		msg = "no corresponding .idx nor .pack";
+		break;
+	case 1:
+		msg = "no corresponding .idx";
+		break;
+	case 2:
+		msg = "no corresponding .pack";
+		break;
+	default:
+		return;
+	}
+	for (; first < last; first++)
+		report_garbage(msg, list->items[first].string);
+}
+
+static void report_pack_garbage(struct string_list *list)
+{
+	int i, baselen = -1, first = 0, seen_bits = 0;
+
+	if (!report_garbage)
+		return;
+
+	sort_string_list(list);
+
+	for (i = 0; i < list->nr; i++) {
+		const char *path = list->items[i].string;
+		if (baselen != -1 &&
+		    strncmp(path, list->items[first].string, baselen)) {
+			report_helper(list, seen_bits, first, i);
+			baselen = -1;
+			seen_bits = 0;
+		}
+		if (baselen == -1) {
+			const char *dot = strrchr(path, '.');
+			if (!dot) {
+				report_garbage("garbage found", path);
+				continue;
+			}
+			baselen = dot - path + 1;
+			first = i;
+		}
+		if (!strcmp(path + baselen, "pack"))
+			seen_bits |= 1;
+		else if (!strcmp(path + baselen, "idx"))
+			seen_bits |= 2;
+	}
+	report_helper(list, seen_bits, first, list->nr);
+}
+
 static void prepare_packed_git_one(char *objdir, int local)
 {
 	/* Ensure that this buffer is large enough so that we can
@@ -1009,6 +1067,7 @@ static void prepare_packed_git_one(char *objdir, int local)
 	int len;
 	DIR *dir;
 	struct dirent *de;
+	struct string_list garbage = STRING_LIST_INIT_DUP;
 
 	sprintf(path, "%s/pack", objdir);
 	len = strlen(path);
@@ -1024,7 +1083,17 @@ static void prepare_packed_git_one(char *objdir, int local)
 		int namelen = strlen(de->d_name);
 		struct packed_git *p;
 
-		if (len + namelen + 1 > sizeof(path))
+		if (len + namelen + 1 > sizeof(path)) {
+			if (report_garbage) {
+				struct strbuf sb = STRBUF_INIT;
+				strbuf_addf(&sb, "%.*s/%s", len - 1, path, de->d_name);
+				report_garbage("path too long", sb.buf);
+				strbuf_release(&sb);
+			}
+			continue;
+		}
+
+		if (is_dot_or_dotdot(de->d_name))
 			continue;
 
 		strcpy(path + len, de->d_name);
@@ -1043,8 +1112,20 @@ static void prepare_packed_git_one(char *objdir, int local)
 			    (p = add_packed_git(path, len + namelen, local)) != NULL)
 				install_packed_git(p);
 		}
+
+		if (!report_garbage)
+			continue;
+
+		if (has_extension(de->d_name, ".idx") ||
+		    has_extension(de->d_name, ".pack") ||
+		    has_extension(de->d_name, ".keep"))
+			string_list_append(&garbage, path);
+		else
+			report_garbage("garbage found", path);
 	}
 	closedir(dir);
+	report_pack_garbage(&garbage);
+	string_list_clear(&garbage, 0);
 }
 
 static int sort_pack(const void *a_, const void *b_)
