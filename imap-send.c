@@ -266,12 +266,17 @@ static void socket_perror(const char *func, struct imap_socket *sock, int ret)
 	}
 }
 
+#ifdef NO_OPENSSL
 static int ssl_socket_connect(struct imap_socket *sock, int use_tls_only, int verify)
 {
-#ifdef NO_OPENSSL
 	fprintf(stderr, "SSL requested but SSL support not compiled in\n");
 	return -1;
+}
+
 #else
+
+static int ssl_socket_connect(struct imap_socket *sock, int use_tls_only, int verify)
+{
 #if (OPENSSL_VERSION_NUMBER >= 0x10000000L)
 	const SSL_METHOD *meth;
 #else
@@ -323,8 +328,8 @@ static int ssl_socket_connect(struct imap_socket *sock, int use_tls_only, int ve
 	}
 
 	return 0;
-#endif
 }
+#endif
 
 static int socket_read(struct imap_socket *sock, char *buf, int len)
 {
