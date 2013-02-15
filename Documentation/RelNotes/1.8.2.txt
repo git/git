@@ -217,6 +217,13 @@ Performance, Internal Implementation, etc.
    these implementations can reliably update.  This can be used to
    avoid excessive revalidation of contents.
 
+ * Some platforms ship with old version of expat where xmlparse.h
+   needs to be included instead of expat.h; the build procedure has
+   been taught about this.
+
+ * "make clean" on platforms that cannot compute header dependencies
+   on the fly did not work with implementations of "rm" that do not
+   like an empty argument list.
 
 Also contains minor documentation updates and code clean-ups.
 
@@ -391,6 +398,11 @@ details).
 
  * Command line completion code was inadvertently made incompatible with
    older versions of bash by using a newer array notation.
+
+ * "git push" was taught to refuse updating the branch that is
+   currently checked out long time ago, but the user manual was left
+   stale.
+   (merge d9be248 wk/man-deny-current-branch-is-default-these-days later to maint).
 
  * Some shells do not behave correctly when IFS is unset; work it
    around by explicitly setting it to the default value.
