@@ -1779,7 +1779,7 @@ __git_config_get_set_variables ()
 	while [ $c -gt 1 ]; do
 		word="${words[c]}"
 		case "$word" in
-		--global|--system|--file=*)
+		--system|--global|--local|--file=*)
 			config_file="$word"
 			break
 			;;
@@ -1885,7 +1885,7 @@ _git_config ()
 	case "$cur" in
 	--*)
 		__gitcomp "
-			--global --system --file=
+			--system --global --local --file=
 			--list --replace-all
 			--get --get-all --get-regexp
 			--add --unset --unset-all
