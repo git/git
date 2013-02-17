@@ -156,3 +156,20 @@ diff.tool::
 	that a corresponding difftool.<tool>.cmd variable is defined.
 
 include::mergetools-diff.txt[]
+
+diff.algorithm::
+	Choose a diff algorithm.  The variants are as follows:
++
+--
+`default`, `myers`;;
+	The basic greedy diff algorithm. Currently, this is the default.
+`minimal`;;
+	Spend extra time to make sure the smallest possible diff is
+	produced.
+`patience`;;
+	Use "patience diff" algorithm when generating patches.
+`histogram`;;
+	This algorithm extends the patience algorithm to "support
+	low-occurrence common elements".
+--
++

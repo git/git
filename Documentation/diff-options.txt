@@ -55,6 +55,26 @@ endif::git-format-patch[]
 --histogram::
 	Generate a diff using the "histogram diff" algorithm.
 
+--diff-algorithm={patience|minimal|histogram|myers}::
+	Choose a diff algorithm. The variants are as follows:
++
+--
+`default`, `myers`;;
+	The basic greedy diff algorithm. Currently, this is the default.
+`minimal`;;
+	Spend extra time to make sure the smallest possible diff is
+	produced.
+`patience`;;
+	Use "patience diff" algorithm when generating patches.
+`histogram`;;
+	This algorithm extends the patience algorithm to "support
+	low-occurrence common elements".
+--
++
+For instance, if you configured diff.algorithm variable to a
+non-default value and want to use the default one, then you
+have to use `--diff-algorithm=default` option.
+
 --stat[=<width>[,<name-width>[,<count>]]]::
 	Generate a diffstat. By default, as much space as necessary
 	will be used for the filename part, and the rest for the graph
