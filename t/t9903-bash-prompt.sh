@@ -360,11 +360,47 @@ test_expect_success 'prompt - dirty status indicator - before root commit' '
 	test_cmp expected "$actual"
 '
 
-test_expect_success 'prompt - dirty status indicator - disabled by config' '
+test_expect_success 'prompt - dirty status indicator - shell variable unset with config disabled' '
 	printf " (master)" > expected &&
 	echo "dirty" > file &&
 	test_when_finished "git reset --hard" &&
 	test_config bash.showDirtyState false &&
+	(
+		sane_unset GIT_PS1_SHOWDIRTYSTATE &&
+		__git_ps1 > "$actual"
+	) &&
+	test_cmp expected "$actual"
+'
+
+test_expect_success 'prompt - dirty status indicator - shell variable unset with config enabled' '
+	printf " (master)" > expected &&
+	echo "dirty" > file &&
+	test_when_finished "git reset --hard" &&
+	test_config bash.showDirtyState true &&
+	(
+		sane_unset GIT_PS1_SHOWDIRTYSTATE &&
+		__git_ps1 > "$actual"
+	) &&
+	test_cmp expected "$actual"
+'
+
+test_expect_success 'prompt - dirty status indicator - shell variable set with config disabled' '
+	printf " (master)" > expected &&
+	echo "dirty" > file &&
+	test_when_finished "git reset --hard" &&
+	test_config bash.showDirtyState false &&
+	(
+		GIT_PS1_SHOWDIRTYSTATE=y &&
+		__git_ps1 > "$actual"
+	) &&
+	test_cmp expected "$actual"
+'
+
+test_expect_success 'prompt - dirty status indicator - shell variable set with config enabled' '
+	printf " (master *)" > expected &&
+	echo "dirty" > file &&
+	test_when_finished "git reset --hard" &&
+	test_config bash.showDirtyState true &&
 	(
 		GIT_PS1_SHOWDIRTYSTATE=y &&
 		__git_ps1 > "$actual"
@@ -430,6 +466,46 @@ test_expect_success 'prompt - untracked files status indicator - no untracked fi
 
 test_expect_success 'prompt - untracked files status indicator - untracked files' '
 	printf " (master %%)" > expected &&
+	(
+		GIT_PS1_SHOWUNTRACKEDFILES=y &&
+		__git_ps1 > "$actual"
+	) &&
+	test_cmp expected "$actual"
+'
+
+test_expect_success 'prompt - untracked files status indicator - shell variable unset with config disabled' '
+	printf " (master)" > expected &&
+	test_config bash.showUntrackedFiles false &&
+	(
+		sane_unset GIT_PS1_SHOWUNTRACKEDFILES &&
+		__git_ps1 > "$actual"
+	) &&
+	test_cmp expected "$actual"
+'
+
+test_expect_success 'prompt - untracked files status indicator - shell variable unset with config enabled' '
+	printf " (master)" > expected &&
+	test_config bash.showUntrackedFiles true &&
+	(
+		sane_unset GIT_PS1_SHOWUNTRACKEDFILES &&
+		__git_ps1 > "$actual"
+	) &&
+	test_cmp expected "$actual"
+'
+
+test_expect_success 'prompt - untracked files status indicator - shell variable set with config disabled' '
+	printf " (master)" > expected &&
+	test_config bash.showUntrackedFiles false &&
+	(
+		GIT_PS1_SHOWUNTRACKEDFILES=y &&
+		__git_ps1 > "$actual"
+	) &&
+	test_cmp expected "$actual"
+'
+
+test_expect_success 'prompt - untracked files status indicator - shell variable set with config enabled' '
+	printf " (master %%)" > expected &&
+	test_config bash.showUntrackedFiles true &&
 	(
 		GIT_PS1_SHOWUNTRACKEDFILES=y &&
 		__git_ps1 > "$actual"
