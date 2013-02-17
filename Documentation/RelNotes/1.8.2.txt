@@ -95,6 +95,10 @@ UI, Workflows & Features
  * "git commit" can be told to use --cleanup=whitespace by setting the
    configuration variable commit.cleanup to 'whitespace'.
 
+ * "git diff" and other Porcelain commands can be told to use a
+   non-standard algorithm by setting diff.algorithm configuration
+   variable.
+
  * "git fetch --mirror" and fetch that uses other forms of refspec
    with wildcard used to attempt to update a symbolic ref that match
    the wildcard on the receiving end, which made little sense (the
@@ -117,6 +121,10 @@ UI, Workflows & Features
 
  * "git log --cc --graph" now shows the combined diff output with the
    ancestry graph.
+
+ * "git log --grep=<pattern>" honors i18n.logoutputencoding to look
+   for the pattern after fixing the log message to the specified
+   encoding.
 
  * "git mergetool" and "git difftool" learned to list the available
    tool backends in a more consistent manner.
@@ -153,6 +161,11 @@ UI, Workflows & Features
  * "git submodule" started learning a new mode to integrate with the
    tip of the remote branch (as opposed to integrating with the commit
    recorded in the superproject's gitlink).
+
+ * "git upload-pack" which implements the service "ls-remote" and
+   "fetch" talk to can be told to hide ref hierarchies the server
+   side internally uses (and that clients have no business learning
+   about) with transfer.hiderefs configuration.
 
 
 Foreign Interface
