@@ -126,4 +126,16 @@ test_expect_success 'Report match with --exit-code' '
 	test_cmp expect actual
 '
 
+for configsection in transfer uploadpack
+do
+	test_expect_success "Hide some refs with $configsection.hiderefs" '
+		test_config $configsection.hiderefs refs/tags &&
+		git ls-remote . >actual &&
+		test_unconfig $configsection.hiderefs &&
+		git ls-remote . |
+		sed -e "/	refs\/tags\//d" >expect &&
+		test_cmp expect actual
+	'
+done
+
 test_done

@@ -147,4 +147,7 @@ int update_ref(const char *action, const char *refname,
 		const unsigned char *sha1, const unsigned char *oldval,
 		int flags, enum action_on_err onerr);
 
+extern int parse_hide_refs_config(const char *var, const char *value, const char *);
+extern int ref_is_hidden(const char *);
+
 #endif /* REFS_H */
