@@ -931,11 +931,20 @@ The linkgit:git-archive[1] command can create a tar or zip archive from
 any version of a project; for example:
 
 -------------------------------------------------
-$ git archive --format=tar --prefix=project/ HEAD | gzip >latest.tar.gz
+$ git archive -o latest.tar.gz --prefix=project/ HEAD
 -------------------------------------------------
 
-will use HEAD to produce a tar archive in which each filename is
-preceded by "project/".
+will use HEAD to produce a gzipped tar archive in which each filename
+is preceded by `project/`.  The output file format is inferred from
+the output file extension if possible, see linkgit:git-archive[1] for
+details.
+
+Versions of Git older than 1.7.7 don't know about the 'tar.gz' format,
+you'll need to use gzip explicitly:
+
+-------------------------------------------------
+$ git archive --format=tar --prefix=project/ HEAD | gzip >latest.tar.gz
+-------------------------------------------------
 
 If you're releasing a new version of a software project, you may want
 to simultaneously make a changelog to include in the release
@@ -991,9 +1000,16 @@ Developing with Git
 Telling Git your name
 ---------------------
 
-Before creating any commits, you should introduce yourself to Git.  The
-easiest way to do so is to make sure the following lines appear in a
-file named .gitconfig in your home directory:
+Before creating any commits, you should introduce yourself to Git.
+The easiest way to do so is to use linkgit:git-config[1]:
+
+------------------------------------------------
+$ git config --global user.name 'Your Name Comes Here'
+$ git config --global user.email 'you@yourdomain.example.com'
+------------------------------------------------
+
+Which will add the following to a file named `.gitconfig` in your
+home directory:
 
 ------------------------------------------------
 [user]
@@ -1001,8 +1017,9 @@ file named .gitconfig in your home directory:
 	email = you@yourdomain.example.com
 ------------------------------------------------
 
-(See the "CONFIGURATION FILE" section of linkgit:git-config[1] for
-details on the configuration file.)
+See the "CONFIGURATION FILE" section of linkgit:git-config[1] for
+details on the configuration file.  The file is plain text, so you can
+also edit it with your favorite editor.
 
 
 [[creating-a-new-repository]]
@@ -1993,16 +2010,21 @@ See the description ofthe receive.denyCurrentBranch option
 in linkgit:git-config[1] for details.
 
 As with `git fetch`, you may also set up configuration options to
-save typing; so, for example, after
+save typing; so, for example:
 
 -------------------------------------------------
-$ cat >>.git/config <<EOF
+$ git remote add public-repo ssh://yourserver.com/~you/proj.git
+-------------------------------------------------
+
+adds the following to `.git/config`:
+
+-------------------------------------------------
 [remote "public-repo"]
-	url = ssh://yourserver.com/~you/proj.git
-EOF
+	url = yourserver.com:proj.git
+	fetch = +refs/heads/*:refs/remotes/example/*
 -------------------------------------------------
 
-you should be able to perform the above push with just
+which lets you do the same push with just
 
 -------------------------------------------------
 $ git push public-repo master
@@ -2039,6 +2061,13 @@ branch name with a plus sign:
 
 -------------------------------------------------
 $ git push ssh://yourserver.com/~you/proj.git +master
+-------------------------------------------------
+
+Note the addition of the `+` sign.  Alternatively, you can use the
+`-f` flag to force the remote update, as in:
+
+-------------------------------------------------
+$ git push -f ssh://yourserver.com/~you/proj.git master
 -------------------------------------------------
 
 Normally whenever a branch head in a public repository is modified, it
@@ -2845,48 +2874,34 @@ branch.master.merge=refs/heads/master
 
 If there are other repositories that you also use frequently, you can
 create similar configuration options to save typing; for example,
-after
 
 -------------------------------------------------
-$ git config remote.example.url git://example.com/proj.git
+$ git remote add example git://example.com/proj.git
 -------------------------------------------------
 
-then the following two commands will do the same thing:
+adds the following to `.git/config`:
 
 -------------------------------------------------
-$ git fetch git://example.com/proj.git master:refs/remotes/example/master
-$ git fetch example master:refs/remotes/example/master
+[remote "example"]
+	url = git://example.com/proj.git
+	fetch = +refs/heads/*:refs/remotes/example/*
 -------------------------------------------------
 
-Even better, if you add one more option:
+Also note that the above configuration can be performed by directly
+editing the file `.git/config` instead of using linkgit:git-remote[1].
+
+After configuring the remote, the following three commands will do the
+same thing:
 
 -------------------------------------------------
-$ git config remote.example.fetch master:refs/remotes/example/master
--------------------------------------------------
-
-then the following commands will all do the same thing:
-
--------------------------------------------------
-$ git fetch git://example.com/proj.git master:refs/remotes/example/master
-$ git fetch example master:refs/remotes/example/master
+$ git fetch git://example.com/proj.git +refs/heads/*:refs/remotes/example/*
+$ git fetch example +refs/heads/*:refs/remotes/example/*
 $ git fetch example
 -------------------------------------------------
 
-You can also add a "+" to force the update each time:
-
--------------------------------------------------
-$ git config remote.example.fetch +master:refs/remotes/example/master
--------------------------------------------------
-
-Don't do this unless you're sure you won't mind "git fetch" possibly
-throwing away commits on 'example/master'.
-
-Also note that all of the above configuration can be performed by
-directly editing the file .git/config instead of using
-linkgit:git-config[1].
-
 See linkgit:git-config[1] for more details on the configuration
-options mentioned above.
+options mentioned above and linkgit:git-fetch[1] for more details on
+the refspec syntax.
 
 
 [[git-concepts]]
