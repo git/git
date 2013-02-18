@@ -991,9 +991,16 @@ Developing with git
 Telling git your name
 ---------------------
 
-Before creating any commits, you should introduce yourself to git.  The
-easiest way to do so is to make sure the following lines appear in a
-file named .gitconfig in your home directory:
+Before creating any commits, you should introduce yourself to Git.
+The easiest way to do so is to use linkgit:git-config[1]:
+
+------------------------------------------------
+$ git config --global user.name 'Your Name Comes Here'
+$ git config --global user.email 'you@yourdomain.example.com'
+------------------------------------------------
+
+Which will add the following to a file named `.gitconfig` in your
+home directory:
 
 ------------------------------------------------
 [user]
@@ -1001,8 +1008,9 @@ file named .gitconfig in your home directory:
 	email = you@yourdomain.example.com
 ------------------------------------------------
 
-(See the "CONFIGURATION FILE" section of linkgit:git-config[1] for
-details on the configuration file.)
+See the "CONFIGURATION FILE" section of linkgit:git-config[1] for
+details on the configuration file.  The file is plain text, so you can
+also edit it with your favorite editor.
 
 
 [[creating-a-new-repository]]
