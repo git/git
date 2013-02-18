@@ -2045,6 +2045,13 @@ branch name with a plus sign:
 $ git push ssh://yourserver.com/~you/proj.git +master
 -------------------------------------------------
 
+Note the addition of the `+` sign.  Alternatively, you can use the
+`-f` flag to force the remote update, as in:
+
+-------------------------------------------------
+$ git push -f ssh://yourserver.com/~you/proj.git master
+-------------------------------------------------
+
 Normally whenever a branch head in a public repository is modified, it
 is modified to point to a descendant of the commit that it pointed to
 before.  By forcing a push in this situation, you break that convention.
