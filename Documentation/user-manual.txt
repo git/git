@@ -1992,16 +1992,21 @@ will not be updated by the push.  This may lead to unexpected results if
 the branch you push to is the currently checked-out branch!
 
 As with `git fetch`, you may also set up configuration options to
-save typing; so, for example, after
+save typing; so, for example:
 
 -------------------------------------------------
-$ cat >>.git/config <<EOF
+$ git remote add public-repo ssh://yourserver.com/~you/proj.git
+-------------------------------------------------
+
+adds the following to `.git/config`:
+
+-------------------------------------------------
 [remote "public-repo"]
-	url = ssh://yourserver.com/~you/proj.git
-EOF
+	url = yourserver.com:proj.git
+	fetch = +refs/heads/*:refs/remotes/example/*
 -------------------------------------------------
 
-you should be able to perform the above push with just
+which lets you do the same push with just
 
 -------------------------------------------------
 $ git push public-repo master
