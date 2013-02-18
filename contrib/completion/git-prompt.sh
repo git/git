@@ -320,26 +320,25 @@ __git_ps1 ()
 				b="GIT_DIR!"
 			fi
 		elif [ "true" = "$(git rev-parse --is-inside-work-tree 2>/dev/null)" ]; then
-			if [ -n "${GIT_PS1_SHOWDIRTYSTATE-}" ]; then
-				if [ "$(git config --bool bash.showDirtyState)" != "false" ]; then
-					git diff --no-ext-diff --quiet --exit-code || w="*"
-					if git rev-parse --quiet --verify HEAD >/dev/null; then
-						git diff-index --cached --quiet HEAD -- || i="+"
-					else
-						i="#"
-					fi
+			if [ -n "${GIT_PS1_SHOWDIRTYSTATE-}" ] &&
+			   [ "$(git config --bool bash.showDirtyState)" != "false" ]
+			then
+				git diff --no-ext-diff --quiet --exit-code || w="*"
+				if git rev-parse --quiet --verify HEAD >/dev/null; then
+					git diff-index --cached --quiet HEAD -- || i="+"
+				else
+					i="#"
 				fi
 			fi
 			if [ -n "${GIT_PS1_SHOWSTASHSTATE-}" ]; then
 				git rev-parse --verify refs/stash >/dev/null 2>&1 && s="$"
 			fi
 
-			if [ -n "${GIT_PS1_SHOWUNTRACKEDFILES-}" ]; then
-				if [ "$(git config --bool bash.showUntrackedFiles)" != "false" ]; then
-					if [ -n "$(git ls-files --others --exclude-standard)" ]; then
-						u="%"
-					fi
-				fi
+			if [ -n "${GIT_PS1_SHOWUNTRACKEDFILES-}" ] &&
+			   [ "$(git config --bool bash.showUntrackedFiles)" != "false" ] &&
+			   [ -n "$(git ls-files --others --exclude-standard)" ]
+			then
+				u="%"
 			fi
 
 			if [ -n "${GIT_PS1_SHOWUPSTREAM-}" ]; then
