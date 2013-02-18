@@ -4,8 +4,8 @@ Git v1.8.2 Release Notes
 Backward compatibility notes
 ----------------------------
 
-In the upcoming major release (tentatively called 1.8.2), we will
-change the behavior of the "git push" command.
+In the next major release Git 2.0 (not *this* one), we will change the
+behavior of the "git push" command.
 
 When "git push [$there]" does not say what to push, we have used the
 traditional "matching" semantics so far (all your branches were sent
@@ -21,6 +21,18 @@ you are pushing points at a commit that is a decendant of a commit
 that the old tag v1.2.3 points at.  This was found to be error prone
 and starting with this release, any attempt to update an existing
 ref under refs/tags/ hierarchy will fail, without "--force".
+
+When "git add -u" and "git add -A", that does not specify what paths
+to add on the command line, is run from inside a subdirectory, the
+scope of the operation has always been limited to the subirectory.
+Many users found this counter-intuitive, given that "git commit -a"
+and other commands operate on the entire tree regardless of where you
+are. In this release, these commands give warning in such a case and
+encourage the user to say "git add -u/-A ." instead when restricting
+the scope to the current directory. At Git 2.0 (not *this* one), we
+plan to change these commands without pathspec to operate on the
+entire tree, and training your fingers to type "." will protect you
+against the future change.
 
 
 Updates since v1.8.1
