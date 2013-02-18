@@ -931,11 +931,20 @@ The linkgit:git-archive[1] command can create a tar or zip archive from
 any version of a project; for example:
 
 -------------------------------------------------
-$ git archive --format=tar --prefix=project/ HEAD | gzip >latest.tar.gz
+$ git archive -o latest.tar.gz --prefix=project/ HEAD
 -------------------------------------------------
 
-will use HEAD to produce a tar archive in which each filename is
-preceded by "project/".
+will use HEAD to produce a gzipped tar archive in which each filename
+is preceded by `project/`.  The output file format is inferred from
+the output file extension if possible, see linkgit:git-archive[1] for
+details.
+
+Versions of Git older than 1.7.7 don't know about the 'tar.gz' format,
+you'll need to use gzip explicitly:
+
+-------------------------------------------------
+$ git archive --format=tar --prefix=project/ HEAD | gzip >latest.tar.gz
+-------------------------------------------------
 
 If you're releasing a new version of a software project, you may want
 to simultaneously make a changelog to include in the release
