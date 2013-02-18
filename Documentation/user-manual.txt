@@ -1988,7 +1988,7 @@ Note that the target of a "push" is normally a
 <<def_bare_repository,bare>> repository.  You can also push to a
 repository that has a checked-out working tree, but a push to update the
 currently checked-out branch is denied by default to prevent confusion.
-See the description ofthe receive.denyCurrentBranch option
+See the description of the receive.denyCurrentBranch option
 in linkgit:git-config[1] for details.
 
 As with `git fetch`, you may also set up configuration options to
