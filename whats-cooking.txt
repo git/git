@@ -1,19 +1,19 @@
 To: git@vger.kernel.org
 Bcc: lwn@lwn.net
-Subject: What's cooking in git.git (Feb 2013, #06; Thu, 14)
-X-master-at: 02339dd5295d7add78ab409300b985e5888af0ee
-X-next-at: ffa3c6506ad4ad51b33a54dee5c10a07cee019f0
+Subject: What's cooking in git.git (Feb 2013, #07; Sun, 17)
+X-master-at: 004825d314db4ba3f34ef499e3522ef72792d896
+X-next-at: 838f5639caf00f6b9b0bfab81f201c6402762bf9
 
-What's cooking in git.git (Feb 2013, #06; Thu, 14)
+What's cooking in git.git (Feb 2013, #07; Sun, 17)
 --------------------------------------------------
 
 Here are the topics that have been cooking.  Commits prefixed with
 '-' are only in 'pu' (proposed updates) while commits prefixed with
 '+' are in 'next'.
 
-A preview of the upcoming release 1.8.2-rc0 is expected to be tagged
-late this week.  At around that time, we may want to discard
-long-stalled topics that did not see activities as well.
+The tip of the 'master' is at 1.8.2-rc0; new topics that are not
+listed in this report are likely to be too late for the upcoming
+release.
 
 You can find the changes described here in the integration branches of the
 repositories listed at
@@ -21,95 +21,80 @@ repositories listed at
     http://git-blame.blogspot.com/p/git-public-repositories.html
 
 --------------------------------------------------
-[Graduated to "master"]
+[New Topics]
 
-* al/mergetool-printf-fix (2013-02-10) 2 commits
-  (merged to 'next' on 2013-02-11 at 5f9bc4e)
- + difftool--helper: fix printf usage
- + git-mergetool: print filename when it contains %
+* da/difftool-fixes (2013-02-17) 5 commits
+ - [DONTMERGE] expect reroll $gmane/216376
+ - t7800: "defaults" is no longer a builtin tool name
+ - t7800: modernize tests
+ - t7800: Update copyright notice
+ - difftool: silence uninitialized variable warning
 
-
-* bw/get-tz-offset-perl (2013-02-09) 3 commits
-  (merged to 'next' on 2013-02-11 at b9c8893)
- + cvsimport: format commit timestamp ourselves without using strftime
- + perl/Git.pm: fix get_tz_offset to properly handle DST boundary cases
- + Move Git::SVN::get_tz to Git::get_tz_offset
-
- "git-cvsimport" and "git-svn" miscomputed TZ offset at DST boundary.
+ Minor maintenance updates to difftool, and updates to its tests.
+ Expecting a reroll.
+ $gmane/216376
 
 
-* dg/subtree-fixes (2013-02-05) 6 commits
-  (merged to 'next' on 2013-02-09 at 8f19ebe)
- + contrib/subtree: make the manual directory if needed
- + contrib/subtree: honor DESTDIR
- + contrib/subtree: fix synopsis
- + contrib/subtree: better error handling for 'subtree add'
- + contrib/subtree: use %B for split subject/body
- + contrib/subtree: remove test number comments
+* jk/smart-http-robustify (2013-02-17) 3 commits
+ - remote-curl: sanity check ref advertisement from server
+ - remote-curl: verify smart-http metadata lines
+ - pkt-line: teach packet_get_line a no-op mode
 
- contrib/subtree updates, but here are only the ones that looked
- ready.
+ Parse the HTTP exchange that implements the native Git protocol as
+ a series of stateless RPC more carefully to diagnose protocol
+ breakage better.
 
-
-* jc/extended-fake-ancestor-for-gitlink (2013-02-05) 1 commit
-  (merged to 'next' on 2013-02-09 at 2d3547b)
- + apply: verify submodule commit object name better
-
- Instead of requiring the full 40-hex object names on the index
- line, we can read submodule commit object names from the textual
- diff when synthesizing a fake ancestore tree for "git am -3".
+ Will merge to and hold in 'next'.
 
 
-* jk/diff-graph-cleanup (2013-02-12) 6 commits
-  (merged to 'next' on 2013-02-12 at 6e764c1)
- + combine-diff.c: teach combined diffs about line prefix
- + diff.c: use diff_line_prefix() where applicable
- + diff: add diff_line_prefix function
- + diff.c: make constant string arguments const
- + diff: write prefix to the correct file
- + graph: output padding for merge subsequent parents
+* nd/read-directory-recursive-optim (2013-02-17) 1 commit
+ - read_directory: avoid invoking exclude machinery on tracked files
 
- Refactors a lot of repetitive code sequence from the graph drawing
- code and adds it to the combined diff output.
+ "git status" has been optimized by taking advantage of the fact
+ that paths that are already known to the index do not have to be
+ checked against the .gitignore mechanism under some conditions.
 
-
-* jk/error-const-return (2013-02-08) 1 commit
-  (merged to 'next' on 2013-02-11 at ba8dba3)
- + Use __VA_ARGS__ for all of error's arguments
-
-
-* jx/utf8-printf-width (2013-02-11) 1 commit
-  (merged to 'next' on 2013-02-11 at 968b4e2)
- + Add utf8_fprintf helper that returns correct number of columns
-
- Use a new helper that prints a message and counts its display width
- to align the help messages parse-options produces.
-
-
-* mg/bisect-doc (2013-02-11) 1 commit
-  (merged to 'next' on 2013-02-11 at 6125304)
- + git-bisect.txt: clarify that reset quits bisect
-
-
-* mm/remote-mediawiki-build (2013-02-08) 2 commits
-  (merged to 'next' on 2013-02-11 at 4ebb902)
- + git-remote-mediawiki: use toplevel's Makefile
- + Makefile: make script-related rules usable from subdirectories
-
-
-* nd/status-show-in-progress (2013-02-05) 1 commit
-  (merged to 'next' on 2013-02-11 at 5ffcbc2)
- + status: show the branch name if possible in in-progress info
-
-
-* tz/perl-styles (2013-02-06) 1 commit
-  (merged to 'next' on 2013-02-09 at c8cff17)
- + Update CodingGuidelines for Perl
-
- Add coding guidelines for writing Perl scripts for Git.
+ Will merge to and hold in 'next'.
 
 --------------------------------------------------
-[New Topics]
+[Graduated to "master"]
+
+* da/p4merge-mktemp-fix (2013-02-10) 1 commit
+  (merged to 'next' on 2013-02-14 at c5fc5ba)
+ + p4merge: fix printf usage
+
+
+* ef/non-ascii-parse-options-error-diag (2013-02-11) 1 commit
+  (merged to 'next' on 2013-02-14 at 10cbdf8)
+ + parse-options: report uncorrupted multi-byte options
+
+
+* jc/hidden-refs (2013-02-07) 3 commits
+  (merged to 'next' on 2013-02-14 at b69f9cc)
+ + upload/receive-pack: allow hiding ref hierarchies
+ + upload-pack: simplify request validation
+ + upload-pack: share more code
+ (this branch is used by jc/fetch-raw-sha1.)
+
+ Allow the server side to redact the refs/ namespace it shows to the
+ client.
+
+
+* jk/read-commit-buffer-data-after-free (2013-02-11) 1 commit
+  (merged to 'next' on 2013-02-14 at 220e3a8)
+ + log: re-encode commit messages before grepping
+
+ "git log --grep=<pattern>" has been taught to honor the logoutput
+ encoding when matching the log message against the given pattern.
+
+
+* jk/rebase-i-comment-char (2013-02-12) 1 commit
+  (merged to 'next' on 2013-02-14 at 0ed2f48)
+ + rebase -i: respect core.commentchar
+
+ Finishing touches to core.commentchar topic to teach it to "rebase
+ -i" as well.
+
 
 * mk/make-rm-depdirs-could-be-empty (2013-02-13) 1 commit
   (merged to 'next' on 2013-02-14 at d966248)
@@ -119,7 +104,28 @@ repositories listed at
  -rf $(dep_dirs)" with an empty dep_dir, but some implementations of
  "rm -rf" barf on an empty argument list.
 
- Will merge to 'master'.
+
+* mk/old-expat (2013-02-11) 1 commit
+  (merged to 'next' on 2013-02-14 at 5fb47ce)
+ + Allow building with xmlparse.h
+
+ Old expat needs to include xmlparse.h instead of expat.h header
+ file.
+
+
+* mm/config-local-completion (2013-02-12) 1 commit
+  (merged to 'next' on 2013-02-14 at 26bf6c2)
+ + completion: support 'git config --local'
+
+
+* mp/diff-algo-config (2013-01-16) 3 commits
+  (merged to 'next' on 2013-02-14 at cd765dc)
+ + diff: Introduce --diff-algorithm command line option
+ + config: Introduce diff.algorithm variable
+ + git-completion.bash: Autocomplete --minimal and --histogram for git-diff
+
+ Add diff.algorithm configuration so that the user does not type
+ "diff --histogram".
 
 
 * mw/bash-prompt-show-untracked-config (2013-02-13) 3 commits
@@ -131,22 +137,10 @@ repositories listed at
  Allows skipping the untracked check GIT_PS1_SHOWUNTRACKEDFILES
  asks for the git-prompt (in contrib/) per repository.
 
- Will merge to 'master'.
 
-
-* mg/gpg-interface-using-status (2013-02-14) 5 commits
- - pretty: make %GK output the signing key for signed commits
- - pretty: parse the gpg status lines rather than the output
- - gpg_interface: allow to request status return
- - log-tree: rely upon the check in the gpg_interface
- - gpg-interface: check good signature in a reliable way
-
- Call "gpg" using the right API when validating the signature on
- tags.
-
-
-* mm/config-intro-in-git-doc (2013-02-14) 1 commit
- - git.txt: update description of the configuration mechanism
+* wk/man-deny-current-branch-is-default-these-days (2013-02-14) 1 commit
+  (merged to 'next' on 2013-02-14 at 6fab9d4)
+ + user-manual: Update for receive.denyCurrentBranch=refuse
 
 --------------------------------------------------
 [Stalled]
@@ -156,58 +150,6 @@ repositories listed at
 
  Expecting a reroll.
  $gmane/211935
-
-
-* jk/lua-hackery (2012-10-07) 6 commits
- - pretty: fix up one-off format_commit_message calls
- - Minimum compilation fixup
- - Makefile: make "lua" a bit more configurable
- - add a "lua" pretty format
- - add basic lua infrastructure
- - pretty: make some commit-parsing helpers more public
-
- Interesting exercise. When we do this for real, we probably would want
- to wrap a commit to make it more like an "object" with methods like
- "parents", etc.
-
-
-* rc/maint-complete-git-p4 (2012-09-24) 1 commit
- - Teach git-completion about git p4
-
- Comment from Pete will need to be addressed ($gmane/206172).
-
-
-* jc/maint-name-rev (2012-09-17) 7 commits
- - describe --contains: use "name-rev --algorithm=weight"
- - name-rev --algorithm=weight: tests and documentation
- - name-rev --algorithm=weight: cache the computed weight in notes
- - name-rev --algorithm=weight: trivial optimization
- - name-rev: --algorithm option
- - name_rev: clarify the logic to assign a new tip-name to a commit
- - name-rev: lose unnecessary typedef
-
- "git name-rev" names the given revision based on a ref that can be
- reached in the smallest number of steps from the rev, but that is
- not useful when the caller wants to know which tag is the oldest one
- that contains the rev.  This teaches a new mode to the command that
- uses the oldest ref among those which contain the rev.
-
- I am not sure if this is worth it; for one thing, even with the help
- from notes-cache, it seems to make the "describe --contains" even
- slower. Also the command will be unusably slow for a user who does
- not have a write access (hence unable to create or update the
- notes-cache).
-
- Stalled mostly due to lack of responses.
-
-
-* jc/xprm-generation (2012-09-14) 1 commit
- - test-generation: compute generation numbers and clock skews
-
- A toy to analyze how bad the clock skews are in histories of real
- world projects.
-
- Stalled mostly due to lack of responses.
 
 
 * jc/add-delete-default (2012-08-13) 1 commit
@@ -220,7 +162,8 @@ repositories listed at
  Resurrected from graveyard, as I thought it was a worthwhile thing
  to do in the longer term.
 
- Stalled mostly due to lack of responses.
+ There seems to be some interest. Let's see if it results in a solid
+ execution of a sensible transition plan towards Git 2.0.
 
 
 * mb/remote-default-nn-origin (2012-07-11) 6 commits
@@ -244,21 +187,19 @@ repositories listed at
 --------------------------------------------------
 [Cooking]
 
-* mp/diff-algo-config (2013-01-16) 3 commits
-  (merged to 'next' on 2013-02-14 at cd765dc)
- + diff: Introduce --diff-algorithm command line option
- + config: Introduce diff.algorithm variable
- + git-completion.bash: Autocomplete --minimal and --histogram for git-diff
+* mg/gpg-interface-using-status (2013-02-14) 5 commits
+ - pretty: make %GK output the signing key for signed commits
+ - pretty: parse the gpg status lines rather than the output
+ - gpg_interface: allow to request status return
+ - log-tree: rely upon the check in the gpg_interface
+ - gpg-interface: check good signature in a reliable way
 
- Add diff.algorithm configuration so that the user does not type
- "diff --histogram".
-
- Will merge to 'master'.
+ Call "gpg" using the right API when validating the signature on
+ tags.
 
 
-* da/p4merge-mktemp-fix (2013-02-10) 1 commit
-  (merged to 'next' on 2013-02-14 at c5fc5ba)
- + p4merge: fix printf usage
+* mm/config-intro-in-git-doc (2013-02-15) 1 commit
+ - git.txt: update description of the configuration mechanism
 
  Will merge to 'master'.
 
@@ -271,52 +212,18 @@ repositories listed at
  $gmane/216229
 
 
-* jk/read-commit-buffer-data-after-free (2013-02-11) 1 commit
-  (merged to 'next' on 2013-02-14 at 220e3a8)
- + log: re-encode commit messages before grepping
-
- Will merge to 'master'.
-
-
-* mk/old-expat (2013-02-11) 1 commit
-  (merged to 'next' on 2013-02-14 at 5fb47ce)
- + Allow building with xmlparse.h
-
- Will merge to 'master'.
-
-
-* ef/non-ascii-parse-options-error-diag (2013-02-11) 1 commit
-  (merged to 'next' on 2013-02-14 at 10cbdf8)
- + parse-options: report uncorrupted multi-byte options
-
- Will merge to 'master'.
-
-
-* jk/rebase-i-comment-char (2013-02-12) 1 commit
-  (merged to 'next' on 2013-02-14 at 0ed2f48)
- + rebase -i: respect core.commentchar
-
- Will merge to 'master'.
-
-
-* mm/config-local-completion (2013-02-12) 1 commit
-  (merged to 'next' on 2013-02-14 at 26bf6c2)
- + completion: support 'git config --local'
-
- Will merge to 'master'.
-
-
 * jc/fetch-raw-sha1 (2013-02-07) 4 commits
   (merged to 'next' on 2013-02-14 at ffa3c65)
  + fetch: fetch objects by their exact SHA-1 object names
  + upload-pack: optionally allow fetching from the tips of hidden refs
  + fetch: use struct ref to represent refs to be fetched
  + parse_fetch_refspec(): clarify the codeflow a bit
- (this branch uses jc/hidden-refs.)
 
  Allows requests to fetch objects at any tip of refs (including
  hidden ones).  It seems that there may be use cases even outside
  Gerrit (e.g. $gmane/215701).
+
+ Will cook in 'next'.
 
 
 * mn/send-email-works-with-credential (2013-02-12) 6 commits
@@ -339,21 +246,13 @@ repositories listed at
  $gmane/215771
 
 
-* nd/count-garbage (2013-02-13) 4 commits
+* nd/count-garbage (2013-02-15) 4 commits
  - count-objects: report how much disk space taken by garbage files
  - count-objects: report garbage files in pack directory too
  - sha1_file: reorder code in prepare_packed_git_one()
  - git-count-objects.txt: describe each line in -v output
 
- Looked good, but the handling of files with known-corrupt .idx
- counterparts could be improved.
-
-
-* wk/man-deny-current-branch-is-default-these-days (2013-02-14) 1 commit
-  (merged to 'next' on 2013-02-14 at 6fab9d4)
- + user-manual: Update for receive.denyCurrentBranch=refuse
-
- Will merge to 'master'.
+ Will merge to 'next'.
 
 
 * tz/credential-authinfo (2013-02-05) 1 commit
@@ -367,15 +266,12 @@ repositories listed at
  $gmane/215556
 
 
-* jl/submodule-deinit (2013-02-06) 1 commit
+* jl/submodule-deinit (2013-02-17) 1 commit
  - submodule: add 'deinit' command
 
  There was no Porcelain way to say "I no longer am interested in
  this submodule", once you express your interest in a submodule with
  "submodule init".  "submodule deinit" is the way to do so.
-
- Expecting another reroll.
- $gmane/216276
 
 
 * jc/remove-export-from-config-mak-in (2013-02-12) 2 commits
@@ -407,20 +303,7 @@ repositories listed at
  can be found if the reader looks for it" version; I'm not married
  to the layout and will be happy to take a replacement patch.
 
- Will merge to 'next', unless a replacement materializes soonish.
-
-
-* jc/hidden-refs (2013-02-07) 3 commits
-  (merged to 'next' on 2013-02-14 at b69f9cc)
- + upload/receive-pack: allow hiding ref hierarchies
- + upload-pack: simplify request validation
- + upload-pack: share more code
- (this branch is used by jc/fetch-raw-sha1.)
-
- Allow the server side to redact the refs/ namespace it shows to the
- client.
-
- Will merge to 'master'.
+ Will merge to 'next'.
 
 
 * jc/remove-treesame-parent-in-simplify-merges (2013-01-17) 1 commit
@@ -475,3 +358,57 @@ repositories listed at
 
  Waiting for further reviews.
  $gmane/216327 may need to be addressed.
+
+--------------------------------------------------
+[Discarded]
+
+* jc/maint-name-rev (2012-09-17) 7 commits
+ - describe --contains: use "name-rev --algorithm=weight"
+ - name-rev --algorithm=weight: tests and documentation
+ - name-rev --algorithm=weight: cache the computed weight in notes
+ - name-rev --algorithm=weight: trivial optimization
+ - name-rev: --algorithm option
+ - name_rev: clarify the logic to assign a new tip-name to a commit
+ - name-rev: lose unnecessary typedef
+
+ "git name-rev" names the given revision based on a ref that can be
+ reached in the smallest number of steps from the rev, but that is
+ not useful when the caller wants to know which tag is the oldest one
+ that contains the rev.  This teaches a new mode to the command that
+ uses the oldest ref among those which contain the rev.
+
+ I am not sure if this is worth it; for one thing, even with the help
+ from notes-cache, it seems to make the "describe --contains" even
+ slower. Also the command will be unusably slow for a user who does
+ not have a write access (hence unable to create or update the
+ notes-cache).
+
+ Stalled mostly due to lack of responses.
+
+
+* jc/xprm-generation (2012-09-14) 1 commit
+ - test-generation: compute generation numbers and clock skews
+
+ A toy to analyze how bad the clock skews are in histories of real
+ world projects.
+
+ Stalled mostly due to lack of responses.
+
+
+* jk/lua-hackery (2012-10-07) 6 commits
+ - pretty: fix up one-off format_commit_message calls
+ - Minimum compilation fixup
+ - Makefile: make "lua" a bit more configurable
+ - add a "lua" pretty format
+ - add basic lua infrastructure
+ - pretty: make some commit-parsing helpers more public
+
+ Interesting exercise. When we do this for real, we probably would want
+ to wrap a commit to make it more like an "object" with methods like
+ "parents", etc.
+
+
+* rc/maint-complete-git-p4 (2012-09-24) 1 commit
+ - Teach git-completion about git p4
+
+ Comment from Pete will need to be addressed ($gmane/206172).
