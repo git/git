@@ -24,11 +24,11 @@ static unsigned int hash_name(const char *name, int namelen)
 {
 	unsigned int hash = 0x123;
 
-	do {
+	while (namelen--) {
 		unsigned char c = *name++;
 		c = icase_hash(c);
 		hash = hash*101 + c;
-	} while (--namelen);
+	}
 	return hash;
 }
 

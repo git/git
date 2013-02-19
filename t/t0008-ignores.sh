@@ -138,6 +138,7 @@ test_expect_success 'setup' '
 	cat <<-\EOF >.gitignore &&
 		one
 		ignored-*
+		top-level-dir/
 	EOF
 	for dir in . a
 	do
@@ -176,6 +177,10 @@ test_expect_success 'setup' '
 ############################################################################
 #
 # test invalid inputs
+
+test_expect_success_multi '. corner-case' '' '
+	test_check_ignore . 1
+'
 
 test_expect_success_multi 'empty command line' '' '
 	test_check_ignore "" 128 &&
