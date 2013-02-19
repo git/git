@@ -2305,17 +2305,13 @@ branch and then merge into each of the test and release branches.  For
 these changes, just apply directly to the "release" branch, and then
 merge that into the "test" branch.
 
-To create diffstat and shortlog summaries of changes to include in a "please
-pull" request to Linus you can use:
+After pushing your work to `mytree`, you can use
+linkgit:git-request-pull[1] to prepare a "please pull" request message
+to send to Linus:
 
 -------------------------------------------------
-$ git diff --stat origin..release
--------------------------------------------------
-
-and
-
--------------------------------------------------
-$ git log -p origin..release | git shortlog
+$ git push mytree
+$ git request-pull origin mytree release
 -------------------------------------------------
 
 Here are some of the scripts that simplify all this even further.
