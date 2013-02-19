@@ -181,8 +181,8 @@ test_expect_success 'cleanup commit messages (verbatim option,-t)' '
 
 	echo >>negative &&
 	{ echo;echo "# text";echo; } >expect &&
-	git commit --cleanup=verbatim -t expect -a &&
-	git cat-file -p HEAD |sed -e "1,/^\$/d" |head -n 3 >actual &&
+	git commit --cleanup=verbatim --no-status -t expect -a &&
+	git cat-file -p HEAD |sed -e "1,/^\$/d" >actual &&
 	test_cmp expect actual
 
 '
