@@ -12,8 +12,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Git\n"
 "Report-Msgid-Bugs-To: Git Mailing List <git@vger.kernel.org>\n"
-"POT-Creation-Date: 2013-02-14 14:46+0800\n"
-"PO-Revision-Date: 2013-02-14 17:43+0800\n"
+"POT-Creation-Date: 2013-02-19 13:32+0800\n"
+"PO-Revision-Date: 2013-02-19 14:44+0800\n"
 "Last-Translator: Jiang Xin <worldhello.net@gmail.com>\n"
 "Language-Team: GitHub <https://github.com/gotgit/git/>\n"
 "Language: zh_CN\n"
@@ -310,23 +310,23 @@ msgstr[0] "%lu 年前"
 msgstr[1] "%lu 年前"
 
 #  译者：注意保持前导空格
-#: diff.c:111
+#: diff.c:112
 #, c-format
 msgid "  Failed to parse dirstat cut-off percentage '%s'\n"
 msgstr "  无法解析 dirstat 截止（cut-off）百分比 '%s'\n"
 
 #  译者：注意保持前导空格
-#: diff.c:116
+#: diff.c:117
 #, c-format
 msgid "  Unknown dirstat parameter '%s'\n"
 msgstr "  未知的 dirstat 参数 '%s'\n"
 
-#: diff.c:194
+#: diff.c:210
 #, c-format
 msgid "Unknown value for 'diff.submodule' config variable: '%s'"
 msgstr "配置变量 'diff.submodule' 未知的取值：'%s'"
 
-#: diff.c:237
+#: diff.c:260
 #, c-format
 msgid ""
 "Found errors in 'diff.dirstat' config variable:\n"
@@ -335,7 +335,7 @@ msgstr ""
 "发现配置变量 'diff.dirstat' 中的错误：\n"
 "%s"
 
-#: diff.c:3494
+#: diff.c:3468
 #, c-format
 msgid ""
 "Failed to parse --dirstat/-X option parameter:\n"
@@ -344,7 +344,7 @@ msgstr ""
 "无法解析 --dirstat/-X 选项的参数：\n"
 "%s"
 
-#: diff.c:3508
+#: diff.c:3482
 #, c-format
 msgid "Failed to parse --submodule option parameter: '%s'"
 msgstr "无法解析 --submodule 选项的参数：'%s'"
@@ -708,27 +708,31 @@ msgstr "不能解析对象 '%s'"
 msgid "Unable to write index."
 msgstr "不能写入索引。"
 
-#: parse-options.c:485
+#: parse-options.c:489
 msgid "..."
 msgstr "..."
 
-#: parse-options.c:503
+#: parse-options.c:507
 #, c-format
 msgid "usage: %s"
 msgstr "用法：%s"
 
 #. TRANSLATORS: the colon here should align with the
 #. one in "usage: %s" translation
-#: parse-options.c:507
+#: parse-options.c:511
 #, c-format
 msgid "   or: %s"
 msgstr "  或：%s"
 
 #  译者：为保证在输出中对齐，注意调整句中空格！
-#: parse-options.c:510
+#: parse-options.c:514
 #, c-format
 msgid "    %s"
 msgstr "    %s"
+
+#: parse-options.c:548
+msgid "-NUM"
+msgstr "-数字"
 
 #: pathspec.c:83
 #, c-format
@@ -988,7 +992,7 @@ msgstr "不能解析 HEAD"
 msgid "cannot abort from a branch yet to be born"
 msgstr "不能从尚未建立的分支终止"
 
-#: sequencer.c:821 builtin/apply.c:4020
+#: sequencer.c:821 builtin/apply.c:4056
 #, c-format
 msgid "cannot open %s: %s"
 msgstr "不能打开 %s：%s"
@@ -1228,7 +1232,7 @@ msgid "You have unmerged paths."
 msgstr "您有尚未合并的路径。"
 
 #  译者：注意保持前导空格
-#: wt-status.c:792 wt-status.c:916
+#: wt-status.c:792 wt-status.c:944
 msgid "  (fix conflicts and run \"git commit\")"
 msgstr "  （解决冲突并运行 \"git commit\"）"
 
@@ -1264,173 +1268,194 @@ msgstr "  （使用 \"git am --skip\" 跳过此补丁）"
 msgid "  (use \"git am --abort\" to restore the original branch)"
 msgstr "  （使用 \"git am --abort\" 恢复原有分支）"
 
-#: wt-status.c:877 wt-status.c:887
+#: wt-status.c:879 wt-status.c:896
+#, c-format
+msgid "You are currently rebasing branch '%s' on '%s'."
+msgstr "您正在将分支 '%s' 变基到 '%s'。"
+
+#: wt-status.c:884 wt-status.c:901
 msgid "You are currently rebasing."
 msgstr "您正在变基。"
 
 #  译者：注意保持前导空格
-#: wt-status.c:880
+#: wt-status.c:887
 msgid "  (fix conflicts and then run \"git rebase --continue\")"
 msgstr "  （解决冲突，然后运行 \"git rebase --continue\"）"
 
 #  译者：注意保持前导空格
-#: wt-status.c:882
+#: wt-status.c:889
 msgid "  (use \"git rebase --skip\" to skip this patch)"
 msgstr "  （使用 \"git rebase --skip\" 跳过此补丁）"
 
 #  译者：注意保持前导空格
-#: wt-status.c:884
+#: wt-status.c:891
 msgid "  (use \"git rebase --abort\" to check out the original branch)"
 msgstr "  （使用 \"git rebase --abort\" 以检出原有分支）"
 
 #  译者：注意保持前导空格
-#: wt-status.c:890
+#: wt-status.c:904
 msgid "  (all conflicts fixed: run \"git rebase --continue\")"
 msgstr "  （所有冲突已解决：运行 \"git rebase --continue\"）"
 
-#: wt-status.c:892
+#: wt-status.c:908
+#, c-format
+msgid ""
+"You are currently splitting a commit while rebasing branch '%s' on '%s'."
+msgstr "您正在将分支 '%s' 变基到 '%s' 过程中拆分一个提交。"
+
+#: wt-status.c:913
 msgid "You are currently splitting a commit during a rebase."
 msgstr "您正在变基过程中拆分一个提交。"
 
 #  译者：注意保持前导空格
-#: wt-status.c:895
+#: wt-status.c:916
 msgid "  (Once your working directory is clean, run \"git rebase --continue\")"
 msgstr "  （一旦您工作目录提交干净后，运行 \"git rebase --continue\"）"
 
-#: wt-status.c:897
+#: wt-status.c:920
+#, c-format
+msgid "You are currently editing a commit while rebasing branch '%s' on '%s'."
+msgstr "您正在将分支 '%s' 变基到 '%s' 过程中编辑一个提交。"
+
+#: wt-status.c:925
 msgid "You are currently editing a commit during a rebase."
 msgstr "您正在变基过程中编辑一个提交。"
 
 #  译者：注意保持前导空格
-#: wt-status.c:900
+#: wt-status.c:928
 msgid "  (use \"git commit --amend\" to amend the current commit)"
 msgstr "  （使用 \"git commit --amend\" 修补当前提交）"
 
 #  译者：注意保持前导空格
-#: wt-status.c:902
+#: wt-status.c:930
 msgid ""
 "  (use \"git rebase --continue\" once you are satisfied with your changes)"
 msgstr "  （当您对您的修改满意后执行 \"git rebase --continue\"）"
 
-#: wt-status.c:912
+#: wt-status.c:940
 msgid "You are currently cherry-picking."
 msgstr "您正在做拣选操作。"
 
 #  译者：注意保持前导空格
-#: wt-status.c:919
+#: wt-status.c:947
 msgid "  (all conflicts fixed: run \"git commit\")"
 msgstr "  （解决所有冲突后，执行 \"git commit\"）"
 
-#: wt-status.c:928
+#: wt-status.c:958
+#, c-format
+msgid "You are currently bisecting branch '%s'."
+msgstr "您正在分支 '%s' 中做二分查找。"
+
+#: wt-status.c:962
 msgid "You are currently bisecting."
 msgstr "您正在做二分查找。"
 
 #  译者：注意保持前导空格
-#: wt-status.c:931
+#: wt-status.c:965
 msgid "  (use \"git bisect reset\" to get back to the original branch)"
 msgstr "  （使用 \"git bisect reset\" 以回到原有分支）"
 
-#: wt-status.c:982
+#: wt-status.c:1064
 msgid "On branch "
 msgstr "位于分支 "
 
-#: wt-status.c:989
+#: wt-status.c:1071
 msgid "Not currently on any branch."
 msgstr "当前不在任何分支上。"
 
-#: wt-status.c:1001
+#: wt-status.c:1083
 msgid "Initial commit"
 msgstr "初始提交"
 
-#: wt-status.c:1015
+#: wt-status.c:1097
 msgid "Untracked files"
 msgstr "未跟踪的文件"
 
-#: wt-status.c:1017
+#: wt-status.c:1099
 msgid "Ignored files"
 msgstr "忽略的文件"
 
-#: wt-status.c:1019
+#: wt-status.c:1101
 #, c-format
 msgid "Untracked files not listed%s"
 msgstr "未跟踪的文件没有列出%s"
 
 #  译者：中文字符串拼接，可删除前导空格
-#: wt-status.c:1021
+#: wt-status.c:1103
 msgid " (use -u option to show untracked files)"
 msgstr "（使用 -u 参数显示未跟踪的文件）"
 
-#: wt-status.c:1027
+#: wt-status.c:1109
 msgid "No changes"
 msgstr "没有修改"
 
 #  译者：中文字符串拼接，可删除前导空格
-#: wt-status.c:1032
+#: wt-status.c:1114
 #, c-format
 msgid "no changes added to commit (use \"git add\" and/or \"git commit -a\")\n"
 msgstr "修改尚未加入提交（使用 \"git add\" 和/或 \"git commit -a\"）\n"
 
-#: wt-status.c:1035
+#: wt-status.c:1117
 #, c-format
 msgid "no changes added to commit\n"
 msgstr "修改尚未加入提交\n"
 
-#: wt-status.c:1038
+#: wt-status.c:1120
 #, c-format
 msgid ""
 "nothing added to commit but untracked files present (use \"git add\" to "
 "track)\n"
 msgstr "提交为空，但是存在尚未跟踪的文件（使用 \"git add\" 建立跟踪）\n"
 
-#: wt-status.c:1041
+#: wt-status.c:1123
 #, c-format
 msgid "nothing added to commit but untracked files present\n"
 msgstr "提交为空，但是存在尚未跟踪的文件\n"
 
 #  译者：中文字符串拼接，可删除前导空格
-#: wt-status.c:1044
+#: wt-status.c:1126
 #, c-format
 msgid "nothing to commit (create/copy files and use \"git add\" to track)\n"
 msgstr "无文件要提交（创建/拷贝文件并使用 \"git add\" 建立跟踪）\n"
 
-#: wt-status.c:1047 wt-status.c:1052
+#: wt-status.c:1129 wt-status.c:1134
 #, c-format
 msgid "nothing to commit\n"
 msgstr "无文件要提交\n"
 
 #  译者：中文字符串拼接，可删除前导空格
-#: wt-status.c:1050
+#: wt-status.c:1132
 #, c-format
 msgid "nothing to commit (use -u to show untracked files)\n"
 msgstr "无文件要提交（使用 -u 显示未跟踪的文件）\n"
 
 #  译者：中文字符串拼接，可删除前导空格
-#: wt-status.c:1054
+#: wt-status.c:1136
 #, c-format
 msgid "nothing to commit, working directory clean\n"
 msgstr "无文件要提交，干净的工作区\n"
 
-#: wt-status.c:1162
+#: wt-status.c:1244
 msgid "HEAD (no branch)"
 msgstr "HEAD（非分支）"
 
 #  译者：注意保持句尾空格
-#: wt-status.c:1168
+#: wt-status.c:1250
 msgid "Initial commit on "
 msgstr "初始提交于 "
 
 #  译者：注意保持句尾空格
-#: wt-status.c:1183
+#: wt-status.c:1265
 msgid "behind "
 msgstr "落后 "
 
 #  译者：注意保持句尾空格
-#: wt-status.c:1186 wt-status.c:1189
+#: wt-status.c:1268 wt-status.c:1271
 msgid "ahead "
 msgstr "领先 "
 
 #  译者：注意保持句尾空格
-#: wt-status.c:1191
+#: wt-status.c:1273
 msgid ", behind "
 msgstr "，落后 "
 
@@ -1503,7 +1528,7 @@ msgstr "下列路径根据您的一个 .gitignore 文件而被忽略：\n"
 msgid "dry run"
 msgstr "演习"
 
-#: builtin/add.c:278 builtin/apply.c:4369 builtin/check-ignore.c:19
+#: builtin/add.c:278 builtin/apply.c:4405 builtin/check-ignore.c:19
 #: builtin/commit.c:1150 builtin/count-objects.c:82 builtin/fsck.c:613
 #: builtin/log.c:1522 builtin/mv.c:62 builtin/read-tree.c:112
 msgid "be verbose"
@@ -1629,7 +1654,7 @@ msgstr "也许您想要执行 'git add .'？\n"
 msgid "index file corrupt"
 msgstr "索引文件损坏"
 
-#: builtin/add.c:481 builtin/apply.c:4465 builtin/mv.c:229 builtin/rm.c:370
+#: builtin/add.c:481 builtin/apply.c:4501 builtin/mv.c:229 builtin/rm.c:370
 msgid "Unable to write new index file"
 msgstr "无法写入新索引文件"
 
@@ -1877,224 +1902,224 @@ msgstr "%s：补丁未应用"
 msgid "Checking patch %s..."
 msgstr "检查补丁 %s..."
 
-#: builtin/apply.c:3639 builtin/checkout.c:215 builtin/reset.c:124
+#: builtin/apply.c:3675 builtin/checkout.c:215 builtin/reset.c:124
 #, c-format
 msgid "make_cache_entry failed for path '%s'"
 msgstr "对路径 '%s' 的 make_cache_entry 操作失败"
 
-#: builtin/apply.c:3782
+#: builtin/apply.c:3818
 #, c-format
 msgid "unable to remove %s from index"
 msgstr "不能从索引中移除 %s"
 
-#: builtin/apply.c:3810
+#: builtin/apply.c:3846
 #, c-format
 msgid "corrupt patch for subproject %s"
 msgstr "子项目 %s 损坏的补丁"
 
-#: builtin/apply.c:3814
+#: builtin/apply.c:3850
 #, c-format
 msgid "unable to stat newly created file '%s'"
 msgstr "不能枚举新建文件 '%s' 的状态"
 
-#: builtin/apply.c:3819
+#: builtin/apply.c:3855
 #, c-format
 msgid "unable to create backing store for newly created file %s"
 msgstr "不能为新建文件 %s 创建后端存储"
 
-#: builtin/apply.c:3822 builtin/apply.c:3930
+#: builtin/apply.c:3858 builtin/apply.c:3966
 #, c-format
 msgid "unable to add cache entry for %s"
 msgstr "无法为 %s 添加缓存条目"
 
-#: builtin/apply.c:3855
+#: builtin/apply.c:3891
 #, c-format
 msgid "closing file '%s'"
 msgstr "关闭文件 '%s'"
 
-#: builtin/apply.c:3904
+#: builtin/apply.c:3940
 #, c-format
 msgid "unable to write file '%s' mode %o"
 msgstr "不能写文件 '%s' 权限 %o"
 
-#: builtin/apply.c:3991
+#: builtin/apply.c:4027
 #, c-format
 msgid "Applied patch %s cleanly."
 msgstr "成功应用补丁 %s。"
 
-#: builtin/apply.c:3999
+#: builtin/apply.c:4035
 msgid "internal error"
 msgstr "内部错误"
 
 #. Say this even without --verbose
-#: builtin/apply.c:4002
+#: builtin/apply.c:4038
 #, c-format
 msgid "Applying patch %%s with %d reject..."
 msgid_plural "Applying patch %%s with %d rejects..."
 msgstr[0] "应用 %%s 个补丁，其中 %d 个被拒绝..."
 msgstr[1] "应用 %%s 个补丁，其中 %d 个被拒绝..."
 
-#: builtin/apply.c:4012
+#: builtin/apply.c:4048
 #, c-format
 msgid "truncating .rej filename to %.*s.rej"
 msgstr "截短 .rej 文件名为 %.*s.rej"
 
-#: builtin/apply.c:4033
+#: builtin/apply.c:4069
 #, c-format
 msgid "Hunk #%d applied cleanly."
 msgstr "第 #%d 个片段成功应用。"
 
-#: builtin/apply.c:4036
+#: builtin/apply.c:4072
 #, c-format
 msgid "Rejected hunk #%d."
 msgstr "拒绝第 #%d 个片段。"
 
-#: builtin/apply.c:4186
+#: builtin/apply.c:4222
 msgid "unrecognized input"
 msgstr "未能识别的输入"
 
-#: builtin/apply.c:4197
+#: builtin/apply.c:4233
 msgid "unable to read index file"
 msgstr "无法读取索引文件"
 
-#: builtin/apply.c:4316 builtin/apply.c:4319 builtin/clone.c:91
+#: builtin/apply.c:4352 builtin/apply.c:4355 builtin/clone.c:91
 #: builtin/fetch.c:63
 msgid "path"
 msgstr "路径"
 
-#: builtin/apply.c:4317
+#: builtin/apply.c:4353
 msgid "don't apply changes matching the given path"
 msgstr "不要应用与给出路径向匹配的变更"
 
-#: builtin/apply.c:4320
+#: builtin/apply.c:4356
 msgid "apply changes matching the given path"
 msgstr "应用与给出路径向匹配的变更"
 
-#: builtin/apply.c:4322
+#: builtin/apply.c:4358
 msgid "num"
 msgstr "数字"
 
-#: builtin/apply.c:4323
+#: builtin/apply.c:4359
 msgid "remove <num> leading slashes from traditional diff paths"
 msgstr "从传统的 diff 路径中移除指定数量的前导斜线"
 
-#: builtin/apply.c:4326
+#: builtin/apply.c:4362
 msgid "ignore additions made by the patch"
 msgstr "忽略补丁中的添加的文件"
 
-#: builtin/apply.c:4328
+#: builtin/apply.c:4364
 msgid "instead of applying the patch, output diffstat for the input"
 msgstr "不应用补丁，而是显示输入的差异统计（diffstat）"
 
-#: builtin/apply.c:4332
+#: builtin/apply.c:4368
 msgid "show number of added and deleted lines in decimal notation"
 msgstr "以十进制数显示添加和删除的行数"
 
-#: builtin/apply.c:4334
+#: builtin/apply.c:4370
 msgid "instead of applying the patch, output a summary for the input"
 msgstr "不应用补丁，而是显示输入的概要"
 
-#: builtin/apply.c:4336
+#: builtin/apply.c:4372
 msgid "instead of applying the patch, see if the patch is applicable"
 msgstr "不应用补丁，而是查看补丁是否可应用"
 
-#: builtin/apply.c:4338
+#: builtin/apply.c:4374
 msgid "make sure the patch is applicable to the current index"
 msgstr "确认补丁可以应用到当前索引"
 
-#: builtin/apply.c:4340
+#: builtin/apply.c:4376
 msgid "apply a patch without touching the working tree"
 msgstr "应用补丁而不修改工作区"
 
-#: builtin/apply.c:4342
+#: builtin/apply.c:4378
 msgid "also apply the patch (use with --stat/--summary/--check)"
 msgstr "还应用此补丁（与 --stat/--summary/--check 选项同时使用）"
 
-#: builtin/apply.c:4344
+#: builtin/apply.c:4380
 msgid "attempt three-way merge if a patch does not apply"
 msgstr "如果一个补丁不能应用则尝试三路合并"
 
-#: builtin/apply.c:4346
+#: builtin/apply.c:4382
 msgid "build a temporary index based on embedded index information"
 msgstr "创建一个临时索引基于嵌入的索引信息"
 
-#: builtin/apply.c:4348 builtin/checkout-index.c:197 builtin/ls-files.c:463
+#: builtin/apply.c:4384 builtin/checkout-index.c:197 builtin/ls-files.c:463
 msgid "paths are separated with NUL character"
 msgstr "路径以 NUL 字符分隔"
 
-#: builtin/apply.c:4351
+#: builtin/apply.c:4387
 msgid "ensure at least <n> lines of context match"
 msgstr "确保至少匹配 <n> 行上下文"
 
-#: builtin/apply.c:4352
+#: builtin/apply.c:4388
 msgid "action"
 msgstr "动作"
 
-#: builtin/apply.c:4353
+#: builtin/apply.c:4389
 msgid "detect new or modified lines that have whitespace errors"
 msgstr "检查新增和修改的行中间的空白字符滥用"
 
-#: builtin/apply.c:4356 builtin/apply.c:4359
+#: builtin/apply.c:4392 builtin/apply.c:4395
 msgid "ignore changes in whitespace when finding context"
 msgstr "查找上下文时忽略空白字符的变更"
 
-#: builtin/apply.c:4362
+#: builtin/apply.c:4398
 msgid "apply the patch in reverse"
 msgstr "反向应用补丁"
 
-#: builtin/apply.c:4364
+#: builtin/apply.c:4400
 msgid "don't expect at least one line of context"
 msgstr "无需至少一行上下文"
 
-#: builtin/apply.c:4366
+#: builtin/apply.c:4402
 msgid "leave the rejected hunks in corresponding *.rej files"
 msgstr "将拒绝的补丁片段保存在对应的 *.rej 文件中"
 
-#: builtin/apply.c:4368
+#: builtin/apply.c:4404
 msgid "allow overlapping hunks"
 msgstr "允许重叠的补丁片段"
 
-#: builtin/apply.c:4371
+#: builtin/apply.c:4407
 msgid "tolerate incorrectly detected missing new-line at the end of file"
 msgstr "允许不正确的文件末尾换行符"
 
-#: builtin/apply.c:4374
+#: builtin/apply.c:4410
 msgid "do not trust the line counts in the hunk headers"
 msgstr "不信任补丁片段的头信息中的行号"
 
-#: builtin/apply.c:4376
+#: builtin/apply.c:4412
 msgid "root"
 msgstr "根目录"
 
-#: builtin/apply.c:4377
+#: builtin/apply.c:4413
 msgid "prepend <root> to all filenames"
 msgstr "为所有文件名前添加 <根目录>"
 
-#: builtin/apply.c:4399
+#: builtin/apply.c:4435
 msgid "--3way outside a repository"
 msgstr "--3way 在一个版本库之外"
 
-#: builtin/apply.c:4407
+#: builtin/apply.c:4443
 msgid "--index outside a repository"
 msgstr "--index 在一个版本库之外"
 
-#: builtin/apply.c:4410
+#: builtin/apply.c:4446
 msgid "--cached outside a repository"
 msgstr "--cached 在一个版本库之外"
 
-#: builtin/apply.c:4426
+#: builtin/apply.c:4462
 #, c-format
 msgid "can't open patch '%s'"
 msgstr "不能打开补丁 '%s'"
 
-#: builtin/apply.c:4440
+#: builtin/apply.c:4476
 #, c-format
 msgid "squelched %d whitespace error"
 msgid_plural "squelched %d whitespace errors"
 msgstr[0] "抑制下仍有 %d 个空白字符误用"
 msgstr[1] "抑制下仍有 %d 个空白字符误用"
 
-#: builtin/apply.c:4446 builtin/apply.c:4456
+#: builtin/apply.c:4482 builtin/apply.c:4492
 #, c-format
 msgid "%d line adds whitespace errors."
 msgid_plural "%d lines add whitespace errors."
@@ -8759,7 +8784,7 @@ msgstr "版本库缺乏必要的数据（blob）对象以进行三路合并。"
 
 #: git-am.sh:139
 msgid "Using index info to reconstruct a base tree..."
-msgstr "更新索引信息以重建基树..."
+msgstr "使用索引来重建一个（三路合并的）基础目录树..."
 
 #: git-am.sh:154
 msgid ""
@@ -8870,7 +8895,7 @@ msgstr "您的索引中仍有未合并的路径。您是否忘了执行 'git add
 
 #: git-am.sh:845
 msgid "No changes -- Patch already applied."
-msgstr "没有变更 -- 补丁已经应用过。"
+msgstr "没有变更 —— 补丁已经应用过。"
 
 #: git-am.sh:855
 #, sh-format
@@ -9566,9 +9591,6 @@ msgstr "为 '$prefix$sm_path' 同步子模组 url"
 
 #~ msgid "failed to close pipe to 'show' for object '%s'"
 #~ msgstr "无法为对象 '%s' 的 'show' 关闭管道"
-
-#~ msgid "-NUM"
-#~ msgstr "-数字"
 
 #~ msgid " 0 files changed"
 #~ msgstr " 0 个文件被修改"
