@@ -3739,7 +3739,9 @@ module a
 
 NOTE: The changes are still visible in the submodule's reflog.
 
-This is not the case if you did not commit your changes.
+If you have uncommitted changes in your submodule working tree, `git
+submodule update` will not overwrite them.  Instead, you get the usual
+warning about not being able switch from a dirty branch.
 
 [[low-level-operations]]
 Low-level git operations
