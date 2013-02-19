@@ -124,8 +124,10 @@ static int opt_parse_m(const struct option *opt, const char *arg, int unset)
 	if (unset)
 		strbuf_setlen(buf, 0);
 	else {
+		if (buf->len)
+			strbuf_addch(buf, '\n');
 		strbuf_addstr(buf, arg);
-		strbuf_addstr(buf, "\n\n");
+		strbuf_complete_line(buf);
 	}
 	return 0;
 }

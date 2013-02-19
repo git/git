@@ -204,7 +204,7 @@ test_expect_success 'cleanup commit messages (verbatim option,-F)' '
 
 '
 
-test_expect_failure 'cleanup commit messages (verbatim option,-m)' '
+test_expect_success 'cleanup commit messages (verbatim option,-m)' '
 
 	echo >>negative &&
 	git commit --cleanup=verbatim -m "$mesg_with_comment_and_newlines" -a &&
