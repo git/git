@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: git 1.8.2\n"
 "Report-Msgid-Bugs-To: Git Mailing List <git@vger.kernel.org>\n"
-"POT-Creation-Date: 2013-02-14 14:46+0800\n"
+"POT-Creation-Date: 2013-02-19 13:32+0800\n"
 "PO-Revision-Date: 2012-10-02 19:35+0200\n"
 "Last-Translator: Ralf Thielow <ralf.thielow@gmail.com>\n"
 "Language-Team: German <>\n"
@@ -306,23 +306,23 @@ msgid_plural "%lu years ago"
 msgstr[0] "vor %lu Jahr"
 msgstr[1] "vor %lu Jahren"
 
-#: diff.c:111
+#: diff.c:112
 #, c-format
 msgid "  Failed to parse dirstat cut-off percentage '%s'\n"
 msgstr ""
 "  Fehler beim Parsen des abgeschnittenen \"dirstat\" Prozentsatzes '%s'\n"
 
-#: diff.c:116
+#: diff.c:117
 #, c-format
 msgid "  Unknown dirstat parameter '%s'\n"
 msgstr "  Unbekannter \"dirstat\" Parameter '%s'\n"
 
-#: diff.c:194
+#: diff.c:210
 #, c-format
 msgid "Unknown value for 'diff.submodule' config variable: '%s'"
 msgstr "Unbekannter Wert in Konfigurationsvariable 'diff.dirstat': '%s'"
 
-#: diff.c:237
+#: diff.c:260
 #, c-format
 msgid ""
 "Found errors in 'diff.dirstat' config variable:\n"
@@ -331,7 +331,7 @@ msgstr ""
 "Fehler in 'diff.dirstat' Konfigurationsvariable gefunden:\n"
 "%s"
 
-#: diff.c:3494
+#: diff.c:3468
 #, c-format
 msgid ""
 "Failed to parse --dirstat/-X option parameter:\n"
@@ -340,7 +340,7 @@ msgstr ""
 "Fehler beim Parsen des --dirstat/-X Optionsparameters:\n"
 "%s"
 
-#: diff.c:3508
+#: diff.c:3482
 #, c-format
 msgid "Failed to parse --submodule option parameter: '%s'"
 msgstr "Fehler beim Parsen des --submodule Optionsparameters: '%s'"
@@ -708,26 +708,30 @@ msgstr "Konnte Objekt '%s' nicht parsen."
 msgid "Unable to write index."
 msgstr "Konnte Bereitstellung nicht schreiben."
 
-#: parse-options.c:485
+#: parse-options.c:489
 msgid "..."
 msgstr "..."
 
-#: parse-options.c:503
+#: parse-options.c:507
 #, c-format
 msgid "usage: %s"
 msgstr "Verwendung: %s"
 
 #. TRANSLATORS: the colon here should align with the
 #. one in "usage: %s" translation
-#: parse-options.c:507
+#: parse-options.c:511
 #, c-format
 msgid "   or: %s"
 msgstr "      oder: %s"
 
-#: parse-options.c:510
+#: parse-options.c:514
 #, c-format
 msgid "    %s"
 msgstr "    %s"
+
+#: parse-options.c:548
+msgid "-NUM"
+msgstr "-NUM"
 
 #: pathspec.c:83
 #, c-format
@@ -997,7 +1001,7 @@ msgstr "kann Zweigspitze (HEAD) nicht auflösen"
 msgid "cannot abort from a branch yet to be born"
 msgstr "kann nicht abbrechen: bin auf einem Zweig, der noch geboren wird"
 
-#: sequencer.c:821 builtin/apply.c:4020
+#: sequencer.c:821 builtin/apply.c:4056
 #, c-format
 msgid "cannot open %s: %s"
 msgstr "Kann %s nicht öffnen: %s"
@@ -1230,7 +1234,7 @@ msgstr "Fehler: unbehandelter Differenz-Status %c"
 msgid "You have unmerged paths."
 msgstr "Sie haben nicht zusammengeführte Pfade."
 
-#: wt-status.c:792 wt-status.c:916
+#: wt-status.c:792 wt-status.c:944
 msgid "  (fix conflicts and run \"git commit\")"
 msgstr " (beheben Sie die Konflikte und führen Sie \"git commit\" aus)"
 
@@ -1266,120 +1270,143 @@ msgstr ""
 "  (benutzen Sie \"git am --abort\" um den ursprünglichen Zweig "
 "wiederherzustellen)"
 
-#: wt-status.c:877 wt-status.c:887
+#: wt-status.c:879 wt-status.c:896
+#, c-format
+msgid "You are currently rebasing branch '%s' on '%s'."
+msgstr "Sie sind gerade beim Neuaufbau von Zweig '%s' auf '%s'."
+
+#: wt-status.c:884 wt-status.c:901
 msgid "You are currently rebasing."
 msgstr "Sie sind gerade beim Neuaufbau."
 
-#: wt-status.c:880
+#: wt-status.c:887
 msgid "  (fix conflicts and then run \"git rebase --continue\")"
 msgstr ""
 "  (beheben Sie die Konflikte und führen Sie dann \"git rebase --continue\" "
 "aus)"
 
-#: wt-status.c:882
+#: wt-status.c:889
 msgid "  (use \"git rebase --skip\" to skip this patch)"
 msgstr "  (benutzen Sie \"git rebase --skip\" um diesen Patch auszulassen)"
 
-#: wt-status.c:884
+#: wt-status.c:891
 msgid "  (use \"git rebase --abort\" to check out the original branch)"
 msgstr ""
 "  (benutzen Sie \"git rebase --abort\" um den ursprünglichen Zweig "
 "auszuchecken)"
 
-#: wt-status.c:890
+#: wt-status.c:904
 msgid "  (all conflicts fixed: run \"git rebase --continue\")"
 msgstr "  (alle Konflikte behoben: führen Sie \"git rebase --continue\" aus)"
 
-#: wt-status.c:892
+#: wt-status.c:908
+#, c-format
+msgid ""
+"You are currently splitting a commit while rebasing branch '%s' on '%s'."
+msgstr "Sie teilen gerade eine Version auf, während ein Neuaufbau von Zweig "
+"'%s' auf '%s' im Gange ist."
+
+#: wt-status.c:913
 msgid "You are currently splitting a commit during a rebase."
 msgstr "Sie teilen gerade eine Version während eines Neuaufbaus auf."
 
-#: wt-status.c:895
+#: wt-status.c:916
 msgid "  (Once your working directory is clean, run \"git rebase --continue\")"
 msgstr ""
 "  (Sobald Ihr Arbeitsverzeichnis sauber ist, führen Sie \"git rebase --"
 "continue\" aus)"
 
-#: wt-status.c:897
+#: wt-status.c:920
+#, c-format
+msgid "You are currently editing a commit while rebasing branch '%s' on '%s'."
+msgstr "Sie editieren gerade eine Version während eines Neuaufbaus von Zweig "
+"'%s' auf '%s'."
+
+#: wt-status.c:925
 msgid "You are currently editing a commit during a rebase."
 msgstr "Sie editieren gerade eine Version während eines Neuaufbaus."
 
-#: wt-status.c:900
+#: wt-status.c:928
 msgid "  (use \"git commit --amend\" to amend the current commit)"
 msgstr ""
 "  (benutzen Sie \"git commit --amend\" um die aktuelle Version nachzubessern)"
 
-#: wt-status.c:902
+#: wt-status.c:930
 msgid ""
 "  (use \"git rebase --continue\" once you are satisfied with your changes)"
 msgstr ""
 "  (benutzen Sie \"git rebase --continue\" sobald Ihre Änderungen "
 "abgeschlossen sind)"
 
-#: wt-status.c:912
+#: wt-status.c:940
 msgid "You are currently cherry-picking."
 msgstr "Sie führen gerade \"cherry-pick\" aus."
 
-#: wt-status.c:919
+#: wt-status.c:947
 msgid "  (all conflicts fixed: run \"git commit\")"
 msgstr "  (alle Konflikte behoben: führen Sie \"git commit\" aus)"
 
-#: wt-status.c:928
+#: wt-status.c:958
+#, c-format
+msgid "You are currently bisecting branch '%s'."
+msgstr "Sie sind gerade beim Halbieren in Zweig '%s'."
+
+#: wt-status.c:962
 msgid "You are currently bisecting."
 msgstr "Sie sind gerade beim Halbieren."
 
-#: wt-status.c:931
+#: wt-status.c:965
 msgid "  (use \"git bisect reset\" to get back to the original branch)"
 msgstr ""
 "  (benutzen Sie \"git bisect reset\" um zum ursprünglichen Zweig "
 "zurückzukehren)"
 
-#: wt-status.c:982
+#: wt-status.c:1064
 msgid "On branch "
 msgstr "Auf Zweig "
 
-#: wt-status.c:989
+#: wt-status.c:1071
 msgid "Not currently on any branch."
 msgstr "Im Moment auf keinem Zweig."
 
-#: wt-status.c:1001
+#: wt-status.c:1083
 msgid "Initial commit"
 msgstr "Initiale Version"
 
-#: wt-status.c:1015
+#: wt-status.c:1097
 msgid "Untracked files"
 msgstr "Unbeobachtete Dateien"
 
-#: wt-status.c:1017
+#: wt-status.c:1099
 msgid "Ignored files"
 msgstr "Ignorierte Dateien"
 
-#: wt-status.c:1019
+#: wt-status.c:1101
 #, c-format
 msgid "Untracked files not listed%s"
 msgstr "Unbeobachtete Dateien nicht aufgelistet%s"
 
-#: wt-status.c:1021
+#: wt-status.c:1103
 msgid " (use -u option to show untracked files)"
 msgstr " (benutzen Sie die Option -u um unbeobachteten Dateien anzuzeigen)"
 
-#: wt-status.c:1027
+#: wt-status.c:1109
 msgid "No changes"
 msgstr "Keine Änderungen"
 
-#: wt-status.c:1032
+#: wt-status.c:1114
 #, c-format
 msgid "no changes added to commit (use \"git add\" and/or \"git commit -a\")\n"
 msgstr ""
 "keine Änderungen zum Eintragen hinzugefügt (benutzen Sie \"git add\" und/"
 "oder \"git commit -a\")\n"
 
-#: wt-status.c:1035
+#: wt-status.c:1117
 #, c-format
 msgid "no changes added to commit\n"
 msgstr "keine Änderungen zum Eintragen hinzugefügt\n"
 
-#: wt-status.c:1038
+#: wt-status.c:1120
 #, c-format
 msgid ""
 "nothing added to commit but untracked files present (use \"git add\" to "
@@ -1388,52 +1415,52 @@ msgstr ""
 "nichts zum Eintragen hinzugefügt, aber es gibt unbeobachtete Dateien "
 "(benutzen Sie \"git add\" zum Beobachten)\n"
 
-#: wt-status.c:1041
+#: wt-status.c:1123
 #, c-format
 msgid "nothing added to commit but untracked files present\n"
 msgstr "nichts zum Eintragen hinzugefügt, aber es gibt unbeobachtete Dateien\n"
 
-#: wt-status.c:1044
+#: wt-status.c:1126
 #, c-format
 msgid "nothing to commit (create/copy files and use \"git add\" to track)\n"
 msgstr ""
 "nichts einzutragen (Erstellen/Kopieren Sie Dateien und benutzen Sie \"git add"
 "\" zum Beobachten)\n"
 
-#: wt-status.c:1047 wt-status.c:1052
+#: wt-status.c:1129 wt-status.c:1134
 #, c-format
 msgid "nothing to commit\n"
 msgstr "nichts einzutragen\n"
 
-#: wt-status.c:1050
+#: wt-status.c:1132
 #, c-format
 msgid "nothing to commit (use -u to show untracked files)\n"
 msgstr ""
 "nichts einzutragen (benutzen Sie die Option -u, um unbeobachtete Dateien "
 "anzuzeigen)\n"
 
-#: wt-status.c:1054
+#: wt-status.c:1136
 #, c-format
 msgid "nothing to commit, working directory clean\n"
 msgstr "nichts einzutragen, Arbeitsverzeichnis sauber\n"
 
-#: wt-status.c:1162
+#: wt-status.c:1244
 msgid "HEAD (no branch)"
 msgstr "HEAD (kein Zweig)"
 
-#: wt-status.c:1168
+#: wt-status.c:1250
 msgid "Initial commit on "
 msgstr "Initiale Version auf "
 
-#: wt-status.c:1183
+#: wt-status.c:1265
 msgid "behind "
 msgstr "hinterher "
 
-#: wt-status.c:1186 wt-status.c:1189
+#: wt-status.c:1268 wt-status.c:1271
 msgid "ahead "
 msgstr "voraus "
 
-#: wt-status.c:1191
+#: wt-status.c:1273
 msgid ", behind "
 msgstr ", hinterher "
 
@@ -1509,7 +1536,7 @@ msgstr ""
 msgid "dry run"
 msgstr "Probelauf"
 
-#: builtin/add.c:278 builtin/apply.c:4369 builtin/check-ignore.c:19
+#: builtin/add.c:278 builtin/apply.c:4405 builtin/check-ignore.c:19
 #: builtin/commit.c:1150 builtin/count-objects.c:82 builtin/fsck.c:613
 #: builtin/log.c:1522 builtin/mv.c:62 builtin/read-tree.c:112
 msgid "be verbose"
@@ -1640,7 +1667,7 @@ msgstr "Wollten Sie vielleicht 'git add .' sagen?\n"
 msgid "index file corrupt"
 msgstr "Bereitstellungsdatei beschädigt"
 
-#: builtin/add.c:481 builtin/apply.c:4465 builtin/mv.c:229 builtin/rm.c:370
+#: builtin/add.c:481 builtin/apply.c:4501 builtin/mv.c:229 builtin/rm.c:370
 msgid "Unable to write new index file"
 msgstr "Konnte neue Bereitstellungsdatei nicht schreiben."
 
@@ -1898,245 +1925,245 @@ msgstr "%s: Patch konnte nicht angewendet werden"
 msgid "Checking patch %s..."
 msgstr "Prüfe Patch %s..."
 
-#: builtin/apply.c:3639 builtin/checkout.c:215 builtin/reset.c:124
+#: builtin/apply.c:3675 builtin/checkout.c:215 builtin/reset.c:124
 #, c-format
 msgid "make_cache_entry failed for path '%s'"
 msgstr "make_cache_entry für Pfad '%s' fehlgeschlagen"
 
-#: builtin/apply.c:3782
+#: builtin/apply.c:3818
 #, c-format
 msgid "unable to remove %s from index"
 msgstr "konnte %s nicht aus der Bereitstellung entfernen"
 
-#: builtin/apply.c:3810
+#: builtin/apply.c:3846
 #, c-format
 msgid "corrupt patch for subproject %s"
 msgstr "fehlerhafter Patch für Unterprojekt %s"
 
-#: builtin/apply.c:3814
+#: builtin/apply.c:3850
 #, c-format
 msgid "unable to stat newly created file '%s'"
 msgstr "konnte neu erstellte Datei '%s' nicht lesen"
 
-#: builtin/apply.c:3819
+#: builtin/apply.c:3855
 #, c-format
 msgid "unable to create backing store for newly created file %s"
 msgstr "kann internen Speicher für eben erstellte Datei %s nicht erzeugen"
 
-#: builtin/apply.c:3822 builtin/apply.c:3930
+#: builtin/apply.c:3858 builtin/apply.c:3966
 #, c-format
 msgid "unable to add cache entry for %s"
 msgstr "kann für %s keinen Eintrag in den Zwischenspeicher hinzufügen"
 
-#: builtin/apply.c:3855
+#: builtin/apply.c:3891
 #, c-format
 msgid "closing file '%s'"
 msgstr "schließe Datei '%s'"
 
-#: builtin/apply.c:3904
+#: builtin/apply.c:3940
 #, c-format
 msgid "unable to write file '%s' mode %o"
 msgstr "konnte Datei '%s' mit Modus %o nicht schreiben"
 
-#: builtin/apply.c:3991
+#: builtin/apply.c:4027
 #, c-format
 msgid "Applied patch %s cleanly."
 msgstr "Patch %s sauber angewendet"
 
-#: builtin/apply.c:3999
+#: builtin/apply.c:4035
 msgid "internal error"
 msgstr "interner Fehler"
 
 #. Say this even without --verbose
-#: builtin/apply.c:4002
+#: builtin/apply.c:4038
 #, c-format
 msgid "Applying patch %%s with %d reject..."
 msgid_plural "Applying patch %%s with %d rejects..."
 msgstr[0] "Wende Patch %%s mit %d Zurückweisung an..."
 msgstr[1] "Wende Patch %%s mit %d Zurückweisungen an..."
 
-#: builtin/apply.c:4012
+#: builtin/apply.c:4048
 #, c-format
 msgid "truncating .rej filename to %.*s.rej"
 msgstr "Verkürze Name von .rej Datei zu %.*s.rej"
 
-#: builtin/apply.c:4033
+#: builtin/apply.c:4069
 #, c-format
 msgid "Hunk #%d applied cleanly."
 msgstr "Patch-Bereich #%d sauber angewendet."
 
-#: builtin/apply.c:4036
+#: builtin/apply.c:4072
 #, c-format
 msgid "Rejected hunk #%d."
 msgstr "Patch-Bereich #%d zurückgewiesen."
 
-#: builtin/apply.c:4186
+#: builtin/apply.c:4222
 msgid "unrecognized input"
 msgstr "nicht erkannte Eingabe"
 
-#: builtin/apply.c:4197
+#: builtin/apply.c:4233
 msgid "unable to read index file"
 msgstr "Konnte Bereitstellungsdatei nicht lesen"
 
-#: builtin/apply.c:4316 builtin/apply.c:4319 builtin/clone.c:91
+#: builtin/apply.c:4352 builtin/apply.c:4355 builtin/clone.c:91
 #: builtin/fetch.c:63
 msgid "path"
 msgstr "Pfad"
 
-#: builtin/apply.c:4317
+#: builtin/apply.c:4353
 msgid "don't apply changes matching the given path"
 msgstr "wendet keine Änderungen im angegebenen Pfad an"
 
-#: builtin/apply.c:4320
+#: builtin/apply.c:4356
 msgid "apply changes matching the given path"
 msgstr "wendet Änderungen nur im angegebenen Pfad an"
 
-#: builtin/apply.c:4322
+#: builtin/apply.c:4358
 msgid "num"
 msgstr "Anzahl"
 
-#: builtin/apply.c:4323
+#: builtin/apply.c:4359
 msgid "remove <num> leading slashes from traditional diff paths"
 msgstr ""
 "entfernt <Anzahl> vorangestellte Schrägstriche von herkömmlichen "
 "Differenzpfaden"
 
-#: builtin/apply.c:4326
+#: builtin/apply.c:4362
 msgid "ignore additions made by the patch"
 msgstr "ignoriert hinzugefügte Zeilen des Patches"
 
-#: builtin/apply.c:4328
+#: builtin/apply.c:4364
 msgid "instead of applying the patch, output diffstat for the input"
 msgstr ""
 "anstatt der Anwendung des Patches, wird der \"diffstat\" für die Eingabe "
 "ausgegeben"
 
-#: builtin/apply.c:4332
+#: builtin/apply.c:4368
 msgid "show number of added and deleted lines in decimal notation"
 msgstr ""
 "zeigt die Anzahl von hinzugefügten/entfernten Zeilen in Dezimalnotation"
 
-#: builtin/apply.c:4334
+#: builtin/apply.c:4370
 msgid "instead of applying the patch, output a summary for the input"
 msgstr ""
 "anstatt der Anwendung des Patches, wird eine Zusammenfassung für die Eingabe "
 "ausgegeben"
 
-#: builtin/apply.c:4336
+#: builtin/apply.c:4372
 msgid "instead of applying the patch, see if the patch is applicable"
 msgstr ""
 "anstatt der Anwendung des Patches, zeige ob Patch angewendet werden kann"
 
-#: builtin/apply.c:4338
+#: builtin/apply.c:4374
 msgid "make sure the patch is applicable to the current index"
 msgstr ""
 "stellt sicher, dass der Patch in der aktuellen Bereitstellung angewendet "
 "werden kann"
 
-#: builtin/apply.c:4340
+#: builtin/apply.c:4376
 msgid "apply a patch without touching the working tree"
 msgstr "wendet einen Patch an, ohne Änderungen im Arbeitszweig vorzunehmen"
 
-#: builtin/apply.c:4342
+#: builtin/apply.c:4378
 msgid "also apply the patch (use with --stat/--summary/--check)"
 msgstr "wendet den Patch an (Benutzung mit --stat/--summary/--check)"
 
-#: builtin/apply.c:4344
+#: builtin/apply.c:4380
 msgid "attempt three-way merge if a patch does not apply"
 msgstr ""
 "versucht 3-Wege-Zusammenführung, wenn der Patch nicht angewendet werden "
 "konnte"
 
-#: builtin/apply.c:4346
+#: builtin/apply.c:4382
 msgid "build a temporary index based on embedded index information"
 msgstr ""
 "erstellt eine temporäre Bereitstellung basierend auf den integrierten "
 "Bereitstellungsinformationen"
 
-#: builtin/apply.c:4348 builtin/checkout-index.c:197 builtin/ls-files.c:463
+#: builtin/apply.c:4384 builtin/checkout-index.c:197 builtin/ls-files.c:463
 msgid "paths are separated with NUL character"
 msgstr "Pfade sind getrennt durch NUL Zeichen"
 
-#: builtin/apply.c:4351
+#: builtin/apply.c:4387
 msgid "ensure at least <n> lines of context match"
 msgstr "stellt sicher, dass mindestens <n> Zeilen des Kontextes übereinstimmen"
 
-#: builtin/apply.c:4352
+#: builtin/apply.c:4388
 msgid "action"
 msgstr "Aktion"
 
-#: builtin/apply.c:4353
+#: builtin/apply.c:4389
 msgid "detect new or modified lines that have whitespace errors"
 msgstr "ermittelt neue oder geänderte Zeilen die Fehler in Leerzeichen haben"
 
-#: builtin/apply.c:4356 builtin/apply.c:4359
+#: builtin/apply.c:4392 builtin/apply.c:4395
 msgid "ignore changes in whitespace when finding context"
 msgstr "ignoriert Änderungen in Leerzeichen bei der Suche des Kontextes"
 
-#: builtin/apply.c:4362
+#: builtin/apply.c:4398
 msgid "apply the patch in reverse"
 msgstr "wendet den Patch in umgekehrter Reihenfolge an"
 
-#: builtin/apply.c:4364
+#: builtin/apply.c:4400
 msgid "don't expect at least one line of context"
 msgstr "erwartet keinen Kontext"
 
-#: builtin/apply.c:4366
+#: builtin/apply.c:4402
 msgid "leave the rejected hunks in corresponding *.rej files"
 msgstr ""
 "hinterlässt zurückgewiesene Patch-Bereiche in den entsprechenden *.rej "
 "Dateien"
 
-#: builtin/apply.c:4368
+#: builtin/apply.c:4404
 msgid "allow overlapping hunks"
 msgstr "erlaubt sich überlappende Patch-Bereiche"
 
-#: builtin/apply.c:4371
+#: builtin/apply.c:4407
 msgid "tolerate incorrectly detected missing new-line at the end of file"
 msgstr "toleriert fehlerhaft erkannten fehlenden Zeilenumbruch am Dateiende"
 
-#: builtin/apply.c:4374
+#: builtin/apply.c:4410
 msgid "do not trust the line counts in the hunk headers"
 msgstr "vertraut nicht den Zeilennummern im Kopf des Patch-Bereiches"
 
-#: builtin/apply.c:4376
+#: builtin/apply.c:4412
 msgid "root"
 msgstr "Wurzelverzeichnis"
 
-#: builtin/apply.c:4377
+#: builtin/apply.c:4413
 msgid "prepend <root> to all filenames"
 msgstr "stellt <Wurzelverzeichnis> vor alle Dateinamen"
 
-#: builtin/apply.c:4399
+#: builtin/apply.c:4435
 msgid "--3way outside a repository"
 msgstr ""
 "Die Option --3way kann nicht außerhalb eines Projektarchivs verwendet werden."
 
-#: builtin/apply.c:4407
+#: builtin/apply.c:4443
 msgid "--index outside a repository"
 msgstr ""
 "Die Option --index kann nicht außerhalb eines Projektarchivs verwendet "
 "werden."
 
-#: builtin/apply.c:4410
+#: builtin/apply.c:4446
 msgid "--cached outside a repository"
 msgstr ""
 "Die Option --cached kann nicht außerhalb eines Projektarchivs verwendet "
 "werden."
 
-#: builtin/apply.c:4426
+#: builtin/apply.c:4462
 #, c-format
 msgid "can't open patch '%s'"
 msgstr "kann Patch '%s' nicht öffnen"
 
-#: builtin/apply.c:4440
+#: builtin/apply.c:4476
 #, c-format
 msgid "squelched %d whitespace error"
 msgid_plural "squelched %d whitespace errors"
 msgstr[0] "unterdrückte %d Fehler in Leerzeichen"
 msgstr[1] "unterdrückte %d Fehler in Leerzeichen"
 
-#: builtin/apply.c:4446 builtin/apply.c:4456
+#: builtin/apply.c:4482 builtin/apply.c:4492
 #, c-format
 msgid "%d line adds whitespace errors."
 msgid_plural "%d lines add whitespace errors."
@@ -2590,7 +2617,8 @@ msgstr "Zweigname erforderlich"
 
 #: builtin/branch.c:860
 msgid "Cannot give description to detached HEAD"
-msgstr "zu losgelöster Zweigspitze (HEAD) kann keine Beschreibung hinterlegt werden"
+msgstr ""
+"zu losgelöster Zweigspitze (HEAD) kann keine Beschreibung hinterlegt werden"
 
 #: builtin/branch.c:865
 msgid "cannot edit description of more than one branch"
@@ -2759,7 +2787,8 @@ msgstr "Die Option --quiet ist nur mit einem einzelnen Pfadnamen gültig."
 
 #: builtin/check-ignore.c:162
 msgid "cannot have both --quiet and --verbose"
-msgstr "Die Optionen --quiet und --verbose können nicht gemeinsam verwendet werden."
+msgstr ""
+"Die Optionen --quiet und --verbose können nicht gemeinsam verwendet werden."
 
 #: builtin/checkout-index.c:126
 msgid "git checkout-index [options] [--] [<file>...]"
@@ -3615,7 +3644,8 @@ msgid ""
 "with '%c' will be ignored, and an empty message aborts the commit.\n"
 msgstr ""
 "Bitte geben Sie eine Versionsbeschreibung für Ihre Änderungen ein. Zeilen,\n"
-"die mit '%c' beginnen, werden ignoriert, und eine leere Versionsbeschreibung\n"
+"die mit '%c' beginnen, werden ignoriert, und eine leere "
+"Versionsbeschreibung\n"
 "bricht die Eintragung ab.\n"
 
 #: builtin/commit.c:740
@@ -4566,11 +4596,13 @@ msgstr "Sie müssen den Namen der Markierung angeben."
 
 #: builtin/fetch.c:981
 msgid "--depth and --unshallow cannot be used together"
-msgstr "Die Optionen --depth und --unshallow können nicht gemeinsam verwendet werden."
+msgstr ""
+"Die Optionen --depth und --unshallow können nicht gemeinsam verwendet werden."
 
 #: builtin/fetch.c:983
 msgid "--unshallow on a complete repository does not make sense"
-msgstr "Die Option --unshallow kann nicht in einem vollständigen Projektarchiv "
+msgstr ""
+"Die Option --unshallow kann nicht in einem vollständigen Projektarchiv "
 "verwendet werden."
 
 #: builtin/fetch.c:1002
@@ -7222,10 +7254,14 @@ msgid ""
 "'git pull') before pushing again.\n"
 "See the 'Note about fast-forwards' in 'git push --help' for details."
 msgstr ""
-"Aktualisierungen wurden zurückgewiesen, weil das Fernarchiv Versionen enthält,\n"
-"die lokal nicht vorhanden sind. Das wird üblicherweise durch das Versenden von\n"
-"Versionen auf dieselbe Referenz von einem anderen Projektarchiv aus verursacht.\n"
-"Vielleicht müssen Sie die externen Änderungen zusammenzuführen (z.B. 'git pull')\n"
+"Aktualisierungen wurden zurückgewiesen, weil das Fernarchiv Versionen "
+"enthält,\n"
+"die lokal nicht vorhanden sind. Das wird üblicherweise durch das Versenden "
+"von\n"
+"Versionen auf dieselbe Referenz von einem anderen Projektarchiv aus "
+"verursacht.\n"
+"Vielleicht müssen Sie die externen Änderungen zusammenzuführen (z.B. 'git "
+"pull')\n"
 "bevor Sie erneut versenden.\n"
 "Siehe auch die Sektion 'Note about fast-forwards' in 'git push --help'\n"
 "für weitere Details."
