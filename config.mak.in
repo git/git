@@ -9,6 +9,7 @@ CC_LD_DYNPATH = @CC_LD_DYNPATH@
 AR = @AR@
 TAR = @TAR@
 DIFF = @DIFF@
+PACKAGE_TARNAME = @PACKAGE_TARNAME@
 #INSTALL = @INSTALL@		# needs install-sh or install.sh in sources
 TCLTK_PATH = @TCLTK_PATH@
 
@@ -19,6 +20,7 @@ gitexecdir = @libexecdir@/git-core
 datarootdir = @datarootdir@
 template_dir = @datadir@/git-core/templates
 sysconfdir = @sysconfdir@
+docdir = @docdir@
 
 mandir = @mandir@
 htmldir = @htmldir@
