@@ -21,8 +21,6 @@ int cmd_upload_archive_writer(int argc, const char **argv, const char *prefix)
 {
 	struct argv_array sent_argv = ARGV_ARRAY_INIT;
 	const char *arg_cmd = "argument ";
-	char buf[4096];
-	int len;
 
 	if (argc != 2)
 		usage(upload_archive_usage);
@@ -33,9 +31,8 @@ int cmd_upload_archive_writer(int argc, const char **argv, const char *prefix)
 	/* put received options in sent_argv[] */
 	argv_array_push(&sent_argv, "git-upload-archive");
 	for (;;) {
-		/* This will die if not enough free space in buf */
-		len = packet_read_line(0, buf, sizeof(buf));
-		if (len == 0)
+		char *buf = packet_read_line(0, NULL);
+		if (!buf)
 			break;	/* got a flush */
 		if (sent_argv.argc > MAX_ARGS)
 			die("Too many options (>%d)", MAX_ARGS - 1);

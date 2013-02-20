@@ -1,6 +1,7 @@
 #include "cache.h"
 #include "pkt-line.h"
 
+char packet_buffer[LARGE_PACKET_MAX];
 static const char *packet_trace_prefix = "git";
 static const char trace_key[] = "GIT_TRACE_PACKET";
 
@@ -174,9 +175,13 @@ int packet_read(int fd, char *buffer, unsigned size, int options)
 	return len;
 }
 
-int packet_read_line(int fd, char *buffer, unsigned size)
+char *packet_read_line(int fd, int *len_p)
 {
-	return packet_read(fd, buffer, size, PACKET_READ_CHOMP_NEWLINE);
+	int len = packet_read(fd, packet_buffer, sizeof(packet_buffer),
+			      PACKET_READ_CHOMP_NEWLINE);
+	if (len_p)
+		*len_p = len;
+	return len ? packet_buffer : NULL;
 }
 
 int packet_get_line(struct strbuf *out,

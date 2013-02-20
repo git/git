@@ -100,12 +100,11 @@ int cmd_fetch_pack(int argc, const char **argv, const char *prefix)
 			/* in stateless RPC mode we use pkt-line to read
 			 * from stdin, until we get a flush packet
 			 */
-			static char line[1000];
 			for (;;) {
-				int n = packet_read_line(0, line, sizeof(line));
-				if (!n)
+				char *line = packet_read_line(0, NULL);
+				if (!line)
 					break;
-				string_list_append(&sought, xmemdupz(line, n));
+				string_list_append(&sought, xstrdup(line));
 			}
 		}
 		else {

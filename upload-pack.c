@@ -408,7 +408,6 @@ static int ok_to_give_up(void)
 
 static int get_common_commits(void)
 {
-	static char line[1000];
 	unsigned char sha1[20];
 	char last_hex[41];
 	int got_common = 0;
@@ -418,10 +417,10 @@ static int get_common_commits(void)
 	save_commit_buffer = 0;
 
 	for (;;) {
-		int len = packet_read_line(0, line, sizeof(line));
+		char *line = packet_read_line(0, NULL);
 		reset_timeout();
 
-		if (!len) {
+		if (!line) {
 			if (multi_ack == 2 && got_common
 			    && !got_other && ok_to_give_up()) {
 				sent_ready = 1;
@@ -567,8 +566,7 @@ error:
 static void receive_needs(void)
 {
 	struct object_array shallows = OBJECT_ARRAY_INIT;
-	static char line[1000];
-	int len, depth = 0;
+	int depth = 0;
 	int has_non_tip = 0;
 
 	shallow_nr = 0;
@@ -576,9 +574,9 @@ static void receive_needs(void)
 		struct object *o;
 		const char *features;
 		unsigned char sha1_buf[20];
-		len = packet_read_line(0, line, sizeof(line));
+		char *line = packet_read_line(0, NULL);
 		reset_timeout();
-		if (!len)
+		if (!line)
 			break;
 
 		if (!prefixcmp(line, "shallow ")) {

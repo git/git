@@ -754,14 +754,14 @@ static struct command *read_head_info(void)
 	struct command *commands = NULL;
 	struct command **p = &commands;
 	for (;;) {
-		static char line[1000];
+		char *line;
 		unsigned char old_sha1[20], new_sha1[20];
 		struct command *cmd;
 		char *refname;
 		int len, reflen;
 
-		len = packet_read_line(0, line, sizeof(line));
-		if (!len)
+		line = packet_read_line(0, &len);
+		if (!line)
 			break;
 		if (len < 83 ||
 		    line[40] != ' ' ||

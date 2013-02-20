@@ -72,11 +72,11 @@ struct ref **get_remote_heads(int in, struct ref **list,
 	for (;;) {
 		struct ref *ref;
 		unsigned char old_sha1[20];
-		static char buffer[1000];
 		char *name;
 		int len, name_len;
+		char *buffer = packet_buffer;
 
-		len = packet_read(in, buffer, sizeof(buffer),
+		len = packet_read(in, packet_buffer, sizeof(packet_buffer),
 				  PACKET_READ_GENTLE_ON_EOF |
 				  PACKET_READ_CHOMP_NEWLINE);
 		if (len < 0)

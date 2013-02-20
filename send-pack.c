@@ -106,9 +106,8 @@ static int pack_objects(int fd, struct ref *refs, struct extra_have_objects *ext
 static int receive_status(int in, struct ref *refs)
 {
 	struct ref *hint;
-	char line[1000];
 	int ret = 0;
-	int len = packet_read_line(in, line, sizeof(line));
+	char *line = packet_read_line(in, NULL);
 	if (prefixcmp(line, "unpack "))
 		return error("did not receive remote status");
 	if (strcmp(line, "unpack ok")) {
@@ -119,8 +118,8 @@ static int receive_status(int in, struct ref *refs)
 	while (1) {
 		char *refname;
 		char *msg;
-		len = packet_read_line(in, line, sizeof(line));
-		if (!len)
+		line = packet_read_line(in, NULL);
+		if (!line)
 			break;
 		if (prefixcmp(line, "ok ") && prefixcmp(line, "ng ")) {
 			error("invalid ref status from remote: %s", line);

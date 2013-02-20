@@ -54,12 +54,17 @@ int packet_read(int fd, char *buffer, unsigned size, int options);
 
 /*
  * Convenience wrapper for packet_read that is not gentle, and sets the
- * CHOMP_NEWLINE option.
+ * CHOMP_NEWLINE option. The return value is NULL for a flush packet,
+ * and otherwise points to a static buffer (that may be overwritten by
+ * subsequent calls). If the size parameter is not NULL, the length of the
+ * packet is written to it.
  */
-int packet_read_line(int fd, char *buffer, unsigned size);
+char *packet_read_line(int fd, int *size);
+
 
 #define DEFAULT_PACKET_MAX 1000
 #define LARGE_PACKET_MAX 65520
+extern char packet_buffer[LARGE_PACKET_MAX];
 
 int packet_get_line(struct strbuf *out, char **src_buf, size_t *src_len);
 
