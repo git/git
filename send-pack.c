@@ -109,9 +109,9 @@ static int receive_status(int in, struct ref *refs)
 	char line[1000];
 	int ret = 0;
 	int len = packet_read_line(in, line, sizeof(line));
-	if (len < 10 || memcmp(line, "unpack ", 7))
+	if (prefixcmp(line, "unpack "))
 		return error("did not receive remote status");
-	if (memcmp(line, "unpack ok\n", 10)) {
+	if (strcmp(line, "unpack ok\n")) {
 		char *p = line + strlen(line) - 1;
 		if (*p == '\n')
 			*p = '\0';
@@ -125,9 +125,8 @@ static int receive_status(int in, struct ref *refs)
 		len = packet_read_line(in, line, sizeof(line));
 		if (!len)
 			break;
-		if (len < 3 ||
-		    (memcmp(line, "ok ", 3) && memcmp(line, "ng ", 3))) {
-			fprintf(stderr, "protocol error: %s\n", line);
+		if (prefixcmp(line, "ok ") && prefixcmp(line, "ng ")) {
+			error("invalid ref status from remote: %s", line);
 			ret = -1;
 			break;
 		}
