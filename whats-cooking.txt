@@ -1,18 +1,21 @@
 To: git@vger.kernel.org
 Bcc: lwn@lwn.net
-Subject: What's cooking in git.git (Feb 2013, #07; Sun, 17)
-X-master-at: 004825d314db4ba3f34ef499e3522ef72792d896
-X-next-at: 838f5639caf00f6b9b0bfab81f201c6402762bf9
+Subject: What's cooking in git.git (Feb 2013, #08; Tue, 19)
+X-master-at: b3600c36286517cda38df976946557ce3e87bd82
+X-next-at: 01e6e4a21161470b1c5f7df6d2d4d6cbc7556508
 
-What's cooking in git.git (Feb 2013, #07; Sun, 17)
+What's cooking in git.git (Feb 2013, #08; Tue, 19)
 --------------------------------------------------
 
 Here are the topics that have been cooking.  Commits prefixed with
 '-' are only in 'pu' (proposed updates) while commits prefixed with
 '+' are in 'next'.
 
-The tip of the 'master' is at 1.8.2-rc0; new topics that are not
-listed in this report are likely to be too late for the upcoming
+On the 'maint' front, a maintenance release 1.8.1.4 is out.  The
+same fixes are also included in the 'master' and upwards.
+
+The tip of the 'master' is a bit past 1.8.2-rc0; new topics that are
+not listed in this report are likely to be too late for the upcoming
 release.
 
 You can find the changes described here in the integration branches of the
@@ -23,124 +26,73 @@ repositories listed at
 --------------------------------------------------
 [New Topics]
 
-* da/difftool-fixes (2013-02-17) 5 commits
- - [DONTMERGE] expect reroll $gmane/216376
- - t7800: "defaults" is no longer a builtin tool name
- - t7800: modernize tests
- - t7800: Update copyright notice
- - difftool: silence uninitialized variable warning
+* as/check-ignore (2013-02-19) 2 commits
+ - name-hash: allow hashing an empty string
+ - t0008: document test_expect_success_multi
 
- Minor maintenance updates to difftool, and updates to its tests.
- Expecting a reroll.
- $gmane/216376
+ "git check-ignore ." segfaulted, as a function it calls deep in its
+ callchain took a string in the <ptr, length> form but did not stop
+ when given an empty string.
 
-
-* jk/smart-http-robustify (2013-02-17) 3 commits
- - remote-curl: sanity check ref advertisement from server
- - remote-curl: verify smart-http metadata lines
- - pkt-line: teach packet_get_line a no-op mode
-
- Parse the HTTP exchange that implements the native Git protocol as
- a series of stateless RPC more carefully to diagnose protocol
- breakage better.
-
- Will merge to and hold in 'next'.
+ Will merge to 'next' and will fast-track to 'master' (this is a new
+ feature in the upcoming release).
 
 
-* nd/read-directory-recursive-optim (2013-02-17) 1 commit
- - read_directory: avoid invoking exclude machinery on tracked files
+* bc/commit-complete-lines-given-via-m-option (2013-02-19) 4 commits
+  (merged to 'next' on 2013-02-19 at cf622b7)
+ + Documentation/git-commit.txt: rework the --cleanup section
+ + git-commit: only append a newline to -m mesg if necessary
+ + t7502: demonstrate breakage with a commit message with trailing newlines
+ + t/t7502: compare entire commit message with what was expected
 
- "git status" has been optimized by taking advantage of the fact
- that paths that are already known to the index do not have to be
- checked against the .gitignore mechanism under some conditions.
+ 'git commit -m "$str"' when $str was already terminated with a LF
+ now avoids adding an extra LF to the message.
 
- Will merge to and hold in 'next'.
+ Will merge to 'next'.
+
+
+* ct/autoconf-htmldir (2013-02-19) 1 commit
+ - Bugfix: undefined htmldir in config.mak.autogen
+
+ An earlier change to config.mak.autogen broke a build driven by the
+ ./configure script when --htmldir is not specified on the command
+ line of ./configure.
+
+ Will merge to 'next' and will fast-track to 'master' (this is a
+ regressin workaround).
+
+
+* wk/user-manual (2013-02-19) 3 commits
+  (merged to 'next' on 2013-02-19 at dbc0eb2)
+ + user-manual: Flesh out uncommitted changes and submodule updates
+ + user-manual: Use request-pull to generate "please pull" text
+ + user-manual: Reorganize the reroll sections, adding 'git rebase -i'
+
+ Further updates to the user manual.
+
+ Will merge to 'next'.
+
+
+* wk/man-deny-current-branch-is-default-these-days (2013-02-18) 1 commit
+ - user-manual: typofix (ofthe->of the)
+
+ Will merge to 'next' and fast-track to 'master'.
 
 --------------------------------------------------
 [Graduated to "master"]
 
-* da/p4merge-mktemp-fix (2013-02-10) 1 commit
-  (merged to 'next' on 2013-02-14 at c5fc5ba)
- + p4merge: fix printf usage
+* jc/mention-tracking-for-pull-default (2013-01-31) 1 commit
+  (merged to 'next' on 2013-02-17 at 043624b)
+ + doc: mention tracking for pull.default
+
+ We stopped mentioning `tracking` is a deprecated but supported
+ synonym for `upstream` in pull.default even though we have no
+ intention of removing the support for it.
 
 
-* ef/non-ascii-parse-options-error-diag (2013-02-11) 1 commit
-  (merged to 'next' on 2013-02-14 at 10cbdf8)
- + parse-options: report uncorrupted multi-byte options
-
-
-* jc/hidden-refs (2013-02-07) 3 commits
-  (merged to 'next' on 2013-02-14 at b69f9cc)
- + upload/receive-pack: allow hiding ref hierarchies
- + upload-pack: simplify request validation
- + upload-pack: share more code
- (this branch is used by jc/fetch-raw-sha1.)
-
- Allow the server side to redact the refs/ namespace it shows to the
- client.
-
-
-* jk/read-commit-buffer-data-after-free (2013-02-11) 1 commit
-  (merged to 'next' on 2013-02-14 at 220e3a8)
- + log: re-encode commit messages before grepping
-
- "git log --grep=<pattern>" has been taught to honor the logoutput
- encoding when matching the log message against the given pattern.
-
-
-* jk/rebase-i-comment-char (2013-02-12) 1 commit
-  (merged to 'next' on 2013-02-14 at 0ed2f48)
- + rebase -i: respect core.commentchar
-
- Finishing touches to core.commentchar topic to teach it to "rebase
- -i" as well.
-
-
-* mk/make-rm-depdirs-could-be-empty (2013-02-13) 1 commit
-  (merged to 'next' on 2013-02-14 at d966248)
- + Makefile: don't run "rm" without any files
-
- "make COMPUTE_HEADER_DEPENDENCIES=no clean" would try to run "rm
- -rf $(dep_dirs)" with an empty dep_dir, but some implementations of
- "rm -rf" barf on an empty argument list.
-
-
-* mk/old-expat (2013-02-11) 1 commit
-  (merged to 'next' on 2013-02-14 at 5fb47ce)
- + Allow building with xmlparse.h
-
- Old expat needs to include xmlparse.h instead of expat.h header
- file.
-
-
-* mm/config-local-completion (2013-02-12) 1 commit
-  (merged to 'next' on 2013-02-14 at 26bf6c2)
- + completion: support 'git config --local'
-
-
-* mp/diff-algo-config (2013-01-16) 3 commits
-  (merged to 'next' on 2013-02-14 at cd765dc)
- + diff: Introduce --diff-algorithm command line option
- + config: Introduce diff.algorithm variable
- + git-completion.bash: Autocomplete --minimal and --histogram for git-diff
-
- Add diff.algorithm configuration so that the user does not type
- "diff --histogram".
-
-
-* mw/bash-prompt-show-untracked-config (2013-02-13) 3 commits
-  (merged to 'next' on 2013-02-14 at 809dbcf)
- + t9903: add extra tests for bash.showDirtyState
- + t9903: add tests for bash.showUntrackedFiles
- + shell prompt: add bash.showUntrackedFiles option
-
- Allows skipping the untracked check GIT_PS1_SHOWUNTRACKEDFILES
- asks for the git-prompt (in contrib/) per repository.
-
-
-* wk/man-deny-current-branch-is-default-these-days (2013-02-14) 1 commit
-  (merged to 'next' on 2013-02-14 at 6fab9d4)
- + user-manual: Update for receive.denyCurrentBranch=refuse
+* mm/config-intro-in-git-doc (2013-02-15) 1 commit
+  (merged to 'next' on 2013-02-17 at ff03eb5)
+ + git.txt: update description of the configuration mechanism
 
 --------------------------------------------------
 [Stalled]
@@ -187,6 +139,38 @@ repositories listed at
 --------------------------------------------------
 [Cooking]
 
+* da/difftool-fixes (2013-02-19) 4 commits
+ - t7800: "defaults" is no longer a builtin tool name
+ - t7800: modernize tests
+ - t7800: update copyright notice
+ - difftool: silence uninitialized variable warning
+
+ Minor maintenance updates to difftool, and updates to its tests.
+
+
+* jk/smart-http-robustify (2013-02-17) 3 commits
+ - remote-curl: sanity check ref advertisement from server
+ - remote-curl: verify smart-http metadata lines
+ - pkt-line: teach packet_get_line a no-op mode
+
+ Parse the HTTP exchange that implements the native Git protocol as
+ a series of stateless RPC more carefully to diagnose protocol
+ breakage better.
+
+ Will merge to and hold in 'next'.
+
+
+* nd/read-directory-recursive-optim (2013-02-17) 1 commit
+  (merged to 'next' on 2013-02-17 at 36ba9f4)
+ + read_directory: avoid invoking exclude machinery on tracked files
+
+ "git status" has been optimized by taking advantage of the fact
+ that paths that are already known to the index do not have to be
+ checked against the .gitignore mechanism under some conditions.
+
+ Will cook in 'next'.
+
+
 * mg/gpg-interface-using-status (2013-02-14) 5 commits
  - pretty: make %GK output the signing key for signed commits
  - pretty: parse the gpg status lines rather than the output
@@ -196,12 +180,6 @@ repositories listed at
 
  Call "gpg" using the right API when validating the signature on
  tags.
-
-
-* mm/config-intro-in-git-doc (2013-02-15) 1 commit
- - git.txt: update description of the configuration mechanism
-
- Will merge to 'master'.
 
 
 * jn/shell-disable-interactive (2013-02-11) 2 commits
@@ -247,12 +225,13 @@ repositories listed at
 
 
 * nd/count-garbage (2013-02-15) 4 commits
- - count-objects: report how much disk space taken by garbage files
- - count-objects: report garbage files in pack directory too
- - sha1_file: reorder code in prepare_packed_git_one()
- - git-count-objects.txt: describe each line in -v output
+  (merged to 'next' on 2013-02-17 at b2af923)
+ + count-objects: report how much disk space taken by garbage files
+ + count-objects: report garbage files in pack directory too
+ + sha1_file: reorder code in prepare_packed_git_one()
+ + git-count-objects.txt: describe each line in -v output
 
- Will merge to 'next'.
+ Will cook in 'next'.
 
 
 * tz/credential-authinfo (2013-02-05) 1 commit
@@ -292,20 +271,6 @@ repositories listed at
  Will cook in 'next'.
 
 
-* jc/mention-tracking-for-pull-default (2013-01-31) 1 commit
- - doc: mention tracking for pull.default
-
- We stopped mentioning `tracking` is a deprecated but supported
- synonym for `upstream` in pull.default even though we have no
- intention of removing the support for it.
-
- This is my "don't list it to catch readers' eyes, but make sure it
- can be found if the reader looks for it" version; I'm not married
- to the layout and will be happy to take a replacement patch.
-
- Will merge to 'next'.
-
-
 * jc/remove-treesame-parent-in-simplify-merges (2013-01-17) 1 commit
   (merged to 'next' on 2013-01-30 at b639b47)
  + simplify-merges: drop merge from irrelevant side branch
@@ -339,7 +304,7 @@ repositories listed at
  + t5505: do not assume the "matching" push is the default
  + t5404: do not assume the "matching" push is the default
 
- Will cook in 'next' until Git 2.0 ;-).
+ Will cook in 'next' until Git 2.0.
 
 
 * bc/append-signed-off-by (2013-02-12) 12 commits
