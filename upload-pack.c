@@ -603,8 +603,10 @@ static void receive_needs(void)
 				die("did not find object for %s", line);
 			if (object->type != OBJ_COMMIT)
 				die("invalid shallow object %s", sha1_to_hex(sha1));
-			object->flags |= CLIENT_SHALLOW;
-			add_object_array(object, NULL, &shallows);
+			if (!(object->flags & CLIENT_SHALLOW)) {
+				object->flags |= CLIENT_SHALLOW;
+				add_object_array(object, NULL, &shallows);
+			}
 			continue;
 		}
 		if (!prefixcmp(line, "deepen ")) {
