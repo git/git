@@ -58,6 +58,9 @@ int packet_read(int fd, char *buffer, unsigned size, int options);
  */
 int packet_read_line(int fd, char *buffer, unsigned size);
 
+#define DEFAULT_PACKET_MAX 1000
+#define LARGE_PACKET_MAX 65520
+
 int packet_get_line(struct strbuf *out, char **src_buf, size_t *src_len);
 
 #endif
