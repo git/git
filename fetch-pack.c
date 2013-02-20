@@ -247,7 +247,7 @@ static void send_request(struct fetch_pack_args *args,
 		send_sideband(fd, -1, buf->buf, buf->len, LARGE_PACKET_MAX);
 		packet_flush(fd);
 	} else
-		safe_write(fd, buf->buf, buf->len);
+		write_or_die(fd, buf->buf, buf->len);
 }
 
 static void insert_one_alternate_ref(const struct ref *ref, void *unused)

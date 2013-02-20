@@ -27,6 +27,5 @@ void packet_buf_write(struct strbuf *buf, const char *fmt, ...) __attribute__((f
 int packet_read_line(int fd, char *buffer, unsigned size);
 int packet_read(int fd, char *buffer, unsigned size);
 int packet_get_line(struct strbuf *out, char **src_buf, size_t *src_len);
-ssize_t safe_write(int, const void *, ssize_t);
 
 #endif

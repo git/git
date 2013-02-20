@@ -280,7 +280,7 @@ int send_pack(struct send_pack_args *args,
 			send_sideband(out, -1, req_buf.buf, req_buf.len, LARGE_PACKET_MAX);
 		}
 	} else {
-		safe_write(out, req_buf.buf, req_buf.len);
+		write_or_die(out, req_buf.buf, req_buf.len);
 		packet_flush(out);
 	}
 	strbuf_release(&req_buf);
