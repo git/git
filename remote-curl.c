@@ -76,6 +76,7 @@ struct discovery {
 	char *buf_alloc;
 	char *buf;
 	size_t len;
+	struct ref *refs;
 	unsigned proto_git : 1;
 };
 static struct discovery *last_discovery;
@@ -145,11 +146,12 @@ static void free_discovery(struct discovery *d)
 		if (d == last_discovery)
 			last_discovery = NULL;
 		free(d->buf_alloc);
+		free_refs(d->refs);
 		free(d);
 	}
 }
 
-static struct discovery* discover_refs(const char *service)
+static struct discovery* discover_refs(const char *service, int for_push)
 {
 	struct strbuf exp = STRBUF_INIT;
 	struct strbuf type = STRBUF_INIT;
@@ -221,6 +223,11 @@ static struct discovery* discover_refs(const char *service)
 		last->proto_git = 1;
 	}
 
+	if (last->proto_git)
+		last->refs = parse_git_refs(last, for_push);
+	else
+		last->refs = parse_info_refs(last);
+
 	free(refs_url);
 	strbuf_release(&exp);
 	strbuf_release(&type);
@@ -234,13 +241,11 @@ static struct ref *get_refs(int for_push)
 	struct discovery *heads;
 
 	if (for_push)
-		heads = discover_refs("git-receive-pack");
+		heads = discover_refs("git-receive-pack", for_push);
 	else
-		heads = discover_refs("git-upload-pack");
+		heads = discover_refs("git-upload-pack", for_push);
 
-	if (heads->proto_git)
-		return parse_git_refs(heads, for_push);
-	return parse_info_refs(heads);
+	return heads->refs;
 }
 
 static void output_refs(struct ref *refs)
@@ -254,7 +259,6 @@ static void output_refs(struct ref *refs)
 	}
 	printf("\n");
 	fflush(stdout);
-	free_refs(refs);
 }
 
 struct rpc_state {
@@ -670,7 +674,7 @@ static int fetch_git(struct discovery *heads,
 
 static int fetch(int nr_heads, struct ref **to_fetch)
 {
-	struct discovery *d = discover_refs("git-upload-pack");
+	struct discovery *d = discover_refs("git-upload-pack", 0);
 	if (d->proto_git)
 		return fetch_git(d, nr_heads, to_fetch);
 	else
@@ -789,7 +793,7 @@ static int push_git(struct discovery *heads, int nr_spec, char **specs)
 
 static int push(int nr_spec, char **specs)
 {
-	struct discovery *heads = discover_refs("git-receive-pack");
+	struct discovery *heads = discover_refs("git-receive-pack", 1);
 	int ret;
 
 	if (heads->proto_git)
