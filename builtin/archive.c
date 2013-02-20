@@ -56,8 +56,6 @@ static int run_remote_archiver(int argc, const char **argv,
 	len = packet_read_line(fd[0], buf, sizeof(buf));
 	if (!len)
 		die(_("git archive: expected ACK/NAK, got EOF"));
-	if (buf[len-1] == '\n')
-		buf[--len] = 0;
 	if (strcmp(buf, "ACK")) {
 		if (len > 5 && !prefixcmp(buf, "NACK "))
 			die(_("git archive: NACK %s"), buf + 5);

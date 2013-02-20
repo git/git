@@ -763,8 +763,6 @@ static struct command *read_head_info(void)
 		len = packet_read_line(0, line, sizeof(line));
 		if (!len)
 			break;
-		if (line[len-1] == '\n')
-			line[--len] = 0;
 		if (len < 83 ||
 		    line[40] != ' ' ||
 		    line[81] != ' ' ||

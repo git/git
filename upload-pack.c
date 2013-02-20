@@ -50,13 +50,6 @@ static void reset_timeout(void)
 	alarm(timeout);
 }
 
-static int strip(char *line, int len)
-{
-	if (len && line[len-1] == '\n')
-		line[--len] = 0;
-	return len;
-}
-
 static ssize_t send_client_data(int fd, const char *data, ssize_t sz)
 {
 	if (use_sideband)
@@ -447,7 +440,6 @@ static int get_common_commits(void)
 			got_other = 0;
 			continue;
 		}
-		strip(line, len);
 		if (!prefixcmp(line, "have ")) {
 			switch (got_sha1(line+5, sha1)) {
 			case -1: /* they have what we do not */

@@ -220,8 +220,6 @@ static enum ack_type get_ack(int fd, unsigned char *result_sha1)
 
 	if (!len)
 		die("git fetch-pack: expected ACK/NAK, got EOF");
-	if (line[len-1] == '\n')
-		line[--len] = 0;
 	if (!strcmp(line, "NAK"))
 		return NAK;
 	if (!prefixcmp(line, "ACK ")) {

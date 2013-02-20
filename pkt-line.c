@@ -164,6 +164,11 @@ int packet_read(int fd, char *buffer, unsigned size, int options)
 	ret = safe_read(fd, buffer, len, options);
 	if (ret < 0)
 		return ret;
+
+	if ((options & PACKET_READ_CHOMP_NEWLINE) &&
+	    len && buffer[len-1] == '\n')
+		len--;
+
 	buffer[len] = 0;
 	packet_trace(buffer, len, 0);
 	return len;
@@ -171,7 +176,7 @@ int packet_read(int fd, char *buffer, unsigned size, int options)
 
 int packet_read_line(int fd, char *buffer, unsigned size)
 {
-	return packet_read(fd, buffer, size, 0);
+	return packet_read(fd, buffer, size, PACKET_READ_CHOMP_NEWLINE);
 }
 
 int packet_get_line(struct strbuf *out,

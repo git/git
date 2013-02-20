@@ -105,8 +105,6 @@ int cmd_fetch_pack(int argc, const char **argv, const char *prefix)
 				int n = packet_read_line(0, line, sizeof(line));
 				if (!n)
 					break;
-				if (line[n-1] == '\n')
-					n--;
 				string_list_append(&sought, xmemdupz(line, n));
 			}
 		}

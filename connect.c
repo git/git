@@ -77,14 +77,13 @@ struct ref **get_remote_heads(int in, struct ref **list,
 		int len, name_len;
 
 		len = packet_read(in, buffer, sizeof(buffer),
-				  PACKET_READ_GENTLE_ON_EOF);
+				  PACKET_READ_GENTLE_ON_EOF |
+				  PACKET_READ_CHOMP_NEWLINE);
 		if (len < 0)
 			die_initial_contact(got_at_least_one_head);
 
 		if (!len)
 			break;
-		if (buffer[len-1] == '\n')
-			buffer[--len] = 0;
 
 		if (len > 4 && !prefixcmp(buffer, "ERR "))
 			die("remote error: %s", buffer + 4);

@@ -111,10 +111,7 @@ static int receive_status(int in, struct ref *refs)
 	int len = packet_read_line(in, line, sizeof(line));
 	if (prefixcmp(line, "unpack "))
 		return error("did not receive remote status");
-	if (strcmp(line, "unpack ok\n")) {
-		char *p = line + strlen(line) - 1;
-		if (*p == '\n')
-			*p = '\0';
+	if (strcmp(line, "unpack ok")) {
 		error("unpack failed: %s", line + 7);
 		ret = -1;
 	}
@@ -131,7 +128,6 @@ static int receive_status(int in, struct ref *refs)
 			break;
 		}
 
-		line[strlen(line)-1] = '\0';
 		refname = line + 3;
 		msg = strchr(refname, ' ');
 		if (msg)

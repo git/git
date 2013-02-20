@@ -44,11 +44,18 @@ void packet_buf_write(struct strbuf *buf, const char *fmt, ...) __attribute__((f
  * If options does contain PACKET_READ_GENTLE_ON_EOF, we will not die on
  * condition 4 (truncated input), but instead return -1. However, we will still
  * die for the other 3 conditions.
+ *
+ * If options contains PACKET_READ_CHOMP_NEWLINE, a trailing newline (if
+ * present) is removed from the buffer before returning.
  */
 #define PACKET_READ_GENTLE_ON_EOF (1u<<0)
+#define PACKET_READ_CHOMP_NEWLINE (1u<<1)
 int packet_read(int fd, char *buffer, unsigned size, int options);
 
-/* Historical convenience wrapper for packet_read that sets no options */
+/*
+ * Convenience wrapper for packet_read that is not gentle, and sets the
+ * CHOMP_NEWLINE option.
+ */
 int packet_read_line(int fd, char *buffer, unsigned size);
 
 int packet_get_line(struct strbuf *out, char **src_buf, size_t *src_len);
