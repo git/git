@@ -192,7 +192,7 @@ static struct ref *parse_git_refs(struct discovery *heads, int for_push)
 
 	if (start_async(&async))
 		die("cannot start thread to parse advertised refs");
-	get_remote_heads(async.out, &list,
+	get_remote_heads(async.out, NULL, 0, &list,
 			for_push ? REF_NORMAL : 0, NULL);
 	close(async.out);
 	if (finish_async(&async))
