@@ -42,7 +42,6 @@ static unsigned int timeout;
  * otherwise maximum packet size (up to 65520 bytes).
  */
 static int use_sideband;
-static int debug_fd;
 static int advertise_refs;
 static int stateless_rpc;
 
@@ -580,8 +579,6 @@ static void receive_needs(void)
 	int has_non_tip = 0;
 
 	shallow_nr = 0;
-	if (debug_fd)
-		write_str_in_full(debug_fd, "#S\n");
 	for (;;) {
 		struct object *o;
 		const char *features;
@@ -590,8 +587,6 @@ static void receive_needs(void)
 		reset_timeout();
 		if (!len)
 			break;
-		if (debug_fd)
-			write_in_full(debug_fd, line, len);
 
 		if (!prefixcmp(line, "shallow ")) {
 			unsigned char sha1[20];
@@ -653,8 +648,6 @@ static void receive_needs(void)
 			add_object_array(o, NULL, &want_obj);
 		}
 	}
-	if (debug_fd)
-		write_str_in_full(debug_fd, "#E\n");
 
 	/*
 	 * We have sent all our refs already, and the other end
@@ -845,8 +838,6 @@ int main(int argc, char **argv)
 	if (is_repository_shallow())
 		die("attempt to fetch/clone from a shallow repository");
 	git_config(upload_pack_config, NULL);
-	if (getenv("GIT_DEBUG_SEND_PACK"))
-		debug_fd = atoi(getenv("GIT_DEBUG_SEND_PACK"));
 	upload_pack();
 	return 0;
 }

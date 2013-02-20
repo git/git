@@ -5,7 +5,7 @@ test_description='test automatic tag following'
 . ./test-lib.sh
 
 if ! test_have_prereq NOT_MINGW; then
-	say "GIT_DEBUG_SEND_PACK not supported - skipping tests"
+	say "GIT_TRACE_PACKET not supported - skipping tests"
 fi
 
 # End state of the repository:
@@ -42,21 +42,26 @@ U=UPLOAD_LOG
 
 test_expect_success NOT_MINGW 'setup expect' '
 cat - <<EOF >expect
-#S
 want $A
-#E
 EOF
 '
+
+get_needs () {
+	perl -alne '
+		next unless $F[1] eq "upload-pack<";
+		last if $F[2] eq "0000";
+		print $F[2], " ", $F[3];
+	' "$@"
+}
 
 test_expect_success NOT_MINGW 'fetch A (new commit : 1 connection)' '
 	rm -f $U &&
 	(
 		cd cloned &&
-		GIT_DEBUG_SEND_PACK=3 git fetch 3>../$U &&
+		GIT_TRACE_PACKET=3 git fetch 3>../$U &&
 		test $A = $(git rev-parse --verify origin/master)
 	) &&
-	test -s $U &&
-	cut -d" " -f1,2 $U >actual &&
+	get_needs $U >actual &&
 	test_cmp expect actual
 '
 
@@ -74,10 +79,8 @@ test_expect_success NOT_MINGW "create tag T on A, create C on branch cat" '
 
 test_expect_success NOT_MINGW 'setup expect' '
 cat - <<EOF >expect
-#S
 want $C
 want $T
-#E
 EOF
 '
 
@@ -85,13 +88,12 @@ test_expect_success NOT_MINGW 'fetch C, T (new branch, tag : 1 connection)' '
 	rm -f $U &&
 	(
 		cd cloned &&
-		GIT_DEBUG_SEND_PACK=3 git fetch 3>../$U &&
+		GIT_TRACE_PACKET=3 git fetch 3>../$U &&
 		test $C = $(git rev-parse --verify origin/cat) &&
 		test $T = $(git rev-parse --verify tag1) &&
 		test $A = $(git rev-parse --verify tag1^0)
 	) &&
-	test -s $U &&
-	cut -d" " -f1,2 $U >actual &&
+	get_needs $U >actual &&
 	test_cmp expect actual
 '
 
@@ -113,10 +115,8 @@ test_expect_success NOT_MINGW "create commits O, B, tag S on B" '
 
 test_expect_success NOT_MINGW 'setup expect' '
 cat - <<EOF >expect
-#S
 want $B
 want $S
-#E
 EOF
 '
 
@@ -124,22 +124,19 @@ test_expect_success NOT_MINGW 'fetch B, S (commit and tag : 1 connection)' '
 	rm -f $U &&
 	(
 		cd cloned &&
-		GIT_DEBUG_SEND_PACK=3 git fetch 3>../$U &&
+		GIT_TRACE_PACKET=3 git fetch 3>../$U &&
 		test $B = $(git rev-parse --verify origin/master) &&
 		test $B = $(git rev-parse --verify tag2^0) &&
 		test $S = $(git rev-parse --verify tag2)
 	) &&
-	test -s $U &&
-	cut -d" " -f1,2 $U >actual &&
+	get_needs $U >actual &&
 	test_cmp expect actual
 '
 
 test_expect_success NOT_MINGW 'setup expect' '
 cat - <<EOF >expect
-#S
 want $B
 want $S
-#E
 EOF
 '
 
@@ -151,15 +148,14 @@ test_expect_success NOT_MINGW 'new clone fetch master and tags' '
 		cd clone2 &&
 		git init &&
 		git remote add origin .. &&
-		GIT_DEBUG_SEND_PACK=3 git fetch 3>../$U &&
+		GIT_TRACE_PACKET=3 git fetch 3>../$U &&
 		test $B = $(git rev-parse --verify origin/master) &&
 		test $S = $(git rev-parse --verify tag2) &&
 		test $B = $(git rev-parse --verify tag2^0) &&
 		test $T = $(git rev-parse --verify tag1) &&
 		test $A = $(git rev-parse --verify tag1^0)
 	) &&
-	test -s $U &&
-	cut -d" " -f1,2 $U >actual &&
+	get_needs $U >actual &&
 	test_cmp expect actual
 '
 
