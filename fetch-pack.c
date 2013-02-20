@@ -226,6 +226,8 @@ static enum ack_type get_ack(int fd, unsigned char *result_sha1)
 		return NAK;
 	if (!prefixcmp(line, "ACK ")) {
 		if (!get_sha1_hex(line+4, result_sha1)) {
+			if (len < 45)
+				return ACK;
 			if (strstr(line+45, "continue"))
 				return ACK_continue;
 			if (strstr(line+45, "common"))
