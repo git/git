@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# Copyright (c) 2009, 2010 David Aguilar
+# Copyright (c) 2009, 2010, 2012, 2013 David Aguilar
 #
 
 test_description='git-difftool
