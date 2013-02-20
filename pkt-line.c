@@ -103,13 +103,13 @@ void packet_buf_write(struct strbuf *buf, const char *fmt, ...)
 	strbuf_add(buf, buffer, n);
 }
 
-static int safe_read(int fd, void *buffer, unsigned size, int return_line_fail)
+static int safe_read(int fd, void *buffer, unsigned size, int options)
 {
 	ssize_t ret = read_in_full(fd, buffer, size);
 	if (ret < 0)
 		die_errno("read error");
 	else if (ret < size) {
-		if (return_line_fail)
+		if (options & PACKET_READ_GENTLE_ON_EOF)
 			return -1;
 
 		die("The remote end hung up unexpectedly");
@@ -143,13 +143,13 @@ static int packet_length(const char *linelen)
 	return len;
 }
 
-static int packet_read_internal(int fd, char *buffer, unsigned size, int return_line_fail)
+int packet_read(int fd, char *buffer, unsigned size, int options)
 {
 	int len, ret;
 	char linelen[4];
 
-	ret = safe_read(fd, linelen, 4, return_line_fail);
-	if (return_line_fail && ret < 0)
+	ret = safe_read(fd, linelen, 4, options);
+	if (ret < 0)
 		return ret;
 	len = packet_length(linelen);
 	if (len < 0)
@@ -161,22 +161,17 @@ static int packet_read_internal(int fd, char *buffer, unsigned size, int return_
 	len -= 4;
 	if (len >= size)
 		die("protocol error: bad line length %d", len);
-	ret = safe_read(fd, buffer, len, return_line_fail);
-	if (return_line_fail && ret < 0)
+	ret = safe_read(fd, buffer, len, options);
+	if (ret < 0)
 		return ret;
 	buffer[len] = 0;
 	packet_trace(buffer, len, 0);
 	return len;
 }
 
-int packet_read(int fd, char *buffer, unsigned size)
-{
-	return packet_read_internal(fd, buffer, size, 1);
-}
-
 int packet_read_line(int fd, char *buffer, unsigned size)
 {
-	return packet_read_internal(fd, buffer, size, 0);
+	return packet_read(fd, buffer, size, 0);
 }
 
 int packet_get_line(struct strbuf *out,

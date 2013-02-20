@@ -76,7 +76,8 @@ struct ref **get_remote_heads(int in, struct ref **list,
 		char *name;
 		int len, name_len;
 
-		len = packet_read(in, buffer, sizeof(buffer));
+		len = packet_read(in, buffer, sizeof(buffer),
+				  PACKET_READ_GENTLE_ON_EOF);
 		if (len < 0)
 			die_initial_contact(got_at_least_one_head);
 
