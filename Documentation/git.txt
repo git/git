@@ -653,12 +653,19 @@ git so take care if using Cogito etc.
 	The '--namespace' command-line option also sets this value.
 
 'GIT_CEILING_DIRECTORIES'::
-	This should be a colon-separated list of absolute paths.
-	If set, it is a list of directories that git should not chdir
-	up into while looking for a repository directory.
-	It will not exclude the current working directory or
-	a GIT_DIR set on the command line or in the environment.
-	(Useful for excluding slow-loading network directories.)
+	This should be a colon-separated list of absolute paths.  If
+	set, it is a list of directories that git should not chdir up
+	into while looking for a repository directory (useful for
+	excluding slow-loading network directories).  It will not
+	exclude the current working directory or a GIT_DIR set on the
+	command line or in the environment.  Normally, Git has to read
+	the entries in this list and resolve any symlink that
+	might be present in order to compare them with the current
+	directory.  However, if even this access is slow, you
+	can add an empty entry to the list to tell Git that the
+	subsequent entries are not symlinks and needn't be resolved;
+	e.g.,
+	'GIT_CEILING_DIRECTORIES=/maybe/symlink::/very/slow/non/symlink'.
 
 'GIT_DISCOVERY_ACROSS_FILESYSTEM'::
 	When run in a directory that does not have ".git" repository
