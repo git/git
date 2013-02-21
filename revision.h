@@ -143,6 +143,7 @@ struct rev_info {
 	const char	*log_reencode;
 	const char	*subject_prefix;
 	int		disposition_attachment;
+	int		inline_single;
 	int		show_log_size;
 	struct string_list *mailmap;
 
