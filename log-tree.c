@@ -326,7 +326,7 @@ void log_write_email_headers(struct rev_info *opt, struct commit *commit,
 			 " filename=\"%s\"\n\n",
 			 mime_boundary_leader, opt->mime_boundary,
 			 filename.buf,
-			 opt->no_inline ? "attachment" : "inline",
+			 opt->disposition_attachment ? "attachment" : "inline",
 			 filename.buf);
 		opt->diffopt.stat_sep = buffer;
 		strbuf_release(&filename);
