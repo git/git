@@ -64,8 +64,11 @@ argument is always evaluated in the shell context using the 'eval' command
 Prior to that, the $GIT_COMMIT environment variable will be set to contain
 the id of the commit being rewritten.  Also, GIT_AUTHOR_NAME,
 GIT_AUTHOR_EMAIL, GIT_AUTHOR_DATE, GIT_COMMITTER_NAME, GIT_COMMITTER_EMAIL,
-and GIT_COMMITTER_DATE are set according to the current commit.  The values
-of these variables after the filters have run, are used for the new commit.
+and GIT_COMMITTER_DATE are taken from the current commit and exported to
+the environment, in order to affect the author and committer identities of
+the replacement commit created by linkgit:git-commit-tree[1] after the
+filters have run.
+
 If any evaluation of <command> returns a non-zero exit status, the whole
 operation will be aborted.
 
