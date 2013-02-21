@@ -60,9 +60,9 @@ test_expect_success PERL 'custom commands' '
 '
 
 test_expect_success PERL 'custom tool commands override built-ins' '
-	test_config difftool.defaults.cmd "cat \"\$REMOTE\"" &&
+	test_config difftool.vimdiff.cmd "cat \"\$REMOTE\"" &&
 	echo master >expect &&
-	git difftool --tool defaults --no-prompt branch >actual &&
+	git difftool --tool vimdiff --no-prompt branch >actual &&
 	test_cmp expect actual
 '
 
