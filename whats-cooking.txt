@@ -1,10 +1,10 @@
 To: git@vger.kernel.org
 Bcc: lwn@lwn.net
-Subject: What's cooking in git.git (Feb 2013, #08; Tue, 19)
+Subject: What's cooking in git.git (Feb 2013, #09; Thu, 21)
 X-master-at: b3600c36286517cda38df976946557ce3e87bd82
-X-next-at: 01e6e4a21161470b1c5f7df6d2d4d6cbc7556508
+X-next-at: 811e0c07090d01cfcae9d07e8c207363d2d9194f
 
-What's cooking in git.git (Feb 2013, #08; Tue, 19)
+What's cooking in git.git (Feb 2013, #09; Thu, 21)
 --------------------------------------------------
 
 Here are the topics that have been cooking.  Commits prefixed with
@@ -26,73 +26,76 @@ repositories listed at
 --------------------------------------------------
 [New Topics]
 
-* as/check-ignore (2013-02-19) 2 commits
- - name-hash: allow hashing an empty string
- - t0008: document test_expect_success_multi
+* jk/pkt-line-cleanup (2013-02-20) 19 commits
+ - remote-curl: always parse incoming refs
+ - remote-curl: move ref-parsing code up in file
+ - remote-curl: pass buffer straight to get_remote_heads
+ - teach get_remote_heads to read from a memory buffer
+ - pkt-line: share buffer/descriptor reading implementation
+ - pkt-line: provide a LARGE_PACKET_MAX static buffer
+ - pkt-line: move LARGE_PACKET_MAX definition from sideband
+ - pkt-line: teach packet_read_line to chomp newlines
+ - pkt-line: provide a generic reading function with options
+ - pkt-line: drop safe_write function
+ - pkt-line: move a misplaced comment
+ - write_or_die: raise SIGPIPE when we get EPIPE
+ - upload-archive: use argv_array to store client arguments
+ - upload-archive: do not copy repo name
+ - send-pack: prefer prefixcmp over memcmp in receive_status
+ - fetch-pack: fix out-of-bounds buffer offset in get_ack
+ - upload-pack: remove packet debugging harness
+ - upload-pack: do not add duplicate objects to shallow list
+ - upload-pack: use get_sha1_hex to parse "shallow" lines
 
- "git check-ignore ." segfaulted, as a function it calls deep in its
- callchain took a string in the <ptr, length> form but did not stop
- when given an empty string.
+ Cleans up pkt-line API, implementation and its callers to make
+ them more robust.
 
- Will merge to 'next' and will fast-track to 'master' (this is a new
- feature in the upcoming release).
-
-
-* bc/commit-complete-lines-given-via-m-option (2013-02-19) 4 commits
-  (merged to 'next' on 2013-02-19 at cf622b7)
- + Documentation/git-commit.txt: rework the --cleanup section
- + git-commit: only append a newline to -m mesg if necessary
- + t7502: demonstrate breakage with a commit message with trailing newlines
- + t/t7502: compare entire commit message with what was expected
-
- 'git commit -m "$str"' when $str was already terminated with a LF
- now avoids adding an extra LF to the message.
-
- Will merge to 'next'.
-
-
-* ct/autoconf-htmldir (2013-02-19) 1 commit
- - Bugfix: undefined htmldir in config.mak.autogen
-
- An earlier change to config.mak.autogen broke a build driven by the
- ./configure script when --htmldir is not specified on the command
- line of ./configure.
-
- Will merge to 'next' and will fast-track to 'master' (this is a
- regressin workaround).
+ Will merge to and cook in 'next'.
 
 
-* wk/user-manual (2013-02-19) 3 commits
-  (merged to 'next' on 2013-02-19 at dbc0eb2)
- + user-manual: Flesh out uncommitted changes and submodule updates
- + user-manual: Use request-pull to generate "please pull" text
- + user-manual: Reorganize the reroll sections, adding 'git rebase -i'
+* ob/imap-send-ssl-verify (2013-02-20) 1 commit
+ - imap-send: support Server Name Indication (RFC4366)
 
- Further updates to the user manual.
+ Correctly connect to SSL/TLS sites that serve multiple hostnames on
+ a single IP by including Server Name Indication in the client-hello.
 
- Will merge to 'next'.
+ Will merge to and cook in 'next'.
 
 
-* wk/man-deny-current-branch-is-default-these-days (2013-02-18) 1 commit
- - user-manual: typofix (ofthe->of the)
+* jn/less-reconfigure (2013-02-20) 1 commit
+  (merged to 'next' on 2013-02-21 at 811e0c0)
+ + Makefile: avoid infinite loop on configure.ac change
 
- Will merge to 'next' and fast-track to 'master'.
+ A change made on v1.8.1.x maintenance track had a nasty regression
+ to break the build when autoconf is used.
 
---------------------------------------------------
-[Graduated to "master"]
-
-* jc/mention-tracking-for-pull-default (2013-01-31) 1 commit
-  (merged to 'next' on 2013-02-17 at 043624b)
- + doc: mention tracking for pull.default
-
- We stopped mentioning `tracking` is a deprecated but supported
- synonym for `upstream` in pull.default even though we have no
- intention of removing the support for it.
+ Will fast-track to 'master' and 'maint' (regression fix).
 
 
-* mm/config-intro-in-git-doc (2013-02-15) 1 commit
-  (merged to 'next' on 2013-02-17 at ff03eb5)
- + git.txt: update description of the configuration mechanism
+* jc/format-patch (2013-02-21) 2 commits
+ - format-patch: --inline-single
+ - format-patch: rename "no_inline" field
+
+ A new option to send a single patch to the standard output to be
+ appended at the bottom of a message.  I personally have no need for
+ this, but it was easy enough to cobble together.
+
+
+* mh/maint-ceil-absolute (2013-02-21) 1 commit
+ - Provide a mechanism to turn off symlink resolution in ceiling paths
+
+ An earlier workaround designed to help people who list logical
+ directories that will not match what getcwd(3) returns in the
+ GIT_CEILING_DIRECTORIES had an adverse effect when it is slow to
+ stat and readlink a directory component of an element listed on it.
+
+ Waiting for review.  Needs sign-off.
+
+
+* tk/doc-filter-branch (2013-02-21) 3 commits
+ - [SQUASH???] reword desc on filter-branch's use of env
+ - Documentation: filter-branch env-filter example
+ - git-filter-branch.txt: clarify ident variables usage
 
 --------------------------------------------------
 [Stalled]
@@ -139,25 +142,66 @@ repositories listed at
 --------------------------------------------------
 [Cooking]
 
-* da/difftool-fixes (2013-02-19) 4 commits
- - t7800: "defaults" is no longer a builtin tool name
+* as/check-ignore (2013-02-19) 2 commits
+  (merged to 'next' on 2013-02-21 at 27927a2)
+ + name-hash: allow hashing an empty string
+ + t0008: document test_expect_success_multi
+
+ "git check-ignore ." segfaulted, as a function it calls deep in its
+ callchain took a string in the <ptr, length> form but did not stop
+ when given an empty string.
+
+ Will fast-track to 'master' (this is a new feature in the upcoming release).
+
+
+* bc/commit-complete-lines-given-via-m-option (2013-02-19) 4 commits
+  (merged to 'next' on 2013-02-19 at cf622b7)
+ + Documentation/git-commit.txt: rework the --cleanup section
+ + git-commit: only append a newline to -m mesg if necessary
+ + t7502: demonstrate breakage with a commit message with trailing newlines
+ + t/t7502: compare entire commit message with what was expected
+
+ 'git commit -m "$str"' when $str was already terminated with a LF
+ now avoids adding an extra LF to the message.
+
+ Will cook in 'next'.
+
+
+* ct/autoconf-htmldir (2013-02-19) 1 commit
+  (merged to 'next' on 2013-02-21 at 44f127d)
+ + Bugfix: undefined htmldir in config.mak.autogen
+
+ An earlier change to config.mak.autogen broke a build driven by the
+ ./configure script when --htmldir is not specified on the command
+ line of ./configure.
+
+ Will fast-track to 'master' (regression fix).
+
+
+* wk/user-manual (2013-02-19) 3 commits
+  (merged to 'next' on 2013-02-19 at dbc0eb2)
+ + user-manual: Flesh out uncommitted changes and submodule updates
+ + user-manual: Use request-pull to generate "please pull" text
+ + user-manual: Reorganize the reroll sections, adding 'git rebase -i'
+
+ Further updates to the user manual.
+
+ Will merge to 'master'.
+
+
+* wk/man-deny-current-branch-is-default-these-days (2013-02-18) 1 commit
+  (merged to 'next' on 2013-02-21 at e67b15b)
+ + user-manual: typofix (ofthe->of the)
+
+ Will fast-track to 'master'.
+
+
+* da/difftool-fixes (2013-02-20) 3 commits
  - t7800: modernize tests
  - t7800: update copyright notice
  - difftool: silence uninitialized variable warning
 
  Minor maintenance updates to difftool, and updates to its tests.
-
-
-* jk/smart-http-robustify (2013-02-17) 3 commits
- - remote-curl: sanity check ref advertisement from server
- - remote-curl: verify smart-http metadata lines
- - pkt-line: teach packet_get_line a no-op mode
-
- Parse the HTTP exchange that implements the native Git protocol as
- a series of stateless RPC more carefully to diagnose protocol
- breakage better.
-
- Will merge to and hold in 'next'.
 
 
 * nd/read-directory-recursive-optim (2013-02-17) 1 commit
@@ -349,6 +393,18 @@ repositories listed at
  notes-cache).
 
  Stalled mostly due to lack of responses.
+
+
+* jk/smart-http-robustify (2013-02-17) 3 commits
+ . remote-curl: sanity check ref advertisement from server
+ . remote-curl: verify smart-http metadata lines
+ . pkt-line: teach packet_get_line a no-op mode
+
+ Parse the HTTP exchange that implements the native Git protocol as
+ a series of stateless RPC more carefully to diagnose protocol
+ breakage better.
+
+ Superseded by jk/pkt-line-cleanup
 
 
 * jc/xprm-generation (2012-09-14) 1 commit
