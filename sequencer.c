@@ -1127,10 +1127,33 @@ void append_signoff(struct strbuf *msgbuf, int ignore_footer, unsigned flag)
 		const char *append_newlines = NULL;
 		size_t len = msgbuf->len - ignore_footer;
 
-		if (len && msgbuf->buf[len - 1] != '\n')
+		if (!len) {
+			/*
+			 * The buffer is completely empty.  Leave foom for
+			 * the title and body to be filled in by the user.
+			 */
 			append_newlines = "\n\n";
-		else if (len > 1 && msgbuf->buf[len - 2] != '\n')
+		} else if (msgbuf->buf[len - 1] != '\n') {
+			/*
+			 * Incomplete line.  Complete the line and add a
+			 * blank one so that there is an empty line between
+			 * the message body and the sob.
+			 */
+			append_newlines = "\n\n";
+		} else if (len == 1) {
+			/*
+			 * Buffer contains a single newline.  Add another
+			 * so that we leave room for the title and body.
+			 */
 			append_newlines = "\n";
+		} else if (msgbuf->buf[len - 2] != '\n') {
+			/*
+			 * Buffer ends with a single newline.  Add another
+			 * so that there is an empty line between the message
+			 * body and the sob.
+			 */
+			append_newlines = "\n";
+		} /* else, the buffer already ends with two newlines. */
 
 		if (append_newlines)
 			strbuf_splice(msgbuf, msgbuf->len - ignore_footer, 0,
