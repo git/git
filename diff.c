@@ -1177,7 +1177,16 @@ static char *pprint_rename(const char *a, const char *b)
 	old = a + len_a;
 	new = b + len_b;
 	sfx_length = 0;
-	while (a <= old && b <= new && *old == *new) {
+	/*
+	 * Note:
+	 * if pfx_length is 0, old/new will never reach a - 1 because it
+	 * would mean the whole string is common suffix. But then, the
+	 * whole string would also be a common prefix, and we would not
+	 * have pfx_length equals 0.
+	 */
+	while (a + pfx_length - 1 <= old &&
+	       b + pfx_length - 1 <= new &&
+	       *old == *new) {
 		if (*old == '/')
 			sfx_length = len_a - (old - a);
 		old--;
