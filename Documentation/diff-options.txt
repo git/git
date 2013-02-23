@@ -174,8 +174,8 @@ any of those replacements occurred.
 
 --color[=<when>]::
 	Show colored diff.
-	The value must be `always` (the default for `<when>`), `never`, or `auto`.
-	The default value is `never`.
+	`--color` (i.e. without '=<when>') is the same as `--color=always`.
+	'<when>' can be one of `always`, `never`, or `auto`.
 ifdef::git-diff[]
 	It can be changed by the `color.ui` and `color.diff`
 	configuration settings.
