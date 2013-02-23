@@ -76,7 +76,8 @@ struct ref **get_remote_heads(int in, struct ref **list,
 		int len, name_len;
 		char *buffer = packet_buffer;
 
-		len = packet_read(in, packet_buffer, sizeof(packet_buffer),
+		len = packet_read(in, NULL, NULL,
+				  packet_buffer, sizeof(packet_buffer),
 				  PACKET_READ_GENTLE_ON_EOF |
 				  PACKET_READ_CHOMP_NEWLINE);
 		if (len < 0)

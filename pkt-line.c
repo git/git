@@ -104,12 +104,28 @@ void packet_buf_write(struct strbuf *buf, const char *fmt, ...)
 	strbuf_add(buf, buffer, n);
 }
 
-static int safe_read(int fd, void *buffer, unsigned size, int options)
+static int get_packet_data(int fd, char **src_buf, size_t *src_size,
+			   void *dst, unsigned size, int options)
 {
-	ssize_t ret = read_in_full(fd, buffer, size);
-	if (ret < 0)
-		die_errno("read error");
-	else if (ret < size) {
+	ssize_t ret;
+
+	if (fd >= 0 && src_buf && *src_buf)
+		die("BUG: multiple sources given to packet_read");
+
+	/* Read up to "size" bytes from our source, whatever it is. */
+	if (src_buf && *src_buf) {
+		ret = size < *src_size ? size : *src_size;
+		memcpy(dst, *src_buf, ret);
+		*src_buf += ret;
+		*src_size -= ret;
+	} else {
+		ret = read_in_full(fd, dst, size);
+		if (ret < 0)
+			die_errno("read error");
+	}
+
+	/* And complain if we didn't get enough bytes to satisfy the read. */
+	if (ret < size) {
 		if (options & PACKET_READ_GENTLE_ON_EOF)
 			return -1;
 
@@ -144,12 +160,13 @@ static int packet_length(const char *linelen)
 	return len;
 }
 
-int packet_read(int fd, char *buffer, unsigned size, int options)
+int packet_read(int fd, char **src_buf, size_t *src_len,
+		char *buffer, unsigned size, int options)
 {
 	int len, ret;
 	char linelen[4];
 
-	ret = safe_read(fd, linelen, 4, options);
+	ret = get_packet_data(fd, src_buf, src_len, linelen, 4, options);
 	if (ret < 0)
 		return ret;
 	len = packet_length(linelen);
@@ -162,7 +179,7 @@ int packet_read(int fd, char *buffer, unsigned size, int options)
 	len -= 4;
 	if (len >= size)
 		die("protocol error: bad line length %d", len);
-	ret = safe_read(fd, buffer, len, options);
+	ret = get_packet_data(fd, src_buf, src_len, buffer, len, options);
 	if (ret < 0)
 		return ret;
 
@@ -175,41 +192,24 @@ int packet_read(int fd, char *buffer, unsigned size, int options)
 	return len;
 }
 
-char *packet_read_line(int fd, int *len_p)
+static char *packet_read_line_generic(int fd,
+				      char **src, size_t *src_len,
+				      int *dst_len)
 {
-	int len = packet_read(fd, packet_buffer, sizeof(packet_buffer),
+	int len = packet_read(fd, src, src_len,
+			      packet_buffer, sizeof(packet_buffer),
 			      PACKET_READ_CHOMP_NEWLINE);
-	if (len_p)
-		*len_p = len;
+	if (dst_len)
+		*dst_len = len;
 	return len ? packet_buffer : NULL;
 }
 
-int packet_get_line(struct strbuf *out,
-	char **src_buf, size_t *src_len)
+char *packet_read_line(int fd, int *len_p)
 {
-	int len;
+	return packet_read_line_generic(fd, NULL, NULL, len_p);
+}
 
-	if (*src_len < 4)
-		return -1;
-	len = packet_length(*src_buf);
-	if (len < 0)
-		return -1;
-	if (!len) {
-		*src_buf += 4;
-		*src_len -= 4;
-		packet_trace("0000", 4, 0);
-		return 0;
-	}
-	if (*src_len < len)
-		return -2;
-
-	*src_buf += 4;
-	*src_len -= 4;
-	len -= 4;
-
-	strbuf_add(out, *src_buf, len);
-	*src_buf += len;
-	*src_len -= len;
-	packet_trace(out->buf, out->len, 0);
-	return len;
+char *packet_read_line_buf(char **src, size_t *src_len, int *dst_len)
+{
+	return packet_read_line_generic(-1, src, src_len, dst_len);
 }

@@ -25,9 +25,16 @@ void packet_buf_flush(struct strbuf *buf);
 void packet_buf_write(struct strbuf *buf, const char *fmt, ...) __attribute__((format (printf, 2, 3)));
 
 /*
- * Read a packetized line from the descriptor into the buffer, which must be at
- * least size bytes long. The return value specifies the number of bytes read
- * into the buffer.
+ * Read a packetized line into the buffer, which must be at least size bytes
+ * long. The return value specifies the number of bytes read into the buffer.
+ *
+ * If src_buffer is not NULL (and nor is *src_buffer), it should point to a
+ * buffer containing the packet data to parse, of at least *src_len bytes.
+ * After the function returns, src_buf will be incremented and src_len
+ * decremented by the number of bytes consumed.
+ *
+ * If src_buffer (or *src_buffer) is NULL, then data is read from the
+ * descriptor "fd".
  *
  * If options does not contain PACKET_READ_GENTLE_ON_EOF, we will die under any
  * of the following conditions:
@@ -50,7 +57,8 @@ void packet_buf_write(struct strbuf *buf, const char *fmt, ...) __attribute__((f
  */
 #define PACKET_READ_GENTLE_ON_EOF (1u<<0)
 #define PACKET_READ_CHOMP_NEWLINE (1u<<1)
-int packet_read(int fd, char *buffer, unsigned size, int options);
+int packet_read(int fd, char **src_buffer, size_t *src_len, char
+		*buffer, unsigned size, int options);
 
 /*
  * Convenience wrapper for packet_read that is not gentle, and sets the
@@ -61,11 +69,14 @@ int packet_read(int fd, char *buffer, unsigned size, int options);
  */
 char *packet_read_line(int fd, int *size);
 
+/*
+ * Same as packet_read_line, but read from a buf rather than a descriptor;
+ * see packet_read for details on how src_* is used.
+ */
+char *packet_read_line_buf(char **src_buf, size_t *src_len, int *size);
 
 #define DEFAULT_PACKET_MAX 1000
 #define LARGE_PACKET_MAX 65520
 extern char packet_buffer[LARGE_PACKET_MAX];
-
-int packet_get_line(struct strbuf *out, char **src_buf, size_t *src_len);
 
 #endif
