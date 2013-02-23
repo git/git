@@ -1349,11 +1349,11 @@ msgstr "  (alle Konflikte behoben: führen Sie \"git commit\" aus)"
 #: wt-status.c:958
 #, c-format
 msgid "You are currently bisecting branch '%s'."
-msgstr "Sie sind gerade beim Halbieren in Zweig '%s'."
+msgstr "Sie sind gerade bei einer binären Suche in Zweig '%s'."
 
 #: wt-status.c:962
 msgid "You are currently bisecting."
-msgstr "Sie sind gerade beim Halbieren."
+msgstr "Sie sind gerade bei einer binären Suche."
 
 #: wt-status.c:965
 msgid "  (use \"git bisect reset\" to get back to the original branch)"
@@ -9247,7 +9247,7 @@ msgstr ""
 
 #: git-bisect.sh:140
 msgid "won't bisect on seeked tree"
-msgstr "\"bisect\" auf gesuchtem Zweig nicht möglich"
+msgstr "binäre Suche auf gesuchtem Zweig nicht möglich"
 
 #: git-bisect.sh:144
 msgid "Bad HEAD - strange symbolic ref"
@@ -9280,7 +9280,7 @@ msgstr "'git bisect bad' kann nur ein Argument entgegennehmen."
 #. this is less optimum.
 #: git-bisect.sh:273
 msgid "Warning: bisecting only with a bad commit."
-msgstr "Warnung: halbiere nur mit einer fehlerhaften Version"
+msgstr "Warnung: binäre Suche nur mit einer fehlerhaften Version"
 
 #. TRANSLATORS: Make sure to include [Y] and [n] in your
 #. translation. The program will only accept English input
@@ -9310,7 +9310,7 @@ msgstr ""
 
 #: git-bisect.sh:347 git-bisect.sh:474
 msgid "We are not bisecting."
-msgstr "Wir sind nicht beim Halbieren."
+msgstr "keine binäre Suche im Gange"
 
 #: git-bisect.sh:354
 #, sh-format
@@ -9350,12 +9350,12 @@ msgid ""
 "bisect run failed:\n"
 "exit code $res from '$command' is < 0 or >= 128"
 msgstr ""
-"Ausführung der Halbierung fehlgeschlagen:\n"
+"'bisect run' fehlgeschlagen:\n"
 "Rückkehrwert $res von '$command' ist < 0 oder >= 128"
 
 #: git-bisect.sh:453
 msgid "bisect run cannot continue any more"
-msgstr "Ausführung der Halbierung kann nicht mehr fortgesetzt werden"
+msgstr "'bisect run' kann nicht mehr fortgesetzt werden"
 
 #: git-bisect.sh:459
 #, sh-format
@@ -9363,12 +9363,12 @@ msgid ""
 "bisect run failed:\n"
 "'bisect_state $state' exited with error code $res"
 msgstr ""
-"Ausführung der Halbierung fehlgeschlagen:\n"
+"'bisect run' fehlgeschlagen:\n"
 "'bisect_state $state' wurde mit Fehlerwert $res beendet"
 
 #: git-bisect.sh:466
 msgid "bisect run success"
-msgstr "Halbierung erfolgreich ausgeführt"
+msgstr "'bisect run' erfolgreich ausgeführt"
 
 #: git-pull.sh:21
 msgid ""
