@@ -7,7 +7,7 @@
 use strict;
 use File::Find;
 
-my $USAGE = 'Usage: git-import branch import-message';
+my $USAGE = 'usage: git-import branch import-message';
 my $branch = shift or die "$USAGE\n";
 my $message = shift or die "$USAGE\n";
 

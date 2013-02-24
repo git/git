@@ -19,7 +19,7 @@ if hexversion < 0x01060000:
         sys.exit(1)
 
 if len(argv) < 2:
-	print 'Usage:', argv[0], '<zipfile>...'
+        print 'usage:', argv[0], '<zipfile>...'
 	exit(1)
 
 branch_ref = 'refs/heads/import-zips'
