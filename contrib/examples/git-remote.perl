@@ -347,7 +347,7 @@ sub rm_remote {
 }
 
 sub add_usage {
-	print STDERR "Usage: git remote add [-f] [-t track]* [-m master] <name> <url>\n";
+	print STDERR "usage: git remote add [-f] [-t track]* [-m master] <name> <url>\n";
 	exit(1);
 }
 
