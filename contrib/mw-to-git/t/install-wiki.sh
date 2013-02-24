@@ -15,7 +15,7 @@ fi
 
 . "$WIKI_TEST_DIR"/test-gitmw-lib.sh
 usage () {
-	echo "Usage: "
+	echo "usage: "
 	echo "	./install-wiki.sh <install | delete | --help>"
 	echo "		install | -i :	Install a wiki on your computer."
 	echo "		delete | -d : Delete the wiki and all its pages and "
