@@ -15,8 +15,8 @@ from zipfile import ZipFile
 
 if hexversion < 0x01060000:
         # The limiter is the zipfile module
-        sys.stderr.write("import-zips.py: requires Python 1.6.0 or later.\n")
-        sys.exit(1)
+        stderr.write("import-zips.py: requires Python 1.6.0 or later.\n")
+        exit(1)
 
 if len(argv) < 2:
         print 'usage:', argv[0], '<zipfile>...'
