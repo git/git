@@ -534,7 +534,7 @@ sub cmd_fetch {
 	}
 	my ($remote) = @_;
 	if (@_ > 1) {
-		die "Usage: $0 fetch [--all] [--parent] [svn-remote]\n";
+		die "usage: $0 fetch [--all] [--parent] [svn-remote]\n";
 	}
 	$Git::SVN::no_reuse_existing = undef;
 	if ($_fetch_parent) {
@@ -1404,7 +1404,7 @@ sub cmd_multi_fetch {
 # this command is special because it requires no metadata
 sub cmd_commit_diff {
 	my ($ta, $tb, $url) = @_;
-	my $usage = "Usage: $0 commit-diff -r<revision> ".
+	my $usage = "usage: $0 commit-diff -r<revision> ".
 	            "<tree-ish> <tree-ish> [<URL>]";
 	fatal($usage) if (!defined $ta || !defined $tb);
 	my $svn_path = '';
