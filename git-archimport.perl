@@ -75,7 +75,7 @@ our($opt_h,$opt_f,$opt_v,$opt_T,$opt_t,$opt_D,$opt_a,$opt_o);
 
 sub usage() {
     print STDERR <<END;
-Usage: git archimport     # fetch/update GIT from Arch
+usage: git archimport     # fetch/update GIT from Arch
        [ -h ] [ -v ] [ -o ] [ -a ] [ -f ] [ -T ] [ -D depth ] [ -t tempdir ]
        repository/arch-branch [ repository/arch-branch] ...
 END
