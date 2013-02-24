@@ -84,14 +84,14 @@ if test -n "$OPTIONS_SPEC"; then
 else
 	dashless=$(basename "$0" | sed -e 's/-/ /')
 	usage() {
-		die "Usage: $dashless $USAGE"
+		die "usage: $dashless $USAGE"
 	}
 
 	if [ -z "$LONG_USAGE" ]
 	then
-		LONG_USAGE="Usage: $dashless $USAGE"
+		LONG_USAGE="usage: $dashless $USAGE"
 	else
-		LONG_USAGE="Usage: $dashless $USAGE
+		LONG_USAGE="usage: $dashless $USAGE
 
 $LONG_USAGE"
 	fi
