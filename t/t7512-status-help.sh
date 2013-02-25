@@ -5,7 +5,7 @@
 #		     Grenoble INP Ensimag
 #
 
-test_description='git status advices'
+test_description='git status advice'
 
 . ./test-lib.sh
 
