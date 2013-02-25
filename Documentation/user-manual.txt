@@ -2306,17 +2306,13 @@ branch and then merge into each of the test and release branches.  For
 these changes, just apply directly to the "release" branch, and then
 merge that into the "test" branch.
 
-To create diffstat and shortlog summaries of changes to include in a "please
-pull" request to Linus you can use:
+After pushing your work to `mytree`, you can use
+linkgit:git-request-pull[1] to prepare a "please pull" request message
+to send to Linus:
 
 -------------------------------------------------
-$ git diff --stat origin..release
--------------------------------------------------
-
-and
-
--------------------------------------------------
-$ git log -p origin..release | git shortlog
+$ git push mytree
+$ git request-pull origin mytree release
 -------------------------------------------------
 
 Here are some of the scripts that simplify all this even further.
@@ -2557,6 +2553,12 @@ return mywork to the state it had before you started the rebase:
 $ git rebase --abort
 -------------------------------------------------
 
+If you need to reorder or edit a number of commits in a branch, it may
+be easier to use `git rebase -i`, which allows you to reorder and
+squash commits, as well as marking them for individual editing during
+the rebase.  See <<interactive-rebase>> for details, and
+<<reordering-patch-series>> for alternatives.
+
 [[rewriting-one-commit]]
 Rewriting a single commit
 -------------------------
@@ -2570,72 +2572,89 @@ $ git commit --amend
 
 which will replace the old commit by a new commit incorporating your
 changes, giving you a chance to edit the old commit message first.
+This is useful for fixing typos in your last commit, or for adjusting
+the patch contents of a poorly staged commit.
 
-You can also use a combination of this and linkgit:git-rebase[1] to
-replace a commit further back in your history and recreate the
-intervening changes on top of it.  First, tag the problematic commit
-with
-
--------------------------------------------------
-$ git tag bad mywork~5
--------------------------------------------------
-
-(Either gitk or `git log` may be useful for finding the commit.)
-
-Then check out that commit, edit it, and rebase the rest of the series
-on top of it (note that we could check out the commit on a temporary
-branch, but instead we're using a <<detached-head,detached head>>):
-
--------------------------------------------------
-$ git checkout bad
-$ # make changes here and update the index
-$ git commit --amend
-$ git rebase --onto HEAD bad mywork
--------------------------------------------------
-
-When you're done, you'll be left with mywork checked out, with the top
-patches on mywork reapplied on top of your modified commit.  You can
-then clean up with
-
--------------------------------------------------
-$ git tag -d bad
--------------------------------------------------
-
-Note that the immutable nature of Git history means that you haven't really
-"modified" existing commits; instead, you have replaced the old commits with
-new commits having new object names.
+If you need to amend commits from deeper in your history, you can
+use <<interactive-rebase,interactive rebase's `edit` instruction>>.
 
 [[reordering-patch-series]]
 Reordering or selecting from a patch series
 -------------------------------------------
 
-Given one existing commit, the linkgit:git-cherry-pick[1] command
-allows you to apply the change introduced by that commit and create a
-new commit that records it.  So, for example, if "mywork" points to a
-series of patches on top of "origin", you might do something like:
-
--------------------------------------------------
-$ git checkout -b mywork-new origin
-$ gitk origin..mywork &
--------------------------------------------------
-
-and browse through the list of patches in the mywork branch using gitk,
-applying them (possibly in a different order) to mywork-new using
-cherry-pick, and possibly modifying them as you go using `git commit --amend`.
-The linkgit:git-gui[1] command may also help as it allows you to
-individually select diff hunks for inclusion in the index (by
-right-clicking on the diff hunk and choosing "Stage Hunk for Commit").
-
-Another technique is to use `git format-patch` to create a series of
-patches, then reset the state to before the patches:
+Sometimes you want to edit a commit deeper in your history.  One
+approach is to use `git format-patch` to create a series of patches
+and then reset the state to before the patches:
 
 -------------------------------------------------
 $ git format-patch origin
 $ git reset --hard origin
 -------------------------------------------------
 
-Then modify, reorder, or eliminate patches as preferred before applying
-them again with linkgit:git-am[1].
+Then modify, reorder, or eliminate patches as needed before applying
+them again with linkgit:git-am[1]:
+
+-------------------------------------------------
+$ git am *.patch
+-------------------------------------------------
+
+[[interactive-rebase]]
+Using interactive rebases
+-------------------------
+
+You can also edit a patch series with an interactive rebase.  This is
+the same as <<reordering-patch-series,reordering a patch series using
+`format-patch`>>, so use whichever interface you like best.
+
+Rebase your current HEAD on the last commit you want to retain as-is.
+For example, if you want to reorder the last 5 commits, use:
+
+-------------------------------------------------
+$ git rebase -i HEAD~5
+-------------------------------------------------
+
+This will open your editor with a list of steps to be taken to perform
+your rebase.
+
+-------------------------------------------------
+pick deadbee The oneline of this commit
+pick fa1afe1 The oneline of the next commit
+...
+
+# Rebase c0ffeee..deadbee onto c0ffeee
+#
+# Commands:
+#  p, pick = use commit
+#  r, reword = use commit, but edit the commit message
+#  e, edit = use commit, but stop for amending
+#  s, squash = use commit, but meld into previous commit
+#  f, fixup = like "squash", but discard this commit's log message
+#  x, exec = run command (the rest of the line) using shell
+#
+# These lines can be re-ordered; they are executed from top to bottom.
+#
+# If you remove a line here THAT COMMIT WILL BE LOST.
+#
+# However, if you remove everything, the rebase will be aborted.
+#
+# Note that empty commits are commented out
+-------------------------------------------------
+
+As explained in the comments, you can reorder commits, squash them
+together, edit commit messages, etc. by editing the list.  Once you
+are satisfied, save the list and close your editor, and the rebase
+will begin.
+
+The rebase will stop where `pick` has been replaced with `edit` or
+when a step in the list fails to mechanically resolve conflicts and
+needs your help.  When you are done editing and/or resolving conflicts
+you can continue with `git rebase --continue`.  If you decide that
+things are getting too hairy, you can always bail out with `git rebase
+--abort`.  Even after the rebase is complete, you can still recover
+the original branch by using the <<reflogs,reflog>>.
+
+For a more detailed discussion of the procedure and additional tips,
+see the "INTERACTIVE MODE" section of linkgit:git-rebase[1].
 
 [[patch-series-tools]]
 Other tools
@@ -3721,7 +3740,9 @@ module a
 
 NOTE: The changes are still visible in the submodule's reflog.
 
-This is not the case if you did not commit your changes.
+If you have uncommitted changes in your submodule working tree, `git
+submodule update` will not overwrite them.  Instead, you get the usual
+warning about not being able switch from a dirty branch.
 
 [[low-level-operations]]
 Low-level Git operations
