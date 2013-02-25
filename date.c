@@ -383,7 +383,7 @@ static int is_date(int year, int month, int day, struct tm *now_tm, time_t now, 
 		 * sense to specify timestamp way into the future.  Make
 		 * sure it is not later than ten days from now...
 		 */
-		if (now + 10*24*3600 < specified)
+		if ((specified != -1) && (now + 10*24*3600 < specified))
 			return 0;
 		tm->tm_mon = r->tm_mon;
 		tm->tm_mday = r->tm_mday;
