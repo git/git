@@ -17,14 +17,14 @@ preference configuration variable "push.default" to change this.
 
 "git push $there tag v1.2.3" used to allow replacing a tag v1.2.3
 that already exists in the repository $there, if the rewritten tag
-you are pushing points at a commit that is a decendant of a commit
+you are pushing points at a commit that is a descendant of a commit
 that the old tag v1.2.3 points at.  This was found to be error prone
 and starting with this release, any attempt to update an existing
 ref under refs/tags/ hierarchy will fail, without "--force".
 
 When "git add -u" and "git add -A", that does not specify what paths
 to add on the command line, is run from inside a subdirectory, the
-scope of the operation has always been limited to the subirectory.
+scope of the operation has always been limited to the subdirectory.
 Many users found this counter-intuitive, given that "git commit -a"
 and other commands operate on the entire tree regardless of where you
 are. In this release, these commands give warning in such a case and
@@ -125,7 +125,7 @@ UI, Workflows & Features
    string "v$count-" to the names of its output files, and also
    automatically sets the subject prefix to "PATCH v$count". This
    allows patches from rerolled series to be stored under different
-   names and makes it easier to reuse cover letter messsages.
+   names and makes it easier to reuse cover letter messages.
 
  * "git log" and friends can be told with --use-mailmap option to
    rewrite the names and email addresses of people using the mailmap
@@ -295,7 +295,6 @@ details).
  * The smart HTTP clients forgot to verify the content-type that comes
    back from the server side to make sure that the request is being
    handled properly.
-   (merge 3443db5 sp/smart-http-content-type-check later to maint).
 
  * "git am" did not parse datestamp correctly from Hg generated patch,
    when it is run in a locale outside C (or en).
@@ -306,7 +305,6 @@ details).
  * "git apply --summary" has been taught to make sure the similarity
    value shown in its output is sensible, even when the input had a
    bogus value.
-   (merge afcb6ac jk/apply-similaritly-parsing later to maint).
 
  * A tar archive created by "git archive" recorded a directory in a
    way that made NetBSD's implementation of "tar" sometimes unhappy.
@@ -327,19 +325,16 @@ details).
    untracked directory, it found an embedded git repository there
    which it is not allowed to remove).  It now performs the actions
    and then reports the outcome more faithfully.
-   (merge f538a91 zk/clean-report-failure later to maint).
 
  * When "git clone --separate-git-dir=$over_there" is interrupted, it
    failed to remove the real location of the $GIT_DIR it created.
    This was most visible when interrupting a submodule update.
 
  * "git cvsimport" mishandled timestamps at DST boundary.
-   (merge 48c9162 bw/get-tz-offset-perl later to maint).
 
  * We used to have an arbitrary 32 limit for combined diff input,
    resulting in incorrect number of leading colons shown when showing
    the "--raw --cc" output.
-   (merge edbc00e jc/combine-diff-many-parents later to maint).
 
  * "git fetch --depth" was broken in at least three ways.  The
    resulting history was deeper than specified by one commit, it was
@@ -349,7 +344,6 @@ details).
 
  * "git log --all -p" that walked refs/notes/textconv/ ref can later
    try to use the textconv data incorrectly after it gets freed.
-   (merge be5c9fb jk/read-commit-buffer-data-after-free later to maint).
 
  * We forgot to close the file descriptor reading from "gpg" output,
    killing "git log --show-signature" on a long history.
@@ -374,7 +368,6 @@ details).
 
  * "git clone" used to allow --bare and --separate-git-dir=$there
    options at the same time, which was nonsensical.
-   (merge 95b63f1 nd/clone-no-separate-git-dir-with-bare later to maint).
 
  * "git rebase --preserve-merges" lost empty merges in recent versions
    of Git.
@@ -409,7 +402,6 @@ details).
  * "gitweb" pages served over HTTPS, when configured to show picon or
    gravatar, referred to these external resources to be fetched via
    HTTP, resulting in mixed contents warning in browsers.
-   (merge 5748558 ab/gitweb-use-same-scheme later to maint).
 
  * When a line to be wrapped has a solid run of non space characters
    whose length exactly is the wrap width, "git shortlog -w" failed
@@ -427,7 +419,7 @@ details).
  * "git push" was taught to refuse updating the branch that is
    currently checked out long time ago, but the user manual was left
    stale.
-   (merge d9be248 wk/man-deny-current-branch-is-default-these-days later to maint).
+   (merge 50995ed wk/man-deny-current-branch-is-default-these-days later to maint).
 
  * Some shells do not behave correctly when IFS is unset; work it
    around by explicitly setting it to the default value.
@@ -446,7 +438,11 @@ details).
 
  * The autoconf subsystem passed --mandir down to generated
    config.mak.autogen but forgot to do the same for --htmldir.
-   (merge fc1c541 ct/autoconf-htmldir later to maint).
+   (merge 55d9bf0 ct/autoconf-htmldir later to maint).
+
+ * A change made on v1.8.1.x maintenance track had a nasty regression
+   to break the build when autoconf is used.
+   (merge 7f1b697 jn/less-reconfigure later to maint).
 
  * We have been carrying a translated and long-unmaintained copy of an
    old version of the tutorial; removed.
