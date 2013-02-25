@@ -107,13 +107,14 @@ couple of magic command line options:
 ---------------------------------------------
 $ git describe -h
 usage: git describe [options] <committish>*
+   or: git describe [options] --dirty
 
     --contains            find the tag that comes after the commit
     --debug               debug search strategy on stderr
-    --all                 use any ref in .git/refs
-    --tags                use any tag in .git/refs/tags
-    --abbrev [<n>]        use <n> digits to display SHA-1s
-    --candidates <n>      consider <n> most recent tags (default: 10)
+    --all                 use any ref
+    --tags                use any tag, even unannotated
+    --long                always use long format
+    --abbrev[=<n>]        use <n> digits to display SHA-1s
 ---------------------------------------------
 
 --help-all::
