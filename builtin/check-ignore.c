@@ -89,7 +89,7 @@ static int check_ignore(const char *prefix, const char **pathspec)
 					? strlen(prefix) : 0, path);
 		full_path = check_path_for_gitlink(full_path);
 		die_if_path_beyond_symlink(full_path, prefix);
-		if (!seen[i] && path[0]) {
+		if (!seen[i]) {
 			exclude = last_exclude_matching_path(&check, full_path,
 							     -1, &dtype);
 			if (exclude) {

@@ -75,6 +75,16 @@ test_check_ignore () {
 	stderr_empty_on_success "$expect_code"
 }
 
+# Runs the same code with 3 different levels of output verbosity,
+# expecting success each time.  Takes advantage of the fact that
+# check-ignore --verbose output is the same as normal output except
+# for the extra first column.
+#
+# Arguments:
+#   - (optional) prereqs for this test, e.g. 'SYMLINKS'
+#   - test name
+#   - output to expect from -v / --verbose mode
+#   - code to run (should invoke test_check_ignore)
 test_expect_success_multi () {
 	prereq=
 	if test $# -eq 4
@@ -128,6 +138,7 @@ test_expect_success 'setup' '
 	cat <<-\EOF >.gitignore &&
 		one
 		ignored-*
+		top-level-dir/
 	EOF
 	for dir in . a
 	do
@@ -166,6 +177,10 @@ test_expect_success 'setup' '
 ############################################################################
 #
 # test invalid inputs
+
+test_expect_success_multi '. corner-case' '' '
+	test_check_ignore . 1
+'
 
 test_expect_success_multi 'empty command line' '' '
 	test_check_ignore "" 128 &&
