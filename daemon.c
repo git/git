@@ -9,10 +9,6 @@
 #define HOST_NAME_MAX 256
 #endif
 
-#ifndef NI_MAXSERV
-#define NI_MAXSERV 32
-#endif
-
 #ifdef NO_INITGROUPS
 #define initgroups(x, y) (0) /* nothing */
 #endif
