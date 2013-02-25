@@ -1,0 +1,37 @@
+Git 1.8.1.5 Release Notes
+=========================
+
+Fixes since v1.8.1.5
+--------------------
+
+ * "git apply --summary" has been taught to make sure the similarity
+   value shown in its output is sensible, even when the input had a
+   bogus value.
+
+ * "git clean" showed what it was going to do, but sometimes ended
+   up finding that it was not allowed to do so, which resulted in a
+   confusing output (e.g. after saying that it will remove an
+   untracked directory, it found an embedded git repository there
+   which it is not allowed to remove).  It now performs the actions
+   and then reports the outcome more faithfully.
+
+ * "git clone" used to allow --bare and --separate-git-dir=$there
+   options at the same time, which was nonsensical.
+
+ * "git cvsimport" mishandled timestamps at DST boundary.
+
+ * We used to have an arbitrary 32 limit for combined diff input,
+   resulting in incorrect number of leading colons shown when showing
+   the "--raw --cc" output.
+
+ * The smart HTTP clients forgot to verify the content-type that comes
+   back from the server side to make sure that the request is being
+   handled properly.
+
+ * "git help remote-helpers" failed to find the documentation.
+
+ * "gitweb" pages served over HTTPS, when configured to show picon or
+   gravatar, referred to these external resources to be fetched via
+   HTTP, resulting in mixed contents warning in browsers.
+
+Also contains various documentation fixes.
