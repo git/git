@@ -531,10 +531,9 @@ include::cmds-purehelpers.txt[]
 Configuration Mechanism
 -----------------------
 
-Starting from 0.99.9 (actually mid 0.99.8.GIT), `.git/config` file
-is used to hold per-repository configuration options.  It is a
-simple text file modeled after `.ini` format familiar to some
-people.  Here is an example:
+Git uses a simple text format to store customizations that are per
+repository and are per user.  Such a configuration file may look
+like this:
 
 ------------
 #
@@ -549,13 +548,13 @@ people.  Here is an example:
 ; user identity
 [user]
 	name = "Junio C Hamano"
-	email = "junkio@twinsun.com"
+	email = "gitster@pobox.com"
 
 ------------
 
 Various commands read from the configuration file and adjust
 their operation accordingly.  See linkgit:git-config[1] for a
-list.
+list and more details about the configuration mechanism.
 
 
 Identifier Terminology
