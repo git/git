@@ -80,6 +80,7 @@ fi
 prepare_httpd() {
 	mkdir -p "$HTTPD_DOCUMENT_ROOT_PATH"
 	cp "$TEST_PATH"/passwd "$HTTPD_ROOT_PATH"
+	cp "$TEST_PATH"/broken-smart-http.sh "$HTTPD_ROOT_PATH"
 
 	ln -s "$LIB_HTTPD_MODULE_PATH" "$HTTPD_ROOT_PATH/modules"
 
