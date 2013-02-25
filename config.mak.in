@@ -8,6 +8,7 @@ LDFLAGS = @LDFLAGS@
 AR = @AR@
 TAR = @TAR@
 DIFF = @DIFF@
+PACKAGE_TARNAME = @PACKAGE_TARNAME@
 #INSTALL = @INSTALL@		# needs install-sh or install.sh in sources
 
 prefix = @prefix@
@@ -17,6 +18,7 @@ gitexecdir = @libexecdir@/git-core
 datarootdir = @datarootdir@
 template_dir = @datadir@/git-core/templates
 sysconfdir = @sysconfdir@
+docdir = @docdir@
 
 mandir = @mandir@
 htmldir = @htmldir@
