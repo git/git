@@ -168,7 +168,7 @@ advice.*::
 		Advice shown when linkgit:git-merge[1] refuses to
 		merge to avoid overwriting local changes.
 	resolveConflict::
-		Advices shown by various commands when conflicts
+		Advice shown by various commands when conflicts
 		prevent the operation from being performed.
 	implicitIdentity::
 		Advice on how to set your identity configuration when
