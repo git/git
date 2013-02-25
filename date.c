@@ -694,8 +694,14 @@ int parse_date_basic(const char *date, unsigned long *timestamp, int *offset)
 
 	/* mktime uses local timezone */
 	*timestamp = tm_to_time_t(&tm);
-	if (*offset == -1)
-		*offset = ((time_t)*timestamp - mktime(&tm)) / 60;
+	if (*offset == -1) {
+		time_t temp_time = mktime(&tm);
+		if ((time_t)*timestamp > temp_time) {
+			*offset = ((time_t)*timestamp - temp_time) / 60;
+		} else {
+			*offset = -(int)((temp_time - (time_t)*timestamp) / 60);
+		}
+	}
 
 	if (*timestamp == -1)
 		return -1;
