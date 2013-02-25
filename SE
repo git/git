@@ -2,7 +2,6 @@
 
 me='Junio C Hamano <gitster@pobox.com>'
 smtp='/usr/bin/msmtp'
-to='git@vger.kernel.org'
 
 #to='junkio@cox.net'
 #smtp=/var/tmp/smtp-server
@@ -31,7 +30,6 @@ done
 git send-email \
 	--from="$me" \
 	--envelope-sender="$me" \
-	--to="$to" \
 	--smtp-server=$smtp \
 	$dryrun \
 	"$@"
