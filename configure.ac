@@ -901,12 +901,6 @@ GIT_CHECK_FUNC(strcasestr,
 [NO_STRCASESTR=YesPlease])
 GIT_CONF_SUBST([NO_STRCASESTR])
 #
-# Define NO_STRTOK_R if you don't have strtok_r
-GIT_CHECK_FUNC(strtok_r,
-[NO_STRTOK_R=],
-[NO_STRTOK_R=YesPlease])
-GIT_CONF_SUBST([NO_STRTOK_R])
-#
 # Define NO_FNMATCH if you don't have fnmatch
 GIT_CHECK_FUNC(fnmatch,
 [NO_FNMATCH=],

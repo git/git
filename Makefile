@@ -101,8 +101,6 @@ all::
 #
 # Define NO_MKSTEMPS if you don't have mkstemps in the C library.
 #
-# Define NO_STRTOK_R if you don't have strtok_r in the C library.
-#
 # Define NO_FNMATCH if you don't have fnmatch in the C library.
 #
 # Define NO_FNMATCH_CASEFOLD if your fnmatch function doesn't have the
@@ -1248,10 +1246,6 @@ ifdef NO_STRTOUMAX
 endif
 ifdef NO_STRTOULL
 	COMPAT_CFLAGS += -DNO_STRTOULL
-endif
-ifdef NO_STRTOK_R
-	COMPAT_CFLAGS += -DNO_STRTOK_R
-	COMPAT_OBJS += compat/strtok_r.o
 endif
 ifdef NO_FNMATCH
 	COMPAT_CFLAGS += -Icompat/fnmatch
