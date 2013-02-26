@@ -1,22 +1,18 @@
 To: git@vger.kernel.org
 Bcc: lwn@lwn.net
-Subject: What's cooking in git.git (Feb 2013, #09; Thu, 21)
-X-master-at: b3600c36286517cda38df976946557ce3e87bd82
-X-next-at: 811e0c07090d01cfcae9d07e8c207363d2d9194f
+Subject: What's cooking in git.git (Feb 2013, #10; Tue, 26)
+X-master-at: 27db5a02c73b35fe6b004fca66a824e022cc3c01
+X-next-at: 93ec2c9877fe8e1f0d976afee36dc5e927fa4650
 
-What's cooking in git.git (Feb 2013, #09; Thu, 21)
+What's cooking in git.git (Feb 2013, #10; Tue, 26)
 --------------------------------------------------
 
 Here are the topics that have been cooking.  Commits prefixed with
 '-' are only in 'pu' (proposed updates) while commits prefixed with
 '+' are in 'next'.
 
-On the 'maint' front, a maintenance release 1.8.1.4 is out.  The
-same fixes are also included in the 'master' and upwards.
-
-The tip of the 'master' is a bit past 1.8.2-rc0; new topics that are
-not listed in this report are likely to be too late for the upcoming
-release.
+The tip of the 'master' is a bit past 1.8.2-rc1.  I am hoping to do
+an -rc2 by the end of this week.
 
 You can find the changes described here in the integration branches of the
 repositories listed at
@@ -24,42 +20,25 @@ repositories listed at
     http://git-blame.blogspot.com/p/git-public-repositories.html
 
 --------------------------------------------------
-[New Topics]
+[Graduated to "master"]
 
-* jk/pkt-line-cleanup (2013-02-20) 19 commits
- - remote-curl: always parse incoming refs
- - remote-curl: move ref-parsing code up in file
- - remote-curl: pass buffer straight to get_remote_heads
- - teach get_remote_heads to read from a memory buffer
- - pkt-line: share buffer/descriptor reading implementation
- - pkt-line: provide a LARGE_PACKET_MAX static buffer
- - pkt-line: move LARGE_PACKET_MAX definition from sideband
- - pkt-line: teach packet_read_line to chomp newlines
- - pkt-line: provide a generic reading function with options
- - pkt-line: drop safe_write function
- - pkt-line: move a misplaced comment
- - write_or_die: raise SIGPIPE when we get EPIPE
- - upload-archive: use argv_array to store client arguments
- - upload-archive: do not copy repo name
- - send-pack: prefer prefixcmp over memcmp in receive_status
- - fetch-pack: fix out-of-bounds buffer offset in get_ack
- - upload-pack: remove packet debugging harness
- - upload-pack: do not add duplicate objects to shallow list
- - upload-pack: use get_sha1_hex to parse "shallow" lines
+* as/check-ignore (2013-02-19) 2 commits
+  (merged to 'next' on 2013-02-21 at 27927a2)
+ + name-hash: allow hashing an empty string
+ + t0008: document test_expect_success_multi
 
- Cleans up pkt-line API, implementation and its callers to make
- them more robust.
-
- Will merge to and cook in 'next'.
+ "git check-ignore ." segfaulted, as a function it calls deep in its
+ callchain took a string in the <ptr, length> form but did not stop
+ when given an empty string.
 
 
-* ob/imap-send-ssl-verify (2013-02-20) 1 commit
- - imap-send: support Server Name Indication (RFC4366)
+* ct/autoconf-htmldir (2013-02-19) 1 commit
+  (merged to 'next' on 2013-02-21 at 44f127d)
+ + Bugfix: undefined htmldir in config.mak.autogen
 
- Correctly connect to SSL/TLS sites that serve multiple hostnames on
- a single IP by including Server Name Indication in the client-hello.
-
- Will merge to and cook in 'next'.
+ An earlier change to config.mak.autogen broke a build driven by the
+ ./configure script when --htmldir is not specified on the command
+ line of ./configure.
 
 
 * jn/less-reconfigure (2013-02-20) 1 commit
@@ -69,33 +48,206 @@ repositories listed at
  A change made on v1.8.1.x maintenance track had a nasty regression
  to break the build when autoconf is used.
 
- Will fast-track to 'master' and 'maint' (regression fix).
+
+* wk/man-deny-current-branch-is-default-these-days (2013-02-18) 1 commit
+  (merged to 'next' on 2013-02-21 at e67b15b)
+ + user-manual: typofix (ofthe->of the)
 
 
-* jc/format-patch (2013-02-21) 2 commits
- - format-patch: --inline-single
- - format-patch: rename "no_inline" field
+* wk/user-manual (2013-02-19) 3 commits
+  (merged to 'next' on 2013-02-19 at dbc0eb2)
+ + user-manual: Flesh out uncommitted changes and submodule updates
+ + user-manual: Use request-pull to generate "please pull" text
+ + user-manual: Reorganize the reroll sections, adding 'git rebase -i'
 
- A new option to send a single patch to the standard output to be
- appended at the bottom of a message.  I personally have no need for
- this, but it was easy enough to cobble together.
+ Further updates to the user manual.
+
+--------------------------------------------------
+[New Topics]
+
+* jc/perl-cat-blob (2013-02-22) 1 commit
+  (merged to 'next' on 2013-02-25 at 7c0079a)
+ + Git.pm: fix cat_blob crashes on large files
+
+ perl/Git.pm::cat_blob slurped everything in core only to write it
+ out to a file descriptor, which was not a very smart thing to do.
+
+ Will cook in 'next'.
 
 
-* mh/maint-ceil-absolute (2013-02-21) 1 commit
- - Provide a mechanism to turn off symlink resolution in ceiling paths
+* nd/doc-index-format (2013-02-23) 3 commits
+  (merged to 'next' on 2013-02-26 at 4d3caea)
+ + update-index: list supported idx versions and their features
+ + read-cache.c: use INDEX_FORMAT_{LB,UB} in verify_hdr()
+ + index-format.txt: mention of v4 is missing in some places
 
- An earlier workaround designed to help people who list logical
- directories that will not match what getcwd(3) returns in the
- GIT_CEILING_DIRECTORIES had an adverse effect when it is slow to
- stat and readlink a directory component of an element listed on it.
+ Update the index format documentation to mention the v4 format.
 
- Waiting for review.  Needs sign-off.
+ Will cook in 'next'.
 
 
-* tk/doc-filter-branch (2013-02-21) 3 commits
- - [SQUASH???] reword desc on filter-branch's use of env
- - Documentation: filter-branch env-filter example
- - git-filter-branch.txt: clarify ident variables usage
+* ap/maint-diff-rename-avoid-overlap (2013-02-26) 2 commits
+  (merged to 'next' on 2013-02-26 at 19d70bf)
+ + diff: prevent pprint_rename from underrunning input
+  (merged to 'next' on 2013-02-25 at c9bd6d3)
+ + diff: Fix rename pretty-print when suffix and prefix overlap
+
+ The logic used by "git diff -M --stat" to shorten the names of
+ files before and after a rename did not work correctly when the
+ common prefix and suffix between the two filenames overlapped.
+
+ Will cook in 'next'.
+
+
+* ap/maint-update-index-h-is-for-help (2013-02-23) 1 commit
+  (merged to 'next' on 2013-02-25 at f5f767c)
+ + update-index: allow "-h" to also display options
+
+ Will cook in 'next'.
+
+
+* jc/color-diff-doc (2013-02-22) 1 commit
+  (merged to 'next' on 2013-02-25 at c37541c)
+ + diff-options: unconfuse description of --color
+
+ Will cook in 'next'.
+
+
+* nd/branch-error-cases (2013-02-23) 1 commit
+  (merged to 'next' on 2013-02-25 at 1d0289f)
+ + branch: segfault fixes and validation
+
+ "git branch" had more cases where it did not bother to check
+ nonsense command line parameters.
+
+ Will cook in 'next'.
+
+
+* rt/commit-cleanup-config (2013-02-23) 1 commit
+  (merged to 'next' on 2013-02-25 at 8249b61)
+ + t7502: perform commits using alternate editor in a subshell
+
+ Fix tests that contaminated their environments and affected new
+ tests introduced later in the sequence by containing their effects
+ in their own subshells.
+
+ Will cook in 'next'.
+
+
+* wk/doc-pre-rebase (2013-02-24) 1 commit
+  (merged to 'next' on 2013-02-25 at a6ec310)
+ + Documentation/githooks: Explain pre-rebase parameters
+
+ Will cook in 'next'.
+
+
+* da/downcase-u-in-usage (2013-02-24) 20 commits
+  (merged to 'next' on 2013-02-26 at 977b67e)
+ + contrib/mw-to-git/t/install-wiki.sh: use a lowercase "usage:" string
+ + contrib/examples/git-remote.perl: use a lowercase "usage:" string
+ + tests: use a lowercase "usage:" string
+ + git-svn: use a lowercase "usage:" string
+ + Documentation/user-manual.txt: use a lowercase "usage:" string
+ + templates/hooks--update.sample: use a lowercase "usage:" string
+ + contrib/hooks/setgitperms.perl: use a lowercase "usage:" string
+ + contrib/examples: use a lowercase "usage:" string
+ + contrib/fast-import/import-zips.py: use spaces instead of tabs
+ + contrib/fast-import/import-zips.py: fix broken error message
+ + contrib/fast-import: use a lowercase "usage:" string
+ + contrib/credential: use a lowercase "usage:" string
+ + git-cvsimport: use a lowercase "usage:" string
+ + git-cvsimport: use a lowercase "usage:" string
+ + git-cvsexportcommit: use a lowercase "usage:" string
+ + git-archimport: use a lowercase "usage:" string
+ + git-merge-one-file: use a lowercase "usage:" string
+ + git-relink: use a lowercase "usage:" string
+ + git-svn: use a lowercase "usage:" string
+ + git-sh-setup: use a lowercase "usage:" string
+
+ Will cook in 'next'.
+
+
+* dm/ni-maxhost-may-be-missing (2013-02-25) 1 commit
+  (merged to 'next' on 2013-02-26 at 93ec2c9)
+ + git-compat-util.h: Provide missing netdb.h definitions
+
+ Will cook in 'next'.
+
+
+* gp/avoid-explicit-mention-of-dot-git-refs (2013-02-24) 1 commit
+  (merged to 'next' on 2013-02-26 at ec42d98)
+ + Fix ".git/refs" stragglers
+
+ Will cook in 'next'.
+
+
+* gp/describe-match-uses-glob-pattern (2013-02-24) 1 commit
+  (merged to 'next' on 2013-02-26 at c9cc789)
+ + describe: Document --match pattern format
+ (this branch is used by gp/forbid-describe-all-match.)
+
+ Will cook in 'next'.
+
+
+* gp/forbid-describe-all-match (2013-02-24) 1 commit
+ - describe: make --all and --match=PATTERN mutually incompatible
+ (this branch uses gp/describe-match-uses-glob-pattern.)
+
+ Not sure if we should forbid the combination or explain the
+ semantics better, perhaps by giving a better synonym to "--all",
+ which meant "disable the usual limit that only gives the annotated
+ tags".
+
+
+* jk/common-make-variables-export-safety (2013-02-25) 1 commit
+ - Makefile: make mandir, htmldir and infodir absolute
+
+ Make the three variables safer to be exported to submakes by
+ ensuring that they are full paths so that they can be used as
+ installation location.
+
+
+* jk/suppress-clang-warning (2013-02-25) 1 commit
+ - fix clang -Wtautological-compare with unsigned enum
+
+
+* mg/qnx6 (2013-02-25) 1 commit
+ - QNX: newer QNX 6.x.x is not so crippled
+
+ Still under discussion.
+ Not ready for inclusion.
+
+
+* mg/unsigned-time-t (2013-02-25) 2 commits
+ - Fix time offset calculation in case of unsigned time_t
+ - date.c: fix unsigned time_t comparison
+
+ A few workarounds for systems with unsigned time_t.
+
+
+* rj/msvc-build (2013-02-25) 5 commits
+  (merged to 'next' on 2013-02-26 at 7493068)
+ + msvc: avoid collisions between "tags" and "TAGS"
+ + msvc: test-svn-fe: Fix linker "unresolved external" error
+ + msvc: Fix build by adding missing symbol defines
+ + msvc: git-daemon: Fix linker "unresolved external" errors
+ + msvc: Fix compilation errors caused by poll.h emulation
+
+ Will cook in 'next'.
+
+
+* wk/user-manual-literal-format (2013-02-25) 1 commit
+  (merged to 'next' on 2013-02-26 at d59ce38)
+ + user-manual: Standardize backtick quoting
+
+ Will cook in 'next'.
+
+
+* jk/utf-8-can-be-spelled-differently (2013-02-25) 1 commit
+  (merged to 'next' on 2013-02-26 at c079525)
+ + utf8: accept alternate spellings of UTF-8
+
+ Will cook in 'next'.
 
 --------------------------------------------------
 [Stalled]
@@ -142,16 +294,75 @@ repositories listed at
 --------------------------------------------------
 [Cooking]
 
-* as/check-ignore (2013-02-19) 2 commits
-  (merged to 'next' on 2013-02-21 at 27927a2)
- + name-hash: allow hashing an empty string
- + t0008: document test_expect_success_multi
+* jk/pkt-line-cleanup (2013-02-24) 19 commits
+  (merged to 'next' on 2013-02-25 at d83e970)
+ + remote-curl: always parse incoming refs
+ + remote-curl: move ref-parsing code up in file
+ + remote-curl: pass buffer straight to get_remote_heads
+ + teach get_remote_heads to read from a memory buffer
+ + pkt-line: share buffer/descriptor reading implementation
+ + pkt-line: provide a LARGE_PACKET_MAX static buffer
+ + pkt-line: move LARGE_PACKET_MAX definition from sideband
+ + pkt-line: teach packet_read_line to chomp newlines
+ + pkt-line: provide a generic reading function with options
+ + pkt-line: drop safe_write function
+ + pkt-line: move a misplaced comment
+ + write_or_die: raise SIGPIPE when we get EPIPE
+ + upload-archive: use argv_array to store client arguments
+ + upload-archive: do not copy repo name
+ + send-pack: prefer prefixcmp over memcmp in receive_status
+ + fetch-pack: fix out-of-bounds buffer offset in get_ack
+ + upload-pack: remove packet debugging harness
+ + upload-pack: do not add duplicate objects to shallow list
+ + upload-pack: use get_sha1_hex to parse "shallow" lines
 
- "git check-ignore ." segfaulted, as a function it calls deep in its
- callchain took a string in the <ptr, length> form but did not stop
- when given an empty string.
+ Cleans up pkt-line API, implementation and its callers to make
+ them more robust.
 
- Will fast-track to 'master' (this is a new feature in the upcoming release).
+ Will cook in 'next'.
+
+
+* ob/imap-send-ssl-verify (2013-02-20) 1 commit
+  (merged to 'next' on 2013-02-25 at e897609)
+ + imap-send: support Server Name Indication (RFC4366)
+
+ Correctly connect to SSL/TLS sites that serve multiple hostnames on
+ a single IP by including Server Name Indication in the client-hello.
+
+ Will cook in 'next'.
+
+
+* jc/format-patch (2013-02-21) 2 commits
+ - format-patch: --inline-single
+ - format-patch: rename "no_inline" field
+
+ A new option to send a single patch to the standard output to be
+ appended at the bottom of a message.  I personally have no need for
+ this, but it was easy enough to cobble together.  Tests, docs and
+ stripping out more MIMEy stuff are left as exercises to interested
+ parties.
+
+ Not ready for inclusion.
+
+
+* mh/maint-ceil-absolute (2013-02-22) 1 commit
+  (merged to 'next' on 2013-02-26 at ba83c45)
+ + Provide a mechanism to turn off symlink resolution in ceiling paths
+
+ An earlier workaround designed to help people who list logical
+ directories that will not match what getcwd(3) returns in the
+ GIT_CEILING_DIRECTORIES had an adverse effect when it is slow to
+ stat and readlink a directory component of an element listed on it.
+
+ Will fast-track to 'master' (regression fix).
+
+
+* tk/doc-filter-branch (2013-02-26) 2 commits
+  (merged to 'next' on 2013-02-26 at bd4638b)
+ + Documentation: filter-branch env-filter example
+ + git-filter-branch.txt: clarify ident variables usage
+
+ Will cook in 'next'.
 
 
 * bc/commit-complete-lines-given-via-m-option (2013-02-19) 4 commits
@@ -167,41 +378,16 @@ repositories listed at
  Will cook in 'next'.
 
 
-* ct/autoconf-htmldir (2013-02-19) 1 commit
-  (merged to 'next' on 2013-02-21 at 44f127d)
- + Bugfix: undefined htmldir in config.mak.autogen
-
- An earlier change to config.mak.autogen broke a build driven by the
- ./configure script when --htmldir is not specified on the command
- line of ./configure.
-
- Will fast-track to 'master' (regression fix).
-
-
-* wk/user-manual (2013-02-19) 3 commits
-  (merged to 'next' on 2013-02-19 at dbc0eb2)
- + user-manual: Flesh out uncommitted changes and submodule updates
- + user-manual: Use request-pull to generate "please pull" text
- + user-manual: Reorganize the reroll sections, adding 'git rebase -i'
-
- Further updates to the user manual.
-
- Will merge to 'master'.
-
-
-* wk/man-deny-current-branch-is-default-these-days (2013-02-18) 1 commit
-  (merged to 'next' on 2013-02-21 at e67b15b)
- + user-manual: typofix (ofthe->of the)
-
- Will fast-track to 'master'.
-
-
-* da/difftool-fixes (2013-02-20) 3 commits
- - t7800: modernize tests
- - t7800: update copyright notice
- - difftool: silence uninitialized variable warning
+* da/difftool-fixes (2013-02-21) 4 commits
+  (merged to 'next' on 2013-02-25 at 687db1f)
+ + t7800: "defaults" is no longer a builtin tool name
+ + t7800: modernize tests
+ + t7800: update copyright notice
+ + difftool: silence uninitialized variable warning
 
  Minor maintenance updates to difftool, and updates to its tests.
+
+ Will cook in 'next'.
 
 
 * nd/read-directory-recursive-optim (2013-02-17) 1 commit
@@ -216,14 +402,17 @@ repositories listed at
 
 
 * mg/gpg-interface-using-status (2013-02-14) 5 commits
- - pretty: make %GK output the signing key for signed commits
- - pretty: parse the gpg status lines rather than the output
- - gpg_interface: allow to request status return
- - log-tree: rely upon the check in the gpg_interface
- - gpg-interface: check good signature in a reliable way
+  (merged to 'next' on 2013-02-26 at 93f0e72)
+ + pretty: make %GK output the signing key for signed commits
+ + pretty: parse the gpg status lines rather than the output
+ + gpg_interface: allow to request status return
+ + log-tree: rely upon the check in the gpg_interface
+ + gpg-interface: check good signature in a reliable way
 
  Call "gpg" using the right API when validating the signature on
  tags.
+
+ Will cook in 'next'.
 
 
 * jn/shell-disable-interactive (2013-02-11) 2 commits
@@ -278,15 +467,14 @@ repositories listed at
  Will cook in 'next'.
 
 
-* tz/credential-authinfo (2013-02-05) 1 commit
+* tz/credential-authinfo (2013-02-25) 1 commit
  - Add contrib/credentials/netrc with GPG support
 
  A new read-only credential helper (in contrib/) to interact with
  the .netrc/.authinfo files.  Hopefully mn/send-email-authinfo topic
  can rebuild on top of something like this.
 
- Expecting a reroll.
- $gmane/215556
+ Will merge to and cook in 'next'.
 
 
 * jl/submodule-deinit (2013-02-17) 1 commit
@@ -295,6 +483,9 @@ repositories listed at
  There was no Porcelain way to say "I no longer am interested in
  this submodule", once you express your interest in a submodule with
  "submodule init".  "submodule deinit" is the way to do so.
+
+ Expecting a reroll.
+ $gmane/216498
 
 
 * jc/remove-export-from-config-mak-in (2013-02-12) 2 commits
@@ -351,85 +542,20 @@ repositories listed at
  Will cook in 'next' until Git 2.0.
 
 
-* bc/append-signed-off-by (2013-02-12) 12 commits
- - Unify appending signoff in format-patch, commit and sequencer
- - format-patch: update append_signoff prototype
- - t4014: more tests about appending s-o-b lines
- - sequencer.c: teach append_signoff to avoid adding a duplicate newline
- - sequencer.c: teach append_signoff how to detect duplicate s-o-b
- - sequencer.c: always separate "(cherry picked from" from commit body
- - sequencer.c: require a conforming footer to be preceded by a blank line
- - sequencer.c: recognize "(cherry picked from ..." as part of s-o-b footer
- - t/t3511: add some tests of 'cherry-pick -s' functionality
- - t/test-lib-functions.sh: allow to specify the tag name to test_commit
- - commit, cherry-pick -s: remove broken support for multiline rfc2822 fields
- - sequencer.c: rework search for start of footer to improve clarity
+* bc/append-signed-off-by (2013-02-23) 13 commits
+  (merged to 'next' on 2013-02-25 at 32f7ac2)
+ + git-commit: populate the edit buffer with 2 blank lines before s-o-b
+ + Unify appending signoff in format-patch, commit and sequencer
+ + format-patch: update append_signoff prototype
+ + t4014: more tests about appending s-o-b lines
+ + sequencer.c: teach append_signoff to avoid adding a duplicate newline
+ + sequencer.c: teach append_signoff how to detect duplicate s-o-b
+ + sequencer.c: always separate "(cherry picked from" from commit body
+ + sequencer.c: require a conforming footer to be preceded by a blank line
+ + sequencer.c: recognize "(cherry picked from ..." as part of s-o-b footer
+ + t/t3511: add some tests of 'cherry-pick -s' functionality
+ + t/test-lib-functions.sh: allow to specify the tag name to test_commit
+ + commit, cherry-pick -s: remove broken support for multiline rfc2822 fields
+ + sequencer.c: rework search for start of footer to improve clarity
 
- Waiting for further reviews.
- $gmane/216327 may need to be addressed.
-
---------------------------------------------------
-[Discarded]
-
-* jc/maint-name-rev (2012-09-17) 7 commits
- - describe --contains: use "name-rev --algorithm=weight"
- - name-rev --algorithm=weight: tests and documentation
- - name-rev --algorithm=weight: cache the computed weight in notes
- - name-rev --algorithm=weight: trivial optimization
- - name-rev: --algorithm option
- - name_rev: clarify the logic to assign a new tip-name to a commit
- - name-rev: lose unnecessary typedef
-
- "git name-rev" names the given revision based on a ref that can be
- reached in the smallest number of steps from the rev, but that is
- not useful when the caller wants to know which tag is the oldest one
- that contains the rev.  This teaches a new mode to the command that
- uses the oldest ref among those which contain the rev.
-
- I am not sure if this is worth it; for one thing, even with the help
- from notes-cache, it seems to make the "describe --contains" even
- slower. Also the command will be unusably slow for a user who does
- not have a write access (hence unable to create or update the
- notes-cache).
-
- Stalled mostly due to lack of responses.
-
-
-* jk/smart-http-robustify (2013-02-17) 3 commits
- . remote-curl: sanity check ref advertisement from server
- . remote-curl: verify smart-http metadata lines
- . pkt-line: teach packet_get_line a no-op mode
-
- Parse the HTTP exchange that implements the native Git protocol as
- a series of stateless RPC more carefully to diagnose protocol
- breakage better.
-
- Superseded by jk/pkt-line-cleanup
-
-
-* jc/xprm-generation (2012-09-14) 1 commit
- - test-generation: compute generation numbers and clock skews
-
- A toy to analyze how bad the clock skews are in histories of real
- world projects.
-
- Stalled mostly due to lack of responses.
-
-
-* jk/lua-hackery (2012-10-07) 6 commits
- - pretty: fix up one-off format_commit_message calls
- - Minimum compilation fixup
- - Makefile: make "lua" a bit more configurable
- - add a "lua" pretty format
- - add basic lua infrastructure
- - pretty: make some commit-parsing helpers more public
-
- Interesting exercise. When we do this for real, we probably would want
- to wrap a commit to make it more like an "object" with methods like
- "parents", etc.
-
-
-* rc/maint-complete-git-p4 (2012-09-24) 1 commit
- - Teach git-completion about git p4
-
- Comment from Pete will need to be addressed ($gmane/206172).
+ Will cook in 'next'.
