@@ -180,7 +180,7 @@ def fixup_user(user):
 def get_filechanges(cur, prev):
     modified = {}
     removed = {}
-
+    renamed = []
     changes = cur.changes_from(prev)
 
     for path, fid, kind in changes.added:
@@ -190,10 +190,57 @@ def get_filechanges(cur, prev):
     for path, fid, kind, mod, _ in changes.modified:
         modified[path] = fid
     for oldpath, newpath, fid, kind, mod, _ in changes.renamed:
-        removed[oldpath] = None
-        modified[newpath] = fid
+        if mod:
+            removed[oldpath] = None
+            modified[newpath] = fid
+        else:
+            # This is fixing a bug in an older bzr version
+            # A -> B, B -> A in the same commit should be nulled out
+            for prev_old, prev_new, prev_kind in renamed[:]:
+                if oldpath == prev_new and newpath == prev_old:
+                    renamed.remove((prev_old, prev_new, prev_kind))
+                    break
+            else:
+                renamed.append((oldpath, newpath, kind))
 
-    return modified, removed
+            # This is fixing a bug in an older bzr version
+            # A -> B, B -> C, should be A -> C
+            renamed_copy = renamed[:]
+            for old, new, kind in renamed_copy:
+                if kind != 'file':
+                    continue
+                for check_old, check_new, check_kind in renamed_copy:
+                    if check_kind != 'file':
+                        continue
+                    if check_old == old and check_new == new:
+                        continue
+                    if new == check_old:
+                        renamed.remove((prev_old, prev_new, prev_kind))
+                        renamed.append((prev_old, new, kind))
+
+    # Try to order the renamed directories in the logical rename order
+    # if we have:
+    #    rename a to b
+    #    rename a/sub to c
+    # we rearrange them as:
+    #    rename a/sub to c
+    #    rename a to b
+    renamed_copy = renamed[:]
+    for old, new, kind in renamed_copy:
+        if kind != 'directory':
+            continue
+        for check_old, check_new, check_kind in renamed_copy:
+            if check_kind != 'directory':
+                continue
+            # Skip ourselves
+            if check_old == old and check_new == new:
+                continue
+            if check_old.startswith(old):
+                renamed.remove((old, new, kind))
+                renamed.append((old, new, kind))
+                break
+
+    return modified, removed, renamed
 
 def export_files(tree, files):
     global marks, filenodes
@@ -272,7 +319,7 @@ def export_branch(branch, name):
 
         cur_tree = repo.revision_tree(revid)
         prev = repo.revision_tree(parent)
-        modified, removed = get_filechanges(cur_tree, prev)
+        modified, removed, renamed = get_filechanges(cur_tree, prev)
 
         modified_final = export_files(cur_tree, modified)
 
@@ -299,6 +346,8 @@ def export_branch(branch, name):
 
         for f in modified_final:
             print "M %s :%u %s" % f
+        for old, new, kind in renamed:
+            print "R %s %s" %(old, new)
         for f in removed:
             print "D %s" % (f)
         print
