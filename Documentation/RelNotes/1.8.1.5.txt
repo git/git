@@ -1,8 +1,12 @@
 Git 1.8.1.5 Release Notes
 =========================
 
-Fixes since v1.8.1.5
+Fixes since v1.8.1.4
 --------------------
+
+ * Given a string with a multi-byte character that begins with '-' on
+   the command line where an option is expected, the option parser
+   used just one byte of the unknown letter when reporting an error.
 
  * "git apply --summary" has been taught to make sure the similarity
    value shown in its output is sensible, even when the input had a
