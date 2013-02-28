@@ -137,40 +137,39 @@ static void add_to_known_names(const char *path,
 
 static int get_name(const char *path, const unsigned char *sha1, int flag, void *cb_data)
 {
-	int might_be_tag = !prefixcmp(path, "refs/tags/");
+	int is_tag = !prefixcmp(path, "refs/tags/");
 	unsigned char peeled[20];
-	int is_tag, prio;
+	int is_annotated, prio;
 
-	if (!all && !might_be_tag)
+	/* Reject anything outside refs/tags/ unless --all */
+	if (!all && !is_tag)
 		return 0;
 
+	/* Accept only tags that match the pattern, if given */
+	if (pattern && (!is_tag || fnmatch(pattern, path + 10, 0)))
+		return 0;
+
+	/* Is it annotated? */
 	if (!peel_ref(path, peeled)) {
-		is_tag = !!hashcmp(sha1, peeled);
+		is_annotated = !!hashcmp(sha1, peeled);
 	} else {
 		hashcpy(peeled, sha1);
-		is_tag = 0;
+		is_annotated = 0;
 	}
 
-	/* If --all, then any refs are used.
-	 * If --tags, then any tags are used.
-	 * Otherwise only annotated tags are used.
+	/*
+	 * By default, we only use annotated tags, but with --tags
+	 * we fall back to lightweight ones (even without --tags,
+	 * we still remember lightweight ones, only to give hints
+	 * in an error message).  --all allows any refs to be used.
 	 */
-	if (might_be_tag) {
-		if (is_tag)
-			prio = 2;
-		else
-			prio = 1;
-
-		if (pattern && fnmatch(pattern, path + 10, 0))
-			prio = 0;
-	}
+	if (is_annotated)
+		prio = 2;
+	else if (is_tag)
+		prio = 1;
 	else
 		prio = 0;
 
-	if (!all) {
-		if (!prio)
-			return 0;
-	}
 	add_to_known_names(all ? path + 5 : path + 10, peeled, prio, sha1);
 	return 0;
 }
