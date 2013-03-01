@@ -8,6 +8,12 @@ Fixes since v1.8.1.4
    the command line where an option is expected, the option parser
    used just one byte of the unknown letter when reporting an error.
 
+ * In v1.8.1, the attribute parser was tightened too restrictive to
+   error out upon seeing an entry that begins with an ! (exclamation),
+   which may confuse users to expect a "negative match", which does
+   not exist.  This has been demoted to a warning; such an entry is
+   still ignored.
+
  * "git apply --summary" has been taught to make sure the similarity
    value shown in its output is sensible, even when the input had a
    bogus value.
