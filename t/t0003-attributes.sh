@@ -198,7 +198,8 @@ test_expect_success 'root subdir attribute test' '
 
 test_expect_success 'negative patterns' '
 	echo "!f test=bar" >.gitattributes &&
-	test_must_fail git check-attr test -- f
+	git check-attr test -- '"'"'!f'"'"' 2>errors &&
+	test_i18ngrep "Negative patterns are ignored" errors
 '
 
 test_expect_success 'patterns starting with exclamation' '
