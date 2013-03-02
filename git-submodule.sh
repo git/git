@@ -588,7 +588,7 @@ cmd_update()
 		die_if_unmatched "$mode"
 		if test "$stage" = U
 		then
-			echo >&2 "Skipping unmerged submodule $sm_path"
+			echo >&2 "Skipping unmerged submodule $prefix$sm_path"
 			continue
 		fi
 		name=$(module_name "$sm_path") || exit
@@ -602,7 +602,7 @@ cmd_update()
 
 		if test "$update_module" = "none"
 		then
-			echo "Skipping submodule '$sm_path'"
+			echo "Skipping submodule '$prefix$sm_path'"
 			continue
 		fi
 
@@ -611,7 +611,7 @@ cmd_update()
 			# Only mention uninitialized submodules when its
 			# path have been specified
 			test "$#" != "0" &&
-			say "$(eval_gettext "Submodule path '\$sm_path' not initialized
+			say "$(eval_gettext "Submodule path '\$prefix\$sm_path' not initialized
 Maybe you want to use 'update --init'?")"
 			continue
 		fi
@@ -624,7 +624,7 @@ Maybe you want to use 'update --init'?")"
 		else
 			subsha1=$(clear_local_git_env; cd "$sm_path" &&
 				git rev-parse --verify HEAD) ||
-			die "$(eval_gettext "Unable to find current revision in submodule path '\$sm_path'")"
+			die "$(eval_gettext "Unable to find current revision in submodule path '\$prefix\$sm_path'")"
 		fi
 
 		if test "$subsha1" != "$sha1" -o -n "$force"
@@ -643,7 +643,7 @@ Maybe you want to use 'update --init'?")"
 				(clear_local_git_env; cd "$sm_path" &&
 					( (rev=$(git rev-list -n 1 $sha1 --not --all 2>/dev/null) &&
 					 test -z "$rev") || git-fetch)) ||
-				die "$(eval_gettext "Unable to fetch in submodule path '\$sm_path'")"
+				die "$(eval_gettext "Unable to fetch in submodule path '\$prefix\$sm_path'")"
 			fi
 
 			# Is this something we just cloned?
@@ -657,20 +657,20 @@ Maybe you want to use 'update --init'?")"
 			case "$update_module" in
 			rebase)
 				command="git rebase"
-				die_msg="$(eval_gettext "Unable to rebase '\$sha1' in submodule path '\$sm_path'")"
-				say_msg="$(eval_gettext "Submodule path '\$sm_path': rebased into '\$sha1'")"
+				die_msg="$(eval_gettext "Unable to rebase '\$sha1' in submodule path '\$prefix\$sm_path'")"
+				say_msg="$(eval_gettext "Submodule path '\$prefix\$sm_path': rebased into '\$sha1'")"
 				must_die_on_failure=yes
 				;;
 			merge)
 				command="git merge"
-				die_msg="$(eval_gettext "Unable to merge '\$sha1' in submodule path '\$sm_path'")"
-				say_msg="$(eval_gettext "Submodule path '\$sm_path': merged in '\$sha1'")"
+				die_msg="$(eval_gettext "Unable to merge '\$sha1' in submodule path '\$prefix\$sm_path'")"
+				say_msg="$(eval_gettext "Submodule path '\$prefix\$sm_path': merged in '\$sha1'")"
 				must_die_on_failure=yes
 				;;
 			*)
 				command="git checkout $subforce -q"
-				die_msg="$(eval_gettext "Unable to checkout '\$sha1' in submodule path '\$sm_path'")"
-				say_msg="$(eval_gettext "Submodule path '\$sm_path': checked out '\$sha1'")"
+				die_msg="$(eval_gettext "Unable to checkout '\$sha1' in submodule path '\$prefix\$sm_path'")"
+				say_msg="$(eval_gettext "Submodule path '\$prefix\$sm_path': checked out '\$sha1'")"
 				;;
 			esac
 
@@ -688,11 +688,16 @@ Maybe you want to use 'update --init'?")"
 
 		if test -n "$recursive"
 		then
-			(clear_local_git_env; cd "$sm_path" && eval cmd_update "$orig_flags")
+			(
+				prefix="$prefix$sm_path/"
+				clear_local_git_env
+				cd "$sm_path" &&
+				eval cmd_update "$orig_flags"
+			)
 			res=$?
 			if test $res -gt 0
 			then
-				die_msg="$(eval_gettext "Failed to recurse into submodule path '\$sm_path'")"
+				die_msg="$(eval_gettext "Failed to recurse into submodule path '\$prefix\$sm_path'")"
 				if test $res -eq 1
 				then
 					err="${err};$die_msg"
