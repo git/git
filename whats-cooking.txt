@@ -1,18 +1,18 @@
 To: git@vger.kernel.org
 Bcc: lwn@lwn.net
-Subject: What's cooking in git.git (Feb 2013, #10; Tue, 26)
-X-master-at: 27db5a02c73b35fe6b004fca66a824e022cc3c01
-X-next-at: 93ec2c9877fe8e1f0d976afee36dc5e927fa4650
+Subject: What's cooking in git.git (Mar 2013, #01; Sun, 3)
+X-master-at: 4d0d0c3c59800e07d899e53121902833e3fd0cc7
+X-next-at: c3bedd3ddcc0d007d41c3ed9d173b298b181e827
 
-What's cooking in git.git (Feb 2013, #10; Tue, 26)
+What's cooking in git.git (Mar 2013, #01; Sun, 3)
 --------------------------------------------------
 
 Here are the topics that have been cooking.  Commits prefixed with
 '-' are only in 'pu' (proposed updates) while commits prefixed with
 '+' are in 'next'.
 
-The tip of the 'master' is a bit past 1.8.2-rc1.  I am hoping to do
-an -rc2 by the end of this week.
+The tip of the 'master' is at 1.8.2-rc2.  Hopefully we can tag the
+final in the middle of the month.
 
 You can find the changes described here in the integration branches of the
 repositories listed at
@@ -22,48 +22,113 @@ repositories listed at
 --------------------------------------------------
 [Graduated to "master"]
 
-* as/check-ignore (2013-02-19) 2 commits
-  (merged to 'next' on 2013-02-21 at 27927a2)
- + name-hash: allow hashing an empty string
- + t0008: document test_expect_success_multi
+* mh/maint-ceil-absolute (2013-02-22) 1 commit
+  (merged to 'next' on 2013-02-26 at ba83c45)
+ + Provide a mechanism to turn off symlink resolution in ceiling paths
 
- "git check-ignore ." segfaulted, as a function it calls deep in its
- callchain took a string in the <ptr, length> form but did not stop
- when given an empty string.
-
-
-* ct/autoconf-htmldir (2013-02-19) 1 commit
-  (merged to 'next' on 2013-02-21 at 44f127d)
- + Bugfix: undefined htmldir in config.mak.autogen
-
- An earlier change to config.mak.autogen broke a build driven by the
- ./configure script when --htmldir is not specified on the command
- line of ./configure.
-
-
-* jn/less-reconfigure (2013-02-20) 1 commit
-  (merged to 'next' on 2013-02-21 at 811e0c0)
- + Makefile: avoid infinite loop on configure.ac change
-
- A change made on v1.8.1.x maintenance track had a nasty regression
- to break the build when autoconf is used.
-
-
-* wk/man-deny-current-branch-is-default-these-days (2013-02-18) 1 commit
-  (merged to 'next' on 2013-02-21 at e67b15b)
- + user-manual: typofix (ofthe->of the)
-
-
-* wk/user-manual (2013-02-19) 3 commits
-  (merged to 'next' on 2013-02-19 at dbc0eb2)
- + user-manual: Flesh out uncommitted changes and submodule updates
- + user-manual: Use request-pull to generate "please pull" text
- + user-manual: Reorganize the reroll sections, adding 'git rebase -i'
-
- Further updates to the user manual.
+ An earlier workaround designed to help people who list logical
+ directories that will not match what getcwd(3) returns in the
+ GIT_CEILING_DIRECTORIES had an adverse effect when it is slow to
+ stat and readlink a directory component of an element listed on it.
 
 --------------------------------------------------
 [New Topics]
+
+* kb/name-hash (2013-02-27) 1 commit
+ - name-hash.c: fix endless loop with core.ignorecase=true
+
+ The code to keep track of what directory names are known to Git on
+ platforms with case insensitive filesystems can get confused upon
+ a hash collision between these pathnames and looped forever.
+
+
+* rs/zip-compresssed-size-with-export-subst (2013-02-27) 1 commit
+  (merged to 'next' on 2013-03-03 at c1ac6d8)
+ + archive-zip: fix compressed size for stored export-subst files
+
+ When export-subst is used, "zip" output recorded incorrect
+ size of the file.
+
+ Will cook in 'next'.
+
+
+* hv/config-from-strbuf (2013-02-28) 4 commits
+ - teach config parsing to read from strbuf
+ - config: make parsing stack struct independent from actual data source
+ - config: drop file pointer validity check in get_next_char()
+ - config: factor out config file stack management
+
+
+* jc/describe (2013-02-28) 1 commit
+ - describe: --match=<pattern> must limit the refs even when used with --all
+
+ Comments?
+
+
+* jk/mailsplit-maildir-muttsort (2013-03-02) 1 commit
+  (merged to 'next' on 2013-03-03 at d5f7735)
+ + mailsplit: sort maildir filenames more cleverly
+
+ Will cook in 'next'.
+
+
+* pc/subtree-add-before-fetch (2013-02-28) 1 commit
+ - contrib/subtree: allow addition of remote branch with name not locally present
+
+ Comments?
+
+
+* tr/line-log (2013-02-28) 5 commits
+ - log -L: :pattern:file syntax to find by funcname
+ - Implement line-history search (git log -L)
+ - Export rewrite_parents() for 'log -L'
+ - blame: introduce $ as "end of file" in -L syntax
+ - Refactor parse_loc
+
+--------------------------------------------------
+[Stalled]
+
+* mb/gitweb-highlight-link-target (2012-12-20) 1 commit
+ - Highlight the link target line in Gitweb using CSS
+
+ Expecting a reroll.
+ $gmane/211935
+
+
+* jc/add-delete-default (2012-08-13) 1 commit
+ - git add: notice removal of tracked paths by default
+
+ "git add dir/" updated modified files and added new files, but does
+ not notice removed files, which may be "Huh?" to some users.  They
+ can of course use "git add -A dir/", but why should they?
+
+ Resurrected from graveyard, as I thought it was a worthwhile thing
+ to do in the longer term.
+
+ There seems to be some interest. Let's see if it results in a solid
+ execution of a sensible transition plan towards Git 2.0.
+
+
+* mb/remote-default-nn-origin (2012-07-11) 6 commits
+ - Teach get_default_remote to respect remote.default.
+ - Test that plain "git fetch" uses remote.default when on a detached HEAD.
+ - Teach clone to set remote.default.
+ - Teach "git remote" about remote.default.
+ - Teach remote.c about the remote.default configuration setting.
+ - Rename remote.c's default_remote_name static variables.
+
+ When the user does not specify what remote to interact with, we
+ often attempt to use 'origin'.  This can now be customized via a
+ configuration variable.
+
+ Expecting a reroll.
+ $gmane/210151
+
+ "The first remote becomes the default" bit is better done as a
+ separate step.
+
+--------------------------------------------------
+[Cooking]
 
 * jc/perl-cat-blob (2013-02-22) 1 commit
   (merged to 'next' on 2013-02-25 at 7c0079a)
@@ -86,7 +151,8 @@ repositories listed at
  Will cook in 'next'.
 
 
-* ap/maint-diff-rename-avoid-overlap (2013-02-26) 2 commits
+* ap/maint-diff-rename-avoid-overlap (2013-03-02) 3 commits
+ - tests: make sure rename pretty print works
   (merged to 'next' on 2013-02-26 at 19d70bf)
  + diff: prevent pprint_rename from underrunning input
   (merged to 'next' on 2013-02-25 at c9bd6d3)
@@ -96,7 +162,7 @@ repositories listed at
  files before and after a rename did not work correctly when the
  common prefix and suffix between the two filenames overlapped.
 
- Will cook in 'next'.
+ Will cook in 'next' (the tip may still be rerolled).
 
 
 * ap/maint-update-index-h-is-for-help (2013-02-23) 1 commit
@@ -193,10 +259,13 @@ repositories listed at
  - describe: make --all and --match=PATTERN mutually incompatible
  (this branch uses gp/describe-match-uses-glob-pattern.)
 
- Not sure if we should forbid the combination or explain the
- semantics better, perhaps by giving a better synonym to "--all",
- which meant "disable the usual limit that only gives the annotated
- tags".
+ "describe --match=<pattern> --all <commit>" ought to mean "use refs
+ that match <pattern> to describe <commit>; you do not have to limit
+ yourself to annotated tags."  But it doesn't.  Disable the
+ combination.
+
+ We may want to discard this if jc/describe topic turns out to be a
+ better idea.
 
 
 * jk/common-make-variables-export-safety (2013-02-25) 1 commit
@@ -249,50 +318,6 @@ repositories listed at
 
  Will cook in 'next'.
 
---------------------------------------------------
-[Stalled]
-
-* mb/gitweb-highlight-link-target (2012-12-20) 1 commit
- - Highlight the link target line in Gitweb using CSS
-
- Expecting a reroll.
- $gmane/211935
-
-
-* jc/add-delete-default (2012-08-13) 1 commit
- - git add: notice removal of tracked paths by default
-
- "git add dir/" updated modified files and added new files, but does
- not notice removed files, which may be "Huh?" to some users.  They
- can of course use "git add -A dir/", but why should they?
-
- Resurrected from graveyard, as I thought it was a worthwhile thing
- to do in the longer term.
-
- There seems to be some interest. Let's see if it results in a solid
- execution of a sensible transition plan towards Git 2.0.
-
-
-* mb/remote-default-nn-origin (2012-07-11) 6 commits
- - Teach get_default_remote to respect remote.default.
- - Test that plain "git fetch" uses remote.default when on a detached HEAD.
- - Teach clone to set remote.default.
- - Teach "git remote" about remote.default.
- - Teach remote.c about the remote.default configuration setting.
- - Rename remote.c's default_remote_name static variables.
-
- When the user does not specify what remote to interact with, we
- often attempt to use 'origin'.  This can now be customized via a
- configuration variable.
-
- Expecting a reroll.
- $gmane/210151
-
- "The first remote becomes the default" bit is better done as a
- separate step.
-
---------------------------------------------------
-[Cooking]
 
 * jk/pkt-line-cleanup (2013-02-24) 19 commits
   (merged to 'next' on 2013-02-25 at d83e970)
@@ -343,18 +368,6 @@ repositories listed at
  parties.
 
  Not ready for inclusion.
-
-
-* mh/maint-ceil-absolute (2013-02-22) 1 commit
-  (merged to 'next' on 2013-02-26 at ba83c45)
- + Provide a mechanism to turn off symlink resolution in ceiling paths
-
- An earlier workaround designed to help people who list logical
- directories that will not match what getcwd(3) returns in the
- GIT_CEILING_DIRECTORIES had an adverse effect when it is slow to
- stat and readlink a directory component of an element listed on it.
-
- Will fast-track to 'master' (regression fix).
 
 
 * tk/doc-filter-branch (2013-02-26) 2 commits
@@ -437,17 +450,18 @@ repositories listed at
  Will cook in 'next'.
 
 
-* mn/send-email-works-with-credential (2013-02-12) 6 commits
- - git-send-email: use git credential to obtain password
- - Git.pm: add interface for git credential command
- - Git.pm: allow pipes to be closed prior to calling command_close_bidi_pipe
- - Git.pm: refactor command_close_bidi_pipe to use _cmd_close
- - Git.pm: fix example in command_close_bidi_pipe documentation
- - Git.pm: allow command_close_bidi_pipe to be called as method
+* mn/send-email-works-with-credential (2013-02-27) 6 commits
+  (merged to 'next' on 2013-02-27 at ee7ae0e)
+ + git-send-email: use git credential to obtain password
+ + Git.pm: add interface for git credential command
+ + Git.pm: allow pipes to be closed prior to calling command_close_bidi_pipe
+ + Git.pm: refactor command_close_bidi_pipe to use _cmd_close
+ + Git.pm: fix example in command_close_bidi_pipe documentation
+ + Git.pm: allow command_close_bidi_pipe to be called as method
 
  Hooks the credential system to send-email.
- Rerolled.
- Waiting for a review.
+
+ Will cook in 'next'.
 
 
 * nd/branch-show-rebase-bisect-state (2013-02-08) 1 commit
@@ -468,13 +482,14 @@ repositories listed at
 
 
 * tz/credential-authinfo (2013-02-25) 1 commit
- - Add contrib/credentials/netrc with GPG support
+  (merged to 'next' on 2013-02-27 at 7a261cb)
+ + Add contrib/credentials/netrc with GPG support
 
  A new read-only credential helper (in contrib/) to interact with
  the .netrc/.authinfo files.  Hopefully mn/send-email-authinfo topic
  can rebuild on top of something like this.
 
- Will merge to and cook in 'next'.
+ Will cook in 'next'.
 
 
 * jl/submodule-deinit (2013-02-17) 1 commit
