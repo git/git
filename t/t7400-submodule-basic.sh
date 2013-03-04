@@ -756,4 +756,104 @@ test_expect_success 'submodule add with an existing name fails unless forced' '
 	)
 '
 
+test_expect_success 'set up a second submodule' '
+	git submodule add ./init2 example2 &&
+	git commit -m "submodule example2 added"
+'
+
+test_expect_success 'submodule deinit should remove the whole submodule section from .git/config' '
+	git config submodule.example.foo bar &&
+	git config submodule.example2.frotz nitfol &&
+	git submodule deinit init &&
+	test -z "$(git config --get-regexp "submodule\.example\.")" &&
+	test -n "$(git config --get-regexp "submodule\.example2\.")" &&
+	test -f example2/.git &&
+	rmdir init
+'
+
+test_expect_success 'submodule deinit . deinits all initialized submodules' '
+	git submodule update --init &&
+	git config submodule.example.foo bar &&
+	git config submodule.example2.frotz nitfol &&
+	test_must_fail git submodule deinit &&
+	git submodule deinit . &&
+	test -z "$(git config --get-regexp "submodule\.example\.")" &&
+	test -z "$(git config --get-regexp "submodule\.example2\.")" &&
+	rmdir init example2
+'
+
+test_expect_success 'submodule deinit deinits a submodule when its work tree is missing or empty' '
+	git submodule update --init &&
+	rm -rf init example2/* example2/.git &&
+	git submodule deinit init example2 &&
+	test -z "$(git config --get-regexp "submodule\.example\.")" &&
+	test -z "$(git config --get-regexp "submodule\.example2\.")" &&
+	rmdir init
+'
+
+test_expect_success 'submodule deinit fails when the submodule contains modifications unless forced' '
+	git submodule update --init &&
+	echo X >>init/s &&
+	test_must_fail git submodule deinit init &&
+	test -n "$(git config --get-regexp "submodule\.example\.")" &&
+	test -f example2/.git &&
+	git submodule deinit -f init &&
+	test -z "$(git config --get-regexp "submodule\.example\.")" &&
+	rmdir init
+'
+
+test_expect_success 'submodule deinit fails when the submodule contains untracked files unless forced' '
+	git submodule update --init &&
+	echo X >>init/untracked &&
+	test_must_fail git submodule deinit init &&
+	test -n "$(git config --get-regexp "submodule\.example\.")" &&
+	test -f example2/.git &&
+	git submodule deinit -f init &&
+	test -z "$(git config --get-regexp "submodule\.example\.")" &&
+	rmdir init
+'
+
+test_expect_success 'submodule deinit fails when the submodule HEAD does not match unless forced' '
+	git submodule update --init &&
+	(
+		cd init &&
+		git checkout HEAD^
+	) &&
+	test_must_fail git submodule deinit init &&
+	test -n "$(git config --get-regexp "submodule\.example\.")" &&
+	test -f example2/.git &&
+	git submodule deinit -f init &&
+	test -z "$(git config --get-regexp "submodule\.example\.")" &&
+	rmdir init
+'
+
+test_expect_success 'submodule deinit is silent when used on an uninitialized submodule' '
+	git submodule update --init &&
+	git submodule deinit init >actual &&
+	test_i18ngrep "Submodule .example. (.*) unregistered for path .init" actual &&
+	git submodule deinit init >actual &&
+	test_i18ngrep ! "Submodule .example. (.*) unregistered for path .init" actual &&
+	git submodule deinit . >actual &&
+	test_i18ngrep ! "Submodule .example. (.*) unregistered for path .init" actual &&
+	test_i18ngrep "Submodule .example2. (.*) unregistered for path .example2" actual &&
+	git submodule deinit . >actual &&
+	test_i18ngrep ! "Submodule .example. (.*) unregistered for path .init" actual &&
+	test_i18ngrep ! "Submodule .example2. (.*) unregistered for path .example2" actual &&
+	rmdir init example2
+'
+
+test_expect_success 'submodule deinit fails when submodule has a .git directory even when forced' '
+	git submodule update --init &&
+	(
+		cd init &&
+		rm .git &&
+		cp -R ../.git/modules/example .git &&
+		GIT_WORK_TREE=. git config --unset core.worktree
+	) &&
+	test_must_fail git submodule deinit init &&
+	test_must_fail git submodule deinit -f init &&
+	test -d init/.git &&
+	test -n "$(git config --get-regexp "submodule\.example\.")"
+'
+
 test_done
