@@ -8,34 +8,6 @@
 /* Internal API */
 
 /*
- * Output the next line for a graph.
- * This formats the next graph line into the specified strbuf.  It is not
- * terminated with a newline.
- *
- * Returns 1 if the line includes the current commit, and 0 otherwise.
- * graph_next_line() will return 1 exactly once for each time
- * graph_update() is called.
- */
-static int graph_next_line(struct git_graph *graph, struct strbuf *sb);
-
-/*
- * Set up a custom scheme for column colors.
- *
- * The default column color scheme inserts ANSI color escapes to colorize
- * the graph. The various color escapes are stored in an array of strings
- * where each entry corresponds to a color, except for the last entry,
- * which denotes the escape for resetting the color back to the default.
- * When generating the graph, strings from this array are inserted before
- * and after the various column characters.
- *
- * This function allows you to enable a custom array of color escapes.
- * The 'colors_max' argument is the index of the last "reset" entry.
- *
- * This functions must be called BEFORE graph_init() is called.
- */
-static void graph_set_column_colors(const char **colors, unsigned short colors_max);
-
-/*
  * Output a padding line in the graph.
  * This is similar to graph_next_line().  However, it is guaranteed to
  * never print the current commit line.  Instead, if the commit line is
@@ -90,7 +62,7 @@ enum graph_state {
 static const char **column_colors;
 static unsigned short column_colors_max;
 
-static void graph_set_column_colors(const char **colors, unsigned short colors_max)
+void graph_set_column_colors(const char **colors, unsigned short colors_max)
 {
 	column_colors = colors;
 	column_colors_max = colors_max;
@@ -1144,7 +1116,7 @@ static void graph_output_collapsing_line(struct git_graph *graph, struct strbuf 
 		graph_update_state(graph, GRAPH_PADDING);
 }
 
-static int graph_next_line(struct git_graph *graph, struct strbuf *sb)
+int graph_next_line(struct git_graph *graph, struct strbuf *sb)
 {
 	switch (graph->state) {
 	case GRAPH_PADDING:
