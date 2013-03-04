@@ -148,7 +148,8 @@ enum match_refs_flags {
 	MATCH_REFS_NONE		= 0,
 	MATCH_REFS_ALL 		= (1 << 0),
 	MATCH_REFS_MIRROR	= (1 << 1),
-	MATCH_REFS_PRUNE	= (1 << 2)
+	MATCH_REFS_PRUNE	= (1 << 2),
+	MATCH_REFS_FOLLOW_TAGS	= (1 << 3)
 };
 
 /* Reporting of tracking info */
