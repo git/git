@@ -13,6 +13,7 @@ DIFF = @DIFF@
 TCLTK_PATH = @TCLTK_PATH@
 
 prefix = @prefix@
+exec_prefix = @exec_prefix@
 bindir = @bindir@
 gitexecdir = @libexecdir@/git-core
 datarootdir = @datarootdir@
