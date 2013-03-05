@@ -12,8 +12,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Git\n"
 "Report-Msgid-Bugs-To: Git Mailing List <git@vger.kernel.org>\n"
-"POT-Creation-Date: 2013-02-19 13:32+0800\n"
-"PO-Revision-Date: 2013-02-19 14:44+0800\n"
+"POT-Creation-Date: 2013-03-05 12:36+0800\n"
+"PO-Revision-Date: 2013-03-05 13:07+0800\n"
 "Last-Translator: Jiang Xin <worldhello.net@gmail.com>\n"
 "Language-Team: GitHub <https://github.com/gotgit/git/>\n"
 "Language: zh_CN\n"
@@ -130,10 +130,10 @@ msgstr "远程 git-upload-archive 命令的路径"
 
 #: attr.c:259
 msgid ""
-"Negative patterns are forbidden in git attributes\n"
+"Negative patterns are ignored in git attributes\n"
 "Use '\\!' for literal leading exclamation."
 msgstr ""
-"在 git attributes 中不允许使用负值模版\n"
+"负值模版在 git attributes 中被忽略\n"
 "当字符串确实要以感叹号开始时，使用 '\\!'。"
 
 #: bundle.c:36
