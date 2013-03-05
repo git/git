@@ -463,12 +463,21 @@ static void clear_commit_marks_1(struct commit_list **plist,
 	}
 }
 
-void clear_commit_marks(struct commit *commit, unsigned int mark)
+void clear_commit_marks_many(int nr, struct commit **commit, unsigned int mark)
 {
 	struct commit_list *list = NULL;
-	commit_list_insert(commit, &list);
+
+	while (nr--) {
+		commit_list_insert(*commit, &list);
+		commit++;
+	}
 	while (list)
 		clear_commit_marks_1(&list, pop_commit(&list), mark);
+}
+
+void clear_commit_marks(struct commit *commit, unsigned int mark)
+{
+	clear_commit_marks_many(1, &commit, mark);
 }
 
 void clear_commit_marks_for_object_array(struct object_array *a, unsigned mark)
@@ -797,8 +806,7 @@ struct commit_list *get_merge_bases_many(struct commit *one,
 	if (!result || !result->next) {
 		if (cleanup) {
 			clear_commit_marks(one, all_flags);
-			for (i = 0; i < n; i++)
-				clear_commit_marks(twos[i], all_flags);
+			clear_commit_marks_many(n, twos, all_flags);
 		}
 		return result;
 	}
@@ -816,8 +824,7 @@ struct commit_list *get_merge_bases_many(struct commit *one,
 	free_commit_list(result);
 
 	clear_commit_marks(one, all_flags);
-	for (i = 0; i < n; i++)
-		clear_commit_marks(twos[i], all_flags);
+	clear_commit_marks_many(n, twos, all_flags);
 
 	cnt = remove_redundant(rslt, cnt);
 	result = NULL;
