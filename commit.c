@@ -876,8 +876,7 @@ int in_merge_bases_many(struct commit *commit, int nr_reference, struct commit *
 	if (commit->object.flags & PARENT2)
 		ret = 1;
 	clear_commit_marks(commit, all_flags);
-	for (i = 0; i < nr_reference; i++)
-		clear_commit_marks(reference[i], all_flags);
+	clear_commit_marks_many(nr_reference, reference, all_flags);
 	free_commit_list(bases);
 	return ret;
 }
