@@ -6,10 +6,10 @@
 #
 msgid ""
 msgstr ""
-"Project-Id-Version: git-v1.8.2-rc0-16-g20a59\n"
+"Project-Id-Version: git-v1.8.2-rc2-4-g77995\n"
 "Report-Msgid-Bugs-To: Git Mailing List <git@vger.kernel.org>\n"
-"POT-Creation-Date: 2013-02-19 13:32+0800\n"
-"PO-Revision-Date: 2013-02-20 07:14+0700\n"
+"POT-Creation-Date: 2013-03-05 12:36+0800\n"
+"PO-Revision-Date: 2013-03-06 13:55+0700\n"
 "Last-Translator: Trần Ngọc Quân <vnwildman@gmail.com>\n"
 "Language-Team: Vietnamese <translation-team-vi@lists.sourceforge.net>\n"
 "Language: vi\n"
@@ -131,11 +131,11 @@ msgstr "đường dẫn đến lệnh git-upload-pack trên máy chủ"
 
 #: attr.c:259
 msgid ""
-"Negative patterns are forbidden in git attributes\n"
+"Negative patterns are ignored in git attributes\n"
 "Use '\\!' for literal leading exclamation."
 msgstr ""
-"Các mẫu dạng phủ định bị cấm dùng trong các thuộc tính của git\n"
-"Dùng “\\!” cho các chuỗi văn bản có dấu chấm than."
+"Các mẫu dạng phủ định bị cấm dùng cho các thuộc tính của git\n"
+"Dùng “\\!” cho các chuỗi văn bản có dấu chấm than dẫn đầu."
 
 #: bundle.c:36
 #, c-format
@@ -1269,7 +1269,7 @@ msgstr "  (dùng \"git am --abort\" để phục hồi lại nhánh nguyên th�
 #: wt-status.c:879 wt-status.c:896
 #, c-format
 msgid "You are currently rebasing branch '%s' on '%s'."
-msgstr "Bạn hiện nay đang thực hiện việc rebase nhánh '%s' trên '%s'."
+msgstr "Bạn hiện nay đang thực hiện việc rebase nhánh “%s” trên “%s”."
 
 #: wt-status.c:884 wt-status.c:901
 msgid "You are currently rebasing."
@@ -1298,7 +1298,7 @@ msgid ""
 "You are currently splitting a commit while rebasing branch '%s' on '%s'."
 msgstr ""
 "Bạn hiện nay đang thực hiện việc chia tách một lần chuyển giao (commit) "
-"trong khi đang rebase nhánh '%s' trên '%s'."
+"trong khi đang rebase nhánh “%s” trên “%s”."
 
 #: wt-status.c:913
 msgid "You are currently splitting a commit during a rebase."
@@ -1317,7 +1317,7 @@ msgstr ""
 msgid "You are currently editing a commit while rebasing branch '%s' on '%s'."
 msgstr ""
 "Bạn hiện nay đang thực hiện việc sửa chữa một lần chuyển giao (commit) trong "
-"khi đang rebase nhánh '%s' trên '%s'."
+"khi đang rebase nhánh “%s” trên “%s”."
 
 #: wt-status.c:925
 msgid "You are currently editing a commit during a rebase."
@@ -1348,7 +1348,7 @@ msgstr "  (khi tất cả các xung đột đã sửa xong: chạy lệnh \"git 
 msgid "You are currently bisecting branch '%s'."
 msgstr ""
 "Bạn hiện nay đang thực hiện thao tác di chuyển nửa bước (bisect) trên nhánh "
-"'%s'."
+"“%s”."
 
 #: wt-status.c:962
 msgid "You are currently bisecting."
