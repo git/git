@@ -1493,6 +1493,11 @@ sub lookup_svn_merge {
 	my @merged_commit_ranges;
 	# find the tip
 	for my $range ( @ranges ) {
+		if ($range =~ /[*]$/) {
+			warn "W: Ignoring partial merge in svn:mergeinfo "
+				."dirprop: $source:$range\n";
+			next;
+		}
 		my ($bottom, $top) = split "-", $range;
 		$top ||= $bottom;
 		my $bottom_commit = $gs->find_rev_after( $bottom, 1, $top );
