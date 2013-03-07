@@ -42,6 +42,20 @@ test_expect_success 'P4CONFIG and relative dir clone' '
 	)
 '
 
+# Common setup using .p4config to set P4CLIENT and P4PORT breaks
+# if clone destination is relative.  Make sure that chdir() expands
+# the relative path in --dest to absolute.
+test_expect_success 'p4 client root would be relative due to clone --dest' '
+	test_when_finished cleanup_git &&
+	(
+		echo P4PORT=$P4PORT >git/.p4config &&
+		P4CONFIG=.p4config &&
+		export P4CONFIG &&
+		unset P4PORT &&
+		git p4 clone --dest="git" //depot
+	)
+'
+
 test_expect_success 'kill p4d' '
 	kill_p4d
 '
