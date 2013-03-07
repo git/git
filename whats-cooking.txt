@@ -1,18 +1,18 @@
 To: git@vger.kernel.org
 Bcc: lwn@lwn.net
-Subject: What's cooking in git.git (Mar 2013, #01; Sun, 3)
-X-master-at: 4d0d0c3c59800e07d899e53121902833e3fd0cc7
-X-next-at: c3bedd3ddcc0d007d41c3ed9d173b298b181e827
+Subject: What's cooking in git.git (Mar 2013, #02; Thu, 7)
+X-master-at: aadb70a5594222cac215f9590017f05d5d0f31b2
+X-next-at: 73fd3fa695a58ff3bcd7342bf03a18bb4617bcf8
 
-What's cooking in git.git (Mar 2013, #01; Sun, 3)
+What's cooking in git.git (Mar 2013, #02; Thu, 7)
 --------------------------------------------------
 
 Here are the topics that have been cooking.  Commits prefixed with
 '-' are only in 'pu' (proposed updates) while commits prefixed with
 '+' are in 'next'.
 
-The tip of the 'master' is at 1.8.2-rc2.  Hopefully we can tag the
-final in the middle of the month.
+The tip of the 'master' is at 1.8.2-rc3.  Hopefully we can tag the
+final sometime next week.
 
 You can find the changes described here in the integration branches of the
 repositories listed at
@@ -22,68 +22,102 @@ repositories listed at
 --------------------------------------------------
 [Graduated to "master"]
 
-* mh/maint-ceil-absolute (2013-02-22) 1 commit
-  (merged to 'next' on 2013-02-26 at ba83c45)
- + Provide a mechanism to turn off symlink resolution in ceiling paths
+* mp/complete-paths (2013-03-05) 1 commit
+  (merged to 'next' on 2013-03-05 at 929f7c5)
+ + git-completion.zsh: define __gitcomp_file compatibility function
 
- An earlier workaround designed to help people who list logical
- directories that will not match what getcwd(3) returns in the
- GIT_CEILING_DIRECTORIES had an adverse effect when it is slow to
- stat and readlink a directory component of an element listed on it.
+ A finishing touch for a new feature in the upcoming release.
 
 --------------------------------------------------
 [New Topics]
 
-* kb/name-hash (2013-02-27) 1 commit
- - name-hash.c: fix endless loop with core.ignorecase=true
+* po/help-guides (2013-03-03) 5 commits
+ - help doc: include --guide option description
+ - help.c: add list_common_guides_help() function
+ - help.c: add --guide option
+ - help.c: use OPT_COUNTUP
+ - show 'git help <guide>' usage, with examples
 
- The code to keep track of what directory names are known to Git on
- platforms with case insensitive filesystems can get confused upon
- a hash collision between these pathnames and looped forever.
+ Give more visibility to "concept guides" to help "git help" users.
 
-
-* rs/zip-compresssed-size-with-export-subst (2013-02-27) 1 commit
-  (merged to 'next' on 2013-03-03 at c1ac6d8)
- + archive-zip: fix compressed size for stored export-subst files
-
- When export-subst is used, "zip" output recorded incorrect
- size of the file.
-
- Will cook in 'next'.
+ Expecting a reroll.
+ $gmane/217384
 
 
-* hv/config-from-strbuf (2013-02-28) 4 commits
- - teach config parsing to read from strbuf
- - config: make parsing stack struct independent from actual data source
- - config: drop file pointer validity check in get_next_char()
- - config: factor out config file stack management
+* jk/graph-c-expose-symbols-for-cgit (2013-03-03) 1 commit
+  (merged to 'next' on 2013-03-04 at be35b12)
+ + Revert "graph.c: mark private file-scope symbols as static"
 
-
-* jc/describe (2013-02-28) 1 commit
- - describe: --match=<pattern> must limit the refs even when used with --all
-
- Comments?
-
-
-* jk/mailsplit-maildir-muttsort (2013-03-02) 1 commit
-  (merged to 'next' on 2013-03-03 at d5f7735)
- + mailsplit: sort maildir filenames more cleverly
+ In the v1.8.0 era, we changed symbols that do not have to be global
+ to file scope static, but a few functions in graph.c were used by
+ CGit from sideways bypassing the entry points of the API the
+ in-tree users use.
 
  Will cook in 'next'.
 
 
-* pc/subtree-add-before-fetch (2013-02-28) 1 commit
- - contrib/subtree: allow addition of remote branch with name not locally present
+* we/submodule-update-prefix-output (2013-03-03) 1 commit
+  (merged to 'next' on 2013-03-04 at 908df73)
+ + submodule update: when using recursion, show full path
 
- Comments?
+ Will cook in 'next'.
 
 
-* tr/line-log (2013-02-28) 5 commits
- - log -L: :pattern:file syntax to find by funcname
- - Implement line-history search (git log -L)
- - Export rewrite_parents() for 'log -L'
- - blame: introduce $ as "end of file" in -L syntax
- - Refactor parse_loc
+* jc/nobody-sets-src-peer-ref (2013-03-04) 1 commit
+  (merged to 'next' on 2013-03-07 at 1910e21)
+ + match_push_refs(): nobody sets src->peer_ref anymore
+
+ Dead code removal.
+
+ Will cook in 'next'.
+
+
+* jc/push-follow-tag (2013-03-05) 4 commits
+ - push: --follow-tags
+ - commit.c: use clear_commit_marks_many() in in_merge_bases_many()
+ - commit.c: add in_merge_bases_many()
+ - commit.c: add clear_commit_marks_many()
+
+ The new "--follow-tags" option tells "git push" to push relevant
+ tags when pushing branches out.
+
+
+* jc/maint-reflog-expire-clean-mark-typofix (2013-03-05) 1 commit
+  (merged to 'next' on 2013-03-07 at 0a61cbb)
+ + reflog: fix typo in "reflog expire" clean-up codepath
+
+ Will cook in 'next'.
+
+
+* aw/setup-prefix-pathspec (2013-03-07) 1 commit
+ - setup.c: stop prefix_pathspec() from looping past the end of string
+
+ Expecting a reroll.
+ $gmane/217618
+
+
+* gp/add-u-A-documentation (2013-03-07) 1 commit
+ - add: Clarify documentation of -A and -u
+
+ Looked good. We would need to start preparing a xx/add-u-A-2.0-default-to-top
+ topic and update the messages this topic touches soon, though.
+
+ Waiting for comments and then will merge to 'next'.
+
+
+* lf/bundle-verify-list-prereqs (2013-03-07) 2 commits
+ - bundle: Add colons to list headings in "verify"
+ - bundle: Fix "verify" output if history is complete
+
+ Will merge to 'next'.
+
+
+* ks/rfc2047-one-char-at-a-time (2013-03-07) 1 commit
+ - format-patch: RFC 2047 says multi-octet character may not be split
+
+ When "format-patch" quoted a non-ascii strings on the header files,
+ it incorrectly applied rfc2047 and chopped a single character in
+ the middle of it.
 
 --------------------------------------------------
 [Stalled]
@@ -130,6 +164,73 @@ repositories listed at
 --------------------------------------------------
 [Cooking]
 
+* kb/name-hash (2013-02-27) 1 commit
+  (merged to 'next' on 2013-03-05 at 7f7e5d4)
+ + name-hash.c: fix endless loop with core.ignorecase=true
+
+ The code to keep track of what directory names are known to Git on
+ platforms with case insensitive filesystems can get confused upon
+ a hash collision between these pathnames and looped forever.
+
+ Will cook in 'next'.
+
+
+* rs/zip-compresssed-size-with-export-subst (2013-02-27) 1 commit
+  (merged to 'next' on 2013-03-03 at c1ac6d8)
+ + archive-zip: fix compressed size for stored export-subst files
+
+ When export-subst is used, "zip" output recorded incorrect
+ size of the file.
+
+ Will cook in 'next'.
+
+
+* hv/config-from-strbuf (2013-02-28) 4 commits
+ - teach config parsing to read from strbuf
+ - config: make parsing stack struct independent from actual data source
+ - config: drop file pointer validity check in get_next_char()
+ - config: factor out config file stack management
+
+ Expecting a reroll.
+ $gmane/217163
+
+
+* jc/describe (2013-02-28) 1 commit
+  (merged to 'next' on 2013-03-05 at 6b353f3)
+ + describe: --match=<pattern> must limit the refs even when used with --all
+
+ The "--match=<pattern>" option of "git describe", when used with
+ "--all" to allow refs that are not annotated tags to be used as a
+ base of description, did not restrict the output from the command
+ to those that match the given pattern.
+
+ We may want to have a looser matching that does not restrict to tags,
+ but that can be done as a follow-up topic; this step is purely a bugfix.
+
+ Will cook in 'next'.
+
+
+* jk/mailsplit-maildir-muttsort (2013-03-02) 1 commit
+  (merged to 'next' on 2013-03-03 at d5f7735)
+ + mailsplit: sort maildir filenames more cleverly
+
+ Will cook in 'next'.
+
+
+* pc/subtree-add-before-fetch (2013-02-28) 1 commit
+ - contrib/subtree: allow addition of remote branch with name not locally present
+
+ Comments?
+
+
+* tr/line-log (2013-02-28) 5 commits
+ - log -L: :pattern:file syntax to find by funcname
+ - Implement line-history search (git log -L)
+ - Export rewrite_parents() for 'log -L'
+ - blame: introduce $ as "end of file" in -L syntax
+ - Refactor parse_loc
+
+
 * jc/perl-cat-blob (2013-02-22) 1 commit
   (merged to 'next' on 2013-02-25 at 7c0079a)
  + Git.pm: fix cat_blob crashes on large files
@@ -151,8 +252,9 @@ repositories listed at
  Will cook in 'next'.
 
 
-* ap/maint-diff-rename-avoid-overlap (2013-03-02) 3 commits
- - tests: make sure rename pretty print works
+* ap/maint-diff-rename-avoid-overlap (2013-03-06) 3 commits
+  (merged to 'next' on 2013-03-06 at 3bc8dda)
+ + tests: make sure rename pretty print works
   (merged to 'next' on 2013-02-26 at 19d70bf)
  + diff: prevent pprint_rename from underrunning input
   (merged to 'next' on 2013-02-25 at c9bd6d3)
@@ -162,7 +264,7 @@ repositories listed at
  files before and after a rename did not work correctly when the
  common prefix and suffix between the two filenames overlapped.
 
- Will cook in 'next' (the tip may still be rerolled).
+ Will cook in 'next'.
 
 
 * ap/maint-update-index-h-is-for-help (2013-02-23) 1 commit
@@ -269,11 +371,14 @@ repositories listed at
 
 
 * jk/common-make-variables-export-safety (2013-02-25) 1 commit
- - Makefile: make mandir, htmldir and infodir absolute
+  (merged to 'next' on 2013-03-05 at 084ae43)
+ + Makefile: make mandir, htmldir and infodir absolute
 
  Make the three variables safer to be exported to submakes by
  ensuring that they are full paths so that they can be used as
  installation location.
+
+ Will cook in 'next'.
 
 
 * jk/suppress-clang-warning (2013-02-25) 1 commit
@@ -464,11 +569,13 @@ repositories listed at
  Will cook in 'next'.
 
 
-* nd/branch-show-rebase-bisect-state (2013-02-08) 1 commit
- - branch: show rebase/bisect info when possible instead of "(no branch)"
+* nd/branch-show-rebase-bisect-state (2013-03-06) 4 commits
+ - branch: show more information when HEAD is detached
+ - status: show more info than "currently not on any branch"
+ - wt-status: move wt_status_get_state() out to wt_status_print()
+ - wt-status: split wt_status_state parsing function out
 
- Expecting a reroll.
- $gmane/215771
+ This is hopefully almost there.
 
 
 * nd/count-garbage (2013-02-15) 4 commits
@@ -492,18 +599,20 @@ repositories listed at
  Will cook in 'next'.
 
 
-* jl/submodule-deinit (2013-02-17) 1 commit
- - submodule: add 'deinit' command
+* jl/submodule-deinit (2013-03-04) 1 commit
+  (merged to 'next' on 2013-03-05 at 097164e)
+ + submodule: add 'deinit' command
 
  There was no Porcelain way to say "I no longer am interested in
  this submodule", once you express your interest in a submodule with
  "submodule init".  "submodule deinit" is the way to do so.
 
- Expecting a reroll.
- $gmane/216498
+ Will cook in 'next'.
 
 
-* jc/remove-export-from-config-mak-in (2013-02-12) 2 commits
+* jc/remove-export-from-config-mak-in (2013-03-05) 3 commits
+  (merged to 'next' on 2013-03-05 at abaa3cb)
+ + Fix `make install` when configured with autoconf
   (merged to 'next' on 2013-02-12 at eb8af04)
  + Makefile: do not export mandir/htmldir/infodir
   (merged to 'next' on 2013-02-07 at 33f7d4f)
