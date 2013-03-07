@@ -21,4 +21,6 @@ char *reencode_string(const char *in, const char *out_encoding, const char *in_e
 #define reencode_string(a,b,c) NULL
 #endif
 
+int mbs_chrlen(const char **text, size_t *remainder_p, const char *encoding);
+
 #endif
