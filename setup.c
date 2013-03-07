@@ -199,10 +199,11 @@ static const char *prefix_pathspec(const char *prefix, int prefixlen, const char
 		     *copyfrom && *copyfrom != ')';
 		     copyfrom = nextat) {
 			size_t len = strcspn(copyfrom, ",)");
-			if (copyfrom[len] == ')')
-				nextat = copyfrom + len;
-			else
+			if (copyfrom[len] == ',')
 				nextat = copyfrom + len + 1;
+			else
+				/* handle ')' and '\0' */
+				nextat = copyfrom + len;
 			if (!len)
 				continue;
 			for (i = 0; i < ARRAY_SIZE(pathspec_magic); i++)
