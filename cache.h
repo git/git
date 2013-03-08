@@ -341,6 +341,7 @@ static inline enum object_type object_type(unsigned int mode)
 		OBJ_BLOB;
 }
 
+/* Double-check local_repo_env below if you add to this list. */
 #define GIT_DIR_ENVIRONMENT "GIT_DIR"
 #define GIT_NAMESPACE_ENVIRONMENT "GIT_NAMESPACE"
 #define GIT_WORK_TREE_ENVIRONMENT "GIT_WORK_TREE"
@@ -364,13 +365,12 @@ static inline enum object_type object_type(unsigned int mode)
 #define GIT_NOTES_REWRITE_MODE_ENVIRONMENT "GIT_NOTES_REWRITE_MODE"
 
 /*
- * Repository-local GIT_* environment variables
- * The array is NULL-terminated to simplify its usage in contexts such
- * environment creation or simple walk of the list.
- * The number of non-NULL entries is available as a macro.
+ * Repository-local GIT_* environment variables; these will be cleared
+ * when git spawns a sub-process that runs inside another repository.
+ * The array is NULL-terminated, which makes it easy to pass in the "env"
+ * parameter of a run-command invocation, or to do a simple walk.
  */
-#define LOCAL_REPO_ENV_SIZE 9
-extern const char *const local_repo_env[LOCAL_REPO_ENV_SIZE + 1];
+extern const char * const local_repo_env[];
 
 extern int is_bare_repository_cfg;
 extern int is_bare_repository(void);
