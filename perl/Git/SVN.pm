@@ -1504,7 +1504,7 @@ sub lookup_svn_merge {
 		my $top_commit = $gs->find_rev_before( $top, 1, $bottom );
 
 		unless ($top_commit and $bottom_commit) {
-			warn "W:unknown path/rev in svn:mergeinfo "
+			warn "W: unknown path/rev in svn:mergeinfo "
 				."dirprop: $source:$range\n";
 			next;
 		}
