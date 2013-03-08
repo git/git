@@ -1,19 +1,8 @@
 Git v1.8.2 Release Notes
 ========================
 
-Backward compatibility notes
-----------------------------
-
-In the next major release Git 2.0 (not *this* one), we will change the
-behavior of the "git push" command.
-
-When "git push [$there]" does not say what to push, we have used the
-traditional "matching" semantics so far (all your branches were sent
-to the remote as long as there already are branches of the same name
-over there).  We will use the "simple" semantics that pushes the
-current branch to the branch with the same name, only when the current
-branch is set to integrate with that remote branch.  There is a user
-preference configuration variable "push.default" to change this.
+Backward compatibility notes (this release)
+-------------------------------------------
 
 "git push $there tag v1.2.3" used to allow replacing a tag v1.2.3
 that already exists in the repository $there, if the rewritten tag
@@ -22,22 +11,41 @@ that the old tag v1.2.3 points at.  This was found to be error prone
 and starting with this release, any attempt to update an existing
 ref under refs/tags/ hierarchy will fail, without "--force".
 
-When "git add -u" and "git add -A", that does not specify what paths
-to add on the command line, is run from inside a subdirectory, the
+When "git add -u" and "git add -A" that does not specify what paths
+to add on the command line is run from inside a subdirectory, the
 scope of the operation has always been limited to the subdirectory.
 Many users found this counter-intuitive, given that "git commit -a"
 and other commands operate on the entire tree regardless of where you
-are. In this release, these commands give warning in such a case and
-encourage the user to say "git add -u/-A ." instead when restricting
-the scope to the current directory.
+are.  In this release, these commands give a warning message that
+suggests the users to use "git add -u/-A ." when they want to limit
+the scope to the current directory; doing so will squelch the message,
+while training their fingers.
 
-At Git 2.0 (not *this* one), we plan to change these commands without
-pathspec to operate on the entire tree.  Forming a habit to type "."
-when you mean to limit the command to the current working directory
-will protect you against the planned future change, and that is the
-whole point of the new message (there will be no configuration
-variable to squelch this warning---it goes against the "habit forming"
-objective).
+
+Backward compatibility notes (for Git 2.0)
+------------------------------------------
+
+When "git push [$there]" does not say what to push, we have used the
+traditional "matching" semantics so far (all your branches were sent
+to the remote as long as there already are branches of the same name
+over there).  In Git 2.0, the default will change to the "simple"
+semantics that pushes the current branch to the branch with the same
+name, only when the current branch is set to integrate with that
+remote branch.  There is a user preference configuration variable
+"push.default" to change this.  If you are an old-timer who is used
+to the "matching" semantics, you can set it to "matching" to keep the
+traditional behaviour.  If you want to live in the future early,
+you can set it to "simple" today without waiting for Git 2.0.
+
+When "git add -u" and "git add -A", that does not specify what paths
+to add on the command line is run from inside a subdirectory, these
+commands will operate on the entire tree in Git 2.0 for consistency
+with "git commit -a" and other commands. Because there will be no
+mechanism to make "git add -u" behave as if "git add -u .", it is
+important for those who are used to "git add -u" (without pathspec)
+updating the index only for paths in the current subdirectory to start
+training their fingers to explicitly say "git add -u ." when they mean
+it before Git 2.0 comes.
 
 
 Updates since v1.8.1
