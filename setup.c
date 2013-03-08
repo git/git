@@ -497,6 +497,12 @@ static const char *setup_explicit_git_dir(const char *gitdirenv,
 			set_git_work_tree(core_worktree);
 		}
 	}
+	else if (!git_env_bool(GIT_IMPLICIT_WORK_TREE_ENVIRONMENT, 1)) {
+		/* #16d */
+		set_git_dir(gitdirenv);
+		free(gitfile);
+		return NULL;
+	}
 	else /* #2, #10 */
 		set_git_work_tree(".");
 
@@ -574,6 +580,8 @@ static const char *setup_bare_git_dir(char *cwd, int offset, int len, int *nongi
 
 	if (check_repository_format_gently(".", nongit_ok))
 		return NULL;
+
+	setenv(GIT_IMPLICIT_WORK_TREE_ENVIRONMENT, "0", 1);
 
 	/* --work-tree is set without --git-dir; use discovered one */
 	if (getenv(GIT_WORK_TREE_ENVIRONMENT) || git_work_tree_cfg) {
