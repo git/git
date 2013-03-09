@@ -59,6 +59,26 @@ users to list repositories they have access to, create, delete, or
 rename repositories, or change repository descriptions and
 permissions.
 
+If a `no-interactive-login` command exists, then it is run and the
+interactive shell is aborted.
+
+EXAMPLE
+-------
+
+To disable interactive logins, displaying a greeting instead:
++
+----------------
+$ chsh -s /usr/bin/git-shell
+$ mkdir $HOME/git-shell-commands
+$ cat >$HOME/git-shell-commands/no-interactive-login <<\EOF
+#!/bin/sh
+printf '%s\n' "Hi $USER! You've successfully authenticated, but I do not"
+printf '%s\n' "provide interactive shell access."
+exit 128
+EOF
+$ chmod +x $HOME/git-shell-commands/no-interactive-login
+----------------
+
 SEE ALSO
 --------
 ssh(1),
