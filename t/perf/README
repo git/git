@@ -56,7 +56,7 @@ You can set the following variables (also in your config.mak):
 
     GIT_PERF_REPEAT_COUNT
 	Number of times a test should be repeated for best-of-N
-	measurements.  Defaults to 5.
+	measurements.  Defaults to 3.
 
     GIT_PERF_MAKE_OPTS
 	Options to use when automatically building a git tree for
