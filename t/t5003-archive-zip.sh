@@ -3,14 +3,8 @@
 test_description='git archive --format=zip test'
 
 . ./test-lib.sh
-GIT_UNZIP=${GIT_UNZIP:-unzip}
 
 SUBSTFORMAT=%H%n
-
-test_lazy_prereq UNZIP '
-	"$GIT_UNZIP" -v
-	test $? -ne 127
-'
 
 test_lazy_prereq UNZIP_SYMLINKS '
 	(
