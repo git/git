@@ -1,18 +1,19 @@
 To: git@vger.kernel.org
 Bcc: lwn@lwn.net
-Subject: What's cooking in git.git (Mar 2013, #02; Thu, 7)
-X-master-at: aadb70a5594222cac215f9590017f05d5d0f31b2
-X-next-at: 73fd3fa695a58ff3bcd7342bf03a18bb4617bcf8
+Subject: What's cooking in git.git (Mar 2013, #03; Mon, 11)
+X-master-at: ce432cac30f98b291be609a0fc974042a2156f55
+X-next-at: a3a3ddd090a4feb8ff0eca6d353f517c26c37842
 
-What's cooking in git.git (Mar 2013, #02; Thu, 7)
+What's cooking in git.git (Mar 2013, #03; Mon, 11)
 --------------------------------------------------
 
 Here are the topics that have been cooking.  Commits prefixed with
 '-' are only in 'pu' (proposed updates) while commits prefixed with
 '+' are in 'next'.
 
-The tip of the 'master' is at 1.8.2-rc3.  Hopefully we can tag the
-final sometime next week.
+The final will be tagged in a few days; we have enough material for
+post 1.8.2 cycle already, and it will be a busy few weeks towards
+the end of the month once the dust settles.
 
 You can find the changes described here in the integration branches of the
 repositories listed at
@@ -22,14 +23,125 @@ repositories listed at
 --------------------------------------------------
 [Graduated to "master"]
 
-* mp/complete-paths (2013-03-05) 1 commit
-  (merged to 'next' on 2013-03-05 at 929f7c5)
- + git-completion.zsh: define __gitcomp_file compatibility function
-
- A finishing touch for a new feature in the upcoming release.
+* gp/add-u-A-documentation (2013-03-07) 1 commit
+  (merged to 'next' on 2013-03-08 at d86f8b3)
+ + add: Clarify documentation of -A and -u
+ (this branch is used by jc/add-2.0-delete-default and jc/add-2.0-u-A-sans-pathspec.)
 
 --------------------------------------------------
 [New Topics]
+
+* jc/maint-push-refspec-default-doc (2013-03-08) 1 commit
+ - Documentation/git-push: clarify the description of defaults
+
+ Clarify in the documentation "what" gets pushed to "where" when the
+ command line to "git push" does not say these explicitly.
+
+ Needs proofreading.
+
+
+* jc/reflog-reverse-walk (2013-03-08) 3 commits
+ - reflog: add for_each_reflog_ent_reverse() API
+ - for_each_recent_reflog_ent(): simplify opening of a reflog file
+ - for_each_reflog_ent(): extract a helper to process a single entry
+
+ An internal function used to implementate "git checkout @{-1}" was
+ hard to use correctly.
+
+
+* jk/alias-in-bare (2013-03-08) 3 commits
+  (merged to 'next' on 2013-03-09 at 2f9d72a)
+ + setup: suppress implicit "." work-tree for bare repos
+ + environment: add GIT_PREFIX to local_repo_env
+ + cache.h: drop LOCAL_REPO_ENV_SIZE
+
+ An aliased command spawned from a bare repository that does not say
+ it is bare with "core.bare = yes" is treated as non-bare by mistake.
+
+ Will cook in 'next'.
+
+
+* pw/p4-symlinked-root (2013-03-11) 3 commits
+ - git p4: avoid expanding client paths in chdir
+ - git p4 test: should honor symlink in p4 client root
+ - git p4 test: make sure P4CONFIG relative path works
+
+ Will merge to 'next'.
+
+
+* jc/add-2.0-delete-default (2013-03-08) 3 commits
+ - git add <pathspec>... defaults to "-A"
+ - git add: start preparing for "git add <pathspec>..." to default to "-A"
+ - builtin/add.c: simplify boolean variables
+
+ "git add dir/" updated modified files and added new files, but does
+ not notice removed files, which may be "Huh?" to some users.  They
+ can of course use "git add -A dir/", but why should they?
+
+ There seemed to be some interest in this topic, so resurrected and
+ rebased on top of recent documentation updates to propose a
+ possible transition plan.
+
+
+* jc/add-2.0-u-A-sans-pathspec (2013-03-11) 1 commit
+ - git add: -u/-A now affects the entire working tree
+
+ "git add -u/-A" without pathspec has traditonally limited its
+ operation to the current directory and its subdirectories, but in
+ Git 1.8.2 we started encouraging users to be more explicit to
+ specify "." when they mean it (and use ":/" to make it affect the
+ entire working tree).  With this, we finally change the behaviour
+ and make it affect the entire working tree in Git 2.0.
+
+
+* jk/empty-archive (2013-03-10) 2 commits
+ - archive: handle commits with an empty tree
+ - test-lib: factor out $GIT_UNZIP setup
+
+ "git archive" reports a failure when asked to create an archive out
+ of an empty tree.  It would be more intuitive to give an empty
+ archive back in such a case.
+
+ Will merge to 'next'.
+
+
+* kb/p4merge (2013-03-09) 3 commits
+ - git-merge-one-file: revise merge error reporting
+ - mergetools/p4merge: create a base if none available
+ - mergetools/p4merge: swap LOCAL and REMOTE
+
+ Expecting a reroll.
+
+--------------------------------------------------
+[Stalled]
+
+* mb/gitweb-highlight-link-target (2012-12-20) 1 commit
+ - Highlight the link target line in Gitweb using CSS
+
+ Expecting a reroll.
+ $gmane/211935
+
+
+* mb/remote-default-nn-origin (2012-07-11) 6 commits
+ - Teach get_default_remote to respect remote.default.
+ - Test that plain "git fetch" uses remote.default when on a detached HEAD.
+ - Teach clone to set remote.default.
+ - Teach "git remote" about remote.default.
+ - Teach remote.c about the remote.default configuration setting.
+ - Rename remote.c's default_remote_name static variables.
+
+ When the user does not specify what remote to interact with, we
+ often attempt to use 'origin'.  This can now be customized via a
+ configuration variable.
+
+ Expecting a reroll.
+ $gmane/210151
+
+ "The first remote becomes the default" bit is better done as a
+ separate step.
+
+--------------------------------------------------
+[Cooking]
 
 * po/help-guides (2013-03-03) 5 commits
  - help doc: include --guide option description
@@ -73,13 +185,16 @@ repositories listed at
 
 
 * jc/push-follow-tag (2013-03-05) 4 commits
- - push: --follow-tags
- - commit.c: use clear_commit_marks_many() in in_merge_bases_many()
- - commit.c: add in_merge_bases_many()
- - commit.c: add clear_commit_marks_many()
+  (merged to 'next' on 2013-03-09 at 748fbed)
+ + push: --follow-tags
+ + commit.c: use clear_commit_marks_many() in in_merge_bases_many()
+ + commit.c: add in_merge_bases_many()
+ + commit.c: add clear_commit_marks_many()
 
  The new "--follow-tags" option tells "git push" to push relevant
  tags when pushing branches out.
+
+ Will cook in 'next'.
 
 
 * jc/maint-reflog-expire-clean-mark-typofix (2013-03-05) 1 commit
@@ -89,80 +204,31 @@ repositories listed at
  Will cook in 'next'.
 
 
-* aw/setup-prefix-pathspec (2013-03-07) 1 commit
+* aw/setup-prefix-pathspec (2013-03-09) 2 commits
+ - setup.c: check that the pathspec magic ends with ")"
  - setup.c: stop prefix_pathspec() from looping past the end of string
-
- Expecting a reroll.
- $gmane/217618
-
-
-* gp/add-u-A-documentation (2013-03-07) 1 commit
- - add: Clarify documentation of -A and -u
-
- Looked good. We would need to start preparing a xx/add-u-A-2.0-default-to-top
- topic and update the messages this topic touches soon, though.
-
- Waiting for comments and then will merge to 'next'.
-
-
-* lf/bundle-verify-list-prereqs (2013-03-07) 2 commits
- - bundle: Add colons to list headings in "verify"
- - bundle: Fix "verify" output if history is complete
 
  Will merge to 'next'.
 
 
-* ks/rfc2047-one-char-at-a-time (2013-03-07) 1 commit
- - format-patch: RFC 2047 says multi-octet character may not be split
+* lf/bundle-verify-list-prereqs (2013-03-08) 2 commits
+  (merged to 'next' on 2013-03-08 at 9e55d6d)
+ + bundle: Add colons to list headings in "verify"
+ + bundle: Fix "verify" output if history is complete
+
+ Will cook in 'next'.
+
+
+* ks/rfc2047-one-char-at-a-time (2013-03-09) 1 commit
+  (merged to 'next' on 2013-03-09 at a12465e)
+ + format-patch: RFC 2047 says multi-octet character may not be split
 
  When "format-patch" quoted a non-ascii strings on the header files,
  it incorrectly applied rfc2047 and chopped a single character in
  the middle of it.
 
---------------------------------------------------
-[Stalled]
+ Will cook in 'next'.
 
-* mb/gitweb-highlight-link-target (2012-12-20) 1 commit
- - Highlight the link target line in Gitweb using CSS
-
- Expecting a reroll.
- $gmane/211935
-
-
-* jc/add-delete-default (2012-08-13) 1 commit
- - git add: notice removal of tracked paths by default
-
- "git add dir/" updated modified files and added new files, but does
- not notice removed files, which may be "Huh?" to some users.  They
- can of course use "git add -A dir/", but why should they?
-
- Resurrected from graveyard, as I thought it was a worthwhile thing
- to do in the longer term.
-
- There seems to be some interest. Let's see if it results in a solid
- execution of a sensible transition plan towards Git 2.0.
-
-
-* mb/remote-default-nn-origin (2012-07-11) 6 commits
- - Teach get_default_remote to respect remote.default.
- - Test that plain "git fetch" uses remote.default when on a detached HEAD.
- - Teach clone to set remote.default.
- - Teach "git remote" about remote.default.
- - Teach remote.c about the remote.default configuration setting.
- - Rename remote.c's default_remote_name static variables.
-
- When the user does not specify what remote to interact with, we
- often attempt to use 'origin'.  This can now be customized via a
- configuration variable.
-
- Expecting a reroll.
- $gmane/210151
-
- "The first remote becomes the default" bit is better done as a
- separate step.
-
---------------------------------------------------
-[Cooking]
 
 * kb/name-hash (2013-02-27) 1 commit
   (merged to 'next' on 2013-03-05 at 7f7e5d4)
@@ -185,14 +251,13 @@ repositories listed at
  Will cook in 'next'.
 
 
-* hv/config-from-strbuf (2013-02-28) 4 commits
+* hv/config-from-strbuf (2013-03-10) 4 commits
  - teach config parsing to read from strbuf
  - config: make parsing stack struct independent from actual data source
  - config: drop file pointer validity check in get_next_char()
  - config: factor out config file stack management
 
- Expecting a reroll.
- $gmane/217163
+ Rerolled.
 
 
 * jc/describe (2013-02-28) 1 commit
@@ -533,12 +598,11 @@ repositories listed at
  Will cook in 'next'.
 
 
-* jn/shell-disable-interactive (2013-02-11) 2 commits
- - shell: pay attention to exit status from 'help' command
+* jn/shell-disable-interactive (2013-03-09) 2 commits
+ - shell: new no-interactive-login command to print a custom message
  - shell doc: emphasize purpose and security model
 
- Expecting a reroll.
- $gmane/216229
+ Rerolled.
 
 
 * jc/fetch-raw-sha1 (2013-02-07) 4 commits
@@ -570,12 +634,15 @@ repositories listed at
 
 
 * nd/branch-show-rebase-bisect-state (2013-03-06) 4 commits
- - branch: show more information when HEAD is detached
- - status: show more info than "currently not on any branch"
- - wt-status: move wt_status_get_state() out to wt_status_print()
- - wt-status: split wt_status_state parsing function out
+ . branch: show more information when HEAD is detached
+ . status: show more info than "currently not on any branch"
+ . wt-status: move wt_status_get_state() out to wt_status_print()
+ . wt-status: split wt_status_state parsing function out
 
- This is hopefully almost there.
+ Kicked out of 'pu'; if the function to read reflog backwards,
+ introduced by jc/reflog-reverse-walk, turns out to be a good idea
+ to avoid mistaken use of the existing function, this topic can be
+ rerolled using the new function.
 
 
 * nd/count-garbage (2013-02-15) 4 commits
