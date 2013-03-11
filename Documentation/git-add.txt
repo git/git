@@ -100,12 +100,9 @@ apply to the index. See EDITING PATCHES below.
 
 -u::
 --update::
-	Only match <pathspec> against already tracked files in
-	the index rather than the working tree. That means that it
-	will never stage new files, but that it will stage modified
-	new contents of tracked files and that it will remove files
-	from the index if the corresponding files in the working tree
-	have been removed.
+	Update the index just where it already has an entry matching
+	<pathspec>.  This removes as well as modifies index entries to
+	match the working tree, but adds no new files.
 +
 If no <pathspec> is given, the current version of Git defaults to
 "."; in other words, update all tracked files in the current directory
@@ -114,10 +111,15 @@ of Git, hence the form without <pathspec> should not be used.
 
 -A::
 --all::
-	Like `-u`, but match <pathspec> against files in the
-	working tree in addition to the index. That means that it
-	will find new files as well as staging modified content and
-	removing files that are no longer in the working tree.
+	Update the index not only where the working tree has a file
+	matching <pathspec> but also where the index already has an
+	entry.	This adds, modifies, and removes index entries to
+	match the working tree.
++
+If no <pathspec> is given, the current version of Git defaults to
+"."; in other words, update all files in the current directory
+and its subdirectories. This default will change in a future version
+of Git, hence the form without <pathspec> should not be used.
 
 -N::
 --intent-to-add::
