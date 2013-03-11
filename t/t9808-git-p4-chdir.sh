@@ -56,6 +56,33 @@ test_expect_success 'p4 client root would be relative due to clone --dest' '
 	)
 '
 
+# When the p4 client Root is a symlink, make sure chdir() does not use
+# getcwd() to convert it to a physical path.
+test_expect_failure SYMLINKS 'p4 client root symlink should stay symbolic' '
+	physical="$TRASH_DIRECTORY/physical" &&
+	symbolic="$TRASH_DIRECTORY/symbolic" &&
+	test_when_finished "rm -rf \"$physical\"" &&
+	test_when_finished "rm \"$symbolic\"" &&
+	mkdir -p "$physical" &&
+	ln -s "$physical" "$symbolic" &&
+	test_when_finished cleanup_git &&
+	(
+		P4CLIENT=client-sym &&
+		p4 client -i <<-EOF &&
+		Client: $P4CLIENT
+		Description: $P4CLIENT
+		Root: $symbolic
+		LineEnd: unix
+		View: //depot/... //$P4CLIENT/...
+		EOF
+		git p4 clone --dest="$git" //depot &&
+		cd "$git" &&
+		test_commit file2 &&
+		git config git-p4.skipSubmitEdit true &&
+		git p4 submit
+	)
+'
+
 test_expect_success 'kill p4d' '
 	kill_p4d
 '
