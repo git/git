@@ -57,7 +57,9 @@ static void warn_pathless_add(void)
 		  "  git add %s .\n"
 		  "  (or git add %s .)\n"
 		  "\n"
-		  "With the current Git version, the command is restricted to the current directory."),
+		  "With the current Git version, the command is restricted to "
+		  "the current directory.\n"
+		  ""),
 		option_with_implicit_dot, short_option_with_implicit_dot,
 		option_with_implicit_dot, short_option_with_implicit_dot,
 		option_with_implicit_dot, short_option_with_implicit_dot);
