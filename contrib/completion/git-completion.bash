@@ -299,9 +299,12 @@ __git_index_file_list_filter ()
 # the second argument.
 __git_ls_files_helper ()
 {
-	# NOTE: $2 is not quoted in order to support multiple options
-	cd "$1" && git ls-files --exclude-standard $2
-} 2>/dev/null
+	(
+		test -n "${CDPATH+set}" && unset CDPATH
+		# NOTE: $2 is not quoted in order to support multiple options
+		cd "$1" && git ls-files --exclude-standard $2
+	) 2>/dev/null
+}
 
 
 # Execute git diff-index, returning paths relative to the directory
@@ -309,8 +312,11 @@ __git_ls_files_helper ()
 # specified in the second argument.
 __git_diff_index_helper ()
 {
-	cd "$1" && git diff-index --name-only --relative "$2"
-} 2>/dev/null
+	(
+		test -n "${CDPATH+set}" && unset CDPATH
+		cd "$1" && git diff-index --name-only --relative "$2"
+	) 2>/dev/null
+}
 
 # __git_index_files accepts 1 or 2 arguments:
 # 1: Options to pass to ls-files (required).
