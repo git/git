@@ -79,12 +79,27 @@ def p4_build_cmd(cmd):
         real_cmd += cmd
     return real_cmd
 
-def chdir(dir):
-    # P4 uses the PWD environment variable rather than getcwd(). Since we're
-    # not using the shell, we have to set it ourselves.  This path could
-    # be relative, so go there first, then figure out where we ended up.
-    os.chdir(dir)
-    os.environ['PWD'] = os.getcwd()
+def chdir(path, is_client_path=False):
+    """Do chdir to the given path, and set the PWD environment
+       variable for use by P4.  It does not look at getcwd() output.
+       Since we're not using the shell, it is necessary to set the
+       PWD environment variable explicitly.
+
+       Normally, expand the path to force it to be absolute.  This
+       addresses the use of relative path names inside P4 settings,
+       e.g. P4CONFIG=.p4config.  P4 does not simply open the filename
+       as given; it looks for .p4config using PWD.
+
+       If is_client_path, the path was handed to us directly by p4,
+       and may be a symbolic link.  Do not call os.getcwd() in this
+       case, because it will cause p4 to think that PWD is not inside
+       the client path.
+       """
+
+    os.chdir(path)
+    if not is_client_path:
+        path = os.getcwd()
+    os.environ['PWD'] = path
 
 def die(msg):
     if verbose:
@@ -1624,7 +1639,7 @@ class P4Submit(Command, P4UserMap):
             new_client_dir = True
             os.makedirs(self.clientPath)
 
-        chdir(self.clientPath)
+        chdir(self.clientPath, is_client_path=True)
         if self.dry_run:
             print "Would synchronize p4 checkout in %s" % self.clientPath
         else:

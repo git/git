@@ -58,7 +58,7 @@ test_expect_success 'p4 client root would be relative due to clone --dest' '
 
 # When the p4 client Root is a symlink, make sure chdir() does not use
 # getcwd() to convert it to a physical path.
-test_expect_failure SYMLINKS 'p4 client root symlink should stay symbolic' '
+test_expect_success SYMLINKS 'p4 client root symlink should stay symbolic' '
 	physical="$TRASH_DIRECTORY/physical" &&
 	symbolic="$TRASH_DIRECTORY/symbolic" &&
 	test_when_finished "rm -rf \"$physical\"" &&
