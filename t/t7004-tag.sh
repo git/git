@@ -104,6 +104,18 @@ test_expect_success 'creating a tag using HEAD directly should succeed' '
 	tag_exists myhead
 '
 
+test_expect_success '--force can create a tag with the name of one existing' '
+	tag_exists mytag &&
+	git tag --force mytag &&
+	tag_exists mytag'
+
+test_expect_success '--force is moot with a non-existing tag name' '
+	git tag newtag >expect &&
+	git tag --force forcetag >actual &&
+	test_cmp expect actual
+'
+git tag -d newtag forcetag
+
 # deleting tags:
 
 test_expect_success 'trying to delete an unknown tag should fail' '

@@ -584,7 +584,7 @@ int cmd_tag(int argc, const char **argv, const char *prefix)
 		die(_("%s: cannot lock the ref"), ref.buf);
 	if (write_ref_sha1(lock, object, NULL) < 0)
 		die(_("%s: cannot update the ref"), ref.buf);
-	if (force && hashcmp(prev, object))
+	if (force && !is_null_sha1(prev) && hashcmp(prev, object))
 		printf(_("Updated tag '%s' (was %s)\n"), tag, find_unique_abbrev(prev, DEFAULT_ABBREV));
 
 	strbuf_release(&buf);
