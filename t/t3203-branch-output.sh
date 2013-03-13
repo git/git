@@ -94,13 +94,13 @@ test_expect_success 'git branch -v pattern does not show branch summaries' '
 	test_must_fail git branch -v branch*
 '
 
-cat >expect <<'EOF'
-* (no branch)
+test_expect_success 'git branch shows detached HEAD properly' '
+	cat >expect <<EOF &&
+* (detached from $(git rev-parse --short HEAD^0))
   branch-one
   branch-two
   master
 EOF
-test_expect_success 'git branch shows detached HEAD properly' '
 	git checkout HEAD^0 &&
 	git branch >actual &&
 	test_i18ncmp expect actual
