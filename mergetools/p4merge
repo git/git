@@ -22,7 +22,7 @@ diff_cmd () {
 merge_cmd () {
 	touch "$BACKUP"
 	$base_present || >"$BASE"
-	"$merge_tool_path" "$BASE" "$LOCAL" "$REMOTE" "$MERGED"
+	"$merge_tool_path" "$BASE" "$REMOTE" "$LOCAL" "$MERGED"
 	check_unchanged
 }
 
