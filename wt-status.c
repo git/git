@@ -1031,32 +1031,30 @@ void wt_status_get_state(struct wt_status_state *state)
 	}
 }
 
-static void wt_status_print_state(struct wt_status *s)
+static void wt_status_print_state(struct wt_status *s,
+				  struct wt_status_state *state)
 {
 	const char *state_color = color(WT_STATUS_HEADER, s);
-	struct wt_status_state state;
-
-	memset(&state, 0, sizeof(state));
-	wt_status_get_state(&state);
-
-	if (state.merge_in_progress)
-		show_merge_in_progress(s, &state, state_color);
-	else if (state.am_in_progress)
-		show_am_in_progress(s, &state, state_color);
-	else if (state.rebase_in_progress || state.rebase_interactive_in_progress)
-		show_rebase_in_progress(s, &state, state_color);
-	else if (state.cherry_pick_in_progress)
-		show_cherry_pick_in_progress(s, &state, state_color);
-	if (state.bisect_in_progress)
-		show_bisect_in_progress(s, &state, state_color);
-	free(state.branch);
-	free(state.onto);
+	if (state->merge_in_progress)
+		show_merge_in_progress(s, state, state_color);
+	else if (state->am_in_progress)
+		show_am_in_progress(s, state, state_color);
+	else if (state->rebase_in_progress || state->rebase_interactive_in_progress)
+		show_rebase_in_progress(s, state, state_color);
+	else if (state->cherry_pick_in_progress)
+		show_cherry_pick_in_progress(s, state, state_color);
+	if (state->bisect_in_progress)
+		show_bisect_in_progress(s, state, state_color);
 }
 
 void wt_status_print(struct wt_status *s)
 {
 	const char *branch_color = color(WT_STATUS_ONBRANCH, s);
 	const char *branch_status_color = color(WT_STATUS_HEADER, s);
+	struct wt_status_state state;
+
+	memset(&state, 0, sizeof(state));
+	wt_status_get_state(&state);
 
 	if (s->branch) {
 		const char *on_what = _("On branch ");
@@ -1075,7 +1073,10 @@ void wt_status_print(struct wt_status *s)
 			wt_status_print_tracking(s);
 	}
 
-	wt_status_print_state(s);
+	wt_status_print_state(s, &state);
+	free(state.branch);
+	free(state.onto);
+
 	if (s->is_initial) {
 		status_printf_ln(s, color(WT_STATUS_HEADER, s), "");
 		status_printf_ln(s, color(WT_STATUS_HEADER, s), _("Initial commit"));
