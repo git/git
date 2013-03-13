@@ -1,119 +1,58 @@
 To: git@vger.kernel.org
 Bcc: lwn@lwn.net
-Subject: What's cooking in git.git (Mar 2013, #03; Mon, 11)
-X-master-at: ce432cac30f98b291be609a0fc974042a2156f55
-X-next-at: a3a3ddd090a4feb8ff0eca6d353f517c26c37842
+Subject: What's cooking in git.git (Mar 2013, #04; Wed, 13)
+X-master-at: 239222f587ed06f96d90dd71c66d80a2b1e3dc9f
+X-next-at: 36b63d62840a512828134a9665bea5dcf8279464
 
-What's cooking in git.git (Mar 2013, #03; Mon, 11)
+What's cooking in git.git (Mar 2013, #04; Wed, 13)
 --------------------------------------------------
 
 Here are the topics that have been cooking.  Commits prefixed with
 '-' are only in 'pu' (proposed updates) while commits prefixed with
 '+' are in 'next'.
 
-The final will be tagged in a few days; we have enough material for
-post 1.8.2 cycle already, and it will be a busy few weeks towards
-the end of the month once the dust settles.
+The tip of the master is at v1.8.2.  We have already many topics
+lined up for the next cycle, so after a few days to calm down, we
+will see exciting changes on 'master' starting from next week.
 
-You can find the changes described here in the integration branches of the
-repositories listed at
+You can find the changes described here in the integration branches
+of the repositories listed at
 
     http://git-blame.blogspot.com/p/git-public-repositories.html
 
 --------------------------------------------------
-[Graduated to "master"]
-
-* gp/add-u-A-documentation (2013-03-07) 1 commit
-  (merged to 'next' on 2013-03-08 at d86f8b3)
- + add: Clarify documentation of -A and -u
- (this branch is used by jc/add-2.0-delete-default and jc/add-2.0-u-A-sans-pathspec.)
-
---------------------------------------------------
 [New Topics]
 
-* jc/maint-push-refspec-default-doc (2013-03-08) 1 commit
- - Documentation/git-push: clarify the description of defaults
-
- Clarify in the documentation "what" gets pushed to "where" when the
- command line to "git push" does not say these explicitly.
-
- Needs proofreading.
-
-
-* jc/reflog-reverse-walk (2013-03-08) 3 commits
- - reflog: add for_each_reflog_ent_reverse() API
- - for_each_recent_reflog_ent(): simplify opening of a reflog file
- - for_each_reflog_ent(): extract a helper to process a single entry
-
- An internal function used to implementate "git checkout @{-1}" was
- hard to use correctly.
-
-
-* jk/alias-in-bare (2013-03-08) 3 commits
-  (merged to 'next' on 2013-03-09 at 2f9d72a)
- + setup: suppress implicit "." work-tree for bare repos
- + environment: add GIT_PREFIX to local_repo_env
- + cache.h: drop LOCAL_REPO_ENV_SIZE
-
- An aliased command spawned from a bare repository that does not say
- it is bare with "core.bare = yes" is treated as non-bare by mistake.
+* ph/tag-force-no-warn-on-creation (2013-03-13) 1 commit
+ - tag: --force does not have to warn when creating tags
 
  Will cook in 'next'.
 
-
-* pw/p4-symlinked-root (2013-03-11) 3 commits
- - git p4: avoid expanding client paths in chdir
- - git p4 test: should honor symlink in p4 client root
- - git p4 test: make sure P4CONFIG relative path works
-
- Will merge to 'next'.
-
-
-* jc/add-2.0-delete-default (2013-03-08) 3 commits
- - git add <pathspec>... defaults to "-A"
- - git add: start preparing for "git add <pathspec>..." to default to "-A"
- - builtin/add.c: simplify boolean variables
-
- "git add dir/" updated modified files and added new files, but does
- not notice removed files, which may be "Huh?" to some users.  They
- can of course use "git add -A dir/", but why should they?
-
- There seemed to be some interest in this topic, so resurrected and
- rebased on top of recent documentation updates to propose a
- possible transition plan.
-
-
-* jc/add-2.0-u-A-sans-pathspec (2013-03-11) 1 commit
- - git add: -u/-A now affects the entire working tree
-
- "git add -u/-A" without pathspec has traditonally limited its
- operation to the current directory and its subdirectories, but in
- Git 1.8.2 we started encouraging users to be more explicit to
- specify "." when they mean it (and use ":/" to make it affect the
- entire working tree).  With this, we finally change the behaviour
- and make it affect the entire working tree in Git 2.0.
-
-
-* jk/empty-archive (2013-03-10) 2 commits
- - archive: handle commits with an empty tree
- - test-lib: factor out $GIT_UNZIP setup
-
- "git archive" reports a failure when asked to create an archive out
- of an empty tree.  It would be more intuitive to give an empty
- archive back in such a case.
-
- Will merge to 'next'.
-
-
-* kb/p4merge (2013-03-09) 3 commits
- - git-merge-one-file: revise merge error reporting
- - mergetools/p4merge: create a base if none available
- - mergetools/p4merge: swap LOCAL and REMOTE
-
- Expecting a reroll.
-
 --------------------------------------------------
 [Stalled]
+
+* po/help-guides (2013-03-03) 5 commits
+ - help doc: include --guide option description
+ - help.c: add list_common_guides_help() function
+ - help.c: add --guide option
+ - help.c: use OPT_COUNTUP
+ - show 'git help <guide>' usage, with examples
+
+ Give more visibility to "concept guides" to help "git help" users.
+
+ Expecting a reroll.
+ $gmane/217384
+
+
+* hv/config-from-strbuf (2013-03-10) 4 commits
+ - teach config parsing to read from strbuf
+ - config: make parsing stack struct independent from actual data source
+ - config: drop file pointer validity check in get_next_char()
+ - config: factor out config file stack management
+
+ Expecting a reroll.
+ $gmane/217811
+
 
 * mb/gitweb-highlight-link-target (2012-12-20) 1 commit
  - Highlight the link target line in Gitweb using CSS
@@ -143,17 +82,108 @@ repositories listed at
 --------------------------------------------------
 [Cooking]
 
-* po/help-guides (2013-03-03) 5 commits
- - help doc: include --guide option description
- - help.c: add list_common_guides_help() function
- - help.c: add --guide option
- - help.c: use OPT_COUNTUP
- - show 'git help <guide>' usage, with examples
+* nd/branch-show-rebase-bisect-state (2013-03-13) 6 commits
+ - branch: show more information when HEAD is detached
+ - status: show more info than "currently not on any branch"
+ - wt-status: move wt_status_get_state() out to wt_status_print()
+ - wt-status: split wt_status_state parsing function out
+ - wt-status: move strbuf into read_and_strip_branch()
+ - Merge branch 'jc/reflog-reverse-walk' into nd/branch-show-rebase-bisect-state
+ (this branch uses jc/reflog-reverse-walk.)
 
- Give more visibility to "concept guides" to help "git help" users.
+ The changes look sound, but some patches need better description.
 
- Expecting a reroll.
- $gmane/217384
+
+* kb/p4merge (2013-03-13) 2 commits
+ - mergetools/p4merge: create a base if none available
+ - mergetools/p4merge: swap LOCAL and REMOTE
+
+ Looked reasonable.
+
+ Will merge to 'next'.
+
+
+* jc/maint-push-refspec-default-doc (2013-03-08) 1 commit
+ - Documentation/git-push: clarify the description of defaults
+
+ Clarify in the documentation "what" gets pushed to "where" when the
+ command line to "git push" does not say these explicitly.
+
+ Will merge to 'next'.
+
+
+* jc/reflog-reverse-walk (2013-03-08) 3 commits
+ - reflog: add for_each_reflog_ent_reverse() API
+ - for_each_recent_reflog_ent(): simplify opening of a reflog file
+ - for_each_reflog_ent(): extract a helper to process a single entry
+ (this branch is used by nd/branch-show-rebase-bisect-state.)
+
+ An internal function used to implement "git checkout @{-1}" was
+ hard to use correctly.
+
+ Will merge to 'next'.
+
+
+* jk/alias-in-bare (2013-03-08) 3 commits
+  (merged to 'next' on 2013-03-09 at 2f9d72a)
+ + setup: suppress implicit "." work-tree for bare repos
+ + environment: add GIT_PREFIX to local_repo_env
+ + cache.h: drop LOCAL_REPO_ENV_SIZE
+
+ An aliased command spawned from a bare repository that does not say
+ it is bare with "core.bare = yes" is treated as non-bare by mistake.
+
+ Will cook in 'next'.
+
+
+* pw/p4-symlinked-root (2013-03-11) 3 commits
+  (merged to 'next' on 2013-03-12 at 559b926)
+ + git p4: avoid expanding client paths in chdir
+ + git p4 test: should honor symlink in p4 client root
+ + git p4 test: make sure P4CONFIG relative path works
+
+ Will cook in 'next'.
+
+
+* jc/add-2.0-delete-default (2013-03-08) 3 commits
+ - git add <pathspec>... defaults to "-A"
+ - git add: start preparing for "git add <pathspec>..." to default to "-A"
+ - builtin/add.c: simplify boolean variables
+
+ "git add dir/" updated modified files and added new files, but does
+ not notice removed files, which may be "Huh?" to some users.  They
+ can of course use "git add -A dir/", but why should they?
+
+ There seemed to be some interest in this topic, so resurrected and
+ rebased on top of recent documentation updates to propose a
+ possible transition plan.
+
+ Will merge to and cook in 'next' until Git 2.0.
+
+
+* jc/add-2.0-u-A-sans-pathspec (2013-03-11) 1 commit
+ - git add: -u/-A now affects the entire working tree
+
+ "git add -u/-A" without pathspec has traditonally limited its
+ operation to the current directory and its subdirectories, but in
+ Git 1.8.2 we started encouraging users to be more explicit to
+ specify "." when they mean it (and use ":/" to make it affect the
+ entire working tree).  With this, we finally change the behaviour
+ and make it affect the entire working tree in Git 2.0.
+
+ Will merge to and cook in 'next' until Git 2.0.
+
+
+* jk/empty-archive (2013-03-10) 2 commits
+  (merged to 'next' on 2013-03-12 at 942e592)
+ + archive: handle commits with an empty tree
+ + test-lib: factor out $GIT_UNZIP setup
+
+ "git archive" reports a failure when asked to create an archive out
+ of an empty tree.  It would be more intuitive to give an empty
+ archive back in such a case.
+
+ Will cook in 'next'.
 
 
 * jk/graph-c-expose-symbols-for-cgit (2013-03-03) 1 commit
@@ -205,10 +235,14 @@ repositories listed at
 
 
 * aw/setup-prefix-pathspec (2013-03-09) 2 commits
- - setup.c: check that the pathspec magic ends with ")"
- - setup.c: stop prefix_pathspec() from looping past the end of string
+  (merged to 'next' on 2013-03-12 at 31a4a5e)
+ + setup.c: check that the pathspec magic ends with ")"
+ + setup.c: stop prefix_pathspec() from looping past the end of string
 
- Will merge to 'next'.
+ "git cmd -- ':(top'" was not diagnosed as an invalid syntax, and
+ instead the parser kept reading beyond the end of the string.
+
+ Will cook in 'next'.
 
 
 * lf/bundle-verify-list-prereqs (2013-03-08) 2 commits
@@ -251,15 +285,6 @@ repositories listed at
  Will cook in 'next'.
 
 
-* hv/config-from-strbuf (2013-03-10) 4 commits
- - teach config parsing to read from strbuf
- - config: make parsing stack struct independent from actual data source
- - config: drop file pointer validity check in get_next_char()
- - config: factor out config file stack management
-
- Rerolled.
-
-
 * jc/describe (2013-02-28) 1 commit
   (merged to 'next' on 2013-03-05 at 6b353f3)
  + describe: --match=<pattern> must limit the refs even when used with --all
@@ -285,7 +310,8 @@ repositories listed at
 * pc/subtree-add-before-fetch (2013-02-28) 1 commit
  - contrib/subtree: allow addition of remote branch with name not locally present
 
- Comments?
+ Will discard.
+ Not getting enough reviews.
 
 
 * tr/line-log (2013-02-28) 5 commits
@@ -294,6 +320,9 @@ repositories listed at
  - Export rewrite_parents() for 'log -L'
  - blame: introduce $ as "end of file" in -L syntax
  - Refactor parse_loc
+
+ Expecting a reroll.
+ $gmane/217278
 
 
 * jc/perl-cat-blob (2013-02-22) 1 commit
@@ -422,19 +451,6 @@ repositories listed at
  Will cook in 'next'.
 
 
-* gp/forbid-describe-all-match (2013-02-24) 1 commit
- - describe: make --all and --match=PATTERN mutually incompatible
- (this branch uses gp/describe-match-uses-glob-pattern.)
-
- "describe --match=<pattern> --all <commit>" ought to mean "use refs
- that match <pattern> to describe <commit>; you do not have to limit
- yourself to annotated tags."  But it doesn't.  Disable the
- combination.
-
- We may want to discard this if jc/describe topic turns out to be a
- better idea.
-
-
 * jk/common-make-variables-export-safety (2013-02-25) 1 commit
   (merged to 'next' on 2013-03-05 at 084ae43)
  + Makefile: make mandir, htmldir and infodir absolute
@@ -449,6 +465,8 @@ repositories listed at
 * jk/suppress-clang-warning (2013-02-25) 1 commit
  - fix clang -Wtautological-compare with unsigned enum
 
+ Will merge to 'next'.
+
 
 * mg/qnx6 (2013-02-25) 1 commit
  - QNX: newer QNX 6.x.x is not so crippled
@@ -462,6 +480,8 @@ repositories listed at
  - date.c: fix unsigned time_t comparison
 
  A few workarounds for systems with unsigned time_t.
+
+ Will merge to 'next'.
 
 
 * rj/msvc-build (2013-02-25) 5 commits
@@ -602,7 +622,7 @@ repositories listed at
  - shell: new no-interactive-login command to print a custom message
  - shell doc: emphasize purpose and security model
 
- Rerolled.
+ Will merge to 'next'.
 
 
 * jc/fetch-raw-sha1 (2013-02-07) 4 commits
@@ -631,18 +651,6 @@ repositories listed at
  Hooks the credential system to send-email.
 
  Will cook in 'next'.
-
-
-* nd/branch-show-rebase-bisect-state (2013-03-06) 4 commits
- . branch: show more information when HEAD is detached
- . status: show more info than "currently not on any branch"
- . wt-status: move wt_status_get_state() out to wt_status_print()
- . wt-status: split wt_status_state parsing function out
-
- Kicked out of 'pu'; if the function to read reflog backwards,
- introduced by jc/reflog-reverse-walk, turns out to be a good idea
- to avoid mistaken use of the existing function, this topic can be
- rerolled using the new function.
 
 
 * nd/count-garbage (2013-02-15) 4 commits
@@ -750,3 +758,18 @@ repositories listed at
  + sequencer.c: rework search for start of footer to improve clarity
 
  Will cook in 'next'.
+
+
+* gp/forbid-describe-all-match (2013-02-24) 1 commit
+ - describe: make --all and --match=PATTERN mutually incompatible
+ (this branch uses gp/describe-match-uses-glob-pattern.)
+
+ "describe --match=<pattern> --all <commit>" ought to mean "use refs
+ that match <pattern> to describe <commit>; you do not have to limit
+ yourself to annotated tags."  But it doesn't.  Disable the
+ combination.
+
+ Will discard.
+
+ jc/describe topic fixes the semantics of --match used with --all
+ option.
