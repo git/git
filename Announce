@@ -71,6 +71,7 @@ cat <<EOF
 Also the following public repositories all have a copy of the $relname
 tag and the $branch branch that the tag points at:
 
+  url = https://kernel.googlesource.com/pub/scm/git/git
   url = git://repo.or.cz/alt-git.git
   url = https://code.google.com/p/git-core/
   url = git://git.sourceforge.jp/gitroot/git-core/git.git
