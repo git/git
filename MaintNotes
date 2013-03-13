@@ -81,15 +81,17 @@ hints.
 My public git.git repositories are at:
 
         git://git.kernel.org/pub/scm/git/git.git/
+	https://kernel.googlesource.com/pub/scm/git/git
 	git://repo.or.cz/alt-git.git/
 	https://github.com/git/git/
 	https://code.google.com/p/git-core/
 	git://git.sourceforge.jp/gitroot/git-core/git.git/
 	git://git-core.git.sourceforge.net/gitroot/git-core/git-core/
 
-A few gitweb interfaces are found at:
+A few web interfaces are found at:
 
         http://git.kernel.org/?p=git/git.git
+	https://kernel.googlesource.com/pub/scm/git/git
         http://repo.or.cz/w/alt-git.git
 
 Preformatted documentation from the tip of the "master" branch can be
@@ -111,9 +113,8 @@ The "master" branch is meant to contain what are very well tested and
 ready to be used in a production setting.  Every now and then, a
 "feature release" is cut from the tip of this branch and they
 typically are named with three dotted decimal digits.  The last such
-release was 1.8.1 done on Dec 31, 2012 (or Jan 1, 2013, depending on
-where you were when it happened). You can expect that the tip of the
-"master" branch is always more stable than any of the released
+release was 1.8.2 done on Mar 13, 2013. You can expect that the tip of
+the "master" branch is always more stable than any of the released
 versions.
 
 Whenever a feature release is made, "maint" branch is forked off from
@@ -121,7 +122,7 @@ Whenever a feature release is made, "maint" branch is forked off from
 release are applied to this branch and maintenance releases are cut from
 it.  The maintenance releases are named with four dotted decimal, named
 after the feature release they are updates to; the last such release was
-1.8.1.2.  New features never go to this branch.  This branch is also
+1.8.1.5.  New features never go to this branch.  This branch is also
 merged into "master" to propagate the fixes forward as needed.
 
 A new development does not usually happen on "master". When you send a
