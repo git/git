@@ -104,30 +104,22 @@ case "${1:-.}${2:-.}${3:-.}" in
 		;;
 	esac
 
-	src2=`git-unpack-file $3`
+	src1=$(git-unpack-file $2)
+	src2=$(git-unpack-file $3)
 	case "$1" in
 	'')
 		echo "Added $4 in both, but differently."
-		# This extracts OUR file in $orig, and uses git apply to
-		# remove lines that are unique to ours.
-		orig=`git-unpack-file $2`
-		sz0=`wc -c <"$orig"`
-		@@DIFF@@ -u -La/$orig -Lb/$orig $orig $src2 | git apply --no-add
-		sz1=`wc -c <"$orig"`
-
-		# If we do not have enough common material, it is not
-		# worth trying two-file merge using common subsections.
-		expr $sz0 \< $sz1 \* 2 >/dev/null || : >$orig
+		orig=$(git-unpack-file $2)
+		create_virtual_base "$orig" "$src2"
 		;;
 	*)
 		echo "Auto-merging $4"
-		orig=`git-unpack-file $1`
+		orig=$(git-unpack-file $1)
 		;;
 	esac
 
 	# Be careful for funny filename such as "-L" in "$4", which
 	# would confuse "merge" greatly.
-	src1=`git-unpack-file $2`
 	git merge-file "$src1" "$orig" "$src2"
 	ret=$?
 	msg=
