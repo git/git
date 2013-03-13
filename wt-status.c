@@ -496,9 +496,14 @@ static void wt_status_collect_untracked(struct wt_status *s)
 {
 	int i;
 	struct dir_struct dir;
+	struct timeval t_begin;
 
 	if (!s->show_untracked_files)
 		return;
+
+	if (advice_status_u_option)
+		gettimeofday(&t_begin, NULL);
+
 	memset(&dir, 0, sizeof(dir));
 	if (s->show_untracked_files != SHOW_ALL_UNTRACKED_FILES)
 		dir.flags |=
@@ -528,6 +533,14 @@ static void wt_status_collect_untracked(struct wt_status *s)
 	}
 
 	free(dir.entries);
+
+	if (advice_status_u_option) {
+		struct timeval t_end;
+		gettimeofday(&t_end, NULL);
+		s->untracked_in_ms =
+			(uint64_t)t_end.tv_sec * 1000 + t_end.tv_usec / 1000 -
+			((uint64_t)t_begin.tv_sec * 1000 + t_begin.tv_usec / 1000);
+	}
 }
 
 void wt_status_collect(struct wt_status *s)
@@ -1011,6 +1024,18 @@ void wt_status_print(struct wt_status *s)
 		wt_status_print_other(s, &s->untracked, _("Untracked files"), "add");
 		if (s->show_ignored_files)
 			wt_status_print_other(s, &s->ignored, _("Ignored files"), "add -f");
+		if (advice_status_u_option && 2000 < s->untracked_in_ms) {
+			status_printf_ln(s, GIT_COLOR_NORMAL, "");
+			status_printf_ln(s, GIT_COLOR_NORMAL,
+				 _("It took %.2f seconds to enumerate untracked files."
+				   "  'status -uno'"),
+				 s->untracked_in_ms / 1000.0);
+			status_printf_ln(s, GIT_COLOR_NORMAL,
+				 _("may speed it up, but you have to be careful not"
+				   " to forget to add"));
+			status_printf_ln(s, GIT_COLOR_NORMAL,
+				 _("new files yourself (see 'git help status')."));
+		}
 	} else if (s->commitable)
 		status_printf_ln(s, GIT_COLOR_NORMAL, _("Untracked files not listed%s"),
 			advice_status_hints
