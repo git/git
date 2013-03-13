@@ -664,8 +664,10 @@ test_expect_success 'submodule add properly re-creates deeper level submodules' 
 
 test_expect_success 'submodule update properly revives a moved submodule' '
 	(cd super &&
+	 H=$(git rev-parse --short HEAD) &&
 	 git commit -am "pre move" &&
-	 git status >expect&&
+	 H2=$(git rev-parse --short HEAD) &&
+	 git status | sed "s/$H/XXX/" >expect &&
 	 H=$(cd submodule2; git rev-parse HEAD) &&
 	 git rm --cached submodule2 &&
 	 rm -rf submodule2 &&
@@ -674,7 +676,7 @@ test_expect_success 'submodule update properly revives a moved submodule' '
 	 git config -f .gitmodules submodule.submodule2.path "moved/sub module"
 	 git commit -am "post move" &&
 	 git submodule update &&
-	 git status >actual &&
+	 git status | sed "s/$H2/XXX/" >actual &&
 	 test_cmp expect actual
 	)
 '
