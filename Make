@@ -56,7 +56,9 @@ do
 	)
 done
 
-Wall='-Wall -Wdeclaration-after-statement' tests= jobs= skip= oldtest=
+Wall='-Wall -Wdeclaration-after-statement'
+tests= jobs= skip= oldtest=
+
 case `uname` in
 OpenBSD)
 	O="-fgnu89-inline"
@@ -76,20 +78,43 @@ SunOS)
 	;;
 esac
 
+old_style_def_fix () {
+	rev=$($GIT rev-parse HEAD 2>/dev/null) &&
+	case "$($GIT merge-base "$old_style_def_fix" "$rev")" in
+	$old_style_def_fix)
+		printf "%s\n" "-Wold-style-definition"
+		;;
+	esac
+}
+
+determine_branch () {
+	expr "$($GIT symbolic-ref HEAD 2>/dev/null)" : 'refs/heads/\(.*\)' ||
+	echo detached
+}
+
+determine_version () {
+	v=`$GIT describe HEAD`
+	expr "$v" : '.*-g[0-9a-f]*$' >/dev/null && {
+		echo >&2 "You are on 'snap' but $v is not an official version."
+		exit 1
+	}
+	echo "$v"
+}
+
+determine_long_version () {
+	$GIT describe HEAD 2>/dev/null || echo unknown-g00000000 |
+	sed -e 's/-/./g'
+}
+
 while case $# in 0) break ;; esac
 do 
 	case "$1" in
 	-pedantic | --pedantic)
-		o= &&
-		rev=$($GIT rev-parse HEAD) &&
-		case "$($GIT merge-base "$old_style_def_fix" "$rev")" in
-		$old_style_def_fix)
-			o=-Wold-style-definition ;;
-		esac
 		case "$NO_PEDANTIC" in
 		?*)	;;
 		'')
-			O="$O -Werror $o -std=c99 -Wno-pointer-to-int-cast"
+			O="$O -Werror $(old_style_def_fix) -std=c99"
+			O="$O -Wno-pointer-to-int-cast"
 			O="$O -Wpointer-arith -Woverflow -Wunused"
 			;;
 		esac
@@ -151,19 +176,14 @@ fi
 LC_ALL=$LANG
 export LANG LC_ALL
 
-head=`$GIT symbolic-ref HEAD 2>/dev/null` &&
-branch=`expr "$head" : 'refs/heads/\(.*\)'` || branch=detached
+branch=$(determine_branch)
 
 case "$branch" in
 next | maint | master | pu | jch)
 	prefix="$inst_prefix/git-$branch"
 	;;
 snap)
-	v=`$GIT describe HEAD`
-	expr "$v" : '.*-g[0-9a-f]*$' >/dev/null && {
-	    echo >&2 "You are on 'snap' but $v is not an official version."
-	    exit 1
-	}
+	v=$(determine_version)
 	prefix="$inst_prefix/git-snap-$v"
 	;;
 *)
@@ -171,9 +191,7 @@ snap)
 esac
 d="prefix=$prefix"
 
-sh -c 'git describe --abbrev=4 HEAD' >/dev/null 2>&1 || {
-	$GIT describe --abbrev=4 HEAD | sed -e 's/-/./g' >version
-}
+determine_long_version >version
 
 d="$d "'
 MAN_BASE_URL="http://www.kernel.org/pub/software/scm/git/docs/"
