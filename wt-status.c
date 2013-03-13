@@ -999,40 +999,45 @@ got_nothing:
 	return NULL;
 }
 
+void wt_status_get_state(struct wt_status_state *state)
+{
+	struct stat st;
+
+	if (!stat(git_path("MERGE_HEAD"), &st)) {
+		state->merge_in_progress = 1;
+	} else if (!stat(git_path("rebase-apply"), &st)) {
+		if (!stat(git_path("rebase-apply/applying"), &st)) {
+			state->am_in_progress = 1;
+			if (!stat(git_path("rebase-apply/patch"), &st) && !st.st_size)
+				state->am_empty_patch = 1;
+		} else {
+			state->rebase_in_progress = 1;
+			state->branch = read_and_strip_branch("rebase-apply/head-name");
+			state->onto = read_and_strip_branch("rebase-apply/onto");
+		}
+	} else if (!stat(git_path("rebase-merge"), &st)) {
+		if (!stat(git_path("rebase-merge/interactive"), &st))
+			state->rebase_interactive_in_progress = 1;
+		else
+			state->rebase_in_progress = 1;
+		state->branch = read_and_strip_branch("rebase-merge/head-name");
+		state->onto = read_and_strip_branch("rebase-merge/onto");
+	} else if (!stat(git_path("CHERRY_PICK_HEAD"), &st)) {
+		state->cherry_pick_in_progress = 1;
+	}
+	if (!stat(git_path("BISECT_LOG"), &st)) {
+		state->bisect_in_progress = 1;
+		state->branch = read_and_strip_branch("BISECT_START");
+	}
+}
+
 static void wt_status_print_state(struct wt_status *s)
 {
 	const char *state_color = color(WT_STATUS_HEADER, s);
 	struct wt_status_state state;
-	struct stat st;
 
 	memset(&state, 0, sizeof(state));
-
-	if (!stat(git_path("MERGE_HEAD"), &st)) {
-		state.merge_in_progress = 1;
-	} else if (!stat(git_path("rebase-apply"), &st)) {
-		if (!stat(git_path("rebase-apply/applying"), &st)) {
-			state.am_in_progress = 1;
-			if (!stat(git_path("rebase-apply/patch"), &st) && !st.st_size)
-				state.am_empty_patch = 1;
-		} else {
-			state.rebase_in_progress = 1;
-			state.branch = read_and_strip_branch("rebase-apply/head-name");
-			state.onto = read_and_strip_branch("rebase-apply/onto");
-		}
-	} else if (!stat(git_path("rebase-merge"), &st)) {
-		if (!stat(git_path("rebase-merge/interactive"), &st))
-			state.rebase_interactive_in_progress = 1;
-		else
-			state.rebase_in_progress = 1;
-		state.branch = read_and_strip_branch("rebase-merge/head-name");
-		state.onto = read_and_strip_branch("rebase-merge/onto");
-	} else if (!stat(git_path("CHERRY_PICK_HEAD"), &st)) {
-		state.cherry_pick_in_progress = 1;
-	}
-	if (!stat(git_path("BISECT_LOG"), &st)) {
-		state.bisect_in_progress = 1;
-		state.branch = read_and_strip_branch("BISECT_START");
-	}
+	wt_status_get_state(&state);
 
 	if (state.merge_in_progress)
 		show_merge_in_progress(s, &state, state_color);
