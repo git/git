@@ -4,8 +4,44 @@
 _x40='[0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f]'
 _x40="$_x40$_x40$_x40$_x40$_x40$_x40$_x40$_x40"
 
-initial=$(git rev-parse --verify e83c5163316f89bfbde7d9ab23ca2e25604af290) &&
-this=$(git rev-parse --verify ${1-HEAD}^0) || exit
+summary=
+while case $# in 0) break ;; esac
+do
+	case "$1" in
+	-s | --summary)
+		summary=t
+		;;
+	-*)
+		echo >&2 "$1: unknown option"
+		exit 1
+		;;
+	*)
+		break
+		;;
+	esac
+	shift
+done
+
+if test $# = 0
+then
+	this=HEAD
+else
+	this=$1
+	shift
+fi
+
+if test $# = 0
+then
+	initial=e83c5163316f89bfbde7d9ab23ca2e25604af290
+	range="..$this"
+else
+	initial=$1
+	range="$initial..$this"
+	shift
+fi
+
+this=$(git rev-parse --verify "$this^0") &&
+initial=$(git rev-parse --verify "$initial^0") || exit
 
 tmp="/var/tmp/Linus.$$"
 trap 'rm -f "$tmp".*' 0
@@ -30,10 +66,12 @@ show () {
 	printf "%12d %12d %s (%d.%02d%%)\n" $s $t $n $p $c
 }
 
-git ls-tree -r "$initial" |
-while read mode type sha1 name
+empty_tree=$(git hash-object -t tree -w --stdin </dev/null)
+
+git diff-tree -r --raw $empty_tree $initial -- "$@" |
+while read mode_old mode_new sha1_old sha1_new op name
 do
-	git blame $opts --porcelain -S "$graft" "$initial" -- "$name" |
+	git blame $opts --porcelain -S "$graft" "$this..$initial" -- "$name" |
 	sed -ne "s/^\($_x40\) .*/\1/p" |
 	sort |
 	uniq -c | {
@@ -57,13 +95,20 @@ do
 done | {
 	total=0
 	surviving=0
+	test -n "$summary" ||
 	printf "%12s %12s %s (survival%%)\n" surviving original path
 	while read s t n
 	do
 		total=$(( $total + $t )) surviving=$(( $surviving + $s ))
-		# printf "%12d %12d %s\n" $s $t $n
+		test -n "$summary" ||
 		show $s $t $n
 	done
-	# printf "%12d %12d %s\n" $surviving $total Total
-	show $surviving $total Total
+	if test -n "$summary"
+	then
+		echo $surviving $total
+	else
+		label=Total
+		show $surviving $total $label
+	fi
+
 }
