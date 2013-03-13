@@ -103,7 +103,7 @@ extern int read_ref_at(const char *refname, unsigned long at_time, int cnt,
 /* iterate over reflog entries */
 typedef int each_reflog_ent_fn(unsigned char *osha1, unsigned char *nsha1, const char *, unsigned long, int, const char *, void *);
 int for_each_reflog_ent(const char *refname, each_reflog_ent_fn fn, void *cb_data);
-int for_each_recent_reflog_ent(const char *refname, each_reflog_ent_fn fn, long, void *cb_data);
+int for_each_reflog_ent_reverse(const char *refname, each_reflog_ent_fn fn, void *cb_data);
 
 /*
  * Calls the specified function for each reflog file until it returns nonzero,
