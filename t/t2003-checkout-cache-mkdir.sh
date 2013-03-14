@@ -90,4 +90,30 @@ test_expect_success SYMLINKS 'use --prefix=tmp- where tmp-path1 is a symlink' '
 	test -f tmp-path1/file1
 '
 
+test_expect_success 'apply filter from working tree .gitattributes with --prefix' '
+	rm -fr path0 path1 path2 tmp* &&
+	mkdir path1 &&
+	mkdir tmp &&
+	git config filter.replace-all.smudge "sed -e s/./=/g" &&
+	git config filter.replace-all.clean cat &&
+	git config filter.replace-all.required true &&
+	echo "file1 filter=replace-all" >path1/.gitattributes &&
+	git checkout-index --prefix=tmp/ -f -a &&
+	echo frotz >expected &&
+	test_cmp expected tmp/path0 &&
+	echo ====== >expected &&
+	test_cmp expected tmp/path1/file1
+'
+
+test_expect_success 'apply CRLF filter from working tree .gitattributes with --prefix' '
+	rm -fr path0 path1 path2 tmp* &&
+	mkdir path1 &&
+	mkdir tmp &&
+	echo "file1 eol=crlf" >path1/.gitattributes &&
+	git checkout-index --prefix=tmp/ -f -a &&
+	echo rezrovQ >expected &&
+	tr \\015 Q <tmp/path1/file1 >actual &&
+	test_cmp expected actual
+'
+
 test_done

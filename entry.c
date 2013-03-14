@@ -188,7 +188,7 @@ static int write_entry(struct cache_entry *ce, char *path, const struct checkout
 	struct stat st;
 
 	if (ce_mode_s_ifmt == S_IFREG) {
-		struct stream_filter *filter = get_stream_filter(path, ce->sha1);
+		struct stream_filter *filter = get_stream_filter(ce->name, ce->sha1);
 		if (filter &&
 		    !streaming_write_entry(ce, path, filter,
 					   state, to_tempfile,
