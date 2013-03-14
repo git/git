@@ -370,6 +370,28 @@ test_expect_success PERL 'difftool --dir-diff' '
 	echo "$diff" | stdin_contains file
 '
 
+write_script .git/CHECK_SYMLINKS <<\EOF
+for f in file file2 sub/sub
+do
+	echo "$f"
+	readlink "$2/$f"
+done >actual
+EOF
+
+test_expect_success PERL,SYMLINKS 'difftool --dir-diff --symlink without unstaged changes' '
+	cat >expect <<-EOF &&
+	file
+	$(pwd)/file
+	file2
+	$(pwd)/file2
+	sub/sub
+	$(pwd)/sub/sub
+	EOF
+	git difftool --dir-diff --symlink \
+		--extcmd "./.git/CHECK_SYMLINKS" branch HEAD &&
+	test_cmp actual expect
+'
+
 test_expect_success PERL 'difftool --dir-diff ignores --prompt' '
 	diff=$(git difftool --dir-diff --prompt --extcmd ls branch) &&
 	echo "$diff" | stdin_contains sub &&

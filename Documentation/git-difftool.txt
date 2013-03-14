@@ -72,7 +72,9 @@ with custom merge tool commands and has the same value as `$MERGED`.
 --symlinks::
 --no-symlinks::
 	'git difftool''s default behavior is create symlinks to the
-	working tree when run in `--dir-diff` mode.
+	working tree when run in `--dir-diff` mode and the right-hand
+	side of the comparison yields the same content as the file in
+	the working tree.
 +
 Specifying `--no-symlinks` instructs 'git difftool' to create copies
 instead.  `--no-symlinks` is the default on Windows.
