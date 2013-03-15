@@ -111,8 +111,9 @@ static void copy_le32(unsigned char *dest, unsigned int n)
 	dest[3] = 0xff & (n >> 030);
 }
 
-static void *zlib_deflate(void *data, unsigned long size,
-		int compression_level, unsigned long *compressed_size)
+static void *zlib_deflate_raw(void *data, unsigned long size,
+			      int compression_level,
+			      unsigned long *compressed_size)
 {
 	git_zstream stream;
 	unsigned long maxsize;
@@ -120,7 +121,7 @@ static void *zlib_deflate(void *data, unsigned long size,
 	int result;
 
 	memset(&stream, 0, sizeof(stream));
-	git_deflate_init(&stream, compression_level);
+	git_deflate_init_raw(&stream, compression_level);
 	maxsize = git_deflate_bound(&stream, size);
 	buffer = xmalloc(maxsize);
 
@@ -265,14 +266,11 @@ static int write_zip_entry(struct archiver_args *args,
 	}
 
 	if (buffer && method == 8) {
-		deflated = zlib_deflate(buffer, size, args->compression_level,
-				&compressed_size);
-		if (deflated && compressed_size - 6 < size) {
-			/* ZLIB --> raw compressed data (see RFC 1950) */
-			/* CMF and FLG ... */
-			out = (unsigned char *)deflated + 2;
-			compressed_size -= 6;	/* ... and ADLER32 */
-		} else {
+		out = deflated = zlib_deflate_raw(buffer, size,
+						  args->compression_level,
+						  &compressed_size);
+		if (!out || compressed_size >= size) {
+			out = buffer;
 			method = 0;
 			compressed_size = size;
 		}
@@ -353,7 +351,7 @@ static int write_zip_entry(struct archiver_args *args,
 		unsigned char compressed[STREAM_BUFFER_SIZE * 2];
 
 		memset(&zstream, 0, sizeof(zstream));
-		git_deflate_init(&zstream, args->compression_level);
+		git_deflate_init_raw(&zstream, args->compression_level);
 
 		compressed_size = 0;
 		zstream.next_out = compressed;
@@ -370,13 +368,10 @@ static int write_zip_entry(struct archiver_args *args,
 			result = git_deflate(&zstream, 0);
 			if (result != Z_OK)
 				die("deflate error (%d)", result);
-			out = compressed;
-			if (!compressed_size)
-				out += 2;
-			out_len = zstream.next_out - out;
+			out_len = zstream.next_out - compressed;
 
 			if (out_len > 0) {
-				write_or_die(1, out, out_len);
+				write_or_die(1, compressed, out_len);
 				compressed_size += out_len;
 				zstream.next_out = compressed;
 				zstream.avail_out = sizeof(compressed);
@@ -394,11 +389,8 @@ static int write_zip_entry(struct archiver_args *args,
 			die("deflate error (%d)", result);
 
 		git_deflate_end(&zstream);
-		out = compressed;
-		if (!compressed_size)
-			out += 2;
-		out_len = zstream.next_out - out - 4;
-		write_or_die(1, out, out_len);
+		out_len = zstream.next_out - compressed;
+		write_or_die(1, compressed, out_len);
 		compressed_size += out_len;
 		zip_offset += compressed_size;
 
