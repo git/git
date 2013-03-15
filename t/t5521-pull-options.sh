@@ -19,6 +19,17 @@ test_expect_success 'git pull -q' '
 	test ! -s out)
 '
 
+test_expect_success 'git pull -q --rebase' '
+	mkdir clonedqrb &&
+	(cd clonedqrb && git init &&
+	git pull -q --rebase "../parent" >out 2>err &&
+	test ! -s err &&
+	test ! -s out &&
+	git pull -q --rebase "../parent" >out 2>err &&
+	test ! -s err &&
+	test ! -s out)
+'
+
 test_expect_success 'git pull' '
 	mkdir cloned &&
 	(cd cloned && git init &&
@@ -27,10 +38,26 @@ test_expect_success 'git pull' '
 	test ! -s out)
 '
 
+test_expect_success 'git pull --rebase' '
+	mkdir clonedrb &&
+	(cd clonedrb && git init &&
+	git pull --rebase "../parent" >out 2>err &&
+	test -s err &&
+	test ! -s out)
+'
+
 test_expect_success 'git pull -v' '
 	mkdir clonedv &&
 	(cd clonedv && git init &&
 	git pull -v "../parent" >out 2>err &&
+	test -s err &&
+	test ! -s out)
+'
+
+test_expect_success 'git pull -v --rebase' '
+	mkdir clonedvrb &&
+	(cd clonedvrb && git init &&
+	git pull -v --rebase "../parent" >out 2>err &&
 	test -s err &&
 	test ! -s out)
 '
