@@ -638,8 +638,8 @@ static void receive_needs(void)
 		if (parse_feature_request(features, "include-tag"))
 			use_include_tag = 1;
 
-		o = lookup_object(sha1_buf);
-		if (!o || !parse_object(o->sha1))
+		o = parse_object(sha1_buf);
+		if (!o)
 			die("git upload-pack: not our ref %s",
 			    sha1_to_hex(sha1_buf));
 		if (!(o->flags & WANTED)) {
