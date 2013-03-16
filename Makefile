@@ -583,22 +583,6 @@ LIB_FILE = libgit.a
 XDIFF_LIB = xdiff/lib.a
 VCSSVN_LIB = vcs-svn/lib.a
 
-LIB_H += xdiff/xinclude.h
-LIB_H += xdiff/xmacros.h
-LIB_H += xdiff/xdiff.h
-LIB_H += xdiff/xtypes.h
-LIB_H += xdiff/xutils.h
-LIB_H += xdiff/xprepare.h
-LIB_H += xdiff/xdiffi.h
-LIB_H += xdiff/xemit.h
-
-LIB_H += vcs-svn/line_buffer.h
-LIB_H += vcs-svn/sliding_window.h
-LIB_H += vcs-svn/repo_tree.h
-LIB_H += vcs-svn/fast_export.h
-LIB_H += vcs-svn/svndiff.h
-LIB_H += vcs-svn/svndump.h
-
 GENERATED_H += common-cmds.h
 
 LIB_H += advice.h
@@ -699,10 +683,23 @@ LIB_H += url.h
 LIB_H += userdiff.h
 LIB_H += utf8.h
 LIB_H += varint.h
+LIB_H += vcs-svn/fast_export.h
+LIB_H += vcs-svn/line_buffer.h
+LIB_H += vcs-svn/repo_tree.h
+LIB_H += vcs-svn/sliding_window.h
+LIB_H += vcs-svn/svndiff.h
+LIB_H += vcs-svn/svndump.h
 LIB_H += walker.h
 LIB_H += wt-status.h
 LIB_H += xdiff-interface.h
 LIB_H += xdiff/xdiff.h
+LIB_H += xdiff/xdiffi.h
+LIB_H += xdiff/xemit.h
+LIB_H += xdiff/xinclude.h
+LIB_H += xdiff/xmacros.h
+LIB_H += xdiff/xprepare.h
+LIB_H += xdiff/xtypes.h
+LIB_H += xdiff/xutils.h
 
 LIB_OBJS += abspath.o
 LIB_OBJS += advice.o
