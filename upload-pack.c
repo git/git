@@ -327,9 +327,7 @@ static int got_sha1(char *hex, unsigned char *sha1)
 	if (!has_sha1_file(sha1))
 		return -1;
 
-	o = lookup_object(sha1);
-	if (!(o && o->parsed))
-		o = parse_object(sha1);
+	o = parse_object(sha1);
 	if (!o)
 		die("oops (%s)", sha1_to_hex(sha1));
 	if (o->type == OBJ_COMMIT) {
