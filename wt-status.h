@@ -79,8 +79,8 @@ struct wt_status_state {
 	int rebase_interactive_in_progress;
 	int cherry_pick_in_progress;
 	int bisect_in_progress;
-	const char *branch;
-	const char *onto;
+	char *branch;
+	char *onto;
 };
 
 void wt_status_prepare(struct wt_status *s);

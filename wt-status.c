@@ -967,41 +967,41 @@ static void show_bisect_in_progress(struct wt_status *s,
 /*
  * Extract branch information from rebase/bisect
  */
-static void read_and_strip_branch(struct strbuf *sb,
-				  const char **branch,
-				  const char *path)
+static char *read_and_strip_branch(const char *path)
 {
+	struct strbuf sb = STRBUF_INIT;
 	unsigned char sha1[20];
 
-	strbuf_reset(sb);
-	if (strbuf_read_file(sb, git_path("%s", path), 0) <= 0)
-		return;
+	if (strbuf_read_file(&sb, git_path("%s", path), 0) <= 0)
+		goto got_nothing;
 
-	while (sb->len && sb->buf[sb->len - 1] == '\n')
-		strbuf_setlen(sb, sb->len - 1);
-	if (!sb->len)
-		return;
-	if (!prefixcmp(sb->buf, "refs/heads/"))
-		*branch = sb->buf + strlen("refs/heads/");
-	else if (!prefixcmp(sb->buf, "refs/"))
-		*branch = sb->buf;
-	else if (!get_sha1_hex(sb->buf, sha1)) {
+	while (&sb.len && sb.buf[sb.len - 1] == '\n')
+		strbuf_setlen(&sb, sb.len - 1);
+	if (!sb.len)
+		goto got_nothing;
+	if (!prefixcmp(sb.buf, "refs/heads/"))
+		strbuf_remove(&sb,0, strlen("refs/heads/"));
+	else if (!prefixcmp(sb.buf, "refs/"))
+		;
+	else if (!get_sha1_hex(sb.buf, sha1)) {
 		const char *abbrev;
 		abbrev = find_unique_abbrev(sha1, DEFAULT_ABBREV);
-		strbuf_reset(sb);
-		strbuf_addstr(sb, abbrev);
-		*branch = sb->buf;
-	} else if (!strcmp(sb->buf, "detached HEAD")) /* rebase */
-		;
+		strbuf_reset(&sb);
+		strbuf_addstr(&sb, abbrev);
+	} else if (!strcmp(sb.buf, "detached HEAD")) /* rebase */
+		goto got_nothing;
 	else			/* bisect */
-		*branch = sb->buf;
+		;
+	return strbuf_detach(&sb, NULL);
+
+got_nothing:
+	strbuf_release(&sb);
+	return NULL;
 }
 
 static void wt_status_print_state(struct wt_status *s)
 {
 	const char *state_color = color(WT_STATUS_HEADER, s);
-	struct strbuf branch = STRBUF_INIT;
-	struct strbuf onto = STRBUF_INIT;
 	struct wt_status_state state;
 	struct stat st;
 
@@ -1016,27 +1016,22 @@ static void wt_status_print_state(struct wt_status *s)
 				state.am_empty_patch = 1;
 		} else {
 			state.rebase_in_progress = 1;
-			read_and_strip_branch(&branch, &state.branch,
-					      "rebase-apply/head-name");
-			read_and_strip_branch(&onto, &state.onto,
-					      "rebase-apply/onto");
+			state.branch = read_and_strip_branch("rebase-apply/head-name");
+			state.onto = read_and_strip_branch("rebase-apply/onto");
 		}
 	} else if (!stat(git_path("rebase-merge"), &st)) {
 		if (!stat(git_path("rebase-merge/interactive"), &st))
 			state.rebase_interactive_in_progress = 1;
 		else
 			state.rebase_in_progress = 1;
-		read_and_strip_branch(&branch, &state.branch,
-				      "rebase-merge/head-name");
-		read_and_strip_branch(&onto, &state.onto,
-				      "rebase-merge/onto");
+		state.branch = read_and_strip_branch("rebase-merge/head-name");
+		state.onto = read_and_strip_branch("rebase-merge/onto");
 	} else if (!stat(git_path("CHERRY_PICK_HEAD"), &st)) {
 		state.cherry_pick_in_progress = 1;
 	}
 	if (!stat(git_path("BISECT_LOG"), &st)) {
 		state.bisect_in_progress = 1;
-		read_and_strip_branch(&branch, &state.branch,
-				      "BISECT_START");
+		state.branch = read_and_strip_branch("BISECT_START");
 	}
 
 	if (state.merge_in_progress)
@@ -1049,8 +1044,8 @@ static void wt_status_print_state(struct wt_status *s)
 		show_cherry_pick_in_progress(s, &state, state_color);
 	if (state.bisect_in_progress)
 		show_bisect_in_progress(s, &state, state_color);
-	strbuf_release(&branch);
-	strbuf_release(&onto);
+	free(state.branch);
+	free(state.onto);
 }
 
 void wt_status_print(struct wt_status *s)
