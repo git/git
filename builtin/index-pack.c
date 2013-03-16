@@ -1099,7 +1099,7 @@ static void conclude_pack(int fix_thin_pack, const char *curr_pack, unsigned cha
 	if (fix_thin_pack) {
 		struct sha1file *f;
 		unsigned char read_sha1[20], tail_sha1[20];
-		char msg[48];
+		struct strbuf msg = STRBUF_INIT;
 		int nr_unresolved = nr_deltas - nr_resolved_deltas;
 		int nr_objects_initial = nr_objects;
 		if (nr_unresolved <= 0)
@@ -1109,9 +1109,10 @@ static void conclude_pack(int fix_thin_pack, const char *curr_pack, unsigned cha
 				   * sizeof(*objects));
 		f = sha1fd(output_fd, curr_pack);
 		fix_unresolved_deltas(f, nr_unresolved);
-		sprintf(msg, _("completed with %d local objects"),
-			nr_objects - nr_objects_initial);
-		stop_progress_msg(&progress, msg);
+		strbuf_addf(&msg, _("completed with %d local objects"),
+			    nr_objects - nr_objects_initial);
+		stop_progress_msg(&progress, msg.buf);
+		strbuf_release(&msg);
 		sha1close(f, tail_sha1, 0);
 		hashcpy(read_sha1, pack_sha1);
 		fixup_pack_header_footer(output_fd, pack_sha1,
