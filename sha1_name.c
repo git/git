@@ -1137,7 +1137,8 @@ int get_sha1_blob(const char *name, unsigned char *sha1)
 static void diagnose_invalid_sha1_path(const char *prefix,
 				       const char *filename,
 				       const unsigned char *tree_sha1,
-				       const char *object_name)
+				       const char *object_name,
+				       int object_name_len)
 {
 	struct stat st;
 	unsigned char sha1[20];
@@ -1147,8 +1148,8 @@ static void diagnose_invalid_sha1_path(const char *prefix,
 		prefix = "";
 
 	if (!lstat(filename, &st))
-		die("Path '%s' exists on disk, but not in '%s'.",
-		    filename, object_name);
+		die("Path '%s' exists on disk, but not in '%.*s'.",
+		    filename, object_name_len, object_name);
 	if (errno == ENOENT || errno == ENOTDIR) {
 		char *fullname = xmalloc(strlen(filename)
 					     + strlen(prefix) + 1);
@@ -1158,16 +1159,16 @@ static void diagnose_invalid_sha1_path(const char *prefix,
 		if (!get_tree_entry(tree_sha1, fullname,
 				    sha1, &mode)) {
 			die("Path '%s' exists, but not '%s'.\n"
-			    "Did you mean '%s:%s' aka '%s:./%s'?",
+			    "Did you mean '%.*s:%s' aka '%.*s:./%s'?",
 			    fullname,
 			    filename,
-			    object_name,
+			    object_name_len, object_name,
 			    fullname,
-			    object_name,
+			    object_name_len, object_name,
 			    filename);
 		}
-		die("Path '%s' does not exist in '%s'",
-		    filename, object_name);
+		die("Path '%s' does not exist in '%.*s'",
+		    filename, object_name_len, object_name);
 	}
 }
 
@@ -1332,13 +1333,8 @@ static int get_sha1_with_context_1(const char *name,
 	}
 	if (*cp == ':') {
 		unsigned char tree_sha1[20];
-		char *object_name = NULL;
-		if (only_to_die) {
-			object_name = xmalloc(cp-name+1);
-			strncpy(object_name, name, cp-name);
-			object_name[cp-name] = '\0';
-		}
-		if (!get_sha1_1(name, cp-name, tree_sha1, GET_SHA1_TREEISH)) {
+		int len = cp - name;
+		if (!get_sha1_1(name, len, tree_sha1, GET_SHA1_TREEISH)) {
 			const char *filename = cp+1;
 			char *new_filename = NULL;
 
@@ -1348,8 +1344,8 @@ static int get_sha1_with_context_1(const char *name,
 			ret = get_tree_entry(tree_sha1, filename, sha1, &oc->mode);
 			if (ret && only_to_die) {
 				diagnose_invalid_sha1_path(prefix, filename,
-							   tree_sha1, object_name);
-				free(object_name);
+							   tree_sha1,
+							   name, len);
 			}
 			hashcpy(oc->tree, tree_sha1);
 			strncpy(oc->path, filename,
@@ -1360,7 +1356,7 @@ static int get_sha1_with_context_1(const char *name,
 			return ret;
 		} else {
 			if (only_to_die)
-				die("Invalid object name '%s'.", object_name);
+				die("Invalid object name '%.*s'.", len, name);
 		}
 	}
 	return ret;

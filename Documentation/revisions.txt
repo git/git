@@ -88,10 +88,10 @@ some output processing may assume ref names in UTF-8.
   The construct '@\{-<n>\}' means the <n>th branch checked out
   before the current one.
 
-'<refname>@\{upstream\}', e.g. 'master@\{upstream\}', '@\{u\}'::
-  The suffix '@\{upstream\}' to a ref (short form '<refname>@\{u\}') refers to
-  the branch the ref is set to build on top of.  A missing ref defaults
-  to the current branch.
+'<branchname>@\{upstream\}', e.g. 'master@\{upstream\}', '@\{u\}'::
+  The suffix '@\{upstream\}' to a branchname (short form '<branchname>@\{u\}')
+  refers to the branch that the branch specified by branchname is set to build on
+  top of.  A missing branchname defaults to the current one.
 
 '<rev>{caret}', e.g. 'HEAD{caret}, v1.5.1{caret}0'::
   A suffix '{caret}' to a revision parameter means the first parent of
