@@ -113,7 +113,7 @@ static void show_progress(void)
 		printf("progress %d objects\n", counter);
 }
 
-static void handle_object(const unsigned char *sha1)
+static void export_blob(const unsigned char *sha1)
 {
 	unsigned long size;
 	enum object_type type;
@@ -312,7 +312,7 @@ static void handle_commit(struct commit *commit, struct rev_info *rev)
 	/* Export the referenced blobs, and remember the marks. */
 	for (i = 0; i < diff_queued_diff.nr; i++)
 		if (!S_ISGITLINK(diff_queued_diff.queue[i]->two->mode))
-			handle_object(diff_queued_diff.queue[i]->two->sha1);
+			export_blob(diff_queued_diff.queue[i]->two->sha1);
 
 	mark_next_object(&commit->object);
 	if (!is_encoding_utf8(encoding))
@@ -509,7 +509,7 @@ static void get_tags_and_duplicates(struct object_array *pending,
 				commit = (struct commit *)tag;
 				break;
 			case OBJ_BLOB:
-				handle_object(tag->object.sha1);
+				export_blob(tag->object.sha1);
 				continue;
 			default: /* OBJ_TAG (nested tags) is already handled */
 				warning("Tag points to object of unexpected type %s, skipping.",
