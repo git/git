@@ -389,6 +389,7 @@ static int find_exact_renames(struct diff_options *options)
 	struct hash_table file_table;
 
 	init_hash(&file_table);
+	preallocate_hash(&file_table, rename_src_nr + rename_dst_nr);
 	for (i = 0; i < rename_src_nr; i++)
 		insert_file_table(&file_table, -1, i, rename_src[i].p->one);
 

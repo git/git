@@ -40,4 +40,11 @@ static inline void init_hash(struct hash_table *table)
 	table->array = NULL;
 }
 
+static inline void preallocate_hash(struct hash_table *table, unsigned int elts)
+{
+	assert(table->size == 0 && table->nr == 0 && table->array == NULL);
+	table->size = elts * 2;
+	table->array = xcalloc(sizeof(struct hash_table_entry), table->size);
+}
+
 #endif
