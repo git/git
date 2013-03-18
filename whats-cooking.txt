@@ -1,19 +1,32 @@
 To: git@vger.kernel.org
 Bcc: lwn@lwn.net
-Subject: What's cooking in git.git (Mar 2013, #04; Wed, 13)
-X-master-at: 239222f587ed06f96d90dd71c66d80a2b1e3dc9f
-X-next-at: 36b63d62840a512828134a9665bea5dcf8279464
+Subject: What's cooking in git.git (Mar 2013, #05; Mon, 18)
+X-master-at: 1c71541ddd51968ca2957063b00da42941d13d98
+X-next-at: 4a4606479e7f1a5f817dd3a6582cd086aa0e70c2
 
-What's cooking in git.git (Mar 2013, #04; Wed, 13)
+What's cooking in git.git (Mar 2013, #05; Mon, 18)
 --------------------------------------------------
 
 Here are the topics that have been cooking.  Commits prefixed with
 '-' are only in 'pu' (proposed updates) while commits prefixed with
 '+' are in 'next'.
 
-The tip of the master is at v1.8.2.  We have already many topics
-lined up for the next cycle, so after a few days to calm down, we
-will see exciting changes on 'master' starting from next week.
+We have been scheduling each cycle to last for 8-10 weeks, but at
+the end of 1.8.2 cycle we already have quite a many topics already
+in flight.  I am wondering perhaps we should cut this cycle a bit
+short by tagging -rc0 shortly after we have those we already have
+been cooking graduated to 'master' (we already have 200 non-merge
+commits on 'next').
+
+This issue classifies these topics in flight into three categories:
+Trivially Safe, Safe and Risky.  "Risky" does not mean the topic is
+with known breakages, but just that my gut feeling tells it would
+not be surprising if there were unintended consequences, either
+these topics touch fairly deep part of the codepath, their design
+may not match some obscure but still valid use cases, or for some
+other unforeseen reason.  Feeding this message to "cook -w" (found
+in 'todo' branch) script may make the overall picture easier to
+review.
 
 You can find the changes described here in the integration branches
 of the repositories listed at
@@ -23,10 +36,187 @@ of the repositories listed at
 --------------------------------------------------
 [New Topics]
 
-* ph/tag-force-no-warn-on-creation (2013-03-13) 1 commit
- - tag: --force does not have to warn when creating tags
+* ap/combine-diff-ignore-whitespace (2013-03-14) 1 commit
+  (merged to 'next' on 2013-03-18 at 32435a6)
+ + Allow combined diff to ignore white-spaces
 
- Will cook in 'next'.
+ Teach "diff --cc" output to honor options to ignore various forms
+ of whitespace changes.
+
+ Will merge to 'master' in the 4th batch (Safe).
+
+
+* jk/checkout-attribute-lookup (2013-03-14) 2 commits
+  (merged to 'next' on 2013-03-15 at 28bd515)
+ + entry: fix filter lookup
+ + t2003: modernize style
+
+ Codepath to stream blob object contents directly from the object
+ store to filesystem did not use the correct path to find conversion
+ filters when writing to temporary files.
+
+ Will merge to 'master' in the 4th batch (Safe).
+
+
+* jk/difftool-dir-diff-edit-fix (2013-03-14) 3 commits
+  (merged to 'next' on 2013-03-15 at add7b77)
+ + difftool --dir-diff: symlink all files matching the working tree
+ + difftool: avoid double slashes in symlink targets
+ + git-difftool(1): fix formatting of --symlink description
+
+ "git difftool --dir-diff" made symlinks to working tree files when
+ preparing a temporary directory structure, so that accidental edits
+ of these files in the difftool are reflected back to the working
+ tree, but the logic to decide when to do so was not quite right.
+
+ Will merge to 'master' in the 4th batch (Safe).
+
+
+* lf/setup-prefix-pathspec (2013-03-14) 2 commits
+  (merged to 'next' on 2013-03-14 at 7552204)
+ + setup.c: check that the pathspec magic ends with ")"
+ + setup.c: stop prefix_pathspec() from looping past the end of string
+
+ Rerolls aw/setup-prefix-pathspec.
+
+ Will merge to 'master' in the 3rd batch (Safe).
+
+
+* tb/document-status-u-tradeoff (2013-03-16) 2 commits
+  (merged to 'next' on 2013-03-18 at 2fc53b0)
+ + status: advise to consider use of -u when read_directory takes too long
+ + git status: document trade-offs in choosing parameters to the -u option
+
+ Suggest users to look into using--untracked=no option when "git
+ status" takes too long.
+
+ Will merge to 'master' in the 2nd batch (Trivially Safe).
+
+
+* jk/fully-peeled-packed-ref (2013-03-18) 4 commits
+  (merged to 'next' on 2013-03-18 at cbcfa32)
+ + pack-refs: add fully-peeled trait
+ + pack-refs: write peeled entry for non-tags
+ + use parse_object_or_die instead of die("bad object")
+ + avoid segfaults on parse_object failure
+
+ Not that we do not actively encourage having annotated tags outside
+ refs/tags/ hierarchy, but they were not advertised correctly to the
+ ls-remote and fetch with recent version of Git.
+
+ Will merge to 'master' in the 3rd batch (Safe).
+
+
+* jk/peel-ref (2013-03-16) 3 commits
+  (merged to 'next' on 2013-03-18 at 77f0e4e)
+ + upload-pack: load non-tip "want" objects from disk
+ + upload-pack: make sure "want" objects are parsed
+ + upload-pack: drop lookup-before-parse optimization
+
+ Recent optimization broke shallow clones.
+
+ Will merge to 'master' in the 3rd batch (Safe).
+
+
+* nd/index-pack-l10n-buf-overflow (2013-03-16) 1 commit
+  (merged to 'next' on 2013-03-18 at b7a4a8e)
+ + index-pack: fix buffer overflow caused by translations
+
+ Will merge to 'master' in the 2nd batch (Trivially Safe).
+
+
+* nd/magic-pathspecs (2013-03-15) 45 commits
+ - Rename field "raw" to "_raw" in struct pathspec
+ - pathspec: support :(glob) syntax
+ - pathspec: make --literal-pathspecs disable pathspec magic
+ - pathspec: support :(literal) syntax for noglob pathspec
+ - Kill limit_pathspec_to_literal() as it's only used by parse_pathspec()
+ - parse_pathspec: preserve prefix length via PATHSPEC_PREFIX_ORIGIN
+ - parse_pathspec: make sure the prefix part is wildcard-free
+ - tree-diff: remove the use of pathspec's raw[] in follow-rename codepath
+ - Remove match_pathspec() in favor of match_pathspec_depth()
+ - Remove init_pathspec() in favor of parse_pathspec()
+ - Remove diff_tree_{setup,release}_paths
+ - Convert common_prefix() to use struct pathspec
+ - Convert add_files_to_cache to take struct pathspec
+ - Convert {read,fill}_directory to take struct pathspec
+ - Convert refresh_index to take struct pathspec
+ - Convert report_path_error to take struct pathspec
+ - checkout: convert read_tree_some to take struct pathspec
+ - Convert unmerge_cache to take struct pathspec
+ - Convert run_add_interactive to use struct pathspec
+ - Convert read_cache_preload() to take struct pathspec
+ - reset: convert to use parse_pathspec
+ - add: convert to use parse_pathspec
+ - check-ignore: convert to use parse_pathspec
+ - archive: convert to use parse_pathspec
+ - ls-files: convert to use parse_pathspec
+ - rm: convert to use parse_pathspec
+ - checkout: convert to use parse_pathspec
+ - rerere: convert to use parse_pathspec
+ - status: convert to use parse_pathspec
+ - commit: convert to use parse_pathspec
+ - clean: convert to use parse_pathspec
+ - Guard against new pathspec magic in pathspec matching code
+ - parse_pathspec: support prefixing original patterns
+ - parse_pathspec: support stripping/checking submodule paths
+ - parse_pathspec: support stripping submodule trailing slashes
+ - parse_pathspec: a special flag for max_depth feature
+ - Convert some get_pathspec() calls to parse_pathspec()
+ - parse_pathspec: add PATHSPEC_PREFER_{CWD,FULL}
+ - parse_pathspec: save original pathspec for reporting
+ - Add parse_pathspec() that converts cmdline args to struct pathspec
+ - pathspec: add copy_pathspec
+ - pathspec: i18n-ize error strings in pathspec parsing code
+ - Move struct pathspec and related functions to pathspec.[ch]
+ - clean: remove unused variable "seen"
+ - setup.c: check that the pathspec magic ends with ")"
+
+ Migrate the rest of codebase to use "struct pathspec" more.
+
+ Expecting a reroll, but this is overall going in the right direction.
+ $gmane/218385
+
+
+* nd/preallocate-hash (2013-03-16) 1 commit
+  (merged to 'next' on 2013-03-18 at 0b928c5)
+ + Preallocate hash tables when the number of inserts are known in advance
+
+ When we know approximately how many entries we will have in the
+ hash-table, it makes sense to size the hash table to that number
+ from the beginning to avoid unnecessary rehashing.
+
+ Will merge to 'master' in the 2nd batch (Trivially Safe).
+
+
+* pe/pull-rebase-v-q (2013-03-16) 1 commit
+  (merged to 'next' on 2013-03-18 at 8e17883)
+ + pull: Apply -q and -v options to rebase mode as well
+
+ Will merge to 'master' in the 2nd batch (Safe).
+
+
+* rs/archive-zip-raw-compression (2013-03-16) 1 commit
+  (merged to 'next' on 2013-03-18 at 229897a)
+ + archive-zip: use deflateInit2() to ask for raw compressed data
+ (this branch uses rs/zip-compresssed-size-with-export-subst.)
+
+ Will merge to 'master' in the 4th batch (Safe).
+
+
+* jk/fast-export-object-lookup (2013-03-17) 2 commits
+  (merged to 'next' on 2013-03-18 at 98c436d)
+ + fast-export: do not load blob objects twice
+ + fast-export: rename handle_object function
+
+ Will merge to 'master' in the 3rd batch (Safe).
+
+
+* sw/safe-create-leading-dir-race (2013-03-17) 2 commits
+ - SQUASH???
+ - safe_create_leading_directories: fix race that could give a false negative
+
+ Waiting for response to review comments.
 
 --------------------------------------------------
 [Stalled]
@@ -82,46 +272,58 @@ of the repositories listed at
 --------------------------------------------------
 [Cooking]
 
-* nd/branch-show-rebase-bisect-state (2013-03-13) 6 commits
- - branch: show more information when HEAD is detached
- - status: show more info than "currently not on any branch"
- - wt-status: move wt_status_get_state() out to wt_status_print()
- - wt-status: split wt_status_state parsing function out
- - wt-status: move strbuf into read_and_strip_branch()
- - Merge branch 'jc/reflog-reverse-walk' into nd/branch-show-rebase-bisect-state
+* ph/tag-force-no-warn-on-creation (2013-03-13) 1 commit
+  (merged to 'next' on 2013-03-14 at 809e9ae)
+ + tag: --force does not have to warn when creating tags
+
+ Will merge to 'master' in the 3rd batch (Safe).
+
+
+* nd/branch-show-rebase-bisect-state (2013-03-16) 6 commits
+  (merged to 'next' on 2013-03-18 at 4a46064)
+ + branch: show more information when HEAD is detached
+ + status: show more info than "currently not on any branch"
+ + wt-status: move wt_status_get_state() out to wt_status_print()
+ + wt-status: split wt_status_state parsing function out
+ + wt-status: move strbuf into read_and_strip_branch()
+ + Merge branch 'jc/reflog-reverse-walk' into nd/branch-show-rebase-bisect-state
  (this branch uses jc/reflog-reverse-walk.)
 
- The changes look sound, but some patches need better description.
+ Will merge to 'master' in the 4th batch (Safe).
 
 
 * kb/p4merge (2013-03-13) 2 commits
- - mergetools/p4merge: create a base if none available
- - mergetools/p4merge: swap LOCAL and REMOTE
+  (merged to 'next' on 2013-03-14 at 6d390d4)
+ + mergetools/p4merge: create a base if none available
+ + mergetools/p4merge: swap LOCAL and REMOTE
 
- Looked reasonable.
+ Adjust the order mergetools feeds the files to the p4merge backend
+ to match the p4 convention.
 
- Will merge to 'next'.
+ Will merge to 'master' in the 3rd batch (Safe).
 
 
 * jc/maint-push-refspec-default-doc (2013-03-08) 1 commit
- - Documentation/git-push: clarify the description of defaults
+  (merged to 'next' on 2013-03-14 at 912eb14)
+ + Documentation/git-push: clarify the description of defaults
 
  Clarify in the documentation "what" gets pushed to "where" when the
  command line to "git push" does not say these explicitly.
 
- Will merge to 'next'.
+ Will merge to 'master' in the 2nd batch (Trivially Safe).
 
 
 * jc/reflog-reverse-walk (2013-03-08) 3 commits
- - reflog: add for_each_reflog_ent_reverse() API
- - for_each_recent_reflog_ent(): simplify opening of a reflog file
- - for_each_reflog_ent(): extract a helper to process a single entry
+  (merged to 'next' on 2013-03-14 at 3f2ed32)
+ + reflog: add for_each_reflog_ent_reverse() API
+ + for_each_recent_reflog_ent(): simplify opening of a reflog file
+ + for_each_reflog_ent(): extract a helper to process a single entry
  (this branch is used by nd/branch-show-rebase-bisect-state.)
 
  An internal function used to implement "git checkout @{-1}" was
  hard to use correctly.
 
- Will merge to 'next'.
+ Will merge to 'master' in the 3rd batch (Safe).
 
 
 * jk/alias-in-bare (2013-03-08) 3 commits
@@ -133,7 +335,7 @@ of the repositories listed at
  An aliased command spawned from a bare repository that does not say
  it is bare with "core.bare = yes" is treated as non-bare by mistake.
 
- Will cook in 'next'.
+ Will merge to 'master' in the 3rd batch (Safe).
 
 
 * pw/p4-symlinked-root (2013-03-11) 3 commits
@@ -142,13 +344,15 @@ of the repositories listed at
  + git p4 test: should honor symlink in p4 client root
  + git p4 test: make sure P4CONFIG relative path works
 
- Will cook in 'next'.
+ Will merge to 'master' in the 3rd batch (Safe).
 
 
 * jc/add-2.0-delete-default (2013-03-08) 3 commits
- - git add <pathspec>... defaults to "-A"
- - git add: start preparing for "git add <pathspec>..." to default to "-A"
- - builtin/add.c: simplify boolean variables
+  (merged to 'next' on 2013-03-14 at 4684748)
+ + git add <pathspec>... defaults to "-A"
+  (merged to 'next' on 2013-03-14 at 2b7a7a2)
+ + git add: start preparing for "git add <pathspec>..." to default to "-A"
+ + builtin/add.c: simplify boolean variables
 
  "git add dir/" updated modified files and added new files, but does
  not notice removed files, which may be "Huh?" to some users.  They
@@ -158,11 +362,13 @@ of the repositories listed at
  rebased on top of recent documentation updates to propose a
  possible transition plan.
 
- Will merge to and cook in 'next' until Git 2.0.
+ Will cook in 'next' until Git 2.0.
 
 
-* jc/add-2.0-u-A-sans-pathspec (2013-03-11) 1 commit
- - git add: -u/-A now affects the entire working tree
+* jc/add-2.0-u-A-sans-pathspec (2013-03-14) 2 commits
+  (merged to 'next' on 2013-03-14 at 9538716)
+ + git add: -u/-A now affects the entire working tree
+ + t2200: check that "add -u" limits itself to subdirectory
 
  "git add -u/-A" without pathspec has traditonally limited its
  operation to the current directory and its subdirectories, but in
@@ -171,7 +377,7 @@ of the repositories listed at
  entire working tree).  With this, we finally change the behaviour
  and make it affect the entire working tree in Git 2.0.
 
- Will merge to and cook in 'next' until Git 2.0.
+ Will cook in 'next' until Git 2.0.
 
 
 * jk/empty-archive (2013-03-10) 2 commits
@@ -183,7 +389,7 @@ of the repositories listed at
  of an empty tree.  It would be more intuitive to give an empty
  archive back in such a case.
 
- Will cook in 'next'.
+ Will merge to 'master' in the 3rd batch (Safe).
 
 
 * jk/graph-c-expose-symbols-for-cgit (2013-03-03) 1 commit
@@ -195,14 +401,14 @@ of the repositories listed at
  CGit from sideways bypassing the entry points of the API the
  in-tree users use.
 
- Will cook in 'next'.
+ Will merge to 'master' in the 1st batch (Trivially Safe).
 
 
 * we/submodule-update-prefix-output (2013-03-03) 1 commit
   (merged to 'next' on 2013-03-04 at 908df73)
  + submodule update: when using recursion, show full path
 
- Will cook in 'next'.
+ Will merge to 'master' in the 2nd batch (Safe).
 
 
 * jc/nobody-sets-src-peer-ref (2013-03-04) 1 commit
@@ -211,7 +417,10 @@ of the repositories listed at
 
  Dead code removal.
 
- Will cook in 'next'.
+ Even though I think this change is correct, please report
+ immediately if you find any unintended side effect.
+
+ Will merge to 'master' in the 4th batch (Risky).
 
 
 * jc/push-follow-tag (2013-03-05) 4 commits
@@ -222,27 +431,16 @@ of the repositories listed at
  + commit.c: add clear_commit_marks_many()
 
  The new "--follow-tags" option tells "git push" to push relevant
- tags when pushing branches out.
+ annotated tags when pushing branches out.
 
- Will cook in 'next'.
+ Will merge to 'master' in the 3rd batch (Safe).
 
 
 * jc/maint-reflog-expire-clean-mark-typofix (2013-03-05) 1 commit
   (merged to 'next' on 2013-03-07 at 0a61cbb)
  + reflog: fix typo in "reflog expire" clean-up codepath
 
- Will cook in 'next'.
-
-
-* aw/setup-prefix-pathspec (2013-03-09) 2 commits
-  (merged to 'next' on 2013-03-12 at 31a4a5e)
- + setup.c: check that the pathspec magic ends with ")"
- + setup.c: stop prefix_pathspec() from looping past the end of string
-
- "git cmd -- ':(top'" was not diagnosed as an invalid syntax, and
- instead the parser kept reading beyond the end of the string.
-
- Will cook in 'next'.
+ Will merge to 'master' in the 3rd batch (Safe).
 
 
 * lf/bundle-verify-list-prereqs (2013-03-08) 2 commits
@@ -250,7 +448,7 @@ of the repositories listed at
  + bundle: Add colons to list headings in "verify"
  + bundle: Fix "verify" output if history is complete
 
- Will cook in 'next'.
+ Will merge to 'master' in the 1st batch (Trivially Safe).
 
 
 * ks/rfc2047-one-char-at-a-time (2013-03-09) 1 commit
@@ -261,7 +459,7 @@ of the repositories listed at
  it incorrectly applied rfc2047 and chopped a single character in
  the middle of it.
 
- Will cook in 'next'.
+ Will merge to 'master' in the 3rd batch (Safe).
 
 
 * kb/name-hash (2013-02-27) 1 commit
@@ -272,17 +470,21 @@ of the repositories listed at
  platforms with case insensitive filesystems can get confused upon
  a hash collision between these pathnames and looped forever.
 
- Will cook in 'next'.
+ Even though I think this change is correct, please report
+ immediately if you find any unintended side effect.
+
+ Will merge to 'master' in the 4th batch (Risky).
 
 
 * rs/zip-compresssed-size-with-export-subst (2013-02-27) 1 commit
   (merged to 'next' on 2013-03-03 at c1ac6d8)
  + archive-zip: fix compressed size for stored export-subst files
+ (this branch is used by rs/archive-zip-raw-compression.)
 
  When export-subst is used, "zip" output recorded incorrect
  size of the file.
 
- Will cook in 'next'.
+ Will merge to 'master' in the 2nd batch (Safe).
 
 
 * jc/describe (2013-02-28) 1 commit
@@ -297,32 +499,27 @@ of the repositories listed at
  We may want to have a looser matching that does not restrict to tags,
  but that can be done as a follow-up topic; this step is purely a bugfix.
 
- Will cook in 'next'.
+ Will merge to 'master' in the 3rd batch (Safe).
 
 
 * jk/mailsplit-maildir-muttsort (2013-03-02) 1 commit
   (merged to 'next' on 2013-03-03 at d5f7735)
  + mailsplit: sort maildir filenames more cleverly
 
- Will cook in 'next'.
-
-
-* pc/subtree-add-before-fetch (2013-02-28) 1 commit
- - contrib/subtree: allow addition of remote branch with name not locally present
-
- Will discard.
- Not getting enough reviews.
+ Will merge to 'master' in the 2nd batch (Safe).
 
 
 * tr/line-log (2013-02-28) 5 commits
- - log -L: :pattern:file syntax to find by funcname
- - Implement line-history search (git log -L)
- - Export rewrite_parents() for 'log -L'
- - blame: introduce $ as "end of file" in -L syntax
- - Refactor parse_loc
+ . log -L: :pattern:file syntax to find by funcname
+ . Implement line-history search (git log -L)
+ . Export rewrite_parents() for 'log -L'
+ . blame: introduce $ as "end of file" in -L syntax
+ . Refactor parse_loc
 
  Expecting a reroll.
  $gmane/217278
+
+ Kept outside 'pu' for now as it collides with nd/magic-pathspecs.
 
 
 * jc/perl-cat-blob (2013-02-22) 1 commit
@@ -332,7 +529,7 @@ of the repositories listed at
  perl/Git.pm::cat_blob slurped everything in core only to write it
  out to a file descriptor, which was not a very smart thing to do.
 
- Will cook in 'next'.
+ Will merge to 'master' in the 2nd batch (Safe).
 
 
 * nd/doc-index-format (2013-02-23) 3 commits
@@ -343,7 +540,7 @@ of the repositories listed at
 
  Update the index format documentation to mention the v4 format.
 
- Will cook in 'next'.
+ Will merge to 'master' in the 1st batch (Trivially Safe).
 
 
 * ap/maint-diff-rename-avoid-overlap (2013-03-06) 3 commits
@@ -358,21 +555,21 @@ of the repositories listed at
  files before and after a rename did not work correctly when the
  common prefix and suffix between the two filenames overlapped.
 
- Will cook in 'next'.
+ Will merge to 'master' in the 3rd batch (Safe).
 
 
 * ap/maint-update-index-h-is-for-help (2013-02-23) 1 commit
   (merged to 'next' on 2013-02-25 at f5f767c)
  + update-index: allow "-h" to also display options
 
- Will cook in 'next'.
+ Will merge to 'master' in the 2nd batch (Safe).
 
 
 * jc/color-diff-doc (2013-02-22) 1 commit
   (merged to 'next' on 2013-02-25 at c37541c)
  + diff-options: unconfuse description of --color
 
- Will cook in 'next'.
+ Will merge to 'master' in the 1st batch (Trivially Safe).
 
 
 * nd/branch-error-cases (2013-02-23) 1 commit
@@ -382,7 +579,7 @@ of the repositories listed at
  "git branch" had more cases where it did not bother to check
  nonsense command line parameters.
 
- Will cook in 'next'.
+ Will merge to 'master' in the 2nd batch (Safe).
 
 
 * rt/commit-cleanup-config (2013-02-23) 1 commit
@@ -393,14 +590,14 @@ of the repositories listed at
  tests introduced later in the sequence by containing their effects
  in their own subshells.
 
- Will cook in 'next'.
+ Will merge to 'master' in the 2nd batch (Safe).
 
 
 * wk/doc-pre-rebase (2013-02-24) 1 commit
   (merged to 'next' on 2013-02-25 at a6ec310)
  + Documentation/githooks: Explain pre-rebase parameters
 
- Will cook in 'next'.
+ Will merge to 'master' in the 1st batch (Trivially Safe).
 
 
 * da/downcase-u-in-usage (2013-02-24) 20 commits
@@ -426,21 +623,21 @@ of the repositories listed at
  + git-svn: use a lowercase "usage:" string
  + git-sh-setup: use a lowercase "usage:" string
 
- Will cook in 'next'.
+ Will merge to 'master' in the 1st batch (Trivially Safe).
 
 
 * dm/ni-maxhost-may-be-missing (2013-02-25) 1 commit
   (merged to 'next' on 2013-02-26 at 93ec2c9)
  + git-compat-util.h: Provide missing netdb.h definitions
 
- Will cook in 'next'.
+ Will merge to 'master' in the 1st batch (Trivially Safe).
 
 
 * gp/avoid-explicit-mention-of-dot-git-refs (2013-02-24) 1 commit
   (merged to 'next' on 2013-02-26 at ec42d98)
  + Fix ".git/refs" stragglers
 
- Will cook in 'next'.
+ Will merge to 'master' in the 1st batch (Trivially Safe).
 
 
 * gp/describe-match-uses-glob-pattern (2013-02-24) 1 commit
@@ -448,7 +645,7 @@ of the repositories listed at
  + describe: Document --match pattern format
  (this branch is used by gp/forbid-describe-all-match.)
 
- Will cook in 'next'.
+ Will merge to 'master' in the 1st batch (Trivially Safe).
 
 
 * jk/common-make-variables-export-safety (2013-02-25) 1 commit
@@ -459,13 +656,17 @@ of the repositories listed at
  ensuring that they are full paths so that they can be used as
  installation location.
 
- Will cook in 'next'.
+ Even though I think this change is correct, please report
+ immediately if you find any unintended side effect.
+
+ Will merge to 'master' in the 4th batch (Risky).
 
 
 * jk/suppress-clang-warning (2013-02-25) 1 commit
- - fix clang -Wtautological-compare with unsigned enum
+  (merged to 'next' on 2013-03-14 at f30489a)
+ + fix clang -Wtautological-compare with unsigned enum
 
- Will merge to 'next'.
+ Will merge to 'master' in the 3rd batch (Safe).
 
 
 * mg/qnx6 (2013-02-25) 1 commit
@@ -476,12 +677,13 @@ of the repositories listed at
 
 
 * mg/unsigned-time-t (2013-02-25) 2 commits
- - Fix time offset calculation in case of unsigned time_t
- - date.c: fix unsigned time_t comparison
+  (merged to 'next' on 2013-03-14 at 815f297)
+ + Fix time offset calculation in case of unsigned time_t
+ + date.c: fix unsigned time_t comparison
 
  A few workarounds for systems with unsigned time_t.
 
- Will merge to 'next'.
+ Will merge to 'master' in the 3rd batch (Safe).
 
 
 * rj/msvc-build (2013-02-25) 5 commits
@@ -492,21 +694,21 @@ of the repositories listed at
  + msvc: git-daemon: Fix linker "unresolved external" errors
  + msvc: Fix compilation errors caused by poll.h emulation
 
- Will cook in 'next'.
+ Will merge to 'master' in the 1st batch (Trivially Safe).
 
 
 * wk/user-manual-literal-format (2013-02-25) 1 commit
   (merged to 'next' on 2013-02-26 at d59ce38)
  + user-manual: Standardize backtick quoting
 
- Will cook in 'next'.
+ Will merge to 'master' in the 1st batch (Trivially Safe).
 
 
 * jk/utf-8-can-be-spelled-differently (2013-02-25) 1 commit
   (merged to 'next' on 2013-02-26 at c079525)
  + utf8: accept alternate spellings of UTF-8
 
- Will cook in 'next'.
+ Will merge to 'master' in the 2nd batch (Safe).
 
 
 * jk/pkt-line-cleanup (2013-02-24) 19 commits
@@ -531,10 +733,11 @@ of the repositories listed at
  + upload-pack: do not add duplicate objects to shallow list
  + upload-pack: use get_sha1_hex to parse "shallow" lines
 
- Cleans up pkt-line API, implementation and its callers to make
- them more robust.
+ Cleans up pkt-line API, implementation and its callers to make them
+ more robust.  Even though I think this change is correct, please
+ report immediately if you find any unintended side effect.
 
- Will cook in 'next'.
+ Will merge to 'master' in the 3rd batch (Risky).
 
 
 * ob/imap-send-ssl-verify (2013-02-20) 1 commit
@@ -544,7 +747,7 @@ of the repositories listed at
  Correctly connect to SSL/TLS sites that serve multiple hostnames on
  a single IP by including Server Name Indication in the client-hello.
 
- Will cook in 'next'.
+ Will merge to 'master' in the 2nd batch (Safe).
 
 
 * jc/format-patch (2013-02-21) 2 commits
@@ -565,7 +768,7 @@ of the repositories listed at
  + Documentation: filter-branch env-filter example
  + git-filter-branch.txt: clarify ident variables usage
 
- Will cook in 'next'.
+ Will merge to 'master' in the 1st batch (Trivially Safe).
 
 
 * bc/commit-complete-lines-given-via-m-option (2013-02-19) 4 commits
@@ -578,7 +781,7 @@ of the repositories listed at
  'git commit -m "$str"' when $str was already terminated with a LF
  now avoids adding an extra LF to the message.
 
- Will cook in 'next'.
+ Will merge to 'master' in the 2nd batch (Safe).
 
 
 * da/difftool-fixes (2013-02-21) 4 commits
@@ -590,7 +793,7 @@ of the repositories listed at
 
  Minor maintenance updates to difftool, and updates to its tests.
 
- Will cook in 'next'.
+ Will merge to 'master' in the 2nd batch (Safe).
 
 
 * nd/read-directory-recursive-optim (2013-02-17) 1 commit
@@ -600,8 +803,10 @@ of the repositories listed at
  "git status" has been optimized by taking advantage of the fact
  that paths that are already known to the index do not have to be
  checked against the .gitignore mechanism under some conditions.
+ Even though I think this change is correct, please report
+ immediately if you find any unintended side effect.
 
- Will cook in 'next'.
+ Will merge to 'master' in the 2nd batch (Risky).
 
 
 * mg/gpg-interface-using-status (2013-02-14) 5 commits
@@ -615,14 +820,15 @@ of the repositories listed at
  Call "gpg" using the right API when validating the signature on
  tags.
 
- Will cook in 'next'.
+ Will merge to 'master' in the 2nd batch (Safe).
 
 
 * jn/shell-disable-interactive (2013-03-09) 2 commits
- - shell: new no-interactive-login command to print a custom message
- - shell doc: emphasize purpose and security model
+  (merged to 'next' on 2013-03-14 at 3121f9f)
+ + shell: new no-interactive-login command to print a custom message
+ + shell doc: emphasize purpose and security model
 
- Will merge to 'next'.
+ Will merge to 'master' in the 2nd batch (Trivially Safe).
 
 
 * jc/fetch-raw-sha1 (2013-02-07) 4 commits
@@ -636,7 +842,7 @@ of the repositories listed at
  hidden ones).  It seems that there may be use cases even outside
  Gerrit (e.g. $gmane/215701).
 
- Will cook in 'next'.
+ Will merge to 'master' in the 2nd batch (Safe).
 
 
 * mn/send-email-works-with-credential (2013-02-27) 6 commits
@@ -650,7 +856,7 @@ of the repositories listed at
 
  Hooks the credential system to send-email.
 
- Will cook in 'next'.
+ Will merge to 'master' in the 2nd batch (Safe).
 
 
 * nd/count-garbage (2013-02-15) 4 commits
@@ -660,7 +866,7 @@ of the repositories listed at
  + sha1_file: reorder code in prepare_packed_git_one()
  + git-count-objects.txt: describe each line in -v output
 
- Will cook in 'next'.
+ Will merge to 'master' in the 2nd batch (Safe).
 
 
 * tz/credential-authinfo (2013-02-25) 1 commit
@@ -671,7 +877,7 @@ of the repositories listed at
  the .netrc/.authinfo files.  Hopefully mn/send-email-authinfo topic
  can rebuild on top of something like this.
 
- Will cook in 'next'.
+ Will merge to 'master' in the 2nd batch (Safe).
 
 
 * jl/submodule-deinit (2013-03-04) 1 commit
@@ -682,7 +888,7 @@ of the repositories listed at
  this submodule", once you express your interest in a submodule with
  "submodule init".  "submodule deinit" is the way to do so.
 
- Will cook in 'next'.
+ Will merge to 'master' in the 3rd batch (Safe).
 
 
 * jc/remove-export-from-config-mak-in (2013-03-05) 3 commits
@@ -702,7 +908,10 @@ of the repositories listed at
  broken installation of manpages (but not other documentation
  formats).
 
- Will cook in 'next'.
+ Even though I think this change is correct, please report
+ immediately if you find any unintended side effect.
+
+ Will merge to 'master' in the 4th batch (Risky).
 
 
 * jc/remove-treesame-parent-in-simplify-merges (2013-01-17) 1 commit
@@ -717,7 +926,7 @@ of the repositories listed at
  infrastructure; even though I think this change is correct, please
  report immediately if you find any unintended side effect.
 
- Will cook in 'next'.
+ Will merge to 'master' in the 2nd batch (Risky).
 
 
 * jc/push-2.0-default-to-simple (2013-01-16) 14 commits
@@ -757,19 +966,36 @@ of the repositories listed at
  + commit, cherry-pick -s: remove broken support for multiline rfc2822 fields
  + sequencer.c: rework search for start of footer to improve clarity
 
- Will cook in 'next'.
+ Consolidates codepaths that inspect log-message-to-be and decide to
+ add a new Signed-off-by line in various commands.  I think there is
+ no negative behaviour change in this series, but please report any
+ iffy behaviour change immediately if you notice one.
+
+ Will merge to 'master' in the 3rd batch (Risky).
+
+--------------------------------------------------
+[Discarded]
+
+* pc/subtree-add-before-fetch (2013-02-28) 1 commit
+ . contrib/subtree: allow addition of remote branch with name not locally present
+
+ I'll leave subtree updates to the area maintainer.
 
 
 * gp/forbid-describe-all-match (2013-02-24) 1 commit
- - describe: make --all and --match=PATTERN mutually incompatible
+ . describe: make --all and --match=PATTERN mutually incompatible
  (this branch uses gp/describe-match-uses-glob-pattern.)
-
- "describe --match=<pattern> --all <commit>" ought to mean "use refs
- that match <pattern> to describe <commit>; you do not have to limit
- yourself to annotated tags."  But it doesn't.  Disable the
- combination.
-
- Will discard.
 
  jc/describe topic fixes the semantics of --match used with --all
  option.
+
+
+* aw/setup-prefix-pathspec (2013-03-09) 2 commits
+  (merged to 'next' on 2013-03-12 at 31a4a5e)
+ + setup.c: check that the pathspec magic ends with ")"
+ + setup.c: stop prefix_pathspec() from looping past the end of string
+
+ "git cmd -- ':(top'" was not diagnosed as an invalid syntax, and
+ instead the parser kept reading beyond the end of the string.
+
+ Replaced by lf/setup-prefix-pathspec.
