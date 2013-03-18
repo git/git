@@ -804,11 +804,38 @@ static const char *parse_ref_line(char *line, unsigned char *sha1)
 	return line;
 }
 
+/*
+ * Read f, which is a packed-refs file, into dir.
+ *
+ * A comment line of the form "# pack-refs with: " may contain zero or
+ * more traits. We interpret the traits as follows:
+ *
+ *   No traits:
+ *
+ *      Probably no references are peeled. But if the file contains a
+ *      peeled value for a reference, we will use it.
+ *
+ *   peeled:
+ *
+ *      References under "refs/tags/", if they *can* be peeled, *are*
+ *      peeled in this file. References outside of "refs/tags/" are
+ *      probably not peeled even if they could have been, but if we find
+ *      a peeled value for such a reference we will use it.
+ *
+ *   fully-peeled:
+ *
+ *      All references in the file that can be peeled are peeled.
+ *      Inversely (and this is more important), any references in the
+ *      file for which no peeled value is recorded is not peelable. This
+ *      trait should typically be written alongside "peeled" for
+ *      compatibility with older clients, but we do not require it
+ *      (i.e., "peeled" is a no-op if "fully-peeled" is set).
+ */
 static void read_packed_refs(FILE *f, struct ref_dir *dir)
 {
 	struct ref_entry *last = NULL;
 	char refline[PATH_MAX];
-	int flag = REF_ISPACKED;
+	enum { PEELED_NONE, PEELED_TAGS, PEELED_FULLY } peeled = PEELED_NONE;
 
 	while (fgets(refline, sizeof(refline), f)) {
 		unsigned char sha1[20];
@@ -817,15 +844,20 @@ static void read_packed_refs(FILE *f, struct ref_dir *dir)
 
 		if (!strncmp(refline, header, sizeof(header)-1)) {
 			const char *traits = refline + sizeof(header) - 1;
-			if (strstr(traits, " peeled "))
-				flag |= REF_KNOWS_PEELED;
+			if (strstr(traits, " fully-peeled "))
+				peeled = PEELED_FULLY;
+			else if (strstr(traits, " peeled "))
+				peeled = PEELED_TAGS;
 			/* perhaps other traits later as well */
 			continue;
 		}
 
 		refname = parse_ref_line(refline, sha1);
 		if (refname) {
-			last = create_ref_entry(refname, sha1, flag, 1);
+			last = create_ref_entry(refname, sha1, REF_ISPACKED, 1);
+			if (peeled == PEELED_FULLY ||
+			    (peeled == PEELED_TAGS && !prefixcmp(refname, "refs/tags/")))
+				last->flag |= REF_KNOWS_PEELED;
 			add_ref(dir, last);
 			continue;
 		}
@@ -833,8 +865,15 @@ static void read_packed_refs(FILE *f, struct ref_dir *dir)
 		    refline[0] == '^' &&
 		    strlen(refline) == 42 &&
 		    refline[41] == '\n' &&
-		    !get_sha1_hex(refline + 1, sha1))
+		    !get_sha1_hex(refline + 1, sha1)) {
 			hashcpy(last->u.value.peeled, sha1);
+			/*
+			 * Regardless of what the file header said,
+			 * we definitely know the value of *this*
+			 * reference:
+			 */
+			last->flag |= REF_KNOWS_PEELED;
+		}
 	}
 }
 
