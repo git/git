@@ -203,7 +203,7 @@ test_expect_success 'push with wildcard' '
 test_expect_success 'push with insteadOf' '
 	mk_empty &&
 	TRASH="$(pwd)/" &&
-	git config "url.$TRASH.insteadOf" trash/ &&
+	test_config "url.$TRASH.insteadOf" trash/ &&
 	git push trash/testrepo refs/heads/master:refs/remotes/origin/master &&
 	(
 		cd testrepo &&
@@ -217,7 +217,7 @@ test_expect_success 'push with insteadOf' '
 test_expect_success 'push with pushInsteadOf' '
 	mk_empty &&
 	TRASH="$(pwd)/" &&
-	git config "url.$TRASH.pushInsteadOf" trash/ &&
+	test_config "url.$TRASH.pushInsteadOf" trash/ &&
 	git push trash/testrepo refs/heads/master:refs/remotes/origin/master &&
 	(
 		cd testrepo &&
@@ -231,9 +231,9 @@ test_expect_success 'push with pushInsteadOf' '
 test_expect_success 'push with pushInsteadOf and explicit pushurl (pushInsteadOf should not rewrite)' '
 	mk_empty &&
 	TRASH="$(pwd)/" &&
-	git config "url.trash2/.pushInsteadOf" trash/ &&
-	git config remote.r.url trash/wrong &&
-	git config remote.r.pushurl "$TRASH/testrepo" &&
+	test_config "url.trash2/.pushInsteadOf" trash/ &&
+	test_config remote.r.url trash/wrong &&
+	test_config remote.r.pushurl "$TRASH/testrepo" &&
 	git push r refs/heads/master:refs/remotes/origin/master &&
 	(
 		cd testrepo &&
@@ -489,30 +489,23 @@ test_expect_success 'push with config remote.*.push = HEAD' '
 		git checkout local &&
 		git reset --hard $the_first_commit
 	) &&
-	git config remote.there.url testrepo &&
-	git config remote.there.push HEAD &&
-	git config branch.master.remote there &&
+	test_config remote.there.url testrepo &&
+	test_config remote.there.push HEAD &&
+	test_config branch.master.remote there &&
 	git push &&
 	check_push_result $the_commit heads/master &&
 	check_push_result $the_first_commit heads/local
 '
 
-# clean up the cruft left with the previous one
-git config --remove-section remote.there
-git config --remove-section branch.master
-
 test_expect_success 'push with config remote.*.pushurl' '
 
 	mk_test heads/master &&
 	git checkout master &&
-	git config remote.there.url test2repo &&
-	git config remote.there.pushurl testrepo &&
+	test_config remote.there.url test2repo &&
+	test_config remote.there.pushurl testrepo &&
 	git push there &&
 	check_push_result $the_commit heads/master
 '
-
-# clean up the cruft left with the previous one
-git config --remove-section remote.there
 
 test_expect_success 'push with dry-run' '
 
