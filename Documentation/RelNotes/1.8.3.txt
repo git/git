@@ -1,0 +1,53 @@
+Git v1.8.3 Release Notes
+========================
+
+Backward compatibility notes (for Git 2.0)
+------------------------------------------
+
+When "git push [$there]" does not say what to push, we have used the
+traditional "matching" semantics so far (all your branches were sent
+to the remote as long as there already are branches of the same name
+over there).  In Git 2.0, the default will change to the "simple"
+semantics that pushes the current branch to the branch with the same
+name, only when the current branch is set to integrate with that
+remote branch.  There is a user preference configuration variable
+"push.default" to change this.  If you are an old-timer who is used
+to the "matching" semantics, you can set it to "matching" to keep the
+traditional behaviour.  If you want to live in the future early,
+you can set it to "simple" today without waiting for Git 2.0.
+
+When "git add -u" and "git add -A", that does not specify what paths
+to add on the command line is run from inside a subdirectory, these
+commands will operate on the entire tree in Git 2.0 for consistency
+with "git commit -a" and other commands. Because there will be no
+mechanism to make "git add -u" behave as if "git add -u .", it is
+important for those who are used to "git add -u" (without pathspec)
+updating the index only for paths in the current subdirectory to start
+training their fingers to explicitly say "git add -u ." when they mean
+it before Git 2.0 comes.
+
+
+Updates since v1.8.2
+--------------------
+
+UI, Workflows & Features
+
+
+
+Foreign Interface
+
+
+
+Performance, Internal Implementation, etc.
+
+
+
+Also contains minor documentation updates and code clean-ups.
+
+
+Fixes since v1.8.2
+------------------
+
+Unless otherwise noted, all the fixes since v1.8.2 in the maintenance
+track are contained in this release (see release notes to them for
+details).
