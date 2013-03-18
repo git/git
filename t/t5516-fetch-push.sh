@@ -22,10 +22,8 @@ mk_test () {
 	(
 		for ref in "$@"
 		do
-			git push testrepo $the_first_commit:refs/$ref || {
-				echo "Oops, push refs/$ref failure"
-				exit 1
-			}
+			git push testrepo $the_first_commit:refs/$ref ||
+			exit
 		done &&
 		cd testrepo &&
 		for ref in "$@"
@@ -328,13 +326,8 @@ test_expect_success 'push with weak ambiguity (2)' '
 test_expect_success 'push with ambiguity' '
 
 	mk_test heads/frotz tags/frotz &&
-	if git push testrepo master:frotz
-	then
-		echo "Oops, should have failed"
-		false
-	else
-		check_push_result $the_first_commit heads/frotz tags/frotz
-	fi
+	test_must_fail git push testrepo master:frotz &&
+	check_push_result $the_first_commit heads/frotz tags/frotz
 
 '
 
