@@ -1106,6 +1106,8 @@ static void conclude_pack(int fix_thin_pack, const char *curr_pack, unsigned cha
 		objects = xrealloc(objects,
 				   (nr_objects + nr_unresolved + 1)
 				   * sizeof(*objects));
+		memset(objects + nr_objects + 1, 0,
+		       nr_unresolved * sizeof(*objects));
 		f = sha1fd(output_fd, curr_pack);
 		fix_unresolved_deltas(f, nr_unresolved);
 		sprintf(msg, "completed with %d local objects",
