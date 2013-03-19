@@ -4,6 +4,25 @@
 /* A graph is a pointer to this opaque structure */
 struct git_graph;
 
+/*
+ * Set up a custom scheme for column colors.
+ *
+ * The default column color scheme inserts ANSI color escapes to colorize
+ * the graph. The various color escapes are stored in an array of strings
+ * where each entry corresponds to a color, except for the last entry,
+ * which denotes the escape for resetting the color back to the default.
+ * When generating the graph, strings from this array are inserted before
+ * and after the various column characters.
+ *
+ * This function allows you to enable a custom array of color escapes.
+ * The 'colors_max' argument is the index of the last "reset" entry.
+ *
+ * This functions must be called BEFORE graph_init() is called.
+ *
+ * NOTE: This function isn't used in Git outside graph.c but it is used
+ * by CGit (http://git.zx2c4.com/cgit/) to use HTML for colors.
+ */
+void graph_set_column_colors(const char **colors, unsigned short colors_max);
 
 /*
  * Create a new struct git_graph.
@@ -32,6 +51,20 @@ void graph_update(struct git_graph *graph, struct commit *commit);
  * appropriate "vertical padding" in the graph.
  */
 int graph_is_commit_finished(struct git_graph const *graph);
+
+/*
+ * Output the next line for a graph.
+ * This formats the next graph line into the specified strbuf.  It is not
+ * terminated with a newline.
+ *
+ * Returns 1 if the line includes the current commit, and 0 otherwise.
+ * graph_next_line() will return 1 exactly once for each time
+ * graph_update() is called.
+ *
+ * NOTE: This function isn't used in Git outside graph.c but it is used
+ * by CGit (http://git.zx2c4.com/cgit/) to wrap HTML around graph lines.
+ */
+int graph_next_line(struct git_graph *graph, struct strbuf *sb);
 
 
 /*
