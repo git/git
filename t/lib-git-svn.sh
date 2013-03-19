@@ -148,7 +148,7 @@ stop_httpd () {
 convert_to_rev_db () {
 	"$PERL_PATH" -w -- - "$@" <<\EOF
 use strict;
-@ARGV == 2 or die "Usage: convert_to_rev_db <input> <output>";
+@ARGV == 2 or die "usage: convert_to_rev_db <input> <output>";
 open my $wr, '+>', $ARGV[1] or die "$!: couldn't open: $ARGV[1]";
 open my $rd, '<', $ARGV[0] or die "$!: couldn't open: $ARGV[0]";
 my $size = (stat($rd))[7];

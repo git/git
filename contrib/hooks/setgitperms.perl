@@ -24,7 +24,7 @@ use File::Find;
 use File::Basename;
 
 my $usage =
-"Usage: setgitperms.perl [OPTION]... <--read|--write>
+"usage: setgitperms.perl [OPTION]... <--read|--write>
 This program uses a file `.gitmeta` to store/restore permissions and uid/gid
 info for all files/dirs tracked by git in the repository.
 

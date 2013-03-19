@@ -14,7 +14,7 @@ xmkdir() {
 
 R="$1"
 
-[ -n "$R" ] || die "Usage: prepare-chroot.sh <root>"
+[ -n "$R" ] || die "usage: prepare-chroot.sh <root>"
 [ -x git ] || die "This script needs to be executed at git source code's top directory"
 [ -x /bin/busybox ] || die "You need busybox"
 

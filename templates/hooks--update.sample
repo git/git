@@ -38,7 +38,7 @@ if [ -z "$GIT_DIR" ]; then
 fi
 
 if [ -z "$refname" -o -z "$oldrev" -o -z "$newrev" ]; then
-	echo "Usage: $0 <ref> <oldrev> <newrev>" >&2
+	echo "usage: $0 <ref> <oldrev> <newrev>" >&2
 	exit 1
 fi
 

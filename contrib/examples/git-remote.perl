@@ -347,7 +347,7 @@ sub rm_remote {
 }
 
 sub add_usage {
-	print STDERR "Usage: git remote add [-f] [-t track]* [-m master] <name> <url>\n";
+	print STDERR "usage: git remote add [-f] [-t track]* [-m master] <name> <url>\n";
 	exit(1);
 }
 
@@ -380,7 +380,7 @@ elsif ($ARGV[0] eq 'show') {
 		}
 	}
 	if ($i >= @ARGV) {
-		print STDERR "Usage: git remote show <remote>\n";
+		print STDERR "usage: git remote show <remote>\n";
 		exit(1);
 	}
 	my $status = 0;
@@ -410,7 +410,7 @@ elsif ($ARGV[0] eq 'prune') {
 		}
 	}
 	if ($i >= @ARGV) {
-		print STDERR "Usage: git remote prune <remote>\n";
+		print STDERR "usage: git remote prune <remote>\n";
 		exit(1);
 	}
 	my $status = 0;
@@ -458,13 +458,13 @@ elsif ($ARGV[0] eq 'add') {
 }
 elsif ($ARGV[0] eq 'rm') {
 	if (@ARGV <= 1) {
-		print STDERR "Usage: git remote rm <remote>\n";
+		print STDERR "usage: git remote rm <remote>\n";
 		exit(1);
 	}
 	exit(rm_remote($ARGV[1]));
 }
 else {
-	print STDERR "Usage: git remote\n";
+	print STDERR "usage: git remote\n";
 	print STDERR "       git remote add <name> <url>\n";
 	print STDERR "       git remote rm <name>\n";
 	print STDERR "       git remote show <name>\n";

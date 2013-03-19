@@ -18,7 +18,7 @@
 
 USAGE='<orig blob> <our blob> <their blob> <path>'
 USAGE="$USAGE <orig mode> <our mode> <their mode>"
-LONG_USAGE="Usage: git merge-one-file $USAGE
+LONG_USAGE="usage: git merge-one-file $USAGE
 
 Blob ids and modes should be empty for missing files."
 

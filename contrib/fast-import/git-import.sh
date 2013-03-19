@@ -5,7 +5,7 @@
 # but is meant to be a simple fast-import example.
 
 if [ -z "$1" -o -z "$2" ]; then
-	echo "Usage: git-import branch import-message"
+	echo "usage: git-import branch import-message"
 	exit 1
 fi
 
