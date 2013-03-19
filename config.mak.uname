@@ -326,7 +326,6 @@ ifeq ($(uname_S),Windows)
 	# NEEDS_LIBICONV = YesPlease
 	NO_ICONV = YesPlease
 	NO_STRTOUMAX = YesPlease
-	NO_STRTOULL = YesPlease
 	NO_MKDTEMP = YesPlease
 	NO_MKSTEMPS = YesPlease
 	SNPRINTF_RETURNS_BOGUS = YesPlease
@@ -343,6 +342,9 @@ ifeq ($(uname_S),Windows)
 	NO_CURL = YesPlease
 	NO_PYTHON = YesPlease
 	BLK_SHA1 = YesPlease
+	ETAGS_TARGET = ETAGS
+	NO_INET_PTON = YesPlease
+	NO_INET_NTOP = YesPlease
 	NO_POSIX_GOODIES = UnfortunatelyYes
 	NATIVE_CRLF = YesPlease
 	DEFAULT_HELP_FORMAT = html
