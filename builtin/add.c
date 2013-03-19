@@ -26,6 +26,8 @@ static int take_worktree_changes;
 struct update_callback_data {
 	int flags;
 	int add_errors;
+	const char *implicit_dot;
+	size_t implicit_dot_len;
 };
 
 static const char *option_with_implicit_dot;
@@ -96,10 +98,26 @@ static void update_callback(struct diff_queue_struct *q,
 {
 	int i;
 	struct update_callback_data *data = cbdata;
+	const char *implicit_dot = data->implicit_dot;
+	size_t implicit_dot_len = data->implicit_dot_len;
 
 	for (i = 0; i < q->nr; i++) {
 		struct diff_filepair *p = q->queue[i];
 		const char *path = p->one->path;
+		/*
+		 * Check if "git add -A" or "git add -u" was run from a
+		 * subdirectory with a modified file outside that directory,
+		 * and warn if so.
+		 *
+		 * "git add -u" will behave like "git add -u :/" instead of
+		 * "git add -u ." in the future.  This warning prepares for
+		 * that change.
+		 */
+		if (implicit_dot &&
+		    strncmp_icase(path, implicit_dot, implicit_dot_len)) {
+			warn_pathless_add();
+			continue;
+		}
 		switch (fix_unmerged_status(p, data)) {
 		default:
 			die(_("unexpected diff status %c"), p->status);
@@ -127,13 +145,25 @@ int add_files_to_cache(const char *prefix, const char **pathspec, int flags)
 {
 	struct update_callback_data data;
 	struct rev_info rev;
+
+	memset(&data, 0, sizeof(data));
+	data.flags = flags & ~ADD_CACHE_IMPLICIT_DOT;
+	if ((flags & ADD_CACHE_IMPLICIT_DOT) && prefix) {
+		/*
+		 * Check for modified files throughout the worktree so
+		 * update_callback has a chance to warn about changes
+		 * outside the cwd.
+		 */
+		data.implicit_dot = prefix;
+		data.implicit_dot_len = strlen(prefix);
+		pathspec = NULL;
+	}
+
 	init_revisions(&rev, prefix);
 	setup_revisions(0, NULL, &rev, NULL);
 	init_pathspec(&rev.prune_data, pathspec);
 	rev.diffopt.output_format = DIFF_FORMAT_CALLBACK;
 	rev.diffopt.format_callback = update_callback;
-	data.flags = flags;
-	data.add_errors = 0;
 	rev.diffopt.format_callback_data = &data;
 	rev.max_count = 0; /* do not compare unmerged paths with stage #2 */
 	run_diff_files(&rev, DIFF_RACY_IS_MODIFIED);
@@ -373,6 +403,7 @@ int cmd_add(int argc, const char **argv, const char *prefix)
 	int add_new_files;
 	int require_pathspec;
 	char *seen = NULL;
+	int implicit_dot = 0;
 
 	git_config(add_config, NULL);
 
@@ -402,10 +433,11 @@ int cmd_add(int argc, const char **argv, const char *prefix)
 	}
 	if (option_with_implicit_dot && !argc) {
 		static const char *here[2] = { ".", NULL };
-		if (prefix)
+		if (prefix && addremove)
 			warn_pathless_add();
 		argc = 1;
 		argv = here;
+		implicit_dot = 1;
 	}
 
 	add_new_files = !take_worktree_changes && !refresh_only;
@@ -418,7 +450,8 @@ int cmd_add(int argc, const char **argv, const char *prefix)
 		 (intent_to_add ? ADD_CACHE_INTENT : 0) |
 		 (ignore_add_errors ? ADD_CACHE_IGNORE_ERRORS : 0) |
 		 (!(addremove || take_worktree_changes)
-		  ? ADD_CACHE_IGNORE_REMOVAL : 0));
+		  ? ADD_CACHE_IGNORE_REMOVAL : 0)) |
+		 (implicit_dot ? ADD_CACHE_IMPLICIT_DOT : 0);
 
 	if (require_pathspec && argc == 0) {
 		fprintf(stderr, _("Nothing specified, nothing added.\n"));
