@@ -170,7 +170,9 @@ int add_files_to_cache(const char *prefix, const char **pathspec, int flags)
 	return !!data.add_errors;
 }
 
-static char *prune_directory(struct dir_struct *dir, const char **pathspec, int prefix)
+#define WARN_IMPLICIT_DOT (1u << 0)
+static char *prune_directory(struct dir_struct *dir, const char **pathspec,
+			     int prefix, unsigned flag)
 {
 	char *seen;
 	int i, specs;
@@ -187,6 +189,16 @@ static char *prune_directory(struct dir_struct *dir, const char **pathspec, int 
 		if (match_pathspec(pathspec, entry->name, entry->len,
 				   prefix, seen))
 			*dst++ = entry;
+		else if (flag & WARN_IMPLICIT_DOT)
+			/*
+			 * "git add -A" was run from a subdirectory with a
+			 * new file outside that directory.
+			 *
+			 * "git add -A" will behave like "git add -A :/"
+			 * instead of "git add -A ." in the future.
+			 * Warn about the coming behavior change.
+			 */
+			warn_pathless_add();
 	}
 	dir->nr = dst - dir->entries;
 	add_pathspec_matches_against_index(pathspec, seen, specs);
@@ -433,8 +445,6 @@ int cmd_add(int argc, const char **argv, const char *prefix)
 	}
 	if (option_with_implicit_dot && !argc) {
 		static const char *here[2] = { ".", NULL };
-		if (prefix && addremove)
-			warn_pathless_add();
 		argc = 1;
 		argv = here;
 		implicit_dot = 1;
@@ -475,9 +485,10 @@ int cmd_add(int argc, const char **argv, const char *prefix)
 		}
 
 		/* This picks up the paths that are not tracked */
-		baselen = fill_directory(&dir, pathspec);
+		baselen = fill_directory(&dir, implicit_dot ? NULL : pathspec);
 		if (pathspec)
-			seen = prune_directory(&dir, pathspec, baselen);
+			seen = prune_directory(&dir, pathspec, baselen,
+					implicit_dot ? WARN_IMPLICIT_DOT : 0);
 	}
 
 	if (refresh_only) {
