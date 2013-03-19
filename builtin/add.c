@@ -33,7 +33,12 @@ static const char *short_option_with_implicit_dot;
 
 static void warn_pathless_add(void)
 {
+	static int shown;
 	assert(option_with_implicit_dot && short_option_with_implicit_dot);
+
+	if (shown)
+		return;
+	shown = 1;
 
 	/*
 	 * To be consistent with "git add -p" and most Git
