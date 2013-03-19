@@ -40,6 +40,7 @@ Foreign Interface
 
 Performance, Internal Implementation, etc.
 
+ * Updates for building under msvc.
 
 
 Also contains minor documentation updates and code clean-ups.
@@ -51,3 +52,35 @@ Fixes since v1.8.2
 Unless otherwise noted, all the fixes since v1.8.2 in the maintenance
 track are contained in this release (see release notes to them for
 details).
+
+ * The "--color=<when>" argument to the commands in the diff family
+   was described poorly.
+   (merge 3d0e75f jc/color-diff-doc later to maint).
+
+ * The arguments given to pre-rebase hook were not documented.
+   (merge 0414acc wk/doc-pre-rebase later to maint).
+
+ * The v4 index format was not documented.
+   (merge 647d879 nd/doc-index-format later to maint).
+
+ * The "--match=<pattern>" argument "git describe" takes uses glob
+   pattern but it wasn't obvious from the documentation.
+   (merge 5229149 gp/describe-match-uses-glob-pattern later to maint).
+
+ * Some sources failed to compile on systems that lack NI_MAXHOST in
+   their system header (e.g. z/OS).
+   (merge 3b130ade dm/ni-maxhost-may-be-missing later to maint).
+
+ * Add an example use of "--env-filter" in "filter-branch"
+   documentation.
+   (merge 21b6e4f tk/doc-filter-branch later to maint).
+
+ * "git bundle verify" did not say "records a complete history" for a
+   bundle that does not have any prerequisites.
+   (merge a02ffe0 lf/bundle-verify-list-prereqs later to maint).
+
+ * In the v1.8.0 era, we changed symbols that do not have to be global
+   to file scope static, but a few functions in graph.c were used by
+   CGit from sideways bypassing the entry points of the API the
+   in-tree users use.
+   (merge ac751a0 jk/graph-c-expose-symbols-for-cgit later to maint).
