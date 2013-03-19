@@ -78,6 +78,7 @@ static int nr_threads;
 static int from_stdin;
 static int strict;
 static int verbose;
+static int show_stat;
 
 static struct progress *progress;
 
@@ -108,6 +109,10 @@ static pthread_mutex_t work_mutex;
 #define work_lock()		lock_mutex(&work_mutex)
 #define work_unlock()		unlock_mutex(&work_mutex)
 
+static pthread_mutex_t deepest_delta_mutex;
+#define deepest_delta_lock()	lock_mutex(&deepest_delta_mutex)
+#define deepest_delta_unlock()	unlock_mutex(&deepest_delta_mutex)
+
 static pthread_key_t key;
 
 static inline void lock_mutex(pthread_mutex_t *mutex)
@@ -130,6 +135,8 @@ static void init_thread(void)
 	init_recursive_mutex(&read_mutex);
 	pthread_mutex_init(&counter_mutex, NULL);
 	pthread_mutex_init(&work_mutex, NULL);
+	if (show_stat)
+		pthread_mutex_init(&deepest_delta_mutex, NULL);
 	pthread_key_create(&key, NULL);
 	thread_data = xcalloc(nr_threads, sizeof(*thread_data));
 	threads_active = 1;
@@ -143,6 +150,8 @@ static void cleanup_thread(void)
 	pthread_mutex_destroy(&read_mutex);
 	pthread_mutex_destroy(&counter_mutex);
 	pthread_mutex_destroy(&work_mutex);
+	if (show_stat)
+		pthread_mutex_destroy(&deepest_delta_mutex);
 	pthread_key_delete(key);
 	free(thread_data);
 }
@@ -157,6 +166,9 @@ static void cleanup_thread(void)
 
 #define work_lock()
 #define work_unlock()
+
+#define deepest_delta_lock()
+#define deepest_delta_unlock()
 
 #endif
 
@@ -833,9 +845,13 @@ static void resolve_delta(struct object_entry *delta_obj,
 	void *base_data, *delta_data;
 
 	delta_obj->real_type = base->obj->real_type;
-	delta_obj->delta_depth = base->obj->delta_depth + 1;
-	if (deepest_delta < delta_obj->delta_depth)
-		deepest_delta = delta_obj->delta_depth;
+	if (show_stat) {
+		delta_obj->delta_depth = base->obj->delta_depth + 1;
+		deepest_delta_lock();
+		if (deepest_delta < delta_obj->delta_depth)
+			deepest_delta = delta_obj->delta_depth;
+		deepest_delta_unlock();
+	}
 	delta_obj->base_object_no = base->obj - objects;
 	delta_data = get_data_from_pack(delta_obj);
 	base_data = get_base_data(base);
@@ -1461,7 +1477,7 @@ static void show_pack_info(int stat_only)
 
 int cmd_index_pack(int argc, const char **argv, const char *prefix)
 {
-	int i, fix_thin_pack = 0, verify = 0, stat_only = 0, stat = 0;
+	int i, fix_thin_pack = 0, verify = 0, stat_only = 0;
 	const char *curr_pack, *curr_index;
 	const char *index_name = NULL, *pack_name = NULL;
 	const char *keep_name = NULL, *keep_msg = NULL;
@@ -1494,10 +1510,10 @@ int cmd_index_pack(int argc, const char **argv, const char *prefix)
 				verify = 1;
 			} else if (!strcmp(arg, "--verify-stat")) {
 				verify = 1;
-				stat = 1;
+				show_stat = 1;
 			} else if (!strcmp(arg, "--verify-stat-only")) {
 				verify = 1;
-				stat = 1;
+				show_stat = 1;
 				stat_only = 1;
 			} else if (!strcmp(arg, "--keep")) {
 				keep_msg = "";
@@ -1605,7 +1621,7 @@ int cmd_index_pack(int argc, const char **argv, const char *prefix)
 	if (strict)
 		check_objects();
 
-	if (stat)
+	if (show_stat)
 		show_pack_info(stat_only);
 
 	idx_objects = xmalloc((nr_objects) * sizeof(struct pack_idx_entry *));
