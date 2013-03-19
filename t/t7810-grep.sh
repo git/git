@@ -861,11 +861,6 @@ test_expect_success LIBPCRE 'grep -G -F -E -P pattern' '
 	test_cmp expected actual
 '
 
-test_config() {
-	git config "$1" "$2" &&
-	test_when_finished "git config --unset $1"
-}
-
 cat >expected <<EOF
 hello.c<RED>:<RESET>int main(int argc, const char **argv)
 hello.c<RED>-<RESET>{
