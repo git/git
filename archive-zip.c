@@ -240,7 +240,6 @@ static int write_zip_entry(struct archiver_args *args,
 			(mode & 0111) ? ((mode) << 16) : 0;
 		if (S_ISREG(mode) && args->compression_level != 0 && size > 0)
 			method = 8;
-		compressed_size = (method == 0) ? size : 0;
 
 		if (S_ISREG(mode) && type == OBJ_BLOB && !args->convert &&
 		    size > big_file_threshold) {
@@ -259,6 +258,7 @@ static int write_zip_entry(struct archiver_args *args,
 			crc = crc32(crc, buffer, size);
 			out = buffer;
 		}
+		compressed_size = (method == 0) ? size : 0;
 	} else {
 		return error("unsupported file mode: 0%o (SHA1: %s)", mode,
 				sha1_to_hex(sha1));
