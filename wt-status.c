@@ -264,7 +264,7 @@ static void wt_status_print_change_data(struct wt_status *s,
 {
 	struct wt_status_change_data *d = it->util;
 	const char *c = color(change_type, s);
-	int status = status;
+	int status;
 	char *one_name;
 	char *two_name;
 	const char *one, *two;
@@ -292,6 +292,9 @@ static void wt_status_print_change_data(struct wt_status *s,
 		}
 		status = d->worktree_status;
 		break;
+	default:
+		die("BUG: unhandled change_type %d in wt_status_print_change_data",
+		    change_type);
 	}
 
 	one = quote_path(one_name, -1, &onebuf, s->prefix);
