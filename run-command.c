@@ -273,7 +273,7 @@ int start_command(struct child_process *cmd)
 {
 	int need_in, need_out, need_err;
 	int fdin[2], fdout[2], fderr[2];
-	int failed_errno = failed_errno;
+	int failed_errno;
 	char *str;
 
 	/*
@@ -341,6 +341,7 @@ fail_pipe:
 		notify_pipe[0] = notify_pipe[1] = -1;
 
 	cmd->pid = fork();
+	failed_errno = errno;
 	if (!cmd->pid) {
 		/*
 		 * Redirect the channel to write syscall error messages to
@@ -420,7 +421,7 @@ fail_pipe:
 	}
 	if (cmd->pid < 0)
 		error("cannot fork() for %s: %s", cmd->argv[0],
-			strerror(failed_errno = errno));
+			strerror(errno));
 	else if (cmd->clean_on_exit)
 		mark_child_for_cleanup(cmd->pid);
 
