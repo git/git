@@ -170,6 +170,30 @@ happens:
 If you tried a merge which resulted in complex conflicts and
 want to start over, you can recover with `git merge --abort`.
 
+MERGING TAG
+-----------
+
+When merging an annotated (and possibly signed) tag, Git always
+creates a merge commit even if a fast-forward merge is possible, and
+the commit message template is prepared with the tag message.
+Additionally, if the tag is signed, the signature check is reported
+as a comment in the message template. See also linkgit:git-tag[1].
+
+When you want to just integrate with the work leading to the commit
+that happens to be tagged, e.g. synchronizing with an upstream
+release point, you may not want to make an unnecessary merge commit.
+
+In such a case, you can "unwrap" the tag yourself before feeding it
+to `git merge`, or pass `--ff-only` when you do not have any work on
+your own. e.g.
+
+---
+git fetch origin
+git merge v1.2.3^0
+git merge --ff-only v1.2.3
+---
+
+
 HOW CONFLICTS ARE PRESENTED
 ---------------------------
 
