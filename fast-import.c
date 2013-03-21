@@ -2434,7 +2434,7 @@ static void note_change_n(struct branch *b, unsigned char *old_fanout)
 {
 	const char *p = command_buf.buf + 2;
 	static struct strbuf uq = STRBUF_INIT;
-	struct object_entry *oe = oe;
+	struct object_entry *oe;
 	struct branch *s;
 	unsigned char sha1[20], commit_sha1[20];
 	char path[60];
