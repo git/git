@@ -6,6 +6,7 @@
 
 #define COMMAND_DIR "git-shell-commands"
 #define HELP_COMMAND COMMAND_DIR "/help"
+#define NOLOGIN_COMMAND COMMAND_DIR "/no-interactive-login"
 
 static int do_generic_cmd(const char *me, char *arg)
 {
@@ -65,6 +66,18 @@ static void run_shell(void)
 {
 	int done = 0;
 	static const char *help_argv[] = { HELP_COMMAND, NULL };
+
+	if (!access(NOLOGIN_COMMAND, F_OK)) {
+		/* Interactive login disabled. */
+		const char *argv[] = { NOLOGIN_COMMAND, NULL };
+		int status;
+
+		status = run_command_v_opt(argv, 0);
+		if (status < 0)
+			exit(127);
+		exit(status);
+	}
+
 	/* Print help if enabled */
 	run_command_v_opt(help_argv, RUN_SILENT_EXEC_FAILURE);
 
