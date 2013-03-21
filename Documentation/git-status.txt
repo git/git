@@ -46,14 +46,20 @@ OPTIONS
 	Show untracked files.
 +
 The mode parameter is optional (defaults to 'all'), and is used to
-specify the handling of untracked files; when -u is not used, the
-default is 'normal', i.e. show untracked files and directories.
+specify the handling of untracked files.
 +
 The possible options are:
 +
-	- 'no'     - Show no untracked files
-	- 'normal' - Shows untracked files and directories
+	- 'no'     - Show no untracked files.
+	- 'normal' - Shows untracked files and directories.
 	- 'all'    - Also shows individual files in untracked directories.
++
+When `-u` option is not used, untracked files and directories are
+shown (i.e. the same as specifying `normal`), to help you avoid
+forgetting to add newly created files.  Because it takes extra work
+to find untracked files in the filesystem, this mode may take some
+time in a large working tree.  You can use `no` to have `git status`
+return more quickly without showing untracked files.
 +
 The default can be changed using the status.showUntrackedFiles
 configuration variable documented in linkgit:git-config[1].
