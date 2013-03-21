@@ -172,16 +172,25 @@ OPTIONS
        linkgit:git-commit-tree[1].
 
 --cleanup=<mode>::
-	This option sets how the commit message is cleaned up.
-	The  '<mode>' can be one of 'verbatim', 'whitespace', 'strip',
-	and 'default'. The 'default' mode will strip leading and
-	trailing empty lines and #commentary from the commit message
-	only if the message is to be edited. Otherwise only whitespace
-	removed. The 'verbatim' mode does not change message at all,
-	'whitespace' removes just leading/trailing whitespace lines
-	and 'strip' removes both whitespace and commentary. The default
-	can be changed by the 'commit.cleanup' configuration variable
-	(see linkgit:git-config[1]).
+	This option determines how the supplied commit message should be
+	cleaned up before committing.  The '<mode>' can be `strip`,
+	`whitespace`, `verbatim`, or `default`.
++
+--
+strip::
+	Strip leading and trailing empty lines, trailing whitespace, and
+	#commentary and collapse consecutive empty lines.
+whitespace::
+	Same as `strip` except #commentary is not removed.
+verbatim::
+	Do not change the message at all.
+default::
+	Same as `strip` if the message is to be edited.
+	Otherwise `whitespace`.
+--
++
+The default can be changed by the 'commit.cleanup' configuration
+variable (see linkgit:git-config[1]).
 
 -e::
 --edit::
