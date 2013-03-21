@@ -2265,7 +2265,7 @@ static void file_change_m(struct branch *b)
 	const char *p = command_buf.buf + 2;
 	static struct strbuf uq = STRBUF_INIT;
 	const char *endp;
-	struct object_entry *oe = oe;
+	struct object_entry *oe;
 	unsigned char sha1[20];
 	uint16_t mode, inline_data = 0;
 
@@ -2292,6 +2292,7 @@ static void file_change_m(struct branch *b)
 		hashcpy(sha1, oe->idx.sha1);
 	} else if (!prefixcmp(p, "inline ")) {
 		inline_data = 1;
+		oe = NULL; /* not used with inline_data, but makes gcc happy */
 		p += strlen("inline");  /* advance to space */
 	} else {
 		if (get_sha1_hex(p, sha1))
