@@ -32,6 +32,25 @@ Updates since v1.8.2
 
 UI, Workflows & Features
 
+ * When the interactive access to git-shell is not enabled, it issues
+   a message meant to help the system admininstrator to enable it.
+   An explicit way to help the end users who connect to the service by
+   issuing custom messages to refuse such an access has been added.
+
+ * "git status" suggests users to look into using--untracked=no option
+   when it takes too long.
+
+ * "git fetch" learned to fetch a commit at the tip of an unadvertised
+   ref by specifying a raw object name from the command line when the
+   server side supports this feature.
+
+ * "git count-objects -v" learned to report leftover temporary
+   packfiles and other garbage in the object store.
+
+ * A new read-only credential helper (in contrib/) to interact with
+   the .netrc/.authinfo files has been added.
+
+ * "git send-email" can be used with the credential helper system.
 
 
 Foreign Interface
@@ -41,6 +60,10 @@ Foreign Interface
 Performance, Internal Implementation, etc.
 
  * Updates for building under msvc.
+
+ * A few codepaths knew how much data they need to put in the
+   hashtables they use upfront, but still started from a small table
+   repeatedly growing and rehashing.
 
 
 Also contains minor documentation updates and code clean-ups.
@@ -52,6 +75,10 @@ Fixes since v1.8.2
 Unless otherwise noted, all the fixes since v1.8.2 in the maintenance
 track are contained in this release (see release notes to them for
 details).
+
+ * Clarify in the documentation "what" gets pushed to "where" when the
+   command line to "git push" does not say these explicitly.
+   (merge cfe1348 jc/maint-push-refspec-default-doc later to maint).
 
  * The "--color=<when>" argument to the commands in the diff family
    was described poorly.
@@ -84,3 +111,52 @@ details).
    CGit from sideways bypassing the entry points of the API the
    in-tree users use.
    (merge ac751a0 jk/graph-c-expose-symbols-for-cgit later to maint).
+
+ * "git update-index -h" did not do the usual "-h(elp)" thing.
+
+ * "git index-pack" had a buffer-overflow while preparing an
+   informational message when the translated version of it was too
+   long.
+   (merge 5c3459f nd/index-pack-l10n-buf-overflow later to maint).
+
+ * 'git commit -m "$msg"' used to add an extra newline even when
+   $msg already ended with one.
+   (merge 46fbf75 bc/commit-complete-lines-given-via-m-option later to maint).
+
+ * The SSL peer verification done by "git imap-send" did not ask for
+   Server Name Indication (RFC 4366), failing to connect SSL/TLS
+   sites that serve multiple hostnames on a single IP.
+   (merge 698a1ec ob/imap-send-ssl-verify later to maint).
+
+ * perl/Git.pm::cat_blob slurped everything in core only to write it
+   out to a file descriptor, which was not a very smart thing to do.
+   (merge 712c6ad jc/perl-cat-blob later to maint).
+
+ * "git branch" did not bother to check nonsense command line
+   parameters and issue errors in many cases.
+   (merge 8efb889 nd/branch-error-cases later to maint).
+
+ * Verification of signed tags were not done correctly when not in C
+   or en/US locale.
+   (merge 0174eea mg/gpg-interface-using-status later to maint).
+
+ * Some platforms and users spell UTF-8 differently; retry with the
+   most official "UTF-8" when the system does not understand the
+   user-supplied encoding name that are the common alternative
+   spellings of UTF-8.
+   (merge 5c680be jk/utf-8-can-be-spelled-differently later to maint).
+
+ * When export-subst is used, "zip" output recorded incorrect
+   size of the file.
+   (merge d3c1472 rs/zip-compresssed-size-with-export-subst later to maint).
+
+ * "git am $maildir/" applied messages in an unexpected order; sort
+   filenames read from the maildir/ in a way that is more likely to
+   sort messages in the order the writing MUA meant to, by sorting
+   numeric segment in numeric order and non-numeric segment in
+   alphabetical order.
+   (merge 18505c3 jk/mailsplit-maildir-muttsort later to maint).
+
+ * "git submodule update", when recursed into sub-submodules, did not
+   acccumulate the prefix paths.
+   (merge 75bf5e6 we/submodule-update-prefix-output later to maint).
