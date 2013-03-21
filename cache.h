@@ -1017,7 +1017,8 @@ struct ref {
 		force:1,
 		forced_update:1,
 		merge:1,
-		deletion:1;
+		deletion:1,
+		matched:1;
 	enum {
 		REF_STATUS_NONE = 0,
 		REF_STATUS_OK,

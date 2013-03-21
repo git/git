@@ -15,6 +15,7 @@ static struct refspec s_tag_refspec = {
 	0,
 	1,
 	0,
+	0,
 	"refs/tags/*",
 	"refs/tags/*"
 };
@@ -538,7 +539,7 @@ static struct refspec *parse_refspec_internal(int nr_refspec, const char **refsp
 
 		/*
 		 * Before going on, special case ":" (or "+:") as a refspec
-		 * for matching refs.
+		 * for pushing matching refs.
 		 */
 		if (!fetch && rhs == lhs && rhs[1] == '\0') {
 			rs[i].matching = 1;
@@ -565,26 +566,25 @@ static struct refspec *parse_refspec_internal(int nr_refspec, const char **refsp
 		flags = REFNAME_ALLOW_ONELEVEL | (is_glob ? REFNAME_REFSPEC_PATTERN : 0);
 
 		if (fetch) {
-			/*
-			 * LHS
-			 * - empty is allowed; it means HEAD.
-			 * - otherwise it must be a valid looking ref.
-			 */
+			unsigned char unused[40];
+
+			/* LHS */
 			if (!*rs[i].src)
-				; /* empty is ok */
-			else if (check_refname_format(rs[i].src, flags))
+				; /* empty is ok; it means "HEAD" */
+			else if (llen == 40 && !get_sha1_hex(rs[i].src, unused))
+				rs[i].exact_sha1 = 1; /* ok */
+			else if (!check_refname_format(rs[i].src, flags))
+				; /* valid looking ref is ok */
+			else
 				goto invalid;
-			/*
-			 * RHS
-			 * - missing is ok, and is same as empty.
-			 * - empty is ok; it means not to store.
-			 * - otherwise it must be a valid looking ref.
-			 */
+			/* RHS */
 			if (!rs[i].dst)
-				; /* ok */
+				; /* missing is ok; it is the same as empty */
 			else if (!*rs[i].dst)
-				; /* ok */
-			else if (check_refname_format(rs[i].dst, flags))
+				; /* empty is ok; it means "do not store" */
+			else if (!check_refname_format(rs[i].dst, flags))
+				; /* valid looking ref is ok */
+			else
 				goto invalid;
 		} else {
 			/*
@@ -1466,7 +1466,12 @@ int get_fetch_map(const struct ref *remote_refs,
 	} else {
 		const char *name = refspec->src[0] ? refspec->src : "HEAD";
 
-		ref_map = get_remote_ref(remote_refs, name);
+		if (refspec->exact_sha1) {
+			ref_map = alloc_ref(name);
+			get_sha1_hex(name, ref_map->old_sha1);
+		} else {
+			ref_map = get_remote_ref(remote_refs, name);
+		}
 		if (!missing_ok && !ref_map)
 			die("Couldn't find remote ref %s", name);
 		if (ref_map) {

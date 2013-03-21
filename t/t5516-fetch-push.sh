@@ -1043,4 +1043,38 @@ do
 	'
 done
 
+test_expect_success 'fetch exact SHA1' '
+	mk_test heads/master hidden/one &&
+	git push testrepo master:refs/hidden/one &&
+	(
+		cd testrepo &&
+		git config transfer.hiderefs refs/hidden
+	) &&
+	check_push_result $the_commit hidden/one &&
+
+	mk_child child &&
+	(
+		cd child &&
+
+		# make sure $the_commit does not exist here
+		git repack -a -d &&
+		git prune &&
+		test_must_fail git cat-file -t $the_commit &&
+
+		# fetching the hidden object should fail by default
+		test_must_fail git fetch -v ../testrepo $the_commit:refs/heads/copy &&
+		test_must_fail git rev-parse --verify refs/heads/copy &&
+
+		# the server side can allow it to succeed
+		(
+			cd ../testrepo &&
+			git config uploadpack.allowtipsha1inwant true
+		) &&
+
+		git fetch -v ../testrepo $the_commit:refs/heads/copy &&
+		result=$(git rev-parse --verify refs/heads/copy) &&
+		test "$the_commit" = "$result"
+	)
+'
+
 test_done

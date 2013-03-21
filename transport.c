@@ -518,11 +518,9 @@ static int fetch_refs_via_pack(struct transport *transport,
 			       int nr_heads, struct ref **to_fetch)
 {
 	struct git_transport_data *data = transport->data;
-	struct string_list sought = STRING_LIST_INIT_DUP;
 	const struct ref *refs;
 	char *dest = xstrdup(transport->url);
 	struct fetch_pack_args args;
-	int i;
 	struct ref *refs_tmp = NULL;
 
 	memset(&args, 0, sizeof(args));
@@ -536,9 +534,6 @@ static int fetch_refs_via_pack(struct transport *transport,
 	args.no_progress = !transport->progress;
 	args.depth = data->options.depth;
 
-	for (i = 0; i < nr_heads; i++)
-		string_list_append(&sought, to_fetch[i]->name);
-
 	if (!data->got_remote_heads) {
 		connect_setup(transport, 0, 0);
 		get_remote_heads(data->fd[0], &refs_tmp, 0, NULL);
@@ -547,7 +542,8 @@ static int fetch_refs_via_pack(struct transport *transport,
 
 	refs = fetch_pack(&args, data->fd, data->conn,
 			  refs_tmp ? refs_tmp : transport->remote_refs,
-			  dest, &sought, &transport->pack_lockfile);
+			  dest, to_fetch, nr_heads,
+			  &transport->pack_lockfile);
 	close(data->fd[0]);
 	close(data->fd[1]);
 	if (finish_connect(data->conn))
@@ -557,7 +553,6 @@ static int fetch_refs_via_pack(struct transport *transport,
 
 	free_refs(refs_tmp);
 
-	string_list_clear(&sought, 0);
 	free(dest);
 	return (refs ? 0 : -1);
 }

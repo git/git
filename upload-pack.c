@@ -26,6 +26,7 @@ static const char upload_pack_usage[] = "git upload-pack [--strict] [--timeout=<
 #define SHALLOW		(1u << 16)
 #define NOT_SHALLOW	(1u << 17)
 #define CLIENT_SHALLOW	(1u << 18)
+#define HIDDEN_REF	(1u << 19)
 
 static unsigned long oldest_have;
 
@@ -33,6 +34,7 @@ static int multi_ack;
 static int no_done;
 static int use_thin_pack, use_ofs_delta, use_include_tag;
 static int no_progress, daemon_mode;
+static int allow_tip_sha1_in_want;
 static int shallow_nr;
 static struct object_array have_obj;
 static struct object_array want_obj;
@@ -487,6 +489,12 @@ static int get_common_commits(void)
 	}
 }
 
+static int is_our_ref(struct object *o)
+{
+	return o->flags &
+		((allow_tip_sha1_in_want ? HIDDEN_REF : 0) | OUR_REF);
+}
+
 static void check_non_tip(void)
 {
 	static const char *argv[] = {
@@ -523,7 +531,7 @@ static void check_non_tip(void)
 		o = get_indexed_object(--i);
 		if (!o)
 			continue;
-		if (!(o->flags & OUR_REF))
+		if (!is_our_ref(o))
 			continue;
 		memcpy(namebuf + 1, sha1_to_hex(o->sha1), 40);
 		if (write_in_full(cmd.in, namebuf, 42) < 0)
@@ -532,7 +540,7 @@ static void check_non_tip(void)
 	namebuf[40] = '\n';
 	for (i = 0; i < want_obj.nr; i++) {
 		o = want_obj.objects[i].item;
-		if (o->flags & OUR_REF)
+		if (is_our_ref(o))
 			continue;
 		memcpy(namebuf, sha1_to_hex(o->sha1), 40);
 		if (write_in_full(cmd.in, namebuf, 41) < 0)
@@ -566,7 +574,7 @@ error:
 	/* Pick one of them (we know there at least is one) */
 	for (i = 0; i < want_obj.nr; i++) {
 		o = want_obj.objects[i].item;
-		if (!(o->flags & OUR_REF))
+		if (!is_our_ref(o))
 			die("git upload-pack: not our ref %s",
 			    sha1_to_hex(o->sha1));
 	}
@@ -646,7 +654,7 @@ static void receive_needs(void)
 			    sha1_to_hex(sha1_buf));
 		if (!(o->flags & WANTED)) {
 			o->flags |= WANTED;
-			if (!(o->flags & OUR_REF))
+			if (!is_our_ref(o))
 				has_non_tip = 1;
 			add_object_array(o, NULL, &want_obj);
 		}
@@ -732,8 +740,10 @@ static int mark_our_ref(const char *refname, const unsigned char *sha1, int flag
 {
 	struct object *o = lookup_unknown_object(sha1);
 
-	if (ref_is_hidden(refname))
+	if (ref_is_hidden(refname)) {
+		o->flags |= HIDDEN_REF;
 		return 1;
+	}
 	if (!o)
 		die("git upload-pack: cannot find object %s:", sha1_to_hex(sha1));
 	o->flags |= OUR_REF;
@@ -752,9 +762,10 @@ static int send_ref(const char *refname, const unsigned char *sha1, int flag, vo
 		return 0;
 
 	if (capabilities)
-		packet_write(1, "%s %s%c%s%s agent=%s\n",
+		packet_write(1, "%s %s%c%s%s%s agent=%s\n",
 			     sha1_to_hex(sha1), refname_nons,
 			     0, capabilities,
+			     allow_tip_sha1_in_want ? " allow-tip-sha1-in-want" : "",
 			     stateless_rpc ? " no-done" : "",
 			     git_user_agent_sanitized());
 	else
@@ -788,6 +799,8 @@ static void upload_pack(void)
 
 static int upload_pack_config(const char *var, const char *value, void *unused)
 {
+	if (!strcmp("uploadpack.allowtipsha1inwant", var))
+		allow_tip_sha1_in_want = git_config_bool(var, value);
 	return parse_hide_refs_config(var, value, "uploadpack");
 }
 
