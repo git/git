@@ -92,6 +92,8 @@ static void lazy_init_name_hash(struct index_state *istate)
 
 	if (istate->name_hash_initialized)
 		return;
+	if (istate->cache_nr)
+		preallocate_hash(&istate->name_hash, istate->cache_nr);
 	for (nr = 0; nr < istate->cache_nr; nr++)
 		hash_index_entry(istate, istate->cache[nr]);
 	istate->name_hash_initialized = 1;
