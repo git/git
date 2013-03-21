@@ -304,6 +304,17 @@ static int ssl_socket_connect(struct imap_socket *sock, int use_tls_only, int ve
 		return -1;
 	}
 
+#ifdef SSL_CTRL_SET_TLSEXT_HOSTNAME
+	/*
+	 * SNI (RFC4366)
+	 * OpenSSL does not document this function, but the implementation
+	 * returns 1 on success, 0 on failure after calling SSLerr().
+	 */
+	ret = SSL_set_tlsext_host_name(sock->ssl, server.host);
+	if (ret != 1)
+		warning("SSL_set_tlsext_host_name(%s) failed.", server.host);
+#endif
+
 	ret = SSL_connect(sock->ssl);
 	if (ret <= 0) {
 		socket_perror("SSL_connect", sock, ret);
