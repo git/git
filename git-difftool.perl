@@ -336,7 +336,7 @@ sub main
 	}
 	if ($opts{gui}) {
 		my $guitool = Git::config('diff.guitool');
-		if (length($guitool) > 0) {
+		if (defined($guitool) && length($guitool) > 0) {
 			$ENV{GIT_DIFF_TOOL} = $guitool;
 		}
 	}
