@@ -261,7 +261,7 @@ void show_submodule_summary(FILE *f, const char *path,
 		const char *del, const char *add, const char *reset)
 {
 	struct rev_info rev;
-	struct commit *left = left, *right = right;
+	struct commit *left = NULL, *right = NULL;
 	const char *message = NULL;
 	struct strbuf sb = STRBUF_INIT;
 	int fast_forward = 0, fast_backward = 0;
@@ -275,10 +275,8 @@ void show_submodule_summary(FILE *f, const char *path,
 	else if (!(left = lookup_commit_reference(one)) ||
 		 !(right = lookup_commit_reference(two)))
 		message = "(commits not present)";
-
-	if (!message &&
-	    prepare_submodule_summary(&rev, path, left, right,
-					&fast_forward, &fast_backward))
+	else if (prepare_submodule_summary(&rev, path, left, right,
+					   &fast_forward, &fast_backward))
 		message = "(revision walker failed)";
 
 	if (dirty_submodule & DIRTY_SUBMODULE_UNTRACKED)
@@ -302,11 +300,12 @@ void show_submodule_summary(FILE *f, const char *path,
 		strbuf_addf(&sb, "%s:%s\n", fast_backward ? " (rewind)" : "", reset);
 	fwrite(sb.buf, sb.len, 1, f);
 
-	if (!message) {
+	if (!message) /* only NULL if we succeeded in setting up the walk */
 		print_submodule_summary(&rev, f, del, add, reset);
+	if (left)
 		clear_commit_marks(left, ~0);
+	if (right)
 		clear_commit_marks(right, ~0);
-	}
 
 	strbuf_release(&sb);
 }
