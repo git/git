@@ -1,3 +1,4 @@
+#define CYGWIN_C
 #define WIN32_LEAN_AND_MEAN
 #ifdef CYGWIN_V15_WIN32API
 #include "../git-compat-util.h"
@@ -9,6 +10,18 @@
 #include "../git-compat-util.h"
 #endif
 #include "../cache.h" /* to read configuration */
+
+/*
+ * Return POSIX permission bits, regardless of core.ignorecygwinfstricks
+ */
+int cygwin_get_st_mode_bits(const char *path, int *mode)
+{
+	struct stat st;
+	if (lstat(path, &st) < 0)
+		return -1;
+	*mode = st.st_mode;
+	return 0;
+}
 
 static inline void filetime_to_timespec(const FILETIME *ft, struct timespec *ts)
 {
