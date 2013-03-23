@@ -953,7 +953,7 @@ static void show_bisect_in_progress(struct wt_status *s,
 {
 	if (state->branch)
 		status_printf_ln(s, color,
-				 _("You are currently bisecting branch '%s'."),
+				 _("You are currently bisecting, started from branch '%s'."),
 				 state->branch);
 	else
 		status_printf_ln(s, color,

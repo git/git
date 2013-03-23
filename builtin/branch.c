@@ -562,7 +562,7 @@ static char *get_head_description(void)
 		strbuf_addf(&desc, _("(no branch, rebasing %s)"),
 			    state.branch);
 	else if (state.bisect_in_progress)
-		strbuf_addf(&desc, _("(no branch, bisecting %s)"),
+		strbuf_addf(&desc, _("(no branch, bisect started on %s)"),
 			    state.branch);
 	else if (state.detached_from)
 		strbuf_addf(&desc, _("(detached from %s)"),

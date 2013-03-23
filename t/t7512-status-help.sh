@@ -578,7 +578,7 @@ test_expect_success 'status when bisecting' '
 	TGT=$(git rev-parse --short two_bisect) &&
 	cat >expected <<-EOF &&
 	# HEAD detached at $TGT
-	# You are currently bisecting branch '\''bisect'\''.
+	# You are currently bisecting, started from branch '\''bisect'\''.
 	#   (use "git bisect reset" to get back to the original branch)
 	#
 	nothing to commit (use -u to show untracked files)
