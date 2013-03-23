@@ -2357,7 +2357,7 @@ int for_each_reflog_ent_reverse(const char *refname, each_reflog_ent_fn fn, void
 			return error("cannot seek back reflog for %s: %s",
 				     refname, strerror(errno));
 		nread = fread(buf, cnt, 1, logfp);
-		if (nread < 0)
+		if (nread != 1)
 			return error("cannot read %d bytes from reflog for %s: %s",
 				     cnt, refname, strerror(errno));
 		pos -= cnt;
