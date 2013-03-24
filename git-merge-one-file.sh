@@ -69,7 +69,7 @@ case "${1:-.}${2:-.}${3:-.}" in
 	echo "Adding $4"
 	if test -f "$4"
 	then
-		echo "ERROR: untracked $4 is overwritten by the merge."
+		echo "ERROR: untracked $4 is overwritten by the merge." >&2
 		exit 1
 	fi
 	git update-index --add --cacheinfo "$7" "$3" "$4" &&
@@ -82,8 +82,8 @@ case "${1:-.}${2:-.}${3:-.}" in
 ".$3$2")
 	if test "$6" != "$7"
 	then
-		echo "ERROR: File $4 added identically in both branches,"
-		echo "ERROR: but permissions conflict $6->$7."
+		echo "ERROR: File $4 added identically in both branches," >&2
+		echo "ERROR: but permissions conflict $6->$7." >&2
 		exit 1
 	fi
 	echo "Adding $4"
@@ -98,11 +98,11 @@ case "${1:-.}${2:-.}${3:-.}" in
 
 	case ",$6,$7," in
 	*,120000,*)
-		echo "ERROR: $4: Not merging symbolic link changes."
+		echo "ERROR: $4: Not merging symbolic link changes." >&2
 		exit 1
 		;;
 	*,160000,*)
-		echo "ERROR: $4: Not merging conflicting submodule changes."
+		echo "ERROR: $4: Not merging conflicting submodule changes." >&2
 		exit 1
 		;;
 	esac
@@ -150,14 +150,14 @@ case "${1:-.}${2:-.}${3:-.}" in
 
 	if test $ret != 0
 	then
-		echo "ERROR: $msg in $4"
+		echo "ERROR: $msg in $4" >&2
 		exit 1
 	fi
 	exec git update-index -- "$4"
 	;;
 
 *)
-	echo "ERROR: $4: Not handling case $1 -> $2 -> $3"
+	echo "ERROR: $4: Not handling case $1 -> $2 -> $3" >&2
 	;;
 esac
 exit 1
