@@ -171,10 +171,9 @@ test_expect_success 'verbose' '
 
 test_expect_success 'verbose respects diff config' '
 
-	git config color.diff always &&
+	test_config color.diff always &&
 	git status -v >actual &&
-	grep "\[1mdiff --git" actual &&
-	git config --unset color.diff
+	grep "\[1mdiff --git" actual
 '
 
 test_expect_success 'cleanup commit messages (verbatim option,-t)' '
@@ -518,8 +517,7 @@ use_template="-t template"
 try_commit_status_combo
 
 test_expect_success 'commit --status with custom comment character' '
-	test_when_finished "git config --unset core.commentchar" &&
-	git config core.commentchar ";" &&
+	test_config core.commentchar ";" &&
 	try_commit --status &&
 	test_i18ngrep "^; Changes to be committed:" .git/COMMIT_EDITMSG
 '
