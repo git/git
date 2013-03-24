@@ -27,7 +27,7 @@ SUBDIRECTORY_OK=Yes
 cd_to_toplevel
 require_work_tree
 
-if ! test "$#" -eq 7
+if test $# != 7
 then
 	echo "$LONG_USAGE"
 	exit 1
@@ -38,7 +38,8 @@ case "${1:-.}${2:-.}${3:-.}" in
 # Deleted in both or deleted in one and unchanged in the other
 #
 "$1.." | "$1.$1" | "$1$1.")
-	if [ "$2" ]; then
+	if test -n "$2"
+	then
 		echo "Removing $4"
 	else
 		# read-tree checked that index matches HEAD already,
@@ -48,7 +49,8 @@ case "${1:-.}${2:-.}${3:-.}" in
 		# we do not have it in the index, though.
 		exec git update-index --remove -- "$4"
 	fi
-	if test -f "$4"; then
+	if test -f "$4"
+	then
 		rm -f -- "$4" &&
 		rmdir -p "$(expr "z$4" : 'z\(.*\)/')" 2>/dev/null || :
 	fi &&
@@ -78,7 +80,8 @@ case "${1:-.}${2:-.}${3:-.}" in
 # Added in both, identically (check for same permissions).
 #
 ".$3$2")
-	if [ "$6" != "$7" ]; then
+	if test "$6" != "$7"
+	then
 		echo "ERROR: File $4 added identically in both branches,"
 		echo "ERROR: but permissions conflict $6->$7."
 		exit 1
@@ -121,7 +124,8 @@ case "${1:-.}${2:-.}${3:-.}" in
 	git merge-file "$src1" "$orig" "$src2"
 	ret=$?
 	msg=
-	if [ $ret -ne 0 ]; then
+	if test $ret != 0
+	then
 		msg='content conflict'
 	fi
 
@@ -130,18 +134,22 @@ case "${1:-.}${2:-.}${3:-.}" in
 	git checkout-index -f --stage=2 -- "$4" && cat "$src1" >"$4" || exit 1
 	rm -f -- "$orig" "$src1" "$src2"
 
-	if [ "$6" != "$7" ]; then
-		if [ -n "$msg" ]; then
+	if test "$6" != "$7"
+	then
+		if test -n "$msg"
+		then
 			msg="$msg, "
 		fi
 		msg="${msg}permissions conflict: $5->$6,$7"
 		ret=1
 	fi
-	if [ "$1" = '' ]; then
+	if test -z "$1"
+	then
 		ret=1
 	fi
 
-	if [ $ret -ne 0 ]; then
+	if test $ret != 0
+	then
 		echo "ERROR: $msg in $4"
 		exit 1
 	fi
