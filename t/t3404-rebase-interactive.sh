@@ -937,8 +937,7 @@ test_expect_success 'rebase --edit-todo can be used to modify todo' '
 test_expect_success 'rebase -i respects core.commentchar' '
 	git reset --hard &&
 	git checkout E^0 &&
-	git config core.commentchar "\\" &&
-	test_when_finished "git config --unset core.commentchar" &&
+	test_config core.commentchar "\\" &&
 	write_script remove-all-but-first.sh <<-\EOF &&
 	sed -e "2,\$s/^/\\\\/" "$1" >"$1.tmp" &&
 	mv "$1.tmp" "$1"
