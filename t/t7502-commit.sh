@@ -418,16 +418,6 @@ EOF
 
 echo '## Custom template' >template
 
-clear_config () {
-	(
-		git config --unset-all "$1"
-		case $? in
-		0|5)	exit 0 ;;
-		*)	exit 1 ;;
-		esac
-	)
-}
-
 try_commit () {
 	git reset --hard &&
 	echo >>negative &&
@@ -443,67 +433,57 @@ try_commit () {
 try_commit_status_combo () {
 
 	test_expect_success 'commit' '
-		clear_config commit.status &&
 		try_commit "" &&
 		test_i18ngrep "^# Changes to be committed:" .git/COMMIT_EDITMSG
 	'
 
 	test_expect_success 'commit' '
-		clear_config commit.status &&
 		try_commit "" &&
 		test_i18ngrep "^# Changes to be committed:" .git/COMMIT_EDITMSG
 	'
 
 	test_expect_success 'commit --status' '
-		clear_config commit.status &&
 		try_commit --status &&
 		test_i18ngrep "^# Changes to be committed:" .git/COMMIT_EDITMSG
 	'
 
 	test_expect_success 'commit --no-status' '
-		clear_config commit.status &&
 		try_commit --no-status &&
 		test_i18ngrep ! "^# Changes to be committed:" .git/COMMIT_EDITMSG
 	'
 
 	test_expect_success 'commit with commit.status = yes' '
-		clear_config commit.status &&
-		git config commit.status yes &&
+		test_config commit.status yes &&
 		try_commit "" &&
 		test_i18ngrep "^# Changes to be committed:" .git/COMMIT_EDITMSG
 	'
 
 	test_expect_success 'commit with commit.status = no' '
-		clear_config commit.status &&
-		git config commit.status no &&
+		test_config commit.status no &&
 		try_commit "" &&
 		test_i18ngrep ! "^# Changes to be committed:" .git/COMMIT_EDITMSG
 	'
 
 	test_expect_success 'commit --status with commit.status = yes' '
-		clear_config commit.status &&
-		git config commit.status yes &&
+		test_config commit.status yes &&
 		try_commit --status &&
 		test_i18ngrep "^# Changes to be committed:" .git/COMMIT_EDITMSG
 	'
 
 	test_expect_success 'commit --no-status with commit.status = yes' '
-		clear_config commit.status &&
-		git config commit.status yes &&
+		test_config commit.status yes &&
 		try_commit --no-status &&
 		test_i18ngrep ! "^# Changes to be committed:" .git/COMMIT_EDITMSG
 	'
 
 	test_expect_success 'commit --status with commit.status = no' '
-		clear_config commit.status &&
-		git config commit.status no &&
+		test_config commit.status no &&
 		try_commit --status &&
 		test_i18ngrep "^# Changes to be committed:" .git/COMMIT_EDITMSG
 	'
 
 	test_expect_success 'commit --no-status with commit.status = no' '
-		clear_config commit.status &&
-		git config commit.status no &&
+		test_config commit.status no &&
 		try_commit --no-status &&
 		test_i18ngrep ! "^# Changes to be committed:" .git/COMMIT_EDITMSG
 	'
