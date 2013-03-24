@@ -47,6 +47,13 @@ static int score_matches(unsigned mode1, unsigned mode2, const char *path)
 	return score;
 }
 
+static int base_name_entries_compare(const struct name_entry *a,
+				     const struct name_entry *b)
+{
+	return base_name_compare(a->path, tree_entry_len(a), a->mode,
+				 b->path, tree_entry_len(b), b->mode);
+}
+
 /*
  * Inspect two trees, and give a score that tells how similar they are.
  */
@@ -71,54 +78,35 @@ static int score_trees(const unsigned char *hash1, const unsigned char *hash2)
 	if (type != OBJ_TREE)
 		die("%s is not a tree", sha1_to_hex(hash2));
 	init_tree_desc(&two, two_buf, size);
-	while (one.size | two.size) {
-		const unsigned char *elem1 = elem1;
-		const unsigned char *elem2 = elem2;
-		const char *path1 = path1;
-		const char *path2 = path2;
-		unsigned mode1 = mode1;
-		unsigned mode2 = mode2;
+	for (;;) {
+		struct name_entry e1, e2;
+		int got_entry_from_one = tree_entry(&one, &e1);
+		int got_entry_from_two = tree_entry(&two, &e2);
 		int cmp;
 
-		if (one.size)
-			elem1 = tree_entry_extract(&one, &path1, &mode1);
-		if (two.size)
-			elem2 = tree_entry_extract(&two, &path2, &mode2);
-
-		if (!one.size) {
-			/* two has more entries */
-			score += score_missing(mode2, path2);
-			update_tree_entry(&two);
-			continue;
-		}
-		if (!two.size) {
+		if (got_entry_from_one && got_entry_from_two)
+			cmp = base_name_entries_compare(&e1, &e2);
+		else if (got_entry_from_one)
 			/* two lacks this entry */
-			score += score_missing(mode1, path1);
-			update_tree_entry(&one);
-			continue;
-		}
-		cmp = base_name_compare(path1, strlen(path1), mode1,
-					path2, strlen(path2), mode2);
-		if (cmp < 0) {
+			cmp = -1;
+		else if (got_entry_from_two)
+			/* two has more entries */
+			cmp = 1;
+		else
+			break;
+
+		if (cmp < 0)
 			/* path1 does not appear in two */
-			score += score_missing(mode1, path1);
-			update_tree_entry(&one);
-			continue;
-		}
-		else if (cmp > 0) {
+			score += score_missing(e1.mode, e1.path);
+		else if (cmp > 0)
 			/* path2 does not appear in one */
-			score += score_missing(mode2, path2);
-			update_tree_entry(&two);
-			continue;
-		}
-		else if (hashcmp(elem1, elem2))
+			score += score_missing(e2.mode, e2.path);
+		else if (hashcmp(e1.sha1, e2.sha1))
 			/* they are different */
-			score += score_differs(mode1, mode2, path1);
+			score += score_differs(e1.mode, e2.mode, e1.path);
 		else
 			/* same subtree or blob */
-			score += score_matches(mode1, mode2, path1);
-		update_tree_entry(&one);
-		update_tree_entry(&two);
+			score += score_matches(e1.mode, e2.mode, e1.path);
 	}
 	free(one_buf);
 	free(two_buf);
