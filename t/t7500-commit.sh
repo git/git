@@ -36,8 +36,7 @@ test_expect_success 'nonexistent template file should return error' '
 '
 
 test_expect_success 'nonexistent template file in config should return error' '
-	git config commit.template "$PWD"/notexist &&
-	test_when_finished "git config --unset commit.template" &&
+	test_config commit.template "$PWD"/notexist &&
 	(
 		GIT_EDITOR="echo hello >\"\$1\"" &&
 		export GIT_EDITOR &&
@@ -93,14 +92,13 @@ test_expect_success '-t option should be short for --template' '
 
 test_expect_success 'config-specified template should commit' '
 	echo "new template" > "$TEMPLATE" &&
-	git config commit.template "$TEMPLATE" &&
+	test_config commit.template "$TEMPLATE" &&
 	echo "more content" >> foo &&
 	git add foo &&
 	(
 		test_set_editor "$TEST_DIRECTORY"/t7500/add-content &&
 		git commit
 	) &&
-	git config --unset commit.template &&
 	commit_msg_is "new templatecommit message"
 '
 
