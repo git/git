@@ -1,0 +1,29 @@
+Git v1.8.2.1 Release Notes
+==========================
+
+Fixes since v1.8.2
+------------------
+
+ * The "--color=<when>" argument to the commands in the diff family
+   was described poorly.
+
+ * The arguments given to pre-rebase hook were not documented.
+
+ * The v4 index format was not documented.
+
+ * The "--match=<pattern>" argument "git describe" takes uses glob
+   pattern but it wasn't obvious from the documentation.
+
+ * Some sources failed to compile on systems that lack NI_MAXHOST in
+   their system header (e.g. z/OS).
+
+ * Add an example use of "--env-filter" in "filter-branch"
+   documentation.
+
+ * "git bundle verify" did not say "records a complete history" for a
+   bundle that does not have any prerequisites.
+
+ * In the v1.8.0 era, we changed symbols that do not have to be global
+   to file scope static, but a few functions in graph.c were used by
+   CGit from sideways bypassing the entry points of the API the
+   in-tree users use.
