@@ -52,6 +52,16 @@ UI, Workflows & Features
 
  * "git send-email" can be used with the credential helper system.
 
+ * There was no Porcelain way to say "I no longer am interested in
+   this submodule", once you express your interest in a submodule with
+   "submodule init".  "submodule deinit" is the way to do so.
+
+ * "git pull --rebase" learned to pass "-v/-q" options to underlying
+   "git rebase".
+
+ * The new "--follow-tags" option tells "git push" to push relevant
+   annotated tags when pushing branches out.
+
 
 Foreign Interface
 
@@ -76,35 +86,76 @@ Unless otherwise noted, all the fixes since v1.8.2 in the maintenance
 track are contained in this release (see release notes to them for
 details).
 
+ * Annotated tags outside refs/tags/ hierarchy were not advertised
+   correctly to the ls-remote and fetch with recent version of Git.
+   (merge c29c46f jk/fully-peeled-packed-ref later to maint).
+
+ * Recent optimization broke shallow clones.
+   (merge f59de5d jk/peel-ref later to maint).
+
+ * "git cmd -- ':(top'" was not diagnosed as an invalid syntax, and
+   instead the parser kept reading beyond the end of the string.
+   (merge f612a67 lf/setup-prefix-pathspec later to maint).
+
+ * "git tag -f <tag>" always said "Updated tag '<tag>'" even when
+   creating a new tag (i.e. not overwriting nor updating).
+   (merge 3ae851e ph/tag-force-no-warn-on-creation later to maint).
+
+ * "git p4" did not behave well when the path to the root of the P4
+   client was not its real path.
+   (merge bbd8486 pw/p4-symlinked-root later to maint).
+
+ * "git archive" reports a failure when asked to create an archive out
+   of an empty tree.  It would be more intuitive to give an empty
+   archive back in such a case.
+   (merge bd54cf1 jk/empty-archive later to maint).
+
+ * When "format-patch" quoted a non-ascii strings on the header files,
+   it incorrectly applied rfc2047 and chopped a single character in
+   the middle of it.
+   (merge 6cd3c05 ks/rfc2047-one-char-at-a-time later to maint).
+
+ * An aliased command spawned from a bare repository that does not say
+   it is bare with "core.bare = yes" is treated as non-bare by mistake.
+   (merge 2cd83d1 jk/alias-in-bare later to maint).
+
+ * In "git reflog expire", REACHABLE bit was not cleared from the
+   correct objects.
+   (merge e8e92e0 jc/maint-reflog-expire-clean-mark-typofix later to maint).
+
+ * The logic used by "git diff -M --stat" to shorten the names of
+   files before and after a rename did not work correctly when the
+   common prefix and suffix between the two filenames overlapped.
+   (merge b174eb4 ap/maint-diff-rename-avoid-overlap later to maint).
+
+ * The "--match=<pattern>" option of "git describe", when used with
+   "--all" to allow refs that are not annotated tags to be used as a
+   base of description, did not restrict the output from the command
+   to those that match the given pattern.
+   (merge 46e1d6e jc/describe later to maint).
+
  * Clarify in the documentation "what" gets pushed to "where" when the
    command line to "git push" does not say these explicitly.
    (merge cfe1348 jc/maint-push-refspec-default-doc later to maint).
 
  * The "--color=<when>" argument to the commands in the diff family
    was described poorly.
-   (merge 3d0e75f jc/color-diff-doc later to maint).
 
  * The arguments given to pre-rebase hook were not documented.
-   (merge 0414acc wk/doc-pre-rebase later to maint).
 
  * The v4 index format was not documented.
-   (merge 647d879 nd/doc-index-format later to maint).
 
  * The "--match=<pattern>" argument "git describe" takes uses glob
    pattern but it wasn't obvious from the documentation.
-   (merge 5229149 gp/describe-match-uses-glob-pattern later to maint).
 
  * Some sources failed to compile on systems that lack NI_MAXHOST in
    their system header (e.g. z/OS).
-   (merge 3b130ade dm/ni-maxhost-may-be-missing later to maint).
 
  * Add an example use of "--env-filter" in "filter-branch"
    documentation.
-   (merge 21b6e4f tk/doc-filter-branch later to maint).
 
  * "git bundle verify" did not say "records a complete history" for a
    bundle that does not have any prerequisites.
-   (merge a02ffe0 lf/bundle-verify-list-prereqs later to maint).
 
  * In the v1.8.0 era, we changed symbols that do not have to be global
    to file scope static, but a few functions in graph.c were used by
