@@ -106,7 +106,8 @@ static void insert_packed_refs(const char *packed_refs, struct ref **list)
 		return;
 
 	for (;;) {
-		int cmp, len;
+		int cmp = 0; /* assigned before used */
+		int len;
 
 		if (!fgets(buffer, sizeof(buffer), f)) {
 			fclose(f);
