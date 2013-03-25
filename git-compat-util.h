@@ -209,6 +209,17 @@ extern char *gitbasename(char *);
 #include <openssl/err.h>
 #endif
 
+/* On most systems <netdb.h> would have given us this, but
+ * not on some systems (e.g. z/OS).
+ */
+#ifndef NI_MAXHOST
+#define NI_MAXHOST 1025
+#endif
+
+#ifndef NI_MAXSERV
+#define NI_MAXSERV 32
+#endif
+
 /* On most systems <limits.h> would have given us this, but
  * not on some systems (e.g. GNU/Hurd).
  */
