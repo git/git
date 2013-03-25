@@ -79,7 +79,7 @@ test_expect_success 'clone --no-local --bare detects missing object' '
 	test_must_fail git clone --no-local --bare missing missing-transport
 '
 
-test_expect_failure 'clone --no-local --bare detects misnamed object' '
+test_expect_success 'clone --no-local --bare detects misnamed object' '
 	test_must_fail git clone --no-local --bare misnamed misnamed-transport
 '
 
