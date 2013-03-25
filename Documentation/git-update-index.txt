@@ -145,7 +145,15 @@ you will need to handle the situation manually.
 
 --index-version <n>::
 	Write the resulting index out in the named on-disk format version.
-	The current default version is 2.
+	Supported versions are 2, 3 and 4. The current default version is 2
+	or 3, depending on whether extra features are used, such as
+	`git add -N`.
++
+Version 4 performs a simple pathname compression that reduces index
+size by 30%-50% on large repositories, which results in faster load
+time. Version 4 is relatively young (first released in in 1.8.0 in
+October 2012). Other Git implementations such as JGit and libgit2
+may not support it yet.
 
 -z::
 	Only meaningful with `--stdin` or `--index-info`; paths are

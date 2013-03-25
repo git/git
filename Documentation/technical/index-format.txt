@@ -12,7 +12,7 @@ Git index format
        The signature is { 'D', 'I', 'R', 'C' } (stands for "dircache")
 
      4-byte version number:
-       The current supported versions are 2 and 3.
+       The current supported versions are 2, 3 and 4.
 
      32-bit number of index entries.
 
@@ -93,8 +93,8 @@ Git index format
     12-bit name length if the length is less than 0xFFF; otherwise 0xFFF
     is stored in this field.
 
-  (Version 3) A 16-bit field, only applicable if the "extended flag"
-  above is 1, split into (high to low bits).
+  (Version 3 or later) A 16-bit field, only applicable if the
+  "extended flag" above is 1, split into (high to low bits).
 
     1-bit reserved for future
 
