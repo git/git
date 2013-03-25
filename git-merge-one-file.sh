@@ -118,8 +118,6 @@ case "${1:-.}${2:-.}${3:-.}" in
 		;;
 	esac
 
-	# Be careful for funny filename such as "-L" in "$4", which
-	# would confuse "merge" greatly.
 	git merge-file "$src1" "$orig" "$src2"
 	ret=$?
 	msg=
