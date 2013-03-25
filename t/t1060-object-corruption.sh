@@ -89,7 +89,7 @@ test_expect_success 'clone --local detects corruption' '
 	test_must_fail git clone --local bit-error corrupt-checkout
 '
 
-test_expect_failure 'clone --local detects missing objects' '
+test_expect_success 'clone --local detects missing objects' '
 	test_must_fail git clone --local missing missing-checkout
 '
 
