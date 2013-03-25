@@ -463,12 +463,21 @@ static void clear_commit_marks_1(struct commit_list **plist,
 	}
 }
 
-void clear_commit_marks(struct commit *commit, unsigned int mark)
+void clear_commit_marks_many(int nr, struct commit **commit, unsigned int mark)
 {
 	struct commit_list *list = NULL;
-	commit_list_insert(commit, &list);
+
+	while (nr--) {
+		commit_list_insert(*commit, &list);
+		commit++;
+	}
 	while (list)
 		clear_commit_marks_1(&list, pop_commit(&list), mark);
+}
+
+void clear_commit_marks(struct commit *commit, unsigned int mark)
+{
+	clear_commit_marks_many(1, &commit, mark);
 }
 
 void clear_commit_marks_for_object_array(struct object_array *a, unsigned mark)
@@ -797,8 +806,7 @@ struct commit_list *get_merge_bases_many(struct commit *one,
 	if (!result || !result->next) {
 		if (cleanup) {
 			clear_commit_marks(one, all_flags);
-			for (i = 0; i < n; i++)
-				clear_commit_marks(twos[i], all_flags);
+			clear_commit_marks_many(n, twos, all_flags);
 		}
 		return result;
 	}
@@ -816,8 +824,7 @@ struct commit_list *get_merge_bases_many(struct commit *one,
 	free_commit_list(result);
 
 	clear_commit_marks(one, all_flags);
-	for (i = 0; i < n; i++)
-		clear_commit_marks(twos[i], all_flags);
+	clear_commit_marks_many(n, twos, all_flags);
 
 	cnt = remove_redundant(rslt, cnt);
 	result = NULL;
@@ -852,23 +859,34 @@ int is_descendant_of(struct commit *commit, struct commit_list *with_commit)
 }
 
 /*
+ * Is "commit" an ancestor of one of the "references"?
+ */
+int in_merge_bases_many(struct commit *commit, int nr_reference, struct commit **reference)
+{
+	struct commit_list *bases;
+	int ret = 0, i;
+
+	if (parse_commit(commit))
+		return ret;
+	for (i = 0; i < nr_reference; i++)
+		if (parse_commit(reference[i]))
+			return ret;
+
+	bases = paint_down_to_common(commit, nr_reference, reference);
+	if (commit->object.flags & PARENT2)
+		ret = 1;
+	clear_commit_marks(commit, all_flags);
+	clear_commit_marks_many(nr_reference, reference, all_flags);
+	free_commit_list(bases);
+	return ret;
+}
+
+/*
  * Is "commit" an ancestor of (i.e. reachable from) the "reference"?
  */
 int in_merge_bases(struct commit *commit, struct commit *reference)
 {
-	struct commit_list *bases;
-	int ret = 0;
-
-	if (parse_commit(commit) || parse_commit(reference))
-		return ret;
-
-	bases = paint_down_to_common(commit, 1, &reference);
-	if (commit->object.flags & PARENT2)
-		ret = 1;
-	clear_commit_marks(commit, all_flags);
-	clear_commit_marks(reference, all_flags);
-	free_commit_list(bases);
-	return ret;
+	return in_merge_bases_many(commit, 1, &reference);
 }
 
 struct commit_list *reduce_heads(struct commit_list *heads)

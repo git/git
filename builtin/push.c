@@ -437,6 +437,8 @@ int cmd_push(int argc, const char **argv, const char *prefix)
 		OPT_BIT(0, "prune", &flags, N_("prune locally removed refs"),
 			TRANSPORT_PUSH_PRUNE),
 		OPT_BIT(0, "no-verify", &flags, N_("bypass pre-push hook"), TRANSPORT_PUSH_NO_HOOK),
+		OPT_BIT(0, "follow-tags", &flags, N_("push missing but relevant tags"),
+			TRANSPORT_PUSH_FOLLOW_TAGS),
 		OPT_END()
 	};
 

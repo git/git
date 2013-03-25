@@ -1077,4 +1077,77 @@ test_expect_success 'fetch exact SHA1' '
 	)
 '
 
+test_expect_success 'fetch follows tags by default' '
+	mk_test heads/master &&
+	rm -fr src dst &&
+	git init src &&
+	(
+		cd src &&
+		git pull ../testrepo master &&
+		git tag -m "annotated" tag &&
+		git for-each-ref >tmp1 &&
+		(
+			cat tmp1
+			sed -n "s|refs/heads/master$|refs/remotes/origin/master|p" tmp1
+		) |
+		sort -k 3 >../expect
+	) &&
+	git init dst &&
+	(
+		cd dst &&
+		git remote add origin ../src &&
+		git config branch.master.remote origin &&
+		git config branch.master.merge refs/heads/master &&
+		git pull &&
+		git for-each-ref >../actual
+	) &&
+	test_cmp expect actual
+'
+
+test_expect_success 'push does not follow tags by default' '
+	mk_test heads/master &&
+	rm -fr src dst &&
+	git init src &&
+	git init --bare dst &&
+	(
+		cd src &&
+		git pull ../testrepo master &&
+		git tag -m "annotated" tag &&
+		git checkout -b another &&
+		git commit --allow-empty -m "future commit" &&
+		git tag -m "future" future &&
+		git checkout master &&
+		git for-each-ref refs/heads/master >../expect &&
+		git push ../dst master
+	) &&
+	(
+		cd dst &&
+		git for-each-ref >../actual
+	) &&
+	test_cmp expect actual
+'
+
+test_expect_success 'push --follow-tag only pushes relevant tags' '
+	mk_test heads/master &&
+	rm -fr src dst &&
+	git init src &&
+	git init --bare dst &&
+	(
+		cd src &&
+		git pull ../testrepo master &&
+		git tag -m "annotated" tag &&
+		git checkout -b another &&
+		git commit --allow-empty -m "future commit" &&
+		git tag -m "future" future &&
+		git checkout master &&
+		git for-each-ref refs/heads/master refs/tags/tag >../expect
+		git push --follow-tag ../dst master
+	) &&
+	(
+		cd dst &&
+		git for-each-ref >../actual
+	) &&
+	test_cmp expect actual
+'
+
 test_done
