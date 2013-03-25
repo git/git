@@ -24,10 +24,35 @@ test_expect_success 'setup corrupt repo' '
 	)
 '
 
+test_expect_success 'setup repo with missing object' '
+	git init missing &&
+	(
+		cd missing &&
+		test_commit content &&
+		rm -f "$(obj_to_file HEAD:content.t)"
+	)
+'
+
 test_expect_success 'streaming a corrupt blob fails' '
 	(
 		cd bit-error &&
 		test_must_fail git cat-file blob HEAD:content.t
+	)
+'
+
+test_expect_success 'read-tree -u detects bit-errors in blobs' '
+	(
+		cd bit-error &&
+		rm -f content.t &&
+		test_must_fail git read-tree --reset -u HEAD
+	)
+'
+
+test_expect_success 'read-tree -u detects missing objects' '
+	(
+		cd missing &&
+		rm -f content.t &&
+		test_must_fail git read-tree --reset -u HEAD
 	)
 '
 

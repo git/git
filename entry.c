@@ -120,16 +120,18 @@ static int streaming_write_entry(struct cache_entry *ce, char *path,
 				 const struct checkout *state, int to_tempfile,
 				 int *fstat_done, struct stat *statbuf)
 {
-	int result = -1;
+	int result = 0;
 	int fd;
 
 	fd = open_output_fd(path, ce, to_tempfile);
-	if (0 <= fd) {
-		result = stream_blob_to_fd(fd, ce->sha1, filter, 1);
-		*fstat_done = fstat_output(fd, state, statbuf);
-		result = close(fd);
-	}
-	if (result && 0 <= fd)
+	if (fd < 0)
+		return -1;
+
+	result |= stream_blob_to_fd(fd, ce->sha1, filter, 1);
+	*fstat_done = fstat_output(fd, state, statbuf);
+	result |= close(fd);
+
+	if (result)
 		unlink(path);
 	return result;
 }
