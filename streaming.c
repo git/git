@@ -514,6 +514,8 @@ int stream_blob_to_fd(int fd, unsigned const char *sha1, struct stream_filter *f
 		ssize_t wrote, holeto;
 		ssize_t readlen = read_istream(st, buf, sizeof(buf));
 
+		if (readlen < 0)
+			goto close_and_exit;
 		if (!readlen)
 			break;
 		if (can_seek && sizeof(buf) == readlen) {
