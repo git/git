@@ -383,7 +383,7 @@ static int is_date(int year, int month, int day, struct tm *now_tm, time_t now, 
 		 * sense to specify timestamp way into the future.  Make
 		 * sure it is not later than ten days from now...
 		 */
-		if (now + 10*24*3600 < specified)
+		if ((specified != -1) && (now + 10*24*3600 < specified))
 			return 0;
 		tm->tm_mon = r->tm_mon;
 		tm->tm_mday = r->tm_mday;
@@ -694,8 +694,14 @@ int parse_date_basic(const char *date, unsigned long *timestamp, int *offset)
 
 	/* mktime uses local timezone */
 	*timestamp = tm_to_time_t(&tm);
-	if (*offset == -1)
-		*offset = ((time_t)*timestamp - mktime(&tm)) / 60;
+	if (*offset == -1) {
+		time_t temp_time = mktime(&tm);
+		if ((time_t)*timestamp > temp_time) {
+			*offset = ((time_t)*timestamp - temp_time) / 60;
+		} else {
+			*offset = -(int)((temp_time - (time_t)*timestamp) / 60);
+		}
+	}
 
 	if (*timestamp == -1)
 		return -1;
