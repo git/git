@@ -3,12 +3,6 @@
 test_description='respect crlf in git archive'
 
 . ./test-lib.sh
-GIT_UNZIP=${GIT_UNZIP:-unzip}
-
-test_lazy_prereq UNZIP '
-	"$GIT_UNZIP" -v
-	test $? -ne 127
-'
 
 test_expect_success setup '
 
