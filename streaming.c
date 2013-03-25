@@ -237,7 +237,7 @@ static read_method_decl(filtered)
 		if (!fs->input_finished) {
 			fs->i_end = read_istream(fs->upstream, fs->ibuf, FILTER_BUFFER);
 			if (fs->i_end < 0)
-				break;
+				return -1;
 			if (fs->i_end)
 				continue;
 		}
