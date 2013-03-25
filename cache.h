@@ -341,9 +341,11 @@ static inline enum object_type object_type(unsigned int mode)
 		OBJ_BLOB;
 }
 
+/* Double-check local_repo_env below if you add to this list. */
 #define GIT_DIR_ENVIRONMENT "GIT_DIR"
 #define GIT_NAMESPACE_ENVIRONMENT "GIT_NAMESPACE"
 #define GIT_WORK_TREE_ENVIRONMENT "GIT_WORK_TREE"
+#define GIT_PREFIX_ENVIRONMENT "GIT_PREFIX"
 #define DEFAULT_GIT_DIR_ENVIRONMENT ".git"
 #define DB_ENVIRONMENT "GIT_OBJECT_DIRECTORY"
 #define INDEX_ENVIRONMENT "GIT_INDEX_FILE"
@@ -365,13 +367,24 @@ static inline enum object_type object_type(unsigned int mode)
 #define GIT_LITERAL_PATHSPECS_ENVIRONMENT "GIT_LITERAL_PATHSPECS"
 
 /*
- * Repository-local GIT_* environment variables
- * The array is NULL-terminated to simplify its usage in contexts such
- * environment creation or simple walk of the list.
- * The number of non-NULL entries is available as a macro.
+ * This environment variable is expected to contain a boolean indicating
+ * whether we should or should not treat:
+ *
+ *   GIT_DIR=foo.git git ...
+ *
+ * as if GIT_WORK_TREE=. was given. It's not expected that users will make use
+ * of this, but we use it internally to communicate to sub-processes that we
+ * are in a bare repo. If not set, defaults to true.
  */
-#define LOCAL_REPO_ENV_SIZE 9
-extern const char *const local_repo_env[LOCAL_REPO_ENV_SIZE + 1];
+#define GIT_IMPLICIT_WORK_TREE_ENVIRONMENT "GIT_IMPLICIT_WORK_TREE"
+
+/*
+ * Repository-local GIT_* environment variables; these will be cleared
+ * when git spawns a sub-process that runs inside another repository.
+ * The array is NULL-terminated, which makes it easy to pass in the "env"
+ * parameter of a run-command invocation, or to do a simple walk.
+ */
+extern const char * const local_repo_env[];
 
 extern int is_bare_repository_cfg;
 extern int is_bare_repository(void);
