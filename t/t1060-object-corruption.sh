@@ -33,6 +33,19 @@ test_expect_success 'setup repo with missing object' '
 	)
 '
 
+test_expect_success 'setup repo with misnamed object' '
+	git init misnamed &&
+	(
+		cd misnamed &&
+		test_commit content &&
+		good=$(obj_to_file HEAD:content.t) &&
+		blob=$(echo corrupt | git hash-object -w --stdin) &&
+		bad=$(obj_to_file $blob) &&
+		rm -f "$good" &&
+		mv "$bad" "$good"
+	)
+'
+
 test_expect_success 'streaming a corrupt blob fails' '
 	(
 		cd bit-error &&
@@ -54,6 +67,34 @@ test_expect_success 'read-tree -u detects missing objects' '
 		rm -f content.t &&
 		test_must_fail git read-tree --reset -u HEAD
 	)
+'
+
+# We use --bare to make sure that the transport detects it, not the checkout
+# phase.
+test_expect_success 'clone --no-local --bare detects corruption' '
+	test_must_fail git clone --no-local --bare bit-error corrupt-transport
+'
+
+test_expect_success 'clone --no-local --bare detects missing object' '
+	test_must_fail git clone --no-local --bare missing missing-transport
+'
+
+test_expect_failure 'clone --no-local --bare detects misnamed object' '
+	test_must_fail git clone --no-local --bare misnamed misnamed-transport
+'
+
+# We do not expect --local to detect corruption at the transport layer,
+# so we are really checking the checkout() code path.
+test_expect_success 'clone --local detects corruption' '
+	test_must_fail git clone --local bit-error corrupt-checkout
+'
+
+test_expect_failure 'clone --local detects missing objects' '
+	test_must_fail git clone --local missing missing-checkout
+'
+
+test_expect_failure 'clone --local detects misnamed objects' '
+	test_must_fail git clone --local misnamed misnamed-checkout
 '
 
 test_done
