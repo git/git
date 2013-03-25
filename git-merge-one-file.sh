@@ -124,9 +124,10 @@ case "${1:-.}${2:-.}${3:-.}" in
 	git merge-file "$src1" "$orig" "$src2"
 	ret=$?
 	msg=
-	if test $ret != 0
+	if test $ret != 0 || test -z "$1"
 	then
 		msg='content conflict'
+		ret=1
 	fi
 
 	# Create the working tree file, using "our tree" version from the
@@ -141,10 +142,6 @@ case "${1:-.}${2:-.}${3:-.}" in
 			msg="$msg, "
 		fi
 		msg="${msg}permissions conflict: $5->$6,$7"
-		ret=1
-	fi
-	if test -z "$1"
-	then
 		ret=1
 	fi
 
