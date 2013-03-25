@@ -10,7 +10,9 @@ SYNOPSIS
 --------
 [verse]
 'git commit-tree' <tree> [(-p <parent>)...] < changelog
-'git commit-tree' [(-p <parent>)...] [(-m <message>)...] [(-F <file>)...] <tree>
+'git commit-tree' [(-p <parent>)...] [-S[<keyid>]] [(-m <message>)...]
+		  [(-F <file>)...] <tree>
+
 
 DESCRIPTION
 -----------
@@ -51,6 +53,9 @@ OPTIONS
 -F <file>::
 	Read the commit log message from the given file. Use `-` to read
 	from the standard input.
+
+-S[<keyid>]::
+	GPG-sign commit.
 
 
 Commit Information
