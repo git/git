@@ -89,6 +89,10 @@ test_expect_success 'clone --local detects corruption' '
 	test_must_fail git clone --local bit-error corrupt-checkout
 '
 
+test_expect_success 'error detected during checkout leaves repo intact' '
+	test_path_is_dir corrupt-checkout/.git
+'
+
 test_expect_success 'clone --local detects missing objects' '
 	test_must_fail git clone --local missing missing-checkout
 '
