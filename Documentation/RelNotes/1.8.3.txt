@@ -62,9 +62,10 @@ UI, Workflows & Features
  * The new "--follow-tags" option tells "git push" to push relevant
    annotated tags when pushing branches out.
 
-
-Foreign Interface
-
+ * "git mergetool" now feeds files to the "p4merge" backend in the
+   order that matches the p4 convention, where "theirs" is usually
+   shown on the left side, which is the opposite from other backend
+   expects.
 
 
 Performance, Internal Implementation, etc.
@@ -74,6 +75,10 @@ Performance, Internal Implementation, etc.
  * A few codepaths knew how much data they need to put in the
    hashtables they use upfront, but still started from a small table
    repeatedly growing and rehashing.
+
+ * The API to walk reflog entries from the latest to older, which was
+   necessary for operations such as "git checkout -", was cumbersome
+   to use correctly and also inefficient.
 
 
 Also contains minor documentation updates and code clean-ups.
@@ -121,7 +126,6 @@ details).
 
  * In "git reflog expire", REACHABLE bit was not cleared from the
    correct objects.
-   (merge e8e92e0 jc/maint-reflog-expire-clean-mark-typofix later to maint).
 
  * The logic used by "git diff -M --stat" to shorten the names of
    files before and after a rename did not work correctly when the
@@ -136,7 +140,6 @@ details).
 
  * Clarify in the documentation "what" gets pushed to "where" when the
    command line to "git push" does not say these explicitly.
-   (merge cfe1348 jc/maint-push-refspec-default-doc later to maint).
 
  * The "--color=<when>" argument to the commands in the diff family
    was described poorly.
@@ -161,14 +164,12 @@ details).
    to file scope static, but a few functions in graph.c were used by
    CGit from sideways bypassing the entry points of the API the
    in-tree users use.
-   (merge ac751a0 jk/graph-c-expose-symbols-for-cgit later to maint).
 
  * "git update-index -h" did not do the usual "-h(elp)" thing.
 
  * "git index-pack" had a buffer-overflow while preparing an
    informational message when the translated version of it was too
    long.
-   (merge 5c3459f nd/index-pack-l10n-buf-overflow later to maint).
 
  * 'git commit -m "$msg"' used to add an extra newline even when
    $msg already ended with one.
@@ -177,15 +178,12 @@ details).
  * The SSL peer verification done by "git imap-send" did not ask for
    Server Name Indication (RFC 4366), failing to connect SSL/TLS
    sites that serve multiple hostnames on a single IP.
-   (merge 698a1ec ob/imap-send-ssl-verify later to maint).
 
  * perl/Git.pm::cat_blob slurped everything in core only to write it
    out to a file descriptor, which was not a very smart thing to do.
-   (merge 712c6ad jc/perl-cat-blob later to maint).
 
  * "git branch" did not bother to check nonsense command line
    parameters and issue errors in many cases.
-   (merge 8efb889 nd/branch-error-cases later to maint).
 
  * Verification of signed tags were not done correctly when not in C
    or en/US locale.
@@ -195,19 +193,15 @@ details).
    most official "UTF-8" when the system does not understand the
    user-supplied encoding name that are the common alternative
    spellings of UTF-8.
-   (merge 5c680be jk/utf-8-can-be-spelled-differently later to maint).
 
  * When export-subst is used, "zip" output recorded incorrect
    size of the file.
-   (merge d3c1472 rs/zip-compresssed-size-with-export-subst later to maint).
 
  * "git am $maildir/" applied messages in an unexpected order; sort
    filenames read from the maildir/ in a way that is more likely to
    sort messages in the order the writing MUA meant to, by sorting
    numeric segment in numeric order and non-numeric segment in
    alphabetical order.
-   (merge 18505c3 jk/mailsplit-maildir-muttsort later to maint).
 
  * "git submodule update", when recursed into sub-submodules, did not
    acccumulate the prefix paths.
-   (merge 75bf5e6 we/submodule-update-prefix-output later to maint).
