@@ -402,8 +402,8 @@ int cmd_describe(int argc, const char **argv, const char *prefix)
 	struct option options[] = {
 		OPT_BOOLEAN(0, "contains",   &contains, N_("find the tag that comes after the commit")),
 		OPT_BOOLEAN(0, "debug",      &debug, N_("debug search strategy on stderr")),
-		OPT_BOOLEAN(0, "all",        &all, N_("use any ref in .git/refs")),
-		OPT_BOOLEAN(0, "tags",       &tags, N_("use any tag in .git/refs/tags")),
+		OPT_BOOLEAN(0, "all",        &all, N_("use any ref")),
+		OPT_BOOLEAN(0, "tags",       &tags, N_("use any tag, even unannotated")),
 		OPT_BOOLEAN(0, "long",       &longformat, N_("always use long format")),
 		OPT__ABBREV(&abbrev),
 		OPT_SET_INT(0, "exact-match", &max_candidates,
