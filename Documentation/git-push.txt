@@ -23,6 +23,17 @@ You can make interesting things happen to a repository
 every time you push into it, by setting up 'hooks' there.  See
 documentation for linkgit:git-receive-pack[1].
 
+When the command line does not specify where to push with the
+`<repository>` argument, `branch.*.remote` configuration for the
+current branch is consulted to determine where to push.  If the
+configuration is missing, it defaults to 'origin'.
+
+When the command line does not specify what to push with `<refspec>...`
+arguments or `--all`, `--mirror`, `--tags` options, the command finds
+the default `<refspec>` by consulting `remote.*.push` configuration,
+and if it is not found, honors `push.default` configuration to decide
+what to push (See gitlink:git-config[1] for the meaning of `push.default`).
+
 
 OPTIONS[[OPTIONS]]
 ------------------
@@ -33,13 +44,10 @@ OPTIONS[[OPTIONS]]
 	of a remote (see the section <<REMOTES,REMOTES>> below).
 
 <refspec>...::
+	Specify what destination ref to update with what source object.
 	The format of a <refspec> parameter is an optional plus
-	`+`, followed by the source ref <src>, followed
+	`+`, followed by the source object <src>, followed
 	by a colon `:`, followed by the destination ref <dst>.
-	It is used to specify with what <src> object the <dst> ref
-	in the remote repository is to be updated.  If not specified,
-	the behavior of the command is controlled by the `push.default`
-	configuration variable.
 +
 The <src> is often the name of the branch you would want to push, but
 it can be any arbitrary "SHA-1 expression", such as `master~4` or
@@ -66,10 +74,7 @@ the remote repository.
 The special refspec `:` (or `+:` to allow non-fast-forward updates)
 directs Git to push "matching" branches: for every branch that exists on
 the local side, the remote side is updated if a branch of the same name
-already exists on the remote side.  This is the default operation mode
-if no explicit refspec is found (that is neither on the command line
-nor in any Push line of the corresponding remotes file---see below) and
-no `push.default` configuration variable is set.
+already exists on the remote side.
 
 --all::
 	Instead of naming each ref to push, specifies that all
