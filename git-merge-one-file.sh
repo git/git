@@ -27,7 +27,7 @@ SUBDIRECTORY_OK=Yes
 cd_to_toplevel
 require_work_tree
 
-if ! test "$#" -eq 7
+if test $# != 7
 then
 	echo "$LONG_USAGE"
 	exit 1
@@ -38,7 +38,8 @@ case "${1:-.}${2:-.}${3:-.}" in
 # Deleted in both or deleted in one and unchanged in the other
 #
 "$1.." | "$1.$1" | "$1$1.")
-	if [ "$2" ]; then
+	if test -n "$2"
+	then
 		echo "Removing $4"
 	else
 		# read-tree checked that index matches HEAD already,
@@ -48,7 +49,8 @@ case "${1:-.}${2:-.}${3:-.}" in
 		# we do not have it in the index, though.
 		exec git update-index --remove -- "$4"
 	fi
-	if test -f "$4"; then
+	if test -f "$4"
+	then
 		rm -f -- "$4" &&
 		rmdir -p "$(expr "z$4" : 'z\(.*\)/')" 2>/dev/null || :
 	fi &&
@@ -67,7 +69,7 @@ case "${1:-.}${2:-.}${3:-.}" in
 	echo "Adding $4"
 	if test -f "$4"
 	then
-		echo "ERROR: untracked $4 is overwritten by the merge."
+		echo "ERROR: untracked $4 is overwritten by the merge." >&2
 		exit 1
 	fi
 	git update-index --add --cacheinfo "$7" "$3" "$4" &&
@@ -78,9 +80,10 @@ case "${1:-.}${2:-.}${3:-.}" in
 # Added in both, identically (check for same permissions).
 #
 ".$3$2")
-	if [ "$6" != "$7" ]; then
-		echo "ERROR: File $4 added identically in both branches,"
-		echo "ERROR: but permissions conflict $6->$7."
+	if test "$6" != "$7"
+	then
+		echo "ERROR: File $4 added identically in both branches," >&2
+		echo "ERROR: but permissions conflict $6->$7." >&2
 		exit 1
 	fi
 	echo "Adding $4"
@@ -95,44 +98,36 @@ case "${1:-.}${2:-.}${3:-.}" in
 
 	case ",$6,$7," in
 	*,120000,*)
-		echo "ERROR: $4: Not merging symbolic link changes."
+		echo "ERROR: $4: Not merging symbolic link changes." >&2
 		exit 1
 		;;
 	*,160000,*)
-		echo "ERROR: $4: Not merging conflicting submodule changes."
+		echo "ERROR: $4: Not merging conflicting submodule changes." >&2
 		exit 1
 		;;
 	esac
 
-	src2=`git-unpack-file $3`
+	src1=$(git-unpack-file $2)
+	src2=$(git-unpack-file $3)
 	case "$1" in
 	'')
 		echo "Added $4 in both, but differently."
-		# This extracts OUR file in $orig, and uses git apply to
-		# remove lines that are unique to ours.
-		orig=`git-unpack-file $2`
-		sz0=`wc -c <"$orig"`
-		@@DIFF@@ -u -La/$orig -Lb/$orig $orig $src2 | git apply --no-add
-		sz1=`wc -c <"$orig"`
-
-		# If we do not have enough common material, it is not
-		# worth trying two-file merge using common subsections.
-		expr $sz0 \< $sz1 \* 2 >/dev/null || : >$orig
+		orig=$(git-unpack-file $2)
+		create_virtual_base "$orig" "$src2"
 		;;
 	*)
 		echo "Auto-merging $4"
-		orig=`git-unpack-file $1`
+		orig=$(git-unpack-file $1)
 		;;
 	esac
 
-	# Be careful for funny filename such as "-L" in "$4", which
-	# would confuse "merge" greatly.
-	src1=`git-unpack-file $2`
 	git merge-file "$src1" "$orig" "$src2"
 	ret=$?
 	msg=
-	if [ $ret -ne 0 ]; then
+	if test $ret != 0 || test -z "$1"
+	then
 		msg='content conflict'
+		ret=1
 	fi
 
 	# Create the working tree file, using "our tree" version from the
@@ -140,26 +135,26 @@ case "${1:-.}${2:-.}${3:-.}" in
 	git checkout-index -f --stage=2 -- "$4" && cat "$src1" >"$4" || exit 1
 	rm -f -- "$orig" "$src1" "$src2"
 
-	if [ "$6" != "$7" ]; then
-		if [ -n "$msg" ]; then
+	if test "$6" != "$7"
+	then
+		if test -n "$msg"
+		then
 			msg="$msg, "
 		fi
 		msg="${msg}permissions conflict: $5->$6,$7"
 		ret=1
 	fi
-	if [ "$1" = '' ]; then
-		ret=1
-	fi
 
-	if [ $ret -ne 0 ]; then
-		echo "ERROR: $msg in $4"
+	if test $ret != 0
+	then
+		echo "ERROR: $msg in $4" >&2
 		exit 1
 	fi
 	exec git update-index -- "$4"
 	;;
 
 *)
-	echo "ERROR: $4: Not handling case $1 -> $2 -> $3"
+	echo "ERROR: $4: Not handling case $1 -> $2 -> $3" >&2
 	;;
 esac
 exit 1
