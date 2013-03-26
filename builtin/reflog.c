@@ -414,7 +414,7 @@ static int expire_reflog(const char *ref, const unsigned char *sha1, int unused,
 		if (cb.unreachable_expire_kind == UE_HEAD) {
 			struct commit_list *elem;
 			for (elem = tips; elem; elem = elem->next)
-				clear_commit_marks(tip_commit, REACHABLE);
+				clear_commit_marks(elem->item, REACHABLE);
 			free_commit_list(tips);
 		} else {
 			clear_commit_marks(tip_commit, REACHABLE);
