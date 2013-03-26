@@ -4,6 +4,45 @@ Git v1.8.2.1 Release Notes
 Fixes since v1.8.2
 ------------------
 
+ * "git submodule update", when recursed into sub-submodules, did not
+   acccumulate the prefix paths.
+
+ * "git am $maildir/" applied messages in an unexpected order; sort
+   filenames read from the maildir/ in a way that is more likely to
+   sort messages in the order the writing MUA meant to, by sorting
+   numeric segment in numeric order and non-numeric segment in
+   alphabetical order.
+
+ * When export-subst is used, "zip" output recorded incorrect
+   size of the file.
+
+ * Some platforms and users spell UTF-8 differently; retry with the
+   most official "UTF-8" when the system does not understand the
+   user-supplied encoding name that are the common alternative
+   spellings of UTF-8.
+
+ * "git branch" did not bother to check nonsense command line
+   parameters and issue errors in many cases.
+
+ * "git update-index -h" did not do the usual "-h(elp)" thing.
+
+ * perl/Git.pm::cat_blob slurped everything in core only to write it
+   out to a file descriptor, which was not a very smart thing to do.
+
+ * The SSL peer verification done by "git imap-send" did not ask for
+   Server Name Indication (RFC 4366), failing to connect SSL/TLS
+   sites that serve multiple hostnames on a single IP.
+
+ * "git index-pack" had a buffer-overflow while preparing an
+   informational message when the translated version of it was too
+   long.
+
+ * Clarify in the documentation "what" gets pushed to "where" when the
+   command line to "git push" does not say these explicitly.
+
+ * In "git reflog expire", REACHABLE bit was not cleared from the
+   correct objects.
+
  * The "--color=<when>" argument to the commands in the diff family
    was described poorly.
 

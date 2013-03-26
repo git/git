@@ -774,9 +774,12 @@ other
 	If this environment variable is set then 'git fetch'
 	and 'git push' will use this command instead
 	of 'ssh' when they need to connect to a remote system.
-	The '$GIT_SSH' command will be given exactly two arguments:
-	the 'username@host' (or just 'host') from the URL and the
-	shell command to execute on that remote system.
+	The '$GIT_SSH' command will be given exactly two or
+	four arguments: the 'username@host' (or just 'host')
+	from the URL and the shell command to execute on that
+	remote system, optionally preceded by '-p' (literally) and
+	the 'port' from the URL when it specifies something other
+	than the default SSH port.
 +
 To pass options to the program that you want to list in GIT_SSH
 you will need to wrap the program and options into a shell script,
