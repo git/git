@@ -796,7 +796,7 @@ int cmd_update_index(int argc, const char **argv, const char *prefix)
 	};
 
 	if (argc == 2 && !strcmp(argv[1], "-h"))
-		usage(update_index_usage[0]);
+		usage_with_options(update_index_usage, options);
 
 	git_config(git_default_config, NULL);
 
