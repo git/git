@@ -130,6 +130,27 @@ static int populate_maildir_list(struct string_list *list, const char *path)
 	return 0;
 }
 
+static int maildir_filename_cmp(const char *a, const char *b)
+{
+	while (*a && *b) {
+		if (isdigit(*a) && isdigit(*b)) {
+			long int na, nb;
+			na = strtol(a, (char **)&a, 10);
+			nb = strtol(b, (char **)&b, 10);
+			if (na != nb)
+				return na - nb;
+			/* strtol advanced our pointers */
+		}
+		else {
+			if (*a != *b)
+				return (unsigned char)*a - (unsigned char)*b;
+			a++;
+			b++;
+		}
+	}
+	return (unsigned char)*a - (unsigned char)*b;
+}
+
 static int split_maildir(const char *maildir, const char *dir,
 	int nr_prec, int skip)
 {
@@ -138,6 +159,8 @@ static int split_maildir(const char *maildir, const char *dir,
 	int ret = -1;
 	int i;
 	struct string_list list = STRING_LIST_INIT_DUP;
+
+	list.cmp = maildir_filename_cmp;
 
 	if (populate_maildir_list(&list, maildir) < 0)
 		goto out;
