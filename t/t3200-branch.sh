@@ -42,6 +42,10 @@ test_expect_success \
     'git branch a/b/c should create a branch' \
     'git branch a/b/c && test_path_is_file .git/refs/heads/a/b/c'
 
+test_expect_success \
+    'git branch HEAD should fail' \
+    'test_must_fail git branch HEAD'
+
 cat >expect <<EOF
 $_z40 $HEAD $GIT_COMMITTER_NAME <$GIT_COMMITTER_EMAIL> 1117150200 +0000	branch: Created from master
 EOF
@@ -388,6 +392,14 @@ test_expect_success \
     'git tag foobar &&
      test_must_fail git branch --track my11 foobar'
 
+test_expect_success '--set-upstream-to fails on multiple branches' \
+    'test_must_fail git branch --set-upstream-to master a b c'
+
+test_expect_success '--set-upstream-to fails on detached HEAD' \
+    'git checkout HEAD^{} &&
+     test_must_fail git branch --set-upstream-to master &&
+     git checkout -'
+
 test_expect_success 'use --set-upstream-to modify HEAD' \
     'test_config branch.master.remote foo &&
      test_config branch.master.merge foo &&
@@ -415,6 +427,15 @@ test_expect_success 'test --unset-upstream on HEAD' \
      test_must_fail git config branch.master.merge &&
      # fail for a branch without upstream set
      test_must_fail git branch --unset-upstream
+'
+
+test_expect_success '--unset-upstream should fail on multiple branches' \
+    'test_must_fail git branch --unset-upstream a b c'
+
+test_expect_success '--unset-upstream should fail on detached HEAD' \
+    'git checkout HEAD^{} &&
+     test_must_fail git branch --unset-upstream &&
+     git checkout -
 '
 
 test_expect_success 'test --unset-upstream on a particular branch' \

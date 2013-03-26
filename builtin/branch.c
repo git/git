@@ -889,6 +889,17 @@ int cmd_branch(int argc, const char **argv, const char *prefix)
 	} else if (new_upstream) {
 		struct branch *branch = branch_get(argv[0]);
 
+		if (argc > 1)
+			die(_("too many branches to set new upstream"));
+
+		if (!branch) {
+			if (!argc || !strcmp(argv[0], "HEAD"))
+				die(_("could not set upstream of HEAD to %s when "
+				      "it does not point to any branch."),
+				    new_upstream);
+			die(_("no such branch '%s'"), argv[0]);
+		}
+
 		if (!ref_exists(branch->refname))
 			die(_("branch '%s' does not exist"), branch->name);
 
@@ -900,6 +911,16 @@ int cmd_branch(int argc, const char **argv, const char *prefix)
 	} else if (unset_upstream) {
 		struct branch *branch = branch_get(argv[0]);
 		struct strbuf buf = STRBUF_INIT;
+
+		if (argc > 1)
+			die(_("too many branches to unset upstream"));
+
+		if (!branch) {
+			if (!argc || !strcmp(argv[0], "HEAD"))
+				die(_("could not unset upstream of HEAD when "
+				      "it does not point to any branch."));
+			die(_("no such branch '%s'"), argv[0]);
+		}
 
 		if (!branch_has_merge_config(branch)) {
 			die(_("Branch '%s' has no upstream information"), branch->name);
@@ -915,6 +936,12 @@ int cmd_branch(int argc, const char **argv, const char *prefix)
 		struct branch *branch = branch_get(argv[0]);
 		int branch_existed = 0, remote_tracking = 0;
 		struct strbuf buf = STRBUF_INIT;
+
+		if (!strcmp(argv[0], "HEAD"))
+			die(_("it does not make sense to create 'HEAD' manually"));
+
+		if (!branch)
+			die(_("no such branch '%s'"), argv[0]);
 
 		if (kinds != REF_LOCAL_BRANCH)
 			die(_("-a and -r options to 'git branch' do not make sense with a branch name"));
