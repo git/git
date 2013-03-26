@@ -295,7 +295,7 @@ sub gs_do_switch {
 	my $full_url = add_path_to_url( $self->url, $path );
 	my ($ra, $reparented);
 
-	if ($old_url =~ m#^svn(\+ssh)?://# ||
+	if ($old_url =~ m#^svn(\+\w+)?://# ||
 	    ($full_url =~ m#^https?://# &&
 	     canonicalize_url($full_url) ne $full_url)) {
 		$_[0] = undef;
