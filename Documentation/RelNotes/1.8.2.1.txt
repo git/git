@@ -66,3 +66,6 @@ Fixes since v1.8.2
    to file scope static, but a few functions in graph.c were used by
    CGit from sideways bypassing the entry points of the API the
    in-tree users use.
+
+ * "git merge-tree" had a typo in the logic to detect d/f conflicts,
+   which caused it to segfault in some cases.
