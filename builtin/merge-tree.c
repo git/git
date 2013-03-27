@@ -245,7 +245,7 @@ static void unresolved(const struct traverse_info *info, struct name_entry n[3])
 	unsigned dirmask = 0, mask = 0;
 
 	for (i = 0; i < 3; i++) {
-		mask |= (1 << 1);
+		mask |= (1 << i);
 		if (n[i].mode && S_ISDIR(n[i].mode))
 			dirmask |= (1 << i);
 	}
