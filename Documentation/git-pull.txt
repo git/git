@@ -218,7 +218,7 @@ $ git merge origin/next
 ------------------------------------------------
 
 
-If you tried a pull which resulted in a complex conflicts and
+If you tried a pull which resulted in complex conflicts and
 would want to start over, you can recover with 'git reset'.
 
 
