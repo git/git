@@ -137,6 +137,8 @@ OPTIONS
 -m <msg>::
 --message=<msg>::
 	Use the given <msg> as the commit message.
+	If multiple `-m` options are given, their values are
+	concatenated as separate paragraphs.
 
 -t <file>::
 --template=<file>::
