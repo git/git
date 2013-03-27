@@ -1756,32 +1756,51 @@ static unsigned long pack_entry_hash(struct packed_git *p, off_t base_offset)
 	return hash % MAX_DELTA_CACHE;
 }
 
-static int in_delta_base_cache(struct packed_git *p, off_t base_offset)
+static struct delta_base_cache_entry *
+get_delta_base_cache_entry(struct packed_git *p, off_t base_offset)
 {
 	unsigned long hash = pack_entry_hash(p, base_offset);
-	struct delta_base_cache_entry *ent = delta_base_cache + hash;
+	return delta_base_cache + hash;
+}
+
+static int eq_delta_base_cache_entry(struct delta_base_cache_entry *ent,
+				     struct packed_git *p, off_t base_offset)
+{
 	return (ent->data && ent->p == p && ent->base_offset == base_offset);
+}
+
+static int in_delta_base_cache(struct packed_git *p, off_t base_offset)
+{
+	struct delta_base_cache_entry *ent;
+	ent = get_delta_base_cache_entry(p, base_offset);
+	return eq_delta_base_cache_entry(ent, p, base_offset);
+}
+
+static void clear_delta_base_cache_entry(struct delta_base_cache_entry *ent)
+{
+	ent->data = NULL;
+	ent->lru.next->prev = ent->lru.prev;
+	ent->lru.prev->next = ent->lru.next;
+	delta_base_cached -= ent->size;
 }
 
 static void *cache_or_unpack_entry(struct packed_git *p, off_t base_offset,
 	unsigned long *base_size, enum object_type *type, int keep_cache)
 {
+	struct delta_base_cache_entry *ent;
 	void *ret;
-	unsigned long hash = pack_entry_hash(p, base_offset);
-	struct delta_base_cache_entry *ent = delta_base_cache + hash;
 
-	ret = ent->data;
-	if (!ret || ent->p != p || ent->base_offset != base_offset)
+	ent = get_delta_base_cache_entry(p, base_offset);
+
+	if (!eq_delta_base_cache_entry(ent, p, base_offset))
 		return unpack_entry(p, base_offset, type, base_size);
 
-	if (!keep_cache) {
-		ent->data = NULL;
-		ent->lru.next->prev = ent->lru.prev;
-		ent->lru.prev->next = ent->lru.next;
-		delta_base_cached -= ent->size;
-	} else {
+	ret = ent->data;
+
+	if (!keep_cache)
+		clear_delta_base_cache_entry(ent);
+	else
 		ret = xmemdupz(ent->data, ent->size);
-	}
 	*type = ent->type;
 	*base_size = ent->size;
 	return ret;
