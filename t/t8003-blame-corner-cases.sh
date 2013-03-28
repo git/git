@@ -175,6 +175,12 @@ test_expect_success 'blame -L with invalid end' '
 	grep "has only 2 lines" errors
 '
 
+test_expect_success 'blame parses <end> part of -L' '
+	git blame -L1,1 tres >out &&
+	cat out &&
+	test $(wc -l < out) -eq 1
+'
+
 test_expect_success 'indent of line numbers, nine lines' '
 	git blame nine_lines >actual &&
 	test $(grep -c "  " actual) = 0
