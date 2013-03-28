@@ -93,11 +93,6 @@ sed -e '
 	s/song;/song();/
 ' <Beer.perl >Beer-correct.perl
 
-test_config () {
-	git config "$1" "$2" &&
-	test_when_finished "git config --unset $1"
-}
-
 test_expect_funcname () {
 	lang=${2-java}
 	test_expect_code 1 git diff --no-index -U1 \

@@ -125,11 +125,6 @@ test_expect_success 'modified file' '
 	test_cmp empty out
 '
 
-test_config() {
-	git config "$1" "$2" &&
-	test_when_finished "git config --unset $1"
-}
-
 test_expect_success 'copes with color settings' '
 	rm -f actual &&
 	echo grep.h >expect &&
