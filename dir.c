@@ -597,6 +597,7 @@ int match_pathname(const char *pathname, int pathlen,
 	 */
 	if (*pattern == '/') {
 		pattern++;
+		patternlen--;
 		prefix--;
 	}
 
