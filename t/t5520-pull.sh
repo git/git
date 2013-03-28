@@ -167,9 +167,9 @@ test_expect_success 'pull --rebase dies early with dirty working directory' '
 	git update-ref refs/remotes/me/copy copy^ &&
 	COPY=$(git rev-parse --verify me/copy) &&
 	git rebase --onto $COPY copy &&
-	git config branch.to-rebase.remote me &&
-	git config branch.to-rebase.merge refs/heads/copy &&
-	git config branch.to-rebase.rebase true &&
+	test_config branch.to-rebase.remote me &&
+	test_config branch.to-rebase.merge refs/heads/copy &&
+	test_config branch.to-rebase.rebase true &&
 	echo dirty >> file &&
 	git add file &&
 	test_must_fail git pull &&
