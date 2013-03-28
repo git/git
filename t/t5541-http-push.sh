@@ -181,8 +181,7 @@ test_expect_success 'push (chunked)' '
 	git checkout master &&
 	test_commit commit path3 &&
 	HEAD=$(git rev-parse --verify HEAD) &&
-	git config http.postbuffer 4 &&
-	test_when_finished "git config --unset http.postbuffer" &&
+	test_config http.postbuffer 4 &&
 	git push -v -v origin $BRANCH 2>err &&
 	grep "POST git-receive-pack (chunked)" err &&
 	(cd "$HTTPD_DOCUMENT_ROOT_PATH"/test_repo.git &&

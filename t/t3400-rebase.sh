@@ -138,8 +138,7 @@ test_expect_success 'rebase a single mode change' '
 '
 
 test_expect_success 'rebase is not broken by diff.renames' '
-	git config diff.renames copies &&
-	test_when_finished "git config --unset diff.renames" &&
+	test_config diff.renames copies &&
 	git checkout filemove &&
 	GIT_TRACE=1 git rebase force-3way
 '

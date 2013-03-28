@@ -131,8 +131,7 @@ cat >expect <<\EOF
 EOF
 
 test_expect_success 'status (advice.statusHints false)' '
-	test_when_finished "git config --unset advice.statusHints" &&
-	git config advice.statusHints false &&
+	test_config advice.statusHints false &&
 	git status >output &&
 	test_i18ncmp expect output
 
@@ -332,8 +331,7 @@ test_expect_success 'status -uno' '
 '
 
 test_expect_success 'status (status.showUntrackedFiles no)' '
-	git config status.showuntrackedfiles no
-	test_when_finished "git config --unset status.showuntrackedfiles" &&
+	test_config status.showuntrackedfiles no &&
 	git status >output &&
 	test_i18ncmp expect output
 '
@@ -348,12 +346,11 @@ cat >expect <<EOF
 #
 # Untracked files not listed
 EOF
-git config advice.statusHints false
 test_expect_success 'status -uno (advice.statusHints false)' '
+	test_config advice.statusHints false &&
 	git status -uno >output &&
 	test_i18ncmp expect output
 '
-git config --unset advice.statusHints
 
 cat >expect << EOF
  M dir1/modified
@@ -400,8 +397,7 @@ test_expect_success 'status -unormal' '
 '
 
 test_expect_success 'status (status.showUntrackedFiles normal)' '
-	git config status.showuntrackedfiles normal
-	test_when_finished "git config --unset status.showuntrackedfiles" &&
+	test_config status.showuntrackedfiles normal
 	git status >output &&
 	test_i18ncmp expect output
 '
@@ -459,8 +455,7 @@ test_expect_success 'status -uall' '
 '
 
 test_expect_success 'status (status.showUntrackedFiles all)' '
-	git config status.showuntrackedfiles all
-	test_when_finished "git config --unset status.showuntrackedfiles" &&
+	test_config status.showuntrackedfiles all
 	git status >output &&
 	test_i18ncmp expect output
 '
@@ -485,10 +480,9 @@ test_expect_success 'status -s -uall' '
 	test_cmp expect output
 '
 test_expect_success 'status -s (status.showUntrackedFiles all)' '
-	git config status.showuntrackedfiles all
+	test_config status.showuntrackedfiles all &&
 	git status -s >output &&
 	rm -rf dir3 &&
-	git config --unset status.showuntrackedfiles &&
 	test_cmp expect output
 '
 
@@ -588,15 +582,13 @@ cat >expect <<\EOF
 EOF
 
 test_expect_success 'status with color.ui' '
-	git config color.ui always &&
-	test_when_finished "git config --unset color.ui" &&
+	test_config color.ui always &&
 	git status | test_decode_color >output &&
 	test_i18ncmp expect output
 '
 
 test_expect_success 'status with color.status' '
-	git config color.status always &&
-	test_when_finished "git config --unset color.status" &&
+	test_config color.status always &&
 	git status | test_decode_color >output &&
 	test_i18ncmp expect output
 '
@@ -720,8 +712,7 @@ EOF
 
 test_expect_success 'status without relative paths' '
 
-	git config status.relativePaths false &&
-	test_when_finished "git config --unset status.relativePaths" &&
+	test_config status.relativePaths false &&
 	(cd dir1 && git status) >output &&
 	test_i18ncmp expect output
 
@@ -740,8 +731,7 @@ EOF
 
 test_expect_success 'status -s without relative paths' '
 
-	git config status.relativePaths false &&
-	test_when_finished "git config --unset status.relativePaths" &&
+	test_config status.relativePaths false &&
 	(cd dir1 && git status -s) >output &&
 	test_cmp expect output
 
@@ -1038,15 +1028,14 @@ test_expect_success '--ignore-submodules=untracked suppresses submodules with un
 '
 
 test_expect_success '.gitmodules ignore=untracked suppresses submodules with untracked content' '
-	git config diff.ignoreSubmodules dirty &&
+	test_config diff.ignoreSubmodules dirty &&
 	git status >output &&
 	test_i18ncmp expect output &&
 	git config --add -f .gitmodules submodule.subname.ignore untracked &&
 	git config --add -f .gitmodules submodule.subname.path sm &&
 	git status >output &&
 	test_i18ncmp expect output &&
-	git config -f .gitmodules  --remove-section submodule.subname &&
-	git config --unset diff.ignoreSubmodules
+	git config -f .gitmodules  --remove-section submodule.subname
 '
 
 test_expect_success '.git/config ignore=untracked suppresses submodules with untracked content' '
@@ -1066,15 +1055,14 @@ test_expect_success '--ignore-submodules=dirty suppresses submodules with untrac
 '
 
 test_expect_success '.gitmodules ignore=dirty suppresses submodules with untracked content' '
-	git config diff.ignoreSubmodules dirty &&
+	test_config diff.ignoreSubmodules dirty &&
 	git status >output &&
 	! test -s actual &&
 	git config --add -f .gitmodules submodule.subname.ignore dirty &&
 	git config --add -f .gitmodules submodule.subname.path sm &&
 	git status >output &&
 	test_i18ncmp expect output &&
-	git config -f .gitmodules  --remove-section submodule.subname &&
-	git config --unset diff.ignoreSubmodules
+	git config -f .gitmodules  --remove-section submodule.subname
 '
 
 test_expect_success '.git/config ignore=dirty suppresses submodules with untracked content' '
@@ -1291,15 +1279,13 @@ cat > expect << EOF
 EOF
 
 test_expect_success "status (core.commentchar with submodule summary)" '
-	test_when_finished "git config --unset core.commentchar" &&
-	git config core.commentchar ";" &&
+	test_config core.commentchar ";" &&
 	git status >output &&
 	test_i18ncmp expect output
 '
 
 test_expect_success "status (core.commentchar with two chars with submodule summary)" '
-	test_when_finished "git config --unset core.commentchar" &&
-	git config core.commentchar ";;" &&
+	test_config core.commentchar ";;" &&
 	git status >output &&
 	test_i18ncmp expect output
 '
