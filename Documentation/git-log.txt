@@ -69,12 +69,13 @@ produced by --stat etc.
 	Note that only message is considered, if also a diff is shown
 	its size is not included.
 
--L <start>,<end>:<file>::
+-L <start>,<end>:<file>, -L :<regex>:<file>::
+
 	Trace the evolution of the line range given by "<start>,<end>"
-	within the <file>.  You may not give any pathspec limiters.
-	This is currently limited to a walk starting from a single
-	revision, i.e., you may only give zero or one positive
-	revision arguments.
+	(or the funcname regex <regex>) within the <file>.  You may
+	not give any pathspec limiters.  This is currently limited to
+	a walk starting from a single revision, i.e., you may only
+	give zero or one positive revision arguments.
 
 <start> and <end> can take one of these forms:
 

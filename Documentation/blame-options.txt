@@ -9,7 +9,7 @@
 --show-stats::
 	Include additional statistics at the end of blame output.
 
--L <start>,<end>::
+-L <start>,<end>, -L :<regex>::
 	Annotate only the given line range.  <start> and <end> can take
 	one of these forms:
 

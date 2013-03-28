@@ -12,6 +12,7 @@
 #include "strbuf.h"
 #include "log-tree.h"
 #include "graph.h"
+#include "userdiff.h"
 #include "line-log.h"
 
 static void range_set_grow(struct range_set *rs, size_t extra)
@@ -438,7 +439,6 @@ static void range_set_map_across_diff(struct range_set *out,
 	*touched_out = touched;
 }
 
-
 static struct commit *check_single_commit(struct rev_info *revs)
 {
 	struct object *commit = NULL;
@@ -559,7 +559,8 @@ parse_lines(struct commit *commit, const char *prefix, struct string_list *args)
 		cb_data.line_ends = ends;
 
 		if (parse_range_arg(range_part, nth_line, &cb_data,
-				    lines, &begin, &end))
+				    lines, &begin, &end,
+				    spec->path))
 			die("malformed -L argument '%s'", range_part);
 		if (begin < 1)
 			begin = 1;

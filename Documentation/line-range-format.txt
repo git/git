@@ -16,3 +16,10 @@ starting at the line given by <start>.
 This is only valid for <end> and will specify a number
 of lines before or after the line given by <start>.
 +
+
+- :regex
++
+If the option's argument is of the form :regex, it denotes the range
+from the first funcname line that matches <regex>, up to the next
+funcname line.
++
