@@ -230,10 +230,10 @@ test_expect_success 'push with pushInsteadOf' '
 
 test_expect_success 'push with pushInsteadOf and explicit pushurl (pushInsteadOf should not rewrite)' '
 	mk_empty &&
-	TRASH="$(pwd)/" &&
-	git config "url.trash2/.pushInsteadOf" trash/ &&
+	git config "url.trash2/.pushInsteadOf" testrepo/ &&
+	git config "url.trash3/.pusnInsteadOf" trash/wrong &&
 	git config remote.r.url trash/wrong &&
-	git config remote.r.pushurl "$TRASH/testrepo" &&
+	git config remote.r.pushurl "testrepo/" &&
 	git push r refs/heads/master:refs/remotes/origin/master &&
 	(
 		cd testrepo &&
