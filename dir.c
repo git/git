@@ -624,11 +624,22 @@ int match_pathname(const char *pathname, int pathlen,
 		if (strncmp_icase(pattern, name, prefix))
 			return 0;
 		pattern += prefix;
+		patternlen -= prefix;
 		name    += prefix;
 		namelen -= prefix;
+
+		/*
+		 * If the whole pattern did not have a wildcard,
+		 * then our prefix match is all we need; we
+		 * do not need to call fnmatch at all.
+		 */
+		if (!patternlen && !namelen)
+			return 1;
 	}
 
-	return fnmatch_icase(pattern, name, FNM_PATHNAME) == 0;
+	return fnmatch_icase_mem(pattern, patternlen,
+				 name, namelen,
+				 FNM_PATHNAME) == 0;
 }
 
 /* Scan the list and let the last match determine the fate.
