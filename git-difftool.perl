@@ -83,6 +83,21 @@ sub exit_cleanup
 	exit($status | ($status >> 8));
 }
 
+sub use_wt_file
+{
+	my ($repo, $workdir, $file, $sha1, $symlinks) = @_;
+	my $null_sha1 = '0' x 40;
+
+	if ($sha1 eq $null_sha1) {
+		return 1;
+	} elsif (not $symlinks) {
+		return 0;
+	}
+
+	my $wt_sha1 = $repo->command_oneline('hash-object', "$workdir/$file");
+	return $sha1 eq $wt_sha1;
+}
+
 sub setup_dir_diff
 {
 	my ($repo, $workdir, $symlinks) = @_;
@@ -159,10 +174,10 @@ EOF
 		}
 
 		if ($rmode ne $null_mode) {
-			if ($rsha1 ne $null_sha1) {
-				$rindex .= "$rmode $rsha1\t$dst_path\0";
-			} else {
+			if (use_wt_file($repo, $workdir, $dst_path, $rsha1, $symlinks)) {
 				push(@working_tree, $dst_path);
+			} else {
+				$rindex .= "$rmode $rsha1\t$dst_path\0";
 			}
 		}
 	}
@@ -209,7 +224,9 @@ EOF
 	delete($ENV{GIT_INDEX_FILE});
 
 	# Changes in the working tree need special treatment since they are
-	# not part of the index
+	# not part of the index. Remove any trailing slash from $workdir
+	# before starting to avoid double slashes in symlink targets.
+	$workdir =~ s|/$||;
 	for my $file (@working_tree) {
 		my $dir = dirname($file);
 		unless (-d "$rdir/$dir") {
