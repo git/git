@@ -1970,6 +1970,22 @@ static struct merge_simplify_state *locate_simplify_state(struct rev_info *revs,
 	return st;
 }
 
+static void remove_treesame_parents(struct commit *commit)
+{
+	struct commit_list **pp, *p;
+
+	pp = &commit->parents;
+	while ((p = *pp) != NULL) {
+		struct commit *parent = p->item;
+		if (parent->object.flags & TREESAME) {
+			*pp = p->next;
+			free(p);
+			continue;
+		}
+		pp = &p->next;
+	}
+}
+
 static struct commit_list **simplify_one(struct rev_info *revs, struct commit *commit, struct commit_list **tail)
 {
 	struct commit_list *p;
@@ -2022,10 +2038,18 @@ static struct commit_list **simplify_one(struct rev_info *revs, struct commit *c
 		if (revs->first_parent_only)
 			break;
 	}
-	if (!revs->first_parent_only)
-		cnt = remove_duplicate_parents(commit);
-	else
+
+	if (revs->first_parent_only) {
 		cnt = 1;
+	} else {
+		/*
+		 * A merge with a tree-same parent is useless
+		 */
+		if (commit->parents && commit->parents->next)
+			remove_treesame_parents(commit);
+
+		cnt = remove_duplicate_parents(commit);
+	}
 
 	/*
 	 * It is possible that we are a merge and one side branch
