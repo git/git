@@ -1,0 +1,49 @@
+#!/bin/sh
+
+test_description='test log -L'
+. ./test-lib.sh
+
+test_expect_success 'setup (import history)' '
+	git fast-import < "$TEST_DIRECTORY"/t4211/history.export &&
+	git reset --hard
+'
+
+canned_test () {
+	test_expect_success "$1" "
+		git log $1 >actual &&
+		test_cmp \"\$TEST_DIRECTORY\"/t4211/expect.$2 actual
+	"
+}
+
+test_bad_opts () {
+	test_expect_success "invalid args: $1" "
+		test_must_fail git log $1 2>errors &&
+		grep '$2' errors
+	"
+}
+
+canned_test "-L 4,12:a.c simple" simple-f
+canned_test "-L 4,+9:a.c simple" simple-f
+canned_test "-L '/long f/,/^}/:a.c' simple" simple-f
+
+canned_test "-L '/main/,/^}/:a.c' simple" simple-main
+
+canned_test "-L 1,+4:a.c simple" beginning-of-file
+
+canned_test "-L 20:a.c simple" end-of-file
+
+canned_test "-L '/long f/',/^}/:a.c -L /main/,/^}/:a.c simple" two-ranges
+canned_test "-L 24,+1:a.c simple" vanishes-early
+
+canned_test "-L '/long f/,/^}/:b.c' move-support" move-support-f
+
+test_bad_opts "-L" "switch.*requires a value"
+test_bad_opts "-L b.c" "argument.*not of the form"
+test_bad_opts "-L 1:" "argument.*not of the form"
+test_bad_opts "-L 1:nonexistent" "There is no path"
+test_bad_opts "-L 1:simple" "There is no path"
+test_bad_opts "-L '/foo:b.c'" "argument.*not of the form"
+test_bad_opts "-L 1000:b.c" "has only.*lines"
+test_bad_opts "-L 1,1000:b.c" "has only.*lines"
+
+test_done

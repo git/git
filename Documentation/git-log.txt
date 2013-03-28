@@ -69,6 +69,23 @@ produced by --stat etc.
 	Note that only message is considered, if also a diff is shown
 	its size is not included.
 
+-L <start>,<end>:<file>::
+	Trace the evolution of the line range given by "<start>,<end>"
+	within the <file>.  You may not give any pathspec limiters.
+	This is currently limited to a walk starting from a single
+	revision, i.e., you may only give zero or one positive
+	revision arguments.
+
+<start> and <end> can take one of these forms:
+
+include::line-range-format.txt[]
+You can specify this option more than once.
+
+
+--full-line-diff::
+	Always print the interesting range even if the current commit
+	does not change any line of the range.
+
 [\--] <path>...::
 	Show only commits that are enough to explain how the files
 	that match the specified paths came to be.  See "History
@@ -137,6 +154,11 @@ Examples
 	branches, and showing full diffs of changes introduced by the merges.
 	This makes sense only when following a strict policy of merging all
 	topic branches when staying on a single integration branch.
+
+git log -L '/int main/',/^}/:main.c::
+
+	Shows how the function `main()` in the file 'main.c' evolved
+	over time.
 
 `git log -3`::
 	Limits the number of commits to show to 3.

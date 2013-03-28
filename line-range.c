@@ -21,6 +21,8 @@ static const char *parse_loc(const char *spec, nth_line_fn_t nth_line,
 	if (1 < begin && (spec[0] == '+' || spec[0] == '-')) {
 		num = strtol(spec + 1, &term, 10);
 		if (term != spec + 1) {
+			if (!ret)
+				return term;
 			if (spec[0] == '-')
 				num = 0 - num;
 			if (0 < num)
@@ -35,7 +37,8 @@ static const char *parse_loc(const char *spec, nth_line_fn_t nth_line,
 	}
 	num = strtol(spec, &term, 10);
 	if (term != spec) {
-		*ret = num;
+		if (ret)
+			*ret = num;
 		return term;
 	}
 	if (spec[0] != '/')
@@ -48,6 +51,10 @@ static const char *parse_loc(const char *spec, nth_line_fn_t nth_line,
 	}
 	if (*term != '/')
 		return spec;
+
+	/* in the scan-only case we are not interested in the regex */
+	if (!ret)
+		return term+1;
 
 	/* try [spec+1 .. term-1] as regexp */
 	*term = 0;
@@ -89,4 +96,14 @@ int parse_range_arg(const char *arg, nth_line_fn_t nth_line_cb,
 		return -1;
 
 	return 0;
+}
+
+const char *skip_range_arg(const char *arg)
+{
+	arg = parse_loc(arg, NULL, NULL, 0, -1, NULL);
+
+	if (*arg == ',')
+		arg = parse_loc(arg+1, NULL, NULL, 0, 0, NULL);
+
+	return arg;
 }

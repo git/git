@@ -1,0 +1,40 @@
+commit 6ce3c4ff690136099bb17e1a8766b75764726ea7
+Author: Thomas Rast <trast@student.ethz.ch>
+Date:   Thu Feb 28 10:49:50 2013 +0100
+
+    another simple change
+
+diff --git a/b.c b/b.c
+--- a/b.c
++++ b/b.c
+@@ -4,9 +4,9 @@
+ long f(long x)
+ {
+ 	int s = 0;
+ 	while (x) {
+-		x >>= 1;
++		x /= 2;
+ 		s++;
+ 	}
+ 	return s;
+ }
+
+commit e6da343666244ea9e67cbe3f3bd26da860f9fe0e
+Author: Thomas Rast <trast@student.ethz.ch>
+Date:   Thu Feb 28 10:49:28 2013 +0100
+
+    move file
+
+diff --git a/b.c b/b.c
+--- /dev/null
++++ b/b.c
+@@ -0,0 +4,9 @@
++long f(long x)
++{
++	int s = 0;
++	while (x) {
++		x >>= 1;
++		s++;
++	}
++	return s;
++}

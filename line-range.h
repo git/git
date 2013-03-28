@@ -21,4 +21,15 @@ extern int parse_range_arg(const char *arg,
 			   void *cb_data, long lines,
 			   long *begin, long *end);
 
+/*
+ * Scan past a range argument that could be parsed by
+ * 'parse_range_arg', to help the caller determine the start of the
+ * filename in '-L n,m:file' syntax.
+ *
+ * Returns a pointer to the first character after the 'n,m' part, or
+ * NULL in case the argument is obviously malformed.
+ */
+
+extern const char *skip_range_arg(const char *arg);
+
 #endif /* LINE_RANGE_H */
