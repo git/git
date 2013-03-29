@@ -314,7 +314,7 @@ test_expect_success PERL 'setup change in subdirectory' '
 	git commit -m "added sub/sub" &&
 	echo test >>file &&
 	echo test >>sub/sub &&
-	git add . &&
+	git add file sub/sub &&
 	git commit -m "modified both"
 '
 
