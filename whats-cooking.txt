@@ -1,15 +1,20 @@
 To: git@vger.kernel.org
 Bcc: lwn@lwn.net
-Subject: What's cooking in git.git (Mar 2013, #07; Tue, 26)
-X-master-at: 2bba2f0e6542d541e9f27653d8c9d5fc8d0e679c
-X-next-at: 21b325ca9d683712f5399553f0472ba31ad5cf0f
+Subject: What's cooking in git.git (Mar 2013, #08; Fri, 29)
+X-master-at: 631bc94e67383b66da190550866566f09d32f299
+X-next-at: 26eb6e9fce877ff55db93fee605b878939872a5a
 
-What's cooking in git.git (Mar 2013, #07; Tue, 26)
+What's cooking in git.git (Mar 2013, #08; Fri, 29)
 --------------------------------------------------
 
 Here are the topics that have been cooking.  Commits prefixed with
 '-' are only in 'pu' (proposed updates) while commits prefixed with
 '+' are in 'next'.
+
+A handful of topics that have been stalled for quite a while have
+been discarded; for those that are not superseded by something else,
+interested parties can still resubmit a reroll, but without any
+advances, we do not get any benefit from carrying them in my tree.
 
 You can find the changes described here in the integration branches
 of the repositories listed at
@@ -19,249 +24,54 @@ of the repositories listed at
 --------------------------------------------------
 [Graduated to "master"]
 
-* ap/maint-diff-rename-avoid-overlap (2013-03-06) 3 commits
-  (merged to 'next' on 2013-03-19 at c3276cf)
- + tests: make sure rename pretty print works
- + diff: prevent pprint_rename from underrunning input
- + diff: Fix rename pretty-print when suffix and prefix overlap
-
- Originally merged to 'next' on 2013-03-06
-
- The logic used by "git diff -M --stat" to shorten the names of
- files before and after a rename did not work correctly when the
- common prefix and suffix between the two filenames overlapped.
-
-
-* jc/describe (2013-02-28) 1 commit
-  (merged to 'next' on 2013-03-19 at 89e6e47)
- + describe: --match=<pattern> must limit the refs even when used with --all
-
- Originally merged to 'next' on 2013-03-05
-
- The "--match=<pattern>" option of "git describe", when used with
- "--all" to allow refs that are not annotated tags to be used as a
- base of description, did not restrict the output from the command
- to those that match the given pattern.
-
- We may want to have a looser matching that does not restrict to tags,
- but that can be done as a follow-up topic; this step is purely a bugfix.
-
-
-* jc/maint-reflog-expire-clean-mark-typofix (2013-03-05) 1 commit
-  (merged to 'next' on 2013-03-19 at a4f9eac)
- + reflog: fix typo in "reflog expire" clean-up codepath
-
- Originally merged to 'next' on 2013-03-07
-
- In "git reflog expire", REACHABLE bit was not cleared from the
- correct objects.
-
-
-* jc/push-follow-tag (2013-03-05) 4 commits
-  (merged to 'next' on 2013-03-19 at d302a10)
- + push: --follow-tags
- + commit.c: use clear_commit_marks_many() in in_merge_bases_many()
- + commit.c: add in_merge_bases_many()
- + commit.c: add clear_commit_marks_many()
-
- Originally merged to 'next' on 2013-03-09
-
- The new "--follow-tags" option tells "git push" to push relevant
- annotated tags when pushing branches out.
-
-
-* jc/reflog-reverse-walk (2013-03-23) 4 commits
-  (merged to 'next' on 2013-03-25 at 1bcc1c4)
- + refs.c: fix fread error handling
-  (merged to 'next' on 2013-03-19 at 25beb2a)
- + reflog: add for_each_reflog_ent_reverse() API
- + for_each_recent_reflog_ent(): simplify opening of a reflog file
- + for_each_reflog_ent(): extract a helper to process a single entry
- (this branch is tangled with nd/branch-show-rebase-bisect-state.)
-
- An internal function used to implement "git checkout @{-1}" was
- hard to use correctly.
-
-
-* jk/alias-in-bare (2013-03-08) 3 commits
-  (merged to 'next' on 2013-03-19 at d2b4227)
- + setup: suppress implicit "." work-tree for bare repos
- + environment: add GIT_PREFIX to local_repo_env
- + cache.h: drop LOCAL_REPO_ENV_SIZE
-
- Originally merged to 'next' on 2013-03-09
-
- An aliased command spawned from a bare repository that does not say
- it is bare with "core.bare = yes" is treated as non-bare by mistake.
-
-
-* jk/empty-archive (2013-03-10) 2 commits
-  (merged to 'next' on 2013-03-19 at bb4eb61)
- + archive: handle commits with an empty tree
- + test-lib: factor out $GIT_UNZIP setup
-
- Originally merged to 'next' on 2013-03-12
-
- "git archive" reports a failure when asked to create an archive out
- of an empty tree.  It would be more intuitive to give an empty
- archive back in such a case.
-
-
-* jk/fast-export-object-lookup (2013-03-17) 2 commits
-  (merged to 'next' on 2013-03-19 at 026ac3d)
- + fast-export: do not load blob objects twice
- + fast-export: rename handle_object function
+* ap/combine-diff-ignore-whitespace (2013-03-14) 1 commit
+  (merged to 'next' on 2013-03-19 at dfb2c98)
+ + Allow combined diff to ignore white-spaces
+ (this branch is used by ap/combine-diff-coalesce-lost.)
 
  Originally merged to 'next' on 2013-03-18
 
-
-* jk/fully-peeled-packed-ref (2013-03-18) 4 commits
-  (merged to 'next' on 2013-03-19 at fa92bc7)
- + pack-refs: add fully-peeled trait
- + pack-refs: write peeled entry for non-tags
- + use parse_object_or_die instead of die("bad object")
- + avoid segfaults on parse_object failure
-
- Originally merged to 'next' on 2013-03-18
-
- Not that we do not actively encourage having annotated tags outside
- refs/tags/ hierarchy, but they were not advertised correctly to the
- ls-remote and fetch with recent version of Git.
+ Teach "diff --cc" output to honor options to ignore various forms
+ of whitespace changes.
 
 
-* jk/peel-ref (2013-03-16) 3 commits
-  (merged to 'next' on 2013-03-19 at f0d4c16)
- + upload-pack: load non-tip "want" objects from disk
- + upload-pack: make sure "want" objects are parsed
- + upload-pack: drop lookup-before-parse optimization
+* jc/remove-treesame-parent-in-simplify-merges (2013-01-17) 1 commit
+  (merged to 'next' on 2013-03-26 at 7999dbe)
+ + simplify-merges: drop merge from irrelevant side branch
 
- Originally merged to 'next' on 2013-03-18
+ The --simplify-merges logic did not cull irrelevant parents from a
+ merge that is otherwise not interesting with respect to the paths
+ we are following.
 
- Recent optimization broke shallow clones.
-
-
-* jk/suppress-clang-warning (2013-02-25) 1 commit
-  (merged to 'next' on 2013-03-19 at 1fd6858)
- + fix clang -Wtautological-compare with unsigned enum
-
- Originally merged to 'next' on 2013-03-14
+ This touches a fairly core part of the revision traversal
+ infrastructure; even though I think this change is correct, please
+ report immediately if you find any unintended side effect.
 
 
-* jl/submodule-deinit (2013-03-04) 1 commit
-  (merged to 'next' on 2013-03-19 at d8367c5)
- + submodule: add 'deinit' command
+* jk/checkout-attribute-lookup (2013-03-20) 3 commits
+  (merged to 'next' on 2013-03-20 at 43a89e8)
+ + t2003: work around path mangling issue on Windows
+  (merged to 'next' on 2013-03-19 at b063a55)
+ + entry: fix filter lookup
+ + t2003: modernize style
 
- Originally merged to 'next' on 2013-03-05
-
- There was no Porcelain way to say "I no longer am interested in
- this submodule", once you express your interest in a submodule with
- "submodule init".  "submodule deinit" is the way to do so.
-
-
-* kb/p4merge (2013-03-25) 6 commits
-  (merged to 'next' on 2013-03-25 at 4db939e)
- + merge-one-file: force content conflict for "both sides added" case
- + git-merge-one-file: send "ERROR:" messages to stderr
- + git-merge-one-file: style cleanup
- + merge-one-file: remove stale comment
-  (merged to 'next' on 2013-03-19 at 43cc599)
- + mergetools/p4merge: create a base if none available
- + mergetools/p4merge: swap LOCAL and REMOTE
-
- Originally merged to 'next' on 2013-03-14
-
- Adjust the order mergetools feeds the files to the p4merge backend
- to match the p4 convention.
+ Codepath to stream blob object contents directly from the object
+ store to filesystem did not use the correct path to find conversion
+ filters when writing to temporary files.
 
 
-* ks/rfc2047-one-char-at-a-time (2013-03-09) 1 commit
-  (merged to 'next' on 2013-03-19 at 577ddf2)
- + format-patch: RFC 2047 says multi-octet character may not be split
+* jk/difftool-dir-diff-edit-fix (2013-03-14) 3 commits
+  (merged to 'next' on 2013-03-19 at e68014a)
+ + difftool --dir-diff: symlink all files matching the working tree
+ + difftool: avoid double slashes in symlink targets
+ + git-difftool(1): fix formatting of --symlink description
 
- Originally merged to 'next' on 2013-03-09
+ Originally merged to 'next' on 2013-03-15
 
- When "format-patch" quoted a non-ascii strings on the header files,
- it incorrectly applied rfc2047 and chopped a single character in
- the middle of it.
-
-
-* lf/setup-prefix-pathspec (2013-03-14) 2 commits
-  (merged to 'next' on 2013-03-19 at 0017e9e)
- + setup.c: check that the pathspec magic ends with ")"
- + setup.c: stop prefix_pathspec() from looping past the end of string
-
- Originally merged to 'next' on 2013-03-14
-
- "git cmd -- ':(top'" was not diagnosed as an invalid syntax, and
- instead the parser kept reading beyond the end of the string.
-
-
-* mg/unsigned-time-t (2013-02-25) 2 commits
-  (merged to 'next' on 2013-03-19 at 1fc1ad6)
- + Fix time offset calculation in case of unsigned time_t
- + date.c: fix unsigned time_t comparison
-
- Originally merged to 'next' on 2013-03-14
-
- A few workarounds for systems with unsigned time_t.
-
-
-* pe/pull-rebase-v-q (2013-03-16) 1 commit
-  (merged to 'next' on 2013-03-19 at 10b311c)
- + pull: Apply -q and -v options to rebase mode as well
-
- Originally merged to 'next' on 2013-03-18
-
- Teach "git pull --rebase" to pass "-v/-q" command line options to
- underlying "git rebase".
-
-
-* ph/tag-force-no-warn-on-creation (2013-03-13) 1 commit
-  (merged to 'next' on 2013-03-19 at b273fd3)
- + tag: --force does not have to warn when creating tags
-
- Originally merged to 'next' on 2013-03-14
-
- "git tag -f <tag>" always said "Updated tag '<tag>'" even when
- creating a new tag (i.e. not overwriting nor updating).
-
-
-* pw/p4-symlinked-root (2013-03-11) 3 commits
-  (merged to 'next' on 2013-03-19 at 9127e82)
- + git p4: avoid expanding client paths in chdir
- + git p4 test: should honor symlink in p4 client root
- + git p4 test: make sure P4CONFIG relative path works
-
- Originally merged to 'next' on 2013-03-12
-
- "git p4" did not behave well when the path to the root of the P4
- client was not its real path.
-
---------------------------------------------------
-[New Topics]
-
-* jc/apply-ws-fix-tab-in-indent (2013-03-22) 1 commit
- - apply --whitespace=fix: avoid running over the postimage buffer
-
-
-* jk/no-more-self-assignment (2013-03-25) 2 commits
-  (merged to 'next' on 2013-03-26 at 31ec9ac)
- + match-trees: simplify score_trees() using tree_entry()
- + submodule: clarify logic in show_submodule_summary
-
- This started as a topic to reduce "type var = var" self assignment
- tricks that were used to squelch "variable used uninitialized perhaps?"
- warning from some compilers, but resulted in rewriting logic with
- a version that is simpler and easier to understand for humans.
-
-
-* jk/t7800-modernize (2013-03-23) 3 commits
- - t7800: run --dir-diff tests with and without symlinks
- - t7800: fix tests when difftool uses --no-symlinks
- - t7800: don't hide grep output
-
- Looked reasonable standalone; conflicts with other topics in flight
- needs to be resolved carefully, though.
+ "git difftool --dir-diff" made symlinks to working tree files when
+ preparing a temporary directory structure, so that accidental edits
+ of these files in the difftool are reflected back to the working
+ tree, but the logic to decide when to do so was not quite right.
 
 
 * kk/revwalk-slop-too-many-commit-within-a-second (2013-03-22) 1 commit
@@ -273,82 +83,133 @@ of the repositories listed at
  often happen after a large "am" and "rebase" session).
 
 
+* rr/tests-dedup-test-config (2013-03-19) 1 commit
+  (merged to 'next' on 2013-03-26 at d314299)
+ + t4018,7810,7811: remove test_config() redefinition
+
+
+* rs/archive-zip-raw-compression (2013-03-16) 1 commit
+  (merged to 'next' on 2013-03-19 at 8cc1cb3)
+ + archive-zip: use deflateInit2() to ask for raw compressed data
+
+ Originally merged to 'next' on 2013-03-18
+
+
+* yd/doc-is-in-asciidoc (2013-03-21) 1 commit
+  (merged to 'next' on 2013-03-26 at a980af2)
+ + CodingGuidelines: our documents are in AsciiDoc
+
+
+* yd/doc-merge-annotated-tag (2013-03-21) 1 commit
+  (merged to 'next' on 2013-03-26 at a11162f)
+ + Documentation: merging a tag is a special case
+
+ Document the 1.7.9 feature to merge a signed tag and keep that in
+ the mergetag header in the resulting commit better.
+
+
 * yd/use-test-config-unconfig (2013-03-25) 12 commits
- - t7600: use test_config to set/unset git config variables
- - t7502: remove clear_config
- - t7502: use test_config to set/unset git config variables
- - t9500: use test_config to set/unset git config variables
- - t7508: use test_config to set/unset git config variables
- - t7500: use test_config to set/unset git config variables
- - t5541: use test_config to set/unset git config variables
- - t5520: use test_config to set/unset git config variables
- - t4202: use test_config/test_unconfig to set/unset git config variables
- - t4034: use test_config/test_unconfig to set/unset git config variables
- - t4304: use test_config to set/unset git config variables
- - t3400: use test_config to set/unset git config variables
+  (merged to 'next' on 2013-03-26 at 55b69a9)
+ + t7600: use test_config to set/unset git config variables
+ + t7502: remove clear_config
+ + t7502: use test_config to set/unset git config variables
+ + t9500: use test_config to set/unset git config variables
+ + t7508: use test_config to set/unset git config variables
+ + t7500: use test_config to set/unset git config variables
+ + t5541: use test_config to set/unset git config variables
+ + t5520: use test_config to set/unset git config variables
+ + t4202: use test_config/test_unconfig to set/unset git config variables
+ + t4034: use test_config/test_unconfig to set/unset git config variables
+ + t4304: use test_config to set/unset git config variables
+ + t3400: use test_config to set/unset git config variables
 
  Bulk-update of the test suite.
 
+--------------------------------------------------
+[New Topics]
 
-* ap/combine-diff-coalesce-lost (2013-03-25) 1 commit
- - combine-diff: coalesce lost lines optimally
- (this branch uses ap/combine-diff-ignore-whitespace.)
+* js/log-gpg (2013-03-27) 1 commit
+ - log: read gpg settings for signed commit verification
 
- Attempts to minimize "diff -c/--cc" output by coalescing the same
- lines removed from the parents better, but with an O(n^2)
- complexity.  I wonder
+ Teach "show/log" honor gpg.program configuration just like other
+ parts of the code that use GnuPG.
 
-
-* bk/document-commit-tree-S (2013-03-25) 1 commit
-  (merged to 'next' on 2013-03-26 at 8ee205f)
- + commit-tree: document -S option consistently
-
- Will merge to 'master'.
+ Will merge to 'next'.
 
 
-* jk/check-corrupt-objects-carefully (2013-03-25) 9 commits
- - clone: run check_everything_connected
- - clone: die on errors from unpack_trees
- - add tests for cloning corrupted repositories
- - streaming_write_entry: propagate streaming errors
- - add test for streaming corrupt blobs
- - avoid infinite loop in read_istream_loose
- - read_istream_filtered: propagate read error from upstream
- - check_sha1_signature: check return value from read_istream
- - stream_blob_to_fd: detect errors reading from stream
+* jc/t5516-pushInsteadOf-vs-pushURL (2013-03-28) 1 commit
+ - t5516: test interaction between pushURL and pushInsteadOf correctly
 
- Have the streaming interface and other codepaths more carefully
- examine for corrupt objects.
+ Update a test to match the documented interaction between pushURL
+ and pushInsteadOf.
+
+ Will merge to 'next'.
 
 
-* js/iterm-is-on-osx (2013-03-25) 1 commit
- - git-web--browse: recognize iTerm as a GUI terminal on OS X
+* jk/merge-tree-added-identically (2013-03-27) 1 commit
+ - merge-tree: fix "same file added in subdir"
 
- Add more logic to detect graphic environment of OS X.
-
-
-* tb/cygwin-shared-repository (2013-03-25) 2 commits
- - optimize set_shared_perm()
- - Make core.sharedRepository work under cygwin 1.7
-
- Cygwin port has a faster-but-lying lstat(2) emulation whose
- incorrectness does not matter in practice except for a few
- codepaths, and setting permission bits to directories is a codepath
- that needs to use a more correct one.
+ We would most likely want to change things the other way around.
 
 
-* jc/directory-attrs-regression-fix (2013-03-26) 4 commits
- - make sure a pattern without trailing slash matches a directory
- - attr.c::path_matches(): special case paths that end with a slash
- - dir.c::match_basename(): pay attention to the length of string parameters
- - attr.c::path_matches(): the basename is part of the pathname
+* rr/triangle (2013-03-28) 6 commits
+ - remote.c: introduce branch.<name>.pushremote
+ - remote.c: introduce remote.pushdefault
+ - remote.c: introduce a way to have different remotes for fetch/push
+ - t5516 (fetch-push): drop implicit arguments from helper functions
+ - t5516 (fetch-push): update test description
+ - remote.c: simplify a bit of code using git_config_string()
 
- Fix 1.8.1.x regression that stopped matching "dir" (without
- trailing slash) to a directory "dir".
+ Support "pull from one place, push to another place" workflow
+ better by introducing remote.pushdefault (overrides the "origin"
+ thing) and branch.*.pushremote (overrides the branch.*.remote).
 
 
-* nd/checkout-paths-reduce-match-pathspec-calls (2013-03-26) 1 commit
- - [NEEDSTEST] checkout: avoid unnecessary match_pathspec calls
+* sg/gpg-sig (2013-03-29) 5 commits
+ - pretty printing: extend %G? to include 'N' and 'U'
+ - merge/pull Check for untrusted good GPG signatures
+ - merge/pull: verify GPG signatures of commits being merged
+ - commit.c: also look at the first GPG status line
+ - Move commit GPG signature verification to commit.c
+
+ Teach "merge/pull" to optionally verify and reject commits that are
+ not signed properly.
+
+ Will merge to 'next'.
+
+
+* tr/log-tree-optim (2013-03-28) 1 commit
+ - Avoid loading commits twice in log with diffs
+
+ Optimize "log" that shows the difference between the parent and the
+ child.
+
+ Will merge to 'next'.
+
+
+* jk/config-with-empty-section (2013-03-29) 1 commit
+ - t1300: document some aesthetic failures of the config editor
+
+ Document that "git config --unset" does not remove an empty section
+ head after removing the last variable in a section, and adding a
+ new variable does not try to reuse a leftover empty section head.
+
+ Will merge to 'next'.
+
+
+* jk/difftool-no-overwrite-on-copyback (2013-03-29) 5 commits
+ - t7800: run --dir-diff tests with and without symlinks
+ - t7800: fix tests when difftool uses --no-symlinks
+ - t7800: don't hide grep output
+ - difftool: don't overwrite modified files
+ - t7800: move '--symlinks' specific test to the end
+
+ Try to be careful when difftool backend allows the user to write
+ into the temporary files being shown *and* the user makes changes
+ to the working tree at the same time. One of the changes has to be
+ lost in such a case, but at least tell the user what he did.
+
+
 
 --------------------------------------------------
 [Stalled]
@@ -365,63 +226,113 @@ of the repositories listed at
 
  Not ready for inclusion.
 
-
-* mg/qnx6 (2013-02-25) 1 commit
- - QNX: newer QNX 6.x.x is not so crippled
-
- Not ready for inclusion.
-
-
-* po/help-guides (2013-03-03) 5 commits
- - help doc: include --guide option description
- - help.c: add list_common_guides_help() function
- - help.c: add --guide option
- - help.c: use OPT_COUNTUP
- - show 'git help <guide>' usage, with examples
-
- Give more visibility to "concept guides" to help "git help" users.
-
- Expecting a reroll.
- $gmane/217384
-
-
-* hv/config-from-strbuf (2013-03-10) 4 commits
- - teach config parsing to read from strbuf
- - config: make parsing stack struct independent from actual data source
- - config: drop file pointer validity check in get_next_char()
- - config: factor out config file stack management
-
- Expecting a reroll.
- $gmane/217811
-
-
-* mb/gitweb-highlight-link-target (2012-12-20) 1 commit
- - Highlight the link target line in Gitweb using CSS
-
- Expecting a reroll.
- $gmane/211935
-
-
-* mb/remote-default-nn-origin (2012-07-11) 6 commits
- - Teach get_default_remote to respect remote.default.
- - Test that plain "git fetch" uses remote.default when on a detached HEAD.
- - Teach clone to set remote.default.
- - Teach "git remote" about remote.default.
- - Teach remote.c about the remote.default configuration setting.
- - Rename remote.c's default_remote_name static variables.
-
- When the user does not specify what remote to interact with, we
- often attempt to use 'origin'.  This can now be customized via a
- configuration variable.
-
- Expecting a reroll.
- $gmane/210151
-
- "The first remote becomes the default" bit is better done as a
- separate step.
-
 --------------------------------------------------
 [Cooking]
+
+* jc/apply-ws-fix-tab-in-indent (2013-03-29) 2 commits
+  (merged to 'next' on 2013-03-29 at 26eb6e9)
+ + test: resurrect q_to_tab
+  (merged to 'next' on 2013-03-26 at 46c6bda)
+ + apply --whitespace=fix: avoid running over the postimage buffer
+
+ "git apply --whitespace=fix" was not prepared to see a line getting
+ longer after fixing whitespaces (e.g. tab-in-indent aka Python).
+
+ Will merge to 'master'.
+
+
+* jk/no-more-self-assignment (2013-03-25) 2 commits
+  (merged to 'next' on 2013-03-26 at 31ec9ac)
+ + match-trees: simplify score_trees() using tree_entry()
+ + submodule: clarify logic in show_submodule_summary
+
+ This started as a topic to reduce "type var = var" self assignment
+ tricks that were used to squelch "variable used uninitialized perhaps?"
+ warning from some compilers, but resulted in rewriting logic with
+ a version that is simpler and easier to understand for humans.
+
+ Will merge to 'master'.
+
+
+* ap/combine-diff-coalesce-lost (2013-03-25) 1 commit
+ - combine-diff: coalesce lost lines optimally
+
+ Attempts to minimize "diff -c/--cc" output by coalescing the same
+ lines removed from the parents better, but with an O(n^2)
+ complexity.
+
+ Will merge to 'next' to see if people with real-world usage scream.
+
+
+* bk/document-commit-tree-S (2013-03-25) 1 commit
+  (merged to 'next' on 2013-03-26 at 8ee205f)
+ + commit-tree: document -S option consistently
+
+ Will merge to 'master'.
+
+
+* jk/check-corrupt-objects-carefully (2013-03-27) 10 commits
+ - clone: leave repo in place after checkout errors
+ - clone: run check_everything_connected
+ - clone: die on errors from unpack_trees
+ - add tests for cloning corrupted repositories
+ - streaming_write_entry: propagate streaming errors
+ - add test for streaming corrupt blobs
+ - avoid infinite loop in read_istream_loose
+ - read_istream_filtered: propagate read error from upstream
+ - check_sha1_signature: check return value from read_istream
+ - stream_blob_to_fd: detect errors reading from stream
+
+ Have the streaming interface and other codepaths more carefully
+ examine for corrupt objects.
+
+ The message in the last one may want to be updated.
+ $gmane/219229
+
+
+* js/iterm-is-on-osx (2013-03-25) 1 commit
+ - git-web--browse: recognize iTerm as a GUI terminal on OS X
+
+ Add more logic to detect graphic environment of OS X.
+
+ We may want to simplify it down to just "is there TERM_PROGRAM?",
+ but I am not an OS X user.
+
+
+* tb/cygwin-shared-repository (2013-03-25) 1 commit
+ - Make core.sharedRepository work under cygwin 1.7
+
+ Cygwin port has a faster-but-lying lstat(2) emulation whose
+ incorrectness does not matter in practice except for a few
+ codepaths, and setting permission bits to directories is a codepath
+ that needs to use a more correct one.
+
+ Will merge to 'next'.
+
+
+* jc/directory-attrs-regression-fix (2013-03-28) 6 commits
+ - t: check that a pattern without trailing slash matches a directory
+ - dir.c::match_pathname(): pay attention to the length of string parameters
+ - dir.c::match_pathname(): adjust patternlen when shifting pattern
+ - dir.c::match_basename(): pay attention to the length of string parameters
+ - attr.c::path_matches(): special case paths that end with a slash
+ - attr.c::path_matches(): the basename is part of the pathname
+
+ Fix 1.8.1.x regression that stopped matching "dir" (without
+ trailing slash) to a directory "dir".
+
+ Will merge to 'next'.
+
+
+* nd/checkout-paths-reduce-match-pathspec-calls (2013-03-27) 1 commit
+ - checkout: avoid unnecessary match_pathspec calls
+
+ Consolidate repeated pathspec matches on the same paths, while
+ fixing a bug in "git checkout dir/" code started from an unmerged
+ index.
+
+ Will merge to 'next'.
+
 
 * jc/merge-tag-object (2013-03-19) 1 commit
  - merge: a random object may not necssarily be a commit
@@ -439,28 +350,39 @@ of the repositories listed at
  though.  After all, the user went to great length to feed something
  different from the normal "v1.8.2" to the command.
 
+ Will merge to 'next'.
+
 
 * jk/index-pack-correct-depth-fix (2013-03-20) 1 commit
- - index-pack: always zero-initialize object_entry list
+  (merged to 'next' on 2013-03-26 at c56e839)
+ + index-pack: always zero-initialize object_entry list
 
  "index-pack --fix-thin" used uninitialize value to compute delta
  depths of objects it appends to the resulting pack.
 
+ Will merge to 'master'.
+
 
 * jn/push-tests (2013-03-19) 3 commits
- - push test: rely on &&-chaining instead of 'if bad; then echo Oops; fi'
- - push test: simplify check of push result
- - push test: use test_config when appropriate
+  (merged to 'next' on 2013-03-26 at da891db)
+ + push test: rely on &&-chaining instead of 'if bad; then echo Oops; fi'
+ + push test: simplify check of push result
+ + push test: use test_config when appropriate
 
  Update t5516 with style fixes.
 
+ Will merge to 'master'.
+
 
 * nd/index-pack-threaded-fixes (2013-03-19) 2 commits
- - index-pack: guard nr_resolved_deltas reads by lock
- - index-pack: protect deepest_delta in multithread code
+  (merged to 'next' on 2013-03-26 at e508c77)
+ + index-pack: guard nr_resolved_deltas reads by lock
+ + index-pack: protect deepest_delta in multithread code
 
  "index-pack --verify-stat" used a few counters outside protection
  of mutex, possibly showing incorrect numbers.
+
+ Will merge to 'master'.
 
 
 * kb/status-ignored-optim (2013-03-19) 8 commits
@@ -483,13 +405,6 @@ of the repositories listed at
  data.
 
 
-* rr/tests-dedup-test-config (2013-03-19) 1 commit
-  (merged to 'next' on 2013-03-26 at d314299)
- + t4018,7810,7811: remove test_config() redefinition
-
- Will merge to 'master'.
-
-
 * jn/add-2.0-u-A-sans-pathspec (2013-03-20) 5 commits
  - git add: -u/-A now affects the entire working tree
  - add -A: only show pathless 'add -A' warning when changes exist outside cwd
@@ -501,6 +416,9 @@ of the repositories listed at
  "add -u/-A" that is ran without pathspec when there is no change
  outside the current directory.
 
+ Expecting a reroll and then merge the bottom bits to 'next'.
+ $gmane/219342
+
 
 * rr/test-3200-style (2013-03-20) 1 commit
   (merged to 'next' on 2013-03-26 at 1214287)
@@ -511,13 +429,15 @@ of the repositories listed at
  Will merge to 'master'.
 
 
-* tr/packed-object-info-wo-recursion (2013-03-25) 3 commits
+* tr/packed-object-info-wo-recursion (2013-03-27) 3 commits
  - sha1_file: remove recursion in unpack_entry
  - Refactor parts of in_delta_base_cache/cache_or_unpack_entry
  - sha1_file: remove recursion in packed_object_info
 
  Attempts to reduce the stack footprint of sha1_object_info()
  and unpack_entry() codepaths.
+
+ Will merge to 'next'.
 
 
 * sr/am-show-final-message-in-applying-indicator (2013-03-21) 1 commit
@@ -532,68 +452,7 @@ of the repositories listed at
  Will merge to 'master'.
 
 
-* yd/doc-merge-annotated-tag (2013-03-21) 1 commit
-  (merged to 'next' on 2013-03-26 at a11162f)
- + Documentation: merging a tag is a special case
-
- Document the 1.7.9 feature to merge a signed tag and keep that in
- the mergetag header in the resulting commit better.
-
- Will merge to 'master'.
-
-
-* yd/doc-is-in-asciidoc (2013-03-21) 1 commit
-  (merged to 'next' on 2013-03-26 at a980af2)
- + CodingGuidelines: our documents are in AsciiDoc
-
- Will merge to 'master'.
-
-
-* ap/combine-diff-ignore-whitespace (2013-03-14) 1 commit
-  (merged to 'next' on 2013-03-19 at dfb2c98)
- + Allow combined diff to ignore white-spaces
- (this branch is used by ap/combine-diff-coalesce-lost.)
-
- Originally merged to 'next' on 2013-03-18
-
- Teach "diff --cc" output to honor options to ignore various forms
- of whitespace changes.
-
- Will merge to 'master' in the 4th batch (Safe).
-
-
-* jk/checkout-attribute-lookup (2013-03-20) 3 commits
-  (merged to 'next' on 2013-03-20 at 43a89e8)
- + t2003: work around path mangling issue on Windows
-  (merged to 'next' on 2013-03-19 at b063a55)
- + entry: fix filter lookup
- + t2003: modernize style
-
- Codepath to stream blob object contents directly from the object
- store to filesystem did not use the correct path to find conversion
- filters when writing to temporary files.
-
- Will merge to 'master' in the 4th batch (Safe).
-
-
-* jk/difftool-dir-diff-edit-fix (2013-03-14) 3 commits
-  (merged to 'next' on 2013-03-19 at e68014a)
- + difftool --dir-diff: symlink all files matching the working tree
- + difftool: avoid double slashes in symlink targets
- + git-difftool(1): fix formatting of --symlink description
-
- Originally merged to 'next' on 2013-03-15
-
- "git difftool --dir-diff" made symlinks to working tree files when
- preparing a temporary directory structure, so that accidental edits
- of these files in the difftool are reflected back to the working
- tree, but the logic to decide when to do so was not quite right.
-
- Will merge to 'master' in the 4th batch (Safe).
-
-
-* nd/magic-pathspecs (2013-03-22) 46 commits
- - fixup
+* nd/magic-pathspecs (2013-03-23) 45 commits
  - Rename field "raw" to "_raw" in struct pathspec
  - pathspec: support :(glob) syntax
  - pathspec: make --literal-pathspecs disable pathspec magic
@@ -642,35 +501,27 @@ of the repositories listed at
 
  Migrate the rest of codebase to use "struct pathspec" more.
 
- Haven't picked up the reroll yet.
+ Will merge to 'next' after all the dust settles.
 
 
-* rs/archive-zip-raw-compression (2013-03-16) 1 commit
-  (merged to 'next' on 2013-03-19 at 8cc1cb3)
- + archive-zip: use deflateInit2() to ask for raw compressed data
+* sw/safe-create-leading-dir-race (2013-03-26) 1 commit
+  (merged to 'next' on 2013-03-26 at 744bb50)
+ + safe_create_leading_directories: fix race that could give a false negative
 
- Originally merged to 'next' on 2013-03-18
-
- Will merge to 'master' in the 4th batch (Safe).
-
-
-* sw/safe-create-leading-dir-race (2013-03-17) 2 commits
- - SQUASH???
- - safe_create_leading_directories: fix race that could give a false negative
-
- Will merge to 'next' after squashing in the fix.
+ Will merge to 'master'.
 
 
 * nd/branch-show-rebase-bisect-state (2013-03-23) 7 commits
- - status, branch: fix the misleading "bisecting" message
- - branch: show more information when HEAD is detached
- - status: show more info than "currently not on any branch"
- - wt-status: move wt_status_get_state() out to wt_status_print()
- - wt-status: split wt_status_state parsing function out
- - wt-status: move strbuf into read_and_strip_branch()
- - Merge branch 'jc/reflog-reverse-walk' into nd/branch-show-rebase-bisect-state
+  (merged to 'next' on 2013-03-26 at cd666f6)
+ + status, branch: fix the misleading "bisecting" message
+ + branch: show more information when HEAD is detached
+ + status: show more info than "currently not on any branch"
+ + wt-status: move wt_status_get_state() out to wt_status_print()
+ + wt-status: split wt_status_state parsing function out
+ + wt-status: move strbuf into read_and_strip_branch()
+ + Merge branch 'jc/reflog-reverse-walk' into nd/branch-show-rebase-bisect-state
 
- Will merge to 'next'.
+ Will merge to 'master'.
 
 
 * jc/add-2.0-delete-default (2013-03-08) 3 commits
@@ -690,7 +541,8 @@ of the repositories listed at
 
 
 * jc/nobody-sets-src-peer-ref (2013-03-04) 1 commit
- - match_push_refs(): nobody sets src->peer_ref anymore
+  (merged to 'next' on 2013-03-26 at 9d13c02)
+ + match_push_refs(): nobody sets src->peer_ref anymore
 
  Dead code removal.
 
@@ -701,7 +553,8 @@ of the repositories listed at
 
 
 * kb/name-hash (2013-02-27) 1 commit
- - name-hash.c: fix endless loop with core.ignorecase=true
+  (merged to 'next' on 2013-03-26 at 750490a)
+ + name-hash.c: fix endless loop with core.ignorecase=true
 
  The code to keep track of what directory names are known to Git on
  platforms with case insensitive filesystems can get confused upon
@@ -713,19 +566,21 @@ of the repositories listed at
  Will merge to 'master' in the 4th batch (Risky).
 
 
-* tr/line-log (2013-03-23) 6 commits
+* tr/line-log (2013-03-28) 5 commits
  - Speed up log -L... -M
  - log -L: :pattern:file syntax to find by funcname
  - Implement line-history search (git log -L)
  - Export rewrite_parents() for 'log -L'
- - fixup
  - Refactor parse_loc
 
- Rerolled; collides with nd/magic-pathspecs.
+ Rerolled.
+
+ Will merge to 'next'.
 
 
 * jk/common-make-variables-export-safety (2013-02-25) 1 commit
- - Makefile: make mandir, htmldir and infodir absolute
+  (merged to 'next' on 2013-03-26 at 8b7bb16)
+ + Makefile: make mandir, htmldir and infodir absolute
 
  Make the three variables safer to be exported to submakes by
  ensuring that they are full paths so that they can be used as
@@ -738,26 +593,27 @@ of the repositories listed at
 
 
 * jk/pkt-line-cleanup (2013-03-21) 20 commits
- - do not use GIT_TRACE_PACKET=3 in tests
- - remote-curl: always parse incoming refs
- - remote-curl: move ref-parsing code up in file
- - remote-curl: pass buffer straight to get_remote_heads
- - teach get_remote_heads to read from a memory buffer
- - pkt-line: share buffer/descriptor reading implementation
- - pkt-line: provide a LARGE_PACKET_MAX static buffer
- - pkt-line: move LARGE_PACKET_MAX definition from sideband
- - pkt-line: teach packet_read_line to chomp newlines
- - pkt-line: provide a generic reading function with options
- - pkt-line: drop safe_write function
- - pkt-line: move a misplaced comment
- - write_or_die: raise SIGPIPE when we get EPIPE
- - upload-archive: use argv_array to store client arguments
- - upload-archive: do not copy repo name
- - send-pack: prefer prefixcmp over memcmp in receive_status
- - fetch-pack: fix out-of-bounds buffer offset in get_ack
- - upload-pack: remove packet debugging harness
- - upload-pack: do not add duplicate objects to shallow list
- - upload-pack: use get_sha1_hex to parse "shallow" lines
+  (merged to 'next' on 2013-03-26 at 2bb3b75)
+ + do not use GIT_TRACE_PACKET=3 in tests
+ + remote-curl: always parse incoming refs
+ + remote-curl: move ref-parsing code up in file
+ + remote-curl: pass buffer straight to get_remote_heads
+ + teach get_remote_heads to read from a memory buffer
+ + pkt-line: share buffer/descriptor reading implementation
+ + pkt-line: provide a LARGE_PACKET_MAX static buffer
+ + pkt-line: move LARGE_PACKET_MAX definition from sideband
+ + pkt-line: teach packet_read_line to chomp newlines
+ + pkt-line: provide a generic reading function with options
+ + pkt-line: drop safe_write function
+ + pkt-line: move a misplaced comment
+ + write_or_die: raise SIGPIPE when we get EPIPE
+ + upload-archive: use argv_array to store client arguments
+ + upload-archive: do not copy repo name
+ + send-pack: prefer prefixcmp over memcmp in receive_status
+ + fetch-pack: fix out-of-bounds buffer offset in get_ack
+ + upload-pack: remove packet debugging harness
+ + upload-pack: do not add duplicate objects to shallow list
+ + upload-pack: use get_sha1_hex to parse "shallow" lines
 
  Cleans up pkt-line API, implementation and its callers to make them
  more robust.  Even though I think this change is correct, please
@@ -767,9 +623,10 @@ of the repositories listed at
 
 
 * jc/remove-export-from-config-mak-in (2013-03-05) 3 commits
- - Fix `make install` when configured with autoconf
- - Makefile: do not export mandir/htmldir/infodir
- - config.mak.in: remove unused definitions
+  (merged to 'next' on 2013-03-26 at a789220)
+ + Fix `make install` when configured with autoconf
+ + Makefile: do not export mandir/htmldir/infodir
+ + config.mak.in: remove unused definitions
 
  config.mak.in template had an "export" line to cause a few
  common makefile variables to be exported; if they need to be
@@ -784,20 +641,6 @@ of the repositories listed at
  immediately if you find any unintended side effect.
 
  Will merge to 'master' in the 4th batch (Risky).
-
-
-* jc/remove-treesame-parent-in-simplify-merges (2013-01-17) 1 commit
- - simplify-merges: drop merge from irrelevant side branch
-
- The --simplify-merges logic did not cull irrelevant parents from a
- merge that is otherwise not interesting with respect to the paths
- we are following.
-
- This touches a fairly core part of the revision traversal
- infrastructure; even though I think this change is correct, please
- report immediately if you find any unintended side effect.
-
- Will merge to 'master' in the 2nd batch (Risky).
 
 
 * jc/push-2.0-default-to-simple (2013-03-18) 15 commits
@@ -821,19 +664,20 @@ of the repositories listed at
 
 
 * bc/append-signed-off-by (2013-02-23) 13 commits
- - git-commit: populate the edit buffer with 2 blank lines before s-o-b
- - Unify appending signoff in format-patch, commit and sequencer
- - format-patch: update append_signoff prototype
- - t4014: more tests about appending s-o-b lines
- - sequencer.c: teach append_signoff to avoid adding a duplicate newline
- - sequencer.c: teach append_signoff how to detect duplicate s-o-b
- - sequencer.c: always separate "(cherry picked from" from commit body
- - sequencer.c: require a conforming footer to be preceded by a blank line
- - sequencer.c: recognize "(cherry picked from ..." as part of s-o-b footer
- - t/t3511: add some tests of 'cherry-pick -s' functionality
- - t/test-lib-functions.sh: allow to specify the tag name to test_commit
- - commit, cherry-pick -s: remove broken support for multiline rfc2822 fields
- - sequencer.c: rework search for start of footer to improve clarity
+  (merged to 'next' on 2013-03-26 at 0e3c79b)
+ + git-commit: populate the edit buffer with 2 blank lines before s-o-b
+ + Unify appending signoff in format-patch, commit and sequencer
+ + format-patch: update append_signoff prototype
+ + t4014: more tests about appending s-o-b lines
+ + sequencer.c: teach append_signoff to avoid adding a duplicate newline
+ + sequencer.c: teach append_signoff how to detect duplicate s-o-b
+ + sequencer.c: always separate "(cherry picked from" from commit body
+ + sequencer.c: require a conforming footer to be preceded by a blank line
+ + sequencer.c: recognize "(cherry picked from ..." as part of s-o-b footer
+ + t/t3511: add some tests of 'cherry-pick -s' functionality
+ + t/test-lib-functions.sh: allow to specify the tag name to test_commit
+ + commit, cherry-pick -s: remove broken support for multiline rfc2822 fields
+ + sequencer.c: rework search for start of footer to improve clarity
 
  Consolidates codepaths that inspect log-message-to-be and decide to
  add a new Signed-off-by line in various commands.  I think there is
@@ -854,7 +698,7 @@ of the repositories listed at
  Even though I think this change is correct, please report
  immediately if you find any unintended side effect.
 
- kb/status-ignored-optim may supersede this.
+ kb/status-ignored-optim supersedes this.
 
 
 * jc/add-2.0-u-A-sans-pathspec (2013-03-14) 1 commit
@@ -867,13 +711,74 @@ of the repositories listed at
  entire working tree).  With this, we finally change the behaviour
  and make it affect the entire working tree in Git 2.0.
 
+ jn/add-2.0-u-A-sans-pathspec supersedes this.
 
---------------------------------------------------
-[Discarded]
 
 * ja/directory-attrs (2013-03-20) 1 commit
  . trailing slash required in .gitattributes
 
  Now part of jc/directory-attrs-regression-fix.
 
+
+* hv/config-from-strbuf (2013-03-10) 4 commits
+ . teach config parsing to read from strbuf
+ . config: make parsing stack struct independent from actual data source
+ . config: drop file pointer validity check in get_next_char()
+ . config: factor out config file stack management
+
+ Was expecting a reroll.
+ $gmane/217811
+
+
+* mb/gitweb-highlight-link-target (2012-12-20) 1 commit
+ . Highlight the link target line in Gitweb using CSS
+
+ Was expecting a reroll.
+ $gmane/211935
+
+
+* mb/remote-default-nn-origin (2012-07-11) 6 commits
+ . Teach get_default_remote to respect remote.default.
+ . Test that plain "git fetch" uses remote.default when on a detached HEAD.
+ . Teach clone to set remote.default.
+ . Teach "git remote" about remote.default.
+ . Teach remote.c about the remote.default configuration setting.
+ . Rename remote.c's default_remote_name static variables.
+
+ When the user does not specify what remote to interact with, we
+ often attempt to use 'origin'.  This can now be customized via a
+ configuration variable.
+
+ Was expecting a reroll.
+ $gmane/210151
+
+ "The first remote becomes the default" bit is better done as a
+ separate step.
+
+
+* mg/qnx6 (2013-02-25) 1 commit
+ . QNX: newer QNX 6.x.x is not so crippled
+
+ Not ready for inclusion.
+
+
+* po/help-guides (2013-03-03) 5 commits
+ . help doc: include --guide option description
+ . help.c: add list_common_guides_help() function
+ . help.c: add --guide option
+ . help.c: use OPT_COUNTUP
+ . show 'git help <guide>' usage, with examples
+
+ Give more visibility to "concept guides" to help "git help" users.
+
+ Was (and still is) expecting a reroll.
+ $gmane/217384
+
+
+* jk/t7800-modernize (2013-03-23) 3 commits
+ . t7800: run --dir-diff tests with and without symlinks
+ . t7800: fix tests when difftool uses --no-symlinks
+ . t7800: don't hide grep output
+
+ Superseded by jk/difftool-no-overwrite-on-copyback.
 
