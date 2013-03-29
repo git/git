@@ -377,4 +377,34 @@ test_expect_success PERL,SYMLINKS 'difftool --dir-diff --symlink without unstage
 	test_cmp actual expect
 '
 
+write_script modify-file <<\EOF
+echo "new content" >file
+EOF
+
+test_expect_success PERL 'difftool --no-symlinks does not overwrite working tree file ' '
+	echo "orig content" >file &&
+	git difftool --dir-diff --no-symlinks --extcmd "$(pwd)/modify-file" branch &&
+	echo "new content" >expect &&
+	test_cmp expect file
+'
+
+write_script modify-both-files <<\EOF
+echo "wt content" >file &&
+echo "tmp content" >"$2/file" &&
+echo "$2" >tmpdir
+EOF
+
+test_expect_success PERL 'difftool --no-symlinks detects conflict ' '
+	(
+		TMPDIR=$TRASH_DIRECTORY &&
+		export TMPDIR &&
+		echo "orig content" >file &&
+		test_must_fail git difftool --dir-diff --no-symlinks --extcmd "$(pwd)/modify-both-files" branch &&
+		echo "wt content" >expect &&
+		test_cmp expect file &&
+		echo "tmp content" >expect &&
+		test_cmp expect "$(cat tmpdir)/file"
+	)
+'
+
 test_done
