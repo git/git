@@ -318,28 +318,39 @@ test_expect_success PERL 'setup change in subdirectory' '
 	git commit -m "modified both"
 '
 
-test_expect_success PERL 'difftool -d' '
-	git difftool -d --extcmd ls branch >output &&
+run_dir_diff_test () {
+	test_expect_success PERL "$1 --no-symlinks" "
+		symlinks=--no-symlinks &&
+		$2
+	"
+	test_expect_success PERL,SYMLINKS "$1 --symlinks" "
+		symlinks=--symlinks &&
+		$2
+	"
+}
+
+run_dir_diff_test 'difftool -d' '
+	git difftool -d $symlinks --extcmd ls branch >output &&
 	grep sub output &&
 	grep file output
 '
 
-test_expect_success PERL 'difftool --dir-diff' '
-	git difftool --dir-diff --extcmd ls branch >output &&
+run_dir_diff_test 'difftool --dir-diff' '
+	git difftool --dir-diff $symlinks --extcmd ls branch >output &&
 	grep sub output &&
 	grep file output
 '
 
-test_expect_success PERL 'difftool --dir-diff ignores --prompt' '
-	git difftool --dir-diff --prompt --extcmd ls branch >output &&
+run_dir_diff_test 'difftool --dir-diff ignores --prompt' '
+	git difftool --dir-diff $symlinks --prompt --extcmd ls branch >output &&
 	grep sub output &&
 	grep file output
 '
 
-test_expect_success PERL 'difftool --dir-diff from subdirectory' '
+run_dir_diff_test 'difftool --dir-diff from subdirectory' '
 	(
 		cd sub &&
-		git difftool --dir-diff --extcmd ls branch >output &&
+		git difftool --dir-diff $symlinks --extcmd ls branch >output &&
 		grep sub output &&
 		grep file output
 	)
