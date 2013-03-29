@@ -87,6 +87,10 @@ q_to_cr () {
 	tr Q '\015'
 }
 
+q_to_tab () {
+	tr Q '\011'
+}
+
 qz_to_tab_space () {
 	tr QZ '\011\040'
 }
