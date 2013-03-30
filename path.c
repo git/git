@@ -396,22 +396,14 @@ const char *enter_repo(const char *path, int strict)
 	return NULL;
 }
 
-int adjust_shared_perm(const char *path)
+static int calc_shared_perm(int mode)
 {
-	int tweak, shared, orig_mode, mode;
+	int tweak;
 
-	if (!shared_repository) {
-		return 0;
-	}
-	if (get_st_mode_bits(path, &mode) < 0)
-		return -1;
-
-	orig_mode = mode;
 	if (shared_repository < 0)
-		shared = -shared_repository;
+		tweak = -shared_repository;
 	else
-		shared = shared_repository;
-	tweak = shared;
+		tweak = shared_repository;
 
 	if (!(mode & S_IWUSR))
 		tweak &= ~0222;
@@ -423,16 +415,28 @@ int adjust_shared_perm(const char *path)
 	else
 		mode |= tweak;
 
-	if (S_ISDIR(mode)) {
+	return mode;
+}
+
+
+int adjust_shared_perm(const char *path)
+{
+	int old_mode, new_mode;
+
+	if (!shared_repository)
+		return 0;
+	if (get_st_mode_bits(path, &old_mode) < 0)
+		return -1;
+
+	new_mode = calc_shared_perm(old_mode);
+	if (S_ISDIR(old_mode)) {
 		/* Copy read bits to execute bits */
-		mode |= (shared & 0444) >> 2;
-		mode |= FORCE_DIR_SET_GID;
+		new_mode |= (new_mode & 0444) >> 2;
+		new_mode |= FORCE_DIR_SET_GID;
 	}
 
-	if (((shared_repository < 0
-	      ? (orig_mode & (FORCE_DIR_SET_GID | 0777))
-	      : (orig_mode & mode)) != mode) &&
-	    chmod(path, (mode & ~S_IFMT)) < 0)
+	if (((old_mode ^ new_mode) & ~S_IFMT) &&
+			chmod(path, (new_mode & ~S_IFMT)) < 0)
 		return -2;
 	return 0;
 }
