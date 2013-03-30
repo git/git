@@ -669,11 +669,13 @@ sub merge_revs_into_hash {
 }
 
 sub merge_merge_info {
-	my ($mergeinfo_one, $mergeinfo_two) = @_;
+	my ($mergeinfo_one, $mergeinfo_two, $ignore_branch) = @_;
 	my %result_hash = ();
 
 	merge_revs_into_hash(\%result_hash, $mergeinfo_one);
 	merge_revs_into_hash(\%result_hash, $mergeinfo_two);
+
+	delete $result_hash{$ignore_branch} if $ignore_branch;
 
 	my $result = '';
 	# Sort below is for consistency's sake
@@ -695,6 +697,7 @@ sub populate_merge_info {
 		my $all_parents_ok = 1;
 		my $aggregate_mergeinfo = '';
 		my $rooturl = $gs->repos_root;
+		my ($target_branch) = $gs->full_pushurl =~ /^\Q$rooturl\E(.*)/;
 
 		if (defined($rewritten_parent)) {
 			# Replace first parent with newly-rewritten version
@@ -726,7 +729,8 @@ sub populate_merge_info {
 			# Merge previous mergeinfo values
 			$aggregate_mergeinfo =
 				merge_merge_info($aggregate_mergeinfo,
-								 $par_mergeinfo, 0);
+								$par_mergeinfo,
+								$target_branch);
 
 			next if $parent eq $parents[0]; # Skip first parent
 			# Add new changes being placed in tree by merge
@@ -769,7 +773,8 @@ sub populate_merge_info {
 			my $newmergeinfo = "$branchpath:" . join(',', @revsin);
 			$aggregate_mergeinfo =
 				merge_merge_info($aggregate_mergeinfo,
-								 $newmergeinfo, 1);
+								$newmergeinfo,
+								$target_branch);
 		}
 		if ($all_parents_ok and $aggregate_mergeinfo) {
 			return $aggregate_mergeinfo;
