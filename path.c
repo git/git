@@ -1,14 +1,5 @@
 /*
- * I'm tired of doing "vsnprintf()" etc just to open a
- * file, so here's a "return static buffer with printf"
- * interface for paths.
- *
- * It's obviously not thread-safe. Sue me. But it's quite
- * useful for doing things like
- *
- *   f = open(mkpath("%s/%s.git", base, name), O_RDONLY);
- *
- * which is what it's designed for.
+ * Utilities for paths and pathnames
  */
 #include "cache.h"
 #include "strbuf.h"
@@ -405,21 +396,17 @@ const char *enter_repo(const char *path, int strict)
 	return NULL;
 }
 
-int set_shared_perm(const char *path, int mode)
+int adjust_shared_perm(const char *path)
 {
-	int tweak, shared, orig_mode;
+	int tweak, shared, orig_mode, mode;
 
 	if (!shared_repository) {
-		if (mode)
-			return chmod(path, mode & ~S_IFMT);
 		return 0;
 	}
-	if (!mode) {
-		if (get_st_mode_bits(path, &mode) < 0)
-			return -1;
-		orig_mode = mode;
-	} else
-		orig_mode = 0;
+	if (get_st_mode_bits(path, &mode) < 0)
+		return -1;
+
+	orig_mode = mode;
 	if (shared_repository < 0)
 		shared = -shared_repository;
 	else
