@@ -95,8 +95,7 @@ appropriately before running "make".
 --valgrind::
 	Execute all Git binaries with valgrind and exit with status
 	126 on errors (just like regular tests, this will only stop
-	the test script when running under -i).  Valgrind errors
-	go to stderr, so you might want to pass the -v option, too.
+	the test script when running under -i).
 
 	Since it makes no sense to run the tests with --valgrind and
 	not see any output, this option implies --verbose.  For
