@@ -1145,6 +1145,8 @@ static size_t format_commit_one(struct strbuf *sb, const char *placeholder,
 			switch (c->signature_check.result) {
 			case 'G':
 			case 'B':
+			case 'U':
+			case 'N':
 				strbuf_addch(sb, c->signature_check.result);
 			}
 			break;
