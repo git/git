@@ -654,6 +654,8 @@ static int peel_onion(const char *name, int len, unsigned char *sha1)
 
 	if (expected_type == OBJ_COMMIT)
 		lookup_flags = GET_SHA1_COMMITTISH;
+	else if (expected_type == OBJ_TREE)
+		lookup_flags = GET_SHA1_TREEISH;
 
 	if (get_sha1_1(name, sp - name - 2, outer, lookup_flags))
 		return -1;
