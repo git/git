@@ -5,6 +5,8 @@ base=$(basename "$0")
 TOOL_OPTIONS='--leak-check=no'
 
 case "$GIT_VALGRIND_MODE" in
+memcheck-fast)
+	;;
 memcheck)
 	VALGRIND_VERSION=$(valgrind --version)
 	VALGRIND_MAJOR=$(expr "$VALGRIND_VERSION" : '[^0-9]*\([0-9]*\)')
