@@ -6,6 +6,7 @@ struct signature_check {
 	char *gpg_status;
 	char result; /* 0 (not checked),
 		      * N (checked but no further result),
+		      * U (untrusted good),
 		      * G (good)
 		      * B (bad) */
 	char *signer;

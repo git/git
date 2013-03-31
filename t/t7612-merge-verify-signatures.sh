@@ -27,6 +27,10 @@ test_expect_success GPG 'create signed commits' '
 	git hash-object -w -t commit forged >forged.commit &&
 	git checkout initial &&
 
+	git checkout -b side-untrusted &&
+	echo 3 >baz && git add baz &&
+	test_tick && git commit -SB7227189 -m "untrusted on side"
+
 	git checkout master
 '
 
@@ -38,6 +42,11 @@ test_expect_success GPG 'merge unsigned commit with verification' '
 test_expect_success GPG 'merge commit with bad signature with verification' '
 	test_must_fail git merge --ff-only --verify-signatures $(cat forged.commit) 2>mergeerror &&
 	test_i18ngrep "has a bad GPG signature" mergeerror
+'
+
+test_expect_success GPG 'merge commit with untrusted signature with verification' '
+	test_must_fail git merge --ff-only --verify-signatures side-untrusted 2>mergeerror &&
+	test_i18ngrep "has an untrusted GPG signature" mergeerror
 '
 
 test_expect_success GPG 'merge signed commit with verification' '

@@ -234,11 +234,11 @@ extern void print_commit_list(struct commit_list *list,
 			      const char *format_last);
 
 /*
- * Check the signature of the given commit. The result of the check is stored in
- * sig->result, 'G' for a good signature, 'B' for a bad signature and 'N'
- * for no signature at all.
- * This may allocate memory for sig->gpg_output, sig->gpg_status, sig->signer
- * and sig->key.
+ * Check the signature of the given commit. The result of the check is stored
+ * in sig->check_result, 'G' for a good signature, 'U' for a good signature
+ * from an untrusted signer, 'B' for a bad signature and 'N' for no signature
+ * at all.  This may allocate memory for sig->gpg_output, sig->gpg_status,
+ * sig->signer and sig->key.
  */
 extern void check_commit_signature(const struct commit* commit, struct signature_check *sigc);
 

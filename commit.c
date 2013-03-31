@@ -1047,6 +1047,8 @@ static struct {
 } sigcheck_gpg_status[] = {
 	{ 'G', "\n[GNUPG:] GOODSIG " },
 	{ 'B', "\n[GNUPG:] BADSIG " },
+	{ 'U', "\n[GNUPG:] TRUST_NEVER" },
+	{ 'U', "\n[GNUPG:] TRUST_UNDEFINED" },
 };
 
 static void parse_gpg_output(struct signature_check *sigc)
@@ -1068,11 +1070,13 @@ static void parse_gpg_output(struct signature_check *sigc)
 			found += strlen(sigcheck_gpg_status[i].check);
 		}
 		sigc->result = sigcheck_gpg_status[i].result;
-		sigc->key = xmemdupz(found, 16);
-		found += 17;
-		next = strchrnul(found, '\n');
-		sigc->signer = xmemdupz(found, next - found);
-		break;
+		/* The trust messages are not followed by key/signer information */
+		if (sigc->result != 'U') {
+			sigc->key = xmemdupz(found, 16);
+			found += 17;
+			next = strchrnul(found, '\n');
+			sigc->signer = xmemdupz(found, next - found);
+		}
 	}
 }
 
