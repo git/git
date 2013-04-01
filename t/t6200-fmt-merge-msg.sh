@@ -112,8 +112,8 @@ test_expect_success '[merge] summary/log configuration' '
 	  Common #1
 	EOF
 
-	git config merge.log true &&
-	test_might_fail git config --unset-all merge.summary &&
+	test_config merge.log true &&
+	test_unconfig merge.summary &&
 
 	git checkout master &&
 	test_tick &&
@@ -121,8 +121,8 @@ test_expect_success '[merge] summary/log configuration' '
 
 	git fmt-merge-msg <.git/FETCH_HEAD >actual1 &&
 
-	test_might_fail git config --unset-all merge.log &&
-	git config merge.summary true &&
+	test_unconfig merge.log &&
+	test_config merge.summary true &&
 
 	git checkout master &&
 	test_tick &&
@@ -132,11 +132,6 @@ test_expect_success '[merge] summary/log configuration' '
 
 	test_cmp expected actual1 &&
 	test_cmp expected actual2
-'
-
-test_expect_success 'setup: clear [merge] configuration' '
-	test_might_fail git config --unset-all merge.log &&
-	test_might_fail git config --unset-all merge.summary
 '
 
 test_expect_success 'setup FETCH_HEAD' '
@@ -248,14 +243,14 @@ test_expect_success 'fmt-merge-msg -m' '
 	  Common #1
 	EOF
 
-	test_might_fail git config --unset merge.log &&
-	test_might_fail git config --unset merge.summary &&
+	test_unconfig merge.log &&
+	test_unconfig merge.summary &&
 	git checkout master &&
 	git fetch "$(pwd)" left &&
 	git fmt-merge-msg -m "Sync with left" <.git/FETCH_HEAD >actual &&
 	git fmt-merge-msg --log -m "Sync with left" \
 					<.git/FETCH_HEAD >actual.log &&
-	git config merge.log true &&
+	test_config merge.log true &&
 	git fmt-merge-msg -m "Sync with left" \
 					<.git/FETCH_HEAD >actual.log-config &&
 	git fmt-merge-msg --no-log -m "Sync with left" \
@@ -290,29 +285,29 @@ test_expect_success 'setup: expected shortlog for two branches' '
 '
 
 test_expect_success 'shortlog for two branches' '
-	git config merge.log true &&
-	test_might_fail git config --unset-all merge.summary &&
+	test_config merge.log true &&
+	test_unconfig merge.summary &&
 	git checkout master &&
 	test_tick &&
 	git fetch . left right &&
 	git fmt-merge-msg <.git/FETCH_HEAD >actual1 &&
 
-	test_might_fail git config --unset-all merge.log &&
-	git config merge.summary true &&
+	test_unconfig merge.log &&
+	test_config merge.summary true &&
 	git checkout master &&
 	test_tick &&
 	git fetch . left right &&
 	git fmt-merge-msg <.git/FETCH_HEAD >actual2 &&
 
-	git config merge.log yes &&
-	test_might_fail git config --unset-all merge.summary &&
+	test_config merge.log yes &&
+	test_unconfig merge.summary &&
 	git checkout master &&
 	test_tick &&
 	git fetch . left right &&
 	git fmt-merge-msg <.git/FETCH_HEAD >actual3 &&
 
-	test_might_fail git config --unset-all merge.log &&
-	git config merge.summary yes &&
+	test_unconfig merge.log &&
+	test_config merge.summary yes &&
 	git checkout master &&
 	test_tick &&
 	git fetch . left right &&
@@ -325,8 +320,8 @@ test_expect_success 'shortlog for two branches' '
 '
 
 test_expect_success 'merge-msg -F' '
-	test_might_fail git config --unset-all merge.log &&
-	git config merge.summary yes &&
+	test_unconfig merge.log &&
+	test_config merge.summary yes &&
 	git checkout master &&
 	test_tick &&
 	git fetch . left right &&
@@ -335,8 +330,8 @@ test_expect_success 'merge-msg -F' '
 '
 
 test_expect_success 'merge-msg -F in subdirectory' '
-	test_might_fail git config --unset-all merge.log &&
-	git config merge.summary yes &&
+	test_unconfig merge.log &&
+	test_config merge.summary yes &&
 	git checkout master &&
 	test_tick &&
 	git fetch . left right &&
@@ -350,8 +345,8 @@ test_expect_success 'merge-msg -F in subdirectory' '
 '
 
 test_expect_success 'merge-msg with nothing to merge' '
-	test_might_fail git config --unset-all merge.log &&
-	git config merge.summary yes &&
+	test_unconfig merge.log &&
+	test_config merge.summary yes &&
 
 	>empty &&
 
@@ -376,8 +371,8 @@ test_expect_success 'merge-msg tag' '
 	  Common #1
 	EOF
 
-	test_might_fail git config --unset-all merge.log &&
-	git config merge.summary yes &&
+	test_unconfig merge.log &&
+	test_config merge.summary yes &&
 
 	git checkout master &&
 	test_tick &&
@@ -406,8 +401,8 @@ test_expect_success 'merge-msg two tags' '
 	  Common #1
 	EOF
 
-	test_might_fail git config --unset-all merge.log &&
-	git config merge.summary yes &&
+	test_unconfig merge.log &&
+	test_config merge.summary yes &&
 
 	git checkout master &&
 	test_tick &&
@@ -436,8 +431,8 @@ test_expect_success 'merge-msg tag and branch' '
 	  Common #1
 	EOF
 
-	test_might_fail git config --unset-all merge.log &&
-	git config merge.summary yes &&
+	test_unconfig merge.log &&
+	test_config merge.summary yes &&
 
 	git checkout master &&
 	test_tick &&
@@ -463,6 +458,8 @@ test_expect_success 'merge-msg lots of commits' '
 		done &&
 		echo "  ..."
 	} >expected &&
+
+	test_config merge.summary yes &&
 
 	git checkout master &&
 	test_tick &&
