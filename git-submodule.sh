@@ -570,10 +570,12 @@ cmd_deinit()
 
 			if test -z "$force"
 			then
-				git rm -n "$sm_path" ||
+				git rm -qn "$sm_path" ||
 				die "$(eval_gettext "Submodule work tree '\$sm_path' contains local modifications; use '-f' to discard them")"
 			fi
-			rm -rf "$sm_path" || say "$(eval_gettext "Could not remove submodule work tree '\$sm_path'")"
+			rm -rf "$sm_path" &&
+			say "$(eval_gettext "Cleared directory '\$sm_path'")" ||
+			say "$(eval_gettext "Could not remove submodule work tree '\$sm_path'")"
 		fi
 
 		mkdir "$sm_path" || say "$(eval_gettext "Could not create empty submodule directory '\$sm_path'")"

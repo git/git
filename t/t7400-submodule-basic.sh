@@ -776,18 +776,22 @@ test_expect_success 'submodule deinit . deinits all initialized submodules' '
 	git config submodule.example.foo bar &&
 	git config submodule.example2.frotz nitfol &&
 	test_must_fail git submodule deinit &&
-	git submodule deinit . &&
+	git submodule deinit . >actual &&
 	test -z "$(git config --get-regexp "submodule\.example\.")" &&
 	test -z "$(git config --get-regexp "submodule\.example2\.")" &&
+	test_i18ngrep "Cleared directory .init" actual &&
+	test_i18ngrep "Cleared directory .example2" actual &&
 	rmdir init example2
 '
 
 test_expect_success 'submodule deinit deinits a submodule when its work tree is missing or empty' '
 	git submodule update --init &&
 	rm -rf init example2/* example2/.git &&
-	git submodule deinit init example2 &&
+	git submodule deinit init example2 >actual &&
 	test -z "$(git config --get-regexp "submodule\.example\.")" &&
 	test -z "$(git config --get-regexp "submodule\.example2\.")" &&
+	test_i18ngrep ! "Cleared directory .init" actual &&
+	test_i18ngrep "Cleared directory .example2" actual &&
 	rmdir init
 '
 
@@ -797,8 +801,9 @@ test_expect_success 'submodule deinit fails when the submodule contains modifica
 	test_must_fail git submodule deinit init &&
 	test -n "$(git config --get-regexp "submodule\.example\.")" &&
 	test -f example2/.git &&
-	git submodule deinit -f init &&
+	git submodule deinit -f init >actual &&
 	test -z "$(git config --get-regexp "submodule\.example\.")" &&
+	test_i18ngrep "Cleared directory .init" actual &&
 	rmdir init
 '
 
@@ -808,8 +813,9 @@ test_expect_success 'submodule deinit fails when the submodule contains untracke
 	test_must_fail git submodule deinit init &&
 	test -n "$(git config --get-regexp "submodule\.example\.")" &&
 	test -f example2/.git &&
-	git submodule deinit -f init &&
+	git submodule deinit -f init >actual &&
 	test -z "$(git config --get-regexp "submodule\.example\.")" &&
+	test_i18ngrep "Cleared directory .init" actual &&
 	rmdir init
 '
 
@@ -822,8 +828,9 @@ test_expect_success 'submodule deinit fails when the submodule HEAD does not mat
 	test_must_fail git submodule deinit init &&
 	test -n "$(git config --get-regexp "submodule\.example\.")" &&
 	test -f example2/.git &&
-	git submodule deinit -f init &&
+	git submodule deinit -f init >actual &&
 	test -z "$(git config --get-regexp "submodule\.example\.")" &&
+	test_i18ngrep "Cleared directory .init" actual &&
 	rmdir init
 '
 
@@ -831,14 +838,18 @@ test_expect_success 'submodule deinit is silent when used on an uninitialized su
 	git submodule update --init &&
 	git submodule deinit init >actual &&
 	test_i18ngrep "Submodule .example. (.*) unregistered for path .init" actual &&
+	test_i18ngrep "Cleared directory .init" actual &&
 	git submodule deinit init >actual &&
 	test_i18ngrep ! "Submodule .example. (.*) unregistered for path .init" actual &&
+	test_i18ngrep "Cleared directory .init" actual &&
 	git submodule deinit . >actual &&
 	test_i18ngrep ! "Submodule .example. (.*) unregistered for path .init" actual &&
 	test_i18ngrep "Submodule .example2. (.*) unregistered for path .example2" actual &&
+	test_i18ngrep "Cleared directory .init" actual &&
 	git submodule deinit . >actual &&
 	test_i18ngrep ! "Submodule .example. (.*) unregistered for path .init" actual &&
 	test_i18ngrep ! "Submodule .example2. (.*) unregistered for path .example2" actual &&
+	test_i18ngrep "Cleared directory .init" actual &&
 	rmdir init example2
 '
 
