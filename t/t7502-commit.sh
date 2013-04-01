@@ -424,6 +424,18 @@ test_expect_success 'A single-liner subject with a token plus colon is not a foo
 
 '
 
+test_expect_success 'commit -s places sob on third line after two empty lines' '
+	git commit -s --allow-empty --allow-empty-message &&
+	cat <<-EOF >expect &&
+
+
+	Signed-off-by: $GIT_COMMITTER_NAME <$GIT_COMMITTER_EMAIL>
+
+	EOF
+	sed -e "/^#/d" -e "s/^:.*//" .git/COMMIT_EDITMSG >actual &&
+	test_cmp expect actual
+'
+
 write_script .git/FAKE_EDITOR <<\EOF
 mv "$1" "$1.orig"
 (

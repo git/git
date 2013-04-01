@@ -1086,7 +1086,6 @@ int cmd_format_patch(int argc, const char **argv, const char *prefix)
 	struct commit *origin = NULL, *head = NULL;
 	const char *in_reply_to = NULL;
 	struct patch_ids ids;
-	char *add_signoff = NULL;
 	struct strbuf buf = STRBUF_INIT;
 	int use_patch_format = 0;
 	int quiet = 0;
@@ -1191,16 +1190,6 @@ int cmd_format_patch(int argc, const char **argv, const char *prefix)
 			    rev.subject_prefix, reroll_count);
 		rev.reroll_count = reroll_count;
 		rev.subject_prefix = strbuf_detach(&sprefix, NULL);
-	}
-
-	if (do_signoff) {
-		const char *committer;
-		const char *endpos;
-		committer = git_committer_info(IDENT_STRICT);
-		endpos = strchr(committer, '>');
-		if (!endpos)
-			die(_("bogus committer info %s"), committer);
-		add_signoff = xmemdupz(committer, endpos - committer + 1);
 	}
 
 	for (i = 0; i < extra_hdr.nr; i++) {
@@ -1393,7 +1382,7 @@ int cmd_format_patch(int argc, const char **argv, const char *prefix)
 		total++;
 		start_number--;
 	}
-	rev.add_signoff = add_signoff;
+	rev.add_signoff = do_signoff;
 	while (0 <= --nr) {
 		int shown;
 		commit = list[nr];
