@@ -469,4 +469,43 @@ test_expect_success 'merge-msg lots of commits' '
 	test_cmp expected actual
 '
 
+test_expect_success 'merge-msg with "merging" an annotated tag' '
+	test_config merge.log true &&
+
+	git checkout master^0 &&
+	git commit --allow-empty -m "One step ahead" &&
+	git tag -a -m "An annotated one" annote HEAD &&
+
+	git checkout master &&
+	git fetch . annote &&
+
+	git fmt-merge-msg <.git/FETCH_HEAD >actual &&
+	{
+		cat <<-\EOF
+		Merge tag '\''annote'\''
+
+		An annotated one
+
+		* tag '\''annote'\'':
+		  One step ahead
+		EOF
+	} >expected &&
+	test_cmp expected actual &&
+
+	test_when_finished "git reset --hard" &&
+	annote=$(git rev-parse annote) &&
+	git merge --no-commit $annote &&
+	{
+		cat <<-EOF
+		Merge tag '\''$annote'\''
+
+		An annotated one
+
+		* tag '\''$annote'\'':
+		  One step ahead
+		EOF
+	} >expected &&
+	test_cmp expected .git/MERGE_MSG
+'
+
 test_done
