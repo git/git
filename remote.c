@@ -1322,9 +1322,6 @@ int match_push_refs(struct ref *src, struct ref **dst,
 		const struct refspec *pat = NULL;
 		char *dst_name;
 
-		if (ref->peer_ref)
-			continue;
-
 		dst_name = get_ref_match(rs, nr_refspec, ref, send_mirror, FROM_SRC, &pat);
 		if (!dst_name)
 			continue;
