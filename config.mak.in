@@ -22,9 +22,3 @@ docdir = @docdir@
 
 mandir = @mandir@
 htmldir = @htmldir@
-
-srcdir = @srcdir@
-VPATH = @srcdir@
-
-export exec_prefix mandir
-export srcdir VPATH
