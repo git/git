@@ -711,7 +711,7 @@ sub ask {
 			}
 		}
 	}
-	return undef;
+	return;
 }
 
 my %broken_encoding;
@@ -833,7 +833,7 @@ sub extract_valid_address {
 	# less robust/correct than the monster regexp in Email::Valid,
 	# but still does a 99% job, and one less dependency
 	return $1 if $address =~ /($local_part_regexp\@$domain_regexp)/;
-	return undef;
+	return;
 }
 
 sub extract_valid_address_or_die {
@@ -1484,7 +1484,7 @@ sub validate_patch {
 			return "$.: patch contains a line longer than 998 characters";
 		}
 	}
-	return undef;
+	return;
 }
 
 sub file_has_nonascii {
