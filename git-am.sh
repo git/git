@@ -778,13 +778,6 @@ To restore the original branch and stop patching run \"\$cmdline --abort\"."
 	    action=yes
 	fi
 
-	if test -f "$dotest/final-commit"
-	then
-		FIRSTLINE=$(sed 1q "$dotest/final-commit")
-	else
-		FIRSTLINE=""
-	fi
-
 	if test $action = skip
 	then
 		go_next
@@ -795,6 +788,13 @@ To restore the original branch and stop patching run \"\$cmdline --abort\"."
 	then
 		"$GIT_DIR"/hooks/applypatch-msg "$dotest/final-commit" ||
 		stop_here $this
+	fi
+
+	if test -f "$dotest/final-commit"
+	then
+		FIRSTLINE=$(sed 1q "$dotest/final-commit")
+	else
+		FIRSTLINE=""
 	fi
 
 	say "$(eval_gettext "Applying: \$FIRSTLINE")"
