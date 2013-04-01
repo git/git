@@ -1,3 +1,4 @@
+#include "cache.h"
 #include "pkt-line.h"
 #include "sideband.h"
 
@@ -37,7 +38,7 @@ int recv_sideband(const char *me, int in_stream, int out)
 
 	while (1) {
 		int band, len;
-		len = packet_read_line(in_stream, buf + pf, LARGE_PACKET_MAX);
+		len = packet_read(in_stream, NULL, NULL, buf + pf, LARGE_PACKET_MAX, 0);
 		if (len == 0)
 			break;
 		if (len < 1) {
@@ -108,7 +109,7 @@ int recv_sideband(const char *me, int in_stream, int out)
 			} while (len);
 			continue;
 		case 1:
-			safe_write(out, buf + pf+1, len);
+			write_or_die(out, buf + pf+1, len);
 			continue;
 		default:
 			fprintf(stderr, "%s: protocol error: bad band #%d\n",
@@ -138,12 +139,12 @@ ssize_t send_sideband(int fd, int band, const char *data, ssize_t sz, int packet
 		if (0 <= band) {
 			sprintf(hdr, "%04x", n + 5);
 			hdr[4] = band;
-			safe_write(fd, hdr, 5);
+			write_or_die(fd, hdr, 5);
 		} else {
 			sprintf(hdr, "%04x", n + 4);
-			safe_write(fd, hdr, 4);
+			write_or_die(fd, hdr, 4);
 		}
-		safe_write(fd, p, n);
+		write_or_die(fd, p, n);
 		p += n;
 		sz -= n;
 	}

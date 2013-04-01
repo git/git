@@ -172,8 +172,8 @@ static void consume_shallow_list(struct fetch_pack_args *args, int fd)
 		 * shallow and unshallow commands every time there
 		 * is a block of have lines exchanged.
 		 */
-		char line[1000];
-		while (packet_read_line(fd, line, sizeof(line))) {
+		char *line;
+		while ((line = packet_read_line(fd, NULL))) {
 			if (!prefixcmp(line, "shallow "))
 				continue;
 			if (!prefixcmp(line, "unshallow "))
@@ -215,17 +215,17 @@ static int write_shallow_commits(struct strbuf *out, int use_pack_protocol)
 
 static enum ack_type get_ack(int fd, unsigned char *result_sha1)
 {
-	static char line[1000];
-	int len = packet_read_line(fd, line, sizeof(line));
+	int len;
+	char *line = packet_read_line(fd, &len);
 
 	if (!len)
 		die("git fetch-pack: expected ACK/NAK, got EOF");
-	if (line[len-1] == '\n')
-		line[--len] = 0;
 	if (!strcmp(line, "NAK"))
 		return NAK;
 	if (!prefixcmp(line, "ACK ")) {
 		if (!get_sha1_hex(line+4, result_sha1)) {
+			if (len < 45)
+				return ACK;
 			if (strstr(line+45, "continue"))
 				return ACK_continue;
 			if (strstr(line+45, "common"))
@@ -245,7 +245,7 @@ static void send_request(struct fetch_pack_args *args,
 		send_sideband(fd, -1, buf->buf, buf->len, LARGE_PACKET_MAX);
 		packet_flush(fd);
 	} else
-		safe_write(fd, buf->buf, buf->len);
+		write_or_die(fd, buf->buf, buf->len);
 }
 
 static void insert_one_alternate_ref(const struct ref *ref, void *unused)
@@ -346,11 +346,11 @@ static int find_common(struct fetch_pack_args *args,
 	state_len = req_buf.len;
 
 	if (args->depth > 0) {
-		char line[1024];
+		char *line;
 		unsigned char sha1[20];
 
 		send_request(args, fd[1], &req_buf);
-		while (packet_read_line(fd[0], line, sizeof(line))) {
+		while ((line = packet_read_line(fd[0], NULL))) {
 			if (!prefixcmp(line, "shallow ")) {
 				if (get_sha1_hex(line + 8, sha1))
 					die("invalid shallow line: %s", line);

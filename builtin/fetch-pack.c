@@ -119,14 +119,11 @@ int cmd_fetch_pack(int argc, const char **argv, const char *prefix)
 			/* in stateless RPC mode we use pkt-line to read
 			 * from stdin, until we get a flush packet
 			 */
-			static char line[1000];
 			for (;;) {
-				int n = packet_read_line(0, line, sizeof(line));
-				if (!n)
+				char *line = packet_read_line(0, NULL);
+				if (!line)
 					break;
-				if (line[n-1] == '\n')
-					n--;
-				add_sought_entry_mem(&sought, &nr_sought,  &alloc_sought, line, n);
+				add_sought_entry(&sought, &nr_sought,  &alloc_sought, line);
 			}
 		}
 		else {
@@ -147,7 +144,7 @@ int cmd_fetch_pack(int argc, const char **argv, const char *prefix)
 				   args.verbose ? CONNECT_VERBOSE : 0);
 	}
 
-	get_remote_heads(fd[0], &ref, 0, NULL);
+	get_remote_heads(fd[0], NULL, 0, &ref, 0, NULL);
 
 	ref = fetch_pack(&args, fd, conn, ref, dest,
 			 sought, nr_sought, pack_lockfile_ptr);

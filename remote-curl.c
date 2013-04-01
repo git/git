@@ -76,129 +76,16 @@ struct discovery {
 	char *buf_alloc;
 	char *buf;
 	size_t len;
+	struct ref *refs;
 	unsigned proto_git : 1;
 };
 static struct discovery *last_discovery;
 
-static void free_discovery(struct discovery *d)
-{
-	if (d) {
-		if (d == last_discovery)
-			last_discovery = NULL;
-		free(d->buf_alloc);
-		free(d);
-	}
-}
-
-static struct discovery* discover_refs(const char *service)
-{
-	struct strbuf exp = STRBUF_INIT;
-	struct strbuf type = STRBUF_INIT;
-	struct strbuf buffer = STRBUF_INIT;
-	struct discovery *last = last_discovery;
-	char *refs_url;
-	int http_ret, maybe_smart = 0;
-
-	if (last && !strcmp(service, last->service))
-		return last;
-	free_discovery(last);
-
-	strbuf_addf(&buffer, "%sinfo/refs", url);
-	if ((!prefixcmp(url, "http://") || !prefixcmp(url, "https://")) &&
-	     git_env_bool("GIT_SMART_HTTP", 1)) {
-		maybe_smart = 1;
-		if (!strchr(url, '?'))
-			strbuf_addch(&buffer, '?');
-		else
-			strbuf_addch(&buffer, '&');
-		strbuf_addf(&buffer, "service=%s", service);
-	}
-	refs_url = strbuf_detach(&buffer, NULL);
-
-	http_ret = http_get_strbuf(refs_url, &type, &buffer, HTTP_NO_CACHE);
-	switch (http_ret) {
-	case HTTP_OK:
-		break;
-	case HTTP_MISSING_TARGET:
-		die("%s not found: did you run git update-server-info on the"
-		    " server?", refs_url);
-	case HTTP_NOAUTH:
-		die("Authentication failed");
-	default:
-		http_error(refs_url, http_ret);
-		die("HTTP request failed");
-	}
-
-	last= xcalloc(1, sizeof(*last_discovery));
-	last->service = service;
-	last->buf_alloc = strbuf_detach(&buffer, &last->len);
-	last->buf = last->buf_alloc;
-
-	strbuf_addf(&exp, "application/x-%s-advertisement", service);
-	if (maybe_smart &&
-	    (5 <= last->len && last->buf[4] == '#') &&
-	    !strbuf_cmp(&exp, &type)) {
-		/*
-		 * smart HTTP response; validate that the service
-		 * pkt-line matches our request.
-		 */
-		if (packet_get_line(&buffer, &last->buf, &last->len) <= 0)
-			die("%s has invalid packet header", refs_url);
-		if (buffer.len && buffer.buf[buffer.len - 1] == '\n')
-			strbuf_setlen(&buffer, buffer.len - 1);
-
-		strbuf_reset(&exp);
-		strbuf_addf(&exp, "# service=%s", service);
-		if (strbuf_cmp(&exp, &buffer))
-			die("invalid server response; got '%s'", buffer.buf);
-		strbuf_release(&exp);
-
-		/* The header can include additional metadata lines, up
-		 * until a packet flush marker.  Ignore these now, but
-		 * in the future we might start to scan them.
-		 */
-		strbuf_reset(&buffer);
-		while (packet_get_line(&buffer, &last->buf, &last->len) > 0)
-			strbuf_reset(&buffer);
-
-		last->proto_git = 1;
-	}
-
-	free(refs_url);
-	strbuf_release(&exp);
-	strbuf_release(&type);
-	strbuf_release(&buffer);
-	last_discovery = last;
-	return last;
-}
-
-static int write_discovery(int in, int out, void *data)
-{
-	struct discovery *heads = data;
-	int err = 0;
-	if (write_in_full(out, heads->buf, heads->len) != heads->len)
-		err = 1;
-	close(out);
-	return err;
-}
-
 static struct ref *parse_git_refs(struct discovery *heads, int for_push)
 {
 	struct ref *list = NULL;
-	struct async async;
-
-	memset(&async, 0, sizeof(async));
-	async.proc = write_discovery;
-	async.data = heads;
-	async.out = -1;
-
-	if (start_async(&async))
-		die("cannot start thread to parse advertised refs");
-	get_remote_heads(async.out, &list,
-			for_push ? REF_NORMAL : 0, NULL);
-	close(async.out);
-	if (finish_async(&async))
-		die("ref parsing thread failed");
+	get_remote_heads(-1, heads->buf, heads->len, &list,
+			 for_push ? REF_NORMAL : 0, NULL);
 	return list;
 }
 
@@ -253,18 +140,112 @@ static struct ref *parse_info_refs(struct discovery *heads)
 	return refs;
 }
 
+static void free_discovery(struct discovery *d)
+{
+	if (d) {
+		if (d == last_discovery)
+			last_discovery = NULL;
+		free(d->buf_alloc);
+		free_refs(d->refs);
+		free(d);
+	}
+}
+
+static struct discovery* discover_refs(const char *service, int for_push)
+{
+	struct strbuf exp = STRBUF_INIT;
+	struct strbuf type = STRBUF_INIT;
+	struct strbuf buffer = STRBUF_INIT;
+	struct discovery *last = last_discovery;
+	char *refs_url;
+	int http_ret, maybe_smart = 0;
+
+	if (last && !strcmp(service, last->service))
+		return last;
+	free_discovery(last);
+
+	strbuf_addf(&buffer, "%sinfo/refs", url);
+	if ((!prefixcmp(url, "http://") || !prefixcmp(url, "https://")) &&
+	     git_env_bool("GIT_SMART_HTTP", 1)) {
+		maybe_smart = 1;
+		if (!strchr(url, '?'))
+			strbuf_addch(&buffer, '?');
+		else
+			strbuf_addch(&buffer, '&');
+		strbuf_addf(&buffer, "service=%s", service);
+	}
+	refs_url = strbuf_detach(&buffer, NULL);
+
+	http_ret = http_get_strbuf(refs_url, &type, &buffer, HTTP_NO_CACHE);
+	switch (http_ret) {
+	case HTTP_OK:
+		break;
+	case HTTP_MISSING_TARGET:
+		die("%s not found: did you run git update-server-info on the"
+		    " server?", refs_url);
+	case HTTP_NOAUTH:
+		die("Authentication failed");
+	default:
+		http_error(refs_url, http_ret);
+		die("HTTP request failed");
+	}
+
+	last= xcalloc(1, sizeof(*last_discovery));
+	last->service = service;
+	last->buf_alloc = strbuf_detach(&buffer, &last->len);
+	last->buf = last->buf_alloc;
+
+	strbuf_addf(&exp, "application/x-%s-advertisement", service);
+	if (maybe_smart &&
+	    (5 <= last->len && last->buf[4] == '#') &&
+	    !strbuf_cmp(&exp, &type)) {
+		char *line;
+
+		/*
+		 * smart HTTP response; validate that the service
+		 * pkt-line matches our request.
+		 */
+		line = packet_read_line_buf(&last->buf, &last->len, NULL);
+
+		strbuf_reset(&exp);
+		strbuf_addf(&exp, "# service=%s", service);
+		if (strcmp(line, exp.buf))
+			die("invalid server response; got '%s'", line);
+		strbuf_release(&exp);
+
+		/* The header can include additional metadata lines, up
+		 * until a packet flush marker.  Ignore these now, but
+		 * in the future we might start to scan them.
+		 */
+		while (packet_read_line_buf(&last->buf, &last->len, NULL))
+			;
+
+		last->proto_git = 1;
+	}
+
+	if (last->proto_git)
+		last->refs = parse_git_refs(last, for_push);
+	else
+		last->refs = parse_info_refs(last);
+
+	free(refs_url);
+	strbuf_release(&exp);
+	strbuf_release(&type);
+	strbuf_release(&buffer);
+	last_discovery = last;
+	return last;
+}
+
 static struct ref *get_refs(int for_push)
 {
 	struct discovery *heads;
 
 	if (for_push)
-		heads = discover_refs("git-receive-pack");
+		heads = discover_refs("git-receive-pack", for_push);
 	else
-		heads = discover_refs("git-upload-pack");
+		heads = discover_refs("git-upload-pack", for_push);
 
-	if (heads->proto_git)
-		return parse_git_refs(heads, for_push);
-	return parse_info_refs(heads);
+	return heads->refs;
 }
 
 static void output_refs(struct ref *refs)
@@ -278,7 +259,6 @@ static void output_refs(struct ref *refs)
 	}
 	printf("\n");
 	fflush(stdout);
-	free_refs(refs);
 }
 
 struct rpc_state {
@@ -308,7 +288,7 @@ static size_t rpc_out(void *ptr, size_t eltsize,
 
 	if (!avail) {
 		rpc->initial_buffer = 0;
-		avail = packet_read_line(rpc->out, rpc->buf, rpc->alloc);
+		avail = packet_read(rpc->out, NULL, NULL, rpc->buf, rpc->alloc, 0);
 		if (!avail)
 			return 0;
 		rpc->pos = 0;
@@ -425,7 +405,7 @@ static int post_rpc(struct rpc_state *rpc)
 			break;
 		}
 
-		n = packet_read_line(rpc->out, buf, left);
+		n = packet_read(rpc->out, NULL, NULL, buf, left, 0);
 		if (!n)
 			break;
 		rpc->len += n;
@@ -579,7 +559,7 @@ static int rpc_service(struct rpc_state *rpc, struct discovery *heads)
 	rpc->hdr_accept = strbuf_detach(&buf, NULL);
 
 	while (!err) {
-		int n = packet_read_line(rpc->out, rpc->buf, rpc->alloc);
+		int n = packet_read(rpc->out, NULL, NULL, rpc->buf, rpc->alloc, 0);
 		if (!n)
 			break;
 		rpc->pos = 0;
@@ -685,7 +665,7 @@ static int fetch_git(struct discovery *heads,
 
 	err = rpc_service(&rpc, heads);
 	if (rpc.result.len)
-		safe_write(1, rpc.result.buf, rpc.result.len);
+		write_or_die(1, rpc.result.buf, rpc.result.len);
 	strbuf_release(&rpc.result);
 	strbuf_release(&preamble);
 	free(depth_arg);
@@ -694,7 +674,7 @@ static int fetch_git(struct discovery *heads,
 
 static int fetch(int nr_heads, struct ref **to_fetch)
 {
-	struct discovery *d = discover_refs("git-upload-pack");
+	struct discovery *d = discover_refs("git-upload-pack", 0);
 	if (d->proto_git)
 		return fetch_git(d, nr_heads, to_fetch);
 	else
@@ -805,7 +785,7 @@ static int push_git(struct discovery *heads, int nr_spec, char **specs)
 
 	err = rpc_service(&rpc, heads);
 	if (rpc.result.len)
-		safe_write(1, rpc.result.buf, rpc.result.len);
+		write_or_die(1, rpc.result.buf, rpc.result.len);
 	strbuf_release(&rpc.result);
 	free(argv);
 	return err;
@@ -813,7 +793,7 @@ static int push_git(struct discovery *heads, int nr_spec, char **specs)
 
 static int push(int nr_spec, char **specs)
 {
-	struct discovery *heads = discover_refs("git-receive-pack");
+	struct discovery *heads = discover_refs("git-receive-pack", 1);
 	int ret;
 
 	if (heads->proto_git)

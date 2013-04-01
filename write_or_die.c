@@ -1,5 +1,15 @@
 #include "cache.h"
 
+static void check_pipe(int err)
+{
+	if (err == EPIPE) {
+		signal(SIGPIPE, SIG_DFL);
+		raise(SIGPIPE);
+		/* Should never happen, but just in case... */
+		exit(141);
+	}
+}
+
 /*
  * Some cases use stdio, but want to flush after the write
  * to get error handling (and to get better interactive
@@ -34,8 +44,7 @@ void maybe_flush_or_die(FILE *f, const char *desc)
 			return;
 	}
 	if (fflush(f)) {
-		if (errno == EPIPE)
-			exit(0);
+		check_pipe(errno);
 		die_errno("write failure on '%s'", desc);
 	}
 }
@@ -50,8 +59,7 @@ void fsync_or_die(int fd, const char *msg)
 void write_or_die(int fd, const void *buf, size_t count)
 {
 	if (write_in_full(fd, buf, count) < 0) {
-		if (errno == EPIPE)
-			exit(0);
+		check_pipe(errno);
 		die_errno("write error");
 	}
 }
@@ -59,8 +67,7 @@ void write_or_die(int fd, const void *buf, size_t count)
 int write_or_whine_pipe(int fd, const void *buf, size_t count, const char *msg)
 {
 	if (write_in_full(fd, buf, count) < 0) {
-		if (errno == EPIPE)
-			exit(0);
+		check_pipe(errno);
 		fprintf(stderr, "%s: write error (%s)\n",
 			msg, strerror(errno));
 		return 0;

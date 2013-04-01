@@ -79,7 +79,7 @@ static void print_helper_status(struct ref *ref)
 		}
 		strbuf_addch(&buf, '\n');
 
-		safe_write(1, buf.buf, buf.len);
+		write_or_die(1, buf.buf, buf.len);
 	}
 	strbuf_release(&buf);
 }
@@ -207,7 +207,7 @@ int cmd_send_pack(int argc, const char **argv, const char *prefix)
 
 	memset(&extra_have, 0, sizeof(extra_have));
 
-	get_remote_heads(fd[0], &remote_refs, REF_NORMAL, &extra_have);
+	get_remote_heads(fd[0], NULL, 0, &remote_refs, REF_NORMAL, &extra_have);
 
 	transport_verify_remote_names(nr_refspecs, refspecs);
 

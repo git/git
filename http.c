@@ -5,6 +5,7 @@
 #include "url.h"
 #include "credential.h"
 #include "version.h"
+#include "pkt-line.h"
 
 int active_requests;
 int http_is_verbose;

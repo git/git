@@ -70,7 +70,7 @@ static void format_write(int fd, const char *fmt, ...)
 	if (n >= sizeof(buffer))
 		die("protocol error: impossibly long line");
 
-	safe_write(fd, buffer, n);
+	write_or_die(fd, buffer, n);
 }
 
 static void http_status(unsigned code, const char *msg)
@@ -111,7 +111,7 @@ static void hdr_cache_forever(void)
 
 static void end_headers(void)
 {
-	safe_write(1, "\r\n", 2);
+	write_or_die(1, "\r\n", 2);
 }
 
 __attribute__((format (printf, 1, 2)))
@@ -157,7 +157,7 @@ static void send_strbuf(const char *type, struct strbuf *buf)
 	hdr_int(content_length, buf->len);
 	hdr_str(content_type, type);
 	end_headers();
-	safe_write(1, buf->buf, buf->len);
+	write_or_die(1, buf->buf, buf->len);
 }
 
 static void send_local_file(const char *the_type, const char *name)
@@ -185,7 +185,7 @@ static void send_local_file(const char *the_type, const char *name)
 			die_errno("Cannot read '%s'", p);
 		if (!n)
 			break;
-		safe_write(1, buf, n);
+		write_or_die(1, buf, n);
 	}
 	close(fd);
 	free(buf);

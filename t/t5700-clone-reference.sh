@@ -54,11 +54,14 @@ cd "$base_dir"
 
 rm -f "$U.D"
 
-test_expect_success 'cloning with reference (no -l -s)' \
-'GIT_DEBUG_SEND_PACK=3 git clone --reference B "file://$(pwd)/A" D 3>"$U.D"'
+test_expect_success 'cloning with reference (no -l -s)' '
+	GIT_TRACE_PACKET=$U.D git clone --reference B "file://$(pwd)/A" D
+'
 
-test_expect_success 'fetched no objects' \
-'! grep "^want" "$U.D"'
+test_expect_success 'fetched no objects' '
+	test -s "$U.D" &&
+	! grep " want" "$U.D"
+'
 
 cd "$base_dir"
 
@@ -173,12 +176,13 @@ test_expect_success 'fetch with incomplete alternates' '
 	(
 		cd K &&
 		git remote add J "file://$base_dir/J" &&
-		GIT_DEBUG_SEND_PACK=3 git fetch J 3>"$U.K"
+		GIT_TRACE_PACKET=$U.K git fetch J
 	) &&
 	master_object=$(cd A && git for-each-ref --format="%(objectname)" refs/heads/master) &&
-	! grep "^want $master_object" "$U.K" &&
+	test -s "$U.K" &&
+	! grep " want $master_object" "$U.K" &&
 	tag_object=$(cd A && git for-each-ref --format="%(objectname)" refs/tags/HEAD) &&
-	! grep "^want $tag_object" "$U.K"
+	! grep " want $tag_object" "$U.K"
 '
 
 test_done

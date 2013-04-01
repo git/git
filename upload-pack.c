@@ -44,20 +44,12 @@ static unsigned int timeout;
  * otherwise maximum packet size (up to 65520 bytes).
  */
 static int use_sideband;
-static int debug_fd;
 static int advertise_refs;
 static int stateless_rpc;
 
 static void reset_timeout(void)
 {
 	alarm(timeout);
-}
-
-static int strip(char *line, int len)
-{
-	if (len && line[len-1] == '\n')
-		line[--len] = 0;
-	return len;
 }
 
 static ssize_t send_client_data(int fd, const char *data, ssize_t sz)
@@ -72,7 +64,8 @@ static ssize_t send_client_data(int fd, const char *data, ssize_t sz)
 		xwrite(fd, data, sz);
 		return sz;
 	}
-	return safe_write(fd, data, sz);
+	write_or_die(fd, data, sz);
+	return sz;
 }
 
 static FILE *pack_pipe = NULL;
@@ -415,7 +408,6 @@ static int ok_to_give_up(void)
 
 static int get_common_commits(void)
 {
-	static char line[1000];
 	unsigned char sha1[20];
 	char last_hex[41];
 	int got_common = 0;
@@ -425,10 +417,10 @@ static int get_common_commits(void)
 	save_commit_buffer = 0;
 
 	for (;;) {
-		int len = packet_read_line(0, line, sizeof(line));
+		char *line = packet_read_line(0, NULL);
 		reset_timeout();
 
-		if (!len) {
+		if (!line) {
 			if (multi_ack == 2 && got_common
 			    && !got_other && ok_to_give_up()) {
 				sent_ready = 1;
@@ -447,7 +439,6 @@ static int get_common_commits(void)
 			got_other = 0;
 			continue;
 		}
-		strip(line, len);
 		if (!prefixcmp(line, "have ")) {
 			switch (got_sha1(line+5, sha1)) {
 			case -1: /* they have what we do not */
@@ -581,36 +572,33 @@ error:
 static void receive_needs(void)
 {
 	struct object_array shallows = OBJECT_ARRAY_INIT;
-	static char line[1000];
-	int len, depth = 0;
+	int depth = 0;
 	int has_non_tip = 0;
 
 	shallow_nr = 0;
-	if (debug_fd)
-		write_str_in_full(debug_fd, "#S\n");
 	for (;;) {
 		struct object *o;
 		const char *features;
 		unsigned char sha1_buf[20];
-		len = packet_read_line(0, line, sizeof(line));
+		char *line = packet_read_line(0, NULL);
 		reset_timeout();
-		if (!len)
+		if (!line)
 			break;
-		if (debug_fd)
-			write_in_full(debug_fd, line, len);
 
 		if (!prefixcmp(line, "shallow ")) {
 			unsigned char sha1[20];
 			struct object *object;
-			if (get_sha1(line + 8, sha1))
+			if (get_sha1_hex(line + 8, sha1))
 				die("invalid shallow line: %s", line);
 			object = parse_object(sha1);
 			if (!object)
 				die("did not find object for %s", line);
 			if (object->type != OBJ_COMMIT)
 				die("invalid shallow object %s", sha1_to_hex(sha1));
-			object->flags |= CLIENT_SHALLOW;
-			add_object_array(object, NULL, &shallows);
+			if (!(object->flags & CLIENT_SHALLOW)) {
+				object->flags |= CLIENT_SHALLOW;
+				add_object_array(object, NULL, &shallows);
+			}
 			continue;
 		}
 		if (!prefixcmp(line, "deepen ")) {
@@ -657,8 +645,6 @@ static void receive_needs(void)
 			add_object_array(o, NULL, &want_obj);
 		}
 	}
-	if (debug_fd)
-		write_str_in_full(debug_fd, "#E\n");
 
 	/*
 	 * We have sent all our refs already, and the other end
@@ -854,8 +840,6 @@ int main(int argc, char **argv)
 	if (is_repository_shallow())
 		die("attempt to fetch/clone from a shallow repository");
 	git_config(upload_pack_config, NULL);
-	if (getenv("GIT_DEBUG_SEND_PACK"))
-		debug_fd = atoi(getenv("GIT_DEBUG_SEND_PACK"));
 	upload_pack();
 	return 0;
 }

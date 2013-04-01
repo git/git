@@ -106,15 +106,11 @@ static int pack_objects(int fd, struct ref *refs, struct extra_have_objects *ext
 static int receive_status(int in, struct ref *refs)
 {
 	struct ref *hint;
-	char line[1000];
 	int ret = 0;
-	int len = packet_read_line(in, line, sizeof(line));
-	if (len < 10 || memcmp(line, "unpack ", 7))
+	char *line = packet_read_line(in, NULL);
+	if (prefixcmp(line, "unpack "))
 		return error("did not receive remote status");
-	if (memcmp(line, "unpack ok\n", 10)) {
-		char *p = line + strlen(line) - 1;
-		if (*p == '\n')
-			*p = '\0';
+	if (strcmp(line, "unpack ok")) {
 		error("unpack failed: %s", line + 7);
 		ret = -1;
 	}
@@ -122,17 +118,15 @@ static int receive_status(int in, struct ref *refs)
 	while (1) {
 		char *refname;
 		char *msg;
-		len = packet_read_line(in, line, sizeof(line));
-		if (!len)
+		line = packet_read_line(in, NULL);
+		if (!line)
 			break;
-		if (len < 3 ||
-		    (memcmp(line, "ok ", 3) && memcmp(line, "ng ", 3))) {
-			fprintf(stderr, "protocol error: %s\n", line);
+		if (prefixcmp(line, "ok ") && prefixcmp(line, "ng ")) {
+			error("invalid ref status from remote: %s", line);
 			ret = -1;
 			break;
 		}
 
-		line[strlen(line)-1] = '\0';
 		refname = line + 3;
 		msg = strchr(refname, ' ');
 		if (msg)
@@ -281,7 +275,7 @@ int send_pack(struct send_pack_args *args,
 			send_sideband(out, -1, req_buf.buf, req_buf.len, LARGE_PACKET_MAX);
 		}
 	} else {
-		safe_write(out, req_buf.buf, req_buf.len);
+		write_or_die(out, req_buf.buf, req_buf.len);
 		packet_flush(out);
 	}
 	strbuf_release(&req_buf);
