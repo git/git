@@ -971,7 +971,7 @@ static void show_bisect_in_progress(struct wt_status *s,
 {
 	if (state->branch)
 		status_printf_ln(s, color,
-				 _("You are currently bisecting branch '%s'."),
+				 _("You are currently bisecting, started from branch '%s'."),
 				 state->branch);
 	else
 		status_printf_ln(s, color,
@@ -985,96 +985,164 @@ static void show_bisect_in_progress(struct wt_status *s,
 /*
  * Extract branch information from rebase/bisect
  */
-static void read_and_strip_branch(struct strbuf *sb,
-				  const char **branch,
-				  const char *path)
+static char *read_and_strip_branch(const char *path)
 {
+	struct strbuf sb = STRBUF_INIT;
 	unsigned char sha1[20];
 
-	strbuf_reset(sb);
-	if (strbuf_read_file(sb, git_path("%s", path), 0) <= 0)
-		return;
+	if (strbuf_read_file(&sb, git_path("%s", path), 0) <= 0)
+		goto got_nothing;
 
-	while (sb->len && sb->buf[sb->len - 1] == '\n')
-		strbuf_setlen(sb, sb->len - 1);
-	if (!sb->len)
-		return;
-	if (!prefixcmp(sb->buf, "refs/heads/"))
-		*branch = sb->buf + strlen("refs/heads/");
-	else if (!prefixcmp(sb->buf, "refs/"))
-		*branch = sb->buf;
-	else if (!get_sha1_hex(sb->buf, sha1)) {
+	while (&sb.len && sb.buf[sb.len - 1] == '\n')
+		strbuf_setlen(&sb, sb.len - 1);
+	if (!sb.len)
+		goto got_nothing;
+	if (!prefixcmp(sb.buf, "refs/heads/"))
+		strbuf_remove(&sb,0, strlen("refs/heads/"));
+	else if (!prefixcmp(sb.buf, "refs/"))
+		;
+	else if (!get_sha1_hex(sb.buf, sha1)) {
 		const char *abbrev;
 		abbrev = find_unique_abbrev(sha1, DEFAULT_ABBREV);
-		strbuf_reset(sb);
-		strbuf_addstr(sb, abbrev);
-		*branch = sb->buf;
-	} else if (!strcmp(sb->buf, "detached HEAD")) /* rebase */
-		;
+		strbuf_reset(&sb);
+		strbuf_addstr(&sb, abbrev);
+	} else if (!strcmp(sb.buf, "detached HEAD")) /* rebase */
+		goto got_nothing;
 	else			/* bisect */
-		*branch = sb->buf;
+		;
+	return strbuf_detach(&sb, NULL);
+
+got_nothing:
+	strbuf_release(&sb);
+	return NULL;
 }
 
-static void wt_status_print_state(struct wt_status *s)
+struct grab_1st_switch_cbdata {
+	int found;
+	struct strbuf buf;
+	unsigned char nsha1[20];
+};
+
+static int grab_1st_switch(unsigned char *osha1, unsigned char *nsha1,
+			   const char *email, unsigned long timestamp, int tz,
+			   const char *message, void *cb_data)
 {
-	const char *state_color = color(WT_STATUS_HEADER, s);
-	struct strbuf branch = STRBUF_INIT;
-	struct strbuf onto = STRBUF_INIT;
-	struct wt_status_state state;
+	struct grab_1st_switch_cbdata *cb = cb_data;
+	const char *target = NULL, *end;
+
+	if (prefixcmp(message, "checkout: moving from "))
+		return 0;
+	message += strlen("checkout: moving from ");
+	target = strstr(message, " to ");
+	if (!target)
+		return 0;
+	target += strlen(" to ");
+	strbuf_reset(&cb->buf);
+	hashcpy(cb->nsha1, nsha1);
+	for (end = target; *end && *end != '\n'; end++)
+		;
+	strbuf_add(&cb->buf, target, end - target);
+	cb->found = 1;
+	return 1;
+}
+
+static void wt_status_get_detached_from(struct wt_status_state *state)
+{
+	struct grab_1st_switch_cbdata cb;
+	struct commit *commit;
+	unsigned char sha1[20];
+	char *ref = NULL;
+
+	strbuf_init(&cb.buf, 0);
+	if (for_each_reflog_ent_reverse("HEAD", grab_1st_switch, &cb) <= 0) {
+		strbuf_release(&cb.buf);
+		return;
+	}
+
+	if (dwim_ref(cb.buf.buf, cb.buf.len, sha1, &ref) == 1 &&
+	    /* sha1 is a commit? match without further lookup */
+	    (!hashcmp(cb.nsha1, sha1) ||
+	     /* perhaps sha1 is a tag, try to dereference to a commit */
+	     ((commit = lookup_commit_reference_gently(sha1, 1)) != NULL &&
+	      !hashcmp(cb.nsha1, commit->object.sha1)))) {
+		int ofs;
+		if (!prefixcmp(ref, "refs/tags/"))
+			ofs = strlen("refs/tags/");
+		else if (!prefixcmp(ref, "refs/remotes/"))
+			ofs = strlen("refs/remotes/");
+		else
+			ofs = 0;
+		state->detached_from = xstrdup(ref + ofs);
+	} else
+		state->detached_from =
+			xstrdup(find_unique_abbrev(cb.nsha1, DEFAULT_ABBREV));
+	hashcpy(state->detached_sha1, cb.nsha1);
+
+	free(ref);
+	strbuf_release(&cb.buf);
+}
+
+void wt_status_get_state(struct wt_status_state *state,
+			 int get_detached_from)
+{
 	struct stat st;
 
-	memset(&state, 0, sizeof(state));
-
 	if (!stat(git_path("MERGE_HEAD"), &st)) {
-		state.merge_in_progress = 1;
+		state->merge_in_progress = 1;
 	} else if (!stat(git_path("rebase-apply"), &st)) {
 		if (!stat(git_path("rebase-apply/applying"), &st)) {
-			state.am_in_progress = 1;
+			state->am_in_progress = 1;
 			if (!stat(git_path("rebase-apply/patch"), &st) && !st.st_size)
-				state.am_empty_patch = 1;
+				state->am_empty_patch = 1;
 		} else {
-			state.rebase_in_progress = 1;
-			read_and_strip_branch(&branch, &state.branch,
-					      "rebase-apply/head-name");
-			read_and_strip_branch(&onto, &state.onto,
-					      "rebase-apply/onto");
+			state->rebase_in_progress = 1;
+			state->branch = read_and_strip_branch("rebase-apply/head-name");
+			state->onto = read_and_strip_branch("rebase-apply/onto");
 		}
 	} else if (!stat(git_path("rebase-merge"), &st)) {
 		if (!stat(git_path("rebase-merge/interactive"), &st))
-			state.rebase_interactive_in_progress = 1;
+			state->rebase_interactive_in_progress = 1;
 		else
-			state.rebase_in_progress = 1;
-		read_and_strip_branch(&branch, &state.branch,
-				      "rebase-merge/head-name");
-		read_and_strip_branch(&onto, &state.onto,
-				      "rebase-merge/onto");
+			state->rebase_in_progress = 1;
+		state->branch = read_and_strip_branch("rebase-merge/head-name");
+		state->onto = read_and_strip_branch("rebase-merge/onto");
 	} else if (!stat(git_path("CHERRY_PICK_HEAD"), &st)) {
-		state.cherry_pick_in_progress = 1;
+		state->cherry_pick_in_progress = 1;
 	}
 	if (!stat(git_path("BISECT_LOG"), &st)) {
-		state.bisect_in_progress = 1;
-		read_and_strip_branch(&branch, &state.branch,
-				      "BISECT_START");
+		state->bisect_in_progress = 1;
+		state->branch = read_and_strip_branch("BISECT_START");
 	}
 
-	if (state.merge_in_progress)
-		show_merge_in_progress(s, &state, state_color);
-	else if (state.am_in_progress)
-		show_am_in_progress(s, &state, state_color);
-	else if (state.rebase_in_progress || state.rebase_interactive_in_progress)
-		show_rebase_in_progress(s, &state, state_color);
-	else if (state.cherry_pick_in_progress)
-		show_cherry_pick_in_progress(s, &state, state_color);
-	if (state.bisect_in_progress)
-		show_bisect_in_progress(s, &state, state_color);
-	strbuf_release(&branch);
-	strbuf_release(&onto);
+	if (get_detached_from)
+		wt_status_get_detached_from(state);
+}
+
+static void wt_status_print_state(struct wt_status *s,
+				  struct wt_status_state *state)
+{
+	const char *state_color = color(WT_STATUS_HEADER, s);
+	if (state->merge_in_progress)
+		show_merge_in_progress(s, state, state_color);
+	else if (state->am_in_progress)
+		show_am_in_progress(s, state, state_color);
+	else if (state->rebase_in_progress || state->rebase_interactive_in_progress)
+		show_rebase_in_progress(s, state, state_color);
+	else if (state->cherry_pick_in_progress)
+		show_cherry_pick_in_progress(s, state, state_color);
+	if (state->bisect_in_progress)
+		show_bisect_in_progress(s, state, state_color);
 }
 
 void wt_status_print(struct wt_status *s)
 {
 	const char *branch_color = color(WT_STATUS_ONBRANCH, s);
 	const char *branch_status_color = color(WT_STATUS_HEADER, s);
+	struct wt_status_state state;
+
+	memset(&state, 0, sizeof(state));
+	wt_status_get_state(&state,
+			    s->branch && !strcmp(s->branch, "HEAD"));
 
 	if (s->branch) {
 		const char *on_what = _("On branch ");
@@ -1082,9 +1150,19 @@ void wt_status_print(struct wt_status *s)
 		if (!prefixcmp(branch_name, "refs/heads/"))
 			branch_name += 11;
 		else if (!strcmp(branch_name, "HEAD")) {
-			branch_name = "";
 			branch_status_color = color(WT_STATUS_NOBRANCH, s);
-			on_what = _("Not currently on any branch.");
+			if (state.detached_from) {
+				unsigned char sha1[20];
+				branch_name = state.detached_from;
+				if (!get_sha1("HEAD", sha1) &&
+				    !hashcmp(sha1, state.detached_sha1))
+					on_what = _("HEAD detached at ");
+				else
+					on_what = _("HEAD detached from ");
+			} else {
+				branch_name = "";
+				on_what = _("Not currently on any branch.");
+			}
 		}
 		status_printf(s, color(WT_STATUS_HEADER, s), "");
 		status_printf_more(s, branch_status_color, "%s", on_what);
@@ -1093,7 +1171,11 @@ void wt_status_print(struct wt_status *s)
 			wt_status_print_tracking(s);
 	}
 
-	wt_status_print_state(s);
+	wt_status_print_state(s, &state);
+	free(state.branch);
+	free(state.onto);
+	free(state.detached_from);
+
 	if (s->is_initial) {
 		status_printf_ln(s, color(WT_STATUS_HEADER, s), "");
 		status_printf_ln(s, color(WT_STATUS_HEADER, s), _("Initial commit"));
