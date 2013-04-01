@@ -5,6 +5,7 @@ test_description='basic work tree status reporting'
 . ./test-lib.sh
 
 test_expect_success setup '
+	git config --global advice.statusuoption false &&
 	test_commit A &&
 	test_commit B oneside added &&
 	git checkout A^0 &&

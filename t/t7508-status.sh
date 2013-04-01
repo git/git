@@ -8,6 +8,7 @@ test_description='git status'
 . ./test-lib.sh
 
 test_expect_success 'status -h in broken repository' '
+	git config --global advice.statusuoption false &&
 	mkdir broken &&
 	test_when_finished "rm -fr broken" &&
 	(

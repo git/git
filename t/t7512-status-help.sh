@@ -14,6 +14,7 @@ test_description='git status advice'
 set_fake_editor
 
 test_expect_success 'prepare for conflicts' '
+	git config --global advice.statusuoption false &&
 	test_commit init main.txt init &&
 	git branch conflicts &&
 	test_commit on_master main.txt on_master &&
