@@ -37,8 +37,16 @@ UI, Workflows & Features
    An explicit way to help the end users who connect to the service by
    issuing custom messages to refuse such an access has been added.
 
- * "git status" suggests users to look into using--untracked=no option
+ * In addition to the case where the user edits the log message with
+   the "e)dit" option of "am -i", replace the "Applying: this patch"
+   message with the final log message contents after applymsg hook
+   munges it.
+
+ * "git status" suggests users to look into using --untracked=no option
    when it takes too long.
+
+ * "git status" shows a bit more information to "git status" during a
+   rebase/bisect session.
 
  * "git fetch" learned to fetch a commit at the tip of an unadvertised
    ref by specifying a raw object name from the command line when the
@@ -80,6 +88,12 @@ Performance, Internal Implementation, etc.
    necessary for operations such as "git checkout -", was cumbersome
    to use correctly and also inefficient.
 
+ * Codepaths that inspect log-message-to-be and decide when to add a
+   new Signed-off-by line in various commands have been consolidated.
+
+ * The pkt-line API, implementation and its callers have been cleaned
+   up to make them more robust.
+
 
 Also contains minor documentation updates and code clean-ups.
 
@@ -90,6 +104,19 @@ Fixes since v1.8.2
 Unless otherwise noted, all the fixes since v1.8.2 in the maintenance
 track are contained in this release (see release notes to them for
 details).
+
+ * "index-pack --fix-thin" used uninitialize value to compute delta
+   depths of objects it appends to the resulting pack.
+   (merge 57165db jk/index-pack-correct-depth-fix later to maint).
+
+ * "index-pack --verify-stat" used a few counters outside protection
+   of mutex, possibly showing incorrect numbers.
+   (merge 8f82aad nd/index-pack-threaded-fixes later to maint).
+
+ * The code to keep track of what directory names are known to Git on
+   platforms with case insensitive filesystems can get confused upon a
+   hash collision between these pathnames and looped forever.
+   (merge 2092678 kb/name-hash later to maint).
 
  * Annotated tags outside refs/tags/ hierarchy were not advertised
    correctly to the ls-remote and fetch with recent version of Git.
@@ -130,7 +157,6 @@ details).
  * The logic used by "git diff -M --stat" to shorten the names of
    files before and after a rename did not work correctly when the
    common prefix and suffix between the two filenames overlapped.
-   (merge b174eb4 ap/maint-diff-rename-avoid-overlap later to maint).
 
  * The "--match=<pattern>" option of "git describe", when used with
    "--all" to allow refs that are not annotated tags to be used as a
