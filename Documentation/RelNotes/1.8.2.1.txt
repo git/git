@@ -4,6 +4,10 @@ Git v1.8.2.1 Release Notes
 Fixes since v1.8.2
 ------------------
 
+ * The logic used by "git diff -M --stat" to shorten the names of
+   files before and after a rename did not work correctly when the
+   common prefix and suffix between the two filenames overlapped.
+
  * "git submodule update", when recursed into sub-submodules, did not
    acccumulate the prefix paths.
 
