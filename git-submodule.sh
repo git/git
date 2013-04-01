@@ -266,6 +266,11 @@ module_clone()
 	(clear_local_git_env; cd "$sm_path" && GIT_WORK_TREE=. git config core.worktree "$rel/$b")
 }
 
+isnumber()
+{
+	n=$(($1 + 0)) 2>/dev/null && test "$n" = "$1"
+}
+
 #
 # Add a new submodule to the working tree, .gitmodules and the index
 #
@@ -814,13 +819,13 @@ cmd_summary() {
 			for_status="$1"
 			;;
 		-n|--summary-limit)
-			if summary_limit=$(($2 + 0)) 2>/dev/null && test "$summary_limit" = "$2"
-			then
-				:
-			else
-				usage
-			fi
+			summary_limit="$2"
+			isnumber "$summary_limit" || usage
 			shift
+			;;
+		--summary-limit=*)
+			summary_limit="${1#--summary-limit=}"
+			isnumber "$summary_limit" || usage
 			;;
 		--)
 			shift
