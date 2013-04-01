@@ -44,9 +44,13 @@ prime_resolve_undo () {
 
 test_expect_success setup '
 	mkdir fi &&
+	printf "a\0a" >binary &&
+	git add binary &&
 	test_commit initial fi/le first &&
 	git branch side &&
 	git branch another &&
+	printf "a\0b" >binary &&
+	git add binary &&
 	test_commit second fi/le second &&
 	git checkout side &&
 	test_commit third fi/le third &&
@@ -165,6 +169,14 @@ test_expect_success 'rerere and rerere forget (subdirectory)' '
 	tr "\0" "\n" <.git/MERGE_RR >actual &&
 	echo "$rerere_id	fi/le" >expect &&
 	test_cmp expect actual
+'
+
+test_expect_success 'rerere forget (binary)' '
+	git checkout -f side &&
+	printf "a\0c" >binary &&
+	git commit -a -m binary &&
+	test_must_fail git merge second &&
+	git rerere forget binary
 '
 
 test_done

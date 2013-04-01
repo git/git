@@ -284,8 +284,10 @@ static int rerere_mem_getline(struct strbuf *sb, struct rerere_io *io_)
 	strbuf_release(sb);
 	if (!io->input.len)
 		return -1;
-	ep = strchrnul(io->input.buf, '\n');
-	if (*ep == '\n')
+	ep = memchr(io->input.buf, '\n', io->input.len);
+	if (!ep)
+		ep = io->input.buf + io->input.len;
+	else if (*ep == '\n')
 		ep++;
 	len = ep - io->input.buf;
 	strbuf_add(sb, io->input.buf, len);
