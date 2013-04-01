@@ -22,19 +22,16 @@ mk_test () {
 	(
 		for ref in "$@"
 		do
-			git push testrepo $the_first_commit:refs/$ref || {
-				echo "Oops, push refs/$ref failure"
-				exit 1
-			}
+			git push testrepo $the_first_commit:refs/$ref ||
+			exit
 		done &&
 		cd testrepo &&
 		for ref in "$@"
 		do
-			r=$(git show-ref -s --verify refs/$ref) &&
-			test "z$r" = "z$the_first_commit" || {
-				echo "Oops, refs/$ref is wrong"
-				exit 1
-			}
+			echo "$the_first_commit" >expect &&
+			git show-ref -s --verify refs/$ref >actual &&
+			test_cmp expect actual ||
+			exit
 		done &&
 		git fsck --full
 	)
@@ -82,15 +79,13 @@ mk_child() {
 check_push_result () {
 	(
 		cd testrepo &&
-		it="$1" &&
-		shift
+		echo "$1" >expect &&
+		shift &&
 		for ref in "$@"
 		do
-			r=$(git show-ref -s --verify refs/$ref) &&
-			test "z$r" = "z$it" || {
-				echo "Oops, refs/$ref is wrong"
-				exit 1
-			}
+			git show-ref -s --verify refs/$ref >actual &&
+			test_cmp expect actual ||
+			exit
 		done &&
 		git fsck --full
 	)
@@ -118,10 +113,9 @@ test_expect_success 'fetch without wildcard' '
 		cd testrepo &&
 		git fetch .. refs/heads/master:refs/remotes/origin/master &&
 
-		r=$(git show-ref -s --verify refs/remotes/origin/master) &&
-		test "z$r" = "z$the_commit" &&
-
-		test 1 = $(git for-each-ref refs/remotes/origin | wc -l)
+		echo "$the_commit commit	refs/remotes/origin/master" >expect &&
+		git for-each-ref refs/remotes/origin >actual &&
+		test_cmp expect actual
 	)
 '
 
@@ -133,10 +127,9 @@ test_expect_success 'fetch with wildcard' '
 		git config remote.up.fetch "refs/heads/*:refs/remotes/origin/*" &&
 		git fetch up &&
 
-		r=$(git show-ref -s --verify refs/remotes/origin/master) &&
-		test "z$r" = "z$the_commit" &&
-
-		test 1 = $(git for-each-ref refs/remotes/origin | wc -l)
+		echo "$the_commit commit	refs/remotes/origin/master" >expect &&
+		git for-each-ref refs/remotes/origin >actual &&
+		test_cmp expect actual
 	)
 '
 
@@ -150,10 +143,9 @@ test_expect_success 'fetch with insteadOf' '
 		git config remote.up.fetch "refs/heads/*:refs/remotes/origin/*" &&
 		git fetch up &&
 
-		r=$(git show-ref -s --verify refs/remotes/origin/master) &&
-		test "z$r" = "z$the_commit" &&
-
-		test 1 = $(git for-each-ref refs/remotes/origin | wc -l)
+		echo "$the_commit commit	refs/remotes/origin/master" >expect &&
+		git for-each-ref refs/remotes/origin >actual &&
+		test_cmp expect actual
 	)
 '
 
@@ -167,10 +159,9 @@ test_expect_success 'fetch with pushInsteadOf (should not rewrite)' '
 		git config remote.up.fetch "refs/heads/*:refs/remotes/origin/*" &&
 		git fetch up &&
 
-		r=$(git show-ref -s --verify refs/remotes/origin/master) &&
-		test "z$r" = "z$the_commit" &&
-
-		test 1 = $(git for-each-ref refs/remotes/origin | wc -l)
+		echo "$the_commit commit	refs/remotes/origin/master" >expect &&
+		git for-each-ref refs/remotes/origin >actual &&
+		test_cmp expect actual
 	)
 '
 
@@ -180,10 +171,9 @@ test_expect_success 'push without wildcard' '
 	git push testrepo refs/heads/master:refs/remotes/origin/master &&
 	(
 		cd testrepo &&
-		r=$(git show-ref -s --verify refs/remotes/origin/master) &&
-		test "z$r" = "z$the_commit" &&
-
-		test 1 = $(git for-each-ref refs/remotes/origin | wc -l)
+		echo "$the_commit commit	refs/remotes/origin/master" >expect &&
+		git for-each-ref refs/remotes/origin >actual &&
+		test_cmp expect actual
 	)
 '
 
@@ -193,54 +183,50 @@ test_expect_success 'push with wildcard' '
 	git push testrepo "refs/heads/*:refs/remotes/origin/*" &&
 	(
 		cd testrepo &&
-		r=$(git show-ref -s --verify refs/remotes/origin/master) &&
-		test "z$r" = "z$the_commit" &&
-
-		test 1 = $(git for-each-ref refs/remotes/origin | wc -l)
+		echo "$the_commit commit	refs/remotes/origin/master" >expect &&
+		git for-each-ref refs/remotes/origin >actual &&
+		test_cmp expect actual
 	)
 '
 
 test_expect_success 'push with insteadOf' '
 	mk_empty &&
 	TRASH="$(pwd)/" &&
-	git config "url.$TRASH.insteadOf" trash/ &&
+	test_config "url.$TRASH.insteadOf" trash/ &&
 	git push trash/testrepo refs/heads/master:refs/remotes/origin/master &&
 	(
 		cd testrepo &&
-		r=$(git show-ref -s --verify refs/remotes/origin/master) &&
-		test "z$r" = "z$the_commit" &&
-
-		test 1 = $(git for-each-ref refs/remotes/origin | wc -l)
+		echo "$the_commit commit	refs/remotes/origin/master" >expect &&
+		git for-each-ref refs/remotes/origin >actual &&
+		test_cmp expect actual
 	)
 '
 
 test_expect_success 'push with pushInsteadOf' '
 	mk_empty &&
 	TRASH="$(pwd)/" &&
-	git config "url.$TRASH.pushInsteadOf" trash/ &&
+	test_config "url.$TRASH.pushInsteadOf" trash/ &&
 	git push trash/testrepo refs/heads/master:refs/remotes/origin/master &&
 	(
 		cd testrepo &&
-		r=$(git show-ref -s --verify refs/remotes/origin/master) &&
-		test "z$r" = "z$the_commit" &&
-
-		test 1 = $(git for-each-ref refs/remotes/origin | wc -l)
+		echo "$the_commit commit	refs/remotes/origin/master" >expect &&
+		git for-each-ref refs/remotes/origin >actual &&
+		test_cmp expect actual
 	)
 '
 
 test_expect_success 'push with pushInsteadOf and explicit pushurl (pushInsteadOf should not rewrite)' '
 	mk_empty &&
 	TRASH="$(pwd)/" &&
-	git config "url.trash2/.pushInsteadOf" trash/ &&
-	git config remote.r.url trash/wrong &&
-	git config remote.r.pushurl "$TRASH/testrepo" &&
+	test_config "url.trash2/.pushInsteadOf" trash/ &&
+	test_config remote.r.url trash/wrong &&
+	test_config remote.r.pushurl "$TRASH/testrepo" &&
 	git push r refs/heads/master:refs/remotes/origin/master &&
 	(
 		cd testrepo &&
-		r=$(git show-ref -s --verify refs/remotes/origin/master) &&
-		test "z$r" = "z$the_commit" &&
-
-		test 1 = $(git for-each-ref refs/remotes/origin | wc -l)
+		echo "$the_commit commit	refs/remotes/origin/master" >expect &&
+		git for-each-ref refs/remotes/origin >actual &&
+		test_cmp expect actual
 	)
 '
 
@@ -340,13 +326,8 @@ test_expect_success 'push with weak ambiguity (2)' '
 test_expect_success 'push with ambiguity' '
 
 	mk_test heads/frotz tags/frotz &&
-	if git push testrepo master:frotz
-	then
-		echo "Oops, should have failed"
-		false
-	else
-		check_push_result $the_first_commit heads/frotz tags/frotz
-	fi
+	test_must_fail git push testrepo master:frotz &&
+	check_push_result $the_first_commit heads/frotz tags/frotz
 
 '
 
@@ -489,30 +470,23 @@ test_expect_success 'push with config remote.*.push = HEAD' '
 		git checkout local &&
 		git reset --hard $the_first_commit
 	) &&
-	git config remote.there.url testrepo &&
-	git config remote.there.push HEAD &&
-	git config branch.master.remote there &&
+	test_config remote.there.url testrepo &&
+	test_config remote.there.push HEAD &&
+	test_config branch.master.remote there &&
 	git push &&
 	check_push_result $the_commit heads/master &&
 	check_push_result $the_first_commit heads/local
 '
 
-# clean up the cruft left with the previous one
-git config --remove-section remote.there
-git config --remove-section branch.master
-
 test_expect_success 'push with config remote.*.pushurl' '
 
 	mk_test heads/master &&
 	git checkout master &&
-	git config remote.there.url test2repo &&
-	git config remote.there.pushurl testrepo &&
+	test_config remote.there.url test2repo &&
+	test_config remote.there.pushurl testrepo &&
 	git push there &&
 	check_push_result $the_commit heads/master
 '
-
-# clean up the cruft left with the previous one
-git config --remove-section remote.there
 
 test_expect_success 'push with dry-run' '
 
@@ -834,9 +808,9 @@ test_expect_success 'fetch with branches' '
 	(
 		cd testrepo &&
 		git fetch branch1 &&
-		r=$(git show-ref -s --verify refs/heads/branch1) &&
-		test "z$r" = "z$the_commit" &&
-		test 1 = $(git for-each-ref refs/heads | wc -l)
+		echo "$the_commit commit	refs/heads/branch1" >expect &&
+		git for-each-ref refs/heads >actual &&
+		test_cmp expect actual
 	) &&
 	git checkout master
 '
@@ -847,9 +821,9 @@ test_expect_success 'fetch with branches containing #' '
 	(
 		cd testrepo &&
 		git fetch branch2 &&
-		r=$(git show-ref -s --verify refs/heads/branch2) &&
-		test "z$r" = "z$the_first_commit" &&
-		test 1 = $(git for-each-ref refs/heads | wc -l)
+		echo "$the_first_commit commit	refs/heads/branch2" >expect &&
+		git for-each-ref refs/heads >actual &&
+		test_cmp expect actual
 	) &&
 	git checkout master
 '
@@ -861,9 +835,9 @@ test_expect_success 'push with branches' '
 	git push branch1 &&
 	(
 		cd testrepo &&
-		r=$(git show-ref -s --verify refs/heads/master) &&
-		test "z$r" = "z$the_first_commit" &&
-		test 1 = $(git for-each-ref refs/heads | wc -l)
+		echo "$the_first_commit commit	refs/heads/master" >expect &&
+		git for-each-ref refs/heads >actual &&
+		test_cmp expect actual
 	)
 '
 
@@ -873,9 +847,9 @@ test_expect_success 'push with branches containing #' '
 	git push branch2 &&
 	(
 		cd testrepo &&
-		r=$(git show-ref -s --verify refs/heads/branch3) &&
-		test "z$r" = "z$the_first_commit" &&
-		test 1 = $(git for-each-ref refs/heads | wc -l)
+		echo "$the_first_commit commit	refs/heads/branch3" >expect &&
+		git for-each-ref refs/heads >actual &&
+		test_cmp expect actual
 	) &&
 	git checkout master
 '
@@ -958,9 +932,9 @@ test_expect_success 'push --porcelain' '
 	git push >.git/bar --porcelain  testrepo refs/heads/master:refs/remotes/origin/master &&
 	(
 		cd testrepo &&
-		r=$(git show-ref -s --verify refs/remotes/origin/master) &&
-		test "z$r" = "z$the_commit" &&
-		test 1 = $(git for-each-ref refs/remotes/origin | wc -l)
+		echo "$the_commit commit	refs/remotes/origin/master" >expect &&
+		git for-each-ref refs/remotes/origin >actual &&
+		test_cmp expect actual
 	) &&
 	test_cmp .git/foo .git/bar
 '
