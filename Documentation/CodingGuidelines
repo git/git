@@ -237,6 +237,9 @@ For Python scripts:
 
 Writing Documentation:
 
+ Most (if not all) of the documentation pages are written in AsciiDoc
+ and processed into HTML output and manpages.
+
  Every user-visible change should be reflected in the documentation.
  The same general rule as for code applies -- imitate the existing
  conventions.  A few commented examples follow to provide reference
