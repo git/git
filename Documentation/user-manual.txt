@@ -2338,7 +2338,7 @@ origin)
 	fi
 	;;
 *)
-	echo "Usage: $0 origin|test|release" 1>&2
+	echo "usage: $0 origin|test|release" 1>&2
 	exit 1
 	;;
 esac
@@ -2352,7 +2352,7 @@ pname=$0
 
 usage()
 {
-	echo "Usage: $pname branch test|release" 1>&2
+	echo "usage: $pname branch test|release" 1>&2
 	exit 1
 }
 
