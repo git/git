@@ -409,6 +409,18 @@ test_expect_success '--set-upstream-to fails on detached HEAD' '
 	git checkout -
 '
 
+test_expect_success '--set-upstream-to fails on a missing dst branch' '
+	test_must_fail git branch --set-upstream-to master does-not-exist
+'
+
+test_expect_success '--set-upstream-to fails on a missing src branch' '
+	test_must_fail git branch --set-upstream-to does-not-exist master
+'
+
+test_expect_success '--set-upstream-to fails on a non-ref' '
+	test_must_fail git branch --set-upstream-to HEAD^{}
+'
+
 test_expect_success 'use --set-upstream-to modify HEAD' '
 	test_config branch.master.remote foo &&
 	test_config branch.master.merge foo &&
