@@ -23,6 +23,7 @@
 #include "streaming.h"
 #include "version.h"
 #include "mailmap.h"
+#include "gpg-interface.h"
 
 /* Set a default date-time format for git log ("log.date" config variable) */
 static const char *default_date_mode = NULL;
@@ -366,6 +367,8 @@ static int git_log_config(const char *var, const char *value, void *cb)
 	}
 
 	if (grep_config(var, value, cb) < 0)
+		return -1;
+	if (git_gpg_config(var, value, cb) < 0)
 		return -1;
 	return git_diff_ui_config(var, value, cb);
 }
