@@ -1,6 +1,17 @@
 #!/bin/sh
 
-test_description='fetching and pushing, with or without wildcard'
+test_description='Basic fetch/push functionality.
+
+This test checks the following functionality:
+
+* command-line syntax
+* refspecs
+* fast-forward detection, and overriding it
+* configuration
+* hooks
+* --porcelain output format
+* hiderefs
+'
 
 . ./test-lib.sh
 
