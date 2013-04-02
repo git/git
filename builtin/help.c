@@ -39,7 +39,7 @@ static int show_all = 0;
 static unsigned int colopts;
 static enum help_format help_format = HELP_FORMAT_NONE;
 static struct option builtin_help_options[] = {
-	OPT_BOOLEAN('a', "all", &show_all, N_("print all available commands")),
+	OPT_BOOL('a', "all", &show_all, N_("print all available commands")),
 	OPT_SET_INT('m', "man", &help_format, N_("show man page"), HELP_FORMAT_MAN),
 	OPT_SET_INT('w', "web", &help_format, N_("show manual in web browser"),
 			HELP_FORMAT_WEB),
@@ -428,7 +428,13 @@ int cmd_help(int argc, const char **argv, const char *prefix)
 		git_config(git_help_config, NULL);
 		printf(_("usage: %s%s"), _(git_usage_string), "\n\n");
 		list_commands(colopts, &main_cmds, &other_cmds);
+	}
+
+	if (show_all) {
 		printf("%s\n", _(git_more_info_string));
+		/*
+		* We're done. Ignore any remaining args
+		*/
 		return 0;
 	}
 
