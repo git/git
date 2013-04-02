@@ -124,8 +124,13 @@ int safe_create_leading_directories(char *path)
 			}
 		}
 		else if (mkdir(path, 0777)) {
-			*pos = '/';
-			return -1;
+			if (errno == EEXIST &&
+			    !stat(path, &st) && S_ISDIR(st.st_mode)) {
+				; /* somebody created it since we checked */
+			} else {
+				*pos = '/';
+				return -1;
+			}
 		}
 		else if (adjust_shared_perm(path)) {
 			*pos = '/';
