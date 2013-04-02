@@ -49,6 +49,7 @@ static int branches_nr;
 
 static struct branch *current_branch;
 static const char *default_remote_name;
+static const char *pushremote_name;
 static int explicit_default_remote_name;
 
 static struct rewrites rewrites;
@@ -670,17 +671,21 @@ static int valid_remote_nick(const char *name)
 	return !strchr(name, '/'); /* no slash */
 }
 
-struct remote *remote_get(const char *name)
+static struct remote *remote_get_1(const char *name, const char *pushremote_name)
 {
 	struct remote *ret;
 	int name_given = 0;
 
-	read_config();
 	if (name)
 		name_given = 1;
 	else {
-		name = default_remote_name;
-		name_given = explicit_default_remote_name;
+		if (pushremote_name) {
+			name = pushremote_name;
+			name_given = 1;
+		} else {
+			name = default_remote_name;
+			name_given = explicit_default_remote_name;
+		}
 	}
 
 	ret = make_remote(name, 0);
@@ -697,6 +702,18 @@ struct remote *remote_get(const char *name)
 	ret->fetch = parse_fetch_refspec(ret->fetch_refspec_nr, ret->fetch_refspec);
 	ret->push = parse_push_refspec(ret->push_refspec_nr, ret->push_refspec);
 	return ret;
+}
+
+struct remote *remote_get(const char *name)
+{
+	read_config();
+	return remote_get_1(name, NULL);
+}
+
+struct remote *pushremote_get(const char *name)
+{
+	read_config();
+	return remote_get_1(name, pushremote_name);
 }
 
 int remote_is_configured(const char *name)
