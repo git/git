@@ -198,9 +198,9 @@ int validate_new_branchname(const char *name, struct strbuf *ref,
 }
 
 static const char upstream_not_branch[] =
-N_("Cannot setup tracking information; starting point is not a branch.");
+N_("Cannot setup tracking information; starting point '%s' is not a branch.");
 static const char upstream_missing[] =
-N_("Cannot setup tracking information; starting point does not exist");
+N_("Cannot setup tracking information; starting point '%s' does not exist");
 
 void create_branch(const char *head,
 		   const char *name, const char *start_name,
@@ -231,7 +231,7 @@ void create_branch(const char *head,
 	real_ref = NULL;
 	if (get_sha1(start_name, sha1)) {
 		if (explicit_tracking)
-			die(_(upstream_missing));
+			die(_(upstream_missing), start_name);
 		die("Not a valid object name: '%s'.", start_name);
 	}
 
@@ -239,14 +239,14 @@ void create_branch(const char *head,
 	case 0:
 		/* Not branching from any existing branch */
 		if (explicit_tracking)
-			die(_(upstream_not_branch));
+			die(_(upstream_not_branch), start_name);
 		break;
 	case 1:
 		/* Unique completion -- good, only if it is a real branch */
 		if (prefixcmp(real_ref, "refs/heads/") &&
 		    prefixcmp(real_ref, "refs/remotes/")) {
 			if (explicit_tracking)
-				die(_(upstream_not_branch));
+				die(_(upstream_not_branch), start_name);
 			else
 				real_ref = NULL;
 		}
