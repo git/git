@@ -163,6 +163,7 @@
 typedef long intptr_t;
 typedef unsigned long uintptr_t;
 #endif
+int get_st_mode_bits(const char *path, int *mode);
 #if defined(__CYGWIN__)
 #undef _XOPEN_SOURCE
 #include <grp.h>

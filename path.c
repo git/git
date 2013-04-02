@@ -14,6 +14,22 @@
 #include "strbuf.h"
 #include "string-list.h"
 
+#ifndef get_st_mode_bits
+/*
+ * The replacement lstat(2) we use on Cygwin is incomplete and
+ * may return wrong permission bits. Most of the time we do not care,
+ * but the callsites of this wrapper do care.
+ */
+int get_st_mode_bits(const char *path, int *mode)
+{
+	struct stat st;
+	if (lstat(path, &st) < 0)
+		return -1;
+	*mode = st.st_mode;
+	return 0;
+}
+#endif
+
 static char bad_path[] = "/bad-path/";
 
 static char *get_pathname(void)
@@ -391,7 +407,6 @@ const char *enter_repo(const char *path, int strict)
 
 int set_shared_perm(const char *path, int mode)
 {
-	struct stat st;
 	int tweak, shared, orig_mode;
 
 	if (!shared_repository) {
@@ -400,9 +415,8 @@ int set_shared_perm(const char *path, int mode)
 		return 0;
 	}
 	if (!mode) {
-		if (lstat(path, &st) < 0)
+		if (get_st_mode_bits(path, &mode) < 0)
 			return -1;
-		mode = st.st_mode;
 		orig_mode = mode;
 	} else
 		orig_mode = 0;
