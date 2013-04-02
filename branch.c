@@ -197,6 +197,9 @@ int validate_new_branchname(const char *name, struct strbuf *ref,
 	return 1;
 }
 
+static const char upstream_not_branch[] =
+N_("Cannot setup tracking information; starting point is not a branch.");
+
 void create_branch(const char *head,
 		   const char *name, const char *start_name,
 		   int force, int reflog, int clobber_head,
@@ -231,14 +234,14 @@ void create_branch(const char *head,
 	case 0:
 		/* Not branching from any existing branch */
 		if (explicit_tracking)
-			die("Cannot setup tracking information; starting point is not a branch.");
+			die(_(upstream_not_branch));
 		break;
 	case 1:
 		/* Unique completion -- good, only if it is a real branch */
 		if (prefixcmp(real_ref, "refs/heads/") &&
 		    prefixcmp(real_ref, "refs/remotes/")) {
 			if (explicit_tracking)
-				die("Cannot setup tracking information; starting point is not a branch.");
+				die(_(upstream_not_branch));
 			else
 				real_ref = NULL;
 		}
