@@ -36,10 +36,12 @@ enum help_format {
 static const char *html_path;
 
 static int show_all = 0;
+static int show_guides = 0;
 static unsigned int colopts;
 static enum help_format help_format = HELP_FORMAT_NONE;
 static struct option builtin_help_options[] = {
 	OPT_BOOL('a', "all", &show_all, N_("print all available commands")),
+	OPT_BOOL('g', "guides", &show_guides, N_("print list of useful guides")),
 	OPT_SET_INT('m', "man", &help_format, N_("show man page"), HELP_FORMAT_MAN),
 	OPT_SET_INT('w', "web", &help_format, N_("show manual in web browser"),
 			HELP_FORMAT_WEB),
@@ -49,7 +51,7 @@ static struct option builtin_help_options[] = {
 };
 
 static const char * const builtin_help_usage[] = {
-	N_("git help [--all] [--man|--web|--info] [command]"),
+	N_("git help [--all] [--guides] [--man|--web|--info] [command]"),
 	NULL
 };
 
@@ -430,7 +432,11 @@ int cmd_help(int argc, const char **argv, const char *prefix)
 		list_commands(colopts, &main_cmds, &other_cmds);
 	}
 
-	if (show_all) {
+	if (show_guides) {
+		/* do action - next patch */
+	}
+
+	if (show_all || show_guides) {
 		printf("%s\n", _(git_more_info_string));
 		/*
 		* We're done. Ignore any remaining args
