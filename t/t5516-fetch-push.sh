@@ -519,6 +519,21 @@ test_expect_success 'push with config remote.*.pushurl' '
 	check_push_result testrepo $the_commit heads/master
 '
 
+test_expect_success 'push with config branch.*.pushremote' '
+	mk_test up_repo heads/master &&
+	mk_test side_repo heads/master &&
+	mk_test down_repo heads/master &&
+	test_config remote.up.url up_repo &&
+	test_config remote.pushdefault side_repo &&
+	test_config remote.down.url down_repo &&
+	test_config branch.master.remote up &&
+	test_config branch.master.pushremote down &&
+	git push &&
+	check_push_result up_repo $the_first_commit heads/master &&
+	check_push_result side_repo $the_first_commit heads/master &&
+	check_push_result down_repo $the_commit heads/master
+'
+
 test_expect_success 'push with dry-run' '
 
 	mk_test testrepo heads/master &&
