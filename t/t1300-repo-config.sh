@@ -1087,4 +1087,39 @@ test_expect_success 'barf on incomplete string' '
 	grep " line 3 " error
 '
 
+# good section hygiene
+test_expect_failure 'unsetting the last key in a section removes header' '
+	cat >.git/config <<-\EOF &&
+	# some generic comment on the configuration file itself
+	# a comment specific to this "section" section.
+	[section]
+	# some intervening lines
+	# that should also be dropped
+
+	key = value
+	# please be careful when you update the above variable
+	EOF
+
+	cat >expect <<-\EOF &&
+	# some generic comment on the configuration file itself
+	EOF
+
+	git config --unset section.key &&
+	test_cmp expect .git/config
+'
+
+test_expect_failure 'adding a key into an empty section reuses header' '
+	cat >.git/config <<-\EOF &&
+	[section]
+	EOF
+
+	q_to_tab >expect <<-\EOF &&
+	[section]
+	Qkey = value
+	EOF
+
+	git config section.key value
+	test_cmp expect .git/config
+'
+
 test_done
