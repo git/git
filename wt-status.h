@@ -80,6 +80,7 @@ struct wt_status_state {
 	int rebase_interactive_in_progress;
 	int cherry_pick_in_progress;
 	int bisect_in_progress;
+	int revert_in_progress;
 	char *branch;
 	char *onto;
 	char *detached_from;

@@ -965,6 +965,24 @@ static void show_cherry_pick_in_progress(struct wt_status *s,
 	wt_status_print_trailer(s);
 }
 
+static void show_revert_in_progress(struct wt_status *s,
+					struct wt_status_state *state,
+					const char *color)
+{
+	status_printf_ln(s, color, _("You are currently reverting a commit."));
+	if (advice_status_hints) {
+		if (has_unmerged(s))
+			status_printf_ln(s, color,
+				_("  (fix conflicts and run \"git revert --continue\")"));
+		else
+			status_printf_ln(s, color,
+				_("  (all conflicts fixed: run \"git revert --continue\")"));
+		status_printf_ln(s, color,
+			_("  (use \"git revert --abort\" to cancel the revert operation)"));
+	}
+	wt_status_print_trailer(s);
+}
+
 static void show_bisect_in_progress(struct wt_status *s,
 				struct wt_status_state *state,
 				const char *color)
@@ -1113,6 +1131,9 @@ void wt_status_get_state(struct wt_status_state *state,
 		state->bisect_in_progress = 1;
 		state->branch = read_and_strip_branch("BISECT_START");
 	}
+	if (!stat(git_path("REVERT_HEAD"), &st)) {
+		state->revert_in_progress = 1;
+	}
 
 	if (get_detached_from)
 		wt_status_get_detached_from(state);
@@ -1130,6 +1151,8 @@ static void wt_status_print_state(struct wt_status *s,
 		show_rebase_in_progress(s, state, state_color);
 	else if (state->cherry_pick_in_progress)
 		show_cherry_pick_in_progress(s, state, state_color);
+	else if (state->revert_in_progress)
+		show_revert_in_progress(s, state, state_color);
 	if (state->bisect_in_progress)
 		show_bisect_in_progress(s, state, state_color);
 }
