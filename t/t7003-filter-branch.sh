@@ -64,6 +64,20 @@ test_expect_success 'correct GIT_DIR while using -d' '
 	grep drepo "$TRASHDIR/backup-refs"
 '
 
+test_expect_success 'tree-filter works with -d' '
+	git init drepo-tree &&
+	(
+		cd drepo-tree &&
+		test_commit one &&
+		git filter-branch -d "$TRASHDIR/dfoo" \
+			--tree-filter "echo changed >one.t" &&
+		echo changed >expect &&
+		git cat-file blob HEAD:one.t >actual &&
+		test_cmp expect actual &&
+		test_cmp one.t actual
+	)
+'
+
 test_expect_success 'Fail if commit filter fails' '
 	test_must_fail git filter-branch -f --commit-filter "exit 1" HEAD
 '
