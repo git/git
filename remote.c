@@ -389,9 +389,16 @@ static int handle_config(const char *key, const char *value, void *cb)
 			add_instead_of(rewrite, xstrdup(value));
 		}
 	}
+
 	if (prefixcmp(key,  "remote."))
 		return 0;
 	name = key + 7;
+
+	/* Handle remote.* variables */
+	if (!strcmp(name, "pushdefault"))
+		return git_config_string(&pushremote_name, key, value);
+
+	/* Handle remote.<name>.* variables */
 	if (*name == '/') {
 		warning("Config remote shorthand cannot begin with '/': %s",
 			name);
