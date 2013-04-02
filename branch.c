@@ -200,7 +200,16 @@ int validate_new_branchname(const char *name, struct strbuf *ref,
 static const char upstream_not_branch[] =
 N_("Cannot setup tracking information; starting point '%s' is not a branch.");
 static const char upstream_missing[] =
-N_("Cannot setup tracking information; starting point '%s' does not exist");
+N_("the requested upstream branch '%s' does not exist");
+static const char upstream_advice[] =
+N_("\n"
+"If you are planning on basing your work on an upstream\n"
+"branch that already exists at the remote, you may need to\n"
+"run \"git fetch\" to retrieve it.\n"
+"\n"
+"If you are planning to push out a new local branch that\n"
+"will track its remote counterpart, you may want to use\n"
+"\"git push -u\" to set the upstream config as you push.");
 
 void create_branch(const char *head,
 		   const char *name, const char *start_name,
@@ -230,8 +239,14 @@ void create_branch(const char *head,
 
 	real_ref = NULL;
 	if (get_sha1(start_name, sha1)) {
-		if (explicit_tracking)
+		if (explicit_tracking) {
+			if (advice_set_upstream_failure) {
+				error(_(upstream_missing), start_name);
+				advise(_(upstream_advice));
+				exit(1);
+			}
 			die(_(upstream_missing), start_name);
+		}
 		die("Not a valid object name: '%s'.", start_name);
 	}
 
