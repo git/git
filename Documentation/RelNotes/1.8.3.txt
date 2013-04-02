@@ -75,6 +75,12 @@ UI, Workflows & Features
    shown on the left side, which is the opposite from other backend
    expects.
 
+ * "show/log" now honors gpg.program configuration just like other
+   parts of the code that use GnuPG.
+
+ * "git log" that shows the difference between the parent and the
+   child has been optimized somewhat.
+
 
 Performance, Internal Implementation, etc.
 
@@ -93,6 +99,11 @@ Performance, Internal Implementation, etc.
 
  * The pkt-line API, implementation and its callers have been cleaned
    up to make them more robust.
+
+ * Cygwin port has a faster-but-lying lstat(2) emulation whose
+   incorrectness does not matter in practice except for a few
+   codepaths, and setting permission bits to directories is a codepath
+   that needs to use a more correct one.
 
 
 Also contains minor documentation updates and code clean-ups.
