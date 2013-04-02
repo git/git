@@ -199,6 +199,8 @@ int validate_new_branchname(const char *name, struct strbuf *ref,
 
 static const char upstream_not_branch[] =
 N_("Cannot setup tracking information; starting point is not a branch.");
+static const char upstream_missing[] =
+N_("Cannot setup tracking information; starting point does not exist");
 
 void create_branch(const char *head,
 		   const char *name, const char *start_name,
@@ -227,8 +229,11 @@ void create_branch(const char *head,
 	}
 
 	real_ref = NULL;
-	if (get_sha1(start_name, sha1))
+	if (get_sha1(start_name, sha1)) {
+		if (explicit_tracking)
+			die(_(upstream_missing));
 		die("Not a valid object name: '%s'.", start_name);
+	}
 
 	switch (dwim_ref(start_name, strlen(start_name), sha1, &real_ref)) {
 	case 0:
