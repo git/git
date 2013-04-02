@@ -969,7 +969,8 @@ static void show_revert_in_progress(struct wt_status *s,
 					struct wt_status_state *state,
 					const char *color)
 {
-	status_printf_ln(s, color, _("You are currently reverting a commit."));
+	status_printf_ln(s, color, _("You are currently reverting commit %s."),
+			 find_unique_abbrev(state->revert_head_sha1, DEFAULT_ABBREV));
 	if (advice_status_hints) {
 		if (has_unmerged(s))
 			status_printf_ln(s, color,
@@ -1104,6 +1105,7 @@ void wt_status_get_state(struct wt_status_state *state,
 			 int get_detached_from)
 {
 	struct stat st;
+	unsigned char sha1[20];
 
 	if (!stat(git_path("MERGE_HEAD"), &st)) {
 		state->merge_in_progress = 1;
@@ -1131,8 +1133,10 @@ void wt_status_get_state(struct wt_status_state *state,
 		state->bisect_in_progress = 1;
 		state->branch = read_and_strip_branch("BISECT_START");
 	}
-	if (!stat(git_path("REVERT_HEAD"), &st)) {
+	if (!stat(git_path("REVERT_HEAD"), &st) &&
+	    !get_sha1("REVERT_HEAD", sha1)) {
 		state->revert_in_progress = 1;
+		hashcpy(state->revert_head_sha1, sha1);
 	}
 
 	if (get_detached_from)

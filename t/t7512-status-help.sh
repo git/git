@@ -686,10 +686,11 @@ test_expect_success 'status while reverting commit (conflicts)' '
 	test_commit old to-revert.txt &&
 	echo new >to-revert.txt &&
 	test_commit new to-revert.txt &&
-	test_must_fail git revert HEAD^ &&
+	TO_REVERT=$(git rev-parse --short HEAD^) &&
+	test_must_fail git revert $TO_REVERT &&
 	cat >expected <<-EOF
 	# On branch master
-	# You are currently reverting a commit.
+	# You are currently reverting commit $TO_REVERT.
 	#   (fix conflicts and run "git revert --continue")
 	#   (use "git revert --abort" to cancel the revert operation)
 	#
@@ -710,7 +711,7 @@ test_expect_success 'status while reverting commit (conflicts resolved)' '
 	git add to-revert.txt &&
 	cat >expected <<-EOF
 	# On branch master
-	# You are currently reverting a commit.
+	# You are currently reverting commit $TO_REVERT.
 	#   (all conflicts fixed: run "git revert --continue")
 	#   (use "git revert --abort" to cancel the revert operation)
 	#
