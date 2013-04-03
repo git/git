@@ -4,6 +4,41 @@ Git v1.8.2.1 Release Notes
 Fixes since v1.8.2
 ------------------
 
+ * Verification of signed tags were not done correctly when not in C
+   or en/US locale.
+
+ * 'git commit -m "$msg"' used to add an extra newline even when
+   $msg already ended with one.
+
+ * The "--match=<pattern>" option of "git describe", when used with
+   "--all" to allow refs that are not annotated tags to be used as a
+   base of description, did not restrict the output from the command
+   to those that match the given pattern.
+
+ * An aliased command spawned from a bare repository that does not say
+   it is bare with "core.bare = yes" is treated as non-bare by mistake.
+
+ * When "format-patch" quoted a non-ascii strings on the header files,
+   it incorrectly applied rfc2047 and chopped a single character in
+   the middle of it.
+
+ * "git archive" reports a failure when asked to create an archive out
+   of an empty tree.  It would be more intuitive to give an empty
+   archive back in such a case.
+
+ * "git tag -f <tag>" always said "Updated tag '<tag>'" even when
+   creating a new tag (i.e. not overwriting nor updating).
+
+ * "git cmd -- ':(top'" was not diagnosed as an invalid syntax, and
+   instead the parser kept reading beyond the end of the string.
+
+ * Annotated tags outside refs/tags/ hierarchy were not advertised
+   correctly to the ls-remote and fetch with recent version of Git.
+
+ * The code to keep track of what directory names are known to Git on
+   platforms with case insensitive filesystems can get confused upon a
+   hash collision between these pathnames and looped forever.
+
  * The logic used by "git diff -M --stat" to shorten the names of
    files before and after a rename did not work correctly when the
    common prefix and suffix between the two filenames overlapped.
