@@ -1256,6 +1256,7 @@ static char *pprint_rename(const char *a, const char *b)
 	const char *new = b;
 	struct strbuf name = STRBUF_INIT;
 	int pfx_length, sfx_length;
+	int pfx_adjust_for_slash;
 	int len_a = strlen(a);
 	int len_b = strlen(b);
 	int a_midlen, b_midlen;
@@ -1282,7 +1283,18 @@ static char *pprint_rename(const char *a, const char *b)
 	old = a + len_a;
 	new = b + len_b;
 	sfx_length = 0;
-	while (a <= old && b <= new && *old == *new) {
+	/*
+	 * If there is a common prefix, it must end in a slash.  In
+	 * that case we let this loop run 1 into the prefix to see the
+	 * same slash.
+	 *
+	 * If there is no common prefix, we cannot do this as it would
+	 * underrun the input strings.
+	 */
+	pfx_adjust_for_slash = (pfx_length ? 1 : 0);
+	while (a + pfx_length - pfx_adjust_for_slash <= old &&
+	       b + pfx_length - pfx_adjust_for_slash <= new &&
+	       *old == *new) {
 		if (*old == '/')
 			sfx_length = len_a - (old - a);
 		old--;
