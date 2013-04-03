@@ -540,6 +540,9 @@ test_must_fail () {
 	elif test $exit_code = 127; then
 		echo >&2 "test_must_fail: command not found: $*"
 		return 1
+	elif test $exit_code = 126; then
+		echo >&2 "test_must_fail: valgrind error: $*"
+		return 1
 	fi
 	return 0
 }

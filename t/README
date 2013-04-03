@@ -92,17 +92,26 @@ appropriately before running "make".
 	This causes additional long-running tests to be run (where
 	available), for more exhaustive testing.
 
---valgrind::
-	Execute all Git binaries with valgrind and exit with status
-	126 on errors (just like regular tests, this will only stop
-	the test script when running under -i).  Valgrind errors
-	go to stderr, so you might want to pass the -v option, too.
+--valgrind=<tool>::
+	Execute all Git binaries under valgrind tool <tool> and exit
+	with status 126 on errors (just like regular tests, this will
+	only stop the test script when running under -i).
 
 	Since it makes no sense to run the tests with --valgrind and
 	not see any output, this option implies --verbose.  For
 	convenience, it also implies --tee.
 
-	Note that valgrind is run with the option --leak-check=no,
+	<tool> defaults to 'memcheck', just like valgrind itself.
+	Other particularly useful choices include 'helgrind' and
+	'drd', but you may use any tool recognized by your valgrind
+	installation.
+
+	As a special case, <tool> can be 'memcheck-fast', which uses
+	memcheck but disables --track-origins.  Use this if you are
+	running tests in bulk, to see if there are _any_ memory
+	issues.
+
+	Note that memcheck is run with the option --leak-check=no,
 	as the git process is short-lived and some errors are not
 	interesting. In order to run a single command under the same
 	conditions manually, you should set GIT_VALGRIND to point to
