@@ -81,6 +81,17 @@ UI, Workflows & Features
  * "git log" that shows the difference between the parent and the
    child has been optimized somewhat.
 
+ * "git difftool" allows the user to write into the temporary files
+   being shown; if the user makes changes to the working tree at the
+   same time, one of the changes has to be lost in such a case, but it
+   tells the user what happened and refrains from overwriting the copy
+   in the working tree.
+
+ * There was no good way to ask "I have a random string that came from
+   outside world. I want to turn it into a 40-hex object name while
+   making sure such an object exists".  A new peeling suffix ^{object}
+   can be used for that purpose, together with "rev-parse --verify".
+
 
 Performance, Internal Implementation, etc.
 
@@ -105,6 +116,10 @@ Performance, Internal Implementation, etc.
    codepaths, and setting permission bits to directories is a codepath
    that needs to use a more correct one.
 
+ * "git checkout" had repeated pathspec matches on the same paths,
+   which have been consolidated.  Also a bug in "git checkout dir/"
+   that is started from an unmerged index has been fixed.
+
 
 Also contains minor documentation updates and code clean-ups.
 
@@ -115,6 +130,22 @@ Fixes since v1.8.2
 Unless otherwise noted, all the fixes since v1.8.2 in the maintenance
 track are contained in this release (see release notes to them for
 details).
+
+ * Fix 1.8.1.x regression that stopped matching "dir" (without
+   trailing slash) to a directory "dir".
+   (merge efa5f82 jc/directory-attrs-regression-fix later to maint-1.8.1).
+
+ * "git apply --whitespace=fix" was not prepared to see a line getting
+   longer after fixing whitespaces (e.g. tab-in-indent aka Python).
+   (merge 329b26e jc/apply-ws-fix-tab-in-indent later to maint-1.8.1).
+
+ * The prompt string generator (in contrib/completion/) did not notice
+   when we are in a middle of a "git revert" session.
+   (merge 3ee4452 rr/prompt-revert-head later to maint).
+
+ * "submodule summary --summary-limit" option did not support
+   "--option=value" form.
+   (merge 862ae6c rs/submodule-summary-limit later to maint).
 
  * "index-pack --fix-thin" used uninitialize value to compute delta
    depths of objects it appends to the resulting pack.
@@ -127,22 +158,18 @@ details).
  * The code to keep track of what directory names are known to Git on
    platforms with case insensitive filesystems can get confused upon a
    hash collision between these pathnames and looped forever.
-   (merge 2092678 kb/name-hash later to maint).
 
  * Annotated tags outside refs/tags/ hierarchy were not advertised
    correctly to the ls-remote and fetch with recent version of Git.
-   (merge c29c46f jk/fully-peeled-packed-ref later to maint).
 
  * Recent optimization broke shallow clones.
    (merge f59de5d jk/peel-ref later to maint).
 
  * "git cmd -- ':(top'" was not diagnosed as an invalid syntax, and
    instead the parser kept reading beyond the end of the string.
-   (merge f612a67 lf/setup-prefix-pathspec later to maint).
 
  * "git tag -f <tag>" always said "Updated tag '<tag>'" even when
    creating a new tag (i.e. not overwriting nor updating).
-   (merge 3ae851e ph/tag-force-no-warn-on-creation later to maint).
 
  * "git p4" did not behave well when the path to the root of the P4
    client was not its real path.
@@ -151,16 +178,13 @@ details).
  * "git archive" reports a failure when asked to create an archive out
    of an empty tree.  It would be more intuitive to give an empty
    archive back in such a case.
-   (merge bd54cf1 jk/empty-archive later to maint).
 
  * When "format-patch" quoted a non-ascii strings on the header files,
    it incorrectly applied rfc2047 and chopped a single character in
    the middle of it.
-   (merge 6cd3c05 ks/rfc2047-one-char-at-a-time later to maint).
 
  * An aliased command spawned from a bare repository that does not say
    it is bare with "core.bare = yes" is treated as non-bare by mistake.
-   (merge 2cd83d1 jk/alias-in-bare later to maint).
 
  * In "git reflog expire", REACHABLE bit was not cleared from the
    correct objects.
@@ -173,7 +197,6 @@ details).
    "--all" to allow refs that are not annotated tags to be used as a
    base of description, did not restrict the output from the command
    to those that match the given pattern.
-   (merge 46e1d6e jc/describe later to maint).
 
  * Clarify in the documentation "what" gets pushed to "where" when the
    command line to "git push" does not say these explicitly.
@@ -210,7 +233,6 @@ details).
 
  * 'git commit -m "$msg"' used to add an extra newline even when
    $msg already ended with one.
-   (merge 46fbf75 bc/commit-complete-lines-given-via-m-option later to maint).
 
  * The SSL peer verification done by "git imap-send" did not ask for
    Server Name Indication (RFC 4366), failing to connect SSL/TLS
@@ -224,7 +246,6 @@ details).
 
  * Verification of signed tags were not done correctly when not in C
    or en/US locale.
-   (merge 0174eea mg/gpg-interface-using-status later to maint).
 
  * Some platforms and users spell UTF-8 differently; retry with the
    most official "UTF-8" when the system does not understand the
