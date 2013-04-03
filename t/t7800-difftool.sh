@@ -23,16 +23,6 @@ prompt_given ()
 	test "$prompt" = "Launch 'test-tool' [Y/n]: branch"
 }
 
-stdin_contains ()
-{
-	grep >/dev/null "$1"
-}
-
-stdin_doesnot_contain ()
-{
-	! stdin_contains "$1"
-}
-
 # Create a file on master and change it on branch
 test_expect_success PERL 'setup' '
 	echo master >file &&
@@ -296,24 +286,24 @@ test_expect_success PERL 'setup with 2 files different' '
 test_expect_success PERL 'say no to the first file' '
 	(echo n && echo) >input &&
 	git difftool -x cat branch <input >output &&
-	stdin_contains m2 <output &&
-	stdin_contains br2 <output &&
-	stdin_doesnot_contain master <output &&
-	stdin_doesnot_contain branch <output
+	grep m2 output &&
+	grep br2 output &&
+	! grep master output &&
+	! grep branch output
 '
 
 test_expect_success PERL 'say no to the second file' '
 	(echo && echo n) >input &&
 	git difftool -x cat branch <input >output &&
-	stdin_contains master <output &&
-	stdin_contains branch  <output &&
-	stdin_doesnot_contain m2 <output &&
-	stdin_doesnot_contain br2 <output
+	grep master output &&
+	grep branch output &&
+	! grep m2 output &&
+	! grep br2 output
 '
 
 test_expect_success PERL 'difftool --tool-help' '
 	git difftool --tool-help >output &&
-	stdin_contains tool <output
+	grep tool output
 '
 
 test_expect_success PERL 'setup change in subdirectory' '
@@ -324,20 +314,46 @@ test_expect_success PERL 'setup change in subdirectory' '
 	git commit -m "added sub/sub" &&
 	echo test >>file &&
 	echo test >>sub/sub &&
-	git add . &&
+	git add file sub/sub &&
 	git commit -m "modified both"
 '
 
-test_expect_success PERL 'difftool -d' '
-	git difftool -d --extcmd ls branch >output &&
-	stdin_contains sub <output &&
-	stdin_contains file <output
+run_dir_diff_test () {
+	test_expect_success PERL "$1 --no-symlinks" "
+		symlinks=--no-symlinks &&
+		$2
+	"
+	test_expect_success PERL,SYMLINKS "$1 --symlinks" "
+		symlinks=--symlinks &&
+		$2
+	"
+}
+
+run_dir_diff_test 'difftool -d' '
+	git difftool -d $symlinks --extcmd ls branch >output &&
+	grep sub output &&
+	grep file output
 '
 
-test_expect_success PERL 'difftool --dir-diff' '
-	git difftool --dir-diff --extcmd ls branch >output &&
-	stdin_contains sub <output &&
-	stdin_contains file <output
+run_dir_diff_test 'difftool --dir-diff' '
+	git difftool --dir-diff $symlinks --extcmd ls branch >output &&
+	grep sub output &&
+	grep file output
+'
+
+run_dir_diff_test 'difftool --dir-diff ignores --prompt' '
+	git difftool --dir-diff $symlinks --prompt --extcmd ls branch >output &&
+	grep sub output &&
+	grep file output
+'
+
+run_dir_diff_test 'difftool --dir-diff from subdirectory' '
+	(
+		cd sub &&
+		git difftool --dir-diff $symlinks --extcmd ls branch >output &&
+		grep sub output &&
+		grep file output
+	)
 '
 
 write_script .git/CHECK_SYMLINKS <<\EOF
@@ -362,18 +378,33 @@ test_expect_success PERL,SYMLINKS 'difftool --dir-diff --symlink without unstage
 	test_cmp actual expect
 '
 
-test_expect_success PERL 'difftool --dir-diff ignores --prompt' '
-	git difftool --dir-diff --prompt --extcmd ls branch >output &&
-	stdin_contains sub <output &&
-	stdin_contains file <output
+write_script modify-file <<\EOF
+echo "new content" >file
+EOF
+
+test_expect_success PERL 'difftool --no-symlinks does not overwrite working tree file ' '
+	echo "orig content" >file &&
+	git difftool --dir-diff --no-symlinks --extcmd "$(pwd)/modify-file" branch &&
+	echo "new content" >expect &&
+	test_cmp expect file
 '
 
-test_expect_success PERL 'difftool --dir-diff from subdirectory' '
+write_script modify-both-files <<\EOF
+echo "wt content" >file &&
+echo "tmp content" >"$2/file" &&
+echo "$2" >tmpdir
+EOF
+
+test_expect_success PERL 'difftool --no-symlinks detects conflict ' '
 	(
-		cd sub &&
-		git difftool --dir-diff --extcmd ls branch >output &&
-		stdin_contains sub <output &&
-		stdin_contains file <output
+		TMPDIR=$TRASH_DIRECTORY &&
+		export TMPDIR &&
+		echo "orig content" >file &&
+		test_must_fail git difftool --dir-diff --no-symlinks --extcmd "$(pwd)/modify-both-files" branch &&
+		echo "wt content" >expect &&
+		test_cmp expect file &&
+		echo "tmp content" >expect &&
+		test_cmp expect "$(cat tmpdir)/file"
 	)
 '
 
