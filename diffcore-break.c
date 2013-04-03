@@ -68,6 +68,9 @@ static int should_break(struct diff_filespec *src,
 	if (max_size < MINIMUM_BREAK_SIZE)
 		return 0; /* we do not break too small filepair */
 
+	if (!src->size)
+		return 0; /* we do not let empty files get renamed */
+
 	if (diffcore_count_changes(src, dst,
 				   &src->cnt_data, &dst->cnt_data,
 				   0,
