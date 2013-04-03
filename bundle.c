@@ -279,12 +279,12 @@ int create_bundle(struct bundle_header *header, const char *path,
 		if (buf.len > 0 && buf.buf[0] == '-') {
 			write_or_die(bundle_fd, buf.buf, buf.len);
 			if (!get_sha1_hex(buf.buf + 1, sha1)) {
-				struct object *object = parse_object(sha1);
+				struct object *object = parse_object_or_die(sha1, buf.buf);
 				object->flags |= UNINTERESTING;
 				add_pending_object(&revs, object, xstrdup(buf.buf));
 			}
 		} else if (!get_sha1_hex(buf.buf, sha1)) {
-			struct object *object = parse_object(sha1);
+			struct object *object = parse_object_or_die(sha1, buf.buf);
 			object->flags |= SHOWN;
 		}
 	}
@@ -361,7 +361,7 @@ int create_bundle(struct bundle_header *header, const char *path,
 				 * end up triggering "empty bundle"
 				 * error.
 				 */
-				obj = parse_object(sha1);
+				obj = parse_object_or_die(sha1, e->name);
 				obj->flags |= SHOWN;
 				add_pending_object(&revs, obj, e->name);
 			}
