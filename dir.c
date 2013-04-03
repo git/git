@@ -59,6 +59,35 @@ inline int git_fnmatch(const char *pattern, const char *string,
 	return fnmatch(pattern, string, fnm_flags);
 }
 
+static int fnmatch_icase_mem(const char *pattern, int patternlen,
+			     const char *string, int stringlen,
+			     int flags)
+{
+	int match_status;
+	struct strbuf pat_buf = STRBUF_INIT;
+	struct strbuf str_buf = STRBUF_INIT;
+	const char *use_pat = pattern;
+	const char *use_str = string;
+
+	if (pattern[patternlen]) {
+		strbuf_add(&pat_buf, pattern, patternlen);
+		use_pat = pat_buf.buf;
+	}
+	if (string[stringlen]) {
+		strbuf_add(&str_buf, string, stringlen);
+		use_str = str_buf.buf;
+	}
+
+	if (ignore_case)
+		flags |= WM_CASEFOLD;
+	match_status = wildmatch(use_pat, use_str, flags, NULL);
+
+	strbuf_release(&pat_buf);
+	strbuf_release(&str_buf);
+
+	return match_status;
+}
+
 static size_t common_prefix_len(const char **pathspec)
 {
 	const char *n, *first;
@@ -626,15 +655,20 @@ int match_basename(const char *basename, int basenamelen,
 		   int flags)
 {
 	if (prefix == patternlen) {
-		if (!strcmp_icase(pattern, basename))
+		if (patternlen == basenamelen &&
+		    !strncmp_icase(pattern, basename, basenamelen))
 			return 1;
 	} else if (flags & EXC_FLAG_ENDSWITH) {
+		/* "*literal" matching against "fooliteral" */
 		if (patternlen - 1 <= basenamelen &&
-		    !strcmp_icase(pattern + 1,
-				  basename + basenamelen - patternlen + 1))
+		    !strncmp_icase(pattern + 1,
+				   basename + basenamelen - (patternlen - 1),
+				   patternlen - 1))
 			return 1;
 	} else {
-		if (fnmatch_icase(pattern, basename, 0) == 0)
+		if (fnmatch_icase_mem(pattern, patternlen,
+				      basename, basenamelen,
+				      0) == 0)
 			return 1;
 	}
 	return 0;
@@ -654,6 +688,7 @@ int match_pathname(const char *pathname, int pathlen,
 	 */
 	if (*pattern == '/') {
 		pattern++;
+		patternlen--;
 		prefix--;
 	}
 
@@ -680,13 +715,22 @@ int match_pathname(const char *pathname, int pathlen,
 		if (strncmp_icase(pattern, name, prefix))
 			return 0;
 		pattern += prefix;
+		patternlen -= prefix;
 		name    += prefix;
 		namelen -= prefix;
+
+		/*
+		 * If the whole pattern did not have a wildcard,
+		 * then our prefix match is all we need; we
+		 * do not need to call fnmatch at all.
+		 */
+		if (!patternlen && !namelen)
+			return 1;
 	}
 
-	return wildmatch(pattern, name,
-			 WM_PATHNAME | (ignore_case ? WM_CASEFOLD : 0),
-			 NULL) == 0;
+	return fnmatch_icase_mem(pattern, patternlen,
+				 name, namelen,
+				 WM_PATHNAME) == 0;
 }
 
 /*
