@@ -39,4 +39,26 @@ test_expect_success 'checking out paths out of a tree does not clobber unrelated
 	test_cmp expect.next2 dir/next2
 '
 
+test_expect_success 'do not touch unmerged entries matching $path but not in $tree' '
+	git checkout next &&
+	git reset --hard &&
+
+	cat dir/common >expect.common &&
+	EMPTY_SHA1=$(git hash-object -w --stdin </dev/null) &&
+	git rm dir/next0 &&
+	cat >expect.next0 <<-EOF &&
+	100644 $EMPTY_SHA1 1	dir/next0
+	100644 $EMPTY_SHA1 2	dir/next0
+	EOF
+	git update-index --index-info <expect.next0 &&
+
+	git checkout master dir &&
+
+	test_cmp expect.common dir/common &&
+	test_path_is_file dir/master &&
+	git diff --exit-code master dir/master &&
+	git ls-files -s dir/next0 >actual.next0 &&
+	test_cmp expect.next0 actual.next0
+'
+
 test_done

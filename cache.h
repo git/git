@@ -162,6 +162,9 @@ struct cache_entry {
 #define CE_UNPACKED          (1 << 24)
 #define CE_NEW_SKIP_WORKTREE (1 << 25)
 
+/* used to temporarily mark paths matched by pathspecs */
+#define CE_MATCHED           (1 << 26)
+
 /*
  * Extended on-disk flags
  */

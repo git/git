@@ -271,24 +271,55 @@ static int checkout_paths(const struct checkout_opts *opts,
 		;
 	ps_matched = xcalloc(1, pos);
 
+	/*
+	 * Make sure all pathspecs participated in locating the paths
+	 * to be checked out.
+	 */
 	for (pos = 0; pos < active_nr; pos++) {
 		struct cache_entry *ce = active_cache[pos];
+		ce->ce_flags &= ~CE_MATCHED;
 		if (opts->source_tree && !(ce->ce_flags & CE_UPDATE))
+			/*
+			 * "git checkout tree-ish -- path", but this entry
+			 * is in the original index; it will not be checked
+			 * out to the working tree and it does not matter
+			 * if pathspec matched this entry.  We will not do
+			 * anything to this entry at all.
+			 */
 			continue;
-		match_pathspec(opts->pathspec, ce->name, ce_namelen(ce), 0, ps_matched);
+		/*
+		 * Either this entry came from the tree-ish we are
+		 * checking the paths out of, or we are checking out
+		 * of the index.
+		 *
+		 * If it comes from the tree-ish, we already know it
+		 * matches the pathspec and could just stamp
+		 * CE_MATCHED to it from update_some(). But we still
+		 * need ps_matched and read_tree_recursive (and
+		 * eventually tree_entry_interesting) cannot fill
+		 * ps_matched yet. Once it can, we can avoid calling
+		 * match_pathspec() for _all_ entries when
+		 * opts->source_tree != NULL.
+		 */
+		if (match_pathspec(opts->pathspec, ce->name, ce_namelen(ce),
+				   0, ps_matched))
+			ce->ce_flags |= CE_MATCHED;
 	}
 
-	if (report_path_error(ps_matched, opts->pathspec, opts->prefix))
+	if (report_path_error(ps_matched, opts->pathspec, opts->prefix)) {
+		free(ps_matched);
 		return 1;
+	}
+	free(ps_matched);
 
 	/* "checkout -m path" to recreate conflicted state */
 	if (opts->merge)
-		unmerge_cache(opts->pathspec);
+		unmerge_marked_index(&the_index);
 
 	/* Any unmerged paths? */
 	for (pos = 0; pos < active_nr; pos++) {
 		struct cache_entry *ce = active_cache[pos];
-		if (match_pathspec(opts->pathspec, ce->name, ce_namelen(ce), 0, NULL)) {
+		if (ce->ce_flags & CE_MATCHED) {
 			if (!ce_stage(ce))
 				continue;
 			if (opts->force) {
@@ -313,9 +344,7 @@ static int checkout_paths(const struct checkout_opts *opts,
 	state.refresh_cache = 1;
 	for (pos = 0; pos < active_nr; pos++) {
 		struct cache_entry *ce = active_cache[pos];
-		if (opts->source_tree && !(ce->ce_flags & CE_UPDATE))
-			continue;
-		if (match_pathspec(opts->pathspec, ce->name, ce_namelen(ce), 0, NULL)) {
+		if (ce->ce_flags & CE_MATCHED) {
 			if (!ce_stage(ce)) {
 				errs |= checkout_entry(ce, &state, NULL);
 				continue;

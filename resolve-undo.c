@@ -118,7 +118,7 @@ int unmerge_index_entry_at(struct index_state *istate, int pos)
 	struct cache_entry *ce;
 	struct string_list_item *item;
 	struct resolve_undo_info *ru;
-	int i, err = 0;
+	int i, err = 0, matched;
 
 	if (!istate->resolve_undo)
 		return pos;
@@ -137,6 +137,7 @@ int unmerge_index_entry_at(struct index_state *istate, int pos)
 	ru = item->util;
 	if (!ru)
 		return pos;
+	matched = ce->ce_flags & CE_MATCHED;
 	remove_index_entry_at(istate, pos);
 	for (i = 0; i < 3; i++) {
 		struct cache_entry *nce;
@@ -144,6 +145,8 @@ int unmerge_index_entry_at(struct index_state *istate, int pos)
 			continue;
 		nce = make_cache_entry(ru->mode[i], ru->sha1[i],
 				       ce->name, i + 1, 0);
+		if (matched)
+			nce->ce_flags |= CE_MATCHED;
 		if (add_index_entry(istate, nce, ADD_CACHE_OK_TO_ADD)) {
 			err = 1;
 			error("cannot unmerge '%s'", ce->name);
@@ -154,6 +157,20 @@ int unmerge_index_entry_at(struct index_state *istate, int pos)
 	free(ru);
 	item->util = NULL;
 	return unmerge_index_entry_at(istate, pos);
+}
+
+void unmerge_marked_index(struct index_state *istate)
+{
+	int i;
+
+	if (!istate->resolve_undo)
+		return;
+
+	for (i = 0; i < istate->cache_nr; i++) {
+		struct cache_entry *ce = istate->cache[i];
+		if (ce->ce_flags & CE_MATCHED)
+			i = unmerge_index_entry_at(istate, i);
+	}
 }
 
 void unmerge_index(struct index_state *istate, const char **pathspec)
