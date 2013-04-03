@@ -126,6 +126,12 @@ This option is only applicable when listing tags without annotation lines.
 	linkgit:git-check-ref-format[1].  Some of these checks
 	may restrict the characters allowed in a tag name.
 
+<commit>::
+<object>::
+	The object that the new tag will refer to, usually a commit.
+	Defaults to HEAD.
+
+
 CONFIGURATION
 -------------
 By default, 'git tag' in sign-with-default mode (-s) will use your
