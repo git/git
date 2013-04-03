@@ -83,20 +83,20 @@ static const char *git_dir;
 static char *git_object_dir, *git_index_file, *git_graft_file;
 
 /*
- * Repository-local GIT_* environment variables
- * Remember to update local_repo_env_size in cache.h when
- * the size of the list changes
+ * Repository-local GIT_* environment variables; see cache.h for details.
  */
-const char * const local_repo_env[LOCAL_REPO_ENV_SIZE + 1] = {
+const char * const local_repo_env[] = {
 	ALTERNATE_DB_ENVIRONMENT,
 	CONFIG_ENVIRONMENT,
 	CONFIG_DATA_ENVIRONMENT,
 	DB_ENVIRONMENT,
 	GIT_DIR_ENVIRONMENT,
 	GIT_WORK_TREE_ENVIRONMENT,
+	GIT_IMPLICIT_WORK_TREE_ENVIRONMENT,
 	GRAFT_ENVIRONMENT,
 	INDEX_ENVIRONMENT,
 	NO_REPLACE_OBJECTS_ENVIRONMENT,
+	GIT_PREFIX_ENVIRONMENT,
 	NULL
 };
 
