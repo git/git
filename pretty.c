@@ -345,7 +345,7 @@ static int needs_rfc2047_encoding(const char *line, int len,
 	return 0;
 }
 
-static void add_rfc2047(struct strbuf *sb, const char *line, int len,
+static void add_rfc2047(struct strbuf *sb, const char *line, size_t len,
 		       const char *encoding, enum rfc2047_type type)
 {
 	static const int max_encoded_length = 76; /* per rfc2047 */
@@ -355,9 +355,22 @@ static void add_rfc2047(struct strbuf *sb, const char *line, int len,
 	strbuf_grow(sb, len * 3 + strlen(encoding) + 100);
 	strbuf_addf(sb, "=?%s?q?", encoding);
 	line_len += strlen(encoding) + 5; /* 5 for =??q? */
-	for (i = 0; i < len; i++) {
-		unsigned ch = line[i] & 0xFF;
-		int is_special = is_rfc2047_special(ch, type);
+
+	while (len) {
+		/*
+		 * RFC 2047, section 5 (3):
+		 *
+		 * Each 'encoded-word' MUST represent an integral number of
+		 * characters.  A multi-octet character may not be split across
+		 * adjacent 'encoded- word's.
+		 */
+		const unsigned char *p = (const unsigned char *)line;
+		int chrlen = mbs_chrlen(&line, &len, encoding);
+		int is_special = (chrlen > 1) || is_rfc2047_special(*p, type);
+
+		/* "=%02X" * chrlen, or the byte itself */
+		const char *encoded_fmt = is_special ? "=%02X"    : "%c";
+		int	    encoded_len = is_special ? 3 * chrlen : 1;
 
 		/*
 		 * According to RFC 2047, we could encode the special character
@@ -367,18 +380,15 @@ static void add_rfc2047(struct strbuf *sb, const char *line, int len,
 		 * causes ' ' to be encoded as '=20', avoiding this problem.
 		 */
 
-		if (line_len + 2 + (is_special ? 3 : 1) > max_encoded_length) {
+		if (line_len + encoded_len + 2 > max_encoded_length) {
+			/* It won't fit with trailing "?=" --- break the line */
 			strbuf_addf(sb, "?=\n =?%s?q?", encoding);
 			line_len = strlen(encoding) + 5 + 1; /* =??q? plus SP */
 		}
 
-		if (is_special) {
-			strbuf_addf(sb, "=%02X", ch);
-			line_len += 3;
-		} else {
-			strbuf_addch(sb, ch);
-			line_len++;
-		}
+		for (i = 0; i < chrlen; i++)
+			strbuf_addf(sb, encoded_fmt, p[i]);
+		line_len += encoded_len;
 	}
 	strbuf_addstr(sb, "?=");
 }
