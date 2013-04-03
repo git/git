@@ -177,12 +177,20 @@ test_expect_success 'verbose respects diff config' '
 	git config --unset color.diff
 '
 
+mesg_with_comment_and_newlines='
+# text
+
+'
+
+test_expect_success 'prepare file with comment line and trailing newlines'  '
+	printf "%s" "$mesg_with_comment_and_newlines" >expect
+'
+
 test_expect_success 'cleanup commit messages (verbatim option,-t)' '
 
 	echo >>negative &&
-	{ echo;echo "# text";echo; } >expect &&
-	git commit --cleanup=verbatim -t expect -a &&
-	git cat-file -p HEAD |sed -e "1,/^\$/d" |head -n 3 >actual &&
+	git commit --cleanup=verbatim --no-status -t expect -a &&
+	git cat-file -p HEAD |sed -e "1,/^\$/d" >actual &&
 	test_cmp expect actual
 
 '
@@ -199,7 +207,7 @@ test_expect_success 'cleanup commit messages (verbatim option,-F)' '
 test_expect_success 'cleanup commit messages (verbatim option,-m)' '
 
 	echo >>negative &&
-	git commit --cleanup=verbatim -m "$(cat expect)" -a &&
+	git commit --cleanup=verbatim -m "$mesg_with_comment_and_newlines" -a &&
 	git cat-file -p HEAD |sed -e "1,/^\$/d">actual &&
 	test_cmp expect actual
 
