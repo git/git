@@ -91,6 +91,10 @@ q_to_tab () {
 	tr Q '\011'
 }
 
+qz_to_tab_space () {
+	tr QZ '\011\040'
+}
+
 append_cr () {
 	sed -e 's/$/Q/' | tr Q '\015'
 }
