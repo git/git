@@ -594,7 +594,7 @@ struct object *peel_to_type(const char *name, int namelen,
 	while (1) {
 		if (!o || (!o->parsed && !parse_object(o->sha1)))
 			return NULL;
-		if (o->type == expected_type)
+		if (expected_type == OBJ_ANY || o->type == expected_type)
 			return o;
 		if (o->type == OBJ_TAG)
 			o = ((struct tag*) o)->tagged;
@@ -645,6 +645,8 @@ static int peel_onion(const char *name, int len, unsigned char *sha1)
 		expected_type = OBJ_TREE;
 	else if (!strncmp(blob_type, sp, 4) && sp[4] == '}')
 		expected_type = OBJ_BLOB;
+	else if (!prefixcmp(sp, "object}"))
+		expected_type = OBJ_ANY;
 	else if (sp[0] == '}')
 		expected_type = OBJ_NONE;
 	else if (sp[0] == '/')
@@ -654,6 +656,8 @@ static int peel_onion(const char *name, int len, unsigned char *sha1)
 
 	if (expected_type == OBJ_COMMIT)
 		lookup_flags = GET_SHA1_COMMITTISH;
+	else if (expected_type == OBJ_TREE)
+		lookup_flags = GET_SHA1_TREEISH;
 
 	if (get_sha1_1(name, sp - name - 2, outer, lookup_flags))
 		return -1;

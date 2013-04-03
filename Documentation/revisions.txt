@@ -116,6 +116,11 @@ some output processing may assume ref names in UTF-8.
   object of that type is found or the object cannot be
   dereferenced anymore (in which case, barf).  '<rev>{caret}0'
   is a short-hand for '<rev>{caret}\{commit\}'.
++
+'rev{caret}\{object\}' can be used to make sure 'rev' names an
+object that exists, without requiring 'rev' to be a tag, and
+without dereferencing 'rev'; because a tag is already an object,
+it does not have to be dereferenced even once to get to an object.
 
 '<rev>{caret}\{\}', e.g. 'v0.99.8{caret}\{\}'::
   A suffix '{caret}' followed by an empty brace pair
