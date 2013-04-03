@@ -1271,6 +1271,10 @@ int check_sha1_signature(const unsigned char *sha1, void *map,
 		char buf[1024 * 16];
 		ssize_t readlen = read_istream(st, buf, sizeof(buf));
 
+		if (readlen < 0) {
+			close_istream(st);
+			return -1;
+		}
 		if (!readlen)
 			break;
 		git_SHA1_Update(&c, buf, readlen);

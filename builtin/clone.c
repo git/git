@@ -23,6 +23,7 @@
 #include "branch.h"
 #include "remote.h"
 #include "run-command.h"
+#include "connected.h"
 
 /*
  * Overall FIXMEs:
@@ -376,10 +377,32 @@ static void clone_local(const char *src_repo, const char *dest_repo)
 static const char *junk_work_tree;
 static const char *junk_git_dir;
 static pid_t junk_pid;
+enum {
+	JUNK_LEAVE_NONE,
+	JUNK_LEAVE_REPO,
+	JUNK_LEAVE_ALL
+} junk_mode = JUNK_LEAVE_NONE;
+
+static const char junk_leave_repo_msg[] =
+N_("Clone succeeded, but checkout failed.\n"
+   "You can inspect what was checked out with 'git status'\n"
+   "and retry the checkout with 'git checkout -f HEAD'\n");
 
 static void remove_junk(void)
 {
 	struct strbuf sb = STRBUF_INIT;
+
+	switch (junk_mode) {
+	case JUNK_LEAVE_REPO:
+		warning("%s", _(junk_leave_repo_msg));
+		/* fall-through */
+	case JUNK_LEAVE_ALL:
+		return;
+	default:
+		/* proceed to removal */
+		break;
+	}
+
 	if (getpid() != junk_pid)
 		return;
 	if (junk_git_dir) {
@@ -485,12 +508,37 @@ static void write_followtags(const struct ref *refs, const char *msg)
 	}
 }
 
+static int iterate_ref_map(void *cb_data, unsigned char sha1[20])
+{
+	struct ref **rm = cb_data;
+	struct ref *ref = *rm;
+
+	/*
+	 * Skip anything missing a peer_ref, which we are not
+	 * actually going to write a ref for.
+	 */
+	while (ref && !ref->peer_ref)
+		ref = ref->next;
+	/* Returning -1 notes "end of list" to the caller. */
+	if (!ref)
+		return -1;
+
+	hashcpy(sha1, ref->old_sha1);
+	*rm = ref->next;
+	return 0;
+}
+
 static void update_remote_refs(const struct ref *refs,
 			       const struct ref *mapped_refs,
 			       const struct ref *remote_head_points_at,
 			       const char *branch_top,
 			       const char *msg)
 {
+	const struct ref *rm = mapped_refs;
+
+	if (check_everything_connected(iterate_ref_map, 0, &rm))
+		die(_("remote did not send all necessary objects"));
+
 	if (refs) {
 		write_remote_refs(mapped_refs);
 		if (option_single_branch)
@@ -579,7 +627,8 @@ static int checkout(void)
 	tree = parse_tree_indirect(sha1);
 	parse_tree(tree);
 	init_tree_desc(&t, tree->buffer, tree->size);
-	unpack_trees(1, &t, &opts);
+	if (unpack_trees(1, &t, &opts) < 0)
+		die(_("unable to checkout working tree"));
 
 	if (write_cache(fd, active_cache, active_nr) ||
 	    commit_locked_index(lock_file))
@@ -898,12 +947,13 @@ int cmd_clone(int argc, const char **argv, const char *prefix)
 	transport_unlock_pack(transport);
 	transport_disconnect(transport);
 
+	junk_mode = JUNK_LEAVE_REPO;
 	err = checkout();
 
 	strbuf_release(&reflog_msg);
 	strbuf_release(&branch_top);
 	strbuf_release(&key);
 	strbuf_release(&value);
-	junk_pid = 0;
+	junk_mode = JUNK_LEAVE_ALL;
 	return err;
 }
