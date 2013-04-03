@@ -234,7 +234,7 @@ static void parse_pathspec_arg(const char **pathspec,
 	ar_args->pathspec = pathspec = get_pathspec("", pathspec);
 	if (pathspec) {
 		while (*pathspec) {
-			if (!path_exists(ar_args->tree, *pathspec))
+			if (**pathspec && !path_exists(ar_args->tree, *pathspec))
 				die("path not found: %s", *pathspec);
 			pathspec++;
 		}
