@@ -282,6 +282,8 @@ __git_ps1 ()
 				r="|MERGING"
 			elif [ -f "$g/CHERRY_PICK_HEAD" ]; then
 				r="|CHERRY-PICKING"
+			elif [ -f "$g/REVERT_HEAD" ]; then
+				r="|REVERTING"
 			elif [ -f "$g/BISECT_LOG" ]; then
 				r="|BISECTING"
 			fi
