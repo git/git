@@ -647,4 +647,16 @@ test_expect_success SYMLINKS 'rm of d/f when d has become a dangling symlink' '
 	test_path_is_missing d
 '
 
+test_expect_success 'rm of file when it has become a directory' '
+	rm -rf d &&
+	>d &&
+	git add d &&
+	rm -f d &&
+	mkdir d &&
+	>d/f &&
+	test_must_fail git rm d &&
+	git rev-parse --verify :d &&
+	test_path_is_file d/f
+'
+
 test_done
