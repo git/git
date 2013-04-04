@@ -622,4 +622,29 @@ test_expect_success 'rm of a populated nested submodule with a nested .git direc
 	rm -rf submod
 '
 
+test_expect_success 'rm of d/f when d has become a non-directory' '
+	rm -rf d &&
+	mkdir d &&
+	>d/f &&
+	git add d &&
+	rm -rf d &&
+	>d &&
+	git rm d/f &&
+	test_must_fail git rev-parse --verify :d/f &&
+	test_path_is_file d
+'
+
+test_expect_success SYMLINKS 'rm of d/f when d has become a dangling symlink' '
+	rm -rf d &&
+	mkdir d &&
+	>d/f &&
+	git add d &&
+	rm -rf d &&
+	ln -s nonexistent d &&
+	git rm d/f &&
+	test_must_fail git rev-parse --verify :d/f &&
+	test -h d &&
+	test_path_is_missing d
+'
+
 test_done
