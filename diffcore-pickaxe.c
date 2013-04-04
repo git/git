@@ -75,11 +75,10 @@ static void diffgrep_consume(void *priv, char *line, unsigned long len)
 }
 
 static void fill_one(struct diff_filespec *one,
-		     mmfile_t *mf, struct userdiff_driver **textconv)
+		     mmfile_t *mf, struct userdiff_driver *textconv)
 {
 	if (DIFF_FILE_VALID(one)) {
-		*textconv = get_textconv(one);
-		mf->size = fill_textconv(*textconv, one, &mf->ptr);
+		mf->size = fill_textconv(textconv, one, &mf->ptr);
 	} else {
 		memset(mf, 0, sizeof(*mf));
 	}
@@ -97,8 +96,11 @@ static int diff_grep(struct diff_filepair *p, struct diff_options *o,
 	if (diff_unmodified_pair(p))
 		return 0;
 
-	fill_one(p->one, &mf1, &textconv_one);
-	fill_one(p->two, &mf2, &textconv_two);
+	textconv_one = get_textconv(p->one);
+	textconv_two = get_textconv(p->two);
+
+	fill_one(p->one, &mf1, textconv_one);
+	fill_one(p->two, &mf2, textconv_two);
 
 	if (!mf1.ptr) {
 		if (!mf2.ptr)
@@ -201,13 +203,16 @@ static unsigned int contains(mmfile_t *mf, struct diff_options *o,
 static int has_changes(struct diff_filepair *p, struct diff_options *o,
 		       regex_t *regexp, kwset_t kws)
 {
-	struct userdiff_driver *textconv_one = get_textconv(p->one);
-	struct userdiff_driver *textconv_two = get_textconv(p->two);
+	struct userdiff_driver *textconv_one = NULL;
+	struct userdiff_driver *textconv_two = NULL;
 	mmfile_t mf1, mf2;
 	int ret;
 
 	if (!o->pickaxe[0])
 		return 0;
+
+	textconv_one = get_textconv(p->one);
+	textconv_two = get_textconv(p->two);
 
 	/*
 	 * If we have an unmodified pair, we know that the count will be the
@@ -219,8 +224,8 @@ static int has_changes(struct diff_filepair *p, struct diff_options *o,
 	if (textconv_one == textconv_two && diff_unmodified_pair(p))
 		return 0;
 
-	fill_one(p->one, &mf1, &textconv_one);
-	fill_one(p->two, &mf2, &textconv_two);
+	fill_one(p->one, &mf1, textconv_one);
+	fill_one(p->two, &mf2, textconv_two);
 
 	if (!mf1.ptr) {
 		if (!mf2.ptr)
