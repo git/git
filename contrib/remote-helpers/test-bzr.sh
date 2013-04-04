@@ -136,7 +136,7 @@ test_expect_success 'special modes' '
   (cd gitrepo &&
   git cat-file -p HEAD:link > ../actual) &&
 
-  echo -n content > expected &&
+  printf content > expected &&
   test_cmp expected actual
 '
 
