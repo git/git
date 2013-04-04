@@ -54,8 +54,11 @@ test_expect_success setup '
 	test_commit second fi/le second &&
 	git checkout side &&
 	test_commit third fi/le third &&
+	git branch add-add &&
 	git checkout another &&
 	test_commit fourth fi/le fourth &&
+	git checkout add-add &&
+	test_commit fifth add-differently &&
 	git checkout master
 '
 
@@ -177,6 +180,16 @@ test_expect_success 'rerere forget (binary)' '
 	git commit -a -m binary &&
 	test_must_fail git merge second &&
 	git rerere forget binary
+'
+
+test_expect_success 'rerere forget (add-add conflict)' '
+	git checkout -f master &&
+	echo master >add-differently &&
+	git add add-differently &&
+	git commit -m "add differently" &&
+	test_must_fail git merge fifth &&
+	git rerere forget add-differently 2>actual &&
+	test_i18ngrep "no remembered" actual
 '
 
 test_done
