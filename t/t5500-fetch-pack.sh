@@ -364,6 +364,15 @@ EOF
 	test_cmp count7.expected count7.actual
 '
 
+test_expect_success 'clone shallow with packed refs' '
+	git pack-refs --all &&
+	git clone --depth 1 --branch A "file://$(pwd)/." shallow8 &&
+	echo "in-pack: 4" > count8.expected &&
+	GIT_DIR=shallow8/.git git count-objects -v |
+		grep "^in-pack" > count8.actual &&
+	test_cmp count8.expected count8.actual
+'
+
 test_expect_success 'setup tests for the --stdin parameter' '
 	for head in C D E F
 	do
