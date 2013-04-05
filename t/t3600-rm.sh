@@ -659,4 +659,32 @@ test_expect_success 'rm of file when it has become a directory' '
 	test_path_is_file d/f
 '
 
+test_expect_success SYMLINKS 'rm across a symlinked leading path (no index)' '
+	rm -rf d e &&
+	mkdir e &&
+	echo content >e/f &&
+	ln -s e d &&
+	git add -A e d &&
+	git commit -m "symlink d to e, e/f exists" &&
+	test_must_fail git rm d/f &&
+	git rev-parse --verify :d &&
+	git rev-parse --verify :e/f &&
+	test -h d &&
+	test_path_is_file e/f
+'
+
+test_expect_failure SYMLINKS 'rm across a symlinked leading path (w/ index)' '
+	rm -rf d e &&
+	mkdir d &&
+	echo content >d/f &&
+	git add -A e d &&
+	git commit -m "d/f exists" &&
+	mv d e &&
+	ln -s e d &&
+	test_must_fail git rm d/f &&
+	git rev-parse --verify :d/f &&
+	test -h d &&
+	test_path_is_file e/f
+'
+
 test_done
