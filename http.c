@@ -857,7 +857,8 @@ static int http_request(const char *url, struct strbuf *type,
 		run_active_slot(slot);
 		ret = handle_curl_result(&results);
 	} else {
-		error("Unable to start HTTP request for %s", url);
+		snprintf(curl_errorstr, sizeof(curl_errorstr),
+			 "failed to start HTTP request");
 		ret = HTTP_START_FAILED;
 	}
 
@@ -940,13 +941,9 @@ cleanup:
 	return ret;
 }
 
-int http_error(const char *url, int ret)
+void http_error(const char *url)
 {
-	/* http_request has already handled HTTP_START_FAILED. */
-	if (ret != HTTP_START_FAILED)
-		error("%s while accessing %s", curl_errorstr, url);
-
-	return ret;
+	error("%s while accessing %s", curl_errorstr, url);
 }
 
 int http_fetch_ref(const char *base, struct ref *ref)
