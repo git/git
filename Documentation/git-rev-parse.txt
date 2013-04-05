@@ -60,8 +60,19 @@ OPTIONS
 	instead.
 
 --verify::
-	The parameter given must be usable as a single, valid
-	object name.  Otherwise barf and abort.
+	Verify that exactly one parameter is provided, and that it
+	can be turned into a raw 20-byte SHA-1 that can be used to
+	access the object database. If so, emit it to the standard
+	output; otherwise, error out.
++
+If you want to make sure that the output actually names an object in
+your object database and/or can be used as a specific type of object
+you require, you can add "^{type}" peeling operator to the parmeter.
+For example, `git rev-parse "$VAR^{commit}"` will make sure `$VAR`
+names an existing object that is a commit-ish (i.e. a commit, or an
+annotated tag that points at a commit).  To make sure that `$VAR`
+names an existing object of any type, `git rev-parse "$VAR^{object}"`
+can be used.
 
 -q::
 --quiet::
@@ -308,12 +319,12 @@ $ git rev-parse --verify HEAD
 * Print the commit object name from the revision in the $REV shell variable:
 +
 ------------
-$ git rev-parse --verify $REV
+$ git rev-parse --verify $REV^{commit}
 ------------
 +
 This will error out if $REV is empty or not a valid revision.
 
-* Same as above:
+* Similar to above:
 +
 ------------
 $ git rev-parse --default master --verify $REV
