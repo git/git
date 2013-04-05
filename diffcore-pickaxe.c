@@ -86,8 +86,10 @@ static int diff_grep(struct diff_filepair *p, struct diff_options *o,
 	if (diff_unmodified_pair(p))
 		return 0;
 
-	textconv_one = get_textconv(p->one);
-	textconv_two = get_textconv(p->two);
+	if (DIFF_OPT_TST(o, ALLOW_TEXTCONV)) {
+		textconv_one = get_textconv(p->one);
+		textconv_two = get_textconv(p->two);
+	}
 
 	mf1.size = fill_textconv(textconv_one, p->one, &mf1.ptr);
 	mf2.size = fill_textconv(textconv_two, p->two, &mf2.ptr);
@@ -201,8 +203,10 @@ static int has_changes(struct diff_filepair *p, struct diff_options *o,
 	if (!o->pickaxe[0])
 		return 0;
 
-	textconv_one = get_textconv(p->one);
-	textconv_two = get_textconv(p->two);
+	if (DIFF_OPT_TST(o, ALLOW_TEXTCONV)) {
+		textconv_one = get_textconv(p->one);
+		textconv_two = get_textconv(p->two);
+	}
 
 	/*
 	 * If we have an unmodified pair, we know that the count will be the
