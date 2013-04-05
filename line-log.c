@@ -56,14 +56,19 @@ static void range_set_move(struct range_set *dst, struct range_set *src)
 }
 
 /* tack on a _new_ range _at the end_ */
-static void range_set_append(struct range_set *rs, long a, long b)
+static void range_set_append_unsafe(struct range_set *rs, long a, long b)
 {
 	assert(a <= b);
-	assert(rs->nr == 0 || rs->ranges[rs->nr-1].end <= a);
 	range_set_grow(rs, 1);
 	rs->ranges[rs->nr].start = a;
 	rs->ranges[rs->nr].end = b;
 	rs->nr++;
+}
+
+static void range_set_append(struct range_set *rs, long a, long b)
+{
+	assert(rs->nr == 0 || rs->ranges[rs->nr-1].end <= a);
+	range_set_append_unsafe(rs, a, b);
 }
 
 static int range_cmp(const void *_r, const void *_s)
@@ -99,10 +104,8 @@ static void range_set_check_invariants(struct range_set *rs)
 }
 
 /*
- * Helper: In-place pass of sorting and merging the ranges in the
- * range set, to re-establish the invariants after another operation
- *
- * NEEDSWORK currently not needed
+ * In-place pass of sorting and merging the ranges in the range set,
+ * to establish the invariants when we get the ranges from the user
  */
 static void sort_and_merge_range_set(struct range_set *rs)
 {
@@ -280,7 +283,7 @@ static void line_log_data_insert(struct line_log_data **list,
 	struct line_log_data *p = search_line_log_data(*list, spec->path, &ip);
 
 	if (p) {
-		range_set_append(&p->ranges, begin, end);
+		range_set_append_unsafe(&p->ranges, begin, end);
 		sort_and_merge_range_set(&p->ranges);
 		free_filespec(spec);
 		return;
