@@ -74,16 +74,6 @@ static void diffgrep_consume(void *priv, char *line, unsigned long len)
 	line[len] = hold;
 }
 
-static void fill_one(struct diff_filespec *one,
-		     mmfile_t *mf, struct userdiff_driver *textconv)
-{
-	if (DIFF_FILE_VALID(one)) {
-		mf->size = fill_textconv(textconv, one, &mf->ptr);
-	} else {
-		memset(mf, 0, sizeof(*mf));
-	}
-}
-
 static int diff_grep(struct diff_filepair *p, struct diff_options *o,
 		     regex_t *regexp, kwset_t kws)
 {
@@ -99,15 +89,15 @@ static int diff_grep(struct diff_filepair *p, struct diff_options *o,
 	textconv_one = get_textconv(p->one);
 	textconv_two = get_textconv(p->two);
 
-	fill_one(p->one, &mf1, textconv_one);
-	fill_one(p->two, &mf2, textconv_two);
+	mf1.size = fill_textconv(textconv_one, p->one, &mf1.ptr);
+	mf2.size = fill_textconv(textconv_two, p->two, &mf2.ptr);
 
-	if (!mf1.ptr) {
-		if (!mf2.ptr)
+	if (!DIFF_FILE_VALID(p->one)) {
+		if (!DIFF_FILE_VALID(p->two))
 			return 0; /* ignore unmerged */
 		/* created "two" -- does it have what we are looking for? */
 		hit = !regexec(regexp, mf2.ptr, 1, &regmatch, 0);
-	} else if (!mf2.ptr) {
+	} else if (!DIFF_FILE_VALID(p->two)) {
 		/* removed "one" -- did it have what we are looking for? */
 		hit = !regexec(regexp, mf1.ptr, 1, &regmatch, 0);
 	} else {
@@ -224,16 +214,16 @@ static int has_changes(struct diff_filepair *p, struct diff_options *o,
 	if (textconv_one == textconv_two && diff_unmodified_pair(p))
 		return 0;
 
-	fill_one(p->one, &mf1, textconv_one);
-	fill_one(p->two, &mf2, textconv_two);
+	mf1.size = fill_textconv(textconv_one, p->one, &mf1.ptr);
+	mf2.size = fill_textconv(textconv_two, p->two, &mf2.ptr);
 
-	if (!mf1.ptr) {
-		if (!mf2.ptr)
+	if (!DIFF_FILE_VALID(p->one)) {
+		if (!DIFF_FILE_VALID(p->two))
 			ret = 0; /* ignore unmerged */
 		/* created */
 		ret = contains(&mf2, o, regexp, kws) != 0;
 	}
-	else if (!mf2.ptr) /* removed */
+	else if (!DIFF_FILE_VALID(p->two)) /* removed */
 		ret = contains(&mf1, o, regexp, kws) != 0;
 	else
 		ret = contains(&mf1, o, regexp, kws) !=
