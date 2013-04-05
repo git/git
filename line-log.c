@@ -80,6 +80,25 @@ static int range_cmp(const void *_r, const void *_s)
 }
 
 /*
+ * Check that the ranges are non-empty, sorted and non-overlapping
+ */
+static void range_set_check_invariants(struct range_set *rs)
+{
+	int i;
+
+	if (!rs)
+		return;
+
+	if (rs->nr)
+		assert(rs->ranges[0].start < rs->ranges[0].end);
+
+	for (i = 1; i < rs->nr; i++) {
+		assert(rs->ranges[i-1].end < rs->ranges[i].start);
+		assert(rs->ranges[i].start < rs->ranges[i].end);
+	}
+}
+
+/*
  * Helper: In-place pass of sorting and merging the ranges in the
  * range set, to re-establish the invariants after another operation
  *
@@ -103,6 +122,8 @@ static void sort_and_merge_range_set(struct range_set *rs)
 	}
 	assert(o <= rs->nr);
 	rs->nr = o;
+
+	range_set_check_invariants(rs);
 }
 
 /*
@@ -687,8 +708,13 @@ static struct line_log_data *lookup_line_range(struct rev_info *revs,
 					       struct commit *commit)
 {
 	struct line_log_data *ret = NULL;
+	struct line_log_data *d;
 
 	ret = lookup_decoration(&revs->line_log_data, &commit->object);
+
+	for (d = ret; d; d = d->next)
+		range_set_check_invariants(&d->ranges);
+
 	return ret;
 }
 
