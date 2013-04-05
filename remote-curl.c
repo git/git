@@ -151,6 +151,33 @@ static void free_discovery(struct discovery *d)
 	}
 }
 
+static int show_http_message(struct strbuf *type, struct strbuf *msg)
+{
+	const char *p, *eol;
+
+	/*
+	 * We only show text/plain parts, as other types are likely
+	 * to be ugly to look at on the user's terminal.
+	 *
+	 * TODO should handle "; charset=XXX", and re-encode into
+	 * logoutputencoding
+	 */
+	if (strcasecmp(type->buf, "text/plain"))
+		return -1;
+
+	strbuf_trim(msg);
+	if (!msg->len)
+		return -1;
+
+	p = msg->buf;
+	do {
+		eol = strchrnul(p, '\n');
+		fprintf(stderr, "remote: %.*s\n", (int)(eol - p), p);
+		p = eol + 1;
+	} while(*eol);
+	return 0;
+}
+
 static struct discovery* discover_refs(const char *service, int for_push)
 {
 	struct strbuf exp = STRBUF_INIT;
@@ -176,16 +203,20 @@ static struct discovery* discover_refs(const char *service, int for_push)
 	}
 	refs_url = strbuf_detach(&buffer, NULL);
 
-	http_ret = http_get_strbuf(refs_url, &type, &buffer, HTTP_NO_CACHE);
+	http_ret = http_get_strbuf(refs_url, &type, &buffer,
+				   HTTP_NO_CACHE | HTTP_KEEP_ERROR);
 	switch (http_ret) {
 	case HTTP_OK:
 		break;
 	case HTTP_MISSING_TARGET:
+		show_http_message(&type, &buffer);
 		die("%s not found: did you run git update-server-info on the"
 		    " server?", refs_url);
 	case HTTP_NOAUTH:
+		show_http_message(&type, &buffer);
 		die("Authentication failed");
 	default:
+		show_http_message(&type, &buffer);
 		http_error(refs_url, http_ret);
 		die("HTTP request failed");
 	}
