@@ -100,9 +100,22 @@ to point at the new commit.
 
 [[def_detached_HEAD]]detached HEAD::
 	Normally the <<def_HEAD,HEAD>> stores the name of a
-	<<def_branch,branch>>.  However, git also allows you to <<def_checkout,check out>>
-	an arbitrary <<def_commit,commit>> that isn't necessarily the tip of any
-	particular branch.  In this case HEAD is said to be "detached".
+	<<def_branch,branch>>, and commands that operate on the
+	history HEAD represents operate on the history leading to the
+	tip of the branch the HEAD points at.  However, Git also
+	allows you to <<def_checkout,check out>> an arbitrary
+	<<def_commit,commit>> that isn't necessarily the tip of any
+	particular branch.  The HEAD in such a state is called
+	"detached".
++
+Note that commands that operate on the history of the current branch
+(e.g. `git commit` to build a new history on top of it) still work
+while the HEAD is detached. They update the HEAD to point at the tip
+of the updated history without affecting any branch.  Commands that
+update or inquire information _about_ the current branch (e.g. `git
+branch --set-upstream-to` that sets what remote tracking branch the
+current branch integrates with) obviously do not work, as there is no
+(real) current branch to ask about in this state.
 
 [[def_dircache]]dircache::
 	You are *waaaaay* behind. See <<def_index,index>>.
