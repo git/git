@@ -118,6 +118,7 @@ extern char *get_remote_object_url(const char *url, const char *hex,
 
 /* Options for http_request_*() */
 #define HTTP_NO_CACHE		1
+#define HTTP_KEEP_ERROR		2
 
 /* Return values for http_request_*() */
 #define HTTP_OK			0

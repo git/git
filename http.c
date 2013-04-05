@@ -761,6 +761,25 @@ char *get_remote_object_url(const char *url, const char *hex,
 
 int handle_curl_result(struct slot_results *results)
 {
+	/*
+	 * If we see a failing http code with CURLE_OK, we have turned off
+	 * FAILONERROR (to keep the server's custom error response), and should
+	 * translate the code into failure here.
+	 */
+	if (results->curl_result == CURLE_OK &&
+	    results->http_code >= 400) {
+		results->curl_result = CURLE_HTTP_RETURNED_ERROR;
+		/*
+		 * Normally curl will already have put the "reason phrase"
+		 * from the server into curl_errorstr; unfortunately without
+		 * FAILONERROR it is lost, so we can give only the numeric
+		 * status code.
+		 */
+		snprintf(curl_errorstr, sizeof(curl_errorstr),
+			 "The requested URL returned error: %ld",
+			 results->http_code);
+	}
+
 	if (results->curl_result == CURLE_OK) {
 		credential_approve(&http_auth);
 		return HTTP_OK;
@@ -825,6 +844,8 @@ static int http_request(const char *url, struct strbuf *type,
 	strbuf_addstr(&buf, "Pragma:");
 	if (options & HTTP_NO_CACHE)
 		strbuf_addstr(&buf, " no-cache");
+	if (options & HTTP_KEEP_ERROR)
+		curl_easy_setopt(slot->curl, CURLOPT_FAILONERROR, 0);
 
 	headers = curl_slist_append(headers, buf.buf);
 
@@ -862,6 +883,22 @@ static int http_request_reauth(const char *url,
 	int ret = http_request(url, type, result, target, options);
 	if (ret != HTTP_REAUTH)
 		return ret;
+
+	/*
+	 * If we are using KEEP_ERROR, the previous request may have
+	 * put cruft into our output stream; we should clear it out before
+	 * making our next request. We only know how to do this for
+	 * the strbuf case, but that is enough to satisfy current callers.
+	 */
+	if (options & HTTP_KEEP_ERROR) {
+		switch (target) {
+		case HTTP_REQUEST_STRBUF:
+			strbuf_reset(result);
+			break;
+		default:
+			die("BUG: HTTP_KEEP_ERROR is only supported with strbufs");
+		}
+	}
 	return http_request(url, type, result, target, options);
 }
 
