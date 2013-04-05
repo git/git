@@ -84,6 +84,11 @@ option can be used to override --squash.
 	Pass merge strategy specific option through to the merge
 	strategy.
 
+--verify-signatures::
+--no-verify-signatures::
+	Verify that the commits being merged have good and trusted GPG signatures
+	and abort the merge in case they do not.
+
 --summary::
 --no-summary::
 	Synonyms to --stat and --no-stat; these are deprecated and will be
