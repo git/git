@@ -99,9 +99,10 @@ static int diff_grep(struct diff_filepair *p, struct diff_options *o,
 
 	if (!DIFF_FILE_VALID(p->one)) {
 		if (!DIFF_FILE_VALID(p->two))
-			return 0; /* ignore unmerged */
-		/* created "two" -- does it have what we are looking for? */
-		hit = !regexec(regexp, mf2.ptr, 1, &regmatch, 0);
+			hit = 0; /* ignore unmerged */
+		else
+			/* created "two" -- does it have what we are looking for? */
+			hit = !regexec(regexp, mf2.ptr, 1, &regmatch, 0);
 	} else if (!DIFF_FILE_VALID(p->two)) {
 		/* removed "one" -- did it have what we are looking for? */
 		hit = !regexec(regexp, mf1.ptr, 1, &regmatch, 0);
@@ -229,8 +230,9 @@ static int has_changes(struct diff_filepair *p, struct diff_options *o,
 	if (!DIFF_FILE_VALID(p->one)) {
 		if (!DIFF_FILE_VALID(p->two))
 			ret = 0; /* ignore unmerged */
-		/* created */
-		ret = contains(&mf2, o, regexp, kws) != 0;
+		else
+			/* created */
+			ret = contains(&mf2, o, regexp, kws) != 0;
 	}
 	else if (!DIFF_FILE_VALID(p->two)) /* removed */
 		ret = contains(&mf1, o, regexp, kws) != 0;
