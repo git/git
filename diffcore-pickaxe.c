@@ -83,13 +83,16 @@ static int diff_grep(struct diff_filepair *p, struct diff_options *o,
 	mmfile_t mf1, mf2;
 	int hit;
 
-	if (diff_unmodified_pair(p))
+	if (!o->pickaxe[0])
 		return 0;
 
 	if (DIFF_OPT_TST(o, ALLOW_TEXTCONV)) {
 		textconv_one = get_textconv(p->one);
 		textconv_two = get_textconv(p->two);
 	}
+
+	if (textconv_one == textconv_two && diff_unmodified_pair(p))
+		return 0;
 
 	mf1.size = fill_textconv(textconv_one, p->one, &mf1.ptr);
 	mf2.size = fill_textconv(textconv_two, p->two, &mf2.ptr);
@@ -125,6 +128,8 @@ static int diff_grep(struct diff_filepair *p, struct diff_options *o,
 		free(mf1.ptr);
 	if (textconv_two)
 		free(mf2.ptr);
+	diff_free_filespec_data(p->one);
+	diff_free_filespec_data(p->two);
 	return hit;
 }
 
