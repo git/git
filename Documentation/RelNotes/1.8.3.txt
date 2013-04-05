@@ -70,6 +70,10 @@ UI, Workflows & Features
  * The new "--follow-tags" option tells "git push" to push relevant
    annotated tags when pushing branches out.
 
+ * "git merge" and "git pull" can optionally be told to inspect and
+   reject when merging a commit that does not carry a trusted GPG
+   signature.
+
  * "git mergetool" now feeds files to the "p4merge" backend in the
    order that matches the p4 convention, where "theirs" is usually
    shown on the left side, which is the opposite from other backend
@@ -130,6 +134,14 @@ Fixes since v1.8.2
 Unless otherwise noted, all the fixes since v1.8.2 in the maintenance
 track are contained in this release (see release notes to them for
 details).
+
+ * "git merge $(git rev-parse v1.8.2)" behaved quite differently from
+   "git merge v1.8.2", as if v1.8.2 were written as v1.8.2^0 and did
+   not pay much attention to the annotated tag payload.  Make the code
+   notice the type of the tag object, in addition to the dwim_ref()
+   based classification the current code uses (i.e. the name appears
+   in refs/tags/) to decide when to special case merging of tags.
+   (merge a38d3d7 jc/merge-tag-object later to maint).
 
  * Fix 1.8.1.x regression that stopped matching "dir" (without
    trailing slash) to a directory "dir".
