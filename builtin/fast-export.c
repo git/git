@@ -618,9 +618,12 @@ static void import_marks(char *input_file)
 			|| *mark_end != ' ' || get_sha1(mark_end + 1, sha1))
 			die("corrupt mark line: %s", line);
 
+		if (last_idnum < mark)
+			last_idnum = mark;
+
 		object = parse_object(sha1);
 		if (!object)
-			die ("Could not read blob %s", sha1_to_hex(sha1));
+			continue;
 
 		if (object->flags & SHOWN)
 			error("Object %s already has a mark", sha1_to_hex(sha1));
@@ -630,8 +633,6 @@ static void import_marks(char *input_file)
 			continue;
 
 		mark_object(object, mark);
-		if (last_idnum < mark)
-			last_idnum = mark;
 
 		object->flags |= SHOWN;
 	}
@@ -645,6 +646,7 @@ int cmd_fast_export(int argc, const char **argv, const char *prefix)
 	struct string_list extra_refs = STRING_LIST_INIT_NODUP;
 	struct commit *commit;
 	char *export_filename = NULL, *import_filename = NULL;
+	uint32_t lastimportid;
 	struct option options[] = {
 		OPT_INTEGER(0, "progress", &progress,
 			    N_("show progress after <n> objects")),
@@ -688,6 +690,7 @@ int cmd_fast_export(int argc, const char **argv, const char *prefix)
 
 	if (import_filename)
 		import_marks(import_filename);
+	lastimportid = last_idnum;
 
 	if (import_filename && revs.prune_data.nr)
 		full_tree = 1;
@@ -710,7 +713,7 @@ int cmd_fast_export(int argc, const char **argv, const char *prefix)
 
 	handle_tags_and_duplicates(&extra_refs);
 
-	if (export_filename)
+	if (export_filename && lastimportid != last_idnum)
 		export_marks(export_filename);
 
 	if (use_done_feature)

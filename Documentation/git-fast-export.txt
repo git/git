@@ -66,6 +66,8 @@ produced incorrect results if you gave these options.
 	incremental runs.  As <file> is only opened and truncated
 	at completion, the same path can also be safely given to
 	\--import-marks.
+	The file will not be written if no new object has been
+	marked/exported.
 
 --import-marks=<file>::
 	Before processing any input, load the marks specified in
