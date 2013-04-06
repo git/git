@@ -223,7 +223,7 @@ def export_files(tree, files):
             # is the blog already exported?
             if h in filenodes:
                 mark = filenodes[h]
-                final.append((mode, mark, path))
+                final.append((mode, mark, path.encode('utf-8')))
                 continue
 
             d = tree.get_file_text(fid)
@@ -240,7 +240,7 @@ def export_files(tree, files):
         print "data %d" % len(d)
         print d
 
-        final.append((mode, mark, path))
+        final.append((mode, mark, path.encode('utf-8')))
 
     return final
 
