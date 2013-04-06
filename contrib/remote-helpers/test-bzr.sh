@@ -164,4 +164,19 @@ test_expect_success 'moving directory' '
   test_cmp expected actual
 '
 
+test_expect_success 'different authors' '
+  (cd bzrrepo &&
+  echo john >> content &&
+  bzr commit -m john \
+    --author "Jane Rey <jrey@example.com>" \
+    --author "John Doe <jdoe@example.com>") &&
+
+  (cd gitrepo &&
+  git pull &&
+  git show --format="%an <%ae>, %cn <%ce>" --quiet > ../actual) &&
+
+  echo "Jane Rey <jrey@example.com>, A U Thor <author@example.com>" > expected &&
+  test_cmp expected actual
+'
+
 test_done

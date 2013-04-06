@@ -266,7 +266,12 @@ def export_branch(branch, name):
         tz = rev.timezone
         committer = rev.committer.encode('utf-8')
         committer = "%s %u %s" % (fixup_user(committer), time, gittz(tz))
-        author = committer
+        authors = rev.get_apparent_authors()
+        if authors:
+            author = authors[0].encode('utf-8')
+            author = "%s %u %s" % (fixup_user(author), time, gittz(tz))
+        else:
+            author = committer
         msg = rev.message.encode('utf-8')
 
         msg += '\n'
