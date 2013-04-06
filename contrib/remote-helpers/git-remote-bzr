@@ -630,10 +630,9 @@ def do_export(parser):
                     peer.import_last_revision_info_and_tags(repo, revno, revid)
                 else:
                     peer.import_last_revision_info(repo.repository, revno, revid)
-                wt = peer.bzrdir.open_workingtree()
             else:
                 wt = repo.bzrdir.open_workingtree()
-            wt.update()
+                wt.update()
         print "ok %s" % ref
     print
 
