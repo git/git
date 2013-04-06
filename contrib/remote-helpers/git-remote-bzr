@@ -654,7 +654,11 @@ def do_capabilities(parser):
 def do_list(parser):
     global tags
     print "? refs/heads/%s" % 'master'
+
+    history = parser.repo.revision_history()
     for tag, revid in parser.repo.tags.get_tag_dict().items():
+        if revid not in history:
+            continue
         print "? refs/tags/%s" % tag
         tags[tag] = revid
     print "@refs/heads/%s HEAD" % 'master'
