@@ -140,4 +140,28 @@ test_expect_success 'special modes' '
   test_cmp expected actual
 '
 
+cat > expected <<EOF
+100644 blob 54f9d6da5c91d556e6b54340b1327573073030af	content
+100755 blob 68769579c3eaadbe555379b9c3538e6628bae1eb	executable
+120000 blob 6b584e8ece562ebffc15d38808cd6b98fc3d97ea	link
+040000 tree 35c0caa46693cef62247ac89a680f0c5ce32b37b	movedir-new
+EOF
+
+test_expect_success 'moving directory' '
+  (cd bzrrepo &&
+  mkdir movedir &&
+  echo one > movedir/one &&
+  echo two > movedir/two &&
+  bzr add movedir &&
+  bzr commit -m movedir &&
+  bzr mv movedir movedir-new &&
+  bzr commit -m movedir-new) &&
+
+  (cd gitrepo &&
+  git pull &&
+  git ls-tree HEAD > ../actual) &&
+
+  test_cmp expected actual
+'
+
 test_done

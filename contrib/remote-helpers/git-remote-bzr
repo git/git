@@ -191,7 +191,13 @@ def get_filechanges(cur, prev):
         modified[path] = fid
     for oldpath, newpath, fid, kind, mod, _ in changes.renamed:
         removed[oldpath] = None
-        modified[newpath] = fid
+        if kind == 'directory':
+            lst = cur.list_files(from_dir=newpath, recursive=True)
+            for path, file_class, kind, fid, entry in lst:
+                if kind != 'directory':
+                    modified[newpath + '/' + path] = fid
+        else:
+            modified[newpath] = fid
 
     return modified, removed
 
