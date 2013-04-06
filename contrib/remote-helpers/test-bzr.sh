@@ -204,4 +204,35 @@ test_expect_success 'fetch utf-8 filenames' '
   test_cmp expected actual
 '
 
+test_expect_success 'push utf-8 filenames' '
+  mkdir -p tmp && cd tmp &&
+  test_when_finished "cd .. && rm -rf tmp && LC_ALL=C" &&
+
+  export LC_ALL=en_US.UTF-8
+
+  (
+  bzr init bzrrepo &&
+  cd bzrrepo &&
+
+  echo one >> content &&
+  bzr add content &&
+  bzr commit -m one
+  ) &&
+
+  (
+  git clone "bzr::$PWD/bzrrepo" gitrepo &&
+  cd gitrepo &&
+
+  echo test >> "áéíóú" &&
+  git add "áéíóú" &&
+  git commit -m utf-8 &&
+
+  git push
+  ) &&
+
+  (cd bzrrepo && bzr ls > ../actual) &&
+  echo -e "content\náéíóú" > expected &&
+  test_cmp expected actual
+'
+
 test_done

@@ -512,6 +512,11 @@ class CustomTree():
     def get_symlink_target(self, file_id):
         return self.updates[file_id]['data']
 
+def c_style_unescape(string):
+    if string[0] == string[-1] == '"':
+        return string.decode('string-escape')[1:-1]
+    return string
+
 def parse_commit(parser):
     global marks, blob_marks, bmarks, parsed_refs
     global mode
@@ -551,6 +556,7 @@ def parse_commit(parser):
             f = { 'deleted' : True }
         else:
             die('Unknown file command: %s' % line)
+        path = c_style_unescape(path).decode('utf-8')
         files[path] = f
 
     repo = parser.repo
