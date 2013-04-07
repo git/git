@@ -80,10 +80,12 @@ struct wt_status_state {
 	int rebase_interactive_in_progress;
 	int cherry_pick_in_progress;
 	int bisect_in_progress;
+	int revert_in_progress;
 	char *branch;
 	char *onto;
 	char *detached_from;
 	unsigned char detached_sha1[20];
+	unsigned char revert_head_sha1[20];
 };
 
 void wt_status_prepare(struct wt_status *s);

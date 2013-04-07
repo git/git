@@ -678,4 +678,62 @@ test_expect_success 'status showing detached from a tag' '
 	test_i18ncmp expected actual
 '
 
+test_expect_success 'status while reverting commit (conflicts)' '
+	git checkout master &&
+	echo before >to-revert.txt &&
+	test_commit before to-revert.txt &&
+	echo old >to-revert.txt &&
+	test_commit old to-revert.txt &&
+	echo new >to-revert.txt &&
+	test_commit new to-revert.txt &&
+	TO_REVERT=$(git rev-parse --short HEAD^) &&
+	test_must_fail git revert $TO_REVERT &&
+	cat >expected <<-EOF
+	# On branch master
+	# You are currently reverting commit $TO_REVERT.
+	#   (fix conflicts and run "git revert --continue")
+	#   (use "git revert --abort" to cancel the revert operation)
+	#
+	# Unmerged paths:
+	#   (use "git reset HEAD <file>..." to unstage)
+	#   (use "git add <file>..." to mark resolution)
+	#
+	#	both modified:      to-revert.txt
+	#
+	no changes added to commit (use "git add" and/or "git commit -a")
+	EOF
+	git status --untracked-files=no >actual &&
+	test_i18ncmp expected actual
+'
+
+test_expect_success 'status while reverting commit (conflicts resolved)' '
+	echo reverted >to-revert.txt &&
+	git add to-revert.txt &&
+	cat >expected <<-EOF
+	# On branch master
+	# You are currently reverting commit $TO_REVERT.
+	#   (all conflicts fixed: run "git revert --continue")
+	#   (use "git revert --abort" to cancel the revert operation)
+	#
+	# Changes to be committed:
+	#   (use "git reset HEAD <file>..." to unstage)
+	#
+	#	modified:   to-revert.txt
+	#
+	# Untracked files not listed (use -u option to show untracked files)
+	EOF
+	git status --untracked-files=no >actual &&
+	test_i18ncmp expected actual
+'
+
+test_expect_success 'status after reverting commit' '
+	git revert --continue &&
+	cat >expected <<-\EOF
+	# On branch master
+	nothing to commit (use -u to show untracked files)
+	EOF
+	git status --untracked-files=no >actual &&
+	test_i18ncmp expected actual
+'
+
 test_done
