@@ -1284,4 +1284,9 @@ test_expect_success 'cover letter using branch description (6)' '
 	grep hello actual >/dev/null
 '
 
+test_expect_success 'cover letter with nothing' '
+	git format-patch --stdout --cover-letter >actual &&
+	test_line_count = 0 actual
+'
+
 test_done
