@@ -810,9 +810,37 @@ static void add_branch_description(struct strbuf *buf, const char *branch_name)
 	}
 }
 
+static char *find_branch_name(struct rev_info *rev)
+{
+	int i, positive = -1;
+	unsigned char branch_sha1[20];
+	const unsigned char *tip_sha1;
+	const char *ref;
+	char *full_ref, *branch = NULL;
+
+	for (i = 0; i < rev->cmdline.nr; i++) {
+		if (rev->cmdline.rev[i].flags & UNINTERESTING)
+			continue;
+		if (positive < 0)
+			positive = i;
+		else
+			return NULL;
+	}
+	if (positive < 0)
+		return NULL;
+	ref = rev->cmdline.rev[positive].name;
+	tip_sha1 = rev->cmdline.rev[positive].item->sha1;
+	if (dwim_ref(ref, strlen(ref), branch_sha1, &full_ref) &&
+	    !prefixcmp(full_ref, "refs/heads/") &&
+	    !hashcmp(tip_sha1, branch_sha1))
+		branch = xstrdup(full_ref + strlen("refs/heads/"));
+	free(full_ref);
+	return branch;
+}
+
 static void make_cover_letter(struct rev_info *rev, int use_stdout,
 			      struct commit *origin,
-			      int nr, struct commit **list, struct commit *head,
+			      int nr, struct commit **list,
 			      const char *branch_name,
 			      int quiet)
 {
@@ -826,6 +854,7 @@ static void make_cover_letter(struct rev_info *rev, int use_stdout,
 	struct diff_options opts;
 	int need_8bit_cte = 0;
 	struct pretty_print_context pp = {0};
+	struct commit *head = list[0];
 
 	if (rev->commit_format != CMIT_FMT_EMAIL)
 		die(_("Cover letter needs email format"));
@@ -842,6 +871,9 @@ static void make_cover_letter(struct rev_info *rev, int use_stdout,
 	for (i = 0; !need_8bit_cte && i < nr; i++)
 		if (has_non_ascii(list[i]->buffer))
 			need_8bit_cte = 1;
+
+	if (!branch_name)
+		branch_name = find_branch_name(rev);
 
 	msg = body;
 	pp.fmt = CMIT_FMT_EMAIL;
@@ -1049,36 +1081,6 @@ static int cc_callback(const struct option *opt, const char *arg, int unset)
 	return 0;
 }
 
-static char *find_branch_name(struct rev_info *rev)
-{
-	int i, positive = -1;
-	unsigned char branch_sha1[20];
-	const unsigned char *tip_sha1;
-	const char *ref;
-	char *full_ref, *branch = NULL;
-
-	for (i = 0; i < rev->cmdline.nr; i++) {
-		if (rev->cmdline.rev[i].flags & UNINTERESTING)
-			continue;
-		if (positive < 0)
-			positive = i;
-		else
-			return NULL;
-	}
-	if (0 <= positive) {
-		ref = rev->cmdline.rev[positive].name;
-		tip_sha1 = rev->cmdline.rev[positive].item->sha1;
-	} else {
-		return NULL;
-	}
-	if (dwim_ref(ref, strlen(ref), branch_sha1, &full_ref) &&
-	    !prefixcmp(full_ref, "refs/heads/") &&
-	    !hashcmp(tip_sha1, branch_sha1))
-		branch = xstrdup(full_ref + strlen("refs/heads/"));
-	free(full_ref);
-	return branch;
-}
-
 int cmd_format_patch(int argc, const char **argv, const char *prefix)
 {
 	struct commit *commit;
@@ -1093,7 +1095,7 @@ int cmd_format_patch(int argc, const char **argv, const char *prefix)
 	int cover_letter = -1;
 	int boundary_count = 0;
 	int no_binary_diff = 0;
-	struct commit *origin = NULL, *head = NULL;
+	struct commit *origin = NULL;
 	const char *in_reply_to = NULL;
 	struct patch_ids ids;
 	struct strbuf buf = STRBUF_INIT;
@@ -1359,7 +1361,6 @@ int cmd_format_patch(int argc, const char **argv, const char *prefix)
 	if (nr == 0)
 		/* nothing to do */
 		return 0;
-	head = list[0];
 	total = nr;
 	if (!keep_subject && auto_number && total > 1)
 		numbered = 1;
@@ -1383,10 +1384,8 @@ int cmd_format_patch(int argc, const char **argv, const char *prefix)
 	if (cover_letter) {
 		if (thread)
 			gen_message_id(&rev, "cover");
-		if (!branch_name)
-			branch_name = find_branch_name(&rev);
 		make_cover_letter(&rev, use_stdout,
-				  origin, nr, list, head, branch_name, quiet);
+				  origin, nr, list, branch_name, quiet);
 		total++;
 		start_number--;
 	}
