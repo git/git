@@ -32,6 +32,18 @@ Updates since v1.8.2
 
 UI, Workflows & Features
 
+ * A triangular "pull from one place, push to another place" workflow
+   is supported better by new remote.pushdefault (overrides the
+   "origin" thing) and branch.*.pushremote (overrides the
+   branch.*.remote) configuration variables.
+
+ * "git status" learned to report that you are in the middle of a
+   revert session, just like it does for a cherry-pick and a bisect
+   session.
+
+ * The handing by "git branch --set-upstream-to" against various forms
+   of errorneous inputs was suboptimal and has been improved.
+
  * When the interactive access to git-shell is not enabled, it issues
    a message meant to help the system admininstrator to enable it.
    An explicit way to help the end users who connect to the service by
@@ -101,6 +113,9 @@ Performance, Internal Implementation, etc.
 
  * Updates for building under msvc.
 
+ * The code to enforce permission bits on files in $GIT_DIR/ for
+   shared repositories have been simplified.
+
  * A few codepaths knew how much data they need to put in the
    hashtables they use upfront, but still started from a small table
    repeatedly growing and rehashing.
@@ -134,6 +149,11 @@ Fixes since v1.8.2
 Unless otherwise noted, all the fixes since v1.8.2 in the maintenance
 track are contained in this release (see release notes to them for
 details).
+
+ * When used with "-d temporary-directory" option, "git filter-branch"
+   failed to come back to the original working tree to perform the
+   final clean-up procedure.
+   (merge 9727601 jk/filter-branch-come-back-to-original later to maint).
 
  * "git merge $(git rev-parse v1.8.2)" behaved quite differently from
    "git merge v1.8.2", as if v1.8.2 were written as v1.8.2^0 and did
