@@ -4,6 +4,11 @@ Git v1.8.2.1 Release Notes
 Fixes since v1.8.2
 ------------------
 
+ * An earlier change to the attribute system introduced at v1.8.1.2 by
+   mistake stopped a pattern "dir" (without trailing slash) from
+   matching a directory "dir" (it only wanted to allow pattern "dir/"
+   to also match).
+
  * Verification of signed tags were not done correctly when not in C
    or en/US locale.
 
