@@ -503,14 +503,18 @@ static void fmt_merge_msg_sigs(struct strbuf *out)
 		} else {
 			if (tag_number == 2) {
 				struct strbuf tagline = STRBUF_INIT;
-				strbuf_addf(&tagline, "\n# %s\n",
-					    origins.items[first_tag].string);
+				strbuf_addch(&tagline, '\n');
+				strbuf_add_commented_lines(&tagline,
+						origins.items[first_tag].string,
+						strlen(origins.items[first_tag].string));
 				strbuf_insert(&tagbuf, 0, tagline.buf,
 					      tagline.len);
 				strbuf_release(&tagline);
 			}
-			strbuf_addf(&tagbuf, "\n# %s\n",
-				    origins.items[i].string);
+			strbuf_addch(&tagbuf, '\n');
+			strbuf_add_commented_lines(&tagbuf,
+					origins.items[i].string,
+					strlen(origins.items[i].string));
 			fmt_tag_signature(&tagbuf, &sig, buf, len);
 		}
 		strbuf_release(&sig);
