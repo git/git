@@ -45,8 +45,9 @@ Composing
 ~~~~~~~~~
 
 --annotate::
-	Review and edit each patch you're about to send. See the
-	CONFIGURATION section for 'sendemail.multiedit'.
+	Review and edit each patch you're about to send. Default is the value
+	of 'sendemail.annotate'. See the CONFIGURATION section for
+	'sendemail.multiedit'.
 
 --bcc=<address>::
 	Specify a "Bcc:" value for each email. Default is the value of
