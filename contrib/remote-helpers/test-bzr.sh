@@ -17,20 +17,6 @@ if ! "$PYTHON_PATH" -c 'import bzrlib'; then
 	test_done
 fi
 
-cmd='
-import bzrlib
-bzrlib.initialize()
-import bzrlib.plugin
-bzrlib.plugin.load_plugins()
-import bzrlib.plugins.fastimport
-'
-
-if ! "$PYTHON_PATH" -c "$cmd"; then
-	echo "consider setting BZR_PLUGIN_PATH=$HOME/.bazaar/plugins" 1>&2
-	skip_all='skipping remote-bzr tests; bzr-fastimport not available'
-	test_done
-fi
-
 check () {
 	(cd $1 &&
 	git log --format='%s' -1 &&
@@ -136,7 +122,7 @@ test_expect_success 'special modes' '
   (cd gitrepo &&
   git cat-file -p HEAD:link > ../actual) &&
 
-  echo -n content > expected &&
+  printf content > expected &&
   test_cmp expected actual
 '
 

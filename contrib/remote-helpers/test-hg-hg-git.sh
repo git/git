@@ -140,7 +140,6 @@ test_expect_success 'executable bit' '
 		git_clone_$x hgrepo-$x gitrepo2-$x &&
 		git_log gitrepo2-$x > log-$x
 	done &&
-	cp -r log-* output-* /tmp/foo/ &&
 
 	test_cmp output-hg output-git &&
 	test_cmp log-hg log-git
