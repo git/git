@@ -1,10 +1,10 @@
 To: git@vger.kernel.org
 Bcc: lwn@lwn.net
-Subject: What's cooking in git.git (Apr 2013, #02; Fri, 5)
-X-master-at: 21ccebec0dd1d7e624ea2f22af6ac93686daf34f
-X-next-at: 2c8b7bf47c81acd2a76c1f9c3be2a1f102b76d31
+Subject: What's cooking in git.git (Apr 2013, #03; Sun, 7)
+X-master-at: 52a3e011c779456e63b6274af0024eeb92dd7888
+X-next-at: b213c0d2377aff930c500c0ac0d580a34e76686d
 
-What's cooking in git.git (Apr 2013, #02; Fri, 5)
+What's cooking in git.git (Apr 2013, #03; Sun, 7)
 --------------------------------------------------
 
 Here are the topics that have been cooking.  Commits prefixed with
@@ -24,250 +24,10 @@ of the repositories listed at
 --------------------------------------------------
 [Graduated to "master"]
 
-* bk/document-commit-tree-S (2013-03-25) 1 commit
-  (merged to 'next' on 2013-03-26 at 8ee205f)
- + commit-tree: document -S option consistently
-
-
-* jc/apply-ws-fix-tab-in-indent (2013-03-29) 2 commits
-  (merged to 'next' on 2013-03-29 at 26eb6e9)
- + test: resurrect q_to_tab
-  (merged to 'next' on 2013-03-26 at 46c6bda)
- + apply --whitespace=fix: avoid running over the postimage buffer
-
- "git apply --whitespace=fix" was not prepared to see a line getting
- longer after fixing whitespaces (e.g. tab-in-indent aka Python).
-
-
-* jc/directory-attrs-regression-fix (2013-03-28) 6 commits
-  (merged to 'next' on 2013-03-29 at a3dce2b)
- + t: check that a pattern without trailing slash matches a directory
- + dir.c::match_pathname(): pay attention to the length of string parameters
- + dir.c::match_pathname(): adjust patternlen when shifting pattern
- + dir.c::match_basename(): pay attention to the length of string parameters
- + attr.c::path_matches(): special case paths that end with a slash
- + attr.c::path_matches(): the basename is part of the pathname
-
- Fix 1.8.1.x regression that stopped matching "dir" (without
- trailing slash) to a directory "dir".
-
-
-* jc/merge-tag-object (2013-04-01) 3 commits
-  (merged to 'next' on 2013-04-03 at 94b5c7d)
- + t6200: test message for merging of an annotated tag
- + t6200: use test_config/test_unconfig
-  (merged to 'next' on 2013-03-29 at aeec39c)
- + merge: a random object may not necssarily be a commit
-
- "git merge $(git rev-parse v1.8.2)" behaved quite differently from
- "git merge v1.8.2" as if v1.8.2 were written as v1.8.2^0 and did
- not pay much attention to the annotated tag payload.
-
- This makes the code notice the type of the tag object, in addition
- to the dwim_ref() based classification the current code uses
- (i.e. the name appears in refs/tags/) to decide when to special
- case merging of tags.
-
-
-* jc/sha1-name-object-peeler (2013-03-31) 2 commits
-  (merged to 'next' on 2013-04-01 at cdb4a18)
- + peel_onion(): teach $foo^{object} peeler
- + peel_onion: disambiguate to favor tree-ish when we know we want a tree-ish
- (this branch is used by mh/rev-parse-verify-doc.)
-
- There was no good way to ask "I have a random string that came from
- outside world. I want to turn it into a 40-hex object name while
- making sure such an object exists".  A new peeling suffix ^{object}
- can be used for that purpose, together with "rev-parse --verify".
-
-
-* jc/t5516-pushInsteadOf-vs-pushURL (2013-03-28) 1 commit
-  (merged to 'next' on 2013-04-01 at bed2879)
- + t5516: test interaction between pushURL and pushInsteadOf correctly
-
- Update a test to match the documented interaction between pushURL
- and pushInsteadOf.
-
-
-* jk/check-corrupt-objects-carefully (2013-03-29) 10 commits
-  (merged to 'next' on 2013-03-29 at b6a04a7)
- + clone: leave repo in place after checkout errors
- + clone: run check_everything_connected
- + clone: die on errors from unpack_trees
- + add tests for cloning corrupted repositories
- + streaming_write_entry: propagate streaming errors
- + add test for streaming corrupt blobs
- + avoid infinite loop in read_istream_loose
- + read_istream_filtered: propagate read error from upstream
- + check_sha1_signature: check return value from read_istream
- + stream_blob_to_fd: detect errors reading from stream
-
- Have the streaming interface and other codepaths more carefully
- examine for corrupt objects.
-
-
-* jk/config-with-empty-section (2013-03-29) 1 commit
-  (merged to 'next' on 2013-04-01 at 7972aa9)
- + t1300: document some aesthetic failures of the config editor
-
- Document that "git config --unset" does not remove an empty section
- head after removing the last variable in a section, and adding a
- new variable does not try to reuse a leftover empty section head.
-
-
-* jk/difftool-no-overwrite-on-copyback (2013-03-29) 5 commits
-  (merged to 'next' on 2013-03-29 at 9f42d34)
- + t7800: run --dir-diff tests with and without symlinks
- + t7800: fix tests when difftool uses --no-symlinks
- + t7800: don't hide grep output
- + difftool: don't overwrite modified files
- + t7800: move '--symlinks' specific test to the end
-
- Try to be careful when difftool backend allows the user to write
- into the temporary files being shown *and* the user makes changes
- to the working tree at the same time. One of the changes has to be
- lost in such a case, but at least tell the user what he did.
-
-
-* jk/no-more-self-assignment (2013-03-25) 2 commits
-  (merged to 'next' on 2013-03-26 at 31ec9ac)
- + match-trees: simplify score_trees() using tree_entry()
- + submodule: clarify logic in show_submodule_summary
-
- This started as a topic to reduce "type var = var" self assignment
- tricks that were used to squelch "variable used uninitialized perhaps?"
- warning from some compilers, but resulted in rewriting logic with
- a version that is simpler and easier to understand for humans.
-
-
-* jl/submodule-deinit (2013-04-01) 1 commit
-  (merged to 'next' on 2013-04-03 at 2ef485c)
- + submodule deinit: clarify work tree removal message
-
- A finishing touch to the new topic in 1.8.3.
-
-
-* jm/branch-rename-nothing-error (2013-03-31) 1 commit
-  (merged to 'next' on 2013-04-01 at 5e5cdaf)
- + branch: give better message when no names specified for rename
-
- "git branch -m" without any argument noticed an error, but with an
- incorrect error message.
-
-
-* js/iterm-is-on-osx (2013-03-29) 1 commit
-  (merged to 'next' on 2013-04-01 at 201fed2)
- + git-web--browse: recognize any TERM_PROGRAM as a GUI terminal on OS X
-
- Add more logic to detect graphic environment of OS X by simply
- checking TERM_PROGRAM has some value, not Apple_Terminal, to detect
- iTerm.app and any other.
-
-
-* js/log-gpg (2013-03-27) 1 commit
-  (merged to 'next' on 2013-03-29 at 9a1b2d3)
- + log: read gpg settings for signed commit verification
-
- Teach "show/log" honor gpg.program configuration just like other
- parts of the code that use GnuPG.
-
-
-* mh/rev-parse-verify-doc (2013-04-02) 1 commit
-  (merged to 'next' on 2013-04-03 at a09c332)
- + rev-parse: clarify documentation for the --verify option
-
- "rev-parse --verify" was documented in a misleading way.
-
-
-* nd/checkout-paths-reduce-match-pathspec-calls (2013-03-27) 1 commit
-  (merged to 'next' on 2013-03-29 at fbcc004)
- + checkout: avoid unnecessary match_pathspec calls
-
- Consolidate repeated pathspec matches on the same paths, while
- fixing a bug in "git checkout dir/" code started from an unmerged
- index.
-
-
-* rr/prompt-revert-head (2013-03-31) 1 commit
-  (merged to 'next' on 2013-04-01 at 1fc21eb)
- + bash: teach __git_ps1 about REVERT_HEAD
-
- The prompt string generator did not notice when we are in a middle
- of a "git revert" session.
-
-
-* rr/send-email-perl-critique (2013-03-31) 3 commits
-  (merged to 'next' on 2013-04-03 at d552868)
- + send-email: use the three-arg form of open in recipients_cmd
- + send-email: drop misleading function prototype
- + send-email: use "return;" not "return undef;" on error codepaths
-
- Broken down from an earlier discussion to pick up reasonable bits
- with explanation, to demonstrate how it should be done.
-
-
-* rs/submodule-summary-limit (2013-04-01) 1 commit
-  (merged to 'next' on 2013-04-01 at 3c18cfe)
- + submodule summary: support --summary-limit=<n>
-
- "submodule summary --summary-limit" option did not support
- "--option=value" form.
-
-
-* sg/gpg-sig (2013-03-31) 5 commits
-  (merged to 'next' on 2013-04-03 at 9c13a17)
- + pretty printing: extend %G? to include 'N' and 'U'
- + merge/pull Check for untrusted good GPG signatures
- + merge/pull: verify GPG signatures of commits being merged
- + commit.c/GPG signature verification: Also look at the first GPG status line
- + Move commit GPG signature verification to commit.c
-
- Teach "merge/pull" to optionally verify and reject commits that are
- not signed properly.
-
-
-* sw/safe-create-leading-dir-race (2013-03-26) 1 commit
-  (merged to 'next' on 2013-03-26 at 744bb50)
- + safe_create_leading_directories: fix race that could give a false negative
-
-
-* tb/cygwin-shared-repository (2013-03-25) 1 commit
-  (merged to 'next' on 2013-03-29 at dbeb068)
- + Make core.sharedRepository work under cygwin 1.7
- (this branch is used by tb/shared-perm.)
-
- Cygwin port has a faster-but-lying lstat(2) emulation whose
- incorrectness does not matter in practice except for a few
- codepaths, and setting permission bits to directories is a codepath
- that needs to use a more correct one.
-
-
-* tr/log-tree-optim (2013-03-28) 1 commit
-  (merged to 'next' on 2013-03-29 at 5a6795d)
- + Avoid loading commits twice in log with diffs
-
- Optimize "log" that shows the difference between the parent and the
- child.
-
-
-* tr/valgrind (2013-04-01) 4 commits
-  (merged to 'next' on 2013-04-01 at a973c52)
- + tests: notice valgrind error in test_must_fail
- + tests --valgrind: provide a mode without --track-origins
- + tests: parameterize --valgrind option
- + t/README: --valgrind already implies -v
-
- Let us use not just memgrind but other *grind debuggers.
-
---------------------------------------------------
-[New Topics]
-
 * cn/commit-amend-doc (2013-04-05) 1 commit
   (merged to 'next' on 2013-04-05 at 4c42e59)
  + Documentation/git-commit: reword the --amend explanation
  (this branch is used by jc/detached-head-doc.)
-
- Will merge to 'master'.
 
 
 * fc/remote-helpers-test-updates (2013-04-04) 4 commits
@@ -278,8 +38,140 @@ of the repositories listed at
  + remote-bzr: avoid echo -n
  (this branch is used by fc/transport-helper-waitpid.)
 
- Will merge to 'master'.
 
+* jk/bisect-prn-unsigned (2013-04-03) 1 commit
+  (merged to 'next' on 2013-04-04 at 2c4df36)
+ + bisect: avoid signed integer overflow
+
+
+* jk/diffcore-break-divzero (2013-04-03) 1 commit
+  (merged to 'next' on 2013-04-04 at b7632e0)
+ + diffcore-break: don't divide by zero
+
+
+* jk/filter-branch-come-back-to-original (2013-04-02) 1 commit
+  (merged to 'next' on 2013-04-04 at 621684a)
+ + filter-branch: return to original dir after filtering
+
+ When used with "-d temporary-directory" option, "git filter-branch"
+ failed to come back to the original working tree to perform the
+ final clean-up procedure.
+
+
+* jk/rm-removed-paths (2013-04-04) 3 commits
+  (merged to 'next' on 2013-04-05 at ce9a926)
+ + t3600: document failure of rm across symbolic links
+ + t3600: test behavior of reverse-d/f conflict
+ + rm: do not complain about d/f conflicts during deletion
+
+ A handful of test cases and a corner case bugfix for "git rm".
+
+
+* jk/set-upstream-error-cases (2013-04-02) 5 commits
+  (merged to 'next' on 2013-04-04 at b58c26b)
+ + branch: give advice when tracking start-point is missing
+ + branch: mention start_name in set-upstream error messages
+ + branch: improve error message for missing --set-upstream-to ref
+ + branch: factor out "upstream is not a branch" error messages
+ + t3200: test --set-upstream-to with bogus refs
+
+ The handing by "git branch --set-upstream-to" against various forms
+ of errorneous inputs was suboptimal and has been improved.
+
+
+* mg/texinfo-5 (2013-04-03) 1 commit
+  (merged to 'next' on 2013-04-04 at bd84440)
+ + Documentation: Strip texinfo anchors to avoid duplicates
+
+ Strip @anchor elements in the texinfo output of the documentation,
+ as a single document created by concatenating our entire manual set
+ will produce many duplicates that makes newer texinfo unhappy.
+
+
+* mm/status-during-revert (2013-04-02) 2 commits
+  (merged to 'next' on 2013-04-04 at 1282528)
+ + status: show commit sha1 in "You are currently reverting" message
+ + status: show 'revert' state and status hint
+
+ "git status" learned to report that you are in the middle of a
+ revert session, just like it does for a cherry-pick and a bisect
+ session.
+
+
+* rr/triangle (2013-04-02) 6 commits
+  (merged to 'next' on 2013-04-04 at 2d2c8ee)
+ + remote.c: introduce branch.<name>.pushremote
+ + remote.c: introduce remote.pushdefault
+ + remote.c: introduce a way to have different remotes for fetch/push
+ + t5516 (fetch-push): drop implicit arguments from helper functions
+ + t5516 (fetch-push): update test description
+ + remote.c: simplify a bit of code using git_config_string()
+
+ Support "pull from one place, push to another place" workflow
+ better by introducing remote.pushdefault (overrides the "origin"
+ thing) and branch.*.pushremote (overrides the branch.*.remote).
+
+
+* tb/shared-perm (2013-04-05) 2 commits
+  (merged to 'next' on 2013-04-05 at 2481155)
+ + path.c: optimize adjust_shared_perm()
+ + path.c: simplify adjust_shared_perm()
+
+ Simplifies adjust_shared_perm() implementation.
+
+--------------------------------------------------
+[New Topics]
+
+* fc/send-email-annotate (2013-04-07) 6 commits
+ - format-patch: trivial cleanups
+ - format-patch: add format.coverLetter configuration variable
+ - log: update to OPT_BOOL
+ - format-patch: refactor branch name calculation
+ - format-patch: improve head calculation for cover-letter
+ - send-email: make annotate configurable
+
+
+* jk/http-error-messages (2013-04-06) 9 commits
+ - http: drop http_error function
+ - remote-curl: die directly with http error messages
+ - http: re-word http error message
+ - http: simplify http_error helper function
+ - remote-curl: consistently report repo url for http errors
+ - remote-curl: always show friendlier 404 message
+ - remote-curl: let servers override http 404 advice
+ - remote-curl: show server content on http errors
+ - http: add HTTP_KEEP_ERROR option
+
+
+* jk/show-branch-strbuf (2013-04-06) 1 commit
+ - show-branch: use strbuf instead of static buffer
+
+
+* lf/bundle-with-tip-wo-message (2013-04-07) 1 commit
+ - bundle: Accept prerequisites without commit messages
+
+
+* rt/commentchar-fmt-merge-msg (2013-04-07) 2 commits
+ - fmt-merge-msg: use core.commentchar in tag signatures completely
+ - fmt-merge-msg: respect core.commentchar in people credits
+
+--------------------------------------------------
+[Stalled]
+
+* jc/format-patch (2013-02-21) 2 commits
+ - format-patch: --inline-single
+ - format-patch: rename "no_inline" field
+
+ A new option to send a single patch to the standard output to be
+ appended at the bottom of a message.  I personally have no need for
+ this, but it was easy enough to cobble together.  Tests, docs and
+ stripping out more MIMEy stuff are left as exercises to interested
+ parties.
+
+ Not ready for inclusion.
+
+--------------------------------------------------
+[Cooking]
 
 * fc/remote-hg (2013-04-04) 13 commits
  - remote-hg: push to the appropriate branch
@@ -302,44 +194,12 @@ of the repositories listed at
  Expecting a reroll.
 
 
-* fc/transport-helper-waitpid (2013-04-04) 2 commits
+* fc/transport-helper-waitpid (2013-04-07) 3 commits
+ - SQUASH???
  - transport-helper: check if remote helper is alive
- - run-command: add new check_command helper
- (this branch uses fc/remote-helpers-test-updates.)
+ - [EXPLAIN BETTER] run-command: add new check_command helper
 
- Seems to be solving a real problem at a wrong level.
-
-
-* jk/bisect-prn-unsigned (2013-04-03) 1 commit
-  (merged to 'next' on 2013-04-04 at 2c4df36)
- + bisect: avoid signed integer overflow
-
- Will merge to 'master'.
-
-
-* jk/diffcore-break-divzero (2013-04-03) 1 commit
-  (merged to 'next' on 2013-04-04 at b7632e0)
- + diffcore-break: don't divide by zero
-
- Will merge to 'master'.
-
-
-* jk/filter-branch-come-back-to-original (2013-04-02) 1 commit
-  (merged to 'next' on 2013-04-04 at 621684a)
- + filter-branch: return to original dir after filtering
-
- Will merge to 'master'.
-
-
-* jk/set-upstream-error-cases (2013-04-02) 5 commits
-  (merged to 'next' on 2013-04-04 at b58c26b)
- + branch: give advice when tracking start-point is missing
- + branch: mention start_name in set-upstream error messages
- + branch: improve error message for missing --set-upstream-to ref
- + branch: factor out "upstream is not a branch" error messages
- + t3200: test --set-upstream-to with bogus refs
-
- Will merge to 'master'.
+ Waiting for a response to summarize what this topic is about here.
 
 
 * js/rerere-forget-protect-against-NUL (2013-04-04) 2 commits
@@ -371,14 +231,6 @@ of the repositories listed at
  Will merge to 'master'.
 
 
-* mm/status-during-revert (2013-04-02) 2 commits
-  (merged to 'next' on 2013-04-04 at 1282528)
- + status: show commit sha1 in "You are currently reverting" message
- + status: show 'revert' state and status hint
-
- Will merge to 'master'.
-
-
 * po/help-guides (2013-04-03) 5 commits
   (merged to 'next' on 2013-04-04 at 3d99b28)
  + doc: include --guide option description for "git help"
@@ -401,17 +253,6 @@ of the repositories listed at
  (they already do so when talking with smart HTTP clients).
 
 
-* jk/rm-removed-paths (2013-04-04) 3 commits
-  (merged to 'next' on 2013-04-05 at ce9a926)
- + t3600: document failure of rm across symbolic links
- + t3600: test behavior of reverse-d/f conflict
- + rm: do not complain about d/f conflicts during deletion
-
- A handful of test cases and a corner case bugfix for "git rm".
-
- Will merge to 'master'.
-
-
 * jl/submodule-mv (2013-04-03) 3 commits
  - Teach mv to update the path entry in .gitmodules for moved submodules
  - Teach mv to move submodules using a gitfile
@@ -423,17 +264,6 @@ of the repositories listed at
 
  Seems to break tests in 'pu' but it may be a mismerge with
  nd/magic-pathspecs topic.
-
-
-* mg/texinfo-5 (2013-04-03) 1 commit
-  (merged to 'next' on 2013-04-04 at bd84440)
- + Documentation: Strip texinfo anchors to avoid duplicates
-
- Strip @anchor elements in the texinfo output of the documentation,
- as a single document created by concatenating our entire manual set
- will produce many duplicates that makes newer texinfo unhappy.
-
- Will merge to 'master'.
 
 
 * sr/log-SG-no-textconv (2013-04-05) 6 commits
@@ -453,56 +283,38 @@ of the repositories listed at
 
 
 * tr/perl-keep-stderr-open (2013-04-04) 2 commits
- - t9700: do not close STDERR
- - perl: redirect stderr to /dev/null instead of closing
+  (merged to 'next' on 2013-04-07 at 04f737a)
+ + t9700: do not close STDERR
+ + perl: redirect stderr to /dev/null instead of closing
 
  Closing (not redirecting to /dev/null) the standard error stream is
  not a very smart thing to do.  Later open may return file
  descriptor #2 for unrelated purpose, and error reporting code may
  write into them.
 
- Will merge to 'next'.
-
 
 * jc/detached-head-doc (2013-04-05) 1 commit
  - glossary: extend "detached HEAD" description
- (this branch uses cn/commit-amend-doc.)
+
+ Will merge to 'next'.
 
 
 * jk/diff-algo-finishing-touches (2013-04-05) 2 commits
  - diff: allow unstuck arguments with --diff-algorithm
  - git-merge(1): document diff-algorithm option to merge-recursive
 
+ "git diff --diff-algorithm algo" is also understood as "git diff
+ --diff-algorithm=algo". 
+
+ Will merge to 'next'.
+
 
 * jk/diff-graph-submodule-summary (2013-04-05) 1 commit
  - submodule: print graph output next to submodule log
 
---------------------------------------------------
-[Stalled]
+ Make "git diff --graph" work better with submodule log output.
 
-* jc/format-patch (2013-02-21) 2 commits
- - format-patch: --inline-single
- - format-patch: rename "no_inline" field
-
- A new option to send a single patch to the standard output to be
- appended at the bottom of a message.  I personally have no need for
- this, but it was easy enough to cobble together.  Tests, docs and
- stripping out more MIMEy stuff are left as exercises to interested
- parties.
-
- Not ready for inclusion.
-
---------------------------------------------------
-[Cooking]
-
-* tb/shared-perm (2013-04-05) 2 commits
-  (merged to 'next' on 2013-04-05 at 2481155)
- + path.c: optimize adjust_shared_perm()
- + path.c: simplify adjust_shared_perm()
-
- Simplifies adjust_shared_perm() implementation.
-
- Will merge to 'master'.
+ Will merge to 'next'.
 
 
 * nd/pretty-formats (2013-04-01) 12 commits
@@ -531,22 +343,6 @@ of the repositories listed at
  We would most likely want to change things the other way around.
 
  Expecting a reroll.
-
-
-* rr/triangle (2013-04-02) 6 commits
-  (merged to 'next' on 2013-04-04 at 2d2c8ee)
- + remote.c: introduce branch.<name>.pushremote
- + remote.c: introduce remote.pushdefault
- + remote.c: introduce a way to have different remotes for fetch/push
- + t5516 (fetch-push): drop implicit arguments from helper functions
- + t5516 (fetch-push): update test description
- + remote.c: simplify a bit of code using git_config_string()
-
- Support "pull from one place, push to another place" workflow
- better by introducing remote.pushdefault (overrides the "origin"
- thing) and branch.*.pushremote (overrides the branch.*.remote).
-
- Will merge to 'master'.
 
 
 * ap/combine-diff-coalesce-lost (2013-03-25) 1 commit
