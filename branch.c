@@ -197,6 +197,20 @@ int validate_new_branchname(const char *name, struct strbuf *ref,
 	return 1;
 }
 
+static const char upstream_not_branch[] =
+N_("Cannot setup tracking information; starting point '%s' is not a branch.");
+static const char upstream_missing[] =
+N_("the requested upstream branch '%s' does not exist");
+static const char upstream_advice[] =
+N_("\n"
+"If you are planning on basing your work on an upstream\n"
+"branch that already exists at the remote, you may need to\n"
+"run \"git fetch\" to retrieve it.\n"
+"\n"
+"If you are planning to push out a new local branch that\n"
+"will track its remote counterpart, you may want to use\n"
+"\"git push -u\" to set the upstream config as you push.");
+
 void create_branch(const char *head,
 		   const char *name, const char *start_name,
 		   int force, int reflog, int clobber_head,
@@ -224,21 +238,30 @@ void create_branch(const char *head,
 	}
 
 	real_ref = NULL;
-	if (get_sha1(start_name, sha1))
+	if (get_sha1(start_name, sha1)) {
+		if (explicit_tracking) {
+			if (advice_set_upstream_failure) {
+				error(_(upstream_missing), start_name);
+				advise(_(upstream_advice));
+				exit(1);
+			}
+			die(_(upstream_missing), start_name);
+		}
 		die("Not a valid object name: '%s'.", start_name);
+	}
 
 	switch (dwim_ref(start_name, strlen(start_name), sha1, &real_ref)) {
 	case 0:
 		/* Not branching from any existing branch */
 		if (explicit_tracking)
-			die("Cannot setup tracking information; starting point is not a branch.");
+			die(_(upstream_not_branch), start_name);
 		break;
 	case 1:
 		/* Unique completion -- good, only if it is a real branch */
 		if (prefixcmp(real_ref, "refs/heads/") &&
 		    prefixcmp(real_ref, "refs/remotes/")) {
 			if (explicit_tracking)
-				die("Cannot setup tracking information; starting point is not a branch.");
+				die(_(upstream_not_branch), start_name);
 			else
 				real_ref = NULL;
 		}
