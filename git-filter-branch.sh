@@ -199,6 +199,7 @@ t)
 	test -d "$tempdir" &&
 		die "$tempdir already exists, please remove it"
 esac
+orig_dir=$(pwd)
 mkdir -p "$tempdir/t" &&
 tempdir="$(cd "$tempdir"; pwd)" &&
 cd "$tempdir/t" &&
@@ -206,7 +207,7 @@ workdir="$(pwd)" ||
 die ""
 
 # Remove tempdir on exit
-trap 'cd ../..; rm -rf "$tempdir"' 0
+trap 'cd "$orig_dir"; rm -rf "$tempdir"' 0
 
 ORIG_GIT_DIR="$GIT_DIR"
 ORIG_GIT_WORK_TREE="$GIT_WORK_TREE"
@@ -469,7 +470,7 @@ if [ "$filter_tag_name" ]; then
 	done
 fi
 
-cd ../..
+cd "$orig_dir"
 rm -rf "$tempdir"
 
 trap - 0
