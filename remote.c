@@ -49,6 +49,7 @@ static int branches_nr;
 
 static struct branch *current_branch;
 static const char *default_remote_name;
+static const char *pushremote_name;
 static int explicit_default_remote_name;
 
 static struct rewrites rewrites;
@@ -357,13 +358,16 @@ static int handle_config(const char *key, const char *value, void *cb)
 			return 0;
 		branch = make_branch(name, subkey - name);
 		if (!strcmp(subkey, ".remote")) {
-			if (!value)
-				return config_error_nonbool(key);
-			branch->remote_name = xstrdup(value);
+			if (git_config_string(&branch->remote_name, key, value))
+				return -1;
 			if (branch == current_branch) {
 				default_remote_name = branch->remote_name;
 				explicit_default_remote_name = 1;
 			}
+		} else if (!strcmp(subkey, ".pushremote")) {
+			if (branch == current_branch)
+				if (git_config_string(&pushremote_name, key, value))
+					return -1;
 		} else if (!strcmp(subkey, ".merge")) {
 			if (!value)
 				return config_error_nonbool(key);
@@ -389,9 +393,16 @@ static int handle_config(const char *key, const char *value, void *cb)
 			add_instead_of(rewrite, xstrdup(value));
 		}
 	}
+
 	if (prefixcmp(key,  "remote."))
 		return 0;
 	name = key + 7;
+
+	/* Handle remote.* variables */
+	if (!strcmp(name, "pushdefault"))
+		return git_config_string(&pushremote_name, key, value);
+
+	/* Handle remote.<name>.* variables */
 	if (*name == '/') {
 		warning("Config remote shorthand cannot begin with '/': %s",
 			name);
@@ -671,17 +682,21 @@ static int valid_remote_nick(const char *name)
 	return !strchr(name, '/'); /* no slash */
 }
 
-struct remote *remote_get(const char *name)
+static struct remote *remote_get_1(const char *name, const char *pushremote_name)
 {
 	struct remote *ret;
 	int name_given = 0;
 
-	read_config();
 	if (name)
 		name_given = 1;
 	else {
-		name = default_remote_name;
-		name_given = explicit_default_remote_name;
+		if (pushremote_name) {
+			name = pushremote_name;
+			name_given = 1;
+		} else {
+			name = default_remote_name;
+			name_given = explicit_default_remote_name;
+		}
 	}
 
 	ret = make_remote(name, 0);
@@ -698,6 +713,18 @@ struct remote *remote_get(const char *name)
 	ret->fetch = parse_fetch_refspec(ret->fetch_refspec_nr, ret->fetch_refspec);
 	ret->push = parse_push_refspec(ret->push_refspec_nr, ret->push_refspec);
 	return ret;
+}
+
+struct remote *remote_get(const char *name)
+{
+	read_config();
+	return remote_get_1(name, NULL);
+}
+
+struct remote *pushremote_get(const char *name)
+{
+	read_config();
+	return remote_get_1(name, pushremote_name);
 }
 
 int remote_is_configured(const char *name)
