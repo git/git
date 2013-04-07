@@ -719,8 +719,7 @@ enum sharedrepo {
 	PERM_EVERYBODY      = 0664
 };
 int git_config_perm(const char *var, const char *value);
-int set_shared_perm(const char *path, int mode);
-#define adjust_shared_perm(path) set_shared_perm((path), 0)
+int adjust_shared_perm(const char *path);
 int safe_create_leading_directories(char *path);
 int safe_create_leading_directories_const(const char *path);
 int mkdir_in_gitdir(const char *path);
