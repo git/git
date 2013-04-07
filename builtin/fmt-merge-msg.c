@@ -287,10 +287,10 @@ static void credit_people(struct strbuf *out,
 	const char *me;
 
 	if (kind == 'a') {
-		label = "\n# By ";
+		label = "By";
 		me = git_author_info(IDENT_NO_DATE);
 	} else {
-		label = "\n# Via ";
+		label = "Via";
 		me = git_committer_info(IDENT_NO_DATE);
 	}
 
@@ -300,7 +300,7 @@ static void credit_people(struct strbuf *out,
 	     (me = skip_prefix(me, them->items->string)) != NULL &&
 	     skip_prefix(me, " <")))
 		return;
-	strbuf_addstr(out, label);
+	strbuf_addf(out, "\n%c %s ", comment_line_char, label);
 	add_people_count(out, them);
 }
 

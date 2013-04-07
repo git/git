@@ -180,6 +180,24 @@ test_expect_success 'merge.log=5 shows all 5 commits' '
 	test_cmp expected actual
 '
 
+test_expect_success '--log=5 with custom comment character' '
+	cat >expected <<-EOF &&
+	Merge branch ${apos}left${apos}
+
+	/ By Another Author (3) and A U Thor (2)
+	/ Via Another Committer
+	* left:
+	  Left #5
+	  Left #4
+	  Left #3
+	  Common #2
+	  Common #1
+	EOF
+
+	git -c core.commentchar="/" fmt-merge-msg --log=5 <.git/FETCH_HEAD >actual &&
+	test_cmp expected actual
+'
+
 test_expect_success 'merge.log=0 disables shortlog' '
 	echo "Merge branch ${apos}left${apos}" >expected
 	git -c merge.log=0 fmt-merge-msg <.git/FETCH_HEAD >actual &&
