@@ -115,7 +115,7 @@ test_expect_success 'update bookmark' '
   git push
   ) &&
 
-  hg -R hgrepo bookmarks | grep "devel\s\+3:"
+  hg -R hgrepo bookmarks | egrep "devel[	 ]+3:"
 '
 
 test_done
