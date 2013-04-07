@@ -57,7 +57,7 @@ static int parse_bundle_header(int fd, struct bundle_header *header,
 		 * followed by SP and subject line.
 		 */
 		if (get_sha1_hex(buf.buf, sha1) ||
-		    (40 <= buf.len && !isspace(buf.buf[40])) ||
+		    (buf.len > 40 && !isspace(buf.buf[40])) ||
 		    (!is_prereq && buf.len <= 40)) {
 			if (report_path)
 				error(_("unrecognized header: %s%s (%d)"),
