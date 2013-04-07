@@ -622,6 +622,14 @@ static void add_header(const char *value)
 static int thread;
 static int do_signoff;
 static const char *signature = git_version_string;
+static int config_cover_letter;
+
+enum {
+	COVER_UNSET,
+	COVER_OFF,
+	COVER_ON,
+	COVER_AUTO
+};
 
 static int git_format_config(const char *var, const char *value, void *cb)
 {
@@ -683,6 +691,14 @@ static int git_format_config(const char *var, const char *value, void *cb)
 	}
 	if (!strcmp(var, "format.signature"))
 		return git_config_string(&signature, var, value);
+	if (!strcmp(var, "format.coverletter")) {
+		if (value && !strcasecmp(value, "auto")) {
+			config_cover_letter = COVER_AUTO;
+			return 0;
+		}
+		config_cover_letter = git_config_bool(var, value) ? COVER_ON : COVER_OFF;
+		return 0;
+	}
 
 	return git_log_config(var, value, cb);
 }
@@ -1074,7 +1090,7 @@ int cmd_format_patch(int argc, const char **argv, const char *prefix)
 	int start_number = -1;
 	int just_numbers = 0;
 	int ignore_if_in_upstream = 0;
-	int cover_letter = 0;
+	int cover_letter = -1;
 	int boundary_count = 0;
 	int no_binary_diff = 0;
 	struct commit *origin = NULL, *head = NULL;
@@ -1309,11 +1325,6 @@ int cmd_format_patch(int argc, const char **argv, const char *prefix)
 	 */
 	rev.show_root_diff = 1;
 
-	if (cover_letter) {
-		if (!branch_name)
-			branch_name = find_branch_name(&rev);
-	}
-
 	if (ignore_if_in_upstream) {
 		/* Don't say anything if head and upstream are the same. */
 		if (rev.pending.nr == 2) {
@@ -1354,6 +1365,13 @@ int cmd_format_patch(int argc, const char **argv, const char *prefix)
 		numbered = 1;
 	if (numbered)
 		rev.total = total + start_number - 1;
+	if (cover_letter == -1) {
+		if (config_cover_letter == COVER_AUTO)
+			cover_letter = (total > 1);
+		else
+			cover_letter = (config_cover_letter == COVER_ON);
+	}
+
 	if (in_reply_to || thread || cover_letter)
 		rev.ref_message_ids = xcalloc(1, sizeof(struct string_list));
 	if (in_reply_to) {
@@ -1365,6 +1383,8 @@ int cmd_format_patch(int argc, const char **argv, const char *prefix)
 	if (cover_letter) {
 		if (thread)
 			gen_message_id(&rev, "cover");
+		if (!branch_name)
+			branch_name = find_branch_name(&rev);
 		make_cover_letter(&rev, use_stdout,
 				  origin, nr, list, head, branch_name, quiet);
 		total++;
