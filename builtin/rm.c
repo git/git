@@ -110,7 +110,7 @@ static int check_local_mod(unsigned char *head, int index_only)
 		ce = active_cache[pos];
 
 		if (lstat(ce->name, &st) < 0) {
-			if (errno != ENOENT)
+			if (errno != ENOENT && errno != ENOTDIR)
 				warning("'%s': %s", ce->name, strerror(errno));
 			/* It already vanished from the working tree */
 			continue;
