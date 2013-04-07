@@ -155,6 +155,11 @@ static int same_entry(struct name_entry *a, struct name_entry *b)
 		a->mode == b->mode;
 }
 
+static int both_empty(struct name_entry *a, struct name_entry *b)
+{
+	return !(a->sha1 || b->sha1);
+}
+
 static struct merge_list *create_entry(unsigned stage, unsigned mode, const unsigned char *sha1, const char *path)
 {
 	struct merge_list *res = xcalloc(1, sizeof(*res));
@@ -297,13 +302,10 @@ static void unresolved(const struct traverse_info *info, struct name_entry n[3])
 static int threeway_callback(int n, unsigned long mask, unsigned long dirmask, struct name_entry *entry, struct traverse_info *info)
 {
 	/* Same in both? */
-	if (same_entry(entry+1, entry+2)) {
-		if (entry[0].sha1) {
-			/* Modified identically */
-			resolve(info, NULL, entry+1);
-			return mask;
-		}
-		/* "Both added the same" is left unresolved */
+	if (same_entry(entry+1, entry+2) || both_empty(entry+0, entry+2)) {
+		/* Modified, added or removed identically */
+		resolve(info, NULL, entry+1);
+		return mask;
 	}
 
 	if (same_entry(entry+0, entry+1)) {
@@ -319,12 +321,10 @@ static int threeway_callback(int n, unsigned long mask, unsigned long dirmask, s
 		 */
 	}
 
-	if (same_entry(entry+0, entry+2)) {
-		if (entry[1].sha1 && !S_ISDIR(entry[1].mode)) {
-			/* We modified, they did not touch -- take ours */
-			resolve(info, NULL, entry+1);
-			return mask;
-		}
+	if (same_entry(entry+0, entry+2) || both_empty(entry+0, entry+2)) {
+		/* We added, modified or removed, they did not touch -- take ours */
+		resolve(info, NULL, entry+1);
+		return mask;
 	}
 
 	unresolved(info, entry);

@@ -26,8 +26,6 @@ EXPECTED
 
 test_expect_success 'file add !A, B' '
 	cat >expected <<\EXPECTED &&
-added in local
-  our    100644 43d5a8ed6ef6c00ff775008633f95787d088285d ONE
 EXPECTED
 
 	git reset --hard initial &&
@@ -38,9 +36,6 @@ EXPECTED
 
 test_expect_success 'file add A, B (same)' '
 	cat >expected <<\EXPECTED &&
-added in both
-  our    100644 43d5a8ed6ef6c00ff775008633f95787d088285d ONE
-  their  100644 43d5a8ed6ef6c00ff775008633f95787d088285d ONE
 EXPECTED
 
 	git reset --hard initial &&
@@ -181,9 +176,6 @@ AAA" &&
 
 test_expect_success 'file remove A, !B' '
 	cat >expected <<\EXPECTED &&
-removed in local
-  base   100644 43d5a8ed6ef6c00ff775008633f95787d088285d ONE
-  their  100644 43d5a8ed6ef6c00ff775008633f95787d088285d ONE
 EXPECTED
 
 	git reset --hard initial &&
@@ -283,8 +275,6 @@ test_expect_success 'turn tree to file' '
 	test_commit "make-file" "dir" "CCC" &&
 	git merge-tree add-tree add-another-tree make-file >actual &&
 	cat >expect <<-\EOF &&
-	added in local
-	  our    100644 ba629238ca89489f2b350e196ca445e09d8bb834 dir/another
 	removed in remote
 	  base   100644 43d5a8ed6ef6c00ff775008633f95787d088285d dir/path
 	  our    100644 43d5a8ed6ef6c00ff775008633f95787d088285d dir/path
