@@ -183,21 +183,24 @@ def get_filechanges(cur, prev):
 
     changes = cur.changes_from(prev)
 
+    def u(s):
+        return s.encode('utf-8')
+
     for path, fid, kind in changes.added:
-        modified[path] = fid
+        modified[u(path)] = fid
     for path, fid, kind in changes.removed:
-        removed[path] = None
+        removed[u(path)] = None
     for path, fid, kind, mod, _ in changes.modified:
-        modified[path] = fid
+        modified[u(path)] = fid
     for oldpath, newpath, fid, kind, mod, _ in changes.renamed:
-        removed[oldpath] = None
+        removed[u(oldpath)] = None
         if kind == 'directory':
             lst = cur.list_files(from_dir=newpath, recursive=True)
             for path, file_class, kind, fid, entry in lst:
                 if kind != 'directory':
-                    modified[newpath + '/' + path] = fid
+                    modified[u(newpath + '/' + path)] = fid
         else:
-            modified[newpath] = fid
+            modified[u(newpath)] = fid
 
     return modified, removed
 
@@ -223,7 +226,7 @@ def export_files(tree, files):
             # is the blog already exported?
             if h in filenodes:
                 mark = filenodes[h]
-                final.append((mode, mark, path.encode('utf-8')))
+                final.append((mode, mark, path))
                 continue
 
             d = tree.get_file_text(fid)
@@ -240,7 +243,7 @@ def export_files(tree, files):
         print "data %d" % len(d)
         print d
 
-        final.append((mode, mark, path.encode('utf-8')))
+        final.append((mode, mark, path))
 
     return final
 

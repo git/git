@@ -177,6 +177,13 @@ test_expect_success 'fetch utf-8 filenames' '
 
   echo test >> "áéíóú" &&
   bzr add "áéíóú" &&
+  echo test >> "îø∫∆" &&
+  bzr add "îø∫∆" &&
+  bzr commit -m utf-8 &&
+  echo test >> "áéíóú" &&
+  bzr commit -m utf-8 &&
+  bzr rm "îø∫∆" &&
+  bzr mv "áéíóú" "åß∂" &&
   bzr commit -m utf-8
   ) &&
 
@@ -186,7 +193,7 @@ test_expect_success 'fetch utf-8 filenames' '
   git ls-files > ../actual
   ) &&
 
-  echo "\"\\303\\241\\303\\251\\303\\255\\303\\263\\303\\272\"" > expected &&
+  echo "\"\\303\\245\\303\\237\\342\\210\\202\"" > expected &&
   test_cmp expected actual
 '
 
