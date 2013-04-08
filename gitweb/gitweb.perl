@@ -8056,7 +8056,7 @@ sub git_feed {
 	return if ($cgi->request_method() eq 'HEAD');
 
 	# header variables
-	my $title = "$site_name - $project/$action";
+	my $title = to_utf8($site_name) . " - " . to_utf8($project) . "/$action";
 	my $feed_type = 'log';
 	if (defined $hash) {
 		$title .= " - '$hash'";
