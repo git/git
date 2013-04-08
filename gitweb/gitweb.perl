@@ -2258,7 +2258,7 @@ sub format_extended_diff_header_line {
 
 # format from-file/to-file diff header
 sub format_diff_from_to_header {
-	my ($from_line, $to_line, $diffinfo, $from, $to, @parents) = @_;
+	my ($from_line, $to_line, $diffinfo, $from, $to, $hash, @parents) = @_;
 	my $line;
 	my $result = '';
 
@@ -2324,7 +2324,7 @@ sub format_diff_from_to_header {
 
 # create note for patch simplified by combined diff
 sub format_diff_cc_simplified {
-	my ($diffinfo, @parents) = @_;
+	my ($diffinfo, $hash, @parents) = @_;
 	my $result = '';
 
 	$result .= "<div class=\"diff header\">" .
@@ -3592,7 +3592,8 @@ sub parse_ls_tree_line {
 
 # generates _two_ hashes, references to which are passed as 2 and 3 argument
 sub parse_from_to_diffinfo {
-	my ($diffinfo, $from, $to, @parents) = @_;
+	my ($diffinfo, $from, $to, $hash, @parents) = @_;
+	my ($hash_parent) = $parents[0];
 
 	if ($diffinfo->{'nparents'}) {
 		# combined diff
@@ -5312,7 +5313,7 @@ sub git_patchset_body {
 			if ($is_combined) {
 				while ($to_name ne $diffinfo->{'to_file'}) {
 					print "<div class=\"patch\" id=\"patch". ($patch_idx+1) ."\">\n" .
-					      format_diff_cc_simplified($diffinfo, @hash_parents) .
+					      format_diff_cc_simplified($diffinfo, $hash, @hash_parents) .
 					      "</div>\n";  # class="patch"
 
 					$patch_idx++;
@@ -5324,7 +5325,7 @@ sub git_patchset_body {
 			}
 
 			# modifies %from, %to hashes
-			parse_from_to_diffinfo($diffinfo, \%from, \%to, @hash_parents);
+			parse_from_to_diffinfo($diffinfo, \%from, \%to, $hash, @hash_parents);
 
 			# this is first patch for raw difftree line with $patch_idx index
 			# we index @$difftree array from 0, but number patches from 1
@@ -5367,7 +5368,7 @@ sub git_patchset_body {
 
 		print format_diff_from_to_header($last_patch_line, $patch_line,
 		                                 $diffinfo, \%from, \%to,
-		                                 @hash_parents);
+		                                 $hash, @hash_parents);
 
 		# the patch itself
 	LINE:
@@ -5404,7 +5405,7 @@ sub git_patchset_body {
 
 		# generate anchor for "patch" links in difftree / whatchanged part
 		print "<div class=\"patch\" id=\"patch". ($patch_idx+1) ."\">\n" .
-		      format_diff_cc_simplified($diffinfo, @hash_parents) .
+		      format_diff_cc_simplified($diffinfo, $hash, @hash_parents) .
 		      "</div>\n";  # class="patch"
 
 		$patch_number++;
