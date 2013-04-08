@@ -4165,7 +4165,7 @@ sub git_footer_html {
 		print qq!<script type="text/javascript">\n!.
 		      qq!window.onload = function () {\n!;
 		if (gitweb_check_feature('javascript-actions')) {
-			print qq!	fixLinks();\n!;
+			print qq!	fixLinks('$my_url');\n!;
 		}
 		if ($jstimezone && $tz_cookie && $datetime_class) {
 			print qq!	var tz_cookie = { name: '$tz_cookie', expires: 14, path: '/' };\n!. # in days

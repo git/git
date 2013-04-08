@@ -29,11 +29,11 @@ var jsExceptionsRe = /[;?]js=[01](#.*)?$/;
  *
  * @globals jsExceptionsRe
  */
-function fixLinks() {
+function fixLinks(baseurl) {
 	var allLinks = document.getElementsByTagName("a") || document.links;
 	for (var i = 0, len = allLinks.length; i < len; i++) {
 		var link = allLinks[i];
-		if (!jsExceptionsRe.test(link)) {
+		if (!jsExceptionsRe.test(link) && !link.href.indexOf(baseurl)) {
 			link.href = link.href.replace(/(#|$)/,
 				(link.href.indexOf('?') === -1 ? '?' : ';') + 'js=1$1');
 		}
