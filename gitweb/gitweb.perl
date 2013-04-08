@@ -3823,7 +3823,7 @@ sub blob_contenttype {
 	my ($fd, $file_name, $type) = @_;
 
 	$type ||= blob_mimetype($fd, $file_name);
-	if ($type eq 'text/plain' && defined $default_text_plain_charset) {
+	if (($type =~ m!^text/\w[-\w]*$! || $type =~ m!^\w[-\w]*/\w[-\w]*\+xml$!) && defined $default_text_plain_charset) {
 		$type .= "; charset=$default_text_plain_charset";
 	}
 
@@ -7637,7 +7637,9 @@ sub git_blobdiff {
 			last if $line =~ m!^\+\+\+!;
 		}
 		local $/ = undef;
+		binmode STDOUT, ':raw';
 		print <$fd>;
+		binmode STDOUT, ':utf8'; # as set at the beginning of gitweb.cgi
 		close $fd;
 	}
 }
@@ -7884,12 +7886,16 @@ sub git_commitdiff {
 
 	} elsif ($format eq 'plain') {
 		local $/ = undef;
+		binmode STDOUT, ':raw';
 		print <$fd>;
+		binmode STDOUT, ':utf8'; # as set at the beginning of gitweb.cgi
 		close $fd
 			or print "Reading git-diff-tree failed\n";
 	} elsif ($format eq 'patch') {
 		local $/ = undef;
+		binmode STDOUT, ':raw';
 		print <$fd>;
+		binmode STDOUT, ':utf8'; # as set at the beginning of gitweb.cgi
 		close $fd
 			or print "Reading git-format-patch failed\n";
 	}
