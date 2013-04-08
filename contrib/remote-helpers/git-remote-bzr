@@ -25,6 +25,7 @@ bzrlib.plugin.load_plugins()
 
 import bzrlib.generate_ids
 import bzrlib.transport
+import bzrlib.errors
 
 import sys
 import os
@@ -335,12 +336,9 @@ def export_branch(branch, name):
 
 def export_tag(repo, name):
     global tags
-    try:
-        print "reset refs/tags/%s" % name
-        print "from :%u" % rev_to_mark(tags[name])
-        print
-    except KeyError:
-        warn("TODO: fetch tag '%s'" % name)
+    print "reset refs/tags/%s" % name
+    print "from :%u" % rev_to_mark(tags[name])
+    print
 
 def do_import(parser):
     global dirname
@@ -660,16 +658,25 @@ def do_capabilities(parser):
 
     print
 
+def ref_is_valid(name):
+    return not True in [c in name for c in '~^: \\']
+
 def do_list(parser):
     global tags
     print "? refs/heads/%s" % 'master'
 
-    history = parser.repo.revision_history()
-    for tag, revid in parser.repo.tags.get_tag_dict().items():
-        if revid not in history:
+    branch = parser.repo
+    branch.lock_read()
+    for tag, revid in branch.tags.get_tag_dict().items():
+        try:
+            branch.revision_id_to_dotted_revno(revid)
+        except bzrlib.errors.NoSuchRevision:
+            continue
+        if not ref_is_valid(tag):
             continue
         print "? refs/tags/%s" % tag
         tags[tag] = revid
+    branch.unlock()
     print "@refs/heads/%s HEAD" % 'master'
     print
 
