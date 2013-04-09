@@ -232,11 +232,21 @@ static void strip_trailing_slashes(char *dir)
 static int add_one_reference(struct string_list_item *item, void *cb_data)
 {
 	char *ref_git;
+	const char *repo;
 	struct strbuf alternate = STRBUF_INIT;
 
-	/* Beware: real_path() and mkpath() return static buffer */
+	/* Beware: read_gitfile(), real_path() and mkpath() return static buffer */
 	ref_git = xstrdup(real_path(item->string));
-	if (is_directory(mkpath("%s/.git/objects", ref_git))) {
+
+	repo = read_gitfile(ref_git);
+	if (!repo)
+		repo = read_gitfile(mkpath("%s/.git", ref_git));
+	if (repo) {
+		free(ref_git);
+		ref_git = xstrdup(repo);
+	}
+
+	if (!repo && is_directory(mkpath("%s/.git/objects", ref_git))) {
 		char *ref_git_git = mkpathdup("%s/.git", ref_git);
 		free(ref_git);
 		ref_git = ref_git_git;

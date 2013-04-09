@@ -185,4 +185,17 @@ test_expect_success 'fetch with incomplete alternates' '
 	! grep " want $tag_object" "$U.K"
 '
 
+test_expect_success 'clone using repo with gitfile as a reference' '
+	git clone --separate-git-dir=L A M &&
+	git clone --reference=M A N &&
+	echo "$base_dir/L/objects" >expected &&
+	test_cmp expected "$base_dir/N/.git/objects/info/alternates"
+'
+
+test_expect_success 'clone using repo pointed at by gitfile as reference' '
+	git clone --reference=M/.git A O &&
+	echo "$base_dir/L/objects" >expected &&
+	test_cmp expected "$base_dir/O/.git/objects/info/alternates"
+'
+
 test_done
