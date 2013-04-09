@@ -86,7 +86,10 @@ appropriately before running "make".
 
 --immediate::
 	This causes the test to immediately exit upon the first
-	failed test.
+	failed test. Cleanup commands requested with
+	test_when_finished are not executed if the test failed,
+	in order to keep the state for inspection by the tester
+	to diagnose the bug.
 
 --long-tests::
 	This causes additional long-running tests to be run (where
