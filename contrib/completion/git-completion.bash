@@ -210,11 +210,11 @@ __gitcomp ()
 		local c i=0 IFS=$' \t\n'
 		for c in $1; do
 			c="$c${4-}"
-			case $c in
-			--*=*|*.) ;;
-			*) c="$c " ;;
-			esac
 			if [[ $c == "$cur_"* ]]; then
+				case $c in
+				--*=*|*.) ;;
+				*) c="$c " ;;
+				esac
 				COMPREPLY[i++]="${2-}$c"
 			fi
 		done
