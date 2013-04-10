@@ -69,6 +69,7 @@ run_completion ()
 	local -a COMPREPLY _words
 	local _cword
 	_words=( $1 )
+	test "${1: -1}" == ' ' && _words+=('')
 	(( _cword = ${#_words[@]} - 1 ))
 	__git_wrap__git_main && print_comp
 }
@@ -148,7 +149,7 @@ test_expect_success '__gitcomp - suffix' '
 '
 
 test_expect_success 'basic' '
-	run_completion "git \"\"" &&
+	run_completion "git " &&
 	# built-in
 	grep -q "^add \$" out &&
 	# script
