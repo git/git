@@ -46,7 +46,7 @@ static void sendline(struct helper_data *helper, struct strbuf *buffer)
 		die_errno("Full write to remote helper failed");
 }
 
-static int recvline_fh(FILE *helper, struct strbuf *buffer)
+static int recvline_fh(FILE *helper, struct strbuf *buffer, const char *name)
 {
 	strbuf_reset(buffer);
 	if (debug)
@@ -54,7 +54,7 @@ static int recvline_fh(FILE *helper, struct strbuf *buffer)
 	if (strbuf_getline(buffer, helper, '\n') == EOF) {
 		if (debug)
 			fprintf(stderr, "Debug: Remote helper quit.\n");
-		die("Reading from remote helper failed");
+		die("Reading from helper 'git-remote-%s' failed", name);
 	}
 
 	if (debug)
@@ -64,7 +64,7 @@ static int recvline_fh(FILE *helper, struct strbuf *buffer)
 
 static int recvline(struct helper_data *helper, struct strbuf *buffer)
 {
-	return recvline_fh(helper->out, buffer);
+	return recvline_fh(helper->out, buffer, helper->name);
 }
 
 static void xchgline(struct helper_data *helper, struct strbuf *buffer)
@@ -536,7 +536,7 @@ static int process_connect_service(struct transport *transport,
 		goto exit;
 
 	sendline(data, &cmdbuf);
-	recvline_fh(input, &cmdbuf);
+	recvline_fh(input, &cmdbuf, name);
 	if (!strcmp(cmdbuf.buf, "")) {
 		data->no_disconnect_req = 1;
 		if (debug)
