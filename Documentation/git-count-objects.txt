@@ -8,7 +8,7 @@ git-count-objects - Count unpacked number of objects and their disk consumption
 SYNOPSIS
 --------
 [verse]
-'git count-objects' [-v]
+'git count-objects' [-v] [-H | --human-readable]
 
 DESCRIPTION
 -----------
@@ -24,11 +24,11 @@ OPTIONS
 +
 count: the number of loose objects
 +
-size: disk space consumed by loose objects, in KiB
+size: disk space consumed by loose objects, in KiB (unless -H is specified)
 +
 in-pack: the number of in-pack objects
 +
-size-pack: disk space consumed by the packs, in KiB
+size-pack: disk space consumed by the packs, in KiB (unless -H is specified)
 +
 prune-packable: the number of loose objects that are also present in
 the packs. These objects could be pruned using `git prune-packed`.
@@ -36,7 +36,13 @@ the packs. These objects could be pruned using `git prune-packed`.
 garbage: the number of files in object database that are not valid
 loose objects nor valid packs
 +
-size-garbage: disk space consumed by garbage files, in KiB
+size-garbage: disk space consumed by garbage files, in KiB (unless -H is
+specified)
+
+-H::
+--human-readable::
+
+Print sizes in human readable format
 
 GIT
 ---
