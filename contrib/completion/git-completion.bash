@@ -53,19 +53,6 @@ __gitdir ()
 	fi
 }
 
-__gitcomp_1 ()
-{
-	local c IFS=$' \t\n'
-	for c in $1; do
-		c="$c$2"
-		case $c in
-		--*=*|*.) ;;
-		*) c="$c " ;;
-		esac
-		printf '%s\n' "$c"
-	done
-}
-
 # The following function is based on code from:
 #
 #   bash_completion - programmable completion functions for bash 3.2+
@@ -220,8 +207,17 @@ __gitcomp ()
 	--*=)
 		;;
 	*)
-		local IFS=$'\n'
-		__gitcompadd "$(__gitcomp_1 "${1-}" "${4-}")" "${2-}" "$cur_" ""
+		local c i=0 IFS=$' \t\n'
+		for c in $1; do
+			c="$c${4-}"
+			case $c in
+			--*=*|*.) ;;
+			*) c="$c " ;;
+			esac
+			if [[ $c == "$cur_"* ]]; then
+				COMPREPLY[i++]="${2-}$c"
+			fi
+		done
 		;;
 	esac
 }
