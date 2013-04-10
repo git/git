@@ -105,6 +105,23 @@ test_gitcomp ()
 	test_cmp expected out
 }
 
+# Test __gitcomp_nl
+# Arguments are:
+# 1: current word (cur)
+# -: the rest are passed to __gitcomp_nl
+test_gitcomp_nl ()
+{
+	local -a COMPREPLY &&
+	sed -e 's/Z$//' >expected &&
+	cur="$1" &&
+	shift &&
+	__gitcomp_nl "$@" &&
+	print_comp &&
+	test_cmp expected out
+}
+
+invalid_variable_name='${foo.bar}'
+
 test_expect_success '__gitcomp - trailing space - options' '
 	test_gitcomp "--re" "--dry-run --reuse-message= --reedit-message=
 		--reset-author" <<-EOF
@@ -146,6 +163,49 @@ test_expect_success '__gitcomp - suffix' '
 	branch.master.Z
 	branch.maint.Z
 	EOF
+'
+
+test_expect_failure '__gitcomp - doesnt fail because of invalid variable name' '
+	__gitcomp "$invalid_variable_name"
+'
+
+read -r -d "" refs <<-\EOF
+maint
+master
+next
+pu
+EOF
+
+test_expect_success '__gitcomp_nl - trailing space' '
+	test_gitcomp_nl "m" "$refs" <<-EOF
+	maint Z
+	master Z
+	EOF
+'
+
+test_expect_success '__gitcomp_nl - prefix' '
+	test_gitcomp_nl "--fixup=m" "$refs" "--fixup=" "m" <<-EOF
+	--fixup=maint Z
+	--fixup=master Z
+	EOF
+'
+
+test_expect_success '__gitcomp_nl - suffix' '
+	test_gitcomp_nl "branch.ma" "$refs" "branch." "ma" "." <<-\EOF
+	branch.maint.Z
+	branch.master.Z
+	EOF
+'
+
+test_expect_success '__gitcomp_nl - no suffix' '
+	test_gitcomp_nl "ma" "$refs" "" "ma" "" <<-\EOF
+	maintZ
+	masterZ
+	EOF
+'
+
+test_expect_failure '__gitcomp_nl - doesnt fail because of invalid variable name' '
+	__gitcomp_nl "$invalid_variable_name"
 '
 
 test_expect_success 'basic' '
