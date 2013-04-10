@@ -197,11 +197,16 @@ fi
 
 __gitcompadd ()
 {
-	COMPREPLY=($(compgen -W "$1" -P "$2" -S "$4" -- "$3"))
+	local i=0
+	for x in $1; do
+		if [[ "$x" == "$3"* ]]; then
+			COMPREPLY[i++]="$2$x$4"
+		fi
+	done
 }
 
-# Generates completion reply with compgen, appending a space to possible
-# completion words, if necessary.
+# Generates completion reply, appending a space to possible completion words,
+# if necessary.
 # It accepts 1 to 4 arguments:
 # 1: List of possible completion words.
 # 2: A prefix to be added to each possible completion word (optional).
@@ -221,8 +226,8 @@ __gitcomp ()
 	esac
 }
 
-# Generates completion reply with compgen from newline-separated possible
-# completion words by appending a space to all of them.
+# Generates completion reply from newline-separated possible completion words
+# by appending a space to all of them.
 # It accepts 1 to 4 arguments:
 # 1: List of possible completion words, separated by a single newline.
 # 2: A prefix to be added to each possible completion word (optional).

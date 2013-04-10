@@ -165,7 +165,7 @@ test_expect_success '__gitcomp - suffix' '
 	EOF
 '
 
-test_expect_failure '__gitcomp - doesnt fail because of invalid variable name' '
+test_expect_success '__gitcomp - doesnt fail because of invalid variable name' '
 	__gitcomp "$invalid_variable_name"
 '
 
@@ -204,7 +204,7 @@ test_expect_success '__gitcomp_nl - no suffix' '
 	EOF
 '
 
-test_expect_failure '__gitcomp_nl - doesnt fail because of invalid variable name' '
+test_expect_success '__gitcomp_nl - doesnt fail because of invalid variable name' '
 	__gitcomp_nl "$invalid_variable_name"
 '
 
@@ -332,7 +332,7 @@ test_expect_success 'complete tree filename with spaces' '
 	EOF
 '
 
-test_expect_failure 'complete tree filename with metacharacters' '
+test_expect_success 'complete tree filename with metacharacters' '
 	echo content >"name with \${meta}" &&
 	git add . &&
 	git commit -m meta &&
