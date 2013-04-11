@@ -244,7 +244,7 @@ for gitweb (in gitweb/README), and gitweb.conf(5) manpage.
   through the GITWEB_CONFIG_SYSTEM environment variable.
 
   Note that if per-instance configuration file exists, then system-wide
-  configuration is _not used at all_.  This is quite untypical and suprising
+  configuration is _not used at all_.  This is quite untypical and surprising
   behavior.  On the other hand changing current behavior would break backwards
   compatibility and can lead to unexpected changes in gitweb behavior.
   Therefore gitweb also looks for common system-wide configuration file,

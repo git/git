@@ -86,7 +86,7 @@ begins with `ext::`.  Examples:
 	edit .ssh/config.
 
 "ext::socat -t3600 - ABSTRACT-CONNECT:/git-server %G/somerepo"::
-	Represents repository with path /somerepo accessable over
+	Represents repository with path /somerepo accessible over
 	git protocol at abstract namespace address /git-server.
 
 "ext::git-server-alias foo %G/repo"::

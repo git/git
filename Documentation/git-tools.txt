@@ -109,7 +109,7 @@ Others
 
    - *git.el* (contrib/)
 
-   This is an Emacs interface for Git. The user interface is modeled on
+   This is an Emacs interface for Git. The user interface is modelled on
    pcl-cvs. It has been developed on Emacs 21 and will probably need some
    tweaking to work on XEmacs.
 

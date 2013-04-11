@@ -55,7 +55,7 @@ Functions
 	initial, empty state.
 
 `argv_array_detach`::
-	Detach the argv array from the `struct argv_array`, transfering
+	Detach the argv array from the `struct argv_array`, transferring
 	ownership of the allocated array and strings.
 
 `argv_array_free_detached`::
