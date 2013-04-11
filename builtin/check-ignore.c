@@ -5,7 +5,7 @@
 #include "pathspec.h"
 #include "parse-options.h"
 
-static int quiet, verbose, stdin_paths;
+static int quiet, verbose, stdin_paths, show_non_matching;
 static const char * const check_ignore_usage[] = {
 "git check-ignore [options] pathname...",
 "git check-ignore [options] --stdin < <list-of-paths>",
@@ -22,21 +22,28 @@ static const struct option check_ignore_options[] = {
 		    N_("read file names from stdin")),
 	OPT_BOOLEAN('z', NULL, &null_term_line,
 		    N_("input paths are terminated by a null character")),
+	OPT_BOOLEAN('n', "non-matching", &show_non_matching,
+		    N_("show non-matching input paths")),
 	OPT_END()
 };
 
 static void output_exclude(const char *path, struct exclude *exclude)
 {
-	char *bang  = exclude->flags & EXC_FLAG_NEGATIVE  ? "!" : "";
-	char *slash = exclude->flags & EXC_FLAG_MUSTBEDIR ? "/" : "";
+	char *bang  = (exclude && exclude->flags & EXC_FLAG_NEGATIVE)  ? "!" : "";
+	char *slash = (exclude && exclude->flags & EXC_FLAG_MUSTBEDIR) ? "/" : "";
 	if (!null_term_line) {
 		if (!verbose) {
 			write_name_quoted(path, stdout, '\n');
 		} else {
-			quote_c_style(exclude->el->src, NULL, stdout, 0);
-			printf(":%d:%s%s%s\t",
-			       exclude->srcpos,
-			       bang, exclude->pattern, slash);
+			if (exclude) {
+				quote_c_style(exclude->el->src, NULL, stdout, 0);
+				printf(":%d:%s%s%s\t",
+				       exclude->srcpos,
+				       bang, exclude->pattern, slash);
+			}
+			else {
+				printf("::\t");
+			}
 			quote_c_style(path, NULL, stdout, 0);
 			fputc('\n', stdout);
 		}
@@ -44,11 +51,14 @@ static void output_exclude(const char *path, struct exclude *exclude)
 		if (!verbose) {
 			printf("%s%c", path, '\0');
 		} else {
-			printf("%s%c%d%c%s%s%s%c%s%c",
-			       exclude->el->src, '\0',
-			       exclude->srcpos, '\0',
-			       bang, exclude->pattern, slash, '\0',
-			       path, '\0');
+			if (exclude)
+				printf("%s%c%d%c%s%s%s%c%s%c",
+				       exclude->el->src, '\0',
+				       exclude->srcpos, '\0',
+				       bang, exclude->pattern, slash, '\0',
+				       path, '\0');
+			else
+				printf("%c%c%c%s%c", '\0', '\0', '\0', path, '\0');
 		}
 	}
 }
@@ -89,15 +99,15 @@ static int check_ignore(const char *prefix, const char **pathspec)
 					? strlen(prefix) : 0, path);
 		full_path = check_path_for_gitlink(full_path);
 		die_if_path_beyond_symlink(full_path, prefix);
+		exclude = NULL;
 		if (!seen[i]) {
 			exclude = last_exclude_matching_path(&check, full_path,
 							     -1, &dtype);
-			if (exclude) {
-				if (!quiet)
-					output_exclude(path, exclude);
-				num_ignored++;
-			}
 		}
+		if (!quiet && (exclude || show_non_matching))
+			output_exclude(path, exclude);
+		if (exclude)
+			num_ignored++;
 	}
 	free(seen);
 	clear_directory(&dir);
@@ -161,6 +171,8 @@ int cmd_check_ignore(int argc, const char **argv, const char *prefix)
 		if (verbose)
 			die(_("cannot have both --quiet and --verbose"));
 	}
+	if (show_non_matching && !verbose)
+		die(_("--non-matching is only valid with --verbose"));
 
 	if (stdin_paths) {
 		num_ignored = check_ignore_stdin_paths(prefix);
