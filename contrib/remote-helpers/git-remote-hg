@@ -23,6 +23,10 @@ import urllib
 # If you want to switch to hg-git compatibility mode:
 # git config --global remote-hg.hg-git-compat true
 #
+# If you are not in hg-git-compat mode and want to disable the tracking of
+# named branches:
+# git config --global remote-hg.track-branches false
+#
 # git:
 # Sensible defaults for git.
 # hg bookmarks are exported as git branches, hg branches are prefixed
