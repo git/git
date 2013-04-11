@@ -625,6 +625,10 @@ def parse_commit(parser):
     if merge_mark:
         get_merge_files(repo, p1, p2, files)
 
+    # Check if the ref is supposed to be a named branch
+    if ref.startswith('refs/heads/branches/'):
+        extra['branch'] = ref[len('refs/heads/branches/'):]
+
     if mode == 'hg':
         i = data.find('\n--HG--\n')
         if i >= 0:
