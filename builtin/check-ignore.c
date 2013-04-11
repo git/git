@@ -107,10 +107,9 @@ static int check_ignore(struct path_exclude_check *check,
 static int check_ignore_stdin_paths(struct path_exclude_check *check, const char *prefix)
 {
 	struct strbuf buf, nbuf;
-	char **pathspec = NULL;
-	size_t nr = 0, alloc = 0;
+	char *pathspec[2] = { NULL, NULL };
 	int line_termination = null_term_line ? 0 : '\n';
-	int num_ignored;
+	int num_ignored = 0;
 
 	strbuf_init(&buf, 0);
 	strbuf_init(&nbuf, 0);
@@ -121,14 +120,10 @@ static int check_ignore_stdin_paths(struct path_exclude_check *check, const char
 				die("line is badly quoted");
 			strbuf_swap(&buf, &nbuf);
 		}
-		ALLOC_GROW(pathspec, nr + 1, alloc);
-		pathspec[nr] = xcalloc(strlen(buf.buf) + 1, sizeof(*buf.buf));
-		strcpy(pathspec[nr++], buf.buf);
+		pathspec[0] = buf.buf;
+		num_ignored += check_ignore(check, prefix, (const char **)pathspec);
+		maybe_flush_or_die(stdout, "check-ignore to stdout");
 	}
-	ALLOC_GROW(pathspec, nr + 1, alloc);
-	pathspec[nr] = NULL;
-	num_ignored = check_ignore(check, prefix, (const char **)pathspec);
-	maybe_flush_or_die(stdout, "attribute to stdout");
 	strbuf_release(&buf);
 	strbuf_release(&nbuf);
 	return num_ignored;

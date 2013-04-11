@@ -216,11 +216,7 @@ test_expect_success_multi 'empty command line' '' '
 
 test_expect_success_multi '--stdin with empty STDIN' '' '
 	test_check_ignore "--stdin" 1 </dev/null &&
-	if test -n "$quiet_opt"; then
-		test_stderr ""
-	else
-		test_stderr "no pathspec given."
-	fi
+	test_stderr ""
 '
 
 test_expect_success '-q with multiple args' '
@@ -692,5 +688,27 @@ do
 	'
 done
 
+test_expect_success 'setup: have stdbuf?' '
+	if which stdbuf >/dev/null 2>&1
+	then
+		test_set_prereq STDBUF
+	fi
+'
+
+test_expect_success STDBUF 'streaming support for --stdin' '
+	(
+		echo one
+		sleep 2
+		echo two
+	) | stdbuf -oL git check-ignore -v -n --stdin >out &
+	pid=$! &&
+	sleep 1 &&
+	grep "^\.gitignore:1:one	one" out &&
+	test $( wc -l <out ) = 1 &&
+	sleep 2 &&
+	grep "^::	two" out &&
+	test $( wc -l <out ) = 2 &&
+	( wait $pid || kill $pid || : ) 2>/dev/null
+'
 
 test_done
