@@ -27,6 +27,9 @@ import urllib
 # named branches:
 # git config --global remote-hg.track-branches false
 #
+# If you don't want to force pushes (and thus risk creating new remote heads):
+# git config --global remote-hg.force-push false
+#
 # git:
 # Sensible defaults for git.
 # hg bookmarks are exported as git branches, hg branches are prefixed
@@ -730,7 +733,7 @@ def do_export(parser):
             continue
 
     if peer:
-        parser.repo.push(peer, force=False)
+        parser.repo.push(peer, force=force_push)
 
     # handle bookmarks
     for bmark, node in p_bmarks:
@@ -773,7 +776,7 @@ def main(args):
     global prefix, dirname, branches, bmarks
     global marks, blob_marks, parsed_refs
     global peer, mode, bad_mail, bad_name
-    global track_branches
+    global track_branches, force_push
 
     alias = args[1]
     url = args[2]
@@ -781,12 +784,16 @@ def main(args):
 
     hg_git_compat = False
     track_branches = True
+    force_push = True
+
     try:
         if get_config('remote-hg.hg-git-compat') == 'true\n':
             hg_git_compat = True
             track_branches = False
         if get_config('remote-hg.track-branches') == 'false\n':
             track_branches = False
+        if get_config('remote-hg.force-push') == 'false\n':
+            force_push = False
     except subprocess.CalledProcessError:
         pass
 
