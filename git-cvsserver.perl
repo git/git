@@ -2911,7 +2911,7 @@ sub filenamesplit
 }
 
 # Cleanup various junk in filename (try to canonicalize it), and
-# add prependdir to accomodate running CVS client from a
+# add prependdir to accommodate running CVS client from a
 # subdirectory (so the output is relative to top directory of the project).
 sub filecleanup
 {
@@ -4583,7 +4583,7 @@ sub getmeta
     #     the numerical value of the corresponding byte plus
     #     100.
     #      - "plus 100" avoids "0"s, and also reduces the
-    #        likelyhood of a collision in the case that someone someday
+    #        likelihood of a collision in the case that someone someday
     #        writes an import tool that tries to preserve original
     #        CVS revision numbers, and the original CVS data had done
     #        lots of branches off of branches and other strangeness to

@@ -101,7 +101,7 @@ test_expect_success $PREREQ \
 
 test_expect_success $PREREQ 'Send patches with --envelope-sender' '
     clean_fake_sendmail &&
-     git send-email --envelope-sender="Patch Contributer <patch@example.com>" --suppress-cc=sob --from="Example <nobody@example.com>" --to=nobody@example.com --smtp-server="$(pwd)/fake.sendmail" $patches 2>errors
+     git send-email --envelope-sender="Patch Contributor <patch@example.com>" --suppress-cc=sob --from="Example <nobody@example.com>" --to=nobody@example.com --smtp-server="$(pwd)/fake.sendmail" $patches 2>errors
 '
 
 test_expect_success $PREREQ 'setup expect' '
@@ -787,7 +787,7 @@ test_expect_success $PREREQ 'confirm detects EOF (auto causes failure)' '
 	test $ret = "0"
 '
 
-test_expect_success $PREREQ 'confirm doesnt loop forever' '
+test_expect_success $PREREQ 'confirm does not loop forever' '
 	CONFIRM=$(git config --get sendemail.confirm) &&
 	git config sendemail.confirm auto &&
 	GIT_SEND_EMAIL_NOTTY=1 &&

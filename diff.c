@@ -1565,7 +1565,7 @@ static void show_stats(struct diffstat_t *data, struct diff_options *options)
 	 * Binary files are displayed with "Bin XXX -> YYY bytes"
 	 * instead of the change count and graph. This part is treated
 	 * similarly to the graph part, except that it is not
-	 * "scaled". If total width is too small to accomodate the
+	 * "scaled". If total width is too small to accommodate the
 	 * guaranteed minimum width of the filename part and the
 	 * separators and this message, this message will "overflow"
 	 * making the line longer than the maximum width.

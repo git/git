@@ -237,7 +237,7 @@ test_expect_success 'mergetool takes partial path' '
     git submodule update -N &&
     test_must_fail git merge master &&
 
-    #shouldnt need these lines
+    #should not need these lines
     #( yes "d" | git mergetool file11 >/dev/null 2>&1 ) &&
     #( yes "d" | git mergetool file12 >/dev/null 2>&1 ) &&
     #( yes "l" | git mergetool submod >/dev/null 2>&1 ) &&

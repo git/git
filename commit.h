@@ -164,7 +164,7 @@ extern struct commit_list *get_merge_bases(struct commit *rev1, struct commit *r
 extern struct commit_list *get_merge_bases_many(struct commit *one, int n, struct commit **twos, int cleanup);
 extern struct commit_list *get_octopus_merge_bases(struct commit_list *in);
 
-/* largest postive number a signed 32-bit integer can contain */
+/* largest positive number a signed 32-bit integer can contain */
 #define INFINITE_DEPTH 0x7fffffff
 
 extern int register_shallow(const unsigned char *sha1);

@@ -59,7 +59,7 @@ tmp_patch="$tmp_dir/patch"
 tmp_info="$tmp_dir/info"
 
 
-# Find the intial commit
+# Find the initial commit
 commit=$(git rev-parse HEAD)
 
 mkdir $tmp_dir || exit 2
