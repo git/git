@@ -205,9 +205,15 @@ class Parser:
         tz = ((tz / 100) * 3600) + ((tz % 100) * 60)
         return (user, int(date), -tz)
 
+def fix_file_path(path):
+    if not os.path.isabs(path):
+        return path
+    return os.path.relpath(path, '/')
+
 def export_file(fc):
     d = fc.data()
-    print "M %s inline %s" % (gitmode(fc.flags()), fc.path())
+    path = fix_file_path(fc.path())
+    print "M %s inline %s" % (gitmode(fc.flags()), path)
     print "data %d" % len(d)
     print d
 
@@ -401,7 +407,7 @@ def export_ref(repo, name, kind, head):
         for f in modified:
             export_file(c.filectx(f))
         for f in removed:
-            print "D %s" % (f)
+            print "D %s" % (fix_file_path(f))
         print
 
         count += 1
