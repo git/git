@@ -575,21 +575,6 @@ cat <<-\EOF >stdin
 	b/globaltwo
 	../b/globaltwo
 EOF
-cat <<-\EOF >expected-default
-	../one
-	one
-	b/on
-	b/one
-	b/one one
-	b/one two
-	"b/one\"three"
-	b/two
-	b/twooo
-	../globaltwo
-	globaltwo
-	b/globaltwo
-	../b/globaltwo
-EOF
 cat <<-EOF >expected-verbose
 	.gitignore:1:one	../one
 	.gitignore:1:one	one
@@ -605,6 +590,7 @@ cat <<-EOF >expected-verbose
 	$global_excludes:2:!globaltwo	b/globaltwo
 	$global_excludes:2:!globaltwo	../b/globaltwo
 EOF
+sed -e 's/.*	//' expected-verbose >expected-default
 
 sed -e 's/^"//' -e 's/\\//' -e 's/"$//' stdin | \
 	tr "\n" "\0" >stdin0
