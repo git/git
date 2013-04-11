@@ -271,6 +271,7 @@ def get_repo(url, alias):
 
     myui = ui.ui()
     myui.setconfig('ui', 'interactive', 'off')
+    myui.fout = sys.stderr
 
     if hg.islocal(url):
         repo = hg.repository(myui, url)
