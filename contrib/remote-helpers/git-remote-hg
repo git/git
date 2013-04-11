@@ -685,6 +685,8 @@ def parse_tag(parser):
 def do_export(parser):
     global parsed_refs, bmarks, peer
 
+    p_bmarks = []
+
     parser.next()
 
     for line in parser.each_block('done'):
@@ -706,20 +708,9 @@ def do_export(parser):
             pass
         elif ref.startswith('refs/heads/'):
             bmark = ref[len('refs/heads/'):]
-            if bmark in bmarks:
-                old = bmarks[bmark].hex()
-            else:
-                old = ''
-
-            if bmark == 'master' and 'master' not in parser.repo._bookmarks:
-                # fake bookmark
-                print "ok %s" % ref
-                continue
-
-            if not bookmarks.pushbookmark(parser.repo, bmark, old, node):
-                print "error %s" % ref
-                continue
-
+            p_bmarks.append((bmark, node))
+            # handle below
+            continue
         elif ref.startswith('refs/tags/'):
             tag = ref[len('refs/tags/'):]
             parser.repo.tag([tag], node, None, True, None, {})
@@ -730,6 +721,26 @@ def do_export(parser):
 
     if peer:
         parser.repo.push(peer, force=False)
+
+    # handle bookmarks
+    for bmark, node in p_bmarks:
+        ref = 'refs/heads/' + bmark
+
+        if bmark in bmarks:
+            old = bmarks[bmark].hex()
+        else:
+            old = ''
+
+        if bmark == 'master' and 'master' not in parser.repo._bookmarks:
+            # fake bookmark
+            print "ok %s" % ref
+            continue
+
+        if not bookmarks.pushbookmark(parser.repo, bmark, old, node):
+            print "error %s" % ref
+            continue
+
+        print "ok %s" % ref
 
     print
 
