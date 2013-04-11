@@ -18,6 +18,7 @@ import json
 import shutil
 import subprocess
 import urllib
+import atexit
 
 #
 # If you want to switch to hg-git compatibility mode:
@@ -791,7 +792,7 @@ def main(args):
     global prefix, dirname, branches, bmarks
     global marks, blob_marks, parsed_refs
     global peer, mode, bad_mail, bad_name
-    global track_branches, force_push
+    global track_branches, force_push, is_tmp
 
     alias = args[1]
     url = args[2]
@@ -833,6 +834,7 @@ def main(args):
     bmarks = {}
     blob_marks = {}
     parsed_refs = {}
+    marks = None
 
     repo = get_repo(url, alias)
     prefix = 'refs/hg/%s' % alias
@@ -860,9 +862,13 @@ def main(args):
             die('unhandled command: %s' % line)
         sys.stdout.flush()
 
+def bye():
+    if not marks:
+        return
     if not is_tmp:
         marks.store()
     else:
         shutil.rmtree(dirname)
 
+atexit.register(bye)
 sys.exit(main(sys.argv))
