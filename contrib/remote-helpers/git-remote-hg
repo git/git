@@ -709,9 +709,16 @@ def do_export(parser):
                 old = bmarks[bmark].hex()
             else:
                 old = ''
+
+            if bmark == 'master' and 'master' not in parser.repo._bookmarks:
+                # fake bookmark
+                print "ok %s" % ref
+                continue
+
             if not bookmarks.pushbookmark(parser.repo, bmark, old, node):
                 print "error %s" % ref
                 continue
+
         elif ref.startswith('refs/tags/'):
             tag = ref[len('refs/tags/'):]
             parser.repo.tag([tag], node, None, True, None, {})
