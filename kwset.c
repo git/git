@@ -26,7 +26,7 @@
    The author may be reached (Email) at the address mike@ai.mit.edu,
    or (US mail) as Mike Haertel c/o Free Software Foundation. */
 
-/* The algorithm implemented by these routines bears a startling resemblence
+/* The algorithm implemented by these routines bears a startling resemblance
    to one discovered by Beate Commentz-Walter, although it is not identical.
    See "A String Matching Algorithm Fast on the Average," Technical Report,
    IBM-Germany, Scientific Center Heidelberg, Tiergartenstrasse 15, D-6900
@@ -435,7 +435,7 @@ kwsprep (kwset_t kws)
 	  /* Update the delta table for the descendents of this node. */
 	  treedelta(curr->links, curr->depth, delta);
 
-	  /* Compute the failure function for the decendents of this node. */
+	  /* Compute the failure function for the descendants of this node. */
 	  treefails(curr->links, curr->fail, kwset->trie);
 
 	  /* Update the shifts at each node in the current node's chain
