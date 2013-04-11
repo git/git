@@ -419,7 +419,7 @@ test_expect_success 'add main-sub5' '
 test_expect_success 'split for main-sub5 without --onto' '
         # also test that we still can split out an entirely new subtree
         # if the parent of the first commit in the tree is not empty,
-        # then the new subtree has accidently been attached to something
+	# then the new subtree has accidentally been attached to something
         git subtree split --prefix subdir2 --branch mainsub5 &&
         check_equal ''"$(git log --pretty=format:%P -1 mainsub5)"'' ""
 '
