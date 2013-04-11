@@ -59,7 +59,7 @@ test_expect_success 'gitdir - .git directory in cwd' '
 '
 
 test_expect_success 'gitdir - .git directory in parent' '
-	echo "$TRASH_DIRECTORY/.git" > expected &&
+	echo "$(pwd -P)/.git" > expected &&
 	(
 		cd subdir/subsubdir &&
 		__gitdir > "$actual"
@@ -77,7 +77,7 @@ test_expect_success 'gitdir - cwd is a .git directory' '
 '
 
 test_expect_success 'gitdir - parent is a .git directory' '
-	echo "$TRASH_DIRECTORY/.git" > expected &&
+	echo "$(pwd -P)/.git" > expected &&
 	(
 		cd .git/refs/heads &&
 		__gitdir > "$actual"
@@ -115,7 +115,7 @@ test_expect_success 'gitdir - non-existing $GIT_DIR' '
 '
 
 test_expect_success 'gitdir - gitfile in cwd' '
-	echo "$TRASH_DIRECTORY/otherrepo/.git" > expected &&
+	echo "$(pwd -P)/otherrepo/.git" > expected &&
 	echo "gitdir: $TRASH_DIRECTORY/otherrepo/.git" > subdir/.git &&
 	test_when_finished "rm -f subdir/.git" &&
 	(
@@ -126,7 +126,7 @@ test_expect_success 'gitdir - gitfile in cwd' '
 '
 
 test_expect_success 'gitdir - gitfile in parent' '
-	echo "$TRASH_DIRECTORY/otherrepo/.git" > expected &&
+	echo "$(pwd -P)/otherrepo/.git" > expected &&
 	echo "gitdir: $TRASH_DIRECTORY/otherrepo/.git" > subdir/.git &&
 	test_when_finished "rm -f subdir/.git" &&
 	(
@@ -137,7 +137,7 @@ test_expect_success 'gitdir - gitfile in parent' '
 '
 
 test_expect_success SYMLINKS 'gitdir - resulting path avoids symlinks' '
-	echo "$TRASH_DIRECTORY/otherrepo/.git" > expected &&
+	echo "$(pwd -P)/otherrepo/.git" > expected &&
 	mkdir otherrepo/dir &&
 	test_when_finished "rm -rf otherrepo/dir" &&
 	ln -s otherrepo/dir link &&
