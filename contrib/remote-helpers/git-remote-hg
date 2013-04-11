@@ -9,7 +9,7 @@
 # Then you can clone with:
 # git clone hg::/path/to/mercurial/repo/
 
-from mercurial import hg, ui, bookmarks, context, util, encoding, node
+from mercurial import hg, ui, bookmarks, context, util, encoding, node, error
 
 import re
 import sys
@@ -284,11 +284,17 @@ def get_repo(url, alias):
     else:
         local_path = os.path.join(dirname, 'clone')
         if not os.path.exists(local_path):
-            peer, dstpeer = hg.clone(myui, {}, url, local_path, update=False, pull=True)
+            try:
+                peer, dstpeer = hg.clone(myui, {}, url, local_path, update=True, pull=True)
+            except:
+                die('Repository error')
             repo = dstpeer.local()
         else:
             repo = hg.repository(myui, local_path)
-            peer = hg.peer(myui, {}, url)
+            try:
+                peer = hg.peer(myui, {}, url)
+            except:
+                die('Repository error')
             repo.pull(peer, heads=None, force=True)
 
     return repo
