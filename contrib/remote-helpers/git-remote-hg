@@ -8,6 +8,9 @@
 # Just copy to your ~/bin, or anywhere in your $PATH.
 # Then you can clone with:
 # git clone hg::/path/to/mercurial/repo/
+#
+# For remote repositories a local clone is stored in
+# "$GIT_DIR/hg/origin/clone/.hg/".
 
 from mercurial import hg, ui, bookmarks, context, util, encoding, node, error
 
