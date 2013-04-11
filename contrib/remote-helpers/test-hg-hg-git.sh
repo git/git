@@ -78,7 +78,8 @@ hg_push_hg () {
 }
 
 hg_log () {
-	hg -R $1 log --graph --debug | grep -v 'tag: *default/'
+	hg -R $1 log --graph --debug >log &&
+	grep -v 'tag: *default/' log
 }
 
 git_log () {
@@ -97,6 +98,7 @@ setup () {
 	echo "[extensions]"
 	echo "hgext.bookmarks ="
 	echo "hggit ="
+	echo "graphlog ="
 	) >> "$HOME"/.hgrc &&
 	git config --global receive.denycurrentbranch warn
 	git config --global remote-hg.hg-git-compat true

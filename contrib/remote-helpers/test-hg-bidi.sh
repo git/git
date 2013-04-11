@@ -50,7 +50,8 @@ hg_push () {
 }
 
 hg_log () {
-	hg -R $1 log --graph --debug | grep -v 'tag: *default/'
+	hg -R $1 log --graph --debug >log &&
+	grep -v 'tag: *default/' log
 }
 
 setup () {
@@ -62,6 +63,8 @@ setup () {
 	echo "commit = -d \"0 0\""
 	echo "debugrawcommit = -d \"0 0\""
 	echo "tag = -d \"0 0\""
+	echo "[extensions]"
+	echo "graphlog ="
 	) >> "$HOME"/.hgrc &&
 	git config --global remote-hg.hg-git-compat true
 
