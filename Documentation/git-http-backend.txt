@@ -167,6 +167,61 @@ ScriptAliasMatch \
 ScriptAlias /git/ /var/www/cgi-bin/gitweb.cgi/
 ----------------------------------------------------------------
 
+Lighttpd::
+	Ensure that `mod_cgi`, `mod_alias, `mod_auth`, `mod_setenv` are
+	loaded, then set `GIT_PROJECT_ROOT` appropriately and redirect
+	all requests to the CGI:
++
+----------------------------------------------------------------
+alias.url += ( "/git" => "/usr/lib/git-core/git-http-backend" )
+$HTTP["url"] =~ "^/git" {
+	cgi.assign = ("" => "")
+	setenv.add-environment = (
+		"GIT_PROJECT_ROOT" => "/var/www/git",
+		"GIT_HTTP_EXPORT_ALL" => ""
+	)
+}
+----------------------------------------------------------------
++
+To enable anonymous read access but authenticated write access:
++
+----------------------------------------------------------------
+$HTTP["querystring"] =~ "service=git-receive-pack" {
+	include "git-auth.conf"
+}
+$HTTP["url"] =~ "^/git/.*/git-receive-pack$" {
+	include "git-auth.conf"
+}
+----------------------------------------------------------------
++
+where `git-auth.conf` looks something like:
++
+----------------------------------------------------------------
+auth.require = (
+	"/" => (
+		"method" => "basic",
+		"realm" => "Git Access",
+		"require" => "valid-user"
+	       )
+)
+# ...and set up auth.backend here
+----------------------------------------------------------------
++
+Note that unlike the similar setup with Apache, we can easily match the
+query string for receive-pack, catching the initial request from the
+client. This means that the server administrator does not have to worry
+about configuring `http.receivepack` for the repositories (the default
+value, which enables it only in the case of authentication, is
+sufficient).
++
+To require authentication for both reads and writes:
++
+----------------------------------------------------------------
+$HTTP["url"] =~ "^/git/private" {
+	include "git-auth.conf"
+}
+----------------------------------------------------------------
+
 
 ENVIRONMENT
 -----------
