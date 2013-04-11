@@ -744,6 +744,11 @@ def do_export(parser):
             print "error %s" % ref
             continue
 
+        if peer:
+            if not peer.pushkey('bookmarks', bmark, old, new):
+                print "error %s" % ref
+                continue
+
         print "ok %s" % ref
 
     print
