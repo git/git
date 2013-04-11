@@ -27,7 +27,6 @@ fi
 
 # clone to a git repo with git
 git_clone_git () {
-	hg -R $1 bookmark -f -r tip master &&
 	git clone -q "hg::$PWD/$1" $2
 }
 
@@ -48,7 +47,7 @@ git_clone_hg () {
 	(
 	git init -q $2 &&
 	cd $1 &&
-	hg bookmark -f -r tip master &&
+	hg bookmark -i -f -r tip master &&
 	hg -q push -r master ../$2 || true
 	)
 }
