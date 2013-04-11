@@ -118,4 +118,39 @@ test_expect_success 'update bookmark' '
   hg -R hgrepo bookmarks | grep "devel\s\+3:"
 '
 
+author_test () {
+  echo $1 >> content &&
+  hg commit -u "$2" -m "add $1" &&
+  echo "$3" >> ../expected
+}
+
+test_expect_success 'authors' '
+  mkdir -p tmp && cd tmp &&
+  test_when_finished "cd .. && rm -rf tmp" &&
+
+  (
+  hg init hgrepo &&
+  cd hgrepo &&
+
+  touch content &&
+  hg add content &&
+
+  author_test alpha "" "H G Wells <wells@example.com>" &&
+  author_test beta "test" "test <unknown>" &&
+  author_test beta "test <test@example.com> (comment)" "test <unknown>" &&
+  author_test gamma "<test@example.com>" "Unknown <test@example.com>" &&
+  author_test delta "name<test@example.com>" "name <test@example.com>" &&
+  author_test epsilon "name <test@example.com" "name <unknown>" &&
+  author_test zeta " test " "test <unknown>" &&
+  author_test eta "test < test@example.com >" "test <test@example.com>" &&
+  author_test theta "test >test@example.com>" "test <unknown>" &&
+  author_test iota "test < test <at> example <dot> com>" "test <unknown>"
+  ) &&
+
+  git clone "hg::$PWD/hgrepo" gitrepo &&
+  git --git-dir=gitrepo/.git log --reverse --format="%an <%ae>" > actual &&
+
+  test_cmp expected actual
+'
+
 test_done
