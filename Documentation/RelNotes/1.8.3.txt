@@ -32,6 +32,9 @@ Updates since v1.8.2
 
 UI, Workflows & Features
 
+ * "git help" learned "-g" option to show the list of guides just like
+   list of commands are given with "-a".
+
  * A triangular "pull from one place, push to another place" workflow
    is supported better by new remote.pushdefault (overrides the
    "origin" thing) and branch.*.pushremote (overrides the
@@ -41,11 +44,11 @@ UI, Workflows & Features
    revert session, just like it does for a cherry-pick and a bisect
    session.
 
- * The handing by "git branch --set-upstream-to" against various forms
-   of errorneous inputs was suboptimal and has been improved.
+ * The handling by "git branch --set-upstream-to" against various forms
+   of erroneous inputs was suboptimal and has been improved.
 
  * When the interactive access to git-shell is not enabled, it issues
-   a message meant to help the system admininstrator to enable it.
+   a message meant to help the system administrator to enable it.
    An explicit way to help the end users who connect to the service by
    issuing custom messages to refuse such an access has been added.
 
@@ -113,6 +116,10 @@ Performance, Internal Implementation, etc.
 
  * Updates for building under msvc.
 
+ * The logic to coalesce the same lines removed from the parents in
+   the output from "diff -c/--cc" has been updated, but with an O(n^2)
+   complexity, so this might turn out to be undesirable.
+
  * The code to enforce permission bits on files in $GIT_DIR/ for
    shared repositories have been simplified.
 
@@ -139,6 +146,9 @@ Performance, Internal Implementation, etc.
    which have been consolidated.  Also a bug in "git checkout dir/"
    that is started from an unmerged index has been fixed.
 
+ * A few bugfixes to "git rerere" working on corner case merge
+   conflicts have been applied.
+
 
 Also contains minor documentation updates and code clean-ups.
 
@@ -149,6 +159,11 @@ Fixes since v1.8.2
 Unless otherwise noted, all the fixes since v1.8.2 in the maintenance
 track are contained in this release (see release notes to them for
 details).
+
+ * "git log -S/-G" started paying attention to textconv filter, but
+   there was no way to disable this.  Make it honor --no-textconv
+   option.
+   (merge 61690bf sr/log-SG-no-textconv later to maint).
 
  * When used with "-d temporary-directory" option, "git filter-branch"
    failed to come back to the original working tree to perform the
@@ -179,8 +194,8 @@ details).
    "--option=value" form.
    (merge 862ae6c rs/submodule-summary-limit later to maint).
 
- * "index-pack --fix-thin" used uninitialize value to compute delta
-   depths of objects it appends to the resulting pack.
+ * "index-pack --fix-thin" used an uninitialized value to compute
+   delta depths of objects it appends to the resulting pack.
    (merge 57165db jk/index-pack-correct-depth-fix later to maint).
 
  * "index-pack --verify-stat" used a few counters outside protection
@@ -294,4 +309,4 @@ details).
    alphabetical order.
 
  * "git submodule update", when recursed into sub-submodules, did not
-   acccumulate the prefix paths.
+   accumulate the prefix paths.
