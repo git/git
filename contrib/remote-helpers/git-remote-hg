@@ -30,6 +30,9 @@ import urllib
 # If you don't want to force pushes (and thus risk creating new remote heads):
 # git config --global remote-hg.force-push false
 #
+# If you want the equivalent of hg's clone/pull--insecure option:
+# git config remote-hg.insecure true
+#
 # git:
 # Sensible defaults for git.
 # hg bookmarks are exported as git branches, hg branches are prefixed
@@ -278,6 +281,12 @@ def get_repo(url, alias):
     myui = ui.ui()
     myui.setconfig('ui', 'interactive', 'off')
     myui.fout = sys.stderr
+
+    try:
+        if get_config('remote-hg.insecure') == 'true\n':
+            myui.setconfig('web', 'cacerts', '')
+    except subprocess.CalledProcessError:
+        pass
 
     if hg.islocal(url):
         repo = hg.repository(myui, url)
