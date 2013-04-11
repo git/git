@@ -91,6 +91,15 @@ require authorization with a LocationMatch directive:
 </LocationMatch>
 ----------------------------------------------------------------
 +
+In this mode, the server will not request authentication until the
+client actually starts the object negotiation phase of the push, rather
+than during the initial contact.  For this reason, you must also enable
+the `http.receivepack` config option in any repositories that should
+accept a push. The default behavior, if `http.receivepack` is not set,
+is to reject any pushes by unauthenticated users; the initial request
+will therefore report `403 Forbidden` to the client, without even giving
+an opportunity for authentication.
++
 To require authentication for both reads and writes, use a Location
 directive around the repository, or one of its parent directories:
 +
