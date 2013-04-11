@@ -578,7 +578,7 @@ def parse_commit(parser):
             mark = int(mark_ref[1:])
             f = { 'mode' : hgmode(m), 'data' : blob_marks[mark] }
         elif parser.check('D'):
-            t, path = line.split(' ')
+            t, path = line.split(' ', 1)
             f = { 'deleted' : True }
         else:
             die('Unknown file command: %s' % line)
@@ -625,7 +625,7 @@ def parse_commit(parser):
         i = data.find('\n--HG--\n')
         if i >= 0:
             tmp = data[i + len('\n--HG--\n'):].strip()
-            for k, v in [e.split(' : ') for e in tmp.split('\n')]:
+            for k, v in [e.split(' : ', 1) for e in tmp.split('\n')]:
                 if k == 'rename':
                     old, new = v.split(' => ', 1)
                     files[new]['rename'] = old
