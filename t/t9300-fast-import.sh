@@ -49,14 +49,6 @@ echo "$@"'
 
 >empty
 
-test_expect_success 'setup: have pipes?' '
-	rm -f frob &&
-	if mkfifo frob
-	then
-		test_set_prereq PIPE
-	fi
-'
-
 ###
 ### series A
 ###

@@ -727,6 +727,11 @@ test_i18ngrep () {
 	fi
 }
 
+test_lazy_prereq PIPE '
+	# test whether the filesystem supports FIFOs
+	rm -f testfifo && mkfifo testfifo
+'
+
 test_lazy_prereq SYMLINKS '
 	# test whether the filesystem supports symbolic links
 	ln -s x y && test -h y

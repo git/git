@@ -613,6 +613,11 @@ use these, and "test_set_prereq" for how to define your own.
    The process retains the same pid across exec(2). See fb9a2bea for
    details.
 
+ - PIPE
+
+   The filesystem we're on supports creation of FIFOs (named pipes)
+   via mkfifo(1).
+
  - SYMLINKS
 
    The filesystem we're on supports symbolic links. E.g. a FAT
