@@ -284,8 +284,10 @@ static int rerere_mem_getline(struct strbuf *sb, struct rerere_io *io_)
 	strbuf_release(sb);
 	if (!io->input.len)
 		return -1;
-	ep = strchrnul(io->input.buf, '\n');
-	if (*ep == '\n')
+	ep = memchr(io->input.buf, '\n', io->input.len);
+	if (!ep)
+		ep = io->input.buf + io->input.len;
+	else if (*ep == '\n')
 		ep++;
 	len = ep - io->input.buf;
 	strbuf_add(sb, io->input.buf, len);
@@ -295,7 +297,7 @@ static int rerere_mem_getline(struct strbuf *sb, struct rerere_io *io_)
 
 static int handle_cache(const char *path, unsigned char *sha1, const char *output)
 {
-	mmfile_t mmfile[3];
+	mmfile_t mmfile[3] = {{NULL}};
 	mmbuffer_t result = {NULL, 0};
 	struct cache_entry *ce;
 	int pos, len, i, hunk_no;
@@ -314,17 +316,16 @@ static int handle_cache(const char *path, unsigned char *sha1, const char *outpu
 	for (i = 0; i < 3; i++) {
 		enum object_type type;
 		unsigned long size;
+		int j;
 
-		mmfile[i].size = 0;
-		mmfile[i].ptr = NULL;
 		if (active_nr <= pos)
 			break;
 		ce = active_cache[pos++];
-		if (ce_namelen(ce) != len || memcmp(ce->name, path, len)
-		    || ce_stage(ce) != i + 1)
-			break;
-		mmfile[i].ptr = read_sha1_file(ce->sha1, &type, &size);
-		mmfile[i].size = size;
+		if (ce_namelen(ce) != len || memcmp(ce->name, path, len))
+			continue;
+		j = ce_stage(ce) - 1;
+		mmfile[j].ptr = read_sha1_file(ce->sha1, &type, &size);
+		mmfile[j].size = size;
 	}
 	for (i = 0; i < 3; i++) {
 		if (!mmfile[i].ptr && !mmfile[i].size)
