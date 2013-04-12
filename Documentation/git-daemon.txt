@@ -147,6 +147,13 @@ OPTIONS
 Giving these options is an error when used with `--inetd`; use
 the facility of inet daemon to achieve the same before spawning
 'git daemon' if needed.
++
+Like many programs that switch user id, the daemon does not reset
+environment variables such as `$HOME` when it runs git programs,
+e.g. `upload-pack` and `receive-pack`. When using this option, you
+may also want to set and export `HOME` to point at the home
+directory of `<user>` before starting the daemon, and make sure any
+Git configuration files in that directory are readable by `<user>`.
 
 --enable=<service>::
 --disable=<service>::
