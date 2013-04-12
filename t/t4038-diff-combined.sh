@@ -224,4 +224,133 @@ test_expect_success 'check combined output (ignore all spaces)' '
 	compare_diff_patch expected actual
 '
 
+test_expect_success 'combine diff coalesce simple' '
+	>test &&
+	git add test &&
+	git commit -m initial &&
+	test_seq 4 >test &&
+	git commit -a -m empty1 &&
+	git branch side1 &&
+	git checkout HEAD^ &&
+	test_seq 5 >test &&
+	git commit -a -m empty2 &&
+	test_must_fail git merge side1 &&
+	>test &&
+	git commit -a -m merge &&
+	git show >actual.tmp &&
+	sed -e "1,/^@@@/d" < actual.tmp >actual &&
+	tr -d Q <<-\EOF >expected &&
+	--1
+	--2
+	--3
+	--4
+	- 5
+	EOF
+	compare_diff_patch expected actual
+'
+
+test_expect_success 'combine diff coalesce tricky' '
+	>test &&
+	git add test &&
+	git commit -m initial --allow-empty &&
+	cat <<-\EOF >test &&
+	3
+	1
+	2
+	3
+	4
+	EOF
+	git commit -a -m empty1 &&
+	git branch -f side1 &&
+	git checkout HEAD^ &&
+	cat <<-\EOF >test &&
+	1
+	3
+	5
+	4
+	EOF
+	git commit -a -m empty2 &&
+	git branch -f side2 &&
+	test_must_fail git merge side1 &&
+	>test &&
+	git commit -a -m merge &&
+	git show >actual.tmp &&
+	sed -e "1,/^@@@/d" < actual.tmp >actual &&
+	tr -d Q <<-\EOF >expected &&
+	 -3
+	--1
+	 -2
+	--3
+	- 5
+	--4
+	EOF
+	compare_diff_patch expected actual &&
+	git checkout -f side1 &&
+	test_must_fail git merge side2 &&
+	>test &&
+	git commit -a -m merge &&
+	git show >actual.tmp &&
+	sed -e "1,/^@@@/d" < actual.tmp >actual &&
+	tr -d Q <<-\EOF >expected &&
+	- 3
+	--1
+	- 2
+	--3
+	 -5
+	--4
+	EOF
+	compare_diff_patch expected actual
+'
+
+test_expect_failure 'combine diff coalesce three parents' '
+	>test &&
+	git add test &&
+	git commit -m initial --allow-empty &&
+	cat <<-\EOF >test &&
+	3
+	1
+	2
+	3
+	4
+	EOF
+	git commit -a -m empty1 &&
+	git checkout -B side1 &&
+	git checkout HEAD^ &&
+	cat <<-\EOF >test &&
+	1
+	3
+	7
+	5
+	4
+	EOF
+	git commit -a -m empty2 &&
+	git branch -f side2 &&
+	git checkout HEAD^ &&
+	cat <<-\EOF >test &&
+	3
+	1
+	6
+	5
+	4
+	EOF
+	git commit -a -m empty3 &&
+	>test &&
+	git add test &&
+	TREE=$(git write-tree) &&
+	COMMIT=$(git commit-tree -p HEAD -p side1 -p side2 -m merge $TREE) &&
+	git show $COMMIT >actual.tmp &&
+	sed -e "1,/^@@@/d" < actual.tmp >actual &&
+	tr -d Q <<-\EOF >expected &&
+	-- 3
+	---1
+	-  6
+	 - 2
+	 --3
+	  -7
+	- -5
+	---4
+	EOF
+	compare_diff_patch expected actual
+'
+
 test_done
