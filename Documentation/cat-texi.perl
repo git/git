@@ -12,6 +12,7 @@ while (<STDIN>) {
 		push @menu, $1;
 	}
 	s/\(\@pxref{\[(URLS|REMOTES)\]}\)//;
+	s/\@anchor\{[^{}]*\}//g;
 	print TMP;
 }
 close TMP;
