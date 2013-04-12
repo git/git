@@ -180,6 +180,12 @@ branch by running "git rm -rf ." from the top level of the working tree.
 Afterwards you will be ready to prepare your new files, repopulating the
 working tree, by copying them from elsewhere, extracting a tarball, etc.
 
+--ignore-skip-worktree-bits::
+	In sparse checkout mode, `git checkout -- <paths>` would
+	update only entries matched by <paths> and sparse patterns
+	in $GIT_DIR/info/sparse-checkout. This option ignores
+	the sparse patterns and adds back any files in <paths>.
+
 -m::
 --merge::
 	When switching branches,
