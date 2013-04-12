@@ -147,7 +147,7 @@ EXAMPLES
 --------
 `git cherry-pick master`::
 
-	Apply the change introduced by the commit at the tip of the
+	Apply the change introduced by the commit at the top of the
 	master branch and create a new commit with this change.
 
 `git cherry-pick ..master`::
