@@ -26,7 +26,9 @@ Git pack format
 
      (deltified representation)
      n-byte type and length (3-bit type, (n-1)*7+4-bit length)
-     20-byte base object name
+     20-byte base object name if OBJ_REF_DELTA or a negative relative
+	 offset from the delta object's position in the pack if this
+	 is an OBJ_OFS_DELTA object
      compressed delta data
 
      Observation: length of each object is encoded in a variable
