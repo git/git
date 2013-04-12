@@ -47,7 +47,7 @@ test_fix () {
 	# find touched lines
 	$DIFF file target | sed -n -e "s/^> //p" >fixed
 
-	# the changed lines are all expeced to change
+	# the changed lines are all expected to change
 	fixed_cnt=$(wc -l <fixed)
 	case "$1" in
 	'') expect_cnt=$fixed_cnt ;;

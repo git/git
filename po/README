@@ -232,7 +232,7 @@ Shell:
 
        # To interpolate variables:
        details="oh noes"
-       eval_gettext "An error occured: \$details"; echo
+       eval_gettext "An error occurred: \$details"; echo
 
    In addition we have wrappers for messages that end with a trailing
    newline. I.e. you could write the above as:
@@ -242,7 +242,7 @@ Shell:
 
        # To interpolate variables:
        details="oh noes"
-       eval_gettextln "An error occured: \$details"
+       eval_gettextln "An error occurred: \$details"
 
    More documentation about the interface is available in the GNU info
    page: `info '(gettext)sh'`. Looking at git-am.sh (the first shell
@@ -257,7 +257,7 @@ Perl:
 
        use Git::I18N;
        print __("Welcome to Git!\n");
-       printf __("The following error occured: %s\n"), $error;
+       printf __("The following error occurred: %s\n"), $error;
 
    Run `perldoc perl/Git/I18N.pm` for more info.
 

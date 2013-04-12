@@ -245,7 +245,7 @@ first have already been pushed into SVN.
 	patch), "all" (accept all patches), or "quit".
 	+
 	'git svn dcommit' returns immediately if answer if "no" or "quit", without
-	commiting anything to SVN.
+	committing anything to SVN.
 
 'branch'::
 	Create a branch in the SVN repository.
@@ -856,7 +856,7 @@ HANDLING OF SVN BRANCHES
 ------------------------
 If 'git svn' is configured to fetch branches (and --follow-branches
 is in effect), it sometimes creates multiple Git branches for one
-SVN branch, where the addtional branches have names of the form
+SVN branch, where the additional branches have names of the form
 'branchname@nnn' (with nnn an SVN revision number).  These additional
 branches are created if 'git svn' cannot find a parent commit for the
 first commit in an SVN branch, to connect the branch to the history of

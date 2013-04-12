@@ -28,7 +28,7 @@ use warnings;
 use constant SLASH_REPLACEMENT => "%2F";
 
 # It's not always possible to delete pages (may require some
-# priviledges). Deleted pages are replaced with this content.
+# privileges). Deleted pages are replaced with this content.
 use constant DELETED_CONTENT => "[[Category:Deleted]]\n";
 
 # It's not possible to create empty pages. New empty files in Git are
@@ -841,7 +841,7 @@ sub mw_import_ref {
 	if ($fetch_from == 1 && $n == 0) {
 		print STDERR "You appear to have cloned an empty MediaWiki.\n";
 		# Something has to be done remote-helper side. If nothing is done, an error is
-		# thrown saying that HEAD is refering to unknown object 0000000000000000000
+		# thrown saying that HEAD is referring to unknown object 0000000000000000000
 		# and the clone fails.
 	}
 }
@@ -1067,7 +1067,7 @@ sub mw_push_file {
 		my $file_content;
 		if ($page_deleted) {
 			# Deleting a page usually requires
-			# special priviledges. A common
+			# special privileges. A common
 			# convention is to replace the page
 			# with this content instead:
 			$file_content = DELETED_CONTENT;

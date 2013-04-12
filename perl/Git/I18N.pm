@@ -68,7 +68,7 @@ Git::I18N - Perl interface to Git's Gettext localizations
 
 	print __("Welcome to Git!\n");
 
-	printf __("The following error occured: %s\n"), $error;
+	printf __("The following error occurred: %s\n"), $error;
 
 =head1 DESCRIPTION
 

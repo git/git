@@ -25,7 +25,7 @@ Principles and Technical Choices
 
 The test environment makes it easy to install and manipulate one or
 several MediaWiki instances. To allow developers to run the testsuite
-easily, the environment does not require root priviledge (except to
+easily, the environment does not require root privilege (except to
 install the required packages if needed). It starts a webserver
 instance on the user's account (using lighttpd greatly helps for
 that), and does not need a separate database daemon (thanks to the use
@@ -81,7 +81,7 @@ parameters, please refer to the `test-gitmw-lib.sh` and
 
 ** `test_check_wiki_precond`:
 Check if the tests must be skipped or not. Please use this function
-at the beggining of each new test file.
+at the beginning of each new test file.
 
 ** `wiki_getpage`:
 Fetch a given page from the wiki and puts its content in the
@@ -113,7 +113,7 @@ Tests if a given page exists on the wiki.
 
 ** `wiki_reset`:
 Reset the wiki, i.e. flush the database. Use this function at the
-begining of each new test, except if the test re-uses the same wiki
+beginning of each new test, except if the test re-uses the same wiki
 (and history) as the previous test.
 
 How to write a new test

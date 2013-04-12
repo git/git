@@ -319,7 +319,7 @@ test_expect_success PERL 'split hunk "add -p (edit)"' '
 	# times to get out.
 	#
 	# 2. Correct version applies the (not)edited version, and asks
-	#    about the next hunk, against wich we say q and program
+	#    about the next hunk, against which we say q and program
 	#    exits.
 	for a in s e     q n q q
 	do
