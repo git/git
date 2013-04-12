@@ -207,14 +207,15 @@ variable (see linkgit:git-config[1]).
 	without changing its commit message.
 
 --amend::
-	Used to amend the tip of the current branch. Prepare the tree
-	object you would want to replace the latest commit as usual
-	(this includes the usual -i/-o and explicit paths), and the
-	commit log editor is seeded with the commit message from the
-	tip of the current branch. The commit you create replaces the
-	current tip -- if it was a merge, it will have the parents of
-	the current tip as parents -- so the current top commit is
-	discarded.
+	Replace the tip of the current branch by creating a new
+	commit. The recorded tree is prepared as usual (including
+	the effect of the `-i` and `-o` options and explicit
+	pathspec), and the message from the original commit is used
+	as the starting point, instead of an empty message, when no
+	other message is specified from the command line via options
+	such as `-m`, `-F`, `-c`, etc.  The new commit has the same
+	parents and author as the current one (the `--reset-author`
+	option can countermand this).
 +
 --
 It is a rough equivalent for:
