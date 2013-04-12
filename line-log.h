@@ -26,10 +26,14 @@ struct diff_ranges {
 };
 
 /* Linked list of interesting files and their associated ranges.  The
- * list must be kept sorted by spec->path */
+ * list must be kept sorted by path.
+ *
+ * For simplicity, even though this is highly redundant, each
+ * line_log_data owns its 'path'.
+ */
 struct line_log_data {
 	struct line_log_data *next;
-	struct diff_filespec *spec;
+	char *path;
 	char status;
 	struct range_set ranges;
 	int arg_alloc, arg_nr;

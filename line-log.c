@@ -265,7 +265,7 @@ search_line_log_data(struct line_log_data *list, const char *path,
 	if (insertion_point)
 		*insertion_point = NULL;
 	while (p) {
-		int cmp = strcmp(p->spec->path, path);
+		int cmp = strcmp(p->path, path);
 		if (!cmp)
 			return p;
 		if (insertion_point && cmp < 0)
@@ -275,22 +275,26 @@ search_line_log_data(struct line_log_data *list, const char *path,
 	return NULL;
 }
 
+/*
+ * Note: takes ownership of 'path', which happens to be what the only
+ * caller needs.
+ */
 static void line_log_data_insert(struct line_log_data **list,
-				 struct diff_filespec *spec,
+				 char *path,
 				 long begin, long end)
 {
 	struct line_log_data *ip;
-	struct line_log_data *p = search_line_log_data(*list, spec->path, &ip);
+	struct line_log_data *p = search_line_log_data(*list, path, &ip);
 
 	if (p) {
 		range_set_append_unsafe(&p->ranges, begin, end);
 		sort_and_merge_range_set(&p->ranges);
-		free_filespec(spec);
+		free(path);
 		return;
 	}
 
 	p = xcalloc(1, sizeof(struct line_log_data));
-	p->spec = spec;
+	p->path = path;
 	range_set_append(&p->ranges, begin, end);
 	if (ip) {
 		p->next = ip->next;
@@ -354,7 +358,7 @@ static void dump_line_log_data(struct line_log_data *r)
 {
 	char buf[4096];
 	while (r) {
-		snprintf(buf, 4096, "file %s\n", r->spec->path);
+		snprintf(buf, 4096, "file %s\n", r->path);
 		dump_range_set(&r->ranges, buf);
 		r = r->next;
 	}
@@ -561,7 +565,7 @@ parse_lines(struct commit *commit, const char *prefix, struct string_list *args)
 
 	for_each_string_list_item(item, args) {
 		const char *name_part, *range_part;
-		const char *full_name;
+		char *full_name;
 		struct diff_filespec *spec;
 		long begin = 0, end = 0;
 
@@ -584,7 +588,7 @@ parse_lines(struct commit *commit, const char *prefix, struct string_list *args)
 
 		if (parse_range_arg(range_part, nth_line, &cb_data,
 				    lines, &begin, &end,
-				    spec->path))
+				    full_name))
 			die("malformed -L argument '%s'", range_part);
 		if (begin < 1)
 			begin = 1;
@@ -593,8 +597,9 @@ parse_lines(struct commit *commit, const char *prefix, struct string_list *args)
 		begin--;
 		if (lines < end || lines < begin)
 			die("file %s has only %ld lines", name_part, lines);
-		line_log_data_insert(&ranges, spec, begin, end);
+		line_log_data_insert(&ranges, full_name, begin, end);
 
+		free_filespec(spec);
 		free(ends);
 		ends = NULL;
 	}
@@ -610,9 +615,7 @@ static struct line_log_data *line_log_data_copy_one(struct line_log_data *r)
 	line_log_data_init(ret);
 	range_set_copy(&ret->ranges, &r->ranges);
 
-	ret->spec = r->spec;
-	assert(ret->spec);
-	ret->spec->count++;
+	ret->path = xstrdup(r->path);
 
 	return ret;
 }
@@ -652,7 +655,7 @@ static struct line_log_data *line_log_data_merge(struct line_log_data *a,
 		else if (!b)
 			cmp = -1;
 		else
-			cmp = strcmp(a->spec->path, b->spec->path);
+			cmp = strcmp(a->path, b->path);
 		if (cmp < 0) {
 			src = a;
 			a = a->next;
@@ -667,8 +670,7 @@ static struct line_log_data *line_log_data_merge(struct line_log_data *a,
 		}
 		d = xmalloc(sizeof(struct line_log_data));
 		line_log_data_init(d);
-		d->spec = src->spec;
-		d->spec->count++;
+		d->path = xstrdup(src->path);
 		*pp = d;
 		pp = &d->next;
 		if (src2)
@@ -741,7 +743,7 @@ void line_log_init(struct rev_info *rev, const char *prefix, struct string_list 
 		paths = xmalloc((count+1)*sizeof(char *));
 		r = range;
 		for (i = 0; i < count; i++) {
-			paths[i] = xstrdup(r->spec->path);
+			paths[i] = xstrdup(r->path);
 			r = r->next;
 		}
 		paths[count] = NULL;
@@ -797,7 +799,7 @@ static void filter_diffs_for_paths(struct line_log_data *range, int keep_deletio
 			continue;
 		}
 		for (rg = range; rg; rg = rg->next) {
-			if (!strcmp(rg->spec->path, p->two->path))
+			if (!strcmp(rg->path, p->two->path))
 				break;
 		}
 		if (rg)
@@ -1021,8 +1023,8 @@ static int process_diff_filepair(struct rev_info *rev,
 
 	assert(pair->two->path);
 	while (rg) {
-		assert(rg->spec->path);
-		if (!strcmp(rg->spec->path, pair->two->path))
+		assert(rg->path);
+		if (!strcmp(rg->path, pair->two->path))
 			break;
 		rg = rg->next;
 	}
@@ -1050,7 +1052,8 @@ static int process_diff_filepair(struct rev_info *rev,
 	collect_diff(&file_parent, &file_target, &diff);
 
 	/* NEEDSWORK should apply some heuristics to prevent mismatches */
-	rg->spec->path = xstrdup(pair->one->path);
+	free(rg->path);
+	rg->path = xstrdup(pair->one->path);
 
 	range_set_init(&tmp, 0);
 	range_set_map_across_diff(&tmp, &rg->ranges, &diff, diff_out);
@@ -1096,7 +1099,7 @@ static int process_all_files(struct line_log_data **range_out,
 			struct line_log_data *rg = range;
 			changed++;
 			/* NEEDSWORK tramples over data structures not owned here */
-			while (rg && strcmp(rg->spec->path, queue->queue[i]->two->path))
+			while (rg && strcmp(rg->path, queue->queue[i]->two->path))
 				rg = rg->next;
 			assert(rg);
 			rg->pair = diff_filepair_dup(queue->queue[i]);

@@ -45,7 +45,7 @@ canned_test "-L '/long f/',/^}/:a.c -L /main/,/^}/:a.c simple" two-ranges
 canned_test "-L 24,+1:a.c simple" vanishes-early
 
 canned_test "-M -L '/long f/,/^}/:b.c' move-support" move-support-f
-canned_test_failure "-M -L ':f:b.c' parallel-change" parallel-change-f-to-main
+canned_test "-M -L ':f:b.c' parallel-change" parallel-change-f-to-main
 
 canned_test "-L 4,12:a.c -L :main:a.c simple" multiple
 canned_test "-L 4,18:a.c -L :main:a.c simple" multiple-overlapping
