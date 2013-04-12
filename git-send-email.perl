@@ -512,8 +512,9 @@ if (@alias_files and $aliasfiletype and defined $parse_alias{$aliasfiletype}) {
 
 ($sender) = expand_aliases($sender) if defined $sender;
 
-# returns 1 if the conflict must be solved using it as a format-patch argument
-sub check_file_rev_conflict($) {
+# is_format_patch_arg($f) returns 0 if $f names a patch, or 1 if
+# $f is a revision list specification to be passed to format-patch.
+sub is_format_patch_arg {
 	return unless $repo;
 	my $f = shift;
 	try {
@@ -529,6 +530,7 @@ to produce patches for.  Please disambiguate by...
     * Giving --format-patch option if you mean a range.
 EOF
 	} catch Git::Error::Command with {
+		# Not a valid revision.  Treat it as a filename.
 		return 0;
 	}
 }
@@ -540,14 +542,14 @@ while (defined(my $f = shift @ARGV)) {
 	if ($f eq "--") {
 		push @rev_list_opts, "--", @ARGV;
 		@ARGV = ();
-	} elsif (-d $f and !check_file_rev_conflict($f)) {
+	} elsif (-d $f and !is_format_patch_arg($f)) {
 		opendir my $dh, $f
 			or die "Failed to opendir $f: $!";
 
 		push @files, grep { -f $_ } map { catfile($f, $_) }
 				sort readdir $dh;
 		closedir $dh;
-	} elsif ((-f $f or -p $f) and !check_file_rev_conflict($f)) {
+	} elsif ((-f $f or -p $f) and !is_format_patch_arg($f)) {
 		push @files, $f;
 	} else {
 		push @rev_list_opts, $f;
@@ -711,7 +713,7 @@ sub ask {
 			}
 		}
 	}
-	return undef;
+	return;
 }
 
 my %broken_encoding;
@@ -833,7 +835,7 @@ sub extract_valid_address {
 	# less robust/correct than the monster regexp in Email::Valid,
 	# but still does a 99% job, and one less dependency
 	return $1 if $address =~ /($local_part_regexp\@$domain_regexp)/;
-	return undef;
+	return;
 }
 
 sub extract_valid_address_or_die {
@@ -1438,7 +1440,7 @@ sub recipients_cmd {
 
 	my $sanitized_sender = sanitize_address($sender);
 	my @addresses = ();
-	open my $fh, "$cmd \Q$file\E |"
+	open my $fh, "-|", "$cmd \Q$file\E"
 	    or die "($prefix) Could not execute '$cmd'";
 	while (my $address = <$fh>) {
 		$address =~ s/^\s*//g;
@@ -1484,7 +1486,7 @@ sub validate_patch {
 			return "$.: patch contains a line longer than 998 characters";
 		}
 	}
-	return undef;
+	return;
 }
 
 sub file_has_nonascii {
