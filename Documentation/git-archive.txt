@@ -56,7 +56,8 @@ OPTIONS
 	Write the archive to <file> instead of stdout.
 
 --worktree-attributes::
-	Look for attributes in .gitattributes in working directory too.
+	Look for attributes in .gitattributes files in the working tree
+	as well (see <<ATTRIBUTES>>).
 
 <extra>::
 	This can be any options that the archiver backend understands.
@@ -120,6 +121,7 @@ tar.<format>.remote::
 	user-defined formats, but true for the "tar.gz" and "tgz"
 	formats.
 
+[[ATTRIBUTES]]
 ATTRIBUTES
 ----------
 
