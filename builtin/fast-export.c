@@ -43,7 +43,7 @@ static int parse_opt_signed_tag_mode(const struct option *opt,
 	else if (!strcmp(arg, "strip"))
 		signed_tag_mode = STRIP;
 	else
-		return error("Unknown signed-tag mode: %s", arg);
+		return error("Unknown signed-tags mode: %s", arg);
 	return 0;
 }
 
@@ -416,7 +416,7 @@ static void handle_tag(const char *name, struct tag *tag)
 			switch(signed_tag_mode) {
 			case ABORT:
 				die ("Encountered signed tag %s; use "
-				     "--signed-tag=<mode> to handle it.",
+				     "--signed-tags=<mode> to handle it.",
 				     sha1_to_hex(tag->object.sha1));
 			case WARN:
 				warning ("Exporting signed tag %s",
