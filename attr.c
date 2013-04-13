@@ -387,7 +387,7 @@ static struct attr_stack *read_attr_from_index(const char *path, int macro_ok)
 	char *buf, *sp;
 	int lineno = 0;
 
-	buf = read_blob_data_from_index(use_index ? use_index : &the_index, path);
+	buf = read_blob_data_from_index(use_index ? use_index : &the_index, path, NULL);
 	if (!buf)
 		return NULL;
 

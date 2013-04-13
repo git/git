@@ -1896,7 +1896,7 @@ int index_name_is_other(const struct index_state *istate, const char *name,
 	return 1;
 }
 
-void *read_blob_data_from_index(struct index_state *istate, const char *path)
+void *read_blob_data_from_index(struct index_state *istate, const char *path, unsigned long *size)
 {
 	int pos, len;
 	unsigned long sz;
@@ -1925,5 +1925,7 @@ void *read_blob_data_from_index(struct index_state *istate, const char *path)
 		free(data);
 		return NULL;
 	}
+	if (size)
+		*size = sz;
 	return data;
 }
