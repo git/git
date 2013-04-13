@@ -8,6 +8,7 @@
 #include "notes.h"
 #include "gpg-interface.h"
 #include "mergesort.h"
+#include "commit-slab.h"
 
 static struct commit_extra_header *read_commit_extra_header_lines(const char *buf, size_t len, const char **);
 
@@ -501,57 +502,12 @@ struct commit *pop_commit(struct commit_list **stack)
 	return item;
 }
 
-struct commit_slab_piece {
-	int buf;
-};
+/*
+ * Topological sort support
+ */
 
-struct commit_slab {
-	int piece_size;
-	int piece_count;
-	struct commit_slab_piece **piece;
-};
-
-static void slab_init(struct commit_slab *s)
-{
-	/* allocate ~512kB at once, allowing for malloc overhead */
-	int size = (512*1024-32) / sizeof(struct commit_slab_piece);
-
-	s->piece_size = size;
-	s->piece_count = 0;
-	s->piece = NULL;
-}
-
-static void slab_clear(struct commit_slab *s)
-{
-	int i;
-
-	for (i = 0; i < s->piece_count; i++)
-		free(s->piece[i]);
-	s->piece_count = 0;
-	free(s->piece);
-	s->piece = NULL;
-}
-
-static inline struct commit_slab_piece *slab_at(struct commit_slab *s,
-						const struct commit *c)
-{
-	int nth_piece, nth_slot;
-
-	nth_piece = c->index / s->piece_size;
-	nth_slot = c->index % s->piece_size;
-
-	if (s->piece_count <= nth_piece) {
-		int i;
-
-		s->piece = xrealloc(s->piece, (nth_piece + 1) * sizeof(s->piece));
-		for (i = s->piece_count; i <= nth_piece; i++)
-			s->piece[i] = NULL;
-		s->piece_count = nth_piece + 1;
-	}
-	if (!s->piece[nth_piece])
-		s->piece[nth_piece] = xcalloc(s->piece_size, sizeof(**s->piece));
-	return &s->piece[nth_piece][nth_slot];
-}
+/* count number of children that have not been emitted */
+define_commit_slab(indegree_slab, int);
 
 /*
  * Performs an in-place topological sort on the list supplied.
@@ -561,18 +517,18 @@ void sort_in_topological_order(struct commit_list ** list, int lifo)
 	struct commit_list *next, *orig = *list;
 	struct commit_list *work, **insert;
 	struct commit_list **pptr;
-	struct commit_slab indegree;
+	struct indegree_slab indegree;
 
 	if (!orig)
 		return;
 	*list = NULL;
 
-	slab_init(&indegree);
+	init_indegree_slab(&indegree);
 
 	/* Mark them and clear the indegree */
 	for (next = orig; next; next = next->next) {
 		struct commit *commit = next->item;
-		slab_at(&indegree, commit)->buf = 1;
+		*(indegree_slab_at(&indegree, commit)) = 1;
 	}
 
 	/* update the indegree */
@@ -580,7 +536,7 @@ void sort_in_topological_order(struct commit_list ** list, int lifo)
 		struct commit_list * parents = next->item->parents;
 		while (parents) {
 			struct commit *parent = parents->item;
-			int *pi = &slab_at(&indegree, parent)->buf;
+			int *pi = indegree_slab_at(&indegree, parent);
 
 			if (*pi)
 				(*pi)++;
@@ -600,7 +556,7 @@ void sort_in_topological_order(struct commit_list ** list, int lifo)
 	for (next = orig; next; next = next->next) {
 		struct commit *commit = next->item;
 
-		if (slab_at(&indegree, commit)->buf == 1)
+		if (*(indegree_slab_at(&indegree, commit)) == 1)
 			insert = &commit_list_insert(commit, insert)->next;
 	}
 
@@ -621,7 +577,7 @@ void sort_in_topological_order(struct commit_list ** list, int lifo)
 		commit = work_item->item;
 		for (parents = commit->parents; parents ; parents = parents->next) {
 			struct commit *parent = parents->item;
-			int *pi = &slab_at(&indegree, parent)->buf;
+			int *pi = indegree_slab_at(&indegree, parent);
 
 			if (!*pi)
 				continue;
@@ -642,12 +598,12 @@ void sort_in_topological_order(struct commit_list ** list, int lifo)
 		 * work_item is a commit all of whose children
 		 * have already been emitted. we can emit it now.
 		 */
-		slab_at(&indegree, commit)->buf = 0;
+		*(indegree_slab_at(&indegree, commit)) = 0;
 		*pptr = work_item;
 		pptr = &work_item->next;
 	}
 
-	slab_clear(&indegree);
+	clear_indegree_slab(&indegree);
 }
 
 /* merge-base stuff */
