@@ -630,7 +630,7 @@ Only one finally block may be specified per try block
 =head2 CONSTRUCTORS
 
 The C<Error> object is implemented as a HASH. This HASH is initialized
-with the arguments that are passed to it's constructor. The elements
+with the arguments that are passed to its constructor. The elements
 that are used by, or are retrievable by the C<Error> class are listed
 below, other classes may add to these.
 
@@ -763,7 +763,7 @@ to the constructor.
 
 =item Error::Simple
 
-This class can be used to hold simple error strings and values. It's
+This class can be used to hold simple error strings and values. Its
 constructor takes two arguments. The first is a text value, the second
 is a numeric value. These values are what will be returned by the
 overload methods.
