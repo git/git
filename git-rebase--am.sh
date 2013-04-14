@@ -31,8 +31,8 @@ else
 	rm -f "$GIT_DIR/rebased-patches"
 
 	git format-patch -k --stdout --full-index --ignore-if-in-upstream \
-		--src-prefix=a/ --dst-prefix=b/ \
-		--no-renames $root_flag "$revisions" >"$GIT_DIR/rebased-patches"
+		--src-prefix=a/ --dst-prefix=b/ --no-renames --no-cover-letter \
+		$root_flag "$revisions" >"$GIT_DIR/rebased-patches"
 	ret=$?
 
 	if test 0 != $ret
