@@ -173,7 +173,17 @@ test_expect_success GPG 'push signed tag' '
 	git tag -s -m signed-tag signed-tag &&
 	git push origin signed-tag
 	) &&
-	compare_refs local signed-tag^{} server signed-tag^{}
+	compare_refs local signed-tag^{} server signed-tag^{} &&
+	test_must_fail compare_refs local signed-tag server signed-tag
+'
+
+test_expect_success GPG 'push signed tag with signed-tags capability' '
+	(cd local &&
+	git checkout master &&
+	git tag -s -m signed-tag signed-tag-2 &&
+	GIT_REMOTE_TESTGIT_SIGNED_TAGS=1 git push origin signed-tag-2
+	) &&
+	compare_refs local signed-tag-2 server signed-tag-2
 '
 
 test_done
