@@ -157,7 +157,17 @@ struct ref_dir {
 	struct ref_entry **entries;
 };
 
-/* ISSYMREF=0x01, ISPACKED=0x02, and ISBROKEN=0x04 are public interfaces */
+/*
+ * Bit values for ref_entry::flag.  REF_ISSYMREF=0x01,
+ * REF_ISPACKED=0x02, and REF_ISBROKEN=0x04 are public values; see
+ * refs.h.
+ */
+
+/*
+ * The field ref_entry->u.value.peeled of this value entry contains
+ * the correct peeled value for the reference, which might be
+ * null_sha1 if the reference is not a tag or if it is broken.
+ */
 #define REF_KNOWS_PEELED 0x08
 
 /* ref_entry represents a directory of references */

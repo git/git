@@ -10,8 +10,21 @@ struct ref_lock {
 	int force_write;
 };
 
+/*
+ * Bit values set in the flags argument passed to each_ref_fn():
+ */
+
+/* Reference is a symbolic reference. */
 #define REF_ISSYMREF 0x01
+
+/* Reference is a packed reference. */
 #define REF_ISPACKED 0x02
+
+/*
+ * Reference cannot be resolved to an object name: dangling symbolic
+ * reference (directly or indirectly), corrupt reference file, or
+ * symbolic reference refers to ill-formatted reference name.
+ */
 #define REF_ISBROKEN 0x04
 
 /*
