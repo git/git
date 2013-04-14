@@ -108,7 +108,19 @@ struct ref_entry;
  * (ref_entry->flag & REF_DIR) is zero.
  */
 struct ref_value {
+	/*
+	 * The name of the object to which this reference resolves
+	 * (which may be a tag object).  If REF_ISBROKEN, this is
+	 * null.  If REF_ISSYMREF, then this is the name of the object
+	 * referred to by the last reference in the symlink chain.
+	 */
 	unsigned char sha1[20];
+
+	/*
+	 * If REF_KNOWS_PEELED, then this field holds the peeled value
+	 * of this reference, or null if the reference is known not to
+	 * be peelable.
+	 */
 	unsigned char peeled[20];
 };
 
