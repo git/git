@@ -410,9 +410,10 @@ static int get_exporter(struct transport *transport,
 	/* we need to duplicate helper->in because we want to use it after
 	 * fastexport is done with it. */
 	fastexport->out = dup(helper->in);
-	fastexport->argv = xcalloc(5 + revlist_args->nr, sizeof(*fastexport->argv));
+	fastexport->argv = xcalloc(6 + revlist_args->nr, sizeof(*fastexport->argv));
 	fastexport->argv[argc++] = "fast-export";
 	fastexport->argv[argc++] = "--use-done-feature";
+	fastexport->argv[argc++] = "--signed-tags=warn-strip";
 	if (data->export_marks)
 		fastexport->argv[argc++] = data->export_marks;
 	if (data->import_marks)
