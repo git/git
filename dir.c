@@ -17,7 +17,21 @@ struct path_simplify {
 	const char *path;
 };
 
-static int read_directory_recursive(struct dir_struct *dir, const char *path, int len,
+/*
+ * Tells read_directory_recursive how a file or directory should be treated.
+ * Values are ordered by significance, e.g. if a directory contains both
+ * excluded and untracked files, it is listed as untracked because
+ * path_untracked > path_excluded.
+ */
+enum path_treatment {
+	path_none = 0,
+	path_recurse,
+	path_excluded,
+	path_untracked
+};
+
+static enum path_treatment read_directory_recursive(struct dir_struct *dir,
+	const char *path, int len,
 	int check_only, const struct path_simplify *simplify);
 static int get_dtype(struct dirent *de, const char *path, int len);
 
@@ -1002,35 +1016,26 @@ static enum exist_status directory_exists_in_index(const char *dirname, int len)
  *
  *  (a) if "show_other_directories" is true, we show it as
  *      just a directory, unless "hide_empty_directories" is
- *      also true and the directory is empty, in which case
- *      we just ignore it entirely.
- *      if we are looking for ignored directories, look if it
- *      contains only ignored files to decide if it must be shown as
- *      ignored or not.
+ *      also true, in which case we need to check if it contains any
+ *      untracked and / or ignored files.
  *  (b) if it looks like a git directory, and we don't have
  *      'no_gitlinks' set we treat it as a gitlink, and show it
  *      as a directory.
  *  (c) otherwise, we recurse into it.
  */
-enum directory_treatment {
-	show_directory,
-	ignore_directory,
-	recurse_into_directory
-};
-
-static enum directory_treatment treat_directory(struct dir_struct *dir,
+static enum path_treatment treat_directory(struct dir_struct *dir,
 	const char *dirname, int len, int exclude,
 	const struct path_simplify *simplify)
 {
 	/* The "len-1" is to strip the final '/' */
 	switch (directory_exists_in_index(dirname, len-1)) {
 	case index_directory:
-		return recurse_into_directory;
+		return path_recurse;
 
 	case index_gitdir:
 		if (dir->flags & DIR_SHOW_OTHER_DIRECTORIES)
-			return ignore_directory;
-		return show_directory;
+			return path_none;
+		return path_untracked;
 
 	case index_nonexistent:
 		if (dir->flags & DIR_SHOW_OTHER_DIRECTORIES)
@@ -1038,32 +1043,17 @@ static enum directory_treatment treat_directory(struct dir_struct *dir,
 		if (!(dir->flags & DIR_NO_GITLINKS)) {
 			unsigned char sha1[20];
 			if (resolve_gitlink_ref(dirname, "HEAD", sha1) == 0)
-				return show_directory;
+				return path_untracked;
 		}
-		return recurse_into_directory;
+		return path_recurse;
 	}
 
 	/* This is the "show_other_directories" case */
 
-	/*
-	 * We are looking for ignored files and our directory is not ignored,
-	 * check if it contains untracked files (i.e. is listed as untracked)
-	 */
-	if ((dir->flags & DIR_SHOW_IGNORED) && !exclude) {
-		int ignored;
-		dir->flags &= ~DIR_SHOW_IGNORED;
-		ignored = read_directory_recursive(dir, dirname, len, 1, simplify);
-		dir->flags |= DIR_SHOW_IGNORED;
-
-		if (ignored)
-			return ignore_directory;
-	}
-
 	if (!(dir->flags & DIR_HIDE_EMPTY_DIRECTORIES))
-		return show_directory;
-	if (!read_directory_recursive(dir, dirname, len, 1, simplify))
-		return ignore_directory;
-	return show_directory;
+		return exclude ? path_excluded : path_untracked;
+
+	return read_directory_recursive(dir, dirname, len, 1, simplify);
 }
 
 /*
@@ -1178,12 +1168,6 @@ static int get_dtype(struct dirent *de, const char *path, int len)
 	return dtype;
 }
 
-enum path_treatment {
-	path_ignored,
-	path_handled,
-	path_recurse
-};
-
 static enum path_treatment treat_one_path(struct dir_struct *dir,
 					  struct strbuf *path,
 					  const struct path_simplify *simplify,
@@ -1196,7 +1180,7 @@ static enum path_treatment treat_one_path(struct dir_struct *dir,
 	/* Always exclude indexed files */
 	if (dtype != DT_DIR &&
 	    cache_name_exists(path->buf, path->len, ignore_case))
-		return path_ignored;
+		return path_none;
 
 	exclude = is_excluded(dir, path->buf, &dtype);
 	if (exclude && (dir->flags & DIR_COLLECT_IGNORED)
@@ -1208,29 +1192,19 @@ static enum path_treatment treat_one_path(struct dir_struct *dir,
 	 * ignored files, ignore it
 	 */
 	if (exclude && !(dir->flags & DIR_SHOW_IGNORED))
-		return path_ignored;
+		return path_excluded;
 
 	switch (dtype) {
 	default:
-		return path_ignored;
+		return path_none;
 	case DT_DIR:
 		strbuf_addch(path, '/');
-		switch (treat_directory(dir, path->buf, path->len, exclude, simplify)) {
-		case show_directory:
-			break;
-		case recurse_into_directory:
-			return path_recurse;
-		case ignore_directory:
-			return path_ignored;
-		}
-		break;
+		return treat_directory(dir, path->buf, path->len, exclude,
+			simplify);
 	case DT_REG:
 	case DT_LNK:
-		if (exclude == !(dir->flags & DIR_SHOW_IGNORED))
-			return path_ignored;
-		break;
+		return exclude ? path_excluded : path_untracked;
 	}
-	return path_handled;
 }
 
 static enum path_treatment treat_path(struct dir_struct *dir,
@@ -1242,11 +1216,11 @@ static enum path_treatment treat_path(struct dir_struct *dir,
 	int dtype;
 
 	if (is_dot_or_dotdot(de->d_name) || !strcmp(de->d_name, ".git"))
-		return path_ignored;
+		return path_none;
 	strbuf_setlen(path, baselen);
 	strbuf_addstr(path, de->d_name);
 	if (simplify_away(path->buf, path->len, simplify))
-		return path_ignored;
+		return path_none;
 
 	dtype = DTYPE(de);
 	return treat_one_path(dir, path, simplify, dtype, de);
@@ -1260,14 +1234,16 @@ static enum path_treatment treat_path(struct dir_struct *dir,
  *
  * Also, we ignore the name ".git" (even if it is not a directory).
  * That likely will not change.
+ *
+ * Returns the most significant path_treatment value encountered in the scan.
  */
-static int read_directory_recursive(struct dir_struct *dir,
+static enum path_treatment read_directory_recursive(struct dir_struct *dir,
 				    const char *base, int baselen,
 				    int check_only,
 				    const struct path_simplify *simplify)
 {
 	DIR *fdir;
-	int contents = 0;
+	enum path_treatment state, subdir_state, dir_state = path_none;
 	struct dirent *de;
 	struct strbuf path = STRBUF_INIT;
 
@@ -1278,26 +1254,48 @@ static int read_directory_recursive(struct dir_struct *dir,
 		goto out;
 
 	while ((de = readdir(fdir)) != NULL) {
-		switch (treat_path(dir, de, &path, baselen, simplify)) {
-		case path_recurse:
-			contents += read_directory_recursive(dir, path.buf,
+		/* check how the file or directory should be treated */
+		state = treat_path(dir, de, &path, baselen, simplify);
+		if (state > dir_state)
+			dir_state = state;
+
+		/* recurse into subdir if instructed by treat_path */
+		if (state == path_recurse) {
+			subdir_state = read_directory_recursive(dir, path.buf,
 				path.len, check_only, simplify);
+			if (subdir_state > dir_state)
+				dir_state = subdir_state;
+		}
+
+		if (check_only) {
+			/* abort early if maximum state has been reached */
+			if (dir_state == path_untracked)
+				break;
+			/* skip the dir_add_* part */
 			continue;
-		case path_ignored:
-			continue;
-		case path_handled:
+		}
+
+		/* add the path to the appropriate result list */
+		switch (state) {
+		case path_excluded:
+			if (dir->flags & DIR_SHOW_IGNORED)
+				dir_add_name(dir, path.buf, path.len);
+			break;
+
+		case path_untracked:
+			if (!(dir->flags & DIR_SHOW_IGNORED))
+				dir_add_name(dir, path.buf, path.len);
+			break;
+
+		default:
 			break;
 		}
-		contents++;
-		if (check_only)
-			break;
-		dir_add_name(dir, path.buf, path.len);
 	}
 	closedir(fdir);
  out:
 	strbuf_release(&path);
 
-	return contents;
+	return dir_state;
 }
 
 static int cmp_name(const void *p1, const void *p2)
@@ -1368,7 +1366,7 @@ static int treat_leading_path(struct dir_struct *dir,
 		if (simplify_away(sb.buf, sb.len, simplify))
 			break;
 		if (treat_one_path(dir, &sb, simplify,
-				   DT_DIR, NULL) == path_ignored)
+				   DT_DIR, NULL) == path_none)
 			break; /* do not recurse into it */
 		if (len <= baselen) {
 			rc = 1;
