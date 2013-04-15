@@ -66,7 +66,6 @@ static int check_ignore(const char *prefix, const char **pathspec)
 		die(_("index file corrupt"));
 
 	memset(&dir, 0, sizeof(dir));
-	dir.flags |= DIR_COLLECT_IGNORED;
 	setup_standard_excludes(&dir);
 
 	if (!pathspec || !*pathspec) {

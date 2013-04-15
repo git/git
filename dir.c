@@ -1183,15 +1183,12 @@ static enum path_treatment treat_one_path(struct dir_struct *dir,
 		return path_none;
 
 	exclude = is_excluded(dir, path->buf, &dtype);
-	if (exclude && (dir->flags & DIR_COLLECT_IGNORED)
-	    && exclude_matches_pathspec(path->buf, path->len, simplify))
-		dir_add_ignored(dir, path->buf, path->len);
 
 	/*
 	 * Excluded? If we don't explicitly want to show
 	 * ignored files, ignore it
 	 */
-	if (exclude && !(dir->flags & DIR_SHOW_IGNORED))
+	if (exclude && !(dir->flags & (DIR_SHOW_IGNORED|DIR_SHOW_IGNORED_TOO)))
 		return path_excluded;
 
 	switch (dtype) {
@@ -1280,6 +1277,11 @@ static enum path_treatment read_directory_recursive(struct dir_struct *dir,
 		case path_excluded:
 			if (dir->flags & DIR_SHOW_IGNORED)
 				dir_add_name(dir, path.buf, path.len);
+			else if ((dir->flags & DIR_SHOW_IGNORED_TOO) ||
+				((dir->flags & DIR_COLLECT_IGNORED) &&
+				exclude_matches_pathspec(path.buf, path.len,
+					simplify)))
+				dir_add_ignored(dir, path.buf, path.len);
 			break;
 
 		case path_untracked:
