@@ -33,7 +33,7 @@ in the tag message.
 If `-m <msg>` or `-F <file>` is given and `-a`, `-s`, and `-u <key-id>`
 are absent, `-a` is implied.
 
-Otherwise just a tag reference for the SHA1 object name of the commit object is
+Otherwise just a tag reference for the SHA-1 object name of the commit object is
 created (i.e. a lightweight tag).
 
 A GnuPG signed tag object will be created when `-s` or `-u

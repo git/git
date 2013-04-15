@@ -16,8 +16,8 @@ DESCRIPTION
 -----------
 Adds a 'replace' reference in `refs/replace/` namespace.
 
-The name of the 'replace' reference is the SHA1 of the object that is
-replaced. The content of the 'replace' reference is the SHA1 of the
+The name of the 'replace' reference is the SHA-1 of the object that is
+replaced. The content of the 'replace' reference is the SHA-1 of the
 replacement object.
 
 Unless `-f` is given, the 'replace' reference must not yet exist.
