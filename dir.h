@@ -110,9 +110,11 @@ struct dir_struct {
 	 *
 	 * exclude_stack points to the top of the exclude_stack, and
 	 * basebuf contains the full path to the current
-	 * (sub)directory in the traversal.
+	 * (sub)directory in the traversal. Exclude points to the
+	 * matching exclude struct if the directory is excluded.
 	 */
 	struct exclude_stack *exclude_stack;
+	struct exclude *exclude;
 	char basebuf[PATH_MAX];
 };
 
@@ -156,8 +158,6 @@ extern int match_pathname(const char *, int,
  */
 struct path_exclude_check {
 	struct dir_struct *dir;
-	struct exclude *exclude;
-	struct strbuf path;
 };
 extern void path_exclude_check_init(struct path_exclude_check *, struct dir_struct *);
 extern void path_exclude_check_clear(struct path_exclude_check *);
