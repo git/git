@@ -941,8 +941,7 @@ static struct dir_entry *dir_entry_new(const char *pathname, int len)
 
 static struct dir_entry *dir_add_name(struct dir_struct *dir, const char *pathname, int len)
 {
-	if (!(dir->flags & DIR_SHOW_IGNORED) &&
-	    cache_name_exists(pathname, len, ignore_case))
+	if (cache_name_exists(pathname, len, ignore_case))
 		return NULL;
 
 	ALLOC_GROW(dir->entries, dir->nr+1, dir->alloc);
@@ -1044,9 +1043,8 @@ static enum exist_status directory_exists_in_index(const char *dirname, int len)
  * traversal routine.
  *
  * Case 1: If we *already* have entries in the index under that
- * directory name, we recurse into the directory to see all the files,
- * unless the directory is excluded and we want to show ignored
- * directories
+ * directory name, we always recurse into the directory to see
+ * all the files.
  *
  * Case 2: If we *already* have that directory name as a gitlink,
  * we always continue to see it as a gitlink, regardless of whether
@@ -1081,9 +1079,6 @@ static enum directory_treatment treat_directory(struct dir_struct *dir,
 	/* The "len-1" is to strip the final '/' */
 	switch (directory_exists_in_index(dirname, len-1)) {
 	case index_directory:
-		if ((dir->flags & DIR_SHOW_OTHER_DIRECTORIES) && exclude)
-			break;
-
 		return recurse_into_directory;
 
 	case index_gitdir:

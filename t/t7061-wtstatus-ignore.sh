@@ -186,7 +186,7 @@ cat >expected <<\EOF
 ?? .gitignore
 ?? actual
 ?? expected
-!! tracked/
+!! tracked/uncommitted
 EOF
 
 test_expect_success 'status ignored tracked directory and uncommitted file with --ignore' '
@@ -212,7 +212,7 @@ cat >expected <<\EOF
 ?? .gitignore
 ?? actual
 ?? expected
-!! tracked/
+!! tracked/ignored/
 EOF
 
 test_expect_success 'status ignored tracked directory with uncommitted file in untracked subdir with --ignore' '
@@ -239,7 +239,7 @@ cat >expected <<\EOF
 ?? .gitignore
 ?? actual
 ?? expected
-!! tracked/
+!! tracked/ignored/uncommitted
 EOF
 
 test_expect_success 'status ignored tracked directory with uncommitted file in tracked subdir with --ignore' '

@@ -237,6 +237,32 @@ test_expect_success 'hide empty ignored directory with --no-empty-directory' '
 	test_cmp expect actual
 '
 
+test_expect_success 'show/hide empty ignored sub-directory (setup)' '
+	> top/l1/tracked &&
+	(
+		cd top &&
+		git add -f l1/tracked
+	)
+'
+
+test_expect_success 'show empty ignored sub-directory with --directory' '
+	(
+		cd top &&
+		git ls-files -o -i --exclude l1 --directory
+	) >actual &&
+	echo l1/l2/ >expect &&
+	test_cmp expect actual
+'
+
+test_expect_success 'hide empty ignored sub-directory with --no-empty-directory' '
+	(
+		cd top &&
+		git ls-files -o -i --exclude l1 --directory --no-empty-directory
+	) >actual &&
+	>expect &&
+	test_cmp expect actual
+'
+
 test_expect_success 'pattern matches prefix completely' '
 	: >expect &&
 	git ls-files -i -o --exclude "/three/a.3[abc]" >actual &&
