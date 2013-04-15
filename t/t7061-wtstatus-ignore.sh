@@ -143,4 +143,31 @@ test_expect_success 'status ignored tracked directory and uncommitted file with 
 	test_cmp expected actual
 '
 
+cat >expected <<\EOF
+?? .gitignore
+?? actual
+?? expected
+!! tracked/
+EOF
+
+test_expect_success 'status ignored tracked directory with uncommitted file in untracked subdir with --ignore' '
+	rm -rf tracked/uncommitted &&
+	mkdir tracked/ignored &&
+	: >tracked/ignored/uncommitted &&
+	git status --porcelain --ignored >actual &&
+	test_cmp expected actual
+'
+
+cat >expected <<\EOF
+?? .gitignore
+?? actual
+?? expected
+!! tracked/ignored/uncommitted
+EOF
+
+test_expect_success 'status ignored tracked directory with uncommitted file in untracked subdir with --ignore -u' '
+	git status --porcelain --ignored -u >actual &&
+	test_cmp expected actual
+'
+
 test_done

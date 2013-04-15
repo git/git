@@ -1104,6 +1104,15 @@ static enum directory_treatment treat_directory(struct dir_struct *dir,
 
 	/* This is the "show_other_directories" case */
 
+	/* might be a sub directory in an excluded directory */
+	if (!exclude) {
+		struct path_exclude_check check;
+		int dt = DT_DIR;
+		path_exclude_check_init(&check, dir);
+		exclude = is_path_excluded(&check, dirname, len, &dt);
+		path_exclude_check_clear(&check);
+	}
+
 	/*
 	 * We are looking for ignored files and our directory is not ignored,
 	 * check if it contains only ignored files
