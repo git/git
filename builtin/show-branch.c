@@ -162,29 +162,28 @@ static void name_commits(struct commit_list *list,
 			nth = 0;
 			while (parents) {
 				struct commit *p = parents->item;
-				char newname[1000], *en;
+				struct strbuf newname = STRBUF_INIT;
 				parents = parents->next;
 				nth++;
 				if (p->util)
 					continue;
-				en = newname;
 				switch (n->generation) {
 				case 0:
-					en += sprintf(en, "%s", n->head_name);
+					strbuf_addstr(&newname, n->head_name);
 					break;
 				case 1:
-					en += sprintf(en, "%s^", n->head_name);
+					strbuf_addf(&newname, "%s^", n->head_name);
 					break;
 				default:
-					en += sprintf(en, "%s~%d",
-						n->head_name, n->generation);
+					strbuf_addf(&newname, "%s~%d",
+						    n->head_name, n->generation);
 					break;
 				}
 				if (nth == 1)
-					en += sprintf(en, "^");
+					strbuf_addch(&newname, '^');
 				else
-					en += sprintf(en, "^%d", nth);
-				name_commit(p, xstrdup(newname), 0);
+					strbuf_addf(&newname, "^%d", nth);
+				name_commit(p, strbuf_detach(&newname, NULL), 0);
 				i++;
 				name_first_parent_chain(p);
 			}
