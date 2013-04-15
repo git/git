@@ -67,6 +67,9 @@ UI, Workflows & Features
    ref by specifying a raw object name from the command line when the
    server side supports this feature.
 
+ * Output from "git log --graph" works better with submodule log
+   output now.
+
  * "git count-objects -v" learned to report leftover temporary
    packfiles and other garbage in the object store.
 
@@ -159,6 +162,28 @@ Fixes since v1.8.2
 Unless otherwise noted, all the fixes since v1.8.2 in the maintenance
 track are contained in this release (see release notes to them for
 details).
+
+ * Perl scripts like "git-svn" closed (not redirecting to /dev/null)
+   the standard error stream, which is not a very smart thing to do.
+   Later open may return file descriptor #2 for unrelated purpose, and
+   error reporting code may write into them.
+   (merge a749c0b tr/perl-keep-stderr-open later to maint).
+
+ * "git show-branch" was not prepared to show a very long run of
+   ancestor operators e.g. foobar^2~2^2^2^2...^2~4 correctly.
+   (merge aaa07e3 jk/show-branch-strbuf later to maint).
+
+ * "git diff --diff-algorithm algo" is also understood as "git diff
+   --diff-algorithm=algo".
+   (merge 0895c6d jk/diff-algo-finishing-touches later to maint).
+
+ * The new core.commentchar configuration was not applied to a few
+   places.
+   (merge 89c3bbd rt/commentchar-fmt-merge-msg later to maint).
+
+ * "git bundle" did not like a bundle created using a commit without
+   any message as its one of the prerequistes.
+   (merge 5446e33 lf/bundle-with-tip-wo-message later to maint).
 
  * "git log -S/-G" started paying attention to textconv filter, but
    there was no way to disable this.  Make it honor --no-textconv
