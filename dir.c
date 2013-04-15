@@ -1067,28 +1067,6 @@ static enum directory_treatment treat_directory(struct dir_struct *dir,
 }
 
 /*
- * Decide what to do when we find a file while traversing the
- * filesystem. Mostly two cases:
- *
- *  1. We are looking for ignored files
- *   (a) File is ignored, include it
- *   (b) File is in ignored path, include it
- *   (c) File is not ignored, exclude it
- *
- *  2. Other scenarios, include the file if not excluded
- *
- * Return 1 for exclude, 0 for include.
- */
-static int treat_file(struct dir_struct *dir, struct strbuf *path, int exclude)
-{
-	/* Always exclude indexed files */
-	if (index_name_exists(&the_index, path->buf, path->len, ignore_case))
-		return 1;
-
-	return exclude == !(dir->flags & DIR_SHOW_IGNORED);
-}
-
-/*
  * This is an inexact early pruning of any recursive directory
  * reading - if the path cannot possibly be in the pathspec,
  * return true, and we'll skip it early.
@@ -1211,7 +1189,16 @@ static enum path_treatment treat_one_path(struct dir_struct *dir,
 					  const struct path_simplify *simplify,
 					  int dtype, struct dirent *de)
 {
-	int exclude = is_excluded(dir, path->buf, &dtype);
+	int exclude;
+	if (dtype == DT_UNKNOWN)
+		dtype = get_dtype(de, path->buf, path->len);
+
+	/* Always exclude indexed files */
+	if (dtype != DT_DIR &&
+	    cache_name_exists(path->buf, path->len, ignore_case))
+		return path_ignored;
+
+	exclude = is_excluded(dir, path->buf, &dtype);
 	if (exclude && (dir->flags & DIR_COLLECT_IGNORED)
 	    && exclude_matches_pathspec(path->buf, path->len, simplify))
 		dir_add_ignored(dir, path->buf, path->len);
@@ -1222,9 +1209,6 @@ static enum path_treatment treat_one_path(struct dir_struct *dir,
 	 */
 	if (exclude && !(dir->flags & DIR_SHOW_IGNORED))
 		return path_ignored;
-
-	if (dtype == DT_UNKNOWN)
-		dtype = get_dtype(de, path->buf, path->len);
 
 	switch (dtype) {
 	default:
@@ -1242,7 +1226,7 @@ static enum path_treatment treat_one_path(struct dir_struct *dir,
 		break;
 	case DT_REG:
 	case DT_LNK:
-		if (treat_file(dir, path, exclude))
+		if (exclude == !(dir->flags & DIR_SHOW_IGNORED))
 			return path_ignored;
 		break;
 	}
