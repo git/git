@@ -118,6 +118,7 @@ extern char *get_remote_object_url(const char *url, const char *hex,
 
 /* Options for http_request_*() */
 #define HTTP_NO_CACHE		1
+#define HTTP_KEEP_ERROR		2
 
 /* Return values for http_request_*() */
 #define HTTP_OK			0
@@ -133,12 +134,6 @@ extern char *get_remote_object_url(const char *url, const char *hex,
  * If the result pointer is NULL, a HTTP HEAD request is made instead of GET.
  */
 int http_get_strbuf(const char *url, struct strbuf *content_type, struct strbuf *result, int options);
-
-/*
- * Prints an error message using error() containing url and curl_errorstr,
- * and returns ret.
- */
-int http_error(const char *url, int ret);
 
 extern int http_fetch_ref(const char *base, struct ref *ref);
 
