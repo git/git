@@ -268,7 +268,7 @@ This commit is referred to as a "merge commit", or sometimes just a
 	pack.
 
 [[def_pathspec]]pathspec::
-       Pattern used to specify paths.
+	Pattern used to limit paths in Git commands.
 +
 Pathspecs are used on the command line of "git ls-files", "git
 ls-tree", "git add", "git grep", "git diff", "git checkout",
@@ -277,6 +277,8 @@ limit the scope of operations to some subset of the tree or
 worktree.  See the documentation of each command for whether
 paths are relative to the current directory or toplevel.  The
 pathspec syntax is as follows:
++
+--
 
 * any path matches itself
 * the pathspec up to the last slash represents a
@@ -286,11 +288,12 @@ pathspec syntax is as follows:
   of the pathname.  Paths relative to the directory
   prefix will be matched against that pattern using fnmatch(3);
   in particular, '*' and '?' _can_ match directory separators.
+
+--
 +
 For example, Documentation/*.jpg will match all .jpg files
 in the Documentation subtree,
 including Documentation/chapter_1/figure_1.jpg.
-
 +
 A pathspec that begins with a colon `:` has special meaning.  In the
 short form, the leading colon `:` is followed by zero or more "magic
@@ -306,18 +309,10 @@ and a close parentheses `)`, and the remainder is the pattern to match
 against the path.
 +
 The "magic signature" consists of an ASCII symbol that is not
-alphanumeric.
-+
---
-top `/`;;
-	The magic word `top` (mnemonic: `/`) makes the pattern match
-	from the root of the working tree, even when you are running
-	the command from inside a subdirectory.
---
-+
-Currently only the slash `/` is recognized as the "magic signature",
-but it is envisioned that we will support more types of magic in later
-versions of Git.
+alphanumeric. Currently only the slash `/` is recognized as a
+"magic signature": it makes the pattern match from the root of
+the working tree, even when you are running the command from
+inside a subdirectory.
 +
 A pathspec with only a colon means "there is no pathspec". This form
 should not be combined with other pathspec.
@@ -389,15 +384,7 @@ should not be combined with other pathspec.
 [[def_refspec]]refspec::
 	A "refspec" is used by <<def_fetch,fetch>> and
 	<<def_push,push>> to describe the mapping between remote
-	<<def_ref,ref>> and local ref. They are combined with a colon in
-	the format <src>:<dst>, preceded by an optional plus sign, +.
-	For example: `git fetch $URL
-	refs/heads/master:refs/heads/origin` means "grab the master
-	<<def_branch,branch>> <<def_head,head>> from the $URL and store
-	it as my origin branch head". And `git push
-	$URL refs/heads/master:refs/heads/to-upstream` means "publish my
-	master branch head as to-upstream branch at $URL". See also
-	linkgit:git-push[1].
+	<<def_ref,ref>> and local ref.
 
 [[def_remote_tracking_branch]]remote-tracking branch::
 	A regular Git <<def_branch,branch>> that is used to follow changes from
