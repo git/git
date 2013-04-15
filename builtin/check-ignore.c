@@ -59,7 +59,6 @@ static int check_ignore(const char *prefix, const char **pathspec)
 	const char *path, *full_path;
 	char *seen;
 	int num_ignored = 0, dtype = DT_UNKNOWN, i;
-	struct path_exclude_check check;
 	struct exclude *exclude;
 
 	/* read_cache() is only necessary so we can watch out for submodules. */
@@ -76,7 +75,6 @@ static int check_ignore(const char *prefix, const char **pathspec)
 		return 0;
 	}
 
-	path_exclude_check_init(&check, &dir);
 	/*
 	 * look for pathspecs matching entries in the index, since these
 	 * should not be ignored, in order to be consistent with
@@ -90,8 +88,7 @@ static int check_ignore(const char *prefix, const char **pathspec)
 		full_path = check_path_for_gitlink(full_path);
 		die_if_path_beyond_symlink(full_path, prefix);
 		if (!seen[i]) {
-			exclude = last_exclude_matching_path(&check, full_path,
-							     -1, &dtype);
+			exclude = last_exclude_matching(&dir, full_path, &dtype);
 			if (exclude) {
 				if (!quiet)
 					output_exclude(path, exclude);
@@ -101,7 +98,6 @@ static int check_ignore(const char *prefix, const char **pathspec)
 	}
 	free(seen);
 	clear_directory(&dir);
-	path_exclude_check_clear(&check);
 
 	return num_ignored;
 }

@@ -843,7 +843,7 @@ static void prep_exclude(struct dir_struct *dir, const char *base, int baselen)
  * Returns the exclude_list element which matched, or NULL for
  * undecided.
  */
-static struct exclude *last_exclude_matching(struct dir_struct *dir,
+struct exclude *last_exclude_matching(struct dir_struct *dir,
 					     const char *pathname,
 					     int *dtype_p)
 {
@@ -865,51 +865,10 @@ static struct exclude *last_exclude_matching(struct dir_struct *dir,
  * scans all exclude lists to determine whether pathname is excluded.
  * Returns 1 if true, otherwise 0.
  */
-static int is_excluded(struct dir_struct *dir, const char *pathname, int *dtype_p)
+int is_excluded(struct dir_struct *dir, const char *pathname, int *dtype_p)
 {
 	struct exclude *exclude =
 		last_exclude_matching(dir, pathname, dtype_p);
-	if (exclude)
-		return exclude->flags & EXC_FLAG_NEGATIVE ? 0 : 1;
-	return 0;
-}
-
-void path_exclude_check_init(struct path_exclude_check *check,
-			     struct dir_struct *dir)
-{
-	check->dir = dir;
-}
-
-void path_exclude_check_clear(struct path_exclude_check *check)
-{
-}
-
-/*
- * For each subdirectory in name, starting with the top-most, checks
- * to see if that subdirectory is excluded, and if so, returns the
- * corresponding exclude structure.  Otherwise, checks whether name
- * itself (which is presumably a file) is excluded.
- *
- * A path to a directory known to be excluded is left in check->path to
- * optimize for repeated checks for files in the same excluded directory.
- */
-struct exclude *last_exclude_matching_path(struct path_exclude_check *check,
-					   const char *name, int namelen,
-					   int *dtype)
-{
-	return last_exclude_matching(check->dir, name, dtype);
-}
-
-/*
- * Is this name excluded?  This is for a caller like show_files() that
- * do not honor directory hierarchy and iterate through paths that are
- * possibly in an ignored directory.
- */
-int is_path_excluded(struct path_exclude_check *check,
-		  const char *name, int namelen, int *dtype)
-{
-	struct exclude *exclude =
-		last_exclude_matching_path(check, name, namelen, dtype);
 	if (exclude)
 		return exclude->flags & EXC_FLAG_NEGATIVE ? 0 : 1;
 	return 0;
@@ -1086,15 +1045,6 @@ static enum directory_treatment treat_directory(struct dir_struct *dir,
 
 	/* This is the "show_other_directories" case */
 
-	/* might be a sub directory in an excluded directory */
-	if (!exclude) {
-		struct path_exclude_check check;
-		int dt = DT_DIR;
-		path_exclude_check_init(&check, dir);
-		exclude = is_path_excluded(&check, dirname, len, &dt);
-		path_exclude_check_clear(&check);
-	}
-
 	/*
 	 * We are looking for ignored files and our directory is not ignored,
 	 * check if it contains untracked files (i.e. is listed as untracked)
@@ -1129,27 +1079,13 @@ static enum directory_treatment treat_directory(struct dir_struct *dir,
  *
  * Return 1 for exclude, 0 for include.
  */
-static int treat_file(struct dir_struct *dir, struct strbuf *path, int exclude, int *dtype)
+static int treat_file(struct dir_struct *dir, struct strbuf *path, int exclude)
 {
-	struct path_exclude_check check;
-	int exclude_file = 0;
-
 	/* Always exclude indexed files */
 	if (index_name_exists(&the_index, path->buf, path->len, ignore_case))
 		return 1;
 
-	if (exclude)
-		exclude_file = !(dir->flags & DIR_SHOW_IGNORED);
-	else if (dir->flags & DIR_SHOW_IGNORED) {
-		path_exclude_check_init(&check, dir);
-
-		if (!is_path_excluded(&check, path->buf, path->len, dtype))
-			exclude_file = 1;
-
-		path_exclude_check_clear(&check);
-	}
-
-	return exclude_file;
+	return exclude == !(dir->flags & DIR_SHOW_IGNORED);
 }
 
 /*
@@ -1306,12 +1242,9 @@ static enum path_treatment treat_one_path(struct dir_struct *dir,
 		break;
 	case DT_REG:
 	case DT_LNK:
-		switch (treat_file(dir, path, exclude, &dtype)) {
-		case 1:
+		if (treat_file(dir, path, exclude))
 			return path_ignored;
-		default:
-			break;
-		}
+		break;
 	}
 	return path_handled;
 }

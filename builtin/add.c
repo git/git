@@ -444,9 +444,7 @@ int cmd_add(int argc, const char **argv, const char *prefix)
 
 	if (pathspec) {
 		int i;
-		struct path_exclude_check check;
 
-		path_exclude_check_init(&check, &dir);
 		if (!seen)
 			seen = find_pathspecs_matching_against_index(pathspec);
 		for (i = 0; pathspec[i]; i++) {
@@ -454,7 +452,7 @@ int cmd_add(int argc, const char **argv, const char *prefix)
 			    && !file_exists(pathspec[i])) {
 				if (ignore_missing) {
 					int dtype = DT_UNKNOWN;
-					if (is_path_excluded(&check, pathspec[i], -1, &dtype))
+					if (is_excluded(&dir, pathspec[i], &dtype))
 						dir_add_ignored(&dir, pathspec[i], strlen(pathspec[i]));
 				} else
 					die(_("pathspec '%s' did not match any files"),
@@ -462,7 +460,6 @@ int cmd_add(int argc, const char **argv, const char *prefix)
 			}
 		}
 		free(seen);
-		path_exclude_check_clear(&check);
 	}
 
 	plug_bulk_checkin();
