@@ -153,7 +153,7 @@ to point at the new commit.
 	created. Configured via the `.git/info/grafts` file.
 
 [[def_hash]]hash::
-	In Git's context, synonym to <<def_object_name,object name>>.
+	In Git's context, synonym for <<def_object_name,object name>>.
 
 [[def_head]]head::
 	A <<def_ref,named reference>> to the <<def_commit,commit>> at the tip of a
@@ -225,7 +225,7 @@ This commit is referred to as a "merge commit", or sometimes just a
 
 [[def_object]]object::
 	The unit of storage in Git. It is uniquely identified by the
-	<<def_SHA1,SHA1>> of its contents. Consequently, an
+	<<def_SHA1,SHA-1>> of its contents. Consequently, an
 	object can not be changed.
 
 [[def_object_database]]object database::
@@ -237,10 +237,9 @@ This commit is referred to as a "merge commit", or sometimes just a
 	Synonym for <<def_object_name,object name>>.
 
 [[def_object_name]]object name::
-	The unique identifier of an <<def_object,object>>. The <<def_hash,hash>>
-	of the object's contents using the Secure Hash Algorithm
-	1 and usually represented by the 40 character hexadecimal encoding of
-	the <<def_hash,hash>> of the object.
+	The unique identifier of an <<def_object,object>>.  The
+	object name is usually represented by a 40 character
+	hexadecimal string.  Also colloquially called <<def_SHA1,SHA-1>>.
 
 [[def_object_type]]object type::
 	One of the identifiers "<<def_commit_object,commit>>",
@@ -376,7 +375,7 @@ should not be combined with other pathspec.
 	to the result.
 
 [[def_ref]]ref::
-	A 40-byte hex representation of a <<def_SHA1,SHA1>> or a name that
+	A 40-byte hex representation of a <<def_SHA1,SHA-1>> or a name that
 	denotes a particular <<def_object,object>>. They may be stored in
 	a file under `$GIT_DIR/refs/` directory, or
 	in the `$GIT_DIR/packed-refs` file.
@@ -432,8 +431,9 @@ should not be combined with other pathspec.
 [[def_SCM]]SCM::
 	Source code management (tool).
 
-[[def_SHA1]]SHA1::
-	Synonym for <<def_object_name,object name>>.
+[[def_SHA1]]SHA-1::
+	"Secure Hash Algorithm 1"; a cryptographic hash function.
+	In the context of Git used as a synonym for <<def_object_name,object name>>.
 
 [[def_shallow_repository]]shallow repository::
 	A shallow <<def_repository,repository>> has an incomplete
@@ -447,7 +447,7 @@ should not be combined with other pathspec.
 	its history can be later deepened with linkgit:git-fetch[1].
 
 [[def_symref]]symref::
-	Symbolic reference: instead of containing the <<def_SHA1,SHA1>>
+	Symbolic reference: instead of containing the <<def_SHA1,SHA-1>>
 	id itself, it is of the format 'ref: refs/some/thing' and when
 	referenced, it recursively dereferences to this reference.
 	'<<def_HEAD,HEAD>>' is a prime example of a symref. Symbolic
