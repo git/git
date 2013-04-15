@@ -1489,12 +1489,12 @@ sub _command_common_pipe {
 		if (not defined $pid) {
 			throw Error::Simple("open failed: $!");
 		} elsif ($pid == 0) {
-			if (defined $opts{STDERR}) {
-				close STDERR;
-			}
 			if ($opts{STDERR}) {
 				open (STDERR, '>&', $opts{STDERR})
 					or die "dup failed: $!";
+			} elsif (defined $opts{STDERR}) {
+				open (STDERR, '>', '/dev/null')
+					or die "opening /dev/null failed: $!";
 			}
 			_cmd_exec($self, $cmd, @args);
 		}
