@@ -64,13 +64,35 @@ cat >expected <<\EOF
 ?? .gitignore
 ?? actual
 ?? expected
+EOF
+
+test_expect_success 'status empty untracked directory with --ignore' '
+	rm -rf ignored &&
+	mkdir untracked-ignored &&
+	mkdir untracked-ignored/test &&
+	git status --porcelain --ignored >actual &&
+	test_cmp expected actual
+'
+
+cat >expected <<\EOF
+?? .gitignore
+?? actual
+?? expected
+EOF
+
+test_expect_success 'status empty untracked directory with --ignore -u' '
+	git status --porcelain --ignored -u >actual &&
+	test_cmp expected actual
+'
+
+cat >expected <<\EOF
+?? .gitignore
+?? actual
+?? expected
 !! untracked-ignored/
 EOF
 
 test_expect_success 'status untracked directory with ignored files with --ignore' '
-	rm -rf ignored &&
-	mkdir untracked-ignored &&
-	mkdir untracked-ignored/test &&
 	: >untracked-ignored/ignored &&
 	: >untracked-ignored/test/ignored &&
 	git status --porcelain --ignored >actual &&

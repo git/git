@@ -1115,7 +1115,7 @@ static enum directory_treatment treat_directory(struct dir_struct *dir,
 
 	/*
 	 * We are looking for ignored files and our directory is not ignored,
-	 * check if it contains only ignored files
+	 * check if it contains untracked files (i.e. is listed as untracked)
 	 */
 	if ((dir->flags & DIR_SHOW_IGNORED) && !exclude) {
 		int ignored;
@@ -1123,7 +1123,8 @@ static enum directory_treatment treat_directory(struct dir_struct *dir,
 		ignored = read_directory_recursive(dir, dirname, len, 1, simplify);
 		dir->flags |= DIR_SHOW_IGNORED;
 
-		return ignored ? ignore_directory : show_directory;
+		if (ignored)
+			return ignore_directory;
 	}
 
 	if (!(dir->flags & DIR_HIDE_EMPTY_DIRECTORIES))
