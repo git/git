@@ -32,6 +32,25 @@ test_expect_success 'status untracked directory with --ignored -u' '
 	git status --porcelain --ignored -u >actual &&
 	test_cmp expected actual
 '
+cat >expected <<\EOF
+?? untracked/uncommitted
+!! untracked/ignored
+EOF
+
+test_expect_success 'status prefixed untracked directory with --ignored' '
+	git status --porcelain --ignored untracked/ >actual &&
+	test_cmp expected actual
+'
+
+cat >expected <<\EOF
+?? untracked/uncommitted
+!! untracked/ignored
+EOF
+
+test_expect_success 'status prefixed untracked sub-directory with --ignored -u' '
+	git status --porcelain --ignored -u untracked/ >actual &&
+	test_cmp expected actual
+'
 
 cat >expected <<\EOF
 ?? .gitignore
