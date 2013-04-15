@@ -1120,15 +1120,13 @@ static enum directory_treatment treat_directory(struct dir_struct *dir,
 	if ((dir->flags & DIR_SHOW_IGNORED) && !exclude) {
 		int ignored;
 		dir->flags &= ~DIR_SHOW_IGNORED;
-		dir->flags |= DIR_HIDE_EMPTY_DIRECTORIES;
 		ignored = read_directory_recursive(dir, dirname, len, 1, simplify);
-		dir->flags &= ~DIR_HIDE_EMPTY_DIRECTORIES;
 		dir->flags |= DIR_SHOW_IGNORED;
 
 		return ignored ? ignore_directory : show_directory;
 	}
-	if (!(dir->flags & DIR_SHOW_IGNORED) &&
-	    !(dir->flags & DIR_HIDE_EMPTY_DIRECTORIES))
+
+	if (!(dir->flags & DIR_HIDE_EMPTY_DIRECTORIES))
 		return show_directory;
 	if (!read_directory_recursive(dir, dirname, len, 1, simplify))
 		return ignore_directory;
