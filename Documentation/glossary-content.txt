@@ -104,9 +104,6 @@ to point at the new commit.
 	an arbitrary <<def_commit,commit>> that isn't necessarily the tip of any
 	particular branch.  In this case HEAD is said to be "detached".
 
-[[def_dircache]]dircache::
-	You are *waaaaay* behind. See <<def_index,index>>.
-
 [[def_directory]]directory::
 	The list you get with "ls" :-)
 
@@ -114,11 +111,6 @@ to point at the new commit.
 	A <<def_working_tree,working tree>> is said to be "dirty" if
 	it contains modifications which have not been <<def_commit,committed>> to the current
 	<<def_branch,branch>>.
-
-[[def_ent]]ent::
-	Favorite synonym to "<<def_tree-ish,tree-ish>>" by some total geeks. See
-	http://en.wikipedia.org/wiki/Ent_(Middle-earth) for an in-depth
-	explanation. Avoid this term, not to confuse people.
 
 [[def_evil_merge]]evil merge::
 	An evil merge is a <<def_merge,merge>> that introduces changes that
@@ -257,8 +249,7 @@ This commit is referred to as a "merge commit", or sometimes just a
 	<<def_object,object>>.
 
 [[def_octopus]]octopus::
-	To <<def_merge,merge>> more than two <<def_branch,branches>>. Also denotes an
-	intelligent predator.
+	To <<def_merge,merge>> more than two <<def_branch,branches>>.
 
 [[def_origin]]origin::
 	The default upstream <<def_repository,repository>>. Most projects have
