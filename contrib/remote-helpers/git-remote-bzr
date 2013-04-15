@@ -249,7 +249,7 @@ def export_files(tree, files):
     return final
 
 def export_branch(branch, name):
-    global prefix, dirname
+    global prefix
 
     ref = '%s/heads/%s' % (prefix, name)
     tip = marks.get_tip(name)
@@ -335,8 +335,10 @@ def export_branch(branch, name):
     marks.set_tip(name, revid)
 
 def export_tag(repo, name):
-    global tags
-    print "reset refs/tags/%s" % name
+    global tags, prefix
+
+    ref = '%s/tags/%s' % (prefix, name)
+    print "reset %s" % ref
     print "from :%u" % rev_to_mark(tags[name])
     print
 
@@ -649,6 +651,7 @@ def do_capabilities(parser):
     print "import"
     print "export"
     print "refspec refs/heads/*:%s/heads/*" % prefix
+    print "refspec refs/tags/*:%s/tags/*" % prefix
 
     path = os.path.join(dirname, 'marks-git')
 
