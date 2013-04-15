@@ -419,13 +419,13 @@ static struct {
 	const char *name;
 	const char *help;
 } common_guides[] = {
-	{ "attributes", "Defining attributes per path" },
-	{ "glossary", "A Git glossary" },
-	{ "ignore", "Specifies intentionally untracked files to ignore" },
-	{ "modules", "Defining submodule properties" },
-	{ "revisions", "Specifying revisions and ranges for Git" },
-	{ "tutorial", "A tutorial introduction to Git (for version 1.5.1 or newer)" },
-	{ "workflows", "An overview of recommended workflows with Git"},
+	{ "attributes", N_("Defining attributes per path") },
+	{ "glossary", N_("A Git glossary") },
+	{ "ignore", N_("Specifies intentionally untracked files to ignore") },
+	{ "modules", N_("Defining submodule properties") },
+	{ "revisions", N_("Specifying revisions and ranges for Git") },
+	{ "tutorial", N_("A tutorial introduction to Git (for version 1.5.1 or newer)") },
+	{ "workflows", N_("An overview of recommended workflows with Git") },
 };
 
 static void list_common_guides_help(void)
