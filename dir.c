@@ -1153,16 +1153,13 @@ static int treat_file(struct dir_struct *dir, struct strbuf *path, int exclude, 
 	struct path_exclude_check check;
 	int exclude_file = 0;
 
+	/* Always exclude indexed files */
+	if (index_name_exists(&the_index, path->buf, path->len, ignore_case))
+		return 1;
+
 	if (exclude)
 		exclude_file = !(dir->flags & DIR_SHOW_IGNORED);
 	else if (dir->flags & DIR_SHOW_IGNORED) {
-		/* Always exclude indexed files */
-		struct cache_entry *ce = index_name_exists(&the_index,
-		    path->buf, path->len, ignore_case);
-
-		if (ce)
-			return 1;
-
 		path_exclude_check_init(&check, dir);
 
 		if (!is_path_excluded(&check, path->buf, path->len, dtype))

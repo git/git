@@ -122,10 +122,34 @@ cat >expected <<\EOF
 ?? .gitignore
 ?? actual
 ?? expected
+EOF
+
+test_expect_success 'status ignored tracked directory and ignored file with --ignore' '
+	echo "committed" >>.gitignore &&
+	git status --porcelain --ignored >actual &&
+	test_cmp expected actual
+'
+
+cat >expected <<\EOF
+?? .gitignore
+?? actual
+?? expected
+EOF
+
+test_expect_success 'status ignored tracked directory and ignored file with --ignore -u' '
+	git status --porcelain --ignored -u >actual &&
+	test_cmp expected actual
+'
+
+cat >expected <<\EOF
+?? .gitignore
+?? actual
+?? expected
 !! tracked/
 EOF
 
 test_expect_success 'status ignored tracked directory and uncommitted file with --ignore' '
+	echo "tracked" >.gitignore &&
 	: >tracked/uncommitted &&
 	git status --porcelain --ignored >actual &&
 	test_cmp expected actual
