@@ -57,7 +57,7 @@ void install_branch_config(int flag, const char *local, const char *origin, cons
 	if (remote_is_branch
 	    && !strcmp(local, shortname)
 	    && !origin) {
-		warning("Not setting branch %s as its own upstream.",
+		warning(_("Not setting branch %s as its own upstream."),
 			local);
 		return;
 	}
@@ -78,25 +78,25 @@ void install_branch_config(int flag, const char *local, const char *origin, cons
 
 	if (flag & BRANCH_CONFIG_VERBOSE) {
 		if (remote_is_branch && origin)
-			printf(rebasing ?
-			       "Branch %s set up to track remote branch %s from %s by rebasing.\n" :
-			       "Branch %s set up to track remote branch %s from %s.\n",
-			       local, shortname, origin);
+			printf_ln(rebasing ?
+				  _("Branch %s set up to track remote branch %s from %s by rebasing.") :
+				  _("Branch %s set up to track remote branch %s from %s."),
+				  local, shortname, origin);
 		else if (remote_is_branch && !origin)
-			printf(rebasing ?
-			       "Branch %s set up to track local branch %s by rebasing.\n" :
-			       "Branch %s set up to track local branch %s.\n",
-			       local, shortname);
+			printf_ln(rebasing ?
+				  _("Branch %s set up to track local branch %s by rebasing.") :
+				  _("Branch %s set up to track local branch %s."),
+				  local, shortname);
 		else if (!remote_is_branch && origin)
-			printf(rebasing ?
-			       "Branch %s set up to track remote ref %s by rebasing.\n" :
-			       "Branch %s set up to track remote ref %s.\n",
-			       local, remote);
+			printf_ln(rebasing ?
+				  _("Branch %s set up to track remote ref %s by rebasing.") :
+				  _("Branch %s set up to track remote ref %s."),
+				  local, remote);
 		else if (!remote_is_branch && !origin)
-			printf(rebasing ?
-			       "Branch %s set up to track local ref %s by rebasing.\n" :
-			       "Branch %s set up to track local ref %s.\n",
-			       local, remote);
+			printf_ln(rebasing ?
+				  _("Branch %s set up to track local ref %s by rebasing.") :
+				  _("Branch %s set up to track local ref %s."),
+				  local, remote);
 		else
 			die("BUG: impossible combination of %d and %p",
 			    remote_is_branch, origin);
@@ -115,7 +115,7 @@ static int setup_tracking(const char *new_ref, const char *orig_ref,
 	int config_flags = quiet ? 0 : BRANCH_CONFIG_VERBOSE;
 
 	if (strlen(new_ref) > 1024 - 7 - 7 - 1)
-		return error("Tracking not set up: name too long: %s",
+		return error(_("Tracking not set up: name too long: %s"),
 				new_ref);
 
 	memset(&tracking, 0, sizeof(tracking));
@@ -134,7 +134,7 @@ static int setup_tracking(const char *new_ref, const char *orig_ref,
 		}
 
 	if (tracking.matches > 1)
-		return error("Not tracking: ambiguous information for ref %s",
+		return error(_("Not tracking: ambiguous information for ref %s"),
 				orig_ref);
 
 	install_branch_config(config_flags, new_ref, tracking.remote,
@@ -179,12 +179,12 @@ int validate_new_branchname(const char *name, struct strbuf *ref,
 			    int force, int attr_only)
 {
 	if (strbuf_check_branch_ref(ref, name))
-		die("'%s' is not a valid branch name.", name);
+		die(_("'%s' is not a valid branch name."), name);
 
 	if (!ref_exists(ref->buf))
 		return 0;
 	else if (!force && !attr_only)
-		die("A branch named '%s' already exists.", ref->buf + strlen("refs/heads/"));
+		die(_("A branch named '%s' already exists."), ref->buf + strlen("refs/heads/"));
 
 	if (!attr_only) {
 		const char *head;
@@ -192,7 +192,7 @@ int validate_new_branchname(const char *name, struct strbuf *ref,
 
 		head = resolve_ref_unsafe("HEAD", sha1, 0, NULL);
 		if (!is_bare_repository() && head && !strcmp(head, ref->buf))
-			die("Cannot force update the current branch.");
+			die(_("Cannot force update the current branch."));
 	}
 	return 1;
 }
@@ -247,7 +247,7 @@ void create_branch(const char *head,
 			}
 			die(_(upstream_missing), start_name);
 		}
-		die("Not a valid object name: '%s'.", start_name);
+		die(_("Not a valid object name: '%s'."), start_name);
 	}
 
 	switch (dwim_ref(start_name, strlen(start_name), sha1, &real_ref)) {
@@ -267,18 +267,18 @@ void create_branch(const char *head,
 		}
 		break;
 	default:
-		die("Ambiguous object name: '%s'.", start_name);
+		die(_("Ambiguous object name: '%s'."), start_name);
 		break;
 	}
 
 	if ((commit = lookup_commit_reference(sha1)) == NULL)
-		die("Not a valid branch point: '%s'.", start_name);
+		die(_("Not a valid branch point: '%s'."), start_name);
 	hashcpy(sha1, commit->object.sha1);
 
 	if (!dont_change_ref) {
 		lock = lock_any_ref_for_update(ref.buf, NULL, 0);
 		if (!lock)
-			die_errno("Failed to lock ref for update");
+			die_errno(_("Failed to lock ref for update"));
 	}
 
 	if (reflog)
@@ -296,7 +296,7 @@ void create_branch(const char *head,
 
 	if (!dont_change_ref)
 		if (write_ref_sha1(lock, sha1, msg) < 0)
-			die_errno("Failed to write ref");
+			die_errno(_("Failed to write ref"));
 
 	strbuf_release(&ref);
 	free(real_ref);
