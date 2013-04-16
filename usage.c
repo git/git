@@ -6,8 +6,6 @@
 #include "git-compat-util.h"
 #include "cache.h"
 
-static int dying;
-
 void vreportf(const char *prefix, const char *err, va_list params)
 {
 	char msg[4096];
@@ -49,12 +47,19 @@ static void warn_builtin(const char *warn, va_list params)
 	vreportf("warning: ", warn, params);
 }
 
+static int die_is_recursing_builtin(void)
+{
+	static int dying;
+	return dying++;
+}
+
 /* If we are in a dlopen()ed .so write to a global variable would segfault
  * (ugh), so keep things static. */
 static NORETURN_PTR void (*usage_routine)(const char *err, va_list params) = usage_builtin;
 static NORETURN_PTR void (*die_routine)(const char *err, va_list params) = die_builtin;
 static void (*error_routine)(const char *err, va_list params) = error_builtin;
 static void (*warn_routine)(const char *err, va_list params) = warn_builtin;
+static int (*die_is_recursing)(void) = die_is_recursing_builtin;
 
 void set_die_routine(NORETURN_PTR void (*routine)(const char *err, va_list params))
 {
@@ -64,6 +69,11 @@ void set_die_routine(NORETURN_PTR void (*routine)(const char *err, va_list param
 void set_error_routine(void (*routine)(const char *err, va_list params))
 {
 	error_routine = routine;
+}
+
+void set_die_is_recursing_routine(int (*routine)(void))
+{
+	die_is_recursing = routine;
 }
 
 void NORETURN usagef(const char *err, ...)
@@ -84,11 +94,10 @@ void NORETURN die(const char *err, ...)
 {
 	va_list params;
 
-	if (dying) {
+	if (die_is_recursing()) {
 		fputs("fatal: recursion detected in die handler\n", stderr);
 		exit(128);
 	}
-	dying = 1;
 
 	va_start(params, err);
 	die_routine(err, params);
@@ -102,12 +111,11 @@ void NORETURN die_errno(const char *fmt, ...)
 	char str_error[256], *err;
 	int i, j;
 
-	if (dying) {
+	if (die_is_recursing()) {
 		fputs("fatal: recursion detected in die_errno handler\n",
 			stderr);
 		exit(128);
 	}
-	dying = 1;
 
 	err = strerror(errno);
 	for (i = j = 0; err[i] && j < sizeof(str_error) - 1; ) {
