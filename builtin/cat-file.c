@@ -16,73 +16,6 @@
 #define BATCH 1
 #define BATCH_CHECK 2
 
-static void pprint_tag(const unsigned char *sha1, const char *buf, unsigned long size)
-{
-	/* the parser in tag.c is useless here. */
-	const char *endp = buf + size;
-	const char *cp = buf;
-
-	while (cp < endp) {
-		char c = *cp++;
-		if (c != '\n')
-			continue;
-		if (7 <= endp - cp && !memcmp("tagger ", cp, 7)) {
-			const char *tagger = cp;
-
-			/* Found the tagger line.  Copy out the contents
-			 * of the buffer so far.
-			 */
-			write_or_die(1, buf, cp - buf);
-
-			/*
-			 * Do something intelligent, like pretty-printing
-			 * the date.
-			 */
-			while (cp < endp) {
-				if (*cp++ == '\n') {
-					/* tagger to cp is a line
-					 * that has ident and time.
-					 */
-					const char *sp = tagger;
-					char *ep;
-					unsigned long date;
-					long tz;
-					while (sp < cp && *sp != '>')
-						sp++;
-					if (sp == cp) {
-						/* give up */
-						write_or_die(1, tagger,
-							     cp - tagger);
-						break;
-					}
-					while (sp < cp &&
-					       !('0' <= *sp && *sp <= '9'))
-						sp++;
-					write_or_die(1, tagger, sp - tagger);
-					date = strtoul(sp, &ep, 10);
-					tz = strtol(ep, NULL, 10);
-					sp = show_date(date, tz, 0);
-					write_or_die(1, sp, strlen(sp));
-					xwrite(1, "\n", 1);
-					break;
-				}
-			}
-			break;
-		}
-		if (cp < endp && *cp == '\n')
-			/* end of header */
-			break;
-	}
-	/* At this point, we have copied out the header up to the end of
-	 * the tagger line and cp points at one past \n.  It could be the
-	 * next header line after the tagger line, or it could be another
-	 * \n that marks the end of the headers.  We need to copy out the
-	 * remainder as is.
-	 */
-	if (cp < endp)
-		write_or_die(1, cp, endp - cp);
-}
-
 static int cat_one_file(int opt, const char *exp_type, const char *obj_name)
 {
 	unsigned char sha1[20];
@@ -133,10 +66,6 @@ static int cat_one_file(int opt, const char *exp_type, const char *obj_name)
 		buf = read_sha1_file(sha1, &type, &size);
 		if (!buf)
 			die("Cannot read object %s", obj_name);
-		if (type == OBJ_TAG) {
-			pprint_tag(sha1, buf, size);
-			return 0;
-		}
 
 		/* otherwise just spit out the data */
 		break;
