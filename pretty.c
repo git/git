@@ -393,6 +393,19 @@ static void add_rfc2047(struct strbuf *sb, const char *line, size_t len,
 	strbuf_addstr(sb, "?=");
 }
 
+static const char *show_ident_date(const struct ident_split *ident,
+				   enum date_mode mode)
+{
+	unsigned long date = 0;
+	int tz = 0;
+
+	if (ident->date_begin && ident->date_end)
+		date = strtoul(ident->date_begin, NULL, 10);
+	if (ident->tz_begin && ident->tz_end)
+		tz = strtol(ident->tz_begin, NULL, 10);
+	return show_date(date, tz, mode);
+}
+
 void pp_user_info(const struct pretty_print_context *pp,
 		  const char *what, struct strbuf *sb,
 		  const char *line, const char *encoding)
@@ -401,12 +414,10 @@ void pp_user_info(const struct pretty_print_context *pp,
 	struct strbuf mail;
 	struct ident_split ident;
 	int linelen;
-	char *line_end, *date;
+	char *line_end;
 	const char *mailbuf, *namebuf;
 	size_t namelen, maillen;
 	int max_length = 78; /* per rfc2822 */
-	unsigned long time;
-	int tz;
 
 	if (pp->fmt == CMIT_FMT_ONELINE)
 		return;
@@ -438,8 +449,6 @@ void pp_user_info(const struct pretty_print_context *pp,
 	strbuf_add(&name, namebuf, namelen);
 
 	namelen = name.len + mail.len + 3; /* ' ' + '<' + '>' */
-	time = strtoul(ident.date_begin, &date, 10);
-	tz = strtol(date, NULL, 10);
 
 	if (pp->fmt == CMIT_FMT_EMAIL) {
 		strbuf_addstr(sb, "From: ");
@@ -472,13 +481,16 @@ void pp_user_info(const struct pretty_print_context *pp,
 
 	switch (pp->fmt) {
 	case CMIT_FMT_MEDIUM:
-		strbuf_addf(sb, "Date:   %s\n", show_date(time, tz, pp->date_mode));
+		strbuf_addf(sb, "Date:   %s\n",
+			    show_ident_date(&ident, pp->date_mode));
 		break;
 	case CMIT_FMT_EMAIL:
-		strbuf_addf(sb, "Date: %s\n", show_date(time, tz, DATE_RFC2822));
+		strbuf_addf(sb, "Date: %s\n",
+			    show_ident_date(&ident, DATE_RFC2822));
 		break;
 	case CMIT_FMT_FULLER:
-		strbuf_addf(sb, "%sDate: %s\n", what, show_date(time, tz, pp->date_mode));
+		strbuf_addf(sb, "%sDate: %s\n", what,
+			    show_ident_date(&ident, pp->date_mode));
 		break;
 	default:
 		/* notin' */
@@ -688,8 +700,6 @@ static size_t format_person_part(struct strbuf *sb, char part,
 {
 	/* currently all placeholders have same length */
 	const int placeholder_len = 2;
-	int tz;
-	unsigned long date = 0;
 	struct ident_split s;
 	const char *name, *mail;
 	size_t maillen, namelen;
@@ -716,30 +726,23 @@ static size_t format_person_part(struct strbuf *sb, char part,
 	if (!s.date_begin)
 		goto skip;
 
-	date = strtoul(s.date_begin, NULL, 10);
-
 	if (part == 't') {	/* date, UNIX timestamp */
 		strbuf_add(sb, s.date_begin, s.date_end - s.date_begin);
 		return placeholder_len;
 	}
 
-	/* parse tz */
-	tz = strtoul(s.tz_begin + 1, NULL, 10);
-	if (*s.tz_begin == '-')
-		tz = -tz;
-
 	switch (part) {
 	case 'd':	/* date */
-		strbuf_addstr(sb, show_date(date, tz, dmode));
+		strbuf_addstr(sb, show_ident_date(&s, dmode));
 		return placeholder_len;
 	case 'D':	/* date, RFC2822 style */
-		strbuf_addstr(sb, show_date(date, tz, DATE_RFC2822));
+		strbuf_addstr(sb, show_ident_date(&s, DATE_RFC2822));
 		return placeholder_len;
 	case 'r':	/* date, relative */
-		strbuf_addstr(sb, show_date(date, tz, DATE_RELATIVE));
+		strbuf_addstr(sb, show_ident_date(&s, DATE_RELATIVE));
 		return placeholder_len;
 	case 'i':	/* date, ISO 8601 */
-		strbuf_addstr(sb, show_date(date, tz, DATE_ISO8601));
+		strbuf_addstr(sb, show_ident_date(&s, DATE_ISO8601));
 		return placeholder_len;
 	}
 
