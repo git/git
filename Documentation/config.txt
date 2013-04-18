@@ -1109,6 +1109,11 @@ format.signoff::
     the rights to submit this work under the same open source license.
     Please see the 'SubmittingPatches' document for further discussion.
 
+format.coverLetter::
+	A boolean that controls whether to generate a cover-letter when
+	format-patch is invoked, but in addition can be set to "auto", to
+	generate a cover-letter only when there's more than one patch.
+
 filter.<driver>.clean::
 	The command which is used to convert the content of a worktree
 	file to a blob upon checkin.  See linkgit:gitattributes[5] for
@@ -2016,6 +2021,7 @@ sendemail.<identity>.*::
 
 sendemail.aliasesfile::
 sendemail.aliasfiletype::
+sendemail.annotate::
 sendemail.bcc::
 sendemail.cc::
 sendemail.cccmd::

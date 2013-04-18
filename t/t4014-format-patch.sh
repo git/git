@@ -1284,4 +1284,37 @@ test_expect_success 'cover letter using branch description (6)' '
 	grep hello actual >/dev/null
 '
 
+test_expect_success 'cover letter with nothing' '
+	git format-patch --stdout --cover-letter >actual &&
+	test_line_count = 0 actual
+'
+
+test_expect_success 'cover letter auto' '
+	mkdir -p tmp &&
+	test_when_finished "rm -rf tmp;
+		git config --unset format.coverletter" &&
+
+	git config format.coverletter auto &&
+	git format-patch -o tmp -1 >list &&
+	test_line_count = 1 list &&
+	git format-patch -o tmp -2 >list &&
+	test_line_count = 3 list
+'
+
+test_expect_success 'cover letter auto user override' '
+	mkdir -p tmp &&
+	test_when_finished "rm -rf tmp;
+		git config --unset format.coverletter" &&
+
+	git config format.coverletter auto &&
+	git format-patch -o tmp --cover-letter -1 >list &&
+	test_line_count = 2 list &&
+	git format-patch -o tmp --cover-letter -2 >list &&
+	test_line_count = 3 list &&
+	git format-patch -o tmp --no-cover-letter -1 >list &&
+	test_line_count = 1 list &&
+	git format-patch -o tmp --no-cover-letter -2 >list &&
+	test_line_count = 2 list
+'
+
 test_done

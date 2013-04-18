@@ -100,9 +100,9 @@ static void cmd_log_init_finish(int argc, const char **argv, const char *prefix,
 	int quiet = 0, source = 0, mailmap = 0;
 
 	const struct option builtin_log_options[] = {
-		OPT_BOOLEAN(0, "quiet", &quiet, N_("suppress diff output")),
-		OPT_BOOLEAN(0, "source", &source, N_("show source")),
-		OPT_BOOLEAN(0, "use-mailmap", &mailmap, N_("Use mail map file")),
+		OPT_BOOL(0, "quiet", &quiet, N_("suppress diff output")),
+		OPT_BOOL(0, "source", &source, N_("show source")),
+		OPT_BOOL(0, "use-mailmap", &mailmap, N_("Use mail map file")),
 		{ OPTION_CALLBACK, 0, "decorate", NULL, NULL, N_("decorate options"),
 		  PARSE_OPT_OPTARG, decorate_callback},
 		OPT_END()
@@ -622,6 +622,14 @@ static void add_header(const char *value)
 static int thread;
 static int do_signoff;
 static const char *signature = git_version_string;
+static int config_cover_letter;
+
+enum {
+	COVER_UNSET,
+	COVER_OFF,
+	COVER_ON,
+	COVER_AUTO
+};
 
 static int git_format_config(const char *var, const char *value, void *cb)
 {
@@ -683,6 +691,14 @@ static int git_format_config(const char *var, const char *value, void *cb)
 	}
 	if (!strcmp(var, "format.signature"))
 		return git_config_string(&signature, var, value);
+	if (!strcmp(var, "format.coverletter")) {
+		if (value && !strcasecmp(value, "auto")) {
+			config_cover_letter = COVER_AUTO;
+			return 0;
+		}
+		config_cover_letter = git_config_bool(var, value) ? COVER_ON : COVER_OFF;
+		return 0;
+	}
 
 	return git_log_config(var, value, cb);
 }
@@ -794,9 +810,37 @@ static void add_branch_description(struct strbuf *buf, const char *branch_name)
 	}
 }
 
+static char *find_branch_name(struct rev_info *rev)
+{
+	int i, positive = -1;
+	unsigned char branch_sha1[20];
+	const unsigned char *tip_sha1;
+	const char *ref;
+	char *full_ref, *branch = NULL;
+
+	for (i = 0; i < rev->cmdline.nr; i++) {
+		if (rev->cmdline.rev[i].flags & UNINTERESTING)
+			continue;
+		if (positive < 0)
+			positive = i;
+		else
+			return NULL;
+	}
+	if (positive < 0)
+		return NULL;
+	ref = rev->cmdline.rev[positive].name;
+	tip_sha1 = rev->cmdline.rev[positive].item->sha1;
+	if (dwim_ref(ref, strlen(ref), branch_sha1, &full_ref) &&
+	    !prefixcmp(full_ref, "refs/heads/") &&
+	    !hashcmp(tip_sha1, branch_sha1))
+		branch = xstrdup(full_ref + strlen("refs/heads/"));
+	free(full_ref);
+	return branch;
+}
+
 static void make_cover_letter(struct rev_info *rev, int use_stdout,
 			      struct commit *origin,
-			      int nr, struct commit **list, struct commit *head,
+			      int nr, struct commit **list,
 			      const char *branch_name,
 			      int quiet)
 {
@@ -810,6 +854,7 @@ static void make_cover_letter(struct rev_info *rev, int use_stdout,
 	struct diff_options opts;
 	int need_8bit_cte = 0;
 	struct pretty_print_context pp = {0};
+	struct commit *head = list[0];
 
 	if (rev->commit_format != CMIT_FMT_EMAIL)
 		die(_("Cover letter needs email format"));
@@ -826,6 +871,9 @@ static void make_cover_letter(struct rev_info *rev, int use_stdout,
 	for (i = 0; !need_8bit_cte && i < nr; i++)
 		if (has_non_ascii(list[i]->buffer))
 			need_8bit_cte = 1;
+
+	if (!branch_name)
+		branch_name = find_branch_name(rev);
 
 	msg = body;
 	pp.fmt = CMIT_FMT_EMAIL;
@@ -1033,45 +1081,6 @@ static int cc_callback(const struct option *opt, const char *arg, int unset)
 	return 0;
 }
 
-static char *find_branch_name(struct rev_info *rev)
-{
-	int i, positive = -1;
-	unsigned char branch_sha1[20];
-	const unsigned char *tip_sha1;
-	const char *ref;
-	char *full_ref, *branch = NULL;
-
-	for (i = 0; i < rev->cmdline.nr; i++) {
-		if (rev->cmdline.rev[i].flags & UNINTERESTING)
-			continue;
-		if (positive < 0)
-			positive = i;
-		else
-			return NULL;
-	}
-	if (0 <= positive) {
-		ref = rev->cmdline.rev[positive].name;
-		tip_sha1 = rev->cmdline.rev[positive].item->sha1;
-	} else if (!rev->cmdline.nr && rev->pending.nr == 1 &&
-		   !strcmp(rev->pending.objects[0].name, "HEAD")) {
-		/*
-		 * No actual ref from command line, but "HEAD" from
-		 * rev->def was added in setup_revisions()
-		 * e.g. format-patch --cover-letter -12
-		 */
-		ref = "HEAD";
-		tip_sha1 = rev->pending.objects[0].item->sha1;
-	} else {
-		return NULL;
-	}
-	if (dwim_ref(ref, strlen(ref), branch_sha1, &full_ref) &&
-	    !prefixcmp(full_ref, "refs/heads/") &&
-	    !hashcmp(tip_sha1, branch_sha1))
-		branch = xstrdup(full_ref + strlen("refs/heads/"));
-	free(full_ref);
-	return branch;
-}
-
 int cmd_format_patch(int argc, const char **argv, const char *prefix)
 {
 	struct commit *commit;
@@ -1083,10 +1092,10 @@ int cmd_format_patch(int argc, const char **argv, const char *prefix)
 	int start_number = -1;
 	int just_numbers = 0;
 	int ignore_if_in_upstream = 0;
-	int cover_letter = 0;
+	int cover_letter = -1;
 	int boundary_count = 0;
 	int no_binary_diff = 0;
-	struct commit *origin = NULL, *head = NULL;
+	struct commit *origin = NULL;
 	const char *in_reply_to = NULL;
 	struct patch_ids ids;
 	struct strbuf buf = STRBUF_INIT;
@@ -1101,12 +1110,12 @@ int cmd_format_patch(int argc, const char **argv, const char *prefix)
 		{ OPTION_CALLBACK, 'N', "no-numbered", &numbered, NULL,
 			    N_("use [PATCH] even with multiple patches"),
 			    PARSE_OPT_NOARG, no_numbered_callback },
-		OPT_BOOLEAN('s', "signoff", &do_signoff, N_("add Signed-off-by:")),
-		OPT_BOOLEAN(0, "stdout", &use_stdout,
+		OPT_BOOL('s', "signoff", &do_signoff, N_("add Signed-off-by:")),
+		OPT_BOOL(0, "stdout", &use_stdout,
 			    N_("print patches to standard out")),
-		OPT_BOOLEAN(0, "cover-letter", &cover_letter,
+		OPT_BOOL(0, "cover-letter", &cover_letter,
 			    N_("generate a cover letter")),
-		OPT_BOOLEAN(0, "numbered-files", &just_numbers,
+		OPT_BOOL(0, "numbered-files", &just_numbers,
 			    N_("use simple number sequence for output file names")),
 		OPT_STRING(0, "suffix", &fmt_patch_suffix, N_("sfx"),
 			    N_("use <sfx> instead of '.patch'")),
@@ -1280,28 +1289,36 @@ int cmd_format_patch(int argc, const char **argv, const char *prefix)
 	}
 
 	if (rev.pending.nr == 1) {
+		int check_head = 0;
+
 		if (rev.max_count < 0 && !rev.show_root_diff) {
 			/*
 			 * This is traditional behaviour of "git format-patch
 			 * origin" that prepares what the origin side still
 			 * does not have.
 			 */
-			unsigned char sha1[20];
-			const char *ref;
-
 			rev.pending.objects[0].item->flags |= UNINTERESTING;
 			add_head_to_pending(&rev);
-			ref = resolve_ref_unsafe("HEAD", sha1, 1, NULL);
-			if (ref && !prefixcmp(ref, "refs/heads/"))
-				branch_name = xstrdup(ref + strlen("refs/heads/"));
-			else
-				branch_name = xstrdup(""); /* no branch */
+			check_head = 1;
 		}
 		/*
 		 * Otherwise, it is "format-patch -22 HEAD", and/or
 		 * "format-patch --root HEAD".  The user wants
 		 * get_revision() to do the usual traversal.
 		 */
+
+		if (!strcmp(rev.pending.objects[0].name, "HEAD"))
+			check_head = 1;
+
+		if (check_head) {
+			unsigned char sha1[20];
+			const char *ref;
+			ref = resolve_ref_unsafe("HEAD", sha1, 1, NULL);
+			if (ref && !prefixcmp(ref, "refs/heads/"))
+				branch_name = xstrdup(ref + strlen("refs/heads/"));
+			else
+				branch_name = xstrdup(""); /* no branch */
+		}
 	}
 
 	/*
@@ -1309,29 +1326,6 @@ int cmd_format_patch(int argc, const char **argv, const char *prefix)
 	 * know if --root was given explicitly from the command line.
 	 */
 	rev.show_root_diff = 1;
-
-	if (cover_letter) {
-		/*
-		 * NEEDSWORK:randomly pick one positive commit to show
-		 * diffstat; this is often the tip and the command
-		 * happens to do the right thing in most cases, but a
-		 * complex command like "--cover-letter a b c ^bottom"
-		 * picks "c" and shows diffstat between bottom..c
-		 * which may not match what the series represents at
-		 * all and totally broken.
-		 */
-		int i;
-		for (i = 0; i < rev.pending.nr; i++) {
-			struct object *o = rev.pending.objects[i].item;
-			if (!(o->flags & UNINTERESTING))
-				head = (struct commit *)o;
-		}
-		/* There is nothing to show; it is not an error, though. */
-		if (!head)
-			return 0;
-		if (!branch_name)
-			branch_name = find_branch_name(&rev);
-	}
 
 	if (ignore_if_in_upstream) {
 		/* Don't say anything if head and upstream are the same. */
@@ -1364,11 +1358,21 @@ int cmd_format_patch(int argc, const char **argv, const char *prefix)
 		list = xrealloc(list, nr * sizeof(list[0]));
 		list[nr - 1] = commit;
 	}
+	if (nr == 0)
+		/* nothing to do */
+		return 0;
 	total = nr;
 	if (!keep_subject && auto_number && total > 1)
 		numbered = 1;
 	if (numbered)
 		rev.total = total + start_number - 1;
+	if (cover_letter == -1) {
+		if (config_cover_letter == COVER_AUTO)
+			cover_letter = (total > 1);
+		else
+			cover_letter = (config_cover_letter == COVER_ON);
+	}
+
 	if (in_reply_to || thread || cover_letter)
 		rev.ref_message_ids = xcalloc(1, sizeof(struct string_list));
 	if (in_reply_to) {
@@ -1381,7 +1385,7 @@ int cmd_format_patch(int argc, const char **argv, const char *prefix)
 		if (thread)
 			gen_message_id(&rev, "cover");
 		make_cover_letter(&rev, use_stdout,
-				  origin, nr, list, head, branch_name, quiet);
+				  origin, nr, list, branch_name, quiet);
 		total++;
 		start_number--;
 	}
