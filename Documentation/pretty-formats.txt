@@ -156,7 +156,8 @@ The placeholders are:
   adding `auto,` at the beginning will emit color only when colors are
   enabled for log output (by `color.diff`, `color.ui`, or `--color`, and
   respecting the `auto` settings of the former if we are going to a
-  terminal)
+  terminal). `auto` alone (i.e. `%C(auto)`) will turn on auto coloring
+  on the next placeholders until the color is switched again.
 - '%m': left, right or boundary mark
 - '%n': newline
 - '%%': a raw '%'
