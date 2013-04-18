@@ -100,14 +100,16 @@ test_expect_failure 'push new branch with old:new refspec' '
 
 test_expect_success 'cloning without refspec' '
 	GIT_REMOTE_TESTGIT_REFSPEC="" \
-	git clone "testgit::${PWD}/server" local2 &&
+	git clone "testgit::${PWD}/server" local2 2>error &&
+	grep "This remote helper should implement refspec capability" error &&
 	compare_refs local2 HEAD server HEAD
 '
 
 test_expect_success 'pulling without refspecs' '
 	(cd local2 &&
 	git reset --hard &&
-	GIT_REMOTE_TESTGIT_REFSPEC="" git pull) &&
+	GIT_REMOTE_TESTGIT_REFSPEC="" git pull 2>../error) &&
+	grep "This remote helper should implement refspec capability" error &&
 	compare_refs local2 HEAD server HEAD
 '
 
