@@ -99,4 +99,126 @@ test_expect_failure 'NUL termination with --stat' '
 	test_i18ncmp expected actual
 '
 
+test_expect_success 'setup more commits' '
+	test_commit "message one" one one message-one &&
+	test_commit "message two" two two message-two
+'
+
+test_expect_success 'left alignment formatting' '
+	git log --pretty="format:%<(40)%s" >actual &&
+	# complete the incomplete line at the end
+	echo >>actual &&
+	qz_to_tab_space <<\EOF >expected &&
+message two                            Z
+message one                            Z
+add bar                                Z
+initial                                Z
+EOF
+	test_cmp expected actual
+'
+
+test_expect_success 'left alignment formatting at the nth column' '
+	git log --pretty="format:%h %<|(40)%s" >actual &&
+	# complete the incomplete line at the end
+	echo >>actual &&
+	qz_to_tab_space <<\EOF >expected &&
+fa33ab1 message two                    Z
+7cd6c63 message one                    Z
+1711bf9 add bar                        Z
+af20c06 initial                        Z
+EOF
+	test_cmp expected actual
+'
+
+test_expect_success 'left alignment formatting with no padding' '
+	git log --pretty="format:%<(1)%s" >actual &&
+	# complete the incomplete line at the end
+	echo >>actual &&
+	cat <<\EOF >expected &&
+message two
+message one
+add bar
+initial
+EOF
+	test_cmp expected actual
+'
+
+test_expect_success 'right alignment formatting' '
+	git log --pretty="format:%>(40)%s" >actual &&
+	# complete the incomplete line at the end
+	echo >>actual &&
+	qz_to_tab_space <<\EOF >expected &&
+Z                            message two
+Z                            message one
+Z                                add bar
+Z                                initial
+EOF
+	test_cmp expected actual
+'
+
+test_expect_success 'right alignment formatting at the nth column' '
+	git log --pretty="format:%h %>|(40)%s" >actual &&
+	# complete the incomplete line at the end
+	echo >>actual &&
+	qz_to_tab_space <<\EOF >expected &&
+fa33ab1                      message two
+7cd6c63                      message one
+1711bf9                          add bar
+af20c06                          initial
+EOF
+	test_cmp expected actual
+'
+
+test_expect_success 'right alignment formatting with no padding' '
+	git log --pretty="format:%>(1)%s" >actual &&
+	# complete the incomplete line at the end
+	echo >>actual &&
+	cat <<\EOF >expected &&
+message two
+message one
+add bar
+initial
+EOF
+	test_cmp expected actual
+'
+
+test_expect_success 'center alignment formatting' '
+	git log --pretty="format:%><(40)%s" >actual &&
+	# complete the incomplete line at the end
+	echo >>actual &&
+	qz_to_tab_space <<\EOF >expected &&
+Z             message two              Z
+Z             message one              Z
+Z               add bar                Z
+Z               initial                Z
+EOF
+	test_cmp expected actual
+'
+
+test_expect_success 'center alignment formatting at the nth column' '
+	git log --pretty="format:%h %><|(40)%s" >actual &&
+	# complete the incomplete line at the end
+	echo >>actual &&
+	qz_to_tab_space <<\EOF >expected &&
+fa33ab1           message two          Z
+7cd6c63           message one          Z
+1711bf9             add bar            Z
+af20c06             initial            Z
+EOF
+	test_cmp expected actual
+'
+
+test_expect_success 'center alignment formatting with no padding' '
+	git log --pretty="format:%><(1)%s" >actual &&
+	# complete the incomplete line at the end
+	echo >>actual &&
+	cat <<\EOF >expected &&
+message two
+message one
+add bar
+initial
+EOF
+	test_cmp expected actual
+'
+
 test_done

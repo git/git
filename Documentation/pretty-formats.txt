@@ -164,6 +164,14 @@ The placeholders are:
 - '%x00': print a byte from a hex code
 - '%w([<w>[,<i1>[,<i2>]]])': switch line wrapping, like the -w option of
   linkgit:git-shortlog[1].
+- '%<(<N>)': make the next placeholder take at least N columns,
+  padding spaces on the right if necessary
+- '%<|(<N>)': make the next placeholder take at least until Nth
+  columns, padding spaces on the right if necessary
+- '%>(<N>)', '%>|(<N>)': similar to '%<(<N>)', '%<|(<N>)'
+  respectively, but padding spaces on the left
+- '%><(<N>)', '%><|(<N>)': similar to '%<(<N>)', '%<|(<N>)'
+  respectively, but padding both sides (i.e. the text is centered)
 
 NOTE: Some placeholders may depend on other options given to the
 revision traversal engine. For example, the `%g*` reflog options will

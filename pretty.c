@@ -769,16 +769,25 @@ struct chunk {
 	size_t len;
 };
 
+enum flush_type {
+	no_flush,
+	flush_right,
+	flush_left,
+	flush_both
+};
+
 struct format_commit_context {
 	const struct commit *commit;
 	const struct pretty_print_context *pretty_ctx;
 	unsigned commit_header_parsed:1;
 	unsigned commit_message_parsed:1;
 	struct signature_check signature_check;
+	enum flush_type flush_type;
 	char *message;
 	char *commit_encoding;
 	size_t width, indent1, indent2;
 	int auto_color;
+	int padding;
 
 	/* These offsets are relative to the start of the commit message. */
 	struct chunk author;
@@ -993,6 +1002,52 @@ static size_t parse_color(struct strbuf *sb, /* in UTF-8 */
 		return 0;
 }
 
+static size_t parse_padding_placeholder(struct strbuf *sb,
+					const char *placeholder,
+					struct format_commit_context *c)
+{
+	const char *ch = placeholder;
+	enum flush_type flush_type;
+	int to_column = 0;
+
+	switch (*ch++) {
+	case '<':
+		flush_type = flush_right;
+		break;
+	case '>':
+		if (*ch == '<') {
+			flush_type = flush_both;
+			ch++;
+		} else
+			flush_type = flush_left;
+		break;
+	default:
+		return 0;
+	}
+
+	/* the next value means "wide enough to that column" */
+	if (*ch == '|') {
+		to_column = 1;
+		ch++;
+	}
+
+	if (*ch == '(') {
+		const char *start = ch + 1;
+		const char *end = strchr(start, ')');
+		char *next;
+		int width;
+		if (!end || end == start)
+			return 0;
+		width = strtoul(start, &next, 10);
+		if (next == start || width == 0)
+			return 0;
+		c->padding = to_column ? -width : width;
+		c->flush_type = flush_type;
+		return end - placeholder + 1;
+	}
+	return 0;
+}
+
 static size_t format_commit_one(struct strbuf *sb, /* in UTF-8 */
 				const char *placeholder,
 				void *context)
@@ -1057,6 +1112,10 @@ static size_t format_commit_one(struct strbuf *sb, /* in UTF-8 */
 			return end - placeholder + 1;
 		} else
 			return 0;
+
+	case '<':
+	case '>':
+		return parse_padding_placeholder(sb, placeholder, c);
 	}
 
 	/* these depend on the commit */
@@ -1221,6 +1280,59 @@ static size_t format_commit_one(struct strbuf *sb, /* in UTF-8 */
 	return 0;	/* unknown placeholder */
 }
 
+static size_t format_and_pad_commit(struct strbuf *sb, /* in UTF-8 */
+				    const char *placeholder,
+				    struct format_commit_context *c)
+{
+	struct strbuf local_sb = STRBUF_INIT;
+	int total_consumed = 0, len, padding = c->padding;
+	if (padding < 0) {
+		const char *start = strrchr(sb->buf, '\n');
+		int occupied;
+		if (!start)
+			start = sb->buf;
+		occupied = utf8_strnwidth(start, -1, 1);
+		padding = (-padding) - occupied;
+	}
+	while (1) {
+		int modifier = *placeholder == 'C';
+		int consumed = format_commit_one(&local_sb, placeholder, c);
+		total_consumed += consumed;
+
+		if (!modifier)
+			break;
+
+		placeholder += consumed;
+		if (*placeholder != '%')
+			break;
+		placeholder++;
+		total_consumed++;
+	}
+	len = utf8_strnwidth(local_sb.buf, -1, 1);
+	if (len > padding)
+		strbuf_addstr(sb, local_sb.buf);
+	else {
+		int sb_len = sb->len, offset = 0;
+		if (c->flush_type == flush_left)
+			offset = padding - len;
+		else if (c->flush_type == flush_both)
+			offset = (padding - len) / 2;
+		/*
+		 * we calculate padding in columns, now
+		 * convert it back to chars
+		 */
+		padding = padding - len + local_sb.len;
+		strbuf_grow(sb, padding);
+		strbuf_setlen(sb, sb_len + padding);
+		memset(sb->buf + sb_len, ' ', sb->len - sb_len);
+		memcpy(sb->buf + sb_len + offset, local_sb.buf,
+		       local_sb.len);
+	}
+	strbuf_release(&local_sb);
+	c->flush_type = no_flush;
+	return total_consumed;
+}
+
 static size_t format_commit_item(struct strbuf *sb, /* in UTF-8 */
 				 const char *placeholder,
 				 void *context)
@@ -1251,7 +1363,10 @@ static size_t format_commit_item(struct strbuf *sb, /* in UTF-8 */
 		placeholder++;
 
 	orig_len = sb->len;
-	consumed = format_commit_one(sb, placeholder, context);
+	if (((struct format_commit_context *)context)->flush_type != no_flush)
+		consumed = format_and_pad_commit(sb, placeholder, context);
+	else
+		consumed = format_commit_one(sb, placeholder, context);
 	if (magic == NO_MAGIC)
 		return consumed;
 
