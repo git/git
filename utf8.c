@@ -468,7 +468,7 @@ int utf8_fprintf(FILE *stream, const char *format, ...)
 #else
 	typedef char * iconv_ibp;
 #endif
-char *reencode_string_iconv(const char *in, size_t insz, iconv_t conv)
+char *reencode_string_iconv(const char *in, size_t insz, iconv_t conv, int *outsz_p)
 {
 	size_t outsz, outalloc;
 	char *out, *outpos;
@@ -502,13 +502,17 @@ char *reencode_string_iconv(const char *in, size_t insz, iconv_t conv)
 		}
 		else {
 			*outpos = '\0';
+			if (outsz_p)
+				*outsz_p = outpos - out;
 			break;
 		}
 	}
 	return out;
 }
 
-char *reencode_string(const char *in, const char *out_encoding, const char *in_encoding)
+char *reencode_string_len(const char *in, int insz,
+			  const char *out_encoding, const char *in_encoding,
+			  int *outsz)
 {
 	iconv_t conv;
 	char *out;
@@ -534,7 +538,7 @@ char *reencode_string(const char *in, const char *out_encoding, const char *in_e
 			return NULL;
 	}
 
-	out = reencode_string_iconv(in, strlen(in), conv);
+	out = reencode_string_iconv(in, insz, conv, outsz);
 	iconv_close(conv);
 	return out;
 }

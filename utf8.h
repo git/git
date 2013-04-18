@@ -17,11 +17,24 @@ void strbuf_add_wrapped_bytes(struct strbuf *buf, const char *data, int len,
 			     int indent, int indent2, int width);
 
 #ifndef NO_ICONV
-char *reencode_string_iconv(const char *in, size_t insz, iconv_t conv);
-char *reencode_string(const char *in, const char *out_encoding, const char *in_encoding);
+char *reencode_string_iconv(const char *in, size_t insz,
+			    iconv_t conv, int *outsz);
+char *reencode_string_len(const char *in, int insz,
+			  const char *out_encoding,
+			  const char *in_encoding,
+			  int *outsz);
 #else
-#define reencode_string(a,b,c) NULL
+#define reencode_string_len(a,b,c,d,e) NULL
 #endif
+
+static inline char *reencode_string(const char *in,
+				    const char *out_encoding,
+				    const char *in_encoding)
+{
+	return reencode_string_len(in, strlen(in),
+				   out_encoding, in_encoding,
+				   NULL);
+}
 
 int mbs_chrlen(const char **text, size_t *remainder_p, const char *encoding);
 
