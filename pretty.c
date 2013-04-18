@@ -594,6 +594,7 @@ static char *replace_encoding_header(char *buf, const char *encoding)
 }
 
 char *logmsg_reencode(const struct commit *commit,
+		      char **commit_encoding,
 		      const char *output_encoding)
 {
 	static const char *utf8 = "UTF-8";
@@ -615,9 +616,15 @@ char *logmsg_reencode(const struct commit *commit,
 			    sha1_to_hex(commit->object.sha1), typename(type));
 	}
 
-	if (!output_encoding || !*output_encoding)
+	if (!output_encoding || !*output_encoding) {
+		if (commit_encoding)
+			*commit_encoding =
+				get_header(commit, msg, "encoding");
 		return msg;
+	}
 	encoding = get_header(commit, msg, "encoding");
+	if (commit_encoding)
+		*commit_encoding = encoding;
 	use_encoding = encoding ? encoding : utf8;
 	if (same_encoding(use_encoding, output_encoding)) {
 		/*
@@ -658,7 +665,8 @@ char *logmsg_reencode(const struct commit *commit,
 	if (out)
 		out = replace_encoding_header(out, output_encoding);
 
-	free(encoding);
+	if (!commit_encoding)
+		free(encoding);
 	/*
 	 * If the re-encoding failed, out might be NULL here; in that
 	 * case we just return the commit message verbatim.
@@ -1288,7 +1296,7 @@ void format_commit_message(const struct commit *commit,
 	context.commit = commit;
 	context.pretty_ctx = pretty_ctx;
 	context.wrap_start = sb->len;
-	context.message = logmsg_reencode(commit, output_enc);
+	context.message = logmsg_reencode(commit, NULL, output_enc);
 
 	strbuf_expand(sb, format, format_commit_item, &context);
 	rewrap_message_tail(sb, &context, 0, 0, 0);
@@ -1451,7 +1459,7 @@ void pretty_print_commit(const struct pretty_print_context *pp,
 	}
 
 	encoding = get_log_output_encoding();
-	msg = reencoded = logmsg_reencode(commit, encoding);
+	msg = reencoded = logmsg_reencode(commit, NULL, encoding);
 
 	if (pp->fmt == CMIT_FMT_ONELINE || pp->fmt == CMIT_FMT_EMAIL)
 		indent = 0;

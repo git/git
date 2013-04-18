@@ -1425,7 +1425,7 @@ static void get_commit_info(struct commit *commit,
 	commit_info_init(ret);
 
 	encoding = get_log_output_encoding();
-	message = logmsg_reencode(commit, encoding);
+	message = logmsg_reencode(commit, NULL, encoding);
 	get_ac_line(message, "\nauthor ",
 		    &ret->author, &ret->author_mail,
 		    &ret->author_time, &ret->author_tz);
