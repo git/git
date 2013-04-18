@@ -1648,50 +1648,6 @@ static off_t get_delta_base(struct packed_git *p,
 	return base_offset;
 }
 
-/* forward declaration for a mutually recursive function */
-static int packed_object_info(struct packed_git *p, off_t offset,
-			      unsigned long *sizep, int *rtype);
-
-static int packed_delta_info(struct packed_git *p,
-			     struct pack_window **w_curs,
-			     off_t curpos,
-			     enum object_type type,
-			     off_t obj_offset,
-			     unsigned long *sizep)
-{
-	off_t base_offset;
-
-	base_offset = get_delta_base(p, w_curs, &curpos, type, obj_offset);
-	if (!base_offset)
-		return OBJ_BAD;
-	type = packed_object_info(p, base_offset, NULL, NULL);
-	if (type <= OBJ_NONE) {
-		struct revindex_entry *revidx;
-		const unsigned char *base_sha1;
-		revidx = find_pack_revindex(p, base_offset);
-		if (!revidx)
-			return OBJ_BAD;
-		base_sha1 = nth_packed_object_sha1(p, revidx->nr);
-		mark_bad_packed_object(p, base_sha1);
-		type = sha1_object_info(base_sha1, NULL);
-		if (type <= OBJ_NONE)
-			return OBJ_BAD;
-	}
-
-	/* We choose to only get the type of the base object and
-	 * ignore potentially corrupt pack file that expects the delta
-	 * based on a base with a wrong size.  This saves tons of
-	 * inflate() calls.
-	 */
-	if (sizep) {
-		*sizep = get_size_from_delta(p, w_curs, curpos);
-		if (*sizep == 0)
-			type = OBJ_BAD;
-	}
-
-	return type;
-}
-
 int unpack_object_header(struct packed_git *p,
 			 struct pack_window **w_curs,
 			 off_t *curpos,
@@ -1718,6 +1674,25 @@ int unpack_object_header(struct packed_git *p,
 	return type;
 }
 
+static int retry_bad_packed_offset(struct packed_git *p, off_t obj_offset)
+{
+	int type;
+	struct revindex_entry *revidx;
+	const unsigned char *sha1;
+	revidx = find_pack_revindex(p, obj_offset);
+	if (!revidx)
+		return OBJ_BAD;
+	sha1 = nth_packed_object_sha1(p, revidx->nr);
+	mark_bad_packed_object(p, sha1);
+	type = sha1_object_info(sha1, NULL);
+	if (type <= OBJ_NONE)
+		return OBJ_BAD;
+	return type;
+}
+
+
+#define POI_STACK_PREALLOC 64
+
 static int packed_object_info(struct packed_git *p, off_t obj_offset,
 			      unsigned long *sizep, int *rtype)
 {
@@ -1725,31 +1700,89 @@ static int packed_object_info(struct packed_git *p, off_t obj_offset,
 	unsigned long size;
 	off_t curpos = obj_offset;
 	enum object_type type;
+	off_t small_poi_stack[POI_STACK_PREALLOC];
+	off_t *poi_stack = small_poi_stack;
+	int poi_stack_nr = 0, poi_stack_alloc = POI_STACK_PREALLOC;
 
 	type = unpack_object_header(p, &w_curs, &curpos, &size);
+
 	if (rtype)
 		*rtype = type; /* representation type */
 
+	if (sizep) {
+		if (type == OBJ_OFS_DELTA || type == OBJ_REF_DELTA) {
+			off_t tmp_pos = curpos;
+			off_t base_offset = get_delta_base(p, &w_curs, &tmp_pos,
+							   type, obj_offset);
+			if (!base_offset) {
+				type = OBJ_BAD;
+				goto out;
+			}
+			*sizep = get_size_from_delta(p, &w_curs, tmp_pos);
+			if (*sizep == 0) {
+				type = OBJ_BAD;
+				goto out;
+			}
+		} else {
+			*sizep = size;
+		}
+	}
+
+	while (type == OBJ_OFS_DELTA || type == OBJ_REF_DELTA) {
+		off_t base_offset;
+		/* Push the object we're going to leave behind */
+		if (poi_stack_nr >= poi_stack_alloc && poi_stack == small_poi_stack) {
+			poi_stack_alloc = alloc_nr(poi_stack_nr);
+			poi_stack = xmalloc(sizeof(off_t)*poi_stack_alloc);
+			memcpy(poi_stack, small_poi_stack, sizeof(off_t)*poi_stack_nr);
+		} else {
+			ALLOC_GROW(poi_stack, poi_stack_nr+1, poi_stack_alloc);
+		}
+		poi_stack[poi_stack_nr++] = obj_offset;
+		/* If parsing the base offset fails, just unwind */
+		base_offset = get_delta_base(p, &w_curs, &curpos, type, obj_offset);
+		if (!base_offset)
+			goto unwind;
+		curpos = obj_offset = base_offset;
+		type = unpack_object_header(p, &w_curs, &curpos, &size);
+		if (type <= OBJ_NONE) {
+			/* If getting the base itself fails, we first
+			 * retry the base, otherwise unwind */
+			type = retry_bad_packed_offset(p, base_offset);
+			if (type > OBJ_NONE)
+				goto out;
+			goto unwind;
+		}
+	}
+
 	switch (type) {
-	case OBJ_OFS_DELTA:
-	case OBJ_REF_DELTA:
-		type = packed_delta_info(p, &w_curs, curpos,
-					 type, obj_offset, sizep);
-		break;
+	case OBJ_BAD:
 	case OBJ_COMMIT:
 	case OBJ_TREE:
 	case OBJ_BLOB:
 	case OBJ_TAG:
-		if (sizep)
-			*sizep = size;
 		break;
 	default:
 		error("unknown object type %i at offset %"PRIuMAX" in %s",
 		      type, (uintmax_t)obj_offset, p->pack_name);
 		type = OBJ_BAD;
 	}
+
+out:
+	if (poi_stack != small_poi_stack)
+		free(poi_stack);
 	unuse_pack(&w_curs);
 	return type;
+
+unwind:
+	while (poi_stack_nr) {
+		obj_offset = poi_stack[--poi_stack_nr];
+		type = retry_bad_packed_offset(p, obj_offset);
+		if (type > OBJ_NONE)
+			goto out;
+	}
+	type = OBJ_BAD;
+	goto out;
 }
 
 static void *unpack_compressed_entry(struct packed_git *p,
@@ -1811,32 +1844,51 @@ static unsigned long pack_entry_hash(struct packed_git *p, off_t base_offset)
 	return hash % MAX_DELTA_CACHE;
 }
 
-static int in_delta_base_cache(struct packed_git *p, off_t base_offset)
+static struct delta_base_cache_entry *
+get_delta_base_cache_entry(struct packed_git *p, off_t base_offset)
 {
 	unsigned long hash = pack_entry_hash(p, base_offset);
-	struct delta_base_cache_entry *ent = delta_base_cache + hash;
+	return delta_base_cache + hash;
+}
+
+static int eq_delta_base_cache_entry(struct delta_base_cache_entry *ent,
+				     struct packed_git *p, off_t base_offset)
+{
 	return (ent->data && ent->p == p && ent->base_offset == base_offset);
+}
+
+static int in_delta_base_cache(struct packed_git *p, off_t base_offset)
+{
+	struct delta_base_cache_entry *ent;
+	ent = get_delta_base_cache_entry(p, base_offset);
+	return eq_delta_base_cache_entry(ent, p, base_offset);
+}
+
+static void clear_delta_base_cache_entry(struct delta_base_cache_entry *ent)
+{
+	ent->data = NULL;
+	ent->lru.next->prev = ent->lru.prev;
+	ent->lru.prev->next = ent->lru.next;
+	delta_base_cached -= ent->size;
 }
 
 static void *cache_or_unpack_entry(struct packed_git *p, off_t base_offset,
 	unsigned long *base_size, enum object_type *type, int keep_cache)
 {
+	struct delta_base_cache_entry *ent;
 	void *ret;
-	unsigned long hash = pack_entry_hash(p, base_offset);
-	struct delta_base_cache_entry *ent = delta_base_cache + hash;
 
-	ret = ent->data;
-	if (!ret || ent->p != p || ent->base_offset != base_offset)
+	ent = get_delta_base_cache_entry(p, base_offset);
+
+	if (!eq_delta_base_cache_entry(ent, p, base_offset))
 		return unpack_entry(p, base_offset, type, base_size);
 
-	if (!keep_cache) {
-		ent->data = NULL;
-		ent->lru.next->prev = ent->lru.prev;
-		ent->lru.prev->next = ent->lru.next;
-		delta_base_cached -= ent->size;
-	} else {
+	ret = ent->data;
+
+	if (!keep_cache)
+		clear_delta_base_cache_entry(ent);
+	else
 		ret = xmemdupz(ent->data, ent->size);
-	}
 	*type = ent->type;
 	*base_size = ent->size;
 	return ret;
@@ -1900,68 +1952,6 @@ static void add_delta_base_cache(struct packed_git *p, off_t base_offset,
 static void *read_object(const unsigned char *sha1, enum object_type *type,
 			 unsigned long *size);
 
-static void *unpack_delta_entry(struct packed_git *p,
-				struct pack_window **w_curs,
-				off_t curpos,
-				unsigned long delta_size,
-				off_t obj_offset,
-				enum object_type *type,
-				unsigned long *sizep)
-{
-	void *delta_data, *result, *base;
-	unsigned long base_size;
-	off_t base_offset;
-
-	base_offset = get_delta_base(p, w_curs, &curpos, *type, obj_offset);
-	if (!base_offset) {
-		error("failed to validate delta base reference "
-		      "at offset %"PRIuMAX" from %s",
-		      (uintmax_t)curpos, p->pack_name);
-		return NULL;
-	}
-	unuse_pack(w_curs);
-	base = cache_or_unpack_entry(p, base_offset, &base_size, type, 0);
-	if (!base) {
-		/*
-		 * We're probably in deep shit, but let's try to fetch
-		 * the required base anyway from another pack or loose.
-		 * This is costly but should happen only in the presence
-		 * of a corrupted pack, and is better than failing outright.
-		 */
-		struct revindex_entry *revidx;
-		const unsigned char *base_sha1;
-		revidx = find_pack_revindex(p, base_offset);
-		if (!revidx)
-			return NULL;
-		base_sha1 = nth_packed_object_sha1(p, revidx->nr);
-		error("failed to read delta base object %s"
-		      " at offset %"PRIuMAX" from %s",
-		      sha1_to_hex(base_sha1), (uintmax_t)base_offset,
-		      p->pack_name);
-		mark_bad_packed_object(p, base_sha1);
-		base = read_object(base_sha1, type, &base_size);
-		if (!base)
-			return NULL;
-	}
-
-	delta_data = unpack_compressed_entry(p, w_curs, curpos, delta_size);
-	if (!delta_data) {
-		error("failed to unpack compressed delta "
-		      "at offset %"PRIuMAX" from %s",
-		      (uintmax_t)curpos, p->pack_name);
-		free(base);
-		return NULL;
-	}
-	result = patch_delta(base, base_size,
-			     delta_data, delta_size,
-			     sizep);
-	if (!result)
-		die("failed to apply delta");
-	free(delta_data);
-	add_delta_base_cache(p, base_offset, base, base_size, *type);
-	return result;
-}
-
 static void write_pack_access_log(struct packed_git *p, off_t obj_offset)
 {
 	static FILE *log_file;
@@ -1982,48 +1972,179 @@ static void write_pack_access_log(struct packed_git *p, off_t obj_offset)
 
 int do_check_packed_object_crc;
 
+#define UNPACK_ENTRY_STACK_PREALLOC 64
+struct unpack_entry_stack_ent {
+	off_t obj_offset;
+	off_t curpos;
+	unsigned long size;
+};
+
 void *unpack_entry(struct packed_git *p, off_t obj_offset,
-		   enum object_type *type, unsigned long *sizep)
+		   enum object_type *final_type, unsigned long *final_size)
 {
 	struct pack_window *w_curs = NULL;
 	off_t curpos = obj_offset;
-	void *data;
+	void *data = NULL;
+	unsigned long size;
+	enum object_type type;
+	struct unpack_entry_stack_ent small_delta_stack[UNPACK_ENTRY_STACK_PREALLOC];
+	struct unpack_entry_stack_ent *delta_stack = small_delta_stack;
+	int delta_stack_nr = 0, delta_stack_alloc = UNPACK_ENTRY_STACK_PREALLOC;
+	int base_from_cache = 0;
 
 	if (log_pack_access)
 		write_pack_access_log(p, obj_offset);
 
-	if (do_check_packed_object_crc && p->index_version > 1) {
-		struct revindex_entry *revidx = find_pack_revindex(p, obj_offset);
-		unsigned long len = revidx[1].offset - obj_offset;
-		if (check_pack_crc(p, &w_curs, obj_offset, len, revidx->nr)) {
-			const unsigned char *sha1 =
-				nth_packed_object_sha1(p, revidx->nr);
-			error("bad packed object CRC for %s",
-			      sha1_to_hex(sha1));
-			mark_bad_packed_object(p, sha1);
-			unuse_pack(&w_curs);
-			return NULL;
+	/* PHASE 1: drill down to the innermost base object */
+	for (;;) {
+		off_t base_offset;
+		int i;
+		struct delta_base_cache_entry *ent;
+
+		if (do_check_packed_object_crc && p->index_version > 1) {
+			struct revindex_entry *revidx = find_pack_revindex(p, obj_offset);
+			unsigned long len = revidx[1].offset - obj_offset;
+			if (check_pack_crc(p, &w_curs, obj_offset, len, revidx->nr)) {
+				const unsigned char *sha1 =
+					nth_packed_object_sha1(p, revidx->nr);
+				error("bad packed object CRC for %s",
+				      sha1_to_hex(sha1));
+				mark_bad_packed_object(p, sha1);
+				unuse_pack(&w_curs);
+				return NULL;
+			}
 		}
+
+		ent = get_delta_base_cache_entry(p, curpos);
+		if (eq_delta_base_cache_entry(ent, p, curpos)) {
+			type = ent->type;
+			data = ent->data;
+			size = ent->size;
+			clear_delta_base_cache_entry(ent);
+			base_from_cache = 1;
+			break;
+		}
+
+		type = unpack_object_header(p, &w_curs, &curpos, &size);
+		if (type != OBJ_OFS_DELTA && type != OBJ_REF_DELTA)
+			break;
+
+		base_offset = get_delta_base(p, &w_curs, &curpos, type, obj_offset);
+		if (!base_offset) {
+			error("failed to validate delta base reference "
+			      "at offset %"PRIuMAX" from %s",
+			      (uintmax_t)curpos, p->pack_name);
+			/* bail to phase 2, in hopes of recovery */
+			data = NULL;
+			break;
+		}
+
+		/* push object, proceed to base */
+		if (delta_stack_nr >= delta_stack_alloc
+		    && delta_stack == small_delta_stack) {
+			delta_stack_alloc = alloc_nr(delta_stack_nr);
+			delta_stack = xmalloc(sizeof(*delta_stack)*delta_stack_alloc);
+			memcpy(delta_stack, small_delta_stack,
+			       sizeof(*delta_stack)*delta_stack_nr);
+		} else {
+			ALLOC_GROW(delta_stack, delta_stack_nr+1, delta_stack_alloc);
+		}
+		i = delta_stack_nr++;
+		delta_stack[i].obj_offset = obj_offset;
+		delta_stack[i].curpos = curpos;
+		delta_stack[i].size = size;
+
+		curpos = obj_offset = base_offset;
 	}
 
-	*type = unpack_object_header(p, &w_curs, &curpos, sizep);
-	switch (*type) {
+	/* PHASE 2: handle the base */
+	switch (type) {
 	case OBJ_OFS_DELTA:
 	case OBJ_REF_DELTA:
-		data = unpack_delta_entry(p, &w_curs, curpos, *sizep,
-					  obj_offset, type, sizep);
+		if (data)
+			die("BUG in unpack_entry: left loop at a valid delta");
 		break;
 	case OBJ_COMMIT:
 	case OBJ_TREE:
 	case OBJ_BLOB:
 	case OBJ_TAG:
-		data = unpack_compressed_entry(p, &w_curs, curpos, *sizep);
+		if (!base_from_cache)
+			data = unpack_compressed_entry(p, &w_curs, curpos, size);
 		break;
 	default:
 		data = NULL;
 		error("unknown object type %i at offset %"PRIuMAX" in %s",
-		      *type, (uintmax_t)obj_offset, p->pack_name);
+		      type, (uintmax_t)obj_offset, p->pack_name);
 	}
+
+	/* PHASE 3: apply deltas in order */
+
+	/* invariants:
+	 *   'data' holds the base data, or NULL if there was corruption
+	 */
+	while (delta_stack_nr) {
+		void *delta_data;
+		void *base = data;
+		unsigned long delta_size, base_size = size;
+		int i;
+
+		data = NULL;
+
+		if (base)
+			add_delta_base_cache(p, obj_offset, base, base_size, type);
+
+		if (!base) {
+			/*
+			 * We're probably in deep shit, but let's try to fetch
+			 * the required base anyway from another pack or loose.
+			 * This is costly but should happen only in the presence
+			 * of a corrupted pack, and is better than failing outright.
+			 */
+			struct revindex_entry *revidx;
+			const unsigned char *base_sha1;
+			revidx = find_pack_revindex(p, obj_offset);
+			if (revidx) {
+				base_sha1 = nth_packed_object_sha1(p, revidx->nr);
+				error("failed to read delta base object %s"
+				      " at offset %"PRIuMAX" from %s",
+				      sha1_to_hex(base_sha1), (uintmax_t)obj_offset,
+				      p->pack_name);
+				mark_bad_packed_object(p, base_sha1);
+				base = read_object(base_sha1, &type, &base_size);
+			}
+		}
+
+		i = --delta_stack_nr;
+		obj_offset = delta_stack[i].obj_offset;
+		curpos = delta_stack[i].curpos;
+		delta_size = delta_stack[i].size;
+
+		if (!base)
+			continue;
+
+		delta_data = unpack_compressed_entry(p, &w_curs, curpos, delta_size);
+
+		if (!delta_data) {
+			error("failed to unpack compressed delta "
+			      "at offset %"PRIuMAX" from %s",
+			      (uintmax_t)curpos, p->pack_name);
+			free(base);
+			data = NULL;
+			continue;
+		}
+
+		data = patch_delta(base, base_size,
+				   delta_data, delta_size,
+				   &size);
+		if (!data)
+			die("failed to apply delta");
+
+		free (delta_data);
+	}
+
+	*final_type = type;
+	*final_size = size;
+
 	unuse_pack(&w_curs);
 	return data;
 }
