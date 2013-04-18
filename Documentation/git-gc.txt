@@ -62,8 +62,9 @@ automatic consolidation of packs.
 
 --prune=<date>::
 	Prune loose objects older than date (default is 2 weeks ago,
-	overridable by the config variable `gc.pruneExpire`).  This
-	option is on by default.
+	overridable by the config variable `gc.pruneExpire`).
+	--prune=all prunes loose objects regardless of their age.
+	--prune is on by default.
 
 --no-prune::
 	Do not prune any loose objects.

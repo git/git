@@ -67,14 +67,19 @@ them.
 --expire=<time>::
 	Entries older than this time are pruned.  Without the
 	option it is taken from configuration `gc.reflogExpire`,
-	which in turn defaults to 90 days.
+	which in turn defaults to 90 days.  --expire=all prunes
+	entries regardless of their age; --expire=never turns off
+	pruning of reachable entries (but see --expire-unreachable).
 
 --expire-unreachable=<time>::
 	Entries older than this time and not reachable from
 	the current tip of the branch are pruned.  Without the
 	option it is taken from configuration
 	`gc.reflogExpireUnreachable`, which in turn defaults to
-	30 days.
+	30 days.  --expire-unreachable=all prunes unreachable
+	entries regardless of their age; --expire-unreachable=never
+	turns off early pruning of unreachable entries (but see
+	--expire).
 
 --all::
 	Instead of listing <refs> explicitly, prune all refs.
