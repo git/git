@@ -469,7 +469,7 @@ static int fetch_with_import(struct transport *transport,
 	 * were fetching.
 	 *
 	 * (If no "refspec" capability was specified, for historical
-	 * reasons we default to *:*.)
+	 * reasons we default to the equivalent of *:*.)
 	 *
 	 * Store the result in to_fetch[i].old_sha1.  Callers such
 	 * as "git fetch" can use the value to write feedback to the

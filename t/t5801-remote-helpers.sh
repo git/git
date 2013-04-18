@@ -120,21 +120,6 @@ test_expect_failure 'pushing without refspecs' '
 	compare_refs local2 HEAD server HEAD
 '
 
-test_expect_success 'pulling with straight refspec' '
-	(cd local2 &&
-	GIT_REMOTE_TESTGIT_REFSPEC="*:*" git pull) &&
-	compare_refs local2 HEAD server HEAD
-'
-
-test_expect_failure 'pushing with straight refspec' '
-	test_when_finished "(cd local2 && git reset --hard origin)" &&
-	(cd local2 &&
-	echo content >>file &&
-	git commit -a -m eleven &&
-	GIT_REMOTE_TESTGIT_REFSPEC="*:*" git push) &&
-	compare_refs local2 HEAD server HEAD
-'
-
 test_expect_success 'pulling without marks' '
 	(cd local2 &&
 	GIT_REMOTE_TESTGIT_NO_MARKS=1 git pull) &&
