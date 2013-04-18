@@ -1,10 +1,10 @@
 To: git@vger.kernel.org
 Bcc: lwn@lwn.net
-Subject: What's cooking in git.git (Apr 2013, #05; Mon, 15)
-X-master-at: aec3f77941205909f0671aa9767315a50e20ff87
-X-next-at: 7fdada62084c4fa855f6cf269a638ff1faea5ba2
+Subject: What's cooking in git.git (Apr 2013, #06; Thu, 18)
+X-master-at: 1468a5839309033feb2e58943babdd48b8e2d151
+X-next-at: 630c2117d6a92f48910bfc4663f752cfaa0b30fa
 
-What's cooking in git.git (Apr 2013, #05; Mon, 15)
+What's cooking in git.git (Apr 2013, #06; Thu, 18)
 --------------------------------------------------
 
 Here are the topics that have been cooking.  Commits prefixed with
@@ -19,127 +19,74 @@ of the repositories listed at
 --------------------------------------------------
 [Graduated to "master"]
 
-* jk/diff-algo-finishing-touches (2013-04-05) 2 commits
-  (merged to 'next' on 2013-04-11 at af83b2b)
- + diff: allow unstuck arguments with --diff-algorithm
- + git-merge(1): document diff-algorithm option to merge-recursive
+* fc/completion (2013-04-14) 8 commits
+  (merged to 'next' on 2013-04-14 at a509746)
+ + completion: small optimization
+ + completion: inline __gitcomp_1 to its sole callsite
+ + completion: get rid of compgen
+ + completion: add __gitcomp_nl tests
+ + completion: add new __gitcompadd helper
+ + completion: get rid of empty COMPREPLY assignments
+ + completion: trivial test improvement
+ + completion: add more cherry-pick options
 
- "git diff --diff-algorithm algo" is also understood as "git diff
- --diff-algorithm=algo".
-
-
-* jk/diff-graph-submodule-summary (2013-04-05) 1 commit
-  (merged to 'next' on 2013-04-11 at 70dfa8d)
- + submodule: print graph output next to submodule log
-
- Make "git diff --graph" work better with submodule log output.
-
-
-* jk/http-error-messages (2013-04-06) 9 commits
-  (merged to 'next' on 2013-04-11 at 7a03981)
- + http: drop http_error function
- + remote-curl: die directly with http error messages
- + http: re-word http error message
- + http: simplify http_error helper function
- + remote-curl: consistently report repo url for http errors
- + remote-curl: always show friendlier 404 message
- + remote-curl: let servers override http 404 advice
- + remote-curl: show server content on http errors
- + http: add HTTP_KEEP_ERROR option
-
- Improve error reporting from the http transfer clients.
+ In addition to a user visible change to offer more options to
+ cherry-pick, generally cleans up and simplifies the code.
 
 
-* jk/show-branch-strbuf (2013-04-06) 1 commit
-  (merged to 'next' on 2013-04-11 at 7a20aa5)
- + show-branch: use strbuf instead of static buffer
+* fc/send-email-annotate (2013-04-14) 7 commits
+  (merged to 'next' on 2013-04-14 at 4af1076)
+ + rebase-am: explicitly disable cover-letter
+ + format-patch: trivial cleanups
+ + format-patch: add format.coverLetter configuration variable
+ + log: update to OPT_BOOL
+ + format-patch: refactor branch name calculation
+ + format-patch: improve head calculation for cover-letter
+ + send-email: make annotate configurable
 
- "git show-branch" was not prepared to show a very long run of
- ancestor operators e.g. foobar^2~2^2^2^2...^2~4 correctly.
-
-
-* lf/bundle-with-tip-wo-message (2013-04-07) 1 commit
-  (merged to 'next' on 2013-04-11 at bb9f869)
- + bundle: Accept prerequisites without commit messages
-
- "git bundle" did not like a bundle created using a commit without
- any message as its one of the prerequistes.
-
-
-* po/help-guides (2013-04-03) 5 commits
-  (merged to 'next' on 2013-04-04 at 3d99b28)
- + doc: include --guide option description for "git help"
- + help: mention -a and -g option, and 'git help <concept>' usage.
- + builtin/help.c: add list_common_guides_help() function
- + builtin/help.c: add --guide option
- + builtin/help.c: split "-a" processing into two
-
- "git help" learned "-g" option to show the list of guides just like
- list of commands are given with "-a".
- * po/help-guides (2013-04-12) 1 commit
- - help: mark common_guides[] as translatable
-
- Finishing touches.
+ Allows format-patch --cover-letter to be configurable; the most
+ notable is the "auto" mode to create cover-letter only for multi
+ patch series.
 
 
-* rt/commentchar-fmt-merge-msg (2013-04-07) 2 commits
-  (merged to 'next' on 2013-04-11 at 6af638b)
- + fmt-merge-msg: use core.commentchar in tag signatures completely
- + fmt-merge-msg: respect core.commentchar in people credits
+* jc/detached-head-doc (2013-04-05) 1 commit
+  (merged to 'next' on 2013-04-14 at 24b9271)
+ + glossary: extend "detached HEAD" description
 
- The new core.commentchar configuration was not applied to a few
- places.
-
-
-* tr/perl-keep-stderr-open (2013-04-04) 2 commits
-  (merged to 'next' on 2013-04-07 at 04f737a)
- + t9700: do not close STDERR
- + perl: redirect stderr to /dev/null instead of closing
-
- Closing (not redirecting to /dev/null) the standard error stream is
- not a very smart thing to do.  Later open may return file
- descriptor #2 for unrelated purpose, and error reporting code may
- write into them.
-
---------------------------------------------------
-[New Topics]
-
-* kb/status-ignored-optim-2 (2013-04-15) 14 commits
- . dir.c: git-status --ignored: don't scan the work tree twice
- . dir.c: git-status --ignored: don't scan the work tree three times
- . dir.c: git-status: avoid is_excluded checks for tracked files
- . dir.c: replace is_path_excluded with now equivalent is_excluded API
- . dir.c: unify is_excluded and is_path_excluded APIs
- . dir.c: move prep_exclude
- . dir.c: factor out parts of last_exclude_matching for later reuse
- . dir.c: git-clean -d -X: don't delete tracked directories
- . dir.c: make 'git-status --ignored' work within leading directories
- . dir.c: git-status --ignored: don't list empty directories as ignored
- . dir.c: git-ls-files --directories: don't hide empty directories
- . dir.c: git-status --ignored: don't list empty ignored directories
- . dir.c: git-status --ignored: don't list files in ignored directories
- . dir.c: git-status --ignored: don't drop ignored directories
-
- Rerolls kb/status-ignored-optim topic (reverted from 'next').  Not
- merged to 'pu' as it heavily interferes with as/check-ignore topic.
+ Describe what happens when a command that operates on "the current
+ branch" is run on a detached HEAD.
 
 
-* fc/branch-upstream-color (2013-04-15) 1 commit
-  (merged to 'next' on 2013-04-15 at 2fc50fd)
- + branch: colour upstream branches
+* jk/daemon-user-doc (2013-04-12) 1 commit
+  (merged to 'next' on 2013-04-14 at 56c08ff)
+ + doc: clarify that "git daemon --user=<user>" option does not export HOME=~user
 
- Add more colors to "git branch -vv" output.
+ Document where the configuration is read by the git-daemon when its
+ --user option is used.
 
- Will merge to 'master'.
+
+* jk/http-dumb-namespaces (2013-04-09) 1 commit
+  (merged to 'next' on 2013-04-15 at 4bfa834)
+ + http-backend: respect GIT_NAMESPACE with dumb clients
+
+ Allow smart-capable HTTP servers to be restricted via the
+ GIT_NAMESPACE mechanism when talking with commit-walker clients
+ (they already do so when talking with smart HTTP clients).
 
 
-* jk/commit-info-slab (2013-04-13) 3 commits
- - commit-slab: introduce a macro to define a slab for new type
- - commit-slab: avoid large realloc
- - commit: allow associating auxiliary info on-demand
+* jk/http-error-messages (2013-04-16) 1 commit
+  (merged to 'next' on 2013-04-16 at 4a32517)
+ + http: set curl FAILONERROR each time we select a handle
 
- Technology demonstration to show a way we could use unbound number
- of flag bits on commit objects.
+ A regression fix for the recently graduated topic.
+
+
+* jk/merge-tree-added-identically (2013-04-08) 1 commit
+  (merged to 'next' on 2013-04-15 at 35fd4b9)
+ + merge-tree: don't print entries that match "local"
+
+ The resolution of some corner cases by "git merge-tree" were
+ inconsistent between top-of-the-tree and in a subdirectory.
 
 
 * jk/test-trash (2013-04-14) 2 commits
@@ -151,11 +98,199 @@ of the repositories listed at
  option.
 
 
-* lf/read-blob-data-from-index (2013-04-15) 3 commits
-  (merged to 'next' on 2013-04-15 at 09f92c6)
- + convert.c: Remove duplicate code
- + Add size parameter to read_blob_data_from_index_path()
- + Add public function read_blob_data_from_index_path()
+* kb/co-orphan-suggestion-short-sha1 (2013-04-08) 1 commit
+  (merged to 'next' on 2013-04-14 at 8caf7fd)
+ + checkout: abbreviate hash in suggest_reattach
+
+ Update the informational message when "git checkout" leaves the
+ detached head state.
+
+
+* rs/empty-archive (2013-04-10) 1 commit
+  (merged to 'next' on 2013-04-15 at eab39bc)
+ + t5004: fix issue with empty archive test and bsdtar
+
+ Implementations of "tar" of BSD descend have found to have trouble
+ with reading an otherwise empty tar archive with pax headers and
+ causes an unnecessary test failure.
+
+
+* th/t9903-symlinked-workdir (2013-04-11) 1 commit
+  (merged to 'next' on 2013-04-15 at f062dc6)
+ + t9903: Don't fail when run from path accessed through symlink
+
+
+* tr/packed-object-info-wo-recursion (2013-03-27) 3 commits
+  (merged to 'next' on 2013-03-29 at b1c3858)
+ + sha1_file: remove recursion in unpack_entry
+ + Refactor parts of in_delta_base_cache/cache_or_unpack_entry
+ + sha1_file: remove recursion in packed_object_info
+
+ Attempts to reduce the stack footprint of sha1_object_info()
+ and unpack_entry() codepaths.
+
+--------------------------------------------------
+[New Topics]
+
+* jk/a-thread-only-dies-once (2013-04-16) 2 commits
+  (merged to 'next' on 2013-04-18 at 3208f44)
+ + run-command: use thread-aware die_is_recursing routine
+ + usage: allow pluggable die-recursion checks
+
+ A regression fix for the logic to detect die() handler triggering
+ itself recursively.
+
+ Will fast-track to 'master'.
+
+
+* tr/copy-revisions-from-stdin (2013-04-16) 1 commit
+  (merged to 'next' on 2013-04-16 at d882870)
+ + read_revisions_from_stdin: make copies for handle_revision_arg
+
+ A fix to a long-standing issue in the command line parser for
+ revisions, which was triggered by mv/sequence-pick-error-diag topic
+ (now in 'next').
+
+ Will merge to 'master'.
+
+
+* jc/prune-all (2013-04-18) 3 commits
+ - api-parse-options.txt: document "no-" for non-boolean options
+ - git-gc.txt, git-reflog.txt: document new expiry options
+ - date.c: add parse_expiry_date()
+
+ We used the approxidate() parser for "--expire=<timestamp>" options
+ of various commands, but it is better to treat --expire=all and
+ --expire=now a bit more specially than using the current timestamp.
+ Update "git gc" and "git reflog" with a new parsing function for
+ expiry dates.
+
+
+* jk/chopped-ident (2013-04-17) 3 commits
+ - blame: handle broken commit headers gracefully
+ - pretty: handle broken commit headers gracefully
+ - cat-file: print tags raw for "cat-file -p"
+
+ A commit object whose author or committer ident are malformed
+ crashed some code that trusted that a name, an email and an
+ timestamp can always be found in it.
+
+ Will merge to 'next'.
+
+
+* rt/commentchar-fmt-merge-msg (2013-04-18) 1 commit
+  (merged to 'next' on 2013-04-18 at 96799bd)
+ + t6200: avoid path mangling issue on Windows
+
+ A test fix for recent update.
+
+ Will fast-track to 'master'.
+
+--------------------------------------------------
+[Stalled]
+
+* jc/format-patch (2013-02-21) 2 commits
+ - format-patch: --inline-single
+ - format-patch: rename "no_inline" field
+
+ A new option to send a single patch to the standard output to be
+ appended at the bottom of a message.  I personally have no need for
+ this, but it was easy enough to cobble together.  Tests, docs and
+ stripping out more MIMEy stuff are left as exercises to interested
+ parties.
+
+ Not ready for inclusion.
+
+
+* jk/gitweb-utf8 (2013-04-08) 4 commits
+ - gitweb: Fix broken blob action parameters on blob/commitdiff pages
+ - gitweb: Don't append ';js=(0|1)' to external links
+ - gitweb: Make feed title valid utf8
+ - gitweb: Fix utf8 encoding for blob_plain, blobdiff_plain, commitdiff_plain, and patch
+
+ Various fixes to gitweb.
+
+ Waiting for a reroll after a review.
+
+
+* jk/commit-info-slab (2013-04-13) 3 commits
+ - commit-slab: introduce a macro to define a slab for new type
+ - commit-slab: avoid large realloc
+ - commit: allow associating auxiliary info on-demand
+
+ Technology demonstration to show a way we could use unbound number
+ of flag bits on commit objects.
+
+
+* jn/config-ignore-inaccessible (2013-04-15) 1 commit
+ - config: allow inaccessible configuration under $HOME
+
+ When $HOME is misconfigured to point at an unreadable directory, we
+ used to complain and die. This loosens the check.
+
+ I do not think we agreed that this is a good idea, though.
+
+--------------------------------------------------
+[Cooking]
+
+* nd/pretty-formats (2013-04-17) 14 commits
+ - pretty: support %>> that steal trailing spaces
+ - pretty: support truncating in %>, %< and %><
+ - pretty: support padding placeholders, %< %> and %><
+ - SQUASH??? review comments (round #2)
+ - pretty: add %C(auto) for auto-coloring
+ - pretty: split color parsing into a separate function
+ - pretty: two phase conversion for non utf-8 commits
+ - utf8.c: add reencode_string_len() that can handle NULs in string
+ - utf8.c: add utf8_strnwidth() with the ability to skip ansi sequences
+ - utf8.c: move display_mode_esc_sequence_len() for use by other functions
+ - pretty: share code between format_decoration and show_decorations
+ - pretty-formats.txt: wrap long lines
+ - pretty: get the correct encoding for --pretty:format=%e
+ - pretty: save commit encoding from logmsg_reencode if the caller needs it
+
+ Looked sensible.
+
+ Will merge to 'next' after waiting for further comments for a few days.
+
+
+* kb/status-ignored-optim-2 (2013-04-15) 14 commits
+ - dir.c: git-status --ignored: don't scan the work tree twice
+ - dir.c: git-status --ignored: don't scan the work tree three times
+ - dir.c: git-status: avoid is_excluded checks for tracked files
+ - dir.c: replace is_path_excluded with now equivalent is_excluded API
+ - dir.c: unify is_excluded and is_path_excluded APIs
+ - dir.c: move prep_exclude
+ - dir.c: factor out parts of last_exclude_matching for later reuse
+ - dir.c: git-clean -d -X: don't delete tracked directories
+ - dir.c: make 'git-status --ignored' work within leading directories
+ - dir.c: git-status --ignored: don't list empty directories as ignored
+ - dir.c: git-ls-files --directories: don't hide empty directories
+ - dir.c: git-status --ignored: don't list empty ignored directories
+ - dir.c: git-status --ignored: don't list files in ignored directories
+ - dir.c: git-status --ignored: don't drop ignored directories
+
+ Rerolls kb/status-ignored-optim topic (reverted from 'next').
+ With help from Karsten, conflicts with as/check-ignore topic have
+ been sorted out and it is now in 'pu'.
+
+ Will merge to 'next' after waiting for further comments for a few days.
+
+
+* fc/branch-upstream-color (2013-04-15) 1 commit
+  (merged to 'next' on 2013-04-15 at 2fc50fd)
+ + branch: colour upstream branches
+
+ Add more colors to "git branch -vv" output.
+
+ Will merge to 'master'.
+
+
+* lf/read-blob-data-from-index (2013-04-17) 3 commits
+  (merged to 'next' on 2013-04-17 at 611208f)
+ + convert.c: remove duplicate code
+ + read_blob_data_from_index(): optionally return the size of blob data
+ + attr.c: extract read_index_data() as read_blob_data_from_index()
 
  Reduce duplicated code between convert.c and attr.c.
 
@@ -180,6 +315,8 @@ of the repositories listed at
 
  Enhance "check-ignore" (1.8.2 update) to work more like "check-attr"
  over bidi-pipes.
+
+ Will merge to 'next' after waiting for further comments for a few days.
 
 
 * mh/packed-refs-various (2013-04-15) 33 commits
@@ -229,28 +366,21 @@ of the repositories listed at
  Allows remote-helpers to declare they can handle signed tags, and
  issue a warning when using those that don't.
 
- Comments?
+ Will merge to 'next' after waiting for further comments for a few days.
 
 
-* jn/config-ignore-inaccessible (2013-04-15) 1 commit
- - config: allow inaccessible configuration under $HOME
-
- When $HOME is misconfigured to point at an unreadable directory, we
- used to complain and die. This loosens the check.
-
- I do not think we agreed that this is a good idea, though.
-
-
-* jn/gitweb-install-doc (2013-04-15) 1 commit
+* jn/gitweb-install-doc (2013-04-17) 2 commits
+ - gitweb/INSTALL: GITWEB_CONFIG_SYSTEM is for backward compatibility
  - gitweb/INSTALL: Simplify description of GITWEB_CONFIG_SYSTEM
 
  Reword gitweb configuration instrutions.
 
- Will merge to 'next'.
+ Will merge to 'next' after waiting for further comments for a few days.
 
 
 * jx/i18n-branch-error-messages (2013-04-15) 1 commit
- - i18n: branch: mark strings for translation
+  (merged to 'next' on 2013-04-18 at 630c211)
+ + i18n: branch: mark strings for translation
 
  Will merge to 'master'.
 
@@ -278,43 +408,6 @@ of the repositories listed at
 
  Will merge to 'next'.
 
---------------------------------------------------
-[Stalled]
-
-* nd/pretty-formats (2013-04-01) 12 commits
- - pretty: support %>> that steal trailing spaces
- - pretty: support truncating in %>, %< and %><
- - pretty: support padding placeholders, %< %> and %><
- - pretty: add %C(auto) for auto-coloring on the next placeholder
- - pretty: two phase conversion for non utf-8 commits
- - utf8: keep NULs in reencode_string()
- - pretty: get the correct encoding for --pretty:format=%e
- - pretty: save commit encoding from logmsg_reencode if the caller needs it
- - utf8.c: add utf8_strnwidth() with the ability to skip ansi sequences
- - utf8.c: move display_mode_esc_sequence_len() for use by other functions
- - pretty: share code between format_decoration and show_decorations
- - pretty-formats.txt: wrap long lines
-
- A mixed bag of a bugfix and two fun enhancements on pretty formats
- placeholder.
-
- Expecting a reroll.
-
-
-* jc/format-patch (2013-02-21) 2 commits
- - format-patch: --inline-single
- - format-patch: rename "no_inline" field
-
- A new option to send a single patch to the standard output to be
- appended at the bottom of a message.  I personally have no need for
- this, but it was easy enough to cobble together.  Tests, docs and
- stripping out more MIMEy stuff are left as exercises to interested
- parties.
-
- Not ready for inclusion.
-
---------------------------------------------------
-[Cooking]
 
 * ap/strbuf-humanize (2013-04-10) 2 commits
   (merged to 'next' on 2013-04-14 at 66d7af5)
@@ -330,6 +423,8 @@ of the repositories listed at
  break third-party tools that may have been reading from the output
  of this command.
 
+ Will merge to 'master'.
+
 
 * as/clone-reference-with-gitfile (2013-04-09) 2 commits
   (merged to 'next' on 2013-04-15 at ab0d128)
@@ -339,18 +434,23 @@ of the repositories listed at
  "git clone" did not work if a repository pointed at by the
  "--reference" option is a gitfile that points at another place.
 
- Waiting for comments.
+ Will merge to 'master' after eyeballing it once again.
 
 
-* fc/transport-helper-error-reporting (2013-04-11) 3 commits
+* fc/transport-helper-error-reporting (2013-04-17) 9 commits
+ - transport-helper: update remote helper namespace
+ - transport-helper: trivial code shuffle
+ - transport-helper: warn when refspec is not used
+ - transport-helper: clarify pushing without refspecs
+ - transport-helper: update refspec documentation
+ - transport-helper: clarify *:* refspec
  - transport-helper: improve push messages
  - transport-helper: mention helper name when it dies
  - transport-helper: report errors properly
 
- Rerolled enough times.  In-code comments may want to be further
- extended to explain tricky parts, but seems to be ready otherwise.
+ Rerolled with much more clarifications than before.
 
- Will merge to 'next'.
+ Will merge to 'next' after waiting for further comments for a few days.
 
 
 * jk/doc-http-backend (2013-04-13) 3 commits
@@ -364,17 +464,6 @@ of the repositories listed at
  Will merge to 'next'.
 
 
-* jk/gitweb-utf8 (2013-04-08) 4 commits
- - gitweb: Fix broken blob action parameters on blob/commitdiff pages
- - gitweb: Don't append ';js=(0|1)' to external links
- - gitweb: Make feed title valid utf8
- - gitweb: Fix utf8 encoding for blob_plain, blobdiff_plain, commitdiff_plain, and patch
-
- Various fixes to gitweb.
-
- Waiting for a reroll after a review.
-
-
 * jk/submodule-subdirectory-ok (2013-04-10) 2 commits
  - submodule: drop the top-level requirement
  - rev-parse: add --prefix option
@@ -382,118 +471,44 @@ of the repositories listed at
  Allow various subcommands of "git submodule" to be run not from the
  top of the working tree of the superproject.
 
- Waiting for comments.
-
-
-* kb/co-orphan-suggestion-short-sha1 (2013-04-08) 1 commit
-  (merged to 'next' on 2013-04-14 at 8caf7fd)
- + checkout: abbreviate hash in suggest_reattach
-
- Update the informational message when "git checkout" leaves the
- detached head state.
-
- Will merge to 'master'.
+ Worthy goal, but not quite there yet.
+ $gmane/221575
 
 
 * mv/sequencer-pick-error-diag (2013-04-11) 1 commit
- - cherry-pick: make sure all input objects are commits
+  (merged to 'next' on 2013-04-16 at a2da926)
+ + cherry-pick: make sure all input objects are commits
 
  "git cherry-pick $blob $tree" is diagnosed as a nonsense.
 
- Will merge to 'next'.
-
-
-* rs/empty-archive (2013-04-10) 1 commit
-  (merged to 'next' on 2013-04-15 at eab39bc)
- + t5004: fix issue with empty archive test and bsdtar
-
- Implementations of "tar" of BSD descend have found to have trouble
- with reading an otherwise empty tar archive with pax headers and
- causes an unnecessary test failure.
-
- Will merge to 'master'.
-
-
-* th/t9903-symlinked-workdir (2013-04-11) 1 commit
-  (merged to 'next' on 2013-04-15 at f062dc6)
- + t9903: Don't fail when run from path accessed through symlink
-
- Will merge to 'master'.
-
-
-* fc/completion (2013-04-14) 8 commits
-  (merged to 'next' on 2013-04-14 at a509746)
- + completion: small optimization
- + completion: inline __gitcomp_1 to its sole callsite
- + completion: get rid of compgen
- + completion: add __gitcomp_nl tests
- + completion: add new __gitcompadd helper
- + completion: get rid of empty COMPREPLY assignments
- + completion: trivial test improvement
- + completion: add more cherry-pick options
-
- Will merge to 'master'.
-
-
-* jk/daemon-user-doc (2013-04-12) 1 commit
-  (merged to 'next' on 2013-04-14 at 56c08ff)
- + doc: clarify that "git daemon --user=<user>" option does not export HOME=~user
-
- Will merge to 'master'.
-
-
-* fc/send-email-annotate (2013-04-14) 7 commits
-  (merged to 'next' on 2013-04-14 at 4af1076)
- + rebase-am: explicitly disable cover-letter
- + format-patch: trivial cleanups
- + format-patch: add format.coverLetter configuration variable
- + log: update to OPT_BOOL
- + format-patch: refactor branch name calculation
- + format-patch: improve head calculation for cover-letter
- + send-email: make annotate configurable
-
- Allows format-patch --cover-letter to be configurable; the most
- notable is the "auto" mode to create cover-letter only for multi
- patch series.
-
- Will merge to 'master'.
+ Will merge to 'master' with the 'tr/copy-revisions-from-stdin' topic.
 
 
 * fc/remote-hg (2013-04-11) 21 commits
- - remote-hg: activate graphlog extension for hg_log()
- - remote-hg: fix bad file paths
- - remote-hg: document location of stored hg repository
- - remote-hg: fix bad state issue
- - remote-hg: add 'insecure' option
- - remote-hg: add simple mail test
- - remote-hg: add basic author tests
- - remote-hg: show more proper errors
- - remote-hg: force remote push
- - remote-hg: push to the appropriate branch
- - remote-hg: update tags globally
- - remote-hg: update remote bookmarks
- - remote-hg: refactor export
- - remote-hg: split bookmark handling
- - remote-hg: redirect buggy mercurial output
- - remote-hg: trivial test cleanups
- - remote-hg: make sure fake bookmarks are updated
- - remote-hg: fix for files with spaces
- - remote-hg: properly report errors on bookmark pushes
- - remote-hg: add missing config variable in doc
- - remote-hg: trivial cleanups
+  (merged to 'next' on 2013-04-16 at cbeaf41)
+ + remote-hg: activate graphlog extension for hg_log()
+ + remote-hg: fix bad file paths
+ + remote-hg: document location of stored hg repository
+ + remote-hg: fix bad state issue
+ + remote-hg: add 'insecure' option
+ + remote-hg: add simple mail test
+ + remote-hg: add basic author tests
+ + remote-hg: show more proper errors
+ + remote-hg: force remote push
+ + remote-hg: push to the appropriate branch
+ + remote-hg: update tags globally
+ + remote-hg: update remote bookmarks
+ + remote-hg: refactor export
+ + remote-hg: split bookmark handling
+ + remote-hg: redirect buggy mercurial output
+ + remote-hg: trivial test cleanups
+ + remote-hg: make sure fake bookmarks are updated
+ + remote-hg: fix for files with spaces
+ + remote-hg: properly report errors on bookmark pushes
+ + remote-hg: add missing config variable in doc
+ + remote-hg: trivial cleanups
 
- Rerolled.
-
- Waiting for comments.
-
-
-* jk/http-dumb-namespaces (2013-04-09) 1 commit
-  (merged to 'next' on 2013-04-15 at 4bfa834)
- + http-backend: respect GIT_NAMESPACE with dumb clients
-
- Allow smart-capable HTTP servers to be restricted via the
- GIT_NAMESPACE mechanism when talking with commit-walker clients
- (they already do so when talking with smart HTTP clients).
+ Updates remote-hg helper (in contrib/).
 
  Will merge to 'master'.
 
@@ -509,23 +524,6 @@ of the repositories listed at
  the .gitmodules file.
 
  Will merge to 'next'.
-
-
-* jc/detached-head-doc (2013-04-05) 1 commit
-  (merged to 'next' on 2013-04-14 at 24b9271)
- + glossary: extend "detached HEAD" description
-
- Will merge to 'master'.
-
-
-* jk/merge-tree-added-identically (2013-04-08) 1 commit
-  (merged to 'next' on 2013-04-15 at 35fd4b9)
- + merge-tree: don't print entries that match "local"
-
- The resolution of some corner cases by "git merge-tree" were
- inconsistent between top-of-the-tree and in a subdirectory.
-
- Will merge to 'master'.
 
 
 * jn/add-2.0-u-A-sans-pathspec (2013-04-03) 6 commits
@@ -545,18 +543,6 @@ of the repositories listed at
  default as the final step.
 
  Will merge to 'master' the early bits and cook the rest in 'next' until Git 2.0.
-
-
-* tr/packed-object-info-wo-recursion (2013-03-27) 3 commits
-  (merged to 'next' on 2013-03-29 at b1c3858)
- + sha1_file: remove recursion in unpack_entry
- + Refactor parts of in_delta_base_cache/cache_or_unpack_entry
- + sha1_file: remove recursion in packed_object_info
-
- Attempts to reduce the stack footprint of sha1_object_info()
- and unpack_entry() codepaths.
-
- Will merge to 'master'.
 
 
 * nd/magic-pathspecs (2013-03-31) 45 commits
@@ -608,9 +594,12 @@ of the repositories listed at
 
  Migrate the rest of codebase to use "struct pathspec" more.
 
+ Will be rerolled.
 
-* jc/add-2.0-delete-default (2013-03-08) 3 commits
+
+* jc/add-2.0-delete-default (2013-04-17) 4 commits
  - git add <pathspec>... defaults to "-A"
+ - git add: rework the logic to warn "git add <pathspec>..." default change
   (merged to 'next' on 2013-04-05 at 199442e)
  + git add: start preparing for "git add <pathspec>..." to default to "-A"
  + builtin/add.c: simplify boolean variables
@@ -629,7 +618,7 @@ of the repositories listed at
  Start training the users for this change to say --no-all when they
  want to ignore the removal to smooth the transition hump.
 
- Will merge to 'master' the early bits and cook the rest in 'next' until Git 2.0.
+ Will merge to 'master' the early bits and cook the tip one in 'next' until Git 2.0.
 
 
 * tr/line-log (2013-04-12) 11 commits
@@ -649,88 +638,9 @@ of the repositories listed at
  + Refactor parse_loc
 
 
-* jc/push-2.0-default-to-simple (2013-04-03) 13 commits
+* jc/push-2.0-default-to-simple (2013-04-03) 1 commit
  - push: switch default from "matching" to "simple"
-  (merged to 'next' on 2013-04-05 at 1b42c19)
- + t5570: do not assume the "matching" push is the default
- + t5551: do not assume the "matching" push is the default
- + t5550: do not assume the "matching" push is the default
- + t9401: do not assume the "matching" push is the default
- + t9400: do not assume the "matching" push is the default
- + t7406: do not assume the "matching" push is the default
- + t5531: do not assume the "matching" push is the default
- + t5519: do not assume the "matching" push is the default
- + t5517: do not assume the "matching" push is the default
- + t5516: do not assume the "matching" push is the default
- + t5505: do not assume the "matching" push is the default
- + t5404: do not assume the "matching" push is the default
 
- Update the test suite that still assumed the push.default will
- forever be 'matching'.  In Git 2.0, that will no longer be the
- case.
+ The early bits to adjust the tests have been merged to 'master'.
 
- Will merge to 'master' the early bits and cook the rest in 'next' until Git 2.0.
-
---------------------------------------------------
-[Discarded]
-
-* fc/transport-helper-waitpid (2013-04-07) 3 commits
- . SQUASH???
- . transport-helper: check if remote helper is alive
- . [EXPLAIN BETTER] run-command: add new check_command helper
-
- fc/transport-helper-error-reporting supersedes this topic.
-
-
-* jc/gg (2013-04-08) 3 commits
- . commit: add get_commit_encoding()
- . commit: rename parse_commit_date()
- . commit: shrink "indegree" field
- (this branch uses jc/decorate.)
-
-
-* mc/count-objects-kibibytes (2013-04-14) 2 commits
-  (merged to 'next' on 2013-04-14 at ff03f2b)
- + Revert "count-objects: output "KiB" instead of "kilobytes""
-  (merged to 'next' on 2013-04-05 at f4e50e8)
- + count-objects: output "KiB" instead of "kilobytes"
-
- The command reports the total diskspace used to store loose objects
- in kibibytes, but it was labelled as "kilobytes".  The number now
- is shown with "KiB", e.g. "6750 objects, 50928 KiB".
-
- If you have scripts that decide when to run "git repack" by parsing
- the output from "git count-objects", this release may break them.
- Sorry about that.  One of the scripts shipped by git-core itself
- also had to be adjusted.  You may want to consider updating such
- scripts to always call "git gc --auto" to let it decide when to
- repack for you.
-
- Discarded.
-
-
-* jc/decorate (2013-04-07) 2 commits
- - decorate: add "clear_decoration()"
- - decorate: document API
- (this branch is used by jc/gg.)
-
- Discarded.
-
-
-* kb/status-ignored-optim (2013-03-19) 8 commits
-  (merged to 'next' on 2013-04-01 at 0c12ed9)
- + dir.c: git-status: avoid is_excluded checks for tracked files
- + dir.c: replace is_path_excluded with now equivalent is_excluded API
- + dir.c: unify is_excluded and is_path_excluded APIs
- + dir.c: move prep_exclude and factor out parts of last_exclude_matching
- + dir.c: git-status --ignored: don't list empty directories as ignored
- + dir.c: git-status --ignored: don't list empty ignored directories
- + dir.c: git-status --ignored: don't list files in ignored directories
- + dir.c: git-status --ignored: don't drop ignored directories
-
- "git status --ignored" had many corner case bugs.  Also the command
- has been optimized by taking advantage of the fact that paths that
- are already known to the index do not have to be checked against
- the .gitignore mechanism most of the time.
-
- Discarded.
+ Will cook in 'next' until Git 2.0.
