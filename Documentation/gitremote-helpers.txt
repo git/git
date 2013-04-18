@@ -162,8 +162,8 @@ Miscellaneous capabilities
 	For remote helpers that implement 'import' or 'export', this capability
 	allows the refs to be constrained to a private namespace, instead of
 	writing to refs/heads or refs/remotes directly.
-	It is recommended that all importers providing the 'import' or 'export'
-	capabilities use this.
+	It is recommended that all importers providing the 'import'
+	capability use this. It's mandatory for 'export'.
 +
 A helper advertising the capability
 `refspec refs/heads/*:refs/svn/origin/branches/*`

@@ -785,6 +785,9 @@ static int push_refs_with_export(struct transport *transport,
 	struct string_list revlist_args = STRING_LIST_INIT_NODUP;
 	struct strbuf buf = STRBUF_INIT;
 
+	if (!data->refspecs)
+		die("remote-helper doesn't support push; refspec needed");
+
 	helper = get_helper(transport);
 
 	write_constant(helper->in, "export\n");
@@ -795,8 +798,6 @@ static int push_refs_with_export(struct transport *transport,
 		char *private;
 		unsigned char sha1[20];
 
-		if (!data->refspecs)
-			continue;
 		private = apply_refspecs(data->refspecs, data->refspec_nr, ref->name);
 		if (private && !get_sha1(private, sha1)) {
 			strbuf_addf(&buf, "^%s", private);
