@@ -159,11 +159,11 @@ Miscellaneous capabilities
 	carried out.
 
 'refspec' <refspec>::
-	This modifies the 'import' capability, allowing the produced
-	fast-import stream to modify refs in a private namespace
-	instead of writing to refs/heads or refs/remotes directly.
-	It is recommended that all importers providing the 'import'
-	capability use this.
+	For remote helpers that implement 'import' or 'export', this capability
+	allows the refs to be constrained to a private namespace, instead of
+	writing to refs/heads or refs/remotes directly.
+	It is recommended that all importers providing the 'import' or 'export'
+	capabilities use this.
 +
 A helper advertising the capability
 `refspec refs/heads/*:refs/svn/origin/branches/*`
