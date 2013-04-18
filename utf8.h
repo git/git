@@ -3,6 +3,7 @@
 
 typedef unsigned int ucs_char_t;  /* assuming 32bit int */
 
+size_t display_mode_esc_sequence_len(const char *s);
 int utf8_width(const char **start, size_t *remainder_p);
 int utf8_strnwidth(const char *string, int len, int skip_ansi);
 int utf8_strwidth(const char *string);

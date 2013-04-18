@@ -260,4 +260,18 @@ EOF
 	test_cmp expected actual
 '
 
+test_expect_success 'left/right alignment formatting with stealing' '
+	git commit --amend -m short --author "long long long <long@me.com>" &&
+	git log --pretty="format:%<(10,trunc)%s%>>(10,ltrunc)% an" >actual &&
+	# complete the incomplete line at the end
+	echo >>actual &&
+	cat <<\EOF >expected &&
+short long  long long
+message ..   A U Thor
+add bar      A U Thor
+initial      A U Thor
+EOF
+	test_cmp expected actual
+'
+
 test_done

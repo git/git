@@ -9,7 +9,7 @@ struct interval {
   int last;
 };
 
-static size_t display_mode_esc_sequence_len(const char *s)
+size_t display_mode_esc_sequence_len(const char *s)
 {
 	const char *p = s;
 	if (*p++ != '\033')
