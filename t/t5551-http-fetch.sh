@@ -163,6 +163,30 @@ test_expect_success 'invalid Content-Type rejected' '
 	grep "not valid:" actual
 '
 
+test_expect_success 'create namespaced refs' '
+	test_commit namespaced &&
+	git push public HEAD:refs/namespaces/ns/refs/heads/master &&
+	git --git-dir="$HTTPD_DOCUMENT_ROOT_PATH/repo.git" \
+		symbolic-ref refs/namespaces/ns/HEAD refs/namespaces/ns/refs/heads/master
+'
+
+test_expect_success 'smart clone respects namespace' '
+	git clone "$HTTPD_URL/smart_namespace/repo.git" ns-smart &&
+	echo namespaced >expect &&
+	git --git-dir=ns-smart/.git log -1 --format=%s >actual &&
+	test_cmp expect actual
+'
+
+test_expect_success 'dumb clone via http-backend respects namespace' '
+	git --git-dir="$HTTPD_DOCUMENT_ROOT_PATH/repo.git" \
+		config http.getanyfile true &&
+	GIT_SMART_HTTP=0 git clone \
+		"$HTTPD_URL/smart_namespace/repo.git" ns-dumb &&
+	echo namespaced >expect &&
+	git --git-dir=ns-dumb/.git log -1 --format=%s >actual &&
+	test_cmp expect actual
+'
+
 test -n "$GIT_TEST_LONG" && test_set_prereq EXPENSIVE
 
 test_expect_success EXPENSIVE 'create 50,000 tags in the repo' '
