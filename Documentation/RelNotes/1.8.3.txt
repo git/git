@@ -32,6 +32,18 @@ Updates since v1.8.2
 
 UI, Workflows & Features
 
+ * The "--annotate" option to "git send-email" can be turned on (or
+   off) by default with sendemail.annotate configuration variable (you
+   can use --no-annotate from the command line to override it).
+
+ * The "--cover-letter" option to "git format-patch" can be turned on
+   (or off) by default with format.coverLetter configuration
+   variable. By setting it to 'auto', you can turn it on only for a
+   series with two or more patches.
+
+ * The bash completion support (in contrib/) learned that cherry-pick
+   takes a few more options than it already knew about.
+
  * "git help" learned "-g" option to show the list of guides just like
    list of commands are given with "-a".
 
@@ -119,6 +131,9 @@ Performance, Internal Implementation, etc.
 
  * Updates for building under msvc.
 
+ * The stack footprint of some codepaths that access an object from a
+   pack has been shrunk.
+
  * The logic to coalesce the same lines removed from the parents in
    the output from "diff -c/--cc" has been updated, but with an O(n^2)
    complexity, so this might turn out to be undesirable.
@@ -153,7 +168,7 @@ Performance, Internal Implementation, etc.
    conflicts have been applied.
 
 
-Also contains minor documentation updates and code clean-ups.
+Also contains various documentation updates and code clean-ups.
 
 
 Fixes since v1.8.2
@@ -162,6 +177,15 @@ Fixes since v1.8.2
 Unless otherwise noted, all the fixes since v1.8.2 in the maintenance
 track are contained in this release (see release notes to them for
 details).
+
+ * Smart-capable HTTP servers were not restricted via the
+   GIT_NAMESPACE mechanism when talking with commit-walker clients,
+   like they do when talking with smart HTTP clients.
+   (merge 6130f86 jk/http-dumb-namespaces later to maint).
+
+ * "git merge-tree" did not omit a merge result that is identical to
+   "our" side in certain cases.
+   (merge aacecc3 jk/merge-tree-added-identically later to maint).
 
  * Perl scripts like "git-svn" closed (not redirecting to /dev/null)
    the standard error stream, which is not a very smart thing to do.
