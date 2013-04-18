@@ -800,6 +800,9 @@ static int push_refs_with_export(struct transport *transport,
 		char *private;
 		unsigned char sha1[20];
 
+		if (ref->deletion)
+			die("remote-helpers do not support ref deletion");
+
 		private = apply_refspecs(data->refspecs, data->refspec_nr, ref->name);
 		if (private && !get_sha1(private, sha1)) {
 			strbuf_addf(&buf, "^%s", private);
@@ -808,13 +811,8 @@ static int push_refs_with_export(struct transport *transport,
 		}
 		free(private);
 
-		if (ref->deletion) {
-			die("remote-helpers do not support ref deletion");
-		}
-
 		if (ref->peer_ref)
 			string_list_append(&revlist_args, ref->peer_ref->name);
-
 	}
 
 	if (get_exporter(transport, &exporter, &revlist_args))
