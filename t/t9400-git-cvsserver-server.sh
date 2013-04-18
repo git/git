@@ -36,6 +36,7 @@ export CVSROOT CVS_SERVER
 
 rm -rf "$CVSWORK" "$SERVERDIR"
 test_expect_success 'setup' '
+  git config push.default matching &&
   echo >empty &&
   git add empty &&
   git commit -q -m "First Commit" &&

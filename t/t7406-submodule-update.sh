@@ -596,14 +596,14 @@ test_expect_success 'submodule add places git-dir in superprojects git-dir recur
 	   git log > ../../../expected
 	  ) &&
 	  git commit -m "added subsubmodule" &&
-	  git push
+	  git push origin :
 	 ) &&
 	 (cd .git/modules/deeper/submodule/modules/subsubmodule &&
 	  git log > ../../../../../actual
 	 ) &&
 	 git add deeper/submodule &&
 	 git commit -m "update submodule" &&
-	 git push &&
+	 git push origin : &&
 	 test_cmp actual expected
 	)
 '

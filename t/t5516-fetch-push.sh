@@ -252,7 +252,7 @@ test_expect_success 'push with pushInsteadOf and explicit pushurl (pushInsteadOf
 test_expect_success 'push with matching heads' '
 
 	mk_test testrepo heads/master &&
-	git push testrepo &&
+	git push testrepo : &&
 	check_push_result testrepo $the_commit heads/master
 
 '
@@ -281,7 +281,7 @@ test_expect_success 'push --force with matching heads' '
 	mk_test testrepo heads/master &&
 	git push testrepo : &&
 	git commit --amend -massaged &&
-	git push --force testrepo &&
+	git push --force testrepo : &&
 	! check_push_result testrepo $the_commit heads/master &&
 	git reset --hard $the_commit
 
@@ -504,6 +504,7 @@ test_expect_success 'push with remote.pushdefault' '
 	test_config remote.down.url down_repo &&
 	test_config branch.master.remote up &&
 	test_config remote.pushdefault down &&
+	test_config push.default matching &&
 	git push &&
 	check_push_result up_repo $the_first_commit heads/master &&
 	check_push_result down_repo $the_commit heads/master
@@ -515,7 +516,7 @@ test_expect_success 'push with config remote.*.pushurl' '
 	git checkout master &&
 	test_config remote.there.url test2repo &&
 	test_config remote.there.pushurl testrepo &&
-	git push there &&
+	git push there : &&
 	check_push_result testrepo $the_commit heads/master
 '
 
@@ -528,6 +529,7 @@ test_expect_success 'push with config branch.*.pushremote' '
 	test_config remote.down.url down_repo &&
 	test_config branch.master.remote up &&
 	test_config branch.master.pushremote down &&
+	test_config push.default matching &&
 	git push &&
 	check_push_result up_repo $the_first_commit heads/master &&
 	check_push_result side_repo $the_first_commit heads/master &&
@@ -541,7 +543,7 @@ test_expect_success 'push with dry-run' '
 		cd testrepo &&
 		old_commit=$(git show-ref -s --verify refs/heads/master)
 	) &&
-	git push --dry-run testrepo &&
+	git push --dry-run testrepo : &&
 	check_push_result testrepo $old_commit heads/master
 '
 
@@ -1022,7 +1024,7 @@ test_expect_success 'push --porcelain --dry-run rejected' '
 
 test_expect_success 'push --prune' '
 	mk_test testrepo heads/master heads/second heads/foo heads/bar &&
-	git push --prune testrepo &&
+	git push --prune testrepo : &&
 	check_push_result testrepo $the_commit heads/master &&
 	check_push_result testrepo $the_first_commit heads/second &&
 	! check_push_result testrepo $the_first_commit heads/foo heads/bar

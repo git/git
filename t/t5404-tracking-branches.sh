@@ -36,7 +36,7 @@ test_expect_success 'prepare pushable branches' '
 '
 
 test_expect_success 'mixed-success push returns error' '
-	test_must_fail git push
+	test_must_fail git push origin :
 '
 
 test_expect_success 'check tracking branches updated correctly after push' '
