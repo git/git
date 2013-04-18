@@ -164,8 +164,11 @@ The placeholders are:
 - '%x00': print a byte from a hex code
 - '%w([<w>[,<i1>[,<i2>]]])': switch line wrapping, like the -w option of
   linkgit:git-shortlog[1].
-- '%<(<N>)': make the next placeholder take at least N columns,
-  padding spaces on the right if necessary
+- '%<(<N>[,trunc|ltrunc|mtrunc])': make the next placeholder take at
+  least N columns, padding spaces on the right if necessary.
+  Optionally truncate at the beginning (ltrunc), the middle (mtrunc)
+  or the end (trunc) if the output is longer than N columns.
+  Note that truncating only works correctly with N >= 2.
 - '%<|(<N>)': make the next placeholder take at least until Nth
   columns, padding spaces on the right if necessary
 - '%>(<N>)', '%>|(<N>)': similar to '%<(<N>)', '%<|(<N>)'

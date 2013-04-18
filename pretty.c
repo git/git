@@ -776,6 +776,13 @@ enum flush_type {
 	flush_both
 };
 
+enum trunc_type {
+	trunc_none,
+	trunc_left,
+	trunc_middle,
+	trunc_right
+};
+
 struct format_commit_context {
 	const struct commit *commit;
 	const struct pretty_print_context *pretty_ctx;
@@ -783,6 +790,7 @@ struct format_commit_context {
 	unsigned commit_message_parsed:1;
 	struct signature_check signature_check;
 	enum flush_type flush_type;
+	enum trunc_type truncate;
 	char *message;
 	char *commit_encoding;
 	size_t width, indent1, indent2;
@@ -1033,7 +1041,7 @@ static size_t parse_padding_placeholder(struct strbuf *sb,
 
 	if (*ch == '(') {
 		const char *start = ch + 1;
-		const char *end = strchr(start, ')');
+		const char *end = start + strcspn(start, ",)");
 		char *next;
 		int width;
 		if (!end || end == start)
@@ -1043,6 +1051,23 @@ static size_t parse_padding_placeholder(struct strbuf *sb,
 			return 0;
 		c->padding = to_column ? -width : width;
 		c->flush_type = flush_type;
+
+		if (*end == ',') {
+			start = end + 1;
+			end = strchr(start, ')');
+			if (!end || end == start)
+				return 0;
+			if (!prefixcmp(start, "trunc)"))
+				c->truncate = trunc_right;
+			else if (!prefixcmp(start, "ltrunc)"))
+				c->truncate = trunc_left;
+			else if (!prefixcmp(start, "mtrunc)"))
+				c->truncate = trunc_middle;
+			else
+				return 0;
+		} else
+			c->truncate = trunc_none;
+
 		return end - placeholder + 1;
 	}
 	return 0;
@@ -1309,9 +1334,29 @@ static size_t format_and_pad_commit(struct strbuf *sb, /* in UTF-8 */
 		total_consumed++;
 	}
 	len = utf8_strnwidth(local_sb.buf, -1, 1);
-	if (len > padding)
+	if (len > padding) {
+		switch (c->truncate) {
+		case trunc_left:
+			strbuf_utf8_replace(&local_sb,
+					    0, len - (padding - 2),
+					    "..");
+			break;
+		case trunc_middle:
+			strbuf_utf8_replace(&local_sb,
+					    padding / 2 - 1,
+					    len - (padding - 2),
+					    "..");
+			break;
+		case trunc_right:
+			strbuf_utf8_replace(&local_sb,
+					    padding - 2, len - (padding - 2),
+					    "..");
+			break;
+		case trunc_none:
+			break;
+		}
 		strbuf_addstr(sb, local_sb.buf);
-	else {
+	} else {
 		int sb_len = sb->len, offset = 0;
 		if (c->flush_type == flush_left)
 			offset = padding - len;

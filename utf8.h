@@ -15,6 +15,8 @@ void strbuf_add_wrapped_text(struct strbuf *buf,
 		const char *text, int indent, int indent2, int width);
 void strbuf_add_wrapped_bytes(struct strbuf *buf, const char *data, int len,
 			     int indent, int indent2, int width);
+void strbuf_utf8_replace(struct strbuf *sb, int pos, int width,
+			 const char *subst);
 
 #ifndef NO_ICONV
 char *reencode_string_iconv(const char *in, size_t insz,

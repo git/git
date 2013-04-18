@@ -143,6 +143,45 @@ EOF
 	test_cmp expected actual
 '
 
+test_expect_success 'left alignment formatting with trunc' '
+	git log --pretty="format:%<(10,trunc)%s" >actual &&
+	# complete the incomplete line at the end
+	echo >>actual &&
+	qz_to_tab_space <<\EOF >expected &&
+message ..
+message ..
+add bar  Z
+initial  Z
+EOF
+	test_cmp expected actual
+'
+
+test_expect_success 'left alignment formatting with ltrunc' '
+	git log --pretty="format:%<(10,ltrunc)%s" >actual &&
+	# complete the incomplete line at the end
+	echo >>actual &&
+	qz_to_tab_space <<\EOF >expected &&
+..sage two
+..sage one
+add bar  Z
+initial  Z
+EOF
+	test_cmp expected actual
+'
+
+test_expect_success 'left alignment formatting with mtrunc' '
+	git log --pretty="format:%<(10,mtrunc)%s" >actual &&
+	# complete the incomplete line at the end
+	echo >>actual &&
+	qz_to_tab_space <<\EOF >expected &&
+mess.. two
+mess.. one
+add bar  Z
+initial  Z
+EOF
+	test_cmp expected actual
+'
+
 test_expect_success 'right alignment formatting' '
 	git log --pretty="format:%>(40)%s" >actual &&
 	# complete the incomplete line at the end
