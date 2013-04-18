@@ -776,12 +776,12 @@ struct format_commit_context {
 	unsigned commit_message_parsed:1;
 	struct signature_check signature_check;
 	char *message;
+	char *commit_encoding;
 	size_t width, indent1, indent2;
 
 	/* These offsets are relative to the start of the commit message. */
 	struct chunk author;
 	struct chunk committer;
-	struct chunk encoding;
 	size_t message_off;
 	size_t subject_off;
 	size_t body_off;
@@ -828,9 +828,6 @@ static void parse_commit_header(struct format_commit_context *context)
 		} else if (!prefixcmp(msg + i, "committer ")) {
 			context->committer.off = i + 10;
 			context->committer.len = eol - i - 10;
-		} else if (!prefixcmp(msg + i, "encoding ")) {
-			context->encoding.off = i + 9;
-			context->encoding.len = eol - i - 9;
 		}
 		i = eol;
 	}
@@ -1185,7 +1182,8 @@ static size_t format_commit_one(struct strbuf *sb, const char *placeholder,
 				   msg + c->committer.off, c->committer.len,
 				   c->pretty_ctx->date_mode);
 	case 'e':	/* encoding */
-		strbuf_add(sb, msg + c->encoding.off, c->encoding.len);
+		if (c->commit_encoding)
+			strbuf_addstr(sb, c->commit_encoding);
 		return 1;
 	case 'B':	/* raw body */
 		/* message_off is always left at the initial newline */
@@ -1296,11 +1294,14 @@ void format_commit_message(const struct commit *commit,
 	context.commit = commit;
 	context.pretty_ctx = pretty_ctx;
 	context.wrap_start = sb->len;
-	context.message = logmsg_reencode(commit, NULL, output_enc);
+	context.message = logmsg_reencode(commit,
+					  &context.commit_encoding,
+					  output_enc);
 
 	strbuf_expand(sb, format, format_commit_item, &context);
 	rewrap_message_tail(sb, &context, 0, 0, 0);
 
+	free(context.commit_encoding);
 	logmsg_free(context.message, commit);
 	free(context.signature_check.gpg_output);
 	free(context.signature_check.signer);
