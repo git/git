@@ -9,6 +9,20 @@ struct interval {
   int last;
 };
 
+static size_t display_mode_esc_sequence_len(const char *s)
+{
+	const char *p = s;
+	if (*p++ != '\033')
+		return 0;
+	if (*p++ != '[')
+		return 0;
+	while (isdigit(*p) || *p == ';')
+		p++;
+	if (*p++ != 'm')
+		return 0;
+	return p - s;
+}
+
 /* auxiliary function for binary search in interval table */
 static int bisearch(ucs_char_t ucs, const struct interval *table, int max)
 {
@@ -301,20 +315,6 @@ static void strbuf_add_indented_text(struct strbuf *buf, const char *text,
 		text = eol;
 		indent = indent2;
 	}
-}
-
-static size_t display_mode_esc_sequence_len(const char *s)
-{
-	const char *p = s;
-	if (*p++ != '\033')
-		return 0;
-	if (*p++ != '[')
-		return 0;
-	while (isdigit(*p) || *p == ';')
-		p++;
-	if (*p++ != 'm')
-		return 0;
-	return p - s;
 }
 
 /*
