@@ -42,6 +42,15 @@
 #define NO_CURL_IOCTL
 #endif
 
+/*
+ * CURLOPT_USE_SSL was known as CURLOPT_FTP_SSL up to 7.16.4,
+ * and the constants were known as CURLFTPSSL_*
+*/
+#if !defined(CURLOPT_USE_SSL) && defined(CURLOPT_FTP_SSL)
+#define CURLOPT_USE_SSL CURLOPT_FTP_SSL
+#define CURLUSESSL_TRY CURLFTPSSL_TRY
+#endif
+
 struct slot_results {
 	CURLcode curl_result;
 	long http_code;

@@ -31,6 +31,7 @@ static CURL *curl_default;
 char curl_errorstr[CURL_ERROR_SIZE];
 
 static int curl_ssl_verify = -1;
+static int curl_ssl_try;
 static const char *ssl_cert;
 #if LIBCURL_VERSION_NUM >= 0x070903
 static const char *ssl_key;
@@ -161,6 +162,10 @@ static int http_options(const char *var, const char *value, void *cb)
 	if (!strcmp("http.sslcertpasswordprotected", var)) {
 		if (git_config_bool(var, value))
 			ssl_cert_password_required = 1;
+		return 0;
+	}
+	if (!strcmp("http.ssltry", var)) {
+		curl_ssl_try = git_config_bool(var, value);
 		return 0;
 	}
 	if (!strcmp("http.minsessions", var)) {
@@ -305,6 +310,11 @@ static CURL *get_curl_handle(void)
 
 	if (curl_ftp_no_epsv)
 		curl_easy_setopt(result, CURLOPT_FTP_USE_EPSV, 0);
+
+#ifdef CURLOPT_USE_SSL
+	if (curl_ssl_try)
+		curl_easy_setopt(result, CURLOPT_USE_SSL, CURLUSESSL_TRY);
+#endif
 
 	if (curl_http_proxy) {
 		curl_easy_setopt(result, CURLOPT_PROXY, curl_http_proxy);
