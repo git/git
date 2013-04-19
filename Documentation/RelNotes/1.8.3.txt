@@ -24,13 +24,27 @@ mechanism to make "git add -u" behave as if "git add -u .", it is
 important for those who are used to "git add -u" (without pathspec)
 updating the index only for paths in the current subdirectory to start
 training their fingers to explicitly say "git add -u ." when they mean
-it before Git 2.0 comes.
+it before Git 2.0 comes.  A warning is issued when these commands are
+run without a pathspec and when you have local changes outside the
+current directory, because the behaviour in Git 2.0 will be different
+from today's version in such a situation.
 
 
 Updates since v1.8.2
 --------------------
 
 UI, Workflows & Features
+
+ * "git branch --vv" learned to paint the name of the branch it
+   integrates with in a different color (color.branch.upstream,
+   which defaults to blue).
+
+ * "git count-objects" learned "--human-readable" aka "-H" option to
+   show various large numbers in Ki/Mi/GiB scaled as necessary.
+
+ * "git cherry-pick $blob" and "git cherry-pick $tree" are nonsense,
+   and a more readable error message e.g. "can't cherry-pick a tree"
+   is given (we used to say "expected exactly one commit").
 
  * The "--annotate" option to "git send-email" can be turned on (or
    off) by default with sendemail.annotate configuration variable (you
@@ -177,6 +191,18 @@ Fixes since v1.8.2
 Unless otherwise noted, all the fixes since v1.8.2 in the maintenance
 track are contained in this release (see release notes to them for
 details).
+
+ * When "upload-pack" fails while generating a pack in response to
+   "git fetch" (or "git clone"), the receiving side mistakenly said
+   there was a programming error to trigger the die handler
+   recursively.
+   (merge 1ece66b jk/a-thread-only-dies-once later to maint).
+
+ * "rev-list --stdin" and friends kept bogus pointers into input
+   buffer around as human readble object names.  This was not a huge
+   problem but was exposed by a new change that uses these names in
+   error output.
+   (merge 70d26c6 tr/copy-revisions-from-stdin later to maint).
 
  * Smart-capable HTTP servers were not restricted via the
    GIT_NAMESPACE mechanism when talking with commit-walker clients,
