@@ -66,7 +66,8 @@ struct commit_name {
 	int generation; /* how many parents away from head_name */
 };
 
-/* Name the commit as nth generation ancestor of head_name;
+/*
+ * Name the commit as nth generation ancestor of head_name;
  * we count only the first-parent relationship for naming purposes.
  */
 static void name_commit(struct commit *commit, const char *head_name, int nth)
@@ -79,7 +80,8 @@ static void name_commit(struct commit *commit, const char *head_name, int nth)
 	name->generation = nth;
 }
 
-/* Parent is the first parent of the commit.  We may name it
+/*
+ * Parent is the first parent of the commit.  We may name it
  * as (n+1)th generation ancestor of the same head_name as
  * commit is nth generation ancestor of, if that generation
  * number is better than the name it already has.
@@ -255,7 +257,8 @@ static void join_revs(struct commit_list **list_p,
 			    !(c->object.flags & UNINTERESTING))
 				continue;
 
-			/* The current commit is either a merge base or
+			/*
+			 * The current commit is either a merge base or
 			 * already uninteresting one.  Mark its parents
 			 * as uninteresting commits _only_ if they are
 			 * already parsed.  No reason to find new ones
@@ -399,7 +402,8 @@ static int append_head_ref(const char *refname, const unsigned char *sha1, int f
 	int ofs = 11;
 	if (prefixcmp(refname, "refs/heads/"))
 		return 0;
-	/* If both heads/foo and tags/foo exists, get_sha1 would
+	/*
+	 * If both heads/foo and tags/foo exists, get_sha1 would
 	 * get confused.
 	 */
 	if (get_sha1(refname + ofs, tmp) || hashcmp(tmp, sha1))
@@ -413,7 +417,8 @@ static int append_remote_ref(const char *refname, const unsigned char *sha1, int
 	int ofs = 13;
 	if (prefixcmp(refname, "refs/remotes/"))
 		return 0;
-	/* If both heads/foo and tags/foo exists, get_sha1 would
+	/*
+	 * If both heads/foo and tags/foo exists, get_sha1 would
 	 * get confused.
 	 */
 	if (get_sha1(refname + ofs, tmp) || hashcmp(tmp, sha1))
@@ -441,7 +446,8 @@ static int count_slash(const char *s)
 
 static int append_matching_ref(const char *refname, const unsigned char *sha1, int flag, void *cb_data)
 {
-	/* we want to allow pattern hold/<asterisk> to show all
+	/*
+	 * We want to allow pattern hold/<asterisk> to show all
 	 * branches under refs/heads/hold/, and v0.99.9? to show
 	 * refs/tags/v0.99.9a and friends.
 	 */
@@ -582,8 +588,8 @@ static int git_show_branch_config(const char *var, const char *value, void *cb)
 
 static int omit_in_dense(struct commit *commit, struct commit **rev, int n)
 {
-	/* If the commit is tip of the named branches, do not
-	 * omit it.
+	/*
+	 * If the commit is tip of the named branches, do not omit it.
 	 * Otherwise, if it is a merge that is reachable from only one
 	 * tip, it is not that interesting.
 	 */
@@ -697,7 +703,8 @@ int cmd_show_branch(int ac, const char **av, const char *prefix)
 		all_remotes = 1;
 
 	if (extra || reflog) {
-		/* "listing" mode is incompatible with
+		/*
+		 * "listing" mode is incompatible with
 		 * independent nor merge-base modes.
 		 */
 		if (independent || merge_base)
@@ -802,7 +809,8 @@ int cmd_show_branch(int ac, const char **av, const char *prefix)
 	if (with_current_branch && head_p) {
 		int has_head = 0;
 		for (i = 0; !has_head && i < ref_name_cnt; i++) {
-			/* We are only interested in adding the branch
+			/*
+			 * We are only interested in adding the branch
 			 * HEAD points at.
 			 */
 			if (rev_is_head(head,
@@ -837,7 +845,8 @@ int cmd_show_branch(int ac, const char **av, const char *prefix)
 		parse_commit(commit);
 		mark_seen(commit, &seen);
 
-		/* rev#0 uses bit REV_SHIFT, rev#1 uses bit REV_SHIFT+1,
+		/*
+		 * rev#0 uses bit REV_SHIFT, rev#1 uses bit REV_SHIFT+1,
 		 * and so on.  REV_SHIFT bits from bit 0 are used for
 		 * internal bookkeeping.
 		 */
