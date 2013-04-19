@@ -55,6 +55,12 @@ one
 two"
 '
 
+test_expect_success 'cherry-pick three one two: fails' '
+	git checkout -f master &&
+	git reset --hard first &&
+	test_must_fail git cherry-pick three one two:
+'
+
 test_expect_success 'output to keep user entertained during multi-pick' '
 	cat <<-\EOF >expected &&
 	[master OBJID] second
