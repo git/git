@@ -179,8 +179,8 @@ test_expect_success '--log=5 with custom comment character' '
 	cat >expected <<-EOF &&
 	Merge branch ${apos}left${apos}
 
-	/ By Another Author (3) and A U Thor (2)
-	/ Via Another Committer
+	x By Another Author (3) and A U Thor (2)
+	x Via Another Committer
 	* left:
 	  Left #5
 	  Left #4
@@ -189,7 +189,7 @@ test_expect_success '--log=5 with custom comment character' '
 	  Common #1
 	EOF
 
-	git -c core.commentchar="/" fmt-merge-msg --log=5 <.git/FETCH_HEAD >actual &&
+	git -c core.commentchar="x" fmt-merge-msg --log=5 <.git/FETCH_HEAD >actual &&
 	test_cmp expected actual
 '
 
