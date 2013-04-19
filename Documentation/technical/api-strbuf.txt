@@ -230,6 +230,11 @@ which can be used by the programmer of the callback as she sees fit.
 	destination. This is useful for literal data to be fed to either
 	strbuf_expand or to the *printf family of functions.
 
+`strbuf_humanise_bytes`::
+
+	Append the given byte size as a human-readable string (i.e. 12.23 KiB,
+	3.50 MiB).
+
 `strbuf_addf`::
 
 	Add a formatted string to the buffer.
