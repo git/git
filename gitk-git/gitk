@@ -7704,6 +7704,7 @@ proc getblobdiffs {ids} {
     fconfigure $bdf -blocking 0 -encoding binary -eofchar {}
     set blobdifffd($ids) $bdf
     set currdiffsubmod ""
+    hunkfilter_init $bdf
     filerun $bdf [list getblobdiffline $bdf $diffids]
 }
 
@@ -7987,24 +7988,121 @@ proc getblobdiffline_end {is_eof seehere_name} {
 proc getblobdiffline_close {} {
 }
 
-proc getblobdiffline_proxy_line {line ids seehere_name} {
-    upvar 1 $seehere_name seehere
+proc normalize_string {str} {
+    set str [regsub -all {[ \r\n\t]+} $str " "]
+    set str [regsub -all {([\{\}\(\)\[\]\*\+;,\\\/\+\*<>-]) ([a-zA-Z0-9_])} $str {\1\2}]
+    set str [regsub -all {([a-zA-Z0-9_]) ([\{\}\(\)\[\]\*\+;,\\\/\+\*<>-])} $str {\1\2}]
+    set str [regsub -all {([\{\}\(\)\[\],;]) ([\{\}\(\)\[\],;])} $str {\1\2}]
+    set str [regsub -all {([\{\}\(\)\[\],;]) ([\{\}\(\)\[\],;])} $str {\1\2}]
+    return $str
+}
 
-    set ret [catch {getblobdiffline_line $line $ids seehere} result options]
-    case [dict get $options -code] {
-        0 { return $ret }
-        4 { return -code continue }
-        default { error [list Unexpected: $ret $result $options] }
+proc hunkfilter_flush {ids} {
+    global hunkfilter_enabled hunkfilter_data hunkfilter_oldlines hunkfilter_newlines
+
+    set old [normalize_string $hunkfilter_oldlines]
+    set new [normalize_string $hunkfilter_newlines]
+    if {[normalize_string $hunkfilter_oldlines] ne [normalize_string $hunkfilter_newlines]} {
+        foreach cached_line $hunkfilter_data {
+            catch {getblobdiffline_line $cached_line $ids fake_seehere} result options
+            case [dict get $options -code] {
+                0 { getblobdiffline_end 0 fake_seehere }
+                4 { }
+                default { error [list Unexpected: $result $options] }
+            }
+        }
+    }
+
+    set hunkfilter_enabled 0
+    set hunkfilter_data {}
+    set hunkfilter_newlines ""
+    set hunkfilter_oldlines ""
+}
+
+proc getblobdiffline_proxy_line {line ids seehere_name} {
+    global hunkfilter_enabled hunkfilter_data hunkfilter_oldlines hunkfilter_newlines
+    upvar 1 $seehere_name seehere
+    global ignorespace worddiff
+
+    if {[info exists hunkfilter_enabled] && $hunkfilter_enabled} {
+        set line_rest [string range $line 1 end]
+        set operation [string index $line 0]
+        case $operation {
+            {" "} {
+                    lappend hunkfilter_data $line
+                    set hunkfilter_oldlines "$hunkfilter_oldlines$line_rest\n"
+                    set hunkfilter_newlines "$hunkfilter_newlines$line_rest\n"
+                }
+            "+" {
+                    lappend hunkfilter_data $line
+                    set hunkfilter_newlines "$hunkfilter_newlines$line_rest\n"
+                }
+            "-" {
+                    lappend hunkfilter_data $line
+                    set hunkfilter_oldlines "$hunkfilter_oldlines$line_rest\n"
+                }
+            "\\" { # newline EOF
+                    lappend hunkfilter_data $line
+                }
+            default {
+                    hunkfilter_flush $ids
+                    if {[string match "@@ *" $line] && $ignorespace && $worddiff eq [mc "Line diff"]} {
+                        set hunkfilter_enabled 1
+                        set hunkfilter_data [list $line]
+                        set hunkfilter_oldlines ""
+                        set hunkfilter_newlines ""
+                    } else {
+                        set hunkfilter_enabled 0
+                    }
+                }
+        }
+    } else {
+        if {[string match "@@ *" $line] && $ignorespace && $worddiff eq [mc "Line diff"]} {
+            set hunkfilter_enabled 1
+            set hunkfilter_data [list $line]
+            set hunkfilter_oldlines ""
+            set hunkfilter_newlines ""
+        }
+    }
+
+    if {![info exists hunkfilter_enabled] || !$hunkfilter_enabled} {
+        set ret [catch {getblobdiffline_line $line $ids seehere} result options]
+        case [dict get $options -code] {
+            0 { return $ret }
+            4 { return -code continue }
+            default { error [list Unexpected: $ret $result $options] }
+        }
     }
 }
 
 proc getblobdiffline_proxy_end {is_eof seehere_name} {
     upvar 1 $seehere_name seehere
 
-    getblobdiffline_end $is_eof seehere
+    if {![info exists hunkfilter_enabled] || !$hunkfilter_enabled} {
+        getblobdiffline_end $is_eof seehere
+    }
 }
 
-proc getblobdiffline_proxy_close {} {
+proc hunkfilter_init {channel} {
+    global hunkfilter_enabled hunkfilter_data
+
+    if {[info exists hunkfilter_enabled] && $hunkfilter_enabled \
+         && [info exists hunkfilter_data] && [llength $hunkfilter_data] > 0} {
+        puts "Lost hunkfilter data:"
+        foreach d $hunkfilter_data {
+            puts [list l: $d]
+        }
+    }
+    set hunkfilter_enabled 0
+}
+
+proc getblobdiffline_proxy_close {ids} {
+    global hunkfilter_enabled hunkfilter_oldlines hunkfilter_newlines hunkfilter_data
+
+    if {[info exists hunkfilter_enabled] && $hunkfilter_enabled} {
+        hunkfilter_flush $ids
+    }
+
     getblobdiffline_close
 }
 
@@ -8016,7 +8114,7 @@ proc getblobdiffline {bdf ids} {
     while {[incr nr] <= 1000 && [gets $bdf line] >= 0} {
 	if {$ids != $diffids || $bdf != $blobdifffd($ids)} {
 	    catch {close $bdf}
-            getblobdiffline_proxy_close
+            getblobdiffline_proxy_close ids
 	    return 0
 	}
         getblobdiffline_proxy_line $line $ids seehere
@@ -8024,7 +8122,7 @@ proc getblobdiffline {bdf ids} {
     getblobdiffline_proxy_end [eof $bdf] seehere
     if {[eof $bdf]} {
 	catch {close $bdf}
-        getblobdiffline_proxy_close
+        getblobdiffline_proxy_close ids
 	return 0
     }
     $ctext conf -state disabled
@@ -8854,6 +8952,7 @@ proc diffcommits {a b} {
     set blobdifffd($diffids) $fd
     set diffinhdr 0
     set currdiffsubmod ""
+    hunkfilter_init $fd
     filerun $fd [list getblobdiffline $fd $diffids]
 }
 
