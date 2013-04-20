@@ -7987,6 +7987,27 @@ proc getblobdiffline_end {is_eof seehere_name} {
 proc getblobdiffline_close {} {
 }
 
+proc getblobdiffline_proxy_line {line ids seehere_name} {
+    upvar 1 $seehere_name seehere
+
+    set ret [catch {getblobdiffline_line $line $ids seehere} result options]
+    case [dict get $options -code] {
+        0 { return $ret }
+        4 { return -code continue }
+        default { error [list Unexpected: $ret $result $options] }
+    }
+}
+
+proc getblobdiffline_proxy_end {is_eof seehere_name} {
+    upvar 1 $seehere_name seehere
+
+    getblobdiffline_end $is_eof seehere
+}
+
+proc getblobdiffline_proxy_close {} {
+    getblobdiffline_close
+}
+
 proc getblobdiffline {bdf ids} {
     global diffids ctext blobdifffd
 
@@ -7995,15 +8016,15 @@ proc getblobdiffline {bdf ids} {
     while {[incr nr] <= 1000 && [gets $bdf line] >= 0} {
 	if {$ids != $diffids || $bdf != $blobdifffd($ids)} {
 	    catch {close $bdf}
-            getblobdiffline_close
+            getblobdiffline_proxy_close
 	    return 0
 	}
-        getblobdiffline_line $line $ids seehere
+        getblobdiffline_proxy_line $line $ids seehere
     }
-    getblobdiffline_end [eof $bdf] seehere
+    getblobdiffline_proxy_end [eof $bdf] seehere
     if {[eof $bdf]} {
 	catch {close $bdf}
-        getblobdiffline_close
+        getblobdiffline_proxy_close
 	return 0
     }
     $ctext conf -state disabled
