@@ -197,6 +197,21 @@ int validate_new_branchname(const char *name, struct strbuf *ref,
 	return 1;
 }
 
+static int check_tracking_branch(struct remote *remote, void *cb_data)
+{
+	char *tracking_branch = cb_data;
+	struct refspec query;
+	memset(&query, 0, sizeof(struct refspec));
+	query.dst = tracking_branch;
+	return !(remote_find_tracking(remote, &query) ||
+		 prefixcmp(query.src, "refs/heads/"));
+}
+
+static int validate_remote_tracking_branch(char *ref)
+{
+	return !for_each_remote(check_tracking_branch, ref);
+}
+
 static const char upstream_not_branch[] =
 N_("Cannot setup tracking information; starting point '%s' is not a branch.");
 static const char upstream_missing[] =
@@ -259,7 +274,7 @@ void create_branch(const char *head,
 	case 1:
 		/* Unique completion -- good, only if it is a real branch */
 		if (prefixcmp(real_ref, "refs/heads/") &&
-		    prefixcmp(real_ref, "refs/remotes/")) {
+		    validate_remote_tracking_branch(real_ref)) {
 			if (explicit_tracking)
 				die(_(upstream_not_branch), start_name);
 			else

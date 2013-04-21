@@ -154,7 +154,7 @@ test_expect_success 'checkout of branch from a single remote succeeds #3' '
 	test_branch_upstream spam repo_c spam
 '
 
-test_expect_failure 'checkout of branch from a single remote succeeds #4' '
+test_expect_success 'checkout of branch from a single remote succeeds #4' '
 	git checkout -B master &&
 	test_might_fail git branch -D eggs &&
 
