@@ -126,7 +126,7 @@ test_expect_success 'setup more remotes with unconventional refspecs' '
 	git fetch --all
 '
 
-test_expect_failure 'checkout of branch from multiple remotes fails #2' '
+test_expect_success 'checkout of branch from multiple remotes fails #2' '
 	git checkout -B master &&
 	test_might_fail git branch -D bar &&
 
@@ -135,7 +135,7 @@ test_expect_failure 'checkout of branch from multiple remotes fails #2' '
 	test_branch master
 '
 
-test_expect_failure 'checkout of branch from multiple remotes fails #3' '
+test_expect_success 'checkout of branch from multiple remotes fails #3' '
 	git checkout -B master &&
 	test_might_fail git branch -D baz &&
 
@@ -144,7 +144,7 @@ test_expect_failure 'checkout of branch from multiple remotes fails #3' '
 	test_branch master
 '
 
-test_expect_failure 'checkout of branch from a single remote succeeds #3' '
+test_expect_success 'checkout of branch from a single remote succeeds #3' '
 	git checkout -B master &&
 	test_might_fail git branch -D spam &&
 
