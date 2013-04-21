@@ -26,10 +26,6 @@ reference to the current repository.
 OPTIONS
 -------
 
--h::
---help::
-	Print a short usage message and exit.
-
 -n::
 --numbered::
 	Sort output according to the number of commits per author instead
