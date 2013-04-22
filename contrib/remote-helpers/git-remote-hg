@@ -230,8 +230,9 @@ def get_filechanges(repo, ctx, parent):
     added = set()
     removed = set()
 
-    cur = ctx.manifest()
+    # load earliest manifest first for caching reasons
     prev = repo[parent].manifest().copy()
+    cur = ctx.manifest()
 
     for fn in cur:
         if fn in prev:
