@@ -2008,16 +2008,15 @@ static int pack_one_ref(struct ref_entry *entry, void *cb_data)
 {
 	struct pack_refs_cb_data *cb = cb_data;
 	enum peel_status peel_status;
-	int is_tag_ref;
-
-	/* Do not pack symbolic or broken refs: */
-	if ((entry->flag & REF_ISSYMREF) || !ref_resolves_to_object(entry))
-		return 0;
-	is_tag_ref = !prefixcmp(entry->name, "refs/tags/");
+	int is_tag_ref = !prefixcmp(entry->name, "refs/tags/");
 
 	/* ALWAYS pack refs that were already packed or are tags */
 	if (!(cb->flags & PACK_REFS_ALL) && !is_tag_ref &&
 	    !(entry->flag & REF_ISPACKED))
+		return 0;
+
+	/* Do not pack symbolic or broken refs: */
+	if ((entry->flag & REF_ISSYMREF) || !ref_resolves_to_object(entry))
 		return 0;
 
 	peel_status = peel_entry(entry, 1);
