@@ -135,14 +135,11 @@ tag_description="This is a tag"
 tag_content="$tag_header_without_timestamp 0000000000 +0000
 
 $tag_description"
-tag_pretty_content="$tag_header_without_timestamp Thu Jan 1 00:00:00 1970 +0000
-
-$tag_description"
 
 tag_sha1=$(echo_without_newline "$tag_content" | git mktag)
 tag_size=$(strlen "$tag_content")
 
-run_tests 'tag' $tag_sha1 $tag_size "$tag_content" "$tag_pretty_content" 1
+run_tests 'tag' $tag_sha1 $tag_size "$tag_content" "$tag_content" 1
 
 test_expect_success \
     "Reach a blob from a tag pointing to it" \
