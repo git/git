@@ -12,7 +12,7 @@ SYNOPSIS
 
 DESCRIPTION
 -----------
-A "patch ID" is nothing but a SHA1 of the diff associated with a patch, with
+A "patch ID" is nothing but a SHA-1 of the diff associated with a patch, with
 whitespace and line numbers ignored.  As such, it's "reasonably stable", but at
 the same time also reasonably unique, i.e., two patches that have the same "patch
 ID" are almost guaranteed to be the same thing.

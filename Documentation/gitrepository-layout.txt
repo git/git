@@ -106,7 +106,7 @@ refs/remotes/`name`::
 	from a remote repository.
 
 refs/replace/`<obj-sha1>`::
-	records the SHA1 of the object that replaces `<obj-sha1>`.
+	records the SHA-1 of the object that replaces `<obj-sha1>`.
 	This is similar to info/grafts and is internally used and
 	maintained by linkgit:git-replace[1]. Such refs can be exchanged
 	between repositories while grafts are not.

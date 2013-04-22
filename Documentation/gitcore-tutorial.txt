@@ -106,9 +106,9 @@ branch. A number of the Git tools will assume that `.git/HEAD` is
 valid, though.
 
 [NOTE]
-An 'object' is identified by its 160-bit SHA1 hash, aka 'object name',
+An 'object' is identified by its 160-bit SHA-1 hash, aka 'object name',
 and a reference to an object is always the 40-byte hex
-representation of that SHA1 name. The files in the `refs`
+representation of that SHA-1 name. The files in the `refs`
 subdirectory are expected to contain these hex references
 (usually with a final `\n` at the end), and you should thus
 expect to see a number of 41-byte files containing these
@@ -763,7 +763,7 @@ already discussed, the `HEAD` branch is nothing but a symlink to one of
 these object pointers.
 
 You can at any time create a new branch by just picking an arbitrary
-point in the project history, and just writing the SHA1 name of that
+point in the project history, and just writing the SHA-1 name of that
 object into a file under `.git/refs/heads/`. You can use any filename you
 want (and indeed, subdirectories), but the convention is that the
 "normal" branch is called `master`. That's just a convention, though,
@@ -1233,7 +1233,7 @@ file (the first tree goes to stage 1, the second to stage 2,
 etc.).  After reading three trees into three stages, the paths
 that are the same in all three stages are 'collapsed' into stage
 0.  Also paths that are the same in two of three stages are
-collapsed into stage 0, taking the SHA1 from either stage 2 or
+collapsed into stage 0, taking the SHA-1 from either stage 2 or
 stage 3, whichever is different from stage 1 (i.e. only one side
 changed from the common ancestor).
 

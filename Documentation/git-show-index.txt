@@ -19,7 +19,7 @@ Reads given idx file for packed Git archive created with
 
 The information it outputs is subset of what you can get from
 'git verify-pack -v'; this command only shows the packfile
-offset and SHA1 of each object.
+offset and SHA-1 of each object.
 
 GIT
 ---

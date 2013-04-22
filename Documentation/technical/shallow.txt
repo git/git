@@ -8,7 +8,7 @@ repo, and therefore grafts are introduced pretending that
 these commits have no parents.
 *********************************************************
 
-The basic idea is to write the SHA1s of shallow commits into
+The basic idea is to write the SHA-1s of shallow commits into
 $GIT_DIR/shallow, and handle its contents like the contents
 of $GIT_DIR/info/grafts (with the difference that shallow
 cannot contain parent information).
@@ -18,7 +18,7 @@ even the config, since the user should not touch that file
 at all (even throughout development of the shallow clone, it
 was never manually edited!).
 
-Each line contains exactly one SHA1. When read, a commit_graft
+Each line contains exactly one SHA-1. When read, a commit_graft
 will be constructed, which has nr_parent < 0 to make it easier
 to discern from user provided grafts.
 

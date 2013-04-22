@@ -21,7 +21,7 @@ OPTIONS
 	Print the contents of the tag object before validating it.
 
 <tag>...::
-	SHA1 identifiers of Git tag objects.
+	SHA-1 identifiers of Git tag objects.
 
 GIT
 ---
