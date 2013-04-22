@@ -9,7 +9,7 @@ git-log - Show commit logs
 SYNOPSIS
 --------
 [verse]
-'git log' [<options>] [<since>..<until>] [[\--] <path>...]
+'git log' [<options>] [<revision range>] [[\--] <path>...]
 
 DESCRIPTION
 -----------
@@ -62,12 +62,14 @@ produced by --stat etc.
 	Note that only message is considered, if also a diff is shown
 	its size is not included.
 
-<since>..<until>::
-	Show only commits between the named two commits.  When
-	either <since> or <until> is omitted, it defaults to
-	`HEAD`, i.e. the tip of the current branch.
-	For a more complete list of ways to spell <since>
-	and <until>, see linkgit:gitrevisions[7].
+<revision range>::
+	Show only commits in the specified revision range.  When no
+	<revision range> is specified, it defaults to `HEAD` (i.e. the
+	whole history leading to the current commit).  `origin..HEAD`
+	specifies all the commits reachable from the current commit
+	(i.e. `HEAD`), but not from `origin`. For a complete list of
+	ways to spell <revision range>, see the "Specifying Ranges"
+	section of linkgit:gitrevisions[7].
 
 [\--] <path>...::
 	Show only commits that are enough to explain how the files
