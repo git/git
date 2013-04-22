@@ -1101,18 +1101,12 @@ int resolve_gitlink_ref(const char *path, const char *refname, unsigned char *sh
 }
 
 /*
- * Try to read ref from the packed references.  On success, set sha1
- * and return 0; otherwise, return -1.
+ * Return the ref_entry for the given refname from the packed
+ * references.  If it does not exist, return NULL.
  */
-static int get_packed_ref(const char *refname, unsigned char *sha1)
+static struct ref_entry *get_packed_ref(const char *refname)
 {
-	struct ref_dir *packed = get_packed_refs(get_ref_cache(NULL));
-	struct ref_entry *entry = find_ref(packed, refname);
-	if (entry) {
-		hashcpy(sha1, entry->u.value.sha1);
-		return 0;
-	}
-	return -1;
+	return find_ref(get_packed_refs(get_ref_cache(NULL)), refname);
 }
 
 const char *resolve_ref_unsafe(const char *refname, unsigned char *sha1, int reading, int *flag)
@@ -1140,13 +1134,17 @@ const char *resolve_ref_unsafe(const char *refname, unsigned char *sha1, int rea
 		git_snpath(path, sizeof(path), "%s", refname);
 
 		if (lstat(path, &st) < 0) {
+			struct ref_entry *entry;
+
 			if (errno != ENOENT)
 				return NULL;
 			/*
 			 * The loose reference file does not exist;
 			 * check for a packed reference.
 			 */
-			if (!get_packed_ref(refname, sha1)) {
+			entry = get_packed_ref(refname);
+			if (entry) {
+				hashcpy(sha1, entry->u.value.sha1);
 				if (flag)
 					*flag |= REF_ISPACKED;
 				return refname;
