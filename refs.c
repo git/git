@@ -806,6 +806,9 @@ void invalidate_ref_cache(const char *submodule)
 	clear_loose_ref_cache(refs);
 }
 
+/* The length of a peeled reference line in packed-refs, including EOL: */
+#define PEELED_LINE_LENGTH 42
+
 /*
  * Parse one line from a packed-refs file.  Write the SHA1 to sha1.
  * Return a pointer to the refname within the line (null-terminated),
@@ -898,8 +901,8 @@ static void read_packed_refs(FILE *f, struct ref_dir *dir)
 		}
 		if (last &&
 		    refline[0] == '^' &&
-		    strlen(refline) == 42 &&
-		    refline[41] == '\n' &&
+		    strlen(refline) == PEELED_LINE_LENGTH &&
+		    refline[PEELED_LINE_LENGTH - 1] == '\n' &&
 		    !get_sha1_hex(refline + 1, sha1)) {
 			hashcpy(last->u.value.peeled, sha1);
 			/*
