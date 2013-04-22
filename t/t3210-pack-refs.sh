@@ -140,7 +140,7 @@ test_expect_success 'delete ref with dangling packed version' '
 	test_cmp /dev/null result
 '
 
-test_expect_failure 'delete ref while another dangling packed ref' '
+test_expect_success 'delete ref while another dangling packed ref' '
 	git branch lamb &&
 	git commit --allow-empty -m "future garbage" &&
 	git pack-refs --all &&
