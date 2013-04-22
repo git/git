@@ -530,6 +530,22 @@ static void sort_ref_dir(struct ref_dir *dir)
 #define DO_FOR_EACH_INCLUDE_BROKEN 0x01
 
 /*
+ * Return true iff the reference described by entry can be resolved to
+ * an object in the database.  Emit a warning if the referred-to
+ * object does not exist.
+ */
+static int ref_resolves_to_object(struct ref_entry *entry)
+{
+	if (entry->flag & REF_ISBROKEN)
+		return 0;
+	if (!has_sha1_file(entry->u.value.sha1)) {
+		error("%s does not point to a valid object!", entry->name);
+		return 0;
+	}
+	return 1;
+}
+
+/*
  * current_ref is a performance hack: when iterating over references
  * using the for_each_ref*() functions, current_ref is set to the
  * current reference's entry before calling the callback function.  If
@@ -550,14 +566,10 @@ static int do_one_ref(const char *base, each_ref_fn fn, int trim,
 	if (prefixcmp(entry->name, base))
 		return 0;
 
-	if (!(flags & DO_FOR_EACH_INCLUDE_BROKEN)) {
-		if (entry->flag & REF_ISBROKEN)
-			return 0; /* ignore broken refs e.g. dangling symref */
-		if (!has_sha1_file(entry->u.value.sha1)) {
-			error("%s does not point to a valid object!", entry->name);
-			return 0;
-		}
-	}
+	if (!(flags & DO_FOR_EACH_INCLUDE_BROKEN) &&
+	      !ref_resolves_to_object(entry))
+		return 0;
+
 	current_ref = entry;
 	retval = fn(entry->name + trim, entry->u.value.sha1, entry->flag, cb_data);
 	current_ref = NULL;
