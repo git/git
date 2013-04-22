@@ -1283,10 +1283,9 @@ int peel_ref(const char *refname, unsigned char *sha1)
 		return -1;
 
 	if ((flag & REF_ISPACKED)) {
-		struct ref_dir *dir = get_packed_refs(get_ref_cache(NULL));
-		struct ref_entry *r = find_ref(dir, refname);
+		struct ref_entry *r = get_packed_ref(refname);
 
-		if (r != NULL && r->flag & REF_KNOWS_PEELED) {
+		if (r && (r->flag & REF_KNOWS_PEELED)) {
 			hashcpy(sha1, r->u.value.peeled);
 			return 0;
 		}
