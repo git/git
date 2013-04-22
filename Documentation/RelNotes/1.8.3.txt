@@ -33,11 +33,28 @@ from today's version in such a situation.
 Updates since v1.8.2
 --------------------
 
+Foreign interface
+
+ * remote-hg helper (in contrib/) has been updated.
+
+
 UI, Workflows & Features
 
  * "git branch --vv" learned to paint the name of the branch it
    integrates with in a different color (color.branch.upstream,
    which defaults to blue).
+
+ * In a sparsely populated working tree, "git checkout <pathspec>" no
+   longer unmarks paths that match the given pathspec that were
+   originally ignored with "--sparse" (use --ignore-skip-worktree-bits
+   option to resurrect these paths out of the index if you really want
+   to).
+
+ * "git bisect" leaves the final outcome as a comment in its bisect
+   log file.
+
+ * "git clone --reference" can now refer to a gitfile "textual symlink"
+   that points at the real location of the repository.
 
  * "git count-objects" learned "--human-readable" aka "-H" option to
    show various large numbers in Ki/Mi/GiB scaled as necessary.
@@ -191,6 +208,11 @@ Fixes since v1.8.2
 Unless otherwise noted, all the fixes since v1.8.2 in the maintenance
 track are contained in this release (see release notes to them for
 details).
+
+ * A commit object whose author or committer ident are malformed
+   crashed some code that trusted that a name, an email and an
+   timestamp can always be found in it.
+   (merge de5abe9 jk/chopped-ident later to maint).
 
  * When "upload-pack" fails while generating a pack in response to
    "git fetch" (or "git clone"), the receiving side mistakenly said
