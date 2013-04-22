@@ -89,7 +89,7 @@ Ah, grasshopper!  And thus the enlightenment begins anew.
 
     <linus> The "magic" is actually in theory totally arbitrary.
         ANY order will give you a working pack, but no, it's not
-        ordered by SHA1.
+	ordered by SHA-1.
 
         Before talking about the ordering for the sliding delta
         window, let's talk about the recency order. That's more

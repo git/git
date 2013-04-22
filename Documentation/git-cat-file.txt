@@ -20,7 +20,7 @@ object type, or '-s' is used to find the object size, or '--textconv' is used
 (which implies type "blob").
 
 In the second form, a list of objects (separated by linefeeds) is provided on
-stdin, and the SHA1, type, and size of each object is printed on stdout.
+stdin, and the SHA-1, type, and size of each object is printed on stdout.
 
 OPTIONS
 -------
@@ -58,11 +58,11 @@ OPTIONS
 	to apply the filter to the content recorded in the index at <path>.
 
 --batch::
-	Print the SHA1, type, size, and contents of each object provided on
+	Print the SHA-1, type, size, and contents of each object provided on
 	stdin. May not be combined with any other options or arguments.
 
 --batch-check::
-	Print the SHA1, type, and size of each object provided on stdin. May not
+	Print the SHA-1, type, and size of each object provided on stdin. May not
 	be combined with any other options or arguments.
 
 OUTPUT

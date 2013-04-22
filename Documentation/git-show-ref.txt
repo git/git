@@ -50,8 +50,8 @@ OPTIONS
 -s::
 --hash[=<n>]::
 
-	Only show the SHA1 hash, not the reference name. When combined with
-	--dereference the dereferenced tag will still be shown after the SHA1.
+	Only show the SHA-1 hash, not the reference name. When combined with
+	--dereference the dereferenced tag will still be shown after the SHA-1.
 
 --verify::
 

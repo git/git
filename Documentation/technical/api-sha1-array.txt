@@ -1,7 +1,7 @@
 sha1-array API
 ==============
 
-The sha1-array API provides storage and manipulation of sets of SHA1
+The sha1-array API provides storage and manipulation of sets of SHA-1
 identifiers. The emphasis is on storage and processing efficiency,
 making them suitable for large lists. Note that the ordering of items is
 not preserved over some operations.
@@ -11,7 +11,7 @@ Data Structures
 
 `struct sha1_array`::
 
-	A single array of SHA1 hashes. This should be initialized by
+	A single array of SHA-1 hashes. This should be initialized by
 	assignment from `SHA1_ARRAY_INIT`.  The `sha1` member contains
 	the actual data. The `nr` member contains the number of items in
 	the set.  The `alloc` and `sorted` members are used internally,

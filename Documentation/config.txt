@@ -412,7 +412,7 @@ repository's usual working tree).
 core.logAllRefUpdates::
 	Enable the reflog. Updates to a ref <ref> is logged to the file
 	"$GIT_DIR/logs/<ref>", by appending the new and old
-	SHA1, the date/time and the reason of the update, but
+	SHA-1, the date/time and the reason of the update, but
 	only when the file exists.  If this configuration
 	variable is set to true, missing "$GIT_DIR/logs/<ref>"
 	file is automatically created for branch heads (i.e. under

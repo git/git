@@ -741,7 +741,7 @@ where:
 
 	<old|new>-file:: are files GIT_EXTERNAL_DIFF can use to read the
                          contents of <old|new>,
-	<old|new>-hex:: are the 40-hexdigit SHA1 hashes,
+	<old|new>-hex:: are the 40-hexdigit SHA-1 hashes,
 	<old|new>-mode:: are the octal representation of the file modes.
 +
 The file parameters can point at the user's working file
@@ -864,7 +864,7 @@ The commit, equivalent to what other systems call a "changeset" or
 represents an immediately preceding step.  Commits with more than one
 parent represent merges of independent lines of development.
 
-All objects are named by the SHA1 hash of their contents, normally
+All objects are named by the SHA-1 hash of their contents, normally
 written as a string of 40 hex digits.  Such names are globally unique.
 The entire history leading up to a commit can be vouched for by signing
 just that commit.  A fourth object type, the tag, is provided for this
@@ -874,9 +874,9 @@ When first created, objects are stored in individual files, but for
 efficiency may later be compressed together into "pack files".
 
 Named pointers called refs mark interesting points in history.  A ref
-may contain the SHA1 name of an object or the name of another ref.  Refs
-with names beginning `ref/head/` contain the SHA1 name of the most
-recent commit (or "head") of a branch under development.  SHA1 names of
+may contain the SHA-1 name of an object or the name of another ref.  Refs
+with names beginning `ref/head/` contain the SHA-1 name of the most
+recent commit (or "head") of a branch under development.  SHA-1 names of
 tags of interest are stored under `ref/tags/`.  A special ref named
 `HEAD` contains the name of the currently checked-out branch.
 

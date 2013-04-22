@@ -46,9 +46,9 @@ What are the 7 digits of hex that Git responded to the commit with?
 
 We saw in part one of the tutorial that commits have names like this.
 It turns out that every object in the Git history is stored under
-a 40-digit hex name.  That name is the SHA1 hash of the object's
+a 40-digit hex name.  That name is the SHA-1 hash of the object's
 contents; among other things, this ensures that Git will never store
-the same data twice (since identical data is given an identical SHA1
+the same data twice (since identical data is given an identical SHA-1
 name), and that the contents of a Git object will never change (since
 that would change the object's name as well). The 7 char hex strings
 here are simply the abbreviation of such 40 character long strings.
@@ -56,7 +56,7 @@ Abbreviations can be used everywhere where the 40 character strings
 can be used, so long as they are unambiguous.
 
 It is expected that the content of the commit object you created while
-following the example above generates a different SHA1 hash than
+following the example above generates a different SHA-1 hash than
 the one shown above because the commit object records the time when
 it was created and the name of the person performing the commit.
 
@@ -80,14 +80,14 @@ A tree can refer to one or more "blob" objects, each corresponding to
 a file.  In addition, a tree can also refer to other tree objects,
 thus creating a directory hierarchy.  You can examine the contents of
 any tree using ls-tree (remember that a long enough initial portion
-of the SHA1 will also work):
+of the SHA-1 will also work):
 
 ------------------------------------------------
 $ git ls-tree 92b8b694
 100644 blob 3b18e512dba79e4c8300dd08aeb37f8e728b8dad    file.txt
 ------------------------------------------------
 
-Thus we see that this tree has one file in it.  The SHA1 hash is a
+Thus we see that this tree has one file in it.  The SHA-1 hash is a
 reference to that file's data:
 
 ------------------------------------------------
@@ -106,7 +106,7 @@ Note that this is the old file data; so the object that Git named in
 its response to the initial tree was a tree with a snapshot of the
 directory state that was recorded by the first commit.
 
-All of these objects are stored under their SHA1 names inside the Git
+All of these objects are stored under their SHA-1 names inside the Git
 directory:
 
 ------------------------------------------------
@@ -142,7 +142,7 @@ ref: refs/heads/master
 
 As you can see, this tells us which branch we're currently on, and it
 tells us this by naming a file under the .git directory, which itself
-contains a SHA1 name referring to a commit object, which we can
+contains a SHA-1 name referring to a commit object, which we can
 examine with cat-file:
 
 ------------------------------------------------
@@ -208,7 +208,7 @@ project's history:
 
 Note, by the way, that lots of commands take a tree as an argument.
 But as we can see above, a tree can be referred to in many different
-ways--by the SHA1 name for that tree, by the name of a commit that
+ways--by the SHA-1 name for that tree, by the name of a commit that
 refers to the tree, by the name of a branch whose head refers to that
 tree, etc.--and most such commands can accept any of these names.
 

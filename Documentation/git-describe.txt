@@ -149,7 +149,7 @@ is found, its name will be output and searching will stop.
 If an exact match was not found, 'git describe' will walk back
 through the commit history to locate an ancestor commit which
 has been tagged.  The ancestor's tag will be output along with an
-abbreviation of the input committish's SHA1.
+abbreviation of the input committish's SHA-1.
 
 If multiple tags were found during the walk then the tag which
 has the fewest commits different from the input committish will be

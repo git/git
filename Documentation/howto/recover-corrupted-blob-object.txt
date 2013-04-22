@@ -15,7 +15,7 @@ On Fri, 9 Nov 2007, Yossi Leybovich wrote:
 > Any one know how can I track this object and understand which file is it
 -----------------------------------------------------------
 
-So exactly *because* the SHA1 hash is cryptographically secure, the hash
+So exactly *because* the SHA-1 hash is cryptographically secure, the hash
 itself doesn't actually tell you anything, in order to fix a corrupt
 object you basically have to find the "original source" for it.
 
@@ -44,7 +44,7 @@ So:
 -----------------------------------------------------------
 
 This is the right thing to do, although it's usually best to save it under
-it's full SHA1 name (you just dropped the "4b" from the result ;).
+it's full SHA-1 name (you just dropped the "4b" from the result ;).
 
 Let's see what that tells us:
 
@@ -89,7 +89,7 @@ working tree, in which case fixing this problem is really simple, just do
 
 	git hash-object -w my-magic-file
 
-again, and if it outputs the missing SHA1 (4b945..) you're now all done!
+again, and if it outputs the missing SHA-1 (4b945..) you're now all done!
 
 But that's the really lucky case, so let's assume that it was some older
 version that was broken. How do you tell which version it was?
