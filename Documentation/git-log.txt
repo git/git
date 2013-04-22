@@ -76,12 +76,11 @@ produced by --stat etc.
 	not give any pathspec limiters.  This is currently limited to
 	a walk starting from a single revision, i.e., you may only
 	give zero or one positive revision arguments.
-
+	You can specify this option more than once.
++
 <start> and <end> can take one of these forms:
 
 include::line-range-format.txt[]
-You can specify this option more than once.
-
 
 --full-line-diff::
 	Always print the interesting range even if the current commit
