@@ -1286,7 +1286,17 @@ enum peel_status {
 	PEEL_INVALID = -1,
 
 	/* object cannot be peeled because it is not a tag: */
-	PEEL_NON_TAG = -2
+	PEEL_NON_TAG = -2,
+
+	/* ref_entry contains no peeled value because it is a symref: */
+	PEEL_IS_SYMREF = -3,
+
+	/*
+	 * ref_entry cannot be peeled because it is broken (i.e., the
+	 * symbolic reference cannot even be resolved to an object
+	 * name):
+	 */
+	PEEL_BROKEN = -4
 };
 
 /*
@@ -1318,31 +1328,56 @@ static enum peel_status peel_object(const unsigned char *name, unsigned char *sh
 	return PEEL_PEELED;
 }
 
+/*
+ * Peel the entry (if possible) and return its new peel_status.
+ */
+static enum peel_status peel_entry(struct ref_entry *entry)
+{
+	enum peel_status status;
+
+	if (entry->flag & REF_KNOWS_PEELED)
+		return is_null_sha1(entry->u.value.peeled) ?
+			PEEL_NON_TAG : PEEL_PEELED;
+	if (entry->flag & REF_ISBROKEN)
+		return PEEL_BROKEN;
+	if (entry->flag & REF_ISSYMREF)
+		return PEEL_IS_SYMREF;
+
+	status = peel_object(entry->u.value.sha1, entry->u.value.peeled);
+	if (status == PEEL_PEELED || status == PEEL_NON_TAG)
+		entry->flag |= REF_KNOWS_PEELED;
+	return status;
+}
+
 int peel_ref(const char *refname, unsigned char *sha1)
 {
 	int flag;
 	unsigned char base[20];
 
 	if (current_ref && (current_ref->name == refname
-		|| !strcmp(current_ref->name, refname))) {
-		if (current_ref->flag & REF_KNOWS_PEELED) {
-			if (is_null_sha1(current_ref->u.value.peeled))
-			    return -1;
-			hashcpy(sha1, current_ref->u.value.peeled);
-			return 0;
-		}
-		return peel_object(current_ref->u.value.sha1, sha1);
+			    || !strcmp(current_ref->name, refname))) {
+		if (peel_entry(current_ref))
+			return -1;
+		hashcpy(sha1, current_ref->u.value.peeled);
+		return 0;
 	}
 
 	if (read_ref_full(refname, base, 1, &flag))
 		return -1;
 
-	if ((flag & REF_ISPACKED)) {
+	/*
+	 * If the reference is packed, read its ref_entry from the
+	 * cache in the hope that we already know its peeled value.
+	 * We only try this optimization on packed references because
+	 * (a) forcing the filling of the loose reference cache could
+	 * be expensive and (b) loose references anyway usually do not
+	 * have REF_KNOWS_PEELED.
+	 */
+	if (flag & REF_ISPACKED) {
 		struct ref_entry *r = get_packed_ref(refname);
-
-		if (r && (r->flag & REF_KNOWS_PEELED)) {
-			if (is_null_sha1(r->u.value.peeled))
-			    return -1;
+		if (r) {
+			if (peel_entry(r))
+				return -1;
 			hashcpy(sha1, r->u.value.peeled);
 			return 0;
 		}
