@@ -1273,11 +1273,38 @@ static int filter_refs(const char *refname, const unsigned char *sha1, int flags
 	return filter->fn(refname, sha1, flags, filter->cb_data);
 }
 
+/*
+ * Peel the named object; i.e., if the object is a tag, resolve the
+ * tag recursively until a non-tag is found.  Store the result to sha1
+ * and return 0 iff successful.  If the object is not a tag or is not
+ * valid, return -1 and leave sha1 unchanged.
+ */
+static int peel_object(const unsigned char *name, unsigned char *sha1)
+{
+	struct object *o = lookup_unknown_object(name);
+
+	if (o->type == OBJ_NONE) {
+		int type = sha1_object_info(name, NULL);
+		if (type < 0)
+			return -1;
+		o->type = type;
+	}
+
+	if (o->type != OBJ_TAG)
+		return -1;
+
+	o = deref_tag_noverify(o);
+	if (!o)
+		return -1;
+
+	hashcpy(sha1, o->sha1);
+	return 0;
+}
+
 int peel_ref(const char *refname, unsigned char *sha1)
 {
 	int flag;
 	unsigned char base[20];
-	struct object *o;
 
 	if (current_ref && (current_ref->name == refname
 		|| !strcmp(current_ref->name, refname))) {
@@ -1287,8 +1314,7 @@ int peel_ref(const char *refname, unsigned char *sha1)
 			hashcpy(sha1, current_ref->u.value.peeled);
 			return 0;
 		}
-		hashcpy(base, current_ref->u.value.sha1);
-		goto fallback;
+		return peel_object(current_ref->u.value.sha1, sha1);
 	}
 
 	if (read_ref_full(refname, base, 1, &flag))
@@ -1303,23 +1329,7 @@ int peel_ref(const char *refname, unsigned char *sha1)
 		}
 	}
 
-fallback:
-	o = lookup_unknown_object(base);
-	if (o->type == OBJ_NONE) {
-		int type = sha1_object_info(base, NULL);
-		if (type < 0)
-			return -1;
-		o->type = type;
-	}
-
-	if (o->type == OBJ_TAG) {
-		o = deref_tag_noverify(o);
-		if (o) {
-			hashcpy(sha1, o->sha1);
-			return 0;
-		}
-	}
-	return -1;
+	return peel_object(base, sha1);
 }
 
 struct warn_if_dangling_data {
