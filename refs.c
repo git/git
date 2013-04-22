@@ -1959,11 +1959,35 @@ struct ref_lock *lock_any_ref_for_update(const char *refname,
 	return lock_ref_sha1_basic(refname, old_sha1, flags, NULL);
 }
 
+/*
+ * Write an entry to the packed-refs file for the specified refname.
+ * If peeled is non-NULL, write it as the entry's peeled value.
+ */
+static void write_packed_entry(int fd, char *refname, unsigned char *sha1,
+			       unsigned char *peeled)
+{
+	char line[PATH_MAX + 100];
+	int len;
+
+	len = snprintf(line, sizeof(line), "%s %s\n",
+		       sha1_to_hex(sha1), refname);
+	/* this should not happen but just being defensive */
+	if (len > sizeof(line))
+		die("too long a refname '%s'", refname);
+	write_or_die(fd, line, len);
+
+	if (peeled) {
+		if (snprintf(line, sizeof(line), "^%s\n",
+			     sha1_to_hex(peeled)) != PEELED_LINE_LENGTH)
+			die("internal error");
+		write_or_die(fd, line, PEELED_LINE_LENGTH);
+	}
+}
+
 static int repack_ref_fn(struct ref_entry *entry, void *cb_data)
 {
 	int *fd = cb_data;
-	char line[PATH_MAX + 100];
-	int len;
+	enum peel_status peel_status;
 
 	if (entry->flag & REF_ISBROKEN) {
 		/* This shouldn't happen to packed refs. */
@@ -2000,20 +2024,10 @@ static int repack_ref_fn(struct ref_entry *entry, void *cb_data)
 		return 0;
 	}
 
-	len = snprintf(line, sizeof(line), "%s %s\n",
-		       sha1_to_hex(entry->u.value.sha1), entry->name);
-	/* this should not happen but just being defensive */
-	if (len > sizeof(line))
-		die("too long a refname '%s'", entry->name);
-	write_or_die(*fd, line, len);
-	if (!peel_entry(entry)) {
-		/* This reference could be peeled; write the peeled value: */
-		if (snprintf(line, sizeof(line), "^%s\n",
-			     sha1_to_hex(entry->u.value.peeled)) !=
-		    PEELED_LINE_LENGTH)
-			die("internal error");
-		write_or_die(*fd, line, PEELED_LINE_LENGTH);
-	}
+	peel_status = peel_entry(entry);
+	write_packed_entry(*fd, entry->name, entry->u.value.sha1,
+			   peel_status == PEEL_PEELED ?
+			   entry->u.value.peeled : NULL);
 
 	return 0;
 }
