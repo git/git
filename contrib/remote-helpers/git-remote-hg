@@ -742,6 +742,10 @@ def do_export(parser):
 
     for ref, node in parsed_refs.iteritems():
         if ref.startswith('refs/heads/branches'):
+            branch = ref[len('refs/heads/branches/'):]
+            if branch in branches and node in branches[branch]:
+                # up to date
+                continue
             print "ok %s" % ref
         elif ref.startswith('refs/heads/'):
             bmark = ref[len('refs/heads/'):]
