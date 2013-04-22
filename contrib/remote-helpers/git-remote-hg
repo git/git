@@ -22,6 +22,7 @@ import shutil
 import subprocess
 import urllib
 import atexit
+import urlparse
 
 #
 # If you want to switch to hg-git compatibility mode:
@@ -793,11 +794,11 @@ def do_export(parser):
     print
 
 def fix_path(alias, repo, orig_url):
-    repo_url = util.url(repo.url())
-    url = util.url(orig_url)
-    if str(url) == str(repo_url):
+    url = urlparse.urlparse(orig_url, 'file')
+    if url.scheme != 'file' or os.path.isabs(url.path):
         return
-    cmd = ['git', 'config', 'remote.%s.url' % alias, "hg::%s" % repo_url]
+    abs_url = urlparse.urljoin("%s/" % os.getcwd(), orig_url)
+    cmd = ['git', 'config', 'remote.%s.url' % alias, "hg::%s" % abs_url]
     subprocess.call(cmd)
 
 def main(args):
