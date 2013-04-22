@@ -526,10 +526,14 @@ static void sort_ref_dir(struct ref_dir *dir)
 	dir->sorted = dir->nr = i;
 }
 
-#define DO_FOR_EACH_INCLUDE_BROKEN 01
+/* Include broken references in a do_for_each_ref*() iteration: */
+#define DO_FOR_EACH_INCLUDE_BROKEN 0x01
 
 static struct ref_entry *current_ref;
 
+/*
+ * Handle one reference in a do_for_each_ref*()-style iteration.
+ */
 static int do_one_ref(const char *base, each_ref_fn fn, int trim,
 		      int flags, void *cb_data, struct ref_entry *entry)
 {
@@ -1339,6 +1343,15 @@ void warn_dangling_symref(FILE *fp, const char *msg_fmt, const char *refname)
 	for_each_rawref(warn_if_dangling_symref, &data);
 }
 
+/*
+ * Call fn for each reference in the specified submodule for which the
+ * refname begins with base.  If trim is non-zero, then trim that many
+ * characters off the beginning of each refname before passing the
+ * refname to fn.  flags can be DO_FOR_EACH_INCLUDE_BROKEN to include
+ * broken references in the iteration.  If fn ever returns a non-zero
+ * value, stop the iteration and return that value; otherwise, return
+ * 0.
+ */
 static int do_for_each_ref(const char *submodule, const char *base, each_ref_fn fn,
 			   int trim, int flags, void *cb_data)
 {
