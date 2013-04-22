@@ -61,7 +61,7 @@ test_expect_success 'refs are peeled outside of refs/tags (old packed)' '
 	test_cmp expect actual
 '
 
-test_expect_failure 'peeled refs survive deletion of packed ref' '
+test_expect_success 'peeled refs survive deletion of packed ref' '
 	git pack-refs --all &&
 	cp .git/packed-refs fully-peeled &&
 	git branch yadda &&

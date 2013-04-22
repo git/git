@@ -877,6 +877,13 @@ void invalidate_ref_cache(const char *submodule)
 #define PEELED_LINE_LENGTH 42
 
 /*
+ * The packed-refs header line that we write out.  Perhaps other
+ * traits will be added later.  The trailing space is required.
+ */
+static const char PACKED_REFS_HEADER[] =
+	"# pack-refs with: peeled fully-peeled \n";
+
+/*
  * Parse one line from a packed-refs file.  Write the SHA1 to sha1.
  * Return a pointer to the refname within the line (null-terminated),
  * or NULL if there was a problem.
@@ -1391,6 +1398,12 @@ static enum peel_status peel_object(const unsigned char *name, unsigned char *sh
 
 /*
  * Peel the entry (if possible) and return its new peel_status.
+ *
+ * It is OK to call this function with a packed reference entry that
+ * might be stale and might even refer to an object that has since
+ * been garbage-collected.  In such a case, if the entry has
+ * REF_KNOWS_PEELED then leave the status unchanged and return
+ * PEEL_PEELED or PEEL_NON_TAG; otherwise, return PEEL_INVALID.
  */
 static enum peel_status peel_entry(struct ref_entry *entry)
 {
@@ -1993,6 +2006,15 @@ static int repack_ref_fn(struct ref_entry *entry, void *cb_data)
 	if (len > sizeof(line))
 		die("too long a refname '%s'", entry->name);
 	write_or_die(*fd, line, len);
+	if (!peel_entry(entry)) {
+		/* This reference could be peeled; write the peeled value: */
+		if (snprintf(line, sizeof(line), "^%s\n",
+			     sha1_to_hex(entry->u.value.peeled)) !=
+		    PEELED_LINE_LENGTH)
+			die("internal error");
+		write_or_die(*fd, line, PEELED_LINE_LENGTH);
+	}
+
 	return 0;
 }
 
@@ -2023,6 +2045,7 @@ static int repack_without_ref(const char *refname)
 		rollback_lock_file(&packlock);
 		return 0;
 	}
+	write_or_die(fd, PACKED_REFS_HEADER, strlen(PACKED_REFS_HEADER));
 	do_for_each_entry_in_dir(packed, 0, repack_ref_fn, &fd);
 	return commit_lock_file(&packlock);
 }
