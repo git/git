@@ -557,22 +557,34 @@ static int ref_resolves_to_object(struct ref_entry *entry)
  */
 static struct ref_entry *current_ref;
 
+typedef int each_ref_entry_fn(struct ref_entry *entry, void *cb_data);
+
+struct ref_entry_cb {
+	const char *base;
+	int trim;
+	int flags;
+	each_ref_fn *fn;
+	void *cb_data;
+};
+
 /*
- * Handle one reference in a do_for_each_ref*()-style iteration.
+ * Handle one reference in a do_for_each_ref*()-style iteration,
+ * calling an each_ref_fn for each entry.
  */
-static int do_one_ref(const char *base, each_ref_fn fn, int trim,
-		      int flags, void *cb_data, struct ref_entry *entry)
+static int do_one_ref(struct ref_entry *entry, void *cb_data)
 {
+	struct ref_entry_cb *data = cb_data;
 	int retval;
-	if (prefixcmp(entry->name, base))
+	if (prefixcmp(entry->name, data->base))
 		return 0;
 
-	if (!(flags & DO_FOR_EACH_INCLUDE_BROKEN) &&
+	if (!(data->flags & DO_FOR_EACH_INCLUDE_BROKEN) &&
 	      !ref_resolves_to_object(entry))
 		return 0;
 
 	current_ref = entry;
-	retval = fn(entry->name + trim, entry->u.value.sha1, entry->flag, cb_data);
+	retval = data->fn(entry->name + data->trim, entry->u.value.sha1,
+			  entry->flag, data->cb_data);
 	current_ref = NULL;
 	return retval;
 }
@@ -581,11 +593,11 @@ static int do_one_ref(const char *base, each_ref_fn fn, int trim,
  * Call fn for each reference in dir that has index in the range
  * offset <= index < dir->nr.  Recurse into subdirectories that are in
  * that index range, sorting them before iterating.  This function
- * does not sort dir itself; it should be sorted beforehand.
+ * does not sort dir itself; it should be sorted beforehand.  fn is
+ * called for all references, including broken ones.
  */
-static int do_for_each_ref_in_dir(struct ref_dir *dir, int offset,
-				  const char *base,
-				  each_ref_fn fn, int trim, int flags, void *cb_data)
+static int do_for_each_entry_in_dir(struct ref_dir *dir, int offset,
+				    each_ref_entry_fn fn, void *cb_data)
 {
 	int i;
 	assert(dir->sorted == dir->nr);
@@ -595,10 +607,9 @@ static int do_for_each_ref_in_dir(struct ref_dir *dir, int offset,
 		if (entry->flag & REF_DIR) {
 			struct ref_dir *subdir = get_ref_dir(entry);
 			sort_ref_dir(subdir);
-			retval = do_for_each_ref_in_dir(subdir, 0,
-							base, fn, trim, flags, cb_data);
+			retval = do_for_each_entry_in_dir(subdir, 0, fn, cb_data);
 		} else {
-			retval = do_one_ref(base, fn, trim, flags, cb_data, entry);
+			retval = fn(entry, cb_data);
 		}
 		if (retval)
 			return retval;
@@ -611,12 +622,12 @@ static int do_for_each_ref_in_dir(struct ref_dir *dir, int offset,
  * by refname.  Recurse into subdirectories.  If a value entry appears
  * in both dir1 and dir2, then only process the version that is in
  * dir2.  The input dirs must already be sorted, but subdirs will be
- * sorted as needed.
+ * sorted as needed.  fn is called for all references, including
+ * broken ones.
  */
-static int do_for_each_ref_in_dirs(struct ref_dir *dir1,
-				   struct ref_dir *dir2,
-				   const char *base, each_ref_fn fn, int trim,
-				   int flags, void *cb_data)
+static int do_for_each_entry_in_dirs(struct ref_dir *dir1,
+				     struct ref_dir *dir2,
+				     each_ref_entry_fn fn, void *cb_data)
 {
 	int retval;
 	int i1 = 0, i2 = 0;
@@ -627,12 +638,10 @@ static int do_for_each_ref_in_dirs(struct ref_dir *dir1,
 		struct ref_entry *e1, *e2;
 		int cmp;
 		if (i1 == dir1->nr) {
-			return do_for_each_ref_in_dir(dir2, i2,
-						      base, fn, trim, flags, cb_data);
+			return do_for_each_entry_in_dir(dir2, i2, fn, cb_data);
 		}
 		if (i2 == dir2->nr) {
-			return do_for_each_ref_in_dir(dir1, i1,
-						      base, fn, trim, flags, cb_data);
+			return do_for_each_entry_in_dir(dir1, i1, fn, cb_data);
 		}
 		e1 = dir1->entries[i1];
 		e2 = dir2->entries[i2];
@@ -644,14 +653,13 @@ static int do_for_each_ref_in_dirs(struct ref_dir *dir1,
 				struct ref_dir *subdir2 = get_ref_dir(e2);
 				sort_ref_dir(subdir1);
 				sort_ref_dir(subdir2);
-				retval = do_for_each_ref_in_dirs(
-						subdir1, subdir2,
-						base, fn, trim, flags, cb_data);
+				retval = do_for_each_entry_in_dirs(
+						subdir1, subdir2, fn, cb_data);
 				i1++;
 				i2++;
 			} else if (!(e1->flag & REF_DIR) && !(e2->flag & REF_DIR)) {
 				/* Both are references; ignore the one from dir1. */
-				retval = do_one_ref(base, fn, trim, flags, cb_data, e2);
+				retval = fn(e2, cb_data);
 				i1++;
 				i2++;
 			} else {
@@ -670,11 +678,10 @@ static int do_for_each_ref_in_dirs(struct ref_dir *dir1,
 			if (e->flag & REF_DIR) {
 				struct ref_dir *subdir = get_ref_dir(e);
 				sort_ref_dir(subdir);
-				retval = do_for_each_ref_in_dir(
-						subdir, 0,
-						base, fn, trim, flags, cb_data);
+				retval = do_for_each_entry_in_dir(
+						subdir, 0, fn, cb_data);
 			} else {
-				retval = do_one_ref(base, fn, trim, flags, cb_data, e);
+				retval = fn(e, cb_data);
 			}
 		}
 		if (retval)
@@ -703,14 +710,13 @@ struct name_conflict_cb {
 	const char *conflicting_refname;
 };
 
-static int name_conflict_fn(const char *existingrefname, const unsigned char *sha1,
-			    int flags, void *cb_data)
+static int name_conflict_fn(struct ref_entry *entry, void *cb_data)
 {
 	struct name_conflict_cb *data = (struct name_conflict_cb *)cb_data;
-	if (data->oldrefname && !strcmp(data->oldrefname, existingrefname))
+	if (data->oldrefname && !strcmp(data->oldrefname, entry->name))
 		return 0;
-	if (names_conflict(data->refname, existingrefname)) {
-		data->conflicting_refname = existingrefname;
+	if (names_conflict(data->refname, entry->name)) {
+		data->conflicting_refname = entry->name;
 		return 1;
 	}
 	return 0;
@@ -718,7 +724,7 @@ static int name_conflict_fn(const char *existingrefname, const unsigned char *sh
 
 /*
  * Return true iff a reference named refname could be created without
- * conflicting with the name of an existing reference in array.  If
+ * conflicting with the name of an existing reference in dir.  If
  * oldrefname is non-NULL, ignore potential conflicts with oldrefname
  * (e.g., because oldrefname is scheduled for deletion in the same
  * operation).
@@ -732,9 +738,7 @@ static int is_refname_available(const char *refname, const char *oldrefname,
 	data.conflicting_refname = NULL;
 
 	sort_ref_dir(dir);
-	if (do_for_each_ref_in_dir(dir, 0, "", name_conflict_fn,
-				   0, DO_FOR_EACH_INCLUDE_BROKEN,
-				   &data)) {
+	if (do_for_each_entry_in_dir(dir, 0, name_conflict_fn, &data)) {
 		error("'%s' exists; cannot create '%s'",
 		      data.conflicting_refname, refname);
 		return 0;
@@ -1422,16 +1426,14 @@ void warn_dangling_symref(FILE *fp, const char *msg_fmt, const char *refname)
 }
 
 /*
- * Call fn for each reference in the specified submodule for which the
- * refname begins with base.  If trim is non-zero, then trim that many
- * characters off the beginning of each refname before passing the
- * refname to fn.  flags can be DO_FOR_EACH_INCLUDE_BROKEN to include
- * broken references in the iteration.  If fn ever returns a non-zero
+ * Call fn for each reference in the specified submodule, omitting
+ * references not in the containing_dir of base.  fn is called for all
+ * references, including broken ones.  If fn ever returns a non-zero
  * value, stop the iteration and return that value; otherwise, return
  * 0.
  */
-static int do_for_each_ref(const char *submodule, const char *base, each_ref_fn fn,
-			   int trim, int flags, void *cb_data)
+static int do_for_each_entry(const char *submodule, const char *base,
+			     each_ref_entry_fn fn, void *cb_data)
 {
 	struct ref_cache *refs = get_ref_cache(submodule);
 	struct ref_dir *packed_dir = get_packed_refs(refs);
@@ -1446,22 +1448,41 @@ static int do_for_each_ref(const char *submodule, const char *base, each_ref_fn 
 	if (packed_dir && loose_dir) {
 		sort_ref_dir(packed_dir);
 		sort_ref_dir(loose_dir);
-		retval = do_for_each_ref_in_dirs(
-				packed_dir, loose_dir,
-				base, fn, trim, flags, cb_data);
+		retval = do_for_each_entry_in_dirs(
+				packed_dir, loose_dir, fn, cb_data);
 	} else if (packed_dir) {
 		sort_ref_dir(packed_dir);
-		retval = do_for_each_ref_in_dir(
-				packed_dir, 0,
-				base, fn, trim, flags, cb_data);
+		retval = do_for_each_entry_in_dir(
+				packed_dir, 0, fn, cb_data);
 	} else if (loose_dir) {
 		sort_ref_dir(loose_dir);
-		retval = do_for_each_ref_in_dir(
-				loose_dir, 0,
-				base, fn, trim, flags, cb_data);
+		retval = do_for_each_entry_in_dir(
+				loose_dir, 0, fn, cb_data);
 	}
 
 	return retval;
+}
+
+/*
+ * Call fn for each reference in the specified submodule for which the
+ * refname begins with base.  If trim is non-zero, then trim that many
+ * characters off the beginning of each refname before passing the
+ * refname to fn.  flags can be DO_FOR_EACH_INCLUDE_BROKEN to include
+ * broken references in the iteration.  If fn ever returns a non-zero
+ * value, stop the iteration and return that value; otherwise, return
+ * 0.
+ */
+static int do_for_each_ref(const char *submodule, const char *base, each_ref_fn fn,
+			   int trim, int flags, void *cb_data)
+{
+	struct ref_entry_cb data;
+	data.base = base;
+	data.trim = trim;
+	data.flags = flags;
+	data.fn = fn;
+	data.cb_data = cb_data;
+
+	return do_for_each_entry(submodule, base, do_one_ref, &data);
 }
 
 static int do_head_ref(const char *submodule, each_ref_fn fn, void *cb_data)
@@ -1873,20 +1894,21 @@ struct repack_without_ref_sb {
 	int fd;
 };
 
-static int repack_without_ref_fn(const char *refname, const unsigned char *sha1,
-				 int flags, void *cb_data)
+static int repack_without_ref_fn(struct ref_entry *entry, void *cb_data)
 {
 	struct repack_without_ref_sb *data = cb_data;
 	char line[PATH_MAX + 100];
 	int len;
 
-	if (!strcmp(data->refname, refname))
+	if (!strcmp(data->refname, entry->name))
 		return 0;
+	if (!ref_resolves_to_object(entry))
+		return 0; /* Skip broken refs */
 	len = snprintf(line, sizeof(line), "%s %s\n",
-		       sha1_to_hex(sha1), refname);
+		       sha1_to_hex(entry->u.value.sha1), entry->name);
 	/* this should not happen but just being defensive */
 	if (len > sizeof(line))
-		die("too long a refname '%s'", refname);
+		die("too long a refname '%s'", entry->name);
 	write_or_die(data->fd, line, len);
 	return 0;
 }
@@ -1910,7 +1932,7 @@ static int repack_without_ref(const char *refname)
 	}
 	clear_packed_ref_cache(refs);
 	packed = get_packed_refs(refs);
-	do_for_each_ref_in_dir(packed, 0, "", repack_without_ref_fn, 0, 0, &data);
+	do_for_each_entry_in_dir(packed, 0, repack_without_ref_fn, &data);
 	return commit_lock_file(&packlock);
 }
 
