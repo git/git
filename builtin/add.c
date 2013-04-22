@@ -97,13 +97,13 @@ static int fix_unmerged_status(struct diff_filepair *p,
 }
 
 static const char *add_would_remove_warning = N_(
-	"You ran 'git add' with neither '-A (--all)' or '--no-all', whose\n"
-"behaviour will change in Git 2.0 with respect to paths you removed from\n"
-"your working tree. Paths like '%s' that are\n"
-"removed are ignored with this version of Git.\n"
+	"You ran 'git add' with neither '-A (--all)' or '--ignore-removal',\n"
+"whose behaviour will change in Git 2.0 with respect to paths you removed.\n"
+"Paths like '%s' that are\n"
+"removed from your working tree are ignored with this version of Git.\n"
 "\n"
-"* 'git add --no-all <pathspec>', which is the current default, ignores\n"
-"  paths you removed from your working tree.\n"
+"* 'git add --ignore-removal <pathspec>', which is the current default,\n"
+"  ignores paths you removed from your working tree.\n"
 "\n"
 "* 'git add --all <pathspec>' will let you also record the removals.\n"
 "\n"
