@@ -103,7 +103,7 @@ test_expect_success \
      test_cmp expect output'
 
 test_expect_success 'restore gitignore' '
-	git checkout $allignores &&
+	git checkout --ignore-skip-worktree-bits $allignores &&
 	rm .git/index
 '
 

@@ -184,6 +184,10 @@ info/exclude::
 	'git clean' look at it but the core Git commands do not look
 	at it.  See also: linkgit:gitignore[5].
 
+info/sparse-checkout::
+	This file stores sparse checkout patterns.
+	See also: linkgit:git-read-tree[1].
+
 remotes::
 	Stores shorthands for URL and default refnames for use
 	when interacting with remote repositories via 'git fetch',

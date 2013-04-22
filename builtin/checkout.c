@@ -35,6 +35,7 @@ struct checkout_opts {
 	int force_detach;
 	int writeout_stage;
 	int overwrite_ignore;
+	int ignore_skipworktree;
 
 	const char *new_branch;
 	const char *new_branch_force;
@@ -278,6 +279,8 @@ static int checkout_paths(const struct checkout_opts *opts,
 	for (pos = 0; pos < active_nr; pos++) {
 		struct cache_entry *ce = active_cache[pos];
 		ce->ce_flags &= ~CE_MATCHED;
+		if (!opts->ignore_skipworktree && ce_skip_worktree(ce))
+			continue;
 		if (opts->source_tree && !(ce->ce_flags & CE_UPDATE))
 			/*
 			 * "git checkout tree-ish -- path", but this entry
@@ -1058,6 +1061,8 @@ int cmd_checkout(int argc, const char **argv, const char *prefix)
 		OPT_STRING(0, "conflict", &conflict_style, N_("style"),
 			   N_("conflict style (merge or diff3)")),
 		OPT_BOOLEAN('p', "patch", &opts.patch_mode, N_("select hunks interactively")),
+		OPT_BOOL(0, "ignore-skip-worktree-bits", &opts.ignore_skipworktree,
+			 N_("do not limit pathspecs to sparse entries only")),
 		{ OPTION_BOOLEAN, 0, "guess", &dwim_new_local_branch, NULL,
 		  N_("second guess 'git checkout no-such-branch'"),
 		  PARSE_OPT_NOARG | PARSE_OPT_HIDDEN },
