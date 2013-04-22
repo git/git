@@ -2092,7 +2092,7 @@ static void prune_refs(struct ref_to_prune *r)
 	}
 }
 
-static struct lock_file packed;
+static struct lock_file packlock;
 
 int pack_refs(unsigned int flags)
 {
@@ -2102,7 +2102,7 @@ int pack_refs(unsigned int flags)
 	memset(&cbdata, 0, sizeof(cbdata));
 	cbdata.flags = flags;
 
-	fd = hold_lock_file_for_update(&packed, git_path("packed-refs"),
+	fd = hold_lock_file_for_update(&packlock, git_path("packed-refs"),
 				       LOCK_DIE_ON_ERROR);
 	cbdata.refs_file = fdopen(fd, "w");
 	if (!cbdata.refs_file)
@@ -2121,8 +2121,8 @@ int pack_refs(unsigned int flags)
 	 * assign -1 to the lock file descriptor so that commit_lock_file()
 	 * won't try to close() it.
 	 */
-	packed.fd = -1;
-	if (commit_lock_file(&packed) < 0)
+	packlock.fd = -1;
+	if (commit_lock_file(&packlock) < 0)
 		die_errno("unable to overwrite old ref-pack file");
 	prune_refs(cbdata.ref_to_prune);
 	return 0;
@@ -2175,8 +2175,6 @@ static int repack_ref_fn(struct ref_entry *entry, void *cb_data)
 
 	return 0;
 }
-
-static struct lock_file packlock;
 
 static int repack_without_ref(const char *refname)
 {
