@@ -5,6 +5,7 @@
 #include "diffcore.h"
 #include "quote.h"
 #include "xdiff-interface.h"
+#include "xdiff/xmacros.h"
 #include "log-tree.h"
 #include "refs.h"
 #include "userdiff.h"
@@ -122,7 +123,47 @@ static char *grab_blob(const unsigned char *sha1, unsigned int mode,
 	return blob;
 }
 
-static void append_lost(struct sline *sline, int n, const char *line, int len)
+static int match_string_spaces(const char *line1, int len1,
+			       const char *line2, int len2,
+			       long flags)
+{
+	if (flags & XDF_WHITESPACE_FLAGS) {
+		for (; len1 > 0 && XDL_ISSPACE(line1[len1 - 1]); len1--);
+		for (; len2 > 0 && XDL_ISSPACE(line2[len2 - 1]); len2--);
+	}
+
+	if (!(flags & (XDF_IGNORE_WHITESPACE | XDF_IGNORE_WHITESPACE_CHANGE)))
+		return (len1 == len2 && !memcmp(line1, line2, len1));
+
+	while (len1 > 0 && len2 > 0) {
+		len1--;
+		len2--;
+		if (XDL_ISSPACE(line1[len1]) || XDL_ISSPACE(line2[len2])) {
+			if ((flags & XDF_IGNORE_WHITESPACE_CHANGE) &&
+			    (!XDL_ISSPACE(line1[len1]) || !XDL_ISSPACE(line2[len2])))
+				return 0;
+
+			for (; len1 > 0 && XDL_ISSPACE(line1[len1]); len1--);
+			for (; len2 > 0 && XDL_ISSPACE(line2[len2]); len2--);
+		}
+		if (line1[len1] != line2[len2])
+			return 0;
+	}
+
+	if (flags & XDF_IGNORE_WHITESPACE) {
+		/* Consume remaining spaces */
+		for (; len1 > 0 && XDL_ISSPACE(line1[len1 - 1]); len1--);
+		for (; len2 > 0 && XDL_ISSPACE(line2[len2 - 1]); len2--);
+	}
+
+	/* We matched full line1 and line2 */
+	if (!len1 && !len2)
+		return 1;
+
+	return 0;
+}
+
+static void append_lost(struct sline *sline, int n, const char *line, int len, long flags)
 {
 	struct lline *lline;
 	unsigned long this_mask = (1UL<<n);
@@ -133,8 +174,8 @@ static void append_lost(struct sline *sline, int n, const char *line, int len)
 	if (sline->lost_head) {
 		lline = sline->next_lost;
 		while (lline) {
-			if (lline->len == len &&
-			    !memcmp(lline->line, line, len)) {
+			if (match_string_spaces(lline->line, lline->len,
+						line, len, flags)) {
 				lline->parent_map |= this_mask;
 				sline->next_lost = lline->next;
 				return;
@@ -162,6 +203,7 @@ struct combine_diff_state {
 	int n;
 	struct sline *sline;
 	struct sline *lost_bucket;
+	long flags;
 };
 
 static void consume_line(void *state_, char *line, unsigned long len)
@@ -201,7 +243,7 @@ static void consume_line(void *state_, char *line, unsigned long len)
 		return; /* not in any hunk yet */
 	switch (line[0]) {
 	case '-':
-		append_lost(state->lost_bucket, state->n, line+1, len-1);
+		append_lost(state->lost_bucket, state->n, line+1, len-1, state->flags);
 		break;
 	case '+':
 		state->sline[state->lno-1].flag |= state->nmask;
@@ -215,7 +257,7 @@ static void combine_diff(const unsigned char *parent, unsigned int mode,
 			 struct sline *sline, unsigned int cnt, int n,
 			 int num_parent, int result_deleted,
 			 struct userdiff_driver *textconv,
-			 const char *path)
+			 const char *path, long flags)
 {
 	unsigned int p_lno, lno;
 	unsigned long nmask = (1UL << n);
@@ -231,9 +273,10 @@ static void combine_diff(const unsigned char *parent, unsigned int mode,
 	parent_file.ptr = grab_blob(parent, mode, &sz, textconv, path);
 	parent_file.size = sz;
 	memset(&xpp, 0, sizeof(xpp));
-	xpp.flags = 0;
+	xpp.flags = flags;
 	memset(&xecfg, 0, sizeof(xecfg));
 	memset(&state, 0, sizeof(state));
+	state.flags = flags;
 	state.nmask = nmask;
 	state.sline = sline;
 	state.lno = 1;
@@ -962,7 +1005,7 @@ static void show_patch_diff(struct combine_diff_path *elem, int num_parent,
 				     elem->parent[i].mode,
 				     &result_file, sline,
 				     cnt, i, num_parent, result_deleted,
-				     textconv, elem->path);
+				     textconv, elem->path, opt->xdl_opts);
 	}
 
 	show_hunks = make_hunks(sline, cnt, num_parent, dense);
