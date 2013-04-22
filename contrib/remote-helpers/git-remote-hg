@@ -652,6 +652,10 @@ def parse_commit(parser):
         if parser.check('merge'):
             die('octopus merges are not supported yet')
 
+    # fast-export adds an extra newline
+    if data[-1] == '\n':
+        data = data[:-1]
+
     files = {}
 
     for line in parser:
