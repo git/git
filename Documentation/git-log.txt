@@ -82,10 +82,6 @@ produced by --stat etc.
 
 include::line-range-format.txt[]
 
---full-line-diff::
-	Always print the interesting range even if the current commit
-	does not change any line of the range.
-
 [\--] <path>...::
 	Show only commits that are enough to explain how the files
 	that match the specified paths came to be.  See "History
