@@ -1504,16 +1504,15 @@ void warn_dangling_symref(FILE *fp, const char *msg_fmt, const char *refname)
 }
 
 /*
- * Call fn for each reference in the specified submodule, omitting
+ * Call fn for each reference in the specified ref_cache, omitting
  * references not in the containing_dir of base.  fn is called for all
  * references, including broken ones.  If fn ever returns a non-zero
  * value, stop the iteration and return that value; otherwise, return
  * 0.
  */
-static int do_for_each_entry(const char *submodule, const char *base,
+static int do_for_each_entry(struct ref_cache *refs, const char *base,
 			     each_ref_entry_fn fn, void *cb_data)
 {
-	struct ref_cache *refs = get_ref_cache(submodule);
 	struct ref_dir *packed_dir = get_packed_refs(refs);
 	struct ref_dir *loose_dir = get_loose_refs(refs);
 	int retval = 0;
@@ -1542,7 +1541,7 @@ static int do_for_each_entry(const char *submodule, const char *base,
 }
 
 /*
- * Call fn for each reference in the specified submodule for which the
+ * Call fn for each reference in the specified ref_cache for which the
  * refname begins with base.  If trim is non-zero, then trim that many
  * characters off the beginning of each refname before passing the
  * refname to fn.  flags can be DO_FOR_EACH_INCLUDE_BROKEN to include
@@ -1550,8 +1549,8 @@ static int do_for_each_entry(const char *submodule, const char *base,
  * value, stop the iteration and return that value; otherwise, return
  * 0.
  */
-static int do_for_each_ref(const char *submodule, const char *base, each_ref_fn fn,
-			   int trim, int flags, void *cb_data)
+static int do_for_each_ref(struct ref_cache *refs, const char *base,
+			   each_ref_fn fn, int trim, int flags, void *cb_data)
 {
 	struct ref_entry_cb data;
 	data.base = base;
@@ -1560,7 +1559,7 @@ static int do_for_each_ref(const char *submodule, const char *base, each_ref_fn 
 	data.fn = fn;
 	data.cb_data = cb_data;
 
-	return do_for_each_entry(submodule, base, do_one_ref, &data);
+	return do_for_each_entry(refs, base, do_one_ref, &data);
 }
 
 static int do_head_ref(const char *submodule, each_ref_fn fn, void *cb_data)
@@ -1593,23 +1592,23 @@ int head_ref_submodule(const char *submodule, each_ref_fn fn, void *cb_data)
 
 int for_each_ref(each_ref_fn fn, void *cb_data)
 {
-	return do_for_each_ref(NULL, "", fn, 0, 0, cb_data);
+	return do_for_each_ref(get_ref_cache(NULL), "", fn, 0, 0, cb_data);
 }
 
 int for_each_ref_submodule(const char *submodule, each_ref_fn fn, void *cb_data)
 {
-	return do_for_each_ref(submodule, "", fn, 0, 0, cb_data);
+	return do_for_each_ref(get_ref_cache(submodule), "", fn, 0, 0, cb_data);
 }
 
 int for_each_ref_in(const char *prefix, each_ref_fn fn, void *cb_data)
 {
-	return do_for_each_ref(NULL, prefix, fn, strlen(prefix), 0, cb_data);
+	return do_for_each_ref(get_ref_cache(NULL), prefix, fn, strlen(prefix), 0, cb_data);
 }
 
 int for_each_ref_in_submodule(const char *submodule, const char *prefix,
 		each_ref_fn fn, void *cb_data)
 {
-	return do_for_each_ref(submodule, prefix, fn, strlen(prefix), 0, cb_data);
+	return do_for_each_ref(get_ref_cache(submodule), prefix, fn, strlen(prefix), 0, cb_data);
 }
 
 int for_each_tag_ref(each_ref_fn fn, void *cb_data)
@@ -1644,7 +1643,7 @@ int for_each_remote_ref_submodule(const char *submodule, each_ref_fn fn, void *c
 
 int for_each_replace_ref(each_ref_fn fn, void *cb_data)
 {
-	return do_for_each_ref(NULL, "refs/replace/", fn, 13, 0, cb_data);
+	return do_for_each_ref(get_ref_cache(NULL), "refs/replace/", fn, 13, 0, cb_data);
 }
 
 int head_ref_namespaced(each_ref_fn fn, void *cb_data)
@@ -1667,7 +1666,7 @@ int for_each_namespaced_ref(each_ref_fn fn, void *cb_data)
 	struct strbuf buf = STRBUF_INIT;
 	int ret;
 	strbuf_addf(&buf, "%srefs/", get_git_namespace());
-	ret = do_for_each_ref(NULL, buf.buf, fn, 0, 0, cb_data);
+	ret = do_for_each_ref(get_ref_cache(NULL), buf.buf, fn, 0, 0, cb_data);
 	strbuf_release(&buf);
 	return ret;
 }
@@ -1709,7 +1708,7 @@ int for_each_glob_ref(each_ref_fn fn, const char *pattern, void *cb_data)
 
 int for_each_rawref(each_ref_fn fn, void *cb_data)
 {
-	return do_for_each_ref(NULL, "", fn, 0,
+	return do_for_each_ref(get_ref_cache(NULL), "", fn, 0,
 			       DO_FOR_EACH_INCLUDE_BROKEN, cb_data);
 }
 
@@ -2104,7 +2103,7 @@ int pack_refs(unsigned int flags)
 
 	write_or_die(cbdata.fd, PACKED_REFS_HEADER, strlen(PACKED_REFS_HEADER));
 
-	do_for_each_entry(NULL, "", pack_one_ref, &cbdata);
+	do_for_each_entry(get_ref_cache(NULL), "", pack_one_ref, &cbdata);
 	if (commit_lock_file(&packlock) < 0)
 		die_errno("unable to overwrite old ref-pack file");
 	prune_refs(cbdata.ref_to_prune);
