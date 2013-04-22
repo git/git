@@ -1397,7 +1397,9 @@ static enum peel_status peel_object(const unsigned char *name, unsigned char *sh
 }
 
 /*
- * Peel the entry (if possible) and return its new peel_status.
+ * Peel the entry (if possible) and return its new peel_status.  If
+ * repeel is true, re-peel the entry even if there is an old peeled
+ * value that is already stored in it.
  *
  * It is OK to call this function with a packed reference entry that
  * might be stale and might even refer to an object that has since
@@ -1405,13 +1407,19 @@ static enum peel_status peel_object(const unsigned char *name, unsigned char *sh
  * REF_KNOWS_PEELED then leave the status unchanged and return
  * PEEL_PEELED or PEEL_NON_TAG; otherwise, return PEEL_INVALID.
  */
-static enum peel_status peel_entry(struct ref_entry *entry)
+static enum peel_status peel_entry(struct ref_entry *entry, int repeel)
 {
 	enum peel_status status;
 
-	if (entry->flag & REF_KNOWS_PEELED)
-		return is_null_sha1(entry->u.value.peeled) ?
-			PEEL_NON_TAG : PEEL_PEELED;
+	if (entry->flag & REF_KNOWS_PEELED) {
+		if (repeel) {
+			entry->flag &= ~REF_KNOWS_PEELED;
+			hashclr(entry->u.value.peeled);
+		} else {
+			return is_null_sha1(entry->u.value.peeled) ?
+				PEEL_NON_TAG : PEEL_PEELED;
+		}
+	}
 	if (entry->flag & REF_ISBROKEN)
 		return PEEL_BROKEN;
 	if (entry->flag & REF_ISSYMREF)
@@ -1430,7 +1438,7 @@ int peel_ref(const char *refname, unsigned char *sha1)
 
 	if (current_ref && (current_ref->name == refname
 			    || !strcmp(current_ref->name, refname))) {
-		if (peel_entry(current_ref))
+		if (peel_entry(current_ref, 0))
 			return -1;
 		hashcpy(sha1, current_ref->u.value.peeled);
 		return 0;
@@ -1450,7 +1458,7 @@ int peel_ref(const char *refname, unsigned char *sha1)
 	if (flag & REF_ISPACKED) {
 		struct ref_entry *r = get_packed_ref(refname);
 		if (r) {
-			if (peel_entry(r))
+			if (peel_entry(r, 0))
 				return -1;
 			hashcpy(sha1, r->u.value.peeled);
 			return 0;
@@ -1999,7 +2007,7 @@ struct pack_refs_cb_data {
 static int pack_one_ref(struct ref_entry *entry, void *cb_data)
 {
 	struct pack_refs_cb_data *cb = cb_data;
-	struct object *o;
+	enum peel_status peel_status;
 	int is_tag_ref;
 
 	/* Do not pack symbolic or broken refs: */
@@ -2015,13 +2023,12 @@ static int pack_one_ref(struct ref_entry *entry, void *cb_data)
 	fprintf(cb->refs_file, "%s %s\n", sha1_to_hex(entry->u.value.sha1),
 		entry->name);
 
-	o = parse_object_or_die(entry->u.value.sha1, entry->name);
-	if (o->type == OBJ_TAG) {
-		o = deref_tag(o, entry->name, 0);
-		if (o)
-			fprintf(cb->refs_file, "^%s\n",
-				sha1_to_hex(o->sha1));
-	}
+	peel_status = peel_entry(entry, 1);
+	if (peel_status == PEEL_PEELED)
+		fprintf(cb->refs_file, "^%s\n", sha1_to_hex(entry->u.value.peeled));
+	else if (peel_status != PEEL_NON_TAG)
+		die("internal error peeling reference %s (%s)",
+		    entry->name, sha1_to_hex(entry->u.value.sha1));
 
 	/* If the ref was already packed, there is no need to prune it. */
 	if ((cb->flags & PACK_REFS_PRUNE) && !(entry->flag & REF_ISPACKED)) {
@@ -2162,7 +2169,7 @@ static int repack_ref_fn(struct ref_entry *entry, void *cb_data)
 		return 0;
 	}
 
-	peel_status = peel_entry(entry);
+	peel_status = peel_entry(entry, 0);
 	write_packed_entry(*fd, entry->name, entry->u.value.sha1,
 			   peel_status == PEEL_PEELED ?
 			   entry->u.value.peeled : NULL);
