@@ -1821,9 +1821,11 @@ static int repack_without_ref(const char *refname)
 {
 	struct repack_without_ref_sb data;
 	struct ref_cache *refs = get_ref_cache(NULL);
-	struct ref_dir *packed = get_packed_refs(refs);
-	if (find_ref(packed, refname) == NULL)
-		return 0;
+	struct ref_dir *packed;
+
+	if (!get_packed_ref(refname))
+		return 0; /* refname does not exist in packed refs */
+
 	data.refname = refname;
 	data.fd = hold_lock_file_for_update(&packlock, git_path("packed-refs"), 0);
 	if (data.fd < 0) {
