@@ -468,6 +468,57 @@ static struct ref_entry *find_ref(struct ref_dir *dir, const char *refname)
 }
 
 /*
+ * Remove the entry with the given name from dir, recursing into
+ * subdirectories as necessary.  If refname is the name of a directory
+ * (i.e., ends with '/'), then remove the directory and its contents.
+ * If the removal was successful, return the number of entries
+ * remaining in the directory entry that contained the deleted entry.
+ * If the name was not found, return -1.  Please note that this
+ * function only deletes the entry from the cache; it does not delete
+ * it from the filesystem or ensure that other cache entries (which
+ * might be symbolic references to the removed entry) are updated.
+ * Nor does it remove any containing dir entries that might be made
+ * empty by the removal.  dir must represent the top-level directory
+ * and must already be complete.
+ */
+static int remove_entry(struct ref_dir *dir, const char *refname)
+{
+	int refname_len = strlen(refname);
+	int entry_index;
+	struct ref_entry *entry;
+	int is_dir = refname[refname_len - 1] == '/';
+	if (is_dir) {
+		/*
+		 * refname represents a reference directory.  Remove
+		 * the trailing slash; otherwise we will get the
+		 * directory *representing* refname rather than the
+		 * one *containing* it.
+		 */
+		char *dirname = xmemdupz(refname, refname_len - 1);
+		dir = find_containing_dir(dir, dirname, 0);
+		free(dirname);
+	} else {
+		dir = find_containing_dir(dir, refname, 0);
+	}
+	if (!dir)
+		return -1;
+	entry_index = search_ref_dir(dir, refname, refname_len);
+	if (entry_index == -1)
+		return -1;
+	entry = dir->entries[entry_index];
+
+	memmove(&dir->entries[entry_index],
+		&dir->entries[entry_index + 1],
+		(dir->nr - entry_index - 1) * sizeof(*dir->entries)
+		);
+	dir->nr--;
+	if (dir->sorted > entry_index)
+		dir->sorted--;
+	free_ref_entry(entry);
+	return dir->nr;
+}
+
+/*
  * Add a ref_entry to the ref_dir (unsorted), recursing into
  * subdirectories as necessary.  dir must represent the top-level
  * directory.  Return 0 on success.
@@ -1895,19 +1946,12 @@ struct ref_lock *lock_any_ref_for_update(const char *refname,
 	return lock_ref_sha1_basic(refname, old_sha1, flags, NULL);
 }
 
-struct repack_without_ref_sb {
-	const char *refname;
-	int fd;
-};
-
-static int repack_without_ref_fn(struct ref_entry *entry, void *cb_data)
+static int repack_ref_fn(struct ref_entry *entry, void *cb_data)
 {
-	struct repack_without_ref_sb *data = cb_data;
+	int *fd = cb_data;
 	char line[PATH_MAX + 100];
 	int len;
 
-	if (!strcmp(data->refname, entry->name))
-		return 0;
 	if (entry->flag & REF_ISBROKEN) {
 		/* This shouldn't happen to packed refs. */
 		error("%s is broken!", entry->name);
@@ -1948,7 +1992,7 @@ static int repack_without_ref_fn(struct ref_entry *entry, void *cb_data)
 	/* this should not happen but just being defensive */
 	if (len > sizeof(line))
 		die("too long a refname '%s'", entry->name);
-	write_or_die(data->fd, line, len);
+	write_or_die(*fd, line, len);
 	return 0;
 }
 
@@ -1956,22 +2000,30 @@ static struct lock_file packlock;
 
 static int repack_without_ref(const char *refname)
 {
-	struct repack_without_ref_sb data;
+	int fd;
 	struct ref_cache *refs = get_ref_cache(NULL);
 	struct ref_dir *packed;
 
 	if (!get_packed_ref(refname))
 		return 0; /* refname does not exist in packed refs */
 
-	data.refname = refname;
-	data.fd = hold_lock_file_for_update(&packlock, git_path("packed-refs"), 0);
-	if (data.fd < 0) {
+	fd = hold_lock_file_for_update(&packlock, git_path("packed-refs"), 0);
+	if (fd < 0) {
 		unable_to_lock_error(git_path("packed-refs"), errno);
 		return error("cannot delete '%s' from packed refs", refname);
 	}
 	clear_packed_ref_cache(refs);
 	packed = get_packed_refs(refs);
-	do_for_each_entry_in_dir(packed, 0, repack_without_ref_fn, &data);
+	/* Remove refname from the cache. */
+	if (remove_entry(packed, refname) == -1) {
+		/*
+		 * The packed entry disappeared while we were
+		 * acquiring the lock.
+		 */
+		rollback_lock_file(&packlock);
+		return 0;
+	}
+	do_for_each_entry_in_dir(packed, 0, repack_ref_fn, &fd);
 	return commit_lock_file(&packlock);
 }
 
@@ -2000,7 +2052,7 @@ int delete_ref(const char *refname, const unsigned char *sha1, int delopt)
 	ret |= repack_without_ref(lock->ref_name);
 
 	unlink_or_warn(git_path("logs/%s", lock->ref_name));
-	invalidate_ref_cache(NULL);
+	clear_loose_ref_cache(get_ref_cache(NULL));
 	unlock_ref(lock);
 	return ret;
 }
