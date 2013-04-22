@@ -17,7 +17,7 @@ test_expect_success 'setup: messages' '
 	vero eos et accusam et justo duo dolores et ea rebum.
 
 	EOF
-	q_to_tab <<-\EOF >>msg &&
+	qz_to_tab_space <<-\EOF >>msg &&
 	QDuis autem vel eum iriure dolor in hendrerit in vulputate velit
 	Qesse molestie consequat, vel illum dolore eu feugiat nulla facilisis
 	Qat vero eros et accumsan et iusto odio dignissim qui blandit

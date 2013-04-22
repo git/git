@@ -2117,10 +2117,10 @@ static void update_pre_post_images(struct image *preimage,
 
 	/*
 	 * Adjust the common context lines in postimage. This can be
-	 * done in-place when we are just doing whitespace fixing,
-	 * which does not make the string grow, but needs a new buffer
-	 * when ignoring whitespace causes the update, since in this case
-	 * we could have e.g. tabs converted to multiple spaces.
+	 * done in-place when we are shrinking it with whitespace
+	 * fixing, but needs a new buffer when ignoring whitespace or
+	 * expanding leading tabs to spaces.
+	 *
 	 * We trust the caller to tell us if the update can be done
 	 * in place (postlen==0) or not.
 	 */
@@ -2185,7 +2185,7 @@ static int match_fragment(struct image *img,
 	int i;
 	char *fixed_buf, *buf, *orig, *target;
 	struct strbuf fixed;
-	size_t fixed_len;
+	size_t fixed_len, postlen;
 	int preimage_limit;
 
 	if (preimage->nr + try_lno <= img->nr) {
@@ -2335,6 +2335,7 @@ static int match_fragment(struct image *img,
 	strbuf_init(&fixed, preimage->len + 1);
 	orig = preimage->buf;
 	target = img->buf + try;
+	postlen = 0;
 	for (i = 0; i < preimage_limit; i++) {
 		size_t oldlen = preimage->line[i].len;
 		size_t tgtlen = img->line[try_lno + i].len;
@@ -2362,6 +2363,7 @@ static int match_fragment(struct image *img,
 		match = (tgtfix.len == fixed.len - fixstart &&
 			 !memcmp(tgtfix.buf, fixed.buf + fixstart,
 					     fixed.len - fixstart));
+		postlen += tgtfix.len;
 
 		strbuf_release(&tgtfix);
 		if (!match)
@@ -2399,8 +2401,10 @@ static int match_fragment(struct image *img,
 	 * hunk match.  Update the context lines in the postimage.
 	 */
 	fixed_buf = strbuf_detach(&fixed, &fixed_len);
+	if (postlen < postimage->len)
+		postlen = 0;
 	update_pre_post_images(preimage, postimage,
-			       fixed_buf, fixed_len, 0);
+			       fixed_buf, fixed_len, postlen);
 	return 1;
 
  unmatch_exit:
