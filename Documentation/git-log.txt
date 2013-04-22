@@ -77,8 +77,8 @@ produced by --stat etc.
 	Simplification" below for details and other simplification
 	modes.
 +
-To prevent confusion with options and branch names, paths may need to
-be prefixed with "\-- " to separate them from options or refnames.
+Paths may need to be prefixed with "\-- " to separate them from
+options or the revision range, when confusion arises.
 
 include::rev-list-options.txt[]
 
