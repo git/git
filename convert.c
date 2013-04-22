@@ -153,36 +153,13 @@ static void check_safe_crlf(const char *path, enum crlf_action crlf_action,
 
 static int has_cr_in_index(const char *path)
 {
-	int pos, len;
 	unsigned long sz;
-	enum object_type type;
 	void *data;
 	int has_cr;
-	struct index_state *istate = &the_index;
 
-	len = strlen(path);
-	pos = index_name_pos(istate, path, len);
-	if (pos < 0) {
-		/*
-		 * We might be in the middle of a merge, in which
-		 * case we would read stage #2 (ours).
-		 */
-		int i;
-		for (i = -pos - 1;
-		     (pos < 0 && i < istate->cache_nr &&
-		      !strcmp(istate->cache[i]->name, path));
-		     i++)
-			if (ce_stage(istate->cache[i]) == 2)
-				pos = i;
-	}
-	if (pos < 0)
+	data = read_blob_data_from_cache(path, &sz);
+	if (!data)
 		return 0;
-	data = read_sha1_file(istate->cache[pos]->sha1, &type, &sz);
-	if (!data || type != OBJ_BLOB) {
-		free(data);
-		return 0;
-	}
-
 	has_cr = memchr(data, '\r', sz) != NULL;
 	free(data);
 	return has_cr;
