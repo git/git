@@ -367,18 +367,17 @@ static int ref_entry_cmp_sslice(const void *key_, const void *ent_)
 }
 
 /*
- * Return the entry with the given refname from the ref_dir
- * (non-recursively), sorting dir if necessary.  Return NULL if no
- * such entry is found.  dir must already be complete.
+ * Return the index of the entry with the given refname from the
+ * ref_dir (non-recursively), sorting dir if necessary.  Return -1 if
+ * no such entry is found.  dir must already be complete.
  */
-static struct ref_entry *search_ref_dir(struct ref_dir *dir,
-					const char *refname, size_t len)
+static int search_ref_dir(struct ref_dir *dir, const char *refname, size_t len)
 {
 	struct ref_entry **r;
 	struct string_slice key;
 
 	if (refname == NULL || !dir->nr)
-		return NULL;
+		return -1;
 
 	sort_ref_dir(dir);
 	key.len = len;
@@ -387,9 +386,9 @@ static struct ref_entry *search_ref_dir(struct ref_dir *dir,
 		    ref_entry_cmp_sslice);
 
 	if (r == NULL)
-		return NULL;
+		return -1;
 
-	return *r;
+	return r - dir->entries;
 }
 
 /*
@@ -403,8 +402,9 @@ static struct ref_dir *search_for_subdir(struct ref_dir *dir,
 					 const char *subdirname, size_t len,
 					 int mkdir)
 {
-	struct ref_entry *entry = search_ref_dir(dir, subdirname, len);
-	if (!entry) {
+	int entry_index = search_ref_dir(dir, subdirname, len);
+	struct ref_entry *entry;
+	if (entry_index == -1) {
 		if (!mkdir)
 			return NULL;
 		/*
@@ -415,6 +415,8 @@ static struct ref_dir *search_for_subdir(struct ref_dir *dir,
 		 */
 		entry = create_dir_entry(dir->ref_cache, subdirname, len, 0);
 		add_entry_to_dir(dir, entry);
+	} else {
+		entry = dir->entries[entry_index];
 	}
 	return get_ref_dir(entry);
 }
@@ -453,12 +455,16 @@ static struct ref_dir *find_containing_dir(struct ref_dir *dir,
  */
 static struct ref_entry *find_ref(struct ref_dir *dir, const char *refname)
 {
+	int entry_index;
 	struct ref_entry *entry;
 	dir = find_containing_dir(dir, refname, 0);
 	if (!dir)
 		return NULL;
-	entry = search_ref_dir(dir, refname, strlen(refname));
-	return (entry && !(entry->flag & REF_DIR)) ? entry : NULL;
+	entry_index = search_ref_dir(dir, refname, strlen(refname));
+	if (entry_index == -1)
+		return NULL;
+	entry = dir->entries[entry_index];
+	return (entry->flag & REF_DIR) ? NULL : entry;
 }
 
 /*
