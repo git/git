@@ -797,7 +797,9 @@ def do_export(parser):
                     msg = 'Added tag %s for changeset %s' % (tag, hghex(node[:6]));
                 write_tag(parser.repo, tag, node, msg, author)
             else:
-                parser.repo.tag([tag], node, None, True, None, {})
+                fp = parser.repo.opener('localtags', 'a')
+                fp.write('%s %s\n' % (hghex(node), tag))
+                fp.close()
             print "ok %s" % ref
         else:
             # transport-helper/fast-export bugs
