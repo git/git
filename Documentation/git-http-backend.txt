@@ -80,7 +80,30 @@ ScriptAlias /git/ /usr/libexec/git-core/git-http-backend/
 ----------------------------------------------------------------
 +
 To enable anonymous read access but authenticated write access,
-require authorization with a LocationMatch directive:
+require authorization for both the initial ref advertisement (which we
+detect as a push via the service parameter in the query string), and the
+receive-pack invocation itself:
++
+----------------------------------------------------------------
+RewriteCond %{QUERY_STRING} service=git-receive-pack [OR]
+RewriteCond %{REQUEST_URI} /git-receive-pack$
+RewriteRule ^/git/ - [E=AUTHREQUIRED:yes]
+
+<LocationMatch "^/git/">
+	Order Deny,Allow
+	Deny from env=AUTHREQUIRED
+
+	AuthType Basic
+	AuthName "Git Access"
+	Require group committers
+	Satisfy Any
+	...
+</LocationMatch>
+----------------------------------------------------------------
++
+If you do not have `mod_rewrite` available to match against the query
+string, it is sufficient to just protect `git-receive-pack` itself,
+like:
 +
 ----------------------------------------------------------------
 <LocationMatch "^/git/.*/git-receive-pack$">
@@ -90,6 +113,15 @@ require authorization with a LocationMatch directive:
 	...
 </LocationMatch>
 ----------------------------------------------------------------
++
+In this mode, the server will not request authentication until the
+client actually starts the object negotiation phase of the push, rather
+than during the initial contact.  For this reason, you must also enable
+the `http.receivepack` config option in any repositories that should
+accept a push. The default behavior, if `http.receivepack` is not set,
+is to reject any pushes by unauthenticated users; the initial request
+will therefore report `403 Forbidden` to the client, without even giving
+an opportunity for authentication.
 +
 To require authentication for both reads and writes, use a Location
 directive around the repository, or one of its parent directories:
@@ -156,6 +188,54 @@ ScriptAliasMatch \
 			git-(upload|receive)-pack))$" \
 	/usr/libexec/git-core/git-http-backend/$1
 ScriptAlias /git/ /var/www/cgi-bin/gitweb.cgi/
+----------------------------------------------------------------
+
+Lighttpd::
+	Ensure that `mod_cgi`, `mod_alias, `mod_auth`, `mod_setenv` are
+	loaded, then set `GIT_PROJECT_ROOT` appropriately and redirect
+	all requests to the CGI:
++
+----------------------------------------------------------------
+alias.url += ( "/git" => "/usr/lib/git-core/git-http-backend" )
+$HTTP["url"] =~ "^/git" {
+	cgi.assign = ("" => "")
+	setenv.add-environment = (
+		"GIT_PROJECT_ROOT" => "/var/www/git",
+		"GIT_HTTP_EXPORT_ALL" => ""
+	)
+}
+----------------------------------------------------------------
++
+To enable anonymous read access but authenticated write access:
++
+----------------------------------------------------------------
+$HTTP["querystring"] =~ "service=git-receive-pack" {
+	include "git-auth.conf"
+}
+$HTTP["url"] =~ "^/git/.*/git-receive-pack$" {
+	include "git-auth.conf"
+}
+----------------------------------------------------------------
++
+where `git-auth.conf` looks something like:
++
+----------------------------------------------------------------
+auth.require = (
+	"/" => (
+		"method" => "basic",
+		"realm" => "Git Access",
+		"require" => "valid-user"
+	       )
+)
+# ...and set up auth.backend here
+----------------------------------------------------------------
++
+To require authentication for both reads and writes:
++
+----------------------------------------------------------------
+$HTTP["url"] =~ "^/git/private" {
+	include "git-auth.conf"
+}
 ----------------------------------------------------------------
 
 

@@ -294,5 +294,35 @@ test_expect_success 'push to auth-only-for-push repo' '
 	test_cmp expect actual
 '
 
+test_expect_success 'create repo without http.receivepack set' '
+	cd "$ROOT_PATH" &&
+	git init half-auth &&
+	(
+		cd half-auth &&
+		test_commit one
+	) &&
+	git clone --bare half-auth "$HTTPD_DOCUMENT_ROOT_PATH/half-auth.git"
+'
+
+test_expect_success 'clone via half-auth-complete does not need password' '
+	cd "$ROOT_PATH" &&
+	set_askpass wrong &&
+	git clone "$HTTPD_URL"/half-auth-complete/smart/half-auth.git \
+		half-auth-clone &&
+	expect_askpass none
+'
+
+test_expect_success 'push into half-auth-complete requires password' '
+	cd "$ROOT_PATH/half-auth-clone" &&
+	echo two >expect &&
+	test_commit two &&
+	set_askpass user@host &&
+	git push "$HTTPD_URL/half-auth-complete/smart/half-auth.git" &&
+	git --git-dir="$HTTPD_DOCUMENT_ROOT_PATH/half-auth.git" \
+		log -1 --format=%s >actual &&
+	expect_askpass both user@host &&
+	test_cmp expect actual
+'
+
 stop_httpd
 test_done
