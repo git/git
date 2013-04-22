@@ -782,6 +782,8 @@ def do_export(parser):
             continue
 
         if peer:
+            rb = peer.listkeys('bookmarks')
+            old = rb.get(bmark, '')
             if not peer.pushkey('bookmarks', bmark, old, new):
                 print "error %s" % ref
                 continue
