@@ -9,7 +9,7 @@ SYNOPSIS
 --------
 [verse]
 'git add' [-n] [-v] [--force | -f] [--interactive | -i] [--patch | -p]
-	  [--edit | -e] [--all | [--update | -u]] [--intent-to-add | -N]
+	  [--edit | -e] [--[no-]all | [--update | -u]] [--intent-to-add | -N]
 	  [--refresh] [--ignore-errors] [--ignore-missing] [--]
 	  [<pathspec>...]
 
@@ -120,6 +120,18 @@ If no <pathspec> is given, the current version of Git defaults to
 "."; in other words, update all files in the current directory
 and its subdirectories. This default will change in a future version
 of Git, hence the form without <pathspec> should not be used.
+
+--no-all::
+	Update the index by adding new files that are unknown to the
+	index and files modified in the working tree, but ignore
+	files that have been removed from the working tree.  This
+	option is a no-op when no <pathspec> is used.
++
+This option is primarily to help the current users of Git, whose
+"git add <pathspec>..." ignores removed files.  In future versions
+of Git, "git add <pathspec>..." will be a synonym to "git add -A
+<pathspec>..." and "git add --no-all <pathspec>..." will behave like
+today's "git add <pathspec>...", ignoring removed files.
 
 -N::
 --intent-to-add::
