@@ -51,6 +51,7 @@ import urlparse
 
 NAME_RE = re.compile('^([^<>]+)')
 AUTHOR_RE = re.compile('^([^<>]+?)? ?<([^<>]*)>$')
+EMAIL_RE = re.compile('^([^<>]+[^ \\\t<>])?\\b(?:[ \\t<>]*?)\\b([^ \\t<>]+@[^ \\t<>]+)')
 AUTHOR_HG_RE = re.compile('^(.*?) ?<(.*?)(?:>(.+)?)?$')
 RAW_AUTHOR_RE = re.compile('^(\w+) (?:(.+)? )?<(.*)> (\d+) ([+-]\d+)')
 
@@ -245,9 +246,14 @@ def fixup_user_git(user):
         name = m.group(1)
         mail = m.group(2).strip()
     else:
-        m = NAME_RE.match(user)
+        m = EMAIL_RE.match(user)
         if m:
-            name = m.group(1).strip()
+            name = m.group(1)
+            mail = m.group(2)
+        else:
+            m = NAME_RE.match(user)
+            if m:
+                name = m.group(1).strip()
     return (name, mail)
 
 def fixup_user_hg(user):
