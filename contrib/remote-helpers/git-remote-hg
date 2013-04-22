@@ -457,6 +457,13 @@ def do_capabilities(parser):
 
     print
 
+def branch_tip(repo, branch):
+    # older versions of mercurial don't have this
+    if hasattr(repo, 'branchtip'):
+        return repo.branchtip(branch)
+    else:
+        return repo.branchtags()[branch]
+
 def get_branch_tip(repo, branch):
     global branches
 
@@ -467,9 +474,7 @@ def get_branch_tip(repo, branch):
     # verify there's only one head
     if (len(heads) > 1):
         warn("Branch '%s' has more than one head, consider merging" % branch)
-        # older versions of mercurial don't have this
-        if hasattr(repo, "branchtip"):
-            return repo.branchtip(branch)
+        return branch_tip(repo, branch)
 
     return heads[0]
 
