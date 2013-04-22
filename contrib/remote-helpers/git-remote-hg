@@ -725,7 +725,9 @@ def parse_tag(parser):
     parsed_tags[name] = (tagger, data)
 
 def write_tag(repo, tag, node, msg, author):
-    tip = repo['tip']
+    branch = repo[node].branch()
+    tip = branch_tip(repo, branch)
+    tip = repo[tip]
 
     def getfilectx(repo, memctx, f):
         try:
@@ -744,7 +746,7 @@ def write_tag(repo, tag, node, msg, author):
 
     ctx = context.memctx(repo, (p1, p2), msg,
             ['.hgtags'], getfilectx,
-            user, (date, tz), {})
+            user, (date, tz), {'branch' : branch})
 
     tmp = encoding.encoding
     encoding.encoding = 'utf-8'
