@@ -94,7 +94,7 @@ class Marks:
         return self.last_mark
 
     def is_marked(self, rev):
-        return self.marks.has_key(rev)
+        return str(rev) in self.marks
 
     def new_mark(self, rev, mark):
         self.marks[rev] = mark
