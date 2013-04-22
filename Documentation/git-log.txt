@@ -24,13 +24,6 @@ each commit introduces are shown.
 OPTIONS
 -------
 
-<since>..<until>::
-	Show only commits between the named two commits.  When
-	either <since> or <until> is omitted, it defaults to
-	`HEAD`, i.e. the tip of the current branch.
-	For a more complete list of ways to spell <since>
-	and <until>, see linkgit:gitrevisions[7].
-
 --follow::
 	Continue listing the history of a file beyond renames
 	(works only for a single file).
@@ -68,6 +61,13 @@ produced by --stat etc.
 	produce a valid value size is set to zero.
 	Note that only message is considered, if also a diff is shown
 	its size is not included.
+
+<since>..<until>::
+	Show only commits between the named two commits.  When
+	either <since> or <until> is omitted, it defaults to
+	`HEAD`, i.e. the tip of the current branch.
+	For a more complete list of ways to spell <since>
+	and <until>, see linkgit:gitrevisions[7].
 
 [\--] <path>...::
 	Show only commits that are enough to explain how the files
