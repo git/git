@@ -830,6 +830,9 @@ def do_export(parser):
         else:
             old = ''
 
+        if old == new:
+            continue
+
         if bmark == 'master' and 'master' not in parser.repo._bookmarks:
             # fake bookmark
             pass
