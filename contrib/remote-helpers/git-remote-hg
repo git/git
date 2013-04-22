@@ -724,6 +724,37 @@ def parse_tag(parser):
 
     parsed_tags[name] = (tagger, data)
 
+def write_tag(repo, tag, node, msg, author):
+    tip = repo['tip']
+
+    def getfilectx(repo, memctx, f):
+        try:
+            fctx = tip.filectx(f)
+            data = fctx.data()
+        except error.ManifestLookupError:
+            data = ""
+        content = data + "%s %s\n" % (hghex(node), tag)
+        return context.memfilectx(f, content, False, False, None)
+
+    p1 = tip.hex()
+    p2 = '\0' * 20
+    if not author:
+        author = (None, 0, 0)
+    user, date, tz = author
+
+    ctx = context.memctx(repo, (p1, p2), msg,
+            ['.hgtags'], getfilectx,
+            user, (date, tz), {})
+
+    tmp = encoding.encoding
+    encoding.encoding = 'utf-8'
+
+    tagnode = repo.commitctx(ctx)
+
+    encoding.encoding = tmp
+
+    return tagnode
+
 def do_export(parser):
     global parsed_refs, bmarks, peer
 
@@ -762,7 +793,7 @@ def do_export(parser):
             if mode == 'git':
                 if not msg:
                     msg = 'Added tag %s for changeset %s' % (tag, hghex(node[:6]));
-                parser.repo.tag([tag], node, msg, False, author[0], {})
+                write_tag(parser.repo, tag, node, msg, author)
             else:
                 parser.repo.tag([tag], node, None, True, None, {})
             print "ok %s" % ref
