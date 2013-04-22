@@ -23,7 +23,7 @@ static int do_not_prune(int flags)
 	return (flags & (REF_ISSYMREF|REF_ISPACKED));
 }
 
-static int handle_one_ref(const char *path, const unsigned char *sha1,
+static int pack_one_ref(const char *path, const unsigned char *sha1,
 			  int flags, void *cb_data)
 {
 	struct pack_refs_cb_data *cb = cb_data;
@@ -130,7 +130,7 @@ int pack_refs(unsigned int flags)
 	/* perhaps other traits later as well */
 	fprintf(cbdata.refs_file, "# pack-refs with: peeled fully-peeled \n");
 
-	for_each_ref(handle_one_ref, &cbdata);
+	for_each_ref(pack_one_ref, &cbdata);
 	if (ferror(cbdata.refs_file))
 		die("failed to write ref-pack file");
 	if (fflush(cbdata.refs_file) || fsync(fd) || fclose(cbdata.refs_file))
