@@ -667,13 +667,6 @@ static int do_for_each_ref_in_dirs(struct ref_dir *dir1,
 		if (retval)
 			return retval;
 	}
-	if (i1 < dir1->nr)
-		return do_for_each_ref_in_dir(dir1, i1,
-					      base, fn, trim, flags, cb_data);
-	if (i2 < dir2->nr)
-		return do_for_each_ref_in_dir(dir2, i2,
-					      base, fn, trim, flags, cb_data);
-	return 0;
 }
 
 /*
