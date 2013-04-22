@@ -75,6 +75,12 @@ def hgmode(mode):
 def hghex(node):
     return hg.node.hex(node)
 
+def hgref(ref):
+    return ref.replace('___', ' ')
+
+def gitref(ref):
+    return ref.replace(' ', '___')
+
 def get_config(config):
     cmd = ['git', 'config', '--get', config]
     process = subprocess.Popen(cmd, stdout=subprocess.PIPE)
@@ -437,10 +443,10 @@ def export_ref(repo, name, kind, head):
     marks.set_tip(ename, rev)
 
 def export_tag(repo, tag):
-    export_ref(repo, tag, 'tags', repo[tag])
+    export_ref(repo, tag, 'tags', repo[hgref(tag)])
 
 def export_bookmark(repo, bmark):
-    head = bmarks[bmark]
+    head = bmarks[hgref(bmark)]
     export_ref(repo, bmark, 'bookmarks', head)
 
 def export_branch(repo, branch):
@@ -479,14 +485,14 @@ def branch_tip(repo, branch):
 def get_branch_tip(repo, branch):
     global branches
 
-    heads = branches.get(branch, None)
+    heads = branches.get(hgref(branch), None)
     if not heads:
         return None
 
     # verify there's only one head
     if (len(heads) > 1):
         warn("Branch '%s' has more than one head, consider merging" % branch)
-        return branch_tip(repo, branch)
+        return branch_tip(repo, hgref(branch))
 
     return heads[0]
 
@@ -508,6 +514,7 @@ def list_head(repo, cur):
             head = 'master'
         bmarks[head] = node
 
+    head = gitref(head)
     print "@refs/heads/%s HEAD" % head
     g_head = (head, node)
 
@@ -529,15 +536,15 @@ def do_list(parser):
                 branches[branch] = heads
 
         for branch in branches:
-            print "? refs/heads/branches/%s" % branch
+            print "? refs/heads/branches/%s" % gitref(branch)
 
     for bmark in bmarks:
-        print "? refs/heads/%s" % bmark
+        print "? refs/heads/%s" % gitref(bmark)
 
     for tag, node in repo.tagslist():
         if tag == 'tip':
             continue
-        print "? refs/tags/%s" % tag
+        print "? refs/tags/%s" % gitref(tag)
 
     print
 
@@ -674,7 +681,8 @@ def parse_commit(parser):
 
     # Check if the ref is supposed to be a named branch
     if ref.startswith('refs/heads/branches/'):
-        extra['branch'] = ref[len('refs/heads/branches/'):]
+        branch = ref[len('refs/heads/branches/'):]
+        extra['branch'] = hgref(branch)
 
     if mode == 'hg':
         i = data.find('\n--HG--\n')
@@ -803,6 +811,7 @@ def do_export(parser):
             continue
         elif ref.startswith('refs/tags/'):
             tag = ref[len('refs/tags/'):]
+            tag = hgref(tag)
             author, msg = parsed_tags.get(tag, (None, None))
             if mode == 'git':
                 if not msg:
