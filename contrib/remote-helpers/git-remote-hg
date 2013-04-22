@@ -126,6 +126,10 @@ class Marks:
     def to_rev(self, mark):
         return self.rev_marks[mark]
 
+    def next_mark(self):
+        self.last_mark += 1
+        return self.last_mark
+
     def get_mark(self, rev):
         self.last_mark += 1
         self.marks[str(rev)] = self.last_mark
@@ -218,12 +222,29 @@ def fix_file_path(path):
         return path
     return os.path.relpath(path, '/')
 
-def export_file(fc):
-    d = fc.data()
-    path = fix_file_path(fc.path())
-    print "M %s inline %s" % (gitmode(fc.flags()), path)
-    print "data %d" % len(d)
-    print d
+def export_files(files):
+    global marks, filenodes
+
+    final = []
+    for f in files:
+        fid = node.hex(f.filenode())
+
+        if fid in filenodes:
+            mark = filenodes[fid]
+        else:
+            mark = marks.next_mark()
+            filenodes[fid] = mark
+            d = f.data()
+
+            print "blob"
+            print "mark :%u" % mark
+            print "data %d" % len(d)
+            print d
+
+        path = fix_file_path(f.path())
+        final.append((gitmode(f.flags()), mark, path))
+
+    return final
 
 def get_filechanges(repo, ctx, parent):
     modified = set()
@@ -413,6 +434,8 @@ def export_ref(repo, name, kind, head):
         if len(parents) == 0 and rev:
             print 'reset %s/%s' % (prefix, ename)
 
+        modified_final = export_files(c.filectx(f) for f in modified)
+
         print "commit %s/%s" % (prefix, ename)
         print "mark :%d" % (marks.get_mark(rev))
         print "author %s" % (author)
@@ -425,8 +448,8 @@ def export_ref(repo, name, kind, head):
             if len(parents) > 1:
                 print "merge :%s" % (rev_to_mark(parents[1]))
 
-        for f in modified:
-            export_file(c.filectx(f))
+        for f in modified_final:
+            print "M %s :%u %s" % f
         for f in removed:
             print "D %s" % (fix_file_path(f))
         print
@@ -878,6 +901,7 @@ def main(args):
     global peer, mode, bad_mail, bad_name
     global track_branches, force_push, is_tmp
     global parsed_tags
+    global filenodes
 
     alias = args[1]
     url = args[2]
@@ -921,6 +945,7 @@ def main(args):
     parsed_refs = {}
     marks = None
     parsed_tags = {}
+    filenodes = {}
 
     repo = get_repo(url, alias)
     prefix = 'refs/hg/%s' % alias
