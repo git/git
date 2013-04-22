@@ -1273,32 +1273,48 @@ static int filter_refs(const char *refname, const unsigned char *sha1, int flags
 	return filter->fn(refname, sha1, flags, filter->cb_data);
 }
 
+enum peel_status {
+	/* object was peeled successfully: */
+	PEEL_PEELED = 0,
+
+	/*
+	 * object cannot be peeled because the named object (or an
+	 * object referred to by a tag in the peel chain), does not
+	 * exist.
+	 */
+	PEEL_INVALID = -1,
+
+	/* object cannot be peeled because it is not a tag: */
+	PEEL_NON_TAG = -2
+};
+
 /*
  * Peel the named object; i.e., if the object is a tag, resolve the
- * tag recursively until a non-tag is found.  Store the result to sha1
- * and return 0 iff successful.  If the object is not a tag or is not
- * valid, return -1 and leave sha1 unchanged.
+ * tag recursively until a non-tag is found.  If successful, store the
+ * result to sha1 and return PEEL_PEELED.  If the object is not a tag
+ * or is not valid, return PEEL_NON_TAG or PEEL_INVALID, respectively,
+ * and leave sha1 unchanged.
  */
-static int peel_object(const unsigned char *name, unsigned char *sha1)
+static enum peel_status peel_object(const unsigned char *name, unsigned char *sha1)
 {
 	struct object *o = lookup_unknown_object(name);
 
 	if (o->type == OBJ_NONE) {
 		int type = sha1_object_info(name, NULL);
 		if (type < 0)
-			return -1;
+			return PEEL_INVALID;
 		o->type = type;
 	}
 
 	if (o->type != OBJ_TAG)
-		return -1;
+		return PEEL_NON_TAG;
 
 	o = deref_tag_noverify(o);
 	if (!o)
-		return -1;
+		return PEEL_INVALID;
 
 	hashcpy(sha1, o->sha1);
-	return 0;
+	return PEEL_PEELED;
 }
 
 int peel_ref(const char *refname, unsigned char *sha1)
