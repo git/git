@@ -119,7 +119,8 @@ struct ref_value {
 	/*
 	 * If REF_KNOWS_PEELED, then this field holds the peeled value
 	 * of this reference, or null if the reference is known not to
-	 * be peelable.
+	 * be peelable.  See the documentation for peel_ref() for an
+	 * exact definition of "peelable".
 	 */
 	unsigned char peeled[20];
 };
@@ -1340,6 +1341,8 @@ int peel_ref(const char *refname, unsigned char *sha1)
 		struct ref_entry *r = get_packed_ref(refname);
 
 		if (r && (r->flag & REF_KNOWS_PEELED)) {
+			if (is_null_sha1(r->u.value.peeled))
+			    return -1;
 			hashcpy(sha1, r->u.value.peeled);
 			return 0;
 		}
