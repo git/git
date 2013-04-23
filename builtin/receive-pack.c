@@ -826,8 +826,11 @@ static const char *unpack(int err_fd)
 			    : 0);
 
 	hdr_err = parse_pack_header(&hdr);
-	if (hdr_err)
+	if (hdr_err) {
+		if (err_fd > 0)
+			close(err_fd);
 		return hdr_err;
+	}
 	snprintf(hdr_arg, sizeof(hdr_arg),
 			"--pack_header=%"PRIu32",%"PRIu32,
 			ntohl(hdr.hdr_version), ntohl(hdr.hdr_entries));
