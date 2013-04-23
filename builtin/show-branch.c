@@ -203,18 +203,29 @@ static int mark_seen(struct commit *commit, struct commit_list **seen_p)
 	return 0;
 }
 
+static unsigned int all_mask;
+static unsigned int all_revs;
+static unsigned int rev_mask[MAX_REVS];
+
+static void set_all_flags(int num_rev, struct commit **rev)
+{
+	int i;
+
+	all_mask = ((1u << (REV_SHIFT + num_rev)) - 1);
+	all_revs = all_mask & ~((1u << REV_SHIFT) - 1);
+	for (i = 0; i < num_rev; i++)
+		rev_mask[i] = rev[i]->object.flags;
+}
+
 static void join_revs(struct commit_list **list_p,
 		      struct commit_list **seen_p,
 		      int num_rev, int extra)
 {
-	int all_mask = ((1u << (REV_SHIFT + num_rev)) - 1);
-	int all_revs = all_mask & ~((1u << REV_SHIFT) - 1);
-
 	while (*list_p) {
 		struct commit_list *parents;
 		int still_interesting = !!interesting(*list_p);
 		struct commit *commit = pop_one_commit(list_p);
-		int flags = commit->object.flags & all_mask;
+		unsigned flags = commit->object.flags & all_mask;
 
 		if (!still_interesting && extra <= 0)
 			break;
@@ -226,7 +237,7 @@ static void join_revs(struct commit_list **list_p,
 
 		while (parents) {
 			struct commit *p = parents->item;
-			int this_flag = p->object.flags;
+			unsigned this_flag = p->object.flags;
 			parents = parents->next;
 			if ((this_flag & flags) == flags)
 				continue;
@@ -498,13 +509,11 @@ static int rev_is_head(char *head, int headlen, char *name,
 
 static int show_merge_base(struct commit_list *seen, int num_rev)
 {
-	int all_mask = ((1u << (REV_SHIFT + num_rev)) - 1);
-	int all_revs = all_mask & ~((1u << REV_SHIFT) - 1);
 	int exit_status = 1;
 
 	while (seen) {
 		struct commit *commit = pop_one_commit(&seen);
-		int flags = commit->object.flags & all_mask;
+		unsigned flags = commit->object.flags & all_mask;
 		if (!(flags & UNINTERESTING) &&
 		    ((flags & all_revs) == all_revs)) {
 			puts(sha1_to_hex(commit->object.sha1));
@@ -517,8 +526,7 @@ static int show_merge_base(struct commit_list *seen, int num_rev)
 
 static int show_independent(struct commit **rev,
 			    int num_rev,
-			    char **ref_name,
-			    unsigned int *rev_mask)
+			    char **ref_name)
 {
 	int i;
 
@@ -633,10 +641,8 @@ int cmd_show_branch(int ac, const char **av, const char *prefix)
 	struct commit *rev[MAX_REVS], *commit;
 	char *reflog_msg[MAX_REVS];
 	struct commit_list *list = NULL, *seen = NULL;
-	unsigned int rev_mask[MAX_REVS];
 	int num_rev, i, extra = 0;
 	int all_heads = 0, all_remotes = 0;
-	int all_mask, all_revs;
 	int lifo = 1;
 	char head[128];
 	const char *head_p;
@@ -855,8 +861,8 @@ int cmd_show_branch(int ac, const char **av, const char *prefix)
 			commit_list_insert_by_date(commit, &list);
 		rev[num_rev] = commit;
 	}
-	for (i = 0; i < num_rev; i++)
-		rev_mask[i] = rev[i]->object.flags;
+
+	set_all_flags(num_rev, rev);
 
 	if (0 <= extra)
 		join_revs(&list, &seen, num_rev, extra);
@@ -867,7 +873,7 @@ int cmd_show_branch(int ac, const char **av, const char *prefix)
 		return show_merge_base(seen, num_rev);
 
 	if (independent)
-		return show_independent(rev, num_rev, ref_name, rev_mask);
+		return show_independent(rev, num_rev, ref_name);
 
 	/* Show list; --more=-1 means list-only */
 	if (1 < num_rev || extra < 0) {
@@ -916,12 +922,9 @@ int cmd_show_branch(int ac, const char **av, const char *prefix)
 	if (!sha1_name && !no_name)
 		name_commits(seen, rev, ref_name, num_rev);
 
-	all_mask = ((1u << (REV_SHIFT + num_rev)) - 1);
-	all_revs = all_mask & ~((1u << REV_SHIFT) - 1);
-
 	while (seen) {
 		struct commit *commit = pop_one_commit(&seen);
-		int this_flag = commit->object.flags;
+		unsigned int this_flag = commit->object.flags;
 		int is_merge_point = ((this_flag & all_revs) == all_revs);
 
 		shown_merge_point |= is_merge_point;
