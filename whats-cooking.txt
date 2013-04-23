@@ -1,10 +1,10 @@
 To: git@vger.kernel.org
 Bcc: lwn@lwn.net
-Subject: What's cooking in git.git (Apr 2013, #07; Mon, 22)
-X-master-at: 118f60ee06612083ff4f1810424e80a3e896f73e
-X-next-at: 46dda50f1b80376d17129b9546d08f602af44864
+Subject: What's cooking in git.git (Apr 2013, #08; Tue, 23)
+X-master-at: 562af5b0b900539bd7ef481316834e500f571899
+X-next-at: d6019519f9f40af1f430c4a5e6d87e69d376483d
 
-What's cooking in git.git (Apr 2013, #07; Mon, 22)
+What's cooking in git.git (Apr 2013, #08; Tue, 23)
 --------------------------------------------------
 
 Here are the topics that have been cooking.  Commits prefixed with
@@ -23,191 +23,12 @@ of the repositories listed at
 --------------------------------------------------
 [Graduated to "master"]
 
-* ap/strbuf-humanize (2013-04-10) 2 commits
-  (merged to 'next' on 2013-04-14 at 66d7af5)
- + count-objects: add -H option to humanize sizes
- + strbuf: create strbuf_humanise_bytes() to show byte sizes
+* fc/untracked-zsh-prompt (2013-04-21) 1 commit
+  (merged to 'next' on 2013-04-22 at 472da3e)
+ + prompt: fix untracked files for zsh
 
- Teach "--human-readable" aka "-H" option to "git count-objects" to
- show various large numbers in Ki/Mi/GiB scaled as necessary.
-
- I've decided to let this topic supersede mc/count-objects-kibibytes.
- Human users will get an even easier output with "-H" and by not
- changing the output without an explicit option we do not have to
- break third-party tools that may have been reading from the output
- of this command.
-
-
-* as/clone-reference-with-gitfile (2013-04-09) 2 commits
-  (merged to 'next' on 2013-04-15 at ab0d128)
- + clone: Allow repo using gitfile as a reference
- + clone: Fix error message for reference repository
-
- "git clone" did not work if a repository pointed at by the
- "--reference" option is a gitfile that points at another place.
-
-
-* fc/branch-upstream-color (2013-04-15) 1 commit
-  (merged to 'next' on 2013-04-15 at 2fc50fd)
- + branch: colour upstream branches
-
- Add more colors to "git branch -vv" output.
-
-
-* fc/remote-hg (2013-04-11) 21 commits
-  (merged to 'next' on 2013-04-16 at cbeaf41)
- + remote-hg: activate graphlog extension for hg_log()
- + remote-hg: fix bad file paths
- + remote-hg: document location of stored hg repository
- + remote-hg: fix bad state issue
- + remote-hg: add 'insecure' option
- + remote-hg: add simple mail test
- + remote-hg: add basic author tests
- + remote-hg: show more proper errors
- + remote-hg: force remote push
- + remote-hg: push to the appropriate branch
- + remote-hg: update tags globally
- + remote-hg: update remote bookmarks
- + remote-hg: refactor export
- + remote-hg: split bookmark handling
- + remote-hg: redirect buggy mercurial output
- + remote-hg: trivial test cleanups
- + remote-hg: make sure fake bookmarks are updated
- + remote-hg: fix for files with spaces
- + remote-hg: properly report errors on bookmark pushes
- + remote-hg: add missing config variable in doc
- + remote-hg: trivial cleanups
-
- Updates remote-hg helper (in contrib/).
-
-
-* jk/a-thread-only-dies-once (2013-04-16) 2 commits
-  (merged to 'next' on 2013-04-18 at 3208f44)
- + run-command: use thread-aware die_is_recursing routine
- + usage: allow pluggable die-recursion checks
-
- A regression fix for the logic to detect die() handler triggering
- itself recursively.
-
-
-* jk/chopped-ident (2013-04-17) 3 commits
-  (merged to 'next' on 2013-04-19 at ecec2d4)
- + blame: handle broken commit headers gracefully
- + pretty: handle broken commit headers gracefully
- + cat-file: print tags raw for "cat-file -p"
-
- A commit object whose author or committer ident are malformed
- crashed some code that trusted that a name, an email and an
- timestamp can always be found in it.
-
-
-* jk/doc-http-backend (2013-04-13) 3 commits
-  (merged to 'next' on 2013-04-19 at 7932840)
- + doc/http-backend: match query-string in apache half-auth example
- + doc/http-backend: give some lighttpd config examples
- + doc/http-backend: clarify "half-auth" repo configuration
-
- Improve documentation to illustrate "push authenticated, fetch
- anonymous" configuration for smart HTTP servers.
-
-
-* jx/i18n-branch-error-messages (2013-04-15) 1 commit
-  (merged to 'next' on 2013-04-18 at 630c211)
- + i18n: branch: mark strings for translation
-
-
-* lf/read-blob-data-from-index (2013-04-17) 3 commits
-  (merged to 'next' on 2013-04-17 at 611208f)
- + convert.c: remove duplicate code
- + read_blob_data_from_index(): optionally return the size of blob data
- + attr.c: extract read_index_data() as read_blob_data_from_index()
-
- Reduce duplicated code between convert.c and attr.c.
-
-
-* mv/sequencer-pick-error-diag (2013-04-11) 1 commit
-  (merged to 'next' on 2013-04-16 at a2da926)
- + cherry-pick: make sure all input objects are commits
-
- "git cherry-pick $blob $tree" is diagnosed as a nonsense.
-
-
-* mv/ssl-ftp-curl (2013-04-12) 1 commit
-  (merged to 'next' on 2013-04-15 at 7fdada6)
- + Support FTP-over-SSL/TLS for regular FTP
-
- Does anybody really use commit walkers over ftp???
-
-
-* nd/checkout-keep-sparse (2013-04-15) 1 commit
-  (merged to 'next' on 2013-04-19 at 803dabc)
- + checkout: add --ignore-skip-worktree-bits in sparse checkout mode
-
- Make the initial "sparse" selection of the paths more sticky across
- "git checkout".
-
-
-* rt/commentchar-fmt-merge-msg (2013-04-18) 1 commit
-  (merged to 'next' on 2013-04-18 at 96799bd)
- + t6200: avoid path mangling issue on Windows
-
- A test fix for recent update.
-
-
-* ta/glossary (2013-04-15) 4 commits
-  (merged to 'next' on 2013-04-19 at 63ee8a4)
- + glossary: improve definitions of refspec and pathspec
- + The name of the hash function is "SHA-1", not "SHA1"
- + glossary: improve description of SHA-1 related topics
- + glossary: remove outdated/misleading/irrelevant entries
-
-
-* th/bisect-final-log (2013-04-15) 1 commit
-  (merged to 'next' on 2013-04-19 at 89d2041)
- + bisect: Store first bad commit as comment in log file
-
- Leave a commit to note what the final outcome was in the bisect log
- file.
-
-* tr/copy-revisions-from-stdin (2013-04-16) 1 commit
-  (merged to 'next' on 2013-04-16 at d882870)
- + read_revisions_from_stdin: make copies for handle_revision_arg
-
- A fix to a long-standing issue in the command line parser for
- revisions, which was triggered by mv/sequence-pick-error-diag topic.
-
---------------------------------------------------
-[New Topics]
-
-* jh/checkout-auto-tracking (2013-04-21) 8 commits
-  (merged to 'next' on 2013-04-22 at 2356700)
- + glossary: Update and rephrase the definition of a remote-tracking branch
- + branch.c: Validate tracking branches with refspecs instead of refs/remotes/*
- + t9114.2: Don't use --track option against "svn-remote"-tracking branches
- + t7201.24: Add refspec to keep --track working
- + t3200.39: tracking setup should fail if there is no matching refspec.
- + checkout: Use remote refspecs when DWIMming tracking branches
- + t2024: Show failure to use refspec when DWIMming remote branch names
- + t2024: Add tests verifying current DWIM behavior of 'git checkout <branch>'
-
- Updates "git checkout foo" that DWIMs the intended "upstream" and
- turns it into "git checkout -t -b foo remotes/origin/foo" to
- correctly take existing remote definitions into account.  The
- remote "origin" may be what uniquely map its own branch to
- remotes/some/where/foo but that some/where may not be "origin".
-
- Will cook in 'next'.
-
-
-* mg/more-textconv (2013-04-19) 6 commits
- - grep: honor --textconv for the case rev:path
- - grep: allow to use textconv filters
- - t7008: demonstrate behavior of grep with textconv
- - cat-file: do not die on --textconv without textconv filters
- - show: honor --textconv for blobs
- - t4030: demonstrate behavior of show with textconv
-
- Will be rerolled.
+ Zsh completion forgot that '%' character used to signal untracked
+ files needs to be escaped with another '%'.
 
 
 * jk/receive-pack-deadlocks-with-early-failure (2013-04-19) 1 commit
@@ -219,49 +40,109 @@ of the repositories listed at
  returned without closing the error stream, which led to a hang
  sideband thread.
 
- Will fast-track to 'master'.
+
+* jn/gitweb-install-doc (2013-04-17) 2 commits
+  (merged to 'next' on 2013-04-22 at a5d4812)
+ + gitweb/INSTALL: GITWEB_CONFIG_SYSTEM is for backward compatibility
+ + gitweb/INSTALL: Simplify description of GITWEB_CONFIG_SYSTEM
+
+ Reword gitweb configuration instrutions.
 
 
-* fc/untracked-zsh-prompt (2013-04-21) 1 commit
-  (merged to 'next' on 2013-04-22 at 472da3e)
- + prompt: fix untracked files for zsh
+* kb/status-ignored-optim-2 (2013-04-15) 14 commits
+  (merged to 'next' on 2013-04-21 at d2a5c70)
+ + dir.c: git-status --ignored: don't scan the work tree twice
+ + dir.c: git-status --ignored: don't scan the work tree three times
+ + dir.c: git-status: avoid is_excluded checks for tracked files
+ + dir.c: replace is_path_excluded with now equivalent is_excluded API
+ + dir.c: unify is_excluded and is_path_excluded APIs
+ + dir.c: move prep_exclude
+ + dir.c: factor out parts of last_exclude_matching for later reuse
+ + dir.c: git-clean -d -X: don't delete tracked directories
+ + dir.c: make 'git-status --ignored' work within leading directories
+ + dir.c: git-status --ignored: don't list empty directories as ignored
+ + dir.c: git-ls-files --directories: don't hide empty directories
+ + dir.c: git-status --ignored: don't list empty ignored directories
+ + dir.c: git-status --ignored: don't list files in ignored directories
+ + dir.c: git-status --ignored: don't drop ignored directories
 
- Will fast-track to 'master'.
+ A handful of issues in the code to traverse working tree to find
+ untracked and/or ignored files have been fixed, and the general
+ codepath involved in "status -u" and "clean" have been cleaned up
+ and optimized.
 
 
-* jn/glossary-revision (2013-04-21) 1 commit
- - glossary: a revision is just a commit
+* nd/pretty-formats (2013-04-18) 13 commits
+  (merged to 'next' on 2013-04-22 at 3d63014)
+ + pretty: support %>> that steal trailing spaces
+ + pretty: support truncating in %>, %< and %><
+ + pretty: support padding placeholders, %< %> and %><
+ + pretty: add %C(auto) for auto-coloring
+ + pretty: split color parsing into a separate function
+ + pretty: two phase conversion for non utf-8 commits
+ + utf8.c: add reencode_string_len() that can handle NULs in string
+ + utf8.c: add utf8_strnwidth() with the ability to skip ansi sequences
+ + utf8.c: move display_mode_esc_sequence_len() for use by other functions
+ + pretty: share code between format_decoration and show_decorations
+ + pretty-formats.txt: wrap long lines
+ + pretty: get the correct encoding for --pretty:format=%e
+ + pretty: save commit encoding from logmsg_reencode if the caller needs it
 
- The wording for "revision" in the glossary wanted to say it refers
- to "commit (noun) as a concept" but it was badly phrased.
+ pretty-printing body of the commit that is stored in non UTF-8
+ encoding did not work well.  The early part of this series fixes
+ it.  And then it adds %C(auto) specifier that turns the coloring on
+ when we are emitting to the terminal, and adds column-aligning
+ format directives.
 
- Will cook in 'next'.
+--------------------------------------------------
+[New Topics]
 
- This may need further updates to hint that in contexts where it is
- clear, the word may refer to an object name, not necessarily a
- commit.
+* jc/add-2.0-ignore-removal (2013-04-22) 1 commit
+ - git add <pathspec>... defaults to "-A"
+ (this branch uses jc/add-ignore-removal.)
+
+ Updated endgame for "git add <pathspec>" that defaults to "--all"
+ aka "--no-ignore-removal".
+
+ Will cook in 'next' until Git 2.0.
 
 
-* rr/shortlog-doc (2013-04-22) 8 commits
- - builtin/shortlog.c: make usage string consistent with log
- - builtin/log.c: make usage string consistent with doc
- - git-shortlog.txt: make SYNOPSIS match log, update OPTIONS
- - git-log.txt: rewrite note on why "--" may be required
- - git-log.txt: generalize <since>..<until>
- - git-log.txt: order OPTIONS properly; move <since>..<until>
- - revisions.txt: clarify the .. and ... syntax
- - git-shortlog.txt: remove (-h|--help) from OPTIONS
+* jc/add-ignore-removal (2013-04-22) 2 commits
+ - git add: rephrase -A/--no-all warning
+ - git add: --ignore-removal is a better named --no-all
+ (this branch is used by jc/add-2.0-ignore-removal.)
 
- Update documentation for "log" and "shortlog".
+ Introduce "--ignore-removal" as a synonym to "--no-all" for "git
+ add", and improve the 2.0 migration warning with it.
 
- Looked reasonable.
  Will merge to 'next'.
 
 
-* mh/multimail (2013-04-21) 1 commit
- - git-multimail: a replacement for post-receive-email
+* fc/remote-hg (2013-04-22) 16 commits
+ - remote-hg: strip extra newline
+ - remote-hg: use marks instead of inlined files
+ - remote-hg: small performance improvement
+ - remote-hg: allow refs with spaces
+ - remote-hg: don't update bookmarks unnecessarily
+ - remote-hg: add support for schemes extension
+ - remote-hg: improve email sanitation
+ - remote-hg: add custom local tag write code
+ - remote-hg: write tags in the appropriate branch
+ - remote-hg: custom method to write tags
+ - remote-hg: add support for tag objects
+ - remote-hg: add branch_tip() helper
+ - remote-hg: properly mark branches up-to-date
+ - remote-hg: use python urlparse
+ - remote-hg: safer bookmark pushing
+ - remote-helpers: avoid has_key
 
- Waiting for comments.
+ Further updates to remote-hg (in contrib/).
+
+ Will merge to 'next' after a few days.
+
+
+* th/bisect-skipped-log (2013-04-23) 1 commit
+ - bisect: Log possibly bad, skipped commits at bisection end
 
 --------------------------------------------------
 [Stalled]
@@ -310,11 +191,80 @@ of the repositories listed at
 --------------------------------------------------
 [Cooking]
 
+* jh/checkout-auto-tracking (2013-04-21) 8 commits
+  (merged to 'next' on 2013-04-22 at 2356700)
+ + glossary: Update and rephrase the definition of a remote-tracking branch
+ + branch.c: Validate tracking branches with refspecs instead of refs/remotes/*
+ + t9114.2: Don't use --track option against "svn-remote"-tracking branches
+ + t7201.24: Add refspec to keep --track working
+ + t3200.39: tracking setup should fail if there is no matching refspec.
+ + checkout: Use remote refspecs when DWIMming tracking branches
+ + t2024: Show failure to use refspec when DWIMming remote branch names
+ + t2024: Add tests verifying current DWIM behavior of 'git checkout <branch>'
+
+ Updates "git checkout foo" that DWIMs the intended "upstream" and
+ turns it into "git checkout -t -b foo remotes/origin/foo" to
+ correctly take existing remote definitions into account.  The
+ remote "origin" may be what uniquely map its own branch to
+ remotes/some/where/foo but that some/where may not be "origin".
+
+ Will cook in 'next'.
+
+
+* mg/more-textconv (2013-04-23) 7 commits
+ - git grep: honor textconv by default
+ - grep: honor --textconv for the case rev:path
+ - grep: allow to use textconv filters
+ - t7008: demonstrate behavior of grep with textconv
+ - cat-file: do not die on --textconv without textconv filters
+ - show: honor --textconv for blobs
+ - t4030: demonstrate behavior of show with textconv
+
+ Rerolld. I am not sure if I like "show <blob>" and "grep" that use
+ textconv by default, though.
+
+
+* jn/glossary-revision (2013-04-21) 1 commit
+ - glossary: a revision is just a commit
+
+ The wording for "revision" in the glossary wanted to say it refers
+ to "commit (noun) as a concept" but it was badly phrased.
+
+ Will cook in 'next'.
+
+ This may need further updates to hint that in contexts where it is
+ clear, the word may refer to an object name, not necessarily a
+ commit.
+
+
+* rr/shortlog-doc (2013-04-22) 8 commits
+ - builtin/shortlog.c: make usage string consistent with log
+ - builtin/log.c: make usage string consistent with doc
+ - git-shortlog.txt: make SYNOPSIS match log, update OPTIONS
+ - git-log.txt: rewrite note on why "--" may be required
+ - git-log.txt: generalize <since>..<until>
+ - git-log.txt: order OPTIONS properly; move <since>..<until>
+ - revisions.txt: clarify the .. and ... syntax
+ - git-shortlog.txt: remove (-h|--help) from OPTIONS
+
+ Update documentation for "log" and "shortlog".
+
+ Looked reasonable.
+ Will merge to 'next'.
+
+
+* mh/multimail (2013-04-21) 1 commit
+ - git-multimail: a replacement for post-receive-email
+
+ Waiting for comments.
+
+
 * jc/prune-all (2013-04-18) 3 commits
   (merged to 'next' on 2013-04-22 at b00ccf6)
  + api-parse-options.txt: document "no-" for non-boolean options
  + git-gc.txt, git-reflog.txt: document new expiry options
  + date.c: add parse_expiry_date()
+ (this branch is used by mh/packed-refs-various.)
 
  We used the approxidate() parser for "--expire=<timestamp>" options
  of various commands, but it is better to treat --expire=all and
@@ -323,55 +273,6 @@ of the repositories listed at
  expiry dates.
 
  Will cook in 'next'.
-
-
-* nd/pretty-formats (2013-04-18) 13 commits
-  (merged to 'next' on 2013-04-22 at 3d63014)
- + pretty: support %>> that steal trailing spaces
- + pretty: support truncating in %>, %< and %><
- + pretty: support padding placeholders, %< %> and %><
- + pretty: add %C(auto) for auto-coloring
- + pretty: split color parsing into a separate function
- + pretty: two phase conversion for non utf-8 commits
- + utf8.c: add reencode_string_len() that can handle NULs in string
- + utf8.c: add utf8_strnwidth() with the ability to skip ansi sequences
- + utf8.c: move display_mode_esc_sequence_len() for use by other functions
- + pretty: share code between format_decoration and show_decorations
- + pretty-formats.txt: wrap long lines
- + pretty: get the correct encoding for --pretty:format=%e
- + pretty: save commit encoding from logmsg_reencode if the caller needs it
-
- pretty-printing body of the commit that is stored in non UTF-8
- encoding did not work well.  The early part of this series fixes
- it.  And then it adds %C(auto) specifier that turns the coloring on
- when we are emitting to the terminal, and adds column-aligning
- format directives.
-
- Will merge to 'master'.
-
-
-* kb/status-ignored-optim-2 (2013-04-15) 14 commits
-  (merged to 'next' on 2013-04-21 at d2a5c70)
- + dir.c: git-status --ignored: don't scan the work tree twice
- + dir.c: git-status --ignored: don't scan the work tree three times
- + dir.c: git-status: avoid is_excluded checks for tracked files
- + dir.c: replace is_path_excluded with now equivalent is_excluded API
- + dir.c: unify is_excluded and is_path_excluded APIs
- + dir.c: move prep_exclude
- + dir.c: factor out parts of last_exclude_matching for later reuse
- + dir.c: git-clean -d -X: don't delete tracked directories
- + dir.c: make 'git-status --ignored' work within leading directories
- + dir.c: git-status --ignored: don't list empty directories as ignored
- + dir.c: git-ls-files --directories: don't hide empty directories
- + dir.c: git-status --ignored: don't list empty ignored directories
- + dir.c: git-status --ignored: don't list files in ignored directories
- + dir.c: git-status --ignored: don't drop ignored directories
-
- Rerolls kb/status-ignored-optim topic (reverted from 'next').
- With help from Karsten, conflicts with as/check-ignore topic have
- been sorted out and it is now in 'pu'.
-
- Will merge to 'master'.
 
 
 * as/check-ignore (2013-04-11) 5 commits
@@ -389,7 +290,7 @@ of the repositories listed at
  The test in the second from the tip needs to be updated.
 
 
-* mh/packed-refs-various (2013-04-15) 33 commits
+* mh/packed-refs-various (2013-04-23) 33 commits
  - refs: handle the main ref_cache specially
  - refs: change do_for_each_*() functions to take ref_cache arguments
  - pack_one_ref(): do some cheap tests before a more expensive one
@@ -423,6 +324,7 @@ of the repositories listed at
  - refs: document do_for_each_ref() and do_one_ref()
  - refs: document the fields of struct ref_value
  - refs: document flags constants REF_*
+ (this branch uses jc/prune-all.)
 
  Updates reading and updating packed-refs file, correcting corner
  case bugs.
@@ -438,16 +340,6 @@ of the repositories listed at
 
  Allows remote-helpers to declare they can handle signed tags, and
  issue a warning when using those that don't.
-
- Will merge to 'master'.
-
-
-* jn/gitweb-install-doc (2013-04-17) 2 commits
-  (merged to 'next' on 2013-04-22 at a5d4812)
- + gitweb/INSTALL: GITWEB_CONFIG_SYSTEM is for backward compatibility
- + gitweb/INSTALL: Simplify description of GITWEB_CONFIG_SYSTEM
-
- Reword gitweb configuration instrutions.
 
  Will merge to 'master'.
 
@@ -481,7 +373,9 @@ of the repositories listed at
  Will cook in 'next'.
 
 
-* jl/submodule-mv (2013-04-11) 4 commits
+* jl/submodule-mv (2013-04-23) 5 commits
+  (merged to 'next' on 2013-04-23 at c04f574)
+ + submodule.c: duplicate real_path's return value
   (merged to 'next' on 2013-04-19 at 45ae3c9)
  + rm: delete .gitmodules entry of submodules removed from the work tree
  + Teach mv to update the path entry in .gitmodules for moved submodules
@@ -550,7 +444,9 @@ of the repositories listed at
 
  Migrate the rest of codebase to use "struct pathspec" more.
 
- Will be rerolled.
+ This has nasty conflicts with kb/status-ignored-optim-2,
+ as/check-ignore and tr/line-log; I've already asked Duy to hold
+ this and later rebase on top of them.
 
 
 * tr/line-log (2013-04-22) 13 commits
@@ -583,9 +479,10 @@ of the repositories listed at
 
  Will cook in 'next' until Git 2.0.
 
+--------------------------------------------------
+[Discarded]
 
 * jc/add-2.0-delete-default (2013-04-21) 1 commit
  - git add <pathspec>... defaults to "-A"
 
- Will cook in 'next' until Git 2.0.
-
+ Superseded by jc/add-2.0-ignore-removal
