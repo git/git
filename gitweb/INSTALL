@@ -243,14 +243,11 @@ for gitweb (in gitweb/README), and gitweb.conf(5) manpage.
   GITWEB_CONFIG_SYSTEM build configuration variable, and override it
   through the GITWEB_CONFIG_SYSTEM environment variable.
 
-  Note that if per-instance configuration file exists, then system-wide
-  configuration is _not used at all_.  This is quite untypical and surprising
-  behavior.  On the other hand changing current behavior would break backwards
-  compatibility and can lead to unexpected changes in gitweb behavior.
-  Therefore gitweb also looks for common system-wide configuration file,
-  normally /etc/gitweb-common.conf (set during build time using build time
-  configuration variable GITWEB_CONFIG_COMMON, set it at runtime using
-  environment variable with the same name).  Settings from per-instance or
+  Note that the GITWEB_CONFIG_SYSTEM system-wide configuration file is
+  only used for instances that lack per-instance configuration file.
+  You can use GITWEB_CONFIG_COMMON common system-wide configuration
+  file (normally /etc/gitweb-common.conf) to keep common default
+  settings that apply to all instances.  Settings from per-instance or
   system-wide configuration file override those from common system-wide
   configuration file.
 
