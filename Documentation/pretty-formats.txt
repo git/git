@@ -106,18 +106,22 @@ The placeholders are:
 - '%P': parent hashes
 - '%p': abbreviated parent hashes
 - '%an': author name
-- '%aN': author name (respecting .mailmap, see linkgit:git-shortlog[1] or linkgit:git-blame[1])
+- '%aN': author name (respecting .mailmap, see linkgit:git-shortlog[1]
+  or linkgit:git-blame[1])
 - '%ae': author email
-- '%aE': author email (respecting .mailmap, see linkgit:git-shortlog[1] or linkgit:git-blame[1])
+- '%aE': author email (respecting .mailmap, see
+  linkgit:git-shortlog[1] or linkgit:git-blame[1])
 - '%ad': author date (format respects --date= option)
 - '%aD': author date, RFC2822 style
 - '%ar': author date, relative
 - '%at': author date, UNIX timestamp
 - '%ai': author date, ISO 8601 format
 - '%cn': committer name
-- '%cN': committer name (respecting .mailmap, see linkgit:git-shortlog[1] or linkgit:git-blame[1])
+- '%cN': committer name (respecting .mailmap, see
+  linkgit:git-shortlog[1] or linkgit:git-blame[1])
 - '%ce': committer email
-- '%cE': committer email (respecting .mailmap, see linkgit:git-shortlog[1] or linkgit:git-blame[1])
+- '%cE': committer email (respecting .mailmap, see
+  linkgit:git-shortlog[1] or linkgit:git-blame[1])
 - '%cd': committer date
 - '%cD': committer date, RFC2822 style
 - '%cr': committer date, relative
@@ -138,9 +142,11 @@ The placeholders are:
 - '%gD': reflog selector, e.g., `refs/stash@{1}`
 - '%gd': shortened reflog selector, e.g., `stash@{1}`
 - '%gn': reflog identity name
-- '%gN': reflog identity name (respecting .mailmap, see linkgit:git-shortlog[1] or linkgit:git-blame[1])
+- '%gN': reflog identity name (respecting .mailmap, see
+  linkgit:git-shortlog[1] or linkgit:git-blame[1])
 - '%ge': reflog identity email
-- '%gE': reflog identity email (respecting .mailmap, see linkgit:git-shortlog[1] or linkgit:git-blame[1])
+- '%gE': reflog identity email (respecting .mailmap, see
+  linkgit:git-shortlog[1] or linkgit:git-blame[1])
 - '%gs': reflog subject
 - '%Cred': switch color to red
 - '%Cgreen': switch color to green
@@ -150,13 +156,28 @@ The placeholders are:
   adding `auto,` at the beginning will emit color only when colors are
   enabled for log output (by `color.diff`, `color.ui`, or `--color`, and
   respecting the `auto` settings of the former if we are going to a
-  terminal)
+  terminal). `auto` alone (i.e. `%C(auto)`) will turn on auto coloring
+  on the next placeholders until the color is switched again.
 - '%m': left, right or boundary mark
 - '%n': newline
 - '%%': a raw '%'
 - '%x00': print a byte from a hex code
 - '%w([<w>[,<i1>[,<i2>]]])': switch line wrapping, like the -w option of
   linkgit:git-shortlog[1].
+- '%<(<N>[,trunc|ltrunc|mtrunc])': make the next placeholder take at
+  least N columns, padding spaces on the right if necessary.
+  Optionally truncate at the beginning (ltrunc), the middle (mtrunc)
+  or the end (trunc) if the output is longer than N columns.
+  Note that truncating only works correctly with N >= 2.
+- '%<|(<N>)': make the next placeholder take at least until Nth
+  columns, padding spaces on the right if necessary
+- '%>(<N>)', '%>|(<N>)': similar to '%<(<N>)', '%<|(<N>)'
+  respectively, but padding spaces on the left
+- '%>>(<N>)', '%>>|(<N>)': similar to '%>(<N>)', '%>|(<N>)'
+  respectively, except that if the next placeholder takes more spaces
+  than given and there are spaces on its left, use those spaces
+- '%><(<N>)', '%><|(<N>)': similar to '% <(<N>)', '%<|(<N>)'
+  respectively, but padding both sides (i.e. the text is centered)
 
 NOTE: Some placeholders may depend on other options given to the
 revision traversal engine. For example, the `%g*` reflog options will
