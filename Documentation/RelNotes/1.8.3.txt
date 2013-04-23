@@ -50,6 +50,10 @@ UI, Workflows & Features
    option to resurrect these paths out of the index if you really want
    to).
 
+ * "git log --format" specifier learned %C(auto) token that tells Git
+   to use color when interpolating %d (decoration), %h (short commit
+   object name), etc. for terminal output.
+
  * "git bisect" leaves the final outcome as a comment in its bisect
    log file.
 
@@ -162,6 +166,11 @@ Performance, Internal Implementation, etc.
 
  * Updates for building under msvc.
 
+ * A handful of issues in the code to traverse working tree to find
+   untracked and/or ignored files have been fixed, and the general
+   codepath involved in "status -u" and "clean" have been cleaned up
+   and optimized.
+
  * The stack footprint of some codepaths that access an object from a
    pack has been shrunk.
 
@@ -208,6 +217,16 @@ Fixes since v1.8.2
 Unless otherwise noted, all the fixes since v1.8.2 in the maintenance
 track are contained in this release (see release notes to them for
 details).
+
+ * When receive-pack detects error in the pack header it received in
+   order to decide which of unpack-objects or index-pack to run, it
+   returned without closing the error stream, which led to a hang
+   sideband thread.
+   (merge 49ecfa1 jk/receive-pack-deadlocks-with-early-failure later to maint).
+
+ * Zsh completion forgot that '%' character used to signal untracked
+   files needs to be escaped with another '%'.
+   (merge 24b6132 fc/untracked-zsh-prompt later to maint).
 
  * A commit object whose author or committer ident are malformed
    crashed some code that trusted that a name, an email and an
