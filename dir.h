@@ -79,7 +79,8 @@ struct dir_struct {
 		DIR_SHOW_OTHER_DIRECTORIES = 1<<1,
 		DIR_HIDE_EMPTY_DIRECTORIES = 1<<2,
 		DIR_NO_GITLINKS = 1<<3,
-		DIR_COLLECT_IGNORED = 1<<4
+		DIR_COLLECT_IGNORED = 1<<4,
+		DIR_SHOW_IGNORED_TOO = 1<<5
 	} flags;
 	struct dir_entry **entries;
 	struct dir_entry **ignored;
@@ -110,9 +111,11 @@ struct dir_struct {
 	 *
 	 * exclude_stack points to the top of the exclude_stack, and
 	 * basebuf contains the full path to the current
-	 * (sub)directory in the traversal.
+	 * (sub)directory in the traversal. Exclude points to the
+	 * matching exclude struct if the directory is excluded.
 	 */
 	struct exclude_stack *exclude_stack;
+	struct exclude *exclude;
 	char basebuf[PATH_MAX];
 };
 
@@ -149,22 +152,10 @@ extern int match_pathname(const char *, int,
 			  const char *, int,
 			  const char *, int, int, int);
 
-/*
- * The is_excluded() API is meant for callers that check each level of leading
- * directory hierarchies with is_excluded() to avoid recursing into excluded
- * directories.  Callers that do not do so should use this API instead.
- */
-struct path_exclude_check {
-	struct dir_struct *dir;
-	struct exclude *exclude;
-	struct strbuf path;
-};
-extern void path_exclude_check_init(struct path_exclude_check *, struct dir_struct *);
-extern void path_exclude_check_clear(struct path_exclude_check *);
-extern struct exclude *last_exclude_matching_path(struct path_exclude_check *, const char *,
-						  int namelen, int *dtype);
-extern int is_path_excluded(struct path_exclude_check *, const char *, int namelen, int *dtype);
+extern struct exclude *last_exclude_matching(struct dir_struct *dir,
+					     const char *name, int *dtype);
 
+extern int is_excluded(struct dir_struct *dir, const char *name, int *dtype);
 
 extern struct exclude_list *add_exclude_list(struct dir_struct *dir,
 					     int group_type, const char *src);

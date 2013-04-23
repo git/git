@@ -22,12 +22,23 @@ The notable options are:
 
 `flags`::
 
-	A bit-field of options:
+	A bit-field of options (the `*IGNORED*` flags are mutually exclusive):
 
 `DIR_SHOW_IGNORED`:::
 
-	The traversal is for finding just ignored files, not unignored
-	files.
+	Return just ignored files in `entries[]`, not untracked files.
+
+`DIR_SHOW_IGNORED_TOO`:::
+
+	Similar to `DIR_SHOW_IGNORED`, but return ignored files in `ignored[]`
+	in addition to untracked files in `entries[]`.
+
+`DIR_COLLECT_IGNORED`:::
+
+	Special mode for git-add. Return ignored files in `ignored[]` and
+	untracked files in `entries[]`. Only returns ignored files that match
+	pathspec exactly (no wildcards). Does not recurse into ignored
+	directories.
 
 `DIR_SHOW_OTHER_DIRECTORIES`:::
 
@@ -57,6 +68,14 @@ The result of the enumeration is left in these fields:
 
 	Internal use; keeps track of allocation of `entries[]` array.
 
+`ignored[]`::
+
+	An array of `struct dir_entry`, used for ignored paths with the
+	`DIR_SHOW_IGNORED_TOO` and `DIR_COLLECT_IGNORED` flags.
+
+`ignored_nr`::
+
+	The number of members in `ignored[]` array.
 
 Calling sequence
 ----------------
