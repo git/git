@@ -516,6 +516,19 @@ static void merge_name(const char *remote, struct strbuf *msg)
 		strbuf_release(&line);
 		goto cleanup;
 	}
+
+	if (remote_head->util) {
+		struct merge_remote_desc *desc;
+		desc = merge_remote_util(remote_head);
+		if (desc && desc->obj && desc->obj->type == OBJ_TAG) {
+			strbuf_addf(msg, "%s\t\t%s '%s'\n",
+				    sha1_to_hex(desc->obj->sha1),
+				    typename(desc->obj->type),
+				    remote);
+			goto cleanup;
+		}
+	}
+
 	strbuf_addf(msg, "%s\t\tcommit '%s'\n",
 		sha1_to_hex(remote_head->object.sha1), remote);
 cleanup:
