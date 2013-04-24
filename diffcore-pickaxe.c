@@ -8,7 +8,12 @@
 #include "xdiff-interface.h"
 #include "kwset.h"
 
-typedef int (*pickaxe_fn)(struct diff_filepair *p, struct diff_options *o, regex_t *regexp, kwset_t kws);
+typedef int (*pickaxe_fn)(mmfile_t *one, mmfile_t *two,
+			  struct diff_options *o,
+			  regex_t *regexp, kwset_t kws);
+
+static int pickaxe_match(struct diff_filepair *p, struct diff_options *o,
+			 regex_t *regexp, kwset_t kws, pickaxe_fn fn);
 
 static void pickaxe(struct diff_queue_struct *q, struct diff_options *o,
 		    regex_t *regexp, kwset_t kws, pickaxe_fn fn)
@@ -22,7 +27,7 @@ static void pickaxe(struct diff_queue_struct *q, struct diff_options *o,
 		/* Showing the whole changeset if needle exists */
 		for (i = 0; i < q->nr; i++) {
 			struct diff_filepair *p = q->queue[i];
-			if (fn(p, o, regexp, kws))
+			if (pickaxe_match(p, o, regexp, kws, fn))
 				return; /* do not munge the queue */
 		}
 
@@ -37,7 +42,7 @@ static void pickaxe(struct diff_queue_struct *q, struct diff_options *o,
 		/* Showing only the filepairs that has the needle */
 		for (i = 0; i < q->nr; i++) {
 			struct diff_filepair *p = q->queue[i];
-			if (fn(p, o, regexp, kws))
+			if (pickaxe_match(p, o, regexp, kws, fn))
 				diff_q(&outq, p);
 			else
 				diff_free_filepair(p);
@@ -74,64 +79,33 @@ static void diffgrep_consume(void *priv, char *line, unsigned long len)
 	line[len] = hold;
 }
 
-static void fill_one(struct diff_filespec *one,
-		     mmfile_t *mf, struct userdiff_driver **textconv)
-{
-	if (DIFF_FILE_VALID(one)) {
-		*textconv = get_textconv(one);
-		mf->size = fill_textconv(*textconv, one, &mf->ptr);
-	} else {
-		memset(mf, 0, sizeof(*mf));
-	}
-}
-
-static int diff_grep(struct diff_filepair *p, struct diff_options *o,
+static int diff_grep(mmfile_t *one, mmfile_t *two,
+		     struct diff_options *o,
 		     regex_t *regexp, kwset_t kws)
 {
 	regmatch_t regmatch;
-	struct userdiff_driver *textconv_one = NULL;
-	struct userdiff_driver *textconv_two = NULL;
-	mmfile_t mf1, mf2;
-	int hit;
+	struct diffgrep_cb ecbdata;
+	xpparam_t xpp;
+	xdemitconf_t xecfg;
 
-	if (diff_unmodified_pair(p))
-		return 0;
+	if (!one)
+		return !regexec(regexp, two->ptr, 1, &regmatch, 0);
+	if (!two)
+		return !regexec(regexp, one->ptr, 1, &regmatch, 0);
 
-	fill_one(p->one, &mf1, &textconv_one);
-	fill_one(p->two, &mf2, &textconv_two);
-
-	if (!mf1.ptr) {
-		if (!mf2.ptr)
-			return 0; /* ignore unmerged */
-		/* created "two" -- does it have what we are looking for? */
-		hit = !regexec(regexp, mf2.ptr, 1, &regmatch, 0);
-	} else if (!mf2.ptr) {
-		/* removed "one" -- did it have what we are looking for? */
-		hit = !regexec(regexp, mf1.ptr, 1, &regmatch, 0);
-	} else {
-		/*
-		 * We have both sides; need to run textual diff and see if
-		 * the pattern appears on added/deleted lines.
-		 */
-		struct diffgrep_cb ecbdata;
-		xpparam_t xpp;
-		xdemitconf_t xecfg;
-
-		memset(&xpp, 0, sizeof(xpp));
-		memset(&xecfg, 0, sizeof(xecfg));
-		ecbdata.regexp = regexp;
-		ecbdata.hit = 0;
-		xecfg.ctxlen = o->context;
-		xecfg.interhunkctxlen = o->interhunkcontext;
-		xdi_diff_outf(&mf1, &mf2, diffgrep_consume, &ecbdata,
-			      &xpp, &xecfg);
-		hit = ecbdata.hit;
-	}
-	if (textconv_one)
-		free(mf1.ptr);
-	if (textconv_two)
-		free(mf2.ptr);
-	return hit;
+	/*
+	 * We have both sides; need to run textual diff and see if
+	 * the pattern appears on added/deleted lines.
+	 */
+	memset(&xpp, 0, sizeof(xpp));
+	memset(&xecfg, 0, sizeof(xecfg));
+	ecbdata.regexp = regexp;
+	ecbdata.hit = 0;
+	xecfg.ctxlen = o->context;
+	xecfg.interhunkctxlen = o->interhunkcontext;
+	xdi_diff_outf(one, two, diffgrep_consume, &ecbdata,
+		      &xpp, &xecfg);
+	return ecbdata.hit;
 }
 
 static void diffcore_pickaxe_grep(struct diff_options *o)
@@ -198,16 +172,36 @@ static unsigned int contains(mmfile_t *mf, struct diff_options *o,
 	return cnt;
 }
 
-static int has_changes(struct diff_filepair *p, struct diff_options *o,
+static int has_changes(mmfile_t *one, mmfile_t *two,
+		       struct diff_options *o,
 		       regex_t *regexp, kwset_t kws)
 {
-	struct userdiff_driver *textconv_one = get_textconv(p->one);
-	struct userdiff_driver *textconv_two = get_textconv(p->two);
+	if (!one)
+		return contains(two, o, regexp, kws) != 0;
+	if (!two)
+		return contains(one, o, regexp, kws) != 0;
+	return contains(one, o, regexp, kws) != contains(two, o, regexp, kws);
+}
+
+static int pickaxe_match(struct diff_filepair *p, struct diff_options *o,
+			 regex_t *regexp, kwset_t kws, pickaxe_fn fn)
+{
+	struct userdiff_driver *textconv_one = NULL;
+	struct userdiff_driver *textconv_two = NULL;
 	mmfile_t mf1, mf2;
 	int ret;
 
 	if (!o->pickaxe[0])
 		return 0;
+
+	/* ignore unmerged */
+	if (!DIFF_FILE_VALID(p->one) && !DIFF_FILE_VALID(p->two))
+		return 0;
+
+	if (DIFF_OPT_TST(o, ALLOW_TEXTCONV)) {
+		textconv_one = get_textconv(p->one);
+		textconv_two = get_textconv(p->two);
+	}
 
 	/*
 	 * If we have an unmodified pair, we know that the count will be the
@@ -219,20 +213,12 @@ static int has_changes(struct diff_filepair *p, struct diff_options *o,
 	if (textconv_one == textconv_two && diff_unmodified_pair(p))
 		return 0;
 
-	fill_one(p->one, &mf1, &textconv_one);
-	fill_one(p->two, &mf2, &textconv_two);
+	mf1.size = fill_textconv(textconv_one, p->one, &mf1.ptr);
+	mf2.size = fill_textconv(textconv_two, p->two, &mf2.ptr);
 
-	if (!mf1.ptr) {
-		if (!mf2.ptr)
-			ret = 0; /* ignore unmerged */
-		/* created */
-		ret = contains(&mf2, o, regexp, kws) != 0;
-	}
-	else if (!mf2.ptr) /* removed */
-		ret = contains(&mf1, o, regexp, kws) != 0;
-	else
-		ret = contains(&mf1, o, regexp, kws) !=
-		      contains(&mf2, o, regexp, kws);
+	ret = fn(DIFF_FILE_VALID(p->one) ? &mf1 : NULL,
+		 DIFF_FILE_VALID(p->two) ? &mf2 : NULL,
+		 o, regexp, kws);
 
 	if (textconv_one)
 		free(mf1.ptr);
