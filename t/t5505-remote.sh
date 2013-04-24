@@ -1003,4 +1003,31 @@ test_expect_success 'remote set-url --delete baz' '
 	cmp expect actual
 '
 
+test_expect_success 'extra args: setup' '
+	# add a dummy origin so that this does not trigger failure
+	git remote add origin .
+'
+
+test_extra_arg () {
+	expect="success"
+	if test "z$1" = "z-f"; then
+		expect=failure
+		shift
+	fi
+	test_expect_$expect "extra args: $*" "
+		test_must_fail git remote $* bogus_extra_arg 2>actual &&
+		grep '^usage:' actual
+	"
+}
+
+test_extra_arg -f add nick url
+test_extra_arg rename origin newname
+test_extra_arg remove origin
+test_extra_arg set-head origin master
+# set-branches takes any number of args
+test_extra_arg set-url origin newurl oldurl
+test_extra_arg -f show origin
+test_extra_arg -f prune origin
+# update takes any number of args
+
 test_done
