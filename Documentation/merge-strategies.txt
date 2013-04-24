@@ -48,6 +48,12 @@ patience;;
 	this when the branches to be merged have diverged wildly.
 	See also linkgit:git-diff[1] `--patience`.
 
+diff-algorithm=[patience|minimal|histogram|myers];;
+	Tells 'merge-recursive' to use a different diff algorithm, which
+	can help avoid mismerges that occur due to unimportant matching
+	lines (such as braces from distinct functions).  See also
+	linkgit:git-diff[1] `--diff-algorithm`.
+
 ignore-space-change;;
 ignore-all-space;;
 ignore-space-at-eol;;
