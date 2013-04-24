@@ -1020,7 +1020,7 @@ test_extra_arg () {
 	"
 }
 
-test_extra_arg -f add nick url
+test_extra_arg add nick url
 test_extra_arg rename origin newname
 test_extra_arg remove origin
 test_extra_arg set-head origin master

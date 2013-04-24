@@ -178,7 +178,7 @@ static int add(int argc, const char **argv)
 	argc = parse_options(argc, argv, NULL, options, builtin_remote_add_usage,
 			     0);
 
-	if (argc < 2)
+	if (argc != 2)
 		usage_with_options(builtin_remote_add_usage, options);
 
 	if (mirror && master)
