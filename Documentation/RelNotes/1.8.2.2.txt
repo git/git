@@ -4,6 +4,24 @@ Git v1.8.2.2 Release Notes
 Fixes since v1.8.2.1
 --------------------
 
+ * "git diff --diff-algorithm=algo" was understood by the command line
+   parser, but "git diff --diff-algorithm algo" was not.
+
+ * "git log -S/-G" started paying attention to textconv filter, but
+   there was no way to disable this.  Make it honor --no-textconv
+   option.
+
+ * "git merge $(git rev-parse v1.8.2)" behaved quite differently from
+   "git merge v1.8.2", as if v1.8.2 were written as v1.8.2^0 and did
+   not pay much attention to the annotated tag payload.  Make the code
+   notice the type of the tag object, in addition to the dwim_ref()
+   based classification the current code uses (i.e. the name appears
+   in refs/tags/) to decide when to special case merging of tags.
+
+ * "git cherry-pick" and "git revert" can take more than one commit
+   on the command line these days, but it was not mentioned on the usage
+   text.
+
  * Perl scripts like "git-svn" closed (not redirecting to /dev/null)
    the standard error stream, which is not a very smart thing to do.
    Later open may return file descriptor #2 for unrelated purpose, and
