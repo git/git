@@ -1184,13 +1184,6 @@ _git_commit ()
 		;;
 	esac
 
-	case "$prev" in
-	-c|-C)
-		__gitcomp_nl "$(__git_refs)" "" "${cur}"
-		return
-		;;
-	esac
-
 	case "$cur" in
 	--cleanup=*)
 		__gitcomp "default strip verbatim whitespace
