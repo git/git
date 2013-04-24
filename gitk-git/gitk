@@ -9494,7 +9494,7 @@ proc showrefs {} {
 	-selectbackground $selectbgcolor -font mainfont \
 	-xscrollcommand "$top.xsb set" -yscrollcommand "$top.ysb set" \
 	-width 30 -height 20 -cursor $maincursor \
-	-spacing1 1 -spacing3 1 -state disabled
+	-spacing1 1 -spacing3 1 -state disabled -wrap no
     $top.list tag configure highlight -background $selectbgcolor
     lappend bglist $top.list
     lappend fglist $top.list
@@ -9504,8 +9504,10 @@ proc showrefs {} {
     grid $top.xsb x -sticky ew
     ${NS}::frame $top.f
     ${NS}::label $top.f.l -text "[mc "Filter"]: "
-    ${NS}::entry $top.f.e -width 20 -textvariable reflistfilter
-    set reflistfilter "*"
+    ${NS}::entry $top.f.e -width 28 -textvariable reflistfilter
+    set reflistfilter "**"
+    $top.f.e icursor 1
+    focus $top.f.e
     trace add variable reflistfilter write reflistfilter_change
     pack $top.f.e -side right -fill x -expand 1
     pack $top.f.l -side left
