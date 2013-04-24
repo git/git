@@ -146,6 +146,12 @@ test_expect_success 'signed-tags=strip' '
 
 '
 
+test_expect_success 'signed-tags=warn-strip' '
+	git fast-export --signed-tags=warn-strip sign-your-name >output 2>err &&
+	! grep PGP output &&
+	test -s err
+'
+
 test_expect_success 'setup submodule' '
 
 	git checkout -f master &&

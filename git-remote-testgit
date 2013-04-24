@@ -38,6 +38,7 @@ do
 			echo "*import-marks $gitmarks"
 			echo "*export-marks $gitmarks"
 		fi
+		test -n "$GIT_REMOTE_TESTGIT_SIGNED_TAGS" && echo "signed-tags"
 		echo
 		;;
 	list)

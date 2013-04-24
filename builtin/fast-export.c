@@ -24,7 +24,7 @@ static const char *fast_export_usage[] = {
 };
 
 static int progress;
-static enum { ABORT, VERBATIM, WARN, STRIP } signed_tag_mode = ABORT;
+static enum { ABORT, VERBATIM, WARN, WARN_STRIP, STRIP } signed_tag_mode = ABORT;
 static enum { ERROR, DROP, REWRITE } tag_of_filtered_mode = ERROR;
 static int fake_missing_tagger;
 static int use_done_feature;
@@ -40,6 +40,8 @@ static int parse_opt_signed_tag_mode(const struct option *opt,
 		signed_tag_mode = VERBATIM;
 	else if (!strcmp(arg, "warn"))
 		signed_tag_mode = WARN;
+	else if (!strcmp(arg, "warn-strip"))
+		signed_tag_mode = WARN_STRIP;
 	else if (!strcmp(arg, "strip"))
 		signed_tag_mode = STRIP;
 	else
@@ -428,6 +430,10 @@ static void handle_tag(const char *name, struct tag *tag)
 				/* fallthru */
 			case VERBATIM:
 				break;
+			case WARN_STRIP:
+				warning ("Stripping signature from tag %s",
+					 sha1_to_hex(tag->object.sha1));
+				/* fallthru */
 			case STRIP:
 				message_size = signature + 1 - message;
 				break;

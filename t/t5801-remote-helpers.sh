@@ -6,6 +6,7 @@
 test_description='Test remote-helper import and export commands'
 
 . ./test-lib.sh
+. "$TEST_DIRECTORY"/lib-gpg.sh
 
 if ! type "${BASH-bash}" >/dev/null 2>&1; then
 	skip_all='skipping remote-testgit tests, bash not available'
@@ -164,6 +165,25 @@ test_expect_success 'push ref with existing object' '
 	git push origin dup
 	) &&
 	compare_refs local dup server dup
+'
+
+test_expect_success GPG 'push signed tag' '
+	(cd local &&
+	git checkout master &&
+	git tag -s -m signed-tag signed-tag &&
+	git push origin signed-tag
+	) &&
+	compare_refs local signed-tag^{} server signed-tag^{} &&
+	test_must_fail compare_refs local signed-tag server signed-tag
+'
+
+test_expect_success GPG 'push signed tag with signed-tags capability' '
+	(cd local &&
+	git checkout master &&
+	git tag -s -m signed-tag signed-tag-2 &&
+	GIT_REMOTE_TESTGIT_SIGNED_TAGS=1 git push origin signed-tag-2
+	) &&
+	compare_refs local signed-tag-2 server signed-tag-2
 '
 
 test_done

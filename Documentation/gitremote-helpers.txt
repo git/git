@@ -202,6 +202,10 @@ capability then it should advertise `refspec *:*`.
 	marks specified in <file> before processing any input. For details,
 	read up on '--import-marks=<file>' in linkgit:git-fast-export[1].
 
+'signed-tags'::
+	This modifies the 'export' capability, instructing Git to pass
+	'--signed-tags=verbatim' to linkgit:git-fast-export[1].  In the
+	absence of this capability, Git will use '--signed-tags=warn-strip'.
 
 
 
