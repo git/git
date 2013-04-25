@@ -1,4 +1,4 @@
-#!/usr/bin/env bash
+#!/bin/sh
 # Copyright (c) 2012 Felipe Contreras
 
 alias=$1
@@ -23,7 +23,6 @@ then
 	testgitmarks="$dir/testgit.marks"
 	test -e "$gitmarks" || >"$gitmarks"
 	test -e "$testgitmarks" || >"$testgitmarks"
-	testgitmarks_args=( "--"{import,export}"-marks=$testgitmarks" )
 fi
 
 while read line
@@ -69,7 +68,10 @@ do
 		fi
 
 		echo "feature done"
-		git fast-export "${testgitmarks_args[@]}" $refs |
+		git fast-export \
+			${testgitmarks:+"--import-marks=$testgitmarks"} \
+			${testgitmarks:+"--export-marks=$testgitmarks"} \
+			$refs |
 		sed -e "s#refs/heads/#${prefix}/heads/#g"
 		echo "done"
 		;;
@@ -88,7 +90,10 @@ do
 
 		before=$(git for-each-ref --format=' %(refname) %(objectname) ')
 
-		git fast-import "${testgitmarks_args[@]}" --quiet
+		git fast-import \
+			${testgitmarks:+"--import-marks=$testgitmarks"} \
+			${testgitmarks:+"--export-marks=$testgitmarks"} \
+			--quiet
 
 		# figure out which refs were updated
 		git for-each-ref --format='%(refname) %(objectname)' |
