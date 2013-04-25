@@ -118,7 +118,9 @@ test_expect_success 'pushing without refspecs' '
 	(cd local2 &&
 	echo content >>file &&
 	git commit -a -m ten &&
-	GIT_REMOTE_TESTGIT_REFSPEC="" test_must_fail git push 2>../error) &&
+	GIT_REMOTE_TESTGIT_REFSPEC="" &&
+	export GIT_REMOTE_TESTGIT_REFSPEC &&
+	test_must_fail git push 2>../error) &&
 	grep "remote-helper doesn.t support push; refspec needed" error
 '
 
