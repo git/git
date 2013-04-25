@@ -413,7 +413,6 @@ void pp_user_info(const struct pretty_print_context *pp,
 	struct strbuf name;
 	struct strbuf mail;
 	struct ident_split ident;
-	int linelen;
 	char *line_end;
 	const char *mailbuf, *namebuf;
 	size_t namelen, maillen;
@@ -422,17 +421,9 @@ void pp_user_info(const struct pretty_print_context *pp,
 	if (pp->fmt == CMIT_FMT_ONELINE)
 		return;
 
-	line_end = strchr(line, '\n');
-	if (!line_end) {
-		line_end = strchr(line, '\0');
-		if (!line_end)
-			return;
-	}
-
-	linelen = ++line_end - line;
-	if (split_ident_line(&ident, line, linelen))
+	line_end = strchrnul(line, '\n');
+	if (split_ident_line(&ident, line, line_end - line))
 		return;
-
 
 	mailbuf = ident.mail_begin;
 	maillen = ident.mail_end - ident.mail_begin;
