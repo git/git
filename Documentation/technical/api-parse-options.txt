@@ -176,6 +176,10 @@ There are some macros to easily define options:
 	Introduce an option with date argument, see `approxidate()`.
 	The timestamp is put into `int_var`.
 
+`OPT_EXPIRY_DATE(short, long, &int_var, description)`::
+	Introduce an option with expiry date argument, see `parse_expiry_date()`.
+	The timestamp is put into `int_var`.
+
 `OPT_CALLBACK(short, long, &var, arg_str, description, func_ptr)`::
 	Introduce an option with argument.
 	The argument will be fed into the function given by `func_ptr`
