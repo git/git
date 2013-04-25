@@ -439,8 +439,6 @@ void pp_user_info(const struct pretty_print_context *pp,
 	strbuf_add(&mail, mailbuf, maillen);
 	strbuf_add(&name, namebuf, namelen);
 
-	namelen = name.len + mail.len + 3; /* ' ' + '<' + '>' */
-
 	if (pp->fmt == CMIT_FMT_EMAIL) {
 		strbuf_addstr(sb, "From: ");
 		if (needs_rfc2047_encoding(name.buf, name.len, RFC2047_ADDRESS)) {
@@ -457,9 +455,10 @@ void pp_user_info(const struct pretty_print_context *pp,
 			strbuf_add_wrapped_bytes(sb, name.buf, name.len,
 						 -6, 1, max_length);
 		}
-		if (namelen - name.len + last_line_length(sb) > max_length)
-			strbuf_addch(sb, '\n');
 
+		if (max_length <
+		    last_line_length(sb) + strlen(" <") + maillen + strlen(">"))
+			strbuf_addch(sb, '\n');
 		strbuf_addf(sb, " <%s>\n", mail.buf);
 	} else {
 		strbuf_addf(sb, "%s: %.*s%s <%s>\n", what,
