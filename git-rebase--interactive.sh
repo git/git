@@ -57,6 +57,9 @@ rewritten="$state_dir"/rewritten
 
 dropped="$state_dir"/dropped
 
+end="$state_dir"/end
+msgnum="$state_dir"/msgnum
+
 # A script to set the GIT_AUTHOR_NAME, GIT_AUTHOR_EMAIL, and
 # GIT_AUTHOR_DATE that will be used for the commit that is currently
 # being rebased.
@@ -109,7 +112,9 @@ mark_action_done () {
 	sed -e 1d < "$todo" >> "$todo".new
 	mv -f "$todo".new "$todo"
 	new_count=$(git stripspace --strip-comments <"$done" | wc -l)
+	echo $new_count >"$msgnum"
 	total=$(($new_count + $(git stripspace --strip-comments <"$todo" | wc -l)))
+	echo $total >"$end"
 	if test "$last_count" != "$new_count"
 	then
 		last_count=$new_count

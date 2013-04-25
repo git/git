@@ -28,6 +28,10 @@ test_expect_success 'setup for prompt tests' '
 	git checkout -b b2 master &&
 	echo 0 > file &&
 	git commit -m "second b2" file &&
+	echo 00 > file &&
+	git commit -m "another b2" file &&
+	echo 000 > file &&
+	git commit -m "yet another b2" file &&
 	git checkout master
 '
 
@@ -243,10 +247,12 @@ test_expect_success 'prompt - inside bare repository' '
 '
 
 test_expect_success 'prompt - interactive rebase' '
-	printf " (b1|REBASE-i)" > expected
+	printf " (b1|REBASE-i 2/3)" > expected
 	echo "#!$SHELL_PATH" >fake_editor.sh &&
 	cat >>fake_editor.sh <<\EOF &&
-echo "edit $(git log -1 --format="%h")" > "$1"
+echo "exec echo" > "$1"
+echo "edit $(git log -1 --format="%h")" >> "$1"
+echo "exec echo" >> "$1"
 EOF
 	test_when_finished "rm -f fake_editor.sh" &&
 	chmod a+x fake_editor.sh &&
@@ -260,7 +266,7 @@ EOF
 '
 
 test_expect_success 'prompt - rebase merge' '
-	printf " (b2|REBASE-m)" > expected &&
+	printf " (b2|REBASE-m 1/3)" > expected &&
 	git checkout b2 &&
 	test_when_finished "git checkout master" &&
 	test_must_fail git rebase --merge b1 b2 &&
@@ -270,7 +276,7 @@ test_expect_success 'prompt - rebase merge' '
 '
 
 test_expect_success 'prompt - rebase' '
-	printf " ((t2)|REBASE)" > expected &&
+	printf " ((t2)|REBASE 1/3)" > expected &&
 	git checkout b2 &&
 	test_when_finished "git checkout master" &&
 	test_must_fail git rebase b1 b2 &&
