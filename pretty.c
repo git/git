@@ -410,8 +410,6 @@ void pp_user_info(const struct pretty_print_context *pp,
 		  const char *what, struct strbuf *sb,
 		  const char *line, const char *encoding)
 {
-	struct strbuf name;
-	struct strbuf mail;
 	struct ident_split ident;
 	char *line_end;
 	const char *mailbuf, *namebuf;
@@ -433,41 +431,32 @@ void pp_user_info(const struct pretty_print_context *pp,
 	if (pp->mailmap)
 		map_user(pp->mailmap, &mailbuf, &maillen, &namebuf, &namelen);
 
-	strbuf_init(&mail, 0);
-	strbuf_init(&name, 0);
-
-	strbuf_add(&mail, mailbuf, maillen);
-	strbuf_add(&name, namebuf, namelen);
-
 	if (pp->fmt == CMIT_FMT_EMAIL) {
 		strbuf_addstr(sb, "From: ");
-		if (needs_rfc2047_encoding(name.buf, name.len, RFC2047_ADDRESS)) {
-			add_rfc2047(sb, name.buf, name.len,
+		if (needs_rfc2047_encoding(namebuf, namelen, RFC2047_ADDRESS)) {
+			add_rfc2047(sb, namebuf, namelen,
 				    encoding, RFC2047_ADDRESS);
 			max_length = 76; /* per rfc2047 */
-		} else if (needs_rfc822_quoting(name.buf, name.len)) {
+		} else if (needs_rfc822_quoting(namebuf, namelen)) {
 			struct strbuf quoted = STRBUF_INIT;
-			add_rfc822_quoted(&quoted, name.buf, name.len);
+			add_rfc822_quoted(&quoted, namebuf, namelen);
 			strbuf_add_wrapped_bytes(sb, quoted.buf, quoted.len,
 							-6, 1, max_length);
 			strbuf_release(&quoted);
 		} else {
-			strbuf_add_wrapped_bytes(sb, name.buf, name.len,
+			strbuf_add_wrapped_bytes(sb, namebuf, namelen,
 						 -6, 1, max_length);
 		}
 
 		if (max_length <
 		    last_line_length(sb) + strlen(" <") + maillen + strlen(">"))
 			strbuf_addch(sb, '\n');
-		strbuf_addf(sb, " <%s>\n", mail.buf);
+		strbuf_addf(sb, " <%.*s>\n", (int)maillen, mailbuf);
 	} else {
-		strbuf_addf(sb, "%s: %.*s%s <%s>\n", what,
-			      (pp->fmt == CMIT_FMT_FULLER) ? 4 : 0,
-			      "    ", name.buf, mail.buf);
+		strbuf_addf(sb, "%s: %.*s%.*s <%.*s>\n", what,
+			    (pp->fmt == CMIT_FMT_FULLER) ? 4 : 0, "    ",
+			    (int)namelen, namebuf, (int)maillen, mailbuf);
 	}
-
-	strbuf_release(&mail);
-	strbuf_release(&name);
 
 	switch (pp->fmt) {
 	case CMIT_FMT_MEDIUM:
