@@ -495,6 +495,8 @@ int cmd_add(int argc, const char **argv, const char *prefix)
 		refresh(verbose, pathspec);
 		goto finish;
 	}
+	if (implicit_dot && prefix)
+		refresh_cache(REFRESH_QUIET);
 
 	if (pathspec) {
 		int i;
