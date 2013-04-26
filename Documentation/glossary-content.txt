@@ -420,9 +420,7 @@ should not be combined with other pathspec.
 	<<def_merge,merge>> left behind.
 
 [[def_revision]]revision::
-	A particular state of files and directories which was stored in the
-	<<def_object_database,object database>>. It is referenced by a
-	<<def_commit_object,commit object>>.
+	Synonym for <<def_commit,commit>> (the noun).
 
 [[def_rewind]]rewind::
 	To throw away part of the development, i.e. to assign the
