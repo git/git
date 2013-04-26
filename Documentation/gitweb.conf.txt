@@ -857,6 +857,13 @@ adding the following lines to your gitweb configuration file:
 	$known_snapshot_formats{'zip'}{'disabled'} = 1;
 	$known_snapshot_formats{'tgz'}{'compressor'} = ['gzip','-6'];
 
+BUGS
+----
+Debugging would be easier if the fallback configuration file
+(`/etc/gitweb.conf`) and environment variable to override its location
+('GITWEB_CONFIG_SYSTEM') had names reflecting their "fallback" role.
+The current names are kept to avoid breaking working setups.
+
 ENVIRONMENT
 -----------
 The location of per-instance and system-wide configuration files can be
