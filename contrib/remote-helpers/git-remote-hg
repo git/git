@@ -12,7 +12,7 @@
 # For remote repositories a local clone is stored in
 # "$GIT_DIR/hg/origin/clone/.hg/".
 
-from mercurial import hg, ui, bookmarks, context, util, encoding, node, error
+from mercurial import hg, ui, bookmarks, context, util, encoding, node, error, extensions
 
 import re
 import sys
@@ -22,6 +22,7 @@ import shutil
 import subprocess
 import urllib
 import atexit
+import urlparse
 
 #
 # If you want to switch to hg-git compatibility mode:
@@ -50,6 +51,7 @@ import atexit
 
 NAME_RE = re.compile('^([^<>]+)')
 AUTHOR_RE = re.compile('^([^<>]+?)? ?<([^<>]*)>$')
+EMAIL_RE = re.compile('^([^<>]+[^ \\\t<>])?\\b(?:[ \\t<>]*?)\\b([^ \\t<>]+@[^ \\t<>]+)')
 AUTHOR_HG_RE = re.compile('^(.*?) ?<(.*?)(?:>(.+)?)?$')
 RAW_AUTHOR_RE = re.compile('^(\w+) (?:(.+)? )?<(.*)> (\d+) ([+-]\d+)')
 
@@ -72,6 +74,12 @@ def hgmode(mode):
 
 def hghex(node):
     return hg.node.hex(node)
+
+def hgref(ref):
+    return ref.replace('___', ' ')
+
+def gitref(ref):
+    return ref.replace(' ', '___')
 
 def get_config(config):
     cmd = ['git', 'config', '--get', config]
@@ -118,6 +126,10 @@ class Marks:
     def to_rev(self, mark):
         return self.rev_marks[mark]
 
+    def next_mark(self):
+        self.last_mark += 1
+        return self.last_mark
+
     def get_mark(self, rev):
         self.last_mark += 1
         self.marks[str(rev)] = self.last_mark
@@ -129,7 +141,7 @@ class Marks:
         self.last_mark = mark
 
     def is_marked(self, rev):
-        return self.marks.has_key(str(rev))
+        return str(rev) in self.marks
 
     def get_tip(self, branch):
         return self.tips.get(branch, 0)
@@ -210,20 +222,38 @@ def fix_file_path(path):
         return path
     return os.path.relpath(path, '/')
 
-def export_file(fc):
-    d = fc.data()
-    path = fix_file_path(fc.path())
-    print "M %s inline %s" % (gitmode(fc.flags()), path)
-    print "data %d" % len(d)
-    print d
+def export_files(files):
+    global marks, filenodes
+
+    final = []
+    for f in files:
+        fid = node.hex(f.filenode())
+
+        if fid in filenodes:
+            mark = filenodes[fid]
+        else:
+            mark = marks.next_mark()
+            filenodes[fid] = mark
+            d = f.data()
+
+            print "blob"
+            print "mark :%u" % mark
+            print "data %d" % len(d)
+            print d
+
+        path = fix_file_path(f.path())
+        final.append((gitmode(f.flags()), mark, path))
+
+    return final
 
 def get_filechanges(repo, ctx, parent):
     modified = set()
     added = set()
     removed = set()
 
-    cur = ctx.manifest()
+    # load earliest manifest first for caching reasons
     prev = repo[parent].manifest().copy()
+    cur = ctx.manifest()
 
     for fn in cur:
         if fn in prev:
@@ -244,9 +274,14 @@ def fixup_user_git(user):
         name = m.group(1)
         mail = m.group(2).strip()
     else:
-        m = NAME_RE.match(user)
+        m = EMAIL_RE.match(user)
         if m:
-            name = m.group(1).strip()
+            name = m.group(1)
+            mail = m.group(2)
+        else:
+            m = NAME_RE.match(user)
+            if m:
+                name = m.group(1).strip()
     return (name, mail)
 
 def fixup_user_hg(user):
@@ -296,6 +331,12 @@ def get_repo(url, alias):
         if get_config('remote-hg.insecure') == 'true\n':
             myui.setconfig('web', 'cacerts', '')
     except subprocess.CalledProcessError:
+        pass
+
+    try:
+        mod = extensions.load(myui, 'hgext.schemes', None)
+        mod.extsetup(myui)
+    except ImportError:
         pass
 
     if hg.islocal(url):
@@ -393,6 +434,8 @@ def export_ref(repo, name, kind, head):
         if len(parents) == 0 and rev:
             print 'reset %s/%s' % (prefix, ename)
 
+        modified_final = export_files(c.filectx(f) for f in modified)
+
         print "commit %s/%s" % (prefix, ename)
         print "mark :%d" % (marks.get_mark(rev))
         print "author %s" % (author)
@@ -405,8 +448,8 @@ def export_ref(repo, name, kind, head):
             if len(parents) > 1:
                 print "merge :%s" % (rev_to_mark(parents[1]))
 
-        for f in modified:
-            export_file(c.filectx(f))
+        for f in modified_final:
+            print "M %s :%u %s" % f
         for f in removed:
             print "D %s" % (fix_file_path(f))
         print
@@ -424,10 +467,10 @@ def export_ref(repo, name, kind, head):
     marks.set_tip(ename, rev)
 
 def export_tag(repo, tag):
-    export_ref(repo, tag, 'tags', repo[tag])
+    export_ref(repo, tag, 'tags', repo[hgref(tag)])
 
 def export_bookmark(repo, bmark):
-    head = bmarks[bmark]
+    head = bmarks[hgref(bmark)]
     export_ref(repo, bmark, 'bookmarks', head)
 
 def export_branch(repo, branch):
@@ -456,19 +499,24 @@ def do_capabilities(parser):
 
     print
 
+def branch_tip(repo, branch):
+    # older versions of mercurial don't have this
+    if hasattr(repo, 'branchtip'):
+        return repo.branchtip(branch)
+    else:
+        return repo.branchtags()[branch]
+
 def get_branch_tip(repo, branch):
     global branches
 
-    heads = branches.get(branch, None)
+    heads = branches.get(hgref(branch), None)
     if not heads:
         return None
 
     # verify there's only one head
     if (len(heads) > 1):
         warn("Branch '%s' has more than one head, consider merging" % branch)
-        # older versions of mercurial don't have this
-        if hasattr(repo, "branchtip"):
-            return repo.branchtip(branch)
+        return branch_tip(repo, hgref(branch))
 
     return heads[0]
 
@@ -490,6 +538,7 @@ def list_head(repo, cur):
             head = 'master'
         bmarks[head] = node
 
+    head = gitref(head)
     print "@refs/heads/%s HEAD" % head
     g_head = (head, node)
 
@@ -511,15 +560,15 @@ def do_list(parser):
                 branches[branch] = heads
 
         for branch in branches:
-            print "? refs/heads/branches/%s" % branch
+            print "? refs/heads/branches/%s" % gitref(branch)
 
     for bmark in bmarks:
-        print "? refs/heads/%s" % bmark
+        print "? refs/heads/%s" % gitref(bmark)
 
     for tag, node in repo.tagslist():
         if tag == 'tip':
             continue
-        print "? refs/tags/%s" % tag
+        print "? refs/tags/%s" % gitref(tag)
 
     print
 
@@ -603,6 +652,10 @@ def parse_commit(parser):
         if parser.check('merge'):
             die('octopus merges are not supported yet')
 
+    # fast-export adds an extra newline
+    if data[-1] == '\n':
+        data = data[:-1]
+
     files = {}
 
     for line in parser:
@@ -656,7 +709,8 @@ def parse_commit(parser):
 
     # Check if the ref is supposed to be a named branch
     if ref.startswith('refs/heads/branches/'):
-        extra['branch'] = ref[len('refs/heads/branches/'):]
+        branch = ref[len('refs/heads/branches/'):]
+        extra['branch'] = hgref(branch)
 
     if mode == 'hg':
         i = data.find('\n--HG--\n')
@@ -716,7 +770,40 @@ def parse_tag(parser):
     data = parser.get_data()
     parser.next()
 
-    # nothing to do
+    parsed_tags[name] = (tagger, data)
+
+def write_tag(repo, tag, node, msg, author):
+    branch = repo[node].branch()
+    tip = branch_tip(repo, branch)
+    tip = repo[tip]
+
+    def getfilectx(repo, memctx, f):
+        try:
+            fctx = tip.filectx(f)
+            data = fctx.data()
+        except error.ManifestLookupError:
+            data = ""
+        content = data + "%s %s\n" % (hghex(node), tag)
+        return context.memfilectx(f, content, False, False, None)
+
+    p1 = tip.hex()
+    p2 = '\0' * 20
+    if not author:
+        author = (None, 0, 0)
+    user, date, tz = author
+
+    ctx = context.memctx(repo, (p1, p2), msg,
+            ['.hgtags'], getfilectx,
+            user, (date, tz), {'branch' : branch})
+
+    tmp = encoding.encoding
+    encoding.encoding = 'utf-8'
+
+    tagnode = repo.commitctx(ctx)
+
+    encoding.encoding = tmp
+
+    return tagnode
 
 def do_export(parser):
     global parsed_refs, bmarks, peer
@@ -741,6 +828,10 @@ def do_export(parser):
 
     for ref, node in parsed_refs.iteritems():
         if ref.startswith('refs/heads/branches'):
+            branch = ref[len('refs/heads/branches/'):]
+            if branch in branches and node in branches[branch]:
+                # up to date
+                continue
             print "ok %s" % ref
         elif ref.startswith('refs/heads/'):
             bmark = ref[len('refs/heads/'):]
@@ -748,11 +839,16 @@ def do_export(parser):
             continue
         elif ref.startswith('refs/tags/'):
             tag = ref[len('refs/tags/'):]
+            tag = hgref(tag)
+            author, msg = parsed_tags.get(tag, (None, None))
             if mode == 'git':
-                msg = 'Added tag %s for changeset %s' % (tag, hghex(node[:6]));
-                parser.repo.tag([tag], node, msg, False, None, {})
+                if not msg:
+                    msg = 'Added tag %s for changeset %s' % (tag, hghex(node[:6]));
+                write_tag(parser.repo, tag, node, msg, author)
             else:
-                parser.repo.tag([tag], node, None, True, None, {})
+                fp = parser.repo.opener('localtags', 'a')
+                fp.write('%s %s\n' % (hghex(node), tag))
+                fp.close()
             print "ok %s" % ref
         else:
             # transport-helper/fast-export bugs
@@ -771,6 +867,9 @@ def do_export(parser):
         else:
             old = ''
 
+        if old == new:
+            continue
+
         if bmark == 'master' and 'master' not in parser.repo._bookmarks:
             # fake bookmark
             pass
@@ -782,6 +881,8 @@ def do_export(parser):
             continue
 
         if peer:
+            rb = peer.listkeys('bookmarks')
+            old = rb.get(bmark, '')
             if not peer.pushkey('bookmarks', bmark, old, new):
                 print "error %s" % ref
                 continue
@@ -791,11 +892,11 @@ def do_export(parser):
     print
 
 def fix_path(alias, repo, orig_url):
-    repo_url = util.url(repo.url())
-    url = util.url(orig_url)
-    if str(url) == str(repo_url):
+    url = urlparse.urlparse(orig_url, 'file')
+    if url.scheme != 'file' or os.path.isabs(url.path):
         return
-    cmd = ['git', 'config', 'remote.%s.url' % alias, "hg::%s" % repo_url]
+    abs_url = urlparse.urljoin("%s/" % os.getcwd(), orig_url)
+    cmd = ['git', 'config', 'remote.%s.url' % alias, "hg::%s" % abs_url]
     subprocess.call(cmd)
 
 def main(args):
@@ -803,6 +904,8 @@ def main(args):
     global marks, blob_marks, parsed_refs
     global peer, mode, bad_mail, bad_name
     global track_branches, force_push, is_tmp
+    global parsed_tags
+    global filenodes
 
     alias = args[1]
     url = args[2]
@@ -845,6 +948,8 @@ def main(args):
     blob_marks = {}
     parsed_refs = {}
     marks = None
+    parsed_tags = {}
+    filenodes = {}
 
     repo = get_repo(url, alias)
     prefix = 'refs/hg/%s' % alias
