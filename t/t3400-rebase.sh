@@ -101,7 +101,14 @@ test_expect_success 'HEAD was detached during rebase' '
 	test $(git rev-parse HEAD@{1}) != $(git rev-parse my-topic-branch@{1})
 '
 
+test_expect_success 'rebase from ambiguous branch name' '
+	git checkout -b topic side &&
+	git rebase master
+'
+
 test_expect_success 'rebase after merge master' '
+	git checkout --detach refs/tags/topic &&
+	git branch -D topic &&
 	git reset --hard topic &&
 	git merge master &&
 	git rebase master &&

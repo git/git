@@ -473,7 +473,7 @@ case "$#" in
 		head_name="detached HEAD"
 		branch_name=HEAD ;# detached
 	fi
-	orig_head=$(git rev-parse --verify "${branch_name}^0") || exit
+	orig_head=$(git rev-parse --verify HEAD) || exit
 	;;
 *)
 	die "BUG: unexpected number of arguments left to parse"
