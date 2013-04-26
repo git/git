@@ -97,13 +97,13 @@ static int fix_unmerged_status(struct diff_filepair *p,
 }
 
 static const char *add_would_remove_warning = N_(
-	"You ran 'git add' with neither '-A (--all)' or '--no-all', whose\n"
-"behaviour will change in Git 2.0 with respect to paths you removed from\n"
-"your working tree. Paths like '%s' that are\n"
-"removed are ignored with this version of Git.\n"
+	"You ran 'git add' with neither '-A (--all)' or '--ignore-removal',\n"
+"whose behaviour will change in Git 2.0 with respect to paths you removed.\n"
+"Paths like '%s' that are\n"
+"removed from your working tree are ignored with this version of Git.\n"
 "\n"
-"* 'git add --no-all <pathspec>', which is the current default, ignores\n"
-"  paths you removed from your working tree.\n"
+"* 'git add --ignore-removal <pathspec>', which is the current default,\n"
+"  ignores paths you removed from your working tree.\n"
 "\n"
 "* 'git add --all <pathspec>' will let you also record the removals.\n"
 "\n"
@@ -382,6 +382,13 @@ static int ignore_add_errors, intent_to_add, ignore_missing;
 static int addremove = ADDREMOVE_DEFAULT;
 static int addremove_explicit = -1; /* unspecified */
 
+static int ignore_removal_cb(const struct option *opt, const char *arg, int unset)
+{
+	/* if we are told to ignore, we are not adding removals */
+	*(int *)opt->value = !unset ? 0 : 1;
+	return 0;
+}
+
 static struct option builtin_add_options[] = {
 	OPT__DRY_RUN(&show_only, N_("dry run")),
 	OPT__VERBOSE(&verbose, N_("be verbose")),
@@ -393,6 +400,10 @@ static struct option builtin_add_options[] = {
 	OPT_BOOL('u', "update", &take_worktree_changes, N_("update tracked files")),
 	OPT_BOOL('N', "intent-to-add", &intent_to_add, N_("record only the fact that the path will be added later")),
 	OPT_BOOL('A', "all", &addremove_explicit, N_("add changes from all tracked and untracked files")),
+	{ OPTION_CALLBACK, 0, "ignore-removal", &addremove_explicit,
+	  NULL /* takes no arguments */,
+	  N_("ignore paths removed in the working tree (same as --no-all)"),
+	  PARSE_OPT_NOARG, ignore_removal_cb },
 	OPT_BOOL( 0 , "refresh", &refresh_only, N_("don't add, only refresh the index")),
 	OPT_BOOL( 0 , "ignore-errors", &ignore_add_errors, N_("just skip files which cannot be added because of errors")),
 	OPT_BOOL( 0 , "ignore-missing", &ignore_missing, N_("check if - even missing - files are ignored in dry run")),

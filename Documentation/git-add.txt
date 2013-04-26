@@ -9,9 +9,9 @@ SYNOPSIS
 --------
 [verse]
 'git add' [-n] [-v] [--force | -f] [--interactive | -i] [--patch | -p]
-	  [--edit | -e] [--[no-]all | [--update | -u]] [--intent-to-add | -N]
-	  [--refresh] [--ignore-errors] [--ignore-missing] [--]
-	  [<pathspec>...]
+	  [--edit | -e] [--[no-]all | --[no-]ignore-removal | [--update | -u]]
+	  [--intent-to-add | -N] [--refresh] [--ignore-errors] [--ignore-missing]
+	  [--] [<pathspec>...]
 
 DESCRIPTION
 -----------
@@ -111,6 +111,7 @@ of Git, hence the form without <pathspec> should not be used.
 
 -A::
 --all::
+--no-ignore-removal::
 	Update the index not only where the working tree has a file
 	matching <pathspec> but also where the index already has an
 	entry.	This adds, modifies, and removes index entries to
@@ -122,6 +123,7 @@ and its subdirectories. This default will change in a future version
 of Git, hence the form without <pathspec> should not be used.
 
 --no-all::
+--ignore-removal::
 	Update the index by adding new files that are unknown to the
 	index and files modified in the working tree, but ignore
 	files that have been removed from the working tree.  This
@@ -130,7 +132,7 @@ of Git, hence the form without <pathspec> should not be used.
 This option is primarily to help the current users of Git, whose
 "git add <pathspec>..." ignores removed files.  In future versions
 of Git, "git add <pathspec>..." will be a synonym to "git add -A
-<pathspec>..." and "git add --no-all <pathspec>..." will behave like
+<pathspec>..." and "git add --ignore-removal <pathspec>..." will behave like
 today's "git add <pathspec>...", ignoring removed files.
 
 -N::
