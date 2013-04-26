@@ -29,13 +29,20 @@ run without a pathspec and when you have local changes outside the
 current directory, because the behaviour in Git 2.0 will be different
 from today's version in such a situation.
 
+In Git 2.0, "git add <path>" will behave as "git add -A <path>", so
+that "git add dir/" will notice paths you removed from the directory
+and record the removal.  Versions before Git 2.0, including this
+release, will keep ignoring removals, but the users who rely on this
+behaviour is encouraged to use "git add --ignore-removal <path>" and
+get used to it.
+
 
 Updates since v1.8.2
 --------------------
 
 Foreign interface
 
- * remote-hg helper (in contrib/) has been updated.
+ * remote-hg and remote-bzr helpers (in contrib/) have been updated.
 
 
 UI, Workflows & Features
@@ -222,22 +229,18 @@ details).
    order to decide which of unpack-objects or index-pack to run, it
    returned without closing the error stream, which led to a hang
    sideband thread.
-   (merge 49ecfa1 jk/receive-pack-deadlocks-with-early-failure later to maint).
 
  * Zsh completion forgot that '%' character used to signal untracked
    files needs to be escaped with another '%'.
-   (merge 24b6132 fc/untracked-zsh-prompt later to maint).
 
  * A commit object whose author or committer ident are malformed
    crashed some code that trusted that a name, an email and an
    timestamp can always be found in it.
-   (merge de5abe9 jk/chopped-ident later to maint).
 
  * When "upload-pack" fails while generating a pack in response to
    "git fetch" (or "git clone"), the receiving side mistakenly said
    there was a programming error to trigger the die handler
    recursively.
-   (merge 1ece66b jk/a-thread-only-dies-once later to maint).
 
  * "rev-list --stdin" and friends kept bogus pointers into input
    buffer around as human readble object names.  This was not a huge
@@ -258,33 +261,26 @@ details).
    the standard error stream, which is not a very smart thing to do.
    Later open may return file descriptor #2 for unrelated purpose, and
    error reporting code may write into them.
-   (merge a749c0b tr/perl-keep-stderr-open later to maint).
 
  * "git show-branch" was not prepared to show a very long run of
    ancestor operators e.g. foobar^2~2^2^2^2...^2~4 correctly.
-   (merge aaa07e3 jk/show-branch-strbuf later to maint).
 
  * "git diff --diff-algorithm algo" is also understood as "git diff
    --diff-algorithm=algo".
-   (merge 0895c6d jk/diff-algo-finishing-touches later to maint).
 
  * The new core.commentchar configuration was not applied to a few
    places.
-   (merge 89c3bbd rt/commentchar-fmt-merge-msg later to maint).
 
  * "git bundle" did not like a bundle created using a commit without
    any message as its one of the prerequistes.
-   (merge 5446e33 lf/bundle-with-tip-wo-message later to maint).
 
  * "git log -S/-G" started paying attention to textconv filter, but
    there was no way to disable this.  Make it honor --no-textconv
    option.
-   (merge 61690bf sr/log-SG-no-textconv later to maint).
 
  * When used with "-d temporary-directory" option, "git filter-branch"
    failed to come back to the original working tree to perform the
    final clean-up procedure.
-   (merge 9727601 jk/filter-branch-come-back-to-original later to maint).
 
  * "git merge $(git rev-parse v1.8.2)" behaved quite differently from
    "git merge v1.8.2", as if v1.8.2 were written as v1.8.2^0 and did
@@ -292,7 +288,6 @@ details).
    notice the type of the tag object, in addition to the dwim_ref()
    based classification the current code uses (i.e. the name appears
    in refs/tags/) to decide when to special case merging of tags.
-   (merge a38d3d7 jc/merge-tag-object later to maint).
 
  * Fix 1.8.1.x regression that stopped matching "dir" (without
    trailing slash) to a directory "dir".
@@ -304,19 +299,15 @@ details).
 
  * The prompt string generator (in contrib/completion/) did not notice
    when we are in a middle of a "git revert" session.
-   (merge 3ee4452 rr/prompt-revert-head later to maint).
 
  * "submodule summary --summary-limit" option did not support
    "--option=value" form.
-   (merge 862ae6c rs/submodule-summary-limit later to maint).
 
  * "index-pack --fix-thin" used an uninitialized value to compute
    delta depths of objects it appends to the resulting pack.
-   (merge 57165db jk/index-pack-correct-depth-fix later to maint).
 
  * "index-pack --verify-stat" used a few counters outside protection
    of mutex, possibly showing incorrect numbers.
-   (merge 8f82aad nd/index-pack-threaded-fixes later to maint).
 
  * The code to keep track of what directory names are known to Git on
    platforms with case insensitive filesystems can get confused upon a
@@ -326,7 +317,6 @@ details).
    correctly to the ls-remote and fetch with recent version of Git.
 
  * Recent optimization broke shallow clones.
-   (merge f59de5d jk/peel-ref later to maint).
 
  * "git cmd -- ':(top'" was not diagnosed as an invalid syntax, and
    instead the parser kept reading beyond the end of the string.
