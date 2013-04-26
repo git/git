@@ -32,7 +32,7 @@ import os
 import json
 import re
 import StringIO
-import atexit
+import atexit, shutil, hashlib
 
 NAME_RE = re.compile('^([^<>]+)')
 AUTHOR_RE = re.compile('^([^<>]+?)? ?<([^<>]*)>$')
@@ -719,11 +719,11 @@ def main(args):
     global blob_marks
     global parsed_refs
     global files_cache
+    global is_tmp
 
     alias = args[1]
     url = args[2]
 
-    prefix = 'refs/bzr/%s' % alias
     tags = {}
     filenodes = {}
     blob_marks = {}
@@ -731,6 +731,13 @@ def main(args):
     files_cache = {}
     marks = None
 
+    if alias[5:] == url:
+        is_tmp = True
+        alias = hashlib.sha1(alias).hexdigest()
+    else:
+        is_tmp = False
+
+    prefix = 'refs/bzr/%s' % alias
     gitdir = os.environ['GIT_DIR']
     dirname = os.path.join(gitdir, 'bzr', alias)
 
@@ -759,7 +766,10 @@ def main(args):
 def bye():
     if not marks:
         return
-    marks.store()
+    if not is_tmp:
+        marks.store()
+    else:
+        shutil.rmtree(dirname)
 
 atexit.register(bye)
 sys.exit(main(sys.argv))
