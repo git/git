@@ -588,6 +588,7 @@ int run_command_v_opt_cd_env(const char **argv, int opt, const char *dir, const 
 static pthread_t main_thread;
 static int main_thread_set;
 static pthread_key_t async_key;
+static pthread_key_t async_die_counter;
 
 static void *run_thread(void *data)
 {
@@ -614,6 +615,14 @@ static NORETURN void die_async(const char *err, va_list params)
 
 	exit(128);
 }
+
+static int async_die_is_recursing(void)
+{
+	void *ret = pthread_getspecific(async_die_counter);
+	pthread_setspecific(async_die_counter, (void *)1);
+	return ret != NULL;
+}
+
 #endif
 
 int start_async(struct async *async)
@@ -695,7 +704,9 @@ int start_async(struct async *async)
 		main_thread_set = 1;
 		main_thread = pthread_self();
 		pthread_key_create(&async_key, NULL);
+		pthread_key_create(&async_die_counter, NULL);
 		set_die_routine(die_async);
+		set_die_is_recursing_routine(async_die_is_recursing);
 	}
 
 	if (proc_in >= 0)
