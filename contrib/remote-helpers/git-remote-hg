@@ -22,7 +22,7 @@ import shutil
 import subprocess
 import urllib
 import atexit
-import urlparse
+import urlparse, hashlib
 
 #
 # If you want to switch to hg-git compatibility mode:
@@ -933,7 +933,7 @@ def main(args):
 
     if alias[4:] == url:
         is_tmp = True
-        alias = util.sha1(alias).hexdigest()
+        alias = hashlib.sha1(alias).hexdigest()
     else:
         is_tmp = False
 
