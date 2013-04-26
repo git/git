@@ -32,7 +32,7 @@ import os
 import json
 import re
 import StringIO
-import atexit, shutil, hashlib
+import atexit, shutil, hashlib, urlparse, subprocess
 
 NAME_RE = re.compile('^([^<>]+)')
 AUTHOR_RE = re.compile('^([^<>]+?)? ?<([^<>]*)>$')
@@ -713,6 +713,14 @@ def get_repo(url, alias):
 
     return branch
 
+def fix_path(alias, orig_url):
+    url = urlparse.urlparse(orig_url, 'file')
+    if url.scheme != 'file' or os.path.isabs(url.path):
+        return
+    abs_url = urlparse.urljoin("%s/" % os.getcwd(), orig_url)
+    cmd = ['git', 'config', 'remote.%s.url' % alias, "bzr::%s" % abs_url]
+    subprocess.call(cmd)
+
 def main(args):
     global marks, prefix, dirname
     global tags, filenodes
@@ -740,6 +748,9 @@ def main(args):
     prefix = 'refs/bzr/%s' % alias
     gitdir = os.environ['GIT_DIR']
     dirname = os.path.join(gitdir, 'bzr', alias)
+
+    if not is_tmp:
+        fix_path(alias, url)
 
     if not os.path.exists(dirname):
         os.makedirs(dirname)
