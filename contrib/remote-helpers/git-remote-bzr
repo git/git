@@ -549,6 +549,10 @@ def parse_commit(parser):
         parents.append(parser.get_mark())
         parser.next()
 
+    # fast-export adds an extra newline
+    if data[-1] == '\n':
+        data = data[:-1]
+
     files = {}
 
     for line in parser:
