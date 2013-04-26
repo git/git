@@ -10,9 +10,7 @@
 #include "parse-options.h"
 
 static char const * const shortlog_usage[] = {
-	N_("git shortlog [-n] [-s] [-e] [-w] [rev-opts] [--] [<commit-id>... ]"),
-	"",
-	N_("[rev-opts] are documented in git-rev-list(1)"),
+	N_("git shortlog [<options>] [<revision range>] [[--] [<path>...]]"),
 	NULL
 };
 
