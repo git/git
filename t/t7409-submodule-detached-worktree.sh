@@ -23,7 +23,9 @@ test_expect_success 'submodule on detached working tree' '
 	mkdir home &&
 	(
 		cd home &&
-		export GIT_WORK_TREE="$(pwd)" GIT_DIR="$(pwd)/.dotfiles" &&
+		GIT_WORK_TREE="$(pwd)" &&
+		GIT_DIR="$(pwd)/.dotfiles" &&
+		export GIT_WORK_TREE GIT_DIR &&
 		git clone --bare ../remote .dotfiles &&
 		git submodule add ../bundle1 .vim/bundle/sogood &&
 		test_commit "sogood" &&
@@ -39,7 +41,9 @@ test_expect_success 'submodule on detached working tree' '
 	(
 		cd home2 &&
 		git clone --bare ../remote .dotfiles &&
-		export GIT_WORK_TREE="$(pwd)" GIT_DIR="$(pwd)/.dotfiles" &&
+		GIT_WORK_TREE="$(pwd)" &&
+		GIT_DIR="$(pwd)/.dotfiles" &&
+		export GIT_WORK_TREE GIT_DIR &&
 		git checkout master &&
 		git submodule update --init &&
 		(
@@ -55,7 +59,8 @@ test_expect_success 'submodule on detached working pointed by core.worktree' '
 	mkdir home3 &&
 	(
 		cd home3 &&
-		export GIT_DIR="$(pwd)/.dotfiles" &&
+		GIT_DIR="$(pwd)/.dotfiles" &&
+		export GIT_DIR &&
 		git clone --bare ../remote "$GIT_DIR" &&
 		git config core.bare false &&
 		git config core.worktree .. &&
@@ -66,7 +71,8 @@ test_expect_success 'submodule on detached working pointed by core.worktree' '
 	) &&
 	(
 		cd home &&
-		export GIT_DIR="$(pwd)/.dotfiles" &&
+		GIT_DIR="$(pwd)/.dotfiles" &&
+		export GIT_DIR &&
 		git config core.bare false &&
 		git config core.worktree .. &&
 		git pull &&

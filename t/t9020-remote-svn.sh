@@ -74,7 +74,8 @@ test_expect_success REMOTE_SVN 'mark-file regeneration' '
 '
 
 test_expect_success REMOTE_SVN 'incremental imports must lead to the same head' '
-	export SVNRMAX=3 &&
+	SVNRMAX=3 &&
+	export SVNRMAX &&
 	init_git &&
 	git fetch svnsim &&
 	test_cmp .git/refs/svn/svnsim/master .git/refs/remotes/svnsim/master  &&

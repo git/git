@@ -103,10 +103,11 @@ setup () {
 	git config --global receive.denycurrentbranch warn
 	git config --global remote-hg.hg-git-compat true
 
-	export HGEDITOR=/usr/bin/true
+	HGEDITOR=/usr/bin/true
 
-	export GIT_AUTHOR_DATE="2007-01-01 00:00:00 +0230"
-	export GIT_COMMITTER_DATE="$GIT_AUTHOR_DATE"
+	GIT_AUTHOR_DATE="2007-01-01 00:00:00 +0230"
+	GIT_COMMITTER_DATE="$GIT_AUTHOR_DATE"
+	export HGEDITOR GIT_AUTHOR_DATE GIT_COMMITTER_DATE
 }
 
 setup
@@ -296,7 +297,8 @@ test_expect_success 'encoding' '
 	git add alpha &&
 	git commit -m "add älphà" &&
 
-	export GIT_AUTHOR_NAME="tést èncödîng" &&
+	GIT_AUTHOR_NAME="tést èncödîng" &&
+	export GIT_AUTHOR_NAME &&
 	echo beta > beta &&
 	git add beta &&
 	git commit -m "add beta" &&

@@ -4,6 +4,24 @@ Git v1.8.2.2 Release Notes
 Fixes since v1.8.2.1
 --------------------
 
+ * Zsh completion forgot that '%' character used to signal untracked
+   files needs to be escaped with another '%'.
+
+ * A commit object whose author or committer ident are malformed
+   crashed some code that trusted that a name, an email and an
+   timestamp can always be found in it.
+
+ * The new core.commentchar configuration was not applied to a few
+   places.
+
+ * "git pull --rebase" did not pass "-v/-q" options to underlying
+   "git rebase".
+
+ * When receive-pack detects error in the pack header it received in
+   order to decide which of unpack-objects or index-pack to run, it
+   returned without closing the error stream, which led to a hang
+   sideband thread.
+
  * "git diff --diff-algorithm=algo" was understood by the command line
    parser, but "git diff --diff-algorithm algo" was not.
 
