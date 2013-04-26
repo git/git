@@ -26,6 +26,7 @@ bzrlib.plugin.load_plugins()
 import bzrlib.generate_ids
 import bzrlib.transport
 import bzrlib.errors
+import bzrlib.ui
 
 import sys
 import os
@@ -754,6 +755,8 @@ def main(args):
 
     if not os.path.exists(dirname):
         os.makedirs(dirname)
+
+    bzrlib.ui.ui_factory.be_quiet(True)
 
     repo = get_repo(url, alias)
 
