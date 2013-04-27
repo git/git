@@ -25,6 +25,7 @@
 # define _GNU_SOURCE	1
 #endif
 
+#include <stddef.h>
 #include <errno.h>
 #include <fnmatch.h>
 #include <ctype.h>
@@ -121,7 +122,7 @@
    whose names are inconsistent.  */
 
 # if !defined _LIBC && !defined getenv
-extern char *getenv ();
+extern char *getenv (const char *name);
 # endif
 
 # ifndef errno
