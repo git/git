@@ -841,8 +841,8 @@ struct pinfo_t {
 	struct pinfo_t *next;
 	pid_t pid;
 	HANDLE proc;
-} pinfo_t;
-struct pinfo_t *pinfo = NULL;
+};
+static struct pinfo_t *pinfo = NULL;
 CRITICAL_SECTION pinfo_cs;
 
 static pid_t mingw_spawnve_fd(const char *cmd, const char **argv, char **env,
@@ -1253,7 +1253,7 @@ static int WSAAPI getaddrinfo_stub(const char *node, const char *service,
 	else
 		sin->sin_addr.s_addr = INADDR_LOOPBACK;
 	ai->ai_addr = (struct sockaddr *)sin;
-	ai->ai_next = 0;
+	ai->ai_next = NULL;
 	return 0;
 }
 
