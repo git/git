@@ -2567,6 +2567,7 @@ proc makewindow {} {
 	{mc "Compare with marked commit" command compare_commits}
 	{mc "Diff this -> marked commit" command {diffvsmark 0}}
 	{mc "Diff marked commit -> this" command {diffvsmark 1}}
+	{mc "Revert this commit" command revert}
     }
     $rowctxmenu configure -tearoff 0
 
@@ -9344,6 +9345,67 @@ proc cherrypick {} {
 	selbyid $newhead
     }
     notbusy cherrypick
+}
+
+proc revert {} {
+    global rowmenuid curview
+    global mainhead mainheadid
+    global gitdir
+
+    set oldhead [exec git rev-parse HEAD]
+    set dheads [descheads $rowmenuid]
+    if { $dheads eq {} || [lsearch -exact $dheads $oldhead] == -1 } {
+       set ok [confirm_popup [mc "Commit %s is not\
+           included in branch %s -- really revert it?" \
+                      [string range $rowmenuid 0 7] $mainhead]]
+       if {!$ok} return
+    }
+    nowbusy revert [mc "Reverting"]
+    update
+
+    if [catch {exec git revert --no-edit $rowmenuid} err] {
+        notbusy revert
+        if [regexp {files would be overwritten by merge:(\n(( |\t)+[^\n]+\n)+)}\
+                $err match files] {
+            regsub {\n( |\t)+} $files "\n" files
+            error_popup [mc "Revert failed because of local changes to\
+                the following files:%s Please commit, reset or stash \
+                your changes and try again." $files]
+        } elseif [regexp {error: could not revert} $err] {
+            if [confirm_popup [mc "Revert failed because of merge conflict.\n\
+                Do you wish to run git citool to resolve it?"]] {
+                # Force citool to read MERGE_MSG
+                file delete [file join $gitdir "GITGUI_MSG"]
+                exec_citool {} $rowmenuid
+            }
+        } else { error_popup $err }
+        run updatecommits
+        return
+    }
+
+    set newhead [exec git rev-parse HEAD]
+    if { $newhead eq $oldhead } {
+        notbusy revert
+        error_popup [mc "No changes committed"]
+        return
+    }
+
+    addnewchild $newhead $oldhead
+
+    if [commitinview $oldhead $curview] {
+        # XXX this isn't right if we have a path limit...
+        insertrow $newhead $oldhead $curview
+        if {$mainhead ne {}} {
+            movehead $newhead $mainhead
+            movedhead $newhead $mainhead
+        }
+        set mainheadid $newhead
+        redrawtags $oldhead
+        redrawtags $newhead
+        selbyid $newhead
+    }
+
+    notbusy revert
 }
 
 proc resethead {} {
