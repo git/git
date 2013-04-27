@@ -297,29 +297,24 @@ __git_index_file_list_filter ()
 	__git_index_file_list_filter_bash
 }
 
-# Execute git ls-files, returning paths relative to the directory
-# specified in the first argument, and using the options specified in
-# the second argument.
+# Execute 'git ls-files', unless the --committable option is specified, in
+# which case it runs 'git diff-index' to find out the files that can be
+# committed.  It return paths relative to the directory specified in the first
+# argument, and using the options specified in the second argument.
 __git_ls_files_helper ()
 {
 	(
 		test -n "${CDPATH+set}" && unset CDPATH
-		# NOTE: $2 is not quoted in order to support multiple options
-		cd "$1" && git ls-files --exclude-standard $2
+		cd "$1"
+		if [ "$2" == "--committable" ]; then
+			git diff-index --name-only --relative HEAD
+		else
+			# NOTE: $2 is not quoted in order to support multiple options
+			git ls-files --exclude-standard $2
+		fi
 	) 2>/dev/null
 }
 
-
-# Execute git diff-index, returning paths relative to the directory
-# specified in the first argument, and using the tree object id
-# specified in the second argument.
-__git_diff_index_helper ()
-{
-	(
-		test -n "${CDPATH+set}" && unset CDPATH
-		cd "$1" && git diff-index --name-only --relative "$2"
-	) 2>/dev/null
-}
 
 # __git_index_files accepts 1 or 2 arguments:
 # 1: Options to pass to ls-files (required).
@@ -333,22 +328,6 @@ __git_index_files ()
 
 	if [ -d "$dir" ]; then
 		__git_ls_files_helper "$root" "$1" | __git_index_file_list_filter |
-			sort | uniq
-	fi
-}
-
-# __git_diff_index_files accepts 1 or 2 arguments:
-# 1) The id of a tree object.
-# 2) A directory path (optional).
-#    If provided, only files within the specified directory are listed.
-#    Sub directories are never recursed.  Path must have a trailing
-#    slash.
-__git_diff_index_files ()
-{
-	local dir="$(__gitdir)" root="${2-.}"
-
-	if [ -d "$dir" ]; then
-		__git_diff_index_helper "$root" "$1" | __git_index_file_list_filter |
 			sort | uniq
 	fi
 }
@@ -550,8 +529,10 @@ __git_complete_revlist_file ()
 }
 
 
-# __git_complete_index_file requires 1 argument: the options to pass to
-# ls-file
+# __git_complete_index_file requires 1 argument:
+# 1: the options to pass to ls-file
+#
+# The exception is --committable, which finds the files appropriate commit.
 __git_complete_index_file ()
 {
 	local pfx cur_="$cur"
@@ -566,26 +547,6 @@ __git_complete_index_file ()
 		;;
 	*)
 		__gitcomp_file "$(__git_index_files "$1")" "" "$cur_"
-		;;
-	esac
-}
-
-# __git_complete_diff_index_file requires 1 argument: the id of a tree
-# object
-__git_complete_diff_index_file ()
-{
-	local pfx cur_="$cur"
-
-	case "$cur_" in
-	?*/*)
-		pfx="${cur_%/*}"
-		cur_="${cur_##*/}"
-		pfx="${pfx}/"
-
-		__gitcomp_file "$(__git_diff_index_files "$1" "$pfx")" "$pfx" "$cur_"
-		;;
-	*)
-		__gitcomp_file "$(__git_diff_index_files "$1")" "" "$cur_"
 		;;
 	esac
 }
@@ -1211,7 +1172,7 @@ _git_commit ()
 	esac
 
 	if git rev-parse --verify --quiet HEAD >/dev/null; then
-		__git_complete_diff_index_file "HEAD"
+		__git_complete_index_file "--committable"
 	else
 		# This is the first commit
 		__git_complete_index_file "--cached"
