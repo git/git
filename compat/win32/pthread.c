@@ -52,7 +52,7 @@ int win32_pthread_join(pthread_t *thread, void **value_ptr)
 
 pthread_t pthread_self(void)
 {
-	pthread_t t = { 0 };
+	pthread_t t = { NULL };
 	t.tid = GetCurrentThreadId();
 	return t;
 }
