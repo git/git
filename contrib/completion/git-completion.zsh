@@ -72,14 +72,14 @@ __gitcomp_file ()
 _git ()
 {
 	local _ret=1
-	() {
-		emulate -L ksh
-		local cur cword prev
-		cur=${words[CURRENT-1]}
-		prev=${words[CURRENT-2]}
-		let cword=CURRENT-1
-		__${service}_main
-	}
+	local cur cword prev
+
+	cur=${words[CURRENT]}
+	prev=${words[CURRENT-1]}
+	let cword=CURRENT-1
+
+	emulate ksh -c __${service}_main
+
 	let _ret && _default -S '' && _ret=0
 	return _ret
 }
