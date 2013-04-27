@@ -1314,11 +1314,12 @@ _git_fetch ()
 }
 
 __git_format_patch_options="
-	--stdout --attach --no-attach --thread --thread= --output-directory
+	--stdout --attach --no-attach --thread --thread= --no-thread
 	--numbered --start-number --numbered-files --keep-subject --signoff
 	--signature --no-signature --in-reply-to= --cc= --full-index --binary
 	--not --all --cover-letter --no-prefix --src-prefix= --dst-prefix=
 	--inline --suffix= --ignore-if-in-upstream --subject-prefix=
+	--output-directory --reroll-count --to= --quiet --notes
 "
 
 _git_format_patch ()
