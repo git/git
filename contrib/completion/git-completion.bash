@@ -535,20 +535,17 @@ __git_complete_revlist_file ()
 # The exception is --committable, which finds the files appropriate commit.
 __git_complete_index_file ()
 {
-	local pfx cur_="$cur"
+	local pfx="" cur_="$cur"
 
 	case "$cur_" in
 	?*/*)
 		pfx="${cur_%/*}"
 		cur_="${cur_##*/}"
 		pfx="${pfx}/"
-
-		__gitcomp_file "$(__git_index_files "$1" "$pfx")" "$pfx" "$cur_"
-		;;
-	*)
-		__gitcomp_file "$(__git_index_files "$1")" "" "$cur_"
 		;;
 	esac
+
+	__gitcomp_file "$(__git_index_files "$1" "$pfx")" "$pfx" "$cur_"
 }
 
 __git_complete_file ()
