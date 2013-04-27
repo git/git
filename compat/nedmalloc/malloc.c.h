@@ -484,6 +484,10 @@ MAX_RELEASE_CHECK_RATE   default: 4095 unless not HAVE_MMAP
 #define DLMALLOC_VERSION 20804
 #endif /* DLMALLOC_VERSION */
 
+#if defined(linux)
+#define _GNU_SOURCE 1
+#endif
+
 #ifndef WIN32
 #ifdef _WIN32
 #define WIN32 1
