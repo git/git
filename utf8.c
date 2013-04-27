@@ -463,8 +463,8 @@ void strbuf_utf8_replace(struct strbuf *sb_src, int pos, int width,
 		w += n;
 	}
 	strbuf_setlen(&sb_dst, dst - sb_dst.buf);
-	strbuf_attach(sb_src, strbuf_detach(&sb_dst, NULL),
-		      sb_dst.len, sb_dst.alloc);
+	strbuf_swap(sb_src, &sb_dst);
+	strbuf_release(&sb_dst);
 }
 
 int is_encoding_utf8(const char *name)
