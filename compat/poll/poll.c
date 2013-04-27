@@ -576,7 +576,7 @@ restart:
 	{
 	  /* It's a socket.  */
 	  WSAEnumNetworkEvents ((SOCKET) h, NULL, &ev);
-	  WSAEventSelect ((SOCKET) h, 0, 0);
+	  WSAEventSelect ((SOCKET) h, NULL, 0);
 
 	  /* If we're lucky, WSAEnumNetworkEvents already provided a way
 	     to distinguish FD_READ and FD_ACCEPT; this saves a recv later.  */
