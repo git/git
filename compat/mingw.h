@@ -346,8 +346,8 @@ extern CRITICAL_SECTION pinfo_cs;
  */
 
 #define main(c,v) dummy_decl_mingw_main(); \
-static int mingw_main(); \
-int main(int argc, const char **argv) \
+static int mingw_main(c,v); \
+int main(int argc, char **argv) \
 { \
 	extern CRITICAL_SECTION pinfo_cs; \
 	_fmode = _O_BINARY; \

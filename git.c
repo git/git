@@ -507,8 +507,9 @@ static int run_argv(int *argcp, const char ***argv)
 }
 
 
-int main(int argc, const char **argv)
+int main(int argc, char **av)
 {
+	const char **argv = (const char **) av;
 	const char *cmd;
 
 	startup_info = &git_startup_info;

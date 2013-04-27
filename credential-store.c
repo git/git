@@ -114,7 +114,7 @@ static int lookup_credential(const char *fn, struct credential *c)
 	return c->username && c->password;
 }
 
-int main(int argc, const char **argv)
+int main(int argc, char **argv)
 {
 	const char * const usage[] = {
 		"git credential-store [options] <action>",
@@ -131,7 +131,7 @@ int main(int argc, const char **argv)
 
 	umask(077);
 
-	argc = parse_options(argc, argv, NULL, options, usage, 0);
+	argc = parse_options(argc, (const char **)argv, NULL, options, usage, 0);
 	if (argc != 1)
 		usage_with_options(usage, options);
 	op = argv[0];

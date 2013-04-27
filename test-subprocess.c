@@ -1,7 +1,7 @@
 #include "cache.h"
 #include "run-command.h"
 
-int main(int argc, const char **argv)
+int main(int argc, char **argv)
 {
 	struct child_process cp;
 	int nogit = 0;
@@ -15,6 +15,6 @@ int main(int argc, const char **argv)
 	}
 	memset(&cp, 0, sizeof(cp));
 	cp.git_cmd = 1;
-	cp.argv = argv + 1;
+	cp.argv = (const char **)argv + 1;
 	return run_command(&cp);
 }
