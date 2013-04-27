@@ -205,6 +205,19 @@ EXPECTED
 	test_cmp expected actual
 '
 
+test_expect_success 'file remove A, B (same)' '
+	cat >expected <<\EXPECTED &&
+EXPECTED
+
+	git reset --hard initial &&
+	test_commit "rm-a-b-base" "ONE" "AAA" &&
+	git rm ONE &&
+	git commit -m "rm-a-b" &&
+	git tag "rm-a-b" &&
+	git merge-tree rm-a-b-base rm-a-b rm-a-b >actual &&
+	test_cmp expected actual
+'
+
 test_expect_success 'file change A, remove B' '
 	cat >expected <<\EXPECTED &&
 removed in remote
