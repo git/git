@@ -255,7 +255,7 @@ __gitcomp_file ()
 	__gitcompadd "$1" "${2-}" "${3-$cur}" ""
 
 	# use a hack to enable file mode in bash < 4
-	compopt -o filenames 2>/dev/null ||
+	compopt -o filenames +o nospace 2>/dev/null ||
 	compgen -f /non-existing-dir/ > /dev/null
 }
 
