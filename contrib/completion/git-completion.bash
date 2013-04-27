@@ -252,7 +252,7 @@ __gitcomp_file ()
 	# since tilde expansion is not applied.
 	# This means that COMPREPLY will be empty and Bash default
 	# completion will be used.
-	COMPREPLY=($(compgen -P "${2-}" -W "$1" -- "${3-$cur}"))
+	__gitcompadd "$1" "${2-}" "${3-$cur}" ""
 
 	# Tell Bash that compspec generates filenames.
 	compopt -o filenames 2>/dev/null
