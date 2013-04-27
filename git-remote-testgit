@@ -86,17 +86,18 @@ do
 			exit 1
 		fi
 
-		before=$(git for-each-ref --format='%(refname) %(objectname)')
+		before=$(git for-each-ref --format=' %(refname) %(objectname) ')
 
 		git fast-import "${testgitmarks_args[@]}" --quiet
 
-		after=$(git for-each-ref --format='%(refname) %(objectname)')
-
 		# figure out which refs were updated
-		join -e 0 -o '0 1.2 2.2' -a 2 <(echo "$before") <(echo "$after") |
-		while read ref a b
+		git for-each-ref --format='%(refname) %(objectname)' |
+		while read ref a
 		do
-			test $a == $b && continue
+			case "$before" in
+			*" $ref $a "*)
+				continue ;;	# unchanged
+			esac
 			echo "ok $ref"
 		done
 
