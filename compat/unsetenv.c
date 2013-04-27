@@ -2,7 +2,6 @@
 
 void gitunsetenv (const char *name)
 {
-     extern char **environ;
      int src, dst;
      size_t nmln;
 
