@@ -254,38 +254,9 @@ __gitcomp_file ()
 	# completion will be used.
 	__gitcompadd "$1" "${2-}" "${3-$cur}" ""
 
-	# Tell Bash that compspec generates filenames.
-	compopt -o filenames 2>/dev/null
-}
-
-__git_index_file_list_filter_compat ()
-{
-	local path
-
-	while read -r path; do
-		case "$path" in
-		?*/*) echo "${path%%/*}/" ;;
-		*) echo "$path" ;;
-		esac
-	done
-}
-
-__git_index_file_list_filter_bash ()
-{
-	local path
-
-	while read -r path; do
-		case "$path" in
-		?*/*)
-			# XXX if we append a slash to directory names when using
-			# `compopt -o filenames`, Bash will append another slash.
-			# This is pretty stupid, and this the reason why we have to
-			# define a compatible version for this function.
-			echo "${path%%/*}" ;;
-		*)
-			echo "$path" ;;
-		esac
-	done
+	# use a hack to enable file mode in bash < 4
+	compopt -o filenames 2>/dev/null ||
+	compgen -f /non-existing-dir/ > /dev/null
 }
 
 # Process path list returned by "ls-files" and "diff-index --name-only"
@@ -293,8 +264,16 @@ __git_index_file_list_filter_bash ()
 # directory, and append a slash to directory names.
 __git_index_file_list_filter ()
 {
-	# Default to Bash >= 4.x
-	__git_index_file_list_filter_bash
+	local path
+
+	while read -r path; do
+		case "$path" in
+		?*/*)
+			echo "${path%%/*}" ;;
+		*)
+			echo "$path" ;;
+		esac
+	done
 }
 
 # Execute 'git ls-files', unless the --committable option is specified, in
@@ -2651,14 +2630,6 @@ if [[ -n ${ZSH_VERSION-} ]]; then
 
 	compdef _git git gitk
 	return
-elif [[ -n ${BASH_VERSION-} ]]; then
-	if ((${BASH_VERSINFO[0]} < 4)); then
-		# compopt is not supported
-		__git_index_file_list_filter ()
-		{
-			__git_index_file_list_filter_compat
-		}
-	fi
 fi
 
 __git_func_wrap ()
