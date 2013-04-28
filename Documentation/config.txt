@@ -1104,11 +1104,11 @@ format.thread::
 	value disables threading.
 
 format.signoff::
-    A boolean value which lets you enable the `-s/--signoff` option of
-    format-patch by default. *Note:* Adding the Signed-off-by: line to a
-    patch should be a conscious act and means that you certify you have
-    the rights to submit this work under the same open source license.
-    Please see the 'SubmittingPatches' document for further discussion.
+	A boolean value which lets you enable the `-s/--signoff` option of
+	format-patch by default. *Note:* Adding the Signed-off-by: line to a
+	patch should be a conscious act and means that you certify you have
+	the rights to submit this work under the same open source license.
+	Please see the 'SubmittingPatches' document for further discussion.
 
 format.coverLetter::
 	A boolean that controls whether to generate a cover-letter when
@@ -1225,7 +1225,7 @@ gitcvs.dbname::
 
 gitcvs.dbdriver::
 	Used Perl DBI driver. You can specify any available driver
-        for this here, but it might not work. git-cvsserver is tested
+	for this here, but it might not work. git-cvsserver is tested
 	with 'DBD::SQLite', reported to work with 'DBD::Pg', and
 	reported *not* to work with 'DBD::mysql'. Experimental feature.
 	May not contain double colons (`:`). Default: 'SQLite'.
