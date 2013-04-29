@@ -688,27 +688,23 @@ do
 	'
 done
 
-test_expect_success 'setup: have stdbuf?' '
-	if which stdbuf >/dev/null 2>&1
-	then
-		test_set_prereq STDBUF
-	fi
-'
+test_expect_success PIPE 'streaming support for --stdin' '
+	mkfifo in out &&
+	(git check-ignore -n -v --stdin <in >out &) &&
 
-test_expect_success STDBUF 'streaming support for --stdin' '
-	(
-		echo one
-		sleep 2
-		echo two
-	) | stdbuf -oL git check-ignore -v -n --stdin >out &
-	pid=$! &&
-	sleep 1 &&
-	grep "^\.gitignore:1:one	one" out &&
-	test $( wc -l <out ) = 1 &&
-	sleep 2 &&
-	grep "^::	two" out &&
-	test $( wc -l <out ) = 2 &&
-	( wait $pid || kill $pid || : ) 2>/dev/null
+	# We cannot just "echo >in" because check-ignore would get EOF
+	# after echo exited; instead we open the descriptor in our
+	# shell, and then echo to the fd. We make sure to close it at
+	# the end, so that the subprocess does get EOF and dies
+	# properly.
+	exec 9>in &&
+	test_when_finished "exec 9>&-" &&
+	echo >&9 one &&
+	read response <out &&
+	echo "$response" | grep "^\.gitignore:1:one	one" &&
+	echo >&9 two &&
+	read response <out &&
+	echo "$response" | grep "^::	two"
 '
 
 test_done
