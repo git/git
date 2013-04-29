@@ -1,29 +1,30 @@
 To: git@vger.kernel.org
 Bcc: lwn@lwn.net
-Subject: What's cooking in git.git (Apr 2013, #09; Fri, 26)
-X-master-at: b75cdfaa882a00f2274e74b21c1a9927d184ed29
-X-next-at: b1478c83563fcc2b22771ab08fa759a3972c365d
+Subject: What's cooking in git.git (Apr 2013, #10; Mon, 29)
+X-master-at: 7e6a0cc47da79dd22c0338aee8750fda92ced5d9
+X-next-at: 06c29dc5775bfd65329e6072358821bb781a6deb
 
-What's cooking in git.git (Apr 2013, #09; Fri, 26)
+What's cooking in git.git (Apr 2013, #10; Mon, 29)
 --------------------------------------------------
 
 Here are the topics that have been cooking.  Commits prefixed with
 '-' are only in 'pu' (proposed updates) while commits prefixed with
 '+' are in 'next'.
 
-The release candidate preview 1.8.3-rc0 has been tagged. I'd like to
-see people focus on catching and fixing last minute regressions and
+There are a few more topics in flight that look sane and trivially
+correct that I would feel safe to merge down to 'master', but what
+we have in 'master' should be a pretty similar to the final, from
+the point of view of features and new fixes.  I'd like to see people
+focus on catching and fixing last minute regressions and
 incompleteness in the topics that have already in 'master' for the
-upcoming release. New topics that are not relevant for the goal to
-release a regression-free and complete 1.8.3 may not be queued even
-on 'pu' until final to reduce hassles on integration testing (I do
-not mean that it is forbidden to work on and discussing new topics
-on the list. It is just the patches won't be considered as formal
-submission and they won't hit 'pu').
+upcoming release.
 
-As to the topics still cooking on 'next', I unfortunately do not see
-anything that I feel comfortable merging for 1.8.3; but I am open to
-suggestions.
+New topics that are not relevant for the goal to release a complete
+and regression-free 1.8.3 may not be queued even on 'pu' until final
+to reduce hassles on integration testing (I do not mean that it is
+forbidden to work on and discussing new topics on the list. It is
+just the patches won't be considered as formal submission and they
+won't hit 'pu').
 
 You can find the changes described here in the integration branches
 of the repositories listed at
@@ -33,113 +34,120 @@ of the repositories listed at
 --------------------------------------------------
 [Graduated to "master"]
 
-* fc/remote-hg (2013-04-22) 16 commits
-  (merged to 'next' on 2013-04-25 at 152cb06)
- + remote-hg: strip extra newline
- + remote-hg: use marks instead of inlined files
- + remote-hg: small performance improvement
- + remote-hg: allow refs with spaces
- + remote-hg: don't update bookmarks unnecessarily
- + remote-hg: add support for schemes extension
- + remote-hg: improve email sanitation
- + remote-hg: add custom local tag write code
- + remote-hg: write tags in the appropriate branch
- + remote-hg: custom method to write tags
- + remote-hg: add support for tag objects
- + remote-hg: add branch_tip() helper
- + remote-hg: properly mark branches up-to-date
- + remote-hg: use python urlparse
- + remote-hg: safer bookmark pushing
- + remote-helpers: avoid has_key
+* fc/zsh-completion (2013-04-28) 2 commits
+ + complete: zsh: use zsh completion for the main cmd
+ + complete: zsh: trivial simplification
 
- Further updates to remote-hg (in contrib/).
-
-
-* jc/add-ignore-removal (2013-04-22) 2 commits
-  (merged to 'next' on 2013-04-24 at c85c5a7)
- + git add: rephrase -A/--no-all warning
- + git add: --ignore-removal is a better named --no-all
- (this branch is used by jc/add-2.0-ignore-removal.)
-
- Introduce "--ignore-removal" as a synonym to "--no-all" for "git
- add", and improve the 2.0 migration warning with it.
-
-
-* jk/remote-helper-with-signed-tags (2013-04-15) 3 commits
-  (merged to 'next' on 2013-04-21 at 0231d45)
- + transport-helper: add 'signed-tags' capability
- + transport-helper: pass --signed-tags=warn-strip to fast-export
- + fast-export: add --signed-tags=warn-strip mode
-
- Allows remote-helpers to declare they can handle signed tags, and
- issue a warning when using those that don't.
-
-
-* jn/glossary-revision (2013-04-21) 1 commit
-  (merged to 'next' on 2013-04-24 at 70efbe7)
- + glossary: a revision is just a commit
-
- The wording for "revision" in the glossary wanted to say it refers
- to "commit (noun) as a concept" but it was badly phrased.
-
- This may need further updates to hint that in contexts where it is
- clear, the word may refer to an object name, not necessarily a
- commit. But the patch as-is is already an improvement.
-
-
-* ph/rebase-original (2013-04-23) 1 commit
-  (merged to 'next' on 2013-04-24 at c643dcd)
- + rebase: find orig_head unambiguously
-
-
-* rr/shortlog-doc (2013-04-22) 8 commits
-  (merged to 'next' on 2013-04-25 at a95a3fc)
- + builtin/shortlog.c: make usage string consistent with log
- + builtin/log.c: make usage string consistent with doc
- + git-shortlog.txt: make SYNOPSIS match log, update OPTIONS
- + git-log.txt: rewrite note on why "--" may be required
- + git-log.txt: generalize <since>..<until>
- + git-log.txt: order OPTIONS properly; move <since>..<until>
- + revisions.txt: clarify the .. and ... syntax
- + git-shortlog.txt: remove (-h|--help) from OPTIONS
-
- Update documentation for "log" and "shortlog".
-
-
-* th/bisect-skipped-log (2013-04-23) 1 commit
-  (merged to 'next' on 2013-04-25 at 1de189b)
- + bisect: Log possibly bad, skipped commits at bisection end
 
 --------------------------------------------------
 [New Topics]
 
-* kb/full-history-compute-treesame-carefully (2013-04-24) 2 commits
- - t6012: update test for tweaked full-history traversal
- - Make --full-history consider more merges
+* fc/completion (2013-04-27) 9 commits
+ - completion: remove __git_index_file_list_filter()
+ - completion: add space after completed filename
+ - completion: add hack to enable file mode in bash < 4
+ - completion: refactor __git_complete_index_file()
+ - completion: refactor diff_index wrappers
+ - completion: use __gitcompadd for __gitcomp_file
+ - completion; remove unuseful comments
+ - completion: document tilde expansion failure in tests
+ - completion: add file completion tests
+
+ I saw this discussed somewhat. Is everybody happy with this
+ version?  This is its v2, in the $gmane/222682 thread.
 
 
-* tr/remote-tighten-commandline-parsing (2013-04-24) 3 commits
- - remote: 'show' and 'prune' can take more than one remote
- - remote: check for superfluous arguments in 'git remote add'
- - remote: add a test for extra arguments, according to docs
+* jk/test-output (2013-04-29) 2 commits
+ - test output: respect $TEST_OUTPUT_DIRECTORY
+ - t/Makefile: fix result handling with TEST_OUTPUT_DIRECTORY
+
+ Allows "sh tXXXX-*.sh --root=$there" to correctly use the moved
+ output directory when summarizing the results.
 
  Will merge to 'next'.
 
 
-* zk/prompt-rebase-step (2013-04-25) 1 commit
-  (merged to 'next' on 2013-04-25 at a8264bf)
- + bash-prompt.sh: show where rebase is at when stopped
+* rj/mingw-cygwin (2013-04-28) 2 commits
+ - cygwin: Remove the CYGWIN_V15_WIN32API build variable
+ - mingw: rename WIN32 cpp macro to GIT_WINDOWS_NATIVE
+
+ Cygwin portability; both were reviewed by Jonathan, and the tip one
+ seems to want a bit further explanation.  Needs positive report
+ from Cygwin 1.7 users who have been on 1.7 to make sure it does not
+ regress for them.
 
 
-* rr/pp-user-info-without-extra-allocation (2013-04-25) 3 commits
- - pretty: remove intermediate strbufs from pp_user_info()
- - pretty: simplify output line length calculation in pp_user_info()
- - pretty: simplify input line length calculation in pp_user_info()
+* rj/sparse (2013-04-28) 10 commits
+ - sparse: Fix mingw_main() argument number/type errors
+ - compat/mingw.c: Fix some sparse warnings
+ - compat/win32mmap.c: Fix some sparse warnings
+ - compat/poll/poll.c: Fix a sparse warning
+ - compat/win32/pthread.c: Fix a sparse warning
+ - compat/unsetenv.c: Fix a sparse warning
+ - compat/nedmalloc: Fix compiler warnings on linux
+ - compat/nedmalloc: Fix some sparse warnings
+ - compat/fnmatch/fnmatch.c: Fix a sparse error
+ - compat/regex/regexec.c: Fix some sparse warnings
 
  Will merge to 'next'.
+
+
+* rs/pp-user-info-without-extra-allocation (2013-04-25) 3 commits
+  (merged to 'next' on 2013-04-29 at 13eafc3)
+ + pretty: remove intermediate strbufs from pp_user_info()
+ + pretty: simplify output line length calculation in pp_user_info()
+ + pretty: simplify input line length calculation in pp_user_info()
+
+ Will merge to 'master'.
+
+
+* hb/git-pm-tempfile (2013-04-29) 1 commit
+  (merged to 'next' on 2013-04-29 at fecc6b0)
+ + Git.pm: call tempfile from File::Temp as a regular function
+
+ Will merge to 'master'.
+
+
+* js/transport-helper-error-reporting-fix (2013-04-28) 3 commits
+  (merged to 'next' on 2013-04-29 at 8cc4bb8)
+ + git-remote-testgit: build it to run under $SHELL_PATH
+ + git-remote-testgit: further remove some bashisms
+ + git-remote-testgit: avoid process substitution
+ (this branch uses fc/transport-helper-error-reporting.)
+
+ Finishing touches to fc/transport-helper-error-reporting topic.
+ Will cook in 'next'.
+
+
+* mh/fetch-into-shallow (2013-04-28) 1 commit
+  (merged to 'next' on 2013-04-29 at a167d3e)
+ + upload-pack: ignore 'shallow' lines with unknown obj-ids
+
+ May want to have a few tests. $gmane/222774
+ Will cook in 'next'.
+
 
 --------------------------------------------------
 [Stalled]
+
+* mg/more-textconv (2013-04-23) 7 commits
+ - git grep: honor textconv by default
+ - grep: honor --textconv for the case rev:path
+ - grep: allow to use textconv filters
+ - t7008: demonstrate behavior of grep with textconv
+ - cat-file: do not die on --textconv without textconv filters
+ - show: honor --textconv for blobs
+ - t4030: demonstrate behavior of show with textconv
+
+ Rerolled. I am not sure if I like "show <blob>" and "grep" that use
+ textconv by default, though.
+
+
+* mh/multimail (2013-04-21) 1 commit
+ - git-multimail: a replacement for post-receive-email
+
+ Waiting for comments.
+
 
 * jc/format-patch (2013-04-22) 2 commits
  - format-patch: --inline-single
@@ -186,6 +194,31 @@ of the repositories listed at
 --------------------------------------------------
 [Cooking]
 
+* kb/full-history-compute-treesame-carefully (2013-04-27) 3 commits
+ - simplify-merges: drop merge from irrelevant side branch
+ - simplify-merges: never remove all TREESAME parents
+ - revision.c: tighten up TREESAME handling of merges
+
+ Another improved redesign coming.  This touches a very core part of
+ the system and will not be a 1.8.3 material.
+
+
+* tr/remote-tighten-commandline-parsing (2013-04-24) 3 commits
+  (merged to 'next' on 2013-04-29 at 46a1043)
+ + remote: 'show' and 'prune' can take more than one remote
+ + remote: check for superfluous arguments in 'git remote add'
+ + remote: add a test for extra arguments, according to docs
+
+ Will merge to 'master'.
+
+
+* zk/prompt-rebase-step (2013-04-25) 1 commit
+  (merged to 'next' on 2013-04-25 at a8264bf)
+ + bash-prompt.sh: show where rebase is at when stopped
+
+ Will merge to 'master'.
+
+
 * jh/checkout-auto-tracking (2013-04-21) 8 commits
   (merged to 'next' on 2013-04-22 at 2356700)
  + glossary: Update and rephrase the definition of a remote-tracking branch
@@ -204,25 +237,6 @@ of the repositories listed at
  remotes/some/where/foo but that some/where may not be "origin".
 
  Will cook in 'next'.
-
-
-* mg/more-textconv (2013-04-23) 7 commits
- - git grep: honor textconv by default
- - grep: honor --textconv for the case rev:path
- - grep: allow to use textconv filters
- - t7008: demonstrate behavior of grep with textconv
- - cat-file: do not die on --textconv without textconv filters
- - show: honor --textconv for blobs
- - t4030: demonstrate behavior of show with textconv
-
- Rerolled. I am not sure if I like "show <blob>" and "grep" that use
- textconv by default, though.
-
-
-* mh/multimail (2013-04-21) 1 commit
- - git-multimail: a replacement for post-receive-email
-
- Waiting for comments.
 
 
 * jc/prune-all (2013-04-25) 4 commits
@@ -254,7 +268,7 @@ of the repositories listed at
  Enhance "check-ignore" (1.8.2 update) to work more like "check-attr"
  over bidi-pipes.
 
- Will wait for a follow-up.
+ Waiting for a follow-up.
  $gmane/222235
 
  The test in the second from the tip needs to be updated.
@@ -303,6 +317,8 @@ of the repositories listed at
  Updates reading and updating packed-refs file, correcting corner
  case bugs.
 
+ Will merge to 'next' after rebasing on the tip of jc/prune-all.
+
 
 * fc/transport-helper-error-reporting (2013-04-25) 10 commits
   (merged to 'next' on 2013-04-25 at 3358f1a)
@@ -317,14 +333,12 @@ of the repositories listed at
  + transport-helper: improve push messages
  + transport-helper: mention helper name when it dies
  + transport-helper: report errors properly
+ (this branch is used by js/transport-helper-error-reporting-fix.)
 
  Update transport helper to report errors and maintain ref hierarchy
  used to keep track of remote helper state better.
 
- J6t reports that the update to t5801 breaks on Windows by the
- remote-testgit that is written in bash, and Windows port of bash
- does not have process substitution so remote-testgit is unusable
- there.
+ Will cook in 'next', but may be 1.8.3 material depending on how things go.
 
 
 * jk/submodule-subdirectory-ok (2013-04-24) 3 commits
@@ -414,6 +428,8 @@ of the repositories listed at
  This has nasty conflicts with kb/status-ignored-optim-2,
  as/check-ignore and tr/line-log; I've already asked Duy to hold
  this and later rebase on top of them.
+
+ Will defer.
 
 
 * tr/line-log (2013-04-22) 13 commits
