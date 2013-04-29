@@ -1,6 +1,10 @@
 #!/bin/sh
 
-out_prefix=$(dirname "$0")/../test-results/valgrind.out
+# Get TEST_OUTPUT_DIRECTORY from GIT-BUILD-OPTIONS if it's there...
+. "$(dirname "$0")/../../GIT-BUILD-OPTIONS"
+# ... otherwise set it to the default value.
+: ${TEST_OUTPUT_DIRECTORY=$(dirname "$0")/..}
+
 output=
 count=0
 total_count=0
@@ -115,7 +119,7 @@ handle_one () {
 	finish_output
 }
 
-for test_script in "$(dirname "$0")"/../test-results/*.out
+for test_script in "$TEST_OUTPUT_DIRECTORY"/test-results/*.out
 do
 	handle_one $test_script
 done
