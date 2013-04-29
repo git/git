@@ -10831,7 +10831,7 @@ proc showtag {tag isnew} {
     set linknum 0
     if {![info exists cached_tagcontent($tag)]} {
 	catch {
-           set cached_tagcontent($tag) [exec git cat-file tag $tag]
+           set cached_tagcontent($tag) [exec git cat-file -p $tag]
 	}
     }
     if {[info exists cached_tagcontent($tag)]} {
