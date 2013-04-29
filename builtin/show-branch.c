@@ -22,7 +22,6 @@ static const char **default_arg;
 #define REV_SHIFT	 2
 #define MAX_REVS	(FLAG_BITS - REV_SHIFT) /* should not exceed bits_per_int - REV_SHIFT */
 
-static unsigned int all_mask;
 static unsigned int all_revs;
 static unsigned int rev_mask[MAX_REVS];
 
@@ -30,8 +29,7 @@ static void prepare_all_flags(int num_rev, struct commit **rev)
 {
 	int i;
 
-	all_mask = ((1u << (REV_SHIFT + num_rev)) - 1);
-	all_revs = all_mask & ~((1u << REV_SHIFT) - 1);
+	all_revs = ((1u << (REV_SHIFT + num_rev)) - 1) & ~((1u << REV_SHIFT) - 1);
 	for (i = 0; i < num_rev; i++)
 		rev_mask[i] = rev[i]->object.flags;
 }
@@ -43,7 +41,7 @@ static int commit_seen(struct commit *commit)
 
 static int reachable_from_all(struct commit *commit)
 {
-	unsigned flags = commit->object.flags & all_mask;
+	unsigned flags = commit->object.flags;
 	return (flags & all_revs) == all_revs;
 }
 
