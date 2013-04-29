@@ -228,8 +228,7 @@ obtained through ref discovery.
 The client MUST write all obj-ids which it only has shallow copies
 of (meaning that it does not have the parents of a commit) as
 'shallow' lines so that the server is aware of the limitations of
-the client's history. Clients MUST NOT mention an obj-id which
-it does not know exists on the server.
+the client's history.
 
 The client now sends the maximum commit history depth it wants for
 this transaction, which is the number of commits it wants from the
