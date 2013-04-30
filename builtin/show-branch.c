@@ -4,6 +4,7 @@
 #include "builtin.h"
 #include "color.h"
 #include "parse-options.h"
+#include "commit-slab.h"
 
 static const char* show_branch_usage[] = {
     N_("git show-branch [-a|--all] [-r|--remotes] [--topo-order | --date-order] [--current] [--color[=<when>] | --no-color] [--sparse] [--more=<n> | --list | --independent | --merge-base] [--no-name | --sha1-name] [--topics] [(<rev> | <glob>)...]"),
@@ -22,74 +23,170 @@ static const char **default_arg;
 #define REV_SHIFT	 2
 #define MAX_REVS	(FLAG_BITS - REV_SHIFT) /* should not exceed bits_per_int - REV_SHIFT */
 
-static unsigned int all_revs;
-static unsigned int rev_mask[MAX_REVS];
+
+define_commit_slab(reachable_cslab, unsigned char);
+
+struct reachable {
+	int numbits;
+	unsigned char *all_revs;
+	unsigned char *rev_mask;
+	struct reachable_cslab cslab;
+};
+
+static struct reachable reachable;
+
+static void init_reachable(int numbits)
+{
+	int numbytes = (numbits + 7) / 8;
+
+	reachable.numbits = numbits;
+	reachable.all_revs = xcalloc(numbytes, 1);
+	reachable.rev_mask = xcalloc(numbits, numbytes);
+
+	init_reachable_cslab(&reachable.cslab);
+	clear_reachable_cslab(&reachable.cslab);
+
+	init_reachable_cslab_with_stride(&reachable.cslab, numbytes);
+}
+
+static void set_nth_bit_in_bytearray(unsigned char *barray, int n)
+{
+	barray[n/8] |= (1 << (n % 8));
+}
+
+static int tst_nth_bit_in_bytearray(unsigned char *barray, int n)
+{
+	return barray[n/8] & (1 << (n % 8));
+}
+
+static int has_any_bit_set(struct commit *commit)
+{
+	unsigned char *at;
+	int numbytes = (reachable.numbits + 7) / 8;
+	int i;
+
+	/* Yeah, I know accessing a word at a time may be faster */
+	at = reachable_cslab_at(&reachable.cslab, commit);
+	for (i = 0; i < numbytes; i++) {
+		if (*at)
+			return 1;
+		at++;
+	}
+	return 0;
+}
 
 static void prepare_all_flags(int num_rev, struct commit **rev)
 {
 	int i;
+	unsigned char *at;
+	int numbytes = (reachable.numbits + 7) / 8;
 
-	all_revs = ((1u << (REV_SHIFT + num_rev)) - 1) & ~((1u << REV_SHIFT) - 1);
-	for (i = 0; i < num_rev; i++)
-		rev_mask[i] = rev[i]->object.flags;
+	for (i = 0; i < reachable.numbits; i++)
+		set_nth_bit_in_bytearray(reachable.all_revs, i);
+	for (i = 0; i < reachable.numbits; i++) {
+		at = reachable_cslab_at(&reachable.cslab, rev[i]);
+		memcpy(reachable.rev_mask + i * numbytes, at, numbytes);
+	}
 }
 
 static int commit_seen(struct commit *commit)
 {
-	return commit->object.flags;
+	return ((commit->object.flags & UNINTERESTING) ||
+		has_any_bit_set(commit));
+}
+
+static int all_bits_set(const unsigned char *bits, const unsigned char *mask)
+{
+	int numbytes = (reachable.numbits + 7) / 8;
+	int i;
+
+	for (i = 0; i < numbytes; i++)
+		if ((bits[i] & mask[i]) != mask[i])
+			return 0;
+	return 1;
 }
 
 static int reachable_from_all(struct commit *commit)
 {
-	unsigned flags = commit->object.flags;
-	return (flags & all_revs) == all_revs;
+	unsigned char *at = reachable_cslab_at(&reachable.cslab, commit);
+
+	return all_bits_set(at, reachable.all_revs);
 }
 
 static int already_reachable(struct commit *this, struct commit *other, int uninteresting)
 {
-	unsigned this_flag = this->object.flags & ~UNINTERESTING;
-	unsigned flag = other->object.flags & ~UNINTERESTING;
+	unsigned char *this_at, *other_at;
 
 	if (!!(this->object.flags & UNINTERESTING) != uninteresting)
 		return 0;
 
-	return (this_flag & flag) == flag;
+	this_at = reachable_cslab_at(&reachable.cslab, this);
+	other_at = reachable_cslab_at(&reachable.cslab, other);
+
+	return all_bits_set(this_at, other_at);
 }
 
 static void propagate_mark(struct commit *this, struct commit *other, int uninteresting)
 {
+	int numbytes = (reachable.numbits + 7) / 8;
+	int i;
+	unsigned char *this_at, *other_at;
+
 	if (uninteresting)
 		this->object.flags |= UNINTERESTING;
-	this->object.flags |= (other->object.flags & ~UNINTERESTING);
+
+	this_at = reachable_cslab_at(&reachable.cslab, this);
+	other_at = reachable_cslab_at(&reachable.cslab, other);
+	for (i = 0; i < numbytes; i++)
+		this_at[i] |= other_at[i];
 }
 
 static int has_independent_mask(struct commit *commit, int i)
 {
-	return commit->object.flags == rev_mask[i];
+	int numbytes = (reachable.numbits + 7) / 8;
+	unsigned char *at = reachable_cslab_at(&reachable.cslab, commit);
+
+	return !memcmp(at, reachable.rev_mask + i * numbytes, numbytes);
 }
 
 static int count_set_bits(struct commit *commit, int num_rev)
 {
 	int i, count;
+	unsigned char *at = reachable_cslab_at(&reachable.cslab, commit);
+
+	if (num_rev != reachable.numbits)
+		die("BUG: num-rev different from numbits");
+
 	for (i = count = 0; i < num_rev; i++)
-		if (commit->object.flags & (1u << (i + REV_SHIFT)))
+		if (tst_nth_bit_in_bytearray(at, i))
 			count++;
 	return count;
 }
 
 static void set_nth_bit(struct commit *commit, int n)
 {
-	commit->object.flags |= (1u << (n + REV_SHIFT));
+	unsigned char *at = reachable_cslab_at(&reachable.cslab, commit);
+	set_nth_bit_in_bytearray(at, n);
 }
 
 static int has_nth_bit_only(struct commit *commit, int n)
 {
-	return commit->object.flags == (1u << (n + REV_SHIFT));
+	int i;
+	unsigned char *at = reachable_cslab_at(&reachable.cslab, commit);
+
+	for (i = 0; i < n; i++)
+		if (tst_nth_bit_in_bytearray(at, i))
+			return 0;
+	for (i = n + 1; i < reachable.numbits; i++)
+		if (tst_nth_bit_in_bytearray(at, i))
+			return 0;
+	return tst_nth_bit_in_bytearray(at, n);
 }
 
 static int has_nth_bit(struct commit *commit, int n)
 {
-	return !!(commit->object.flags & (1u << (n + REV_SHIFT)));
+	unsigned char *at = reachable_cslab_at(&reachable.cslab, commit);
+	return tst_nth_bit_in_bytearray(at, n);
 }
 
 #define DEFAULT_REFLOG	4
@@ -281,7 +378,7 @@ static void join_revs(struct commit_list **list_p,
 		struct commit_list *parents;
 		int still_interesting = !!interesting(*list_p);
 		struct commit *commit = pop_one_commit(list_p);
-		int mark_uninteresting = 0;
+		int mark_uninteresting = !!(commit->object.flags & UNINTERESTING);
 
 		if (!still_interesting && extra <= 0)
 			break;
@@ -885,6 +982,8 @@ int cmd_show_branch(int ac, const char **av, const char *prefix)
 		fprintf(stderr, "No revs to be shown.\n");
 		exit(0);
 	}
+
+	init_reachable(ref_name_cnt);
 
 	for (num_rev = 0; ref_name[num_rev]; num_rev++) {
 		unsigned char revkey[20];
