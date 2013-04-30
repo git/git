@@ -1033,12 +1033,14 @@ int interpret_branch_name(const char *name, struct strbuf *buf)
 	int len = interpret_nth_prior_checkout(name, buf);
 	int tmp_len;
 
-	if (!len)
+	if (!len) {
 		return len; /* syntax Ok, not enough switches */
-	if (0 < len && len == namelen)
-		return len; /* consumed all */
-	else if (0 < len)
-		return reinterpret(name, namelen, len, buf);
+	} else if (len > 0) {
+		if (len == namelen)
+			return len; /* consumed all */
+		else
+			return reinterpret(name, namelen, len, buf);
+	}
 
 	cp = strchr(name, '@');
 	if (!cp)
