@@ -393,7 +393,7 @@ class CustomTree():
             tree = repo.repository.revision_tree(revid)
             try:
                 for path, entry in tree.iter_entries_by_dir():
-                    files[path] = entry.file_id
+                    files[path] = [entry.file_id, None]
             finally:
                 repo.unlock()
             return files
@@ -408,12 +408,18 @@ class CustomTree():
                 self.base_files = copy_tree(self.base_id)
 
         self.files = files_cache[revid] = self.base_files.copy()
+        self.rev_files = {}
+
+        for path, data in self.files.iteritems():
+            fid, mark = data
+            self.rev_files[fid] = [path, mark]
 
         for path, f in files.iteritems():
-            fid = self.files.get(path, None)
+            fid, mark = self.files.get(path, [None, None])
             if not fid:
                 fid = bzrlib.generate_ids.gen_file_id(path)
             f['path'] = path
+            self.rev_files[fid] = [path, mark]
             self.updates[fid] = f
 
     def last_revision(self):
@@ -423,10 +429,10 @@ class CustomTree():
         changes = []
 
         def get_parent(dirname, basename):
-            parent_fid = self.base_files.get(dirname, None)
+            parent_fid, mark = self.base_files.get(dirname, [None, None])
             if parent_fid:
                 return parent_fid
-            parent_fid = self.files.get(dirname, None)
+            parent_fid, mark = self.files.get(dirname, [None, None])
             if parent_fid:
                 return parent_fid
             if basename == '':
@@ -453,7 +459,7 @@ class CustomTree():
                     (None, basename),
                     (None, kind),
                     (None, executable))
-            self.files[path] = change[0]
+            self.files[path] = [change[0], None]
             changes.append(change)
 
         def update_entry(fid, path, kind, mode = None):
@@ -474,7 +480,7 @@ class CustomTree():
                     (None, basename),
                     (None, kind),
                     (None, executable))
-            self.files[path] = change[0]
+            self.files[path] = [change[0], None]
             changes.append(change)
 
         def remove_entry(fid, path, kind):
@@ -503,15 +509,22 @@ class CustomTree():
             else:
                 add_entry(fid, path, 'file', f['mode'])
 
+            self.files[path][1] = f['mark']
+            self.rev_files[fid][1] = f['mark']
+
         return changes
 
     def get_file_with_stat(self, file_id, path=None):
-        mark = self.updates[file_id]['mark']
+        path, mark = self.rev_files[file_id]
         return (StringIO.StringIO(blob_marks[mark]), None)
 
     def get_symlink_target(self, file_id):
-        mark = self.updates[file_id]['mark']
+        path, mark = self.rev_files[file_id]
         return blob_marks[mark]
+
+    def id2path(self, file_id):
+        path, mark = self.rev_files[file_id]
+        return path
 
 def c_style_unescape(string):
     if string[0] == string[-1] == '"':

@@ -228,4 +228,40 @@ test_expect_success 'push utf-8 filenames' '
   test_cmp expected actual
 '
 
+test_expect_success 'pushing a merge' '
+  mkdir -p tmp && cd tmp &&
+  test_when_finished "cd .. && rm -rf tmp" &&
+
+  (
+  bzr init bzrrepo &&
+  cd bzrrepo &&
+  echo one > content &&
+  bzr add content &&
+  bzr commit -m one
+  ) &&
+
+  git clone "bzr::$PWD/bzrrepo" gitrepo &&
+
+  (
+  cd bzrrepo &&
+  echo two > content &&
+  bzr commit -m two
+  ) &&
+
+  (
+  cd gitrepo &&
+  echo three > content &&
+  git commit -a -m three &&
+  git fetch &&
+  git merge origin/master || true &&
+  echo three > content &&
+  git commit -a --no-edit &&
+  git push
+  ) &&
+
+  echo three > expected &&
+  cat bzrrepo/content > actual &&
+  test_cmp expected actual
+'
+
 test_done
