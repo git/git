@@ -781,6 +781,7 @@ def get_repo(url, alias):
 
             name = repo.user_transport.relpath(branch.base)
             name = name if name != '' else 'master'
+            name = name.replace('/', '+')
 
             if not is_local:
                 peers[name] = branch
