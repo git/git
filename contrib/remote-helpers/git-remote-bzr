@@ -27,6 +27,7 @@ import bzrlib.generate_ids
 import bzrlib.transport
 import bzrlib.errors
 import bzrlib.ui
+import bzrlib.urlutils
 
 import sys
 import os
@@ -250,12 +251,13 @@ def export_files(tree, files):
 
     return final
 
-def export_branch(branch, name):
+def export_branch(repo, name):
     global prefix
 
     ref = '%s/heads/%s' % (prefix, name)
     tip = marks.get_tip(name)
 
+    branch = branches[name]
     repo = branch.repository
 
     branch.lock_read()
@@ -323,7 +325,7 @@ def export_branch(branch, name):
 
         count += 1
         if (count % 100 == 0):
-            print "progress revision %s (%d/%d)" % (revid, count, len(revs))
+            print "progress revision %s '%s' (%d/%d)" % (revid, name, count, len(revs))
             print "#############################################################"
 
     branch.unlock()
@@ -348,7 +350,7 @@ def export_tag(repo, name):
 def do_import(parser):
     global dirname
 
-    branch = parser.repo
+    repo = parser.repo
     path = os.path.join(dirname, 'marks-git')
 
     print "feature done"
@@ -362,10 +364,10 @@ def do_import(parser):
         ref = parser[1]
         if ref.startswith('refs/heads/'):
             name = ref[len('refs/heads/'):]
-            export_branch(branch, name)
+            export_branch(repo, name)
         if ref.startswith('refs/tags/'):
             name = ref[len('refs/tags/'):]
-            export_tag(branch, name)
+            export_tag(repo, name)
         parser.next()
 
     print 'done'
@@ -551,8 +553,11 @@ def parse_commit(parser):
     ref = parser[1]
     parser.next()
 
-    if ref != 'refs/heads/master':
-        die("bzr doesn't support multiple branches; use 'master'")
+    if ref.startswith('refs/heads/'):
+        name = ref[len('refs/heads/'):]
+        branch = branches[name]
+    else:
+        die('unknown ref')
 
     commit_mark = parser.get_mark()
     parser.next()
@@ -588,8 +593,6 @@ def parse_commit(parser):
         path = c_style_unescape(path).decode('utf-8')
         files[path] = f
 
-    branch = parser.repo
-
     committer, date, tz = committer
     parents = [str(mark_to_rev(p)) for p in parents]
     revid = bzrlib.generate_ids.gen_revision_id(committer, date)
@@ -621,9 +624,6 @@ def parse_reset(parser):
     ref = parser[1]
     parser.next()
 
-    if ref != 'refs/heads/master':
-        die("bzr doesn't support multiple branches; use 'master'")
-
     # ugh
     if parser.check('commit'):
         parse_commit(parser)
@@ -636,7 +636,7 @@ def parse_reset(parser):
     parsed_refs[ref] = mark_to_rev(from_mark)
 
 def do_export(parser):
-    global parsed_refs, dirname, peer
+    global parsed_refs, dirname
 
     parser.next()
 
@@ -654,23 +654,24 @@ def do_export(parser):
         else:
             die('unhandled export command: %s' % line)
 
-    branch = parser.repo
-
     for ref, revid in parsed_refs.iteritems():
-        if ref == 'refs/heads/master':
-            branch.generate_revision_history(revid, marks.get_tip('master'))
-            if peer:
-                try:
-                    branch.push(peer, stop_revision=revid)
-                except bzrlib.errors.DivergedBranches:
-                    print "error %s non-fast forward" % ref
-                    continue
+        name = ref[len('refs/heads/'):]
+        branch = branches[name]
+        branch.generate_revision_history(revid, marks.get_tip(name))
 
+        if name in peers:
+            peer = peers[name]
             try:
-                wt = branch.bzrdir.open_workingtree()
-                wt.update()
-            except bzrlib.errors.NoWorkingTree:
-                pass
+                peer.bzrdir.push_branch(branch, revision_id=revid)
+            except bzrlib.errors.DivergedBranches:
+                print "error %s non-fast forward" % ref
+                continue
+
+        try:
+            wt = branch.bzrdir.open_workingtree()
+            wt.update()
+        except bzrlib.errors.NoWorkingTree:
+            pass
 
         print "ok %s" % ref
 
@@ -697,9 +698,15 @@ def ref_is_valid(name):
 
 def do_list(parser):
     global tags
-    print "? refs/heads/%s" % 'master'
 
-    branch = parser.repo
+    master_branch = None
+
+    for name in branches:
+        if not master_branch:
+            master_branch = name
+        print "? refs/heads/%s" % name
+
+    branch = branches[master_branch]
     branch.lock_read()
     for tag, revid in branch.tags.get_tag_dict().items():
         try:
@@ -711,41 +718,77 @@ def do_list(parser):
         print "? refs/tags/%s" % tag
         tags[tag] = revid
     branch.unlock()
-    print "@refs/heads/%s HEAD" % 'master'
+
+    print "@refs/heads/%s HEAD" % master_branch
     print
 
-def get_repo(url, alias):
-    global dirname, peer
+def get_remote_branch(origin, remote_branch, name):
+    global dirname, peers
 
-    origin = bzrlib.bzrdir.BzrDir.open(url)
-    branch = origin.open_branch()
-
-    if not isinstance(origin.transport, bzrlib.transport.local.LocalTransport):
-        clone_path = os.path.join(dirname, 'clone')
-        remote_branch = branch
-        if os.path.exists(clone_path):
-            # pull
-            d = bzrlib.bzrdir.BzrDir.open(clone_path)
-            branch = d.open_branch()
-            try:
-                result = branch.pull(remote_branch, [], None, False)
-            except bzrlib.errors.DivergedBranches:
-                # use remote branch for now
-                peer = None
-                return remote_branch
-        else:
-            # clone
-            d = origin.sprout(clone_path, None,
-                    hardlink=True, create_tree_if_local=False,
-                    source_branch=remote_branch)
-            branch = d.open_branch()
-            branch.bind(remote_branch)
-
-        peer = remote_branch
+    branch_path = os.path.join(dirname, 'clone', name)
+    if os.path.exists(branch_path):
+        # pull
+        d = bzrlib.bzrdir.BzrDir.open(branch_path)
+        branch = d.open_branch()
+        try:
+            branch.pull(remote_branch, [], None, False)
+        except bzrlib.errors.DivergedBranches:
+            # use remote branch for now
+            return remote_branch
     else:
-        peer = None
+        # clone
+        d = origin.sprout(branch_path, None,
+                hardlink=True, create_tree_if_local=False,
+                force_new_repo=False,
+                source_branch=remote_branch)
+        branch = d.open_branch()
 
     return branch
+
+def get_repo(url, alias):
+    global dirname, peer, branches
+
+    normal_url = bzrlib.urlutils.normalize_url(url)
+    origin = bzrlib.bzrdir.BzrDir.open(url)
+    is_local = isinstance(origin.transport, bzrlib.transport.local.LocalTransport)
+
+    clone_path = os.path.join(dirname, 'clone')
+
+    try:
+        repo = origin.open_repository()
+    except bzrlib.errors.NoRepositoryPresent:
+        # branch
+
+        name = 'master'
+        branch = origin.open_branch()
+
+        if not is_local:
+            if not os.path.exists(clone_path):
+                os.mkdir(clone_path)
+            peers[name] = branch
+            branches[name] = get_remote_branch(origin, branch, name)
+        else:
+            branches[name] = branch
+
+        return branch.repository
+    else:
+        # repository
+
+        if not is_local and not os.path.exists(clone_path):
+            clonedir = bzrlib.bzrdir.BzrDir.create(clone_path)
+
+        for branch in repo.find_branches():
+
+            name = repo.user_transport.relpath(branch.base)
+            name = name if name != '' else 'master'
+
+            if not is_local:
+                peers[name] = branch
+                branches[name] = get_remote_branch(origin, branch, name)
+            else:
+                branches[name] = branch
+
+        return repo
 
 def fix_path(alias, orig_url):
     url = urlparse.urlparse(orig_url, 'file')
@@ -762,6 +805,7 @@ def main(args):
     global parsed_refs
     global files_cache
     global is_tmp
+    global branches, peers
 
     alias = args[1]
     url = args[2]
@@ -772,6 +816,8 @@ def main(args):
     parsed_refs = {}
     files_cache = {}
     marks = None
+    branches = {}
+    peers = {}
 
     if alias[5:] == url:
         is_tmp = True

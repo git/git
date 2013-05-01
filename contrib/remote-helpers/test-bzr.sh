@@ -264,4 +264,40 @@ test_expect_success 'pushing a merge' '
   test_cmp expected actual
 '
 
+cat > expected <<EOF
+origin/HEAD
+origin/branch
+origin/trunk
+EOF
+
+test_expect_success 'proper bzr repo' '
+  mkdir -p tmp && cd tmp &&
+  test_when_finished "cd .. && rm -rf tmp" &&
+
+  bzr init-repo bzrrepo &&
+
+  bzr init bzrrepo/trunk &&
+  (
+  cd bzrrepo/trunk &&
+  echo one >> content &&
+  bzr add content &&
+  bzr commit -m one
+  ) &&
+
+  bzr branch bzrrepo/trunk bzrrepo/branch &&
+  (
+  cd bzrrepo/branch &&
+  echo two >> content &&
+  bzr commit -m one
+  ) &&
+
+  git clone "bzr::$PWD/bzrrepo" gitrepo &&
+  (
+  cd gitrepo &&
+  git for-each-ref --format "%(refname:short)" refs/remotes/origin > ../actual
+  ) &&
+
+  test_cmp ../expected actual
+'
+
 test_done
