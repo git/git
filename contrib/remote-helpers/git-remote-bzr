@@ -354,6 +354,7 @@ def do_import(parser):
     if os.path.exists(path):
         print "feature import-marks=%s" % path
     print "feature export-marks=%s" % path
+    print "feature force"
     sys.stdout.flush()
 
     while parser.check('import'):
@@ -716,7 +717,12 @@ def get_repo(url, alias):
             # pull
             d = bzrlib.bzrdir.BzrDir.open(clone_path)
             branch = d.open_branch()
-            result = branch.pull(remote_branch, [], None, False)
+            try:
+                result = branch.pull(remote_branch, [], None, False)
+            except bzrlib.errors.DivergedBranches:
+                # use remote branch for now
+                peer = None
+                return remote_branch
         else:
             # clone
             d = origin.sprout(clone_path, None,
