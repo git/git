@@ -286,9 +286,10 @@ def export_branch(repo, name):
     last_revno, _ = branch.last_revision_info()
     total = last_revno - tip_revno
 
-    revs = [revid, seq for revid, _, seq, _ in revs if not marks.is_marked(revid)]
+    for revid, _, seq, _ in revs:
 
-    for revid, seq in revs:
+        if marks.is_marked(revid):
+            continue
 
         rev = repo.get_revision(revid)
         revno = seq[0]
