@@ -752,7 +752,20 @@ def get_repo(url, alias):
     origin = bzrlib.bzrdir.BzrDir.open(url)
     is_local = isinstance(origin.transport, bzrlib.transport.local.LocalTransport)
 
-    clone_path = os.path.join(dirname, 'clone')
+    shared_path = os.path.join(gitdir, 'bzr')
+    try:
+        shared_dir = bzrlib.bzrdir.BzrDir.open(shared_path)
+    except bzrlib.errors.NotBranchError:
+        shared_dir = bzrlib.bzrdir.BzrDir.create(shared_path)
+    try:
+        shared_repo = shared_dir.open_repository()
+    except bzrlib.errors.NoRepositoryPresent:
+        shared_repo = shared_dir.create_repository(shared=True)
+
+    if not is_local:
+        clone_path = os.path.join(dirname, 'clone')
+        if not os.path.exists(clone_path):
+            os.mkdir(clone_path)
 
     try:
         repo = origin.open_repository()
@@ -763,8 +776,6 @@ def get_repo(url, alias):
         branch = origin.open_branch()
 
         if not is_local:
-            if not os.path.exists(clone_path):
-                os.mkdir(clone_path)
             peers[name] = branch
             branches[name] = get_remote_branch(origin, branch, name)
         else:
@@ -773,9 +784,6 @@ def get_repo(url, alias):
         return branch.repository
     else:
         # repository
-
-        if not is_local and not os.path.exists(clone_path):
-            clonedir = bzrlib.bzrdir.BzrDir.create(clone_path)
 
         for branch in repo.find_branches():
 
@@ -800,7 +808,7 @@ def fix_path(alias, orig_url):
     subprocess.call(cmd)
 
 def main(args):
-    global marks, prefix, dirname
+    global marks, prefix, gitdir, dirname
     global tags, filenodes
     global blob_marks
     global parsed_refs
