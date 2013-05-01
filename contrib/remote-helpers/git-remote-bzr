@@ -506,10 +506,12 @@ class CustomTree():
         return changes
 
     def get_file_with_stat(self, file_id, path=None):
-        return (StringIO.StringIO(self.updates[file_id]['data']), None)
+        mark = self.updates[file_id]['mark']
+        return (StringIO.StringIO(blob_marks[mark]), None)
 
     def get_symlink_target(self, file_id):
-        return self.updates[file_id]['data']
+        mark = self.updates[file_id]['mark']
+        return blob_marks[mark]
 
 def c_style_unescape(string):
     if string[0] == string[-1] == '"':
@@ -553,7 +555,7 @@ def parse_commit(parser):
         if parser.check('M'):
             t, m, mark_ref, path = line.split(' ', 3)
             mark = int(mark_ref[1:])
-            f = { 'mode' : m, 'data' : blob_marks[mark] }
+            f = { 'mode' : m, 'mark' : mark }
         elif parser.check('D'):
             t, path = line.split(' ')
             f = { 'deleted' : True }
