@@ -385,9 +385,6 @@ class CustomTree():
     def __init__(self, repo, revid, parents, files):
         global files_cache
 
-        self.repo = repo
-        self.revid = revid
-        self.parents = parents
         self.updates = {}
 
         def copy_tree(revid):
@@ -435,7 +432,7 @@ class CustomTree():
             if basename == '':
                 return None
             fid = bzrlib.generate_ids.gen_file_id(path)
-            d = add_entry(fid, dirname, 'directory')
+            add_entry(fid, dirname, 'directory')
             return fid
 
         def add_entry(fid, path, kind, mode = None):
@@ -458,7 +455,6 @@ class CustomTree():
                     (None, executable))
             self.files[path] = change[0]
             changes.append(change)
-            return change
 
         def update_entry(fid, path, kind, mode = None):
             dirname, basename = os.path.split(path)
@@ -480,7 +476,6 @@ class CustomTree():
                     (None, executable))
             self.files[path] = change[0]
             changes.append(change)
-            return change
 
         def remove_entry(fid, path, kind):
             dirname, basename = os.path.split(path)
@@ -495,7 +490,6 @@ class CustomTree():
                     (None, None))
             del self.files[path]
             changes.append(change)
-            return change
 
         for fid, f in self.updates.iteritems():
             path = f['path']
