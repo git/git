@@ -387,6 +387,7 @@ class CustomTree():
         global files_cache
 
         self.updates = {}
+        self.branch = repo
 
         def copy_tree(revid):
             files = files_cache[revid] = {}
@@ -515,13 +516,21 @@ class CustomTree():
 
         return changes
 
-    def get_file_with_stat(self, file_id, path=None):
+    def get_content(self, file_id):
         path, mark = self.rev_files[file_id]
-        return (StringIO.StringIO(blob_marks[mark]), None)
+        if mark:
+            return blob_marks[mark]
+
+        # last resort
+        tree = self.branch.repository.revision_tree(self.base_id)
+        return tree.get_file_text(file_id)
+
+    def get_file_with_stat(self, file_id, path=None):
+        content = self.get_content(file_id)
+        return (StringIO.StringIO(content), None)
 
     def get_symlink_target(self, file_id):
-        path, mark = self.rev_files[file_id]
-        return blob_marks[mark]
+        return self.get_content(file_id)
 
     def id2path(self, file_id):
         path, mark = self.rev_files[file_id]
