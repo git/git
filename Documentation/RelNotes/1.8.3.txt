@@ -46,6 +46,10 @@ Foreign interface
 
 UI, Workflows & Features
 
+ * The prompt string generator (in contrib/completion/) learned to
+   show how many changes there are in total and how many have been
+   replayed during a "git rebase" session.
+
  * "git branch --vv" learned to paint the name of the branch it
    integrates with in a different color (color.branch.upstream,
    which defaults to blue).
@@ -158,9 +162,9 @@ UI, Workflows & Features
 
  * "git difftool" allows the user to write into the temporary files
    being shown; if the user makes changes to the working tree at the
-   same time, one of the changes has to be lost in such a case, but it
-   tells the user what happened and refrains from overwriting the copy
-   in the working tree.
+   same time, it now refrains from overwriting the copy in the working
+   tree and leaves the temporary file so that changes can be merged
+   manually.
 
  * There was no good way to ask "I have a random string that came from
    outside world. I want to turn it into a 40-hex object name while
@@ -223,6 +227,15 @@ Fixes since v1.8.2
 Unless otherwise noted, all the fixes since v1.8.2 in the maintenance
 track are contained in this release (see release notes to them for
 details).
+
+ * Recent versions of File::Temp (used by "git svn") started blowing
+   up when its tempfile sub is called as a class method; updated the
+   callsite to call it as a plain vanilla function to fix it.
+   (merge eafc2dd hb/git-pm-tempfile later to maint).
+
+ * Various subcommands of "git remote" simply ignored extraneous
+   command line arguments instead of diagnosing them as errors.
+   (merge b17dd3f tr/remote-tighten-commandline-parsing later to maint).
 
  * When receive-pack detects an error in the pack header it received in
    order to decide which of unpack-objects or index-pack to run, it
