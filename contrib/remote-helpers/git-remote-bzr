@@ -38,6 +38,7 @@ import atexit, shutil, hashlib, urlparse, subprocess
 
 NAME_RE = re.compile('^([^<>]+)')
 AUTHOR_RE = re.compile('^([^<>]+?)? ?<([^<>]*)>$')
+EMAIL_RE = re.compile('^([^<>]+[^ \\\t<>])?\\b(?:[ \\t<>]*?)\\b([^ \\t<>]+@[^ \\t<>]+)')
 RAW_AUTHOR_RE = re.compile('^(\w+) (.+)? <(.*)> (\d+) ([+-]\d+)')
 
 def die(msg, *args):
@@ -175,9 +176,19 @@ def fixup_user(user):
         name = m.group(1)
         mail = m.group(2).strip()
     else:
-        m = NAME_RE.match(user)
+        m = EMAIL_RE.match(user)
         if m:
-            name = m.group(1).strip()
+            name = m.group(1)
+            mail = m.group(2)
+        else:
+            m = NAME_RE.match(user)
+            if m:
+                name = m.group(1).strip()
+
+    if not name:
+        name = 'unknown'
+    if not mail:
+        mail = 'Unknown'
 
     return '%s <%s>' % (name, mail)
 
