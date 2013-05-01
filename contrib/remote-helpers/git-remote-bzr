@@ -277,7 +277,7 @@ def export_branch(repo, name):
     ref = '%s/heads/%s' % (prefix, name)
     tip = marks.get_tip(name)
 
-    branch = branches[name]
+    branch = bzrlib.branch.Branch.open(branches[name])
     repo = branch.repository
 
     branch.lock_read()
@@ -582,7 +582,7 @@ def parse_commit(parser):
 
     if ref.startswith('refs/heads/'):
         name = ref[len('refs/heads/'):]
-        branch = branches[name]
+        branch = bzrlib.branch.Branch.open(branches[name])
     else:
         die('unknown ref')
 
@@ -683,7 +683,7 @@ def do_export(parser):
 
     for ref, revid in parsed_refs.iteritems():
         name = ref[len('refs/heads/'):]
-        branch = branches[name]
+        branch = bzrlib.branch.Branch.open(branches[name])
         branch.generate_revision_history(revid, marks.get_tip(name))
 
         if name in peers:
@@ -733,7 +733,7 @@ def do_list(parser):
             master_branch = name
         print "? refs/heads/%s" % name
 
-    branch = branches[master_branch]
+    branch = bzrlib.branch.Branch.open(branches[master_branch])
     branch.lock_read()
     for tag, revid in branch.tags.get_tag_dict().items():
         try:
@@ -822,13 +822,15 @@ def get_repo(url, alias):
         # branch
 
         name = 'master'
-        branch = origin.open_branch()
+        remote_branch = origin.open_branch()
 
         if not is_local:
-            peers[name] = branch.base
-            branches[name] = get_remote_branch(origin, branch, name)
+            peers[name] = remote_branch.base
+            branch = get_remote_branch(origin, remote_branch, name)
         else:
-            branches[name] = branch
+            branch = remote_branch
+
+        branches[name] = branch.base
 
         return branch.repository
     else:
@@ -838,13 +840,15 @@ def get_repo(url, alias):
         # stupid python
         wanted = [e for e in wanted if e]
 
-        for name, branch in find_branches(repo, wanted):
+        for name, remote_branch in find_branches(repo, wanted):
 
             if not is_local:
-                peers[name] = branch.base
-                branches[name] = get_remote_branch(origin, branch, name)
+                peers[name] = remote_branch.base
+                branch = get_remote_branch(origin, remote_branch, name)
             else:
-                branches[name] = branch
+                branch = remote_branch
+
+            branches[name] = branch.base
 
         return repo
 
