@@ -282,13 +282,16 @@ def export_branch(repo, name):
 
     branch.lock_read()
     revs = branch.iter_merge_sorted_revisions(None, tip, 'exclude', 'forward')
-    count = 0
+    tip_revno = branch.revision_id_to_revno(tip)
+    last_revno, _ = branch.last_revision_info()
+    total = last_revno - tip_revno
 
-    revs = [revid for revid, _, _, _ in revs if not marks.is_marked(revid)]
+    revs = [revid, seq for revid, _, seq, _ in revs if not marks.is_marked(revid)]
 
-    for revid in revs:
+    for revid, seq in revs:
 
         rev = repo.get_revision(revid)
+        revno = seq[0]
 
         parents = rev.parent_ids
         time = rev.timestamp
@@ -343,10 +346,13 @@ def export_branch(repo, name):
             print "M %s :%u %s" % f
         print
 
-        count += 1
-        if (count % 100 == 0):
-            print "progress revision %s '%s' (%d/%d)" % (revid, name, count, len(revs))
-            print "#############################################################"
+        if len(seq) > 1:
+            # let's skip branch revisions from the progress report
+            continue
+
+        progress = (revno - tip_revno)
+        if (progress % 100 == 0):
+            print "progress revision %d '%s' (%d/%d)" % (revno, name, progress, total)
 
     branch.unlock()
 
