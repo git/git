@@ -257,7 +257,8 @@ def export_branch(branch, name):
     tip = marks.get_tip(name)
 
     repo = branch.repository
-    repo.lock_read()
+
+    branch.lock_read()
     revs = branch.iter_merge_sorted_revisions(None, tip, 'exclude', 'forward')
     count = 0
 
@@ -325,7 +326,7 @@ def export_branch(branch, name):
             print "progress revision %s (%d/%d)" % (revid, count, len(revs))
             print "#############################################################"
 
-    repo.unlock()
+    branch.unlock()
 
     revid = branch.last_revision()
 
@@ -383,21 +384,21 @@ def parse_blob(parser):
 
 class CustomTree():
 
-    def __init__(self, repo, revid, parents, files):
+    def __init__(self, branch, revid, parents, files):
         global files_cache
 
         self.updates = {}
-        self.branch = repo
+        self.branch = branch
 
         def copy_tree(revid):
             files = files_cache[revid] = {}
-            repo.lock_read()
-            tree = repo.repository.revision_tree(revid)
+            branch.lock_read()
+            tree = branch.repository.revision_tree(revid)
             try:
                 for path, entry in tree.iter_entries_by_dir():
                     files[path] = [entry.file_id, None]
             finally:
-                repo.unlock()
+                branch.unlock()
             return files
 
         if len(parents) == 0:
@@ -587,20 +588,20 @@ def parse_commit(parser):
         path = c_style_unescape(path).decode('utf-8')
         files[path] = f
 
-    repo = parser.repo
+    branch = parser.repo
 
     committer, date, tz = committer
     parents = [str(mark_to_rev(p)) for p in parents]
     revid = bzrlib.generate_ids.gen_revision_id(committer, date)
     props = {}
-    props['branch-nick'] = repo.nick
+    props['branch-nick'] = branch.nick
 
-    mtree = CustomTree(repo, revid, parents, files)
+    mtree = CustomTree(branch, revid, parents, files)
     changes = mtree.iter_changes()
 
-    repo.lock_write()
+    branch.lock_write()
     try:
-        builder = repo.get_commit_builder(parents, None, date, tz, committer, props, revid)
+        builder = branch.get_commit_builder(parents, None, date, tz, committer, props, revid)
         try:
             list(builder.record_iter_changes(mtree, mtree.last_revision(), changes))
             builder.finish_inventory()
@@ -609,7 +610,7 @@ def parse_commit(parser):
             builder.abort()
             raise
     finally:
-        repo.unlock()
+        branch.unlock()
 
     parsed_refs[ref] = revid
     marks.new_mark(revid, commit_mark)
@@ -653,20 +654,20 @@ def do_export(parser):
         else:
             die('unhandled export command: %s' % line)
 
-    repo = parser.repo
+    branch = parser.repo
 
     for ref, revid in parsed_refs.iteritems():
         if ref == 'refs/heads/master':
-            repo.generate_revision_history(revid, marks.get_tip('master'))
+            branch.generate_revision_history(revid, marks.get_tip('master'))
             if peer:
                 try:
-                    repo.push(peer, stop_revision=revid)
+                    branch.push(peer, stop_revision=revid)
                 except bzrlib.errors.DivergedBranches:
                     print "error %s non-fast forward" % ref
                     continue
 
             try:
-                wt = repo.bzrdir.open_workingtree()
+                wt = branch.bzrdir.open_workingtree()
                 wt.update()
             except bzrlib.errors.NoWorkingTree:
                 pass
