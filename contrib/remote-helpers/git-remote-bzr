@@ -687,7 +687,7 @@ def do_export(parser):
         branch.generate_revision_history(revid, marks.get_tip(name))
 
         if name in peers:
-            peer = peers[name]
+            peer = bzrlib.branch.Branch.open(peers[name])
             try:
                 peer.bzrdir.push_branch(branch, revision_id=revid)
             except bzrlib.errors.DivergedBranches:
@@ -825,7 +825,7 @@ def get_repo(url, alias):
         branch = origin.open_branch()
 
         if not is_local:
-            peers[name] = branch
+            peers[name] = branch.base
             branches[name] = get_remote_branch(origin, branch, name)
         else:
             branches[name] = branch
@@ -841,7 +841,7 @@ def get_repo(url, alias):
         for name, branch in find_branches(repo, wanted):
 
             if not is_local:
-                peers[name] = branch
+                peers[name] = branch.base
                 branches[name] = get_remote_branch(origin, branch, name)
             else:
                 branches[name] = branch
