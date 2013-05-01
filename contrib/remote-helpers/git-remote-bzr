@@ -389,8 +389,8 @@ class CustomTree():
 
         def copy_tree(revid):
             files = files_cache[revid] = {}
-            tree = repo.repository.revision_tree(revid)
             repo.lock_read()
+            tree = repo.repository.revision_tree(revid)
             try:
                 for path, entry in tree.iter_entries_by_dir():
                     files[path] = entry.file_id
