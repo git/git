@@ -13,6 +13,9 @@
 # or
 # % git clone bzr::lp:myrepo
 #
+# If you want to specify which branches you want track (per repo):
+# git config remote-bzr.branches 'trunk, devel, test'
+#
 
 import sys
 
@@ -50,6 +53,12 @@ def warn(msg, *args):
 
 def gittz(tz):
     return '%+03d%02d' % (tz / 3600, tz % 3600 / 60)
+
+def get_config(config):
+    cmd = ['git', 'config', '--get', config]
+    process = subprocess.Popen(cmd, stdout=subprocess.PIPE)
+    output, _ = process.communicate()
+    return output
 
 class Marks:
 
@@ -756,7 +765,7 @@ def get_remote_branch(origin, remote_branch, name):
 
     return branch
 
-def find_branches(repo):
+def find_branches(repo, wanted):
     transport = repo.user_transport
 
     for fn in transport.iter_files_recursive():
@@ -766,6 +775,9 @@ def find_branches(repo):
         name = subdir = fn[:-len('/.bzr/branch-format')]
         name = name if name != '' else 'master'
         name = name.replace('/', '+')
+
+        if wanted and not name in wanted:
+            continue
 
         try:
             cur = transport.clone(subdir)
@@ -815,7 +827,11 @@ def get_repo(url, alias):
     else:
         # repository
 
-        for name, branch in find_branches(repo):
+        wanted = get_config('remote-bzr.branches').rstrip().split(', ')
+        # stupid python
+        wanted = [e for e in wanted if e]
+
+        for name, branch in find_branches(repo, wanted):
 
             if not is_local:
                 peers[name] = branch
