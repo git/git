@@ -641,9 +641,13 @@ def do_export(parser):
                 except bzrlib.errors.DivergedBranches:
                     print "error %s non-fast forward" % ref
                     continue
-            else:
+
+            try:
                 wt = repo.bzrdir.open_workingtree()
                 wt.update()
+            except bzrlib.errors.NoWorkingTree:
+                pass
+
         print "ok %s" % ref
 
     print
