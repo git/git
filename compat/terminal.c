@@ -3,7 +3,7 @@
 #include "sigchain.h"
 #include "strbuf.h"
 
-#if defined(HAVE_DEV_TTY) || defined(WIN32)
+#if defined(HAVE_DEV_TTY) || defined(GIT_WINDOWS_NATIVE)
 
 static void restore_term(void);
 
@@ -53,7 +53,7 @@ error:
 	return -1;
 }
 
-#elif defined(WIN32)
+#elif defined(GIT_WINDOWS_NATIVE)
 
 #define INPUT_PATH "CONIN$"
 #define OUTPUT_PATH "CONOUT$"
