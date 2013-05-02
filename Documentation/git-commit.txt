@@ -197,8 +197,8 @@ variable (see linkgit:git-config[1]).
 -e::
 --edit::
 	The message taken from file with `-F`, command line with
-	`-m`, and from file with `-C` are usually used as the
-	commit log message unmodified.  This option lets you
+	`-m`, and from commit object with `-C` are usually used as
+	the commit log message unmodified. This option lets you
 	further edit the message taken from these sources.
 
 --no-edit::
