@@ -2128,7 +2128,6 @@ void *unpack_entry(struct packed_git *p, off_t obj_offset,
 			error("failed to unpack compressed delta "
 			      "at offset %"PRIuMAX" from %s",
 			      (uintmax_t)curpos, p->pack_name);
-			free(base);
 			data = NULL;
 			continue;
 		}
