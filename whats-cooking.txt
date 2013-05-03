@@ -1,30 +1,23 @@
 To: git@vger.kernel.org
 Bcc: lwn@lwn.net
-Subject: What's cooking in git.git (Apr 2013, #10; Mon, 29)
-X-master-at: 7e6a0cc47da79dd22c0338aee8750fda92ced5d9
-X-next-at: 06c29dc5775bfd65329e6072358821bb781a6deb
+Subject: What's cooking in git.git (May 2013, #01; Fri, 3)
+X-master-at: 7d3ccdffb5d28970dd7a4d177cfcca690ccd0c22
+X-next-at: 3fadc6125b27e103d8f0ce6c19c749a972da4d25
 
-What's cooking in git.git (Apr 2013, #10; Mon, 29)
+What's cooking in git.git (May 2013, #01; Fri, 3)
 --------------------------------------------------
 
 Here are the topics that have been cooking.  Commits prefixed with
 '-' are only in 'pu' (proposed updates) while commits prefixed with
 '+' are in 'next'.
 
-There are a few more topics in flight that look sane and trivially
-correct that I would feel safe to merge down to 'master', but what
-we have in 'master' should be a pretty similar to the final, from
-the point of view of features and new fixes.  I'd like to see people
-focus on catching and fixing last minute regressions and
-incompleteness in the topics that have already in 'master' for the
-upcoming release.
-
-New topics that are not relevant for the goal to release a complete
-and regression-free 1.8.3 may not be queued even on 'pu' until final
-to reduce hassles on integration testing (I do not mean that it is
-forbidden to work on and discussing new topics on the list. It is
-just the patches won't be considered as formal submission and they
-won't hit 'pu').
+The tip of the 'master' branch is tagged as v1.8.3-rc1.  We seem to
+have a few interesting topics that are being discussed but it is
+unlikely I'll be picking them up in 'pu'.  As we already have merged
+enough changes to 'master' during this cycle that can potentially
+cause unforseen regressions, let's not merge topics that are not
+regression fixes from 'next' to 'master', either, until the final
+release.
 
 You can find the changes described here in the integration branches
 of the repositories listed at
@@ -34,62 +27,13 @@ of the repositories listed at
 --------------------------------------------------
 [Graduated to "master"]
 
-* fc/zsh-completion (2013-04-28) 2 commits
- + complete: zsh: use zsh completion for the main cmd
- + complete: zsh: trivial simplification
+* hb/git-pm-tempfile (2013-04-29) 1 commit
+  (merged to 'next' on 2013-04-29 at fecc6b0)
+ + Git.pm: call tempfile from File::Temp as a regular function
 
 
---------------------------------------------------
-[New Topics]
-
-* fc/completion (2013-04-27) 9 commits
- - completion: remove __git_index_file_list_filter()
- - completion: add space after completed filename
- - completion: add hack to enable file mode in bash < 4
- - completion: refactor __git_complete_index_file()
- - completion: refactor diff_index wrappers
- - completion: use __gitcompadd for __gitcomp_file
- - completion; remove unuseful comments
- - completion: document tilde expansion failure in tests
- - completion: add file completion tests
-
- I saw this discussed somewhat. Is everybody happy with this
- version?  This is its v2, in the $gmane/222682 thread.
-
-
-* jk/test-output (2013-04-29) 2 commits
- - test output: respect $TEST_OUTPUT_DIRECTORY
- - t/Makefile: fix result handling with TEST_OUTPUT_DIRECTORY
-
- Allows "sh tXXXX-*.sh --root=$there" to correctly use the moved
- output directory when summarizing the results.
-
- Will merge to 'next'.
-
-
-* rj/mingw-cygwin (2013-04-28) 2 commits
- - cygwin: Remove the CYGWIN_V15_WIN32API build variable
- - mingw: rename WIN32 cpp macro to GIT_WINDOWS_NATIVE
-
- Cygwin portability; both were reviewed by Jonathan, and the tip one
- seems to want a bit further explanation.  Needs positive report
- from Cygwin 1.7 users who have been on 1.7 to make sure it does not
- regress for them.
-
-
-* rj/sparse (2013-04-28) 10 commits
- - sparse: Fix mingw_main() argument number/type errors
- - compat/mingw.c: Fix some sparse warnings
- - compat/win32mmap.c: Fix some sparse warnings
- - compat/poll/poll.c: Fix a sparse warning
- - compat/win32/pthread.c: Fix a sparse warning
- - compat/unsetenv.c: Fix a sparse warning
- - compat/nedmalloc: Fix compiler warnings on linux
- - compat/nedmalloc: Fix some sparse warnings
- - compat/fnmatch/fnmatch.c: Fix a sparse error
- - compat/regex/regexec.c: Fix some sparse warnings
-
- Will merge to 'next'.
+* mb/relnotes-1.8.3-typofix (2013-04-30) 1 commit
+ - Fix grammar in the 1.8.3 release notes.
 
 
 * rs/pp-user-info-without-extra-allocation (2013-04-25) 3 commits
@@ -98,34 +42,65 @@ of the repositories listed at
  + pretty: simplify output line length calculation in pp_user_info()
  + pretty: simplify input line length calculation in pp_user_info()
 
- Will merge to 'master'.
+
+* tr/remote-tighten-commandline-parsing (2013-04-24) 3 commits
+  (merged to 'next' on 2013-04-29 at 46a1043)
+ + remote: 'show' and 'prune' can take more than one remote
+ + remote: check for superfluous arguments in 'git remote add'
+ + remote: add a test for extra arguments, according to docs
 
 
-* hb/git-pm-tempfile (2013-04-29) 1 commit
-  (merged to 'next' on 2013-04-29 at fecc6b0)
- + Git.pm: call tempfile from File::Temp as a regular function
+* tr/unpack-entry-use-after-free-fix (2013-04-30) 1 commit
+ - unpack_entry: avoid freeing objects in base cache
 
- Will merge to 'master'.
-
-
-* js/transport-helper-error-reporting-fix (2013-04-28) 3 commits
-  (merged to 'next' on 2013-04-29 at 8cc4bb8)
- + git-remote-testgit: build it to run under $SHELL_PATH
- + git-remote-testgit: further remove some bashisms
- + git-remote-testgit: avoid process substitution
- (this branch uses fc/transport-helper-error-reporting.)
-
- Finishing touches to fc/transport-helper-error-reporting topic.
- Will cook in 'next'.
+ Fix for use-after-free regression in 1.8.3-rc0.
 
 
-* mh/fetch-into-shallow (2013-04-28) 1 commit
-  (merged to 'next' on 2013-04-29 at a167d3e)
- + upload-pack: ignore 'shallow' lines with unknown obj-ids
+* zk/prompt-rebase-step (2013-04-25) 1 commit
+  (merged to 'next' on 2013-04-25 at a8264bf)
+ + bash-prompt.sh: show where rebase is at when stopped
 
- May want to have a few tests. $gmane/222774
- Will cook in 'next'.
+--------------------------------------------------
+[New Topics]
 
+* fc/at-head (2013-05-02) 5 commits
+ - Add new @ shortcut for HEAD
+ - sha1_name: refactor reinterpret()
+ - sha1_name: compare variable with constant, not constant with variable
+ - sha1_name: remove unnecessary braces
+ - sha1_name: remove no-op
+
+ People are too lazy to type four capital letters "HEAD" and want to
+ use a single line-noise "@" instead.
+
+
+* fc/remote-bzr (2013-04-30) 18 commits
+ - remote-bzr: access branches only when needed
+ - remote-bzr: delay peer branch usage
+ - remote-bzr: iterate revisions properly
+ - remote-bzr: improve progress reporting
+ - remote-bzr: add option to specify branches
+ - remote-bzr: add custom method to find branches
+ - remote-bzr: improve author sanitazion
+ - remote-bzr: add support for shared repo
+ - remote-bzr: fix branch names
+ - remote-bzr: add support for bzr repos
+ - remote-bzr: use branch variable when appropriate
+ - remote-bzr: fix partially pushed merge
+ - remote-bzr: fixes for branch diverge
+ - remote-bzr: add support to push merges
+ - remote-bzr: always try to update the worktree
+ - remote-bzr: fix order of locking in CustomTree
+ - remote-bzr: delay blob fetching until the very end
+ - remote-bzr: cleanup CustomTree
+
+
+* jk/lookup-object-prefer-latest (2013-05-02) 1 commit
+ - lookup_object: prioritize recently found objects
+
+
+* jk/subtree-do-not-push-if-split-fails (2013-05-01) 1 commit
+ - contrib/subtree: don't delete remote branches if split fails
 
 --------------------------------------------------
 [Stalled]
@@ -194,29 +169,93 @@ of the repositories listed at
 --------------------------------------------------
 [Cooking]
 
-* kb/full-history-compute-treesame-carefully (2013-04-27) 3 commits
+* fc/completion (2013-04-27) 9 commits
+ - completion: remove __git_index_file_list_filter()
+ - completion: add space after completed filename
+ - completion: add hack to enable file mode in bash < 4
+ - completion: refactor __git_complete_index_file()
+ - completion: refactor diff_index wrappers
+ - completion: use __gitcompadd for __gitcomp_file
+ - completion; remove unuseful comments
+ - completion: document tilde expansion failure in tests
+ - completion: add file completion tests
+
+ I saw this discussed somewhat. Is everybody happy with this
+ version?  This is its v2, in the $gmane/222682 thread.
+
+
+* jk/test-output (2013-04-29) 2 commits
+  (merged to 'next' on 2013-05-01 at 63827c9)
+ + test output: respect $TEST_OUTPUT_DIRECTORY
+ + t/Makefile: fix result handling with TEST_OUTPUT_DIRECTORY
+
+ When TEST_OUTPUT_DIRECTORY setting is used, it was handled somewhat
+ inconsistently between the test framework and t/Makefile, and logic
+ to summarize the results looked at a wrong place.
+
+ Will cook in 'next'.
+
+
+* rj/mingw-cygwin (2013-04-28) 2 commits
+ - cygwin: Remove the CYGWIN_V15_WIN32API build variable
+ - mingw: rename WIN32 cpp macro to GIT_WINDOWS_NATIVE
+
+ Cygwin portability; both were reviewed by Jonathan, and the tip one
+ seems to want a bit further explanation.  Needs positive report
+ from Cygwin 1.7 users who have been on 1.7 to make sure it does not
+ regress for them.
+
+
+* rj/sparse (2013-04-28) 10 commits
+  (merged to 'next' on 2013-05-01 at 649e16c)
+ + sparse: Fix mingw_main() argument number/type errors
+ + compat/mingw.c: Fix some sparse warnings
+ + compat/win32mmap.c: Fix some sparse warnings
+ + compat/poll/poll.c: Fix a sparse warning
+ + compat/win32/pthread.c: Fix a sparse warning
+ + compat/unsetenv.c: Fix a sparse warning
+ + compat/nedmalloc: Fix compiler warnings on linux
+ + compat/nedmalloc: Fix some sparse warnings
+ + compat/fnmatch/fnmatch.c: Fix a sparse error
+ + compat/regex/regexec.c: Fix some sparse warnings
+
+ Will cook in 'next'.
+
+
+* js/transport-helper-error-reporting-fix (2013-04-28) 3 commits
+  (merged to 'next' on 2013-04-29 at 8cc4bb8)
+ + git-remote-testgit: build it to run under $SHELL_PATH
+ + git-remote-testgit: further remove some bashisms
+ + git-remote-testgit: avoid process substitution
+ (this branch uses fc/transport-helper-error-reporting.)
+
+ Finishing touches to fc/transport-helper-error-reporting topic.
+ Will cook in 'next'.
+
+
+* mh/fetch-into-shallow (2013-05-02) 2 commits
+  (merged to 'next' on 2013-05-03 at 3fadc61)
+ + t5500: add test for fetching with an unknown 'shallow'
+  (merged to 'next' on 2013-04-29 at a167d3e)
+ + upload-pack: ignore 'shallow' lines with unknown obj-ids
+
+ Will cook in 'next'.
+
+
+* kb/full-history-compute-treesame-carefully (2013-04-30) 8 commits
+ - revision.c: discount UNINTERESTING parents
  - simplify-merges: drop merge from irrelevant side branch
  - simplify-merges: never remove all TREESAME parents
- - revision.c: tighten up TREESAME handling of merges
+ - t6012: update test for tweaked full-history traversal
+ - revision.c: Make --full-history consider more merges
+ - rev-list-options.txt: correct TREESAME for P
+ - t6019: test file dropped in -s ours merge
+ - decorate.c: compact table when growing
 
- Another improved redesign coming.  This touches a very core part of
- the system and will not be a 1.8.3 material.
+ Major update to a very core part of the system to improve culling
+ of irrelevant parents while traversing a mergy history.
 
-
-* tr/remote-tighten-commandline-parsing (2013-04-24) 3 commits
-  (merged to 'next' on 2013-04-29 at 46a1043)
- + remote: 'show' and 'prune' can take more than one remote
- + remote: check for superfluous arguments in 'git remote add'
- + remote: add a test for extra arguments, according to docs
-
- Will merge to 'master'.
-
-
-* zk/prompt-rebase-step (2013-04-25) 1 commit
-  (merged to 'next' on 2013-04-25 at a8264bf)
- + bash-prompt.sh: show where rebase is at when stopped
-
- Will merge to 'master'.
+ Will not be a 1.8.3 material.
 
 
 * jh/checkout-auto-tracking (2013-04-21) 8 commits
@@ -246,7 +285,7 @@ of the repositories listed at
  + api-parse-options.txt: document "no-" for non-boolean options
  + git-gc.txt, git-reflog.txt: document new expiry options
  + date.c: add parse_expiry_date()
- (this branch is tangled with mh/packed-refs-various.)
+ (this branch is used by mh/packed-refs-various.)
 
  We used the approxidate() parser for "--expire=<timestamp>" options
  of various commands, but it is better to treat --expire=all and
@@ -257,7 +296,9 @@ of the repositories listed at
  Will cook in 'next'.
 
 
-* as/check-ignore (2013-04-11) 5 commits
+* as/check-ignore (2013-04-29) 6 commits
+  (merged to 'next' on 2013-04-30 at 646931f)
+ + t0008: use named pipe (FIFO) to test check-ignore streaming
   (merged to 'next' on 2013-04-21 at 7515aa8)
  + Documentation: add caveats about I/O buffering for check-{attr,ignore}
  + check-ignore: allow incremental streaming of queries via --stdin
@@ -268,56 +309,50 @@ of the repositories listed at
  Enhance "check-ignore" (1.8.2 update) to work more like "check-attr"
  over bidi-pipes.
 
- Waiting for a follow-up.
- $gmane/222235
-
- The test in the second from the tip needs to be updated.
+ Will cook in 'next'.
 
 
-* mh/packed-refs-various (2013-04-24) 36 commits
- - refs: handle the main ref_cache specially
- - refs: change do_for_each_*() functions to take ref_cache arguments
- - pack_one_ref(): do some cheap tests before a more expensive one
- - pack_one_ref(): use write_packed_entry() to do the writing
- - pack_one_ref(): use function peel_entry()
- - refs: inline function do_not_prune()
- - pack_refs(): change to use do_for_each_entry()
- - refs: use same lock_file object for both ref-packing functions
- - pack_one_ref(): rename "path" parameter to "refname"
- - pack-refs: merge code from pack-refs.{c,h} into refs.{c,h}
- - pack-refs: rename handle_one_ref() to pack_one_ref()
- - refs: extract a function write_packed_entry()
- - repack_without_ref(): write peeled refs in the rewritten file
- - t3211: demonstrate loss of peeled refs if a packed ref is deleted
- - refs: change how packed refs are deleted
- - search_ref_dir(): return an index rather than a pointer
- - repack_without_ref(): silence errors for dangling packed refs
- - t3210: test for spurious error messages for dangling packed refs
- - refs: change the internal reference-iteration API
- - refs: extract a function peel_entry()
- - peel_ref(): fix return value for non-peelable, not-current reference
- - peel_object(): give more specific information in return value
- - refs: extract function peel_object()
- - refs: extract a function ref_resolves_to_object()
- - repack_without_ref(): use function get_packed_ref()
- - peel_ref(): use function get_packed_ref()
- - get_packed_ref(): return a ref_entry
- - do_for_each_ref_in_dirs(): remove dead code
- - refs: define constant PEELED_LINE_LENGTH
- - refs: document how current_ref is used
- - refs: document do_for_each_ref() and do_one_ref()
- - refs: document the fields of struct ref_value
- - refs: document flags constants REF_*
-  (merged to 'next' on 2013-04-22 at b00ccf6)
- + api-parse-options.txt: document "no-" for non-boolean options
- + git-gc.txt, git-reflog.txt: document new expiry options
- + date.c: add parse_expiry_date()
- (this branch is tangled with jc/prune-all.)
+* mh/packed-refs-various (2013-05-01) 33 commits
+  (merged to 'next' on 2013-05-01 at e527153)
+ + refs: handle the main ref_cache specially
+ + refs: change do_for_each_*() functions to take ref_cache arguments
+ + pack_one_ref(): do some cheap tests before a more expensive one
+ + pack_one_ref(): use write_packed_entry() to do the writing
+ + pack_one_ref(): use function peel_entry()
+ + refs: inline function do_not_prune()
+ + pack_refs(): change to use do_for_each_entry()
+ + refs: use same lock_file object for both ref-packing functions
+ + pack_one_ref(): rename "path" parameter to "refname"
+ + pack-refs: merge code from pack-refs.{c,h} into refs.{c,h}
+ + pack-refs: rename handle_one_ref() to pack_one_ref()
+ + refs: extract a function write_packed_entry()
+ + repack_without_ref(): write peeled refs in the rewritten file
+ + t3211: demonstrate loss of peeled refs if a packed ref is deleted
+ + refs: change how packed refs are deleted
+ + search_ref_dir(): return an index rather than a pointer
+ + repack_without_ref(): silence errors for dangling packed refs
+ + t3210: test for spurious error messages for dangling packed refs
+ + refs: change the internal reference-iteration API
+ + refs: extract a function peel_entry()
+ + peel_ref(): fix return value for non-peelable, not-current reference
+ + peel_object(): give more specific information in return value
+ + refs: extract function peel_object()
+ + refs: extract a function ref_resolves_to_object()
+ + repack_without_ref(): use function get_packed_ref()
+ + peel_ref(): use function get_packed_ref()
+ + get_packed_ref(): return a ref_entry
+ + do_for_each_ref_in_dirs(): remove dead code
+ + refs: define constant PEELED_LINE_LENGTH
+ + refs: document how current_ref is used
+ + refs: document do_for_each_ref() and do_one_ref()
+ + refs: document the fields of struct ref_value
+ + refs: document flags constants REF_*
+ (this branch uses jc/prune-all.)
 
  Updates reading and updating packed-refs file, correcting corner
  case bugs.
 
- Will merge to 'next' after rebasing on the tip of jc/prune-all.
+ Will cook in 'next'.
 
 
 * fc/transport-helper-error-reporting (2013-04-25) 10 commits
