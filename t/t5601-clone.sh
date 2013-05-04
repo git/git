@@ -280,4 +280,9 @@ test_expect_success 'clone checking out a tag' '
 	test_cmp fetch.expected fetch.actual
 '
 
+test_expect_success NOT_MINGW,NOT_CYGWIN 'clone local path foo:bar' '
+	cp -R src "foo:bar" &&
+	git clone "./foo:bar" foobar
+'
+
 test_done
