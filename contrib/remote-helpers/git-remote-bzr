@@ -95,7 +95,7 @@ class Marks:
         return self.marks[rev]
 
     def to_rev(self, mark):
-        return self.rev_marks[mark]
+        return str(self.rev_marks[mark])
 
     def next_mark(self):
         self.last_mark += 1
@@ -621,7 +621,7 @@ def parse_commit(parser):
         files[path] = f
 
     committer, date, tz = committer
-    parents = [str(mark_to_rev(p)) for p in parents]
+    parents = [mark_to_rev(p) for p in parents]
     revid = bzrlib.generate_ids.gen_revision_id(committer, date)
     props = {}
     props['branch-nick'] = branch.nick
