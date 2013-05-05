@@ -623,7 +623,7 @@ static void import_marks(char *input_file)
 
 		mark = strtoumax(line + 1, &mark_end, 10);
 		if (!mark || mark_end == line + 1
-			|| *mark_end != ' ' || get_sha1(mark_end + 1, sha1))
+			|| *mark_end != ' ' || get_sha1_hex(mark_end + 1, sha1))
 			die("corrupt mark line: %s", line);
 
 		if (last_idnum < mark)
