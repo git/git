@@ -186,4 +186,18 @@ test_expect_success GPG 'push signed tag with signed-tags capability' '
 	compare_refs local signed-tag-2 server signed-tag-2
 '
 
+test_expect_success 'push messages' '
+	(cd local &&
+	git checkout -b new_branch master &&
+	echo new >>file &&
+	git commit -a -m new &&
+	git push origin new_branch &&
+	git fetch origin &&
+	echo new >>file &&
+	git commit -a -m new &&
+	git push origin new_branch 2> msg &&
+	! grep "\[new branch\]" msg
+	)
+'
+
 test_done

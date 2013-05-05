@@ -806,6 +806,7 @@ static int push_refs_with_export(struct transport *transport,
 		if (private && !get_sha1(private, sha1)) {
 			strbuf_addf(&buf, "^%s", private);
 			string_list_append(&revlist_args, strbuf_detach(&buf, NULL));
+			hashcpy(ref->old_sha1, sha1);
 		}
 		free(private);
 
