@@ -125,6 +125,8 @@ sub _read_password {
 1;
 __END__
 
+=head1 NAME
+
 Git::SVN::Prompt - authentication callbacks for git-svn
 
 =head1 SYNOPSIS

@@ -512,6 +512,8 @@ sub stash_placeholder_list {
 1;
 __END__
 
+=head1 NAME
+
 Git::SVN::Fetcher - tree delta consumer for "git svn fetch"
 
 =head1 SYNOPSIS
