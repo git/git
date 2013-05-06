@@ -251,7 +251,11 @@ static void unresolved(const struct traverse_info *info, struct name_entry n[3])
 
 	for (i = 0; i < 3; i++) {
 		mask |= (1 << i);
-		if (n[i].mode && S_ISDIR(n[i].mode))
+		/*
+		 * Treat missing entries as directories so that we return
+		 * after unresolved_directory has handled this.
+		 */
+		if (!n[i].mode || S_ISDIR(n[i].mode))
 			dirmask |= (1 << i);
 	}
 
