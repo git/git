@@ -16,7 +16,7 @@ DEFAULT_TEST_TARGET ?= test
 TEST_LINT ?= test-lint-duplicates test-lint-executable
 
 ifdef TEST_OUTPUT_DIRECTORY
-TEST_RESULTS_DIRECTORY = $(TEST_RESULTS_DIRECTORY)/test-results
+TEST_RESULTS_DIRECTORY = $(TEST_OUTPUT_DIRECTORY)/test-results
 else
 TEST_RESULTS_DIRECTORY = test-results
 endif
