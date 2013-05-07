@@ -18,7 +18,7 @@ check() {
 
 nonsense() {
 	test_expect_${2:-success} "$1 is nonsensical" "
-		test_must_fail git log -1 '$1'
+		test_must_fail git rev-parse --verify '$1'
 	"
 }
 
