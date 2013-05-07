@@ -300,4 +300,42 @@ test_expect_success 'proper bzr repo' '
   test_cmp ../expected actual
 '
 
+test_expect_success 'strip' '
+  # Do not imitate this style; always chdir inside a subshell instead
+  mkdir -p tmp && cd tmp &&
+  test_when_finished "cd .. && rm -rf tmp" &&
+
+  (
+  bzr init bzrrepo &&
+  cd bzrrepo &&
+
+  echo one >> content &&
+  bzr add content &&
+  bzr commit -m one &&
+
+  echo two >> content &&
+  bzr commit -m two
+  ) &&
+
+  git clone "bzr::$PWD/bzrrepo" gitrepo &&
+
+  (
+  cd bzrrepo &&
+  bzr uncommit --force &&
+
+  echo three >> content &&
+  bzr commit -m three &&
+
+  echo four >> content &&
+  bzr commit -m four &&
+  bzr log --line | sed -e "s/^[0-9]\+: //" > ../expected
+  ) &&
+
+  (cd gitrepo &&
+  git fetch &&
+  git log --format="%an %ad %s" --date=short origin/master > ../actual) &&
+
+  test_cmp expected actual
+'
+
 test_done

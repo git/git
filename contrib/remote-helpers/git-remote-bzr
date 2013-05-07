@@ -282,9 +282,13 @@ def export_branch(repo, name):
 
     branch.lock_read()
     revs = branch.iter_merge_sorted_revisions(None, tip, 'exclude', 'forward')
-    tip_revno = branch.revision_id_to_revno(tip)
-    last_revno, _ = branch.last_revision_info()
-    total = last_revno - tip_revno
+    try:
+        tip_revno = branch.revision_id_to_revno(tip)
+        last_revno, _ = branch.last_revision_info()
+        total = last_revno - tip_revno
+    except bzrlib.errors.NoSuchRevision:
+        tip_revno = 0
+        total = 0
 
     for revid, _, seq, _ in revs:
 
@@ -353,7 +357,10 @@ def export_branch(repo, name):
 
         progress = (revno - tip_revno)
         if (progress % 100 == 0):
-            print "progress revision %d '%s' (%d/%d)" % (revno, name, progress, total)
+            if total:
+                print "progress revision %d '%s' (%d/%d)" % (revno, name, progress, total)
+            else:
+                print "progress revision %d '%s' (%d)" % (revno, name, progress)
 
     branch.unlock()
 
