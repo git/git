@@ -57,7 +57,7 @@ test_shortname () {
 	test_cmp expect.sha1 actual.sha1
 }
 
-test_expect_failure 'shortening refnames in strict mode' '
+test_expect_success 'shortening refnames in strict mode' '
 	test_shortname refs/heads/master strict heads/master master_f &&
 	test_shortname refs/heads/origin/master strict heads/origin/master master_b &&
 	test_shortname refs/master strict refs/master master_d &&
@@ -66,7 +66,7 @@ test_expect_failure 'shortening refnames in strict mode' '
 	test_shortname refs/tags/master strict tags/master master_c
 '
 
-test_expect_failure 'shortening refnames in loose mode' '
+test_expect_success 'shortening refnames in loose mode' '
 	test_shortname refs/heads/master loose heads/master master_f &&
 	test_shortname refs/heads/origin/master loose origin/master master_b &&
 	test_shortname refs/master loose master master_d &&

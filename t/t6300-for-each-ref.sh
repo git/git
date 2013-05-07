@@ -472,7 +472,7 @@ origin
 origin/master
 EOF
 
-test_expect_failure 'Check refs/remotes/origin/HEAD shortens to origin' '
+test_expect_success 'Check refs/remotes/origin/HEAD shortens to origin' '
 	git remote set-head origin master &&
 	git for-each-ref --format="%(refname:short)" refs/remotes >actual &&
 	test_cmp expected actual
