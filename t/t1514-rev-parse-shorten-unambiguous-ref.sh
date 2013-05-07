@@ -75,4 +75,11 @@ test_expect_success 'shortening refnames in loose mode' '
 	test_shortname refs/tags/master loose tags/master master_c
 '
 
+test_expect_success 'shortening is done after dereferencing a symref' '
+	git update-ref refs/remotes/frotz/master master_e &&
+	git symbolic-ref refs/remotes/frotz/HEAD refs/remotes/frotz/master &&
+	test_shortname refs/remotes/frotz/HEAD strict frotz/master master_e &&
+	test_shortname refs/remotes/frotz/HEAD loose frotz/master master_e
+'
+
 test_done
