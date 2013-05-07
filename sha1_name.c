@@ -465,12 +465,11 @@ static int get_sha1_basic(const char *str, int len, unsigned char *sha1)
 		int ret;
 		/* try the @{-N} syntax for n-th checkout */
 		ret = interpret_branch_name(str, &buf);
-		if (ret > 0) {
+		if (ret > 0)
 			/* substitute this branch name and restart */
 			return get_sha1_1(buf.buf, buf.len, sha1, 0);
-		} else if (ret == 0) {
+		else if (ret == 0)
 			return -1;
-		}
 		/* allow "@{...}" to mean the current branch reflog */
 		refs_found = dwim_ref("HEAD", 4, sha1, &real_ref);
 	} else if (reflog_len)
