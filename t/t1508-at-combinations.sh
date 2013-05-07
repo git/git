@@ -44,13 +44,21 @@ test_expect_success 'setup' '
 
 check HEAD ref refs/heads/new-branch
 check "@{1}" commit new-one
+check "HEAD@{1}" commit new-one
+check "@{now}" commit new-two
+check "HEAD@{now}" commit new-two
 check "@{-1}" ref refs/heads/old-branch
+check "@{-1}@{0}" commit old-two
 check "@{-1}@{1}" commit old-one
 check "@{u}" ref refs/heads/upstream-branch
+check "HEAD@{u}" ref refs/heads/upstream-branch
 check "@{u}@{1}" commit upstream-one
 check "@{-1}@{u}" ref refs/heads/master
 check "@{-1}@{u}@{1}" commit master-one
 nonsense "@{u}@{-1}"
+nonsense "@{0}@{0}"
 nonsense "@{1}@{u}"
+nonsense "HEAD@{-1}"
+nonsense "@{-1}@{-1}"
 
 test_done
