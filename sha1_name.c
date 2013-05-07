@@ -972,6 +972,27 @@ int get_sha1_mb(const char *name, unsigned char *sha1)
 	return st;
 }
 
+static int reinterpret(const char *name, int namelen, int len, struct strbuf *buf)
+{
+	/* we have extra data, which might need further processing */
+	struct strbuf tmp = STRBUF_INIT;
+	int used = buf->len;
+	int ret;
+
+	strbuf_add(buf, name + len, namelen - len);
+	ret = interpret_branch_name(buf->buf, &tmp);
+	/* that data was not interpreted, remove our cruft */
+	if (ret < 0) {
+		strbuf_setlen(buf, used);
+		return len;
+	}
+	strbuf_reset(buf);
+	strbuf_addbuf(buf, &tmp);
+	strbuf_release(&tmp);
+	/* tweak for size of {-N} versus expanded ref name */
+	return ret - used + len;
+}
+
 /*
  * This reads short-hand syntax that not only evaluates to a commit
  * object name, but also can act as if the end user spelled the name
@@ -1005,25 +1026,8 @@ int interpret_branch_name(const char *name, struct strbuf *buf)
 		return len; /* syntax Ok, not enough switches */
 	if (0 < len && len == namelen)
 		return len; /* consumed all */
-	else if (0 < len) {
-		/* we have extra data, which might need further processing */
-		struct strbuf tmp = STRBUF_INIT;
-		int used = buf->len;
-		int ret;
-
-		strbuf_add(buf, name + len, namelen - len);
-		ret = interpret_branch_name(buf->buf, &tmp);
-		/* that data was not interpreted, remove our cruft */
-		if (ret < 0) {
-			strbuf_setlen(buf, used);
-			return len;
-		}
-		strbuf_reset(buf);
-		strbuf_addbuf(buf, &tmp);
-		strbuf_release(&tmp);
-		/* tweak for size of {-N} versus expanded ref name */
-		return ret - used + len;
-	}
+	else if (0 < len)
+		return reinterpret(name, namelen, len, buf);
 
 	cp = strchr(name, '@');
 	if (!cp)
