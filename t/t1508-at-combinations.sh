@@ -31,10 +31,8 @@ test_expect_success 'setup' '
 	git checkout -b new-branch &&
 	test_commit new-one &&
 	test_commit new-two &&
-	git config branch.old-branch.remote . &&
-	git config branch.old-branch.merge refs/heads/master &&
-	git config branch.new-branch.remote . &&
-	git config branch.new-branch.merge refs/heads/upstream-branch
+	git branch -u master old-branch &&
+	git branch -u upstream-branch new-branch
 '
 
 check HEAD new-two
