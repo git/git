@@ -20,11 +20,13 @@ test_expect_success 'setup' '
 	test_commit master_d &&
 	git update-ref refs/master master_d &&
 	test_commit master_e &&
+	git update-ref refs/remotes/origin/HEAD master_e &&
 	test_commit master_f &&
 	cat >expect.show-ref <<-EOF
 	$(git rev-parse master_f) refs/heads/master
 	$(git rev-parse master_b) refs/heads/origin/master
 	$(git rev-parse master_d) refs/master
+	$(git rev-parse master_e) refs/remotes/origin/HEAD
 	$(git rev-parse master_a) refs/remotes/origin/master
 	$(git rev-parse master_c) refs/tags/master
 	$(git rev-parse master_a) refs/tags/master_a
@@ -55,18 +57,20 @@ test_shortname () {
 	test_cmp expect.sha1 actual.sha1
 }
 
-test_expect_success 'shortening refnames in strict mode' '
+test_expect_failure 'shortening refnames in strict mode' '
 	test_shortname refs/heads/master strict heads/master master_f &&
 	test_shortname refs/heads/origin/master strict heads/origin/master master_b &&
 	test_shortname refs/master strict refs/master master_d &&
+	test_shortname refs/remotes/origin/HEAD strict origin master_e &&
 	test_shortname refs/remotes/origin/master strict remotes/origin/master master_a &&
 	test_shortname refs/tags/master strict tags/master master_c
 '
 
-test_expect_success 'shortening refnames in loose mode' '
+test_expect_failure 'shortening refnames in loose mode' '
 	test_shortname refs/heads/master loose heads/master master_f &&
 	test_shortname refs/heads/origin/master loose origin/master master_b &&
 	test_shortname refs/master loose master master_d &&
+	test_shortname refs/remotes/origin/HEAD loose origin master_e &&
 	test_shortname refs/remotes/origin/master loose remotes/origin/master master_a &&
 	test_shortname refs/tags/master loose tags/master master_c
 '

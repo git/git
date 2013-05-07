@@ -466,4 +466,16 @@ test_expect_success 'Verify sort with multiple keys' '
 		refs/tags/bogo refs/tags/master > actual &&
 	test_cmp expected actual
 '
+
+cat >expected <<\EOF
+origin
+origin/master
+EOF
+
+test_expect_failure 'Check refs/remotes/origin/HEAD shortens to origin' '
+	git remote set-head origin master &&
+	git for-each-ref --format="%(refname:short)" refs/remotes >actual &&
+	test_cmp expected actual
+'
+
 test_done
