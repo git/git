@@ -61,4 +61,17 @@ nonsense "@{1}@{u}"
 nonsense "HEAD@{-1}"
 nonsense "@{-1}@{-1}"
 
+# @{N} versus HEAD@{N}
+
+check "HEAD@{3}" commit old-two
+nonsense "@{3}"
+
+test_expect_success 'switch to old-branch' '
+	git checkout old-branch
+'
+
+check HEAD ref refs/heads/old-branch
+check "HEAD@{1}" commit new-two
+check "@{1}" commit old-one
+
 test_done
