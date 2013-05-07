@@ -1,23 +1,20 @@
 To: git@vger.kernel.org
 Bcc: lwn@lwn.net
-Subject: What's cooking in git.git (May 2013, #01; Fri, 3)
-X-master-at: 7d3ccdffb5d28970dd7a4d177cfcca690ccd0c22
-X-next-at: 3fadc6125b27e103d8f0ce6c19c749a972da4d25
+Subject: What's cooking in git.git (May 2013, #02; Mon, 6)
+X-master-at: 423ecb0bb66e9d60b6667aebc2844e82205369a1
+X-next-at: cc59dccce3f551f6d04e123f8ba0564e5aee6c54
 
-What's cooking in git.git (May 2013, #01; Fri, 3)
+What's cooking in git.git (May 2013, #02; Mon, 6)
 --------------------------------------------------
 
 Here are the topics that have been cooking.  Commits prefixed with
 '-' are only in 'pu' (proposed updates) while commits prefixed with
 '+' are in 'next'.
 
-The tip of the 'master' branch is tagged as v1.8.3-rc1.  We seem to
-have a few interesting topics that are being discussed but it is
-unlikely I'll be picking them up in 'pu'.  As we already have merged
-enough changes to 'master' during this cycle that can potentially
-cause unforseen regressions, let's not merge topics that are not
-regression fixes from 'next' to 'master', either, until the final
-release.
+As we already have merged enough changes to 'master' during this
+cycle that can potentially cause unforseen regressions, let's not
+merge topics that are not regression fixes from 'next' to 'master',
+either, until the final release.
 
 You can find the changes described here in the integration branches
 of the repositories listed at
@@ -26,53 +23,6 @@ of the repositories listed at
 
 --------------------------------------------------
 [Graduated to "master"]
-
-* hb/git-pm-tempfile (2013-04-29) 1 commit
-  (merged to 'next' on 2013-04-29 at fecc6b0)
- + Git.pm: call tempfile from File::Temp as a regular function
-
-
-* mb/relnotes-1.8.3-typofix (2013-04-30) 1 commit
- - Fix grammar in the 1.8.3 release notes.
-
-
-* rs/pp-user-info-without-extra-allocation (2013-04-25) 3 commits
-  (merged to 'next' on 2013-04-29 at 13eafc3)
- + pretty: remove intermediate strbufs from pp_user_info()
- + pretty: simplify output line length calculation in pp_user_info()
- + pretty: simplify input line length calculation in pp_user_info()
-
-
-* tr/remote-tighten-commandline-parsing (2013-04-24) 3 commits
-  (merged to 'next' on 2013-04-29 at 46a1043)
- + remote: 'show' and 'prune' can take more than one remote
- + remote: check for superfluous arguments in 'git remote add'
- + remote: add a test for extra arguments, according to docs
-
-
-* tr/unpack-entry-use-after-free-fix (2013-04-30) 1 commit
- - unpack_entry: avoid freeing objects in base cache
-
- Fix for use-after-free regression in 1.8.3-rc0.
-
-
-* zk/prompt-rebase-step (2013-04-25) 1 commit
-  (merged to 'next' on 2013-04-25 at a8264bf)
- + bash-prompt.sh: show where rebase is at when stopped
-
---------------------------------------------------
-[New Topics]
-
-* fc/at-head (2013-05-02) 5 commits
- - Add new @ shortcut for HEAD
- - sha1_name: refactor reinterpret()
- - sha1_name: compare variable with constant, not constant with variable
- - sha1_name: remove unnecessary braces
- - sha1_name: remove no-op
-
- People are too lazy to type four capital letters "HEAD" and want to
- use a single line-noise "@" instead.
-
 
 * fc/remote-bzr (2013-04-30) 18 commits
  - remote-bzr: access branches only when needed
@@ -94,13 +44,36 @@ of the repositories listed at
  - remote-bzr: delay blob fetching until the very end
  - remote-bzr: cleanup CustomTree
 
+ To replace the one we pushed out in 1.8.2 after hearing that Emacs
+ folks had a good experience with this version, this will be in
+ 1.8.3-rc2.
 
-* jk/lookup-object-prefer-latest (2013-05-02) 1 commit
- - lookup_object: prioritize recently found objects
+--------------------------------------------------
+[New Topics]
+
+* fc/fast-export-persistent-marks (2013-05-06) 3 commits
+ - fast-export: don't parse commits while reading marks file
+ - fast-export: do not parse non-commit objects while reading marks file
+ - fast-{import,export}: use get_sha1_hex() directly
+
+ Seems to break a handful of topics when merged to the tip of 'pu'.
 
 
-* jk/subtree-do-not-push-if-split-fails (2013-05-01) 1 commit
- - contrib/subtree: don't delete remote branches if split fails
+* jc/core-checkstat-2.0 (2013-05-06) 2 commits
+ - core.statinfo: remove as promised in Git 2.0
+ - deprecate core.statinfo at Git 2.0 boundary
+
+ The bottom one is a fix for a breakage of a new feature in 1.8.2
+ but it is not all that urgent.
+
+
+* jk/packed-refs-race (2013-05-06) 4 commits
+ - for_each_ref: load all loose refs before packed refs
+ - get_packed_refs: reload packed-refs file when it changes
+ - add a stat_validity struct
+ - resolve_ref: close race condition for packed refs
+
+
 
 --------------------------------------------------
 [Stalled]
@@ -169,6 +142,37 @@ of the repositories listed at
 --------------------------------------------------
 [Cooking]
 
+* fc/at-head (2013-05-02) 5 commits
+ - Add new @ shortcut for HEAD
+ - sha1_name: refactor reinterpret()
+ - sha1_name: compare variable with constant, not constant with variable
+ - sha1_name: remove unnecessary braces
+ - sha1_name: remove no-op
+
+ Instead of typing four capital letters "HEAD", you can say "@"
+ instead.
+
+ There was another series from Ram that looked mostly test updates
+ but I lost track of which one was which.  In any case, are people
+ happy with this series?
+
+
+* jk/lookup-object-prefer-latest (2013-05-02) 1 commit
+  (merged to 'next' on 2013-05-06 at cc59dcc)
+ + lookup_object: prioritize recently found objects
+
+ Optimizes object lookup when the object hashtable starts to become
+ crowded.
+
+
+* jk/subtree-do-not-push-if-split-fails (2013-05-01) 1 commit
+  (merged to 'next' on 2013-05-06 at 81bdf37)
+ + contrib/subtree: don't delete remote branches if split fails
+
+ "git subtree" (in contrib/) had one codepath with loose error
+ checks to lose data at the remote side.
+
+
 * fc/completion (2013-04-27) 9 commits
  - completion: remove __git_index_file_list_filter()
  - completion: add space after completed filename
@@ -184,7 +188,9 @@ of the repositories listed at
  version?  This is its v2, in the $gmane/222682 thread.
 
 
-* jk/test-output (2013-04-29) 2 commits
+* jk/test-output (2013-05-06) 3 commits
+  (merged to 'next' on 2013-05-06 at 7c03af3)
+ + t/Makefile: don't define TEST_RESULTS_DIRECTORY recursively
   (merged to 'next' on 2013-05-01 at 63827c9)
  + test output: respect $TEST_OUTPUT_DIRECTORY
  + t/Makefile: fix result handling with TEST_OUTPUT_DIRECTORY
@@ -242,20 +248,23 @@ of the repositories listed at
  Will cook in 'next'.
 
 
-* kb/full-history-compute-treesame-carefully (2013-04-30) 8 commits
- - revision.c: discount UNINTERESTING parents
+* kb/full-history-compute-treesame-carefully (2013-05-06) 11 commits
+ - revision.c: treat A...B merge bases as if manually specified
+ - revision.c: discount side branches when computing TREESAME
  - simplify-merges: drop merge from irrelevant side branch
  - simplify-merges: never remove all TREESAME parents
  - t6012: update test for tweaked full-history traversal
  - revision.c: Make --full-history consider more merges
  - rev-list-options.txt: correct TREESAME for P
+ - t6111: allow checking the parents as well
+ - t6111: new TREESAME test set
  - t6019: test file dropped in -s ours merge
  - decorate.c: compact table when growing
 
  Major update to a very core part of the system to improve culling
  of irrelevant parents while traversing a mergy history.
 
- Will not be a 1.8.3 material.
+ Will not be a 1.8.3 material, but is an important topic.
 
 
 * jh/checkout-auto-tracking (2013-04-21) 8 commits
