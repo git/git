@@ -453,7 +453,6 @@ def export_ref(repo, name, kind, head):
         count += 1
         if (count % 100 == 0):
             print "progress revision %d '%s' (%d/%d)" % (rev, name, count, len(revs))
-            print "#############################################################"
 
     # make sure the ref is updated
     print "reset %s/%s" % (prefix, ename)
