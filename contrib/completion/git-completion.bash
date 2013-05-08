@@ -2663,7 +2663,7 @@ if [[ -n ${ZSH_VERSION-} ]]; then
 				--*=*|*.) ;;
 				*) c="$c " ;;
 				esac
-				array[$#array+1]="$c"
+				array+=("$c")
 			done
 			compset -P '*[=:]'
 			compadd -Q -S '' -p "${2-}" -a -- array && _ret=0
@@ -2696,7 +2696,7 @@ if [[ -n ${ZSH_VERSION-} ]]; then
 		prev=${words[CURRENT-1]}
 		let cword=CURRENT-1
 		emulate ksh -c __${service}_main
-		let _ret && _default -S '' && _ret=0
+		let _ret && _default && _ret=0
 		return _ret
 	}
 
