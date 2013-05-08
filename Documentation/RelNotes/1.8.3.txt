@@ -41,8 +41,9 @@ Updates since v1.8.2
 
 Foreign interface
 
- * remote-hg and remote-bzr helpers (in contrib/) have been updated.
-
+ * remote-hg and remote-bzr helpers (in contrib/) have been updated;
+   especially, the latter has been accelerated to help Emacs folks,
+   whose primary SCM seems to be stagnating.
 
 UI, Workflows & Features
 
