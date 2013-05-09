@@ -29,9 +29,8 @@ check_dir() {
 
 test_expect_success 'tar archive of empty tree is empty' '
 	git archive --format=tar HEAD: >empty.tar &&
-	make_dir extract &&
-	"$TAR" xf empty.tar -C extract &&
-	check_dir extract
+	perl -e "print \"\\0\" x 10240" >10knuls.tar &&
+	test_cmp 10knuls.tar empty.tar
 '
 
 test_expect_success 'tar archive of empty tree with prefix' '
