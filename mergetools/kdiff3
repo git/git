@@ -1,5 +1,5 @@
 diff_cmd () {
-	"$merge_tool_path" --auto \
+	"$merge_tool_path" \
 		--L1 "$MERGED (A)" --L2 "$MERGED (B)" \
 		"$LOCAL" "$REMOTE" >/dev/null 2>&1
 }
