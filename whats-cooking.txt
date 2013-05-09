@@ -1,20 +1,19 @@
 To: git@vger.kernel.org
 Bcc: lwn@lwn.net
-Subject: What's cooking in git.git (May 2013, #02; Mon, 6)
-X-master-at: 423ecb0bb66e9d60b6667aebc2844e82205369a1
-X-next-at: cc59dccce3f551f6d04e123f8ba0564e5aee6c54
+Subject: What's cooking in git.git (May 2013, #03; Thu, 9)
+X-master-at: b387c77b12953d543bf5efc3825b5be26d753f9c
+X-next-at: 747d353d98dc660fb24ce70ad72ad9d9553c40ae
 
-What's cooking in git.git (May 2013, #02; Mon, 6)
+What's cooking in git.git (May 2013, #03; Thu, 9)
 --------------------------------------------------
 
 Here are the topics that have been cooking.  Commits prefixed with
 '-' are only in 'pu' (proposed updates) while commits prefixed with
 '+' are in 'next'.
 
-As we already have merged enough changes to 'master' during this
-cycle that can potentially cause unforseen regressions, let's not
-merge topics that are not regression fixes from 'next' to 'master',
-either, until the final release.
+I'll tag 1.8.3-rc2 by the end of the week, and hopefully we can have
+a solid final release late next week.  One embarrassing regression
+was found and had to be fixed today.
 
 You can find the changes described here in the integration branches
 of the repositories listed at
@@ -24,56 +23,80 @@ of the repositories listed at
 --------------------------------------------------
 [Graduated to "master"]
 
-* fc/remote-bzr (2013-04-30) 18 commits
- - remote-bzr: access branches only when needed
- - remote-bzr: delay peer branch usage
- - remote-bzr: iterate revisions properly
- - remote-bzr: improve progress reporting
- - remote-bzr: add option to specify branches
- - remote-bzr: add custom method to find branches
- - remote-bzr: improve author sanitazion
- - remote-bzr: add support for shared repo
- - remote-bzr: fix branch names
- - remote-bzr: add support for bzr repos
- - remote-bzr: use branch variable when appropriate
- - remote-bzr: fix partially pushed merge
- - remote-bzr: fixes for branch diverge
- - remote-bzr: add support to push merges
- - remote-bzr: always try to update the worktree
- - remote-bzr: fix order of locking in CustomTree
- - remote-bzr: delay blob fetching until the very end
- - remote-bzr: cleanup CustomTree
-
- To replace the one we pushed out in 1.8.2 after hearing that Emacs
- folks had a good experience with this version, this will be in
- 1.8.3-rc2.
+* fc/sha1-name-at-home (2013-05-07) 14 commits
+ - sha1_name: compare variable with constant, not constant with variable
+ - Add new @ shortcut for HEAD
+ - sha1_name: refactor reinterpret()
+ - sha1_name: check @{-N} errors sooner
+ - sha1_name: reorganize get_sha1_basic()
+ - sha1_name: don't waste cycles in the @-parsing loop
+ - sha1_name: remove unnecessary braces
+ - sha1_name: remove no-op
+ - tests: at-combinations: @{N} versus HEAD@{N}
+ - tests: at-combinations: increase coverage
+ - tests: at-combinations: improve nonsense()
+ - SQUASH??? style fixups
+ - tests: at-combinations: check ref names directly
+ - tests: at-combinations: simplify setup
 
 --------------------------------------------------
 [New Topics]
 
-* fc/fast-export-persistent-marks (2013-05-06) 3 commits
- - fast-export: don't parse commits while reading marks file
- - fast-export: do not parse non-commit objects while reading marks file
- - fast-{import,export}: use get_sha1_hex() directly
+* jh/shorten-refname (2013-05-07) 4 commits
+ - t1514: refname shortening is done after dereferencing symbolic refs
+ - shorten_unambiguous_ref(): Fix shortening refs/remotes/origin/HEAD to origin
+ - t1514: Demonstrate failure to correctly shorten "refs/remotes/origin/HEAD"
+ - t1514: Add tests of shortening refnames in strict/loose mode
 
- Seems to break a handful of topics when merged to the tip of 'pu'.
+ When remotes/origin/HEAD is not a symbolic ref, "rev-parse
+ --abbrev-ref remotes/origin/HEAD" ought to show "origin", not
+ "origin/HEAD", which is fixed with this series (if it is a symbolic
+ ref that points at remotes/origin/something, then it should show
+ "origin/something" and it already does).
 
 
-* jc/core-checkstat-2.0 (2013-05-06) 2 commits
- - core.statinfo: remove as promised in Git 2.0
- - deprecate core.statinfo at Git 2.0 boundary
+* nd/clone-local-with-colon (2013-05-07) 1 commit
+ - clone: allow cloning local paths with colons in them
 
- The bottom one is a fix for a breakage of a new feature in 1.8.2
+ "git clone foo/bar:baz" cannot be a request to clone from a remote
+ over git-over-ssh specified in the scp style.  Detect this case and
+ clone from a local repository at "foo/bar:baz".
+
+
+* nd/warn-ambiguous-object-name (2013-05-07) 1 commit
+ - get_sha1: improve ambiguity warning regarding SHA-1 and ref names
+
+ "git cmd <name>", when <name> happens to be a 40-hex string,
+ directly uses the 40-hex string as an object name, even if a ref
+ "refs/<some hierarchy>/<name>" exists.  This disambiguation order
+ is unlikely to change, but we should warn about the ambiguity just
+ like we warn when more than one refs/ hierachies share the same
+ name.
+
+ The message needs to be fixed up, as this is not "refname is
+ ambiguous".
+
+
+* fc/zsh-leftover-bits (2013-05-08) 2 commits
+ - completion: synchronize zsh wrapper
+ - completion: cleanup zsh wrapper
+
+
+* rs/empty-archive (2013-05-09) 2 commits
+ - t5004: resurrect original empty tar archive test
+ - t5004: avoid using tar for checking emptiness of archive
+
+ Fixes tests added in 1.8.2 era that are broken on BSDs,
  but it is not all that urgent.
 
 
-* jk/packed-refs-race (2013-05-06) 4 commits
- - for_each_ref: load all loose refs before packed refs
- - get_packed_refs: reload packed-refs file when it changes
- - add a stat_validity struct
- - resolve_ref: close race condition for packed refs
+* vv/help-unknown-ref (2013-05-08) 2 commits
+ - merge: use help_unknown_ref()
+ - help: add help_unknown_ref()
 
-
+ Detect "git merge foo" that might have meant "git merge origin/foo"
+ and give an error message that is more specific than "foo is not
+ something we can merge".
 
 --------------------------------------------------
 [Stalled]
@@ -94,7 +117,8 @@ of the repositories listed at
 * mh/multimail (2013-04-21) 1 commit
  - git-multimail: a replacement for post-receive-email
 
- Waiting for comments.
+ Waiting for the initial history to pull from.
+ $gmane/223564
 
 
 * jc/format-patch (2013-04-22) 2 commits
@@ -132,29 +156,57 @@ of the repositories listed at
 
 
 * jn/config-ignore-inaccessible (2013-04-15) 1 commit
- - config: allow inaccessible configuration under $HOME
+  (merged to 'next' on 2013-05-07 at 4f09e24)
+ + config: allow inaccessible configuration under $HOME
 
  When $HOME is misconfigured to point at an unreadable directory, we
  used to complain and die. This loosens the check.
 
- I do not think we agreed that this is a good idea, though.
-
 --------------------------------------------------
 [Cooking]
 
-* fc/at-head (2013-05-02) 5 commits
+* fc/fast-export-persistent-marks (2013-05-07) 3 commits
+ - fast-{import,export}: use get_sha1_hex() to read from marks file
+ - fast-export: don't parse commits while reading marks file
+ - fast-export: do not parse non-commit objects while reading marks file
+
+ Optimization for fast-export by avoiding unnecessarily resolving
+ arbitrary object name and parsing object when only presence and
+ type information is necessary, etc.
+
+
+* jc/core-checkstat-2.0 (2013-05-06) 2 commits
+ - core.statinfo: remove as promised in Git 2.0
+ - deprecate core.statinfo at Git 2.0 boundary
+
+ The bottom one is a fix for a breakage of a new feature in 1.8.2
+ but it is not all that urgent.
+
+
+* jk/packed-refs-race (2013-05-06) 4 commits
+ - for_each_ref: load all loose refs before packed refs
+ - get_packed_refs: reload packed-refs file when it changes
+ - add a stat_validity struct
+ - resolve_ref: close race condition for packed refs
+
+
+* fc/at-head (2013-05-08) 13 commits
+ - sha1_name: compare variable with constant, not constant with variable
  - Add new @ shortcut for HEAD
  - sha1_name: refactor reinterpret()
- - sha1_name: compare variable with constant, not constant with variable
+ - sha1_name: check @{-N} errors sooner
+ - sha1_name: reorganize get_sha1_basic()
+ - sha1_name: don't waste cycles in the @-parsing loop
  - sha1_name: remove unnecessary braces
  - sha1_name: remove no-op
+ - tests: at-combinations: @{N} versus HEAD@{N}
+ - tests: at-combinations: increase coverage
+ - tests: at-combinations: improve nonsense()
+ - tests: at-combinations: check ref names directly
+ - tests: at-combinations: simplify setup
 
  Instead of typing four capital letters "HEAD", you can say "@"
  instead.
-
- There was another series from Ram that looked mostly test updates
- but I lost track of which one was which.  In any case, are people
- happy with this series?
 
 
 * jk/lookup-object-prefer-latest (2013-05-02) 1 commit
@@ -202,14 +254,12 @@ of the repositories listed at
  Will cook in 'next'.
 
 
-* rj/mingw-cygwin (2013-04-28) 2 commits
+* rj/mingw-cygwin (2013-05-08) 2 commits
  - cygwin: Remove the CYGWIN_V15_WIN32API build variable
  - mingw: rename WIN32 cpp macro to GIT_WINDOWS_NATIVE
 
- Cygwin portability; both were reviewed by Jonathan, and the tip one
- seems to want a bit further explanation.  Needs positive report
- from Cygwin 1.7 users who have been on 1.7 to make sure it does not
- regress for them.
+ Update build for Cygwin 1.[57].  There seems to be an ongoing
+ discussion on the list.
 
 
 * rj/sparse (2013-04-28) 10 commits
