@@ -23,7 +23,7 @@ check_dir() {
 			echo "$dir/$i"
 		done
 	} | sort >expect &&
-	find "$dir" -print | sort >actual &&
+	find "$dir" ! -name pax_global_header -print | sort >actual &&
 	test_cmp expect actual
 }
 
