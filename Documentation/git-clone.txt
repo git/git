@@ -14,7 +14,7 @@ SYNOPSIS
 	  [-o <name>] [-b <name>] [-u <upload-pack>] [--reference <repository>]
 	  [--separate-git-dir <git dir>]
 	  [--depth <depth>] [--[no-]single-branch]
-	  [--recursive|--recurse-submodules] [--] <repository>
+	  [--recursive | --recurse-submodules] [--] <repository>
 	  [<directory>]
 
 DESCRIPTION
@@ -188,7 +188,7 @@ objects from the source repository into a pack in the cloned repository.
 	with a long history, and would want to send in fixes
 	as patches.
 
---single-branch::
+--[no-]single-branch::
 	Clone only the history leading to the tip of a single branch,
 	either specified by the `--branch` option or the primary
 	branch remote's `HEAD` points at. When creating a shallow
