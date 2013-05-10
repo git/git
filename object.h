@@ -13,6 +13,7 @@ struct object_array {
 		struct object *item;
 		const char *name;
 		unsigned mode;
+		struct object_context *context;
 	} *objects;
 };
 
@@ -85,6 +86,7 @@ int object_list_contains(struct object_list *list, struct object *obj);
 /* Object array handling .. */
 void add_object_array(struct object *obj, const char *name, struct object_array *array);
 void add_object_array_with_mode(struct object *obj, const char *name, struct object_array *array, unsigned mode);
+void add_object_array_with_context(struct object *obj, const char *name, struct object_array *array, struct object_context *context);
 void object_array_remove_duplicates(struct object_array *);
 
 void clear_object_flags(unsigned flags);

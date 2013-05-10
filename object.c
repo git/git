@@ -255,12 +255,7 @@ int object_list_contains(struct object_list *list, struct object *obj)
 	return 0;
 }
 
-void add_object_array(struct object *obj, const char *name, struct object_array *array)
-{
-	add_object_array_with_mode(obj, name, array, S_IFINVALID);
-}
-
-void add_object_array_with_mode(struct object *obj, const char *name, struct object_array *array, unsigned mode)
+static void add_object_array_with_mode_context(struct object *obj, const char *name, struct object_array *array, unsigned mode, struct object_context *context)
 {
 	unsigned nr = array->nr;
 	unsigned alloc = array->alloc;
@@ -275,7 +270,26 @@ void add_object_array_with_mode(struct object *obj, const char *name, struct obj
 	objects[nr].item = obj;
 	objects[nr].name = name;
 	objects[nr].mode = mode;
+	objects[nr].context = context;
 	array->nr = ++nr;
+}
+
+void add_object_array(struct object *obj, const char *name, struct object_array *array)
+{
+	add_object_array_with_mode(obj, name, array, S_IFINVALID);
+}
+
+void add_object_array_with_mode(struct object *obj, const char *name, struct object_array *array, unsigned mode)
+{
+	add_object_array_with_mode_context(obj, name, array, mode, NULL);
+}
+
+void add_object_array_with_context(struct object *obj, const char *name, struct object_array *array, struct object_context *context)
+{
+	if (context)
+		add_object_array_with_mode_context(obj, name, array, context->mode, context);
+	else
+		add_object_array_with_mode_context(obj, name, array, S_IFINVALID, context);
 }
 
 void object_array_remove_duplicates(struct object_array *array)
