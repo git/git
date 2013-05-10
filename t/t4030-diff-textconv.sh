@@ -96,14 +96,14 @@ test_expect_success 'show blob produces binary' '
 	test_cmp expect actual
 '
 
-test_expect_failure 'show --textconv blob produces text' '
+test_expect_success 'show --textconv blob produces text' '
 	git show --textconv HEAD:file >actual &&
 	printf "0\\n1\\n" >expect &&
 	test_cmp expect actual
 '
 
-test_success 'show --no-textconv blob produces binary' '
-	git show --textconv HEAD:file >actual &&
+test_expect_success 'show --no-textconv blob produces binary' '
+	git show --no-textconv HEAD:file >actual &&
 	printf "\\0\\n\\01\\n" >expect &&
 	test_cmp expect actual
 '
