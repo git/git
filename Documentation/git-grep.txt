@@ -9,7 +9,7 @@ git-grep - Print lines matching a pattern
 SYNOPSIS
 --------
 [verse]
-'git grep' [-a | --text] [-I] [-i | --ignore-case] [-w | --word-regexp]
+'git grep' [-a | --text] [-I] [--textconv] [-i | --ignore-case] [-w | --word-regexp]
 	   [-v | --invert-match] [-h|-H] [--full-name]
 	   [-E | --extended-regexp] [-G | --basic-regexp]
 	   [-P | --perl-regexp]
@@ -79,6 +79,13 @@ OPTIONS
 -a::
 --text::
 	Process binary files as if they were text.
+
+--textconv::
+	Honor textconv filter settings.
+
+--no-textconv::
+	Do not honor textconv filter settings.
+	This is the default.
 
 -i::
 --ignore-case::
