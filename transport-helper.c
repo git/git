@@ -701,7 +701,7 @@ static int push_update_ref_status(struct strbuf *buf,
 
 	(*ref)->status = status;
 	(*ref)->remote_status = msg;
-	return 0;
+	return !(status == REF_STATUS_OK);
 }
 
 static void push_update_refs_status(struct helper_data *data,
