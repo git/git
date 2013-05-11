@@ -169,25 +169,22 @@ int git_config_from_parameters(config_fn_t fn, void *data)
 static int get_next_char(void)
 {
 	int c;
-	FILE *f;
+	FILE *f = cf->f;
 
-	c = '\n';
-	if (cf && ((f = cf->f) != NULL)) {
+	c = fgetc(f);
+	if (c == '\r') {
+		/* DOS like systems */
 		c = fgetc(f);
-		if (c == '\r') {
-			/* DOS like systems */
-			c = fgetc(f);
-			if (c != '\n') {
-				ungetc(c, f);
-				c = '\r';
-			}
+		if (c != '\n') {
+			ungetc(c, f);
+			c = '\r';
 		}
-		if (c == '\n')
-			cf->linenr++;
-		if (c == EOF) {
-			cf->eof = 1;
-			c = '\n';
-		}
+	}
+	if (c == '\n')
+		cf->linenr++;
+	if (c == EOF) {
+		cf->eof = 1;
+		c = '\n';
 	}
 	return c;
 }
