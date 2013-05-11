@@ -1054,6 +1054,7 @@ ifeq ($(uname_S),Darwin)
 			BASIC_LDFLAGS += -L/opt/local/lib
 		endif
 	endif
+	NO_REGEX = YesPlease
 	PTHREAD_LIBS =
 endif
 
