@@ -119,7 +119,7 @@ static void add_merge_config(struct ref **head,
 
 		for (rm = *head; rm; rm = rm->next) {
 			if (branch_merge_matches(branch, i, rm->name)) {
-				rm->merge = 1;
+				rm->fetch_head_status = FETCH_HEAD_MERGE;
 				break;
 			}
 		}
@@ -140,7 +140,7 @@ static void add_merge_config(struct ref **head,
 		refspec.src = branch->merge[i]->src;
 		get_fetch_map(remote_refs, &refspec, tail, 1);
 		for (rm = *old_tail; rm; rm = rm->next)
-			rm->merge = 1;
+			rm->fetch_head_status = FETCH_HEAD_MERGE;
 	}
 }
 
@@ -167,7 +167,7 @@ static struct ref *get_ref_map(struct transport *transport,
 		}
 		/* Merge everything on the command line, but not --tags */
 		for (rm = ref_map; rm; rm = rm->next)
-			rm->merge = 1;
+			rm->fetch_head_status = FETCH_HEAD_MERGE;
 		if (tags == TAGS_SET)
 			get_fetch_map(remote_refs, tag_refspec, &tail, 0);
 	} else {
@@ -186,7 +186,7 @@ static struct ref *get_ref_map(struct transport *transport,
 					*autotags = 1;
 				if (!i && !has_merge && ref_map &&
 				    !remote->fetch[0].pattern)
-					ref_map->merge = 1;
+					ref_map->fetch_head_status = FETCH_HEAD_MERGE;
 			}
 			/*
 			 * if the remote we're fetching from is the same
@@ -202,7 +202,7 @@ static struct ref *get_ref_map(struct transport *transport,
 			ref_map = get_remote_ref(remote_refs, "HEAD");
 			if (!ref_map)
 				die(_("Couldn't find remote ref HEAD"));
-			ref_map->merge = 1;
+			ref_map->fetch_head_status = FETCH_HEAD_MERGE;
 			tail = &ref_map->next;
 		}
 	}
@@ -389,7 +389,7 @@ static int store_updated_refs(const char *raw_url, const char *remote_name,
 	const char *what, *kind;
 	struct ref *rm;
 	char *url, *filename = dry_run ? "/dev/null" : git_path("FETCH_HEAD");
-	int want_merge;
+	int want_status;
 
 	fp = fopen(filename, "a");
 	if (!fp)
@@ -407,19 +407,22 @@ static int store_updated_refs(const char *raw_url, const char *remote_name,
 	}
 
 	/*
-	 * The first pass writes objects to be merged and then the
-	 * second pass writes the rest, in order to allow using
-	 * FETCH_HEAD as a refname to refer to the ref to be merged.
+	 * We do a pass for each fetch_head_status type in their enum order, so
+	 * merged entries are written before not-for-merge. That lets readers
+	 * use FETCH_HEAD as a refname to refer to the ref to be merged.
 	 */
-	for (want_merge = 1; 0 <= want_merge; want_merge--) {
+	for (want_status = FETCH_HEAD_MERGE;
+	     want_status <= FETCH_HEAD_IGNORE;
+	     want_status++) {
 		for (rm = ref_map; rm; rm = rm->next) {
 			struct ref *ref = NULL;
+			const char *merge_status_marker = "";
 
 			commit = lookup_commit_reference_gently(rm->old_sha1, 1);
 			if (!commit)
-				rm->merge = 0;
+				rm->fetch_head_status = FETCH_HEAD_NOT_FOR_MERGE;
 
-			if (rm->merge != want_merge)
+			if (rm->fetch_head_status != want_status)
 				continue;
 
 			if (rm->peer_ref) {
@@ -465,16 +468,26 @@ static int store_updated_refs(const char *raw_url, const char *remote_name,
 					strbuf_addf(&note, "%s ", kind);
 				strbuf_addf(&note, "'%s' of ", what);
 			}
-			fprintf(fp, "%s\t%s\t%s",
-				sha1_to_hex(rm->old_sha1),
-				rm->merge ? "" : "not-for-merge",
-				note.buf);
-			for (i = 0; i < url_len; ++i)
-				if ('\n' == url[i])
-					fputs("\\n", fp);
-				else
-					fputc(url[i], fp);
-			fputc('\n', fp);
+			switch (rm->fetch_head_status) {
+			case FETCH_HEAD_NOT_FOR_MERGE:
+				merge_status_marker = "not-for-merge";
+				/* fall-through */
+			case FETCH_HEAD_MERGE:
+				fprintf(fp, "%s\t%s\t%s",
+					sha1_to_hex(rm->old_sha1),
+					merge_status_marker,
+					note.buf);
+				for (i = 0; i < url_len; ++i)
+					if ('\n' == url[i])
+						fputs("\\n", fp);
+					else
+						fputc(url[i], fp);
+				fputc('\n', fp);
+				break;
+			default:
+				/* do not write anything to FETCH_HEAD */
+				break;
+			}
 
 			strbuf_reset(&note);
 			if (ref) {
