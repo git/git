@@ -126,6 +126,7 @@ my %remote_opts = ( 'username=s' => \$Git::SVN::Prompt::_username,
                     'config-dir=s' => \$Git::SVN::Ra::config_dir,
                     'no-auth-cache' => \$Git::SVN::Prompt::_no_auth_cache,
                     'ignore-paths=s' => \$Git::SVN::Fetcher::_ignore_regex,
+                    'include-paths=s' => \$Git::SVN::Fetcher::_include_regex,
                     'ignore-refs=s' => \$Git::SVN::Ra::_ignore_refs_regex );
 my %fc_opts = ( 'follow-parent|follow!' => \$Git::SVN::_follow_parent,
 		'authors-file|A=s' => \$_authors,
@@ -470,6 +471,9 @@ sub do_git_init_db {
 	my $ignore_paths_regex = \$Git::SVN::Fetcher::_ignore_regex;
 	command_noisy('config', "$pfx.ignore-paths", $$ignore_paths_regex)
 		if defined $$ignore_paths_regex;
+	my $include_paths_regex = \$Git::SVN::Fetcher::_include_regex;
+	command_noisy('config', "$pfx.include-paths", $$include_paths_regex)
+		if defined $$include_paths_regex;
 	my $ignore_refs_regex = \$Git::SVN::Ra::_ignore_refs_regex;
 	command_noisy('config', "$pfx.ignore-refs", $$ignore_refs_regex)
 		if defined $$ignore_refs_regex;
@@ -669,11 +673,13 @@ sub merge_revs_into_hash {
 }
 
 sub merge_merge_info {
-	my ($mergeinfo_one, $mergeinfo_two) = @_;
+	my ($mergeinfo_one, $mergeinfo_two, $ignore_branch) = @_;
 	my %result_hash = ();
 
 	merge_revs_into_hash(\%result_hash, $mergeinfo_one);
 	merge_revs_into_hash(\%result_hash, $mergeinfo_two);
+
+	delete $result_hash{$ignore_branch} if $ignore_branch;
 
 	my $result = '';
 	# Sort below is for consistency's sake
@@ -695,6 +701,7 @@ sub populate_merge_info {
 		my $all_parents_ok = 1;
 		my $aggregate_mergeinfo = '';
 		my $rooturl = $gs->repos_root;
+		my ($target_branch) = $gs->full_pushurl =~ /^\Q$rooturl\E(.*)/;
 
 		if (defined($rewritten_parent)) {
 			# Replace first parent with newly-rewritten version
@@ -726,7 +733,8 @@ sub populate_merge_info {
 			# Merge previous mergeinfo values
 			$aggregate_mergeinfo =
 				merge_merge_info($aggregate_mergeinfo,
-								 $par_mergeinfo, 0);
+								$par_mergeinfo,
+								$target_branch);
 
 			next if $parent eq $parents[0]; # Skip first parent
 			# Add new changes being placed in tree by merge
@@ -769,7 +777,8 @@ sub populate_merge_info {
 			my $newmergeinfo = "$branchpath:" . join(',', @revsin);
 			$aggregate_mergeinfo =
 				merge_merge_info($aggregate_mergeinfo,
-								 $newmergeinfo, 1);
+								$newmergeinfo,
+								$target_branch);
 		}
 		if ($all_parents_ok and $aggregate_mergeinfo) {
 			return $aggregate_mergeinfo;

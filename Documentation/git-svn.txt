@@ -85,6 +85,10 @@ COMMANDS
 	When passed to 'init' or 'clone' this regular expression will
 	be preserved as a config key.  See 'fetch' for a description
 	of '--ignore-paths'.
+--include-paths=<regex>;;
+	When passed to 'init' or 'clone' this regular expression will
+	be preserved as a config key.  See 'fetch' for a description
+	of '--include-paths'.
 --no-minimize-url;;
 	When tracking multiple directories (using --stdlayout,
 	--branches, or --tags options), git svn will attempt to connect
@@ -145,6 +149,14 @@ Skip "branches" and "tags" of first level directories;;
 --ignore-paths="^[^/]+/(?:branches|tags)"
 ------------------------------------------------------------------------
 --
+
+--include-paths=<regex>;;
+	This allows one to specify a Perl regular expression that will
+	cause the inclusion of only matching paths from checkout from SVN.
+	The '--include-paths' option should match for every 'fetch'
+	(including automatic fetches due to 'clone', 'dcommit',
+	'rebase', etc) on a given repository. '--ignore-paths' takes
+	precedence over '--include-paths'.
 
 --log-window-size=<n>;;
     Fetch <n> log entries per request when scanning Subversion history.

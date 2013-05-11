@@ -627,6 +627,8 @@ sub skip_unknown_revs {
 1;
 __END__
 
+=head1 NAME
+
 Git::SVN::Ra - Subversion remote access functions for git-svn
 
 =head1 SYNOPSIS

@@ -88,7 +88,6 @@ test_expect_success 'check reintegration mergeinfo' '
 	test "$mergeinfo" = "/branches/svnb1:2-4,7-9,13-18
 /branches/svnb2:3,8,16-17
 /branches/svnb3:4,9
-/branches/svnb4:5-6,10-12
 /branches/svnb5:6,11"
 	'
 

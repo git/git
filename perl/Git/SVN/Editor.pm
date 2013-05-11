@@ -499,6 +499,8 @@ sub apply_diff {
 1;
 __END__
 
+=head1 NAME
+
 Git::SVN::Editor - commit driver for "git svn set-tree" and dcommit
 
 =head1 SYNOPSIS
