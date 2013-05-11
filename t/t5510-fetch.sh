@@ -370,12 +370,20 @@ test_expect_success 'bundle should record HEAD correctly' '
 
 '
 
+test_expect_success 'mark initial state of origin/master' '
+	(
+		cd three &&
+		git tag base-origin-master refs/remotes/origin/master
+	)
+'
+
 test_expect_success 'explicit fetch should not update tracking' '
 
 	cd "$D" &&
 	git branch -f side &&
 	(
 		cd three &&
+		git update-ref refs/remotes/origin/master base-origin-master &&
 		o=$(git rev-parse --verify refs/remotes/origin/master) &&
 		git fetch origin master &&
 		n=$(git rev-parse --verify refs/remotes/origin/master) &&
@@ -390,6 +398,7 @@ test_expect_success 'explicit pull should not update tracking' '
 	git branch -f side &&
 	(
 		cd three &&
+		git update-ref refs/remotes/origin/master base-origin-master &&
 		o=$(git rev-parse --verify refs/remotes/origin/master) &&
 		git pull origin master &&
 		n=$(git rev-parse --verify refs/remotes/origin/master) &&
@@ -404,6 +413,7 @@ test_expect_success 'configured fetch updates tracking' '
 	git branch -f side &&
 	(
 		cd three &&
+		git update-ref refs/remotes/origin/master base-origin-master &&
 		o=$(git rev-parse --verify refs/remotes/origin/master) &&
 		git fetch origin &&
 		n=$(git rev-parse --verify refs/remotes/origin/master) &&
