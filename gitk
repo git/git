@@ -1998,6 +1998,9 @@ proc mca {str} {
     return [string map {&& & & {}} [mc $str]]
 }
 
+proc cleardropsel {w} {
+    $w selection clear
+}
 proc makedroplist {w varname args} {
     global use_ttk
     if {$use_ttk} {
@@ -2007,7 +2010,9 @@ proc makedroplist {w varname args} {
             if {$cx > $width} {set width $cx}
         }
 	set gm [ttk::combobox $w -width $width -state readonly\
-		    -textvariable $varname -values $args]
+		    -textvariable $varname -values $args \
+		    -exportselection false]
+	bind $gm <<ComboboxSelected>> [list $gm selection clear]
     } else {
 	set gm [eval [linsert $args 0 tk_optionMenu $w $varname]]
     }
