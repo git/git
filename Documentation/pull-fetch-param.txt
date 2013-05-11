@@ -75,4 +75,4 @@ ifdef::git-pull[]
 * A parameter <ref> without a colon merges <ref> into the current
   branch,
 endif::git-pull[]
-  while not storing the branch anywhere locally.
+  and updates the remote-tracking branches (if any).

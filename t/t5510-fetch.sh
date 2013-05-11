@@ -377,7 +377,7 @@ test_expect_success 'mark initial state of origin/master' '
 	)
 '
 
-test_expect_success 'explicit fetch should not update tracking' '
+test_expect_success 'explicit fetch should update tracking' '
 
 	cd "$D" &&
 	git branch -f side &&
@@ -387,12 +387,12 @@ test_expect_success 'explicit fetch should not update tracking' '
 		o=$(git rev-parse --verify refs/remotes/origin/master) &&
 		git fetch origin master &&
 		n=$(git rev-parse --verify refs/remotes/origin/master) &&
-		test "$o" = "$n" &&
+		test "$o" != "$n" &&
 		test_must_fail git rev-parse --verify refs/remotes/origin/side
 	)
 '
 
-test_expect_success 'explicit pull should not update tracking' '
+test_expect_success 'explicit pull should update tracking' '
 
 	cd "$D" &&
 	git branch -f side &&
@@ -402,7 +402,7 @@ test_expect_success 'explicit pull should not update tracking' '
 		o=$(git rev-parse --verify refs/remotes/origin/master) &&
 		git pull origin master &&
 		n=$(git rev-parse --verify refs/remotes/origin/master) &&
-		test "$o" = "$n" &&
+		test "$o" != "$n" &&
 		test_must_fail git rev-parse --verify refs/remotes/origin/side
 	)
 '

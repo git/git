@@ -160,6 +160,8 @@ static struct ref *get_ref_map(struct transport *transport,
 	const struct ref *remote_refs = transport_get_remote_refs(transport);
 
 	if (ref_count || tags == TAGS_SET) {
+		struct ref **old_tail;
+
 		for (i = 0; i < ref_count; i++) {
 			get_fetch_map(remote_refs, &refs[i], &tail, 0);
 			if (refs[i].dst && refs[i].dst[0])
@@ -170,6 +172,20 @@ static struct ref *get_ref_map(struct transport *transport,
 			rm->fetch_head_status = FETCH_HEAD_MERGE;
 		if (tags == TAGS_SET)
 			get_fetch_map(remote_refs, tag_refspec, &tail, 0);
+
+		/*
+		 * For any refs that we happen to be fetching via command-line
+		 * arguments, take the opportunity to update their configured
+		 * counterparts. However, we do not want to mention these
+		 * entries in FETCH_HEAD at all, as they would simply be
+		 * duplicates of existing entries.
+		 */
+		old_tail = tail;
+		for (i = 0; i < transport->remote->fetch_refspec_nr; i++)
+			get_fetch_map(ref_map, &transport->remote->fetch[i],
+				      &tail, 0);
+		for (rm = *old_tail; rm; rm = rm->next)
+			rm->fetch_head_status = FETCH_HEAD_IGNORE;
 	} else {
 		/* Use the defaults */
 		struct remote *remote = transport->remote;
