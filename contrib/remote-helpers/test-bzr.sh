@@ -328,7 +328,7 @@ test_expect_success 'strip' '
 
   echo four >> content &&
   bzr commit -m four &&
-  bzr log --line | sed -e "s/^[0-9]\+: //" > ../expected
+  bzr log --line | sed -e "s/^[0-9][0-9]*: //" > ../expected
   ) &&
 
   (cd gitrepo &&
