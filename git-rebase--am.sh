@@ -7,12 +7,12 @@ case "$action" in
 continue)
 	git am --resolved --resolvemsg="$resolvemsg" &&
 	move_to_original_branch
-	exit
+	return
 	;;
 skip)
 	git am --skip --resolvemsg="$resolvemsg" &&
 	move_to_original_branch
-	exit
+	return
 	;;
 esac
 
@@ -56,7 +56,7 @@ else
 
 		As a result, git cannot rebase them.
 		EOF
-		exit $?
+		return $?
 	fi
 
 	git am $git_am_opt --rebasing --resolvemsg="$resolvemsg" <"$GIT_DIR/rebased-patches"
@@ -68,7 +68,7 @@ fi
 if test 0 != $ret
 then
 	test -d "$state_dir" && write_basic_state
-	exit $ret
+	return $ret
 fi
 
 move_to_original_branch
