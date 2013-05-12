@@ -150,6 +150,13 @@ run_specific_rebase () {
 		autosquash=
 	fi
 	. git-rebase--$type
+	ret=$?
+	if test $ret -eq 0
+	then
+		git gc --auto &&
+		rm -rf "$state_dir"
+	fi
+	exit $ret
 }
 
 run_pre_rebase_hook () {
