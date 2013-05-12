@@ -96,7 +96,6 @@ finish_rb_merge () {
 			"$GIT_DIR"/hooks/post-rewrite rebase <"$state_dir"/rewritten
 		fi
 	fi
-	rm -r "$state_dir"
 	say All done.
 }
 
@@ -110,7 +109,7 @@ continue)
 		continue_merge
 	done
 	finish_rb_merge
-	exit
+	return
 	;;
 skip)
 	read_state
@@ -122,7 +121,7 @@ skip)
 		continue_merge
 	done
 	finish_rb_merge
-	exit
+	return
 	;;
 esac
 
