@@ -628,17 +628,16 @@ do_next () {
 		"$GIT_DIR"/hooks/post-rewrite rebase < "$rewritten_list"
 		true # we don't care if this hook failed
 	fi &&
-	rm -rf "$state_dir" &&
-	git gc --auto &&
 	warn "Successfully rebased and updated $head_name."
 
-	exit
+	return 1 # not failure; just to break the do_rest loop
 }
 
+# can only return 0, when the infinite loop breaks
 do_rest () {
 	while :
 	do
-		do_next
+		do_next || break
 	done
 }
 
@@ -805,11 +804,13 @@ first and then run 'git rebase --continue' again."
 
 	require_clean_work_tree "rebase"
 	do_rest
+	return 0
 	;;
 skip)
 	git rerere clear
 
 	do_rest
+	return 0
 	;;
 edit-todo)
 	git stripspace --strip-comments <"$todo" >"$todo".new
