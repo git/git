@@ -2529,7 +2529,7 @@ check-builtins::
 
 coverage:
 	$(MAKE) coverage-test
-	$(MAKE) coverage-report
+	$(MAKE) coverage-untested-functions
 
 object_dirs := $(sort $(dir $(OBJECTS)))
 coverage-clean-results:
