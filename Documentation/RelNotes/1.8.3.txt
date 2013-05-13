@@ -41,11 +41,16 @@ Updates since v1.8.2
 
 Foreign interface
 
- * remote-hg and remote-bzr helpers (in contrib/) have been updated;
-   especially, the latter has been accelerated to help Emacs folks,
-   whose primary SCM seems to be stagnating.
+ * remote-hg and remote-bzr helpers (in contrib/ since v1.8.2) have
+   been updated; especially, the latter has been accelerated to help
+   Emacs folks, whose primary SCM seems to be stagnating.
+
 
 UI, Workflows & Features
+
+ * A handful of updates applied to gitk, including an addition of
+   "revert" action, showing dates in tags in a nicer way, making
+   colors configurable, and support for -G'pickaxe' search.
 
  * The prompt string generator (in contrib/completion/) learned to
    show how many changes there are in total and how many have been
