@@ -1998,6 +1998,9 @@ proc mca {str} {
     return [string map {&& & & {}} [mc $str]]
 }
 
+proc cleardropsel {w} {
+    $w selection clear
+}
 proc makedroplist {w varname args} {
     global use_ttk
     if {$use_ttk} {
@@ -2007,7 +2010,9 @@ proc makedroplist {w varname args} {
             if {$cx > $width} {set width $cx}
         }
 	set gm [ttk::combobox $w -width $width -state readonly\
-		    -textvariable $varname -values $args]
+		    -textvariable $varname -values $args \
+		    -exportselection false]
+	bind $gm <<ComboboxSelected>> [list $gm selection clear]
     } else {
 	set gm [eval [linsert $args 0 tk_optionMenu $w $varname]]
     }
@@ -2026,6 +2031,9 @@ proc makewindow {} {
     global highlight_files gdttype
     global searchstring sstring
     global bgcolor fgcolor bglist fglist diffcolors selectbgcolor
+    global uifgcolor uifgdisabledcolor
+    global filesepbgcolor filesepfgcolor
+    global mergecolors foundbgcolor currentsearchhitbgcolor
     global headctxmenu progresscanv progressitem progresscoords statusw
     global fprogitem fprogcoord lastprogupdate progupdatepending
     global rprogitem rprogcoord rownumsel numcommits
@@ -2177,10 +2185,10 @@ proc makewindow {} {
 	0x00, 0x38, 0xff, 0x7f, 0xff, 0x7f, 0xff, 0x7f, 0x00, 0x38, 0x00, 0x1c,
 	0x00, 0x0e, 0x00, 0x07, 0x80, 0x03, 0xc0, 0x01};
     }
-    image create bitmap bm-left -data $bm_left_data
-    image create bitmap bm-left-gray -data $bm_left_data -foreground "#999"
-    image create bitmap bm-right -data $bm_right_data
-    image create bitmap bm-right-gray -data $bm_right_data -foreground "#999"
+    image create bitmap bm-left -data $bm_left_data -foreground $uifgcolor
+    image create bitmap bm-left-gray -data $bm_left_data -foreground $uifgdisabledcolor
+    image create bitmap bm-right -data $bm_right_data -foreground $uifgcolor
+    image create bitmap bm-right-gray -data $bm_right_data -foreground $uifgdisabledcolor
 
     ${NS}::button .tf.bar.leftbut -command goback -state disabled -width 26
     if {$use_ttk} {
@@ -2245,7 +2253,8 @@ proc makewindow {} {
     set gm [makedroplist .tf.lbar.gdttype gdttype \
 		[mc "containing:"] \
 		[mc "touching paths:"] \
-		[mc "adding/removing string:"]]
+		[mc "adding/removing string:"] \
+		[mc "changing lines matching:"]]
     trace add variable gdttype write gdttype_change
     pack .tf.lbar.gdttype -side left -fill y
 
@@ -2349,32 +2358,32 @@ proc makewindow {} {
     lappend fglist $ctext
 
     $ctext tag conf comment -wrap $wrapcomment
-    $ctext tag conf filesep -font textfontbold -back "#aaaaaa"
+    $ctext tag conf filesep -font textfontbold -fore $filesepfgcolor -back $filesepbgcolor
     $ctext tag conf hunksep -fore [lindex $diffcolors 2]
     $ctext tag conf d0 -fore [lindex $diffcolors 0]
     $ctext tag conf dresult -fore [lindex $diffcolors 1]
-    $ctext tag conf m0 -fore red
-    $ctext tag conf m1 -fore blue
-    $ctext tag conf m2 -fore green
-    $ctext tag conf m3 -fore purple
-    $ctext tag conf m4 -fore brown
-    $ctext tag conf m5 -fore "#009090"
-    $ctext tag conf m6 -fore magenta
-    $ctext tag conf m7 -fore "#808000"
-    $ctext tag conf m8 -fore "#009000"
-    $ctext tag conf m9 -fore "#ff0080"
-    $ctext tag conf m10 -fore cyan
-    $ctext tag conf m11 -fore "#b07070"
-    $ctext tag conf m12 -fore "#70b0f0"
-    $ctext tag conf m13 -fore "#70f0b0"
-    $ctext tag conf m14 -fore "#f0b070"
-    $ctext tag conf m15 -fore "#ff70b0"
+    $ctext tag conf m0 -fore [lindex $mergecolors 0]
+    $ctext tag conf m1 -fore [lindex $mergecolors 1]
+    $ctext tag conf m2 -fore [lindex $mergecolors 2]
+    $ctext tag conf m3 -fore [lindex $mergecolors 3]
+    $ctext tag conf m4 -fore [lindex $mergecolors 4]
+    $ctext tag conf m5 -fore [lindex $mergecolors 5]
+    $ctext tag conf m6 -fore [lindex $mergecolors 6]
+    $ctext tag conf m7 -fore [lindex $mergecolors 7]
+    $ctext tag conf m8 -fore [lindex $mergecolors 8]
+    $ctext tag conf m9 -fore [lindex $mergecolors 9]
+    $ctext tag conf m10 -fore [lindex $mergecolors 10]
+    $ctext tag conf m11 -fore [lindex $mergecolors 11]
+    $ctext tag conf m12 -fore [lindex $mergecolors 12]
+    $ctext tag conf m13 -fore [lindex $mergecolors 13]
+    $ctext tag conf m14 -fore [lindex $mergecolors 14]
+    $ctext tag conf m15 -fore [lindex $mergecolors 15]
     $ctext tag conf mmax -fore darkgrey
     set mergemax 16
     $ctext tag conf mresult -font textfontbold
     $ctext tag conf msep -font textfontbold
-    $ctext tag conf found -back yellow
-    $ctext tag conf currentsearchhit -back orange
+    $ctext tag conf found -back $foundbgcolor
+    $ctext tag conf currentsearchhit -back $currentsearchhitbgcolor
     $ctext tag conf wwrap -wrap word
 
     .pwbottom add .bleft
@@ -2559,6 +2568,7 @@ proc makewindow {} {
 	{mc "Compare with marked commit" command compare_commits}
 	{mc "Diff this -> marked commit" command {diffvsmark 0}}
 	{mc "Diff marked commit -> this" command {diffvsmark 1}}
+	{mc "Revert this commit" command revert}
     }
     $rowctxmenu configure -tearoff 0
 
@@ -2721,6 +2731,14 @@ proc savestuff {w} {
     global viewname viewfiles viewargs viewargscmd viewperm nextviewnum
     global cmitmode wrapcomment datetimeformat limitdiffs
     global colors uicolor bgcolor fgcolor diffcolors diffcontext selectbgcolor
+    global uifgcolor uifgdisabledcolor
+    global headbgcolor headfgcolor headoutlinecolor remotebgcolor
+    global tagbgcolor tagfgcolor tagoutlinecolor
+    global reflinecolor filesepbgcolor filesepfgcolor
+    global mergecolors foundbgcolor currentsearchhitbgcolor
+    global linehoverbgcolor linehoverfgcolor linehoveroutlinecolor circlecolors
+    global mainheadcirclecolor workingfilescirclecolor indexcirclecolor
+    global linkfgcolor circleoutlinecolor
     global autoselect autosellen extdifftool perfile_attrs markbgcolor use_ttk
     global hideremotes want_ttk maxrefs
 
@@ -2753,13 +2771,37 @@ proc savestuff {w} {
 	puts $f [list set want_ttk $want_ttk]
 	puts $f [list set bgcolor $bgcolor]
 	puts $f [list set fgcolor $fgcolor]
+	puts $f [list set uifgcolor $uifgcolor]
+	puts $f [list set uifgdisabledcolor $uifgdisabledcolor]
 	puts $f [list set colors $colors]
 	puts $f [list set diffcolors $diffcolors]
+	puts $f [list set mergecolors $mergecolors]
 	puts $f [list set markbgcolor $markbgcolor]
 	puts $f [list set diffcontext $diffcontext]
 	puts $f [list set selectbgcolor $selectbgcolor]
+	puts $f [list set foundbgcolor $foundbgcolor]
+	puts $f [list set currentsearchhitbgcolor $currentsearchhitbgcolor]
 	puts $f [list set extdifftool $extdifftool]
 	puts $f [list set perfile_attrs $perfile_attrs]
+	puts $f [list set headbgcolor $headbgcolor]
+	puts $f [list set headfgcolor $headfgcolor]
+	puts $f [list set headoutlinecolor $headoutlinecolor]
+	puts $f [list set remotebgcolor $remotebgcolor]
+	puts $f [list set tagbgcolor $tagbgcolor]
+	puts $f [list set tagfgcolor $tagfgcolor]
+	puts $f [list set tagoutlinecolor $tagoutlinecolor]
+	puts $f [list set reflinecolor $reflinecolor]
+	puts $f [list set filesepbgcolor $filesepbgcolor]
+	puts $f [list set filesepfgcolor $filesepfgcolor]
+	puts $f [list set linehoverbgcolor $linehoverbgcolor]
+	puts $f [list set linehoverfgcolor $linehoverfgcolor]
+	puts $f [list set linehoveroutlinecolor $linehoveroutlinecolor]
+	puts $f [list set mainheadcirclecolor $mainheadcirclecolor]
+	puts $f [list set workingfilescirclecolor $workingfilescirclecolor]
+	puts $f [list set indexcirclecolor $indexcirclecolor]
+	puts $f [list set circlecolors $circlecolors]
+	puts $f [list set linkfgcolor $linkfgcolor]
+	puts $f [list set circleoutlinecolor $circleoutlinecolor]
 
 	puts $f "set geometry(main) [wm geometry .]"
 	puts $f "set geometry(state) [wm state .]"
@@ -4617,6 +4659,8 @@ proc do_file_hl {serial} {
 	set gdtargs [concat -- $relative_paths]
     } elseif {$gdttype eq [mc "adding/removing string:"]} {
 	set gdtargs [list "-S$highlight_files"]
+    } elseif {$gdttype eq [mc "changing lines matching:"]} {
+	set gdtargs [list "-G$highlight_files"]
     } else {
 	# must be "containing:", i.e. we're searching commit info
 	return
@@ -5925,15 +5969,17 @@ proc drawcmittext {id row col} {
     global linehtag linentag linedtag selectedline
     global canvxmax boldids boldnameids fgcolor markedid
     global mainheadid nullid nullid2 circleitem circlecolors ctxbut
+    global mainheadcirclecolor workingfilescirclecolor indexcirclecolor
+    global circleoutlinecolor
 
     # listed is 0 for boundary, 1 for normal, 2 for negative, 3 for left, 4 for right
     set listed $cmitlisted($curview,$id)
     if {$id eq $nullid} {
-	set ofill red
+	set ofill $workingfilescirclecolor
     } elseif {$id eq $nullid2} {
-	set ofill green
+	set ofill $indexcirclecolor
     } elseif {$id eq $mainheadid} {
-	set ofill yellow
+	set ofill $mainheadcirclecolor
     } else {
 	set ofill [lindex $circlecolors $listed]
     }
@@ -5943,21 +5989,21 @@ proc drawcmittext {id row col} {
     if {$listed <= 2} {
 	set t [$canv create oval [expr {$x - $orad}] [expr {$y - $orad}] \
 		   [expr {$x + $orad - 1}] [expr {$y + $orad - 1}] \
-		   -fill $ofill -outline $fgcolor -width 1 -tags circle]
+		   -fill $ofill -outline $circleoutlinecolor -width 1 -tags circle]
     } elseif {$listed == 3} {
 	# triangle pointing left for left-side commits
 	set t [$canv create polygon \
 		   [expr {$x - $orad}] $y \
 		   [expr {$x + $orad - 1}] [expr {$y - $orad}] \
 		   [expr {$x + $orad - 1}] [expr {$y + $orad - 1}] \
-		   -fill $ofill -outline $fgcolor -width 1 -tags circle]
+		   -fill $ofill -outline $circleoutlinecolor -width 1 -tags circle]
     } else {
 	# triangle pointing right for right-side commits
 	set t [$canv create polygon \
 		   [expr {$x + $orad - 1}] $y \
 		   [expr {$x - $orad}] [expr {$y - $orad}] \
 		   [expr {$x - $orad}] [expr {$y + $orad - 1}] \
-		   -fill $ofill -outline $fgcolor -width 1 -tags circle]
+		   -fill $ofill -outline $circleoutlinecolor -width 1 -tags circle]
     }
     set circleitem($row) $t
     $canv raise $t
@@ -6345,6 +6391,9 @@ proc drawtags {id x xt y1} {
     global idtags idheads idotherrefs mainhead
     global linespc lthickness
     global canv rowtextx curview fgcolor bgcolor ctxbut
+    global headbgcolor headfgcolor headoutlinecolor remotebgcolor
+    global tagbgcolor tagfgcolor tagoutlinecolor
+    global reflinecolor
 
     set marks {}
     set ntags 0
@@ -6382,7 +6431,7 @@ proc drawtags {id x xt y1} {
 	set xt [expr {$xt + $delta + $wid + $lthickness + $linespc}]
     }
     set t [$canv create line $x $y1 [lindex $xvals end] $y1 \
-	       -width $lthickness -fill black -tags tag.$id]
+	       -width $lthickness -fill $reflinecolor -tags tag.$id]
     $canv lower $t
     foreach tag $marks x $xvals wid $wvals {
 	set tag_quoted [string map {% %%} $tag]
@@ -6393,13 +6442,14 @@ proc drawtags {id x xt y1} {
 	    # draw a tag
 	    set t [$canv create polygon $x [expr {$yt + $delta}] $xl $yt \
 		       $xr $yt $xr $yb $xl $yb $x [expr {$yb - $delta}] \
-		       -width 1 -outline black -fill yellow -tags tag.$id]
+		       -width 1 -outline $tagoutlinecolor -fill $tagbgcolor \
+		       -tags tag.$id]
 	    $canv bind $t <1> [list showtag $tag_quoted 1]
 	    set rowtextx([rowofcommit $id]) [expr {$xr + $linespc}]
 	} else {
 	    # draw a head or other ref
 	    if {[incr nheads -1] >= 0} {
-		set col green
+		set col $headbgcolor
 		if {$tag eq $mainhead} {
 		    set font mainfontbold
 		}
@@ -6415,10 +6465,10 @@ proc drawtags {id x xt y1} {
 		set yti [expr {$yt + 1}]
 		set xri [expr {$x + $rwid}]
 		$canv create polygon $xi $yti $xri $yti $xri $yb $xi $yb \
-			-width 0 -fill "#ffddaa" -tags tag.$id
+			-width 0 -fill $remotebgcolor -tags tag.$id
 	    }
 	}
-	set t [$canv create text $xl $y1 -anchor w -text $tag -fill $fgcolor \
+	set t [$canv create text $xl $y1 -anchor w -text $tag -fill $headfgcolor \
 		   -font $font -tags [list tag.$id text]]
 	if {$ntags >= 0} {
 	    $canv bind $t <1> [list showtag $tag_quoted 1]
@@ -6799,6 +6849,7 @@ proc appendwithlinks {text tags} {
 
 proc setlink {id lk} {
     global curview ctext pendinglinks
+    global linkfgcolor
 
     if {[string range $id 0 1] eq "-g"} {
       set id [string range $id 2 end]
@@ -6816,7 +6867,7 @@ proc setlink {id lk} {
 	set known [commitinview $id $curview]
     }
     if {$known} {
-	$ctext tag conf $lk -foreground blue -underline 1
+	$ctext tag conf $lk -foreground $linkfgcolor -underline 1
 	$ctext tag bind $lk <1> [list selbyid $id]
 	$ctext tag bind $lk <Enter> {linkcursor %W 1}
 	$ctext tag bind $lk <Leave> {linkcursor %W -1}
@@ -7571,9 +7622,13 @@ proc diffcmd {ids flags} {
 }
 
 proc gettreediffs {ids} {
-    global treediff treepending
+    global treediff treepending limitdiffs vfilelimit curview
 
-    if {[catch {set gdtf [open [diffcmd $ids {--no-commit-id}] r]}]} return
+    set cmd [diffcmd $ids {--no-commit-id}]
+    if {$limitdiffs && $vfilelimit($curview) ne {}} {
+	    set cmd [concat $cmd -- $vfilelimit($curview)]
+    }
+    if {[catch {set gdtf [open $cmd r]}]} return
 
     set treepending $ids
     set treediff {}
@@ -7617,17 +7672,7 @@ proc gettreediffline {gdtf ids} {
 	return [expr {$nr >= $max? 2: 1}]
     }
     close $gdtf
-    if {$limitdiffs && $vfilelimit($curview) ne {}} {
-	set flist {}
-	foreach f $treediff {
-	    if {[path_filter $vfilelimit($curview) $f]} {
-		lappend flist $f
-	    }
-	}
-	set treediffs($ids) $flist
-    } else {
-	set treediffs($ids) $treediff
-    }
+    set treediffs($ids) $treediff
     unset treepending
     if {$cmitmode eq "tree" && [llength $diffids] == 1} {
 	gettree $diffids
@@ -8459,6 +8504,8 @@ proc lineleave {id} {
 proc linehover {} {
     global hoverx hovery hoverid hovertimer
     global canv linespc lthickness
+    global linehoverbgcolor linehoverfgcolor linehoveroutlinecolor
+
     global commitinfo
 
     set text [lindex $commitinfo($hoverid) 0]
@@ -8472,10 +8519,11 @@ proc linehover {} {
     set x1 [expr {$x + [font measure mainfont $text] + 2 * $lthickness}]
     set y1 [expr {$y + $linespc + 2 * $lthickness}]
     set t [$canv create rectangle $x0 $y0 $x1 $y1 \
-	       -fill \#ffff80 -outline black -width 1 -tags hover]
+	       -fill $linehoverbgcolor -outline $linehoveroutlinecolor \
+	       -width 1 -tags hover]
     $canv raise $t
     set t [$canv create text $x $y -anchor nw -text $text -tags hover \
-	       -font mainfont]
+	       -font mainfont -fill $linehoverfgcolor]
     $canv raise $t
 }
 
@@ -9039,12 +9087,13 @@ proc domktag {} {
 proc redrawtags {id} {
     global canv linehtag idpos currentid curview cmitlisted markedid
     global canvxmax iddrawn circleitem mainheadid circlecolors
+    global mainheadcirclecolor
 
     if {![commitinview $id $curview]} return
     if {![info exists iddrawn($id)]} return
     set row [rowofcommit $id]
     if {$id eq $mainheadid} {
-	set ofill yellow
+	set ofill $mainheadcirclecolor
     } else {
 	set ofill [lindex $circlecolors $cmitlisted($curview,$id)]
     }
@@ -9299,6 +9348,67 @@ proc cherrypick {} {
 	selbyid $newhead
     }
     notbusy cherrypick
+}
+
+proc revert {} {
+    global rowmenuid curview
+    global mainhead mainheadid
+    global gitdir
+
+    set oldhead [exec git rev-parse HEAD]
+    set dheads [descheads $rowmenuid]
+    if { $dheads eq {} || [lsearch -exact $dheads $oldhead] == -1 } {
+       set ok [confirm_popup [mc "Commit %s is not\
+           included in branch %s -- really revert it?" \
+                      [string range $rowmenuid 0 7] $mainhead]]
+       if {!$ok} return
+    }
+    nowbusy revert [mc "Reverting"]
+    update
+
+    if [catch {exec git revert --no-edit $rowmenuid} err] {
+        notbusy revert
+        if [regexp {files would be overwritten by merge:(\n(( |\t)+[^\n]+\n)+)}\
+                $err match files] {
+            regsub {\n( |\t)+} $files "\n" files
+            error_popup [mc "Revert failed because of local changes to\
+                the following files:%s Please commit, reset or stash \
+                your changes and try again." $files]
+        } elseif [regexp {error: could not revert} $err] {
+            if [confirm_popup [mc "Revert failed because of merge conflict.\n\
+                Do you wish to run git citool to resolve it?"]] {
+                # Force citool to read MERGE_MSG
+                file delete [file join $gitdir "GITGUI_MSG"]
+                exec_citool {} $rowmenuid
+            }
+        } else { error_popup $err }
+        run updatecommits
+        return
+    }
+
+    set newhead [exec git rev-parse HEAD]
+    if { $newhead eq $oldhead } {
+        notbusy revert
+        error_popup [mc "No changes committed"]
+        return
+    }
+
+    addnewchild $newhead $oldhead
+
+    if [commitinview $oldhead $curview] {
+        # XXX this isn't right if we have a path limit...
+        insertrow $newhead $oldhead $curview
+        if {$mainhead ne {}} {
+            movehead $newhead $mainhead
+            movedhead $newhead $mainhead
+        }
+        set mainheadid $newhead
+        redrawtags $oldhead
+        redrawtags $newhead
+        selbyid $newhead
+    }
+
+    notbusy revert
 }
 
 proc resethead {} {
@@ -10780,7 +10890,7 @@ proc showtag {tag isnew} {
     set linknum 0
     if {![info exists cached_tagcontent($tag)]} {
 	catch {
-           set cached_tagcontent($tag) [exec git cat-file tag $tag]
+           set cached_tagcontent($tag) [exec git cat-file -p $tag]
 	}
     }
     if {[info exists cached_tagcontent($tag)]} {
@@ -11641,6 +11751,15 @@ if {[catch {package require Tk 8.4} err]} {
     exit 1
 }
 
+# on OSX bring the current Wish process window to front
+if {[tk windowingsystem] eq "aqua"} {
+    exec osascript -e [format {
+        tell application "System Events"
+            set frontmost of processes whose unix id is %d to true
+        end tell
+    } [pid] ]
+}
+
 # Unset GIT_TRACE var if set
 if { [info exists ::env(GIT_TRACE)] } {
     unset ::env(GIT_TRACE)
@@ -11728,22 +11847,47 @@ if {[tk windowingsystem] eq "aqua"} {
 set colors {green red blue magenta darkgrey brown orange}
 if {[tk windowingsystem] eq "win32"} {
     set uicolor SystemButtonFace
+    set uifgcolor SystemButtonText
+    set uifgdisabledcolor SystemDisabledText
     set bgcolor SystemWindow
-    set fgcolor SystemButtonText
+    set fgcolor SystemWindowText
     set selectbgcolor SystemHighlight
 } else {
     set uicolor grey85
+    set uifgcolor black
+    set uifgdisabledcolor "#999"
     set bgcolor white
     set fgcolor black
     set selectbgcolor gray85
 }
 set diffcolors {red "#00a000" blue}
 set diffcontext 3
+set mergecolors {red blue green purple brown "#009090" magenta "#808000" "#009000" "#ff0080" cyan "#b07070" "#70b0f0" "#70f0b0" "#f0b070" "#ff70b0"}
 set ignorespace 0
 set worddiff ""
 set markbgcolor "#e0e0ff"
 
+set headbgcolor green
+set headfgcolor black
+set headoutlinecolor black
+set remotebgcolor #ffddaa
+set tagbgcolor yellow
+set tagfgcolor black
+set tagoutlinecolor black
+set reflinecolor black
+set filesepbgcolor #aaaaaa
+set filesepfgcolor black
+set linehoverbgcolor #ffff80
+set linehoverfgcolor black
+set linehoveroutlinecolor black
+set mainheadcirclecolor yellow
+set workingfilescirclecolor red
+set indexcirclecolor green
 set circlecolors {white blue gray blue blue}
+set linkfgcolor blue
+set circleoutlinecolor $fgcolor
+set foundbgcolor yellow
+set currentsearchhitbgcolor orange
 
 # button for popping up context menus
 if {[tk windowingsystem] eq "aqua"} {
