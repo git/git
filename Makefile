@@ -2551,7 +2551,7 @@ coverage-compile:
 
 coverage-test: coverage-clean-results coverage-compile
 	$(MAKE) CFLAGS="$(COVERAGE_CFLAGS)" LDFLAGS="$(COVERAGE_LDFLAGS)" \
-		-j1 test
+		DEFAULT_TEST_TARGET=test -j1 test
 
 coverage-report:
 	$(QUIET_GCOV)for dir in $(object_dirs); do \
