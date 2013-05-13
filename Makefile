@@ -2524,10 +2524,10 @@ check-builtins::
 
 ### Test suite coverage testing
 #
-.PHONY: coverage coverage-clean coverage-build coverage-report
+.PHONY: coverage coverage-clean coverage-compile coverage-test coverage-report
 
 coverage:
-	$(MAKE) coverage-build
+	$(MAKE) coverage-test
 	$(MAKE) coverage-report
 
 object_dirs := $(sort $(dir $(OBJECTS)))
@@ -2543,8 +2543,10 @@ COVERAGE_CFLAGS = $(CFLAGS) -O0 -ftest-coverage -fprofile-arcs
 COVERAGE_LDFLAGS = $(CFLAGS)  -O0 -lgcov
 GCOVFLAGS = --preserve-paths --branch-probabilities --all-blocks
 
-coverage-build: coverage-clean
+coverage-compile:
 	$(MAKE) CFLAGS="$(COVERAGE_CFLAGS)" LDFLAGS="$(COVERAGE_LDFLAGS)" all
+
+coverage-test: coverage-clean-results coverage-compile
 	$(MAKE) CFLAGS="$(COVERAGE_CFLAGS)" LDFLAGS="$(COVERAGE_LDFLAGS)" \
 		-j1 test
 
