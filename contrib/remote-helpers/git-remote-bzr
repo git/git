@@ -830,6 +830,13 @@ def get_repo(url, alias):
         clone_path = os.path.join(dirname, 'clone')
         if not os.path.exists(clone_path):
             os.mkdir(clone_path)
+        else:
+            # check and remove old organization
+            try:
+                bdir = bzrlib.bzrdir.BzrDir.open(clone_path)
+                bdir.destroy_repository()
+            except bzrlib.errors.NotBranchError:
+                pass
 
     try:
         repo = origin.open_repository()
