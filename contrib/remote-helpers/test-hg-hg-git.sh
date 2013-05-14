@@ -455,8 +455,6 @@ test_expect_success 'hg author' '
 		git_log gitrepo-$x > git-log-$x
 	done &&
 
-	test_cmp git-log-hg git-log-git &&
-
 	test_cmp hg-log-hg hg-log-git &&
 	test_cmp git-log-hg git-log-git
 '

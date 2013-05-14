@@ -538,7 +538,7 @@ def list_head(repo, cur):
     g_head = (head, node)
 
 def do_list(parser):
-    global branches, bmarks, mode, track_branches
+    global branches, bmarks, track_branches
 
     repo = parser.repo
     for bmark, node in bookmarks.listbookmarks(repo).iteritems():
