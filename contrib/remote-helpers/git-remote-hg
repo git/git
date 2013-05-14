@@ -914,7 +914,7 @@ def main(args):
 
     hg_git_compat = get_config_bool('remote-hg.hg-git-compat')
     track_branches = get_config_bool('remote-hg.track-branches', True)
-    force_push = get_config_bool('remote-hg.force-push', True)
+    force_push = get_config_bool('remote-hg.force-push')
 
     if hg_git_compat:
         mode = 'hg'
