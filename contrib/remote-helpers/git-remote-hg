@@ -87,6 +87,15 @@ def get_config(config):
     output, _ = process.communicate()
     return output
 
+def get_config_bool(config, default=False):
+    value = get_config(config).rstrip('\n')
+    if value == "true":
+        return True
+    elif value == "false":
+        return False
+    else:
+        return default
+
 class Marks:
 
     def __init__(self, path):
@@ -327,7 +336,7 @@ def get_repo(url, alias):
     myui.setconfig('ui', 'interactive', 'off')
     myui.fout = sys.stderr
 
-    if get_config('remote-hg.insecure') == 'true\n':
+    if get_config_bool('remote-hg.insecure'):
         myui.setconfig('web', 'cacerts', '')
 
     try:
@@ -903,16 +912,9 @@ def main(args):
     url = args[2]
     peer = None
 
-    hg_git_compat = False
-    track_branches = True
-    force_push = True
-
-    if get_config('remote-hg.hg-git-compat') == 'true\n':
-        hg_git_compat = True
-    if get_config('remote-hg.track-branches') == 'false\n':
-        track_branches = False
-    if get_config('remote-hg.force-push') == 'false\n':
-        force_push = False
+    hg_git_compat = get_config_bool('remote-hg.hg-git-compat')
+    track_branches = get_config_bool('remote-hg.track-branches', True)
+    force_push = get_config_bool('remote-hg.force-push', True)
 
     if hg_git_compat:
         mode = 'hg'
