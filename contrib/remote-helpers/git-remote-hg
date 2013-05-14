@@ -909,7 +909,6 @@ def main(args):
 
     if get_config('remote-hg.hg-git-compat') == 'true\n':
         hg_git_compat = True
-        track_branches = False
     if get_config('remote-hg.track-branches') == 'false\n':
         track_branches = False
     if get_config('remote-hg.force-push') == 'false\n':

@@ -102,6 +102,7 @@ setup () {
 	) >> "$HOME"/.hgrc &&
 	git config --global receive.denycurrentbranch warn
 	git config --global remote-hg.hg-git-compat true
+	git config --global remote-hg.track-branches false
 
 	HGEDITOR=/usr/bin/true
 
