@@ -1,19 +1,21 @@
 To: git@vger.kernel.org
 Bcc: lwn@lwn.net
-Subject: What's cooking in git.git (May 2013, #03; Thu, 9)
-X-master-at: b387c77b12953d543bf5efc3825b5be26d753f9c
-X-next-at: 747d353d98dc660fb24ce70ad72ad9d9553c40ae
+Subject: What's cooking in git.git (May 2013, #04; Wed, 15)
+X-master-at: 0c2b1cf812be6e7e35bed0844b37e412cd232b6b
+X-next-at: 2fb82f5641542fc2b7c7ba84210b67d8255297c8
 
-What's cooking in git.git (May 2013, #03; Thu, 9)
+What's cooking in git.git (May 2013, #04; Wed, 15)
 --------------------------------------------------
 
 Here are the topics that have been cooking.  Commits prefixed with
 '-' are only in 'pu' (proposed updates) while commits prefixed with
 '+' are in 'next'.
 
-I'll tag 1.8.3-rc2 by the end of the week, and hopefully we can have
-a solid final release late next week.  One embarrassing regression
-was found and had to be fixed today.
+We are past -rc2 and haven't seen any regression reported since the
+feature freeze started, which may be a good sign (the coming release
+is perfect) or a bad sign (nobody is testing).  We'll see soon when
+we tag the 1.8.3 final sometime next week.  We may see subsystem
+(git-svn? gitk? git-gui?) and l10n updates before that happens.
 
 You can find the changes described here in the integration branches
 of the repositories listed at
@@ -21,98 +23,181 @@ of the repositories listed at
     http://git-blame.blogspot.com/p/git-public-repositories.html
 
 --------------------------------------------------
-[Graduated to "master"]
-
-* fc/sha1-name-at-home (2013-05-07) 14 commits
- - sha1_name: compare variable with constant, not constant with variable
- - Add new @ shortcut for HEAD
- - sha1_name: refactor reinterpret()
- - sha1_name: check @{-N} errors sooner
- - sha1_name: reorganize get_sha1_basic()
- - sha1_name: don't waste cycles in the @-parsing loop
- - sha1_name: remove unnecessary braces
- - sha1_name: remove no-op
- - tests: at-combinations: @{N} versus HEAD@{N}
- - tests: at-combinations: increase coverage
- - tests: at-combinations: improve nonsense()
- - SQUASH??? style fixups
- - tests: at-combinations: check ref names directly
- - tests: at-combinations: simplify setup
-
---------------------------------------------------
 [New Topics]
 
-* jh/shorten-refname (2013-05-07) 4 commits
- - t1514: refname shortening is done after dereferencing symbolic refs
- - shorten_unambiguous_ref(): Fix shortening refs/remotes/origin/HEAD to origin
- - t1514: Demonstrate failure to correctly shorten "refs/remotes/origin/HEAD"
- - t1514: Add tests of shortening refnames in strict/loose mode
-
- When remotes/origin/HEAD is not a symbolic ref, "rev-parse
- --abbrev-ref remotes/origin/HEAD" ought to show "origin", not
- "origin/HEAD", which is fixed with this series (if it is a symbolic
- ref that points at remotes/origin/something, then it should show
- "origin/something" and it already does).
+* dw/asciidoc-sources-are-dot-txt-files (2013-05-10) 1 commit
+ - CodingGuidelines: Documentation/*.txt are the sources
 
 
-* nd/clone-local-with-colon (2013-05-07) 1 commit
- - clone: allow cloning local paths with colons in them
-
- "git clone foo/bar:baz" cannot be a request to clone from a remote
- over git-over-ssh specified in the scp style.  Detect this case and
- clone from a local repository at "foo/bar:baz".
+* fc/doc-style (2013-05-09) 2 commits
+ - SQUASH??? more consistently update docs
+ - documentation: trivial style cleanups
 
 
-* nd/warn-ambiguous-object-name (2013-05-07) 1 commit
- - get_sha1: improve ambiguity warning regarding SHA-1 and ref names
+* da/darwin (2013-05-15) 3 commits
+ - imap-send: eliminate HMAC deprecation warnings on Mac OS X
+ - cache.h: eliminate SHA-1 deprecation warnings on Mac OS X
+ - Makefile: fix default regex settings on Darwin
 
- "git cmd <name>", when <name> happens to be a 40-hex string,
- directly uses the 40-hex string as an object name, even if a ref
- "refs/<some hierarchy>/<name>" exists.  This disambiguation order
- is unlikely to change, but we should warn about the ambiguity just
- like we warn when more than one refs/ hierachies share the same
- name.
-
- The message needs to be fixed up, as this is not "refname is
- ambiguous".
+ Waiting for polishing discussion to finish.
 
 
-* fc/zsh-leftover-bits (2013-05-08) 2 commits
- - completion: synchronize zsh wrapper
- - completion: cleanup zsh wrapper
+* fc/macos-x-clipped-write (2013-05-10) 2 commits
+ - SQUASH???
+ - compate/clipped-write.c: large write(2) fails on Mac OS X/XNU
+
+ The tip needs to be squashed, as it was reported to have tested OK.
 
 
-* rs/empty-archive (2013-05-09) 2 commits
- - t5004: resurrect original empty tar archive test
- - t5004: avoid using tar for checking emptiness of archive
+* fc/remote-hg (2013-05-15) 39 commits
+ - remote-hg: remove files before modifications
+ - remote-hg: improve lightweight tag author
+ - remote-hg: use remote 'default' not local one
+ - remote-hg: improve branch listing
+ - remote-hg: simplify branch_tip()
+ - remote-hg: check diverged bookmarks
+ - remote-hg: pass around revision refs
+ - remote-hg: implement custom checkheads()
+ - remote-hg: implement custom push()
+ - remote-hg: only update necessary revisions
+ - remote-hg: force remote bookmark push selectively
+ - remote-hg: reorganize bookmark handling
+ - remote-hg: add test for failed double push
+ - remote-hg: add test for big push
+ - remote-hg: add test for new bookmark special
+ - remote-hg: add test for bookmark diverge
+ - remote-hg: add test for diverged push
+ - remote-hg: add test to push new bookmark
+ - remote-hg: add remote tests
+ - remote-hg: add check_bookmark() test helper
+ - remote-bzr: simplify test checks
+ - remote-hg: always point HEAD to master
+ - remote-hg: improve progress calculation
+ - remote-hg: trivial cleanups
+ - remote-hg: ensure remote rebasing works
+ - remote-hg: upgrade version 1 marks
+ - remote-hg: switch from revisions to SHA-1 noteids
+ - remote-hg: add version checks to the marks
+ - remote-hg: improve node traversing
+ - remote-hg: shuffle some code
+ - remote-hg: use a shared repository store
+ - remote-hg: load all extensions
+ - remote-hg: test: simplify previous branch checkout
+ - remote-helpers: test: simplify remote URLs
+ - remote-helpers: tests: general improvements
+ - remote-helpers: test: cleanup style
+ - remote-helpers: test: cleanup white-spaces
+ - remote-hg: trivial reorganization
+ - remote-hg: test: be a little more quiet
 
- Fixes tests added in 1.8.2 era that are broken on BSDs,
- but it is not all that urgent.
+ Probably will be one of the early topics to graduate post 1.8.3.
 
 
-* vv/help-unknown-ref (2013-05-08) 2 commits
- - merge: use help_unknown_ref()
- - help: add help_unknown_ref()
+* hv/config-from-blob (2013-05-12) 5 commits
+ - do not die when error in config parsing of buf occurs
+ - teach config --blob option to parse config from database
+ - config: make parsing stack struct independent from actual data source
+ - config: drop cf validity check in get_next_char()
+ - config: factor out config file stack management
 
- Detect "git merge foo" that might have meant "git merge origin/foo"
- and give an error message that is more specific than "foo is not
- something we can merge".
+
+* jc/t5551-posix-sed-bre (2013-05-12) 1 commit
+ - t5551: do not use unportable sed '\+'
+
+ Not a regression fix and not urgent.
+
+
+* jk/fetch-always-update-tracking (2013-05-12) 4 commits
+ - fetch: opportunistically update tracking refs
+ - refactor "ref->merge" flag
+ - fetch/pull doc: untangle meaning of bare <ref>
+ - t5510: start tracking-ref tests from a known state
+
+ "git fetch origin master" unlike "git fetch origin" or "git fetch"
+ does not update "refs/remotes/origin/master" and it was an early
+ design decision to keep the update of remote tracking branches
+ predictable, but in practice it turns out that people find it more
+ convenient to opportunisticly update them whenever we have a
+ chance, and we have been updating them when we run "git push" which
+ already breaks the original "predictability" anyway.
+
+
+* nd/clone-connectivity-shortcut (2013-05-11) 4 commits
+ - clone: open a shortcut for connectivity check
+ - index-pack: remove dead code (it should never happen)
+ - fetch-pack: prepare updated shallow file before fetching the pack
+ - clone: let the user know when check_everything_connected is run
+
+
+* rr/rebase-autostash (2013-05-12) 7 commits
+ - rebase: implement --[no-]autostash and rebase.autostash
+ - rebase --merge: return control to caller, for housekeeping
+ - rebase -i: return control to caller, for housekeeping
+ - am: return control to caller, for housekeeping
+ - rebase: prepare to do generic housekeeping
+ - rebase -i: don't error out if $state_dir already exists
+ - am: tighten a conditional that checks for $dotest
+
+
+* kb/ancestry-path-threedots (2013-05-13) 1 commit
+ - t6019: demonstrate --ancestry-path A...B breakage
+ (this branch is used by kb/full-history-compute-treesame-carefully-2.)
+
+
+* kb/full-history-compute-treesame-carefully-2 (2013-05-13) 11 commits
+ - revision.c: treat A...B merge bases as if manually specified
+ - revision.c: discount side branches when computing TREESAME
+ - simplify-merges: drop merge from irrelevant side branch
+ - simplify-merges: never remove all TREESAME parents
+ - t6012: update test for tweaked full-history traversal
+ - revision.c: Make --full-history consider more merges
+ - rev-list-options.txt: correct TREESAME for P
+ - t6111: allow checking the parents as well
+ - t6111: new TREESAME test set
+ - t6019: test file dropped in -s ours merge
+ - decorate.c: compact table when growing
+ (this branch uses kb/ancestry-path-threedots.)
+
+ Major update to a very core part of the system to improve culling
+ of irrelevant parents while traversing a mergy history.
+
+ Will not be a 1.8.3 material, but is an important topic.
+
+
+* jc/strbuf-branchname-fix (2013-05-15) 1 commit
+ - strbuf_branchname(): do not double-expand @{-1}~22
+
+ "git merge @{-1}~22" was rewritten to "git merge frotz@{1}~22"
+ incorrectly when your previous branch was "frotz" (it should be
+ rewritten to "git merge frotz~22" instead).
+
+
+* mk/combine-diff-context-horizon-fix (2013-05-15) 1 commit
+ - combine-diff.c: Fix output when changes are exactly 3 lines apart
+
+ "git diff -c -p" was not showing a deleted line from a hunk when
+ another hunk immediately begins where the earlier one ends.
+
+
+* mm/color-auto-default (2013-05-15) 2 commits
+ - make color.ui default to 'auto'
+ - config: refactor management of color.ui's default value
+
+ Flip the default for color.ui to 'auto', which is what many
+ tutorials recommend new users to do.
+
+
+* tr/coverage (2013-05-13) 4 commits
+ - coverage: build coverage-untested-functions by default
+ - coverage: set DEFAULT_TEST_TARGET to avoid using prove
+ - coverage: do not delete .gcno files before building
+ - coverage: split build target into compile and test
+
+ Update the test coverage support that was left to bitrot for some
+ time.
 
 --------------------------------------------------
 [Stalled]
-
-* mg/more-textconv (2013-04-23) 7 commits
- - git grep: honor textconv by default
- - grep: honor --textconv for the case rev:path
- - grep: allow to use textconv filters
- - t7008: demonstrate behavior of grep with textconv
- - cat-file: do not die on --textconv without textconv filters
- - show: honor --textconv for blobs
- - t4030: demonstrate behavior of show with textconv
-
- Rerolled. I am not sure if I like "show <blob>" and "grep" that use
- textconv by default, though.
-
 
 * mh/multimail (2013-04-21) 1 commit
  - git-multimail: a replacement for post-receive-email
@@ -164,6 +249,77 @@ of the repositories listed at
 
 --------------------------------------------------
 [Cooking]
+
+* mg/more-textconv (2013-05-10) 7 commits
+ - grep: honor --textconv for the case rev:path
+ - grep: allow to use textconv filters
+ - t7008: demonstrate behavior of grep with textconv
+ - cat-file: do not die on --textconv without textconv filters
+ - show: honor --textconv for blobs
+ - diff_opt: track whether flags have been set explicitly
+ - t4030: demonstrate behavior of show with textconv
+
+ Looked reasonable, I think.  Comments?
+
+
+* jh/shorten-refname (2013-05-07) 4 commits
+ - t1514: refname shortening is done after dereferencing symbolic refs
+ - shorten_unambiguous_ref(): Fix shortening refs/remotes/origin/HEAD to origin
+ - t1514: Demonstrate failure to correctly shorten "refs/remotes/origin/HEAD"
+ - t1514: Add tests of shortening refnames in strict/loose mode
+
+ When remotes/origin/HEAD is not a symbolic ref, "rev-parse
+ --abbrev-ref remotes/origin/HEAD" ought to show "origin", not
+ "origin/HEAD", which is fixed with this series (if it is a symbolic
+ ref that points at remotes/origin/something, then it should show
+ "origin/something" and it already does).
+
+ I think this is being rerolled using strbuf_expand().
+
+
+* nd/clone-local-with-colon (2013-05-07) 1 commit
+ - clone: allow cloning local paths with colons in them
+
+ "git clone foo/bar:baz" cannot be a request to clone from a remote
+ over git-over-ssh specified in the scp style.  Detect this case and
+ clone from a local repository at "foo/bar:baz".
+
+
+* nd/warn-ambiguous-object-name (2013-05-07) 1 commit
+ - get_sha1: improve ambiguity warning regarding SHA-1 and ref names
+
+ "git cmd <name>", when <name> happens to be a 40-hex string,
+ directly uses the 40-hex string as an object name, even if a ref
+ "refs/<some hierarchy>/<name>" exists.  This disambiguation order
+ is unlikely to change, but we should warn about the ambiguity just
+ like we warn when more than one refs/ hierachies share the same
+ name.
+
+ The message needs to be fixed up, as this is not "refname is
+ ambiguous".
+
+
+* fc/zsh-leftover-bits (2013-05-08) 2 commits
+ - completion: synchronize zsh wrapper
+ - completion: cleanup zsh wrapper
+
+
+* rs/empty-archive (2013-05-09) 2 commits
+ - t5004: resurrect original empty tar archive test
+ - t5004: avoid using tar for checking emptiness of archive
+
+ Fixes tests added in 1.8.2 era that are broken on BSDs,
+ but it is not all that urgent.
+
+
+* vv/help-unknown-ref (2013-05-08) 2 commits
+ - merge: use help_unknown_ref()
+ - help: add help_unknown_ref()
+
+ Detect "git merge foo" that might have meant "git merge origin/foo"
+ and give an error message that is more specific than "foo is not
+ something we can merge".
+
 
 * fc/fast-export-persistent-marks (2013-05-07) 3 commits
  - fast-{import,export}: use get_sha1_hex() to read from marks file
@@ -278,12 +434,24 @@ of the repositories listed at
  Will cook in 'next'.
 
 
-* js/transport-helper-error-reporting-fix (2013-04-28) 3 commits
+* js/transport-helper-error-reporting-fix (2013-04-28) 13 commits
   (merged to 'next' on 2013-04-29 at 8cc4bb8)
  + git-remote-testgit: build it to run under $SHELL_PATH
  + git-remote-testgit: further remove some bashisms
  + git-remote-testgit: avoid process substitution
- (this branch uses fc/transport-helper-error-reporting.)
+  (merged to 'next' on 2013-04-25 at 3358f1a)
+ + t5801: "VAR=VAL shell_func args" is forbidden
+  (merged to 'next' on 2013-04-22 at 5ba6467)
+ + transport-helper: update remote helper namespace
+ + transport-helper: trivial code shuffle
+ + transport-helper: warn when refspec is not used
+ + transport-helper: clarify pushing without refspecs
+ + transport-helper: update refspec documentation
+ + transport-helper: clarify *:* refspec
+ + transport-helper: improve push messages
+ + transport-helper: mention helper name when it dies
+ + transport-helper: report errors properly
+ (this branch is tangled with fc/transport-helper-error-reporting.)
 
  Finishing touches to fc/transport-helper-error-reporting topic.
  Will cook in 'next'.
@@ -296,25 +464,6 @@ of the repositories listed at
  + upload-pack: ignore 'shallow' lines with unknown obj-ids
 
  Will cook in 'next'.
-
-
-* kb/full-history-compute-treesame-carefully (2013-05-06) 11 commits
- - revision.c: treat A...B merge bases as if manually specified
- - revision.c: discount side branches when computing TREESAME
- - simplify-merges: drop merge from irrelevant side branch
- - simplify-merges: never remove all TREESAME parents
- - t6012: update test for tweaked full-history traversal
- - revision.c: Make --full-history consider more merges
- - rev-list-options.txt: correct TREESAME for P
- - t6111: allow checking the parents as well
- - t6111: new TREESAME test set
- - t6019: test file dropped in -s ours merge
- - decorate.c: compact table when growing
-
- Major update to a very core part of the system to improve culling
- of irrelevant parents while traversing a mergy history.
-
- Will not be a 1.8.3 material, but is an important topic.
 
 
 * jh/checkout-auto-tracking (2013-04-21) 8 commits
@@ -414,7 +563,10 @@ of the repositories listed at
  Will cook in 'next'.
 
 
-* fc/transport-helper-error-reporting (2013-04-25) 10 commits
+* fc/transport-helper-error-reporting (2013-05-10) 12 commits
+  (merged to 'next' on 2013-05-10 at 2a9af4b)
+ + transport-helper: fix remote helper namespace regression
+ + test: remote-helper: add missing and
   (merged to 'next' on 2013-04-25 at 3358f1a)
  + t5801: "VAR=VAL shell_func args" is forbidden
   (merged to 'next' on 2013-04-22 at 5ba6467)
@@ -427,12 +579,12 @@ of the repositories listed at
  + transport-helper: improve push messages
  + transport-helper: mention helper name when it dies
  + transport-helper: report errors properly
- (this branch is used by js/transport-helper-error-reporting-fix.)
+ (this branch is tangled with js/transport-helper-error-reporting-fix.)
 
  Update transport helper to report errors and maintain ref hierarchy
  used to keep track of remote helper state better.
 
- Will cook in 'next', but may be 1.8.3 material depending on how things go.
+ Will cook in 'next'.
 
 
 * jk/submodule-subdirectory-ok (2013-04-24) 3 commits
@@ -564,3 +716,21 @@ of the repositories listed at
  aka "--no-ignore-removal".
 
  Will cook in 'next' until Git 2.0.
+
+--------------------------------------------------
+[Discarded]
+
+* kb/full-history-compute-treesame-carefully (2013-05-06) 11 commits
+ . revision.c: treat A...B merge bases as if manually specified
+ . revision.c: discount side branches when computing TREESAME
+ . simplify-merges: drop merge from irrelevant side branch
+ . simplify-merges: never remove all TREESAME parents
+ . t6012: update test for tweaked full-history traversal
+ . revision.c: Make --full-history consider more merges
+ . rev-list-options.txt: correct TREESAME for P
+ . t6111: allow checking the parents as well
+ . t6111: new TREESAME test set
+ . t6019: test file dropped in -s ours merge
+ . decorate.c: compact table when growing
+
+ Superseded by kb/full-history-compute-treesame-carefully-2
