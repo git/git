@@ -102,6 +102,7 @@ setup () {
 	) >> "$HOME"/.hgrc &&
 	git config --global receive.denycurrentbranch warn
 	git config --global remote-hg.hg-git-compat true
+	git config --global remote-hg.track-branches false
 
 	HGEDITOR=/usr/bin/true
 
@@ -454,8 +455,6 @@ test_expect_success 'hg author' '
 		hg_log hgrepo2-$x > hg-log-$x &&
 		git_log gitrepo-$x > git-log-$x
 	done &&
-
-	test_cmp git-log-hg git-log-git &&
 
 	test_cmp hg-log-hg hg-log-git &&
 	test_cmp git-log-hg git-log-git

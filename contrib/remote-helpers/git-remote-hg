@@ -87,6 +87,15 @@ def get_config(config):
     output, _ = process.communicate()
     return output
 
+def get_config_bool(config, default=False):
+    value = get_config(config).rstrip('\n')
+    if value == "true":
+        return True
+    elif value == "false":
+        return False
+    else:
+        return default
+
 class Marks:
 
     def __init__(self, path):
@@ -327,11 +336,8 @@ def get_repo(url, alias):
     myui.setconfig('ui', 'interactive', 'off')
     myui.fout = sys.stderr
 
-    try:
-        if get_config('remote-hg.insecure') == 'true\n':
-            myui.setconfig('web', 'cacerts', '')
-    except subprocess.CalledProcessError:
-        pass
+    if get_config_bool('remote-hg.insecure'):
+        myui.setconfig('web', 'cacerts', '')
 
     try:
         mod = extensions.load(myui, 'hgext.schemes', None)
@@ -356,6 +362,9 @@ def get_repo(url, alias):
             except:
                 die('Repository error')
             repo.pull(peer, heads=None, force=True)
+
+        rb = peer.listkeys('bookmarks')
+        bookmarks.updatefromremote(myui, repo, rb, url)
 
     return repo
 
@@ -538,7 +547,7 @@ def list_head(repo, cur):
     g_head = (head, node)
 
 def do_list(parser):
-    global branches, bmarks, mode, track_branches
+    global branches, bmarks, track_branches
 
     repo = parser.repo
     for bmark, node in bookmarks.listbookmarks(repo).iteritems():
@@ -850,7 +859,7 @@ def do_export(parser):
             continue
 
     if peer:
-        parser.repo.push(peer, force=force_push)
+        parser.repo.push(peer, force=force_push, newbranch=True)
 
     # handle bookmarks
     for bmark, node in p_bmarks:
@@ -867,7 +876,8 @@ def do_export(parser):
 
         if bmark == 'master' and 'master' not in parser.repo._bookmarks:
             # fake bookmark
-            pass
+            print "ok %s" % ref
+            continue
         elif bookmarks.pushbookmark(parser.repo, bmark, old, new):
             # updated locally
             pass
@@ -906,20 +916,9 @@ def main(args):
     url = args[2]
     peer = None
 
-    hg_git_compat = False
-    track_branches = True
-    force_push = True
-
-    try:
-        if get_config('remote-hg.hg-git-compat') == 'true\n':
-            hg_git_compat = True
-            track_branches = False
-        if get_config('remote-hg.track-branches') == 'false\n':
-            track_branches = False
-        if get_config('remote-hg.force-push') == 'false\n':
-            force_push = False
-    except subprocess.CalledProcessError:
-        pass
+    hg_git_compat = get_config_bool('remote-hg.hg-git-compat')
+    track_branches = get_config_bool('remote-hg.track-branches', True)
+    force_push = get_config_bool('remote-hg.force-push')
 
     if hg_git_compat:
         mode = 'hg'
