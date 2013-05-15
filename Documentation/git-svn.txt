@@ -300,6 +300,11 @@ where <name> is the name of the SVN repository as specified by the -R option to
 	git config --get-all svn-remote.<name>.commiturl
 +
 
+--parents;;
+	Create parent folders. This parameter is equivalent to the parameter
+	--parents on svn cp commands and is useful for non-standard repository
+	layouts.
+
 'tag'::
 	Create a tag in the SVN repository. This is a shorthand for
 	'branch -t'.
