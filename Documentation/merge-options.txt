@@ -8,12 +8,13 @@ failed and do not autocommit, to give the user a chance to
 inspect and further tweak the merge result before committing.
 
 --edit::
+-e::
 --no-edit::
 	Invoke an editor before committing successful mechanical merge to
 	further edit the auto-generated merge message, so that the user
 	can explain and justify the merge. The `--no-edit` option can be
 	used to accept the auto-generated message (this is generally
-	discouraged). The `--edit` option is still useful if you are
+	discouraged). The `--edit` (or `-e`) option is still useful if you are
 	giving a draft message with the `-m` option from the command line
 	and want to edit it in the editor.
 +
