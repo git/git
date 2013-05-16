@@ -146,8 +146,8 @@ check_result '(LH)M (E)H (J)L (I)J (E)I' E..M --ancestry-path --simplify-merges 
 # to G.
 check_result 'M L K J I H' G..M
 check_result 'M H L K J I' G..M --topo-order
-check_outcome failure 'M L H' G..M -- file # includes J I
-check_outcome failure '(LH)M (G)L (G)H' G..M --parents -- file # includes J I
+check_result 'M L H' G..M -- file
+check_result '(LH)M (G)L (G)H' G..M --parents -- file
 check_result 'M L J I H' G..M --full-history -- file
 check_result 'M L K J I H' G..M --full-history --parents -- file
 check_result 'M H L J I' G..M --simplify-merges -- file
@@ -161,8 +161,8 @@ check_result 'M H L J I' G..M --ancestry-path --simplify-merges -- file
 # But --full-history shouldn't drop D on its own - without simplification,
 # we can't decide if the merge from INTERESTING commit C was sensible.
 check_result 'F D C' B..F
-check_outcome failure 'F' B..F -- file # includes D
-check_outcome failure '(B)F' B..F --parents -- file # includes D
+check_result 'F' B..F -- file
+check_result '(B)F' B..F --parents -- file
 check_result 'F D' B..F --full-history -- file
 check_result '(D)F (BA)D' B..F --full-history --parents -- file
 check_result '(B)F' B..F --simplify-merges -- file
@@ -174,8 +174,8 @@ check_result 'F D' B..F --first-parent
 check_result 'F' B..F --first-parent -- file
 
 # E...F should be equivalent to E F ^B, and be able to drop D as above.
-check_outcome failure 'F' E F ^B -- file # includes D
-check_outcome failure 'F' E...F -- file # includes D
+check_result 'F' E F ^B -- file # includes D
+check_result 'F' E...F -- file # includes D
 
 # Any sort of full history of C..F should show D, as it's the connection to C,
 # and it differs from it.
