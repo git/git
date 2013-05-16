@@ -168,6 +168,7 @@ struct rev_info {
 	struct reflog_walk_info *reflog_info;
 	struct decoration children;
 	struct decoration merge_simplification;
+	struct decoration treesame;
 
 	/* notes-specific options: which refs to show */
 	struct display_notes_opt notes_opt;

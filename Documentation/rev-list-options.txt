@@ -409,10 +409,10 @@ parent lines.
 	the example, we get
 +
 -----------------------------------------------------------------------
-	I  A  B  N  D  O
+	I  A  B  N  D  O  P
 -----------------------------------------------------------------------
 +
-`P` and `M` were excluded because they are TREESAME to a parent.  `E`,
+`M` was excluded because it is TREESAME to both parents.  `E`,
 `C` and `B` were all walked, but only `B` was !TREESAME, so the others
 do not appear.
 +
@@ -440,7 +440,7 @@ themselves.  This results in
 Compare to '\--full-history' without rewriting above.  Note that `E`
 was pruned away because it is TREESAME, but the parent list of P was
 rewritten to contain `E`'s parent `I`.  The same happened for `C` and
-`N`.  Note also that `P` was included despite being TREESAME.
+`N`.
 
 In addition to the above settings, you can change whether TREESAME
 affects inclusion:

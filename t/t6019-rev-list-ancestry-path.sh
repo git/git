@@ -100,7 +100,7 @@ test_expect_success 'rev-list G..M -- G.t' '
 	test_cmp expect actual
 '
 
-test_expect_failure 'rev-list --ancestry-path G..M -- G.t' '
+test_expect_success 'rev-list --ancestry-path G..M -- G.t' '
 	for c in H J L; do echo $c; done >expect &&
 	git rev-list --ancestry-path --format=%s G..M -- G.t |
 	sed -e "/^commit /d" |
