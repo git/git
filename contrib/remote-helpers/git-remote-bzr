@@ -840,6 +840,9 @@ def get_repo(url, alias):
 
     try:
         repo = origin.open_repository()
+        if not repo.user_transport.listable():
+            # this repository is not usable for us
+            raise bzrlib.errors.NoRepositoryPresent(repo.bzrdir)
     except bzrlib.errors.NoRepositoryPresent:
         # branch
 
