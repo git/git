@@ -363,9 +363,6 @@ def get_repo(url, alias):
                 die('Repository error')
             repo.pull(peer, heads=None, force=True)
 
-        rb = peer.listkeys('bookmarks')
-        bookmarks.updatefromremote(myui, repo, rb, url)
-
     return repo
 
 def rev_to_mark(rev):
