@@ -271,8 +271,8 @@ See also linkgit:git-reflog[1].
 
 --boundary::
 
-	Output uninteresting commits at the boundary, which are usually
-	not shown.
+	Output excluded boundary commits. Boundary commits are
+	prefixed with `-`.
 
 --
 
