@@ -116,7 +116,7 @@ check_result 'M L H B A' -- file
 check_result '(LH)M (B)L (B)H (A)B A' --parents -- file
 check_result 'M L J I H G F D B A' --full-history -- file
 check_result '(LH)M (K)L (GJ)K (I)J (G)I (G)H (FB)G (D)F (BA)D (A)B A' --full-history --parents -- file
-check_outcome failure '(LH)M (G)H (J)L (I)J (G)I (FB)G (B)F (A)B A' --simplify-merges -- file # drops parent B from G
+check_result '(LH)M (G)H (J)L (I)J (G)I (FB)G (B)F (A)B A' --simplify-merges -- file
 check_result 'M L K G F D B A' --first-parent
 check_result 'M L G F B A' --first-parent -- file
 
@@ -127,7 +127,7 @@ check_result 'M L H' F..M -- file
 check_result '(LH)M (B)L (B)H' --parents F..M -- file
 check_result 'M L J I H G' F..M --full-history -- file
 check_result '(LH)M (K)L (GJ)K (I)J (G)I (G)H (FB)G' F..M --full-history --parents -- file
-check_outcome failure '(LH)M (G)H (J)L (I)J (G)I (FB)G' F..M --simplify-merges -- file # drops parent B from G
+check_result '(LH)M (G)H (J)L (I)J (G)I (FB)G' F..M --simplify-merges -- file
 check_result 'M L K J I H G' F..M --ancestry-path
 check_result 'M L J I H G' F..M --ancestry-path -- file
 check_result '(LH)M (K)L (GJ)K (I)J (G)I (G)H (FE)G' F..M --ancestry-path --parents -- file

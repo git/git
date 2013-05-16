@@ -471,7 +471,8 @@ history according to the following rules:
 +
 * Replace each parent `P` of `C'` with its simplification `P'`.  In
   the process, drop parents that are ancestors of other parents, and
-  remove duplicates.
+  remove duplicates, but take care to never drop all parents that
+  we are TREESAME to.
 +
 * If after this parent rewriting, `C'` is a root or merge commit (has
   zero or >1 parents), a boundary commit, or !TREESAME, it remains.
