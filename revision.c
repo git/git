@@ -2136,6 +2136,22 @@ static int mark_redundant_parents(struct rev_info *revs, struct commit *commit)
 	return marked;
 }
 
+static int mark_treesame_root_parents(struct rev_info *revs, struct commit *commit)
+{
+	struct commit_list *p;
+	int marked = 0;
+
+	for (p = commit->parents; p; p = p->next) {
+		struct commit *parent = p->item;
+		if (!parent->parents && (parent->object.flags & TREESAME)) {
+			parent->object.flags |= TMP_MARK;
+			marked++;
+		}
+	}
+
+	return marked;
+}
+
 /*
  * Awkward naming - this means one parent we are TREESAME to.
  * cf mark_treesame_root_parents: root parents that are TREESAME (to an
@@ -2301,10 +2317,18 @@ static struct commit_list **simplify_one(struct rev_info *revs, struct commit *c
 	 *     /    /		o: a commit that touches the paths;
 	 * ---o----'
 	 *
-	 * Detect and simplify this case.
+	 * Further, a merge of an independent branch that doesn't
+	 * touch the path will reduce to a treesame root parent:
+	 *
+	 *  ----o----X		X: the commit we are looking at;
+	 *          /		o: a commit that touches the paths;
+	 *         r		r: a root commit not touching the paths
+	 *
+	 * Detect and simplify both cases.
 	 */
 	if (1 < cnt) {
 		int marked = mark_redundant_parents(revs, commit);
+		marked += mark_treesame_root_parents(revs, commit);
 		if (marked)
 			marked -= leave_one_treesame_to_parent(revs, commit);
 		if (marked)
