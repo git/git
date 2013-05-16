@@ -20,7 +20,7 @@ note () {
 }
 
 unnote () {
-	git name-rev --tags --stdin | sed -e "s|$_x40 (tags/\([^)]*\)) |\1 |g"
+	git name-rev --tags --stdin | sed -e "s|$_x40 (tags/\([^)]*\))\([ 	]\)|\1\2|g"
 }
 
 test_expect_success setup '
@@ -66,23 +66,34 @@ test_expect_success setup '
 	test_commit M file "Parts 1+2"
 '
 
-FMT='tformat:%P 	%H | %s'
-
 # could we soup this up to optionally check parents? So "(BA)C" would check
 # that C is shown and has parents B A.
 check_outcome () {
 	outcome=$1
 	shift
-	for c in $1
-	do
-		echo "$c"
-	done >expect &&
-	shift &&
+
+	case "$1" in
+	*"("*)
+		FMT="%P	%H | %s"
+		munge_actual="
+			s/^\([^	]*\)	\([^ ]*\) .*/(\1)\2/
+			s/ //g
+			s/()//
+		"
+		;;
+	*)
+		FMT="%H | %s"
+		munge_actual="s/^\([^ ]*\) .*/\1/"
+		;;
+	esac &&
+	printf "%s\n" $1 >expect &&
+	shift
+
 	param="$*" &&
 	test_expect_$outcome "log $param" '
 		git log --format="$FMT" $param |
 		unnote >actual &&
-		sed -e "s/^.*	\([^ ]*\) .*/\1/" >check <actual &&
+		sed -e "$munge_actual" <actual >check &&
 		test_cmp expect check || {
 			cat actual
 			false
@@ -99,6 +110,7 @@ check_result () {
 # shown in normal full-history, as we can't distinguish unless we do a
 # simplification pass. After simplification, D is dropped but G remains.
 check_result 'M L K J I H G F E D C B A'
+check_result '(LH)M (K)L (GJ)K (I)J (G)I (G)H (FE)G (D)F (B)E (BC)D (A)C (A)B A'
 check_result 'M H L K J I G E F D C B A' --topo-order
 check_result 'M L H B A' -- file
 check_result 'M L H B A' --parents -- file
