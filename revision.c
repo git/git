@@ -909,16 +909,12 @@ static void limit_to_ancestry(struct commit_list *bottom, struct commit_list *li
  * to filter the result of "A..B" further to the ones that can actually
  * reach A.
  */
-static struct commit_list *collect_bottom_commits(struct rev_info *revs)
+static struct commit_list *collect_bottom_commits(struct commit_list *list)
 {
-	struct commit_list *bottom = NULL;
-	int i;
-	for (i = 0; i < revs->cmdline.nr; i++) {
-		struct rev_cmdline_entry *elem = &revs->cmdline.rev[i];
-		if ((elem->flags & UNINTERESTING) &&
-		    elem->item->type == OBJ_COMMIT)
-			commit_list_insert((struct commit *)elem->item, &bottom);
-	}
+	struct commit_list *elem, *bottom = NULL;
+	for (elem = list; elem; elem = elem->next)
+		if (elem->item->object.flags & BOTTOM)
+			commit_list_insert(elem->item, &bottom);
 	return bottom;
 }
 
@@ -949,7 +945,7 @@ static int limit_list(struct rev_info *revs)
 	struct commit_list *bottom = NULL;
 
 	if (revs->ancestry_path) {
-		bottom = collect_bottom_commits(revs);
+		bottom = collect_bottom_commits(list);
 		if (!bottom)
 			die("--ancestry-path given but there are no bottom commits");
 	}
@@ -1121,7 +1117,7 @@ static int add_parents_only(struct rev_info *revs, const char *arg_, int flags)
 	const char *arg = arg_;
 
 	if (*arg == '^') {
-		flags ^= UNINTERESTING;
+		flags ^= UNINTERESTING | BOTTOM;
 		arg++;
 	}
 	if (get_sha1_committish(arg, sha1))
@@ -1213,8 +1209,8 @@ static void prepare_show_merge(struct rev_info *revs)
 	add_pending_object(revs, &head->object, "HEAD");
 	add_pending_object(revs, &other->object, "MERGE_HEAD");
 	bases = get_merge_bases(head, other, 1);
-	add_rev_cmdline_list(revs, bases, REV_CMD_MERGE_BASE, UNINTERESTING);
-	add_pending_commit_list(revs, bases, UNINTERESTING);
+	add_rev_cmdline_list(revs, bases, REV_CMD_MERGE_BASE, UNINTERESTING | BOTTOM);
+	add_pending_commit_list(revs, bases, UNINTERESTING | BOTTOM);
 	free_commit_list(bases);
 	head->object.flags |= SYMMETRIC_LEFT;
 
@@ -1250,13 +1246,15 @@ int handle_revision_arg(const char *arg_, struct rev_info *revs, int flags, unsi
 	int cant_be_filename = revarg_opt & REVARG_CANNOT_BE_FILENAME;
 	unsigned get_sha1_flags = 0;
 
+	flags = flags & UNINTERESTING ? flags | BOTTOM : flags & ~BOTTOM;
+
 	dotdot = strstr(arg, "..");
 	if (dotdot) {
 		unsigned char from_sha1[20];
 		const char *next = dotdot + 2;
 		const char *this = arg;
 		int symmetric = *next == '.';
-		unsigned int flags_exclude = flags ^ UNINTERESTING;
+		unsigned int flags_exclude = flags ^ (UNINTERESTING | BOTTOM);
 		static const char head_by_default[] = "HEAD";
 		unsigned int a_flags;
 
@@ -1332,13 +1330,13 @@ int handle_revision_arg(const char *arg_, struct rev_info *revs, int flags, unsi
 	dotdot = strstr(arg, "^!");
 	if (dotdot && !dotdot[2]) {
 		*dotdot = 0;
-		if (!add_parents_only(revs, arg, flags ^ UNINTERESTING))
+		if (!add_parents_only(revs, arg, flags ^ (UNINTERESTING | BOTTOM)))
 			*dotdot = '^';
 	}
 
 	local_flags = 0;
 	if (*arg == '^') {
-		local_flags = UNINTERESTING;
+		local_flags = UNINTERESTING | BOTTOM;
 		arg++;
 	}
 
@@ -1815,7 +1813,7 @@ static int handle_revision_pseudo_opt(const char *submodule,
 		handle_refs(submodule, revs, *flags, for_each_branch_ref_submodule);
 	} else if (!strcmp(arg, "--bisect")) {
 		handle_refs(submodule, revs, *flags, for_each_bad_bisect_ref);
-		handle_refs(submodule, revs, *flags ^ UNINTERESTING, for_each_good_bisect_ref);
+		handle_refs(submodule, revs, *flags ^ (UNINTERESTING | BOTTOM), for_each_good_bisect_ref);
 		revs->bisect = 1;
 	} else if (!strcmp(arg, "--tags")) {
 		handle_refs(submodule, revs, *flags, for_each_tag_ref_submodule);
@@ -1841,7 +1839,7 @@ static int handle_revision_pseudo_opt(const char *submodule,
 	} else if (!strcmp(arg, "--reflog")) {
 		handle_reflog(revs, *flags);
 	} else if (!strcmp(arg, "--not")) {
-		*flags ^= UNINTERESTING;
+		*flags ^= UNINTERESTING | BOTTOM;
 	} else if (!strcmp(arg, "--no-walk")) {
 		revs->no_walk = REVISION_WALK_NO_WALK_SORTED;
 	} else if (!prefixcmp(arg, "--no-walk=")) {
