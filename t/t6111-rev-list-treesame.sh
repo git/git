@@ -138,9 +138,9 @@ check_result 'M L G' F..M --first-parent -- file
 # Note that G is pruned when E is the bottom, even if it's the same commit list
 # If we want history since E, then we're quite happy to ignore G that took E.
 check_result 'M L K J I H G' E..M --ancestry-path
-check_outcome failure 'M L J I H' E..M --ancestry-path -- file # includes G
+check_result 'M L J I H' E..M --ancestry-path -- file
 check_outcome failure '(LH)M (K)L (EJ)K (I)J (E)I (E)H' E..M --ancestry-path --parents -- file # includes G
-check_outcome failure '(LH)M (E)H (J)L (I)J (E)I' E..M --ancestry-path --simplify-merges -- file # includes G
+check_result '(LH)M (E)H (J)L (I)J (E)I' E..M --ancestry-path --simplify-merges -- file
 
 # Should still be able to ignore I-J branch in simple log, despite limiting
 # to G.
@@ -167,9 +167,9 @@ check_result 'F D' B..F --full-history -- file
 check_result '(D)F (BA)D' B..F --full-history --parents -- file
 check_result '(B)F' B..F --simplify-merges -- file
 check_result 'F D' B..F --ancestry-path
-check_outcome failure 'F' B..F --ancestry-path -- file # includes D
+check_result 'F' B..F --ancestry-path -- file
 check_outcome failure 'F' B..F --ancestry-path --parents -- file # includes D
-check_outcome failure 'F' B..F --ancestry-path --simplify-merges -- file # includes D
+check_result 'F' B..F --ancestry-path --simplify-merges -- file
 check_result 'F D' B..F --first-parent
 check_result 'F' B..F --first-parent -- file
 

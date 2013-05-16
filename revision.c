@@ -333,6 +333,80 @@ static int everybody_uninteresting(struct commit_list *orig)
 }
 
 /*
+ * A definition of "relevant" commit that we can use to simplify limited graphs
+ * by eliminating side branches.
+ *
+ * A "relevant" commit is one that is !UNINTERESTING (ie we are including it
+ * in our list), or that is a specified BOTTOM commit. Then after computing
+ * a limited list, during processing we can generally ignore boundary merges
+ * coming from outside the graph, (ie from irrelevant parents), and treat
+ * those merges as if they were single-parent. TREESAME is defined to consider
+ * only relevant parents, if any. If we are TREESAME to our on-graph parents,
+ * we don't care if we were !TREESAME to non-graph parents.
+ *
+ * Treating bottom commits as relevant ensures that a limited graph's
+ * connection to the actual bottom commit is not viewed as a side branch, but
+ * treated as part of the graph. For example:
+ *
+ *   ....Z...A---X---o---o---B
+ *        .     /
+ *         W---Y
+ *
+ * When computing "A..B", the A-X connection is at least as important as
+ * Y-X, despite A being flagged UNINTERESTING.
+ *
+ * And when computing --ancestry-path "A..B", the A-X connection is more
+ * important than Y-X, despite both A and Y being flagged UNINTERESTING.
+ */
+static inline int relevant_commit(struct commit *commit)
+{
+	return (commit->object.flags & (UNINTERESTING | BOTTOM)) != UNINTERESTING;
+}
+
+/*
+ * Return a single relevant commit from a parent list. If we are a TREESAME
+ * commit, and this selects one of our parents, then we can safely simplify to
+ * that parent.
+ */
+static struct commit *one_relevant_parent(const struct rev_info *revs,
+					  struct commit_list *orig)
+{
+	struct commit_list *list = orig;
+	struct commit *relevant = NULL;
+
+	if (!orig)
+		return NULL;
+
+	/*
+	 * For 1-parent commits, or if first-parent-only, then return that
+	 * first parent (even if not "relevant" by the above definition).
+	 * TREESAME will have been set purely on that parent.
+	 */
+	if (revs->first_parent_only || !orig->next)
+		return orig->item;
+
+	/*
+	 * For multi-parent commits, identify a sole relevant parent, if any.
+	 * If we have only one relevant parent, then TREESAME will be set purely
+	 * with regard to that parent, and we can simplify accordingly.
+	 *
+	 * If we have more than one relevant parent, or no relevant parents
+	 * (and multiple irrelevant ones), then we can't select a parent here
+	 * and return NULL.
+	 */
+	while (list) {
+		struct commit *commit = list->item;
+		list = list->next;
+		if (relevant_commit(commit)) {
+			if (relevant)
+				return NULL;
+			relevant = commit;
+		}
+	}
+	return relevant;
+}
+
+/*
  * The goal is to get REV_TREE_NEW as the result only if the
  * diff consists of all '+' (and no other changes), REV_TREE_OLD
  * if the whole diff is removal of old data, and otherwise
@@ -502,27 +576,52 @@ static unsigned update_treesame(struct rev_info *revs, struct commit *commit)
 	if (commit->parents && commit->parents->next) {
 		unsigned n;
 		struct treesame_state *st;
+		struct commit_list *p;
+		unsigned relevant_parents;
+		unsigned relevant_change, irrelevant_change;
 
 		st = lookup_decoration(&revs->treesame, &commit->object);
 		if (!st)
 			die("update_treesame %s", sha1_to_hex(commit->object.sha1));
-		commit->object.flags |= TREESAME;
-		for (n = 0; n < st->nparents; n++) {
-			if (!st->treesame[n]) {
-				commit->object.flags &= ~TREESAME;
-				break;
-			}
+		relevant_parents = 0;
+		relevant_change = irrelevant_change = 0;
+		for (p = commit->parents, n = 0; p; n++, p = p->next) {
+			if (relevant_commit(p->item)) {
+				relevant_change |= !st->treesame[n];
+				relevant_parents++;
+			} else
+				irrelevant_change |= !st->treesame[n];
 		}
+		if (relevant_parents ? relevant_change : irrelevant_change)
+			commit->object.flags &= ~TREESAME;
+		else
+			commit->object.flags |= TREESAME;
 	}
 
 	return commit->object.flags & TREESAME;
+}
+
+static inline int limiting_can_increase_treesame(const struct rev_info *revs)
+{
+	/*
+	 * TREESAME is irrelevant unless prune && dense;
+	 * if simplify_history is set, we can't have a mixture of TREESAME and
+	 *    !TREESAME INTERESTING parents (and we don't have treesame[]
+	 *    decoration anyway);
+	 * if first_parent_only is set, then the TREESAME flag is locked
+	 *    against the first parent (and again we lack treesame[] decoration).
+	 */
+	return revs->prune && revs->dense &&
+	       !revs->simplify_history &&
+	       !revs->first_parent_only;
 }
 
 static void try_to_simplify_commit(struct rev_info *revs, struct commit *commit)
 {
 	struct commit_list **pp, *parent;
 	struct treesame_state *ts = NULL;
-	int tree_changed = 0, nth_parent;
+	int relevant_change = 0, irrelevant_change = 0;
+	int relevant_parents, nth_parent;
 
 	/*
 	 * If we don't do pruning, everything is interesting
@@ -546,10 +645,12 @@ static void try_to_simplify_commit(struct rev_info *revs, struct commit *commit)
 	if (!revs->dense && !commit->parents->next)
 		return;
 
-	for (pp = &commit->parents, nth_parent = 0;
+	for (pp = &commit->parents, nth_parent = 0, relevant_parents = 0;
 	     (parent = *pp) != NULL;
 	     pp = &parent->next, nth_parent++) {
 		struct commit *p = parent->item;
+		if (relevant_commit(p))
+			relevant_parents++;
 
 		if (nth_parent == 1) {
 			/*
@@ -573,7 +674,7 @@ static void try_to_simplify_commit(struct rev_info *revs, struct commit *commit)
 			    !revs->simplify_history &&
 			    !(commit->object.flags & UNINTERESTING)) {
 				ts = initialise_treesame(revs, commit);
-				if (!tree_changed)
+				if (!(irrelevant_change || relevant_change))
 					ts->treesame[0] = 1;
 			}
 		}
@@ -619,14 +720,27 @@ static void try_to_simplify_commit(struct rev_info *revs, struct commit *commit)
 		/* fallthrough */
 		case REV_TREE_OLD:
 		case REV_TREE_DIFFERENT:
-			tree_changed = 1;
+			if (relevant_commit(p))
+				relevant_change = 1;
+			else
+				irrelevant_change = 1;
 			continue;
 		}
 		die("bad tree compare for commit %s", sha1_to_hex(commit->object.sha1));
 	}
-	if (tree_changed)
-		return;
-	commit->object.flags |= TREESAME;
+
+	/*
+	 * TREESAME is straightforward for single-parent commits. For merge
+	 * commits, it is most useful to define it so that "irrelevant"
+	 * parents cannot make us !TREESAME - if we have any relevant
+	 * parents, then we only consider TREESAMEness with respect to them,
+	 * allowing irrelevant merges from uninteresting branches to be
+	 * simplified away. Only if we have only irrelevant parents do we
+	 * base TREESAME on them. Note that this logic is replicated in
+	 * update_treesame, which should be kept in sync.
+	 */
+	if (relevant_parents ? !relevant_change : !irrelevant_change)
+		commit->object.flags |= TREESAME;
 }
 
 static void commit_list_insert_by_date_cached(struct commit *p, struct commit_list **head,
@@ -997,6 +1111,18 @@ static int limit_list(struct rev_info *revs)
 		limit_to_ancestry(bottom, newlist);
 		free_commit_list(bottom);
 	}
+
+	/*
+	 * Check if any commits have become TREESAME by some of their parents
+	 * becoming UNINTERESTING.
+	 */
+	if (limiting_can_increase_treesame(revs))
+		for (list = newlist; list; list = list->next) {
+			struct commit *c = list->item;
+			if (c->object.flags & (UNINTERESTING | TREESAME))
+				continue;
+			update_treesame(revs, c);
+		}
 
 	revs->commits = newlist;
 	return 0;
@@ -2248,6 +2374,7 @@ static int remove_marked_parents(struct rev_info *revs, struct commit *commit)
 static struct commit_list **simplify_one(struct rev_info *revs, struct commit *commit, struct commit_list **tail)
 {
 	struct commit_list *p;
+	struct commit *parent;
 	struct merge_simplify_state *st, *pst;
 	int cnt;
 
@@ -2336,19 +2463,20 @@ static struct commit_list **simplify_one(struct rev_info *revs, struct commit *c
 	/*
 	 * A commit simplifies to itself if it is a root, if it is
 	 * UNINTERESTING, if it touches the given paths, or if it is a
-	 * merge and its parents simplify to more than one commit
+	 * merge and its parents don't simplify to one relevant commit
 	 * (the first two cases are already handled at the beginning of
 	 * this function).
 	 *
-	 * Otherwise, it simplifies to what its sole parent simplifies to.
+	 * Otherwise, it simplifies to what its sole relevant parent
+	 * simplifies to.
 	 */
 	if (!cnt ||
 	    (commit->object.flags & UNINTERESTING) ||
 	    !(commit->object.flags & TREESAME) ||
-	    (1 < cnt))
+	    (parent = one_relevant_parent(revs, commit->parents)) == NULL)
 		st->simplified = commit;
 	else {
-		pst = locate_simplify_state(revs, commit->parents->item);
+		pst = locate_simplify_state(revs, parent);
 		st->simplified = pst->simplified;
 	}
 	return tail;
@@ -2445,7 +2573,8 @@ int prepare_revision_walk(struct rev_info *revs)
 		free(list);
 
 	/* Signal whether we need per-parent treesame decoration */
-	if (revs->simplify_merges)
+	if (revs->simplify_merges ||
+	    (revs->limited && limiting_can_increase_treesame(revs)))
 		revs->treesame.name = "treesame";
 
 	if (revs->no_walk != REVISION_WALK_NO_WALK_UNSORTED)
@@ -2479,15 +2608,15 @@ static enum rewrite_result rewrite_one(struct rev_info *revs, struct commit **pp
 		if (!revs->limited)
 			if (add_parents_to_list(revs, p, &revs->commits, &cache) < 0)
 				return rewrite_one_error;
-		if (p->parents && p->parents->next)
-			return rewrite_one_ok;
 		if (p->object.flags & UNINTERESTING)
 			return rewrite_one_ok;
 		if (!(p->object.flags & TREESAME))
 			return rewrite_one_ok;
 		if (!p->parents)
 			return rewrite_one_noparents;
-		*pp = p->parents->item;
+		if ((p = one_relevant_parent(revs, p->parents)) == NULL)
+			return rewrite_one_ok;
+		*pp = p;
 	}
 }
 
