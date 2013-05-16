@@ -1,16 +1,16 @@
 # Swedish translation for gitk
-# Copyright (C) 2005-2012 Paul Mackerras
+# Copyright (C) 2005-2013 Paul Mackerras
 # This file is distributed under the same license as the gitk package.
 #
 # Mikael Magnusson <mikachu@gmail.com>, 2008.
-# Peter Krefting <peter@softwolves.pp.se>, 2008, 2009, 2010, 2012.
+# Peter Krefting <peter@softwolves.pp.se>, 2008, 2009, 2010, 2012, 2013.
 #
 msgid ""
 msgstr ""
 "Project-Id-Version: sv\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2012-10-03 08:09+0100\n"
-"PO-Revision-Date: 2012-10-03 08:13+0100\n"
+"POT-Creation-Date: 2013-05-16 08:06+0100\n"
+"PO-Revision-Date: 2013-05-16 08:12+0100\n"
 "Last-Translator: Peter Krefting <peter@softwolves.pp.se>\n"
 "Language-Team: Swedish <tp-sv@listor.tp-sv.se>\n"
 "Language: sv\n"
@@ -22,11 +22,11 @@ msgstr ""
 msgid "Couldn't get list of unmerged files:"
 msgstr "Kunde inte hämta lista över ej sammanslagna filer:"
 
-#: gitk:210 gitk:2317
+#: gitk:210 gitk:2334
 msgid "Color words"
 msgstr "Färga ord"
 
-#: gitk:215 gitk:2317 gitk:7888 gitk:7921
+#: gitk:215 gitk:2334 gitk:7977 gitk:8010
 msgid "Markup words"
 msgstr "Märk upp ord"
 
@@ -60,11 +60,11 @@ msgstr "Fel vid körning av git log:"
 msgid "Reading"
 msgstr "Läser"
 
-#: gitk:484 gitk:4353
+#: gitk:484 gitk:4409
 msgid "Reading commits..."
 msgstr "Läser incheckningar..."
 
-#: gitk:487 gitk:1625 gitk:4356
+#: gitk:487 gitk:1625 gitk:4412
 msgid "No commits selected"
 msgstr "Inga incheckningar markerade"
 
@@ -80,278 +80,286 @@ msgstr "Ingen incheckningsinformation är tillgänglig"
 msgid "mc"
 msgstr "mc"
 
-#: gitk:1911 gitk:4146 gitk:9282 gitk:10824 gitk:11100
+#: gitk:1911 gitk:4202 gitk:9437 gitk:10979 gitk:11258
 msgid "OK"
 msgstr "OK"
 
-#: gitk:1913 gitk:4148 gitk:8871 gitk:8950 gitk:9065 gitk:9114 gitk:9284
-#: gitk:10825 gitk:11101
+#: gitk:1913 gitk:4204 gitk:8964 gitk:9043 gitk:9159 gitk:9208 gitk:9439
+#: gitk:10980 gitk:11259
 msgid "Cancel"
 msgstr "Avbryt"
 
-#: gitk:2040
+#: gitk:2048
 msgid "Update"
 msgstr "Uppdatera"
 
-#: gitk:2041
+#: gitk:2049
 msgid "Reload"
 msgstr "Ladda om"
 
-#: gitk:2042
+#: gitk:2050
 msgid "Reread references"
 msgstr "Läs om referenser"
 
-#: gitk:2043
+#: gitk:2051
 msgid "List references"
 msgstr "Visa referenser"
 
-#: gitk:2045
+#: gitk:2053
 msgid "Start git gui"
 msgstr "Starta git gui"
 
-#: gitk:2047
+#: gitk:2055
 msgid "Quit"
 msgstr "Avsluta"
 
-#: gitk:2039
+#: gitk:2047
 msgid "File"
 msgstr "Arkiv"
 
-#: gitk:2051
+#: gitk:2059
 msgid "Preferences"
 msgstr "Inställningar"
 
-#: gitk:2050
+#: gitk:2058
 msgid "Edit"
 msgstr "Redigera"
 
-#: gitk:2055
+#: gitk:2063
 msgid "New view..."
 msgstr "Ny vy..."
 
-#: gitk:2056
+#: gitk:2064
 msgid "Edit view..."
 msgstr "Ändra vy..."
 
-#: gitk:2057
+#: gitk:2065
 msgid "Delete view"
 msgstr "Ta bort vy"
 
-#: gitk:2059
+#: gitk:2067
 msgid "All files"
 msgstr "Alla filer"
 
-#: gitk:2054 gitk:3899
+#: gitk:2062 gitk:3955
 msgid "View"
 msgstr "Visa"
 
-#: gitk:2064 gitk:2074 gitk:2869
+#: gitk:2072 gitk:2082 gitk:2925
 msgid "About gitk"
 msgstr "Om gitk"
 
-#: gitk:2065 gitk:2079
+#: gitk:2073 gitk:2087
 msgid "Key bindings"
 msgstr "Tangentbordsbindningar"
 
-#: gitk:2063 gitk:2078
+#: gitk:2071 gitk:2086
 msgid "Help"
 msgstr "Hjälp"
 
-#: gitk:2156 gitk:8330
+#: gitk:2164 gitk:8420
 msgid "SHA1 ID:"
 msgstr "SHA1-id:"
 
-#: gitk:2192
+#: gitk:2208
 msgid "Row"
 msgstr "Rad"
 
-#: gitk:2230
+#: gitk:2246
 msgid "Find"
 msgstr "Sök"
 
-#: gitk:2231
+#: gitk:2247
 msgid "next"
 msgstr "nästa"
 
-#: gitk:2232
+#: gitk:2248
 msgid "prev"
 msgstr "föreg"
 
-#: gitk:2233
+#: gitk:2249
 msgid "commit"
 msgstr "incheckning"
 
-#: gitk:2236 gitk:2238 gitk:4514 gitk:4537 gitk:4561 gitk:6528 gitk:6600
-#: gitk:6685
+#: gitk:2252 gitk:2254 gitk:4570 gitk:4593 gitk:4617 gitk:6592 gitk:6664
+#: gitk:6749
 msgid "containing:"
 msgstr "som innehåller:"
 
-#: gitk:2239 gitk:3381 gitk:3386 gitk:4590
+#: gitk:2255 gitk:3437 gitk:3442 gitk:4646
 msgid "touching paths:"
 msgstr "som rör sökväg:"
 
-#: gitk:2240 gitk:4604
+#: gitk:2256 gitk:4660
 msgid "adding/removing string:"
 msgstr "som lägger/till tar bort sträng:"
 
-#: gitk:2249 gitk:2251 gitk:4593
+#: gitk:2257 gitk:4662
+msgid "changing lines matching:"
+msgstr "ändrar rader som matchar:"
+
+#: gitk:2266 gitk:2268 gitk:4649
 msgid "Exact"
 msgstr "Exakt"
 
-#: gitk:2251 gitk:4679 gitk:6496
+#: gitk:2268 gitk:4737 gitk:6560
 msgid "IgnCase"
 msgstr "IgnVersaler"
 
-#: gitk:2251 gitk:4563 gitk:4677 gitk:6492
+#: gitk:2268 gitk:4619 gitk:4735 gitk:6556
 msgid "Regexp"
 msgstr "Reg.uttr."
 
-#: gitk:2253 gitk:2254 gitk:4699 gitk:4729 gitk:4736 gitk:6621 gitk:6689
+#: gitk:2270 gitk:2271 gitk:4757 gitk:4787 gitk:4794 gitk:6685 gitk:6753
 msgid "All fields"
 msgstr "Alla fält"
 
-#: gitk:2254 gitk:4696 gitk:4729 gitk:6559
+#: gitk:2271 gitk:4754 gitk:4787 gitk:6623
 msgid "Headline"
 msgstr "Rubrik"
 
-#: gitk:2255 gitk:4696 gitk:6559 gitk:6689 gitk:7126
+#: gitk:2272 gitk:4754 gitk:6623 gitk:6753 gitk:7221
 msgid "Comments"
 msgstr "Kommentarer"
 
-#: gitk:2255 gitk:4696 gitk:4701 gitk:4736 gitk:6559 gitk:7061 gitk:8505
-#: gitk:8520
+#: gitk:2272 gitk:4754 gitk:4759 gitk:4794 gitk:6623 gitk:7156 gitk:8598
+#: gitk:8613
 msgid "Author"
 msgstr "Författare"
 
-#: gitk:2255 gitk:4696 gitk:6559 gitk:7063
+#: gitk:2272 gitk:4754 gitk:6623 gitk:7158
 msgid "Committer"
 msgstr "Incheckare"
 
-#: gitk:2286
+#: gitk:2303
 msgid "Search"
 msgstr "Sök"
 
-#: gitk:2294
+#: gitk:2311
 msgid "Diff"
 msgstr "Diff"
 
-#: gitk:2296
+#: gitk:2313
 msgid "Old version"
 msgstr "Gammal version"
 
-#: gitk:2298
+#: gitk:2315
 msgid "New version"
 msgstr "Ny version"
 
-#: gitk:2300
+#: gitk:2317
 msgid "Lines of context"
 msgstr "Rader sammanhang"
 
-#: gitk:2310
+#: gitk:2327
 msgid "Ignore space change"
 msgstr "Ignorera ändringar i blanksteg"
 
-#: gitk:2314 gitk:2316 gitk:7646 gitk:7874
+#: gitk:2331 gitk:2333 gitk:7735 gitk:7963
 msgid "Line diff"
 msgstr "Rad-diff"
 
-#: gitk:2379
+#: gitk:2397
 msgid "Patch"
 msgstr "Patch"
 
-#: gitk:2381
+#: gitk:2399
 msgid "Tree"
 msgstr "Träd"
 
-#: gitk:2540 gitk:2559
+#: gitk:2557 gitk:2577
 msgid "Diff this -> selected"
 msgstr "Diff denna -> markerad"
 
-#: gitk:2541 gitk:2560
+#: gitk:2558 gitk:2578
 msgid "Diff selected -> this"
 msgstr "Diff markerad -> denna"
 
-#: gitk:2542 gitk:2561
+#: gitk:2559 gitk:2579
 msgid "Make patch"
 msgstr "Skapa patch"
 
-#: gitk:2543 gitk:8929
+#: gitk:2560 gitk:9022
 msgid "Create tag"
 msgstr "Skapa tagg"
 
-#: gitk:2544 gitk:9045
+#: gitk:2561 gitk:9139
 msgid "Write commit to file"
 msgstr "Skriv incheckning till fil"
 
-#: gitk:2545 gitk:9102
+#: gitk:2562 gitk:9196
 msgid "Create new branch"
 msgstr "Skapa ny gren"
 
-#: gitk:2546
+#: gitk:2563
 msgid "Cherry-pick this commit"
 msgstr "Plocka denna incheckning"
 
-#: gitk:2547
+#: gitk:2564
 msgid "Reset HEAD branch to here"
 msgstr "Återställ HEAD-grenen hit"
 
-#: gitk:2548
+#: gitk:2565
 msgid "Mark this commit"
 msgstr "Markera denna incheckning"
 
-#: gitk:2549
+#: gitk:2566
 msgid "Return to mark"
 msgstr "Återgå till markering"
 
-#: gitk:2550
+#: gitk:2567
 msgid "Find descendant of this and mark"
 msgstr "Hitta efterföljare till denna och markera"
 
-#: gitk:2551
+#: gitk:2568
 msgid "Compare with marked commit"
 msgstr "Jämför med markerad incheckning"
 
-#: gitk:2552 gitk:2562
+#: gitk:2569 gitk:2580
 msgid "Diff this -> marked commit"
 msgstr "Diff denna -> markerad incheckning"
 
-#: gitk:2553 gitk:2563
+#: gitk:2570 gitk:2581
 msgid "Diff marked commit -> this"
 msgstr "Diff markerad incheckning -> denna"
 
-#: gitk:2569
+#: gitk:2571
+msgid "Revert this commit"
+msgstr "Ångra denna incheckning"
+
+#: gitk:2587
 msgid "Check out this branch"
 msgstr "Checka ut denna gren"
 
-#: gitk:2570
+#: gitk:2588
 msgid "Remove this branch"
 msgstr "Ta bort denna gren"
 
-#: gitk:2577
+#: gitk:2595
 msgid "Highlight this too"
 msgstr "Markera även detta"
 
-#: gitk:2578
+#: gitk:2596
 msgid "Highlight this only"
 msgstr "Markera bara detta"
 
-#: gitk:2579
+#: gitk:2597
 msgid "External diff"
 msgstr "Extern diff"
 
-#: gitk:2580
+#: gitk:2598
 msgid "Blame parent commit"
 msgstr "Klandra föräldraincheckning"
 
-#: gitk:2587
+#: gitk:2605
 msgid "Show origin of this line"
 msgstr "Visa ursprunget för den här raden"
 
-#: gitk:2588
+#: gitk:2606
 msgid "Run git gui blame on this line"
 msgstr "Kör git gui blame på den här raden"
 
-#: gitk:2871
+#: gitk:2927
 msgid ""
 "\n"
 "Gitk - a commit viewer for git\n"
@@ -367,302 +375,302 @@ msgstr ""
 "\n"
 "Använd och vidareförmedla enligt villkoren i GNU General Public License"
 
-#: gitk:2879 gitk:2944 gitk:9468
+#: gitk:2935 gitk:3000 gitk:9623
 msgid "Close"
 msgstr "Stäng"
 
-#: gitk:2900
+#: gitk:2956
 msgid "Gitk key bindings"
 msgstr "Tangentbordsbindningar för Gitk"
 
-#: gitk:2903
+#: gitk:2959
 msgid "Gitk key bindings:"
 msgstr "Tangentbordsbindningar för Gitk:"
 
-#: gitk:2905
+#: gitk:2961
 #, tcl-format
 msgid "<%s-Q>\t\tQuit"
 msgstr "<%s-Q>\t\tAvsluta"
 
-#: gitk:2906
+#: gitk:2962
 #, tcl-format
 msgid "<%s-W>\t\tClose window"
 msgstr "<%s-W>\t\tStäng fönster"
 
-#: gitk:2907
+#: gitk:2963
 msgid "<Home>\t\tMove to first commit"
 msgstr "<Home>\t\tGå till första incheckning"
 
-#: gitk:2908
+#: gitk:2964
 msgid "<End>\t\tMove to last commit"
 msgstr "<End>\t\tGå till sista incheckning"
 
-#: gitk:2909
+#: gitk:2965
 msgid "<Up>, p, k\tMove up one commit"
 msgstr "<Upp>, p, k\tGå en incheckning upp"
 
-#: gitk:2910
+#: gitk:2966
 msgid "<Down>, n, j\tMove down one commit"
 msgstr "<Ned>, n, j\tGå en incheckning ned"
 
-#: gitk:2911
+#: gitk:2967
 msgid "<Left>, z, h\tGo back in history list"
 msgstr "<Vänster>, z, h\tGå bakåt i historiken"
 
-#: gitk:2912
+#: gitk:2968
 msgid "<Right>, x, l\tGo forward in history list"
 msgstr "<Höger>, x, l\tGå framåt i historiken"
 
-#: gitk:2913
+#: gitk:2969
 msgid "<PageUp>\tMove up one page in commit list"
 msgstr "<PageUp>\tGå upp en sida i incheckningslistan"
 
-#: gitk:2914
+#: gitk:2970
 msgid "<PageDown>\tMove down one page in commit list"
 msgstr "<PageDown>\tGå ned en sida i incheckningslistan"
 
-#: gitk:2915
+#: gitk:2971
 #, tcl-format
 msgid "<%s-Home>\tScroll to top of commit list"
 msgstr "<%s-Home>\tRulla till början av incheckningslistan"
 
-#: gitk:2916
+#: gitk:2972
 #, tcl-format
 msgid "<%s-End>\tScroll to bottom of commit list"
 msgstr "<%s-End>\tRulla till slutet av incheckningslistan"
 
-#: gitk:2917
+#: gitk:2973
 #, tcl-format
 msgid "<%s-Up>\tScroll commit list up one line"
 msgstr "<%s-Upp>\tRulla incheckningslistan upp ett steg"
 
-#: gitk:2918
+#: gitk:2974
 #, tcl-format
 msgid "<%s-Down>\tScroll commit list down one line"
 msgstr "<%s-Ned>\tRulla incheckningslistan ned ett steg"
 
-#: gitk:2919
+#: gitk:2975
 #, tcl-format
 msgid "<%s-PageUp>\tScroll commit list up one page"
 msgstr "<%s-PageUp>\tRulla incheckningslistan upp en sida"
 
-#: gitk:2920
+#: gitk:2976
 #, tcl-format
 msgid "<%s-PageDown>\tScroll commit list down one page"
 msgstr "<%s-PageDown>\tRulla incheckningslistan ned en sida"
 
-#: gitk:2921
+#: gitk:2977
 msgid "<Shift-Up>\tFind backwards (upwards, later commits)"
 msgstr "<Skift-Upp>\tSök bakåt (uppåt, senare incheckningar)"
 
-#: gitk:2922
+#: gitk:2978
 msgid "<Shift-Down>\tFind forwards (downwards, earlier commits)"
 msgstr "<Skift-Ned>\tSök framåt (nedåt, tidigare incheckningar)"
 
-#: gitk:2923
+#: gitk:2979
 msgid "<Delete>, b\tScroll diff view up one page"
 msgstr "<Delete>, b\tRulla diffvisningen upp en sida"
 
-#: gitk:2924
+#: gitk:2980
 msgid "<Backspace>\tScroll diff view up one page"
 msgstr "<Baksteg>\tRulla diffvisningen upp en sida"
 
-#: gitk:2925
+#: gitk:2981
 msgid "<Space>\t\tScroll diff view down one page"
 msgstr "<Blanksteg>\tRulla diffvisningen ned en sida"
 
-#: gitk:2926
+#: gitk:2982
 msgid "u\t\tScroll diff view up 18 lines"
 msgstr "u\t\tRulla diffvisningen upp 18 rader"
 
-#: gitk:2927
+#: gitk:2983
 msgid "d\t\tScroll diff view down 18 lines"
 msgstr "d\t\tRulla diffvisningen ned 18 rader"
 
-#: gitk:2928
+#: gitk:2984
 #, tcl-format
 msgid "<%s-F>\t\tFind"
 msgstr "<%s-F>\t\tSök"
 
-#: gitk:2929
+#: gitk:2985
 #, tcl-format
 msgid "<%s-G>\t\tMove to next find hit"
 msgstr "<%s-G>\t\tGå till nästa sökträff"
 
-#: gitk:2930
+#: gitk:2986
 msgid "<Return>\tMove to next find hit"
 msgstr "<Return>\t\tGå till nästa sökträff"
 
-#: gitk:2931
+#: gitk:2987
 msgid "/\t\tFocus the search box"
 msgstr "/\t\tFokusera sökrutan"
 
-#: gitk:2932
+#: gitk:2988
 msgid "?\t\tMove to previous find hit"
 msgstr "?\t\tGå till föregående sökträff"
 
-#: gitk:2933
+#: gitk:2989
 msgid "f\t\tScroll diff view to next file"
 msgstr "f\t\tRulla diffvisningen till nästa fil"
 
-#: gitk:2934
+#: gitk:2990
 #, tcl-format
 msgid "<%s-S>\t\tSearch for next hit in diff view"
 msgstr "<%s-S>\t\tGå till nästa sökträff i diffvisningen"
 
-#: gitk:2935
+#: gitk:2991
 #, tcl-format
 msgid "<%s-R>\t\tSearch for previous hit in diff view"
 msgstr "<%s-R>\t\tGå till föregående sökträff i diffvisningen"
 
-#: gitk:2936
+#: gitk:2992
 #, tcl-format
 msgid "<%s-KP+>\tIncrease font size"
 msgstr "<%s-Num+>\tÖka teckenstorlek"
 
-#: gitk:2937
+#: gitk:2993
 #, tcl-format
 msgid "<%s-plus>\tIncrease font size"
 msgstr "<%s-plus>\tÖka teckenstorlek"
 
-#: gitk:2938
+#: gitk:2994
 #, tcl-format
 msgid "<%s-KP->\tDecrease font size"
 msgstr "<%s-Num->\tMinska teckenstorlek"
 
-#: gitk:2939
+#: gitk:2995
 #, tcl-format
 msgid "<%s-minus>\tDecrease font size"
 msgstr "<%s-minus>\tMinska teckenstorlek"
 
-#: gitk:2940
+#: gitk:2996
 msgid "<F5>\t\tUpdate"
 msgstr "<F5>\t\tUppdatera"
 
-#: gitk:3395 gitk:3404
+#: gitk:3451 gitk:3460
 #, tcl-format
 msgid "Error creating temporary directory %s:"
 msgstr "Fel vid skapande av temporär katalog %s:"
 
-#: gitk:3417
+#: gitk:3473
 #, tcl-format
 msgid "Error getting \"%s\" from %s:"
 msgstr "Fel vid hämtning av  \"%s\" från %s:"
 
-#: gitk:3480
+#: gitk:3536
 msgid "command failed:"
 msgstr "kommando misslyckades:"
 
-#: gitk:3629
+#: gitk:3685
 msgid "No such commit"
 msgstr "Incheckning saknas"
 
-#: gitk:3643
+#: gitk:3699
 msgid "git gui blame: command failed:"
 msgstr "git gui blame: kommando misslyckades:"
 
-#: gitk:3674
+#: gitk:3730
 #, tcl-format
 msgid "Couldn't read merge head: %s"
 msgstr "Kunde inte läsa sammanslagningshuvud: %s"
 
-#: gitk:3682
+#: gitk:3738
 #, tcl-format
 msgid "Error reading index: %s"
 msgstr "Fel vid läsning av index: %s"
 
-#: gitk:3707
+#: gitk:3763
 #, tcl-format
 msgid "Couldn't start git blame: %s"
 msgstr "Kunde inte starta git blame: %s"
 
-#: gitk:3710 gitk:6527
+#: gitk:3766 gitk:6591
 msgid "Searching"
 msgstr "Söker"
 
-#: gitk:3742
+#: gitk:3798
 #, tcl-format
 msgid "Error running git blame: %s"
 msgstr "Fel vid körning av git blame: %s"
 
-#: gitk:3770
+#: gitk:3826
 #, tcl-format
 msgid "That line comes from commit %s,  which is not in this view"
 msgstr "Raden kommer från incheckningen %s, som inte finns i denna vy"
 
-#: gitk:3784
+#: gitk:3840
 msgid "External diff viewer failed:"
 msgstr "Externt diff-verktyg misslyckades:"
 
-#: gitk:3902
+#: gitk:3958
 msgid "Gitk view definition"
 msgstr "Definition av Gitk-vy"
 
-#: gitk:3906
+#: gitk:3962
 msgid "Remember this view"
 msgstr "Spara denna vy"
 
-#: gitk:3907
+#: gitk:3963
 msgid "References (space separated list):"
 msgstr "Referenser (blankstegsavdelad lista):"
 
-#: gitk:3908
+#: gitk:3964
 msgid "Branches & tags:"
 msgstr "Grenar & taggar:"
 
-#: gitk:3909
+#: gitk:3965
 msgid "All refs"
 msgstr "Alla referenser"
 
-#: gitk:3910
+#: gitk:3966
 msgid "All (local) branches"
 msgstr "Alla (lokala) grenar"
 
-#: gitk:3911
+#: gitk:3967
 msgid "All tags"
 msgstr "Alla taggar"
 
-#: gitk:3912
+#: gitk:3968
 msgid "All remote-tracking branches"
 msgstr "Alla fjärrspårande grenar"
 
-#: gitk:3913
+#: gitk:3969
 msgid "Commit Info (regular expressions):"
 msgstr "Incheckningsinfo (reguljära uttryck):"
 
-#: gitk:3914
+#: gitk:3970
 msgid "Author:"
 msgstr "Författare:"
 
-#: gitk:3915
+#: gitk:3971
 msgid "Committer:"
 msgstr "Incheckare:"
 
-#: gitk:3916
+#: gitk:3972
 msgid "Commit Message:"
 msgstr "Incheckningsmeddelande:"
 
-#: gitk:3917
+#: gitk:3973
 msgid "Matches all Commit Info criteria"
 msgstr "Motsvarar alla kriterier för incheckningsinfo"
 
-#: gitk:3918
+#: gitk:3974
 msgid "Changes to Files:"
 msgstr "Ändringar av filer:"
 
-#: gitk:3919
+#: gitk:3975
 msgid "Fixed String"
 msgstr "Fast sträng"
 
-#: gitk:3920
+#: gitk:3976
 msgid "Regular Expression"
 msgstr "Reguljärt uttryck"
 
-#: gitk:3921
+#: gitk:3977
 msgid "Search string:"
 msgstr "Söksträng:"
 
-#: gitk:3922
+#: gitk:3978
 msgid ""
 "Commit Dates (\"2 weeks ago\", \"2009-03-17 15:27:38\", \"March 17, 2009 "
 "15:27:38\"):"
@@ -670,197 +678,201 @@ msgstr ""
 "Incheckingsdatum (\"2 weeks ago\", \"2009-03-17 15:27:38\", \"March 17, 2009 "
 "15:27:38\"):"
 
-#: gitk:3923
+#: gitk:3979
 msgid "Since:"
 msgstr "Från:"
 
-#: gitk:3924
+#: gitk:3980
 msgid "Until:"
 msgstr "Till:"
 
-#: gitk:3925
+#: gitk:3981
 msgid "Limit and/or skip a number of revisions (positive integer):"
 msgstr "Begränsa och/eller hoppa över ett antal revisioner (positivt heltal):"
 
-#: gitk:3926
+#: gitk:3982
 msgid "Number to show:"
 msgstr "Antal att visa:"
 
-#: gitk:3927
+#: gitk:3983
 msgid "Number to skip:"
 msgstr "Antal att hoppa över:"
 
-#: gitk:3928
+#: gitk:3984
 msgid "Miscellaneous options:"
 msgstr "Diverse alternativ:"
 
-#: gitk:3929
+#: gitk:3985
 msgid "Strictly sort by date"
 msgstr "Strikt datumsortering"
 
-#: gitk:3930
+#: gitk:3986
 msgid "Mark branch sides"
 msgstr "Markera sidogrenar"
 
-#: gitk:3931
+#: gitk:3987
 msgid "Limit to first parent"
 msgstr "Begränsa till första förälder"
 
-#: gitk:3932
+#: gitk:3988
 msgid "Simple history"
 msgstr "Enkel historik"
 
-#: gitk:3933
+#: gitk:3989
 msgid "Additional arguments to git log:"
 msgstr "Ytterligare argument till git log:"
 
-#: gitk:3934
+#: gitk:3990
 msgid "Enter files and directories to include, one per line:"
 msgstr "Ange filer och kataloger att ta med, en per rad:"
 
-#: gitk:3935
+#: gitk:3991
 msgid "Command to generate more commits to include:"
 msgstr "Kommando för att generera fler incheckningar att ta med:"
 
-#: gitk:4059
+#: gitk:4115
 msgid "Gitk: edit view"
 msgstr "Gitk: redigera vy"
 
-#: gitk:4067
+#: gitk:4123
 msgid "-- criteria for selecting revisions"
 msgstr " - kriterier för val av revisioner"
 
-#: gitk:4072
+#: gitk:4128
 msgid "View Name"
 msgstr "Namn på vy"
 
-#: gitk:4147
+#: gitk:4203
 msgid "Apply (F5)"
 msgstr "Använd (F5)"
 
-#: gitk:4185
+#: gitk:4241
 msgid "Error in commit selection arguments:"
 msgstr "Fel i argument för val av incheckningar:"
 
-#: gitk:4238 gitk:4290 gitk:4749 gitk:4763 gitk:6027 gitk:11849 gitk:11850
+#: gitk:4294 gitk:4346 gitk:4807 gitk:4821 gitk:6087 gitk:12041 gitk:12042
 msgid "None"
 msgstr "Inget"
 
-#: gitk:4846 gitk:4851
+#: gitk:4904 gitk:4909
 msgid "Descendant"
 msgstr "Avkomling"
 
-#: gitk:4847
+#: gitk:4905
 msgid "Not descendant"
 msgstr "Inte avkomling"
 
-#: gitk:4854 gitk:4859
+#: gitk:4912 gitk:4917
 msgid "Ancestor"
 msgstr "Förfader"
 
-#: gitk:4855
+#: gitk:4913
 msgid "Not ancestor"
 msgstr "Inte förfader"
 
-#: gitk:5145
+#: gitk:5203
 msgid "Local changes checked in to index but not committed"
 msgstr "Lokala ändringar sparade i indexet men inte incheckade"
 
-#: gitk:5181
+#: gitk:5239
 msgid "Local uncommitted changes, not checked in to index"
 msgstr "Lokala ändringar, ej sparade i indexet"
 
-#: gitk:6882
+#: gitk:6971
+msgid "and many more"
+msgstr "med många flera"
+
+#: gitk:6974
 msgid "many"
 msgstr "många"
 
-#: gitk:7065
+#: gitk:7160
 msgid "Tags:"
 msgstr "Taggar:"
 
-#: gitk:7082 gitk:7088 gitk:8500
+#: gitk:7177 gitk:7183 gitk:8593
 msgid "Parent"
 msgstr "Förälder"
 
-#: gitk:7093
+#: gitk:7188
 msgid "Child"
 msgstr "Barn"
 
-#: gitk:7102
+#: gitk:7197
 msgid "Branch"
 msgstr "Gren"
 
-#: gitk:7105
+#: gitk:7200
 msgid "Follows"
 msgstr "Följer"
 
-#: gitk:7108
+#: gitk:7203
 msgid "Precedes"
 msgstr "Föregår"
 
-#: gitk:7653
+#: gitk:7742
 #, tcl-format
 msgid "Error getting diffs: %s"
 msgstr "Fel vid hämtning av diff: %s"
 
-#: gitk:8328
+#: gitk:8418
 msgid "Goto:"
 msgstr "Gå till:"
 
-#: gitk:8349
+#: gitk:8439
 #, tcl-format
 msgid "Short SHA1 id %s is ambiguous"
 msgstr "Förkortat SHA1-id %s är tvetydigt"
 
-#: gitk:8356
+#: gitk:8446
 #, tcl-format
 msgid "Revision %s is not known"
 msgstr "Revisionen %s är inte känd"
 
-#: gitk:8366
+#: gitk:8456
 #, tcl-format
 msgid "SHA1 id %s is not known"
 msgstr "SHA-id:t %s är inte känt"
 
-#: gitk:8368
+#: gitk:8458
 #, tcl-format
 msgid "Revision %s is not in the current view"
 msgstr "Revisionen %s finns inte i den nuvarande vyn"
 
-#: gitk:8507 gitk:8522
+#: gitk:8600 gitk:8615
 msgid "Date"
 msgstr "Datum"
 
-#: gitk:8510
+#: gitk:8603
 msgid "Children"
 msgstr "Barn"
 
-#: gitk:8573
+#: gitk:8666
 #, tcl-format
 msgid "Reset %s branch to here"
 msgstr "Återställ grenen %s hit"
 
-#: gitk:8575
+#: gitk:8668
 msgid "Detached head: can't reset"
 msgstr "Frånkopplad head: kan inte återställa"
 
-#: gitk:8680 gitk:8686
+#: gitk:8773 gitk:8779
 msgid "Skipping merge commit "
 msgstr "Hoppar över sammanslagningsincheckning "
 
-#: gitk:8695 gitk:8700
+#: gitk:8788 gitk:8793
 msgid "Error getting patch ID for "
 msgstr "Fel vid hämtning av patch-id för "
 
-#: gitk:8696 gitk:8701
+#: gitk:8789 gitk:8794
 msgid " - stopping\n"
 msgstr " - stannar\n"
 
-#: gitk:8706 gitk:8709 gitk:8717 gitk:8731 gitk:8740
+#: gitk:8799 gitk:8802 gitk:8810 gitk:8824 gitk:8833
 msgid "Commit "
 msgstr "Incheckning "
 
-#: gitk:8710
+#: gitk:8803
 msgid ""
 " is the same patch as\n"
 "       "
@@ -868,7 +880,7 @@ msgstr ""
 " är samma patch som\n"
 "       "
 
-#: gitk:8718
+#: gitk:8811
 msgid ""
 " differs from\n"
 "       "
@@ -876,7 +888,7 @@ msgstr ""
 " skiljer sig från\n"
 "       "
 
-#: gitk:8720
+#: gitk:8813
 msgid ""
 "Diff of commits:\n"
 "\n"
@@ -884,131 +896,131 @@ msgstr ""
 "Skillnad mellan incheckningar:\n"
 "\n"
 
-#: gitk:8732 gitk:8741
+#: gitk:8825 gitk:8834
 #, tcl-format
 msgid " has %s children - stopping\n"
 msgstr " har %s barn - stannar\n"
 
-#: gitk:8760
+#: gitk:8853
 #, tcl-format
 msgid "Error writing commit to file: %s"
 msgstr "Fel vid skrivning av incheckning till fil: %s"
 
-#: gitk:8766
+#: gitk:8859
 #, tcl-format
 msgid "Error diffing commits: %s"
 msgstr "Fel vid jämförelse av incheckningar: %s"
 
-#: gitk:8812
+#: gitk:8905
 msgid "Top"
 msgstr "Topp"
 
-#: gitk:8813
+#: gitk:8906
 msgid "From"
 msgstr "Från"
 
-#: gitk:8818
+#: gitk:8911
 msgid "To"
 msgstr "Till"
 
-#: gitk:8842
+#: gitk:8935
 msgid "Generate patch"
 msgstr "Generera patch"
 
-#: gitk:8844
+#: gitk:8937
 msgid "From:"
 msgstr "Från:"
 
-#: gitk:8853
+#: gitk:8946
 msgid "To:"
 msgstr "Till:"
 
-#: gitk:8862
+#: gitk:8955
 msgid "Reverse"
 msgstr "Vänd"
 
-#: gitk:8864 gitk:9059
+#: gitk:8957 gitk:9153
 msgid "Output file:"
 msgstr "Utdatafil:"
 
-#: gitk:8870
+#: gitk:8963
 msgid "Generate"
 msgstr "Generera"
 
-#: gitk:8908
+#: gitk:9001
 msgid "Error creating patch:"
 msgstr "Fel vid generering av patch:"
 
-#: gitk:8931 gitk:9047 gitk:9104
+#: gitk:9024 gitk:9141 gitk:9198
 msgid "ID:"
 msgstr "Id:"
 
-#: gitk:8940
+#: gitk:9033
 msgid "Tag name:"
 msgstr "Taggnamn:"
 
-#: gitk:8943
+#: gitk:9036
 msgid "Tag message is optional"
 msgstr "Taggmeddelandet är valfritt"
 
-#: gitk:8945
+#: gitk:9038
 msgid "Tag message:"
 msgstr "Taggmeddelande:"
 
-#: gitk:8949 gitk:9113
+#: gitk:9042 gitk:9207
 msgid "Create"
 msgstr "Skapa"
 
-#: gitk:8967
+#: gitk:9060
 msgid "No tag name specified"
 msgstr "Inget taggnamn angavs"
 
-#: gitk:8971
+#: gitk:9064
 #, tcl-format
 msgid "Tag \"%s\" already exists"
 msgstr "Taggen \"%s\" finns redan"
 
-#: gitk:8981
+#: gitk:9074
 msgid "Error creating tag:"
 msgstr "Fel vid skapande av tagg:"
 
-#: gitk:9056
+#: gitk:9150
 msgid "Command:"
 msgstr "Kommando:"
 
-#: gitk:9064
+#: gitk:9158
 msgid "Write"
 msgstr "Skriv"
 
-#: gitk:9082
+#: gitk:9176
 msgid "Error writing commit:"
 msgstr "Fel vid skrivning av incheckning:"
 
-#: gitk:9109
+#: gitk:9203
 msgid "Name:"
 msgstr "Namn:"
 
-#: gitk:9132
+#: gitk:9226
 msgid "Please specify a name for the new branch"
 msgstr "Ange ett namn för den nya grenen"
 
-#: gitk:9137
+#: gitk:9231
 #, tcl-format
 msgid "Branch '%s' already exists. Overwrite?"
 msgstr "Grenen \"%s\" finns redan. Skriva över?"
 
-#: gitk:9204
+#: gitk:9298
 #, tcl-format
 msgid "Commit %s is already included in branch %s -- really re-apply it?"
 msgstr ""
 "Incheckningen %s finns redan på grenen %s -- skall den verkligen appliceras "
 "på nytt?"
 
-#: gitk:9209
+#: gitk:9303
 msgid "Cherry-picking"
 msgstr "Plockar"
 
-#: gitk:9218
+#: gitk:9312
 #, tcl-format
 msgid ""
 "Cherry-pick failed because of local changes to file '%s'.\n"
@@ -1018,7 +1030,7 @@ msgstr ""
 "Checka in, återställ eller spara undan (stash) dina ändringar och försök "
 "igen."
 
-#: gitk:9224
+#: gitk:9318
 msgid ""
 "Cherry-pick failed because of merge conflict.\n"
 "Do you wish to run git citool to resolve it?"
@@ -1026,32 +1038,59 @@ msgstr ""
 "Cherry-pick misslyckades på grund av en sammanslagningskonflikt.\n"
 "Vill du köra git citool för att lösa den?"
 
-#: gitk:9240
+#: gitk:9334 gitk:9392
 msgid "No changes committed"
 msgstr "Inga ändringar incheckade"
 
-#: gitk:9266
+#: gitk:9361
+#, tcl-format
+msgid "Commit %s is not included in branch %s -- really revert it?"
+msgstr "Incheckningen %s finns inte på grenen %s -- vill du verkligen ångra?"
+
+#: gitk:9366
+msgid "Reverting"
+msgstr "Ångrar"
+
+#: gitk:9374
+#, tcl-format
+msgid ""
+"Revert failed because of local changes to the following files:%s Please "
+"commit, reset or stash  your changes and try again."
+msgstr ""
+"Misslyckades med att ångra på grund av lokala ändringar i följande filer:%s. "
+"Checka in, återställ eller spara undan (stash) dina ändringar och försök "
+"igen."
+
+#: gitk:9378
+msgid ""
+"Revert failed because of merge conflict.\n"
+" Do you wish to run git citool to resolve it?"
+msgstr ""
+"Misslyckades med att ångra på grund av en sammanslagningskonflikt.\n"
+" Vill du köra git citool för att lösa den?"
+
+#: gitk:9421
 msgid "Confirm reset"
 msgstr "Bekräfta återställning"
 
-#: gitk:9268
+#: gitk:9423
 #, tcl-format
 msgid "Reset branch %s to %s?"
 msgstr "Återställa grenen %s till %s?"
 
-#: gitk:9270
+#: gitk:9425
 msgid "Reset type:"
 msgstr "Typ av återställning:"
 
-#: gitk:9273
+#: gitk:9428
 msgid "Soft: Leave working tree and index untouched"
 msgstr "Mjuk: Rör inte utcheckning och index"
 
-#: gitk:9276
+#: gitk:9431
 msgid "Mixed: Leave working tree untouched, reset index"
 msgstr "Blandad: Rör inte utcheckning, återställ index"
 
-#: gitk:9279
+#: gitk:9434
 msgid ""
 "Hard: Reset working tree and index\n"
 "(discard ALL local changes)"
@@ -1059,19 +1098,19 @@ msgstr ""
 "Hård: Återställ utcheckning och index\n"
 "(förkastar ALLA lokala ändringar)"
 
-#: gitk:9296
+#: gitk:9451
 msgid "Resetting"
 msgstr "Återställer"
 
-#: gitk:9356
+#: gitk:9511
 msgid "Checking out"
 msgstr "Checkar ut"
 
-#: gitk:9409
+#: gitk:9564
 msgid "Cannot delete the currently checked-out branch"
 msgstr "Kan inte ta bort den just nu utcheckade grenen"
 
-#: gitk:9415
+#: gitk:9570
 #, tcl-format
 msgid ""
 "The commits on branch %s aren't on any other branch.\n"
@@ -1080,16 +1119,16 @@ msgstr ""
 "Incheckningarna på grenen %s existerar inte på någon annan gren.\n"
 "Vill du verkligen ta bort grenen %s?"
 
-#: gitk:9446
+#: gitk:9601
 #, tcl-format
 msgid "Tags and heads: %s"
 msgstr "Taggar och huvuden: %s"
 
-#: gitk:9461
+#: gitk:9616
 msgid "Filter"
 msgstr "Filter"
 
-#: gitk:9757
+#: gitk:9912
 msgid ""
 "Error reading commit topology information; branch and preceding/following "
 "tag information will be incomplete."
@@ -1097,210 +1136,214 @@ msgstr ""
 "Fel vid läsning av information om incheckningstopologi; information om "
 "grenar och föregående/senare taggar kommer inte vara komplett."
 
-#: gitk:10744
+#: gitk:10899
 msgid "Tag"
 msgstr "Tagg"
 
-#: gitk:10744
+#: gitk:10899
 msgid "Id"
 msgstr "Id"
 
-#: gitk:10793
+#: gitk:10948
 msgid "Gitk font chooser"
 msgstr "Teckensnittsväljare för Gitk"
 
-#: gitk:10810
+#: gitk:10965
 msgid "B"
 msgstr "F"
 
-#: gitk:10813
+#: gitk:10968
 msgid "I"
 msgstr "K"
 
-#: gitk:10931
+#: gitk:11086
 msgid "Commit list display options"
 msgstr "Alternativ för incheckningslistvy"
 
-#: gitk:10934
+#: gitk:11089
 msgid "Maximum graph width (lines)"
 msgstr "Maximal grafbredd (rader)"
 
-#: gitk:10937
+#: gitk:11092
 #, tcl-format
 msgid "Maximum graph width (% of pane)"
 msgstr "Maximal grafbredd (% av ruta)"
 
-#: gitk:10940
+#: gitk:11095
 msgid "Show local changes"
 msgstr "Visa lokala ändringar"
 
-#: gitk:10943
+#: gitk:11098
 msgid "Auto-select SHA1 (length)"
 msgstr "Välj SHA1 (längd) automatiskt"
 
-#: gitk:10947
+#: gitk:11102
 msgid "Hide remote refs"
 msgstr "Dölj fjärr-referenser"
 
-#: gitk:10951
+#: gitk:11106
 msgid "Diff display options"
 msgstr "Alternativ för diffvy"
 
-#: gitk:10953
+#: gitk:11108
 msgid "Tab spacing"
 msgstr "Blanksteg för tabulatortecken"
 
-#: gitk:10956
-msgid "Display nearby tags"
-msgstr "Visa närliggande taggar"
+#: gitk:11111
+msgid "Display nearby tags/heads"
+msgstr "Visa närliggande taggar/huvuden"
 
-#: gitk:10959
+#: gitk:11114
+msgid "Maximum # tags/heads to show"
+msgstr "Maximalt antal taggar/huvuden att visa"
+
+#: gitk:11117
 msgid "Limit diffs to listed paths"
 msgstr "Begränsa diff till listade sökvägar"
 
-#: gitk:10962
+#: gitk:11120
 msgid "Support per-file encodings"
 msgstr "Stöd för filspecifika teckenkodningar"
 
-#: gitk:10968 gitk:11115
+#: gitk:11126 gitk:11273
 msgid "External diff tool"
 msgstr "Externt diff-verktyg"
 
-#: gitk:10969
+#: gitk:11127
 msgid "Choose..."
 msgstr "Välj..."
 
-#: gitk:10974
+#: gitk:11132
 msgid "General options"
 msgstr "Allmänna inställningar"
 
-#: gitk:10977
+#: gitk:11135
 msgid "Use themed widgets"
 msgstr "Använd tema på fönsterelement"
 
-#: gitk:10979
+#: gitk:11137
 msgid "(change requires restart)"
 msgstr "(ändringen kräver omstart)"
 
-#: gitk:10981
+#: gitk:11139
 msgid "(currently unavailable)"
 msgstr "(för närvarande inte tillgängligt)"
 
-#: gitk:10992
+#: gitk:11150
 msgid "Colors: press to choose"
 msgstr "Färger: tryck för att välja"
 
-#: gitk:10995
+#: gitk:11153
 msgid "Interface"
 msgstr "Gränssnitt"
 
-#: gitk:10996
+#: gitk:11154
 msgid "interface"
 msgstr "gränssnitt"
 
-#: gitk:10999
+#: gitk:11157
 msgid "Background"
 msgstr "Bakgrund"
 
-#: gitk:11000 gitk:11030
+#: gitk:11158 gitk:11188
 msgid "background"
 msgstr "bakgrund"
 
-#: gitk:11003
+#: gitk:11161
 msgid "Foreground"
 msgstr "Förgrund"
 
-#: gitk:11004
+#: gitk:11162
 msgid "foreground"
 msgstr "förgrund"
 
-#: gitk:11007
+#: gitk:11165
 msgid "Diff: old lines"
 msgstr "Diff: gamla rader"
 
-#: gitk:11008
+#: gitk:11166
 msgid "diff old lines"
 msgstr "diff gamla rader"
 
-#: gitk:11012
+#: gitk:11170
 msgid "Diff: new lines"
 msgstr "Diff: nya rader"
 
-#: gitk:11013
+#: gitk:11171
 msgid "diff new lines"
 msgstr "diff nya rader"
 
-#: gitk:11017
+#: gitk:11175
 msgid "Diff: hunk header"
 msgstr "Diff: delhuvud"
 
-#: gitk:11019
+#: gitk:11177
 msgid "diff hunk header"
 msgstr "diff delhuvud"
 
-#: gitk:11023
+#: gitk:11181
 msgid "Marked line bg"
 msgstr "Markerad rad bakgrund"
 
-#: gitk:11025
+#: gitk:11183
 msgid "marked line background"
 msgstr "markerad rad bakgrund"
 
-#: gitk:11029
+#: gitk:11187
 msgid "Select bg"
 msgstr "Markerad bakgrund"
 
-#: gitk:11038
+#: gitk:11196
 msgid "Fonts: press to choose"
 msgstr "Teckensnitt: tryck för att välja"
 
-#: gitk:11040
+#: gitk:11198
 msgid "Main font"
 msgstr "Huvudteckensnitt"
 
-#: gitk:11041
+#: gitk:11199
 msgid "Diff display font"
 msgstr "Teckensnitt för diffvisning"
 
-#: gitk:11042
+#: gitk:11200
 msgid "User interface font"
 msgstr "Teckensnitt för användargränssnitt"
 
-#: gitk:11064
+#: gitk:11222
 msgid "Gitk preferences"
 msgstr "Inställningar för Gitk"
 
-#: gitk:11073
+#: gitk:11231
 msgid "General"
 msgstr "Allmänt"
 
-#: gitk:11074
+#: gitk:11232
 msgid "Colors"
 msgstr "Färger"
 
-#: gitk:11075
+#: gitk:11233
 msgid "Fonts"
 msgstr "Teckensnitt"
 
-#: gitk:11125
+#: gitk:11283
 #, tcl-format
 msgid "Gitk: choose color for %s"
 msgstr "Gitk: välj färg för %s"
 
-#: gitk:11745
+#: gitk:11937
 msgid "Cannot find a git repository here."
 msgstr "Hittar inget git-arkiv här."
 
-#: gitk:11792
+#: gitk:11984
 #, tcl-format
 msgid "Ambiguous argument '%s': both revision and filename"
 msgstr "Tvetydigt argument \"%s\": både revision och filnamn"
 
-#: gitk:11804
+#: gitk:11996
 msgid "Bad arguments to gitk:"
 msgstr "Felaktiga argument till gitk:"
 
-#: gitk:11907
+#: gitk:12099
 msgid "Command line"
 msgstr "Kommandorad"
 
