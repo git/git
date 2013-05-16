@@ -49,7 +49,7 @@ static void grow_decoration(struct decoration *n)
 		const struct object *base = old_hash[i].base;
 		void *decoration = old_hash[i].decoration;
 
-		if (!base)
+		if (!decoration)
 			continue;
 		insert_decoration(n, base, decoration);
 	}
