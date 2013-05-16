@@ -66,8 +66,6 @@ test_expect_success setup '
 	test_commit M file "Parts 1+2"
 '
 
-# could we soup this up to optionally check parents? So "(BA)C" would check
-# that C is shown and has parents B A.
 check_outcome () {
 	outcome=$1
 	shift
@@ -109,14 +107,16 @@ check_result () {
 # except the most basic list. Achieving this means normal merge D will also be
 # shown in normal full-history, as we can't distinguish unless we do a
 # simplification pass. After simplification, D is dropped but G remains.
+# Also, merge simplification of G should not drop the parent B that the default
+# simple history follows.
 check_result 'M L K J I H G F E D C B A'
 check_result '(LH)M (K)L (GJ)K (I)J (G)I (G)H (FE)G (D)F (B)E (BC)D (A)C (A)B A'
 check_result 'M H L K J I G E F D C B A' --topo-order
 check_result 'M L H B A' -- file
-check_result 'M L H B A' --parents -- file
+check_result '(LH)M (B)L (B)H (A)B A' --parents -- file
 check_outcome failure 'M L J I H G F D B A' --full-history -- file # drops G
-check_result 'M L K J I H G F D B A' --full-history --parents -- file
-check_outcome failure 'M H L J I G F B A' --simplify-merges -- file # drops G
+check_result '(LH)M (K)L (GJ)K (I)J (G)I (G)H (FB)G (D)F (BA)D (A)B A' --full-history --parents -- file
+check_outcome failure '(LH)M (G)H (J)L (I)J (G)I (FB)G (B)F (A)B A' --simplify-merges -- file # drops G
 check_result 'M L K G F D B A' --first-parent
 check_result 'M L G F B A' --first-parent -- file
 
@@ -124,14 +124,14 @@ check_result 'M L G F B A' --first-parent -- file
 check_result 'M L K J I H G E' F..M
 check_result 'M H L K J I G E' F..M --topo-order
 check_result 'M L H' F..M -- file
-check_result 'M L H' F..M --parents -- file # L+H's parents rewritten to B, so more useful than it may seem
+check_result '(LH)M (B)L (B)H' --parents F..M -- file
 check_outcome failure 'M L J I H G' F..M --full-history -- file # drops G
-check_result 'M L K J I H G' F..M --full-history --parents -- file
-check_outcome failure 'M H L J I G' F..M --simplify-merges -- file # drops G
+check_result '(LH)M (K)L (GJ)K (I)J (G)I (G)H (FB)G' F..M --full-history --parents -- file
+check_outcome failure '(LH)M (G)H (J)L (I)J (G)I (FB)G' F..M --simplify-merges -- file # drops G
 check_result 'M L K J I H G' F..M --ancestry-path
 check_outcome failure 'M L J I H G' F..M --ancestry-path -- file # drops G
-check_result 'M L K J I H G' F..M --ancestry-path --parents -- file
-check_result 'M H L J I G' F..M --ancestry-path --simplify-merges -- file
+check_result '(LH)M (K)L (GJ)K (I)J (G)I (G)H (FE)G' F..M --ancestry-path --parents -- file
+check_result '(LH)M (G)H (J)L (I)J (G)I (FE)G' F..M --ancestry-path --simplify-merges -- file
 check_result 'M L K G' F..M --first-parent
 check_result 'M L G' F..M --first-parent -- file
 
@@ -139,15 +139,15 @@ check_result 'M L G' F..M --first-parent -- file
 # If we want history since E, then we're quite happy to ignore G that took E.
 check_result 'M L K J I H G' E..M --ancestry-path
 check_result 'M L J I H' E..M --ancestry-path -- file
-check_outcome failure 'M L K J I H' E..M --ancestry-path --parents -- file # includes G
-check_outcome failure 'M H L J I' E..M --ancestry-path --simplify-merges -- file # includes G
+check_outcome failure '(LH)M (K)L (EJ)K (I)J (E)I (E)H' E..M --ancestry-path --parents -- file # includes G
+check_outcome failure '(LH)M (E)H (J)L (I)J (E)I' E..M --ancestry-path --simplify-merges -- file # includes G
 
 # Should still be able to ignore I-J branch in simple log, despite limiting
 # to G.
 check_result 'M L K J I H' G..M
 check_result 'M H L K J I' G..M --topo-order
 check_outcome failure 'M L H' G..M -- file # includes J I
-check_outcome failure 'M L H' G..M --parents -- file # includes J I
+check_outcome failure '(LH)M (G)L (G)H' G..M --parents -- file # includes J I
 check_result 'M L J I H' G..M --full-history -- file
 check_result 'M L K J I H' G..M --full-history --parents -- file
 check_result 'M H L J I' G..M --simplify-merges -- file
@@ -162,10 +162,10 @@ check_result 'M H L J I' G..M --ancestry-path --simplify-merges -- file
 # we can't decide if the merge from INTERESTING commit C was sensible.
 check_result 'F D C' B..F
 check_result 'F' B..F -- file
-check_outcome failure 'F' B..F --parents -- file # includes D
+check_outcome failure '(B)F' B..F --parents -- file # includes D
 check_outcome failure 'F D' B..F --full-history -- file # drops D prematurely
-check_result 'F D' B..F --full-history --parents -- file
-check_result 'F' B..F --simplify-merges -- file
+check_result '(D)F (BA)D' B..F --full-history --parents -- file
+check_result '(B)F' B..F --simplify-merges -- file
 check_result 'F D' B..F --ancestry-path
 check_result 'F' B..F --ancestry-path -- file
 check_outcome failure 'F' B..F --ancestry-path --parents -- file # includes D
@@ -181,10 +181,10 @@ check_result 'F' E...F -- file
 # and it differs from it.
 check_result 'F D B' C..F
 check_result 'F B' C..F -- file
-check_result 'F B' C..F --parents -- file
+check_result '(B)F (A)B' C..F --parents -- file
 check_outcome failure 'F D B' C..F --full-history -- file # drops D
-check_result 'F D B' C..F --full-history --parents -- file
-check_result 'F D B' C..F --simplify-merges -- file
+check_result '(D)F (BC)D (A)B' C..F --full-history --parents -- file
+check_result '(D)F (BC)D (A)B' C..F --simplify-merges -- file
 check_result 'F D' C..F --ancestry-path
 check_outcome failure 'F D' C..F --ancestry-path -- file # drops D
 check_result 'F D' C..F --ancestry-path --parents -- file
