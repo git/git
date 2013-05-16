@@ -367,8 +367,7 @@ each merge.  The commits are:
   `N` and `D` to "foobarbaz"; i.e., it is not TREESAME to any parent.
 
 * `E` changes `quux` to "xyzzy", and its merge `P` combines the
-  strings to "quux xyzzy".  Despite appearing interesting, `P` is
-  TREESAME to all parents.
+  strings to "quux xyzzy".  `P` is TREESAME to `O`, but not to `E`.
 
 'rev-list' walks backwards through history, including or excluding
 commits based on whether '\--full-history' and/or parent rewriting
