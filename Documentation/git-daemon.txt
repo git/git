@@ -16,8 +16,10 @@ SYNOPSIS
 	     [--reuseaddr] [--detach] [--pid-file=<file>]
 	     [--enable=<service>] [--disable=<service>]
 	     [--allow-override=<service>] [--forbid-override=<service>]
-	     [--access-hook=<path>]
-	     [--inetd | [--listen=<host_or_ipaddr>] [--port=<n>] [--user=<user> [--group=<group>]]
+	     [--access-hook=<path>] [--[no-]informative-errors]
+	     [--inetd |
+	      [--listen=<host_or_ipaddr>] [--port=<n>]
+	      [--user=<user> [--group=<group>]]]
 	     [<directory>...]
 
 DESCRIPTION
@@ -169,8 +171,7 @@ Git configuration files in that directory are readable by `<user>`.
 	repository configuration.  By default, all the services
 	are overridable.
 
---informative-errors::
---no-informative-errors::
+--[no-]informative-errors::
 	When informative errors are turned on, git-daemon will report
 	more verbose errors to the client, differentiating conditions
 	like "no such repository" from "repository not exported". This

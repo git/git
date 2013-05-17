@@ -69,8 +69,7 @@ with custom merge tool commands and has the same value as `$MERGED`.
 --tool-help::
 	Print a list of diff tools that may be used with `--tool`.
 
---symlinks::
---no-symlinks::
+--[no-]symlinks::
 	'git difftool''s default behavior is create symlinks to the
 	working tree when run in `--dir-diff` mode and the right-hand
 	side of the comparison yields the same content as the file in

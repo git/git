@@ -10,7 +10,7 @@ SYNOPSIS
 --------
 [verse]
 'git archive' [--format=<fmt>] [--list] [--prefix=<prefix>/] [<extra>]
-	      [-o | --output=<file>] [--worktree-attributes]
+	      [-o <file> | --output=<file>] [--worktree-attributes]
 	      [--remote=<repo> [--exec=<git-upload-archive>]] <tree-ish>
 	      [<path>...]
 

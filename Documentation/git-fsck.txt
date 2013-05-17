@@ -30,8 +30,7 @@ index file, all SHA-1 references in `refs` namespace, and all reflogs
 	Print out objects that exist but that aren't reachable from any
 	of the reference nodes.
 
---dangling::
---no-dangling::
+--[no-]dangling::
 	Print objects that exist but that are never 'directly' used (default).
 	`--no-dangling` can be used to omit this information from the output.
 
@@ -78,8 +77,7 @@ index file, all SHA-1 references in `refs` namespace, and all reflogs
 	a blob, the contents are written into the file, rather than
 	its object name.
 
---progress::
---no-progress::
+--[no-]progress::
 	Progress status is reported on the standard error stream by
 	default when it is attached to a terminal, unless
 	--no-progress or --verbose is specified. --progress forces

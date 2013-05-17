@@ -83,8 +83,7 @@ typed the branch name.
 
 OPTIONS
 -------
---allow-onelevel::
---no-allow-onelevel::
+--[no-]allow-onelevel::
 	Controls whether one-level refnames are accepted (i.e.,
 	refnames that do not contain multiple `/`-separated
 	components).  The default is `--no-allow-onelevel`.

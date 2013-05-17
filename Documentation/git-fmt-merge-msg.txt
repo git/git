@@ -35,8 +35,7 @@ OPTIONS
 	Do not list one-line descriptions from the actual commits being
 	merged.
 
---summary::
---no-summary::
+--[no-]summary::
 	Synonyms to --log and --no-log; these are deprecated and will be
 	removed in the future.
 
