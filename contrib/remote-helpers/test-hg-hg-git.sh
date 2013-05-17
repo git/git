@@ -104,11 +104,12 @@ setup () {
 	git config --global remote-hg.hg-git-compat true
 	git config --global remote-hg.track-branches false
 
-	HGEDITOR=/usr/bin/true
+	HGEDITOR=true
+	HGMERGE=true
 
 	GIT_AUTHOR_DATE="2007-01-01 00:00:00 +0230"
 	GIT_COMMITTER_DATE="$GIT_AUTHOR_DATE"
-	export HGEDITOR GIT_AUTHOR_DATE GIT_COMMITTER_DATE
+	export HGEDITOR HGMERGE GIT_AUTHOR_DATE GIT_COMMITTER_DATE
 }
 
 setup
@@ -198,7 +199,7 @@ test_expect_success 'merge conflict 1' '
 	echo C > afile &&
 	hg ci -m "A->C" &&
 
-	hg merge -r1 || true &&
+	hg merge -r1 &&
 	echo C > afile &&
 	hg resolve -m afile &&
 	hg ci -m "merge to C"
