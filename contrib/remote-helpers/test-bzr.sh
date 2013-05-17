@@ -12,7 +12,7 @@ if ! test_have_prereq PYTHON; then
 	test_done
 fi
 
-if ! "$PYTHON_PATH" -c 'import bzrlib'; then
+if ! python -c 'import bzrlib'; then
 	skip_all='skipping remote-bzr tests; bzr not available'
 	test_done
 fi
