@@ -237,8 +237,10 @@ For Python scripts:
 
 Writing Documentation:
 
- Most (if not all) of the documentation pages are written in AsciiDoc
- and processed into HTML output and manpages.
+ Most (if not all) of the documentation pages are written in the
+ AsciiDoc format in *.txt files (e.g. Documentation/git.txt), and
+ processed into HTML and manpages (e.g. git.html and git.1 in the
+ same directory).
 
  Every user-visible change should be reflected in the documentation.
  The same general rule as for code applies -- imitate the existing
