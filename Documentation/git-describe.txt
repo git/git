@@ -88,6 +88,11 @@ OPTIONS
 --always::
 	Show uniquely abbreviated commit object as fallback.
 
+--first-parent::
+	Follow only the first parent commit upon seeing a merge commit.
+	This is useful when you wish to not match tags on branches merged
+	in the history of the target commit.
+
 EXAMPLES
 --------
 
@@ -149,7 +154,9 @@ is found, its name will be output and searching will stop.
 If an exact match was not found, 'git describe' will walk back
 through the commit history to locate an ancestor commit which
 has been tagged.  The ancestor's tag will be output along with an
-abbreviation of the input committish's SHA-1.
+abbreviation of the input committish's SHA-1. If '--first-parent' was
+specified then the walk will only consider the first parent of each
+commit.
 
 If multiple tags were found during the walk then the tag which
 has the fewest commits different from the input committish will be

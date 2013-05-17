@@ -110,6 +110,9 @@ check_describe tags/e --all HEAD^^^
 check_describe B-0-* --long HEAD^^2^
 check_describe A-3-* --long HEAD^^2
 
+check_describe c-7-* --tags
+check_describe e-3-* --first-parent --tags
+
 : >err.expect
 check_describe A --all A^0
 test_expect_success 'no warning was displayed for A' '

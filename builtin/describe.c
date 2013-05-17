@@ -21,6 +21,7 @@ static int debug;	/* Display lots of verbose info */
 static int all;	/* Any valid ref can be used */
 static int tags;	/* Allow lightweight tags */
 static int longformat;
+static int first_parent;
 static int abbrev = -1; /* unspecified */
 static int max_candidates = 10;
 static struct hash_table names;
@@ -336,6 +337,9 @@ static void describe(const char *arg, int last_one)
 				commit_list_insert_by_date(p, &list);
 			p->object.flags |= c->object.flags;
 			parents = parents->next;
+
+			if (first_parent)
+				break;
 		}
 	}
 
@@ -404,6 +408,7 @@ int cmd_describe(int argc, const char **argv, const char *prefix)
 		OPT_BOOLEAN(0, "all",        &all, N_("use any ref")),
 		OPT_BOOLEAN(0, "tags",       &tags, N_("use any tag, even unannotated")),
 		OPT_BOOLEAN(0, "long",       &longformat, N_("always use long format")),
+		OPT_BOOLEAN(0, "first-parent", &first_parent, N_("only follow first parent")),
 		OPT__ABBREV(&abbrev),
 		OPT_SET_INT(0, "exact-match", &max_candidates,
 			    N_("only output exact matches"), 0),
