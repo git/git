@@ -359,6 +359,7 @@ __git_ps1 ()
 			fi
 		fi
 
+		local z="${GIT_PS1_STATESEPARATOR-" "}"
 		local f="$w$i$s$u"
 		if [ $pcmode = yes ]; then
 			local gitstring=
@@ -384,7 +385,7 @@ __git_ps1 ()
 				gitstring="\[$branch_color\]$branchstring\[$c_clear\]"
 
 				if [ -n "$w$i$s$u$r$p" ]; then
-					gitstring="$gitstring "
+					gitstring="$gitstring$z"
 				fi
 				if [ "$w" = "*" ]; then
 					gitstring="$gitstring\[$bad_color\]$w"
@@ -400,13 +401,13 @@ __git_ps1 ()
 				fi
 				gitstring="$gitstring\[$c_clear\]$r$p"
 			else
-				gitstring="$c${b##refs/heads/}${f:+ $f}$r$p"
+				gitstring="$c${b##refs/heads/}${f:+$z$f}$r$p"
 			fi
 			gitstring=$(printf -- "$printf_format" "$gitstring")
 			PS1="$ps1pc_start$gitstring$ps1pc_end"
 		else
 			# NO color option unless in PROMPT_COMMAND mode
-			printf -- "$printf_format" "$c${b##refs/heads/}${f:+ $f}$r$p"
+			printf -- "$printf_format" "$c${b##refs/heads/}${f:+$z$f}$r$p"
 		fi
 	fi
 }
