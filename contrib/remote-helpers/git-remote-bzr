@@ -31,6 +31,7 @@ import bzrlib.transport
 import bzrlib.errors
 import bzrlib.ui
 import bzrlib.urlutils
+import bzrlib.branch
 
 import sys
 import os
@@ -788,7 +789,7 @@ def get_remote_branch(origin, remote_branch, name):
     return branch
 
 def find_branches(repo, wanted):
-    transport = repo.user_transport
+    transport = repo.bzrdir.root_transport
 
     for fn in transport.iter_files_recursive():
         if not fn.endswith('.bzr/branch-format'):
@@ -924,7 +925,8 @@ def main(args):
     if not os.path.exists(dirname):
         os.makedirs(dirname)
 
-    bzrlib.ui.ui_factory.be_quiet(True)
+    if hasattr(bzrlib.ui.ui_factory, 'be_quiet'):
+        bzrlib.ui.ui_factory.be_quiet(True)
 
     repo = get_repo(url, alias)
 
