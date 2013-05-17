@@ -222,6 +222,48 @@ __git_ps1_show_upstream ()
 
 }
 
+# Helper function that is meant to be called from __git_ps1.  It
+# builds up a gitstring injecting color codes into the appropriate
+# places.
+__git_ps1_colorize_gitstring ()
+{
+	local c_red='\e[31m'
+	local c_green='\e[32m'
+	local c_lblue='\e[1;34m'
+	local c_clear='\e[0m'
+	local bad_color=$c_red
+	local ok_color=$c_green
+	local branch_color="$c_clear"
+	local flags_color="$c_lblue"
+	local branchstring="$c${b##refs/heads/}"
+
+	if [ $detached = no ]; then
+		branch_color="$ok_color"
+	else
+		branch_color="$bad_color"
+	fi
+
+	# Setting gitstring directly with \[ and \] around colors
+	# is necessary to prevent wrapping issues!
+	gitstring="\[$branch_color\]$branchstring\[$c_clear\]"
+
+	if [ -n "$w$i$s$u$r$p" ]; then
+		gitstring="$gitstring$z"
+	fi
+	if [ "$w" = "*" ]; then
+		gitstring="$gitstring\[$bad_color\]$w"
+	fi
+	if [ -n "$i" ]; then
+		gitstring="$gitstring\[$ok_color\]$i"
+	fi
+	if [ -n "$s" ]; then
+		gitstring="$gitstring\[$flags_color\]$s"
+	fi
+	if [ -n "$u" ]; then
+		gitstring="$gitstring\[$bad_color\]$u"
+	fi
+	gitstring="$gitstring\[$c_clear\]$r$p"
+}
 
 # __git_ps1 accepts 0 or 1 arguments (i.e., format string)
 # when called from PS1 using command substitution
@@ -364,42 +406,7 @@ __git_ps1 ()
 		if [ $pcmode = yes ]; then
 			local gitstring=
 			if [ -n "${GIT_PS1_SHOWCOLORHINTS-}" ]; then
-				local c_red='\e[31m'
-				local c_green='\e[32m'
-				local c_lblue='\e[1;34m'
-				local c_clear='\e[0m'
-				local bad_color=$c_red
-				local ok_color=$c_green
-				local branch_color="$c_clear"
-				local flags_color="$c_lblue"
-				local branchstring="$c${b##refs/heads/}"
-
-				if [ $detached = no ]; then
-					branch_color="$ok_color"
-				else
-					branch_color="$bad_color"
-				fi
-
-				# Setting gitstring directly with \[ and \] around colors
-				# is necessary to prevent wrapping issues!
-				gitstring="\[$branch_color\]$branchstring\[$c_clear\]"
-
-				if [ -n "$w$i$s$u$r$p" ]; then
-					gitstring="$gitstring$z"
-				fi
-				if [ "$w" = "*" ]; then
-					gitstring="$gitstring\[$bad_color\]$w"
-				fi
-				if [ -n "$i" ]; then
-					gitstring="$gitstring\[$ok_color\]$i"
-				fi
-				if [ -n "$s" ]; then
-					gitstring="$gitstring\[$flags_color\]$s"
-				fi
-				if [ -n "$u" ]; then
-					gitstring="$gitstring\[$bad_color\]$u"
-				fi
-				gitstring="$gitstring\[$c_clear\]$r$p"
+				__git_ps1_colorize_gitstring
 			else
 				gitstring="$c${b##refs/heads/}${f:+$z$f}$r$p"
 			fi
