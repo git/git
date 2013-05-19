@@ -137,6 +137,10 @@ all::
 # specify your own (or DarwinPort's) include directories and
 # library directories by defining CFLAGS and LDFLAGS appropriately.
 #
+# Define NO_APPLE_COMMON_CRYPTO if you are building on Darwin/Mac OS X
+# and do not want to use Apple's CommonCrypto library.  This allows you
+# to provide your own OpenSSL library, for example from MacPorts.
+#
 # Define BLK_SHA1 environment variable to make use of the bundled
 # optimized C SHA1 routine.
 #
@@ -1053,6 +1057,10 @@ ifeq ($(uname_S),Darwin)
 			BASIC_CFLAGS += -I/opt/local/include
 			BASIC_LDFLAGS += -L/opt/local/lib
 		endif
+	endif
+	ifndef NO_APPLE_COMMON_CRYPTO
+		APPLE_COMMON_CRYPTO = YesPlease
+		COMPAT_CFLAGS += -DAPPLE_COMMON_CRYPTO
 	endif
 	NO_REGEX = YesPlease
 	PTHREAD_LIBS =
