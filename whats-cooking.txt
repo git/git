@@ -1,21 +1,19 @@
 To: git@vger.kernel.org
 Bcc: lwn@lwn.net
-Subject: What's cooking in git.git (May 2013, #04; Wed, 15)
-X-master-at: 0c2b1cf812be6e7e35bed0844b37e412cd232b6b
-X-next-at: 2fb82f5641542fc2b7c7ba84210b67d8255297c8
+Subject: What's cooking in git.git (May 2013, #05; Mon, 20)
+X-master-at: 9134a460e3ebfc93790e98d74b3cda2bcca8eb8b
+X-next-at: 751216b6ed747580cebd6590282b8ff55b96ac72
 
-What's cooking in git.git (May 2013, #04; Wed, 15)
+What's cooking in git.git (May 2013, #05; Mon, 20)
 --------------------------------------------------
 
 Here are the topics that have been cooking.  Commits prefixed with
 '-' are only in 'pu' (proposed updates) while commits prefixed with
 '+' are in 'next'.
 
-We are past -rc2 and haven't seen any regression reported since the
-feature freeze started, which may be a good sign (the coming release
-is perfect) or a bad sign (nobody is testing).  We'll see soon when
-we tag the 1.8.3 final sometime next week.  We may see subsystem
-(git-svn? gitk? git-gui?) and l10n updates before that happens.
+The final version of 1.8.3 is expected to be tagged late this week.
+While applying a few regression hot-fix patches, a couple of benign
+doc updates have also been merged to 'master'.
 
 You can find the changes described here in the integration branches
 of the repositories listed at
@@ -23,178 +21,94 @@ of the repositories listed at
     http://git-blame.blogspot.com/p/git-public-repositories.html
 
 --------------------------------------------------
-[New Topics]
+[Graduated to "master"]
 
 * dw/asciidoc-sources-are-dot-txt-files (2013-05-10) 1 commit
  - CodingGuidelines: Documentation/*.txt are the sources
 
 
-* fc/doc-style (2013-05-09) 2 commits
- - SQUASH??? more consistently update docs
+* fc/doc-style (2013-05-09) 1 commit
  - documentation: trivial style cleanups
 
+--------------------------------------------------
+[New Topics]
 
-* da/darwin (2013-05-15) 3 commits
- - imap-send: eliminate HMAC deprecation warnings on Mac OS X
- - cache.h: eliminate SHA-1 deprecation warnings on Mac OS X
- - Makefile: fix default regex settings on Darwin
+* fc/remote-bzr (2013-05-16) 6 commits
+ - remote-bzr: trivial cleanups
+ - remote-bzr: change global repo
+ - remote-bzr: delay cloning/pulling
+ - remote-bzr: simplify get_remote_branch()
+ - remote-bzr: fix for files with spaces
+ - remote-bzr: recover from failed clones
 
- Waiting for polishing discussion to finish.
-
-
-* fc/macos-x-clipped-write (2013-05-10) 2 commits
- - SQUASH???
- - compate/clipped-write.c: large write(2) fails on Mac OS X/XNU
-
- The tip needs to be squashed, as it was reported to have tested OK.
-
-
-* fc/remote-hg (2013-05-15) 39 commits
- - remote-hg: remove files before modifications
- - remote-hg: improve lightweight tag author
- - remote-hg: use remote 'default' not local one
- - remote-hg: improve branch listing
- - remote-hg: simplify branch_tip()
- - remote-hg: check diverged bookmarks
- - remote-hg: pass around revision refs
- - remote-hg: implement custom checkheads()
- - remote-hg: implement custom push()
- - remote-hg: only update necessary revisions
- - remote-hg: force remote bookmark push selectively
- - remote-hg: reorganize bookmark handling
- - remote-hg: add test for failed double push
- - remote-hg: add test for big push
- - remote-hg: add test for new bookmark special
- - remote-hg: add test for bookmark diverge
- - remote-hg: add test for diverged push
- - remote-hg: add test to push new bookmark
- - remote-hg: add remote tests
- - remote-hg: add check_bookmark() test helper
- - remote-bzr: simplify test checks
- - remote-hg: always point HEAD to master
- - remote-hg: improve progress calculation
- - remote-hg: trivial cleanups
- - remote-hg: ensure remote rebasing works
- - remote-hg: upgrade version 1 marks
- - remote-hg: switch from revisions to SHA-1 noteids
- - remote-hg: add version checks to the marks
- - remote-hg: improve node traversing
- - remote-hg: shuffle some code
- - remote-hg: use a shared repository store
- - remote-hg: load all extensions
- - remote-hg: test: simplify previous branch checkout
- - remote-helpers: test: simplify remote URLs
- - remote-helpers: tests: general improvements
- - remote-helpers: test: cleanup style
- - remote-helpers: test: cleanup white-spaces
- - remote-hg: trivial reorganization
- - remote-hg: test: be a little more quiet
-
- Probably will be one of the early topics to graduate post 1.8.3.
+ The ones near the tip conflicted with the hotfix for 1.8.3 so I
+ discarded them for now.
 
 
-* hv/config-from-blob (2013-05-12) 5 commits
- - do not die when error in config parsing of buf occurs
- - teach config --blob option to parse config from database
- - config: make parsing stack struct independent from actual data source
- - config: drop cf validity check in get_next_char()
- - config: factor out config file stack management
+* jx/clean-interactive (2013-05-20) 15 commits
+ - test: add t7301 for git-clean--interactive
+ - git-clean: add documentation for interactive git-clean
+ - git-clean: add ask each interactive action
+ - git-clean: add select by numbers interactive action
+ - git-clean: add filter by pattern interactive action
+ - git-clean: use a git-add-interactive compatible UI
+ - git-clean: add colors to interactive git-clean
+ - git-clean: show items of del_list in columns
+ - git-clean: add support for -i/--interactive
+ - git-clean: refactor git-clean into two phases
+ - Refactor write_name_quoted_relative, remove unused params
+ - Refactor quote_path_relative, remove unused params
+ - quote.c: remove path_relative, use relative_path instead
+ - path.c: refactor relative_path(), not only strip prefix
+ - test: add test cases for relative_path
 
 
-* jc/t5551-posix-sed-bre (2013-05-12) 1 commit
- - t5551: do not use unportable sed '\+'
+* tr/test-v-and-v-subtest-only (2013-05-16) 6 commits
+ - test-lib: support running tests under valgrind in parallel
+ - test-lib: allow prefixing a custom string before "ok N" etc.
+ - test-lib: valgrind for only tests matching a pattern
+ - test-lib: verbose mode for only tests matching a pattern
+ - test-lib: refactor $GIT_SKIP_TESTS matching
+ - test-lib: enable MALLOC_* for the actual tests
 
- Not a regression fix and not urgent.
+ Allows N instances of tests run in parallel, each running 1/N parts
+ of the test suite under Valgrind, to speed things up.
 
+ The tip one may be useful in practice but is a tad ugly ;-)
+ 
 
-* jk/fetch-always-update-tracking (2013-05-12) 4 commits
- - fetch: opportunistically update tracking refs
- - refactor "ref->merge" flag
- - fetch/pull doc: untangle meaning of bare <ref>
- - t5510: start tracking-ref tests from a known state
+* rh/merge-options-doc-fix (2013-05-16) 1 commit
+ - Documentation/merge-options.txt: restore `-e` option
 
- "git fetch origin master" unlike "git fetch origin" or "git fetch"
- does not update "refs/remotes/origin/master" and it was an early
- design decision to keep the update of remote tracking branches
- predictable, but in practice it turns out that people find it more
- convenient to opportunisticly update them whenever we have a
- chance, and we have been updating them when we run "git push" which
- already breaks the original "predictability" anyway.
-
-
-* nd/clone-connectivity-shortcut (2013-05-11) 4 commits
- - clone: open a shortcut for connectivity check
- - index-pack: remove dead code (it should never happen)
- - fetch-pack: prepare updated shallow file before fetching the pack
- - clone: let the user know when check_everything_connected is run
+ Even though it is not all that urgent, this can be merged to
+ 'master' before the final,
 
 
-* rr/rebase-autostash (2013-05-12) 7 commits
- - rebase: implement --[no-]autostash and rebase.autostash
- - rebase --merge: return control to caller, for housekeeping
- - rebase -i: return control to caller, for housekeeping
- - am: return control to caller, for housekeeping
- - rebase: prepare to do generic housekeeping
- - rebase -i: don't error out if $state_dir already exists
- - am: tighten a conditional that checks for $dotest
+* rr/zsh-color-prompt (2013-05-17) 3 commits
+ - prompt: colorize ZSH prompt
+ - prompt: factor out gitstring coloring logic
+ - prompt: introduce GIT_PS1_STATESEPARATOR
 
 
-* kb/ancestry-path-threedots (2013-05-13) 1 commit
- - t6019: demonstrate --ancestry-path A...B breakage
- (this branch is used by kb/full-history-compute-treesame-carefully-2.)
+* an/diff-index-doc (2013-05-20) 1 commit
+ - Documentation/diff-index: mention two modes of operation
 
 
-* kb/full-history-compute-treesame-carefully-2 (2013-05-13) 11 commits
- - revision.c: treat A...B merge bases as if manually specified
- - revision.c: discount side branches when computing TREESAME
- - simplify-merges: drop merge from irrelevant side branch
- - simplify-merges: never remove all TREESAME parents
- - t6012: update test for tweaked full-history traversal
- - revision.c: Make --full-history consider more merges
- - rev-list-options.txt: correct TREESAME for P
- - t6111: allow checking the parents as well
- - t6111: new TREESAME test set
- - t6019: test file dropped in -s ours merge
- - decorate.c: compact table when growing
- (this branch uses kb/ancestry-path-threedots.)
-
- Major update to a very core part of the system to improve culling
- of irrelevant parents while traversing a mergy history.
-
- Will not be a 1.8.3 material, but is an important topic.
+* fc/contrib-related (2013-05-20) 1 commit
+ - Add new git-related helper to contrib
 
 
-* jc/strbuf-branchname-fix (2013-05-15) 1 commit
- - strbuf_branchname(): do not double-expand @{-1}~22
-
- "git merge @{-1}~22" was rewritten to "git merge frotz@{1}~22"
- incorrectly when your previous branch was "frotz" (it should be
- rewritten to "git merge frotz~22" instead).
+* mc/describe-first-parent (2013-05-20) 1 commit
+ - describe: Add --first-parent option
 
 
-* mk/combine-diff-context-horizon-fix (2013-05-15) 1 commit
- - combine-diff.c: Fix output when changes are exactly 3 lines apart
-
- "git diff -c -p" was not showing a deleted line from a hunk when
- another hunk immediately begins where the earlier one ends.
-
-
-* mm/color-auto-default (2013-05-15) 2 commits
- - make color.ui default to 'auto'
- - config: refactor management of color.ui's default value
-
- Flip the default for color.ui to 'auto', which is what many
- tutorials recommend new users to do.
-
-
-* tr/coverage (2013-05-13) 4 commits
- - coverage: build coverage-untested-functions by default
- - coverage: set DEFAULT_TEST_TARGET to avoid using prove
- - coverage: do not delete .gcno files before building
- - coverage: split build target into compile and test
-
- Update the test coverage support that was left to bitrot for some
- time.
+* rs/tar-tests (2013-05-20) 6 commits
+ - t5000: test long filenames
+ - t5000: simplify tar-tree tests
+ - t5000: use check_tar for prefix test
+ - t5000: factor out check_tar
+ - t5000, t5003: create directories for extracted files lazily
+ - t5000: integrate export-subst tests into regular tests
 
 --------------------------------------------------
 [Stalled]
@@ -250,6 +164,196 @@ of the repositories listed at
 --------------------------------------------------
 [Cooking]
 
+* da/darwin (2013-05-20) 4 commits
+ - imap-send: eliminate HMAC deprecation warnings on Mac OS X
+ - cache.h: eliminate SHA-1 deprecation warnings on Mac OS X
+ - Makefile: add support for Apple CommonCrypto facility
+ - Makefile: fix default regex settings on Darwin
+
+ I think this is ready for 'next'; not that it matters during the
+ prerelease feature freeze.
+
+
+* fc/macos-x-clipped-write (2013-05-17) 1 commit
+ - compate/clipped-write.c: large write(2) fails on Mac OS X/XNU
+
+ I think this is ready for 'next'; not that it matters during the
+ prerelease feature freeze.
+
+
+* fc/remote-hg (2013-05-20) 41 commits
+ - remote-hg: tests: fix hg merge
+ - remote-helpers: tests: use python directly
+ - remote-hg: remove files before modifications
+ - remote-hg: improve lightweight tag author
+ - remote-hg: use remote 'default' not local one
+ - remote-hg: improve branch listing
+ - remote-hg: simplify branch_tip()
+ - remote-hg: check diverged bookmarks
+ - remote-hg: pass around revision refs
+ - remote-hg: implement custom checkheads()
+ - remote-hg: implement custom push()
+ - remote-hg: only update necessary revisions
+ - remote-hg: force remote bookmark push selectively
+ - remote-hg: reorganize bookmark handling
+ - remote-hg: add test for failed double push
+ - remote-hg: add test for big push
+ - remote-hg: add test for new bookmark special
+ - remote-hg: add test for bookmark diverge
+ - remote-hg: add test for diverged push
+ - remote-hg: add test to push new bookmark
+ - remote-hg: add remote tests
+ - remote-hg: add check_bookmark() test helper
+ - remote-bzr: simplify test checks
+ - remote-hg: always point HEAD to master
+ - remote-hg: improve progress calculation
+ - remote-hg: trivial cleanups
+ - remote-hg: ensure remote rebasing works
+ - remote-hg: upgrade version 1 marks
+ - remote-hg: switch from revisions to SHA-1 noteids
+ - remote-hg: add version checks to the marks
+ - remote-hg: improve node traversing
+ - remote-hg: shuffle some code
+ - remote-hg: use a shared repository store
+ - remote-hg: load all extensions
+ - remote-hg: test: simplify previous branch checkout
+ - remote-helpers: test: simplify remote URLs
+ - remote-helpers: tests: general improvements
+ - remote-helpers: test: cleanup style
+ - remote-helpers: test: cleanup white-spaces
+ - remote-hg: trivial reorganization
+ - remote-hg: test: be a little more quiet
+
+ The tip-two need to be split into its own branch, merged to 'next'
+ and the remainder discarded to be rerolled after 1.8.3.
+
+
+* hv/config-from-blob (2013-05-12) 5 commits
+ - do not die when error in config parsing of buf occurs
+ - teach config --blob option to parse config from database
+ - config: make parsing stack struct independent from actual data source
+ - config: drop cf validity check in get_next_char()
+ - config: factor out config file stack management
+
+
+* jc/t5551-posix-sed-bre (2013-05-12) 1 commit
+ - t5551: do not use unportable sed '\+'
+
+ I think this is ready for 'next'; not that it matters during the
+ prerelease feature freeze.
+
+
+* jk/fetch-always-update-tracking (2013-05-12) 4 commits
+ - fetch: opportunistically update tracking refs
+ - refactor "ref->merge" flag
+ - fetch/pull doc: untangle meaning of bare <ref>
+ - t5510: start tracking-ref tests from a known state
+
+ "git fetch origin master" unlike "git fetch origin" or "git fetch"
+ does not update "refs/remotes/origin/master" and it was an early
+ design decision to keep the update of remote tracking branches
+ predictable, but in practice it turns out that people find it more
+ convenient to opportunisticly update them whenever we have a
+ chance, and we have been updating them when we run "git push" which
+ already breaks the original "predictability" anyway.
+
+ I think this is ready for 'next'; not that it matters during the
+ prerelease feature freeze.
+
+
+* nd/clone-connectivity-shortcut (2013-05-11) 4 commits
+ - clone: open a shortcut for connectivity check
+ - index-pack: remove dead code (it should never happen)
+ - fetch-pack: prepare updated shallow file before fetching the pack
+ - clone: let the user know when check_everything_connected is run
+
+
+* rr/rebase-autostash (2013-05-12) 7 commits
+ - rebase: implement --[no-]autostash and rebase.autostash
+ - rebase --merge: return control to caller, for housekeeping
+ - rebase -i: return control to caller, for housekeeping
+ - am: return control to caller, for housekeeping
+ - rebase: prepare to do generic housekeeping
+ - rebase -i: don't error out if $state_dir already exists
+ - am: tighten a conditional that checks for $dotest
+
+
+* kb/ancestry-path-threedots (2013-05-16) 2 commits
+ - revision.c: treat A...B merge bases as if manually specified
+ - t6019: demonstrate --ancestry-path A...B breakage
+ (this branch is used by kb/full-history-compute-treesame-carefully-2.)
+
+ I think this is ready for 'next'; not that it matters during the
+ prerelease feature freeze.
+
+
+* kb/full-history-compute-treesame-carefully-2 (2013-05-16) 15 commits
+ - revision.c: make default history consider bottom commits
+ - revision.c: don't show all merges for --parents
+ - revision.c: discount side branches when computing TREESAME
+ - revision.c: add BOTTOM flag for commits
+ - simplify-merges: drop merge from irrelevant side branch
+ - simplify-merges: never remove all TREESAME parents
+ - t6012: update test for tweaked full-history traversal
+ - revision.c: Make --full-history consider more merges
+ - Documentation: avoid "uninteresting"
+ - rev-list-options.txt: correct TREESAME for P
+ - t6111: add parents to tests
+ - t6111: allow checking the parents as well
+ - t6111: new TREESAME test set
+ - t6019: test file dropped in -s ours merge
+ - decorate.c: compact table when growing
+ (this branch uses kb/ancestry-path-threedots.)
+
+ Major update to a very core part of the system to improve culling
+ of irrelevant parents while traversing a mergy history.
+
+ Will not be a 1.8.3 material, but is an important topic.
+
+
+* jc/strbuf-branchname-fix (2013-05-16) 1 commit
+ - strbuf_branchname(): do not double-expand @{-1}~22
+
+ "git merge @{-1}~22" was rewritten to "git merge frotz@{1}~22"
+ incorrectly when your previous branch was "frotz" (it should be
+ rewritten to "git merge frotz~22" instead).
+
+
+* mk/combine-diff-context-horizon-fix (2013-05-15) 1 commit
+ - combine-diff.c: Fix output when changes are exactly 3 lines apart
+
+ "git diff -c -p" was not showing a deleted line from a hunk when
+ another hunk immediately begins where the earlier one ends.
+
+ I think this is ready for 'next'; not that it matters during the
+ prerelease feature freeze.
+
+
+* mm/color-auto-default (2013-05-15) 2 commits
+ - make color.ui default to 'auto'
+ - config: refactor management of color.ui's default value
+
+ Flip the default for color.ui to 'auto', which is what many
+ tutorials recommend new users to do.
+
+ I think this is ready for 'next', but we may want to audit
+ tutorials to see if we need to adjust them if they suggest to set
+ color.ui as the first thing to do when they meet Git.
+
+
+* tr/coverage (2013-05-13) 4 commits
+ - coverage: build coverage-untested-functions by default
+ - coverage: set DEFAULT_TEST_TARGET to avoid using prove
+ - coverage: do not delete .gcno files before building
+ - coverage: split build target into compile and test
+
+ Update the test coverage support that was left to bitrot for some
+ time.
+
+ I think this is ready for 'next'; not that it matters during the
+ prerelease feature freeze.
+
+
 * mg/more-textconv (2013-05-10) 7 commits
  - grep: honor --textconv for the case rev:path
  - grep: allow to use textconv filters
@@ -259,7 +363,8 @@ of the repositories listed at
  - diff_opt: track whether flags have been set explicitly
  - t4030: demonstrate behavior of show with textconv
 
- Looked reasonable, I think.  Comments?
+ I think this is ready for 'next'; not that it matters during the
+ prerelease feature freeze.
 
 
 * jh/shorten-refname (2013-05-07) 4 commits
@@ -284,6 +389,9 @@ of the repositories listed at
  over git-over-ssh specified in the scp style.  Detect this case and
  clone from a local repository at "foo/bar:baz".
 
+ I think this is ready for 'next'; not that it matters during the
+ prerelease feature freeze.
+
 
 * nd/warn-ambiguous-object-name (2013-05-07) 1 commit
  - get_sha1: improve ambiguity warning regarding SHA-1 and ref names
@@ -303,6 +411,9 @@ of the repositories listed at
  - completion: synchronize zsh wrapper
  - completion: cleanup zsh wrapper
 
+ I think this is ready for 'next'; not that it matters during the
+ prerelease feature freeze.
+
 
 * rs/empty-archive (2013-05-09) 2 commits
  - t5004: resurrect original empty tar archive test
@@ -310,6 +421,9 @@ of the repositories listed at
 
  Fixes tests added in 1.8.2 era that are broken on BSDs,
  but it is not all that urgent.
+
+ I think this is ready for 'next'; not that it matters during the
+ prerelease feature freeze.
 
 
 * vv/help-unknown-ref (2013-05-08) 2 commits
@@ -320,6 +434,9 @@ of the repositories listed at
  and give an error message that is more specific than "foo is not
  something we can merge".
 
+ I think this is ready for 'next'; not that it matters during the
+ prerelease feature freeze.
+
 
 * fc/fast-export-persistent-marks (2013-05-07) 3 commits
  - fast-{import,export}: use get_sha1_hex() to read from marks file
@@ -329,6 +446,9 @@ of the repositories listed at
  Optimization for fast-export by avoiding unnecessarily resolving
  arbitrary object name and parsing object when only presence and
  type information is necessary, etc.
+
+ I think this is ready for 'next'; not that it matters during the
+ prerelease feature freeze.
 
 
 * jc/core-checkstat-2.0 (2013-05-06) 2 commits
@@ -392,8 +512,8 @@ of the repositories listed at
  - completion: document tilde expansion failure in tests
  - completion: add file completion tests
 
- I saw this discussed somewhat. Is everybody happy with this
- version?  This is its v2, in the $gmane/222682 thread.
+ I think this is ready for 'next'; not that it matters during the
+ prerelease feature freeze.
 
 
 * jk/test-output (2013-05-06) 3 commits
