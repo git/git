@@ -103,6 +103,18 @@ test_expect_success \
 
 check_tar b
 
+test_expect_success 'git archive --prefix=prefix/' '
+	git archive --prefix=prefix/ HEAD >with_prefix.tar
+'
+
+check_tar with_prefix prefix/
+
+test_expect_success 'git-archive --prefix=olde-' '
+	git archive --prefix=olde- HEAD >with_olde-prefix.tar
+'
+
+check_tar with_olde-prefix olde-
+
 test_expect_success \
     'git tar-tree' \
     'git tar-tree HEAD >b2.tar'
@@ -178,18 +190,6 @@ test_expect_success 'clients cannot access unreachable commits' '
 	git reset --hard HEAD^ &&
 	git archive $sha1 >remote.tar &&
 	test_must_fail git archive --remote=. $sha1 >remote.tar
-'
-
-test_expect_success 'git-archive --prefix=olde-' '
-	git archive --prefix=olde- >h.tar HEAD &&
-	(
-		mkdir h &&
-		cd h &&
-		"$TAR" xf - <../h.tar
-	) &&
-	test -d h/olde-a &&
-	test -d h/olde-a/bin &&
-	test -f h/olde-a/bin/sh
 '
 
 test_expect_success 'setup tar filters' '
