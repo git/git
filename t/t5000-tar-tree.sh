@@ -30,6 +30,32 @@ GUNZIP=${GUNZIP:-gzip -d}
 
 SUBSTFORMAT=%H%n
 
+test_lazy_prereq TAR_NEEDS_PAX_FALLBACK '
+	(
+		mkdir pax &&
+		cd pax &&
+		"$TAR" xf "$TEST_DIRECTORY"/t5000/pax.tar &&
+		test -f PaxHeaders.1791/file
+	)
+'
+
+get_pax_header() {
+	file=$1
+	header=$2=
+
+	while read len rest
+	do
+		if test "$len" = $(echo "$len $rest" | wc -c)
+		then
+			case "$rest" in
+			$header*)
+				echo "${rest#$header}"
+				;;
+			esac
+		fi
+	done <"$file"
+}
+
 check_tar() {
 	tarfile=$1.tar
 	listfile=$1.lst
@@ -38,6 +64,24 @@ check_tar() {
 
 	test_expect_success ' extract tar archive' '
 		(mkdir $dir && cd $dir && "$TAR" xf -) <$tarfile
+	'
+
+	test_expect_success TAR_NEEDS_PAX_FALLBACK ' interpret pax headers' '
+		(
+			cd $dir &&
+			for header in *.paxheader
+			do
+				data=${header%.paxheader}.data &&
+				if test -h $data -o -e $data
+				then
+					path=$(get_pax_header $header path) &&
+					if test -n "$path"
+					then
+						mv "$data" "$path"
+					fi
+				fi
+			done
+		)
 	'
 
 	test_expect_success ' validate filenames' '
@@ -54,6 +98,8 @@ test_expect_success \
     'populate workdir' \
     'mkdir a &&
      echo simple textfile >a/a &&
+     ten=0123456789 && hundred=$ten$ten$ten$ten$ten$ten$ten$ten$ten$ten &&
+     echo long filename >a/four$hundred &&
      mkdir a/bin &&
      cp /bin/sh a/bin &&
      printf "A\$Format:%s\$O" "$SUBSTFORMAT" >a/substfile1 &&
