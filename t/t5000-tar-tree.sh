@@ -32,7 +32,7 @@ SUBSTFORMAT=%H%n
 
 test_expect_success \
     'populate workdir' \
-    'mkdir a b c &&
+    'mkdir a &&
      echo simple textfile >a/a &&
      mkdir a/bin &&
      cp /bin/sh a/bin &&
@@ -126,7 +126,7 @@ test_expect_success \
 
 test_expect_success \
     'extract tar archive' \
-    '(cd b && "$TAR" xf -) <b.tar'
+    '(mkdir b && cd b && "$TAR" xf -) <b.tar'
 
 test_expect_success \
     'validate filenames' \
@@ -143,7 +143,7 @@ test_expect_success \
 
 test_expect_success \
     'extract tar archive with prefix' \
-    '(cd c && "$TAR" xf -) <c.tar'
+    '(mkdir c && cd c && "$TAR" xf -) <c.tar'
 
 test_expect_success \
     'validate filenames with prefix' \
