@@ -62,6 +62,12 @@ test_expect_success \
      git update-ref HEAD $(TZ=GMT GIT_COMMITTER_DATE="2005-05-27 22:00:00" \
      git commit-tree $treeid </dev/null)'
 
+test_expect_success 'setup export-subst' '
+	echo "substfile?" export-subst >>.git/info/attributes &&
+	git log --max-count=1 "--pretty=format:A${SUBSTFORMAT}O" HEAD \
+		>a/substfile1
+'
+
 test_expect_success \
     'create bare clone' \
     'git clone --bare . bare.git &&
@@ -147,38 +153,6 @@ test_expect_success \
 test_expect_success \
     'validate file contents with prefix' \
     'diff -r a c/prefix/a'
-
-test_expect_success \
-    'create archives with substfiles' \
-    'cp .git/info/attributes .git/info/attributes.before &&
-     echo "substfile?" export-subst >>.git/info/attributes &&
-     git archive HEAD >f.tar &&
-     git archive --prefix=prefix/ HEAD >g.tar &&
-     mv .git/info/attributes.before .git/info/attributes'
-
-test_expect_success \
-    'extract substfiles' \
-    '(mkdir f && cd f && "$TAR" xf -) <f.tar'
-
-test_expect_success \
-     'validate substfile contents' \
-     'git log --max-count=1 "--pretty=format:A${SUBSTFORMAT}O" HEAD \
-      >f/a/substfile1.expected &&
-      test_cmp f/a/substfile1.expected f/a/substfile1 &&
-      test_cmp a/substfile2 f/a/substfile2
-'
-
-test_expect_success \
-    'extract substfiles from archive with prefix' \
-    '(mkdir g && cd g && "$TAR" xf -) <g.tar'
-
-test_expect_success \
-     'validate substfile contents from archive with prefix' \
-     'git log --max-count=1 "--pretty=format:A${SUBSTFORMAT}O" HEAD \
-      >g/prefix/a/substfile1.expected &&
-      test_cmp g/prefix/a/substfile1.expected g/prefix/a/substfile1 &&
-      test_cmp a/substfile2 g/prefix/a/substfile2
-'
 
 test_expect_success 'git archive with --output, override inferred format' '
 	git archive --format=tar --output=d4.zip HEAD &&
