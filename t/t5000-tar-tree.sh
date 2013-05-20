@@ -115,14 +115,6 @@ test_expect_success 'git-archive --prefix=olde-' '
 
 check_tar with_olde-prefix olde-
 
-test_expect_success \
-    'git tar-tree' \
-    'git tar-tree HEAD >b2.tar'
-
-test_expect_success \
-    'git archive vs. git tar-tree' \
-    'test_cmp b.tar b2.tar'
-
 test_expect_success 'git archive on large files' '
     test_config core.bigfilethreshold 1 &&
     git archive HEAD >b3.tar &&
@@ -158,22 +150,15 @@ test_expect_success \
     'git get-tar-commit-id <b.tar >b.commitid &&
      test_cmp .git/$(git symbolic-ref HEAD) b.commitid'
 
-test_expect_success \
-    'git tar-tree with prefix' \
-    'git tar-tree HEAD prefix >c.tar'
+test_expect_success 'git tar-tree' '
+	git tar-tree HEAD >tar-tree.tar &&
+	test_cmp b.tar tar-tree.tar
+'
 
-test_expect_success \
-    'extract tar archive with prefix' \
-    '(mkdir c && cd c && "$TAR" xf -) <c.tar'
-
-test_expect_success \
-    'validate filenames with prefix' \
-    '(cd c/prefix/a && find .) | sort >c.lst &&
-     test_cmp a.lst c.lst'
-
-test_expect_success \
-    'validate file contents with prefix' \
-    'diff -r a c/prefix/a'
+test_expect_success 'git tar-tree with prefix' '
+	git tar-tree HEAD prefix >tar-tree_with_prefix.tar &&
+	test_cmp with_prefix.tar tar-tree_with_prefix.tar
+'
 
 test_expect_success 'git archive with --output, override inferred format' '
 	git archive --format=tar --output=d4.zip HEAD &&
