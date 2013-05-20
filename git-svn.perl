@@ -113,7 +113,7 @@ my ($_stdin, $_help, $_edit,
 	$_template, $_shared,
 	$_version, $_fetch_all, $_no_rebase, $_fetch_parent,
 	$_before, $_after,
-	$_merge, $_strategy, $_preserve_merges, $_dry_run, $_local,
+	$_merge, $_strategy, $_preserve_merges, $_dry_run, $_parents, $_local,
 	$_prefix, $_no_checkout, $_url, $_verbose,
 	$_commit_url, $_tag, $_merge_info, $_interactive);
 
@@ -203,6 +203,7 @@ my %cmd = (
 	            { 'message|m=s' => \$_message,
 	              'destination|d=s' => \$_branch_dest,
 	              'dry-run|n' => \$_dry_run,
+	              'parents' => \$_parents,
 	              'tag|t' => \$_tag,
 	              'username=s' => \$Git::SVN::Prompt::_username,
 	              'commit-url=s' => \$_commit_url } ],
@@ -211,6 +212,7 @@ my %cmd = (
 	         { 'message|m=s' => \$_message,
 	           'destination|d=s' => \$_branch_dest,
 	           'dry-run|n' => \$_dry_run,
+	           'parents' => \$_parents,
 	           'username=s' => \$Git::SVN::Prompt::_username,
 	           'commit-url=s' => \$_commit_url } ],
 	'set-tree' => [ \&cmd_set_tree,
@@ -1172,11 +1174,26 @@ sub cmd_branch {
 		$ctx->ls($dst, 'HEAD', 0);
 	} and die "branch ${branch_name} already exists\n";
 
+	if ($_parents) {
+		mk_parent_dirs($ctx, $dst);
+	}
+
 	print "Copying ${src} at r${rev} to ${dst}...\n";
 	$ctx->copy($src, $rev, $dst)
 		unless $_dry_run;
 
 	$gs->fetch_all;
+}
+
+sub mk_parent_dirs {
+	my ($ctx, $parent) = @_;
+	$parent =~ s{/[^/]*$}{};
+
+	if (!eval{$ctx->ls($parent, 'HEAD', 0)}) {
+		mk_parent_dirs($ctx, $parent);
+		print "Creating parent folder ${parent} ...\n";
+		$ctx->mkdir($parent) unless $_dry_run;
+	}
 }
 
 sub cmd_find_rev {
