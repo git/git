@@ -30,6 +30,26 @@ GUNZIP=${GUNZIP:-gzip -d}
 
 SUBSTFORMAT=%H%n
 
+check_tar() {
+	tarfile=$1.tar
+	listfile=$1.lst
+	dir=$1
+	dir_with_prefix=$dir/$2
+
+	test_expect_success ' extract tar archive' '
+		(mkdir $dir && cd $dir && "$TAR" xf -) <$tarfile
+	'
+
+	test_expect_success ' validate filenames' '
+		(cd ${dir_with_prefix}a && find .) | sort >$listfile &&
+		test_cmp a.lst $listfile
+	'
+
+	test_expect_success ' validate file contents' '
+		diff -r a ${dir_with_prefix}a
+	'
+}
+
 test_expect_success \
     'populate workdir' \
     'mkdir a &&
@@ -81,6 +101,8 @@ test_expect_success \
     'git archive' \
     'git archive HEAD >b.tar'
 
+check_tar b
+
 test_expect_success \
     'git tar-tree' \
     'git tar-tree HEAD >b2.tar'
@@ -123,19 +145,6 @@ test_expect_success \
     'git get-tar-commit-id' \
     'git get-tar-commit-id <b.tar >b.commitid &&
      test_cmp .git/$(git symbolic-ref HEAD) b.commitid'
-
-test_expect_success \
-    'extract tar archive' \
-    '(mkdir b && cd b && "$TAR" xf -) <b.tar'
-
-test_expect_success \
-    'validate filenames' \
-    '(cd b/a && find .) | sort >b.lst &&
-     test_cmp a.lst b.lst'
-
-test_expect_success \
-    'validate file contents' \
-    'diff -r a b/a'
 
 test_expect_success \
     'git tar-tree with prefix' \
