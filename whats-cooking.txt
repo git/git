@@ -1,10 +1,10 @@
 To: git@vger.kernel.org
 Bcc: lwn@lwn.net
-Subject: What's cooking in git.git (May 2013, #05; Mon, 20)
-X-master-at: 9134a460e3ebfc93790e98d74b3cda2bcca8eb8b
-X-next-at: 751216b6ed747580cebd6590282b8ff55b96ac72
+Subject: What's cooking in git.git (May 2013, #06; Tue, 21)
+X-master-at: 5e49f30c85ecacec98631462fa73f1148a01637c
+X-next-at: 6bd1cbc7f99e9924e7312d52e6ec62d01f81905f
 
-What's cooking in git.git (May 2013, #05; Mon, 20)
+What's cooking in git.git (May 2013, #06; Tue, 21)
 --------------------------------------------------
 
 Here are the topics that have been cooking.  Commits prefixed with
@@ -12,8 +12,14 @@ Here are the topics that have been cooking.  Commits prefixed with
 '+' are in 'next'.
 
 The final version of 1.8.3 is expected to be tagged late this week.
-While applying a few regression hot-fix patches, a couple of benign
-doc updates have also been merged to 'master'.
+
+I have kept many late topics outside 'next' during the -rc period
+primarily because the original plan was to keep the -rc period short
+for this cycle, and because rebuilding 'next' after the release will
+make it a lot more cumbersome to maintain the "What's cooking"
+report if we have many topics on 'next' already.  But we ended up
+having to do an extra -rc3 so I merged a bunch of topics including
+the late ones to 'next' with this pushout.
 
 You can find the changes described here in the integration branches
 of the repositories listed at
@@ -21,97 +27,43 @@ of the repositories listed at
     http://git-blame.blogspot.com/p/git-public-repositories.html
 
 --------------------------------------------------
-[Graduated to "master"]
-
-* dw/asciidoc-sources-are-dot-txt-files (2013-05-10) 1 commit
- - CodingGuidelines: Documentation/*.txt are the sources
-
-
-* fc/doc-style (2013-05-09) 1 commit
- - documentation: trivial style cleanups
-
---------------------------------------------------
 [New Topics]
 
-* fc/remote-bzr (2013-05-16) 6 commits
- - remote-bzr: trivial cleanups
- - remote-bzr: change global repo
- - remote-bzr: delay cloning/pulling
- - remote-bzr: simplify get_remote_branch()
- - remote-bzr: fix for files with spaces
- - remote-bzr: recover from failed clones
-
- The ones near the tip conflicted with the hotfix for 1.8.3 so I
- discarded them for now.
+* dm/unbash-subtree (2013-05-21) 1 commit
+ - contrib/git-subtree: Use /bin/sh interpreter instead of /bin/bash
 
 
-* jx/clean-interactive (2013-05-20) 15 commits
- - test: add t7301 for git-clean--interactive
- - git-clean: add documentation for interactive git-clean
- - git-clean: add ask each interactive action
- - git-clean: add select by numbers interactive action
- - git-clean: add filter by pattern interactive action
- - git-clean: use a git-add-interactive compatible UI
- - git-clean: add colors to interactive git-clean
- - git-clean: show items of del_list in columns
- - git-clean: add support for -i/--interactive
- - git-clean: refactor git-clean into two phases
- - Refactor write_name_quoted_relative, remove unused params
- - Refactor quote_path_relative, remove unused params
- - quote.c: remove path_relative, use relative_path instead
- - path.c: refactor relative_path(), not only strip prefix
- - test: add test cases for relative_path
+* fc/transport-helper-no-refspec (2013-05-21) 2 commits
+ - transport-helper: check if the dry-run is supported
+ - transport-helper: barf when user tries old:new
 
 
-* tr/test-v-and-v-subtest-only (2013-05-16) 6 commits
- - test-lib: support running tests under valgrind in parallel
- - test-lib: allow prefixing a custom string before "ok N" etc.
- - test-lib: valgrind for only tests matching a pattern
- - test-lib: verbose mode for only tests matching a pattern
- - test-lib: refactor $GIT_SKIP_TESTS matching
- - test-lib: enable MALLOC_* for the actual tests
+* rr/die-on-missing-upstream (2013-05-21) 2 commits
+ - sha1_name: fix error message for @{<N>}, @{<date>}
+ - sha1_name: fix error message for @{u}
 
- Allows N instances of tests run in parallel, each running 1/N parts
- of the test suite under Valgrind, to speed things up.
-
- The tip one may be useful in practice but is a tad ugly ;-)
- 
-
-* rh/merge-options-doc-fix (2013-05-16) 1 commit
- - Documentation/merge-options.txt: restore `-e` option
-
- Even though it is not all that urgent, this can be merged to
- 'master' before the final,
+ When a reflog notation is used for implicit "current branch", we
+ did not say which branch and worse said "branch ''".
 
 
-* rr/zsh-color-prompt (2013-05-17) 3 commits
- - prompt: colorize ZSH prompt
- - prompt: factor out gitstring coloring logic
- - prompt: introduce GIT_PS1_STATESEPARATOR
-
-
-* an/diff-index-doc (2013-05-20) 1 commit
- - Documentation/diff-index: mention two modes of operation
-
-
-* fc/contrib-related (2013-05-20) 1 commit
- - Add new git-related helper to contrib
-
-
-* mc/describe-first-parent (2013-05-20) 1 commit
- - describe: Add --first-parent option
-
-
-* rs/tar-tests (2013-05-20) 6 commits
- - t5000: test long filenames
- - t5000: simplify tar-tree tests
- - t5000: use check_tar for prefix test
- - t5000: factor out check_tar
- - t5000, t5003: create directories for extracted files lazily
- - t5000: integrate export-subst tests into regular tests
+* jc/show-branch (2013-05-21) 5 commits
+ - show-branch: use commit slab to represent bitflags of arbitrary width
+ - show-branch.c: remove "all_mask"
+ - show-branch.c: abstract out "flags" operation
+ - show-branch.c: lift all_mask/all_revs to a global static
+ - show-branch.c: update comment style
+ (this branch uses jk/commit-info-slab.)
 
 --------------------------------------------------
 [Stalled]
+
+* rj/mingw-cygwin (2013-05-08) 2 commits
+ - cygwin: Remove the CYGWIN_V15_WIN32API build variable
+ - mingw: rename WIN32 cpp macro to GIT_WINDOWS_NATIVE
+
+ Update build for Cygwin 1.[57].  There seems to have been some
+ discussion but did anything concrete come out of it???
+
 
 * mh/multimail (2013-04-21) 1 commit
  - git-multimail: a replacement for post-receive-email
@@ -164,26 +116,105 @@ of the repositories listed at
 --------------------------------------------------
 [Cooking]
 
-* da/darwin (2013-05-20) 4 commits
- - imap-send: eliminate HMAC deprecation warnings on Mac OS X
- - cache.h: eliminate SHA-1 deprecation warnings on Mac OS X
- - Makefile: add support for Apple CommonCrypto facility
- - Makefile: fix default regex settings on Darwin
+* fc/remote-bzr (2013-05-16) 6 commits
+ - remote-bzr: trivial cleanups
+ - remote-bzr: change global repo
+ - remote-bzr: delay cloning/pulling
+ - remote-bzr: simplify get_remote_branch()
+ - remote-bzr: fix for files with spaces
+ - remote-bzr: recover from failed clones
 
- I think this is ready for 'next'; not that it matters during the
- prerelease feature freeze.
+ The ones near the tip conflicted with the hotfix for 1.8.3 so I
+ discarded them for now.
+
+
+* jx/clean-interactive (2013-05-20) 15 commits
+ - test: add t7301 for git-clean--interactive
+ - git-clean: add documentation for interactive git-clean
+ - git-clean: add ask each interactive action
+ - git-clean: add select by numbers interactive action
+ - git-clean: add filter by pattern interactive action
+ - git-clean: use a git-add-interactive compatible UI
+ - git-clean: add colors to interactive git-clean
+ - git-clean: show items of del_list in columns
+ - git-clean: add support for -i/--interactive
+ - git-clean: refactor git-clean into two phases
+ - Refactor write_name_quoted_relative, remove unused params
+ - Refactor quote_path_relative, remove unused params
+ - quote.c: remove path_relative, use relative_path instead
+ - path.c: refactor relative_path(), not only strip prefix
+ - test: add test cases for relative_path
+
+
+* tr/test-v-and-v-subtest-only (2013-05-16) 6 commits
+ - test-lib: support running tests under valgrind in parallel
+ - test-lib: allow prefixing a custom string before "ok N" etc.
+ - test-lib: valgrind for only tests matching a pattern
+ - test-lib: verbose mode for only tests matching a pattern
+ - test-lib: refactor $GIT_SKIP_TESTS matching
+ - test-lib: enable MALLOC_* for the actual tests
+
+ Allows N instances of tests run in parallel, each running 1/N parts
+ of the test suite under Valgrind, to speed things up.
+
+ The tip one may be useful in practice but is a tad ugly ;-)
+
+
+* rh/merge-options-doc-fix (2013-05-16) 1 commit
+  (merged to 'next' on 2013-05-21 at f76baf3)
+ + Documentation/merge-options.txt: restore `-e` option
+
+
+* rr/zsh-color-prompt (2013-05-17) 3 commits
+ - prompt: colorize ZSH prompt
+ - prompt: factor out gitstring coloring logic
+ - prompt: introduce GIT_PS1_STATESEPARATOR
+
+
+* an/diff-index-doc (2013-05-20) 1 commit
+  (merged to 'next' on 2013-05-21 at 6e1459b)
+ + Documentation/diff-index: mention two modes of operation
+
+
+* fc/contrib-related (2013-05-20) 1 commit
+ - Add new git-related helper to contrib
+
+
+* mc/describe-first-parent (2013-05-20) 1 commit
+  (merged to 'next' on 2013-05-21 at 2e02ffc)
+ + describe: Add --first-parent option
+
+
+* rs/tar-tests (2013-05-20) 6 commits
+  (merged to 'next' on 2013-05-21 at aed12a7)
+ + t5000: test long filenames
+ + t5000: simplify tar-tree tests
+ + t5000: use check_tar for prefix test
+ + t5000: factor out check_tar
+ + t5000, t5003: create directories for extracted files lazily
+ + t5000: integrate export-subst tests into regular tests
+
+
+* da/darwin (2013-05-21) 4 commits
+  (merged to 'next' on 2013-05-21 at 0497edb)
+ + imap-send: eliminate HMAC deprecation warnings on Mac OS X
+ + cache.h: eliminate SHA-1 deprecation warnings on Mac OS X
+ + Makefile: add support for Apple CommonCrypto facility
+ + Makefile: fix default regex settings on Darwin
+
+ Newer MacOS X encourages the programs to compile and link with
+ their CommonCrypto, not with OpenSSL.
 
 
 * fc/macos-x-clipped-write (2013-05-17) 1 commit
- - compate/clipped-write.c: large write(2) fails on Mac OS X/XNU
+  (merged to 'next' on 2013-05-21 at 510b0dd)
+ + compate/clipped-write.c: large write(2) fails on Mac OS X/XNU
 
- I think this is ready for 'next'; not that it matters during the
- prerelease feature freeze.
+ Mac OS X does not like to write(2) more than INT_MAX number of
+ bytes.
 
 
-* fc/remote-hg (2013-05-20) 41 commits
- - remote-hg: tests: fix hg merge
- - remote-helpers: tests: use python directly
+* fc/remote-hg (2013-05-21) 41 commits
  - remote-hg: remove files before modifications
  - remote-hg: improve lightweight tag author
  - remote-hg: use remote 'default' not local one
@@ -223,9 +254,11 @@ of the repositories listed at
  - remote-helpers: test: cleanup white-spaces
  - remote-hg: trivial reorganization
  - remote-hg: test: be a little more quiet
+ - remote-hg: tests: fix hg merge
+ - remote-helpers: tests: use python directly
 
- The tip-two need to be split into its own branch, merged to 'next'
- and the remainder discarded to be rerolled after 1.8.3.
+ The remainder are to be rerolled on top of the bottom-two, so I
+ flipped the order of the series.
 
 
 * hv/config-from-blob (2013-05-12) 5 commits
@@ -237,17 +270,18 @@ of the repositories listed at
 
 
 * jc/t5551-posix-sed-bre (2013-05-12) 1 commit
- - t5551: do not use unportable sed '\+'
+  (merged to 'next' on 2013-05-21 at d597ca1)
+ + t5551: do not use unportable sed '\+'
 
- I think this is ready for 'next'; not that it matters during the
- prerelease feature freeze.
+ POSIX fix for a test script.
 
 
 * jk/fetch-always-update-tracking (2013-05-12) 4 commits
- - fetch: opportunistically update tracking refs
- - refactor "ref->merge" flag
- - fetch/pull doc: untangle meaning of bare <ref>
- - t5510: start tracking-ref tests from a known state
+  (merged to 'next' on 2013-05-21 at f7e4b16)
+ + fetch: opportunistically update tracking refs
+ + refactor "ref->merge" flag
+ + fetch/pull doc: untangle meaning of bare <ref>
+ + t5510: start tracking-ref tests from a known state
 
  "git fetch origin master" unlike "git fetch origin" or "git fetch"
  does not update "refs/remotes/origin/master" and it was an early
@@ -256,9 +290,6 @@ of the repositories listed at
  convenient to opportunisticly update them whenever we have a
  chance, and we have been updating them when we run "git push" which
  already breaks the original "predictability" anyway.
-
- I think this is ready for 'next'; not that it matters during the
- prerelease feature freeze.
 
 
 * nd/clone-connectivity-shortcut (2013-05-11) 4 commits
@@ -279,12 +310,14 @@ of the repositories listed at
 
 
 * kb/ancestry-path-threedots (2013-05-16) 2 commits
- - revision.c: treat A...B merge bases as if manually specified
- - t6019: demonstrate --ancestry-path A...B breakage
+  (merged to 'next' on 2013-05-21 at 5d75bd3)
+ + revision.c: treat A...B merge bases as if manually specified
+ + t6019: demonstrate --ancestry-path A...B breakage
  (this branch is used by kb/full-history-compute-treesame-carefully-2.)
 
- I think this is ready for 'next'; not that it matters during the
- prerelease feature freeze.
+ "git log --ancestry-path A...B" did not work as expected, as it did
+ not pay attention to the fact that the merge base between A and B
+ was the bottom of the range being specified.
 
 
 * kb/full-history-compute-treesame-carefully-2 (2013-05-16) 15 commits
@@ -312,7 +345,8 @@ of the repositories listed at
 
 
 * jc/strbuf-branchname-fix (2013-05-16) 1 commit
- - strbuf_branchname(): do not double-expand @{-1}~22
+  (merged to 'next' on 2013-05-21 at 5db8872)
+ + strbuf_branchname(): do not double-expand @{-1}~22
 
  "git merge @{-1}~22" was rewritten to "git merge frotz@{1}~22"
  incorrectly when your previous branch was "frotz" (it should be
@@ -320,13 +354,11 @@ of the repositories listed at
 
 
 * mk/combine-diff-context-horizon-fix (2013-05-15) 1 commit
- - combine-diff.c: Fix output when changes are exactly 3 lines apart
+  (merged to 'next' on 2013-05-21 at f462c02)
+ + combine-diff.c: Fix output when changes are exactly 3 lines apart
 
  "git diff -c -p" was not showing a deleted line from a hunk when
  another hunk immediately begins where the earlier one ends.
-
- I think this is ready for 'next'; not that it matters during the
- prerelease feature freeze.
 
 
 * mm/color-auto-default (2013-05-15) 2 commits
@@ -334,37 +366,35 @@ of the repositories listed at
  - config: refactor management of color.ui's default value
 
  Flip the default for color.ui to 'auto', which is what many
- tutorials recommend new users to do.
-
- I think this is ready for 'next', but we may want to audit
- tutorials to see if we need to adjust them if they suggest to set
- color.ui as the first thing to do when they meet Git.
+ tutorials recommend new users to do.  The updated code claims the
+ switch happened at Git 2.0 in the past tense, but we might want to
+ expedite it, as this change is not all that important to deserve a
+ major version bump.
 
 
 * tr/coverage (2013-05-13) 4 commits
- - coverage: build coverage-untested-functions by default
- - coverage: set DEFAULT_TEST_TARGET to avoid using prove
- - coverage: do not delete .gcno files before building
- - coverage: split build target into compile and test
+  (merged to 'next' on 2013-05-21 at 8480007)
+ + coverage: build coverage-untested-functions by default
+ + coverage: set DEFAULT_TEST_TARGET to avoid using prove
+ + coverage: do not delete .gcno files before building
+ + coverage: split build target into compile and test
 
  Update the test coverage support that was left to bitrot for some
  time.
 
- I think this is ready for 'next'; not that it matters during the
- prerelease feature freeze.
-
 
 * mg/more-textconv (2013-05-10) 7 commits
- - grep: honor --textconv for the case rev:path
- - grep: allow to use textconv filters
- - t7008: demonstrate behavior of grep with textconv
- - cat-file: do not die on --textconv without textconv filters
- - show: honor --textconv for blobs
- - diff_opt: track whether flags have been set explicitly
- - t4030: demonstrate behavior of show with textconv
+  (merged to 'next' on 2013-05-21 at 701cdb7)
+ + grep: honor --textconv for the case rev:path
+ + grep: allow to use textconv filters
+ + t7008: demonstrate behavior of grep with textconv
+ + cat-file: do not die on --textconv without textconv filters
+ + show: honor --textconv for blobs
+ + diff_opt: track whether flags have been set explicitly
+ + t4030: demonstrate behavior of show with textconv
 
- I think this is ready for 'next'; not that it matters during the
- prerelease feature freeze.
+ Make "git grep" and "git show" pay attention to --textconv when
+ dealing with blob objects.
 
 
 * jh/shorten-refname (2013-05-07) 4 commits
@@ -379,18 +409,14 @@ of the repositories listed at
  ref that points at remotes/origin/something, then it should show
  "origin/something" and it already does).
 
- I think this is being rerolled using strbuf_expand().
-
 
 * nd/clone-local-with-colon (2013-05-07) 1 commit
- - clone: allow cloning local paths with colons in them
+  (merged to 'next' on 2013-05-21 at 3e293bd)
+ + clone: allow cloning local paths with colons in them
 
  "git clone foo/bar:baz" cannot be a request to clone from a remote
  over git-over-ssh specified in the scp style.  Detect this case and
  clone from a local repository at "foo/bar:baz".
-
- I think this is ready for 'next'; not that it matters during the
- prerelease feature freeze.
 
 
 * nd/warn-ambiguous-object-name (2013-05-07) 1 commit
@@ -408,55 +434,45 @@ of the repositories listed at
 
 
 * fc/zsh-leftover-bits (2013-05-08) 2 commits
- - completion: synchronize zsh wrapper
- - completion: cleanup zsh wrapper
-
- I think this is ready for 'next'; not that it matters during the
- prerelease feature freeze.
+  (merged to 'next' on 2013-05-21 at 1b84ec1)
+ + completion: synchronize zsh wrapper
+ + completion: cleanup zsh wrapper
 
 
 * rs/empty-archive (2013-05-09) 2 commits
- - t5004: resurrect original empty tar archive test
- - t5004: avoid using tar for checking emptiness of archive
+  (merged to 'next' on 2013-05-21 at 3e9e288)
+ + t5004: resurrect original empty tar archive test
+ + t5004: avoid using tar for checking emptiness of archive
 
- Fixes tests added in 1.8.2 era that are broken on BSDs,
- but it is not all that urgent.
-
- I think this is ready for 'next'; not that it matters during the
- prerelease feature freeze.
+ Fixes tests added in 1.8.2 era that are broken on BSDs.
 
 
 * vv/help-unknown-ref (2013-05-08) 2 commits
- - merge: use help_unknown_ref()
- - help: add help_unknown_ref()
+  (merged to 'next' on 2013-05-21 at 77a2941)
+ + merge: use help_unknown_ref()
+ + help: add help_unknown_ref()
 
  Detect "git merge foo" that might have meant "git merge origin/foo"
  and give an error message that is more specific than "foo is not
  something we can merge".
 
- I think this is ready for 'next'; not that it matters during the
- prerelease feature freeze.
-
 
 * fc/fast-export-persistent-marks (2013-05-07) 3 commits
- - fast-{import,export}: use get_sha1_hex() to read from marks file
- - fast-export: don't parse commits while reading marks file
- - fast-export: do not parse non-commit objects while reading marks file
+  (merged to 'next' on 2013-05-21 at 10b8214)
+ + fast-{import,export}: use get_sha1_hex() to read from marks file
+ + fast-export: don't parse commits while reading marks file
+ + fast-export: do not parse non-commit objects while reading marks file
 
  Optimization for fast-export by avoiding unnecessarily resolving
  arbitrary object name and parsing object when only presence and
  type information is necessary, etc.
-
- I think this is ready for 'next'; not that it matters during the
- prerelease feature freeze.
 
 
 * jc/core-checkstat-2.0 (2013-05-06) 2 commits
  - core.statinfo: remove as promised in Git 2.0
  - deprecate core.statinfo at Git 2.0 boundary
 
- The bottom one is a fix for a breakage of a new feature in 1.8.2
- but it is not all that urgent.
+ The bottom one is a fix for a breakage of a new feature in 1.8.2.
 
 
 * jk/packed-refs-race (2013-05-06) 4 commits
@@ -502,15 +518,16 @@ of the repositories listed at
 
 
 * fc/completion (2013-04-27) 9 commits
- - completion: remove __git_index_file_list_filter()
- - completion: add space after completed filename
- - completion: add hack to enable file mode in bash < 4
- - completion: refactor __git_complete_index_file()
- - completion: refactor diff_index wrappers
- - completion: use __gitcompadd for __gitcomp_file
- - completion; remove unuseful comments
- - completion: document tilde expansion failure in tests
- - completion: add file completion tests
+  (merged to 'next' on 2013-05-21 at aba6ef1)
+ + completion: remove __git_index_file_list_filter()
+ + completion: add space after completed filename
+ + completion: add hack to enable file mode in bash < 4
+ + completion: refactor __git_complete_index_file()
+ + completion: refactor diff_index wrappers
+ + completion: use __gitcompadd for __gitcomp_file
+ + completion; remove unuseful comments
+ + completion: document tilde expansion failure in tests
+ + completion: add file completion tests
 
  I think this is ready for 'next'; not that it matters during the
  prerelease feature freeze.
@@ -528,14 +545,6 @@ of the repositories listed at
  to summarize the results looked at a wrong place.
 
  Will cook in 'next'.
-
-
-* rj/mingw-cygwin (2013-05-08) 2 commits
- - cygwin: Remove the CYGWIN_V15_WIN32API build variable
- - mingw: rename WIN32 cpp macro to GIT_WINDOWS_NATIVE
-
- Update build for Cygwin 1.[57].  There seems to be an ongoing
- discussion on the list.
 
 
 * rj/sparse (2013-04-28) 10 commits
