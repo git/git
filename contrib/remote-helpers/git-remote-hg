@@ -36,7 +36,7 @@ import urlparse, hashlib
 # git config --global remote-hg.force-push false
 #
 # If you want the equivalent of hg's clone/pull--insecure option:
-# git config remote-hg.insecure true
+# git config --global remote-hg.insecure true
 #
 # git:
 # Sensible defaults for git.
