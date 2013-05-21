@@ -25,9 +25,6 @@ import atexit
 import urlparse, hashlib
 
 #
-# If you want to switch to hg-git compatibility mode:
-# git config --global remote-hg.hg-git-compat true
-#
 # If you are not in hg-git-compat mode and want to disable the tracking of
 # named branches:
 # git config --global remote-hg.track-branches false
@@ -37,6 +34,9 @@ import urlparse, hashlib
 #
 # If you want the equivalent of hg's clone/pull--insecure option:
 # git config --global remote-hg.insecure true
+#
+# If you want to switch to hg-git compatibility mode:
+# git config --global remote-hg.hg-git-compat true
 #
 # git:
 # Sensible defaults for git.
