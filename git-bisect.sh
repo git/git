@@ -320,8 +320,8 @@ bisect_next() {
 	elif test $res -eq 2
 	then
 		echo "# only skipped commits left to test" >>"$GIT_DIR/BISECT_LOG"
-		good_revs=$(git for-each-ref --format="--not %(objectname)" "refs/bisect/good-*")
-		for skipped in $(git rev-list refs/bisect/bad $good_revs)
+		good_revs=$(git for-each-ref --format="%(objectname)" "refs/bisect/good-*")
+		for skipped in $(git rev-list refs/bisect/bad --not $good_revs)
 		do
 			skipped_commit=$(git show-branch $skipped)
 			echo "# possible first bad commit: $skipped_commit" >>"$GIT_DIR/BISECT_LOG"
