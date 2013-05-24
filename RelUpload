@@ -1,5 +1,21 @@
 #!/bin/sh
 
+kup=/srv/project/git/kup/kup
+
+for s in git-*.sig
+do
+	test -f "$s" &&
+	v=$(expr "$s" : '^git.*-\([^-]*\)\.tar\.sig$') &&
+	case "$v" in
+	*.rc[1-9]*)
+		dest=/pub/software/scm/git/testing/ ;;
+	*)
+		dest=/pub/software/scm/git/ ;;
+	esac &&
+
+	$kup --host kup.kernel.org put "${s%.sig}.gz" "$s" "$dest"
+done
+
 pw=$(sed -ne '/code.google.com login jch2355@gmail.com/s/.* password //p' $HOME/.netrc)
 
 for s in git-*.sign

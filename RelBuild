@@ -27,4 +27,11 @@ done
 
 sha1sum $files | gpg --clearsign >git-$version.sign
 
-ls -l git-$version.sign $files
+for file in $files
+do
+	gzip -dc <"$file" >"${file%.gz}" &&
+	gpg -b "${file%.gz}" &&
+	rm "${file%.gz}" || exit
+done
+
+ls -l git-$version.sign $files git*-$version.tar.sig
