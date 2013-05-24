@@ -1,23 +1,10 @@
 #!/bin/sh
 
-case "$#" in
-0)
-	tagged=
-	for branch in maint master
-	do
-		t=$(git describe --exact-match $branch 2>/dev/null) &&
-		tagged="$tagged$t "
-	done
-	if test -n "$tagged"
-	then
-		"$0" $tagged
-	fi
-esac
-
+# for remote in ko repo gph github2 sfjp sf.net
 for remote in ko repo gph github2 sfjp sf.net
 do
 	printf "%s: " "$remote"
-	git push "$remote" "$@" || exit $?
+	git push --follow-tags "$remote" "$@" || exit $?
 done
 
 case "$#,$*" in
