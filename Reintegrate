@@ -25,6 +25,16 @@ annotate_merge () {
 	test -f Meta/whats-cooking.txt || return 0
 
 	perl -e '
+		sub wildo_match {
+			s/^\s*//;
+			if (/^Will (?:\S+ ){0,2}(fast-track|keep|merge|drop|discard|cook|kick|defer|be re-?rolled)[,. ]/ ||
+			    /^Not urgent/ || /^Not ready/ || /^Waiting for / ||
+			    /^Needs? / || /^Expecting / || /^May want to /) {
+				return 1;
+			}
+			return 0;
+		}
+
 		my ($branch) = $ARGV[0];
 		my ($in_section, $in_desc);
 		my @msg = ();
@@ -41,18 +51,28 @@ annotate_merge () {
 				$in_desc = 1;
 			}
 			next unless ($in_section && $in_desc);
+			next if (/Originally merged to '\''next'\'' on ([-0-9]+)/);
+			next if (wildo_match($_));
 			push @msg, "$_\n";
 		}
 
 		if ($in_section && @msg) {
 			open(my $fh, "-|", qw(git cat-file commit HEAD));
 			my @original = (<$fh>);
+			close $fh;
 			my @final;
 			$in_section = 0;
 			for (@original) {
 				if (!$in_section) {
 					$in_section = 1 if (/^$/);
 					next;
+				}
+				if (/^Conflicts:$/ && $in_section == 2) {
+					$in_section = 3;
+				}
+
+				if ($in_section == 3) {
+					$_ = "# $_";
 				}
 				push @final, $_;
 				if (/^$/ && $in_section == 1) {
@@ -61,7 +81,6 @@ annotate_merge () {
 					$in_section = 2;
 				}
 			}
-			close $fh;
 			open($fh, "|-", qw(git commit --amend -F -));
 			print $fh @final;
 			close $fh;
