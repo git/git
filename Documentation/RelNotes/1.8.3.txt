@@ -42,8 +42,11 @@ Updates since v1.8.2
 Foreign interface
 
  * remote-hg and remote-bzr helpers (in contrib/ since v1.8.2) have
-   been updated; especially, the latter has been accelerated to help
-   Emacs folks, whose primary SCM seems to be stagnating.
+   been updated; especially, the latter has been done in an
+   accelerated schedule (read: we may not have merged to this release
+   if we were following the usual "cook sufficiently in next before
+   unleashing it to the world" workflow) in order to help Emacs folks,
+   whose primary SCM seems to be stagnating.
 
 
 UI, Workflows & Features
@@ -111,9 +114,10 @@ UI, Workflows & Features
    of erroneous inputs was suboptimal and has been improved.
 
  * When the interactive access to git-shell is not enabled, it issues
-   a message meant to help the system administrator to enable it.
-   An explicit way to help the end users who connect to the service by
-   issuing custom messages to refuse such an access has been added.
+   a message meant to help the system administrator to enable it.  An
+   explicit way has been added to issue custom messages to refuse an
+   access over the network to help the end users who connect to the
+   service expecting an interactive shell.
 
  * In addition to the case where the user edits the log message with
    the "e)dit" option of "am -i", replace the "Applying: this patch"
@@ -123,8 +127,8 @@ UI, Workflows & Features
  * "git status" suggests users to look into using --untracked=no option
    when it takes too long.
 
- * "git status" shows a bit more information during a
-   rebase/bisect session.
+ * "git status" shows a bit more information during a rebase/bisect
+   session.
 
  * "git fetch" learned to fetch a commit at the tip of an unadvertised
    ref by specifying a raw object name from the command line when the
@@ -241,7 +245,6 @@ details).
 
  * Various subcommands of "git remote" simply ignored extraneous
    command line arguments instead of diagnosing them as errors.
-   (merge b17dd3f tr/remote-tighten-commandline-parsing later to maint).
 
  * When receive-pack detects an error in the pack header it received in
    order to decide which of unpack-objects or index-pack to run, it
@@ -264,7 +267,6 @@ details).
    buffer around as human readable object names.  This was not a huge
    problem but was exposed by a new change that uses these names in
    error output.
-   (merge 70d26c6 tr/copy-revisions-from-stdin later to maint).
 
  * Smart-capable HTTP servers were not restricted via the
    GIT_NAMESPACE mechanism when talking with commit-walking clients,
@@ -309,11 +311,9 @@ details).
 
  * Fix a 1.8.1.x regression that stopped matching "dir" (without a
    trailing slash) to a directory "dir".
-   (merge efa5f82 jc/directory-attrs-regression-fix later to maint-1.8.1).
 
  * "git apply --whitespace=fix" was not prepared to see a line getting
    longer after fixing whitespaces (e.g. tab-in-indent aka Python).
-   (merge 329b26e jc/apply-ws-fix-tab-in-indent later to maint-1.8.1).
 
  * The prompt string generator (in contrib/completion/) did not notice
    when we are in a middle of a "git revert" session.
