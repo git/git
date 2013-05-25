@@ -41,10 +41,9 @@ hg_clone () {
 hg_push () {
 	(
 	cd $2
-	old=$(git symbolic-ref --short HEAD)
 	git checkout -q -b tmp &&
 	git fetch -q "hg::../$1" 'refs/tags/*:refs/tags/*' 'refs/heads/*:refs/heads/*' &&
-	git checkout -q $old &&
+	git checkout -q @{-1} &&
 	git branch -q -D tmp 2> /dev/null || true
 	)
 }
