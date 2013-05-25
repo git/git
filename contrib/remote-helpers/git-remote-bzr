@@ -864,7 +864,7 @@ def get_repo(url, alias):
 
         branches[name] = remote_branch.base
 
-        return remote_branch.repository
+        return origin
     else:
         # repository
 
@@ -879,7 +879,7 @@ def get_repo(url, alias):
 
             branches[name] = remote_branch.base
 
-        return repo
+        return origin
 
 def fix_path(alias, orig_url):
     url = urlparse.urlparse(orig_url, 'file')
