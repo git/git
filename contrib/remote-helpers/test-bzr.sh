@@ -18,18 +18,23 @@ if ! python -c 'import bzrlib'; then
 fi
 
 check () {
-	(cd $1 &&
+	(
+	cd $1 &&
 	git log --format='%s' -1 &&
-	git symbolic-ref HEAD) > actual &&
-	(echo $2 &&
-	echo "refs/heads/$3") > expected &&
+	git symbolic-ref HEAD
+	) > actual &&
+	(
+	echo $2 &&
+	echo "refs/heads/$3"
+	) > expected &&
 	test_cmp expected actual
 }
 
 bzr whoami "A U Thor <author@example.com>"
 
 test_expect_success 'cloning' '
-	(bzr init bzrrepo &&
+	(
+	bzr init bzrrepo &&
 	cd bzrrepo &&
 	echo one > content &&
 	bzr add content &&
@@ -41,7 +46,8 @@ test_expect_success 'cloning' '
 '
 
 test_expect_success 'pulling' '
-	(cd bzrrepo &&
+	(
+	cd bzrrepo &&
 	echo two > content &&
 	bzr commit -m two
 	) &&
@@ -52,7 +58,8 @@ test_expect_success 'pulling' '
 '
 
 test_expect_success 'pushing' '
-	(cd gitrepo &&
+	(
+	cd gitrepo &&
 	echo three > content &&
 	git commit -a -m three &&
 	git push
@@ -64,15 +71,18 @@ test_expect_success 'pushing' '
 '
 
 test_expect_success 'roundtrip' '
-	(cd gitrepo &&
+	(
+	cd gitrepo &&
 	git pull &&
-	git log --format="%s" -1 origin/master > actual) &&
+	git log --format="%s" -1 origin/master > actual
+	) &&
 	echo three > expected &&
 	test_cmp expected actual &&
 
 	(cd gitrepo && git push && git pull) &&
 
-	(cd bzrrepo &&
+	(
+	cd bzrrepo &&
 	echo four > content &&
 	bzr commit -m four
 	) &&
@@ -81,7 +91,8 @@ test_expect_success 'roundtrip' '
 
 	check gitrepo four master &&
 
-	(cd gitrepo &&
+	(
+	cd gitrepo &&
 	echo five > content &&
 	git commit -a -m five &&
 	git push && git pull
@@ -101,7 +112,8 @@ cat > expected <<EOF
 EOF
 
 test_expect_success 'special modes' '
-	(cd bzrrepo &&
+	(
+	cd bzrrepo &&
 	echo exec > executable
 	chmod +x executable &&
 	bzr add executable
@@ -111,16 +123,21 @@ test_expect_success 'special modes' '
 	bzr commit -m link &&
 	mkdir dir &&
 	bzr add dir &&
-	bzr commit -m dir) &&
+	bzr commit -m dir
+	) &&
 
-	(cd gitrepo &&
+	(
+	cd gitrepo &&
 	git pull
-	git ls-tree HEAD > ../actual) &&
+	git ls-tree HEAD > ../actual
+	) &&
 
 	test_cmp expected actual &&
 
-	(cd gitrepo &&
-	git cat-file -p HEAD:link > ../actual) &&
+	(
+	cd gitrepo &&
+	git cat-file -p HEAD:link > ../actual
+	) &&
 
 	printf content > expected &&
 	test_cmp expected actual
@@ -134,32 +151,40 @@ cat > expected <<EOF
 EOF
 
 test_expect_success 'moving directory' '
-	(cd bzrrepo &&
+	(
+	cd bzrrepo &&
 	mkdir movedir &&
 	echo one > movedir/one &&
 	echo two > movedir/two &&
 	bzr add movedir &&
 	bzr commit -m movedir &&
 	bzr mv movedir movedir-new &&
-	bzr commit -m movedir-new) &&
+	bzr commit -m movedir-new
+	) &&
 
-	(cd gitrepo &&
+	(
+	cd gitrepo &&
 	git pull &&
-	git ls-tree HEAD > ../actual) &&
+	git ls-tree HEAD > ../actual
+	) &&
 
 	test_cmp expected actual
 '
 
 test_expect_success 'different authors' '
-	(cd bzrrepo &&
+	(
+	cd bzrrepo &&
 	echo john >> content &&
 	bzr commit -m john \
 	  --author "Jane Rey <jrey@example.com>" \
-	  --author "John Doe <jdoe@example.com>") &&
+	  --author "John Doe <jdoe@example.com>"
+	) &&
 
-	(cd gitrepo &&
+	(
+	cd gitrepo &&
 	git pull &&
-	git show --format="%an <%ae>, %cn <%ce>" --quiet > ../actual) &&
+	git show --format="%an <%ae>, %cn <%ce>" --quiet > ../actual
+	) &&
 
 	echo "Jane Rey <jrey@example.com>, A U Thor <author@example.com>" > expected &&
 	test_cmp expected actual
@@ -171,6 +196,7 @@ test_expect_success 'fetch utf-8 filenames' '
 
 	LC_ALL=en_US.UTF-8
 	export LC_ALL
+
 	(
 	bzr init bzrrepo &&
 	cd bzrrepo &&
@@ -276,23 +302,23 @@ test_expect_success 'proper bzr repo' '
 
 	bzr init-repo bzrrepo &&
 
-	bzr init bzrrepo/trunk &&
 	(
+	bzr init bzrrepo/trunk &&
 	cd bzrrepo/trunk &&
 	echo one >> content &&
 	bzr add content &&
 	bzr commit -m one
 	) &&
 
-	bzr branch bzrrepo/trunk bzrrepo/branch &&
 	(
+	bzr branch bzrrepo/trunk bzrrepo/branch &&
 	cd bzrrepo/branch &&
 	echo two >> content &&
 	bzr commit -m one
 	) &&
 
-	git clone "bzr::$PWD/bzrrepo" gitrepo &&
 	(
+	git clone "bzr::$PWD/bzrrepo" gitrepo &&
 	cd gitrepo &&
 	git for-each-ref --format "%(refname:short)" refs/remotes/origin > ../actual
 	) &&
@@ -331,9 +357,11 @@ test_expect_success 'strip' '
 	bzr log --line | sed -e "s/^[0-9][0-9]*: //" > ../expected
 	) &&
 
-	(cd gitrepo &&
+	(
+	cd gitrepo &&
 	git fetch &&
-	git log --format="%an %ad %s" --date=short origin/master > ../actual) &&
+	git log --format="%an %ad %s" --date=short origin/master > ../actual
+	) &&
 
 	test_cmp expected actual
 '

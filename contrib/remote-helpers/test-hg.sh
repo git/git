@@ -21,11 +21,15 @@ if ! python -c 'import mercurial'; then
 fi
 
 check () {
-	(cd $1 &&
+	(
+	cd $1 &&
 	git log --format='%s' -1 &&
-	git symbolic-ref HEAD) > actual &&
-	(echo $2 &&
-	echo "refs/heads/$3") > expected &&
+	git symbolic-ref HEAD
+	) > actual &&
+	(
+	echo $2 &&
+	echo "refs/heads/$3"
+	) > expected &&
 	test_cmp expected actual
 }
 
