@@ -117,6 +117,21 @@ test_expect_success 'update bookmark' '
 	check_bookmark hgrepo devel devel
 '
 
+test_expect_success 'new bookmark' '
+	test_when_finished "rm -rf gitrepo*" &&
+
+	(
+	git clone "hg::hgrepo" gitrepo &&
+	cd gitrepo &&
+	git checkout --quiet -b feature-b &&
+	echo feature-b > content &&
+	git commit -a -m feature-b &&
+	git push --quiet origin feature-b
+	) &&
+
+	check_bookmark hgrepo feature-b feature-b
+'
+
 # cleanup previous stuff
 rm -rf hgrepo
 
@@ -286,6 +301,21 @@ test_expect_success 'remote update bookmark' '
 	) &&
 
 	check_bookmark hgrepo devel devel
+'
+
+test_expect_success 'remote new bookmark' '
+	test_when_finished "rm -rf gitrepo*" &&
+
+	(
+	git clone "hg::hgrepo" gitrepo &&
+	cd gitrepo &&
+	git checkout --quiet -b feature-b &&
+	echo feature-b > content &&
+	git commit -a -m feature-b &&
+	git push --quiet origin feature-b
+	) &&
+
+	check_bookmark hgrepo feature-b feature-b
 '
 
 test_done
