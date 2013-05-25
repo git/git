@@ -74,11 +74,11 @@ def hgmode(mode):
     m = { '100755': 'x', '120000': 'l' }
     return m.get(mode, '')
 
-def hghex(node):
-    return hg.node.hex(node)
+def hghex(n):
+    return node.hex(n)
 
-def hgbin(node):
-    return hg.node.bin(node)
+def hgbin(n):
+    return node.bin(n)
 
 def hgref(ref):
     return ref.replace('___', ' ')
@@ -734,12 +734,12 @@ def parse_commit(parser):
     if from_mark:
         p1 = mark_to_rev(from_mark)
     else:
-        p1 = '\0' * 20
+        p1 = '0' * 40
 
     if merge_mark:
         p2 = mark_to_rev(merge_mark)
     else:
-        p2 = '\0' * 20
+        p2 = '0' * 40
 
     #
     # If files changed from any of the parents, hg wants to know, but in git if
@@ -826,7 +826,7 @@ def write_tag(repo, tag, node, msg, author):
         return context.memfilectx(f, content, False, False, None)
 
     p1 = tip.hex()
-    p2 = '\0' * 20
+    p2 = '0' * 40
     if not author:
         author = (None, 0, 0)
     user, date, tz = author
