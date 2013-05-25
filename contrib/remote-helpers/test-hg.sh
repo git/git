@@ -486,4 +486,28 @@ test_expect_failure 'remote big push' '
 	check_bookmark hgrepo new_bmark ''
 '
 
+test_expect_failure 'remote double failed push' '
+	test_when_finished "rm -rf hgrepo gitrepo*" &&
+
+	(
+	hg init hgrepo &&
+	cd hgrepo &&
+	echo zero > content &&
+	hg add content &&
+	hg commit -m zero &&
+	echo one > content &&
+	hg commit -m one
+	) &&
+
+	(
+	git clone "hg::hgrepo" gitrepo &&
+	cd gitrepo &&
+	git reset --hard HEAD^ &&
+	echo two > content &&
+	git commit -a -m two &&
+	test_expect_code 1 git push &&
+	test_expect_code 1 git push
+	)
+'
+
 test_done
