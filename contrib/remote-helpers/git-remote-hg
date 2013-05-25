@@ -55,7 +55,7 @@ EMAIL_RE = re.compile('^([^<>]+[^ \\\t<>])?\\b(?:[ \\t<>]*?)\\b([^ \\t<>]+@[^ \\
 AUTHOR_HG_RE = re.compile('^(.*?) ?<(.*?)(?:>(.+)?)?$')
 RAW_AUTHOR_RE = re.compile('^(\w+) (?:(.+)? )?<(.*)> (\d+) ([+-]\d+)')
 
-VERSION = 1
+VERSION = 2
 
 def die(msg, *args):
     sys.stderr.write('ERROR: %s\n' % (msg % args))
@@ -131,7 +131,7 @@ class Marks:
         self.version = tmp.get('version', 1)
 
         for rev, mark in self.marks.iteritems():
-            self.rev_marks[mark] = int(rev)
+            self.rev_marks[mark] = rev
 
     def dict(self):
         return { 'tips': self.tips, 'marks': self.marks, 'last-mark' : self.last_mark, 'version' : self.version }
@@ -143,7 +143,7 @@ class Marks:
         return str(self.dict())
 
     def from_rev(self, rev):
-        return self.marks[str(rev)]
+        return self.marks[rev]
 
     def to_rev(self, mark):
         return self.rev_marks[mark]
@@ -154,19 +154,19 @@ class Marks:
 
     def get_mark(self, rev):
         self.last_mark += 1
-        self.marks[str(rev)] = self.last_mark
+        self.marks[rev] = self.last_mark
         return self.last_mark
 
     def new_mark(self, rev, mark):
-        self.marks[str(rev)] = mark
+        self.marks[rev] = mark
         self.rev_marks[mark] = rev
         self.last_mark = mark
 
     def is_marked(self, rev):
-        return str(rev) in self.marks
+        return rev in self.marks
 
     def get_tip(self, branch):
-        return self.tips.get(branch, 0)
+        return self.tips.get(branch, None)
 
     def set_tip(self, branch, tip):
         self.tips[branch] = tip
@@ -384,7 +384,7 @@ def get_repo(url, alias):
 
 def rev_to_mark(rev):
     global marks
-    return marks.from_rev(rev)
+    return marks.from_rev(rev.hex())
 
 def mark_to_rev(mark):
     global marks
@@ -395,6 +395,10 @@ def export_ref(repo, name, kind, head):
 
     ename = '%s/%s' % (kind, name)
     tip = marks.get_tip(ename)
+    if tip and tip in repo:
+        tip = repo[tip].rev()
+    else:
+        tip = 0
 
     revs = xrange(tip, head.rev() + 1)
     count = 0
@@ -460,16 +464,16 @@ def export_ref(repo, name, kind, head):
         modified_final = export_files(c.filectx(f) for f in modified)
 
         print "commit %s/%s" % (prefix, ename)
-        print "mark :%d" % (marks.get_mark(rev))
+        print "mark :%d" % (marks.get_mark(c.hex()))
         print "author %s" % (author)
         print "committer %s" % (committer)
         print "data %d" % (len(desc))
         print desc
 
         if len(parents) > 0:
-            print "from :%s" % (rev_to_mark(parents[0].rev()))
+            print "from :%s" % (rev_to_mark(parents[0]))
             if len(parents) > 1:
-                print "merge :%s" % (rev_to_mark(parents[1].rev()))
+                print "merge :%s" % (rev_to_mark(parents[1]))
 
         for f in modified_final:
             print "M %s :%u %s" % f
@@ -483,10 +487,10 @@ def export_ref(repo, name, kind, head):
 
     # make sure the ref is updated
     print "reset %s/%s" % (prefix, ename)
-    print "from :%u" % rev_to_mark(head.rev())
+    print "from :%u" % rev_to_mark(head)
     print
 
-    marks.set_tip(ename, head.rev())
+    marks.set_tip(ename, head.hex())
 
 def export_tag(repo, tag):
     export_ref(repo, tag, 'tags', repo[hgref(tag)])
@@ -713,12 +717,12 @@ def parse_commit(parser):
         extra['committer'] = "%s %u %u" % committer
 
     if from_mark:
-        p1 = repo.changelog.node(mark_to_rev(from_mark))
+        p1 = mark_to_rev(from_mark)
     else:
         p1 = '\0' * 20
 
     if merge_mark:
-        p2 = repo.changelog.node(mark_to_rev(merge_mark))
+        p2 = mark_to_rev(merge_mark)
     else:
         p2 = '\0' * 20
 
@@ -760,10 +764,8 @@ def parse_commit(parser):
 
     encoding.encoding = tmp
 
-    rev = repo[node].rev()
-
     parsed_refs[ref] = node
-    marks.new_mark(rev, commit_mark)
+    marks.new_mark(node, commit_mark)
 
 def parse_reset(parser):
     global parsed_refs
@@ -779,8 +781,8 @@ def parse_reset(parser):
     from_mark = parser.get_mark()
     parser.next()
 
-    node = parser.repo.changelog.node(mark_to_rev(from_mark))
-    parsed_refs[ref] = hghex(node)
+    rev = mark_to_rev(from_mark)
+    parsed_refs[ref] = rev
 
 def parse_tag(parser):
     name = parser[1]
