@@ -2435,25 +2435,23 @@ static struct commit *get_revision_1(struct rev_info *revs)
 	return NULL;
 }
 
+/*
+ * Return true for entries that have not yet been shown.  (This is an
+ * object_array_each_func_t.)
+ */
+static int entry_unshown(struct object_array_entry *entry, void *cb_data_unused)
+{
+	return !(entry->item->flags & SHOWN);
+}
+
+/*
+ * If array is on the verge of a realloc, garbage-collect any entries
+ * that have already been shown to try to free up some space.
+ */
 static void gc_boundary(struct object_array *array)
 {
-	unsigned nr = array->nr;
-	unsigned alloc = array->alloc;
-	struct object_array_entry *objects = array->objects;
-
-	if (alloc <= nr) {
-		unsigned i, j;
-		for (i = j = 0; i < nr; i++) {
-			if (objects[i].item->flags & SHOWN)
-				continue;
-			if (i != j)
-				objects[j] = objects[i];
-			j++;
-		}
-		for (i = j; i < nr; i++)
-			objects[i].item = NULL;
-		array->nr = j;
-	}
+	if (array->nr == array->alloc)
+		object_array_filter(array, entry_unshown, NULL);
 }
 
 static void create_boundary_commit_list(struct rev_info *revs)
