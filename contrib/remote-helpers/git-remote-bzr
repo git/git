@@ -815,7 +815,7 @@ def find_branches(repo, wanted):
         except bzrlib.errors.NotBranchError:
             continue
         else:
-            yield name, branch
+            yield name, branch.base
 
 def get_repo(url, alias):
     global dirname, peer, branches
@@ -857,12 +857,12 @@ def get_repo(url, alias):
         # branch
 
         name = 'master'
-        remote_branch = origin.open_branch()
+        branch = origin.open_branch().base
 
         if not is_local:
-            peers[name] = remote_branch.base
+            peers[name] = branch
 
-        branches[name] = remote_branch.base
+        branches[name] = branch
 
         return origin
     else:
@@ -872,12 +872,12 @@ def get_repo(url, alias):
         # stupid python
         wanted = [e for e in wanted if e]
 
-        for name, remote_branch in find_branches(repo, wanted):
+        for name, branch in find_branches(repo, wanted):
 
             if not is_local:
-                peers[name] = remote_branch.base
+                peers[name] = branch
 
-            branches[name] = remote_branch.base
+            branches[name] = branch
 
         return origin
 
