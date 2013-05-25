@@ -339,9 +339,9 @@ int cmd_diff(int argc, const char **argv, const char *prefix)
 	}
 
 	for (i = 0; i < rev.pending.nr; i++) {
-		struct object_array_entry *list = rev.pending.objects+i;
-		struct object *obj = list->item;
-		const char *name = list->name;
+		struct object_array_entry *entry = &rev.pending.objects[i];
+		struct object *obj = entry->item;
+		const char *name = entry->name;
 		int flags = (obj->flags & UNINTERESTING);
 		if (!obj->parsed)
 			obj = parse_object(obj->sha1);
@@ -360,7 +360,7 @@ int cmd_diff(int argc, const char **argv, const char *prefix)
 				die(_("more than two blobs given: '%s'"), name);
 			hashcpy(blob[blobs].sha1, obj->sha1);
 			blob[blobs].name = name;
-			blob[blobs].mode = list->mode;
+			blob[blobs].mode = entry->mode;
 			blobs++;
 			continue;
 
