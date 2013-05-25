@@ -278,7 +278,7 @@ def export_branch(repo, name):
     ref = '%s/heads/%s' % (prefix, name)
     tip = marks.get_tip(name)
 
-    branch = bzrlib.branch.Branch.open(branches[name])
+    branch = get_remote_branch(name)
     repo = branch.repository
 
     branch.lock_read()
@@ -590,7 +590,7 @@ def parse_commit(parser):
 
     if ref.startswith('refs/heads/'):
         name = ref[len('refs/heads/'):]
-        branch = bzrlib.branch.Branch.open(branches[name])
+        branch = get_remote_branch(name)
     else:
         die('unknown ref')
 
@@ -692,7 +692,7 @@ def do_export(parser):
     for ref, revid in parsed_refs.iteritems():
         if ref.startswith('refs/heads/'):
             name = ref[len('refs/heads/'):]
-            branch = bzrlib.branch.Branch.open(branches[name])
+            branch = get_remote_branch(name)
             branch.generate_revision_history(revid, marks.get_tip(name))
 
             if name in peers:
@@ -749,7 +749,7 @@ def do_list(parser):
             master_branch = name
         print "? refs/heads/%s" % name
 
-    branch = bzrlib.branch.Branch.open(branches[master_branch])
+    branch = get_remote_branch(master_branch)
     branch.lock_read()
     for tag, revid in branch.tags.get_tag_dict().items():
         try:
@@ -771,8 +771,12 @@ def clone(path, remote_branch):
     repo.fetch(remote_branch.repository)
     return remote_branch.sprout(bdir, repository=repo)
 
-def get_remote_branch(remote_branch, name):
-    global dirname, peers
+def get_remote_branch(name):
+    global dirname, branches
+
+    remote_branch = bzrlib.branch.Branch.open(branches[name])
+    if isinstance(remote_branch.user_transport, bzrlib.transport.local.LocalTransport):
+        return remote_branch
 
     branch_path = os.path.join(dirname, 'clone', name)
 
@@ -857,13 +861,10 @@ def get_repo(url, alias):
 
         if not is_local:
             peers[name] = remote_branch.base
-            branch = get_remote_branch(remote_branch, name)
-        else:
-            branch = remote_branch
 
-        branches[name] = branch.base
+        branches[name] = remote_branch.base
 
-        return branch.repository
+        return remote_branch.repository
     else:
         # repository
 
@@ -875,11 +876,8 @@ def get_repo(url, alias):
 
             if not is_local:
                 peers[name] = remote_branch.base
-                branch = get_remote_branch(remote_branch, name)
-            else:
-                branch = remote_branch
 
-            branches[name] = branch.base
+            branches[name] = remote_branch.base
 
         return repo
 
