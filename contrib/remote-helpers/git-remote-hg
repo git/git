@@ -389,12 +389,16 @@ def export_ref(repo, name, kind, head):
     revs = xrange(tip, head.rev() + 1)
     count = 0
 
-    revs = [rev for rev in revs if not marks.is_marked(rev)]
-
     for rev in revs:
 
         c = repo[rev]
-        (manifest, user, (time, tz), files, desc, extra) = repo.changelog.read(c.node())
+        node = c.node()
+
+        if marks.is_marked(c.hex()):
+            count += 1
+            continue
+
+        (manifest, user, (time, tz), files, desc, extra) = repo.changelog.read(node)
         rev_branch = extra['branch']
 
         author = "%s %d %s" % (fixup_user(user), time, gittz(tz))
