@@ -898,6 +898,10 @@ static int limit_list(struct rev_info *revs)
 	return 0;
 }
 
+/*
+ * Add an entry to refs->cmdline with the specified information.
+ * *name is copied.
+ */
 static void add_rev_cmdline(struct rev_info *revs,
 			    struct object *item,
 			    const char *name,
@@ -909,7 +913,7 @@ static void add_rev_cmdline(struct rev_info *revs,
 
 	ALLOC_GROW(info->rev, nr + 1, info->alloc);
 	info->rev[nr].item = item;
-	info->rev[nr].name = name;
+	info->rev[nr].name = xstrdup(name);
 	info->rev[nr].whence = whence;
 	info->rev[nr].flags = flags;
 	info->nr++;
