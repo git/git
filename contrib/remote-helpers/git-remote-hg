@@ -12,7 +12,7 @@
 # For remote repositories a local clone is stored in
 # "$GIT_DIR/hg/origin/clone/.hg/".
 
-from mercurial import hg, ui, bookmarks, context, encoding, node, error, extensions, discovery
+from mercurial import hg, ui, bookmarks, context, encoding, node, error, extensions, discovery, util
 
 import re
 import sys
@@ -85,6 +85,11 @@ def hgref(ref):
 
 def gitref(ref):
     return ref.replace(' ', '___')
+
+def check_version(*check):
+    if not hg_version:
+        return True
+    return hg_version >= check
 
 def get_config(config):
     cmd = ['git', 'config', '--get', config]
@@ -854,6 +859,42 @@ def write_tag(repo, tag, node, msg, author):
 
     return tagnode
 
+def checkheads(repo, remote, p_revs):
+
+    remotemap = remote.branchmap()
+    if not remotemap:
+        # empty repo
+        return
+
+    new = {}
+
+    for node in p_revs:
+        ctx = repo[node]
+        branch = ctx.branch()
+        if not branch in remotemap:
+            # new branch
+            continue
+        new.setdefault(branch, []).append(ctx.rev())
+
+    for branch, heads in new.iteritems():
+        old = [repo.changelog.rev(x) for x in remotemap[branch]]
+        for rev in heads:
+            if check_version(2, 3):
+                ancestors = repo.changelog.ancestors([rev], stoprev=min(old))
+            else:
+                ancestors = repo.changelog.ancestors(rev)
+            found = False
+
+            for x in old:
+                if x in ancestors:
+                    found = True
+                    break
+
+            if found:
+                continue
+
+            raise Exception("non-fast-forward")
+
 def push_unsafe(repo, remote, parsed_refs, p_revs):
 
     force = force_push
@@ -862,7 +903,8 @@ def push_unsafe(repo, remote, parsed_refs, p_revs):
     commoninc = fci(repo, remote, force=force)
     common, _, remoteheads = commoninc
 
-    # TODO checkheads
+    if not force:
+        checkheads(repo, remote, p_revs)
 
     cg = repo.getbundle('push', heads=list(p_revs), common=common)
 
@@ -991,7 +1033,7 @@ def main(args):
     global track_branches, force_push, is_tmp
     global parsed_tags
     global filenodes
-    global fake_bmark
+    global fake_bmark, hg_version
 
     alias = args[1]
     url = args[2]
@@ -1026,6 +1068,10 @@ def main(args):
     parsed_tags = {}
     filenodes = {}
     fake_bmark = None
+    try:
+        hg_version = tuple(int(e) for e in util.version().split('.'))
+    except:
+        hg_version = None
 
     repo = get_repo(url, alias)
     prefix = 'refs/hg/%s' % alias
