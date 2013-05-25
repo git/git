@@ -356,6 +356,21 @@ def fixup_user(user):
 
     return '%s <%s>' % (name, mail)
 
+def updatebookmarks(repo, peer):
+    remotemarks = peer.listkeys('bookmarks')
+    localmarks = repo._bookmarks
+
+    if not remotemarks:
+        return
+
+    for k, v in remotemarks.iteritems():
+        localmarks[k] = hgbin(v)
+
+    if hasattr(localmarks, 'write'):
+        localmarks.write()
+    else:
+        bookmarks.write(repo)
+
 def get_repo(url, alias):
     global dirname, peer
 
@@ -393,6 +408,8 @@ def get_repo(url, alias):
         except:
             die('Repository error')
         repo.pull(peer, heads=None, force=True)
+
+        updatebookmarks(repo, peer)
 
     return repo
 
