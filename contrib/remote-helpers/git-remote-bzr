@@ -621,7 +621,7 @@ def parse_commit(parser):
             mark = int(mark_ref[1:])
             f = { 'mode' : m, 'mark' : mark }
         elif parser.check('D'):
-            t, path = line.split(' ')
+            t, path = line.split(' ', 1)
             f = { 'deleted' : True }
         else:
             die('Unknown file command: %s' % line)
