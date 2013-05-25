@@ -68,6 +68,9 @@ check_push () {
 		'fetch-first')
 			grep "^ ! \[rejected\] *${branch} -> ${branch} (fetch first)$" error || ref_ret=1
 			;;
+		'forced-update')
+			grep "^ + [a-f0-9]*\.\.\.[a-f0-9]* *${branch} -> ${branch} (forced update)$" error || ref_ret=1
+			;;
 		'')
 			grep "^   [a-f0-9]*\.\.[a-f0-9]* *${branch} -> ${branch}$" error || ref_ret=1
 			;;
@@ -592,6 +595,36 @@ test_expect_success 'remote big push fetch first' '
 	branches/bad_branch:non-fast-forward
 	EOF
 	)
+'
+
+test_expect_failure 'remote big push force' '
+	test_when_finished "rm -rf hgrepo gitrepo*" &&
+
+	setup_big_push
+
+	(
+	cd gitrepo &&
+
+	check_push 0 --force --all <<-EOF
+	master
+	good_bmark
+	branches/good_branch
+	new_bmark:new
+	branches/new_branch:new
+	bad_bmark1:forced-update
+	bad_bmark2:forced-update
+	branches/bad_branch:forced-update
+	EOF
+	) &&
+
+	check_branch hgrepo default six &&
+	check_branch hgrepo good_branch eight &&
+	check_branch hgrepo bad_branch nine &&
+	check_branch hgrepo new_branch ten &&
+	check_bookmark hgrepo good_bmark three &&
+	check_bookmark hgrepo bad_bmark1 four &&
+	check_bookmark hgrepo bad_bmark2 five &&
+	check_bookmark hgrepo new_bmark six
 '
 
 test_expect_failure 'remote big push dry-run' '

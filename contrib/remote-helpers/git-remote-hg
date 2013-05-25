@@ -29,9 +29,6 @@ import urlparse, hashlib
 # named branches:
 # git config --global remote-hg.track-branches false
 #
-# If you don't want to force pushes (and thus risk creating new remote heads):
-# git config --global remote-hg.force-push false
-#
 # If you want the equivalent of hg's clone/pull--insecure option:
 # git config --global remote-hg.insecure true
 #
@@ -877,9 +874,6 @@ def write_tag(repo, tag, node, msg, author):
     return (tagnode, branch)
 
 def checkheads_bmark(repo, ref, ctx):
-    if force_push:
-        return True
-
     bmark = ref[len('refs/heads/'):]
     if not bmark in bmarks:
         # new bmark
@@ -888,8 +882,11 @@ def checkheads_bmark(repo, ref, ctx):
     ctx_old = bmarks[bmark]
     ctx_new = ctx
     if not repo.changelog.descendant(ctx_old.rev(), ctx_new.rev()):
-        print "error %s non-fast forward" % ref
-        return False
+        if force_push:
+            print "ok %s forced update" % ref
+        else:
+            print "error %s non-fast forward" % ref
+            return False
 
     return True
 
@@ -936,8 +933,12 @@ def checkheads(repo, remote, p_revs):
                 continue
 
             node = repo.changelog.node(rev)
-            print "error %s non-fast forward" % p_revs[node]
-            ret = False
+            ref = p_revs[node]
+            if force_push:
+                print "ok %s forced update" % ref
+            else:
+                print "error %s non-fast forward" % ref
+                ret = False
 
     return ret
 
@@ -949,7 +950,7 @@ def push_unsafe(repo, remote, parsed_refs, p_revs):
     commoninc = fci(repo, remote, force=force)
     common, _, remoteheads = commoninc
 
-    if not force and not checkheads(repo, remote, p_revs):
+    if not checkheads(repo, remote, p_revs):
         return None
 
     cg = repo.getbundle('push', heads=list(p_revs), common=common)
@@ -1110,10 +1111,13 @@ def do_export(parser):
     print
 
 def do_option(parser):
-    global dry_run
+    global dry_run, force_push
     _, key, value = parser.line.split(' ')
     if key == 'dry-run':
         dry_run = (value == 'true')
+        print 'ok'
+    elif key == 'force':
+        force_push = (value == 'true')
         print 'ok'
     else:
         print 'unsupported'
@@ -1142,7 +1146,7 @@ def main(args):
 
     hg_git_compat = get_config_bool('remote-hg.hg-git-compat')
     track_branches = get_config_bool('remote-hg.track-branches', True)
-    force_push = get_config_bool('remote-hg.force-push')
+    force_push = False
 
     if hg_git_compat:
         mode = 'hg'
