@@ -103,14 +103,20 @@ def get_config_bool(config, default=False):
 
 class Marks:
 
-    def __init__(self, path):
+    def __init__(self, path, repo):
         self.path = path
+        self.repo = repo
         self.clear()
         self.load()
 
         if self.version < VERSION:
-            self.clear()
-            self.version = VERSION
+            if self.version == 1:
+                self.upgrade_one()
+
+            # upgraded?
+            if self.version < VERSION:
+                self.clear()
+                self.version = VERSION
 
     def clear(self):
         self.tips = {}
@@ -132,6 +138,14 @@ class Marks:
 
         for rev, mark in self.marks.iteritems():
             self.rev_marks[mark] = rev
+
+    def upgrade_one(self):
+        def get_id(rev):
+            return hghex(self.repo.changelog.node(int(rev)))
+        self.tips = dict((name, get_id(rev)) for name, rev in self.tips.iteritems())
+        self.marks = dict((get_id(rev), mark) for rev, mark in self.marks.iteritems())
+        self.rev_marks = dict((mark, get_id(rev)) for mark, rev in self.rev_marks.iteritems())
+        self.version = 2
 
     def dict(self):
         return { 'tips': self.tips, 'marks': self.marks, 'last-mark' : self.last_mark, 'version' : self.version }
@@ -973,7 +987,7 @@ def main(args):
         fix_path(alias, peer or repo, url)
 
     marks_path = os.path.join(dirname, 'marks-hg')
-    marks = Marks(marks_path)
+    marks = Marks(marks_path, repo)
 
     if sys.platform == 'win32':
         import msvcrt
