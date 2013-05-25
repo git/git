@@ -370,4 +370,19 @@ test_expect_failure 'remote update bookmark diverge' '
 	check_bookmark hgrepo diverge "bump bookmark"
 '
 
+test_expect_failure 'remote new bookmark multiple branch head' '
+	test_when_finished "rm -rf gitrepo*" &&
+
+	(
+	git clone "hg::hgrepo" gitrepo &&
+	cd gitrepo &&
+	git checkout --quiet -b feature-c HEAD^ &&
+	echo feature-c > content &&
+	git commit -a -m feature-c &&
+	git push --quiet origin feature-c
+	) &&
+
+	check_bookmark hgrepo feature-c feature-c
+'
+
 test_done
