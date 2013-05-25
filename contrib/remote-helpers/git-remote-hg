@@ -919,7 +919,8 @@ def do_export(parser):
         # update remote bookmarks
         remote_bmarks = peer.listkeys('bookmarks')
         for ref, bmark, old, new in p_bmarks:
-            old = remote_bmarks.get(bmark, '')
+            if force_push:
+                old = remote_bmarks.get(bmark, '')
             if not peer.pushkey('bookmarks', bmark, old, new):
                 print "error %s" % ref
     else:
