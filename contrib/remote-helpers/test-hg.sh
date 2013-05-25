@@ -250,4 +250,42 @@ test_expect_success 'remote push from master branch' '
 	check_branch hgrepo default one
 '
 
+GIT_REMOTE_HG_TEST_REMOTE=1
+export GIT_REMOTE_HG_TEST_REMOTE
+
+test_expect_success 'remote cloning' '
+	test_when_finished "rm -rf gitrepo*" &&
+
+	(
+	hg init hgrepo &&
+	cd hgrepo &&
+	echo zero > content &&
+	hg add content &&
+	hg commit -m zero
+	) &&
+
+	git clone "hg::hgrepo" gitrepo &&
+	check gitrepo HEAD zero
+'
+
+test_expect_success 'remote update bookmark' '
+	test_when_finished "rm -rf gitrepo*" &&
+
+	(
+	cd hgrepo &&
+	hg bookmark devel
+	) &&
+
+	(
+	git clone "hg::hgrepo" gitrepo &&
+	cd gitrepo &&
+	git checkout --quiet devel &&
+	echo devel > content &&
+	git commit -a -m devel &&
+	git push --quiet
+	) &&
+
+	check_bookmark hgrepo devel devel
+'
+
 test_done
