@@ -343,21 +343,29 @@ def get_repo(url, alias):
 
     if hg.islocal(url):
         repo = hg.repository(myui, url)
+        if not os.path.exists(dirname):
+            os.makedirs(dirname)
     else:
+        shared_path = os.path.join(gitdir, 'hg')
+        if not os.path.exists(shared_path):
+            try:
+                hg.clone(myui, {}, url, shared_path, update=False, pull=True)
+            except:
+                die('Repository error')
+
+        if not os.path.exists(dirname):
+            os.makedirs(dirname)
+
         local_path = os.path.join(dirname, 'clone')
         if not os.path.exists(local_path):
-            try:
-                peer, dstpeer = hg.clone(myui, {}, url, local_path, update=True, pull=True)
-            except:
-                die('Repository error')
-            repo = dstpeer.local()
-        else:
-            repo = hg.repository(myui, local_path)
-            try:
-                peer = hg.peer(myui, {}, url)
-            except:
-                die('Repository error')
-            repo.pull(peer, heads=None, force=True)
+            hg.share(myui, shared_path, local_path, update=False)
+
+        repo = hg.repository(myui, local_path)
+        try:
+            peer = hg.peer(myui, {}, url)
+        except:
+            die('Repository error')
+        repo.pull(peer, heads=None, force=True)
 
     return repo
 
@@ -898,7 +906,7 @@ def fix_path(alias, repo, orig_url):
     subprocess.call(cmd)
 
 def main(args):
-    global prefix, dirname, branches, bmarks
+    global prefix, gitdir, dirname, branches, bmarks
     global marks, blob_marks, parsed_refs
     global peer, mode, bad_mail, bad_name
     global track_branches, force_push, is_tmp
@@ -943,9 +951,6 @@ def main(args):
 
     if not is_tmp:
         fix_path(alias, peer or repo, url)
-
-    if not os.path.exists(dirname):
-        os.makedirs(dirname)
 
     marks_path = os.path.join(dirname, 'marks-hg')
     marks = Marks(marks_path)
