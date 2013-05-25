@@ -21,15 +21,8 @@ if ! python -c 'import mercurial'; then
 fi
 
 check () {
-	(
-	cd $1 &&
-	git log --format='%s' -1 &&
-	git symbolic-ref HEAD
-	) > actual &&
-	(
-	echo $2 &&
-	echo "refs/heads/$3"
-	) > expected &&
+	echo $3 > expected &&
+	git --git-dir=$1/.git log --format='%s' -1 $2 > actual
 	test_cmp expected actual
 }
 
@@ -56,7 +49,7 @@ test_expect_success 'cloning' '
 	) &&
 
 	git clone "hg::hgrepo" gitrepo &&
-	check gitrepo zero master
+	check gitrepo HEAD zero
 '
 
 test_expect_success 'cloning with branches' '
@@ -70,12 +63,7 @@ test_expect_success 'cloning with branches' '
 	) &&
 
 	git clone "hg::hgrepo" gitrepo &&
-	check gitrepo next next &&
-
-	(cd hgrepo && hg checkout default) &&
-
-	git clone "hg::hgrepo" gitrepo2 &&
-	check gitrepo2 zero master
+	check gitrepo origin/branches/next next
 '
 
 test_expect_success 'cloning with bookmarks' '
@@ -83,25 +71,14 @@ test_expect_success 'cloning with bookmarks' '
 
 	(
 	cd hgrepo &&
+	hg checkout default &&
 	hg bookmark feature-a &&
 	echo feature-a > content &&
 	hg commit -m feature-a
 	) &&
 
 	git clone "hg::hgrepo" gitrepo &&
-	check gitrepo feature-a feature-a
-'
-
-test_expect_success 'cloning with detached head' '
-	test_when_finished "rm -rf gitrepo*" &&
-
-	(
-	cd hgrepo &&
-	hg update -r 0
-	) &&
-
-	git clone "hg::hgrepo" gitrepo &&
-	check gitrepo zero master
+	check gitrepo origin/feature-a feature-a
 '
 
 test_expect_success 'update bookmark' '

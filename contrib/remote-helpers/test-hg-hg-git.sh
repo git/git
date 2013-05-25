@@ -27,7 +27,8 @@ fi
 
 # clone to a git repo with git
 git_clone_git () {
-	git clone -q "hg::$1" $2
+	git clone -q "hg::$1" $2 &&
+	(cd $2 && git checkout master && git branch -D default)
 }
 
 # clone to an hg repo with git
@@ -63,6 +64,7 @@ hg_push_git () {
 	cd $2
 	git checkout -q -b tmp &&
 	git fetch -q "hg::../$1" 'refs/tags/*:refs/tags/*' 'refs/heads/*:refs/heads/*' &&
+	git branch -D default &&
 	git checkout -q @{-1} &&
 	git branch -q -D tmp 2> /dev/null || true
 	)

@@ -29,7 +29,6 @@ git_clone () {
 hg_clone () {
 	(
 	hg init $2 &&
-	hg -R $2 bookmark -i master &&
 	cd $1 &&
 	git push -q "hg::../$2" 'refs/tags/*:refs/tags/*' 'refs/heads/*:refs/heads/*'
 	) &&
@@ -49,8 +48,7 @@ hg_push () {
 }
 
 hg_log () {
-	hg -R $1 log --graph --debug >log &&
-	grep -v 'tag: *default/' log
+	hg -R $1 log --graph --debug
 }
 
 setup () {
@@ -66,6 +64,7 @@ setup () {
 	echo "graphlog ="
 	) >> "$HOME"/.hgrc &&
 	git config --global remote-hg.hg-git-compat true
+	git config --global remote-hg.track-branches true
 
 	HGEDITOR=/usr/bin/true
 	GIT_AUTHOR_DATE="2007-01-01 00:00:00 +0230"
@@ -189,7 +188,7 @@ test_expect_success 'hg branch' '
 	hg_clone gitrepo hgrepo &&
 
 	cd hgrepo &&
-	hg -q co master &&
+	hg -q co default &&
 	hg mv alpha beta &&
 	hg -q commit -m "rename alpha to beta" &&
 	hg branch gamma | grep -v "permanent and global" &&
@@ -225,7 +224,7 @@ test_expect_success 'hg tags' '
 	hg_clone gitrepo hgrepo &&
 
 	cd hgrepo &&
-	hg co master &&
+	hg co default &&
 	hg tag alpha
 	) &&
 

@@ -560,22 +560,16 @@ def get_branch_tip(repo, branch):
     return heads[0]
 
 def list_head(repo, cur):
-    global g_head, bmarks
+    global g_head, bmarks, fake_bmark
 
-    head = bookmarks.readcurrent(repo)
-    if head:
-        node = repo[head]
-    else:
-        # fake bookmark from current branch
-        head = cur
-        node = repo['.']
-        if not node:
-            node = repo['tip']
-        if not node:
-            return
-        if head == 'default':
-            head = 'master'
-        bmarks[head] = node
+    if 'default' not in repo:
+        # empty repo
+        return
+
+    node = repo['default']
+    head = 'master' if not 'master' in bmarks else 'default'
+    fake_bmark = head
+    bmarks[head] = node
 
     head = gitref(head)
     print "@refs/heads/%s HEAD" % head
@@ -910,8 +904,8 @@ def do_export(parser):
         if old == new:
             continue
 
-        if bmark == 'master' and 'master' not in parser.repo._bookmarks:
-            # fake bookmark
+        if bmark == fake_bmark or \
+                bmark == 'master' and 'master' not in parser.repo._bookmarks:
             print "ok %s" % ref
             continue
         elif bookmarks.pushbookmark(parser.repo, bmark, old, new):
@@ -946,6 +940,7 @@ def main(args):
     global track_branches, force_push, is_tmp
     global parsed_tags
     global filenodes
+    global fake_bmark
 
     alias = args[1]
     url = args[2]
@@ -979,6 +974,7 @@ def main(args):
     marks = None
     parsed_tags = {}
     filenodes = {}
+    fake_bmark = None
 
     repo = get_repo(url, alias)
     prefix = 'refs/hg/%s' % alias
