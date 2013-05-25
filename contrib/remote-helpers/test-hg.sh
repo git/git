@@ -398,9 +398,7 @@ test_expect_success 'remote new bookmark multiple branch head' '
 # cleanup previous stuff
 rm -rf hgrepo
 
-test_expect_success 'remote big push' '
-	test_when_finished "rm -rf hgrepo gitrepo*" &&
-
+setup_big_push () {
 	(
 	hg init hgrepo &&
 	cd hgrepo &&
@@ -459,8 +457,17 @@ test_expect_success 'remote big push' '
 
 	git checkout -q -b branches/new_branch master &&
 	echo ten > content &&
-	git commit -q -a -m ten &&
+	git commit -q -a -m ten
+	)
+}
 
+test_expect_success 'remote big push' '
+	test_when_finished "rm -rf hgrepo gitrepo*" &&
+
+	setup_big_push
+
+	(
+	cd gitrepo &&
 	test_expect_code 1 git push origin master \
 		good_bmark bad_bmark1 bad_bmark2 new_bmark \
 		branches/good_branch branches/bad_branch \
