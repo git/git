@@ -840,13 +840,23 @@ def write_tag(repo, tag, node, msg, author):
 
     p1 = tip.hex()
     p2 = '0' * 40
-    if not author:
-        author = (None, 0, 0)
-    user, date, tz = author
+    if author:
+        user, date, tz = author
+        date_tz = (date, tz)
+    else:
+        cmd = ['git', 'var', 'GIT_COMMITTER_IDENT']
+        process = subprocess.Popen(cmd, stdout=subprocess.PIPE)
+        output, _ = process.communicate()
+        m = re.match('^.* <.*>', output)
+        if m:
+            user = m.group(0)
+        else:
+            user = repo.ui.username()
+        date_tz = None
 
     ctx = context.memctx(repo, (p1, p2), msg,
             ['.hgtags'], getfilectx,
-            user, (date, tz), {'branch' : branch})
+            user, date_tz, {'branch' : branch})
 
     tmp = encoding.encoding
     encoding.encoding = 'utf-8'
