@@ -55,6 +55,8 @@ EMAIL_RE = re.compile('^([^<>]+[^ \\\t<>])?\\b(?:[ \\t<>]*?)\\b([^ \\t<>]+@[^ \\
 AUTHOR_HG_RE = re.compile('^(.*?) ?<(.*?)(?:>(.+)?)?$')
 RAW_AUTHOR_RE = re.compile('^(\w+) (?:(.+)? )?<(.*)> (\d+) ([+-]\d+)')
 
+VERSION = 1
+
 def die(msg, *args):
     sys.stderr.write('ERROR: %s\n' % (msg % args))
     sys.exit(1)
@@ -103,12 +105,19 @@ class Marks:
 
     def __init__(self, path):
         self.path = path
+        self.clear()
+        self.load()
+
+        if self.version < VERSION:
+            self.clear()
+            self.version = VERSION
+
+    def clear(self):
         self.tips = {}
         self.marks = {}
         self.rev_marks = {}
         self.last_mark = 0
-
-        self.load()
+        self.version = 0
 
     def load(self):
         if not os.path.exists(self.path):
@@ -119,12 +128,13 @@ class Marks:
         self.tips = tmp['tips']
         self.marks = tmp['marks']
         self.last_mark = tmp['last-mark']
+        self.version = tmp.get('version', 1)
 
         for rev, mark in self.marks.iteritems():
             self.rev_marks[mark] = int(rev)
 
     def dict(self):
-        return { 'tips': self.tips, 'marks': self.marks, 'last-mark' : self.last_mark }
+        return { 'tips': self.tips, 'marks': self.marks, 'last-mark' : self.last_mark, 'version' : self.version }
 
     def store(self):
         json.dump(self.dict(), open(self.path, 'w'))
