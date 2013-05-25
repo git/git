@@ -510,10 +510,10 @@ def export_ref(repo, name, kind, head):
             if len(parents) > 1:
                 print "merge :%s" % (rev_to_mark(parents[1]))
 
-        for f in modified_final:
-            print "M %s :%u %s" % f
         for f in removed:
             print "D %s" % (fix_file_path(f))
+        for f in modified_final:
+            print "M %s :%u %s" % f
         print
 
         progress = (rev - tip)
