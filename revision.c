@@ -88,7 +88,9 @@ void add_object(struct object *obj,
 		struct name_path *path,
 		const char *name)
 {
-	add_object_array(obj, path_name(path, name), p);
+	char *pn = path_name(path, name);
+	add_object_array(obj, pn, p);
+	free(pn);
 }
 
 static void mark_blob_uninteresting(struct blob *blob)
@@ -1288,7 +1290,7 @@ static void read_revisions_from_stdin(struct rev_info *revs,
 			}
 			die("options not supported in --stdin mode");
 		}
-		if (handle_revision_arg(xstrdup(sb.buf), revs, 0,
+		if (handle_revision_arg(sb.buf, revs, 0,
 					REVARG_CANNOT_BE_FILENAME))
 			die("bad revision '%s'", sb.buf);
 	}

@@ -260,11 +260,18 @@ void add_object_array(struct object *obj, const char *name, struct object_array 
 	add_object_array_with_mode(obj, name, array, S_IFINVALID);
 }
 
+/*
+ * A zero-length string to which object_array_entry::name can be
+ * initialized without requiring a malloc/free.
+ */
+static char object_array_slopbuf[1];
+
 void add_object_array_with_mode(struct object *obj, const char *name, struct object_array *array, unsigned mode)
 {
 	unsigned nr = array->nr;
 	unsigned alloc = array->alloc;
 	struct object_array_entry *objects = array->objects;
+	struct object_array_entry *entry;
 
 	if (nr >= alloc) {
 		alloc = (alloc + 32) * 2;
@@ -272,9 +279,16 @@ void add_object_array_with_mode(struct object *obj, const char *name, struct obj
 		array->alloc = alloc;
 		array->objects = objects;
 	}
-	objects[nr].item = obj;
-	objects[nr].name = name;
-	objects[nr].mode = mode;
+	entry = &objects[nr];
+	entry->item = obj;
+	if (!name)
+		entry->name = NULL;
+	else if (!*name)
+		/* Use our own empty string instead of allocating one: */
+		entry->name = object_array_slopbuf;
+	else
+		entry->name = xstrdup(name);
+	entry->mode = mode;
 	array->nr = ++nr;
 }
 
@@ -289,6 +303,9 @@ void object_array_filter(struct object_array *array,
 			if (src != dst)
 				objects[dst] = objects[src];
 			dst++;
+		} else {
+			if (objects[src].name != object_array_slopbuf)
+				free(objects[src].name);
 		}
 	}
 	array->nr = dst;
@@ -319,6 +336,9 @@ void object_array_remove_duplicates(struct object_array *array)
 			if (src != array->nr)
 				objects[array->nr] = objects[src];
 			array->nr++;
+		} else {
+			if (objects[src].name != object_array_slopbuf)
+				free(objects[src].name);
 		}
 	}
 }
