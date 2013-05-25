@@ -502,11 +502,11 @@ build-python-script: $(SCRIPT_PYTHON_GEN)
 
 .PHONY: install-perl-script install-sh-script install-python-script
 install-sh-script: $(SCRIPT_SH_GEN)
-	$(INSTALL) $(SCRIPT_SH_GEN) '$(DESTDIR_SQ)$(gitexec_instdir_SQ)'
+	$(INSTALL) $^ '$(DESTDIR_SQ)$(gitexec_instdir_SQ)'
 install-perl-script: $(SCRIPT_PERL_GEN)
-	$(INSTALL) $(SCRIPT_PERL_GEN) '$(DESTDIR_SQ)$(gitexec_instdir_SQ)'
+	$(INSTALL) $^ '$(DESTDIR_SQ)$(gitexec_instdir_SQ)'
 install-python-script: $(SCRIPT_PYTHON_GEN)
-	$(INSTALL) $(SCRIPT_PYTHON_GEN) '$(DESTDIR_SQ)$(gitexec_instdir_SQ)'
+	$(INSTALL) $^ '$(DESTDIR_SQ)$(gitexec_instdir_SQ)'
 
 .PHONY: clean-perl-script clean-sh-script clean-python-script
 clean-sh-script:
@@ -1645,7 +1645,7 @@ please_set_SHELL_PATH_to_a_more_modern_shell:
 shell_compatibility_test: please_set_SHELL_PATH_to_a_more_modern_shell
 
 strip: $(PROGRAMS) git$X
-	$(STRIP) $(STRIP_OPTS) $(PROGRAMS) git$X
+	$(STRIP) $(STRIP_OPTS) $^
 
 ### Target-specific flags and dependencies
 
