@@ -486,7 +486,7 @@ test_expect_success 'remote big push' '
 	check_bookmark hgrepo new_bmark ''
 '
 
-test_expect_failure 'remote double failed push' '
+test_expect_success 'remote double failed push' '
 	test_when_finished "rm -rf hgrepo gitrepo*" &&
 
 	(
