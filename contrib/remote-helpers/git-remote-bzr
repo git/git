@@ -795,7 +795,7 @@ def get_remote_branch(name):
 
     return branch
 
-def find_branches(repo, wanted):
+def find_branches(repo):
     transport = repo.bzrdir.root_transport
 
     for fn in transport.iter_files_recursive():
@@ -805,9 +805,6 @@ def find_branches(repo, wanted):
         name = subdir = fn[:-len('/.bzr/branch-format')]
         name = name if name != '' else 'master'
         name = name.replace('/', '+')
-
-        if wanted and not name in wanted:
-            continue
 
         try:
             cur = transport.clone(subdir)
@@ -848,38 +845,35 @@ def get_repo(url, alias):
             except bzrlib.errors.NoRepositoryPresent:
                 pass
 
-    try:
-        repo = origin.open_repository()
-        if not repo.user_transport.listable():
-            # this repository is not usable for us
-            raise bzrlib.errors.NoRepositoryPresent(repo.bzrdir)
-    except bzrlib.errors.NoRepositoryPresent:
-        # branch
+    wanted = get_config('remote-bzr.branches').rstrip().split(', ')
+    # stupid python
+    wanted = [e for e in wanted if e]
 
-        name = 'master'
-        branch = origin.open_branch().base
+    if not wanted:
+        try:
+            repo = origin.open_repository()
+            if not repo.user_transport.listable():
+                # this repository is not usable for us
+                raise bzrlib.errors.NoRepositoryPresent(repo.bzrdir)
+        except bzrlib.errors.NoRepositoryPresent:
+            wanted = ['master']
 
-        if not is_local:
-            peers[name] = branch
+    if wanted:
+        def list_wanted(url, wanted):
+            for name in wanted:
+                subdir = name if name != 'master' else ''
+                yield name, bzrlib.urlutils.join(url, subdir)
 
-        branches[name] = branch
-
-        return origin
+        branch_list = list_wanted(url, wanted)
     else:
-        # repository
+        branch_list = find_branches(repo)
 
-        wanted = get_config('remote-bzr.branches').rstrip().split(', ')
-        # stupid python
-        wanted = [e for e in wanted if e]
+    for name, url in branch_list:
+        if not is_local:
+            peers[name] = url
+        branches[name] = url
 
-        for name, branch in find_branches(repo, wanted):
-
-            if not is_local:
-                peers[name] = branch
-
-            branches[name] = branch
-
-        return origin
+    return origin
 
 def fix_path(alias, orig_url):
     url = urlparse.urlparse(orig_url, 'file')
