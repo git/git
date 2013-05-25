@@ -15,7 +15,7 @@
 static struct sha1_array good_revs;
 static struct sha1_array skipped_revs;
 
-static const unsigned char *current_bad_sha1;
+static unsigned char *current_bad_sha1;
 
 static const char *argv_checkout[] = {"checkout", "-q", NULL, "--", NULL};
 static const char *argv_show_branch[] = {"show-branch", NULL, NULL};
@@ -404,7 +404,8 @@ static int register_ref(const char *refname, const unsigned char *sha1,
 			int flags, void *cb_data)
 {
 	if (!strcmp(refname, "bad")) {
-		current_bad_sha1 = sha1;
+		current_bad_sha1 = xmalloc(20);
+		hashcpy(current_bad_sha1, sha1);
 	} else if (!prefixcmp(refname, "good-")) {
 		sha1_array_append(&good_revs, sha1);
 	} else if (!prefixcmp(refname, "skip-")) {
