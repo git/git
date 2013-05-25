@@ -26,13 +26,23 @@ check () {
 	test_cmp expected actual
 }
 
+check_branch () {
+	echo $3 > expected &&
+	hg -R $1 log -r $2 --template '{desc}\n' > actual &&
+	test_cmp expected actual
+}
+
 setup () {
 	(
 	echo "[ui]"
 	echo "username = H G Wells <wells@example.com>"
 	echo "[extensions]"
 	echo "mq ="
-	) >> "$HOME"/.hgrc
+	) >> "$HOME"/.hgrc &&
+
+	GIT_AUTHOR_DATE="2007-01-01 00:00:00 +0230" &&
+	GIT_COMMITTER_DATE="$GIT_AUTHOR_DATE" &&
+	export GIT_COMMITTER_DATE GIT_AUTHOR_DATE
 }
 
 setup
@@ -176,6 +186,62 @@ test_expect_success 'strip' '
 
 	hg -R hgrepo log --template "{desc}\n" > expected &&
 	test_cmp actual expected
+'
+
+test_expect_success 'remote push with master bookmark' '
+	test_when_finished "rm -rf hgrepo gitrepo*" &&
+
+	(
+	hg init hgrepo &&
+	cd hgrepo &&
+	echo zero > content &&
+	hg add content &&
+	hg commit -m zero &&
+	hg bookmark master &&
+	echo one > content &&
+	hg commit -m one
+	) &&
+
+	(
+	git clone "hg::hgrepo" gitrepo &&
+	cd gitrepo &&
+	echo two > content &&
+	git commit -a -m two &&
+	git push
+	) &&
+
+	check_branch hgrepo default two
+'
+
+cat > expected <<EOF
+changeset:   0:6e2126489d3d
+tag:         tip
+user:        A U Thor <author@example.com>
+date:        Mon Jan 01 00:00:00 2007 +0230
+summary:     one
+
+EOF
+
+test_expect_success 'remote push from master branch' '
+	test_when_finished "rm -rf hgrepo gitrepo*" &&
+
+	hg init hgrepo &&
+
+	(
+	git init gitrepo &&
+	cd gitrepo &&
+	git remote add origin "hg::../hgrepo" &&
+	echo one > content &&
+	git add content &&
+	git commit -a -m one &&
+	git push origin master
+	) &&
+
+	hg -R hgrepo log > actual &&
+	cat actual &&
+	test_cmp expected actual &&
+
+	check_branch hgrepo default one
 '
 
 test_done
