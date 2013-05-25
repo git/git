@@ -70,7 +70,8 @@ static int show_path_truncated(FILE *out, const struct name_path *path)
 	return ours || emitted;
 }
 
-void show_object_with_name(FILE *out, struct object *obj, const struct name_path *path, const char *component)
+void show_object_with_name(FILE *out, struct object *obj,
+			   const struct name_path *path, const char *component)
 {
 	struct name_path leaf;
 	leaf.up = (struct name_path *)path;
@@ -186,7 +187,9 @@ void mark_parents_uninteresting(struct commit *commit)
 	}
 }
 
-static void add_pending_object_with_mode(struct rev_info *revs, struct object *obj, const char *name, unsigned mode)
+static void add_pending_object_with_mode(struct rev_info *revs,
+					 struct object *obj,
+					 const char *name, unsigned mode)
 {
 	if (!obj)
 		return;
@@ -209,7 +212,8 @@ static void add_pending_object_with_mode(struct rev_info *revs, struct object *o
 	add_object_array_with_mode(obj, name, &revs->pending, mode);
 }
 
-void add_pending_object(struct rev_info *revs, struct object *obj, const char *name)
+void add_pending_object(struct rev_info *revs,
+			struct object *obj, const char *name)
 {
 	add_pending_object_with_mode(revs, obj, name, S_IFINVALID);
 }
@@ -226,7 +230,9 @@ void add_head_to_pending(struct rev_info *revs)
 	add_pending_object(revs, obj, "HEAD");
 }
 
-static struct object *get_reference(struct rev_info *revs, const char *name, const unsigned char *sha1, unsigned int flags)
+static struct object *get_reference(struct rev_info *revs, const char *name,
+				    const unsigned char *sha1,
+				    unsigned int flags)
 {
 	struct object *object;
 
@@ -247,7 +253,8 @@ void add_pending_sha1(struct rev_info *revs, const char *name,
 	add_pending_object(revs, object, name);
 }
 
-static struct commit *handle_commit(struct rev_info *revs, struct object *object, const char *name)
+static struct commit *handle_commit(struct rev_info *revs,
+				    struct object *object, const char *name)
 {
 	unsigned long flags = object->flags;
 
@@ -368,7 +375,8 @@ static void file_change(struct diff_options *options,
 	DIFF_OPT_SET(options, HAS_CHANGES);
 }
 
-static int rev_compare_tree(struct rev_info *revs, struct commit *parent, struct commit *commit)
+static int rev_compare_tree(struct rev_info *revs,
+			    struct commit *parent, struct commit *commit)
 {
 	struct tree *t1 = parent->tree;
 	struct tree *t2 = commit->tree;
