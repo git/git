@@ -415,7 +415,7 @@ def export_ref(repo, name, kind, head):
         tip = 0
 
     revs = xrange(tip, head.rev() + 1)
-    count = 0
+    total = len(revs)
 
     for rev in revs:
 
@@ -423,7 +423,6 @@ def export_ref(repo, name, kind, head):
         node = c.node()
 
         if marks.is_marked(c.hex()):
-            count += 1
             continue
 
         (manifest, user, (time, tz), files, desc, extra) = repo.changelog.read(node)
@@ -495,9 +494,9 @@ def export_ref(repo, name, kind, head):
             print "D %s" % (fix_file_path(f))
         print
 
-        count += 1
-        if (count % 100 == 0):
-            print "progress revision %d '%s' (%d/%d)" % (rev, name, count, len(revs))
+        progress = (rev - tip)
+        if (progress % 100 == 0):
+            print "progress revision %d '%s' (%d/%d)" % (rev, name, progress, total)
 
     # make sure the ref is updated
     print "reset %s/%s" % (prefix, ename)
