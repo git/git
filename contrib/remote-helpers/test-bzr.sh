@@ -190,9 +190,11 @@ test_expect_success 'different authors' '
 	test_cmp expected actual
 '
 
+# cleanup previous stuff
+rm -rf bzrrepo gitrepo
+
 test_expect_success 'fetch utf-8 filenames' '
-	mkdir -p tmp && cd tmp &&
-	test_when_finished "cd .. && rm -rf tmp && LC_ALL=C" &&
+	test_when_finished "rm -rf bzrrepo gitrepo && LC_ALL=C" &&
 
 	LC_ALL=en_US.UTF-8
 	export LC_ALL
@@ -223,8 +225,9 @@ test_expect_success 'fetch utf-8 filenames' '
 '
 
 test_expect_success 'push utf-8 filenames' '
+	test_when_finished "rm -rf bzrrepo gitrepo && LC_ALL=C" &&
+
 	mkdir -p tmp && cd tmp &&
-	test_when_finished "cd .. && rm -rf tmp && LC_ALL=C" &&
 
 	LC_ALL=en_US.UTF-8
 	export LC_ALL
@@ -255,8 +258,7 @@ test_expect_success 'push utf-8 filenames' '
 '
 
 test_expect_success 'pushing a merge' '
-	mkdir -p tmp && cd tmp &&
-	test_when_finished "cd .. && rm -rf tmp" &&
+	test_when_finished "rm -rf bzrrepo gitrepo" &&
 
 	(
 	bzr init bzrrepo &&
@@ -297,8 +299,7 @@ origin/trunk
 EOF
 
 test_expect_success 'proper bzr repo' '
-	mkdir -p tmp && cd tmp &&
-	test_when_finished "cd .. && rm -rf tmp" &&
+	test_when_finished "rm -rf bzrrepo gitrepo" &&
 
 	bzr init-repo bzrrepo &&
 
@@ -323,13 +324,11 @@ test_expect_success 'proper bzr repo' '
 	git for-each-ref --format "%(refname:short)" refs/remotes/origin > ../actual
 	) &&
 
-	test_cmp ../expected actual
+	test_cmp expected actual
 '
 
 test_expect_success 'strip' '
-	# Do not imitate this style; always chdir inside a subshell instead
-	mkdir -p tmp && cd tmp &&
-	test_when_finished "cd .. && rm -rf tmp" &&
+	test_when_finished "rm -rf bzrrepo gitrepo" &&
 
 	(
 	bzr init bzrrepo &&

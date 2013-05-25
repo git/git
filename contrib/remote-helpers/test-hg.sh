@@ -122,6 +122,9 @@ test_expect_success 'update bookmark' '
 	hg -R hgrepo bookmarks | egrep "devel[	 ]+3:"
 '
 
+# cleanup previous stuff
+rm -rf hgrepo
+
 author_test () {
 	echo $1 >> content &&
 	hg commit -u "$2" -m "add $1" &&
@@ -129,8 +132,7 @@ author_test () {
 }
 
 test_expect_success 'authors' '
-	mkdir -p tmp && cd tmp &&
-	test_when_finished "cd .. && rm -rf tmp" &&
+	test_when_finished "rm -rf hgrepo gitrepo" &&
 
 	(
 	hg init hgrepo &&
@@ -139,6 +141,7 @@ test_expect_success 'authors' '
 	touch content &&
 	hg add content &&
 
+	> ../expected &&
 	author_test alpha "" "H G Wells <wells@example.com>" &&
 	author_test beta "test" "test <unknown>" &&
 	author_test beta "test <test@example.com> (comment)" "test <test@example.com>" &&
