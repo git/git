@@ -75,6 +75,9 @@ def hgmode(mode):
 def hghex(node):
     return hg.node.hex(node)
 
+def hgbin(node):
+    return hg.node.bin(node)
+
 def hgref(ref):
     return ref.replace('___', ' ')
 
@@ -261,7 +264,7 @@ def get_filechanges(repo, ctx, parent):
     removed = set()
 
     # load earliest manifest first for caching reasons
-    prev = repo[parent].manifest().copy()
+    prev = parent.manifest().copy()
     cur = ctx.manifest()
 
     for fn in cur:
@@ -401,7 +404,7 @@ def export_ref(repo, name, kind, head):
         else:
             committer = author
 
-        parents = [p for p in repo.changelog.parentrevs(rev) if p >= 0]
+        parents = [repo[p] for p in repo.changelog.parentrevs(rev) if p >= 0]
 
         if len(parents) == 0:
             modified = c.manifest().keys()
@@ -450,9 +453,9 @@ def export_ref(repo, name, kind, head):
         print desc
 
         if len(parents) > 0:
-            print "from :%s" % (rev_to_mark(parents[0]))
+            print "from :%s" % (rev_to_mark(parents[0].rev()))
             if len(parents) > 1:
-                print "merge :%s" % (rev_to_mark(parents[1]))
+                print "merge :%s" % (rev_to_mark(parents[1].rev()))
 
         for f in modified_final:
             print "M %s :%u %s" % f
@@ -466,10 +469,10 @@ def export_ref(repo, name, kind, head):
 
     # make sure the ref is updated
     print "reset %s/%s" % (prefix, ename)
-    print "from :%u" % rev_to_mark(rev)
+    print "from :%u" % rev_to_mark(head.rev())
     print
 
-    marks.set_tip(ename, rev)
+    marks.set_tip(ename, head.rev())
 
 def export_tag(repo, tag):
     export_ref(repo, tag, 'tags', repo[hgref(tag)])
@@ -739,7 +742,7 @@ def parse_commit(parser):
     tmp = encoding.encoding
     encoding.encoding = 'utf-8'
 
-    node = repo.commitctx(ctx)
+    node = hghex(repo.commitctx(ctx))
 
     encoding.encoding = tmp
 
@@ -763,7 +766,7 @@ def parse_reset(parser):
     parser.next()
 
     node = parser.repo.changelog.node(mark_to_rev(from_mark))
-    parsed_refs[ref] = node
+    parsed_refs[ref] = hghex(node)
 
 def parse_tag(parser):
     name = parser[1]
@@ -788,7 +791,7 @@ def write_tag(repo, tag, node, msg, author):
             data = fctx.data()
         except error.ManifestLookupError:
             data = ""
-        content = data + "%s %s\n" % (hghex(node), tag)
+        content = data + "%s %s\n" % (node, tag)
         return context.memfilectx(f, content, False, False, None)
 
     p1 = tip.hex()
@@ -832,9 +835,10 @@ def do_export(parser):
             die('unhandled export command: %s' % line)
 
     for ref, node in parsed_refs.iteritems():
+        bnode = hgbin(node)
         if ref.startswith('refs/heads/branches'):
             branch = ref[len('refs/heads/branches/'):]
-            if branch in branches and node in branches[branch]:
+            if branch in branches and bnode in branches[branch]:
                 # up to date
                 continue
             print "ok %s" % ref
@@ -848,11 +852,11 @@ def do_export(parser):
             author, msg = parsed_tags.get(tag, (None, None))
             if mode == 'git':
                 if not msg:
-                    msg = 'Added tag %s for changeset %s' % (tag, hghex(node[:6]));
+                    msg = 'Added tag %s for changeset %s' % (tag, node[:12]);
                 write_tag(parser.repo, tag, node, msg, author)
             else:
                 fp = parser.repo.opener('localtags', 'a')
-                fp.write('%s %s\n' % (hghex(node), tag))
+                fp.write('%s %s\n' % (node, tag))
                 fp.close()
             print "ok %s" % ref
         else:
@@ -866,7 +870,7 @@ def do_export(parser):
     # handle bookmarks
     for bmark, node in p_bmarks:
         ref = 'refs/heads/' + bmark
-        new = hghex(node)
+        new = node
 
         if bmark in bmarks:
             old = bmarks[bmark].hex()
