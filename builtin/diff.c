@@ -153,7 +153,8 @@ static int builtin_diff_index(struct rev_info *revs,
 
 static int builtin_diff_tree(struct rev_info *revs,
 			     int argc, const char **argv,
-			     struct object_array_entry *ent)
+			     struct object_array_entry *ent0,
+			     struct object_array_entry *ent1)
 {
 	const unsigned char *(sha1[2]);
 	int swap = 0;
@@ -161,13 +162,14 @@ static int builtin_diff_tree(struct rev_info *revs,
 	if (argc > 1)
 		usage(builtin_diff_usage);
 
-	/* We saw two trees, ent[0] and ent[1].
-	 * if ent[1] is uninteresting, they are swapped
+	/*
+	 * We saw two trees, ent0 and ent1.  If ent1 is uninteresting,
+	 * swap them.
 	 */
-	if (ent[1].item->flags & UNINTERESTING)
+	if (ent1->item->flags & UNINTERESTING)
 		swap = 1;
-	sha1[swap] = ent[0].item->sha1;
-	sha1[1-swap] = ent[1].item->sha1;
+	sha1[swap] = ent0->item->sha1;
+	sha1[1-swap] = ent1->item->sha1;
 	diff_tree_sha1(sha1[0], sha1[1], "", &revs->diffopt);
 	log_tree_diff_flush(revs);
 	return 0;
@@ -403,7 +405,7 @@ int cmd_diff(int argc, const char **argv, const char *prefix)
 	else if (ents == 1)
 		result = builtin_diff_index(&rev, argc, argv);
 	else if (ents == 2)
-		result = builtin_diff_tree(&rev, argc, argv, ent);
+		result = builtin_diff_tree(&rev, argc, argv, &ent[0], &ent[1]);
 	else if (ent[0].item->flags & UNINTERESTING) {
 		/*
 		 * diff A...B where there is at least one merge base
@@ -412,8 +414,7 @@ int cmd_diff(int argc, const char **argv, const char *prefix)
 		 * between the base and B.  Note that we pick one
 		 * merge base at random if there are more than one.
 		 */
-		ent[1] = ent[ents-1];
-		result = builtin_diff_tree(&rev, argc, argv, ent);
+		result = builtin_diff_tree(&rev, argc, argv, &ent[0], &ent[ents-1]);
 	} else
 		result = builtin_diff_combined(&rev, argc, argv,
 					       ent, ents);
