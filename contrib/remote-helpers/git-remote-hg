@@ -185,10 +185,7 @@ class Marks:
         return rev in self.marks
 
     def get_tip(self, branch):
-        try:
-            return str(self.tips[branch])
-        except KeyError:
-            return None
+        return str(self.tips[branch])
 
     def set_tip(self, branch, tip):
         self.tips[branch] = tip
@@ -433,10 +430,10 @@ def export_ref(repo, name, kind, head):
     global prefix, marks, mode
 
     ename = '%s/%s' % (kind, name)
-    tip = marks.get_tip(ename)
-    if tip and tip in repo:
+    try:
+        tip = marks.get_tip(ename)
         tip = repo[tip].rev()
-    else:
+    except:
         tip = 0
 
     revs = xrange(tip, head.rev() + 1)
