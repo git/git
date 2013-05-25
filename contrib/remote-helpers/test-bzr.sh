@@ -18,15 +18,8 @@ if ! python -c 'import bzrlib'; then
 fi
 
 check () {
-	(
-	cd $1 &&
-	git log --format='%s' -1 &&
-	git symbolic-ref HEAD
-	) > actual &&
-	(
-	echo $2 &&
-	echo "refs/heads/$3"
-	) > expected &&
+	echo $3 > expected &&
+	git --git-dir=$1/.git log --format='%s' -1 $2 > actual
 	test_cmp expected actual
 }
 
@@ -42,7 +35,7 @@ test_expect_success 'cloning' '
 	) &&
 
 	git clone "bzr::bzrrepo" gitrepo &&
-	check gitrepo one master
+	check gitrepo HEAD one
 '
 
 test_expect_success 'pulling' '
@@ -54,7 +47,7 @@ test_expect_success 'pulling' '
 
 	(cd gitrepo && git pull) &&
 
-	check gitrepo two master
+	check gitrepo HEAD two
 '
 
 test_expect_success 'pushing' '
@@ -89,7 +82,7 @@ test_expect_success 'roundtrip' '
 
 	(cd gitrepo && git pull && git push) &&
 
-	check gitrepo four master &&
+	check gitrepo HEAD four &&
 
 	(
 	cd gitrepo &&
