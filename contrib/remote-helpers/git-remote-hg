@@ -859,6 +859,23 @@ def write_tag(repo, tag, node, msg, author):
 
     return (tagnode, branch)
 
+def checkheads_bmark(repo, ref, ctx):
+    if force_push:
+        return True
+
+    bmark = ref[len('refs/heads/'):]
+    if not bmark in bmarks:
+        # new bmark
+        return True
+
+    ctx_old = bmarks[bmark]
+    ctx_new = ctx
+    if not repo.changelog.descendant(ctx_old.rev(), ctx_new.rev()):
+        print "error %s non-fast forward" % ref
+        return False
+
+    return True
+
 def checkheads(repo, remote, p_revs):
 
     remotemap = remote.branchmap()
@@ -874,6 +891,13 @@ def checkheads(repo, remote, p_revs):
         branch = ctx.branch()
         if not branch in remotemap:
             # new branch
+            continue
+        if not ref.startswith('refs/heads/branches'):
+            if ref.startswith('refs/heads/'):
+                if not checkheads_bmark(repo, ref, ctx):
+                    ret = False
+
+            # only check branches
             continue
         new.setdefault(branch, []).append(ctx.rev())
 
