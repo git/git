@@ -328,7 +328,7 @@ test_expect_success 'remote new bookmark' '
 	check_bookmark hgrepo feature-b feature-b
 '
 
-test_expect_failure 'remote push diverged' '
+test_expect_success 'remote push diverged' '
 	test_when_finished "rm -rf gitrepo*" &&
 
 	git clone "hg::hgrepo" gitrepo &&
@@ -351,7 +351,7 @@ test_expect_failure 'remote push diverged' '
 	check_branch hgrepo default bump
 '
 
-test_expect_failure 'remote update bookmark diverge' '
+test_expect_success 'remote update bookmark diverge' '
 	test_when_finished "rm -rf gitrepo*" &&
 
 	(
@@ -398,7 +398,7 @@ test_expect_failure 'remote new bookmark multiple branch head' '
 # cleanup previous stuff
 rm -rf hgrepo
 
-test_expect_failure 'remote big push' '
+test_expect_success 'remote big push' '
 	test_when_finished "rm -rf hgrepo gitrepo*" &&
 
 	(
