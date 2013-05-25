@@ -294,22 +294,32 @@ void object_array_filter(struct object_array *array,
 	array->nr = dst;
 }
 
+/*
+ * Return true iff array already contains an entry with name.
+ */
+static int contains_name(struct object_array *array, const char *name)
+{
+	unsigned nr = array->nr, i;
+	struct object_array_entry *object = array->objects;
+
+	for (i = 0; i < nr; i++, object++)
+		if (!strcmp(object->name, name))
+			return 1;
+	return 0;
+}
+
 void object_array_remove_duplicates(struct object_array *array)
 {
-	unsigned int ref, src, dst;
+	unsigned nr = array->nr, src;
 	struct object_array_entry *objects = array->objects;
 
-	for (ref = 0; ref + 1 < array->nr; ref++) {
-		for (src = ref + 1, dst = src;
-		     src < array->nr;
-		     src++) {
-			if (!strcmp(objects[ref].name, objects[src].name))
-				continue;
-			if (src != dst)
-				objects[dst] = objects[src];
-			dst++;
+	array->nr = 0;
+	for (src = 0; src < nr; src++) {
+		if (!contains_name(array, objects[src].name)) {
+			if (src != array->nr)
+				objects[array->nr] = objects[src];
+			array->nr++;
 		}
-		array->nr = dst;
 	}
 }
 

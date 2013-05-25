@@ -96,7 +96,11 @@ typedef int (*object_array_each_func_t)(struct object_array_entry *, void *);
 void object_array_filter(struct object_array *array,
 			 object_array_each_func_t want, void *cb_data);
 
-void object_array_remove_duplicates(struct object_array *);
+/*
+ * Remove from array all but the first entry with a given name.
+ * Warning: this function uses an O(N^2) algorithm.
+ */
+void object_array_remove_duplicates(struct object_array *array);
 
 void clear_object_flags(unsigned flags);
 
