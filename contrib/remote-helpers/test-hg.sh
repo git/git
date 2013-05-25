@@ -341,4 +341,33 @@ test_expect_failure 'remote push diverged' '
 	check_branch hgrepo default bump
 '
 
+test_expect_failure 'remote update bookmark diverge' '
+	test_when_finished "rm -rf gitrepo*" &&
+
+	(
+	cd hgrepo &&
+	hg checkout tip^ &&
+	hg bookmark diverge
+	) &&
+
+	git clone "hg::hgrepo" gitrepo &&
+
+	(
+	cd hgrepo &&
+	echo "bump bookmark" > content &&
+	hg commit -m "bump bookmark"
+	) &&
+
+	(
+	cd gitrepo &&
+	git checkout --quiet diverge &&
+	echo diverge > content &&
+	git commit -a -m diverge &&
+	test_expect_code 1 git push 2> error &&
+	grep "^ ! \[rejected\] *diverge -> diverge (non-fast-forward)$" error
+	) &&
+
+	check_bookmark hgrepo diverge "bump bookmark"
+'
+
 test_done
