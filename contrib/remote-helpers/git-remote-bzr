@@ -765,25 +765,26 @@ def do_list(parser):
     print "@refs/heads/%s HEAD" % master_branch
     print
 
-def get_remote_branch(origin, remote_branch, name):
+def clone(path, remote_branch):
+    bdir = bzrlib.bzrdir.BzrDir.create(path)
+    repo = bdir.find_repository()
+    repo.fetch(remote_branch.repository)
+    return remote_branch.sprout(bdir, repository=repo)
+
+def get_remote_branch(remote_branch, name):
     global dirname, peers
 
     branch_path = os.path.join(dirname, 'clone', name)
 
     try:
-        d = bzrlib.bzrdir.BzrDir.open(branch_path)
-        branch = d.open_branch()
+        branch = bzrlib.branch.Branch.open(branch_path)
     except bzrlib.errors.NotBranchError:
         # clone
-        d = origin.sprout(branch_path, None,
-                hardlink=True, create_tree_if_local=False,
-                force_new_repo=False,
-                source_branch=remote_branch)
-        branch = d.open_branch()
+        branch = clone(branch_path, remote_branch)
     else:
         # pull
         try:
-            branch.pull(remote_branch, [], None, False)
+            branch.pull(remote_branch, overwrite=True)
         except bzrlib.errors.DivergedBranches:
             # use remote branch for now
             return remote_branch
@@ -856,7 +857,7 @@ def get_repo(url, alias):
 
         if not is_local:
             peers[name] = remote_branch.base
-            branch = get_remote_branch(origin, remote_branch, name)
+            branch = get_remote_branch(remote_branch, name)
         else:
             branch = remote_branch
 
@@ -874,7 +875,7 @@ def get_repo(url, alias):
 
             if not is_local:
                 peers[name] = remote_branch.base
-                branch = get_remote_branch(origin, remote_branch, name)
+                branch = get_remote_branch(remote_branch, name)
             else:
                 branch = remote_branch
 
