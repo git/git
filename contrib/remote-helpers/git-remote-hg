@@ -858,6 +858,7 @@ def do_export(parser):
     global parsed_refs, bmarks, peer
 
     p_bmarks = []
+    p_revs = set()
 
     parser.next()
 
@@ -882,6 +883,7 @@ def do_export(parser):
             if branch in branches and bnode in branches[branch]:
                 # up to date
                 continue
+            p_revs.add(bnode)
             print "ok %s" % ref
         elif ref.startswith('refs/heads/'):
             bmark = ref[len('refs/heads/'):]
@@ -896,6 +898,7 @@ def do_export(parser):
                     not (bmark == 'master' and bmark not in parser.repo._bookmarks):
                 p_bmarks.append((ref, bmark, old, new))
 
+            p_revs.add(bnode)
         elif ref.startswith('refs/tags/'):
             tag = ref[len('refs/tags/'):]
             tag = hgref(tag)
@@ -903,18 +906,20 @@ def do_export(parser):
             if mode == 'git':
                 if not msg:
                     msg = 'Added tag %s for changeset %s' % (tag, node[:12]);
-                write_tag(parser.repo, tag, node, msg, author)
+                tagnode = write_tag(parser.repo, tag, node, msg, author)
+                p_revs.add(tagnode)
             else:
                 fp = parser.repo.opener('localtags', 'a')
                 fp.write('%s %s\n' % (node, tag))
                 fp.close()
+            p_revs.add(bnode)
             print "ok %s" % ref
         else:
             # transport-helper/fast-export bugs
             continue
 
     if peer:
-        parser.repo.push(peer, force=force_push, newbranch=True)
+        parser.repo.push(peer, force=force_push, newbranch=True, revs=list(p_revs))
 
         # update remote bookmarks
         remote_bmarks = peer.listkeys('bookmarks')
