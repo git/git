@@ -27,7 +27,7 @@ fi
 
 # clone to a git repo with git
 git_clone_git () {
-	git clone -q "hg::$PWD/$1" $2
+	git clone -q "hg::$1" $2
 }
 
 # clone to an hg repo with git
@@ -36,7 +36,7 @@ hg_clone_git () {
 	hg init $2 &&
 	hg -R $2 bookmark -i master &&
 	cd $1 &&
-	git push -q "hg::$PWD/../$2" 'refs/tags/*:refs/tags/*' 'refs/heads/*:refs/heads/*'
+	git push -q "hg::../$2" 'refs/tags/*:refs/tags/*' 'refs/heads/*:refs/heads/*'
 	) &&
 
 	(cd $2 && hg -q update)
@@ -63,7 +63,7 @@ hg_push_git () {
 	cd $2
 	old=$(git symbolic-ref --short HEAD)
 	git checkout -q -b tmp &&
-	git fetch -q "hg::$PWD/../$1" 'refs/tags/*:refs/tags/*' 'refs/heads/*:refs/heads/*' &&
+	git fetch -q "hg::../$1" 'refs/tags/*:refs/tags/*' 'refs/heads/*:refs/heads/*' &&
 	git checkout -q $old &&
 	git branch -q -D tmp 2> /dev/null || true
 	)

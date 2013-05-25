@@ -41,7 +41,7 @@ test_expect_success 'cloning' '
 	bzr commit -m one
 	) &&
 
-	git clone "bzr::$PWD/bzrrepo" gitrepo &&
+	git clone "bzr::bzrrepo" gitrepo &&
 	check gitrepo one master
 '
 
@@ -216,7 +216,7 @@ test_expect_success 'fetch utf-8 filenames' '
 	) &&
 
 	(
-	git clone "bzr::$PWD/bzrrepo" gitrepo &&
+	git clone "bzr::bzrrepo" gitrepo &&
 	cd gitrepo &&
 	git -c core.quotepath=false ls-files > ../actual
 	) &&
@@ -242,7 +242,7 @@ test_expect_success 'push utf-8 filenames' '
 	) &&
 
 	(
-	git clone "bzr::$PWD/bzrrepo" gitrepo &&
+	git clone "bzr::bzrrepo" gitrepo &&
 	cd gitrepo &&
 
 	echo test >> "ærø" &&
@@ -268,7 +268,7 @@ test_expect_success 'pushing a merge' '
 	bzr commit -m one
 	) &&
 
-	git clone "bzr::$PWD/bzrrepo" gitrepo &&
+	git clone "bzr::bzrrepo" gitrepo &&
 
 	(
 	cd bzrrepo &&
@@ -319,7 +319,7 @@ test_expect_success 'proper bzr repo' '
 	) &&
 
 	(
-	git clone "bzr::$PWD/bzrrepo" gitrepo &&
+	git clone "bzr::bzrrepo" gitrepo &&
 	cd gitrepo &&
 	git for-each-ref --format "%(refname:short)" refs/remotes/origin > ../actual
 	) &&
@@ -342,7 +342,7 @@ test_expect_success 'strip' '
 	bzr commit -m two
 	) &&
 
-	git clone "bzr::$PWD/bzrrepo" gitrepo &&
+	git clone "bzr::bzrrepo" gitrepo &&
 
 	(
 	cd bzrrepo &&

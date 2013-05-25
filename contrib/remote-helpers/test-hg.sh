@@ -53,7 +53,7 @@ test_expect_success 'cloning' '
 	hg commit -m zero
 	) &&
 
-	git clone "hg::$PWD/hgrepo" gitrepo &&
+	git clone "hg::hgrepo" gitrepo &&
 	check gitrepo zero master
 '
 
@@ -67,12 +67,12 @@ test_expect_success 'cloning with branches' '
 	hg commit -m next
 	) &&
 
-	git clone "hg::$PWD/hgrepo" gitrepo &&
+	git clone "hg::hgrepo" gitrepo &&
 	check gitrepo next next &&
 
 	(cd hgrepo && hg checkout default) &&
 
-	git clone "hg::$PWD/hgrepo" gitrepo2 &&
+	git clone "hg::hgrepo" gitrepo2 &&
 	check gitrepo2 zero master
 '
 
@@ -86,7 +86,7 @@ test_expect_success 'cloning with bookmarks' '
 	hg commit -m feature-a
 	) &&
 
-	git clone "hg::$PWD/hgrepo" gitrepo &&
+	git clone "hg::hgrepo" gitrepo &&
 	check gitrepo feature-a feature-a
 '
 
@@ -98,7 +98,7 @@ test_expect_success 'cloning with detached head' '
 	hg update -r 0
 	) &&
 
-	git clone "hg::$PWD/hgrepo" gitrepo &&
+	git clone "hg::hgrepo" gitrepo &&
 	check gitrepo zero master
 '
 
@@ -111,7 +111,7 @@ test_expect_success 'update bookmark' '
 	) &&
 
 	(
-	git clone "hg::$PWD/hgrepo" gitrepo &&
+	git clone "hg::hgrepo" gitrepo &&
 	cd gitrepo &&
 	git checkout --quiet devel &&
 	echo devel > content &&
@@ -155,7 +155,7 @@ test_expect_success 'authors' '
 	author_test kappa "test@example.com" "Unknown <test@example.com>"
 	) &&
 
-	git clone "hg::$PWD/hgrepo" gitrepo &&
+	git clone "hg::hgrepo" gitrepo &&
 	git --git-dir=gitrepo/.git log --reverse --format="%an <%ae>" > actual &&
 
 	test_cmp expected actual
