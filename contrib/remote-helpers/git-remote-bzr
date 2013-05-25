@@ -769,22 +769,24 @@ def get_remote_branch(origin, remote_branch, name):
     global dirname, peers
 
     branch_path = os.path.join(dirname, 'clone', name)
-    if os.path.exists(branch_path):
-        # pull
+
+    try:
         d = bzrlib.bzrdir.BzrDir.open(branch_path)
         branch = d.open_branch()
-        try:
-            branch.pull(remote_branch, [], None, False)
-        except bzrlib.errors.DivergedBranches:
-            # use remote branch for now
-            return remote_branch
-    else:
+    except bzrlib.errors.NotBranchError:
         # clone
         d = origin.sprout(branch_path, None,
                 hardlink=True, create_tree_if_local=False,
                 force_new_repo=False,
                 source_branch=remote_branch)
         branch = d.open_branch()
+    else:
+        # pull
+        try:
+            branch.pull(remote_branch, [], None, False)
+        except bzrlib.errors.DivergedBranches:
+            # use remote branch for now
+            return remote_branch
 
     return branch
 
