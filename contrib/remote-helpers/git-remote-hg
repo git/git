@@ -885,8 +885,17 @@ def do_export(parser):
             print "ok %s" % ref
         elif ref.startswith('refs/heads/'):
             bmark = ref[len('refs/heads/'):]
-            p_bmarks.append((bmark, node))
-            continue
+            new = node
+            old = bmarks[bmark].hex() if bmark in bmarks else ''
+
+            if old == new:
+                continue
+
+            print "ok %s" % ref
+            if bmark != fake_bmark and \
+                    not (bmark == 'master' and bmark not in parser.repo._bookmarks):
+                p_bmarks.append((ref, bmark, old, new))
+
         elif ref.startswith('refs/tags/'):
             tag = ref[len('refs/tags/'):]
             tag = hgref(tag)
@@ -906,39 +915,18 @@ def do_export(parser):
 
     if peer:
         parser.repo.push(peer, force=force_push, newbranch=True)
+
+        # update remote bookmarks
         remote_bmarks = peer.listkeys('bookmarks')
-
-    # handle bookmarks
-    for bmark, node in p_bmarks:
-        ref = 'refs/heads/' + bmark
-        new = node
-
-        if bmark in bmarks:
-            old = bmarks[bmark].hex()
-        else:
-            old = ''
-
-        if old == new:
-            continue
-
-        if bmark == fake_bmark or \
-                bmark == 'master' and 'master' not in parser.repo._bookmarks:
-            print "ok %s" % ref
-            continue
-        elif bookmarks.pushbookmark(parser.repo, bmark, old, new):
-            # updated locally
-            pass
-        else:
-            print "error %s" % ref
-            continue
-
-        if peer:
+        for ref, bmark, old, new in p_bmarks:
             old = remote_bmarks.get(bmark, '')
             if not peer.pushkey('bookmarks', bmark, old, new):
                 print "error %s" % ref
-                continue
-
-        print "ok %s" % ref
+    else:
+        # update local bookmarks
+        for ref, bmark, old, new in p_bmarks:
+            if not bookmarks.pushbookmark(parser.repo, bmark, old, new):
+                print "error %s" % ref
 
     print
 
