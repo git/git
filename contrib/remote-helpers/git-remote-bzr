@@ -766,7 +766,10 @@ def do_list(parser):
     print
 
 def clone(path, remote_branch):
-    bdir = bzrlib.bzrdir.BzrDir.create(path)
+    try:
+        bdir = bzrlib.bzrdir.BzrDir.create(path)
+    except bzrlib.errors.AlreadyControlDirError:
+        bdir = bzrlib.bzrdir.BzrDir.open(path)
     repo = bdir.find_repository()
     repo.fetch(remote_branch.repository)
     return remote_branch.sprout(bdir, repository=repo)
