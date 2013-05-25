@@ -253,8 +253,8 @@ int cmd_diff(int argc, const char **argv, const char *prefix)
 {
 	int i;
 	struct rev_info rev;
-	struct object_array_entry ent[100];
-	int ents = 0, blobs = 0, paths = 0;
+	struct object_array ent = OBJECT_ARRAY_INIT;
+	int blobs = 0, paths = 0;
 	const char *path = NULL;
 	struct blobinfo blob[2];
 	int nongit;
@@ -351,13 +351,8 @@ int cmd_diff(int argc, const char **argv, const char *prefix)
 		if (obj->type == OBJ_COMMIT)
 			obj = &((struct commit *)obj)->tree->object;
 		if (obj->type == OBJ_TREE) {
-			if (ARRAY_SIZE(ent) <= ents)
-				die(_("more than %d trees given: '%s'"),
-				    (int) ARRAY_SIZE(ent), name);
 			obj->flags |= flags;
-			ent[ents].item = obj;
-			ent[ents].name = name;
-			ents++;
+			add_object_array(obj, name, &ent);
 			continue;
 		}
 		if (obj->type == OBJ_BLOB) {
@@ -381,7 +376,7 @@ int cmd_diff(int argc, const char **argv, const char *prefix)
 	/*
 	 * Now, do the arguments look reasonable?
 	 */
-	if (!ents) {
+	if (!ent.nr) {
 		switch (blobs) {
 		case 0:
 			result = builtin_diff_files(&rev, argc, argv);
@@ -402,22 +397,26 @@ int cmd_diff(int argc, const char **argv, const char *prefix)
 	}
 	else if (blobs)
 		usage(builtin_diff_usage);
-	else if (ents == 1)
+	else if (ent.nr == 1)
 		result = builtin_diff_index(&rev, argc, argv);
-	else if (ents == 2)
-		result = builtin_diff_tree(&rev, argc, argv, &ent[0], &ent[1]);
-	else if (ent[0].item->flags & UNINTERESTING) {
+	else if (ent.nr == 2)
+		result = builtin_diff_tree(&rev, argc, argv,
+					   &ent.objects[0], &ent.objects[1]);
+	else if (ent.objects[0].item->flags & UNINTERESTING) {
 		/*
 		 * diff A...B where there is at least one merge base
-		 * between A and B.  We have ent[0] == merge-base,
-		 * ent[ents-2] == A, and ent[ents-1] == B.  Show diff
-		 * between the base and B.  Note that we pick one
-		 * merge base at random if there are more than one.
+		 * between A and B.  We have ent.objects[0] ==
+		 * merge-base, ent.objects[ents-2] == A, and
+		 * ent.objects[ents-1] == B.  Show diff between the
+		 * base and B.  Note that we pick one merge base at
+		 * random if there are more than one.
 		 */
-		result = builtin_diff_tree(&rev, argc, argv, &ent[0], &ent[ents-1]);
+		result = builtin_diff_tree(&rev, argc, argv,
+					   &ent.objects[0],
+					   &ent.objects[ent.nr-1]);
 	} else
 		result = builtin_diff_combined(&rev, argc, argv,
-					       ent, ents);
+					       ent.objects, ent.nr);
 	result = diff_result_code(&rev.diffopt, result);
 	if (1 < rev.diffopt.skip_stat_unmatch)
 		refresh_index_quietly();
