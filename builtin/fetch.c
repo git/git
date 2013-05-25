@@ -697,6 +697,7 @@ static int do_fetch(struct transport *transport,
 	struct ref *ref_map;
 	struct ref *rm;
 	int autotags = (transport->remote->fetch_tags == 1);
+	int retcode = 0;
 
 	for_each_ref(add_existing, &existing_refs);
 
@@ -712,9 +713,9 @@ static int do_fetch(struct transport *transport,
 
 	/* if not appending, truncate FETCH_HEAD */
 	if (!append && !dry_run) {
-		int errcode = truncate_fetch_head();
-		if (errcode)
-			return errcode;
+		retcode = truncate_fetch_head();
+		if (retcode)
+			goto cleanup;
 	}
 
 	ref_map = get_ref_map(transport, refs, ref_count, tags, &autotags);
@@ -736,7 +737,8 @@ static int do_fetch(struct transport *transport,
 		transport_set_option(transport, TRANS_OPT_FOLLOWTAGS, "1");
 	if (fetch_refs(transport, ref_map)) {
 		free_refs(ref_map);
-		return 1;
+		retcode = 1;
+		goto cleanup;
 	}
 	if (prune) {
 		/* If --tags was specified, pretend the user gave us the canonical tags refspec */
@@ -779,7 +781,9 @@ static int do_fetch(struct transport *transport,
 		free_refs(ref_map);
 	}
 
-	return 0;
+ cleanup:
+	string_list_clear(&existing_refs, 0);
+	return retcode;
 }
 
 static void set_option(const char *name, const char *value)
