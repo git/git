@@ -694,7 +694,6 @@ static int do_fetch(struct transport *transport,
 		    struct refspec *refs, int ref_count)
 {
 	struct string_list existing_refs = STRING_LIST_INIT_DUP;
-	struct string_list_item *peer_item = NULL;
 	struct ref *ref_map;
 	struct ref *rm;
 	int autotags = (transport->remote->fetch_tags == 1);
@@ -724,8 +723,9 @@ static int do_fetch(struct transport *transport,
 
 	for (rm = ref_map; rm; rm = rm->next) {
 		if (rm->peer_ref) {
-			peer_item = string_list_lookup(&existing_refs,
-						       rm->peer_ref->name);
+			struct string_list_item *peer_item =
+				string_list_lookup(&existing_refs,
+						   rm->peer_ref->name);
 			if (peer_item)
 				hashcpy(rm->peer_ref->old_sha1,
 					peer_item->util);
