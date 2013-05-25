@@ -39,119 +39,119 @@ setup () {
 setup
 
 test_expect_success 'cloning' '
-  test_when_finished "rm -rf gitrepo*" &&
+	test_when_finished "rm -rf gitrepo*" &&
 
-  (
-  hg init hgrepo &&
-  cd hgrepo &&
-  echo zero > content &&
-  hg add content &&
-  hg commit -m zero
-  ) &&
+	(
+	hg init hgrepo &&
+	cd hgrepo &&
+	echo zero > content &&
+	hg add content &&
+	hg commit -m zero
+	) &&
 
-  git clone "hg::$PWD/hgrepo" gitrepo &&
-  check gitrepo zero master
+	git clone "hg::$PWD/hgrepo" gitrepo &&
+	check gitrepo zero master
 '
 
 test_expect_success 'cloning with branches' '
-  test_when_finished "rm -rf gitrepo*" &&
+	test_when_finished "rm -rf gitrepo*" &&
 
-  (
-  cd hgrepo &&
-  hg branch next &&
-  echo next > content &&
-  hg commit -m next
-  ) &&
+	(
+	cd hgrepo &&
+	hg branch next &&
+	echo next > content &&
+	hg commit -m next
+	) &&
 
-  git clone "hg::$PWD/hgrepo" gitrepo &&
-  check gitrepo next next &&
+	git clone "hg::$PWD/hgrepo" gitrepo &&
+	check gitrepo next next &&
 
-  (cd hgrepo && hg checkout default) &&
+	(cd hgrepo && hg checkout default) &&
 
-  git clone "hg::$PWD/hgrepo" gitrepo2 &&
-  check gitrepo2 zero master
+	git clone "hg::$PWD/hgrepo" gitrepo2 &&
+	check gitrepo2 zero master
 '
 
 test_expect_success 'cloning with bookmarks' '
-  test_when_finished "rm -rf gitrepo*" &&
+	test_when_finished "rm -rf gitrepo*" &&
 
-  (
-  cd hgrepo &&
-  hg bookmark feature-a &&
-  echo feature-a > content &&
-  hg commit -m feature-a
-  ) &&
+	(
+	cd hgrepo &&
+	hg bookmark feature-a &&
+	echo feature-a > content &&
+	hg commit -m feature-a
+	) &&
 
-  git clone "hg::$PWD/hgrepo" gitrepo &&
-  check gitrepo feature-a feature-a
+	git clone "hg::$PWD/hgrepo" gitrepo &&
+	check gitrepo feature-a feature-a
 '
 
 test_expect_success 'cloning with detached head' '
-  test_when_finished "rm -rf gitrepo*" &&
+	test_when_finished "rm -rf gitrepo*" &&
 
-  (
-  cd hgrepo &&
-  hg update -r 0
-  ) &&
+	(
+	cd hgrepo &&
+	hg update -r 0
+	) &&
 
-  git clone "hg::$PWD/hgrepo" gitrepo &&
-  check gitrepo zero master
+	git clone "hg::$PWD/hgrepo" gitrepo &&
+	check gitrepo zero master
 '
 
 test_expect_success 'update bookmark' '
-  test_when_finished "rm -rf gitrepo*" &&
+	test_when_finished "rm -rf gitrepo*" &&
 
-  (
-  cd hgrepo &&
-  hg bookmark devel
-  ) &&
+	(
+	cd hgrepo &&
+	hg bookmark devel
+	) &&
 
-  (
-  git clone "hg::$PWD/hgrepo" gitrepo &&
-  cd gitrepo &&
-  git checkout --quiet devel &&
-  echo devel > content &&
-  git commit -a -m devel &&
-  git push --quiet
-  ) &&
+	(
+	git clone "hg::$PWD/hgrepo" gitrepo &&
+	cd gitrepo &&
+	git checkout --quiet devel &&
+	echo devel > content &&
+	git commit -a -m devel &&
+	git push --quiet
+	) &&
 
-  hg -R hgrepo bookmarks | egrep "devel[	 ]+3:"
+	hg -R hgrepo bookmarks | egrep "devel[	 ]+3:"
 '
 
 author_test () {
-  echo $1 >> content &&
-  hg commit -u "$2" -m "add $1" &&
-  echo "$3" >> ../expected
+	echo $1 >> content &&
+	hg commit -u "$2" -m "add $1" &&
+	echo "$3" >> ../expected
 }
 
 test_expect_success 'authors' '
-  mkdir -p tmp && cd tmp &&
-  test_when_finished "cd .. && rm -rf tmp" &&
+	mkdir -p tmp && cd tmp &&
+	test_when_finished "cd .. && rm -rf tmp" &&
 
-  (
-  hg init hgrepo &&
-  cd hgrepo &&
+	(
+	hg init hgrepo &&
+	cd hgrepo &&
 
-  touch content &&
-  hg add content &&
+	touch content &&
+	hg add content &&
 
-  author_test alpha "" "H G Wells <wells@example.com>" &&
-  author_test beta "test" "test <unknown>" &&
-  author_test beta "test <test@example.com> (comment)" "test <test@example.com>" &&
-  author_test gamma "<test@example.com>" "Unknown <test@example.com>" &&
-  author_test delta "name<test@example.com>" "name <test@example.com>" &&
-  author_test epsilon "name <test@example.com" "name <test@example.com>" &&
-  author_test zeta " test " "test <unknown>" &&
-  author_test eta "test < test@example.com >" "test <test@example.com>" &&
-  author_test theta "test >test@example.com>" "test <test@example.com>" &&
-  author_test iota "test < test <at> example <dot> com>" "test <unknown>" &&
-  author_test kappa "test@example.com" "Unknown <test@example.com>"
-  ) &&
+	author_test alpha "" "H G Wells <wells@example.com>" &&
+	author_test beta "test" "test <unknown>" &&
+	author_test beta "test <test@example.com> (comment)" "test <test@example.com>" &&
+	author_test gamma "<test@example.com>" "Unknown <test@example.com>" &&
+	author_test delta "name<test@example.com>" "name <test@example.com>" &&
+	author_test epsilon "name <test@example.com" "name <test@example.com>" &&
+	author_test zeta " test " "test <unknown>" &&
+	author_test eta "test < test@example.com >" "test <test@example.com>" &&
+	author_test theta "test >test@example.com>" "test <test@example.com>" &&
+	author_test iota "test < test <at> example <dot> com>" "test <unknown>" &&
+	author_test kappa "test@example.com" "Unknown <test@example.com>"
+	) &&
 
-  git clone "hg::$PWD/hgrepo" gitrepo &&
-  git --git-dir=gitrepo/.git log --reverse --format="%an <%ae>" > actual &&
+	git clone "hg::$PWD/hgrepo" gitrepo &&
+	git --git-dir=gitrepo/.git log --reverse --format="%an <%ae>" > actual &&
 
-  test_cmp expected actual
+	test_cmp expected actual
 '
 
 test_done
