@@ -339,11 +339,7 @@ def get_repo(url, alias):
     if get_config_bool('remote-hg.insecure'):
         myui.setconfig('web', 'cacerts', '')
 
-    try:
-        mod = extensions.load(myui, 'hgext.schemes', None)
-        mod.extsetup(myui)
-    except ImportError:
-        pass
+    extensions.loadall(myui)
 
     if hg.islocal(url):
         repo = hg.repository(myui, url)
