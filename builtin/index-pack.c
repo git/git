@@ -747,8 +747,7 @@ static void sha1_object(const void *data, struct object_entry *obj_entry,
 			int eaten;
 			void *buf = (void *) data;
 
-			if (!buf)
-				buf = new_data = get_data_from_pack(obj_entry);
+			assert(data && "data can only be NULL for large _blobs_");
 
 			/*
 			 * we do not need to free the memory here, as the
