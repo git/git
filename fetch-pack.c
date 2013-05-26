@@ -20,6 +20,8 @@ static int no_done;
 static int fetch_fsck_objects = -1;
 static int transfer_fsck_objects = -1;
 static int agent_supported;
+static struct lock_file shallow_lock;
+static const char *alternate_shallow_file;
 
 #define COMPLETE	(1U << 0)
 #define COMMON		(1U << 1)
@@ -683,7 +685,7 @@ static int get_pack(struct fetch_pack_args *args,
 		    int xd[2], char **pack_lockfile)
 {
 	struct async demux;
-	const char *argv[20];
+	const char *argv[22];
 	char keep_arg[256];
 	char hdr_arg[256];
 	const char **av;
@@ -722,6 +724,11 @@ static int get_pack(struct fetch_pack_args *args,
 			do_keep = 0;
 		else
 			do_keep = 1;
+	}
+
+	if (alternate_shallow_file) {
+		*av++ = "--shallow-file";
+		*av++ = alternate_shallow_file;
 	}
 
 	if (do_keep) {
@@ -777,6 +784,27 @@ static int cmp_ref_by_name(const void *a_, const void *b_)
 	const struct ref *a = *((const struct ref **)a_);
 	const struct ref *b = *((const struct ref **)b_);
 	return strcmp(a->name, b->name);
+}
+
+static void setup_alternate_shallow(void)
+{
+	struct strbuf sb = STRBUF_INIT;
+	int fd;
+
+	check_shallow_file_for_update();
+	fd = hold_lock_file_for_update(&shallow_lock, git_path("shallow"),
+				       LOCK_DIE_ON_ERROR);
+	if (write_shallow_commits(&sb, 0)) {
+		if (write_in_full(fd, sb.buf, sb.len) != sb.len)
+			die_errno("failed to write to %s", shallow_lock.filename);
+		alternate_shallow_file = shallow_lock.filename;
+	} else
+		/*
+		 * is_repository_shallow() sees empty string as "no
+		 * shallow file".
+		 */
+		alternate_shallow_file = "";
+	strbuf_release(&sb);
 }
 
 static struct ref *do_fetch_pack(struct fetch_pack_args *args,
@@ -858,6 +886,8 @@ static struct ref *do_fetch_pack(struct fetch_pack_args *args,
 
 	if (args->stateless_rpc)
 		packet_flush(fd[1]);
+	if (args->depth > 0)
+		setup_alternate_shallow();
 	if (get_pack(args, fd, pack_lockfile))
 		die("git fetch-pack: fetch failed.");
 
@@ -936,15 +966,9 @@ struct ref *fetch_pack(struct fetch_pack_args *args,
 		       struct ref **sought, int nr_sought,
 		       char **pack_lockfile)
 {
-	struct stat st;
 	struct ref *ref_cpy;
 
 	fetch_pack_setup();
-	if (args->depth > 0) {
-		if (stat(git_path("shallow"), &st))
-			st.st_mtime = 0;
-	}
-
 	if (nr_sought)
 		nr_sought = remove_duplicates_in_refs(sought, nr_sought);
 
@@ -954,35 +978,12 @@ struct ref *fetch_pack(struct fetch_pack_args *args,
 	}
 	ref_cpy = do_fetch_pack(args, fd, ref, sought, nr_sought, pack_lockfile);
 
-	if (args->depth > 0) {
-		static struct lock_file lock;
-		struct cache_time mtime;
-		struct strbuf sb = STRBUF_INIT;
-		char *shallow = git_path("shallow");
-		int fd;
-
-		mtime.sec = st.st_mtime;
-		mtime.nsec = ST_MTIME_NSEC(st);
-		if (stat(shallow, &st)) {
-			if (mtime.sec)
-				die("shallow file was removed during fetch");
-		} else if (st.st_mtime != mtime.sec
-#ifdef USE_NSEC
-				|| ST_MTIME_NSEC(st) != mtime.nsec
-#endif
-			  )
-			die("shallow file was changed during fetch");
-
-		fd = hold_lock_file_for_update(&lock, shallow,
-					       LOCK_DIE_ON_ERROR);
-		if (!write_shallow_commits(&sb, 0)
-		 || write_in_full(fd, sb.buf, sb.len) != sb.len) {
-			unlink_or_warn(shallow);
-			rollback_lock_file(&lock);
-		} else {
-			commit_lock_file(&lock);
-		}
-		strbuf_release(&sb);
+	if (alternate_shallow_file) {
+		if (*alternate_shallow_file == '\0') { /* --unshallow */
+			unlink_or_warn(git_path("shallow"));
+			rollback_lock_file(&shallow_lock);
+		} else
+			commit_lock_file(&shallow_lock);
 	}
 
 	reprepare_packed_git();

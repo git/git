@@ -135,6 +135,13 @@ test_expect_success 'clone shallow depth 1' '
 	test "`git --git-dir=shallow0/.git rev-list --count HEAD`" = 1
 '
 
+test_expect_success 'clone shallow depth 1 with fsck' '
+	git config --global fetch.fsckobjects true &&
+	git clone --no-single-branch --depth 1 "file://$(pwd)/." shallow0fsck &&
+	test "`git --git-dir=shallow0fsck/.git rev-list --count HEAD`" = 1 &&
+	git config --global --unset fetch.fsckobjects
+'
+
 test_expect_success 'clone shallow' '
 	git clone --no-single-branch --depth 2 "file://$(pwd)/." shallow
 '
