@@ -691,6 +691,7 @@ static int get_pack(struct fetch_pack_args *args,
 	const char **av;
 	int do_keep = args->keep_pack;
 	struct child_process cmd;
+	int ret;
 
 	memset(&demux, 0, sizeof(demux));
 	if (use_sideband) {
@@ -747,11 +748,14 @@ static int get_pack(struct fetch_pack_args *args,
 				strcpy(keep_arg + s, "localhost");
 			*av++ = keep_arg;
 		}
+		if (args->check_self_contained_and_connected)
+			*av++ = "--check-self-contained-and-connected";
 	}
 	else {
 		*av++ = "unpack-objects";
 		if (args->quiet || args->no_progress)
 			*av++ = "-q";
+		args->check_self_contained_and_connected = 0;
 	}
 	if (*hdr_arg)
 		*av++ = hdr_arg;
@@ -772,7 +776,12 @@ static int get_pack(struct fetch_pack_args *args,
 		close(cmd.out);
 	}
 
-	if (finish_command(&cmd))
+	ret = finish_command(&cmd);
+	if (!ret || (args->check_self_contained_and_connected && ret == 1))
+		args->self_contained_and_connected =
+			args->check_self_contained_and_connected &&
+			ret == 0;
+	else
 		die("%s failed", argv[0]);
 	if (use_sideband && finish_async(&demux))
 		die("error in sideband demultiplexer");

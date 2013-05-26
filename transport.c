@@ -534,6 +534,8 @@ static int fetch_refs_via_pack(struct transport *transport,
 	args.quiet = (transport->verbose < 0);
 	args.no_progress = !transport->progress;
 	args.depth = data->options.depth;
+	args.check_self_contained_and_connected =
+		data->options.check_self_contained_and_connected;
 
 	if (!data->got_remote_heads) {
 		connect_setup(transport, 0, 0);
@@ -551,6 +553,8 @@ static int fetch_refs_via_pack(struct transport *transport,
 		refs = NULL;
 	data->conn = NULL;
 	data->got_remote_heads = 0;
+	data->options.self_contained_and_connected =
+		args.self_contained_and_connected;
 
 	free_refs(refs_tmp);
 

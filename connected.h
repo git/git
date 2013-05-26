@@ -1,6 +1,8 @@
 #ifndef CONNECTED_H
 #define CONNECTED_H
 
+struct transport;
+
 /*
  * Take callback data, and return next object name in the buffer.
  * When called after returning the name for the last object, return -1
@@ -16,5 +18,8 @@ typedef int (*sha1_iterate_fn)(void *, unsigned char [20]);
  * Return 0 if Ok, non zero otherwise (i.e. some missing objects)
  */
 extern int check_everything_connected(sha1_iterate_fn, int quiet, void *cb_data);
+extern int check_everything_connected_with_transport(sha1_iterate_fn, int quiet,
+						     void *cb_data,
+						     struct transport *transport);
 
 #endif /* CONNECTED_H */
