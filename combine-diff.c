@@ -1120,6 +1120,7 @@ void diff_tree_combined(const unsigned char *sha1,
 	int i, num_paths, needsep, show_log_first, num_parent = parents->nr;
 
 	diffopts = *opt;
+	diff_tree_setup_paths(diffopts.pathspec.raw, &diffopts);
 	diffopts.output_format = DIFF_FORMAT_NO_OUTPUT;
 	DIFF_OPT_SET(&diffopts, RECURSIVE);
 	DIFF_OPT_CLR(&diffopts, ALLOW_EXTERNAL);
@@ -1187,6 +1188,8 @@ void diff_tree_combined(const unsigned char *sha1,
 		paths = paths->next;
 		free(tmp);
 	}
+
+	diff_tree_release_paths(&diffopts);
 }
 
 void diff_tree_combined_merge(const struct commit *commit, int dense,
