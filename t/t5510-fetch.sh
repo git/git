@@ -422,6 +422,22 @@ test_expect_success 'configured fetch updates tracking' '
 	)
 '
 
+test_expect_success 'non-matching refspecs do not confuse tracking update' '
+	cd "$D" &&
+	git update-ref refs/odd/location HEAD &&
+	(
+		cd three &&
+		git update-ref refs/remotes/origin/master base-origin-master &&
+		git config --add remote.origin.fetch \
+			refs/odd/location:refs/remotes/origin/odd &&
+		o=$(git rev-parse --verify refs/remotes/origin/master) &&
+		git fetch origin master &&
+		n=$(git rev-parse --verify refs/remotes/origin/master) &&
+		test "$o" != "$n" &&
+		test_must_fail git rev-parse --verify refs/remotes/origin/odd
+	)
+'
+
 test_expect_success 'pushing nonexistent branch by mistake should not segv' '
 
 	cd "$D" &&

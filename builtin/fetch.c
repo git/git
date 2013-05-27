@@ -183,7 +183,7 @@ static struct ref *get_ref_map(struct transport *transport,
 		old_tail = tail;
 		for (i = 0; i < transport->remote->fetch_refspec_nr; i++)
 			get_fetch_map(ref_map, &transport->remote->fetch[i],
-				      &tail, 0);
+				      &tail, 1);
 		for (rm = *old_tail; rm; rm = rm->next)
 			rm->fetch_head_status = FETCH_HEAD_IGNORE;
 	} else {
