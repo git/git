@@ -12,6 +12,9 @@
 extern const char git_usage_string[];
 extern const char git_more_info_string[];
 
+#define PRUNE_PACKED_DRY_RUN 01
+#define PRUNE_PACKED_VERBOSE 02
+
 extern void prune_packed_objects(int);
 
 struct fmt_merge_msg_opts {
