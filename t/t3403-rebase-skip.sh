@@ -64,10 +64,11 @@ test_expect_success 'rebase with --merge' '
 
 test_expect_success 'rebase --skip with --merge' '
 	git rebase --skip
-	'
+'
 
-test_expect_success 'merge and reference trees equal' \
-	'test -z "`git diff-tree skip-merge skip-reference`"'
+test_expect_success 'merge and reference trees equal' '
+	test -z "`git diff-tree skip-merge skip-reference`"
+'
 
 test_expect_success 'moved back to branch correctly' '
 	test refs/heads/skip-merge = $(git symbolic-ref HEAD)

@@ -28,29 +28,21 @@ test_expect_success setup '
 '
 
 test_expect_success 'cherry-pick an empty commit' '
-	git checkout master && {
-		git cherry-pick empty-branch^
-		test "$?" = 1
-	}
+	git checkout master &&
+	test_expect_code 1 git cherry-pick empty-branch^
 '
 
 test_expect_success 'index lockfile was removed' '
-
 	test ! -f .git/index.lock
-
 '
 
 test_expect_success 'cherry-pick a commit with an empty message' '
-	git checkout master && {
-		git cherry-pick empty-branch
-		test "$?" = 1
-	}
+	git checkout master &&
+	test_expect_code 1 git cherry-pick empty-branch
 '
 
 test_expect_success 'index lockfile was removed' '
-
 	test ! -f .git/index.lock
-
 '
 
 test_expect_success 'cherry-pick a commit with an empty message with --allow-empty-message' '
@@ -101,7 +93,7 @@ test_expect_success 'cherry-pick a no-op with --keep-redundant' '
 	git reset --hard &&
 	git checkout fork^0 &&
 	git cherry-pick --keep-redundant-commits master &&
-	git show -s --format='%s' >actual &&
+	git show -s --format=%s >actual &&
 	echo "add file2 on master" >expect &&
 	test_cmp expect actual
 '
