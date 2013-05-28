@@ -692,7 +692,7 @@ test_expect_success 'rebase -i can copy notes' '
 	test_commit n2 &&
 	test_commit n3 &&
 	git notes add -m"a note" n3 &&
-	git rebase --onto n1 n2 &&
+	git rebase -i --onto n1 n2 &&
 	test "a note" = "$(git notes show HEAD)"
 '
 
