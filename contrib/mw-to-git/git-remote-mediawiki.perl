@@ -238,6 +238,22 @@ sub mw_connect_maybe {
 	}
 }
 
+sub fatal_mw_error {
+	my $action = shift;
+	print STDERR "fatal: could not $action.\n";
+	print STDERR "fatal: '$url' does not appear to be a mediawiki\n";
+	if ($url =~ /^https/) {
+		print STDERR "fatal: make sure '$url/api.php' is a valid page\n";
+		print STDERR "fatal: and the SSL certificate is correct.\n";
+	} else {
+		print STDERR "fatal: make sure '$url/api.php' is a valid page.\n";
+	}
+	print STDERR "fatal: (error " .
+	    $mediawiki->{error}->{code} . ': ' .
+	    $mediawiki->{error}->{details} . ")\n";
+	exit 1;
+}
+
 ## Functions for listing pages on the remote wiki
 sub get_mw_tracked_pages {
 	my $pages = shift;
@@ -290,10 +306,7 @@ sub get_mw_all_pages {
 		aplimit => 'max'
 	});
 	if (!defined($mw_pages)) {
-		print STDERR "fatal: could not get the list of wiki pages.\n";
-		print STDERR "fatal: '$url' does not appear to be a mediawiki\n";
-		print STDERR "fatal: make sure '$url/api.php' is a valid page.\n";
-		exit 1;
+		fatal_mw_error("get the list of wiki pages");
 	}
 	foreach my $page (@{$mw_pages}) {
 		$pages->{$page->{title}} = $page;
@@ -316,10 +329,7 @@ sub get_mw_first_pages {
 		titles => $titles,
 	});
 	if (!defined($mw_pages)) {
-		print STDERR "fatal: could not query the list of wiki pages.\n";
-		print STDERR "fatal: '$url' does not appear to be a mediawiki\n";
-		print STDERR "fatal: make sure '$url/api.php' is a valid page.\n";
-		exit 1;
+		fatal_mw_error("query the list of wiki pages");
 	}
 	while (my ($id, $page) = each(%{$mw_pages->{query}->{pages}})) {
 		if ($id < 0) {
