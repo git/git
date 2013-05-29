@@ -18,7 +18,6 @@
 #include "transport.h"
 #include "strbuf.h"
 #include "dir.h"
-#include "pack-refs.h"
 #include "sigchain.h"
 #include "branch.h"
 #include "remote.h"

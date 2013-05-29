@@ -10,8 +10,21 @@ struct ref_lock {
 	int force_write;
 };
 
+/*
+ * Bit values set in the flags argument passed to each_ref_fn():
+ */
+
+/* Reference is a symbolic reference. */
 #define REF_ISSYMREF 0x01
+
+/* Reference is a packed reference. */
 #define REF_ISPACKED 0x02
+
+/*
+ * Reference cannot be resolved to an object name: dangling symbolic
+ * reference (directly or indirectly), corrupt reference file, or
+ * symbolic reference refers to ill-formatted reference name.
+ */
 #define REF_ISBROKEN 0x04
 
 /*
@@ -59,8 +72,30 @@ extern void warn_dangling_symref(FILE *fp, const char *msg_fmt, const char *refn
  */
 extern void add_packed_ref(const char *refname, const unsigned char *sha1);
 
+/*
+ * Flags for controlling behaviour of pack_refs()
+ * PACK_REFS_PRUNE: Prune loose refs after packing
+ * PACK_REFS_ALL:   Pack _all_ refs, not just tags and already packed refs
+ */
+#define PACK_REFS_PRUNE 0x0001
+#define PACK_REFS_ALL   0x0002
+
+/*
+ * Write a packed-refs file for the current repository.
+ * flags: Combination of the above PACK_REFS_* flags.
+ */
+int pack_refs(unsigned int flags);
+
 extern int ref_exists(const char *);
 
+/*
+ * If refname is a non-symbolic reference that refers to a tag object,
+ * and the tag can be (recursively) dereferenced to a non-tag object,
+ * store the SHA1 of the referred-to object to sha1 and return 0.  If
+ * any of these conditions are not met, return a non-zero value.
+ * Symbolic references are considered unpeelable, even if they
+ * ultimately resolve to a peelable tag.
+ */
 extern int peel_ref(const char *refname, unsigned char *sha1);
 
 /** Locks a "refs/" ref returning the lock on success and NULL on failure. **/
