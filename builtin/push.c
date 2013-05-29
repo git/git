@@ -175,6 +175,8 @@ static void warn_unspecified_push_default_configuration(void)
 
 static void setup_default_push_refspecs(struct remote *remote)
 {
+	struct branch *branch;
+
 	switch (push_default) {
 	default:
 	case PUSH_DEFAULT_UNSPECIFIED:
@@ -194,6 +196,9 @@ static void setup_default_push_refspecs(struct remote *remote)
 		break;
 
 	case PUSH_DEFAULT_CURRENT:
+		branch = branch_get(NULL);
+		if (!branch)
+			die(_(message_detached_head_die), remote->name);
 		add_refspec("HEAD");
 		break;
 
