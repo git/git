@@ -276,7 +276,7 @@ test_expect_success 'prompt - rebase merge' '
 '
 
 test_expect_success 'prompt - rebase' '
-	printf " ((t2)|REBASE 1/3)" > expected &&
+	printf " (b2|REBASE 1/3)" > expected &&
 	git checkout b2 &&
 	test_when_finished "git checkout master" &&
 	test_must_fail git rebase b1 b2 &&
