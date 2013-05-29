@@ -8,11 +8,6 @@ test_description='Test remote-helper import and export commands'
 . ./test-lib.sh
 . "$TEST_DIRECTORY"/lib-gpg.sh
 
-if ! type "${BASH-bash}" >/dev/null 2>&1; then
-	skip_all='skipping remote-testgit tests, bash not available'
-	test_done
-fi
-
 compare_refs() {
 	git --git-dir="$1/.git" rev-parse --verify $2 >expect &&
 	git --git-dir="$3/.git" rev-parse --verify $4 >actual &&
