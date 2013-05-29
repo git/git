@@ -199,7 +199,7 @@ static void setup_default_push_refspecs(struct remote *remote)
 		branch = branch_get(NULL);
 		if (!branch)
 			die(_(message_detached_head_die), remote->name);
-		add_refspec("HEAD");
+		add_refspec(branch->name);
 		break;
 
 	case PUSH_DEFAULT_NOTHING:
