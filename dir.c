@@ -821,6 +821,9 @@ static void prep_exclude(struct dir_struct *dir, const char *base, int baselen)
 				dir->basebuf, stk->baselen - 1,
 				dir->basebuf + current, &dt);
 			dir->basebuf[stk->baselen - 1] = '/';
+			if (dir->exclude &&
+			    dir->exclude->flags & EXC_FLAG_NEGATIVE)
+				dir->exclude = NULL;
 			if (dir->exclude) {
 				dir->basebuf[stk->baselen] = 0;
 				dir->exclude_stack = stk;
