@@ -62,12 +62,31 @@ do
 			echo "feature import-marks=$gitmarks"
 			echo "feature export-marks=$gitmarks"
 		fi
+
+		if test -n "$GIT_REMOTE_TESTGIT_FAILURE"
+		then
+			echo "feature done"
+			exit 1
+		fi
+
 		echo "feature done"
 		git fast-export "${testgitmarks_args[@]}" $refs |
 		sed -e "s#refs/heads/#${prefix}/heads/#g"
 		echo "done"
 		;;
 	export)
+		if test -n "$GIT_REMOTE_TESTGIT_FAILURE"
+		then
+			# consume input so fast-export doesn't get SIGPIPE;
+			# git would also notice that case, but we want
+			# to make sure we are exercising the later
+			# error checks
+			while read line; do
+				test "done" = "$line" && break
+			done
+			exit 1
+		fi
+
 		before=$(git for-each-ref --format='%(refname) %(objectname)')
 
 		git fast-import "${testgitmarks_args[@]}" --quiet
@@ -79,7 +98,12 @@ do
 		while read ref a b
 		do
 			test $a == $b && continue
-			echo "ok $ref"
+			if test -z "$GIT_REMOTE_TESTGIT_PUSH_ERROR"
+			then
+				echo "ok $ref"
+			else
+				echo "error $ref $GIT_REMOTE_TESTGIT_PUSH_ERROR"
+			fi
 		done
 
 		echo
