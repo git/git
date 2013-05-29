@@ -85,12 +85,8 @@ sub exit_cleanup
 
 sub use_wt_file
 {
-	my ($repo, $workdir, $file, $sha1, $symlinks) = @_;
+	my ($repo, $workdir, $file, $sha1) = @_;
 	my $null_sha1 = '0' x 40;
-
-	if ($sha1 ne $null_sha1 and not $symlinks) {
-		return 0;
-	}
 
 	if (! -e "$workdir/$file") {
 		# If the file doesn't exist in the working tree, we cannot
@@ -213,8 +209,7 @@ EOF
 
 		if ($rmode ne $null_mode) {
 			my ($use, $wt_sha1) = use_wt_file($repo, $workdir,
-							  $dst_path, $rsha1,
-							  $symlinks);
+							  $dst_path, $rsha1);
 			if ($use) {
 				push @working_tree, $dst_path;
 				$wtindex .= "$rmode $wt_sha1\t$dst_path\0";
