@@ -1932,7 +1932,7 @@ sub cmt_sha2rev_batch {
 sub working_head_info {
 	my ($head, $refs) = @_;
 	my @args = qw/rev-list --first-parent --pretty=medium/;
-	my ($fh, $ctx) = command_output_pipe(@args, $head);
+	my ($fh, $ctx) = command_output_pipe(@args, $head, "--");
 	my $hash;
 	my %max;
 	while (<$fh>) {
