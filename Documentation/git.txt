@@ -811,8 +811,9 @@ for further details.
 'GIT_FLUSH'::
 	If this environment variable is set to "1", then commands such
 	as 'git blame' (in incremental mode), 'git rev-list', 'git log',
-	and 'git whatchanged' will force a flush of the output stream
-	after each commit-oriented record have been flushed.   If this
+	'git check-attr', 'git check-ignore', and 'git whatchanged' will
+	force a flush of the output stream after each record have been
+	flushed. If this
 	variable is set to "0", the output of these commands will be done
 	using completely buffered I/O.   If this environment variable is
 	not set, Git will choose buffered or record-oriented flushing

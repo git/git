@@ -66,16 +66,23 @@ test_check_ignore () {
 
 	init_vars &&
 	rm -f "$HOME/stdout" "$HOME/stderr" "$HOME/cmd" &&
-	echo git $global_args check-ignore $quiet_opt $verbose_opt $args \
+	echo git $global_args check-ignore $quiet_opt $verbose_opt $non_matching_opt $args \
 		>"$HOME/cmd" &&
+	echo "$expect_code" >"$HOME/expected-exit-code" &&
 	test_expect_code "$expect_code" \
-		git $global_args check-ignore $quiet_opt $verbose_opt $args \
+		git $global_args check-ignore $quiet_opt $verbose_opt $non_matching_opt $args \
 		>"$HOME/stdout" 2>"$HOME/stderr" &&
 	test_cmp "$HOME/expected-stdout" "$HOME/stdout" &&
 	stderr_empty_on_success "$expect_code"
 }
 
-# Runs the same code with 3 different levels of output verbosity,
+# Runs the same code with 4 different levels of output verbosity:
+#
+#   1. with -q / --quiet
+#   2. with default verbosity
+#   3. with -v / --verbose
+#   4. with -v / --verbose, *and* -n / --non-matching
+#
 # expecting success each time.  Takes advantage of the fact that
 # check-ignore --verbose output is the same as normal output except
 # for the extra first column.
@@ -83,7 +90,9 @@ test_check_ignore () {
 # Arguments:
 #   - (optional) prereqs for this test, e.g. 'SYMLINKS'
 #   - test name
-#   - output to expect from -v / --verbose mode
+#   - output to expect from the fourth verbosity mode (the output
+#     from the other verbosity modes is automatically inferred
+#     from this value)
 #   - code to run (should invoke test_check_ignore)
 test_expect_success_multi () {
 	prereq=
@@ -92,8 +101,9 @@ test_expect_success_multi () {
 		prereq=$1
 		shift
 	fi
-	testname="$1" expect_verbose="$2" code="$3"
+	testname="$1" expect_all="$2" code="$3"
 
+	expect_verbose=$( echo "$expect_all" | grep -v '^::	' )
 	expect=$( echo "$expect_verbose" | sed -e 's/.*	//' )
 
 	test_expect_success $prereq "$testname" '
@@ -101,23 +111,40 @@ test_expect_success_multi () {
 		eval "$code"
 	'
 
-	for quiet_opt in '-q' '--quiet'
-	do
-		test_expect_success $prereq "$testname${quiet_opt:+ with $quiet_opt}" "
+	# --quiet is only valid when a single pattern is passed
+	if test $( echo "$expect_all" | wc -l ) = 1
+	then
+		for quiet_opt in '-q' '--quiet'
+		do
+			test_expect_success $prereq "$testname${quiet_opt:+ with $quiet_opt}" "
 			expect '' &&
 			$code
 		"
-	done
-	quiet_opt=
+		done
+		quiet_opt=
+	fi
 
 	for verbose_opt in '-v' '--verbose'
 	do
-		test_expect_success $prereq "$testname${verbose_opt:+ with $verbose_opt}" "
-			expect '$expect_verbose' &&
-			$code
-		"
+		for non_matching_opt in '' ' -n' ' --non-matching'
+		do
+			if test -n "$non_matching_opt"
+			then
+				my_expect="$expect_all"
+			else
+				my_expect="$expect_verbose"
+			fi
+
+			test_code="
+				expect '$my_expect' &&
+				$code
+			"
+			opts="$verbose_opt$non_matching_opt"
+			test_expect_success $prereq "$testname${opts:+ with $opts}" "$test_code"
+		done
 	done
 	verbose_opt=
+	non_matching_opt=
 }
 
 test_expect_success 'setup' '
@@ -178,7 +205,7 @@ test_expect_success 'setup' '
 #
 # test invalid inputs
 
-test_expect_success_multi '. corner-case' '' '
+test_expect_success_multi '. corner-case' '::	.' '
 	test_check_ignore . 1
 '
 
@@ -189,11 +216,7 @@ test_expect_success_multi 'empty command line' '' '
 
 test_expect_success_multi '--stdin with empty STDIN' '' '
 	test_check_ignore "--stdin" 1 </dev/null &&
-	if test -n "$quiet_opt"; then
-		test_stderr ""
-	else
-		test_stderr "no pathspec given."
-	fi
+	test_stderr ""
 '
 
 test_expect_success '-q with multiple args' '
@@ -276,27 +299,39 @@ do
 		where="in subdir $subdir"
 	fi
 
-	test_expect_success_multi "non-existent file $where not ignored" '' "
-		test_check_ignore '${subdir}non-existent' 1
-	"
+	test_expect_success_multi "non-existent file $where not ignored" \
+		"::	${subdir}non-existent" \
+		"test_check_ignore '${subdir}non-existent' 1"
 
 	test_expect_success_multi "non-existent file $where ignored" \
-		".gitignore:1:one	${subdir}one" "
-		test_check_ignore '${subdir}one'
-	"
+		".gitignore:1:one	${subdir}one" \
+		"test_check_ignore '${subdir}one'"
 
-	test_expect_success_multi "existing untracked file $where not ignored" '' "
-		test_check_ignore '${subdir}not-ignored' 1
-	"
+	test_expect_success_multi "existing untracked file $where not ignored" \
+		"::	${subdir}not-ignored" \
+		"test_check_ignore '${subdir}not-ignored' 1"
 
-	test_expect_success_multi "existing tracked file $where not ignored" '' "
-		test_check_ignore '${subdir}ignored-but-in-index' 1
-	"
+	test_expect_success_multi "existing tracked file $where not ignored" \
+		"::	${subdir}ignored-but-in-index" \
+		"test_check_ignore '${subdir}ignored-but-in-index' 1"
 
 	test_expect_success_multi "existing untracked file $where ignored" \
-		".gitignore:2:ignored-*	${subdir}ignored-and-untracked" "
-		test_check_ignore '${subdir}ignored-and-untracked'
-	"
+		".gitignore:2:ignored-*	${subdir}ignored-and-untracked" \
+		"test_check_ignore '${subdir}ignored-and-untracked'"
+
+	test_expect_success_multi "mix of file types $where" \
+"::	${subdir}non-existent
+.gitignore:1:one	${subdir}one
+::	${subdir}not-ignored
+::	${subdir}ignored-but-in-index
+.gitignore:2:ignored-*	${subdir}ignored-and-untracked" \
+		"test_check_ignore '
+			${subdir}non-existent
+			${subdir}one
+			${subdir}not-ignored
+			${subdir}ignored-but-in-index
+			${subdir}ignored-and-untracked'
+		"
 done
 
 # Having established the above, from now on we mostly test against
@@ -391,7 +426,7 @@ test_expect_success 'cd to ignored sub-directory with -v' '
 #
 # test handling of symlinks
 
-test_expect_success_multi SYMLINKS 'symlink' '' '
+test_expect_success_multi SYMLINKS 'symlink' '::	a/symlink' '
 	test_check_ignore "a/symlink" 1
 '
 
@@ -574,37 +609,34 @@ cat <<-\EOF >stdin
 	globaltwo
 	b/globaltwo
 	../b/globaltwo
+	c/not-ignored
 EOF
-cat <<-\EOF >expected-default
-	../one
-	one
-	b/on
-	b/one
-	b/one one
-	b/one two
-	"b/one\"three"
-	b/two
-	b/twooo
-	../globaltwo
-	globaltwo
-	b/globaltwo
-	../b/globaltwo
-EOF
-cat <<-EOF >expected-verbose
+# N.B. we deliberately end STDIN with a non-matching pattern in order
+# to test that the exit code indicates that one or more of the
+# provided paths is ignored - in other words, that it represents an
+# aggregation of all the results, not just the final result.
+
+cat <<-EOF >expected-all
 	.gitignore:1:one	../one
+	::	../not-ignored
 	.gitignore:1:one	one
+	::	not-ignored
 	a/b/.gitignore:8:!on*	b/on
 	a/b/.gitignore:8:!on*	b/one
 	a/b/.gitignore:8:!on*	b/one one
 	a/b/.gitignore:8:!on*	b/one two
 	a/b/.gitignore:8:!on*	"b/one\"three"
 	a/b/.gitignore:9:!two	b/two
+	::	b/not-ignored
 	a/.gitignore:1:two*	b/twooo
 	$global_excludes:2:!globaltwo	../globaltwo
 	$global_excludes:2:!globaltwo	globaltwo
 	$global_excludes:2:!globaltwo	b/globaltwo
 	$global_excludes:2:!globaltwo	../b/globaltwo
+	::	c/not-ignored
 EOF
+grep -v '^::	' expected-all >expected-verbose
+sed -e 's/.*	//' expected-verbose >expected-default
 
 sed -e 's/^"//' -e 's/\\//' -e 's/"$//' stdin | \
 	tr "\n" "\0" >stdin0
@@ -629,6 +661,14 @@ test_expect_success '--stdin from subdirectory with -v' '
 	)
 '
 
+test_expect_success '--stdin from subdirectory with -v -n' '
+	expect_from_stdin <expected-all &&
+	(
+		cd a &&
+		test_check_ignore "--stdin -v -n" <../stdin
+	)
+'
+
 for opts in '--stdin -z' '-z --stdin'
 do
 	test_expect_success "$opts from subdirectory" '
@@ -648,5 +688,23 @@ do
 	'
 done
 
+test_expect_success PIPE 'streaming support for --stdin' '
+	mkfifo in out &&
+	(git check-ignore -n -v --stdin <in >out &) &&
+
+	# We cannot just "echo >in" because check-ignore would get EOF
+	# after echo exited; instead we open the descriptor in our
+	# shell, and then echo to the fd. We make sure to close it at
+	# the end, so that the subprocess does get EOF and dies
+	# properly.
+	exec 9>in &&
+	test_when_finished "exec 9>&-" &&
+	echo >&9 one &&
+	read response <out &&
+	echo "$response" | grep "^\.gitignore:1:one	one" &&
+	echo >&9 two &&
+	read response <out &&
+	echo "$response" | grep "^::	two"
+'
 
 test_done

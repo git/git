@@ -39,6 +39,12 @@ OPTIONS
 	below).  If `--stdin` is also given, input paths are separated
 	with a NUL character instead of a linefeed character.
 
+-n, --non-matching::
+	Show given paths which don't match any pattern.	 This only
+	makes sense when `--verbose` is enabled, otherwise it would
+	not be possible to distinguish between paths which match a
+	pattern and those which don't.
+
 OUTPUT
 ------
 
@@ -65,6 +71,20 @@ are also used instead of colons and hard tabs:
 
 <source> <NULL> <linenum> <NULL> <pattern> <NULL> <pathname> <NULL>
 
+If `-n` or `--non-matching` are specified, non-matching pathnames will
+also be output, in which case all fields in each output record except
+for <pathname> will be empty.  This can be useful when running
+non-interactively, so that files can be incrementally streamed to
+STDIN of a long-running check-ignore process, and for each of these
+files, STDOUT will indicate whether that file matched a pattern or
+not.  (Without this option, it would be impossible to tell whether the
+absence of output for a given file meant that it didn't match any
+pattern, or that the output hadn't been generated yet.)
+
+Buffering happens as documented under the `GIT_FLUSH` option in
+linkgit:git[1].  The caller is responsible for avoiding deadlocks
+caused by overfilling an input buffer or reading from an empty output
+buffer.
 
 EXIT STATUS
 -----------
