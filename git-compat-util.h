@@ -692,8 +692,9 @@ int remove_or_warn(unsigned int mode, const char *path);
  * Call access(2), but warn for any error except "missing file"
  * (ENOENT or ENOTDIR).
  */
-int access_or_warn(const char *path, int mode);
-int access_or_die(const char *path, int mode);
+#define ACCESS_EACCES_OK (1U << 0)
+int access_or_warn(const char *path, int mode, unsigned flag);
+int access_or_die(const char *path, int mode, unsigned flag);
 
 /* Warn on an inaccessible file that ought to be accessible */
 void warn_on_inaccessible(const char *path);

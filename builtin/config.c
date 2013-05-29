@@ -379,8 +379,8 @@ int cmd_config(int argc, const char **argv, const char *prefix)
 			 */
 			die("$HOME not set");
 
-		if (access_or_warn(user_config, R_OK) &&
-		    xdg_config && !access_or_warn(xdg_config, R_OK))
+		if (access_or_warn(user_config, R_OK, 0) &&
+		    xdg_config && !access_or_warn(xdg_config, R_OK, 0))
 			given_config_file = xdg_config;
 		else
 			given_config_file = user_config;

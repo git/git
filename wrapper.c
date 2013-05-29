@@ -408,18 +408,24 @@ void warn_on_inaccessible(const char *path)
 	warning(_("unable to access '%s': %s"), path, strerror(errno));
 }
 
-int access_or_warn(const char *path, int mode)
+static int access_error_is_ok(int err, unsigned flag)
+{
+	return err == ENOENT || err == ENOTDIR ||
+		((flag & ACCESS_EACCES_OK) && err == EACCES);
+}
+
+int access_or_warn(const char *path, int mode, unsigned flag)
 {
 	int ret = access(path, mode);
-	if (ret && errno != ENOENT && errno != ENOTDIR)
+	if (ret && !access_error_is_ok(errno, flag))
 		warn_on_inaccessible(path);
 	return ret;
 }
 
-int access_or_die(const char *path, int mode)
+int access_or_die(const char *path, int mode, unsigned flag)
 {
 	int ret = access(path, mode);
-	if (ret && errno != ENOENT && errno != ENOTDIR)
+	if (ret && !access_error_is_ok(errno, flag))
 		die_errno(_("unable to access '%s'"), path);
 	return ret;
 }
