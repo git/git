@@ -15,9 +15,16 @@ PROVE ?= prove
 DEFAULT_TEST_TARGET ?= test
 TEST_LINT ?= test-lint-duplicates test-lint-executable
 
+ifdef TEST_OUTPUT_DIRECTORY
+TEST_RESULTS_DIRECTORY = $(TEST_OUTPUT_DIRECTORY)/test-results
+else
+TEST_RESULTS_DIRECTORY = test-results
+endif
+
 # Shell quote;
 SHELL_PATH_SQ = $(subst ','\'',$(SHELL_PATH))
 PERL_PATH_SQ = $(subst ','\'',$(PERL_PATH))
+TEST_RESULTS_DIRECTORY_SQ = $(subst ','\'',$(TEST_RESULTS_DIRECTORY))
 
 T = $(sort $(wildcard t[0-9][0-9][0-9][0-9]-*.sh))
 TSVN = $(sort $(wildcard t91[0-9][0-9]-*.sh))
@@ -36,10 +43,10 @@ $(T):
 	@echo "*** $@ ***"; GIT_CONFIG=.git/config '$(SHELL_PATH_SQ)' $@ $(GIT_TEST_OPTS)
 
 pre-clean:
-	$(RM) -r test-results
+	$(RM) -r '$(TEST_RESULTS_DIRECTORY_SQ)'
 
 clean-except-prove-cache:
-	$(RM) -r 'trash directory'.* test-results
+	$(RM) -r 'trash directory'.* '$(TEST_RESULTS_DIRECTORY_SQ)'
 	$(RM) -r valgrind/bin
 
 clean: clean-except-prove-cache
@@ -65,7 +72,7 @@ aggregate-results-and-cleanup: $(T)
 	$(MAKE) clean
 
 aggregate-results:
-	for f in test-results/t*-*.counts; do \
+	for f in '$(TEST_RESULTS_DIRECTORY_SQ)'/t*-*.counts; do \
 		echo "$$f"; \
 	done | '$(SHELL_PATH_SQ)' ./aggregate-results.sh
 
