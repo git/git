@@ -1,27 +1,30 @@
 To: git@vger.kernel.org
 Bcc: lwn@lwn.net
-Subject: What's cooking in git.git (May 2013, #08; Tue, 28)
-X-master-at: edca4152560522a431a51fc0a06147fc680b5b18
-X-next-at: c6abf3f6e02deba43158d8c73669e079c83d9722
+Subject: What's cooking in git.git (May 2013, #09; Wed, 29)
+X-master-at: 727a46b2f9a1ce69eaf09bc46cb129f1c40833d8
+X-next-at: f3f2a46de0016cbb91a672fc1179759b6ad9a32c
 
-What's cooking in git.git (May 2013, #08; Tue, 28)
+What's cooking in git.git (May 2013, #09; Wed, 29)
 --------------------------------------------------
 
 Here are the topics that have been cooking.  Commits prefixed with
 '-' are only in 'pu' (proposed updates) while commits prefixed with
 '+' are in 'next'.
 
-There are topics that are still in 'next', not because they needed
-more testing, but only because we already were in the -rc period.
-Now that 1.8.3 is out, we will start merging them to 'master' (and
-some to 'maint' for 1.8.3.1) probably tomorrow (after waiting for a
-few days to make sure we can have a clean start of the post 1.8.3
-maint branch with brown paper bag fixes and nothing else).
+Usually I avoid issuing "What's cooking" back-to-back, but because I
+will be offline for a few days, here is a snapshot of tonight's
+status.
 
-The post 1.8.3 cycle will start early next month, at which time the
-'next' branch will be rewound and rebuilt.  Until then, I expect
-that my patch queue may stay slow and leaky while I take a bit of
-break.
+Some topics that have been cooking in 'next' from the previous cycle
+have now graduated to 'master', so the RelNotes have been updated.
+
+Nothing new in 'next', and it has not been rewound yet, which will
+hopefully happen this weekend, and after that post 1.8.3 cycle
+really starts.
+
+Also a rather serious regression on path-exclusion logic (most
+notably seen in .gitignore) has been found and quickly patched (it
+hasn't been merged to 'master' yet, though).
 
 You can find the changes described here in the integration branches
 of the repositories listed at
@@ -29,7 +32,339 @@ of the repositories listed at
     http://git-blame.blogspot.com/p/git-public-repositories.html
 
 --------------------------------------------------
+[Graduated to "master"]
+
+* as/check-ignore (2013-04-29) 6 commits
+  (merged to 'next' on 2013-04-30 at 646931f)
+ + t0008: use named pipe (FIFO) to test check-ignore streaming
+  (merged to 'next' on 2013-04-21 at 7515aa8)
+ + Documentation: add caveats about I/O buffering for check-{attr,ignore}
+ + check-ignore: allow incremental streaming of queries via --stdin
+ + check-ignore: move setup into cmd_check_ignore()
+ + check-ignore: add -n / --non-matching option
+ + t0008: remove duplicated test fixture data
+
+ Enhance "check-ignore" (1.8.2 update) to work more like "check-attr"
+ over bidi-pipes.
+
+
+* fc/transport-helper-error-reporting (2013-05-10) 12 commits
+  (merged to 'next' on 2013-05-10 at 2a9af4b)
+ + transport-helper: fix remote helper namespace regression
+ + test: remote-helper: add missing and
+  (merged to 'next' on 2013-04-25 at 3358f1a)
+ + t5801: "VAR=VAL shell_func args" is forbidden
+  (merged to 'next' on 2013-04-22 at 5ba6467)
+ + transport-helper: update remote helper namespace
+ + transport-helper: trivial code shuffle
+ + transport-helper: warn when refspec is not used
+ + transport-helper: clarify pushing without refspecs
+ + transport-helper: update refspec documentation
+ + transport-helper: clarify *:* refspec
+ + transport-helper: improve push messages
+ + transport-helper: mention helper name when it dies
+ + transport-helper: report errors properly
+ (this branch is tangled with js/transport-helper-error-reporting-fix.)
+
+ Update transport helper to report errors and maintain ref hierarchy
+ used to keep track of remote helper state better.
+
+
+* jc/prune-all (2013-04-25) 4 commits
+  (merged to 'next' on 2013-04-26 at 97a7387)
+ + prune: introduce OPT_EXPIRY_DATE() and use it
+  (merged to 'next' on 2013-04-22 at b00ccf6)
+ + api-parse-options.txt: document "no-" for non-boolean options
+ + git-gc.txt, git-reflog.txt: document new expiry options
+ + date.c: add parse_expiry_date()
+ (this branch is used by mh/packed-refs-various.)
+
+ We used the approxidate() parser for "--expire=<timestamp>" options
+ of various commands, but it is better to treat --expire=all and
+ --expire=now a bit more specially than using the current timestamp.
+ Update "git gc" and "git reflog" with a new parsing function for
+ expiry dates.
+
+
+* jh/checkout-auto-tracking (2013-04-21) 8 commits
+  (merged to 'next' on 2013-04-22 at 2356700)
+ + glossary: Update and rephrase the definition of a remote-tracking branch
+ + branch.c: Validate tracking branches with refspecs instead of refs/remotes/*
+ + t9114.2: Don't use --track option against "svn-remote"-tracking branches
+ + t7201.24: Add refspec to keep --track working
+ + t3200.39: tracking setup should fail if there is no matching refspec.
+ + checkout: Use remote refspecs when DWIMming tracking branches
+ + t2024: Show failure to use refspec when DWIMming remote branch names
+ + t2024: Add tests verifying current DWIM behavior of 'git checkout <branch>'
+
+ Updates "git checkout foo" that DWIMs the intended "upstream" and
+ turns it into "git checkout -t -b foo remotes/origin/foo" to
+ correctly take existing remote definitions into account.  The
+ remote "origin" may be what uniquely map its own branch to
+ remotes/some/where/foo but that some/where may not be "origin".
+
+
+* jk/lookup-object-prefer-latest (2013-05-02) 1 commit
+  (merged to 'next' on 2013-05-06 at cc59dcc)
+ + lookup_object: prioritize recently found objects
+
+ Optimizes object lookup when the object hashtable starts to become
+ crowded.
+
+
+* jk/subtree-do-not-push-if-split-fails (2013-05-01) 1 commit
+  (merged to 'next' on 2013-05-06 at 81bdf37)
+ + contrib/subtree: don't delete remote branches if split fails
+
+ "git subtree" (in contrib/) had one codepath with loose error
+ checks to lose data at the remote side.
+
+
+* jk/test-output (2013-05-06) 3 commits
+  (merged to 'next' on 2013-05-06 at 7c03af3)
+ + t/Makefile: don't define TEST_RESULTS_DIRECTORY recursively
+  (merged to 'next' on 2013-05-01 at 63827c9)
+ + test output: respect $TEST_OUTPUT_DIRECTORY
+ + t/Makefile: fix result handling with TEST_OUTPUT_DIRECTORY
+
+ When TEST_OUTPUT_DIRECTORY setting is used, it was handled somewhat
+ inconsistently between the test framework and t/Makefile, and logic
+ to summarize the results looked at a wrong place.
+
+
+* jn/config-ignore-inaccessible (2013-04-15) 1 commit
+  (merged to 'next' on 2013-05-07 at 4f09e24)
+ + config: allow inaccessible configuration under $HOME
+
+ When $HOME is misconfigured to point at an unreadable directory, we
+ used to complain and die. This loosens the check.
+
+
+* js/transport-helper-error-reporting-fix (2013-04-28) 13 commits
+  (merged to 'next' on 2013-04-29 at 8cc4bb8)
+ + git-remote-testgit: build it to run under $SHELL_PATH
+ + git-remote-testgit: further remove some bashisms
+ + git-remote-testgit: avoid process substitution
+  (merged to 'next' on 2013-04-25 at 3358f1a)
+ + t5801: "VAR=VAL shell_func args" is forbidden
+  (merged to 'next' on 2013-04-22 at 5ba6467)
+ + transport-helper: update remote helper namespace
+ + transport-helper: trivial code shuffle
+ + transport-helper: warn when refspec is not used
+ + transport-helper: clarify pushing without refspecs
+ + transport-helper: update refspec documentation
+ + transport-helper: clarify *:* refspec
+ + transport-helper: improve push messages
+ + transport-helper: mention helper name when it dies
+ + transport-helper: report errors properly
+ (this branch is tangled with fc/transport-helper-error-reporting.)
+
+ Finishing touches to fc/transport-helper-error-reporting topic.
+
+
+* mh/fetch-into-shallow (2013-05-02) 2 commits
+  (merged to 'next' on 2013-05-03 at 3fadc61)
+ + t5500: add test for fetching with an unknown 'shallow'
+  (merged to 'next' on 2013-04-29 at a167d3e)
+ + upload-pack: ignore 'shallow' lines with unknown obj-ids
+
+
+* mh/packed-refs-various (2013-05-01) 33 commits
+  (merged to 'next' on 2013-05-01 at e527153)
+ + refs: handle the main ref_cache specially
+ + refs: change do_for_each_*() functions to take ref_cache arguments
+ + pack_one_ref(): do some cheap tests before a more expensive one
+ + pack_one_ref(): use write_packed_entry() to do the writing
+ + pack_one_ref(): use function peel_entry()
+ + refs: inline function do_not_prune()
+ + pack_refs(): change to use do_for_each_entry()
+ + refs: use same lock_file object for both ref-packing functions
+ + pack_one_ref(): rename "path" parameter to "refname"
+ + pack-refs: merge code from pack-refs.{c,h} into refs.{c,h}
+ + pack-refs: rename handle_one_ref() to pack_one_ref()
+ + refs: extract a function write_packed_entry()
+ + repack_without_ref(): write peeled refs in the rewritten file
+ + t3211: demonstrate loss of peeled refs if a packed ref is deleted
+ + refs: change how packed refs are deleted
+ + search_ref_dir(): return an index rather than a pointer
+ + repack_without_ref(): silence errors for dangling packed refs
+ + t3210: test for spurious error messages for dangling packed refs
+ + refs: change the internal reference-iteration API
+ + refs: extract a function peel_entry()
+ + peel_ref(): fix return value for non-peelable, not-current reference
+ + peel_object(): give more specific information in return value
+ + refs: extract function peel_object()
+ + refs: extract a function ref_resolves_to_object()
+ + repack_without_ref(): use function get_packed_ref()
+ + peel_ref(): use function get_packed_ref()
+ + get_packed_ref(): return a ref_entry
+ + do_for_each_ref_in_dirs(): remove dead code
+ + refs: define constant PEELED_LINE_LENGTH
+ + refs: document how current_ref is used
+ + refs: document do_for_each_ref() and do_one_ref()
+ + refs: document the fields of struct ref_value
+ + refs: document flags constants REF_*
+ (this branch uses jc/prune-all.)
+
+ Updates reading and updating packed-refs file, correcting corner
+ case bugs.
+
+
+* rj/sparse (2013-04-28) 10 commits
+  (merged to 'next' on 2013-05-01 at 649e16c)
+ + sparse: Fix mingw_main() argument number/type errors
+ + compat/mingw.c: Fix some sparse warnings
+ + compat/win32mmap.c: Fix some sparse warnings
+ + compat/poll/poll.c: Fix a sparse warning
+ + compat/win32/pthread.c: Fix a sparse warning
+ + compat/unsetenv.c: Fix a sparse warning
+ + compat/nedmalloc: Fix compiler warnings on linux
+ + compat/nedmalloc: Fix some sparse warnings
+ + compat/fnmatch/fnmatch.c: Fix a sparse error
+ + compat/regex/regexec.c: Fix some sparse warnings
+
+--------------------------------------------------
 [New Topics]
+
+* ap/diff-ignore-blank-lines (2013-05-29) 1 commit
+ - diff: add --ignore-blank-lines option
+
+ "git diff" learned a mode that ignores hunks whose change consists
+ only of additions and removals of blank lines, which is the same as
+ "diff -B" (ignore blank lines) of GNU diff.
+
+
+* fc/show-branch-in-rebase-am (2013-05-29) 1 commit
+ - prompt: fix for simple rebase
+
+ The bash prompt code (in contrib/) displayed the name of the branch
+ being rebased when "rebase -i/-m/-p" modes are in use, but not the
+ plain vanilla "rebase".
+
+ Will merge to 'next'.
+
+
+* kb/status-ignored-optim-2 (2013-05-29) 1 commit
+ - dir.c: fix ignore processing within not-ignored directories
+
+ Fix 1.8.3 regressions in the .gitignore path exclusion logic.
+
+
+* ks/difftool-dir-diff-copy-fix (2013-05-29) 1 commit
+ - difftool --dir-diff: allow changing any clean working tree file
+
+ "difftool --dir-diff" did not copy back changes made by the
+ end-user in the diff tool backend to the working tree in some
+ cases.
+
+
+* rr/push-head (2013-05-29) 3 commits
+ - push: make push.default = current use resolved HEAD
+ - push: fail early with detached HEAD and current
+ - push: factor out the detached HEAD error message
+
+ "git push $there HEAD:branch" did not resolve HEAD early enough, so
+ it was easy to flip it around while push is still going on and push
+ out a branch that the user did not originally intended when the
+ command was started.
+
+ Will merge to 'next'.
+
+
+* sb/archive-zip-double-assignment-fix (2013-05-29) 1 commit
+ - archive-zip:write_zip_entry: Remove second reset of size variable to zero.
+
+ Will merge to 'next'.
+
+--------------------------------------------------
+[Stalled]
+
+* mg/more-textconv (2013-05-10) 7 commits
+  (merged to 'next' on 2013-05-21 at 701cdb7)
+ + grep: honor --textconv for the case rev:path
+ + grep: allow to use textconv filters
+ + t7008: demonstrate behavior of grep with textconv
+ + cat-file: do not die on --textconv without textconv filters
+ + show: honor --textconv for blobs
+ + diff_opt: track whether flags have been set explicitly
+ + t4030: demonstrate behavior of show with textconv
+
+ Make "git grep" and "git show" pay attention to --textconv when
+ dealing with blob objects.
+
+ I thought this was pretty well designed and executed, but it seems
+ there are some doubts on the list.
+
+
+* mh/multimail (2013-04-21) 1 commit
+ - git-multimail: a replacement for post-receive-email
+
+ Waiting for the initial history to pull from.
+ $gmane/223564
+
+
+* jc/format-patch (2013-04-22) 2 commits
+ - format-patch: --inline-single
+ - format-patch: rename "no_inline" field
+
+ A new option to send a single patch to the standard output to be
+ appended at the bottom of a message.  I personally have no need for
+ this, but it was easy enough to cobble together.  Tests, docs and
+ stripping out more MIMEy stuff are left as exercises to interested
+ parties.
+
+ Not ready for inclusion.
+
+ Will discard unless we hear from anybody who is interested in
+ tying its loose ends.
+
+
+* jk/gitweb-utf8 (2013-04-08) 4 commits
+ - gitweb: Fix broken blob action parameters on blob/commitdiff pages
+ - gitweb: Don't append ';js=(0|1)' to external links
+ - gitweb: Make feed title valid utf8
+ - gitweb: Fix utf8 encoding for blob_plain, blobdiff_plain, commitdiff_plain, and patch
+
+ Various fixes to gitweb.
+
+ Waiting for a reroll after a review.
+ Will discard unless we hear from anybody who is interested in
+ tying its loose ends.
+
+* jk/commit-info-slab (2013-04-19) 3 commits
+ - commit-slab: introduce a macro to define a slab for new type
+ - commit-slab: avoid large realloc
+ - commit: allow associating auxiliary info on-demand
+ (this branch is used by jc/show-branch.)
+
+ Technology demonstration to show a way we could use unbound number
+ of flag bits on commit objects.
+
+--------------------------------------------------
+[Cooking]
+
+* rj/mingw-cygwin (2013-05-08) 2 commits
+ - cygwin: Remove the CYGWIN_V15_WIN32API build variable
+ - mingw: rename WIN32 cpp macro to GIT_WINDOWS_NATIVE
+
+ Update build for Cygwin 1.[57].  Torsten Bögershausen reports that
+ this is fine with Cygwin 1.7 ($gmane/225824) so let's try moving it
+ ahead.
+ 
+ Will merge to 'next'.
+
+
+* rr/rebase-autostash (2013-05-29) 7 commits
+ - rebase: implement --[no-]autostash and rebase.autostash
+ - rebase --merge: return control to caller, for housekeeping
+ - rebase -i: return control to caller, for housekeeping
+ - am: return control to caller, for housekeeping
+ - rebase: prepare to do generic housekeeping
+ - rebase -i: don't error out if $state_dir already exists
+ - am: tighten a conditional that checks for $dotest
+
+ Will merge to 'next'.
+
 
 * nd/urls-doc-no-file-hyperlink-fix (2013-05-24) 1 commit
  - urls.txt: avoid auto converting to hyperlink
@@ -91,8 +426,7 @@ of the repositories listed at
  weren't expecting the user to modify them and did not take the
  change back to the working tree.
 
- The log message has room for clarification, but the change looked
- sane.
+ Will merge to 'next'.
 
 
 * nd/prune-packed-dryrun-verbose (2013-05-28) 1 commit
@@ -125,73 +459,6 @@ of the repositories listed at
 
  Will merge to 'next'.
 
---------------------------------------------------
-[Stalled]
-
-* rr/rebase-autostash (2013-05-12) 7 commits
- - rebase: implement --[no-]autostash and rebase.autostash
- - rebase --merge: return control to caller, for housekeeping
- - rebase -i: return control to caller, for housekeeping
- - am: return control to caller, for housekeeping
- - rebase: prepare to do generic housekeeping
- - rebase -i: don't error out if $state_dir already exists
- - am: tighten a conditional that checks for $dotest
-
- This is from v3, but after a "Fixed" message in $gmane/224111 we
- haven't seen a reroll yet.  Also there was an attempt for a
- follow-up, but it was never completed.
-
-
-* rj/mingw-cygwin (2013-05-08) 2 commits
- - cygwin: Remove the CYGWIN_V15_WIN32API build variable
- - mingw: rename WIN32 cpp macro to GIT_WINDOWS_NATIVE
-
- Update build for Cygwin 1.[57].  There seems to have been some
- discussion but did anything concrete come out of it???
-
-
-* mh/multimail (2013-04-21) 1 commit
- - git-multimail: a replacement for post-receive-email
-
- Waiting for the initial history to pull from.
- $gmane/223564
-
-
-* jc/format-patch (2013-04-22) 2 commits
- - format-patch: --inline-single
- - format-patch: rename "no_inline" field
-
- A new option to send a single patch to the standard output to be
- appended at the bottom of a message.  I personally have no need for
- this, but it was easy enough to cobble together.  Tests, docs and
- stripping out more MIMEy stuff are left as exercises to interested
- parties.
-
- Not ready for inclusion.
-
-
-* jk/gitweb-utf8 (2013-04-08) 4 commits
- - gitweb: Fix broken blob action parameters on blob/commitdiff pages
- - gitweb: Don't append ';js=(0|1)' to external links
- - gitweb: Make feed title valid utf8
- - gitweb: Fix utf8 encoding for blob_plain, blobdiff_plain, commitdiff_plain, and patch
-
- Various fixes to gitweb.
-
- Waiting for a reroll after a review.
-
-
-* jk/commit-info-slab (2013-04-19) 3 commits
- - commit-slab: introduce a macro to define a slab for new type
- - commit-slab: avoid large realloc
- - commit: allow associating auxiliary info on-demand
- (this branch is used by jc/show-branch.)
-
- Technology demonstration to show a way we could use unbound number
- of flag bits on commit objects.
-
---------------------------------------------------
-[Cooking]
 
 * tr/line-log (2013-04-22) 13 commits
   (merged to 'next' on 2013-04-22 at 8f2c1de)
@@ -212,16 +479,6 @@ of the repositories listed at
  + Implement line-history search (git log -L)
  + Export rewrite_parents() for 'log -L'
  + Refactor parse_loc
-
- Will merge to 'master'.
-
-
-* jn/config-ignore-inaccessible (2013-04-15) 1 commit
-  (merged to 'next' on 2013-05-07 at 4f09e24)
- + config: allow inaccessible configuration under $HOME
-
- When $HOME is misconfigured to point at an unreadable directory, we
- used to complain and die. This loosens the check.
 
  Will merge to 'master'.
 
@@ -257,6 +514,8 @@ of the repositories listed at
  feeds to its callbacks (in short, "you do not own it, so make a
  copy if you want to keep it").
 
+ Will merge to 'next'.
+
 
 * th/bisect-skip-report-range-fix (2013-05-22) 1 commit
  - bisect: Fix log output for multi-parent skip ranges
@@ -266,15 +525,14 @@ of the repositories listed at
  Will merge to 'next'.
 
 
-* mm/mediawiki-https-fail-message (2013-05-23) 1 commit
+* mm/mediawiki-https-fail-message (2013-05-29) 1 commit
  - git-remote-mediawiki: better error message when HTTP(S) access fails
 
  Hint users when https:// connection failed to check the
  certificate; it is a good hint if we assumie that it is common
  error for the end users to make.
 
- Still under discussion.
- $gmane/225678
+ Will merge to 'next'.
 
 
 * tg/maint-zsh-svn-remote-prompt (2013-05-22) 1 commit
@@ -324,7 +582,7 @@ of the repositories listed at
  When a reflog notation is used for implicit "current branch", we
  did not say which branch and worse said "branch ''".
 
- Waiting for series of rerolls to settle.
+ Will merge to 'next'.
 
 
 * jc/show-branch (2013-05-21) 5 commits
@@ -348,10 +606,7 @@ of the repositories listed at
  - remote-bzr: fix for files with spaces
  - remote-bzr: recover from failed clones
 
- The ones near the tip conflicted with the hotfix for 1.8.3 so I
- discarded them for now.
-
- Will merge to 'next'?
+ Will merge to 'next'.
 
 
 * jx/clean-interactive (2013-05-22) 15 commits
@@ -386,7 +641,9 @@ of the repositories listed at
  of the test suite under Valgrind, to speed things up.
 
  The tip one may be useful in practice but is a tad ugly ;-)
- Will merge to 'next'.
+
+ There seem to be some miscounting by toggling the verbose/valgrind
+ mode at wrong places?  Cf. $gmane/225735
 
 
 * rh/merge-options-doc-fix (2013-05-16) 1 commit
@@ -650,23 +907,6 @@ of the repositories listed at
  Will merge to 'master'.
 
 
-* mg/more-textconv (2013-05-10) 7 commits
-  (merged to 'next' on 2013-05-21 at 701cdb7)
- + grep: honor --textconv for the case rev:path
- + grep: allow to use textconv filters
- + t7008: demonstrate behavior of grep with textconv
- + cat-file: do not die on --textconv without textconv filters
- + show: honor --textconv for blobs
- + diff_opt: track whether flags have been set explicitly
- + t4030: demonstrate behavior of show with textconv
-
- Make "git grep" and "git show" pay attention to --textconv when
- dealing with blob objects.
-
- I thought this was pretty well designed and executed, but it seems
- there are some doubts on the list.
-
-
 * jh/shorten-refname (2013-05-07) 4 commits
  - t1514: refname shortening is done after dereferencing symbolic refs
  - shorten_unambiguous_ref(): Fix shortening refs/remotes/origin/HEAD to origin
@@ -693,8 +933,8 @@ of the repositories listed at
  Will merge to 'master'.
 
 
-* nd/warn-ambiguous-object-name (2013-05-07) 1 commit
- - get_sha1: improve ambiguity warning regarding SHA-1 and ref names
+* nd/warn-ambiguous-object-name (2013-05-29) 1 commit
+ - get_sha1: warn about full or short object names that look like refs
 
  "git cmd <name>", when <name> happens to be a 40-hex string,
  directly uses the 40-hex string as an object name, even if a ref
@@ -703,12 +943,9 @@ of the repositories listed at
  like we warn when more than one refs/ hierachies share the same
  name.
 
- Will be rerolled.
- $gmane/225585
 
-
-* fc/zsh-leftover-bits (2013-05-28) 3 commits
-  (merged to 'next' on 2013-05-28 at d4a7aee)
+* fc/zsh-leftover-bits (2013-05-29) 3 commits
+  (merged to 'next' on 2013-05-29 at b367b4e)
  + completion: zsh: improve bash script loading
   (merged to 'next' on 2013-05-21 at 1b84ec1)
  + completion: synchronize zsh wrapper
@@ -782,26 +1019,6 @@ of the repositories listed at
  Will merge to 'next'.
 
 
-* jk/lookup-object-prefer-latest (2013-05-02) 1 commit
-  (merged to 'next' on 2013-05-06 at cc59dcc)
- + lookup_object: prioritize recently found objects
-
- Optimizes object lookup when the object hashtable starts to become
- crowded.
-
- Will merge to 'master'.
-
-
-* jk/subtree-do-not-push-if-split-fails (2013-05-01) 1 commit
-  (merged to 'next' on 2013-05-06 at 81bdf37)
- + contrib/subtree: don't delete remote branches if split fails
-
- "git subtree" (in contrib/) had one codepath with loose error
- checks to lose data at the remote side.
-
- Will merge to 'master'.
-
-
 * fc/completion (2013-04-27) 9 commits
   (merged to 'next' on 2013-05-21 at aba6ef1)
  + completion: remove __git_index_file_list_filter()
@@ -813,190 +1030,6 @@ of the repositories listed at
  + completion; remove unuseful comments
  + completion: document tilde expansion failure in tests
  + completion: add file completion tests
-
- Will merge to 'master'.
-
-
-* jk/test-output (2013-05-06) 3 commits
-  (merged to 'next' on 2013-05-06 at 7c03af3)
- + t/Makefile: don't define TEST_RESULTS_DIRECTORY recursively
-  (merged to 'next' on 2013-05-01 at 63827c9)
- + test output: respect $TEST_OUTPUT_DIRECTORY
- + t/Makefile: fix result handling with TEST_OUTPUT_DIRECTORY
-
- When TEST_OUTPUT_DIRECTORY setting is used, it was handled somewhat
- inconsistently between the test framework and t/Makefile, and logic
- to summarize the results looked at a wrong place.
-
- Will merge to 'master'.
-
-
-* rj/sparse (2013-04-28) 10 commits
-  (merged to 'next' on 2013-05-01 at 649e16c)
- + sparse: Fix mingw_main() argument number/type errors
- + compat/mingw.c: Fix some sparse warnings
- + compat/win32mmap.c: Fix some sparse warnings
- + compat/poll/poll.c: Fix a sparse warning
- + compat/win32/pthread.c: Fix a sparse warning
- + compat/unsetenv.c: Fix a sparse warning
- + compat/nedmalloc: Fix compiler warnings on linux
- + compat/nedmalloc: Fix some sparse warnings
- + compat/fnmatch/fnmatch.c: Fix a sparse error
- + compat/regex/regexec.c: Fix some sparse warnings
-
- Will merge to 'master'.
-
-
-* mh/fetch-into-shallow (2013-05-02) 2 commits
-  (merged to 'next' on 2013-05-03 at 3fadc61)
- + t5500: add test for fetching with an unknown 'shallow'
-  (merged to 'next' on 2013-04-29 at a167d3e)
- + upload-pack: ignore 'shallow' lines with unknown obj-ids
-
- Will merge to 'master'.
-
-
-* jh/checkout-auto-tracking (2013-04-21) 8 commits
-  (merged to 'next' on 2013-04-22 at 2356700)
- + glossary: Update and rephrase the definition of a remote-tracking branch
- + branch.c: Validate tracking branches with refspecs instead of refs/remotes/*
- + t9114.2: Don't use --track option against "svn-remote"-tracking branches
- + t7201.24: Add refspec to keep --track working
- + t3200.39: tracking setup should fail if there is no matching refspec.
- + checkout: Use remote refspecs when DWIMming tracking branches
- + t2024: Show failure to use refspec when DWIMming remote branch names
- + t2024: Add tests verifying current DWIM behavior of 'git checkout <branch>'
-
- Updates "git checkout foo" that DWIMs the intended "upstream" and
- turns it into "git checkout -t -b foo remotes/origin/foo" to
- correctly take existing remote definitions into account.  The
- remote "origin" may be what uniquely map its own branch to
- remotes/some/where/foo but that some/where may not be "origin".
-
- Will merge to 'master'.
-
-
-* jc/prune-all (2013-04-25) 4 commits
-  (merged to 'next' on 2013-04-26 at 97a7387)
- + prune: introduce OPT_EXPIRY_DATE() and use it
-  (merged to 'next' on 2013-04-22 at b00ccf6)
- + api-parse-options.txt: document "no-" for non-boolean options
- + git-gc.txt, git-reflog.txt: document new expiry options
- + date.c: add parse_expiry_date()
- (this branch is used by mh/packed-refs-various.)
-
- We used the approxidate() parser for "--expire=<timestamp>" options
- of various commands, but it is better to treat --expire=all and
- --expire=now a bit more specially than using the current timestamp.
- Update "git gc" and "git reflog" with a new parsing function for
- expiry dates.
-
- Will merge to 'master'.
-
-
-* as/check-ignore (2013-04-29) 6 commits
-  (merged to 'next' on 2013-04-30 at 646931f)
- + t0008: use named pipe (FIFO) to test check-ignore streaming
-  (merged to 'next' on 2013-04-21 at 7515aa8)
- + Documentation: add caveats about I/O buffering for check-{attr,ignore}
- + check-ignore: allow incremental streaming of queries via --stdin
- + check-ignore: move setup into cmd_check_ignore()
- + check-ignore: add -n / --non-matching option
- + t0008: remove duplicated test fixture data
-
- Enhance "check-ignore" (1.8.2 update) to work more like "check-attr"
- over bidi-pipes.
-
- Will merge to 'master'.
-
-
-* mh/packed-refs-various (2013-05-01) 33 commits
-  (merged to 'next' on 2013-05-01 at e527153)
- + refs: handle the main ref_cache specially
- + refs: change do_for_each_*() functions to take ref_cache arguments
- + pack_one_ref(): do some cheap tests before a more expensive one
- + pack_one_ref(): use write_packed_entry() to do the writing
- + pack_one_ref(): use function peel_entry()
- + refs: inline function do_not_prune()
- + pack_refs(): change to use do_for_each_entry()
- + refs: use same lock_file object for both ref-packing functions
- + pack_one_ref(): rename "path" parameter to "refname"
- + pack-refs: merge code from pack-refs.{c,h} into refs.{c,h}
- + pack-refs: rename handle_one_ref() to pack_one_ref()
- + refs: extract a function write_packed_entry()
- + repack_without_ref(): write peeled refs in the rewritten file
- + t3211: demonstrate loss of peeled refs if a packed ref is deleted
- + refs: change how packed refs are deleted
- + search_ref_dir(): return an index rather than a pointer
- + repack_without_ref(): silence errors for dangling packed refs
- + t3210: test for spurious error messages for dangling packed refs
- + refs: change the internal reference-iteration API
- + refs: extract a function peel_entry()
- + peel_ref(): fix return value for non-peelable, not-current reference
- + peel_object(): give more specific information in return value
- + refs: extract function peel_object()
- + refs: extract a function ref_resolves_to_object()
- + repack_without_ref(): use function get_packed_ref()
- + peel_ref(): use function get_packed_ref()
- + get_packed_ref(): return a ref_entry
- + do_for_each_ref_in_dirs(): remove dead code
- + refs: define constant PEELED_LINE_LENGTH
- + refs: document how current_ref is used
- + refs: document do_for_each_ref() and do_one_ref()
- + refs: document the fields of struct ref_value
- + refs: document flags constants REF_*
- (this branch uses jc/prune-all.)
-
- Updates reading and updating packed-refs file, correcting corner
- case bugs.
-
- Will merge to 'master'.
-
-
-* fc/transport-helper-error-reporting (2013-05-10) 12 commits
-  (merged to 'next' on 2013-05-10 at 2a9af4b)
- + transport-helper: fix remote helper namespace regression
- + test: remote-helper: add missing and
-  (merged to 'next' on 2013-04-25 at 3358f1a)
- + t5801: "VAR=VAL shell_func args" is forbidden
-  (merged to 'next' on 2013-04-22 at 5ba6467)
- + transport-helper: update remote helper namespace
- + transport-helper: trivial code shuffle
- + transport-helper: warn when refspec is not used
- + transport-helper: clarify pushing without refspecs
- + transport-helper: update refspec documentation
- + transport-helper: clarify *:* refspec
- + transport-helper: improve push messages
- + transport-helper: mention helper name when it dies
- + transport-helper: report errors properly
- (this branch is tangled with js/transport-helper-error-reporting-fix.)
-
- Update transport helper to report errors and maintain ref hierarchy
- used to keep track of remote helper state better.
-
- Will merge to 'master'.
-
-
-* js/transport-helper-error-reporting-fix (2013-04-28) 13 commits
-  (merged to 'next' on 2013-04-29 at 8cc4bb8)
- + git-remote-testgit: build it to run under $SHELL_PATH
- + git-remote-testgit: further remove some bashisms
- + git-remote-testgit: avoid process substitution
-  (merged to 'next' on 2013-04-25 at 3358f1a)
- + t5801: "VAR=VAL shell_func args" is forbidden
-  (merged to 'next' on 2013-04-22 at 5ba6467)
- + transport-helper: update remote helper namespace
- + transport-helper: trivial code shuffle
- + transport-helper: warn when refspec is not used
- + transport-helper: clarify pushing without refspecs
- + transport-helper: update refspec documentation
- + transport-helper: clarify *:* refspec
- + transport-helper: improve push messages
- + transport-helper: mention helper name when it dies
- + transport-helper: report errors properly
- (this branch is tangled with fc/transport-helper-error-reporting.)
-
- Finishing touches to fc/transport-helper-error-reporting topic.
 
  Will merge to 'master'.
 
@@ -1056,21 +1089,3 @@ of the repositories listed at
  aka "--no-ignore-removal".
 
  Will cook in 'next' until Git 2.0.
-
---------------------------------------------------
-[Discarded]
-
-* kb/full-history-compute-treesame-carefully (2013-05-06) 11 commits
- . revision.c: treat A...B merge bases as if manually specified
- . revision.c: discount side branches when computing TREESAME
- . simplify-merges: drop merge from irrelevant side branch
- . simplify-merges: never remove all TREESAME parents
- . t6012: update test for tweaked full-history traversal
- . revision.c: Make --full-history consider more merges
- . rev-list-options.txt: correct TREESAME for P
- . t6111: allow checking the parents as well
- . t6111: new TREESAME test set
- . t6019: test file dropped in -s ours merge
- . decorate.c: compact table when growing
-
- Superseded by kb/full-history-compute-treesame-carefully-2
