@@ -5,7 +5,7 @@ test_description=check-ignore
 . ./test-lib.sh
 
 init_vars () {
-	global_excludes="$(pwd)/global-excludes"
+	global_excludes="global-excludes"
 }
 
 enable_global_excludes () {
