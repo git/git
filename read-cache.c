@@ -975,7 +975,7 @@ int add_index_entry(struct index_state *istate, struct cache_entry *ce, int opti
 	if (istate->cache_nr == istate->cache_alloc) {
 		istate->cache_alloc = alloc_nr(istate->cache_alloc);
 		istate->cache = xrealloc(istate->cache,
-					istate->cache_alloc * sizeof(struct cache_entry *));
+					istate->cache_alloc * sizeof(*istate->cache));
 	}
 
 	/* Add it in.. */
@@ -1445,7 +1445,7 @@ int read_index_from(struct index_state *istate, const char *path)
 	istate->version = ntohl(hdr->hdr_version);
 	istate->cache_nr = ntohl(hdr->hdr_entries);
 	istate->cache_alloc = alloc_nr(istate->cache_nr);
-	istate->cache = xcalloc(istate->cache_alloc, sizeof(struct cache_entry *));
+	istate->cache = xcalloc(istate->cache_alloc, sizeof(*istate->cache));
 	istate->initialized = 1;
 
 	if (istate->version == 4)
