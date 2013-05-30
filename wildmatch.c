@@ -196,6 +196,11 @@ static int dowild(const uchar *p, const uchar *text, unsigned int flags)
 					}
 					if (t_ch <= p_ch && t_ch >= prev_ch)
 						matched = 1;
+					else if ((flags & WM_CASEFOLD) && ISLOWER(t_ch)) {
+						uchar t_ch_upper = toupper(t_ch);
+						if (t_ch_upper <= p_ch && t_ch_upper >= prev_ch)
+							matched = 1;
+					}
 					p_ch = 0; /* This makes "prev_ch" get set to 0. */
 				} else if (p_ch == '[' && p[1] == ':') {
 					const uchar *s;
@@ -244,6 +249,8 @@ static int dowild(const uchar *p, const uchar *text, unsigned int flags)
 							matched = 1;
 					} else if (CC_EQ(s,i, "upper")) {
 						if (ISUPPER(t_ch))
+							matched = 1;
+						else if ((flags & WM_CASEFOLD) && ISLOWER(t_ch))
 							matched = 1;
 					} else if (CC_EQ(s,i, "xdigit")) {
 						if (ISXDIGIT(t_ch))
