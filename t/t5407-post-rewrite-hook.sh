@@ -31,8 +31,8 @@ clear_hook_input () {
 }
 
 verify_hook_input () {
-	test_cmp "$TRASH_DIRECTORY"/post-rewrite.args expected.args &&
-	test_cmp "$TRASH_DIRECTORY"/post-rewrite.data expected.data
+	test_cmp expected.args "$TRASH_DIRECTORY"/post-rewrite.args &&
+	test_cmp expected.data "$TRASH_DIRECTORY"/post-rewrite.data
 }
 
 test_expect_success 'git commit --amend' '
