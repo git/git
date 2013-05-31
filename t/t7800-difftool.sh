@@ -253,7 +253,7 @@ test_expect_success PERL 'difftool --extcmd echo arg1' '
 	echo file >expect &&
 	git difftool --no-prompt \
 		--extcmd sh\ -c\ \"echo\ \$1\" branch >actual &&
-	test_cmp expect actual
+	test_cmp_text expect actual
 '
 
 test_expect_success PERL 'difftool --extcmd cat arg1' '
@@ -393,7 +393,7 @@ test_expect_success PERL 'difftool --no-symlinks does not overwrite working tree
 	echo "orig content" >file &&
 	git difftool --dir-diff --no-symlinks --extcmd "$(pwd)/modify-file" branch &&
 	echo "new content" >expect &&
-	test_cmp expect file
+	test_cmp_text expect file
 '
 
 write_script modify-both-files <<\EOF
@@ -409,9 +409,9 @@ test_expect_success PERL 'difftool --no-symlinks detects conflict ' '
 		echo "orig content" >file &&
 		test_must_fail git difftool --dir-diff --no-symlinks --extcmd "$(pwd)/modify-both-files" branch &&
 		echo "wt content" >expect &&
-		test_cmp expect file &&
+		test_cmp_text expect file &&
 		echo "tmp content" >expect &&
-		test_cmp expect "$(cat tmpdir)/file"
+		test_cmp_text expect "$(cat tmpdir)/file"
 	)
 '
 
