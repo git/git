@@ -383,14 +383,36 @@ ifndef::git-format-patch[]
 	that matches other criteria, nothing is selected.
 
 -S<string>::
-	Look for differences that introduce or remove an instance of
-	<string>. Note that this is different than the string simply
-	appearing in diff output; see the 'pickaxe' entry in
-	linkgit:gitdiffcore[7] for more details.
+	Look for differences that change the number of occurrences of
+	the specified string (i.e. addition/deletion) in a file.
+	Intended for the scripter's use.
++
+It is useful when you're looking for an exact block of code (like a
+struct), and want to know the history of that block since it first
+came into being: use the feature iteratively to feed the interesting
+block in the preimage back into `-S`, and keep going until you get the
+very first version of the block.
 
 -G<regex>::
-	Look for differences whose added or removed line matches
-	the given <regex>.
+	Look for differences whose patch text contains added/removed
+	lines that match <regex>.
++
+To illustrate the difference between `-S<regex> --pickaxe-regex` and
+`-G<regex>`, consider a commit with the following diff in the same
+file:
++
+----
++    return !regexec(regexp, two->ptr, 1, &regmatch, 0);
+...
+-    hit = !regexec(regexp, mf2.ptr, 1, &regmatch, 0);
+----
++
+While `git log -G"regexec\(regexp"` will show this commit, `git log
+-S"regexec\(regexp" --pickaxe-regex` will not (because the number of
+occurrences of that string did not change).
++
+See the 'pickaxe' entry in linkgit:gitdiffcore[7] for more
+information.
 
 --pickaxe-all::
 	When `-S` or `-G` finds a change, show all the changes in that
@@ -398,8 +420,8 @@ ifndef::git-format-patch[]
 	in <string>.
 
 --pickaxe-regex::
-	Make the <string> not a plain string but an extended POSIX
-	regex to match.
+	Treat the <string> given to `-S` as an extended POSIX regular
+	expression to match.
 endif::git-format-patch[]
 
 -O<orderfile>::
