@@ -34,7 +34,7 @@ test_expect_success 'log --grep searches in log output encoding (utf8)' '
 	test_cmp expect actual
 '
 
-test_expect_success 'log --grep searches in log output encoding (latin1)' '
+test_expect_success NOT_MINGW 'log --grep searches in log output encoding (latin1)' '
 	cat >expect <<-\EOF &&
 	latin1
 	utf8
@@ -43,7 +43,7 @@ test_expect_success 'log --grep searches in log output encoding (latin1)' '
 	test_cmp expect actual
 '
 
-test_expect_success 'log --grep does not find non-reencoded values (utf8)' '
+test_expect_success NOT_MINGW 'log --grep does not find non-reencoded values (utf8)' '
 	>expect &&
 	git log --encoding=utf8 --format=%s --grep=$latin1_e >actual &&
 	test_cmp expect actual
