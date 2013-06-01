@@ -6,7 +6,7 @@
 #include "parse-options.h"
 
 static const char* show_branch_usage[] = {
-    N_("git show-branch [-a|--all] [-r|--remotes] [--topo-order | --date-order] [--current] [--color[=<when>] | --no-color] [--sparse] [--more=<n> | --list | --independent | --merge-base] [--no-name | --sha1-name] [--topics] [(<rev> | <glob>)...]"),
+    N_("git show-branch [-a|--all] [-r|--remotes] [--topo-order | --date-order | --authorship-order] [--current] [--color[=<when>] | --no-color] [--sparse] [--more=<n> | --list | --independent | --merge-base] [--no-name | --sha1-name] [--topics] [(<rev> | <glob>)...]"),
     N_("git show-branch (-g|--reflog)[=<n>[,<base>]] [--list] [<ref>]"),
     NULL
 };
@@ -631,6 +631,7 @@ int cmd_show_branch(int ac, const char **av, const char *prefix)
 	int all_heads = 0, all_remotes = 0;
 	int all_mask, all_revs;
 	int lifo = 1;
+	int use_author = 0;
 	char head[128];
 	const char *head_p;
 	int head_len;
@@ -667,6 +668,8 @@ int cmd_show_branch(int ac, const char **av, const char *prefix)
 			    N_("show refs unreachable from any other ref")),
 		OPT_BOOLEAN(0, "topo-order", &lifo,
 			    N_("show commits in topological order")),
+		OPT_BOOLEAN(0, "authorship-order", &use_author,
+			    N_("like --date-order, but with the *author* date")),
 		OPT_BOOLEAN(0, "topics", &topics,
 			    N_("show only commits not on the first branch")),
 		OPT_SET_INT(0, "sparse", &dense,
@@ -694,6 +697,11 @@ int cmd_show_branch(int ac, const char **av, const char *prefix)
 			   show_branch_usage, PARSE_OPT_STOP_AT_NON_OPTION);
 	if (all_heads)
 		all_remotes = 1;
+	/* I'm having trouble figuring out exactly what `lifo` stores. Why do both 'date-order' and
+	 * 'topo-order' set the same variable!? Aren't they mutually exclusive? Since *both* set it, for
+	 * the moment, I'm going to set it for '--authorship-order'; but that seems counterintuitive. */
+	if (use_author)
+		lifo = 1;
 
 	if (extra || reflog) {
 		/* "listing" mode is incompatible with
@@ -900,7 +908,7 @@ int cmd_show_branch(int ac, const char **av, const char *prefix)
 		exit(0);
 
 	/* Sort topologically */
-	sort_in_topological_order(&seen, lifo);
+	sort_in_topological_order(&seen, lifo, use_author);
 
 	/* Give names to commits */
 	if (!sha1_name && !no_name)

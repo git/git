@@ -65,6 +65,7 @@ static int is_rev_argument(const char *arg)
 		"--tags",
 		"--topo-order",
 		"--date-order",
+		"--authorship-order",
 		"--unpacked",
 		NULL
 	};

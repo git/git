@@ -73,6 +73,7 @@ struct rev_info {
 			simplify_history:1,
 			lifo:1,
 			topo_order:1,
+			use_author:1,
 			simplify_merges:1,
 			simplify_by_decoration:1,
 			tag_objects:1,
