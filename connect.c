@@ -551,8 +551,11 @@ struct child_process *git_connect(int fd[2], const char *url_orig,
 	path = strchr(end, c);
 	if (path && !has_dos_drive_prefix(end)) {
 		if (c == ':') {
-			protocol = PROTO_SSH;
-			*path++ = '\0';
+			if (path < strchrnul(host, '/')) {
+				protocol = PROTO_SSH;
+				*path++ = '\0';
+			} else /* '/' in the host part, assume local path */
+				path = end;
 		}
 	} else
 		path = end;

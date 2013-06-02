@@ -23,6 +23,12 @@ An alternative scp-like syntax may also be used with the ssh protocol:
 
 - {startsb}user@{endsb}host.xz:path/to/repo.git/
 
+This syntax is only recognized if there are no slashes before the
+first colon. This helps differentiate a local path that contains a
+colon. For example the local path `foo:bar` could be specified as an
+absolute path or `./foo:bar` to avoid being misinterpreted as an ssh
+url.
+
 The ssh and git protocols additionally support ~username expansion:
 
 - ssh://{startsb}user@{endsb}host.xz{startsb}:port{endsb}/~{startsb}user{endsb}/path/to/repo.git/
