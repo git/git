@@ -353,4 +353,52 @@ test_expect_failure 'combine diff coalesce three parents' '
 	compare_diff_patch expected actual
 '
 
+# Test for a bug reported at
+# http://thread.gmane.org/gmane.comp.version-control.git/224410
+# where a delete lines were missing from combined diff output when they
+# occurred exactly before the context lines of a later change.
+test_expect_success 'combine diff missing delete bug' '
+	git commit -m initial --allow-empty &&
+	cat <<-\EOF >test &&
+	1
+	2
+	3
+	4
+	EOF
+	git add test &&
+	git commit -a -m side1 &&
+	git checkout -B side1 &&
+	git checkout HEAD^ &&
+	cat <<-\EOF >test &&
+	0
+	1
+	2
+	3
+	4modified
+	EOF
+	git add test &&
+	git commit -m side2 &&
+	git branch -f side2 &&
+	test_must_fail git merge --no-commit side1 &&
+	cat <<-\EOF >test &&
+	1
+	2
+	3
+	4modified
+	EOF
+	git add test &&
+	git commit -a -m merge &&
+	git diff-tree -c -p HEAD >actual.tmp &&
+	sed -e "1,/^@@@/d" < actual.tmp >actual &&
+	tr -d Q <<-\EOF >expected &&
+	- 0
+	  1
+	  2
+	  3
+	 -4
+	 +4modified
+	EOF
+	compare_diff_patch expected actual
+'
+
 test_done
