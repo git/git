@@ -116,14 +116,20 @@ static void do_add_entry(struct unpack_trees_options *o, struct cache_entry *ce,
 			ADD_CACHE_OK_TO_ADD | ADD_CACHE_OK_TO_REPLACE);
 }
 
-static void add_entry(struct unpack_trees_options *o, struct cache_entry *ce,
-	unsigned int set, unsigned int clear)
+static struct cache_entry *dup_entry(const struct cache_entry *ce)
 {
 	unsigned int size = ce_size(ce);
 	struct cache_entry *new = xmalloc(size);
 
 	memcpy(new, ce, size);
-	do_add_entry(o, new, set, clear);
+	return new;
+}
+
+static void add_entry(struct unpack_trees_options *o,
+		      const struct cache_entry *ce,
+		      unsigned int set, unsigned int clear)
+{
+	do_add_entry(o, dup_entry(ce), set, clear);
 }
 
 /*
