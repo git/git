@@ -91,7 +91,7 @@ void fill_stat_cache_info(struct cache_entry *ce, struct stat *st)
 		ce_mark_uptodate(ce);
 }
 
-static int ce_compare_data(struct cache_entry *ce, struct stat *st)
+static int ce_compare_data(const struct cache_entry *ce, struct stat *st)
 {
 	int match = -1;
 	int fd = open(ce->name, O_RDONLY);
@@ -105,7 +105,7 @@ static int ce_compare_data(struct cache_entry *ce, struct stat *st)
 	return match;
 }
 
-static int ce_compare_link(struct cache_entry *ce, size_t expected_size)
+static int ce_compare_link(const struct cache_entry *ce, size_t expected_size)
 {
 	int match = -1;
 	void *buffer;
@@ -126,7 +126,7 @@ static int ce_compare_link(struct cache_entry *ce, size_t expected_size)
 	return match;
 }
 
-static int ce_compare_gitlink(struct cache_entry *ce)
+static int ce_compare_gitlink(const struct cache_entry *ce)
 {
 	unsigned char sha1[20];
 
@@ -143,7 +143,7 @@ static int ce_compare_gitlink(struct cache_entry *ce)
 	return hashcmp(sha1, ce->sha1);
 }
 
-static int ce_modified_check_fs(struct cache_entry *ce, struct stat *st)
+static int ce_modified_check_fs(const struct cache_entry *ce, struct stat *st)
 {
 	switch (st->st_mode & S_IFMT) {
 	case S_IFREG:
@@ -163,7 +163,7 @@ static int ce_modified_check_fs(struct cache_entry *ce, struct stat *st)
 	return 0;
 }
 
-static int ce_match_stat_basic(struct cache_entry *ce, struct stat *st)
+static int ce_match_stat_basic(const struct cache_entry *ce, struct stat *st)
 {
 	unsigned int changed = 0;
 
@@ -239,7 +239,8 @@ static int ce_match_stat_basic(struct cache_entry *ce, struct stat *st)
 	return changed;
 }
 
-static int is_racy_timestamp(const struct index_state *istate, struct cache_entry *ce)
+static int is_racy_timestamp(const struct index_state *istate,
+			     const struct cache_entry *ce)
 {
 	return (!S_ISGITLINK(ce->ce_mode) &&
 		istate->timestamp.sec &&
@@ -255,7 +256,7 @@ static int is_racy_timestamp(const struct index_state *istate, struct cache_entr
 }
 
 int ie_match_stat(const struct index_state *istate,
-		  struct cache_entry *ce, struct stat *st,
+		  const struct cache_entry *ce, struct stat *st,
 		  unsigned int options)
 {
 	unsigned int changed;
@@ -311,7 +312,8 @@ int ie_match_stat(const struct index_state *istate,
 }
 
 int ie_modified(const struct index_state *istate,
-		struct cache_entry *ce, struct stat *st, unsigned int options)
+		const struct cache_entry *ce,
+		struct stat *st, unsigned int options)
 {
 	int changed, changed_fs;
 
