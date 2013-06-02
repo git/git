@@ -600,9 +600,16 @@ static int unpack_nondirectories(int n, unsigned long mask,
 		src[i + o->merge] = create_ce_entry(info, names + i, stage);
 	}
 
-	if (o->merge)
-		return call_unpack_fn((const struct cache_entry * const *)src,
-				      o);
+	if (o->merge) {
+		int rc = call_unpack_fn((const struct cache_entry * const *)src,
+					o);
+		for (i = 0; i < n; i++) {
+			struct cache_entry *ce = src[i + o->merge];
+			if (ce != o->df_conflict_entry)
+				free(ce);
+		}
+		return rc;
+	}
 
 	for (i = 0; i < n; i++)
 		if (src[i] && src[i] != o->df_conflict_entry)
