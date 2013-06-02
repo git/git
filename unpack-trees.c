@@ -1466,10 +1466,12 @@ static int verify_absent_sparse(struct cache_entry *ce,
 	return verify_absent_1(ce, orphaned_error, o);
 }
 
-static int merged_entry(struct cache_entry *merge, struct cache_entry *old,
-		struct unpack_trees_options *o)
+static int merged_entry(const struct cache_entry *ce,
+			struct cache_entry *old,
+			struct unpack_trees_options *o)
 {
 	int update = CE_UPDATE;
+	struct cache_entry *merge = dup_entry(ce);
 
 	if (!old) {
 		/*
@@ -1487,8 +1489,11 @@ static int merged_entry(struct cache_entry *merge, struct cache_entry *old,
 		update |= CE_ADDED;
 		merge->ce_flags |= CE_NEW_SKIP_WORKTREE;
 
-		if (verify_absent(merge, ERROR_WOULD_LOSE_UNTRACKED_OVERWRITTEN, o))
+		if (verify_absent(merge,
+				  ERROR_WOULD_LOSE_UNTRACKED_OVERWRITTEN, o)) {
+			free(merge);
 			return -1;
+		}
 		invalidate_ce_path(merge, o);
 	} else if (!(old->ce_flags & CE_CONFLICTED)) {
 		/*
@@ -1502,8 +1507,10 @@ static int merged_entry(struct cache_entry *merge, struct cache_entry *old,
 			copy_cache_entry(merge, old);
 			update = 0;
 		} else {
-			if (verify_uptodate(old, o))
+			if (verify_uptodate(old, o)) {
+				free(merge);
 				return -1;
+			}
 			/* Migrate old flags over */
 			update |= old->ce_flags & (CE_SKIP_WORKTREE | CE_NEW_SKIP_WORKTREE);
 			invalidate_ce_path(old, o);
@@ -1516,7 +1523,7 @@ static int merged_entry(struct cache_entry *merge, struct cache_entry *old,
 		invalidate_ce_path(old, o);
 	}
 
-	add_entry(o, merge, update, CE_STAGEMASK);
+	do_add_entry(o, merge, update, CE_STAGEMASK);
 	return 1;
 }
 
