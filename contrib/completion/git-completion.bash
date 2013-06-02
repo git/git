@@ -252,106 +252,50 @@ __gitcomp_file ()
 	# since tilde expansion is not applied.
 	# This means that COMPREPLY will be empty and Bash default
 	# completion will be used.
-	COMPREPLY=($(compgen -P "${2-}" -W "$1" -- "${3-$cur}"))
+	__gitcompadd "$1" "${2-}" "${3-$cur}" ""
 
-	# Tell Bash that compspec generates filenames.
-	compopt -o filenames 2>/dev/null
+	# use a hack to enable file mode in bash < 4
+	compopt -o filenames +o nospace 2>/dev/null ||
+	compgen -f /non-existing-dir/ > /dev/null
 }
 
-__git_index_file_list_filter_compat ()
-{
-	local path
-
-	while read -r path; do
-		case "$path" in
-		?*/*) echo "${path%%/*}/" ;;
-		*) echo "$path" ;;
-		esac
-	done
-}
-
-__git_index_file_list_filter_bash ()
-{
-	local path
-
-	while read -r path; do
-		case "$path" in
-		?*/*)
-			# XXX if we append a slash to directory names when using
-			# `compopt -o filenames`, Bash will append another slash.
-			# This is pretty stupid, and this the reason why we have to
-			# define a compatible version for this function.
-			echo "${path%%/*}" ;;
-		*)
-			echo "$path" ;;
-		esac
-	done
-}
-
-# Process path list returned by "ls-files" and "diff-index --name-only"
-# commands, in order to list only file names relative to a specified
-# directory, and append a slash to directory names.
-__git_index_file_list_filter ()
-{
-	# Default to Bash >= 4.x
-	__git_index_file_list_filter_bash
-}
-
-# Execute git ls-files, returning paths relative to the directory
-# specified in the first argument, and using the options specified in
-# the second argument.
+# Execute 'git ls-files', unless the --committable option is specified, in
+# which case it runs 'git diff-index' to find out the files that can be
+# committed.  It return paths relative to the directory specified in the first
+# argument, and using the options specified in the second argument.
 __git_ls_files_helper ()
 {
 	(
 		test -n "${CDPATH+set}" && unset CDPATH
-		# NOTE: $2 is not quoted in order to support multiple options
-		cd "$1" && git ls-files --exclude-standard $2
+		cd "$1"
+		if [ "$2" == "--committable" ]; then
+			git diff-index --name-only --relative HEAD
+		else
+			# NOTE: $2 is not quoted in order to support multiple options
+			git ls-files --exclude-standard $2
+		fi
 	) 2>/dev/null
 }
 
-
-# Execute git diff-index, returning paths relative to the directory
-# specified in the first argument, and using the tree object id
-# specified in the second argument.
-__git_diff_index_helper ()
-{
-	(
-		test -n "${CDPATH+set}" && unset CDPATH
-		cd "$1" && git diff-index --name-only --relative "$2"
-	) 2>/dev/null
-}
 
 # __git_index_files accepts 1 or 2 arguments:
 # 1: Options to pass to ls-files (required).
-#    Supported options are --cached, --modified, --deleted, --others,
-#    and --directory.
 # 2: A directory path (optional).
 #    If provided, only files within the specified directory are listed.
 #    Sub directories are never recursed.  Path must have a trailing
 #    slash.
 __git_index_files ()
 {
-	local dir="$(__gitdir)" root="${2-.}"
+	local dir="$(__gitdir)" root="${2-.}" file
 
 	if [ -d "$dir" ]; then
-		__git_ls_files_helper "$root" "$1" | __git_index_file_list_filter |
-			sort | uniq
-	fi
-}
-
-# __git_diff_index_files accepts 1 or 2 arguments:
-# 1) The id of a tree object.
-# 2) A directory path (optional).
-#    If provided, only files within the specified directory are listed.
-#    Sub directories are never recursed.  Path must have a trailing
-#    slash.
-__git_diff_index_files ()
-{
-	local dir="$(__gitdir)" root="${2-.}"
-
-	if [ -d "$dir" ]; then
-		__git_diff_index_helper "$root" "$1" | __git_index_file_list_filter |
-			sort | uniq
+		__git_ls_files_helper "$root" "$1" |
+		while read -r file; do
+			case "$file" in
+			?*/*) echo "${file%%/*}" ;;
+			*) echo "$file" ;;
+			esac
+		done | sort | uniq
 	fi
 }
 
@@ -552,44 +496,23 @@ __git_complete_revlist_file ()
 }
 
 
-# __git_complete_index_file requires 1 argument: the options to pass to
-# ls-file
+# __git_complete_index_file requires 1 argument:
+# 1: the options to pass to ls-file
+#
+# The exception is --committable, which finds the files appropriate commit.
 __git_complete_index_file ()
 {
-	local pfx cur_="$cur"
+	local pfx="" cur_="$cur"
 
 	case "$cur_" in
 	?*/*)
 		pfx="${cur_%/*}"
 		cur_="${cur_##*/}"
 		pfx="${pfx}/"
-
-		__gitcomp_file "$(__git_index_files "$1" "$pfx")" "$pfx" "$cur_"
-		;;
-	*)
-		__gitcomp_file "$(__git_index_files "$1")" "" "$cur_"
 		;;
 	esac
-}
 
-# __git_complete_diff_index_file requires 1 argument: the id of a tree
-# object
-__git_complete_diff_index_file ()
-{
-	local pfx cur_="$cur"
-
-	case "$cur_" in
-	?*/*)
-		pfx="${cur_%/*}"
-		cur_="${cur_##*/}"
-		pfx="${pfx}/"
-
-		__gitcomp_file "$(__git_diff_index_files "$1" "$pfx")" "$pfx" "$cur_"
-		;;
-	*)
-		__gitcomp_file "$(__git_diff_index_files "$1")" "" "$cur_"
-		;;
-	esac
+	__gitcomp_file "$(__git_index_files "$1" "$pfx")" "$pfx" "$cur_"
 }
 
 __git_complete_file ()
@@ -1213,7 +1136,7 @@ _git_commit ()
 	esac
 
 	if git rev-parse --verify --quiet HEAD >/dev/null; then
-		__git_complete_diff_index_file "HEAD"
+		__git_complete_index_file "--committable"
 	else
 		# This is the first commit
 		__git_complete_index_file "--cached"
@@ -2702,14 +2625,6 @@ if [[ -n ${ZSH_VERSION-} ]]; then
 
 	compdef _git git gitk
 	return
-elif [[ -n ${BASH_VERSION-} ]]; then
-	if ((${BASH_VERSINFO[0]} < 4)); then
-		# compopt is not supported
-		__git_index_file_list_filter ()
-		{
-			__git_index_file_list_filter_compat
-		}
-	fi
 fi
 
 __git_func_wrap ()

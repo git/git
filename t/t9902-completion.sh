@@ -347,4 +347,81 @@ test_expect_success 'send-email' '
 	test_completion "git send-email ma" "master "
 '
 
+test_expect_success 'complete files' '
+	git init tmp && cd tmp &&
+	test_when_finished "cd .. && rm -rf tmp" &&
+
+	echo "expected" > .gitignore &&
+	echo "out" >> .gitignore &&
+
+	git add .gitignore &&
+	test_completion "git commit " ".gitignore" &&
+
+	git commit -m ignore &&
+
+	touch new &&
+	test_completion "git add " "new" &&
+
+	git add new &&
+	git commit -a -m new &&
+	test_completion "git add " "" &&
+
+	git mv new modified &&
+	echo modify > modified &&
+	test_completion "git add " "modified" &&
+
+	touch untracked &&
+
+	: TODO .gitignore should not be here &&
+	test_completion "git rm " <<-\EOF &&
+	.gitignore
+	modified
+	EOF
+
+	test_completion "git clean " "untracked" &&
+
+	: TODO .gitignore should not be here &&
+	test_completion "git mv " <<-\EOF &&
+	.gitignore
+	modified
+	EOF
+
+	mkdir dir &&
+	touch dir/file-in-dir &&
+	git add dir/file-in-dir &&
+	git commit -m dir &&
+
+	mkdir untracked-dir &&
+
+	: TODO .gitignore should not be here &&
+	test_completion "git mv modified " <<-\EOF &&
+	.gitignore
+	dir
+	modified
+	untracked
+	untracked-dir
+	EOF
+
+	test_completion "git commit " "modified" &&
+
+	: TODO .gitignore should not be here &&
+	test_completion "git ls-files " <<-\EOF
+	.gitignore
+	dir
+	modified
+	EOF
+
+	touch momified &&
+	test_completion "git add mom" "momified"
+'
+
+test_expect_failure 'complete with tilde expansion' '
+	git init tmp && cd tmp &&
+	test_when_finished "cd .. && rm -rf tmp" &&
+
+	touch ~/tmp/file &&
+
+	test_completion "git add ~/tmp/" "~/tmp/file"
+'
+
 test_done
