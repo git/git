@@ -1055,9 +1055,13 @@ int interpret_branch_name(const char *name, struct strbuf *buf)
 int strbuf_branchname(struct strbuf *sb, const char *name)
 {
 	int len = strlen(name);
-	if (interpret_branch_name(name, sb) == len)
+	int used = interpret_branch_name(name, sb);
+
+	if (used == len)
 		return 0;
-	strbuf_add(sb, name, len);
+	if (used < 0)
+		used = 0;
+	strbuf_add(sb, name + used, len - used);
 	return len;
 }
 
