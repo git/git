@@ -37,7 +37,7 @@ check_zip() {
 
 test_expect_success \
     'populate workdir' \
-    'mkdir a b c &&
+    'mkdir a &&
      echo simple textfile >a/a &&
      mkdir a/bin &&
      cp /bin/sh a/bin &&
