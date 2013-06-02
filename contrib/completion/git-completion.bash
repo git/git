@@ -2360,7 +2360,7 @@ _git_show ()
 		return
 		;;
 	esac
-	__git_complete_file
+	__git_complete_revlist_file
 }
 
 _git_show_branch ()
