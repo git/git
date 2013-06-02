@@ -424,7 +424,8 @@ static void do_oneway_diff(struct unpack_trees_options *o,
  * the fairly complex unpack_trees() semantic requirements, including
  * the skipping, the path matching, the type conflict cases etc.
  */
-static int oneway_diff(struct cache_entry **src, struct unpack_trees_options *o)
+static int oneway_diff(const struct cache_entry * const *src,
+		       struct unpack_trees_options *o)
 {
 	const struct cache_entry *idx = src[0];
 	const struct cache_entry *tree = src[1];

@@ -300,7 +300,8 @@ static int apply_sparse_checkout(struct cache_entry *ce, struct unpack_trees_opt
 	return 0;
 }
 
-static inline int call_unpack_fn(struct cache_entry **src, struct unpack_trees_options *o)
+static inline int call_unpack_fn(const struct cache_entry * const *src,
+				 struct unpack_trees_options *o)
 {
 	int ret = o->fn(src, o);
 	if (ret > 0)
@@ -397,7 +398,7 @@ static void add_same_unmerged(struct cache_entry *ce,
 static int unpack_index_entry(struct cache_entry *ce,
 			      struct unpack_trees_options *o)
 {
-	struct cache_entry *src[MAX_UNPACK_TREES + 1] = { NULL, };
+	const struct cache_entry *src[MAX_UNPACK_TREES + 1] = { NULL, };
 	int ret;
 
 	src[0] = ce;
@@ -600,7 +601,8 @@ static int unpack_nondirectories(int n, unsigned long mask,
 	}
 
 	if (o->merge)
-		return call_unpack_fn(src, o);
+		return call_unpack_fn((const struct cache_entry * const *)src,
+				      o);
 
 	for (i = 0; i < n; i++)
 		if (src[i] && src[i] != o->df_conflict_entry)
@@ -1574,7 +1576,8 @@ static void show_stage_entry(FILE *o,
 }
 #endif
 
-int threeway_merge(struct cache_entry **stages, struct unpack_trees_options *o)
+int threeway_merge(const struct cache_entry * const *stages,
+		   struct unpack_trees_options *o)
 {
 	const struct cache_entry *index;
 	const struct cache_entry *head;
@@ -1746,7 +1749,8 @@ int threeway_merge(struct cache_entry **stages, struct unpack_trees_options *o)
  * "carry forward" rule, please see <Documentation/git-read-tree.txt>.
  *
  */
-int twoway_merge(struct cache_entry **src, struct unpack_trees_options *o)
+int twoway_merge(const struct cache_entry * const *src,
+		 struct unpack_trees_options *o)
 {
 	const struct cache_entry *current = src[0];
 	const struct cache_entry *oldtree = src[1];
@@ -1812,8 +1816,8 @@ int twoway_merge(struct cache_entry **src, struct unpack_trees_options *o)
  * Keep the index entries at stage0, collapse stage1 but make sure
  * stage0 does not have anything there.
  */
-int bind_merge(struct cache_entry **src,
-		struct unpack_trees_options *o)
+int bind_merge(const struct cache_entry * const *src,
+	       struct unpack_trees_options *o)
 {
 	const struct cache_entry *old = src[0];
 	const struct cache_entry *a = src[1];
@@ -1836,7 +1840,8 @@ int bind_merge(struct cache_entry **src,
  * The rule is:
  * - take the stat information from stage0, take the data from stage1
  */
-int oneway_merge(struct cache_entry **src, struct unpack_trees_options *o)
+int oneway_merge(const struct cache_entry * const *src,
+		 struct unpack_trees_options *o)
 {
 	const struct cache_entry *old = src[0];
 	const struct cache_entry *a = src[1];

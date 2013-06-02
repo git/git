@@ -80,7 +80,8 @@ static void debug_stage(const char *label, const struct cache_entry *ce,
 		       sha1_to_hex(ce->sha1));
 }
 
-static int debug_merge(struct cache_entry **stages, struct unpack_trees_options *o)
+static int debug_merge(const struct cache_entry * const *stages,
+		       struct unpack_trees_options *o)
 {
 	int i;
 
