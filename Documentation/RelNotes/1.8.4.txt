@@ -15,14 +15,40 @@ UI, Workflows & Features
  * "check-ignore" (new feature since 1.8.2) has been updated to work
    more like "check-attr" over bidi-pipes.
 
+ * "git describe" learned "--first-parent" option to limit its closest
+   tagged commmit search to the first-parent chain.
+
+ * "git merge foo" that might have meant "git merge origin/foo" is
+   diagnosed with a more informative error message.
+
+ * "git log -L<line>,<range>:<filename>" has been added.  This may
+   still have leaks and rough edges, though.
+
  * We used the approxidate() parser for "--expire=<timestamp>" options
    of various commands, but it is better to treat --expire=all and
    --expire=now a bit more specially than using the current timestamp.
    "git gc" and "git reflog" have been updated with a new parsing
    function for expiry dates.
 
+ * Updates to completion (both bash and zsh) helpers.
+
+ * "git fetch origin master" unlike "git fetch origin" or "git fetch"
+   did not update "refs/remotes/origin/master"; this was an early
+   design decision to keep the update of remote tracking branches
+   predictable, but in practice it turns out that people find it more
+   convenient to opportunisticly update them whenever we have a
+   chance, and we have been updating them when we run "git push" which
+   already breaks the original "predictability" anyway.
+
 
 Performance, Internal Implementation, etc.
+
+ * The codepath to read from marks files in fast-import/export did not
+   have to accept anything but 40-hex representation of the object
+   name.  Further, fast-export did not need full in-core object
+   representation to have parsed wen reading from them.  These
+   codepaths have been optimized by taking advantage of these access
+   patterns.
 
  * Object lookup logic, when the object hashtable starts to become
    crowded, has been optimized.
@@ -47,6 +73,33 @@ Fixes since v1.8.3
 Unless otherwise noted, all the fixes since v1.8.3 in the maintenance
 track are contained in this release (see release notes to them for
 details).
+
+ * "git merge @{-1}~22" was rewritten to "git merge frotz@{1}~22"
+   incorrectly when your previous branch was "frotz" (it should be
+   rewritten to "git merge frotz~22" instead).
+   (merge 84cf246 jc/strbuf-branchname-fix later to maint).
+
+ * "git diff -c -p" was not showing a deleted line from a hunk when
+   another hunk immediately begins where the earlier one ends.
+   (merge aac3857 mk/combine-diff-context-horizon-fix later to maint).
+
+ * "git log --ancestry-path A...B" did not work as expected, as it did
+   not pay attention to the fact that the merge base between A and B
+   was the bottom of the range being specified.
+   (merge a765499 kb/ancestry-path-threedots later to maint).
+
+ * Mac OS X does not like to write(2) more than INT_MAX number of
+   bytes; work it around by chopping write(2) into smaller pieces.
+   (merge 6c642a8 fc/macos-x-clipped-write later to maint).
+
+ * Newer MacOS X encourages the programs to compile and link with
+   their CommonCrypto, not with OpenSSL.
+   (merge be4c828 da/darwin later to maint).
+
+ * "git clone foo/bar:baz" cannot be a request to clone from a remote
+   over git-over-ssh specified in the scp style.  This case is now
+   detected and clones from a local repository at "foo/bar:baz".
+   (merge 6000334 nd/clone-local-with-colon later to maint).
 
  * When $HOME is misconfigured to point at an unreadable directory, we
    used to complain and die. Loosen the check.
