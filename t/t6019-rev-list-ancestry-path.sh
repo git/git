@@ -13,6 +13,9 @@ test_description='--ancestry-path'
 #
 #  D..M -- M.t                 == M
 #  --ancestry-path D..M -- M.t == M
+#
+#  F...I                 == F G H I
+#  --ancestry-path F...I == F H I
 
 . ./test-lib.sh
 
@@ -63,10 +66,26 @@ test_expect_success 'rev-list D..M -- M.t' '
 	test_cmp expect actual
 '
 
-test_expect_success 'rev-list --ancestry-patch D..M -- M.t' '
+test_expect_success 'rev-list --ancestry-path D..M -- M.t' '
 	echo M >expect &&
 	git rev-list --ancestry-path --format=%s D..M -- M.t |
 	sed -e "/^commit /d" >actual &&
+	test_cmp expect actual
+'
+
+test_expect_success 'rev-list F...I' '
+	for c in F G H I; do echo $c; done >expect &&
+	git rev-list --format=%s F...I |
+	sed -e "/^commit /d" |
+	sort >actual &&
+	test_cmp expect actual
+'
+
+test_expect_success 'rev-list --ancestry-path F...I' '
+	for c in F H I; do echo $c; done >expect &&
+	git rev-list --ancestry-path --format=%s F...I |
+	sed -e "/^commit /d" |
+	sort >actual &&
 	test_cmp expect actual
 '
 
