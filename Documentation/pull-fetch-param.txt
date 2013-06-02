@@ -68,6 +68,11 @@ Some short-cut notations are also supported.
 +
 * `tag <tag>` means the same as `refs/tags/<tag>:refs/tags/<tag>`;
   it requests fetching everything up to the given tag.
-* A parameter <ref> without a colon is equivalent to
-  <ref>: when pulling/fetching, so it merges <ref> into the current
-  branch without storing the remote branch anywhere locally
+ifndef::git-pull[]
+* A parameter <ref> without a colon fetches that ref into FETCH_HEAD,
+endif::git-pull[]
+ifdef::git-pull[]
+* A parameter <ref> without a colon merges <ref> into the current
+  branch,
+endif::git-pull[]
+  and updates the remote-tracking branches (if any).
