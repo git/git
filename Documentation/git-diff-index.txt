@@ -3,7 +3,7 @@ git-diff-index(1)
 
 NAME
 ----
-git-diff-index - Compares content and mode of blobs between the index and repository
+git-diff-index - Compare a tree to the working tree or index
 
 
 SYNOPSIS
@@ -13,11 +13,11 @@ SYNOPSIS
 
 DESCRIPTION
 -----------
-Compares the content and mode of the blobs found via a tree
-object with the content of the current index and, optionally
-ignoring the stat state of the file on disk.  When paths are
-specified, compares only those named paths.  Otherwise all
-entries in the index are compared.
+Compares the content and mode of the blobs found in a tree object
+with the corresponding tracked files in the working tree, or with the
+corresponding paths in the index.  When <path> arguments are present,
+compares only paths matching those patterns.  Otherwise all tracked
+files are compared.
 
 OPTIONS
 -------
