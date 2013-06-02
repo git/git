@@ -66,7 +66,7 @@ static int exclude_per_directory_cb(const struct option *opt, const char *arg,
 	return 0;
 }
 
-static void debug_stage(const char *label, struct cache_entry *ce,
+static void debug_stage(const char *label, const struct cache_entry *ce,
 			struct unpack_trees_options *o)
 {
 	printf("%s ", label);
