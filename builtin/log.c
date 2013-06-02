@@ -19,6 +19,7 @@
 #include "remote.h"
 #include "string-list.h"
 #include "parse-options.h"
+#include "line-log.h"
 #include "branch.h"
 #include "streaming.h"
 #include "version.h"
@@ -40,6 +41,12 @@ static const char * const builtin_log_usage[] = {
 	N_("git log [<options>] [<revision range>] [[--] <path>...]\n")
 	N_("   or: git show [options] <object>..."),
 	NULL
+};
+
+struct line_opt_callback_data {
+	struct rev_info *rev;
+	const char *prefix;
+	struct string_list args;
 };
 
 static int parse_decoration_style(const char *var, const char *value)
@@ -76,6 +83,19 @@ static int decorate_callback(const struct option *opt, const char *arg, int unse
 	return 0;
 }
 
+static int log_line_range_callback(const struct option *option, const char *arg, int unset)
+{
+	struct line_opt_callback_data *data = option->value;
+
+	if (!arg)
+		return -1;
+
+	data->rev->line_level_traverse = 1;
+	string_list_append(&data->args, arg);
+
+	return 0;
+}
+
 static void cmd_log_init_defaults(struct rev_info *rev)
 {
 	if (fmt_pretty)
@@ -98,6 +118,7 @@ static void cmd_log_init_finish(int argc, const char **argv, const char *prefix,
 {
 	struct userformat_want w;
 	int quiet = 0, source = 0, mailmap = 0;
+	static struct line_opt_callback_data line_cb = {NULL, NULL, STRING_LIST_INIT_DUP};
 
 	const struct option builtin_log_options[] = {
 		OPT_BOOL(0, "quiet", &quiet, N_("suppress diff output")),
@@ -105,8 +126,14 @@ static void cmd_log_init_finish(int argc, const char **argv, const char *prefix,
 		OPT_BOOL(0, "use-mailmap", &mailmap, N_("Use mail map file")),
 		{ OPTION_CALLBACK, 0, "decorate", NULL, NULL, N_("decorate options"),
 		  PARSE_OPT_OPTARG, decorate_callback},
+		OPT_CALLBACK('L', NULL, &line_cb, "n,m:file",
+			     "Process line range n,m in file, counting from 1",
+			     log_line_range_callback),
 		OPT_END()
 	};
+
+	line_cb.rev = rev;
+	line_cb.prefix = prefix;
 
 	mailmap = use_mailmap_config;
 	argc = parse_options(argc, argv, prefix,
@@ -161,6 +188,10 @@ static void cmd_log_init_finish(int argc, const char **argv, const char *prefix,
 		rev->show_decorations = 1;
 		load_ref_decorations(decoration_style);
 	}
+
+	if (rev->line_level_traverse)
+		line_log_init(rev, line_cb.prefix, &line_cb.args);
+
 	setup_pager();
 }
 

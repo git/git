@@ -10,6 +10,7 @@
 #include "color.h"
 #include "gpg-interface.h"
 #include "sequencer.h"
+#include "line-log.h"
 
 struct decoration name_decoration = { "object names" };
 
@@ -795,6 +796,9 @@ int log_tree_commit(struct rev_info *opt, struct commit *commit)
 	log.commit = commit;
 	log.parent = NULL;
 	opt->loginfo = &log;
+
+	if (opt->line_level_traverse)
+		return line_log_print(opt, commit);
 
 	shown = log_tree_diff(opt, commit, &log);
 	if (!shown && opt->loginfo && opt->always_show_header) {
