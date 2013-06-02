@@ -190,7 +190,8 @@ struct cache_entry {
  * another. But we never change the name, or the hash state!
  */
 #define CE_STATE_MASK (CE_HASHED | CE_UNHASHED)
-static inline void copy_cache_entry(struct cache_entry *dst, struct cache_entry *src)
+static inline void copy_cache_entry(struct cache_entry *dst,
+				    const struct cache_entry *src)
 {
 	unsigned int state = dst->ce_flags & CE_STATE_MASK;
 
@@ -222,7 +223,8 @@ static inline unsigned int create_ce_mode(unsigned int mode)
 		return S_IFGITLINK;
 	return S_IFREG | ce_permissions(mode);
 }
-static inline unsigned int ce_mode_from_stat(struct cache_entry *ce, unsigned int mode)
+static inline unsigned int ce_mode_from_stat(const struct cache_entry *ce,
+					     unsigned int mode)
 {
 	extern int trust_executable_bit, has_symlinks;
 	if (!has_symlinks && S_ISREG(mode) &&
