@@ -2663,7 +2663,7 @@ if [[ -n ${ZSH_VERSION-} ]]; then
 				--*=*|*.) ;;
 				*) c="$c " ;;
 				esac
-				array[$#array+1]="$c"
+				array+=("$c")
 			done
 			compset -P '*[=:]'
 			compadd -Q -S '' -p "${2-}" -a -- array && _ret=0
@@ -2689,22 +2689,14 @@ if [[ -n ${ZSH_VERSION-} ]]; then
 		compadd -Q -p "${2-}" -f -- ${=1} && _ret=0
 	}
 
-	__git_zsh_helper ()
-	{
-		emulate -L ksh
-		local cur cword prev
-		cur=${words[CURRENT-1]}
-		prev=${words[CURRENT-2]}
-		let cword=CURRENT-1
-		__${service}_main
-	}
-
 	_git ()
 	{
-		emulate -L zsh
-		local _ret=1
-		__git_zsh_helper
-		let _ret && _default -S '' && _ret=0
+		local _ret=1 cur cword prev
+		cur=${words[CURRENT]}
+		prev=${words[CURRENT-1]}
+		let cword=CURRENT-1
+		emulate ksh -c __${service}_main
+		let _ret && _default && _ret=0
 		return _ret
 	}
 
