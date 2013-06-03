@@ -2138,7 +2138,7 @@ void *unpack_entry(struct packed_git *p, off_t obj_offset,
 		if (!data)
 			die("failed to apply delta");
 
-		free (delta_data);
+		free(delta_data);
 	}
 
 	*final_type = type;
