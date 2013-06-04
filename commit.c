@@ -78,7 +78,34 @@ struct commit *lookup_commit_reference_by_name(const char *name)
 	return commit;
 }
 
-static unsigned long parse_commit_date(const char *buf, const char *tail)
+static unsigned long parse_commit_author_date(const char *buf, const char *tail)
+{
+	const char *dateptr;
+
+	if (buf + 6 >= tail)
+		return 0;
+	if (memcmp(buf, "author", 6))
+		return 0;
+	while (buf < tail && *buf++ != '>')
+		/* nada */;
+	if (buf >= tail)
+		return 0;
+	dateptr = buf;
+	while (buf < tail && *buf++ != '\n')
+		/* nada */;
+	if (buf + 9 >= tail)
+		return 0;
+	if (memcmp(buf, "committer", 9))
+		return 0;
+	while (buf < tail && *buf++ != '\n')
+		/* nada */;
+	if (buf >= tail)
+		return 0;
+	/* dateptr < buf && buf[-1] == '\n', so strtoul will stop at buf-1 */
+	return strtoul(dateptr, NULL, 10);
+}
+
+static unsigned long parse_commit_committer_date(const char *buf, const char *tail)
 {
 	const char *dateptr;
 
@@ -301,7 +328,8 @@ int parse_commit_buffer(struct commit *item, const void *buffer, unsigned long s
 			pptr = &commit_list_insert(new_parent, pptr)->next;
 		}
 	}
-	item->date = parse_commit_date(bufptr, tail);
+	item->date = parse_commit_committer_date(bufptr, tail);
+	item->author_date = parse_commit_author_date(bufptr, tail);
 
 	return 0;
 }
@@ -380,6 +408,19 @@ void free_commit_list(struct commit_list *list)
 	}
 }
 
+struct commit_list * commit_list_insert_by_author_date(struct commit *item, struct commit_list **list)
+{
+	struct commit_list **pp = list;
+	struct commit_list *p;
+	while ((p = *pp) != NULL) {
+		if (p->item->author_date < item->author_date) {
+			break;
+		}
+		pp = &p->next;
+	}
+	return commit_list_insert(item, pp);
+}
+
 struct commit_list * commit_list_insert_by_date(struct commit *item, struct commit_list **list)
 {
 	struct commit_list **pp = list;
@@ -391,6 +432,17 @@ struct commit_list * commit_list_insert_by_date(struct commit *item, struct comm
 		pp = &p->next;
 	}
 	return commit_list_insert(item, pp);
+}
+
+static int commit_list_compare_by_author_date(const void *a, const void *b)
+{
+	unsigned long a_date = ((const struct commit_list *)a)->item->author_date;
+	unsigned long b_date = ((const struct commit_list *)b)->item->author_date;
+	if (a_date < b_date)
+		return 1;
+	if (a_date > b_date)
+		return -1;
+	return 0;
 }
 
 static int commit_list_compare_by_date(const void *a, const void *b)
@@ -412,6 +464,12 @@ static void *commit_list_get_next(const void *a)
 static void commit_list_set_next(void *a, void *next)
 {
 	((struct commit_list *)a)->next = next;
+}
+
+void commit_list_sort_by_author_date(struct commit_list **list)
+{
+	*list = llist_mergesort(*list, commit_list_get_next, commit_list_set_next,
+				commit_list_compare_by_author_date);
 }
 
 void commit_list_sort_by_date(struct commit_list **list)
@@ -509,7 +567,7 @@ struct commit *pop_commit(struct commit_list **stack)
 /*
  * Performs an in-place topological sort on the list supplied.
  */
-void sort_in_topological_order(struct commit_list ** list, int lifo)
+void sort_in_topological_order(struct commit_list ** list, int lifo, int use_author)
 {
 	struct commit_list *next, *orig = *list;
 	struct commit_list *work, **insert;
@@ -554,8 +612,12 @@ void sort_in_topological_order(struct commit_list ** list, int lifo)
 	}
 
 	/* process the list in topological order */
-	if (!lifo)
-		commit_list_sort_by_date(&work);
+	if (!lifo) {
+		if (use_author)
+			commit_list_sort_by_author_date(&work);
+		else
+			commit_list_sort_by_date(&work);
+	}
 
 	pptr = list;
 	*list = NULL;
@@ -580,10 +642,13 @@ void sort_in_topological_order(struct commit_list ** list, int lifo)
 			 * guaranteeing topological order.
 			 */
 			if (--parent->indegree == 1) {
-				if (!lifo)
-					commit_list_insert_by_date(parent, &work);
-				else
-					commit_list_insert(parent, &work);
+				if (!lifo) {
+					if (use_author)
+						commit_list_insert_by_author_date(parent, &work);
+					else
+						commit_list_insert_by_date(parent, &work);
+				} else {
+					commit_list_insert(parent, &work); }
 			}
 		}
 		/*

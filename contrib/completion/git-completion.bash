@@ -1445,7 +1445,7 @@ _git_log ()
 			$__git_log_common_options
 			$__git_log_shortlog_options
 			$__git_log_gitk_options
-			--root --topo-order --date-order --reverse
+			--root --topo-order --date-order --authorship-order --reverse
 			--follow --full-diff
 			--abbrev-commit --abbrev=
 			--relative-date --date=
@@ -2291,7 +2291,7 @@ _git_show_branch ()
 	case "$cur" in
 	--*)
 		__gitcomp "
-			--all --remotes --topo-order --current --more=
+			--all --remotes --topo-order --authorship-order --current --more=
 			--list --independent --merge-base --no-name
 			--color --no-color
 			--sha1-name --sparse --topics --reflog
