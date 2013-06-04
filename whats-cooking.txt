@@ -1,28 +1,21 @@
 To: git@vger.kernel.org
 Bcc: lwn@lwn.net
-Subject: What's cooking in git.git (Jun 2013, #01; Sun, 2)
-X-master-at: b2edae0ab6d8188d6cd912ba5c8d1f2086c2cb9a
-X-next-at: 88ee588a4065fc39b2b849219c7dd2eb139932c5
+Subject: What's cooking in git.git (Jun 2013, #02; Tue, 4)
+X-master-at: 2fe2458370d9bfcc9a00ade21181dd8ac65ca0f0
+X-next-at: da085a372bc80f6746d0649a2d0bf281e853a7a2
 
-What's cooking in git.git (Jun 2013, #01; Sun, 2)
+What's cooking in git.git (Jun 2013, #02; Tue, 4)
 --------------------------------------------------
 
 Here are the topics that have been cooking.  Commits prefixed with
 '-' are only in 'pu' (proposed updates) while commits prefixed with
 '+' are in 'next'.
 
-Many topics that have been cooking in 'next' from the previous cycle
-have now graduated to 'master', so the RelNotes have been updated
-again.
-
-Nothing really new in 'next' except for one, and it has not been
-rewound yet, which will hopefully happen tomorrow, and after that
-post 1.8.3 cycle really starts.  I haven't caught up all the series
-posted during the past few days.
-
-Also a rather serious regression on path-exclusion logic (most
-notably seen in .gitignore) has been found and quickly patched (it
-hasn't been merged to 'master' yet, though).
+We are in the post-1.8.3 cycle.  As promised, 'next' has been
+rewound. A few stalled topics have been ejected and bunch of new
+topics that have been cooking are now in it.  I expect these on
+'next' to graduate to 'master' soonish, as I picked relatively easy
+ones in this round.
 
 You can find the changes described here in the integration branches
 of the repositories listed at
@@ -32,247 +25,168 @@ of the repositories listed at
 --------------------------------------------------
 [Graduated to "master"]
 
-* an/diff-index-doc (2013-05-20) 1 commit
-  (merged to 'next' on 2013-05-21 at 6e1459b)
- + Documentation/diff-index: mention two modes of operation
+* kb/status-ignored-optim-2 (2013-06-02) 1 commit
+  (merged to 'next' on 2013-06-02 at 88ee588)
+ + dir.c: fix ignore processing within not-ignored directories
 
-
-* da/darwin (2013-05-21) 4 commits
-  (merged to 'next' on 2013-05-21 at 0497edb)
- + imap-send: eliminate HMAC deprecation warnings on Mac OS X
- + cache.h: eliminate SHA-1 deprecation warnings on Mac OS X
- + Makefile: add support for Apple CommonCrypto facility
- + Makefile: fix default regex settings on Darwin
-
- Newer MacOS X encourages the programs to compile and link with
- their CommonCrypto, not with OpenSSL.
-
-
-* fc/completion (2013-04-27) 9 commits
-  (merged to 'next' on 2013-05-21 at aba6ef1)
- + completion: remove __git_index_file_list_filter()
- + completion: add space after completed filename
- + completion: add hack to enable file mode in bash < 4
- + completion: refactor __git_complete_index_file()
- + completion: refactor diff_index wrappers
- + completion: use __gitcompadd for __gitcomp_file
- + completion; remove unuseful comments
- + completion: document tilde expansion failure in tests
- + completion: add file completion tests
-
-
-* fc/fast-export-persistent-marks (2013-05-07) 3 commits
-  (merged to 'next' on 2013-05-21 at 10b8214)
- + fast-{import,export}: use get_sha1_hex() to read from marks file
- + fast-export: don't parse commits while reading marks file
- + fast-export: do not parse non-commit objects while reading marks file
-
- Optimization for fast-export by avoiding unnecessarily resolving
- arbitrary object name and parsing object when only presence and
- type information is necessary, etc.
-
-
-* fc/macos-x-clipped-write (2013-05-17) 1 commit
-  (merged to 'next' on 2013-05-21 at 510b0dd)
- + compate/clipped-write.c: large write(2) fails on Mac OS X/XNU
-
- Mac OS X does not like to write(2) more than INT_MAX number of
- bytes.
-
-
-* fc/zsh-leftover-bits (2013-05-29) 3 commits
-  (merged to 'next' on 2013-05-29 at b367b4e)
- + completion: zsh: improve bash script loading
-  (merged to 'next' on 2013-05-21 at 1b84ec1)
- + completion: synchronize zsh wrapper
- + completion: cleanup zsh wrapper
-
-
-* jc/strbuf-branchname-fix (2013-05-16) 1 commit
-  (merged to 'next' on 2013-05-21 at 5db8872)
- + strbuf_branchname(): do not double-expand @{-1}~22
-
- "git merge @{-1}~22" was rewritten to "git merge frotz@{1}~22"
- incorrectly when your previous branch was "frotz" (it should be
- rewritten to "git merge frotz~22" instead).
-
-
-* jc/t5551-posix-sed-bre (2013-05-12) 1 commit
-  (merged to 'next' on 2013-05-21 at d597ca1)
- + t5551: do not use unportable sed '\+'
-
- POSIX fix for a test script.
-
-
-* jk/fetch-always-update-tracking (2013-05-28) 5 commits
-  (merged to 'next' on 2013-05-28 at c6abf3f)
- + fetch: don't try to update unfetched tracking refs
-  (merged to 'next' on 2013-05-21 at f7e4b16)
- + fetch: opportunistically update tracking refs
- + refactor "ref->merge" flag
- + fetch/pull doc: untangle meaning of bare <ref>
- + t5510: start tracking-ref tests from a known state
-
- "git fetch origin master" unlike "git fetch origin" or "git fetch"
- does not update "refs/remotes/origin/master" and it was an early
- design decision to keep the update of remote tracking branches
- predictable, but in practice it turns out that people find it more
- convenient to opportunisticly update them whenever we have a
- chance, and we have been updating them when we run "git push" which
- already breaks the original "predictability" anyway.
-
-
-* kb/ancestry-path-threedots (2013-05-16) 2 commits
-  (merged to 'next' on 2013-05-21 at 5d75bd3)
- + revision.c: treat A...B merge bases as if manually specified
- + t6019: demonstrate --ancestry-path A...B breakage
- (this branch is used by kb/full-history-compute-treesame-carefully-2.)
-
- "git log --ancestry-path A...B" did not work as expected, as it did
- not pay attention to the fact that the merge base between A and B
- was the bottom of the range being specified.
-
-
-* mc/describe-first-parent (2013-05-20) 1 commit
-  (merged to 'next' on 2013-05-21 at 2e02ffc)
- + describe: Add --first-parent option
-
-
-* mk/combine-diff-context-horizon-fix (2013-05-15) 1 commit
-  (merged to 'next' on 2013-05-21 at f462c02)
- + combine-diff.c: Fix output when changes are exactly 3 lines apart
-
- "git diff -c -p" was not showing a deleted line from a hunk when
- another hunk immediately begins where the earlier one ends.
-
-
-* nd/clone-local-with-colon (2013-05-07) 1 commit
-  (merged to 'next' on 2013-05-21 at 3e293bd)
- + clone: allow cloning local paths with colons in them
-
- "git clone foo/bar:baz" cannot be a request to clone from a remote
- over git-over-ssh specified in the scp style.  Detect this case and
- clone from a local repository at "foo/bar:baz".
-
-
-* rh/merge-options-doc-fix (2013-05-16) 1 commit
-  (merged to 'next' on 2013-05-21 at f76baf3)
- + Documentation/merge-options.txt: restore `-e` option
-
-
-* rs/empty-archive (2013-05-09) 2 commits
-  (merged to 'next' on 2013-05-21 at 3e9e288)
- + t5004: resurrect original empty tar archive test
- + t5004: avoid using tar for checking emptiness of archive
-
- Fixes tests added in 1.8.2 era that are broken on BSDs.
-
-
-* rs/tar-tests (2013-05-20) 6 commits
-  (merged to 'next' on 2013-05-21 at aed12a7)
- + t5000: test long filenames
- + t5000: simplify tar-tree tests
- + t5000: use check_tar for prefix test
- + t5000: factor out check_tar
- + t5000, t5003: create directories for extracted files lazily
- + t5000: integrate export-subst tests into regular tests
-
-
-* tr/coverage (2013-05-13) 4 commits
-  (merged to 'next' on 2013-05-21 at 8480007)
- + coverage: build coverage-untested-functions by default
- + coverage: set DEFAULT_TEST_TARGET to avoid using prove
- + coverage: do not delete .gcno files before building
- + coverage: split build target into compile and test
-
- Update the test coverage support that was left to bitrot for some
- time.
-
-
-* tr/line-log (2013-04-22) 13 commits
-  (merged to 'next' on 2013-04-22 at 8f2c1de)
- + git-log(1): remove --full-line-diff description
-  (merged to 'next' on 2013-04-21 at cd92620)
- + line-log: fix documentation formatting
-  (merged to 'next' on 2013-04-15 at 504559e)
- + log -L: improve comments in process_all_files()
- + log -L: store the path instead of a diff_filespec
- + log -L: test merge of parallel modify/rename
- + t4211: pass -M to 'git log -M -L...' test
-  (merged to 'next' on 2013-04-05 at 5afb00c)
- + log -L: fix overlapping input ranges
- + log -L: check range set invariants when we look it up
-  (merged to 'next' on 2013-04-01 at 5be920c)
- + Speed up log -L... -M
- + log -L: :pattern:file syntax to find by funcname
- + Implement line-history search (git log -L)
- + Export rewrite_parents() for 'log -L'
- + Refactor parse_loc
-
-
-* vv/help-unknown-ref (2013-05-08) 2 commits
-  (merged to 'next' on 2013-05-21 at 77a2941)
- + merge: use help_unknown_ref()
- + help: add help_unknown_ref()
-
- Detect "git merge foo" that might have meant "git merge origin/foo"
- and give an error message that is more specific than "foo is not
- something we can merge".
+ Fix 1.8.3 regressions in the .gitignore path exclusion logic.
 
 --------------------------------------------------
 [New Topics]
 
-* ap/wildmatch-foldcase (2013-06-02) 1 commit
- - wildmatch: properly fold case everywhere
+* ar/wildmatch-foldcase (2013-06-02) 1 commit
+  (merged to 'next' on 2013-06-04 at 3180bcc)
+ + wildmatch: properly fold case everywhere
+
+ The wildmatch engine did not honor WM_CASEFOLD option correctly.
+
+ Will merge to 'master'.
+
+* cr/git-work-tree-sans-git-dir (2013-06-03) 1 commit
+  (merged to 'next' on 2013-06-04 at bebedca)
+ + git.txt: remove stale comment regarding GIT_WORK_TREE
+
+ These days, "git --work-tree=there cmd" without specifying an
+ explicit --git-dir=here will do the usual discovery, but we had a
+ description of older behaviour in the documentation.
+
+ Will merge to 'master'.
 
 
-* fc/completion-less-ls-remote (2013-06-02) 1 commit
- - completion: avoid ls-remote in certain scenarios
+* fc/do-not-use-the-index-in-add-to-index (2013-06-03) 2 commits
+  (merged to 'next' on 2013-06-04 at 94e7b60)
+ + read-cache: trivial style cleanups
+ + read-cache: fix wrong 'the_index' usage
+
+ Will merge to 'master'.
 
 
-* jk/test-exit-code-by-signal (2013-06-02) 1 commit
- - t0005: test git exit code from signal death
+* fc/sequencer-skip-quiet (2013-06-03) 8 commits
+ - revert/cherry-pick: add --skip option
+ - revert/cherry-pick: add --quiet option
+ - sequencer: run post-rewrite hook
+ - cherry-pick: store rewritten commits
+ - SQUASH???
+ - cherry-pick: add --skip-empty option
+ - sequencer: trivial fix
+ - sequencer: remove useless indentation
+
+ I think the post-rewrite hook should not apply to revert, and
+ revert should be taught about --skip-empty.  The "copy-notes"
+ change was nak'ed, and I agree with Thomas that the external
+ interface to the mechanism should be aligned with existing
+ notes.rewrite.<command>.
+
+ Waiting for a reroll.
+
+ $gmane/225676, $gmane/226263, $gmane/226271
 
 
-* nd/make-wildmatch-default (2013-06-02) 1 commit
- - Makefile: promote wildmatch to be the default fnmatch implementation
+* js/test-ln-s-add (2013-06-02) 11 commits
+ - t6035: use test_ln_s_add to remove SYMLINKS prerequisite
+ - t3509, t4023, t4114: use test_ln_s_add to remove SYMLINKS prerequisite
+ - t3100: use test_ln_s_add to remove SYMLINKS prerequisite
+ - t3030: use test_ln_s_add to remove SYMLINKS prerequisite
+ - t2100: use test_ln_s_add to remove SYMLINKS prerequisite
+ - t0000: use test_ln_s_add to remove SYMLINKS prerequisite
+ - tests: use test_ln_s_add to remove SYMLINKS prerequisite (trivial cases)
+ - tests: introduce test_ln_s and test_ln_s_add
+ - t3010: modernize style
+ - t2100: modernize style and unroll a loop of test cases
+ - test-chmtime: Fix exit code on Windows
+
+ Many tests that check the behaviour of symbolic links stored in the
+ index or the tree objects do not have to be skipped on a filesystem
+ that lack symbolic link support.
+
+ There seem to be some misconversion, mostly around the use of the
+ new test_ln_s helper.
+
+ Waiting for responses to reviews.
+ $gmane/226417 and others.
 
 
-* rr/remove-contrib-some (2013-06-02) 1 commit
- - contrib: remove continuous/ and patches/
+* mt/send-email-cc-match-fix (2013-06-03) 6 commits
+ - t/send-email: test suppress-cc=self with non-ascii
+ - t/send-email: add test with quoted sender
+ - send-email: make --suppress-cc=self sanitize input
+ - t/send-email: test suppress-cc=self on cccmd
+ - send-email: fix suppress-cc=self on cccmd
+ - t/send-email.sh: add test for suppress-cc=self
+
+ It may want to have an additional test case for --from='"A U. Thor"
+ <author@example.xz>' to make sure we do not doubly escape what is
+ already escaped.
+
+ Some changes in patch 2/6 and a later patch may need to be flipped
+ around.
 
 
-* rs/unpack-trees-plug-leak (2013-06-02) 7 commits
- - unpack-trees: free cache_entry array members for merges
- - diff-lib, read-tree, unpack-trees: mark cache_entry array paramters const
- - diff-lib, read-tree, unpack-trees: mark cache_entry pointers const
- - unpack-trees: create working copy of merge entry in merged_entry
- - unpack-trees: factor out dup_entry
- - read-cache: mark cache_entry pointers const
- - cache: mark cache_entry pointers const
+* rr/complete-difftool (2013-06-03) 2 commits
+  (merged to 'next' on 2013-06-04 at 01c7611)
+ + completion: clarify ls-tree, archive, show completion
+ + completion: difftool takes both revs and files
+
+ Update command line completion (in contrib/) to use a better named
+ completion helper function for commands that take revisions and
+ paths.
+
+ Will merge to 'master'.
 
 
-* tr/test-commit-only-on-orphan (2013-06-02) 1 commit
- - Test 'commit --only' after 'checkout --orphan'
+* rr/diffcore-pickaxe-doc (2013-06-03) 2 commits
+  (merged to 'next' on 2013-06-04 at 67d1fc7)
+ + diffcore-pickaxe doc: document -S and -G properly
+ + diffcore-pickaxe: make error messages more consistent
+
+ Update the low-level diffcore documentation on -S/-G and --pickaxe-all.
+
+ Will merge to 'master'.
+
+
+* tr/sha1-file-silence-loose-object-info-under-prune-race (2013-06-03) 1 commit
+  (merged to 'next' on 2013-06-04 at e891bb8)
+ + sha1_file: silence sha1_loose_object_info
+
+ Will merge to 'master'.
+
+
+* bp/mediawiki-credential (2013-06-04) 1 commit
+ - git-remote-mediawiki: use git.pm functions for credentials
+
+ The bridge to MediaWiki has been updated to use the credential
+ helper interface in Git.pm, losing its own and the original
+ implementation the former was based on.
+
+ Minor review comments sent.
+
+
+* mz/rebase-tests (2013-06-03) 7 commits
+ - tests: move test for rebase messages from t3400 to t3406
+ - t3406: modernize style
+ - add tests for rebasing merged history
+ - add tests for rebasing root
+ - add tests for rebasing of empty commits
+ - add tests for rebasing with patch-equivalence present
+ - add simple tests of consistency across rebase types
 
 --------------------------------------------------
 [Stalled]
 
 * mg/more-textconv (2013-05-10) 7 commits
-  (merged to 'next' on 2013-05-21 at 701cdb7)
- + grep: honor --textconv for the case rev:path
- + grep: allow to use textconv filters
- + t7008: demonstrate behavior of grep with textconv
- + cat-file: do not die on --textconv without textconv filters
- + show: honor --textconv for blobs
- + diff_opt: track whether flags have been set explicitly
- + t4030: demonstrate behavior of show with textconv
+ - grep: honor --textconv for the case rev:path
+ - grep: allow to use textconv filters
+ - t7008: demonstrate behavior of grep with textconv
+ - cat-file: do not die on --textconv without textconv filters
+ - show: honor --textconv for blobs
+ - diff_opt: track whether flags have been set explicitly
+ - t4030: demonstrate behavior of show with textconv
 
  Make "git grep" and "git show" pay attention to --textconv when
  dealing with blob objects.
 
  I thought this was pretty well designed and executed, but it seems
- there are some doubts on the list.
+ there are some doubts on the list; kicking back to 'pu'.
 
 
 * mh/multimail (2013-04-21) 1 commit
@@ -306,9 +220,8 @@ of the repositories listed at
 
  Various fixes to gitweb.
 
- Waiting for a reroll after a review.
- Will discard unless we hear from anybody who is interested in
- tying its loose ends.
+ Drew Northup volunteered to take a look into this.
+ $gmane/226216
 
 
 * jk/commit-info-slab (2013-04-19) 3 commits
@@ -320,8 +233,65 @@ of the repositories listed at
  Technology demonstration to show a way we could use unbound number
  of flag bits on commit objects.
 
+
+* jc/show-branch (2013-05-21) 5 commits
+ - show-branch: use commit slab to represent bitflags of arbitrary width
+ - show-branch.c: remove "all_mask"
+ - show-branch.c: abstract out "flags" operation
+ - show-branch.c: lift all_mask/all_revs to a global static
+ - show-branch.c: update comment style
+ (this branch uses jk/commit-info-slab.)
+
+ Waiting for the final step to lift the hard-limit before sending it out.
+
 --------------------------------------------------
 [Cooking]
+
+* fc/completion-less-ls-remote (2013-06-02) 1 commit
+  (merged to 'next' on 2013-06-03 at 6624f0b)
+ + completion: avoid ls-remote in certain scenarios
+
+ Will merge to 'master'.
+
+
+* jk/test-exit-code-by-signal (2013-06-02) 1 commit
+  (merged to 'next' on 2013-06-03 at 25af892)
+ + t0005: test git exit code from signal death
+
+ Will merge to 'master'.
+
+
+* nd/make-wildmatch-default (2013-06-02) 1 commit
+ - Makefile: promote wildmatch to be the default fnmatch implementation
+
+ Will merge to 'next'.
+
+
+* rr/remove-contrib-some (2013-06-02) 1 commit
+ - contrib: remove continuous/ and patches/
+
+ Will merge to 'next'.
+
+
+* rs/unpack-trees-plug-leak (2013-06-02) 7 commits
+  (merged to 'next' on 2013-06-03 at 97e7b6d)
+ + unpack-trees: free cache_entry array members for merges
+ + diff-lib, read-tree, unpack-trees: mark cache_entry array paramters const
+ + diff-lib, read-tree, unpack-trees: mark cache_entry pointers const
+ + unpack-trees: create working copy of merge entry in merged_entry
+ + unpack-trees: factor out dup_entry
+ + read-cache: mark cache_entry pointers const
+ + cache: mark cache_entry pointers const
+
+ Will merge to 'master'.
+
+
+* tr/test-commit-only-on-orphan (2013-06-02) 1 commit
+  (merged to 'next' on 2013-06-03 at b1864fd)
+ + Test 'commit --only' after 'checkout --orphan'
+
+ Will merge to 'master'.
+
 
 * ap/diff-ignore-blank-lines (2013-05-29) 1 commit
  - diff: add --ignore-blank-lines option
@@ -330,105 +300,111 @@ of the repositories listed at
  only of additions and removals of blank lines, which is the same as
  "diff -B" (ignore blank lines) of GNU diff.
 
+ Will be rerolled.
+ $gmane/226394
+
 
 * fc/show-branch-in-rebase-am (2013-05-29) 1 commit
- - prompt: fix for simple rebase
+  (merged to 'next' on 2013-06-03 at 176f6b7)
+ + prompt: fix for simple rebase
 
  The bash prompt code (in contrib/) displayed the name of the branch
  being rebased when "rebase -i/-m/-p" modes are in use, but not the
  plain vanilla "rebase".
 
- Will merge to 'next'.
-
-
-* kb/status-ignored-optim-2 (2013-06-02) 1 commit
-  (merged to 'next' on 2013-06-02 at 88ee588)
- + dir.c: fix ignore processing within not-ignored directories
-
- Fix 1.8.3 regressions in the .gitignore path exclusion logic.
-
  Will merge to 'master'.
 
 
 * ks/difftool-dir-diff-copy-fix (2013-05-29) 1 commit
- - difftool --dir-diff: allow changing any clean working tree file
+  (merged to 'next' on 2013-06-03 at ca0cae0)
+ + difftool --dir-diff: allow changing any clean working tree file
 
  "difftool --dir-diff" did not copy back changes made by the
  end-user in the diff tool backend to the working tree in some
  cases.
 
+ Will merge to 'master'.
+
 
 * rr/push-head (2013-05-29) 3 commits
- - push: make push.default = current use resolved HEAD
- - push: fail early with detached HEAD and current
- - push: factor out the detached HEAD error message
+  (merged to 'next' on 2013-06-03 at ecd5be7)
+ + push: make push.default = current use resolved HEAD
+ + push: fail early with detached HEAD and current
+ + push: factor out the detached HEAD error message
 
  "git push $there HEAD:branch" did not resolve HEAD early enough, so
  it was easy to flip it around while push is still going on and push
  out a branch that the user did not originally intended when the
  command was started.
 
- Will merge to 'next'.
+ Will merge to 'master'.
 
 
 * sb/archive-zip-double-assignment-fix (2013-05-29) 1 commit
- - archive-zip:write_zip_entry: Remove second reset of size variable to zero.
+  (merged to 'next' on 2013-06-03 at c316eec)
+ + archive-zip:write_zip_entry: Remove second reset of size variable to zero.
 
- Will merge to 'next'.
+ Will merge to 'master'.
 
 
 * rj/mingw-cygwin (2013-05-08) 2 commits
- - cygwin: Remove the CYGWIN_V15_WIN32API build variable
- - mingw: rename WIN32 cpp macro to GIT_WINDOWS_NATIVE
+  (merged to 'next' on 2013-06-04 at 308fdb4)
+ + cygwin: Remove the CYGWIN_V15_WIN32API build variable
+ + mingw: rename WIN32 cpp macro to GIT_WINDOWS_NATIVE
 
  Update build for Cygwin 1.[57].  Torsten Bögershausen reports that
  this is fine with Cygwin 1.7 ($gmane/225824) so let's try moving it
  ahead.
 
- Will merge to 'next'.
+ Will merge to 'master'.
 
 
 * rr/rebase-autostash (2013-05-29) 7 commits
- - rebase: implement --[no-]autostash and rebase.autostash
- - rebase --merge: return control to caller, for housekeeping
- - rebase -i: return control to caller, for housekeeping
- - am: return control to caller, for housekeeping
- - rebase: prepare to do generic housekeeping
- - rebase -i: don't error out if $state_dir already exists
- - am: tighten a conditional that checks for $dotest
+  (merged to 'next' on 2013-06-04 at 16f7c54)
+ + rebase: implement --[no-]autostash and rebase.autostash
+ + rebase --merge: return control to caller, for housekeeping
+ + rebase -i: return control to caller, for housekeeping
+ + am: return control to caller, for housekeeping
+ + rebase: prepare to do generic housekeeping
+ + rebase -i: don't error out if $state_dir already exists
+ + am: tighten a conditional that checks for $dotest
 
- Will merge to 'next'.
+ Will merge to 'master'.
 
 
 * nd/urls-doc-no-file-hyperlink-fix (2013-05-24) 1 commit
- - urls.txt: avoid auto converting to hyperlink
+  (merged to 'next' on 2013-06-03 at 54903b2)
+ + urls.txt: avoid auto converting to hyperlink
 
- Will merge to 'next'.
+ Will merge to 'master'.
 
 
 * cb/log-follow-with-combined (2013-05-28) 1 commit
- - fix segfault with git log -c --follow
+  (merged to 'next' on 2013-06-04 at d5bf4f3)
+ + fix segfault with git log -c --follow
 
- Will merge to 'next'.
+ Will merge to 'master'.
 
 
 * fc/cleanups (2013-05-28) 3 commits
- - test: rebase: fix --interactive test
- - test: trivial cleanups
- - remote: trivial style cleanup
+  (merged to 'next' on 2013-06-03 at 527cf93)
+ + test: rebase: fix --interactive test
+ + test: trivial cleanups
+ + remote: trivial style cleanup
 
- Will merge to 'next'.
+ Will merge to 'master'.
 
 
 * fc/makefile (2013-05-26) 5 commits
- - build: do not install git-remote-testpy
- - build: add NO_INSTALL variable
- - build: cleanup using $<
- - build: cleanup using $^
- - build: trivial simplification
+  (merged to 'next' on 2013-06-03 at d1074e4)
+ + build: do not install git-remote-testpy
+ + build: add NO_INSTALL variable
+ + build: cleanup using $<
+ + build: cleanup using $^
+ + build: trivial simplification
  (this branch is used by fc/remote-helpers-use-specified-python.)
 
- Will merge to 'next'.
+ Will merge to 'master'.
 
 
 * fc/remote-helpers-use-specified-python (2013-05-28) 4 commits
@@ -440,58 +416,57 @@ of the repositories listed at
 
  I do not particularly think the second from the bottom is a good
  change, but it takes the remainder of the series hostage.
- Will hopefully be rerolled without it.
+
+ Waiting for a reroll.
 
 
 * fc/send-email-chainreplyto-warning (2013-05-28) 1 commit
- - send-email: remove warning about unset chainreplyto
+  (merged to 'next' on 2013-06-03 at e04764f)
+ + send-email: remove warning about unset chainreplyto
 
  An overdue removal od "behaviour changed at 1.7.0; if you were
  living in a cave, here is what you can adjust to it" message.
 
- Will merge to 'next'.
-
-
-* ks/difftool-dirdiff-copy-all (2013-05-28) 1 commit
- - difftool --dir-diff: always use identical working tree file
-
- "difftool --dir-diff" populates a temporary directory with files,
- inviting the user to modify them in place, but in some cases we
- weren't expecting the user to modify them and did not take the
- change back to the working tree.
-
- Will merge to 'next'.
+ Will merge to 'master'.
 
 
 * nd/prune-packed-dryrun-verbose (2013-05-28) 1 commit
- - prune-packed: avoid implying "1" is DRY_RUN in prune_packed_objects()
+  (merged to 'next' on 2013-06-03 at 3445b27)
+ + prune-packed: avoid implying "1" is DRY_RUN in prune_packed_objects()
 
- Will merge to 'next'.
+ Will merge to 'master'.
 
 
 * rj/mingw-compat-st-mode-bits (2013-05-29) 1 commit
- - path: Fix a sparse warning
+  (merged to 'next' on 2013-06-03 at 2efe84c)
+ + path: Fix a sparse warning
 
- Will merge to 'next'.
+ Will merge to 'master'.
 
 
 * rs/commit-m-no-edit (2013-05-28) 1 commit
- - commit: don't start editor if empty message is given with -m
+  (merged to 'next' on 2013-06-03 at 14329fa)
+ + commit: don't start editor if empty message is given with -m
 
- Will merge to 'next'.
+ "git commit --allow-empty-message -m ''" should not start an
+ editor.
+
+ Will merge to 'master'.
 
 
 * xq/credential-osxkeychain (2013-05-28) 1 commit
- - credential-osxkeychain: support more protocols
+  (merged to 'next' on 2013-06-04 at a4ee0e0)
+ + credential-osxkeychain: support more protocols
 
- Will merge to 'next'.
+ Will merge to 'master'.
 
 
 * jc/core-checkstat (2013-05-06) 1 commit
- - deprecate core.statinfo at Git 2.0 boundary
+  (merged to 'next' on 2013-06-03 at 2166cb3)
+ + deprecate core.statinfo at Git 2.0 boundary
  (this branch is used by jc/core-checkstat-2.0.)
 
- Will merge to 'next'.
+ Will merge to 'master'.
 
 
 * mh/reflife (2013-06-02) 25 commits
@@ -529,53 +504,59 @@ of the repositories listed at
 
 
 * th/bisect-skip-report-range-fix (2013-05-22) 1 commit
- - bisect: Fix log output for multi-parent skip ranges
+  (merged to 'next' on 2013-06-03 at 7bd4656)
+ + bisect: Fix log output for multi-parent skip ranges
 
  Fix for an additional bisect log comments.
 
- Will merge to 'next'.
+ Will merge to 'master'.
 
 
 * mm/mediawiki-https-fail-message (2013-05-29) 1 commit
- - git-remote-mediawiki: better error message when HTTP(S) access fails
+  (merged to 'next' on 2013-06-04 at fb2671c)
+ + git-remote-mediawiki: better error message when HTTP(S) access fails
 
  Hint users when https:// connection failed to check the
  certificate; it is a good hint if we assumie that it is common
  error for the end users to make.
 
- Will merge to 'next'.
+ Will merge to 'master'.
 
 
 * tg/maint-zsh-svn-remote-prompt (2013-05-22) 1 commit
- - prompt: fix show upstream with svn and zsh
+  (merged to 'next' on 2013-06-03 at 32a45c0)
+ + prompt: fix show upstream with svn and zsh
 
  zsh prompt script that borrowed from bash prompt script did not
  work due to slight differences in array variable notation between
  these two shells.
 
- Will merge to 'next'.
+ Will merge to 'master'.
 
 
 * tr/push-no-verify-doc (2013-05-23) 1 commit
- - Document push --no-verify
+  (merged to 'next' on 2013-06-03 at 01737d6)
+ + Document push --no-verify
 
  "git push --[no-]verify" was not documented.
 
- Will merge to 'next'.
+ Will merge to 'master'.
 
 
 * dm/unbash-subtree (2013-05-21) 1 commit
- - contrib/git-subtree: Use /bin/sh interpreter instead of /bin/bash
+  (merged to 'next' on 2013-06-03 at 2c9d2fb)
+ + contrib/git-subtree: Use /bin/sh interpreter instead of /bin/bash
 
  It turns out that git-subtree script does not have to be run with
  bash.
 
- Will merge to 'next'.
+ Will merge to 'master'.
 
 
 * fc/transport-helper-no-refspec (2013-05-21) 2 commits
- - transport-helper: check if the dry-run is supported
- - transport-helper: barf when user tries old:new
+  (merged to 'next' on 2013-06-03 at 8763bda)
+ + transport-helper: check if the dry-run is supported
+ + transport-helper: barf when user tries old:new
 
  With "export" remote-helper protocol, (1) a push that tries to
  update a remote ref whose name is different from the pushing side
@@ -583,44 +564,35 @@ of the repositories listed at
  --dry-run, so detect such problematic cases and disable them for
  now.
 
- Will merge to 'next'.
+ Will merge to 'master'.
 
 
 * rr/die-on-missing-upstream (2013-06-02) 2 commits
- - sha1_name: fix error message for @{<N>}, @{<date>}
- - sha1_name: fix error message for @{u}
+  (merged to 'next' on 2013-06-03 at 00847ea)
+ + sha1_name: fix error message for @{<N>}, @{<date>}
+ + sha1_name: fix error message for @{u}
 
  When a reflog notation is used for implicit "current branch", we
  did not say which branch and worse said "branch ''".
 
- Will merge to 'next'.
-
-
-* jc/show-branch (2013-05-21) 5 commits
- - show-branch: use commit slab to represent bitflags of arbitrary width
- - show-branch.c: remove "all_mask"
- - show-branch.c: abstract out "flags" operation
- - show-branch.c: lift all_mask/all_revs to a global static
- - show-branch.c: update comment style
- (this branch uses jk/commit-info-slab.)
-
- Waiting for the final step to lift the hard-limit before sending it out.
+ Will merge to 'master'.
 
 
 * fc/remote-bzr (2013-05-28) 8 commits
- - remote-bzr: add fallback check for a partial clone
- - remote-bzr: reorganize the way 'wanted' works
- - remote-bzr: trivial cleanups
- - remote-bzr: change global repo
- - remote-bzr: delay cloning/pulling
- - remote-bzr: simplify get_remote_branch()
- - remote-bzr: fix for files with spaces
- - remote-bzr: recover from failed clones
+  (merged to 'next' on 2013-06-04 at a603082)
+ + remote-bzr: add fallback check for a partial clone
+ + remote-bzr: reorganize the way 'wanted' works
+ + remote-bzr: trivial cleanups
+ + remote-bzr: change global repo
+ + remote-bzr: delay cloning/pulling
+ + remote-bzr: simplify get_remote_branch()
+ + remote-bzr: fix for files with spaces
+ + remote-bzr: recover from failed clones
 
- Will merge to 'next'.
+ Will merge to 'master'.
 
 
-* jx/clean-interactive (2013-05-22) 15 commits
+* jx/clean-interactive (2013-06-03) 15 commits
  - test: add t7301 for git-clean--interactive
  - git-clean: add documentation for interactive git-clean
  - git-clean: add ask each interactive action
@@ -636,8 +608,6 @@ of the repositories listed at
  - quote.c: remove path_relative, use relative_path instead
  - path.c: refactor relative_path(), not only strip prefix
  - test: add test cases for relative_path
-
- Still under discussion, e.g. $gmane/225139.
 
 
 * tr/test-v-and-v-subtest-only (2013-05-16) 6 commits
@@ -656,74 +626,81 @@ of the repositories listed at
  There seem to be some miscounting by toggling the verbose/valgrind
  mode at wrong places?  Cf. $gmane/225735
 
+ Waiting for a reroll.
+
 
 * rr/zsh-color-prompt (2013-05-17) 3 commits
- - prompt: colorize ZSH prompt
- - prompt: factor out gitstring coloring logic
- - prompt: introduce GIT_PS1_STATESEPARATOR
+  (merged to 'next' on 2013-06-03 at d011a76)
+ + prompt: colorize ZSH prompt
+ + prompt: factor out gitstring coloring logic
+ + prompt: introduce GIT_PS1_STATESEPARATOR
 
- Will merge to 'next'.
+ Will merge to 'master'.
 
 
-* fc/contrib-related (2013-05-20) 1 commit
+* fc/contrib-related (2013-06-03) 4 commits
+ - contrib: related: parse committish like format-patch
+ - contrib: related: add option to parse from committish
+ - contrib: related: add support for multiple patches
  - Add new git-related helper to contrib
 
- Waiting the design review for this earliest part to settle.
+ Waiting for the design review to settle.
 
 
 * fc/remote-hg (2013-05-28) 50 commits
- - remote-hg: add support for --force
- - remote-hg: add support for --dry-run
- - remote-hg: check if a fetch is needed
- - remote-hg: trivial cleanup
- - remote-helpers: improve marks usage
- - remote-hg: add check_push() helper
- - remote-hg: add setup_big_push() helper
- - remote-hg: remove files before modifications
- - remote-hg: improve lightweight tag author
- - remote-hg: use remote 'default' not local one
- - remote-hg: improve branch listing
- - remote-hg: simplify branch_tip()
- - remote-hg: check diverged bookmarks
- - remote-hg: pass around revision refs
- - remote-hg: implement custom checkheads()
- - remote-hg: implement custom push()
- - remote-hg: only update necessary revisions
- - remote-hg: force remote bookmark push selectively
- - remote-hg: reorganize bookmark handling
- - remote-hg: add test for failed double push
- - remote-hg: add test for big push
- - remote-hg: add test for new bookmark special
- - remote-hg: add test for bookmark diverge
- - remote-hg: add test for diverged push
- - remote-hg: add test to push new bookmark
- - remote-hg: add remote tests
- - remote-hg: update bookmarks when using a remote
- - remote-hg: add check_bookmark() test helper
- - remote-bzr: simplify test checks
- - remote-hg: add tests for 'master' bookmark
- - remote-hg: always point HEAD to master
- - remote-hg: improve progress calculation
- - remote-hg: trivial cleanups
- - remote-hg: ensure remote rebasing works
- - remote-hg: upgrade version 1 marks
- - remote-hg: switch from revisions to SHA-1 noteids
- - remote-hg: add version checks to the marks
- - remote-hg: improve node traversing
- - remote-hg: shuffle some code
- - remote-hg: use a shared repository store
- - remote-hg: load all extensions
- - remote-hg: test: simplify previous branch checkout
- - remote-helpers: test: simplify remote URLs
- - remote-helpers: tests: general improvements
- - remote-helpers: test: cleanup style
- - remote-helpers: test: cleanup white-spaces
- - remote-hg: trivial reorganization
- - remote-hg: test: be a little more quiet
- - remote-hg: tests: fix hg merge
- - remote-helpers: tests: use python directly
+  (merged to 'next' on 2013-06-04 at 9ee7dab)
+ + remote-hg: add support for --force
+ + remote-hg: add support for --dry-run
+ + remote-hg: check if a fetch is needed
+ + remote-hg: trivial cleanup
+ + remote-helpers: improve marks usage
+ + remote-hg: add check_push() helper
+ + remote-hg: add setup_big_push() helper
+ + remote-hg: remove files before modifications
+ + remote-hg: improve lightweight tag author
+ + remote-hg: use remote 'default' not local one
+ + remote-hg: improve branch listing
+ + remote-hg: simplify branch_tip()
+ + remote-hg: check diverged bookmarks
+ + remote-hg: pass around revision refs
+ + remote-hg: implement custom checkheads()
+ + remote-hg: implement custom push()
+ + remote-hg: only update necessary revisions
+ + remote-hg: force remote bookmark push selectively
+ + remote-hg: reorganize bookmark handling
+ + remote-hg: add test for failed double push
+ + remote-hg: add test for big push
+ + remote-hg: add test for new bookmark special
+ + remote-hg: add test for bookmark diverge
+ + remote-hg: add test for diverged push
+ + remote-hg: add test to push new bookmark
+ + remote-hg: add remote tests
+ + remote-hg: update bookmarks when using a remote
+ + remote-hg: add check_bookmark() test helper
+ + remote-bzr: simplify test checks
+ + remote-hg: add tests for 'master' bookmark
+ + remote-hg: always point HEAD to master
+ + remote-hg: improve progress calculation
+ + remote-hg: trivial cleanups
+ + remote-hg: ensure remote rebasing works
+ + remote-hg: upgrade version 1 marks
+ + remote-hg: switch from revisions to SHA-1 noteids
+ + remote-hg: add version checks to the marks
+ + remote-hg: improve node traversing
+ + remote-hg: shuffle some code
+ + remote-hg: use a shared repository store
+ + remote-hg: load all extensions
+ + remote-hg: test: simplify previous branch checkout
+ + remote-helpers: test: simplify remote URLs
+ + remote-helpers: tests: general improvements
+ + remote-helpers: test: cleanup style
+ + remote-helpers: test: cleanup white-spaces
+ + remote-hg: trivial reorganization
+ + remote-hg: test: be a little more quiet
+ + remote-hg: tests: fix hg merge
+ + remote-helpers: tests: use python directly
 
- Will merge to 'next'.
+ Will merge to 'master'.
 
 
 * hv/config-from-blob (2013-05-12) 5 commits
@@ -733,17 +710,18 @@ of the repositories listed at
  - config: drop cf validity check in get_next_char()
  - config: factor out config file stack management
 
- Will see a resubmit.
+ Waiting for a reroll.
  $gmane/223964
 
 
 * nd/clone-connectivity-shortcut (2013-05-28) 4 commits
- - clone: open a shortcut for connectivity check
- - index-pack: remove dead code (it should never happen)
- - fetch-pack: prepare updated shallow file before fetching the pack
- - clone: let the user know when check_everything_connected is run
+  (merged to 'next' on 2013-06-03 at 812bd80)
+ + clone: open a shortcut for connectivity check
+ + index-pack: remove dead code (it should never happen)
+ + fetch-pack: prepare updated shallow file before fetching the pack
+ + clone: let the user know when check_everything_connected is run
 
- Will merge to 'next'.
+ Will merge to 'master'.
 
 
 * kb/full-history-compute-treesame-carefully-2 (2013-05-16) 15 commits
@@ -782,6 +760,7 @@ of the repositories listed at
  major version bump.
 
  I'd vote for merging this without waiting for 2.0.  Comments?
+
  Waiting for a reroll.
 
 
@@ -801,7 +780,8 @@ of the repositories listed at
 
 
 * nd/warn-ambiguous-object-name (2013-05-29) 1 commit
- - get_sha1: warn about full or short object names that look like refs
+  (merged to 'next' on 2013-06-04 at e87c9d1)
+ + get_sha1: warn about full or short object names that look like refs
 
  "git cmd <name>", when <name> happens to be a 40-hex string,
  directly uses the 40-hex string as an object name, even if a ref
@@ -809,6 +789,8 @@ of the repositories listed at
  is unlikely to change, but we should warn about the ambiguity just
  like we warn when more than one refs/ hierachies share the same
  name.
+
+ Will merge to 'master'.
 
 
 * jk/packed-refs-race (2013-05-06) 4 commits
@@ -821,53 +803,50 @@ of the repositories listed at
 
 
 * fc/at-head (2013-05-08) 13 commits
- - sha1_name: compare variable with constant, not constant with variable
- - Add new @ shortcut for HEAD
- - sha1_name: refactor reinterpret()
- - sha1_name: check @{-N} errors sooner
- - sha1_name: reorganize get_sha1_basic()
- - sha1_name: don't waste cycles in the @-parsing loop
- - sha1_name: remove unnecessary braces
- - sha1_name: remove no-op
- - tests: at-combinations: @{N} versus HEAD@{N}
- - tests: at-combinations: increase coverage
- - tests: at-combinations: improve nonsense()
- - tests: at-combinations: check ref names directly
- - tests: at-combinations: simplify setup
+  (merged to 'next' on 2013-06-04 at f334a2a)
+ + sha1_name: compare variable with constant, not constant with variable
+ + Add new @ shortcut for HEAD
+ + sha1_name: refactor reinterpret()
+ + sha1_name: check @{-N} errors sooner
+ + sha1_name: reorganize get_sha1_basic()
+ + sha1_name: don't waste cycles in the @-parsing loop
+ + sha1_name: remove unnecessary braces
+ + sha1_name: remove no-op
+ + tests: at-combinations: @{N} versus HEAD@{N}
+ + tests: at-combinations: increase coverage
+ + tests: at-combinations: improve nonsense()
+ + tests: at-combinations: check ref names directly
+ + tests: at-combinations: simplify setup
 
  Instead of typing four capital letters "HEAD", you can say "@"
  instead.
 
- Will merge to 'next'.
+ Will merge to 'master'.
 
 
 * jk/submodule-subdirectory-ok (2013-04-24) 3 commits
-  (merged to 'next' on 2013-04-24 at 6306b29)
- + submodule: fix quoting in relative_path()
-  (merged to 'next' on 2013-04-22 at f211e25)
- + submodule: drop the top-level requirement
- + rev-parse: add --prefix option
+ - submodule: fix quoting in relative_path()
+ - submodule: drop the top-level requirement
+ - rev-parse: add --prefix option
 
  Allow various subcommands of "git submodule" to be run not from the
  top of the working tree of the superproject.
 
- Will be commented by Jens.
+ Waiting for a reroll.
 
 
 * jl/submodule-mv (2013-04-23) 5 commits
-  (merged to 'next' on 2013-04-23 at c04f574)
- + submodule.c: duplicate real_path's return value
-  (merged to 'next' on 2013-04-19 at 45ae3c9)
- + rm: delete .gitmodules entry of submodules removed from the work tree
- + Teach mv to update the path entry in .gitmodules for moved submodules
- + Teach mv to move submodules using a gitfile
- + Teach mv to move submodules together with their work trees
+ - submodule.c: duplicate real_path's return value
+ - rm: delete .gitmodules entry of submodules removed from the work tree
+ - Teach mv to update the path entry in .gitmodules for moved submodules
+ - Teach mv to move submodules using a gitfile
+ - Teach mv to move submodules together with their work trees
 
  "git mv A B" when moving a submodule A does "the right thing",
  inclusing relocating its working tree and adjusting the paths in
  the .gitmodules file.
 
- Will be commented by Jens.
+ Waiting for a reroll.
 
 
 * jn/add-2.0-u-A-sans-pathspec (2013-04-26) 1 commit
