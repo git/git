@@ -324,6 +324,9 @@ Don't:
    use 'test_must_fail git cmd'.  This will signal a failure if git
    dies in an unexpected way (e.g. segfault).
 
+   On the other hand, don't use test_must_fail for running regular
+   platform commands; just use '! cmd'.
+
  - use perl without spelling it as "$PERL_PATH". This is to help our
    friends on Windows where the platform Perl often adds CR before
    the end of line, and they bundle Git with a version of Perl that
