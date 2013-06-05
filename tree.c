@@ -225,6 +225,14 @@ int parse_tree(struct tree *item)
 	return parse_tree_buffer(item, buffer, size);
 }
 
+void free_tree_buffer(struct tree *tree)
+{
+	free(tree->buffer);
+	tree->buffer = NULL;
+	tree->size = 0;
+	tree->object.parsed = 0;
+}
+
 struct tree *parse_tree_indirect(const unsigned char *sha1)
 {
 	struct object *obj = parse_object(sha1);
