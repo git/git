@@ -1086,7 +1086,7 @@ sub evaluate_and_validate_params {
 	our $search_use_regexp = $input_params{'search_use_regexp'};
 
 	our $searchtext = $input_params{'searchtext'};
-	our $search_regexp;
+	our $search_regexp = undef;
 	if (defined $searchtext) {
 		if (length($searchtext) < 2) {
 			die_error(403, "At least two characters are required for search parameter");
