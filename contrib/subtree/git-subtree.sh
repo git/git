@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/bin/sh
 #
 # git-subtree.sh: split/join git repositories in subdirectories of this one
 #
