@@ -241,6 +241,11 @@ test_expect_success $PREREQ 'non-ascii self name is suppressed' "
 		'non_ascii_self_suppressed'
 "
 
+test_expect_success $PREREQ 'sanitized self name is suppressed' "
+	test_suppress_self_unquoted '\"A U. Thor\"' 'author@example.com' \
+		'self_name_sanitized_suppressed'
+"
+
 test_expect_success $PREREQ 'Show all headers' '
 	git send-email \
 		--dry-run \
