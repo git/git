@@ -16,7 +16,7 @@ UI, Workflows & Features
    more like "check-attr" over bidi-pipes.
 
  * "git describe" learned "--first-parent" option to limit its closest
-   tagged commmit search to the first-parent chain.
+   tagged commit search to the first-parent chain.
 
  * "git merge foo" that might have meant "git merge origin/foo" is
    diagnosed with a more informative error message.
@@ -32,13 +32,23 @@ UI, Workflows & Features
 
  * Updates to completion (both bash and zsh) helpers.
 
+ * The behaviour of the "--chain-reply-to" option of "git send-email"
+   have changed at 1.7.0, and we added a warning/advice message to
+   help users adjust to the new behaviour back then, but we kept it
+   around for too long.  The message has finally been removed.
+
  * "git fetch origin master" unlike "git fetch origin" or "git fetch"
    did not update "refs/remotes/origin/master"; this was an early
    design decision to keep the update of remote tracking branches
    predictable, but in practice it turns out that people find it more
-   convenient to opportunisticly update them whenever we have a
+   convenient to opportunistically update them whenever we have a
    chance, and we have been updating them when we run "git push" which
    already breaks the original "predictability" anyway.
+
+ * The configuration variable core.checkstat was advertised in the
+   documentation but the code expected core.statinfo instead.
+   For now, we accept both core.checkstat and core.statinfo, but the
+   latter will be removed in the longer term.
 
 
 Performance, Internal Implementation, etc.
@@ -73,6 +83,31 @@ Fixes since v1.8.3
 Unless otherwise noted, all the fixes since v1.8.3 in the maintenance
 track are contained in this release (see release notes to them for
 details).
+
+ * Handling of negative exclude pattern for directories "!dir" was
+   broken in the update to v1.8.3.
+   (merge c3c327d kb/status-ignored-optim-2 later to maint).
+
+ * zsh prompt script that borrowed from bash prompt script did not
+   work due to slight differences in array variable notation between
+   these two shells.
+   (merge d0583da tg/maint-zsh-svn-remote-prompt later to maint).
+
+ * An entry for "file://" scheme in the enumeration of URL types Git
+   can take in the HTML documentation was made into a clickable link
+   by mistake.
+   (merge 4c32e36 nd/urls-doc-no-file-hyperlink-fix later to maint).
+
+ * "git push --[no-]verify" was not documented.
+   (merge 90d32d1 tr/push-no-verify-doc later to maint).
+
+ * Stop installing the git-remote-testpy script that is only used for
+   testing.
+   (merge 416fda6 fc/makefile later to maint).
+
+ * "git commit --allow-empty-message -m ''" should not start an
+   editor.
+   (merge 2520677 rs/commit-m-no-edit later to maint).
 
  * "git merge @{-1}~22" was rewritten to "git merge frotz@{1}~22"
    incorrectly when your previous branch was "frotz" (it should be
