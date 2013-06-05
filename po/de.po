@@ -885,7 +885,7 @@ msgstr[1] "Ihr Zweig ist vor '%s' um %d Versionen.\n"
 
 #: remote.c:1787
 msgid "  (use \"git push\" to publish your local commits)\n"
-msgstr "  (benutzen Sie \"git push\" um lokalen Versionen herauszubringen)\n"
+msgstr "  (benutzen Sie \"git push\" um lokale Versionen herauszubringen)\n"
 
 #: remote.c:1790
 #, c-format
