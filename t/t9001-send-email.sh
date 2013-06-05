@@ -204,13 +204,15 @@ test_suppress_self_unquoted () {
 
 		unquoted-$3
 
+		cccmd--$1 <$2>
+
 		Cc: $1 <$2>
 		Signed-off-by: $1 <$2>
 	EOF
 }
 
 test_expect_success $PREREQ 'self name is suppressed' "
-	test_suppress_self_unquoted 'A U Thor' 'author@redhat.com' \
+	test_suppress_self_unquoted 'A U Thor' 'author@example.com' \
 		'self_name_suppressed'
 "
 
