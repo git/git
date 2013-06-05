@@ -1474,8 +1474,7 @@ struct branch *branch_get(const char *name)
 		ret->remote = remote_get(ret->remote_name);
 		if (ret->merge_nr) {
 			int i;
-			ret->merge = xcalloc(sizeof(*ret->merge),
-					     ret->merge_nr);
+			ret->merge = xcalloc(ret->merge_nr, sizeof(*ret->merge));
 			for (i = 0; i < ret->merge_nr; i++) {
 				ret->merge[i] = xcalloc(1, sizeof(**ret->merge));
 				ret->merge[i]->src = xstrdup(ret->merge_name[i]);
