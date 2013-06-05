@@ -107,7 +107,7 @@ static const char *cleanup_arg;
 
 static enum commit_whence whence;
 static int use_editor = 1, include_status = 1;
-static int show_ignored_in_status;
+static int show_ignored_in_status, have_option_m;
 static const char *only_include_assumed;
 static struct strbuf message = STRBUF_INIT;
 
@@ -121,9 +121,11 @@ static enum {
 static int opt_parse_m(const struct option *opt, const char *arg, int unset)
 {
 	struct strbuf *buf = opt->value;
-	if (unset)
+	if (unset) {
+		have_option_m = 0;
 		strbuf_setlen(buf, 0);
-	else {
+	} else {
+		have_option_m = 1;
 		if (buf->len)
 			strbuf_addch(buf, '\n');
 		strbuf_addstr(buf, arg);
@@ -975,7 +977,7 @@ static int parse_and_validate_options(int argc, const char *argv[],
 	if (force_author && renew_authorship)
 		die(_("Using both --reset-author and --author does not make sense"));
 
-	if (logfile || message.len || use_message || fixup_message)
+	if (logfile || have_option_m || use_message || fixup_message)
 		use_editor = 0;
 	if (0 <= edit_flag)
 		use_editor = edit_flag;
