@@ -39,7 +39,7 @@ For local repositories, also supported by Git natively, the following
 syntaxes may be used:
 
 - /path/to/repo.git/
-- file:///path/to/repo.git/
+- \file:///path/to/repo.git/
 
 ifndef::git-clone[]
 These two syntaxes are mostly equivalent, except when cloning, when
