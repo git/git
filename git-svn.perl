@@ -831,7 +831,7 @@ sub dcommit_rebase {
 sub cmd_dcommit {
 	my $head = shift;
 	command_noisy(qw/update-index --refresh/);
-	git_cmd_try { command_oneline(qw/diff-index --quiet HEAD/) }
+	git_cmd_try { command_oneline(qw/diff-index --quiet HEAD --/) }
 		'Cannot dcommit with a dirty index.  Commit your changes first, '
 		. "or stash them with `git stash'.\n";
 	$head ||= 'HEAD';
@@ -1932,7 +1932,7 @@ sub cmt_sha2rev_batch {
 sub working_head_info {
 	my ($head, $refs) = @_;
 	my @args = qw/rev-list --first-parent --pretty=medium/;
-	my ($fh, $ctx) = command_output_pipe(@args, $head);
+	my ($fh, $ctx) = command_output_pipe(@args, $head, "--");
 	my $hash;
 	my %max;
 	while (<$fh>) {
