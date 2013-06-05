@@ -1446,7 +1446,7 @@ sub recipients_cmd {
 		$address =~ s/^\s*//g;
 		$address =~ s/\s*$//g;
 		$address = sanitize_address($address);
-		next if ($address eq $sanitized_sender and $suppress_from);
+		next if ($address eq $sanitized_sender and $suppress_cc{'self'});
 		push @addresses, $address;
 		printf("($prefix) Adding %s: %s from: '%s'\n",
 		       $what, $address, $cmd) unless $quiet;
