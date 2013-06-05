@@ -11,7 +11,7 @@ SYNOPSIS
 [verse]
 'git push' [--all | --mirror | --tags] [--follow-tags] [-n | --dry-run] [--receive-pack=<git-receive-pack>]
 	   [--repo=<repository>] [-f | --force] [--prune] [-v | --verbose] [-u | --set-upstream]
-	   [<repository> [<refspec>...]]
+	   [--no-verify] [<repository> [<refspec>...]]
 
 DESCRIPTION
 -----------
@@ -194,6 +194,11 @@ useful if you write an alias or script around 'git push'.
 	all submodules that changed in the revisions to be pushed will
 	be pushed. If on-demand was not able to push all necessary
 	revisions it will also be aborted and exit with non-zero status.
+
+--[no-]verify::
+	Toggle the pre-push hook (see linkgit:githooks[5]).  The
+	default is \--verify, giving the hook a chance to prevent the
+	push.  With \--no-verify, the hook is bypassed completely.
 
 
 include::urls-remotes.txt[]
