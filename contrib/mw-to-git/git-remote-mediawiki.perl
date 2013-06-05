@@ -13,6 +13,7 @@
 
 use strict;
 use MediaWiki::API;
+use Git;
 use DateTime::Format::ISO8601;
 
 # By default, use UTF-8 to communicate with Git and the user
@@ -156,57 +157,6 @@ while (<STDIN>) {
 
 ########################## Functions ##############################
 
-## credential API management (generic functions)
-
-sub credential_read {
-	my %credential;
-	my $reader = shift;
-	my $op = shift;
-	while (<$reader>) {
-		my ($key, $value) = /([^=]*)=(.*)/;
-		if (not defined $key) {
-			die "ERROR receiving response from git credential $op:\n$_\n";
-		}
-		$credential{$key} = $value;
-	}
-	return %credential;
-}
-
-sub credential_write {
-	my $credential = shift;
-	my $writer = shift;
-	# url overwrites other fields, so it must come first
-	print $writer "url=$credential->{url}\n" if exists $credential->{url};
-	while (my ($key, $value) = each(%$credential) ) {
-		if (length $value && $key ne 'url') {
-			print $writer "$key=$value\n";
-		}
-	}
-}
-
-sub credential_run {
-	my $op = shift;
-	my $credential = shift;
-	my $pid = open2(my $reader, my $writer, "git credential $op");
-	credential_write($credential, $writer);
-	print $writer "\n";
-	close($writer);
-
-	if ($op eq "fill") {
-		%$credential = credential_read($reader, $op);
-	} else {
-		if (<$reader>) {
-			die "ERROR while running git credential $op:\n$_";
-		}
-	}
-	close($reader);
-	waitpid($pid, 0);
-	my $child_exit_status = $? >> 8;
-	if ($child_exit_status != 0) {
-		die "'git credential $op' failed with code $child_exit_status.";
-	}
-}
-
 # MediaWiki API instance, created lazily.
 my $mediawiki;
 
@@ -217,22 +167,24 @@ sub mw_connect_maybe {
 	$mediawiki = MediaWiki::API->new;
 	$mediawiki->{config}->{api_url} = "$url/api.php";
 	if ($wiki_login) {
-		my %credential = (url => $url);
-		$credential{username} = $wiki_login;
-		$credential{password} = $wiki_passwd;
-		credential_run("fill", \%credential);
+		my %credential = (
+			'url' => $url,
+			'username' => $wiki_login,
+			'password' => $wiki_passwd
+		);
+		Git::credential(\%credential);
 		my $request = {lgname => $credential{username},
 			       lgpassword => $credential{password},
 			       lgdomain => $wiki_domain};
 		if ($mediawiki->login($request)) {
-			credential_run("approve", \%credential);
+			Git::credential(\%credential, 'approve');
 			print STDERR "Logged in mediawiki user \"$credential{username}\".\n";
 		} else {
 			print STDERR "Failed to log in mediawiki user \"$credential{username}\" on $url\n";
 			print STDERR "  (error " .
 				$mediawiki->{error}->{code} . ': ' .
 				$mediawiki->{error}->{details} . ")\n";
-			credential_run("reject", \%credential);
+			Git::credential(\%credential, 'reject');
 			exit 1;
 		}
 	}
