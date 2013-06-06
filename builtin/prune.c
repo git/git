@@ -165,7 +165,7 @@ int cmd_prune(int argc, const char **argv, const char *prefix)
 	stop_progress(&progress);
 	prune_object_dir(get_object_directory());
 
-	prune_packed_objects(show_only);
+	prune_packed_objects(show_only ? PRUNE_PACKED_DRY_RUN : 0);
 	remove_temporary_files(get_object_directory());
 	s = mkpathdup("%s/pack", get_object_directory());
 	remove_temporary_files(s);
