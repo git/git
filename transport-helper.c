@@ -809,6 +809,11 @@ static int push_refs_with_export(struct transport *transport,
 	if (!data->refspecs)
 		die("remote-helper doesn't support push; refspec needed");
 
+	if (flags & TRANSPORT_PUSH_DRY_RUN) {
+		if (set_helper_option(transport, "dry-run", "true") != 0)
+			die("helper %s does not support dry-run", data->name);
+	}
+
 	helper = get_helper(transport);
 
 	write_constant(helper->in, "export\n");
@@ -830,8 +835,14 @@ static int push_refs_with_export(struct transport *transport,
 		}
 		free(private);
 
-		if (ref->peer_ref)
+		if (ref->deletion)
+			die("remote-helpers do not support ref deletion");
+
+		if (ref->peer_ref) {
+			if (strcmp(ref->peer_ref->name, ref->name))
+				die("remote-helpers do not support old:new syntax");
 			string_list_append(&revlist_args, ref->peer_ref->name);
+		}
 	}
 
 	if (get_exporter(transport, &exporter, &revlist_args))
