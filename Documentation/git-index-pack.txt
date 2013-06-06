@@ -74,6 +74,9 @@ OPTIONS
 --strict::
 	Die, if the pack contains broken objects or links.
 
+--check-self-contained-and-connected::
+	Die if the pack contains broken links. For internal use only.
+
 --threads=<n>::
 	Specifies the number of threads to spawn when resolving
 	deltas. This requires that index-pack be compiled with

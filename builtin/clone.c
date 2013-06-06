@@ -541,12 +541,18 @@ static void update_remote_refs(const struct ref *refs,
 			       const struct ref *mapped_refs,
 			       const struct ref *remote_head_points_at,
 			       const char *branch_top,
-			       const char *msg)
+			       const char *msg,
+			       struct transport *transport)
 {
 	const struct ref *rm = mapped_refs;
 
-	if (check_everything_connected(iterate_ref_map, 0, &rm))
+	if (0 <= option_verbosity)
+		printf(_("Checking connectivity... "));
+	if (check_everything_connected_with_transport(iterate_ref_map,
+						      0, &rm, transport))
 		die(_("remote did not send all necessary objects"));
+	if (0 <= option_verbosity)
+		printf(_("done\n"));
 
 	if (refs) {
 		write_remote_refs(mapped_refs);
@@ -890,6 +896,9 @@ int cmd_clone(int argc, const char **argv, const char *prefix)
 		if (option_upload_pack)
 			transport_set_option(transport, TRANS_OPT_UPLOADPACK,
 					     option_upload_pack);
+
+		if (transport->smart_options && !option_depth)
+			transport->smart_options->check_self_contained_and_connected = 1;
 	}
 
 	refs = transport_get_remote_refs(transport);
@@ -951,7 +960,7 @@ int cmd_clone(int argc, const char **argv, const char *prefix)
 		transport_fetch_refs(transport, mapped_refs);
 
 	update_remote_refs(refs, mapped_refs, remote_head_points_at,
-			   branch_top.buf, reflog_msg.buf);
+			   branch_top.buf, reflog_msg.buf, transport);
 
 	update_head(our_head_points_at, remote_head, reflog_msg.buf);
 

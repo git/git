@@ -77,8 +77,10 @@ static int nr_threads;
 
 static int from_stdin;
 static int strict;
+static int do_fsck_object;
 static int verbose;
 static int show_stat;
+static int check_self_contained_and_connected;
 
 static struct progress *progress;
 
@@ -187,13 +189,13 @@ static int mark_link(struct object *obj, int type, void *data)
 
 /* The content of each linked object must have been checked
    or it must be already present in the object database */
-static void check_object(struct object *obj)
+static unsigned check_object(struct object *obj)
 {
 	if (!obj)
-		return;
+		return 0;
 
 	if (!(obj->flags & FLAG_LINK))
-		return;
+		return 0;
 
 	if (!(obj->flags & FLAG_CHECKED)) {
 		unsigned long size;
@@ -201,17 +203,20 @@ static void check_object(struct object *obj)
 		if (type != obj->type || type <= 0)
 			die(_("object of unexpected type"));
 		obj->flags |= FLAG_CHECKED;
-		return;
+		return 1;
 	}
+
+	return 0;
 }
 
-static void check_objects(void)
+static unsigned check_objects(void)
 {
-	unsigned i, max;
+	unsigned i, max, foreign_nr = 0;
 
 	max = get_max_object_index();
 	for (i = 0; i < max; i++)
-		check_object(get_indexed_object(i));
+		foreign_nr += check_object(get_indexed_object(i));
+	return foreign_nr;
 }
 
 
@@ -747,8 +752,7 @@ static void sha1_object(const void *data, struct object_entry *obj_entry,
 			int eaten;
 			void *buf = (void *) data;
 
-			if (!buf)
-				buf = new_data = get_data_from_pack(obj_entry);
+			assert(data && "data can only be NULL for large _blobs_");
 
 			/*
 			 * we do not need to free the memory here, as the
@@ -757,7 +761,8 @@ static void sha1_object(const void *data, struct object_entry *obj_entry,
 			obj = parse_object_buffer(sha1, type, size, buf, &eaten);
 			if (!obj)
 				die(_("invalid %s"), typename(type));
-			if (fsck_object(obj, 1, fsck_error_function))
+			if (do_fsck_object &&
+			    fsck_object(obj, 1, fsck_error_function))
 				die(_("Error in object"));
 			if (fsck_walk(obj, mark_link, NULL))
 				die(_("Not all child objects of %s are reachable"), sha1_to_hex(obj->sha1));
@@ -1491,6 +1496,7 @@ int cmd_index_pack(int argc, const char **argv, const char *prefix)
 	struct pack_idx_entry **idx_objects;
 	struct pack_idx_option opts;
 	unsigned char pack_sha1[20];
+	unsigned foreign_nr = 1;	/* zero is a "good" value, assume bad */
 
 	if (argc == 2 && !strcmp(argv[1], "-h"))
 		usage(index_pack_usage);
@@ -1512,6 +1518,10 @@ int cmd_index_pack(int argc, const char **argv, const char *prefix)
 				fix_thin_pack = 1;
 			} else if (!strcmp(arg, "--strict")) {
 				strict = 1;
+				do_fsck_object = 1;
+			} else if (!strcmp(arg, "--check-self-contained-and-connected")) {
+				strict = 1;
+				check_self_contained_and_connected = 1;
 			} else if (!strcmp(arg, "--verify")) {
 				verify = 1;
 			} else if (!strcmp(arg, "--verify-stat")) {
@@ -1625,7 +1635,7 @@ int cmd_index_pack(int argc, const char **argv, const char *prefix)
 	conclude_pack(fix_thin_pack, curr_pack, pack_sha1);
 	free(deltas);
 	if (strict)
-		check_objects();
+		foreign_nr = check_objects();
 
 	if (show_stat)
 		show_pack_info(stat_only);
@@ -1650,6 +1660,12 @@ int cmd_index_pack(int argc, const char **argv, const char *prefix)
 		free((void *) curr_pack);
 	if (index_name == NULL)
 		free((void *) curr_index);
+
+	/*
+	 * Let the caller know this pack is not self contained
+	 */
+	if (check_self_contained_and_connected && foreign_nr)
+		return 1;
 
 	return 0;
 }

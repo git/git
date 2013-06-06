@@ -8,6 +8,8 @@ struct git_transport_options {
 	unsigned thin : 1;
 	unsigned keep : 1;
 	unsigned followtags : 1;
+	unsigned check_self_contained_and_connected : 1;
+	unsigned self_contained_and_connected : 1;
 	int depth;
 	const char *uploadpack;
 	const char *receivepack;
