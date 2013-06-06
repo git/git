@@ -385,6 +385,25 @@ test_expect_success PERL,SYMLINKS 'difftool --dir-diff --symlink without unstage
 	test_cmp actual expect
 '
 
+write_script modify-right-file <<\EOF
+echo "new content" >"$2/file"
+EOF
+
+run_dir_diff_test 'difftool --dir-diff syncs worktree with unstaged change' '
+	test_when_finished git reset --hard &&
+	echo "orig content" >file &&
+	git difftool -d $symlinks --extcmd "$(pwd)/modify-right-file" branch &&
+	echo "new content" >expect &&
+	test_cmp expect file
+'
+
+run_dir_diff_test 'difftool --dir-diff syncs worktree without unstaged change' '
+	test_when_finished git reset --hard &&
+	git difftool -d $symlinks --extcmd "$(pwd)/modify-right-file" branch &&
+	echo "new content" >expect &&
+	test_cmp expect file
+'
+
 write_script modify-file <<\EOF
 echo "new content" >file
 EOF
