@@ -20,7 +20,7 @@ test_expect_success 'sigchain works' '
 	test_cmp expect actual
 '
 
-test_expect_success 'signals are propagated using shell convention' '
+test_expect_success !MINGW 'signals are propagated using shell convention' '
 	# we use exec here to avoid any sub-shell interpretation
 	# of the exit code
 	git config alias.sigterm "!exec test-sigchain" &&
