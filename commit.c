@@ -512,7 +512,7 @@ define_commit_slab(indegree_slab, int);
 /*
  * Performs an in-place topological sort on the list supplied.
  */
-void sort_in_topological_order(struct commit_list ** list, int lifo)
+void sort_in_topological_order(struct commit_list ** list, enum rev_sort_order sort_order)
 {
 	struct commit_list *next, *orig = *list;
 	struct commit_list *work, **insert;
@@ -561,7 +561,7 @@ void sort_in_topological_order(struct commit_list ** list, int lifo)
 	}
 
 	/* process the list in topological order */
-	if (!lifo)
+	if (sort_order != REV_SORT_IN_GRAPH_ORDER)
 		commit_list_sort_by_date(&work);
 
 	pptr = list;
@@ -588,10 +588,14 @@ void sort_in_topological_order(struct commit_list ** list, int lifo)
 			 * guaranteeing topological order.
 			 */
 			if (--(*pi) == 1) {
-				if (!lifo)
+				switch (sort_order) {
+				case REV_SORT_BY_COMMIT_DATE:
 					commit_list_insert_by_date(parent, &work);
-				else
+					break;
+				default: /* REV_SORT_IN_GRAPH_ORDER */
 					commit_list_insert(parent, &work);
+					break;
+				}
 			}
 		}
 		/*

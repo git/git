@@ -1038,7 +1038,7 @@ void init_revisions(struct rev_info *revs, const char *prefix)
 	DIFF_OPT_SET(&revs->pruning, QUICK);
 	revs->pruning.add_remove = file_add_remove;
 	revs->pruning.change = file_change;
-	revs->lifo = 1;
+	revs->sort_order = REV_SORT_IN_GRAPH_ORDER;
 	revs->dense = 1;
 	revs->prefix = prefix;
 	revs->max_age = -1;
@@ -1373,7 +1373,7 @@ static int handle_revision_opt(struct rev_info *revs, int argc, const char **arg
 	} else if (!strcmp(arg, "--merge")) {
 		revs->show_merge = 1;
 	} else if (!strcmp(arg, "--topo-order")) {
-		revs->lifo = 1;
+		revs->sort_order = REV_SORT_IN_GRAPH_ORDER;
 		revs->topo_order = 1;
 	} else if (!strcmp(arg, "--simplify-merges")) {
 		revs->simplify_merges = 1;
@@ -1391,7 +1391,7 @@ static int handle_revision_opt(struct rev_info *revs, int argc, const char **arg
 		revs->prune = 1;
 		load_ref_decorations(DECORATE_SHORT_REFS);
 	} else if (!strcmp(arg, "--date-order")) {
-		revs->lifo = 0;
+		revs->sort_order = REV_SORT_BY_COMMIT_DATE;
 		revs->topo_order = 1;
 	} else if (!prefixcmp(arg, "--early-output")) {
 		int count = 100;
@@ -2165,7 +2165,7 @@ int prepare_revision_walk(struct rev_info *revs)
 		if (limit_list(revs) < 0)
 			return -1;
 	if (revs->topo_order)
-		sort_in_topological_order(&revs->commits, revs->lifo);
+		sort_in_topological_order(&revs->commits, revs->sort_order);
 	if (revs->simplify_merges)
 		simplify_merges(revs);
 	if (revs->children.name)
@@ -2480,7 +2480,7 @@ static void create_boundary_commit_list(struct rev_info *revs)
 	 * If revs->topo_order is set, sort the boundary commits
 	 * in topological order
 	 */
-	sort_in_topological_order(&revs->commits, revs->lifo);
+	sort_in_topological_order(&revs->commits, revs->sort_order);
 }
 
 static struct commit *get_revision_internal(struct rev_info *revs)

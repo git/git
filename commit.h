@@ -139,15 +139,23 @@ struct commit *pop_commit(struct commit_list **stack);
 void clear_commit_marks(struct commit *commit, unsigned int mark);
 void clear_commit_marks_for_object_array(struct object_array *a, unsigned mark);
 
+
+enum rev_sort_order {
+	REV_SORT_IN_GRAPH_ORDER = 0,
+	REV_SORT_BY_COMMIT_DATE
+};
+
 /*
  * Performs an in-place topological sort of list supplied.
  *
  *   invariant of resulting list is:
  *      a reachable from b => ord(b) < ord(a)
- *   in addition, when lifo == 0, commits on parallel tracks are
- *   sorted in the dates order.
+ *   sort_order further specifies:
+ *   REV_SORT_IN_GRAPH_ORDER: try to show a commit on a single-parent
+ *                            chain together.
+ *   REV_SORT_BY_COMMIT_DATE: show eligible commits in committer-date order.
  */
-void sort_in_topological_order(struct commit_list ** list, int lifo);
+void sort_in_topological_order(struct commit_list **, enum rev_sort_order);
 
 struct commit_graft {
 	unsigned char sha1[20];
