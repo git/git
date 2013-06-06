@@ -127,6 +127,9 @@
 #else
 #include <poll.h>
 #endif
+
+extern int get_st_mode_bits(const char *path, int *mode);
+
 #if defined(__MINGW32__)
 /* pull in Windows compatibility stuff */
 #include "compat/mingw.h"
@@ -163,7 +166,6 @@
 typedef long intptr_t;
 typedef unsigned long uintptr_t;
 #endif
-int get_st_mode_bits(const char *path, int *mode);
 #if defined(__CYGWIN__)
 #undef _XOPEN_SOURCE
 #include <grp.h>
