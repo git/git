@@ -9,6 +9,10 @@ Foreign interface
  * Remote transport helper has been updated to report errors and
    maintain ref hierarchy used to keep track of its own state better.
 
+ * With "export" remote-helper protocol, (1) a push that tries to
+   update a remote ref whose name is different from the pushing side
+   does not work yet, and (2) the helper may not know how to do
+   --dry-run; these problematic cases are disabled for now.
 
 UI, Workflows & Features
 
@@ -67,6 +71,9 @@ Performance, Internal Implementation, etc.
    inconsistently between the test framework and t/Makefile, and logic
    to summarize the results looked at a wrong place.
 
+ * "git clone" uses a lighter-weight implementation when making sure
+   that the history behind refs are complete.
+
  * Many warnings from sparse source checker in compat/ area has been
    squelched.
 
@@ -83,6 +90,22 @@ Fixes since v1.8.3
 Unless otherwise noted, all the fixes since v1.8.3 in the maintenance
 track are contained in this release (see release notes to them for
 details).
+
+ * "difftool --dir-diff" did not copy back changes made by the
+   end-user in the diff tool backend to the working tree in some
+   cases.
+   (merge 32eaf1d ks/difftool-dir-diff-copy-fix later to maint).
+
+ * "git push $there HEAD:branch" did not resolve HEAD early enough, so
+   it was easy to flip it around while push is still going on and push
+   out a branch that the user did not originally intended when the
+   command was started.
+   (merge 0f075b2 rr/push-head later to maint).
+
+ * The bash prompt code (in contrib/) displayed the name of the branch
+   being rebased when "rebase -i/-m/-p" modes are in use, but not the
+   plain vanilla "rebase".
+   (merge 1306321 fc/show-branch-in-rebase-am later to maint).
 
  * Handling of negative exclude pattern for directories "!dir" was
    broken in the update to v1.8.3.
