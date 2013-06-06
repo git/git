@@ -137,6 +137,20 @@ unset oguimsg
 
 ######################################################################
 ##
+## On Mac, bring the current Wish process window to front
+
+if {[tk windowingsystem] eq "aqua"} {
+	catch {
+		exec osascript -e [format {
+			tell application "System Events"
+				set frontmost of processes whose unix id is %d to true
+			end tell
+		} [pid]]
+	}
+}
+
+######################################################################
+##
 ## read only globals
 
 set _appname {Git Gui}
