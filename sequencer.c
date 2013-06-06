@@ -628,8 +628,10 @@ static int do_pick_commit(struct commit *commit, struct replay_opts *opts)
 	}
 
 	allow = allow_empty(opts, commit);
-	if (allow < 0)
-		return allow;
+	if (allow < 0) {
+		res = allow;
+		goto leave;
+	}
 	if (!opts->no_commit)
 		res = run_git_commit(defmsg, opts, allow);
 
