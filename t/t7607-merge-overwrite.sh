@@ -141,11 +141,10 @@ test_expect_success SYMLINKS 'will not overwrite untracked symlink in leading pa
 	test_path_is_missing .git/MERGE_HEAD
 '
 
-test_expect_success SYMLINKS 'will not be confused by symlink in leading path' '
+test_expect_success 'will not be confused by symlink in leading path' '
 	git reset --hard c0 &&
 	rm -rf sub &&
-	ln -s sub2 sub &&
-	git add sub &&
+	test_ln_s_add sub2 sub &&
 	git commit -m ln &&
 	git checkout sub
 '

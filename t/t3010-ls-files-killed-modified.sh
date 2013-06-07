@@ -39,12 +39,7 @@ modified without reporting path9 and path10.
 
 test_expect_success 'git update-index --add to add various paths.' '
 	date >path0 &&
-	if test_have_prereq SYMLINKS
-	then
-		ln -s xyzzy path1
-	else
-		date > path1
-	fi &&
+	test_ln_s_add xyzzy path1 &&
 	mkdir path2 path3 &&
 	date >path2/file2 &&
 	date >path3/file3 &&
@@ -52,7 +47,7 @@ test_expect_success 'git update-index --add to add various paths.' '
 	date >path8 &&
 	: >path9 &&
 	date >path10 &&
-	git update-index --add -- path0 path1 path?/file? path7 path8 path9 path10 &&
+	git update-index --add -- path0 path?/file? path7 path8 path9 path10 &&
 	rm -fr path?	# leave path10 alone
 '
 

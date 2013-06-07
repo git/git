@@ -396,7 +396,7 @@ test_expect_success 'tree_tag-obj'    'git fast-export tree_tag-obj'
 test_expect_success 'tag-obj_tag'     'git fast-export tag-obj_tag'
 test_expect_success 'tag-obj_tag-obj' 'git fast-export tag-obj_tag-obj'
 
-test_expect_success SYMLINKS 'directory becomes symlink'        '
+test_expect_success 'directory becomes symlink'        '
 	git init dirtosymlink &&
 	git init result &&
 	(
@@ -408,8 +408,7 @@ test_expect_success SYMLINKS 'directory becomes symlink'        '
 		git add foo/world bar/world &&
 		git commit -q -mone &&
 		git rm -r foo &&
-		ln -s bar foo &&
-		git add foo &&
+		test_ln_s_add bar foo &&
 		git commit -q -mtwo
 	) &&
 	(
