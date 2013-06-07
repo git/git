@@ -42,4 +42,7 @@ extern void *prio_queue_get(struct prio_queue *);
 
 extern void clear_prio_queue(struct prio_queue *);
 
+/* Reverse the LIFO elements */
+extern void prio_queue_reverse(struct prio_queue *);
+
 #endif /* PRIO_QUEUE_H */

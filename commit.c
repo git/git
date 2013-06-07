@@ -9,6 +9,7 @@
 #include "gpg-interface.h"
 #include "mergesort.h"
 #include "commit-slab.h"
+#include "prio-queue.h"
 
 static struct commit_extra_header *read_commit_extra_header_lines(const char *buf, size_t len, const char **);
 
@@ -509,21 +510,42 @@ struct commit *pop_commit(struct commit_list **stack)
 /* count number of children that have not been emitted */
 define_commit_slab(indegree_slab, int);
 
+static int compare_commits_by_commit_date(const void *a_, const void *b_, void *unused)
+{
+	const struct commit *a = a_, *b = b_;
+	/* newer commits with larger date first */
+	if (a->date < b->date)
+		return 1;
+	else if (a->date > b->date)
+		return -1;
+	return 0;
+}
+
 /*
  * Performs an in-place topological sort on the list supplied.
  */
-void sort_in_topological_order(struct commit_list ** list, enum rev_sort_order sort_order)
+void sort_in_topological_order(struct commit_list **list, enum rev_sort_order sort_order)
 {
 	struct commit_list *next, *orig = *list;
-	struct commit_list *work, **insert;
 	struct commit_list **pptr;
 	struct indegree_slab indegree;
+	struct prio_queue queue;
+	struct commit *commit;
 
 	if (!orig)
 		return;
 	*list = NULL;
 
 	init_indegree_slab(&indegree);
+	memset(&queue, '\0', sizeof(queue));
+	switch (sort_order) {
+	default: /* REV_SORT_IN_GRAPH_ORDER */
+		queue.compare = NULL;
+		break;
+	case REV_SORT_BY_COMMIT_DATE:
+		queue.compare = compare_commits_by_commit_date;
+		break;
+	}
 
 	/* Mark them and clear the indegree */
 	for (next = orig; next; next = next->next) {
@@ -533,7 +555,7 @@ void sort_in_topological_order(struct commit_list ** list, enum rev_sort_order s
 
 	/* update the indegree */
 	for (next = orig; next; next = next->next) {
-		struct commit_list * parents = next->item->parents;
+		struct commit_list *parents = next->item->parents;
 		while (parents) {
 			struct commit *parent = parents->item;
 			int *pi = indegree_slab_at(&indegree, parent);
@@ -551,30 +573,28 @@ void sort_in_topological_order(struct commit_list ** list, enum rev_sort_order s
 	 *
 	 * the tips serve as a starting set for the work queue.
 	 */
-	work = NULL;
-	insert = &work;
 	for (next = orig; next; next = next->next) {
 		struct commit *commit = next->item;
 
 		if (*(indegree_slab_at(&indegree, commit)) == 1)
-			insert = &commit_list_insert(commit, insert)->next;
+			prio_queue_put(&queue, commit);
 	}
 
-	/* process the list in topological order */
-	if (sort_order != REV_SORT_IN_GRAPH_ORDER)
-		commit_list_sort_by_date(&work);
+	/*
+	 * This is unfortunate; the initial tips need to be shown
+	 * in the order given from the revision traversal machinery.
+	 */
+	if (sort_order == REV_SORT_IN_GRAPH_ORDER)
+		prio_queue_reverse(&queue);
+
+	/* We no longer need the commit list */
+	free_commit_list(orig);
 
 	pptr = list;
 	*list = NULL;
-	while (work) {
-		struct commit *commit;
-		struct commit_list *parents, *work_item;
+	while ((commit = prio_queue_get(&queue)) != NULL) {
+		struct commit_list *parents;
 
-		work_item = work;
-		work = work_item->next;
-		work_item->next = NULL;
-
-		commit = work_item->item;
 		for (parents = commit->parents; parents ; parents = parents->next) {
 			struct commit *parent = parents->item;
 			int *pi = indegree_slab_at(&indegree, parent);
@@ -587,27 +607,20 @@ void sort_in_topological_order(struct commit_list ** list, enum rev_sort_order s
 			 * when all their children have been emitted thereby
 			 * guaranteeing topological order.
 			 */
-			if (--(*pi) == 1) {
-				switch (sort_order) {
-				case REV_SORT_BY_COMMIT_DATE:
-					commit_list_insert_by_date(parent, &work);
-					break;
-				default: /* REV_SORT_IN_GRAPH_ORDER */
-					commit_list_insert(parent, &work);
-					break;
-				}
-			}
+			if (--(*pi) == 1)
+				prio_queue_put(&queue, parent);
 		}
 		/*
-		 * work_item is a commit all of whose children
-		 * have already been emitted. we can emit it now.
+		 * all children of commit have already been
+		 * emitted. we can emit it now.
 		 */
 		*(indegree_slab_at(&indegree, commit)) = 0;
-		*pptr = work_item;
-		pptr = &work_item->next;
+
+		pptr = &commit_list_insert(commit, pptr)->next;
 	}
 
 	clear_indegree_slab(&indegree);
+	clear_prio_queue(&queue);
 }
 
 /* merge-base stuff */
