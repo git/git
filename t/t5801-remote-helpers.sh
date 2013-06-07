@@ -8,11 +8,6 @@ test_description='Test remote-helper import and export commands'
 . ./test-lib.sh
 . "$TEST_DIRECTORY"/lib-gpg.sh
 
-if ! type "${BASH-bash}" >/dev/null 2>&1; then
-	skip_all='skipping remote-testgit tests, bash not available'
-	test_done
-fi
-
 compare_refs() {
 	git --git-dir="$1/.git" rev-parse --verify $2 >expect &&
 	git --git-dir="$3/.git" rev-parse --verify $4 >actual &&
@@ -101,39 +96,28 @@ test_expect_failure 'push new branch with old:new refspec' '
 
 test_expect_success 'cloning without refspec' '
 	GIT_REMOTE_TESTGIT_REFSPEC="" \
-	git clone "testgit::${PWD}/server" local2 &&
+	git clone "testgit::${PWD}/server" local2 2>error &&
+	grep "This remote helper should implement refspec capability" error &&
 	compare_refs local2 HEAD server HEAD
 '
 
 test_expect_success 'pulling without refspecs' '
 	(cd local2 &&
 	git reset --hard &&
-	GIT_REMOTE_TESTGIT_REFSPEC="" git pull) &&
+	GIT_REMOTE_TESTGIT_REFSPEC="" git pull 2>../error) &&
+	grep "This remote helper should implement refspec capability" error &&
 	compare_refs local2 HEAD server HEAD
 '
 
-test_expect_failure 'pushing without refspecs' '
+test_expect_success 'pushing without refspecs' '
 	test_when_finished "(cd local2 && git reset --hard origin)" &&
 	(cd local2 &&
 	echo content >>file &&
 	git commit -a -m ten &&
-	GIT_REMOTE_TESTGIT_REFSPEC="" git push) &&
-	compare_refs local2 HEAD server HEAD
-'
-
-test_expect_success 'pulling with straight refspec' '
-	(cd local2 &&
-	GIT_REMOTE_TESTGIT_REFSPEC="*:*" git pull) &&
-	compare_refs local2 HEAD server HEAD
-'
-
-test_expect_failure 'pushing with straight refspec' '
-	test_when_finished "(cd local2 && git reset --hard origin)" &&
-	(cd local2 &&
-	echo content >>file &&
-	git commit -a -m eleven &&
-	GIT_REMOTE_TESTGIT_REFSPEC="*:*" git push) &&
-	compare_refs local2 HEAD server HEAD
+	GIT_REMOTE_TESTGIT_REFSPEC="" &&
+	export GIT_REMOTE_TESTGIT_REFSPEC &&
+	test_must_fail git push 2>../error) &&
+	grep "remote-helper doesn.t support push; refspec needed" error
 '
 
 test_expect_success 'pulling without marks' '
@@ -184,6 +168,38 @@ test_expect_success GPG 'push signed tag with signed-tags capability' '
 	GIT_REMOTE_TESTGIT_SIGNED_TAGS=1 git push origin signed-tag-2
 	) &&
 	compare_refs local signed-tag-2 server signed-tag-2
+'
+
+test_expect_success 'push update refs' '
+	(cd local &&
+	git checkout -b update master &&
+	echo update >>file &&
+	git commit -a -m update &&
+	git push origin update
+	git rev-parse --verify remotes/origin/update >expect &&
+	git rev-parse --verify testgit/origin/heads/update >actual &&
+	test_cmp expect actual
+	)
+'
+
+test_expect_success 'proper failure checks for fetching' '
+	(GIT_REMOTE_TESTGIT_FAILURE=1 &&
+	export GIT_REMOTE_TESTGIT_FAILURE &&
+	cd local &&
+	test_must_fail git fetch 2> error &&
+	cat error &&
+	grep -q "Error while running fast-import" error
+	)
+'
+
+test_expect_success 'proper failure checks for pushing' '
+	(GIT_REMOTE_TESTGIT_FAILURE=1 &&
+	export GIT_REMOTE_TESTGIT_FAILURE &&
+	cd local &&
+	test_must_fail git push --all 2> error &&
+	cat error &&
+	grep -q "Reading from helper .git-remote-testgit. failed" error
+	)
 '
 
 test_expect_success 'push messages' '

@@ -159,11 +159,11 @@ Miscellaneous capabilities
 	carried out.
 
 'refspec' <refspec>::
-	This modifies the 'import' capability, allowing the produced
-	fast-import stream to modify refs in a private namespace
-	instead of writing to refs/heads or refs/remotes directly.
+	For remote helpers that implement 'import' or 'export', this capability
+	allows the refs to be constrained to a private namespace, instead of
+	writing to refs/heads or refs/remotes directly.
 	It is recommended that all importers providing the 'import'
-	capability use this.
+	capability use this. It's mandatory for 'export'.
 +
 A helper advertising the capability
 `refspec refs/heads/*:refs/svn/origin/branches/*`
@@ -174,8 +174,8 @@ ref.
 This capability can be advertised multiple times.  The first
 applicable refspec takes precedence.  The left-hand of refspecs
 advertised with this capability must cover all refs reported by
-the list command.  If a helper does not need a specific 'refspec'
-capability then it should advertise `refspec *:*`.
+the list command.  If no 'refspec' capability is advertised,
+there is an implied `refspec *:*`.
 
 'bidi-import'::
 	This modifies the 'import' capability.

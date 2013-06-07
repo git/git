@@ -1,4 +1,4 @@
-#!/usr/bin/env bash
+#!/bin/sh
 # Copyright (c) 2012 Felipe Contreras
 
 alias=$1
@@ -23,7 +23,6 @@ then
 	testgitmarks="$dir/testgit.marks"
 	test -e "$gitmarks" || >"$gitmarks"
 	test -e "$testgitmarks" || >"$testgitmarks"
-	testgitmarks_args=( "--"{import,export}"-marks=$testgitmarks" )
 fi
 
 while read line
@@ -62,23 +61,49 @@ do
 			echo "feature import-marks=$gitmarks"
 			echo "feature export-marks=$gitmarks"
 		fi
+
+		if test -n "$GIT_REMOTE_TESTGIT_FAILURE"
+		then
+			echo "feature done"
+			exit 1
+		fi
+
 		echo "feature done"
-		git fast-export "${testgitmarks_args[@]}" $refs |
+		git fast-export \
+			${testgitmarks:+"--import-marks=$testgitmarks"} \
+			${testgitmarks:+"--export-marks=$testgitmarks"} \
+			$refs |
 		sed -e "s#refs/heads/#${prefix}/heads/#g"
 		echo "done"
 		;;
 	export)
-		before=$(git for-each-ref --format='%(refname) %(objectname)')
+		if test -n "$GIT_REMOTE_TESTGIT_FAILURE"
+		then
+			# consume input so fast-export doesn't get SIGPIPE;
+			# git would also notice that case, but we want
+			# to make sure we are exercising the later
+			# error checks
+			while read line; do
+				test "done" = "$line" && break
+			done
+			exit 1
+		fi
 
-		git fast-import "${testgitmarks_args[@]}" --quiet
+		before=$(git for-each-ref --format=' %(refname) %(objectname) ')
 
-		after=$(git for-each-ref --format='%(refname) %(objectname)')
+		git fast-import \
+			${testgitmarks:+"--import-marks=$testgitmarks"} \
+			${testgitmarks:+"--export-marks=$testgitmarks"} \
+			--quiet
 
 		# figure out which refs were updated
-		join -e 0 -o '0 1.2 2.2' -a 2 <(echo "$before") <(echo "$after") |
-		while read ref a b
+		git for-each-ref --format='%(refname) %(objectname)' |
+		while read ref a
 		do
-			test $a == $b && continue
+			case "$before" in
+			*" $ref $a "*)
+				continue ;;	# unchanged
+			esac
 			echo "ok $ref"
 		done
 

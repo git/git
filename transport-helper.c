@@ -11,6 +11,7 @@
 #include "thread-utils.h"
 #include "sigchain.h"
 #include "argv-array.h"
+#include "refs.h"
 
 static int debug;
 
@@ -47,7 +48,7 @@ static void sendline(struct helper_data *helper, struct strbuf *buffer)
 		die_errno("Full write to remote helper failed");
 }
 
-static int recvline_fh(FILE *helper, struct strbuf *buffer)
+static int recvline_fh(FILE *helper, struct strbuf *buffer, const char *name)
 {
 	strbuf_reset(buffer);
 	if (debug)
@@ -55,7 +56,7 @@ static int recvline_fh(FILE *helper, struct strbuf *buffer)
 	if (strbuf_getline(buffer, helper, '\n') == EOF) {
 		if (debug)
 			fprintf(stderr, "Debug: Remote helper quit.\n");
-		exit(128);
+		die("Reading from helper 'git-remote-%s' failed", name);
 	}
 
 	if (debug)
@@ -65,7 +66,7 @@ static int recvline_fh(FILE *helper, struct strbuf *buffer)
 
 static int recvline(struct helper_data *helper, struct strbuf *buffer)
 {
-	return recvline_fh(helper->out, buffer);
+	return recvline_fh(helper->out, buffer, helper->name);
 }
 
 static void xchgline(struct helper_data *helper, struct strbuf *buffer)
@@ -217,6 +218,8 @@ static struct child_process *get_helper(struct transport *transport)
 		for (i = 0; i < refspec_nr; i++)
 			free((char *)refspecs[i]);
 		free(refspecs);
+	} else if (data->import || data->bidi_import || data->export) {
+		warning("This remote helper should implement refspec capability.");
 	}
 	strbuf_release(&buf);
 	if (debug)
@@ -473,7 +476,7 @@ static int fetch_with_import(struct transport *transport,
 	 * were fetching.
 	 *
 	 * (If no "refspec" capability was specified, for historical
-	 * reasons we default to *:*.)
+	 * reasons we default to the equivalent of *:*.)
 	 *
 	 * Store the result in to_fetch[i].old_sha1.  Callers such
 	 * as "git fetch" can use the value to write feedback to the
@@ -540,7 +543,7 @@ static int process_connect_service(struct transport *transport,
 		goto exit;
 
 	sendline(data, &cmdbuf);
-	recvline_fh(input, &cmdbuf);
+	recvline_fh(input, &cmdbuf, name);
 	if (!strcmp(cmdbuf.buf, "")) {
 		data->no_disconnect_req = 1;
 		if (debug)
@@ -622,7 +625,7 @@ static int fetch(struct transport *transport,
 	return -1;
 }
 
-static void push_update_ref_status(struct strbuf *buf,
+static int push_update_ref_status(struct strbuf *buf,
 				   struct ref **ref,
 				   struct ref *remote_refs)
 {
@@ -688,7 +691,7 @@ static void push_update_ref_status(struct strbuf *buf,
 		*ref = find_ref_by_name(remote_refs, refname);
 	if (!*ref) {
 		warning("helper reported unexpected status of %s", refname);
-		return;
+		return 1;
 	}
 
 	if ((*ref)->status != REF_STATUS_NONE) {
@@ -697,11 +700,12 @@ static void push_update_ref_status(struct strbuf *buf,
 		 * status reported by the remote helper if the latter is 'no match'.
 		 */
 		if (status == REF_STATUS_NONE)
-			return;
+			return 1;
 	}
 
 	(*ref)->status = status;
 	(*ref)->remote_status = msg;
+	return 0;
 }
 
 static void push_update_refs_status(struct helper_data *data,
@@ -710,11 +714,24 @@ static void push_update_refs_status(struct helper_data *data,
 	struct strbuf buf = STRBUF_INIT;
 	struct ref *ref = remote_refs;
 	for (;;) {
+		char *private;
+
 		recvline(data, &buf);
 		if (!buf.len)
 			break;
 
-		push_update_ref_status(&buf, &ref, remote_refs);
+		if (push_update_ref_status(&buf, &ref, remote_refs))
+			continue;
+
+		if (!data->refspecs)
+			continue;
+
+		/* propagate back the update to the remote namespace */
+		private = apply_refspecs(data->refspecs, data->refspec_nr, ref->name);
+		if (!private)
+			continue;
+		update_ref("update by helper", private, ref->new_sha1, NULL, 0, 0);
+		free(private);
 	}
 	strbuf_release(&buf);
 }
@@ -789,6 +806,9 @@ static int push_refs_with_export(struct transport *transport,
 	struct string_list revlist_args = STRING_LIST_INIT_NODUP;
 	struct strbuf buf = STRBUF_INIT;
 
+	if (!data->refspecs)
+		die("remote-helper doesn't support push; refspec needed");
+
 	helper = get_helper(transport);
 
 	write_constant(helper->in, "export\n");
@@ -799,8 +819,9 @@ static int push_refs_with_export(struct transport *transport,
 		char *private;
 		unsigned char sha1[20];
 
-		if (!data->refspecs)
-			continue;
+		if (ref->deletion)
+			die("remote-helpers do not support ref deletion");
+
 		private = apply_refspecs(data->refspecs, data->refspec_nr, ref->name);
 		if (private && !get_sha1(private, sha1)) {
 			strbuf_addf(&buf, "^%s", private);
@@ -809,13 +830,8 @@ static int push_refs_with_export(struct transport *transport,
 		}
 		free(private);
 
-		if (ref->deletion) {
-			die("remote-helpers do not support ref deletion");
-		}
-
 		if (ref->peer_ref)
 			string_list_append(&revlist_args, ref->peer_ref->name);
-
 	}
 
 	if (get_exporter(transport, &exporter, &revlist_args))
