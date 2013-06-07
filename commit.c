@@ -510,6 +510,68 @@ struct commit *pop_commit(struct commit_list **stack)
 /* count number of children that have not been emitted */
 define_commit_slab(indegree_slab, int);
 
+/* record author-date for each commit object */
+define_commit_slab(author_date_slab, unsigned long);
+
+static void record_author_date(struct author_date_slab *author_date,
+			       struct commit *commit)
+{
+	const char *buf, *line_end;
+	char *buffer = NULL;
+	struct ident_split ident;
+	char *date_end;
+	unsigned long date;
+
+	if (!commit->buffer) {
+		unsigned long size;
+		enum object_type type;
+		buffer = read_sha1_file(commit->object.sha1, &type, &size);
+		if (!buffer)
+			return;
+	}
+
+	for (buf = commit->buffer ? commit->buffer : buffer;
+	     buf;
+	     buf = line_end + 1) {
+		line_end = strchrnul(buf, '\n');
+		if (prefixcmp(buf, "author ")) {
+			if (!line_end[0] || line_end[1] == '\n')
+				return; /* end of header */
+			continue;
+		}
+		if (split_ident_line(&ident,
+				     buf + strlen("author "),
+				     line_end - (buf + strlen("author "))) ||
+		    !ident.date_begin || !ident.date_end)
+			goto fail_exit; /* malformed "author" line */
+		break;
+	}
+
+	date = strtoul(ident.date_begin, &date_end, 10);
+	if (date_end != ident.date_end)
+		goto fail_exit; /* malformed date */
+	*(author_date_slab_at(author_date, commit)) = date;
+
+fail_exit:
+	free(buffer);
+}
+
+static int compare_commits_by_author_date(const void *a_, const void *b_,
+					  void *cb_data)
+{
+	const struct commit *a = a_, *b = b_;
+	struct author_date_slab *author_date = cb_data;
+	unsigned long a_date = *(author_date_slab_at(author_date, a));
+	unsigned long b_date = *(author_date_slab_at(author_date, b));
+
+	/* newer commits with larger date first */
+	if (a_date < b_date)
+		return 1;
+	else if (a_date > b_date)
+		return -1;
+	return 0;
+}
+
 static int compare_commits_by_commit_date(const void *a_, const void *b_, void *unused)
 {
 	const struct commit *a = a_, *b = b_;
@@ -531,6 +593,7 @@ void sort_in_topological_order(struct commit_list **list, enum rev_sort_order so
 	struct indegree_slab indegree;
 	struct prio_queue queue;
 	struct commit *commit;
+	struct author_date_slab author_date;
 
 	if (!orig)
 		return;
@@ -538,6 +601,7 @@ void sort_in_topological_order(struct commit_list **list, enum rev_sort_order so
 
 	init_indegree_slab(&indegree);
 	memset(&queue, '\0', sizeof(queue));
+
 	switch (sort_order) {
 	default: /* REV_SORT_IN_GRAPH_ORDER */
 		queue.compare = NULL;
@@ -545,12 +609,20 @@ void sort_in_topological_order(struct commit_list **list, enum rev_sort_order so
 	case REV_SORT_BY_COMMIT_DATE:
 		queue.compare = compare_commits_by_commit_date;
 		break;
+	case REV_SORT_BY_AUTHOR_DATE:
+		init_author_date_slab(&author_date);
+		queue.compare = compare_commits_by_author_date;
+		queue.cb_data = &author_date;
+		break;
 	}
 
 	/* Mark them and clear the indegree */
 	for (next = orig; next; next = next->next) {
 		struct commit *commit = next->item;
 		*(indegree_slab_at(&indegree, commit)) = 1;
+		/* also record the author dates, if needed */
+		if (sort_order == REV_SORT_BY_AUTHOR_DATE)
+			record_author_date(&author_date, commit);
 	}
 
 	/* update the indegree */
@@ -621,6 +693,8 @@ void sort_in_topological_order(struct commit_list **list, enum rev_sort_order so
 
 	clear_indegree_slab(&indegree);
 	clear_prio_queue(&queue);
+	if (sort_order == REV_SORT_BY_AUTHOR_DATE)
+		clear_author_date_slab(&author_date);
 }
 
 /* merge-base stuff */

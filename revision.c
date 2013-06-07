@@ -1393,6 +1393,9 @@ static int handle_revision_opt(struct rev_info *revs, int argc, const char **arg
 	} else if (!strcmp(arg, "--date-order")) {
 		revs->sort_order = REV_SORT_BY_COMMIT_DATE;
 		revs->topo_order = 1;
+	} else if (!strcmp(arg, "--author-date-order")) {
+		revs->sort_order = REV_SORT_BY_AUTHOR_DATE;
+		revs->topo_order = 1;
 	} else if (!prefixcmp(arg, "--early-output")) {
 		int count = 100;
 		switch (arg[14]) {

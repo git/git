@@ -617,6 +617,10 @@ By default, the commits are shown in reverse chronological order.
 	Show no parents before all of its children are shown, but
 	otherwise show commits in the commit timestamp order.
 
+--author-date-order::
+	Show no parents before all of its children are shown, but
+	otherwise show commits in the author timestamp order.
+
 --topo-order::
 	Show no parents before all of its children are shown, and
 	avoid showing commits on multiple lines of history

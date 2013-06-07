@@ -142,7 +142,8 @@ void clear_commit_marks_for_object_array(struct object_array *a, unsigned mark);
 
 enum rev_sort_order {
 	REV_SORT_IN_GRAPH_ORDER = 0,
-	REV_SORT_BY_COMMIT_DATE
+	REV_SORT_BY_COMMIT_DATE,
+	REV_SORT_BY_AUTHOR_DATE
 };
 
 /*
