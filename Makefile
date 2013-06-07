@@ -488,6 +488,7 @@ SCRIPT_PERL += git-svn.perl
 SCRIPT_PYTHON += git-remote-testpy.py
 SCRIPT_PYTHON += git-p4.py
 
+NO_INSTALL += git-remote-testgit
 NO_INSTALL += git-remote-testpy
 
 # Generated files for scripts
