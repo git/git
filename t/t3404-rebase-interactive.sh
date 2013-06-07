@@ -477,19 +477,11 @@ test_expect_success 'interrupted squash works as expected (case 2)' '
 	test $one = $(git rev-parse HEAD~2)
 '
 
-test_expect_success 'ignore patch if in upstream' '
-	HEAD=$(git rev-parse HEAD) &&
-	git checkout -b has-cherry-picked HEAD^ &&
+test_expect_success '--continue tries to commit, even for "edit"' '
 	echo unrelated > file7 &&
 	git add file7 &&
 	test_tick &&
 	git commit -m "unrelated change" &&
-	git cherry-pick $HEAD &&
-	EXPECT_COUNT=1 git rebase -i $HEAD &&
-	test $HEAD = $(git rev-parse HEAD^)
-'
-
-test_expect_success '--continue tries to commit, even for "edit"' '
 	parent=$(git rev-parse HEAD^) &&
 	test_tick &&
 	FAKE_LINES="edit 1" git rebase -i HEAD^ &&
