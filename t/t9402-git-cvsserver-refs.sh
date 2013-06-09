@@ -330,7 +330,7 @@ test_expect_success 'validate result of edits [cvswork2]' '
 
 test_expect_success 'validate basic diffs saved during above cvswork2 edits' '
 	test $(grep Index: cvsEdit1.diff | wc -l) = 1 &&
-	test ! -s cvsEdit2-empty.diff &&
+	test_must_be_empty cvsEdit2-empty.diff &&
 	test $(grep Index: cvsEdit2-N.diff | wc -l) = 1 &&
 	test $(grep Index: cvsEdit3.diff | wc -l) = 3 &&
 	rm -rf diffSandbox &&
@@ -456,20 +456,20 @@ test_expect_success 'cvs up -r $(git rev-parse v1)' '
 
 test_expect_success 'cvs diff -r v1 -u' '
 	( cd cvswork && cvs -f diff -r v1 -u ) >cvsDiff.out 2>cvs.log &&
-	test ! -s cvsDiff.out &&
-	test ! -s cvs.log
+	test_must_be_empty cvsDiff.out &&
+	test_must_be_empty cvs.log
 '
 
 test_expect_success 'cvs diff -N -r v2 -u' '
 	( cd cvswork && ! cvs -f diff -N -r v2 -u ) >cvsDiff.out 2>cvs.log &&
-	test ! -s cvs.log &&
+	test_must_be_empty cvs.log &&
 	test -s cvsDiff.out &&
 	check_diff cvsDiff.out v2 v1 >check_diff.out 2>&1
 '
 
 test_expect_success 'cvs diff -N -r v2 -r v1.2' '
 	( cd cvswork && ! cvs -f diff -N -r v2 -r v1.2 -u ) >cvsDiff.out 2>cvs.log &&
-	test ! -s cvs.log &&
+	test_must_be_empty cvs.log &&
 	test -s cvsDiff.out &&
 	check_diff cvsDiff.out v2 v1.2 >check_diff.out 2>&1
 '
@@ -488,7 +488,7 @@ test_expect_success 'apply early [cvswork3] diff to b3' '
 
 test_expect_success 'check [cvswork3] diff' '
 	( cd cvswork3 && ! cvs -f diff -N -u ) >"$WORKDIR/cvsDiff.out" 2>cvs.log &&
-	test ! -s cvs.log &&
+	test_must_be_empty cvs.log &&
 	test -s cvsDiff.out &&
 	test $(grep Index: cvsDiff.out | wc -l) = 3 &&
 	test_cmp cvsDiff.out cvswork3edit.diff &&
