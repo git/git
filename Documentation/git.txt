@@ -832,6 +832,13 @@ for further details.
 	as a file path and will try to write the trace messages
 	into it.
 
+'GIT_TRACE_PACK_ACCESS'::
+	If this variable is set to a path, a file will be created at
+	the given path logging all accesses to any packs. For each
+	access, the pack file name and an offset in the pack is
+	recorded. This may be helpful for troubleshooting some
+	pack-related performance problems.
+
 GIT_LITERAL_PATHSPECS::
 	Setting this variable to `1` will cause Git to treat all
 	pathspecs literally, rather than as glob patterns. For example,

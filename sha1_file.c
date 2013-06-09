@@ -36,6 +36,9 @@ static inline uintmax_t sz_fmt(size_t s) { return s; }
 
 const unsigned char null_sha1[20];
 
+static const char *no_log_pack_access = "no_log_pack_access";
+static const char *log_pack_access;
+
 /*
  * This is meant to hold a *small* number of objects that you would
  * want read_sha1_file() to be able to return, but yet you do not want
@@ -1956,12 +1959,19 @@ static void write_pack_access_log(struct packed_git *p, off_t obj_offset)
 {
 	static FILE *log_file;
 
+	if (!log_pack_access)
+		log_pack_access = getenv("GIT_TRACE_PACK_ACCESS");
+	if (!log_pack_access)
+		log_pack_access = no_log_pack_access;
+	if (log_pack_access == no_log_pack_access)
+		return;
+
 	if (!log_file) {
 		log_file = fopen(log_pack_access, "w");
 		if (!log_file) {
 			error("cannot open pack access log '%s' for writing: %s",
 			      log_pack_access, strerror(errno));
-			log_pack_access = NULL;
+			log_pack_access = no_log_pack_access;
 			return;
 		}
 	}
@@ -1992,7 +2002,7 @@ void *unpack_entry(struct packed_git *p, off_t obj_offset,
 	int delta_stack_nr = 0, delta_stack_alloc = UNPACK_ENTRY_STACK_PREALLOC;
 	int base_from_cache = 0;
 
-	if (log_pack_access)
+	if (log_pack_access != no_log_pack_access)
 		write_pack_access_log(p, obj_offset);
 
 	/* PHASE 1: drill down to the innermost base object */
