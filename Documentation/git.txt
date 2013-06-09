@@ -839,6 +839,12 @@ for further details.
 	recorded. This may be helpful for troubleshooting some
 	pack-related performance problems.
 
+'GIT_TRACE_PACKET'::
+	If this variable is set, it shows a trace of all packets
+	coming in or out of a given program. This can help with
+	debugging object negotiation or other protocol issues. Tracing
+	is turned off at a packet starting with "PACK".
+
 GIT_LITERAL_PATHSPECS::
 	Setting this variable to `1` will cause Git to treat all
 	pathspecs literally, rather than as glob patterns. For example,
