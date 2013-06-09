@@ -211,6 +211,9 @@ shallow::
 	and maintained by shallow clone mechanism.  See `--depth`
 	option to linkgit:git-clone[1] and linkgit:git-fetch[1].
 
+modules::
+	Contains the git-repositories of the submodules.
+
 SEE ALSO
 --------
 linkgit:git-init[1],
