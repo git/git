@@ -342,7 +342,7 @@ static int get_colorbool(int print)
 
 	if (get_colorbool_found < 0)
 		/* default value if none found in config */
-		get_colorbool_found = 0;
+		get_colorbool_found = GIT_COLOR_AUTO;
 
 	get_colorbool_found = want_color(get_colorbool_found);
 
