@@ -4,17 +4,24 @@ test_description='test various @{X} syntax combinations together'
 . ./test-lib.sh
 
 check() {
-test_expect_${3:-success} "$1 = $2" "
-	echo '$2' >expect &&
-	git log -1 --format=%s '$1' >actual &&
-	test_cmp expect actual
-"
+	test_expect_${4:-success} "$1 = $3" "
+		echo '$3' >expect &&
+		if test '$2' = 'commit'
+		then
+			git log -1 --format=%s '$1' >actual
+		else
+			git rev-parse --symbolic-full-name '$1' >actual
+		fi &&
+		test_cmp expect actual
+	"
 }
+
 nonsense() {
-test_expect_${2:-success} "$1 is nonsensical" "
-	test_must_fail git log -1 '$1'
-"
+	test_expect_${2:-success} "$1 is nonsensical" "
+		test_must_fail git rev-parse --verify '$1'
+	"
 }
+
 fail() {
 	"$@" failure
 }
@@ -31,21 +38,42 @@ test_expect_success 'setup' '
 	git checkout -b new-branch &&
 	test_commit new-one &&
 	test_commit new-two &&
-	git config branch.old-branch.remote . &&
-	git config branch.old-branch.merge refs/heads/master &&
-	git config branch.new-branch.remote . &&
-	git config branch.new-branch.merge refs/heads/upstream-branch
+	git branch -u master old-branch &&
+	git branch -u upstream-branch new-branch
 '
 
-check HEAD new-two
-check "@{1}" new-one
-check "@{-1}" old-two
-check "@{-1}@{1}" old-one
-check "@{u}" upstream-two
-check "@{u}@{1}" upstream-one
-check "@{-1}@{u}" master-two
-check "@{-1}@{u}@{1}" master-one
+check HEAD ref refs/heads/new-branch
+check "@{1}" commit new-one
+check "HEAD@{1}" commit new-one
+check "@{now}" commit new-two
+check "HEAD@{now}" commit new-two
+check "@{-1}" ref refs/heads/old-branch
+check "@{-1}@{0}" commit old-two
+check "@{-1}@{1}" commit old-one
+check "@{u}" ref refs/heads/upstream-branch
+check "HEAD@{u}" ref refs/heads/upstream-branch
+check "@{u}@{1}" commit upstream-one
+check "@{-1}@{u}" ref refs/heads/master
+check "@{-1}@{u}@{1}" commit master-one
+check "@" commit new-two
+check "@@{u}" ref refs/heads/upstream-branch
 nonsense "@{u}@{-1}"
+nonsense "@{0}@{0}"
 nonsense "@{1}@{u}"
+nonsense "HEAD@{-1}"
+nonsense "@{-1}@{-1}"
+
+# @{N} versus HEAD@{N}
+
+check "HEAD@{3}" commit old-two
+nonsense "@{3}"
+
+test_expect_success 'switch to old-branch' '
+	git checkout old-branch
+'
+
+check HEAD ref refs/heads/old-branch
+check "HEAD@{1}" commit new-two
+check "@{1}" commit old-one
 
 test_done
