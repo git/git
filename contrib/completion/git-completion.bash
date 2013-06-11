@@ -371,14 +371,8 @@ __git_refs ()
 		done
 		;;
 	*)
-		git ls-remote "$dir" HEAD ORIG_HEAD 'refs/tags/*' 'refs/heads/*' 'refs/remotes/*' 2>/dev/null | \
-		while read -r hash i; do
-			case "$i" in
-			*^{}) ;;
-			refs/*) echo "${i#refs/*/}" ;;
-			*) echo "$i" ;;
-			esac
-		done
+		echo "HEAD"
+		git for-each-ref --format="%(refname:short)" -- "refs/remotes/$dir/" | sed -e "s#^$dir/##"
 		;;
 	esac
 }
