@@ -17,7 +17,7 @@ test_expect_success 'mktemp to nonexistent directory prints filename' '
 	grep "doesnotexist/test" err
 '
 
-test_expect_success POSIXPERM 'mktemp to unwritable directory prints filename' '
+test_expect_success POSIXPERM,SANITY 'mktemp to unwritable directory prints filename' '
 	mkdir cannotwrite &&
 	chmod -w cannotwrite &&
 	test_when_finished "chmod +w cannotwrite" &&
