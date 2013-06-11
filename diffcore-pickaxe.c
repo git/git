@@ -122,7 +122,7 @@ static void diffcore_pickaxe_grep(struct diff_options *o)
 		char errbuf[1024];
 		regerror(err, &regex, errbuf, 1024);
 		regfree(&regex);
-		die("invalid log-grep regex: %s", errbuf);
+		die("invalid regex: %s", errbuf);
 	}
 
 	pickaxe(&diff_queued_diff, o, &regex, NULL, diff_grep);
@@ -246,7 +246,7 @@ static void diffcore_pickaxe_count(struct diff_options *o)
 			char errbuf[1024];
 			regerror(err, &regex, errbuf, 1024);
 			regfree(&regex);
-			die("invalid pickaxe regex: %s", errbuf);
+			die("invalid regex: %s", errbuf);
 		}
 		regexp = &regex;
 	} else {
