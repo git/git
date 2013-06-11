@@ -72,7 +72,7 @@ static inline void close_pair(int fd[2])
 	close(fd[1]);
 }
 
-#ifndef WIN32
+#ifndef GIT_WINDOWS_NATIVE
 static inline void dup_devnull(int to)
 {
 	int fd = open("/dev/null", O_RDWR);
@@ -159,7 +159,7 @@ static const char **prepare_shell_cmd(const char **argv)
 		die("BUG: shell command is empty");
 
 	if (strcspn(argv[0], "|&;<>()$`\\\"' \t\n*?[#~=%") != strlen(argv[0])) {
-#ifndef WIN32
+#ifndef GIT_WINDOWS_NATIVE
 		nargv[nargc++] = SHELL_PATH;
 #else
 		nargv[nargc++] = "sh";
@@ -182,7 +182,7 @@ static const char **prepare_shell_cmd(const char **argv)
 	return nargv;
 }
 
-#ifndef WIN32
+#ifndef GIT_WINDOWS_NATIVE
 static int execv_shell_cmd(const char **argv)
 {
 	const char **nargv = prepare_shell_cmd(argv);
@@ -193,7 +193,7 @@ static int execv_shell_cmd(const char **argv)
 }
 #endif
 
-#ifndef WIN32
+#ifndef GIT_WINDOWS_NATIVE
 static int child_err = 2;
 static int child_notifier = -1;
 
@@ -334,7 +334,7 @@ fail_pipe:
 	trace_argv_printf(cmd->argv, "trace: run_command:");
 	fflush(NULL);
 
-#ifndef WIN32
+#ifndef GIT_WINDOWS_NATIVE
 {
 	int notify_pipe[2];
 	if (pipe(notify_pipe))
