@@ -129,8 +129,7 @@ test_expect_success 'branch@{u} works when tracking a local branch' '
 
 test_expect_success 'branch@{u} error message when no upstream' '
 	cat >expect <<-EOF &&
-	error: No upstream configured for branch ${sq}non-tracking${sq}
-	fatal: Needed a single revision
+	fatal: No upstream configured for branch ${sq}non-tracking${sq}
 	EOF
 	error_message non-tracking@{u} 2>actual &&
 	test_i18ncmp expect actual
@@ -138,8 +137,7 @@ test_expect_success 'branch@{u} error message when no upstream' '
 
 test_expect_success '@{u} error message when no upstream' '
 	cat >expect <<-EOF &&
-	error: No upstream configured for branch ${sq}master${sq}
-	fatal: Needed a single revision
+	fatal: No upstream configured for branch ${sq}master${sq}
 	EOF
 	test_must_fail git rev-parse --verify @{u} 2>actual &&
 	test_i18ncmp expect actual
@@ -147,8 +145,7 @@ test_expect_success '@{u} error message when no upstream' '
 
 test_expect_success 'branch@{u} error message with misspelt branch' '
 	cat >expect <<-EOF &&
-	error: No such branch: ${sq}no-such-branch${sq}
-	fatal: Needed a single revision
+	fatal: No such branch: ${sq}no-such-branch${sq}
 	EOF
 	error_message no-such-branch@{u} 2>actual &&
 	test_i18ncmp expect actual
@@ -156,8 +153,7 @@ test_expect_success 'branch@{u} error message with misspelt branch' '
 
 test_expect_success '@{u} error message when not on a branch' '
 	cat >expect <<-EOF &&
-	error: HEAD does not point to a branch
-	fatal: Needed a single revision
+	fatal: HEAD does not point to a branch
 	EOF
 	git checkout HEAD^0 &&
 	test_must_fail git rev-parse --verify @{u} 2>actual &&
@@ -166,8 +162,7 @@ test_expect_success '@{u} error message when not on a branch' '
 
 test_expect_success 'branch@{u} error message if upstream branch not fetched' '
 	cat >expect <<-EOF &&
-	error: Upstream branch ${sq}refs/heads/side${sq} not stored as a remote-tracking branch
-	fatal: Needed a single revision
+	fatal: Upstream branch ${sq}refs/heads/side${sq} not stored as a remote-tracking branch
 	EOF
 	error_message bad-upstream@{u} 2>actual &&
 	test_i18ncmp expect actual
