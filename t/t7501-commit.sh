@@ -524,4 +524,17 @@ test_expect_success 'commit a file whose name is a dash' '
 	test_i18ngrep " changed, 5 insertions" output
 '
 
+test_expect_success '--only works on to-be-born branch' '
+	# This test relies on having something in the index, as it
+	# would not otherwise actually prove much.  So check this.
+	test -n "$(git ls-files)" &&
+	git checkout --orphan orphan &&
+	echo foo >newfile &&
+	git add newfile &&
+	git commit --only newfile -m"--only on unborn branch" &&
+	echo newfile >expected &&
+	git ls-tree -r --name-only HEAD >actual &&
+	test_cmp expected actual
+'
+
 test_done
