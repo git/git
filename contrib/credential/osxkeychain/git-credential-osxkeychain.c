@@ -127,10 +127,20 @@ static void read_credential(void)
 		*v++ = '\0';
 
 		if (!strcmp(buf, "protocol")) {
-			if (!strcmp(v, "https"))
+			if (!strcmp(v, "imap"))
+				protocol = kSecProtocolTypeIMAP;
+			else if (!strcmp(v, "imaps"))
+				protocol = kSecProtocolTypeIMAPS;
+			else if (!strcmp(v, "ftp"))
+				protocol = kSecProtocolTypeFTP;
+			else if (!strcmp(v, "ftps"))
+				protocol = kSecProtocolTypeFTPS;
+			else if (!strcmp(v, "https"))
 				protocol = kSecProtocolTypeHTTPS;
 			else if (!strcmp(v, "http"))
 				protocol = kSecProtocolTypeHTTP;
+			else if (!strcmp(v, "smtp"))
+				protocol = kSecProtocolTypeSMTP;
 			else /* we don't yet handle other protocols */
 				exit(0);
 		}
