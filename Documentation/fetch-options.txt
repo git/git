@@ -61,7 +61,7 @@ endif::git-pull[]
 ifndef::git-pull[]
 -t::
 --tags::
-	This is a short-hand for giving "refs/tags/*:refs/tags/*"
+	This is a short-hand for giving `refs/tags/*:refs/tags/*`
 	refspec from the command line, to ask all tags to be fetched
 	and stored locally.  Because this acts as an explicit
 	refspec, the default refspecs (configured with the
