@@ -446,6 +446,8 @@ done
 # If the dotest directory exists, but we have finished applying all the
 # patches in them, clear it out.
 if test -d "$dotest" &&
+   test -f "$dotest/last" &&
+   test -f "$dotest/next" &&
    last=$(cat "$dotest/last") &&
    next=$(cat "$dotest/next") &&
    test $# != 0 &&
@@ -454,7 +456,7 @@ then
    rm -fr "$dotest"
 fi
 
-if test -d "$dotest"
+if test -d "$dotest" && test -f "$dotest/last" && test -f "$dotest/next"
 then
 	case "$#,$skip$resolved$abort" in
 	0,*t*)
@@ -904,5 +906,10 @@ if test -s "$dotest"/rewritten; then
     fi
 fi
 
-rm -fr "$dotest"
-git gc --auto
+# If am was called with --rebasing (from git-rebase--am), it's up to
+# the caller to take care of housekeeping.
+if ! test -f "$dotest/rebasing"
+then
+	rm -fr "$dotest"
+	git gc --auto
+fi

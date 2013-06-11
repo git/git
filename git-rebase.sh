@@ -13,6 +13,7 @@ git-rebase --continue | --abort | --skip | --edit-todo
  Available options are
 v,verbose!         display a diffstat of what changed upstream
 q,quiet!           be quiet. implies --no-stat
+autostash!         automatically stash/stash pop before and after
 onto=!             rebase onto given branch instead of upstream
 p,preserve-merges! try to recreate merges instead of ignoring them
 s,strategy=!       use the given merge strategy
@@ -64,6 +65,7 @@ apply_dir="$GIT_DIR"/rebase-apply
 verbose=
 diffstat=
 test "$(git config --bool rebase.stat)" = true && diffstat=t
+autostash="$(git config --bool rebase.autostash || echo false)"
 git_am_opt=
 rebase_root=
 force_rebase=
@@ -143,6 +145,29 @@ move_to_original_branch () {
 	esac
 }
 
+finish_rebase () {
+	if test -f "$state_dir/autostash"
+	then
+		stash_sha1=$(cat "$state_dir/autostash")
+		if git stash apply $stash_sha1 2>&1 >/dev/null
+		then
+			echo "$(gettext 'Applied autostash.')"
+		else
+			ref_stash=refs/stash &&
+			>>"$GIT_DIR/logs/$ref_stash" &&
+			git update-ref -m "autostash" $ref_stash $stash_sha1 ||
+			die "$(eval_gettext 'Cannot store $stash_sha1')"
+
+			gettext 'Applying autostash resulted in conflicts.
+Your changes are safe in the stash.
+You can run "git stash pop" or "git stash drop" it at any time.
+'
+		fi
+	fi
+	git gc --auto &&
+	rm -rf "$state_dir"
+}
+
 run_specific_rebase () {
 	if [ "$interactive_rebase" = implied ]; then
 		GIT_EDITOR=:
@@ -150,6 +175,12 @@ run_specific_rebase () {
 		autosquash=
 	fi
 	. git-rebase--$type
+	ret=$?
+	if test $ret -eq 0
+	then
+		finish_rebase
+	fi
+	exit $ret
 }
 
 run_pre_rebase_hook () {
@@ -240,6 +271,9 @@ do
 		;;
 	--stat)
 		diffstat=t
+		;;
+	--autostash)
+		autostash=true
 		;;
 	-v)
 		verbose=t
@@ -341,7 +375,7 @@ abort)
 		;;
 	esac
 	output git reset --hard $orig_head
-	rm -r "$state_dir"
+	finish_rebase
 	exit
 	;;
 edit-todo)
@@ -479,6 +513,18 @@ case "$#" in
 	die "BUG: unexpected number of arguments left to parse"
 	;;
 esac
+
+if test "$autostash" = true && ! (require_clean_work_tree) 2>/dev/null
+then
+	stash_sha1=$(git stash create "autostash") ||
+	die "$(gettext 'Cannot autostash')"
+
+	mkdir -p "$state_dir" &&
+	echo $stash_sha1 >"$state_dir/autostash" &&
+	stash_abbrev=$(git rev-parse --short $stash_sha1) &&
+	echo "$(eval_gettext 'Created autostash: $stash_abbrev')" &&
+	git reset --hard
+fi
 
 require_clean_work_tree "rebase" "$(gettext "Please commit or stash them.")"
 
