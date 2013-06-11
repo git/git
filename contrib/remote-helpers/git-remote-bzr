@@ -281,7 +281,7 @@ def export_branch(repo, name):
     ref = '%s/heads/%s' % (prefix, name)
     tip = marks.get_tip(name)
 
-    branch = bzrlib.branch.Branch.open(branches[name])
+    branch = get_remote_branch(name)
     repo = branch.repository
 
     branch.lock_read()
@@ -593,7 +593,7 @@ def parse_commit(parser):
 
     if ref.startswith('refs/heads/'):
         name = ref[len('refs/heads/'):]
-        branch = bzrlib.branch.Branch.open(branches[name])
+        branch = get_remote_branch(name)
     else:
         die('unknown ref')
 
@@ -624,7 +624,7 @@ def parse_commit(parser):
             mark = int(mark_ref[1:])
             f = { 'mode' : m, 'mark' : mark }
         elif parser.check('D'):
-            t, path = line.split(' ')
+            t, path = line.split(' ', 1)
             f = { 'deleted' : True }
         else:
             die('Unknown file command: %s' % line)
@@ -695,7 +695,7 @@ def do_export(parser):
     for ref, revid in parsed_refs.iteritems():
         if ref.startswith('refs/heads/'):
             name = ref[len('refs/heads/'):]
-            branch = bzrlib.branch.Branch.open(branches[name])
+            branch = get_remote_branch(name)
             branch.generate_revision_history(revid, marks.get_tip(name))
 
             if name in peers:
@@ -752,7 +752,7 @@ def do_list(parser):
             master_branch = name
         print "? refs/heads/%s" % name
 
-    branch = bzrlib.branch.Branch.open(branches[master_branch])
+    branch = get_remote_branch(master_branch)
     branch.lock_read()
     for tag, revid in branch.tags.get_tag_dict().items():
         try:
@@ -768,30 +768,40 @@ def do_list(parser):
     print "@refs/heads/%s HEAD" % master_branch
     print
 
-def get_remote_branch(origin, remote_branch, name):
-    global dirname, peers
+def clone(path, remote_branch):
+    try:
+        bdir = bzrlib.bzrdir.BzrDir.create(path)
+    except bzrlib.errors.AlreadyControlDirError:
+        bdir = bzrlib.bzrdir.BzrDir.open(path)
+    repo = bdir.find_repository()
+    repo.fetch(remote_branch.repository)
+    return remote_branch.sprout(bdir, repository=repo)
+
+def get_remote_branch(name):
+    global dirname, branches
+
+    remote_branch = bzrlib.branch.Branch.open(branches[name])
+    if isinstance(remote_branch.user_transport, bzrlib.transport.local.LocalTransport):
+        return remote_branch
 
     branch_path = os.path.join(dirname, 'clone', name)
-    if os.path.exists(branch_path):
+
+    try:
+        branch = bzrlib.branch.Branch.open(branch_path)
+    except bzrlib.errors.NotBranchError:
+        # clone
+        branch = clone(branch_path, remote_branch)
+    else:
         # pull
-        d = bzrlib.bzrdir.BzrDir.open(branch_path)
-        branch = d.open_branch()
         try:
-            branch.pull(remote_branch, [], None, False)
+            branch.pull(remote_branch, overwrite=True)
         except bzrlib.errors.DivergedBranches:
             # use remote branch for now
             return remote_branch
-    else:
-        # clone
-        d = origin.sprout(branch_path, None,
-                hardlink=True, create_tree_if_local=False,
-                force_new_repo=False,
-                source_branch=remote_branch)
-        branch = d.open_branch()
 
     return branch
 
-def find_branches(repo, wanted):
+def find_branches(repo):
     transport = repo.bzrdir.root_transport
 
     for fn in transport.iter_files_recursive():
@@ -802,16 +812,13 @@ def find_branches(repo, wanted):
         name = name if name != '' else 'master'
         name = name.replace('/', '+')
 
-        if wanted and not name in wanted:
-            continue
-
         try:
             cur = transport.clone(subdir)
             branch = bzrlib.branch.Branch.open_from_transport(cur)
         except bzrlib.errors.NotBranchError:
             continue
         else:
-            yield name, branch
+            yield name, branch.base
 
 def get_repo(url, alias):
     global dirname, peer, branches
@@ -844,44 +851,35 @@ def get_repo(url, alias):
             except bzrlib.errors.NoRepositoryPresent:
                 pass
 
-    try:
-        repo = origin.open_repository()
-        if not repo.user_transport.listable():
-            # this repository is not usable for us
-            raise bzrlib.errors.NoRepositoryPresent(repo.bzrdir)
-    except bzrlib.errors.NoRepositoryPresent:
-        # branch
+    wanted = get_config('remote-bzr.branches').rstrip().split(', ')
+    # stupid python
+    wanted = [e for e in wanted if e]
 
-        name = 'master'
-        remote_branch = origin.open_branch()
+    if not wanted:
+        try:
+            repo = origin.open_repository()
+            if not repo.user_transport.listable():
+                # this repository is not usable for us
+                raise bzrlib.errors.NoRepositoryPresent(repo.bzrdir)
+        except bzrlib.errors.NoRepositoryPresent:
+            wanted = ['master']
 
-        if not is_local:
-            peers[name] = remote_branch.base
-            branch = get_remote_branch(origin, remote_branch, name)
-        else:
-            branch = remote_branch
+    if wanted:
+        def list_wanted(url, wanted):
+            for name in wanted:
+                subdir = name if name != 'master' else ''
+                yield name, bzrlib.urlutils.join(url, subdir)
 
-        branches[name] = branch.base
-
-        return branch.repository
+        branch_list = list_wanted(url, wanted)
     else:
-        # repository
+        branch_list = find_branches(repo)
 
-        wanted = get_config('remote-bzr.branches').rstrip().split(', ')
-        # stupid python
-        wanted = [e for e in wanted if e]
+    for name, url in branch_list:
+        if not is_local:
+            peers[name] = url
+        branches[name] = url
 
-        for name, remote_branch in find_branches(repo, wanted):
-
-            if not is_local:
-                peers[name] = remote_branch.base
-                branch = get_remote_branch(origin, remote_branch, name)
-            else:
-                branch = remote_branch
-
-            branches[name] = branch.base
-
-        return repo
+    return origin
 
 def fix_path(alias, orig_url):
     url = urlparse.urlparse(orig_url, 'file')
