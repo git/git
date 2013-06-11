@@ -1117,6 +1117,10 @@ static int git_status_config(const char *k, const char *v, void *cb)
 			status_format = STATUS_FORMAT_NONE;
 		return 0;
 	}
+	if (!strcmp(k, "status.branch")) {
+		s->show_branch = git_config_bool(k, v);
+		return 0;
+	}
 	if (!strcmp(k, "status.color") || !strcmp(k, "color.status")) {
 		s->use_color = git_config_colorbool(k, v);
 		return 0;
