@@ -1361,6 +1361,33 @@ test_expect_success '"status.short=false" weaker than "-s"' '
 	test_cmp expected_short actual
 '
 
+test_expect_success '"status.branch=true" same as "-b"' '
+	git status -sb >expected_branch &&
+	git -c status.branch=true status -s >actual &&
+	test_cmp expected_branch actual
+'
+
+test_expect_success '"status.branch=true" different from "--no-branch"' '
+	git status -s --no-branch  >expected_nobranch &&
+	git -c status.branch=true status -s >actual &&
+	test_must_fail test_cmp expected_nobranch actual
+'
+
+test_expect_success '"status.branch=true" weaker than "--no-branch"' '
+	git -c status.branch=true status -s --no-branch >actual &&
+	test_cmp expected_nobranch actual
+'
+
+test_expect_success '"status.branch=false" same as "--no-branch"' '
+	git -c status.branch=false status -s >actual &&
+	test_cmp expected_nobranch actual
+'
+
+test_expect_success '"status.branch=false" weaker than "-b"' '
+	git -c status.branch=false status -sb >actual &&
+	test_cmp expected_branch actual
+'
+
 test_expect_success 'Restore default test environment' '
 	git config --unset status.showUntrackedFiles
 '
