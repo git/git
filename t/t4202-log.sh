@@ -530,6 +530,20 @@ test_expect_success 'show added path under "--follow -M"' '
 	)
 '
 
+test_expect_success 'git log -c --follow' '
+	test_create_repo follow-c &&
+	(
+		cd follow-c &&
+		test_commit initial file original &&
+		git rm file &&
+		test_commit rename file2 original &&
+		git reset --hard initial &&
+		test_commit modify file foo &&
+		git merge -m merge rename &&
+		git log -c --follow file2
+	)
+'
+
 cat >expect <<\EOF
 *   commit COMMIT_OBJECT_NAME
 |\  Merge: MERGE_PARENTS
