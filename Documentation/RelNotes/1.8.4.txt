@@ -4,7 +4,15 @@ Git v1.8.4 Release Notes
 Updates since v1.8.3
 --------------------
 
-Foreign interface
+Foreign interfaces and ports.
+
+ * Update build for Cygwin 1.[57].  Torsten Bögershausen reports that
+   this is fine with Cygwin 1.7 ($gmane/225824) so let's try moving it
+   ahead.
+
+ * The credential helper to talk to keychain on OS X (in contrib/) has
+   been updated to kick in not just when talking http/https but also
+   imap(s) and smtp.
 
  * Remote transport helper has been updated to report errors and
    maintain ref hierarchy used to keep track of its own state better.
@@ -14,7 +22,27 @@ Foreign interface
    does not work yet, and (2) the helper may not know how to do
    --dry-run; these problematic cases are disabled for now.
 
+ * git-remote-hg/bzr (in contrib/) updates.
+
+ * git-remote-mw (in contrib/) hints users to check the certificate,
+   when https:// connection failed.
+
+
 UI, Workflows & Features
+
+ * "git cmd <name>", when <name> happens to be a 40-hex string,
+   directly uses the 40-hex string as an object name, even if a ref
+   "refs/<some hierarchy>/<name>" exists.  This disambiguation order
+   is unlikely to change, but we should warn about the ambiguity just
+   like we warn when more than one refs/ hierachies share the same
+   name.
+
+ * "git rebase" learned "--[no-]autostash" option to save local
+   changes instead of refusing to run (to which people's normal
+   response was to stash them and re-run).
+
+ * Instead of typing four capital letters "HEAD", you can say "@" now,
+   e.g. "git log @".
 
  * "check-ignore" (new feature since 1.8.2) has been updated to work
    more like "check-attr" over bidi-pipes.
@@ -57,6 +85,9 @@ UI, Workflows & Features
 
 Performance, Internal Implementation, etc.
 
+ * Some leaks in unpack-trees (used in merge, cherry-pick and other
+   codepaths) have been plugged.
+
  * The codepath to read from marks files in fast-import/export did not
    have to accept anything but 40-hex representation of the object
    name.  Further, fast-export did not need full in-core object
@@ -90,6 +121,22 @@ Fixes since v1.8.3
 Unless otherwise noted, all the fixes since v1.8.3 in the maintenance
 track are contained in this release (see release notes to them for
 details).
+
+ * "gitweb" forgot to clear a global variable $search_regexp upon each
+   request, mistakenly carrying over the previous search to a new one
+   when used as a persistent CGI.
+   (merge ca7a5dc cm/gitweb-project-list-persistent-cgi-fix later to maint).
+
+ * The wildmatch engine did not honor WM_CASEFOLD option correctly.
+   (merge b79c0c3 ar/wildmatch-foldcase later to maint).
+
+ * "git log -c --follow $path" segfaulted upon hitting the commit that
+   renamed the $path being followed.
+   (merge 46ec510 cb/log-follow-with-combined later to maint).
+
+ * When a reflog notation is used for implicit "current branch", we
+   did not say which branch and worse said "branch ''".
+   (merge 305ebea rr/die-on-missing-upstream later to maint).
 
  * "difftool --dir-diff" did not copy back changes made by the
    end-user in the diff tool backend to the working tree in some
