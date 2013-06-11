@@ -116,7 +116,10 @@ class Marks:
         self.last_mark = mark
 
     def get_tip(self, branch):
-        return self.tips.get(branch, None)
+        try:
+            return str(self.tips[branch])
+        except KeyError:
+            return None
 
     def set_tip(self, branch, tip):
         self.tips[branch] = tip

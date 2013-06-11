@@ -15,23 +15,22 @@ if ! test_have_prereq PYTHON; then
 	test_done
 fi
 
-if ! "$PYTHON_PATH" -c 'import mercurial'; then
+if ! python -c 'import mercurial'; then
 	skip_all='skipping remote-hg tests; mercurial not available'
 	test_done
 fi
 
 # clone to a git repo
 git_clone () {
-	git clone -q "hg::$PWD/$1" $2
+	git clone -q "hg::$1" $2
 }
 
 # clone to an hg repo
 hg_clone () {
 	(
 	hg init $2 &&
-	hg -R $2 bookmark -i master &&
 	cd $1 &&
-	git push -q "hg::$PWD/../$2" 'refs/tags/*:refs/tags/*' 'refs/heads/*:refs/heads/*'
+	git push -q "hg::../$2" 'refs/tags/*:refs/tags/*' 'refs/heads/*:refs/heads/*'
 	) &&
 
 	(cd $2 && hg -q update)
@@ -41,17 +40,15 @@ hg_clone () {
 hg_push () {
 	(
 	cd $2
-	old=$(git symbolic-ref --short HEAD)
 	git checkout -q -b tmp &&
-	git fetch -q "hg::$PWD/../$1" 'refs/tags/*:refs/tags/*' 'refs/heads/*:refs/heads/*' &&
-	git checkout -q $old &&
+	git fetch -q "hg::../$1" 'refs/tags/*:refs/tags/*' 'refs/heads/*:refs/heads/*' &&
+	git checkout -q @{-1} &&
 	git branch -q -D tmp 2> /dev/null || true
 	)
 }
 
 hg_log () {
-	hg -R $1 log --graph --debug >log &&
-	grep -v 'tag: *default/' log
+	hg -R $1 log --graph --debug
 }
 
 setup () {
@@ -67,6 +64,7 @@ setup () {
 	echo "graphlog ="
 	) >> "$HOME"/.hgrc &&
 	git config --global remote-hg.hg-git-compat true
+	git config --global remote-hg.track-branches true
 
 	HGEDITOR=/usr/bin/true
 	GIT_AUTHOR_DATE="2007-01-01 00:00:00 +0230"
@@ -77,8 +75,7 @@ setup () {
 setup
 
 test_expect_success 'encoding' '
-	mkdir -p tmp && cd tmp &&
-	test_when_finished "cd .. && rm -rf tmp" &&
+	test_when_finished "rm -rf gitrepo* hgrepo*" &&
 
 	(
 	git init -q gitrepo &&
@@ -115,8 +112,7 @@ test_expect_success 'encoding' '
 '
 
 test_expect_success 'file removal' '
-	mkdir -p tmp && cd tmp &&
-	test_when_finished "cd .. && rm -rf tmp" &&
+	test_when_finished "rm -rf gitrepo* hgrepo*" &&
 
 	(
 	git init -q gitrepo &&
@@ -148,8 +144,7 @@ test_expect_success 'file removal' '
 '
 
 test_expect_success 'git tags' '
-	mkdir -p tmp && cd tmp &&
-	test_when_finished "cd .. && rm -rf tmp" &&
+	test_when_finished "rm -rf gitrepo* hgrepo*" &&
 
 	(
 	git init -q gitrepo &&
@@ -177,8 +172,7 @@ test_expect_success 'git tags' '
 '
 
 test_expect_success 'hg branch' '
-	mkdir -p tmp && cd tmp &&
-	test_when_finished "cd .. && rm -rf tmp" &&
+	test_when_finished "rm -rf gitrepo* hgrepo*" &&
 
 	(
 	git init -q gitrepo &&
@@ -194,7 +188,7 @@ test_expect_success 'hg branch' '
 	hg_clone gitrepo hgrepo &&
 
 	cd hgrepo &&
-	hg -q co master &&
+	hg -q co default &&
 	hg mv alpha beta &&
 	hg -q commit -m "rename alpha to beta" &&
 	hg branch gamma | grep -v "permanent and global" &&
@@ -214,8 +208,7 @@ test_expect_success 'hg branch' '
 '
 
 test_expect_success 'hg tags' '
-	mkdir -p tmp && cd tmp &&
-	test_when_finished "cd .. && rm -rf tmp" &&
+	test_when_finished "rm -rf gitrepo* hgrepo*" &&
 
 	(
 	git init -q gitrepo &&
@@ -231,7 +224,7 @@ test_expect_success 'hg tags' '
 	hg_clone gitrepo hgrepo &&
 
 	cd hgrepo &&
-	hg co master &&
+	hg co default &&
 	hg tag alpha
 	) &&
 
