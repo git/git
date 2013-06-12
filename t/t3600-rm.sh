@@ -707,6 +707,18 @@ test_expect_success 'rm files with different staged content' '
 	test_i18ncmp expect actual
 '
 
+test_expect_success 'rm files with different staged content without hints' '
+	cat >expect <<-\EOF &&
+	error: the following files have staged content different from both the
+	file and the HEAD:
+	    bar.txt
+	    foo.txt
+	EOF
+	echo content2 >foo.txt &&
+	echo content2 >bar.txt &&
+	test_must_fail git -c advice.rmhints=false rm foo.txt bar.txt 2>actual &&
+	test_i18ncmp expect actual
+'
 
 test_expect_success 'rm file with local modification' '
 	cat >expect <<-\EOF &&
@@ -720,6 +732,15 @@ test_expect_success 'rm file with local modification' '
 	test_i18ncmp expect actual
 '
 
+test_expect_success 'rm file with local modification without hints' '
+	cat >expect <<-\EOF &&
+	error: the following file has local modifications:
+	    bar.txt
+	EOF
+	echo content4 >bar.txt &&
+	test_must_fail git -c advice.rmhints=false rm bar.txt 2>actual &&
+	test_i18ncmp expect actual
+'
 
 test_expect_success 'rm file with changes in the index' '
 	cat >expect <<-\EOF &&
@@ -734,6 +755,14 @@ test_expect_success 'rm file with changes in the index' '
 	test_i18ncmp expect actual
 '
 
+test_expect_success 'rm file with changes in the index without hints' '
+	cat >expect <<-\EOF &&
+	error: the following file has changes staged in the index:
+	    foo.txt
+	EOF
+	test_must_fail git -c advice.rmhints=false rm foo.txt 2>actual &&
+	test_i18ncmp expect actual
+'
 
 test_expect_success 'rm files with two different errors' '
 	cat >expect <<-\EOF &&

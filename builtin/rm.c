@@ -51,7 +51,8 @@ static void print_error_files(struct string_list *files_list,
 			strbuf_addf(&err_msg,
 				    "\n    %s",
 				    files_list->items[i].string);
-		strbuf_addstr(&err_msg, hints_msg);
+		if (advice_rm_hints)
+			strbuf_addstr(&err_msg, hints_msg);
 		*errs = error("%s", err_msg.buf);
 		strbuf_release(&err_msg);
 	}

@@ -17,6 +17,7 @@ extern int advice_resolve_conflict;
 extern int advice_implicit_identity;
 extern int advice_detached_head;
 extern int advice_set_upstream_failure;
+extern int advice_rm_hints;
 
 int git_default_advice_config(const char *var, const char *value);
 void advise(const char *advice, ...);
