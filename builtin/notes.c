@@ -403,11 +403,11 @@ int copy_note_for_rewrite(struct notes_rewrite_cfg *c,
 	return ret;
 }
 
-void finish_copy_notes_for_rewrite(struct notes_rewrite_cfg *c)
+void finish_copy_notes_for_rewrite(struct notes_rewrite_cfg *c, const char *msg)
 {
 	int i;
 	for (i = 0; c->trees[i]; i++) {
-		commit_notes(c->trees[i], "Notes added by 'git notes copy'");
+		commit_notes(c->trees[i], msg);
 		free_notes(c->trees[i]);
 	}
 	free(c->trees);
@@ -420,6 +420,7 @@ static int notes_copy_from_stdin(int force, const char *rewrite_cmd)
 	struct notes_rewrite_cfg *c = NULL;
 	struct notes_tree *t = NULL;
 	int ret = 0;
+	const char *msg = "Notes added by 'git notes copy'";
 
 	if (rewrite_cmd) {
 		c = init_copy_notes_for_rewrite(rewrite_cmd);
@@ -461,10 +462,10 @@ static int notes_copy_from_stdin(int force, const char *rewrite_cmd)
 	}
 
 	if (!rewrite_cmd) {
-		commit_notes(t, "Notes added by 'git notes copy'");
+		commit_notes(t, msg);
 		free_notes(t);
 	} else {
-		finish_copy_notes_for_rewrite(c);
+		finish_copy_notes_for_rewrite(c, msg);
 	}
 	return ret;
 }

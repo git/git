@@ -1591,7 +1591,7 @@ int cmd_commit(int argc, const char **argv, const char *prefix)
 		if (cfg) {
 			/* we are amending, so current_head is not NULL */
 			copy_note_for_rewrite(cfg, current_head->object.sha1, sha1);
-			finish_copy_notes_for_rewrite(cfg);
+			finish_copy_notes_for_rewrite(cfg, "Notes added by 'git commit --amend'");
 		}
 		run_rewrite_hook(current_head->object.sha1, sha1);
 	}
