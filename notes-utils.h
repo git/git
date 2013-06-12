@@ -3,6 +3,20 @@
 
 #include "notes.h"
 
+/*
+ * Create new notes commit from the given notes tree
+ *
+ * Properties of the created commit:
+ * - tree: the result of converting t to a tree object with write_notes_tree().
+ * - parents: the given parents OR (if NULL) the commit referenced by t->ref.
+ * - author/committer: the default determined by commmit_tree().
+ * - commit message: msg
+ *
+ * The resulting commit SHA1 is stored in result_sha1.
+ */
+void create_notes_commit(struct notes_tree *t, struct commit_list *parents,
+			 const struct strbuf *msg, unsigned char *result_sha1);
+
 void commit_notes(struct notes_tree *t, const char *msg);
 
 struct notes_rewrite_cfg {
