@@ -84,6 +84,8 @@ keep_empty=
 test "$(git config --bool rebase.autosquash)" = "true" && autosquash=t
 
 read_basic_state () {
+	test -f "$state_dir/head-name" &&
+	test -f "$state_dir/onto" &&
 	head_name=$(cat "$state_dir"/head-name) &&
 	onto=$(cat "$state_dir"/onto) &&
 	# We always write to orig-head, but interactive rebase used to write to
