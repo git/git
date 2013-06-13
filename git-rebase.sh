@@ -547,6 +547,7 @@ then
 		# Lazily switch to the target branch if needed...
 		test -z "$switch_to" || git checkout "$switch_to" --
 		say "$(eval_gettext "Current branch \$branch_name is up to date.")"
+		finish_rebase
 		exit 0
 	else
 		say "$(eval_gettext "Current branch \$branch_name is up to date, rebase forced.")"

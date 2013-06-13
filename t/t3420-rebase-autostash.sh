@@ -152,6 +152,17 @@ test_expect_success "rebase: fast-forward rebase" '
 	git checkout feature-branch
 '
 
+test_expect_success "rebase: noop rebase" '
+	test_config rebase.autostash true &&
+	git reset --hard &&
+	git checkout -b same-feature-branch feature-branch &&
+	test_when_finished git branch -D same-feature-branch &&
+	echo dirty >>file1 &&
+	git rebase feature-branch &&
+	grep dirty file1 &&
+	git checkout feature-branch
+'
+
 testrebase "" .git/rebase-apply
 testrebase " --merge" .git/rebase-merge
 testrebase " --interactive" .git/rebase-merge
