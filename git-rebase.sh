@@ -579,6 +579,7 @@ if test "$mb" = "$orig_head"
 then
 	say "$(eval_gettext "Fast-forwarded \$branch_name to \$onto_name.")"
 	move_to_original_branch
+	finish_rebase
 	exit 0
 fi
 
