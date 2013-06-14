@@ -371,7 +371,7 @@ sub get_all_mediafiles {
 
 sub get_linked_mediafiles {
 	my $pages = shift;
-	my @titles = map $_->{title}, values(%{$pages});
+	my @titles = map { $_->{title} } values(%{$pages});
 
 	# The query is split in small batches because of the MW API limit of
 	# the number of links to be returned (500 links max).
@@ -399,11 +399,13 @@ sub get_linked_mediafiles {
 		while (my ($id, $page) = each(%{$result->{query}->{pages}})) {
 			my @media_titles;
 			if (defined($page->{links})) {
-				my @link_titles = map $_->{title}, @{$page->{links}};
+				my @link_titles
+				    = map { $_->{title} } @{$page->{links}};
 				push(@media_titles, @link_titles);
 			}
 			if (defined($page->{images})) {
-				my @image_titles = map $_->{title}, @{$page->{images}};
+				my @image_titles
+				    = map { $_->{title} } @{$page->{images}};
 				push(@media_titles, @image_titles);
 			}
 			if (@media_titles) {
@@ -833,7 +835,7 @@ sub mw_import_ref_by_pages {
 	my ($n, @revisions) = fetch_mw_revisions(\@pages, $fetch_from);
 
 	@revisions = sort {$a->{revid} <=> $b->{revid}} @revisions;
-	my @revision_ids = map $_->{revid}, @revisions;
+	my @revision_ids = map { $_->{revid} } @revisions;
 
 	return mw_import_revids($fetch_from, \@revision_ids, \%pages_hash);
 }
@@ -1246,8 +1248,8 @@ sub get_allowed_file_extensions {
 		siprop => 'fileextensions'
 		};
 	my $result = $mediawiki->api($query);
-	my @file_extensions= map $_->{ext},@{$result->{query}->{fileextensions}};
-	my %hashFile = map {$_ => 1}@file_extensions;
+	my @file_extensions = map { $_->{ext}} @{$result->{query}->{fileextensions}};
+	my %hashFile = map { $_ => 1 } @file_extensions;
 
 	return %hashFile;
 }
