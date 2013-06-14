@@ -15,6 +15,7 @@ use strict;
 use MediaWiki::API;
 use Git;
 use DateTime::Format::ISO8601;
+use warnings;
 
 # By default, use UTF-8 to communicate with Git and the user
 binmode STDERR, ":utf8";
@@ -22,8 +23,6 @@ binmode STDOUT, ":utf8";
 
 use URI::Escape;
 use IPC::Open2;
-
-use warnings;
 
 # Mediawiki filenames can contain forward slashes. This variable decides by which pattern they should be replaced
 use constant SLASH_REPLACEMENT => "%2F";
