@@ -276,6 +276,33 @@ test_expect_success \
      git cat-file blob $blob_3 > /dev/null'
 
 test_expect_success \
+    'corruption of delta base reference pointing to wrong object' \
+    'create_new_pack --delta-base-offset &&
+     git prune-packed &&
+     printf "\220\033" | do_corrupt_object $blob_3 2 &&
+     git cat-file blob $blob_1 >/dev/null &&
+     git cat-file blob $blob_2 >/dev/null &&
+     test_must_fail git cat-file blob $blob_3 >/dev/null'
+
+test_expect_success \
+    '... but having a loose copy allows for full recovery' \
+    'mv ${pack}.idx tmp &&
+     git hash-object -t blob -w file_3 &&
+     mv tmp ${pack}.idx &&
+     git cat-file blob $blob_1 > /dev/null &&
+     git cat-file blob $blob_2 > /dev/null &&
+     git cat-file blob $blob_3 > /dev/null'
+
+test_expect_success \
+    '... and then a repack "clears" the corruption' \
+    'do_repack --delta-base-offset --no-reuse-delta &&
+     git prune-packed &&
+     git verify-pack ${pack}.pack &&
+     git cat-file blob $blob_1 > /dev/null &&
+     git cat-file blob $blob_2 > /dev/null &&
+     git cat-file blob $blob_3 > /dev/null'
+
+test_expect_success \
     'corrupting header to have too small output buffer fails unpack' \
     'create_new_pack &&
      git prune-packed &&
