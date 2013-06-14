@@ -338,7 +338,10 @@ sub run_git {
 	my $args = shift;
 	my $encoding = (shift || "encoding(UTF-8)");
 	open(my $git, "-|:$encoding", "git " . $args);
-	my $res = do { local $/; <$git> };
+	my $res = do {
+		local $/ = undef;
+		<$git>
+	};
 	close($git);
 
 	return $res;
