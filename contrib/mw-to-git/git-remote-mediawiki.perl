@@ -123,7 +123,6 @@ $wiki_name =~ s{[^/]*://}{};
 $wiki_name =~ s/^.*@//;
 
 # Commands parser
-my $entry;
 my @cmd;
 while (<STDIN>) {
 	chomp;
