@@ -1192,7 +1192,7 @@ sub mw_push_revision {
 		my @history = split(/\n/, $history);
 		@history = @history[1..$#history];
 		foreach my $line (reverse @history) {
-			my @commit_info_split = split(/ |\n/, $line);
+			my @commit_info_split = split(/[ \n]/, $line);
 			push(@commit_pairs, \@commit_info_split);
 		}
 	}
