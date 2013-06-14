@@ -237,7 +237,7 @@ sub get_mw_tracked_pages {
 sub get_mw_page_list {
 	my $page_list = shift;
 	my $pages = shift;
-	my @some_pages = @$page_list;
+	my @some_pages = @{$page_list};
 	while (@some_pages) {
 		my $last_page = SLICE_SIZE;
 		if ($#some_pages < $last_page) {
@@ -881,7 +881,7 @@ sub mw_import_revids {
 	my $n_actual = 0;
 	my $last_timestamp = 0; # Placeholer in case $rev->timestamp is undefined
 
-	foreach my $pagerevid (@$revision_ids) {
+	foreach my $pagerevid (@{$revision_ids}) {
 	        # Count page even if we skip it, since we display
 		# $n/$total and $total includes skipped pages.
 		$n++;
@@ -916,7 +916,7 @@ sub mw_import_revids {
 		my $page_title = $result_page->{title};
 
 		if (!exists($pages->{$page_title})) {
-			print {*STDERR} "${n}/", scalar(@$revision_ids),
+			print {*STDERR} "${n}/", scalar(@{$revision_ids}),
 				": Skipping revision #$rev->{revid} of ${page_title}\n";
 			next;
 		}
@@ -949,7 +949,7 @@ sub mw_import_revids {
 		# If this is a revision of the media page for new version
 		# of a file do one common commit for both file and media page.
 		# Else do commit only for that page.
-		print {*STDERR} "${n}/", scalar(@$revision_ids), ": Revision #$rev->{revid} of $commit{title}\n";
+		print {*STDERR} "${n}/", scalar(@{$revision_ids}), ": Revision #$rev->{revid} of $commit{title}\n";
 		import_file_revision(\%commit, ($fetch_from == 1), $n_actual, \%mediafile);
 	}
 
