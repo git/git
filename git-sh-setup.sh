@@ -313,3 +313,15 @@ then
 	}
 	: ${GIT_OBJECT_DIRECTORY="$GIT_DIR/objects"}
 fi
+
+peel_committish () {
+	case "$1" in
+	:/*)
+		peeltmp=$(git rev-parse --verify "$1") &&
+		git rev-parse --verify "${peeltmp}^0"
+		;;
+	*)
+		git rev-parse --verify "${1}^0"
+		;;
+	esac
+}
