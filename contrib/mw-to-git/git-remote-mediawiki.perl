@@ -91,6 +91,9 @@ unless ($fetch_strategy) {
 	$fetch_strategy = "by_page";
 }
 
+# Remember the timestamp corresponding to a revision id.
+my %basetimestamps;
+
 # Dumb push: don't update notes and mediawiki ref to reflect the last push.
 #
 # Configurable with mediawiki.dumbPush, or per-remote with
@@ -479,9 +482,6 @@ sub get_last_local_revision {
 	}
 	return $lastrevision_number;
 }
-
-# Remember the timestamp corresponding to a revision id.
-my %basetimestamps;
 
 # Get the last remote revision without taking in account which pages are
 # tracked or not. This function makes a single request to the wiki thus
