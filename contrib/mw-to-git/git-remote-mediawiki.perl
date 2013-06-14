@@ -116,7 +116,7 @@ chomp($dumb_push);
 $dumb_push = ($dumb_push eq "true");
 
 my $wiki_name = $url;
-$wiki_name =~ s/[^\/]*:\/\///;
+$wiki_name =~ s{[^/]*://}{};
 # If URL is like http://user:password@example.com/, we clearly don't
 # want the password in $wiki_name. While we're there, also remove user
 # and '@' sign, to avoid author like MWUser@HTTPUser@host.com
@@ -564,7 +564,7 @@ sub mediawiki_smudge {
 
 sub mediawiki_clean_filename {
 	my $filename = shift;
-	$filename =~ s/@{[SLASH_REPLACEMENT]}/\//g;
+	$filename =~ s{@{[SLASH_REPLACEMENT]}}{/}g;
 	# [, ], |, {, and } are forbidden by MediaWiki, even URL-encoded.
 	# Do a variant of URL-encoding, i.e. looks like URL-encoding,
 	# but with _ added to prevent MediaWiki from thinking this is
@@ -578,7 +578,7 @@ sub mediawiki_clean_filename {
 
 sub mediawiki_smudge_filename {
 	my $filename = shift;
-	$filename =~ s/\//@{[SLASH_REPLACEMENT]}/g;
+	$filename =~ s{/}{@{[SLASH_REPLACEMENT]}}g;
 	$filename =~ s/ /_/g;
 	# Decode forbidden characters encoded in mediawiki_clean_filename
 	$filename =~ s/_%_([0-9a-fA-F][0-9a-fA-F])/sprintf("%c", hex($1))/ge;
