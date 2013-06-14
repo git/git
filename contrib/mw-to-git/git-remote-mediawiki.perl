@@ -1090,14 +1090,14 @@ sub mw_push_file {
 				# edit conflicts, considered as non-fast-forward
 				print {*STDERR} 'Warning: Error ' .
 				    $mediawiki->{error}->{code} .
-				    ' from mediwiki: ' . $mediawiki->{error}->{details} .
+				    ' from mediawiki: ' . $mediawiki->{error}->{details} .
 				    ".\n";
 				return ($oldrevid, 'non-fast-forward');
 			} else {
 				# Other errors. Shouldn't happen => just die()
 				die 'Fatal: Error ' .
 				    $mediawiki->{error}->{code} .
-				    ' from mediwiki: ' . $mediawiki->{error}->{details} . "\n";
+				    ' from mediawiki: ' . $mediawiki->{error}->{details} . "\n";
 			}
 		}
 		$newrevid = $result->{edit}->{newrevid};
