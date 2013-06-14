@@ -40,6 +40,8 @@ use constant NULL_SHA1 => '0000000000000000000000000000000000000000';
 # Used on Git's side to reflect empty edit messages on the wiki
 use constant EMPTY_MESSAGE => '*Empty MediaWiki Message*';
 
+use constant EMPTY => q{};
+
 my $remotename = $ARGV[0];
 my $url = $ARGV[1];
 
@@ -150,11 +152,11 @@ sub parse_command {
 		mw_list($cmd[1]);
 	} elsif ($cmd[0] eq 'import') {
 		die("Invalid arguments for import\n")
-		    if ($cmd[1] eq "" || defined($cmd[2]));
+		    if ($cmd[1] eq EMPTY || defined($cmd[2]));
 		mw_import($cmd[1]);
 	} elsif ($cmd[0] eq 'option') {
 		die("Too many arguments for option\n")
-		    if ($cmd[1] eq "" || $cmd[2] eq "" || defined($cmd[3]));
+		    if ($cmd[1] eq EMPTY || $cmd[2] eq EMPTY || defined($cmd[3]));
 		mw_option($cmd[1],$cmd[2]);
 	} elsif ($cmd[0] eq 'push') {
 		mw_push($cmd[1]);
@@ -555,7 +557,7 @@ sub mediawiki_clean {
 	# Mediawiki does not allow blank space at the end of a page and ends with a single \n.
 	# This function right trims a string and adds a \n at the end to follow this rule
 	$string =~ s/\s+$//;
-	if ($string eq "" && $page_created) {
+	if ($string eq EMPTY && $page_created) {
 		# Creating empty pages is forbidden.
 		$string = EMPTY_CONTENT;
 	}
@@ -566,7 +568,7 @@ sub mediawiki_clean {
 sub mediawiki_smudge {
 	my $string = shift;
 	if ($string eq EMPTY_CONTENT) {
-		$string = "";
+		$string = EMPTY;
 	}
 	# This \n is important. This is due to mediawiki's way to handle end of files.
 	return "${string}\n";
@@ -992,7 +994,7 @@ sub mw_upload_file {
 	} else {
 		# Don't let perl try to interpret file content as UTF-8 => use "raw"
 		my $content = run_git("cat-file blob ${new_sha1}", 'raw');
-		if ($content ne "") {
+		if ($content ne EMPTY) {
 			mw_connect_maybe();
 			$mediawiki->{config}->{upload_url} =
 				"${url}/index.php/Special:Upload";
@@ -1034,7 +1036,7 @@ sub mw_push_file {
 	my $newrevid;
 
 	if ($summary eq EMPTY_MESSAGE) {
-		$summary = '';
+		$summary = EMPTY;
 	}
 
 	my $new_sha1 = $diff_info_split[3];
@@ -1045,7 +1047,7 @@ sub mw_push_file {
 
 	my ($title, $extension) = $complete_file_name =~ /^(.*)\.([^\.]*)$/;
 	if (!defined($extension)) {
-		$extension = "";
+		$extension = EMPTY;
 	}
 	if ($extension eq 'mw') {
 		my $ns = get_mw_namespace_id_for_page($complete_file_name);
@@ -1113,7 +1115,7 @@ sub mw_push {
 		if ($force) {
 			print {*STDERR} "Warning: forced push not allowed on a MediaWiki.\n";
 		}
-		if ($local eq "") {
+		if ($local eq EMPTY) {
 			print {*STDERR} "Cannot delete remote branch on a MediaWiki\n";
 			print {*STDOUT} "error ${remote} cannot delete\n";
 			next;
