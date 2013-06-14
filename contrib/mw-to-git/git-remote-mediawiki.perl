@@ -454,14 +454,14 @@ sub get_mw_mediafile_for_page_revision {
 }
 
 sub download_mw_mediafile {
-	my $url = shift;
+	my $download_url = shift;
 
-	my $response = $mediawiki->{ua}->get($url);
+	my $response = $mediawiki->{ua}->get($download_url);
 	if ($response->code == 200) {
 		return $response->decoded_content;
 	} else {
 		print STDERR "Error downloading mediafile from :\n";
-		print STDERR "URL: $url\n";
+		print STDERR "URL: $download_url\n";
 		print STDERR "Server response: " . $response->code . " " . $response->message . "\n";
 		exit 1;
 	}
