@@ -131,16 +131,16 @@ while (<STDIN>) {
 	if (defined($cmd[0])) {
 		# Line not blank
 		if ($cmd[0] eq "capabilities") {
-			die("Too many arguments for capabilities") unless (!defined($cmd[1]));
+			die("Too many arguments for capabilities\n") unless (!defined($cmd[1]));
 			mw_capabilities();
 		} elsif ($cmd[0] eq "list") {
-			die("Too many arguments for list") unless (!defined($cmd[2]));
+			die("Too many arguments for list\n") unless (!defined($cmd[2]));
 			mw_list($cmd[1]);
 		} elsif ($cmd[0] eq "import") {
-			die("Invalid arguments for import") unless ($cmd[1] ne "" && !defined($cmd[2]));
+			die("Invalid arguments for import\n") unless ($cmd[1] ne "" && !defined($cmd[2]));
 			mw_import($cmd[1]);
 		} elsif ($cmd[0] eq "option") {
-			die("Too many arguments for option") unless ($cmd[1] ne "" && $cmd[2] ne "" && !defined($cmd[3]));
+			die("Too many arguments for option\n") unless ($cmd[1] ne "" && $cmd[2] ne "" && !defined($cmd[3]));
 			mw_option($cmd[1],$cmd[2]);
 		} elsif ($cmd[0] eq "push") {
 			mw_push($cmd[1]);
@@ -247,7 +247,7 @@ sub get_mw_tracked_categories {
 			cmtitle => $category,
 			cmlimit => 'max' } )
 			|| die $mediawiki->{error}->{code} . ': '
-				. $mediawiki->{error}->{details};
+				. $mediawiki->{error}->{details} . "\n";
 		foreach my $page (@{$mw_pages}) {
 			$pages->{$page->{title}} = $page;
 		}
@@ -766,7 +766,7 @@ sub get_more_refs {
 		} elsif ($line eq "\n") {
 			return @refs;
 		} else {
-			die("Invalid command in a '$cmd' batch: ". $_);
+			die("Invalid command in a '$cmd' batch: $_\n");
 		}
 	}
 	return;
@@ -878,7 +878,7 @@ sub mw_import_revids {
 		my $result = $mediawiki->api($query);
 
 		if (!$result) {
-			die "Failed to retrieve modified page for revision $pagerevid";
+			die "Failed to retrieve modified page for revision $pagerevid\n";
 		}
 
 		if (defined($result->{query}->{badrevids}->{$pagerevid})) {
@@ -887,7 +887,7 @@ sub mw_import_revids {
 		}
 
 		if (!defined($result->{query}->{pages})) {
-			die "Invalid revision $pagerevid.";
+			die "Invalid revision $pagerevid.\n";
 		}
 
 		my @result_pages = values(%{$result->{query}->{pages}});
@@ -998,7 +998,7 @@ sub mw_upload_file {
 			}, {
 				skip_encoding => 1
 			} ) || die $mediawiki->{error}->{code} . ':'
-				 . $mediawiki->{error}->{details};
+				 . $mediawiki->{error}->{details} . "\n";
 			my $last_file_page = $mediawiki->get_page({title => $path});
 			$newrevid = $last_file_page->{revid};
 			print STDERR "Pushed file: $new_sha1 - $complete_file_name.\n";
@@ -1078,7 +1078,7 @@ sub mw_push_file {
 				# Other errors. Shouldn't happen => just die()
 				die 'Fatal: Error ' .
 				    $mediawiki->{error}->{code} .
-				    ' from mediwiki: ' . $mediawiki->{error}->{details};
+				    ' from mediwiki: ' . $mediawiki->{error}->{details} . "\n";
 			}
 		}
 		$newrevid = $result->{edit}->{newrevid};
@@ -1100,7 +1100,7 @@ sub mw_push {
 	my $pushed;
 	for my $refspec (@refsspecs) {
 		my ($force, $local, $remote) = $refspec =~ /^(\+)?([^:]*):([^:]*)$/
-		    or die("Invalid refspec for push. Expected <src>:<dst> or +<src>:<dst>");
+		    or die("Invalid refspec for push. Expected <src>:<dst> or +<src>:<dst>\n");
 		if ($force) {
 			print STDERR "Warning: forced push not allowed on a MediaWiki.\n";
 		}
@@ -1172,7 +1172,7 @@ sub mw_push_revision {
 					$local_ancestry{$parent} = $child;
 				}
 			} elsif (!$line =~ /^([a-f0-9]+)/) {
-				die "Unexpected output from git rev-list: $line";
+				die "Unexpected output from git rev-list: $line\n";
 			}
 		}
 		while ($parsed_sha1 ne $HEAD_sha1) {
@@ -1226,7 +1226,7 @@ sub mw_push_revision {
 				return error_non_fast_forward($remote);
 			}
 			if ($status ne "ok") {
-				die("Unknown error from mw_push_file()");
+				die("Unknown error from mw_push_file()\n");
 			}
 		}
 		unless ($dumb_push) {
