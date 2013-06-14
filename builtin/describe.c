@@ -43,7 +43,7 @@ struct commit_name {
 	unsigned prio:2; /* annotated tag = 2, tag = 1, head = 0 */
 	unsigned name_checked:1;
 	unsigned char sha1[20];
-	const char *path;
+	char *path;
 };
 static const char *prio_names[] = {
 	"head", "lightweight", "annotated",
@@ -127,12 +127,14 @@ static void add_to_known_names(const char *path,
 			} else {
 				e->next = NULL;
 			}
+			e->path = NULL;
 		}
 		e->tag = tag;
 		e->prio = prio;
 		e->name_checked = 0;
 		hashcpy(e->sha1, sha1);
-		e->path = path;
+		free(e->path);
+		e->path = xstrdup(path);
 	}
 }
 

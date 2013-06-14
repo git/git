@@ -918,17 +918,21 @@ out:
 	return ret;
 }
 
-static int string_list_add_one_ref(const char *path, const unsigned char *sha1,
+static int string_list_add_one_ref(const char *refname, const unsigned char *sha1,
 				   int flag, void *cb)
 {
 	struct string_list *refs = cb;
-	if (!unsorted_string_list_has_string(refs, path))
-		string_list_append(refs, path);
+	if (!unsorted_string_list_has_string(refs, refname))
+		string_list_append(refs, refname);
 	return 0;
 }
 
+/*
+ * The list argument must have strdup_strings set on it.
+ */
 void string_list_add_refs_by_glob(struct string_list *list, const char *glob)
 {
+	assert(list->strdup_strings);
 	if (has_glob_specials(glob)) {
 		for_each_glob_ref(string_list_add_one_ref, glob, list);
 	} else {

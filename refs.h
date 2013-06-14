@@ -28,13 +28,23 @@ struct ref_lock {
 #define REF_ISBROKEN 0x04
 
 /*
- * Calls the specified function for each ref file until it returns
- * nonzero, and returns the value.  Please note that it is not safe to
- * modify references while an iteration is in progress, unless the
- * same callback function invocation that modifies the reference also
- * returns a nonzero value to immediately stop the iteration.
+ * The signature for the callback function for the for_each_*()
+ * functions below.  The memory pointed to by the refname and sha1
+ * arguments is only guaranteed to be valid for the duration of a
+ * single callback invocation.
  */
-typedef int each_ref_fn(const char *refname, const unsigned char *sha1, int flags, void *cb_data);
+typedef int each_ref_fn(const char *refname,
+			const unsigned char *sha1, int flags, void *cb_data);
+
+/*
+ * The following functions invoke the specified callback function for
+ * each reference indicated.  If the function ever returns a nonzero
+ * value, stop the iteration and return that value.  Please note that
+ * it is not safe to modify references while an iteration is in
+ * progress, unless the same callback function invocation that
+ * modifies the reference also returns a nonzero value to immediately
+ * stop the iteration.
+ */
 extern int head_ref(each_ref_fn, void *);
 extern int for_each_ref(each_ref_fn, void *);
 extern int for_each_ref_in(const char *, each_ref_fn, void *);

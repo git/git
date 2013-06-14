@@ -11,7 +11,13 @@ struct object_array {
 	unsigned int alloc;
 	struct object_array_entry {
 		struct object *item;
-		const char *name;
+		/*
+		 * name or NULL.  If non-NULL, the memory pointed to
+		 * is owned by this object *except* if it points at
+		 * object_array_slopbuf, which is a static copy of the
+		 * empty string.
+		 */
+		char *name;
 		unsigned mode;
 	} *objects;
 };
@@ -85,7 +91,22 @@ int object_list_contains(struct object_list *list, struct object *obj);
 /* Object array handling .. */
 void add_object_array(struct object *obj, const char *name, struct object_array *array);
 void add_object_array_with_mode(struct object *obj, const char *name, struct object_array *array, unsigned mode);
-void object_array_remove_duplicates(struct object_array *);
+
+typedef int (*object_array_each_func_t)(struct object_array_entry *, void *);
+
+/*
+ * Apply want to each entry in array, retaining only the entries for
+ * which the function returns true.  Preserve the order of the entries
+ * that are retained.
+ */
+void object_array_filter(struct object_array *array,
+			 object_array_each_func_t want, void *cb_data);
+
+/*
+ * Remove from array all but the first entry with a given name.
+ * Warning: this function uses an O(N^2) algorithm.
+ */
+void object_array_remove_duplicates(struct object_array *array);
 
 void clear_object_flags(unsigned flags);
 

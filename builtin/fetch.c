@@ -600,7 +600,8 @@ static int add_existing(const char *refname, const unsigned char *sha1,
 {
 	struct string_list *list = (struct string_list *)cbdata;
 	struct string_list_item *item = string_list_insert(list, refname);
-	item->util = (void *)sha1;
+	item->util = xmalloc(20);
+	hashcpy(item->util, sha1);
 	return 0;
 }
 
@@ -619,7 +620,7 @@ static void find_non_local_tags(struct transport *transport,
 			struct ref **head,
 			struct ref ***tail)
 {
-	struct string_list existing_refs = STRING_LIST_INIT_NODUP;
+	struct string_list existing_refs = STRING_LIST_INIT_DUP;
 	struct string_list remote_refs = STRING_LIST_INIT_NODUP;
 	const struct ref *ref;
 	struct string_list_item *item = NULL;
@@ -665,7 +666,7 @@ static void find_non_local_tags(struct transport *transport,
 		item = string_list_insert(&remote_refs, ref->name);
 		item->util = (void *)ref->old_sha1;
 	}
-	string_list_clear(&existing_refs, 0);
+	string_list_clear(&existing_refs, 1);
 
 	/*
 	 * We may have a final lightweight tag that needs to be
@@ -722,11 +723,11 @@ static int truncate_fetch_head(void)
 static int do_fetch(struct transport *transport,
 		    struct refspec *refs, int ref_count)
 {
-	struct string_list existing_refs = STRING_LIST_INIT_NODUP;
-	struct string_list_item *peer_item = NULL;
+	struct string_list existing_refs = STRING_LIST_INIT_DUP;
 	struct ref *ref_map;
 	struct ref *rm;
 	int autotags = (transport->remote->fetch_tags == 1);
+	int retcode = 0;
 
 	for_each_ref(add_existing, &existing_refs);
 
@@ -742,9 +743,9 @@ static int do_fetch(struct transport *transport,
 
 	/* if not appending, truncate FETCH_HEAD */
 	if (!append && !dry_run) {
-		int errcode = truncate_fetch_head();
-		if (errcode)
-			return errcode;
+		retcode = truncate_fetch_head();
+		if (retcode)
+			goto cleanup;
 	}
 
 	ref_map = get_ref_map(transport, refs, ref_count, tags, &autotags);
@@ -753,8 +754,9 @@ static int do_fetch(struct transport *transport,
 
 	for (rm = ref_map; rm; rm = rm->next) {
 		if (rm->peer_ref) {
-			peer_item = string_list_lookup(&existing_refs,
-						       rm->peer_ref->name);
+			struct string_list_item *peer_item =
+				string_list_lookup(&existing_refs,
+						   rm->peer_ref->name);
 			if (peer_item)
 				hashcpy(rm->peer_ref->old_sha1,
 					peer_item->util);
@@ -765,7 +767,8 @@ static int do_fetch(struct transport *transport,
 		transport_set_option(transport, TRANS_OPT_FOLLOWTAGS, "1");
 	if (fetch_refs(transport, ref_map)) {
 		free_refs(ref_map);
-		return 1;
+		retcode = 1;
+		goto cleanup;
 	}
 	if (prune) {
 		/* If --tags was specified, pretend the user gave us the canonical tags refspec */
@@ -808,7 +811,9 @@ static int do_fetch(struct transport *transport,
 		free_refs(ref_map);
 	}
 
-	return 0;
+ cleanup:
+	string_list_clear(&existing_refs, 1);
+	return retcode;
 }
 
 static void set_option(const char *name, const char *value)

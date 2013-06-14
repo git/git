@@ -845,7 +845,7 @@ static int find_first_merges(struct object_array *result, const char *path,
 		struct commit *a, struct commit *b)
 {
 	int i, j;
-	struct object_array merges;
+	struct object_array merges = OBJECT_ARRAY_INIT;
 	struct commit *commit;
 	int contains_another;
 
@@ -855,7 +855,6 @@ static int find_first_merges(struct object_array *result, const char *path,
 	struct rev_info revs;
 	struct setup_revision_opt rev_opts;
 
-	memset(&merges, 0, sizeof(merges));
 	memset(result, 0, sizeof(struct object_array));
 	memset(&rev_opts, 0, sizeof(rev_opts));
 
@@ -893,8 +892,7 @@ static int find_first_merges(struct object_array *result, const char *path,
 		}
 
 		if (!contains_another)
-			add_object_array(merges.objects[i].item,
-					 merges.objects[i].name, result);
+			add_object_array(merges.objects[i].item, NULL, result);
 	}
 
 	free(merges.objects);

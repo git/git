@@ -410,14 +410,14 @@ static void get_info_refs(char *arg)
 	strbuf_release(&buf);
 }
 
-static int show_head_ref(const char *name, const unsigned char *sha1,
+static int show_head_ref(const char *refname, const unsigned char *sha1,
 	int flag, void *cb_data)
 {
 	struct strbuf *buf = cb_data;
 
 	if (flag & REF_ISSYMREF) {
-		unsigned char sha1[20];
-		const char *target = resolve_ref_unsafe(name, sha1, 1, NULL);
+		unsigned char unused[20];
+		const char *target = resolve_ref_unsafe(refname, unused, 1, NULL);
 		const char *target_nons = strip_namespace(target);
 
 		strbuf_addf(buf, "ref: %s\n", target_nons);

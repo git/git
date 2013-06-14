@@ -112,7 +112,7 @@ static int mark_object(struct object *obj, int type, void *data)
 		return 1;
 	}
 
-	add_object_array(obj, (void *) parent, &pending);
+	add_object_array(obj, NULL, &pending);
 	return 0;
 }
 
