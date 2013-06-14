@@ -88,7 +88,7 @@ test_expect_success 'rebase fast-forward to master' '
 	test_i18ngrep "Fast-forwarded HEAD to my-topic-branch" out
 '
 
-test_expect_failure 'rebase, with <onto> and <upstream> specified as :/quuxery' '
+test_expect_success 'rebase, with <onto> and <upstream> specified as :/quuxery' '
 	test_when_finished "git branch -D torebase" &&
 	git checkout -b torebase my-topic-branch^ &&
 	upstream=$(git rev-parse ":/Add B") &&
