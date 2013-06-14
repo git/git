@@ -82,11 +82,11 @@ $shallow_import = ($shallow_import eq 'true');
 # - by_rev: perform one query per new revision on the remote wiki
 # - by_page: query each tracked page for new revision
 my $fetch_strategy = run_git("config --get remote.${remotename}.fetchStrategy");
-unless ($fetch_strategy) {
+if (!$fetch_strategy) {
 	$fetch_strategy = run_git('config --get mediawiki.fetchStrategy');
 }
 chomp($fetch_strategy);
-unless ($fetch_strategy) {
+if (!$fetch_strategy) {
 	$fetch_strategy = 'by_page';
 }
 
@@ -108,7 +108,7 @@ my %basetimestamps;
 # deterministic, this means everybody gets the same sha1 for each
 # MediaWiki revision.
 my $dumb_push = run_git("config --get --bool remote.${remotename}.dumbPush");
-unless ($dumb_push) {
+if (!$dumb_push) {
 	$dumb_push = run_git('config --get --bool mediawiki.dumbPush');
 }
 chomp($dumb_push);
@@ -667,7 +667,7 @@ sub fetch_mw_revisions_for_page {
 			push(@page_revs, $page_rev_ids);
 			$revnum++;
 		}
-		last unless $result->{'query-continue'};
+		last if (!$result->{'query-continue'});
 		$query->{rvstartid} = $result->{'query-continue'}->{revisions}->{rvstartid};
 	}
 	if ($shallow_import && @page_revs) {
@@ -1239,7 +1239,7 @@ sub mw_push_revision {
 				die("Unknown error from mw_push_file()\n");
 			}
 		}
-		unless ($dumb_push) {
+		if (!$dumb_push) {
 			run_git(qq(notes --ref=${remotename}/mediawiki add -f -m "mediawiki_revision: ${mw_revision}" ${sha1_commit}));
 			run_git(qq(update-ref -m "Git-MediaWiki push" refs/mediawiki/${remotename}/master ${sha1_commit} ${sha1_child}));
 		}
@@ -1320,7 +1320,7 @@ sub get_mw_namespace_id {
 	my $ns = $namespace_id{$name};
 	my $id;
 
-	unless (defined $ns) {
+	if (!defined $ns) {
 		print {*STDERR} "No such namespace ${name} on MediaWiki.\n";
 		$ns = {is_namespace => 0};
 		$namespace_id{$name} = $ns;
