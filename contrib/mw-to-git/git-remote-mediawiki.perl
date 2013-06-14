@@ -337,7 +337,8 @@ sub get_mw_pages {
 sub run_git {
 	my $args = shift;
 	my $encoding = (shift || "encoding(UTF-8)");
-	open(my $git, "-|:$encoding", "git " . $args);
+	open(my $git, "-|:$encoding", "git " . $args)
+	    or die "Unable to open: $!\n";
 	my $res = do {
 		local $/ = undef;
 		<$git>
