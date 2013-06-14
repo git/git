@@ -761,7 +761,7 @@ sub get_more_refs {
 	my @refs;
 	while (1) {
 		my $line = <STDIN>;
-		if ($line =~ m/^$cmd (.*)$/) {
+		if ($line =~ /^$cmd (.*)$/) {
 			push(@refs, $1);
 		} elsif ($line eq "\n") {
 			return @refs;
@@ -1167,11 +1167,11 @@ sub mw_push_revision {
 		my @local_ancestry = split(/\n/, run_git("rev-list --boundary --parents $local ^$parsed_sha1"));
 		my %local_ancestry;
 		foreach my $line (@local_ancestry) {
-			if (my ($child, $parents) = $line =~ m/^-?([a-f0-9]+) ([a-f0-9 ]+)/) {
+			if (my ($child, $parents) = $line =~ /^-?([a-f0-9]+) ([a-f0-9 ]+)/) {
 				foreach my $parent (split(' ', $parents)) {
 					$local_ancestry{$parent} = $child;
 				}
-			} elsif (!$line =~ m/^([a-f0-9]+)/) {
+			} elsif (!$line =~ /^([a-f0-9]+)/) {
 				die "Unexpected output from git rev-list: $line";
 			}
 		}
