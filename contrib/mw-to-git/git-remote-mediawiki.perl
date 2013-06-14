@@ -22,7 +22,6 @@ binmode STDERR, ":encoding(UTF-8)";
 binmode STDOUT, ":encoding(UTF-8)";
 
 use URI::Escape;
-use IPC::Open2;
 
 # Mediawiki filenames can contain forward slashes. This variable decides by which pattern they should be replaced
 use constant SLASH_REPLACEMENT => "%2F";
