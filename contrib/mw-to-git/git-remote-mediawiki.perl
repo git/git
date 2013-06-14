@@ -42,6 +42,16 @@ use constant EMPTY_MESSAGE => '*Empty MediaWiki Message*';
 
 use constant EMPTY => q{};
 
+# Number of pages taken into account at once in submodule get_mw_page_list
+use constant SLICE_SIZE => 50;
+
+# Number of linked mediafile to get at once in get_linked_mediafiles
+# The query is split in small batches because of the MW API limit of
+# the number of links to be returned (500 links max).
+use constant BATCH_SIZE => 10;
+
+use constant HTTP_CODE_OK => 200;
+
 my $remotename = $ARGV[0];
 my $url = $ARGV[1];
 
@@ -229,13 +239,13 @@ sub get_mw_page_list {
 	my $pages = shift;
 	my @some_pages = @$page_list;
 	while (@some_pages) {
-		my $last_page = 50;
+		my $last_page = SLICE_SIZE;
 		if ($#some_pages < $last_page) {
 			$last_page = $#some_pages;
 		}
 		my @slice = @some_pages[0..$last_page];
 		get_mw_first_pages(\@slice, $pages);
-		@some_pages = @some_pages[51..$#some_pages];
+		@some_pages = @some_pages[(SLICE_SIZE + 1)..$#some_pages];
 	}
 	return;
 }
@@ -385,9 +395,7 @@ sub get_linked_mediafiles {
 	my $pages = shift;
 	my @titles = map { $_->{title} } values(%{$pages});
 
-	# The query is split in small batches because of the MW API limit of
-	# the number of links to be returned (500 links max).
-	my $batch = 10;
+	my $batch = BATCH_SIZE;
 	while (@titles) {
 		if ($#titles < $batch) {
 			$batch = $#titles;
@@ -469,7 +477,7 @@ sub download_mw_mediafile {
 	my $download_url = shift;
 
 	my $response = $mediawiki->{ua}->get($download_url);
-	if ($response->code == 200) {
+	if ($response->code == HTTP_CODE_OK) {
 		return $response->decoded_content;
 	} else {
 		print {*STDERR} "Error downloading mediafile from :\n";
