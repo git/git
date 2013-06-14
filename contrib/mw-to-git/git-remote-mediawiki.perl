@@ -220,11 +220,11 @@ sub get_mw_page_list {
 	my $pages = shift;
 	my @some_pages = @$page_list;
 	while (@some_pages) {
-		my $last = 50;
-		if ($#some_pages < $last) {
-			$last = $#some_pages;
+		my $last_page = 50;
+		if ($#some_pages < $last_page) {
+			$last_page = $#some_pages;
 		}
-		my @slice = @some_pages[0..$last];
+		my @slice = @some_pages[0..$last_page];
 		get_mw_first_pages(\@slice, $pages);
 		@some_pages = @some_pages[51..$#some_pages];
 	}
