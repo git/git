@@ -271,8 +271,8 @@ See also linkgit:git-reflog[1].
 
 --boundary::
 
-	Output uninteresting commits at the boundary, which are usually
-	not shown.
+	Output excluded boundary commits. Boundary commits are
+	prefixed with `-`.
 
 --
 
@@ -342,13 +342,13 @@ In the following, we will always refer to the same example history to
 illustrate the differences between simplification settings.  We assume
 that you are filtering for a file `foo` in this commit graph:
 -----------------------------------------------------------------------
-	  .-A---M---N---O---P
-	 /     /   /   /   /
-	I     B   C   D   E
-	 \   /   /   /   /
-	  `-------------'
+	  .-A---M---N---O---P---Q
+	 /     /   /   /   /   /
+	I     B   C   D   E   Y
+	 \   /   /   /   /   /
+	  `-------------'   X
 -----------------------------------------------------------------------
-The horizontal line of history A---P is taken to be the first parent of
+The horizontal line of history A---Q is taken to be the first parent of
 each merge.  The commits are:
 
 * `I` is the initial commit, in which `foo` exists with contents
@@ -367,8 +367,11 @@ each merge.  The commits are:
   `N` and `D` to "foobarbaz"; i.e., it is not TREESAME to any parent.
 
 * `E` changes `quux` to "xyzzy", and its merge `P` combines the
-  strings to "quux xyzzy".  Despite appearing interesting, `P` is
-  TREESAME to all parents.
+  strings to "quux xyzzy".  `P` is TREESAME to `O`, but not to `E`.
+
+* `X` is an indpendent root commit that added a new file `side`, and `Y`
+  modified it. `Y` is TREESAME to `X`. Its merge `Q` added `side` to `P`, and
+  `Q` is TREESAME to `P`, but not to `Y`.
 
 'rev-list' walks backwards through history, including or excluding
 commits based on whether '\--full-history' and/or parent rewriting
@@ -410,10 +413,10 @@ parent lines.
 	the example, we get
 +
 -----------------------------------------------------------------------
-	I  A  B  N  D  O
+	I  A  B  N  D  O  P  Q
 -----------------------------------------------------------------------
 +
-`P` and `M` were excluded because they are TREESAME to a parent.  `E`,
+`M` was excluded because it is TREESAME to both parents.  `E`,
 `C` and `B` were all walked, but only `B` was !TREESAME, so the others
 do not appear.
 +
@@ -431,7 +434,7 @@ Along each parent, prune away commits that are not included
 themselves.  This results in
 +
 -----------------------------------------------------------------------
-	  .-A---M---N---O---P
+	  .-A---M---N---O---P---Q
 	 /     /   /   /   /
 	I     B   /   D   /
 	 \   /   /   /   /
@@ -441,7 +444,7 @@ themselves.  This results in
 Compare to '\--full-history' without rewriting above.  Note that `E`
 was pruned away because it is TREESAME, but the parent list of P was
 rewritten to contain `E`'s parent `I`.  The same happened for `C` and
-`N`.  Note also that `P` was included despite being TREESAME.
+`N`, and `X`, `Y` and `Q`.
 
 In addition to the above settings, you can change whether TREESAME
 affects inclusion:
@@ -471,8 +474,9 @@ history according to the following rules:
 * Set `C'` to `C`.
 +
 * Replace each parent `P` of `C'` with its simplification `P'`.  In
-  the process, drop parents that are ancestors of other parents, and
-  remove duplicates.
+  the process, drop parents that are ancestors of other parents or that are
+  root commits TREESAME to an empty tree, and remove duplicates, but take care
+  to never drop all parents that we are TREESAME to.
 +
 * If after this parent rewriting, `C'` is a root or merge commit (has
   zero or >1 parents), a boundary commit, or !TREESAME, it remains.
@@ -490,7 +494,7 @@ The effect of this is best shown by way of comparing to
 	  `---------'
 -----------------------------------------------------------------------
 +
-Note the major differences in `N` and `P` over '--full-history':
+Note the major differences in `N`, `P` and `Q` over '--full-history':
 +
 --
 * `N`'s parent list had `I` removed, because it is an ancestor of the
@@ -498,6 +502,10 @@ Note the major differences in `N` and `P` over '--full-history':
 +
 * `P`'s parent list similarly had `I` removed.  `P` was then
   removed completely, because it had one parent and is TREESAME.
++
+* `Q`'s parent list had `Y` simplified to `X`. `X` was then removed, because it
+  was a TREESAME root. `Q` was then removed completely, because it had one
+  parent and is TREESAME.
 --
 
 Finally, there is a fifth simplification mode available:

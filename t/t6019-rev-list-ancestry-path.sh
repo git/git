@@ -16,6 +16,10 @@ test_description='--ancestry-path'
 #
 #  F...I                 == F G H I
 #  --ancestry-path F...I == F H I
+#
+#  G..M -- G.t                 == [nothing - was dropped in "-s ours" merge L]
+#  --ancestry-path G..M -- G.t == L
+#  --ancestry-path --simplify-merges G^..M -- G.t == G L
 
 . ./test-lib.sh
 
@@ -84,6 +88,29 @@ test_expect_success 'rev-list F...I' '
 test_expect_success 'rev-list --ancestry-path F...I' '
 	for c in F H I; do echo $c; done >expect &&
 	git rev-list --ancestry-path --format=%s F...I |
+	sed -e "/^commit /d" |
+	sort >actual &&
+	test_cmp expect actual
+'
+
+# G.t is dropped in an "-s ours" merge
+test_expect_success 'rev-list G..M -- G.t' '
+	>expect &&
+	git rev-list --format=%s G..M -- G.t |
+	sed -e "/^commit /d" >actual &&
+	test_cmp expect actual
+'
+
+test_expect_success 'rev-list --ancestry-path G..M -- G.t' '
+	echo L >expect &&
+	git rev-list --ancestry-path --format=%s G..M -- G.t |
+	sed -e "/^commit /d" >actual &&
+	test_cmp expect actual
+'
+
+test_expect_success 'rev-list --ancestry-path --simplify-merges G^..M -- G.t' '
+	for c in G L; do echo $c; done >expect &&
+	git rev-list --ancestry-path --simplify-merges --format=%s G^..M -- G.t |
 	sed -e "/^commit /d" |
 	sort >actual &&
 	test_cmp expect actual

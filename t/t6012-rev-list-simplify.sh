@@ -14,21 +14,24 @@ unnote () {
 
 test_expect_success setup '
 	echo "Hi there" >file &&
-	git add file &&
-	test_tick && git commit -m "Initial file" &&
+	echo "initial" >lost &&
+	git add file lost &&
+	test_tick && git commit -m "Initial file and lost" &&
 	note A &&
 
 	git branch other-branch &&
 
 	echo "Hello" >file &&
-	git add file &&
-	test_tick && git commit -m "Modified file" &&
+	echo "second" >lost &&
+	git add file lost &&
+	test_tick && git commit -m "Modified file and lost" &&
 	note B &&
 
 	git checkout other-branch &&
 
 	echo "Hello" >file &&
-	git add file &&
+	>lost &&
+	git add file lost &&
 	test_tick && git commit -m "Modified the file identically" &&
 	note C &&
 
@@ -37,7 +40,9 @@ test_expect_success setup '
 	test_tick && git commit -m "Add another file" &&
 	note D &&
 
-	test_tick && git merge -m "merge" master &&
+	test_tick &&
+	test_must_fail git merge -m "merge" master &&
+	>lost && git commit -a -m "merge" &&
 	note E &&
 
 	echo "Yet another" >elif &&
@@ -105,9 +110,21 @@ check_result 'L K J I H G F E D C B A' --full-history
 check_result 'K I H E C B A' --full-history -- file
 check_result 'K I H E C B A' --full-history --topo-order -- file
 check_result 'K I H E C B A' --full-history --date-order -- file
-check_outcome failure 'I E C B A' --simplify-merges -- file
+check_result 'I E C B A' --simplify-merges -- file
 check_result 'I B A' -- file
 check_result 'I B A' --topo-order -- file
 check_result 'H' --first-parent -- another-file
+
+check_result 'E C B A' --full-history E -- lost
+test_expect_success 'full history simplification without parent' '
+	printf "%s\n" E C B A >expect &&
+	git log --pretty="$FMT" --full-history E -- lost |
+	unnote >actual &&
+	sed -e "s/^.*	\([^ ]*\) .*/\1/" >check <actual &&
+	test_cmp expect check || {
+		cat actual
+		false
+	}
+'
 
 test_done
