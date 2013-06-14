@@ -1168,7 +1168,7 @@ sub mw_push_revision {
 		my %local_ancestry;
 		foreach my $line (@local_ancestry) {
 			if (my ($child, $parents) = $line =~ /^-?([a-f0-9]+) ([a-f0-9 ]+)/) {
-				foreach my $parent (split(' ', $parents)) {
+				foreach my $parent (split(/ /, $parents)) {
 					$local_ancestry{$parent} = $child;
 				}
 			} elsif (!$line =~ /^([a-f0-9]+)/) {
