@@ -187,6 +187,7 @@ sub mw_connect_maybe {
 			exit 1;
 		}
 	}
+	return;
 }
 
 sub fatal_mw_error {
@@ -209,6 +210,7 @@ sub fatal_mw_error {
 sub get_mw_tracked_pages {
 	my $pages = shift;
 	get_mw_page_list(\@tracked_pages, $pages);
+	return;
 }
 
 sub get_mw_page_list {
@@ -224,6 +226,7 @@ sub get_mw_page_list {
 		get_mw_first_pages(\@slice, $pages);
 		@some_pages = @some_pages[51..$#some_pages];
 	}
+	return;
 }
 
 sub get_mw_tracked_categories {
@@ -246,6 +249,7 @@ sub get_mw_tracked_categories {
 			$pages->{$page->{title}} = $page;
 		}
 	}
+	return;
 }
 
 sub get_mw_all_pages {
@@ -262,6 +266,7 @@ sub get_mw_all_pages {
 	foreach my $page (@{$mw_pages}) {
 		$pages->{$page->{title}} = $page;
 	}
+	return;
 }
 
 # queries the wiki for a set of pages. Meant to be used within a loop
@@ -289,6 +294,7 @@ sub get_mw_first_pages {
 			$pages->{$page->{title}} = $page;
 		}
 	}
+	return;
 }
 
 # Get the list of pages to be fetched according to configuration.
@@ -357,6 +363,7 @@ sub get_all_mediafiles {
 	foreach my $page (@{$mw_pages}) {
 		$pages->{$page->{title}} = $page;
 	}
+	return;
 }
 
 sub get_linked_mediafiles {
@@ -403,6 +410,7 @@ sub get_linked_mediafiles {
 
 		@titles = @titles[($batch+1)..$#titles];
 	}
+	return;
 }
 
 sub get_mw_mediafile_for_page_revision {
@@ -578,6 +586,7 @@ sub mediawiki_smudge_filename {
 sub literal_data {
 	my ($content) = @_;
 	print STDOUT "data ", bytes::length($content), "\n", $content;
+	return;
 }
 
 sub literal_data_raw {
@@ -588,6 +597,7 @@ sub literal_data_raw {
 	binmode STDOUT, ":raw";
 	print STDOUT "data ", bytes::length($content), "\n", $content;
 	binmode STDOUT, ":encoding(UTF-8)";
+	return;
 }
 
 sub mw_capabilities {
@@ -599,6 +609,7 @@ sub mw_capabilities {
 	print STDOUT "list\n";
 	print STDOUT "push\n";
 	print STDOUT "\n";
+	return;
 }
 
 sub mw_list {
@@ -607,11 +618,13 @@ sub mw_list {
 	print STDOUT "? refs/heads/master\n";
 	print STDOUT "\@refs/heads/master HEAD\n";
 	print STDOUT "\n";
+	return;
 }
 
 sub mw_option {
 	print STDERR "remote-helper command 'option $_[0]' not yet implemented\n";
 	print STDOUT "unsupported\n";
+	return;
 }
 
 sub fetch_mw_revisions_for_page {
@@ -733,6 +746,7 @@ sub import_file_revision {
 	print STDOUT "N inline :$n\n";
 	literal_data("mediawiki_revision: " . $commit{mw_revision});
 	print STDOUT "\n\n";
+	return;
 }
 
 # parse a sequence of
@@ -753,6 +767,7 @@ sub get_more_refs {
 			die("Invalid command in a '$cmd' batch: ". $_);
 		}
 	}
+	return;
 }
 
 sub mw_import {
@@ -762,6 +777,7 @@ sub mw_import {
 		mw_import_ref($ref);
 	}
 	print STDOUT "done\n";
+	return;
 }
 
 sub mw_import_ref {
@@ -805,6 +821,7 @@ sub mw_import_ref {
 		# thrown saying that HEAD is referring to unknown object 0000000000000000000
 		# and the clone fails.
 	}
+	return;
 }
 
 sub mw_import_ref_by_pages {
@@ -1111,6 +1128,7 @@ sub mw_push {
 		print STDERR "  git pull --rebase\n";
 		print STDERR "\n";
 	}
+	return;
 }
 
 sub mw_push_revision {
