@@ -868,4 +868,16 @@ test_expect_success 'submodule deinit fails when submodule has a .git directory 
 	test -n "$(git config --get-regexp "submodule\.example\.")"
 '
 
+test_expect_success 'submodule with strange name works "å äö"' '
+	mkdir "å äö" &&
+	(
+		cd "å äö" &&
+		git init &&
+		touch sub
+		git add sub
+		git commit -m "init sub"
+	)
+	git submodule add "/å äö" &&
+	test -n "$(git submodule | grep "å äö")"
+'
 test_done
