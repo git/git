@@ -1170,7 +1170,7 @@ sub mw_push_revision {
 		# history (linearized with --first-parent)
 		print STDERR "Warning: no common ancestor, pushing complete history\n";
 		my $history = run_git("rev-list --first-parent --children $local");
-		my @history = split('\n', $history);
+		my @history = split(/\n/, $history);
 		@history = @history[1..$#history];
 		foreach my $line (reverse @history) {
 			my @commit_info_split = split(/ |\n/, $line);
