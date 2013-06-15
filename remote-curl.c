@@ -866,9 +866,10 @@ static void parse_push(struct strbuf *buf)
 	free(specs);
 }
 
-int main(int argc, const char **argv)
+int main(int argc, char **av)
 {
 	struct strbuf buf = STRBUF_INIT;
+	const char **argv = (const char **)av;
 	int nongit;
 
 	git_extract_argv0_path(argv[0]);
