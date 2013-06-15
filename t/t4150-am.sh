@@ -363,6 +363,12 @@ test_expect_success 'am --skip works' '
 	test_cmp expected another
 '
 
+test_expect_success 'am --abort removes a stray directory' '
+	mkdir .git/rebase-apply &&
+	git am --abort &&
+	test_path_is_missing .git/rebase-apply
+'
+
 test_expect_success 'am --resolved works' '
 	echo goodbye >expected &&
 	rm -fr .git/rebase-apply &&
