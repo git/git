@@ -546,10 +546,7 @@ clear)
 	clear_stash "$@"
 	;;
 create)
-	if test $# -gt 0 && test "$1" = create
-	then
-		shift
-	fi
+	shift
 	create_stash "$*" && echo "$w_commit"
 	;;
 drop)
