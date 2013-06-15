@@ -46,7 +46,7 @@ struct traverse_info {
 	int pathlen;
 	struct pathspec *pathspec;
 
-	unsigned long conflicts;
+	unsigned long df_conflicts;
 	traverse_callback_t fn;
 	void *data;
 	int show_all_errors;
