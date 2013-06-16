@@ -174,7 +174,7 @@ test_expect_success '"git submodule sync" handles origin URL of the form foo/bar
 			cd submodule &&
 			#actual foo/submodule
 			test "$(git config remote.origin.url)" = "../foo/submodule"
-		)
+		) &&
 		(
 			cd submodule/sub-submodule &&
 			test "$(git config remote.origin.url)" != "../../foo/submodule"
@@ -191,7 +191,7 @@ test_expect_success '"git submodule sync --recursive" propagates changes in orig
 			cd submodule &&
 			#actual foo/submodule
 			test "$(git config remote.origin.url)" = "../foo/submodule"
-		)
+		) &&
 		(
 			cd submodule/sub-submodule &&
 			test "$(git config remote.origin.url)" = "../../foo/submodule"
