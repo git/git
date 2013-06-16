@@ -485,7 +485,7 @@ cmd_foreach()
 					cmd_foreach "--recursive" "$@"
 				fi
 			) <&3 3<&- ||
-			die "$(eval_gettext "Stopping at '\$sm_path'; script returned non-zero status.")"
+			die "$(eval_gettext "Stopping at '\$prefix\$sm_path'; script returned non-zero status.")"
 		fi
 	done
 }
