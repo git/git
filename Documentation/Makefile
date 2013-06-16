@@ -81,6 +81,7 @@ DOC_MAN7 = $(patsubst %.txt,%.7,$(MAN7_TXT))
 prefix ?= $(HOME)
 bindir ?= $(prefix)/bin
 htmldir ?= $(prefix)/share/doc/git-doc
+infodir ?= $(prefix)/share/info
 pdfdir ?= $(prefix)/share/doc/git-doc
 mandir ?= $(prefix)/share/man
 man1dir = $(mandir)/man1
@@ -98,7 +99,6 @@ RM ?= rm -f
 MAN_REPO = ../../git-manpages
 HTML_REPO = ../../git-htmldocs
 
-infodir ?= $(prefix)/share/info
 MAKEINFO = makeinfo
 INSTALL_INFO = install-info
 DOCBOOK2X_TEXI = docbook2x-texi
