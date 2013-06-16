@@ -45,6 +45,42 @@ EOF
 	test_cmp expected actual
 "
 
+test_expect_success 'added submodule (subdirectory)' "
+	mkdir sub &&
+	(
+		cd sub &&
+		git submodule summary >../actual
+	) &&
+	cat >expected <<-EOF &&
+* ../sm1 0000000...$head1 (2):
+  > Add foo2
+
+EOF
+	test_cmp expected actual
+"
+
+test_expect_success 'added submodule (subdirectory only)' "
+	(
+		cd sub &&
+		git submodule summary . >../actual
+	) &&
+	>expected &&
+	test_cmp expected actual
+"
+
+test_expect_success 'added submodule (subdirectory with explicit path)' "
+	(
+		cd sub &&
+		git submodule summary ../sm1 >../actual
+	) &&
+	cat >expected <<-EOF &&
+* ../sm1 0000000...$head1 (2):
+  > Add foo2
+
+EOF
+	test_cmp expected actual
+"
+
 commit_file sm1 &&
 head2=$(add_file sm1 foo3)
 

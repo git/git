@@ -80,6 +80,21 @@ test_expect_success 'submodule update detaching the HEAD ' '
 	)
 '
 
+test_expect_success 'submodule update from subdirectory' '
+	(cd super/submodule &&
+	 git reset --hard HEAD~1
+	) &&
+	mkdir super/sub &&
+	(cd super/sub &&
+	 (cd ../submodule &&
+	  compare_head
+	 ) &&
+	 git submodule update ../submodule &&
+	 cd ../submodule &&
+	 ! compare_head
+	)
+'
+
 apos="'";
 test_expect_success 'submodule update does not fetch already present commits' '
 	(cd submodule &&
