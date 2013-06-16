@@ -6,6 +6,9 @@ Updates since v1.8.3
 
 Foreign interfaces and ports.
 
+ * MediaWiki remote helper (in contrib/) has been updated to use the
+   credential helper interface from Git.pm.
+
  * Update build for Cygwin 1.[57].  Torsten Bögershausen reports that
    this is fine with Cygwin 1.7 ($gmane/225824) so let's try moving it
    ahead.
@@ -85,6 +88,13 @@ UI, Workflows & Features
 
 Performance, Internal Implementation, etc.
 
+ * Memory ownership and lifetime rules for what for-each-ref feeds to
+   its callbacks have been clarified (in short, "you do not own it, so
+   make a copy if you want to keep it").
+
+ * The revision traversal logic to improve culling of irrelevant
+   parents while traversing a mergy history has been updated.
+
  * Some leaks in unpack-trees (used in merge, cherry-pick and other
    codepaths) have been plugged.
 
@@ -121,6 +131,13 @@ Fixes since v1.8.3
 Unless otherwise noted, all the fixes since v1.8.3 in the maintenance
 track are contained in this release (see release notes to them for
 details).
+
+ * Logic used by git-send-email to suppress cc mishandled names like
+   "A U. Thor" <author@example.xz>, where the human readable part
+   needs to be quoted (the user input may not have the double quotes
+   around the name, and comparison was done between quoted and
+   unquoted strings).
+   (merge 1495266 mt/send-email-cc-match-fix later to maint).
 
  * "gitweb" forgot to clear a global variable $search_regexp upon each
    request, mistakenly carrying over the previous search to a new one
