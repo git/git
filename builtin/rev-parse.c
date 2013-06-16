@@ -212,11 +212,17 @@ static void show_datestring(const char *flag, const char *datestr)
 	show(buffer);
 }
 
-static int show_file(const char *arg)
+static int show_file(const char *arg, int output_prefix)
 {
 	show_default();
 	if ((filter & (DO_NONFLAGS|DO_NOREV)) == (DO_NONFLAGS|DO_NOREV)) {
-		show(arg);
+		if (output_prefix) {
+			const char *prefix = startup_info->prefix;
+			show(prefix_filename(prefix,
+					     prefix ? strlen(prefix) : 0,
+					     arg));
+		} else
+			show(arg);
 		return 1;
 	}
 	return 0;
@@ -470,6 +476,7 @@ N_("git rev-parse --parseopt [options] -- [<args>...]\n"
 int cmd_rev_parse(int argc, const char **argv, const char *prefix)
 {
 	int i, as_is = 0, verify = 0, quiet = 0, revs_count = 0, type = 0;
+	int output_prefix = 0;
 	unsigned char sha1[20];
 	const char *name = NULL;
 
@@ -503,7 +510,7 @@ int cmd_rev_parse(int argc, const char **argv, const char *prefix)
 		const char *arg = argv[i];
 
 		if (as_is) {
-			if (show_file(arg) && as_is < 2)
+			if (show_file(arg, output_prefix) && as_is < 2)
 				verify_filename(prefix, arg, 0);
 			continue;
 		}
@@ -527,11 +534,18 @@ int cmd_rev_parse(int argc, const char **argv, const char *prefix)
 				as_is = 2;
 				/* Pass on the "--" if we show anything but files.. */
 				if (filter & (DO_FLAGS | DO_REVS))
-					show_file(arg);
+					show_file(arg, 0);
 				continue;
 			}
 			if (!strcmp(arg, "--default")) {
 				def = argv[i+1];
+				i++;
+				continue;
+			}
+			if (!strcmp(arg, "--prefix")) {
+				prefix = argv[i+1];
+				startup_info->prefix = prefix;
+				output_prefix = 1;
 				i++;
 				continue;
 			}
@@ -754,7 +768,7 @@ int cmd_rev_parse(int argc, const char **argv, const char *prefix)
 		if (verify)
 			die_no_single_rev(quiet);
 		as_is = 1;
-		if (!show_file(arg))
+		if (!show_file(arg, output_prefix))
 			continue;
 		verify_filename(prefix, arg, 1);
 	}
