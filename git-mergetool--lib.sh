@@ -114,6 +114,33 @@ valid_tool () {
 	test -n "$cmd"
 }
 
+setup_user_tool () {
+	merge_tool_cmd=$(get_merge_tool_cmd "$tool")
+	test -n "$merge_tool_cmd" || return 1
+
+	diff_cmd () {
+		( eval $merge_tool_cmd )
+		status=$?
+		return $status
+	}
+
+	merge_cmd () {
+		trust_exit_code=$(git config --bool \
+			"mergetool.$1.trustExitCode" || echo false)
+		if test "$trust_exit_code" = "false"
+		then
+			touch "$BACKUP"
+			( eval $merge_tool_cmd )
+			status=$?
+			check_unchanged
+		else
+			( eval $merge_tool_cmd )
+			status=$?
+		fi
+		return $status
+	}
+}
+
 setup_tool () {
 	tool="$1"
 
@@ -142,15 +169,15 @@ setup_tool () {
 
 	if ! test -f "$MERGE_TOOLS_DIR/$tool"
 	then
-		# Use a special return code for this case since we want to
-		# source "defaults" even when an explicit tool path is
-		# configured since the user can use that to override the
-		# default path in the scriptlet.
-		return 2
+		setup_user_tool
+		return $?
 	fi
 
 	# Load the redefined functions
 	. "$MERGE_TOOLS_DIR/$tool"
+	# Now let the user override the default command for the tool.  If
+	# they have not done so then this will return 1 which we ignore.
+	setup_user_tool
 
 	if merge_mode && ! can_merge
 	then
@@ -187,20 +214,7 @@ run_merge_tool () {
 	status=0
 
 	# Bring tool-specific functions into scope
-	setup_tool "$1"
-	exitcode=$?
-	case $exitcode in
-	0)
-		:
-		;;
-	2)
-		# The configured tool is not a built-in tool.
-		test -n "$merge_tool_path" || return 1
-		;;
-	*)
-		return $exitcode
-		;;
-	esac
+	setup_tool "$1" || return 1
 
 	if merge_mode
 	then
@@ -213,38 +227,12 @@ run_merge_tool () {
 
 # Run a either a configured or built-in diff tool
 run_diff_cmd () {
-	merge_tool_cmd=$(get_merge_tool_cmd "$1")
-	if test -n "$merge_tool_cmd"
-	then
-		( eval $merge_tool_cmd )
-		status=$?
-		return $status
-	else
-		diff_cmd "$1"
-	fi
+	diff_cmd "$1"
 }
 
 # Run a either a configured or built-in merge tool
 run_merge_cmd () {
-	merge_tool_cmd=$(get_merge_tool_cmd "$1")
-	if test -n "$merge_tool_cmd"
-	then
-		trust_exit_code=$(git config --bool \
-			"mergetool.$1.trustExitCode" || echo false)
-		if test "$trust_exit_code" = "false"
-		then
-			touch "$BACKUP"
-			( eval $merge_tool_cmd )
-			status=$?
-			check_unchanged
-		else
-			( eval $merge_tool_cmd )
-			status=$?
-		fi
-		return $status
-	else
-		merge_cmd "$1"
-	fi
+	merge_cmd "$1"
 }
 
 list_merge_tool_candidates () {
