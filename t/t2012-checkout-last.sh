@@ -116,7 +116,7 @@ test_expect_success 'master...' '
 	test "z$(git rev-parse --verify HEAD)" = "z$(git rev-parse --verify master^)"
 '
 
-test_expect_failure '"checkout -" works after a rebase A' '
+test_expect_success '"checkout -" works after a rebase A' '
 	git checkout master &&
 	git checkout other &&
 	git rebase master &&
@@ -124,7 +124,7 @@ test_expect_failure '"checkout -" works after a rebase A' '
 	test "z$(git symbolic-ref HEAD)" = "zrefs/heads/master"
 '
 
-test_expect_failure '"checkout -" works after a rebase A B' '
+test_expect_success '"checkout -" works after a rebase A B' '
 	git branch moodle master~1 &&
 	git checkout master &&
 	git checkout other &&
@@ -133,7 +133,7 @@ test_expect_failure '"checkout -" works after a rebase A B' '
 	test "z$(git symbolic-ref HEAD)" = "zrefs/heads/master"
 '
 
-test_expect_failure '"checkout -" works after a rebase -i A' '
+test_expect_success '"checkout -" works after a rebase -i A' '
 	git checkout master &&
 	git checkout other &&
 	git rebase -i master &&
@@ -141,7 +141,7 @@ test_expect_failure '"checkout -" works after a rebase -i A' '
 	test "z$(git symbolic-ref HEAD)" = "zrefs/heads/master"
 '
 
-test_expect_failure '"checkout -" works after a rebase -i A B' '
+test_expect_success '"checkout -" works after a rebase -i A B' '
 	git branch foodle master~1 &&
 	git checkout master &&
 	git checkout other &&
