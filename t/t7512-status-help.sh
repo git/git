@@ -667,11 +667,19 @@ test_expect_success 'status when cherry-picking after resolving conflicts' '
 	test_i18ncmp expected actual
 '
 
-test_expect_success 'status showing detached from a tag' '
+test_expect_success 'status showing detached at and from a tag' '
 	test_commit atag tagging &&
 	git checkout atag &&
 	cat >expected <<-\EOF
 	# HEAD detached at atag
+	nothing to commit (use -u to show untracked files)
+	EOF
+	git status --untracked-files=no >actual &&
+	test_i18ncmp expected actual &&
+
+	git reset --hard HEAD^ &&
+	cat >expected <<-\EOF
+	# HEAD detached from atag
 	nothing to commit (use -u to show untracked files)
 	EOF
 	git status --untracked-files=no >actual &&
