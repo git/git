@@ -1129,16 +1129,16 @@ cmd_status()
 			say "-$sha1 $displaypath"
 			continue;
 		fi
-		set_name_rev "$sm_path" "$sha1"
 		if git diff-files --ignore-submodules=dirty --quiet -- "$sm_path"
 		then
+			set_name_rev "$sm_path" "$sha1"
 			say " $sha1 $displaypath$revname"
 		else
 			if test -z "$cached"
 			then
 				sha1=$(clear_local_git_env; cd "$sm_path" && git rev-parse --verify HEAD)
-				set_name_rev "$sm_path" "$sha1"
 			fi
+			set_name_rev "$sm_path" "$sha1"
 			say "+$sha1 $displaypath$revname"
 		fi
 
