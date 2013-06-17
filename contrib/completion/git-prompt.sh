@@ -461,7 +461,11 @@ __git_ps1 ()
 		else
 			gitstring="$c${b##refs/heads/}${f:+$z$f}$r$p"
 		fi
-		gitstring=$(printf -- "$printf_format" "$gitstring")
+		if [[ -n ${ZSH_VERSION-} ]]; then
+			gitstring=$(printf -- "$printf_format" "$gitstring")
+		else
+			printf -v gitstring -- "$printf_format" "$gitstring"
+		fi
 		PS1="$ps1pc_start$gitstring$ps1pc_end"
 	else
 		# NO color option unless in PROMPT_COMMAND mode
