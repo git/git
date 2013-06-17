@@ -286,7 +286,9 @@ method _next {action} {
 	destroy $w_body
 	if {![winfo exists $w_next]} {
 		${NS}::button $w_next -default active
-		pack $w_next -side right -padx 5 -before $w_quit
+		set pos -before
+		if {[tk windowingsystem] eq "win32"} { set pos -after }
+		pack $w_next -side right -padx 5 $pos $w_quit
 	}
 	_do_$action $this
 }

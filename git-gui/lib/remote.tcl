@@ -245,7 +245,8 @@ proc update_all_remotes_menu_entry {} {
 	set prune_m $remote_m.prune
 	if {$have_remote > 1} {
 		make_sure_remote_submenues_exist $remote_m
-		if {[$fetch_m entrycget end -label] ne "All"} {
+		if {[$fetch_m type end] eq "command" \
+			&& [$fetch_m entrycget end -label] ne "All"} {
 
 			$fetch_m insert end separator
 			$fetch_m insert end command \
@@ -259,7 +260,8 @@ proc update_all_remotes_menu_entry {} {
 		}
 	} else {
 		if {[winfo exists $fetch_m]} {
-			if {[$fetch_m entrycget end -label] eq "All"} {
+			if {[$fetch_m type end] eq "command" \
+				&& [$fetch_m entrycget end -label] eq "All"} {
 
 				delete_from_menu $fetch_m end
 				delete_from_menu $fetch_m end

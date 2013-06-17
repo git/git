@@ -189,9 +189,9 @@ proc merge_resolve_tool2 {} {
 	}
 	bc3 {
 		if {$base_stage ne {}} {
-			set cmdline [list "$merge_tool_path" "$LOCAL" "$REMOTE" "$BASE" -mergeoutput="$MERGED"]
+			set cmdline [list "$merge_tool_path" "$LOCAL" "$REMOTE" "$BASE" "-mergeoutput=$MERGED"]
 		} else {
-			set cmdline [list "$merge_tool_path" "$LOCAL" "$REMOTE" -mergeoutput="$MERGED"]
+			set cmdline [list "$merge_tool_path" "$LOCAL" "$REMOTE" "-mergeoutput=$MERGED"]
 		}
 	}
 	ecmerge {

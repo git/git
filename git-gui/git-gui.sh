@@ -137,6 +137,20 @@ unset oguimsg
 
 ######################################################################
 ##
+## On Mac, bring the current Wish process window to front
+
+if {[tk windowingsystem] eq "aqua"} {
+	catch {
+		exec osascript -e [format {
+			tell application "System Events"
+				set frontmost of processes whose unix id is %d to true
+			end tell
+		} [pid]]
+	}
+}
+
+######################################################################
+##
 ## read only globals
 
 set _appname {Git Gui}
@@ -3003,18 +3017,11 @@ blame {
 	set jump_spec {}
 	set is_path 0
 	foreach a $argv {
-		if {[file exists $a]} {
-			if {$path ne {}} usage
-			set path [normalize_relpath $a]
-			break
-		} elseif {[file exists $_prefix$a]} {
-			if {$path ne {}} usage
-			set path [normalize_relpath $_prefix$a]
-			break
-		}
+		set p [file join $_prefix $a]
 
-		if {$is_path} {
+		if {$is_path || [file exists $p]} {
 			if {$path ne {}} usage
+			set path [normalize_relpath $p]
 			break
 		} elseif {$a eq {--}} {
 			if {$path ne {}} {
