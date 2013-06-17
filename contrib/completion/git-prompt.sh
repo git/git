@@ -80,30 +80,6 @@
 # GIT_PS1_SHOWCOLORHINTS to a nonempty value. The colors are based on
 # the colored output of "git status -sb".
 
-# __gitdir accepts 0 or 1 arguments (i.e., location)
-# returns location of .git repo
-__gitdir ()
-{
-	# Note: this function is duplicated in git-completion.bash
-	# When updating it, make sure you update the other one to match.
-	if [ -z "${1-}" ]; then
-		if [ -n "${__git_dir-}" ]; then
-			echo "$__git_dir"
-		elif [ -n "${GIT_DIR-}" ]; then
-			test -d "${GIT_DIR-}" || return 1
-			echo "$GIT_DIR"
-		elif [ -d .git ]; then
-			echo .git
-		else
-			git rev-parse --git-dir 2>/dev/null
-		fi
-	elif [ -d "$1/.git" ]; then
-		echo "$1/.git"
-	else
-		echo "$1"
-	fi
-}
-
 # stores the divergence from upstream in $p
 # used by GIT_PS1_SHOWUPSTREAM
 __git_ps1_show_upstream ()
@@ -335,7 +311,7 @@ __git_ps1 ()
 		;;
 	esac
 
-	local g="$(__gitdir)"
+	local g="$(git rev-parse --git-dir 2>/dev/null)"
 	if [ -z "$g" ]; then
 		if [ $pcmode = yes ]; then
 			#In PC mode PS1 always needs to be set
