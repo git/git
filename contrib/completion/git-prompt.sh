@@ -311,14 +311,22 @@ __git_ps1 ()
 		;;
 	esac
 
-	local g="$(git rev-parse --git-dir 2>/dev/null)"
-	if [ -z "$g" ]; then
+	local repo_info="$(git rev-parse --git-dir --is-inside-git-dir \
+		--is-bare-repository --is-inside-work-tree 2>/dev/null)"
+	if [ -z "$repo_info" ]; then
 		if [ $pcmode = yes ]; then
 			#In PC mode PS1 always needs to be set
 			PS1="$ps1pc_start$ps1pc_end"
 		fi
 		return
 	fi
+
+	local inside_worktree="${repo_info##*$'\n'}"
+	repo_info="${repo_info%$'\n'*}"
+	local bare_repo="${repo_info##*$'\n'}"
+	repo_info="${repo_info%$'\n'*}"
+	local inside_gitdir="${repo_info##*$'\n'}"
+	local g="${repo_info%$'\n'*}"
 
 	local r=""
 	local b=""
@@ -402,13 +410,13 @@ __git_ps1 ()
 	local c=""
 	local p=""
 
-	if [ "true" = "$(git rev-parse --is-inside-git-dir 2>/dev/null)" ]; then
-		if [ "true" = "$(git rev-parse --is-bare-repository 2>/dev/null)" ]; then
+	if [ "true" = "$inside_gitdir" ]; then
+		if [ "true" = "$bare_repo" ]; then
 			c="BARE:"
 		else
 			b="GIT_DIR!"
 		fi
-	elif [ "true" = "$(git rev-parse --is-inside-work-tree 2>/dev/null)" ]; then
+	elif [ "true" = "$inside_worktree" ]; then
 		if [ -n "${GIT_PS1_SHOWDIRTYSTATE-}" ] &&
 		   [ "$(git config --bool bash.showDirtyState)" != "false" ]
 		then
