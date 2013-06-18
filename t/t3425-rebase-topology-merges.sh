@@ -30,7 +30,7 @@ test_expect_success 'setup of non-linear-history' '
 	test_commit g &&
 	revert h g &&
 	git checkout d &&
-	cherry_pick G g &&
+	cherry_pick gp g &&
 	test_commit i &&
 	git checkout b &&
 	test_commit f
@@ -154,11 +154,11 @@ test_expect_success "rebase -p can re-create two branches on onto" "
 #      /
 # a---b---c---g---h
 #      \
-#       d---G---i
+#       d---gp--i
 #        \       \
 #         e-------u
 #
-# uppercase = cherry-picked
+# gp = cherry-picked g
 # h = reverted g
 test_expect_success 'setup of non-linear-history for patch-equivalence tests' '
 	git checkout e &&
@@ -186,24 +186,24 @@ test_expect_success "rebase -p --onto in merged history does not drop patches in
 	git rebase -p --onto h f u &&
 	test_cmp_rev h HEAD~3 &&
 	test_cmp_rev HEAD^2~2 HEAD~2 &&
-	test_revision_subjects 'd G i e u' HEAD~2 HEAD^2^ HEAD^2 HEAD^ HEAD
+	test_revision_subjects 'd gp i e u' HEAD~2 HEAD^2^ HEAD^2 HEAD^ HEAD
 "
 
 # a---b---c---g---h
 #      \
-#       d---G---s
+#       d---gp--s
 #        \   \ /
 #         \   X
 #          \ / \
 #           e---t
 #
-# uppercase = cherry-picked
+# gp = cherry-picked g
 # h = reverted g
 test_expect_success 'setup of non-linear-history for dropping whole side' '
-	git checkout G &&
+	git checkout gp &&
 	test_merge s e &&
 	git checkout e &&
-	test_merge t G
+	test_merge t gp
 '
 
 test_expect_failure "rebase -p drops merge commit when entire first-parent side is dropped" "

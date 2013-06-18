@@ -79,9 +79,9 @@ test_run_rebase success -p
 #      /
 # a---b---c---g---h
 #      \
-#       d---G---i
+#       d---gp--i
 #
-# uppercase = cherry-picked
+# gp = cherry-picked g
 # h = reverted g
 #
 # Reverted patches are there for tests to be able to check if a commit
@@ -94,7 +94,7 @@ test_expect_success 'setup of linear history for range selection tests' '
 	test_commit g &&
 	revert h g &&
 	git checkout d &&
-	cherry_pick G g &&
+	cherry_pick gp g &&
 	test_commit i &&
 	git checkout b &&
 	test_commit f
@@ -120,7 +120,7 @@ test_run_rebase () {
 	shift
 	test_expect_$result "rebase $* can drop last patch if in upstream" "
 		reset_rebase &&
-		git rebase $* h G &&
+		git rebase $* h gp &&
 		test_cmp_rev h HEAD^ &&
 		test_linear_range 'd' h..
 	"
@@ -152,7 +152,7 @@ test_run_rebase () {
 		reset_rebase &&
 		git rebase $* --onto h f i &&
 		test_cmp_rev h HEAD~3 &&
-		test_linear_range 'd G i' h..
+		test_linear_range 'd gp i' h..
 	"
 }
 test_run_rebase success ''
@@ -222,9 +222,9 @@ test_run_rebase failure -p
 #      /
 # a---b---c---g
 #
-# x---y---B
+# x---y---bp
 #
-# uppercase = cherry-picked
+# bp = cherry-picked b
 # m = reverted b
 #
 # Reverted patches are there for tests to be able to check if a commit
@@ -239,7 +239,7 @@ test_expect_success 'setup of linear history for test involving root' '
 	git rm -rf . &&
 	test_commit x &&
 	test_commit y &&
-	cherry_pick B b
+	cherry_pick bp b
 '
 
 test_run_rebase () {
@@ -277,7 +277,7 @@ test_run_rebase () {
 	shift
 	test_expect_$result "rebase $* --onto --root drops patch in onto" "
 		reset_rebase &&
-		git rebase $* --onto m --root B &&
+		git rebase $* --onto m --root bp &&
 		test_cmp_rev m HEAD~2 &&
 		test_linear_range 'x y' m..
 	"
@@ -308,7 +308,7 @@ test_run_rebase () {
 	shift
 	test_expect_$result "rebase $* without --onto --root with disjoint history drops patch in onto" "
 		reset_rebase &&
-		git rebase $* m B &&
+		git rebase $* m bp &&
 		test_cmp_rev m HEAD~2 &&
 		test_linear_range 'x y' m..
 	"
