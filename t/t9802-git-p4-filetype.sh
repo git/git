@@ -95,7 +95,7 @@ test_expect_success 'gitattributes setting eol=lf produces lf newlines' '
 		git init &&
 		echo "* eol=lf" >.gitattributes &&
 		git p4 sync //depot@all &&
-		git checkout master &&
+		git checkout -b master p4/master &&
 		test_cmp "$cli"/f-unix-orig f-unix &&
 		test_cmp "$cli"/f-win-as-lf f-win
 	)
@@ -109,7 +109,7 @@ test_expect_success 'gitattributes setting eol=crlf produces crlf newlines' '
 		git init &&
 		echo "* eol=crlf" >.gitattributes &&
 		git p4 sync //depot@all &&
-		git checkout master &&
+		git checkout -b master p4/master &&
 		test_cmp "$cli"/f-unix-as-crlf f-unix &&
 		test_cmp "$cli"/f-win-orig f-win
 	)
