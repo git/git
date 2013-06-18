@@ -369,8 +369,15 @@ test_run_ () {
 	return "$eval_ret"
 }
 
-test_skip () {
+test_start_ () {
 	test_count=$(($test_count+1))
+}
+
+test_finish_ () {
+	echo >&3 ""
+}
+
+test_skip () {
 	to_skip=
 	if match_pattern_list $this_test.$test_count $GIT_SKIP_TESTS
 	then
