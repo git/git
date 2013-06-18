@@ -956,7 +956,7 @@ test_expect_success $PREREQ 'utf8 author is correctly passed on' '
 	grep "^From: Füñný Nâmé <odd_?=mail@example.com>" msgtxt1
 '
 
-test_expect_failure $PREREQ 'utf8 sender is not duplicated' '
+test_expect_success $PREREQ 'utf8 sender is not duplicated' '
 	clean_fake_sendmail &&
 	test_commit weird_sender &&
 	test_when_finished "git reset --hard HEAD^" &&
