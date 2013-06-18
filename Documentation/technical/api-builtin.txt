@@ -39,7 +39,7 @@ where options is the bitwise-or of:
 	on bare repositories.
 	This only makes sense when `RUN_SETUP` is also set.
 
-. Add `builtin-foo.o` to `BUILTIN_OBJS` in `Makefile`.
+. Add `builtin/foo.o` to `BUILTIN_OBJS` in `Makefile`.
 
 Additionally, if `foo` is a new command, there are 3 more things to do:
 

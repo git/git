@@ -1,6 +1,4 @@
 /*
- * builtin-help.c
- *
  * Builtin help command
  */
 #include "cache.h"
