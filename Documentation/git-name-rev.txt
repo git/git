@@ -25,7 +25,8 @@ OPTIONS
 	Do not use branch names, but only tags to name the commits
 
 --refs=<pattern>::
-	Only use refs whose names match a given shell pattern.
+	Only use refs whose names match a given shell pattern.  The pattern
+	can be one of branch name, tag name or fully qualified ref name.
 
 --all::
 	List all commits reachable from all refs

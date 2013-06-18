@@ -82,6 +82,20 @@ copy_data:
 	}
 }
 
+static int subpath_matches(const char *path, const char *filter)
+{
+	const char *subpath = path;
+
+	while (subpath) {
+		if (!fnmatch(filter, subpath, 0))
+			return subpath - path;
+		subpath = strchr(subpath, '/');
+		if (subpath)
+			subpath++;
+	}
+	return -1;
+}
+
 struct name_ref_data {
 	int tags_only;
 	int name_only;
@@ -92,13 +106,23 @@ static int name_ref(const char *path, const unsigned char *sha1, int flags, void
 {
 	struct object *o = parse_object(sha1);
 	struct name_ref_data *data = cb_data;
+	int can_abbreviate_output = data->tags_only && data->name_only;
 	int deref = 0;
 
 	if (data->tags_only && prefixcmp(path, "refs/tags/"))
 		return 0;
 
-	if (data->ref_filter && fnmatch(data->ref_filter, path, 0))
-		return 0;
+	if (data->ref_filter) {
+		switch (subpath_matches(path, data->ref_filter)) {
+		case -1: /* did not match */
+			return 0;
+		case 0:  /* matched fully */
+			break;
+		default: /* matched subpath */
+			can_abbreviate_output = 1;
+			break;
+		}
+	}
 
 	while (o && o->type == OBJ_TAG) {
 		struct tag *t = (struct tag *) o;
@@ -110,12 +134,10 @@ static int name_ref(const char *path, const unsigned char *sha1, int flags, void
 	if (o && o->type == OBJ_COMMIT) {
 		struct commit *commit = (struct commit *)o;
 
-		if (!prefixcmp(path, "refs/heads/"))
+		if (can_abbreviate_output)
+			path = shorten_unambiguous_ref(path, 0);
+		else if (!prefixcmp(path, "refs/heads/"))
 			path = path + 11;
-		else if (data->tags_only
-		    && data->name_only
-		    && !prefixcmp(path, "refs/tags/"))
-			path = path + 10;
 		else if (!prefixcmp(path, "refs/"))
 			path = path + 5;
 
