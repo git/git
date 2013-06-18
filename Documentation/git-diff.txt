@@ -18,8 +18,8 @@ SYNOPSIS
 DESCRIPTION
 -----------
 Show changes between the working tree and the index or a tree, changes
-between the index and a tree, changes between two trees, or changes
-between two files on disk.
+between the index and a tree, changes between two trees, changes between
+two blob objects, or changes between two files on disk.
 
 'git diff' [--options] [--] [<path>...]::
 
@@ -56,11 +56,6 @@ directories. This behavior can be forced by --no-index.
 	This is to view the changes between two arbitrary
 	<commit>.
 
-'git diff' [options] <blob> <blob>::
-
-	This form is to view the differences between the raw
-	contents of two blob objects.
-
 'git diff' [--options] <commit>..<commit> [--] [<path>...]::
 
 	This is synonymous to the previous form.  If <commit> on
@@ -86,6 +81,11 @@ However, "diff" is about comparing two _endpoints_, not ranges,
 and the range notations ("<commit>..<commit>" and
 "<commit>\...<commit>") do not mean a range as defined in the
 "SPECIFYING RANGES" section in linkgit:gitrevisions[7].
+
+'git diff' [options] <blob> <blob>::
+
+	This form is to view the differences between the raw
+	contents of two blob objects.
 
 OPTIONS
 -------
