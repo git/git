@@ -48,7 +48,6 @@ test_expect_success '"upstream" pushes to configured upstream' '
 test_expect_success '"upstream" does not push on unconfigured remote' '
 	git checkout master &&
 	test_unconfig branch.master.remote &&
-	test_config push.default upstream &&
 	test_commit three &&
 	test_push_failure upstream
 '
@@ -57,7 +56,6 @@ test_expect_success '"upstream" does not push on unconfigured branch' '
 	git checkout master &&
 	test_config branch.master.remote parent1 &&
 	test_unconfig branch.master.merge &&
-	test_config push.default upstream
 	test_commit four &&
 	test_push_failure upstream
 '
