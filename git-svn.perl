@@ -1220,7 +1220,7 @@ sub cmd_rebase {
 		return;
 	}
 	if (command(qw/diff-index HEAD --/)) {
-		print STDERR "Cannot rebase with uncommited changes:\n";
+		print STDERR "Cannot rebase with uncommitted changes:\n";
 		command_noisy('status');
 		exit 1;
 	}
