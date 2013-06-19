@@ -1197,6 +1197,37 @@ static struct ref_entry *get_packed_ref(const char *refname)
 	return find_ref(get_packed_refs(&ref_cache), refname);
 }
 
+/*
+ * A loose ref file doesn't exist; check for a packed ref.  The
+ * options are forwarded from resolve_safe_unsafe().
+ */
+static const char *handle_missing_loose_ref(const char *refname,
+					    unsigned char *sha1,
+					    int reading,
+					    int *flag)
+{
+	struct ref_entry *entry;
+
+	/*
+	 * The loose reference file does not exist; check for a packed
+	 * reference.
+	 */
+	entry = get_packed_ref(refname);
+	if (entry) {
+		hashcpy(sha1, entry->u.value.sha1);
+		if (flag)
+			*flag |= REF_ISPACKED;
+		return refname;
+	}
+	/* The reference is not a packed reference, either. */
+	if (reading) {
+		return NULL;
+	} else {
+		hashclr(sha1);
+		return refname;
+	}
+}
+
 const char *resolve_ref_unsafe(const char *refname, unsigned char *sha1, int reading, int *flag)
 {
 	int depth = MAXDEPTH;
@@ -1222,28 +1253,11 @@ const char *resolve_ref_unsafe(const char *refname, unsigned char *sha1, int rea
 		git_snpath(path, sizeof(path), "%s", refname);
 
 		if (lstat(path, &st) < 0) {
-			struct ref_entry *entry;
-
-			if (errno != ENOENT)
+			if (errno == ENOENT)
+				return handle_missing_loose_ref(refname, sha1,
+								reading, flag);
+			else
 				return NULL;
-			/*
-			 * The loose reference file does not exist;
-			 * check for a packed reference.
-			 */
-			entry = get_packed_ref(refname);
-			if (entry) {
-				hashcpy(sha1, entry->u.value.sha1);
-				if (flag)
-					*flag |= REF_ISPACKED;
-				return refname;
-			}
-			/* The reference is not a packed reference, either. */
-			if (reading) {
-				return NULL;
-			} else {
-				hashclr(sha1);
-				return refname;
-			}
 		}
 
 		/* Follow "normalized" - ie "refs/.." symlinks by hand */
