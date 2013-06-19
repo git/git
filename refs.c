@@ -1300,8 +1300,19 @@ const char *resolve_ref_unsafe(const char *refname, unsigned char *sha1, int rea
 		/*
 		 * Is it a symbolic ref?
 		 */
-		if (prefixcmp(buffer, "ref:"))
-			break;
+		if (prefixcmp(buffer, "ref:")) {
+			/*
+			 * Please note that FETCH_HEAD has a second
+			 * line containing other data.
+			 */
+			if (get_sha1_hex(buffer, sha1) ||
+			    (buffer[40] != '\0' && !isspace(buffer[40]))) {
+				if (flag)
+					*flag |= REF_ISBROKEN;
+				return NULL;
+			}
+			return refname;
+		}
 		if (flag)
 			*flag |= REF_ISSYMREF;
 		buf = buffer + 4;
@@ -1314,13 +1325,6 @@ const char *resolve_ref_unsafe(const char *refname, unsigned char *sha1, int rea
 		}
 		refname = strcpy(refname_buffer, buf);
 	}
-	/* Please note that FETCH_HEAD has a second line containing other data. */
-	if (get_sha1_hex(buffer, sha1) || (buffer[40] != '\0' && !isspace(buffer[40]))) {
-		if (flag)
-			*flag |= REF_ISBROKEN;
-		return NULL;
-	}
-	return refname;
 }
 
 char *resolve_refdup(const char *ref, unsigned char *sha1, int reading, int *flag)
