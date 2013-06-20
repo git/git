@@ -825,6 +825,9 @@ struct packed_ref_cache {
 	 * when it is unlocked.
 	 */
 	struct lock_file *lock;
+
+	/* The metadata from when this packed-refs cache was read */
+	struct stat_validity validity;
 };
 
 /*
@@ -862,6 +865,7 @@ static int release_packed_ref_cache(struct packed_ref_cache *packed_refs)
 {
 	if (!--packed_refs->referrers) {
 		free_ref_entry(packed_refs->root);
+		stat_validity_clear(&packed_refs->validity);
 		free(packed_refs);
 		return 1;
 	} else {
@@ -1053,19 +1057,26 @@ static void read_packed_refs(FILE *f, struct ref_dir *dir)
  */
 static struct packed_ref_cache *get_packed_ref_cache(struct ref_cache *refs)
 {
+	const char *packed_refs_file;
+
+	if (*refs->name)
+		packed_refs_file = git_path_submodule(refs->name, "packed-refs");
+	else
+		packed_refs_file = git_path("packed-refs");
+
+	if (refs->packed &&
+	    !stat_validity_check(&refs->packed->validity, packed_refs_file))
+		clear_packed_ref_cache(refs);
+
 	if (!refs->packed) {
-		const char *packed_refs_file;
 		FILE *f;
 
 		refs->packed = xcalloc(1, sizeof(*refs->packed));
 		acquire_packed_ref_cache(refs->packed);
 		refs->packed->root = create_dir_entry(refs, "", 0, 0);
-		if (*refs->name)
-			packed_refs_file = git_path_submodule(refs->name, "packed-refs");
-		else
-			packed_refs_file = git_path("packed-refs");
 		f = fopen(packed_refs_file, "r");
 		if (f) {
+			stat_validity_update(&refs->packed->validity, fileno(f));
 			read_packed_refs(f, get_ref_dir(refs->packed->root));
 			fclose(f);
 		}
