@@ -750,6 +750,21 @@ static int do_for_each_entry_in_dirs(struct ref_dir *dir1,
 }
 
 /*
+ * Load all of the refs from the dir into our in-memory cache. The hard work
+ * of loading loose refs is done by get_ref_dir(), so we just need to recurse
+ * through all of the sub-directories. We do not even need to care about
+ * sorting, as traversal order does not matter to us.
+ */
+static void prime_ref_dir(struct ref_dir *dir)
+{
+	int i;
+	for (i = 0; i < dir->nr; i++) {
+		struct ref_entry *entry = dir->entries[i];
+		if (entry->flag & REF_DIR)
+			prime_ref_dir(get_ref_dir(entry));
+	}
+}
+/*
  * Return true iff refname1 and refname2 conflict with each other.
  * Two reference names conflict if one of them exactly matches the
  * leading components of the other; e.g., "foo/bar" conflicts with
@@ -1603,15 +1618,31 @@ void warn_dangling_symref(FILE *fp, const char *msg_fmt, const char *refname)
 static int do_for_each_entry(struct ref_cache *refs, const char *base,
 			     each_ref_entry_fn fn, void *cb_data)
 {
-	struct packed_ref_cache *packed_ref_cache = get_packed_ref_cache(refs);
-	struct ref_dir *packed_dir = get_packed_ref_dir(packed_ref_cache);
-	struct ref_dir *loose_dir = get_loose_refs(refs);
+	struct packed_ref_cache *packed_ref_cache;
+	struct ref_dir *loose_dir;
+	struct ref_dir *packed_dir;
 	int retval = 0;
 
+	/*
+	 * We must make sure that all loose refs are read before accessing the
+	 * packed-refs file; this avoids a race condition in which loose refs
+	 * are migrated to the packed-refs file by a simultaneous process, but
+	 * our in-memory view is from before the migration. get_packed_ref_cache()
+	 * takes care of making sure our view is up to date with what is on
+	 * disk.
+	 */
+	loose_dir = get_loose_refs(refs);
+	if (base && *base) {
+		loose_dir = find_containing_dir(loose_dir, base, 0);
+	}
+	if (loose_dir)
+		prime_ref_dir(loose_dir);
+
+	packed_ref_cache = get_packed_ref_cache(refs);
 	acquire_packed_ref_cache(packed_ref_cache);
+	packed_dir = get_packed_ref_dir(packed_ref_cache);
 	if (base && *base) {
 		packed_dir = find_containing_dir(packed_dir, base, 0);
-		loose_dir = find_containing_dir(loose_dir, base, 0);
 	}
 
 	if (packed_dir && loose_dir) {
