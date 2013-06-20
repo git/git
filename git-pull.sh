@@ -262,8 +262,8 @@ esac
 
 if test -z "$orig_head"
 then
-	git update-ref -m "initial pull" HEAD $merge_head "$curr_head" &&
-	git read-tree -m -u HEAD || exit 1
+	git read-tree -m -u $merge_head &&
+	git update-ref -m "initial pull" HEAD $merge_head "$curr_head"
 	exit
 fi
 
