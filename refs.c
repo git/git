@@ -1590,10 +1590,12 @@ void warn_dangling_symref(FILE *fp, const char *msg_fmt, const char *refname)
 static int do_for_each_entry(struct ref_cache *refs, const char *base,
 			     each_ref_entry_fn fn, void *cb_data)
 {
-	struct ref_dir *packed_dir = get_packed_refs(refs);
+	struct packed_ref_cache *packed_ref_cache = get_packed_ref_cache(refs);
+	struct ref_dir *packed_dir = get_packed_ref_dir(packed_ref_cache);
 	struct ref_dir *loose_dir = get_loose_refs(refs);
 	int retval = 0;
 
+	acquire_packed_ref_cache(packed_ref_cache);
 	if (base && *base) {
 		packed_dir = find_containing_dir(packed_dir, base, 0);
 		loose_dir = find_containing_dir(loose_dir, base, 0);
@@ -1614,6 +1616,7 @@ static int do_for_each_entry(struct ref_cache *refs, const char *base,
 				loose_dir, 0, fn, cb_data);
 	}
 
+	release_packed_ref_cache(packed_ref_cache);
 	return retval;
 }
 
