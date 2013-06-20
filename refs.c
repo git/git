@@ -806,6 +806,10 @@ static int is_refname_available(const char *refname, const char *oldrefname,
 	return 1;
 }
 
+struct packed_ref_cache {
+	struct ref_entry *root;
+};
+
 /*
  * Future: need to be in "struct repository"
  * when doing a full libification.
@@ -813,7 +817,7 @@ static int is_refname_available(const char *refname, const char *oldrefname,
 static struct ref_cache {
 	struct ref_cache *next;
 	struct ref_entry *loose;
-	struct ref_entry *packed;
+	struct packed_ref_cache *packed;
 	/*
 	 * The submodule name, or "" for the main repo.  We allocate
 	 * length 1 rather than FLEX_ARRAY so that the main ref_cache
@@ -825,7 +829,8 @@ static struct ref_cache {
 static void clear_packed_ref_cache(struct ref_cache *refs)
 {
 	if (refs->packed) {
-		free_ref_entry(refs->packed);
+		free_ref_entry(refs->packed->root);
+		free(refs->packed);
 		refs->packed = NULL;
 	}
 }
@@ -996,24 +1001,39 @@ static void read_packed_refs(FILE *f, struct ref_dir *dir)
 	}
 }
 
-static struct ref_dir *get_packed_refs(struct ref_cache *refs)
+/*
+ * Get the packed_ref_cache for the specified ref_cache, creating it
+ * if necessary.
+ */
+static struct packed_ref_cache *get_packed_ref_cache(struct ref_cache *refs)
 {
 	if (!refs->packed) {
 		const char *packed_refs_file;
 		FILE *f;
 
-		refs->packed = create_dir_entry(refs, "", 0, 0);
+		refs->packed = xcalloc(1, sizeof(*refs->packed));
+		refs->packed->root = create_dir_entry(refs, "", 0, 0);
 		if (*refs->name)
 			packed_refs_file = git_path_submodule(refs->name, "packed-refs");
 		else
 			packed_refs_file = git_path("packed-refs");
 		f = fopen(packed_refs_file, "r");
 		if (f) {
-			read_packed_refs(f, get_ref_dir(refs->packed));
+			read_packed_refs(f, get_ref_dir(refs->packed->root));
 			fclose(f);
 		}
 	}
-	return get_ref_dir(refs->packed);
+	return refs->packed;
+}
+
+static struct ref_dir *get_packed_ref_dir(struct packed_ref_cache *packed_ref_cache)
+{
+	return get_ref_dir(packed_ref_cache->root);
+}
+
+static struct ref_dir *get_packed_refs(struct ref_cache *refs)
+{
+	return get_packed_ref_dir(get_packed_ref_cache(refs));
 }
 
 void add_packed_ref(const char *refname, const unsigned char *sha1)
