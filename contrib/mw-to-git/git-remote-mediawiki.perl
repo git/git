@@ -42,6 +42,10 @@ use constant NULL_SHA1 => "0000000000000000000000000000000000000000";
 # Used on Git's side to reflect empty edit messages on the wiki
 use constant EMPTY_MESSAGE => '*Empty MediaWiki Message*';
 
+if (@ARGV != 2) {
+	exit_error_usage();
+}
+
 my $remotename = $ARGV[0];
 my $url = $ARGV[1];
 
@@ -156,6 +160,17 @@ while (<STDIN>) {
 }
 
 ########################## Functions ##############################
+
+## error handling
+sub exit_error_usage {
+	die "ERROR: git-remote-mediawiki module was not called with a correct number of\n" .
+	    "parameters\n" .
+	    "You may obtain this error because you attempted to run the git-remote-mediawiki\n" .
+            "module directly.\n" .
+	    "This module can be used the following way:\n" .
+	    "\tgit clone mediawiki://<address of a mediawiki>\n" .
+	    "Then, use git commit, push and pull as with every normal git repository.\n";
+}
 
 # MediaWiki API instance, created lazily.
 my $mediawiki;
