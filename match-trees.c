@@ -47,6 +47,22 @@ static int score_matches(unsigned mode1, unsigned mode2, const char *path)
 	return score;
 }
 
+static void *fill_tree_desc_strict(struct tree_desc *desc,
+				   const unsigned char *hash)
+{
+	void *buffer;
+	enum object_type type;
+	unsigned long size;
+
+	buffer = read_sha1_file(hash, &type, &size);
+	if (!buffer)
+		die("unable to read tree (%s)", sha1_to_hex(hash));
+	if (type != OBJ_TREE)
+		die("%s is not a tree", sha1_to_hex(hash));
+	init_tree_desc(desc, buffer, size);
+	return buffer;
+}
+
 static int base_name_entries_compare(const struct name_entry *a,
 				     const struct name_entry *b)
 {
@@ -61,23 +77,10 @@ static int score_trees(const unsigned char *hash1, const unsigned char *hash2)
 {
 	struct tree_desc one;
 	struct tree_desc two;
-	void *one_buf, *two_buf;
+	void *one_buf = fill_tree_desc_strict(&one, hash1);
+	void *two_buf = fill_tree_desc_strict(&two, hash2);
 	int score = 0;
-	enum object_type type;
-	unsigned long size;
 
-	one_buf = read_sha1_file(hash1, &type, &size);
-	if (!one_buf)
-		die("unable to read tree (%s)", sha1_to_hex(hash1));
-	if (type != OBJ_TREE)
-		die("%s is not a tree", sha1_to_hex(hash1));
-	init_tree_desc(&one, one_buf, size);
-	two_buf = read_sha1_file(hash2, &type, &size);
-	if (!two_buf)
-		die("unable to read tree (%s)", sha1_to_hex(hash2));
-	if (type != OBJ_TREE)
-		die("%s is not a tree", sha1_to_hex(hash2));
-	init_tree_desc(&two, two_buf, size);
 	for (;;) {
 		struct name_entry e1, e2;
 		int got_entry_from_one = tree_entry(&one, &e1);
@@ -124,16 +127,7 @@ static void match_trees(const unsigned char *hash1,
 			int recurse_limit)
 {
 	struct tree_desc one;
-	void *one_buf;
-	enum object_type type;
-	unsigned long size;
-
-	one_buf = read_sha1_file(hash1, &type, &size);
-	if (!one_buf)
-		die("unable to read tree (%s)", sha1_to_hex(hash1));
-	if (type != OBJ_TREE)
-		die("%s is not a tree", sha1_to_hex(hash1));
-	init_tree_desc(&one, one_buf, size);
+	void *one_buf = fill_tree_desc_strict(&one, hash1);
 
 	while (one.size) {
 		const char *path;
