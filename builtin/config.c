@@ -329,6 +329,7 @@ static int get_colorbool(int print)
 {
 	get_colorbool_found = -1;
 	get_diff_color_found = -1;
+	get_color_ui_found = -1;
 	git_config_with_options(git_get_colorbool_config, NULL,
 				given_config_file, respect_includes);
 
@@ -338,6 +339,10 @@ static int get_colorbool(int print)
 		if (get_colorbool_found < 0)
 			get_colorbool_found = get_color_ui_found;
 	}
+
+	if (get_colorbool_found < 0)
+		/* default value if none found in config */
+		get_colorbool_found = GIT_COLOR_AUTO;
 
 	get_colorbool_found = want_color(get_colorbool_found);
 
