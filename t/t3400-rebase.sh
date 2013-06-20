@@ -185,7 +185,7 @@ test_expect_success 'default to @{upstream} when upstream arg is missing' '
 test_expect_success 'rebase -q is quiet' '
 	git checkout -b quiet topic &&
 	git rebase -q master >output.out 2>&1 &&
-	test ! -s output.out
+	test_must_be_empty output.out
 '
 
 test_expect_success 'Rebase a commit that sprinkles CRs in' '

@@ -609,6 +609,18 @@ test_cmp() {
 	$GIT_TEST_CMP "$@"
 }
 
+# Check if the file expected to be empty is indeed empty, and barfs
+# otherwise.
+
+test_must_be_empty () {
+	if test -s "$1"
+	then
+		echo "'$1' is not empty, it contains:"
+		cat "$1"
+		return 1
+	fi
+}
+
 # Tests that its two parameters refer to the same revision
 test_cmp_rev () {
 	git rev-parse --verify "$1" >expect.rev &&

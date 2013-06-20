@@ -78,7 +78,7 @@ test_expect_success 'submodule add' '
 	(
 		cd addtest &&
 		git submodule add -q "$submodurl" submod >actual &&
-		test ! -s actual &&
+		test_must_be_empty actual &&
 		echo "gitdir: ../.git/modules/submod" >expect &&
 		test_cmp expect submod/.git &&
 		(
@@ -308,7 +308,7 @@ test_expect_success 'update should work when path is an empty dir' '
 
 	mkdir init &&
 	git submodule update -q >update.out &&
-	test ! -s update.out &&
+	test_must_be_empty update.out &&
 
 	inspect init &&
 	test_cmp expect head-sha1
@@ -696,7 +696,7 @@ test_expect_success 'submodule add --name allows to replace a submodule with ano
 		rm -rf repo &&
 		git rm repo &&
 		git submodule add -q --name repo_new "$submodurl/bare.git" repo >actual &&
-		test ! -s actual &&
+		test_must_be_empty actual &&
 		echo "gitdir: ../.git/modules/submod" >expect &&
 		test_cmp expect submod/.git &&
 		(

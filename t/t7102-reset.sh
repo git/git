@@ -457,7 +457,7 @@ test_expect_success 'disambiguation (1)' '
 	test_must_fail git diff --quiet -- secondfile &&
 	test -z "$(git diff --cached --name-only)" &&
 	test -f secondfile &&
-	test ! -s secondfile
+	test_must_be_empty secondfile
 
 '
 
