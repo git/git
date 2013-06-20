@@ -1520,8 +1520,9 @@ int discard_index(struct index_state *istate)
 	free_name_hash(istate);
 	cache_tree_free(&(istate->cache_tree));
 	istate->initialized = 0;
-
-	/* no need to throw away allocated active_cache */
+	free(istate->cache);
+	istate->cache = NULL;
+	istate->cache_alloc = 0;
 	return 0;
 }
 
