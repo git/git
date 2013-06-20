@@ -4,7 +4,9 @@ Git v1.8.4 Release Notes
 Updates since v1.8.3
 --------------------
 
-Foreign interfaces and ports.
+Foreign interfaces, subsystems and ports.
+
+ * Git-gui has been updated to its 0.18.0 version.
 
  * MediaWiki remote helper (in contrib/) has been updated to use the
    credential helper interface from Git.pm.
@@ -32,6 +34,10 @@ Foreign interfaces and ports.
 
 
 UI, Workflows & Features
+
+ * Many tutorials teach users to set "color.ui" to "auto" as the first
+   thing after you set "user.name/email" to introduce yourselves to
+   Git.  Now the variable defaults to "auto".
 
  * "git cmd <name>", when <name> happens to be a 40-hex string,
    directly uses the 40-hex string as an object name, even if a ref
@@ -88,6 +94,11 @@ UI, Workflows & Features
 
 Performance, Internal Implementation, etc.
 
+ * Uses of the platform fnmatch(3) function (many places in the code,
+   matching pathspec, .gitignore and .gitattributes to name a few)
+   have been replaced with wildmatch, allowing "foo/**/bar" that would
+   match foo/bar, foo/a/bar, foo/a/b/bar, etc.
+
  * Memory ownership and lifetime rules for what for-each-ref feeds to
    its callbacks have been clarified (in short, "you do not own it, so
    make a copy if you want to keep it").
@@ -138,6 +149,12 @@ details).
    around the name, and comparison was done between quoted and
    unquoted strings).
    (merge 1495266 mt/send-email-cc-match-fix later to maint).
+
+ * Call to discard_cache/discard_index (used when we use different
+   contents of the index in-core, in many operations like commit,
+   apply, and merge) used to leak memory that held the array of index
+   entries, which has been plugged.
+   (merge a0fc4db rs/discard-index-discard-array later to maint).
 
  * "gitweb" forgot to clear a global variable $search_regexp upon each
    request, mistakenly carrying over the previous search to a new one
