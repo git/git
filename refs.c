@@ -2023,35 +2023,50 @@ struct ref_to_prune {
 
 struct pack_refs_cb_data {
 	unsigned int flags;
+	struct ref_dir *packed_refs;
 	struct ref_to_prune *ref_to_prune;
-	int fd;
 };
 
-static int pack_one_ref(struct ref_entry *entry, void *cb_data)
+/*
+ * An each_ref_entry_fn that is run over loose references only.  If
+ * the loose reference can be packed, add an entry in the packed ref
+ * cache.  If the reference should be pruned, also add it to
+ * ref_to_prune in the pack_refs_cb_data.
+ */
+static int pack_if_possible_fn(struct ref_entry *entry, void *cb_data)
 {
 	struct pack_refs_cb_data *cb = cb_data;
 	enum peel_status peel_status;
+	struct ref_entry *packed_entry;
 	int is_tag_ref = !prefixcmp(entry->name, "refs/tags/");
 
-	/* ALWAYS pack refs that were already packed or are tags */
-	if (!(cb->flags & PACK_REFS_ALL) && !is_tag_ref &&
-	    !(entry->flag & REF_ISPACKED))
+	/* ALWAYS pack tags */
+	if (!(cb->flags & PACK_REFS_ALL) && !is_tag_ref)
 		return 0;
 
 	/* Do not pack symbolic or broken refs: */
 	if ((entry->flag & REF_ISSYMREF) || !ref_resolves_to_object(entry))
 		return 0;
 
+	/* Add a packed ref cache entry equivalent to the loose entry. */
 	peel_status = peel_entry(entry, 1);
 	if (peel_status != PEEL_PEELED && peel_status != PEEL_NON_TAG)
 		die("internal error peeling reference %s (%s)",
 		    entry->name, sha1_to_hex(entry->u.value.sha1));
-	write_packed_entry(cb->fd, entry->name, entry->u.value.sha1,
-			   peel_status == PEEL_PEELED ?
-			   entry->u.value.peeled : NULL);
+	packed_entry = find_ref(cb->packed_refs, entry->name);
+	if (packed_entry) {
+		/* Overwrite existing packed entry with info from loose entry */
+		packed_entry->flag = REF_ISPACKED | REF_KNOWS_PEELED;
+		hashcpy(packed_entry->u.value.sha1, entry->u.value.sha1);
+	} else {
+		packed_entry = create_ref_entry(entry->name, entry->u.value.sha1,
+						REF_ISPACKED | REF_KNOWS_PEELED, 0);
+		add_ref(cb->packed_refs, packed_entry);
+	}
+	hashcpy(packed_entry->u.value.peeled, entry->u.value.peeled);
 
-	/* If the ref was already packed, there is no need to prune it. */
-	if ((cb->flags & PACK_REFS_PRUNE) && !(entry->flag & REF_ISPACKED)) {
+	/* Schedule the loose reference for pruning if requested. */
+	if ((cb->flags & PACK_REFS_PRUNE)) {
 		int namelen = strlen(entry->name) + 1;
 		struct ref_to_prune *n = xcalloc(1, sizeof(*n) + namelen);
 		hashcpy(n->sha1, entry->u.value.sha1);
@@ -2118,16 +2133,21 @@ static struct lock_file packlock;
 int pack_refs(unsigned int flags)
 {
 	struct pack_refs_cb_data cbdata;
+	int fd;
 
 	memset(&cbdata, 0, sizeof(cbdata));
 	cbdata.flags = flags;
 
-	cbdata.fd = hold_lock_file_for_update(&packlock, git_path("packed-refs"),
-					      LOCK_DIE_ON_ERROR);
+	fd = hold_lock_file_for_update(&packlock, git_path("packed-refs"),
+				       LOCK_DIE_ON_ERROR);
+	cbdata.packed_refs = get_packed_refs(&ref_cache);
 
-	write_or_die(cbdata.fd, PACKED_REFS_HEADER, strlen(PACKED_REFS_HEADER));
+	do_for_each_entry_in_dir(get_loose_refs(&ref_cache), 0,
+				 pack_if_possible_fn, &cbdata);
 
-	do_for_each_entry(&ref_cache, "", pack_one_ref, &cbdata);
+	write_or_die(fd, PACKED_REFS_HEADER, strlen(PACKED_REFS_HEADER));
+	do_for_each_entry_in_dir(cbdata.packed_refs, 0, write_packed_entry_fn, &fd);
+
 	if (commit_lock_file(&packlock) < 0)
 		die_errno("unable to overwrite old ref-pack file");
 	prune_refs(cbdata.ref_to_prune);
