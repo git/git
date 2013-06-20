@@ -109,7 +109,7 @@ all::
 # Define NO_FNMATCH_CASEFOLD if your fnmatch function doesn't have the
 # FNM_CASEFOLD GNU extension.
 #
-# Define USE_WILDMATCH if you want to use Git's wildmatch
+# Define NO_WILDMATCH if you do not want to use Git's wildmatch
 # implementation as fnmatch
 #
 # Define NO_GECOS_IN_PWENT if you don't have pw_gecos in struct passwd
@@ -1278,7 +1278,7 @@ ifdef NO_FNMATCH_CASEFOLD
 	COMPAT_OBJS += compat/fnmatch/fnmatch.o
 endif
 endif
-ifdef USE_WILDMATCH
+ifndef NO_WILDMATCH
 	COMPAT_CFLAGS += -DUSE_WILDMATCH
 endif
 ifdef NO_SETENV
