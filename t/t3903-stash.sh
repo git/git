@@ -336,41 +336,58 @@ test_expect_success SYMLINKS 'stash file to symlink (full stage)' '
 
 # This test creates a commit with a symlink used for the following tests
 
-test_expect_success SYMLINKS 'stash symlink to file' '
+test_expect_success 'stash symlink to file' '
 	git reset --hard &&
-	ln -s file filelink &&
-	git add filelink &&
+	test_ln_s_add file filelink &&
 	git commit -m "Add symlink" &&
 	rm filelink &&
 	cp file filelink &&
-	git stash save "symlink to file" &&
+	git stash save "symlink to file"
+'
+
+test_expect_success SYMLINKS 'this must have re-created the symlink' '
 	test -h filelink &&
-	case "$(ls -l filelink)" in *" filelink -> file") :;; *) false;; esac &&
+	case "$(ls -l filelink)" in *" filelink -> file") :;; *) false;; esac
+'
+
+test_expect_success 'unstash must re-create the file' '
 	git stash apply &&
 	! test -h filelink &&
 	test bar = "$(cat file)"
 '
 
-test_expect_success SYMLINKS 'stash symlink to file (stage rm)' '
+test_expect_success 'stash symlink to file (stage rm)' '
 	git reset --hard &&
 	git rm filelink &&
 	cp file filelink &&
-	git stash save "symlink to file (stage rm)" &&
+	git stash save "symlink to file (stage rm)"
+'
+
+test_expect_success SYMLINKS 'this must have re-created the symlink' '
 	test -h filelink &&
-	case "$(ls -l filelink)" in *" filelink -> file") :;; *) false;; esac &&
+	case "$(ls -l filelink)" in *" filelink -> file") :;; *) false;; esac
+'
+
+test_expect_success 'unstash must re-create the file' '
 	git stash apply &&
 	! test -h filelink &&
 	test bar = "$(cat file)"
 '
 
-test_expect_success SYMLINKS 'stash symlink to file (full stage)' '
+test_expect_success 'stash symlink to file (full stage)' '
 	git reset --hard &&
 	rm filelink &&
 	cp file filelink &&
 	git add filelink &&
-	git stash save "symlink to file (full stage)" &&
+	git stash save "symlink to file (full stage)"
+'
+
+test_expect_success SYMLINKS 'this must have re-created the symlink' '
 	test -h filelink &&
-	case "$(ls -l filelink)" in *" filelink -> file") :;; *) false;; esac &&
+	case "$(ls -l filelink)" in *" filelink -> file") :;; *) false;; esac
+'
+
+test_expect_success 'unstash must re-create the file' '
 	git stash apply &&
 	! test -h filelink &&
 	test bar = "$(cat file)"

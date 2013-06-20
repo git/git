@@ -99,11 +99,11 @@ test_expect_success \
     'validate result of -B -M (#4)' \
     'compare_diff_raw expected current'
 
-test_expect_success SYMLINKS \
+test_expect_success \
     'make file0 into something completely different' \
     'rm -f file0 &&
-     ln -s frotz file0 &&
-     git update-index file0 file1'
+     test_ln_s_add frotz file0 &&
+     git update-index file1'
 
 test_expect_success \
     'run diff with -B' \
@@ -114,7 +114,7 @@ cat >expected <<\EOF
 :100644 100644 6ff87c4664981e4397625791c8ea3bbb5f2279a3 f5deac7be59e7eeab8657fd9ae706fd6a57daed2 M100	file1
 EOF
 
-test_expect_success SYMLINKS \
+test_expect_success \
     'validate result of -B (#5)' \
     'compare_diff_raw expected current'
 
@@ -129,7 +129,7 @@ cat >expected <<\EOF
 :100644 100644 6ff87c4664981e4397625791c8ea3bbb5f2279a3 f5deac7be59e7eeab8657fd9ae706fd6a57daed2 R	file0	file1
 EOF
 
-test_expect_success SYMLINKS \
+test_expect_success \
     'validate result of -B -M (#6)' \
     'compare_diff_raw expected current'
 
@@ -144,7 +144,7 @@ cat >expected <<\EOF
 :100644 100644 6ff87c4664981e4397625791c8ea3bbb5f2279a3 f5deac7be59e7eeab8657fd9ae706fd6a57daed2 M	file1
 EOF
 
-test_expect_success SYMLINKS \
+test_expect_success \
     'validate result of -M (#7)' \
     'compare_diff_raw expected current'
 

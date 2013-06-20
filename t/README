@@ -595,6 +595,20 @@ library for your script to use.
 		test_cmp expected actual
 	'
 
+ - test_ln_s_add <path1> <path2>
+
+   This function helps systems whose filesystem does not support symbolic
+   links. Use it to add a symbolic link entry to the index when it is not
+   important that the file system entry is a symbolic link, i.e., instead
+   of the sequence
+
+	ln -s foo bar &&
+	git add bar
+
+   Sometimes it is possible to split a test in a part that does not need
+   the symbolic link in the file system and a part that does; then only
+   the latter part need be protected by a SYMLINKS prerequisite (see below).
+
 Prerequisites
 -------------
 

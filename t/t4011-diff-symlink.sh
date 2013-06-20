@@ -9,7 +9,7 @@ test_description='Test diff of symlinks.
 . ./test-lib.sh
 . "$TEST_DIRECTORY"/diff-lib.sh
 
-test_expect_success SYMLINKS 'diff new symlink and file' '
+test_expect_success 'diff new symlink and file' '
 	cat >expected <<-\EOF &&
 	diff --git a/frotz b/frotz
 	new file mode 120000
@@ -27,22 +27,25 @@ test_expect_success SYMLINKS 'diff new symlink and file' '
 	@@ -0,0 +1 @@
 	+xyzzy
 	EOF
-	ln -s xyzzy frotz &&
-	echo xyzzy >nitfol &&
+
+	# the empty tree
 	git update-index &&
 	tree=$(git write-tree) &&
-	git update-index --add frotz nitfol &&
+
+	test_ln_s_add xyzzy frotz &&
+	echo xyzzy >nitfol &&
+	git update-index --add nitfol &&
 	GIT_DIFF_OPTS=--unified=0 git diff-index -M -p $tree >current &&
 	compare_diff_patch expected current
 '
 
-test_expect_success SYMLINKS 'diff unchanged symlink and file'  '
+test_expect_success 'diff unchanged symlink and file'  '
 	tree=$(git write-tree) &&
 	git update-index frotz nitfol &&
 	test -z "$(git diff-index --name-only $tree)"
 '
 
-test_expect_success SYMLINKS 'diff removed symlink and file' '
+test_expect_success 'diff removed symlink and file' '
 	cat >expected <<-\EOF &&
 	diff --git a/frotz b/frotz
 	deleted file mode 120000
@@ -66,12 +69,18 @@ test_expect_success SYMLINKS 'diff removed symlink and file' '
 	compare_diff_patch expected current
 '
 
-test_expect_success SYMLINKS 'diff identical, but newly created symlink and file' '
+test_expect_success 'diff identical, but newly created symlink and file' '
 	>expected &&
 	rm -f frotz nitfol &&
 	echo xyzzy >nitfol &&
 	test-chmtime +10 nitfol &&
-	ln -s xyzzy frotz &&
+	if test_have_prereq SYMLINKS
+	then
+		ln -s xyzzy frotz
+	else
+		printf xyzzy >frotz
+		# the symlink property propagates from the index
+	fi &&
 	git diff-index -M -p $tree >current &&
 	compare_diff_patch expected current &&
 
@@ -80,7 +89,7 @@ test_expect_success SYMLINKS 'diff identical, but newly created symlink and file
 	compare_diff_patch expected current
 '
 
-test_expect_success SYMLINKS 'diff different symlink and file' '
+test_expect_success 'diff different symlink and file' '
 	cat >expected <<-\EOF &&
 	diff --git a/frotz b/frotz
 	index 7c465af..df1db54 120000
@@ -100,7 +109,13 @@ test_expect_success SYMLINKS 'diff different symlink and file' '
 	+yxyyz
 	EOF
 	rm -f frotz &&
-	ln -s yxyyz frotz &&
+	if test_have_prereq SYMLINKS
+	then
+		ln -s yxyyz frotz
+	else
+		printf yxyyz >frotz
+		# the symlink property propagates from the index
+	fi &&
 	echo yxyyz >nitfol &&
 	git diff-index -M -p $tree >current &&
 	compare_diff_patch expected current

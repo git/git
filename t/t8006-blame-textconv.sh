@@ -18,17 +18,13 @@ test_expect_success 'setup ' '
 	echo "bin: test number 0" >zero.bin &&
 	echo "bin: test 1" >one.bin &&
 	echo "bin: test number 2" >two.bin &&
-	if test_have_prereq SYMLINKS; then
-		ln -s one.bin symlink.bin
-	fi &&
+	test_ln_s_add one.bin symlink.bin &&
 	git add . &&
 	GIT_AUTHOR_NAME=Number1 git commit -a -m First --date="2010-01-01 18:00:00" &&
 	echo "bin: test 1 version 2" >one.bin &&
 	echo "bin: test number 2 version 2" >>two.bin &&
-	if test_have_prereq SYMLINKS; then
-		rm symlink.bin &&
-		ln -s two.bin symlink.bin
-	fi &&
+	rm -f symlink.bin &&
+	test_ln_s_add two.bin symlink.bin &&
 	GIT_AUTHOR_NAME=Number2 git commit -a -m Second --date="2010-01-01 20:00:00"
 '
 
@@ -135,7 +131,7 @@ test_expect_success SYMLINKS 'blame --textconv (on symlink)' '
 
 # cp two.bin three.bin  and make small tweak
 # (this will direct blame -C -C three.bin to consider two.bin and symlink.bin)
-test_expect_success SYMLINKS 'make another new commit' '
+test_expect_success 'make another new commit' '
 	cat >three.bin <<\EOF &&
 bin: test number 2
 bin: test number 2 version 2
@@ -146,7 +142,7 @@ EOF
 	GIT_AUTHOR_NAME=Number4 git commit -a -m Fourth --date="2010-01-01 23:00:00"
 '
 
-test_expect_success SYMLINKS 'blame on last commit (-C -C, symlink)' '
+test_expect_success 'blame on last commit (-C -C, symlink)' '
 	git blame -C -C three.bin >blame &&
 	find_blame <blame >result &&
 	cat >expected <<\EOF &&

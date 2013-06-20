@@ -96,11 +96,10 @@ test_expect_success 'non-limited update in subdir leaves root alone' '
 	test_cmp expect actual
 '
 
-test_expect_success SYMLINKS 'replace a file with a symlink' '
+test_expect_success 'replace a file with a symlink' '
 
 	rm foo &&
-	ln -s top foo &&
-	git add -u -- foo
+	test_ln_s_add top foo
 
 '
 
