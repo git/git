@@ -1998,6 +1998,23 @@ static void write_packed_entry(int fd, char *refname, unsigned char *sha1,
 	}
 }
 
+/*
+ * An each_ref_entry_fn that writes the entry to a packed-refs file.
+ */
+static int write_packed_entry_fn(struct ref_entry *entry, void *cb_data)
+{
+	int *fd = cb_data;
+	enum peel_status peel_status = peel_entry(entry, 0);
+
+	if (peel_status != PEEL_PEELED && peel_status != PEEL_NON_TAG)
+		error("internal error: %s is not a valid packed reference!",
+		      entry->name);
+	write_packed_entry(*fd, entry->name, entry->u.value.sha1,
+			   peel_status == PEEL_PEELED ?
+			   entry->u.value.peeled : NULL);
+	return 0;
+}
+
 struct ref_to_prune {
 	struct ref_to_prune *next;
 	unsigned char sha1[20];
@@ -2117,14 +2134,25 @@ int pack_refs(unsigned int flags)
 	return 0;
 }
 
-static int repack_ref_fn(struct ref_entry *entry, void *cb_data)
+/*
+ * If entry is no longer needed in packed-refs, add it to the string
+ * list pointed to by cb_data.  Reasons for deleting entries:
+ *
+ * - Entry is broken.
+ * - Entry is overridden by a loose ref.
+ * - Entry does not point at a valid object.
+ *
+ * In the first and third cases, also emit an error message because these
+ * are indications of repository corruption.
+ */
+static int curate_packed_ref_fn(struct ref_entry *entry, void *cb_data)
 {
-	int *fd = cb_data;
-	enum peel_status peel_status;
+	struct string_list *refs_to_delete = cb_data;
 
 	if (entry->flag & REF_ISBROKEN) {
 		/* This shouldn't happen to packed refs. */
 		error("%s is broken!", entry->name);
+		string_list_append(refs_to_delete, entry->name);
 		return 0;
 	}
 	if (!has_sha1_file(entry->u.value.sha1)) {
@@ -2134,7 +2162,7 @@ static int repack_ref_fn(struct ref_entry *entry, void *cb_data)
 		if (read_ref_full(entry->name, sha1, 0, &flags))
 			/* We should at least have found the packed ref. */
 			die("Internal error");
-		if ((flags & REF_ISSYMREF) || !(flags & REF_ISPACKED))
+		if ((flags & REF_ISSYMREF) || !(flags & REF_ISPACKED)) {
 			/*
 			 * This packed reference is overridden by a
 			 * loose reference, so it is OK that its value
@@ -2143,9 +2171,11 @@ static int repack_ref_fn(struct ref_entry *entry, void *cb_data)
 			 * collected.  For this purpose we don't even
 			 * care whether the loose reference itself is
 			 * invalid, broken, symbolic, etc.  Silently
-			 * omit the packed reference from the output.
+			 * remove the packed reference.
 			 */
+			string_list_append(refs_to_delete, entry->name);
 			return 0;
+		}
 		/*
 		 * There is no overriding loose reference, so the fact
 		 * that this reference doesn't refer to a valid object
@@ -2154,13 +2184,9 @@ static int repack_ref_fn(struct ref_entry *entry, void *cb_data)
 		 * the output.
 		 */
 		error("%s does not point to a valid object!", entry->name);
+		string_list_append(refs_to_delete, entry->name);
 		return 0;
 	}
-
-	peel_status = peel_entry(entry, 0);
-	write_packed_entry(*fd, entry->name, entry->u.value.sha1,
-			   peel_status == PEEL_PEELED ?
-			   entry->u.value.peeled : NULL);
 
 	return 0;
 }
@@ -2169,6 +2195,8 @@ static int repack_without_ref(const char *refname)
 {
 	int fd;
 	struct ref_dir *packed;
+	struct string_list refs_to_delete = STRING_LIST_INIT_DUP;
+	struct string_list_item *ref_to_delete;
 
 	if (!get_packed_ref(refname))
 		return 0; /* refname does not exist in packed refs */
@@ -2180,7 +2208,8 @@ static int repack_without_ref(const char *refname)
 	}
 	clear_packed_ref_cache(&ref_cache);
 	packed = get_packed_refs(&ref_cache);
-	/* Remove refname from the cache. */
+
+	/* Remove refname from the cache: */
 	if (remove_entry(packed, refname) == -1) {
 		/*
 		 * The packed entry disappeared while we were
@@ -2189,8 +2218,17 @@ static int repack_without_ref(const char *refname)
 		rollback_lock_file(&packlock);
 		return 0;
 	}
+
+	/* Remove any other accumulated cruft: */
+	do_for_each_entry_in_dir(packed, 0, curate_packed_ref_fn, &refs_to_delete);
+	for_each_string_list_item(ref_to_delete, &refs_to_delete) {
+		if (remove_entry(packed, ref_to_delete->string) == -1)
+			die("internal error");
+	}
+
+	/* Write what remains: */
 	write_or_die(fd, PACKED_REFS_HEADER, strlen(PACKED_REFS_HEADER));
-	do_for_each_entry_in_dir(packed, 0, repack_ref_fn, &fd);
+	do_for_each_entry_in_dir(packed, 0, write_packed_entry_fn, &fd);
 	return commit_lock_file(&packlock);
 }
 
