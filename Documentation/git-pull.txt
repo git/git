@@ -31,7 +31,7 @@ a collection of refs with corresponding remote-tracking branches
 (e.g., refs/heads/{asterisk}:refs/remotes/origin/{asterisk}),
 but usually it is the name of a branch in the remote repository.
 
-Default values for <repository> and <branch> are read from the
+Default values for <repository> and <refspec> are read from the
 "remote" and "merge" configuration for the current branch
 as set by linkgit:git-branch[1] `--track`.
 
