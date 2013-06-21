@@ -64,13 +64,22 @@ commit_date () {
 	sed -n "s/^committer .*> \([0-9]*\) .*/\1/p"
 }
 
+# Assign the value of fake date to a variable, but
+# allow fairly common "1971-08-16 00:00" to be omittd
+assign_fake_date () {
+	case "$2" in
+	??:??:??)	eval "$1='1971-08-16 $2'" ;;
+	??:??)		eval "$1='1971-08-16 00:$2'" ;;
+	??)		eval "$1='1971-08-16 00:00:$2'" ;;
+	*)		eval "$1='$2'" ;;
+	esac
+}
+
 on_committer_date () {
-	_date=$1
-	shift 1
-	GIT_COMMITTER_DATE="$_date"
+	assign_fake_date GIT_COMMITTER_DATE "$1"
 	export GIT_COMMITTER_DATE
+	shift 1
 	"$@"
-	unset GIT_COMMITTER_DATE
 }
 
 # Execute a command and suppress any error output.
