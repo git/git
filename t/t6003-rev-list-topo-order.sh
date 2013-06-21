@@ -28,8 +28,8 @@ on_dates "00:08" "00:08" as_author foobar@example.com save_tag b2 unique_commit 
 on_dates "00:09" "00:09" save_tag b3 unique_commit b3 tree -p b2
 on_dates "00:10" "00:10" save_tag c2 unique_commit c2 tree -p c1 -p b2
 on_dates "00:11" "00:11" save_tag c3 unique_commit c3 tree -p c2
-on_dates "00:12" "00:12" save_tag a2 unique_commit a2 tree -p a1
-on_dates "00:13" "00:13" save_tag a3 unique_commit a3 tree -p a2
+on_dates "00:12" "00:00" save_tag a2 unique_commit a2 tree -p a1
+on_dates "00:13" "00:01" save_tag a3 unique_commit a3 tree -p a2
 on_dates "00:14" "00:14" save_tag b4 unique_commit b4 tree -p b3 -p a3
 on_dates "00:15" "00:15" save_tag a4 unique_commit a4 tree -p a3 -p b4 -p c3
 on_dates "00:16" "00:16" save_tag l3 unique_commit l3 tree -p a4
@@ -114,6 +114,28 @@ b3
 b2
 c1
 b1
+a1
+a0
+l2
+l1
+l0
+root
+EOF
+
+test_output_expect_success 'simple author-date order' 'git rev-list --author-date-order  HEAD' <<EOF
+l5
+l4
+l3
+a4
+b4
+c3
+c2
+b3
+b2
+c1
+b1
+a3
+a2
 a1
 a0
 l2
