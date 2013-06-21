@@ -100,6 +100,28 @@ l0
 root
 EOF
 
+test_output_expect_success 'simple date order' 'git rev-list --date-order  HEAD' <<EOF
+l5
+l4
+l3
+a4
+b4
+a3
+a2
+c3
+c2
+b3
+b2
+c1
+b1
+a1
+a0
+l2
+l1
+l0
+root
+EOF
+
 test_output_expect_success 'two diamonds topo order (g6)' 'git rev-list --topo-order  g4' <<EOF
 g4
 h2
