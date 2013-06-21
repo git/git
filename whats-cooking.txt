@@ -1,10 +1,10 @@
 To: git@vger.kernel.org
 Bcc: lwn@lwn.net
-Subject: What's cooking in git.git (Jun 2013, #06; Tue, 18)
-X-master-at: fb7dfaa710da6f9ebb854f70ffc1c78668a1e70c
-X-next-at: 12cfec846bdac68981fbf455e2a638ddf5a6ef9c
+Subject: What's cooking in git.git (Jun 2013, #07; Thu, 20)
+X-master-at: 21ff9151e811059f5576ca906c519ee5bb5b925e
+X-next-at: 7507a48fb149c98af104b7faaacd79147fc7907a
 
-What's cooking in git.git (Jun 2013, #06; Tue, 18)
+What's cooking in git.git (Jun 2013, #07; Thu, 20)
 --------------------------------------------------
 
 Here are the topics that have been cooking.  Commits prefixed with
@@ -17,142 +17,162 @@ of the repositories listed at
     http://git-blame.blogspot.com/p/git-public-repositories.html
 
 --------------------------------------------------
+[Graduated to "master"]
+
+* cm/remote-mediawiki (2013-06-11) 1 commit
+  (merged to 'next' on 2013-06-15 at bdce58e)
+ + git-remote-mediawiki: display message when launched directly
+
+
+* fc/makefile (2013-06-09) 4 commits
+  (merged to 'next' on 2013-06-14 at 75b5f6b)
+ + Makefile: use $^ to avoid listing prerequisites on the command line
+ + build: do not install git-remote-testgit
+ + build: generate and clean test scripts
+ + Merge branch 'js/transport-helper-error-reporting-fix' into fc/makefile
+
+ Makefile simplification.
+
+
+* fc/show-non-empty-errors-in-test (2013-06-09) 1 commit
+  (merged to 'next' on 2013-06-14 at 99b6b54)
+ + test: test_must_be_empty helper
+
+
+* js/test-ln-s-add (2013-06-07) 10 commits
+  (merged to 'next' on 2013-06-14 at 9f58cb1)
+ + t4011: remove SYMLINKS prerequisite
+ + t6035: use test_ln_s_add to remove SYMLINKS prerequisite
+ + t3509, t4023, t4114: use test_ln_s_add to remove SYMLINKS prerequisite
+ + t3100: use test_ln_s_add to remove SYMLINKS prerequisite
+ + t3030: use test_ln_s_add to remove SYMLINKS prerequisite
+ + t0000: use test_ln_s_add to remove SYMLINKS prerequisite
+ + tests: use test_ln_s_add to remove SYMLINKS prerequisite (trivial cases)
+ + tests: introduce test_ln_s_add
+ + t3010: modernize style
+ + test-chmtime: Fix exit code on Windows
+
+ Many tests that check the behaviour of symbolic links stored in the
+ index or the tree objects do not have to be skipped on a filesystem
+ that lack symbolic link support.
+
+
+* mm/color-auto-default (2013-06-10) 2 commits
+  (merged to 'next' on 2013-06-14 at 0647576)
+ + make color.ui default to 'auto'
+ + config: refactor management of color.ui's default value
+
+ Flip the default for color.ui to 'auto', which is what many
+ tutorials recommend new users to do.
+
+
+* nd/make-wildmatch-default (2013-06-02) 1 commit
+  (merged to 'next' on 2013-06-14 at cf21faa)
+ + Makefile: promote wildmatch to be the default fnmatch implementation
+
+ Uses of the platform fnmatch(3) function (many places in the code,
+ matching pathspec, .gitignore and .gitattributes to name a few)
+ have been replaced with wildmatch, allowing "foo/**/bar" that would
+ match foo/bar, foo/a/bar, foo/a/b/bar, etc.
+
+
+* nd/traces (2013-06-09) 2 commits
+  (merged to 'next' on 2013-06-14 at ce0d897)
+ + git.txt: document GIT_TRACE_PACKET
+ + core: use env variable instead of config var to turn on logging pack access
+
+
+* rs/discard-index-discard-array (2013-06-09) 2 commits
+  (merged to 'next' on 2013-06-14 at 778ea9b)
+ + read-cache: free cache in discard_index
+ + read-cache: add simple performance test
+
+ Call to discard_cache/discard_index (used when we use different
+ contents of the index in-core, in many operations like commit,
+ apply, and merge) used to leak memory that held the array of index
+ entries, which has been plugged.
+
+
+* rs/logical-vs-binary-or (2013-06-13) 1 commit
+  (merged to 'next' on 2013-06-14 at 2821441)
+ + use logical OR (||) instead of binary OR (|) in logical context
+
+ Code cleanup.
+
+
+* rs/match-trees-refactor (2013-06-13) 1 commit
+  (merged to 'next' on 2013-06-14 at 1904928)
+ + match-trees: factor out fill_tree_desc_strict
+
+ Code cleanup.
+
+--------------------------------------------------
 [New Topics]
 
-* rr/rebase-checkout-reflog (2013-06-17) 8 commits
- - SQUASH???
- - rebase -i: use a better reflog message
- - rebase: use a better reflog message
- - checkout: respect GIT_REFLOG_ACTION
- - status: do not depend on rebase reflog messages
- - t/t2021-checkout-last: "checkout -" should work after a rebase finishes
- - wt-status: remove unused field in grab_1st_switch_cbdata
- - t7512: test "detached from" as well
+* as/log-output-encoding-in-user-format (2013-06-20) 3 commits
+ - t4205 (log-pretty-formats): don't hardcode SHA-1 in expected outputs
+ - t7102 (reset): don't hardcode SHA-1 in expected outputs
+ - t6006 (rev-list-format): don't hardcode SHA-1 in expected outputs
 
- Invocations of "git checkout" used internally by "git rebase" were
- counted as "checkout", and affected later "git checkout -" to the
- the user to an unexpected place.
+ "log --format=" did not honor i18n.logoutputencoding configuration
+ and this is a beginning of the series that attempts to fix it.
 
  Waiting for a reroll.
- $gmane/228271.
 
 
-* rr/rebase-stash-store (2013-06-17) 5 commits
- - rebase: use 'git stash store' to simplify logic
- - stash: introduce 'git stash store'
- - stash: simplify option parser for create
- - stash doc: document short form -p in synopsis
- - stash doc: add a warning about using create
+* bc/http-keep-memory-given-to-curl (2013-06-19) 1 commit
+ - http.c: don't rewrite the user:passwd string multiple times
 
- Finishing touches for the "git rebase --autostash" feature
- introduced earlier.
+ Older cURL wanted piece of memory we call it with to be stable, but
+ we updated the auth material after handing it to a call.
 
  Will merge to 'next'.
 
 
-* rs/unpack-trees-tree-walk-conflict-field (2013-06-17) 1 commit
- - unpack-trees: don't shift conflicts left and right
+* jc/reflog-doc (2013-06-19) 1 commit
+ - setup_reflog_action: document the rules for using GIT_REFLOG_ACTION
+
+ Document rules to use GIT_REFLOG_ACTION variable in the scripted
+ Porcelain.  git-rebase--interactive locally violates this, but it
+ is a leaf user that does not call out to or dot-sources other
+ scripts, so fixing it is not all that urgent.
+
+
+* jk/pull-into-dirty-unborn (2013-06-20) 2 commits
+ - pull: merge into unborn by fast-forwarding from empty tree
+ - pull: update unborn branch tip after index
+
+ "git pull" into nothing trashed "local changes" that were in the
+ index, and this avoids it.
 
  Will merge to 'next'.
 
 
-* dk/maint-t5150-dirname (2013-06-17) 1 commit
- - tests: allow sha1's as part of the path
+* mh/ref-races-optim-invalidate-cached (2013-06-20) 1 commit
+ - refs: do not invalidate the packed-refs cache unnecessarily
+ (this branch uses mh/ref-races.)
+
+ Optional.
+
+
+* rr/cherry-pick-fast-forward-reflog-message (2013-06-19) 1 commit
+ - sequencer: write useful reflog message for fast-forward
+
+ The reflog message created when "git cherry-pick" fast-forwarded
+ did not say anything but "cherry-pick", but it now says
+ "cherry-pick: fast-forward".
 
  Will merge to 'next'.
 
 
-* dk/version-gen-gitdir (2013-06-17) 1 commit
- - GIT-VERSION-GEN: support non-standard $GIT_DIR path
-
- A comment and a counterproposal sent, which is queued here.
+* vl/typofix (2013-06-19) 1 commit
+ - random typofixes (committed missing a 't', successful missing an 's')
 
  Will merge to 'next'.
 
 
-* fg/submodule-fixup (2013-06-17) 1 commit
- - git-submodule.sh: remove duplicate call to set_rev_name
-
- Will merge to 'next'.
-
-
-* jk/doc-build-move-infordir-def (2013-06-17) 2 commits
- - Documentation/Makefile: move infodir to be with other '*dir's
- - Documentation/Makefile: fix spaces around assignments
-
- Will merge to 'next'.
-
-
-* jk/mergetool-lib-refactor (2013-06-17) 1 commit
- - mergetool--lib: refactor {diff,merge}_cmd logic
-
- Will merge to 'next'.
-
-
-* mm/push-force-is-dangerous (2013-06-18) 1 commit
- - Documentation/git-push.txt: explain better cases where --force is dangerous
-
- Will merge to 'next'.
-
-
-* nk/config-local-doc (2013-06-17) 1 commit
- - config: Add description of --local option
-
- Will merge to 'next'.
-
-
-* rj/read-default-config-in-show-ref-pack-refs (2013-06-17) 3 commits
- - ### DONTMERGE: needs better explanation on what config they need
- - pack-refs.c: Add missing call to git_config()
- - show-ref.c: Add missing call to git_config()
-
- The changes themselves are probably good, but it is unclear what
- basic setting needs to be read for which exact operation.
-
- Waiting for clarification.
- $gmane/228294
-
-
-* rt/cherry-pick-continue-advice-in-status (2013-06-17) 1 commit
- - wt-status: give better advice when cherry-pick is in progress
-
- Will merge to 'next'.
-
-
-* bc/checkout-tracking-name-plug-leak (2013-06-18) 2 commits
- - t/t9802: explicitly name the upstream branch to use as a base
- - builtin/checkout.c: don't leak memory in check_tracking_name
-
- Will merge to 'next'.
-
-
-* kb/diff-blob-blob-doc (2013-06-18) 1 commit
- - Documentation: Move "git diff <blob> <blob>"
-
- Will merge to 'next'.
-
-
-* mm/merge-in-dirty-worktree-doc (2013-06-18) 1 commit
- - Documentation/git-merge.txt: weaken warning about uncommited changes
-
- Will merge to 'next'.
-
-
-* mt/send-email-cc-match-fix (2013-06-18) 2 commits
- - send-email: add test for duplicate utf8 name
- - send-email: sanitize author when writing From line
-
- Will merge to 'next'.
-
-
-* nk/name-rev-abbreviated-refs (2013-06-18) 1 commit
- - name-rev: allow to specify a subpath for --refs option
-
- Will merge to 'next'.
-
-
-* ph/builtin-srcs-are-in-subdir-these-days (2013-06-18) 1 commit
- - fix "builtin-*" references to be "builtin/*"
+* wk/doc-git-has-grown (2013-06-19) 1 commit
+ - user-manual: Update download size for Git and the kernel
 
  Will merge to 'next'.
 
@@ -180,17 +200,42 @@ of the repositories listed at
  $gmane/223964
 
 
-* rr/triangle-push-fix (2013-06-09) 4 commits
- - t/push-default: test pushdefault with all modes
- - t/push-default: generalize test_push_{success, commit}
- - push: make upstream, simple work with pushdefault
- - t/push-default: remove redundant test_config lines
+* rr/triangle-push-fix (2013-06-20) 9 commits
+ - push: honor branch.*.push
+ - SQUASH??? fix git-config push.default description
+ - SQUASH??? minimum "simple" safety fix-up
+ - t/t5528-push-default: test pushdefault workflows
+ - t/t5528-push-default: generalize test_push_*
+ - push: remove dead code in setup_push_upstream()
+ - push: change `simple` to accommodate triangular workflows
+ - config doc: rewrite push.default section
+ - t/t5528-push-default: remove redundant test_config lines
 
- Tries to apply the 'push.default = upstream' semantics to
- triangular workflow where it does not quite apply.
+ Earlier remote.pushdefault (and per-branch branch.*.pushremote)
+ were introduced as an additional mechanism to choose what
+ repository to push into when "git push" did not say it from the
+ command line, to help people who push to a repository that is
+ different from where they fetch from.  This attempts to finish that
+ topic by teaching the default mechanism to choose branch in the
+ remote repository to be updated by such a push.
 
- Waiting for a reroll.
- $gmane/227313
+ The 'current', 'matching' and 'nothing' modes (specified by the
+ push.default configuration variable) extend to such a "triangular"
+ workflow naturally, but 'upstream' and 'simple' have to be updated.
+
+ . 'upstream' is about pushing back to update the branch in the
+ remote repository that the current branch fetches from and
+ integrates with, it errors out in a triangular workflow.
+
+ . 'simple' is meant to help new people by avoiding mistakes, and
+ will be the safe default in Git 2.0.  In a non-triangular
+ workflow, it will continue to act as a cross between 'upstream'
+ and 'current' in that it pushes to the current branch's
+ @{upstream} only when it is set to the same name as the current
+ branch (e.g. your 'master' forks from the 'master' from the
+ central repository).  In a triangular workflow, this series
+ tentatively defines it as the same as 'current', but we may have
+ to tighten it to avoid surprises in some way.
 
 
 * jh/shorten-refname (2013-05-07) 4 commits
@@ -300,6 +345,166 @@ of the repositories listed at
 --------------------------------------------------
 [Cooking]
 
+* rr/rebase-checkout-reflog (2013-06-17) 8 commits
+ - SQUASH???
+ - rebase -i: use a better reflog message
+ - rebase: use a better reflog message
+ - checkout: respect GIT_REFLOG_ACTION
+ - status: do not depend on rebase reflog messages
+ - t/t2021-checkout-last: "checkout -" should work after a rebase finishes
+ - wt-status: remove unused field in grab_1st_switch_cbdata
+ - t7512: test "detached from" as well
+
+ Invocations of "git checkout" used internally by "git rebase" were
+ counted as "checkout", and affected later "git checkout -" to the
+ the user to an unexpected place.
+
+ Waiting for a reroll.
+ $gmane/228271.
+
+
+* rr/rebase-stash-store (2013-06-17) 5 commits
+ - rebase: use 'git stash store' to simplify logic
+ - stash: introduce 'git stash store'
+ - stash: simplify option parser for create
+ - stash doc: document short form -p in synopsis
+ - stash doc: add a warning about using create
+
+ Finishing touches for the "git rebase --autostash" feature
+ introduced earlier.
+
+ Will merge to 'next'.
+
+
+* rs/unpack-trees-tree-walk-conflict-field (2013-06-17) 1 commit
+  (merged to 'next' on 2013-06-20 at 0afbf0b)
+ + unpack-trees: don't shift conflicts left and right
+
+ Code clean-up.
+
+ Will merge to 'master'.
+
+
+* dk/maint-t5150-dirname (2013-06-17) 1 commit
+  (merged to 'next' on 2013-06-20 at 7441301)
+ + tests: allow sha1's as part of the path
+
+ Fix a test script.
+
+ Will merge to 'master'.
+
+
+* dk/version-gen-gitdir (2013-06-17) 1 commit
+  (merged to 'next' on 2013-06-20 at c9c687e)
+ + GIT-VERSION-GEN: support non-standard $GIT_DIR path
+
+ Allow packaging a tarball in a working tree with $GIT_DIR set elsewhere.
+
+ Will merge to 'master'.
+
+
+* fg/submodule-fixup (2013-06-17) 1 commit
+  (merged to 'next' on 2013-06-20 at 64d74b4)
+ + git-submodule.sh: remove duplicate call to set_rev_name
+
+ Code cleanup.
+
+ Will merge to 'master'.
+
+
+* jk/doc-build-move-infordir-def (2013-06-17) 2 commits
+  (merged to 'next' on 2013-06-20 at 81e56a8)
+ + Documentation/Makefile: move infodir to be with other '*dir's
+ + Documentation/Makefile: fix spaces around assignments
+
+ Makefile cleanup.
+
+ Will merge to 'master'.
+
+
+* jk/mergetool-lib-refactor (2013-06-17) 1 commit
+  (merged to 'next' on 2013-06-20 at 7ce98c0)
+ + mergetool--lib: refactor {diff,merge}_cmd logic
+
+ Code cleanup.
+
+ Will merge to 'master'.
+
+
+* mm/push-force-is-dangerous (2013-06-18) 1 commit
+  (merged to 'next' on 2013-06-20 at a6a8913)
+ + Documentation/git-push.txt: explain better cases where --force is dangerous
+
+ Will merge to 'master'.
+
+
+* nk/config-local-doc (2013-06-17) 1 commit
+  (merged to 'next' on 2013-06-20 at 3568ebe)
+ + config: Add description of --local option
+
+ Will merge to 'master'.
+
+
+* rj/read-default-config-in-show-ref-pack-refs (2013-06-17) 3 commits
+ - ### DONTMERGE: needs better explanation on what config they need
+ - pack-refs.c: Add missing call to git_config()
+ - show-ref.c: Add missing call to git_config()
+
+ The changes themselves are probably good, but it is unclear what
+ basic setting needs to be read for which exact operation.
+
+ Waiting for clarification.
+ $gmane/228294
+
+
+* rt/cherry-pick-continue-advice-in-status (2013-06-17) 1 commit
+  (merged to 'next' on 2013-06-20 at ec8a930)
+ + wt-status: give better advice when cherry-pick is in progress
+
+ Will merge to 'master'.
+
+
+* bc/checkout-tracking-name-plug-leak (2013-06-18) 2 commits
+ - t/t9802: explicitly name the upstream branch to use as a base
+ - builtin/checkout.c: don't leak memory in check_tracking_name
+
+ Will merge to 'next'.
+
+
+* kb/diff-blob-blob-doc (2013-06-18) 1 commit
+  (merged to 'next' on 2013-06-20 at 34e896a)
+ + Documentation: Move "git diff <blob> <blob>"
+
+ Will merge to 'master'.
+
+
+* mm/merge-in-dirty-worktree-doc (2013-06-18) 1 commit
+  (merged to 'next' on 2013-06-20 at 21b3267)
+ + Documentation/git-merge.txt: weaken warning about uncommited changes
+
+ Will merge to 'master'.
+
+
+* mt/send-email-cc-match-fix (2013-06-20) 2 commits
+ - send-email: sanitize author when writing From line
+ - send-email: add test for duplicate utf8 name
+
+ Will merge to 'next'.
+
+
+* nk/name-rev-abbreviated-refs (2013-06-18) 1 commit
+ - name-rev: allow to specify a subpath for --refs option
+
+ Will merge to 'next'.
+
+
+* ph/builtin-srcs-are-in-subdir-these-days (2013-06-18) 1 commit
+  (merged to 'next' on 2013-06-20 at 7507a48)
+ + fix "builtin-*" references to be "builtin/*"
+
+ Will merge to 'master'.
+
+
 * jk/submodule-subdirectory-ok (2013-06-17) 6 commits
  - submodule: drop the top-level requirement
  - rev-parse: add --prefix option
@@ -322,11 +527,14 @@ of the repositories listed at
 
 
 * jh/libify-note-handling (2013-06-12) 3 commits
- - Move create_notes_commit() from notes-merge.c into notes-utils.c
- - Move copy_note_for_rewrite + friends from builtin/notes.c to notes-utils.c
- - finish_copy_notes_for_rewrite(): Let caller provide commit message
+  (merged to 'next' on 2013-06-20 at 7dac8b6)
+ + Move create_notes_commit() from notes-merge.c into notes-utils.c
+ + Move copy_note_for_rewrite + friends from builtin/notes.c to notes-utils.c
+ + finish_copy_notes_for_rewrite(): Let caller provide commit message
 
- Will merge to 'next'.
+ Make it possible to call into copy-notes API from the sequencer code.
+
+ Will merge to 'master'.
 
 
 * jk/add-i-custom-diff-algo (2013-06-12) 1 commit
@@ -336,8 +544,7 @@ of the repositories listed at
  Will merge to 'master'.
 
 
-* mh/ref-races (2013-06-11) 13 commits
- - refs: do not invalidate the packed-refs cache unnecessarily
+* mh/ref-races (2013-06-20) 11 commits
  - for_each_ref: load all loose refs before packed refs
  - get_packed_ref_cache: reload packed-refs file when it changes
  - add a stat_validity struct
@@ -349,44 +556,37 @@ of the repositories listed at
  - refs: wrap the packed refs cache in a level of indirection
  - pack_refs(): split creation of packed refs and entry writing
  - repack_without_ref(): split list curation and entry writing
- - Merge branch 'mh/packed-refs-various' into mh/ref-races
+ (this branch is used by mh/ref-races-optim-invalidate-cached.)
 
  Will merge to 'next'.
 
 
 * mm/rm-coalesce-errors (2013-06-12) 2 commits
- - rm: introduce advice.rmHints to shorten messages
- - rm: better error message on failure for multiple files
+  (merged to 'next' on 2013-06-20 at c70340c)
+ + rm: introduce advice.rmHints to shorten messages
+ + rm: better error message on failure for multiple files
 
- Will merge to 'next'.
+ Give a single message followed by list of paths from "git rm" to
+ report multiple paths that cannot be removed.
+
+ Will merge to 'master'.
 
 
 * rr/am-quit-empty-then-abort-fix (2013-06-17) 2 commits
- - t/am: use test_path_is_missing() where appropriate
- - am: handle stray $dotest directory
+  (merged to 'next' on 2013-06-20 at f9feae3)
+ + t/am: use test_path_is_missing() where appropriate
+ + am: handle stray $dotest directory
 
- Will merge to 'next'.
-
-
-* rs/logical-vs-binary-or (2013-06-13) 1 commit
-  (merged to 'next' on 2013-06-14 at 2821441)
- + use logical OR (||) instead of binary OR (|) in logical context
-
- Code cleanup.
+ Recent "rebase --autostash" update made it impossible to recover
+ with "git am --abort" from a repository where "git am" without mbox
+ was run by mistake and then was killed with "^C".
 
  Will merge to 'master'.
 
 
-* rs/match-trees-refactor (2013-06-13) 1 commit
-  (merged to 'next' on 2013-06-14 at 1904928)
- + match-trees: factor out fill_tree_desc_strict
-
- Code cleanup.
-
- Will merge to 'master'.
-
-
-* fg/submodule-non-ascii-path (2013-06-14) 1 commit
+* fg/submodule-non-ascii-path (2013-06-20) 2 commits
+  (merged to 'next' on 2013-06-20 at 122c0b2)
+ + t7400: test of UTF-8 submodule names pass under Mac OS
   (merged to 'next' on 2013-06-17 at a0b9fa3)
  + handle multibyte characters in name
 
@@ -460,11 +660,15 @@ of the repositories listed at
 
 
 * rr/rebase-sha1-by-string-query (2013-06-14) 3 commits
- - rebase: use peel_committish() where appropriate
- - sh-setup: add new peel_committish() helper
- - t/rebase: add failing tests for a peculiar revision
+  (merged to 'next' on 2013-06-20 at d0742fe)
+ + rebase: use peel_committish() where appropriate
+ + sh-setup: add new peel_committish() helper
+ + t/rebase: add failing tests for a peculiar revision
 
- Will merge to 'next'.
+ Allow various commit objects to be given to "git rebase" by ':/look
+ for this string' syntax, e.g. "git rebase --onto ':/there'".
+
+ Will merge to 'master'.
 
 
 * jk/unpack-entry-fallback-to-another (2013-06-14) 2 commits
@@ -490,48 +694,6 @@ of the repositories listed at
  Needs a test or two.
 
 
-* fc/makefile (2013-06-09) 4 commits
-  (merged to 'next' on 2013-06-14 at 75b5f6b)
- + Makefile: use $^ to avoid listing prerequisites on the command line
- + build: do not install git-remote-testgit
- + build: generate and clean test scripts
- + Merge branch 'js/transport-helper-error-reporting-fix' into fc/makefile
-
- Makefile simplification.
-
- Will merge to 'master'.
-
-
-* fc/show-non-empty-errors-in-test (2013-06-09) 1 commit
-  (merged to 'next' on 2013-06-14 at 99b6b54)
- + test: test_must_be_empty helper
-
- Will merge to 'master'.
-
-
-* nd/traces (2013-06-09) 2 commits
-  (merged to 'next' on 2013-06-14 at ce0d897)
- + git.txt: document GIT_TRACE_PACKET
- + core: use env variable instead of config var to turn on logging pack access
-
- Will merge to 'master'.
-
-
-* rs/discard-index-discard-array (2013-06-09) 2 commits
-  (merged to 'next' on 2013-06-14 at 778ea9b)
- + read-cache: free cache in discard_index
- + read-cache: add simple performance test
-
- Will merge to 'master'.
-
-
-* cm/remote-mediawiki (2013-06-11) 1 commit
-  (merged to 'next' on 2013-06-15 at bdce58e)
- + git-remote-mediawiki: display message when launched directly
-
- Will merge to 'master'.
-
-
 * jg/status-config (2013-06-15) 2 commits
   (merged to 'next' on 2013-06-15 at 2bc6547)
  + status: introduce status.branch to enable --branch by default
@@ -540,9 +702,8 @@ of the repositories listed at
  Will merge to 'master'.
 
 
-* mh/loose-refs-race-with-pack-ref (2013-06-11) 4 commits
+* mh/loose-refs-race-with-pack-ref (2013-06-19) 3 commits
  - resolve_ref_unsafe(): close race condition reading loose refs
- - resolve_ref_unsafe(): nest reference-reading code in an infinite loop
  - resolve_ref_unsafe(): handle the case of an SHA-1 within loop
  - resolve_ref_unsafe(): extract function handle_missing_loose_ref()
 
@@ -563,28 +724,11 @@ of the repositories listed at
 
 
 * fc/sequencer-plug-leak (2013-06-06) 2 commits
- - sequencer: avoid leaking message buffer when refusing to create an empty commit
- - sequencer: remove useless indentation
+  (merged to 'next' on 2013-06-20 at 3c94075)
+ + sequencer: avoid leaking message buffer when refusing to create an empty commit
+ + sequencer: remove useless indentation
 
- Will merge to 'next'.
-
-
-* js/test-ln-s-add (2013-06-07) 10 commits
-  (merged to 'next' on 2013-06-14 at 9f58cb1)
- + t4011: remove SYMLINKS prerequisite
- + t6035: use test_ln_s_add to remove SYMLINKS prerequisite
- + t3509, t4023, t4114: use test_ln_s_add to remove SYMLINKS prerequisite
- + t3100: use test_ln_s_add to remove SYMLINKS prerequisite
- + t3030: use test_ln_s_add to remove SYMLINKS prerequisite
- + t0000: use test_ln_s_add to remove SYMLINKS prerequisite
- + tests: use test_ln_s_add to remove SYMLINKS prerequisite (trivial cases)
- + tests: introduce test_ln_s_add
- + t3010: modernize style
- + test-chmtime: Fix exit code on Windows
-
- Many tests that check the behaviour of symbolic links stored in the
- index or the tree objects do not have to be skipped on a filesystem
- that lack symbolic link support.
+ Plug a small leak in an error codepath.
 
  Will merge to 'master'.
 
@@ -604,24 +748,14 @@ of the repositories listed at
  Will merge to 'master'.
 
 
-* nd/make-wildmatch-default (2013-06-02) 1 commit
-  (merged to 'next' on 2013-06-14 at cf21faa)
- + Makefile: promote wildmatch to be the default fnmatch implementation
-
- Will merge to 'master'.
-
-
-* ap/diff-ignore-blank-lines (2013-06-17) 1 commit
+* ap/diff-ignore-blank-lines (2013-06-19) 1 commit
  - diff: add --ignore-blank-lines option
 
  "git diff" learned a mode that ignores hunks whose change consists
  only of additions and removals of blank lines, which is the same as
  "diff -B" (ignore blank lines) of GNU diff.
 
- There still is a small bug.
-
- Waiting for a reroll.
- $gmane/228117
+ Will merge to 'next'.
 
 
 * jx/clean-interactive (2013-06-03) 15 commits
@@ -661,17 +795,6 @@ of the repositories listed at
  The tip two may be useful in practice but is a tad ugly ;-)
 
  Will merge to 'next'.
-
-
-* mm/color-auto-default (2013-06-10) 2 commits
-  (merged to 'next' on 2013-06-14 at 0647576)
- + make color.ui default to 'auto'
- + config: refactor management of color.ui's default value
-
- Flip the default for color.ui to 'auto', which is what many
- tutorials recommend new users to do.
-
- Will merge to 'master'.
 
 
 * jn/add-2.0-u-A-sans-pathspec (2013-04-26) 1 commit
