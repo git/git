@@ -82,6 +82,14 @@ on_committer_date () {
 	"$@"
 }
 
+on_dates () {
+	assign_fake_date GIT_COMMITTER_DATE "$1"
+	assign_fake_date GIT_AUTHOR_DATE "$2"
+	export GIT_COMMITTER_DATE GIT_AUTHOR_DATE
+	shift 2
+	"$@"
+}
+
 # Execute a command and suppress any error output.
 hide_error () {
 	"$@" 2>/dev/null
