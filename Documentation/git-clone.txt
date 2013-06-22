@@ -271,13 +271,6 @@ $ git clone --bare -l /home/proj/.git /pub/scm/proj.git
 ------------
 
 
-* Create a repository on the kernel.org machine that borrows from Linus:
-+
-------------
-$ git clone --bare -l -s /pub/scm/.../torvalds/linux-2.6.git \
-    /pub/scm/.../me/subsys-2.6.git
-------------
-
 GIT
 ---
 Part of the linkgit:git[1] suite
