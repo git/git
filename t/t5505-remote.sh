@@ -764,7 +764,8 @@ test_expect_success 'migrate a remote from named file in $GIT_DIR/branches' '
 		git remote rename origin origin &&
 		! test -f .git/branches/origin &&
 		test "$(git config remote.origin.url)" = "$origin_url" &&
-		test "$(git config remote.origin.fetch)" = "refs/heads/master:refs/heads/origin"
+		test "$(git config remote.origin.fetch)" = "refs/heads/master:refs/heads/origin" &&
+		test "$(git config remote.origin.push)" = "HEAD:refs/heads/master"
 	)
 '
 
