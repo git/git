@@ -257,10 +257,10 @@ $ git show-branch
 * Clone from upstream while borrowing from an existing local directory:
 +
 ------------
-$ git clone --reference my2.6 \
-	git://git.kernel.org/pub/scm/.../linux-2.7 \
-	my2.7
-$ cd my2.7
+$ git clone --reference /git/linux.git \
+	git://git.kernel.org/pub/scm/.../linux.git \
+	my-linux
+$ cd my-linux
 ------------
 
 
