@@ -48,9 +48,9 @@ OPTIONS
 	exit without talking to the remote.
 
 <repository>::
-	Location of the repository.  The shorthand defined in
-	$GIT_DIR/branches/ can be used. Use "." (dot) to list references in
-	the local repository.
+	The "remote" repository to query.  This parameter can be
+	either a URL or the name of a remote (see the GIT URLS and
+	REMOTES sections of linkgit:git-fetch[1]).
 
 <refs>...::
 	When unspecified, all references, after filtering done
