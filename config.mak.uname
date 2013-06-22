@@ -170,7 +170,6 @@ ifeq ($(uname_O),Cygwin)
 	# Try commenting this out if you suspect MMAP is more efficient
 	NO_MMAP = YesPlease
 	X = .exe
-	COMPAT_OBJS += compat/cygwin.o
 	UNRELIABLE_FSTAT = UnfortunatelyYes
 	SPARSE_FLAGS = -isystem /usr/include/w32api -Wno-one-bit-signed-bitfield
 endif

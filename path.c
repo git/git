@@ -5,13 +5,7 @@
 #include "strbuf.h"
 #include "string-list.h"
 
-#ifndef get_st_mode_bits
-/*
- * The replacement lstat(2) we use on Cygwin is incomplete and
- * may return wrong permission bits. Most of the time we do not care,
- * but the callsites of this wrapper do care.
- */
-int get_st_mode_bits(const char *path, int *mode)
+static int get_st_mode_bits(const char *path, int *mode)
 {
 	struct stat st;
 	if (lstat(path, &st) < 0)
@@ -19,7 +13,6 @@ int get_st_mode_bits(const char *path, int *mode)
 	*mode = st.st_mode;
 	return 0;
 }
-#endif
 
 static char bad_path[] = "/bad-path/";
 

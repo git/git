@@ -213,17 +213,6 @@ The default is true, except linkgit:git-clone[1] or linkgit:git-init[1]
 will probe and set core.fileMode false if appropriate when the
 repository is created.
 
-core.ignoreCygwinFSTricks::
-	This option is only used by Cygwin implementation of Git. If false,
-	the Cygwin stat() and lstat() functions are used. This may be useful
-	if your repository consists of a few separate directories joined in
-	one hierarchy using Cygwin mount. If true, Git uses native Win32 API
-	whenever it is possible and falls back to Cygwin functions only to
-	handle symbol links. The native mode is more than twice faster than
-	normal Cygwin l/stat() functions. True by default, unless core.filemode
-	is true, in which case ignoreCygwinFSTricks is ignored as Cygwin's
-	POSIX emulation is required to support core.filemode.
-
 core.ignorecase::
 	If true, this option enables various workarounds to enable
 	Git to work better on filesystems that are not case sensitive,
