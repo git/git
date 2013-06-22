@@ -70,7 +70,6 @@ EXAMPLES
 	$ git ls-remote http://www.kernel.org/pub/scm/git/git.git master pu rc
 	5fe978a5381f1fbad26a80e682ddd2a401966740	refs/heads/master
 	c781a84b5204fb294c9ccc79f8b3baceeb32c061	refs/heads/pu
-	b1d096f2926c4e37c9c0b6a7bf2119bedaa277cb	refs/heads/rc
 	$ echo http://www.kernel.org/pub/scm/git/git.git >.git/branches/public
 	$ git ls-remote --tags public v\*
 	d6602ec5194c87b0fc87103ca4d67251c76f233a	refs/tags/v0.99
