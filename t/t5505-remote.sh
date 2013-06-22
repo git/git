@@ -735,7 +735,9 @@ test_expect_success 'rename a remote with name prefix of other remote' '
 cat >remotes_origin <<EOF
 URL: $(pwd)/one
 Push: refs/heads/master:refs/heads/upstream
+Push: refs/heads/next:refs/heads/upstream2
 Pull: refs/heads/master:refs/heads/origin
+Pull: refs/heads/next:refs/heads/origin2
 EOF
 
 test_expect_success 'migrate a remote from named file in $GIT_DIR/remotes' '
@@ -749,8 +751,18 @@ test_expect_success 'migrate a remote from named file in $GIT_DIR/remotes' '
 		git remote rename origin origin &&
 		test_path_is_missing .git/remotes/origin &&
 		test "$(git config remote.origin.url)" = "$origin_url" &&
-		test "$(git config remote.origin.push)" = "refs/heads/master:refs/heads/upstream" &&
-		test "$(git config remote.origin.fetch)" = "refs/heads/master:refs/heads/origin"
+		cat >push_expected <<-\EOF &&
+		refs/heads/master:refs/heads/upstream
+		refs/heads/next:refs/heads/upstream2
+		EOF
+		cat >fetch_expected <<-\EOF &&
+		refs/heads/master:refs/heads/origin
+		refs/heads/next:refs/heads/origin2
+		EOF
+		git config --get-all remote.origin.push >push_actual &&
+		git config --get-all remote.origin.fetch >fetch_actual &&
+		test_cmp push_expected push_actual &&
+		test_cmp fetch_expected fetch_actual
 	)
 '
 
