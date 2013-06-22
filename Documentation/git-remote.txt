@@ -187,18 +187,25 @@ Examples
 $ git remote
 origin
 $ git branch -r
-origin/master
-$ git remote add linux-nfs git://linux-nfs.org/pub/linux/nfs-2.6.git
+  origin/HEAD -> origin/master
+  origin/master
+$ git remote add staging git://git.kernel.org/.../gregkh/staging.git
 $ git remote
-linux-nfs
 origin
-$ git fetch
-* refs/remotes/linux-nfs/master: storing branch 'master' ...
-  commit: bf81b46
+staging
+$ git fetch staging
+...
+From git://git.kernel.org/pub/scm/linux/kernel/git/gregkh/staging
+ * [new branch]      master     -> staging/master
+ * [new branch]      staging-linus -> staging/staging-linus
+ * [new branch]      staging-next -> staging/staging-next
 $ git branch -r
-origin/master
-linux-nfs/master
-$ git checkout -b nfs linux-nfs/master
+  origin/HEAD -> origin/master
+  origin/master
+  staging/master
+  staging/staging-linus
+  staging/staging-next
+$ git checkout -b staging staging/master
 ...
 ------------
 
