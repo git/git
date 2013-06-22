@@ -66,8 +66,8 @@ $ git clone git://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux-2.6.git
 The initial clone may be time-consuming for a large project, but you
 will only need to clone once.
 
-The clone command creates a new directory named after the project (`git`
-or `linux-2.6` in the examples above).  After you cd into this
+The clone command creates a new directory named after the project
+(`git` or `linux` in the examples above).  After you cd into this
 directory, you will see that it contains a copy of the project files,
 called the <<def_working_tree,working tree>>, together with a special
 top-level directory named `.git`, which contains all the information
@@ -2162,7 +2162,7 @@ To set this up, first create your work tree by cloning Linus's public
 tree:
 
 -------------------------------------------------
-$ git clone git://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux-2.6.git work
+$ git clone git://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git work
 $ cd work
 -------------------------------------------------
 
@@ -2204,7 +2204,7 @@ make it easy to push both branches to your public tree.  (See
 -------------------------------------------------
 $ cat >> .git/config <<EOF
 [remote "mytree"]
-	url =  master.kernel.org:/pub/scm/linux/kernel/git/aegl/linux-2.6.git
+	url =  master.kernel.org:/pub/scm/linux/kernel/git/aegl/linux.git
 	push = release
 	push = test
 EOF

@@ -239,8 +239,8 @@ Examples
 * Clone from upstream:
 +
 ------------
-$ git clone git://git.kernel.org/pub/scm/.../linux-2.6 my2.6
-$ cd my2.6
+$ git clone git://git.kernel.org/pub/scm/.../linux.git my-linux
+$ cd my-linux
 $ make
 ------------
 
