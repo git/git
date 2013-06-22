@@ -276,10 +276,9 @@ static void read_remotes_file(struct remote *remote)
 
 static void read_branches_file(struct remote *remote)
 {
-	const char *slash = strchr(remote->name, '/');
 	char *frag;
 	struct strbuf branch = STRBUF_INIT;
-	int n = slash ? slash - remote->name : 1000;
+	int n = 1000;
 	FILE *f = fopen(git_path("branches/%.*s", n, remote->name), "r");
 	char *s, *p;
 	int len;
@@ -299,21 +298,11 @@ static void read_branches_file(struct remote *remote)
 	while (isspace(p[-1]))
 		*--p = 0;
 	len = p - s;
-	if (slash)
-		len += strlen(slash);
 	p = xmalloc(len + 1);
 	strcpy(p, s);
-	if (slash)
-		strcat(p, slash);
 
 	/*
-	 * With "slash", e.g. "git fetch jgarzik/netdev-2.6" when
-	 * reading from $GIT_DIR/branches/jgarzik fetches "HEAD" from
-	 * the partial URL obtained from the branches file plus
-	 * "/netdev-2.6" and does not store it in any tracking ref.
-	 * #branch specifier in the file is ignored.
-	 *
-	 * Otherwise, the branches file would have URL and optionally
+	 * The branches file would have URL and optionally
 	 * #branch specified.  The "master" (or specified) branch is
 	 * fetched and stored in the local branch of the same name.
 	 */
@@ -323,12 +312,8 @@ static void read_branches_file(struct remote *remote)
 		strbuf_addf(&branch, "refs/heads/%s", frag);
 	} else
 		strbuf_addstr(&branch, "refs/heads/master");
-	if (!slash) {
-		strbuf_addf(&branch, ":refs/heads/%s", remote->name);
-	} else {
-		strbuf_reset(&branch);
-		strbuf_addstr(&branch, "HEAD:");
-	}
+
+	strbuf_addf(&branch, ":refs/heads/%s", remote->name);
 	add_url_alias(remote, p);
 	add_fetch_refspec(remote, strbuf_detach(&branch, NULL));
 	/*
