@@ -747,7 +747,7 @@ test_expect_success 'migrate a remote from named file in $GIT_DIR/remotes' '
 		mkdir -p .git/remotes &&
 		cat ../remotes_origin >.git/remotes/origin &&
 		git remote rename origin origin &&
-		! test -f .git/remotes/origin &&
+		test_path_is_missing .git/remotes/origin &&
 		test "$(git config remote.origin.url)" = "$origin_url" &&
 		test "$(git config remote.origin.push)" = "refs/heads/master:refs/heads/upstream" &&
 		test "$(git config remote.origin.fetch)" = "refs/heads/master:refs/heads/origin"
@@ -762,7 +762,7 @@ test_expect_success 'migrate a remote from named file in $GIT_DIR/branches' '
 		git remote rm origin &&
 		echo "$origin_url" >.git/branches/origin &&
 		git remote rename origin origin &&
-		! test -f .git/branches/origin &&
+		test_path_is_missing .git/branches/origin &&
 		test "$(git config remote.origin.url)" = "$origin_url" &&
 		test "$(git config remote.origin.fetch)" = "refs/heads/master:refs/heads/origin" &&
 		test "$(git config remote.origin.push)" = "HEAD:refs/heads/master"
