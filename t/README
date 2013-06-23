@@ -126,6 +126,11 @@ appropriately before running "make".
 	the 't/valgrind/' directory and use the commands under
 	't/valgrind/bin/'.
 
+--valgrind-only=<pattern>::
+	Like --valgrind, but the effect is limited to tests with
+	numbers matching <pattern>.  The number matched against is
+	simply the running count of the test within the file.
+
 --tee::
 	In addition to printing the test output to the terminal,
 	write it to files named 't/test-results/$TEST_NAME.out'.

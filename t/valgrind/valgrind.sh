@@ -4,6 +4,9 @@ base=$(basename "$0")
 
 TOOL_OPTIONS='--leak-check=no'
 
+test -z "$GIT_VALGRIND_ENABLED" &&
+exec "$GIT_VALGRIND"/../../"$base" "$@"
+
 case "$GIT_VALGRIND_MODE" in
 memcheck-fast)
 	;;
