@@ -15,3 +15,5 @@ all: build
 build install clean:
 	$(MAKE) -C $(GIT_ROOT_DIR) SCRIPT_PERL=$(SCRIPT_PERL_FULL) \
                 $@-perl-script
+perlcritic:
+	perlcritic -2 *.perl
