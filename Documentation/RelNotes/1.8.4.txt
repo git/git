@@ -39,6 +39,10 @@ UI, Workflows & Features
    thing after you set "user.name/email" to introduce yourselves to
    Git.  Now the variable defaults to "auto".
 
+ * "git status" learned status.branch and status.short configuration
+   variables to use --branch and --short options by default (override
+   with --no-branch and --no-short options from the command line).
+
  * "git cmd <name>", when <name> happens to be a 40-hex string,
    directly uses the 40-hex string as an object name, even if a ref
    "refs/<some hierarchy>/<name>" exists.  This disambiguation order
