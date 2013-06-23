@@ -40,13 +40,6 @@ test_expect_success 'prepare repository with topic branches' '
 	echo Side >>C &&
 	git add C &&
 	git commit -m "Add C" &&
-	git checkout -b nonlinear my-topic-branch &&
-	echo Edit >>B &&
-	git add B &&
-	git commit -m "Modify B" &&
-	git merge side &&
-	git checkout -b upstream-merged-nonlinear &&
-	git merge master &&
 	git checkout -f my-topic-branch &&
 	git tag topic
 '
@@ -64,28 +57,6 @@ test_expect_success 'rebase on dirty cache' '
 test_expect_success 'rebase against master' '
 	git reset --hard HEAD &&
 	git rebase master
-'
-
-test_expect_success 'rebase against master twice' '
-	git rebase master >out &&
-	test_i18ngrep "Current branch my-topic-branch is up to date" out
-'
-
-test_expect_success 'rebase against master twice with --force' '
-	git rebase --force-rebase master >out &&
-	test_i18ngrep "Current branch my-topic-branch is up to date, rebase forced" out
-'
-
-test_expect_success 'rebase against master twice from another branch' '
-	git checkout my-topic-branch^ &&
-	git rebase master my-topic-branch >out &&
-	test_i18ngrep "Current branch my-topic-branch is up to date" out
-'
-
-test_expect_success 'rebase fast-forward to master' '
-	git checkout my-topic-branch^ &&
-	git rebase my-topic-branch >out &&
-	test_i18ngrep "Fast-forwarded HEAD to my-topic-branch" out
 '
 
 test_expect_success 'the rebase operation should not have destroyed author information' '
@@ -106,31 +77,9 @@ test_expect_success 'rebase from ambiguous branch name' '
 	git rebase master
 '
 
-test_expect_success 'rebase after merge master' '
-	git checkout --detach refs/tags/topic &&
-	git branch -D topic &&
-	git reset --hard topic &&
-	git merge master &&
-	git rebase master &&
-	! (git show | grep "^Merge:")
-'
-
-test_expect_success 'rebase of history with merges is linearized' '
-	git checkout nonlinear &&
-	test 4 = $(git rev-list master.. | wc -l) &&
-	git rebase master &&
-	test 3 = $(git rev-list master.. | wc -l)
-'
-
-test_expect_success 'rebase of history with merges after upstream merge is linearized' '
-	git checkout upstream-merged-nonlinear &&
-	test 5 = $(git rev-list master.. | wc -l) &&
-	git rebase master &&
-	test 3 = $(git rev-list master.. | wc -l)
-'
-
 test_expect_success 'rebase a single mode change' '
 	git checkout master &&
+	git branch -D topic &&
 	echo 1 >X &&
 	git add X &&
 	test_tick &&
