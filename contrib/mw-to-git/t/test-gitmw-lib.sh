@@ -336,20 +336,21 @@ wiki_install () {
 	fi
 
 	# Fetch MediaWiki's archive if not already present in the TMP directory
+	MW_FILENAME="mediawiki-$MW_VERSION_MAJOR.$MW_VERSION_MINOR.tar.gz"
 	cd "$TMP"
-	if [ ! -f "$MW_VERSION.tar.gz" ] ; then
-		echo "Downloading $MW_VERSION sources ..."
-		wget "http://download.wikimedia.org/mediawiki/1.19/mediawiki-1.19.0.tar.gz" ||
+	if [ ! -f $MW_FILENAME ] ; then
+		echo "Downloading $MW_VERSION_MAJOR.$MW_VERSION_MINOR sources ..."
+		wget "http://download.wikimedia.org/mediawiki/$MW_VERSION_MAJOR/$MW_FILENAME" ||
 			error "Unable to download "\
-			"http://download.wikimedia.org/mediawiki/1.19/"\
-			"mediawiki-1.19.0.tar.gz. "\
+			"http://download.wikimedia.org/mediawiki/$MW_VERSION_MAJOR/"\
+			"$MW_FILENAME. "\
 			"Please fix your connection and launch the script again."
-		echo "$MW_VERSION.tar.gz downloaded in `pwd`. "\
+		echo "$MW_FILENAME downloaded in `pwd`. "\
 			"You can delete it later if you want."
 	else
-		echo "Reusing existing $MW_VERSION.tar.gz downloaded in `pwd`."
+		echo "Reusing existing $MW_FILENAME downloaded in `pwd`."
 	fi
-	archive_abs_path=$(pwd)/"$MW_VERSION.tar.gz"
+	archive_abs_path=$(pwd)/$MW_FILENAME
 	cd "$WIKI_DIR_INST/$WIKI_DIR_NAME/" ||
 		error "can't cd to $WIKI_DIR_INST/$WIKI_DIR_NAME/"
 	tar xzf "$archive_abs_path" --strip-components=1 ||
@@ -431,5 +432,5 @@ wiki_delete () {
 	# Delete the wiki's SQLite database
 	rm -f "$TMP/$DB_FILE" || error "Database $TMP/$DB_FILE could not be deleted."
 	rm -f "$FILES_FOLDER/$DB_FILE"
-	rm -rf "$TMP/$MW_VERSION"
+	rm -rf "$TMP/mediawiki-$MW_VERSION_MAJOR.$MW_VERSION_MINOR.tar.gz"
 }
