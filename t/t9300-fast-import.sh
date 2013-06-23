@@ -1253,7 +1253,7 @@ test_expect_success \
 	 git diff-tree -C --find-copies-harder -r N4 N6 >actual &&
 	 compare_diff_raw expect actual'
 
-test_expect_failure \
+test_expect_success \
 	'N: copy root by path' \
 	'cat >expect <<-\EOF &&
 	:100755 100755 f1fb5da718392694d0076d677d6d0e364c79b0bc f1fb5da718392694d0076d677d6d0e364c79b0bc C100	file2/newf	oldroot/file2/newf
@@ -2988,7 +2988,7 @@ test_expect_success 'S: ls with garbage after sha1 must fail' '
 ###
 # Setup is carried over from series S.
 
-test_expect_failure 'T: ls root tree' '
+test_expect_success 'T: ls root tree' '
 	sed -e "s/Z\$//" >expect <<-EOF &&
 	040000 tree $(git rev-parse S^{tree})	Z
 	EOF
