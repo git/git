@@ -1568,7 +1568,8 @@ static int tree_content_set(
 static int tree_content_remove(
 	struct tree_entry *root,
 	const char *p,
-	struct tree_entry *backup_leaf)
+	struct tree_entry *backup_leaf,
+	int allow_root)
 {
 	struct tree_content *t;
 	const char *slash1;
@@ -1583,6 +1584,12 @@ static int tree_content_remove(
 
 	if (!root->tree)
 		load_tree(root);
+
+	if (!*p && allow_root) {
+		e = root;
+		goto del_entry;
+	}
+
 	t = root->tree;
 	for (i = 0; i < t->entry_count; i++) {
 		e = t->entries[i];
@@ -1599,7 +1606,7 @@ static int tree_content_remove(
 				goto del_entry;
 			if (!e->tree)
 				load_tree(e);
-			if (tree_content_remove(e, slash1 + 1, backup_leaf)) {
+			if (tree_content_remove(e, slash1 + 1, backup_leaf, 0)) {
 				for (n = 0; n < e->tree->entry_count; n++) {
 					if (e->tree->entries[n]->versions[1].mode) {
 						hashclr(root->versions[1].sha1);
@@ -2188,7 +2195,7 @@ static uintmax_t do_change_note_fanout(
 			}
 
 			/* Rename fullpath to realpath */
-			if (!tree_content_remove(orig_root, fullpath, &leaf))
+			if (!tree_content_remove(orig_root, fullpath, &leaf, 0))
 				die("Failed to remove path %s", fullpath);
 			tree_content_set(orig_root, realpath,
 				leaf.versions[1].sha1,
@@ -2323,7 +2330,7 @@ static void file_change_m(struct branch *b)
 
 	/* Git does not track empty, non-toplevel directories. */
 	if (S_ISDIR(mode) && !memcmp(sha1, EMPTY_TREE_SHA1_BIN, 20) && *p) {
-		tree_content_remove(&b->branch_tree, p, NULL);
+		tree_content_remove(&b->branch_tree, p, NULL, 0);
 		return;
 	}
 
@@ -2384,7 +2391,7 @@ static void file_change_d(struct branch *b)
 			die("Garbage after path in: %s", command_buf.buf);
 		p = uq.buf;
 	}
-	tree_content_remove(&b->branch_tree, p, NULL);
+	tree_content_remove(&b->branch_tree, p, NULL, 1);
 }
 
 static void file_change_cr(struct branch *b, int rename)
@@ -2422,7 +2429,7 @@ static void file_change_cr(struct branch *b, int rename)
 
 	memset(&leaf, 0, sizeof(leaf));
 	if (rename)
-		tree_content_remove(&b->branch_tree, s, &leaf);
+		tree_content_remove(&b->branch_tree, s, &leaf, 1);
 	else
 		tree_content_get(&b->branch_tree, s, &leaf, 1);
 	if (!leaf.versions[1].mode)
@@ -2530,7 +2537,7 @@ static void note_change_n(struct branch *b, unsigned char *old_fanout)
 	}
 
 	construct_path_with_fanout(sha1_to_hex(commit_sha1), *old_fanout, path);
-	if (tree_content_remove(&b->branch_tree, path, NULL))
+	if (tree_content_remove(&b->branch_tree, path, NULL, 0))
 		b->num_notes--;
 
 	if (is_null_sha1(sha1))

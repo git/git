@@ -1050,7 +1050,7 @@ cat >expect <<EOF
 :100755 100755 e74b7d465e52746be2b4bae983670711e6e66657 e74b7d465e52746be2b4bae983670711e6e66657 R100	newdir/exec.sh	sub/newdir/exec.sh
 :100644 100644 fcf778cda181eaa1cbc9e9ce3a2e15ee9f9fe791 fcf778cda181eaa1cbc9e9ce3a2e15ee9f9fe791 R100	newdir/interesting	sub/newdir/interesting
 EOF
-test_expect_failure \
+test_expect_success \
 	'M: rename root to subdirectory' \
 	'git fast-import <input &&
 	 git diff-tree -M -r M4^ M4 >actual &&
