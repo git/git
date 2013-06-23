@@ -392,7 +392,7 @@ __git_ps1 ()
 					git describe --tags --exact-match HEAD ;;
 				esac 2>/dev/null)" ||
 
-				b="$(cut -c1-7 "$g/HEAD" 2>/dev/null)..." ||
+				b="$(git rev-parse --short HEAD 2>/dev/null)..." ||
 				b="unknown"
 				b="($b)"
 			}

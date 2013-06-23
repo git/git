@@ -50,7 +50,8 @@ test_expect_success SYMLINKS 'prompt - branch name - symlink symref' '
 '
 
 test_expect_success 'prompt - detached head' '
-	printf " ((%s...))" $(git log -1 --format="%h" b1^) >expected &&
+	printf " ((%s...))" $(git log -1 --format="%h" --abbrev=13 b1^) >expected &&
+	test_config core.abbrev 13 &&
 	git checkout b1^ &&
 	test_when_finished "git checkout master" &&
 	__git_ps1 >"$actual" &&
