@@ -734,7 +734,7 @@ sub parse_diff {
 	my ($path) = @_;
 	my @diff_cmd = split(" ", $patch_mode_flavour{DIFF});
 	if (defined $diff_algorithm) {
-		push @diff_cmd, "--diff-algorithm=${diff_algorithm}";
+		splice @diff_cmd, 1, 0, "--diff-algorithm=${diff_algorithm}";
 	}
 	if (defined $patch_mode_revision) {
 		push @diff_cmd, $patch_mode_revision;
