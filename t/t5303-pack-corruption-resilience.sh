@@ -51,7 +51,7 @@ do_corrupt_object() {
     ofs=`git show-index < ${pack}.idx | grep $1 | cut -f1 -d" "` &&
     ofs=$(($ofs + $2)) &&
     chmod +w ${pack}.pack &&
-    dd of=${pack}.pack count=1 bs=1 conv=notrunc seek=$ofs &&
+    dd of=${pack}.pack bs=1 conv=notrunc seek=$ofs &&
     test_must_fail git verify-pack ${pack}.pack
 }
 
@@ -271,6 +271,33 @@ test_expect_success \
      printf "$blob_1\n$blob_2\n" | git pack-objects .git/objects/pack/pack &&
      git prune-packed &&
      mv tmp ${pack}.idx &&
+     git cat-file blob $blob_1 > /dev/null &&
+     git cat-file blob $blob_2 > /dev/null &&
+     git cat-file blob $blob_3 > /dev/null'
+
+test_expect_success \
+    'corruption of delta base reference pointing to wrong object' \
+    'create_new_pack --delta-base-offset &&
+     git prune-packed &&
+     printf "\220\033" | do_corrupt_object $blob_3 2 &&
+     git cat-file blob $blob_1 >/dev/null &&
+     git cat-file blob $blob_2 >/dev/null &&
+     test_must_fail git cat-file blob $blob_3 >/dev/null'
+
+test_expect_success \
+    '... but having a loose copy allows for full recovery' \
+    'mv ${pack}.idx tmp &&
+     git hash-object -t blob -w file_3 &&
+     mv tmp ${pack}.idx &&
+     git cat-file blob $blob_1 > /dev/null &&
+     git cat-file blob $blob_2 > /dev/null &&
+     git cat-file blob $blob_3 > /dev/null'
+
+test_expect_success \
+    '... and then a repack "clears" the corruption' \
+    'do_repack --delta-base-offset --no-reuse-delta &&
+     git prune-packed &&
+     git verify-pack ${pack}.pack &&
      git cat-file blob $blob_1 > /dev/null &&
      git cat-file blob $blob_2 > /dev/null &&
      git cat-file blob $blob_3 > /dev/null'
