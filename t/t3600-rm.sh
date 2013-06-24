@@ -687,4 +687,100 @@ test_expect_failure SYMLINKS 'rm across a symlinked leading path (w/ index)' '
 	test_path_is_file e/f
 '
 
+test_expect_success 'setup for testing rm messages' '
+	>bar.txt &&
+	>foo.txt &&
+	git add bar.txt foo.txt
+'
+
+test_expect_success 'rm files with different staged content' '
+	cat >expect <<-\EOF &&
+	error: the following files have staged content different from both the
+	file and the HEAD:
+	    bar.txt
+	    foo.txt
+	(use -f to force removal)
+	EOF
+	echo content1 >foo.txt &&
+	echo content1 >bar.txt &&
+	test_must_fail git rm foo.txt bar.txt 2>actual &&
+	test_i18ncmp expect actual
+'
+
+test_expect_success 'rm files with different staged content without hints' '
+	cat >expect <<-\EOF &&
+	error: the following files have staged content different from both the
+	file and the HEAD:
+	    bar.txt
+	    foo.txt
+	EOF
+	echo content2 >foo.txt &&
+	echo content2 >bar.txt &&
+	test_must_fail git -c advice.rmhints=false rm foo.txt bar.txt 2>actual &&
+	test_i18ncmp expect actual
+'
+
+test_expect_success 'rm file with local modification' '
+	cat >expect <<-\EOF &&
+	error: the following file has local modifications:
+	    foo.txt
+	(use --cached to keep the file, or -f to force removal)
+	EOF
+	git commit -m "testing rm 3" &&
+	echo content3 >foo.txt &&
+	test_must_fail git rm foo.txt 2>actual &&
+	test_i18ncmp expect actual
+'
+
+test_expect_success 'rm file with local modification without hints' '
+	cat >expect <<-\EOF &&
+	error: the following file has local modifications:
+	    bar.txt
+	EOF
+	echo content4 >bar.txt &&
+	test_must_fail git -c advice.rmhints=false rm bar.txt 2>actual &&
+	test_i18ncmp expect actual
+'
+
+test_expect_success 'rm file with changes in the index' '
+	cat >expect <<-\EOF &&
+	error: the following file has changes staged in the index:
+	    foo.txt
+	(use --cached to keep the file, or -f to force removal)
+	EOF
+	git reset --hard &&
+	echo content5 >foo.txt &&
+	git add foo.txt &&
+	test_must_fail git rm foo.txt 2>actual &&
+	test_i18ncmp expect actual
+'
+
+test_expect_success 'rm file with changes in the index without hints' '
+	cat >expect <<-\EOF &&
+	error: the following file has changes staged in the index:
+	    foo.txt
+	EOF
+	test_must_fail git -c advice.rmhints=false rm foo.txt 2>actual &&
+	test_i18ncmp expect actual
+'
+
+test_expect_success 'rm files with two different errors' '
+	cat >expect <<-\EOF &&
+	error: the following file has staged content different from both the
+	file and the HEAD:
+	    foo1.txt
+	(use -f to force removal)
+	error: the following file has changes staged in the index:
+	    bar1.txt
+	(use --cached to keep the file, or -f to force removal)
+	EOF
+	echo content >foo1.txt &&
+	git add foo1.txt &&
+	echo content6 >foo1.txt &&
+	echo content6 >bar1.txt &&
+	git add bar1.txt &&
+	test_must_fail git rm bar1.txt foo1.txt 2>actual &&
+	test_i18ncmp expect actual
+'
+
 test_done

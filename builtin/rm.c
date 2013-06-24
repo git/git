@@ -9,6 +9,7 @@
 #include "cache-tree.h"
 #include "tree-walk.h"
 #include "parse-options.h"
+#include "string-list.h"
 #include "submodule.h"
 
 static const char * const builtin_rm_usage[] = {
@@ -36,10 +37,32 @@ static int get_ours_cache_pos(const char *path, int pos)
 	return -1;
 }
 
+static void print_error_files(struct string_list *files_list,
+			      const char *main_msg,
+			      const char *hints_msg,
+			      int *errs)
+{
+	if (files_list->nr) {
+		int i;
+		struct strbuf err_msg = STRBUF_INIT;
+
+		strbuf_addstr(&err_msg, main_msg);
+		for (i = 0; i < files_list->nr; i++)
+			strbuf_addf(&err_msg,
+				    "\n    %s",
+				    files_list->items[i].string);
+		if (advice_rm_hints)
+			strbuf_addstr(&err_msg, hints_msg);
+		*errs = error("%s", err_msg.buf);
+		strbuf_release(&err_msg);
+	}
+}
+
 static int check_submodules_use_gitfiles(void)
 {
 	int i;
 	int errs = 0;
+	struct string_list files = STRING_LIST_INIT_NODUP;
 
 	for (i = 0; i < list.nr; i++) {
 		const char *name = list.entry[i].name;
@@ -61,11 +84,18 @@ static int check_submodules_use_gitfiles(void)
 			continue;
 
 		if (!submodule_uses_gitfile(name))
-			errs = error(_("submodule '%s' (or one of its nested "
-				     "submodules) uses a .git directory\n"
-				     "(use 'rm -rf' if you really want to remove "
-				     "it including all of its history)"), name);
+			string_list_append(&files, name);
 	}
+	print_error_files(&files,
+			  Q_("the following submodule (or one of its nested "
+			     "submodules)\n uses a .git directory:",
+			     "the following submodules (or one of its nested "
+			     "submodules)\n use a .git directory:",
+			     files.nr),
+			  _("\n(use 'rm -rf' if you really want to remove "
+			    "it including all of its history)"),
+			  &errs);
+	string_list_clear(&files, 0);
 
 	return errs;
 }
@@ -81,6 +111,10 @@ static int check_local_mod(unsigned char *head, int index_only)
 	 */
 	int i, no_head;
 	int errs = 0;
+	struct string_list files_staged = STRING_LIST_INIT_NODUP;
+	struct string_list files_cached = STRING_LIST_INIT_NODUP;
+	struct string_list files_submodule = STRING_LIST_INIT_NODUP;
+	struct string_list files_local = STRING_LIST_INIT_NODUP;
 
 	no_head = is_null_sha1(head);
 	for (i = 0; i < list.nr; i++) {
@@ -171,29 +205,58 @@ static int check_local_mod(unsigned char *head, int index_only)
 		 */
 		if (local_changes && staged_changes) {
 			if (!index_only || !(ce->ce_flags & CE_INTENT_TO_ADD))
-				errs = error(_("'%s' has staged content different "
-					     "from both the file and the HEAD\n"
-					     "(use -f to force removal)"), name);
+				string_list_append(&files_staged, name);
 		}
 		else if (!index_only) {
 			if (staged_changes)
-				errs = error(_("'%s' has changes staged in the index\n"
-					     "(use --cached to keep the file, "
-					     "or -f to force removal)"), name);
+				string_list_append(&files_cached, name);
 			if (local_changes) {
 				if (S_ISGITLINK(ce->ce_mode) &&
-				    !submodule_uses_gitfile(name)) {
-					errs = error(_("submodule '%s' (or one of its nested "
-						     "submodules) uses a .git directory\n"
-						     "(use 'rm -rf' if you really want to remove "
-						     "it including all of its history)"), name);
-				} else
-					errs = error(_("'%s' has local modifications\n"
-						     "(use --cached to keep the file, "
-						     "or -f to force removal)"), name);
+				    !submodule_uses_gitfile(name))
+					string_list_append(&files_submodule, name);
+				else
+					string_list_append(&files_local, name);
 			}
 		}
 	}
+	print_error_files(&files_staged,
+			  Q_("the following file has staged content different "
+			     "from both the\nfile and the HEAD:",
+			     "the following files have staged content different"
+			     " from both the\nfile and the HEAD:",
+			     files_staged.nr),
+			  _("\n(use -f to force removal)"),
+			  &errs);
+	string_list_clear(&files_staged, 0);
+	print_error_files(&files_cached,
+			  Q_("the following file has changes "
+			     "staged in the index:",
+			     "the following files have changes "
+			     "staged in the index:", files_cached.nr),
+			  _("\n(use --cached to keep the file,"
+			    " or -f to force removal)"),
+			  &errs);
+	string_list_clear(&files_cached, 0);
+	print_error_files(&files_submodule,
+			  Q_("the following submodule (or one of its nested "
+			     "submodule)\nuses a .git directory:",
+			     "the following submodules (or one of its nested "
+			     "submodule)\nuse a .git directory:",
+			     files_submodule.nr),
+			  _("\n(use 'rm -rf' if you really "
+			    "want to remove it including all "
+			    "of its history)"),
+			  &errs);
+	string_list_clear(&files_submodule, 0);
+	print_error_files(&files_local,
+			  Q_("the following file has local modifications:",
+			     "the following files have local modifications:",
+			     files_local.nr),
+			  _("\n(use --cached to keep the file,"
+			    " or -f to force removal)"),
+			  &errs);
+	string_list_clear(&files_local, 0);
+
 	return errs;
 }
 

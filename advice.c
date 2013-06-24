@@ -15,6 +15,7 @@ int advice_implicit_identity = 1;
 int advice_detached_head = 1;
 int advice_set_upstream_failure = 1;
 int advice_object_name_warning = 1;
+int advice_rm_hints = 1;
 
 static struct {
 	const char *name;
@@ -35,6 +36,7 @@ static struct {
 	{ "detachedhead", &advice_detached_head },
 	{ "setupstreamfailure", &advice_set_upstream_failure },
 	{ "object_name_warning", &advice_object_name_warning },
+	{ "rmhints", &advice_rm_hints },
 
 	/* make this an alias for backward compatibility */
 	{ "pushnonfastforward", &advice_push_update_rejected }
