@@ -632,7 +632,8 @@ test_expect_success 'status when cherry-picking before resolving conflicts' '
 	cat >expected <<-\EOF &&
 	# On branch cherry_branch
 	# You are currently cherry-picking.
-	#   (fix conflicts and run "git commit")
+	#   (fix conflicts and run "git cherry-pick --continue")
+	#   (use "git cherry-pick --abort" to cancel the cherry-pick operation)
 	#
 	# Unmerged paths:
 	#   (use "git add <file>..." to mark resolution)
@@ -655,7 +656,8 @@ test_expect_success 'status when cherry-picking after resolving conflicts' '
 	cat >expected <<-\EOF &&
 	# On branch cherry_branch
 	# You are currently cherry-picking.
-	#   (all conflicts fixed: run "git commit")
+	#   (all conflicts fixed: run "git cherry-pick --continue")
+	#   (use "git cherry-pick --abort" to cancel the cherry-pick operation)
 	#
 	# Changes to be committed:
 	#
