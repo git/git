@@ -464,7 +464,7 @@ static int traverse_trees_recursive(int n, unsigned long dirmask,
 	newinfo.pathspec = info->pathspec;
 	newinfo.name = *p;
 	newinfo.pathlen += tree_entry_len(p) + 1;
-	newinfo.conflicts |= df_conflicts;
+	newinfo.df_conflicts |= df_conflicts;
 
 	for (i = 0; i < n; i++, dirmask >>= 1) {
 		const unsigned char *sha1 = NULL;
@@ -565,16 +565,11 @@ static int unpack_nondirectories(int n, unsigned long mask,
 {
 	int i;
 	struct unpack_trees_options *o = info->data;
-	unsigned long conflicts;
+	unsigned long conflicts = info->df_conflicts | dirmask;
 
 	/* Do we have *only* directories? Nothing to do */
 	if (mask == dirmask && !src[0])
 		return 0;
-
-	conflicts = info->conflicts;
-	if (o->merge)
-		conflicts >>= 1;
-	conflicts |= dirmask;
 
 	/*
 	 * Ok, we've filled in up to any potential index entry in src[0],
@@ -807,13 +802,6 @@ static int unpack_callback(int n, unsigned long mask, unsigned long dirmask, str
 
 	/* Now handle any directories.. */
 	if (dirmask) {
-		unsigned long conflicts = mask & ~dirmask;
-		if (o->merge) {
-			conflicts <<= 1;
-			if (src[0])
-				conflicts |= 1;
-		}
-
 		/* special case: "diff-index --cached" looking at a tree */
 		if (o->diff_index_cached &&
 		    n == 1 && dirmask == 1 && S_ISDIR(names->mode)) {
@@ -832,7 +820,7 @@ static int unpack_callback(int n, unsigned long mask, unsigned long dirmask, str
 			}
 		}
 
-		if (traverse_trees_recursive(n, dirmask, conflicts,
+		if (traverse_trees_recursive(n, dirmask, mask & ~dirmask,
 					     names, info) < 0)
 			return -1;
 		return mask;
