@@ -1441,6 +1441,7 @@ int cmd_commit(int argc, const char **argv, const char *prefix)
 	wt_status_prepare(&s);
 	gitmodules_config();
 	git_config(git_commit_config, &s);
+	status_format = STATUS_FORMAT_NONE; /* Ignore status.short */
 	determine_whence(&s);
 	s.colopts = 0;
 
