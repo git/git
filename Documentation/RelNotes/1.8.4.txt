@@ -35,13 +35,19 @@ Foreign interfaces, subsystems and ports.
 
 UI, Workflows & Features
 
+ * "git rm" gives a single message followed by list of paths to report
+   multiple paths that cannot be removed.
+
+ * "git rebase" can be told with ":/look for this string" syntax commits
+   to replay the changes onto and where the work to be replayed begins.
+
  * Many tutorials teach users to set "color.ui" to "auto" as the first
    thing after you set "user.name/email" to introduce yourselves to
    Git.  Now the variable defaults to "auto".
 
- * "git status" learned status.branch and status.short configuration
-   variables to use --branch and --short options by default (override
-   with --no-branch and --no-short options from the command line).
+### * "git status" learned status.branch and status.short configuration
+###   variables to use --branch and --short options by default (override
+###   with --no-branch and --no-short options from the command line).
 
  * "git cmd <name>", when <name> happens to be a 40-hex string,
    directly uses the 40-hex string as an object name, even if a ref
@@ -52,7 +58,8 @@ UI, Workflows & Features
 
  * "git rebase" learned "--[no-]autostash" option to save local
    changes instead of refusing to run (to which people's normal
-   response was to stash them and re-run).
+   response was to stash them and re-run).  This introduced a corner
+   case breakage to "git am --abort" but it has been fixed.
 
  * Instead of typing four capital letters "HEAD", you can say "@" now,
    e.g. "git log @".
@@ -146,6 +153,9 @@ Fixes since v1.8.3
 Unless otherwise noted, all the fixes since v1.8.3 in the maintenance
 track are contained in this release (see release notes to them for
 details).
+
+ * "cherry-pick" had a small leak in an error codepath.
+   (merge 706728a fc/sequencer-plug-leak later to maint).
 
  * Logic used by git-send-email to suppress cc mishandled names like
    "A U. Thor" <author@example.xz>, where the human readable part
