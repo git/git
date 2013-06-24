@@ -31,11 +31,11 @@ MAN7_TXT += gittutorial.txt
 MAN7_TXT += gitworkflows.txt
 
 MAN_TXT = $(MAN1_TXT) $(MAN5_TXT) $(MAN7_TXT)
-MAN_XML=$(patsubst %.txt,%.xml,$(MAN_TXT))
-MAN_HTML=$(patsubst %.txt,%.html,$(MAN_TXT))
+MAN_XML = $(patsubst %.txt,%.xml,$(MAN_TXT))
+MAN_HTML = $(patsubst %.txt,%.html,$(MAN_TXT))
 
 OBSOLETE_HTML = git-remote-helpers.html
-DOC_HTML=$(MAN_HTML) $(OBSOLETE_HTML)
+DOC_HTML = $(MAN_HTML) $(OBSOLETE_HTML)
 
 ARTICLES = howto-index
 ARTICLES += everyday
@@ -74,35 +74,35 @@ SP_ARTICLES += technical/api-index
 
 DOC_HTML += $(patsubst %,%.html,$(ARTICLES) $(SP_ARTICLES))
 
-DOC_MAN1=$(patsubst %.txt,%.1,$(MAN1_TXT))
-DOC_MAN5=$(patsubst %.txt,%.5,$(MAN5_TXT))
-DOC_MAN7=$(patsubst %.txt,%.7,$(MAN7_TXT))
+DOC_MAN1 = $(patsubst %.txt,%.1,$(MAN1_TXT))
+DOC_MAN5 = $(patsubst %.txt,%.5,$(MAN5_TXT))
+DOC_MAN7 = $(patsubst %.txt,%.7,$(MAN7_TXT))
 
-prefix?=$(HOME)
-bindir?=$(prefix)/bin
-htmldir?=$(prefix)/share/doc/git-doc
-pdfdir?=$(prefix)/share/doc/git-doc
-mandir?=$(prefix)/share/man
-man1dir=$(mandir)/man1
-man5dir=$(mandir)/man5
-man7dir=$(mandir)/man7
-# DESTDIR=
+prefix ?= $(HOME)
+bindir ?= $(prefix)/bin
+htmldir ?= $(prefix)/share/doc/git-doc
+infodir ?= $(prefix)/share/info
+pdfdir ?= $(prefix)/share/doc/git-doc
+mandir ?= $(prefix)/share/man
+man1dir = $(mandir)/man1
+man5dir = $(mandir)/man5
+man7dir = $(mandir)/man7
+# DESTDIR =
 
 ASCIIDOC = asciidoc
 ASCIIDOC_EXTRA =
 MANPAGE_XSL = manpage-normal.xsl
 XMLTO = xmlto
 XMLTO_EXTRA =
-INSTALL?=install
+INSTALL ?= install
 RM ?= rm -f
 MAN_REPO = ../../git-manpages
 HTML_REPO = ../../git-htmldocs
 
-infodir?=$(prefix)/share/info
-MAKEINFO=makeinfo
-INSTALL_INFO=install-info
-DOCBOOK2X_TEXI=docbook2x-texi
-DBLATEX=dblatex
+MAKEINFO = makeinfo
+INSTALL_INFO = install-info
+DOCBOOK2X_TEXI = docbook2x-texi
+DBLATEX = dblatex
 ifndef PERL_PATH
 	PERL_PATH = /usr/bin/perl
 endif
