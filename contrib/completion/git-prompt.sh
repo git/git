@@ -311,8 +311,12 @@ __git_ps1 ()
 		;;
 	esac
 
-	local repo_info="$(git rev-parse --git-dir --is-inside-git-dir \
-		--is-bare-repository --is-inside-work-tree 2>/dev/null)"
+	local repo_info rev_parse_exit_code
+	repo_info="$(git rev-parse --git-dir --is-inside-git-dir \
+		--is-bare-repository --is-inside-work-tree \
+		--short HEAD 2>/dev/null)"
+	rev_parse_exit_code="$?"
+
 	if [ -z "$repo_info" ]; then
 		if [ $pcmode = yes ]; then
 			#In PC mode PS1 always needs to be set
@@ -321,6 +325,11 @@ __git_ps1 ()
 		return
 	fi
 
+	local short_sha
+	if [ "$rev_parse_exit_code" = "0" ]; then
+		short_sha="${repo_info##*$'\n'}"
+		repo_info="${repo_info%$'\n'*}"
+	fi
 	local inside_worktree="${repo_info##*$'\n'}"
 	repo_info="${repo_info%$'\n'*}"
 	local bare_repo="${repo_info##*$'\n'}"
@@ -392,8 +401,7 @@ __git_ps1 ()
 					git describe --tags --exact-match HEAD ;;
 				esac 2>/dev/null)" ||
 
-				b="$(git rev-parse --short HEAD 2>/dev/null)..." ||
-				b="unknown"
+				b="$short_sha..."
 				b="($b)"
 			fi
 		fi
