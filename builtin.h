@@ -5,7 +5,6 @@
 #include "strbuf.h"
 #include "cache.h"
 #include "commit.h"
-#include "notes.h"
 
 #define DEFAULT_MERGE_LOG_LEN 20
 
@@ -25,21 +24,6 @@ struct fmt_merge_msg_opts {
 
 extern int fmt_merge_msg(struct strbuf *in, struct strbuf *out,
 			 struct fmt_merge_msg_opts *);
-
-struct notes_rewrite_cfg {
-	struct notes_tree **trees;
-	const char *cmd;
-	int enabled;
-	combine_notes_fn combine;
-	struct string_list *refs;
-	int refs_from_env;
-	int mode_from_env;
-};
-
-struct notes_rewrite_cfg *init_copy_notes_for_rewrite(const char *cmd);
-int copy_note_for_rewrite(struct notes_rewrite_cfg *c,
-			  const unsigned char *from_obj, const unsigned char *to_obj);
-void finish_copy_notes_for_rewrite(struct notes_rewrite_cfg *c);
 
 extern int textconv_object(const char *path, unsigned mode, const unsigned char *sha1, int sha1_valid, char **buf, unsigned long *buf_size);
 
