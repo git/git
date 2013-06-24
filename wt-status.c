@@ -127,6 +127,7 @@ void wt_status_prepare(struct wt_status *s)
 	s->change.strdup_strings = 1;
 	s->untracked.strdup_strings = 1;
 	s->ignored.strdup_strings = 1;
+	s->show_branch = -1;  /* unspecified */
 }
 
 static void wt_status_print_unmerged_header(struct wt_status *s)

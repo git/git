@@ -111,12 +111,14 @@ static int show_ignored_in_status;
 static const char *only_include_assumed;
 static struct strbuf message = STRBUF_INIT;
 
-static enum {
+static enum status_format {
 	STATUS_FORMAT_NONE = 0,
 	STATUS_FORMAT_LONG,
 	STATUS_FORMAT_SHORT,
-	STATUS_FORMAT_PORCELAIN
-} status_format;
+	STATUS_FORMAT_PORCELAIN,
+
+	STATUS_FORMAT_UNSPECIFIED
+} status_format = STATUS_FORMAT_UNSPECIFIED;
 
 static int opt_parse_m(const struct option *opt, const char *arg, int unset)
 {
@@ -456,6 +458,9 @@ static int run_status(FILE *fp, const char *index_file, const char *prefix, int 
 		break;
 	case STATUS_FORMAT_PORCELAIN:
 		wt_porcelain_print(s);
+		break;
+	case STATUS_FORMAT_UNSPECIFIED:
+		die("BUG: finalize_deferred_config() should have been called");
 		break;
 	case STATUS_FORMAT_NONE:
 	case STATUS_FORMAT_LONG:
@@ -958,6 +963,42 @@ static const char *read_commit_message(const char *name)
 	return logmsg_reencode(commit, NULL, out_enc);
 }
 
+/*
+ * Enumerate what needs to be propagated when --porcelain
+ * is not in effect here.
+ */
+static struct status_deferred_config {
+	enum status_format status_format;
+	int show_branch;
+} status_deferred_config = {
+	STATUS_FORMAT_UNSPECIFIED,
+	-1 /* unspecified */
+};
+
+static void finalize_deferred_config(struct wt_status *s)
+{
+	int use_deferred_config = (status_format != STATUS_FORMAT_PORCELAIN &&
+				   !s->null_termination);
+
+	if (s->null_termination) {
+		if (status_format == STATUS_FORMAT_NONE ||
+		    status_format == STATUS_FORMAT_UNSPECIFIED)
+			status_format = STATUS_FORMAT_PORCELAIN;
+		else if (status_format == STATUS_FORMAT_LONG)
+			die(_("--long and -z are incompatible"));
+	}
+
+	if (use_deferred_config && status_format == STATUS_FORMAT_UNSPECIFIED)
+		status_format = status_deferred_config.status_format;
+	if (status_format == STATUS_FORMAT_UNSPECIFIED)
+		status_format = STATUS_FORMAT_NONE;
+
+	if (use_deferred_config && s->show_branch < 0)
+		s->show_branch = status_deferred_config.show_branch;
+	if (s->show_branch < 0)
+		s->show_branch = 0;
+}
+
 static int parse_and_validate_options(int argc, const char *argv[],
 				      const struct option *options,
 				      const char * const usage[],
@@ -968,6 +1009,7 @@ static int parse_and_validate_options(int argc, const char *argv[],
 	int f = 0;
 
 	argc = parse_options(argc, argv, prefix, options, usage, 0);
+	finalize_deferred_config(s);
 
 	if (force_author && !strchr(force_author, '>'))
 		force_author = find_author_by_nickname(force_author);
@@ -1052,12 +1094,6 @@ static int parse_and_validate_options(int argc, const char *argv[],
 	if (all && argc > 0)
 		die(_("Paths with -a does not make sense."));
 
-	if (s->null_termination) {
-		if (status_format == STATUS_FORMAT_NONE)
-			status_format = STATUS_FORMAT_PORCELAIN;
-		else if (status_format == STATUS_FORMAT_LONG)
-			die(_("--long and -z are incompatible"));
-	}
 	if (status_format != STATUS_FORMAT_NONE)
 		dry_run = 1;
 
@@ -1112,13 +1148,13 @@ static int git_status_config(const char *k, const char *v, void *cb)
 	}
 	if (!strcmp(k, "status.short")) {
 		if (git_config_bool(k, v))
-			status_format = STATUS_FORMAT_SHORT;
+			status_deferred_config.status_format = STATUS_FORMAT_SHORT;
 		else
-			status_format = STATUS_FORMAT_NONE;
+			status_deferred_config.status_format = STATUS_FORMAT_NONE;
 		return 0;
 	}
 	if (!strcmp(k, "status.branch")) {
-		s->show_branch = git_config_bool(k, v);
+		status_deferred_config.show_branch = git_config_bool(k, v);
 		return 0;
 	}
 	if (!strcmp(k, "status.color") || !strcmp(k, "color.status")) {
@@ -1163,8 +1199,8 @@ int cmd_status(int argc, const char **argv, const char *prefix)
 		OPT__VERBOSE(&verbose, N_("be verbose")),
 		OPT_SET_INT('s', "short", &status_format,
 			    N_("show status concisely"), STATUS_FORMAT_SHORT),
-		OPT_BOOLEAN('b', "branch", &s.show_branch,
-			    N_("show branch information")),
+		OPT_BOOL('b', "branch", &s.show_branch,
+			 N_("show branch information")),
 		OPT_SET_INT(0, "porcelain", &status_format,
 			    N_("machine-readable output"),
 			    STATUS_FORMAT_PORCELAIN),
@@ -1197,13 +1233,7 @@ int cmd_status(int argc, const char **argv, const char *prefix)
 			     builtin_status_options,
 			     builtin_status_usage, 0);
 	finalize_colopts(&s.colopts, -1);
-
-	if (s.null_termination) {
-		if (status_format == STATUS_FORMAT_NONE)
-			status_format = STATUS_FORMAT_PORCELAIN;
-		else if (status_format == STATUS_FORMAT_LONG)
-			die(_("--long and -z are incompatible"));
-	}
+	finalize_deferred_config(&s);
 
 	handle_untracked_files_arg(&s);
 	if (show_ignored_in_status)
@@ -1231,6 +1261,9 @@ int cmd_status(int argc, const char **argv, const char *prefix)
 		break;
 	case STATUS_FORMAT_PORCELAIN:
 		wt_porcelain_print(&s);
+		break;
+	case STATUS_FORMAT_UNSPECIFIED:
+		die("BUG: finalize_deferred_config() should have been called");
 		break;
 	case STATUS_FORMAT_NONE:
 	case STATUS_FORMAT_LONG:
@@ -1400,7 +1433,7 @@ int cmd_commit(int argc, const char **argv, const char *prefix)
 		OPT_BOOLEAN(0, "dry-run", &dry_run, N_("show what would be committed")),
 		OPT_SET_INT(0, "short", &status_format, N_("show status concisely"),
 			    STATUS_FORMAT_SHORT),
-		OPT_BOOLEAN(0, "branch", &s.show_branch, N_("show branch information")),
+		OPT_BOOL(0, "branch", &s.show_branch, N_("show branch information")),
 		OPT_SET_INT(0, "porcelain", &status_format,
 			    N_("machine-readable output"), STATUS_FORMAT_PORCELAIN),
 		OPT_SET_INT(0, "long", &status_format,
