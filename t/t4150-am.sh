@@ -147,7 +147,7 @@ test_expect_success 'am applies patch correctly' '
 	git checkout first &&
 	test_tick &&
 	git am <patch1 &&
-	! test -d .git/rebase-apply &&
+	test_path_is_missing .git/rebase-apply &&
 	git diff --exit-code second &&
 	test "$(git rev-parse second)" = "$(git rev-parse HEAD)" &&
 	test "$(git rev-parse second^)" = "$(git rev-parse HEAD^)"
@@ -158,7 +158,7 @@ test_expect_success 'am applies patch e-mail not in a mbox' '
 	git reset --hard &&
 	git checkout first &&
 	git am patch1.eml &&
-	! test -d .git/rebase-apply &&
+	test_path_is_missing .git/rebase-apply &&
 	git diff --exit-code second &&
 	test "$(git rev-parse second)" = "$(git rev-parse HEAD)" &&
 	test "$(git rev-parse second^)" = "$(git rev-parse HEAD^)"
@@ -169,7 +169,7 @@ test_expect_success 'am applies patch e-mail not in a mbox with CRLF' '
 	git reset --hard &&
 	git checkout first &&
 	git am patch1-crlf.eml &&
-	! test -d .git/rebase-apply &&
+	test_path_is_missing .git/rebase-apply &&
 	git diff --exit-code second &&
 	test "$(git rev-parse second)" = "$(git rev-parse HEAD)" &&
 	test "$(git rev-parse second^)" = "$(git rev-parse HEAD^)"
@@ -180,7 +180,7 @@ test_expect_success 'am applies patch e-mail with preceding whitespace' '
 	git reset --hard &&
 	git checkout first &&
 	git am patch1-ws.eml &&
-	! test -d .git/rebase-apply &&
+	test_path_is_missing .git/rebase-apply &&
 	git diff --exit-code second &&
 	test "$(git rev-parse second)" = "$(git rev-parse HEAD)" &&
 	test "$(git rev-parse second^)" = "$(git rev-parse HEAD^)"
@@ -206,7 +206,7 @@ test_expect_success 'am changes committer and keeps author' '
 	git reset --hard &&
 	git checkout first &&
 	git am patch2 &&
-	! test -d .git/rebase-apply &&
+	test_path_is_missing .git/rebase-apply &&
 	test "$(git rev-parse master^^)" = "$(git rev-parse HEAD^^)" &&
 	git diff --exit-code master..HEAD &&
 	git diff --exit-code master^..HEAD^ &&
@@ -258,7 +258,7 @@ test_expect_success 'am --keep really keeps the subject' '
 	git reset --hard &&
 	git checkout HEAD^ &&
 	git am --keep patch4 &&
-	! test -d .git/rebase-apply &&
+	test_path_is_missing .git/rebase-apply &&
 	git cat-file commit HEAD >actual &&
 	grep "Re: Re: Re: \[PATCH 1/5 v2\] \[foo\] third" actual
 '
@@ -268,7 +268,7 @@ test_expect_success 'am --keep-non-patch really keeps the non-patch part' '
 	git reset --hard &&
 	git checkout HEAD^ &&
 	git am --keep-non-patch patch4 &&
-	! test -d .git/rebase-apply &&
+	test_path_is_missing .git/rebase-apply &&
 	git cat-file commit HEAD >actual &&
 	grep "^\[foo\] third" actual
 '
@@ -283,7 +283,7 @@ test_expect_success 'am -3 falls back to 3-way merge' '
 	test_tick &&
 	git commit -m "copied stuff" &&
 	git am -3 lorem-move.patch &&
-	! test -d .git/rebase-apply &&
+	test_path_is_missing .git/rebase-apply &&
 	git diff --exit-code lorem
 '
 
@@ -297,7 +297,7 @@ test_expect_success 'am -3 -p0 can read --no-prefix patch' '
 	test_tick &&
 	git commit -m "copied stuff" &&
 	git am -3 -p0 lorem-zero.patch &&
-	! test -d .git/rebase-apply &&
+	test_path_is_missing .git/rebase-apply &&
 	git diff --exit-code lorem
 '
 
@@ -307,7 +307,7 @@ test_expect_success 'am can rename a file' '
 	git reset --hard &&
 	git checkout lorem^0 &&
 	git am rename.patch &&
-	! test -d .git/rebase-apply &&
+	test_path_is_missing .git/rebase-apply &&
 	git update-index --refresh &&
 	git diff --exit-code rename
 '
@@ -318,7 +318,7 @@ test_expect_success 'am -3 can rename a file' '
 	git reset --hard &&
 	git checkout lorem^0 &&
 	git am -3 rename.patch &&
-	! test -d .git/rebase-apply &&
+	test_path_is_missing .git/rebase-apply &&
 	git update-index --refresh &&
 	git diff --exit-code rename
 '
@@ -329,7 +329,7 @@ test_expect_success 'am -3 can rename a file after falling back to 3-way merge' 
 	git reset --hard &&
 	git checkout lorem^0 &&
 	git am -3 rename-add.patch &&
-	! test -d .git/rebase-apply &&
+	test_path_is_missing .git/rebase-apply &&
 	git update-index --refresh &&
 	git diff --exit-code rename
 '
@@ -358,9 +358,15 @@ test_expect_success 'am pauses on conflict' '
 test_expect_success 'am --skip works' '
 	echo goodbye >expected &&
 	git am --skip &&
-	! test -d .git/rebase-apply &&
+	test_path_is_missing .git/rebase-apply &&
 	git diff --exit-code lorem2^^ -- file &&
 	test_cmp expected another
+'
+
+test_expect_success 'am --abort removes a stray directory' '
+	mkdir .git/rebase-apply &&
+	git am --abort &&
+	test_path_is_missing .git/rebase-apply
 '
 
 test_expect_success 'am --resolved works' '
@@ -373,7 +379,7 @@ test_expect_success 'am --resolved works' '
 	echo resolved >>file &&
 	git add file &&
 	git am --resolved &&
-	! test -d .git/rebase-apply &&
+	test_path_is_missing .git/rebase-apply &&
 	test_cmp expected another
 '
 
@@ -382,7 +388,7 @@ test_expect_success 'am takes patches from a Pine mailbox' '
 	git reset --hard &&
 	git checkout first &&
 	cat pine patch1 | git am &&
-	! test -d .git/rebase-apply &&
+	test_path_is_missing .git/rebase-apply &&
 	git diff --exit-code master^..HEAD
 '
 
@@ -391,7 +397,7 @@ test_expect_success 'am fails on mail without patch' '
 	git reset --hard &&
 	test_must_fail git am <failmail &&
 	git am --abort &&
-	! test -d .git/rebase-apply
+	test_path_is_missing .git/rebase-apply
 '
 
 test_expect_success 'am fails on empty patch' '
@@ -400,7 +406,7 @@ test_expect_success 'am fails on empty patch' '
 	echo "---" >>failmail &&
 	test_must_fail git am <failmail &&
 	git am --skip &&
-	! test -d .git/rebase-apply
+	test_path_is_missing .git/rebase-apply
 '
 
 test_expect_success 'am works from stdin in subdirectory' '
