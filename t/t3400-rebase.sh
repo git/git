@@ -59,6 +59,17 @@ test_expect_success 'rebase against master' '
 	git rebase master
 '
 
+test_expect_success 'rebase, with <onto> and <upstream> specified as :/quuxery' '
+	test_when_finished "git branch -D torebase" &&
+	git checkout -b torebase my-topic-branch^ &&
+	upstream=$(git rev-parse ":/Add B") &&
+	onto=$(git rev-parse ":/Add A") &&
+	git rebase --onto $onto $upstream &&
+	git reset --hard my-topic-branch^ &&
+	git rebase --onto ":/Add A" ":/Add B" &&
+	git checkout my-topic-branch
+'
+
 test_expect_success 'the rebase operation should not have destroyed author information' '
 	! (git log | grep "Author:" | grep "<>")
 '

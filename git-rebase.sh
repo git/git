@@ -436,7 +436,7 @@ then
 		shift
 		;;
 	esac
-	upstream=`git rev-parse --verify "${upstream_name}^0"` ||
+	upstream=$(peel_committish "${upstream_name}") ||
 	die "$(eval_gettext "invalid upstream \$upstream_name")"
 	upstream_arg="$upstream_name"
 else
@@ -472,7 +472,7 @@ case "$onto_name" in
 	fi
 	;;
 *)
-	onto=$(git rev-parse --verify "${onto_name}^0") ||
+	onto=$(peel_committish "$onto_name") ||
 	die "$(eval_gettext "Does not point to a valid commit: \$onto_name")"
 	;;
 esac
