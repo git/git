@@ -12,6 +12,11 @@ norm_path() {
 	"test \"\$(test-path-utils normalize_path_copy '$1')\" = '$2'"
 }
 
+relative_path() {
+	test_expect_success $4 "relative path: $1 $2 => $3" \
+	"test \"\$(test-path-utils relative_path '$1' '$2')\" = '$3'"
+}
+
 # On Windows, we are using MSYS's bash, which mangles the paths.
 # Absolute paths are anchored at the MSYS installation directory,
 # which means that the path / accounts for this many characters:
@@ -181,6 +186,38 @@ test_expect_success SYMLINKS 'real path works on symlinks' '
 	ln -s ../first/file .git/syml &&
 	sym="$(cd first; pwd -P)"/file &&
 	test "$sym" = "$(test-path-utils real_path "$dir2/syml")"
+'
+
+relative_path /a/b/c/	/a/b/		c/
+relative_path /a/b/c/	/a/b		c/
+relative_path /a//b//c/	//a/b//		c/	POSIX
+relative_path /a/b	/a/b		.
+relative_path /a/b/	/a/b		.
+relative_path /a	/a/b		/a	POSIX
+relative_path /		/a/b/		/	POSIX
+relative_path /a/c	/a/b/		/a/c	POSIX
+relative_path /a/c	/a/b		/a/c	POSIX
+relative_path /x/y	/a/b/		/x/y	POSIX
+relative_path /a/b	"<empty>"	/a/b	POSIX
+relative_path /a/b 	"<null>"	/a/b	POSIX
+relative_path a/b/c/	a/b/		c/
+relative_path a/b/c/	a/b		c/
+relative_path a/b//c	a//b		c
+relative_path a/b/	a/b/		.
+relative_path a/b/	a/b		.
+relative_path a		a/b		a	# TODO: should be: ..
+relative_path x/y	a/b		x/y	# TODO: should be: ../../x/y
+relative_path a/c	a/b		a/c	# TODO: should be: ../c
+relative_path a/b	"<empty>"	a/b
+relative_path a/b 	"<null>"	a/b
+relative_path "<empty>"	/a/b		"(empty)"
+relative_path "<empty>"	"<empty>"	"(empty)"
+relative_path "<empty>"	"<null>"	"(empty)"
+relative_path "<null>"	"<empty>"	"(null)"
+relative_path "<null>"	"<null>"	"(null)"
+
+test_expect_failure 'relative path: <null> /a/b => segfault' '
+	test-path-utils relative_path "<null>" "/a/b"
 '
 
 test_done
