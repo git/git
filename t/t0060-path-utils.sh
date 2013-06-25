@@ -191,33 +191,30 @@ test_expect_success SYMLINKS 'real path works on symlinks' '
 relative_path /a/b/c/	/a/b/		c/
 relative_path /a/b/c/	/a/b		c/
 relative_path /a//b//c/	//a/b//		c/	POSIX
-relative_path /a/b	/a/b		.
-relative_path /a/b/	/a/b		.
-relative_path /a	/a/b		/a	POSIX
-relative_path /		/a/b/		/	POSIX
-relative_path /a/c	/a/b/		/a/c	POSIX
-relative_path /a/c	/a/b		/a/c	POSIX
-relative_path /x/y	/a/b/		/x/y	POSIX
+relative_path /a/b	/a/b		./
+relative_path /a/b/	/a/b		./
+relative_path /a	/a/b		../
+relative_path /		/a/b/		../../
+relative_path /a/c	/a/b/		../c
+relative_path /a/c	/a/b		../c
+relative_path /x/y	/a/b/		../../x/y
 relative_path /a/b	"<empty>"	/a/b	POSIX
 relative_path /a/b 	"<null>"	/a/b	POSIX
 relative_path a/b/c/	a/b/		c/
 relative_path a/b/c/	a/b		c/
 relative_path a/b//c	a//b		c
-relative_path a/b/	a/b/		.
-relative_path a/b/	a/b		.
-relative_path a		a/b		a	# TODO: should be: ..
-relative_path x/y	a/b		x/y	# TODO: should be: ../../x/y
-relative_path a/c	a/b		a/c	# TODO: should be: ../c
+relative_path a/b/	a/b/		./
+relative_path a/b/	a/b		./
+relative_path a		a/b		../
+relative_path x/y	a/b		../../x/y
+relative_path a/c	a/b		../c
 relative_path a/b	"<empty>"	a/b
 relative_path a/b 	"<null>"	a/b
-relative_path "<empty>"	/a/b		"(empty)"
-relative_path "<empty>"	"<empty>"	"(empty)"
-relative_path "<empty>"	"<null>"	"(empty)"
-relative_path "<null>"	"<empty>"	"(null)"
-relative_path "<null>"	"<null>"	"(null)"
-
-test_expect_failure 'relative path: <null> /a/b => segfault' '
-	test-path-utils relative_path "<null>" "/a/b"
-'
+relative_path "<empty>"	/a/b		./
+relative_path "<empty>"	"<empty>"	./
+relative_path "<empty>"	"<null>"	./
+relative_path "<null>"	"<empty>"	./
+relative_path "<null>"	"<null>"	./
+relative_path "<null>"	/a/b		./
 
 test_done

@@ -117,14 +117,16 @@ int main(int argc, char **argv)
 	}
 
 	if (argc == 4 && !strcmp(argv[1], "relative_path")) {
+		struct strbuf sb = STRBUF_INIT;
 		const char *in, *prefix, *rel;
 		normalize_argv_string(&in, argv[2]);
 		normalize_argv_string(&prefix, argv[3]);
-		rel = relative_path(in, prefix);
+		rel = relative_path(in, prefix, &sb);
 		if (!rel)
 			puts("(null)");
 		else
 			puts(strlen(rel) > 0 ? rel : "(empty)");
+		strbuf_release(&sb);
 		return 0;
 	}
 
