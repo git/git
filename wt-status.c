@@ -243,7 +243,7 @@ static void wt_status_print_unmerged_data(struct wt_status *s,
 	struct strbuf onebuf = STRBUF_INIT;
 	const char *one, *how = _("bug");
 
-	one = quote_path(it->string, -1, &onebuf, s->prefix);
+	one = quote_path(it->string, s->prefix, &onebuf);
 	status_printf(s, color(WT_STATUS_HEADER, s), "\t");
 	switch (d->stagemask) {
 	case 1: how = _("both deleted:"); break;
@@ -297,8 +297,8 @@ static void wt_status_print_change_data(struct wt_status *s,
 		    change_type);
 	}
 
-	one = quote_path(one_name, -1, &onebuf, s->prefix);
-	two = quote_path(two_name, -1, &twobuf, s->prefix);
+	one = quote_path(one_name, s->prefix, &onebuf);
+	two = quote_path(two_name, s->prefix, &twobuf);
 
 	status_printf(s, color(WT_STATUS_HEADER, s), "\t");
 	switch (status) {
@@ -706,8 +706,7 @@ static void wt_status_print_other(struct wt_status *s,
 		struct string_list_item *it;
 		const char *path;
 		it = &(l->items[i]);
-		path = quote_path(it->string, strlen(it->string),
-				  &buf, s->prefix);
+		path = quote_path(it->string, s->prefix, &buf);
 		if (column_active(s->colopts)) {
 			string_list_append(&output, path);
 			continue;
@@ -1289,7 +1288,7 @@ static void wt_shortstatus_unmerged(struct string_list_item *it,
 	} else {
 		struct strbuf onebuf = STRBUF_INIT;
 		const char *one;
-		one = quote_path(it->string, -1, &onebuf, s->prefix);
+		one = quote_path(it->string, s->prefix, &onebuf);
 		printf(" %s\n", one);
 		strbuf_release(&onebuf);
 	}
@@ -1317,7 +1316,7 @@ static void wt_shortstatus_status(struct string_list_item *it,
 		struct strbuf onebuf = STRBUF_INIT;
 		const char *one;
 		if (d->head_path) {
-			one = quote_path(d->head_path, -1, &onebuf, s->prefix);
+			one = quote_path(d->head_path, s->prefix, &onebuf);
 			if (*one != '"' && strchr(one, ' ') != NULL) {
 				putchar('"');
 				strbuf_addch(&onebuf, '"');
@@ -1326,7 +1325,7 @@ static void wt_shortstatus_status(struct string_list_item *it,
 			printf("%s -> ", one);
 			strbuf_release(&onebuf);
 		}
-		one = quote_path(it->string, -1, &onebuf, s->prefix);
+		one = quote_path(it->string, s->prefix, &onebuf);
 		if (*one != '"' && strchr(one, ' ') != NULL) {
 			putchar('"');
 			strbuf_addch(&onebuf, '"');
@@ -1345,7 +1344,7 @@ static void wt_shortstatus_other(struct string_list_item *it,
 	} else {
 		struct strbuf onebuf = STRBUF_INIT;
 		const char *one;
-		one = quote_path(it->string, -1, &onebuf, s->prefix);
+		one = quote_path(it->string, s->prefix, &onebuf);
 		color_fprintf(s->fp, color(WT_STATUS_UNTRACKED, s), "%s", sign);
 		printf(" %s\n", one);
 		strbuf_release(&onebuf);

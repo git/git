@@ -286,8 +286,7 @@ static int grep_sha1(struct grep_opt *opt, const unsigned char *sha1,
 	struct strbuf pathbuf = STRBUF_INIT;
 
 	if (opt->relative && opt->prefix_length) {
-		quote_path_relative(filename + tree_name_len, -1, &pathbuf,
-				    opt->prefix);
+		quote_path_relative(filename + tree_name_len, opt->prefix, &pathbuf);
 		strbuf_insert(&pathbuf, 0, filename, tree_name_len);
 	} else {
 		strbuf_addstr(&pathbuf, filename);
@@ -318,7 +317,7 @@ static int grep_file(struct grep_opt *opt, const char *filename)
 	struct strbuf buf = STRBUF_INIT;
 
 	if (opt->relative && opt->prefix_length)
-		quote_path_relative(filename, -1, &buf, opt->prefix);
+		quote_path_relative(filename, opt->prefix, &buf);
 	else
 		strbuf_addstr(&buf, filename);
 

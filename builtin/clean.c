@@ -56,7 +56,7 @@ static int remove_dirs(struct strbuf *path, const char *prefix, int force_flag,
 	if ((force_flag & REMOVE_DIR_KEEP_NESTED_GIT) &&
 			!resolve_gitlink_ref(path->buf, "HEAD", submodule_head)) {
 		if (!quiet) {
-			quote_path_relative(path->buf, strlen(path->buf), &quoted, prefix);
+			quote_path_relative(path->buf, prefix, &quoted);
 			printf(dry_run ?  _(msg_would_skip_git_dir) : _(msg_skip_git_dir),
 					quoted.buf);
 		}
@@ -70,7 +70,7 @@ static int remove_dirs(struct strbuf *path, const char *prefix, int force_flag,
 		/* an empty dir could be removed even if it is unreadble */
 		res = dry_run ? 0 : rmdir(path->buf);
 		if (res) {
-			quote_path_relative(path->buf, strlen(path->buf), &quoted, prefix);
+			quote_path_relative(path->buf, prefix, &quoted);
 			warning(_(msg_warn_remove_failed), quoted.buf);
 			*dir_gone = 0;
 		}
@@ -94,7 +94,7 @@ static int remove_dirs(struct strbuf *path, const char *prefix, int force_flag,
 			if (remove_dirs(path, prefix, force_flag, dry_run, quiet, &gone))
 				ret = 1;
 			if (gone) {
-				quote_path_relative(path->buf, strlen(path->buf), &quoted, prefix);
+				quote_path_relative(path->buf, prefix, &quoted);
 				string_list_append(&dels, quoted.buf);
 			} else
 				*dir_gone = 0;
@@ -102,10 +102,10 @@ static int remove_dirs(struct strbuf *path, const char *prefix, int force_flag,
 		} else {
 			res = dry_run ? 0 : unlink(path->buf);
 			if (!res) {
-				quote_path_relative(path->buf, strlen(path->buf), &quoted, prefix);
+				quote_path_relative(path->buf, prefix, &quoted);
 				string_list_append(&dels, quoted.buf);
 			} else {
-				quote_path_relative(path->buf, strlen(path->buf), &quoted, prefix);
+				quote_path_relative(path->buf, prefix, &quoted);
 				warning(_(msg_warn_remove_failed), quoted.buf);
 				*dir_gone = 0;
 				ret = 1;
@@ -127,7 +127,7 @@ static int remove_dirs(struct strbuf *path, const char *prefix, int force_flag,
 		if (!res)
 			*dir_gone = 1;
 		else {
-			quote_path_relative(path->buf, strlen(path->buf), &quoted, prefix);
+			quote_path_relative(path->buf, prefix, &quoted);
 			warning(_(msg_warn_remove_failed), quoted.buf);
 			*dir_gone = 0;
 			ret = 1;
@@ -262,7 +262,7 @@ int cmd_clean(int argc, const char **argv, const char *prefix)
 				if (remove_dirs(&directory, prefix, rm_flags, dry_run, quiet, &gone))
 					errors++;
 				if (gone && !quiet) {
-					qname = quote_path_relative(directory.buf, directory.len, &buf, prefix);
+					qname = quote_path_relative(directory.buf, prefix, &buf);
 					printf(dry_run ? _(msg_would_remove) : _(msg_remove), qname);
 				}
 			}
@@ -272,11 +272,11 @@ int cmd_clean(int argc, const char **argv, const char *prefix)
 				continue;
 			res = dry_run ? 0 : unlink(ent->name);
 			if (res) {
-				qname = quote_path_relative(ent->name, -1, &buf, prefix);
+				qname = quote_path_relative(ent->name, prefix, &buf);
 				warning(_(msg_warn_remove_failed), qname);
 				errors++;
 			} else if (!quiet) {
-				qname = quote_path_relative(ent->name, -1, &buf, prefix);
+				qname = quote_path_relative(ent->name, prefix, &buf);
 				printf(dry_run ? _(msg_would_remove) : _(msg_remove), qname);
 			}
 		}

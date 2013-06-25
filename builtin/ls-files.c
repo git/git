@@ -394,7 +394,7 @@ int report_path_error(const char *ps_matched, const char **pathspec, const char 
 		if (found_dup)
 			continue;
 
-		name = quote_path_relative(pathspec[num], -1, &sb, prefix);
+		name = quote_path_relative(pathspec[num], prefix, &sb);
 		error("pathspec '%s' did not match any file(s) known to git.",
 		      name);
 		errors++;

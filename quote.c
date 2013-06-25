@@ -325,17 +325,14 @@ void write_name_quoted_relative(const char *name, size_t len,
 }
 
 /* quote path as relative to the given prefix */
-char *quote_path_relative(const char *in, int len,
-			  struct strbuf *out, const char *prefix)
+char *quote_path_relative(const char *in, const char *prefix,
+			  struct strbuf *out)
 {
 	struct strbuf sb = STRBUF_INIT;
 	const char *rel = relative_path(in, prefix, &sb);
 	strbuf_reset(out);
 	quote_c_style_counted(rel, strlen(rel), out, NULL, 0);
 	strbuf_release(&sb);
-
-	if (!out->len)
-		strbuf_addstr(out, "./");
 
 	return out->buf;
 }
