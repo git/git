@@ -48,8 +48,13 @@ static const char *tag_resolve_undo = "";
 
 static void write_name(const char* name, size_t len)
 {
-	write_name_quoted_relative(name, len, prefix, prefix_len, stdout,
-			line_terminator);
+	/*
+	 * With "--full-name", prefix_len=0; write_name_quoted_relative()
+	 * ignores prefix_len, so this caller needs to pass empty string
+	 * in that case (a NULL is good for "").
+	 */
+	write_name_quoted_relative(name, len, prefix_len ? prefix : NULL,
+			prefix_len, stdout, line_terminator);
 }
 
 static void show_dir_entry(const char *tag, struct dir_entry *ent)
