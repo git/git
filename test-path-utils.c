@@ -116,6 +116,11 @@ int main(int argc, char **argv)
 		return 0;
 	}
 
+	if (argc == 3 && !strcmp(argv[1], "mingw_path")) {
+		puts(argv[2]);
+		return 0;
+	}
+
 	if (argc == 4 && !strcmp(argv[1], "relative_path")) {
 		struct strbuf sb = STRBUF_INIT;
 		const char *in, *prefix, *rel;
