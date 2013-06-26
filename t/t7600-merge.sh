@@ -316,7 +316,7 @@ test_expect_success 'merge c1 with c2 (squash)' '
 
 test_debug 'git log --graph --decorate --oneline --all'
 
-test_expect_success 'unsuccesful merge of c1 with c2 (squash, ff-only)' '
+test_expect_success 'unsuccessful merge of c1 with c2 (squash, ff-only)' '
 	git reset --hard c1 &&
 	test_must_fail git merge --squash --ff-only c2
 '
