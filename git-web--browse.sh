@@ -32,8 +32,9 @@ valid_custom_tool()
 valid_tool() {
 	case "$1" in
 	firefox | iceweasel | seamonkey | iceape | \
-	chrome | google-chrome | chromium | chromium-browser |\
-	konqueror | opera | w3m | elinks | links | lynx | dillo | open | start)
+	chrome | google-chrome | chromium | chromium-browser | \
+	konqueror | opera | w3m | elinks | links | lynx | dillo | open | \
+	start | cygstart)
 		;; # happy
 	*)
 		valid_custom_tool "$1" || return 1
@@ -127,6 +128,10 @@ if test -z "$browser" ; then
 	if test -x /bin/start; then
 		browser_candidates="start $browser_candidates"
 	fi
+	# /usr/bin/cygstart indicates Cygwin
+	if test -x /usr/bin/cygstart; then
+		browser_candidates="cygstart $browser_candidates"
+	fi
 
 	for i in $browser_candidates; do
 		init_browser_path $i
@@ -174,7 +179,7 @@ konqueror)
 		;;
 	esac
 	;;
-w3m|elinks|links|lynx|open)
+w3m|elinks|links|lynx|open|cygstart)
 	"$browser_path" "$@"
 	;;
 start)
