@@ -665,125 +665,12 @@ test_expect_success 'prompt - bash color pc mode - untracked files status indica
 	test_cmp expected "$actual"
 '
 
-test_expect_success 'prompt - zsh color pc mode - branch name' '
+test_expect_success 'prompt - zsh color pc mode' '
 	printf "BEFORE: (%%F{green}master%%f%%f):AFTER" >expected &&
 	(
 		ZSH_VERSION=5.0.0 &&
 		GIT_PS1_SHOWCOLORHINTS=y &&
 		__git_ps1 "BEFORE:" ":AFTER" >"$actual"
-		printf "%s" "$PS1" >"$actual"
-	) &&
-	test_cmp expected "$actual"
-'
-
-test_expect_success 'prompt - zsh color pc mode - detached head' '
-	printf "BEFORE: (%%F{red}(%s...)%%f%%f):AFTER" $(git log -1 --format="%h" b1^) >expected &&
-	git checkout b1^ &&
-	test_when_finished "git checkout master" &&
-	(
-		ZSH_VERSION=5.0.0 &&
-		GIT_PS1_SHOWCOLORHINTS=y &&
-		__git_ps1 "BEFORE:" ":AFTER" &&
-		printf "%s" "$PS1" >"$actual"
-	) &&
-	test_cmp expected "$actual"
-'
-
-test_expect_success 'prompt - zsh color pc mode - dirty status indicator - dirty worktree' '
-	printf "BEFORE: (%%F{green}master%%f %%F{red}*%%f):AFTER" >expected &&
-	echo "dirty" >file &&
-	test_when_finished "git reset --hard" &&
-	(
-		ZSH_VERSION=5.0.0 &&
-		GIT_PS1_SHOWDIRTYSTATE=y &&
-		GIT_PS1_SHOWCOLORHINTS=y &&
-		__git_ps1 "BEFORE:" ":AFTER" &&
-		printf "%s" "$PS1" >"$actual"
-	) &&
-	test_cmp expected "$actual"
-'
-
-test_expect_success 'prompt - zsh color pc mode - dirty status indicator - dirty index' '
-	printf "BEFORE: (%%F{green}master%%f %%F{green}+%%f):AFTER" >expected &&
-	echo "dirty" >file &&
-	test_when_finished "git reset --hard" &&
-	git add -u &&
-	(
-		ZSH_VERSION=5.0.0 &&
-		GIT_PS1_SHOWDIRTYSTATE=y &&
-		GIT_PS1_SHOWCOLORHINTS=y &&
-		__git_ps1 "BEFORE:" ":AFTER" &&
-		printf "%s" "$PS1" >"$actual"
-	) &&
-	test_cmp expected "$actual"
-'
-
-test_expect_success 'prompt - zsh color pc mode - dirty status indicator - dirty index and worktree' '
-	printf "BEFORE: (%%F{green}master%%f %%F{red}*%%F{green}+%%f):AFTER" >expected &&
-	echo "dirty index" >file &&
-	test_when_finished "git reset --hard" &&
-	git add -u &&
-	echo "dirty worktree" >file &&
-	(
-		ZSH_VERSION=5.0.0 &&
-		GIT_PS1_SHOWCOLORHINTS=y &&
-		GIT_PS1_SHOWDIRTYSTATE=y &&
-		__git_ps1 "BEFORE:" ":AFTER" &&
-		printf "%s" "$PS1" >"$actual"
-	) &&
-	test_cmp expected "$actual"
-'
-
-test_expect_success 'prompt - zsh color pc mode - dirty status indicator - before root commit' '
-	printf "BEFORE: (%%F{green}master%%f %%F{green}#%%f):AFTER" >expected &&
-	(
-		ZSH_VERSION=5.0.0 &&
-		GIT_PS1_SHOWDIRTYSTATE=y &&
-		GIT_PS1_SHOWCOLORHINTS=y &&
-		cd otherrepo &&
-		__git_ps1 "BEFORE:" ":AFTER" &&
-		printf "%s" "$PS1" >"$actual"
-	) &&
-	test_cmp expected "$actual"
-'
-
-test_expect_success 'prompt - zsh color pc mode - inside .git directory' '
-	printf "BEFORE: (%%F{green}GIT_DIR!%%f%%f):AFTER" >expected &&
-	echo "dirty" >file &&
-	test_when_finished "git reset --hard" &&
-	(
-		ZSH_VERSION=5.0.0 &&
-		GIT_PS1_SHOWDIRTYSTATE=y &&
-		GIT_PS1_SHOWCOLORHINTS=y &&
-		cd .git &&
-		__git_ps1 "BEFORE:" ":AFTER" &&
-		printf "%s" "$PS1" >"$actual"
-	) &&
-	test_cmp expected "$actual"
-'
-
-test_expect_success 'prompt - zsh color pc mode - stash status indicator' '
-	printf "BEFORE: (%%F{green}master%%f %%F{blue}$%%f):AFTER" >expected &&
-	echo 2 >file &&
-	git stash &&
-	test_when_finished "git stash drop" &&
-	(
-		ZSH_VERSION=5.0.0 &&
-		GIT_PS1_SHOWSTASHSTATE=y &&
-		GIT_PS1_SHOWCOLORHINTS=y &&
-		__git_ps1 "BEFORE:" ":AFTER" &&
-		printf "%s" "$PS1" >"$actual"
-	) &&
-	test_cmp expected "$actual"
-'
-
-test_expect_success 'prompt - zsh color pc mode - untracked files status indicator' '
-	printf "BEFORE: (%%F{green}master%%f %%F{red}%%%%%%f):AFTER" >expected &&
-	(
-		ZSH_VERSION=5.0.0 &&
-		GIT_PS1_SHOWUNTRACKEDFILES=y &&
-		GIT_PS1_SHOWCOLORHINTS=y &&
-		__git_ps1 "BEFORE:" ":AFTER" &&
 		printf "%s" "$PS1" >"$actual"
 	) &&
 	test_cmp expected "$actual"
