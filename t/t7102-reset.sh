@@ -9,6 +9,17 @@ Documented tests for git reset'
 
 . ./test-lib.sh
 
+commit_msg () {
+	# String "modify 2nd file (changed)" partly in German(translated with Google Translate),
+	# encoded in UTF-8, used as a commit log message below.
+	msg=$(printf "modify 2nd file (ge\303\244ndert)")
+	if test -n "$1"
+	then
+		msg=$(echo $msg | iconv -f utf-8 -t $1)
+	fi
+	echo $msg
+}
+
 test_expect_success 'creating initial files and commits' '
 	test_tick &&
 	echo "1st file" >first &&
@@ -28,7 +39,7 @@ test_expect_success 'creating initial files and commits' '
 
 	echo "1st line 2nd file" >secondfile &&
 	echo "2nd line 2nd file" >>secondfile &&
-	git commit -a -m "modify 2nd file" &&
+	git -c "i18n.commitEncoding=iso-8859-1" commit -a -m "$(commit_msg iso-8859-1)" &&
 	head5=$(git rev-parse --verify HEAD)
 '
 # git log --pretty=oneline # to see those SHA1 involved
@@ -43,6 +54,20 @@ check_changes () {
 		cat $FILE || return
 	done | test_cmp .cat_expect -
 }
+
+test_expect_failure 'reset --hard message' '
+	hex=$(git log -1 --format="%h") &&
+	git reset --hard > .actual &&
+	echo HEAD is now at $hex $(commit_msg) > .expected &&
+	test_cmp .expected .actual
+'
+
+test_expect_success 'reset --hard message (iso-8859-1 logoutencoding)' '
+	hex=$(git log -1 --format="%h") &&
+	git -c "i18n.logOutputEncoding=iso-8859-1" reset --hard > .actual &&
+	echo HEAD is now at $hex $(commit_msg iso-8859-1) > .expected &&
+	test_cmp .expected .actual
+'
 
 >.diff_expect
 >.cached_expect
@@ -304,7 +329,7 @@ test_expect_success 'redoing the last two commits should succeed' '
 
 	echo "1st line 2nd file" >secondfile &&
 	echo "2nd line 2nd file" >>secondfile &&
-	git commit -a -m "modify 2nd file" &&
+	git -c "i18n.commitEncoding=iso-8859-1" commit -a -m "$(commit_msg iso-8859-1)" &&
 	check_changes $head5
 '
 
