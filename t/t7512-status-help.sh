@@ -510,7 +510,7 @@ test_expect_success 'status in an am session: file already exists' '
 	cat >expected <<-\EOF &&
 	# On branch am_already_exists
 	# You are in the middle of an am session.
-	#   (fix conflicts and then run "git am --resolved")
+	#   (fix conflicts and then run "git am --continue")
 	#   (use "git am --skip" to skip this patch)
 	#   (use "git am --abort" to restore the original branch)
 	#
@@ -532,7 +532,7 @@ test_expect_success 'status in an am session: file does not exist' '
 	cat >expected <<-\EOF &&
 	# On branch am_not_exists
 	# You are in the middle of an am session.
-	#   (fix conflicts and then run "git am --resolved")
+	#   (fix conflicts and then run "git am --continue")
 	#   (use "git am --skip" to skip this patch)
 	#   (use "git am --abort" to restore the original branch)
 	#
