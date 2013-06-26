@@ -253,8 +253,8 @@ __git_ps1_colorize_gitstring ()
 		branch_color="$bad_color"
 	fi
 	c="$branch_color$c"
-	b="$b$c_clear"
 
+	z="$c_clear$z"
 	if [ "$w" = "*" ]; then
 		w="$bad_color$w"
 	fi
