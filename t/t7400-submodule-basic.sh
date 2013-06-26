@@ -868,4 +868,19 @@ test_expect_success 'submodule deinit fails when submodule has a .git directory 
 	test -n "$(git config --get-regexp "submodule\.example\.")"
 '
 
+test_expect_success 'submodule with UTF-8 name' '
+	svname=$(printf "\303\245 \303\244\303\266") &&
+	mkdir "$svname" &&
+	(
+		cd "$svname" &&
+		git init &&
+		>sub &&
+		git add sub &&
+		git commit -m "init sub"
+	) &&
+	test_config core.precomposeunicode true &&
+	git submodule add ./"$svname" &&
+	git submodule >&2 &&
+	test -n "$(git submodule | grep "$svname")"
+'
 test_done

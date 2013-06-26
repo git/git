@@ -113,7 +113,7 @@ resolve_relative_url ()
 module_list()
 {
 	(
-		git ls-files --error-unmatch --stage -- "$@" ||
+		git ls-files -z --error-unmatch --stage -- "$@" ||
 		echo "unmatched pathspec exists"
 	) |
 	perl -e '
@@ -121,6 +121,7 @@ module_list()
 	my ($null_sha1) = ("0" x 40);
 	my @out = ();
 	my $unmatched = 0;
+	$/ = "\0";
 	while (<STDIN>) {
 		if (/^unmatched pathspec/) {
 			$unmatched = 1;
