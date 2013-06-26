@@ -906,7 +906,7 @@ static void parse_traditional_patch(const char *first, const char *second, struc
 			patch->old_name = name;
 		} else {
 			patch->old_name = name;
-			patch->new_name = xstrdup(name);
+			patch->new_name = null_strdup(name);
 		}
 	}
 	if (!name)
