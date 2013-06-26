@@ -1232,7 +1232,7 @@ int transport_fetch_refs(struct transport *transport, struct ref *refs)
 		 * then local and remote refs are likely to still be equal.
 		 * Just feed them all to the fetch method in that case.
 		 * This condition shouldn't be met in a non-deepening fetch
-		 * (see builtin-fetch.c:quickfetch()).
+		 * (see builtin/fetch.c:quickfetch()).
 		 */
 		heads = xmalloc(nr_refs * sizeof(*heads));
 		for (rm = refs; rm; rm = rm->next)

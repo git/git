@@ -128,9 +128,9 @@ Examples
 	in the "release" branch, along with the list of paths
 	each commit modifies.
 
-`git log --follow builtin-rev-list.c`::
+`git log --follow builtin/rev-list.c`::
 
-	Shows the commits that changed builtin-rev-list.c, including
+	Shows the commits that changed builtin/rev-list.c, including
 	those commits that occurred before the file was given its
 	present name.
 

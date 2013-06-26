@@ -170,7 +170,7 @@ int transport_connect(struct transport *transport, const char *name,
 int transport_helper_init(struct transport *transport, const char *name);
 int bidirectional_transfer_loop(int input, int output);
 
-/* common methods used by transport.c and builtin-send-pack.c */
+/* common methods used by transport.c and builtin/send-pack.c */
 void transport_verify_remote_names(int nr_heads, const char **heads);
 
 void transport_update_tracking_ref(struct remote *remote, struct ref *ref, int verbose);
