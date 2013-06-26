@@ -55,7 +55,7 @@ check_changes () {
 	done | test_cmp .cat_expect -
 }
 
-test_expect_failure 'reset --hard message' '
+test_expect_success 'reset --hard message' '
 	hex=$(git log -1 --format="%h") &&
 	git reset --hard > .actual &&
 	echo HEAD is now at $hex $(commit_msg) > .expected &&

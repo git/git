@@ -93,10 +93,12 @@ static int reset_index(const unsigned char *sha1, int reset_type, int quiet)
 static void print_new_head_line(struct commit *commit)
 {
 	const char *hex, *body;
+	char *msg;
 
 	hex = find_unique_abbrev(commit->object.sha1, DEFAULT_ABBREV);
 	printf(_("HEAD is now at %s"), hex);
-	body = strstr(commit->buffer, "\n\n");
+	msg = logmsg_reencode(commit, NULL, get_log_output_encoding());
+	body = strstr(msg, "\n\n");
 	if (body) {
 		const char *eol;
 		size_t len;
@@ -107,6 +109,7 @@ static void print_new_head_line(struct commit *commit)
 	}
 	else
 		printf("\n");
+	logmsg_free(msg, commit);
 }
 
 static void update_index_from_diff(struct diff_queue_struct *q,
