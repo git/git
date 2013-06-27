@@ -280,6 +280,7 @@ __git_ps1 ()
 				step=$(cat "$g/rebase-apply/next")
 				total=$(cat "$g/rebase-apply/last")
 				if [ -f "$g/rebase-apply/rebasing" ]; then
+					b="$(cat "$g/rebase-apply/head-name")"
 					r="|REBASE"
 				elif [ -f "$g/rebase-apply/applying" ]; then
 					r="|AM"
@@ -296,6 +297,7 @@ __git_ps1 ()
 				r="|BISECTING"
 			fi
 
+			test -n "$b" ||
 			b="$(git symbolic-ref HEAD 2>/dev/null)" || {
 				detached=yes
 				b="$(
