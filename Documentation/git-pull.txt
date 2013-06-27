@@ -97,6 +97,14 @@ must be given before the options meant for 'git fetch'.
 Options related to merging
 ~~~~~~~~~~~~~~~~~~~~~~~~~~
 
+With no repository or branch on the command line, `git pull` needs
+to be told how to integrate the changes with your history.
+
+This can be done via either `--merge` or `--rebase` option, but most
+people would want to decide which method matches the workflow of the
+project once, and set the configuration variable `pull.rebase` or
+`branch.<name>.rebase` to stick to it; see linkgit:git-config[1].
+
 include::merge-options.txt[]
 
 :git-pull: 1
@@ -119,6 +127,7 @@ It rewrites history, which does not bode well when you
 published that history already.  Do *not* use this option
 unless you have read linkgit:git-rebase[1] carefully.
 
+--merge::
 --no-rebase::
 	Override earlier --rebase.
 

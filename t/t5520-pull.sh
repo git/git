@@ -255,4 +255,55 @@ test_expect_success 'git pull --rebase against local branch' '
 	test file = "$(cat file2)"
 '
 
+test_expect_success 'git pull that does not say how to integrate' '
+	git checkout -b other master^1 &&
+	>new &&
+	git add new &&
+	git commit -m "add new file" &&
+
+	git checkout -b test-to-integrate master &&
+
+	test_config branch.test-to-integrate.remote . &&
+	test_config branch.test-to-integrate.merge other &&
+
+	# need real integration
+	test_must_fail git pull &&
+	git reset --hard master &&
+
+
+	# configuration is explicit enough
+	for how in false true
+	do
+		test_config pull.rebase $how &&
+		git pull &&
+		git reset --hard master || break
+	done &&
+
+	# per branch configuration is explicit enough
+	test_unconfig pull.rebase &&
+	for how in false true
+	do
+		test_config branch.test-to-integrate.rebase $how &&
+		git pull &&
+		git reset --hard master || break
+	done &&
+
+	test_unconfig pull.rebase &&
+	test_unconfig branch.test-to-integrate &&
+
+	# already up to date
+	git reset --hard master &&
+	git branch -f other master^1
+	git pull &&
+
+	# fast forward
+	git reset --hard master &&
+	git checkout -B other master &&
+	>new &&
+	git add new &&
+	git commit -m "add new file" &&
+	git checkout -B test-to-integrate master &&
+	git pull
+'
+
 test_done
