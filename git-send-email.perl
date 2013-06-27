@@ -1259,6 +1259,7 @@ foreach my $t (@files) {
 	open my $fh, "<", $t or die "can't open file $t";
 
 	my $author = undef;
+	my $sauthor = undef;
 	my $author_encoding;
 	my $has_content_type;
 	my $body_encoding;
@@ -1297,7 +1298,7 @@ foreach my $t (@files) {
 			}
 			elsif (/^From:\s+(.*)$/i) {
 				($author, $author_encoding) = unquote_rfc2047($1);
-				my $sauthor = sanitize_address($author);
+				$sauthor = sanitize_address($author);
 				next if $suppress_cc{'author'};
 				next if $suppress_cc{'self'} and $sauthor eq $sender;
 				printf("(mbox) Adding cc: %s from line '%s'\n",
@@ -1393,7 +1394,7 @@ foreach my $t (@files) {
 		$subject = quote_subject($subject, $auto_8bit_encoding);
 	}
 
-	if (defined $author and $author ne $sender) {
+	if (defined $sauthor and $sauthor ne $sender) {
 		$message = "From: $author\n\n$message";
 		if (defined $author_encoding) {
 			if ($has_content_type) {
