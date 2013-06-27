@@ -66,6 +66,20 @@ EOF
 	chmod a+x fake-editor.sh
 }
 
+# After set_cat_todo_editor, rebase -i will write the todo list (ignoring
+# blank lines and comments) to stdout, and exit failure (so you should run
+# it with test_must_fail).  This can be used to verify the expected user
+# experience, for todo list changes that do not affect the outcome of
+# rebase; or as an extra check in addition to checking the outcome.
+
+set_cat_todo_editor () {
+	write_script fake-editor.sh <<-\EOF
+	grep "^[^#]" "$1"
+	exit 1
+	EOF
+	test_set_editor "$(pwd)/fake-editor.sh"
+}
+
 # checks that the revisions in "$2" represent a linear range with the
 # subjects in "$1"
 test_linear_range () {

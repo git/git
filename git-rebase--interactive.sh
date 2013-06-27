@@ -689,8 +689,22 @@ rearrange_squash () {
 		case "$message" in
 		"squash! "*|"fixup! "*)
 			action="${message%%!*}"
-			rest="${message#*! }"
-			echo "$sha1 $action $rest"
+			rest=$message
+			prefix=
+			# skip all squash! or fixup! (but save for later)
+			while :
+			do
+				case "$rest" in
+				"squash! "*|"fixup! "*)
+					prefix="$prefix${rest%%!*},"
+					rest="${rest#*! }"
+					;;
+				*)
+					break
+					;;
+				esac
+			done
+			echo "$sha1 $action $prefix $rest"
 			# if it's a single word, try to resolve to a full sha1 and
 			# emit a second copy. This allows us to match on both message
 			# and on sha1 prefix
@@ -699,7 +713,7 @@ rearrange_squash () {
 				if test -n "$fullsha"; then
 					# prefix the action to uniquely identify this line as
 					# intended for full sha1 match
-					echo "$sha1 +$action $fullsha"
+					echo "$sha1 +$action $prefix $fullsha"
 				fi
 			fi
 		esac
@@ -714,7 +728,7 @@ rearrange_squash () {
 		esac
 		printf '%s\n' "$pick $sha1 $message"
 		used="$used$sha1 "
-		while read -r squash action msg_content
+		while read -r squash action msg_prefix msg_content
 		do
 			case " $used" in
 			*" $squash "*) continue ;;
@@ -730,7 +744,8 @@ rearrange_squash () {
 				case "$message" in "$msg_content"*) emit=1;; esac ;;
 			esac
 			if test $emit = 1; then
-				printf '%s\n' "$action $squash $action! $msg_content"
+				real_prefix=$(echo "$msg_prefix" | sed "s/,/! /g")
+				printf '%s\n' "$action $squash ${real_prefix}$msg_content"
 				used="$used$squash "
 			fi
 		done <"$1.sq"
