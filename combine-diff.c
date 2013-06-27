@@ -518,8 +518,11 @@ static int give_context(struct sline *sline, unsigned long cnt, int num_parent)
 		unsigned long k;
 
 		/* Paint a few lines before the first interesting line. */
-		while (j < i)
-			sline[j++].flag |= mark | no_pre_delete;
+		while (j < i) {
+			if (!(sline[j].flag & mark))
+				sline[j].flag |= no_pre_delete;
+			sline[j++].flag |= mark;
+		}
 
 	again:
 		/* we know up to i is to be included.  where does the
