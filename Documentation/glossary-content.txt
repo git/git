@@ -400,12 +400,13 @@ should not be combined with other pathspec.
 	<<def_ref,ref>> and local ref.
 
 [[def_remote_tracking_branch]]remote-tracking branch::
-	A regular Git <<def_branch,branch>> that is used to follow changes from
-	another <<def_repository,repository>>. A remote-tracking
-	branch should not contain direct modifications or have local commits
-	made to it. A remote-tracking branch can usually be
-	identified as the right-hand-side <<def_ref,ref>> in a Pull:
-	<<def_refspec,refspec>>.
+	A <<def_ref,ref>> that is used to follow changes from another
+	<<def_repository,repository>>. It typically looks like
+	'refs/remotes/foo/bar' (indicating that it tracks a branch named
+	'bar' in a remote named 'foo'), and matches the right-hand-side of
+	a configured fetch <<def_refspec,refspec>>. A remote-tracking
+	branch should not contain direct modifications or have local
+	commits made to it.
 
 [[def_repository]]repository::
 	A collection of <<def_ref,refs>> together with an

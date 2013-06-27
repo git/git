@@ -825,38 +825,40 @@ static int git_checkout_config(const char *var, const char *value, void *cb)
 }
 
 struct tracking_name_data {
-	const char *name;
-	char *remote;
+	/* const */ char *src_ref;
+	char *dst_ref;
+	unsigned char *dst_sha1;
 	int unique;
 };
 
-static int check_tracking_name(const char *refname, const unsigned char *sha1,
-			       int flags, void *cb_data)
+static int check_tracking_name(struct remote *remote, void *cb_data)
 {
 	struct tracking_name_data *cb = cb_data;
-	const char *slash;
-
-	if (prefixcmp(refname, "refs/remotes/"))
+	struct refspec query;
+	memset(&query, 0, sizeof(struct refspec));
+	query.src = cb->src_ref;
+	if (remote_find_tracking(remote, &query) ||
+	    get_sha1(query.dst, cb->dst_sha1))
 		return 0;
-	slash = strchr(refname + 13, '/');
-	if (!slash || strcmp(slash + 1, cb->name))
-		return 0;
-	if (cb->remote) {
+	if (cb->dst_ref) {
 		cb->unique = 0;
 		return 0;
 	}
-	cb->remote = xstrdup(refname);
+	cb->dst_ref = xstrdup(query.dst);
 	return 0;
 }
 
-static const char *unique_tracking_name(const char *name)
+static const char *unique_tracking_name(const char *name, unsigned char *sha1)
 {
-	struct tracking_name_data cb_data = { NULL, NULL, 1 };
-	cb_data.name = name;
-	for_each_ref(check_tracking_name, &cb_data);
+	struct tracking_name_data cb_data = { NULL, NULL, NULL, 1 };
+	char src_ref[PATH_MAX];
+	snprintf(src_ref, PATH_MAX, "refs/heads/%s", name);
+	cb_data.src_ref = src_ref;
+	cb_data.dst_sha1 = sha1;
+	for_each_remote(check_tracking_name, &cb_data);
 	if (cb_data.unique)
-		return cb_data.remote;
-	free(cb_data.remote);
+		return cb_data.dst_ref;
+	free(cb_data.dst_ref);
 	return NULL;
 }
 
@@ -919,8 +921,8 @@ static int parse_branchname_arg(int argc, const char **argv,
 		if (dwim_new_local_branch_ok &&
 		    !check_filename(NULL, arg) &&
 		    argc == 1) {
-			const char *remote = unique_tracking_name(arg);
-			if (!remote || get_sha1(remote, rev))
+			const char *remote = unique_tracking_name(arg, rev);
+			if (!remote)
 				return argcount;
 			*new_branch = arg;
 			arg = remote;

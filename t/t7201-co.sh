@@ -431,6 +431,7 @@ test_expect_success 'detach a symbolic link HEAD' '
 
 test_expect_success \
     'checkout with --track fakes a sensible -b <name>' '
+    git config remote.origin.fetch "+refs/heads/*:refs/remotes/origin/*" &&
     git update-ref refs/remotes/origin/koala/bear renamer &&
 
     git checkout --track origin/koala/bear &&
