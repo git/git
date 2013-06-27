@@ -162,6 +162,14 @@ details).
    v1.7.11 and will need to be merged down to the maintanance tracks.
    (merge 212eb96 tr/maint-apply-non-git-patch-parsefix later to maint).
 
+ * Older cURL wanted piece of memory we call it with to be stable, but
+   we updated the auth material after handing it to a call.
+   (merge a94cf2c bc/http-keep-memory-given-to-curl later to maint).
+
+ * "git pull" into nothing trashed "local changes" that were in the
+   index, and this avoids it.
+   (merge b4dc085 jk/pull-into-dirty-unborn later to maint).
+
  * Many "git submodule" operations do not work on a submodule at a
    path whose name is not in ASCII.
    (merge bed9470 fg/submodule-non-ascii-path later to maint).
@@ -173,7 +181,8 @@ details).
    "A U. Thor" <author@example.xz>, where the human readable part
    needs to be quoted (the user input may not have the double quotes
    around the name, and comparison was done between quoted and
-   unquoted strings).
+   unquoted strings).  It also mishandled names that need RFC2047
+   quoting.
    (merge 1495266 mt/send-email-cc-match-fix later to maint).
 
  * Call to discard_cache/discard_index (used when we use different
