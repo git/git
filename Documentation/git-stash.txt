@@ -13,10 +13,11 @@ SYNOPSIS
 'git stash' drop [-q|--quiet] [<stash>]
 'git stash' ( pop | apply ) [--index] [-q|--quiet] [<stash>]
 'git stash' branch <branchname> [<stash>]
-'git stash' [save [--patch] [-k|--[no-]keep-index] [-q|--quiet]
+'git stash' [save [-p|--patch] [-k|--[no-]keep-index] [-q|--quiet]
 	     [-u|--include-untracked] [-a|--all] [<message>]]
 'git stash' clear
-'git stash' create
+'git stash' create [<message>]
+'git stash' store [-m|--message <message>] [-q|--quiet] <commit>
 
 DESCRIPTION
 -----------
@@ -151,7 +152,15 @@ create::
 
 	Create a stash (which is a regular commit object) and return its
 	object name, without storing it anywhere in the ref namespace.
+	This is intended to be useful for scripts.  It is probably not
+	the command you want to use; see "save" above.
 
+store::
+
+	Store a given stash created via 'git stash create' (which is a
+	dangling merge commit) in the stash ref, updating the stash
+	reflog.  This is intended to be useful for scripts.  It is
+	probably not the command you want to use; see "save" above.
 
 DISCUSSION
 ----------

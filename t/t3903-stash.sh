@@ -654,4 +654,23 @@ test_expect_success 'stash where working directory contains "HEAD" file' '
 	test_cmp output expect
 '
 
+test_expect_success 'store called with invalid commit' '
+	test_must_fail git stash store foo
+'
+
+test_expect_success 'store updates stash ref and reflog' '
+	git stash clear &&
+	git reset --hard &&
+	echo quux >bazzy &&
+	git add bazzy &&
+	STASH_ID=$(git stash create) &&
+	git reset --hard &&
+	! grep quux bazzy &&
+	git stash store -m quuxery $STASH_ID &&
+	test $(cat .git/refs/stash) = $STASH_ID &&
+	grep $STASH_ID .git/logs/refs/stash &&
+	git stash pop &&
+	grep quux bazzy
+'
+
 test_done

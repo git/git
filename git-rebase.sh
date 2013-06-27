@@ -155,11 +155,8 @@ finish_rebase () {
 		then
 			echo "$(gettext 'Applied autostash.')"
 		else
-			ref_stash=refs/stash &&
-			>>"$GIT_DIR/logs/$ref_stash" &&
-			git update-ref -m "autostash" $ref_stash $stash_sha1 ||
-			die "$(eval_gettext 'Cannot store $stash_sha1')"
-
+			git stash store -m "autostash" -q $stash_sha1 ||
+			die "$(eval_gettext "Cannot store \$stash_sha1")"
 			gettext 'Applying autostash resulted in conflicts.
 Your changes are safe in the stash.
 You can run "git stash pop" or "git stash drop" it at any time.
