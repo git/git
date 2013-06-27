@@ -361,6 +361,23 @@ test_expect_success !AUTOIDENT 'do not fire editor when committer is bogus' '
 	test_cmp expect .git/result
 '
 
+test_expect_success 'do not fire editor if -m <msg> was given' '
+	echo tick >file &&
+	git add file &&
+	echo "editor not started" >.git/result &&
+	(GIT_EDITOR="\"$(pwd)/.git/FAKE_EDITOR\"" git commit -m tick) &&
+	test "$(cat .git/result)" = "editor not started"
+'
+
+test_expect_success 'do not fire editor if -m "" was given' '
+	echo tock >file &&
+	git add file &&
+	echo "editor not started" >.git/result &&
+	(GIT_EDITOR="\"$(pwd)/.git/FAKE_EDITOR\"" \
+	 git commit -m "" --allow-empty-message) &&
+	test "$(cat .git/result)" = "editor not started"
+'
+
 test_expect_success 'do not fire editor in the presence of conflicts' '
 
 	git clean -f &&
