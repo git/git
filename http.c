@@ -228,9 +228,15 @@ static void init_curl_http_auth(CURL *result)
 #else
 	{
 		static struct strbuf up = STRBUF_INIT;
-		strbuf_reset(&up);
-		strbuf_addf(&up, "%s:%s",
-			    http_auth.username, http_auth.password);
+		/*
+		 * Note that we assume we only ever have a single set of
+		 * credentials in a given program run, so we do not have
+		 * to worry about updating this buffer, only setting its
+		 * initial value.
+		 */
+		if (!up.len)
+			strbuf_addf(&up, "%s:%s",
+				http_auth.username, http_auth.password);
 		curl_easy_setopt(result, CURLOPT_USERPWD, up.buf);
 	}
 #endif
