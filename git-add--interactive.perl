@@ -44,6 +44,8 @@ my ($diff_new_color) =
 
 my $normal_color = $repo->get_color("", "reset");
 
+my $diff_algorithm = $repo->config('diff.algorithm');
+
 my $use_readkey = 0;
 my $use_termcap = 0;
 my %term_escapes;
@@ -731,6 +733,9 @@ sub run_git_apply {
 sub parse_diff {
 	my ($path) = @_;
 	my @diff_cmd = split(" ", $patch_mode_flavour{DIFF});
+	if (defined $diff_algorithm) {
+		splice @diff_cmd, 1, 0, "--diff-algorithm=${diff_algorithm}";
+	}
 	if (defined $patch_mode_revision) {
 		push @diff_cmd, $patch_mode_revision;
 	}
