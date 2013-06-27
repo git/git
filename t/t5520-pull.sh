@@ -57,6 +57,35 @@ test_expect_success 'pulling into void does not overwrite untracked files' '
 	)
 '
 
+test_expect_success 'pulling into void does not overwrite staged files' '
+	git init cloned-staged-colliding &&
+	(
+		cd cloned-staged-colliding &&
+		echo "alternate content" >file &&
+		git add file &&
+		test_must_fail git pull .. master &&
+		echo "alternate content" >expect &&
+		test_cmp expect file &&
+		git cat-file blob :file >file.index &&
+		test_cmp expect file.index
+	)
+'
+
+
+test_expect_success 'pulling into void does not remove new staged files' '
+	git init cloned-staged-new &&
+	(
+		cd cloned-staged-new &&
+		echo "new tracked file" >newfile &&
+		git add newfile &&
+		git pull .. master &&
+		echo "new tracked file" >expect &&
+		test_cmp expect newfile &&
+		git cat-file blob :newfile >newfile.index &&
+		test_cmp expect newfile.index
+	)
+'
+
 test_expect_success 'test . as a remote' '
 
 	git branch copy master &&
