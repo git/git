@@ -35,6 +35,7 @@ struct rev_cmdline_info {
 			REV_CMD_PARENTS_ONLY,
 			REV_CMD_LEFT,
 			REV_CMD_RIGHT,
+			REV_CMD_MERGE_BASE,
 			REV_CMD_REV
 		} whence;
 		unsigned flags;
