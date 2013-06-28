@@ -193,7 +193,7 @@ AC_ARG_ENABLE([pthreads],
   [FLAGS is the value to pass to the compiler to enable POSIX Threads.]
   [The default if FLAGS is not specified is to try first -pthread]
   [and then -lpthread.]
-  [--without-pthreads will disable threading.])],
+  [--disable-pthreads will disable threading.])],
 [
 if test "x$enableval" = "xyes"; then
    AC_MSG_NOTICE([Will try -pthread then -lpthread to enable POSIX Threads])
