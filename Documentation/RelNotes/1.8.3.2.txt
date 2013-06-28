@@ -4,6 +4,11 @@ Git v1.8.3.2 Release Notes
 Fixes since v1.8.3.1
 --------------------
 
+ * Cloning with "git clone --depth N" while fetch.fsckobjects (or
+   transfer.fsckobjects) is set to true did not tell the cut-off
+   points of the shallow history to the process that validates the
+   objects and the history received, causing the validation to fail.
+
  * "git checkout foo" DWIMs the intended "upstream" and turns it into
    "git checkout -t -b foo remotes/origin/foo". This codepath has been
    updated to correctly take existing remote definitions into account.
