@@ -3,6 +3,16 @@
 #include "tag.h"
 
 static int is_shallow = -1;
+static struct stat shallow_stat;
+static char *alternate_shallow_file;
+
+void set_alternate_shallow_file(const char *path)
+{
+	if (is_shallow != -1)
+		die("BUG: is_repository_shallow must not be called before set_alternate_shallow_file");
+	free(alternate_shallow_file);
+	alternate_shallow_file = path ? xstrdup(path) : NULL;
+}
 
 int register_shallow(const unsigned char *sha1)
 {
@@ -21,12 +31,21 @@ int is_repository_shallow(void)
 {
 	FILE *fp;
 	char buf[1024];
+	const char *path = alternate_shallow_file;
 
 	if (is_shallow >= 0)
 		return is_shallow;
 
-	fp = fopen(git_path("shallow"), "r");
-	if (!fp) {
+	if (!path)
+		path = git_path("shallow");
+	/*
+	 * fetch-pack sets '--shallow-file ""' as an indicator that no
+	 * shallow file should be used. We could just open it and it
+	 * will likely fail. But let's do an explicit check instead.
+	 */
+	if (!*path ||
+	    stat(path, &shallow_stat) ||
+	    (fp = fopen(path, "r")) == NULL) {
 		is_shallow = 0;
 		return is_shallow;
 	}
@@ -107,4 +126,23 @@ struct commit_list *get_shallow_commits(struct object_array *heads, int depth,
 	}
 
 	return result;
+}
+
+void check_shallow_file_for_update(void)
+{
+	struct stat st;
+
+	if (!is_shallow)
+		return;
+	else if (is_shallow == -1)
+		die("BUG: shallow must be initialized by now");
+
+	if (stat(git_path("shallow"), &st))
+		die("shallow file was removed during fetch");
+	else if (st.st_mtime != shallow_stat.st_mtime
+#ifdef USE_NSEC
+		 || ST_MTIME_NSEC(st) != ST_MTIME_NSEC(shallow_stat)
+#endif
+		   )
+		die("shallow file was changed during fetch");
 }
