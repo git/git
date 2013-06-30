@@ -91,12 +91,12 @@ test_expect_success 'update-index --remove' '
 	test_cmp expected 1
 '
 
-test_expect_success 'ls-files --delete' '
+test_expect_success 'ls-files --deleted' '
 	setup_absent &&
 	test -z "$(git ls-files -d)"
 '
 
-test_expect_success 'ls-files --delete' '
+test_expect_success 'ls-files --deleted' '
 	setup_dirty &&
 	test -z "$(git ls-files -d)"
 '
