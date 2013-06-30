@@ -142,6 +142,351 @@ EOF
 git diff --ignore-space-at-eol > out
 test_expect_success 'another test, with --ignore-space-at-eol' 'test_cmp expect out'
 
+test_expect_success 'ignore-blank-lines: only new lines' '
+	test_seq 5 >x &&
+	git update-index x &&
+	test_seq 5 | sed "/3/i \\
+" >x &&
+	git diff --ignore-blank-lines >out &&
+	>expect &&
+	test_cmp out expect
+'
+
+test_expect_success 'ignore-blank-lines: only new lines with space' '
+	test_seq 5 >x &&
+	git update-index x &&
+	test_seq 5 | sed "/3/i \ " >x &&
+	git diff -w --ignore-blank-lines >out &&
+	>expect &&
+	test_cmp out expect
+'
+
+test_expect_success 'ignore-blank-lines: after change' '
+	cat <<-\EOF >x &&
+	1
+	2
+
+	3
+	4
+	5
+
+	6
+	7
+	EOF
+	git update-index x &&
+	cat <<-\EOF >x &&
+	change
+
+	1
+	2
+	3
+	4
+	5
+	6
+
+	7
+	EOF
+	git diff --inter-hunk-context=100 --ignore-blank-lines >out.tmp &&
+	cat <<-\EOF >expected &&
+	diff --git a/x b/x
+	--- a/x
+	+++ b/x
+	@@ -1,6 +1,7 @@
+	+change
+	+
+	 1
+	 2
+	-
+	 3
+	 4
+	 5
+	EOF
+	compare_diff_patch expected out.tmp
+'
+
+test_expect_success 'ignore-blank-lines: before change' '
+	cat <<-\EOF >x &&
+	1
+	2
+
+	3
+	4
+	5
+	6
+	7
+	EOF
+	git update-index x &&
+	cat <<-\EOF >x &&
+
+	1
+	2
+	3
+	4
+	5
+
+	6
+	7
+	change
+	EOF
+	git diff --inter-hunk-context=100 --ignore-blank-lines >out.tmp &&
+	cat <<-\EOF >expected &&
+	diff --git a/x b/x
+	--- a/x
+	+++ b/x
+	@@ -4,5 +4,7 @@
+	 3
+	 4
+	 5
+	+
+	 6
+	 7
+	+change
+	EOF
+	compare_diff_patch expected out.tmp
+'
+
+test_expect_success 'ignore-blank-lines: between changes' '
+	cat <<-\EOF >x &&
+	1
+	2
+	3
+	4
+	5
+
+
+	6
+	7
+	8
+	9
+	10
+	EOF
+	git update-index x &&
+	cat <<-\EOF >x &&
+	change
+	1
+	2
+
+	3
+	4
+	5
+	6
+	7
+	8
+
+	9
+	10
+	change
+	EOF
+	git diff --ignore-blank-lines >out.tmp &&
+	cat <<-\EOF >expected &&
+	diff --git a/x b/x
+	--- a/x
+	+++ b/x
+	@@ -1,5 +1,7 @@
+	+change
+	 1
+	 2
+	+
+	 3
+	 4
+	 5
+	@@ -8,5 +8,7 @@
+	 6
+	 7
+	 8
+	+
+	 9
+	 10
+	+change
+	EOF
+	compare_diff_patch expected out.tmp
+'
+
+test_expect_success 'ignore-blank-lines: between changes (with interhunkctx)' '
+	test_seq 10 >x &&
+	git update-index x &&
+	cat <<-\EOF >x &&
+	change
+	1
+	2
+
+	3
+	4
+	5
+
+	6
+	7
+	8
+	9
+
+	10
+	change
+	EOF
+	git diff --inter-hunk-context=2 --ignore-blank-lines >out.tmp &&
+	cat <<-\EOF >expected &&
+	diff --git a/x b/x
+	--- a/x
+	+++ b/x
+	@@ -1,10 +1,15 @@
+	+change
+	 1
+	 2
+	+
+	 3
+	 4
+	 5
+	+
+	 6
+	 7
+	 8
+	 9
+	+
+	 10
+	+change
+	EOF
+	compare_diff_patch expected out.tmp
+'
+
+test_expect_success 'ignore-blank-lines: scattered spaces' '
+	test_seq 10 >x &&
+	git update-index x &&
+	cat <<-\EOF >x &&
+	change
+	1
+	2
+	3
+
+	4
+
+	5
+
+	6
+
+
+	7
+
+	8
+	9
+	10
+	change
+	EOF
+	git diff --inter-hunk-context=4 --ignore-blank-lines >out.tmp &&
+	cat <<-\EOF >expected &&
+	diff --git a/x b/x
+	--- a/x
+	+++ b/x
+	@@ -1,3 +1,4 @@
+	+change
+	 1
+	 2
+	 3
+	@@ -8,3 +15,4 @@
+	 8
+	 9
+	 10
+	+change
+	EOF
+	compare_diff_patch expected out.tmp
+'
+
+test_expect_success 'ignore-blank-lines: spaces coalesce' '
+	test_seq 6 >x &&
+	git update-index x &&
+	cat <<-\EOF >x &&
+	change
+	1
+	2
+	3
+
+	4
+
+	5
+
+	6
+	change
+	EOF
+	git diff --inter-hunk-context=4 --ignore-blank-lines >out.tmp &&
+	cat <<-\EOF >expected &&
+	diff --git a/x b/x
+	--- a/x
+	+++ b/x
+	@@ -1,6 +1,11 @@
+	+change
+	 1
+	 2
+	 3
+	+
+	 4
+	+
+	 5
+	+
+	 6
+	+change
+	EOF
+	compare_diff_patch expected out.tmp
+'
+
+test_expect_success 'ignore-blank-lines: mix changes and blank lines' '
+	test_seq 16 >x &&
+	git update-index x &&
+	cat <<-\EOF >x &&
+	change
+	1
+	2
+
+	3
+	4
+	5
+	change
+	6
+	7
+	8
+
+	9
+	10
+	11
+	change
+	12
+	13
+	14
+
+	15
+	16
+	change
+	EOF
+	git diff --ignore-blank-lines >out.tmp &&
+	cat <<-\EOF >expected &&
+	diff --git a/x b/x
+	--- a/x
+	+++ b/x
+	@@ -1,8 +1,11 @@
+	+change
+	 1
+	 2
+	+
+	 3
+	 4
+	 5
+	+change
+	 6
+	 7
+	 8
+	@@ -9,8 +13,11 @@
+	 9
+	 10
+	 11
+	+change
+	 12
+	 13
+	 14
+	+
+	 15
+	 16
+	+change
+	EOF
+	compare_diff_patch expected out.tmp
+'
+
 test_expect_success 'check mixed spaces and tabs in indent' '
 
 	# This is indented with SP HT SP.

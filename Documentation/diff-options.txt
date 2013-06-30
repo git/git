@@ -461,6 +461,9 @@ endif::git-format-patch[]
 	differences even if one line has whitespace where the other
 	line has none.
 
+--ignore-blank-lines::
+	Ignore changes whose lines are all blank.
+
 --inter-hunk-context=<lines>::
 	Show the context between diff hunks, up to the specified number
 	of lines, thereby fusing hunks that are close to each other.

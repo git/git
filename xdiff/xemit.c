@@ -56,16 +56,51 @@ static int xdl_emit_record(xdfile_t *xdf, long ri, char const *pre, xdemitcb_t *
 /*
  * Starting at the passed change atom, find the latest change atom to be included
  * inside the differential hunk according to the specified configuration.
+ * Also advance xscr if the first changes must be discarded.
  */
-xdchange_t *xdl_get_hunk(xdchange_t *xscr, xdemitconf_t const *xecfg) {
-	xdchange_t *xch, *xchp;
+xdchange_t *xdl_get_hunk(xdchange_t **xscr, xdemitconf_t const *xecfg)
+{
+	xdchange_t *xch, *xchp, *lxch;
 	long max_common = 2 * xecfg->ctxlen + xecfg->interhunkctxlen;
+	long max_ignorable = xecfg->ctxlen;
+	unsigned long ignored = 0; /* number of ignored blank lines */
 
-	for (xchp = xscr, xch = xscr->next; xch; xchp = xch, xch = xch->next)
-		if (xch->i1 - (xchp->i1 + xchp->chg1) > max_common)
+	/* remove ignorable changes that are too far before other changes */
+	for (xchp = *xscr; xchp && xchp->ignore; xchp = xchp->next) {
+		xch = xchp->next;
+
+		if (xch == NULL ||
+		    xch->i1 - (xchp->i1 + xchp->chg1) >= max_ignorable)
+			*xscr = xch;
+	}
+
+	if (*xscr == NULL)
+		return NULL;
+
+	lxch = *xscr;
+
+	for (xchp = *xscr, xch = xchp->next; xch; xchp = xch, xch = xch->next) {
+		long distance = xch->i1 - (xchp->i1 + xchp->chg1);
+		if (distance > max_common)
 			break;
 
-	return xchp;
+		if (distance < max_ignorable && (!xch->ignore || lxch == xchp)) {
+			lxch = xch;
+			ignored = 0;
+		} else if (distance < max_ignorable && xch->ignore) {
+			ignored += xch->chg2;
+		} else if (lxch != xchp &&
+			   xch->i1 + ignored - (lxch->i1 + lxch->chg1) > max_common) {
+			break;
+		} else if (!xch->ignore) {
+			lxch = xch;
+			ignored = 0;
+		} else {
+			ignored += xch->chg2;
+		}
+	}
+
+	return lxch;
 }
 
 
@@ -139,7 +174,9 @@ int xdl_emit_diff(xdfenv_t *xe, xdchange_t *xscr, xdemitcb_t *ecb,
 		return xdl_emit_common(xe, xscr, ecb, xecfg);
 
 	for (xch = xscr; xch; xch = xche->next) {
-		xche = xdl_get_hunk(xch, xecfg);
+		xche = xdl_get_hunk(&xch, xecfg);
+		if (!xch)
+			break;
 
 		s1 = XDL_MAX(xch->i1 - xecfg->ctxlen, 0);
 		s2 = XDL_MAX(xch->i2 - xecfg->ctxlen, 0);
