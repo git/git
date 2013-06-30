@@ -1197,6 +1197,37 @@ static struct ref_entry *get_packed_ref(const char *refname)
 	return find_ref(get_packed_refs(&ref_cache), refname);
 }
 
+/*
+ * A loose ref file doesn't exist; check for a packed ref.  The
+ * options are forwarded from resolve_safe_unsafe().
+ */
+static const char *handle_missing_loose_ref(const char *refname,
+					    unsigned char *sha1,
+					    int reading,
+					    int *flag)
+{
+	struct ref_entry *entry;
+
+	/*
+	 * The loose reference file does not exist; check for a packed
+	 * reference.
+	 */
+	entry = get_packed_ref(refname);
+	if (entry) {
+		hashcpy(sha1, entry->u.value.sha1);
+		if (flag)
+			*flag |= REF_ISPACKED;
+		return refname;
+	}
+	/* The reference is not a packed reference, either. */
+	if (reading) {
+		return NULL;
+	} else {
+		hashclr(sha1);
+		return refname;
+	}
+}
+
 const char *resolve_ref_unsafe(const char *refname, unsigned char *sha1, int reading, int *flag)
 {
 	int depth = MAXDEPTH;
@@ -1221,36 +1252,34 @@ const char *resolve_ref_unsafe(const char *refname, unsigned char *sha1, int rea
 
 		git_snpath(path, sizeof(path), "%s", refname);
 
+		/*
+		 * We might have to loop back here to avoid a race
+		 * condition: first we lstat() the file, then we try
+		 * to read it as a link or as a file.  But if somebody
+		 * changes the type of the file (file <-> directory
+		 * <-> symlink) between the lstat() and reading, then
+		 * we don't want to report that as an error but rather
+		 * try again starting with the lstat().
+		 */
+	stat_ref:
 		if (lstat(path, &st) < 0) {
-			struct ref_entry *entry;
-
-			if (errno != ENOENT)
+			if (errno == ENOENT)
+				return handle_missing_loose_ref(refname, sha1,
+								reading, flag);
+			else
 				return NULL;
-			/*
-			 * The loose reference file does not exist;
-			 * check for a packed reference.
-			 */
-			entry = get_packed_ref(refname);
-			if (entry) {
-				hashcpy(sha1, entry->u.value.sha1);
-				if (flag)
-					*flag |= REF_ISPACKED;
-				return refname;
-			}
-			/* The reference is not a packed reference, either. */
-			if (reading) {
-				return NULL;
-			} else {
-				hashclr(sha1);
-				return refname;
-			}
 		}
 
 		/* Follow "normalized" - ie "refs/.." symlinks by hand */
 		if (S_ISLNK(st.st_mode)) {
 			len = readlink(path, buffer, sizeof(buffer)-1);
-			if (len < 0)
-				return NULL;
+			if (len < 0) {
+				if (errno == ENOENT || errno == EINVAL)
+					/* inconsistent with lstat; retry */
+					goto stat_ref;
+				else
+					return NULL;
+			}
 			buffer[len] = 0;
 			if (!prefixcmp(buffer, "refs/") &&
 					!check_refname_format(buffer, 0)) {
@@ -1273,8 +1302,13 @@ const char *resolve_ref_unsafe(const char *refname, unsigned char *sha1, int rea
 		 * a ref
 		 */
 		fd = open(path, O_RDONLY);
-		if (fd < 0)
-			return NULL;
+		if (fd < 0) {
+			if (errno == ENOENT)
+				/* inconsistent with lstat; retry */
+				goto stat_ref;
+			else
+				return NULL;
+		}
 		len = read_in_full(fd, buffer, sizeof(buffer)-1);
 		close(fd);
 		if (len < 0)
@@ -1286,8 +1320,19 @@ const char *resolve_ref_unsafe(const char *refname, unsigned char *sha1, int rea
 		/*
 		 * Is it a symbolic ref?
 		 */
-		if (prefixcmp(buffer, "ref:"))
-			break;
+		if (prefixcmp(buffer, "ref:")) {
+			/*
+			 * Please note that FETCH_HEAD has a second
+			 * line containing other data.
+			 */
+			if (get_sha1_hex(buffer, sha1) ||
+			    (buffer[40] != '\0' && !isspace(buffer[40]))) {
+				if (flag)
+					*flag |= REF_ISBROKEN;
+				return NULL;
+			}
+			return refname;
+		}
 		if (flag)
 			*flag |= REF_ISSYMREF;
 		buf = buffer + 4;
@@ -1300,13 +1345,6 @@ const char *resolve_ref_unsafe(const char *refname, unsigned char *sha1, int rea
 		}
 		refname = strcpy(refname_buffer, buf);
 	}
-	/* Please note that FETCH_HEAD has a second line containing other data. */
-	if (get_sha1_hex(buffer, sha1) || (buffer[40] != '\0' && !isspace(buffer[40]))) {
-		if (flag)
-			*flag |= REF_ISBROKEN;
-		return NULL;
-	}
-	return refname;
 }
 
 char *resolve_refdup(const char *ref, unsigned char *sha1, int reading, int *flag)
