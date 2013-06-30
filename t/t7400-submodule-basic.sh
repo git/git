@@ -212,6 +212,32 @@ test_expect_success 'submodule add with ./, /.. and // in path' '
 	test_cmp empty untracked
 '
 
+test_expect_success 'submodule add in subdirectory' '
+	echo "refs/heads/master" >expect &&
+	>empty &&
+
+	mkdir addtest/sub &&
+	(
+		cd addtest/sub &&
+		git submodule add "$submodurl" ../realsubmod3 &&
+		git submodule init
+	) &&
+
+	rm -f heads head untracked &&
+	inspect addtest/realsubmod3 ../.. &&
+	test_cmp expect heads &&
+	test_cmp expect head &&
+	test_cmp empty untracked
+'
+
+test_expect_success 'submodule add in subdirectory with relative path should fail' '
+	(
+		cd addtest/sub &&
+		test_must_fail git submodule add ../../ submod3 2>../../output.err
+	) &&
+	test_i18ngrep toplevel output.err
+'
+
 test_expect_success 'setup - add an example entry to .gitmodules' '
 	GIT_CONFIG=.gitmodules \
 	git config submodule.example.url git://example.com/init.git
@@ -319,6 +345,26 @@ test_expect_success 'status should be "up-to-date" after update' '
 	grep "^ $rev1" list
 '
 
+test_expect_success 'status "up-to-date" from subdirectory' '
+	mkdir -p sub &&
+	(
+		cd sub &&
+		git submodule status >../list
+	) &&
+	grep "^ $rev1" list &&
+	grep "\\.\\./init" list
+'
+
+test_expect_success 'status "up-to-date" from subdirectory with path' '
+	mkdir -p sub &&
+	(
+		cd sub &&
+		git submodule status ../init >../list
+	) &&
+	grep "^ $rev1" list &&
+	grep "\\.\\./init" list
+'
+
 test_expect_success 'status should be "modified" after submodule commit' '
 	(
 		cd init &&
@@ -396,6 +442,25 @@ test_expect_success 'update --init' '
 	test_must_fail git rev-parse --resolve-git-dir init/.git &&
 
 	git submodule update --init init &&
+	git rev-parse --resolve-git-dir init/.git
+'
+
+test_expect_success 'update --init from subdirectory' '
+	mv init init2 &&
+	git config -f .gitmodules submodule.example.url "$(pwd)/init2" &&
+	git config --remove-section submodule.example &&
+	test_must_fail git config submodule.example.url &&
+
+	mkdir -p sub &&
+	(
+		cd sub &&
+		git submodule update ../init >update.out &&
+		cat update.out &&
+		test_i18ngrep "not initialized" update.out &&
+		test_must_fail git rev-parse --resolve-git-dir ../init/.git &&
+
+		git submodule update --init ../init
+	) &&
 	git rev-parse --resolve-git-dir init/.git
 '
 
@@ -766,6 +831,21 @@ test_expect_success 'submodule deinit should remove the whole submodule section 
 	git config submodule.example.foo bar &&
 	git config submodule.example2.frotz nitfol &&
 	git submodule deinit init &&
+	test -z "$(git config --get-regexp "submodule\.example\.")" &&
+	test -n "$(git config --get-regexp "submodule\.example2\.")" &&
+	test -f example2/.git &&
+	rmdir init
+'
+
+test_expect_success 'submodule deinit from subdirectory' '
+	git submodule update --init &&
+	git config submodule.example.foo bar &&
+	mkdir -p sub &&
+	(
+		cd sub &&
+		git submodule deinit ../init >../output
+	) &&
+	grep "\\.\\./init" output &&
 	test -z "$(git config --get-regexp "submodule\.example\.")" &&
 	test -n "$(git config --get-regexp "submodule\.example2\.")" &&
 	test -f example2/.git &&

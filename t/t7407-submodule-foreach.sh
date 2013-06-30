@@ -80,6 +80,22 @@ test_expect_success 'test basic "submodule foreach" usage' '
 	test_i18ncmp expect actual
 '
 
+cat >expect <<EOF
+Entering '../sub1'
+$pwd/clone-foo1-../sub1-$sub1sha1
+Entering '../sub3'
+$pwd/clone-foo3-../sub3-$sub3sha1
+EOF
+
+test_expect_success 'test "submodule foreach" from subdirectory' '
+	mkdir clone/sub &&
+	(
+		cd clone/sub &&
+		git submodule foreach "echo \$toplevel-\$name-\$sm_path-\$sha1" >../../actual
+	) &&
+	test_i18ncmp expect actual
+'
+
 test_expect_success 'setup nested submodules' '
 	git clone submodule nested1 &&
 	git clone submodule nested2 &&

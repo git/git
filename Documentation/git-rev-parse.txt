@@ -59,6 +59,22 @@ OPTIONS
 	If there is no parameter given by the user, use `<arg>`
 	instead.
 
+--prefix <arg>::
+	Behave as if 'git rev-parse' was invoked from the `<arg>`
+	subdirectory of the working tree.  Any relative filenames are
+	resolved as if they are prefixed by `<arg>` and will be printed
+	in that form.
++
+This can be used to convert arguments to a command run in a subdirectory
+so that they can still be used after moving to the top-level of the
+repository.  For example:
++
+----
+prefix=$(git rev-parse --show-prefix)
+cd "$(git rev-parse --show-toplevel)"
+eval "set -- $(git rev-parse --sq --prefix "$prefix" "$@")"
+----
+
 --verify::
 	Verify that exactly one parameter is provided, and that it
 	can be turned into a raw 20-byte SHA-1 that can be used to
