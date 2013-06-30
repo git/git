@@ -1,0 +1,11 @@
+Git v1.8.3.3 Release Notes
+==========================
+
+Fixes since v1.8.3.2
+--------------------
+
+ * Mac OS X does not like to write(2) more than INT_MAX number of
+   bytes; work it around by chopping write(2) into smaller pieces.
+
+ * Newer MacOS X encourages the programs to compile and link with
+   their CommonCrypto, not with OpenSSL.
