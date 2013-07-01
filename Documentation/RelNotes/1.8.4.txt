@@ -35,6 +35,13 @@ Foreign interfaces, subsystems and ports.
 
 UI, Workflows & Features
 
+ * Having multiple "fixup!" on a line in the rebase instruction sheet
+   did not work very well with "git rebase -i --autosquash".
+
+ * "git log" learned the "--author-date-order" option, with which the
+   output is topologically sorted and commits in parallel histories
+   are shown intermixed together based on the author timestamp.
+
  * Various subcommands of "git submodule" refused to run from anywhere
    other than the top of the working tree of the superproject, but
    they have been taught to let you run from a subdirectory.
@@ -116,6 +123,12 @@ UI, Workflows & Features
 
 Performance, Internal Implementation, etc.
 
+ * The original way to specify remote repository using .git/branches/
+   used to have a nifty feature.  The code to support the feature was
+   still in a function but the caller was changed not to call it 5
+   years ago, breaking that feature and leaving the supporting code
+   unreachable.  The dead code has been removed.
+
  * "git pack-refs" that races with new ref creation or deletion have
    been susceptible to lossage of refs under right conditions, which
    has been tightened up.
@@ -174,6 +187,9 @@ Fixes since v1.8.3
 Unless otherwise noted, all the fixes since v1.8.3 in the maintenance
 track are contained in this release (see release notes to them for
 details).
+
+ * The configuration variable column.ui was poorly documented.
+   (merge 5e62cc1 rr/column-doc later to maint).
 
  * "git name-rev --refs=tags/v*" were forbidden, which was a bit
    inconvenient (you had to give a pattern to match refs fully, like
