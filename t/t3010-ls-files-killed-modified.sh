@@ -11,6 +11,8 @@ This test prepares the following in the cache:
     path1       - a symlink
     path2/file2 - a file in a directory
     path3/file3 - a file in a directory
+    submod1/	- a submodule
+    submod2/	- another submodule
 
 and the following on the filesystem:
 
@@ -21,9 +23,11 @@ and the following on the filesystem:
     path4	- a file
     path5	- a symlink
     path6/file6 - a file in a directory
+    submod1/	- a submodule (modified from the cache)
+    submod2/	- a submodule (matches the cache)
 
-git ls-files -k should report that existing filesystem
-objects except path4, path5 and path6/file6 to be killed.
+git ls-files -k should report that existing filesystem objects
+path0/*, path1/*, path2 and path3 to be killed.
 
 Also for modification test, the cache and working tree have:
 
@@ -33,7 +37,7 @@ Also for modification test, the cache and working tree have:
     path10	- a non-empty file, cache dirtied.
 
 We should report path0, path1, path2/file2, path3/file3, path7 and path8
-modified without reporting path9 and path10.
+modified without reporting path9 and path10.  submod1 is also modified.
 '
 . ./test-lib.sh
 
@@ -48,6 +52,18 @@ test_expect_success 'git update-index --add to add various paths.' '
 	: >path9 &&
 	date >path10 &&
 	git update-index --add -- path0 path?/file? path7 path8 path9 path10 &&
+	for i in 1 2
+	do
+		git init submod$i &&
+		(
+			cd submod$i && git commit --allow-empty -m "empty $i"
+		) || break
+	done &&
+	git update-index --add submod[12]
+	(
+		cd submod1 &&
+		git commit --allow-empty -m "empty 1 (updated)"
+	) &&
 	rm -fr path?	# leave path10 alone
 '
 
@@ -94,6 +110,7 @@ test_expect_success 'validate git ls-files -m output.' '
 	path3/file3
 	path7
 	path8
+	submod1
 	EOF
 	test_cmp .expected .output
 '

@@ -1036,9 +1036,7 @@ static enum path_treatment treat_directory(struct dir_struct *dir,
 		return path_recurse;
 
 	case index_gitdir:
-		if (dir->flags & DIR_SHOW_OTHER_DIRECTORIES)
-			return path_none;
-		return path_untracked;
+		return path_none;
 
 	case index_nonexistent:
 		if (dir->flags & DIR_SHOW_OTHER_DIRECTORIES)
