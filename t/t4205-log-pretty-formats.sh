@@ -192,7 +192,7 @@ test_expect_success 'left alignment formatting with trunc' "
 message ..
 message ..
 add bar  Z
-$(commit_msg "" "8" ".\+$")
+$(commit_msg "" "8" "..*$")
 EOF
 	test_cmp expected actual
 "
@@ -310,7 +310,7 @@ test_expect_success 'left/right alignment formatting with stealing' "
 short long  long long
 message ..   A U Thor
 add bar      A U Thor
-$(commit_msg "" "8" ".\+$")   A U Thor
+$(commit_msg "" "8" "..*$")   A U Thor
 EOF
 	test_cmp expected actual
 "
