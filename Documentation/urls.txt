@@ -11,6 +11,9 @@ and ftps can be used for fetching and rsync can be used for fetching
 and pushing, but these are inefficient and deprecated; do not use
 them).
 
+The native transport (i.e. git:// URL) does no authentication and
+should be used with caution on unsecured networks.
+
 The following syntaxes may be used with them:
 
 - ssh://{startsb}user@{endsb}host.xz{startsb}:port{endsb}/path/to/repo.git/
