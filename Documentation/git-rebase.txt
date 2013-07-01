@@ -389,7 +389,9 @@ squash/fixup series.
 	the same ..., automatically modify the todo list of rebase -i
 	so that the commit marked for squashing comes right after the
 	commit to be modified, and change the action of the moved
-	commit from `pick` to `squash` (or `fixup`).
+	commit from `pick` to `squash` (or `fixup`).  Ignores subsequent
+	"fixup! " or "squash! " after the first, in case you referred to an
+	earlier fixup/squash with `git commit --fixup/--squash`.
 +
 This option is only valid when the '--interactive' option is used.
 +
