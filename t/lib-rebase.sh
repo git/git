@@ -22,48 +22,46 @@
 #   ">" -- Add a blank line.
 
 set_fake_editor () {
-	echo "#!$SHELL_PATH" >fake-editor.sh
-	cat >> fake-editor.sh <<\EOF
-case "$1" in
-*/COMMIT_EDITMSG)
-	test -z "$EXPECT_HEADER_COUNT" ||
-		test "$EXPECT_HEADER_COUNT" = "$(sed -n '1s/^# This is a combination of \(.*\) commits\./\1/p' < "$1")" ||
+	write_script fake-editor.sh <<-\EOF
+	case "$1" in
+	*/COMMIT_EDITMSG)
+		test -z "$EXPECT_HEADER_COUNT" ||
+			test "$EXPECT_HEADER_COUNT" = "$(sed -n '1s/^# This is a combination of \(.*\) commits\./\1/p' < "$1")" ||
+			exit
+		test -z "$FAKE_COMMIT_MESSAGE" || echo "$FAKE_COMMIT_MESSAGE" > "$1"
+		test -z "$FAKE_COMMIT_AMEND" || echo "$FAKE_COMMIT_AMEND" >> "$1"
 		exit
-	test -z "$FAKE_COMMIT_MESSAGE" || echo "$FAKE_COMMIT_MESSAGE" > "$1"
-	test -z "$FAKE_COMMIT_AMEND" || echo "$FAKE_COMMIT_AMEND" >> "$1"
-	exit
-	;;
-esac
-test -z "$EXPECT_COUNT" ||
-	test "$EXPECT_COUNT" = $(sed -e '/^#/d' -e '/^$/d' < "$1" | wc -l) ||
-	exit
-test -z "$FAKE_LINES" && exit
-grep -v '^#' < "$1" > "$1".tmp
-rm -f "$1"
-echo 'rebase -i script before editing:'
-cat "$1".tmp
-action=pick
-for line in $FAKE_LINES; do
-	case $line in
-	squash|fixup|edit|reword)
-		action="$line";;
-	exec*)
-		echo "$line" | sed 's/_/ /g' >> "$1";;
-	"#")
-		echo '# comment' >> "$1";;
-	">")
-		echo >> "$1";;
-	*)
-		sed -n "${line}s/^pick/$action/p" < "$1".tmp >> "$1"
-		action=pick;;
+		;;
 	esac
-done
-echo 'rebase -i script after editing:'
-cat "$1"
-EOF
+	test -z "$EXPECT_COUNT" ||
+		test "$EXPECT_COUNT" = $(sed -e '/^#/d' -e '/^$/d' < "$1" | wc -l) ||
+		exit
+	test -z "$FAKE_LINES" && exit
+	grep -v '^#' < "$1" > "$1".tmp
+	rm -f "$1"
+	echo 'rebase -i script before editing:'
+	cat "$1".tmp
+	action=pick
+	for line in $FAKE_LINES; do
+		case $line in
+		squash|fixup|edit|reword)
+			action="$line";;
+		exec*)
+			echo "$line" | sed 's/_/ /g' >> "$1";;
+		"#")
+			echo '# comment' >> "$1";;
+		">")
+			echo >> "$1";;
+		*)
+			sed -n "${line}s/^pick/$action/p" < "$1".tmp >> "$1"
+			action=pick;;
+		esac
+	done
+	echo 'rebase -i script after editing:'
+	cat "$1"
+	EOF
 
 	test_set_editor "$(pwd)/fake-editor.sh"
-	chmod a+x fake-editor.sh
 }
 
 # After set_cat_todo_editor, rebase -i will write the todo list (ignoring
