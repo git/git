@@ -66,7 +66,7 @@ You can set the following variables (also in your config.mak):
     GIT_PERF_LARGE_REPO
 	Repositories to copy for the performance tests.  The normal
 	repo should be at least git.git size.  The large repo should
-	probably be about linux-2.6.git size for optimal results.
+	probably be about linux.git size for optimal results.
 	Both default to the git.git you are running from.
 
 You can also pass the options taken by ordinary git tests; the most

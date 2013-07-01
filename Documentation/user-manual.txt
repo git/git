@@ -66,8 +66,8 @@ $ git clone git://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git
 The initial clone may be time-consuming for a large project, but you
 will only need to clone once.
 
-The clone command creates a new directory named after the project (`git`
-or `linux-2.6` in the examples above).  After you cd into this
+The clone command creates a new directory named after the project
+(`git` or `linux` in the examples above).  After you cd into this
 directory, you will see that it contains a copy of the project files,
 called the <<def_working_tree,working tree>>, together with a special
 top-level directory named `.git`, which contains all the information
@@ -431,19 +431,25 @@ You can also track branches from repositories other than the one you
 cloned from, using linkgit:git-remote[1]:
 
 -------------------------------------------------
-$ git remote add linux-nfs git://linux-nfs.org/pub/nfs-2.6.git
-$ git fetch linux-nfs
-* refs/remotes/linux-nfs/master: storing branch 'master' ...
-  commit: bf81b46
+$ git remote add staging git://git.kernel.org/.../gregkh/staging.git
+$ git fetch staging
+...
+From git://git.kernel.org/pub/scm/linux/kernel/git/gregkh/staging
+ * [new branch]      master     -> staging/master
+ * [new branch]      staging-linus -> staging/staging-linus
+ * [new branch]      staging-next -> staging/staging-next
 -------------------------------------------------
 
 New remote-tracking branches will be stored under the shorthand name
-that you gave `git remote add`, in this case `linux-nfs`:
+that you gave `git remote add`, in this case `staging`:
 
 -------------------------------------------------
 $ git branch -r
-linux-nfs/master
-origin/master
+  origin/HEAD -> origin/master
+  origin/master
+  staging/master
+  staging/staging-linus
+  staging/staging-next
 -------------------------------------------------
 
 If you run `git fetch <remote>` later, the remote-tracking branches
@@ -455,9 +461,9 @@ a new stanza:
 -------------------------------------------------
 $ cat .git/config
 ...
-[remote "linux-nfs"]
-	url = git://linux-nfs.org/pub/nfs-2.6.git
-	fetch = +refs/heads/*:refs/remotes/linux-nfs/*
+[remote "staging"]
+	url = git://git.kernel.org/pub/scm/linux/kernel/git/gregkh/staging.git
+	fetch = +refs/heads/*:refs/remotes/staging/*
 ...
 -------------------------------------------------
 
@@ -2156,7 +2162,7 @@ To set this up, first create your work tree by cloning Linus's public
 tree:
 
 -------------------------------------------------
-$ git clone git://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux-2.6.git work
+$ git clone git://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git work
 $ cd work
 -------------------------------------------------
 
@@ -2198,7 +2204,7 @@ make it easy to push both branches to your public tree.  (See
 -------------------------------------------------
 $ cat >> .git/config <<EOF
 [remote "mytree"]
-	url =  master.kernel.org:/pub/scm/linux/kernel/git/aegl/linux-2.6.git
+	url =  master.kernel.org:/pub/scm/linux/kernel/git/aegl/linux.git
 	push = release
 	push = test
 EOF

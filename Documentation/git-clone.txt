@@ -239,8 +239,8 @@ Examples
 * Clone from upstream:
 +
 ------------
-$ git clone git://git.kernel.org/pub/scm/.../linux-2.6 my2.6
-$ cd my2.6
+$ git clone git://git.kernel.org/pub/scm/.../linux.git my-linux
+$ cd my-linux
 $ make
 ------------
 
@@ -257,10 +257,10 @@ $ git show-branch
 * Clone from upstream while borrowing from an existing local directory:
 +
 ------------
-$ git clone --reference my2.6 \
-	git://git.kernel.org/pub/scm/.../linux-2.7 \
-	my2.7
-$ cd my2.7
+$ git clone --reference /git/linux.git \
+	git://git.kernel.org/pub/scm/.../linux.git \
+	my-linux
+$ cd my-linux
 ------------
 
 
@@ -270,13 +270,6 @@ $ cd my2.7
 $ git clone --bare -l /home/proj/.git /pub/scm/proj.git
 ------------
 
-
-* Create a repository on the kernel.org machine that borrows from Linus:
-+
-------------
-$ git clone --bare -l -s /pub/scm/.../torvalds/linux-2.6.git \
-    /pub/scm/.../me/subsys-2.6.git
-------------
 
 GIT
 ---

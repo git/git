@@ -135,9 +135,9 @@ them, and give the same timestamp to the index file:
   $ git ls-files | git update-index --stdin
   $ touch -r .datestamp .git/index
 
-This will make all index entries racily clean.  The linux-2.6
-project, for example, there are over 20,000 files in the working
-tree.  On my Athlon 64 X2 3800+, after the above:
+This will make all index entries racily clean.  The linux project, for
+example, there are over 20,000 files in the working tree.  On my
+Athlon 64 X2 3800+, after the above:
 
   $ /usr/bin/time git diff-files
   1.68user 0.54system 0:02.22elapsed 100%CPU (0avgtext+0avgdata 0maxresident)k
