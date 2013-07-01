@@ -8,12 +8,14 @@
 #include "notes.h"
 #include "gpg-interface.h"
 #include "mergesort.h"
+#include "commit-slab.h"
 
 static struct commit_extra_header *read_commit_extra_header_lines(const char *buf, size_t len, const char **);
 
 int save_commit_buffer = 1;
 
 const char *commit_type = "commit";
+static int commit_count;
 
 static struct commit *check_commit(struct object *obj,
 				   const unsigned char *sha1,
@@ -58,8 +60,11 @@ struct commit *lookup_commit_or_die(const unsigned char *sha1, const char *ref_n
 struct commit *lookup_commit(const unsigned char *sha1)
 {
 	struct object *obj = lookup_object(sha1);
-	if (!obj)
-		return create_object(sha1, OBJ_COMMIT, alloc_commit_node());
+	if (!obj) {
+		struct commit *c = alloc_commit_node();
+		c->index = commit_count++;
+		return create_object(sha1, OBJ_COMMIT, c);
+	}
 	if (!obj->type)
 		obj->type = OBJ_COMMIT;
 	return check_commit(obj, sha1, 0);
@@ -507,6 +512,13 @@ struct commit *pop_commit(struct commit_list **stack)
 }
 
 /*
+ * Topological sort support
+ */
+
+/* count number of children that have not been emitted */
+define_commit_slab(indegree_slab, int);
+
+/*
  * Performs an in-place topological sort on the list supplied.
  */
 void sort_in_topological_order(struct commit_list ** list, int lifo)
@@ -514,15 +526,18 @@ void sort_in_topological_order(struct commit_list ** list, int lifo)
 	struct commit_list *next, *orig = *list;
 	struct commit_list *work, **insert;
 	struct commit_list **pptr;
+	struct indegree_slab indegree;
 
 	if (!orig)
 		return;
 	*list = NULL;
 
+	init_indegree_slab(&indegree);
+
 	/* Mark them and clear the indegree */
 	for (next = orig; next; next = next->next) {
 		struct commit *commit = next->item;
-		commit->indegree = 1;
+		*(indegree_slab_at(&indegree, commit)) = 1;
 	}
 
 	/* update the indegree */
@@ -530,9 +545,10 @@ void sort_in_topological_order(struct commit_list ** list, int lifo)
 		struct commit_list * parents = next->item->parents;
 		while (parents) {
 			struct commit *parent = parents->item;
+			int *pi = indegree_slab_at(&indegree, parent);
 
-			if (parent->indegree)
-				parent->indegree++;
+			if (*pi)
+				(*pi)++;
 			parents = parents->next;
 		}
 	}
@@ -549,7 +565,7 @@ void sort_in_topological_order(struct commit_list ** list, int lifo)
 	for (next = orig; next; next = next->next) {
 		struct commit *commit = next->item;
 
-		if (commit->indegree == 1)
+		if (*(indegree_slab_at(&indegree, commit)) == 1)
 			insert = &commit_list_insert(commit, insert)->next;
 	}
 
@@ -570,8 +586,9 @@ void sort_in_topological_order(struct commit_list ** list, int lifo)
 		commit = work_item->item;
 		for (parents = commit->parents; parents ; parents = parents->next) {
 			struct commit *parent = parents->item;
+			int *pi = indegree_slab_at(&indegree, parent);
 
-			if (!parent->indegree)
+			if (!*pi)
 				continue;
 
 			/*
@@ -579,7 +596,7 @@ void sort_in_topological_order(struct commit_list ** list, int lifo)
 			 * when all their children have been emitted thereby
 			 * guaranteeing topological order.
 			 */
-			if (--parent->indegree == 1) {
+			if (--(*pi) == 1) {
 				if (!lifo)
 					commit_list_insert_by_date(parent, &work);
 				else
@@ -590,10 +607,12 @@ void sort_in_topological_order(struct commit_list ** list, int lifo)
 		 * work_item is a commit all of whose children
 		 * have already been emitted. we can emit it now.
 		 */
-		commit->indegree = 0;
+		*(indegree_slab_at(&indegree, commit)) = 0;
 		*pptr = work_item;
 		pptr = &work_item->next;
 	}
+
+	clear_indegree_slab(&indegree);
 }
 
 /* merge-base stuff */

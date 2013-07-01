@@ -15,7 +15,7 @@ struct commit_list {
 struct commit {
 	struct object object;
 	void *util;
-	unsigned int indegree;
+	unsigned int index;
 	unsigned long date;
 	struct commit_list *parents;
 	struct tree *tree;
