@@ -13,9 +13,9 @@ commit_msg_is () {
 	expect=commit_msg_is.expect
 	actual=commit_msg_is.actual
 
-	printf "%s" "$(git log --pretty=format:%s%b -1)" >$expect &&
-	printf "%s" "$1" >$actual &&
-	test_i18ncmp $expect $actual
+	printf "%s" "$(git log --pretty=format:%s%b -1)" >"$actual" &&
+	printf "%s" "$1" >"$expect" &&
+	test_i18ncmp "$expect" "$actual"
 }
 
 # A sanity check to see if commit is working at all.
