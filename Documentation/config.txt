@@ -934,6 +934,9 @@ column.ui::
 	This variable consists of a list of tokens separated by spaces
 	or commas:
 +
+These options control when the feature should be enabled
+(defaults to 'never'):
++
 --
 `always`;;
 	always show in columns
@@ -941,19 +944,30 @@ column.ui::
 	never show in columns
 `auto`;;
 	show in columns if the output is to the terminal
+--
++
+These options control layout (defaults to 'column').  Setting any
+of these implies 'always' if none of 'always', 'never', or 'auto' are
+specified.
++
+--
 `column`;;
-	fill columns before rows (default)
+	fill columns before rows
 `row`;;
 	fill rows before columns
 `plain`;;
 	show in one column
+--
++
+Finally, these options can be combined with a layout option (defaults
+to 'nodense'):
++
+--
 `dense`;;
 	make unequal size columns to utilize more space
 `nodense`;;
 	make equal size columns
 --
-+
-This option defaults to 'never'.
 
 column.branch::
 	Specify whether to output branch listing in `git branch` in columns.
