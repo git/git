@@ -1841,7 +1841,7 @@ Once the index is updated with the results of the conflict
 resolution, instead of creating a new commit, just run
 
 -------------------------------------------------
-$ git am --resolved
+$ git am --continue
 -------------------------------------------------
 
 and Git will create the commit for you and continue applying the

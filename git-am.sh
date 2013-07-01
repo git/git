@@ -6,7 +6,7 @@ SUBDIRECTORY_OK=Yes
 OPTIONS_KEEPDASHDASH=
 OPTIONS_SPEC="\
 git am [options] [(<mbox>|<Maildir>)...]
-git am [options] (--resolved | --skip | --abort)
+git am [options] (--continue | --skip | --abort)
 --
 i,interactive   run interactively
 b,binary*       (historical option -- no-op)
@@ -102,7 +102,7 @@ stop_here_user_resolve () {
 	    printf '%s\n' "$resolvemsg"
 	    stop_here $1
     fi
-    eval_gettextln "When you have resolved this problem, run \"\$cmdline --resolved\".
+    eval_gettextln "When you have resolved this problem, run \"\$cmdline --continue\".
 If you prefer to skip this patch, run \"\$cmdline --skip\" instead.
 To restore the original branch and stop patching, run \"\$cmdline --abort\"."
 
@@ -523,7 +523,7 @@ Use \"git am --abort\" to remove it.")"
 		esac
 	fi
 
-	# Make sure we are not given --skip, --resolved, nor --abort
+	# Make sure we are not given --skip, --continue, nor --abort
 	test "$skip$resolved$abort" = "" ||
 		die "$(gettext "Resolve operation not in progress, we are not resuming.")"
 
@@ -670,7 +670,7 @@ do
 	#  - patch is the patch body.
 	#
 	# When we are resuming, these files are either already prepared
-	# by the user, or the user can tell us to do so by --resolved flag.
+	# by the user, or the user can tell us to do so by --continue flag.
 	case "$resume" in
 	'')
 		if test -f "$dotest/rebasing"

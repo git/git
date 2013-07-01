@@ -826,7 +826,7 @@ static void show_am_in_progress(struct wt_status *s,
 	if (advice_status_hints) {
 		if (!state->am_empty_patch)
 			status_printf_ln(s, color,
-				_("  (fix conflicts and then run \"git am --resolved\")"));
+				_("  (fix conflicts and then run \"git am --continue\")"));
 		status_printf_ln(s, color,
 			_("  (use \"git am --skip\" to skip this patch)"));
 		status_printf_ln(s, color,
