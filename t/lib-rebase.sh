@@ -17,6 +17,8 @@
 #       ("squash", "fixup", "edit", or "reword") and the SHA1 taken
 #       from the specified line.
 #
+#   "exec_cmd_with_args" -- add an "exec cmd with args" line.
+#
 #   "#" -- Add a comment line.
 #
 #   ">" -- Add a blank line.
