@@ -630,7 +630,7 @@ int cmd_show_branch(int ac, const char **av, const char *prefix)
 	int num_rev, i, extra = 0;
 	int all_heads = 0, all_remotes = 0;
 	int all_mask, all_revs;
-	int lifo = 1;
+	enum rev_sort_order sort_order = REV_SORT_IN_GRAPH_ORDER;
 	char head[128];
 	const char *head_p;
 	int head_len;
@@ -665,15 +665,17 @@ int cmd_show_branch(int ac, const char **av, const char *prefix)
 			    N_("show possible merge bases")),
 		OPT_BOOLEAN(0, "independent", &independent,
 			    N_("show refs unreachable from any other ref")),
-		OPT_BOOLEAN(0, "topo-order", &lifo,
-			    N_("show commits in topological order")),
+		OPT_SET_INT(0, "topo-order", &sort_order,
+			    N_("show commits in topological order"),
+			    REV_SORT_IN_GRAPH_ORDER),
 		OPT_BOOLEAN(0, "topics", &topics,
 			    N_("show only commits not on the first branch")),
 		OPT_SET_INT(0, "sparse", &dense,
 			    N_("show merges reachable from only one tip"), 0),
-		OPT_SET_INT(0, "date-order", &lifo,
+		OPT_SET_INT(0, "date-order", &sort_order,
 			    N_("show commits where no parent comes before its "
-			       "children"), 0),
+			       "children"),
+			    REV_SORT_BY_COMMIT_DATE),
 		{ OPTION_CALLBACK, 'g', "reflog", &reflog_base, N_("<n>[,<base>]"),
 			    N_("show <n> most recent ref-log entries starting at "
 			       "base"),
@@ -900,7 +902,7 @@ int cmd_show_branch(int ac, const char **av, const char *prefix)
 		exit(0);
 
 	/* Sort topologically */
-	sort_in_topological_order(&seen, lifo);
+	sort_in_topological_order(&seen, sort_order);
 
 	/* Give names to commits */
 	if (!sha1_name && !no_name)

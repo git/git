@@ -4,6 +4,7 @@
 #include "parse-options.h"
 #include "grep.h"
 #include "notes.h"
+#include "commit.h"
 
 #define SEEN		(1u<<0)
 #define UNINTERESTING   (1u<<1)
@@ -62,6 +63,10 @@ struct rev_info {
 	const char *prefix;
 	const char *def;
 	struct pathspec prune_data;
+
+	/* topo-sort */
+	enum rev_sort_order sort_order;
+
 	unsigned int	early_output:1,
 			ignore_missing:1;
 
@@ -72,7 +77,6 @@ struct rev_info {
 			show_all:1,
 			remove_empty_trees:1,
 			simplify_history:1,
-			lifo:1,
 			topo_order:1,
 			simplify_merges:1,
 			simplify_by_decoration:1,

@@ -191,6 +191,7 @@
 /test-mktemp
 /test-parse-options
 /test-path-utils
+/test-prio-queue
 /test-read-cache
 /test-regex
 /test-revision-walking
