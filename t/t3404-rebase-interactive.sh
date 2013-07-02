@@ -950,4 +950,15 @@ test_expect_success 'rebase -i, with <onto> and <upstream> specified as :/quuxer
 	git checkout branch1
 '
 
+test_expect_success 'rebase -i with --strategy and -X' '
+	git checkout -b conflict-merge-use-theirs conflict-branch &&
+	git reset --hard HEAD^ &&
+	echo five >conflict &&
+	echo Z >file1 &&
+	git commit -a -m "one file conflict" &&
+	EDITOR=true git rebase -i --strategy=recursive -Xours conflict-branch &&
+	test $(git show conflict-branch:conflict) = $(cat conflict) &&
+	test $(cat file1) = Z
+'
+
 test_done
