@@ -77,6 +77,7 @@ test_expect_success 'disambiguate blob' '
 
 test_expect_success 'disambiguate tree' '
 	commit=$(echo "d7xm" | git commit-tree 000000000) &&
+	# this commit is fffff2e and not ambiguous with the 00000* objects
 	test $(git rev-parse $commit^{tree}) = $(git rev-parse 0000000000cdc)
 '
 
@@ -99,10 +100,14 @@ test_expect_success 'disambiguate commit-ish' '
 
 test_expect_success 'disambiguate commit' '
 	commit=$(echo "hoaxj" | git commit-tree 0000000000cdc -p 000000000) &&
+	# this commit is ffffffd8 and not ambiguous with the 00000* objects
 	test $(git rev-parse $commit^) = $(git rev-parse 0000000000e4f)
 '
 
 test_expect_success 'log name1..name2 takes only commit-ishes on both ends' '
+	# These are underspecified from the prefix-length point of view
+	# to disambiguate the commit with other objects, but there is only
+	# one commit that has 00000* prefix at this point.
 	git log 000000000..000000000 &&
 	git log ..000000000 &&
 	git log 000000000.. &&
@@ -112,16 +117,19 @@ test_expect_success 'log name1..name2 takes only commit-ishes on both ends' '
 '
 
 test_expect_success 'rev-parse name1..name2 takes only commit-ishes on both ends' '
+	# Likewise.
 	git rev-parse 000000000..000000000 &&
 	git rev-parse ..000000000 &&
 	git rev-parse 000000000..
 '
 
 test_expect_success 'git log takes only commit-ish' '
+	# Likewise.
 	git log 000000000
 '
 
 test_expect_success 'git reset takes only commit-ish' '
+	# Likewise.
 	git reset 000000000
 '
 
@@ -131,26 +139,30 @@ test_expect_success 'first tag' '
 '
 
 test_expect_failure 'two semi-ambiguous commit-ish' '
+	# At this point, we have a tag 0000000000f8f that points
+	# at a commit 0000000000e4f, and a tree and a blob that
+	# share 0000000000 prefix with these tag and commit.
+	#
 	# Once the parser becomes ultra-smart, it could notice that
-	# 110282 before ^{commit} name many different objects, but
+	# 0000000000 before ^{commit} name many different objects, but
 	# that only two (HEAD and v1.0.0 tag) can be peeled to commit,
 	# and that peeling them down to commit yield the same commit
 	# without ambiguity.
-	git rev-parse --verify 110282^{commit} &&
+	git rev-parse --verify 0000000000^{commit} &&
 
 	# likewise
-	git log 000000000..000000000 &&
-	git log ..000000000 &&
-	git log 000000000.. &&
-	git log 000000000...000000000 &&
-	git log ...000000000 &&
-	git log 000000000...
+	git log 0000000000..0000000000 &&
+	git log ..0000000000 &&
+	git log 0000000000.. &&
+	git log 0000000000...0000000000 &&
+	git log ...0000000000 &&
+	git log 0000000000...
 '
 
 test_expect_failure 'three semi-ambiguous tree-ish' '
 	# Likewise for tree-ish.  HEAD, v1.0.0 and HEAD^{tree} share
 	# the prefix but peeling them to tree yields the same thing
-	git rev-parse --verify 000000000^{tree}
+	git rev-parse --verify 0000000000^{tree}
 '
 
 test_expect_success 'parse describe name' '
@@ -241,7 +253,7 @@ test_expect_success 'ambiguous commit-ish' '
 	# Now there are many commits that begin with the
 	# common prefix, none of these should pick one at
 	# random.  They all should result in ambiguity errors.
-	test_must_fail git rev-parse --verify 110282^{commit} &&
+	test_must_fail git rev-parse --verify 00000000^{commit} &&
 
 	# likewise
 	test_must_fail git log 000000000..000000000 &&
