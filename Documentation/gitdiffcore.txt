@@ -222,25 +222,34 @@ version prefixed with '+'.
 diffcore-pickaxe: For Detecting Addition/Deletion of Specified String
 ---------------------------------------------------------------------
 
-This transformation is used to find filepairs that represent
-changes that touch a specified string, and is controlled by the
--S option and the `--pickaxe-all` option to the 'git diff-*'
-commands.
+This transformation limits the set of filepairs to those that change
+specified strings between the preimage and the postimage in a certain
+way.  -S<block of text> and -G<regular expression> options are used to
+specify different ways these strings are sought.
 
-When diffcore-pickaxe is in use, it checks if there are
-filepairs whose "result" side and whose "origin" side have
-different number of specified string.  Such a filepair represents
-"the string appeared in this changeset".  It also checks for the
-opposite case that loses the specified string.
+"-S<block of text>" detects filepairs whose preimage and postimage
+have different number of occurrences of the specified block of text.
+By definition, it will not detect in-file moves.  Also, when a
+changeset moves a file wholesale without affecting the interesting
+string, diffcore-rename kicks in as usual, and `-S` omits the filepair
+(since the number of occurrences of that string didn't change in that
+rename-detected filepair).  When used with `--pickaxe-regex`, treat
+the <block of text> as an extended POSIX regular expression to match,
+instead of a literal string.
 
-When `--pickaxe-all` is not in effect, diffcore-pickaxe leaves
-only such filepairs that touch the specified string in its
-output.  When `--pickaxe-all` is used, diffcore-pickaxe leaves all
-filepairs intact if there is such a filepair, or makes the
-output empty otherwise.  The latter behaviour is designed to
-make reviewing of the changes in the context of the whole
+"-G<regular expression>" (mnemonic: grep) detects filepairs whose
+textual diff has an added or a deleted line that matches the given
+regular expression.  This means that it will detect in-file (or what
+rename-detection considers the same file) moves, which is noise.  The
+implementation runs diff twice and greps, and this can be quite
+expensive.
+
+When `-S` or `-G` are used without `--pickaxe-all`, only filepairs
+that match their respective criterion are kept in the output.  When
+`--pickaxe-all` is used, if even one filepair matches their respective
+criterion in a changeset, the entire changeset is kept.  This behavior
+is designed to make reviewing changes in the context of the whole
 changeset easier.
-
 
 diffcore-order: For Sorting the Output Based on Filenames
 ---------------------------------------------------------
