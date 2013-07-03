@@ -948,7 +948,7 @@ static int evaluate_result(void)
 }
 
 /*
- * Pretend as if the user told us to merge with the tracking
+ * Pretend as if the user told us to merge with the remote-tracking
  * branch we have for the upstream of the current branch
  */
 static int setup_with_upstream(const char ***argv)
@@ -967,7 +967,7 @@ static int setup_with_upstream(const char ***argv)
 	args = xcalloc(branch->merge_nr + 1, sizeof(char *));
 	for (i = 0; i < branch->merge_nr; i++) {
 		if (!branch->merge[i]->dst)
-			die(_("No remote tracking branch for %s from %s"),
+			die(_("No remote-tracking branch for %s from %s"),
 			    branch->merge[i]->src, branch->remote_name);
 		args[i] = branch->merge[i]->dst;
 	}

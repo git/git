@@ -697,7 +697,7 @@ static void write_refspec_config(const char* src_ref_prefix,
 			/*
 			 * otherwise, the next "git fetch" will
 			 * simply fetch from HEAD without updating
-			 * any remote tracking branch, which is what
+			 * any remote-tracking branch, which is what
 			 * we want.
 			 */
 		} else {

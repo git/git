@@ -262,7 +262,7 @@ OPTIONS
 --remote::
 	This option is only valid for the update command.  Instead of using
 	the superproject's recorded SHA-1 to update the submodule, use the
-	status of the submodule's remote tracking branch.  The remote used
+	status of the submodule's remote-tracking branch.  The remote used
 	is branch's remote (`branch.<name>.remote`), defaulting to `origin`.
 	The remote branch used defaults to `master`, but the branch name may
 	be overridden by setting the `submodule.<name>.branch` option in
