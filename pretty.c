@@ -406,7 +406,7 @@ static const char *show_ident_date(const struct ident_split *ident,
 	return show_date(date, tz, mode);
 }
 
-void pp_user_info(const struct pretty_print_context *pp,
+void pp_user_info(struct pretty_print_context *pp,
 		  const char *what, struct strbuf *sb,
 		  const char *line, const char *encoding)
 {
@@ -1514,7 +1514,7 @@ void format_commit_message(const struct commit *commit,
 	free(context.signature_check.signer);
 }
 
-static void pp_header(const struct pretty_print_context *pp,
+static void pp_header(struct pretty_print_context *pp,
 		      const char *encoding,
 		      const struct commit *commit,
 		      const char **msg_p,
@@ -1575,7 +1575,7 @@ static void pp_header(const struct pretty_print_context *pp,
 	}
 }
 
-void pp_title_line(const struct pretty_print_context *pp,
+void pp_title_line(struct pretty_print_context *pp,
 		   const char **msg_p,
 		   struct strbuf *sb,
 		   const char *encoding,
@@ -1618,7 +1618,7 @@ void pp_title_line(const struct pretty_print_context *pp,
 	strbuf_release(&title);
 }
 
-void pp_remainder(const struct pretty_print_context *pp,
+void pp_remainder(struct pretty_print_context *pp,
 		  const char **msg_p,
 		  struct strbuf *sb,
 		  int indent)
@@ -1650,7 +1650,7 @@ void pp_remainder(const struct pretty_print_context *pp,
 	}
 }
 
-void pretty_print_commit(const struct pretty_print_context *pp,
+void pretty_print_commit(struct pretty_print_context *pp,
 			 const struct commit *commit,
 			 struct strbuf *sb)
 {
