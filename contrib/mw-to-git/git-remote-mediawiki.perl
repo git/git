@@ -635,9 +635,9 @@ sub literal_data_raw {
 	my ($content) = @_;
 	# Avoid confusion between size in bytes and in characters
 	utf8::downgrade($content);
-	binmode {*STDOUT}, ':raw';
+	binmode STDOUT, ':raw';
 	print {*STDOUT} 'data ', bytes::length($content), "\n", $content;
-	binmode {*STDOUT}, ':encoding(UTF-8)';
+	binmode STDOUT, ':encoding(UTF-8)';
 	return;
 }
 
