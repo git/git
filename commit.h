@@ -6,6 +6,7 @@
 #include "strbuf.h"
 #include "decorate.h"
 #include "gpg-interface.h"
+#include "string-list.h"
 
 struct commit_list {
 	struct commit *item;
@@ -95,11 +96,15 @@ struct pretty_print_context {
 	const char *output_encoding;
 	struct string_list *mailmap;
 	int color;
+	struct ident_split *from_ident;
 
 	/*
 	 * Fields below here are manipulated internally by pp_* functions and
 	 * should not be counted on by callers.
 	 */
+
+	/* Manipulated by the pp_* functions internally. */
+	struct string_list in_body_headers;
 };
 
 struct userformat_want {

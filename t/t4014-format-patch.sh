@@ -972,6 +972,49 @@ test_expect_success 'empty subject prefix does not have extra space' '
 	test_cmp expect actual
 '
 
+test_expect_success '--from=ident notices bogus ident' '
+	test_must_fail git format-patch -1 --stdout --from=foo >patch
+'
+
+test_expect_success '--from=ident replaces author' '
+	git format-patch -1 --stdout --from="Me <me@example.com>" >patch &&
+	cat >expect <<-\EOF &&
+	From: Me <me@example.com>
+
+	From: A U Thor <author@example.com>
+
+	EOF
+	sed -ne "/^From:/p; /^$/p; /^---$/q" <patch >patch.head &&
+	test_cmp expect patch.head
+'
+
+test_expect_success '--from uses committer ident' '
+	git format-patch -1 --stdout --from >patch &&
+	cat >expect <<-\EOF &&
+	From: C O Mitter <committer@example.com>
+
+	From: A U Thor <author@example.com>
+
+	EOF
+	sed -ne "/^From:/p; /^$/p; /^---$/q" <patch >patch.head &&
+	test_cmp expect patch.head
+'
+
+test_expect_success 'in-body headers trigger content encoding' '
+	GIT_AUTHOR_NAME="éxötìc" test_commit exotic &&
+	test_when_finished "git reset --hard HEAD^" &&
+	git format-patch -1 --stdout --from >patch &&
+	cat >expect <<-\EOF &&
+	From: C O Mitter <committer@example.com>
+	Content-Type: text/plain; charset=UTF-8
+
+	From: éxötìc <author@example.com>
+
+	EOF
+	sed -ne "/^From:/p; /^$/p; /^Content-Type/p; /^---$/q" <patch >patch.head &&
+	test_cmp expect patch.head
+'
+
 append_signoff()
 {
 	C=$(git commit-tree HEAD^^{tree} -p HEAD) &&

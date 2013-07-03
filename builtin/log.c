@@ -1112,6 +1112,21 @@ static int cc_callback(const struct option *opt, const char *arg, int unset)
 	return 0;
 }
 
+static int from_callback(const struct option *opt, const char *arg, int unset)
+{
+	char **from = opt->value;
+
+	free(*from);
+
+	if (unset)
+		*from = NULL;
+	else if (arg)
+		*from = xstrdup(arg);
+	else
+		*from = xstrdup(git_committer_info(IDENT_NO_DATE));
+	return 0;
+}
+
 int cmd_format_patch(int argc, const char **argv, const char *prefix)
 {
 	struct commit *commit;
@@ -1134,6 +1149,7 @@ int cmd_format_patch(int argc, const char **argv, const char *prefix)
 	int quiet = 0;
 	int reroll_count = -1;
 	char *branch_name = NULL;
+	char *from = NULL;
 	const struct option builtin_format_patch_options[] = {
 		{ OPTION_CALLBACK, 'n', "numbered", &numbered, NULL,
 			    N_("use [PATCH n/m] even with a single patch"),
@@ -1177,6 +1193,9 @@ int cmd_format_patch(int argc, const char **argv, const char *prefix)
 			    0, to_callback },
 		{ OPTION_CALLBACK, 0, "cc", NULL, N_("email"), N_("add Cc: header"),
 			    0, cc_callback },
+		{ OPTION_CALLBACK, 0, "from", &from, N_("ident"),
+			    N_("set From address to <ident> (or committer ident if absent)"),
+			    PARSE_OPT_OPTARG, from_callback },
 		OPT_STRING(0, "in-reply-to", &in_reply_to, N_("message-id"),
 			    N_("make first mail a reply to <message-id>")),
 		{ OPTION_CALLBACK, 0, "attach", &rev, N_("boundary"),
@@ -1263,6 +1282,11 @@ int cmd_format_patch(int argc, const char **argv, const char *prefix)
 	}
 
 	rev.extra_headers = strbuf_detach(&buf, NULL);
+
+	if (from) {
+		if (split_ident_line(&rev.from_ident, from, strlen(from)))
+			die(_("invalid ident line: %s"), from);
+	}
 
 	if (start_number < 0)
 		start_number = 1;
