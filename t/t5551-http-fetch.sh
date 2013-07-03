@@ -209,13 +209,17 @@ test_expect_success EXPENSIVE 'create 50,000 tags in the repo' '
 
 	# now assign tags to all the dangling commits we created above
 	tag=$("$PERL_PATH" -e "print \"bla\" x 30") &&
-	sed -e "s/^:\(.\+\) \(.\+\)$/\2 refs\/tags\/$tag-\1/" <marks >>packed-refs
+	sed -e "s|^:\([^ ]*\) \(.*\)$|\2 refs/tags/$tag-\1|" <marks >>packed-refs
 	)
 '
 
 test_expect_success EXPENSIVE 'clone the 50,000 tag repo to check OS command line overflow' '
 	git clone $HTTPD_URL/smart/repo.git too-many-refs 2>err &&
-	test_line_count = 0 err
+	test_line_count = 0 err &&
+	(
+		cd too-many-refs &&
+		test $(git for-each-ref refs/tags | wc -l) = 50000
+	)
 '
 
 stop_httpd
