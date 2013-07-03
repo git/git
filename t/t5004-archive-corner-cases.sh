@@ -27,6 +27,21 @@ check_dir() {
 	test_cmp expect actual
 }
 
+
+# bsdtar/libarchive versions before 3.1.3 consider a tar file with a
+# global pax header that is not followed by a file record as corrupt.
+if "$TAR" tf "$TEST_DIRECTORY"/t5004/empty-with-pax-header.tar >/dev/null 2>&1
+then
+	test_set_prereq HEADER_ONLY_TAR_OK
+fi
+
+test_expect_success HEADER_ONLY_TAR_OK 'tar archive of commit with empty tree' '
+	git archive --format=tar HEAD >empty-with-pax-header.tar &&
+	make_dir extract &&
+	"$TAR" xf empty-with-pax-header.tar -C extract &&
+	check_dir extract
+'
+
 test_expect_success 'tar archive of empty tree is empty' '
 	git archive --format=tar HEAD: >empty.tar &&
 	perl -e "print \"\\0\" x 10240" >10knuls.tar &&
