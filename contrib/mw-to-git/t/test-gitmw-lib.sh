@@ -62,12 +62,8 @@ test_check_precond () {
 		test_done
 	fi
 
-	if [ ! -f "$GIT_BUILD_DIR"/git-remote-mediawiki ];
-	then
-		echo "No remote mediawiki for git found. Copying it in git"
-		echo "cp $GIT_BUILD_DIR/contrib/mw-to-git/git-remote-mediawiki $GIT_BUILD_DIR/"
-		ln -s "$GIT_BUILD_DIR"/contrib/mw-to-git/git-remote-mediawiki "$GIT_BUILD_DIR"
-	fi
+	GIT_EXEC_PATH=$(cd "$(dirname "$0")" && cd "../.." && pwd)
+	PATH="$GIT_EXEC_PATH"'/bin-wrapper:'"$PATH"
 
 	if [ ! -d "$WIKI_DIR_INST/$WIKI_DIR_NAME" ];
 	then
