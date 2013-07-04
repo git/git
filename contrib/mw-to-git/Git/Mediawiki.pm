@@ -19,7 +19,7 @@ require Exporter;
 
 # Methods which can be called as standalone functions as well:
 @EXPORT_OK = qw(clean_filename smudge_filename connect_maybe
-				EMPTY HTTP_CODE_OK);
+				EMPTY HTTP_CODE_OK HTTP_CODE_PAGE_NOT_FOUND);
 }
 
 # Mediawiki filenames can contain forward slashes. This variable decides by which pattern they should be replaced
@@ -30,6 +30,7 @@ use constant EMPTY => q{};
 
 # HTTP codes
 use constant HTTP_CODE_OK => 200;
+use constant HTTP_CODE_PAGE_NOT_FOUND => 404;
 
 sub clean_filename {
 	my $filename = shift;
