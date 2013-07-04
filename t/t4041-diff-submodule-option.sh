@@ -23,8 +23,8 @@ add_file () {
 			echo "$name" >"$name" &&
 			git add "$name" &&
 			test_tick &&
-			msg_added_iso88591=$(echo "Add $name ($added $name)" | iconv -f utf-8 -t iso-8859-1) &&
-			git -c 'i18n.commitEncoding=iso-8859-1' commit -m "$msg_added_iso88591"
+			msg_added_iso88591=$(echo "Add $name ($added $name)" | iconv -f utf-8 -t iso8859-1) &&
+			git -c 'i18n.commitEncoding=iso8859-1' commit -m "$msg_added_iso88591"
 		done >/dev/null &&
 		git rev-parse --short --verify HEAD
 	)
