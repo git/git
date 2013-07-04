@@ -2,6 +2,12 @@
 # Copyright (C) 2013
 #     Matthieu Moy <Matthieu.Moy@imag.fr>
 #
+# To build and test:
+#
+#   make
+#   bin-wrapper/git mw preview Some_page.mw
+#   bin-wrapper/git clone mediawiki::http://example.com/wiki/
+#
 # To install, run Git's toplevel 'make install' then run:
 #
 #   make install
