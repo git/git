@@ -1240,11 +1240,15 @@ int commit_tree(const struct strbuf *msg, unsigned char *tree,
 static int find_invalid_utf8(const char *buf, int len)
 {
 	int offset = 0;
+	static const unsigned int max_codepoint[] = {
+		0x7f, 0x7ff, 0xffff, 0x10ffff
+	};
 
 	while (len) {
 		unsigned char c = *buf++;
 		int bytes, bad_offset;
 		unsigned int codepoint;
+		unsigned int min_val, max_val;
 
 		len--;
 		offset++;
@@ -1276,8 +1280,13 @@ static int find_invalid_utf8(const char *buf, int len)
 		if (len < bytes)
 			return bad_offset;
 
-		/* Place the encoded bits at the bottom of the value. */
+		/*
+		 * Place the encoded bits at the bottom of the value and compute the
+		 * valid range.
+		 */
 		codepoint = (c & 0x7f) >> bytes;
+		min_val = max_codepoint[bytes-1] + 1;
+		max_val = max_codepoint[bytes];
 
 		offset += bytes;
 		len -= bytes;
@@ -1290,8 +1299,8 @@ static int find_invalid_utf8(const char *buf, int len)
 				return bad_offset;
 		} while (--bytes);
 
-		/* No codepoints can ever be allocated beyond U+10FFFF. */
-		if (codepoint > 0x10ffff)
+		/* Reject codepoints that are out of range for the sequence length. */
+		if (codepoint < min_val || codepoint > max_val)
 			return bad_offset;
 		/* Surrogates are only for UTF-16 and cannot be encoded in UTF-8. */
 		if ((codepoint & 0x1ff800) == 0xd800)
@@ -1308,9 +1317,6 @@ static int find_invalid_utf8(const char *buf, int len)
  *
  * If it isn't, it assumes any non-utf8 characters are Latin1,
  * and does the conversion.
- *
- * Fixme: we should probably also disallow overlong forms.
- * But we don't do that currently.
  */
 static int verify_utf8(struct strbuf *buf)
 {
