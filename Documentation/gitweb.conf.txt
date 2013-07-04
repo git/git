@@ -336,8 +336,26 @@ $home_link_str::
 	used as the first component of gitweb's "breadcrumb trail":
 	`<home link> / <project> / <action>`.  Can be set at build time using
 	the `GITWEB_HOME_LINK_STR` variable.  By default it is set to "projects",
-	as this link leads to the list of projects.  Other popular choice it to
-	set it to the name of site.
+	as this link leads to the list of projects.  Another popular choice is to
+	set it to the name of site.  Note that it is treated as raw HTML so it
+	should not be set from untrusted sources.
+
+@extra_breadcrumbs::
+	Additional links to be added to the start of the breadcrumb trail before
+	the home link, to pages that are logically "above" the gitweb projects
+	list, such as the organization and department which host the gitweb
+	server. Each element of the list is a reference to an array, in which
+	element 0 is the link text (equivalent to `$home_link_str`) and element
+	1 is the target URL (equivalent to `$home_link`).
++
+For example, the following setting produces a breadcrumb trail like
+"home / dev / projects / ..." where "projects" is the home link.
+----------------------------------------------------------------------------
+    our @extra_breadcrumbs = (
+      [ 'home' => 'https://www.example.org/' ],
+      [ 'dev'  => 'https://dev.example.org/' ],
+    );
+----------------------------------------------------------------------------
 
 $logo_url::
 $logo_label::
