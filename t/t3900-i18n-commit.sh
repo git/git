@@ -39,6 +39,14 @@ test_expect_failure 'UTF-16 refused because of NULs' '
 	git commit -a -F "$TEST_DIRECTORY"/t3900/UTF-16.txt
 '
 
+test_expect_success 'UTF-8 invalid characters refused' '
+	test_when_finished "rm -f $HOME/stderr $HOME/invalid" &&
+	echo "UTF-8 characters" >F &&
+	printf "Commit message\n\nInvalid surrogate:\355\240\200\n" \
+		>"$HOME/invalid" &&
+	git commit -a -F "$HOME/invalid" 2>"$HOME"/stderr &&
+	grep "did not conform" "$HOME"/stderr
+'
 
 for H in ISO8859-1 eucJP ISO-2022-JP
 do

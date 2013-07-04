@@ -1244,6 +1244,7 @@ static int find_invalid_utf8(const char *buf, int len)
 	while (len) {
 		unsigned char c = *buf++;
 		int bytes, bad_offset;
+		unsigned int codepoint;
 
 		len--;
 		offset++;
@@ -1264,24 +1265,40 @@ static int find_invalid_utf8(const char *buf, int len)
 			bytes++;
 		}
 
-		/* Must be between 1 and 5 more bytes */
-		if (bytes < 1 || bytes > 5)
+		/*
+		 * Must be between 1 and 3 more bytes.  Longer sequences result in
+		 * codepoints beyond U+10FFFF, which are guaranteed never to exist.
+		 */
+		if (bytes < 1 || 3 < bytes)
 			return bad_offset;
 
 		/* Do we *have* that many bytes? */
 		if (len < bytes)
 			return bad_offset;
 
+		/* Place the encoded bits at the bottom of the value. */
+		codepoint = (c & 0x7f) >> bytes;
+
 		offset += bytes;
 		len -= bytes;
 
 		/* And verify that they are good continuation bytes */
 		do {
+			codepoint <<= 6;
+			codepoint |= *buf & 0x3f;
 			if ((*buf++ & 0xc0) != 0x80)
 				return bad_offset;
 		} while (--bytes);
 
-		/* We could/should check the value and length here too */
+		/* No codepoints can ever be allocated beyond U+10FFFF. */
+		if (codepoint > 0x10ffff)
+			return bad_offset;
+		/* Surrogates are only for UTF-16 and cannot be encoded in UTF-8. */
+		if ((codepoint & 0x1ff800) == 0xd800)
+			return bad_offset;
+		/* U+FFFE and U+FFFF are guaranteed non-characters. */
+		if ((codepoint & 0x1ffffe) == 0xfffe)
+			return bad_offset;
 	}
 	return -1;
 }
@@ -1292,8 +1309,8 @@ static int find_invalid_utf8(const char *buf, int len)
  * If it isn't, it assumes any non-utf8 characters are Latin1,
  * and does the conversion.
  *
- * Fixme: we should probably also disallow overlong forms and
- * invalid characters. But we don't do that currently.
+ * Fixme: we should probably also disallow overlong forms.
+ * But we don't do that currently.
  */
 static int verify_utf8(struct strbuf *buf)
 {
