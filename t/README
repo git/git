@@ -76,6 +76,11 @@ appropriately before running "make".
 	command being run and their output if any are also
 	output.
 
+--verbose-only=<pattern>::
+	Like --verbose, but the effect is limited to tests with
+	numbers matching <pattern>.  The number matched against is
+	simply the running count of the test within the file.
+
 --debug::
 	This may help the person who is developing a new test.
 	It causes the command defined with test_debug to run.
@@ -120,6 +125,11 @@ appropriately before running "make".
 	conditions manually, you should set GIT_VALGRIND to point to
 	the 't/valgrind/' directory and use the commands under
 	't/valgrind/bin/'.
+
+--valgrind-only=<pattern>::
+	Like --valgrind, but the effect is limited to tests with
+	numbers matching <pattern>.  The number matched against is
+	simply the running count of the test within the file.
 
 --tee::
 	In addition to printing the test output to the terminal,

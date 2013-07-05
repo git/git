@@ -343,6 +343,7 @@ test_declared_prereq () {
 }
 
 test_expect_failure () {
+	test_start_
 	test "$#" = 3 && { test_prereq=$1; shift; } || test_prereq=
 	test "$#" = 2 ||
 	error "bug in the test script: not 2 or 3 parameters to test-expect-failure"
@@ -357,10 +358,11 @@ test_expect_failure () {
 			test_known_broken_failure_ "$1"
 		fi
 	fi
-	echo >&3 ""
+	test_finish_
 }
 
 test_expect_success () {
+	test_start_
 	test "$#" = 3 && { test_prereq=$1; shift; } || test_prereq=
 	test "$#" = 2 ||
 	error "bug in the test script: not 2 or 3 parameters to test-expect-success"
@@ -375,7 +377,7 @@ test_expect_success () {
 			test_failure_ "$@"
 		fi
 	fi
-	echo >&3 ""
+	test_finish_
 }
 
 # test_external runs external test scripts that provide continuous
