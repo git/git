@@ -8,7 +8,8 @@ test_description='Test pretty formats'
 . ./test-lib.sh
 
 commit_msg () {
-	# String "initial. initial" partly in German (translated with Google Translate),
+	# String "initial. initial" partly in German
+	# (translated with Google Translate),
 	# encoded in UTF-8, used as a commit log message below.
 	msg=$(printf "initial. anf\303\244nglich")
 	if test -n "$1"

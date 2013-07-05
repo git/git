@@ -10,14 +10,16 @@ Documented tests for git reset'
 . ./test-lib.sh
 
 commit_msg () {
-	# String "modify 2nd file (changed)" partly in German(translated with Google Translate),
+	# String "modify 2nd file (changed)" partly in German
+	# (translated with Google Translate),
 	# encoded in UTF-8, used as a commit log message below.
-	msg=$(printf "modify 2nd file (ge\303\244ndert)")
+	msg="modify 2nd file (ge\303\244ndert)\n"
 	if test -n "$1"
 	then
-		msg=$(echo $msg | iconv -f utf-8 -t $1)
+		printf "$msg" | iconv -f utf-8 -t "$1"
+	else
+		printf "$msg"
 	fi
-	echo $msg
 }
 
 test_expect_success 'creating initial files and commits' '

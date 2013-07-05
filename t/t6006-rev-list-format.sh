@@ -9,8 +9,9 @@ test_description='git rev-list --pretty=format test'
 . "$TEST_DIRECTORY"/lib-terminal.sh
 
 test_tick
-# String "added" in German (translated with Google Translate), encoded in UTF-8,
-# used as a commit log message below.
+# String "added" in German
+# (translated with Google Translate),
+# encoded in UTF-8, used as a commit log message below.
 added=$(printf "added (hinzugef\303\274gt) foo")
 added_iso88591=$(echo "$added" | iconv -f utf-8 -t iso8859-1)
 # same but "changed"
@@ -35,26 +36,13 @@ test_expect_success 'setup' '
 	git config --unset i18n.commitEncoding
 '
 
-# usage: test_format [failure] name format_string <expected_output
+# usage: test_format name format_string [failure] <expected_output
 test_format () {
-	must_fail=0
-	# if parameters count is more than 2 then test must fail
-	if test $# -gt 2
-	then
-		must_fail=1
-		# remove first parameter which is flag for test failure
-		shift
-	fi
 	cat >expect.$1
-	name="format $1"
-	command="git rev-list --pretty=format:'$2' master >output.$1 &&
-		test_cmp expect.$1 output.$1"
-	if test $must_fail -eq 1
-	then
-		test_expect_failure "$name" "$command"
-	else
-		test_expect_success "$name" "$command"
-	fi
+	test_expect_${3:-success} "format $1" "
+		git rev-list --pretty=format:'$2' master >output.$1 &&
+		test_cmp expect.$1 output.$1
+	"
 }
 
 # Feed to --format to provide predictable colored sequences.
