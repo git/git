@@ -2305,9 +2305,6 @@ check: common-cmds.h
 		exit 1; \
 	fi
 
-remove-dashes:
-	./fixup-builtins $(BUILT_INS) $(PROGRAMS) $(SCRIPTS)
-
 ### Installation rules
 
 ifneq ($(filter /%,$(firstword $(template_dir))),)
