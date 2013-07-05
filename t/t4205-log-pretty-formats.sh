@@ -7,25 +7,19 @@
 test_description='Test pretty formats'
 . ./test-lib.sh
 
+sample_utf8_part=$(printf "f\303\244ng")
+
 commit_msg () {
 	# String "initial. initial" partly in German
 	# (translated with Google Translate),
 	# encoded in UTF-8, used as a commit log message below.
-	msg=$(printf "initial. anf\303\244nglich")
+	msg="initial. an${sample_utf8_part}lich\n"
 	if test -n "$1"
 	then
-		msg=$(echo $msg | iconv -f utf-8 -t $1)
+		printf "$msg" | iconv -f utf-8 -t "$1"
+	else
+		printf "$msg"
 	fi
-	if test -n "$2" -a -n "$3"
-	then
-		# cut string, replace cut part with two dots
-		# $2 - chars count from the beginning of the string
-		# $3 - "trailing" chars
-		# LC_ALL is set to make `sed` interpret "." as a UTF-8 char not a byte
-		# as it does with C locale
-		msg=$(echo $msg | LC_ALL=en_US.UTF-8 sed -e "s/^\(.\{$2\}\)$3/\1../")
-	fi
-	echo $msg
 }
 
 test_expect_success 'set up basic repos' '
@@ -193,7 +187,7 @@ test_expect_success 'left alignment formatting with trunc' '
 message ..
 message ..
 add bar  Z
-$(commit_msg "" "8" "..*$")
+initial...
 EOF
 	test_cmp expected actual
 '
@@ -206,7 +200,7 @@ test_expect_success 'left alignment formatting with ltrunc' '
 ..sage two
 ..sage one
 add bar  Z
-$(commit_msg "" "0" ".\{11\}")
+..${sample_utf8_part}lich
 EOF
 	test_cmp expected actual
 '
@@ -219,7 +213,7 @@ test_expect_success 'left alignment formatting with mtrunc' '
 mess.. two
 mess.. one
 add bar  Z
-$(commit_msg "" "4" ".\{11\}")
+init..lich
 EOF
 	test_cmp expected actual
 '
@@ -311,7 +305,7 @@ test_expect_success 'left/right alignment formatting with stealing' '
 short long  long long
 message ..   A U Thor
 add bar      A U Thor
-$(commit_msg "" "8" "..*$")   A U Thor
+initial...   A U Thor
 EOF
 	test_cmp expected actual
 '
