@@ -218,12 +218,7 @@ test_expect_success 'setup complex body' '
 	git config i18n.commitencoding iso8859-1 &&
 	echo change2 >foo && git commit -a -F commit-msg &&
 	head3=$(git rev-parse --verify HEAD) &&
-	head3_short=$(git rev-parse --short $head3) &&
-	# unset commit encoding config
-	# otherwise %e does not print encoding value
-	# and following test fails
-	git config --unset i18n.commitEncoding
-
+	head3_short=$(git rev-parse --short $head3)
 '
 
 test_format complex-encoding %e <<EOF
@@ -239,20 +234,40 @@ test_format complex-subject %s <<EOF
 commit $head3
 Test printing of complex bodies
 commit $head2
+$changed_iso88591
+commit $head1
+$added_iso88591
+EOF
+
+test_expect_success 'prepare expected messages (for test %b)' '
+	cat <<-EOF >expected.utf-8 &&
+	commit $head3
+	This commit message is much longer than the others,
+	and it will be encoded in iso8859-1. We should therefore
+	include an iso8859 character: ¡bueno!
+
+	commit $head2
+	commit $head1
+	EOF
+	iconv -f utf-8 -t iso8859-1 expected.utf-8 >expected.iso8859-1
+'
+
+test_format complex-body %b <expected.iso8859-1
+
+# Git uses i18n.commitEncoding if no i18n.logOutputEncoding set
+# so unset i18n.commitEncoding to test encoding conversion
+git config --unset i18n.commitEncoding
+
+test_format complex-subject-commitencoding-unset %s <<EOF
+commit $head3
+Test printing of complex bodies
+commit $head2
 $changed
 commit $head1
 $added
 EOF
 
-test_format complex-body %b <<EOF
-commit $head3
-This commit message is much longer than the others,
-and it will be encoded in iso8859-1. We should therefore
-include an iso8859 character: ¡bueno!
-
-commit $head2
-commit $head1
-EOF
+test_format complex-body-commitencoding-unset %b <expected.utf-8
 
 test_expect_success '%x00 shows NUL' '
 	echo  >expect commit $head3 &&
