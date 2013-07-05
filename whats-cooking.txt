@@ -1,10 +1,10 @@
 To: git@vger.kernel.org
 Bcc: lwn@lwn.net
-Subject: What's cooking in git.git (Jul 2013, #01; Mon, 1)
-X-master-at: 8c4e4ec3ff053331c845331645a437b01b1f0de6
-X-next-at: 27cfd277767dfcdf40973f837d71a02664df5d01
+Subject: What's cooking in git.git (Jul 2013, #02; Fri, 5)
+X-master-at: f8abaebab3fe1a1b873f9636ea410ac4007c8fa8
+X-next-at: 0346b8459f4201954d9ada6dccc8e6ff9f59269c
 
-What's cooking in git.git (Jul 2013, #01; Mon, 1)
+What's cooking in git.git (Jul 2013, #02; Fri, 5)
 --------------------------------------------------
 
 Here are the topics that have been cooking.  Commits prefixed with
@@ -24,256 +24,91 @@ of the repositories listed at
 --------------------------------------------------
 [Graduated to "master"]
 
-* ap/diff-ignore-blank-lines (2013-06-19) 1 commit
-  (merged to 'next' on 2013-06-23 at 9cf8e03)
- + diff: add --ignore-blank-lines option
+* tr/test-v-and-v-subtest-only (2013-06-29) 9 commits
+  (merged to 'next' on 2013-06-30 at 1c5fac1)
+ + perf-lib: fix start/stop of perf tests
+  (merged to 'next' on 2013-06-26 at 8ff4d84)
+ + test-lib: support running tests under valgrind in parallel
+ + test-lib: allow prefixing a custom string before "ok N" etc.
+ + test-lib: valgrind for only tests matching a pattern
+ + test-lib: verbose mode for only tests matching a pattern
+ + test-lib: self-test that --verbose works
+ + test-lib: rearrange start/end of test_expect_* and test_skip
+ + test-lib: refactor $GIT_SKIP_TESTS matching
+ + test-lib: enable MALLOC_* for the actual tests
 
- "git diff" learned a mode that ignores hunks whose change consists
- only of additions and removals of blank lines, which is the same as
- "diff -B" (ignore blank lines) of GNU diff.
-
-
-* ap/rebase-multiple-fixups (2013-06-27) 1 commit
-  (merged to 'next' on 2013-06-28 at c3d1b1e)
- + rebase -i: handle fixup! fixup! in --autosquash
-
- Having multiple "fixup!" on a line in the rebase instruction sheet
- did not work very well with "git rebase -i --autosquash".
-
-
-* ed/color-prompt (2013-06-26) 5 commits
-  (merged to 'next' on 2013-06-28 at 334892c)
- + git-prompt.sh: add missing information in comments
- + git-prompt.sh: do not print duplicate clean color code
- + t9903: remove redundant tests
- + git-prompt.sh: refactor colored prompt code
- + t9903: add tests for git-prompt pcmode
-
- Code clean-up for in-prompt status script (in contrib/).
-
-
-* ft/doc-git-transport (2013-06-26) 1 commit
-  (merged to 'next' on 2013-06-27 at 4a7d248)
- + documentation: add git:// transport security notice
-
-
-* jc/topo-author-date-sort (2013-06-21) 9 commits
-  (merged to 'next' on 2013-06-26 at 9283719)
- + t6003: add --author-date-order test
- + topology tests: teach a helper to set author dates as well
- + t6003: add --date-order test
- + topology tests: teach a helper to take abbreviated timestamps
- + t/lib-t6000: style fixes
-  (merged to 'next' on 2013-06-15 at ad4fb48)
- + log: --author-date-order
- + sort-in-topological-order: use prio-queue
- + prio-queue: priority queue of pointers to structs
- + toposort: rename "lifo" field
- (this branch uses jk/commit-info-slab; is tangled with jc/show-branch.)
-
- "git log" learned the "--author-date-order" option, with which the
- output is topologically sorted and commits in parallel histories
- are shown intermixed together based on the author timestamp.
-
-
-* jk/commit-info-slab (2013-06-07) 3 commits
-  (merged to 'next' on 2013-06-15 at 908ab93)
- + commit-slab: introduce a macro to define a slab for new type
- + commit-slab: avoid large realloc
- + commit: allow associating auxiliary info on-demand
- (this branch is used by jc/show-branch and jc/topo-author-date-sort.)
-
- Allow adding custom information to commit objects in order to
- represent unbound number of flag bits etc.
-
-
-* jk/submodule-subdirectory-ok (2013-06-17) 6 commits
-  (merged to 'next' on 2013-06-23 at f17fb37)
- + submodule: drop the top-level requirement
- + rev-parse: add --prefix option
- + submodule: show full path in error message
- + t7403: add missing && chaining
- + t7403: modernize style
- + t7401: make indentation consistent
-
- Allow various subcommands of "git submodule" to be run not from the
- top of the working tree of the superproject.
-
-
-* kb/am-deprecate-resolved (2013-06-27) 1 commit
-  (merged to 'next' on 2013-06-28 at 177f491)
- + am: replace uses of --resolved with --continue
-
- Promote "git am --continue" over "git am --resolved" for UI
- consistency.
-
-
-* mh/loose-refs-race-with-pack-ref (2013-06-19) 3 commits
-  (merged to 'next' on 2013-06-23 at 2099d0b)
- + resolve_ref_unsafe(): close race condition reading loose refs
- + resolve_ref_unsafe(): handle the case of an SHA-1 within loop
- + resolve_ref_unsafe(): extract function handle_missing_loose_ref()
-
- We read loose and packed rerferences in two steps, but after
- deciding to read a loose ref but before actually opening it to read
- it, another process racing with us can unlink it, which would cause
- us to barf. Update the codepath to retry when such a race is
- detected.
-
-
-* mh/ref-races (2013-06-20) 11 commits
-  (merged to 'next' on 2013-06-23 at 71f1a18)
- + for_each_ref: load all loose refs before packed refs
- + get_packed_ref_cache: reload packed-refs file when it changes
- + add a stat_validity struct
- + Extract a struct stat_data from cache_entry
- + packed_ref_cache: increment refcount when locked
- + do_for_each_entry(): increment the packed refs cache refcount
- + refs: manage lifetime of packed refs cache via reference counting
- + refs: implement simple transactions for the packed-refs file
- + refs: wrap the packed refs cache in a level of indirection
- + pack_refs(): split creation of packed refs and entry writing
- + repack_without_ref(): split list curation and entry writing
- (this branch is used by mh/ref-races-optim-invalidate-cached.)
-
- "git pack-refs" that races with new ref creation or deletion have
- been susceptible to lossage of refs under right conditions, which
- has been tightened up.
-
-
-* nk/name-rev-abbreviated-refs (2013-06-18) 1 commit
-  (merged to 'next' on 2013-06-23 at 2ec9e05)
- + name-rev: allow to specify a subpath for --refs option
-
- "git name-rev --refs=tags/v*" were forbidden, which was a bit
- inconvenient (you had to give a pattern to match refs fully, like
- --refs=refs/tags/v*).
-
-
-* rr/column-doc (2013-06-26) 1 commit
-  (merged to 'next' on 2013-06-27 at 99497e1)
- + column doc: rewrite documentation for column.ui
-
-
-* rr/remote-branch-config-refresh (2013-06-23) 9 commits
-  (merged to 'next' on 2013-06-26 at 48746e1)
- + t/t5505-remote: test multiple push/pull in remotes-file
- + ls-remote doc: don't encourage use of branches-file
- + ls-remote doc: rewrite <repository> paragraph
- + ls-remote doc: fix example invocation on git.git
- + t/t5505-remote: test url-with-# in branches-file
- + remote: remove dead code in read_branches_file()
- + t/t5505-remote: use test_path_is_missing
- + t/t5505-remote: test push-refspec in branches-file
- + t/t5505-remote: modernize style
-
- The original way to specify remote repository using .git/branches/
- used to have a nifty feature.  The code to support the feature was
- still in a function but the caller was changed not to call it 5
- years ago, breaking that feature and leaving the supporting code
- unreachable.
-
-
-* sb/mailmap-merijn-brand (2013-06-25) 1 commit
-  (merged to 'next' on 2013-06-27 at 2dd247a)
- + .mailmap: Map "H.Merijn Brand" to "H. Merijn Brand"
-
-
-* sg/bash-prompt (2013-06-24) 16 commits
-  (merged to 'next' on 2013-06-27 at 09fda6a)
- + bash prompt: mention that PROMPT_COMMAND mode is faster
- + bash prompt: avoid command substitution when finalizing gitstring
- + bash prompt: avoid command substitution when checking for untracked files
- + bash prompt: use bash builtins to check stash state
- + bash prompt: use bash builtins to check for unborn branch for dirty state
- + bash prompt: combine 'git rev-parse' for detached head
- + bash prompt: combine 'git rev-parse' executions in the main code path
- + bash prompt: use bash builtins to find out current branch
- + bash prompt: use bash builtins to find out rebase state
- + bash prompt: run 'git rev-parse --git-dir' directly instead of __gitdir()
- + bash prompt: return early from __git_ps1() when not in a git repository
- + bash prompt: print unique detached HEAD abbreviated object name
- + bash prompt: add a test for symbolic link symbolic refs
- + completion, bash prompt: move __gitdir() tests to completion test suite
- + bash prompt: use 'write_script' helper in interactive rebase test
- + bash prompt: fix redirection coding style in tests
-
-
-* wk/doc-in-linux-3.x-era (2013-06-22) 4 commits
-  (merged to 'next' on 2013-06-26 at a24e9e6)
- + Documentation: Update 'linux-2.6.git' -> 'linux.git'
- + Documentation: Update the NFS remote examples to use the staging repo
- + doc/clone: Pick more compelling paths for the --reference example
- + doc/clone: Remove the '--bare -l -s' example
-
- Update documentation to match more recent realities.
+ Allows N instances of tests run in parallel, each running 1/N parts
+ of the test suite under Valgrind, to speed things up.
 
 --------------------------------------------------
 [New Topics]
 
-* pb/stash-refuse-to-kill (2013-07-01) 2 commits
- - git stash: avoid data loss when "git stash save" kills a directory
- - treat_directory(): do not declare submodules to be untracked
+* jc/t1512-fix (2013-07-01) 2 commits
+ - get_short_sha1(): correctly disambiguate type-limited abbreviation
+ - t1512: correct leftover constants from earlier edition
 
- "git stash save" is not just about "saving" the local changes, but
- also is to restore the working tree state to that of HEAD. If you
- changed a non-directory into a directory in the local change, you
- may have untracked files in that directory, which have to be killed
- while doing so, unless you run it with --include-untracked.  Teach
- the command to detect and error out before spreading the damage.
+ A test that should have failed but didn't revealed a bug that needs
+ to be corrected.
 
- This needed a small fix to "ls-files --killed".
-
- Will merge to 'next' after waiting for a few days.
+ Will merge to 'next'.
 
 
-* es/contacts (2013-06-30) 4 commits
- - contrib: contacts: interpret committish akin to format-patch
- - contrib: contacts: add ability to parse from committish
- - contrib: contacts: add support for multiple patches
- - contrib: add git-contacts helper
+* jk/fetch-pack-many-refs (2013-07-02) 3 commits
+ - fetch-pack: avoid quadratic behavior in rev_list_push
+ - commit.c: make compare_commits_by_commit_date global
+ - fetch-pack: avoid quadratic list insertion in mark_complete
 
- Waiting for more discussion.
+ Fetching between repositories with many refs employed O(n^2)
+ algorithm to match up the common objects, which has been corrected.
 
-
-* jk/bash-completion (2013-06-30) 2 commits
-  (merged to 'next' on 2013-07-01 at 6daca44)
- + completion: learn about --man-path
- + completion: handle unstuck form of base git options
-
- Will merge to 'master'.
+ Will merge to 'next'.
 
 
-* cp/submodule-custom-update (2013-07-01) 1 commit
- - submodule update: allow custom command to update submodule working tree
+* jk/format-patch-from (2013-07-03) 2 commits
+ - teach format-patch to place other authors into in-body "From"
+ - pretty.c: drop const-ness from pretty_print_context
 
- In addition to the choice from "rebase, merge, or checkout-detach",
- allow a custom command to be used in "submodule update" to update
- the working tree of submodules.
+ "git format-patch" learned "--from[=whom]" option, which sets the
+ "From: " header to the specified person (or the person who runs the
+ command, if "=whom" part is missing) and move the original author
+ information to an in-body From: header as necessary.
 
- Needs to be reviewed.
-
-
-* mv/merge-ff-tristate (2013-07-01) 1 commit
- - merge: handle --ff/--no-ff/--ff-only as a tri-state option
-
- The configuration variable "merge.ff" was cleary a tri-state to
- choose one from "favor fast-forward when possible", "always create
- a merge even when the history could fast-forward" and "do not
- create any merge, only update when the history fast-forwards", but
- the command line parser did not implement the usual convention of
- "last one wins, and command line overrides the configuration"
- correctly.
-
- Needs to be reviewed.
+ Will merge to 'next'.
 
 
-* rr/rebase-reflog-message-reword (2013-06-23) 2 commits
- - rebase -i: use a better reflog message
- - rebase: use a better reflog message
- (this branch uses rr/rebase-checkout-reflog.)
+* ms/remote-tracking-branches-in-doc (2013-07-03) 1 commit
+ - Change "remote tracking" to "remote-tracking"
 
- Split from the other topic.
+ Will merge to 'next'.
+
+
+* tf/gitweb-extra-breadcrumbs (2013-07-04) 1 commit
+ - gitweb: allow extra breadcrumbs to prefix the trail
+
+ An Gitweb installation that is a part of larger site can optionally
+ show extra links that point at the levels higher than the Gitweb
+ pages itself in the link hierarchy of pages.
+
+ Will merge to 'next'.
+
+
+* bc/commit-invalid-utf8 (2013-07-04) 2 commits
+ - commit: reject overlong UTF-8 sequences
+ - commit: reject invalid UTF-8 codepoints
+
+ Will merge to 'next'.
+
+
+* bc/send-email-use-port-as-separate-param (2013-07-04) 1 commit
+ - send-email: provide port separately from hostname
+
+ Will merge to 'next'.
+
+
+* ml/cygwin-does-not-have-fifo (2013-07-05) 1 commit
+ - test-lib.sh - cygwin does not have usable FIFOs
+
+ Will merge to 'next'.
 
 --------------------------------------------------
 [Stalled]
@@ -407,23 +242,101 @@ of the repositories listed at
 --------------------------------------------------
 [Cooking]
 
-* bp/mediawiki-preview (2013-06-26) 5 commits
- - git-remote-mediawiki: Add preview subcommand into git mw.
+* pb/stash-refuse-to-kill (2013-07-01) 2 commits
+  (merged to 'next' on 2013-07-05 at 78ecc59)
+ + git stash: avoid data loss when "git stash save" kills a directory
+ + treat_directory(): do not declare submodules to be untracked
+
+ "git stash save" is not just about "saving" the local changes, but
+ also is to restore the working tree state to that of HEAD. If you
+ changed a non-directory into a directory in the local change, you
+ may have untracked files in that directory, which have to be killed
+ while doing so, unless you run it with --include-untracked.  Teach
+ the command to detect and error out before spreading the damage.
+
+ This needed a small fix to "ls-files --killed".
+
+ Will merge to 'next'.
+
+
+* es/contacts (2013-07-03) 3 commits
+ - contrib: contacts: interpret committish akin to format-patch
+ - contrib: contacts: add ability to parse from committish
+ - contrib: add git-contacts helper
+
+ A helper to read from a set of format-patch output files or a range
+ of commits and find those who may have insights to the code that
+ the changes touch by running a series of "git blame" commands.
+
+ Still needs to add mailmap support and other niceties but the
+ basics already look sound, and the enhancements can be done
+ in-tree. Assuming that "git contact" is something we may want to
+ have as a member of the official set of commands someday, that is.
+
+ Will merge to 'next'.
+
+
+* jk/bash-completion (2013-06-30) 2 commits
+  (merged to 'next' on 2013-07-01 at 6daca44)
+ + completion: learn about --man-path
+ + completion: handle unstuck form of base git options
+
+ Will merge to 'master'.
+
+
+* cp/submodule-custom-update (2013-07-03) 1 commit
+ - submodule update: allow custom command to update submodule working tree
+
+ In addition to the choice from "rebase, merge, or checkout-detach",
+ allow a custom command to be used in "submodule update" to update
+ the working tree of submodules.
+
+ Will merge to 'next'.
+
+
+* mv/merge-ff-tristate (2013-07-02) 1 commit
+ - merge: handle --ff/--no-ff/--ff-only as a tri-state option
+
+ The configuration variable "merge.ff" was cleary a tri-state to
+ choose one from "favor fast-forward when possible", "always create
+ a merge even when the history could fast-forward" and "do not
+ create any merge, only update when the history fast-forwards", but
+ the command line parser did not implement the usual convention of
+ "last one wins, and command line overrides the configuration"
+ correctly.
+
+ Will merge to 'next'.
+
+
+* rr/rebase-reflog-message-reword (2013-06-23) 2 commits
+ - rebase -i: use a better reflog message
+ - rebase: use a better reflog message
+ (this branch uses rr/rebase-checkout-reflog.)
+
+ "git rebase [-i]" used to leave just "rebase" as its reflog message
+ for some operations. This rewords them to be more informative.
+
+ Will merge to 'next'.
+
+
+* bp/mediawiki-preview (2013-07-04) 7 commits
+ - git-remote-mediawiki: Add preview subcommand into git mw
  - git-remote-mediawiki: Adding git-mw command
- - git-remote-mediawiki: factoring code between git-remote-mediawiki and Git::Mediawiki
- - git-remote-mediawiki: new git bin-wrapper for developement
+ - git-remote-mediawiki: Factoring code between git-remote-mediawiki and Git::Mediawiki
+ - git-remote-mediawiki: Update tests to run with the new bin-wrapper
+ - git-remote-mediawiki: New git bin-wrapper for developement
+ - wrap-for-bin: Make bin-wrappers chainable
  - git-remote-mediawiki: Introduction of Git::Mediawiki.pm
 
- Still under discussion?
+ Looks like this is in a fairly good shape?
 
 
-* fg/submodule-clone-depth (2013-06-28) 1 commit
+* fg/submodule-clone-depth (2013-07-03) 1 commit
  - Add --depth to submodule update/add
 
  Allow shallow-cloning of submodules with "git submodule update".
 
- Waiting for a reroll.
- $gmane/229248
+ Will merge to 'next'.
 
 
 * jc/pull-training-wheel (2013-06-27) 1 commit
@@ -438,7 +351,9 @@ of the repositories listed at
  logic with other people's support.  Hint, hint...
 
 
-* as/log-output-encoding-in-user-format (2013-07-01) 6 commits
+* as/log-output-encoding-in-user-format (2013-07-05) 7 commits
+  (merged to 'next' on 2013-07-05 at d2c99e5)
+ + t4041, t4205, t6006, t7102: use iso8859-1 rather than iso-8859-1
   (merged to 'next' on 2013-07-01 at 3318aa8)
  + t4205: replace .\+ with ..* in sed commands
   (merged to 'next' on 2013-06-28 at 4063330)
@@ -455,13 +370,14 @@ of the repositories listed at
 
 
 * jc/maint-diff-core-safecrlf (2013-06-25) 1 commit
- - diff: demote core.safecrlf=true to core.safecrlf=warn
+  (merged to 'next' on 2013-07-03 at db8a2a6)
+ + diff: demote core.safecrlf=true to core.safecrlf=warn
 
  "git diff" refused to even show difference when core.safecrlf is
  set to true (i.e. error out) and there are offending lines in the
  working tree files.
 
- Will merge to 'next'.
+ Will merge to 'master'.
 
 
 * jk/fast-import-empty-ls (2013-06-23) 4 commits
@@ -474,14 +390,12 @@ of the repositories listed at
  $gmane/228741
 
 
-* af/rebase-i-merge-options (2013-06-25) 2 commits
- - SQUASH???
+* af/rebase-i-merge-options (2013-07-02) 1 commit
  - Do not ignore merge options in interactive rebase
 
  "git rebase -i" now honors --strategy and -X options.
 
- Waiting for response to review comments.
- $gmane/228988
+ Will merge to 'master'.
 
 
 * rj/cygwin-remove-cheating-lstat (2013-06-25) 1 commit
@@ -529,12 +443,15 @@ of the repositories listed at
  tentatively defines it as the same as 'current', but we may have
  to tighten it to avoid surprises in some way.
 
+ Will merge to 'master'.
+
 
 * jg/status-config (2013-06-24) 4 commits
- - status/commit: make sure --porcelain is not affected by user-facing config
- - commit: make it work with status.short
- - status: introduce status.branch to enable --branch by default
- - status: introduce status.short to enable --short by default
+  (merged to 'next' on 2013-07-03 at 6ac1ada)
+ + status/commit: make sure --porcelain is not affected by user-facing config
+ + commit: make it work with status.short
+ + status: introduce status.branch to enable --branch by default
+ + status: introduce status.short to enable --short by default
 
  "git status" learned status.branch and status.short configuration
  variables to use --branch and --short options by default (override
@@ -546,7 +463,7 @@ of the repositories listed at
  is unfortunately overly complex in order not to introduce an
  unnecessary regression.
 
- Will merge to 'next'.
+ Will merge to 'master'.
 
 
 * jc/reflog-doc (2013-06-19) 1 commit
@@ -613,25 +530,6 @@ of the repositories listed at
  merged to 'next'.
 
 
-* tr/test-v-and-v-subtest-only (2013-06-29) 9 commits
-  (merged to 'next' on 2013-06-30 at 1c5fac1)
- + perf-lib: fix start/stop of perf tests
-  (merged to 'next' on 2013-06-26 at 8ff4d84)
- + test-lib: support running tests under valgrind in parallel
- + test-lib: allow prefixing a custom string before "ok N" etc.
- + test-lib: valgrind for only tests matching a pattern
- + test-lib: verbose mode for only tests matching a pattern
- + test-lib: self-test that --verbose works
- + test-lib: rearrange start/end of test_expect_* and test_skip
- + test-lib: refactor $GIT_SKIP_TESTS matching
- + test-lib: enable MALLOC_* for the actual tests
-
- Allows N instances of tests run in parallel, each running 1/N parts
- of the test suite under Valgrind, to speed things up.
-
- Will merge to 'master'.
-
-
 * jn/add-2.0-u-A-sans-pathspec (2013-04-26) 1 commit
  - git add: -u/-A now affects the entire working tree
 
@@ -657,53 +555,3 @@ of the repositories listed at
  aka "--no-ignore-removal".
 
  Will cook in 'next' until Git 2.0.
-
---------------------------------------------------
-[Discarded]
-
-* rr/complete-difftool (2013-06-09) 3 commits
-  (merged to 'next' on 2013-06-09 at 2ee40cb)
- + Revert 77c1305 and 3c3b46b
-  (merged to 'next' on 2013-06-07 at 90e5f58)
- + completion: add deprecated __git_complete_file ()
-  (merged to 'next' on 2013-06-04 at 01c7611)
- + completion: clarify ls-tree, archive, show completion
-
- Update command line completion (in contrib/) to use a better named
- completion helper function for commands that take revisions and
- paths.
-
- Reverted, to be replaced with rr/complete-difftool-fixup.
-
-
-* fc/remote-helpers-use-specified-python (2013-05-28) 4 commits
- - remote-helpers: add exec-path links
- - remote-helpers: allow direct test execution
- - remote-helpers: rename tests
- - remote-helpers: generate scripts
-
- Retracted.
-
-
-* jk/packed-refs-race (2013-05-06) 4 commits
- . for_each_ref: load all loose refs before packed refs
- . get_packed_refs: reload packed-refs file when it changes
- . add a stat_validity struct
- . resolve_ref: close race condition for packed refs
-
- Superseded by mh/ref-races topic, I think.
-
-
-* rr/triangle-push-fix (2013-06-20) 9 commits
- . push: honor branch.*.push
- . SQUASH??? fix git-config push.default description
- . SQUASH??? minimum "simple" safety fix-up
- . t/t5528-push-default: test pushdefault workflows
- . t/t5528-push-default: generalize test_push_*
- . push: remove dead code in setup_push_upstream()
- . push: change `simple` to accommodate triangular workflows
- . config doc: rewrite push.default section
- + t/t5528-push-default: remove redundant test_config lines
- (this branch is tangled with jc/triangle-push-fixup.)
-
- Superseded by jc/triangle-push-fixup.
