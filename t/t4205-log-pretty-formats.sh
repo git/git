@@ -145,174 +145,174 @@ test_expect_success 'setup more commits' '
 	head4=$(git rev-parse --verify --short HEAD~3)
 '
 
-test_expect_success 'left alignment formatting' "
-	git log --pretty='format:%<(40)%s' >actual &&
+test_expect_success 'left alignment formatting' '
+	git log --pretty="format:%<(40)%s" >actual &&
 	# complete the incomplete line at the end
 	echo >>actual &&
-	qz_to_tab_space <<\EOF >expected &&
+	qz_to_tab_space <<EOF >expected &&
 message two                            Z
 message one                            Z
 add bar                                Z
 $(commit_msg)                    Z
 EOF
 	test_cmp expected actual
-"
+'
 
-test_expect_success 'left alignment formatting at the nth column' "
-	git log --pretty='format:%h %<|(40)%s' >actual &&
+test_expect_success 'left alignment formatting at the nth column' '
+	git log --pretty="format:%h %<|(40)%s" >actual &&
 	# complete the incomplete line at the end
 	echo >>actual &&
-	qz_to_tab_space <<\EOF >expected &&
+	qz_to_tab_space <<EOF >expected &&
 $head1 message two                    Z
 $head2 message one                    Z
 $head3 add bar                        Z
 $head4 $(commit_msg)            Z
 EOF
 	test_cmp expected actual
-"
+'
 
-test_expect_success 'left alignment formatting with no padding' "
-	git log --pretty='format:%<(1)%s' >actual &&
+test_expect_success 'left alignment formatting with no padding' '
+	git log --pretty="format:%<(1)%s" >actual &&
 	# complete the incomplete line at the end
 	echo >>actual &&
-	cat <<\EOF >expected &&
+	cat <<EOF >expected &&
 message two
 message one
 add bar
 $(commit_msg)
 EOF
 	test_cmp expected actual
-"
+'
 
-test_expect_success 'left alignment formatting with trunc' "
-	git log --pretty='format:%<(10,trunc)%s' >actual &&
+test_expect_success 'left alignment formatting with trunc' '
+	git log --pretty="format:%<(10,trunc)%s" >actual &&
 	# complete the incomplete line at the end
 	echo >>actual &&
-	qz_to_tab_space <<\EOF >expected &&
+	qz_to_tab_space <<EOF >expected &&
 message ..
 message ..
 add bar  Z
 $(commit_msg "" "8" "..*$")
 EOF
 	test_cmp expected actual
-"
+'
 
-test_expect_success 'left alignment formatting with ltrunc' "
-	git log --pretty='format:%<(10,ltrunc)%s' >actual &&
+test_expect_success 'left alignment formatting with ltrunc' '
+	git log --pretty="format:%<(10,ltrunc)%s" >actual &&
 	# complete the incomplete line at the end
 	echo >>actual &&
-	qz_to_tab_space <<\EOF >expected &&
+	qz_to_tab_space <<EOF >expected &&
 ..sage two
 ..sage one
 add bar  Z
 $(commit_msg "" "0" ".\{11\}")
 EOF
 	test_cmp expected actual
-"
+'
 
-test_expect_success 'left alignment formatting with mtrunc' "
-	git log --pretty='format:%<(10,mtrunc)%s' >actual &&
+test_expect_success 'left alignment formatting with mtrunc' '
+	git log --pretty="format:%<(10,mtrunc)%s" >actual &&
 	# complete the incomplete line at the end
 	echo >>actual &&
-	qz_to_tab_space <<\EOF >expected &&
+	qz_to_tab_space <<EOF >expected &&
 mess.. two
 mess.. one
 add bar  Z
 $(commit_msg "" "4" ".\{11\}")
 EOF
 	test_cmp expected actual
-"
+'
 
-test_expect_success 'right alignment formatting' "
-	git log --pretty='format:%>(40)%s' >actual &&
+test_expect_success 'right alignment formatting' '
+	git log --pretty="format:%>(40)%s" >actual &&
 	# complete the incomplete line at the end
 	echo >>actual &&
-	qz_to_tab_space <<\EOF >expected &&
+	qz_to_tab_space <<EOF >expected &&
 Z                            message two
 Z                            message one
 Z                                add bar
 Z                    $(commit_msg)
 EOF
 	test_cmp expected actual
-"
+'
 
-test_expect_success 'right alignment formatting at the nth column' "
-	git log --pretty='format:%h %>|(40)%s' >actual &&
+test_expect_success 'right alignment formatting at the nth column' '
+	git log --pretty="format:%h %>|(40)%s" >actual &&
 	# complete the incomplete line at the end
 	echo >>actual &&
-	qz_to_tab_space <<\EOF >expected &&
+	qz_to_tab_space <<EOF >expected &&
 $head1                      message two
 $head2                      message one
 $head3                          add bar
 $head4              $(commit_msg)
 EOF
 	test_cmp expected actual
-"
+'
 
-test_expect_success 'right alignment formatting with no padding' "
-	git log --pretty='format:%>(1)%s' >actual &&
+test_expect_success 'right alignment formatting with no padding' '
+	git log --pretty="format:%>(1)%s" >actual &&
 	# complete the incomplete line at the end
 	echo >>actual &&
-	cat <<\EOF >expected &&
+	cat <<EOF >expected &&
 message two
 message one
 add bar
 $(commit_msg)
 EOF
 	test_cmp expected actual
-"
+'
 
-test_expect_success 'center alignment formatting' "
-	git log --pretty='format:%><(40)%s' >actual &&
+test_expect_success 'center alignment formatting' '
+	git log --pretty="format:%><(40)%s" >actual &&
 	# complete the incomplete line at the end
 	echo >>actual &&
-	qz_to_tab_space <<\EOF >expected &&
+	qz_to_tab_space <<EOF >expected &&
 Z             message two              Z
 Z             message one              Z
 Z               add bar                Z
 Z         $(commit_msg)          Z
 EOF
 	test_cmp expected actual
-"
+'
 
-test_expect_success 'center alignment formatting at the nth column' "
-	git log --pretty='format:%h %><|(40)%s' >actual &&
+test_expect_success 'center alignment formatting at the nth column' '
+	git log --pretty="format:%h %><|(40)%s" >actual &&
 	# complete the incomplete line at the end
 	echo >>actual &&
-	qz_to_tab_space <<\EOF >expected &&
+	qz_to_tab_space <<EOF >expected &&
 $head1           message two          Z
 $head2           message one          Z
 $head3             add bar            Z
 $head4       $(commit_msg)      Z
 EOF
 	test_cmp expected actual
-"
+'
 
-test_expect_success 'center alignment formatting with no padding' "
-	git log --pretty='format:%><(1)%s' >actual &&
+test_expect_success 'center alignment formatting with no padding' '
+	git log --pretty="format:%><(1)%s" >actual &&
 	# complete the incomplete line at the end
 	echo >>actual &&
-	cat <<\EOF >expected &&
+	cat <<EOF >expected &&
 message two
 message one
 add bar
 $(commit_msg)
 EOF
 	test_cmp expected actual
-"
+'
 
-test_expect_success 'left/right alignment formatting with stealing' "
-	git commit --amend -m short --author 'long long long <long@me.com>' &&
-	git log --pretty='format:%<(10,trunc)%s%>>(10,ltrunc)% an' >actual &&
+test_expect_success 'left/right alignment formatting with stealing' '
+	git commit --amend -m short --author "long long long <long@me.com>" &&
+	git log --pretty="format:%<(10,trunc)%s%>>(10,ltrunc)% an" >actual &&
 	# complete the incomplete line at the end
 	echo >>actual &&
-	cat <<\EOF >expected &&
+	cat <<EOF >expected &&
 short long  long long
 message ..   A U Thor
 add bar      A U Thor
 $(commit_msg "" "8" "..*$")   A U Thor
 EOF
 	test_cmp expected actual
-"
+'
 
 test_done
