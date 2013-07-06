@@ -700,24 +700,6 @@ int mingw_chmod(const char *filename, int mode)
 	return _wchmod(wfilename, mode);
 }
 
-/*
- * The unit of FILETIME is 100-nanoseconds since January 1, 1601, UTC.
- * Returns the 100-nanoseconds ("hekto nanoseconds") since the epoch.
- */
-static inline long long filetime_to_hnsec(const FILETIME *ft)
-{
-	long long winTime = ((long long)ft->dwHighDateTime << 32) + ft->dwLowDateTime;
-	/* Windows to Unix Epoch conversion */
-	return winTime - 116444736000000000LL;
-}
-
-static inline void filetime_to_timespec(const FILETIME *ft, struct timespec *ts)
-{
-	long long hnsec = filetime_to_hnsec(ft);
-	ts->tv_sec = (time_t)(hnsec / 10000000);
-	ts->tv_nsec = (hnsec % 10000000) * 100;
-}
-
 /**
  * Verifies that safe_create_leading_directories() would succeed.
  */
