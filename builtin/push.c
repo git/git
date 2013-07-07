@@ -204,8 +204,8 @@ static void setup_default_push_refspecs(struct remote *remote)
 
 static const char message_advice_pull_before_push[] =
 	N_("Updates were rejected because the tip of your current branch is behind\n"
-	   "its remote counterpart. Merge the remote changes (e.g. 'git pull')\n"
-	   "before pushing again.\n"
+	   "its remote counterpart. Integrate the remote changes (e.g.\n"
+	   "'git pull ...') before pushing again.\n"
 	   "See the 'Note about fast-forwards' in 'git push --help' for details.");
 
 static const char message_advice_use_upstream[] =
@@ -216,15 +216,15 @@ static const char message_advice_use_upstream[] =
 
 static const char message_advice_checkout_pull_push[] =
 	N_("Updates were rejected because a pushed branch tip is behind its remote\n"
-	   "counterpart. Check out this branch and merge the remote changes\n"
-	   "(e.g. 'git pull') before pushing again.\n"
+	   "counterpart. Check out this branch and integrate the remote changes\n"
+	   "(e.g. 'git pull ...') before pushing again.\n"
 	   "See the 'Note about fast-forwards' in 'git push --help' for details.");
 
 static const char message_advice_ref_fetch_first[] =
 	N_("Updates were rejected because the remote contains work that you do\n"
 	   "not have locally. This is usually caused by another repository pushing\n"
-	   "to the same ref. You may want to first merge the remote changes (e.g.,\n"
-	   "'git pull') before pushing again.\n"
+	   "to the same ref. You may want to first integrate the remote changes\n"
+	   "(e.g., 'git pull ...') before pushing again.\n"
 	   "See the 'Note about fast-forwards' in 'git push --help' for details.");
 
 static const char message_advice_ref_already_exists[] =
