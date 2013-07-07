@@ -96,6 +96,17 @@ static int subpath_matches(const char *path, const char *filter)
 	return -1;
 }
 
+static const char *name_ref_abbrev(const char *refname, int shorten_unambiguous)
+{
+	if (shorten_unambiguous)
+		refname = shorten_unambiguous_ref(refname, 0);
+	else if (!prefixcmp(refname, "refs/heads/"))
+		refname = refname + 11;
+	else if (!prefixcmp(refname, "refs/"))
+		refname = refname + 5;
+	return refname;
+}
+
 struct name_ref_data {
 	int tags_only;
 	int name_only;
@@ -134,13 +145,7 @@ static int name_ref(const char *path, const unsigned char *sha1, int flags, void
 	if (o && o->type == OBJ_COMMIT) {
 		struct commit *commit = (struct commit *)o;
 
-		if (can_abbreviate_output)
-			path = shorten_unambiguous_ref(path, 0);
-		else if (!prefixcmp(path, "refs/heads/"))
-			path = path + 11;
-		else if (!prefixcmp(path, "refs/"))
-			path = path + 5;
-
+		path = name_ref_abbrev(path, can_abbreviate_output);
 		name_rev(commit, xstrdup(path), 0, 0, deref);
 	}
 	return 0;
