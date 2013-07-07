@@ -2409,7 +2409,7 @@ int sha1_object_info_extended(const unsigned char *sha1, struct object_info *oi)
 
 int sha1_object_info(const unsigned char *sha1, unsigned long *sizep)
 {
-	struct object_info oi;
+	struct object_info oi = {0};
 
 	oi.sizep = sizep;
 	return sha1_object_info_extended(sha1, &oi);
