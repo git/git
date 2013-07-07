@@ -4,6 +4,7 @@
 #include "tag.h"
 #include "refs.h"
 #include "parse-options.h"
+#include "sha1-lookup.h"
 
 #define CUTOFF_DATE_SLOP 86400 /* one day */
 
@@ -113,6 +114,34 @@ struct name_ref_data {
 	const char *ref_filter;
 };
 
+static struct tip_table {
+	struct tip_table_entry {
+		unsigned char sha1[20];
+		const char *refname;
+	} *table;
+	int nr;
+	int alloc;
+	int sorted;
+} tip_table;
+
+static void add_to_tip_table(const unsigned char *sha1, const char *refname,
+			     int shorten_unambiguous)
+{
+	refname = name_ref_abbrev(refname, shorten_unambiguous);
+
+	ALLOC_GROW(tip_table.table, tip_table.nr + 1, tip_table.alloc);
+	hashcpy(tip_table.table[tip_table.nr].sha1, sha1);
+	tip_table.table[tip_table.nr].refname = xstrdup(refname);
+	tip_table.nr++;
+	tip_table.sorted = 0;
+}
+
+static int tipcmp(const void *a_, const void *b_)
+{
+	const struct tip_table_entry *a = a_, *b = b_;
+	return hashcmp(a->sha1, b->sha1);
+}
+
 static int name_ref(const char *path, const unsigned char *sha1, int flags, void *cb_data)
 {
 	struct object *o = parse_object(sha1);
@@ -135,6 +164,8 @@ static int name_ref(const char *path, const unsigned char *sha1, int flags, void
 		}
 	}
 
+	add_to_tip_table(sha1, path, can_abbreviate_output);
+
 	while (o && o->type == OBJ_TAG) {
 		struct tag *t = (struct tag *) o;
 		if (!t->tagged)
@@ -151,6 +182,32 @@ static int name_ref(const char *path, const unsigned char *sha1, int flags, void
 	return 0;
 }
 
+static const unsigned char *nth_tip_table_ent(size_t ix, void *table_)
+{
+	struct tip_table_entry *table = table_;
+	return table[ix].sha1;
+}
+
+static const char *get_exact_ref_match(const struct object *o)
+{
+	int found;
+
+	if (!tip_table.table || !tip_table.nr)
+		return NULL;
+
+	if (!tip_table.sorted) {
+		qsort(tip_table.table, tip_table.nr, sizeof(*tip_table.table),
+		      tipcmp);
+		tip_table.sorted = 1;
+	}
+
+	found = sha1_pos(o->sha1, tip_table.table, tip_table.nr,
+			 nth_tip_table_ent);
+	if (0 <= found)
+		return tip_table.table[found].refname;
+	return NULL;
+}
+
 /* returns a static buffer */
 static const char *get_rev_name(const struct object *o)
 {
@@ -159,7 +216,7 @@ static const char *get_rev_name(const struct object *o)
 	struct commit *c;
 
 	if (o->type != OBJ_COMMIT)
-		return NULL;
+		return get_exact_ref_match(o);
 	c = (struct commit *) o;
 	n = c->util;
 	if (!n)
