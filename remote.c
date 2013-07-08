@@ -1396,12 +1396,13 @@ int match_push_refs(struct ref *src, struct ref **dst,
 }
 
 void set_ref_status_for_push(struct ref *remote_refs, int send_mirror,
-	int force_update)
+			     int force_update)
 {
 	struct ref *ref;
 
 	for (ref = remote_refs; ref; ref = ref->next) {
 		int force_ref_update = ref->force || force_update;
+		int reject_reason = 0;
 
 		if (ref->peer_ref)
 			hashcpy(ref->new_sha1, ref->peer_ref->new_sha1);
@@ -1416,6 +1417,26 @@ void set_ref_status_for_push(struct ref *remote_refs, int send_mirror,
 		}
 
 		/*
+		 * Bypass the usual "must fast-forward" check but
+		 * replace it with a weaker "the old value must be
+		 * this value we observed".  If the remote ref has
+		 * moved and is now different from what we expect,
+		 * reject any push.
+		 *
+		 * It also is an error if the user told us to check
+		 * with the remote-tracking branch to find the value
+		 * to expect, but we did not have such a tracking
+		 * branch.
+		 */
+		if (ref->expect_old_sha1) {
+			if (ref->expect_old_no_trackback ||
+			    hashcmp(ref->old_sha1, ref->old_sha1_expect))
+				reject_reason = REF_STATUS_REJECT_STALE;
+		}
+
+		/*
+		 * The usual "must fast-forward" rules.
+		 *
 		 * Decide whether an individual refspec A:B can be
 		 * pushed.  The push will succeed if any of the
 		 * following are true:
@@ -1433,24 +1454,26 @@ void set_ref_status_for_push(struct ref *remote_refs, int send_mirror,
 		 *     passing the --force argument
 		 */
 
-		if (!ref->deletion && !is_null_sha1(ref->old_sha1)) {
-			int why = 0; /* why would this push require --force? */
-
+		else if (!ref->deletion && !is_null_sha1(ref->old_sha1)) {
 			if (!prefixcmp(ref->name, "refs/tags/"))
-				why = REF_STATUS_REJECT_ALREADY_EXISTS;
+				reject_reason = REF_STATUS_REJECT_ALREADY_EXISTS;
 			else if (!has_sha1_file(ref->old_sha1))
-				why = REF_STATUS_REJECT_FETCH_FIRST;
+				reject_reason = REF_STATUS_REJECT_FETCH_FIRST;
 			else if (!lookup_commit_reference_gently(ref->old_sha1, 1) ||
 				 !lookup_commit_reference_gently(ref->new_sha1, 1))
-				why = REF_STATUS_REJECT_NEEDS_FORCE;
+				reject_reason = REF_STATUS_REJECT_NEEDS_FORCE;
 			else if (!ref_newer(ref->new_sha1, ref->old_sha1))
-				why = REF_STATUS_REJECT_NONFASTFORWARD;
-
-			if (!force_ref_update)
-				ref->status = why;
-			else if (why)
-				ref->forced_update = 1;
+				reject_reason = REF_STATUS_REJECT_NONFASTFORWARD;
 		}
+
+		/*
+		 * "--force" will defeat any rejection implemented
+		 * by the rules above.
+		 */
+		if (!force_ref_update)
+			ref->status = reject_reason;
+		else if (reject_reason)
+			ref->forced_update = 1;
 	}
 }
 

@@ -55,6 +55,11 @@ static void print_helper_status(struct ref *ref)
 			msg = "needs force";
 			break;
 
+		case REF_STATUS_REJECT_STALE:
+			res = "error";
+			msg = "stale info";
+			break;
+
 		case REF_STATUS_REJECT_ALREADY_EXISTS:
 			res = "error";
 			msg = "already exists";
