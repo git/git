@@ -53,7 +53,8 @@ run_sub_test_lib_test () {
 		# Pretend we're a test harness.  This prevents
 		# test-lib from writing the counts to a file that will
 		# later be summarized, showing spurious "failed" tests
-		export HARNESS_ACTIVE=t &&
+		HARNESS_ACTIVE=t &&
+		export HARNESS_ACTIVE &&
 		cd "$name" &&
 		cat >"$name.sh" <<-EOF &&
 		#!$SHELL_PATH
