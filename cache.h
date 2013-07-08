@@ -1035,68 +1035,6 @@ struct pack_entry {
 	struct packed_git *p;
 };
 
-struct ref {
-	struct ref *next;
-	unsigned char old_sha1[20];
-	unsigned char new_sha1[20];
-	char *symref;
-	unsigned int
-		force:1,
-		forced_update:1,
-		deletion:1,
-		matched:1;
-
-	/*
-	 * Order is important here, as we write to FETCH_HEAD
-	 * in numeric order. And the default NOT_FOR_MERGE
-	 * should be 0, so that xcalloc'd structures get it
-	 * by default.
-	 */
-	enum {
-		FETCH_HEAD_MERGE = -1,
-		FETCH_HEAD_NOT_FOR_MERGE = 0,
-		FETCH_HEAD_IGNORE = 1
-	} fetch_head_status;
-
-	enum {
-		REF_STATUS_NONE = 0,
-		REF_STATUS_OK,
-		REF_STATUS_REJECT_NONFASTFORWARD,
-		REF_STATUS_REJECT_ALREADY_EXISTS,
-		REF_STATUS_REJECT_NODELETE,
-		REF_STATUS_REJECT_FETCH_FIRST,
-		REF_STATUS_REJECT_NEEDS_FORCE,
-		REF_STATUS_UPTODATE,
-		REF_STATUS_REMOTE_REJECT,
-		REF_STATUS_EXPECTING_REPORT
-	} status;
-	char *remote_status;
-	struct ref *peer_ref; /* when renaming */
-	char name[FLEX_ARRAY]; /* more */
-};
-
-#define REF_NORMAL	(1u << 0)
-#define REF_HEADS	(1u << 1)
-#define REF_TAGS	(1u << 2)
-
-extern struct ref *find_ref_by_name(const struct ref *list, const char *name);
-
-#define CONNECT_VERBOSE       (1u << 0)
-extern struct child_process *git_connect(int fd[2], const char *url, const char *prog, int flags);
-extern int finish_connect(struct child_process *conn);
-extern int git_connection_is_socket(struct child_process *conn);
-struct extra_have_objects {
-	int nr, alloc;
-	unsigned char (*array)[20];
-};
-extern struct ref **get_remote_heads(int in, char *src_buf, size_t src_len,
-				     struct ref **list, unsigned int flags,
-				     struct extra_have_objects *);
-extern int server_supports(const char *feature);
-extern int parse_feature_request(const char *features, const char *feature);
-extern const char *server_feature_value(const char *feature, int *len_ret);
-extern const char *parse_feature_value(const char *feature_list, const char *feature, int *len_ret);
-
 extern struct packed_git *parse_pack_index(unsigned char *sha1, const char *idx_path);
 
 /* A hook for count-objects to report invalid files in pack directory */

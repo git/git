@@ -71,6 +71,52 @@ struct refspec {
 
 extern const struct refspec *tag_refspec;
 
+struct ref {
+	struct ref *next;
+	unsigned char old_sha1[20];
+	unsigned char new_sha1[20];
+	char *symref;
+	unsigned int
+		force:1,
+		forced_update:1,
+		deletion:1,
+		matched:1;
+
+	/*
+	 * Order is important here, as we write to FETCH_HEAD
+	 * in numeric order. And the default NOT_FOR_MERGE
+	 * should be 0, so that xcalloc'd structures get it
+	 * by default.
+	 */
+	enum {
+		FETCH_HEAD_MERGE = -1,
+		FETCH_HEAD_NOT_FOR_MERGE = 0,
+		FETCH_HEAD_IGNORE = 1
+	} fetch_head_status;
+
+	enum {
+		REF_STATUS_NONE = 0,
+		REF_STATUS_OK,
+		REF_STATUS_REJECT_NONFASTFORWARD,
+		REF_STATUS_REJECT_ALREADY_EXISTS,
+		REF_STATUS_REJECT_NODELETE,
+		REF_STATUS_REJECT_FETCH_FIRST,
+		REF_STATUS_REJECT_NEEDS_FORCE,
+		REF_STATUS_UPTODATE,
+		REF_STATUS_REMOTE_REJECT,
+		REF_STATUS_EXPECTING_REPORT
+	} status;
+	char *remote_status;
+	struct ref *peer_ref; /* when renaming */
+	char name[FLEX_ARRAY]; /* more */
+};
+
+#define REF_NORMAL	(1u << 0)
+#define REF_HEADS	(1u << 1)
+#define REF_TAGS	(1u << 2)
+
+extern struct ref *find_ref_by_name(const struct ref *list, const char *name);
+
 struct ref *alloc_ref(const char *name);
 struct ref *copy_ref(const struct ref *ref);
 struct ref *copy_ref_list(const struct ref *ref);
@@ -83,6 +129,14 @@ int check_ref_type(const struct ref *ref, int flags);
  * Frees the entire list and peers of elements.
  */
 void free_refs(struct ref *ref);
+
+struct extra_have_objects {
+	int nr, alloc;
+	unsigned char (*array)[20];
+};
+extern struct ref **get_remote_heads(int in, char *src_buf, size_t src_len,
+				     struct ref **list, unsigned int flags,
+				     struct extra_have_objects *);
 
 int resolve_remote_symref(struct ref *ref, struct ref *list);
 int ref_newer(const unsigned char *new_sha1, const unsigned char *old_sha1);

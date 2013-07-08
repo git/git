@@ -2,6 +2,7 @@
 #define TRANSPORT_H
 
 #include "cache.h"
+#include "run-command.h"
 #include "remote.h"
 
 struct git_transport_options {

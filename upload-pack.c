@@ -10,6 +10,7 @@
 #include "revision.h"
 #include "list-objects.h"
 #include "run-command.h"
+#include "connect.h"
 #include "sigchain.h"
 #include "version.h"
 #include "string-list.h"

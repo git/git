@@ -1,6 +1,8 @@
 #include "builtin.h"
 #include "pkt-line.h"
 #include "fetch-pack.h"
+#include "remote.h"
+#include "connect.h"
 
 static const char fetch_pack_usage[] =
 "git fetch-pack [--all] [--stdin] [--quiet|-q] [--keep|-k] [--thin] "

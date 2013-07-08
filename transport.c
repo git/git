@@ -3,6 +3,8 @@
 #include "run-command.h"
 #include "pkt-line.h"
 #include "fetch-pack.h"
+#include "remote.h"
+#include "connect.h"
 #include "send-pack.h"
 #include "walker.h"
 #include "bundle.h"

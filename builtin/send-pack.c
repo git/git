@@ -5,6 +5,7 @@
 #include "sideband.h"
 #include "run-command.h"
 #include "remote.h"
+#include "connect.h"
 #include "send-pack.h"
 #include "quote.h"
 #include "transport.h"
