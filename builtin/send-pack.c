@@ -103,6 +103,7 @@ int cmd_send_pack(int argc, const char **argv, const char *prefix)
 	int flags;
 	unsigned int reject_reasons;
 	int progress = -1;
+	struct push_cas_option cas = {0};
 
 	argv++;
 	for (i = 1; i < argc; i++, argv++) {
@@ -163,6 +164,22 @@ int cmd_send_pack(int argc, const char **argv, const char *prefix)
 			}
 			if (!strcmp(arg, "--helper-status")) {
 				helper_status = 1;
+				continue;
+			}
+			if (!strcmp(arg, "--" CAS_OPT_NAME)) {
+				if (parse_push_cas_option(&cas, NULL, 0) < 0)
+					exit(1);
+				continue;
+			}
+			if (!strcmp(arg, "--no-" CAS_OPT_NAME)) {
+				if (parse_push_cas_option(&cas, NULL, 1) < 0)
+					exit(1);
+				continue;
+			}
+			if (!prefixcmp(arg, "--" CAS_OPT_NAME "=")) {
+				if (parse_push_cas_option(&cas,
+							  strchr(arg, '=') + 1, 1) < 0)
+					exit(1);
 				continue;
 			}
 			usage(send_pack_usage);

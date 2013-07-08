@@ -1,6 +1,8 @@
 #ifndef REMOTE_H
 #define REMOTE_H
 
+#include "parse-options.h"
+
 enum {
 	REMOTE_CONFIG,
 	REMOTE_REMOTES,
@@ -225,5 +227,25 @@ struct ref *guess_remote_head(const struct ref *head,
 
 /* Return refs which no longer exist on remote */
 struct ref *get_stale_heads(struct refspec *refs, int ref_count, struct ref *fetch_map);
+
+/*
+ * Compare-and-swap
+ */
+#define CAS_OPT_NAME "force-with-lease"
+
+struct push_cas_option {
+	unsigned use_tracking_for_rest:1;
+	struct push_cas {
+		unsigned char expect[20];
+		unsigned use_tracking:1;
+		char *refname;
+	} *entry;
+	int nr;
+	int alloc;
+};
+
+extern int parseopt_push_cas_option(const struct option *, const char *arg, int unset);
+extern int parse_push_cas_option(struct push_cas_option *, const char *arg, int unset);
+extern void clear_cas_option(struct push_cas_option *);
 
 #endif
