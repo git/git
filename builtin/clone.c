@@ -542,12 +542,15 @@ static void update_remote_refs(const struct ref *refs,
 			       const struct ref *mapped_refs,
 			       const struct ref *remote_head_points_at,
 			       const char *branch_top,
-			       const char *msg)
+			       const char *msg,
+			       int check_connectivity)
 {
 	const struct ref *rm = mapped_refs;
 
-	if (check_everything_connected(iterate_ref_map, 0, &rm))
-		die(_("remote did not send all necessary objects"));
+	if (check_connectivity) {
+		if (check_everything_connected(iterate_ref_map, 0, &rm))
+			die(_("remote did not send all necessary objects"));
+	}
 
 	if (refs) {
 		write_remote_refs(mapped_refs);
@@ -950,7 +953,7 @@ int cmd_clone(int argc, const char **argv, const char *prefix)
 		transport_fetch_refs(transport, mapped_refs);
 
 	update_remote_refs(refs, mapped_refs, remote_head_points_at,
-			   branch_top.buf, reflog_msg.buf);
+			   branch_top.buf, reflog_msg.buf, !is_local);
 
 	update_head(our_head_points_at, remote_head, reflog_msg.buf);
 
