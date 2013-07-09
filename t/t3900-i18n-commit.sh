@@ -58,6 +58,24 @@ test_expect_success 'UTF-8 overlong sequences rejected' '
 	grep "did not conform" "$HOME"/stderr
 '
 
+test_expect_success 'UTF-8 non-characters refused' '
+	test_when_finished "rm -f $HOME/stderr $HOME/invalid" &&
+	echo "UTF-8 non-character 1" >F &&
+	printf "Commit message\n\nNon-character:\364\217\277\276\n" \
+		>"$HOME/invalid" &&
+	git commit -a -F "$HOME/invalid" 2>"$HOME"/stderr &&
+	grep "did not conform" "$HOME"/stderr
+'
+
+test_expect_success 'UTF-8 non-characters refused' '
+	test_when_finished "rm -f $HOME/stderr $HOME/invalid" &&
+	echo "UTF-8 non-character 2." >F &&
+	printf "Commit message\n\nNon-character:\357\267\220\n" \
+		>"$HOME/invalid" &&
+	git commit -a -F "$HOME/invalid" 2>"$HOME"/stderr &&
+	grep "did not conform" "$HOME"/stderr
+'
+
 for H in ISO8859-1 eucJP ISO-2022-JP
 do
 	test_expect_success "$H setup" '

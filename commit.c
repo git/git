@@ -1305,8 +1305,11 @@ static int find_invalid_utf8(const char *buf, int len)
 		/* Surrogates are only for UTF-16 and cannot be encoded in UTF-8. */
 		if ((codepoint & 0x1ff800) == 0xd800)
 			return bad_offset;
-		/* U+FFFE and U+FFFF are guaranteed non-characters. */
-		if ((codepoint & 0x1ffffe) == 0xfffe)
+		/* U+xxFFFE and U+xxFFFF are guaranteed non-characters. */
+		if ((codepoint & 0xffffe) == 0xfffe)
+			return bad_offset;
+		/* So are anything in the range U+FDD0..U+FDEF. */
+		if (codepoint >= 0xfdd0 && codepoint <= 0xfdef)
 			return bad_offset;
 	}
 	return -1;
