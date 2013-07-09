@@ -158,7 +158,7 @@ proc do_options {} {
 		{t gui.newbranchtemplate {mc "New Branch Name Template"}}
 		{c gui.encoding {mc "Default File Contents Encoding"}}
 		{b gui.warndetachedcommit {mc "Warn before committing to a detached head"}}
-		{s gui.stageuntracked {mc "Staging of untracked files"} {list "yes" "no" "ask"}}
+		{s gui.stageuntracked {mc "Staging of untracked files"} {list [mc "yes"] [mc "no"] [mc "ask"]}}
 		} {
 		set type [lindex $option 0]
 		set name [lindex $option 1]

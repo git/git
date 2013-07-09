@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2013-07-10 02:45+0900\n"
+"POT-Creation-Date: 2013-07-10 03:27+0900\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -1980,6 +1980,18 @@ msgstr ""
 
 #: lib/option.tcl:161
 msgid "Staging of untracked files"
+msgstr ""
+
+#: lib/option.tcl:161
+msgid "yes"
+msgstr ""
+
+#: lib/option.tcl:161
+msgid "no"
+msgstr ""
+
+#: lib/option.tcl:161
+msgid "ask"
 msgstr ""
 
 #: lib/option.tcl:207
