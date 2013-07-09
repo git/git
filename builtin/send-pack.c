@@ -242,6 +242,9 @@ int cmd_send_pack(int argc, const char **argv, const char *prefix)
 	if (match_push_refs(local_refs, &remote_refs, nr_refspecs, refspecs, flags))
 		return -1;
 
+	if (!is_empty_cas(&cas))
+		apply_push_cas(&cas, remote, remote_refs);
+
 	set_ref_status_for_push(remote_refs, args.send_mirror,
 		args.force_update);
 

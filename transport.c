@@ -1142,6 +1142,12 @@ int transport_push(struct transport *transport,
 			return -1;
 		}
 
+		if (transport->smart_options &&
+		    transport->smart_options->cas &&
+		    !is_empty_cas(transport->smart_options->cas))
+			apply_push_cas(transport->smart_options->cas,
+				       transport->remote, remote_refs);
+
 		set_ref_status_for_push(remote_refs,
 			flags & TRANSPORT_PUSH_MIRROR,
 			flags & TRANSPORT_PUSH_FORCE);

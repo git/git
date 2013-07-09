@@ -77,10 +77,13 @@ struct ref {
 	struct ref *next;
 	unsigned char old_sha1[20];
 	unsigned char new_sha1[20];
+	unsigned char old_sha1_expect[20]; /* used by expect-old */
 	char *symref;
 	unsigned int
 		force:1,
 		forced_update:1,
+		expect_old_sha1:1,
+		expect_old_no_trackback:1,
 		deletion:1,
 		matched:1;
 
@@ -247,5 +250,8 @@ struct push_cas_option {
 extern int parseopt_push_cas_option(const struct option *, const char *arg, int unset);
 extern int parse_push_cas_option(struct push_cas_option *, const char *arg, int unset);
 extern void clear_cas_option(struct push_cas_option *);
+
+extern int is_empty_cas(const struct push_cas_option *);
+void apply_push_cas(struct push_cas_option *, struct remote *, struct ref *);
 
 #endif

@@ -1978,3 +1978,64 @@ int parseopt_push_cas_option(const struct option *opt, const char *arg, int unse
 {
 	return parse_push_cas_option(opt->value, arg, unset);
 }
+
+int is_empty_cas(const struct push_cas_option *cas)
+{
+	return !cas->use_tracking_for_rest && !cas->nr;
+}
+
+/*
+ * Look at remote.fetch refspec and see if we have a remote
+ * tracking branch for the refname there.  Fill its current
+ * value in sha1[].
+ * If we cannot do so, return negative to signal an error.
+ */
+static int remote_tracking(struct remote *remote, const char *refname,
+			   unsigned char sha1[20])
+{
+	char *dst;
+
+	dst = apply_refspecs(remote->fetch, remote->fetch_refspec_nr, refname);
+	if (!dst)
+		return -1; /* no tracking ref for refname at remote */
+	if (read_ref(dst, sha1))
+		return -1; /* we know what the tracking ref is but we cannot read it */
+	return 0;
+}
+
+static void apply_cas(struct push_cas_option *cas,
+		      struct remote *remote,
+		      struct ref *ref)
+{
+	int i;
+
+	/* Find an explicit --<option>=<name>[:<value>] entry */
+	for (i = 0; i < cas->nr; i++) {
+		struct push_cas *entry = &cas->entry[i];
+		if (!refname_match(entry->refname, ref->name, ref_rev_parse_rules))
+			continue;
+		ref->expect_old_sha1 = 1;
+		if (!entry->use_tracking)
+			hashcpy(ref->old_sha1_expect, cas->entry[i].expect);
+		else if (remote_tracking(remote, ref->name, ref->old_sha1_expect))
+			ref->expect_old_no_trackback = 1;
+		return;
+	}
+
+	/* Are we using "--<option>" to cover all? */
+	if (!cas->use_tracking_for_rest)
+		return;
+
+	ref->expect_old_sha1 = 1;
+	if (remote_tracking(remote, ref->name, ref->old_sha1_expect))
+		ref->expect_old_no_trackback = 1;
+}
+
+void apply_push_cas(struct push_cas_option *cas,
+		    struct remote *remote,
+		    struct ref *remote_refs)
+{
+	struct ref *ref;
+	for (ref = remote_refs; ref; ref = ref->next)
+		apply_cas(cas, remote, ref);
+}
