@@ -2999,7 +2999,7 @@ static int read_blob_object(struct strbuf *buf, const unsigned char *sha1, unsig
 	return 0;
 }
 
-static int read_file_or_gitlink(struct cache_entry *ce, struct strbuf *buf)
+static int read_file_or_gitlink(const struct cache_entry *ce, struct strbuf *buf)
 {
 	if (!ce)
 		return 0;
@@ -3117,7 +3117,7 @@ static struct patch *previous_patch(struct patch *patch, int *gone)
 	return previous;
 }
 
-static int verify_index_match(struct cache_entry *ce, struct stat *st)
+static int verify_index_match(const struct cache_entry *ce, struct stat *st)
 {
 	if (S_ISGITLINK(ce->ce_mode)) {
 		if (!S_ISDIR(st->st_mode))
@@ -3130,7 +3130,7 @@ static int verify_index_match(struct cache_entry *ce, struct stat *st)
 #define SUBMODULE_PATCH_WITHOUT_INDEX 1
 
 static int load_patch_target(struct strbuf *buf,
-			     struct cache_entry *ce,
+			     const struct cache_entry *ce,
 			     struct stat *st,
 			     const char *name,
 			     unsigned expected_mode)
@@ -3160,7 +3160,8 @@ static int load_patch_target(struct strbuf *buf,
  * we read from the result of a previous diff.
  */
 static int load_preimage(struct image *image,
-			 struct patch *patch, struct stat *st, struct cache_entry *ce)
+			 struct patch *patch, struct stat *st,
+			 const struct cache_entry *ce)
 {
 	struct strbuf buf = STRBUF_INIT;
 	size_t len;
@@ -3273,7 +3274,7 @@ static int load_current(struct image *image, struct patch *patch)
 }
 
 static int try_threeway(struct image *image, struct patch *patch,
-			struct stat *st, struct cache_entry *ce)
+			struct stat *st, const struct cache_entry *ce)
 {
 	unsigned char pre_sha1[20], post_sha1[20], our_sha1[20];
 	struct strbuf buf = STRBUF_INIT;
@@ -3343,7 +3344,7 @@ static int try_threeway(struct image *image, struct patch *patch,
 	return 0;
 }
 
-static int apply_data(struct patch *patch, struct stat *st, struct cache_entry *ce)
+static int apply_data(struct patch *patch, struct stat *st, const struct cache_entry *ce)
 {
 	struct image image;
 

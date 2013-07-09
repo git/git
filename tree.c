@@ -159,7 +159,7 @@ int read_tree(struct tree *tree, int stage, struct pathspec *match)
 	 * sort at the end.
 	 */
 	for (i = 0; !fn && i < active_nr; i++) {
-		struct cache_entry *ce = active_cache[i];
+		const struct cache_entry *ce = active_cache[i];
 		if (ce_stage(ce) == stage)
 			fn = read_one_entry;
 	}

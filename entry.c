@@ -79,7 +79,7 @@ static int create_file(const char *path, unsigned int mode)
 	return open(path, O_WRONLY | O_CREAT | O_EXCL, mode);
 }
 
-static void *read_blob_entry(struct cache_entry *ce, unsigned long *size)
+static void *read_blob_entry(const struct cache_entry *ce, unsigned long *size)
 {
 	enum object_type type;
 	void *new = read_sha1_file(ce->sha1, &type, size);
@@ -92,7 +92,7 @@ static void *read_blob_entry(struct cache_entry *ce, unsigned long *size)
 	return NULL;
 }
 
-static int open_output_fd(char *path, struct cache_entry *ce, int to_tempfile)
+static int open_output_fd(char *path, const struct cache_entry *ce, int to_tempfile)
 {
 	int symlink = (ce->ce_mode & S_IFMT) != S_IFREG;
 	if (to_tempfile) {
@@ -115,7 +115,7 @@ static int fstat_output(int fd, const struct checkout *state, struct stat *st)
 	return 0;
 }
 
-static int streaming_write_entry(struct cache_entry *ce, char *path,
+static int streaming_write_entry(const struct cache_entry *ce, char *path,
 				 struct stream_filter *filter,
 				 const struct checkout *state, int to_tempfile,
 				 int *fstat_done, struct stat *statbuf)
@@ -136,7 +136,8 @@ static int streaming_write_entry(struct cache_entry *ce, char *path,
 	return result;
 }
 
-static int write_entry(struct cache_entry *ce, char *path, const struct checkout *state, int to_tempfile)
+static int write_entry(struct cache_entry *ce,
+		       char *path, const struct checkout *state, int to_tempfile)
 {
 	unsigned int ce_mode_s_ifmt = ce->ce_mode & S_IFMT;
 	int fd, ret, fstat_done = 0;
@@ -233,7 +234,8 @@ static int check_path(const char *path, int len, struct stat *st, int skiplen)
 	return lstat(path, st);
 }
 
-int checkout_entry(struct cache_entry *ce, const struct checkout *state, char *topath)
+int checkout_entry(struct cache_entry *ce,
+		   const struct checkout *state, char *topath)
 {
 	static char path[PATH_MAX + 1];
 	struct stat st;

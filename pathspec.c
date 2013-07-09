@@ -32,7 +32,7 @@ void add_pathspec_matches_against_index(const char **pathspec,
 	if (!num_unmatched)
 		return;
 	for (i = 0; i < active_nr; i++) {
-		struct cache_entry *ce = active_cache[i];
+		const struct cache_entry *ce = active_cache[i];
 		match_pathspec(pathspec, ce->name, ce_namelen(ce), 0, seen);
 	}
 }
@@ -67,7 +67,7 @@ const char *check_path_for_gitlink(const char *path)
 {
 	int i, path_len = strlen(path);
 	for (i = 0; i < active_nr; i++) {
-		struct cache_entry *ce = active_cache[i];
+		const struct cache_entry *ce = active_cache[i];
 		if (S_ISGITLINK(ce->ce_mode)) {
 			int ce_len = ce_namelen(ce);
 			if (path_len <= ce_len || path[ce_len] != '/' ||

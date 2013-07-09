@@ -1234,7 +1234,7 @@ static void diagnose_invalid_index_path(int stage,
 					const char *filename)
 {
 	struct stat st;
-	struct cache_entry *ce;
+	const struct cache_entry *ce;
 	int pos;
 	unsigned namelen = strlen(filename);
 	unsigned fullnamelen;
@@ -1328,7 +1328,7 @@ static int get_sha1_with_context_1(const char *name,
 	 */
 	if (name[0] == ':') {
 		int stage = 0;
-		struct cache_entry *ce;
+		const struct cache_entry *ce;
 		char *new_path = NULL;
 		int pos;
 		if (!only_to_die && namelen > 2 && name[1] == '/') {

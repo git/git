@@ -2586,7 +2586,7 @@ void fill_filespec(struct diff_filespec *spec, const unsigned char *sha1,
  */
 static int reuse_worktree_file(const char *name, const unsigned char *sha1, int want_file)
 {
-	struct cache_entry *ce;
+	const struct cache_entry *ce;
 	struct stat st;
 	int pos, len;
 

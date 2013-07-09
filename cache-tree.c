@@ -149,7 +149,7 @@ void cache_tree_invalidate_path(struct cache_tree *it, const char *path)
 		cache_tree_invalidate_path(down->cache_tree, slash + 1);
 }
 
-static int verify_cache(struct cache_entry **cache,
+static int verify_cache(const struct cache_entry * const *cache,
 			int entries, int flags)
 {
 	int i, funny;
@@ -158,7 +158,7 @@ static int verify_cache(struct cache_entry **cache,
 	/* Verify that the tree is merged */
 	funny = 0;
 	for (i = 0; i < entries; i++) {
-		struct cache_entry *ce = cache[i];
+		const struct cache_entry *ce = cache[i];
 		if (ce_stage(ce)) {
 			if (silent)
 				return -1;
@@ -234,7 +234,7 @@ int cache_tree_fully_valid(struct cache_tree *it)
 }
 
 static int update_one(struct cache_tree *it,
-		      struct cache_entry **cache,
+		      const struct cache_entry * const *cache,
 		      int entries,
 		      const char *base,
 		      int baselen,
@@ -265,7 +265,7 @@ static int update_one(struct cache_tree *it,
 	 */
 	i = 0;
 	while (i < entries) {
-		struct cache_entry *ce = cache[i];
+		const struct cache_entry *ce = cache[i];
 		struct cache_tree_sub *sub;
 		const char *path, *slash;
 		int pathlen, sublen, subcnt, subskip;
@@ -312,7 +312,7 @@ static int update_one(struct cache_tree *it,
 
 	i = 0;
 	while (i < entries) {
-		struct cache_entry *ce = cache[i];
+		const struct cache_entry *ce = cache[i];
 		struct cache_tree_sub *sub;
 		const char *path, *slash;
 		int pathlen, entlen;
@@ -397,7 +397,7 @@ static int update_one(struct cache_tree *it,
 }
 
 int cache_tree_update(struct cache_tree *it,
-		      struct cache_entry **cache,
+		      const struct cache_entry * const *cache,
 		      int entries,
 		      int flags)
 {
@@ -599,8 +599,8 @@ int write_cache_as_tree(unsigned char *sha1, int flags, const char *prefix)
 	was_valid = cache_tree_fully_valid(active_cache_tree);
 	if (!was_valid) {
 		if (cache_tree_update(active_cache_tree,
-				      active_cache, active_nr,
-				      flags) < 0)
+				      (const struct cache_entry * const *)active_cache,
+				      active_nr, flags) < 0)
 			return WRITE_TREE_UNMERGED_INDEX;
 		if (0 <= newfd) {
 			if (!write_cache(newfd, active_cache, active_nr) &&
@@ -701,5 +701,6 @@ int update_main_cache_tree(int flags)
 	if (!the_index.cache_tree)
 		the_index.cache_tree = cache_tree();
 	return cache_tree_update(the_index.cache_tree,
-				 the_index.cache, the_index.cache_nr, flags);
+				 (const struct cache_entry * const *)the_index.cache,
+				 the_index.cache_nr, flags);
 }

@@ -59,6 +59,8 @@ int main(int ac, char **av)
 	struct cache_tree *another = cache_tree();
 	if (read_cache() < 0)
 		die("unable to read index file");
-	cache_tree_update(another, active_cache, active_nr, WRITE_TREE_DRY_RUN);
+	cache_tree_update(another,
+			  (const struct cache_entry * const *)active_cache,
+			  active_nr, WRITE_TREE_DRY_RUN);
 	return dump_cache_tree(active_cache_tree, another, "");
 }
