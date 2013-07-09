@@ -1,17 +1,17 @@
 To: git@vger.kernel.org
 Bcc: lwn@lwn.net
-Subject: What's cooking in git.git (Jul 2013, #02; Fri, 5)
+Subject: What's cooking in git.git (Jul 2013, #03; Tue, 9)
 X-master-at: f8abaebab3fe1a1b873f9636ea410ac4007c8fa8
-X-next-at: 0346b8459f4201954d9ada6dccc8e6ff9f59269c
+X-next-at: 3d27516a463a68ec338ac7d8cf6c700422cf7a2e
 
-What's cooking in git.git (Jul 2013, #02; Fri, 5)
+What's cooking in git.git (Jul 2013, #03; Tue, 9)
 --------------------------------------------------
 
 Here are the topics that have been cooking.  Commits prefixed with
 '-' are only in 'pu' (proposed updates) while commits prefixed with
 '+' are in 'next'.
 
-We are in the middle of 5th week now in the 11-week releace cycle
+We are in the middle of 6th week now in the 11-week releace cycle
 for 1.8.4, and quite a few topics have graduated to 'master'.
 Please help ensure the quality of the upcoming release by testing
 the tip of 'master' (and if you are so inclined, 'next') early.
@@ -22,93 +22,180 @@ of the repositories listed at
     http://git-blame.blogspot.com/p/git-public-repositories.html
 
 --------------------------------------------------
-[Graduated to "master"]
-
-* tr/test-v-and-v-subtest-only (2013-06-29) 9 commits
-  (merged to 'next' on 2013-06-30 at 1c5fac1)
- + perf-lib: fix start/stop of perf tests
-  (merged to 'next' on 2013-06-26 at 8ff4d84)
- + test-lib: support running tests under valgrind in parallel
- + test-lib: allow prefixing a custom string before "ok N" etc.
- + test-lib: valgrind for only tests matching a pattern
- + test-lib: verbose mode for only tests matching a pattern
- + test-lib: self-test that --verbose works
- + test-lib: rearrange start/end of test_expect_* and test_skip
- + test-lib: refactor $GIT_SKIP_TESTS matching
- + test-lib: enable MALLOC_* for the actual tests
-
- Allows N instances of tests run in parallel, each running 1/N parts
- of the test suite under Valgrind, to speed things up.
-
---------------------------------------------------
 [New Topics]
 
-* jc/t1512-fix (2013-07-01) 2 commits
- - get_short_sha1(): correctly disambiguate type-limited abbreviation
- - t1512: correct leftover constants from earlier edition
+* bc/push-match-many-refs (2013-07-08) 1 commit
+ - remote.c: avoid O(m*n) behavior in match_push_refs
 
- A test that should have failed but didn't revealed a bug that needs
- to be corrected.
-
- Will merge to 'next'.
-
-
-* jk/fetch-pack-many-refs (2013-07-02) 3 commits
- - fetch-pack: avoid quadratic behavior in rev_list_push
- - commit.c: make compare_commits_by_commit_date global
- - fetch-pack: avoid quadratic list insertion in mark_complete
-
- Fetching between repositories with many refs employed O(n^2)
- algorithm to match up the common objects, which has been corrected.
+ Pushing to repositories with many refs employed O(m*n) algorithm
+ where n is the number of refs on the receiving end.
 
  Will merge to 'next'.
 
 
-* jk/format-patch-from (2013-07-03) 2 commits
- - teach format-patch to place other authors into in-body "From"
- - pretty.c: drop const-ness from pretty_print_context
+* ft/diff-rename-default-score-is-half (2013-07-05) 1 commit
+  (merged to 'next' on 2013-07-09 at 6a6b57e)
+ + diff-options: document default similarity index
 
- "git format-patch" learned "--from[=whom]" option, which sets the
- "From: " header to the specified person (or the person who runs the
- command, if "=whom" part is missing) and move the original author
- information to an in-body From: header as necessary.
-
- Will merge to 'next'.
+ Will merge to 'master'.
 
 
-* ms/remote-tracking-branches-in-doc (2013-07-03) 1 commit
- - Change "remote tracking" to "remote-tracking"
+* jc/name-rev-exact-ref (2013-07-09) 3 commits
+ - describe: use argv-array
+ - name-rev: allow converting the exact object name at the tip of a ref
+ - name-ref: factor out name shortening logic from name_ref()
 
- Will merge to 'next'.
-
-
-* tf/gitweb-extra-breadcrumbs (2013-07-04) 1 commit
- - gitweb: allow extra breadcrumbs to prefix the trail
-
- An Gitweb installation that is a part of larger site can optionally
- show extra links that point at the levels higher than the Gitweb
- pages itself in the link hierarchy of pages.
+ Corrects the longstanding sloppiness in the implementation of
+ name-rev that conflated "we take commit-ish" and "differences
+ between tags and commits do not matter".
 
  Will merge to 'next'.
 
 
-* bc/commit-invalid-utf8 (2013-07-04) 2 commits
- - commit: reject overlong UTF-8 sequences
- - commit: reject invalid UTF-8 codepoints
+* jk/in-pack-size-measurement (2013-07-07) 4 commits
+ - pack-revindex: radix-sort the revindex
+ - cat-file: add --batch-disk-sizes option
+ - teach sha1_object_info_extended a "disk_size" query
+ - zero-initialize object_info structs
+
+ Allow on-disk footprint of objects in packfiles (often they are a
+ lot smaller than their true size, when expressed as deltas).  The
+ command line API to ask for the new extra information may be still
+ under discussion.
+
+ Expecting a reroll.
+
+
+* jk/maint-clone-shared-no-connectivity-validation (2013-07-08) 1 commit
+ - clone: drop connectivity check for local clones
+ (this branch is used by jk/clone-shared-no-connectivity-validation.)
+
+ "git clone -s/-l" is a filesystem level copy and does not offer any
+ protection against source repository being corrupt.  While the
+ connectivity validation checks commits and trees being readable, it
+ made the otherwise instantaneous local modes of clone much more
+ expensive, without protecting blob data from bitflips.
 
  Will merge to 'next'.
 
 
-* bc/send-email-use-port-as-separate-param (2013-07-04) 1 commit
- - send-email: provide port separately from hostname
+* jk/maint-config-multi-order (2013-07-07) 1 commit
+  (merged to 'next' on 2013-07-09 at 0db1db9)
+ + git-config(1): clarify precedence of multiple values
+
+ Will merge to 'master'.
+
+
+* jk/pull-to-integrate (2013-07-08) 2 commits
+  (merged to 'next' on 2013-07-09 at 2ecac24)
+ + pull: change the description to "integrate" changes
+ + push: avoid suggesting "merging" remote changes
+
+ Will merge to 'master'.
+
+
+* km/svn-1.8-serf-only (2013-07-07) 2 commits
+ - git-svn: allow git-svn fetching to work using serf
+ - Git.pm: add new temp_is_locked function
+
+ Comments?
+
+
+* mh/maint-lockfile-overflow (2013-07-07) 1 commit
+  (merged to 'next' on 2013-07-09 at e1a0eac)
+ + lockfile: fix buffer overflow in path handling
+
+ Will merge to 'master' and later to 'maint'.
+
+
+* rr/name-rev-stdin-doc (2013-07-07) 1 commit
+  (merged to 'next' on 2013-07-09 at 7cfbff6)
+ + name-rev doc: rewrite --stdin paragraph
+
+ Will merge to 'master'.
+
+
+* rr/send-email-ssl-verify (2013-07-06) 6 commits
+ - SQUASH??? update to support SSL_ca_file as well as SSL_ca_path
+ - SQUASH??? send-email: cover both smtps and starttls cases
+ - fixup! send-email: squelch warning from Net::SMTP::SSL
+ - SQUASH??? send-email giving default value to ssl-cert-path with ||= assignment
+ - send-email: introduce sendemail.smtpsslcertpath
+ - send-email: squelch warning from Net::SMTP::SSL
+
+ The issue seems a lot deeper than the initial attempt and needs
+ somebody to sit down and sort out to get the version dependencies
+ and lazy loading right.
+
+
+* rs/pickaxe-simplify (2013-07-07) 1 commit
+ - diffcore-pickaxe: simplify has_changes and contains
 
  Will merge to 'next'.
 
 
-* ml/cygwin-does-not-have-fifo (2013-07-05) 1 commit
- - test-lib.sh - cygwin does not have usable FIFOs
+* tr/merge-recursive-index-only (2013-07-07) 3 commits
+ - merge-recursive: -Xindex-only to leave worktree unchanged
+ - merge-recursive: untangle double meaning of o->call_depth
+ - merge-recursive: remove dead conditional in update_stages()
+
+
+* tr/test-lint-no-export-assignment-in-shell (2013-07-08) 2 commits
+  (merged to 'next' on 2013-07-09 at 6f10ea2)
+ + test-lint: detect 'export FOO=bar'
+ + t9902: fix 'test A == B' to use = operator
+
+ Will merge to 'master'.
+
+
+* tr/test-v-and-v-subtest-only (2013-07-08) 1 commit
+  (merged to 'next' on 2013-07-08 at 933d477)
+ + t0000: do not use export X=Y
+
+ Finishing touches to a topics that is already in master for the
+ upcoming release.
+
+ Will merge to 'master'.
+
+
+* es/overlapping-range-set (2013-07-09) 2 commits
+ - range_set: fix coalescing bug when range is a subset of another
+ - t4211: fix broken test when one -L range is subset of another
 
  Will merge to 'next'.
+
+
+* jc/push-cas (2013-07-09) 7 commits
+ - push: document --lockref
+ - t5533: test "push --lockref"
+ - push --lockref: implement logic to populate old_sha1_expect[]
+ - remote.c: add command line option parser for --lockref
+ - push: beginning of compare-and-swap "force/delete safety"
+ - builtin/push.c: use OPT_BOOL, not OPT_BOOLEAN
+ - cache.h: move remote/connect API out of it
+
+ Allow a safer "rewind of the remote tip" push than blind "--force",
+ by requiring that the overwritten remote ref to be unchanged since
+ the new history to replace it was prepared.
+
+ The machinery is more or less ready, but the interface to override
+ the safety may need further discussion.
+
+
+* jc/remote-http-argv-array (2013-07-09) 1 commit
+ - remote-http: use argv-array
+
+ Will merge to 'next'.
+
+
+* jk/argv-pushf-sentinel (2013-07-09) 1 commit
+ - argv-array: add sentinel attribute to argv_array_pushl
+
+ Will merge to 'next'.
+
+
+* nd/const-struct-cache-entry (2013-07-09) 1 commit
+ - Convert "struct cache_entry *" to "const ..." wherever possible
 
 --------------------------------------------------
 [Stalled]
@@ -242,6 +329,84 @@ of the repositories listed at
 --------------------------------------------------
 [Cooking]
 
+* jc/t1512-fix (2013-07-01) 2 commits
+  (merged to 'next' on 2013-07-09 at a6c62bb)
+ + get_short_sha1(): correctly disambiguate type-limited abbreviation
+ + t1512: correct leftover constants from earlier edition
+
+ A test that should have failed but didn't revealed a bug that needs
+ to be corrected.
+
+ Will merge to 'master'.
+
+
+* jk/fetch-pack-many-refs (2013-07-02) 3 commits
+  (merged to 'next' on 2013-07-09 at a53b7c7)
+ + fetch-pack: avoid quadratic behavior in rev_list_push
+ + commit.c: make compare_commits_by_commit_date global
+ + fetch-pack: avoid quadratic list insertion in mark_complete
+
+ Fetching between repositories with many refs employed O(n^2)
+ algorithm to match up the common objects, which has been corrected.
+
+ Will merge to 'master'.
+
+
+* jk/format-patch-from (2013-07-03) 2 commits
+  (merged to 'next' on 2013-07-09 at 6ed86d5)
+ + teach format-patch to place other authors into in-body "From"
+ + pretty.c: drop const-ness from pretty_print_context
+
+ "git format-patch" learned "--from[=whom]" option, which sets the
+ "From: " header to the specified person (or the person who runs the
+ command, if "=whom" part is missing) and move the original author
+ information to an in-body From: header as necessary.
+
+ Will merge to 'master'.
+
+
+* ms/remote-tracking-branches-in-doc (2013-07-03) 1 commit
+  (merged to 'next' on 2013-07-09 at 411a8bd)
+ + Change "remote tracking" to "remote-tracking"
+
+ Will merge to 'master'.
+
+
+* tf/gitweb-extra-breadcrumbs (2013-07-04) 1 commit
+  (merged to 'next' on 2013-07-09 at 525331b)
+ + gitweb: allow extra breadcrumbs to prefix the trail
+
+ An Gitweb installation that is a part of larger site can optionally
+ show extra links that point at the levels higher than the Gitweb
+ pages itself in the link hierarchy of pages.
+
+ Will merge to 'master'.
+
+
+* bc/commit-invalid-utf8 (2013-07-09) 3 commits
+ - commit: reject non-characters
+ - commit: reject overlong UTF-8 sequences
+ - commit: reject invalid UTF-8 codepoints
+
+ Tighten up autodetection of UTF-8 encoded strings.
+
+ Will merge to 'next'.
+
+
+* bc/send-email-use-port-as-separate-param (2013-07-04) 1 commit
+  (merged to 'next' on 2013-07-09 at a569eb5)
+ + send-email: provide port separately from hostname
+
+ Will merge to 'master'.
+
+
+* ml/cygwin-does-not-have-fifo (2013-07-05) 1 commit
+  (merged to 'next' on 2013-07-09 at 7d6849d)
+ + test-lib.sh - cygwin does not have usable FIFOs
+
+ Will merge to 'master'.
+
+
 * pb/stash-refuse-to-kill (2013-07-01) 2 commits
   (merged to 'next' on 2013-07-05 at 78ecc59)
  + git stash: avoid data loss when "git stash save" kills a directory
@@ -256,7 +421,7 @@ of the repositories listed at
 
  This needed a small fix to "ls-files --killed".
 
- Will merge to 'next'.
+ Will merge to 'master'.
 
 
 * es/contacts (2013-07-03) 3 commits
@@ -285,17 +450,19 @@ of the repositories listed at
 
 
 * cp/submodule-custom-update (2013-07-03) 1 commit
- - submodule update: allow custom command to update submodule working tree
+  (merged to 'next' on 2013-07-09 at 3d27516)
+ + submodule update: allow custom command to update submodule working tree
 
  In addition to the choice from "rebase, merge, or checkout-detach",
  allow a custom command to be used in "submodule update" to update
  the working tree of submodules.
 
- Will merge to 'next'.
+ Will merge to 'master'.
 
 
 * mv/merge-ff-tristate (2013-07-02) 1 commit
- - merge: handle --ff/--no-ff/--ff-only as a tri-state option
+  (merged to 'next' on 2013-07-09 at c32b95d)
+ + merge: handle --ff/--no-ff/--ff-only as a tri-state option
 
  The configuration variable "merge.ff" was cleary a tri-state to
  choose one from "favor fast-forward when possible", "always create
@@ -305,7 +472,7 @@ of the repositories listed at
  "last one wins, and command line overrides the configuration"
  correctly.
 
- Will merge to 'next'.
+ Will merge to 'master'.
 
 
 * rr/rebase-reflog-message-reword (2013-06-23) 2 commits
@@ -319,24 +486,25 @@ of the repositories listed at
  Will merge to 'next'.
 
 
-* bp/mediawiki-preview (2013-07-04) 7 commits
- - git-remote-mediawiki: Add preview subcommand into git mw
- - git-remote-mediawiki: Adding git-mw command
- - git-remote-mediawiki: Factoring code between git-remote-mediawiki and Git::Mediawiki
- - git-remote-mediawiki: Update tests to run with the new bin-wrapper
- - git-remote-mediawiki: New git bin-wrapper for developement
- - wrap-for-bin: Make bin-wrappers chainable
- - git-remote-mediawiki: Introduction of Git::Mediawiki.pm
+* bp/mediawiki-preview (2013-07-08) 7 commits
+ - git-remote-mediawiki: add preview subcommand into git mw
+ - git-remote-mediawiki: add git-mw command
+ - git-remote-mediawiki: factoring code between git-remote-mediawiki and Git::Mediawiki
+ - git-remote-mediawiki: update tests to run with the new bin-wrapper
+ - git-remote-mediawiki: add a git bin-wrapper for developement
+ - wrap-for-bin: make bin-wrappers chainable
+ - git-remote-mediawiki: introduction of Git::Mediawiki.pm
 
  Looks like this is in a fairly good shape?
 
 
 * fg/submodule-clone-depth (2013-07-03) 1 commit
- - Add --depth to submodule update/add
+  (merged to 'next' on 2013-07-09 at ab156f3)
+ + Add --depth to submodule update/add
 
  Allow shallow-cloning of submodules with "git submodule update".
 
- Will merge to 'next'.
+ Will merge to 'master'.
 
 
 * jc/pull-training-wheel (2013-06-27) 1 commit
@@ -351,7 +519,12 @@ of the repositories listed at
  logic with other people's support.  Hint, hint...
 
 
-* as/log-output-encoding-in-user-format (2013-07-05) 7 commits
+* as/log-output-encoding-in-user-format (2013-07-05) 11 commits
+  (merged to 'next' on 2013-07-08 at 2e1bdd9)
+ + t4205 (log-pretty-formats): avoid using `sed`
+ + t6006 (rev-list-format): add tests for "%b" and "%s" for the case i18n.commitEncoding is not set
+ + t4205, t6006, t7102: make functions better readable
+ + t4205 (log-pretty-formats): revert back single quotes
   (merged to 'next' on 2013-07-05 at d2c99e5)
  + t4041, t4205, t6006, t7102: use iso8859-1 rather than iso-8859-1
   (merged to 'next' on 2013-07-01 at 3318aa8)
@@ -364,7 +537,7 @@ of the repositories listed at
  + t6006 (rev-list-format): don't hardcode SHA-1 in expected outputs
 
  "log --format=" did not honor i18n.logoutputencoding configuration
- and this is a beginning of the series that attempts to fix it.
+ and this attempts to fix it.
 
  Will merge to 'master'.
 
@@ -391,7 +564,8 @@ of the repositories listed at
 
 
 * af/rebase-i-merge-options (2013-07-02) 1 commit
- - Do not ignore merge options in interactive rebase
+  (merged to 'next' on 2013-07-08 at f411975)
+ + Do not ignore merge options in interactive rebase
 
  "git rebase -i" now honors --strategy and -X options.
 
@@ -415,7 +589,6 @@ of the repositories listed at
  + push: change `simple` to accommodate triangular workflows
  + config doc: rewrite push.default section
  + t/t5528-push-default: remove redundant test_config lines
- (this branch is tangled with rr/triangle-push-fix.)
 
  Earlier remote.pushdefault (and per-branch branch.*.pushremote)
  were introduced as an additional mechanism to choose what
