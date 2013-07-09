@@ -116,7 +116,8 @@ static void sort_and_merge_range_set(struct range_set *rs)
 
 	for (i = 1; i < rs->nr; i++) {
 		if (rs->ranges[i].start <= rs->ranges[o-1].end) {
-			rs->ranges[o-1].end = rs->ranges[i].end;
+			if (rs->ranges[o-1].end < rs->ranges[i].end)
+				rs->ranges[o-1].end = rs->ranges[i].end;
 		} else {
 			rs->ranges[o].start = rs->ranges[i].start;
 			rs->ranges[o].end = rs->ranges[i].end;
