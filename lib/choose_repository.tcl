@@ -24,6 +24,10 @@ field sorted_recent       ; # recent repositories (sorted)
 constructor pick {} {
 	global M1T M1B use_ttk NS
 
+	if {[set maxrecent [get_config gui.maxrecentrepo]] eq {}} {
+		set maxrecent 10
+	}
+
 	make_dialog top w
 	wm title $top [mc "Git Gui"]
 
@@ -148,7 +152,7 @@ constructor pick {} {
 			-background [get_bg_color $w_body.recentlabel] \
 			-wrap none \
 			-width 50 \
-			-height 10
+			-height $maxrecent
 		$w_recentlist tag conf link \
 			-foreground blue \
 			-underline 1
@@ -264,7 +268,11 @@ proc _append_recentrepos {path} {
 	git config --global --add gui.recentrepo $path
 	load_config 1
 
-	while {[llength $recent] > 10} {
+	if {[set maxrecent [get_config gui.maxrecentrepo]] eq {}} {
+		set maxrecent 10
+	}
+
+	while {[llength $recent] > $maxrecent} {
 		_unset_recentrepo [lindex $recent 0]
 		set recent [lrange $recent 1 end]
 	}
