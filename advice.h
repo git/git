@@ -19,6 +19,7 @@ extern int advice_detached_head;
 extern int advice_set_upstream_failure;
 
 int git_default_advice_config(const char *var, const char *value);
+__attribute__((format (printf, 1, 2)))
 void advise(const char *advice, ...);
 int error_resolve_conflict(const char *me);
 extern void NORETURN die_resolve_conflict(const char *me);
