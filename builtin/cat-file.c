@@ -118,6 +118,7 @@ struct expand_data {
 	unsigned char sha1[20];
 	enum object_type type;
 	unsigned long size;
+	unsigned long disk_size;
 
 	/*
 	 * If mark_query is true, we do not expand anything, but rather
@@ -155,6 +156,11 @@ static void expand_atom(struct strbuf *sb, const char *atom, int len,
 			data->info.sizep = &data->size;
 		else
 			strbuf_addf(sb, "%lu", data->size);
+	} else if (is_atom("objectsize:disk", atom, len)) {
+		if (data->mark_query)
+			data->info.disk_sizep = &data->disk_size;
+		else
+			strbuf_addf(sb, "%lu", data->disk_size);
 	} else
 		die("unknown format element: %.*s", len, atom);
 }
