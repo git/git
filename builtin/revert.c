@@ -54,6 +54,7 @@ static int option_parse_x(const struct option *opt,
 	return 0;
 }
 
+__attribute__((sentinel))
 static void verify_opt_compatible(const char *me, const char *base_opt, ...)
 {
 	const char *this_opt;
@@ -70,6 +71,7 @@ static void verify_opt_compatible(const char *me, const char *base_opt, ...)
 		die(_("%s: %s cannot be used with %s"), me, this_opt, base_opt);
 }
 
+__attribute__((sentinel))
 static void verify_opt_mutually_compatible(const char *me, ...)
 {
 	const char *opt1, *opt2 = NULL;
