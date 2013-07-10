@@ -72,8 +72,8 @@ static int cmp_offset(const void *a_, const void *b_)
 static void create_pack_revindex(struct pack_revindex *rix)
 {
 	struct packed_git *p = rix->p;
-	int num_ent = p->num_objects;
-	int i;
+	unsigned num_ent = p->num_objects;
+	unsigned i;
 	const char *index = p->index_data;
 
 	rix->revindex = xmalloc(sizeof(*rix->revindex) * (num_ent + 1));
@@ -114,7 +114,7 @@ static void create_pack_revindex(struct pack_revindex *rix)
 struct revindex_entry *find_pack_revindex(struct packed_git *p, off_t ofs)
 {
 	int num;
-	int lo, hi;
+	unsigned lo, hi;
 	struct pack_revindex *rix;
 	struct revindex_entry *revindex;
 
@@ -132,7 +132,7 @@ struct revindex_entry *find_pack_revindex(struct packed_git *p, off_t ofs)
 	lo = 0;
 	hi = p->num_objects + 1;
 	do {
-		int mi = (lo + hi) / 2;
+		unsigned mi = lo + (hi - lo) / 2;
 		if (revindex[mi].offset == ofs) {
 			return revindex + mi;
 		} else if (ofs < revindex[mi].offset)
