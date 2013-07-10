@@ -13,9 +13,6 @@
 #include "userdiff.h"
 #include "streaming.h"
 
-#define BATCH 1
-#define BATCH_CHECK 2
-
 static int cat_one_file(int opt, const char *exp_type, const char *obj_name)
 {
 	unsigned char sha1[20];
@@ -142,7 +139,12 @@ static void print_object_or_die(int fd, const unsigned char *sha1,
 	}
 }
 
-static int batch_one_object(const char *obj_name, int print_contents)
+struct batch_options {
+	int enabled;
+	int print_contents;
+};
+
+static int batch_one_object(const char *obj_name, struct batch_options *opt)
 {
 	unsigned char sha1[20];
 	enum object_type type = 0;
@@ -167,19 +169,19 @@ static int batch_one_object(const char *obj_name, int print_contents)
 	printf("%s %s %lu\n", sha1_to_hex(sha1), typename(type), size);
 	fflush(stdout);
 
-	if (print_contents == BATCH) {
+	if (opt->print_contents) {
 		print_object_or_die(1, sha1, type, size);
 		write_or_die(1, "\n", 1);
 	}
 	return 0;
 }
 
-static int batch_objects(int print_contents)
+static int batch_objects(struct batch_options *opt)
 {
 	struct strbuf buf = STRBUF_INIT;
 
 	while (strbuf_getline(&buf, stdin, '\n') != EOF) {
-		int error = batch_one_object(buf.buf, print_contents);
+		int error = batch_one_object(buf.buf, opt);
 		if (error)
 			return error;
 	}
@@ -201,10 +203,28 @@ static int git_cat_file_config(const char *var, const char *value, void *cb)
 	return git_default_config(var, value, cb);
 }
 
+static int batch_option_callback(const struct option *opt,
+				 const char *arg,
+				 int unset)
+{
+	struct batch_options *bo = opt->value;
+
+	if (unset) {
+		memset(bo, 0, sizeof(*bo));
+		return 0;
+	}
+
+	bo->enabled = 1;
+	bo->print_contents = !strcmp(opt->long_name, "batch");
+
+	return 0;
+}
+
 int cmd_cat_file(int argc, const char **argv, const char *prefix)
 {
-	int opt = 0, batch = 0;
+	int opt = 0;
 	const char *exp_type = NULL, *obj_name = NULL;
+	struct batch_options batch = {0};
 
 	const struct option options[] = {
 		OPT_GROUP(N_("<type> can be one of: blob, tree, commit, tag")),
@@ -215,12 +235,12 @@ int cmd_cat_file(int argc, const char **argv, const char *prefix)
 		OPT_SET_INT('p', NULL, &opt, N_("pretty-print object's content"), 'p'),
 		OPT_SET_INT(0, "textconv", &opt,
 			    N_("for blob objects, run textconv on object's content"), 'c'),
-		OPT_SET_INT(0, "batch", &batch,
-			    N_("show info and content of objects fed from the standard input"),
-			    BATCH),
-		OPT_SET_INT(0, "batch-check", &batch,
-			    N_("show info about objects fed from the standard input"),
-			    BATCH_CHECK),
+		{ OPTION_CALLBACK, 0, "batch", &batch, NULL,
+			N_("show info and content of objects fed from the standard input"),
+			PARSE_OPT_NOARG, batch_option_callback },
+		{ OPTION_CALLBACK, 0, "batch-check", &batch, NULL,
+			N_("show info about objects fed from the standard input"),
+			PARSE_OPT_NOARG, batch_option_callback },
 		OPT_END()
 	};
 
@@ -237,19 +257,19 @@ int cmd_cat_file(int argc, const char **argv, const char *prefix)
 		else
 			usage_with_options(cat_file_usage, options);
 	}
-	if (!opt && !batch) {
+	if (!opt && !batch.enabled) {
 		if (argc == 2) {
 			exp_type = argv[0];
 			obj_name = argv[1];
 		} else
 			usage_with_options(cat_file_usage, options);
 	}
-	if (batch && (opt || argc)) {
+	if (batch.enabled && (opt || argc)) {
 		usage_with_options(cat_file_usage, options);
 	}
 
-	if (batch)
-		return batch_objects(batch);
+	if (batch.enabled)
+		return batch_objects(&batch);
 
 	return cat_one_file(opt, exp_type, obj_name);
 }
