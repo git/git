@@ -72,6 +72,12 @@ $content"
 	echo_without_newline $sha1 | git cat-file --batch-check >actual &&
 	test_cmp expect actual
     '
+
+    test_expect_success "custom --batch-check format" '
+	echo "$type $sha1" >expect &&
+	echo $sha1 | git cat-file --batch-check="%(objecttype) %(objectname)" >actual &&
+	test_cmp expect actual
+    '
 }
 
 hello_content="Hello World"

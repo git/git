@@ -114,6 +114,66 @@ static int cat_one_file(int opt, const char *exp_type, const char *obj_name)
 	return 0;
 }
 
+struct expand_data {
+	unsigned char sha1[20];
+	enum object_type type;
+	unsigned long size;
+
+	/*
+	 * If mark_query is true, we do not expand anything, but rather
+	 * just mark the object_info with items we wish to query.
+	 */
+	int mark_query;
+
+	/*
+	 * After a mark_query run, this object_info is set up to be
+	 * passed to sha1_object_info_extended. It will point to the data
+	 * elements above, so you can retrieve the response from there.
+	 */
+	struct object_info info;
+};
+
+static int is_atom(const char *atom, const char *s, int slen)
+{
+	int alen = strlen(atom);
+	return alen == slen && !memcmp(atom, s, alen);
+}
+
+static void expand_atom(struct strbuf *sb, const char *atom, int len,
+			void *vdata)
+{
+	struct expand_data *data = vdata;
+
+	if (is_atom("objectname", atom, len)) {
+		if (!data->mark_query)
+			strbuf_addstr(sb, sha1_to_hex(data->sha1));
+	} else if (is_atom("objecttype", atom, len)) {
+		if (!data->mark_query)
+			strbuf_addstr(sb, typename(data->type));
+	} else if (is_atom("objectsize", atom, len)) {
+		if (data->mark_query)
+			data->info.sizep = &data->size;
+		else
+			strbuf_addf(sb, "%lu", data->size);
+	} else
+		die("unknown format element: %.*s", len, atom);
+}
+
+static size_t expand_format(struct strbuf *sb, const char *start, void *data)
+{
+	const char *end;
+
+	if (*start != '(')
+		return 0;
+	end = strchr(start + 1, ')');
+	if (!end)
+		die("format element '%s' does not end in ')'", start);
+
+	expand_atom(sb, start + 1, end - start - 1, data);
+
+	return end - start + 1;
+}
+
 static void print_object_or_die(int fd, const unsigned char *sha1,
 				enum object_type type, unsigned long size)
 {
@@ -142,35 +202,37 @@ static void print_object_or_die(int fd, const unsigned char *sha1,
 struct batch_options {
 	int enabled;
 	int print_contents;
+	const char *format;
 };
 
-static int batch_one_object(const char *obj_name, struct batch_options *opt)
+static int batch_one_object(const char *obj_name, struct batch_options *opt,
+			    struct expand_data *data)
 {
-	unsigned char sha1[20];
-	enum object_type type = 0;
-	unsigned long size;
+	struct strbuf buf = STRBUF_INIT;
 
 	if (!obj_name)
 	   return 1;
 
-	if (get_sha1(obj_name, sha1)) {
+	if (get_sha1(obj_name, data->sha1)) {
 		printf("%s missing\n", obj_name);
 		fflush(stdout);
 		return 0;
 	}
 
-	type = sha1_object_info(sha1, &size);
-	if (type <= 0) {
+	data->type = sha1_object_info_extended(data->sha1, &data->info);
+	if (data->type <= 0) {
 		printf("%s missing\n", obj_name);
 		fflush(stdout);
 		return 0;
 	}
 
-	printf("%s %s %lu\n", sha1_to_hex(sha1), typename(type), size);
-	fflush(stdout);
+	strbuf_expand(&buf, opt->format, expand_format, data);
+	strbuf_addch(&buf, '\n');
+	write_or_die(1, buf.buf, buf.len);
+	strbuf_release(&buf);
 
 	if (opt->print_contents) {
-		print_object_or_die(1, sha1, type, size);
+		print_object_or_die(1, data->sha1, data->type, data->size);
 		write_or_die(1, "\n", 1);
 	}
 	return 0;
@@ -179,9 +241,23 @@ static int batch_one_object(const char *obj_name, struct batch_options *opt)
 static int batch_objects(struct batch_options *opt)
 {
 	struct strbuf buf = STRBUF_INIT;
+	struct expand_data data;
+
+	if (!opt->format)
+		opt->format = "%(objectname) %(objecttype) %(objectsize)";
+
+	/*
+	 * Expand once with our special mark_query flag, which will prime the
+	 * object_info to be handed to sha1_object_info_extended for each
+	 * object.
+	 */
+	memset(&data, 0, sizeof(data));
+	data.mark_query = 1;
+	strbuf_expand(&buf, opt->format, expand_format, &data);
+	data.mark_query = 0;
 
 	while (strbuf_getline(&buf, stdin, '\n') != EOF) {
-		int error = batch_one_object(buf.buf, opt);
+		int error = batch_one_object(buf.buf, opt, &data);
 		if (error)
 			return error;
 	}
@@ -216,6 +292,7 @@ static int batch_option_callback(const struct option *opt,
 
 	bo->enabled = 1;
 	bo->print_contents = !strcmp(opt->long_name, "batch");
+	bo->format = arg;
 
 	return 0;
 }
@@ -235,12 +312,12 @@ int cmd_cat_file(int argc, const char **argv, const char *prefix)
 		OPT_SET_INT('p', NULL, &opt, N_("pretty-print object's content"), 'p'),
 		OPT_SET_INT(0, "textconv", &opt,
 			    N_("for blob objects, run textconv on object's content"), 'c'),
-		{ OPTION_CALLBACK, 0, "batch", &batch, NULL,
+		{ OPTION_CALLBACK, 0, "batch", &batch, "format",
 			N_("show info and content of objects fed from the standard input"),
-			PARSE_OPT_NOARG, batch_option_callback },
-		{ OPTION_CALLBACK, 0, "batch-check", &batch, NULL,
+			PARSE_OPT_OPTARG, batch_option_callback },
+		{ OPTION_CALLBACK, 0, "batch-check", &batch, "format",
 			N_("show info about objects fed from the standard input"),
-			PARSE_OPT_NOARG, batch_option_callback },
+			PARSE_OPT_OPTARG, batch_option_callback },
 		OPT_END()
 	};
 
