@@ -118,6 +118,13 @@ See also <<FILES>>.
 --file config-file::
 	Use the given config file instead of the one specified by GIT_CONFIG.
 
+--blob blob::
+	Similar to '--file' but use the given blob instead of a file. E.g.
+	you can use 'master:.gitmodules' to read values from the file
+	'.gitmodules' in the master branch. See "SPECIFYING REVISIONS"
+	section in linkgit:gitrevisions[7] for a more complete list of
+	ways to spell blob names.
+
 --remove-section::
 	Remove the given section from the configuration file.
 
