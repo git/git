@@ -365,6 +365,7 @@ test_expect_success 'double dash "git" itself' '
 	--exec-path Z
 	--exec-path=
 	--html-path Z
+	--man-path Z
 	--info-path Z
 	--work-tree=
 	--namespace=
