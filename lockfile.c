@@ -124,15 +124,17 @@ static char *resolve_symlink(char *p, size_t s)
 
 static int lock_file(struct lock_file *lk, const char *path, int flags)
 {
-	if (strlen(path) >= sizeof(lk->filename))
-		return -1;
-	strcpy(lk->filename, path);
 	/*
 	 * subtract 5 from size to make sure there's room for adding
 	 * ".lock" for the lock file name
 	 */
+	static const size_t max_path_len = sizeof(lk->filename) - 5;
+
+	if (strlen(path) >= max_path_len)
+		return -1;
+	strcpy(lk->filename, path);
 	if (!(flags & LOCK_NODEREF))
-		resolve_symlink(lk->filename, sizeof(lk->filename)-5);
+		resolve_symlink(lk->filename, max_path_len);
 	strcat(lk->filename, ".lock");
 	lk->fd = open(lk->filename, O_RDWR | O_CREAT | O_EXCL, 0666);
 	if (0 <= lk->fd) {
