@@ -21,6 +21,7 @@ struct config_source {
 		} buf;
 	} u;
 	const char *name;
+	int die_on_error;
 	int linenr;
 	int eof;
 	struct strbuf value;
@@ -442,7 +443,10 @@ static int git_parse_source(config_fn_t fn, void *data)
 		if (get_value(fn, data, var) < 0)
 			break;
 	}
-	die("bad config file line %d in %s", cf->linenr, cf->name);
+	if (cf->die_on_error)
+		die("bad config file line %d in %s", cf->linenr, cf->name);
+	else
+		return error("bad config file line %d in %s", cf->linenr, cf->name);
 }
 
 static int parse_unit_factor(const char *end, uintmax_t *val)
@@ -940,7 +944,7 @@ int git_default_config(const char *var, const char *value, void *dummy)
 }
 
 /*
- * All source specific fields in the union, name and the callbacks
+ * All source specific fields in the union, die_on_error, name and the callbacks
  * fgetc, ungetc, ftell of top need to be initialized before calling
  * this function.
  */
@@ -977,6 +981,7 @@ int git_config_from_file(config_fn_t fn, const char *filename, void *data)
 
 		top.u.file = f;
 		top.name = filename;
+		top.die_on_error = 1;
 		top.fgetc = config_file_fgetc;
 		top.ungetc = config_file_ungetc;
 		top.ftell = config_file_ftell;
@@ -997,6 +1002,7 @@ int git_config_from_buf(config_fn_t fn, const char *name, const char *buf,
 	top.u.buf.len = len;
 	top.u.buf.pos = 0;
 	top.name = name;
+	top.die_on_error = 0;
 	top.fgetc = config_buf_fgetc;
 	top.ungetc = config_buf_ungetc;
 	top.ftell = config_buf_ftell;
