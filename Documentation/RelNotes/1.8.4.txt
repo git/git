@@ -1,10 +1,54 @@
 Git v1.8.4 Release Notes
 ========================
 
+Backward compatibility notes (for Git 2.0)
+------------------------------------------
+
+When "git push [$there]" does not say what to push, we have used the
+traditional "matching" semantics so far (all your branches were sent
+to the remote as long as there already are branches of the same name
+over there).  In Git 2.0, the default will change to the "simple"
+semantics that pushes:
+
+ - only the current branch to the branch with the same name, and only
+   when the current branch is set to integrate with that remote
+   branch, if you are pushing to the same remote as you fetch from; or
+
+ - only the current branch to the branch with the same name, if you
+   are pushing to a remote that is not where you usually fetch from.
+
+Use the user preference configuration variable "push.default" to
+change this.  If you are an old-timer who is used to the "matching"
+semantics, you can set the variable to "matching" to keep the
+traditional behaviour.  If you want to live in the future early, you
+can set it to "simple" today without waiting for Git 2.0.
+
+When "git add -u" (and "git add -A") is run inside a subdirectory and
+does not specify which paths to add on the command line, it
+will operate on the entire tree in Git 2.0 for consistency
+with "git commit -a" and other commands.  There will be no
+mechanism to make plain "git add -u" behave like "git add -u .".
+Current users of "git add -u" (without a pathspec) should start
+training their fingers to explicitly say "git add -u ."
+before Git 2.0 comes.  A warning is issued when these commands are
+run without a pathspec and when you have local changes outside the
+current directory, because the behaviour in Git 2.0 will be different
+from today's version in such a situation.
+
+In Git 2.0, "git add <path>" will behave as "git add -A <path>", so
+that "git add dir/" will notice paths you removed from the directory
+and record the removal.  Versions before Git 2.0, including this
+release, will keep ignoring removals, but the users who rely on this
+behaviour are encouraged to start using "git add --ignore-removal <path>"
+now before 2.0 is released.
+
+
 Updates since v1.8.3
 --------------------
 
 Foreign interfaces, subsystems and ports.
+
+ * "git rebase -i" now honors --strategy and -X options.
 
  * Git-gui has been updated to its 0.18.0 version.
 
@@ -35,6 +79,11 @@ Foreign interfaces, subsystems and ports.
 
 UI, Workflows & Features
 
+ * The "push.default=simple" mode of "git push" has been updated to
+   behave like "current" without requiring a remote tracking
+   information, when you push to a remote that is different from where
+   you fetch from (i.e. a triangular workflow).
+
  * Having multiple "fixup!" on a line in the rebase instruction sheet
    did not work very well with "git rebase -i --autosquash".
 
@@ -63,9 +112,9 @@ UI, Workflows & Features
  * On Cygwin, "cygstart" is now recognised as a possible way to start
    a web browser (used in "help -w" and "instaweb" among others).
 
-### * "git status" learned status.branch and status.short configuration
-###   variables to use --branch and --short options by default (override
-###   with --no-branch and --no-short options from the command line).
+ * "git status" learned status.branch and status.short configuration
+   variables to use --branch and --short options by default (override
+   with --no-branch and --no-short options from the command line).
 
  * "git cmd <name>", when <name> happens to be a 40-hex string,
    directly uses the 40-hex string as an object name, even if a ref
@@ -187,6 +236,30 @@ Fixes since v1.8.3
 Unless otherwise noted, all the fixes since v1.8.3 in the maintenance
 track are contained in this release (see release notes to them for
 details).
+
+ * "git diff" refused to even show difference when core.safecrlf is
+   set to true (i.e. error out) and there are offending lines in the
+   working tree files.
+   (merge 5430bb2 jc/maint-diff-core-safecrlf later to maint).
+
+ * A test that should have failed but didn't revealed a bug that needs
+   to be corrected.
+   (merge 94d75d1 jc/t1512-fix later to maint).
+
+ * An overlong path to a .git directory may have overflown the
+   temporary path buffer used to create a name for lockfiles.
+   (merge 2fbd4f9 mh/maint-lockfile-overflow later to maint).
+
+ * Invocations of "git checkout" used internally by "git rebase" were
+   counted as "checkout", and affected later "git checkout -" to the
+   the user to an unexpected place.
+   (merge 3bed291 rr/rebase-checkout-reflog later to maint).
+
+ * "git stash save", when your local change turns a tracked file into
+   a directory, has to remove files in that directory in order to
+   revert your working tree to a pristine state.  This will lose
+   untracked files in such a directory, and the command now requires
+   you to "--force" it.
 
  * The configuration variable column.ui was poorly documented.
    (merge 5e62cc1 rr/column-doc later to maint).
