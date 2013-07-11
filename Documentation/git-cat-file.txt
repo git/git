@@ -88,8 +88,10 @@ BATCH OUTPUT
 If `--batch` or `--batch-check` is given, `cat-file` will read objects
 from stdin, one per line, and print information about them.
 
-Each line is considered as a whole object name, and is parsed as if
-given to linkgit:git-rev-parse[1].
+Each line is split at the first whitespace boundary. All characters
+before that whitespace are considered as a whole object name, and are
+parsed as if given to linkgit:git-rev-parse[1]. Characters after that
+whitespace can be accessed using the `%(rest)` atom (see below).
 
 You can specify the information shown for each object by using a custom
 `<format>`. The `<format>` is copied literally to stdout for each
@@ -109,6 +111,10 @@ newline. The available atoms are:
 `objectsize:disk`::
 	The size, in bytes, that the object takes up on disk. See the
 	note about on-disk sizes in the `CAVEATS` section below.
+
+`rest`::
+	The text (if any) found after the first run of whitespace on the
+	input line (i.e., the "rest" of the line).
 
 If no format is specified, the default format is `%(objectname)
 %(objecttype) %(objectsize)`.

@@ -78,6 +78,13 @@ $content"
 	echo $sha1 | git cat-file --batch-check="%(objecttype) %(objectname)" >actual &&
 	test_cmp expect actual
     '
+
+    test_expect_success '--batch-check with %(rest)' '
+	echo "$type this is some extra content" >expect &&
+	echo "$sha1    this is some extra content" |
+		git cat-file --batch-check="%(objecttype) %(rest)" >actual &&
+	test_cmp expect actual
+    '
 }
 
 hello_content="Hello World"
