@@ -1037,7 +1037,6 @@ got_nothing:
 }
 
 struct grab_1st_switch_cbdata {
-	int found;
 	struct strbuf buf;
 	unsigned char nsha1[20];
 };
@@ -1061,7 +1060,6 @@ static int grab_1st_switch(unsigned char *osha1, unsigned char *nsha1,
 	for (end = target; *end && *end != '\n'; end++)
 		;
 	strbuf_add(&cb->buf, target, end - target);
-	cb->found = 1;
 	return 1;
 }
 
@@ -1178,7 +1176,10 @@ void wt_status_print(struct wt_status *s)
 			branch_name += 11;
 		else if (!strcmp(branch_name, "HEAD")) {
 			branch_status_color = color(WT_STATUS_NOBRANCH, s);
-			if (state.detached_from) {
+			if (state.rebase_in_progress || state.rebase_interactive_in_progress) {
+				on_what = _("rebase in progress; onto ");
+				branch_name = state.onto;
+			} else if (state.detached_from) {
 				unsigned char sha1[20];
 				branch_name = state.detached_from;
 				if (!get_sha1("HEAD", sha1) &&
