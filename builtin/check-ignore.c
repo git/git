@@ -12,7 +12,7 @@ static const char * const check_ignore_usage[] = {
 NULL
 };
 
-static int null_term_line;
+static int nul_term_line;
 
 static const struct option check_ignore_options[] = {
 	OPT__QUIET(&quiet, N_("suppress progress reporting")),
@@ -20,8 +20,8 @@ static const struct option check_ignore_options[] = {
 	OPT_GROUP(""),
 	OPT_BOOLEAN(0, "stdin", &stdin_paths,
 		    N_("read file names from stdin")),
-	OPT_BOOLEAN('z', NULL, &null_term_line,
-		    N_("input paths are terminated by a null character")),
+	OPT_BOOLEAN('z', NULL, &nul_term_line,
+		    N_("input paths are terminated by a NUL character")),
 	OPT_END()
 };
 
@@ -29,7 +29,7 @@ static void output_exclude(const char *path, struct exclude *exclude)
 {
 	char *bang  = exclude->flags & EXC_FLAG_NEGATIVE  ? "!" : "";
 	char *slash = exclude->flags & EXC_FLAG_MUSTBEDIR ? "/" : "";
-	if (!null_term_line) {
+	if (!nul_term_line) {
 		if (!verbose) {
 			write_name_quoted(path, stdout, '\n');
 		} else {
@@ -111,7 +111,7 @@ static int check_ignore_stdin_paths(const char *prefix)
 	struct strbuf buf, nbuf;
 	char **pathspec = NULL;
 	size_t nr = 0, alloc = 0;
-	int line_termination = null_term_line ? 0 : '\n';
+	int line_termination = nul_term_line ? 0 : '\n';
 	int num_ignored;
 
 	strbuf_init(&buf, 0);
@@ -150,7 +150,7 @@ int cmd_check_ignore(int argc, const char **argv, const char *prefix)
 		if (argc > 0)
 			die(_("cannot specify pathnames with --stdin"));
 	} else {
-		if (null_term_line)
+		if (nul_term_line)
 			die(_("-z only makes sense with --stdin"));
 		if (argc == 0)
 			die(_("no path specified"));
