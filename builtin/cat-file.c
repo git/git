@@ -150,7 +150,9 @@ static void expand_atom(struct strbuf *sb, const char *atom, int len,
 		if (!data->mark_query)
 			strbuf_addstr(sb, sha1_to_hex(data->sha1));
 	} else if (is_atom("objecttype", atom, len)) {
-		if (!data->mark_query)
+		if (data->mark_query)
+			data->info.typep = &data->type;
+		else
 			strbuf_addstr(sb, typename(data->type));
 	} else if (is_atom("objectsize", atom, len)) {
 		if (data->mark_query)
@@ -229,8 +231,7 @@ static int batch_one_object(const char *obj_name, struct batch_options *opt,
 		return 0;
 	}
 
-	data->type = sha1_object_info_extended(data->sha1, &data->info);
-	if (data->type <= 0) {
+	if (sha1_object_info_extended(data->sha1, &data->info) < 0) {
 		printf("%s missing\n", obj_name);
 		fflush(stdout);
 		return 0;

@@ -1099,6 +1099,7 @@ extern int unpack_object_header(struct packed_git *, struct pack_window **, off_
 
 struct object_info {
 	/* Request */
+	enum object_type *typep;
 	unsigned long *sizep;
 	unsigned long *disk_sizep;
 

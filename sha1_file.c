@@ -2433,24 +2433,26 @@ int sha1_object_info_extended(const unsigned char *sha1, struct object_info *oi)
 {
 	struct cached_object *co;
 	struct pack_entry e;
-	int type, rtype;
+	int rtype;
 
 	co = find_cached_object(sha1);
 	if (co) {
+		if (oi->typep)
+			*(oi->typep) = co->type;
 		if (oi->sizep)
 			*(oi->sizep) = co->size;
 		if (oi->disk_sizep)
 			*(oi->disk_sizep) = 0;
 		oi->whence = OI_CACHED;
-		return co->type;
+		return 0;
 	}
 
 	if (!find_pack_entry(sha1, &e)) {
 		/* Most likely it's a loose object. */
-		if (!sha1_loose_object_info(sha1, &type,
+		if (!sha1_loose_object_info(sha1, oi->typep,
 					    oi->sizep, oi->disk_sizep)) {
 			oi->whence = OI_LOOSE;
-			return type;
+			return 0;
 		}
 
 		/* Not a loose object; someone else may have just packed it. */
@@ -2459,7 +2461,7 @@ int sha1_object_info_extended(const unsigned char *sha1, struct object_info *oi)
 			return -1;
 	}
 
-	rtype = packed_object_info(e.p, e.offset, &type, oi->sizep,
+	rtype = packed_object_info(e.p, e.offset, oi->typep, oi->sizep,
 				   oi->disk_sizep);
 	if (rtype < 0) {
 		mark_bad_packed_object(e.p, sha1);
@@ -2474,15 +2476,19 @@ int sha1_object_info_extended(const unsigned char *sha1, struct object_info *oi)
 					 rtype == OBJ_OFS_DELTA);
 	}
 
-	return type;
+	return 0;
 }
 
 int sha1_object_info(const unsigned char *sha1, unsigned long *sizep)
 {
+	enum object_type type;
 	struct object_info oi = {0};
 
+	oi.typep = &type;
 	oi.sizep = sizep;
-	return sha1_object_info_extended(sha1, &oi);
+	if (sha1_object_info_extended(sha1, &oi) < 0)
+		return -1;
+	return type;
 }
 
 static void *read_packed_sha1(const unsigned char *sha1,
