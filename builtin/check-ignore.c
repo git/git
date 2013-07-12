@@ -21,7 +21,7 @@ static const struct option check_ignore_options[] = {
 	OPT_BOOLEAN(0, "stdin", &stdin_paths,
 		    N_("read file names from stdin")),
 	OPT_BOOLEAN('z', NULL, &nul_term_line,
-		    N_("input paths are terminated by a NUL character")),
+		    N_("terminate input and output records by a NUL character")),
 	OPT_END()
 };
 
