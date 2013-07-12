@@ -1780,7 +1780,7 @@ unwind:
 }
 
 static int packed_object_info(struct packed_git *p, off_t obj_offset,
-			      unsigned long *sizep, int *rtype,
+			      enum object_type *typep, unsigned long *sizep,
 			      unsigned long *disk_sizep)
 {
 	struct pack_window *w_curs = NULL;
@@ -1788,10 +1788,11 @@ static int packed_object_info(struct packed_git *p, off_t obj_offset,
 	off_t curpos = obj_offset;
 	enum object_type type;
 
+	/*
+	 * We always get the representation type, but only convert it to
+	 * a "real" type later if the caller is interested.
+	 */
 	type = unpack_object_header(p, &w_curs, &curpos, &size);
-
-	if (rtype)
-		*rtype = type; /* representation type */
 
 	if (sizep) {
 		if (type == OBJ_OFS_DELTA || type == OBJ_REF_DELTA) {
@@ -1817,7 +1818,13 @@ static int packed_object_info(struct packed_git *p, off_t obj_offset,
 		*disk_sizep = revidx[1].offset - obj_offset;
 	}
 
-	type = packed_to_object_type(p, obj_offset, type, &w_curs, curpos);
+	if (typep) {
+		*typep = packed_to_object_type(p, obj_offset, type, &w_curs, curpos);
+		if (*typep < 0) {
+			type = OBJ_BAD;
+			goto out;
+		}
+	}
 
 out:
 	unuse_pack(&w_curs);
@@ -2452,11 +2459,11 @@ int sha1_object_info_extended(const unsigned char *sha1, struct object_info *oi)
 			return -1;
 	}
 
-	type = packed_object_info(e.p, e.offset, oi->sizep, &rtype,
-				  oi->disk_sizep);
-	if (type < 0) {
+	rtype = packed_object_info(e.p, e.offset, &type, oi->sizep,
+				   oi->disk_sizep);
+	if (rtype < 0) {
 		mark_bad_packed_object(e.p, sha1);
-		type = sha1_object_info_extended(sha1, oi);
+		return sha1_object_info_extended(sha1, oi);
 	} else if (in_delta_base_cache(e.p, e.offset)) {
 		oi->whence = OI_DBCACHED;
 	} else {
