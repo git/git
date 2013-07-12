@@ -1780,8 +1780,7 @@ unwind:
 }
 
 static int packed_object_info(struct packed_git *p, off_t obj_offset,
-			      enum object_type *typep, unsigned long *sizep,
-			      unsigned long *disk_sizep)
+			      struct object_info *oi)
 {
 	struct pack_window *w_curs = NULL;
 	unsigned long size;
@@ -1794,7 +1793,7 @@ static int packed_object_info(struct packed_git *p, off_t obj_offset,
 	 */
 	type = unpack_object_header(p, &w_curs, &curpos, &size);
 
-	if (sizep) {
+	if (oi->sizep) {
 		if (type == OBJ_OFS_DELTA || type == OBJ_REF_DELTA) {
 			off_t tmp_pos = curpos;
 			off_t base_offset = get_delta_base(p, &w_curs, &tmp_pos,
@@ -1803,24 +1802,24 @@ static int packed_object_info(struct packed_git *p, off_t obj_offset,
 				type = OBJ_BAD;
 				goto out;
 			}
-			*sizep = get_size_from_delta(p, &w_curs, tmp_pos);
-			if (*sizep == 0) {
+			*oi->sizep = get_size_from_delta(p, &w_curs, tmp_pos);
+			if (*oi->sizep == 0) {
 				type = OBJ_BAD;
 				goto out;
 			}
 		} else {
-			*sizep = size;
+			*oi->sizep = size;
 		}
 	}
 
-	if (disk_sizep) {
+	if (oi->disk_sizep) {
 		struct revindex_entry *revidx = find_pack_revindex(p, obj_offset);
-		*disk_sizep = revidx[1].offset - obj_offset;
+		*oi->disk_sizep = revidx[1].offset - obj_offset;
 	}
 
-	if (typep) {
-		*typep = packed_to_object_type(p, obj_offset, type, &w_curs, curpos);
-		if (*typep < 0) {
+	if (oi->typep) {
+		*oi->typep = packed_to_object_type(p, obj_offset, type, &w_curs, curpos);
+		if (*oi->typep < 0) {
 			type = OBJ_BAD;
 			goto out;
 		}
@@ -2385,9 +2384,7 @@ struct packed_git *find_sha1_pack(const unsigned char *sha1,
 }
 
 static int sha1_loose_object_info(const unsigned char *sha1,
-				  enum object_type *typep,
-				  unsigned long *sizep,
-				  unsigned long *disk_sizep)
+				  struct object_info *oi)
 {
 	int status;
 	unsigned long mapsize, size;
@@ -2399,12 +2396,12 @@ static int sha1_loose_object_info(const unsigned char *sha1,
 	 * If we don't care about type or size, then we don't
 	 * need to look inside the object at all.
 	 */
-	if (!typep && !sizep) {
-		if (disk_sizep) {
+	if (!oi->typep && !oi->sizep) {
+		if (oi->disk_sizep) {
 			struct stat st;
 			if (stat_sha1_file(sha1, &st) < 0)
 				return -1;
-			*disk_sizep = st.st_size;
+			*oi->disk_sizep = st.st_size;
 		}
 		return 0;
 	}
@@ -2412,19 +2409,19 @@ static int sha1_loose_object_info(const unsigned char *sha1,
 	map = map_sha1_file(sha1, &mapsize);
 	if (!map)
 		return error("unable to find %s", sha1_to_hex(sha1));
-	if (disk_sizep)
-		*disk_sizep = mapsize;
+	if (oi->disk_sizep)
+		*oi->disk_sizep = mapsize;
 	if (unpack_sha1_header(&stream, map, mapsize, hdr, sizeof(hdr)) < 0)
 		status = error("unable to unpack %s header",
 			       sha1_to_hex(sha1));
 	else if ((status = parse_sha1_header(hdr, &size)) < 0)
 		status = error("unable to parse %s header", sha1_to_hex(sha1));
-	else if (sizep)
-		*sizep = size;
+	else if (oi->sizep)
+		*oi->sizep = size;
 	git_inflate_end(&stream);
 	munmap(map, mapsize);
-	if (typep)
-		*typep = status;
+	if (oi->typep)
+		*oi->typep = status;
 	return 0;
 }
 
@@ -2449,8 +2446,7 @@ int sha1_object_info_extended(const unsigned char *sha1, struct object_info *oi)
 
 	if (!find_pack_entry(sha1, &e)) {
 		/* Most likely it's a loose object. */
-		if (!sha1_loose_object_info(sha1, oi->typep,
-					    oi->sizep, oi->disk_sizep)) {
+		if (!sha1_loose_object_info(sha1, oi)) {
 			oi->whence = OI_LOOSE;
 			return 0;
 		}
@@ -2461,8 +2457,7 @@ int sha1_object_info_extended(const unsigned char *sha1, struct object_info *oi)
 			return -1;
 	}
 
-	rtype = packed_object_info(e.p, e.offset, oi->typep, oi->sizep,
-				   oi->disk_sizep);
+	rtype = packed_object_info(e.p, e.offset, oi);
 	if (rtype < 0) {
 		mark_bad_packed_object(e.p, sha1);
 		return sha1_object_info_extended(sha1, oi);
