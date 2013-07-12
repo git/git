@@ -176,13 +176,16 @@ Sync options
 These options can be used in the initial 'clone' as well as in
 subsequent 'sync' operations.
 
---branch <branch>::
-	Import changes into given branch.  If the branch starts with
-	'refs/', it will be used as is.  Otherwise if it does not start
-	with 'p4/', that prefix is added.  The branch is assumed to
-	name a remote tracking, but this can be modified using
-	'--import-local', or by giving a full ref name.  The default
-	branch is 'master'.
+--branch <ref>::
+	Import changes into <ref> instead of refs/remotes/p4/master.
+	If <ref> starts with refs/, it is used as is.  Otherwise, if
+	it does not start with p4/, that prefix is added.
++
+By default a <ref> not starting with refs/ is treated as the
+name of a remote-tracking branch (under refs/remotes/).  This
+behavior can be modified using the --import-local option.
++
+The default <ref> is "master".
 +
 This example imports a new remote "p4/proj2" into an existing
 Git repository:

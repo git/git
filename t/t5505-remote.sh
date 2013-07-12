@@ -74,7 +74,7 @@ test_expect_success 'add another remote' '
 	)
 '
 
-test_expect_success C_LOCALE_OUTPUT 'check remote tracking' '
+test_expect_success C_LOCALE_OUTPUT 'check remote-tracking' '
 	(
 		cd test &&
 		check_remote_track origin master side &&
