@@ -885,7 +885,14 @@ test_i18ngrep () {
 
 test_lazy_prereq PIPE '
 	# test whether the filesystem supports FIFOs
-	rm -f testfifo && mkfifo testfifo
+	case $(uname -s) in
+	CYGWIN*)
+		false
+		;;
+	*)
+		rm -f testfifo && mkfifo testfifo
+		;;
+	esac
 '
 
 test_lazy_prereq SYMLINKS '
