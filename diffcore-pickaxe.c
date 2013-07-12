@@ -131,8 +131,7 @@ static void diffcore_pickaxe_grep(struct diff_options *o)
 	return;
 }
 
-static unsigned int contains(mmfile_t *mf, struct diff_options *o,
-			     regex_t *regexp, kwset_t kws)
+static unsigned int contains(mmfile_t *mf, regex_t *regexp, kwset_t kws)
 {
 	unsigned int cnt;
 	unsigned long sz;
@@ -176,11 +175,9 @@ static int has_changes(mmfile_t *one, mmfile_t *two,
 		       struct diff_options *o,
 		       regex_t *regexp, kwset_t kws)
 {
-	if (!one)
-		return contains(two, o, regexp, kws) != 0;
-	if (!two)
-		return contains(one, o, regexp, kws) != 0;
-	return contains(one, o, regexp, kws) != contains(two, o, regexp, kws);
+	unsigned int one_contains = one ? contains(one, regexp, kws) : 0;
+	unsigned int two_contains = two ? contains(two, regexp, kws) : 0;
+	return one_contains != two_contains;
 }
 
 static int pickaxe_match(struct diff_filepair *p, struct diff_options *o,
