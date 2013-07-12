@@ -2375,7 +2375,7 @@ int sha1_object_info_extended(const unsigned char *sha1, struct object_info *oi)
 {
 	struct cached_object *co;
 	struct pack_entry e;
-	int status, rtype;
+	int type, rtype;
 
 	co = find_cached_object(sha1);
 	if (co) {
@@ -2389,23 +2389,23 @@ int sha1_object_info_extended(const unsigned char *sha1, struct object_info *oi)
 
 	if (!find_pack_entry(sha1, &e)) {
 		/* Most likely it's a loose object. */
-		status = sha1_loose_object_info(sha1, oi->sizep, oi->disk_sizep);
-		if (status >= 0) {
+		type = sha1_loose_object_info(sha1, oi->sizep, oi->disk_sizep);
+		if (type >= 0) {
 			oi->whence = OI_LOOSE;
-			return status;
+			return type;
 		}
 
 		/* Not a loose object; someone else may have just packed it. */
 		reprepare_packed_git();
 		if (!find_pack_entry(sha1, &e))
-			return status;
+			return type;
 	}
 
-	status = packed_object_info(e.p, e.offset, oi->sizep, &rtype,
-				    oi->disk_sizep);
-	if (status < 0) {
+	type = packed_object_info(e.p, e.offset, oi->sizep, &rtype,
+				  oi->disk_sizep);
+	if (type < 0) {
 		mark_bad_packed_object(e.p, sha1);
-		status = sha1_object_info_extended(sha1, oi);
+		type = sha1_object_info_extended(sha1, oi);
 	} else if (in_delta_base_cache(e.p, e.offset)) {
 		oi->whence = OI_DBCACHED;
 	} else {
@@ -2416,7 +2416,7 @@ int sha1_object_info_extended(const unsigned char *sha1, struct object_info *oi)
 					 rtype == OBJ_OFS_DELTA);
 	}
 
-	return status;
+	return type;
 }
 
 int sha1_object_info(const unsigned char *sha1, unsigned long *sizep)
