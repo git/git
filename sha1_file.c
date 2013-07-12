@@ -1303,6 +1303,26 @@ static int git_open_noatime(const char *name)
 	}
 }
 
+static int stat_sha1_file(const unsigned char *sha1, struct stat *st)
+{
+	char *name = sha1_file_name(sha1);
+	struct alternate_object_database *alt;
+
+	if (!lstat(name, st))
+		return 0;
+
+	prepare_alt_odb();
+	errno = ENOENT;
+	for (alt = alt_odb_list; alt; alt = alt->next) {
+		name = alt->name;
+		fill_sha1_path(name, sha1);
+		if (!lstat(alt->base, st))
+			return 0;
+	}
+
+	return -1;
+}
+
 static int open_sha1_file(const unsigned char *sha1)
 {
 	int fd;
@@ -2344,7 +2364,9 @@ struct packed_git *find_sha1_pack(const unsigned char *sha1,
 
 }
 
-static int sha1_loose_object_info(const unsigned char *sha1, unsigned long *sizep,
+static int sha1_loose_object_info(const unsigned char *sha1,
+				  enum object_type *typep,
+				  unsigned long *sizep,
 				  unsigned long *disk_sizep)
 {
 	int status;
@@ -2352,6 +2374,20 @@ static int sha1_loose_object_info(const unsigned char *sha1, unsigned long *size
 	void *map;
 	git_zstream stream;
 	char hdr[32];
+
+	/*
+	 * If we don't care about type or size, then we don't
+	 * need to look inside the object at all.
+	 */
+	if (!typep && !sizep) {
+		if (disk_sizep) {
+			struct stat st;
+			if (stat_sha1_file(sha1, &st) < 0)
+				return -1;
+			*disk_sizep = st.st_size;
+		}
+		return 0;
+	}
 
 	map = map_sha1_file(sha1, &mapsize);
 	if (!map)
@@ -2367,7 +2403,9 @@ static int sha1_loose_object_info(const unsigned char *sha1, unsigned long *size
 		*sizep = size;
 	git_inflate_end(&stream);
 	munmap(map, mapsize);
-	return status;
+	if (typep)
+		*typep = status;
+	return 0;
 }
 
 /* returns enum object_type or negative */
@@ -2389,8 +2427,8 @@ int sha1_object_info_extended(const unsigned char *sha1, struct object_info *oi)
 
 	if (!find_pack_entry(sha1, &e)) {
 		/* Most likely it's a loose object. */
-		type = sha1_loose_object_info(sha1, oi->sizep, oi->disk_sizep);
-		if (type >= 0) {
+		if (!sha1_loose_object_info(sha1, &type,
+					    oi->sizep, oi->disk_sizep)) {
 			oi->whence = OI_LOOSE;
 			return type;
 		}
@@ -2398,7 +2436,7 @@ int sha1_object_info_extended(const unsigned char *sha1, struct object_info *oi)
 		/* Not a loose object; someone else may have just packed it. */
 		reprepare_packed_git();
 		if (!find_pack_entry(sha1, &e))
-			return type;
+			return -1;
 	}
 
 	type = packed_object_info(e.p, e.offset, oi->sizep, &rtype,
