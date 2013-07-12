@@ -79,6 +79,13 @@ Foreign interfaces, subsystems and ports.
 
 UI, Workflows & Features
 
+ * "gitweb" learned to optionally place extra links that point at the
+   levels higher than the Gitweb pages themselves in the breadcrumbs,
+   so that it can be used as part of a larger installation.
+
+ * "git log --format=" now honors i18n.logoutputencoding configuration
+   variable.
+
  * The "push.default=simple" mode of "git push" has been updated to
    behave like "current" without requiring a remote tracking
    information, when you push to a remote that is different from where
