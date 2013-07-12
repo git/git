@@ -160,8 +160,7 @@ static int http_options(const char *var, const char *value, void *cb)
 	if (!strcmp("http.sslcainfo", var))
 		return git_config_string(&ssl_cainfo, var, value);
 	if (!strcmp("http.sslcertpasswordprotected", var)) {
-		if (git_config_bool(var, value))
-			ssl_cert_password_required = 1;
+		ssl_cert_password_required = git_config_bool(var, value);
 		return 0;
 	}
 	if (!strcmp("http.ssltry", var)) {
