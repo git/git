@@ -7,6 +7,7 @@
 #include "run-command.h"
 #include "pkt-line.h"
 #include "sideband.h"
+#include "argv-array.h"
 
 static struct remote *remote;
 static const char *url; /* always ends with a trailing slash */
@@ -787,36 +788,35 @@ static int push_dav(int nr_spec, char **specs)
 static int push_git(struct discovery *heads, int nr_spec, char **specs)
 {
 	struct rpc_state rpc;
-	const char **argv;
-	int argc = 0, i, err;
+	int i, err;
+	struct argv_array args;
 
-	argv = xmalloc((10 + nr_spec) * sizeof(char*));
-	argv[argc++] = "send-pack";
-	argv[argc++] = "--stateless-rpc";
-	argv[argc++] = "--helper-status";
+	argv_array_init(&args);
+	argv_array_pushl(&args, "send-pack", "--stateless-rpc", "--helper-status",
+			 NULL);
+
 	if (options.thin)
-		argv[argc++] = "--thin";
+		argv_array_push(&args, "--thin");
 	if (options.dry_run)
-		argv[argc++] = "--dry-run";
+		argv_array_push(&args, "--dry-run");
 	if (options.verbosity == 0)
-		argv[argc++] = "--quiet";
+		argv_array_push(&args, "--quiet");
 	else if (options.verbosity > 1)
-		argv[argc++] = "--verbose";
-	argv[argc++] = options.progress ? "--progress" : "--no-progress";
-	argv[argc++] = url;
+		argv_array_push(&args, "--verbose");
+	argv_array_push(&args, options.progress ? "--progress" : "--no-progress");
+	argv_array_push(&args, url);
 	for (i = 0; i < nr_spec; i++)
-		argv[argc++] = specs[i];
-	argv[argc++] = NULL;
+		argv_array_push(&args, specs[i]);
 
 	memset(&rpc, 0, sizeof(rpc));
 	rpc.service_name = "git-receive-pack",
-	rpc.argv = argv;
+	rpc.argv = args.argv;
 
 	err = rpc_service(&rpc, heads);
 	if (rpc.result.len)
 		write_or_die(1, rpc.result.buf, rpc.result.len);
 	strbuf_release(&rpc.result);
-	free(argv);
+	argv_array_clear(&args);
 	return err;
 }
 
