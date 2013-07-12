@@ -31,8 +31,9 @@ OPTIONS
 	Read file names from stdin instead of from the command-line.
 
 -z::
-	Only meaningful with `--stdin`; paths are separated with a
-	NUL character instead of a linefeed character.
+	The output format is modified to be machine-parseable.
+	If `--stdin` is also given, input paths are separated
+	with a NUL character instead of a linefeed character.
 
 \--::
 	Interpret all preceding arguments as attributes and all following
@@ -47,6 +48,10 @@ OUTPUT
 
 The output is of the form:
 <path> COLON SP <attribute> COLON SP <info> LF
+
+unless `-z` is in effect, in which case NUL is used as delimiter:
+<path> NUL <attribute> NUL <info> NUL
+
 
 <path> is the path of a file being queried, <attribute> is an attribute
 being queried and <info> can be either:
