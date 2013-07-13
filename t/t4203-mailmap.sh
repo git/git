@@ -13,6 +13,11 @@ fuzz_blame () {
 }
 
 test_expect_success setup '
+	cat >contacts <<-\EOF &&
+	A U Thor <author@example.com>
+	nick1 <bugs@company.xx>
+	EOF
+
 	echo one >one &&
 	git add one &&
 	test_tick &&
@@ -21,6 +26,44 @@ test_expect_success setup '
 	git add one &&
 	test_tick &&
 	git commit --author "nick1 <bugs@company.xx>" -m second
+'
+
+test_expect_success 'check-mailmap no arguments' '
+	test_must_fail git check-mailmap
+'
+
+test_expect_success 'check-mailmap arguments' '
+	cat >expect <<-\EOF &&
+	A U Thor <author@example.com>
+	nick1 <bugs@company.xx>
+	EOF
+	git check-mailmap \
+		"A U Thor <author@example.com>" \
+		"nick1 <bugs@company.xx>" >actual &&
+	test_cmp expect actual
+'
+
+test_expect_success 'check-mailmap --stdin' '
+	cat >expect <<-\EOF &&
+	A U Thor <author@example.com>
+	nick1 <bugs@company.xx>
+	EOF
+	git check-mailmap --stdin <contacts >actual &&
+	test_cmp expect actual
+'
+
+test_expect_success 'check-mailmap --stdin arguments' '
+	cat >expect <<-\EOF &&
+	Internal Guy <bugs@company.xy>
+	EOF
+	cat <contacts >>expect &&
+	git check-mailmap --stdin "Internal Guy <bugs@company.xy>" \
+		<contacts >actual &&
+	test_cmp expect actual
+'
+
+test_expect_success 'check-mailmap bogus contact' '
+	test_must_fail git check-mailmap bogus
 '
 
 cat >expect <<\EOF
