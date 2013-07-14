@@ -224,7 +224,7 @@ static void try_to_follow_renames(struct tree_desc *t1, struct tree_desc *t2, co
 	DIFF_OPT_SET(&diff_opts, RECURSIVE);
 	DIFF_OPT_SET(&diff_opts, FIND_COPIES_HARDER);
 	diff_opts.output_format = DIFF_FORMAT_NO_OUTPUT;
-	diff_opts.single_follow = opt->pathspec.raw[0];
+	diff_opts.single_follow = opt->pathspec.items[0].match;
 	diff_opts.break_opt = opt->break_opt;
 	diff_opts.rename_score = opt->rename_score;
 	diff_setup_done(&diff_opts);
@@ -243,7 +243,7 @@ static void try_to_follow_renames(struct tree_desc *t1, struct tree_desc *t2, co
 		 * the future!
 		 */
 		if ((p->status == 'R' || p->status == 'C') &&
-		    !strcmp(p->two->path, opt->pathspec.raw[0])) {
+		    !strcmp(p->two->path, opt->pathspec.items[0].match)) {
 			const char *path[2];
 
 			/* Switch the file-pairs around */
