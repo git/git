@@ -83,12 +83,9 @@ static int update_some(const unsigned char *sha1, const char *base, int baselen,
 	return 0;
 }
 
-static int read_tree_some(struct tree *tree, const char **pathspec)
+static int read_tree_some(struct tree *tree, const struct pathspec *pathspec)
 {
-	struct pathspec ps;
-	init_pathspec(&ps, pathspec);
-	read_tree_recursive(tree, "", 0, 0, &ps, update_some, NULL);
-	free_pathspec(&ps);
+	read_tree_recursive(tree, "", 0, 0, pathspec, update_some, NULL);
 
 	/* update the index with the given tree's info
 	 * for all args, expanding wildcards, and exit
@@ -266,7 +263,7 @@ static int checkout_paths(const struct checkout_opts *opts,
 		return error(_("corrupt index file"));
 
 	if (opts->source_tree)
-		read_tree_some(opts->source_tree, opts->pathspec.raw);
+		read_tree_some(opts->source_tree, &opts->pathspec);
 
 	ps_matched = xcalloc(1, opts->pathspec.nr);
 
