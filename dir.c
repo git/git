@@ -341,7 +341,9 @@ int match_pathspec_depth(const struct pathspec *ps,
 	int i, retval = 0;
 
 	if (!ps->nr) {
-		if (!ps->recursive || ps->max_depth == -1)
+		if (!ps->recursive ||
+		    !(ps->magic & PATHSPEC_MAXDEPTH) ||
+		    ps->max_depth == -1)
 			return MATCHED_RECURSIVELY;
 
 		if (within_depth(name, namelen, 0, ps->max_depth))
@@ -358,7 +360,9 @@ int match_pathspec_depth(const struct pathspec *ps,
 		if (seen && seen[i] == MATCHED_EXACTLY)
 			continue;
 		how = match_pathspec_item(ps->items+i, prefix, name, namelen);
-		if (ps->recursive && ps->max_depth != -1 &&
+		if (ps->recursive &&
+		    (ps->magic & PATHSPEC_MAXDEPTH) &&
+		    ps->max_depth != -1 &&
 		    how && how != MATCHED_FNMATCH) {
 			int len = ps->items[i].len;
 			if (name[len] == '/')

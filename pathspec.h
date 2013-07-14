@@ -3,7 +3,10 @@
 
 /* Pathspec magic */
 #define PATHSPEC_FROMTOP	(1<<0)
-#define PATHSPEC_ALL_MAGIC PATHSPEC_FROMTOP
+#define PATHSPEC_MAXDEPTH	(1<<1)
+#define PATHSPEC_ALL_MAGIC	  \
+	(PATHSPEC_FROMTOP	| \
+	 PATHSPEC_MAXDEPTH)
 
 #define PATHSPEC_ONESTAR 1	/* the pathspec pattern sastisfies GFNM_ONESTAR */
 
@@ -27,6 +30,7 @@ struct pathspec {
 /* parse_pathspec flags */
 #define PATHSPEC_PREFER_CWD (1<<0) /* No args means match cwd */
 #define PATHSPEC_PREFER_FULL (1<<1) /* No args means match everything */
+#define PATHSPEC_MAXDEPTH_VALID (1<<2) /* max_depth field is valid */
 
 extern int init_pathspec(struct pathspec *, const char **);
 extern void parse_pathspec(struct pathspec *pathspec,
