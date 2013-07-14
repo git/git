@@ -244,16 +244,12 @@ static void refresh(int verbose, const char **pathspec)
 }
 
 int run_add_interactive(const char *revision, const char *patch_mode,
-			const char **pathspec)
+			const struct pathspec *pathspec)
 {
-	int status, ac, pc = 0;
+	int status, ac, i;
 	const char **args;
 
-	if (pathspec)
-		while (pathspec[pc])
-			pc++;
-
-	args = xcalloc(sizeof(const char *), (pc + 5));
+	args = xcalloc(sizeof(const char *), (pathspec->nr + 6));
 	ac = 0;
 	args[ac++] = "add--interactive";
 	if (patch_mode)
@@ -261,11 +257,9 @@ int run_add_interactive(const char *revision, const char *patch_mode,
 	if (revision)
 		args[ac++] = revision;
 	args[ac++] = "--";
-	if (pc) {
-		memcpy(&(args[ac]), pathspec, sizeof(const char *) * pc);
-		ac += pc;
-	}
-	args[ac] = NULL;
+	for (i = 0; i < pathspec->nr; i++)
+		/* pass original pathspec, to be re-parsed */
+		args[ac++] = pathspec->items[i].original;
 
 	status = run_command_v_opt(args, RUN_GIT_CMD);
 	free(args);
@@ -280,17 +274,17 @@ int interactive_add(int argc, const char **argv, const char *prefix, int patch)
 	 * git-add--interactive itself does not parse pathspec. It
 	 * simply passes the pathspec to other builtin commands. Let's
 	 * hope all of them support all magic, or we'll need to limit
-	 * the magic here. There is still a problem with prefix. But
-	 * that'll be worked on later on.
+	 * the magic here.
 	 */
 	parse_pathspec(&pathspec, PATHSPEC_ALL_MAGIC & ~PATHSPEC_FROMTOP,
 		       PATHSPEC_PREFER_FULL |
-		       PATHSPEC_SYMLINK_LEADING_PATH,
+		       PATHSPEC_SYMLINK_LEADING_PATH |
+		       PATHSPEC_PREFIX_ORIGIN,
 		       prefix, argv);
 
 	return run_add_interactive(NULL,
 				   patch ? "--patch" : NULL,
-				   pathspec.raw);
+				   &pathspec);
 }
 
 static int edit_patch(int argc, const char **argv, const char *prefix)

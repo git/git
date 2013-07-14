@@ -257,7 +257,7 @@ static int checkout_paths(const struct checkout_opts *opts,
 
 	if (opts->patch_mode)
 		return run_add_interactive(revision, "--patch=checkout",
-					   opts->pathspec.raw);
+					   &opts->pathspec);
 
 	lock_file = xcalloc(1, sizeof(struct lock_file));
 
@@ -1159,10 +1159,9 @@ int cmd_checkout(int argc, const char **argv, const char *prefix)
 		 * cannot handle. Magic mask is pretty safe to be
 		 * lifted for new magic when opts.patch_mode == 0.
 		 */
-		parse_pathspec(&opts.pathspec,
-			       opts.patch_mode == 0 ? 0 :
-			       (PATHSPEC_ALL_MAGIC & ~PATHSPEC_FROMTOP),
-			       0, prefix, argv);
+		parse_pathspec(&opts.pathspec, 0,
+			       opts.patch_mode ? PATHSPEC_PREFIX_ORIGIN : 0,
+			       prefix, argv);
 
 		if (!opts.pathspec.nr)
 			die(_("invalid path specification"));
