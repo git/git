@@ -167,11 +167,11 @@ static const char *prefix_pathspec(const char *prefix, int prefixlen, const char
 					break;
 				}
 			if (ARRAY_SIZE(pathspec_magic) <= i)
-				die("Invalid pathspec magic '%.*s' in '%s'",
+				die(_("Invalid pathspec magic '%.*s' in '%s'"),
 				    (int) len, copyfrom, elt);
 		}
 		if (*copyfrom != ')')
-			die("Missing ')' at the end of pathspec magic in '%s'", elt);
+			die(_("Missing ')' at the end of pathspec magic in '%s'"), elt);
 		copyfrom++;
 	} else {
 		/* shorthand */
@@ -188,7 +188,7 @@ static const char *prefix_pathspec(const char *prefix, int prefixlen, const char
 					break;
 				}
 			if (ARRAY_SIZE(pathspec_magic) <= i)
-				die("Unimplemented pathspec magic '%c' in '%s'",
+				die(_("Unimplemented pathspec magic '%c' in '%s'"),
 				    ch, elt);
 		}
 		if (*copyfrom == ':')
