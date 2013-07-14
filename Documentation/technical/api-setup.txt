@@ -8,6 +8,23 @@ Talk about
 * is_inside_git_dir()
 * is_inside_work_tree()
 * setup_work_tree()
-* get_pathspec()
 
 (Dscho)
+
+Pathspec
+--------
+
+See glossary-context.txt for the syntax of pathspec. In memory, a
+pathspec set is represented by "struct pathspec" and is prepared by
+parse_pathspec(). This function takes several arguments:
+
+- magic_mask specifies what features that are NOT supported by the
+  following code. If a user attempts to use such a feature,
+  parse_pathspec() can reject it early.
+
+- flags specifies other things that the caller wants parse_pathspec to
+  perform.
+
+- prefix and args come from cmd_* functions
+
+get_pathspec() is obsolete and should never be used in new code.

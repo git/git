@@ -103,10 +103,6 @@ void die_if_path_beyond_symlink(const char *path, const char *prefix)
 /*
  * Magic pathspec
  *
- * NEEDSWORK: These need to be moved to dir.h or even to a new
- * pathspec.h when we restructure get_pathspec() users to use the
- * "struct pathspec" interface.
- *
  * Possible future magic semantics include stuff like:
  *
  *	{ PATHSPEC_NOGLOB, '!', "noglob" },
@@ -115,7 +111,6 @@ void die_if_path_beyond_symlink(const char *path, const char *prefix)
  *	{ PATHSPEC_REGEXP, '\0', "regexp" },
  *
  */
-#define PATHSPEC_FROMTOP    (1<<0)
 
 static struct pathspec_magic {
 	unsigned bit;
@@ -127,7 +122,7 @@ static struct pathspec_magic {
 
 /*
  * Take an element of a pathspec and check for magic signatures.
- * Append the result to the prefix.
+ * Append the result to the prefix. Return the magic bitmap.
  *
  * For now, we only parse the syntax and throw out anything other than
  * "top" magic.
@@ -138,10 +133,15 @@ static struct pathspec_magic {
  * the prefix part must always match literally, and a single stupid
  * string cannot express such a case.
  */
-static const char *prefix_pathspec(const char *prefix, int prefixlen, const char *elt)
+static unsigned prefix_pathspec(struct pathspec_item *item,
+				unsigned *p_short_magic,
+				const char **raw, unsigned flags,
+				const char *prefix, int prefixlen,
+				const char *elt)
 {
-	unsigned magic = 0;
+	unsigned magic = 0, short_magic = 0;
 	const char *copyfrom = elt;
+	char *match;
 	int i;
 
 	if (elt[0] != ':') {
@@ -184,7 +184,7 @@ static const char *prefix_pathspec(const char *prefix, int prefixlen, const char
 				break;
 			for (i = 0; i < ARRAY_SIZE(pathspec_magic); i++)
 				if (pathspec_magic[i].mnemonic == ch) {
-					magic |= pathspec_magic[i].bit;
+					short_magic |= pathspec_magic[i].bit;
 					break;
 				}
 			if (ARRAY_SIZE(pathspec_magic) <= i)
@@ -195,15 +195,128 @@ static const char *prefix_pathspec(const char *prefix, int prefixlen, const char
 			copyfrom++;
 	}
 
+	magic |= short_magic;
+	*p_short_magic = short_magic;
+
 	if (magic & PATHSPEC_FROMTOP)
-		return xstrdup(copyfrom);
+		match = xstrdup(copyfrom);
 	else
-		return prefix_path(prefix, prefixlen, copyfrom);
+		match = prefix_path(prefix, prefixlen, copyfrom);
+	*raw = item->match = match;
+	item->len = strlen(item->match);
+	if (limit_pathspec_to_literal())
+		item->nowildcard_len = item->len;
+	else
+		item->nowildcard_len = simple_length(item->match);
+	item->flags = 0;
+	if (item->nowildcard_len < item->len &&
+	    item->match[item->nowildcard_len] == '*' &&
+	    no_wildcard(item->match + item->nowildcard_len + 1))
+		item->flags |= PATHSPEC_ONESTAR;
+	return magic;
+}
+
+static int pathspec_item_cmp(const void *a_, const void *b_)
+{
+	struct pathspec_item *a, *b;
+
+	a = (struct pathspec_item *)a_;
+	b = (struct pathspec_item *)b_;
+	return strcmp(a->match, b->match);
+}
+
+static void NORETURN unsupported_magic(const char *pattern,
+				       unsigned magic,
+				       unsigned short_magic)
+{
+	struct strbuf sb = STRBUF_INIT;
+	int i, n;
+	for (n = i = 0; i < ARRAY_SIZE(pathspec_magic); i++) {
+		const struct pathspec_magic *m = pathspec_magic + i;
+		if (!(magic & m->bit))
+			continue;
+		if (sb.len)
+			strbuf_addstr(&sb, " ");
+		if (short_magic & m->bit)
+			strbuf_addf(&sb, "'%c'", m->mnemonic);
+		else
+			strbuf_addf(&sb, "'%s'", m->name);
+		n++;
+	}
+	/*
+	 * We may want to substitute "this command" with a command
+	 * name. E.g. when add--interactive dies when running
+	 * "checkout -p"
+	 */
+	die(_("%s: pathspec magic not supported by this command: %s"),
+	    pattern, sb.buf);
+}
+
+/*
+ * Given command line arguments and a prefix, convert the input to
+ * pathspec. die() if any magic in magic_mask is used.
+ */
+void parse_pathspec(struct pathspec *pathspec,
+		    unsigned magic_mask, unsigned flags,
+		    const char *prefix, const char **argv)
+{
+	struct pathspec_item *item;
+	const char *entry = argv ? *argv : NULL;
+	int i, n, prefixlen;
+
+	memset(pathspec, 0, sizeof(*pathspec));
+
+	/* No arguments, no prefix -> no pathspec */
+	if (!entry && !prefix)
+		return;
+
+	/* No arguments with prefix -> prefix pathspec */
+	if (!entry) {
+		static const char *raw[2];
+
+		pathspec->items = item = xmalloc(sizeof(*item));
+		memset(item, 0, sizeof(*item));
+		item->match = prefix;
+		item->nowildcard_len = item->len = strlen(prefix);
+		raw[0] = prefix;
+		raw[1] = NULL;
+		pathspec->nr = 1;
+		pathspec->raw = raw;
+		return;
+	}
+
+	n = 0;
+	while (argv[n])
+		n++;
+
+	pathspec->nr = n;
+	pathspec->items = item = xmalloc(sizeof(*item) * n);
+	pathspec->raw = argv;
+	prefixlen = prefix ? strlen(prefix) : 0;
+
+	for (i = 0; i < n; i++) {
+		unsigned short_magic;
+		entry = argv[i];
+
+		item[i].magic = prefix_pathspec(item + i, &short_magic,
+						argv + i, flags,
+						prefix, prefixlen, entry);
+		if (item[i].magic & magic_mask)
+			unsupported_magic(entry,
+					  item[i].magic & magic_mask,
+					  short_magic);
+		if (item[i].nowildcard_len < item[i].len)
+			pathspec->has_wildcard = 1;
+		pathspec->magic |= item[i].magic;
+	}
+
+	qsort(pathspec->items, pathspec->nr,
+	      sizeof(struct pathspec_item), pathspec_item_cmp);
 }
 
 /*
  * N.B. get_pathspec() is deprecated in favor of the "struct pathspec"
- * based interface - see pathspec_magic above.
+ * based interface - see pathspec.c:parse_pathspec().
  *
  * Arguments:
  *  - prefix - a path relative to the root of the working tree
@@ -222,32 +335,11 @@ static const char *prefix_pathspec(const char *prefix, int prefixlen, const char
  */
 const char **get_pathspec(const char *prefix, const char **pathspec)
 {
-	const char *entry = *pathspec;
-	const char **src, **dst;
-	int prefixlen;
-
-	if (!prefix && !entry)
-		return NULL;
-
-	if (!entry) {
-		static const char *spec[2];
-		spec[0] = prefix;
-		spec[1] = NULL;
-		return spec;
-	}
-
-	/* Otherwise we have to re-write the entries.. */
-	src = pathspec;
-	dst = pathspec;
-	prefixlen = prefix ? strlen(prefix) : 0;
-	while (*src) {
-		*(dst++) = prefix_pathspec(prefix, prefixlen, *src);
-		src++;
-	}
-	*dst = NULL;
-	if (!*pathspec)
-		return NULL;
-	return pathspec;
+	struct pathspec ps;
+	parse_pathspec(&ps,
+		       PATHSPEC_ALL_MAGIC & ~PATHSPEC_FROMTOP,
+		       0, prefix, pathspec);
+	return ps.raw;
 }
 
 void copy_pathspec(struct pathspec *dst, const struct pathspec *src)

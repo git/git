@@ -1,6 +1,10 @@
 #ifndef PATHSPEC_H
 #define PATHSPEC_H
 
+/* Pathspec magic */
+#define PATHSPEC_FROMTOP	(1<<0)
+#define PATHSPEC_ALL_MAGIC PATHSPEC_FROMTOP
+
 #define PATHSPEC_ONESTAR 1	/* the pathspec pattern sastisfies GFNM_ONESTAR */
 
 struct pathspec {
@@ -8,9 +12,11 @@ struct pathspec {
 	int nr;
 	unsigned int has_wildcard:1;
 	unsigned int recursive:1;
+	unsigned magic;
 	int max_depth;
 	struct pathspec_item {
 		const char *match;
+		unsigned magic;
 		int len;
 		int nowildcard_len;
 		int flags;
@@ -18,6 +24,11 @@ struct pathspec {
 };
 
 extern int init_pathspec(struct pathspec *, const char **);
+extern void parse_pathspec(struct pathspec *pathspec,
+			   unsigned magic_mask,
+			   unsigned flags,
+			   const char *prefix,
+			   const char **args);
 extern void copy_pathspec(struct pathspec *dst, const struct pathspec *src);
 extern void free_pathspec(struct pathspec *);
 
