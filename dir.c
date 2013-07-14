@@ -152,7 +152,7 @@ int fill_directory(struct dir_struct *dir, const struct pathspec *pathspec)
 	len = common_prefix_len(pathspec);
 
 	/* Read the directory and prune it */
-	read_directory(dir, pathspec->nr ? pathspec->raw[0] : "", len, pathspec);
+	read_directory(dir, pathspec->nr ? pathspec->_raw[0] : "", len, pathspec);
 	return len;
 }
 
@@ -1293,7 +1293,7 @@ int read_directory(struct dir_struct *dir, const char *path, int len, const stru
 	if (has_symlink_leading_path(path, len))
 		return dir->nr;
 
-	simplify = create_simplify(pathspec ? pathspec->raw : NULL);
+	simplify = create_simplify(pathspec ? pathspec->_raw : NULL);
 	if (!len || treat_leading_path(dir, path, len, simplify))
 		read_directory_recursive(dir, path, len, 0, simplify);
 	free_simplify(simplify);

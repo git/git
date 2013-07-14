@@ -36,7 +36,7 @@ static int show_recursive(const char *base, int baselen, const char *pathname)
 	if (ls_options & LS_RECURSIVE)
 		return 1;
 
-	s = pathspec.raw;
+	s = pathspec._raw;
 	if (!s)
 		return 0;
 

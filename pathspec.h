@@ -11,7 +11,7 @@
 #define PATHSPEC_ONESTAR 1	/* the pathspec pattern sastisfies GFNM_ONESTAR */
 
 struct pathspec {
-	const char **raw; /* get_pathspec() result, not freed by free_pathspec() */
+	const char **_raw; /* get_pathspec() result, not freed by free_pathspec() */
 	int nr;
 	unsigned int has_wildcard:1;
 	unsigned int recursive:1;

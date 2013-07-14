@@ -287,7 +287,7 @@ void parse_pathspec(struct pathspec *pathspec,
 		raw[0] = prefix;
 		raw[1] = NULL;
 		pathspec->nr = 1;
-		pathspec->raw = raw;
+		pathspec->_raw = raw;
 		return;
 	}
 
@@ -297,7 +297,7 @@ void parse_pathspec(struct pathspec *pathspec,
 
 	pathspec->nr = n;
 	pathspec->items = item = xmalloc(sizeof(*item) * n);
-	pathspec->raw = argv;
+	pathspec->_raw = argv;
 	prefixlen = prefix ? strlen(prefix) : 0;
 
 	for (i = 0; i < n; i++) {
@@ -357,7 +357,7 @@ const char **get_pathspec(const char *prefix, const char **pathspec)
 		       PATHSPEC_ALL_MAGIC & ~PATHSPEC_FROMTOP,
 		       PATHSPEC_PREFER_CWD,
 		       prefix, pathspec);
-	return ps.raw;
+	return ps._raw;
 }
 
 void copy_pathspec(struct pathspec *dst, const struct pathspec *src)
