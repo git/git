@@ -31,6 +31,8 @@ struct pathspec {
 #define PATHSPEC_PREFER_CWD (1<<0) /* No args means match cwd */
 #define PATHSPEC_PREFER_FULL (1<<1) /* No args means match everything */
 #define PATHSPEC_MAXDEPTH_VALID (1<<2) /* max_depth field is valid */
+/* strip the trailing slash if the given path is a gitlink */
+#define PATHSPEC_STRIP_SUBMODULE_SLASH_CHEAP (1<<3)
 
 extern int init_pathspec(struct pathspec *, const char **);
 extern void parse_pathspec(struct pathspec *pathspec,

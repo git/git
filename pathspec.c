@@ -205,6 +205,15 @@ static unsigned prefix_pathspec(struct pathspec_item *item,
 	*raw = item->match = match;
 	item->original = elt;
 	item->len = strlen(item->match);
+
+	if ((flags & PATHSPEC_STRIP_SUBMODULE_SLASH_CHEAP) &&
+	    (item->len >= 1 && item->match[item->len - 1] == '/') &&
+	    (i = cache_name_pos(item->match, item->len - 1)) >= 0 &&
+	    S_ISGITLINK(active_cache[i]->ce_mode)) {
+		item->len--;
+		match[item->len] = '\0';
+	}
+
 	if (limit_pathspec_to_literal())
 		item->nowildcard_len = item->len;
 	else
