@@ -5,6 +5,7 @@
 #include "archive.h"
 #include "parse-options.h"
 #include "unpack-trees.h"
+#include "pathspec.h"
 
 static char const * const archive_usage[] = {
 	N_("git archive [options] <tree-ish> [<path>...]"),

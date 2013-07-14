@@ -11,6 +11,7 @@
 #include "refs.h"
 #include "resolve-undo.h"
 #include "parse-options.h"
+#include "pathspec.h"
 
 /*
  * Default to not allowing changes to the list of files. The

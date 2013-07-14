@@ -17,6 +17,7 @@
 #include "grep.h"
 #include "quote.h"
 #include "dir.h"
+#include "pathspec.h"
 
 static char const * const grep_usage[] = {
 	N_("git grep [options] [-e] <pattern> [<rev>...] [[--] <path>...]"),

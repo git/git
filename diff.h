@@ -5,6 +5,7 @@
 #define DIFF_H
 
 #include "tree-walk.h"
+#include "pathspec.h"
 
 struct rev_info;
 struct diff_options;

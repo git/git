@@ -13,6 +13,7 @@
 #include "parse-options.h"
 #include "resolve-undo.h"
 #include "string-list.h"
+#include "pathspec.h"
 
 static int abbrev;
 static int show_deleted;

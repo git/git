@@ -11,6 +11,7 @@
 #include "dir.h"
 #include "refs.h"
 #include "wildmatch.h"
+#include "pathspec.h"
 
 struct path_simplify {
 	int len;

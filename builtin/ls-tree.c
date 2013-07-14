@@ -10,6 +10,7 @@
 #include "quote.h"
 #include "builtin.h"
 #include "parse-options.h"
+#include "pathspec.h"
 
 static int line_termination = '\n';
 #define LS_RECURSIVE 1

@@ -2,6 +2,7 @@
  * Copyright (C) 2008 Linus Torvalds
  */
 #include "cache.h"
+#include "pathspec.h"
 
 #ifdef NO_PTHREADS
 static void preload_index(struct index_state *index, const char **pathspec)
