@@ -64,37 +64,45 @@ static void output_exclude(const char *path, struct exclude *exclude)
 }
 
 static int check_ignore(struct dir_struct *dir,
-			const char *prefix, const char **pathspec)
+			const char *prefix, int argc, const char **argv)
 {
-	const char *path, *full_path;
+	const char *full_path;
 	char *seen;
 	int num_ignored = 0, dtype = DT_UNKNOWN, i;
 	struct exclude *exclude;
+	struct pathspec pathspec;
 
-	if (!pathspec || !*pathspec) {
+	if (!argc) {
 		if (!quiet)
 			fprintf(stderr, "no pathspec given.\n");
 		return 0;
 	}
 
 	/*
+	 * check-ignore just needs paths. Magic beyond :/ is really
+	 * irrelevant.
+	 */
+	parse_pathspec(&pathspec,
+		       PATHSPEC_ALL_MAGIC & ~PATHSPEC_FROMTOP,
+		       PATHSPEC_SYMLINK_LEADING_PATH |
+		       PATHSPEC_STRIP_SUBMODULE_SLASH_EXPENSIVE |
+		       PATHSPEC_KEEP_ORDER,
+		       prefix, argv);
+
+	/*
 	 * look for pathspecs matching entries in the index, since these
 	 * should not be ignored, in order to be consistent with
 	 * 'git status', 'git add' etc.
 	 */
-	seen = find_pathspecs_matching_against_index(pathspec);
-	for (i = 0; pathspec[i]; i++) {
-		path = pathspec[i];
-		full_path = prefix_path(prefix, prefix
-					? strlen(prefix) : 0, path);
-		full_path = check_path_for_gitlink(full_path);
-		die_if_path_beyond_symlink(full_path, prefix);
+	seen = find_pathspecs_matching_against_index(pathspec.raw);
+	for (i = 0; i < pathspec.nr; i++) {
+		full_path = pathspec.raw[i];
 		exclude = NULL;
 		if (!seen[i]) {
 			exclude = last_exclude_matching(dir, full_path, &dtype);
 		}
 		if (!quiet && (exclude || show_non_matching))
-			output_exclude(path, exclude);
+			output_exclude(pathspec.items[i].original, exclude);
 		if (exclude)
 			num_ignored++;
 	}
@@ -120,7 +128,8 @@ static int check_ignore_stdin_paths(struct dir_struct *dir, const char *prefix)
 			strbuf_swap(&buf, &nbuf);
 		}
 		pathspec[0] = buf.buf;
-		num_ignored += check_ignore(dir, prefix, (const char **)pathspec);
+		num_ignored += check_ignore(dir, prefix,
+					    1, (const char **)pathspec);
 		maybe_flush_or_die(stdout, "check-ignore to stdout");
 	}
 	strbuf_release(&buf);
@@ -166,7 +175,7 @@ int cmd_check_ignore(int argc, const char **argv, const char *prefix)
 	if (stdin_paths) {
 		num_ignored = check_ignore_stdin_paths(&dir, prefix);
 	} else {
-		num_ignored = check_ignore(&dir, prefix, argv);
+		num_ignored = check_ignore(&dir, prefix, argc, argv);
 		maybe_flush_or_die(stdout, "ignore to stdout");
 	}
 

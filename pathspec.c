@@ -370,9 +370,13 @@ void parse_pathspec(struct pathspec *pathspec,
 		pathspec->magic |= item[i].magic;
 	}
 
-	if (pathspec->magic & PATHSPEC_MAXDEPTH)
+
+	if (pathspec->magic & PATHSPEC_MAXDEPTH) {
+		if (flags & PATHSPEC_KEEP_ORDER)
+			die("BUG: PATHSPEC_MAXDEPTH_VALID and PATHSPEC_KEEP_ORDER are incompatible");
 		qsort(pathspec->items, pathspec->nr,
 		      sizeof(struct pathspec_item), pathspec_item_cmp);
+	}
 }
 
 /*
