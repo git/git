@@ -155,7 +155,6 @@ int cmd_clean(int argc, const char **argv, const char *prefix)
 	struct string_list exclude_list = STRING_LIST_INIT_NODUP;
 	struct exclude_list *el;
 	const char *qname;
-	char *seen = NULL;
 	struct option options[] = {
 		OPT__QUIET(&quiet, N_("do not print names of files removed")),
 		OPT__DRY_RUN(&dry_run, N_("dry run")),
@@ -214,9 +213,6 @@ int cmd_clean(int argc, const char **argv, const char *prefix)
 
 	fill_directory(&dir, pathspec);
 
-	if (pathspec)
-		seen = xmalloc(argc > 0 ? argc : 1);
-
 	for (i = 0; i < dir.nr; i++) {
 		struct dir_entry *ent = dir.entries[i];
 		int len, pos;
@@ -250,11 +246,9 @@ int cmd_clean(int argc, const char **argv, const char *prefix)
 		if (lstat(ent->name, &st))
 			continue;
 
-		if (pathspec) {
-			memset(seen, 0, argc > 0 ? argc : 1);
+		if (pathspec)
 			matches = match_pathspec(pathspec, ent->name, len,
-						 0, seen);
-		}
+						 0, NULL);
 
 		if (S_ISDIR(st.st_mode)) {
 			strbuf_addstr(&directory, ent->name);
@@ -281,7 +275,6 @@ int cmd_clean(int argc, const char **argv, const char *prefix)
 			}
 		}
 	}
-	free(seen);
 
 	strbuf_release(&directory);
 	string_list_clear(&exclude_list, 0);
