@@ -760,7 +760,7 @@ static void handle(int incoming, struct sockaddr *addr, socklen_t addrlen)
 		snprintf(portbuf, sizeof(portbuf), "REMOTE_PORT=%d",
 		    ntohs(sin_addr->sin_port));
 #ifndef NO_IPV6
-	} else if (addr && addr->sa_family == AF_INET6) {
+	} else if (addr->sa_family == AF_INET6) {
 		struct sockaddr_in6 *sin6_addr = (void *) addr;
 
 		char *buf = addrbuf + 12;
