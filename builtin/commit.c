@@ -284,17 +284,17 @@ static char *prepare_index(int argc, const char **argv, const char *prefix,
 {
 	int fd;
 	struct string_list partial;
-	const char **pathspec = NULL;
+	struct pathspec pathspec;
 	char *old_index_env = NULL;
 	int refresh_flags = REFRESH_QUIET;
 
 	if (is_status)
 		refresh_flags |= REFRESH_UNMERGED;
+	parse_pathspec(&pathspec, 0,
+		       PATHSPEC_PREFER_FULL,
+		       prefix, argv);
 
-	if (*argv)
-		pathspec = get_pathspec(prefix, argv);
-
-	if (read_cache_preload(pathspec) < 0)
+	if (read_cache_preload(pathspec.raw) < 0)
 		die(_("index file corrupt"));
 
 	if (interactive) {
@@ -336,9 +336,9 @@ static char *prepare_index(int argc, const char **argv, const char *prefix,
 	 * (A) if all goes well, commit the real index;
 	 * (B) on failure, rollback the real index.
 	 */
-	if (all || (also && pathspec && *pathspec)) {
+	if (all || (also && pathspec.nr)) {
 		fd = hold_locked_index(&index_lock, 1);
-		add_files_to_cache(also ? prefix : NULL, pathspec, 0);
+		add_files_to_cache(also ? prefix : NULL, pathspec.raw, 0);
 		refresh_cache_or_die(refresh_flags);
 		update_main_cache_tree(WRITE_TREE_SILENT);
 		if (write_cache(fd, active_cache, active_nr) ||
@@ -357,7 +357,7 @@ static char *prepare_index(int argc, const char **argv, const char *prefix,
 	 * and create commit from the_index.
 	 * We still need to refresh the index here.
 	 */
-	if (!only && (!pathspec || !*pathspec)) {
+	if (!only && !pathspec.nr) {
 		fd = hold_locked_index(&index_lock, 1);
 		refresh_cache_or_die(refresh_flags);
 		if (active_cache_changed) {
@@ -402,7 +402,7 @@ static char *prepare_index(int argc, const char **argv, const char *prefix,
 
 	memset(&partial, 0, sizeof(partial));
 	partial.strdup_strings = 1;
-	if (list_paths(&partial, !current_head ? NULL : "HEAD", prefix, pathspec))
+	if (list_paths(&partial, !current_head ? NULL : "HEAD", prefix, pathspec.raw))
 		exit(1);
 
 	discard_cache();
