@@ -13,6 +13,7 @@
 #include "refs.h"
 #include "string-list.h"
 #include "quote.h"
+#include "pathspec.h"
 
 static int force = -1; /* unset */
 
@@ -150,7 +151,7 @@ int cmd_clean(int argc, const char **argv, const char *prefix)
 	int rm_flags = REMOVE_DIR_KEEP_NESTED_GIT;
 	struct strbuf directory = STRBUF_INIT;
 	struct dir_struct dir;
-	static const char **pathspec;
+	struct pathspec pathspec;
 	struct strbuf buf = STRBUF_INIT;
 	struct string_list exclude_list = STRING_LIST_INIT_NODUP;
 	struct exclude_list *el;
@@ -209,9 +210,11 @@ int cmd_clean(int argc, const char **argv, const char *prefix)
 	for (i = 0; i < exclude_list.nr; i++)
 		add_exclude(exclude_list.items[i].string, "", 0, el, -(i+1));
 
-	pathspec = get_pathspec(prefix, argv);
+	parse_pathspec(&pathspec, 0,
+		       PATHSPEC_PREFER_CWD,
+		       prefix, argv);
 
-	fill_directory(&dir, pathspec);
+	fill_directory(&dir, pathspec.raw);
 
 	for (i = 0; i < dir.nr; i++) {
 		struct dir_entry *ent = dir.entries[i];
@@ -246,9 +249,9 @@ int cmd_clean(int argc, const char **argv, const char *prefix)
 		if (lstat(ent->name, &st))
 			continue;
 
-		if (pathspec)
-			matches = match_pathspec(pathspec, ent->name, len,
-						 0, NULL);
+		if (pathspec.nr)
+			matches = match_pathspec_depth(&pathspec, ent->name,
+						       len, 0, NULL);
 
 		if (S_ISDIR(st.st_mode)) {
 			strbuf_addstr(&directory, ent->name);
@@ -262,7 +265,7 @@ int cmd_clean(int argc, const char **argv, const char *prefix)
 			}
 			strbuf_reset(&directory);
 		} else {
-			if (pathspec && !matches)
+			if (pathspec.nr && !matches)
 				continue;
 			res = dry_run ? 0 : unlink(ent->name);
 			if (res) {
