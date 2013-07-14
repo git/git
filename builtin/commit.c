@@ -1244,7 +1244,7 @@ int cmd_status(int argc, const char **argv, const char *prefix)
 		       prefix, argv);
 
 	read_cache_preload(&s.pathspec);
-	refresh_index(&the_index, REFRESH_QUIET|REFRESH_UNMERGED, s.pathspec.raw, NULL, NULL);
+	refresh_index(&the_index, REFRESH_QUIET|REFRESH_UNMERGED, &s.pathspec, NULL, NULL);
 
 	fd = hold_locked_index(&index_lock, 0);
 	if (0 <= fd)

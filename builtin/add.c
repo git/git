@@ -226,19 +226,18 @@ static char *prune_directory(struct dir_struct *dir, const char **pathspec,
 	return seen;
 }
 
-static void refresh(int verbose, const char **pathspec)
+static void refresh(int verbose, const struct pathspec *pathspec)
 {
 	char *seen;
-	int i, specs;
+	int i;
 
-	for (specs = 0; pathspec[specs];  specs++)
-		/* nothing */;
-	seen = xcalloc(specs, 1);
+	seen = xcalloc(pathspec->nr, 1);
 	refresh_index(&the_index, verbose ? REFRESH_IN_PORCELAIN : REFRESH_QUIET,
 		      pathspec, seen, _("Unstaged changes after refreshing the index:"));
-	for (i = 0; i < specs; i++) {
+	for (i = 0; i < pathspec->nr; i++) {
 		if (!seen[i])
-			die(_("pathspec '%s' did not match any files"), pathspec[i]);
+			die(_("pathspec '%s' did not match any files"),
+			    pathspec->items[i].match);
 	}
         free(seen);
 }
@@ -524,7 +523,7 @@ int cmd_add(int argc, const char **argv, const char *prefix)
 	}
 
 	if (refresh_only) {
-		refresh(verbose, pathspec.raw);
+		refresh(verbose, &pathspec);
 		goto finish;
 	}
 	if (implicit_dot && prefix)
