@@ -294,7 +294,7 @@ static char *prepare_index(int argc, const char **argv, const char *prefix,
 		       PATHSPEC_PREFER_FULL,
 		       prefix, argv);
 
-	if (read_cache_preload(pathspec.raw) < 0)
+	if (read_cache_preload(&pathspec) < 0)
 		die(_("index file corrupt"));
 
 	if (interactive) {
@@ -1245,7 +1245,7 @@ int cmd_status(int argc, const char **argv, const char *prefix)
 		       PATHSPEC_PREFER_FULL,
 		       prefix, argv);
 
-	read_cache_preload(s.pathspec.raw);
+	read_cache_preload(&s.pathspec);
 	refresh_index(&the_index, REFRESH_QUIET|REFRESH_UNMERGED, s.pathspec.raw, NULL, NULL);
 
 	fd = hold_locked_index(&index_lock, 0);
