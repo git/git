@@ -523,7 +523,7 @@ static int grep_directory(struct grep_opt *opt, const struct pathspec *pathspec,
 	if (exc_std)
 		setup_standard_excludes(&dir);
 
-	fill_directory(&dir, pathspec->raw);
+	fill_directory(&dir, pathspec);
 	for (i = 0; i < dir.nr; i++) {
 		const char *name = dir.entries[i]->name;
 		int namelen = strlen(name);

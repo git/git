@@ -214,7 +214,7 @@ int cmd_clean(int argc, const char **argv, const char *prefix)
 		       PATHSPEC_PREFER_CWD,
 		       prefix, argv);
 
-	fill_directory(&dir, pathspec.raw);
+	fill_directory(&dir, &pathspec);
 
 	for (i = 0; i < dir.nr; i++) {
 		struct dir_entry *ent = dir.entries[i];

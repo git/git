@@ -514,7 +514,7 @@ static void wt_status_collect_untracked(struct wt_status *s)
 		dir.flags |= DIR_SHOW_IGNORED_TOO;
 	setup_standard_excludes(&dir);
 
-	fill_directory(&dir, s->pathspec.raw);
+	fill_directory(&dir, &s->pathspec);
 
 	for (i = 0; i < dir.nr; i++) {
 		struct dir_entry *ent = dir.entries[i];
