@@ -11,6 +11,7 @@
 #include "parse-options.h"
 #include "string-list.h"
 #include "submodule.h"
+#include "pathspec.h"
 
 static const char * const builtin_rm_usage[] = {
 	N_("git rm [options] [--] <file>..."),
@@ -279,7 +280,7 @@ static struct option builtin_rm_options[] = {
 int cmd_rm(int argc, const char **argv, const char *prefix)
 {
 	int i, newfd;
-	const char **pathspec;
+	struct pathspec pathspec;
 	char *seen;
 
 	git_config(git_default_config, NULL);
@@ -312,31 +313,30 @@ int cmd_rm(int argc, const char **argv, const char *prefix)
 		}
 	}
 
-	pathspec = get_pathspec(prefix, argv);
-	refresh_index(&the_index, REFRESH_QUIET, pathspec, NULL, NULL);
+	parse_pathspec(&pathspec, 0, PATHSPEC_PREFER_CWD, prefix, argv);
+	refresh_index(&the_index, REFRESH_QUIET, pathspec.raw, NULL, NULL);
 
 	seen = NULL;
-	for (i = 0; pathspec[i] ; i++)
-		/* nothing */;
-	seen = xcalloc(i, 1);
+	seen = xcalloc(pathspec.nr, 1);
 
 	for (i = 0; i < active_nr; i++) {
 		struct cache_entry *ce = active_cache[i];
-		if (!match_pathspec(pathspec, ce->name, ce_namelen(ce), 0, seen))
+		if (!match_pathspec_depth(&pathspec, ce->name, ce_namelen(ce), 0, seen))
 			continue;
 		ALLOC_GROW(list.entry, list.nr + 1, list.alloc);
 		list.entry[list.nr].name = ce->name;
 		list.entry[list.nr++].is_submodule = S_ISGITLINK(ce->ce_mode);
 	}
 
-	if (pathspec) {
-		const char *match;
+	if (pathspec.nr) {
+		const char *original;
 		int seen_any = 0;
-		for (i = 0; (match = pathspec[i]) != NULL ; i++) {
+		for (i = 0; i < pathspec.nr; i++) {
+			original = pathspec.items[i].original;
 			if (!seen[i]) {
 				if (!ignore_unmatch) {
 					die(_("pathspec '%s' did not match any files"),
-					    match);
+					    original);
 				}
 			}
 			else {
@@ -344,7 +344,7 @@ int cmd_rm(int argc, const char **argv, const char *prefix)
 			}
 			if (!recursive && seen[i] == MATCHED_RECURSIVELY)
 				die(_("not removing '%s' recursively without -r"),
-				    *match ? match : ".");
+				    *original ? original : ".");
 		}
 
 		if (! seen_any)
