@@ -24,6 +24,10 @@ struct pathspec {
 	} *items;
 };
 
+/* parse_pathspec flags */
+#define PATHSPEC_PREFER_CWD (1<<0) /* No args means match cwd */
+#define PATHSPEC_PREFER_FULL (1<<1) /* No args means match everything */
+
 extern int init_pathspec(struct pathspec *, const char **);
 extern void parse_pathspec(struct pathspec *pathspec,
 			   unsigned magic_mask,
