@@ -334,6 +334,9 @@ literal;;
 	Wildcards in the pattern such as `*` or `?` are treated
 	as literal characters.
 
+icase;;
+	Case insensitive match.
+
 glob;;
 	Git treats the pattern as a shell glob suitable for
 	consumption by fnmatch(3) with the FNM_PATHNAME flag:

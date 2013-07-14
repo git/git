@@ -466,6 +466,10 @@ help ...`.
 	globbing on individual pathspecs can be done using pathspec
 	magic ":(glob)"
 
+--icase-pathspecs:
+	Add "icase" magic to all pathspec. This is equivalent to setting
+	the `GIT_ICASE_PATHSPECS` environment variable to `1`.
+
 GIT COMMANDS
 ------------
 
@@ -878,6 +882,10 @@ GIT_GLOB_PATHSPECS::
 GIT_NOGLOB_PATHSPECS::
 	Setting this variable to `1` will cause Git to treat all
 	pathspecs as literal (aka "literal" magic).
+
+GIT_ICASE_PATHSPECS::
+	Setting this variable to `1` will cause Git to treat all
+	pathspecs as case-insensitive.
 
 
 Discussion[[Discussion]]

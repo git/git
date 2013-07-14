@@ -57,7 +57,7 @@ inline int git_fnmatch(const struct pathspec_item *item,
 		       int prefix)
 {
 	if (prefix > 0) {
-		if (strncmp(pattern, string, prefix))
+		if (ps_strncmp(item, pattern, string, prefix))
 			return FNM_NOMATCH;
 		pattern += prefix;
 		string += prefix;
@@ -66,14 +66,18 @@ inline int git_fnmatch(const struct pathspec_item *item,
 		int pattern_len = strlen(++pattern);
 		int string_len = strlen(string);
 		return string_len < pattern_len ||
-		       strcmp(pattern,
-			      string + string_len - pattern_len);
+			ps_strcmp(item, pattern,
+				  string + string_len - pattern_len);
 	}
 	if (item->magic & PATHSPEC_GLOB)
-		return wildmatch(pattern, string, WM_PATHNAME, NULL);
+		return wildmatch(pattern, string,
+				 WM_PATHNAME |
+				 (item->magic & PATHSPEC_ICASE ? WM_CASEFOLD : 0),
+				 NULL);
 	else
 		/* wildmatch has not learned no FNM_PATHNAME mode yet */
-		return fnmatch(pattern, string, 0);
+		return fnmatch(pattern, string,
+			       item->magic & PATHSPEC_ICASE ? FNM_CASEFOLD : 0);
 }
 
 static int fnmatch_icase_mem(const char *pattern, int patternlen,
@@ -110,16 +114,27 @@ static size_t common_prefix_len(const struct pathspec *pathspec)
 	int n;
 	size_t max = 0;
 
+	/*
+	 * ":(icase)path" is treated as a pathspec full of
+	 * wildcard. In other words, only prefix is considered common
+	 * prefix. If the pathspec is abc/foo abc/bar, running in
+	 * subdir xyz, the common prefix is still xyz, not xuz/abc as
+	 * in non-:(icase).
+	 */
 	GUARD_PATHSPEC(pathspec,
 		       PATHSPEC_FROMTOP |
 		       PATHSPEC_MAXDEPTH |
 		       PATHSPEC_LITERAL |
-		       PATHSPEC_GLOB);
+		       PATHSPEC_GLOB |
+		       PATHSPEC_ICASE);
 
 	for (n = 0; n < pathspec->nr; n++) {
-		size_t i = 0, len = 0;
-		while (i < pathspec->items[n].nowildcard_len &&
-		       (n == 0 || i < max)) {
+		size_t i = 0, len = 0, item_len;
+		if (pathspec->items[n].magic & PATHSPEC_ICASE)
+			item_len = pathspec->items[n].prefix;
+		else
+			item_len = pathspec->items[n].nowildcard_len;
+		while (i < item_len && (n == 0 || i < max)) {
 			char c = pathspec->items[n].match[i];
 			if (c != pathspec->items[0].match[i])
 				break;
@@ -196,11 +211,44 @@ static int match_pathspec_item(const struct pathspec_item *item, int prefix,
 	const char *match = item->match + prefix;
 	int matchlen = item->len - prefix;
 
+	/*
+	 * The normal call pattern is:
+	 * 1. prefix = common_prefix_len(ps);
+	 * 2. prune something, or fill_directory
+	 * 3. match_pathspec_depth()
+	 *
+	 * 'prefix' at #1 may be shorter than the command's prefix and
+	 * it's ok for #2 to match extra files. Those extras will be
+	 * trimmed at #3.
+	 *
+	 * Suppose the pathspec is 'foo' and '../bar' running from
+	 * subdir 'xyz'. The common prefix at #1 will be empty, thanks
+	 * to "../". We may have xyz/foo _and_ XYZ/foo after #2. The
+	 * user does not want XYZ/foo, only the "foo" part should be
+	 * case-insensitive. We need to filter out XYZ/foo here. In
+	 * other words, we do not trust the caller on comparing the
+	 * prefix part when :(icase) is involved. We do exact
+	 * comparison ourselves.
+	 *
+	 * Normally the caller (common_prefix_len() in fact) does
+	 * _exact_ matching on name[-prefix+1..-1] and we do not need
+	 * to check that part. Be defensive and check it anyway, in
+	 * case common_prefix_len is changed, or a new caller is
+	 * introduced that does not use common_prefix_len.
+	 *
+	 * If the penalty turns out too high when prefix is really
+	 * long, maybe change it to
+	 * strncmp(match, name, item->prefix - prefix)
+	 */
+	if (item->prefix && (item->magic & PATHSPEC_ICASE) &&
+	    strncmp(item->match, name - prefix, item->prefix))
+		return 0;
+
 	/* If the match was just the prefix, we matched */
 	if (!*match)
 		return MATCHED_RECURSIVELY;
 
-	if (matchlen <= namelen && !strncmp(match, name, matchlen)) {
+	if (matchlen <= namelen && !ps_strncmp(item, match, name, matchlen)) {
 		if (matchlen == namelen)
 			return MATCHED_EXACTLY;
 
@@ -241,7 +289,8 @@ int match_pathspec_depth(const struct pathspec *ps,
 		       PATHSPEC_FROMTOP |
 		       PATHSPEC_MAXDEPTH |
 		       PATHSPEC_LITERAL |
-		       PATHSPEC_GLOB);
+		       PATHSPEC_GLOB |
+		       PATHSPEC_ICASE);
 
 	if (!ps->nr) {
 		if (!ps->recursive ||
@@ -1301,7 +1350,8 @@ int read_directory(struct dir_struct *dir, const char *path, int len, const stru
 			       PATHSPEC_FROMTOP |
 			       PATHSPEC_MAXDEPTH |
 			       PATHSPEC_LITERAL |
-			       PATHSPEC_GLOB);
+			       PATHSPEC_GLOB |
+			       PATHSPEC_ICASE);
 
 	if (has_symlink_leading_path(path, len))
 		return dir->nr;

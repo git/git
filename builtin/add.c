@@ -544,12 +544,14 @@ int cmd_add(int argc, const char **argv, const char *prefix)
 		GUARD_PATHSPEC(&pathspec,
 			       PATHSPEC_FROMTOP |
 			       PATHSPEC_LITERAL |
-			       PATHSPEC_GLOB);
+			       PATHSPEC_GLOB |
+			       PATHSPEC_ICASE);
 
 		for (i = 0; i < pathspec.nr; i++) {
 			const char *path = pathspec.items[i].match;
 			if (!seen[i] &&
-			    ((pathspec.items[i].magic & PATHSPEC_GLOB) ||
+			    ((pathspec.items[i].magic &
+			      (PATHSPEC_GLOB | PATHSPEC_ICASE)) ||
 			     !file_exists(path))) {
 				if (ignore_missing) {
 					int dtype = DT_UNKNOWN;

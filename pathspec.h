@@ -6,11 +6,13 @@
 #define PATHSPEC_MAXDEPTH	(1<<1)
 #define PATHSPEC_LITERAL	(1<<2)
 #define PATHSPEC_GLOB		(1<<3)
+#define PATHSPEC_ICASE		(1<<4)
 #define PATHSPEC_ALL_MAGIC	  \
 	(PATHSPEC_FROMTOP	| \
 	 PATHSPEC_MAXDEPTH	| \
 	 PATHSPEC_LITERAL	| \
-	 PATHSPEC_GLOB)
+	 PATHSPEC_GLOB		| \
+	 PATHSPEC_ICASE)
 
 #define PATHSPEC_ONESTAR 1	/* the pathspec pattern sastisfies GFNM_ONESTAR */
 
@@ -64,6 +66,24 @@ extern void parse_pathspec(struct pathspec *pathspec,
 			   const char **args);
 extern void copy_pathspec(struct pathspec *dst, const struct pathspec *src);
 extern void free_pathspec(struct pathspec *);
+
+static inline int ps_strncmp(const struct pathspec_item *item,
+			     const char *s1, const char *s2, size_t n)
+{
+	if (item->magic & PATHSPEC_ICASE)
+		return strncasecmp(s1, s2, n);
+	else
+		return strncmp(s1, s2, n);
+}
+
+static inline int ps_strcmp(const struct pathspec_item *item,
+			    const char *s1, const char *s2)
+{
+	if (item->magic & PATHSPEC_ICASE)
+		return strcasecmp(s1, s2);
+	else
+		return strcmp(s1, s2);
+}
 
 extern char *find_pathspecs_matching_against_index(const struct pathspec *pathspec);
 extern void add_pathspec_matches_against_index(const struct pathspec *pathspec, char *seen);

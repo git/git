@@ -57,7 +57,6 @@ char *find_pathspecs_matching_against_index(const struct pathspec *pathspec)
  *
  * Possible future magic semantics include stuff like:
  *
- *	{ PATHSPEC_ICASE, '\0', "icase" },
  *	{ PATHSPEC_RECURSIVE, '*', "recursive" },
  *	{ PATHSPEC_REGEXP, '\0', "regexp" },
  *
@@ -71,6 +70,7 @@ static struct pathspec_magic {
 	{ PATHSPEC_FROMTOP, '/', "top" },
 	{ PATHSPEC_LITERAL,   0, "literal" },
 	{ PATHSPEC_GLOB,   '\0', "glob" },
+	{ PATHSPEC_ICASE,  '\0', "icase" },
 };
 
 /*
@@ -95,6 +95,7 @@ static unsigned prefix_pathspec(struct pathspec_item *item,
 	static int literal_global = -1;
 	static int glob_global = -1;
 	static int noglob_global = -1;
+	static int icase_global = -1;
 	unsigned magic = 0, short_magic = 0, global_magic = 0;
 	const char *copyfrom = elt, *long_magic_end = NULL;
 	char *match;
@@ -115,6 +116,12 @@ static unsigned prefix_pathspec(struct pathspec_item *item,
 
 	if (glob_global && noglob_global)
 		die(_("global 'glob' and 'noglob' pathspec settings are incompatible"));
+
+
+	if (icase_global < 0)
+		icase_global = git_env_bool(GIT_ICASE_PATHSPECS_ENVIRONMENT, 0);
+	if (icase_global)
+		global_magic |= PATHSPEC_ICASE;
 
 	if ((global_magic & PATHSPEC_LITERAL) &&
 	    (global_magic & ~PATHSPEC_LITERAL))
