@@ -304,7 +304,7 @@ static int checkout_paths(const struct checkout_opts *opts,
 			ce->ce_flags |= CE_MATCHED;
 	}
 
-	if (report_path_error(ps_matched, opts->pathspec.raw, opts->prefix)) {
+	if (report_path_error(ps_matched, &opts->pathspec, opts->prefix)) {
 		free(ps_matched);
 		return 1;
 	}
