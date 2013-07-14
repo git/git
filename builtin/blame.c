@@ -408,7 +408,7 @@ static struct origin *find_origin(struct scoreboard *sb,
 	paths[0] = origin->path;
 	paths[1] = NULL;
 
-	init_pathspec(&diff_opts.pathspec, paths);
+	parse_pathspec(&diff_opts.pathspec, PATHSPEC_ALL_MAGIC, 0, "", paths);
 	diff_setup_done(&diff_opts);
 
 	if (is_null_sha1(origin->commit->object.sha1))
@@ -486,15 +486,12 @@ static struct origin *find_rename(struct scoreboard *sb,
 	struct origin *porigin = NULL;
 	struct diff_options diff_opts;
 	int i;
-	const char *paths[2];
 
 	diff_setup(&diff_opts);
 	DIFF_OPT_SET(&diff_opts, RECURSIVE);
 	diff_opts.detect_rename = DIFF_DETECT_RENAME;
 	diff_opts.output_format = DIFF_FORMAT_NO_OUTPUT;
 	diff_opts.single_follow = origin->path;
-	paths[0] = NULL;
-	init_pathspec(&diff_opts.pathspec, paths);
 	diff_setup_done(&diff_opts);
 
 	if (is_null_sha1(origin->commit->object.sha1))
@@ -1064,7 +1061,6 @@ static int find_copy_in_parent(struct scoreboard *sb,
 			       int opt)
 {
 	struct diff_options diff_opts;
-	const char *paths[1];
 	int i, j;
 	int retval;
 	struct blame_list *blame_list;
@@ -1078,8 +1074,6 @@ static int find_copy_in_parent(struct scoreboard *sb,
 	DIFF_OPT_SET(&diff_opts, RECURSIVE);
 	diff_opts.output_format = DIFF_FORMAT_NO_OUTPUT;
 
-	paths[0] = NULL;
-	init_pathspec(&diff_opts.pathspec, paths);
 	diff_setup_done(&diff_opts);
 
 	/* Try "find copies harder" on new path if requested;

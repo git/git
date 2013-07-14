@@ -315,13 +315,12 @@ void overlay_tree_on_cache(const char *tree_name, const char *prefix)
 	}
 
 	if (prefix) {
-		static const char *(matchbuf[2]);
-		matchbuf[0] = prefix;
-		matchbuf[1] = NULL;
-		init_pathspec(&pathspec, matchbuf);
-		pathspec.items[0].nowildcard_len = pathspec.items[0].len;
+		static const char *(matchbuf[1]);
+		matchbuf[0] = NULL;
+		parse_pathspec(&pathspec, PATHSPEC_ALL_MAGIC,
+			       PATHSPEC_PREFER_CWD, prefix, matchbuf);
 	} else
-		init_pathspec(&pathspec, NULL);
+		memset(&pathspec, 0, sizeof(pathspec));
 	if (read_tree(tree, 1, &pathspec))
 		die("unable to read tree entries %s", tree_name);
 

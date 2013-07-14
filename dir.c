@@ -1580,64 +1580,6 @@ int remove_path(const char *name)
 	return 0;
 }
 
-static int pathspec_item_cmp(const void *a_, const void *b_)
-{
-	struct pathspec_item *a, *b;
-
-	a = (struct pathspec_item *)a_;
-	b = (struct pathspec_item *)b_;
-	return strcmp(a->match, b->match);
-}
-
-int init_pathspec(struct pathspec *pathspec, const char **paths)
-{
-	const char **p = paths;
-	int i;
-
-	memset(pathspec, 0, sizeof(*pathspec));
-	if (!p)
-		return 0;
-	while (*p)
-		p++;
-	pathspec->raw = paths;
-	pathspec->nr = p - paths;
-	if (!pathspec->nr)
-		return 0;
-
-	pathspec->items = xmalloc(sizeof(struct pathspec_item)*pathspec->nr);
-	for (i = 0; i < pathspec->nr; i++) {
-		struct pathspec_item *item = pathspec->items+i;
-		const char *path = paths[i];
-
-		item->match = path;
-		item->original = path;
-		item->len = strlen(path);
-		item->flags = 0;
-		if (limit_pathspec_to_literal()) {
-			item->nowildcard_len = item->len;
-		} else {
-			item->nowildcard_len = simple_length(path);
-			if (item->nowildcard_len < item->len) {
-				pathspec->has_wildcard = 1;
-				if (path[item->nowildcard_len] == '*' &&
-				    no_wildcard(path + item->nowildcard_len + 1))
-					item->flags |= PATHSPEC_ONESTAR;
-			}
-		}
-	}
-
-	qsort(pathspec->items, pathspec->nr,
-	      sizeof(struct pathspec_item), pathspec_item_cmp);
-
-	return 0;
-}
-
-void free_pathspec(struct pathspec *pathspec)
-{
-	free(pathspec->items);
-	pathspec->items = NULL;
-}
-
 int limit_pathspec_to_literal(void)
 {
 	static int flag = -1;

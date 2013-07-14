@@ -372,3 +372,9 @@ void copy_pathspec(struct pathspec *dst, const struct pathspec *src)
 	memcpy(dst->items, src->items,
 	       sizeof(struct pathspec_item) * dst->nr);
 }
+
+void free_pathspec(struct pathspec *pathspec)
+{
+	free(pathspec->items);
+	pathspec->items = NULL;
+}
