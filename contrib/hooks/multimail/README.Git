@@ -1,0 +1,15 @@
+This copy of git-multimail is distributed as part of the "contrib"
+section of the Git project as a convenience to Git users.
+git-multimail is developed as an independent project at the following
+website:
+
+    https://github.com/mhagger/git-multimail
+
+The version in this directory was obtained from the upstream project
+on 2013-07-14 and consists of the "git-multimail" subdirectory from
+revision
+
+    1a5cb09c698a74d15a715a86b09ead5f56bf4b06
+
+Please see the README file in this directory for information about how
+to report bugs or contribute to git-multimail.
