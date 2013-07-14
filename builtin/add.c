@@ -226,21 +226,6 @@ static char *prune_directory(struct dir_struct *dir, const char **pathspec,
 	return seen;
 }
 
-/*
- * Checks the index to see whether any path in pathspec refers to
- * something inside a submodule.  If so, dies with an error message.
- */
-static void treat_gitlinks(const char **pathspec)
-{
-	int i;
-
-	if (!pathspec || !*pathspec)
-		return;
-
-	for (i = 0; pathspec[i]; i++)
-		pathspec[i] = check_path_for_gitlink(pathspec[i]);
-}
-
 static void refresh(int verbose, const char **pathspec)
 {
 	char *seen;
@@ -256,25 +241,6 @@ static void refresh(int verbose, const char **pathspec)
 			die(_("pathspec '%s' did not match any files"), pathspec[i]);
 	}
         free(seen);
-}
-
-/*
- * Normalizes argv relative to prefix, via get_pathspec(), and then
- * runs die_if_path_beyond_symlink() on each path in the normalized
- * list.
- */
-static const char **validate_pathspec(const char **argv, const char *prefix)
-{
-	const char **pathspec = get_pathspec(prefix, argv);
-
-	if (pathspec) {
-		const char **p;
-		for (p = pathspec; *p; p++) {
-			die_if_path_beyond_symlink(*p, prefix);
-		}
-	}
-
-	return pathspec;
 }
 
 int run_add_interactive(const char *revision, const char *patch_mode,
@@ -308,17 +274,23 @@ int run_add_interactive(const char *revision, const char *patch_mode,
 
 int interactive_add(int argc, const char **argv, const char *prefix, int patch)
 {
-	const char **pathspec = NULL;
+	struct pathspec pathspec;
 
-	if (argc) {
-		pathspec = validate_pathspec(argv, prefix);
-		if (!pathspec)
-			return -1;
-	}
+	/*
+	 * git-add--interactive itself does not parse pathspec. It
+	 * simply passes the pathspec to other builtin commands. Let's
+	 * hope all of them support all magic, or we'll need to limit
+	 * the magic here. There is still a problem with prefix. But
+	 * that'll be worked on later on.
+	 */
+	parse_pathspec(&pathspec, PATHSPEC_ALL_MAGIC & ~PATHSPEC_FROMTOP,
+		       PATHSPEC_PREFER_FULL |
+		       PATHSPEC_SYMLINK_LEADING_PATH,
+		       prefix, argv);
 
 	return run_add_interactive(NULL,
 				   patch ? "--patch" : NULL,
-				   pathspec);
+				   pathspec.raw);
 }
 
 static int edit_patch(int argc, const char **argv, const char *prefix)
@@ -445,7 +417,7 @@ int cmd_add(int argc, const char **argv, const char *prefix)
 {
 	int exit_status = 0;
 	int newfd;
-	const char **pathspec;
+	struct pathspec pathspec;
 	struct dir_struct dir;
 	int flags;
 	int add_new_files;
@@ -526,11 +498,19 @@ int cmd_add(int argc, const char **argv, const char *prefix)
 		fprintf(stderr, _("Maybe you wanted to say 'git add .'?\n"));
 		return 0;
 	}
-	pathspec = validate_pathspec(argv, prefix);
 
 	if (read_cache() < 0)
 		die(_("index file corrupt"));
-	treat_gitlinks(pathspec);
+
+	/*
+	 * Check the "pathspec '%s' did not match any files" block
+	 * below before enabling new magic.
+	 */
+	parse_pathspec(&pathspec, 0,
+		       PATHSPEC_PREFER_FULL |
+		       PATHSPEC_SYMLINK_LEADING_PATH |
+		       PATHSPEC_STRIP_SUBMODULE_SLASH_EXPENSIVE,
+		       prefix, argv);
 
 	if (add_new_files) {
 		int baselen;
@@ -543,34 +523,40 @@ int cmd_add(int argc, const char **argv, const char *prefix)
 		}
 
 		/* This picks up the paths that are not tracked */
-		baselen = fill_directory(&dir, implicit_dot ? NULL : pathspec);
-		if (pathspec)
-			seen = prune_directory(&dir, pathspec, baselen,
+		baselen = fill_directory(&dir, implicit_dot ? NULL : pathspec.raw);
+		if (pathspec.nr)
+			seen = prune_directory(&dir, pathspec.raw, baselen,
 					implicit_dot ? WARN_IMPLICIT_DOT : 0);
 	}
 
 	if (refresh_only) {
-		refresh(verbose, pathspec);
+		refresh(verbose, pathspec.raw);
 		goto finish;
 	}
 	if (implicit_dot && prefix)
 		refresh_cache(REFRESH_QUIET);
 
-	if (pathspec) {
+	if (pathspec.nr) {
 		int i;
 
 		if (!seen)
-			seen = find_pathspecs_matching_against_index(pathspec);
-		for (i = 0; pathspec[i]; i++) {
-			if (!seen[i] && pathspec[i][0]
-			    && !file_exists(pathspec[i])) {
+			seen = find_pathspecs_matching_against_index(pathspec.raw);
+
+		/*
+		 * file_exists() assumes exact match
+		 */
+		GUARD_PATHSPEC(&pathspec, PATHSPEC_FROMTOP);
+
+		for (i = 0; pathspec.raw[i]; i++) {
+			if (!seen[i] && pathspec.raw[i][0]
+			    && !file_exists(pathspec.raw[i])) {
 				if (ignore_missing) {
 					int dtype = DT_UNKNOWN;
-					if (is_excluded(&dir, pathspec[i], &dtype))
-						dir_add_ignored(&dir, pathspec[i], strlen(pathspec[i]));
+					if (is_excluded(&dir, pathspec.raw[i], &dtype))
+						dir_add_ignored(&dir, pathspec.raw[i], strlen(pathspec.raw[i]));
 				} else
 					die(_("pathspec '%s' did not match any files"),
-					    pathspec[i]);
+					    pathspec.raw[i]);
 			}
 		}
 		free(seen);
@@ -586,10 +572,11 @@ int cmd_add(int argc, const char **argv, const char *prefix)
 		 */
 		update_data.implicit_dot = prefix;
 		update_data.implicit_dot_len = strlen(prefix);
-		pathspec = NULL;
+		free_pathspec(&pathspec);
+		memset(&pathspec, 0, sizeof(pathspec));
 	}
 	update_data.flags = flags & ~ADD_CACHE_IMPLICIT_DOT;
-	update_files_in_cache(prefix, pathspec, &update_data);
+	update_files_in_cache(prefix, pathspec.raw, &update_data);
 
 	exit_status |= !!update_data.add_errors;
 	if (add_new_files)
