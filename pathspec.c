@@ -57,7 +57,6 @@ char *find_pathspecs_matching_against_index(const struct pathspec *pathspec)
  *
  * Possible future magic semantics include stuff like:
  *
- *	{ PATHSPEC_NOGLOB, '!', "noglob" },
  *	{ PATHSPEC_ICASE, '\0', "icase" },
  *	{ PATHSPEC_RECURSIVE, '*', "recursive" },
  *	{ PATHSPEC_REGEXP, '\0', "regexp" },
@@ -71,6 +70,7 @@ static struct pathspec_magic {
 } pathspec_magic[] = {
 	{ PATHSPEC_FROMTOP, '/', "top" },
 	{ PATHSPEC_LITERAL,   0, "literal" },
+	{ PATHSPEC_GLOB,   '\0', "glob" },
 };
 
 /*
@@ -93,6 +93,8 @@ static unsigned prefix_pathspec(struct pathspec_item *item,
 				const char *elt)
 {
 	static int literal_global = -1;
+	static int glob_global = -1;
+	static int noglob_global = -1;
 	unsigned magic = 0, short_magic = 0, global_magic = 0;
 	const char *copyfrom = elt, *long_magic_end = NULL;
 	char *match;
@@ -102,6 +104,22 @@ static unsigned prefix_pathspec(struct pathspec_item *item,
 		literal_global = git_env_bool(GIT_LITERAL_PATHSPECS_ENVIRONMENT, 0);
 	if (literal_global)
 		global_magic |= PATHSPEC_LITERAL;
+
+	if (glob_global < 0)
+		glob_global = git_env_bool(GIT_GLOB_PATHSPECS_ENVIRONMENT, 0);
+	if (glob_global)
+		global_magic |= PATHSPEC_GLOB;
+
+	if (noglob_global < 0)
+		noglob_global = git_env_bool(GIT_NOGLOB_PATHSPECS_ENVIRONMENT, 0);
+
+	if (glob_global && noglob_global)
+		die(_("global 'glob' and 'noglob' pathspec settings are incompatible"));
+
+	if ((global_magic & PATHSPEC_LITERAL) &&
+	    (global_magic & ~PATHSPEC_LITERAL))
+		die(_("global 'literal' pathspec setting is incompatible "
+		      "with all other global pathspec settings"));
 
 	if (elt[0] != ':' || literal_global) {
 		; /* nothing to do */
@@ -167,11 +185,23 @@ static unsigned prefix_pathspec(struct pathspec_item *item,
 
 	magic |= short_magic;
 	*p_short_magic = short_magic;
+
+	/* --noglob-pathspec adds :(literal) _unless_ :(glob) is specifed */
+	if (noglob_global && !(magic & PATHSPEC_GLOB))
+		global_magic |= PATHSPEC_LITERAL;
+
+	/* --glob-pathspec is overriden by :(literal) */
+	if ((global_magic & PATHSPEC_GLOB) && (magic & PATHSPEC_LITERAL))
+		global_magic &= ~PATHSPEC_GLOB;
+
 	magic |= global_magic;
 
 	if (pathspec_prefix >= 0 &&
 	    (prefixlen || (prefix && *prefix)))
 		die("BUG: 'prefix' magic is supposed to be used at worktree's root");
+
+	if ((magic & PATHSPEC_LITERAL) && (magic & PATHSPEC_GLOB))
+		die(_("%s: 'literal' and 'glob' are incompatible"), elt);
 
 	if (pathspec_prefix >= 0) {
 		match = xstrdup(copyfrom);
@@ -248,10 +278,17 @@ static unsigned prefix_pathspec(struct pathspec_item *item,
 			item->nowildcard_len = prefixlen;
 	}
 	item->flags = 0;
-	if (item->nowildcard_len < item->len &&
-	    item->match[item->nowildcard_len] == '*' &&
-	    no_wildcard(item->match + item->nowildcard_len + 1))
-		item->flags |= PATHSPEC_ONESTAR;
+	if (magic & PATHSPEC_GLOB) {
+		/*
+		 * FIXME: should we enable ONESTAR in _GLOB for
+		 * pattern "* * / * . c"?
+		 */
+	} else {
+		if (item->nowildcard_len < item->len &&
+		    item->match[item->nowildcard_len] == '*' &&
+		    no_wildcard(item->match + item->nowildcard_len + 1))
+			item->flags |= PATHSPEC_ONESTAR;
+	}
 
 	/* sanity checks, pathspec matchers assume these are sane */
 	assert(item->nowildcard_len <= item->len &&

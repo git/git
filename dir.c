@@ -52,26 +52,28 @@ int fnmatch_icase(const char *pattern, const char *string, int flags)
 	return fnmatch(pattern, string, flags | (ignore_case ? FNM_CASEFOLD : 0));
 }
 
-inline int git_fnmatch(const char *pattern, const char *string,
-		       int flags, int prefix)
+inline int git_fnmatch(const struct pathspec_item *item,
+		       const char *pattern, const char *string,
+		       int prefix)
 {
-	int fnm_flags = 0;
-	if (flags & GFNM_PATHNAME)
-		fnm_flags |= FNM_PATHNAME;
 	if (prefix > 0) {
 		if (strncmp(pattern, string, prefix))
 			return FNM_NOMATCH;
 		pattern += prefix;
 		string += prefix;
 	}
-	if (flags & GFNM_ONESTAR) {
+	if (item->flags & PATHSPEC_ONESTAR) {
 		int pattern_len = strlen(++pattern);
 		int string_len = strlen(string);
 		return string_len < pattern_len ||
 		       strcmp(pattern,
 			      string + string_len - pattern_len);
 	}
-	return fnmatch(pattern, string, fnm_flags);
+	if (item->magic & PATHSPEC_GLOB)
+		return wildmatch(pattern, string, WM_PATHNAME, NULL);
+	else
+		/* wildmatch has not learned no FNM_PATHNAME mode yet */
+		return fnmatch(pattern, string, 0);
 }
 
 static int fnmatch_icase_mem(const char *pattern, int patternlen,
@@ -111,7 +113,8 @@ static size_t common_prefix_len(const struct pathspec *pathspec)
 	GUARD_PATHSPEC(pathspec,
 		       PATHSPEC_FROMTOP |
 		       PATHSPEC_MAXDEPTH |
-		       PATHSPEC_LITERAL);
+		       PATHSPEC_LITERAL |
+		       PATHSPEC_GLOB);
 
 	for (n = 0; n < pathspec->nr; n++) {
 		size_t i = 0, len = 0;
@@ -206,8 +209,7 @@ static int match_pathspec_item(const struct pathspec_item *item, int prefix,
 	}
 
 	if (item->nowildcard_len < item->len &&
-	    !git_fnmatch(match, name,
-			 item->flags & PATHSPEC_ONESTAR ? GFNM_ONESTAR : 0,
+	    !git_fnmatch(item, match, name,
 			 item->nowildcard_len - prefix))
 		return MATCHED_FNMATCH;
 
@@ -238,7 +240,8 @@ int match_pathspec_depth(const struct pathspec *ps,
 	GUARD_PATHSPEC(ps,
 		       PATHSPEC_FROMTOP |
 		       PATHSPEC_MAXDEPTH |
-		       PATHSPEC_LITERAL);
+		       PATHSPEC_LITERAL |
+		       PATHSPEC_GLOB);
 
 	if (!ps->nr) {
 		if (!ps->recursive ||
@@ -1297,7 +1300,8 @@ int read_directory(struct dir_struct *dir, const char *path, int len, const stru
 		GUARD_PATHSPEC(pathspec,
 			       PATHSPEC_FROMTOP |
 			       PATHSPEC_MAXDEPTH |
-			       PATHSPEC_LITERAL);
+			       PATHSPEC_LITERAL |
+			       PATHSPEC_GLOB);
 
 	if (has_symlink_leading_path(path, len))
 		return dir->nr;

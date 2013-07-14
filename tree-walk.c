@@ -639,7 +639,8 @@ enum interesting tree_entry_interesting(const struct name_entry *entry,
 	GUARD_PATHSPEC(ps,
 		       PATHSPEC_FROMTOP |
 		       PATHSPEC_MAXDEPTH |
-		       PATHSPEC_LITERAL);
+		       PATHSPEC_LITERAL |
+		       PATHSPEC_GLOB);
 
 	if (!ps->nr) {
 		if (!ps->recursive ||
@@ -685,8 +686,7 @@ enum interesting tree_entry_interesting(const struct name_entry *entry,
 				return entry_interesting;
 
 			if (item->nowildcard_len < item->len) {
-				if (!git_fnmatch(match + baselen, entry->path,
-						 item->flags & PATHSPEC_ONESTAR ? GFNM_ONESTAR : 0,
+				if (!git_fnmatch(item, match + baselen, entry->path,
 						 item->nowildcard_len - baselen))
 					return entry_interesting;
 
@@ -727,8 +727,7 @@ match_wildcards:
 
 		strbuf_add(base, entry->path, pathlen);
 
-		if (!git_fnmatch(match, base->buf + base_offset,
-				 item->flags & PATHSPEC_ONESTAR ? GFNM_ONESTAR : 0,
+		if (!git_fnmatch(item, match, base->buf + base_offset,
 				 item->nowildcard_len)) {
 			strbuf_setlen(base, base_offset + baselen);
 			return entry_interesting;

@@ -32,12 +32,31 @@ test_expect_success 'star pathspec globs' '
 	test_cmp expect actual
 '
 
+test_expect_success 'star pathspec globs' '
+	cat >expect <<-\EOF &&
+	bracket
+	star
+	vanilla
+	EOF
+	git log --format=%s -- ":(glob)f*" >actual &&
+	test_cmp expect actual
+'
+
 test_expect_success 'bracket pathspec globs and matches literal brackets' '
 	cat >expect <<-\EOF &&
 	bracket
 	vanilla
 	EOF
 	git log --format=%s -- "f[o][o]" >actual &&
+	test_cmp expect actual
+'
+
+test_expect_success 'bracket pathspec globs and matches literal brackets' '
+	cat >expect <<-\EOF &&
+	bracket
+	vanilla
+	EOF
+	git log --format=%s -- ":(glob)f[o][o]" >actual &&
 	test_cmp expect actual
 '
 
@@ -86,6 +105,50 @@ test_expect_success 'no-glob option disables :(literal)' '
 test_expect_success 'no-glob environment variable works' '
 	echo star >expect &&
 	GIT_LITERAL_PATHSPECS=1 git log --format=%s -- "f*" >actual &&
+	test_cmp expect actual
+'
+
+test_expect_success 'setup xxx/bar' '
+	mkdir xxx &&
+	test_commit xxx xxx/bar
+'
+
+test_expect_success '**/ works with :(glob)' '
+	cat >expect <<-\EOF &&
+	xxx
+	unrelated
+	EOF
+	git log --format=%s -- ":(glob)**/bar" >actual &&
+	test_cmp expect actual
+'
+
+test_expect_success '**/ does not work with --noglob-pathspecs' '
+	: >expect &&
+	git --noglob-pathspecs log --format=%s -- "**/bar" >actual &&
+	test_cmp expect actual
+'
+
+test_expect_success '**/ works with :(glob) and --noglob-pathspecs' '
+	cat >expect <<-\EOF &&
+	xxx
+	unrelated
+	EOF
+	git --noglob-pathspecs log --format=%s -- ":(glob)**/bar" >actual &&
+	test_cmp expect actual
+'
+
+test_expect_success '**/ works with --glob-pathspecs' '
+	cat >expect <<-\EOF &&
+	xxx
+	unrelated
+	EOF
+	git --glob-pathspecs log --format=%s -- "**/bar" >actual &&
+	test_cmp expect actual
+'
+
+test_expect_success '**/ does not work with :(literal) and --glob-pathspecs' '
+	: >expect &&
+	git --glob-pathspecs log --format=%s -- ":(literal)**/bar" >actual &&
 	test_cmp expect actual
 '
 

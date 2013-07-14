@@ -454,6 +454,17 @@ help ...`.
 	This is equivalent to setting the `GIT_LITERAL_PATHSPECS` environment
 	variable to `1`.
 
+--glob-pathspecs:
+	Add "glob" magic to all pathspec. This is equivalent to setting
+	the `GIT_GLOB_PATHSPECS` environment variable to `1`. Disabling
+	globbing on individual pathspecs can be done using pathspec
+	magic ":(literal)"
+
+--noglob-pathspecs:
+	Add "literal" magic to all pathspec. This is equivalent to setting
+	the `GIT_NOGLOB_PATHSPECS` environment variable to `1`. Enabling
+	globbing on individual pathspecs can be done using pathspec
+	magic ":(glob)"
 
 GIT COMMANDS
 ------------
@@ -859,6 +870,14 @@ GIT_LITERAL_PATHSPECS::
 	glob `*.c` matches. You might want this if you are feeding
 	literal paths to Git (e.g., paths previously given to you by
 	`git ls-tree`, `--raw` diff output, etc).
+
+GIT_GLOB_PATHSPECS::
+	Setting this variable to `1` will cause Git to treat all
+	pathspecs as glob patterns (aka "glob" magic).
+
+GIT_NOGLOB_PATHSPECS::
+	Setting this variable to `1` will cause Git to treat all
+	pathspecs as literal (aka "literal" magic).
 
 
 Discussion[[Discussion]]

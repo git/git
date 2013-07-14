@@ -541,11 +541,16 @@ int cmd_add(int argc, const char **argv, const char *prefix)
 		/*
 		 * file_exists() assumes exact match
 		 */
-		GUARD_PATHSPEC(&pathspec, PATHSPEC_FROMTOP | PATHSPEC_LITERAL);
+		GUARD_PATHSPEC(&pathspec,
+			       PATHSPEC_FROMTOP |
+			       PATHSPEC_LITERAL |
+			       PATHSPEC_GLOB);
 
 		for (i = 0; i < pathspec.nr; i++) {
 			const char *path = pathspec.items[i].match;
-			if (!seen[i] && !file_exists(path)) {
+			if (!seen[i] &&
+			    ((pathspec.items[i].magic & PATHSPEC_GLOB) ||
+			     !file_exists(path))) {
 				if (ignore_missing) {
 					int dtype = DT_UNKNOWN;
 					if (is_excluded(&dir, path, &dtype))

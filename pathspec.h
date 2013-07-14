@@ -5,10 +5,12 @@
 #define PATHSPEC_FROMTOP	(1<<0)
 #define PATHSPEC_MAXDEPTH	(1<<1)
 #define PATHSPEC_LITERAL	(1<<2)
+#define PATHSPEC_GLOB		(1<<3)
 #define PATHSPEC_ALL_MAGIC	  \
 	(PATHSPEC_FROMTOP	| \
 	 PATHSPEC_MAXDEPTH	| \
-	 PATHSPEC_LITERAL)
+	 PATHSPEC_LITERAL	| \
+	 PATHSPEC_GLOB)
 
 #define PATHSPEC_ONESTAR 1	/* the pathspec pattern sastisfies GFNM_ONESTAR */
 
