@@ -166,14 +166,16 @@ static void update_callback(struct diff_queue_struct *q,
 	}
 }
 
-static void update_files_in_cache(const char *prefix, const char **pathspec,
+static void update_files_in_cache(const char *prefix,
+				  const struct pathspec *pathspec,
 				  struct update_callback_data *data)
 {
 	struct rev_info rev;
 
 	init_revisions(&rev, prefix);
 	setup_revisions(0, NULL, &rev, NULL);
-	init_pathspec(&rev.prune_data, pathspec);
+	if (pathspec)
+		copy_pathspec(&rev.prune_data, pathspec);
 	rev.diffopt.output_format = DIFF_FORMAT_CALLBACK;
 	rev.diffopt.format_callback = update_callback;
 	rev.diffopt.format_callback_data = data;
@@ -181,7 +183,8 @@ static void update_files_in_cache(const char *prefix, const char **pathspec,
 	run_diff_files(&rev, DIFF_RACY_IS_MODIFIED);
 }
 
-int add_files_to_cache(const char *prefix, const char **pathspec, int flags)
+int add_files_to_cache(const char *prefix,
+		       const struct pathspec *pathspec, int flags)
 {
 	struct update_callback_data data;
 
@@ -571,7 +574,7 @@ int cmd_add(int argc, const char **argv, const char *prefix)
 		memset(&pathspec, 0, sizeof(pathspec));
 	}
 	update_data.flags = flags & ~ADD_CACHE_IMPLICIT_DOT;
-	update_files_in_cache(prefix, pathspec.raw, &update_data);
+	update_files_in_cache(prefix, &pathspec, &update_data);
 
 	exit_status |= !!update_data.add_errors;
 	if (add_new_files)
