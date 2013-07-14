@@ -21,7 +21,7 @@ struct pathspec {
 		const char *match;
 		const char *original;
 		unsigned magic;
-		int len;
+		int len, prefix;
 		int nowildcard_len;
 		int flags;
 	} *items;

@@ -414,6 +414,7 @@ extern void setup_work_tree(void);
 extern const char *setup_git_directory_gently(int *);
 extern const char *setup_git_directory(void);
 extern char *prefix_path(const char *prefix, int len, const char *path);
+extern char *prefix_path_gently(const char *prefix, int len, int *remaining, const char *path);
 extern const char *prefix_filename(const char *prefix, int len, const char *path);
 extern int check_filename(const char *prefix, const char *name);
 extern void verify_filename(const char *prefix,
@@ -741,6 +742,7 @@ const char *real_path(const char *path);
 const char *real_path_if_valid(const char *path);
 const char *absolute_path(const char *path);
 const char *relative_path(const char *abs, const char *base);
+int normalize_path_copy_len(char *dst, const char *src, int *prefix_len);
 int normalize_path_copy(char *dst, const char *src);
 int longest_ancestor_length(const char *path, struct string_list *prefixes);
 char *strip_path_suffix(const char *path, const char *suffix);

@@ -150,10 +150,14 @@ static unsigned prefix_pathspec(struct pathspec_item *item,
 	magic |= short_magic;
 	*p_short_magic = short_magic;
 
-	if (magic & PATHSPEC_FROMTOP)
+	if (magic & PATHSPEC_FROMTOP) {
 		match = xstrdup(copyfrom);
-	else
-		match = prefix_path(prefix, prefixlen, copyfrom);
+		prefixlen = 0;
+	} else {
+		match = prefix_path_gently(prefix, prefixlen, &prefixlen, copyfrom);
+		if (!match)
+			die(_("%s: '%s' is outside repository"), elt, copyfrom);
+	}
 	*raw = item->match = match;
 	/*
 	 * Prefix the pathspec (keep all magic) and assign to
@@ -167,6 +171,7 @@ static unsigned prefix_pathspec(struct pathspec_item *item,
 	} else
 		item->original = elt;
 	item->len = strlen(item->match);
+	item->prefix = prefixlen;
 
 	if ((flags & PATHSPEC_STRIP_SUBMODULE_SLASH_CHEAP) &&
 	    (item->len >= 1 && item->match[item->len - 1] == '/') &&
@@ -198,13 +203,20 @@ static unsigned prefix_pathspec(struct pathspec_item *item,
 
 	if (limit_pathspec_to_literal())
 		item->nowildcard_len = item->len;
-	else
+	else {
 		item->nowildcard_len = simple_length(item->match);
+		if (item->nowildcard_len < prefixlen)
+			item->nowildcard_len = prefixlen;
+	}
 	item->flags = 0;
 	if (item->nowildcard_len < item->len &&
 	    item->match[item->nowildcard_len] == '*' &&
 	    no_wildcard(item->match + item->nowildcard_len + 1))
 		item->flags |= PATHSPEC_ONESTAR;
+
+	/* sanity checks, pathspec matchers assume these are sane */
+	assert(item->nowildcard_len <= item->len &&
+	       item->prefix         <= item->len);
 	return magic;
 }
 
@@ -284,6 +296,7 @@ void parse_pathspec(struct pathspec *pathspec,
 		item->match = prefix;
 		item->original = prefix;
 		item->nowildcard_len = item->len = strlen(prefix);
+		item->prefix = item->len;
 		raw[0] = prefix;
 		raw[1] = NULL;
 		pathspec->nr = 1;

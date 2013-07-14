@@ -5,7 +5,19 @@
 static int inside_git_dir = -1;
 static int inside_work_tree = -1;
 
-static char *prefix_path_gently(const char *prefix, int len, const char *path)
+/*
+ * Normalize "path", prepending the "prefix" for relative paths. If
+ * remaining_prefix is not NULL, return the actual prefix still
+ * remains in the path. For example, prefix = sub1/sub2/ and path is
+ *
+ *  foo          -> sub1/sub2/foo  (full prefix)
+ *  ../foo       -> sub1/foo       (remaining prefix is sub1/)
+ *  ../../bar    -> bar            (no remaining prefix)
+ *  ../../sub1/sub2/foo -> sub1/sub2/foo (but no remaining prefix)
+ *  `pwd`/../bar -> sub1/bar       (no remaining prefix)
+ */
+char *prefix_path_gently(const char *prefix, int len,
+			 int *remaining_prefix, const char *path)
 {
 	const char *orig = path;
 	char *sanitized;
@@ -13,13 +25,17 @@ static char *prefix_path_gently(const char *prefix, int len, const char *path)
 		const char *temp = real_path(path);
 		sanitized = xmalloc(len + strlen(temp) + 1);
 		strcpy(sanitized, temp);
+		if (remaining_prefix)
+			*remaining_prefix = 0;
 	} else {
 		sanitized = xmalloc(len + strlen(path) + 1);
 		if (len)
 			memcpy(sanitized, prefix, len);
 		strcpy(sanitized + len, path);
+		if (remaining_prefix)
+			*remaining_prefix = len;
 	}
-	if (normalize_path_copy(sanitized, sanitized))
+	if (normalize_path_copy_len(sanitized, sanitized, remaining_prefix))
 		goto error_out;
 	if (is_absolute_path(orig)) {
 		size_t root_len, len, total;
@@ -44,7 +60,7 @@ static char *prefix_path_gently(const char *prefix, int len, const char *path)
 
 char *prefix_path(const char *prefix, int len, const char *path)
 {
-	char *r = prefix_path_gently(prefix, len, path);
+	char *r = prefix_path_gently(prefix, len, NULL, path);
 	if (!r)
 		die("'%s' is outside repository", path);
 	return r;
@@ -53,7 +69,7 @@ char *prefix_path(const char *prefix, int len, const char *path)
 int path_inside_repo(const char *prefix, const char *path)
 {
 	int len = prefix ? strlen(prefix) : 0;
-	char *r = prefix_path_gently(prefix, len, path);
+	char *r = prefix_path_gently(prefix, len, NULL, path);
 	if (r) {
 		free(r);
 		return 1;
