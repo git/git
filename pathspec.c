@@ -203,6 +203,7 @@ static unsigned prefix_pathspec(struct pathspec_item *item,
 	else
 		match = prefix_path(prefix, prefixlen, copyfrom);
 	*raw = item->match = match;
+	item->original = elt;
 	item->len = strlen(item->match);
 	if (limit_pathspec_to_literal())
 		item->nowildcard_len = item->len;
@@ -277,6 +278,7 @@ void parse_pathspec(struct pathspec *pathspec,
 		pathspec->items = item = xmalloc(sizeof(*item));
 		memset(item, 0, sizeof(*item));
 		item->match = prefix;
+		item->original = prefix;
 		item->nowildcard_len = item->len = strlen(prefix);
 		raw[0] = prefix;
 		raw[1] = NULL;

@@ -16,6 +16,7 @@ struct pathspec {
 	int max_depth;
 	struct pathspec_item {
 		const char *match;
+		const char *original;
 		unsigned magic;
 		int len;
 		int nowildcard_len;
