@@ -18,6 +18,7 @@ struct pathspec {
 };
 
 extern int init_pathspec(struct pathspec *, const char **);
+extern void copy_pathspec(struct pathspec *dst, const struct pathspec *src);
 extern void free_pathspec(struct pathspec *);
 
 extern int limit_pathspec_to_literal(void);
