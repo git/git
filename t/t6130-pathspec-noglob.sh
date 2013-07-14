@@ -77,6 +77,12 @@ test_expect_success 'no-glob option matches literally (bracket)' '
 	test_cmp expect actual
 '
 
+test_expect_success 'no-glob option disables :(literal)' '
+	: >expect &&
+	git --literal-pathspecs log --format=%s -- ":(literal)foo" >actual &&
+	test_cmp expect actual
+'
+
 test_expect_success 'no-glob environment variable works' '
 	echo star >expect &&
 	GIT_LITERAL_PATHSPECS=1 git log --format=%s -- "f*" >actual &&

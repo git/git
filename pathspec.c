@@ -103,7 +103,7 @@ static unsigned prefix_pathspec(struct pathspec_item *item,
 	if (literal_global)
 		global_magic |= PATHSPEC_LITERAL;
 
-	if (elt[0] != ':') {
+	if (elt[0] != ':' || literal_global) {
 		; /* nothing to do */
 	} else if (elt[1] == '(') {
 		/* longhand */

@@ -450,8 +450,8 @@ help ...`.
 	linkgit:git-replace[1] for more information.
 
 --literal-pathspecs::
-	Treat pathspecs literally, rather than as glob patterns. This is
-	equivalent to setting the `GIT_LITERAL_PATHSPECS` environment
+	Treat pathspecs literally (i.e. no globbing, no pathspec magic).
+	This is equivalent to setting the `GIT_LITERAL_PATHSPECS` environment
 	variable to `1`.
 
 
