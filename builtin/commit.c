@@ -526,7 +526,6 @@ static void determine_author_info(struct strbuf *author_ident)
 					(lb - strlen(" ") -
 					 (a + strlen("\nauthor "))));
 		email = xmemdupz(lb + strlen("<"), rb - (lb + strlen("<")));
-		date = xmemdupz(rb + strlen("> "), eol - (rb + strlen("> ")));
 		len = eol - (rb + strlen("> "));
 		date = xmalloc(len + 2);
 		*date = '@';
