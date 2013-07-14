@@ -668,7 +668,7 @@ int rerere_forget(struct pathspec *pathspec)
 
 	fd = setup_rerere(&merge_rr, RERERE_NOAUTOUPDATE);
 
-	unmerge_cache(pathspec->raw);
+	unmerge_cache(pathspec);
 	find_conflict(&conflict);
 	for (i = 0; i < conflict.nr; i++) {
 		struct string_list_item *it = &conflict.items[i];
