@@ -546,7 +546,7 @@ int cmd_ls_files(int argc, const char **argv, const char *cmd_prefix)
 		       prefix, argv);
 
 	/* Find common prefix for all pathspec's */
-	max_prefix = common_prefix(pathspec.raw);
+	max_prefix = common_prefix(&pathspec);
 	max_prefix_len = max_prefix ? strlen(max_prefix) : 0;
 
 	/* Treat unmatching pathspec elements as errors */

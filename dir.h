@@ -130,7 +130,7 @@ struct dir_struct {
 #define MATCHED_EXACTLY 3
 extern int simple_length(const char *match);
 extern int no_wildcard(const char *string);
-extern char *common_prefix(const char **pathspec);
+extern char *common_prefix(const struct pathspec *pathspec);
 extern int match_pathspec(const char **pathspec, const char *name, int namelen, int prefix, char *seen);
 extern int match_pathspec_depth(const struct pathspec *pathspec,
 				const char *name, int namelen,

@@ -103,26 +103,25 @@ static int fnmatch_icase_mem(const char *pattern, int patternlen,
 	return match_status;
 }
 
-static size_t common_prefix_len(const char **pathspec)
+static size_t common_prefix_len(const struct pathspec *pathspec)
 {
-	const char *n, *first;
+	int n;
 	size_t max = 0;
-	int literal = limit_pathspec_to_literal();
 
-	if (!pathspec)
-		return max;
+	GUARD_PATHSPEC(pathspec, PATHSPEC_FROMTOP | PATHSPEC_MAXDEPTH);
 
-	first = *pathspec;
-	while ((n = *pathspec++)) {
-		size_t i, len = 0;
-		for (i = 0; first == n || i < max; i++) {
-			char c = n[i];
-			if (!c || c != first[i] || (!literal && is_glob_special(c)))
+	for (n = 0; n < pathspec->nr; n++) {
+		size_t i = 0, len = 0;
+		while (i < pathspec->items[n].nowildcard_len &&
+		       (n == 0 || i < max)) {
+			char c = pathspec->items[n].match[i];
+			if (c != pathspec->items[0].match[i])
 				break;
 			if (c == '/')
 				len = i + 1;
+			i++;
 		}
-		if (first == n || len < max) {
+		if (n == 0 || len < max) {
 			max = len;
 			if (!max)
 				break;
@@ -135,11 +134,11 @@ static size_t common_prefix_len(const char **pathspec)
  * Returns a copy of the longest leading path common among all
  * pathspecs.
  */
-char *common_prefix(const char **pathspec)
+char *common_prefix(const struct pathspec *pathspec)
 {
 	unsigned long len = common_prefix_len(pathspec);
 
-	return len ? xmemdupz(*pathspec, len) : NULL;
+	return len ? xmemdupz(pathspec->items[0].match, len) : NULL;
 }
 
 int fill_directory(struct dir_struct *dir, const struct pathspec *pathspec)
@@ -150,7 +149,7 @@ int fill_directory(struct dir_struct *dir, const struct pathspec *pathspec)
 	 * Calculate common prefix for the pathspec, and
 	 * use that to optimize the directory walk
 	 */
-	len = common_prefix_len(pathspec->raw);
+	len = common_prefix_len(pathspec);
 
 	/* Read the directory and prune it */
 	read_directory(dir, pathspec->nr ? pathspec->raw[0] : "", len, pathspec);
