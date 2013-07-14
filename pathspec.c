@@ -15,8 +15,8 @@
  * If seen[] has not already been written to, it may make sense
  * to use find_pathspecs_matching_against_index() instead.
  */
-void add_pathspec_matches_against_index(const char **pathspec,
-					char *seen, int specs)
+void add_pathspec_matches_against_index(const struct pathspec *pathspec,
+					char *seen)
 {
 	int num_unmatched = 0, i;
 
@@ -26,14 +26,14 @@ void add_pathspec_matches_against_index(const char **pathspec,
 	 * mistakenly think that the user gave a pathspec that did not match
 	 * anything.
 	 */
-	for (i = 0; i < specs; i++)
+	for (i = 0; i < pathspec->nr; i++)
 		if (!seen[i])
 			num_unmatched++;
 	if (!num_unmatched)
 		return;
 	for (i = 0; i < active_nr; i++) {
 		struct cache_entry *ce = active_cache[i];
-		match_pathspec(pathspec, ce->name, ce_namelen(ce), 0, seen);
+		match_pathspec_depth(pathspec, ce->name, ce_namelen(ce), 0, seen);
 	}
 }
 
@@ -45,15 +45,10 @@ void add_pathspec_matches_against_index(const char **pathspec,
  * nature of the "closest" (i.e. most specific) matches which each of the
  * given pathspecs achieves against all items in the index.
  */
-char *find_pathspecs_matching_against_index(const char **pathspec)
+char *find_pathspecs_matching_against_index(const struct pathspec *pathspec)
 {
-	char *seen;
-	int i;
-
-	for (i = 0; pathspec[i];  i++)
-		; /* just counting */
-	seen = xcalloc(i, 1);
-	add_pathspec_matches_against_index(pathspec, seen, i);
+	char *seen = xcalloc(pathspec->nr, 1);
+	add_pathspec_matches_against_index(pathspec, seen);
 	return seen;
 }
 

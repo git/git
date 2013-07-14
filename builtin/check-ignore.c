@@ -94,9 +94,9 @@ static int check_ignore(struct dir_struct *dir,
 	 * should not be ignored, in order to be consistent with
 	 * 'git status', 'git add' etc.
 	 */
-	seen = find_pathspecs_matching_against_index(pathspec.raw);
+	seen = find_pathspecs_matching_against_index(&pathspec);
 	for (i = 0; i < pathspec.nr; i++) {
-		full_path = pathspec.raw[i];
+		full_path = pathspec.items[i].match;
 		exclude = NULL;
 		if (!seen[i]) {
 			exclude = last_exclude_matching(dir, full_path, &dtype);
