@@ -91,10 +91,14 @@ static unsigned prefix_pathspec(struct pathspec_item *item,
 				const char *prefix, int prefixlen,
 				const char *elt)
 {
+	static int literal_global = -1;
 	unsigned magic = 0, short_magic = 0;
 	const char *copyfrom = elt, *long_magic_end = NULL;
 	char *match;
 	int i, pathspec_prefix = -1;
+
+	if (literal_global < 0)
+		literal_global = git_env_bool(GIT_LITERAL_PATHSPECS_ENVIRONMENT, 0);
 
 	if (elt[0] != ':') {
 		; /* nothing to do */
@@ -184,7 +188,7 @@ static unsigned prefix_pathspec(struct pathspec_item *item,
 	if (flags & PATHSPEC_PREFIX_ORIGIN) {
 		struct strbuf sb = STRBUF_INIT;
 		const char *start = elt;
-		if (prefixlen && !limit_pathspec_to_literal()) {
+		if (prefixlen && !literal_global) {
 			/* Preserve the actual prefix length of each pattern */
 			if (long_magic_end) {
 				strbuf_add(&sb, start, long_magic_end - start);
@@ -232,7 +236,7 @@ static unsigned prefix_pathspec(struct pathspec_item *item,
 				     elt, ce_len, ce->name);
 		}
 
-	if (limit_pathspec_to_literal())
+	if (literal_global)
 		item->nowildcard_len = item->len;
 	else {
 		item->nowildcard_len = simple_length(item->match);

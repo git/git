@@ -1473,14 +1473,6 @@ int remove_path(const char *name)
 	return 0;
 }
 
-int limit_pathspec_to_literal(void)
-{
-	static int flag = -1;
-	if (flag < 0)
-		flag = git_env_bool(GIT_LITERAL_PATHSPECS_ENVIRONMENT, 0);
-	return flag;
-}
-
 /*
  * Frees memory within dir which was allocated for exclude lists and
  * the exclude_stack.  Does not free dir itself.
