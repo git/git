@@ -2,10 +2,19 @@
 #
 # Copyright (c) 2007 Andy Parkins
 #
-# An example hook script to mail out commit update information.  This hook
-# sends emails listing new revisions to the repository introduced by the
-# change being reported.  The rule is that (for branch updates) each commit
-# will appear on one email and one email only.
+# An example hook script to mail out commit update information.
+#
+# NOTE: This script is no longer under active development.  There
+# is another script, git-multimail, which is more capable and
+# configurable and is largely backwards-compatible with this script;
+# please see "contrib/hooks/multimail/".  For instructions on how to
+# migrate from post-receive-email to git-multimail, please see
+# "README.migrate-from-post-receive-email" in that directory.
+#
+# This hook sends emails listing new revisions to the repository
+# introduced by the change being reported.  The rule is that (for
+# branch updates) each commit will appear on one email and one email
+# only.
 #
 # This hook is stored in the contrib/hooks directory.  Your distribution
 # will have put this somewhere standard.  You should make this script
