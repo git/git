@@ -367,6 +367,8 @@ int cmd_diff(int argc, const char **argv, const char *prefix)
 		}
 	}
 	if (rev.prune_data.nr) {
+		/* builtin_diff_b_f() */
+		GUARD_PATHSPEC(&rev.prune_data, PATHSPEC_FROMTOP);
 		if (!path)
 			path = rev.prune_data.items[0].match;
 		paths += rev.prune_data.nr;

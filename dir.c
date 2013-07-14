@@ -340,6 +340,8 @@ int match_pathspec_depth(const struct pathspec *ps,
 {
 	int i, retval = 0;
 
+	GUARD_PATHSPEC(ps, PATHSPEC_FROMTOP | PATHSPEC_MAXDEPTH);
+
 	if (!ps->nr) {
 		if (!ps->recursive ||
 		    !(ps->magic & PATHSPEC_MAXDEPTH) ||
