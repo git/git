@@ -203,7 +203,17 @@ static unsigned prefix_pathspec(struct pathspec_item *item,
 	else
 		match = prefix_path(prefix, prefixlen, copyfrom);
 	*raw = item->match = match;
-	item->original = elt;
+	/*
+	 * Prefix the pathspec (keep all magic) and assign to
+	 * original. Useful for passing to another command.
+	 */
+	if (flags & PATHSPEC_PREFIX_ORIGIN) {
+		struct strbuf sb = STRBUF_INIT;
+		strbuf_add(&sb, elt, copyfrom - elt);
+		strbuf_addstr(&sb, match);
+		item->original = strbuf_detach(&sb, NULL);
+	} else
+		item->original = elt;
 	item->len = strlen(item->match);
 
 	if ((flags & PATHSPEC_STRIP_SUBMODULE_SLASH_CHEAP) &&

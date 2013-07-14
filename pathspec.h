@@ -43,6 +43,7 @@ struct pathspec {
  * safer than _SLASH_CHEAP and also more expensive.
  */
 #define PATHSPEC_STRIP_SUBMODULE_SLASH_EXPENSIVE (1<<5)
+#define PATHSPEC_PREFIX_ORIGIN (1<<6)
 
 extern int init_pathspec(struct pathspec *, const char **);
 extern void parse_pathspec(struct pathspec *pathspec,
