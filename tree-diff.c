@@ -202,7 +202,7 @@ static void try_to_follow_renames(struct tree_desc *t1, struct tree_desc *t2, co
 	 * path. Magic that matches more than one path is not
 	 * supported.
 	 */
-	GUARD_PATHSPEC(&opt->pathspec, PATHSPEC_FROMTOP);
+	GUARD_PATHSPEC(&opt->pathspec, PATHSPEC_FROMTOP | PATHSPEC_LITERAL);
 #if 0
 	/*
 	 * We should reject wildcards as well. Unfortunately we

@@ -70,6 +70,7 @@ static struct pathspec_magic {
 	const char *name;
 } pathspec_magic[] = {
 	{ PATHSPEC_FROMTOP, '/', "top" },
+	{ PATHSPEC_LITERAL,   0, "literal" },
 };
 
 /*
@@ -92,13 +93,15 @@ static unsigned prefix_pathspec(struct pathspec_item *item,
 				const char *elt)
 {
 	static int literal_global = -1;
-	unsigned magic = 0, short_magic = 0;
+	unsigned magic = 0, short_magic = 0, global_magic = 0;
 	const char *copyfrom = elt, *long_magic_end = NULL;
 	char *match;
 	int i, pathspec_prefix = -1;
 
 	if (literal_global < 0)
 		literal_global = git_env_bool(GIT_LITERAL_PATHSPECS_ENVIRONMENT, 0);
+	if (literal_global)
+		global_magic |= PATHSPEC_LITERAL;
 
 	if (elt[0] != ':') {
 		; /* nothing to do */
@@ -164,6 +167,7 @@ static unsigned prefix_pathspec(struct pathspec_item *item,
 
 	magic |= short_magic;
 	*p_short_magic = short_magic;
+	magic |= global_magic;
 
 	if (pathspec_prefix >= 0 &&
 	    (prefixlen || (prefix && *prefix)))
@@ -236,7 +240,7 @@ static unsigned prefix_pathspec(struct pathspec_item *item,
 				     elt, ce_len, ce->name);
 		}
 
-	if (literal_global)
+	if (magic & PATHSPEC_LITERAL)
 		item->nowildcard_len = item->len;
 	else {
 		item->nowildcard_len = simple_length(item->match);
@@ -402,7 +406,8 @@ const char **get_pathspec(const char *prefix, const char **pathspec)
 {
 	struct pathspec ps;
 	parse_pathspec(&ps,
-		       PATHSPEC_ALL_MAGIC & ~PATHSPEC_FROMTOP,
+		       PATHSPEC_ALL_MAGIC &
+		       ~(PATHSPEC_FROMTOP | PATHSPEC_LITERAL),
 		       PATHSPEC_PREFER_CWD,
 		       prefix, pathspec);
 	return ps._raw;

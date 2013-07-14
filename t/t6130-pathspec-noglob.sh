@@ -47,15 +47,33 @@ test_expect_success 'no-glob option matches literally (vanilla)' '
 	test_cmp expect actual
 '
 
+test_expect_success 'no-glob option matches literally (vanilla)' '
+	echo vanilla >expect &&
+	git log --format=%s -- ":(literal)foo" >actual &&
+	test_cmp expect actual
+'
+
 test_expect_success 'no-glob option matches literally (star)' '
 	echo star >expect &&
 	git --literal-pathspecs log --format=%s -- "f*" >actual &&
 	test_cmp expect actual
 '
 
+test_expect_success 'no-glob option matches literally (star)' '
+	echo star >expect &&
+	git log --format=%s -- ":(literal)f*" >actual &&
+	test_cmp expect actual
+'
+
 test_expect_success 'no-glob option matches literally (bracket)' '
 	echo bracket >expect &&
 	git --literal-pathspecs log --format=%s -- "f[o][o]" >actual &&
+	test_cmp expect actual
+'
+
+test_expect_success 'no-glob option matches literally (bracket)' '
+	echo bracket >expect &&
+	git log --format=%s -- ":(literal)f[o][o]" >actual &&
 	test_cmp expect actual
 '
 

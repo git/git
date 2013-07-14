@@ -108,7 +108,10 @@ static size_t common_prefix_len(const struct pathspec *pathspec)
 	int n;
 	size_t max = 0;
 
-	GUARD_PATHSPEC(pathspec, PATHSPEC_FROMTOP | PATHSPEC_MAXDEPTH);
+	GUARD_PATHSPEC(pathspec,
+		       PATHSPEC_FROMTOP |
+		       PATHSPEC_MAXDEPTH |
+		       PATHSPEC_LITERAL);
 
 	for (n = 0; n < pathspec->nr; n++) {
 		size_t i = 0, len = 0;
@@ -232,7 +235,10 @@ int match_pathspec_depth(const struct pathspec *ps,
 {
 	int i, retval = 0;
 
-	GUARD_PATHSPEC(ps, PATHSPEC_FROMTOP | PATHSPEC_MAXDEPTH);
+	GUARD_PATHSPEC(ps,
+		       PATHSPEC_FROMTOP |
+		       PATHSPEC_MAXDEPTH |
+		       PATHSPEC_LITERAL);
 
 	if (!ps->nr) {
 		if (!ps->recursive ||
@@ -1288,7 +1294,10 @@ int read_directory(struct dir_struct *dir, const char *path, int len, const stru
 	 * Check out create_simplify()
 	 */
 	if (pathspec)
-		GUARD_PATHSPEC(pathspec, PATHSPEC_FROMTOP | PATHSPEC_MAXDEPTH);
+		GUARD_PATHSPEC(pathspec,
+			       PATHSPEC_FROMTOP |
+			       PATHSPEC_MAXDEPTH |
+			       PATHSPEC_LITERAL);
 
 	if (has_symlink_leading_path(path, len))
 		return dir->nr;
