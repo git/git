@@ -133,12 +133,13 @@ static void update_index_from_diff(struct diff_queue_struct *q,
 	}
 }
 
-static int read_from_tree(const char **pathspec, unsigned char *tree_sha1)
+static int read_from_tree(const struct pathspec *pathspec,
+			  unsigned char *tree_sha1)
 {
 	struct diff_options opt;
 
 	memset(&opt, 0, sizeof(opt));
-	diff_tree_setup_paths(pathspec, &opt);
+	copy_pathspec(&opt.pathspec, pathspec);
 	opt.output_format = DIFF_FORMAT_CALLBACK;
 	opt.format_callback = update_index_from_diff;
 
@@ -147,7 +148,7 @@ static int read_from_tree(const char **pathspec, unsigned char *tree_sha1)
 		return 1;
 	diffcore_std(&opt);
 	diff_flush(&opt);
-	diff_tree_release_paths(&opt);
+	free_pathspec(&opt.pathspec);
 
 	return 0;
 }
@@ -332,7 +333,7 @@ int cmd_reset(int argc, const char **argv, const char *prefix)
 		struct lock_file *lock = xcalloc(1, sizeof(struct lock_file));
 		int newfd = hold_locked_index(lock, 1);
 		if (reset_type == MIXED) {
-			if (read_from_tree(pathspec.raw, sha1))
+			if (read_from_tree(&pathspec, sha1))
 				return 1;
 		} else {
 			int err = reset_index(sha1, reset_type, quiet);
