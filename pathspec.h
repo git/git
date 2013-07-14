@@ -33,6 +33,16 @@ struct pathspec {
 #define PATHSPEC_MAXDEPTH_VALID (1<<2) /* max_depth field is valid */
 /* strip the trailing slash if the given path is a gitlink */
 #define PATHSPEC_STRIP_SUBMODULE_SLASH_CHEAP (1<<3)
+/* die if a symlink is part of the given path's directory */
+#define PATHSPEC_SYMLINK_LEADING_PATH (1<<4)
+/*
+ * This is like a combination of ..LEADING_PATH and .._SLASH_CHEAP
+ * (but not the same): it strips the trailing slash if the given path
+ * is a gitlink but also checks and dies if gitlink is part of the
+ * leading path (i.e. the given path goes beyond a submodule). It's
+ * safer than _SLASH_CHEAP and also more expensive.
+ */
+#define PATHSPEC_STRIP_SUBMODULE_SLASH_EXPENSIVE (1<<5)
 
 extern int init_pathspec(struct pathspec *, const char **);
 extern void parse_pathspec(struct pathspec *pathspec,

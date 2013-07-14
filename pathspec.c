@@ -214,6 +214,26 @@ static unsigned prefix_pathspec(struct pathspec_item *item,
 		match[item->len] = '\0';
 	}
 
+	if (flags & PATHSPEC_STRIP_SUBMODULE_SLASH_EXPENSIVE)
+		for (i = 0; i < active_nr; i++) {
+			struct cache_entry *ce = active_cache[i];
+			int ce_len = ce_namelen(ce);
+
+			if (!S_ISGITLINK(ce->ce_mode))
+				continue;
+
+			if (item->len <= ce_len || match[ce_len] != '/' ||
+			    memcmp(ce->name, match, ce_len))
+				continue;
+			if (item->len == ce_len + 1) {
+				/* strip trailing slash */
+				item->len--;
+				match[item->len] = '\0';
+			} else
+				die (_("Pathspec '%s' is in submodule '%.*s'"),
+				     elt, ce_len, ce->name);
+		}
+
 	if (limit_pathspec_to_literal())
 		item->nowildcard_len = item->len;
 	else
@@ -329,6 +349,12 @@ void parse_pathspec(struct pathspec *pathspec,
 			unsupported_magic(entry,
 					  item[i].magic & magic_mask,
 					  short_magic);
+
+		if ((flags & PATHSPEC_SYMLINK_LEADING_PATH) &&
+		    has_symlink_leading_path(item[i].match, item[i].len)) {
+			die(_("pathspec '%s' is beyond a symbolic link"), entry);
+		}
+
 		if (item[i].nowildcard_len < item[i].len)
 			pathspec->has_wildcard = 1;
 		pathspec->magic |= item[i].magic;
