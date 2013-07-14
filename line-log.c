@@ -747,7 +747,7 @@ void line_log_init(struct rev_info *rev, const char *prefix, struct string_list 
 			r = r->next;
 		}
 		paths[count] = NULL;
-		init_pathspec(&rev->diffopt.pathspec, paths);
+		parse_pathspec(&rev->diffopt.pathspec, 0, 0, "", paths);
 		free(paths);
 	}
 }
