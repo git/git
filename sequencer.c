@@ -474,7 +474,7 @@ static int do_pick_commit(struct commit *commit, struct replay_opts *opts)
 	struct commit_message msg = { NULL, NULL, NULL, NULL, NULL };
 	char *defmsg = NULL;
 	struct strbuf msgbuf = STRBUF_INIT;
-	int res, unborn = 0;
+	int res, unborn = 0, allow;
 
 	if (opts->no_commit) {
 		/*
@@ -624,14 +624,18 @@ static int do_pick_commit(struct commit *commit, struct replay_opts *opts)
 		      msg.subject);
 		print_advice(res == 1, opts);
 		rerere(opts->allow_rerere_auto);
-	} else {
-		int allow = allow_empty(opts, commit);
-		if (allow < 0)
-			return allow;
-		if (!opts->no_commit)
-			res = run_git_commit(defmsg, opts, allow);
+		goto leave;
 	}
 
+	allow = allow_empty(opts, commit);
+	if (allow < 0) {
+		res = allow;
+		goto leave;
+	}
+	if (!opts->no_commit)
+		res = run_git_commit(defmsg, opts, allow);
+
+leave:
 	free_message(&msg);
 	free(defmsg);
 
