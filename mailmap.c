@@ -337,7 +337,7 @@ int map_user(struct string_list *map,
 				*name = mi->name;
 				*namelen = strlen(*name);
 		}
-		debug_mm("map_user:  to '%.*s' <.*%s>\n", *namelen, *name,
+		debug_mm("map_user:  to '%.*s' <%.*s>\n", *namelen, *name,
 				 *emaillen, *email);
 		return 1;
 	}
