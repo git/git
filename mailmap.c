@@ -309,7 +309,7 @@ int map_user(struct string_list *map,
 	struct mailmap_entry *me;
 
 	debug_mm("map_user: map '%.*s' <%.*s>\n",
-		 *name, *namelen, *emaillen, *email);
+		 *namelen, *name, *emaillen, *email);
 
 	item = lookup_prefix(map, *email, *emaillen);
 	if (item != NULL) {
