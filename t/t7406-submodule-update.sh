@@ -294,6 +294,35 @@ test_expect_success 'submodule update - checkout in .git/config' '
 	)
 '
 
+test_expect_success 'submodule update - command in .git/config' '
+	(cd super &&
+	 git config submodule.submodule.update "!git checkout"
+	) &&
+	(cd super/submodule &&
+	  git reset --hard HEAD^
+	) &&
+	(cd super &&
+	 (cd submodule &&
+	  compare_head
+	 ) &&
+	 git submodule update submodule &&
+	 cd submodule &&
+	 ! compare_head
+	)
+'
+
+test_expect_success 'submodule update - command in .git/config catches failure' '
+	(cd super &&
+	 git config submodule.submodule.update "!false"
+	) &&
+	(cd super/submodule &&
+	  git reset --hard HEAD^
+	) &&
+	(cd super &&
+	 test_must_fail git submodule update submodule
+	)
+'
+
 test_expect_success 'submodule init picks up rebase' '
 	(cd super &&
 	 git config -f .gitmodules submodule.rebasing.update rebase &&

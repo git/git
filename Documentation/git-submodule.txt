@@ -159,7 +159,9 @@ update::
 	This will make the submodules HEAD be detached unless `--rebase` or
 	`--merge` is specified or the key `submodule.$name.update` is set to
 	`rebase`, `merge` or `none`. `none` can be overridden by specifying
-	`--checkout`.
+	`--checkout`. Setting the key `submodule.$name.update` to `!command`
+	will cause `command` to be run. `command` can be any arbitrary shell
+	command that takes a single argument, namely the sha1 to update to.
 +
 If the submodule is not yet initialized, and you just want to use the
 setting as stored in .gitmodules, you can automatically initialize the
