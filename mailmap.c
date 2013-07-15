@@ -5,8 +5,10 @@
 #define DEBUG_MAILMAP 0
 #if DEBUG_MAILMAP
 #define debug_mm(...) fprintf(stderr, __VA_ARGS__)
+#define debug_str(X) ((X) ? (X) : "(none)")
 #else
 static inline void debug_mm(const char *format, ...) {}
+static inline const char *debug_str(const char *s) { return s; }
 #endif
 
 const char *git_mailmap_file;
@@ -29,7 +31,7 @@ struct mailmap_entry {
 static void free_mailmap_info(void *p, const char *s)
 {
 	struct mailmap_info *mi = (struct mailmap_info *)p;
-	debug_mm("mailmap: -- complex: '%s' -> '%s' <%s>\n", s, mi->name, mi->email);
+	debug_mm("mailmap: -- complex: '%s' -> '%s' <%s>\n", s, debug_str(mi->name), debug_str(mi->email));
 	free(mi->name);
 	free(mi->email);
 }
@@ -38,7 +40,8 @@ static void free_mailmap_entry(void *p, const char *s)
 {
 	struct mailmap_entry *me = (struct mailmap_entry *)p;
 	debug_mm("mailmap: removing entries for <%s>, with %d sub-entries\n", s, me->namemap.nr);
-	debug_mm("mailmap: - simple: '%s' <%s>\n", me->name, me->email);
+	debug_mm("mailmap: - simple: '%s' <%s>\n", debug_str(me->name), debug_str(me->email));
+
 	free(me->name);
 	free(me->email);
 
@@ -94,7 +97,7 @@ static void add_mapping(struct string_list *map,
 	}
 
 	debug_mm("mailmap:  '%s' <%s> -> '%s' <%s>\n",
-		 old_name, old_email, new_name, new_email);
+		 debug_str(old_name), old_email, debug_str(new_name), debug_str(new_email));
 }
 
 static char *parse_name_and_email(char *buffer, char **name,
@@ -309,7 +312,7 @@ int map_user(struct string_list *map,
 	struct mailmap_entry *me;
 
 	debug_mm("map_user: map '%.*s' <%.*s>\n",
-		 (int)*namelen, *name, (int)*emaillen, *email);
+		 (int)*namelen, debug_str(*name), (int)*emaillen, debug_str(*email));
 
 	item = lookup_prefix(map, *email, *emaillen);
 	if (item != NULL) {
@@ -337,8 +340,8 @@ int map_user(struct string_list *map,
 				*name = mi->name;
 				*namelen = strlen(*name);
 		}
-		debug_mm("map_user:  to '%.*s' <%.*s>\n", (int)*namelen, *name,
-				 (int)*emaillen, *email);
+		debug_mm("map_user:  to '%.*s' <%.*s>\n", (int)*namelen, debug_str(*name),
+				 (int)*emaillen, debug_str(*email));
 		return 1;
 	}
 	debug_mm("map_user:  --\n");
