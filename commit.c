@@ -581,7 +581,7 @@ static int compare_commits_by_author_date(const void *a_, const void *b_,
 	return 0;
 }
 
-static int compare_commits_by_commit_date(const void *a_, const void *b_, void *unused)
+int compare_commits_by_commit_date(const void *a_, const void *b_, void *unused)
 {
 	const struct commit *a = a_, *b = b_;
 	/* newer commits with larger date first */

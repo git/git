@@ -254,4 +254,6 @@ extern void print_commit_list(struct commit_list *list,
  */
 extern void check_commit_signature(const struct commit* commit, struct signature_check *sigc);
 
+int compare_commits_by_commit_date(const void *a_, const void *b_, void *unused);
+
 #endif /* COMMIT_H */
