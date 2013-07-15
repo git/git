@@ -963,4 +963,20 @@ test_expect_success 'submodule with UTF-8 name' '
 	git submodule >&2 &&
 	test -n "$(git submodule | grep "$svname")"
 '
+
+test_expect_success 'submodule add clone shallow submodule' '
+	mkdir super &&
+	pwd=$(pwd)
+	(
+		cd super &&
+		git init &&
+		git submodule add --depth=1 file://"$pwd"/example2 submodule &&
+		(
+			cd submodule &&
+			test 1 = $(git log --oneline | wc -l)
+		)
+	)
+'
+
+
 test_done
