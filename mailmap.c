@@ -31,7 +31,8 @@ struct mailmap_entry {
 static void free_mailmap_info(void *p, const char *s)
 {
 	struct mailmap_info *mi = (struct mailmap_info *)p;
-	debug_mm("mailmap: -- complex: '%s' -> '%s' <%s>\n", s, debug_str(mi->name), debug_str(mi->email));
+	debug_mm("mailmap: -- complex: '%s' -> '%s' <%s>\n",
+		 s, debug_str(mi->name), debug_str(mi->email));
 	free(mi->name);
 	free(mi->email);
 }
@@ -39,8 +40,10 @@ static void free_mailmap_info(void *p, const char *s)
 static void free_mailmap_entry(void *p, const char *s)
 {
 	struct mailmap_entry *me = (struct mailmap_entry *)p;
-	debug_mm("mailmap: removing entries for <%s>, with %d sub-entries\n", s, me->namemap.nr);
-	debug_mm("mailmap: - simple: '%s' <%s>\n", debug_str(me->name), debug_str(me->email));
+	debug_mm("mailmap: removing entries for <%s>, with %d sub-entries\n",
+		 s, me->namemap.nr);
+	debug_mm("mailmap: - simple: '%s' <%s>\n",
+		 debug_str(me->name), debug_str(me->email));
 
 	free(me->name);
 	free(me->email);
@@ -50,7 +53,8 @@ static void free_mailmap_entry(void *p, const char *s)
 }
 
 static void add_mapping(struct string_list *map,
-			char *new_name, char *new_email, char *old_name, char *old_email)
+			char *new_name, char *new_email,
+			char *old_name, char *old_email)
 {
 	struct mailmap_entry *me;
 	int index;
@@ -76,7 +80,8 @@ static void add_mapping(struct string_list *map,
 	}
 
 	if (old_name == NULL) {
-		debug_mm("mailmap: adding (simple) entry for %s at index %d\n", old_email, index);
+		debug_mm("mailmap: adding (simple) entry for %s at index %d\n",
+			 old_email, index);
 		/* Replace current name and new email for simple entry */
 		if (new_name) {
 			free(me->name);
@@ -88,7 +93,8 @@ static void add_mapping(struct string_list *map,
 		}
 	} else {
 		struct mailmap_info *mi = xcalloc(1, sizeof(struct mailmap_info));
-		debug_mm("mailmap: adding (complex) entry for %s at index %d\n", old_email, index);
+		debug_mm("mailmap: adding (complex) entry for %s at index %d\n",
+			 old_email, index);
 		if (new_name)
 			mi->name = xstrdup(new_name);
 		if (new_email)
@@ -97,11 +103,12 @@ static void add_mapping(struct string_list *map,
 	}
 
 	debug_mm("mailmap:  '%s' <%s> -> '%s' <%s>\n",
-		 debug_str(old_name), old_email, debug_str(new_name), debug_str(new_email));
+		 debug_str(old_name), old_email,
+		 debug_str(new_name), debug_str(new_email));
 }
 
 static char *parse_name_and_email(char *buffer, char **name,
-		char **email, int allow_empty_email)
+				  char **email, int allow_empty_email)
 {
 	char *left, *right, *nstart, *nend;
 	*name = *email = NULL;
@@ -305,21 +312,25 @@ static struct string_list_item *lookup_prefix(struct string_list *map,
 }
 
 int map_user(struct string_list *map,
-			 const char **email, size_t *emaillen,
-			 const char **name, size_t *namelen)
+	     const char **email, size_t *emaillen,
+	     const char **name, size_t *namelen)
 {
 	struct string_list_item *item;
 	struct mailmap_entry *me;
 
 	debug_mm("map_user: map '%.*s' <%.*s>\n",
-		 (int)*namelen, debug_str(*name), (int)*emaillen, debug_str(*email));
+		 (int)*namelen, debug_str(*name),
+		 (int)*emaillen, debug_str(*email));
 
 	item = lookup_prefix(map, *email, *emaillen);
 	if (item != NULL) {
 		me = (struct mailmap_entry *)item->util;
 		if (me->namemap.nr) {
-			/* The item has multiple items, so we'll look up on name too */
-			/* If the name is not found, we choose the simple entry      */
+			/*
+			 * The item has multiple items, so we'll look up on
+			 * name too. If the name is not found, we choose the
+			 * simple entry.
+			 */
 			struct string_list_item *subitem;
 			subitem = lookup_prefix(&me->namemap, *name, *namelen);
 			if (subitem)
@@ -340,8 +351,9 @@ int map_user(struct string_list *map,
 				*name = mi->name;
 				*namelen = strlen(*name);
 		}
-		debug_mm("map_user:  to '%.*s' <%.*s>\n", (int)*namelen, debug_str(*name),
-				 (int)*emaillen, debug_str(*email));
+		debug_mm("map_user:  to '%.*s' <%.*s>\n",
+			 (int)*namelen, debug_str(*name),
+			 (int)*emaillen, debug_str(*email));
 		return 1;
 	}
 	debug_mm("map_user:  --\n");
