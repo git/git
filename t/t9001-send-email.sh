@@ -171,6 +171,81 @@ Result: OK
 EOF
 "
 
+test_suppress_self () {
+	test_commit $3 &&
+	test_when_finished "git reset --hard HEAD^" &&
+
+	write_script cccmd-sed <<-EOF &&
+		sed -n -e s/^cccmd--//p "\$1"
+	EOF
+
+	git commit --amend --author="$1 <$2>" -F - &&
+	clean_fake_sendmail &&
+	git format-patch --stdout -1 >"suppress-self-$3.patch" &&
+
+	git send-email --from="$1 <$2>" \
+		--to=nobody@example.com \
+		--cc-cmd=./cccmd-sed \
+		--suppress-cc=self \
+		--smtp-server="$(pwd)/fake.sendmail" \
+		suppress-self-$3.patch &&
+
+	mv msgtxt1 msgtxt1-$3 &&
+	sed -e '/^$/q' msgtxt1-$3 >"msghdr1-$3" &&
+	>"expected-no-cc-$3" &&
+
+	(grep '^Cc:' msghdr1-$3 >"actual-no-cc-$3";
+	 test_cmp expected-no-cc-$3 actual-no-cc-$3)
+}
+
+test_suppress_self_unquoted () {
+	test_suppress_self "$1" "$2" "unquoted-$3" <<-EOF
+		test suppress-cc.self unquoted-$3 with name $1 email $2
+
+		unquoted-$3
+
+		cccmd--$1 <$2>
+
+		Cc: $1 <$2>
+		Signed-off-by: $1 <$2>
+	EOF
+}
+
+test_suppress_self_quoted () {
+	test_suppress_self "$1" "$2" "quoted-$3" <<-EOF
+		test suppress-cc.self quoted-$3 with name $1 email $2
+
+		quoted-$3
+
+		cccmd--"$1" <$2>
+
+		Cc: $1 <$2>
+		Cc: "$1" <$2>
+		Signed-off-by: $1 <$2>
+		Signed-off-by: "$1" <$2>
+	EOF
+}
+
+test_expect_success $PREREQ 'self name is suppressed' "
+	test_suppress_self_unquoted 'A U Thor' 'author@example.com' \
+		'self_name_suppressed'
+"
+
+test_expect_success $PREREQ 'self name with dot is suppressed' "
+	test_suppress_self_quoted 'A U. Thor' 'author@example.com' \
+		'self_name_dot_suppressed'
+"
+
+test_expect_success $PREREQ 'non-ascii self name is suppressed' "
+	test_suppress_self_quoted 'Füñný Nâmé' 'odd_?=mail@example.com' \
+		'non_ascii_self_suppressed'
+"
+
+test_expect_success $PREREQ 'sanitized self name is suppressed' "
+	test_suppress_self_unquoted '\"A U. Thor\"' 'author@example.com' \
+		'self_name_sanitized_suppressed'
+"
+
 test_expect_success $PREREQ 'Show all headers' '
 	git send-email \
 		--dry-run \
@@ -879,6 +954,20 @@ test_expect_success $PREREQ 'utf8 author is correctly passed on' '
 	  --smtp-server="$(pwd)/fake.sendmail" \
 	  funny_name.patch &&
 	grep "^From: Füñný Nâmé <odd_?=mail@example.com>" msgtxt1
+'
+
+test_expect_success $PREREQ 'utf8 sender is not duplicated' '
+	clean_fake_sendmail &&
+	test_commit weird_sender &&
+	test_when_finished "git reset --hard HEAD^" &&
+	git commit --amend --author "Füñný Nâmé <odd_?=mail@example.com>" &&
+	git format-patch --stdout -1 >funny_name.patch &&
+	git send-email --from="Füñný Nâmé <odd_?=mail@example.com>" \
+	  --to=nobody@example.com \
+	  --smtp-server="$(pwd)/fake.sendmail" \
+	  funny_name.patch &&
+	grep "^From: " msgtxt1 >msgfrom &&
+	test_line_count = 1 msgfrom
 '
 
 test_expect_success $PREREQ 'sendemail.composeencoding works' '
