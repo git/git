@@ -266,10 +266,17 @@ case "$merge_head" in
 	;;
 esac
 
+# Pulling into unborn branch: a shorthand for branching off
+# FETCH_HEAD, for lazy typers.
 if test -z "$orig_head"
 then
-	git update-ref -m "initial pull" HEAD $merge_head "$curr_head" &&
-	git read-tree -m -u HEAD || exit 1
+	# Two-way merge: we claim the index is based on an empty tree,
+	# and try to fast-forward to HEAD.  This ensures we will not
+	# lose index/worktree changes that the user already made on
+	# the unborn branch.
+	empty_tree=4b825dc642cb6eb9a060e54bf8d69288fbee4904
+	git read-tree -m -u $empty_tree $merge_head &&
+	git update-ref -m "initial pull" HEAD $merge_head "$curr_head"
 	exit
 fi
 
