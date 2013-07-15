@@ -1188,9 +1188,11 @@ X-Mailer: git-send-email $gitversion
 		else {
 			require Net::SMTP;
 			$smtp_domain ||= maildomain();
-			$smtp ||= Net::SMTP->new(smtp_host_string(),
+			$smtp_server_port ||= 25;
+			$smtp ||= Net::SMTP->new($smtp_server,
 						 Hello => $smtp_domain,
-						 Debug => $debug_net_smtp);
+						 Debug => $debug_net_smtp,
+						 Port => $smtp_server_port);
 			if ($smtp_encryption eq 'tls' && $smtp) {
 				require Net::SMTP::SSL;
 				$smtp->command('STARTTLS');
