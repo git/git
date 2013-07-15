@@ -6,6 +6,7 @@
 #include "strbuf.h"
 #include "decorate.h"
 #include "gpg-interface.h"
+#include "string-list.h"
 
 struct commit_list {
 	struct commit *item;
@@ -79,6 +80,9 @@ enum cmit_fmt {
 };
 
 struct pretty_print_context {
+	/*
+	 * Callers should tweak these to change the behavior of pp_* functions.
+	 */
 	enum cmit_fmt fmt;
 	int abbrev;
 	const char *subject;
@@ -92,6 +96,15 @@ struct pretty_print_context {
 	const char *output_encoding;
 	struct string_list *mailmap;
 	int color;
+	struct ident_split *from_ident;
+
+	/*
+	 * Fields below here are manipulated internally by pp_* functions and
+	 * should not be counted on by callers.
+	 */
+
+	/* Manipulated by the pp_* functions internally. */
+	struct string_list in_body_headers;
 };
 
 struct userformat_want {
@@ -111,20 +124,20 @@ extern void userformat_find_requirements(const char *fmt, struct userformat_want
 extern void format_commit_message(const struct commit *commit,
 				  const char *format, struct strbuf *sb,
 				  const struct pretty_print_context *context);
-extern void pretty_print_commit(const struct pretty_print_context *pp,
+extern void pretty_print_commit(struct pretty_print_context *pp,
 				const struct commit *commit,
 				struct strbuf *sb);
 extern void pp_commit_easy(enum cmit_fmt fmt, const struct commit *commit,
 			   struct strbuf *sb);
-void pp_user_info(const struct pretty_print_context *pp,
+void pp_user_info(struct pretty_print_context *pp,
 		  const char *what, struct strbuf *sb,
 		  const char *line, const char *encoding);
-void pp_title_line(const struct pretty_print_context *pp,
+void pp_title_line(struct pretty_print_context *pp,
 		   const char **msg_p,
 		   struct strbuf *sb,
 		   const char *encoding,
 		   int need_8bit_cte);
-void pp_remainder(const struct pretty_print_context *pp,
+void pp_remainder(struct pretty_print_context *pp,
 		  const char **msg_p,
 		  struct strbuf *sb,
 		  int indent);

@@ -406,7 +406,7 @@ static const char *show_ident_date(const struct ident_split *ident,
 	return show_date(date, tz, mode);
 }
 
-void pp_user_info(const struct pretty_print_context *pp,
+void pp_user_info(struct pretty_print_context *pp,
 		  const char *what, struct strbuf *sb,
 		  const char *line, const char *encoding)
 {
@@ -432,6 +432,23 @@ void pp_user_info(const struct pretty_print_context *pp,
 		map_user(pp->mailmap, &mailbuf, &maillen, &namebuf, &namelen);
 
 	if (pp->fmt == CMIT_FMT_EMAIL) {
+		if (pp->from_ident) {
+			struct strbuf buf = STRBUF_INIT;
+
+			strbuf_addstr(&buf, "From: ");
+			strbuf_add(&buf, namebuf, namelen);
+			strbuf_addstr(&buf, " <");
+			strbuf_add(&buf, mailbuf, maillen);
+			strbuf_addstr(&buf, ">\n");
+			string_list_append(&pp->in_body_headers,
+					   strbuf_detach(&buf, NULL));
+
+			mailbuf = pp->from_ident->mail_begin;
+			maillen = pp->from_ident->mail_end - mailbuf;
+			namebuf = pp->from_ident->name_begin;
+			namelen = pp->from_ident->name_end - namebuf;
+		}
+
 		strbuf_addstr(sb, "From: ");
 		if (needs_rfc2047_encoding(namebuf, namelen, RFC2047_ADDRESS)) {
 			add_rfc2047(sb, namebuf, namelen,
@@ -1514,7 +1531,7 @@ void format_commit_message(const struct commit *commit,
 	free(context.signature_check.signer);
 }
 
-static void pp_header(const struct pretty_print_context *pp,
+static void pp_header(struct pretty_print_context *pp,
 		      const char *encoding,
 		      const struct commit *commit,
 		      const char **msg_p,
@@ -1575,7 +1592,7 @@ static void pp_header(const struct pretty_print_context *pp,
 	}
 }
 
-void pp_title_line(const struct pretty_print_context *pp,
+void pp_title_line(struct pretty_print_context *pp,
 		   const char **msg_p,
 		   struct strbuf *sb,
 		   const char *encoding,
@@ -1602,6 +1619,16 @@ void pp_title_line(const struct pretty_print_context *pp,
 	}
 	strbuf_addch(sb, '\n');
 
+	if (need_8bit_cte == 0) {
+		int i;
+		for (i = 0; i < pp->in_body_headers.nr; i++) {
+			if (has_non_ascii(pp->in_body_headers.items[i].string)) {
+				need_8bit_cte = 1;
+				break;
+			}
+		}
+	}
+
 	if (need_8bit_cte > 0) {
 		const char *header_fmt =
 			"MIME-Version: 1.0\n"
@@ -1615,10 +1642,21 @@ void pp_title_line(const struct pretty_print_context *pp,
 	if (pp->fmt == CMIT_FMT_EMAIL) {
 		strbuf_addch(sb, '\n');
 	}
+
+	if (pp->in_body_headers.nr) {
+		int i;
+		for (i = 0; i < pp->in_body_headers.nr; i++) {
+			strbuf_addstr(sb, pp->in_body_headers.items[i].string);
+			free(pp->in_body_headers.items[i].string);
+		}
+		string_list_clear(&pp->in_body_headers, 0);
+		strbuf_addch(sb, '\n');
+	}
+
 	strbuf_release(&title);
 }
 
-void pp_remainder(const struct pretty_print_context *pp,
+void pp_remainder(struct pretty_print_context *pp,
 		  const char **msg_p,
 		  struct strbuf *sb,
 		  int indent)
@@ -1650,7 +1688,7 @@ void pp_remainder(const struct pretty_print_context *pp,
 	}
 }
 
-void pretty_print_commit(const struct pretty_print_context *pp,
+void pretty_print_commit(struct pretty_print_context *pp,
 			 const struct commit *commit,
 			 struct strbuf *sb)
 {

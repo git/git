@@ -144,6 +144,7 @@ struct rev_info {
 	int		numbered_files;
 	int		reroll_count;
 	char		*message_id;
+	struct ident_split from_ident;
 	struct string_list *ref_message_ids;
 	int		add_signoff;
 	const char	*extra_headers;
