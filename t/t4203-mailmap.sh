@@ -247,7 +247,7 @@ test_expect_success 'cleanup after mailmap.blob tests' '
 	rm -f .mailmap
 '
 
-test_expect_failure 'single-character name' '
+test_expect_success 'single-character name' '
 	echo "     1	A <author@example.com>" >expect &&
 	echo "     1	nick1 <bugs@company.xx>" >>expect &&
 	echo "A <author@example.com>" >.mailmap &&

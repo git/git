@@ -122,7 +122,7 @@ static char *parse_name_and_email(char *buffer, char **name,
 	while (nend > nstart && isspace(*nend))
 		--nend;
 
-	*name = (nstart < nend ? nstart : NULL);
+	*name = (nstart <= nend ? nstart : NULL);
 	*email = left+1;
 	*(nend+1) = '\0';
 	*right++ = '\0';
