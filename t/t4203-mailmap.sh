@@ -256,7 +256,7 @@ test_expect_success 'single-character name' '
 	test_cmp expect actual
 '
 
-test_expect_failure 'preserve canonical email case' '
+test_expect_success 'preserve canonical email case' '
 	echo "     1	A U Thor <AUTHOR@example.com>" >expect &&
 	echo "     1	nick1 <bugs@company.xx>" >>expect &&
 	echo "<AUTHOR@example.com> <author@example.com>" >.mailmap &&

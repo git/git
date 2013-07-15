@@ -51,14 +51,6 @@ static void add_mapping(struct string_list *map,
 {
 	struct mailmap_entry *me;
 	int index;
-	char *p;
-
-	if (old_email)
-		for (p = old_email; *p; p++)
-			*p = tolower(*p);
-	if (new_email)
-		for (p = new_email; *p; p++)
-			*p = tolower(*p);
 
 	if (old_email == NULL) {
 		old_email = new_email;
@@ -68,13 +60,17 @@ static void add_mapping(struct string_list *map,
 	if ((index = string_list_find_insert_index(map, old_email, 1)) < 0) {
 		/* mailmap entry exists, invert index value */
 		index = -1 - index;
+		me = (struct mailmap_entry *)map->items[index].util;
 	} else {
 		/* create mailmap entry */
-		struct string_list_item *item = string_list_insert_at_index(map, index, old_email);
-		item->util = xcalloc(1, sizeof(struct mailmap_entry));
-		((struct mailmap_entry *)item->util)->namemap.strdup_strings = 1;
+		struct string_list_item *item;
+
+		item = string_list_insert_at_index(map, index, old_email);
+		me = xcalloc(1, sizeof(struct mailmap_entry));
+		me->namemap.strdup_strings = 1;
+		me->namemap.cmp = strcasecmp;
+		item->util = me;
 	}
-	me = (struct mailmap_entry *)map->items[index].util;
 
 	if (old_name == NULL) {
 		debug_mm("mailmap: adding (simple) entry for %s at index %d\n", old_email, index);
