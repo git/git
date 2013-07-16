@@ -839,5 +839,6 @@ options may be given. See linkgit:git-diff-files[1] for more options.
 	Show the tree objects in the diff output. This implies '-r'.
 
 -s::
+--no-patch::
 	Suppress diff output.
 endif::git-rev-list[]

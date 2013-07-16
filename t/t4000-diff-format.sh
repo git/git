@@ -59,4 +59,16 @@ test_expect_success 'validate git diff-files -p output.' '
 	compare_diff_patch expected actual
 '
 
+test_expect_success 'git diff-files -s after editing work tree' '
+	git diff-files -s >actual 2>err &&
+	test_must_be_empty actual &&
+	test_must_be_empty err
+'
+
+test_expect_success 'git diff-files --no-patch as synonym for -s' '
+	git diff-files --no-patch >actual 2>err &&
+	test_must_be_empty actual &&
+	test_must_be_empty err
+'
+
 test_done
