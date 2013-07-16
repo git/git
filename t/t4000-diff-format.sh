@@ -15,17 +15,17 @@ line 3'
 cat path0 >path1
 chmod +x path1
 
-test_expect_success \
-    'update-index --add two files with and without +x.' \
-    'git update-index --add path0 path1'
+test_expect_success 'update-index --add two files with and without +x.' '
+	git update-index --add path0 path1
+'
 
 mv path0 path0-
 sed -e 's/line/Line/' <path0- >path0
 chmod +x path0
 rm -f path1
-test_expect_success \
-    'git diff-files -p after editing work tree.' \
-    'git diff-files -p >current'
+test_expect_success 'git diff-files -p after editing work tree.' '
+	git diff-files -p >actual
+'
 
 # that's as far as it comes
 if [ "$(git config --get core.filemode)" = false ]
@@ -55,8 +55,8 @@ deleted file mode 100755
 -line 3
 EOF
 
-test_expect_success \
-    'validate git diff-files -p output.' \
-    'compare_diff_patch current expected'
+test_expect_success 'validate git diff-files -p output.' '
+	compare_diff_patch expected actual
+'
 
 test_done
