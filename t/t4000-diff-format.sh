@@ -71,4 +71,22 @@ test_expect_success 'git diff-files --no-patch as synonym for -s' '
 	test_must_be_empty err
 '
 
+test_expect_success 'git diff-files --no-patch --patch shows the patch' '
+	git diff-files --no-patch --patch >actual &&
+	compare_diff_patch expected actual
+'
+
+test_expect_success 'git diff-files --no-patch --patch-with-raw shows the patch and raw data' '
+	git diff-files --no-patch --patch-with-raw >actual &&
+	grep -q "^:100644 100755 .* 0000000000000000000000000000000000000000 M	path0\$" actual &&
+	tail -n +4 actual >actual-patch &&
+	compare_diff_patch expected actual-patch
+'
+
+test_expect_success 'git diff-files --patch --no-patch does not show the patch' '
+	git diff-files --patch --no-patch >actual 2>err &&
+	test_must_be_empty actual &&
+	test_must_be_empty err
+'
+
 test_done
