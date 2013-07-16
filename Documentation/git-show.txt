@@ -45,6 +45,15 @@ include::pretty-options.txt[]
 include::pretty-formats.txt[]
 
 
+COMMON DIFF OPTIONS
+-------------------
+
+:git-log: 1
+include::diff-options.txt[]
+
+include::diff-generate-patch.txt[]
+
+
 EXAMPLES
 --------
 
