@@ -3,9 +3,17 @@
 
 check_count () {
 	head= &&
-	case "$1" in -h) head="$2"; shift; shift ;; esac &&
-	echo "$PROG file $head" >&4 &&
-	$PROG file $head >actual &&
+	options= &&
+	while :
+	do
+		case "$1" in
+		-h) head="$2"; shift; shift ;;
+		-*) options="$options $1"; shift ;;
+		*) break ;;
+		esac
+	done &&
+	echo "$PROG $options file $head" >&4 &&
+	$PROG $options file $head >actual &&
 	perl -e '
 		my %expect = (@ARGV);
 		my %count = map { $_ => 0 } keys %expect;
@@ -141,4 +149,94 @@ test_expect_success 'setup obfuscated email' '
 
 test_expect_success 'blame obfuscated email' '
 	check_count A 1 B 1 B1 1 B2 1 "A U Thor" 1 C 1 D 1 E 1
+'
+
+test_expect_success 'blame -L 1 (all)' '
+	check_count -L1 A 1 B 1 B1 1 B2 1 "A U Thor" 1 C 1 D 1 E 1
+'
+
+test_expect_success 'blame -L , (all)' '
+	check_count -L, A 1 B 1 B1 1 B2 1 "A U Thor" 1 C 1 D 1 E 1
+'
+
+test_expect_success 'blame -L X (X to end)' '
+	check_count -L5 B1 1 C 1 D 1 "A U Thor" 1
+'
+
+test_expect_success 'blame -L X, (X to end)' '
+	check_count -L5, B1 1 C 1 D 1 "A U Thor" 1
+'
+
+test_expect_success 'blame -L ,Y (up to Y)' '
+	check_count -L,3 A 1 B2 1 E 1
+'
+
+test_expect_success 'blame -L X,X' '
+	check_count -L3,3 B2 1
+'
+
+test_expect_success 'blame -L X,Y' '
+	check_count -L3,6 B 1 B1 1 B2 1 D 1
+'
+
+test_expect_success 'blame -L Y,X (undocumented)' '
+	check_count -L6,3 B 1 B1 1 B2 1 D 1
+'
+
+test_expect_success 'blame -L X,+1' '
+	check_count -L3,+1 B2 1
+'
+
+test_expect_success 'blame -L X,+N' '
+	check_count -L3,+4 B 1 B1 1 B2 1 D 1
+'
+
+test_expect_success 'blame -L X,-1' '
+	check_count -L3,-1 B2 1
+'
+
+test_expect_success 'blame -L X,-N' '
+	check_count -L6,-4 B 1 B1 1 B2 1 D 1
+'
+
+test_expect_success 'blame -L /RE/ (RE to end)' '
+	check_count -L/evil/ C 1 "A U Thor" 1
+'
+
+test_expect_success 'blame -L /RE/,/RE2/' '
+	check_count -L/robot/,/green/ A 1 B 1 B2 1 D 1 E 1
+'
+
+test_expect_success 'blame -L X,/RE/' '
+	check_count -L5,/evil/ B1 1 D 1 "A U Thor" 1
+'
+
+test_expect_success 'blame -L /RE/,Y' '
+	check_count -L/99/,7 B1 1 D 1 "A U Thor" 1
+'
+
+test_expect_success 'blame -L /RE/,+N' '
+	check_count -L/99/,+3 B1 1 D 1 "A U Thor" 1
+'
+
+test_expect_success 'blame -L /RE/,-N' '
+	check_count -L/99/,-3 B 1 B2 1 D 1
+'
+
+test_expect_success 'blame -L X (X > nlines)' '
+	test_must_fail $PROG -L12345 file
+'
+
+test_expect_success 'blame -L ,Y (Y > nlines)' '
+	test_must_fail $PROG -L,12345 file
+'
+
+test_expect_success 'blame -L bogus' '
+	test_must_fail $PROG -L file &&
+	test_must_fail $PROG -L1,+ file &&
+	test_must_fail $PROG -L1,- file &&
+	test_must_fail $PROG -LX file &&
+	test_must_fail $PROG -L1,X file &&
+	test_must_fail $PROG -L1,+N file &&
+	test_must_fail $PROG -L1,-N file
 '
