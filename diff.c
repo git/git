@@ -3537,7 +3537,7 @@ static int parse_diff_filter_opt(const char *optarg, struct diff_options *opt)
 
 		bit = (0 <= optch && optch <= 'Z') ? filter_bit[optch] : 0;
 		if (!bit)
-			continue; /* ignore unknown ones, like we always have */
+			return optarg[i];
 		opt->filter |= bit;
 	}
 	return 0;
