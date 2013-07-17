@@ -31,6 +31,9 @@ static int show_ref(const char *refname, const unsigned char *sha1, int flag, vo
 	const char *hex;
 	unsigned char peeled[20];
 
+	if (show_head && !strcmp(refname, "HEAD"))
+		goto match;
+
 	if (tags_only || heads_only) {
 		int match;
 
@@ -167,9 +170,10 @@ static const struct option show_ref_options[] = {
 	OPT_BOOLEAN(0, "verify", &verify, N_("stricter reference checking, "
 		    "requires exact ref path")),
 	{ OPTION_BOOLEAN, 'h', NULL, &show_head, NULL,
-	  N_("show the HEAD reference"),
+	  N_("show the HEAD reference, even if it would be filtered out"),
 	  PARSE_OPT_NOARG | PARSE_OPT_HIDDEN },
-	OPT_BOOLEAN(0, "head", &show_head, N_("show the HEAD reference")),
+	OPT_BOOLEAN(0, "head", &show_head,
+	  N_("show the HEAD reference, even if it would be filtered out")),
 	OPT_BOOLEAN('d', "dereference", &deref_tags,
 		    N_("dereference tags into object IDs")),
 	{ OPTION_CALLBACK, 's', "hash", &abbrev, N_("n"),
