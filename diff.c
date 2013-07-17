@@ -3496,6 +3496,53 @@ static int parse_submodule_opt(struct diff_options *options, const char *value)
 	return 1;
 }
 
+static const char diff_status_letters[] = {
+	DIFF_STATUS_ADDED,
+	DIFF_STATUS_COPIED,
+	DIFF_STATUS_DELETED,
+	DIFF_STATUS_MODIFIED,
+	DIFF_STATUS_RENAMED,
+	DIFF_STATUS_TYPE_CHANGED,
+	DIFF_STATUS_UNKNOWN,
+	DIFF_STATUS_UNMERGED,
+	DIFF_STATUS_FILTER_AON,
+	DIFF_STATUS_FILTER_BROKEN,
+	'\0',
+};
+
+static unsigned int filter_bit['Z' + 1];
+
+static void prepare_filter_bits(void)
+{
+	int i;
+
+	if (!filter_bit[DIFF_STATUS_ADDED]) {
+		for (i = 0; diff_status_letters[i]; i++)
+			filter_bit[(int) diff_status_letters[i]] = (1 << i);
+	}
+}
+
+static unsigned filter_bit_tst(char status, const struct diff_options *opt)
+{
+	return opt->filter & filter_bit[(int) status];
+}
+
+static int parse_diff_filter_opt(const char *optarg, struct diff_options *opt)
+{
+	int i, optch;
+
+	prepare_filter_bits();
+	for (i = 0; (optch = optarg[i]) != '\0'; i++) {
+		unsigned int bit;
+
+		bit = (0 <= optch && optch <= 'Z') ? filter_bit[optch] : 0;
+		if (!bit)
+			continue; /* ignore unknown ones, like we always have */
+		opt->filter |= bit;
+	}
+	return 0;
+}
+
 int diff_opt_parse(struct diff_options *options, const char **av, int ac)
 {
 	const char *arg = av[0];
@@ -3717,7 +3764,10 @@ int diff_opt_parse(struct diff_options *options, const char **av, int ac)
 		return argcount;
 	}
 	else if ((argcount = parse_long_opt("diff-filter", av, &optarg))) {
-		options->filter = optarg;
+		int offending = parse_diff_filter_opt(optarg, options);
+		if (offending)
+			die("unknown change class '%c' in --diff-filter=%s",
+			    offending, optarg);
 		return argcount;
 	}
 	else if (!strcmp(arg, "--abbrev"))
@@ -4513,11 +4563,11 @@ static int match_filter(const struct diff_options *options, const struct diff_fi
 {
 	return (((p->status == DIFF_STATUS_MODIFIED) &&
 		 ((p->score &&
-		   strchr(options->filter, DIFF_STATUS_FILTER_BROKEN)) ||
+		   filter_bit_tst(DIFF_STATUS_FILTER_BROKEN, options)) ||
 		  (!p->score &&
-		   strchr(options->filter, DIFF_STATUS_MODIFIED)))) ||
+		   filter_bit_tst(DIFF_STATUS_MODIFIED, options)))) ||
 		((p->status != DIFF_STATUS_MODIFIED) &&
-		 strchr(options->filter, p->status)));
+		 filter_bit_tst(p->status, options)));
 }
 
 static void diffcore_apply_filter(struct diff_options *options)
@@ -4525,14 +4575,13 @@ static void diffcore_apply_filter(struct diff_options *options)
 	int i;
 	struct diff_queue_struct *q = &diff_queued_diff;
 	struct diff_queue_struct outq;
-	const char *filter = options->filter;
 
 	DIFF_QUEUE_CLEAR(&outq);
 
-	if (!filter)
+	if (!options->filter)
 		return;
 
-	if (strchr(filter, DIFF_STATUS_FILTER_AON)) {
+	if (filter_bit_tst(DIFF_STATUS_FILTER_AON, options)) {
 		int found;
 		for (i = found = 0; !found && i < q->nr; i++) {
 			if (match_filter(options, q->queue[i]))

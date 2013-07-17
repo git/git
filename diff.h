@@ -103,12 +103,15 @@ enum diff_words_type {
 };
 
 struct diff_options {
-	const char *filter;
 	const char *orderfile;
 	const char *pickaxe;
 	const char *single_follow;
 	const char *a_prefix, *b_prefix;
 	unsigned flags;
+
+	/* diff-filter bits */
+	unsigned int filter;
+
 	int use_color;
 	int context;
 	int interhunkcontext;
