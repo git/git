@@ -28,8 +28,7 @@ Chris Shoemaker <c.shoemaker@cox.net>
 Chris Wright <chrisw@sous-sol.org> <chrisw@osdl.org>
 Csaba Henk <csaba@gluster.com> <csaba@lowlife.hu>
 Dan Johnson <computerdruid@gmail.com>
-Dana L. How <danahow@gmail.com>
-Dana L. How <how@deathvalley.cswitch.com>
+Dana L. How <danahow@gmail.com> <how@deathvalley.cswitch.com>
 Daniel Barkalow <barkalow@iabervon.org>
 David Brown <git@davidb.org> <davidb@quicinc.com>
 David D. Kilzer <ddkilzer@kilzer.net>
@@ -52,6 +51,7 @@ Frédéric Heitzmann <frederic.heitzmann@gmail.com>
 Garry Dolley <gdolley@ucla.edu> <gdolley@arpnetworks.com>
 Greg Price <price@mit.edu> <price@MIT.EDU>
 Greg Price <price@mit.edu> <price@ksplice.com>
+Heiko Voigt <hvoigt@hvoigt.net> <git-list@hvoigt.net>
 H. Merijn Brand <h.m.brand@xs4all.nl> H.Merijn Brand <h.m.brand@xs4all.nl>
 H. Peter Anvin <hpa@zytor.com> <hpa@bonde.sc.orionmulti.com>
 H. Peter Anvin <hpa@zytor.com> <hpa@smyrno.hos.anvin.org>
@@ -74,7 +74,8 @@ Johannes Schindelin <Johannes.Schindelin@gmx.de> <johannes.schindelin@gmx.de>
 Johannes Sixt <j6t@kdbg.org> <J.Sixt@eudaptics.com>
 Johannes Sixt <j6t@kdbg.org> <j.sixt@viscovery.net>
 Johannes Sixt <j6t@kdbg.org> <johannes.sixt@telecom.at>
-Jon Loeliger <jdl@freescale.com>
+Jon Loeliger <jdl@jdl.com> <jdl@freescale.com>
+Jon Loeliger <jdl@jdl.com> <jdl@freescale.org>
 Jon Seymour <jon.seymour@gmail.com> <jon@blackcubes.dyndns.org>
 Jonathan Nieder <jrnieder@gmail.com> <jrnieder@uchicago.edu>
 Jonathan del Strother <jon.delStrother@bestbefore.tv> <maillist@steelskies.com>
@@ -175,10 +176,13 @@ Sean Estabrooks <seanlkml@sympatico.ca>
 Sebastian Schuberth <sschuberth@gmail.com> <sschuberth@visageimaging.com>
 Seth Falcon <seth@userprimary.net> <sfalcon@fhcrc.org>
 Shawn O. Pearce <spearce@spearce.org>
+Simon Hausmann <hausmann@kde.org> <simon@lst.de>
+Simon Hausmann <hausmann@kde.org> <shausman@trolltech.com>
 Stefan Naewe <stefan.naewe@gmail.com> <stefan.naewe@atlas-elektronik.com>
 Stefan Naewe <stefan.naewe@gmail.com> <stefan.naewe@googlemail.com>
 Stefan Sperling <stsp@elego.de> <stsp@stsp.name>
 Stephen Boyd <bebarino@gmail.com> <sboyd@codeaurora.org>
+Steven Drake <sdrake@xnet.co.nz> <sdrake@ihug.co.nz>
 Steven Grimm <koreth@midwinter.com> <sgrimm@sgrimm-mbp.local>
 Steven Walter <stevenrwalter@gmail.com> <swalter@lexmark.com>
 Steven Walter <stevenrwalter@gmail.com> <swalter@lpdev.prtdev.lexmark.com>
