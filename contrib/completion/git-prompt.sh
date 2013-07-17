@@ -389,13 +389,15 @@ __git_ps1 ()
 				fi
 				gitstring="$gitstring\[$c_clear\]$r$p"
 			else
-				gitstring="$c${b##refs/heads/}${f:+ $f}$r$p"
+				f="$f$r$p"
+				gitstring="$c${b##refs/heads/}${f:+ $f}"
 			fi
 			gitstring=$(printf -- "$printf_format" "$gitstring")
 			PS1="$ps1pc_start$gitstring$ps1pc_end"
 		else
 			# NO color option unless in PROMPT_COMMAND mode
-			printf -- "$printf_format" "$c${b##refs/heads/}${f:+ $f}$r$p"
+			f="$f$r$p"
+			printf -- "$printf_format" "$c${b##refs/heads/}${f:+ $f}"
 		fi
 	fi
 }
