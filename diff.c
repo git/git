@@ -4509,11 +4509,13 @@ free_queue:
 	}
 }
 
-static void diffcore_apply_filter(const char *filter)
+static void diffcore_apply_filter(struct diff_options *options)
 {
 	int i;
 	struct diff_queue_struct *q = &diff_queued_diff;
 	struct diff_queue_struct outq;
+	const char *filter = options->filter;
+
 	DIFF_QUEUE_CLEAR(&outq);
 
 	if (!filter)
@@ -4661,7 +4663,7 @@ void diffcore_std(struct diff_options *options)
 	if (!options->found_follow)
 		/* See try_to_follow_renames() in tree-diff.c */
 		diff_resolve_rename_copy();
-	diffcore_apply_filter(options->filter);
+	diffcore_apply_filter(options);
 
 	if (diff_queued_diff.nr && !DIFF_OPT_TST(options, DIFF_FROM_CONTENTS))
 		DIFF_OPT_SET(options, HAS_CHANGES);
