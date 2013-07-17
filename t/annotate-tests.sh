@@ -3,17 +3,19 @@
 
 check_count () {
 	head= &&
+	file='file' &&
 	options= &&
 	while :
 	do
 		case "$1" in
 		-h) head="$2"; shift; shift ;;
+		-f) file="$2"; shift; shift ;;
 		-*) options="$options $1"; shift ;;
 		*) break ;;
 		esac
 	done &&
-	echo "$PROG $options file $head" >&4 &&
-	$PROG $options file $head >actual &&
+	echo "$PROG $options $file $head" >&4 &&
+	$PROG $options $file $head >actual &&
 	perl -e '
 		my %expect = (@ARGV);
 		my %count = map { $_ => 0 } keys %expect;
@@ -229,6 +231,48 @@ test_expect_success 'blame -L X (X > nlines)' '
 
 test_expect_success 'blame -L ,Y (Y > nlines)' '
 	test_must_fail $PROG -L,12345 file
+'
+
+test_expect_success 'setup -L :regex' '
+	tr Q "\\t" >hello.c <<-\EOF &&
+	int main(int argc, const char *argv[])
+	{
+	Qputs("hello");
+	}
+	EOF
+	git add hello.c &&
+	GIT_AUTHOR_NAME="F" GIT_AUTHOR_EMAIL="F@test.git" \
+	git commit -m "hello" &&
+
+	mv hello.c hello.orig &&
+	sed -e "/}/i\\
+	Qputs(\"goodbye\");" <hello.orig | tr Q "\\t" >hello.c &&
+	GIT_AUTHOR_NAME="G" GIT_AUTHOR_EMAIL="G@test.git" \
+	git commit -a -m "goodbye" &&
+
+	mv hello.c hello.orig &&
+	echo "#include <stdio.h>" >hello.c &&
+	cat hello.orig >>hello.c &&
+	tr Q "\\t" >>hello.c <<-\EOF
+	void mail()
+	{
+	Qputs("mail");
+	}
+	EOF
+	GIT_AUTHOR_NAME="H" GIT_AUTHOR_EMAIL="H@test.git" \
+	git commit -a -m "mail"
+'
+
+test_expect_success 'blame -L :literal' '
+	check_count -f hello.c -L:main F 4 G 1
+'
+
+test_expect_success 'blame -L :regex' '
+	check_count -f hello.c "-L:m[a-z][a-z]l" H 4
+'
+
+test_expect_success 'blame -L :nomatch' '
+	test_must_fail $PROG -L:nomatch hello.c
 '
 
 test_expect_success 'blame -L bogus' '
