@@ -4509,6 +4509,17 @@ free_queue:
 	}
 }
 
+static int match_filter(const struct diff_options *options, const struct diff_filepair *p)
+{
+	return (((p->status == DIFF_STATUS_MODIFIED) &&
+		 ((p->score &&
+		   strchr(options->filter, DIFF_STATUS_FILTER_BROKEN)) ||
+		  (!p->score &&
+		   strchr(options->filter, DIFF_STATUS_MODIFIED)))) ||
+		((p->status != DIFF_STATUS_MODIFIED) &&
+		 strchr(options->filter, p->status)));
+}
+
 static void diffcore_apply_filter(struct diff_options *options)
 {
 	int i;
@@ -4524,14 +4535,7 @@ static void diffcore_apply_filter(struct diff_options *options)
 	if (strchr(filter, DIFF_STATUS_FILTER_AON)) {
 		int found;
 		for (i = found = 0; !found && i < q->nr; i++) {
-			struct diff_filepair *p = q->queue[i];
-			if (((p->status == DIFF_STATUS_MODIFIED) &&
-			     ((p->score &&
-			       strchr(filter, DIFF_STATUS_FILTER_BROKEN)) ||
-			      (!p->score &&
-			       strchr(filter, DIFF_STATUS_MODIFIED)))) ||
-			    ((p->status != DIFF_STATUS_MODIFIED) &&
-			     strchr(filter, p->status)))
+			if (match_filter(options, q->queue[i]))
 				found++;
 		}
 		if (found)
@@ -4549,14 +4553,7 @@ static void diffcore_apply_filter(struct diff_options *options)
 		/* Only the matching ones */
 		for (i = 0; i < q->nr; i++) {
 			struct diff_filepair *p = q->queue[i];
-
-			if (((p->status == DIFF_STATUS_MODIFIED) &&
-			     ((p->score &&
-			       strchr(filter, DIFF_STATUS_FILTER_BROKEN)) ||
-			      (!p->score &&
-			       strchr(filter, DIFF_STATUS_MODIFIED)))) ||
-			    ((p->status != DIFF_STATUS_MODIFIED) &&
-			     strchr(filter, p->status)))
+			if (match_filter(options, p))
 				diff_q(&outq, p);
 			else
 				diff_free_filepair(p);
