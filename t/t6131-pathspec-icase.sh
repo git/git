@@ -3,6 +3,12 @@
 test_description='test case insensitive pathspec limiting'
 . ./test-lib.sh
 
+if test_have_prereq CASE_INSENSITIVE_FS
+then
+	skip_all='skipping case sensitive tests - case insensitive file system'
+	test_done
+fi
+
 test_expect_success 'create commits with glob characters' '
 	test_commit bar bar &&
 	test_commit bAr bAr &&
