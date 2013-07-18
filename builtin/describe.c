@@ -446,7 +446,8 @@ int cmd_describe(int argc, const char **argv, const char *prefix)
 		struct argv_array args;
 
 		argv_array_init(&args);
-		argv_array_pushl(&args, "name-rev", "--name-only", "--no-undefined",
+		argv_array_pushl(&args, "name-rev",
+				 "--peel-tag", "--name-only", "--no-undefined",
 				 NULL);
 		if (always)
 			argv_array_push(&args, "--always");
