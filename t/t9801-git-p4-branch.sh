@@ -469,9 +469,11 @@ test_expect_success 'use-client-spec detect-branches skips branches setup' '
 		View: //depot/usecs/b1/... //depot/usecs/b3/...
 		EOF
 
-		echo b3/b3-file3 >b3/b3-file3 &&
-		p4 add b3/b3-file3 &&
-		p4 submit -d "b3/b3-file3"
+		echo b3/b3-file3_1 >b3/b3-file3_1 &&
+		echo b3/b3-file3_2 >b3/b3-file3_2 &&
+		p4 add b3/b3-file3_1 &&
+		p4 add b3/b3-file3_2 &&
+		p4 submit -d "b3/b3-file3_1 b3/b3-file3_2"
 	)
 '
 
@@ -484,6 +486,21 @@ test_expect_success 'use-client-spec detect-branches skips branches' '
 		cd "$git" &&
 		git p4 sync --detect-branches --use-client-spec //depot/usecs@all &&
 		test_must_fail git rev-parse refs/remotes/p4/usecs/b3
+	)
+'
+
+test_expect_success 'use-client-spec detect-branches skips files in branches' '
+	client_view "//depot/usecs/... //client/..." \
+		    "-//depot/usecs/b3/b3-file3_1 //client/b3/b3-file3_1" &&
+	test_when_finished cleanup_git &&
+	test_create_repo "$git" &&
+	(
+		cd "$git" &&
+		git p4 sync --detect-branches --use-client-spec //depot/usecs@all &&
+		git checkout -b master p4/usecs/b3 &&
+		test_path_is_file b1-file1 &&
+		test_path_is_file b3-file3_2 &&
+		test_path_is_missing b3-file3_1
 	)
 '
 
