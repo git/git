@@ -671,9 +671,9 @@ int cmd_show_branch(int ac, const char **av, const char *prefix)
 			    N_("show only commits not on the first branch")),
 		OPT_SET_INT(0, "sparse", &dense,
 			    N_("show merges reachable from only one tip"), 0),
-		OPT_SET_INT(0, "date-order", &lifo,
-			    N_("show commits where no parent comes before its "
-			       "children"), 0),
+		OPT_SET_INT(0, "date-order", &sort_order,
+			    N_("topologically sort, maintaining date order "
+			       "where possible"), 0),
 		{ OPTION_CALLBACK, 'g', "reflog", &reflog_base, N_("<n>[,<base>]"),
 			    N_("show <n> most recent ref-log entries starting at "
 			       "base"),
