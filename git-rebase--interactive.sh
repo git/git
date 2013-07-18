@@ -864,8 +864,11 @@ comment_for_reflog start
 
 if test ! -z "$switch_to"
 then
+	GIT_REFLOG_ACTION="$GIT_REFLOG_ACTION: checkout $switch_to"
 	output git checkout "$switch_to" -- ||
-		die "Could not checkout $switch_to"
+	die "Could not checkout $switch_to"
+
+	comment_for_reflog start
 fi
 
 orig_head=$(git rev-parse --verify HEAD) || die "No HEAD?"
@@ -1007,6 +1010,7 @@ has_action "$todo" ||
 
 test -d "$rewritten" || test -n "$force_rebase" || skip_unnecessary_picks
 
+GIT_REFLOG_ACTION="$GIT_REFLOG_ACTION: checkout $onto_name"
 output git checkout $onto || die_abort "could not detach HEAD"
 git update-ref ORIG_HEAD $orig_head
 do_rest

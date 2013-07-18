@@ -542,7 +542,9 @@ then
 	if test -z "$force_rebase"
 	then
 		# Lazily switch to the target branch if needed...
-		test -z "$switch_to" || git checkout "$switch_to" --
+		test -z "$switch_to" ||
+		GIT_REFLOG_ACTION="$GIT_REFLOG_ACTION: checkout $switch_to" \
+			git checkout "$switch_to" --
 		say "$(eval_gettext "Current branch \$branch_name is up to date.")"
 		finish_rebase
 		exit 0
@@ -568,7 +570,9 @@ test "$type" = interactive && run_specific_rebase
 
 # Detach HEAD and reset the tree
 say "$(gettext "First, rewinding head to replay your work on top of it...")"
-git checkout -q "$onto^0" || die "could not detach HEAD"
+
+GIT_REFLOG_ACTION="$GIT_REFLOG_ACTION: checkout $onto_name" \
+	git checkout -q "$onto^0" || die "could not detach HEAD"
 git update-ref ORIG_HEAD $orig_head
 
 # If the $onto is a proper descendant of the tip of the branch, then
