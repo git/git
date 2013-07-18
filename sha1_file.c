@@ -2477,7 +2477,7 @@ int sha1_object_info_extended(const unsigned char *sha1, struct object_info *oi)
 int sha1_object_info(const unsigned char *sha1, unsigned long *sizep)
 {
 	enum object_type type;
-	struct object_info oi = {0};
+	struct object_info oi = {NULL};
 
 	oi.typep = &type;
 	oi.sizep = sizep;
