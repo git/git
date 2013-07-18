@@ -58,7 +58,13 @@ test_expect_success 'creating too deep nesting' \
 git clone -l -s D E &&
 git clone -l -s E F &&
 git clone -l -s F G &&
-test_must_fail git clone --bare -l -s G H'
+git clone --bare -l -s G H'
+
+test_expect_success 'invalidity of deepest repository' \
+'cd H && {
+	test_valid_repo
+	test $? -ne 0
+}'
 
 cd "$base_dir"
 
