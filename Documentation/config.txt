@@ -2022,6 +2022,10 @@ sendemail.smtpencryption::
 sendemail.smtpssl::
 	Deprecated alias for 'sendemail.smtpencryption = ssl'.
 
+sendemail.smtpsslcertpath::
+	Path to ca-certificates (either a directory or a single file).
+	Set it to an empty string to disable certificate verification.
+
 sendemail.<identity>.*::
 	Identity-specific versions of the 'sendemail.*' parameters
 	found below, taking precedence over those when the this
