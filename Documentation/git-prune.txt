@@ -59,7 +59,7 @@ borrows from your repository via its
 `.git/objects/info/alternates`:
 
 ------------
-$ git prune $(cd ../another && $(git rev-parse --all))
+$ git prune $(cd ../another && git rev-parse --all)
 ------------
 
 Notes
