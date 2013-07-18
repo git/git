@@ -174,4 +174,16 @@ check_describe "test2-lightweight-*" --tags --match="test2-*"
 
 check_describe "test2-lightweight-*" --long --tags --match="test2-*" HEAD^
 
+test_expect_success 'name-rev with exact tags' '
+	echo A >expect &&
+	tag_object=$(git rev-parse refs/tags/A) &&
+	git name-rev --tags --name-only $tag_object >actual &&
+	test_cmp expect actual &&
+
+	echo "A^0" >expect &&
+	tagged_commit=$(git rev-parse "refs/tags/A^0") &&
+	git name-rev --tags --name-only $tagged_commit >actual &&
+	test_cmp expect actual
+'
+
 test_done
