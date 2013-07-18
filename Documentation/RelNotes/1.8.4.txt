@@ -76,8 +76,20 @@ Foreign interfaces, subsystems and ports.
  * git-remote-mw (in contrib/) hints users to check the certificate,
    when https:// connection failed.
 
+ * git-remote-mw (in contrib/) adds a command to allow previewing the
+   contents locally before pushing it out, when working with a
+   MediaWiki remote.
+
 
 UI, Workflows & Features
+
+ * "git cat-file --batch-check=<format>" is added, primarily to allow
+   on-disk footprint of objects in packfiles (often they are a lot
+   smaller than their true size, when expressed as deltas) to be
+   reported.
+
+ * "git rebase [-i]" used to leave just "rebase" as its reflog messages
+   for some operations. They have been reworded to be more informative.
 
  * In addition to the choice from "rebase, merge, or checkout-detach",
    "submodule update" can allow a custom command to be used in to
@@ -267,6 +279,10 @@ Fixes since v1.8.3
 Unless otherwise noted, all the fixes since v1.8.3 in the maintenance
 track are contained in this release (see release notes to them for
 details).
+
+ * Logic to auto-detect character encodings in the commit log message
+   did not reject overlong and invalid UTF-8 characters.
+   (merge 81050ac bc/commit-invalid-utf8 later to maint).
 
  * Pass port number as a separate argument when "send-email" initializes
    Net::SMTP, instead of as a part of the hostname, i.e. host:port.
