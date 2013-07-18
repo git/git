@@ -1697,7 +1697,8 @@ static int retry_bad_packed_offset(struct packed_git *p, off_t obj_offset)
 #define POI_STACK_PREALLOC 64
 
 static int packed_object_info(struct packed_git *p, off_t obj_offset,
-			      unsigned long *sizep, int *rtype)
+			      unsigned long *sizep, int *rtype,
+			      unsigned long *disk_sizep)
 {
 	struct pack_window *w_curs = NULL;
 	unsigned long size;
@@ -1729,6 +1730,11 @@ static int packed_object_info(struct packed_git *p, off_t obj_offset,
 		} else {
 			*sizep = size;
 		}
+	}
+
+	if (disk_sizep) {
+		struct revindex_entry *revidx = find_pack_revindex(p, obj_offset);
+		*disk_sizep = revidx[1].offset - obj_offset;
 	}
 
 	while (type == OBJ_OFS_DELTA || type == OBJ_REF_DELTA) {
@@ -2357,7 +2363,8 @@ struct packed_git *find_sha1_pack(const unsigned char *sha1,
 
 }
 
-static int sha1_loose_object_info(const unsigned char *sha1, unsigned long *sizep)
+static int sha1_loose_object_info(const unsigned char *sha1, unsigned long *sizep,
+				  unsigned long *disk_sizep)
 {
 	int status;
 	unsigned long mapsize, size;
@@ -2368,6 +2375,8 @@ static int sha1_loose_object_info(const unsigned char *sha1, unsigned long *size
 	map = map_sha1_file(sha1, &mapsize);
 	if (!map)
 		return -1;
+	if (disk_sizep)
+		*disk_sizep = mapsize;
 	if (unpack_sha1_header(&stream, map, mapsize, hdr, sizeof(hdr)) < 0)
 		status = error("unable to unpack %s header",
 			       sha1_to_hex(sha1));
@@ -2391,13 +2400,15 @@ int sha1_object_info_extended(const unsigned char *sha1, struct object_info *oi)
 	if (co) {
 		if (oi->sizep)
 			*(oi->sizep) = co->size;
+		if (oi->disk_sizep)
+			*(oi->disk_sizep) = 0;
 		oi->whence = OI_CACHED;
 		return co->type;
 	}
 
 	if (!find_pack_entry(sha1, &e)) {
 		/* Most likely it's a loose object. */
-		status = sha1_loose_object_info(sha1, oi->sizep);
+		status = sha1_loose_object_info(sha1, oi->sizep, oi->disk_sizep);
 		if (status >= 0) {
 			oi->whence = OI_LOOSE;
 			return status;
@@ -2409,7 +2420,8 @@ int sha1_object_info_extended(const unsigned char *sha1, struct object_info *oi)
 			return status;
 	}
 
-	status = packed_object_info(e.p, e.offset, oi->sizep, &rtype);
+	status = packed_object_info(e.p, e.offset, oi->sizep, &rtype,
+				    oi->disk_sizep);
 	if (status < 0) {
 		mark_bad_packed_object(e.p, sha1);
 		status = sha1_object_info_extended(sha1, oi);
@@ -2428,7 +2440,7 @@ int sha1_object_info_extended(const unsigned char *sha1, struct object_info *oi)
 
 int sha1_object_info(const unsigned char *sha1, unsigned long *sizep)
 {
-	struct object_info oi;
+	struct object_info oi = {0};
 
 	oi.sizep = sizep;
 	return sha1_object_info_extended(sha1, &oi);

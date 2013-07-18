@@ -58,12 +58,16 @@ OPTIONS
 	to apply the filter to the content recorded in the index at <path>.
 
 --batch::
-	Print the SHA-1, type, size, and contents of each object provided on
-	stdin. May not be combined with any other options or arguments.
+--batch=<format>::
+	Print object information and contents for each object provided
+	on stdin.  May not be combined with any other options or arguments.
+	See the section `BATCH OUTPUT` below for details.
 
 --batch-check::
-	Print the SHA-1, type, and size of each object provided on stdin. May not
-	be combined with any other options or arguments.
+--batch-check=<format>::
+	Print object information for each object provided on stdin.  May
+	not be combined with any other options or arguments.  See the
+	section `BATCH OUTPUT` below for details.
 
 OUTPUT
 ------
@@ -78,27 +82,80 @@ If '-p' is specified, the contents of <object> are pretty-printed.
 If <type> is specified, the raw (though uncompressed) contents of the <object>
 will be returned.
 
-If '--batch' is specified, output of the following form is printed for each
-object specified on stdin:
+BATCH OUTPUT
+------------
+
+If `--batch` or `--batch-check` is given, `cat-file` will read objects
+from stdin, one per line, and print information about them.
+
+Each line is split at the first whitespace boundary. All characters
+before that whitespace are considered as a whole object name, and are
+parsed as if given to linkgit:git-rev-parse[1]. Characters after that
+whitespace can be accessed using the `%(rest)` atom (see below).
+
+You can specify the information shown for each object by using a custom
+`<format>`. The `<format>` is copied literally to stdout for each
+object, with placeholders of the form `%(atom)` expanded, followed by a
+newline. The available atoms are:
+
+`objectname`::
+	The 40-hex object name of the object.
+
+`objecttype`::
+	The type of of the object (the same as `cat-file -t` reports).
+
+`objectsize`::
+	The size, in bytes, of the object (the same as `cat-file -s`
+	reports).
+
+`objectsize:disk`::
+	The size, in bytes, that the object takes up on disk. See the
+	note about on-disk sizes in the `CAVEATS` section below.
+
+`rest`::
+	The text (if any) found after the first run of whitespace on the
+	input line (i.e., the "rest" of the line).
+
+If no format is specified, the default format is `%(objectname)
+%(objecttype) %(objectsize)`.
+
+If `--batch` is specified, the object information is followed by the
+object contents (consisting of `%(objectsize)` bytes), followed by a
+newline.
+
+For example, `--batch` without a custom format would produce:
 
 ------------
 <sha1> SP <type> SP <size> LF
 <contents> LF
 ------------
 
-If '--batch-check' is specified, output of the following form is printed for
-each object specified on stdin:
+Whereas `--batch-check='%(objectname) %(objecttype)'` would produce:
 
 ------------
-<sha1> SP <type> SP <size> LF
+<sha1> SP <type> LF
 ------------
 
-For both '--batch' and '--batch-check', output of the following form is printed
-for each object specified on stdin that does not exist in the repository:
+If a name is specified on stdin that cannot be resolved to an object in
+the repository, then `cat-file` will ignore any custom format and print:
 
 ------------
 <object> SP missing LF
 ------------
+
+
+CAVEATS
+-------
+
+Note that the sizes of objects on disk are reported accurately, but care
+should be taken in drawing conclusions about which refs or objects are
+responsible for disk usage. The size of a packed non-delta object may be
+much larger than the size of objects which delta against it, but the
+choice of which object is the base and which is the delta is arbitrary
+and is subject to change during a repack. Note also that multiple copies
+of an object may be present in the object database; in this case, it is
+undefined which copy's size will be reported.
+
 
 GIT
 ---

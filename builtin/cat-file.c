@@ -13,9 +13,6 @@
 #include "userdiff.h"
 #include "streaming.h"
 
-#define BATCH 1
-#define BATCH_CHECK 2
-
 static int cat_one_file(int opt, const char *exp_type, const char *obj_name)
 {
 	unsigned char sha1[20];
@@ -117,54 +114,174 @@ static int cat_one_file(int opt, const char *exp_type, const char *obj_name)
 	return 0;
 }
 
-static int batch_one_object(const char *obj_name, int print_contents)
-{
+struct expand_data {
 	unsigned char sha1[20];
-	enum object_type type = 0;
+	enum object_type type;
 	unsigned long size;
-	void *contents = NULL;
+	unsigned long disk_size;
+	const char *rest;
+
+	/*
+	 * If mark_query is true, we do not expand anything, but rather
+	 * just mark the object_info with items we wish to query.
+	 */
+	int mark_query;
+
+	/*
+	 * After a mark_query run, this object_info is set up to be
+	 * passed to sha1_object_info_extended. It will point to the data
+	 * elements above, so you can retrieve the response from there.
+	 */
+	struct object_info info;
+};
+
+static int is_atom(const char *atom, const char *s, int slen)
+{
+	int alen = strlen(atom);
+	return alen == slen && !memcmp(atom, s, alen);
+}
+
+static void expand_atom(struct strbuf *sb, const char *atom, int len,
+			void *vdata)
+{
+	struct expand_data *data = vdata;
+
+	if (is_atom("objectname", atom, len)) {
+		if (!data->mark_query)
+			strbuf_addstr(sb, sha1_to_hex(data->sha1));
+	} else if (is_atom("objecttype", atom, len)) {
+		if (!data->mark_query)
+			strbuf_addstr(sb, typename(data->type));
+	} else if (is_atom("objectsize", atom, len)) {
+		if (data->mark_query)
+			data->info.sizep = &data->size;
+		else
+			strbuf_addf(sb, "%lu", data->size);
+	} else if (is_atom("objectsize:disk", atom, len)) {
+		if (data->mark_query)
+			data->info.disk_sizep = &data->disk_size;
+		else
+			strbuf_addf(sb, "%lu", data->disk_size);
+	} else if (is_atom("rest", atom, len)) {
+		if (!data->mark_query && data->rest)
+			strbuf_addstr(sb, data->rest);
+	} else
+		die("unknown format element: %.*s", len, atom);
+}
+
+static size_t expand_format(struct strbuf *sb, const char *start, void *data)
+{
+	const char *end;
+
+	if (*start != '(')
+		return 0;
+	end = strchr(start + 1, ')');
+	if (!end)
+		die("format element '%s' does not end in ')'", start);
+
+	expand_atom(sb, start + 1, end - start - 1, data);
+
+	return end - start + 1;
+}
+
+static void print_object_or_die(int fd, const unsigned char *sha1,
+				enum object_type type, unsigned long size)
+{
+	if (type == OBJ_BLOB) {
+		if (stream_blob_to_fd(fd, sha1, NULL, 0) < 0)
+			die("unable to stream %s to stdout", sha1_to_hex(sha1));
+	}
+	else {
+		enum object_type rtype;
+		unsigned long rsize;
+		void *contents;
+
+		contents = read_sha1_file(sha1, &rtype, &rsize);
+		if (!contents)
+			die("object %s disappeared", sha1_to_hex(sha1));
+		if (rtype != type)
+			die("object %s changed type!?", sha1_to_hex(sha1));
+		if (rsize != size)
+			die("object %s change size!?", sha1_to_hex(sha1));
+
+		write_or_die(fd, contents, size);
+		free(contents);
+	}
+}
+
+struct batch_options {
+	int enabled;
+	int print_contents;
+	const char *format;
+};
+
+static int batch_one_object(const char *obj_name, struct batch_options *opt,
+			    struct expand_data *data)
+{
+	struct strbuf buf = STRBUF_INIT;
 
 	if (!obj_name)
 	   return 1;
 
-	if (get_sha1(obj_name, sha1)) {
+	if (get_sha1(obj_name, data->sha1)) {
 		printf("%s missing\n", obj_name);
 		fflush(stdout);
 		return 0;
 	}
 
-	if (print_contents == BATCH)
-		contents = read_sha1_file(sha1, &type, &size);
-	else
-		type = sha1_object_info(sha1, &size);
-
-	if (type <= 0) {
+	data->type = sha1_object_info_extended(data->sha1, &data->info);
+	if (data->type <= 0) {
 		printf("%s missing\n", obj_name);
 		fflush(stdout);
-		if (print_contents == BATCH)
-			free(contents);
 		return 0;
 	}
 
-	printf("%s %s %lu\n", sha1_to_hex(sha1), typename(type), size);
-	fflush(stdout);
+	strbuf_expand(&buf, opt->format, expand_format, data);
+	strbuf_addch(&buf, '\n');
+	write_or_die(1, buf.buf, buf.len);
+	strbuf_release(&buf);
 
-	if (print_contents == BATCH) {
-		write_or_die(1, contents, size);
-		printf("\n");
-		fflush(stdout);
-		free(contents);
+	if (opt->print_contents) {
+		print_object_or_die(1, data->sha1, data->type, data->size);
+		write_or_die(1, "\n", 1);
 	}
-
 	return 0;
 }
 
-static int batch_objects(int print_contents)
+static int batch_objects(struct batch_options *opt)
 {
 	struct strbuf buf = STRBUF_INIT;
+	struct expand_data data;
+
+	if (!opt->format)
+		opt->format = "%(objectname) %(objecttype) %(objectsize)";
+
+	/*
+	 * Expand once with our special mark_query flag, which will prime the
+	 * object_info to be handed to sha1_object_info_extended for each
+	 * object.
+	 */
+	memset(&data, 0, sizeof(data));
+	data.mark_query = 1;
+	strbuf_expand(&buf, opt->format, expand_format, &data);
+	data.mark_query = 0;
 
 	while (strbuf_getline(&buf, stdin, '\n') != EOF) {
-		int error = batch_one_object(buf.buf, print_contents);
+		char *p;
+		int error;
+
+		/*
+		 * Split at first whitespace, tying off the beginning of the
+		 * string and saving the remainder (or NULL) in data.rest.
+		 */
+		p = strpbrk(buf.buf, " \t");
+		if (p) {
+			while (*p && strchr(" \t", *p))
+				*p++ = '\0';
+		}
+		data.rest = p;
+
+		error = batch_one_object(buf.buf, opt, &data);
 		if (error)
 			return error;
 	}
@@ -186,10 +303,29 @@ static int git_cat_file_config(const char *var, const char *value, void *cb)
 	return git_default_config(var, value, cb);
 }
 
+static int batch_option_callback(const struct option *opt,
+				 const char *arg,
+				 int unset)
+{
+	struct batch_options *bo = opt->value;
+
+	if (unset) {
+		memset(bo, 0, sizeof(*bo));
+		return 0;
+	}
+
+	bo->enabled = 1;
+	bo->print_contents = !strcmp(opt->long_name, "batch");
+	bo->format = arg;
+
+	return 0;
+}
+
 int cmd_cat_file(int argc, const char **argv, const char *prefix)
 {
-	int opt = 0, batch = 0;
+	int opt = 0;
 	const char *exp_type = NULL, *obj_name = NULL;
+	struct batch_options batch = {0};
 
 	const struct option options[] = {
 		OPT_GROUP(N_("<type> can be one of: blob, tree, commit, tag")),
@@ -200,12 +336,12 @@ int cmd_cat_file(int argc, const char **argv, const char *prefix)
 		OPT_SET_INT('p', NULL, &opt, N_("pretty-print object's content"), 'p'),
 		OPT_SET_INT(0, "textconv", &opt,
 			    N_("for blob objects, run textconv on object's content"), 'c'),
-		OPT_SET_INT(0, "batch", &batch,
-			    N_("show info and content of objects fed from the standard input"),
-			    BATCH),
-		OPT_SET_INT(0, "batch-check", &batch,
-			    N_("show info about objects fed from the standard input"),
-			    BATCH_CHECK),
+		{ OPTION_CALLBACK, 0, "batch", &batch, "format",
+			N_("show info and content of objects fed from the standard input"),
+			PARSE_OPT_OPTARG, batch_option_callback },
+		{ OPTION_CALLBACK, 0, "batch-check", &batch, "format",
+			N_("show info about objects fed from the standard input"),
+			PARSE_OPT_OPTARG, batch_option_callback },
 		OPT_END()
 	};
 
@@ -222,19 +358,19 @@ int cmd_cat_file(int argc, const char **argv, const char *prefix)
 		else
 			usage_with_options(cat_file_usage, options);
 	}
-	if (!opt && !batch) {
+	if (!opt && !batch.enabled) {
 		if (argc == 2) {
 			exp_type = argv[0];
 			obj_name = argv[1];
 		} else
 			usage_with_options(cat_file_usage, options);
 	}
-	if (batch && (opt || argc)) {
+	if (batch.enabled && (opt || argc)) {
 		usage_with_options(cat_file_usage, options);
 	}
 
-	if (batch)
-		return batch_objects(batch);
+	if (batch.enabled)
+		return batch_objects(&batch);
 
 	return cat_one_file(opt, exp_type, obj_name);
 }
