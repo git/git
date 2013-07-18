@@ -46,7 +46,7 @@ int finish_command(struct child_process *);
 int run_command(struct child_process *);
 
 extern char *find_hook(const char *name);
-__attribute__((sentinel))
+LAST_ARG_MUST_BE_NULL
 extern int run_hook(const char *index_file, const char *name, ...);
 
 #define RUN_COMMAND_NO_STDIN 1

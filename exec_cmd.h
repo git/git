@@ -7,7 +7,7 @@ extern const char *git_exec_path(void);
 extern void setup_path(void);
 extern const char **prepare_git_cmd(const char **argv);
 extern int execv_git_cmd(const char **argv); /* NULL terminated */
-__attribute__((sentinel))
+LAST_ARG_MUST_BE_NULL
 extern int execl_git_cmd(const char *cmd, ...);
 extern const char *system_path(const char *path);
 
