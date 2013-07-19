@@ -722,7 +722,7 @@ static char *find_name(const char *line, char *def, int p_value, int terminate)
 
 static char *find_name_traditional(const char *line, char *def, int p_value)
 {
-	size_t len = strlen(line);
+	size_t len;
 	size_t date_len;
 
 	if (*line == '"') {

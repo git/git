@@ -663,7 +663,7 @@ static void add_fetch_request(struct object *obj)
 
 static int add_send_request(struct object *obj, struct remote_lock *lock)
 {
-	struct transfer_request *request = request_queue_head;
+	struct transfer_request *request;
 	struct packed_git *target;
 
 	/* Keep locks active */
