@@ -232,7 +232,6 @@ static int write_zip_entry(struct archiver_args *args,
 		size = 0;
 		compressed_size = 0;
 		buffer = NULL;
-		size = 0;
 	} else if (S_ISREG(mode) || S_ISLNK(mode)) {
 		enum object_type type = sha1_object_info(sha1, &size);
 
