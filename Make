@@ -57,7 +57,7 @@ do
 done
 
 Wall="-Wall -Wdeclaration-after-statement -Wno-format-zero-length${Wall+ $Wall}"
-tests= jobs= skip= oldtest=
+tests= jobs= skip= oldtest= with_dash=
 
 case `uname` in
 OpenBSD)
@@ -145,6 +145,9 @@ do
 			done | tr '\012' ' '
 		)
 		;;
+	--dash)
+		with_dash=y
+		;;
 	--)
 		shift
 		break
@@ -159,6 +162,8 @@ do
 	esac
 	shift
 done
+
+test -f /bin/dash || with_dash=
 
 if test -z "$tests" && test -n "$skip"
 then
@@ -189,16 +194,21 @@ snap)
 *)
 	prefix="$inst_prefix/git-test" ;;
 esac
-d="prefix=$prefix"
 
 determine_long_version >version
 
-d="$d "'
-MAN_BASE_URL="http://www.kernel.org/pub/software/scm/git/docs/"
-ASCIIDOC_NO_ROFF=YesPlease
-ASCIIDOC8=YesPlease
-BLK_SHA1=YesPlease
-GNU_ROFF=YesPlease'
+set "prefix=$prefix" "$@"
+if test -n "$with_dash" && test -f /bin/dash
+then
+	set "SHELL_PATH=/bin/dash" "$@"
+fi
+
+set	MAN_BASE_URL='"http://www.kernel.org/pub/software/scm/git/docs/"' \
+	ASCIIDOC_NO_ROFF=YesPlease \
+	ASCIIDOC8=YesPlease \
+	BLK_SHA1=YesPlease \
+	GNU_ROFF=YesPlease \
+	"$@"
 
 # Platform hack
 if test -z "${make:+set}" && {
@@ -221,11 +231,11 @@ then
 	unset OK_TO_USE_CFLAGS
 fi
 
-${make-make} $d \
+${make-make} \
+     $jobs \
      ETC_GITCONFIG=$prefix/etc/gitconfig \
      ${OK_TO_USE_CFLAGS+"CFLAGS=$CFLAGS"} \
      ${tests:+"T=$tests"} \
-     $jobs \
      "$@"
 status=$?
 rm -f version
