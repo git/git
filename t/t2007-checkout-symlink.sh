@@ -6,7 +6,7 @@ test_description='git checkout to switch between branches with symlink<->dir'
 
 . ./test-lib.sh
 
-test_expect_success SYMLINKS setup '
+test_expect_success setup '
 
 	mkdir frotz &&
 	echo hello >frotz/filfre &&
@@ -25,25 +25,25 @@ test_expect_success SYMLINKS setup '
 
 	git rm --cached frotz/filfre &&
 	mv frotz xyzzy &&
-	ln -s xyzzy frotz &&
-	git add xyzzy/filfre frotz &&
+	test_ln_s_add xyzzy frotz &&
+	git add xyzzy/filfre &&
 	test_tick &&
 	git commit -m "side moves frotz/ to xyzzy/ and adds frotz->xyzzy/"
 
 '
 
-test_expect_success SYMLINKS 'switch from symlink to dir' '
+test_expect_success 'switch from symlink to dir' '
 
 	git checkout master
 
 '
 
-test_expect_success SYMLINKS 'Remove temporary directories & switch to master' '
+test_expect_success 'Remove temporary directories & switch to master' '
 	rm -fr frotz xyzzy nitfol &&
 	git checkout -f master
 '
 
-test_expect_success SYMLINKS 'switch from dir to symlink' '
+test_expect_success 'switch from dir to symlink' '
 
 	git checkout side
 

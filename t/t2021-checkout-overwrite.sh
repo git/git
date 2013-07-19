@@ -29,21 +29,25 @@ test_expect_success 'checkout commit with dir must not remove untracked a/b' '
 	test -f a/b
 '
 
-test_expect_success SYMLINKS 'create a commit where dir a/b changed to symlink' '
+test_expect_success 'create a commit where dir a/b changed to symlink' '
 
 	rm -rf a/b &&	# cleanup if previous test failed
 	git checkout -f -b symlink start &&
 	rm -rf a/b &&
-	ln -s foo a/b &&
 	git add -A &&
+	test_ln_s_add foo a/b &&
 	git commit -m "dir to symlink"
 '
 
-test_expect_success SYMLINKS 'checkout commit with dir must not remove untracked a/b' '
+test_expect_success 'checkout commit with dir must not remove untracked a/b' '
 
 	git rm --cached a/b &&
 	git commit -m "un-track the symlink" &&
-	test_must_fail git checkout start &&
+	test_must_fail git checkout start
+'
+
+test_expect_success SYMLINKS 'the symlink remained' '
+
 	test -h a/b
 '
 

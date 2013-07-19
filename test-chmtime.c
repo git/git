@@ -84,7 +84,7 @@ int main(int argc, const char *argv[])
 		if (stat(argv[i], &sb) < 0) {
 			fprintf(stderr, "Failed to stat %s: %s\n",
 			        argv[i], strerror(errno));
-			return -1;
+			return 1;
 		}
 
 #ifdef WIN32
@@ -92,7 +92,7 @@ int main(int argc, const char *argv[])
 				chmod(argv[i], sb.st_mode | S_IWUSR)) {
 			fprintf(stderr, "Could not make user-writable %s: %s",
 				argv[i], strerror(errno));
-			return -1;
+			return 1;
 		}
 #endif
 
@@ -107,7 +107,7 @@ int main(int argc, const char *argv[])
 		if (utb.modtime != sb.st_mtime && utime(argv[i], &utb) < 0) {
 			fprintf(stderr, "Failed to modify time on %s: %s\n",
 			        argv[i], strerror(errno));
-			return -1;
+			return 1;
 		}
 	}
 
@@ -115,5 +115,5 @@ int main(int argc, const char *argv[])
 
 usage:
 	fprintf(stderr, "usage: %s %s\n", argv[0], usage_str);
-	return -1;
+	return 1;
 }

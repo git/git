@@ -10,11 +10,11 @@ lecho () {
 	done
 }
 
-test_expect_success SYMLINKS setup '
+test_expect_success setup '
 
 	mkdir -p arch/i386/boot arch/x86_64 &&
 	lecho 1 2 3 4 5 >arch/i386/boot/Makefile &&
-	ln -s ../i386/boot arch/x86_64/boot &&
+	test_ln_s_add ../i386/boot arch/x86_64/boot &&
 	git add . &&
 	test_tick &&
 	git commit -m initial &&
@@ -31,7 +31,7 @@ test_expect_success SYMLINKS setup '
 
 '
 
-test_expect_success SYMLINKS apply '
+test_expect_success apply '
 
 	git checkout test &&
 	git diff --exit-code test &&
@@ -40,7 +40,7 @@ test_expect_success SYMLINKS apply '
 
 '
 
-test_expect_success SYMLINKS 'check result' '
+test_expect_success 'check result' '
 
 	git diff --exit-code master &&
 	git diff --exit-code --cached master &&

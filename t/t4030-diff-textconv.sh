@@ -139,12 +139,10 @@ index 0000000..67be421
 +frotz
 \ No newline at end of file
 EOF
-# make a symlink the hard way that works on symlink-challenged file systems
+
 test_expect_success 'textconv does not act on symlinks' '
-	printf frotz > file &&
-	git add file &&
-	git ls-files -s | sed -e s/100644/120000/ |
-		git update-index --index-info &&
+	rm -f file &&
+	test_ln_s_add frotz file &&
 	git commit -m typechange &&
 	git show >diff &&
 	find_diff <diff >actual &&
