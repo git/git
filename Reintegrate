@@ -139,9 +139,11 @@ no)
 		"" | "#"*)
 			echo >&2 "* $branch"
 
-			save=$(git rev-parse --verify HEAD)
-			tip=$(git rev-parse --verify "$branch^0")
-			mb=$(git merge-base "$tip" "$save")
+			save=$(git rev-parse --verify HEAD) &&
+			tip=$(git rev-parse --verify "$branch^0") &&
+			mb=$(git merge-base "$tip" "$save") ||
+			exit
+
 			test "$mb" = "$tip" && continue
 
 			mark_cut
