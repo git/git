@@ -333,7 +333,7 @@ endif::git-log[]
 	a fraction, with a decimal point before it.  I.e., `-M5` becomes
 	0.5, and is thus the same as `-M50%`.  Similarly, `-M05` is
 	the same as `-M5%`.  To limit detection to exact renames, use
-	`-M100%`.
+	`-M100%`.  The default similarity index is 50%.
 
 -C[<n>]::
 --find-copies[=<n>]::
