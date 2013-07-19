@@ -68,7 +68,7 @@ fi
 
 cat <<EOF
 
-Also the following public repositories all have a copy of the $relname
+The following public repositories all have a copy of the $relname
 tag and the $branch branch that the tag points at:
 
   url = https://kernel.googlesource.com/pub/scm/git/git
@@ -77,6 +77,13 @@ tag and the $branch branch that the tag points at:
   url = git://git.sourceforge.jp/gitroot/git-core/git.git
   url = git://git-core.git.sourceforge.net/gitroot/git-core/git-core
   url = https://github.com/gitster/git
+
+EOF
+
+test -n "$for_testing" ||
+cat <<EOF
+Also, http://www.kernel.org/pub/software/scm/git/ has copies of the
+release tarballs.
 
 EOF
 
