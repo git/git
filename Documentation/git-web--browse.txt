@@ -34,6 +34,7 @@ The following browsers (or commands) are currently supported:
 * dillo
 * open (this is the default under Mac OS X GUI)
 * start (this is the default under MinGW)
+* cygstart (this is the default under Cygwin)
 
 Custom commands may also be specified.
 
