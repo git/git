@@ -31,8 +31,10 @@ OPTIONS
 	List all commits reachable from all refs
 
 --stdin::
-	Read from stdin, append "(<rev_name>)" to all sha1's of nameable
-	commits, and pass to stdout
+	Transform stdin by substituting all the 40-character SHA-1
+	hexes (say $hex) with "$hex ($rev_name)".  When used with
+	--name-only, substitute with "$rev_name", omitting $hex
+	altogether.  Intended for the scripter's use.
 
 --name-only::
 	Instead of printing both the SHA-1 and the name, print only
