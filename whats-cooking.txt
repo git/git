@@ -1,10 +1,10 @@
 To: git@vger.kernel.org
 Bcc: lwn@lwn.net
-Subject: What's cooking in git.git (Jul 2013, #05; Fri, 12)
-X-master-at: 0da7a53a76b48ea1b2ee6ebe7bd7fbcd7d5c3f9d
-X-next-at: 3a6d6276f9ce81c14c10f2d798b4fc9a9950eef6
+Subject: What's cooking in git.git (Jul 2013, #06; Thu, 18)
+X-master-at: b72c6161f1f34985e4a13f8c4c9ba9e55b3d1496
+X-next-at: 6b4ca9f6d2ab38b0a886be8faea27be3a50ef9e1
 
-What's cooking in git.git (Jul 2013, #05; Fri, 12)
+What's cooking in git.git (Jul 2013, #06; Thu, 18)
 --------------------------------------------------
 
 Here are the topics that have been cooking.  Commits prefixed with
@@ -22,192 +22,372 @@ of the repositories listed at
 --------------------------------------------------
 [Graduated to "master"]
 
-* as/log-output-encoding-in-user-format (2013-07-05) 11 commits
-  (merged to 'next' on 2013-07-08 at 2e1bdd9)
- + t4205 (log-pretty-formats): avoid using `sed`
- + t6006 (rev-list-format): add tests for "%b" and "%s" for the case i18n.commitEncoding is not set
- + t4205, t6006, t7102: make functions better readable
- + t4205 (log-pretty-formats): revert back single quotes
-  (merged to 'next' on 2013-07-05 at d2c99e5)
- + t4041, t4205, t6006, t7102: use iso8859-1 rather than iso-8859-1
-  (merged to 'next' on 2013-07-01 at 3318aa8)
- + t4205: replace .\+ with ..* in sed commands
-  (merged to 'next' on 2013-06-28 at 4063330)
- + pretty: --format output should honor logOutputEncoding
- + pretty: Add failing tests: --format output should honor logOutputEncoding
- + t4205 (log-pretty-formats): don't hardcode SHA-1 in expected outputs
- + t7102 (reset): don't hardcode SHA-1 in expected outputs
- + t6006 (rev-list-format): don't hardcode SHA-1 in expected outputs
+* bc/commit-invalid-utf8 (2013-07-09) 3 commits
+  (merged to 'next' on 2013-07-11 at a2ee572)
+ + commit: reject non-characters
+ + commit: reject overlong UTF-8 sequences
+ + commit: reject invalid UTF-8 codepoints
 
- "log --format=" did not honor i18n.logoutputencoding configuration
- and this attempts to fix it.
+ Tighten up autodetection of UTF-8 encoded strings.
 
 
-* ft/diff-rename-default-score-is-half (2013-07-05) 1 commit
-  (merged to 'next' on 2013-07-09 at 6a6b57e)
- + diff-options: document default similarity index
+* bc/push-match-many-refs (2013-07-08) 1 commit
+  (merged to 'next' on 2013-07-11 at df4d56d)
+ + remote.c: avoid O(m*n) behavior in match_push_refs
+
+ Pushing to repositories with many refs employed O(m*n) algorithm
+ where n is the number of refs on the receiving end.
 
 
-* jc/remote-http-argv-array (2013-07-09) 1 commit
-  (merged to 'next' on 2013-07-11 at 7fbe8bd)
- + remote-http: use argv-array
+* bc/send-email-use-port-as-separate-param (2013-07-04) 1 commit
+  (merged to 'next' on 2013-07-09 at a569eb5)
+ + send-email: provide port separately from hostname
+
+ Pass port number as a separate argument when send-email initializes
+ Net::SMTP, instead of as a part of the hostname, i.e. host:port.
+ This allows GSSAPI codepath to match with the hostname given.
 
 
-* jk/maint-config-multi-order (2013-07-07) 1 commit
-  (merged to 'next' on 2013-07-09 at 0db1db9)
- + git-config(1): clarify precedence of multiple values
+* bp/mediawiki-preview (2013-07-08) 7 commits
+  (merged to 'next' on 2013-07-12 at 870890a)
+ + git-remote-mediawiki: add preview subcommand into git mw
+ + git-remote-mediawiki: add git-mw command
+ + git-remote-mediawiki: factoring code between git-remote-mediawiki and Git::Mediawiki
+ + git-remote-mediawiki: update tests to run with the new bin-wrapper
+ + git-remote-mediawiki: add a git bin-wrapper for developement
+ + wrap-for-bin: make bin-wrappers chainable
+ + git-remote-mediawiki: introduction of Git::Mediawiki.pm
+
+ Add a command to allow previewing the contents locally before
+ pushing it out, when working with a MediaWiki remote.
+
+ I personally do not think this belongs to Git.  If you are working
+ on a set of AsciiDoc source files, you sure do want to locally
+ format to preview what you will be pushing out, and if you are
+ working on a set of C or Java source files, you do want to test it
+ before pushing it out, too.  That kind of thing belongs to your
+ build script, not to your SCM.
+
+ But I'll let it pass, as this is only a contrib/ thing.
 
 
-* jk/pull-to-integrate (2013-07-08) 2 commits
-  (merged to 'next' on 2013-07-09 at 2ecac24)
- + pull: change the description to "integrate" changes
- + push: avoid suggesting "merging" remote changes
+* cp/submodule-custom-update (2013-07-03) 1 commit
+  (merged to 'next' on 2013-07-09 at 3d27516)
+ + submodule update: allow custom command to update submodule working tree
+
+ In addition to the choice from "rebase, merge, or checkout-detach",
+ allow a custom command to be used in "submodule update" to update
+ the working tree of submodules.
 
 
-* ml/cygwin-does-not-have-fifo (2013-07-05) 1 commit
-  (merged to 'next' on 2013-07-09 at 7d6849d)
- + test-lib.sh - cygwin does not have usable FIFOs
+* es/overlapping-range-set (2013-07-09) 2 commits
+  (merged to 'next' on 2013-07-11 at 3df5a94)
+ + range_set: fix coalescing bug when range is a subset of another
+ + t4211: fix broken test when one -L range is subset of another
 
 
-* ms/remote-tracking-branches-in-doc (2013-07-03) 1 commit
-  (merged to 'next' on 2013-07-09 at 411a8bd)
- + Change "remote tracking" to "remote-tracking"
+* fg/submodule-clone-depth (2013-07-03) 1 commit
+  (merged to 'next' on 2013-07-09 at ab156f3)
+ + Add --depth to submodule update/add
+
+ Allow shallow-cloning of submodules with "git submodule update".
 
 
-* rr/name-rev-stdin-doc (2013-07-07) 1 commit
-  (merged to 'next' on 2013-07-09 at 7cfbff6)
- + name-rev doc: rewrite --stdin paragraph
+* jc/revert-clone-doc-update-for-push-from-shallow (2013-07-15) 1 commit
+ + Revert "git-clone.txt: remove the restriction on pushing from a shallow clone"
 
 
-* rs/pickaxe-simplify (2013-07-07) 1 commit
-  (merged to 'next' on 2013-07-11 at c5972f7)
- + diffcore-pickaxe: simplify has_changes and contains
+* jk/fetch-pack-many-refs (2013-07-02) 3 commits
+  (merged to 'next' on 2013-07-09 at a53b7c7)
+ + fetch-pack: avoid quadratic behavior in rev_list_push
+ + commit.c: make compare_commits_by_commit_date global
+ + fetch-pack: avoid quadratic list insertion in mark_complete
+
+ Fetching between repositories with many refs employed O(n^2)
+ algorithm to match up the common objects, which has been corrected.
 
 
-* tf/gitweb-extra-breadcrumbs (2013-07-04) 1 commit
-  (merged to 'next' on 2013-07-09 at 525331b)
- + gitweb: allow extra breadcrumbs to prefix the trail
+* jk/format-patch-from (2013-07-03) 2 commits
+  (merged to 'next' on 2013-07-09 at 6ed86d5)
+ + teach format-patch to place other authors into in-body "From"
+ + pretty.c: drop const-ness from pretty_print_context
 
- An Gitweb installation that is a part of larger site can optionally
- show extra links that point at the levels higher than the Gitweb
- pages itself in the link hierarchy of pages.
+ "git format-patch" learned "--from[=whom]" option, which sets the
+ "From: " header to the specified person (or the person who runs the
+ command, if "=whom" part is missing) and move the original author
+ information to an in-body From: header as necessary.
 
 
-* tr/test-lint-no-export-assignment-in-shell (2013-07-08) 2 commits
-  (merged to 'next' on 2013-07-09 at 6f10ea2)
- + test-lint: detect 'export FOO=bar'
- + t9902: fix 'test A == B' to use = operator
+* jk/in-pack-size-measurement (2013-07-12) 10 commits
+  (merged to 'next' on 2013-07-12 at 5ba720f)
+ + pack-revindex: radix-sort the revindex
+ + pack-revindex: use unsigned to store number of objects
+ + cat-file: split --batch input lines on whitespace
+ + cat-file: add %(objectsize:disk) format atom
+ + cat-file: add --batch-check=<format>
+ + cat-file: refactor --batch option parsing
+ + cat-file: teach --batch to stream blob objects
+ + t1006: modernize output comparisons
+ + teach sha1_object_info_extended a "disk_size" query
+ + zero-initialize object_info structs
+ (this branch is used by jk/cat-file-batch-optim.)
+
+ Allow on-disk footprint of objects in packfiles (often they are a
+ lot smaller than their true size, when expressed as deltas).
+
+
+* jk/maint-clone-shared-no-connectivity-validation (2013-07-08) 1 commit
+  (merged to 'next' on 2013-07-11 at 8183412)
+ + clone: drop connectivity check for local clones
+ (this branch is used by jk/clone-shared-no-connectivity-validation.)
+
+ "git clone -s/-l" is a filesystem level copy and does not offer any
+ protection against source repository being corrupt.  While the
+ connectivity validation checks commits and trees being readable, it
+ made the otherwise instantaneous local modes of clone much more
+ expensive, without protecting blob data from bitflips.
+
+
+* mv/merge-ff-tristate (2013-07-02) 1 commit
+  (merged to 'next' on 2013-07-09 at c32b95d)
+ + merge: handle --ff/--no-ff/--ff-only as a tri-state option
+
+ The configuration variable "merge.ff" was cleary a tri-state to
+ choose one from "favor fast-forward when possible", "always create
+ a merge even when the history could fast-forward" and "do not
+ create any merge, only update when the history fast-forwards", but
+ the command line parser did not implement the usual convention of
+ "last one wins, and command line overrides the configuration"
+ correctly.
+
+
+* rr/rebase-reflog-message-reword (2013-06-23) 2 commits
+  (merged to 'next' on 2013-07-11 at 59921e0)
+ + rebase -i: use a better reflog message
+ + rebase: use a better reflog message
+
+ "git rebase [-i]" used to leave just "rebase" as its reflog message
+ for some operations. This rewords them to be more informative.
+
+
+* rs/mailmap-himself (2013-07-17) 1 commit
+ + .mailmap: René Scharfe has a new email address
+
+
+* sb/mailmap-updates (2013-07-17) 3 commits
+ + .mailmap: combine more (email, name) to individual persons
+  (merged to 'next' on 2013-07-15 at 61c965a)
+ + .mailmap: Combine more (email, name) to individual persons
+ + .mailmap: Map email addresses to names
 
 --------------------------------------------------
 [New Topics]
 
-* es/check-mailmap (2013-07-11) 2 commits
- - t4203: test check-mailmap command invocation
- - builtin: add git-check-mailmap command
+* db/show-ref-head (2013-07-17) 1 commit
+  (merged to 'next' on 2013-07-18 at 73797d0)
+ + show-ref: make --head always show the HEAD ref
 
- A new command to allow scripts to query the mailmap information.
+ The "--head" option to "git show-ref" was only to add "HEAD" to the
+ list of candidate refs to be filtered by the usual rules
+ (e.g. "--heads" that only show refs under refs/heads).  Change the
+ meaning of the option to always show "HEAD" regardless of what
+ filtering will be applied to any other ref (this is a backward
+ incompatible change, so I may need to add an entry to the Release
+ Notes).
 
- Expecting a reroll to lose the -z option.
-
-
-* jc/check-x-z (2013-07-11) 4 commits
- - check-attr -z: a single -z should apply to both input and output
- - check-ignore -z: a single -z should apply to both input and output
- - check-attr: the name of the character is NUL, not NULL
- - check-ignore: the name of the character is NUL, not NULL
-
- "git check-ignore -z" applied the NUL termination to both its input
- (with --stdin) and its output, but "git check-attr -z" ignored the
- option on the output side.
-
- This is potentially a backward incompatible fix.  I am tempted to
- merge this to and keep it in 'next' for a while to see if anybody
- screams before deciding if we want to do anything to help existing
- users (there may be none).
+ Will merge to 'master'.
 
 
-* jk/cat-file-batch-optim (2013-07-12) 8 commits
- - sha1_object_info_extended: pass object_info to helpers
- - sha1_object_info_extended: make type calculation optional
- - packed_object_info: make type lookup optional
- - packed_object_info: hoist delta type resolution to helper
- - sha1_loose_object_info: make type lookup optional
- - sha1_object_info_extended: rename "status" to "type"
- - cat-file: disable object/refname ambiguity check for batch mode
- - Merge branch 'nd/warn-ambiguous-object-name' into jk/cat-file-batch-optim
- (this branch uses jk/in-pack-size-measurement.)
+* dw/request-pull-diag (2013-07-17) 1 commit
+  (merged to 'next' on 2013-07-18 at d4406de)
+ + request-pull: improve error message for invalid revision args
 
- If somebody wants to only know on-disk footprint of an object
- without having to know its type or payload size, we can bypass a
- lot of code to cheaply learn it.
+ Will merge to 'master'.
 
 
-* jk/t0008-sigpipe-fix (2013-07-12) 1 commit
- - t0008: avoid SIGPIPE race condition on fifo
+* es/blame-L-breakage (2013-07-17) 6 commits
+  (merged to 'next' on 2013-07-18 at cfd871a)
+ + blame-options.txt: explain that -L <start> and <end> are optional
+ + blame-options.txt: place each -L option variation on its own line
+ + t8001/t8002 (blame): add blame -L :funcname tests
+ + t8001/t8002 (blame): add blame -L tests
+ + t8001/t8002 (blame): modernize style
+ + line-range: fix "blame -L X,-N" regression
 
- Fix for recent test breakage on 'master'.
+ The refactoring made for parsing "-L" option recently to support
+ "git log -L" seems to have broken "git blame -L X,-5" to show 5
+ lines leading to X.
+
+ Will merge to 'master'.
+
+
+* jc/diff-filter-negation (2013-07-17) 6 commits
+ - diff: deprecate -q option to diff-files
+ - diff: allow lowercase letter to specify what change class to exclude
+ - diff: reject unknown change class given to --diff-filter
+ - diff: preparse --diff-filter string argument
+ - diff: factor out match_filter()
+ - diff: pass the whole diff_options to diffcore_apply_filter()
+ (this branch is used by jc/diff-2.0-remove-q-synonym-for-no-deletion.)
+
+ Teach "git diff --diff-filter" to express "I do not want to see
+ these classes of changes" more directly by listing only the
+ unwanted ones in lowercase (e.g. "--diff-filter=d" will show
+ everything but deletion) and deprecate "diff-files -q" which did
+ the same thing as "--diff-filter=d".
+
+ Waiting for comments.
+
+
+* mh/packed-refs-do-one-ref-recursion (2013-07-17) 1 commit
+ - do_one_ref(): save and restore value of current_ref
+
+ May want some tests?
+
+
+* ml/avoid-using-grep-on-crlf-files (2013-07-18) 1 commit
+ - test-lib.sh - define and use GREP_STRIPS_CR
+
+ On systems that understand a CRLF as a line ending, tests in this
+ script that worked on files with CRLF line endings using "grep" to
+ extract matching lines may lose the CR at the end of lines that
+ match, causing the actual output not to match the expected output.
+
+ Waiting for success reports from folks on various flavours of
+ Windows ports.
+
+
+* ml/cygwin-updates (2013-07-15) 2 commits
+ - Use compat/regex on Cygwin
+ - Cygwin has trustable filemode
+
+ This seems to depend heavily on Cygwin version differences.
+
+
+* mm/diff-no-patch-synonym-to-s (2013-07-17) 6 commits
+  (merged to 'next' on 2013-07-18 at 3b893d6)
+ + Documentation/git-log.txt: capitalize section names
+ + Documentation: move description of -s, --no-patch to diff-options.txt
+ + Documentation/git-show.txt: include common diff options, like git-log.txt
+ + diff: allow --patch & cie to override -s/--no-patch
+ + diff: allow --no-patch as synonym for -s
+ + t4000-diff-format.sh: modernize style
+
+ "git show -s" was less discoverable than it should be.
+
+ Will merge to 'master'.
+
+
+* nd/magic-pathspec (2013-07-17) 47 commits
+ - t6131 - skip tests if on case-insensitive file system
+ - parse_pathspec: accept :(icase)path syntax
+ - pathspec: support :(glob) syntax
+ - pathspec: make --literal-pathspecs disable pathspec magic
+ - pathspec: support :(literal) syntax for noglob pathspec
+ - kill limit_pathspec_to_literal() as it's only used by parse_pathspec()
+ - parse_pathspec: preserve prefix length via PATHSPEC_PREFIX_ORIGIN
+ - parse_pathspec: make sure the prefix part is wildcard-free
+ - rename field "raw" to "_raw" in struct pathspec
+ - tree-diff: remove the use of pathspec's raw[] in follow-rename codepath
+ - remove match_pathspec() in favor of match_pathspec_depth()
+ - remove init_pathspec() in favor of parse_pathspec()
+ - remove diff_tree_{setup,release}_paths
+ - convert common_prefix() to use struct pathspec
+ - convert add_files_to_cache to take struct pathspec
+ - convert {read,fill}_directory to take struct pathspec
+ - convert refresh_index to take struct pathspec
+ - convert report_path_error to take struct pathspec
+ - checkout: convert read_tree_some to take struct pathspec
+ - convert unmerge_cache to take struct pathspec
+ - convert run_add_interactive to use struct pathspec
+ - convert read_cache_preload() to take struct pathspec
+ - line-log: convert to use parse_pathspec
+ - reset: convert to use parse_pathspec
+ - add: convert to use parse_pathspec
+ - check-ignore: convert to use parse_pathspec
+ - archive: convert to use parse_pathspec
+ - ls-files: convert to use parse_pathspec
+ - rm: convert to use parse_pathspec
+ - checkout: convert to use parse_pathspec
+ - rerere: convert to use parse_pathspec
+ - status: convert to use parse_pathspec
+ - commit: convert to use parse_pathspec
+ - clean: convert to use parse_pathspec
+ - guard against new pathspec magic in pathspec matching code
+ - parse_pathspec: support prefixing original patterns
+ - parse_pathspec: support stripping/checking submodule paths
+ - parse_pathspec: support stripping submodule trailing slashes
+ - parse_pathspec: add special flag for max_depth feature
+ - convert some get_pathspec() calls to parse_pathspec()
+ - parse_pathspec: add PATHSPEC_PREFER_{CWD,FULL} flags
+ - parse_pathspec: save original pathspec for reporting
+ - add parse_pathspec() that converts cmdline args to struct pathspec
+ - pathspec: add copy_pathspec
+ - pathspec: i18n-ize error strings in pathspec parsing code
+ - move struct pathspec and related functions to pathspec.[ch]
+ - clean: remove unused variable "seen"
+
+ Use "struct pathspec" interface in more places, instead of array of
+ characters, the latter of which cannot express magic pathspecs
+ (e.g. ":(icase)makefile" that matches both Makefile and makefile).
 
  Will merge to 'next'.
 
 
-* mk/upload-pack-off-by-one-dead-code-removal (2013-07-11) 1 commit
- - upload-pack: Remove a piece of dead code
+* rh/template-updates (2013-07-15) 3 commits
+ - templates: spell ASCII in uppercase in pre-commit hook
+ - templates: Reformat pre-commit hook's message
+ - templates: Use heredoc in pre-commit hook
+
+ This is an earlier part of a 6 patch series, with log message
+ corrected.
+
+
+* sb/misc-fixes (2013-07-15) 3 commits
+ - diff.c: Do not initialize a variable, which gets reassigned anyway.
+ - commit: Fix a memory leak in determine_author_info
+ - daemon.c:handle: Remove unneeded check for null pointer.
+
+ Assorted code cleanups and a minor fix.
 
  Will merge to 'next'.
 
 
-* sb/mailmap-updates (2013-07-12) 1 commit
- - .mailmap: Map email addresses to names
+* sb/parse-object-buffer-eaten (2013-07-17) 1 commit
+  (merged to 'next' on 2013-07-18 at 364689c)
+ + parse_object_buffer: correct freeing the buffer
 
- Will merge to 'next'.
-
-
-* tf/gitweb-ss-tweak (2013-07-09) 2 commits
- - gitweb: vertically centre contents of page footer
- - gitweb: Ensure OPML text fits inside its box.
-
- Comments?
+ Will merge to 'master'.
 
 
-* tr/fd-gotcha-fixes (2013-07-12) 2 commits
- - run-command: dup_devnull(): guard against syscalls failing
- - git_mkstemps: correctly test return value of open()
+* tr/do-not-call-submodules-subprojects (2013-07-18) 2 commits
+  (merged to 'next' on 2013-07-18 at 6386fd5)
+ + show-branch: fix description of --date-order
+ + apply, entry: speak of submodules instead of subprojects
 
- Two places we did not check return value (expected to be a file
- descriptor) correctly.
-
-
-* jc/mailmap-case-insensitivity (2013-07-12) 4 commits
- - add a testcase for checking case insensitivity of mailmap
- - mailmap: style fixes
- - mailmap: do not downcase mailmap entries
- - mailmap: do not lose single-letter names
-
- The test may need to be rerolled and enhanced.
+ Will merge to 'master'.
 
 
-* ms/fetch-prune-configuration (2013-07-12) 2 commits
- - squash???
- - fetch: make --prune configurable
+* tr/protect-low-3-fds (2013-07-17) 2 commits
+  (merged to 'next' on 2013-07-18 at 504d972)
+ + git: ensure 0/1/2 are open in main()
+ + daemon/shell: refactor redirection of 0/1/2 from /dev/null
 
- Allow fetch.prune and remote.*.prune configuration variables to be set,
- and "git fetch" to behave as if "--prune" is given.
+ When "git" is spawned in such a way that any of the low 3 file
+ descriptors is closed, our first open() may yield file descriptor 2,
+ and writing error message to it would screw things up in a big way.
+
+ Will merge to 'master'.
+
+
+* jc/diff-2.0-remove-q-synonym-for-no-deletion (2013-07-18) 1 commit
+ - diff: remove "diff-files -q" at Git 2.0 version boundary
+ (this branch uses jc/diff-filter-negation.)
+
+ This obviously has to wait until Git 2.0.
 
 --------------------------------------------------
 [Stalled]
-
-* rr/send-email-ssl-verify (2013-07-06) 6 commits
- - SQUASH??? update to support SSL_ca_file as well as SSL_ca_path
- - SQUASH??? send-email: cover both smtps and starttls cases
- - fixup! send-email: squelch warning from Net::SMTP::SSL
- - SQUASH??? send-email giving default value to ssl-cert-path with ||= assignment
- - send-email: introduce sendemail.smtpsslcertpath
- - send-email: squelch warning from Net::SMTP::SSL
-
- The issue seems a lot deeper than the initial attempt and needs
- somebody to sit down and sort out to get the version dependencies
- and lazy loading right.
-
 
 * rj/read-default-config-in-show-ref-pack-refs (2013-06-17) 3 commits
  - ### DONTMERGE: needs better explanation on what config they need
@@ -238,18 +418,17 @@ of the repositories listed at
 
 
 * jl/submodule-mv (2013-04-23) 5 commits
- - submodule.c: duplicate real_path's return value
- - rm: delete .gitmodules entry of submodules removed from the work tree
- - Teach mv to update the path entry in .gitmodules for moved submodules
- - Teach mv to move submodules using a gitfile
- - Teach mv to move submodules together with their work trees
+ . submodule.c: duplicate real_path's return value
+ . rm: delete .gitmodules entry of submodules removed from the work tree
+ . Teach mv to update the path entry in .gitmodules for moved submodules
+ . Teach mv to move submodules using a gitfile
+ . Teach mv to move submodules together with their work trees
 
  "git mv A B" when moving a submodule A does "the right thing",
  inclusing relocating its working tree and adjusting the paths in
  the .gitmodules file.
 
- Waiting for a reroll.
- $gmane/226294
+ Ejected from 'pu', as it conflicts with nd/magic-pathspec.
 
 
 * jk/list-objects-sans-blobs (2013-06-06) 4 commits
@@ -280,11 +459,13 @@ of the repositories listed at
  there are some doubts on the list; kicked back to 'pu'.
 
 
-* mh/multimail (2013-04-21) 1 commit
- - git-multimail: a replacement for post-receive-email
+* mh/multimail (2013-07-15) 2 commits
+ - post-receive-email: deprecate script in favor of git-multimail
+ - git-multimail: an improved replacement for post-receive-email
 
- Waiting for the initial history to pull from.
- $gmane/223564
+ An enhanced "post-receive" hook to send e-mail messages.
+
+ Will wait for the review for the tip one to settle and then merge.
 
 
 * jc/format-patch (2013-04-22) 2 commits
@@ -327,6 +508,125 @@ of the repositories listed at
 --------------------------------------------------
 [Cooking]
 
+* rr/send-email-ssl-verify (2013-07-18) 1 commit
+ - send-email: be explicit with SSL certificate verification
+
+ Waiting for test reports.
+
+
+* es/check-mailmap (2013-07-13) 2 commits
+ - t4203: test check-mailmap command invocation
+ - builtin: add git-check-mailmap command
+
+ A new command to allow scripts to query the mailmap information.
+
+ Will merge to 'next'.
+
+
+* jc/check-x-z (2013-07-11) 4 commits
+  (merged to 'next' on 2013-07-15 at 62751bc)
+ + check-attr -z: a single -z should apply to both input and output
+ + check-ignore -z: a single -z should apply to both input and output
+ + check-attr: the name of the character is NUL, not NULL
+ + check-ignore: the name of the character is NUL, not NULL
+
+ "git check-ignore -z" applied the NUL termination to both its input
+ (with --stdin) and its output, but "git check-attr -z" ignored the
+ option on the output side.
+
+ This is potentially a backward incompatible fix.  I am tempted to
+ merge this to and keep it in 'next' for a while to see if anybody
+ screams before deciding if we want to do anything to help existing
+ users (there may be none).
+
+ Waiting for failure reports ;-)
+
+
+* jk/cat-file-batch-optim (2013-07-18) 9 commits
+ - Fix some sparse warnings
+ - sha1_object_info_extended: pass object_info to helpers
+ - sha1_object_info_extended: make type calculation optional
+ - packed_object_info: make type lookup optional
+ - packed_object_info: hoist delta type resolution to helper
+ - sha1_loose_object_info: make type lookup optional
+ - sha1_object_info_extended: rename "status" to "type"
+ - cat-file: disable object/refname ambiguity check for batch mode
+ - Merge branch 'nd/warn-ambiguous-object-name' into jk/cat-file-batch-optim
+
+ If somebody wants to only know on-disk footprint of an object
+ without having to know its type or payload size, we can bypass a
+ lot of code to cheaply learn it.
+
+ Will merge to 'next'.
+
+
+* jk/t0008-sigpipe-fix (2013-07-12) 1 commit
+  (merged to 'next' on 2013-07-15 at cead4b2)
+ + t0008: avoid SIGPIPE race condition on fifo
+
+ Fix for recent test breakage on 'master'.
+
+ Will merge to 'master'.
+
+
+* mk/upload-pack-off-by-one-dead-code-removal (2013-07-15) 1 commit
+  (merged to 'next' on 2013-07-15 at a8f55a2)
+ + upload-pack: remove a piece of dead code
+
+ Will merge to 'master'.
+
+
+* tf/gitweb-ss-tweak (2013-07-15) 4 commits
+ - gitweb: make search help link less ugly
+ - gitweb: omit the repository owner when it is unset
+ - gitweb: vertically centre contents of page footer
+ - gitweb: ensure OPML text fits inside its box
+
+ Waiting for comments.
+
+
+* tr/fd-gotcha-fixes (2013-07-12) 2 commits
+  (merged to 'next' on 2013-07-18 at 30f4fdf)
+ + run-command: dup_devnull(): guard against syscalls failing
+ + git_mkstemps: correctly test return value of open()
+
+ Two places we did not check return value (expected to be a file
+ descriptor) correctly.
+
+ Will merge to 'master'.
+
+
+* jc/mailmap-case-insensitivity (2013-07-15) 9 commits
+  (merged to 'next' on 2013-07-18 at 83341ac)
+ + mailmap: style fixes
+ + mailmap: debug: avoid passing NULL to fprintf() '%s' conversion specification
+ + mailmap: debug: eliminate -Wformat field precision type warning
+ + mailmap: debug: fix malformed fprintf() format conversion specification
+ + mailmap: debug: fix out-of-order fprintf() arguments
+ + mailmap: do not downcase mailmap entries
+ + t4203: demonstrate loss of uppercase characters in canonical email
+ + mailmap: do not lose single-letter names
+ + t4203: demonstrate loss of single-character name in mailmap entry
+
+ The mailmap mechanism unnecessarily downcased the e-mail addresses
+ in the output, and also ignored the human name when it is a single
+ character name.
+
+ This now has become Eric Sunshine's series, even though it still is
+ under jc/ hierarchy.
+
+ Will merge to 'master'.
+
+
+* ms/fetch-prune-configuration (2013-07-18) 1 commit
+ - fetch: make --prune configurable
+
+ Allow fetch.prune and remote.*.prune configuration variables to be set,
+ and "git fetch" to behave as if "--prune" is given.
+
+ Will merge to 'next'.
+
+
 * jk/gcc-function-attributes (2013-07-09) 3 commits
   (merged to 'next' on 2013-07-12 at 5a7081f)
  + wt-status: use "format" function attribute for status_printf
@@ -346,30 +646,28 @@ of the repositories listed at
 
  Allows custom curl configuration per URL when talking over http.
 
+ There is a reroll that needs to be picked up after discussion.
+
 
 * hv/config-from-blob (2013-07-12) 5 commits
- - do not die when error in config parsing of buf occurs
- - teach config --blob option to parse config from database
- - config: make parsing stack struct independent from actual data source
- - config: drop cf validity check in get_next_char()
- - config: factor out config file stack management
+  (merged to 'next' on 2013-07-15 at 9ab7f3f)
+ + do not die when error in config parsing of buf occurs
+ + teach config --blob option to parse config from database
+ + config: make parsing stack struct independent from actual data source
+ + config: drop cf validity check in get_next_char()
+ + config: factor out config file stack management
 
- Rerolled.
-
- Will merge to 'next'.
-
-
-* bc/push-match-many-refs (2013-07-08) 1 commit
-  (merged to 'next' on 2013-07-11 at df4d56d)
- + remote.c: avoid O(m*n) behavior in match_push_refs
-
- Pushing to repositories with many refs employed O(m*n) algorithm
- where n is the number of refs on the receiving end.
+ Allow configuration data to be read from in-tree blob objects,
+ which would help working in a bare repository and submodule
+ updates.
 
  Will merge to 'master'.
 
 
-* jc/name-rev-exact-ref (2013-07-09) 3 commits
+* jc/name-rev-exact-ref (2013-07-18) 5 commits
+  (merged to 'next' on 2013-07-18 at c8bc00c)
+ + describe: fix --contains when a tag is given as input
+ + name-rev: differentiate between tags and commits they point at
   (merged to 'next' on 2013-07-11 at fd5b30c)
  + describe: use argv-array
  + name-rev: allow converting the exact object name at the tip of a ref
@@ -382,40 +680,6 @@ of the repositories listed at
  Will merge to 'master'.
 
 
-* jk/in-pack-size-measurement (2013-07-12) 10 commits
-  (merged to 'next' on 2013-07-12 at 5ba720f)
- + pack-revindex: radix-sort the revindex
- + pack-revindex: use unsigned to store number of objects
- + cat-file: split --batch input lines on whitespace
- + cat-file: add %(objectsize:disk) format atom
- + cat-file: add --batch-check=<format>
- + cat-file: refactor --batch option parsing
- + cat-file: teach --batch to stream blob objects
- + t1006: modernize output comparisons
- + teach sha1_object_info_extended a "disk_size" query
- + zero-initialize object_info structs
- (this branch is used by jk/cat-file-batch-optim.)
-
- Allow on-disk footprint of objects in packfiles (often they are a
- lot smaller than their true size, when expressed as deltas).
-
- Will merge to 'master'.
-
-
-* jk/maint-clone-shared-no-connectivity-validation (2013-07-08) 1 commit
-  (merged to 'next' on 2013-07-11 at 8183412)
- + clone: drop connectivity check for local clones
- (this branch is used by jk/clone-shared-no-connectivity-validation.)
-
- "git clone -s/-l" is a filesystem level copy and does not offer any
- protection against source repository being corrupt.  While the
- connectivity validation checks commits and trees being readable, it
- made the otherwise instantaneous local modes of clone much more
- expensive, without protecting blob data from bitflips.
-
- Will merge to 'master'.
-
-
 * km/svn-1.8-serf-only (2013-07-07) 2 commits
   (merged to 'next' on 2013-07-12 at 70e0b95)
  + git-svn: allow git-svn fetching to work using serf
@@ -424,6 +688,8 @@ of the repositories listed at
  Subversion 1.8.0 that was recently released breaks older subversion
  clients coming over http/https in various ways.
 
+ Are people on older Subversion happy with this change?
+
 
 * tr/merge-recursive-index-only (2013-07-07) 3 commits
  - merge-recursive: -Xindex-only to leave worktree unchanged
@@ -431,15 +697,7 @@ of the repositories listed at
  - merge-recursive: remove dead conditional in update_stages()
 
 
-* es/overlapping-range-set (2013-07-09) 2 commits
-  (merged to 'next' on 2013-07-11 at 3df5a94)
- + range_set: fix coalescing bug when range is a subset of another
- + t4211: fix broken test when one -L range is subset of another
-
- Will merge to 'master'.
-
-
-* jc/push-cas (2013-07-11) 6 commits
+* jc/push-cas (2013-07-17) 6 commits
  - t5533: test "push --lockref"
  - push --lockref: tie it all together
  - push --lockref: implement logic to populate old_sha1_expect[]
@@ -453,56 +711,16 @@ of the repositories listed at
 
  The machinery is more or less ready.  The "--force" option is again
  the big red button to override any safety, thanks to J6t's sanity
- (the original round allowed --lockref to defeat --force).
+ (the original round allowed --lockref to defeat --force).  The
+ logic to choose the default for --lockref is suitable only for the
+ simplest workflows, and may hurt users more than help them.
 
  Waiting for comments.
 
 
 * nd/const-struct-cache-entry (2013-07-09) 1 commit
- - Convert "struct cache_entry *" to "const ..." wherever possible
-
- Will merge to 'next'.
-
-
-* jk/fetch-pack-many-refs (2013-07-02) 3 commits
-  (merged to 'next' on 2013-07-09 at a53b7c7)
- + fetch-pack: avoid quadratic behavior in rev_list_push
- + commit.c: make compare_commits_by_commit_date global
- + fetch-pack: avoid quadratic list insertion in mark_complete
-
- Fetching between repositories with many refs employed O(n^2)
- algorithm to match up the common objects, which has been corrected.
-
- Will merge to 'master'.
-
-
-* jk/format-patch-from (2013-07-03) 2 commits
-  (merged to 'next' on 2013-07-09 at 6ed86d5)
- + teach format-patch to place other authors into in-body "From"
- + pretty.c: drop const-ness from pretty_print_context
-
- "git format-patch" learned "--from[=whom]" option, which sets the
- "From: " header to the specified person (or the person who runs the
- command, if "=whom" part is missing) and move the original author
- information to an in-body From: header as necessary.
-
- Will merge to 'master'.
-
-
-* bc/commit-invalid-utf8 (2013-07-09) 3 commits
-  (merged to 'next' on 2013-07-11 at a2ee572)
- + commit: reject non-characters
- + commit: reject overlong UTF-8 sequences
- + commit: reject invalid UTF-8 codepoints
-
- Tighten up autodetection of UTF-8 encoded strings.
-
- Will merge to 'master'.
-
-
-* bc/send-email-use-port-as-separate-param (2013-07-04) 1 commit
-  (merged to 'next' on 2013-07-09 at a569eb5)
- + send-email: provide port separately from hostname
+  (merged to 'next' on 2013-07-15 at 9ce0122)
+ + Convert "struct cache_entry *" to "const ..." wherever possible
 
  Will merge to 'master'.
 
@@ -521,90 +739,24 @@ of the repositories listed at
  in-tree. Assuming that "git contact" is something we may want to
  have as a member of the official set of commands someday, that is.
 
- Will merge to 'next'.
+ Perhaps this should be rebased on es/check-mailmap to utilize it.
 
 
-* cp/submodule-custom-update (2013-07-03) 1 commit
-  (merged to 'next' on 2013-07-09 at 3d27516)
- + submodule update: allow custom command to update submodule working tree
-
- In addition to the choice from "rebase, merge, or checkout-detach",
- allow a custom command to be used in "submodule update" to update
- the working tree of submodules.
-
- Will merge to 'master'.
-
-
-* mv/merge-ff-tristate (2013-07-02) 1 commit
-  (merged to 'next' on 2013-07-09 at c32b95d)
- + merge: handle --ff/--no-ff/--ff-only as a tri-state option
-
- The configuration variable "merge.ff" was cleary a tri-state to
- choose one from "favor fast-forward when possible", "always create
- a merge even when the history could fast-forward" and "do not
- create any merge, only update when the history fast-forwards", but
- the command line parser did not implement the usual convention of
- "last one wins, and command line overrides the configuration"
- correctly.
-
- Will merge to 'master'.
-
-
-* rr/rebase-reflog-message-reword (2013-06-23) 2 commits
-  (merged to 'next' on 2013-07-11 at 59921e0)
- + rebase -i: use a better reflog message
- + rebase: use a better reflog message
-
- "git rebase [-i]" used to leave just "rebase" as its reflog message
- for some operations. This rewords them to be more informative.
-
- Will merge to 'master'.
-
-
-* bp/mediawiki-preview (2013-07-08) 7 commits
-  (merged to 'next' on 2013-07-12 at 870890a)
- + git-remote-mediawiki: add preview subcommand into git mw
- + git-remote-mediawiki: add git-mw command
- + git-remote-mediawiki: factoring code between git-remote-mediawiki and Git::Mediawiki
- + git-remote-mediawiki: update tests to run with the new bin-wrapper
- + git-remote-mediawiki: add a git bin-wrapper for developement
- + wrap-for-bin: make bin-wrappers chainable
- + git-remote-mediawiki: introduction of Git::Mediawiki.pm
-
- Add a command to allow previewing the contents locally before
- pushing it out, when working with a MediaWiki remote.
-
- I personally do not think this belongs to Git.  If you are working
- on a set of AsciiDoc source files, you sure do want to locally
- format to preview what you will be pushing out, and if you are
- working on a set of C or Java source files, you do want to test it
- before pushing it out, too.  That kind of thing belongs to your
- build script, not to your SCM.
-
- But I'll let it pass, as this is only a contrib/ thing.
-
- Will merge to 'master'.
-
-
-* fg/submodule-clone-depth (2013-07-03) 1 commit
-  (merged to 'next' on 2013-07-09 at ab156f3)
- + Add --depth to submodule update/add
-
- Allow shallow-cloning of submodules with "git submodule update".
-
- Will merge to 'master'.
-
-
-* jc/pull-training-wheel (2013-06-27) 1 commit
+* jc/pull-training-wheel (2013-07-18) 1 commit
  - pull: require choice between rebase/merge on non-fast-forward pull
 
- Make "git pull" refuse with "it does not fast forward; choose between
- 'pull --merge' and 'pull --rebase'".
+ Make "git pull" (without arguments that say what branch to
+ integrate from where) refuse with "it does not fast forward; choose
+ between 'pull --merge' and 'pull --rebase'".
 
- John Keeping seems to want to restrict this to "git pull" without
- any other argument. I personally do not have a strong opinion
- either way, but I'm inclined to take such a patch to loosen the new
- logic with other people's support.  Hint, hint...
+ See
+
+ http://thread.gmane.org/gmane.comp.version-control.git/225146/focus=225326
+ http://thread.gmane.org/gmane.comp.version-control.git/225146/focus=229221
+
+ for full discussion.
+
+ Waiting for reviews.
 
 
 * jk/fast-import-empty-ls (2013-06-23) 4 commits
@@ -617,19 +769,10 @@ of the repositories listed at
  $gmane/228741
 
 
-* rj/cygwin-clarify-use-of-cheating-lstat (2013-07-11) 1 commit
- - cygwin: Add fast_lstat() and fast_fstat() functions
+* rj/cygwin-clarify-use-of-cheating-lstat (2013-07-18) 1 commit
+ - cygwin: Remove the Win32 l/stat() implementation
 
- Turns quite a many uses of lstat() into fast_lstat() to mark
- callsites that allow "a faster but cheating and incorrect variant".
- Defining fast_lstat() to be the same as lstat(), is fine from
- correctness point of view, but it can be replaced with an
- alternative implementation that more quickly grabs only the part of
- the stat information that matter (e.g. cygwin).  The places where
- we _do_ require a fully correct lstat() are left as lstat().
-
- The damage this patch makes to the the core codepath on systems may
- be rather large from readability's point of view, though.
+ Waiting for the discussion to settle.
 
 
 * jc/reflog-doc (2013-06-19) 1 commit
