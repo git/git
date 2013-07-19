@@ -267,7 +267,7 @@ then
 	generate "$0" "$@"
 elif test -z "$diff"
 then
-	generate "$0" "$@" | diff -u "$update" -
+	generate "$0" "$@" | diff -w -u "$update" -
 	if test $? = 0
 	then
 		echo >&2 "No changes."
@@ -283,5 +283,5 @@ then
 		esac
 	fi
 else
-	generate "$0" "$@" | diff -u "$update" -
+	generate "$0" "$@" | diff -w -u "$update" -
 fi
