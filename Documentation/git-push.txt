@@ -136,6 +136,15 @@ already exists on the remote side.
 	not an ancestor of the local ref used to overwrite it.
 	This flag disables the check.  This can cause the
 	remote repository to lose commits; use it with care.
+	Note that `--force` applies to all the refs that are pushed,
+	hence using it with `push.default` set to `matching` or with
+	multiple push destinations configured with `remote.*.push`
+	may overwrite refs other than the current branch (including
+	local refs that are strictly behind their remote counterpart).
+	To force a push to only one branch, use a `+` in front of the
+	refspec to push	(e.g `git push origin +master` to force a push
+	to the `master`	branch). See the `<refspec>...` section above
+	for details.
 
 --repo=<repository>::
 	This option is only relevant if no <repository> argument is
