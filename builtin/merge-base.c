@@ -107,7 +107,7 @@ int cmd_merge_base(int argc, const char **argv, const char *prefix)
 	argc = parse_options(argc, argv, prefix, options, merge_base_usage, 0);
 	if (!octopus && !reduce && argc < 2)
 		usage_with_options(merge_base_usage, options);
-	if (is_ancestor && (show_all | octopus | reduce))
+	if (is_ancestor && (show_all || octopus || reduce))
 		die("--is-ancestor cannot be used with other options");
 	if (is_ancestor)
 		return handle_is_ancestor(argc, argv);

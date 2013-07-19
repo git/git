@@ -3525,7 +3525,7 @@ static int check_patch(struct patch *patch)
 		ok_if_exists = 0;
 
 	if (new_name &&
-	    ((0 < patch->is_new) | (0 < patch->is_rename) | patch->is_copy)) {
+	    ((0 < patch->is_new) || patch->is_rename || patch->is_copy)) {
 		int err = check_to_create(new_name, ok_if_exists);
 
 		if (err && threeway) {
