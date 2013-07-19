@@ -57,10 +57,10 @@ download a copy of an existing repository.  If you don't already have a
 project in mind, here are some interesting examples:
 
 ------------------------------------------------
-	# Git itself (approx. 10MB download):
+	# Git itself (approx. 40MB download):
 $ git clone git://git.kernel.org/pub/scm/git/git.git
-	# the Linux kernel (approx. 150MB download):
-$ git clone git://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux-2.6.git
+	# the Linux kernel (approx. 640MB download):
+$ git clone git://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git
 ------------------------------------------------
 
 The initial clone may be time-consuming for a large project, but you
