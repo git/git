@@ -24,5 +24,7 @@
 	<string>GITg</string>
 	<key>CFBundleVersion</key>
 	<string>@@GITGUI_VERSION@@</string>
+	<key>NSHighResolutionCapable</key>
+	<true/>
 </dict>
 </plist>
