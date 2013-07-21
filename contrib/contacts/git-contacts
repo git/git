@@ -102,9 +102,26 @@ sub scan_patch_file {
 	close $f;
 }
 
+sub parse_rev_args {
+	my @args = @_;
+	open my $f, '-|',
+		qw(git rev-parse --revs-only --default HEAD --symbolic), @args
+		or die;
+	my @revs;
+	while (<$f>) {
+		chomp;
+		push @revs, $_;
+	}
+	close $f;
+	return @revs if scalar(@revs) != 1;
+	return "^$revs[0]", 'HEAD' unless $revs[0] =~ /^-/;
+	return $revs[0], 'HEAD';
+}
+
 sub scan_rev_args {
 	my ($commits, $args) = @_;
-	open my $f, '-|', qw(git rev-list --reverse), @$args or die;
+	my @revs = parse_rev_args(@$args);
+	open my $f, '-|', qw(git rev-list --reverse), @revs or die;
 	while (<$f>) {
 		chomp;
 		my $id = $_;
