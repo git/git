@@ -3,7 +3,7 @@
 # List people who might be interested in a patch.  Useful as the argument to
 # git-send-email --cc-cmd option, and in other situations.
 #
-# Usage: git contacts <file> ...
+# Usage: git contacts <file | rev-list option> ...
 
 use strict;
 use warnings;
@@ -77,8 +77,8 @@ sub get_blame {
 }
 
 sub scan_patches {
-	my ($commits, $f) = @_;
-	my ($id, $source);
+	my ($commits, $id, $f) = @_;
+	my $source;
 	while (<$f>) {
 		if (/^From ([0-9a-f]{40}) Mon Sep 17 00:00:00 2001$/) {
 			$id = $1;
@@ -98,17 +98,43 @@ sub scan_patches {
 sub scan_patch_file {
 	my ($commits, $file) = @_;
 	open my $f, '<', $file or die "read failure: $file: $!\n";
-	scan_patches($commits, $f);
+	scan_patches($commits, undef, $f);
+	close $f;
+}
+
+sub scan_rev_args {
+	my ($commits, $args) = @_;
+	open my $f, '-|', qw(git rev-list --reverse), @$args or die;
+	while (<$f>) {
+		chomp;
+		my $id = $_;
+		$seen{$id} = 1;
+		open my $g, '-|', qw(git show -C --oneline), $id or die;
+		scan_patches($commits, $id, $g);
+		close $g;
+	}
 	close $f;
 }
 
 if (!@ARGV) {
-	die "No input patch files\n";
+	die "No input revisions or patch files\n";
+}
+
+my (@files, @rev_args);
+for (@ARGV) {
+	if (-e) {
+		push @files, $_;
+	} else {
+		push @rev_args, $_;
+	}
 }
 
 my %commits;
-for (@ARGV) {
+for (@files) {
 	scan_patch_file(\%commits, $_);
+}
+if (@rev_args) {
+	scan_rev_args(\%commits, \@rev_args)
 }
 import_commits(\%commits);
 
