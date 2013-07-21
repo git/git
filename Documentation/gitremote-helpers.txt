@@ -143,6 +143,10 @@ Supported commands: 'list', 'fetch'.
 +
 Supported commands: 'list', 'import'.
 
+'check-connectivity'::
+	Can guarantee that when a clone is requested, the received
+	pack is self contained and is connected.
+
 If a helper advertises 'connect', Git will use it if possible and
 fall back to another capability if the helper requests so when
 connecting (see the 'connect' command under COMMANDS).
@@ -269,6 +273,9 @@ Supported if the helper has the "option" capability.
 Optionally may output a 'lock <file>' line indicating a file under
 GIT_DIR/objects/pack which is keeping a pack until refs can be
 suitably updated.
++
+If option 'check-connectivity' is requested, the helper must output
+'connectivity-ok' if the clone is self-contained and connected.
 +
 Supported if the helper has the "fetch" capability.
 
@@ -415,6 +422,9 @@ set by Git if the remote helper has the 'option' capability.
 	next connect. Remote helper may support this option, but
 	must not rely on this option being set before
 	connect request occurs.
+
+'option check-connectivity' \{'true'|'false'\}::
+	Request the helper to check connectivity of a clone.
 
 SEE ALSO
 --------

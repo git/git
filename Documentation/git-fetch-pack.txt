@@ -90,6 +90,10 @@ be in a separate packet, and the list must end with a flush packet.
 --no-progress::
 	Do not show the progress.
 
+--check-self-contained-and-connected::
+	Output "connectivity-ok" if the received pack is
+	self-contained and connected.
+
 -v::
 	Run verbosely.
 
