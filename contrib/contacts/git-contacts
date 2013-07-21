@@ -1,0 +1,127 @@
+#!/usr/bin/perl
+
+# List people who might be interested in a patch.  Useful as the argument to
+# git-send-email --cc-cmd option, and in other situations.
+#
+# Usage: git contacts <file> ...
+
+use strict;
+use warnings;
+use IPC::Open2;
+
+my $since = '5-years-ago';
+my $min_percent = 10;
+my $labels_rx = qr/Signed-off-by|Reviewed-by|Acked-by|Cc/i;
+my %seen;
+
+sub format_contact {
+	my ($name, $email) = @_;
+	return "$name <$email>";
+}
+
+sub parse_commit {
+	my ($commit, $data) = @_;
+	my $contacts = $commit->{contacts};
+	my $inbody = 0;
+	for (split(/^/m, $data)) {
+		if (not $inbody) {
+			if (/^author ([^<>]+) <(\S+)> .+$/) {
+				$contacts->{format_contact($1, $2)} = 1;
+			} elsif (/^$/) {
+				$inbody = 1;
+			}
+		} elsif (/^$labels_rx:\s+([^<>]+)\s+<(\S+?)>$/o) {
+			$contacts->{format_contact($1, $2)} = 1;
+		}
+	}
+}
+
+sub import_commits {
+	my ($commits) = @_;
+	return unless %$commits;
+	my $pid = open2 my $reader, my $writer, qw(git cat-file --batch);
+	for my $id (keys(%$commits)) {
+		print $writer "$id\n";
+		my $line = <$reader>;
+		if ($line =~ /^([0-9a-f]{40}) commit (\d+)/) {
+			my ($cid, $len) = ($1, $2);
+			die "expected $id but got $cid\n" unless $id eq $cid;
+			my $data;
+			# cat-file emits newline after data, so read len+1
+			read $reader, $data, $len + 1;
+			parse_commit($commits->{$id}, $data);
+		}
+	}
+	close $reader;
+	close $writer;
+	waitpid($pid, 0);
+	die "git-cat-file error: $?\n" if $?;
+}
+
+sub get_blame {
+	my ($commits, $source, $start, $len, $from) = @_;
+	$len = 1 unless defined($len);
+	return if $len == 0;
+	open my $f, '-|',
+		qw(git blame --porcelain -C), '-L', "$start,+$len",
+		'--since', $since, "$from^", '--', $source or die;
+	while (<$f>) {
+		if (/^([0-9a-f]{40}) \d+ \d+ \d+$/) {
+			my $id = $1;
+			$commits->{$id} = { id => $id, contacts => {} }
+				unless $seen{$id};
+			$seen{$id} = 1;
+		}
+	}
+	close $f;
+}
+
+sub scan_patches {
+	my ($commits, $f) = @_;
+	my ($id, $source);
+	while (<$f>) {
+		if (/^From ([0-9a-f]{40}) Mon Sep 17 00:00:00 2001$/) {
+			$id = $1;
+			$seen{$id} = 1;
+		}
+		next unless $id;
+		if (m{^--- (?:a/(.+)|/dev/null)$}) {
+			$source = $1;
+		} elsif (/^--- /) {
+			die "Cannot parse hunk source: $_\n";
+		} elsif (/^@@ -(\d+)(?:,(\d+))?/ && $source) {
+			get_blame($commits, $source, $1, $2, $id);
+		}
+	}
+}
+
+sub scan_patch_file {
+	my ($commits, $file) = @_;
+	open my $f, '<', $file or die "read failure: $file: $!\n";
+	scan_patches($commits, $f);
+	close $f;
+}
+
+if (!@ARGV) {
+	die "No input patch files\n";
+}
+
+my %commits;
+for (@ARGV) {
+	scan_patch_file(\%commits, $_);
+}
+import_commits(\%commits);
+
+my $contacts = {};
+for my $commit (values %commits) {
+	for my $contact (keys %{$commit->{contacts}}) {
+		$contacts->{$contact}++;
+	}
+}
+
+my $ncommits = scalar(keys %commits);
+for my $contact (keys %$contacts) {
+	my $percent = $contacts->{$contact} * 100 / $ncommits;
+	next if $percent < $min_percent;
+	print "$contact\n";
+}
