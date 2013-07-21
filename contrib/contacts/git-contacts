@@ -133,6 +133,23 @@ sub scan_rev_args {
 	close $f;
 }
 
+sub mailmap_contacts {
+	my ($contacts) = @_;
+	my %mapped;
+	my $pid = open2 my $reader, my $writer, qw(git check-mailmap --stdin);
+	for my $contact (keys(%$contacts)) {
+		print $writer "$contact\n";
+		my $canonical = <$reader>;
+		chomp $canonical;
+		$mapped{$canonical} += $contacts->{$contact};
+	}
+	close $reader;
+	close $writer;
+	waitpid($pid, 0);
+	die "git-check-mailmap error: $?\n" if $?;
+	return \%mapped;
+}
+
 if (!@ARGV) {
 	die "No input revisions or patch files\n";
 }
@@ -161,6 +178,7 @@ for my $commit (values %commits) {
 		$contacts->{$contact}++;
 	}
 }
+$contacts = mailmap_contacts($contacts);
 
 my $ncommits = scalar(keys %commits);
 for my $contact (keys %$contacts) {
