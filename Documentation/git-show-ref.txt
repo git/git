@@ -21,6 +21,8 @@ commit IDs. Results can be filtered using a pattern and tags can be
 dereferenced into object IDs. Additionally, it can be used to test whether a
 particular ref exists.
 
+By default, shows the tags, heads, and remote refs.
+
 The --exclude-existing form is a filter that does the inverse, it shows the
 refs from stdin that don't exist in the local repository.
 
@@ -32,14 +34,14 @@ OPTIONS
 
 --head::
 
-	Show the HEAD reference.
+	Show the HEAD reference, even if it would normally be filtered out.
 
 --tags::
 --heads::
 
-	Limit to only "refs/heads" and "refs/tags", respectively.  These
-	options are not mutually exclusive; when given both, references stored
-	in "refs/heads" and "refs/tags" are displayed.
+	Limit to "refs/heads" and "refs/tags", respectively.  These options
+	are not mutually exclusive; when given both, references stored in
+	"refs/heads" and "refs/tags" are displayed.
 
 -d::
 --dereference::
