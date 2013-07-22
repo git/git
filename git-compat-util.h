@@ -303,6 +303,13 @@ extern char *gitbasename(char *);
 #endif
 #endif
 
+/* The sentinel attribute is valid from gcc version 4.0 */
+#if defined(__GNUC__) && (__GNUC__ >= 4)
+#define LAST_ARG_MUST_BE_NULL __attribute__((sentinel))
+#else
+#define LAST_ARG_MUST_BE_NULL
+#endif
+
 #include "compat/bswap.h"
 
 #ifdef USE_WILDMATCH
