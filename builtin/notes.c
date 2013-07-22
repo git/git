@@ -4,7 +4,7 @@
  * Copyright (c) 2010 Johan Herland <johan@herland.net>
  *
  * Based on git-notes.sh by Johannes Schindelin,
- * and builtin-tag.c by Kristian Høgsberg and Carlos Rica.
+ * and builtin/tag.c by Kristian Høgsberg and Carlos Rica.
  */
 
 #include "cache.h"

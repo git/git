@@ -4256,15 +4256,16 @@ no longer need to call `setup_pager()` directly).
 Nowadays, `git log` is a builtin, which means that it is _contained_ in the
 command `git`.  The source side of a builtin is
 
-- a function called `cmd_<bla>`, typically defined in `builtin-<bla>.c`,
-  and declared in `builtin.h`,
+- a function called `cmd_<bla>`, typically defined in `builtin/<bla.c>`
+  (note that older versions of Git used to have it in `builtin-<bla>.c`
+  instead), and declared in `builtin.h`.
 
 - an entry in the `commands[]` array in `git.c`, and
 
 - an entry in `BUILTIN_OBJECTS` in the `Makefile`.
 
 Sometimes, more than one builtin is contained in one source file.  For
-example, `cmd_whatchanged()` and `cmd_log()` both reside in `builtin-log.c`,
+example, `cmd_whatchanged()` and `cmd_log()` both reside in `builtin/log.c`,
 since they share quite a bit of code.  In that case, the commands which are
 _not_ named like the `.c` file in which they live have to be listed in
 `BUILT_INS` in the `Makefile`.
@@ -4287,10 +4288,10 @@ For the sake of clarity, let's stay with `git cat-file`, because it
 - is plumbing, and
 
 - was around even in the initial commit (it literally went only through
-  some 20 revisions as `cat-file.c`, was renamed to `builtin-cat-file.c`
+  some 20 revisions as `cat-file.c`, was renamed to `builtin/cat-file.c`
   when made a builtin, and then saw less than 10 versions).
 
-So, look into `builtin-cat-file.c`, search for `cmd_cat_file()` and look what
+So, look into `builtin/cat-file.c`, search for `cmd_cat_file()` and look what
 it does.
 
 ------------------------------------------------------------------
@@ -4366,7 +4367,7 @@ Another example: Find out what to do in order to make some script a
 builtin:
 
 -------------------------------------------------
-$ git log --no-merges --diff-filter=A builtin-*.c
+$ git log --no-merges --diff-filter=A builtin/*.c
 -------------------------------------------------
 
 You see, Git is actually the best tool to find out about the source of Git

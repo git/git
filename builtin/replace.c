@@ -3,7 +3,7 @@
  *
  * Copyright (c) 2008 Christian Couder <chriscool@tuxfamily.org>
  *
- * Based on builtin-tag.c by Kristian Høgsberg <krh@redhat.com>
+ * Based on builtin/tag.c by Kristian Høgsberg <krh@redhat.com>
  * and Carlos Rica <jasampler@gmail.com> that was itself based on
  * git-tag.sh and mktag.c by Linus Torvalds.
  */
