@@ -3,7 +3,7 @@
 # Copyright (c) 2005 Fredrik Kuivinen
 #
 
-# See http://marc.theaimsgroup.com/?l=git&m=111463358500362&w=2 for a
+# See http://marc.info/?l=git&m=111463358500362&w=2 for a
 # nice description of what this is about.
 
 
