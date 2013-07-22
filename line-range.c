@@ -211,6 +211,8 @@ int parse_range_arg(const char *arg, nth_line_fn_t nth_line_cb,
 		    void *cb_data, long lines, long *begin, long *end,
 		    const char *path)
 {
+	*begin = *end = 0;
+
 	if (*arg == ':') {
 		arg = parse_range_funcname(arg, nth_line_cb, cb_data, lines, begin, end, path);
 		if (!arg || *arg)
@@ -225,6 +227,11 @@ int parse_range_arg(const char *arg, nth_line_fn_t nth_line_cb,
 
 	if (*arg)
 		return -1;
+
+	if (*begin && *end && *end < *begin) {
+		long tmp;
+		tmp = *end; *end = *begin; *begin = tmp;
+	}
 
 	return 0;
 }
