@@ -110,17 +110,12 @@ struct commit_list *get_shallow_commits(struct object_array *heads, int depth,
 					continue;
 				*pointer = cur_depth;
 			}
-			if (cur_depth < depth) {
-				if (p->next)
-					add_object_array(&p->item->object,
-							NULL, &stack);
-				else {
-					commit = p->item;
-					cur_depth = *(int *)commit->util;
-				}
-			} else {
-				commit_list_insert(p->item, &result);
-				p->item->object.flags |= shallow_flag;
+			if (p->next)
+				add_object_array(&p->item->object,
+						NULL, &stack);
+			else {
+				commit = p->item;
+				cur_depth = *(int *)commit->util;
 			}
 		}
 	}
