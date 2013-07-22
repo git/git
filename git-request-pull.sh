@@ -51,8 +51,18 @@ fi
 tag_name=$(git describe --exact "$head^0" 2>/dev/null)
 
 test -n "$base" && test -n "$url" || usage
-baserev=$(git rev-parse --verify "$base"^0) &&
-headrev=$(git rev-parse --verify "$head"^0) || exit
+
+baserev=$(git rev-parse --verify --quiet "$base"^0)
+if test -z "$baserev"
+then
+    die "fatal: Not a valid revision: $base"
+fi
+
+headrev=$(git rev-parse --verify --quiet "$head"^0)
+if test -z "$headrev"
+then
+    die "fatal: Not a valid revision: $head"
+fi
 
 merge_base=$(git merge-base $baserev $headrev) ||
 die "fatal: No commits in common between $base and $head"
