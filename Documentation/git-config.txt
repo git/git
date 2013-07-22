@@ -114,6 +114,15 @@ rather than from all available files.
 +
 See also <<FILES>>.
 
+--local::
+	For writing options: write to the repository .git/config file.
+	This is	the default behavior.
++
+For reading options: read only from the repository .git/config rather than
+from all available files.
++
+See also <<FILES>>.
+
 -f config-file::
 --file config-file::
 	Use the given config file instead of the one specified by GIT_CONFIG.
