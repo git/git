@@ -10,19 +10,68 @@
 #include "strbuf.h"
 #include "quote.h"
 
-typedef struct config_file {
-	struct config_file *prev;
-	FILE *f;
+struct config_source {
+	struct config_source *prev;
+	union {
+		FILE *file;
+		struct config_buf {
+			const char *buf;
+			size_t len;
+			size_t pos;
+		} buf;
+	} u;
 	const char *name;
+	int die_on_error;
 	int linenr;
 	int eof;
 	struct strbuf value;
 	struct strbuf var;
-} config_file;
 
-static config_file *cf;
+	int (*fgetc)(struct config_source *c);
+	int (*ungetc)(int c, struct config_source *conf);
+	long (*ftell)(struct config_source *c);
+};
+
+static struct config_source *cf;
 
 static int zlib_compression_seen;
+
+static int config_file_fgetc(struct config_source *conf)
+{
+	return fgetc(conf->u.file);
+}
+
+static int config_file_ungetc(int c, struct config_source *conf)
+{
+	return ungetc(c, conf->u.file);
+}
+
+static long config_file_ftell(struct config_source *conf)
+{
+	return ftell(conf->u.file);
+}
+
+
+static int config_buf_fgetc(struct config_source *conf)
+{
+	if (conf->u.buf.pos < conf->u.buf.len)
+		return conf->u.buf.buf[conf->u.buf.pos++];
+
+	return EOF;
+}
+
+static int config_buf_ungetc(int c, struct config_source *conf)
+{
+	if (conf->u.buf.pos > 0)
+		return conf->u.buf.buf[--conf->u.buf.pos];
+
+	return EOF;
+}
+
+static long config_buf_ftell(struct config_source *conf)
+{
+	return conf->u.buf.pos;
+}
 
 #define MAX_INCLUDE_DEPTH 10
 static const char include_depth_advice[] =
@@ -168,26 +217,21 @@ int git_config_from_parameters(config_fn_t fn, void *data)
 
 static int get_next_char(void)
 {
-	int c;
-	FILE *f;
+	int c = cf->fgetc(cf);
 
-	c = '\n';
-	if (cf && ((f = cf->f) != NULL)) {
-		c = fgetc(f);
-		if (c == '\r') {
-			/* DOS like systems */
-			c = fgetc(f);
-			if (c != '\n') {
-				ungetc(c, f);
-				c = '\r';
-			}
+	if (c == '\r') {
+		/* DOS like systems */
+		c = cf->fgetc(cf);
+		if (c != '\n') {
+			cf->ungetc(c, cf);
+			c = '\r';
 		}
-		if (c == '\n')
-			cf->linenr++;
-		if (c == EOF) {
-			cf->eof = 1;
-			c = '\n';
-		}
+	}
+	if (c == '\n')
+		cf->linenr++;
+	if (c == EOF) {
+		cf->eof = 1;
+		c = '\n';
 	}
 	return c;
 }
@@ -339,7 +383,7 @@ static int get_base_var(struct strbuf *name)
 	}
 }
 
-static int git_parse_file(config_fn_t fn, void *data)
+static int git_parse_source(config_fn_t fn, void *data)
 {
 	int comment = 0;
 	int baselen = 0;
@@ -399,7 +443,10 @@ static int git_parse_file(config_fn_t fn, void *data)
 		if (get_value(fn, data, var) < 0)
 			break;
 	}
-	die("bad config file line %d in %s", cf->linenr, cf->name);
+	if (cf->die_on_error)
+		die("bad config file line %d in %s", cf->linenr, cf->name);
+	else
+		return error("bad config file line %d in %s", cf->linenr, cf->name);
 }
 
 static int parse_unit_factor(const char *end, uintmax_t *val)
@@ -906,6 +953,33 @@ int git_default_config(const char *var, const char *value, void *dummy)
 	return 0;
 }
 
+/*
+ * All source specific fields in the union, die_on_error, name and the callbacks
+ * fgetc, ungetc, ftell of top need to be initialized before calling
+ * this function.
+ */
+static int do_config_from(struct config_source *top, config_fn_t fn, void *data)
+{
+	int ret;
+
+	/* push config-file parsing state stack */
+	top->prev = cf;
+	top->linenr = 1;
+	top->eof = 0;
+	strbuf_init(&top->value, 1024);
+	strbuf_init(&top->var, 1024);
+	cf = top;
+
+	ret = git_parse_source(fn, data);
+
+	/* pop config-file parsing state stack */
+	strbuf_release(&top->value);
+	strbuf_release(&top->var);
+	cf = top->prev;
+
+	return ret;
+}
+
 int git_config_from_file(config_fn_t fn, const char *filename, void *data)
 {
 	int ret;
@@ -913,28 +987,72 @@ int git_config_from_file(config_fn_t fn, const char *filename, void *data)
 
 	ret = -1;
 	if (f) {
-		config_file top;
+		struct config_source top;
 
-		/* push config-file parsing state stack */
-		top.prev = cf;
-		top.f = f;
+		top.u.file = f;
 		top.name = filename;
-		top.linenr = 1;
-		top.eof = 0;
-		strbuf_init(&top.value, 1024);
-		strbuf_init(&top.var, 1024);
-		cf = &top;
+		top.die_on_error = 1;
+		top.fgetc = config_file_fgetc;
+		top.ungetc = config_file_ungetc;
+		top.ftell = config_file_ftell;
 
-		ret = git_parse_file(fn, data);
-
-		/* pop config-file parsing state stack */
-		strbuf_release(&top.value);
-		strbuf_release(&top.var);
-		cf = top.prev;
+		ret = do_config_from(&top, fn, data);
 
 		fclose(f);
 	}
 	return ret;
+}
+
+int git_config_from_buf(config_fn_t fn, const char *name, const char *buf,
+			size_t len, void *data)
+{
+	struct config_source top;
+
+	top.u.buf.buf = buf;
+	top.u.buf.len = len;
+	top.u.buf.pos = 0;
+	top.name = name;
+	top.die_on_error = 0;
+	top.fgetc = config_buf_fgetc;
+	top.ungetc = config_buf_ungetc;
+	top.ftell = config_buf_ftell;
+
+	return do_config_from(&top, fn, data);
+}
+
+static int git_config_from_blob_sha1(config_fn_t fn,
+				     const char *name,
+				     const unsigned char *sha1,
+				     void *data)
+{
+	enum object_type type;
+	char *buf;
+	unsigned long size;
+	int ret;
+
+	buf = read_sha1_file(sha1, &type, &size);
+	if (!buf)
+		return error("unable to load config blob object '%s'", name);
+	if (type != OBJ_BLOB) {
+		free(buf);
+		return error("reference '%s' does not point to a blob", name);
+	}
+
+	ret = git_config_from_buf(fn, name, buf, size, data);
+	free(buf);
+
+	return ret;
+}
+
+static int git_config_from_blob_ref(config_fn_t fn,
+				    const char *name,
+				    void *data)
+{
+	unsigned char sha1[20];
+
+	if (get_sha1(name, sha1) < 0)
+		return error("unable to resolve config blob '%s'", name);
+	return git_config_from_blob_sha1(fn, name, sha1, data);
 }
 
 const char *git_etc_gitconfig(void)
@@ -1002,7 +1120,9 @@ int git_config_early(config_fn_t fn, void *data, const char *repo_config)
 }
 
 int git_config_with_options(config_fn_t fn, void *data,
-			    const char *filename, int respect_includes)
+			    const char *filename,
+			    const char *blob_ref,
+			    int respect_includes)
 {
 	char *repo_config = NULL;
 	int ret;
@@ -1021,6 +1141,8 @@ int git_config_with_options(config_fn_t fn, void *data,
 	 */
 	if (filename)
 		return git_config_from_file(fn, filename, data);
+	else if (blob_ref)
+		return git_config_from_blob_ref(fn, blob_ref, data);
 
 	repo_config = git_pathdup("config");
 	ret = git_config_early(fn, data, repo_config);
@@ -1031,7 +1153,7 @@ int git_config_with_options(config_fn_t fn, void *data,
 
 int git_config(config_fn_t fn, void *data)
 {
-	return git_config_with_options(fn, data, NULL, 1);
+	return git_config_with_options(fn, data, NULL, NULL, 1);
 }
 
 /*
@@ -1063,7 +1185,6 @@ static int store_aux(const char *key, const char *value, void *cb)
 {
 	const char *ep;
 	size_t section_len;
-	FILE *f = cf->f;
 
 	switch (store.state) {
 	case KEY_SEEN:
@@ -1075,7 +1196,7 @@ static int store_aux(const char *key, const char *value, void *cb)
 				return 1;
 			}
 
-			store.offset[store.seen] = ftell(f);
+			store.offset[store.seen] = cf->ftell(cf);
 			store.seen++;
 		}
 		break;
@@ -1102,19 +1223,19 @@ static int store_aux(const char *key, const char *value, void *cb)
 		 * Do not increment matches: this is no match, but we
 		 * just made sure we are in the desired section.
 		 */
-		store.offset[store.seen] = ftell(f);
+		store.offset[store.seen] = cf->ftell(cf);
 		/* fallthru */
 	case SECTION_END_SEEN:
 	case START:
 		if (matches(key, value)) {
-			store.offset[store.seen] = ftell(f);
+			store.offset[store.seen] = cf->ftell(cf);
 			store.state = KEY_SEEN;
 			store.seen++;
 		} else {
 			if (strrchr(key, '.') - key == store.baselen &&
 			      !strncmp(key, store.key, store.baselen)) {
 					store.state = SECTION_SEEN;
-					store.offset[store.seen] = ftell(f);
+					store.offset[store.seen] = cf->ftell(cf);
 			}
 		}
 	}
