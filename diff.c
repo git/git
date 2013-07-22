@@ -2677,6 +2677,14 @@ static int diff_populate_gitlink(struct diff_filespec *s, int size_only)
 int diff_populate_filespec(struct diff_filespec *s, int size_only)
 {
 	int err = 0;
+	/*
+	 * demote FAIL to WARN to allow inspecting the situation
+	 * instead of refusing.
+	 */
+	enum safe_crlf crlf_warn = (safe_crlf == SAFE_CRLF_FAIL
+				    ? SAFE_CRLF_WARN
+				    : safe_crlf);
+
 	if (!DIFF_FILE_VALID(s))
 		die("internal error: asking to populate invalid file.");
 	if (S_ISDIR(s->mode))
@@ -2732,7 +2740,7 @@ int diff_populate_filespec(struct diff_filespec *s, int size_only)
 		/*
 		 * Convert from working tree format to canonical git format
 		 */
-		if (convert_to_git(s->path, s->data, s->size, &buf, safe_crlf)) {
+		if (convert_to_git(s->path, s->data, s->size, &buf, crlf_warn)) {
 			size_t size = 0;
 			munmap(s->data, s->size);
 			s->should_munmap = 0;
