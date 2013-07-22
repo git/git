@@ -835,7 +835,7 @@ int renormalize_buffer(const char *path, const char *src, size_t len, struct str
 
 /*****************************************************************
  *
- * Streaming converison support
+ * Streaming conversion support
  *
  *****************************************************************/
 

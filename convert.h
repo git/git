@@ -48,7 +48,7 @@ static inline int would_convert_to_git(const char *path, const char *src,
 
 /*****************************************************************
  *
- * Streaming converison support
+ * Streaming conversion support
  *
  *****************************************************************/
 

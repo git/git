@@ -97,7 +97,7 @@ Chew for reporting this.
 
 v1.04alpha_svn915 7th October 2006:
  * Fixed failure to unlock thread cache list if allocating a new list failed.
-Thanks to Dmitry Chichkov for reporting this. Futher thanks to Aleksey Sanin.
+Thanks to Dmitry Chichkov for reporting this. Further thanks to Aleksey Sanin.
  * Fixed realloc(0, <size>) segfaulting. Thanks to Dmitry Chichkov for
 reporting this.
  * Made config defines #ifndef so they can be overridden by the build system.
