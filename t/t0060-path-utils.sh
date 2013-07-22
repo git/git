@@ -8,8 +8,15 @@ test_description='Test various path utilities'
 . ./test-lib.sh
 
 norm_path() {
+	expected=$(test-path-utils mingw_path "$2")
 	test_expect_success $3 "normalize path: $1 => $2" \
-	"test \"\$(test-path-utils normalize_path_copy '$1')\" = '$2'"
+	"test \"\$(test-path-utils normalize_path_copy '$1')\" = '$expected'"
+}
+
+relative_path() {
+	expected=$(test-path-utils mingw_path "$3")
+	test_expect_success $4 "relative path: $1 $2 => $3" \
+	"test \"\$(test-path-utils relative_path '$1' '$2')\" = '$expected'"
 }
 
 # On Windows, we are using MSYS's bash, which mangles the paths.
@@ -34,8 +41,8 @@ ancestor() {
 	 test \"\$actual\" = '$expected'"
 }
 
-# Absolute path tests must be skipped on Windows because due to path mangling
-# the test program never sees a POSIX-style absolute path
+# Some absolute path tests should be skipped on Windows due to path mangling
+# on POSIX-style absolute paths
 case $(uname -s) in
 *MINGW*)
 	;;
@@ -68,30 +75,30 @@ norm_path d1/s1//../s2/../../d2 d2
 norm_path d1/.../d2 d1/.../d2
 norm_path d1/..././../d2 d1/d2
 
-norm_path / / POSIX
+norm_path / /
 norm_path // / POSIX
 norm_path /// / POSIX
-norm_path /. / POSIX
+norm_path /. /
 norm_path /./ / POSIX
 norm_path /./.. ++failed++ POSIX
-norm_path /../. ++failed++ POSIX
+norm_path /../. ++failed++
 norm_path /./../.// ++failed++ POSIX
 norm_path /dir/.. / POSIX
 norm_path /dir/sub/../.. / POSIX
 norm_path /dir/sub/../../.. ++failed++ POSIX
-norm_path /dir /dir POSIX
-norm_path /dir// /dir/ POSIX
-norm_path /./dir /dir POSIX
-norm_path /dir/. /dir/ POSIX
-norm_path /dir///./ /dir/ POSIX
-norm_path /dir//sub/.. /dir/ POSIX
-norm_path /dir/sub/../ /dir/ POSIX
+norm_path /dir /dir
+norm_path /dir// /dir/
+norm_path /./dir /dir
+norm_path /dir/. /dir/
+norm_path /dir///./ /dir/
+norm_path /dir//sub/.. /dir/
+norm_path /dir/sub/../ /dir/
 norm_path //dir/sub/../. /dir/ POSIX
-norm_path /dir/s1/../s2/ /dir/s2/ POSIX
-norm_path /d1/s1///s2/..//../s3/ /d1/s3/ POSIX
-norm_path /d1/s1//../s2/../../d2 /d2 POSIX
-norm_path /d1/.../d2 /d1/.../d2 POSIX
-norm_path /d1/..././../d2 /d1/d2 POSIX
+norm_path /dir/s1/../s2/ /dir/s2/
+norm_path /d1/s1///s2/..//../s3/ /d1/s3/
+norm_path /d1/s1//../s2/../../d2 /d2
+norm_path /d1/.../d2 /d1/.../d2
+norm_path /d1/..././../d2 /d1/d2
 
 ancestor / / -1
 ancestor /foo / 0
@@ -182,5 +189,34 @@ test_expect_success SYMLINKS 'real path works on symlinks' '
 	sym="$(cd first; pwd -P)"/file &&
 	test "$sym" = "$(test-path-utils real_path "$dir2/syml")"
 '
+
+relative_path /a/b/c/	/a/b/		c/
+relative_path /a/b/c/	/a/b		c/
+relative_path /a//b//c/	//a/b//		c/	POSIX
+relative_path /a/b	/a/b		./
+relative_path /a/b/	/a/b		./
+relative_path /a	/a/b		../
+relative_path /		/a/b/		../../
+relative_path /a/c	/a/b/		../c
+relative_path /a/c	/a/b		../c
+relative_path /x/y	/a/b/		../../x/y
+relative_path /a/b	"<empty>"	/a/b
+relative_path /a/b 	"<null>"	/a/b
+relative_path a/b/c/	a/b/		c/
+relative_path a/b/c/	a/b		c/
+relative_path a/b//c	a//b		c
+relative_path a/b/	a/b/		./
+relative_path a/b/	a/b		./
+relative_path a		a/b		../
+relative_path x/y	a/b		../../x/y
+relative_path a/c	a/b		../c
+relative_path a/b	"<empty>"	a/b
+relative_path a/b 	"<null>"	a/b
+relative_path "<empty>"	/a/b		./
+relative_path "<empty>"	"<empty>"	./
+relative_path "<empty>"	"<null>"	./
+relative_path "<null>"	"<empty>"	./
+relative_path "<null>"	"<null>"	./
+relative_path "<null>"	/a/b		./
 
 test_done
