@@ -145,7 +145,7 @@ struct object *lookup_unknown_object(const unsigned char *sha1)
 struct object *parse_object_buffer(const unsigned char *sha1, enum object_type type, unsigned long size, void *buffer, int *eaten_p)
 {
 	struct object *obj;
-	int eaten = 0;
+	*eaten_p = 0;
 
 	obj = NULL;
 	if (type == OBJ_BLOB) {
@@ -164,7 +164,7 @@ struct object *parse_object_buffer(const unsigned char *sha1, enum object_type t
 			if (!tree->object.parsed) {
 				if (parse_tree_buffer(tree, buffer, size))
 					return NULL;
-				eaten = 1;
+				*eaten_p = 1;
 			}
 		}
 	} else if (type == OBJ_COMMIT) {
@@ -174,7 +174,7 @@ struct object *parse_object_buffer(const unsigned char *sha1, enum object_type t
 				return NULL;
 			if (!commit->buffer) {
 				commit->buffer = buffer;
-				eaten = 1;
+				*eaten_p = 1;
 			}
 			obj = &commit->object;
 		}
@@ -191,7 +191,6 @@ struct object *parse_object_buffer(const unsigned char *sha1, enum object_type t
 	}
 	if (obj && obj->type == OBJ_NONE)
 		obj->type = type;
-	*eaten_p = eaten;
 	return obj;
 }
 
