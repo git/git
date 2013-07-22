@@ -247,6 +247,24 @@ test_expect_success 'cleanup after mailmap.blob tests' '
 	rm -f .mailmap
 '
 
+test_expect_success 'single-character name' '
+	echo "     1	A <author@example.com>" >expect &&
+	echo "     1	nick1 <bugs@company.xx>" >>expect &&
+	echo "A <author@example.com>" >.mailmap &&
+	test_when_finished "rm .mailmap" &&
+	git shortlog -es HEAD >actual &&
+	test_cmp expect actual
+'
+
+test_expect_success 'preserve canonical email case' '
+	echo "     1	A U Thor <AUTHOR@example.com>" >expect &&
+	echo "     1	nick1 <bugs@company.xx>" >>expect &&
+	echo "<AUTHOR@example.com> <author@example.com>" >.mailmap &&
+	test_when_finished "rm .mailmap" &&
+	git shortlog -es HEAD >actual &&
+	test_cmp expect actual
+'
+
 # Extended mailmap configurations should give us the following output for shortlog
 cat >expect <<\EOF
 A U Thor <author@example.com> (1):
