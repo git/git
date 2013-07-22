@@ -343,6 +343,7 @@ static int edit_patch(int argc, const char **argv, const char *prefix)
 
 	argc = setup_revisions(argc, argv, &rev, NULL);
 	rev.diffopt.output_format = DIFF_FORMAT_PATCH;
+	rev.diffopt.use_color = 0;
 	DIFF_OPT_SET(&rev.diffopt, IGNORE_DIRTY_SUBMODULES);
 	out = open(file, O_CREAT | O_WRONLY, 0666);
 	if (out < 0)
