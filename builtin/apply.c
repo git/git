@@ -3847,7 +3847,7 @@ static void add_index_file(const char *path, unsigned mode, void *buf, unsigned 
 		const char *s = buf;
 
 		if (get_sha1_hex(s + strlen("Subproject commit "), ce->sha1))
-			die(_("corrupt patch for subproject %s"), path);
+			die(_("corrupt patch for submodule %s"), path);
 	} else {
 		if (!cached) {
 			if (lstat(path, &st) < 0)
