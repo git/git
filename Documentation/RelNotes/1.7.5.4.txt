@@ -5,7 +5,7 @@ Fixes since v1.7.5.3
 --------------------
 
  * The single-key mode of "git add -p" was easily fooled into thinking
-   that it was told to add everthing ('a') when up-arrow was pressed by
+   that it was told to add everything ('a') when up-arrow was pressed by
    mistake.
 
  * Setting a git command that uses custom configuration via "-c var=val"

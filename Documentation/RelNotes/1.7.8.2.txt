@@ -12,11 +12,11 @@ Fixes since v1.7.8.1
  * The configuration file parser used for sizes (e.g. bigFileThreshold)
    did not correctly interpret 'g' suffix.
 
- * The replacement implemention for snprintf used on platforms with
+ * The replacement implementation for snprintf used on platforms with
    native snprintf that is broken did not use va_copy correctly.
 
  * LF-to-CRLF streaming filter replaced all LF with CRLF, which might
-   be techinically correct but not friendly to people who are trying
+   be technically correct but not friendly to people who are trying
    to recover from earlier mistakes of using CRLF in the repository
    data in the first place. It now refrains from doing so for LF that
    follows a CR.
