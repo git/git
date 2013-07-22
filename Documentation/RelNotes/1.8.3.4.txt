@@ -13,3 +13,8 @@ Fixes since v1.8.3.3
  * The test coverage framework was left broken for some time.
 
  * The test suite for HTTP transport did not run with Apache 2.4.
+
+ * "git diff" used to fail when core.safecrlf is set and the working
+   tree contents had mixed CRLF/LF line endings. Committing such a
+   content must be prohibited, but "git diff" should help the user to
+   locate and fix such problems without failing.
