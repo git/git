@@ -1320,7 +1320,7 @@ So git bisect is unconditional goodness - and feel free to quote that
 ;-)
 _____________
 
-Acknowledgements
+Acknowledgments
 ----------------
 
 Many thanks to Junio Hamano for his help in reviewing this paper, for

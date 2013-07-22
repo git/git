@@ -12,7 +12,7 @@ How to revert an existing commit
 ================================
 
 One of the changes I pulled into the 'master' branch turns out to
-break building Git with GCC 2.95.  While they were well intentioned
+break building Git with GCC 2.95.  While they were well-intentioned
 portability fixes, keeping things working with gcc-2.95 was also
 important.  Here is what I did to revert the change in the 'master'
 branch and to adjust the 'pu' branch, using core Git tools and

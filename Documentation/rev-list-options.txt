@@ -369,7 +369,7 @@ each merge.  The commits are:
 * `E` changes `quux` to "xyzzy", and its merge `P` combines the
   strings to "quux xyzzy".  `P` is TREESAME to `O`, but not to `E`.
 
-* `X` is an indpendent root commit that added a new file `side`, and `Y`
+* `X` is an independent root commit that added a new file `side`, and `Y`
   modified it. `Y` is TREESAME to `X`. Its merge `Q` added `side` to `P`, and
   `Q` is TREESAME to `P`, but not to `Y`.
 
