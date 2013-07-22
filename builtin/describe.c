@@ -7,6 +7,7 @@
 #include "parse-options.h"
 #include "diff.h"
 #include "hash.h"
+#include "argv-array.h"
 
 #define SEEN		(1u<<0)
 #define MAX_TAGS	(FLAG_BITS - 1)
@@ -442,24 +443,24 @@ int cmd_describe(int argc, const char **argv, const char *prefix)
 		die(_("--long is incompatible with --abbrev=0"));
 
 	if (contains) {
-		const char **args = xmalloc((7 + argc) * sizeof(char *));
-		int i = 0;
-		args[i++] = "name-rev";
-		args[i++] = "--name-only";
-		args[i++] = "--no-undefined";
+		struct argv_array args;
+
+		argv_array_init(&args);
+		argv_array_pushl(&args, "name-rev",
+				 "--peel-tag", "--name-only", "--no-undefined",
+				 NULL);
 		if (always)
-			args[i++] = "--always";
+			argv_array_push(&args, "--always");
 		if (!all) {
-			args[i++] = "--tags";
-			if (pattern) {
-				char *s = xmalloc(strlen("--refs=refs/tags/") + strlen(pattern) + 1);
-				sprintf(s, "--refs=refs/tags/%s", pattern);
-				args[i++] = s;
-			}
+			argv_array_push(&args, "--tags");
+			if (pattern)
+				argv_array_pushf(&args, "--refs=refs/tags/%s", pattern);
 		}
-		memcpy(args + i, argv, argc * sizeof(char *));
-		args[i + argc] = NULL;
-		return cmd_name_rev(i + argc, args, prefix);
+		while (*argv) {
+			argv_array_push(&args, *argv);
+			argv++;
+		}
+		return cmd_name_rev(args.argc, args.argv, prefix);
 	}
 
 	init_hash(&names);
