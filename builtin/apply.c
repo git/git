@@ -473,7 +473,7 @@ static char *find_name_gnu(const char *line, const char *def, int p_value)
 
 	/*
 	 * Proposed "new-style" GNU patch/diff format; see
-	 * http://marc.theaimsgroup.com/?l=git&m=112927316408690&w=2
+	 * http://marc.info/?l=git&m=112927316408690&w=2
 	 */
 	if (unquote_c_style(&name, line, NULL)) {
 		strbuf_release(&name);

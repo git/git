@@ -4675,5 +4675,5 @@ Write a chapter on using plumbing and writing scripts.
 Alternates, clone -reference, etc.
 
 More on recovery from repository corruption.  See:
-	http://marc.theaimsgroup.com/?l=git&m=117263864820799&w=2
-	http://marc.theaimsgroup.com/?l=git&m=117147855503798&w=2
+	http://marc.info/?l=git&m=117263864820799&w=2
+	http://marc.info/?l=git&m=117147855503798&w=2
