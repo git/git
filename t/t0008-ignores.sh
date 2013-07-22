@@ -697,13 +697,21 @@ test_expect_success PIPE 'streaming support for --stdin' '
 	# shell, and then echo to the fd. We make sure to close it at
 	# the end, so that the subprocess does get EOF and dies
 	# properly.
+	#
+	# Similarly, we must keep "out" open so that check-ignore does
+	# not ever get SIGPIPE trying to write to us. Not only would that
+	# produce incorrect results, but then there would be no writer on the
+	# other end of the pipe, and we would potentially block forever trying
+	# to open it.
 	exec 9>in &&
+	exec 8<out &&
 	test_when_finished "exec 9>&-" &&
+	test_when_finished "exec 8<&-" &&
 	echo >&9 one &&
-	read response <out &&
+	read response <&8 &&
 	echo "$response" | grep "^\.gitignore:1:one	one" &&
 	echo >&9 two &&
-	read response <out &&
+	read response <&8 &&
 	echo "$response" | grep "^::	two"
 '
 
