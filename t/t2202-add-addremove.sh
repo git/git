@@ -41,4 +41,14 @@ test_expect_success 'git add --all' '
 	test_cmp expect actual
 '
 
+test_expect_success 'Just "git add" is a no-op' '
+	git reset --hard &&
+	echo >will-remove &&
+	>will-not-be-added &&
+	git add &&
+	git diff-index --name-status --cached HEAD >actual &&
+	>expect &&
+	test_cmp expect actual
+'
+
 test_done
