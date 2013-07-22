@@ -97,7 +97,7 @@ static int read_tree_some(struct tree *tree, const char **pathspec)
 	return 0;
 }
 
-static int skip_same_name(struct cache_entry *ce, int pos)
+static int skip_same_name(const struct cache_entry *ce, int pos)
 {
 	while (++pos < active_nr &&
 	       !strcmp(active_cache[pos]->name, ce->name))
@@ -105,7 +105,7 @@ static int skip_same_name(struct cache_entry *ce, int pos)
 	return pos;
 }
 
-static int check_stage(int stage, struct cache_entry *ce, int pos)
+static int check_stage(int stage, const struct cache_entry *ce, int pos)
 {
 	while (pos < active_nr &&
 	       !strcmp(active_cache[pos]->name, ce->name)) {
@@ -119,7 +119,7 @@ static int check_stage(int stage, struct cache_entry *ce, int pos)
 		return error(_("path '%s' does not have their version"), ce->name);
 }
 
-static int check_stages(unsigned stages, struct cache_entry *ce, int pos)
+static int check_stages(unsigned stages, const struct cache_entry *ce, int pos)
 {
 	unsigned seen = 0;
 	const char *name = ce->name;
@@ -321,7 +321,7 @@ static int checkout_paths(const struct checkout_opts *opts,
 
 	/* Any unmerged paths? */
 	for (pos = 0; pos < active_nr; pos++) {
-		struct cache_entry *ce = active_cache[pos];
+		const struct cache_entry *ce = active_cache[pos];
 		if (ce->ce_flags & CE_MATCHED) {
 			if (!ce_stage(ce))
 				continue;

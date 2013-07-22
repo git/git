@@ -624,7 +624,7 @@ int fetch_populated_submodules(const struct argv_array *options,
 		struct strbuf submodule_path = STRBUF_INIT;
 		struct strbuf submodule_git_dir = STRBUF_INIT;
 		struct strbuf submodule_prefix = STRBUF_INIT;
-		struct cache_entry *ce = active_cache[i];
+		const struct cache_entry *ce = active_cache[i];
 		const char *git_dir, *name, *default_argv;
 
 		if (!S_ISGITLINK(ce->ce_mode))

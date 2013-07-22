@@ -83,7 +83,7 @@ static int process_lstat_error(const char *path, int err)
 	return error("lstat(\"%s\"): %s", path, strerror(errno));
 }
 
-static int add_one_path(struct cache_entry *old, const char *path, int len, struct stat *st)
+static int add_one_path(const struct cache_entry *old, const char *path, int len, struct stat *st)
 {
 	int option, size;
 	struct cache_entry *ce;
@@ -142,7 +142,7 @@ static int process_directory(const char *path, int len, struct stat *st)
 
 	/* Exact match: file or existing gitlink */
 	if (pos >= 0) {
-		struct cache_entry *ce = active_cache[pos];
+		const struct cache_entry *ce = active_cache[pos];
 		if (S_ISGITLINK(ce->ce_mode)) {
 
 			/* Do nothing to the index if there is no HEAD! */
@@ -158,7 +158,7 @@ static int process_directory(const char *path, int len, struct stat *st)
 	/* Inexact match: is there perhaps a subdirectory match? */
 	pos = -pos-1;
 	while (pos < active_nr) {
-		struct cache_entry *ce = active_cache[pos++];
+		const struct cache_entry *ce = active_cache[pos++];
 
 		if (strncmp(ce->name, path, len))
 			break;
@@ -183,7 +183,7 @@ static int process_path(const char *path)
 {
 	int pos, len;
 	struct stat st;
-	struct cache_entry *ce;
+	const struct cache_entry *ce;
 
 	len = strlen(path);
 	if (has_symlink_leading_path(path, len))
@@ -448,7 +448,7 @@ static int unresolve_one(const char *path)
 		/* already merged */
 		pos = unmerge_cache_entry_at(pos);
 		if (pos < active_nr) {
-			struct cache_entry *ce = active_cache[pos];
+			const struct cache_entry *ce = active_cache[pos];
 			if (ce_stage(ce) &&
 			    ce_namelen(ce) == namelen &&
 			    !memcmp(ce->name, path, namelen))
@@ -462,7 +462,7 @@ static int unresolve_one(const char *path)
 		 */
 		pos = -pos-1;
 		if (pos < active_nr) {
-			struct cache_entry *ce = active_cache[pos];
+			const struct cache_entry *ce = active_cache[pos];
 			if (ce_namelen(ce) == namelen &&
 			    !memcmp(ce->name, path, namelen)) {
 				fprintf(stderr,
@@ -558,7 +558,7 @@ static int do_reupdate(int ac, const char **av,
 		has_head = 0;
  redo:
 	for (pos = 0; pos < active_nr; pos++) {
-		struct cache_entry *ce = active_cache[pos];
+		const struct cache_entry *ce = active_cache[pos];
 		struct cache_entry *old = NULL;
 		int save_nr;
 

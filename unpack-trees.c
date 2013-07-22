@@ -179,7 +179,7 @@ static void display_error_msgs(struct unpack_trees_options *o)
  * Unlink the last component and schedule the leading directories for
  * removal, such that empty directories get removed.
  */
-static void unlink_entry(struct cache_entry *ce)
+static void unlink_entry(const struct cache_entry *ce)
 {
 	if (!check_leading_path(ce->name, ce_namelen(ce)))
 		return;
@@ -199,7 +199,7 @@ static int check_updates(struct unpack_trees_options *o)
 
 	if (o->update && o->verbose_update) {
 		for (total = cnt = 0; cnt < index->cache_nr; cnt++) {
-			struct cache_entry *ce = index->cache[cnt];
+			const struct cache_entry *ce = index->cache[cnt];
 			if (ce->ce_flags & (CE_UPDATE | CE_WT_REMOVE))
 				total++;
 		}
@@ -212,7 +212,7 @@ static int check_updates(struct unpack_trees_options *o)
 	if (o->update)
 		git_attr_set_direction(GIT_ATTR_CHECKOUT, &o->result);
 	for (i = 0; i < index->cache_nr; i++) {
-		struct cache_entry *ce = index->cache[i];
+		const struct cache_entry *ce = index->cache[i];
 
 		if (ce->ce_flags & CE_WT_REMOVE) {
 			display_progress(progress, ++cnt);
@@ -376,7 +376,7 @@ static struct cache_entry *next_cache_entry(struct unpack_trees_options *o)
 	return NULL;
 }
 
-static void add_same_unmerged(struct cache_entry *ce,
+static void add_same_unmerged(const struct cache_entry *ce,
 			      struct unpack_trees_options *o)
 {
 	struct index_state *index = o->src_index;
@@ -650,7 +650,7 @@ static int find_cache_pos(struct traverse_info *info,
 	int p_len = tree_entry_len(p);
 
 	for (pos = o->cache_bottom; pos < index->cache_nr; pos++) {
-		struct cache_entry *ce = index->cache[pos];
+		const struct cache_entry *ce = index->cache[pos];
 		const char *ce_name, *ce_slash;
 		int cmp, ce_len;
 
@@ -1353,7 +1353,7 @@ static int verify_clean_subdirectory(const struct cache_entry *ce,
  */
 static int icase_exists(struct unpack_trees_options *o, const char *name, int len, struct stat *st)
 {
-	struct cache_entry *src;
+	const struct cache_entry *src;
 
 	src = index_name_exists(o->src_index, name, len, 1);
 	return src && !ie_match_stat(o->src_index, src, st, CE_MATCH_IGNORE_VALID|CE_MATCH_IGNORE_SKIP_WORKTREE);
@@ -1364,7 +1364,7 @@ static int check_ok_to_remove(const char *name, int len, int dtype,
 			      enum unpack_trees_error_types error_type,
 			      struct unpack_trees_options *o)
 {
-	struct cache_entry *result;
+	const struct cache_entry *result;
 
 	/*
 	 * It may be that the 'lstat()' succeeded even though

@@ -127,7 +127,7 @@ static void show_killed_files(struct dir_struct *dir)
 	}
 }
 
-static void show_ce_entry(const char *tag, struct cache_entry *ce)
+static void show_ce_entry(const char *tag, const struct cache_entry *ce)
 {
 	int len = max_prefix_len;
 
@@ -165,7 +165,7 @@ static void show_ce_entry(const char *tag, struct cache_entry *ce)
 	}
 	write_name(ce->name, ce_namelen(ce));
 	if (debug_mode) {
-		struct stat_data *sd = &ce->ce_stat_data;
+		const struct stat_data *sd = &ce->ce_stat_data;
 
 		printf("  ctime: %d:%d\n", sd->sd_ctime.sec, sd->sd_ctime.nsec);
 		printf("  mtime: %d:%d\n", sd->sd_mtime.sec, sd->sd_mtime.nsec);
@@ -203,7 +203,7 @@ static void show_ru_info(void)
 	}
 }
 
-static int ce_excluded(struct dir_struct *dir, struct cache_entry *ce)
+static int ce_excluded(struct dir_struct *dir, const struct cache_entry *ce)
 {
 	int dtype = ce_to_dtype(ce);
 	return is_excluded(dir, ce->name, &dtype);
@@ -223,7 +223,7 @@ static void show_files(struct dir_struct *dir)
 	}
 	if (show_cached || show_stage) {
 		for (i = 0; i < active_nr; i++) {
-			struct cache_entry *ce = active_cache[i];
+			const struct cache_entry *ce = active_cache[i];
 			if ((dir->flags & DIR_SHOW_IGNORED) &&
 			    !ce_excluded(dir, ce))
 				continue;
@@ -237,7 +237,7 @@ static void show_files(struct dir_struct *dir)
 	}
 	if (show_deleted || show_modified) {
 		for (i = 0; i < active_nr; i++) {
-			struct cache_entry *ce = active_cache[i];
+			const struct cache_entry *ce = active_cache[i];
 			struct stat st;
 			int err;
 			if ((dir->flags & DIR_SHOW_IGNORED) &&
@@ -273,7 +273,7 @@ static void prune_cache(const char *prefix)
 	last = active_nr;
 	while (last > first) {
 		int next = (last + first) >> 1;
-		struct cache_entry *ce = active_cache[next];
+		const struct cache_entry *ce = active_cache[next];
 		if (!strncmp(ce->name, prefix, max_prefix_len)) {
 			first = next+1;
 			continue;

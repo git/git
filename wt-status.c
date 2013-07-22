@@ -372,7 +372,7 @@ static void wt_status_collect_changed_cb(struct diff_queue_struct *q,
 static int unmerged_mask(const char *path)
 {
 	int pos, mask;
-	struct cache_entry *ce;
+	const struct cache_entry *ce;
 
 	pos = cache_name_pos(path, strlen(path));
 	if (0 <= pos)
@@ -476,7 +476,7 @@ static void wt_status_collect_changes_initial(struct wt_status *s)
 	for (i = 0; i < active_nr; i++) {
 		struct string_list_item *it;
 		struct wt_status_change_data *d;
-		struct cache_entry *ce = active_cache[i];
+		const struct cache_entry *ce = active_cache[i];
 
 		if (!ce_path_match(ce, &pathspec))
 			continue;

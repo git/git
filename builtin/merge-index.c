@@ -16,7 +16,7 @@ static int merge_entry(int pos, const char *path)
 		die("git merge-index: %s not in the cache", path);
 	found = 0;
 	do {
-		struct cache_entry *ce = active_cache[pos];
+		const struct cache_entry *ce = active_cache[pos];
 		int stage = ce_stage(ce);
 
 		if (strcmp(ce->name, path))
@@ -58,7 +58,7 @@ static void merge_all(void)
 {
 	int i;
 	for (i = 0; i < active_nr; i++) {
-		struct cache_entry *ce = active_cache[i];
+		const struct cache_entry *ce = active_cache[i];
 		if (!ce_stage(ce))
 			continue;
 		i += merge_entry(i, ce->name)-1;

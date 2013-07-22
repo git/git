@@ -67,7 +67,7 @@ static int check_submodules_use_gitfiles(void)
 	for (i = 0; i < list.nr; i++) {
 		const char *name = list.entry[i].name;
 		int pos;
-		struct cache_entry *ce;
+		const struct cache_entry *ce;
 		struct stat st;
 
 		pos = cache_name_pos(name, strlen(name));
@@ -120,7 +120,7 @@ static int check_local_mod(unsigned char *head, int index_only)
 	for (i = 0; i < list.nr; i++) {
 		struct stat st;
 		int pos;
-		struct cache_entry *ce;
+		const struct cache_entry *ce;
 		const char *name = list.entry[i].name;
 		unsigned char sha1[20];
 		unsigned mode;
@@ -321,7 +321,7 @@ int cmd_rm(int argc, const char **argv, const char *prefix)
 	seen = xcalloc(i, 1);
 
 	for (i = 0; i < active_nr; i++) {
-		struct cache_entry *ce = active_cache[i];
+		const struct cache_entry *ce = active_cache[i];
 		if (!match_pathspec(pathspec, ce->name, ce_namelen(ce), 0, seen))
 			continue;
 		ALLOC_GROW(list.entry, list.nr + 1, list.alloc);

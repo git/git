@@ -1358,7 +1358,7 @@ static void prepare_show_merge(struct rev_info *revs)
 	if (!active_nr)
 		read_cache();
 	for (i = 0; i < active_nr; i++) {
-		struct cache_entry *ce = active_cache[i];
+		const struct cache_entry *ce = active_cache[i];
 		if (!ce_stage(ce))
 			continue;
 		if (ce_path_match(ce, &revs->prune_data)) {

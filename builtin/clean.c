@@ -221,7 +221,7 @@ int cmd_clean(int argc, const char **argv, const char *prefix)
 		struct dir_entry *ent = dir.entries[i];
 		int len, pos;
 		int matches = 0;
-		struct cache_entry *ce;
+		const struct cache_entry *ce;
 		struct stat st;
 
 		/*

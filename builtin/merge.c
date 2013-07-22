@@ -903,7 +903,7 @@ static int suggest_conflicts(int renormalizing)
 		die_errno(_("Could not open '%s' for writing"), filename);
 	fprintf(fp, "\nConflicts:\n");
 	for (pos = 0; pos < active_nr; pos++) {
-		struct cache_entry *ce = active_cache[pos];
+		const struct cache_entry *ce = active_cache[pos];
 
 		if (ce_stage(ce)) {
 			fprintf(fp, "\t%s\n", ce->name);
