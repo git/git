@@ -198,6 +198,12 @@ must be used for each option.
 --smtp-ssl::
 	Legacy alias for '--smtp-encryption ssl'.
 
+--smtp-ssl-cert-path::
+	Path to ca-certificates (either a directory or a single file).
+	Set it to an empty string to disable certificate verification.
+	Defaults to the value set to the 'sendemail.smtpsslcertpath'
+	configuration variable, if set, or `/etc/ssl/certs` otherwise.
+
 --smtp-user=<user>::
 	Username for SMTP-AUTH. Default is the value of 'sendemail.smtpuser';
 	if a username is not specified (with '--smtp-user' or 'sendemail.smtpuser'),

@@ -69,6 +69,9 @@ git send-email [options] <file | directory | rev-list options >
     --smtp-pass             <str>  * Password for SMTP-AUTH; not necessary.
     --smtp-encryption       <str>  * tls or ssl; anything else disables.
     --smtp-ssl                     * Deprecated. Use '--smtp-encryption ssl'.
+    --smtp-ssl-cert-path    <str>  * Path to ca-certificates (either directory or file).
+                                     Pass an empty string to disable certificate
+                                     verification.
     --smtp-domain           <str>  * The domain name sent to HELO/EHLO handshake
     --smtp-debug            <0|1>  * Disable, enable Net::SMTP debug.
 
@@ -194,7 +197,7 @@ sub do_edit {
 my ($thread, $chain_reply_to, $suppress_from, $signed_off_by_cc);
 my ($to_cmd, $cc_cmd);
 my ($smtp_server, $smtp_server_port, @smtp_server_options);
-my ($smtp_authuser, $smtp_encryption);
+my ($smtp_authuser, $smtp_encryption, $smtp_ssl_cert_path);
 my ($identity, $aliasfiletype, @alias_files, $smtp_domain);
 my ($validate, $confirm);
 my (@suppress_cc);
@@ -220,6 +223,7 @@ my %config_settings = (
     "smtpserveroption" => \@smtp_server_options,
     "smtpuser" => \$smtp_authuser,
     "smtppass" => \$smtp_authpass,
+    "smtpsslcertpath" => \$smtp_ssl_cert_path,
     "smtpdomain" => \$smtp_domain,
     "to" => \@initial_to,
     "tocmd" => \$to_cmd,
@@ -287,6 +291,7 @@ my $rc = GetOptions("h" => \$help,
 		    "smtp-pass:s" => \$smtp_authpass,
 		    "smtp-ssl" => sub { $smtp_encryption = 'ssl' },
 		    "smtp-encryption=s" => \$smtp_encryption,
+		    "smtp-ssl-cert-path" => \$smtp_ssl_cert_path,
 		    "smtp-debug:i" => \$debug_net_smtp,
 		    "smtp-domain:s" => \$smtp_domain,
 		    "identity=s" => \$identity,
@@ -1079,6 +1084,34 @@ sub smtp_auth_maybe {
 	return $auth;
 }
 
+sub ssl_verify_params {
+	eval {
+		require IO::Socket::SSL;
+		IO::Socket::SSL->import(qw/SSL_VERIFY_PEER SSL_VERIFY_NONE/);
+	};
+	if ($@) {
+		print STDERR "Not using SSL_VERIFY_PEER due to out-of-date IO::Socket::SSL.\n";
+		return;
+	}
+
+	if (!defined $smtp_ssl_cert_path) {
+		$smtp_ssl_cert_path = "/etc/ssl/certs";
+	}
+
+	if ($smtp_ssl_cert_path eq "") {
+		return (SSL_verify_mode => SSL_VERIFY_NONE());
+	} elsif (-d $smtp_ssl_cert_path) {
+		return (SSL_verify_mode => SSL_VERIFY_PEER(),
+			SSL_ca_path => $smtp_ssl_cert_path);
+	} elsif (-f $smtp_ssl_cert_path) {
+		return (SSL_verify_mode => SSL_VERIFY_PEER(),
+			SSL_ca_file => $smtp_ssl_cert_path);
+	} else {
+		print STDERR "Not using SSL_VERIFY_PEER because the CA path does not exist.\n";
+		return (SSL_verify_mode => SSL_VERIFY_NONE());
+	}
+}
+
 # Returns 1 if the message was sent, and 0 otherwise.
 # In actuality, the whole program dies when there
 # is an error sending a message.
@@ -1183,7 +1216,8 @@ X-Mailer: git-send-email $gitversion
 			$smtp_domain ||= maildomain();
 			$smtp ||= Net::SMTP::SSL->new($smtp_server,
 						      Hello => $smtp_domain,
-						      Port => $smtp_server_port);
+						      Port => $smtp_server_port,
+						      ssl_verify_params());
 		}
 		else {
 			require Net::SMTP;
@@ -1198,7 +1232,8 @@ X-Mailer: git-send-email $gitversion
 				$smtp->command('STARTTLS');
 				$smtp->response();
 				if ($smtp->code == 220) {
-					$smtp = Net::SMTP::SSL->start_SSL($smtp)
+					$smtp = Net::SMTP::SSL->start_SSL($smtp,
+									  ssl_verify_params())
 						or die "STARTTLS failed! ".$smtp->message;
 					$smtp_encryption = '';
 					# Send EHLO again to receive fresh
