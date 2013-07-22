@@ -83,6 +83,28 @@ Foreign interfaces, subsystems and ports.
 
 UI, Workflows & Features
 
+ * "git clean" command learned an interactive mode.
+
+ * The "--head" option to "git show-ref" was only to add "HEAD" to the
+   list of candidate refs to be filtered by the usual rules
+   (e.g. "--heads" that only show refs under refs/heads).  The meaning
+   of the option has been changed to always show "HEAD" regardless of
+   what filtering will be applied to any other ref.
+
+   This is a backward incompatible change and might cause breakages to
+   people's existing scripts.
+
+ * "git show -s" was less discoverable than it should have been.  It
+   now has a natural synonym "git show --no-patch".
+
+ * "git check-mailmap" is a new command that lets you map usernames
+   and e-mail addresses through the mailmap mechanism, just like many
+   built-in commands do.
+
+ * "git name-rev" learned to name an annotated tag object back to its
+   tagname; "git name-rev $(git rev-parse v1.0.0)" gives "tags/v1.0.0",
+   for example.
+
  * "git cat-file --batch-check=<format>" is added, primarily to allow
    on-disk footprint of objects in packfiles (often they are a lot
    smaller than their true size, when expressed as deltas) to be
@@ -212,6 +234,14 @@ UI, Workflows & Features
 
 Performance, Internal Implementation, etc.
 
+ * The function attributes extensions are used to catch mistakes in
+   use of our own variadic functions that use NULL sentinel at the end
+   (i.e. like execl(3)) and format strings (i.e. like printf(3)).
+
+ * The code to allow configuration data to be read from in-tree blob
+   objects is in.  This may help working in a bare repository and
+   submodule updates.
+
  * Fetching between repositories with many refs employed O(n^2)
    algorithm to match up the common objects, which has been corrected.
 
@@ -279,6 +309,26 @@ Fixes since v1.8.3
 Unless otherwise noted, all the fixes since v1.8.3 in the maintenance
 track are contained in this release (see release notes to them for
 details).
+
+ * Newer Net::SMTP::SSL module does not want the user programs to use
+   the default behaviour to let server certificate go without
+   verification, so by default enable the verification with a
+   mechanism to turn it off if needed.
+   (merge 35035bb rr/send-email-ssl-verify later to maint).
+
+ * When "git" is spawned in such a way that any of the low 3 file
+   descriptors is closed, our first open() may yield file descriptor 2,
+   and writing error message to it would screw things up in a big way.
+   (merge a11c396 tr/protect-low-3-fds later to maint).
+
+ * The mailmap mechanism unnecessarily downcased the e-mail addresses
+   in the output, and also ignored the human name when it is a single
+   character name.
+   (merge bd23794 jc/mailmap-case-insensitivity later to maint).
+
+ * In two places we did not check return value (expected to be a file
+   descriptor) correctly.
+   (merge a77f106 tr/fd-gotcha-fixes later to maint).
 
  * Logic to auto-detect character encodings in the commit log message
    did not reject overlong and invalid UTF-8 characters.
