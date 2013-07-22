@@ -849,7 +849,4 @@ options may be given. See linkgit:git-diff-files[1] for more options.
 -t::
 
 	Show the tree objects in the diff output. This implies '-r'.
-
--s::
-	Suppress diff output.
 endif::git-rev-list[]

@@ -26,6 +26,11 @@ ifndef::git-format-patch[]
 	{git-diff? This is the default.}
 endif::git-format-patch[]
 
+-s::
+--no-patch::
+	Suppress diff output. Useful for commands like `git show` that
+	show the patch by default, or to cancel the effect of `--patch`.
+
 -U<n>::
 --unified=<n>::
 	Generate diffs with <n> lines of context instead of

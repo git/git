@@ -97,7 +97,7 @@ include::rev-list-options.txt[]
 
 include::pretty-formats.txt[]
 
-Common diff options
+COMMON DIFF OPTIONS
 -------------------
 
 :git-log: 1
@@ -105,7 +105,7 @@ include::diff-options.txt[]
 
 include::diff-generate-patch.txt[]
 
-Examples
+EXAMPLES
 --------
 `git log --no-merges`::
 
@@ -161,12 +161,12 @@ Examples
 `git log -3`::
 	Limits the number of commits to show to 3.
 
-Discussion
+DISCUSSION
 ----------
 
 include::i18n.txt[]
 
-Configuration
+CONFIGURATION
 -------------
 
 See linkgit:git-config[1] for core variables and linkgit:git-diff[1]
