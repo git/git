@@ -149,7 +149,7 @@ struct git_istream *open_istream(const unsigned char *sha1,
 			return NULL;
 		}
 	}
-	if (st && filter) {
+	if (filter) {
 		/* Add "&& !is_null_stream_filter(filter)" for performance */
 		struct git_istream *nst = attach_stream_filter(st, filter);
 		if (!nst)
