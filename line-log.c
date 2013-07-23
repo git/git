@@ -115,6 +115,8 @@ static void sort_and_merge_range_set(struct range_set *rs)
 	qsort(rs->ranges, rs->nr, sizeof(struct range), range_cmp);
 
 	for (i = 0; i < rs->nr; i++) {
+		if (rs->ranges[i].start == rs->ranges[i].end)
+			continue;
 		if (o > 0 && rs->ranges[i].start <= rs->ranges[o-1].end) {
 			if (rs->ranges[o-1].end < rs->ranges[i].end)
 				rs->ranges[o-1].end = rs->ranges[i].end;

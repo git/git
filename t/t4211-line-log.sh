@@ -67,7 +67,8 @@ test_bad_opts "-L :foo:b.c" "no match"
 # There is a separate bug when an empty -L range is the first -L encountered,
 # thus to demonstrate this particular bug, the empty -L range must follow a
 # non-empty -L range.
-test_expect_failure '-L {empty-range} (any -L)' '
+test_expect_success '-L {empty-range} (any -L)' '
+	n=$(expr $(cat b.c | wc -l) + 1) &&
 	n=$(expr $(wc -l <b.c) + 1) &&
 	git log -L1,1:b.c -L$n:b.c
 '
