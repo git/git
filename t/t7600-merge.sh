@@ -502,7 +502,7 @@ test_expect_success 'option --ff-only overwrites --no-ff' '
 	test_must_fail git merge --no-ff --ff-only c2
 '
 
-test_expect_success 'option --ff-only overwrites merge.ff=only config' '
+test_expect_success 'option --no-ff overrides merge.ff=only config' '
 	git reset --hard c0 &&
 	test_config merge.ff only &&
 	git merge --no-ff c1
