@@ -73,7 +73,7 @@ test_expect_success '-L {empty-range} (any -L)' '
 	git log -L1,1:b.c -L$n:b.c
 '
 
-test_expect_failure '-L {empty-range} (first -L)' '
+test_expect_success '-L {empty-range} (first -L)' '
 	n=$(expr $(wc -l <b.c) + 1) &&
 	git log -L$n:b.c
 '

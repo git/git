@@ -299,6 +299,7 @@ static void line_log_data_insert(struct line_log_data **list,
 	p = xcalloc(1, sizeof(struct line_log_data));
 	p->path = path;
 	range_set_append(&p->ranges, begin, end);
+	sort_and_merge_range_set(&p->ranges);
 	if (ip) {
 		p->next = ip->next;
 		ip->next = p;
