@@ -110,12 +110,12 @@ static void range_set_check_invariants(struct range_set *rs)
 static void sort_and_merge_range_set(struct range_set *rs)
 {
 	int i;
-	int o = 1; /* output cursor */
+	int o = 0; /* output cursor */
 
 	qsort(rs->ranges, rs->nr, sizeof(struct range), range_cmp);
 
-	for (i = 1; i < rs->nr; i++) {
-		if (rs->ranges[i].start <= rs->ranges[o-1].end) {
+	for (i = 0; i < rs->nr; i++) {
+		if (o > 0 && rs->ranges[i].start <= rs->ranges[o-1].end) {
 			if (rs->ranges[o-1].end < rs->ranges[i].end)
 				rs->ranges[o-1].end = rs->ranges[i].end;
 		} else {
