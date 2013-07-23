@@ -367,12 +367,24 @@ def setP4ExecBit(file, mode):
 def getP4OpenedType(file):
     # Returns the perforce file type for the given file.
 
-    result = p4_read_pipe(["opened", wildcard_encode(file)])
-    match = re.match(".*\((.+)\)\r?$", result)
-    if match:
-        return match.group(1)
-    else:
-        die("Could not determine file type for %s (result: '%s')" % (file, result))
+    retType = None
+    attempts = 0
+    # Empty result typically means slow p4 connection, allow 10 attempts
+    while not retType and attempts < 10:
+      # Only print 'attempt' message if retrying
+      if attempts > 0:
+          print ("File type discovery attempt %d..." % (attempts + 1))
+      attempts += 1
+      result = p4_read_pipe(["opened", wildcard_encode(file)])
+      match = re.match(".*\((.+)\)\r?$", result)
+      if match:
+          retType = match.group(1)
+    if not retType:
+        # Let the default file type value to be 'text'
+        print ("Could not determine file type for %s (result: '%s') - 'text' "
+               "assumed" % (file, result))
+        retType = "text"
+    return retType
 
 # Return the set of all p4 labels
 def getP4Labels(depotPaths):
