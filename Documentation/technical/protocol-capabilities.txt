@@ -21,8 +21,8 @@ NOT advertise capabilities it does not understand.
 The 'report-status' and 'delete-refs' capabilities are sent and
 recognized by the receive-pack (push to server) process.
 
-The 'ofs-delta' capability is sent and recognized by both upload-pack
-and receive-pack protocols.
+The 'ofs-delta' and 'side-band-64k' capabilities are sent and recognized
+by both upload-pack and receive-pack protocols.
 
 All other capabilities are only recognized by the upload-pack (fetch
 from server) process.
