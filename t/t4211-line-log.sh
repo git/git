@@ -68,7 +68,6 @@ test_bad_opts "-L :foo:b.c" "no match"
 # thus to demonstrate this particular bug, the empty -L range must follow a
 # non-empty -L range.
 test_expect_success '-L {empty-range} (any -L)' '
-	n=$(expr $(cat b.c | wc -l) + 1) &&
 	n=$(expr $(wc -l <b.c) + 1) &&
 	git log -L1,1:b.c -L$n:b.c
 '
