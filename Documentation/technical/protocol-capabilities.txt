@@ -168,7 +168,7 @@ of whether or not there are tags available.
 report-status
 -------------
 
-The upload-pack process can receive a 'report-status' capability,
+The receive-pack process can receive a 'report-status' capability,
 which tells it that the client wants a report of what happened after
 a packfile upload and reference update.  If the pushing client requests
 this capability, after unpacking and updating references the server
