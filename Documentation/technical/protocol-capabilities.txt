@@ -22,7 +22,8 @@ The 'report-status' and 'delete-refs' capabilities are sent and
 recognized by the receive-pack (push to server) process.
 
 The 'ofs-delta' and 'side-band-64k' capabilities are sent and recognized
-by both upload-pack and receive-pack protocols.
+by both upload-pack and receive-pack protocols.  The 'agent' capability
+may optionally be sent in both protocols.
 
 All other capabilities are only recognized by the upload-pack (fetch
 from server) process.
@@ -122,6 +123,20 @@ ofs-delta
 Server can send, and client understand PACKv2 with delta referring to
 its base by position in pack rather than by an obj-id.  That is, they can
 send/read OBJ_OFS_DELTA (aka type 6) in a packfile.
+
+agent
+-----
+
+The server may optionally send a capability of the form `agent=X` to
+notify the client that the server is running version `X`. The client may
+optionally return its own agent string by responding with an `agent=Y`
+capability (but it MUST NOT do so if the server did not mention the
+agent capability). The `X` and `Y` strings may contain any printable
+ASCII characters except space (i.e., the byte range 32 < x < 127), and
+are typically of the form "package/version" (e.g., "git/1.8.3.1"). The
+agent strings are purely informative for statistics and debugging
+purposes, and MUST NOT be used to programatically assume the presence
+or absence of particular features.
 
 shallow
 -------
