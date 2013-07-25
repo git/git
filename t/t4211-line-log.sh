@@ -64,4 +64,17 @@ test_bad_opts "-L 1,1000:b.c" "has only.*lines"
 test_bad_opts "-L :b.c" "argument.*not of the form"
 test_bad_opts "-L :foo:b.c" "no match"
 
+# There is a separate bug when an empty -L range is the first -L encountered,
+# thus to demonstrate this particular bug, the empty -L range must follow a
+# non-empty -L range.
+test_expect_success '-L {empty-range} (any -L)' '
+	n=$(expr $(wc -l <b.c) + 1) &&
+	git log -L1,1:b.c -L$n:b.c
+'
+
+test_expect_success '-L {empty-range} (first -L)' '
+	n=$(expr $(wc -l <b.c) + 1) &&
+	git log -L$n:b.c
+'
+
 test_done
