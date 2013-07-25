@@ -48,6 +48,8 @@ Updates since v1.8.3
 
 Foreign interfaces, subsystems and ports.
 
+ * Cygwin port has been updated for more recent Cygwin 1.7.
+
  * "git rebase -i" now honors --strategy and -X options.
 
  * Git-gui has been updated to its 0.18.0 version.
@@ -82,6 +84,12 @@ Foreign interfaces, subsystems and ports.
 
 
 UI, Workflows & Features
+
+ * Sample "post-receive-email" hook script got an enhanced replacement
+   "multimail" (in contrib/).
+
+ * Also in contrib/ is a new "contacts" script that runs "git blame"
+   to find out the people who may be interested in a set of changes.
 
  * "git clean" command learned an interactive mode.
 
@@ -182,7 +190,7 @@ UI, Workflows & Features
    directly uses the 40-hex string as an object name, even if a ref
    "refs/<some hierarchy>/<name>" exists.  This disambiguation order
    is unlikely to change, but we should warn about the ambiguity just
-   like we warn when more than one refs/ hierachies share the same
+   like we warn when more than one refs/ hierarchies share the same
    name.
 
  * "git rebase" learned "--[no-]autostash" option to save local
