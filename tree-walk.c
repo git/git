@@ -323,7 +323,6 @@ static inline int prune_traversal(struct name_entry *e,
 
 int traverse_trees(int n, struct tree_desc *t, struct traverse_info *info)
 {
-	int ret = 0;
 	int error = 0;
 	struct name_entry *entry = xmalloc(n*sizeof(*entry));
 	int i;
@@ -341,6 +340,7 @@ int traverse_trees(int n, struct tree_desc *t, struct traverse_info *info)
 		strbuf_setlen(&base, info->pathlen);
 	}
 	for (;;) {
+		int trees_used;
 		unsigned long mask, dirmask;
 		const char *first = NULL;
 		int first_len = 0;
@@ -404,15 +404,14 @@ int traverse_trees(int n, struct tree_desc *t, struct traverse_info *info)
 		if (interesting < 0)
 			break;
 		if (interesting) {
-			ret = info->fn(n, mask, dirmask, entry, info);
-			if (ret < 0) {
-				error = ret;
+			trees_used = info->fn(n, mask, dirmask, entry, info);
+			if (trees_used < 0) {
+				error = trees_used;
 				if (!info->show_all_errors)
 					break;
 			}
-			mask &= ret;
+			mask &= trees_used;
 		}
-		ret = 0;
 		for (i = 0; i < n; i++)
 			if (mask & (1ul << i))
 				update_extended_entry(tx + i, entry + i);
