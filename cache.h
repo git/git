@@ -577,6 +577,7 @@ extern int assume_unchanged;
 extern int prefer_symlink_refs;
 extern int log_all_ref_updates;
 extern int warn_ambiguous_refs;
+extern int warn_on_object_refname_ambiguity;
 extern int shared_repository;
 extern const char *apply_default_whitespace;
 extern const char *apply_default_ignorewhitespace;
@@ -1131,6 +1132,7 @@ extern int unpack_object_header(struct packed_git *, struct pack_window **, off_
 
 struct object_info {
 	/* Request */
+	enum object_type *typep;
 	unsigned long *sizep;
 	unsigned long *disk_sizep;
 

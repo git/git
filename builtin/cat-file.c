@@ -150,7 +150,9 @@ static void expand_atom(struct strbuf *sb, const char *atom, int len,
 		if (!data->mark_query)
 			strbuf_addstr(sb, sha1_to_hex(data->sha1));
 	} else if (is_atom("objecttype", atom, len)) {
-		if (!data->mark_query)
+		if (data->mark_query)
+			data->info.typep = &data->type;
+		else
 			strbuf_addstr(sb, typename(data->type));
 	} else if (is_atom("objectsize", atom, len)) {
 		if (data->mark_query)
@@ -229,8 +231,7 @@ static int batch_one_object(const char *obj_name, struct batch_options *opt,
 		return 0;
 	}
 
-	data->type = sha1_object_info_extended(data->sha1, &data->info);
-	if (data->type <= 0) {
+	if (sha1_object_info_extended(data->sha1, &data->info) < 0) {
 		printf("%s missing\n", obj_name);
 		fflush(stdout);
 		return 0;
@@ -265,6 +266,15 @@ static int batch_objects(struct batch_options *opt)
 	data.mark_query = 1;
 	strbuf_expand(&buf, opt->format, expand_format, &data);
 	data.mark_query = 0;
+
+	/*
+	 * We are going to call get_sha1 on a potentially very large number of
+	 * objects. In most large cases, these will be actual object sha1s. The
+	 * cost to double-check that each one is not also a ref (just so we can
+	 * warn) ends up dwarfing the actual cost of the object lookups
+	 * themselves. We can work around it by just turning off the warning.
+	 */
+	warn_on_object_refname_ambiguity = 0;
 
 	while (strbuf_getline(&buf, stdin, '\n') != EOF) {
 		char *p;

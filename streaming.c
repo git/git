@@ -111,11 +111,11 @@ static enum input_source istream_source(const unsigned char *sha1,
 	unsigned long size;
 	int status;
 
+	oi->typep = type;
 	oi->sizep = &size;
 	status = sha1_object_info_extended(sha1, oi);
 	if (status < 0)
 		return stream_error;
-	*type = status;
 
 	switch (oi->whence) {
 	case OI_LOOSE:
@@ -135,7 +135,7 @@ struct git_istream *open_istream(const unsigned char *sha1,
 				 struct stream_filter *filter)
 {
 	struct git_istream *st;
-	struct object_info oi = {0};
+	struct object_info oi = {NULL};
 	const unsigned char *real = lookup_replace_object(sha1);
 	enum input_source src = istream_source(real, type, &oi);
 
