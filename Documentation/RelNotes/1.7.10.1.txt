@@ -14,7 +14,7 @@ Fixes since v1.7.10
    not exclude them and tried to apply funny patches only to fail.
 
  * "git blame" started missing quite a few changes from the origin
-   since we stopped using the diff minimalization by default in v1.7.2
+   since we stopped using the diff minimization by default in v1.7.2
    era.
 
  * When PATH contains an unreadable directory, alias expansion code

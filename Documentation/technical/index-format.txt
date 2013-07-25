@@ -175,7 +175,7 @@ Git index format
 
   A conflict is represented in the index as a set of higher stage entries.
   When a conflict is resolved (e.g. with "git add path"), these higher
-  stage entries will be removed and a stage-0 entry with proper resoluton
+  stage entries will be removed and a stage-0 entry with proper resolution
   is added.
 
   When these higher stage entries are removed, they are saved in the

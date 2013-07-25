@@ -455,7 +455,7 @@ re_search_stub (struct re_pattern_buffer *bufp,
 
   rval = 0;
 
-  /* I hope we needn't fill ther regs with -1's when no match was found.  */
+  /* I hope we needn't fill their regs with -1's when no match was found.  */
   if (result != REG_NOERROR)
     rval = -1;
   else if (regs != NULL)
@@ -1071,7 +1071,7 @@ acquire_init_state_context (reg_errcode_t *err, const re_match_context_t *mctx,
    FL_LONGEST_MATCH means we want the POSIX longest matching.
    If P_MATCH_FIRST is not NULL, and the match fails, it is set to the
    next place where we may want to try matching.
-   Note that the matcher assume that the maching starts from the current
+   Note that the matcher assume that the matching starts from the current
    index of the buffer.  */
 
 static int
@@ -2239,7 +2239,7 @@ sift_states_iter_mb (const re_match_context_t *mctx, re_sift_context_t *sctx,
 			    dfa->nexts[node_idx]))
     /* The node can't accept the `multi byte', or the
        destination was already thrown away, then the node
-       could't accept the current input `multi byte'.   */
+       couldn't accept the current input `multi byte'.   */
     naccepted = 0;
   /* Otherwise, it is sure that the node could accept
      `naccepted' bytes input.  */

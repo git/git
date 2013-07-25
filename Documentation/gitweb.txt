@@ -504,7 +504,7 @@ repositories, you can configure Apache like this:
 
 The above configuration expects your public repositories to live under
 '/pub/git' and will serve them as `http://git.domain.org/dir-under-pub-git`,
-both as cloneable Git URL and as browseable gitweb interface.  If you then
+both as clonable Git URL and as browseable gitweb interface.  If you then
 start your linkgit:git-daemon[1] with `--base-path=/pub/git --export-all`
 then you can even use the `git://` URL with exactly the same path.
 

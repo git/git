@@ -4464,7 +4464,7 @@ void diff_flush(struct diff_options *options)
 	    DIFF_OPT_TST(options, DIFF_FROM_CONTENTS)) {
 		/*
 		 * run diff_flush_patch for the exit status. setting
-		 * options->file to /dev/null should be safe, becaue we
+		 * options->file to /dev/null should be safe, because we
 		 * aren't supposed to produce any output anyway.
 		 */
 		if (options->close_file)

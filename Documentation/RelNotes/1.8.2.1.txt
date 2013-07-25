@@ -49,7 +49,7 @@ Fixes since v1.8.2
    common prefix and suffix between the two filenames overlapped.
 
  * "git submodule update", when recursed into sub-submodules, did not
-   acccumulate the prefix paths.
+   accumulate the prefix paths.
 
  * "git am $maildir/" applied messages in an unexpected order; sort
    filenames read from the maildir/ in a way that is more likely to

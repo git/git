@@ -58,4 +58,4 @@ Fixes since v1.8.2.1
    conflicts have been applied.
 
  * "git bundle" did not like a bundle created using a commit without
-   any message as its one of the prerequistes.
+   any message as its one of the prerequisites.

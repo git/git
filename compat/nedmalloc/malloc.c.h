@@ -3602,8 +3602,8 @@ static void internal_malloc_stats(mstate m) {
      and choose its bk node as its replacement.
   2. If x was the last node of its size, but not a leaf node, it must
      be replaced with a leaf node (not merely one with an open left or
-     right), to make sure that lefts and rights of descendents
-     correspond properly to bit masks.  We use the rightmost descendent
+     right), to make sure that lefts and rights of descendants
+     correspond properly to bit masks.  We use the rightmost descendant
      of x.  We could use any other leaf, but this is easy to locate and
      tends to counteract removal of leftmosts elsewhere, and so keeps
      paths shorter than minimally guaranteed.  This doesn't loop much

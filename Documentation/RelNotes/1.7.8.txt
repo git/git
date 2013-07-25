@@ -9,7 +9,7 @@ Updates since v1.7.7
  * Updates to bash completion scripts.
 
  * The build procedure has been taught to take advantage of computed
-   dependency automatically when the complier supports it.
+   dependency automatically when the compiler supports it.
 
  * The date parser now accepts timezone designators that lack minutes
    part and also has a colon between "hh:mm".
@@ -31,7 +31,7 @@ Updates since v1.7.7
  * Variants of "git cherry-pick" and "git revert" that take multiple
    commits learned to "--continue" and "--abort".
 
- * "git daemon" gives more human readble error messages to clients
+ * "git daemon" gives more human readable error messages to clients
    using ERR packets when appropriate.
 
  * Errors at the network layer is logged by "git daemon".

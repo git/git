@@ -65,7 +65,7 @@ struct trie
   struct trie *fail;		/* Aho-Corasick failure function. */
   int depth;			/* Depth of this node from the root. */
   int shift;			/* Shift function for search failures. */
-  int maxshift;			/* Max shift of self and descendents. */
+  int maxshift;			/* Max shift of self and descendants. */
 };
 
 /* Structure returned opaquely to the caller, containing everything. */
@@ -308,7 +308,7 @@ treefails (register struct tree const *tree, struct trie const *fail,
   treefails(tree->rlink, fail, recourse);
 
   /* Find, in the chain of fails going back to the root, the first
-     node that has a descendent on the current label. */
+     node that has a descendant on the current label. */
   while (fail)
     {
       link = fail->links;
@@ -426,13 +426,13 @@ kwsprep (kwset_t kws)
 	 computing the delta table, failure function, and shift function. */
       for (curr = last = kwset->trie; curr; curr = curr->next)
 	{
-	  /* Enqueue the immediate descendents in the level order queue. */
+	  /* Enqueue the immediate descendants in the level order queue. */
 	  enqueue(curr->links, &last);
 
 	  curr->shift = kwset->mind;
 	  curr->maxshift = kwset->mind;
 
-	  /* Update the delta table for the descendents of this node. */
+	  /* Update the delta table for the descendants of this node. */
 	  treedelta(curr->links, curr->depth, delta);
 
 	  /* Compute the failure function for the descendants of this node. */
@@ -450,7 +450,7 @@ kwsprep (kwset_t kws)
 		  fail->shift = curr->depth - fail->depth;
 
 	      /* If the current node is accepting then the shift at the
-		 fail and its descendents should be no larger than the
+		 fail and its descendants should be no larger than the
 		 difference of their depths. */
 	      if (curr->accepting && fail->maxshift > curr->depth - fail->depth)
 		fail->maxshift = curr->depth - fail->depth;
