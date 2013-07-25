@@ -102,8 +102,6 @@ struct pretty_print_context {
 	 * Fields below here are manipulated internally by pp_* functions and
 	 * should not be counted on by callers.
 	 */
-
-	/* Manipulated by the pp_* functions internally. */
 	struct string_list in_body_headers;
 };
 
