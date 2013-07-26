@@ -57,6 +57,21 @@ static void print_error_files(struct string_list *files_list,
 	}
 }
 
+static void error_removing_concrete_submodules(struct string_list *files, int *errs)
+{
+	print_error_files(files,
+			  Q_("the following submodule (or one of its nested "
+			     "submodules)\n"
+			     "uses a .git directory:",
+			     "the following submodules (or one of its nested "
+			     "submodules)\n"
+			     "use a .git directory:", files->nr),
+			  _("\n(use 'rm -rf' if you really want to remove "
+			    "it including all of its history)"),
+			  errs);
+	string_list_clear(files, 0);
+}
+
 static int check_submodules_use_gitfiles(void)
 {
 	int i;
@@ -85,16 +100,8 @@ static int check_submodules_use_gitfiles(void)
 		if (!submodule_uses_gitfile(name))
 			string_list_append(&files, name);
 	}
-	print_error_files(&files,
-			  Q_("the following submodule (or one of its nested "
-			     "submodules)\n uses a .git directory:",
-			     "the following submodules (or one of its nested "
-			     "submodules)\n use a .git directory:",
-			     files.nr),
-			  _("\n(use 'rm -rf' if you really want to remove "
-			    "it including all of its history)"),
-			  &errs);
-	string_list_clear(&files, 0);
+
+	error_removing_concrete_submodules(&files, &errs);
 
 	return errs;
 }
@@ -236,17 +243,9 @@ static int check_local_mod(unsigned char *head, int index_only)
 			    " or -f to force removal)"),
 			  &errs);
 	string_list_clear(&files_cached, 0);
-	print_error_files(&files_submodule,
-			  Q_("the following submodule (or one of its nested "
-			     "submodule)\nuses a .git directory:",
-			     "the following submodules (or one of its nested "
-			     "submodule)\nuse a .git directory:",
-			     files_submodule.nr),
-			  _("\n(use 'rm -rf' if you really "
-			    "want to remove it including all "
-			    "of its history)"),
-			  &errs);
-	string_list_clear(&files_submodule, 0);
+
+	error_removing_concrete_submodules(&files_submodule, &errs);
+
 	print_error_files(&files_local,
 			  Q_("the following file has local modifications:",
 			     "the following files have local modifications:",
