@@ -182,9 +182,9 @@ test_expect_success 'merge new subproj history into subdir' '
 test_expect_success 'Check that prefix argument is required for split' '
         echo "You must provide the --prefix option." > expected &&
         test_must_fail git subtree split > actual 2>&1 &&
-        test_debug "echo -n expected: " &&
+	test_debug "printf '"'"'expected: '"'"'" &&
         test_debug "cat expected" &&
-        test_debug "echo -n actual: " &&
+	test_debug "printf '"'"'actual: '"'"'" &&
         test_debug "cat actual" &&
         test_cmp expected actual &&
         rm -f expected actual
@@ -193,9 +193,9 @@ test_expect_success 'Check that prefix argument is required for split' '
 test_expect_success 'Check that the <prefix> exists for a split' '
         echo "'"'"'non-existent-directory'"'"'" does not exist\; use "'"'"'git subtree add'"'"'" > expected &&
         test_must_fail git subtree split --prefix=non-existent-directory > actual 2>&1 &&
-        test_debug "echo -n expected: " &&
+	test_debug "printf '"'"'expected: '"'"'" &&
         test_debug "cat expected" &&
-        test_debug "echo -n actual: " &&
+	test_debug "printf '"'"'actual: '"'"'" &&
         test_debug "cat actual" &&
         test_cmp expected actual
 #        rm -f expected actual
