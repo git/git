@@ -100,25 +100,13 @@ struct strbuf_list {
 	int alloc;
 };
 
-static int collect_config(const char *key_, const char *value_, void *cb)
+static int format_config(struct strbuf *buf, const char *key_, const char *value_)
 {
-	struct strbuf_list *values = cb;
-	struct strbuf *buf;
-	char value[256];
-	const char *vptr = value;
 	int must_free_vptr = 0;
 	int must_print_delim = 0;
+	char value[256];
+	const char *vptr = value;
 
-	if (!use_key_regexp && strcmp(key_, key))
-		return 0;
-	if (use_key_regexp && regexec(key_regexp, key_, 0, NULL, 0))
-		return 0;
-	if (regexp != NULL &&
-	    (do_not_match ^ !!regexec(regexp, (value_?value_:""), 0, NULL, 0)))
-		return 0;
-
-	ALLOC_GROW(values->items, values->nr + 1, values->alloc);
-	buf = &values->items[values->nr++];
 	strbuf_init(buf, 0);
 
 	if (show_keys) {
@@ -126,7 +114,7 @@ static int collect_config(const char *key_, const char *value_, void *cb)
 		must_print_delim = 1;
 	}
 	if (types == TYPE_INT)
-		sprintf(value, "%d", git_config_int(key_, value_?value_:""));
+		sprintf(value, "%d", git_config_int(key_, value_ ? value_ : ""));
 	else if (types == TYPE_BOOL)
 		vptr = git_config_bool(key_, value_) ? "true" : "false";
 	else if (types == TYPE_BOOL_OR_INT) {
@@ -154,13 +142,25 @@ static int collect_config(const char *key_, const char *value_, void *cb)
 	strbuf_addch(buf, term);
 
 	if (must_free_vptr)
-		/* If vptr must be freed, it's a pointer to a
-		 * dynamically allocated buffer, it's safe to cast to
-		 * const.
-		*/
 		free((char *)vptr);
-
 	return 0;
+}
+
+static int collect_config(const char *key_, const char *value_, void *cb)
+{
+	struct strbuf_list *values = cb;
+
+	if (!use_key_regexp && strcmp(key_, key))
+		return 0;
+	if (use_key_regexp && regexec(key_regexp, key_, 0, NULL, 0))
+		return 0;
+	if (regexp != NULL &&
+	    (do_not_match ^ !!regexec(regexp, (value_?value_:""), 0, NULL, 0)))
+		return 0;
+
+	ALLOC_GROW(values->items, values->nr + 1, values->alloc);
+
+	return format_config(&values->items[values->nr++], key_, value_);
 }
 
 static int get_value(const char *key_, const char *regex_)
