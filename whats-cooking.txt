@@ -1,27 +1,20 @@
 To: git@vger.kernel.org
 Bcc: lwn@lwn.net
-Subject: What's cooking in git.git (Jul 2013, #08; Mon, 22)
-X-master-at: 0bde8c0c1e53e2b2001f4ced58d3e66865758cea
-X-next-at: c240c481b4c5d7c300800bb80174c0853d587c6d
+Subject: What's cooking in git.git (Jul 2013, #09; Mon, 29)
+X-master-at: 8f6a3e5d71fa1800c3f330bab2b6b6399ec7aea7
+X-next-at: cf3f07e67f28b0068199b16bc6974f4bbafb4e51
 
-What's cooking in git.git (Jul 2013, #08; Mon, 22)
+What's cooking in git.git (Jul 2013, #09; Mon, 29)
 --------------------------------------------------
 
 Here are the topics that have been cooking.  Commits prefixed with
 '-' are only in 'pu' (proposed updates) while commits prefixed with
 '+' are in 'next'.
 
-This again is one of those back-to-back issues of "What's cooking"
-report, but I expect that the rest of the week will be slower than
-usual due to it being the OSCON week, and I wanted to categorize the
-topics in flight into those that should be in -rc1 and those that
-should cook until the next cycle.  Hopefully -rc0 will be tagged
-tomorrow with some of the former, but not all, as we would like to
-cook topics that are not trivial in 'next' for at least a week or
-so.  The ones marked as "will merge to master" below are marked as
-such because I do not expect major issues in them to be found before
-we tag -rc1 (see http://tinyurl.com/gitCal), while ones marked as
-"will cook in next" may not be so trivial.
+The shape of the upcoming release is pretty much known by now; all
+the topics that are marked for 'master' in this issue will likely to
+be in the final, and others will cook during the pre-release freeze
+period.
 
 You can find the changes described here in the integration branches
 of the repositories listed at
@@ -31,229 +24,247 @@ of the repositories listed at
 --------------------------------------------------
 [Graduated to "master"]
 
-* db/show-ref-head (2013-07-17) 1 commit
-  (merged to 'next' on 2013-07-18 at 73797d0)
- + show-ref: make --head always show the HEAD ref
-
- The "--head" option to "git show-ref" was only to add "HEAD" to the
- list of candidate refs to be filtered by the usual rules
- (e.g. "--heads" that only show refs under refs/heads).  Change the
- meaning of the option to always show "HEAD" regardless of what
- filtering will be applied to any other ref (this is a backward
- incompatible change, so I may need to add an entry to the Release
- Notes).
+* ob/typofixes (2013-07-22) 3 commits
+  (merged to 'next' on 2013-07-22 at 8574f9f)
+ + typofix: in-code comments
+ + typofix: documentation
+ + typofix: release notes
 
 
-* dw/request-pull-diag (2013-07-17) 1 commit
-  (merged to 'next' on 2013-07-18 at d4406de)
- + request-pull: improve error message for invalid revision args
+* es/contacts (2013-07-21) 5 commits
+  (merged to 'next' on 2013-07-22 at a78c3d6)
+ + contrib: contacts: add documentation
+ + contrib: contacts: add mailmap support
+ + contrib: contacts: interpret committish akin to format-patch
+ + contrib: contacts: add ability to parse from committish
+ + contrib: add git-contacts helper
+
+ A helper to read from a set of format-patch output files or a range
+ of commits and find those who may have insights to the code that
+ the changes touch by running a series of "git blame" commands.
 
 
-* es/blame-L-breakage (2013-07-17) 6 commits
-  (merged to 'next' on 2013-07-18 at cfd871a)
- + blame-options.txt: explain that -L <start> and <end> are optional
- + blame-options.txt: place each -L option variation on its own line
- + t8001/t8002 (blame): add blame -L :funcname tests
- + t8001/t8002 (blame): add blame -L tests
- + t8001/t8002 (blame): modernize style
- + line-range: fix "blame -L X,-N" regression
-
- The refactoring made for parsing "-L" option recently to support
- "git log -L" seems to have broken "git blame -L X,-5" to show 5
- lines leading to X.
+* es/line-log-further-fixes (2013-07-23) 5 commits
+ + line-log: fix "log -LN" crash when N is last line of file
+ + range-set: satisfy non-empty ranges invariant
+ + t4211: demonstrate crash when first -L encountered is empty range
+ + t4211: demonstrate empty -L range crash
+ + range-set: fix sort_and_merge_range_set() corner case bug
+ (this branch is used by tr/line-log.)
 
 
-* es/check-mailmap (2013-07-13) 2 commits
-  (merged to 'next' on 2013-07-21 at 23c5363)
- + t4203: test check-mailmap command invocation
- + builtin: add git-check-mailmap command
- (this branch is used by es/contacts.)
+* jk/cat-file-batch-optim (2013-07-18) 9 commits
+  (merged to 'next' on 2013-07-22 at 965897c)
+ + Fix some sparse warnings
+ + sha1_object_info_extended: pass object_info to helpers
+ + sha1_object_info_extended: make type calculation optional
+ + packed_object_info: make type lookup optional
+ + packed_object_info: hoist delta type resolution to helper
+ + sha1_loose_object_info: make type lookup optional
+ + sha1_object_info_extended: rename "status" to "type"
+ + cat-file: disable object/refname ambiguity check for batch mode
+ + Merge branch 'nd/warn-ambiguous-object-name' into jk/cat-file-batch-optim
 
- A new command to allow scripts to query the mailmap information.
-
-
-* hv/config-from-blob (2013-07-12) 5 commits
-  (merged to 'next' on 2013-07-15 at 9ab7f3f)
- + do not die when error in config parsing of buf occurs
- + teach config --blob option to parse config from database
- + config: make parsing stack struct independent from actual data source
- + config: drop cf validity check in get_next_char()
- + config: factor out config file stack management
-
- Allow configuration data to be read from in-tree blob objects,
- which would help working in a bare repository and submodule
- updates.
+ If somebody wants to only know on-disk footprint of an object
+ without having to know its type or payload size, we can bypass a
+ lot of code to cheaply learn it.
 
 
-* jc/mailmap-case-insensitivity (2013-07-15) 9 commits
-  (merged to 'next' on 2013-07-18 at 83341ac)
- + mailmap: style fixes
- + mailmap: debug: avoid passing NULL to fprintf() '%s' conversion specification
- + mailmap: debug: eliminate -Wformat field precision type warning
- + mailmap: debug: fix malformed fprintf() format conversion specification
- + mailmap: debug: fix out-of-order fprintf() arguments
- + mailmap: do not downcase mailmap entries
- + t4203: demonstrate loss of uppercase characters in canonical email
- + mailmap: do not lose single-letter names
- + t4203: demonstrate loss of single-character name in mailmap entry
-
- The mailmap mechanism unnecessarily downcased the e-mail addresses
- in the output, and also ignored the human name when it is a single
- character name.
+* jm/doc-ref-prune (2013-07-18) 2 commits
+  (merged to 'next' on 2013-07-22 at 414e6ea)
+ + Documentation: fix git-prune example usage
+ + Documentation: remove --prune from pack-refs examples
 
 
-* jc/name-rev-exact-ref (2013-07-18) 5 commits
-  (merged to 'next' on 2013-07-18 at c8bc00c)
- + describe: fix --contains when a tag is given as input
- + name-rev: differentiate between tags and commits they point at
-  (merged to 'next' on 2013-07-11 at fd5b30c)
- + describe: use argv-array
- + name-rev: allow converting the exact object name at the tip of a ref
- + name-ref: factor out name shortening logic from name_ref()
+* mh/multimail (2013-07-22) 2 commits
+  (merged to 'next' on 2013-07-22 at e27c933)
+ + post-receive-email: deprecate script in favor of git-multimail
+ + git-multimail: an improved replacement for post-receive-email
 
- Corrects the longstanding sloppiness in the implementation of
- name-rev that conflated "we take commit-ish" and "differences
- between tags and commits do not matter".
+ An enhanced "post-receive" hook to send e-mail messages.
 
 
-* jc/simple-add-must-be-a-no-op (2013-07-19) 1 commit
-  (merged to 'next' on 2013-07-19 at a1543ee)
- + t2202: make sure "git add" (no args) stays a no-op
+* mh/ref-races-optim-invalidate-cached (2013-06-20) 1 commit
+  (merged to 'next' on 2013-07-22 at 144d135)
+ + refs: do not invalidate the packed-refs cache unnecessarily
 
- This detected a mismerge of one of "add-2.0" topics to the 'jch'
- and 'pu' branches.
-
-
-* jk/gcc-function-attributes (2013-07-19) 4 commits
-  (merged to 'next' on 2013-07-19 at 5f6ad91)
- + Add the LAST_ARG_MUST_BE_NULL macro
-  (merged to 'next' on 2013-07-12 at 5a7081f)
- + wt-status: use "format" function attribute for status_printf
- + use "sentinel" function attribute for variadic lists
- + add missing "format" function attributes
-
- Use the function attributes extension to catch mistakes in use of
- our own variadic functions that use NULL sentinel at the end
- (i.e. like execl(3)) and format strings (i.e. like printf(3)).
+ This requires the platform lstat() to be correct to avoid false
+ negatives.
 
 
-* jk/t0008-sigpipe-fix (2013-07-12) 1 commit
-  (merged to 'next' on 2013-07-15 at cead4b2)
- + t0008: avoid SIGPIPE race condition on fifo
+* ml/avoid-using-grep-on-crlf-files (2013-07-18) 1 commit
+  (merged to 'next' on 2013-07-22 at f861472)
+ + test-lib.sh - define and use GREP_STRIPS_CR
 
- Fix for recent test breakage on 'master'.
-
-
-* jx/clean-interactive (2013-06-26) 16 commits
-  (merged to 'next' on 2013-07-12 at 61dd42d)
- + test: run testcases with POSIX absolute paths on Windows
- + test: add t7301 for git-clean--interactive
- + git-clean: add documentation for interactive git-clean
- + git-clean: add ask each interactive action
- + git-clean: add select by numbers interactive action
- + git-clean: add filter by pattern interactive action
- + git-clean: use a git-add-interactive compatible UI
- + git-clean: add colors to interactive git-clean
- + git-clean: show items of del_list in columns
- + git-clean: add support for -i/--interactive
-  (merged to 'next' on 2013-06-26 at f7be2d8)
- + git-clean: refactor git-clean into two phases
- + write_name{_quoted_relative,}(): remove redundant parameters
- + quote_path_relative(): remove redundant parameter
- + quote.c: substitute path_relative with relative_path
- + path.c: refactor relative_path(), not only strip prefix
- + test: add test cases for relative_path
-
- Add "interactive" mode to "git clean".
+ On systems that understand a CRLF as a line ending, tests in this
+ script that worked on files with CRLF line endings using "grep" to
+ extract matching lines may lose the CR at the end of lines that
+ match, causing the actual output not to match the expected output.
 
 
-* mk/upload-pack-off-by-one-dead-code-removal (2013-07-15) 1 commit
-  (merged to 'next' on 2013-07-15 at a8f55a2)
- + upload-pack: remove a piece of dead code
+* ml/cygwin-updates (2013-07-21) 4 commits
+  (merged to 'next' on 2013-07-22 at e9c9872)
+ + cygwin: stop forcing core.filemode=false
+ + Cygwin 1.7 supports mmap
+ + Cygwin 1.7 has thread-safe pread
+ + Cygwin 1.7 needs compat/regex
+
+ The tip one does _not_ revert c869753e (Force core.filemode to
+ false on Cygwin., 2006-12-30) on purpose, so that people can
+ still retain the old behaviour if they wanted to.
 
 
-* mm/color-auto-default (2013-07-19) 1 commit
-  (merged to 'next' on 2013-07-19 at 880d984)
- + git add -e: Explicitly specify that patch should have no color
+* rh/template-updates (2013-07-15) 3 commits
+  (merged to 'next' on 2013-07-22 at 53dffdd)
+ + templates: spell ASCII in uppercase in pre-commit hook
+ + templates: Reformat pre-commit hook's message
+ + templates: Use heredoc in pre-commit hook
 
- A finishing touch to fix breakage to "add -e" caused by defaulting
- ui.color to "auto".
-
-
-* mm/diff-no-patch-synonym-to-s (2013-07-17) 6 commits
-  (merged to 'next' on 2013-07-18 at 3b893d6)
- + Documentation/git-log.txt: capitalize section names
- + Documentation: move description of -s, --no-patch to diff-options.txt
- + Documentation/git-show.txt: include common diff options, like git-log.txt
- + diff: allow --patch & cie to override -s/--no-patch
- + diff: allow --no-patch as synonym for -s
- + t4000-diff-format.sh: modernize style
-
- "git show -s" was less discoverable than it should have been.  It
- now has a more natural looking "git show --no-patch" synonym.
+ This is an earlier part of a 6 patch series, with log message
+ corrected.
 
 
-* nd/const-struct-cache-entry (2013-07-09) 1 commit
-  (merged to 'next' on 2013-07-15 at 9ce0122)
- + Convert "struct cache_entry *" to "const ..." wherever possible
+* rj/sparse (2013-07-21) 1 commit
+  (merged to 'next' on 2013-07-22 at 24efece)
+ + Revert "compat/unsetenv.c: Fix a sparse warning"
 
 
-* rr/send-email-ssl-verify (2013-07-18) 1 commit
-  (merged to 'next' on 2013-07-21 at 62099ff)
- + send-email: be explicit with SSL certificate verification
+* sb/misc-fixes (2013-07-15) 3 commits
+  (merged to 'next' on 2013-07-21 at 880b08c)
+ + diff.c: Do not initialize a variable, which gets reassigned anyway.
+ + commit: Fix a memory leak in determine_author_info
+ + daemon.c:handle: Remove unneeded check for null pointer.
 
- Newer Net::SMTP::SSL module does not want the user programs to use
- the default behaviour to let server certificate go without
- verification, so by default enable the verification with a
- mechanism to turn it off if needed.
-
-
-* sb/parse-object-buffer-eaten (2013-07-17) 1 commit
-  (merged to 'next' on 2013-07-18 at 364689c)
- + parse_object_buffer: correct freeing the buffer
+ Assorted code cleanups and a minor fix.
 
 
-* tr/do-not-call-submodules-subprojects (2013-07-18) 2 commits
-  (merged to 'next' on 2013-07-18 at 6386fd5)
- + show-branch: fix description of --date-order
- + apply, entry: speak of submodules instead of subprojects
+* sb/traverse-trees-bitmask-variable-name (2013-07-19) 1 commit
+  (merged to 'next' on 2013-07-22 at be3227c)
+ + traverse_trees(): clarify return value of the callback
 
 
-* tr/fd-gotcha-fixes (2013-07-12) 2 commits
-  (merged to 'next' on 2013-07-18 at 30f4fdf)
- + run-command: dup_devnull(): guard against syscalls failing
- + git_mkstemps: correctly test return value of open()
-
- Two places we did not check return value (expected to be a file
- descriptor) correctly.
-
-
-* tr/protect-low-3-fds (2013-07-17) 2 commits
-  (merged to 'next' on 2013-07-18 at 504d972)
- + git: ensure 0/1/2 are open in main()
- + daemon/shell: refactor redirection of 0/1/2 from /dev/null
-
- When "git" is spawned in such a way that any of the low 3 file
- descriptors is closed, our first open() may yield file descriptor 2,
- and writing error message to it would screw things up in a big way.
+* tr/line-log (2013-07-23) 1 commit
+  (merged to 'next' on 2013-07-23 at a0a7f9b)
+ + Merge branch 'es/line-log-further-fixes' into tr/line-log
+ (this branch uses es/line-log-further-fixes.)
 
 --------------------------------------------------
 [New Topics]
 
-* rj/doc-rev-parse (2013-07-22) 2 commits
-  (merged to 'next' on 2013-07-22 at 8188667)
- + rev-parse(1): logically group options
- + rev-parse: remove restrictions on some options
+* ob/typofixes (2013-07-29) 1 commit
+ - many small typofixes
 
- Will cook in 'next'.
+ Will merge to 'next'.
 
 
-* ob/typofixes (2013-07-22) 3 commits
- - typofix: in-code comments
- - typofix: documentation
- - typofix: release notes
+* jh/remote-hg-fetch-fix (2013-07-25) 2 commits
+  (merged to 'next' on 2013-07-25 at 33161ad)
+ + Revert "remotes-hg: bugfix for fetching non local remotes"
+  (merged to 'next' on 2013-07-24 at 9c96641)
+ + remotes-hg: bugfix for fetching non local remotes
+
+ Waiting for the final patch after discussion settles.
+
+
+* ma/hg-to-git (2013-07-23) 1 commit
+ - hg-to-git: --allow-empty-message in git commit
+
+ Will merge to 'next'.
+
+
+* nd/clone-connectivity-shortcut (2013-07-23) 1 commit
+ - smart http: use the same connectivity check on cloning
+
+ Will merge to 'next'.
+
+
+* bc/completion-for-bash-3.0 (2013-07-24) 1 commit
+  (merged to 'next' on 2013-07-24 at 913d89c)
+ + git-completion.bash: replace zsh notation that breaks bash 3.X
+
+ Will merge to 'master'.
+
+
+* jk/capabilities-doc (2013-07-26) 5 commits
+  (merged to 'next' on 2013-07-29 at cf3f07e)
+ + document 'allow-tip-sha1-in-want' capability
+  (merged to 'next' on 2013-07-24 at 5af9a33)
+ + document 'quiet' receive-pack capability
+ + document 'agent' protocol capability
+ + docs: note that receive-pack knows side-band-64k capability
+ + docs: fix 'report-status' protocol capability thinko
+
+ Will merge to 'master'.
+
+
+* jx/clean-interactive (2013-07-24) 2 commits
+ - git-clean: implement partial matching for selection
+  (merged to 'next' on 2013-07-24 at 1e63bb9)
+ + Documentation/git-clean: fix description for range
+
+
+* sb/mailmap-updates (2013-07-24) 1 commit
+  (merged to 'next' on 2013-07-24 at 9f8e681)
+ + .mailmap: combine more (email, name) to individual persons
+
+ Will merge to 'master'.
+
+
+* tr/log-full-diff-keep-true-parents (2013-07-29) 2 commits
+ - SQUASH??? free saved-parents slab when done
+ - [PERHAPS LIKE THIS] log: use true parents for diff even when rewriting
+
+
+* db/http-savecookies (2013-07-24) 1 commit
+ - http: Add http.savecookies option to write out HTTP cookies
+
+
+* ds/doc-two-kinds-of-tags (2013-07-29) 1 commit
+ - docs/git-tag: explain lightweight versus annotated tags
 
  Will merge to 'next' and then to 'master'.
+
+
+* jk/commit-how-to-abort-cherry-pick (2013-07-29) 1 commit
+ - commit: tweak empty cherry pick advice for sequencer
+
+ Will merge to 'next' and then to 'master'.
+
+
+* lf/echo-n-is-not-portable (2013-07-29) 1 commit
+ - Avoid using `echo -n` anywhere
+
+ Will merge to 'next'.
+
+
+* rj/commit-slab-fix (2013-07-29) 1 commit
+ - commit-slab.h: Fix memory allocation and addressing
+
+ Will merge to 'next' and then to 'master'.
+
+
+* rr/maint-tilde-markup-in-doc (2013-07-26) 1 commit
+ - config doc: quote paths, fixing tilde-interpretation
+
+ Will merge to 'next' and then to 'master'.
+
+
+* rr/rebase-autostash (2013-07-29) 1 commit
+ - git-rebase: fix typo
+
+ Will merge to 'next' and then to 'master'.
+
+
+* sb/fsck-opt-bool (2013-07-29) 1 commit
+ - fsck: Replace deprecated OPT_BOOLEAN by OPT_BOOL
+
+ Will merge to 'next'.
+
+
+* rr/feed-real-path-to-editor (2013-07-29) 1 commit
+ - editor: use canonicalized absolute path
+
+ Will merge to 'next'.
 
 --------------------------------------------------
 [Stalled]
@@ -377,47 +388,22 @@ of the repositories listed at
 --------------------------------------------------
 [Cooking]
 
+* rj/doc-rev-parse (2013-07-22) 2 commits
+  (merged to 'next' on 2013-07-22 at 8188667)
+ + rev-parse(1): logically group options
+ + rev-parse: remove restrictions on some options
+
+ Will cook in 'next'.
+
+
 * jk/fast-import-empty-ls (2013-06-23) 4 commits
- - fast-import: allow moving the root tree
- - fast-import: allow ls or filecopy of the root tree
- - fast-import: set valid mode on root tree in "ls"
- - t9300: document fast-import empty path issues
+  (merged to 'next' on 2013-07-22 at d26dab6)
+ + fast-import: allow moving the root tree
+ + fast-import: allow ls or filecopy of the root tree
+ + fast-import: set valid mode on root tree in "ls"
+ + t9300: document fast-import empty path issues
 
- Will merge to 'next'.
-
-
-* jm/doc-ref-prune (2013-07-18) 2 commits
-  (merged to 'next' on 2013-07-22 at 414e6ea)
- + Documentation: fix git-prune example usage
- + Documentation: remove --prune from pack-refs examples
-
- Will merge to 'master'.
-
-
-* rj/sparse (2013-07-21) 1 commit
-  (merged to 'next' on 2013-07-22 at 24efece)
- + Revert "compat/unsetenv.c: Fix a sparse warning"
-
- Will merge to 'master'.
-
-
-* sb/traverse-trees-bitmask-variable-name (2013-07-19) 1 commit
-  (merged to 'next' on 2013-07-22 at be3227c)
- + traverse_trees(): clarify return value of the callback
-
- Will merge to 'master'.
-
-
-* mh/multimail (2013-07-15) 2 commits
- - post-receive-email: deprecate script in favor of git-multimail
- - git-multimail: an improved replacement for post-receive-email
-
- An enhanced "post-receive" hook to send e-mail messages.
-
- I tend to agree that the wording of the tip one is a bit too
- strong.  An old script does not necessarily have to be avoided by
- its existing users only because it has not got updates for a long
- time.
+ Will cook in 'next'.
 
 
 * jc/diff-filter-negation (2013-07-19) 6 commits
@@ -442,112 +428,69 @@ of the repositories listed at
 * mh/packed-refs-do-one-ref-recursion (2013-07-17) 1 commit
  - do_one_ref(): save and restore value of current_ref
 
- Needs a bit better description to be placed in the Release Notes.
+ Fix a NULL-pointer dereference during nested iterations over
+ references (for example, when replace references are being used).
+
+ Will merge to 'next' and then to 'master'.
 
 
-* ml/avoid-using-grep-on-crlf-files (2013-07-18) 1 commit
-  (merged to 'next' on 2013-07-22 at f861472)
- + test-lib.sh - define and use GREP_STRIPS_CR
-
- On systems that understand a CRLF as a line ending, tests in this
- script that worked on files with CRLF line endings using "grep" to
- extract matching lines may lose the CR at the end of lines that
- match, causing the actual output not to match the expected output.
-
- Will merge to 'master'.
-
-
-* ml/cygwin-updates (2013-07-21) 4 commits
-  (merged to 'next' on 2013-07-22 at e9c9872)
- + cygwin: stop forcing core.filemode=false
- + Cygwin 1.7 supports mmap
- + Cygwin 1.7 has thread-safe pread
- + Cygwin 1.7 needs compat/regex
-
- The tip one does _not_ revert c869753e (Force core.filemode to
- false on Cygwin., 2006-12-30) on purpose, so that people can
- still retain the old behaviour if they wanted to.
-
- Will merge to 'master'.
-
-
-* nd/magic-pathspec (2013-07-17) 47 commits
- - t6131 - skip tests if on case-insensitive file system
- - parse_pathspec: accept :(icase)path syntax
- - pathspec: support :(glob) syntax
- - pathspec: make --literal-pathspecs disable pathspec magic
- - pathspec: support :(literal) syntax for noglob pathspec
- - kill limit_pathspec_to_literal() as it's only used by parse_pathspec()
- - parse_pathspec: preserve prefix length via PATHSPEC_PREFIX_ORIGIN
- - parse_pathspec: make sure the prefix part is wildcard-free
- - rename field "raw" to "_raw" in struct pathspec
- - tree-diff: remove the use of pathspec's raw[] in follow-rename codepath
- - remove match_pathspec() in favor of match_pathspec_depth()
- - remove init_pathspec() in favor of parse_pathspec()
- - remove diff_tree_{setup,release}_paths
- - convert common_prefix() to use struct pathspec
- - convert add_files_to_cache to take struct pathspec
- - convert {read,fill}_directory to take struct pathspec
- - convert refresh_index to take struct pathspec
- - convert report_path_error to take struct pathspec
- - checkout: convert read_tree_some to take struct pathspec
- - convert unmerge_cache to take struct pathspec
- - convert run_add_interactive to use struct pathspec
- - convert read_cache_preload() to take struct pathspec
- - line-log: convert to use parse_pathspec
- - reset: convert to use parse_pathspec
- - add: convert to use parse_pathspec
- - check-ignore: convert to use parse_pathspec
- - archive: convert to use parse_pathspec
- - ls-files: convert to use parse_pathspec
- - rm: convert to use parse_pathspec
- - checkout: convert to use parse_pathspec
- - rerere: convert to use parse_pathspec
- - status: convert to use parse_pathspec
- - commit: convert to use parse_pathspec
- - clean: convert to use parse_pathspec
- - guard against new pathspec magic in pathspec matching code
- - parse_pathspec: support prefixing original patterns
- - parse_pathspec: support stripping/checking submodule paths
- - parse_pathspec: support stripping submodule trailing slashes
- - parse_pathspec: add special flag for max_depth feature
- - convert some get_pathspec() calls to parse_pathspec()
- - parse_pathspec: add PATHSPEC_PREFER_{CWD,FULL} flags
- - parse_pathspec: save original pathspec for reporting
- - add parse_pathspec() that converts cmdline args to struct pathspec
- - pathspec: add copy_pathspec
- - pathspec: i18n-ize error strings in pathspec parsing code
- - move struct pathspec and related functions to pathspec.[ch]
- - clean: remove unused variable "seen"
+* nd/magic-pathspec (2013-07-23) 48 commits
+  (merged to 'next' on 2013-07-23 at 784c3a1)
+ + rm: do not set a variable twice without intermediate reading.
+  (merged to 'next' on 2013-07-22 at 39f7194)
+ + t6131 - skip tests if on case-insensitive file system
+ + parse_pathspec: accept :(icase)path syntax
+ + pathspec: support :(glob) syntax
+ + pathspec: make --literal-pathspecs disable pathspec magic
+ + pathspec: support :(literal) syntax for noglob pathspec
+ + kill limit_pathspec_to_literal() as it's only used by parse_pathspec()
+ + parse_pathspec: preserve prefix length via PATHSPEC_PREFIX_ORIGIN
+ + parse_pathspec: make sure the prefix part is wildcard-free
+ + rename field "raw" to "_raw" in struct pathspec
+ + tree-diff: remove the use of pathspec's raw[] in follow-rename codepath
+ + remove match_pathspec() in favor of match_pathspec_depth()
+ + remove init_pathspec() in favor of parse_pathspec()
+ + remove diff_tree_{setup,release}_paths
+ + convert common_prefix() to use struct pathspec
+ + convert add_files_to_cache to take struct pathspec
+ + convert {read,fill}_directory to take struct pathspec
+ + convert refresh_index to take struct pathspec
+ + convert report_path_error to take struct pathspec
+ + checkout: convert read_tree_some to take struct pathspec
+ + convert unmerge_cache to take struct pathspec
+ + convert run_add_interactive to use struct pathspec
+ + convert read_cache_preload() to take struct pathspec
+ + line-log: convert to use parse_pathspec
+ + reset: convert to use parse_pathspec
+ + add: convert to use parse_pathspec
+ + check-ignore: convert to use parse_pathspec
+ + archive: convert to use parse_pathspec
+ + ls-files: convert to use parse_pathspec
+ + rm: convert to use parse_pathspec
+ + checkout: convert to use parse_pathspec
+ + rerere: convert to use parse_pathspec
+ + status: convert to use parse_pathspec
+ + commit: convert to use parse_pathspec
+ + clean: convert to use parse_pathspec
+ + guard against new pathspec magic in pathspec matching code
+ + parse_pathspec: support prefixing original patterns
+ + parse_pathspec: support stripping/checking submodule paths
+ + parse_pathspec: support stripping submodule trailing slashes
+ + parse_pathspec: add special flag for max_depth feature
+ + convert some get_pathspec() calls to parse_pathspec()
+ + parse_pathspec: add PATHSPEC_PREFER_{CWD,FULL} flags
+ + parse_pathspec: save original pathspec for reporting
+ + add parse_pathspec() that converts cmdline args to struct pathspec
+ + pathspec: add copy_pathspec
+ + pathspec: i18n-ize error strings in pathspec parsing code
+ + move struct pathspec and related functions to pathspec.[ch]
+ + clean: remove unused variable "seen"
 
  Use "struct pathspec" interface in more places, instead of array of
  characters, the latter of which cannot express magic pathspecs
  (e.g. ":(icase)makefile" that matches both Makefile and makefile).
 
- Will merge to 'next'.
-
-
-* rh/template-updates (2013-07-15) 3 commits
-  (merged to 'next' on 2013-07-22 at 53dffdd)
- + templates: spell ASCII in uppercase in pre-commit hook
- + templates: Reformat pre-commit hook's message
- + templates: Use heredoc in pre-commit hook
-
- This is an earlier part of a 6 patch series, with log message
- corrected.
-
- Will merge to 'master'.
-
-
-* sb/misc-fixes (2013-07-15) 3 commits
-  (merged to 'next' on 2013-07-21 at 880b08c)
- + diff.c: Do not initialize a variable, which gets reassigned anyway.
- + commit: Fix a memory leak in determine_author_info
- + daemon.c:handle: Remove unneeded check for null pointer.
-
- Assorted code cleanups and a minor fix.
-
- Will merge to 'master'.
+ Will cook in 'next'.
 
 
 * jc/check-x-z (2013-07-11) 4 commits
@@ -569,25 +512,6 @@ of the repositories listed at
  Will cook in 'next'.
 
 
-* jk/cat-file-batch-optim (2013-07-18) 9 commits
-  (merged to 'next' on 2013-07-22 at 965897c)
- + Fix some sparse warnings
- + sha1_object_info_extended: pass object_info to helpers
- + sha1_object_info_extended: make type calculation optional
- + packed_object_info: make type lookup optional
- + packed_object_info: hoist delta type resolution to helper
- + sha1_loose_object_info: make type lookup optional
- + sha1_object_info_extended: rename "status" to "type"
- + cat-file: disable object/refname ambiguity check for batch mode
- + Merge branch 'nd/warn-ambiguous-object-name' into jk/cat-file-batch-optim
-
- If somebody wants to only know on-disk footprint of an object
- without having to know its type or payload size, we can bypass a
- lot of code to cheaply learn it.
-
- Will merge to 'master'.
-
-
 * ms/fetch-prune-configuration (2013-07-18) 1 commit
   (merged to 'next' on 2013-07-21 at 7ffb690)
  + fetch: make --prune configurable
@@ -603,16 +527,19 @@ of the repositories listed at
  Will cook in 'next'.
 
 
-* km/http-curl-config-per-url (2013-07-22) 5 commits
- - config: allow http.<url>.* any user matching
- - tests: add new test for the url_normalize function
- - config: improve support for http.<url>.* settings
- - config: add support for http.<url>.* settings
- - http.c: fix parsing of http.sslCertPasswordProtected variable
+* km/http-curl-config-per-url (2013-07-25) 6 commits
+  (merged to 'next' on 2013-07-25 at 531e8cb)
+ + docs: update http.<url>.* options documentation
+  (merged to 'next' on 2013-07-23 at f84689b)
+ + config: allow http.<url>.* any user matching
+ + tests: add new test for the url_normalize function
+ + config: improve support for http.<url>.* settings
+ + config: add support for http.<url>.* settings
+ + http.c: fix parsing of http.sslCertPasswordProtected variable
 
  Allows custom curl configuration per URL when talking over http.
 
- Will merge to 'next'.
+ Will cook in 'next'.
 
 
 * km/svn-1.8-serf-only (2013-07-18) 3 commits
@@ -636,13 +563,14 @@ of the repositories listed at
  Will hold, until we get any user.
 
 
-* jc/push-cas (2013-07-17) 6 commits
- - t5533: test "push --lockref"
- - push --lockref: tie it all together
- - push --lockref: implement logic to populate old_sha1_expect[]
- - remote.c: add command line option parser for "--lockref"
- - builtin/push.c: use OPT_BOOL, not OPT_BOOLEAN
- - cache.h: move remote/connect API out of it
+* jc/push-cas (2013-07-22) 6 commits
+  (merged to 'next' on 2013-07-23 at 72371b0)
+ + t5533: test "push --force-with-lease"
+ + push --force-with-lease: tie it all together
+ + push --force-with-lease: implement logic to populate old_sha1_expect[]
+ + remote.c: add command line option parser for "--force-with-lease"
+ + builtin/push.c: use OPT_BOOL, not OPT_BOOLEAN
+ + cache.h: move remote/connect API out of it
 
  Allow a safer "rewind of the remote tip" push than blind "--force",
  by requiring that the overwritten remote ref to be unchanged since
@@ -652,31 +580,13 @@ of the repositories listed at
  the big red button to override any safety, thanks to J6t's sanity
  (the original round allowed --lockref to defeat --force).
 
- I have strong doubts on the merit of the logic to choose the
- default for "--lockref" implemented here.  It is suitable only for
- the simplest workflows, and it may hurt users more than it helps
- them.
+ The logic to choose the default implemented here is fragile
+ (e.g. "git fetch" after seeing a failure will update the
+ remote-tracking branch and will make the next "push" pass,
+ defeating the safety pretty easily).  It is suitable only for the
+ simplest workflows, and it may hurt users more than it helps them.
 
- Also the option may be called something with "--force" prefix, as
- it is a weaker and more controlled form of "--force" that is used
- to defeat the usual "must fast-forward" safety.
-
- Will redo one more time.
-
-
-* es/contacts (2013-07-21) 5 commits
-  (merged to 'next' on 2013-07-22 at a78c3d6)
- + contrib: contacts: add documentation
- + contrib: contacts: add mailmap support
- + contrib: contacts: interpret committish akin to format-patch
- + contrib: contacts: add ability to parse from committish
- + contrib: add git-contacts helper
-
- A helper to read from a set of format-patch output files or a range
- of commits and find those who may have insights to the code that
- the changes touch by running a series of "git blame" commands.
-
- Will merge to 'master'.
+ Will cook in 'next'.
 
 
 * jc/pull-training-wheel (2013-07-19) 1 commit
@@ -716,16 +626,6 @@ of the repositories listed at
  Porcelain.  git-rebase--interactive locally violates this, but it
  is a leaf user that does not call out to or dot-sources other
  scripts, so fixing it is not all that urgent.
-
-
-* mh/ref-races-optim-invalidate-cached (2013-06-20) 1 commit
-  (merged to 'next' on 2013-07-22 at 144d135)
- + refs: do not invalidate the packed-refs cache unnecessarily
-
- This requires the platform lstat() to be correct to avoid false
- negatives.
-
- Will merge to 'master'.
 
 
 * jn/add-2.0-u-A-sans-pathspec (2013-04-26) 1 commit
