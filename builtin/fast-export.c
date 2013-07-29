@@ -379,7 +379,7 @@ static void handle_tag(const char *name, struct tag *tag)
 	int tagged_mark;
 	struct commit *p;
 
-	/* Trees have no identifer in fast-export output, thus we have no way
+	/* Trees have no identifier in fast-export output, thus we have no way
 	 * to output tags of trees, tags of tags of trees, etc.  Simply omit
 	 * such tags.
 	 */

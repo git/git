@@ -1132,7 +1132,7 @@ static void *udt_copy_task_routine(void *udt)
 #ifndef NO_PTHREADS
 
 /*
- * Join thread, with apporiate errors on failure. Name is name for the
+ * Join thread, with appropriate errors on failure. Name is name for the
  * thread (for error messages). Returns 0 on success, 1 on failure.
  */
 static int tloop_join(pthread_t thread, const char *name)
@@ -1198,7 +1198,7 @@ static void udt_kill_transfer(struct unidirectional_transfer *t)
 }
 
 /*
- * Join process, with apporiate errors on failure. Name is name for the
+ * Join process, with appropriate errors on failure. Name is name for the
  * process (for error messages). Returns 0 on success, 1 on failure.
  */
 static int tloop_join(pid_t pid, const char *name)

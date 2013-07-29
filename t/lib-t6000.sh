@@ -34,7 +34,7 @@ save_tag () {
 	mv sed.script.tmp sed.script
 }
 
-# Replace unhelpful sha1 hashses with their symbolic equivalents
+# Replace unhelpful sha1 hashes with their symbolic equivalents
 entag () {
 	sed -f sed.script
 }

@@ -7,7 +7,7 @@ test_description='test that git handles an svn repository with missing md5sums'
 # Loading a node from a svn dumpfile without a Text-Content-Length
 # field causes svn to neglect to store or report an md5sum.  (it will
 # calculate one if you had put Text-Content-Length: 0).  This showed
-# up in a repository creted with cvs2svn.
+# up in a repository created with cvs2svn.
 
 cat > dumpfile.svn <<EOF
 SVN-fs-dump-format-version: 1

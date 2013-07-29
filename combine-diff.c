@@ -165,7 +165,7 @@ static struct lline *coalesce_lines(struct lline *base, int *lenbase,
 
 	/*
 	 * Coalesce new lines into base by finding the LCS
-	 * - Create the table to run dynamic programing
+	 * - Create the table to run dynamic programming
 	 * - Compute the LCS
 	 * - Then reverse read the direction structure:
 	 *   - If we have MATCH, assign parent to base flag, and consume

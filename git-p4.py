@@ -1786,7 +1786,7 @@ class P4Submit(Command, P4UserMap):
             missingGitTags = gitTags - p4Labels
             self.exportGitTags(missingGitTags)
 
-        # exit with error unless everything applied perfecly
+        # exit with error unless everything applied perfectly
         if len(commits) != len(applied):
                 sys.exit(1)
 

@@ -39,7 +39,7 @@
 #       done
 #
 # The reason for the tac call is that git rev-list emits commits from
-# most recent to least - better to ship notifactions from oldest to newest.
+# most recent to least - better to ship notifications from oldest to newest.
 #
 # Configuration variables affecting this script:
 #
@@ -64,7 +64,7 @@
 # down. It is unknown whether this is still an issue in 2010, but
 # XML-RPC would be annoying to do from sh in any case. (XML-RPC does
 # have the advantage that it guarantees notification of multiple commits
-# shpped from an update in their actual order.)
+# shipped from an update in their actual order.)
 #
 
 # The project as known to CIA. You can set this with a -p option,

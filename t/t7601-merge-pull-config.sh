@@ -109,7 +109,7 @@ test_expect_success 'setup conflicted merge' '
 '
 
 # First do the merge with resolve and recursive then verify that
-# recusive is chosen.
+# recursive is chosen.
 
 test_expect_success 'merge picks up the best result' '
 	git config --unset-all pull.twohead &&

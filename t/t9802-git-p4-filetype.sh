@@ -28,7 +28,7 @@ test_expect_success 'p4 client newlines, unix' '
 		test_cmp f-unix-orig f-unix &&
 
 		# make sure stored in repo as unix newlines
-		# use sed to eat python-appened newline
+		# use sed to eat python-appended newline
 		p4 -G print //depot/f-unix | marshal_dump data 2 |\
 		    sed \$d >f-unix-p4-print &&
 		test_cmp f-unix-orig f-unix-p4-print &&
