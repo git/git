@@ -27,8 +27,6 @@ struct strbuf;
  * excluding the final null regardless of the buffer size.
  */
 
-extern void sq_quote_print(FILE *stream, const char *src);
-
 extern void sq_quote_buf(struct strbuf *, const char *src);
 extern void sq_quote_argv(struct strbuf *, const char **argv, size_t maxlen);
 
