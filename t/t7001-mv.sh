@@ -259,4 +259,38 @@ test_expect_success SYMLINKS 'check moved symlink' '
 
 rm -f moved symlink
 
+test_expect_success 'setup submodule' '
+	git commit -m initial &&
+	git reset --hard &&
+	git submodule add ./. sub &&
+	echo content >file &&
+	git add file &&
+	git commit -m "added sub and file"
+'
+
+test_expect_success 'git mv cannot move a submodule in a file' '
+	test_must_fail git mv sub file
+'
+
+test_expect_success 'git mv moves a submodule with a .git directory and no .gitmodules' '
+	entry="$(git ls-files --stage sub | cut -f 1)" &&
+	git rm .gitmodules &&
+	(
+		cd sub &&
+		rm -f .git &&
+		cp -a ../.git/modules/sub .git &&
+		GIT_WORK_TREE=. git config --unset core.worktree
+	) &&
+	mkdir mod &&
+	git mv sub mod/sub &&
+	! test -e sub &&
+	[ "$entry" = "$(git ls-files --stage mod/sub | cut -f 1)" ] &&
+	(
+		cd mod/sub &&
+		git status
+	) &&
+	git update-index --refresh &&
+	git diff-files --quiet
+'
+
 test_done
