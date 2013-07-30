@@ -9,6 +9,7 @@
 #include "cache-tree.h"
 #include "string-list.h"
 #include "parse-options.h"
+#include "submodule.h"
 
 static const char * const builtin_mv_usage[] = {
 	N_("git mv [options] <source>... <destination>"),
@@ -66,7 +67,7 @@ int cmd_mv(int argc, const char **argv, const char *prefix)
 		OPT_BOOLEAN('k', NULL, &ignore_errors, N_("skip move/rename errors")),
 		OPT_END(),
 	};
-	const char **source, **destination, **dest_path;
+	const char **source, **destination, **dest_path, **submodule_gitfile;
 	enum update_mode { BOTH = 0, WORKING_DIRECTORY, INDEX } *modes;
 	struct stat st;
 	struct string_list src_for_dst = STRING_LIST_INIT_NODUP;
@@ -85,6 +86,7 @@ int cmd_mv(int argc, const char **argv, const char *prefix)
 	source = internal_copy_pathspec(prefix, argv, argc, 0);
 	modes = xcalloc(argc, sizeof(enum update_mode));
 	dest_path = internal_copy_pathspec(prefix, argv + argc, 1, 0);
+	submodule_gitfile = xcalloc(argc, sizeof(char *));
 
 	if (dest_path[0][0] == '\0')
 		/* special case: "." was normalized to "" */
@@ -120,8 +122,14 @@ int cmd_mv(int argc, const char **argv, const char *prefix)
 		else if (src_is_dir) {
 			int first = cache_name_pos(src, length);
 			if (first >= 0) {
+				struct strbuf submodule_dotgit = STRBUF_INIT;
 				if (!S_ISGITLINK(active_cache[first]->ce_mode))
 					die (_("Huh? Directory %s is in index and no submodule?"), src);
+				strbuf_addf(&submodule_dotgit, "%s/.git", src);
+				submodule_gitfile[i] = read_gitfile(submodule_dotgit.buf);
+				if (submodule_gitfile[i])
+					submodule_gitfile[i] = xstrdup(submodule_gitfile[i]);
+				strbuf_release(&submodule_dotgit);
 			} else {
 				const char *src_w_slash = add_slash(src);
 				int last, len_w_slash = length + 1;
@@ -216,9 +224,12 @@ int cmd_mv(int argc, const char **argv, const char *prefix)
 		int pos;
 		if (show_only || verbose)
 			printf(_("Renaming %s to %s\n"), src, dst);
-		if (!show_only && mode != INDEX &&
-				rename(src, dst) < 0 && !ignore_errors)
-			die_errno (_("renaming '%s' failed"), src);
+		if (!show_only && mode != INDEX) {
+			if (rename(src, dst) < 0 && !ignore_errors)
+				die_errno (_("renaming '%s' failed"), src);
+			if (submodule_gitfile[i])
+				connect_work_tree_and_git_dir(dst, submodule_gitfile[i]);
+		}
 
 		if (mode == WORKING_DIRECTORY)
 			continue;
