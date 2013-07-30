@@ -28,20 +28,6 @@
 #include "prompt.h"
 #ifdef NO_OPENSSL
 typedef void *SSL;
-#else
-#ifdef APPLE_COMMON_CRYPTO
-#include <CommonCrypto/CommonHMAC.h>
-#define HMAC_CTX CCHmacContext
-#define HMAC_Init(hmac, key, len, algo) CCHmacInit(hmac, algo, key, len)
-#define HMAC_Update CCHmacUpdate
-#define HMAC_Final(hmac, hash, ptr) CCHmacFinal(hmac, hash)
-#define HMAC_CTX_cleanup(ignore)
-#define EVP_md5() kCCHmacAlgMD5
-#else
-#include <openssl/evp.h>
-#include <openssl/hmac.h>
-#endif
-#include <openssl/x509v3.h>
 #endif
 
 static const char imap_send_usage[] = "git imap-send < <mbox>";
