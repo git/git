@@ -18,11 +18,12 @@ was sent.  Server MUST NOT ignore capabilities that client requested
 and server advertised.  As a consequence of these rules, server MUST
 NOT advertise capabilities it does not understand.
 
-The 'report-status' and 'delete-refs' capabilities are sent and
+The 'report-status', 'delete-refs', and 'quiet' capabilities are sent and
 recognized by the receive-pack (push to server) process.
 
-The 'ofs-delta' capability is sent and recognized by both upload-pack
-and receive-pack protocols.
+The 'ofs-delta' and 'side-band-64k' capabilities are sent and recognized
+by both upload-pack and receive-pack protocols.  The 'agent' capability
+may optionally be sent in both protocols.
 
 All other capabilities are only recognized by the upload-pack (fetch
 from server) process.
@@ -123,6 +124,20 @@ Server can send, and client understand PACKv2 with delta referring to
 its base by position in pack rather than by an obj-id.  That is, they can
 send/read OBJ_OFS_DELTA (aka type 6) in a packfile.
 
+agent
+-----
+
+The server may optionally send a capability of the form `agent=X` to
+notify the client that the server is running version `X`. The client may
+optionally return its own agent string by responding with an `agent=Y`
+capability (but it MUST NOT do so if the server did not mention the
+agent capability). The `X` and `Y` strings may contain any printable
+ASCII characters except space (i.e., the byte range 32 < x < 127), and
+are typically of the form "package/version" (e.g., "git/1.8.3.1"). The
+agent strings are purely informative for statistics and debugging
+purposes, and MUST NOT be used to programatically assume the presence
+or absence of particular features.
+
 shallow
 -------
 
@@ -168,7 +183,7 @@ of whether or not there are tags available.
 report-status
 -------------
 
-The upload-pack process can receive a 'report-status' capability,
+The receive-pack process can receive a 'report-status' capability,
 which tells it that the client wants a report of what happened after
 a packfile upload and reference update.  If the pushing client requests
 this capability, after unpacking and updating references the server
@@ -185,3 +200,20 @@ it is capable of accepting a zero-id value as the target
 value of a reference update.  It is not sent back by the client, it
 simply informs the client that it can be sent zero-id values
 to delete references.
+
+quiet
+-----
+
+If the receive-pack server advertises the 'quiet' capability, it is
+capable of silencing human-readable progress output which otherwise may
+be shown when processing the received pack. A send-pack client should
+respond with the 'quiet' capability to suppress server-side progress
+reporting if the local progress reporting is also being suppressed
+(e.g., via `push -q`, or if stderr does not go to a tty).
+
+allow-tip-sha1-in-want
+----------------------
+
+If the upload-pack server advertises this capability, fetch-pack may
+send "want" lines with SHA-1s that exist at the server but are not
+advertised by upload-pack.
