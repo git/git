@@ -10,6 +10,7 @@
 #include "string-list.h"
 #include "sha1-array.h"
 #include "argv-array.h"
+#include "blob.h"
 
 static struct string_list config_name_for_path;
 static struct string_list config_fetch_recurse_submodules_for_name;
@@ -29,6 +30,51 @@ static struct sha1_array ref_tips_after_fetch;
  * ignored.
  */
 static int gitmodules_is_unmerged;
+
+/*
+ * This flag is set if the .gitmodules file had unstaged modifications on
+ * startup. This must be checked before allowing modifications to the
+ * .gitmodules file with the intention to stage them later, because when
+ * continuing we would stage the modifications the user didn't stage herself
+ * too. That might change in a future version when we learn to stage the
+ * changes we do ourselves without staging any previous modifications.
+ */
+static int gitmodules_is_modified;
+
+
+int is_staging_gitmodules_ok(void)
+{
+	return !gitmodules_is_modified;
+}
+
+void stage_updated_gitmodules(void)
+{
+	struct strbuf buf = STRBUF_INIT;
+	struct stat st;
+	int pos;
+	struct cache_entry *ce;
+	int namelen = strlen(".gitmodules");
+
+	pos = cache_name_pos(".gitmodules", namelen);
+	if (pos < 0) {
+		warning(_("could not find .gitmodules in index"));
+		return;
+	}
+	ce = active_cache[pos];
+	ce->ce_flags = namelen;
+	if (strbuf_read_file(&buf, ".gitmodules", 0) < 0)
+		die(_("reading updated .gitmodules failed"));
+	if (lstat(".gitmodules", &st) < 0)
+		die_errno(_("unable to stat updated .gitmodules"));
+	fill_stat_cache_info(ce, &st);
+	ce->ce_mode = ce_mode_from_stat(ce, st.st_mode);
+	if (remove_cache_entry_at(pos) < 0)
+		die(_("unable to remove .gitmodules from index"));
+	if (write_sha1_file(buf.buf, buf.len, blob_type, ce->sha1))
+		die(_("adding updated .gitmodules failed"));
+	if (add_cache_entry(ce, ADD_CACHE_OK_TO_ADD|ADD_CACHE_OK_TO_REPLACE))
+		die(_("staging updated .gitmodules failed"));
+}
 
 static int add_submodule_odb(const char *path)
 {
@@ -116,6 +162,11 @@ void gitmodules_config(void)
 				    !memcmp(ce->name, ".gitmodules", 11))
 					gitmodules_is_unmerged = 1;
 			}
+		} else if (pos < active_nr) {
+			struct stat st;
+			if (lstat(".gitmodules", &st) == 0 &&
+			    ce_match_stat(active_cache[pos], &st, 0) & DATA_CHANGED)
+				gitmodules_is_modified = 1;
 		}
 
 		if (!gitmodules_is_unmerged)
