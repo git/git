@@ -2,6 +2,7 @@
 #include "cache.h"
 #include "color.h"
 #include "parse-options.h"
+#include "urlmatch.h"
 
 static const char *const builtin_config_usage[] = {
 	N_("git config [options]"),
@@ -41,6 +42,7 @@ static int respect_includes = -1;
 #define ACTION_SET_ALL (1<<12)
 #define ACTION_GET_COLOR (1<<13)
 #define ACTION_GET_COLORBOOL (1<<14)
+#define ACTION_GET_URLMATCH (1<<15)
 
 #define TYPE_BOOL (1<<0)
 #define TYPE_INT (1<<1)
@@ -57,6 +59,7 @@ static struct option builtin_config_options[] = {
 	OPT_BIT(0, "get", &actions, N_("get value: name [value-regex]"), ACTION_GET),
 	OPT_BIT(0, "get-all", &actions, N_("get all values: key [value-regex]"), ACTION_GET_ALL),
 	OPT_BIT(0, "get-regexp", &actions, N_("get values for regexp: name-regex [value-regex]"), ACTION_GET_REGEXP),
+	OPT_BIT(0, "get-urlmatch", &actions, N_("get value specific for the URL: section[.var] URL"), ACTION_GET_URLMATCH),
 	OPT_BIT(0, "replace-all", &actions, N_("replace all matching variables: name value [value_regex]"), ACTION_REPLACE_ALL),
 	OPT_BIT(0, "add", &actions, N_("add a new variable: name value"), ACTION_ADD),
 	OPT_BIT(0, "unset", &actions, N_("remove a variable: name [value-regex]"), ACTION_UNSET),
@@ -348,6 +351,97 @@ static int get_colorbool(int print)
 		return get_colorbool_found ? 0 : 1;
 }
 
+struct urlmatch_current_candidate_value {
+	char value_is_null;
+	struct strbuf value;
+};
+
+static int urlmatch_collect_fn(const char *var, const char *value, void *cb)
+{
+	struct string_list *values = cb;
+	struct string_list_item *item = string_list_insert(values, var);
+	struct urlmatch_current_candidate_value *matched = item->util;
+
+	if (!matched) {
+		matched = xmalloc(sizeof(*matched));
+		strbuf_init(&matched->value, 0);
+		item->util = matched;
+	} else {
+		strbuf_reset(&matched->value);
+	}
+
+	if (value) {
+		strbuf_addstr(&matched->value, value);
+		matched->value_is_null = 0;
+	} else {
+		matched->value_is_null = 1;
+	}
+	return 0;
+}
+
+static char *dup_downcase(const char *string)
+{
+	char *result;
+	size_t len, i;
+
+	len = strlen(string);
+	result = xmalloc(len + 1);
+	for (i = 0; i < len; i++)
+		result[i] = tolower(string[i]);
+	result[i] = '\0';
+	return result;
+}
+
+static int get_urlmatch(const char *var, const char *url)
+{
+	char *section_tail;
+	struct string_list_item *item;
+	struct urlmatch_config config = { STRING_LIST_INIT_DUP };
+	struct string_list values = STRING_LIST_INIT_DUP;
+
+	config.collect_fn = urlmatch_collect_fn;
+	config.cascade_fn = NULL;
+	config.cb = &values;
+
+	if (!url_normalize(url, &config.url))
+		die(config.url.err);
+
+	config.section = dup_downcase(var);
+	section_tail = strchr(config.section, '.');
+	if (section_tail) {
+		*section_tail = '\0';
+		config.key = section_tail + 1;
+		show_keys = 0;
+	} else {
+		config.key = NULL;
+		show_keys = 1;
+	}
+
+	git_config_with_options(urlmatch_config_entry, &config,
+				given_config_file, respect_includes);
+
+	for_each_string_list_item(item, &values) {
+		struct urlmatch_current_candidate_value *matched = item->util;
+		struct strbuf key = STRBUF_INIT;
+		struct strbuf buf = STRBUF_INIT;
+
+		strbuf_addstr(&key, item->string);
+		format_config(&buf, key.buf,
+			      matched->value_is_null ? NULL : matched->value.buf);
+		fwrite(buf.buf, 1, buf.len, stdout);
+		strbuf_release(&key);
+		strbuf_release(&buf);
+
+		strbuf_release(&matched->value);
+	}
+	string_list_clear(&config.vars, 1);
+	string_list_clear(&values, 1);
+	free(config.url.url);
+
+	free((void *)config.section);
+	return 0;
+}
+
 int cmd_config(int argc, const char **argv, const char *prefix)
 {
 	int nongit = !startup_info->have_repository;
@@ -498,6 +592,10 @@ int cmd_config(int argc, const char **argv, const char *prefix)
 		do_all = 1;
 		check_argc(argc, 1, 2);
 		return get_value(argv[0], argv[1]);
+	}
+	else if (actions == ACTION_GET_URLMATCH) {
+		check_argc(argc, 2, 2);
+		return get_urlmatch(argv[0], argv[1]);
 	}
 	else if (actions == ACTION_UNSET) {
 		check_argc(argc, 1, 2);
