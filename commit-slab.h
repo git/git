@@ -48,7 +48,7 @@ static void init_ ##slabname## _with_stride(struct slabname *s,		\
 	if (!stride)							\
 		stride = 1;						\
 	s->stride = stride;						\
-	elem_size = sizeof(struct slabname) * stride;			\
+	elem_size = sizeof(elemtype) * stride;				\
 	s->slab_size = COMMIT_SLAB_SIZE / elem_size;			\
 	s->slab_count = 0;						\
 	s->slab = NULL;							\
@@ -72,11 +72,10 @@ static void clear_ ##slabname(struct slabname *s)			\
 static elemtype *slabname## _at(struct slabname *s,			\
 				const struct commit *c)			\
 {									\
-	int nth_slab, nth_slot, ix;					\
+	int nth_slab, nth_slot;						\
 									\
-	ix = c->index * s->stride;					\
-	nth_slab = ix / s->slab_size;					\
-	nth_slot = ix % s->slab_size;					\
+	nth_slab = c->index / s->slab_size;				\
+	nth_slot = c->index % s->slab_size;				\
 									\
 	if (s->slab_count <= nth_slab) {				\
 		int i;							\
@@ -89,8 +88,8 @@ static elemtype *slabname## _at(struct slabname *s,			\
 	}								\
 	if (!s->slab[nth_slab])						\
 		s->slab[nth_slab] = xcalloc(s->slab_size,		\
-					    sizeof(**s->slab));		\
-	return &s->slab[nth_slab][nth_slot];				\
+					    sizeof(**s->slab) * s->stride);		\
+	return &s->slab[nth_slab][nth_slot * s->stride];				\
 }									\
 									\
 static int stat_ ##slabname## realloc
