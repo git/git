@@ -225,8 +225,30 @@ test_expect_success 'blame -L /RE/,-N' '
 	check_count -L/99/,-3 B 1 B2 1 D 1
 '
 
+# 'file' ends with an incomplete line, so 'wc' reports one fewer lines than
+# git-blame sees, hence the last line is actually $(wc...)+1.
+test_expect_success 'blame -L X (X == nlines)' '
+	n=$(expr $(wc -l <file) + 1) &&
+	check_count -L$n C 1
+'
+
+test_expect_failure 'blame -L X (X == nlines + 1)' '
+	n=$(expr $(wc -l <file) + 2) &&
+	test_must_fail $PROG -L$n file
+'
+
 test_expect_success 'blame -L X (X > nlines)' '
 	test_must_fail $PROG -L12345 file
+'
+
+test_expect_success 'blame -L ,Y (Y == nlines)' '
+	n=$(expr $(wc -l <file) + 1) &&
+	check_count -L,$n A 1 B 1 B1 1 B2 1 "A U Thor" 1 C 1 D 1 E 1
+'
+
+test_expect_success 'blame -L ,Y (Y == nlines + 1)' '
+	n=$(expr $(wc -l <file) + 2) &&
+	test_must_fail $PROG -L,$n file
 '
 
 test_expect_success 'blame -L ,Y (Y > nlines)' '
