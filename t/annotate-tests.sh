@@ -232,7 +232,7 @@ test_expect_success 'blame -L X (X == nlines)' '
 	check_count -L$n C 1
 '
 
-test_expect_failure 'blame -L X (X == nlines + 1)' '
+test_expect_success 'blame -L X (X == nlines + 1)' '
 	n=$(expr $(wc -l <file) + 2) &&
 	test_must_fail $PROG -L$n file
 '
@@ -321,7 +321,7 @@ test_expect_success 'blame -L 0 empty (undocumented)' '
 	check_count -h HEAD^^ -f incremental -L0
 '
 
-test_expect_failure 'blame -L 1 empty' '
+test_expect_success 'blame -L 1 empty' '
 	test_must_fail $PROG -L1 incremental HEAD^^
 '
 
@@ -341,7 +341,7 @@ test_expect_success 'blame -L 1 half' '
 	check_count -h HEAD^ -f incremental -L1 I 1
 '
 
-test_expect_failure 'blame -L 2 half' '
+test_expect_success 'blame -L 2 half' '
 	test_must_fail $PROG -L2 incremental HEAD^
 '
 
@@ -361,7 +361,7 @@ test_expect_success 'blame -L 1 full' '
 	check_count -f incremental -L1 I 1
 '
 
-test_expect_failure 'blame -L 2 full' '
+test_expect_success 'blame -L 2 full' '
 	test_must_fail $PROG -L2 incremental
 '
 
