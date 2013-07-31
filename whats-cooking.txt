@@ -1,20 +1,18 @@
 To: git@vger.kernel.org
 Bcc: lwn@lwn.net
-Subject: What's cooking in git.git (Jul 2013, #09; Mon, 29)
-X-master-at: 8f6a3e5d71fa1800c3f330bab2b6b6399ec7aea7
-X-next-at: cf3f07e67f28b0068199b16bc6974f4bbafb4e51
+Subject: What's cooking in git.git (Jul 2013, #10; Wed, 31)
+X-master-at: 8dc84fdc48a79c70682e6c361a82d0f3e1db9a03
+X-next-at: 025c443e44c008c3a3dd7b83658f4e9734343e53
 
-What's cooking in git.git (Jul 2013, #09; Mon, 29)
+What's cooking in git.git (Jul 2013, #10; Wed, 31)
 --------------------------------------------------
 
 Here are the topics that have been cooking.  Commits prefixed with
 '-' are only in 'pu' (proposed updates) while commits prefixed with
 '+' are in 'next'.
 
-The shape of the upcoming release is pretty much known by now; all
-the topics that are marked for 'master' in this issue will likely to
-be in the final, and others will cook during the pre-release freeze
-period.
+Hopefully the 1.8.4-rc1 tomorrow with topics marked for 'master'
+in this issue of "What's cooking" report.
 
 You can find the changes described here in the integration branches
 of the repositories listed at
@@ -24,165 +22,14 @@ of the repositories listed at
 --------------------------------------------------
 [Graduated to "master"]
 
-* ob/typofixes (2013-07-22) 3 commits
-  (merged to 'next' on 2013-07-22 at 8574f9f)
- + typofix: in-code comments
- + typofix: documentation
- + typofix: release notes
-
-
-* es/contacts (2013-07-21) 5 commits
-  (merged to 'next' on 2013-07-22 at a78c3d6)
- + contrib: contacts: add documentation
- + contrib: contacts: add mailmap support
- + contrib: contacts: interpret committish akin to format-patch
- + contrib: contacts: add ability to parse from committish
- + contrib: add git-contacts helper
-
- A helper to read from a set of format-patch output files or a range
- of commits and find those who may have insights to the code that
- the changes touch by running a series of "git blame" commands.
-
-
-* es/line-log-further-fixes (2013-07-23) 5 commits
- + line-log: fix "log -LN" crash when N is last line of file
- + range-set: satisfy non-empty ranges invariant
- + t4211: demonstrate crash when first -L encountered is empty range
- + t4211: demonstrate empty -L range crash
- + range-set: fix sort_and_merge_range_set() corner case bug
- (this branch is used by tr/line-log.)
-
-
-* jk/cat-file-batch-optim (2013-07-18) 9 commits
-  (merged to 'next' on 2013-07-22 at 965897c)
- + Fix some sparse warnings
- + sha1_object_info_extended: pass object_info to helpers
- + sha1_object_info_extended: make type calculation optional
- + packed_object_info: make type lookup optional
- + packed_object_info: hoist delta type resolution to helper
- + sha1_loose_object_info: make type lookup optional
- + sha1_object_info_extended: rename "status" to "type"
- + cat-file: disable object/refname ambiguity check for batch mode
- + Merge branch 'nd/warn-ambiguous-object-name' into jk/cat-file-batch-optim
-
- If somebody wants to only know on-disk footprint of an object
- without having to know its type or payload size, we can bypass a
- lot of code to cheaply learn it.
-
-
-* jm/doc-ref-prune (2013-07-18) 2 commits
-  (merged to 'next' on 2013-07-22 at 414e6ea)
- + Documentation: fix git-prune example usage
- + Documentation: remove --prune from pack-refs examples
-
-
-* mh/multimail (2013-07-22) 2 commits
-  (merged to 'next' on 2013-07-22 at e27c933)
- + post-receive-email: deprecate script in favor of git-multimail
- + git-multimail: an improved replacement for post-receive-email
-
- An enhanced "post-receive" hook to send e-mail messages.
-
-
-* mh/ref-races-optim-invalidate-cached (2013-06-20) 1 commit
-  (merged to 'next' on 2013-07-22 at 144d135)
- + refs: do not invalidate the packed-refs cache unnecessarily
-
- This requires the platform lstat() to be correct to avoid false
- negatives.
-
-
-* ml/avoid-using-grep-on-crlf-files (2013-07-18) 1 commit
-  (merged to 'next' on 2013-07-22 at f861472)
- + test-lib.sh - define and use GREP_STRIPS_CR
-
- On systems that understand a CRLF as a line ending, tests in this
- script that worked on files with CRLF line endings using "grep" to
- extract matching lines may lose the CR at the end of lines that
- match, causing the actual output not to match the expected output.
-
-
-* ml/cygwin-updates (2013-07-21) 4 commits
-  (merged to 'next' on 2013-07-22 at e9c9872)
- + cygwin: stop forcing core.filemode=false
- + Cygwin 1.7 supports mmap
- + Cygwin 1.7 has thread-safe pread
- + Cygwin 1.7 needs compat/regex
-
- The tip one does _not_ revert c869753e (Force core.filemode to
- false on Cygwin., 2006-12-30) on purpose, so that people can
- still retain the old behaviour if they wanted to.
-
-
-* rh/template-updates (2013-07-15) 3 commits
-  (merged to 'next' on 2013-07-22 at 53dffdd)
- + templates: spell ASCII in uppercase in pre-commit hook
- + templates: Reformat pre-commit hook's message
- + templates: Use heredoc in pre-commit hook
-
- This is an earlier part of a 6 patch series, with log message
- corrected.
-
-
-* rj/sparse (2013-07-21) 1 commit
-  (merged to 'next' on 2013-07-22 at 24efece)
- + Revert "compat/unsetenv.c: Fix a sparse warning"
-
-
-* sb/misc-fixes (2013-07-15) 3 commits
-  (merged to 'next' on 2013-07-21 at 880b08c)
- + diff.c: Do not initialize a variable, which gets reassigned anyway.
- + commit: Fix a memory leak in determine_author_info
- + daemon.c:handle: Remove unneeded check for null pointer.
-
- Assorted code cleanups and a minor fix.
-
-
-* sb/traverse-trees-bitmask-variable-name (2013-07-19) 1 commit
-  (merged to 'next' on 2013-07-22 at be3227c)
- + traverse_trees(): clarify return value of the callback
-
-
-* tr/line-log (2013-07-23) 1 commit
-  (merged to 'next' on 2013-07-23 at a0a7f9b)
- + Merge branch 'es/line-log-further-fixes' into tr/line-log
- (this branch uses es/line-log-further-fixes.)
-
---------------------------------------------------
-[New Topics]
-
-* ob/typofixes (2013-07-29) 1 commit
- - many small typofixes
-
- Will merge to 'next'.
-
-
-* jh/remote-hg-fetch-fix (2013-07-25) 2 commits
-  (merged to 'next' on 2013-07-25 at 33161ad)
- + Revert "remotes-hg: bugfix for fetching non local remotes"
-  (merged to 'next' on 2013-07-24 at 9c96641)
- + remotes-hg: bugfix for fetching non local remotes
-
- Waiting for the final patch after discussion settles.
-
-
-* ma/hg-to-git (2013-07-23) 1 commit
- - hg-to-git: --allow-empty-message in git commit
-
- Will merge to 'next'.
-
-
-* nd/clone-connectivity-shortcut (2013-07-23) 1 commit
- - smart http: use the same connectivity check on cloning
-
- Will merge to 'next'.
-
-
 * bc/completion-for-bash-3.0 (2013-07-24) 1 commit
   (merged to 'next' on 2013-07-24 at 913d89c)
  + git-completion.bash: replace zsh notation that breaks bash 3.X
 
- Will merge to 'master'.
+
+* ds/doc-two-kinds-of-tags (2013-07-29) 1 commit
+  (merged to 'next' on 2013-07-30 at 1201ca7)
+ + docs/git-tag: explain lightweight versus annotated tags
 
 
 * jk/capabilities-doc (2013-07-26) 5 commits
@@ -194,80 +41,98 @@ of the repositories listed at
  + docs: note that receive-pack knows side-band-64k capability
  + docs: fix 'report-status' protocol capability thinko
 
- Will merge to 'master'.
+
+* jk/commit-how-to-abort-cherry-pick (2013-07-29) 1 commit
+  (merged to 'next' on 2013-07-30 at 7b1c49c)
+ + commit: tweak empty cherry pick advice for sequencer
 
 
-* jx/clean-interactive (2013-07-24) 2 commits
- - git-clean: implement partial matching for selection
-  (merged to 'next' on 2013-07-24 at 1e63bb9)
- + Documentation/git-clean: fix description for range
+* mh/packed-refs-do-one-ref-recursion (2013-07-17) 1 commit
+  (merged to 'next' on 2013-07-30 at d8cc1ee)
+ + do_one_ref(): save and restore value of current_ref
+
+ Fix a NULL-pointer dereference during nested iterations over
+ references (for example, when replace references are being used).
+
+
+* rj/commit-slab-fix (2013-07-29) 1 commit
+  (merged to 'next' on 2013-07-30 at 1914f37)
+ + commit-slab.h: Fix memory allocation and addressing
+
+
+* rr/maint-tilde-markup-in-doc (2013-07-26) 1 commit
+  (merged to 'next' on 2013-07-30 at c8f83d5)
+ + config doc: quote paths, fixing tilde-interpretation
+
+
+* rr/rebase-autostash (2013-07-29) 1 commit
+  (merged to 'next' on 2013-07-30 at 0095e2d)
+ + git-rebase: fix typo
 
 
 * sb/mailmap-updates (2013-07-24) 1 commit
   (merged to 'next' on 2013-07-24 at 9f8e681)
  + .mailmap: combine more (email, name) to individual persons
 
- Will merge to 'master'.
+--------------------------------------------------
+[New Topics]
 
+* bc/unuse-packfile (2013-07-30) 1 commit
+ - sha1_file: introduce close_one_pack() to close packs on fd pressure
+
+ Will merge to and cook in 'next'.
+
+
+* da/darwin (2013-07-30) 1 commit
+ - imap-send: use Apple's Security framework for base64 encoding
+
+ Will merge to and cook in 'next'.
+
+
+* jc/rm-submodule-error-message (2013-07-25) 1 commit
+ - builtin/rm.c: consolidate error reporting for removing submodules
+
+ Consolidate two messages phrased subtly differently without a good
+ reason.
+
+ Will merge to 'next' and then to 'master', unless there is an objection.
+
+
+* ms/subtree-install-fix (2013-07-30) 1 commit
+ - contrib/subtree: Fix make install target
+
+ Will merge to 'next' and then to 'master'.
+
+
+* nd/sq-quote-buf (2013-07-30) 3 commits
+ - quote: remove sq_quote_print()
+ - tar-tree: remove dependency on sq_quote_print()
+ - for-each-ref, quote: convert *_quote_print -> *_quote_buf
+
+ Code simplification as a preparatory step to something larger.
+
+ Will merge to and cook in 'next'.
+
+
+* jc/url-match (2013-07-31) 6 commits
+ - config: "git config --get-urlmatch" parses section.<url>.key
+ - builtin/config: refactor collect_config()
+ - config: parse http.<url>.<variable> using urlmatch
+ - config: add generic callback wrapper to parse section.<url>.key
+ - config: add helper to normalize and match URLs
+ - http.c: fix parsing of http.sslCertPasswordProtected variable
+
+ Reroll of km/http-curl-config-per-url topic.
+
+ Will merge to and cook in 'next'
+
+--------------------------------------------------
+[Stalled]
 
 * tr/log-full-diff-keep-true-parents (2013-07-29) 2 commits
  - SQUASH??? free saved-parents slab when done
  - [PERHAPS LIKE THIS] log: use true parents for diff even when rewriting
 
-
-* db/http-savecookies (2013-07-24) 1 commit
- - http: Add http.savecookies option to write out HTTP cookies
-
-
-* ds/doc-two-kinds-of-tags (2013-07-29) 1 commit
- - docs/git-tag: explain lightweight versus annotated tags
-
- Will merge to 'next' and then to 'master'.
-
-
-* jk/commit-how-to-abort-cherry-pick (2013-07-29) 1 commit
- - commit: tweak empty cherry pick advice for sequencer
-
- Will merge to 'next' and then to 'master'.
-
-
-* lf/echo-n-is-not-portable (2013-07-29) 1 commit
- - Avoid using `echo -n` anywhere
-
- Will merge to 'next'.
-
-
-* rj/commit-slab-fix (2013-07-29) 1 commit
- - commit-slab.h: Fix memory allocation and addressing
-
- Will merge to 'next' and then to 'master'.
-
-
-* rr/maint-tilde-markup-in-doc (2013-07-26) 1 commit
- - config doc: quote paths, fixing tilde-interpretation
-
- Will merge to 'next' and then to 'master'.
-
-
-* rr/rebase-autostash (2013-07-29) 1 commit
- - git-rebase: fix typo
-
- Will merge to 'next' and then to 'master'.
-
-
-* sb/fsck-opt-bool (2013-07-29) 1 commit
- - fsck: Replace deprecated OPT_BOOLEAN by OPT_BOOL
-
- Will merge to 'next'.
-
-
-* rr/feed-real-path-to-editor (2013-07-29) 1 commit
- - editor: use canonicalized absolute path
-
- Will merge to 'next'.
-
---------------------------------------------------
-[Stalled]
 
 * tf/gitweb-ss-tweak (2013-07-15) 4 commits
  - gitweb: make search help link less ugly
@@ -304,20 +169,6 @@ of the repositories listed at
 
  Expecting a reroll, as an early part of a larger series.
  $gmane/225137
-
-
-* jl/submodule-mv (2013-04-23) 5 commits
- . submodule.c: duplicate real_path's return value
- . rm: delete .gitmodules entry of submodules removed from the work tree
- . Teach mv to update the path entry in .gitmodules for moved submodules
- . Teach mv to move submodules using a gitfile
- . Teach mv to move submodules together with their work trees
-
- "git mv A B" when moving a submodule A does "the right thing",
- inclusing relocating its working tree and adjusting the paths in
- the .gitmodules file.
-
- Ejected from 'pu', as it conflicts with nd/magic-pathspec.
 
 
 * jk/list-objects-sans-blobs (2013-06-06) 4 commits
@@ -388,6 +239,79 @@ of the repositories listed at
 --------------------------------------------------
 [Cooking]
 
+* jl/submodule-mv (2013-07-30) 5 commits
+ - rm: delete .gitmodules entry of submodules removed from the work tree
+ - mv: update the path entry in .gitmodules for moved submodules
+ - submodule.c: add .gitmodules staging helper functions
+ - mv: move submodules using a gitfile
+ - mv: move submodules together with their work trees
+ (this branch uses nd/magic-pathspec.)
+
+ "git mv A B" when moving a submodule A does "the right thing",
+ inclusing relocating its working tree and adjusting the paths in
+ the .gitmodules file.
+
+ Waiting for a reroll.
+
+
+* ob/typofixes (2013-07-29) 1 commit
+  (merged to 'next' on 2013-07-30 at ec2c897)
+ + many small typofixes
+
+ Will merge to 'next'.
+
+
+* ma/hg-to-git (2013-07-23) 1 commit
+  (merged to 'next' on 2013-07-30 at 1dddc06)
+ + hg-to-git: --allow-empty-message in git commit
+
+ Will merge to 'master'.
+
+
+* nd/clone-connectivity-shortcut (2013-07-23) 1 commit
+  (merged to 'next' on 2013-07-30 at 8d16721)
+ + smart http: use the same connectivity check on cloning
+
+ Will cook in 'next'.
+
+
+* jx/clean-interactive (2013-07-24) 2 commits
+  (merged to 'next' on 2013-07-30 at b7fd474)
+ + git-clean: implement partial matching for selection
+  (merged to 'next' on 2013-07-24 at 1e63bb9)
+ + Documentation/git-clean: fix description for range
+
+ Will merge to 'master'.
+
+
+* db/http-savecookies (2013-07-30) 1 commit
+  (merged to 'next' on 2013-07-30 at d2ad6e5)
+ + http: add http.savecookies option to write out HTTP cookies
+
+ Will cook in 'next'.
+
+
+* lf/echo-n-is-not-portable (2013-07-29) 1 commit
+  (merged to 'next' on 2013-07-30 at e223ceb)
+ + Avoid using `echo -n` anywhere
+
+ Will merge to 'master'.
+
+
+* sb/fsck-opt-bool (2013-07-29) 1 commit
+  (merged to 'next' on 2013-07-30 at 8a9964c)
+ + fsck: Replace deprecated OPT_BOOLEAN by OPT_BOOL
+
+ Will cook in 'next'.
+
+
+* rr/feed-real-path-to-editor (2013-07-29) 1 commit
+  (merged to 'next' on 2013-07-30 at 72c9bcb)
+ + editor: use canonicalized absolute path
+
+ Will cook in 'next'.
+
+
 * rj/doc-rev-parse (2013-07-22) 2 commits
   (merged to 'next' on 2013-07-22 at 8188667)
  + rev-parse(1): logically group options
@@ -423,15 +347,6 @@ of the repositories listed at
  the same thing as "--diff-filter=d".
 
  Will cook in 'next'.
-
-
-* mh/packed-refs-do-one-ref-recursion (2013-07-17) 1 commit
- - do_one_ref(): save and restore value of current_ref
-
- Fix a NULL-pointer dereference during nested iterations over
- references (for example, when replace references are being used).
-
- Will merge to 'next' and then to 'master'.
 
 
 * nd/magic-pathspec (2013-07-23) 48 commits
@@ -485,6 +400,7 @@ of the repositories listed at
  + pathspec: i18n-ize error strings in pathspec parsing code
  + move struct pathspec and related functions to pathspec.[ch]
  + clean: remove unused variable "seen"
+ (this branch is used by jl/submodule-mv.)
 
  Use "struct pathspec" interface in more places, instead of array of
  characters, the latter of which cannot express magic pathspecs
@@ -523,21 +439,6 @@ of the repositories listed at
  should somehow make "git push" aware of it as well.  Perhaps
  remote.*.prune should not be just a boolean, but a 4-way "none",
  "push", "fetch", "both"?
-
- Will cook in 'next'.
-
-
-* km/http-curl-config-per-url (2013-07-25) 6 commits
-  (merged to 'next' on 2013-07-25 at 531e8cb)
- + docs: update http.<url>.* options documentation
-  (merged to 'next' on 2013-07-23 at f84689b)
- + config: allow http.<url>.* any user matching
- + tests: add new test for the url_normalize function
- + config: improve support for http.<url>.* settings
- + config: add support for http.<url>.* settings
- + http.c: fix parsing of http.sslCertPasswordProtected variable
-
- Allows custom curl configuration per URL when talking over http.
 
  Will cook in 'next'.
 
@@ -616,7 +517,7 @@ of the repositories listed at
  time ago, and it started biting us in places.  This removes it and
  uses the standard lstat() that comes with Cygwin.
 
- I am personally in favor of this simpler solution.  Comments?
+ Will merge to and cook in 'next'.
 
 
 * jc/reflog-doc (2013-06-19) 1 commit
@@ -660,3 +561,32 @@ of the repositories listed at
  (this branch uses jc/diff-filter-negation.)
 
  Will cook in 'next' until a distant future.
+
+--------------------------------------------------
+[Discarded]
+
+* jh/remote-hg-fetch-fix (2013-07-25) 2 commits
+  (merged to 'next' on 2013-07-25 at 33161ad)
+ + Revert "remotes-hg: bugfix for fetching non local remotes"
+  (merged to 'next' on 2013-07-24 at 9c96641)
+ + remotes-hg: bugfix for fetching non local remotes
+
+ Reverted.
+
+ Waiting for the final patch to replace, after discussion settles.
+
+
+* km/http-curl-config-per-url (2013-07-31) 7 commits
+  (merged to 'next' on 2013-07-31 at e88aad5)
+ + Revert km/http-curl-config-per-url in its entirety
+  (merged to 'next' on 2013-07-25 at 531e8cb)
+ + docs: update http.<url>.* options documentation
+  (merged to 'next' on 2013-07-23 at f84689b)
+ + config: allow http.<url>.* any user matching
+ + tests: add new test for the url_normalize function
+ + config: improve support for http.<url>.* settings
+ + config: add support for http.<url>.* settings
+ + http.c: fix parsing of http.sslCertPasswordProtected variable
+
+ Reverted to be replaced with a reroll (jc/url-match topic).
+
