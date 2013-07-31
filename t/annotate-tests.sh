@@ -275,12 +275,30 @@ test_expect_success 'blame -L :nomatch' '
 	test_must_fail $PROG -L:nomatch hello.c
 '
 
-test_expect_success 'blame -L bogus' '
-	test_must_fail $PROG -L file &&
-	test_must_fail $PROG -L1,+ file &&
-	test_must_fail $PROG -L1,- file &&
-	test_must_fail $PROG -LX file &&
-	test_must_fail $PROG -L1,X file &&
-	test_must_fail $PROG -L1,+N file &&
+test_expect_success 'blame -L' '
+	test_must_fail $PROG -L file
+'
+
+test_expect_success 'blame -L X,+' '
+	test_must_fail $PROG -L1,+ file
+'
+
+test_expect_success 'blame -L X,-' '
+	test_must_fail $PROG -L1,- file
+'
+
+test_expect_success 'blame -L X (non-numeric X)' '
+	test_must_fail $PROG -LX file
+'
+
+test_expect_success 'blame -L X,Y (non-numeric Y)' '
+	test_must_fail $PROG -L1,Y file
+'
+
+test_expect_success 'blame -L X,+N (non-numeric N)' '
+	test_must_fail $PROG -L1,+N file
+'
+
+test_expect_success 'blame -L X,-N (non-numeric N)' '
 	test_must_fail $PROG -L1,-N file
 '
