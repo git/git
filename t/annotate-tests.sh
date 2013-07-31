@@ -297,6 +297,78 @@ test_expect_success 'blame -L :nomatch' '
 	test_must_fail $PROG -L:nomatch hello.c
 '
 
+test_expect_success 'setup incremental' '
+	(
+	GIT_AUTHOR_NAME=I &&
+	export GIT_AUTHOR_NAME &&
+	GIT_AUTHOR_EMAIL=I@test.git &&
+	export GIT_AUTHOR_EMAIL &&
+	>incremental &&
+	git add incremental &&
+	git commit -m "step 0" &&
+	printf "partial" >>incremental &&
+	git commit -a -m "step 0.5" &&
+	echo >>incremental &&
+	git commit -a -m "step 1"
+	)
+'
+
+test_expect_success 'blame empty' '
+	check_count -h HEAD^^ -f incremental
+'
+
+test_expect_success 'blame -L 0 empty (undocumented)' '
+	check_count -h HEAD^^ -f incremental -L0
+'
+
+test_expect_failure 'blame -L 1 empty' '
+	test_must_fail $PROG -L1 incremental HEAD^^
+'
+
+test_expect_success 'blame -L 2 empty' '
+	test_must_fail $PROG -L2 incremental HEAD^^
+'
+
+test_expect_success 'blame half' '
+	check_count -h HEAD^ -f incremental I 1
+'
+
+test_expect_success 'blame -L 0 half (undocumented)' '
+	check_count -h HEAD^ -f incremental -L0 I 1
+'
+
+test_expect_success 'blame -L 1 half' '
+	check_count -h HEAD^ -f incremental -L1 I 1
+'
+
+test_expect_failure 'blame -L 2 half' '
+	test_must_fail $PROG -L2 incremental HEAD^
+'
+
+test_expect_success 'blame -L 3 half' '
+	test_must_fail $PROG -L3 incremental HEAD^
+'
+
+test_expect_success 'blame full' '
+	check_count -f incremental I 1
+'
+
+test_expect_success 'blame -L 0 full (undocumented)' '
+	check_count -f incremental -L0 I 1
+'
+
+test_expect_success 'blame -L 1 full' '
+	check_count -f incremental -L1 I 1
+'
+
+test_expect_failure 'blame -L 2 full' '
+	test_must_fail $PROG -L2 incremental
+'
+
+test_expect_success 'blame -L 3 full' '
+	test_must_fail $PROG -L3 incremental
+'
+
 test_expect_success 'blame -L' '
 	test_must_fail $PROG -L file
 '
