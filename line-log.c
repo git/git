@@ -594,13 +594,13 @@ parse_lines(struct commit *commit, const char *prefix, struct string_list *args)
 				    lines, &begin, &end,
 				    full_name))
 			die("malformed -L argument '%s'", range_part);
+		if (lines < end || ((lines || begin) && lines < begin))
+			die("file %s has only %lu lines", name_part, lines);
 		if (begin < 1)
 			begin = 1;
 		if (end < 1)
 			end = lines;
 		begin--;
-		if (lines < end || lines < begin)
-			die("file %s has only %ld lines", name_part, lines);
 		line_log_data_insert(&ranges, full_name, begin, end);
 
 		free_filespec(spec);

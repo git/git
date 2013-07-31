@@ -69,7 +69,7 @@ test_expect_success '-L X (X == nlines)' '
 	git log -L $n:b.c
 '
 
-test_expect_failure '-L X (X == nlines + 1)' '
+test_expect_success '-L X (X == nlines + 1)' '
 	n=$(expr $(wc -l <b.c) + 1) &&
 	test_must_fail git log -L $n:b.c
 '
