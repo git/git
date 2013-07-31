@@ -185,7 +185,7 @@ test_expect_success 'blame -L Y,X (undocumented)' '
 	check_count -L6,3 B 1 B1 1 B2 1 D 1
 '
 
-test_expect_failure 'blame -L X,+0' '
+test_expect_success 'blame -L X,+0' '
 	test_must_fail $PROG -L1,+0 file
 '
 
@@ -197,7 +197,7 @@ test_expect_success 'blame -L X,+N' '
 	check_count -L3,+4 B 1 B1 1 B2 1 D 1
 '
 
-test_expect_failure 'blame -L X,-0' '
+test_expect_success 'blame -L X,-0' '
 	test_must_fail $PROG -L1,-0 file
 '
 

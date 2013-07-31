@@ -26,6 +26,8 @@ static const char *parse_loc(const char *spec, nth_line_fn_t nth_line,
 		if (term != spec + 1) {
 			if (!ret)
 				return term;
+			if (num == 0)
+				die("-L invalid empty range");
 			if (spec[0] == '-')
 				num = 0 - num;
 			if (0 < num)
