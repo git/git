@@ -96,29 +96,31 @@ OPTIONS
 	names are not.
 
 --global::
-	For writing options: write to global ~/.gitconfig file rather than
-	the repository .git/config, write to $XDG_CONFIG_HOME/git/config file
-	if this file exists and the ~/.gitconfig file doesn't.
+	For writing options: write to global `~/.gitconfig` file
+	rather than the repository `.git/config`, write to
+	`$XDG_CONFIG_HOME/git/config` file if this file exists and the
+	`~/.gitconfig` file doesn't.
 +
-For reading options: read only from global ~/.gitconfig and from
-$XDG_CONFIG_HOME/git/config rather than from all available files.
+For reading options: read only from global `~/.gitconfig` and from
+`$XDG_CONFIG_HOME/git/config` rather than from all available files.
 +
 See also <<FILES>>.
 
 --system::
-	For writing options: write to system-wide $(prefix)/etc/gitconfig
-	rather than the repository .git/config.
+	For writing options: write to system-wide
+	`$(prefix)/etc/gitconfig` rather than the repository
+	`.git/config`.
 +
-For reading options: read only from system-wide $(prefix)/etc/gitconfig
+For reading options: read only from system-wide `$(prefix)/etc/gitconfig`
 rather than from all available files.
 +
 See also <<FILES>>.
 
 --local::
-	For writing options: write to the repository .git/config file.
+	For writing options: write to the repository `.git/config` file.
 	This is	the default behavior.
 +
-For reading options: read only from the repository .git/config rather than
+For reading options: read only from the repository `.git/config` rather than
 from all available files.
 +
 See also <<FILES>>.
@@ -218,9 +220,9 @@ $(prefix)/etc/gitconfig::
 
 $XDG_CONFIG_HOME/git/config::
 	Second user-specific configuration file. If $XDG_CONFIG_HOME is not set
-	or empty, $HOME/.config/git/config will be used. Any single-valued
+	or empty, `$HOME/.config/git/config` will be used. Any single-valued
 	variable set in this file will be overwritten by whatever is in
-	~/.gitconfig.  It is a good idea not to create this file if
+	`~/.gitconfig`.  It is a good idea not to create this file if
 	you sometimes use older versions of Git, as support for this
 	file was added fairly recently.
 
