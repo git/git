@@ -62,6 +62,9 @@ struct commit_list *commit_list_insert_by_date(struct commit *item,
 				    struct commit_list **list);
 void commit_list_sort_by_date(struct commit_list **list);
 
+/* Shallow copy of the input list */
+struct commit_list *copy_commit_list(struct commit_list *list);
+
 void free_commit_list(struct commit_list *list);
 
 /* Commit formats */
