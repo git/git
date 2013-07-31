@@ -159,7 +159,7 @@ finish_rebase () {
 			die "$(eval_gettext "Cannot store \$stash_sha1")"
 			gettext 'Applying autostash resulted in conflicts.
 Your changes are safe in the stash.
-You can run "git stash pop" or "git stash drop" it at any time.
+You can run "git stash pop" or "git stash drop" at any time.
 '
 		fi
 	fi
