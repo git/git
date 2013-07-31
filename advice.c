@@ -35,7 +35,7 @@ static struct {
 	{ "implicitidentity", &advice_implicit_identity },
 	{ "detachedhead", &advice_detached_head },
 	{ "setupstreamfailure", &advice_set_upstream_failure },
-	{ "object_name_warning", &advice_object_name_warning },
+	{ "objectnamewarning", &advice_object_name_warning },
 	{ "rmhints", &advice_rm_hints },
 
 	/* make this an alias for backward compatibility */

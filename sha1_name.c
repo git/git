@@ -445,7 +445,7 @@ static int get_sha1_basic(const char *str, int len, unsigned char *sha1)
 	"\n"
 	"where \"$br\" is somehow empty and a 40-hex ref is created. Please\n"
 	"examine these refs and maybe delete them. Turn this message off by\n"
-	"running \"git config advice.object_name_warning false\"");
+	"running \"git config advice.objectNameWarning false\"");
 	unsigned char tmp_sha1[20];
 	char *real_ref = NULL;
 	int refs_found = 0;
