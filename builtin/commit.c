@@ -63,8 +63,18 @@ N_("The previous cherry-pick is now empty, possibly due to conflict resolution.\
 "If you wish to commit it anyway, use:\n"
 "\n"
 "    git commit --allow-empty\n"
+"\n");
+
+static const char empty_cherry_pick_advice_single[] =
+N_("Otherwise, please use 'git reset'\n");
+
+static const char empty_cherry_pick_advice_multi[] =
+N_("If you wish to skip this commit, use:\n"
 "\n"
-"Otherwise, please use 'git reset'\n");
+"    git reset\n"
+"\n"
+"Then \"git cherry-pick --continue\" will resume cherry-picking\n"
+"the remaining commits.\n");
 
 static const char *use_message_buffer;
 static const char commit_editmsg[] = "COMMIT_EDITMSG";
@@ -107,6 +117,7 @@ static enum {
 static const char *cleanup_arg;
 
 static enum commit_whence whence;
+static int sequencer_in_use;
 static int use_editor = 1, include_status = 1;
 static int show_ignored_in_status, have_option_m;
 static const char *only_include_assumed;
@@ -141,8 +152,11 @@ static void determine_whence(struct wt_status *s)
 {
 	if (file_exists(git_path("MERGE_HEAD")))
 		whence = FROM_MERGE;
-	else if (file_exists(git_path("CHERRY_PICK_HEAD")))
+	else if (file_exists(git_path("CHERRY_PICK_HEAD"))) {
 		whence = FROM_CHERRY_PICK;
+		if (file_exists(git_path("sequencer")))
+			sequencer_in_use = 1;
+	}
 	else
 		whence = FROM_COMMIT;
 	if (s)
@@ -810,8 +824,13 @@ static int prepare_to_commit(const char *index_file, const char *prefix,
 		run_status(stdout, index_file, prefix, 0, s);
 		if (amend)
 			fputs(_(empty_amend_advice), stderr);
-		else if (whence == FROM_CHERRY_PICK)
+		else if (whence == FROM_CHERRY_PICK) {
 			fputs(_(empty_cherry_pick_advice), stderr);
+			if (!sequencer_in_use)
+				fputs(_(empty_cherry_pick_advice_single), stderr);
+			else
+				fputs(_(empty_cherry_pick_advice_multi), stderr);
+		}
 		return 0;
 	}
 
