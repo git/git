@@ -65,7 +65,20 @@ feature does not trigger when it shouldn't.  Also make sure that the
 test suite passes after your commit.  Do not forget to update the
 documentation to describe the updated behaviour.
 
-Oh, another thing.  I am picky about whitespaces.  Make sure your
+Speaking of the documentation, it is currently a liberal mixture of US
+and UK English norms for spelling and grammar, which is somewhat
+unfortunate.  A huge patch that touches the files all over the place
+only to correct the inconsistency is not welcome, though.  Potential
+clashes with other changes that can result from such a patch are not
+worth it.  We prefer to gradually reconcile the inconsistencies in
+favor of US English, with small and easily digestible patches, as a
+side effect of doing some other real work in the vicinity (e.g.
+rewriting a paragraph for clarity, while turning en_UK spelling to
+en_US).  Obvious typographical fixes are much more welcomed ("teh ->
+"the"), preferably submitted as independent patches separate from
+other documentation changes.
+
+Oh, another thing.  We are picky about whitespaces.  Make sure your
 changes do not trigger errors with the sample pre-commit hook shipped
 in templates/hooks--pre-commit.  To help ensure this does not happen,
 run git diff --check on your changes before you commit.
