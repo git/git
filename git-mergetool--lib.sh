@@ -144,7 +144,7 @@ setup_user_tool () {
 setup_tool () {
 	tool="$1"
 
-	# Fallback definitions, to be overriden by tools.
+	# Fallback definitions, to be overridden by tools.
 	can_merge () {
 		return 0
 	}

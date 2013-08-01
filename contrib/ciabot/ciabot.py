@@ -70,7 +70,7 @@ tinyifier = "http://tinyurl.com/api-create.php?url="
 
 # The template used to generate the XML messages to CIA.  You can make
 # visible changes to the IRC-bot notification lines by hacking this.
-# The default will produce a notfication line that looks like this:
+# The default will produce a notification line that looks like this:
 #
 # ${project}: ${author} ${repo}:${branch} * ${rev} ${files}: ${logmsg} ${url}
 #

@@ -59,7 +59,7 @@ function.
 `reset_revision_walk`::
 
 	Reset the flags used by the revision walking api. You can use
-	this to do multiple sequencial revision walks.
+	this to do multiple sequential revision walks.
 
 Data structures
 ---------------

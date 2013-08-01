@@ -77,7 +77,7 @@ const char *default_notes_ref(void);
  * variable is used, and if that is missing, the default notes ref is used
  * ("refs/notes/commits").
  *
- * If you need to re-intialize a notes_tree structure (e.g. when switching from
+ * If you need to re-initialize a notes_tree structure (e.g. when switching from
  * one notes ref to another), you must first de-initialize the notes_tree
  * structure by calling free_notes(struct notes_tree *).
  *

@@ -94,7 +94,7 @@ your language, document it in the INSTALL file.
 6. There is a file command-list.txt in the distribution main directory
 that categorizes commands by type, so they can be listed in appropriate
 subsections in the documentation's summary command list.  Add an entry
-for yours.  To understand the categories, look at git-cmmands.txt
+for yours.  To understand the categories, look at git-commands.txt
 in the main directory.
 
 7. Give the maintainer one paragraph to include in the RelNotes file

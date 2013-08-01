@@ -92,7 +92,7 @@ static NORETURN int die_push_simple(struct branch *branch, struct remote *remote
 	if (!short_upstream)
 		short_upstream = branch->merge[0]->src;
 	/*
-	 * Don't show advice for people who explicitely set
+	 * Don't show advice for people who explicitly set
 	 * push.default.
 	 */
 	if (push_default == PUSH_DEFAULT_UNSPECIFIED)
