@@ -111,7 +111,7 @@ select by numbers::
    '>>' like this, you can make more than one selection, concatenated
    with whitespace or comma.  Also you can say ranges.  E.g. "2-5 7,9"
    to choose 2,3,4,5,7,9 from the list.  If the second number in a
-   range is omitted, all remaining patches are taken.  E.g. "7-" to
+   range is omitted, all remaining items are selected.  E.g. "7-" to
    choose 7,8,9 from the list.  You can say '*' to choose everything.
    Also when you are satisfied with the filtered result, press ENTER
    (empty) back to the main menu.

@@ -17,7 +17,7 @@ test_expect_success 'setup' '
 
 '
 
-test_expect_success 'git clean -i (clean)' '
+test_expect_success 'git clean -i (c: clean hotkey)' '
 
 	mkdir -p build docs &&
 	touch a.out src/part3.c src/part3.h src/part4.c src/part4.h \
@@ -38,12 +38,33 @@ test_expect_success 'git clean -i (clean)' '
 
 '
 
+test_expect_success 'git clean -i (cl: clean prefix)' '
+
+	mkdir -p build docs &&
+	touch a.out src/part3.c src/part3.h src/part4.c src/part4.h \
+	docs/manual.txt obj.o build/lib.so &&
+	echo cl | git clean -i &&
+	test -f Makefile &&
+	test -f README &&
+	test -f src/part1.c &&
+	test -f src/part2.c &&
+	test ! -f a.out &&
+	test -f docs/manual.txt &&
+	test ! -f src/part3.c &&
+	test ! -f src/part3.h &&
+	test ! -f src/part4.c &&
+	test ! -f src/part4.h &&
+	test -f obj.o &&
+	test -f build/lib.so
+
+'
+
 test_expect_success 'git clean -i (quit)' '
 
 	mkdir -p build docs &&
 	touch a.out src/part3.c src/part3.h src/part4.c src/part4.h \
 	docs/manual.txt obj.o build/lib.so &&
-	echo q | git clean -i &&
+	echo quit | git clean -i &&
 	test -f Makefile &&
 	test -f README &&
 	test -f src/part1.c &&
@@ -253,6 +274,21 @@ test_expect_success 'git clean -id (select - number 3)' '
 	test -f src/part4.h &&
 	test -f obj.o &&
 	test -f build/lib.so
+
+'
+
+test_expect_success 'git clean -id (select - filenames)' '
+
+	mkdir -p build docs &&
+	touch a.out foo.txt bar.txt baz.txt &&
+	(echo s; echo a.out fo ba bar; echo; echo c) | \
+	git clean -id &&
+	test -f Makefile &&
+	test ! -f a.out &&
+	test ! -f foo.txt &&
+	test ! -f bar.txt &&
+	test -f baz.txt &&
+	rm baz.txt
 
 '
 
