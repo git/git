@@ -161,7 +161,7 @@ test_perf () {
 		echo "$test_count" >>"$perf_results_dir"/$base.subtests
 		echo "$1" >"$perf_results_dir"/$base.$test_count.descr
 		if test -z "$verbose"; then
-			echo -n "perf $test_count - $1:"
+			printf "%s" "perf $test_count - $1:"
 		else
 			echo "perf $test_count - $1:"
 		fi
@@ -170,7 +170,7 @@ test_perf () {
 			if test_run_perf_ "$2"
 			then
 				if test -z "$verbose"; then
-					echo -n " $i"
+					printf " %s" "$i"
 				else
 					echo "* timing run $i/$GIT_PERF_REPEAT_COUNT:"
 				fi
