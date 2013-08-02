@@ -119,7 +119,6 @@ struct expand_data {
 	enum object_type type;
 	unsigned long size;
 	unsigned long disk_size;
-	const char *rest;
 
 	/*
 	 * If mark_query is true, we do not expand anything, but rather
@@ -164,9 +163,6 @@ static void expand_atom(struct strbuf *sb, const char *atom, int len,
 			data->info.disk_sizep = &data->disk_size;
 		else
 			strbuf_addf(sb, "%lu", data->disk_size);
-	} else if (is_atom("rest", atom, len)) {
-		if (!data->mark_query && data->rest)
-			strbuf_addstr(sb, data->rest);
 	} else
 		die("unknown format element: %.*s", len, atom);
 }
@@ -277,21 +273,7 @@ static int batch_objects(struct batch_options *opt)
 	warn_on_object_refname_ambiguity = 0;
 
 	while (strbuf_getline(&buf, stdin, '\n') != EOF) {
-		char *p;
-		int error;
-
-		/*
-		 * Split at first whitespace, tying off the beginning of the
-		 * string and saving the remainder (or NULL) in data.rest.
-		 */
-		p = strpbrk(buf.buf, " \t");
-		if (p) {
-			while (*p && strchr(" \t", *p))
-				*p++ = '\0';
-		}
-		data.rest = p;
-
-		error = batch_one_object(buf.buf, opt, &data);
+		int error = batch_one_object(buf.buf, opt, &data);
 		if (error)
 			return error;
 	}
