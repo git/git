@@ -654,7 +654,6 @@ LIB_H += color.h
 LIB_H += column.h
 LIB_H += commit.h
 LIB_H += compat/bswap.h
-LIB_H += compat/cygwin.h
 LIB_H += compat/mingw.h
 LIB_H += compat/obstack.h
 LIB_H += compat/poll/poll.h

@@ -107,10 +107,7 @@ static int is_executable(const char *name)
 	    !S_ISREG(st.st_mode))
 		return 0;
 
-#if defined(GIT_WINDOWS_NATIVE) || defined(__CYGWIN__)
-#if defined(__CYGWIN__)
-if ((st.st_mode & S_IXUSR) == 0)
-#endif
+#if defined(GIT_WINDOWS_NATIVE)
 {	/* cannot trust the executable bit, peek into the file instead */
 	char buf[3] = { 0 };
 	int n;
