@@ -119,7 +119,7 @@ if it is part of the log message.
 --no-min-parents::
 --no-max-parents::
 
-	Show only commits which have at least (or at most) that many
+	Show only commits which have at least (or at most) that many parent
 	commits. In particular, `--max-parents=1` is the same as `--no-merges`,
 	`--min-parents=2` is the same as `--merges`.  `--max-parents=0`
 	gives all root commits and `--min-parents=3` all octopus merges.
