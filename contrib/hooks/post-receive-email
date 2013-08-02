@@ -471,7 +471,7 @@ generate_delete_branch_email()
 	echo "       was  $oldrev"
 	echo ""
 	echo $LOGBEGIN
-	git diff-tree -s --always --pretty=oneline $oldrev
+	git diff-tree -s --always --encoding=UTF-8 --pretty=oneline $oldrev
 	echo $LOGEND
 }
 
@@ -571,7 +571,7 @@ generate_delete_atag_email()
 	echo "       was  $oldrev"
 	echo ""
 	echo $LOGBEGIN
-	git diff-tree -s --always --pretty=oneline $oldrev
+	git diff-tree -s --always --encoding=UTF-8 --pretty=oneline $oldrev
 	echo $LOGEND
 }
 
@@ -617,7 +617,7 @@ generate_general_email()
 	echo ""
 	if [ "$newrev_type" = "commit" ]; then
 		echo $LOGBEGIN
-		git diff-tree -s --always --pretty=medium $newrev
+		git diff-tree -s --always --encoding=UTF-8 --pretty=medium $newrev
 		echo $LOGEND
 	else
 		# What can we do here?  The tag marks an object that is not
@@ -636,7 +636,7 @@ generate_delete_general_email()
 	echo "       was  $oldrev"
 	echo ""
 	echo $LOGBEGIN
-	git diff-tree -s --always --pretty=oneline $oldrev
+	git diff-tree -s --always --encoding=UTF-8 --pretty=oneline $oldrev
 	echo $LOGEND
 }
 
