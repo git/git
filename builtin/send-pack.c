@@ -183,7 +183,7 @@ int cmd_send_pack(int argc, const char **argv, const char *prefix)
 			}
 			if (!prefixcmp(arg, "--" CAS_OPT_NAME "=")) {
 				if (parse_push_cas_option(&cas,
-							  strchr(arg, '=') + 1, 1) < 0)
+							  strchr(arg, '=') + 1, 0) < 0)
 					exit(1);
 				continue;
 			}
