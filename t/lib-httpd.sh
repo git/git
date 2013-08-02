@@ -141,10 +141,11 @@ stop_httpd() {
 		-f "$TEST_PATH/apache.conf" $HTTPD_PARA -k stop
 }
 
-test_http_push_nonff() {
+test_http_push_nonff () {
 	REMOTE_REPO=$1
 	LOCAL_REPO=$2
 	BRANCH=$3
+	EXPECT_CAS_RESULT=${4-failure}
 
 	test_expect_success 'non-fast-forward push fails' '
 		cd "$REMOTE_REPO" &&

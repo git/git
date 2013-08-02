@@ -742,13 +742,15 @@ static void push_update_refs_status(struct helper_data *data,
 }
 
 static int push_refs_with_push(struct transport *transport,
-		struct ref *remote_refs, int flags)
+			       struct ref *remote_refs, int flags)
 {
 	int force_all = flags & TRANSPORT_PUSH_FORCE;
 	int mirror = flags & TRANSPORT_PUSH_MIRROR;
 	struct helper_data *data = transport->data;
 	struct strbuf buf = STRBUF_INIT;
 	struct ref *ref;
+	struct string_list cas_options = STRING_LIST_INIT_DUP;
+	struct string_list_item *cas_option;
 
 	get_helper(transport);
 	if (!data->push)
@@ -784,11 +786,29 @@ static int push_refs_with_push(struct transport *transport,
 		strbuf_addch(&buf, ':');
 		strbuf_addstr(&buf, ref->name);
 		strbuf_addch(&buf, '\n');
+
+		/*
+		 * The "--force-with-lease" options without explicit
+		 * values to expect have already been expanded into
+		 * the ref->old_sha1_expect[] field; we can ignore
+		 * transport->smart_options->cas altogether and instead
+		 * can enumerate them from the refs.
+		 */
+		if (ref->expect_old_sha1) {
+			struct strbuf cas = STRBUF_INIT;
+			strbuf_addf(&cas, "%s:%s",
+				    ref->name, sha1_to_hex(ref->old_sha1_expect));
+			string_list_append(&cas_options, strbuf_detach(&cas, NULL));
+		}
 	}
-	if (buf.len == 0)
+	if (buf.len == 0) {
+		string_list_clear(&cas_options, 0);
 		return 0;
+	}
 
 	standard_options(transport);
+	for_each_string_list_item(cas_option, &cas_options)
+		set_helper_option(transport, "cas", cas_option->string);
 
 	if (flags & TRANSPORT_PUSH_DRY_RUN) {
 		if (set_helper_option(transport, "dry-run", "true") != 0)

@@ -6,6 +6,7 @@
 #include "exec_cmd.h"
 #include "run-command.h"
 #include "pkt-line.h"
+#include "string-list.h"
 #include "sideband.h"
 
 static struct remote *remote;
@@ -20,6 +21,7 @@ struct options {
 		thin : 1;
 };
 static struct options options;
+static struct string_list cas_options = STRING_LIST_INIT_DUP;
 
 static int set_option(const char *name, const char *value)
 {
@@ -64,6 +66,13 @@ static int set_option(const char *name, const char *value)
 			options.dry_run = 0;
 		else
 			return -1;
+		return 0;
+	}
+	else if (!strcmp(name, "cas")) {
+		struct strbuf val = STRBUF_INIT;
+		strbuf_addf(&val, "--" CAS_OPT_NAME "=%s", value);
+		string_list_append(&cas_options, val.buf);
+		strbuf_release(&val);
 		return 0;
 	}
 	else {
@@ -789,8 +798,9 @@ static int push_git(struct discovery *heads, int nr_spec, char **specs)
 	struct rpc_state rpc;
 	const char **argv;
 	int argc = 0, i, err;
+	struct string_list_item *cas_option;
 
-	argv = xmalloc((10 + nr_spec) * sizeof(char*));
+	argv = xmalloc((10 + nr_spec + cas_options.nr) * sizeof(char *));
 	argv[argc++] = "send-pack";
 	argv[argc++] = "--stateless-rpc";
 	argv[argc++] = "--helper-status";
@@ -803,6 +813,10 @@ static int push_git(struct discovery *heads, int nr_spec, char **specs)
 	else if (options.verbosity > 1)
 		argv[argc++] = "--verbose";
 	argv[argc++] = options.progress ? "--progress" : "--no-progress";
+
+	for_each_string_list_item(cas_option, &cas_options)
+		argv[argc++] = cas_option->string;
+
 	argv[argc++] = url;
 	for (i = 0; i < nr_spec; i++)
 		argv[argc++] = specs[i];
