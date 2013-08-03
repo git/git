@@ -256,7 +256,7 @@ first have already been pushed into SVN.
 	For each patch, one may answer "yes" (accept this patch), "no" (discard this
 	patch), "all" (accept all patches), or "quit".
 	+
-	'git svn dcommit' returns immediately if answer if "no" or "quit", without
+       'git svn dcommit' returns immediately if answer is "no" or "quit", without
 	committing anything to SVN.
 
 'branch'::
