@@ -50,9 +50,9 @@ static int respect_includes = -1;
 
 static struct option builtin_config_options[] = {
 	OPT_GROUP(N_("Config file location")),
-	OPT_BOOLEAN(0, "global", &use_global_config, N_("use global config file")),
-	OPT_BOOLEAN(0, "system", &use_system_config, N_("use system config file")),
-	OPT_BOOLEAN(0, "local", &use_local_config, N_("use repository config file")),
+	OPT_BOOL(0, "global", &use_global_config, N_("use global config file")),
+	OPT_BOOL(0, "system", &use_system_config, N_("use system config file")),
+	OPT_BOOL(0, "local", &use_local_config, N_("use repository config file")),
 	OPT_STRING('f', "file", &given_config_file, N_("file"), N_("use given config file")),
 	OPT_STRING(0, "blob", &given_config_blob, N_("blob-id"), N_("read config from given blob object")),
 	OPT_GROUP(N_("Action")),
