@@ -242,6 +242,7 @@ configuration options in linkgit:git-notes[1] to use this workflow).
 Note that the leading character does not have to be a dot; for example,
 you can use `--suffix=-patch` to get `0001-description-of-my-change-patch`.
 
+-q::
 --quiet::
 	Do not print the names of the generated files to standard output.
 
