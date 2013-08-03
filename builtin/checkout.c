@@ -228,8 +228,6 @@ static int checkout_paths(const struct checkout_opts *opts,
 	int flag;
 	struct commit *head;
 	int errs = 0;
-	int stage = opts->writeout_stage;
-	int merge = opts->merge;
 	int newfd;
 	struct lock_file *lock_file;
 
@@ -327,8 +325,8 @@ static int checkout_paths(const struct checkout_opts *opts,
 				continue;
 			if (opts->force) {
 				warning(_("path '%s' is unmerged"), ce->name);
-			} else if (stage) {
-				errs |= check_stage(stage, ce, pos);
+			} else if (opts->writeout_stage) {
+				errs |= check_stage(opts->writeout_stage, ce, pos);
 			} else if (opts->merge) {
 				errs |= check_stages((1<<2) | (1<<3), ce, pos);
 			} else {
@@ -352,9 +350,9 @@ static int checkout_paths(const struct checkout_opts *opts,
 				errs |= checkout_entry(ce, &state, NULL);
 				continue;
 			}
-			if (stage)
-				errs |= checkout_stage(stage, ce, pos, &state);
-			else if (merge)
+			if (opts->writeout_stage)
+				errs |= checkout_stage(opts->writeout_stage, ce, pos, &state);
+			else if (opts->merge)
 				errs |= checkout_merged(pos, &state);
 			pos = skip_same_name(ce, pos) - 1;
 		}
