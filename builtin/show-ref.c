@@ -169,9 +169,8 @@ static const struct option show_ref_options[] = {
 	OPT_BOOLEAN(0, "heads", &heads_only, N_("only show heads (can be combined with tags)")),
 	OPT_BOOLEAN(0, "verify", &verify, N_("stricter reference checking, "
 		    "requires exact ref path")),
-	{ OPTION_BOOLEAN, 'h', NULL, &show_head, NULL,
-	  N_("show the HEAD reference, even if it would be filtered out"),
-	  PARSE_OPT_NOARG | PARSE_OPT_HIDDEN },
+	OPT_HIDDEN_BOOL('h', NULL, &show_head,
+			N_("show the HEAD reference, even if it would be filtered out")),
 	OPT_BOOLEAN(0, "head", &show_head,
 	  N_("show the HEAD reference, even if it would be filtered out")),
 	OPT_BOOLEAN('d', "dereference", &deref_tags,

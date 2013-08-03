@@ -739,13 +739,13 @@ static int merge(int argc, const char **argv, const char *prefix)
 			   N_("resolve notes conflicts using the given strategy "
 			      "(manual/ours/theirs/union/cat_sort_uniq)")),
 		OPT_GROUP(N_("Committing unmerged notes")),
-		{ OPTION_BOOLEAN, 0, "commit", &do_commit, NULL,
+		{ OPTION_SET_INT, 0, "commit", &do_commit, NULL,
 			N_("finalize notes merge by committing unmerged notes"),
-			PARSE_OPT_NOARG | PARSE_OPT_NONEG },
+			PARSE_OPT_NOARG | PARSE_OPT_NONEG, NULL, 1},
 		OPT_GROUP(N_("Aborting notes merge resolution")),
-		{ OPTION_BOOLEAN, 0, "abort", &do_abort, NULL,
+		{ OPTION_SET_INT, 0, "abort", &do_abort, NULL,
 			N_("abort notes merge"),
-			PARSE_OPT_NOARG | PARSE_OPT_NONEG },
+			PARSE_OPT_NOARG | PARSE_OPT_NONEG, NULL, 1},
 		OPT_END()
 	};
 

@@ -1448,12 +1448,10 @@ int cmd_commit(int argc, const char **argv, const char *prefix)
 		{ OPTION_STRING, 'u', "untracked-files", &untracked_files_arg, N_("mode"), N_("show untracked files, optional modes: all, normal, no. (Default: all)"), PARSE_OPT_OPTARG, NULL, (intptr_t)"all" },
 		/* end commit contents options */
 
-		{ OPTION_BOOLEAN, 0, "allow-empty", &allow_empty, NULL,
-		  N_("ok to record an empty change"),
-		  PARSE_OPT_NOARG | PARSE_OPT_HIDDEN },
-		{ OPTION_BOOLEAN, 0, "allow-empty-message", &allow_empty_message, NULL,
-		  N_("ok to record a change with an empty message"),
-		  PARSE_OPT_NOARG | PARSE_OPT_HIDDEN },
+		OPT_HIDDEN_BOOL(0, "allow-empty", &allow_empty,
+				N_("ok to record an empty change")),
+		OPT_HIDDEN_BOOL(0, "allow-empty-message", &allow_empty_message,
+				N_("ok to record a change with an empty message")),
 
 		OPT_END()
 	};

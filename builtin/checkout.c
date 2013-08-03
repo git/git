@@ -1073,9 +1073,8 @@ int cmd_checkout(int argc, const char **argv, const char *prefix)
 		OPT_BOOLEAN('p', "patch", &opts.patch_mode, N_("select hunks interactively")),
 		OPT_BOOL(0, "ignore-skip-worktree-bits", &opts.ignore_skipworktree,
 			 N_("do not limit pathspecs to sparse entries only")),
-		{ OPTION_BOOLEAN, 0, "guess", &dwim_new_local_branch, NULL,
-		  N_("second guess 'git checkout no-such-branch'"),
-		  PARSE_OPT_NOARG | PARSE_OPT_HIDDEN },
+		OPT_HIDDEN_BOOL(0, "guess", &dwim_new_local_branch,
+				N_("second guess 'git checkout no-such-branch'")),
 		OPT_END(),
 	};
 
