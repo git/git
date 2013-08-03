@@ -188,7 +188,7 @@ int cmd_checkout_index(int argc, const char **argv, const char *prefix)
 		OPT__FORCE(&force, N_("force overwrite of existing files")),
 		OPT__QUIET(&quiet,
 			N_("no warning for existing files and files not in index")),
-		OPT_BOOLEAN('n', "no-create", &not_new,
+		OPT_BOOL('n', "no-create", &not_new,
 			N_("don't checkout new files")),
 		{ OPTION_CALLBACK, 'u', "index", &newfd, NULL,
 			N_("update stat information in the index file"),
