@@ -483,7 +483,7 @@ static int copy(int argc, const char **argv, const char *prefix)
 	const char *rewrite_cmd = NULL;
 	struct option options[] = {
 		OPT__FORCE(&force, N_("replace existing notes")),
-		OPT_BOOLEAN(0, "stdin", &from_stdin, N_("read objects from stdin")),
+		OPT_BOOL(0, "stdin", &from_stdin, N_("read objects from stdin")),
 		OPT_STRING(0, "for-rewrite", &rewrite_cmd, N_("command"),
 			   N_("load rewriting config for <command> (implies "
 			      "--stdin)")),
@@ -853,7 +853,7 @@ static int remove_cmd(int argc, const char **argv, const char *prefix)
 		OPT_BIT(0, "ignore-missing", &flag,
 			N_("attempt to remove non-existent note is not an error"),
 			IGNORE_MISSING),
-		OPT_BOOLEAN(0, "stdin", &from_stdin,
+		OPT_BOOL(0, "stdin", &from_stdin,
 			    N_("read object names from the standard input")),
 		OPT_END()
 	};

@@ -62,7 +62,7 @@ int cmd_mv(int argc, const char **argv, const char *prefix)
 		OPT__VERBOSE(&verbose, N_("be verbose")),
 		OPT__DRY_RUN(&show_only, N_("dry run")),
 		OPT__FORCE(&force, N_("force move/rename even if target exists")),
-		OPT_BOOLEAN('k', NULL, &ignore_errors, N_("skip move/rename errors")),
+		OPT_BOOL('k', NULL, &ignore_errors, N_("skip move/rename errors")),
 		OPT_END(),
 	};
 	const char **source, **destination, **dest_path;

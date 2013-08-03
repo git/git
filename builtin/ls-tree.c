@@ -138,9 +138,9 @@ int cmd_ls_tree(int argc, const char **argv, const char *prefix)
 			LS_NAME_ONLY),
 		OPT_SET_INT(0, "full-name", &chomp_prefix,
 			    N_("use full path names"), 0),
-		OPT_BOOLEAN(0, "full-tree", &full_tree,
-			    N_("list entire tree; not just current directory "
-			       "(implies --full-name)")),
+		OPT_BOOL(0, "full-tree", &full_tree,
+			 N_("list entire tree; not just current directory "
+			    "(implies --full-name)")),
 		OPT__ABBREV(&abbrev),
 		OPT_END()
 	};

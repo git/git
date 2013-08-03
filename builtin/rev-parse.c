@@ -346,9 +346,9 @@ static int cmd_parseopt(int argc, const char **argv, const char *prefix)
 		NULL
 	};
 	static struct option parseopt_opts[] = {
-		OPT_BOOLEAN(0, "keep-dashdash", &keep_dashdash,
+		OPT_BOOL(0, "keep-dashdash", &keep_dashdash,
 					N_("keep the `--` passed as an arg")),
-		OPT_BOOLEAN(0, "stop-at-non-option", &stop_at_non_option,
+		OPT_BOOL(0, "stop-at-non-option", &stop_at_non_option,
 					N_("stop parsing after the "
 					   "first non-option argument")),
 		OPT_END(),
