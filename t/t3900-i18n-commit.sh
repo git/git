@@ -34,9 +34,9 @@ test_expect_success 'no encoding header for base case' '
 	test z = "z$E"
 '
 
-test_expect_failure 'UTF-16 refused because of NULs' '
+test_expect_success 'UTF-16 refused because of NULs' '
 	echo UTF-16 >F &&
-	git commit -a -F "$TEST_DIRECTORY"/t3900/UTF-16.txt
+	test_must_fail git commit -a -F "$TEST_DIRECTORY"/t3900/UTF-16.txt
 '
 
 test_expect_success 'UTF-8 invalid characters refused' '
