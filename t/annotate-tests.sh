@@ -245,8 +245,8 @@ test_expect_success 'setup -L :regex' '
 	git commit -m "hello" &&
 
 	mv hello.c hello.orig &&
-	sed -e "/}/i\\
-	Qputs(\"goodbye\");" <hello.orig | tr Q "\\t" >hello.c &&
+	sed -e "/}/ {x; s/$/Qputs(\"goodbye\");/; G;}" <hello.orig |
+	tr Q "\\t" >hello.c &&
 	GIT_AUTHOR_NAME="G" GIT_AUTHOR_EMAIL="G@test.git" \
 	git commit -a -m "goodbye" &&
 
