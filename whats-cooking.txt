@@ -1,10 +1,10 @@
 To: git@vger.kernel.org
 Bcc: lwn@lwn.net
-Subject: What's cooking in git.git (Aug 2013, #01; Thu, 1)
-X-master-at: 304852fc77847e649c746db95e9c4675c03ee567
-X-next-at: d151a9437b346971b08e58455c2b1333b2139cdc
+Subject: What's cooking in git.git (Aug 2013, #02; Mon, 5)
+X-master-at: fb5657082148297b61fbca7e64d51c1e7870309a
+X-next-at: bd48715ffb07f749d234547613e0616af41e5079
 
-What's cooking in git.git (Aug 2013, #01; Thu, 1)
+What's cooking in git.git (Aug 2013, #02; Mon, 5)
 --------------------------------------------------
 
 Here are the topics that have been cooking.  Commits prefixed with
@@ -22,53 +22,83 @@ of the repositories listed at
 --------------------------------------------------
 [Graduated to "master"]
 
-* jc/rm-submodule-error-message (2013-07-25) 1 commit
- + builtin/rm.c: consolidate error reporting for removing submodules
+* rj/cygwin-clarify-use-of-cheating-lstat (2013-07-18) 1 commit
+  (merged to 'next' on 2013-08-01 at 3ebfe7c)
+ + cygwin: Remove the Win32 l/stat() implementation
 
+ Cygwin port added a "not quite correct but a lot faster and good
+ enough for many lstat() calls that are only used to see if the
+ working tree entity matches the index entry" lstat() emulation some
+ time ago, and it started biting us in places.  This removes it and
+ uses the standard lstat() that comes with Cygwin.
 
-* jx/clean-interactive (2013-07-24) 2 commits
-  (merged to 'next' on 2013-07-30 at b7fd474)
- + git-clean: implement partial matching for selection
-  (merged to 'next' on 2013-07-24 at 1e63bb9)
- + Documentation/git-clean: fix description for range
-
-
-* lf/echo-n-is-not-portable (2013-07-29) 1 commit
-  (merged to 'next' on 2013-07-30 at e223ceb)
- + Avoid using `echo -n` anywhere
-
-
-* ma/hg-to-git (2013-07-23) 1 commit
-  (merged to 'next' on 2013-07-30 at 1dddc06)
- + hg-to-git: --allow-empty-message in git commit
-
-
-* ms/subtree-install-fix (2013-07-30) 1 commit
- + contrib/subtree: Fix make install target
-
-
-* ob/typofixes (2013-07-29) 1 commit
-  (merged to 'next' on 2013-07-30 at ec2c897)
- + many small typofixes
+ Recent topic that uses lstat on packed-refs file is broken when
+ this cheating lstat is used, and this is a simplest fix that is
+ also the cleanest direction to go in the long run.
 
 --------------------------------------------------
 [New Topics]
 
-* mb/docs-favor-en-us (2013-08-01) 1 commit
- - Provide some linguistic guidance for the documentation.
+* es/blame-L-more (2013-08-05) 11 commits
+ - blame: reject empty ranges -L,+0 and -L,-0
+ - t8001/t8002: blame: demonstrate acceptance of bogus -L,+0 and -L,-0
+ - blame: reject empty ranges -LX,+0 and -LX,-0
+ - t8001/t8002: blame: demonstrate acceptance of bogus -LX,+0 and -LX,-0
+ - log: fix -L bounds checking bug
+ - t4211: retire soon-to-be unimplementable tests
+ - t4211: log: demonstrate -L bounds checking bug
+ - blame: fix -L bounds checking bug
+ - t8001/t8002: blame: add empty file & partial-line tests
+ - t8001/t8002: blame: demonstrate -L bounds checking bug
+ - t8001/t8002: blame: decompose overly-large test
+
+ More fixes to the code to parse the "-L" option in "log" and "blame".
 
  Will merge to and cook in 'next'.
 
 
-* jc/parseopt-command-modes (2013-07-30) 2 commits
- - tag: use OPT_CMDMODE
- - parse-options: add OPT_CMDMODE()
+* jk/cat-file-batch-optim (2013-08-05) 1 commit
+ - cat-file: only split on whitespace when %(rest) is used
 
- Many commands use --dashed-option as a operation mode selector
- (e.g. "git tag --delete") that the user can use at most one
- (e.g. "git tag --delete --verify" is a nonsense) and you cannot
- negate (e.g. "git tag --no-delete" is a nonsense).  Make it easier
- for users of parse_options() to enforce these restrictions.
+ Rework the reverted change to `cat-file --batch-check`.
+
+ Will merge to and cook in 'next'.
+
+
+* jn/post-receive-utf8 (2013-08-05) 3 commits
+ - hooks/post-receive-email: set declared encoding to utf-8
+ - hooks/post-receive-email: force log messages in UTF-8
+ - hooks/post-receive-email: use plumbing instead of git log/show
+
+ Update post-receive-email script to make sure the message contents
+ and pathnames are encoded consistently in UTF-8.
+
+ I have a feeling that it is a lost cause to solve the issue the
+ topic tries to address in general, because the patch text can have
+ payload in any encodings that are different from either the
+ pathnames or the log message.  Patches that touch paths that use an
+ encoding that conflicts with the encoding of the payload and/or the
+ log message could be transferred with core.quotepath set and patch
+ generated as all binary, but that would be pretty much useless.
+
+
+* sb/parseopt-boolean-removal (2013-08-05) 9 commits
+ - revert: use the OPT_CMDMODE for parsing, reducing code
+ - checkout-index: Fix negations of even numbers of -n
+ - config parsing options: allow one flag multiple times
+ - hash-object: Replace stdin parsing OPT_BOOLEAN by OPT_COUNTUP
+ - branch, commit, name-rev: ease up boolean conditions
+ - checkout: remove superfluous local variable
+ - log, format-patch: parsing uses OPT__QUIET
+ - Replace deprecated OPT_BOOLEAN by OPT_BOOL
+ - Remove deprecated OPTION_BOOLEAN for parsing arguments
+ (this branch uses jc/parseopt-command-modes.)
+
+ Convert most uses of OPT_BOOLEAN/OPTION_BOOLEAN that can use
+ OPT_BOOL/OPTION_BOOLEAN which have much saner semantics, and turn
+ remaining ones into OPT_SET_INT, OPT_COUNTUP, etc. as necessary;
+ there seems to be some misconversion that makes many tests fail,
+ though.
 
 --------------------------------------------------
 [Stalled]
@@ -178,7 +208,26 @@ of the repositories listed at
 --------------------------------------------------
 [Cooking]
 
-* tr/log-full-diff-keep-true-parents (2013-08-01) 1 commit
+* mb/docs-favor-en-us (2013-08-01) 1 commit
+ - Provide some linguistic guidance for the documentation.
+
+ Will merge to and cook in 'next'.
+
+
+* jc/parseopt-command-modes (2013-07-30) 2 commits
+ - tag: use OPT_CMDMODE
+ - parse-options: add OPT_CMDMODE()
+ (this branch is used by sb/parseopt-boolean-removal.)
+
+ Many commands use --dashed-option as a operation mode selector
+ (e.g. "git tag --delete") that the user can use at most one
+ (e.g. "git tag --delete --verify" is a nonsense) and you cannot
+ negate (e.g. "git tag --no-delete" is a nonsense).  Make it easier
+ for users of parse_options() to enforce these restrictions.
+
+
+* tr/log-full-diff-keep-true-parents (2013-08-05) 2 commits
+ - log: use true parents for diff when walking reflogs
  - log: use true parents for diff even when rewriting
 
  Output from "git log --full-diff -- <pathspec>" looked strange,
@@ -186,22 +235,20 @@ of the repositories listed at
  the specified <pathspec>, causing the patches for paths outside the
  pathspec to show more than the single commit has changed.
 
- I am not sure if that is necessarily a problem, though.  Output
- from "git log --full-diff -2 -- <pathspec>" without this change
- will be applicable to some codebase, but after this change that
- will no longer be true (you will get only tiny parts of the change
- that were made by the two commits in question, while missing all
- the other changes).
+ Tweak "git reflog -p" for the same reason using the same mechanism.
 
 
-* bc/unuse-packfile (2013-08-01) 2 commits
+* bc/unuse-packfile (2013-08-02) 2 commits
  - Don't close pack fd when free'ing pack windows
  - sha1_file: introduce close_one_pack() to close packs on fd pressure
 
  Will merge to and cook in 'next'.
 
 
-* da/darwin (2013-07-30) 1 commit
+* da/darwin (2013-08-05) 3 commits
+  (merged to 'next' on 2013-08-05 at 5c54cfa)
+ + OS X: Fix redeclaration of die warning
+ + Makefile: Fix APPLE_COMMON_CRYPTO with BLK_SHA1
   (merged to 'next' on 2013-08-01 at d151a94)
  + imap-send: use Apple's Security framework for base64 encoding
 
@@ -255,7 +302,9 @@ of the repositories listed at
  Will cook in 'next'.
 
 
-* db/http-savecookies (2013-07-30) 1 commit
+* db/http-savecookies (2013-08-05) 2 commits
+  (merged to 'next' on 2013-08-05 at be6f3a3)
+ + t5551: Remove header from curl cookie file
   (merged to 'next' on 2013-07-30 at d2ad6e5)
  + http: add http.savecookies option to write out HTTP cookies
 
@@ -428,7 +477,10 @@ of the repositories listed at
  Will hold, until we get any user.
 
 
-* jc/push-cas (2013-08-01) 7 commits
+* jc/push-cas (2013-08-02) 9 commits
+  (merged to 'next' on 2013-08-05 at 34f4cf3)
+ + push: teach --force-with-lease to smart-http transport
+ + send-pack: fix parsing of --force-with-lease option
   (merged to 'next' on 2013-08-01 at a7604ee)
  + t5540/5541: smart-http does not support "--force-with-lease"
   (merged to 'next' on 2013-07-23 at 72371b0)
@@ -453,9 +505,6 @@ of the repositories listed at
  defeating the safety pretty easily).  It is suitable only for the
  simplest workflows, and it may hurt users more than it helps them.
 
- Also, smart-http needs to be taught about this before we can move
- it forward.
-
  Will cook in 'next'.
 
 
@@ -475,23 +524,6 @@ of the repositories listed at
  for full discussion.
 
  Will cook in 'next'.
-
-
-* rj/cygwin-clarify-use-of-cheating-lstat (2013-07-18) 1 commit
-  (merged to 'next' on 2013-08-01 at 3ebfe7c)
- + cygwin: Remove the Win32 l/stat() implementation
-
- Cygwin port added a "not quite correct but a lot faster and good
- enough for many lstat() calls that are only used to see if the
- working tree entity matches the index entry" lstat() emulation some
- time ago, and it started biting us in places.  This removes it and
- uses the standard lstat() that comes with Cygwin.
-
- Recent topic that uses lstat on packed-refs file is broken when
- this cheating lstat is used, and this is a simplest fix that is
- also the cleanest direction to go in the long run.
-
- Will merge to 'master'.
 
 
 * jc/reflog-doc (2013-06-19) 1 commit
