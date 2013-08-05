@@ -28,7 +28,7 @@ people using 80-column terminals.
 	This is a shorthand for "--pretty=oneline --abbrev-commit"
 	used together.
 
---encoding[=<encoding>]::
+--encoding=<encoding>::
 	The commit objects record the encoding used for the log message
 	in their encoding header; this option can be used to tell the
 	command to re-code the commit log message in the encoding
