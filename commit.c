@@ -1416,7 +1416,7 @@ static int find_invalid_utf8(const char *buf, int len)
 		if ((codepoint & 0x1ff800) == 0xd800)
 			return bad_offset;
 		/* U+xxFFFE and U+xxFFFF are guaranteed non-characters. */
-		if ((codepoint & 0xffffe) == 0xfffe)
+		if ((codepoint & 0xfffe) == 0xfffe)
 			return bad_offset;
 		/* So are anything in the range U+FDD0..U+FDEF. */
 		if (codepoint >= 0xfdd0 && codepoint <= 0xfdef)
