@@ -72,8 +72,6 @@ produced by --stat etc.
 	give zero or one positive revision arguments.
 	You can specify this option more than once.
 +
-<start> and <end> can take one of these forms:
-
 include::line-range-format.txt[]
 
 <revision range>::
