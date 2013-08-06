@@ -23,7 +23,7 @@ static void range_set_grow(struct range_set *rs, size_t extra)
 /* Either initialization would be fine */
 #define RANGE_SET_INIT {0}
 
-static void range_set_init(struct range_set *rs, size_t prealloc)
+void range_set_init(struct range_set *rs, size_t prealloc)
 {
 	rs->alloc = rs->nr = 0;
 	rs->ranges = NULL;
@@ -31,7 +31,7 @@ static void range_set_init(struct range_set *rs, size_t prealloc)
 		range_set_grow(rs, prealloc);
 }
 
-static void range_set_release(struct range_set *rs)
+void range_set_release(struct range_set *rs)
 {
 	free(rs->ranges);
 	rs->alloc = rs->nr = 0;
@@ -56,7 +56,7 @@ static void range_set_move(struct range_set *dst, struct range_set *src)
 }
 
 /* tack on a _new_ range _at the end_ */
-static void range_set_append_unsafe(struct range_set *rs, long a, long b)
+void range_set_append_unsafe(struct range_set *rs, long a, long b)
 {
 	assert(a <= b);
 	range_set_grow(rs, 1);
@@ -65,7 +65,7 @@ static void range_set_append_unsafe(struct range_set *rs, long a, long b)
 	rs->nr++;
 }
 
-static void range_set_append(struct range_set *rs, long a, long b)
+void range_set_append(struct range_set *rs, long a, long b)
 {
 	assert(rs->nr == 0 || rs->ranges[rs->nr-1].end <= a);
 	range_set_append_unsafe(rs, a, b);
@@ -107,7 +107,7 @@ static void range_set_check_invariants(struct range_set *rs)
  * In-place pass of sorting and merging the ranges in the range set,
  * to establish the invariants when we get the ranges from the user
  */
-static void sort_and_merge_range_set(struct range_set *rs)
+void sort_and_merge_range_set(struct range_set *rs)
 {
 	int i;
 	int o = 0; /* output cursor */

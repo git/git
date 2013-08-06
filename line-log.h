@@ -25,6 +25,18 @@ struct diff_ranges {
 	struct range_set target;
 };
 
+extern void range_set_init(struct range_set *, size_t prealloc);
+extern void range_set_release(struct range_set *);
+/* Range includes start; excludes end */
+extern void range_set_append_unsafe(struct range_set *, long start, long end);
+/* New range must begin at or after end of last added range */
+extern void range_set_append(struct range_set *, long start, long end);
+/*
+ * In-place pass of sorting and merging the ranges in the range set,
+ * to sort and make the ranges disjoint.
+ */
+extern void sort_and_merge_range_set(struct range_set *);
+
 /* Linked list of interesting files and their associated ranges.  The
  * list must be kept sorted by path.
  *
