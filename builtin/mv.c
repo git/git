@@ -58,7 +58,7 @@ static struct lock_file lock_file;
 
 int cmd_mv(int argc, const char **argv, const char *prefix)
 {
-	int i, newfd;
+	int i, newfd, gitmodules_modified = 0;
 	int verbose = 0, show_only = 0, force = 0, ignore_errors = 0;
 	struct option builtin_mv_options[] = {
 		OPT__VERBOSE(&verbose, N_("be verbose")),
@@ -72,6 +72,7 @@ int cmd_mv(int argc, const char **argv, const char *prefix)
 	struct stat st;
 	struct string_list src_for_dst = STRING_LIST_INIT_NODUP;
 
+	gitmodules_config();
 	git_config(git_default_config, NULL);
 
 	argc = parse_options(argc, argv, prefix, builtin_mv_options,
@@ -125,6 +126,8 @@ int cmd_mv(int argc, const char **argv, const char *prefix)
 				struct strbuf submodule_dotgit = STRBUF_INIT;
 				if (!S_ISGITLINK(active_cache[first]->ce_mode))
 					die (_("Huh? Directory %s is in index and no submodule?"), src);
+				if (!is_staging_gitmodules_ok())
+					die (_("Please, stage your changes to .gitmodules or stash them to proceed"));
 				strbuf_addf(&submodule_dotgit, "%s/.git", src);
 				submodule_gitfile[i] = read_gitfile(submodule_dotgit.buf);
 				if (submodule_gitfile[i])
@@ -229,6 +232,8 @@ int cmd_mv(int argc, const char **argv, const char *prefix)
 				die_errno (_("renaming '%s' failed"), src);
 			if (submodule_gitfile[i])
 				connect_work_tree_and_git_dir(dst, submodule_gitfile[i]);
+			if (!update_path_in_gitmodules(src, dst))
+				gitmodules_modified = 1;
 		}
 
 		if (mode == WORKING_DIRECTORY)
@@ -239,6 +244,9 @@ int cmd_mv(int argc, const char **argv, const char *prefix)
 		if (!show_only)
 			rename_cache_entry_at(pos, dst);
 	}
+
+	if (gitmodules_modified)
+		stage_updated_gitmodules();
 
 	if (active_cache_changed) {
 		if (write_cache(newfd, active_cache, active_nr) ||

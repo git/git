@@ -49,6 +49,8 @@ SUBMODULES
 Moving a submodule using a gitfile (which means they were cloned
 with a Git version 1.7.8 or newer) will update the gitfile and
 core.worktree setting to make the submodule work in the new location.
+It also will attempt to update the submodule.<name>.path setting in
+the linkgit:gitmodules[5] file and stage that file (unless -n is used).
 
 GIT
 ---
