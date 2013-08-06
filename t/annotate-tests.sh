@@ -185,15 +185,15 @@ test_expect_success 'blame -L Y,X (undocumented)' '
 	check_count -L6,3 B 1 B1 1 B2 1 D 1
 '
 
-test_expect_failure 'blame -L -X' '
+test_expect_success 'blame -L -X' '
 	test_must_fail $PROG -L-1 file
 '
 
-test_expect_failure 'blame -L 0' '
+test_expect_success 'blame -L 0' '
 	test_must_fail $PROG -L0 file
 '
 
-test_expect_failure 'blame -L ,0' '
+test_expect_success 'blame -L ,0' '
 	test_must_fail $PROG -L,0 file
 '
 
@@ -447,8 +447,8 @@ test_expect_success 'blame empty' '
 	check_count -h HEAD^^ -f incremental
 '
 
-test_expect_success 'blame -L 0 empty (undocumented)' '
-	check_count -h HEAD^^ -f incremental -L0
+test_expect_success 'blame -L 0 empty' '
+	test_must_fail $PROG -L0 incremental HEAD^^
 '
 
 test_expect_success 'blame -L 1 empty' '
@@ -463,8 +463,8 @@ test_expect_success 'blame half' '
 	check_count -h HEAD^ -f incremental I 1
 '
 
-test_expect_success 'blame -L 0 half (undocumented)' '
-	check_count -h HEAD^ -f incremental -L0 I 1
+test_expect_success 'blame -L 0 half' '
+	test_must_fail $PROG -L0 incremental HEAD^
 '
 
 test_expect_success 'blame -L 1 half' '
@@ -483,8 +483,8 @@ test_expect_success 'blame full' '
 	check_count -f incremental I 1
 '
 
-test_expect_success 'blame -L 0 full (undocumented)' '
-	check_count -f incremental -L0 I 1
+test_expect_success 'blame -L 0 full' '
+	test_must_fail $PROG -L0 incremental
 '
 
 test_expect_success 'blame -L 1 full' '

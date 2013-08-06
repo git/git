@@ -54,8 +54,11 @@ static const char *parse_loc(const char *spec, nth_line_fn_t nth_line,
 	}
 	num = strtol(spec, &term, 10);
 	if (term != spec) {
-		if (ret)
+		if (ret) {
+			if (num <= 0)
+				die("-L invalid line number: %ld", num);
 			*ret = num;
+		}
 		return term;
 	}
 
