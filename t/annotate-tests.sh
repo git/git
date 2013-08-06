@@ -323,6 +323,23 @@ test_expect_success 'blame -L /RE/ (relative: end-of-file)' '
 	test_must_fail $PROG -L, -L/$/ file
 '
 
+test_expect_success 'blame -L ^/RE/ (absolute)' '
+	check_count -L3,3 -L^/dog/,+2 A 1 B2 1
+'
+
+test_expect_success 'blame -L ^/RE/ (absolute: no preceding range)' '
+	check_count -L^/dog/,+2 A 1 B2 1
+'
+
+test_expect_success 'blame -L ^/RE/ (absolute: not found)' '
+	test_must_fail $PROG -L4,4 -L^/tambourine/ file
+'
+
+test_expect_success 'blame -L ^/RE/ (absolute: end-of-file)' '
+	n=$(expr $(wc -l <file) + 1) &&
+	check_count -L$n -L^/$/,+2 A 1 C 1 E 1
+'
+
 test_expect_success 'setup -L :regex' '
 	tr Q "\\t" >hello.c <<-\EOF &&
 	int main(int argc, const char *argv[])
@@ -463,4 +480,8 @@ test_expect_success 'blame -L X,+N (non-numeric N)' '
 
 test_expect_success 'blame -L X,-N (non-numeric N)' '
 	test_must_fail $PROG -L1,-N file
+'
+
+test_expect_success 'blame -L ,^/RE/' '
+	test_must_fail $PROG -L1,^/99/ file
 '

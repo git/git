@@ -59,8 +59,14 @@ static const char *parse_loc(const char *spec, nth_line_fn_t nth_line,
 		return term;
 	}
 
-	if (begin < 0)
-		begin = -begin;
+	if (begin < 0) {
+		if (spec[0] != '^')
+			begin = -begin;
+		else {
+			begin = 1;
+			spec++;
+		}
+	}
 
 	if (spec[0] != '/')
 		return spec;
