@@ -22,6 +22,7 @@
 #include "utf8.h"
 #include "userdiff.h"
 #include "line-range.h"
+#include "line-log.h"
 
 static char blame_usage[] = N_("git blame [options] [rev-opts] [rev] [--] file");
 
@@ -2233,29 +2234,18 @@ static int blame_move_callback(const struct option *option, const char *arg, int
 	return 0;
 }
 
-static int blame_bottomtop_callback(const struct option *option, const char *arg, int unset)
-{
-	const char **bottomtop = option->value;
-	if (!arg)
-		return -1;
-	if (*bottomtop)
-		die("More than one '-L n,m' option given");
-	*bottomtop = arg;
-	return 0;
-}
-
 int cmd_blame(int argc, const char **argv, const char *prefix)
 {
 	struct rev_info revs;
 	const char *path;
 	struct scoreboard sb;
 	struct origin *o;
-	struct blame_entry *ent;
-	long dashdash_pos, bottom, top, lno;
+	struct blame_entry *ent = NULL;
+	long dashdash_pos, lno;
 	const char *final_commit_name = NULL;
 	enum object_type type;
 
-	static const char *bottomtop = NULL;
+	static struct string_list range_list;
 	static int output_option = 0, opt = 0;
 	static int show_stats = 0;
 	static const char *revs_file = NULL;
@@ -2281,13 +2271,15 @@ int cmd_blame(int argc, const char **argv, const char *prefix)
 		OPT_STRING(0, "contents", &contents_from, N_("file"), N_("Use <file>'s contents as the final image")),
 		{ OPTION_CALLBACK, 'C', NULL, &opt, N_("score"), N_("Find line copies within and across files"), PARSE_OPT_OPTARG, blame_copy_callback },
 		{ OPTION_CALLBACK, 'M', NULL, &opt, N_("score"), N_("Find line movements within and across files"), PARSE_OPT_OPTARG, blame_move_callback },
-		OPT_CALLBACK('L', NULL, &bottomtop, N_("n,m"), N_("Process only line range n,m, counting from 1"), blame_bottomtop_callback),
+		OPT_STRING_LIST('L', NULL, &range_list, N_("n,m"), N_("Process only line range n,m, counting from 1")),
 		OPT__ABBREV(&abbrev),
 		OPT_END()
 	};
 
 	struct parse_opt_ctx_t ctx;
 	int cmd_is_annotate = !strcmp(argv[0], "annotate");
+	struct range_set ranges;
+	unsigned int range_i;
 
 	git_config(git_blame_config, NULL);
 	init_revisions(&revs, NULL);
@@ -2480,23 +2472,46 @@ parse_done:
 	num_read_blob++;
 	lno = prepare_lines(&sb);
 
-	bottom = top = 0;
-	if (bottomtop && parse_range_arg(bottomtop, nth_line_cb, &sb, lno,
-					 &bottom, &top, sb.path))
-		usage(blame_usage);
-	if (lno < top || ((lno || bottom) && lno < bottom))
-		die("file %s has only %lu lines", path, lno);
-	if (bottom < 1)
-		bottom = 1;
-	if (top < 1)
-		top = lno;
-	bottom--;
+	if (lno && !range_list.nr)
+		string_list_append(&range_list, xstrdup("1"));
 
-	ent = xcalloc(1, sizeof(*ent));
-	ent->lno = bottom;
-	ent->num_lines = top - bottom;
-	ent->suspect = o;
-	ent->s_lno = bottom;
+	range_set_init(&ranges, range_list.nr);
+	for (range_i = 0; range_i < range_list.nr; ++range_i) {
+		long bottom, top;
+		if (parse_range_arg(range_list.items[range_i].string,
+				    nth_line_cb, &sb, lno,
+				    &bottom, &top, sb.path))
+			usage(blame_usage);
+		if (lno < top || ((lno || bottom) && lno < bottom))
+			die("file %s has only %lu lines", path, lno);
+		if (bottom < 1)
+			bottom = 1;
+		if (top < 1)
+			top = lno;
+		bottom--;
+		range_set_append_unsafe(&ranges, bottom, top);
+	}
+	sort_and_merge_range_set(&ranges);
+
+	for (range_i = ranges.nr; range_i > 0; --range_i) {
+		const struct range *r = &ranges.ranges[range_i - 1];
+		long bottom = r->start;
+		long top = r->end;
+		struct blame_entry *next = ent;
+		ent = xcalloc(1, sizeof(*ent));
+		ent->lno = bottom;
+		ent->num_lines = top - bottom;
+		ent->suspect = o;
+		ent->s_lno = bottom;
+		ent->next = next;
+		if (next)
+			next->prev = ent;
+		origin_incref(o);
+	}
+	origin_decref(o);
+
+	range_set_release(&ranges);
+	string_list_clear(&range_list, 0);
 
 	sb.ent = ent;
 	sb.path = path;
