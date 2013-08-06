@@ -591,7 +591,7 @@ parse_lines(struct commit *commit, const char *prefix, struct string_list *args)
 		cb_data.line_ends = ends;
 
 		if (parse_range_arg(range_part, nth_line, &cb_data,
-				    lines, &begin, &end,
+				    lines, 1, &begin, &end,
 				    full_name))
 			die("malformed -L argument '%s'", range_part);
 		if (lines < end || ((lines || begin) && lines < begin))

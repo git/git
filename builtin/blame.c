@@ -2479,7 +2479,7 @@ parse_done:
 	for (range_i = 0; range_i < range_list.nr; ++range_i) {
 		long bottom, top;
 		if (parse_range_arg(range_list.items[range_i].string,
-				    nth_line_cb, &sb, lno,
+				    nth_line_cb, &sb, lno, 1,
 				    &bottom, &top, sb.path))
 			usage(blame_usage);
 		if (lno < top || ((lno || bottom) && lno < bottom))
