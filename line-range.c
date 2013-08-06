@@ -173,6 +173,11 @@ static const char *parse_range_funcname(const char *arg, nth_line_fn_t nth_line_
 	int reg_error;
 	regex_t regexp;
 
+	if (*arg == '^') {
+		anchor = 1;
+		arg++;
+	}
+
 	assert(*arg == ':');
 	term = arg+1;
 	while (*term && *term != ':') {
@@ -245,7 +250,7 @@ int parse_range_arg(const char *arg, nth_line_fn_t nth_line_cb,
 	if (anchor > lines)
 		anchor = lines + 1;
 
-	if (*arg == ':') {
+	if (*arg == ':' || (*arg == '^' && *(arg + 1) == ':')) {
 		arg = parse_range_funcname(arg, nth_line_cb, cb_data, lines, anchor, begin, end, path);
 		if (!arg || *arg)
 			return -1;
@@ -270,7 +275,7 @@ int parse_range_arg(const char *arg, nth_line_fn_t nth_line_cb,
 
 const char *skip_range_arg(const char *arg)
 {
-	if (*arg == ':')
+	if (*arg == ':' || (*arg == '^' && *(arg + 1) == ':'))
 		return parse_range_funcname(arg, NULL, NULL, 0, 0, NULL, NULL, NULL);
 
 	arg = parse_loc(arg, NULL, NULL, 0, -1, NULL);

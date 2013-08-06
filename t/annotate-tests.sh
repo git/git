@@ -398,6 +398,23 @@ test_expect_success 'blame -L :RE (relative: end-of-file)' '
 	test_must_fail $PROG -L, -L:main hello.c
 '
 
+test_expect_success 'blame -L ^:RE (absolute)' '
+	check_count -f hello.c -L3,3 -L^:ma.. F 4 G 1
+'
+
+test_expect_success 'blame -L ^:RE (absolute: no preceding range)' '
+	check_count -f hello.c -L^:ma.. F 4 G 1
+'
+
+test_expect_success 'blame -L ^:RE (absolute: not found)' '
+	test_must_fail $PROG -L4,4 -L^:tambourine hello.c
+'
+
+test_expect_success 'blame -L ^:RE (absolute: end-of-file)' '
+	n=$(printf "%d" $(wc -l <hello.c)) &&
+	check_count -f hello.c -L$n -L^:ma.. F 4 G 1 H 1
+'
+
 test_expect_success 'setup incremental' '
 	(
 	GIT_AUTHOR_NAME=I &&
