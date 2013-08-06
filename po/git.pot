@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: Git Mailing List <git@vger.kernel.org>\n"
-"POT-Creation-Date: 2013-07-26 14:19+0800\n"
+"POT-Creation-Date: 2013-08-06 14:10+0800\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -250,7 +250,7 @@ msgstr ""
 msgid "unrecognized header: %s%s (%d)"
 msgstr ""
 
-#: bundle.c:89 builtin/commit.c:683
+#: bundle.c:89 builtin/commit.c:697
 #, c-format
 msgid "could not open '%s'"
 msgstr ""
@@ -484,48 +484,48 @@ msgstr ""
 msgid "'%s': short read %s"
 msgstr ""
 
-#: help.c:213
+#: help.c:210
 #, c-format
 msgid "available git commands in '%s'"
 msgstr ""
 
-#: help.c:220
+#: help.c:217
 msgid "git commands available from elsewhere on your $PATH"
 msgstr ""
 
-#: help.c:236
+#: help.c:233
 msgid "The most commonly used git commands are:"
 msgstr ""
 
-#: help.c:293
+#: help.c:290
 #, c-format
 msgid ""
 "'%s' appears to be a git command, but we were not\n"
 "able to execute it. Maybe git-%s is broken?"
 msgstr ""
 
-#: help.c:350
+#: help.c:347
 msgid "Uh oh. Your system reports no Git commands at all."
 msgstr ""
 
-#: help.c:372
+#: help.c:369
 #, c-format
 msgid ""
 "WARNING: You called a Git command named '%s', which does not exist.\n"
 "Continuing under the assumption that you meant '%s'"
 msgstr ""
 
-#: help.c:377
+#: help.c:374
 #, c-format
 msgid "in %0.1f seconds automatically..."
 msgstr ""
 
-#: help.c:384
+#: help.c:381
 #, c-format
 msgid "git: '%s' is not a git command. See 'git --help'."
 msgstr ""
 
-#: help.c:388 help.c:447
+#: help.c:385 help.c:444
 msgid ""
 "\n"
 "Did you mean this?"
@@ -535,7 +535,7 @@ msgid_plural ""
 msgstr[0] ""
 msgstr[1] ""
 
-#: help.c:443
+#: help.c:440
 #, c-format
 msgid "%s: %s - %s"
 msgstr ""
@@ -1155,7 +1155,7 @@ msgid ""
 "\n"
 "where \"$br\" is somehow empty and a 40-hex ref is created. Please\n"
 "examine these refs and maybe delete them. Turn this message off by\n"
-"running \"git config advice.object_name_warning false\""
+"running \"git config advice.objectNameWarning false\""
 msgstr ""
 
 #: sha1_name.c:1097
@@ -1654,7 +1654,7 @@ msgstr ""
 msgid "unexpected diff status %c"
 msgstr ""
 
-#: builtin/add.c:149 builtin/commit.c:238
+#: builtin/add.c:149 builtin/commit.c:252
 msgid "updating files failed"
 msgstr ""
 
@@ -1703,14 +1703,14 @@ msgstr ""
 msgid "The following paths are ignored by one of your .gitignore files:\n"
 msgstr ""
 
-#: builtin/add.c:394 builtin/clean.c:851 builtin/fetch.c:78 builtin/mv.c:63
+#: builtin/add.c:394 builtin/clean.c:875 builtin/fetch.c:78 builtin/mv.c:63
 #: builtin/prune-packed.c:73 builtin/push.c:451 builtin/remote.c:1253
 #: builtin/rm.c:268
 msgid "dry run"
 msgstr ""
 
 #: builtin/add.c:395 builtin/apply.c:4410 builtin/check-ignore.c:19
-#: builtin/commit.c:1201 builtin/count-objects.c:95 builtin/fsck.c:613
+#: builtin/commit.c:1220 builtin/count-objects.c:95 builtin/fsck.c:613
 #: builtin/log.c:1573 builtin/mv.c:62 builtin/read-tree.c:113
 msgid "be verbose"
 msgstr ""
@@ -1791,8 +1791,8 @@ msgstr ""
 msgid "Maybe you wanted to say 'git add .'?\n"
 msgstr ""
 
-#: builtin/add.c:533 builtin/check-ignore.c:161 builtin/clean.c:895
-#: builtin/commit.c:298 builtin/mv.c:82 builtin/rm.c:297
+#: builtin/add.c:533 builtin/check-ignore.c:161 builtin/clean.c:919
+#: builtin/commit.c:312 builtin/mv.c:82 builtin/rm.c:297
 msgid "index file corrupt"
 msgstr ""
 
@@ -2635,8 +2635,8 @@ msgid "act on remote-tracking branches"
 msgstr ""
 
 #: builtin/branch.c:805 builtin/branch.c:811 builtin/branch.c:832
-#: builtin/branch.c:838 builtin/commit.c:1414 builtin/commit.c:1415
-#: builtin/commit.c:1416 builtin/commit.c:1417 builtin/tag.c:468
+#: builtin/branch.c:838 builtin/commit.c:1433 builtin/commit.c:1434
+#: builtin/commit.c:1435 builtin/commit.c:1436 builtin/tag.c:468
 msgid "commit"
 msgstr ""
 
@@ -2813,43 +2813,43 @@ msgstr ""
 msgid "Need a repository to unbundle."
 msgstr ""
 
-#: builtin/cat-file.c:303
+#: builtin/cat-file.c:285
 msgid "git cat-file (-t|-s|-e|-p|<type>|--textconv) <object>"
 msgstr ""
 
-#: builtin/cat-file.c:304
+#: builtin/cat-file.c:286
 msgid "git cat-file (--batch|--batch-check) < <list_of_objects>"
 msgstr ""
 
-#: builtin/cat-file.c:341
+#: builtin/cat-file.c:323
 msgid "<type> can be one of: blob, tree, commit, tag"
 msgstr ""
 
-#: builtin/cat-file.c:342
+#: builtin/cat-file.c:324
 msgid "show object type"
 msgstr ""
 
-#: builtin/cat-file.c:343
+#: builtin/cat-file.c:325
 msgid "show object size"
 msgstr ""
 
-#: builtin/cat-file.c:345
+#: builtin/cat-file.c:327
 msgid "exit with zero when there's no error"
 msgstr ""
 
-#: builtin/cat-file.c:346
+#: builtin/cat-file.c:328
 msgid "pretty-print object's content"
 msgstr ""
 
-#: builtin/cat-file.c:348
+#: builtin/cat-file.c:330
 msgid "for blob objects, run textconv on object's content"
 msgstr ""
 
-#: builtin/cat-file.c:350
+#: builtin/cat-file.c:332
 msgid "show info and content of objects fed from the standard input"
 msgstr ""
 
-#: builtin/cat-file.c:353
+#: builtin/cat-file.c:335
 msgid "show info about objects fed from the standard input"
 msgstr ""
 
@@ -3299,35 +3299,35 @@ msgid ""
 "           - (empty) finish selecting"
 msgstr ""
 
-#: builtin/clean.c:491
+#: builtin/clean.c:515
 #, c-format
 msgid "Huh (%s)?"
 msgstr ""
 
-#: builtin/clean.c:634
+#: builtin/clean.c:658
 #, c-format
 msgid "Input ignore patterns>> "
 msgstr ""
 
-#: builtin/clean.c:671
+#: builtin/clean.c:695
 #, c-format
 msgid "WARNING: Cannot find items matched by: %s"
 msgstr ""
 
-#: builtin/clean.c:692
+#: builtin/clean.c:716
 msgid "Select items to delete"
 msgstr ""
 
-#: builtin/clean.c:732
+#: builtin/clean.c:756
 #, c-format
 msgid "remove %s? "
 msgstr ""
 
-#: builtin/clean.c:757
+#: builtin/clean.c:781
 msgid "Bye."
 msgstr ""
 
-#: builtin/clean.c:765
+#: builtin/clean.c:789
 msgid ""
 "clean               - start cleaning\n"
 "filter by pattern   - exclude items from deletion\n"
@@ -3338,68 +3338,68 @@ msgid ""
 "?                   - help for prompt selection"
 msgstr ""
 
-#: builtin/clean.c:792
+#: builtin/clean.c:816
 msgid "*** Commands ***"
 msgstr ""
 
-#: builtin/clean.c:793
+#: builtin/clean.c:817
 msgid "What now"
 msgstr ""
 
-#: builtin/clean.c:801
+#: builtin/clean.c:825
 msgid "Would remove the following item:"
 msgid_plural "Would remove the following items:"
 msgstr[0] ""
 msgstr[1] ""
 
-#: builtin/clean.c:818
+#: builtin/clean.c:842
 msgid "No more files to clean, exiting."
 msgstr ""
 
-#: builtin/clean.c:850
+#: builtin/clean.c:874
 msgid "do not print names of files removed"
 msgstr ""
 
-#: builtin/clean.c:852
+#: builtin/clean.c:876
 msgid "force"
 msgstr ""
 
-#: builtin/clean.c:853
+#: builtin/clean.c:877
 msgid "interactive cleaning"
 msgstr ""
 
-#: builtin/clean.c:855
+#: builtin/clean.c:879
 msgid "remove whole directories"
 msgstr ""
 
-#: builtin/clean.c:856 builtin/describe.c:420 builtin/grep.c:716
+#: builtin/clean.c:880 builtin/describe.c:420 builtin/grep.c:716
 #: builtin/ls-files.c:493 builtin/name-rev.c:315 builtin/show-ref.c:186
 msgid "pattern"
 msgstr ""
 
-#: builtin/clean.c:857
+#: builtin/clean.c:881
 msgid "add <pattern> to ignore rules"
 msgstr ""
 
-#: builtin/clean.c:858
+#: builtin/clean.c:882
 msgid "remove ignored files, too"
 msgstr ""
 
-#: builtin/clean.c:860
+#: builtin/clean.c:884
 msgid "remove only ignored files"
 msgstr ""
 
-#: builtin/clean.c:878
+#: builtin/clean.c:902
 msgid "-x and -X cannot be used together"
 msgstr ""
 
-#: builtin/clean.c:882
+#: builtin/clean.c:906
 msgid ""
 "clean.requireForce set to true and neither -i, -n nor -f given; refusing to "
 "clean"
 msgstr ""
 
-#: builtin/clean.c:885
+#: builtin/clean.c:909
 msgid ""
 "clean.requireForce defaults to true and neither -i, -n nor -f given; "
 "refusing to clean"
@@ -3714,96 +3714,109 @@ msgid ""
 "\n"
 "    git commit --allow-empty\n"
 "\n"
-"Otherwise, please use 'git reset'\n"
 msgstr ""
 
-#: builtin/commit.c:265
+#: builtin/commit.c:69
+msgid "Otherwise, please use 'git reset'\n"
+msgstr ""
+
+#: builtin/commit.c:72
+msgid ""
+"If you wish to skip this commit, use:\n"
+"\n"
+"    git reset\n"
+"\n"
+"Then \"git cherry-pick --continue\" will resume cherry-picking\n"
+"the remaining commits.\n"
+msgstr ""
+
+#: builtin/commit.c:279
 msgid "failed to unpack HEAD tree object"
 msgstr ""
 
-#: builtin/commit.c:307
+#: builtin/commit.c:321
 msgid "unable to create temporary index"
 msgstr ""
 
-#: builtin/commit.c:313
+#: builtin/commit.c:327
 msgid "interactive add failed"
 msgstr ""
 
-#: builtin/commit.c:346 builtin/commit.c:367 builtin/commit.c:417
+#: builtin/commit.c:360 builtin/commit.c:381 builtin/commit.c:431
 msgid "unable to write new_index file"
 msgstr ""
 
-#: builtin/commit.c:398
+#: builtin/commit.c:412
 msgid "cannot do a partial commit during a merge."
 msgstr ""
 
-#: builtin/commit.c:400
+#: builtin/commit.c:414
 msgid "cannot do a partial commit during a cherry-pick."
 msgstr ""
 
-#: builtin/commit.c:410
+#: builtin/commit.c:424
 msgid "cannot read the index"
 msgstr ""
 
-#: builtin/commit.c:430
+#: builtin/commit.c:444
 msgid "unable to write temporary index file"
 msgstr ""
 
-#: builtin/commit.c:521 builtin/commit.c:527
+#: builtin/commit.c:535 builtin/commit.c:541
 #, c-format
 msgid "invalid commit: %s"
 msgstr ""
 
-#: builtin/commit.c:549
+#: builtin/commit.c:563
 msgid "malformed --author parameter"
 msgstr ""
 
-#: builtin/commit.c:569
+#: builtin/commit.c:583
 #, c-format
 msgid "Malformed ident string: '%s'"
 msgstr ""
 
-#: builtin/commit.c:607 builtin/commit.c:640 builtin/commit.c:963
+#: builtin/commit.c:621 builtin/commit.c:654 builtin/commit.c:982
 #, c-format
 msgid "could not lookup commit %s"
 msgstr ""
 
-#: builtin/commit.c:619 builtin/shortlog.c:271
+#: builtin/commit.c:633 builtin/shortlog.c:271
 #, c-format
 msgid "(reading log message from standard input)\n"
 msgstr ""
 
-#: builtin/commit.c:621
+#: builtin/commit.c:635
 msgid "could not read log from standard input"
 msgstr ""
 
-#: builtin/commit.c:625
+#: builtin/commit.c:639
 #, c-format
 msgid "could not read log file '%s'"
 msgstr ""
 
-#: builtin/commit.c:631
+#: builtin/commit.c:645
 msgid "commit has empty message"
 msgstr ""
 
-#: builtin/commit.c:647
+#: builtin/commit.c:661
 msgid "could not read MERGE_MSG"
 msgstr ""
 
-#: builtin/commit.c:651
+#: builtin/commit.c:665
 msgid "could not read SQUASH_MSG"
 msgstr ""
 
-#: builtin/commit.c:655
+#: builtin/commit.c:669
 #, c-format
 msgid "could not read '%s'"
 msgstr ""
 
-#: builtin/commit.c:716
+#: builtin/commit.c:730
 msgid "could not write commit template"
 msgstr ""
 
-#: builtin/commit.c:727
+#: builtin/commit.c:741
 #, c-format
 msgid ""
 "\n"
@@ -3813,7 +3826,7 @@ msgid ""
 "and try again.\n"
 msgstr ""
 
-#: builtin/commit.c:732
+#: builtin/commit.c:746
 #, c-format
 msgid ""
 "\n"
@@ -3823,14 +3836,14 @@ msgid ""
 "and try again.\n"
 msgstr ""
 
-#: builtin/commit.c:744
+#: builtin/commit.c:758
 #, c-format
 msgid ""
 "Please enter the commit message for your changes. Lines starting\n"
 "with '%c' will be ignored, and an empty message aborts the commit.\n"
 msgstr ""
 
-#: builtin/commit.c:749
+#: builtin/commit.c:763
 #, c-format
 msgid ""
 "Please enter the commit message for your changes. Lines starting\n"
@@ -3838,351 +3851,351 @@ msgid ""
 "An empty message aborts the commit.\n"
 msgstr ""
 
-#: builtin/commit.c:762
+#: builtin/commit.c:776
 #, c-format
 msgid "%sAuthor:    %s"
 msgstr ""
 
-#: builtin/commit.c:769
+#: builtin/commit.c:783
 #, c-format
 msgid "%sCommitter: %s"
 msgstr ""
 
-#: builtin/commit.c:789
+#: builtin/commit.c:803
 msgid "Cannot read index"
 msgstr ""
 
-#: builtin/commit.c:826
+#: builtin/commit.c:845
 msgid "Error building trees"
 msgstr ""
 
-#: builtin/commit.c:841 builtin/tag.c:359
+#: builtin/commit.c:860 builtin/tag.c:359
 #, c-format
 msgid "Please supply the message using either -m or -F option.\n"
 msgstr ""
 
-#: builtin/commit.c:938
+#: builtin/commit.c:957
 #, c-format
 msgid "No existing author found with '%s'"
 msgstr ""
 
-#: builtin/commit.c:953 builtin/commit.c:1189
+#: builtin/commit.c:972 builtin/commit.c:1208
 #, c-format
 msgid "Invalid untracked files mode '%s'"
 msgstr ""
 
-#: builtin/commit.c:990
+#: builtin/commit.c:1009
 msgid "--long and -z are incompatible"
 msgstr ""
 
-#: builtin/commit.c:1020
+#: builtin/commit.c:1039
 msgid "Using both --reset-author and --author does not make sense"
 msgstr ""
 
-#: builtin/commit.c:1031
+#: builtin/commit.c:1050
 msgid "You have nothing to amend."
 msgstr ""
 
-#: builtin/commit.c:1034
+#: builtin/commit.c:1053
 msgid "You are in the middle of a merge -- cannot amend."
 msgstr ""
 
-#: builtin/commit.c:1036
+#: builtin/commit.c:1055
 msgid "You are in the middle of a cherry-pick -- cannot amend."
 msgstr ""
 
-#: builtin/commit.c:1039
+#: builtin/commit.c:1058
 msgid "Options --squash and --fixup cannot be used together"
 msgstr ""
 
-#: builtin/commit.c:1049
+#: builtin/commit.c:1068
 msgid "Only one of -c/-C/-F/--fixup can be used."
 msgstr ""
 
-#: builtin/commit.c:1051
+#: builtin/commit.c:1070
 msgid "Option -m cannot be combined with -c/-C/-F/--fixup."
 msgstr ""
 
-#: builtin/commit.c:1059
+#: builtin/commit.c:1078
 msgid "--reset-author can be used only with -C, -c or --amend."
 msgstr ""
 
-#: builtin/commit.c:1076
+#: builtin/commit.c:1095
 msgid "Only one of --include/--only/--all/--interactive/--patch can be used."
 msgstr ""
 
-#: builtin/commit.c:1078
+#: builtin/commit.c:1097
 msgid "No paths with --include/--only does not make sense."
 msgstr ""
 
-#: builtin/commit.c:1080
+#: builtin/commit.c:1099
 msgid "Clever... amending the last one with dirty index."
 msgstr ""
 
-#: builtin/commit.c:1082
+#: builtin/commit.c:1101
 msgid "Explicit paths specified without -i nor -o; assuming --only paths..."
 msgstr ""
 
-#: builtin/commit.c:1092 builtin/tag.c:575
+#: builtin/commit.c:1111 builtin/tag.c:575
 #, c-format
 msgid "Invalid cleanup mode %s"
 msgstr ""
 
-#: builtin/commit.c:1097
+#: builtin/commit.c:1116
 msgid "Paths with -a does not make sense."
 msgstr ""
 
-#: builtin/commit.c:1203 builtin/commit.c:1436
+#: builtin/commit.c:1222 builtin/commit.c:1455
 msgid "show status concisely"
 msgstr ""
 
-#: builtin/commit.c:1205 builtin/commit.c:1438
+#: builtin/commit.c:1224 builtin/commit.c:1457
 msgid "show branch information"
 msgstr ""
 
-#: builtin/commit.c:1207 builtin/commit.c:1440 builtin/push.c:452
+#: builtin/commit.c:1226 builtin/commit.c:1459 builtin/push.c:452
 msgid "machine-readable output"
 msgstr ""
 
-#: builtin/commit.c:1210 builtin/commit.c:1442
+#: builtin/commit.c:1229 builtin/commit.c:1461
 msgid "show status in long format (default)"
 msgstr ""
 
-#: builtin/commit.c:1213 builtin/commit.c:1445
+#: builtin/commit.c:1232 builtin/commit.c:1464
 msgid "terminate entries with NUL"
 msgstr ""
 
-#: builtin/commit.c:1215 builtin/commit.c:1448 builtin/fast-export.c:667
+#: builtin/commit.c:1234 builtin/commit.c:1467 builtin/fast-export.c:667
 #: builtin/fast-export.c:670 builtin/tag.c:459
 msgid "mode"
 msgstr ""
 
-#: builtin/commit.c:1216 builtin/commit.c:1448
+#: builtin/commit.c:1235 builtin/commit.c:1467
 msgid "show untracked files, optional modes: all, normal, no. (Default: all)"
 msgstr ""
 
-#: builtin/commit.c:1219
+#: builtin/commit.c:1238
 msgid "show ignored files"
 msgstr ""
 
-#: builtin/commit.c:1220 parse-options.h:154
+#: builtin/commit.c:1239 parse-options.h:154
 msgid "when"
 msgstr ""
 
-#: builtin/commit.c:1221
+#: builtin/commit.c:1240
 msgid ""
 "ignore changes to submodules, optional when: all, dirty, untracked. "
 "(Default: all)"
 msgstr ""
 
-#: builtin/commit.c:1223
+#: builtin/commit.c:1242
 msgid "list untracked files in columns"
 msgstr ""
 
-#: builtin/commit.c:1294
+#: builtin/commit.c:1313
 msgid "couldn't look up newly created commit"
 msgstr ""
 
-#: builtin/commit.c:1296
+#: builtin/commit.c:1315
 msgid "could not parse newly created commit"
 msgstr ""
 
-#: builtin/commit.c:1337
+#: builtin/commit.c:1356
 msgid "detached HEAD"
 msgstr ""
 
-#: builtin/commit.c:1339
+#: builtin/commit.c:1358
 msgid " (root-commit)"
 msgstr ""
 
-#: builtin/commit.c:1406
+#: builtin/commit.c:1425
 msgid "suppress summary after successful commit"
 msgstr ""
 
-#: builtin/commit.c:1407
+#: builtin/commit.c:1426
 msgid "show diff in commit message template"
 msgstr ""
 
-#: builtin/commit.c:1409
+#: builtin/commit.c:1428
 msgid "Commit message options"
 msgstr ""
 
-#: builtin/commit.c:1410 builtin/tag.c:457
+#: builtin/commit.c:1429 builtin/tag.c:457
 msgid "read message from file"
 msgstr ""
 
-#: builtin/commit.c:1411
+#: builtin/commit.c:1430
 msgid "author"
 msgstr ""
 
-#: builtin/commit.c:1411
+#: builtin/commit.c:1430
 msgid "override author for commit"
 msgstr ""
 
-#: builtin/commit.c:1412 builtin/gc.c:178
+#: builtin/commit.c:1431 builtin/gc.c:178
 msgid "date"
 msgstr ""
 
-#: builtin/commit.c:1412
+#: builtin/commit.c:1431
 msgid "override date for commit"
 msgstr ""
 
-#: builtin/commit.c:1413 builtin/merge.c:223 builtin/notes.c:405
+#: builtin/commit.c:1432 builtin/merge.c:223 builtin/notes.c:405
 #: builtin/notes.c:562 builtin/tag.c:455
 msgid "message"
 msgstr ""
 
-#: builtin/commit.c:1413
+#: builtin/commit.c:1432
 msgid "commit message"
 msgstr ""
 
-#: builtin/commit.c:1414
+#: builtin/commit.c:1433
 msgid "reuse and edit message from specified commit"
 msgstr ""
 
-#: builtin/commit.c:1415
+#: builtin/commit.c:1434
 msgid "reuse message from specified commit"
 msgstr ""
 
-#: builtin/commit.c:1416
+#: builtin/commit.c:1435
 msgid "use autosquash formatted message to fixup specified commit"
 msgstr ""
 
-#: builtin/commit.c:1417
+#: builtin/commit.c:1436
 msgid "use autosquash formatted message to squash specified commit"
 msgstr ""
 
-#: builtin/commit.c:1418
+#: builtin/commit.c:1437
 msgid "the commit is authored by me now (used with -C/-c/--amend)"
 msgstr ""
 
-#: builtin/commit.c:1419 builtin/log.c:1160 builtin/revert.c:111
+#: builtin/commit.c:1438 builtin/log.c:1160 builtin/revert.c:111
 msgid "add Signed-off-by:"
 msgstr ""
 
-#: builtin/commit.c:1420
+#: builtin/commit.c:1439
 msgid "use specified template file"
 msgstr ""
 
-#: builtin/commit.c:1421
+#: builtin/commit.c:1440
 msgid "force edit of commit"
 msgstr ""
 
-#: builtin/commit.c:1422
+#: builtin/commit.c:1441
 msgid "default"
 msgstr ""
 
-#: builtin/commit.c:1422 builtin/tag.c:460
+#: builtin/commit.c:1441 builtin/tag.c:460
 msgid "how to strip spaces and #comments from message"
 msgstr ""
 
-#: builtin/commit.c:1423
+#: builtin/commit.c:1442
 msgid "include status in commit message template"
 msgstr ""
 
-#: builtin/commit.c:1424 builtin/merge.c:230 builtin/tag.c:461
+#: builtin/commit.c:1443 builtin/merge.c:230 builtin/tag.c:461
 msgid "key id"
 msgstr ""
 
-#: builtin/commit.c:1425 builtin/merge.c:231
+#: builtin/commit.c:1444 builtin/merge.c:231
 msgid "GPG sign commit"
 msgstr ""
 
 #. end commit message options
-#: builtin/commit.c:1428
+#: builtin/commit.c:1447
 msgid "Commit contents options"
 msgstr ""
 
-#: builtin/commit.c:1429
+#: builtin/commit.c:1448
 msgid "commit all changed files"
 msgstr ""
 
-#: builtin/commit.c:1430
+#: builtin/commit.c:1449
 msgid "add specified files to index for commit"
 msgstr ""
 
-#: builtin/commit.c:1431
+#: builtin/commit.c:1450
 msgid "interactively add files"
 msgstr ""
 
-#: builtin/commit.c:1432
+#: builtin/commit.c:1451
 msgid "interactively add changes"
 msgstr ""
 
-#: builtin/commit.c:1433
+#: builtin/commit.c:1452
 msgid "commit only specified files"
 msgstr ""
 
-#: builtin/commit.c:1434
+#: builtin/commit.c:1453
 msgid "bypass pre-commit hook"
 msgstr ""
 
-#: builtin/commit.c:1435
+#: builtin/commit.c:1454
 msgid "show what would be committed"
 msgstr ""
 
-#: builtin/commit.c:1446
+#: builtin/commit.c:1465
 msgid "amend previous commit"
 msgstr ""
 
-#: builtin/commit.c:1447
+#: builtin/commit.c:1466
 msgid "bypass post-rewrite hook"
 msgstr ""
 
-#: builtin/commit.c:1452
+#: builtin/commit.c:1471
 msgid "ok to record an empty change"
 msgstr ""
 
-#: builtin/commit.c:1455
+#: builtin/commit.c:1474
 msgid "ok to record a change with an empty message"
 msgstr ""
 
-#: builtin/commit.c:1488
+#: builtin/commit.c:1507
 msgid "could not parse HEAD commit"
 msgstr ""
 
-#: builtin/commit.c:1526 builtin/merge.c:525
+#: builtin/commit.c:1545 builtin/merge.c:525
 #, c-format
 msgid "could not open '%s' for reading"
 msgstr ""
 
-#: builtin/commit.c:1533
+#: builtin/commit.c:1552
 #, c-format
 msgid "Corrupt MERGE_HEAD file (%s)"
 msgstr ""
 
-#: builtin/commit.c:1540
-msgid "could not read MERGE_MODE"
-msgstr ""
-
 #: builtin/commit.c:1559
-#, c-format
-msgid "could not read commit message: %s"
-msgstr ""
-
-#: builtin/commit.c:1573
-#, c-format
-msgid "Aborting commit; you did not edit the message.\n"
+msgid "could not read MERGE_MODE"
 msgstr ""
 
 #: builtin/commit.c:1578
 #, c-format
+msgid "could not read commit message: %s"
+msgstr ""
+
+#: builtin/commit.c:1592
+#, c-format
+msgid "Aborting commit; you did not edit the message.\n"
+msgstr ""
+
+#: builtin/commit.c:1597
+#, c-format
 msgid "Aborting commit due to empty commit message.\n"
 msgstr ""
 
-#: builtin/commit.c:1593 builtin/merge.c:861 builtin/merge.c:886
+#: builtin/commit.c:1612 builtin/merge.c:861 builtin/merge.c:886
 msgid "failed to write commit object"
 msgstr ""
 
-#: builtin/commit.c:1614
+#: builtin/commit.c:1633
 msgid "cannot lock HEAD ref"
 msgstr ""
 
-#: builtin/commit.c:1618
+#: builtin/commit.c:1637
 msgid "cannot update HEAD ref"
 msgstr ""
 
-#: builtin/commit.c:1629
+#: builtin/commit.c:1648
 msgid ""
 "Repository has been updated, but unable to write\n"
 "new_index file. Check that disk is not full or quota is\n"
@@ -9316,7 +9329,7 @@ msgstr ""
 msgid ""
 "Applying autostash resulted in conflicts.\n"
 "Your changes are safe in the stash.\n"
-"You can run \"git stash pop\" or \"git stash drop\" it at any time.\n"
+"You can run \"git stash pop\" or \"git stash drop\" at any time.\n"
 msgstr ""
 
 #: git-rebase.sh:190
