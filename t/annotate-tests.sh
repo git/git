@@ -271,6 +271,38 @@ test_expect_success 'blame -L ,Y (Y > nlines)' '
 	test_must_fail $PROG -L,12345 file
 '
 
+test_expect_success 'blame -L multiple (disjoint)' '
+	check_count -L2,3 -L6,7 A 1 B1 1 B2 1 "A U Thor" 1
+'
+
+test_expect_success 'blame -L multiple (disjoint: unordered)' '
+	check_count -L6,7 -L2,3 A 1 B1 1 B2 1 "A U Thor" 1
+'
+
+test_expect_success 'blame -L multiple (adjacent)' '
+	check_count -L2,3 -L4,5 A 1 B 1 B2 1 D 1
+'
+
+test_expect_success 'blame -L multiple (adjacent: unordered)' '
+	check_count -L4,5 -L2,3 A 1 B 1 B2 1 D 1
+'
+
+test_expect_success 'blame -L multiple (overlapping)' '
+	check_count -L2,4 -L3,5 A 1 B 1 B2 1 D 1
+'
+
+test_expect_success 'blame -L multiple (overlapping: unordered)' '
+	check_count -L3,5 -L2,4 A 1 B 1 B2 1 D 1
+'
+
+test_expect_success 'blame -L multiple (superset/subset)' '
+	check_count -L2,8 -L3,5 A 1 B 1 B1 1 B2 1 C 1 D 1 "A U Thor" 1
+'
+
+test_expect_success 'blame -L multiple (superset/subset: unordered)' '
+	check_count -L3,5 -L2,8 A 1 B 1 B1 1 B2 1 C 1 D 1 "A U Thor" 1
+'
+
 test_expect_success 'setup -L :regex' '
 	tr Q "\\t" >hello.c <<-\EOF &&
 	int main(int argc, const char *argv[])
