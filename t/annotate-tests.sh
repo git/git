@@ -382,6 +382,22 @@ test_expect_success 'blame -L :nomatch' '
 	test_must_fail $PROG -L:nomatch hello.c
 '
 
+test_expect_success 'blame -L :RE (relative)' '
+	check_count -f hello.c -L3,3 -L:ma.. F 1 H 4
+'
+
+test_expect_success 'blame -L :RE (relative: no preceding range)' '
+	check_count -f hello.c -L:ma.. F 4 G 1
+'
+
+test_expect_success 'blame -L :RE (relative: not found)' '
+	test_must_fail $PROG -L3,3 -L:tambourine hello.c
+'
+
+test_expect_success 'blame -L :RE (relative: end-of-file)' '
+	test_must_fail $PROG -L, -L:main hello.c
+'
+
 test_expect_success 'setup incremental' '
 	(
 	GIT_AUTHOR_NAME=I &&

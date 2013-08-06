@@ -24,4 +24,5 @@ of lines before or after the line given by <start>.
 +
 If ``:<regex>'' is given in place of <start> and <end>, it denotes the range
 from the first funcname line that matches <regex>, up to the next
-funcname line.
+funcname line. ``:<regex>'' searches from the end of the previous `-L` range,
+if any, otherwise from the start of file.

@@ -161,7 +161,7 @@ static const char *find_funcname_matching_regexp(xdemitconf_t *xecfg, const char
 }
 
 static const char *parse_range_funcname(const char *arg, nth_line_fn_t nth_line_cb,
-					void *cb_data, long lines, long *begin, long *end,
+					void *cb_data, long lines, long anchor, long *begin, long *end,
 					const char *path)
 {
 	char *pattern;
@@ -187,7 +187,8 @@ static const char *parse_range_funcname(const char *arg, nth_line_fn_t nth_line_
 
 	pattern = xstrndup(arg+1, term-(arg+1));
 
-	start = nth_line_cb(cb_data, 0);
+	anchor--; /* input is in human terms */
+	start = nth_line_cb(cb_data, anchor);
 
 	drv = userdiff_find_by_path(path);
 	if (drv && drv->funcname.pattern) {
@@ -205,7 +206,8 @@ static const char *parse_range_funcname(const char *arg, nth_line_fn_t nth_line_
 
 	p = find_funcname_matching_regexp(xecfg, (char*) start, &regexp);
 	if (!p)
-		die("-L parameter '%s': no match", pattern);
+		die("-L parameter '%s' starting at line %ld: no match",
+		    pattern, anchor + 1);
 	*begin = 0;
 	while (p > nth_line_cb(cb_data, *begin))
 		(*begin)++;
@@ -244,7 +246,7 @@ int parse_range_arg(const char *arg, nth_line_fn_t nth_line_cb,
 		anchor = lines + 1;
 
 	if (*arg == ':') {
-		arg = parse_range_funcname(arg, nth_line_cb, cb_data, lines, begin, end, path);
+		arg = parse_range_funcname(arg, nth_line_cb, cb_data, lines, anchor, begin, end, path);
 		if (!arg || *arg)
 			return -1;
 		return 0;
@@ -269,7 +271,7 @@ int parse_range_arg(const char *arg, nth_line_fn_t nth_line_cb,
 const char *skip_range_arg(const char *arg)
 {
 	if (*arg == ':')
-		return parse_range_funcname(arg, NULL, NULL, 0, NULL, NULL, NULL);
+		return parse_range_funcname(arg, NULL, NULL, 0, 0, NULL, NULL, NULL);
 
 	arg = parse_loc(arg, NULL, NULL, 0, -1, NULL);
 
