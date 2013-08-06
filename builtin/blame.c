@@ -2280,6 +2280,7 @@ int cmd_blame(int argc, const char **argv, const char *prefix)
 	int cmd_is_annotate = !strcmp(argv[0], "annotate");
 	struct range_set ranges;
 	unsigned int range_i;
+	long anchor;
 
 	git_config(git_blame_config, NULL);
 	init_revisions(&revs, NULL);
@@ -2475,11 +2476,12 @@ parse_done:
 	if (lno && !range_list.nr)
 		string_list_append(&range_list, xstrdup("1"));
 
+	anchor = 1;
 	range_set_init(&ranges, range_list.nr);
 	for (range_i = 0; range_i < range_list.nr; ++range_i) {
 		long bottom, top;
 		if (parse_range_arg(range_list.items[range_i].string,
-				    nth_line_cb, &sb, lno, 1,
+				    nth_line_cb, &sb, lno, anchor,
 				    &bottom, &top, sb.path))
 			usage(blame_usage);
 		if (lno < top || ((lno || bottom) && lno < bottom))
@@ -2490,6 +2492,7 @@ parse_done:
 			top = lno;
 		bottom--;
 		range_set_append_unsafe(&ranges, bottom, top);
+		anchor = top + 1;
 	}
 	sort_and_merge_range_set(&ranges);
 

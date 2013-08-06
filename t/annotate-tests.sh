@@ -303,6 +303,26 @@ test_expect_success 'blame -L multiple (superset/subset: unordered)' '
 	check_count -L3,5 -L2,8 A 1 B 1 B1 1 B2 1 C 1 D 1 "A U Thor" 1
 '
 
+test_expect_success 'blame -L /RE/ (relative)' '
+	check_count -L3,3 -L/fox/ B1 1 B2 1 C 1 D 1 "A U Thor" 1
+'
+
+test_expect_success 'blame -L /RE/ (relative: no preceding range)' '
+	check_count -L/dog/ A 1 B 1 B1 1 B2 1 C 1 D 1 "A U Thor" 1
+'
+
+test_expect_success 'blame -L /RE/ (relative: adjacent)' '
+	check_count -L1,1 -L/dog/,+1 A 1 E 1
+'
+
+test_expect_success 'blame -L /RE/ (relative: not found)' '
+	test_must_fail $PROG -L4,4 -L/dog/ file
+'
+
+test_expect_success 'blame -L /RE/ (relative: end-of-file)' '
+	test_must_fail $PROG -L, -L/$/ file
+'
+
 test_expect_success 'setup -L :regex' '
 	tr Q "\\t" >hello.c <<-\EOF &&
 	int main(int argc, const char *argv[])
