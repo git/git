@@ -1937,18 +1937,6 @@ static const char *add_prefix(const char *prefix, const char *path)
 	return prefix_path(prefix, prefix ? strlen(prefix) : 0, path);
 }
 
-/*
- * Parsing of -L option
- */
-static void prepare_blame_range(struct scoreboard *sb,
-				const char *bottomtop,
-				long lno,
-				long *bottom, long *top)
-{
-	if (parse_range_arg(bottomtop, nth_line_cb, sb, lno, bottom, top, sb->path))
-		usage(blame_usage);
-}
-
 static int git_blame_config(const char *var, const char *value, void *cb)
 {
 	if (!strcmp(var, "blame.showroot")) {
@@ -2493,8 +2481,9 @@ parse_done:
 	lno = prepare_lines(&sb);
 
 	bottom = top = 0;
-	if (bottomtop)
-		prepare_blame_range(&sb, bottomtop, lno, &bottom, &top);
+	if (bottomtop && parse_range_arg(bottomtop, nth_line_cb, &sb, lno,
+					 &bottom, &top, sb.path))
+		usage(blame_usage);
 	if (lno < top || ((lno || bottom) && lno < bottom))
 		die("file %s has only %lu lines", path, lno);
 	if (bottom < 1)
