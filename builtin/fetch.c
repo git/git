@@ -720,6 +720,31 @@ static int truncate_fetch_head(void)
 	return 0;
 }
 
+static void set_option(struct transport *transport, const char *name, const char *value)
+{
+	int r = transport_set_option(transport, name, value);
+	if (r < 0)
+		die(_("Option \"%s\" value \"%s\" is not valid for %s"),
+		    name, value, transport->url);
+	if (r > 0)
+		warning(_("Option \"%s\" is ignored for %s\n"),
+			name, transport->url);
+}
+
+struct transport *prepare_transport(struct remote *remote)
+{
+	struct transport *transport;
+	transport = transport_get(remote, NULL);
+	transport_set_verbosity(transport, verbosity, progress);
+	if (upload_pack)
+		set_option(transport, TRANS_OPT_UPLOADPACK, upload_pack);
+	if (keep)
+		set_option(transport, TRANS_OPT_KEEP, "yes");
+	if (depth)
+		set_option(transport, TRANS_OPT_DEPTH, depth);
+	return transport;
+}
+
 static int do_fetch(struct transport *transport,
 		    struct refspec *refs, int ref_count)
 {
@@ -814,17 +839,6 @@ static int do_fetch(struct transport *transport,
  cleanup:
 	string_list_clear(&existing_refs, 1);
 	return retcode;
-}
-
-static void set_option(const char *name, const char *value)
-{
-	int r = transport_set_option(gtransport, name, value);
-	if (r < 0)
-		die(_("Option \"%s\" value \"%s\" is not valid for %s"),
-		    name, value, gtransport->url);
-	if (r > 0)
-		warning(_("Option \"%s\" is ignored for %s\n"),
-			name, gtransport->url);
 }
 
 static int get_one_remote_for_fetch(struct remote *remote, void *priv)
@@ -949,15 +963,7 @@ static int fetch_one(struct remote *remote, int argc, const char **argv)
 		die(_("No remote repository specified.  Please, specify either a URL or a\n"
 		    "remote name from which new revisions should be fetched."));
 
-	gtransport = transport_get(remote, NULL);
-	transport_set_verbosity(gtransport, verbosity, progress);
-	if (upload_pack)
-		set_option(TRANS_OPT_UPLOADPACK, upload_pack);
-	if (keep)
-		set_option(TRANS_OPT_KEEP, "yes");
-	if (depth)
-		set_option(TRANS_OPT_DEPTH, depth);
-
+	gtransport = prepare_transport(remote);
 	if (argc > 0) {
 		int j = 0;
 		refs = xcalloc(argc + 1, sizeof(const char *));
