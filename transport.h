@@ -27,6 +27,12 @@ struct transport {
 	 */
 	unsigned got_remote_refs : 1;
 
+	/*
+	 * Transports that call take-over destroys the data specific to
+	 * the transport type while doing so, and cannot be reused.
+	 */
+	unsigned cannot_reuse : 1;
+
 	/**
 	 * Returns 0 if successful, positive if the option is not
 	 * recognized or is inapplicable, and negative if the option
