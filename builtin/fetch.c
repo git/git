@@ -36,7 +36,7 @@ static int tags = TAGS_DEFAULT, unshallow;
 static const char *depth;
 static const char *upload_pack;
 static struct strbuf default_rla = STRBUF_INIT;
-static struct transport *transport;
+static struct transport *gtransport;
 static const char *submodule_prefix = "";
 static const char *recurse_submodules_default;
 
@@ -95,8 +95,8 @@ static struct option builtin_fetch_options[] = {
 
 static void unlock_pack(void)
 {
-	if (transport)
-		transport_unlock_pack(transport);
+	if (gtransport)
+		transport_unlock_pack(gtransport);
 }
 
 static void unlock_pack_on_signal(int signo)
@@ -818,13 +818,13 @@ static int do_fetch(struct transport *transport,
 
 static void set_option(const char *name, const char *value)
 {
-	int r = transport_set_option(transport, name, value);
+	int r = transport_set_option(gtransport, name, value);
 	if (r < 0)
 		die(_("Option \"%s\" value \"%s\" is not valid for %s"),
-			name, value, transport->url);
+		    name, value, gtransport->url);
 	if (r > 0)
 		warning(_("Option \"%s\" is ignored for %s\n"),
-			name, transport->url);
+			name, gtransport->url);
 }
 
 static int get_one_remote_for_fetch(struct remote *remote, void *priv)
@@ -949,8 +949,8 @@ static int fetch_one(struct remote *remote, int argc, const char **argv)
 		die(_("No remote repository specified.  Please, specify either a URL or a\n"
 		    "remote name from which new revisions should be fetched."));
 
-	transport = transport_get(remote, NULL);
-	transport_set_verbosity(transport, verbosity, progress);
+	gtransport = transport_get(remote, NULL);
+	transport_set_verbosity(gtransport, verbosity, progress);
 	if (upload_pack)
 		set_option(TRANS_OPT_UPLOADPACK, upload_pack);
 	if (keep)
@@ -983,10 +983,10 @@ static int fetch_one(struct remote *remote, int argc, const char **argv)
 	sigchain_push_common(unlock_pack_on_signal);
 	atexit(unlock_pack);
 	refspec = parse_fetch_refspec(ref_nr, refs);
-	exit_code = do_fetch(transport, refspec, ref_nr);
+	exit_code = do_fetch(gtransport, refspec, ref_nr);
 	free_refspec(ref_nr, refspec);
-	transport_disconnect(transport);
-	transport = NULL;
+	transport_disconnect(gtransport);
+	gtransport = NULL;
 	return exit_code;
 }
 
