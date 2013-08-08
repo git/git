@@ -2180,9 +2180,13 @@ class P4Sync(Command, P4UserMap):
             git_mode = "100755"
         if type_base == "symlink":
             git_mode = "120000"
-            # p4 print on a symlink contains "target\n"; remove the newline
+            # p4 print on a symlink sometimes contains "target\n";
+            # if it does, remove the newline
             data = ''.join(contents)
-            contents = [data[:-1]]
+            if data[-1] == '\n':
+                contents = [data[:-1]]
+            else:
+                contents = [data]
 
         if type_base == "utf16":
             # p4 delivers different text in the python output to -G
