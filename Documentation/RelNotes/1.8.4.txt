@@ -242,6 +242,13 @@ UI, Workflows & Features
 
 Performance, Internal Implementation, etc.
 
+ * On Cygwin, we used to use our own lstat(2) emulation that is
+   allegedly faster than the platform one in codepaths where some of
+   the information it returns did not matter, but it started to bite
+   us in a few codepaths where the trick it uses to cheat does show
+   breakages. This emulation has been removed and we use the native
+   lstat(2) emulation supplied by Cygwin now.
+
  * The function attributes extensions are used to catch mistakes in
    use of our own variadic functions that use NULL sentinel at the end
    (i.e. like execl(3)) and format strings (i.e. like printf(3)).
