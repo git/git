@@ -13,43 +13,17 @@ SYNOPSIS
 
 DESCRIPTION
 -----------
-Shows commit logs and diff output each commit introduces.  The
-command internally invokes 'git rev-list' piped to
-'git diff-tree', and takes command line options for both of
-these commands.
 
-This manual page describes only the most frequently used options.
+Shows commit logs and diff output each commit introduces.
 
+New users are encouraged to use linkgit:git-log[1] instead.  The
+`whatchanged` command is essentially the same as linkgit:git-log[1]
+but defaults to show the raw format diff output and to skip merges.
 
-OPTIONS
--------
--p::
-	Show textual diffs, instead of the Git internal diff
-	output format that is useful only to tell the changed
-	paths and their nature of changes.
+The command is kept primarily for historical reasons; fingers of
+many people who learned Git long before `git log` was invented by
+reading Linux kernel mailing list are trained to type it.
 
--<n>::
-	Limit output to <n> commits.
-
-<since>..<until>::
-	Limit output to between the two named commits (bottom
-	exclusive, top inclusive).
-
--r::
-	Show Git internal diff output, but for the whole tree,
-	not just the top level.
-
--m::
-	By default, differences for merge commits are not shown.
-	With this flag, show differences to that commit from all
-	of its parents.
-+
-However, it is not very useful in general, although it
-*is* useful on a file-by-file basis.
-
-include::pretty-options.txt[]
-
-include::pretty-formats.txt[]
 
 Examples
 --------
