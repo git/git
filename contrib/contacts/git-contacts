@@ -59,9 +59,11 @@ sub import_commits {
 }
 
 sub get_blame {
-	my ($commits, $source, $start, $len, $from) = @_;
+	my ($commits, $source, $from, $ranges) = @_;
+	return unless @$ranges;
 	open my $f, '-|',
-		qw(git blame --porcelain -C), '-L', "$start,+$len",
+		qw(git blame --porcelain -C),
+		map({"-L$_->[0],+$_->[1]"} @$ranges),
 		'--since', $since, "$from^", '--', $source or die;
 	while (<$f>) {
 		if (/^([0-9a-f]{40}) \d+ \d+ \d+$/) {
@@ -78,10 +80,7 @@ sub blame_sources {
 	my ($sources, $commits) = @_;
 	for my $s (keys %$sources) {
 		for my $id (keys %{$sources->{$s}}) {
-			for my $range (@{$sources->{$s}{$id}}) {
-				get_blame($commits, $s,
-					  $range->[0], $range->[1], $id);
-			}
+			get_blame($commits, $s, $id, $sources->{$s}{$id});
 		}
 	}
 }
