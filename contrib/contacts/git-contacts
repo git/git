@@ -60,8 +60,6 @@ sub import_commits {
 
 sub get_blame {
 	my ($commits, $source, $start, $len, $from) = @_;
-	$len = 1 unless defined($len);
-	return if $len == 0;
 	open my $f, '-|',
 		qw(git blame --porcelain -C), '-L', "$start,+$len",
 		'--since', $since, "$from^", '--', $source or die;
@@ -90,7 +88,8 @@ sub scan_patches {
 		} elsif (/^--- /) {
 			die "Cannot parse hunk source: $_\n";
 		} elsif (/^@@ -(\d+)(?:,(\d+))?/ && $source) {
-			get_blame($commits, $source, $1, $2, $id);
+			my $len = defined($2) ? $2 : 1;
+			get_blame($commits, $source, $1, $len, $id) if $len;
 		}
 	}
 }
