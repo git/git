@@ -3,7 +3,7 @@
 
 int main(int argc, char **argv)
 {
-	const char *usage = "test-urlmatch-normalization [-p | -l] <url1> | <url1> <url2>";
+	const char usage[] = "test-urlmatch-normalization [-p | -l] <url1> | <url1> <url2>";
 	char *url1, *url2;
 	int opt_p = 0, opt_l = 0;
 
@@ -27,7 +27,7 @@ int main(int argc, char **argv)
 	}
 
 	if (argc < 2 || argc > 3)
-		die(usage);
+		die("%s", usage);
 
 	if (argc == 2) {
 		struct url_info info;
@@ -42,7 +42,7 @@ int main(int argc, char **argv)
 	}
 
 	if (opt_p || opt_l)
-		die(usage);
+		die("%s", usage);
 
 	url1 = url_normalize(argv[1], NULL);
 	url2 = url_normalize(argv[2], NULL);

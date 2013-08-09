@@ -404,7 +404,7 @@ static int get_urlmatch(const char *var, const char *url)
 	config.cb = &values;
 
 	if (!url_normalize(url, &config.url))
-		die(config.url.err);
+		die("%s", config.url.err);
 
 	config.section = dup_downcase(var);
 	section_tail = strchr(config.section, '.');
