@@ -14,6 +14,7 @@ Alex Riesen <raa.lkml@gmail.com> <raa@steel.home>
 Alex Vandiver <alex@chmrr.net> <alexmv@MIT.EDU>
 Alexander Gavrilov <angavrilov@gmail.com>
 Alexey Shumkin <alex.crezoff@gmail.com> <zapped@mail.ru>
+Alexey Shumkin <alex.crezoff@gmail.com> <Alex.Crezoff@gmail.com>
 Anders Kaseorg <andersk@MIT.EDU> <andersk@ksplice.com>
 Anders Kaseorg <andersk@MIT.EDU> <andersk@mit.edu>
 Aneesh Kumar K.V <aneesh.kumar@gmail.com>
@@ -31,6 +32,7 @@ Christian Stimming <stimming@tuhh.de> <chs@ckiste.goetheallee>
 Csaba Henk <csaba@gluster.com> <csaba@lowlife.hu>
 Dan Johnson <computerdruid@gmail.com>
 Dana L. How <danahow@gmail.com> <how@deathvalley.cswitch.com>
+Dana L. How <danahow@gmail.com> Dana How
 Daniel Barkalow <barkalow@iabervon.org>
 David Brown <git@davidb.org> <davidb@quicinc.com>
 David D. Kilzer <ddkilzer@kilzer.net>
@@ -65,6 +67,7 @@ J. Bruce Fields <bfields@citi.umich.edu> <bfields@fieldses.org>
 J. Bruce Fields <bfields@citi.umich.edu> <bfields@pig.linuxdev.us.dell.com>
 J. Bruce Fields <bfields@citi.umich.edu> <bfields@puzzle.fieldses.org>
 Jakub Narębski <jnareb@gmail.com>
+James Y Knight <jknight@itasoftware.com> <foom@fuhm.net>
 Jason Riedy <ejr@eecs.berkeley.edu> <ejr@EECS.Berkeley.EDU>
 Jason Riedy <ejr@eecs.berkeley.edu> <ejr@cs.berkeley.edu>
 Jay Soffian <jaysoffian@gmail.com> <jaysoffian+git@gmail.com>
@@ -92,8 +95,8 @@ Junio C Hamano <gitster@pobox.com> <junio@pobox.com>
 Junio C Hamano <gitster@pobox.com> <junio@twinsun.com>
 Junio C Hamano <gitster@pobox.com> <junkio@cox.net>
 Junio C Hamano <gitster@pobox.com> <junkio@twinsun.com>
-Karl Wiberg <kha@treskal.com> Karl Hasselström <kha@treskal.com>
-Karl Wiberg <kha@treskal.com> Karl Hasselström <kha@yoghurt.hemma.treskal.com>
+Karl Wiberg <kha@treskal.com> Karl  Hasselström
+Karl Wiberg <kha@treskal.com> <kha@yoghurt.hemma.treskal.com>
 Karsten Blees <blees@dcon.de> <karsten.blees@dcon.de>
 Karsten Blees <blees@dcon.de> <karsten.blees@gmail.com>
 Kay Sievers <kay.sievers@vrfy.org> <kay.sievers@suse.de>
@@ -177,6 +180,7 @@ Robin Rosenberg <robin.rosenberg@dewire.com> <robin.rosenberg.lists@dewire.com>
 Ryan Anderson <ryan@michonline.com> <rda@google.com>
 Salikh Zakirov <salikh.zakirov@gmail.com> <Salikh.Zakirov@Intel.com>
 Sam Vilain <sam@vilain.net> <sam.vilain@catalyst.net.nz>
+Sam Vilain <sam@vilain.net> sam@vilain.net
 Santi Béjar <santi@agolina.net> <sbejar@gmail.com>
 Sean Estabrooks <seanlkml@sympatico.ca>
 Sebastian Schuberth <sschuberth@gmail.com> <sschuberth@visageimaging.com>
@@ -191,6 +195,7 @@ Stefan Sperling <stsp@elego.de> <stsp@stsp.name>
 Stephen Boyd <bebarino@gmail.com> <sboyd@codeaurora.org>
 Steven Drake <sdrake@xnet.co.nz> <sdrake@ihug.co.nz>
 Steven Grimm <koreth@midwinter.com> <sgrimm@sgrimm-mbp.local>
+Steven Grimm <koreth@midwinter.com> koreth@midwinter.com
 Steven Walter <stevenrwalter@gmail.com> <swalter@lexmark.com>
 Steven Walter <stevenrwalter@gmail.com> <swalter@lpdev.prtdev.lexmark.com>
 Sven Verdoolaege <skimo@kotnet.org> <Sven.Verdoolaege@cs.kuleuven.ac.be>
