@@ -74,8 +74,20 @@ sub get_blame {
 	close $f;
 }
 
+sub blame_sources {
+	my ($sources, $commits) = @_;
+	for my $s (keys %$sources) {
+		for my $id (keys %{$sources->{$s}}) {
+			for my $range (@{$sources->{$s}{$id}}) {
+				get_blame($commits, $s,
+					  $range->[0], $range->[1], $id);
+			}
+		}
+	}
+}
+
 sub scan_patches {
-	my ($commits, $id, $f) = @_;
+	my ($sources, $id, $f) = @_;
 	my $source;
 	while (<$f>) {
 		if (/^From ([0-9a-f]{40}) Mon Sep 17 00:00:00 2001$/) {
@@ -89,7 +101,7 @@ sub scan_patches {
 			die "Cannot parse hunk source: $_\n";
 		} elsif (/^@@ -(\d+)(?:,(\d+))?/ && $source) {
 			my $len = defined($2) ? $2 : 1;
-			get_blame($commits, $source, $1, $len, $id) if $len;
+			push @{$sources->{$source}{$id}}, [$1, $len] if $len;
 		}
 	}
 }
@@ -162,13 +174,16 @@ for (@ARGV) {
 	}
 }
 
-my %commits;
+my %sources;
 for (@files) {
-	scan_patch_file(\%commits, $_);
+	scan_patch_file(\%sources, $_);
 }
 if (@rev_args) {
-	scan_rev_args(\%commits, \@rev_args)
+	scan_rev_args(\%sources, \@rev_args)
 }
+
+my %commits;
+blame_sources(\%sources, \%commits);
 import_commits(\%commits);
 
 my $contacts = {};
