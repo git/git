@@ -145,7 +145,7 @@ test_expect_success 'use "submodule foreach" to checkout 2nd level submodule' '
 		git rev-parse --resolve-git-dir nested1/.git &&
 		test_must_fail git rev-parse --resolve-git-dir nested1/nested2/.git &&
 		git submodule foreach "git submodule update --init" &&
-		git rev-parse --resolve-git-dir nested1/nested1/nested2/.git
+		git rev-parse --resolve-git-dir nested1/nested2/.git &&
 		test_must_fail git rev-parse --resolve-git-dir nested1/nested2/nested3/.git
 	)
 '
