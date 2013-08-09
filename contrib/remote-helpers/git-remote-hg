@@ -392,6 +392,18 @@ def get_repo(url, alias):
     else:
         shared_path = os.path.join(gitdir, 'hg')
 
+        # check and upgrade old organization
+        hg_path = os.path.join(shared_path, '.hg')
+        if os.path.exists(shared_path) and not os.path.exists(hg_path):
+            repos = os.listdir(shared_path)
+            for x in repos:
+                local_hg = os.path.join(shared_path, x, 'clone', '.hg')
+                if not os.path.exists(local_hg):
+                    continue
+                if not os.path.exists(hg_path):
+                    shutil.move(local_hg, hg_path)
+                shutil.rmtree(os.path.join(shared_path, x, 'clone'))
+
         # setup shared repo (if not there)
         try:
             hg.peer(myui, {}, shared_path, create=True)
