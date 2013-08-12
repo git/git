@@ -15,7 +15,7 @@ static const char * const push_usage[] = {
 	NULL,
 };
 
-static int thin;
+static int thin = 1;
 static int deleterefs;
 static const char *receivepack;
 static int verbosity;
@@ -313,8 +313,7 @@ static int push_with_options(struct transport *transport, int flags)
 	if (receivepack)
 		transport_set_option(transport,
 				     TRANS_OPT_RECEIVEPACK, receivepack);
-	if (thin)
-		transport_set_option(transport, TRANS_OPT_THIN, "yes");
+	transport_set_option(transport, TRANS_OPT_THIN, thin ? "yes" : NULL);
 
 	if (verbosity > 0)
 		fprintf(stderr, _("Pushing to %s\n"), transport->url);

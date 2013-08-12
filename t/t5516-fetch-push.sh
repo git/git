@@ -1172,4 +1172,21 @@ test_expect_success 'push --follow-tag only pushes relevant tags' '
 	test_cmp expect actual
 '
 
+test_expect_success 'push --no-thin must produce non-thin pack' '
+	cat >>path1 <<\EOF &&
+keep base version of path1 big enough, compared to the new changes
+later, in order to pass size heuristics in
+builtin/pack-objects.c:try_delta()
+EOF
+	git commit -am initial &&
+	git init no-thin &&
+	git --git-dir=no-thin/.git config receive.unpacklimit 0 &&
+	git push no-thin/.git refs/heads/master:refs/heads/foo &&
+	echo modified >> path1 &&
+	git commit -am modified &&
+	git repack -adf &&
+	rcvpck="git receive-pack --reject-thin-pack-for-testing" &&
+	git push --no-thin --receive-pack="$rcvpck" no-thin/.git refs/heads/master:refs/heads/foo
+'
+
 test_done
