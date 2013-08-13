@@ -1,18 +1,21 @@
 To: git@vger.kernel.org
 Bcc: lwn@lwn.net
-Subject: What's cooking in git.git (Aug 2013, #02; Mon, 5)
-X-master-at: fb5657082148297b61fbca7e64d51c1e7870309a
-X-next-at: bd48715ffb07f749d234547613e0616af41e5079
+Subject: What's cooking in git.git (Aug 2013, #03; Tue, 13)
+X-master-at: 425df881e08bed7a8fcc9a23f452cff792f9ec6c
+X-next-at: 80e72f1fb22b04aabd28f14eb96d1beb23e37b9d
 
-What's cooking in git.git (Aug 2013, #02; Mon, 5)
+What's cooking in git.git (Aug 2013, #03; Tue, 13)
 --------------------------------------------------
 
 Here are the topics that have been cooking.  Commits prefixed with
 '-' are only in 'pu' (proposed updates) while commits prefixed with
 '+' are in 'next'.
 
-The first release candidate v1.8.4-rc1 has been tagged; only
-regression fixes and l10n updates from now on.
+The -rc3 has been tagged; we will need to revert a7365313 (git
+stash: avoid data loss when "git stash save" kills a directory,
+2013-06-28) that is killing "git stash" in repositories with too
+many untracked cruft and plan to reapply it after trying to whip
+"ls-files --killed" into a reasonable performer before the final.
 
 You can find the changes described here in the integration branches
 of the repositories listed at
@@ -22,83 +25,162 @@ of the repositories listed at
 --------------------------------------------------
 [Graduated to "master"]
 
-* rj/cygwin-clarify-use-of-cheating-lstat (2013-07-18) 1 commit
-  (merged to 'next' on 2013-08-01 at 3ebfe7c)
- + cygwin: Remove the Win32 l/stat() implementation
-
- Cygwin port added a "not quite correct but a lot faster and good
- enough for many lstat() calls that are only used to see if the
- working tree entity matches the index entry" lstat() emulation some
- time ago, and it started biting us in places.  This removes it and
- uses the standard lstat() that comes with Cygwin.
-
- Recent topic that uses lstat on packed-refs file is broken when
- this cheating lstat is used, and this is a simplest fix that is
- also the cleanest direction to go in the long run.
+* sb/mailmap-updates (2013-08-12) 1 commit
+ + .mailmap: update long-lost friends with multiple defunct addresses
 
 --------------------------------------------------
 [New Topics]
 
-* es/blame-L-more (2013-08-05) 11 commits
- - blame: reject empty ranges -L,+0 and -L,-0
- - t8001/t8002: blame: demonstrate acceptance of bogus -L,+0 and -L,-0
- - blame: reject empty ranges -LX,+0 and -LX,-0
- - t8001/t8002: blame: demonstrate acceptance of bogus -LX,+0 and -LX,-0
- - log: fix -L bounds checking bug
- - t4211: retire soon-to-be unimplementable tests
- - t4211: log: demonstrate -L bounds checking bug
- - blame: fix -L bounds checking bug
- - t8001/t8002: blame: add empty file & partial-line tests
- - t8001/t8002: blame: demonstrate -L bounds checking bug
- - t8001/t8002: blame: decompose overly-large test
+* es/blame-L-twice (2013-08-06) 16 commits
+  (merged to 'next' on 2013-08-08 at 9d6f821)
+ + line-range: reject -L line numbers less than 1
+ + t8001/t8002: blame: add tests of -L line numbers less than 1
+ + line-range: teach -L^:RE to search from start of file
+ + line-range: teach -L:RE to search from end of previous -L range
+ + line-range: teach -L^/RE/ to search from start of file
+ + line-range-format.txt: document -L/RE/ relative search
+ + log: teach -L/RE/ to search from end of previous -L range
+ + blame: teach -L/RE/ to search from end of previous -L range
+ + line-range: teach -L/RE/ to search relative to anchor point
+ + blame: document multiple -L support
+ + t8001/t8002: blame: add tests of multiple -L options
+ + blame: accept multiple -L ranges
+ + blame: inline one-line function into its lone caller
+ + range-set: publish API for re-use by git-blame -L
+ + line-range-format.txt: clarify -L:regex usage form
+ + git-log.txt: place each -L option variation on its own line
+ (this branch is used by es/contacts-blame-L-multi; uses es/blame-L-more.)
 
- More fixes to the code to parse the "-L" option in "log" and "blame".
+ Teaches "git blame" to take more than one -L ranges.
+
+ Will cook in 'next'.
+
+
+* mm/no-shell-escape-in-die-message (2013-08-07) 1 commit
+  (merged to 'next' on 2013-08-08 at bddff86)
+ + die_with_status: use "printf '%s\n'", not "echo"
+
+ Fixes a minor bug in "git rebase -i" (there could be others, as the
+ root cause is pretty generic) where the code feeds a random, data
+ dependeant string to 'echo' and expects it to come out literally.
+
+ Will cook in 'next'.
+
+
+* tr/fd-gotcha-fixes (2013-08-06) 1 commit
+  (merged to 'next' on 2013-08-08 at f452c5b)
+ + t0070: test that git_mkstemps correctly checks return value of open()
+
+ Finishing touches to an earlier fix already in 'master'.
+
+ Will cook in 'next'.
+
+
+* ap/remote-hg-tilde-is-home-directory (2013-08-09) 1 commit
+ - remote-hg: fix path when cloning with tilde expansion
 
  Will merge to and cook in 'next'.
 
 
-* jk/cat-file-batch-optim (2013-08-05) 1 commit
- - cat-file: only split on whitespace when %(rest) is used
-
- Rework the reverted change to `cat-file --batch-check`.
+* es/rebase-i-no-abbrev (2013-08-11) 3 commits
+ - rebase: interactive: fix short SHA-1 collision
+ - t3404: rebase: interactive: demonstrate short SHA-1 collision
+ - t3404: restore specialized rebase-editor following commentchar test
 
  Will merge to and cook in 'next'.
 
 
-* jn/post-receive-utf8 (2013-08-05) 3 commits
- - hooks/post-receive-email: set declared encoding to utf-8
- - hooks/post-receive-email: force log messages in UTF-8
- - hooks/post-receive-email: use plumbing instead of git log/show
+* fc/remote-hg-shared-setup (2013-08-11) 2 commits
+ - remote-hg: add shared repo upgrade
+ - remote-hg: ensure shared repo is initialized
 
- Update post-receive-email script to make sure the message contents
- and pathnames are encoded consistently in UTF-8.
-
- I have a feeling that it is a lost cause to solve the issue the
- topic tries to address in general, because the patch text can have
- payload in any encodings that are different from either the
- pathnames or the log message.  Patches that touch paths that use an
- encoding that conflicts with the encoding of the payload and/or the
- log message could be transferred with core.quotepath set and patch
- generated as all binary, but that would be pretty much useless.
+ Will merge to and cook in 'next'.
 
 
-* sb/parseopt-boolean-removal (2013-08-05) 9 commits
- - revert: use the OPT_CMDMODE for parsing, reducing code
- - checkout-index: Fix negations of even numbers of -n
- - config parsing options: allow one flag multiple times
- - hash-object: Replace stdin parsing OPT_BOOLEAN by OPT_COUNTUP
- - branch, commit, name-rev: ease up boolean conditions
- - checkout: remove superfluous local variable
- - log, format-patch: parsing uses OPT__QUIET
- - Replace deprecated OPT_BOOLEAN by OPT_BOOL
- - Remove deprecated OPTION_BOOLEAN for parsing arguments
- (this branch uses jc/parseopt-command-modes.)
+* jc/transport-do-not-use-connect-twice-in-fetch (2013-08-07) 5 commits
+ - fetch: work around "transport-take-over" hack
+ - fetch: refactor code that fetches leftover tags
+ - fetch: refactor code that prepares a transport
+ - fetch: rename file-scope global "transport" to "gtransport"
+ - t5802: add test for connect helper
 
- Convert most uses of OPT_BOOLEAN/OPTION_BOOLEAN that can use
- OPT_BOOL/OPTION_BOOLEAN which have much saner semantics, and turn
- remaining ones into OPT_SET_INT, OPT_COUNTUP, etc. as necessary;
- there seems to be some misconversion that makes many tests fail,
- though.
+ The auto-tag-following code in "git fetch" tries to reuse the same
+ transport twice when the serving end does not cooperate and does
+ not give tags that point to commits that are asked for as part of
+ the primary transfer.  Unfortunately, Git-aware transport helper
+ interface is not designed to be used more than once, hence this
+ does not work over smart-http transfer.
+
+ I'll try to see if this workaround can be done in a cleaner way
+ before merging this to 'next'.
+
+
+* ks/p4-view-spec (2013-08-11) 3 commits
+ - WAITING FOR ACK
+ - git p4: implement view spec wildcards with "p4 where"
+ - git p4 test: sanitize P4CHARSET
+
+ Waiting for an ack.
+
+
+* mm/war-on-whatchanged (2013-08-13) 2 commits
+ - whatchanged: document its historical nature
+ - core-tutorial: trim the section on Inspecting Changes
+
+ Will merge to and cook in 'next'.
+
+
+* nd/gc-lock-against-each-other (2013-08-09) 1 commit
+ - gc: reject if another gc is running, unless --force is given
+
+ Will merge to and cook in 'next'.
+
+
+* rt/doc-merge-file-diff3 (2013-08-09) 1 commit
+ - Documentation/git-merge-file: document option "--diff3"
+
+ Will merge to and cook in 'next'.
+
+
+* sb/misc-cleanup (2013-08-09) 3 commits
+ - rm: remove unneeded null pointer check
+ - diff: fix a possible null pointer dereference
+ - diff: remove ternary operator evaluating always to true
+
+ Will merge to and cook in 'next'.
+
+
+* aj/p4-symlink-lose-nl (2013-08-12) 1 commit
+ - git-p4: Fix occasional truncation of symlink contents.
+
+ Will merge to and cook in 'next'.
+
+
+* es/contacts-blame-L-multi (2013-08-13) 3 commits
+ - contacts: reduce git-blame invocations
+ - contacts: gather all blame sources prior to invoking git-blame
+ - contacts: validate hunk length earlier
+ (this branch uses es/blame-L-more and es/blame-L-twice.)
+
+ Will merge to and cook in 'next'.
+
+
+* fc/unpack-trees-leakfix (2013-08-13) 1 commit
+ - unpack-trees: plug a memory leak
+
+ Will merge to and cook in 'next'.
+
+
+* nd/push-no-thin (2013-08-13) 1 commit
+ - push: respect --no-thin
+
+ Will merge to and cook in 'next'.
+
+
+* sh/pull-rebase-preserve (2013-08-13) 1 commit
+ - pull: Allow pull to preserve merges when rebasing.
+
+ Will merge to and cook in 'next'.
 
 --------------------------------------------------
 [Stalled]
@@ -208,15 +290,89 @@ of the repositories listed at
 --------------------------------------------------
 [Cooking]
 
-* mb/docs-favor-en-us (2013-08-01) 1 commit
- - Provide some linguistic guidance for the documentation.
+* es/blame-L-more (2013-08-05) 11 commits
+  (merged to 'next' on 2013-08-06 at 2679f3e)
+ + blame: reject empty ranges -L,+0 and -L,-0
+ + t8001/t8002: blame: demonstrate acceptance of bogus -L,+0 and -L,-0
+ + blame: reject empty ranges -LX,+0 and -LX,-0
+ + t8001/t8002: blame: demonstrate acceptance of bogus -LX,+0 and -LX,-0
+ + log: fix -L bounds checking bug
+ + t4211: retire soon-to-be unimplementable tests
+ + t4211: log: demonstrate -L bounds checking bug
+ + blame: fix -L bounds checking bug
+ + t8001/t8002: blame: add empty file & partial-line tests
+ + t8001/t8002: blame: demonstrate -L bounds checking bug
+ + t8001/t8002: blame: decompose overly-large test
+ (this branch is used by es/blame-L-twice and es/contacts-blame-L-multi.)
 
- Will merge to and cook in 'next'.
+ More fixes to the code to parse the "-L" option in "log" and "blame".
+
+ Will cook in 'next'.
+
+
+* jk/cat-file-batch-optim (2013-08-05) 1 commit
+  (merged to 'next' on 2013-08-06 at cd48621)
+ + cat-file: only split on whitespace when %(rest) is used
+
+ Rework the reverted change to `cat-file --batch-check`.
+
+ Will cook in 'next'.
+
+
+* jn/post-receive-utf8 (2013-08-05) 3 commits
+ - hooks/post-receive-email: set declared encoding to utf-8
+ - hooks/post-receive-email: force log messages in UTF-8
+ - hooks/post-receive-email: use plumbing instead of git log/show
+
+ Update post-receive-email script to make sure the message contents
+ and pathnames are encoded consistently in UTF-8.
+
+ I have a feeling that it is a lost cause to solve the issue the
+ topic tries to address in general, because the patch text can have
+ payload in any encodings that are different from either the
+ pathnames or the log message.  Patches that touch paths that use an
+ encoding that conflicts with the encoding of the payload and/or the
+ log message could be transferred with core.quotepath set and patch
+ generated as all binary, but that would be pretty much useless.
+
+
+* sb/parseopt-boolean-removal (2013-08-07) 9 commits
+  (merged to 'next' on 2013-08-08 at b138a2d)
+ + revert: use the OPT_CMDMODE for parsing, reducing code
+ + checkout-index: fix negations of even numbers of -n
+ + config parsing options: allow one flag multiple times
+ + hash-object: replace stdin parsing OPT_BOOLEAN by OPT_COUNTUP
+ + branch, commit, name-rev: ease up boolean conditions
+ + checkout: remove superfluous local variable
+ + log, format-patch: parsing uses OPT__QUIET
+ + Replace deprecated OPT_BOOLEAN by OPT_BOOL
+ + Remove deprecated OPTION_BOOLEAN for parsing arguments
+ (this branch uses jc/parseopt-command-modes.)
+
+ Convert most uses of OPT_BOOLEAN/OPTION_BOOLEAN that can use
+ OPT_BOOL/OPTION_BOOLEAN which have much saner semantics, and turn
+ remaining ones into OPT_SET_INT, OPT_COUNTUP, etc. as necessary;
+ there seems to be some misconversion that makes many tests fail,
+ though.
+
+ Will cook in 'next'.
+
+
+* mb/docs-favor-en-us (2013-08-01) 1 commit
+  (merged to 'next' on 2013-08-06 at 763d868)
+ + Provide some linguistic guidance for the documentation.
+
+ Declare that the official grammar & spelling of the source of this
+ project is en_US, but strongly discourage patches only to "fix"
+ existing en_UK strings to avoid unnecessary churns.
+
+ Will cook in 'next'.
 
 
 * jc/parseopt-command-modes (2013-07-30) 2 commits
- - tag: use OPT_CMDMODE
- - parse-options: add OPT_CMDMODE()
+  (merged to 'next' on 2013-08-08 at 43abba9)
+ + tag: use OPT_CMDMODE
+ + parse-options: add OPT_CMDMODE()
  (this branch is used by sb/parseopt-boolean-removal.)
 
  Many commands use --dashed-option as a operation mode selector
@@ -225,10 +381,13 @@ of the repositories listed at
  negate (e.g. "git tag --no-delete" is a nonsense).  Make it easier
  for users of parse_options() to enforce these restrictions.
 
+ Will cook in 'next'.
+
 
 * tr/log-full-diff-keep-true-parents (2013-08-05) 2 commits
- - log: use true parents for diff when walking reflogs
- - log: use true parents for diff even when rewriting
+  (merged to 'next' on 2013-08-08 at 2fb633f)
+ + log: use true parents for diff when walking reflogs
+ + log: use true parents for diff even when rewriting
 
  Output from "git log --full-diff -- <pathspec>" looked strange,
  because comparison was done with the previous ancestor that touched
@@ -237,12 +396,18 @@ of the repositories listed at
 
  Tweak "git reflog -p" for the same reason using the same mechanism.
 
+ Will cook in 'next'.
+
 
 * bc/unuse-packfile (2013-08-02) 2 commits
- - Don't close pack fd when free'ing pack windows
- - sha1_file: introduce close_one_pack() to close packs on fd pressure
+  (merged to 'next' on 2013-08-06 at 01aa4fd)
+ + Don't close pack fd when free'ing pack windows
+ + sha1_file: introduce close_one_pack() to close packs on fd pressure
 
- Will merge to and cook in 'next'.
+ Handle memory pressure and file descriptor pressure separately when
+ deciding to release pack windows to honor resource limits.
+
+ Will cook in 'next'.
 
 
 * da/darwin (2013-08-05) 3 commits
@@ -266,33 +431,40 @@ of the repositories listed at
  Will cook in 'next'.
 
 
-* jc/url-match (2013-07-31) 6 commits
- - config: "git config --get-urlmatch" parses section.<url>.key
- - builtin/config: refactor collect_config()
- - config: parse http.<url>.<variable> using urlmatch
- - config: add generic callback wrapper to parse section.<url>.key
- - config: add helper to normalize and match URLs
- - http.c: fix parsing of http.sslCertPasswordProtected variable
+* jc/url-match (2013-08-09) 7 commits
+  (merged to 'next' on 2013-08-12 at 381d358)
+ + builtin/config.c: compilation fix
+  (merged to 'next' on 2013-08-08 at c1ee470)
+ + config: "git config --get-urlmatch" parses section.<url>.key
+ + builtin/config: refactor collect_config()
+ + config: parse http.<url>.<variable> using urlmatch
+ + config: add generic callback wrapper to parse section.<url>.key
+ + config: add helper to normalize and match URLs
+ + http.c: fix parsing of http.sslCertPasswordProtected variable
 
- Reroll of km/http-curl-config-per-url topic.  Peff raises many good
- points about the tests for http.* variables.
+ Allow section.<urlpattern>.var configuration variables to be
+ treated as a "virtual" section.var given a URL, and use the
+ mechanism to enhance http.* configuration variables.
 
- Waiting for the discussion to conclude, hopefully with a replacement test.
+ This is a reroll of Kyle J. McKay's work.
+
+ Will cook in 'next'.
 
 
-* jl/submodule-mv (2013-07-30) 5 commits
- - rm: delete .gitmodules entry of submodules removed from the work tree
- - mv: update the path entry in .gitmodules for moved submodules
- - submodule.c: add .gitmodules staging helper functions
- - mv: move submodules using a gitfile
- - mv: move submodules together with their work trees
+* jl/submodule-mv (2013-08-06) 5 commits
+  (merged to 'next' on 2013-08-08 at 1a57bdf)
+ + rm: delete .gitmodules entry of submodules removed from the work tree
+ + mv: update the path entry in .gitmodules for moved submodules
+ + submodule.c: add .gitmodules staging helper functions
+ + mv: move submodules using a gitfile
+ + mv: move submodules together with their work trees
  (this branch uses nd/magic-pathspec.)
 
  "git mv A B" when moving a submodule A does "the right thing",
  inclusing relocating its working tree and adjusting the paths in
  the .gitmodules file.
 
- Waiting for a reroll.
+ Will cook in 'next'.
 
 
 * nd/clone-connectivity-shortcut (2013-07-23) 1 commit
