@@ -54,8 +54,6 @@ Git imposes the following rules on how references are named:
 
 . They cannot contain a sequence `@{`.
 
-. They cannot be the single character `@`.
-
 . They cannot contain a `\`.
 
 These rules make it easy for shell script based tools to parse

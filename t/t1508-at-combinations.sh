@@ -55,8 +55,6 @@ check "HEAD@{u}" ref refs/heads/upstream-branch
 check "@{u}@{1}" commit upstream-one
 check "@{-1}@{u}" ref refs/heads/master
 check "@{-1}@{u}@{1}" commit master-one
-check "@" commit new-two
-check "@@{u}" ref refs/heads/upstream-branch
 nonsense "@{u}@{-1}"
 nonsense "@{0}@{0}"
 nonsense "@{1}@{u}"
