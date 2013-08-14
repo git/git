@@ -195,7 +195,6 @@ save_stash () {
 	keep_index=
 	patch_mode=
 	untracked=
-	force=
 	while test $# != 0
 	do
 		case "$1" in
@@ -215,9 +214,6 @@ save_stash () {
 			;;
 		-u|--include-untracked)
 			untracked=untracked
-			;;
-		-f|--force)
-			force=t
 			;;
 		-a|--all)
 			untracked=all
@@ -261,14 +257,6 @@ save_stash () {
 	then
 		say "$(gettext "No local changes to save")"
 		exit 0
-	fi
-	if test -z "$untracked$force" &&
-	   test -n "$(git ls-files --killed | head -n 1)"
-	then
-		say "$(gettext "The following untracked files would NOT be saved but need to be removed by stash save:")"
-		test -n "$GIT_QUIET" || git ls-files --killed | sed 's/^/\t/'
-		say "$(gettext "Aborting. Consider using either the --force or --include-untracked option.")" >&2
-		exit 1
 	fi
 	test -f "$GIT_DIR/logs/$ref_stash" ||
 		clear_stash || die "$(gettext "Cannot initialize stash")"
