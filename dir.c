@@ -472,15 +472,14 @@ static void *read_skip_worktree_file_from_index(const char *path, size_t *size)
 	unsigned long sz;
 	enum object_type type;
 	void *data;
-	struct index_state *istate = &the_index;
 
 	len = strlen(path);
-	pos = index_name_pos(istate, path, len);
+	pos = cache_name_pos(path, len);
 	if (pos < 0)
 		return NULL;
-	if (!ce_skip_worktree(istate->cache[pos]))
+	if (!ce_skip_worktree(active_cache[pos]))
 		return NULL;
-	data = read_sha1_file(istate->cache[pos]->sha1, &type, &sz);
+	data = read_sha1_file(active_cache[pos]->sha1, &type, &sz);
 	if (!data || type != OBJ_BLOB) {
 		free(data);
 		return NULL;
@@ -924,13 +923,13 @@ enum exist_status {
 };
 
 /*
- * Do not use the alphabetically stored index to look up
+ * Do not use the alphabetically sorted index to look up
  * the directory name; instead, use the case insensitive
  * name hash.
  */
 static enum exist_status directory_exists_in_index_icase(const char *dirname, int len)
 {
-	struct cache_entry *ce = index_name_exists(&the_index, dirname, len + 1, ignore_case);
+	struct cache_entry *ce = cache_name_exists(dirname, len + 1, ignore_case);
 	unsigned char endchar;
 
 	if (!ce)
