@@ -1,21 +1,41 @@
 To: git@vger.kernel.org
 Bcc: lwn@lwn.net
-Subject: What's cooking in git.git (Aug 2013, #03; Tue, 13)
-X-master-at: 425df881e08bed7a8fcc9a23f452cff792f9ec6c
-X-next-at: 80e72f1fb22b04aabd28f14eb96d1beb23e37b9d
+Subject: What's cooking in git.git (Aug 2013, #04; Thu, 15)
+X-master-at: 2c2b6646c2723459dbd334c7ced6f77ffb0d596e
+X-next-at: c3113b0f8e8c144de8253871ce8abb30e7d58465
 
-What's cooking in git.git (Aug 2013, #03; Tue, 13)
+What's cooking in git.git (Aug 2013, #04; Thu, 15)
 --------------------------------------------------
 
 Here are the topics that have been cooking.  Commits prefixed with
 '-' are only in 'pu' (proposed updates) while commits prefixed with
 '+' are in 'next'.
 
-The -rc3 has been tagged; we will need to revert a7365313 (git
-stash: avoid data loss when "git stash save" kills a directory,
-2013-06-28) that is killing "git stash" in repositories with too
-many untracked cruft and plan to reapply it after trying to whip
-"ls-files --killed" into a reasonable performer before the final.
+Unfortunately, due to regression two topics were reverted but
+without prejudice (i.e. these reverts do not mean what these topics
+tried to achieve have been rejected---they just need to be redone
+without introducing the regression):
+
+ * An attempted fix to "git stash save", to detect that going back
+   to the state of the HEAD needs to lose killed files, and/or
+   untracked files in a killed directory, to prevent the command
+   from proceeding without "--force".
+
+   This used "ls-files -k" that was unusably slow.
+
+ * An attempted enhancement to allow "@" to be used to name "HEAD".
+
+   This rewrote "@" in a ref where it shouldn't have,
+   e.g. refs/@/foo.
+
+The schedule for 1.8.4 has been updated to have an extra rc this
+weekend (1.8.4-rc4) in order to make sure these reverts do not have
+unexpected fallout, even though I do not anticipate any.  The final
+has to be delayed by a week, and the current plan is to tag it on
+Aug 23rd (see http://tinyurl.com/gitCal).
+
+A new topic to optimize "ls-files -k" has been posted, and it may
+help resurrect the "git stash save" topic after 1.8.4 release.
 
 You can find the changes described here in the integration branches
 of the repositories listed at
@@ -23,162 +43,17 @@ of the repositories listed at
     http://git-blame.blogspot.com/p/git-public-repositories.html
 
 --------------------------------------------------
-[Graduated to "master"]
-
-* sb/mailmap-updates (2013-08-12) 1 commit
- + .mailmap: update long-lost friends with multiple defunct addresses
-
---------------------------------------------------
 [New Topics]
 
-* es/blame-L-twice (2013-08-06) 16 commits
-  (merged to 'next' on 2013-08-08 at 9d6f821)
- + line-range: reject -L line numbers less than 1
- + t8001/t8002: blame: add tests of -L line numbers less than 1
- + line-range: teach -L^:RE to search from start of file
- + line-range: teach -L:RE to search from end of previous -L range
- + line-range: teach -L^/RE/ to search from start of file
- + line-range-format.txt: document -L/RE/ relative search
- + log: teach -L/RE/ to search from end of previous -L range
- + blame: teach -L/RE/ to search from end of previous -L range
- + line-range: teach -L/RE/ to search relative to anchor point
- + blame: document multiple -L support
- + t8001/t8002: blame: add tests of multiple -L options
- + blame: accept multiple -L ranges
- + blame: inline one-line function into its lone caller
- + range-set: publish API for re-use by git-blame -L
- + line-range-format.txt: clarify -L:regex usage form
- + git-log.txt: place each -L option variation on its own line
- (this branch is used by es/contacts-blame-L-multi; uses es/blame-L-more.)
+* jc/ls-files-killed-optim (2013-08-15) 3 commits
+ - t3010: update to demonstrate "ls-files -k" optimization pitfalls
+ - ls-files -k: a directory only can be killed if the index has a non-directory
+ - dir.c: use the cache_* macro to access the current index
 
- Teaches "git blame" to take more than one -L ranges.
-
- Will cook in 'next'.
-
-
-* mm/no-shell-escape-in-die-message (2013-08-07) 1 commit
-  (merged to 'next' on 2013-08-08 at bddff86)
- + die_with_status: use "printf '%s\n'", not "echo"
-
- Fixes a minor bug in "git rebase -i" (there could be others, as the
- root cause is pretty generic) where the code feeds a random, data
- dependeant string to 'echo' and expects it to come out literally.
-
- Will cook in 'next'.
-
-
-* tr/fd-gotcha-fixes (2013-08-06) 1 commit
-  (merged to 'next' on 2013-08-08 at f452c5b)
- + t0070: test that git_mkstemps correctly checks return value of open()
-
- Finishing touches to an earlier fix already in 'master'.
-
- Will cook in 'next'.
-
-
-* ap/remote-hg-tilde-is-home-directory (2013-08-09) 1 commit
- - remote-hg: fix path when cloning with tilde expansion
-
- Will merge to and cook in 'next'.
-
-
-* es/rebase-i-no-abbrev (2013-08-11) 3 commits
- - rebase: interactive: fix short SHA-1 collision
- - t3404: rebase: interactive: demonstrate short SHA-1 collision
- - t3404: restore specialized rebase-editor following commentchar test
-
- Will merge to and cook in 'next'.
-
-
-* fc/remote-hg-shared-setup (2013-08-11) 2 commits
- - remote-hg: add shared repo upgrade
- - remote-hg: ensure shared repo is initialized
-
- Will merge to and cook in 'next'.
-
-
-* jc/transport-do-not-use-connect-twice-in-fetch (2013-08-07) 5 commits
- - fetch: work around "transport-take-over" hack
- - fetch: refactor code that fetches leftover tags
- - fetch: refactor code that prepares a transport
- - fetch: rename file-scope global "transport" to "gtransport"
- - t5802: add test for connect helper
-
- The auto-tag-following code in "git fetch" tries to reuse the same
- transport twice when the serving end does not cooperate and does
- not give tags that point to commits that are asked for as part of
- the primary transfer.  Unfortunately, Git-aware transport helper
- interface is not designed to be used more than once, hence this
- does not work over smart-http transfer.
-
- I'll try to see if this workaround can be done in a cleaner way
- before merging this to 'next'.
-
-
-* ks/p4-view-spec (2013-08-11) 3 commits
- - WAITING FOR ACK
- - git p4: implement view spec wildcards with "p4 where"
- - git p4 test: sanitize P4CHARSET
-
- Waiting for an ack.
-
-
-* mm/war-on-whatchanged (2013-08-13) 2 commits
- - whatchanged: document its historical nature
- - core-tutorial: trim the section on Inspecting Changes
-
- Will merge to and cook in 'next'.
-
-
-* nd/gc-lock-against-each-other (2013-08-09) 1 commit
- - gc: reject if another gc is running, unless --force is given
-
- Will merge to and cook in 'next'.
-
-
-* rt/doc-merge-file-diff3 (2013-08-09) 1 commit
- - Documentation/git-merge-file: document option "--diff3"
-
- Will merge to and cook in 'next'.
-
-
-* sb/misc-cleanup (2013-08-09) 3 commits
- - rm: remove unneeded null pointer check
- - diff: fix a possible null pointer dereference
- - diff: remove ternary operator evaluating always to true
-
- Will merge to and cook in 'next'.
-
-
-* aj/p4-symlink-lose-nl (2013-08-12) 1 commit
- - git-p4: Fix occasional truncation of symlink contents.
-
- Will merge to and cook in 'next'.
-
-
-* es/contacts-blame-L-multi (2013-08-13) 3 commits
- - contacts: reduce git-blame invocations
- - contacts: gather all blame sources prior to invoking git-blame
- - contacts: validate hunk length earlier
- (this branch uses es/blame-L-more and es/blame-L-twice.)
-
- Will merge to and cook in 'next'.
-
-
-* fc/unpack-trees-leakfix (2013-08-13) 1 commit
- - unpack-trees: plug a memory leak
-
- Will merge to and cook in 'next'.
-
-
-* nd/push-no-thin (2013-08-13) 1 commit
- - push: respect --no-thin
-
- Will merge to and cook in 'next'.
-
-
-* sh/pull-rebase-preserve (2013-08-13) 1 commit
- - pull: Allow pull to preserve merges when rebasing.
+ "git ls-files -k" needs to crawl only the part of the working tree
+ that may overlap the paths in the index to find killed files, but
+ shared code with the logic to find all the untracked files, which
+ made it unnecessarily inefficient.
 
  Will merge to and cook in 'next'.
 
@@ -290,6 +165,170 @@ of the repositories listed at
 --------------------------------------------------
 [Cooking]
 
+* es/blame-L-twice (2013-08-06) 16 commits
+  (merged to 'next' on 2013-08-08 at 9d6f821)
+ + line-range: reject -L line numbers less than 1
+ + t8001/t8002: blame: add tests of -L line numbers less than 1
+ + line-range: teach -L^:RE to search from start of file
+ + line-range: teach -L:RE to search from end of previous -L range
+ + line-range: teach -L^/RE/ to search from start of file
+ + line-range-format.txt: document -L/RE/ relative search
+ + log: teach -L/RE/ to search from end of previous -L range
+ + blame: teach -L/RE/ to search from end of previous -L range
+ + line-range: teach -L/RE/ to search relative to anchor point
+ + blame: document multiple -L support
+ + t8001/t8002: blame: add tests of multiple -L options
+ + blame: accept multiple -L ranges
+ + blame: inline one-line function into its lone caller
+ + range-set: publish API for re-use by git-blame -L
+ + line-range-format.txt: clarify -L:regex usage form
+ + git-log.txt: place each -L option variation on its own line
+ (this branch is used by es/contacts-blame-L-multi; uses es/blame-L-more.)
+
+ Teaches "git blame" to take more than one -L ranges.
+
+ Will cook in 'next'.
+
+
+* mm/no-shell-escape-in-die-message (2013-08-07) 1 commit
+  (merged to 'next' on 2013-08-08 at bddff86)
+ + die_with_status: use "printf '%s\n'", not "echo"
+
+ Fixes a minor bug in "git rebase -i" (there could be others, as the
+ root cause is pretty generic) where the code feeds a random, data
+ dependeant string to 'echo' and expects it to come out literally.
+
+ Will cook in 'next'.
+
+
+* tr/fd-gotcha-fixes (2013-08-06) 1 commit
+  (merged to 'next' on 2013-08-08 at f452c5b)
+ + t0070: test that git_mkstemps correctly checks return value of open()
+
+ Finishing touches to an earlier fix already in 'master'.
+
+ Will cook in 'next'.
+
+
+* ap/remote-hg-tilde-is-home-directory (2013-08-09) 1 commit
+  (merged to 'next' on 2013-08-14 at cd963e3)
+ + remote-hg: fix path when cloning with tilde expansion
+
+ Will cook in 'next'.
+
+
+* es/rebase-i-no-abbrev (2013-08-11) 3 commits
+  (merged to 'next' on 2013-08-14 at d449e0e)
+ + rebase: interactive: fix short SHA-1 collision
+ + t3404: rebase: interactive: demonstrate short SHA-1 collision
+ + t3404: restore specialized rebase-editor following commentchar test
+
+ Will cook in 'next'.
+
+
+* fc/remote-hg-shared-setup (2013-08-11) 2 commits
+  (merged to 'next' on 2013-08-14 at aae6858)
+ + remote-hg: add shared repo upgrade
+ + remote-hg: ensure shared repo is initialized
+
+ Will cook in 'next'.
+
+
+* jc/transport-do-not-use-connect-twice-in-fetch (2013-08-07) 5 commits
+ - fetch: work around "transport-take-over" hack
+ - fetch: refactor code that fetches leftover tags
+ - fetch: refactor code that prepares a transport
+ - fetch: rename file-scope global "transport" to "gtransport"
+ - t5802: add test for connect helper
+
+ The auto-tag-following code in "git fetch" tries to reuse the same
+ transport twice when the serving end does not cooperate and does
+ not give tags that point to commits that are asked for as part of
+ the primary transfer.  Unfortunately, Git-aware transport helper
+ interface is not designed to be used more than once, hence this
+ does not work over smart-http transfer.
+
+ I'll try to see if this workaround can be done in a cleaner way
+ before merging this to 'next'.
+
+
+* ks/p4-view-spec (2013-08-11) 3 commits
+ - WAITING FOR ACK
+ - git p4: implement view spec wildcards with "p4 where"
+ - git p4 test: sanitize P4CHARSET
+
+ Waiting for an ack.
+
+
+* mm/war-on-whatchanged (2013-08-13) 2 commits
+  (merged to 'next' on 2013-08-14 at fe77c11)
+ + whatchanged: document its historical nature
+ + core-tutorial: trim the section on Inspecting Changes
+
+ Will cook in 'next'.
+
+
+* nd/gc-lock-against-each-other (2013-08-09) 1 commit
+  (merged to 'next' on 2013-08-14 at 6999651)
+ + gc: reject if another gc is running, unless --force is given
+
+ Will cook in 'next'.
+
+
+* rt/doc-merge-file-diff3 (2013-08-09) 1 commit
+  (merged to 'next' on 2013-08-14 at 1e5847b)
+ + Documentation/git-merge-file: document option "--diff3"
+
+ Will cook in 'next'.
+
+
+* sb/misc-cleanup (2013-08-09) 3 commits
+  (merged to 'next' on 2013-08-14 at 9e7ff9a)
+ + rm: remove unneeded null pointer check
+ + diff: fix a possible null pointer dereference
+ + diff: remove ternary operator evaluating always to true
+
+ Will cook in 'next'.
+
+
+* aj/p4-symlink-lose-nl (2013-08-12) 1 commit
+  (merged to 'next' on 2013-08-14 at a4959b7)
+ + git-p4: Fix occasional truncation of symlink contents.
+
+ Will cook in 'next'.
+
+
+* es/contacts-blame-L-multi (2013-08-13) 3 commits
+  (merged to 'next' on 2013-08-14 at 551ed3d)
+ + contacts: reduce git-blame invocations
+ + contacts: gather all blame sources prior to invoking git-blame
+ + contacts: validate hunk length earlier
+ (this branch uses es/blame-L-more and es/blame-L-twice.)
+
+ Will cook in 'next'.
+
+
+* fc/unpack-trees-leakfix (2013-08-13) 1 commit
+  (merged to 'next' on 2013-08-14 at 989f329)
+ + unpack-trees: plug a memory leak
+
+ Will cook in 'next'.
+
+
+* nd/push-no-thin (2013-08-13) 1 commit
+  (merged to 'next' on 2013-08-14 at b2d0fa9)
+ + push: respect --no-thin
+
+ Will cook in 'next'.
+
+
+* sh/pull-rebase-preserve (2013-08-13) 1 commit
+  (merged to 'next' on 2013-08-14 at 99a85dd)
+ + pull: Allow pull to preserve merges when rebasing.
+
+ Will cook in 'next'.
+
+
 * es/blame-L-more (2013-08-05) 11 commits
   (merged to 'next' on 2013-08-06 at 2679f3e)
  + blame: reject empty ranges -L,+0 and -L,-0
@@ -351,9 +390,7 @@ of the repositories listed at
 
  Convert most uses of OPT_BOOLEAN/OPTION_BOOLEAN that can use
  OPT_BOOL/OPTION_BOOLEAN which have much saner semantics, and turn
- remaining ones into OPT_SET_INT, OPT_COUNTUP, etc. as necessary;
- there seems to be some misconversion that makes many tests fail,
- though.
+ remaining ones into OPT_SET_INT, OPT_COUNTUP, etc. as necessary.
 
  Will cook in 'next'.
 
@@ -487,7 +524,10 @@ of the repositories listed at
   (merged to 'next' on 2013-07-30 at 8a9964c)
  + fsck: Replace deprecated OPT_BOOLEAN by OPT_BOOL
 
- Will cook in 'next'.
+ Will drop.
+
+ sb/parseopt-boolean-removal contains the moral equivalent of this
+ change.
 
 
 * rr/feed-real-path-to-editor (2013-07-29) 1 commit
