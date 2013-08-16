@@ -26,6 +26,20 @@
 
 #if defined(WIN32)
 # include <malloc.h>
+#define QS_KEY 0x0001
+#define QS_MOUSEMOVE 0x0002
+#define QS_MOUSEBUTTON 0x0004
+#define QS_POSTMESSAGE 0x0008
+#define QS_TIMER 0x0010
+#define QS_PAINT 0x0020
+#define QS_SENDMESSAGE 0x0040
+#define QS_HOTKEY 0x0080
+#define QS_ALLPOSTMESSAGE 0x0100
+#define QS_RAWINPUT 0x0400
+#define QS_MOUSE (QS_MOUSEMOVE | QS_MOUSEBUTTON)
+#define QS_INPUT (QS_MOUSE | QS_KEY | QS_RAWINPUT)
+#define QS_ALLEVENTS (QS_INPUT | QS_POSTMESSAGE | QS_TIMER | QS_PAINT | QS_HOTKEY)
+#define QS_ALLINPUT (QS_INPUT | QS_POSTMESSAGE | QS_TIMER | QS_PAINT | QS_HOTKEY | QS_SENDMESSAGE)
 #endif
 
 #include <sys/types.h>
@@ -47,6 +61,7 @@
 # include <io.h>
 # include <stdio.h>
 # include <conio.h>
+# include <winuser.h>
 #else
 # include <sys/time.h>
 # include <sys/socket.h>
