@@ -145,11 +145,10 @@ static void mark_edge_parents_uninteresting(struct commit *commit,
 	}
 }
 
-void mark_edges_uninteresting(struct commit_list *list,
-			      struct rev_info *revs,
-			      show_edge_fn show_edge)
+void mark_edges_uninteresting(struct rev_info *revs, show_edge_fn show_edge)
 {
-	for ( ; list; list = list->next) {
+	struct commit_list *list;
+	for (list = revs->commits; list; list = list->next) {
 		struct commit *commit = list->item;
 
 		if (commit->object.flags & UNINTERESTING) {
