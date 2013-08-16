@@ -1191,7 +1191,9 @@ ifdef NEEDS_LIBICONV
 		ICONV_LINK =
 	endif
 	ifdef NEEDS_LIBINTL_BEFORE_LIBICONV
-		ICONV_LINK += -lintl
+		ifndef NO_GETTEXT
+			ICONV_LINK += -lintl
+		endif
 	endif
 	EXTLIBS += $(ICONV_LINK) -liconv
 endif
@@ -1448,7 +1450,7 @@ ifdef NO_PTHREADS
 	BASIC_CFLAGS += -DNO_PTHREADS
 else
 	BASIC_CFLAGS += $(PTHREAD_CFLAGS)
-	EXTLIBS += $(PTHREAD_LIBS)
+	EXTLIBS += -lpthread
 	LIB_OBJS += thread-utils.o
 endif
 
