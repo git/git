@@ -7,6 +7,7 @@ modules =
 PERL_PATH_SQ = $(subst ','\'',$(PERL_PATH))
 prefix_SQ = $(subst ','\'',$(prefix))
 localedir_SQ = $(subst ','\'',$(localedir))
+MAKE=dmake
 
 ifndef V
 	QUIET = @
@@ -42,6 +43,7 @@ modules += Git/SVN/Ra
 modules += Git/SVN/Utils
 
 $(makfile): ../GIT-CFLAGS Makefile
+	echo all: NO_PERL_MAKEMAKER=$(NO_PERL_MAKEMAKER) > $@
 	echo all: private-Error.pm Git.pm Git/I18N.pm > $@
 	set -e; \
 	for i in $(modules); \
@@ -69,6 +71,7 @@ $(makfile): ../GIT-CFLAGS Makefile
 		else \
 			subdir=/$${i%/*}; \
 		fi; \
+		echo '  DESTDIR instdir_SQ subdir = $(DESTDIR)$(instdir_SQ) $(subdir)' >> $@; \
 		echo '	$(RM) "$$(DESTDIR)$(instdir_SQ)/'$$i'.pm"' >> $@; \
 		echo '	mkdir -p "$$(DESTDIR)$(instdir_SQ)'$$subdir'"' >> $@; \
 		echo '	cp '$$i'.pm "$$(DESTDIR)$(instdir_SQ)/'$$i'.pm"' >> $@; \
