@@ -741,6 +741,12 @@ extern "C" {
  #define FORCEINLINE inline
 #endif
 #endif /* __cplusplus */
+
+#if defined(__MINGW32__)
+#  undef FORCEINLINE
+#  define FORCEINLINE inline
+#endif
+
 #ifndef FORCEINLINE
  #define FORCEINLINE
 #endif
