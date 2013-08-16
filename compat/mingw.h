@@ -1,13 +1,25 @@
 #include <winsock2.h>
 #include <ws2tcpip.h>
+#include <stdint.h>
+
+#include <stdio.h>
+#include <sys/types.h>
+#include <sys/stat.h>
+
+# define setmode _setmode
+# define stat    __stat64
+# define chmod   _chmod
+# define getcwd  _getcwd
+# define putenv  _putenv
 
 /*
  * things that are not available in header files
  */
 
-typedef int pid_t;
+//typedef int pid_t;
 typedef int uid_t;
 typedef int socklen_t;
+
 #define hstrerror strerror
 
 #define S_IFLNK    0120000 /* Symbolic link */
@@ -264,7 +276,7 @@ static inline int getrlimit(int resource, struct rlimit *rlp)
 #define off_t off64_t
 #define lseek _lseeki64
 #ifndef ALREADY_DECLARED_STAT_FUNCS
-#define stat _stati64
+//#define stat _stati64
 int mingw_lstat(const char *file_name, struct stat *buf);
 int mingw_stat(const char *file_name, struct stat *buf);
 int mingw_fstat(int fd, struct stat *buf);
