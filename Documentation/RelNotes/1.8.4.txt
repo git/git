@@ -198,9 +198,6 @@ UI, Workflows & Features
    response was to stash them and re-run).  This introduced a corner
    case breakage to "git am --abort" but it has been fixed.
 
- * Instead of typing four capital letters "HEAD", you can say "@" now,
-   e.g. "git log @".
-
  * "check-ignore" (new feature since 1.8.2) has been updated to work
    more like "check-attr" over bidi-pipes.
 
@@ -371,12 +368,6 @@ details).
    counted as "checkout", and affected later "git checkout -" to the
    the user to an unexpected place.
    (merge 3bed291 rr/rebase-checkout-reflog later to maint).
-
- * "git stash save", when your local change turns a tracked file into
-   a directory, has to remove files in that directory in order to
-   revert your working tree to a pristine state.  This will lose
-   untracked files in such a directory, and the command now requires
-   you to "--force" it.
 
  * The configuration variable column.ui was poorly documented.
    (merge 5e62cc1 rr/column-doc later to maint).
