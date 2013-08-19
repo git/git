@@ -1,41 +1,21 @@
 To: git@vger.kernel.org
 Bcc: lwn@lwn.net
-Subject: What's cooking in git.git (Aug 2013, #04; Thu, 15)
-X-master-at: 2c2b6646c2723459dbd334c7ced6f77ffb0d596e
-X-next-at: c3113b0f8e8c144de8253871ce8abb30e7d58465
+Subject: What's cooking in git.git (Aug 2013, #05; Mon, 19)
+X-master-at: 4d06473928ee574910accbde05c19ef2263abdf6
+X-next-at: fb33910d190a5cff4020f44651fc3a51f55c0a1f
 
-What's cooking in git.git (Aug 2013, #04; Thu, 15)
+What's cooking in git.git (Aug 2013, #05; Mon, 19)
 --------------------------------------------------
 
 Here are the topics that have been cooking.  Commits prefixed with
 '-' are only in 'pu' (proposed updates) while commits prefixed with
 '+' are in 'next'.
 
-Unfortunately, due to regression two topics were reverted but
-without prejudice (i.e. these reverts do not mean what these topics
-tried to achieve have been rejected---they just need to be redone
-without introducing the regression):
-
- * An attempted fix to "git stash save", to detect that going back
-   to the state of the HEAD needs to lose killed files, and/or
-   untracked files in a killed directory, to prevent the command
-   from proceeding without "--force".
-
-   This used "ls-files -k" that was unusably slow.
-
- * An attempted enhancement to allow "@" to be used to name "HEAD".
-
-   This rewrote "@" in a ref where it shouldn't have,
-   e.g. refs/@/foo.
-
-The schedule for 1.8.4 has been updated to have an extra rc this
-weekend (1.8.4-rc4) in order to make sure these reverts do not have
-unexpected fallout, even though I do not anticipate any.  The final
-has to be delayed by a week, and the current plan is to tag it on
-Aug 23rd (see http://tinyurl.com/gitCal).
-
-A new topic to optimize "ls-files -k" has been posted, and it may
-help resurrect the "git stash save" topic after 1.8.4 release.
+An extra release candidate -rc4 has been tagged and pushed out.
+Hopefully this will be the last one before the final release of
+1.8.4.  As I expect we will have two more cycles of 1.8.x by the end
+of the year and then 2.0 early next year, we may want to merge these
+"for 2.0" topics to 'next' for real, starting the next cycle.
 
 You can find the changes described here in the integration branches
 of the repositories listed at
@@ -45,15 +25,41 @@ of the repositories listed at
 --------------------------------------------------
 [New Topics]
 
-* jc/ls-files-killed-optim (2013-08-15) 3 commits
- - t3010: update to demonstrate "ls-files -k" optimization pitfalls
- - ls-files -k: a directory only can be killed if the index has a non-directory
- - dir.c: use the cache_* macro to access the current index
+* es/rebase-i-respect-core-commentchar (2013-08-18) 1 commit
+ - rebase -i: fix cases ignoring core.commentchar
 
- "git ls-files -k" needs to crawl only the part of the working tree
- that may overlap the paths in the index to find killed files, but
- shared code with the logic to find all the untracked files, which
- made it unnecessarily inefficient.
+ Will merge to and cook in 'next'.
+
+
+* jx/branch-vv-always-compare-with-upstream (2013-08-18) 3 commits
+ - status: always show tracking branch even no change
+ - branch: mark missing tracking branch as gone
+ - branch: not report invalid tracking branch
+
+
+* nd/fetch-into-shallow (2013-08-18) 6 commits
+ - list-objects: mark more commits as edges in mark_edges_uninteresting
+ - list-objects: reduce one argument in mark_edges_uninteresting
+ - upload-pack: delegate rev walking in shallow fetch to pack-objects
+ - shallow: add setup_temporary_shallow()
+ - shallow: only add shallow graft points to new shallow file
+ - move setup_alternate_shallow and write_shallow_commits to shallow.c
+
+
+* sb/diff-delta-remove-needless-comparison (2013-08-18) 1 commit
+ - create_delta_index: simplify condition always evaluating to true
+
+ Will merge to and cook in 'next'.
+
+
+* sg/bash-prompt-lf-in-cwd-test (2013-08-18) 1 commit
+ - bash prompt: test the prompt with newline in repository path
+
+ Will merge to and cook in 'next'.
+
+
+* jl/some-submodule-config-are-not-boolean (2013-08-19) 1 commit
+ - avoid segfault on submodule.*.path set to an empty "true"
 
  Will merge to and cook in 'next'.
 
@@ -165,6 +171,19 @@ of the repositories listed at
 --------------------------------------------------
 [Cooking]
 
+* jc/ls-files-killed-optim (2013-08-15) 3 commits
+ - t3010: update to demonstrate "ls-files -k" optimization pitfalls
+ - ls-files -k: a directory only can be killed if the index has a non-directory
+ - dir.c: use the cache_* macro to access the current index
+
+ "git ls-files -k" needs to crawl only the part of the working tree
+ that may overlap the paths in the index to find killed files, but
+ shared code with the logic to find all the untracked files, which
+ made it unnecessarily inefficient.
+
+ Will merge to and cook in 'next'.
+
+
 * es/blame-L-twice (2013-08-06) 16 commits
   (merged to 'next' on 2013-08-08 at 9d6f821)
  + line-range: reject -L line numbers less than 1
@@ -217,7 +236,8 @@ of the repositories listed at
  Will cook in 'next'.
 
 
-* es/rebase-i-no-abbrev (2013-08-11) 3 commits
+* es/rebase-i-no-abbrev (2013-08-18) 4 commits
+ - rebase -i: fix core.commentchar regression
   (merged to 'next' on 2013-08-14 at d449e0e)
  + rebase: interactive: fix short SHA-1 collision
  + t3404: rebase: interactive: demonstrate short SHA-1 collision
