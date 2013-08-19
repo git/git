@@ -113,9 +113,9 @@ do
 		case "$NO_PEDANTIC" in
 		?*)	;;
 		'')
-			O="$O -Werror $(old_style_def_fix) -std=c99"
-			O="$O -Wno-pointer-to-int-cast"
-			O="$O -Wpointer-arith -Woverflow -Wunused"
+			O="-Werror $(old_style_def_fix) -std=c99 $O"
+			O="-Wno-pointer-to-int-cast $O"
+			O="-Wpointer-arith -Woverflow -Wunused $O"
 			;;
 		esac
 		# -Wvla
