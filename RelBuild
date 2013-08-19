@@ -1,16 +1,16 @@
 #!/bin/sh
 
+j="-j 8"
 version=$(git describe --exact) &&
 label=$(echo "$version" | sed -e 's|^v||') &&
 version=$(echo "$label" | sed -e 's|-|.|g') || exit
 
-make clean && make dist &&
+make clean && make $j dist &&
 
 ASCIIDOC_NO_ROFF=YesPlease \
 ASCIIDOC8=YesPlease \
 MAN_BASE_URL="git-htmldocs/" \
-make dist-doc || exit
-
+make $j dist-doc || exit
 # The above used to be
 # MAN_BASE_URL="http://www.kernel.org/pub/software/scm/git/docs/"
 
@@ -25,13 +25,23 @@ do
 	test -f $file || exit
 done
 
-sha1sum $files | gpg --clearsign >git-$version.sign
+# Use agent
+GPG_TTY=$(tty) &&
+export GPG_TTY &&
+eval $(gpg-agent --daemon) &&
+GPG_AGENT_PID=$(expr "$GPG_AGENT_INFO" : ".*:\([1-9][0-9]*\):[1-9][0-9]*$") &&
+trap 'kill -0 $GPG_AGENT_PID && kill $GPG_AGENT_PID' 0 1 2 3 15 &&
+kill -0 "$GPG_AGENT_PID" &&
+gpg="gpg --use-agent" || exit
+
+sha1sum $files | $gpg --clearsign >git-$version.sign || exit
 
 for file in $files
 do
 	gzip -dc <"$file" >"${file%.gz}" &&
-	gpg -b "${file%.gz}" &&
+	$gpg -b "${file%.gz}" &&
 	rm "${file%.gz}" || exit
 done
 
+kill $GPG_AGENT_PID
 ls -l git-$version.sign $files git*-$version.tar.sig
