@@ -18,6 +18,16 @@ test_expect_success 'setup - initial commit' '
 	git branch initial
 '
 
+test_expect_success 'configuration parsing' '
+	test_when_finished "rm -f .gitmodules" &&
+	cat >.gitmodules <<-\EOF &&
+	[submodule "s"]
+		path
+		ignore
+	EOF
+	test_must_fail git status
+'
+
 test_expect_success 'setup - repository in init subdirectory' '
 	mkdir init &&
 	(

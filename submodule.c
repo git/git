@@ -134,6 +134,9 @@ int parse_submodule_config_option(const char *var, const char *value)
 		return 0;
 
 	if (!strcmp(key, "path")) {
+		if (!value)
+			return config_error_nonbool(var);
+
 		config = unsorted_string_list_lookup(&config_name_for_path, value);
 		if (config)
 			free(config->util);
@@ -150,6 +153,9 @@ int parse_submodule_config_option(const char *var, const char *value)
 		config->util = (void *)(intptr_t)parse_fetch_recurse_submodules_arg(var, value);
 	} else if (!strcmp(key, "ignore")) {
 		char *name_cstr;
+
+		if (!value)
+			return config_error_nonbool(var);
 
 		if (strcmp(value, "untracked") && strcmp(value, "dirty") &&
 		    strcmp(value, "all") && strcmp(value, "none")) {
