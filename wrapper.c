@@ -131,6 +131,14 @@ void *xcalloc(size_t nmemb, size_t size)
 }
 
 /*
+ * Limit size of IO chunks, because huge chunks only cause pain.  OS X
+ * 64-bit is buggy, returning EINVAL if len >= INT_MAX; and even in
+ * the absense of bugs, large chunks can result in bad latencies when
+ * you decide to kill the process.
+ */
+#define MAX_IO_SIZE (8*1024*1024)
+
+/*
  * xread() is the same a read(), but it automatically restarts read()
  * operations with a recoverable error (EAGAIN and EINTR). xread()
  * DOES NOT GUARANTEE that "len" bytes is read even if the data is available.
@@ -138,6 +146,8 @@ void *xcalloc(size_t nmemb, size_t size)
 ssize_t xread(int fd, void *buf, size_t len)
 {
 	ssize_t nr;
+	if (len > MAX_IO_SIZE)
+	    len = MAX_IO_SIZE;
 	while (1) {
 		nr = read(fd, buf, len);
 		if ((nr < 0) && (errno == EAGAIN || errno == EINTR))
@@ -154,6 +164,8 @@ ssize_t xread(int fd, void *buf, size_t len)
 ssize_t xwrite(int fd, const void *buf, size_t len)
 {
 	ssize_t nr;
+	if (len > MAX_IO_SIZE)
+	    len = MAX_IO_SIZE;
 	while (1) {
 		nr = write(fd, buf, len);
 		if ((nr < 0) && (errno == EAGAIN || errno == EINTR))
