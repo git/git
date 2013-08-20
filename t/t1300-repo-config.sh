@@ -669,6 +669,13 @@ test_expect_success 'invalid unit' '
 	test_cmp actual expect
 '
 
+test_expect_success 'large numbers via --ulong' '
+	git config big.file 3g &&
+	echo 3221225472 >expect &&
+	git config --ulong big.file >actual &&
+	test_cmp expect actual
+'
+
 cat > expect << EOF
 true
 false

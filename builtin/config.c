@@ -47,6 +47,7 @@ static int respect_includes = -1;
 #define TYPE_INT (1<<1)
 #define TYPE_BOOL_OR_INT (1<<2)
 #define TYPE_PATH (1<<3)
+#define TYPE_ULONG (1<<4)
 
 static struct option builtin_config_options[] = {
 	OPT_GROUP(N_("Config file location")),
@@ -73,6 +74,7 @@ static struct option builtin_config_options[] = {
 	OPT_BIT(0, "bool", &types, N_("value is \"true\" or \"false\""), TYPE_BOOL),
 	OPT_BIT(0, "int", &types, N_("value is decimal number"), TYPE_INT),
 	OPT_BIT(0, "bool-or-int", &types, N_("value is --bool or --int"), TYPE_BOOL_OR_INT),
+	OPT_BIT(0, "ulong", &types, N_("value is large unsigned decimal number"), TYPE_ULONG),
 	OPT_BIT(0, "path", &types, N_("value is a path (file or directory name)"), TYPE_PATH),
 	OPT_GROUP(N_("Other")),
 	OPT_BOOLEAN('z', "null", &end_null, N_("terminate values with NUL byte")),
@@ -129,6 +131,8 @@ static int collect_config(const char *key_, const char *value_, void *cb)
 	}
 	if (types == TYPE_INT)
 		sprintf(value, "%d", git_config_int(key_, value_?value_:""));
+	else if (types == TYPE_ULONG)
+		sprintf(value, "%lu", git_config_ulong(key_, value_ ? value_ : ""));
 	else if (types == TYPE_BOOL)
 		vptr = git_config_bool(key_, value_) ? "true" : "false";
 	else if (types == TYPE_BOOL_OR_INT) {
@@ -268,6 +272,10 @@ static char *normalize_value(const char *key, const char *value)
 			int v = git_config_int(key, value);
 			sprintf(normalized, "%d", v);
 		}
+		else if (types == TYPE_ULONG)
+			sprintf(normalized, "%lu",
+				git_config_ulong(key, value));
+
 		else if (types == TYPE_BOOL)
 			sprintf(normalized, "%s",
 				git_config_bool(key, value) ? "true" : "false");
