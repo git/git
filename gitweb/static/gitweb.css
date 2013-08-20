@@ -548,8 +548,7 @@ a.linenr {
 
 a.rss_logo {
 	float: right;
-	padding: 3px 0px;
-	width: 35px;
+	padding: 3px 5px;
 	line-height: 10px;
 	border: 1px solid;
 	border-color: #fcc7a5 #7d3302 #3e1a01 #ff954e;
