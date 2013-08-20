@@ -153,8 +153,7 @@ static void read_mailmap_line(struct string_list *map, char *buffer,
 		if (!strncmp(buffer, abbrev, abblen)) {
 			char *cp;
 
-			if (repo_abbrev)
-				free(*repo_abbrev);
+			free(*repo_abbrev);
 			*repo_abbrev = xmalloc(len);
 
 			for (cp = buffer + abblen; isspace(*cp); cp++)
