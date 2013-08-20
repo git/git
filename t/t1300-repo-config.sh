@@ -652,6 +652,11 @@ test_expect_success numbers '
 	test_cmp expect actual
 '
 
+test_expect_success 'out-of-range integers are detected' '
+	git config giga.crash 3g &&
+	test_must_fail git config --int giga.crash
+'
+
 test_expect_success 'invalid unit' '
 	git config aninvalid.unit "1auto" &&
 	echo 1auto >expect &&
