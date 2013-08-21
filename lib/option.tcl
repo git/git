@@ -160,6 +160,7 @@ proc do_options {} {
 		{c gui.encoding {mc "Default File Contents Encoding"}}
 		{b gui.warndetachedcommit {mc "Warn before committing to a detached head"}}
 		{s gui.stageuntracked {mc "Staging of untracked files"} {list "yes" "no" "ask"}}
+		{b gui.displayuntracked {mc "Show untracked files"}}
 		} {
 		set type [lindex $option 0]
 		set name [lindex $option 1]

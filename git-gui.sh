@@ -913,6 +913,7 @@ set font_descs {
 	{fontdiff font_diff {mc "Diff/Console Font"}}
 }
 set default_config(gui.stageuntracked) ask
+set default_config(gui.displayuntracked) true
 
 ######################################################################
 ##
@@ -1551,18 +1552,23 @@ proc rescan_stage2 {fd after} {
 	set buf_rdf {}
 	set buf_rlo {}
 
-	set rescan_active 3
+	set rescan_active 2
 	ui_status [mc "Scanning for modified files ..."]
 	set fd_di [git_read diff-index --cached -z [PARENT]]
 	set fd_df [git_read diff-files -z]
-	set fd_lo [eval git_read ls-files --others -z $ls_others]
 
 	fconfigure $fd_di -blocking 0 -translation binary -encoding binary
 	fconfigure $fd_df -blocking 0 -translation binary -encoding binary
-	fconfigure $fd_lo -blocking 0 -translation binary -encoding binary
+
 	fileevent $fd_di readable [list read_diff_index $fd_di $after]
 	fileevent $fd_df readable [list read_diff_files $fd_df $after]
-	fileevent $fd_lo readable [list read_ls_others $fd_lo $after]
+
+	if {[is_config_true gui.displayuntracked]} {
+		set fd_lo [eval git_read ls-files --others -z $ls_others]
+		fconfigure $fd_lo -blocking 0 -translation binary -encoding binary
+		fileevent $fd_lo readable [list read_ls_others $fd_lo $after]
+		incr rescan_active
+	}
 }
 
 proc load_message {file {encoding {}}} {
