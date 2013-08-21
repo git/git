@@ -680,11 +680,18 @@ sub ask {
 	my $valid_re = $arg{valid_re};
 	my $default = $arg{default};
 	my $confirm_only = $arg{confirm_only};
+	my $choices = $arg{choices} || [];
 	my $resp;
 	my $i = 0;
 	return defined $default ? $default : undef
 		unless defined $term->IN and defined fileno($term->IN) and
 		       defined $term->OUT and defined fileno($term->OUT);
+	for (@$choices) {
+		printf "(%d) %s\n", $i++, ref($_) eq 'ARRAY' ? $_->[1] : $_;
+	}
+	printf "Enter 0-%d to choose from the above list\n", $i-1
+		if (@$choices);
+	$i = 0;
 	while ($i++ < 10) {
 		$resp = $term->readline($prompt);
 		if (!defined $resp) { # EOF
@@ -693,6 +700,10 @@ sub ask {
 		}
 		if ($resp eq '' and defined $default) {
 			return $default;
+		}
+		if (@$choices && $resp =~ m/^[0-9]+$/ && $resp < @$choices) {
+			my $c = $choices->[$resp];
+			return ref($c) eq 'ARRAY' ? $c->[0] : $c;
 		}
 		if (!defined $valid_re or $resp =~ /$valid_re/) {
 			return $resp;
