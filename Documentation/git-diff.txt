@@ -31,7 +31,8 @@ two blob objects, or changes between two files on disk.
 +
 If exactly two paths are given and at least one points outside
 the current repository, 'git diff' will compare the two files /
-directories. This behavior can be forced by --no-index.
+directories. This behavior can be forced by --no-index or by
+executing 'git diff' outside of a working tree.
 
 'git diff' [--options] --cached [<commit>] [--] [<path>...]::
 
