@@ -407,23 +407,52 @@ bad:
 	return NULL;
 }
 
+static int compare_tree_entries(struct name_entry *e1, struct name_entry *e2)
+{
+	int len1 = tree_entry_len(e1);
+	int len2 = tree_entry_len(e2);
+	int len = len1 < len2 ? len1 : len2;
+	unsigned char c1, c2;
+	int cmp;
+
+	cmp = memcmp(e1->path, e2->path, len);
+	if (cmp)
+		return cmp;
+	c1 = e1->path[len];
+	c2 = e2->path[len];
+	if (!c1 && S_ISDIR(e1->mode))
+		c1 = '/';
+	if (!c2 && S_ISDIR(e2->mode))
+		c2 = '/';
+	return c1 - c2;
+}
+
 /*
  * This converts a canonical tree object buffer into its
  * tightly packed representation using the already populated
  * and sorted tree_path_table dictionary.  The parsing is
  * strict so to ensure the canonical version may always be
  * regenerated and produce the same hash.
+ *
+ * If a delta buffer is provided, we may encode multiple ranges of tree
+ * entries against that buffer.
  */
-void *pv4_encode_tree(void *_buffer, unsigned long *sizep)
+void *pv4_encode_tree(void *_buffer, unsigned long *sizep,
+		      void *delta, unsigned long delta_size,
+		      const unsigned char *delta_sha1)
 {
 	unsigned long size = *sizep;
 	unsigned char *in, *out, *end, *buffer = _buffer;
-	struct tree_desc desc;
-	struct name_entry name_entry;
+	struct tree_desc desc, delta_desc;
+	struct name_entry name_entry, delta_entry;
 	int nb_entries;
+	unsigned int copy_start, copy_count = 0, delta_pos = 0, first_delta = 1;
 
 	if (!size)
 		return NULL;
+
+	if (!delta_size)
+		delta = NULL;
 
 	/*
 	 * We can't make sure the result will always be smaller than the
@@ -447,14 +476,73 @@ void *pv4_encode_tree(void *_buffer, unsigned long *sizep)
 	out += encode_varint(nb_entries, out);
 
 	init_tree_desc(&desc, in, size);
+	if (delta) {
+		init_tree_desc(&delta_desc, delta, delta_size);
+		if (!tree_entry(&delta_desc, &delta_entry))
+			delta = NULL;
+	}
+
 	while (tree_entry(&desc, &name_entry)) {
 		int pathlen, index;
+
+		/*
+		 * Try to match entries against our delta object.
+		 */
+		if (delta) {
+			int ret;
+
+			do {
+				ret = compare_tree_entries(&name_entry, &delta_entry);
+				if (ret <= 0 || copy_count != 0)
+					break;
+				delta_pos++;
+				if (!tree_entry(&delta_desc, &delta_entry))
+					delta = NULL;
+			} while (delta);
+
+			if (ret == 0 && name_entry.mode == delta_entry.mode &&
+			    hashcmp(name_entry.sha1, delta_entry.sha1) == 0) {
+				if (!copy_count)
+					copy_start = delta_pos;
+				copy_count++;
+				delta_pos++;
+				if (!tree_entry(&delta_desc, &delta_entry))
+					delta = NULL;
+				continue;
+			}
+		}
 
 		if (end - out < 48) {
 			unsigned long sofar = out - buffer;
 			buffer = xrealloc(buffer, (sofar + 48)*2);
 			end = buffer + (sofar + 48)*2;
 			out = buffer + sofar;
+		}
+
+		if (copy_count) {
+			/*
+			 * Let's write a sequence indicating we're copying
+			 * entries from another object:
+			 *
+			 * entry_start + entry_count + object_ref
+			 *
+			 * To distinguish between 'entry_start' and an actual
+			 * entry index, we use the LSB = 1.
+			 *
+			 * Furthermore, if object_ref is the same as the
+			 * preceding one, we can omit it and save some
+			 * more space, especially if that ends up being a
+			 * full sha1 reference.  Let's steal the LSB
+			 * of entry_count for that purpose.
+			 */
+			copy_start = (copy_start << 1) | 1;
+			copy_count = (copy_count << 1) | first_delta;
+			out += encode_varint(copy_start, out);
+			out += encode_varint(copy_count, out);
+			if (first_delta)
+				out += encode_sha1ref(delta_sha1, out);
+			copy_count = 0;
+			first_delta = 0;
 		}
 
 		pathlen = tree_entry_len(&name_entry);
@@ -465,8 +553,18 @@ void *pv4_encode_tree(void *_buffer, unsigned long *sizep)
 			free(buffer);
 			return NULL;
 		}
-		out += encode_varint(index, out);
+		out += encode_varint(index << 1, out);
 		out += encode_sha1ref(name_entry.sha1, out);
+	}
+
+	if (copy_count) {
+		/* flush the trailing copy */
+		copy_start = (copy_start << 1) | 1;
+		copy_count = (copy_count << 1) | first_delta;
+		out += encode_varint(copy_start, out);
+		out += encode_varint(copy_count, out);
+		if (first_delta)
+			out += encode_sha1ref(delta_sha1, out);
 	}
 
 	*sizep = out - buffer;
@@ -773,7 +871,7 @@ static off_t packv4_write_object(struct sha1file *f, struct packed_git *p,
 		result = pv4_encode_commit(src, &buf_size);
 		break;
 	case OBJ_TREE:
-		result = pv4_encode_tree(src, &buf_size);
+		result = pv4_encode_tree(src, &buf_size, NULL, 0, NULL);
 		break;
 	default:
 		die("unexpected object type %d", type);
