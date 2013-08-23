@@ -16,6 +16,7 @@
 #include "varint.h"
 
 
+static int pack_compression_seen;
 static int pack_compression_level = Z_DEFAULT_COMPRESSION;
 
 struct data_entry {
@@ -1061,12 +1062,30 @@ static void process_one_pack(char *src_pack, char *dst_pack)
 	sha1close(f, NULL, CSUM_CLOSE | CSUM_FSYNC);
 }
 
+static int git_pack_config(const char *k, const char *v, void *cb)
+{
+	if (!strcmp(k, "pack.compression")) {
+		int level = git_config_int(k, v);
+		if (level == -1)
+			level = Z_DEFAULT_COMPRESSION;
+		else if (level < 0 || level > Z_BEST_COMPRESSION)
+			die("bad pack compression level %d", level);
+		pack_compression_level = level;
+		pack_compression_seen = 1;
+		return 0;
+	}
+	return git_default_config(k, v, cb);
+}
+
 int main(int argc, char *argv[])
 {
 	if (argc != 3) {
 		fprintf(stderr, "Usage: %s <src_packfile> <dst_packfile>\n", argv[0]);
 		exit(1);
 	}
+	git_config(git_pack_config, NULL);
+	if (!pack_compression_seen && core_compression_seen)
+		pack_compression_level = core_compression_level;
 	process_one_pack(argv[1], argv[2]);
 	if (0)
 		dict_dump();
