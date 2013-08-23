@@ -158,12 +158,12 @@ static char *get_nameend_and_tz(char *from, int *tz_val)
 	char *end, *tz;
 
 	tz = strchr(from, '\n');
-	/* let's assume the smallest possible string to be "x <x> 0 +0000\n" */
-	if (!tz || tz - from < 13)
+	/* let's assume the smallest possible string to be " <> 0 +0000\n" */
+	if (!tz || tz - from < 11)
 		return NULL;
 	tz -= 4;
 	end = tz - 4;
-	while (end - from > 5 && *end != ' ')
+	while (end - from > 3 && *end != ' ')
 		end--;
 	if (end[-1] != '>' || end[0] != ' ' || tz[-2] != ' ')
 		return NULL;
