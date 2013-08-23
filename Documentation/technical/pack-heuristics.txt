@@ -366,12 +366,6 @@ been detailed!
 
     <linus> Yes, we always write out most recent first
 
-For the other record:
-
-    <pasky> njs`: http://pastebin.com/547965
-
-The 'net never forgets, so that should be good until the end of time.
-
     <njs`> And, yeah, I got the part about deeper-in-history stuff
         having worse IO characteristics, one sort of doesn't care.
 
