@@ -13,6 +13,7 @@
 #include "tree-walk.h"
 #include "pack.h"
 #include "pack-revindex.h"
+#include "progress.h"
 #include "varint.h"
 
 
@@ -652,8 +653,10 @@ static struct pack_idx_entry **sort_objs_by_offset(struct pack_idx_entry *list,
 static int create_pack_dictionaries(struct packed_git *p,
 				    struct pack_idx_entry **obj_list)
 {
+	struct progress *progress_state;
 	unsigned int i;
 
+	progress_state = start_progress("Scanning objects", p->num_objects);
 	for (i = 0; i < p->num_objects; i++) {
 		struct pack_idx_entry *obj = obj_list[i];
 		void *data;
@@ -661,6 +664,8 @@ static int create_pack_dictionaries(struct packed_git *p,
 		unsigned long size;
 		struct object_info oi = {};
 		int (*add_dict_entries)(void *, unsigned long);
+
+		display_progress(progress_state, i+1);
 
 		oi.typep = &type;
 		oi.sizep = &size;
@@ -691,6 +696,7 @@ static int create_pack_dictionaries(struct packed_git *p,
 		free(data);
 	}
 
+	stop_progress(&progress_state);
 	return 0;
 }
 
@@ -1035,6 +1041,7 @@ static void process_one_pack(char *src_pack, char *dst_pack)
 	off_t written = 0;
 	char *packname;
 	unsigned char pack_sha1[20];
+	struct progress *progress_state;
 
 	p = open_pack(src_pack);
 	if (!p)
@@ -1056,6 +1063,7 @@ static void process_one_pack(char *src_pack, char *dst_pack)
 	written += packv4_write_tables(f, nr_objects, objs);
 
 	/* Let's write objects out, updating the object index list in place */
+	progress_state = start_progress("Writing objects", nr_objects);
 	all_objs = objs;
 	all_objs_nr = nr_objects;
 	for (i = 0; i < nr_objects; i++) {
@@ -1065,7 +1073,9 @@ static void process_one_pack(char *src_pack, char *dst_pack)
 		written += packv4_write_object(f, p, obj);
 		obj->offset = obj_pos;
 		obj->crc32 = crc32_end(f);
+		display_progress(progress_state, i+1);
 	}
+	stop_progress(&progress_state);
 
 	sha1close(f, pack_sha1, CSUM_CLOSE | CSUM_FSYNC);
 
