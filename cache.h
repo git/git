@@ -1160,6 +1160,7 @@ struct object_info {
 	} u;
 };
 extern int sha1_object_info_extended(const unsigned char *, struct object_info *);
+extern int packed_object_info(struct packed_git *, off_t, struct object_info *);
 
 /* Dumb servers support */
 extern int update_server_info(int);
