@@ -53,7 +53,7 @@ test_expect_success PERL 'can use paths with --interactive' '
 '
 
 test_expect_success 'using invalid commit with -C' '
-	test_must_fail git commit -C bogus
+	test_must_fail git commit --allow-empty -C bogus
 '
 
 test_expect_success 'nothing to commit' '
