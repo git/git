@@ -1037,4 +1037,28 @@ test_expect_success 'rebase -i with --strategy and -X' '
 	test $(cat file1) = Z
 '
 
+test_expect_success 'short SHA-1 setup' '
+	test_when_finished "git checkout master" &&
+	git checkout --orphan collide &&
+	git rm -rf . &&
+	(
+	unset test_tick &&
+	test_commit collide1 collide &&
+	test_commit --notick collide2 collide &&
+	test_commit --notick collide3 collide
+	)
+'
+
+test_expect_failure 'short SHA-1 collide' '
+	test_when_finished "reset_rebase && git checkout master" &&
+	git checkout collide &&
+	(
+	unset test_tick &&
+	test_tick &&
+	set_fake_editor &&
+	FAKE_COMMIT_MESSAGE="collide2 ac4f2ee" \
+	FAKE_LINES="reword 1 2" git rebase -i HEAD~2
+	)
+'
+
 test_done
