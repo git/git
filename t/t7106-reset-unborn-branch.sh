@@ -27,7 +27,7 @@ test_expect_success 'reset $file' '
 	test "$(git ls-files)" = "b"
 '
 
-test_expect_success 'reset -p' '
+test_expect_success PERL 'reset -p' '
 	rm .git/index &&
 	git add a &&
 	echo y | git reset -p &&
