@@ -1049,7 +1049,7 @@ test_expect_success 'short SHA-1 setup' '
 	)
 '
 
-test_expect_failure 'short SHA-1 collide' '
+test_expect_success 'short SHA-1 collide' '
 	test_when_finished "reset_rebase && git checkout master" &&
 	git checkout collide &&
 	(
