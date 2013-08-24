@@ -204,7 +204,54 @@ int sha1_entry_pos(const void *table,
 			 * byte 0 thru (ofs-1) are the same between
 			 * lo and hi; ofs is the first byte that is
 			 * different.
+			 *
+			 * If ofs==20, then no bytes are different,
+			 * meaning we have entries with duplicate
+			 * keys. We know that we are in a solid run
+			 * of this entry (because the entries are
+			 * sorted, and our lo and hi are the same,
+			 * there can be nothing but this single key
+			 * in between). So we can stop the search.
+			 * Either one of these entries is it (and
+			 * we do not care which), or we do not have
+			 * it.
+			 *
+			 * Furthermore, we know that one of our
+			 * endpoints must be the edge of the run of
+			 * duplicates. For example, given this
+			 * sequence:
+			 *
+			 *     idx 0 1 2 3 4 5
+			 *     key A C C C C D
+			 *
+			 * If we are searching for "B", we might
+			 * hit the duplicate run at lo=1, hi=3
+			 * (e.g., by first mi=3, then mi=0). But we
+			 * can never have lo > 1, because B < C.
+			 * That is, if our key is less than the
+			 * run, we know that "lo" is the edge, but
+			 * we can say nothing of "hi". Similarly,
+			 * if our key is greater than the run, we
+			 * know that "hi" is the edge, but we can
+			 * say nothing of "lo".
+			 *
+			 * Therefore if we do not find it, we also
+			 * know where it would go if it did exist:
+			 * just on the far side of the edge that we
+			 * know about.
 			 */
+			if (ofs == 20) {
+				mi = lo;
+				mi_key = base + elem_size * mi + key_offset;
+				cmp = memcmp(mi_key, key, 20);
+				if (!cmp)
+					return mi;
+				if (cmp < 0)
+					return -1 - hi;
+				else
+					return -1 - lo;
+			}
+
 			hiv = hi_key[ofs_0];
 			if (ofs_0 < 19)
 				hiv = (hiv << 8) | hi_key[ofs_0+1];
