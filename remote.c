@@ -1788,9 +1788,6 @@ int format_tracking_info(struct branch *branch, struct strbuf *sb)
 		upstream_is_gone = 1;
 		break;
 	default:
-		/* Nothing to report if neither side has changes. */
-		if (!ours && !theirs)
-			return 0;
 		/* with base */
 		break;
 	}
@@ -1804,6 +1801,10 @@ int format_tracking_info(struct branch *branch, struct strbuf *sb)
 		if (advice_status_hints)
 			strbuf_addf(sb,
 				_("  (use \"git branch --unset-upstream\" to fixup)\n"));
+	} else if (!ours && !theirs) {
+		strbuf_addf(sb,
+			_("Your branch is up-to-date with '%s'.\n"),
+			base);
 	} else if (!theirs) {
 		strbuf_addf(sb,
 			Q_("Your branch is ahead of '%s' by %d commit.\n",
