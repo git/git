@@ -1080,19 +1080,13 @@ produce no output at that point.
 
 Modifying the index is easy:
 
-To update the index with the new contents of a modified file, use
+To update the index with the contents of a new or modified file, use
 
 -------------------------------------------------
 $ git add path/to/file
 -------------------------------------------------
 
-To add the contents of a new file to the index, use
-
--------------------------------------------------
-$ git add path/to/file
--------------------------------------------------
-
-To remove a file from the index and from the working tree,
+To remove a file from the index and from the working tree, use
 
 -------------------------------------------------
 $ git rm path/to/file
