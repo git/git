@@ -1,6 +1,6 @@
 #!/bin/sh
 
-kup=/srv/project/git/kup/kup
+kup=../kup/kup
 
 for s in git-*.sig
 do
@@ -13,7 +13,7 @@ do
 		dest=/pub/software/scm/git/ ;;
 	esac &&
 
-	$kup --host kup.kernel.org put "${s%.sig}.gz" "$s" "$dest"
+	$kup --host kup.kernel.org put "${s%.sig}.gz" "$s" "$dest" || exit
 done
 
 pw=$(sed -ne '/code.google.com login jch2355@gmail.com/s/.* password //p' $HOME/.netrc)
