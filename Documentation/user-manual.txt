@@ -4004,27 +4004,26 @@ to see what the top commit was.
 Merging multiple trees
 ----------------------
 
-Git helps you do a three-way merge, which you can expand to n-way by
-repeating the merge procedure arbitrary times until you finally
-"commit" the state.  The normal situation is that you'd only do one
-three-way merge (two parents), and commit it, but if you like to, you
-can do multiple parents in one go.
+Git can help you perform a three-way merge, which can in turn be
+used for a many-way merge by repeating the merge procedure several
+times.  The usual situation is that you only do one three-way merge
+(reconciling two lines of history) and commit the result, but if
+you like to, you can merge several branches in one go.
 
-To do a three-way merge, you need the two sets of "commit" objects
-that you want to merge, use those to find the closest common parent (a
-third "commit" object), and then use those commit objects to find the
-state of the directory ("tree" object) at these points.
+To perform a three-way merge, you start with the two commits you
+want to merge, find their closest common parent (a third commit),
+and compare the trees corresponding to these three commits.
 
-To get the "base" for the merge, you first look up the common parent
-of two commits with
+To get the "base" for the merge, look up the common parent of two
+commits:
 
 -------------------------------------------------
 $ git merge-base <commit1> <commit2>
 -------------------------------------------------
 
-which will return you the commit they are both based on.  You should
-now look up the "tree" objects of those commits, which you can easily
-do with (for example)
+This prints the name of a commit they are both based on. You should
+now look up the tree objects of those commits, which you can easily
+do with
 
 -------------------------------------------------
 $ git cat-file commit <commitname> | head -1
