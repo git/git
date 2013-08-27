@@ -3924,8 +3924,7 @@ save the note about that state, in practice we tend to just write the
 result to the file pointed at by `.git/HEAD`, so that we can always see
 what the last committed state was.
 
-Here is an ASCII art by Jon Loeliger that illustrates how
-various pieces fit together.
+Here is a picture that illustrates how various pieces fit together:
 
 ------------
 
