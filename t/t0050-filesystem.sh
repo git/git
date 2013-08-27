@@ -91,6 +91,7 @@ test_expect_failure CASE_INSENSITIVE_FS 'add (with different case)' '
 test_expect_success "setup unicode normalization tests" '
 	test_create_repo unicode &&
 	cd unicode &&
+	git config core.precomposeunicode false &&
 	touch "$aumlcdiar" &&
 	git add "$aumlcdiar" &&
 	git commit -m initial &&
