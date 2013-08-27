@@ -30,7 +30,7 @@ GPG_TTY=$(tty) &&
 export GPG_TTY &&
 eval $(gpg-agent --daemon) &&
 GPG_AGENT_PID=$(expr "$GPG_AGENT_INFO" : ".*:\([1-9][0-9]*\):[1-9][0-9]*$") &&
-trap 'kill -0 $GPG_AGENT_PID && kill $GPG_AGENT_PID' 0 1 2 3 15 &&
+trap 'kill -0 2>/dev/null $GPG_AGENT_PID && kill $GPG_AGENT_PID' 0 1 2 3 15 &&
 kill -0 "$GPG_AGENT_PID" &&
 gpg="gpg --use-agent" || exit
 
