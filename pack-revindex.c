@@ -170,9 +170,10 @@ static void create_pack_revindex(struct pack_revindex *rix)
 	index += 4 * 256;
 
 	if (p->index_version > 1) {
-		const uint32_t *off_32 =
-			(uint32_t *)(index + 8 + p->num_objects * (20 + 4));
-		const uint32_t *off_64 = off_32 + p->num_objects;
+		const uint32_t *off_32, *off_64;
+		unsigned sha1 = p->index_version < 3 ? 20 : 0;
+		off_32 = (uint32_t *)(index + 8 + p->num_objects * (sha1 + 4));
+		off_64 = off_32 + p->num_objects;
 		for (i = 0; i < num_ent; i++) {
 			uint32_t off = ntohl(*off_32++);
 			if (!(off & 0x80000000)) {

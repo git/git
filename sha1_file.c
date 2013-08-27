@@ -504,7 +504,7 @@ static int check_packed_git_idx(const char *path,  struct packed_git *p)
 	hdr = idx_map;
 	if (hdr->idx_signature == htonl(PACK_IDX_SIGNATURE)) {
 		version = ntohl(hdr->idx_version);
-		if (version < 2 || version > 2) {
+		if (version < 2 || version > 3) {
 			munmap(idx_map, idx_size);
 			return error("index file %s is version %"PRIu32
 				     " and is not supported by this binary"
@@ -539,12 +539,13 @@ static int check_packed_git_idx(const char *path,  struct packed_git *p)
 			munmap(idx_map, idx_size);
 			return error("wrong index v1 file size in %s", path);
 		}
-	} else if (version == 2) {
+	} else if (version == 2 || version == 3) {
+		unsigned long min_size, max_size;
 		/*
 		 * Minimum size:
 		 *  - 8 bytes of header
 		 *  - 256 index entries 4 bytes each
-		 *  - 20-byte sha1 entry * nr
+		 *  - 20-byte sha1 entry * nr (version 2 only)
 		 *  - 4-byte crc entry * nr
 		 *  - 4-byte offset entry * nr
 		 *  - 20-byte SHA1 of the packfile
@@ -553,8 +554,10 @@ static int check_packed_git_idx(const char *path,  struct packed_git *p)
 		 * variable sized table containing 8-byte entries
 		 * for offsets larger than 2^31.
 		 */
-		unsigned long min_size = 8 + 4*256 + nr*(20 + 4 + 4) + 20 + 20;
-		unsigned long max_size = min_size;
+		min_size = 8 + 4*256 + nr*(20 + 4 + 4) + 20 + 20;
+		if (version != 2)
+			min_size -= nr*20;
+		max_size = min_size;
 		if (nr)
 			max_size += (nr - 1)*8;
 		if (idx_size < min_size || idx_size > max_size) {
@@ -572,6 +575,36 @@ static int check_packed_git_idx(const char *path,  struct packed_git *p)
 			return error("pack too large for current definition of off_t in %s", path);
 		}
 	}
+
+	if (version >= 3) {
+		/* the SHA1 table is located in the main pack file */
+		void *pack_map;
+		struct pack_header *pack_hdr;
+
+		fd = git_open_noatime(p->pack_name);
+		if (fd < 0) {
+			munmap(idx_map, idx_size);
+			return error("unable to open %s", p->pack_name);
+		}
+		if (fstat(fd, &st) != 0 || xsize_t(st.st_size) < 12 + nr*20) {
+			close(fd);
+			munmap(idx_map, idx_size);
+			return error("size of %s is wrong", p->pack_name);
+		}
+		pack_map = xmmap(NULL, 12 + nr*20, PROT_READ, MAP_PRIVATE, fd, 0);
+		close(fd);
+		pack_hdr = pack_map;
+		if (pack_hdr->hdr_signature != htonl(PACK_SIGNATURE) ||
+		    pack_hdr->hdr_version != htonl(4) ||
+		    pack_hdr->hdr_entries != htonl(nr)) {
+			munmap(idx_map, idx_size);
+			munmap(pack_map, 12 + nr*20);
+			return error("packfile for %s doesn't match expectations", path);
+		}
+		p->sha1_table = pack_map;
+		p->sha1_table += 12;
+	} else
+		p->sha1_table = NULL;
 
 	p->index_version = version;
 	p->index_data = idx_map;
@@ -696,6 +729,10 @@ void close_pack_index(struct packed_git *p)
 	if (p->index_data) {
 		munmap((void *)p->index_data, p->index_size);
 		p->index_data = NULL;
+	}
+	if (p->sha1_table) {
+		munmap((void *)(p->sha1_table - 12), 12 + p->num_objects * 20);
+		p->sha1_table = NULL;
 	}
 }
 
@@ -2226,8 +2263,11 @@ const unsigned char *nth_packed_object_sha1(struct packed_git *p,
 	index += 4 * 256;
 	if (p->index_version == 1) {
 		return index + 24 * n + 4;
-	} else {
+	} else if (p->index_version == 2) {
 		index += 8;
+		return index + 20 * n;
+	} else {
+		index = p->sha1_table;
 		return index + 20 * n;
 	}
 }
@@ -2241,6 +2281,8 @@ off_t nth_packed_object_offset(const struct packed_git *p, uint32_t n)
 	} else {
 		uint32_t off;
 		index += 8 + p->num_objects * (20 + 4);
+		if (p->index_version != 2)
+			index -= p->num_objects * 20;
 		off = ntohl(*((uint32_t *)(index + 4 * n)));
 		if (!(off & 0x80000000))
 			return off;
@@ -2281,6 +2323,8 @@ off_t find_pack_entry_one(const unsigned char *sha1,
 		stride = 24;
 		index += 4;
 	}
+	if (p->index_version > 2)
+		index = p->sha1_table;
 
 	if (debug_lookup)
 		printf("%02x%02x%02x... lo %u hi %u nr %"PRIu32"\n",

@@ -25,6 +25,7 @@ int check_pack_crc(struct packed_git *p, struct pack_window **w_curs,
 {
 	const uint32_t *index_crc;
 	uint32_t data_crc = crc32(0, NULL, 0);
+	unsigned sha1_table;
 
 	do {
 		unsigned long avail;
@@ -36,8 +37,9 @@ int check_pack_crc(struct packed_git *p, struct pack_window **w_curs,
 		len -= avail;
 	} while (len);
 
+	sha1_table = p->index_version < 3 ? (p->num_objects * (20/4)) : 0;
 	index_crc = p->index_data;
-	index_crc += 2 + 256 + p->num_objects * (20/4) + nr;
+	index_crc += 2 + 256 + sha1_table + nr;
 
 	return data_crc != ntohl(*index_crc);
 }
