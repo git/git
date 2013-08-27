@@ -1,21 +1,23 @@
 To: git@vger.kernel.org
 Bcc: lwn@lwn.net
-Subject: What's cooking in git.git (Aug 2013, #05; Mon, 19)
-X-master-at: 4d06473928ee574910accbde05c19ef2263abdf6
-X-next-at: fb33910d190a5cff4020f44651fc3a51f55c0a1f
+Subject: What's cooking in git.git (Aug 2013, #06; Tue, 27)
+X-master-at: e230c568c4b9a991e3175e5f65171a566fd8e39c
+X-next-at: 7bc9019c3113aff1e050cc98e8c378a6e66abe81
 
-What's cooking in git.git (Aug 2013, #05; Mon, 19)
+What's cooking in git.git (Aug 2013, #06; Tue, 27)
 --------------------------------------------------
 
 Here are the topics that have been cooking.  Commits prefixed with
 '-' are only in 'pu' (proposed updates) while commits prefixed with
 '+' are in 'next'.
 
-An extra release candidate -rc4 has been tagged and pushed out.
-Hopefully this will be the last one before the final release of
-1.8.4.  As I expect we will have two more cycles of 1.8.x by the end
-of the year and then 2.0 early next year, we may want to merge these
-"for 2.0" topics to 'next' for real, starting the next cycle.
+Git 1.8.4 was tagged and released recently, and we will shortly go
+into a new development cycle for the next one, likely to be 1.8.5.
+
+I expect this cycle to conclude at around the end of October, and we
+will have another release by the end of the year.  The first release
+in the coming year may be named "Git 2.0" with the promised
+compatibility breakages.
 
 You can find the changes described here in the integration branches
 of the repositories listed at
@@ -25,55 +27,252 @@ of the repositories listed at
 --------------------------------------------------
 [New Topics]
 
-* es/rebase-i-respect-core-commentchar (2013-08-18) 1 commit
- - rebase -i: fix cases ignoring core.commentchar
+* js/xread-in-full (2013-08-20) 1 commit
+  (merged to 'next' on 2013-08-20 at 95baa13)
+ + stream_to_pack: xread does not guarantee to read all requested bytes
 
- Will merge to and cook in 'next'.
+ Originally merged to 'next' on 2013-08-20
 
+ A call to xread() was used without a loop around to cope with short
+ read in the codepath to stream new contents to a pack.
 
-* jx/branch-vv-always-compare-with-upstream (2013-08-18) 3 commits
- - status: always show tracking branch even no change
- - branch: mark missing tracking branch as gone
- - branch: not report invalid tracking branch
-
-
-* nd/fetch-into-shallow (2013-08-18) 6 commits
- - list-objects: mark more commits as edges in mark_edges_uninteresting
- - list-objects: reduce one argument in mark_edges_uninteresting
- - upload-pack: delegate rev walking in shallow fetch to pack-objects
- - shallow: add setup_temporary_shallow()
- - shallow: only add shallow graft points to new shallow file
- - move setup_alternate_shallow and write_shallow_commits to shallow.c
+ Will cook in 'next'.
 
 
-* sb/diff-delta-remove-needless-comparison (2013-08-18) 1 commit
- - create_delta_index: simplify condition always evaluating to true
+* sb/mailmap-freeing-NULL-is-ok (2013-08-20) 1 commit
+  (merged to 'next' on 2013-08-20 at 303b16c)
+ + mailmap: remove redundant check for freeing memory
 
- Will merge to and cook in 'next'.
+ Originally merged to 'next' on 2013-08-20
 
-
-* sg/bash-prompt-lf-in-cwd-test (2013-08-18) 1 commit
- - bash prompt: test the prompt with newline in repository path
-
- Will merge to and cook in 'next'.
+ Will cook in 'next'.
 
 
-* jl/some-submodule-config-are-not-boolean (2013-08-19) 1 commit
- - avoid segfault on submodule.*.path set to an empty "true"
+* tg/index-struct-sizes (2013-08-20) 1 commit
+  (merged to 'next' on 2013-08-22 at df6b8e2)
+ + read-cache: use fixed width integer types
 
- Will merge to and cook in 'next'.
+ Originally merged to 'next' on 2013-08-22
+
+ The code that reads from a region that mmaps an on-disk index
+ assumed that "int"/"short" are always 32/16 bits.
+
+ Will cook in 'next'.
+
+
+* bc/completion-for-bash-3.0 (2013-08-22) 3 commits
+  (merged to 'next' on 2013-08-22 at 46c5bb2)
+ + contrib/git-prompt.sh: handle missing 'printf -v' more gracefully
+ + t9902-completion.sh: old Bash still does not support array+=('') notation
+ + git-completion.bash: use correct Bash/Zsh array length syntax
+
+ Originally merged to 'next' on 2013-08-22
+
+ Some people still use rather old versions of bash, which cannot
+ grok some constructs like 'printf -v varname' the prompt and
+ completion code started to use recently.
+
+ Will cook in 'next'.
+
+
+* bc/submodule-status-ignored (2013-08-20) 2 commits
+  (merged to 'next' on 2013-08-22 at 3dfd2a3)
+ + submodule: don't print status output with ignore=all
+ + submodule: fix confusing variable name
+
+ Originally merged to 'next' on 2013-08-22
+
+ Will cook in 'next'.
+
+
+* jk/config-int-range-check (2013-08-21) 2 commits
+  (merged to 'next' on 2013-08-22 at 465efb3)
+ + teach git-config to output large integers
+ + config: properly range-check integer values
+
+ Originally merged to 'next' on 2013-08-22
+
+ "git config --int section.var 3g" should somehow diagnose that the
+ number does not fit in "int" (on 32-bit platforms anyway) but it
+ did not.
+
+ Will cook in 'next'.
+
+
+* jk/duplicate-objects-in-packs (2013-08-24) 6 commits
+ - default pack.indexDuplicates to false
+ - index-pack: optionally reject packs with duplicate objects
+ - test index-pack on packs with recoverable delta cycles
+ - add tests for indexing packs with delta cycles
+ - sha1-lookup: handle duplicate keys with GIT_USE_LOOKUP
+ - test-sha1: add a binary output mode
+
+ A packfile that stores the same object more than once is broken and
+ will be rejected.
+
+ Will merge to 'next'.
+
+
+* mm/mediawiki-dumb-push-fix (2013-08-21) 2 commits
+ - git-remote-mediawiki: add test and check Makefile targets
+ - git-remote-mediawiki: reset private ref after non-dumb push
+
+ Waiting for a reroll.
+
+
+* rt/rebase-p-no-merge-summary (2013-08-21) 1 commit
+  (merged to 'next' on 2013-08-22 at 5310599)
+ + rebase --preserve-merges: ignore "merge.log" config
+
+ Originally merged to 'next' on 2013-08-22
+
+ "git rebase -p" internally used the merge machinery, but when
+ rebasing, there should not be a need for merge summary.
+
+ Will cook in 'next'.
+
+
+* rv/send-email-cache-generated-mid (2013-08-21) 2 commits
+ - git-send-email: Cache generated message-ids, use them when prompting
+ - git-send-email: add optional 'choices' parameter to the ask sub
+
+
+* sp/clip-read-write-to-8mb (2013-08-20) 2 commits
+  (merged to 'next' on 2013-08-22 at 254e75d)
+ + Revert "compat/clipped-write.c: large write(2) fails on Mac OS X/XNU"
+ + xread, xwrite: limit size of IO to 8MB
+
+ Originally merged to 'next' on 2013-08-22
+
+ Send a large request to read(2)/write(2) as a smaller but still
+ reasonably large chunks, which would improve the latency when the
+ operation needs to be killed and incidentally works around broken
+ 64-bit systems that cannot take a 2GB write or read in one go.
+
+ Will cook in 'next'.
+
+
+* sp/doc-smart-http (2013-08-21) 1 commit
+  (merged to 'next' on 2013-08-22 at 4a16937)
+ + Document the HTTP transport protocols
+
+ Originally merged to 'next' on 2013-08-22
+
+ Will cook in 'next'.
+
+
+* dw/diff-no-index-doc (2013-08-22) 1 commit
+ - diff --no-index: clarify operation when not inside a repository
+
+ When the user types "git diff" outside a working tree, thinking he
+ is inside one, the current error message that is a single-liner
+ "usage: git diff --no-index <path> <path>" may not be sufficient to
+ make him realize the mistake. Add "Not a git repository" to the
+ error message when we fell into the "--no-index" mode without an
+ explicit command line option to instruct us to do so.
+
+
+* sb/repack-in-c (2013-08-22) 3 commits
+ - repack: rewrite the shell script in C (squashing proposal)
+ - repack: retain the return value of pack-objects
+ - repack: rewrite the shell script in C
+
+
+* ap/commit-author-mailmap (2013-08-24) 1 commit
+ - commit: search author pattern against mailmap
+
+ "git commit --author=$name", when $name is not in the canonical
+ "A. U. Thor <au.thor@example.xz>" format, looks for a matching name
+ from existing history, but did not consult mailmap to grab the
+ preferred author name.
+
+ Will merge to 'next'.
+
+
+* hv/config-from-blob (2013-08-26) 1 commit
+  (merged to 'next' on 2013-08-27 at 7bc9019)
+ + config: do not use C function names as struct members
+
+ Originally merged to 'next' on 2013-08-27
+
+ Portability fix.
+
+ Will merge to 'master', aiming to later apply to 1.8.4.x maintenance track.
+
+
+* jk/mailmap-incomplete-line (2013-08-25) 2 commits
+ - mailmap: avoid allocation when reading from blob
+ - mailmap: handle mailmap blobs without trailing newlines
+
+ Will merge to 'next'.
+
+
+* jk/write-broken-index-with-nul-sha1 (2013-08-26) 1 commit
+ - write_index: optionally allow broken null sha1s
+
+ Am I waiting for another reroll?
+
+
+* kk/tests-with-no-perl (2013-08-24) 4 commits
+ - reset test: modernize style
+ - t/t7106-reset-unborn-branch.sh: Add PERL prerequisite
+ - add -i test: use skip_all instead of repeated PERL prerequisite
+ - Make test "using invalid commit with -C" more strict
+
+ Am I waiting for another reroll?
+
+
+* mm/fast-import-feature-doc (2013-08-25) 1 commit
+ - Documentation/fast-import: clarify summary for `feature` command
+
+ Will merge to 'next'.
+
+
+* mm/remote-helpers-doc (2013-08-26) 1 commit
+ - Documentation/remote-helpers: document common use-case for private ref
+
+ Will merge to 'next'.
+
+
+* mn/doc-pack-heu-remove-dead-pastebin (2013-08-23) 1 commit
+ - remove dead pastebin link from pack-heuristics document
+
+ Will merge to 'next'.
+
+
+* nd/fetch-pack-shallow-fix (2013-08-25) 1 commit
+  (merged to 'next' on 2013-08-27 at 7c2a162)
+ + fetch-pack: do not remove .git/shallow file when --depth is not specified
+
+ Originally merged to 'next' on 2013-08-27
+
+ Recent "short-cut clone connectivity check" topic broke a shallow
+ repository when a fetch operation tries to auto-follow tags.
+
+ Will merge to 'master', aiming to later apply to 1.8.4.x maintenance track.
+
+
+* ta/user-manual (2013-08-24) 6 commits
+ - Remove irrelevant reference from "Tying it all together"
+ - Remove unnecessary historical note from "Object storage format"
+ - Simplify "How to make a commit"
+ - Use "git merge" instead of "git pull ."
+ - Use current output for "git repack"
+ - Call it "Git User Manual" and remove reference to very old Git version
+
+ Update the user's manual to more recent versions of Git.
+
+ I've picked up only the least questionable bits from a slightly
+ larger series.
+
+
+* tb/precompose-autodetect-fix (2013-08-27) 1 commit
+ - Set core.precomposeunicode to true on e.g. HFS+
+
+ Will merge to 'next'.
 
 --------------------------------------------------
 [Stalled]
-
-* tf/gitweb-ss-tweak (2013-07-15) 4 commits
- - gitweb: make search help link less ugly
- - gitweb: omit the repository owner when it is unset
- - gitweb: vertically centre contents of page footer
- - gitweb: ensure OPML text fits inside its box
-
- Comments?
-
 
 * rj/read-default-config-in-show-ref-pack-refs (2013-06-17) 3 commits
  - ### DONTMERGE: needs better explanation on what config they need
@@ -171,17 +370,99 @@ of the repositories listed at
 --------------------------------------------------
 [Cooking]
 
-* jc/ls-files-killed-optim (2013-08-15) 3 commits
- - t3010: update to demonstrate "ls-files -k" optimization pitfalls
- - ls-files -k: a directory only can be killed if the index has a non-directory
- - dir.c: use the cache_* macro to access the current index
+* tf/gitweb-ss-tweak (2013-08-20) 4 commits
+  (merged to 'next' on 2013-08-22 at 3978368)
+ + gitweb: make search help link less ugly
+ + gitweb: omit the repository owner when it is unset
+ + gitweb: vertically centre contents of page footer
+ + gitweb: ensure OPML text fits inside its box
+
+ Originally merged to 'next' on 2013-08-22
+
+ Tweak Gitweb CSS to layout some elements better.
+
+ Will cook in 'next'.
+
+
+* es/rebase-i-respect-core-commentchar (2013-08-18) 1 commit
+  (merged to 'next' on 2013-08-20 at 9f3d0c8)
+ + rebase -i: fix cases ignoring core.commentchar
+
+ Originally merged to 'next' on 2013-08-20
+
+ Will cook in 'next'.
+
+
+* jx/branch-vv-always-compare-with-upstream (2013-08-26) 2 commits
+ - status: always show tracking branch even no change
+ - branch: report invalid tracking branch as gone
+
+ "git branch -v -v" (and "git status") did not distinguish among a
+ branch that does not build on any other branch, a branch that is in
+ sync with the branch it builds on, and a branch that is configured
+ to build on some other branch that no longer exists.
+
+ Am I waiting for another reroll?
+
+
+* nd/fetch-into-shallow (2013-08-18) 6 commits
+ - list-objects: mark more commits as edges in mark_edges_uninteresting
+ - list-objects: reduce one argument in mark_edges_uninteresting
+ - upload-pack: delegate rev walking in shallow fetch to pack-objects
+ - shallow: add setup_temporary_shallow()
+ - shallow: only add shallow graft points to new shallow file
+ - move setup_alternate_shallow and write_shallow_commits to shallow.c
+
+ When there is no sufficient overlap between old and new history
+ during a fetch into a shallow repository, we unnecessarily sent
+ objects the sending side knows the receiving end has.
+
+ Will merge to 'next'.
+
+
+* sb/diff-delta-remove-needless-comparison (2013-08-18) 1 commit
+  (merged to 'next' on 2013-08-20 at c35730b)
+ + create_delta_index: simplify condition always evaluating to true
+
+ Originally merged to 'next' on 2013-08-20
+
+ Will cook in 'next'.
+
+
+* sg/bash-prompt-lf-in-cwd-test (2013-08-18) 1 commit
+  (merged to 'next' on 2013-08-20 at 5544f62)
+ + bash prompt: test the prompt with newline in repository path
+
+ Originally merged to 'next' on 2013-08-20
+
+ Will cook in 'next'.
+
+
+* jl/some-submodule-config-are-not-boolean (2013-08-19) 1 commit
+  (merged to 'next' on 2013-08-20 at 140c2e4)
+ + avoid segfault on submodule.*.path set to an empty "true"
+
+ Originally merged to 'next' on 2013-08-20
+
+ Will cook in 'next'.
+
+
+* jc/ls-files-killed-optim (2013-08-23) 4 commits
+  (merged to 'next' on 2013-08-27 at f7687d1)
+ + dir.c::test_one_path(): work around directory_exists_in_index_icase() breakage
+  (merged to 'next' on 2013-08-20 at d4bf1ad)
+ + t3010: update to demonstrate "ls-files -k" optimization pitfalls
+ + ls-files -k: a directory only can be killed if the index has a non-directory
+ + dir.c: use the cache_* macro to access the current index
+
+ Originally merged to 'next' on 2013-08-27
 
  "git ls-files -k" needs to crawl only the part of the working tree
  that may overlap the paths in the index to find killed files, but
  shared code with the logic to find all the untracked files, which
  made it unnecessarily inefficient.
 
- Will merge to and cook in 'next'.
+ Will cook in 'next'.
 
 
 * es/blame-L-twice (2013-08-06) 16 commits
@@ -204,6 +485,8 @@ of the repositories listed at
  + git-log.txt: place each -L option variation on its own line
  (this branch is used by es/contacts-blame-L-multi; uses es/blame-L-more.)
 
+ Originally merged to 'next' on 2013-08-08
+
  Teaches "git blame" to take more than one -L ranges.
 
  Will cook in 'next'.
@@ -212,6 +495,8 @@ of the repositories listed at
 * mm/no-shell-escape-in-die-message (2013-08-07) 1 commit
   (merged to 'next' on 2013-08-08 at bddff86)
  + die_with_status: use "printf '%s\n'", not "echo"
+
+ Originally merged to 'next' on 2013-08-08
 
  Fixes a minor bug in "git rebase -i" (there could be others, as the
  root cause is pretty generic) where the code feeds a random, data
@@ -224,6 +509,8 @@ of the repositories listed at
   (merged to 'next' on 2013-08-08 at f452c5b)
  + t0070: test that git_mkstemps correctly checks return value of open()
 
+ Originally merged to 'next' on 2013-08-08
+
  Finishing touches to an earlier fix already in 'master'.
 
  Will cook in 'next'.
@@ -233,15 +520,18 @@ of the repositories listed at
   (merged to 'next' on 2013-08-14 at cd963e3)
  + remote-hg: fix path when cloning with tilde expansion
 
+ Originally merged to 'next' on 2013-08-14
+
  Will cook in 'next'.
 
 
-* es/rebase-i-no-abbrev (2013-08-18) 4 commits
- - rebase -i: fix core.commentchar regression
-  (merged to 'next' on 2013-08-14 at d449e0e)
- + rebase: interactive: fix short SHA-1 collision
- + t3404: rebase: interactive: demonstrate short SHA-1 collision
- + t3404: restore specialized rebase-editor following commentchar test
+* es/rebase-i-no-abbrev (2013-08-25) 3 commits
+  (merged to 'next' on 2013-08-26 at 1c3d45d)
+ + rebase -i: fix short SHA-1 collision
+ + t3404: rebase -i: demonstrate short SHA-1 collision
+ + t3404: make tests more self-contained
+
+ Originally merged to 'next' on 2013-08-26
 
  Will cook in 'next'.
 
@@ -251,15 +541,20 @@ of the repositories listed at
  + remote-hg: add shared repo upgrade
  + remote-hg: ensure shared repo is initialized
 
+ Originally merged to 'next' on 2013-08-14
+
  Will cook in 'next'.
 
 
 * jc/transport-do-not-use-connect-twice-in-fetch (2013-08-07) 5 commits
- - fetch: work around "transport-take-over" hack
- - fetch: refactor code that fetches leftover tags
- - fetch: refactor code that prepares a transport
- - fetch: rename file-scope global "transport" to "gtransport"
- - t5802: add test for connect helper
+  (merged to 'next' on 2013-08-20 at 5414722)
+ + fetch: work around "transport-take-over" hack
+ + fetch: refactor code that fetches leftover tags
+ + fetch: refactor code that prepares a transport
+ + fetch: rename file-scope global "transport" to "gtransport"
+ + t5802: add test for connect helper
+
+ Originally merged to 'next' on 2013-08-20
 
  The auto-tag-following code in "git fetch" tries to reuse the same
  transport twice when the serving end does not cooperate and does
@@ -268,8 +563,7 @@ of the repositories listed at
  interface is not designed to be used more than once, hence this
  does not work over smart-http transfer.
 
- I'll try to see if this workaround can be done in a cleaner way
- before merging this to 'next'.
+ Will cook in 'next'.
 
 
 * ks/p4-view-spec (2013-08-11) 3 commits
@@ -285,6 +579,8 @@ of the repositories listed at
  + whatchanged: document its historical nature
  + core-tutorial: trim the section on Inspecting Changes
 
+ Originally merged to 'next' on 2013-08-14
+
  Will cook in 'next'.
 
 
@@ -292,12 +588,16 @@ of the repositories listed at
   (merged to 'next' on 2013-08-14 at 6999651)
  + gc: reject if another gc is running, unless --force is given
 
+ Originally merged to 'next' on 2013-08-14
+
  Will cook in 'next'.
 
 
 * rt/doc-merge-file-diff3 (2013-08-09) 1 commit
   (merged to 'next' on 2013-08-14 at 1e5847b)
  + Documentation/git-merge-file: document option "--diff3"
+
+ Originally merged to 'next' on 2013-08-14
 
  Will cook in 'next'.
 
@@ -308,12 +608,16 @@ of the repositories listed at
  + diff: fix a possible null pointer dereference
  + diff: remove ternary operator evaluating always to true
 
+ Originally merged to 'next' on 2013-08-14
+
  Will cook in 'next'.
 
 
 * aj/p4-symlink-lose-nl (2013-08-12) 1 commit
   (merged to 'next' on 2013-08-14 at a4959b7)
  + git-p4: Fix occasional truncation of symlink contents.
+
+ Originally merged to 'next' on 2013-08-14
 
  Will cook in 'next'.
 
@@ -325,12 +629,16 @@ of the repositories listed at
  + contacts: validate hunk length earlier
  (this branch uses es/blame-L-more and es/blame-L-twice.)
 
+ Originally merged to 'next' on 2013-08-14
+
  Will cook in 'next'.
 
 
 * fc/unpack-trees-leakfix (2013-08-13) 1 commit
   (merged to 'next' on 2013-08-14 at 989f329)
  + unpack-trees: plug a memory leak
+
+ Originally merged to 'next' on 2013-08-14
 
  Will cook in 'next'.
 
@@ -339,12 +647,16 @@ of the repositories listed at
   (merged to 'next' on 2013-08-14 at b2d0fa9)
  + push: respect --no-thin
 
+ Originally merged to 'next' on 2013-08-14
+
  Will cook in 'next'.
 
 
 * sh/pull-rebase-preserve (2013-08-13) 1 commit
   (merged to 'next' on 2013-08-14 at 99a85dd)
  + pull: Allow pull to preserve merges when rebasing.
+
+ Originally merged to 'next' on 2013-08-14
 
  Will cook in 'next'.
 
@@ -364,6 +676,8 @@ of the repositories listed at
  + t8001/t8002: blame: decompose overly-large test
  (this branch is used by es/blame-L-twice and es/contacts-blame-L-multi.)
 
+ Originally merged to 'next' on 2013-08-06
+
  More fixes to the code to parse the "-L" option in "log" and "blame".
 
  Will cook in 'next'.
@@ -373,15 +687,20 @@ of the repositories listed at
   (merged to 'next' on 2013-08-06 at cd48621)
  + cat-file: only split on whitespace when %(rest) is used
 
+ Originally merged to 'next' on 2013-08-06
+
  Rework the reverted change to `cat-file --batch-check`.
 
  Will cook in 'next'.
 
 
 * jn/post-receive-utf8 (2013-08-05) 3 commits
- - hooks/post-receive-email: set declared encoding to utf-8
- - hooks/post-receive-email: force log messages in UTF-8
- - hooks/post-receive-email: use plumbing instead of git log/show
+  (merged to 'next' on 2013-08-20 at 1623e8f)
+ + hooks/post-receive-email: set declared encoding to utf-8
+ + hooks/post-receive-email: force log messages in UTF-8
+ + hooks/post-receive-email: use plumbing instead of git log/show
+
+ Originally merged to 'next' on 2013-08-20
 
  Update post-receive-email script to make sure the message contents
  and pathnames are encoded consistently in UTF-8.
@@ -393,6 +712,8 @@ of the repositories listed at
  encoding that conflicts with the encoding of the payload and/or the
  log message could be transferred with core.quotepath set and patch
  generated as all binary, but that would be pretty much useless.
+
+ Will cook in 'next'.
 
 
 * sb/parseopt-boolean-removal (2013-08-07) 9 commits
@@ -408,6 +729,8 @@ of the repositories listed at
  + Remove deprecated OPTION_BOOLEAN for parsing arguments
  (this branch uses jc/parseopt-command-modes.)
 
+ Originally merged to 'next' on 2013-08-08
+
  Convert most uses of OPT_BOOLEAN/OPTION_BOOLEAN that can use
  OPT_BOOL/OPTION_BOOLEAN which have much saner semantics, and turn
  remaining ones into OPT_SET_INT, OPT_COUNTUP, etc. as necessary.
@@ -418,6 +741,8 @@ of the repositories listed at
 * mb/docs-favor-en-us (2013-08-01) 1 commit
   (merged to 'next' on 2013-08-06 at 763d868)
  + Provide some linguistic guidance for the documentation.
+
+ Originally merged to 'next' on 2013-08-06
 
  Declare that the official grammar & spelling of the source of this
  project is en_US, but strongly discourage patches only to "fix"
@@ -432,6 +757,8 @@ of the repositories listed at
  + parse-options: add OPT_CMDMODE()
  (this branch is used by sb/parseopt-boolean-removal.)
 
+ Originally merged to 'next' on 2013-08-08
+
  Many commands use --dashed-option as a operation mode selector
  (e.g. "git tag --delete") that the user can use at most one
  (e.g. "git tag --delete --verify" is a nonsense) and you cannot
@@ -445,6 +772,8 @@ of the repositories listed at
   (merged to 'next' on 2013-08-08 at 2fb633f)
  + log: use true parents for diff when walking reflogs
  + log: use true parents for diff even when rewriting
+
+ Originally merged to 'next' on 2013-08-08
 
  Output from "git log --full-diff -- <pathspec>" looked strange,
  because comparison was done with the previous ancestor that touched
@@ -461,6 +790,8 @@ of the repositories listed at
  + Don't close pack fd when free'ing pack windows
  + sha1_file: introduce close_one_pack() to close packs on fd pressure
 
+ Originally merged to 'next' on 2013-08-06
+
  Handle memory pressure and file descriptor pressure separately when
  deciding to release pack windows to honor resource limits.
 
@@ -474,6 +805,8 @@ of the repositories listed at
   (merged to 'next' on 2013-08-01 at d151a94)
  + imap-send: use Apple's Security framework for base64 encoding
 
+ Originally merged to 'next' on 2013-08-05
+
  Will cook in 'next'.
 
 
@@ -482,6 +815,8 @@ of the repositories listed at
  + quote: remove sq_quote_print()
  + tar-tree: remove dependency on sq_quote_print()
  + for-each-ref, quote: convert *_quote_print -> *_quote_buf
+
+ Originally merged to 'next' on 2013-08-01
 
  Code simplification as a preparatory step to something larger.
 
@@ -498,6 +833,8 @@ of the repositories listed at
  + config: add generic callback wrapper to parse section.<url>.key
  + config: add helper to normalize and match URLs
  + http.c: fix parsing of http.sslCertPasswordProtected variable
+
+ Originally merged to 'next' on 2013-08-12
 
  Allow section.<urlpattern>.var configuration variables to be
  treated as a "virtual" section.var given a URL, and use the
@@ -517,6 +854,8 @@ of the repositories listed at
  + mv: move submodules together with their work trees
  (this branch uses nd/magic-pathspec.)
 
+ Originally merged to 'next' on 2013-08-08
+
  "git mv A B" when moving a submodule A does "the right thing",
  inclusing relocating its working tree and adjusting the paths in
  the .gitmodules file.
@@ -528,6 +867,8 @@ of the repositories listed at
   (merged to 'next' on 2013-07-30 at 8d16721)
  + smart http: use the same connectivity check on cloning
 
+ Originally merged to 'next' on 2013-07-30
+
  Will cook in 'next'.
 
 
@@ -537,12 +878,16 @@ of the repositories listed at
   (merged to 'next' on 2013-07-30 at d2ad6e5)
  + http: add http.savecookies option to write out HTTP cookies
 
+ Originally merged to 'next' on 2013-08-05
+
  Will cook in 'next'.
 
 
 * sb/fsck-opt-bool (2013-07-29) 1 commit
   (merged to 'next' on 2013-07-30 at 8a9964c)
  + fsck: Replace deprecated OPT_BOOLEAN by OPT_BOOL
+
+ Originally merged to 'next' on 2013-07-30
 
  Will drop.
 
@@ -554,6 +899,8 @@ of the repositories listed at
   (merged to 'next' on 2013-07-30 at 72c9bcb)
  + editor: use canonicalized absolute path
 
+ Originally merged to 'next' on 2013-07-30
+
  Will cook in 'next'.
 
 
@@ -561,6 +908,8 @@ of the repositories listed at
   (merged to 'next' on 2013-07-22 at 8188667)
  + rev-parse(1): logically group options
  + rev-parse: remove restrictions on some options
+
+ Originally merged to 'next' on 2013-07-22
 
  Will cook in 'next'.
 
@@ -571,6 +920,8 @@ of the repositories listed at
  + fast-import: allow ls or filecopy of the root tree
  + fast-import: set valid mode on root tree in "ls"
  + t9300: document fast-import empty path issues
+
+ Originally merged to 'next' on 2013-07-22
 
  Will cook in 'next'.
 
@@ -584,6 +935,8 @@ of the repositories listed at
  + diff: factor out match_filter()
  + diff: pass the whole diff_options to diffcore_apply_filter()
  (this branch is used by jc/hold-diff-remove-q-synonym-for-no-deletion.)
+
+ Originally merged to 'next' on 2013-07-22
 
  Teach "git diff --diff-filter" to express "I do not want to see
  these classes of changes" more directly by listing only the
@@ -647,6 +1000,8 @@ of the repositories listed at
  + clean: remove unused variable "seen"
  (this branch is used by jl/submodule-mv.)
 
+ Originally merged to 'next' on 2013-07-23
+
  Use "struct pathspec" interface in more places, instead of array of
  characters, the latter of which cannot express magic pathspecs
  (e.g. ":(icase)makefile" that matches both Makefile and makefile).
@@ -660,6 +1015,8 @@ of the repositories listed at
  + check-ignore -z: a single -z should apply to both input and output
  + check-attr: the name of the character is NUL, not NULL
  + check-ignore: the name of the character is NUL, not NULL
+
+ Originally merged to 'next' on 2013-07-15
 
  "git check-ignore -z" applied the NUL termination to both its input
  (with --stdin) and its output, but "git check-attr -z" ignored the
@@ -676,6 +1033,8 @@ of the repositories listed at
 * ms/fetch-prune-configuration (2013-07-18) 1 commit
   (merged to 'next' on 2013-07-21 at 7ffb690)
  + fetch: make --prune configurable
+
+ Originally merged to 'next' on 2013-07-21
 
  Allow fetch.prune and remote.*.prune configuration variables to be set,
  and "git fetch" to behave as if "--prune" is given.
@@ -694,6 +1053,8 @@ of the repositories listed at
   (merged to 'next' on 2013-07-12 at 70e0b95)
  + git-svn: allow git-svn fetching to work using serf
  + Git.pm: add new temp_is_locked function
+
+ Originally merged to 'next' on 2013-07-19
 
  Subversion 1.8.0 that was recently released breaks older subversion
  clients coming over http/https in various ways.
@@ -723,6 +1084,8 @@ of the repositories listed at
  + builtin/push.c: use OPT_BOOL, not OPT_BOOLEAN
  + cache.h: move remote/connect API out of it
 
+ Originally merged to 'next' on 2013-08-05
+
  Allow a safer "rewind of the remote tip" push than blind "--force",
  by requiring that the overwritten remote ref to be unchanged since
  the new history to replace it was prepared.
@@ -743,6 +1106,8 @@ of the repositories listed at
 * jc/pull-training-wheel (2013-07-19) 1 commit
   (merged to 'next' on 2013-07-22 at 748180e)
  + pull: require choice between rebase/merge on non-fast-forward pull
+
+ Originally merged to 'next' on 2013-07-22
 
  Make "git pull" (without arguments that say what branch to
  integrate from where) refuse with "it does not fast forward; choose
@@ -809,6 +1174,8 @@ of the repositories listed at
   (merged to 'next' on 2013-07-24 at 9c96641)
  + remotes-hg: bugfix for fetching non local remotes
 
+ Originally merged to 'next' on 2013-07-25
+
  Reverted.
 
  Waiting for the final patch to replace, after discussion settles.
@@ -825,5 +1192,7 @@ of the repositories listed at
  + config: improve support for http.<url>.* settings
  + config: add support for http.<url>.* settings
  + http.c: fix parsing of http.sslCertPasswordProtected variable
+
+ Originally merged to 'next' on 2013-07-31
 
  Reverted to be replaced with a reroll (jc/url-match topic).
