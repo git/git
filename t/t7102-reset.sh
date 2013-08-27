@@ -16,7 +16,7 @@ commit_msg () {
 	msg="modify 2nd file (ge\303\244ndert)\n"
 	if test -n "$1"
 	then
-		printf "$msg" | iconv -f utf-8 -t "$1"
+		printf "$msg" | iconv -t "$1"
 	else
 		printf "$msg"
 	fi
@@ -60,7 +60,7 @@ check_changes () {
 test_expect_success 'reset --hard message' '
 	hex=$(git log -1 --format="%h") &&
 	git reset --hard > .actual &&
-	echo HEAD is now at $hex $(commit_msg) > .expected &&
+	echo HEAD is now at $hex $(commit_msg utf-8) > .expected &&
 	test_cmp .expected .actual
 '
 
