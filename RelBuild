@@ -5,7 +5,7 @@ version=$(git describe --exact) &&
 label=$(echo "$version" | sed -e 's|^v||') &&
 version=$(echo "$label" | sed -e 's|-|.|g') || exit
 
-make clean && make $j dist &&
+make clean && make $j CFLAGS="-O2 -Wno-format-zero-length" dist &&
 
 ASCIIDOC_NO_ROFF=YesPlease \
 ASCIIDOC8=YesPlease \
