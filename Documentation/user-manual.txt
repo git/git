@@ -268,27 +268,23 @@ Creating, deleting, and modifying branches is quick and easy; here's
 a summary of the commands:
 
 `git branch`::
-	list all branches
+	list all branches.
 `git branch <branch>`::
 	create a new branch named `<branch>`, referencing the same
-	point in history as the current branch
+	point in history as the current branch.
 `git branch <branch> <start-point>`::
 	create a new branch named `<branch>`, referencing
 	`<start-point>`, which may be specified any way you like,
-	including using a branch name or a tag name
+	including using a branch name or a tag name.
 `git branch -d <branch>`::
-	delete the branch `<branch>`; if the branch you are deleting
-	points to a commit which is not reachable from the current
-	branch, this command will fail with a warning.
+	delete the branch `<branch>`; if the branch is not fully
+	merged in its upstream branch or contained in the current branch,
+	this command will fail with a warning.
 `git branch -D <branch>`::
-	even if the branch points to a commit not reachable
-	from the current branch, you may know that that commit
-	is still reachable from some other branch or tag.  In that
-	case it is safe to use this command to force Git to delete
-	the branch.
+	delete the branch `<branch>` irrespective of its merged status.
 `git checkout <branch>`::
 	make the current branch `<branch>`, updating the working
-	directory to reflect the version referenced by `<branch>`
+	directory to reflect the version referenced by `<branch>`.
 `git checkout -b <new> <start-point>`::
 	create a new branch `<new>` referencing `<start-point>`, and
 	check it out.
