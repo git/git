@@ -3203,17 +3203,15 @@ To put the loose objects into a pack, just run git repack:
 
 ------------------------------------------------
 $ git repack
-Generating pack...
-Done counting 6020 objects.
-Deltifying 6020 objects.
- 100% (6020/6020) done
-Writing 6020 objects.
- 100% (6020/6020) done
-Total 6020, written 6020 (delta 4070), reused 0 (delta 0)
-Pack pack-3e54ad29d5b2e05838c75df582c65257b8d08e1c created.
+Counting objects: 6020, done.
+Delta compression using up to 4 threads.
+Compressing objects: 100% (6020/6020), done.
+Writing objects: 100% (6020/6020), done.
+Total 6020 (delta 4070), reused 0 (delta 0)
 ------------------------------------------------
 
-You can then run
+This creates a single "pack file" in .git/objects/pack/
+containing all currently unpacked objects.  You can then run
 
 ------------------------------------------------
 $ git prune
