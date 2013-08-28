@@ -1124,7 +1124,7 @@ def do_option(parser):
 
 def fix_path(alias, repo, orig_url):
     url = urlparse.urlparse(orig_url, 'file')
-    if url.scheme != 'file' or os.path.isabs(url.path):
+    if url.scheme != 'file' or os.path.isabs(os.path.expanduser(url.path)):
         return
     abs_url = urlparse.urljoin("%s/" % os.getcwd(), orig_url)
     cmd = ['git', 'config', 'remote.%s.url' % alias, "hg::%s" % abs_url]
