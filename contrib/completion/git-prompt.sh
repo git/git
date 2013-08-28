@@ -84,6 +84,10 @@
 # the colored output of "git status -sb" and are available only when
 # using __git_ps1 for PROMPT_COMMAND or precmd.
 
+# check whether printf supports -v
+__git_printf_supports_v=
+printf -v __git_printf_supports_v -- '%s' yes >/dev/null 2>&1
+
 # stores the divergence from upstream in $p
 # used by GIT_PS1_SHOWUPSTREAM
 __git_ps1_show_upstream ()
@@ -433,7 +437,7 @@ __git_ps1 ()
 	local gitstring="$c${b##refs/heads/}${f:+$z$f}$r$p"
 
 	if [ $pcmode = yes ]; then
-		if [[ -n ${ZSH_VERSION-} ]]; then
+		if [ "${__git_printf_supports_v-}" != yes ]; then
 			gitstring=$(printf -- "$printf_format" "$gitstring")
 		else
 			printf -v gitstring -- "$printf_format" "$gitstring"
