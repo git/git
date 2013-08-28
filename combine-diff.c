@@ -10,6 +10,7 @@
 #include "refs.h"
 #include "userdiff.h"
 #include "sha1-array.h"
+#include "revision.h"
 
 static struct combine_diff_path *intersect_paths(struct combine_diff_path *curr, int n, int num_parent)
 {
@@ -1383,7 +1384,7 @@ void diff_tree_combined(const unsigned char *sha1,
 void diff_tree_combined_merge(const struct commit *commit, int dense,
 			      struct rev_info *rev)
 {
-	struct commit_list *parent = commit->parents;
+	struct commit_list *parent = get_saved_parents(rev, commit);
 	struct sha1_array parents = SHA1_ARRAY_INIT;
 
 	while (parent) {
