@@ -129,3 +129,88 @@ const unsigned char *get_identref(struct packed_git *p, const unsigned char **sr
 	}
 	return p->ident_dict->data + p->ident_dict->offsets[index];
 }
+
+void *pv4_get_commit(struct packed_git *p, struct pack_window **w_curs,
+		     off_t offset, unsigned long size)
+{
+	unsigned long avail;
+	git_zstream stream;
+	int len, st;
+	unsigned int nb_parents;
+	unsigned char *dst, *dcp;
+	const unsigned char *src, *scp, *sha1, *ident, *author, *committer;
+	unsigned long author_time, commit_time;
+	int16_t author_tz, commit_tz;
+
+	dst = xmallocz(size);
+	dcp = dst;
+
+	src = use_pack(p, w_curs, offset, &avail);
+	scp = src;
+
+	sha1 = get_sha1ref(p, &scp);
+	len = snprintf((char *)dcp, size, "tree %s\n", sha1_to_hex(sha1));
+	dcp += len;
+	size -= len;
+
+	nb_parents = decode_varint(&scp);
+	while (nb_parents--) {
+		sha1 = get_sha1ref(p, &scp);
+		len = snprintf((char *)dcp, size, "parent %s\n", sha1_to_hex(sha1));
+		if (len >= size)
+			die("overflow in %s", __func__);
+		dcp += len;
+		size -= len;
+	}
+
+	commit_time = decode_varint(&scp);
+	ident = get_identref(p, &scp);
+	commit_tz = (ident[0] << 8) | ident[1];
+	committer = &ident[2];
+
+	author_time = decode_varint(&scp);
+	ident = get_identref(p, &scp);
+	author_tz = (ident[0] << 8) | ident[1];
+	author = &ident[2];
+
+	if (author_time & 1)
+		author_time = commit_time + (author_time >> 1);
+	else
+		author_time = commit_time - (author_time >> 1);
+
+	len = snprintf((char *)dcp, size, "author %s %lu %+05d\n",
+			author, author_time, author_tz);
+	if (len >= size)
+		die("overflow in %s", __func__);
+	dcp += len;
+	size -= len;
+
+	len = snprintf((char *)dcp, size, "committer %s %lu %+05d\n",
+			committer, commit_time, commit_tz);
+	if (len >= size)
+		die("overflow in %s", __func__);
+	dcp += len;
+	size -= len;
+
+	if (scp - src > avail)
+		die("overflow in %s", __func__);
+	offset += scp - src;
+
+	memset(&stream, 0, sizeof(stream));
+	stream.next_out = dcp;
+	stream.avail_out = size + 1;
+	git_inflate_init(&stream);
+	do {
+		src = use_pack(p, w_curs, offset, &stream.avail_in);
+		stream.next_in = (unsigned char *)src;
+		st = git_inflate(&stream, Z_FINISH);
+		offset += stream.next_in - src;
+	} while ((st == Z_OK || st == Z_BUF_ERROR) && stream.avail_out);
+	git_inflate_end(&stream);
+	if (st != Z_STREAM_END || stream.total_out != size) {
+		free(dst);
+		return NULL;
+	}
+
+	return dst;
+}
