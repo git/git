@@ -580,8 +580,6 @@ test_expect_success 'remote big push fetch first' '
 	check_push 1 --all <<-EOF
 	master
 	good_bmark
-	new_bmark:new
-	new_branch:new
 	bad_bmark:fetch-first
 	branches/bad_branch:festch-first
 	EOF
