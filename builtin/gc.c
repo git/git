@@ -167,11 +167,69 @@ static int need_to_gc(void)
 	return 1;
 }
 
+/* return NULL on success, else hostname running the gc */
+static const char *lock_repo_for_gc(int force, pid_t* ret_pid)
+{
+	static struct lock_file lock;
+	static char locking_host[128];
+	char my_host[128];
+	struct strbuf sb = STRBUF_INIT;
+	struct stat st;
+	uintmax_t pid;
+	FILE *fp;
+	int fd, should_exit;
+
+	if (gethostname(my_host, sizeof(my_host)))
+		strcpy(my_host, "unknown");
+
+	fd = hold_lock_file_for_update(&lock, git_path("gc.pid"),
+				       LOCK_DIE_ON_ERROR);
+	if (!force) {
+		fp = fopen(git_path("gc.pid"), "r");
+		memset(locking_host, 0, sizeof(locking_host));
+		should_exit =
+			fp != NULL &&
+			!fstat(fileno(fp), &st) &&
+			/*
+			 * 12 hour limit is very generous as gc should
+			 * never take that long. On the other hand we
+			 * don't really need a strict limit here,
+			 * running gc --auto one day late is not a big
+			 * problem. --force can be used in manual gc
+			 * after the user verifies that no gc is
+			 * running.
+			 */
+			time(NULL) - st.st_mtime <= 12 * 3600 &&
+			fscanf(fp, "%"PRIuMAX" %127c", &pid, locking_host) == 2 &&
+			/* be gentle to concurrent "gc" on remote hosts */
+			(strcmp(locking_host, my_host) || !kill(pid, 0));
+		if (fp != NULL)
+			fclose(fp);
+		if (should_exit) {
+			if (fd >= 0)
+				rollback_lock_file(&lock);
+			*ret_pid = pid;
+			return locking_host;
+		}
+	}
+
+	strbuf_addf(&sb, "%"PRIuMAX" %s",
+		    (uintmax_t) getpid(), my_host);
+	write_in_full(fd, sb.buf, sb.len);
+	strbuf_release(&sb);
+	commit_lock_file(&lock);
+
+	return NULL;
+}
+
 int cmd_gc(int argc, const char **argv, const char *prefix)
 {
 	int aggressive = 0;
 	int auto_gc = 0;
 	int quiet = 0;
+	int force = 0;
+	const char *name;
+	pid_t pid;
 
 	struct option builtin_gc_options[] = {
 		OPT__QUIET(&quiet, N_("suppress progress reporting")),
@@ -180,6 +238,7 @@ int cmd_gc(int argc, const char **argv, const char *prefix)
 			PARSE_OPT_OPTARG, NULL, (intptr_t)prune_expire },
 		OPT_BOOL(0, "aggressive", &aggressive, N_("be more thorough (increased runtime)")),
 		OPT_BOOL(0, "auto", &auto_gc, N_("enable auto-gc mode")),
+		OPT_BOOL(0, "force", &force, N_("force running gc even if there may be another gc running")),
 		OPT_END()
 	};
 
@@ -224,6 +283,14 @@ int cmd_gc(int argc, const char **argv, const char *prefix)
 					"\"git help gc\" for more information.\n"));
 	} else
 		add_repack_all_option();
+
+	name = lock_repo_for_gc(force, &pid);
+	if (name) {
+		if (auto_gc)
+			return 0; /* be quiet on --auto */
+		die(_("gc is already running on machine '%s' pid %"PRIuMAX" (use --force if not)"),
+		    name, (uintmax_t)pid);
+	}
 
 	if (pack_refs && run_command_v_opt(pack_refs_cmd.argv, RUN_GIT_CMD))
 		return error(FAILED_RUN, pack_refs_cmd.argv[0]);
