@@ -2,6 +2,7 @@
 #include "cache.h"
 #include "color.h"
 #include "parse-options.h"
+#include "urlmatch.h"
 
 static const char *const builtin_config_usage[] = {
 	N_("git config [options]"),
@@ -42,6 +43,7 @@ static int respect_includes = -1;
 #define ACTION_SET_ALL (1<<12)
 #define ACTION_GET_COLOR (1<<13)
 #define ACTION_GET_COLORBOOL (1<<14)
+#define ACTION_GET_URLMATCH (1<<15)
 
 #define TYPE_BOOL (1<<0)
 #define TYPE_INT (1<<1)
@@ -59,6 +61,7 @@ static struct option builtin_config_options[] = {
 	OPT_BIT(0, "get", &actions, N_("get value: name [value-regex]"), ACTION_GET),
 	OPT_BIT(0, "get-all", &actions, N_("get all values: key [value-regex]"), ACTION_GET_ALL),
 	OPT_BIT(0, "get-regexp", &actions, N_("get values for regexp: name-regex [value-regex]"), ACTION_GET_REGEXP),
+	OPT_BIT(0, "get-urlmatch", &actions, N_("get value specific for the URL: section[.var] URL"), ACTION_GET_URLMATCH),
 	OPT_BIT(0, "replace-all", &actions, N_("replace all matching variables: name value [value_regex]"), ACTION_REPLACE_ALL),
 	OPT_BIT(0, "add", &actions, N_("add a new variable: name value"), ACTION_ADD),
 	OPT_BIT(0, "unset", &actions, N_("remove a variable: name [value-regex]"), ACTION_UNSET),
@@ -102,25 +105,13 @@ struct strbuf_list {
 	int alloc;
 };
 
-static int collect_config(const char *key_, const char *value_, void *cb)
+static int format_config(struct strbuf *buf, const char *key_, const char *value_)
 {
-	struct strbuf_list *values = cb;
-	struct strbuf *buf;
-	char value[256];
-	const char *vptr = value;
 	int must_free_vptr = 0;
 	int must_print_delim = 0;
+	char value[256];
+	const char *vptr = value;
 
-	if (!use_key_regexp && strcmp(key_, key))
-		return 0;
-	if (use_key_regexp && regexec(key_regexp, key_, 0, NULL, 0))
-		return 0;
-	if (regexp != NULL &&
-	    (do_not_match ^ !!regexec(regexp, (value_?value_:""), 0, NULL, 0)))
-		return 0;
-
-	ALLOC_GROW(values->items, values->nr + 1, values->alloc);
-	buf = &values->items[values->nr++];
 	strbuf_init(buf, 0);
 
 	if (show_keys) {
@@ -128,7 +119,7 @@ static int collect_config(const char *key_, const char *value_, void *cb)
 		must_print_delim = 1;
 	}
 	if (types == TYPE_INT)
-		sprintf(value, "%d", git_config_int(key_, value_?value_:""));
+		sprintf(value, "%d", git_config_int(key_, value_ ? value_ : ""));
 	else if (types == TYPE_BOOL)
 		vptr = git_config_bool(key_, value_) ? "true" : "false";
 	else if (types == TYPE_BOOL_OR_INT) {
@@ -156,13 +147,25 @@ static int collect_config(const char *key_, const char *value_, void *cb)
 	strbuf_addch(buf, term);
 
 	if (must_free_vptr)
-		/* If vptr must be freed, it's a pointer to a
-		 * dynamically allocated buffer, it's safe to cast to
-		 * const.
-		*/
 		free((char *)vptr);
-
 	return 0;
+}
+
+static int collect_config(const char *key_, const char *value_, void *cb)
+{
+	struct strbuf_list *values = cb;
+
+	if (!use_key_regexp && strcmp(key_, key))
+		return 0;
+	if (use_key_regexp && regexec(key_regexp, key_, 0, NULL, 0))
+		return 0;
+	if (regexp != NULL &&
+	    (do_not_match ^ !!regexec(regexp, (value_?value_:""), 0, NULL, 0)))
+		return 0;
+
+	ALLOC_GROW(values->items, values->nr + 1, values->alloc);
+
+	return format_config(&values->items[values->nr++], key_, value_);
 }
 
 static int get_value(const char *key_, const char *regex_)
@@ -364,6 +367,97 @@ static void check_blob_write(void)
 		die("writing config blobs is not supported");
 }
 
+struct urlmatch_current_candidate_value {
+	char value_is_null;
+	struct strbuf value;
+};
+
+static int urlmatch_collect_fn(const char *var, const char *value, void *cb)
+{
+	struct string_list *values = cb;
+	struct string_list_item *item = string_list_insert(values, var);
+	struct urlmatch_current_candidate_value *matched = item->util;
+
+	if (!matched) {
+		matched = xmalloc(sizeof(*matched));
+		strbuf_init(&matched->value, 0);
+		item->util = matched;
+	} else {
+		strbuf_reset(&matched->value);
+	}
+
+	if (value) {
+		strbuf_addstr(&matched->value, value);
+		matched->value_is_null = 0;
+	} else {
+		matched->value_is_null = 1;
+	}
+	return 0;
+}
+
+static char *dup_downcase(const char *string)
+{
+	char *result;
+	size_t len, i;
+
+	len = strlen(string);
+	result = xmalloc(len + 1);
+	for (i = 0; i < len; i++)
+		result[i] = tolower(string[i]);
+	result[i] = '\0';
+	return result;
+}
+
+static int get_urlmatch(const char *var, const char *url)
+{
+	char *section_tail;
+	struct string_list_item *item;
+	struct urlmatch_config config = { STRING_LIST_INIT_DUP };
+	struct string_list values = STRING_LIST_INIT_DUP;
+
+	config.collect_fn = urlmatch_collect_fn;
+	config.cascade_fn = NULL;
+	config.cb = &values;
+
+	if (!url_normalize(url, &config.url))
+		die("%s", config.url.err);
+
+	config.section = dup_downcase(var);
+	section_tail = strchr(config.section, '.');
+	if (section_tail) {
+		*section_tail = '\0';
+		config.key = section_tail + 1;
+		show_keys = 0;
+	} else {
+		config.key = NULL;
+		show_keys = 1;
+	}
+
+	git_config_with_options(urlmatch_config_entry, &config,
+				given_config_file, NULL, respect_includes);
+
+	for_each_string_list_item(item, &values) {
+		struct urlmatch_current_candidate_value *matched = item->util;
+		struct strbuf key = STRBUF_INIT;
+		struct strbuf buf = STRBUF_INIT;
+
+		strbuf_addstr(&key, item->string);
+		format_config(&buf, key.buf,
+			      matched->value_is_null ? NULL : matched->value.buf);
+		fwrite(buf.buf, 1, buf.len, stdout);
+		strbuf_release(&key);
+		strbuf_release(&buf);
+
+		strbuf_release(&matched->value);
+	}
+	string_list_clear(&config.vars, 1);
+	string_list_clear(&values, 1);
+	free(config.url.url);
+
+	free((void *)config.section);
+	return 0;
+}
+
 int cmd_config(int argc, const char **argv, const char *prefix)
 {
 	int nongit = !startup_info->have_repository;
@@ -522,6 +616,10 @@ int cmd_config(int argc, const char **argv, const char *prefix)
 		do_all = 1;
 		check_argc(argc, 1, 2);
 		return get_value(argv[0], argv[1]);
+	}
+	else if (actions == ACTION_GET_URLMATCH) {
+		check_argc(argc, 2, 2);
+		return get_urlmatch(argv[0], argv[1]);
 	}
 	else if (actions == ACTION_UNSET) {
 		check_blob_write();

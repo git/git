@@ -15,6 +15,7 @@ SYNOPSIS
 'git config' [<file-option>] [type] [-z|--null] --get name [value_regex]
 'git config' [<file-option>] [type] [-z|--null] --get-all name [value_regex]
 'git config' [<file-option>] [type] [-z|--null] --get-regexp name_regex [value_regex]
+'git config' [<file-option>] [type] [-z|--null] --get-urlmatch name URL
 'git config' [<file-option>] --unset name [value_regex]
 'git config' [<file-option>] --unset-all name [value_regex]
 'git config' [<file-option>] --rename-section old_name new_name
@@ -94,6 +95,14 @@ OPTIONS
 	case-sensitive and done against a canonicalized version of the key
 	in which section and variable names are lowercased, but subsection
 	names are not.
+
+--get-urlmatch name URL::
+	When given a two-part name section.key, the value for
+	section.<url>.key whose <url> part matches the best to the
+	given URL is returned (if no such key exists, the value for
+	section.key is used as a fallback).  When given just the
+	section as name, do so for all the keys in the section and
+	list them.
 
 --global::
 	For writing options: write to global `~/.gitconfig` file
@@ -295,6 +304,13 @@ Given a .git/config like this:
 		gitproxy=proxy-command for kernel.org
 		gitproxy=default-proxy ; for all the rest
 
+	; HTTP
+	[http]
+		sslVerify
+	[http "https://weak.example.com"]
+		sslVerify = false
+		cookieFile = /tmp/cookie.txt
+
 you can set the filemode to true with
 
 ------------
@@ -378,6 +394,19 @@ script:
 WS=$(git config --get-color color.diff.whitespace "blue reverse")
 RESET=$(git config --get-color "" "reset")
 echo "${WS}your whitespace color or blue reverse${RESET}"
+------------
+
+For URLs in `https://weak.example.com`, `http.sslVerify` is set to
+false, while it is set to `true` for all others:
+
+------------
+% git config --bool --get-urlmatch http.sslverify https://good.example.com
+true
+% git config --bool --get-urlmatch http.sslverify https://weak.example.com
+false
+% git config --get-urlmatch http https://weak.example.com
+http.cookiefile /tmp/cookie.txt
+http.sslverify false
 ------------
 
 include::config.txt[]
