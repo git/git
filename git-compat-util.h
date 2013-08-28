@@ -185,11 +185,6 @@ typedef unsigned long uintptr_t;
 #define probe_utf8_pathname_composition(a,b)
 #endif
 
-#ifdef NEEDS_CLIPPED_WRITE
-ssize_t clipped_write(int fildes, const void *buf, size_t nbyte);
-#define write(x,y,z) clipped_write((x),(y),(z))
-#endif
-
 #ifdef MKDIR_WO_TRAILING_SLASH
 #define mkdir(a,b) compat_mkdir_wo_trailing_slash((a),(b))
 extern int compat_mkdir_wo_trailing_slash(const char*, mode_t);
