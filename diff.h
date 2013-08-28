@@ -5,6 +5,7 @@
 #define DIFF_H
 
 #include "tree-walk.h"
+#include "pathspec.h"
 
 struct rev_info;
 struct diff_options;
@@ -182,8 +183,6 @@ const char *diff_line_prefix(struct diff_options *);
 
 extern const char mime_boundary_leader[];
 
-extern void diff_tree_setup_paths(const char **paths, struct diff_options *);
-extern void diff_tree_release_paths(struct diff_options *);
 extern int diff_tree(struct tree_desc *t1, struct tree_desc *t2,
 		     const char *base, struct diff_options *opt);
 extern int diff_tree_sha1(const unsigned char *old, const unsigned char *new,

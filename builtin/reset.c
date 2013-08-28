@@ -133,12 +133,13 @@ static void update_index_from_diff(struct diff_queue_struct *q,
 	}
 }
 
-static int read_from_tree(const char **pathspec, unsigned char *tree_sha1)
+static int read_from_tree(const struct pathspec *pathspec,
+			  unsigned char *tree_sha1)
 {
 	struct diff_options opt;
 
 	memset(&opt, 0, sizeof(opt));
-	diff_tree_setup_paths(pathspec, &opt);
+	copy_pathspec(&opt.pathspec, pathspec);
 	opt.output_format = DIFF_FORMAT_CALLBACK;
 	opt.format_callback = update_index_from_diff;
 
@@ -147,7 +148,7 @@ static int read_from_tree(const char **pathspec, unsigned char *tree_sha1)
 		return 1;
 	diffcore_std(&opt);
 	diff_flush(&opt);
-	diff_tree_release_paths(&opt);
+	free_pathspec(&opt.pathspec);
 
 	return 0;
 }
@@ -174,7 +175,10 @@ static void die_if_unmerged_cache(int reset_type)
 
 }
 
-static const char **parse_args(const char **argv, const char *prefix, const char **rev_ret)
+static void parse_args(struct pathspec *pathspec,
+		       const char **argv, const char *prefix,
+		       int patch_mode,
+		       const char **rev_ret)
 {
 	const char *rev = "HEAD";
 	unsigned char unused[20];
@@ -216,7 +220,10 @@ static const char **parse_args(const char **argv, const char *prefix, const char
 		}
 	}
 	*rev_ret = rev;
-	return argv[0] ? get_pathspec(prefix, argv) : NULL;
+	parse_pathspec(pathspec, 0,
+		       PATHSPEC_PREFER_FULL |
+		       (patch_mode ? PATHSPEC_PREFIX_ORIGIN : 0),
+		       prefix, argv);
 }
 
 static int update_refs(const char *rev, const unsigned char *sha1)
@@ -246,7 +253,7 @@ int cmd_reset(int argc, const char **argv, const char *prefix)
 	int patch_mode = 0, unborn;
 	const char *rev;
 	unsigned char sha1[20];
-	const char **pathspec = NULL;
+	struct pathspec pathspec;
 	const struct option options[] = {
 		OPT__QUIET(&quiet, N_("be quiet, only report errors")),
 		OPT_SET_INT(0, "mixed", &reset_type,
@@ -266,13 +273,13 @@ int cmd_reset(int argc, const char **argv, const char *prefix)
 
 	argc = parse_options(argc, argv, prefix, options, git_reset_usage,
 						PARSE_OPT_KEEP_DASHDASH);
-	pathspec = parse_args(argv, prefix, &rev);
+	parse_args(&pathspec, argv, prefix, patch_mode, &rev);
 
 	unborn = !strcmp(rev, "HEAD") && get_sha1("HEAD", sha1);
 	if (unborn) {
 		/* reset on unborn branch: treat as reset to empty tree */
 		hashcpy(sha1, EMPTY_TREE_SHA1_BIN);
-	} else if (!pathspec) {
+	} else if (!pathspec.nr) {
 		struct commit *commit;
 		if (get_sha1_committish(rev, sha1))
 			die(_("Failed to resolve '%s' as a valid revision."), rev);
@@ -293,13 +300,13 @@ int cmd_reset(int argc, const char **argv, const char *prefix)
 	if (patch_mode) {
 		if (reset_type != NONE)
 			die(_("--patch is incompatible with --{hard,mixed,soft}"));
-		return run_add_interactive(sha1_to_hex(sha1), "--patch=reset", pathspec);
+		return run_add_interactive(sha1_to_hex(sha1), "--patch=reset", &pathspec);
 	}
 
 	/* git reset tree [--] paths... can be used to
 	 * load chosen paths from the tree into the index without
 	 * affecting the working tree nor HEAD. */
-	if (pathspec) {
+	if (pathspec.nr) {
 		if (reset_type == MIXED)
 			warning(_("--mixed with paths is deprecated; use 'git reset -- <paths>' instead."));
 		else if (reset_type != NONE)
@@ -326,7 +333,7 @@ int cmd_reset(int argc, const char **argv, const char *prefix)
 		struct lock_file *lock = xcalloc(1, sizeof(struct lock_file));
 		int newfd = hold_locked_index(lock, 1);
 		if (reset_type == MIXED) {
-			if (read_from_tree(pathspec, sha1))
+			if (read_from_tree(&pathspec, sha1))
 				return 1;
 		} else {
 			int err = reset_index(sha1, reset_type, quiet);
@@ -347,7 +354,7 @@ int cmd_reset(int argc, const char **argv, const char *prefix)
 			die(_("Could not write new index file."));
 	}
 
-	if (!pathspec && !unborn) {
+	if (!pathspec.nr && !unborn) {
 		/* Any resets without paths update HEAD to the head being
 		 * switched to, saving the previous head in ORIG_HEAD before. */
 		update_ref_status = update_refs(rev, sha1);
@@ -355,7 +362,7 @@ int cmd_reset(int argc, const char **argv, const char *prefix)
 		if (reset_type == HARD && !update_ref_status && !quiet)
 			print_new_head_line(lookup_commit_reference(sha1));
 	}
-	if (!pathspec)
+	if (!pathspec.nr)
 		remove_branch_state();
 
 	return update_ref_status;

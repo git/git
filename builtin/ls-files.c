@@ -13,6 +13,7 @@
 #include "parse-options.h"
 #include "resolve-undo.h"
 #include "string-list.h"
+#include "pathspec.h"
 
 static int abbrev;
 static int show_deleted;
@@ -30,7 +31,7 @@ static int debug_mode;
 static const char *prefix;
 static int max_prefix_len;
 static int prefix_len;
-static const char **pathspec;
+static struct pathspec pathspec;
 static int error_unmatch;
 static char *ps_matched;
 static const char *with_tree;
@@ -63,7 +64,7 @@ static void show_dir_entry(const char *tag, struct dir_entry *ent)
 	if (len >= ent->len)
 		die("git ls-files: internal error - directory entry not superset of prefix");
 
-	if (!match_pathspec(pathspec, ent->name, ent->len, len, ps_matched))
+	if (!match_pathspec_depth(&pathspec, ent->name, ent->len, len, ps_matched))
 		return;
 
 	fputs(tag, stdout);
@@ -138,7 +139,7 @@ static void show_ce_entry(const char *tag, const struct cache_entry *ce)
 	if (len >= ce_namelen(ce))
 		die("git ls-files: internal error - cache entry not superset of prefix");
 
-	if (!match_pathspec(pathspec, ce->name, ce_namelen(ce), len, ps_matched))
+	if (!match_pathspec_depth(&pathspec, ce->name, ce_namelen(ce), len, ps_matched))
 		return;
 
 	if (tag && *tag && show_valid_bit &&
@@ -194,7 +195,7 @@ static void show_ru_info(void)
 		len = strlen(path);
 		if (len < max_prefix_len)
 			continue; /* outside of the prefix */
-		if (!match_pathspec(pathspec, path, len, max_prefix_len, ps_matched))
+		if (!match_pathspec_depth(&pathspec, path, len, max_prefix_len, ps_matched))
 			continue; /* uninterested */
 		for (i = 0; i < 3; i++) {
 			if (!ui->mode[i])
@@ -219,7 +220,7 @@ static void show_files(struct dir_struct *dir)
 
 	/* For cached/deleted files we don't need to even do the readdir */
 	if (show_others || show_killed) {
-		fill_directory(dir, pathspec);
+		fill_directory(dir, &pathspec);
 		if (show_others)
 			show_other_files(dir);
 		if (show_killed)
@@ -287,21 +288,6 @@ static void prune_cache(const char *prefix)
 	active_nr = last;
 }
 
-static void strip_trailing_slash_from_submodules(void)
-{
-	const char **p;
-
-	for (p = pathspec; *p != NULL; p++) {
-		int len = strlen(*p), pos;
-
-		if (len < 1 || (*p)[len - 1] != '/')
-			continue;
-		pos = cache_name_pos(*p, len - 1);
-		if (pos >= 0 && S_ISGITLINK(active_cache[pos]->ce_mode))
-			*p = xstrndup(*p, len - 1);
-	}
-}
-
 /*
  * Read the tree specified with --with-tree option
  * (typically, HEAD) into stage #1 and then
@@ -333,13 +319,12 @@ void overlay_tree_on_cache(const char *tree_name, const char *prefix)
 	}
 
 	if (prefix) {
-		static const char *(matchbuf[2]);
-		matchbuf[0] = prefix;
-		matchbuf[1] = NULL;
-		init_pathspec(&pathspec, matchbuf);
-		pathspec.items[0].nowildcard_len = pathspec.items[0].len;
+		static const char *(matchbuf[1]);
+		matchbuf[0] = NULL;
+		parse_pathspec(&pathspec, PATHSPEC_ALL_MAGIC,
+			       PATHSPEC_PREFER_CWD, prefix, matchbuf);
 	} else
-		init_pathspec(&pathspec, NULL);
+		memset(&pathspec, 0, sizeof(pathspec));
 	if (read_tree(tree, 1, &pathspec))
 		die("unable to read tree entries %s", tree_name);
 
@@ -364,15 +349,16 @@ void overlay_tree_on_cache(const char *tree_name, const char *prefix)
 	}
 }
 
-int report_path_error(const char *ps_matched, const char **pathspec, const char *prefix)
+int report_path_error(const char *ps_matched,
+		      const struct pathspec *pathspec,
+		      const char *prefix)
 {
 	/*
 	 * Make sure all pathspec matched; otherwise it is an error.
 	 */
 	struct strbuf sb = STRBUF_INIT;
-	const char *name;
 	int num, errors = 0;
-	for (num = 0; pathspec[num]; num++) {
+	for (num = 0; num < pathspec->nr; num++) {
 		int other, found_dup;
 
 		if (ps_matched[num])
@@ -380,13 +366,16 @@ int report_path_error(const char *ps_matched, const char **pathspec, const char 
 		/*
 		 * The caller might have fed identical pathspec
 		 * twice.  Do not barf on such a mistake.
+		 * FIXME: parse_pathspec should have eliminated
+		 * duplicate pathspec.
 		 */
 		for (found_dup = other = 0;
-		     !found_dup && pathspec[other];
+		     !found_dup && other < pathspec->nr;
 		     other++) {
 			if (other == num || !ps_matched[other])
 				continue;
-			if (!strcmp(pathspec[other], pathspec[num]))
+			if (!strcmp(pathspec->items[other].original,
+				    pathspec->items[num].original))
 				/*
 				 * Ok, we have a match already.
 				 */
@@ -395,9 +384,8 @@ int report_path_error(const char *ps_matched, const char **pathspec, const char 
 		if (found_dup)
 			continue;
 
-		name = quote_path_relative(pathspec[num], prefix, &sb);
 		error("pathspec '%s' did not match any file(s) known to git.",
-		      name);
+		      pathspec->items[num].original);
 		errors++;
 	}
 	strbuf_release(&sb);
@@ -555,23 +543,18 @@ int cmd_ls_files(int argc, const char **argv, const char *cmd_prefix)
 	if (require_work_tree && !is_inside_work_tree())
 		setup_work_tree();
 
-	pathspec = get_pathspec(prefix, argv);
-
-	/* be nice with submodule paths ending in a slash */
-	if (pathspec)
-		strip_trailing_slash_from_submodules();
+	parse_pathspec(&pathspec, 0,
+		       PATHSPEC_PREFER_CWD |
+		       PATHSPEC_STRIP_SUBMODULE_SLASH_CHEAP,
+		       prefix, argv);
 
 	/* Find common prefix for all pathspec's */
-	max_prefix = common_prefix(pathspec);
+	max_prefix = common_prefix(&pathspec);
 	max_prefix_len = max_prefix ? strlen(max_prefix) : 0;
 
 	/* Treat unmatching pathspec elements as errors */
-	if (pathspec && error_unmatch) {
-		int num;
-		for (num = 0; pathspec[num]; num++)
-			;
-		ps_matched = xcalloc(1, num);
-	}
+	if (pathspec.nr && error_unmatch)
+		ps_matched = xcalloc(1, pathspec.nr);
 
 	if ((dir.flags & DIR_SHOW_IGNORED) && !exc_given)
 		die("ls-files --ignored needs some exclude pattern");
@@ -598,7 +581,7 @@ int cmd_ls_files(int argc, const char **argv, const char *cmd_prefix)
 
 	if (ps_matched) {
 		int bad;
-		bad = report_path_error(ps_matched, pathspec, prefix);
+		bad = report_path_error(ps_matched, &pathspec, prefix);
 		if (bad)
 			fprintf(stderr, "Did you forget to 'git add'?\n");
 

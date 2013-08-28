@@ -15,8 +15,9 @@ static const char * const builtin_mv_usage[] = {
 	NULL
 };
 
-static const char **copy_pathspec(const char *prefix, const char **pathspec,
-				  int count, int base_name)
+static const char **internal_copy_pathspec(const char *prefix,
+					   const char **pathspec,
+					   int count, int base_name)
 {
 	int i;
 	const char **result = xmalloc((count + 1) * sizeof(const char *));
@@ -81,17 +82,17 @@ int cmd_mv(int argc, const char **argv, const char *prefix)
 	if (read_cache() < 0)
 		die(_("index file corrupt"));
 
-	source = copy_pathspec(prefix, argv, argc, 0);
+	source = internal_copy_pathspec(prefix, argv, argc, 0);
 	modes = xcalloc(argc, sizeof(enum update_mode));
-	dest_path = copy_pathspec(prefix, argv + argc, 1, 0);
+	dest_path = internal_copy_pathspec(prefix, argv + argc, 1, 0);
 
 	if (dest_path[0][0] == '\0')
 		/* special case: "." was normalized to "" */
-		destination = copy_pathspec(dest_path[0], argv, argc, 1);
+		destination = internal_copy_pathspec(dest_path[0], argv, argc, 1);
 	else if (!lstat(dest_path[0], &st) &&
 			S_ISDIR(st.st_mode)) {
 		dest_path[0] = add_slash(dest_path[0]);
-		destination = copy_pathspec(dest_path[0], argv, argc, 1);
+		destination = internal_copy_pathspec(dest_path[0], argv, argc, 1);
 	} else {
 		if (argc != 1)
 			die("destination '%s' is not a directory", dest_path[0]);

@@ -10,6 +10,7 @@
 #include "quote.h"
 #include "builtin.h"
 #include "parse-options.h"
+#include "pathspec.h"
 
 static int line_termination = '\n';
 #define LS_RECURSIVE 1
@@ -35,7 +36,7 @@ static int show_recursive(const char *base, int baselen, const char *pathname)
 	if (ls_options & LS_RECURSIVE)
 		return 1;
 
-	s = pathspec.raw;
+	s = pathspec._raw;
 	if (!s)
 		return 0;
 
@@ -166,7 +167,15 @@ int cmd_ls_tree(int argc, const char **argv, const char *prefix)
 	if (get_sha1(argv[0], sha1))
 		die("Not a valid object name %s", argv[0]);
 
-	init_pathspec(&pathspec, get_pathspec(prefix, argv + 1));
+	/*
+	 * show_recursive() rolls its own matching code and is
+	 * generally ignorant of 'struct pathspec'. The magic mask
+	 * cannot be lifted until it is converted to use
+	 * match_pathspec_depth() or tree_entry_interesting()
+	 */
+	parse_pathspec(&pathspec, PATHSPEC_GLOB | PATHSPEC_ICASE,
+		       PATHSPEC_PREFER_CWD,
+		       prefix, argv + 1);
 	for (i = 0; i < pathspec.nr; i++)
 		pathspec.items[i].nowildcard_len = pathspec.items[i].len;
 	pathspec.has_wildcard = 0;

@@ -46,7 +46,7 @@ struct checkout_opts {
 
 	int branch_exists;
 	const char *prefix;
-	const char **pathspec;
+	struct pathspec pathspec;
 	struct tree *source_tree;
 };
 
@@ -83,12 +83,9 @@ static int update_some(const unsigned char *sha1, const char *base, int baselen,
 	return 0;
 }
 
-static int read_tree_some(struct tree *tree, const char **pathspec)
+static int read_tree_some(struct tree *tree, const struct pathspec *pathspec)
 {
-	struct pathspec ps;
-	init_pathspec(&ps, pathspec);
-	read_tree_recursive(tree, "", 0, 0, &ps, update_some, NULL);
-	free_pathspec(&ps);
+	read_tree_recursive(tree, "", 0, 0, pathspec, update_some, NULL);
 
 	/* update the index with the given tree's info
 	 * for all args, expanding wildcards, and exit
@@ -255,20 +252,18 @@ static int checkout_paths(const struct checkout_opts *opts,
 
 	if (opts->patch_mode)
 		return run_add_interactive(revision, "--patch=checkout",
-					   opts->pathspec);
+					   &opts->pathspec);
 
 	lock_file = xcalloc(1, sizeof(struct lock_file));
 
 	newfd = hold_locked_index(lock_file, 1);
-	if (read_cache_preload(opts->pathspec) < 0)
+	if (read_cache_preload(&opts->pathspec) < 0)
 		return error(_("corrupt index file"));
 
 	if (opts->source_tree)
-		read_tree_some(opts->source_tree, opts->pathspec);
+		read_tree_some(opts->source_tree, &opts->pathspec);
 
-	for (pos = 0; opts->pathspec[pos]; pos++)
-		;
-	ps_matched = xcalloc(1, pos);
+	ps_matched = xcalloc(1, opts->pathspec.nr);
 
 	/*
 	 * Make sure all pathspecs participated in locating the paths
@@ -302,12 +297,12 @@ static int checkout_paths(const struct checkout_opts *opts,
 		 * match_pathspec() for _all_ entries when
 		 * opts->source_tree != NULL.
 		 */
-		if (match_pathspec(opts->pathspec, ce->name, ce_namelen(ce),
+		if (match_pathspec_depth(&opts->pathspec, ce->name, ce_namelen(ce),
 				   0, ps_matched))
 			ce->ce_flags |= CE_MATCHED;
 	}
 
-	if (report_path_error(ps_matched, opts->pathspec, opts->prefix)) {
+	if (report_path_error(ps_matched, &opts->pathspec, opts->prefix)) {
 		free(ps_matched);
 		return 1;
 	}
@@ -1000,7 +995,7 @@ static int switch_unborn_to_new_branch(const struct checkout_opts *opts)
 static int checkout_branch(struct checkout_opts *opts,
 			   struct branch_info *new)
 {
-	if (opts->pathspec)
+	if (opts->pathspec.nr)
 		die(_("paths cannot be used with switching branches"));
 
 	if (opts->patch_mode)
@@ -1151,9 +1146,18 @@ int cmd_checkout(int argc, const char **argv, const char *prefix)
 	}
 
 	if (argc) {
-		opts.pathspec = get_pathspec(prefix, argv);
+		/*
+		 * In patch mode (opts.patch_mode != 0), we pass the
+		 * pathspec to an external program, git-add--interactive.
+		 * Do not accept any kind of magic that that program
+		 * cannot handle. Magic mask is pretty safe to be
+		 * lifted for new magic when opts.patch_mode == 0.
+		 */
+		parse_pathspec(&opts.pathspec, 0,
+			       opts.patch_mode ? PATHSPEC_PREFIX_ORIGIN : 0,
+			       prefix, argv);
 
-		if (!opts.pathspec)
+		if (!opts.pathspec.nr)
 			die(_("invalid path specification"));
 
 		/*
@@ -1185,7 +1189,7 @@ int cmd_checkout(int argc, const char **argv, const char *prefix)
 		strbuf_release(&buf);
 	}
 
-	if (opts.patch_mode || opts.pathspec)
+	if (opts.patch_mode || opts.pathspec.nr)
 		return checkout_paths(&opts, new.name);
 	else
 		return checkout_branch(&opts, &new);

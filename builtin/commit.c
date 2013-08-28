@@ -202,17 +202,15 @@ static int commit_index_files(void)
  * and return the paths that match the given pattern in list.
  */
 static int list_paths(struct string_list *list, const char *with_tree,
-		      const char *prefix, const char **pattern)
+		      const char *prefix, const struct pathspec *pattern)
 {
 	int i;
 	char *m;
 
-	if (!pattern)
+	if (!pattern->nr)
 		return 0;
 
-	for (i = 0; pattern[i]; i++)
-		;
-	m = xcalloc(1, i);
+	m = xcalloc(1, pattern->nr);
 
 	if (with_tree) {
 		char *max_prefix = common_prefix(pattern);
@@ -226,7 +224,7 @@ static int list_paths(struct string_list *list, const char *with_tree,
 
 		if (ce->ce_flags & CE_UPDATE)
 			continue;
-		if (!match_pathspec(pattern, ce->name, ce_namelen(ce), 0, m))
+		if (!match_pathspec_depth(pattern, ce->name, ce_namelen(ce), 0, m))
 			continue;
 		item = string_list_insert(list, ce->name);
 		if (ce_skip_worktree(ce))
@@ -298,17 +296,17 @@ static char *prepare_index(int argc, const char **argv, const char *prefix,
 {
 	int fd;
 	struct string_list partial;
-	const char **pathspec = NULL;
+	struct pathspec pathspec;
 	char *old_index_env = NULL;
 	int refresh_flags = REFRESH_QUIET;
 
 	if (is_status)
 		refresh_flags |= REFRESH_UNMERGED;
+	parse_pathspec(&pathspec, 0,
+		       PATHSPEC_PREFER_FULL,
+		       prefix, argv);
 
-	if (*argv)
-		pathspec = get_pathspec(prefix, argv);
-
-	if (read_cache_preload(pathspec) < 0)
+	if (read_cache_preload(&pathspec) < 0)
 		die(_("index file corrupt"));
 
 	if (interactive) {
@@ -350,9 +348,9 @@ static char *prepare_index(int argc, const char **argv, const char *prefix,
 	 * (A) if all goes well, commit the real index;
 	 * (B) on failure, rollback the real index.
 	 */
-	if (all || (also && pathspec && *pathspec)) {
+	if (all || (also && pathspec.nr)) {
 		fd = hold_locked_index(&index_lock, 1);
-		add_files_to_cache(also ? prefix : NULL, pathspec, 0);
+		add_files_to_cache(also ? prefix : NULL, &pathspec, 0);
 		refresh_cache_or_die(refresh_flags);
 		update_main_cache_tree(WRITE_TREE_SILENT);
 		if (write_cache(fd, active_cache, active_nr) ||
@@ -371,7 +369,7 @@ static char *prepare_index(int argc, const char **argv, const char *prefix,
 	 * and create commit from the_index.
 	 * We still need to refresh the index here.
 	 */
-	if (!only && (!pathspec || !*pathspec)) {
+	if (!only && !pathspec.nr) {
 		fd = hold_locked_index(&index_lock, 1);
 		refresh_cache_or_die(refresh_flags);
 		if (active_cache_changed) {
@@ -416,7 +414,7 @@ static char *prepare_index(int argc, const char **argv, const char *prefix,
 
 	memset(&partial, 0, sizeof(partial));
 	partial.strdup_strings = 1;
-	if (list_paths(&partial, !current_head ? NULL : "HEAD", prefix, pathspec))
+	if (list_paths(&partial, !current_head ? NULL : "HEAD", prefix, &pathspec))
 		exit(1);
 
 	discard_cache();
@@ -1259,11 +1257,12 @@ int cmd_status(int argc, const char **argv, const char *prefix)
 	handle_untracked_files_arg(&s);
 	if (show_ignored_in_status)
 		s.show_ignored_files = 1;
-	if (*argv)
-		s.pathspec = get_pathspec(prefix, argv);
+	parse_pathspec(&s.pathspec, 0,
+		       PATHSPEC_PREFER_FULL,
+		       prefix, argv);
 
-	read_cache_preload(s.pathspec);
-	refresh_index(&the_index, REFRESH_QUIET|REFRESH_UNMERGED, s.pathspec, NULL, NULL);
+	read_cache_preload(&s.pathspec);
+	refresh_index(&the_index, REFRESH_QUIET|REFRESH_UNMERGED, &s.pathspec, NULL, NULL);
 
 	fd = hold_locked_index(&index_lock, 0);
 	if (0 <= fd)

@@ -322,10 +322,54 @@ and a close parentheses `)`, and the remainder is the pattern to match
 against the path.
 +
 The "magic signature" consists of an ASCII symbol that is not
-alphanumeric. Currently only the slash `/` is recognized as a
-"magic signature": it makes the pattern match from the root of
-the working tree, even when you are running the command from
-inside a subdirectory.
+alphanumeric.
++
+--
+top `/`;;
+	The magic word `top` (mnemonic: `/`) makes the pattern match
+	from the root of the working tree, even when you are running
+	the command from inside a subdirectory.
+
+literal;;
+	Wildcards in the pattern such as `*` or `?` are treated
+	as literal characters.
+
+icase;;
+	Case insensitive match.
+
+glob;;
+	Git treats the pattern as a shell glob suitable for
+	consumption by fnmatch(3) with the FNM_PATHNAME flag:
+	wildcards in the pattern will not match a / in the pathname.
+	For example, "Documentation/{asterisk}.html" matches
+	"Documentation/git.html" but not "Documentation/ppc/ppc.html"
+	or "tools/perf/Documentation/perf.html".
++
+Two consecutive asterisks ("`**`") in patterns matched against
+full pathname may have special meaning:
+
+ - A leading "`**`" followed by a slash means match in all
+   directories. For example, "`**/foo`" matches file or directory
+   "`foo`" anywhere, the same as pattern "`foo`". "**/foo/bar"
+   matches file or directory "`bar`" anywhere that is directly
+   under directory "`foo`".
+
+ - A trailing "/**" matches everything inside. For example,
+   "abc/**" matches all files inside directory "abc", relative
+   to the location of the `.gitignore` file, with infinite depth.
+
+ - A slash followed by two consecutive asterisks then a slash
+   matches zero or more directories. For example, "`a/**/b`"
+   matches "`a/b`", "`a/x/b`", "`a/x/y/b`" and so on.
+
+ - Other consecutive asterisks are considered invalid.
++
+Glob magic is incompatible with literal magic.
+--
++
+Currently only the slash `/` is recognized as the "magic signature",
+but it is envisioned that we will support more types of magic in later
+versions of Git.
 +
 A pathspec with only a colon means "there is no pathspec". This form
 should not be combined with other pathspec.

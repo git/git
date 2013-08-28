@@ -503,7 +503,7 @@ int cmd_show(int argc, const char **argv, const char *prefix)
 	init_grep_defaults();
 	git_config(git_log_config, NULL);
 
-	init_pathspec(&match_all, NULL);
+	memset(&match_all, 0, sizeof(match_all));
 	init_revisions(&rev, prefix);
 	rev.diff = 1;
 	rev.always_show_header = 1;

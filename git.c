@@ -147,6 +147,18 @@ static int handle_options(const char ***argv, int *argc, int *envchanged)
 			setenv(GIT_LITERAL_PATHSPECS_ENVIRONMENT, "0", 1);
 			if (envchanged)
 				*envchanged = 1;
+		} else if (!strcmp(cmd, "--glob-pathspecs")) {
+			setenv(GIT_GLOB_PATHSPECS_ENVIRONMENT, "1", 1);
+			if (envchanged)
+				*envchanged = 1;
+		} else if (!strcmp(cmd, "--noglob-pathspecs")) {
+			setenv(GIT_NOGLOB_PATHSPECS_ENVIRONMENT, "1", 1);
+			if (envchanged)
+				*envchanged = 1;
+		} else if (!strcmp(cmd, "--icase-pathspecs")) {
+			setenv(GIT_ICASE_PATHSPECS_ENVIRONMENT, "1", 1);
+			if (envchanged)
+				*envchanged = 1;
 		} else if (!strcmp(cmd, "--shallow-file")) {
 			(*argv)++;
 			(*argc)--;

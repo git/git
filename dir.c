@@ -11,6 +11,7 @@
 #include "dir.h"
 #include "refs.h"
 #include "wildmatch.h"
+#include "pathspec.h"
 
 struct path_simplify {
 	int len;
@@ -51,26 +52,32 @@ int fnmatch_icase(const char *pattern, const char *string, int flags)
 	return fnmatch(pattern, string, flags | (ignore_case ? FNM_CASEFOLD : 0));
 }
 
-inline int git_fnmatch(const char *pattern, const char *string,
-		       int flags, int prefix)
+inline int git_fnmatch(const struct pathspec_item *item,
+		       const char *pattern, const char *string,
+		       int prefix)
 {
-	int fnm_flags = 0;
-	if (flags & GFNM_PATHNAME)
-		fnm_flags |= FNM_PATHNAME;
 	if (prefix > 0) {
-		if (strncmp(pattern, string, prefix))
+		if (ps_strncmp(item, pattern, string, prefix))
 			return FNM_NOMATCH;
 		pattern += prefix;
 		string += prefix;
 	}
-	if (flags & GFNM_ONESTAR) {
+	if (item->flags & PATHSPEC_ONESTAR) {
 		int pattern_len = strlen(++pattern);
 		int string_len = strlen(string);
 		return string_len < pattern_len ||
-		       strcmp(pattern,
-			      string + string_len - pattern_len);
+			ps_strcmp(item, pattern,
+				  string + string_len - pattern_len);
 	}
-	return fnmatch(pattern, string, fnm_flags);
+	if (item->magic & PATHSPEC_GLOB)
+		return wildmatch(pattern, string,
+				 WM_PATHNAME |
+				 (item->magic & PATHSPEC_ICASE ? WM_CASEFOLD : 0),
+				 NULL);
+	else
+		/* wildmatch has not learned no FNM_PATHNAME mode yet */
+		return fnmatch(pattern, string,
+			       item->magic & PATHSPEC_ICASE ? FNM_CASEFOLD : 0);
 }
 
 static int fnmatch_icase_mem(const char *pattern, int patternlen,
@@ -102,26 +109,40 @@ static int fnmatch_icase_mem(const char *pattern, int patternlen,
 	return match_status;
 }
 
-static size_t common_prefix_len(const char **pathspec)
+static size_t common_prefix_len(const struct pathspec *pathspec)
 {
-	const char *n, *first;
+	int n;
 	size_t max = 0;
-	int literal = limit_pathspec_to_literal();
 
-	if (!pathspec)
-		return max;
+	/*
+	 * ":(icase)path" is treated as a pathspec full of
+	 * wildcard. In other words, only prefix is considered common
+	 * prefix. If the pathspec is abc/foo abc/bar, running in
+	 * subdir xyz, the common prefix is still xyz, not xuz/abc as
+	 * in non-:(icase).
+	 */
+	GUARD_PATHSPEC(pathspec,
+		       PATHSPEC_FROMTOP |
+		       PATHSPEC_MAXDEPTH |
+		       PATHSPEC_LITERAL |
+		       PATHSPEC_GLOB |
+		       PATHSPEC_ICASE);
 
-	first = *pathspec;
-	while ((n = *pathspec++)) {
-		size_t i, len = 0;
-		for (i = 0; first == n || i < max; i++) {
-			char c = n[i];
-			if (!c || c != first[i] || (!literal && is_glob_special(c)))
+	for (n = 0; n < pathspec->nr; n++) {
+		size_t i = 0, len = 0, item_len;
+		if (pathspec->items[n].magic & PATHSPEC_ICASE)
+			item_len = pathspec->items[n].prefix;
+		else
+			item_len = pathspec->items[n].nowildcard_len;
+		while (i < item_len && (n == 0 || i < max)) {
+			char c = pathspec->items[n].match[i];
+			if (c != pathspec->items[0].match[i])
 				break;
 			if (c == '/')
 				len = i + 1;
+			i++;
 		}
-		if (first == n || len < max) {
+		if (n == 0 || len < max) {
 			max = len;
 			if (!max)
 				break;
@@ -134,14 +155,14 @@ static size_t common_prefix_len(const char **pathspec)
  * Returns a copy of the longest leading path common among all
  * pathspecs.
  */
-char *common_prefix(const char **pathspec)
+char *common_prefix(const struct pathspec *pathspec)
 {
 	unsigned long len = common_prefix_len(pathspec);
 
-	return len ? xmemdupz(*pathspec, len) : NULL;
+	return len ? xmemdupz(pathspec->items[0].match, len) : NULL;
 }
 
-int fill_directory(struct dir_struct *dir, const char **pathspec)
+int fill_directory(struct dir_struct *dir, const struct pathspec *pathspec)
 {
 	size_t len;
 
@@ -152,7 +173,7 @@ int fill_directory(struct dir_struct *dir, const char **pathspec)
 	len = common_prefix_len(pathspec);
 
 	/* Read the directory and prune it */
-	read_directory(dir, pathspec ? *pathspec : "", len, pathspec);
+	read_directory(dir, pathspec->nr ? pathspec->_raw[0] : "", len, pathspec);
 	return len;
 }
 
@@ -183,113 +204,6 @@ int within_depth(const char *name, int namelen,
  *
  * It returns 0 when there is no match.
  */
-static int match_one(const char *match, const char *name, int namelen)
-{
-	int matchlen;
-	int literal = limit_pathspec_to_literal();
-
-	/* If the match was just the prefix, we matched */
-	if (!*match)
-		return MATCHED_RECURSIVELY;
-
-	if (ignore_case) {
-		for (;;) {
-			unsigned char c1 = tolower(*match);
-			unsigned char c2 = tolower(*name);
-			if (c1 == '\0' || (!literal && is_glob_special(c1)))
-				break;
-			if (c1 != c2)
-				return 0;
-			match++;
-			name++;
-			namelen--;
-		}
-	} else {
-		for (;;) {
-			unsigned char c1 = *match;
-			unsigned char c2 = *name;
-			if (c1 == '\0' || (!literal && is_glob_special(c1)))
-				break;
-			if (c1 != c2)
-				return 0;
-			match++;
-			name++;
-			namelen--;
-		}
-	}
-
-	/*
-	 * If we don't match the matchstring exactly,
-	 * we need to match by fnmatch
-	 */
-	matchlen = strlen(match);
-	if (strncmp_icase(match, name, matchlen)) {
-		if (literal)
-			return 0;
-		return !fnmatch_icase(match, name, 0) ? MATCHED_FNMATCH : 0;
-	}
-
-	if (namelen == matchlen)
-		return MATCHED_EXACTLY;
-	if (match[matchlen-1] == '/' || name[matchlen] == '/')
-		return MATCHED_RECURSIVELY;
-	return 0;
-}
-
-/*
- * Given a name and a list of pathspecs, returns the nature of the
- * closest (i.e. most specific) match of the name to any of the
- * pathspecs.
- *
- * The caller typically calls this multiple times with the same
- * pathspec and seen[] array but with different name/namelen
- * (e.g. entries from the index) and is interested in seeing if and
- * how each pathspec matches all the names it calls this function
- * with.  A mark is left in the seen[] array for each pathspec element
- * indicating the closest type of match that element achieved, so if
- * seen[n] remains zero after multiple invocations, that means the nth
- * pathspec did not match any names, which could indicate that the
- * user mistyped the nth pathspec.
- */
-int match_pathspec(const char **pathspec, const char *name, int namelen,
-		int prefix, char *seen)
-{
-	int i, retval = 0;
-
-	if (!pathspec)
-		return 1;
-
-	name += prefix;
-	namelen -= prefix;
-
-	for (i = 0; pathspec[i] != NULL; i++) {
-		int how;
-		const char *match = pathspec[i] + prefix;
-		if (seen && seen[i] == MATCHED_EXACTLY)
-			continue;
-		how = match_one(match, name, namelen);
-		if (how) {
-			if (retval < how)
-				retval = how;
-			if (seen && seen[i] < how)
-				seen[i] = how;
-		}
-	}
-	return retval;
-}
-
-/*
- * Does 'match' match the given name?
- * A match is found if
- *
- * (1) the 'match' string is leading directory of 'name', or
- * (2) the 'match' string is a wildcard and matches 'name', or
- * (3) the 'match' string is exactly the same as 'name'.
- *
- * and the return value tells which case it was.
- *
- * It returns 0 when there is no match.
- */
 static int match_pathspec_item(const struct pathspec_item *item, int prefix,
 			       const char *name, int namelen)
 {
@@ -297,11 +211,44 @@ static int match_pathspec_item(const struct pathspec_item *item, int prefix,
 	const char *match = item->match + prefix;
 	int matchlen = item->len - prefix;
 
+	/*
+	 * The normal call pattern is:
+	 * 1. prefix = common_prefix_len(ps);
+	 * 2. prune something, or fill_directory
+	 * 3. match_pathspec_depth()
+	 *
+	 * 'prefix' at #1 may be shorter than the command's prefix and
+	 * it's ok for #2 to match extra files. Those extras will be
+	 * trimmed at #3.
+	 *
+	 * Suppose the pathspec is 'foo' and '../bar' running from
+	 * subdir 'xyz'. The common prefix at #1 will be empty, thanks
+	 * to "../". We may have xyz/foo _and_ XYZ/foo after #2. The
+	 * user does not want XYZ/foo, only the "foo" part should be
+	 * case-insensitive. We need to filter out XYZ/foo here. In
+	 * other words, we do not trust the caller on comparing the
+	 * prefix part when :(icase) is involved. We do exact
+	 * comparison ourselves.
+	 *
+	 * Normally the caller (common_prefix_len() in fact) does
+	 * _exact_ matching on name[-prefix+1..-1] and we do not need
+	 * to check that part. Be defensive and check it anyway, in
+	 * case common_prefix_len is changed, or a new caller is
+	 * introduced that does not use common_prefix_len.
+	 *
+	 * If the penalty turns out too high when prefix is really
+	 * long, maybe change it to
+	 * strncmp(match, name, item->prefix - prefix)
+	 */
+	if (item->prefix && (item->magic & PATHSPEC_ICASE) &&
+	    strncmp(item->match, name - prefix, item->prefix))
+		return 0;
+
 	/* If the match was just the prefix, we matched */
 	if (!*match)
 		return MATCHED_RECURSIVELY;
 
-	if (matchlen <= namelen && !strncmp(match, name, matchlen)) {
+	if (matchlen <= namelen && !ps_strncmp(item, match, name, matchlen)) {
 		if (matchlen == namelen)
 			return MATCHED_EXACTLY;
 
@@ -310,8 +257,7 @@ static int match_pathspec_item(const struct pathspec_item *item, int prefix,
 	}
 
 	if (item->nowildcard_len < item->len &&
-	    !git_fnmatch(match, name,
-			 item->flags & PATHSPEC_ONESTAR ? GFNM_ONESTAR : 0,
+	    !git_fnmatch(item, match, name,
 			 item->nowildcard_len - prefix))
 		return MATCHED_FNMATCH;
 
@@ -339,8 +285,17 @@ int match_pathspec_depth(const struct pathspec *ps,
 {
 	int i, retval = 0;
 
+	GUARD_PATHSPEC(ps,
+		       PATHSPEC_FROMTOP |
+		       PATHSPEC_MAXDEPTH |
+		       PATHSPEC_LITERAL |
+		       PATHSPEC_GLOB |
+		       PATHSPEC_ICASE);
+
 	if (!ps->nr) {
-		if (!ps->recursive || ps->max_depth == -1)
+		if (!ps->recursive ||
+		    !(ps->magic & PATHSPEC_MAXDEPTH) ||
+		    ps->max_depth == -1)
 			return MATCHED_RECURSIVELY;
 
 		if (within_depth(name, namelen, 0, ps->max_depth))
@@ -357,7 +312,9 @@ int match_pathspec_depth(const struct pathspec *ps,
 		if (seen && seen[i] == MATCHED_EXACTLY)
 			continue;
 		how = match_pathspec_item(ps->items+i, prefix, name, namelen);
-		if (ps->recursive && ps->max_depth != -1 &&
+		if (ps->recursive &&
+		    (ps->magic & PATHSPEC_MAXDEPTH) &&
+		    ps->max_depth != -1 &&
 		    how && how != MATCHED_FNMATCH) {
 			int len = ps->items[i].len;
 			if (name[len] == '/')
@@ -380,7 +337,7 @@ int match_pathspec_depth(const struct pathspec *ps,
 /*
  * Return the length of the "simple" part of a path match limiter.
  */
-static int simple_length(const char *match)
+int simple_length(const char *match)
 {
 	int len = -1;
 
@@ -392,7 +349,7 @@ static int simple_length(const char *match)
 	}
 }
 
-static int no_wildcard(const char *string)
+int no_wildcard(const char *string)
 {
 	return string[simple_length(string)] == '\0';
 }
@@ -1381,14 +1338,25 @@ static int treat_leading_path(struct dir_struct *dir,
 	return rc;
 }
 
-int read_directory(struct dir_struct *dir, const char *path, int len, const char **pathspec)
+int read_directory(struct dir_struct *dir, const char *path, int len, const struct pathspec *pathspec)
 {
 	struct path_simplify *simplify;
+
+	/*
+	 * Check out create_simplify()
+	 */
+	if (pathspec)
+		GUARD_PATHSPEC(pathspec,
+			       PATHSPEC_FROMTOP |
+			       PATHSPEC_MAXDEPTH |
+			       PATHSPEC_LITERAL |
+			       PATHSPEC_GLOB |
+			       PATHSPEC_ICASE);
 
 	if (has_symlink_leading_path(path, len))
 		return dir->nr;
 
-	simplify = create_simplify(pathspec);
+	simplify = create_simplify(pathspec ? pathspec->_raw : NULL);
 	if (!len || treat_leading_path(dir, path, len, simplify))
 		read_directory_recursive(dir, path, len, 0, simplify);
 	free_simplify(simplify);
@@ -1566,71 +1534,6 @@ int remove_path(const char *name)
 		free(dirs);
 	}
 	return 0;
-}
-
-static int pathspec_item_cmp(const void *a_, const void *b_)
-{
-	struct pathspec_item *a, *b;
-
-	a = (struct pathspec_item *)a_;
-	b = (struct pathspec_item *)b_;
-	return strcmp(a->match, b->match);
-}
-
-int init_pathspec(struct pathspec *pathspec, const char **paths)
-{
-	const char **p = paths;
-	int i;
-
-	memset(pathspec, 0, sizeof(*pathspec));
-	if (!p)
-		return 0;
-	while (*p)
-		p++;
-	pathspec->raw = paths;
-	pathspec->nr = p - paths;
-	if (!pathspec->nr)
-		return 0;
-
-	pathspec->items = xmalloc(sizeof(struct pathspec_item)*pathspec->nr);
-	for (i = 0; i < pathspec->nr; i++) {
-		struct pathspec_item *item = pathspec->items+i;
-		const char *path = paths[i];
-
-		item->match = path;
-		item->len = strlen(path);
-		item->flags = 0;
-		if (limit_pathspec_to_literal()) {
-			item->nowildcard_len = item->len;
-		} else {
-			item->nowildcard_len = simple_length(path);
-			if (item->nowildcard_len < item->len) {
-				pathspec->has_wildcard = 1;
-				if (path[item->nowildcard_len] == '*' &&
-				    no_wildcard(path + item->nowildcard_len + 1))
-					item->flags |= PATHSPEC_ONESTAR;
-			}
-		}
-	}
-
-	qsort(pathspec->items, pathspec->nr,
-	      sizeof(struct pathspec_item), pathspec_item_cmp);
-
-	return 0;
-}
-
-void free_pathspec(struct pathspec *pathspec)
-{
-	free(pathspec->items);
-	pathspec->items = NULL;
-}
-
-int limit_pathspec_to_literal(void)
-{
-	static int flag = -1;
-	if (flag < 0)
-		flag = git_env_bool(GIT_LITERAL_PATHSPECS_ENVIRONMENT, 0);
-	return flag;
 }
 
 /*
