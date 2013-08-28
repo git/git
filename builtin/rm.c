@@ -277,8 +277,8 @@ static struct option builtin_rm_options[] = {
 
 int cmd_rm(int argc, const char **argv, const char *prefix)
 {
-	int i, newfd;
-	const char **pathspec;
+	int i, newfd, seen_any;
+	const char **pathspec, *match;
 	char *seen;
 
 	git_config(git_default_config, NULL);
@@ -314,7 +314,6 @@ int cmd_rm(int argc, const char **argv, const char *prefix)
 	pathspec = get_pathspec(prefix, argv);
 	refresh_index(&the_index, REFRESH_QUIET, pathspec, NULL, NULL);
 
-	seen = NULL;
 	for (i = 0; pathspec[i] ; i++)
 		/* nothing */;
 	seen = xcalloc(i, 1);
@@ -328,27 +327,24 @@ int cmd_rm(int argc, const char **argv, const char *prefix)
 		list.entry[list.nr++].is_submodule = S_ISGITLINK(ce->ce_mode);
 	}
 
-	if (pathspec) {
-		const char *match;
-		int seen_any = 0;
-		for (i = 0; (match = pathspec[i]) != NULL ; i++) {
-			if (!seen[i]) {
-				if (!ignore_unmatch) {
-					die(_("pathspec '%s' did not match any files"),
-					    match);
-				}
-			}
-			else {
-				seen_any = 1;
-			}
-			if (!recursive && seen[i] == MATCHED_RECURSIVELY)
-				die(_("not removing '%s' recursively without -r"),
-				    *match ? match : ".");
-		}
 
-		if (! seen_any)
-			exit(0);
+	seen_any = 0;
+	for (i = 0; (match = pathspec[i]) != NULL ; i++) {
+		if (!seen[i]) {
+			if (!ignore_unmatch) {
+				die(_("pathspec '%s' did not match any files"),
+				    match);
+			}
+		}
+		else {
+			seen_any = 1;
+		}
+		if (!recursive && seen[i] == MATCHED_RECURSIVELY)
+			die(_("not removing '%s' recursively without -r"),
+			    *match ? match : ".");
 	}
+	if (!seen_any)
+		exit(0);
 
 	/*
 	 * If not forced, the file, the index and the HEAD (if exists)
