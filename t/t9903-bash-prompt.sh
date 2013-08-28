@@ -61,6 +61,29 @@ test_expect_success 'prompt - unborn branch' '
 	test_cmp expected "$actual"
 '
 
+repo_with_newline='repo
+with
+newline'
+
+if mkdir "$repo_with_newline" 2>/dev/null
+then
+	test_set_prereq FUNNYNAMES
+else
+	say 'Your filesystem does not allow newlines in filenames.'
+fi
+
+test_expect_success FUNNYNAMES 'prompt - with newline in path' '
+	printf " (master)" >expected &&
+	git init "$repo_with_newline" &&
+	test_when_finished "rm -rf \"$repo_with_newline\"" &&
+	mkdir "$repo_with_newline"/subdir &&
+	(
+		cd "$repo_with_newline/subdir" &&
+		__git_ps1 >"$actual"
+	) &&
+	test_cmp expected "$actual"
+'
+
 test_expect_success 'prompt - detached head' '
 	printf " ((%s...))" $(git log -1 --format="%h" --abbrev=13 b1^) >expected &&
 	test_config core.abbrev 13 &&
