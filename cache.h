@@ -850,8 +850,11 @@ extern int for_each_abbrev(const char *prefix, each_abbrev_fn, void *);
  * Return 0 on success.  Reading stops if a NUL is encountered in the
  * input, so it is safe to pass this function an arbitrary
  * null-terminated string.
+ *
+ * The "low" version accepts numbers and lowercase letters only.
  */
 extern int get_sha1_hex(const char *hex, unsigned char *sha1);
+extern int get_sha1_lowhex(const char *hex, unsigned char *sha1);
 
 extern char *sha1_to_hex(const unsigned char *sha1);	/* static buffer result! */
 extern int read_ref_full(const char *refname, unsigned char *sha1,
