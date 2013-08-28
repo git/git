@@ -838,6 +838,7 @@ LIB_OBJS += object.o
 LIB_OBJS += pack-check.o
 LIB_OBJS += pack-revindex.o
 LIB_OBJS += pack-write.o
+LIB_OBJS += packv4-parse.o
 LIB_OBJS += pager.o
 LIB_OBJS += parse-options.o
 LIB_OBJS += parse-options-cb.o
