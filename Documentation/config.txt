@@ -561,22 +561,20 @@ sequence.editor::
 	When not configured the default commit message editor is used instead.
 
 core.pager::
-	The command that Git will use to paginate output.  Can
-	be overridden with the `GIT_PAGER` environment
-	variable.  Note that Git sets the `LESS` environment
-	variable to `FRSX` if it is unset when it runs the
-	pager.  One can change these settings by setting the
-	`LESS` variable to some other value.  Alternately,
-	these settings can be overridden on a project or
-	global basis by setting the `core.pager` option.
-	Setting `core.pager` has no effect on the `LESS`
-	environment variable behaviour above, so if you want
-	to override Git's default settings this way, you need
-	to be explicit.  For example, to disable the S option
-	in a backward compatible manner, set `core.pager`
-	to `less -+S`.  This will be passed to the shell by
-	Git, which will translate the final command to
-	`LESS=FRSX less -+S`.
+	Text viewer for use by Git commands (e.g., 'less').  The value
+	is meant to be interpreted by the shell.  The order of preference
+	is the `$GIT_PAGER` environment variable, then `core.pager`
+	configuration, then `$PAGER`, and then the default chosen at
+	compile time (usually 'less').
++
+When the `LESS` environment variable is unset, Git sets it to `FRSX`
+(if `LESS` environment variable is set, Git does not change it at
+all).  If you want to selectively override Git's default setting
+for `LESS`, you can set `core.pager` to e.g. `less -+S`.  This will
+be passed to the shell by Git, which will translate the final
+command to `LESS=FRSX less -+S`. The environment tells the command
+to set the `S` option to chop long lines but the command line
+resets it to the default to fold long lines.
 
 core.whitespace::
 	A comma separated list of common whitespace problems to
