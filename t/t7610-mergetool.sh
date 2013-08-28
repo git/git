@@ -253,7 +253,7 @@ test_expect_success 'deleted vs modified submodule' '
     git checkout -b test6 branch1 &&
     git submodule update -N &&
     mv submod submod-movedaside &&
-    git rm submod &&
+    git rm --cached submod &&
     git commit -m "Submodule deleted from branch" &&
     git checkout -b test6.a test6 &&
     test_must_fail git merge master &&
@@ -322,7 +322,7 @@ test_expect_success 'file vs modified submodule' '
     git checkout -b test7 branch1 &&
     git submodule update -N &&
     mv submod submod-movedaside &&
-    git rm submod &&
+    git rm --cached submod &&
     echo not a submodule >submod &&
     git add submod &&
     git commit -m "Submodule path becomes file" &&
@@ -453,7 +453,7 @@ test_expect_success 'submodule in subdirectory' '
 test_expect_success 'directory vs modified submodule' '
     git checkout -b test11 branch1 &&
     mv submod submod-movedaside &&
-    git rm submod &&
+    git rm --cached submod &&
     mkdir submod &&
     echo not a submodule >submod/file16 &&
     git add submod/file16 &&

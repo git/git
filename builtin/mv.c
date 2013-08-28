@@ -9,6 +9,7 @@
 #include "cache-tree.h"
 #include "string-list.h"
 #include "parse-options.h"
+#include "submodule.h"
 
 static const char * const builtin_mv_usage[] = {
 	N_("git mv [options] <source>... <destination>"),
@@ -57,7 +58,7 @@ static struct lock_file lock_file;
 
 int cmd_mv(int argc, const char **argv, const char *prefix)
 {
-	int i, newfd;
+	int i, newfd, gitmodules_modified = 0;
 	int verbose = 0, show_only = 0, force = 0, ignore_errors = 0;
 	struct option builtin_mv_options[] = {
 		OPT__VERBOSE(&verbose, N_("be verbose")),
@@ -66,11 +67,12 @@ int cmd_mv(int argc, const char **argv, const char *prefix)
 		OPT_BOOL('k', NULL, &ignore_errors, N_("skip move/rename errors")),
 		OPT_END(),
 	};
-	const char **source, **destination, **dest_path;
+	const char **source, **destination, **dest_path, **submodule_gitfile;
 	enum update_mode { BOTH = 0, WORKING_DIRECTORY, INDEX } *modes;
 	struct stat st;
 	struct string_list src_for_dst = STRING_LIST_INIT_NODUP;
 
+	gitmodules_config();
 	git_config(git_default_config, NULL);
 
 	argc = parse_options(argc, argv, prefix, builtin_mv_options,
@@ -85,6 +87,7 @@ int cmd_mv(int argc, const char **argv, const char *prefix)
 	source = internal_copy_pathspec(prefix, argv, argc, 0);
 	modes = xcalloc(argc, sizeof(enum update_mode));
 	dest_path = internal_copy_pathspec(prefix, argv + argc, 1, 0);
+	submodule_gitfile = xcalloc(argc, sizeof(char *));
 
 	if (dest_path[0][0] == '\0')
 		/* special case: "." was normalized to "" */
@@ -118,55 +121,68 @@ int cmd_mv(int argc, const char **argv, const char *prefix)
 				&& lstat(dst, &st) == 0)
 			bad = _("cannot move directory over file");
 		else if (src_is_dir) {
-			const char *src_w_slash = add_slash(src);
-			int len_w_slash = length + 1;
-			int first, last;
+			int first = cache_name_pos(src, length);
+			if (first >= 0) {
+				struct strbuf submodule_dotgit = STRBUF_INIT;
+				if (!S_ISGITLINK(active_cache[first]->ce_mode))
+					die (_("Huh? Directory %s is in index and no submodule?"), src);
+				if (!is_staging_gitmodules_ok())
+					die (_("Please, stage your changes to .gitmodules or stash them to proceed"));
+				strbuf_addf(&submodule_dotgit, "%s/.git", src);
+				submodule_gitfile[i] = read_gitfile(submodule_dotgit.buf);
+				if (submodule_gitfile[i])
+					submodule_gitfile[i] = xstrdup(submodule_gitfile[i]);
+				strbuf_release(&submodule_dotgit);
+			} else {
+				const char *src_w_slash = add_slash(src);
+				int last, len_w_slash = length + 1;
 
-			modes[i] = WORKING_DIRECTORY;
+				modes[i] = WORKING_DIRECTORY;
 
-			first = cache_name_pos(src_w_slash, len_w_slash);
-			if (first >= 0)
-				die (_("Huh? %.*s is in index?"),
-						len_w_slash, src_w_slash);
+				first = cache_name_pos(src_w_slash, len_w_slash);
+				if (first >= 0)
+					die (_("Huh? %.*s is in index?"),
+							len_w_slash, src_w_slash);
 
-			first = -1 - first;
-			for (last = first; last < active_nr; last++) {
-				const char *path = active_cache[last]->name;
-				if (strncmp(path, src_w_slash, len_w_slash))
-					break;
-			}
-			free((char *)src_w_slash);
-
-			if (last - first < 1)
-				bad = _("source directory is empty");
-			else {
-				int j, dst_len;
-
-				if (last - first > 0) {
-					source = xrealloc(source,
-							(argc + last - first)
-							* sizeof(char *));
-					destination = xrealloc(destination,
-							(argc + last - first)
-							* sizeof(char *));
-					modes = xrealloc(modes,
-							(argc + last - first)
-							* sizeof(enum update_mode));
+				first = -1 - first;
+				for (last = first; last < active_nr; last++) {
+					const char *path = active_cache[last]->name;
+					if (strncmp(path, src_w_slash, len_w_slash))
+						break;
 				}
+				free((char *)src_w_slash);
 
-				dst = add_slash(dst);
-				dst_len = strlen(dst);
+				if (last - first < 1)
+					bad = _("source directory is empty");
+				else {
+					int j, dst_len;
 
-				for (j = 0; j < last - first; j++) {
-					const char *path =
-						active_cache[first + j]->name;
-					source[argc + j] = path;
-					destination[argc + j] =
-						prefix_path(dst, dst_len,
-							path + length + 1);
-					modes[argc + j] = INDEX;
+					if (last - first > 0) {
+						source = xrealloc(source,
+								(argc + last - first)
+								* sizeof(char *));
+						destination = xrealloc(destination,
+								(argc + last - first)
+								* sizeof(char *));
+						modes = xrealloc(modes,
+								(argc + last - first)
+								* sizeof(enum update_mode));
+					}
+
+					dst = add_slash(dst);
+					dst_len = strlen(dst);
+
+					for (j = 0; j < last - first; j++) {
+						const char *path =
+							active_cache[first + j]->name;
+						source[argc + j] = path;
+						destination[argc + j] =
+							prefix_path(dst, dst_len,
+								path + length + 1);
+						modes[argc + j] = INDEX;
+					}
+					argc += last - first;
 				}
-				argc += last - first;
 			}
 		} else if (cache_name_pos(src, length) < 0)
 			bad = _("not under version control");
@@ -211,9 +227,14 @@ int cmd_mv(int argc, const char **argv, const char *prefix)
 		int pos;
 		if (show_only || verbose)
 			printf(_("Renaming %s to %s\n"), src, dst);
-		if (!show_only && mode != INDEX &&
-				rename(src, dst) < 0 && !ignore_errors)
-			die_errno (_("renaming '%s' failed"), src);
+		if (!show_only && mode != INDEX) {
+			if (rename(src, dst) < 0 && !ignore_errors)
+				die_errno (_("renaming '%s' failed"), src);
+			if (submodule_gitfile[i])
+				connect_work_tree_and_git_dir(dst, submodule_gitfile[i]);
+			if (!update_path_in_gitmodules(src, dst))
+				gitmodules_modified = 1;
+		}
 
 		if (mode == WORKING_DIRECTORY)
 			continue;
@@ -223,6 +244,9 @@ int cmd_mv(int argc, const char **argv, const char *prefix)
 		if (!show_only)
 			rename_cache_entry_at(pos, dst);
 	}
+
+	if (gitmodules_modified)
+		stage_updated_gitmodules();
 
 	if (active_cache_changed) {
 		if (write_cache(newfd, active_cache, active_nr) ||
