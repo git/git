@@ -1015,6 +1015,8 @@ struct pack_window {
 	unsigned int inuse_cnt;
 };
 
+struct packv4_dict;
+
 extern struct packed_git {
 	struct packed_git *next;
 	struct pack_window *windows;
@@ -1027,6 +1029,7 @@ extern struct packed_git {
 	unsigned char *bad_object_sha1;
 	int version;
 	int index_version;
+	struct packv4_dict *ident_dict;
 	time_t mtime;
 	int pack_fd;
 	unsigned pack_local:1,

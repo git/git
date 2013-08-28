@@ -105,3 +105,27 @@ static struct packv4_dict *load_dict(struct packed_git *p, off_t *offset)
 	*offset = curpos;
 	return dict;
 }
+
+static void load_ident_dict(struct packed_git *p)
+{
+	off_t offset = 12 + p->num_objects * 20;
+	struct packv4_dict *names = load_dict(p, &offset);
+	if (!names)
+		die("bad pack name dictionary in %s", p->pack_name);
+	p->ident_dict = names;
+}
+
+const unsigned char *get_identref(struct packed_git *p, const unsigned char **srcp)
+{
+	unsigned int index;
+
+	if (!p->ident_dict)
+		load_ident_dict(p);
+
+	index = decode_varint(srcp);
+	if (index >= p->ident_dict->nb_entries) {
+		error("%s: index overflow", __func__);
+		return NULL;
+	}
+	return p->ident_dict->data + p->ident_dict->offsets[index];
+}
