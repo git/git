@@ -1066,7 +1066,7 @@ def do_export(parser):
             author, msg = parsed_tags.get(tag, (None, None))
             if mode == 'git':
                 if not msg:
-                    msg = 'Added tag %s for changeset %s' % (tag, node[:12]);
+                    msg = 'Added tag %s for changeset %s' % (tag, node[:12])
                 tagnode, branch = write_tag(parser.repo, tag, node, msg, author)
                 p_revs[tagnode] = 'refs/heads/branches/' + gitref(branch)
             else:

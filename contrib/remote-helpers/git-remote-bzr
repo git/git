@@ -488,7 +488,7 @@ class CustomTree():
             add_entry(fid, dirname, 'directory')
             return fid
 
-        def add_entry(fid, path, kind, mode = None):
+        def add_entry(fid, path, kind, mode=None):
             dirname, basename = os.path.split(path)
             parent_fid = get_parent(dirname, basename)
 
@@ -509,7 +509,7 @@ class CustomTree():
             self.files[path] = [change[0], None]
             changes.append(change)
 
-        def update_entry(fid, path, kind, mode = None):
+        def update_entry(fid, path, kind, mode=None):
             dirname, basename = os.path.split(path)
             parent_fid = get_parent(dirname, basename)
 
