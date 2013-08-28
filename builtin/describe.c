@@ -406,12 +406,12 @@ int cmd_describe(int argc, const char **argv, const char *prefix)
 {
 	int contains = 0;
 	struct option options[] = {
-		OPT_BOOLEAN(0, "contains",   &contains, N_("find the tag that comes after the commit")),
-		OPT_BOOLEAN(0, "debug",      &debug, N_("debug search strategy on stderr")),
-		OPT_BOOLEAN(0, "all",        &all, N_("use any ref")),
-		OPT_BOOLEAN(0, "tags",       &tags, N_("use any tag, even unannotated")),
-		OPT_BOOLEAN(0, "long",       &longformat, N_("always use long format")),
-		OPT_BOOLEAN(0, "first-parent", &first_parent, N_("only follow first parent")),
+		OPT_BOOL(0, "contains",   &contains, N_("find the tag that comes after the commit")),
+		OPT_BOOL(0, "debug",      &debug, N_("debug search strategy on stderr")),
+		OPT_BOOL(0, "all",        &all, N_("use any ref")),
+		OPT_BOOL(0, "tags",       &tags, N_("use any tag, even unannotated")),
+		OPT_BOOL(0, "long",       &longformat, N_("always use long format")),
+		OPT_BOOL(0, "first-parent", &first_parent, N_("only follow first parent")),
 		OPT__ABBREV(&abbrev),
 		OPT_SET_INT(0, "exact-match", &max_candidates,
 			    N_("only output exact matches"), 0),
@@ -419,11 +419,11 @@ int cmd_describe(int argc, const char **argv, const char *prefix)
 			    N_("consider <n> most recent tags (default: 10)")),
 		OPT_STRING(0, "match",       &pattern, N_("pattern"),
 			   N_("only consider tags matching <pattern>")),
-		OPT_BOOLEAN(0, "always",     &always,
-			   N_("show abbreviated commit object as fallback")),
+		OPT_BOOL(0, "always",        &always,
+			N_("show abbreviated commit object as fallback")),
 		{OPTION_STRING, 0, "dirty",  &dirty, N_("mark"),
-			   N_("append <mark> on dirty working tree (default: \"-dirty\")"),
-		 PARSE_OPT_OPTARG, NULL, (intptr_t) "-dirty"},
+			N_("append <mark> on dirty working tree (default: \"-dirty\")"),
+			PARSE_OPT_OPTARG, NULL, (intptr_t) "-dirty"},
 		OPT_END(),
 	};
 

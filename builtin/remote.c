@@ -160,7 +160,7 @@ static int add(int argc, const char **argv)
 	int i;
 
 	struct option options[] = {
-		OPT_BOOLEAN('f', "fetch", &fetch, N_("fetch the remote branches")),
+		OPT_BOOL('f', "fetch", &fetch, N_("fetch the remote branches")),
 		OPT_SET_INT(0, "tags", &fetch_tags,
 			    N_("import all tags and associated objects when fetching"),
 			    TAGS_SET),
@@ -1088,7 +1088,7 @@ static int show(int argc, const char **argv)
 {
 	int no_query = 0, result = 0, query_flag = 0;
 	struct option options[] = {
-		OPT_BOOLEAN('n', NULL, &no_query, N_("do not query remotes")),
+		OPT_BOOL('n', NULL, &no_query, N_("do not query remotes")),
 		OPT_END()
 	};
 	struct ref_states states;
@@ -1195,10 +1195,10 @@ static int set_head(int argc, const char **argv)
 	char *head_name = NULL;
 
 	struct option options[] = {
-		OPT_BOOLEAN('a', "auto", &opt_a,
-			    N_("set refs/remotes/<name>/HEAD according to remote")),
-		OPT_BOOLEAN('d', "delete", &opt_d,
-			    N_("delete refs/remotes/<name>/HEAD")),
+		OPT_BOOL('a', "auto", &opt_a,
+			 N_("set refs/remotes/<name>/HEAD according to remote")),
+		OPT_BOOL('d', "delete", &opt_d,
+			 N_("delete refs/remotes/<name>/HEAD")),
 		OPT_END()
 	};
 	argc = parse_options(argc, argv, NULL, options, builtin_remote_sethead_usage,
@@ -1317,8 +1317,8 @@ static int update(int argc, const char **argv)
 {
 	int i, prune = 0;
 	struct option options[] = {
-		OPT_BOOLEAN('p', "prune", &prune,
-			    N_("prune remotes after fetching")),
+		OPT_BOOL('p', "prune", &prune,
+			 N_("prune remotes after fetching")),
 		OPT_END()
 	};
 	const char **fetch_argv;
@@ -1404,7 +1404,7 @@ static int set_branches(int argc, const char **argv)
 {
 	int add_mode = 0;
 	struct option options[] = {
-		OPT_BOOLEAN('\0', "add", &add_mode, N_("add branch")),
+		OPT_BOOL('\0', "add", &add_mode, N_("add branch")),
 		OPT_END()
 	};
 
@@ -1432,11 +1432,11 @@ static int set_url(int argc, const char **argv)
 	int urlset_nr;
 	struct strbuf name_buf = STRBUF_INIT;
 	struct option options[] = {
-		OPT_BOOLEAN('\0', "push", &push_mode,
-			    N_("manipulate push URLs")),
-		OPT_BOOLEAN('\0', "add", &add_mode,
-			    N_("add URL")),
-		OPT_BOOLEAN('\0', "delete", &delete_mode,
+		OPT_BOOL('\0', "push", &push_mode,
+			 N_("manipulate push URLs")),
+		OPT_BOOL('\0', "add", &add_mode,
+			 N_("add URL")),
+		OPT_BOOL('\0', "delete", &delete_mode,
 			    N_("delete URLs")),
 		OPT_END()
 	};

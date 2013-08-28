@@ -50,9 +50,9 @@ static int respect_includes = -1;
 
 static struct option builtin_config_options[] = {
 	OPT_GROUP(N_("Config file location")),
-	OPT_BOOLEAN(0, "global", &use_global_config, N_("use global config file")),
-	OPT_BOOLEAN(0, "system", &use_system_config, N_("use system config file")),
-	OPT_BOOLEAN(0, "local", &use_local_config, N_("use repository config file")),
+	OPT_BOOL(0, "global", &use_global_config, N_("use global config file")),
+	OPT_BOOL(0, "system", &use_system_config, N_("use system config file")),
+	OPT_BOOL(0, "local", &use_local_config, N_("use repository config file")),
 	OPT_STRING('f', "file", &given_config_file, N_("file"), N_("use given config file")),
 	OPT_STRING(0, "blob", &given_config_blob, N_("blob-id"), N_("read config from given blob object")),
 	OPT_GROUP(N_("Action")),
@@ -75,7 +75,7 @@ static struct option builtin_config_options[] = {
 	OPT_BIT(0, "bool-or-int", &types, N_("value is --bool or --int"), TYPE_BOOL_OR_INT),
 	OPT_BIT(0, "path", &types, N_("value is a path (file or directory name)"), TYPE_PATH),
 	OPT_GROUP(N_("Other")),
-	OPT_BOOLEAN('z', "null", &end_null, N_("terminate values with NUL byte")),
+	OPT_BOOL('z', "null", &end_null, N_("terminate values with NUL byte")),
 	OPT_BOOL(0, "includes", &respect_includes, N_("respect include directives on lookup")),
 	OPT_END(),
 };

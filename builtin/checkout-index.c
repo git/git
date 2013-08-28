@@ -183,12 +183,12 @@ int cmd_checkout_index(int argc, const char **argv, const char *prefix)
 	int prefix_length;
 	int force = 0, quiet = 0, not_new = 0;
 	struct option builtin_checkout_index_options[] = {
-		OPT_BOOLEAN('a', "all", &all,
+		OPT_BOOL('a', "all", &all,
 			N_("check out all files in the index")),
 		OPT__FORCE(&force, N_("force overwrite of existing files")),
 		OPT__QUIET(&quiet,
 			N_("no warning for existing files and files not in index")),
-		OPT_BOOLEAN('n', "no-create", &not_new,
+		OPT_BOOL('n', "no-create", &not_new,
 			N_("don't checkout new files")),
 		{ OPTION_CALLBACK, 'u', "index", &newfd, NULL,
 			N_("update stat information in the index file"),
@@ -196,9 +196,9 @@ int cmd_checkout_index(int argc, const char **argv, const char *prefix)
 		{ OPTION_CALLBACK, 'z', NULL, NULL, NULL,
 			N_("paths are separated with NUL character"),
 			PARSE_OPT_NOARG, option_parse_z },
-		OPT_BOOLEAN(0, "stdin", &read_from_stdin,
+		OPT_BOOL(0, "stdin", &read_from_stdin,
 			N_("read list of paths from the standard input")),
-		OPT_BOOLEAN(0, "temp", &to_tempfile,
+		OPT_BOOL(0, "temp", &to_tempfile,
 			N_("write the content to temporary files")),
 		OPT_CALLBACK(0, "prefix", NULL, N_("string"),
 			N_("when creating files, prepend <string>"),
