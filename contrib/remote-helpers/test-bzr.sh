@@ -358,4 +358,34 @@ test_expect_success 'strip' '
 	test_cmp expected actual
 '
 
+test_expect_success 'export utf-8 authors' '
+	test_when_finished "rm -rf bzrrepo gitrepo && LC_ALL=C && unset GIT_COMMITTER_NAME" &&
+
+	LC_ALL=en_US.UTF-8
+	export LC_ALL
+
+	GIT_COMMITTER_NAME="Grégoire"
+	export GIT_COMMITTER_NAME
+
+	bzr init bzrrepo &&
+
+	(
+	git init gitrepo &&
+	cd gitrepo &&
+	echo greg >> content &&
+	git add content &&
+	git commit -m one &&
+	git remote add bzr "bzr::../bzrrepo" &&
+	git push bzr
+	) &&
+
+	(
+	cd bzrrepo &&
+	bzr log | grep "^committer: " > ../actual
+	) &&
+
+	echo "committer: Grégoire <committer@example.com>" > expected &&
+	test_cmp expected actual
+'
+
 test_done

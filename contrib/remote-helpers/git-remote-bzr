@@ -168,6 +168,7 @@ class Parser:
         if not m:
             return None
         _, name, email, date, tz = m.groups()
+        name = name.decode('utf-8')
         committer = '%s <%s>' % (name, email)
         tz = int(tz)
         tz = ((tz / 100) * 3600) + ((tz % 100) * 60)
