@@ -53,7 +53,7 @@ die () {
 die_with_status () {
 	status=$1
 	shift
-	echo >&2 "$*"
+	printf >&2 '%s\n' "$*"
 	exit "$status"
 }
 
