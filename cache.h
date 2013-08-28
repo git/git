@@ -1025,6 +1025,7 @@ extern struct packed_git {
 	uint32_t num_objects;
 	uint32_t num_bad_objects;
 	unsigned char *bad_object_sha1;
+	int version;
 	int index_version;
 	time_t mtime;
 	int pack_fd;

@@ -10,6 +10,7 @@
 #include "string-list.h"
 #include "delta.h"
 #include "pack.h"
+#include "varint.h"
 #include "blob.h"
 #include "commit.h"
 #include "run-command.h"
@@ -845,10 +846,11 @@ static int open_packed_git_1(struct packed_git *p)
 		return error("file %s is far too short to be a packfile", p->pack_name);
 	if (hdr.hdr_signature != htonl(PACK_SIGNATURE))
 		return error("file %s is not a GIT packfile", p->pack_name);
-	if (!pack_version_ok(hdr.hdr_version))
+	if (!pack_version_ok(hdr.hdr_version) && hdr.hdr_version != htonl(4))
 		return error("packfile %s is version %"PRIu32" and not"
 			" supported (try upgrading GIT to a newer version)",
 			p->pack_name, ntohl(hdr.hdr_version));
+	p->version = ntohl(hdr.hdr_version);
 
 	/* Verify the pack matches its index. */
 	if (p->num_objects != ntohl(hdr.hdr_entries))
@@ -1725,7 +1727,15 @@ int unpack_object_header(struct packed_git *p,
 	 * insane, so we know won't exceed what we have been given.
 	 */
 	base = use_pack(p, w_curs, *curpos, &left);
-	used = unpack_object_header_buffer(base, left, &type, sizep);
+	if (p->version < 4) {
+		used = unpack_object_header_buffer(base, left, &type, sizep);
+	} else {
+		const unsigned char *cp = base;
+		uintmax_t val = decode_varint(&cp);
+		used = cp - base;
+		type = val & 0xf;
+		*sizep = val >> 4;
+	}
 	if (!used) {
 		type = OBJ_BAD;
 	} else
