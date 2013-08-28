@@ -41,13 +41,21 @@ test -f "$GIT_DIR/MERGE_HEAD" && die_merge
 strategy_args= diffstat= no_commit= squash= no_ff= ff_only=
 log_arg= verbosity= progress= recurse_submodules= verify_signatures=
 merge_args= edit=
+
 curr_branch=$(git symbolic-ref -q HEAD)
 curr_branch_short="${curr_branch#refs/heads/}"
+
+# See if we are configured to rebase by default.
+# The value $rebase is, throughout the main part of the code:
+#    (empty) - the user did not have any preference
+#    true    - the user told us to integrate by rebasing
+#    false   - the user told us to integrate by merging
 rebase=$(git config --bool branch.$curr_branch_short.rebase)
 if test -z "$rebase"
 then
 	rebase=$(git config --bool pull.rebase)
 fi
+
 dry_run=
 while :
 do
@@ -113,7 +121,8 @@ do
 	-r|--r|--re|--reb|--reba|--rebas|--rebase)
 		rebase=true
 		;;
-	--no-r|--no-re|--no-reb|--no-reba|--no-rebas|--no-rebase)
+	--no-r|--no-re|--no-reb|--no-reba|--no-rebas|--no-rebase|\
+	-m|--m|--me|--mer|--merg|--merge)
 		rebase=false
 		;;
 	--recurse-submodules)
@@ -219,6 +228,7 @@ test true = "$rebase" && {
 		fi
 	done
 }
+
 orig_head=$(git rev-parse -q --verify HEAD)
 git fetch $verbosity $progress $dry_run $recurse_submodules --update-head-ok "$@" || exit 1
 test -z "$dry_run" || exit 0
@@ -262,6 +272,34 @@ case "$merge_head" in
 	if test true = "$rebase"
 	then
 		die "$(gettext "Cannot rebase onto multiple branches")"
+	fi
+	;;
+*)
+	# integrating with a single other history; be careful not to
+	# trigger this check when we will say "fast-forward" or "already
+	# up-to-date".
+	merge_head=${merge_head% }
+	if test -z "$rebase$no_ff$ff_only${squash#--no-squash}" &&
+		test -n "$orig_head" &&
+		test $# = 0 &&
+		! git merge-base --is-ancestor "$orig_head" "$merge_head" &&
+		! git merge-base --is-ancestor "$merge_head" "$orig_head"
+	then
+echo >&2 "orig-head was $orig_head"
+echo >&2 "merge-head is $merge_head"
+git show >&2 --oneline -s "$orig_head" "$merge_head"
+
+		die "The pull does not fast-forward; please specify
+if you want to merge or rebase.
+
+Use either
+
+    git pull --rebase
+    git pull --merge
+
+You can also use 'git config pull.rebase true' (if you want --rebase) or
+'git config pull.rebase false' (if you want --merge) to set this once for
+this project and forget about it."
 	fi
 	;;
 esac
