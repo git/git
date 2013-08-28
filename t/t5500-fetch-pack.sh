@@ -505,4 +505,20 @@ test_expect_success 'test --all, --depth, and explicit tag' '
 	) >out-adt 2>error-adt
 '
 
+test_expect_success 'shallow fetch with tags does not break the repository' '
+	mkdir repo1 &&
+	(
+		cd repo1 &&
+		git init &&
+		test_commit 1 &&
+		test_commit 2 &&
+		test_commit 3 &&
+		mkdir repo2 &&
+		cd repo2 &&
+		git init &&
+		git fetch --depth=2 ../.git master:branch &&
+		git fsck
+	)
+'
+
 test_done
