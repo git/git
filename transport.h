@@ -2,6 +2,7 @@
 #define TRANSPORT_H
 
 #include "cache.h"
+#include "run-command.h"
 #include "remote.h"
 
 struct git_transport_options {
@@ -13,6 +14,7 @@ struct git_transport_options {
 	int depth;
 	const char *uploadpack;
 	const char *receivepack;
+	struct push_cas_option *cas;
 };
 
 struct transport {
@@ -125,6 +127,9 @@ struct transport *transport_get(struct remote *, const char *);
 
 /* Transfer the data as a thin pack if not null */
 #define TRANS_OPT_THIN "thin"
+
+/* Check the current value of the remote ref */
+#define TRANS_OPT_CAS "cas"
 
 /* Keep the pack that was transferred if not null */
 #define TRANS_OPT_KEEP "keep"

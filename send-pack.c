@@ -5,6 +5,7 @@
 #include "sideband.h"
 #include "run-command.h"
 #include "remote.h"
+#include "connect.h"
 #include "send-pack.h"
 #include "quote.h"
 #include "transport.h"
@@ -226,6 +227,7 @@ int send_pack(struct send_pack_args *args,
 		case REF_STATUS_REJECT_ALREADY_EXISTS:
 		case REF_STATUS_REJECT_FETCH_FIRST:
 		case REF_STATUS_REJECT_NEEDS_FORCE:
+		case REF_STATUS_REJECT_STALE:
 		case REF_STATUS_UPTODATE:
 			continue;
 		default:
