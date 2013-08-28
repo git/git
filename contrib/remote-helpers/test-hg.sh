@@ -577,7 +577,7 @@ test_expect_success 'remote big push fetch first' '
 	echo five > content &&
 	git commit -q -a -m five &&
 
-	check_push 1 --all <<-EOF
+	check_push 1 --all <<-EOF &&
 	master
 	good_bmark
 	bad_bmark:fetch-first
@@ -633,7 +633,7 @@ test_expect_failure 'remote big push dry-run' '
 	(
 	cd gitrepo &&
 
-	check_push 0 --dry-run --all <<-EOF
+	check_push 1 --dry-run --all <<-EOF &&
 	master
 	good_bmark
 	branches/good_branch
