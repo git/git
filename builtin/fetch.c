@@ -734,7 +734,7 @@ static void set_option(struct transport *transport, const char *name, const char
 			name, transport->url);
 }
 
-struct transport *prepare_transport(struct remote *remote)
+static struct transport *prepare_transport(struct remote *remote)
 {
 	struct transport *transport;
 	transport = transport_get(remote, NULL);
