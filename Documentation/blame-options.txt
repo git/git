@@ -11,12 +11,12 @@
 
 -L <start>,<end>::
 -L :<regex>::
-	Annotate only the given line range.  <start> and <end> are optional.
-	``-L <start>'' or ``-L <start>,'' spans from <start> to end of file.
-	``-L ,<end>'' spans from start of file to <end>.
+	Annotate only the given line range. May be specified multiple times.
+	Overlapping ranges are allowed.
 +
-<start> and <end> can take one of these forms:
-
+<start> and <end> are optional. ``-L <start>'' or ``-L <start>,'' spans from
+<start> to end of file. ``-L ,<end>'' spans from start of file to <end>.
++
 include::line-range-format.txt[]
 
 -l::

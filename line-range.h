@@ -9,6 +9,9 @@
  * line 'lno' inside the 'cb_data'.  The caller is expected to already
  * have a suitable map at hand to make this a constant-time lookup.
  *
+ * 'anchor' is the 1-based line at which relative range specifications
+ * should be anchored. Absolute ranges are unaffected by this value.
+ *
  * Returns 0 in case of success and -1 if there was an error.  The
  * actual range is stored in *begin and *end.  The counting starts
  * at 1!  In case of error, the caller should show usage message.
@@ -18,7 +21,7 @@ typedef const char *(*nth_line_fn_t)(void *data, long lno);
 
 extern int parse_range_arg(const char *arg,
 			   nth_line_fn_t nth_line_cb,
-			   void *cb_data, long lines,
+			   void *cb_data, long lines, long anchor,
 			   long *begin, long *end,
 			   const char *path);
 

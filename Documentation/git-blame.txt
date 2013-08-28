@@ -9,7 +9,7 @@ SYNOPSIS
 --------
 [verse]
 'git blame' [-c] [-b] [-l] [--root] [-t] [-f] [-n] [-s] [-e] [-p] [-w] [--incremental]
-	    [-L n,m | -L :fn] [-S <revs-file>] [-M] [-C] [-C] [-C] [--since=<date>]
+	    [-L <range>] [-S <revs-file>] [-M] [-C] [-C] [-C] [--since=<date>]
 	    [--abbrev=<n>] [<rev> | --contents <file> | --reverse <rev>] [--] <file>
 
 DESCRIPTION
@@ -18,7 +18,8 @@ DESCRIPTION
 Annotates each line in the given file with information from the revision which
 last modified the line. Optionally, start annotating from the given revision.
 
-The command can also limit the range of lines annotated.
+When specified one or more times, `-L` restricts annotation to the requested
+lines.
 
 The origin of lines is automatically followed across whole-file
 renames (currently there is no option to turn the rename-following
@@ -130,7 +131,10 @@ SPECIFYING RANGES
 
 Unlike 'git blame' and 'git annotate' in older versions of git, the extent
 of the annotation can be limited to both line ranges and revision
-ranges.  When you are interested in finding the origin for
+ranges. The `-L` option, which limits annotation to a range of lines, may be
+specified multiple times.
+
+When you are interested in finding the origin for
 lines 40-60 for file `foo`, you can use the `-L` option like so
 (they mean the same thing -- both ask for 21 lines starting at
 line 40):

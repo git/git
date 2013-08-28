@@ -48,7 +48,7 @@ canned_test "-M -L '/long f/,/^}/:b.c' move-support" move-support-f
 canned_test "-M -L ':f:b.c' parallel-change" parallel-change-f-to-main
 
 canned_test "-L 4,12:a.c -L :main:a.c simple" multiple
-canned_test "-L 4,18:a.c -L :main:a.c simple" multiple-overlapping
+canned_test "-L 4,18:a.c -L ^:main:a.c simple" multiple-overlapping
 canned_test "-L :main:a.c -L 4,18:a.c simple" multiple-overlapping
 canned_test "-L 4:a.c -L 8,12:a.c simple" multiple-superset
 canned_test "-L 8,12:a.c -L 4:a.c simple" multiple-superset
