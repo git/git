@@ -101,9 +101,9 @@ unsigned long git_deflate_bound(git_zstream *, unsigned long);
 
 #define CACHE_SIGNATURE 0x44495243	/* "DIRC" */
 struct cache_header {
-	unsigned int hdr_signature;
-	unsigned int hdr_version;
-	unsigned int hdr_entries;
+	uint32_t hdr_signature;
+	uint32_t hdr_version;
+	uint32_t hdr_entries;
 };
 
 #define INDEX_FORMAT_LB 2
@@ -115,8 +115,8 @@ struct cache_header {
  * check it for equality in the 32 bits we save.
  */
 struct cache_time {
-	unsigned int sec;
-	unsigned int nsec;
+	uint32_t sec;
+	uint32_t nsec;
 };
 
 struct stat_data {
