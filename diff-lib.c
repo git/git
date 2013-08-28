@@ -87,9 +87,11 @@ int run_diff_files(struct rev_info *revs, unsigned int option)
 {
 	int entries, i;
 	int diff_unmerged_stage = revs->max_count;
-	int silent_on_removed = option & DIFF_SILENT_ON_REMOVED;
 	unsigned ce_option = ((option & DIFF_RACY_IS_MODIFIED)
 			      ? CE_MATCH_RACY_IS_DIRTY : 0);
+
+	if (option & DIFF_SILENT_ON_REMOVED)
+		handle_deprecated_show_diff_q(&revs->diffopt);
 
 	diff_set_mnemonic_prefix(&revs->diffopt, "i/", "w/");
 
@@ -137,8 +139,6 @@ int run_diff_files(struct rev_info *revs, unsigned int option)
 					perror(ce->name);
 					continue;
 				}
-				if (silent_on_removed)
-					continue;
 				wt_mode = 0;
 			}
 			dpath->mode = wt_mode;
@@ -204,8 +204,6 @@ int run_diff_files(struct rev_info *revs, unsigned int option)
 				perror(ce->name);
 				continue;
 			}
-			if (silent_on_removed)
-				continue;
 			diff_addremove(&revs->diffopt, '-', ce->ce_mode,
 				       ce->sha1, !is_null_sha1(ce->sha1),
 				       ce->name, 0);
