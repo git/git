@@ -23,7 +23,11 @@ import subprocess
 import urllib
 import atexit
 import urlparse, hashlib
+import time as ptime
 
+#
+# If you want to see Mercurial revisions as Git commit notes:
+# git config core.notesRef refs/notes/hg
 #
 # If you are not in hg-git-compat mode and want to disable the tracking of
 # named branches:
@@ -126,6 +130,7 @@ class Marks:
         self.rev_marks = {}
         self.last_mark = 0
         self.version = 0
+        self.last_note = 0
 
     def load(self):
         if not os.path.exists(self.path):
@@ -137,6 +142,7 @@ class Marks:
         self.marks = tmp['marks']
         self.last_mark = tmp['last-mark']
         self.version = tmp.get('version', 1)
+        self.last_note = tmp.get('last-note', 0)
 
         for rev, mark in self.marks.iteritems():
             self.rev_marks[mark] = rev
@@ -150,7 +156,7 @@ class Marks:
         self.version = 2
 
     def dict(self):
-        return { 'tips': self.tips, 'marks': self.marks, 'last-mark' : self.last_mark, 'version' : self.version }
+        return { 'tips': self.tips, 'marks': self.marks, 'last-mark' : self.last_mark, 'version' : self.version, 'last-note' : self.last_note }
 
     def store(self):
         json.dump(self.dict(), open(self.path, 'w'))
@@ -511,6 +517,31 @@ def export_ref(repo, name, kind, head):
     print "reset %s/%s" % (prefix, ename)
     print "from :%u" % rev_to_mark(head)
     print
+
+    pending_revs = set(revs) - notes
+    if pending_revs:
+        note_mark = marks.next_mark()
+        ref = "refs/notes/hg"
+
+        print "commit %s" % ref
+        print "mark :%d" % (note_mark)
+        print "committer remote-hg <> %s" % (ptime.strftime('%s %z'))
+        desc = "Notes for %s\n" % (name)
+        print "data %d" % (len(desc))
+        print desc
+        if marks.last_note:
+            print "from :%u" % marks.last_note
+
+        for rev in pending_revs:
+            notes.add(rev)
+            c = repo[rev]
+            print "N inline :%u" % rev_to_mark(c)
+            msg = c.hex()
+            print "data %d" % (len(msg))
+            print msg
+        print
+
+        marks.last_note = note_mark
 
     marks.set_tip(ename, head.hex())
 
@@ -1113,6 +1144,7 @@ def main(args):
     global filenodes
     global fake_bmark, hg_version
     global dry_run
+    global notes, alias
 
     alias = args[1]
     url = args[2]
@@ -1152,6 +1184,7 @@ def main(args):
     except:
         hg_version = None
     dry_run = False
+    notes = set()
 
     repo = get_repo(url, alias)
     prefix = 'refs/hg/%s' % alias
