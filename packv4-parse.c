@@ -9,6 +9,7 @@
  */
 
 #include "cache.h"
+#include "packv4-parse.h"
 #include "varint.h"
 
 const unsigned char *get_sha1ref(struct packed_git *p,

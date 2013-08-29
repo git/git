@@ -19,6 +19,7 @@
 #include "tree-walk.h"
 #include "refs.h"
 #include "pack-revindex.h"
+#include "packv4-parse.h"
 #include "sha1-lookup.h"
 #include "bulk-checkin.h"
 #include "streaming.h"
@@ -2172,6 +2173,15 @@ void *unpack_entry(struct packed_git *p, off_t obj_offset,
 		break;
 	case OBJ_COMMIT:
 	case OBJ_TREE:
+		if (p->version >= 4 && !base_from_cache) {
+			if (type == OBJ_COMMIT) {
+				data = pv4_get_commit(p, &w_curs, curpos, size);
+			} else {
+				die("no pack v4 tree parsing yet");
+			}
+			break;
+		}
+		/* fall through */
 	case OBJ_BLOB:
 	case OBJ_TAG:
 		if (!base_from_cache)

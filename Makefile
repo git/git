@@ -702,6 +702,7 @@ LIB_H += notes.h
 LIB_H += object.h
 LIB_H += pack-revindex.h
 LIB_H += pack.h
+LIB_H += packv4-parse.h
 LIB_H += parse-options.h
 LIB_H += patch-ids.h
 LIB_H += pathspec.h
