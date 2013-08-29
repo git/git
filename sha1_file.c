@@ -1686,7 +1686,19 @@ static off_t get_delta_base(struct packed_git *p,
 	 * that is assured.  An OFS_DELTA longer than the hash size
 	 * is stupid, as then a REF_DELTA would be smaller to store.
 	 */
-	if (type == OBJ_OFS_DELTA) {
+	if (p->version >= 4) {
+		if (base_info[0] != 0) {
+			const unsigned char *cp = base_info;
+			unsigned int base_index = decode_varint(&cp);
+			if (!base_index || base_index - 1 >= p->num_objects)
+				return 0;  /* out of bounds */
+			*curpos += cp - base_info;
+			base_offset = nth_packed_object_offset(p, base_index - 1);
+		} else {
+			base_offset = find_pack_entry_one(base_info+1, p);
+			*curpos += 21;
+		}
+	} else if (type == OBJ_OFS_DELTA) {
 		const unsigned char *cp = base_info;
 		base_offset = decode_varint(&cp);
 		base_offset = delta_obj_offset - base_offset;
