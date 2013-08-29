@@ -246,11 +246,11 @@ static int do_sign(struct strbuf *buffer)
 }
 
 static const char tag_template[] =
-	N_("\nWrite a tag message\n"
+	N_("\nWrite a message for tag:\n  %s\n"
 	"Lines starting with '%c' will be ignored.\n");
 
 static const char tag_template_nocleanup[] =
-	N_("\nWrite a tag message\n"
+	N_("\nWrite a message for tag:\n  %s\n"
 	"Lines starting with '%c' will be kept; you may remove them"
 	" yourself if you want to.\n");
 
@@ -346,9 +346,9 @@ static void create_tag(const unsigned char *object, const char *tag,
 			struct strbuf buf = STRBUF_INIT;
 			strbuf_addch(&buf, '\n');
 			if (opt->cleanup_mode == CLEANUP_ALL)
-				strbuf_commented_addf(&buf, _(tag_template), comment_line_char);
+				strbuf_commented_addf(&buf, _(tag_template), tag, comment_line_char);
 			else
-				strbuf_commented_addf(&buf, _(tag_template_nocleanup), comment_line_char);
+				strbuf_commented_addf(&buf, _(tag_template_nocleanup), tag, comment_line_char);
 			write_or_die(fd, buf.buf, buf.len);
 			strbuf_release(&buf);
 		}
