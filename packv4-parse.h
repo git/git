@@ -3,5 +3,7 @@
 
 void *pv4_get_commit(struct packed_git *p, struct pack_window **w_curs,
 		     off_t offset, unsigned long size);
+void *pv4_get_tree(struct packed_git *p, struct pack_window **w_curs,
+		   off_t offset, unsigned long size);
 
 #endif

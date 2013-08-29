@@ -392,3 +392,28 @@ static int decode_entries(struct packed_git *p, struct pack_window **w_curs,
 
 	return 0;
 }
+
+void *pv4_get_tree(struct packed_git *p, struct pack_window **w_curs,
+		   off_t offset, unsigned long size)
+{
+	unsigned long avail;
+	unsigned int nb_entries;
+	unsigned char *dst, *dcp;
+	const unsigned char *src, *scp;
+	int ret;
+
+	src = use_pack(p, w_curs, offset, &avail);
+	scp = src;
+	nb_entries = decode_varint(&scp);
+	if (scp == src)
+		return NULL;
+
+	dst = xmallocz(size);
+	dcp = dst;
+	ret = decode_entries(p, w_curs, offset, 0, nb_entries, &dcp, &size, 0);
+	if (ret < 0 || size != 0) {
+		free(dst);
+		return NULL;
+	}
+	return dst;
+}

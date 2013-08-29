@@ -2177,7 +2177,7 @@ void *unpack_entry(struct packed_git *p, off_t obj_offset,
 			if (type == OBJ_COMMIT) {
 				data = pv4_get_commit(p, &w_curs, curpos, size);
 			} else {
-				die("no pack v4 tree parsing yet");
+				data = pv4_get_tree(p, &w_curs, curpos, size);
 			}
 			break;
 		}
