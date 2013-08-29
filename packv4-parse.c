@@ -151,19 +151,15 @@ static void load_path_dict(struct packed_git *p)
 	p->path_dict = paths;
 }
 
-const unsigned char *get_pathref(struct packed_git *p, const unsigned char **srcp)
+const unsigned char *get_pathref(struct packed_git *p, unsigned int index)
 {
-	unsigned int index;
-
 	if (!p->path_dict)
 		load_path_dict(p);
 
-	index = decode_varint(srcp);
-	if (index < 1 || index - 1 >= p->path_dict->nb_entries) {
+	if (index >= p->path_dict->nb_entries) {
 		error("%s: index overflow", __func__);
 		return NULL;
 	}
-	index -= 1;
 	return p->path_dict->data + p->path_dict->offsets[index];
 }
 
@@ -250,4 +246,149 @@ void *pv4_get_commit(struct packed_git *p, struct pack_window **w_curs,
 	}
 
 	return dst;
+}
+
+static int decode_entries(struct packed_git *p, struct pack_window **w_curs,
+			  off_t offset, unsigned int start, unsigned int count,
+			  unsigned char **dstp, unsigned long *sizep,
+			  int parse_hdr)
+{
+	unsigned long avail;
+	unsigned int nb_entries;
+	const unsigned char *src, *scp;
+	off_t copy_objoffset = 0;
+
+	src = use_pack(p, w_curs, offset, &avail);
+	scp = src;
+
+	if (parse_hdr) {
+		/* we need to skip over the object header */
+		while (*scp & 128)
+			if (++scp - src >= avail - 20)
+				return -1;
+		/* let's still make sure this is actually a tree */
+		if ((*scp++ & 0xf) != OBJ_TREE)
+			return -1;
+	}
+
+	nb_entries = decode_varint(&scp);
+	if (scp == src || start > nb_entries || count > nb_entries - start)
+		return -1;
+	offset += scp - src;
+	avail -= scp - src;
+	src = scp;
+
+	while (count) {
+		unsigned int what;
+
+		if (avail < 20) {
+			src = use_pack(p, w_curs, offset, &avail);
+			if (avail < 20)
+				return -1;
+		}
+		scp = src;
+
+		what = decode_varint(&scp);
+		if (scp == src)
+			return -1;
+
+		if (!(what & 1) && start != 0) {
+			/*
+			 * This is a single entry and we have to skip it.
+			 * The path index was parsed and is in 'what'.
+			 * Skip over the SHA1 index.
+			 */
+			if (!*scp)
+				scp += 1 + 20;
+			else
+				while (*scp++ & 128);
+			start--;
+		} else if (!(what & 1) && start == 0) {
+			/*
+			 * This is an actual tree entry to recreate.
+			 */
+			const unsigned char *path, *sha1;
+			unsigned mode;
+			int len;
+
+			path = get_pathref(p, what >> 1);
+			sha1 = get_sha1ref(p, &scp);
+			if (!path || !sha1)
+				return -1;
+			mode = (path[0] << 8) | path[1];
+			len = snprintf((char *)*dstp, *sizep, "%o %s%c",
+					   mode, path+2, '\0');
+			if (len + 20 > *sizep)
+				return -1;
+			hashcpy(*dstp + len, sha1);
+			*dstp += len + 20;
+			*sizep -= len + 20;
+			count--;
+		} else if (what & 1) {
+			/*
+			 * Copy from another tree object.
+			 */
+			unsigned int copy_start, copy_count;
+
+			copy_start = what >> 1;
+			copy_count = decode_varint(&scp);
+			if (!copy_count)
+				return -1;
+
+			/*
+			 * The LSB of copy_count is a flag indicating if
+			 * a third value is provided to specify the source
+			 * object.  This may be omitted when it doesn't
+			 * change, but has to be specified at least for the
+			 * first copy sequence.
+			 */
+			if (copy_count & 1) {
+				unsigned index = decode_varint(&scp);
+				if (!index) {
+					/*
+					 * SHA1 follows. We assume the
+					 * object is in the same pack.
+					 */
+					copy_objoffset =
+						find_pack_entry_one(scp, p);
+					scp += 20;
+				} else {
+					/*
+					 * From the SHA1 index we can get
+					 * the object offset directly.
+					 */
+					copy_objoffset =
+						nth_packed_object_offset(p, index - 1);
+				}
+			}
+			if (!copy_objoffset)
+				return -1;
+			copy_count >>= 1;
+
+			if (start >= copy_count) {
+				start -= copy_count;
+			} else {
+				int ret;
+				copy_count -= start;
+				copy_start += start;
+				start = 0;
+				if (copy_count > count)
+					copy_count = count;
+				count -= copy_count;
+				ret = decode_entries(p, w_curs,
+					copy_objoffset, copy_start, copy_count,
+					dstp, sizep, 1);
+				if (ret)
+					return ret;
+				/* force pack window readjustment */
+				avail = scp - src;
+			}
+		}
+
+		offset += scp - src;
+		avail -= scp - src;
+		src = scp;
+	}
+
+	return 0;
 }
