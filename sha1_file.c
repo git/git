@@ -1687,20 +1687,12 @@ static off_t get_delta_base(struct packed_git *p,
 	 * is stupid, as then a REF_DELTA would be smaller to store.
 	 */
 	if (type == OBJ_OFS_DELTA) {
-		unsigned used = 0;
-		unsigned char c = base_info[used++];
-		base_offset = c & 127;
-		while (c & 128) {
-			base_offset += 1;
-			if (!base_offset || MSB(base_offset, 7))
-				return 0;  /* overflow */
-			c = base_info[used++];
-			base_offset = (base_offset << 7) + (c & 127);
-		}
+		const unsigned char *cp = base_info;
+		base_offset = decode_varint(&cp);
 		base_offset = delta_obj_offset - base_offset;
 		if (base_offset <= 0 || base_offset >= delta_obj_offset)
 			return 0;  /* out of bound */
-		*curpos += used;
+		*curpos += cp - base_info;
 	} else if (type == OBJ_REF_DELTA) {
 		/* The base entry _must_ be in the same pack */
 		base_offset = find_pack_entry_one(base_info, p);
