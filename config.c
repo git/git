@@ -27,9 +27,9 @@ struct config_source {
 	struct strbuf value;
 	struct strbuf var;
 
-	int (*fgetc)(struct config_source *c);
-	int (*ungetc)(int c, struct config_source *conf);
-	long (*ftell)(struct config_source *c);
+	int (*do_fgetc)(struct config_source *c);
+	int (*do_ungetc)(int c, struct config_source *conf);
+	long (*do_ftell)(struct config_source *c);
 };
 
 static struct config_source *cf;
@@ -217,13 +217,13 @@ int git_config_from_parameters(config_fn_t fn, void *data)
 
 static int get_next_char(void)
 {
-	int c = cf->fgetc(cf);
+	int c = cf->do_fgetc(cf);
 
 	if (c == '\r') {
 		/* DOS like systems */
-		c = cf->fgetc(cf);
+		c = cf->do_fgetc(cf);
 		if (c != '\n') {
-			cf->ungetc(c, cf);
+			cf->do_ungetc(c, cf);
 			c = '\r';
 		}
 	}
@@ -992,9 +992,9 @@ int git_config_from_file(config_fn_t fn, const char *filename, void *data)
 		top.u.file = f;
 		top.name = filename;
 		top.die_on_error = 1;
-		top.fgetc = config_file_fgetc;
-		top.ungetc = config_file_ungetc;
-		top.ftell = config_file_ftell;
+		top.do_fgetc = config_file_fgetc;
+		top.do_ungetc = config_file_ungetc;
+		top.do_ftell = config_file_ftell;
 
 		ret = do_config_from(&top, fn, data);
 
@@ -1013,9 +1013,9 @@ int git_config_from_buf(config_fn_t fn, const char *name, const char *buf,
 	top.u.buf.pos = 0;
 	top.name = name;
 	top.die_on_error = 0;
-	top.fgetc = config_buf_fgetc;
-	top.ungetc = config_buf_ungetc;
-	top.ftell = config_buf_ftell;
+	top.do_fgetc = config_buf_fgetc;
+	top.do_ungetc = config_buf_ungetc;
+	top.do_ftell = config_buf_ftell;
 
 	return do_config_from(&top, fn, data);
 }
@@ -1196,7 +1196,7 @@ static int store_aux(const char *key, const char *value, void *cb)
 				return 1;
 			}
 
-			store.offset[store.seen] = cf->ftell(cf);
+			store.offset[store.seen] = cf->do_ftell(cf);
 			store.seen++;
 		}
 		break;
@@ -1223,19 +1223,19 @@ static int store_aux(const char *key, const char *value, void *cb)
 		 * Do not increment matches: this is no match, but we
 		 * just made sure we are in the desired section.
 		 */
-		store.offset[store.seen] = cf->ftell(cf);
+		store.offset[store.seen] = cf->do_ftell(cf);
 		/* fallthru */
 	case SECTION_END_SEEN:
 	case START:
 		if (matches(key, value)) {
-			store.offset[store.seen] = cf->ftell(cf);
+			store.offset[store.seen] = cf->do_ftell(cf);
 			store.state = KEY_SEEN;
 			store.seen++;
 		} else {
 			if (strrchr(key, '.') - key == store.baselen &&
 			      !strncmp(key, store.key, store.baselen)) {
 					store.state = SECTION_SEEN;
-					store.offset[store.seen] = cf->ftell(cf);
+					store.offset[store.seen] = cf->do_ftell(cf);
 			}
 		}
 	}
