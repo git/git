@@ -534,42 +534,9 @@ all, but just show the actual commit message.
 
 In fact, together with the 'git rev-list' program (which generates a
 list of revisions), 'git diff-tree' ends up being a veritable fount of
-changes. A trivial (but very useful) script called 'git whatchanged' is
-included with Git which does exactly this, and shows a log of recent
-activities.
-
-To see the whole history of our pitiful little git-tutorial project, you
-can do
-
-----------------
-$ git log
-----------------
-
-which shows just the log messages, or if we want to see the log together
-with the associated patches use the more complex (and much more
-powerful)
-
-----------------
-$ git whatchanged -p
-----------------
-
-and you will see exactly what has changed in the repository over its
-short history.
-
-[NOTE]
-When using the above two commands, the initial commit will be shown.
-If this is a problem because it is huge, you can hide it by setting
-the log.showroot configuration variable to false. Having this, you
-can still show it for each command just adding the `--root` option,
-which is a flag for 'git diff-tree' accepted by both commands.
-
-With that, you should now be having some inkling of what Git does, and
-can explore on your own.
-
-[NOTE]
-Most likely, you are not directly using the core
-Git Plumbing commands, but using Porcelain such as 'git add', `git-rm'
-and `git-commit'.
+changes.  You can emulate `git log`, `git log -p`, etc. with a trivial
+script that pipes the output of `git rev-list` to `git diff-tree --stdin`,
+which was exactly how early versions of `git log` were implemented.
 
 
 Tagging a version
