@@ -24,8 +24,22 @@ distinguish between them.
 
 OPTIONS
 -------
+
+Operation Modes
+~~~~~~~~~~~~~~~
+
+Each of these options must appear first on the command line.
+
 --parseopt::
 	Use 'git rev-parse' in option parsing mode (see PARSEOPT section below).
+
+--sq-quote::
+	Use 'git rev-parse' in shell quoting mode (see SQ-QUOTE
+	section below). In contrast to the `--sq` option below, this
+	mode does only quoting. Nothing else is done to command input.
+
+Options for --parseopt
+~~~~~~~~~~~~~~~~~~~~~~
 
 --keep-dashdash::
 	Only meaningful in `--parseopt` mode. Tells the option parser to echo
@@ -36,10 +50,8 @@ OPTIONS
 	the first non-option argument.  This can be used to parse sub-commands
 	that take options themselves.
 
---sq-quote::
-	Use 'git rev-parse' in shell quoting mode (see SQ-QUOTE
-	section below). In contrast to the `--sq` option below, this
-	mode does only quoting. Nothing else is done to command input.
+Options for Filtering
+~~~~~~~~~~~~~~~~~~~~~
 
 --revs-only::
 	Do not output flags and parameters not meant for
@@ -54,6 +66,9 @@ OPTIONS
 
 --no-flags::
 	Do not output flag parameters.
+
+Options for Output
+~~~~~~~~~~~~~~~~~~
 
 --default <arg>::
 	If there is no parameter given by the user, use `<arg>`
@@ -110,6 +125,17 @@ can be used.
 	strip '{caret}' prefix from the object names that already have
 	one.
 
+--abbrev-ref[=(strict|loose)]::
+	A non-ambiguous short name of the objects name.
+	The option core.warnAmbiguousRefs is used to select the strict
+	abbreviation mode.
+
+--short::
+--short=number::
+	Instead of outputting the full SHA-1 values of object names try to
+	abbreviate them to a shorter unique name. When no length is specified
+	7 is used. The minimum length is 4.
+
 --symbolic::
 	Usually the object names are output in SHA-1 form (with
 	possible '{caret}' prefix); this option makes them output in a
@@ -123,16 +149,8 @@ can be used.
 	unfortunately named tag "master"), and show them as full
 	refnames (e.g. "refs/heads/master").
 
---abbrev-ref[=(strict|loose)]::
-	A non-ambiguous short name of the objects name.
-	The option core.warnAmbiguousRefs is used to select the strict
-	abbreviation mode.
-
---disambiguate=<prefix>::
-	Show every object whose name begins with the given prefix.
-	The <prefix> must be at least 4 hexadecimal digits long to
-	avoid listing each and every object in the repository by
-	mistake.
+Options for Objects
+~~~~~~~~~~~~~~~~~~~
 
 --all::
 	Show all refs found in `refs/`.
@@ -155,18 +173,20 @@ shown.  If the pattern does not contain a globbing character (`?`,
 	character (`?`, `*`, or `[`), it is turned into a prefix
 	match by appending `/*`.
 
---show-toplevel::
-	Show the absolute path of the top-level directory.
+--disambiguate=<prefix>::
+	Show every object whose name begins with the given prefix.
+	The <prefix> must be at least 4 hexadecimal digits long to
+	avoid listing each and every object in the repository by
+	mistake.
 
---show-prefix::
-	When the command is invoked from a subdirectory, show the
-	path of the current directory relative to the top-level
-	directory.
+Options for Files
+~~~~~~~~~~~~~~~~~
 
---show-cdup::
-	When the command is invoked from a subdirectory, show the
-	path of the top-level directory relative to the current
-	directory (typically a sequence of "../", or an empty string).
+--local-env-vars::
+	List the GIT_* environment variables that are local to the
+	repository (e.g. GIT_DIR or GIT_WORK_TREE, but not GIT_EDITOR).
+	Only the names of the variables are listed, not their value,
+	even if they are set.
 
 --git-dir::
 	Show `$GIT_DIR` if defined. Otherwise show the path to
@@ -188,17 +208,27 @@ print a message to stderr and exit with nonzero status.
 --is-bare-repository::
 	When the repository is bare print "true", otherwise "false".
 
---local-env-vars::
-	List the GIT_* environment variables that are local to the
-	repository (e.g. GIT_DIR or GIT_WORK_TREE, but not GIT_EDITOR).
-	Only the names of the variables are listed, not their value,
-	even if they are set.
+--resolve-git-dir <path>::
+	Check if <path> is a valid repository or a gitfile that
+	points at a valid repository, and print the location of the
+	repository.  If <path> is a gitfile then the resolved path
+	to the real repository is printed.
 
---short::
---short=number::
-	Instead of outputting the full SHA-1 values of object names try to
-	abbreviate them to a shorter unique name. When no length is specified
-	7 is used. The minimum length is 4.
+--show-cdup::
+	When the command is invoked from a subdirectory, show the
+	path of the top-level directory relative to the current
+	directory (typically a sequence of "../", or an empty string).
+
+--show-prefix::
+	When the command is invoked from a subdirectory, show the
+	path of the current directory relative to the top-level
+	directory.
+
+--show-toplevel::
+	Show the absolute path of the top-level directory.
+
+Other Options
+~~~~~~~~~~~~~
 
 --since=datestring::
 --after=datestring::
@@ -212,12 +242,6 @@ print a message to stderr and exit with nonzero status.
 
 <args>...::
 	Flags and parameters to be parsed.
-
---resolve-git-dir <path>::
-	Check if <path> is a valid repository or a gitfile that
-	points at a valid repository, and print the location of the
-	repository.  If <path> is a gitfile then the resolved path
-	to the real repository is printed.
 
 
 include::revisions.txt[]
