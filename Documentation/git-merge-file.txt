@@ -11,7 +11,7 @@ SYNOPSIS
 [verse]
 'git merge-file' [-L <current-name> [-L <base-name> [-L <other-name>]]]
 	[--ours|--theirs|--union] [-p|--stdout] [-q|--quiet] [--marker-size=<n>]
-	<current-file> <base-file> <other-file>
+	[--[no-]diff3] <current-file> <base-file> <other-file>
 
 
 DESCRIPTION
@@ -65,6 +65,9 @@ OPTIONS
 
 -q::
 	Quiet; do not warn about conflicts.
+
+--diff3::
+	Show conflicts in "diff3" style.
 
 --ours::
 --theirs::
