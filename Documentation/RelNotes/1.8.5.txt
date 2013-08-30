@@ -1,0 +1,86 @@
+Git v1.8.5 Release Notes
+========================
+
+Backward compatibility notes (for Git 2.0)
+------------------------------------------
+
+When "git push [$there]" does not say what to push, we have used the
+traditional "matching" semantics so far (all your branches were sent
+to the remote as long as there already are branches of the same name
+over there).  In Git 2.0, the default will change to the "simple"
+semantics that pushes:
+
+ - only the current branch to the branch with the same name, and only
+   when the current branch is set to integrate with that remote
+   branch, if you are pushing to the same remote as you fetch from; or
+
+ - only the current branch to the branch with the same name, if you
+   are pushing to a remote that is not where you usually fetch from.
+
+Use the user preference configuration variable "push.default" to
+change this.  If you are an old-timer who is used to the "matching"
+semantics, you can set the variable to "matching" to keep the
+traditional behaviour.  If you want to live in the future early, you
+can set it to "simple" today without waiting for Git 2.0.
+
+When "git add -u" (and "git add -A") is run inside a subdirectory and
+does not specify which paths to add on the command line, it
+will operate on the entire tree in Git 2.0 for consistency
+with "git commit -a" and other commands.  There will be no
+mechanism to make plain "git add -u" behave like "git add -u .".
+Current users of "git add -u" (without a pathspec) should start
+training their fingers to explicitly say "git add -u ."
+before Git 2.0 comes.  A warning is issued when these commands are
+run without a pathspec and when you have local changes outside the
+current directory, because the behaviour in Git 2.0 will be different
+from today's version in such a situation.
+
+In Git 2.0, "git add <path>" will behave as "git add -A <path>", so
+that "git add dir/" will notice paths you removed from the directory
+and record the removal.  Versions before Git 2.0, including this
+release, will keep ignoring removals, but the users who rely on this
+behaviour are encouraged to start using "git add --ignore-removal <path>"
+now before 2.0 is released.
+
+
+Updates since v1.8.4
+--------------------
+
+Foreign interfaces, subsystems and ports.
+
+
+UI, Workflows & Features
+
+ * "git whatchanged" may still be used by old timers, but mention of
+   it in documents meant for new users will only waste readers' time
+   wonderig what the difference is between it and "git log".  Make it
+   less prominent in the general part of the documentation and explain
+   that it is merely a "git log" with different default behaviour in
+   its own document.
+
+
+Performance, Internal Implementation, etc.
+
+
+Also contains various documentation updates and code clean-ups.
+
+
+Fixes since v1.8.4
+------------------
+
+Unless otherwise noted, all the fixes since v1.8.4 in the maintenance
+track are contained in this release (see release notes to them for
+details).
+
+ * Some people still use rather old versions of bash, which cannot
+   grok some constructs like 'printf -v varname' the prompt and
+   completion code started to use recently.
+   (merge a44aa69 bc/completion-for-bash-3.0 later to maint).
+
+ * Code to read configuration from a blob object did not compile on
+   platforms with fgetc() etc. implemented as macros.
+   (merge 49d6cfa hv/config-from-blob later to maint-1.8.3).
+
+ * The recent "short-cut clone connectivity check" topic broke a
+   shallow repository when a fetch operation tries to auto-follow tags.
+   (merge 6da8bdc nd/fetch-pack-shallow-fix later to maint-1.8.3).
