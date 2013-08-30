@@ -114,6 +114,7 @@ static void load_ident_dict(struct packed_git *p)
 	if (!names)
 		die("bad pack name dictionary in %s", p->pack_name);
 	p->ident_dict = names;
+	p->ident_dict_end = offset;
 }
 
 const unsigned char *get_identref(struct packed_git *p, const unsigned char **srcp)
@@ -129,6 +130,41 @@ const unsigned char *get_identref(struct packed_git *p, const unsigned char **sr
 		return NULL;
 	}
 	return p->ident_dict->data + p->ident_dict->offsets[index];
+}
+
+static void load_path_dict(struct packed_git *p)
+{
+	off_t offset;
+	struct packv4_dict *paths;
+
+	/*
+	 * For now we need to load the name dictionary to know where
+	 * it ends and therefore where the path dictionary starts.
+	 */
+	if (!p->ident_dict)
+		load_ident_dict(p);
+
+	offset = p->ident_dict_end;
+	paths = load_dict(p, &offset);
+	if (!paths)
+		die("bad pack path dictionary in %s", p->pack_name);
+	p->path_dict = paths;
+}
+
+const unsigned char *get_pathref(struct packed_git *p, const unsigned char **srcp)
+{
+	unsigned int index;
+
+	if (!p->path_dict)
+		load_path_dict(p);
+
+	index = decode_varint(srcp);
+	if (index < 1 || index - 1 >= p->path_dict->nb_entries) {
+		error("%s: index overflow", __func__);
+		return NULL;
+	}
+	index -= 1;
+	return p->path_dict->data + p->path_dict->offsets[index];
 }
 
 void *pv4_get_commit(struct packed_git *p, struct pack_window **w_curs,

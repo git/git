@@ -1030,6 +1030,8 @@ extern struct packed_git {
 	int version;
 	int index_version;
 	struct packv4_dict *ident_dict;
+	off_t ident_dict_end;
+	struct packv4_dict *path_dict;
 	time_t mtime;
 	int pack_fd;
 	unsigned pack_local:1,
