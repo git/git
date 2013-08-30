@@ -1450,7 +1450,7 @@ ifdef NO_PTHREADS
 	BASIC_CFLAGS += -DNO_PTHREADS
 else
 	BASIC_CFLAGS += $(PTHREAD_CFLAGS)
-	EXTLIBS += -lpthread
+	EXTLIBS += $(PTHREAD_LIBS)
 	LIB_OBJS += thread-utils.o
 endif
 
