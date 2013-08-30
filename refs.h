@@ -137,7 +137,7 @@ extern struct ref_lock *lock_ref_sha1(const char *refname, const unsigned char *
 #define REF_NODEREF	0x01
 extern struct ref_lock *lock_any_ref_for_update(const char *refname,
 						const unsigned char *old_sha1,
-						int flags);
+						int flags, int *type_p);
 
 /** Close the file descriptor owned by a lock and return the status */
 extern int close_ref(struct ref_lock *lock);

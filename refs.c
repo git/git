@@ -2121,11 +2121,12 @@ struct ref_lock *lock_ref_sha1(const char *refname, const unsigned char *old_sha
 }
 
 struct ref_lock *lock_any_ref_for_update(const char *refname,
-					 const unsigned char *old_sha1, int flags)
+					 const unsigned char *old_sha1,
+					 int flags, int *type_p)
 {
 	if (check_refname_format(refname, REFNAME_ALLOW_ONELEVEL))
 		return NULL;
-	return lock_ref_sha1_basic(refname, old_sha1, flags, NULL);
+	return lock_ref_sha1_basic(refname, old_sha1, flags, type_p);
 }
 
 /*
@@ -3174,7 +3175,7 @@ int update_ref(const char *action, const char *refname,
 		int flags, enum action_on_err onerr)
 {
 	static struct ref_lock *lock;
-	lock = lock_any_ref_for_update(refname, oldval, flags);
+	lock = lock_any_ref_for_update(refname, oldval, flags, NULL);
 	if (!lock) {
 		const char *str = "Cannot lock the ref '%s'.";
 		switch (onerr) {
