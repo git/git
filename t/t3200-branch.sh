@@ -351,7 +351,7 @@ test_expect_success 'test overriding tracking setup via --no-track' '
 test_expect_success 'no tracking without .fetch entries' '
 	git config branch.autosetupmerge true &&
 	git branch my6 s &&
-	git config branch.automsetupmerge false &&
+	git config branch.autosetupmerge false &&
 	test -z "$(git config branch.my6.remote)" &&
 	test -z "$(git config branch.my6.merge)"
 '
