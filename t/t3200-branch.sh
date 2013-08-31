@@ -14,7 +14,8 @@ test_expect_success 'prepare a trivial repository' '
 	echo World >>A &&
 	git update-index --add A &&
 	git commit -m "Second commit." &&
-	HEAD=$(git rev-parse --verify HEAD)'
+	HEAD=$(git rev-parse --verify HEAD)
+'
 
 test_expect_success 'git branch --help should not have created a bogus branch' '
 	test_might_fail git branch --help </dev/null >/dev/null 2>/dev/null &&
