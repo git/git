@@ -123,14 +123,13 @@ static char *expand_namespace(const char *raw_namespace)
 
 static void setup_git_env(void)
 {
+	const char *gitfile;
+
 	git_dir = getenv(GIT_DIR_ENVIRONMENT);
-	git_dir = git_dir ? xstrdup(git_dir) : NULL;
-	if (!git_dir) {
-		git_dir = read_gitfile(DEFAULT_GIT_DIR_ENVIRONMENT);
-		git_dir = git_dir ? xstrdup(git_dir) : NULL;
-	}
 	if (!git_dir)
 		git_dir = DEFAULT_GIT_DIR_ENVIRONMENT;
+	gitfile = read_gitfile(git_dir);
+	git_dir = xstrdup(gitfile ? gitfile : git_dir);
 	git_object_dir = getenv(DB_ENVIRONMENT);
 	if (!git_object_dir) {
 		git_object_dir = xmalloc(strlen(git_dir) + 9);
