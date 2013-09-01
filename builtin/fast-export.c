@@ -485,9 +485,32 @@ static void handle_tag(const char *name, struct tag *tag)
 	       (int)message_size, (int)message_size, message ? message : "");
 }
 
+static struct commit *get_commit(struct rev_cmdline_entry *e, char *full_name)
+{
+	switch (e->item->type) {
+	case OBJ_COMMIT:
+		return (struct commit *)e->item;
+	case OBJ_TAG: {
+		struct tag *tag = (struct tag *)e->item;
+
+		/* handle nested tags */
+		while (tag && tag->object.type == OBJ_TAG) {
+			parse_object(tag->object.sha1);
+			string_list_append(&extra_refs, full_name)->util = tag;
+			tag = (struct tag *)tag->tagged;
+		}
+		if (!tag)
+			die("Tag %s points nowhere?", e->name);
+		return (struct commit *)tag;
+		break;
+	}
+	default:
+		return NULL;
+	}
+}
+
 static void get_tags_and_duplicates(struct rev_cmdline_info *info)
 {
-	struct tag *tag;
 	int i;
 
 	for (i = 0; i < info->nr; i++) {
@@ -502,38 +525,23 @@ static void get_tags_and_duplicates(struct rev_cmdline_info *info)
 		if (dwim_ref(e->name, strlen(e->name), sha1, &full_name) != 1)
 			continue;
 
-		switch (e->item->type) {
-		case OBJ_COMMIT:
-			commit = (struct commit *)e->item;
-			break;
-		case OBJ_TAG:
-			tag = (struct tag *)e->item;
-
-			/* handle nested tags */
-			while (tag && tag->object.type == OBJ_TAG) {
-				parse_object(tag->object.sha1);
-				string_list_append(&extra_refs, full_name)->util = tag;
-				tag = (struct tag *)tag->tagged;
-			}
-			if (!tag)
-				die ("Tag %s points nowhere?", e->name);
-			switch(tag->object.type) {
-			case OBJ_COMMIT:
-				commit = (struct commit *)tag;
-				break;
-			case OBJ_BLOB:
-				export_blob(tag->object.sha1);
-				continue;
-			default: /* OBJ_TAG (nested tags) is already handled */
-				warning("Tag points to object of unexpected type %s, skipping.",
-					typename(tag->object.type));
-				continue;
-			}
-			break;
-		default:
+		commit = get_commit(e, full_name);
+		if (!commit) {
 			warning("%s: Unexpected object of type %s, skipping.",
 				e->name,
 				typename(e->item->type));
+			continue;
+		}
+
+		switch(commit->object.type) {
+		case OBJ_COMMIT:
+			break;
+		case OBJ_BLOB:
+			export_blob(commit->object.sha1);
+			continue;
+		default: /* OBJ_TAG (nested tags) is already handled */
+			warning("Tag points to object of unexpected type %s, skipping.",
+				typename(commit->object.type));
 			continue;
 		}
 
