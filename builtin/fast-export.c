@@ -30,6 +30,7 @@ static int fake_missing_tagger;
 static int use_done_feature;
 static int no_data;
 static int full_tree;
+static struct string_list extra_refs = STRING_LIST_INIT_NODUP;
 
 static int parse_opt_signed_tag_mode(const struct option *opt,
 				     const char *arg, int unset)
@@ -484,8 +485,7 @@ static void handle_tag(const char *name, struct tag *tag)
 	       (int)message_size, (int)message_size, message ? message : "");
 }
 
-static void get_tags_and_duplicates(struct rev_cmdline_info *info,
-				    struct string_list *extra_refs)
+static void get_tags_and_duplicates(struct rev_cmdline_info *info)
 {
 	struct tag *tag;
 	int i;
@@ -512,7 +512,7 @@ static void get_tags_and_duplicates(struct rev_cmdline_info *info,
 			/* handle nested tags */
 			while (tag && tag->object.type == OBJ_TAG) {
 				parse_object(tag->object.sha1);
-				string_list_append(extra_refs, full_name)->util = tag;
+				string_list_append(&extra_refs, full_name)->util = tag;
 				tag = (struct tag *)tag->tagged;
 			}
 			if (!tag)
@@ -542,20 +542,20 @@ static void get_tags_and_duplicates(struct rev_cmdline_info *info,
 		 * sure it gets properly updated eventually.
 		 */
 		if (commit->util || commit->object.flags & SHOWN)
-			string_list_append(extra_refs, full_name)->util = commit;
+			string_list_append(&extra_refs, full_name)->util = commit;
 		if (!commit->util)
 			commit->util = full_name;
 	}
 }
 
-static void handle_tags_and_duplicates(struct string_list *extra_refs)
+static void handle_tags_and_duplicates(void)
 {
 	struct commit *commit;
 	int i;
 
-	for (i = extra_refs->nr - 1; i >= 0; i--) {
-		const char *name = extra_refs->items[i].string;
-		struct object *object = extra_refs->items[i].util;
+	for (i = extra_refs.nr - 1; i >= 0; i--) {
+		const char *name = extra_refs.items[i].string;
+		struct object *object = extra_refs.items[i].util;
 		switch (object->type) {
 		case OBJ_TAG:
 			handle_tag(name, (struct tag *)object);
@@ -657,7 +657,6 @@ int cmd_fast_export(int argc, const char **argv, const char *prefix)
 {
 	struct rev_info revs;
 	struct object_array commits = OBJECT_ARRAY_INIT;
-	struct string_list extra_refs = STRING_LIST_INIT_NODUP;
 	struct commit *commit;
 	char *export_filename = NULL, *import_filename = NULL;
 	uint32_t lastimportid;
@@ -709,7 +708,7 @@ int cmd_fast_export(int argc, const char **argv, const char *prefix)
 	if (import_filename && revs.prune_data.nr)
 		full_tree = 1;
 
-	get_tags_and_duplicates(&revs.cmdline, &extra_refs);
+	get_tags_and_duplicates(&revs.cmdline);
 
 	if (prepare_revision_walk(&revs))
 		die("revision walk setup failed");
@@ -725,7 +724,7 @@ int cmd_fast_export(int argc, const char **argv, const char *prefix)
 		}
 	}
 
-	handle_tags_and_duplicates(&extra_refs);
+	handle_tags_and_duplicates();
 
 	if (export_filename && lastimportid != last_idnum)
 		export_marks(export_filename);
