@@ -1036,6 +1036,13 @@ cmd_summary() {
 		do
 			# Always show modules deleted or type-changed (blob<->module)
 			test $status = D -o $status = T && echo "$sm_path" && continue
+			# Respect the ignore setting for --for-status.
+			if test -n "$for_status"
+			then
+				name=$(module_name "$sm_path")
+				ignore_config=$(get_submodule_config "$name" ignore none)
+				test $status != A -a $ignore_config = all && continue
+			fi
 			# Also show added or modified modules which are checked out
 			GIT_DIR="$sm_path/.git" git-rev-parse --git-dir >/dev/null 2>&1 &&
 			echo "$sm_path"
