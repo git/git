@@ -12,11 +12,11 @@ test_tick
 # String "added" in German
 # (translated with Google Translate),
 # encoded in UTF-8, used as a commit log message below.
-added=$(printf "added (hinzugef\303\274gt) foo")
-added_iso88591=$(echo "$added" | iconv -f utf-8 -t iso8859-1)
+added=$(printf 'added (hinzugef\303\274gt) foo' | iconv -t utf-8)
+added_iso88591=$(printf 'added (hinzugef\303\274gt) foo' | iconv -f utf-8 -t iso8859-1)
 # same but "changed"
-changed=$(printf "changed (ge\303\244ndert) foo")
-changed_iso88591=$(echo "$changed" | iconv -f utf-8 -t iso8859-1)
+changed=$(printf "changed (ge\303\244ndert) foo" | iconv -t utf-8)
+changed_iso88591=$(printf 'changed (ge\303\244ndert) foo' | iconv -f utf-8 -t iso8859-1)
 
 test_expect_success 'setup' '
 	: >foo &&
@@ -206,13 +206,12 @@ test_expect_success '%C(auto) respects --color=auto (stdout not tty)' '
 	)
 '
 
-iconv -f utf-8 -t iso8859-1 > commit-msg <<EOF
-Test printing of complex bodies
+printf 'Test printing of complex bodies
 
 This commit message is much longer than the others,
 and it will be encoded in iso8859-1. We should therefore
-include an iso8859 character: ¡bueno!
-EOF
+include an iso8859 character: \xc2\xa1bueno!
+' | iconv -f utf-8 -t iso8859-1 > commit-msg
 
 test_expect_success 'setup complex body' '
 	git config i18n.commitencoding iso8859-1 &&
