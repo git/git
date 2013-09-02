@@ -28,7 +28,8 @@ test_expect_success 'set up basic repos' '
 	git add foo &&
 	test_tick &&
 	git config i18n.commitEncoding iso8859-1 &&
-	git commit -m "$(commit_msg iso8859-1)" &&
+	commit_msg iso8859-1 > commit_msg &&
+	git commit --file commit_msg &&
 	git add bar &&
 	test_tick &&
 	git commit -m "add bar" &&
