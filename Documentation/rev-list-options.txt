@@ -174,6 +174,21 @@ parents) and `--max-parents=-1` (negative numbers denote no upper limit).
 	is automatically prepended if missing. If pattern lacks '?', '{asterisk}',
 	or '[', '/{asterisk}' at the end is implied.
 
+--exclude=<glob-pattern>::
+
+	Do not include refs matching '<glob-pattern>' that the next `--all`,
+	`--branches`, `--tags`, `--remotes`, or `--glob` would otherwise
+	consider. Repetitions of this option accumulate exclusion patterns
+	up to the next `--all`, `--branches`, `--tags`, `--remotes`, or
+	`--glob` option (other options or arguments do not clear
+	accumlated patterns).
++
+The patterns given should not begin with `refs/heads`, `refs/tags`, or
+`refs/remotes` when applied to `--branches`, `--tags`, or `--remotes`,
+restrictively, and they must begin with `refs/` when applied to `--glob`
+or `--all`. If a trailing '/{asterisk}' is intended, it must be given
+explicitly.
+
 --ignore-missing::
 
 	Upon seeing an invalid object name in the input, pretend as if
