@@ -1951,7 +1951,7 @@ static int remove_empty_directories(const char *file)
 static char *substitute_branch_name(const char **string, int *len)
 {
 	struct strbuf buf = STRBUF_INIT;
-	int ret = interpret_branch_name(*string, &buf);
+	int ret = interpret_branch_name(*string, *len, &buf);
 
 	if (ret == *len) {
 		size_t size;

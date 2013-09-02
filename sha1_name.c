@@ -1012,7 +1012,7 @@ static int reinterpret(const char *name, int namelen, int len, struct strbuf *bu
 	int ret;
 
 	strbuf_add(buf, name + len, namelen - len);
-	ret = interpret_branch_name(buf->buf, &tmp);
+	ret = interpret_branch_name(buf->buf, buf->len, &tmp);
 	/* that data was not interpreted, remove our cruft */
 	if (ret < 0) {
 		strbuf_setlen(buf, used);
@@ -1046,13 +1046,15 @@ static int reinterpret(const char *name, int namelen, int len, struct strbuf *bu
  * If the input was ok but there are not N branch switches in the
  * reflog, it returns 0.
  */
-int interpret_branch_name(const char *name, struct strbuf *buf)
+int interpret_branch_name(const char *name, int namelen, struct strbuf *buf)
 {
 	char *cp;
 	struct branch *upstream;
-	int namelen = strlen(name);
 	int len = interpret_nth_prior_checkout(name, buf);
 	int tmp_len;
+
+	if (!namelen)
+		namelen = strlen(name);
 
 	if (!len) {
 		return len; /* syntax Ok, not enough switches */
@@ -1100,7 +1102,7 @@ int interpret_branch_name(const char *name, struct strbuf *buf)
 int strbuf_branchname(struct strbuf *sb, const char *name)
 {
 	int len = strlen(name);
-	int used = interpret_branch_name(name, sb);
+	int used = interpret_branch_name(name, len, sb);
 
 	if (used == len)
 		return 0;
