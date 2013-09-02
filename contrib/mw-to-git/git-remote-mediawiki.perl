@@ -590,6 +590,9 @@ sub mw_capabilities {
 	print {*STDOUT} "import\n";
 	print {*STDOUT} "list\n";
 	print {*STDOUT} "push\n";
+	if ($dumb_push) {
+		print {*STDOUT} "no-private-update\n";
+	}
 	print {*STDOUT} "\n";
 	return;
 }
