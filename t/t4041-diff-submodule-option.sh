@@ -13,7 +13,7 @@ This test tries to verify the sanity of the --submodule option of git diff.
 
 # String "added" in German (translated with Google Translate), encoded in UTF-8,
 # used in sample commit log messages in add_file() function below.
-added=$(printf "hinzugef\303\274gt")
+added=$(printf "hinzugef\303\274gt" | iconv -t utf-8)
 add_file () {
 	(
 		cd "$1" &&
