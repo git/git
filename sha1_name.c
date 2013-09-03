@@ -677,13 +677,13 @@ static int peel_onion(const char *name, int len, unsigned char *sha1)
 		return -1;
 
 	sp++; /* beginning of type name, or closing brace for empty */
-	if (!strncmp(commit_type, sp, 6) && sp[6] == '}')
+	if (!prefixcmp(sp, "commit}"))
 		expected_type = OBJ_COMMIT;
-	else if (!strncmp(tag_type, sp, 3) && sp[3] == '}')
+	else if (!prefixcmp(sp, "tag}"))
 		expected_type = OBJ_TAG;
-	else if (!strncmp(tree_type, sp, 4) && sp[4] == '}')
+	else if (!prefixcmp(sp, "tree}"))
 		expected_type = OBJ_TREE;
-	else if (!strncmp(blob_type, sp, 4) && sp[4] == '}')
+	else if (!prefixcmp(sp, "blob}"))
 		expected_type = OBJ_BLOB;
 	else if (!prefixcmp(sp, "object}"))
 		expected_type = OBJ_ANY;
