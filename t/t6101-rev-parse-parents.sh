@@ -6,7 +6,6 @@
 test_description='Test git rev-parse with different parent options'
 
 . ./test-lib.sh
-. "$TEST_DIRECTORY"/lib-t6000.sh # t6xxx specific functions
 
 test_cmp_rev_output () {
 	git rev-parse --verify "$1" >expect &&
@@ -14,14 +13,15 @@ test_cmp_rev_output () {
 	test_cmp expect actual
 }
 
-date >path0
-git update-index --add path0
-save_tag tree git write-tree
-hide_error save_tag start unique_commit "start" tree
-save_tag second unique_commit "second" tree -p start
-hide_error save_tag start2 unique_commit "start2" tree
-save_tag two_parents unique_commit "next" tree -p second -p start2
-save_tag final unique_commit "final" tree -p two_parents
+test_expect_success 'setup' '
+	test_commit start &&
+	test_commit second &&
+	git checkout --orphan tmp &&
+	test_commit start2 &&
+	git checkout master &&
+	git merge -m next start2 &&
+	test_commit final
+'
 
 test_expect_success 'start is valid' '
 	git rev-parse start | grep "^[0-9a-f]\{40\}$"
