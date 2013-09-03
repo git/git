@@ -120,6 +120,11 @@ connecting (see the 'connect' command under COMMANDS).
 When choosing between 'push' and 'export', Git prefers 'push'.
 Other frontends may have some other order of preference.
 
+'no-private-update'::
+	When using the 'refspec' capability, git normally updates the
+	private ref on successful push. This update is disabled when
+	the remote-helper declares the capability 'no-private-update'.
+
 
 Capabilities for Fetching
 ^^^^^^^^^^^^^^^^^^^^^^^^^

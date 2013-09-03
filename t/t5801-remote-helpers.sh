@@ -182,6 +182,17 @@ test_expect_success 'push update refs' '
 	)
 '
 
+test_expect_success 'push update refs disabled by no-private-update' '
+	(cd local &&
+	echo more-update >>file &&
+	git commit -a -m more-update &&
+	git rev-parse --verify testgit/origin/heads/update >expect &&
+	GIT_REMOTE_TESTGIT_NO_PRIVATE_UPDATE=t git push origin update &&
+	git rev-parse --verify testgit/origin/heads/update >actual &&
+	test_cmp expect actual
+	)
+'
+
 test_expect_success 'push update refs failure' '
 	(cd local &&
 	git checkout update &&

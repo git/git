@@ -27,7 +27,8 @@ struct helper_data {
 		push : 1,
 		connect : 1,
 		signed_tags : 1,
-		no_disconnect_req : 1;
+		no_disconnect_req : 1,
+		no_private_update : 1;
 	char *export_marks;
 	char *import_marks;
 	/* These go from remote name (as in "list") to private name */
@@ -205,6 +206,8 @@ static struct child_process *get_helper(struct transport *transport)
 			strbuf_addstr(&arg, "--import-marks=");
 			strbuf_addstr(&arg, capname + strlen("import-marks "));
 			data->import_marks = strbuf_detach(&arg, NULL);
+		} else if (!prefixcmp(capname, "no-private-update")) {
+			data->no_private_update = 1;
 		} else if (mandatory) {
 			die("Unknown mandatory capability %s. This remote "
 			    "helper probably needs newer version of Git.",
@@ -723,7 +726,7 @@ static void push_update_refs_status(struct helper_data *data,
 		if (push_update_ref_status(&buf, &ref, remote_refs))
 			continue;
 
-		if (!data->refspecs)
+		if (!data->refspecs || data->no_private_update)
 			continue;
 
 		/* propagate back the update to the remote namespace */
