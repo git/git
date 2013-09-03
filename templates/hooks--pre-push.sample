@@ -30,6 +30,7 @@ do
 	if [ "$local_sha" = $z40 ]
 	then
 		# Handle delete
+		:
 	else
 		if [ "$remote_sha" = $z40 ]
 		then
