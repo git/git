@@ -8,6 +8,12 @@ test_description='Test git rev-parse with different parent options'
 . ./test-lib.sh
 . "$TEST_DIRECTORY"/lib-t6000.sh # t6xxx specific functions
 
+test_cmp_rev_output () {
+	git rev-parse --verify "$1" >expect &&
+	eval "$2" >actual &&
+	test_cmp expect actual
+}
+
 date >path0
 git update-index --add path0
 save_tag tree git write-tree
@@ -22,7 +28,7 @@ test_expect_success 'start is valid' '
 '
 
 test_expect_success 'start^0' '
-	test $(cat .git/refs/tags/start) = $(git rev-parse start^0)
+	test_cmp_rev_output tags/start "git rev-parse start^0"
 '
 
 test_expect_success 'start^1 not valid' '
@@ -30,19 +36,19 @@ test_expect_success 'start^1 not valid' '
 '
 
 test_expect_success 'second^1 = second^' '
-	test $(git rev-parse second^1) = $(git rev-parse second^)
+	test_cmp_rev_output second^ "git rev-parse second^1"
 '
 
 test_expect_success 'final^1^1^1' '
-	test $(git rev-parse start) = $(git rev-parse final^1^1^1)
+	test_cmp_rev_output start "git rev-parse final^1^1^1"
 '
 
 test_expect_success 'final^1^1^1 = final^^^' '
-	test $(git rev-parse final^1^1^1) = $(git rev-parse final^^^)
+	test_cmp_rev_output final^^^ "git rev-parse final^1^1^1"
 '
 
 test_expect_success 'final^1^2' '
-	test $(git rev-parse start2) = $(git rev-parse final^1^2)
+	test_cmp_rev_output start2 "git rev-parse final^1^2"
 '
 
 test_expect_success 'final^1^2 != final^1^1' '
@@ -62,11 +68,15 @@ test_expect_success '--verify start2^0' '
 '
 
 test_expect_success 'final^1^@ = final^1^1 final^1^2' '
-	test "$(git rev-parse final^1^@)" = "$(git rev-parse final^1^1 final^1^2)"
+	git rev-parse final^1^1 final^1^2 >expect &&
+	git rev-parse final^1^@ >actual &&
+	test_cmp expect actual
 '
 
 test_expect_success 'final^1^! = final^1 ^final^1^1 ^final^1^2' '
-	test "$(git rev-parse final^1^!)" = "$(git rev-parse final^1 ^final^1^1 ^final^1^2)"
+	git rev-parse final^1 ^final^1^1 ^final^1^2 >expect &&
+	git rev-parse final^1^! >actual &&
+	test_cmp expect actual
 '
 
 test_expect_success 'repack for next test' '
@@ -74,13 +84,8 @@ test_expect_success 'repack for next test' '
 '
 
 test_expect_success 'short SHA-1 works' '
-	start=`git rev-parse --verify start` &&
-	echo $start &&
-	abbrv=`echo $start | sed s/.\$//` &&
-	echo $abbrv &&
-	abbrv=`git rev-parse --verify $abbrv` &&
-	echo $abbrv &&
-	test $start = $abbrv
+	start=$(git rev-parse --verify start) &&
+	test_cmp_rev_output start "git rev-parse ${start%?}"
 '
 
 test_done
