@@ -26,7 +26,7 @@ test_expect_success 'start^0' '
 '
 
 test_expect_success 'start^1 not valid' '
-	if git rev-parse --verify start^1; then false; else :; fi
+	test_must_fail git rev-parse --verify start^1
 '
 
 test_expect_success 'second^1 = second^' '
@@ -50,7 +50,7 @@ test_expect_success 'final^1^2 != final^1^1' '
 '
 
 test_expect_success 'final^1^3 not valid' '
-	if git rev-parse --verify final^1^3; then false; else :; fi
+	test_must_fail git rev-parse --verify final^1^3
 '
 
 test_expect_success '--verify start2^1' '
