@@ -4,7 +4,7 @@
 #
 # Fetch one or more remote refs and merge it/them into the current HEAD.
 
-USAGE='[-n | --no-stat] [--[no-]commit] [--[no-]squash] [--[no-]ff] [-s strategy]... [<fetch-options>] <repo> <head>...'
+USAGE='[-n | --no-stat] [--[no-]commit] [--[no-]squash] [--[no-]ff] [--[no-]rebase|--rebase=preserve] [-s strategy]... [<fetch-options>] <repo> <head>...'
 LONG_USAGE='Fetch one or more remote refs and integrate it/them with the current HEAD.'
 SUBDIRECTORY_OK=Yes
 OPTIONS_SPEC=
@@ -38,22 +38,22 @@ Please, commit your changes before you can merge.")"
 test -z "$(git ls-files -u)" || die_conflict
 test -f "$GIT_DIR/MERGE_HEAD" && die_merge
 
+bool_or_string_config () {
+	git config --bool "$1" 2>/dev/null || git config "$1"
+}
+
 strategy_args= diffstat= no_commit= squash= no_ff= ff_only=
 log_arg= verbosity= progress= recurse_submodules= verify_signatures=
-merge_args= edit=
+merge_args= edit= rebase_args=
 
 curr_branch=$(git symbolic-ref -q HEAD)
 curr_branch_short="${curr_branch#refs/heads/}"
 
 # See if we are configured to rebase by default.
-# The value $rebase is, throughout the main part of the code:
-#    (empty) - the user did not have any preference
-#    true    - the user told us to integrate by rebasing
-#    false   - the user told us to integrate by merging
-rebase=$(git config --bool branch.$curr_branch_short.rebase)
+rebase=$(bool_or_string_config branch.$curr_branch_short.rebase)
 if test -z "$rebase"
 then
-	rebase=$(git config --bool pull.rebase)
+	rebase=$(bool_or_string_config pull.rebase)
 fi
 
 dry_run=
@@ -118,6 +118,9 @@ do
 		esac
 		merge_args="$merge_args$xx "
 		;;
+	-r=*|--r=*|--re=*|--reb=*|--reba=*|--rebas=*|--rebase=*)
+		rebase="${1#*=}"
+		;;
 	-r|--r|--re|--reb|--reba|--rebas|--rebase)
 		rebase=true
 		;;
@@ -153,6 +156,25 @@ do
 	esac
 	shift
 done
+
+# The value $rebase is, throughout the main part of the code:
+#    (empty) - the user did not have any preference
+#    true    - the user told us to integrate by rebasing
+#    false   - the user told us to integrate by merging
+# after this case statement checks for specific settings.
+case "$rebase" in
+preserve)
+	rebase=true
+	rebase_args=--preserve-merges
+	;;
+true|false|'')
+	;;
+*)
+	echo "Invalid value for --rebase, should be true, false, or preserve"
+	usage
+	exit 1
+	;;
+esac
 
 error_on_no_merge_candidates () {
 	exec >&2
@@ -330,7 +352,7 @@ fi
 merge_name=$(git fmt-merge-msg $log_arg <"$GIT_DIR/FETCH_HEAD") || exit
 case "$rebase" in
 true)
-	eval="git-rebase $diffstat $strategy_args $merge_args $verbosity"
+	eval="git-rebase $diffstat $strategy_args $merge_args $rebase_args $verbosity"
 	eval="$eval --onto $merge_head ${oldremoteref:-$merge_head}"
 	;;
 *)

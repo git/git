@@ -148,6 +148,95 @@ test_expect_success 'branch.to-rebase.rebase should override pull.rebase' '
 	test new = $(git show HEAD:file2)
 '
 
+# add a feature branch, keep-merge, that is merged into master, so the
+# test can try preserving the merge commit (or not) with various
+# --rebase flags/pull.rebase settings.
+test_expect_success 'preserve merge setup' '
+	git reset --hard before-rebase &&
+	git checkout -b keep-merge second^ &&
+	test_commit file3 &&
+	git checkout to-rebase &&
+	git merge keep-merge &&
+	git tag before-preserve-rebase
+'
+
+test_expect_success 'pull.rebase=false create a new merge commit' '
+	git reset --hard before-preserve-rebase &&
+	test_config pull.rebase false &&
+	git pull . copy &&
+	test $(git rev-parse HEAD^1) = $(git rev-parse before-preserve-rebase) &&
+	test $(git rev-parse HEAD^2) = $(git rev-parse copy) &&
+	test file3 = $(git show HEAD:file3.t)
+'
+
+test_expect_success 'pull.rebase=true flattens keep-merge' '
+	git reset --hard before-preserve-rebase &&
+	test_config pull.rebase true &&
+	git pull . copy &&
+	test $(git rev-parse HEAD^^) = $(git rev-parse copy) &&
+	test file3 = $(git show HEAD:file3.t)
+'
+
+test_expect_success 'pull.rebase=1 is treated as true and flattens keep-merge' '
+	git reset --hard before-preserve-rebase &&
+	test_config pull.rebase 1 &&
+	git pull . copy &&
+	test $(git rev-parse HEAD^^) = $(git rev-parse copy) &&
+	test file3 = $(git show HEAD:file3.t)
+'
+
+test_expect_success 'pull.rebase=preserve rebases and merges keep-merge' '
+	git reset --hard before-preserve-rebase &&
+	test_config pull.rebase preserve &&
+	git pull . copy &&
+	test $(git rev-parse HEAD^^) = $(git rev-parse copy) &&
+	test $(git rev-parse HEAD^2) = $(git rev-parse keep-merge)
+'
+
+test_expect_success 'pull.rebase=invalid fails' '
+	git reset --hard before-preserve-rebase &&
+	test_config pull.rebase invalid &&
+	! git pull . copy
+'
+
+test_expect_success '--rebase=false create a new merge commit' '
+	git reset --hard before-preserve-rebase &&
+	test_config pull.rebase true &&
+	git pull --rebase=false . copy &&
+	test $(git rev-parse HEAD^1) = $(git rev-parse before-preserve-rebase) &&
+	test $(git rev-parse HEAD^2) = $(git rev-parse copy) &&
+	test file3 = $(git show HEAD:file3.t)
+'
+
+test_expect_success '--rebase=true rebases and flattens keep-merge' '
+	git reset --hard before-preserve-rebase &&
+	test_config pull.rebase preserve &&
+	git pull --rebase=true . copy &&
+	test $(git rev-parse HEAD^^) = $(git rev-parse copy) &&
+	test file3 = $(git show HEAD:file3.t)
+'
+
+test_expect_success '--rebase=preserve rebases and merges keep-merge' '
+	git reset --hard before-preserve-rebase &&
+	test_config pull.rebase true &&
+	git pull --rebase=preserve . copy &&
+	test $(git rev-parse HEAD^^) = $(git rev-parse copy) &&
+	test $(git rev-parse HEAD^2) = $(git rev-parse keep-merge)
+'
+
+test_expect_success '--rebase=invalid fails' '
+	git reset --hard before-preserve-rebase &&
+	! git pull --rebase=invalid . copy
+'
+
+test_expect_success '--rebase overrides pull.rebase=preserve and flattens keep-merge' '
+	git reset --hard before-preserve-rebase &&
+	test_config pull.rebase preserve &&
+	git pull --rebase . copy &&
+	test $(git rev-parse HEAD^^) = $(git rev-parse copy) &&
+	test file3 = $(git show HEAD:file3.t)
+'
+
 test_expect_success '--rebase with rebased upstream' '
 
 	git remote add -f me . &&
