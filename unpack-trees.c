@@ -1154,8 +1154,10 @@ int unpack_trees(unsigned len, struct tree_desc *t, struct unpack_trees_options 
 
 	o->src_index = NULL;
 	ret = check_updates(o) ? (-2) : 0;
-	if (o->dst_index)
+	if (o->dst_index) {
+		discard_index(o->dst_index);
 		*o->dst_index = o->result;
+	}
 
 done:
 	clear_exclude_list(&el);
