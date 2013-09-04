@@ -26,8 +26,8 @@ int cmd_tar_tree(int argc, const char **argv, const char *prefix)
 	 * $0 tree-ish basedir ==>
 	 * 	git archive --format-tar --prefix=basedir tree-ish
 	 */
-	int i;
 	const char **nargv = xcalloc(sizeof(*nargv), argc + 3);
+	struct strbuf sb = STRBUF_INIT;
 	char *basedir_arg;
 	int nargc = 0;
 
@@ -65,11 +65,10 @@ int cmd_tar_tree(int argc, const char **argv, const char *prefix)
 	fprintf(stderr,
 		"*** \"git tar-tree\" is now deprecated.\n"
 		"*** Running \"git archive\" instead.\n***");
-	for (i = 0; i < nargc; i++) {
-		fputc(' ', stderr);
-		sq_quote_print(stderr, nargv[i]);
-	}
-	fputc('\n', stderr);
+	sq_quote_argv(&sb, nargv, 0);
+	strbuf_addch(&sb, '\n');
+	fputs(sb.buf, stderr);
+	strbuf_release(&sb);
 	return cmd_archive(nargc, nargv, prefix);
 }
 
