@@ -19,6 +19,7 @@
 
 static int pack_compression_seen;
 static int pack_compression_level = Z_DEFAULT_COMPRESSION;
+static int min_tree_copy = 1;
 
 struct data_entry {
 	unsigned offset;
@@ -454,7 +455,7 @@ void *pv4_encode_tree(void *_buffer, unsigned long *sizep,
 	if (!size)
 		return NULL;
 
-	if (!delta_size)
+	if (!delta_size || !min_tree_copy)
 		delta = NULL;
 
 	/*
@@ -555,7 +556,6 @@ void *pv4_encode_tree(void *_buffer, unsigned long *sizep,
 			cp += encode_varint(copy_count, cp);
 			if (first_delta)
 				cp += encode_sha1ref(delta_sha1, cp);
-			copy_count = 0;
 
 			/*
 			 * Now let's make sure this is going to take less
@@ -563,12 +563,14 @@ void *pv4_encode_tree(void *_buffer, unsigned long *sizep,
 			 * created in parallel.  If so we dump the copy
 			 * sequence over those entries in the output buffer.
 			 */
-			if (cp - copy_buf < out - &buffer[copy_pos]) {
+			if (copy_count >= min_tree_copy &&
+			    cp - copy_buf < out - &buffer[copy_pos]) {
 				out = buffer + copy_pos;
 				memcpy(out, copy_buf, cp - copy_buf);
 				out += cp - copy_buf;
 				first_delta = 0;
 			}
+			copy_count = 0;
 		}
 
 		if (end - out < 48) {
@@ -599,7 +601,8 @@ void *pv4_encode_tree(void *_buffer, unsigned long *sizep,
 		cp += encode_varint(copy_count, cp);
 		if (first_delta)
 			cp += encode_sha1ref(delta_sha1, cp);
-		if (cp - copy_buf < out - &buffer[copy_pos]) {
+		if (copy_count >= min_tree_copy &&
+		    cp - copy_buf < out - &buffer[copy_pos]) {
 			out = buffer + copy_pos;
 			memcpy(out, copy_buf, cp - copy_buf);
 			out += cp - copy_buf;
@@ -1104,14 +1107,24 @@ static int git_pack_config(const char *k, const char *v, void *cb)
 
 int main(int argc, char *argv[])
 {
-	if (argc != 3) {
-		fprintf(stderr, "Usage: %s <src_packfile> <dst_packfile>\n", argv[0]);
+	char *src_pack, *dst_pack;
+
+	if (argc == 3) {
+		src_pack = argv[1];
+		dst_pack = argv[2];
+	} else if (argc == 4 && !prefixcmp(argv[1], "--min-tree-copy=")) {
+		min_tree_copy = atoi(argv[1] + strlen("--min-tree-copy="));
+		src_pack = argv[2];
+		dst_pack = argv[3];
+	} else {
+		fprintf(stderr, "Usage: %s [--min-tree-copy=<n>] <src_packfile> <dst_packfile>\n", argv[0]);
 		exit(1);
 	}
+
 	git_config(git_pack_config, NULL);
 	if (!pack_compression_seen && core_compression_seen)
 		pack_compression_level = core_compression_level;
-	process_one_pack(argv[1], argv[2]);
+	process_one_pack(src_pack, dst_pack);
 	if (0)
 		dict_dump();
 	return 0;
