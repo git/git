@@ -4035,8 +4035,8 @@ sub print_search_form {
 	      $cgi->input({-name=>"h", -value=>$search_hash, -type=>"hidden"}) . "\n" .
 	      $cgi->popup_menu(-name => 'st', -default => 'commit',
 	                       -values => ['commit', 'grep', 'author', 'committer', 'pickaxe']) .
-	      $cgi->sup($cgi->a({-href => href(action=>"search_help")}, "?")) .
-	      " search:\n",
+	      " " . $cgi->a({-href => href(action=>"search_help"),
+			     -title => "search help" }, "?") . " search:\n",
 	      $cgi->textfield(-name => "s", -value => $searchtext, -override => 1) . "\n" .
 	      "<span title=\"Extended regular expression\">" .
 	      $cgi->checkbox(-name => 'sr', -value => 1, -label => 're',
@@ -6468,7 +6468,7 @@ sub git_summary {
 	print "<div class=\"title\">&nbsp;</div>\n";
 	print "<table class=\"projects_list\">\n" .
 	      "<tr id=\"metadata_desc\"><td>description</td><td>" . esc_html($descr) . "</td></tr>\n";
-        unless ($omit_owner) {
+        if ($owner and not $omit_owner) {
 	        print  "<tr id=\"metadata_owner\"><td>owner</td><td>" . esc_html($owner) . "</td></tr>\n";
         }
 	if (defined $cd{'rfc2822'}) {
