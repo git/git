@@ -9,7 +9,7 @@ git-gc - Cleanup unnecessary files and optimize the local repository
 SYNOPSIS
 --------
 [verse]
-'git gc' [--aggressive] [--auto] [--quiet] [--prune=<date> | --no-prune]
+'git gc' [--aggressive] [--auto] [--quiet] [--prune=<date> | --no-prune] [--force]
 
 DESCRIPTION
 -----------
@@ -71,6 +71,10 @@ automatic consolidation of packs.
 
 --quiet::
 	Suppress all progress reports.
+
+--force::
+	Force `git gc` to run even if there may be another `git gc`
+	instance running on this repository.
 
 Configuration
 -------------
