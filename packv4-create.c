@@ -446,7 +446,8 @@ void *pv4_encode_tree(void *_buffer, unsigned long *sizep,
 	struct tree_desc desc, delta_desc;
 	struct name_entry name_entry, delta_entry;
 	int nb_entries;
-	unsigned int copy_start, copy_count = 0, delta_pos = 0, first_delta = 1;
+	unsigned int copy_start = 0, copy_count = 0, copy_pos = 0, copy_end = 0;
+	unsigned int delta_pos = 0, first_delta = 1;
 
 	if (!size)
 		return NULL;
@@ -502,24 +503,23 @@ void *pv4_encode_tree(void *_buffer, unsigned long *sizep,
 
 			if (ret == 0 && name_entry.mode == delta_entry.mode &&
 			    hashcmp(name_entry.sha1, delta_entry.sha1) == 0) {
-				if (!copy_count)
+				if (!copy_count) {
 					copy_start = delta_pos;
+					copy_pos = out - buffer;
+					copy_end = 0;
+				}
 				copy_count++;
 				delta_pos++;
 				if (!tree_entry(&delta_desc, &delta_entry))
 					delta = NULL;
-				continue;
-			}
-		}
+			} else
+				copy_end = 1;
+		} else
+			copy_end = 1;
 
-		if (end - out < 48) {
-			unsigned long sofar = out - buffer;
-			buffer = xrealloc(buffer, (sofar + 48)*2);
-			end = buffer + (sofar + 48)*2;
-			out = buffer + sofar;
-		}
+		if (copy_count && copy_end) {
+			unsigned char copy_buf[48], *cp = copy_buf;
 
-		if (copy_count) {
 			/*
 			 * Let's write a sequence indicating we're copying
 			 * entries from another object:
@@ -537,12 +537,31 @@ void *pv4_encode_tree(void *_buffer, unsigned long *sizep,
 			 */
 			copy_start = (copy_start << 1) | 1;
 			copy_count = (copy_count << 1) | first_delta;
-			out += encode_varint(copy_start, out);
-			out += encode_varint(copy_count, out);
+			cp += encode_varint(copy_start, cp);
+			cp += encode_varint(copy_count, cp);
 			if (first_delta)
-				out += encode_sha1ref(delta_sha1, out);
+				cp += encode_sha1ref(delta_sha1, cp);
 			copy_count = 0;
-			first_delta = 0;
+
+			/*
+			 * Now let's make sure this is going to take less
+			 * space than the corresponding direct entries we've
+			 * created in parallel.  If so we dump the copy
+			 * sequence over those entries in the output buffer.
+			 */
+			if (cp - copy_buf < out - &buffer[copy_pos]) {
+				out = buffer + copy_pos;
+				memcpy(out, copy_buf, cp - copy_buf);
+				out += cp - copy_buf;
+				first_delta = 0;
+			}
+		}
+
+		if (end - out < 48) {
+			unsigned long sofar = out - buffer;
+			buffer = xrealloc(buffer, (sofar + 48)*2);
+			end = buffer + (sofar + 48)*2;
+			out = buffer + sofar;
 		}
 
 		pathlen = tree_entry_len(&name_entry);
@@ -558,13 +577,19 @@ void *pv4_encode_tree(void *_buffer, unsigned long *sizep,
 	}
 
 	if (copy_count) {
-		/* flush the trailing copy */
+		/* process the trailing copy */
+		unsigned char copy_buf[48], *cp = copy_buf;
 		copy_start = (copy_start << 1) | 1;
 		copy_count = (copy_count << 1) | first_delta;
-		out += encode_varint(copy_start, out);
-		out += encode_varint(copy_count, out);
+		cp += encode_varint(copy_start, cp);
+		cp += encode_varint(copy_count, cp);
 		if (first_delta)
-			out += encode_sha1ref(delta_sha1, out);
+			cp += encode_sha1ref(delta_sha1, cp);
+		if (cp - copy_buf < out - &buffer[copy_pos]) {
+			out = buffer + copy_pos;
+			memcpy(out, copy_buf, cp - copy_buf);
+			out += cp - copy_buf;
+		}
 	}
 
 	*sizep = out - buffer;
