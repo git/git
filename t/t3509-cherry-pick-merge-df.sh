@@ -74,7 +74,7 @@ test_expect_success 'Setup rename with file on one side matching different dirna
 	echo content > sub/file &&
 	echo foo > othersub/whatever &&
 	git add -A &&
-	git commit -m "Common commmit" &&
+	git commit -m "Common commit" &&
 
 	git rm -rf othersub &&
 	git mv sub/file othersub &&
