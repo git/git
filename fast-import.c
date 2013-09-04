@@ -2957,7 +2957,7 @@ static struct object_entry *dereference(struct object_entry *oe,
 	case OBJ_TAG:
 		break;
 	default:
-		die("Not a treeish: %s", command_buf.buf);
+		die("Not a tree-ish: %s", command_buf.buf);
 	}
 
 	if (oe->pack_id != MAX_PACK_ID) {	/* in a pack being written */
@@ -3041,7 +3041,7 @@ static void parse_ls(struct branch *b)
 	struct tree_entry *root = NULL;
 	struct tree_entry leaf = {NULL};
 
-	/* ls SP (<treeish> SP)? <path> */
+	/* ls SP (<tree-ish> SP)? <path> */
 	p = command_buf.buf + strlen("ls ");
 	if (*p == '"') {
 		if (!b)
