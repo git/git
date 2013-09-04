@@ -652,6 +652,11 @@ test_expect_success numbers '
 	test_cmp expect actual
 '
 
+test_expect_success 'out-of-range integers are detected' '
+	git config giga.crash 3g &&
+	test_must_fail git config --int giga.crash
+'
+
 test_expect_success 'invalid unit' '
 	git config aninvalid.unit "1auto" &&
 	echo 1auto >expect &&
@@ -662,6 +667,13 @@ test_expect_success 'invalid unit' '
 	EOF
 	test_must_fail git config --int --get aninvalid.unit 2>actual &&
 	test_cmp actual expect
+'
+
+test_expect_success 'large numbers via --ulong' '
+	git config big.file 3g &&
+	echo 3221225472 >expect &&
+	git config --ulong big.file >actual &&
+	test_cmp expect actual
 '
 
 cat > expect << EOF
