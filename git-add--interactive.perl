@@ -169,7 +169,7 @@ my %patch_modes = (
 my %patch_mode_flavour = %{$patch_modes{stage}};
 
 sub run_cmd_pipe {
-	if ($^O eq 'MSWin32' || $^O eq 'msys') {
+	if ($^O eq 'MSWin32') {
 		my @invalid = grep {m/[":*]/} @_;
 		die "$^O does not support: @invalid\n" if @invalid;
 		my @args = map { m/ /o ? "\"$_\"": $_ } @_;
