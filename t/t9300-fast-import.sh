@@ -1031,6 +1031,32 @@ test_expect_success \
 	 git diff-tree -M -r M3^ M3 >actual &&
 	 compare_diff_raw expect actual'
 
+cat >input <<INPUT_END
+commit refs/heads/M4
+committer $GIT_COMMITTER_NAME <$GIT_COMMITTER_EMAIL> $GIT_COMMITTER_DATE
+data <<COMMIT
+rename root
+COMMIT
+
+from refs/heads/M2^0
+R "" sub
+
+INPUT_END
+
+cat >expect <<EOF
+:100644 100644 7123f7f44e39be127c5eb701e5968176ee9d78b1 7123f7f44e39be127c5eb701e5968176ee9d78b1 R100	file2/oldf	sub/file2/oldf
+:100755 100755 85df50785d62d3b05ab03d9cbf7e4a0b49449730 85df50785d62d3b05ab03d9cbf7e4a0b49449730 R100	file4	sub/file4
+:100755 100755 f1fb5da718392694d0076d677d6d0e364c79b0bc f1fb5da718392694d0076d677d6d0e364c79b0bc R100	i/am/new/to/you	sub/i/am/new/to/you
+:100755 100755 e74b7d465e52746be2b4bae983670711e6e66657 e74b7d465e52746be2b4bae983670711e6e66657 R100	newdir/exec.sh	sub/newdir/exec.sh
+:100644 100644 fcf778cda181eaa1cbc9e9ce3a2e15ee9f9fe791 fcf778cda181eaa1cbc9e9ce3a2e15ee9f9fe791 R100	newdir/interesting	sub/newdir/interesting
+EOF
+test_expect_success \
+	'M: rename root to subdirectory' \
+	'git fast-import <input &&
+	 git diff-tree -M -r M4^ M4 >actual &&
+	 cat actual &&
+	 compare_diff_raw expect actual'
+
 ###
 ### series N
 ###
@@ -1225,6 +1251,29 @@ test_expect_success \
 	INPUT_END
 	 git fast-import <input &&
 	 git diff-tree -C --find-copies-harder -r N4 N6 >actual &&
+	 compare_diff_raw expect actual'
+
+test_expect_success \
+	'N: copy root by path' \
+	'cat >expect <<-\EOF &&
+	:100755 100755 f1fb5da718392694d0076d677d6d0e364c79b0bc f1fb5da718392694d0076d677d6d0e364c79b0bc C100	file2/newf	oldroot/file2/newf
+	:100644 100644 7123f7f44e39be127c5eb701e5968176ee9d78b1 7123f7f44e39be127c5eb701e5968176ee9d78b1 C100	file2/oldf	oldroot/file2/oldf
+	:100755 100755 85df50785d62d3b05ab03d9cbf7e4a0b49449730 85df50785d62d3b05ab03d9cbf7e4a0b49449730 C100	file4	oldroot/file4
+	:100755 100755 e74b7d465e52746be2b4bae983670711e6e66657 e74b7d465e52746be2b4bae983670711e6e66657 C100	newdir/exec.sh	oldroot/newdir/exec.sh
+	:100644 100644 fcf778cda181eaa1cbc9e9ce3a2e15ee9f9fe791 fcf778cda181eaa1cbc9e9ce3a2e15ee9f9fe791 C100	newdir/interesting	oldroot/newdir/interesting
+	EOF
+	 cat >input <<-INPUT_END &&
+	commit refs/heads/N-copy-root-path
+	committer $GIT_COMMITTER_NAME <$GIT_COMMITTER_EMAIL> $GIT_COMMITTER_DATE
+	data <<COMMIT
+	copy root directory by (empty) path
+	COMMIT
+
+	from refs/heads/branch^0
+	C "" oldroot
+	INPUT_END
+	 git fast-import <input &&
+	 git diff-tree -C --find-copies-harder -r branch N-copy-root-path >actual &&
 	 compare_diff_raw expect actual'
 
 test_expect_success \
@@ -2932,6 +2981,22 @@ test_expect_success 'S: ls with garbage after sha1 must fail' '
 	EOF
 	cat err &&
 	test_i18ngrep "space after tree-ish" err
+'
+
+###
+### series T (ls)
+###
+# Setup is carried over from series S.
+
+test_expect_success 'T: ls root tree' '
+	sed -e "s/Z\$//" >expect <<-EOF &&
+	040000 tree $(git rev-parse S^{tree})	Z
+	EOF
+	sha1=$(git rev-parse --verify S) &&
+	git fast-import --import-marks=marks <<-EOF >actual &&
+	ls $sha1 ""
+	EOF
+	test_cmp expect actual
 '
 
 test_done
