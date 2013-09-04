@@ -4562,7 +4562,7 @@ msgid "print sizes in human readable format"
 msgstr "以用户可读的格式显示大小"
 
 #: builtin/describe.c:16
-msgid "git describe [options] <committish>*"
+msgid "git describe [options] <commit-ish>*"
 msgstr "git describe [选项] <提交号>*"
 
 #: builtin/describe.c:17
@@ -4698,7 +4698,7 @@ msgid "No names found, cannot describe anything."
 msgstr "没有发现名称，无法描述任何东西。"
 
 #: builtin/describe.c:489
-msgid "--dirty is incompatible with committishes"
+msgid "--dirty is incompatible with commit-ishes"
 msgstr "--dirty 不能与提交同时使用"
 
 #: builtin/diff.c:79

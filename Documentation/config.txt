@@ -170,8 +170,8 @@ advice.*::
 	pushNeedsForce::
 		Shown when linkgit:git-push[1] rejects an update that
 		tries to overwrite a remote ref that points at an
-		object that is not a committish, or make the remote
-		ref point at an object that is not a committish.
+		object that is not a commit-ish, or make the remote
+		ref point at an object that is not a commit-ish.
 	statusHints::
 		Show directions on how to proceed from the current
 		state in the output of linkgit:git-status[1], in

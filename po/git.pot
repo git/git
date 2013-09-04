@@ -4335,7 +4335,7 @@ msgid "print sizes in human readable format"
 msgstr ""
 
 #: builtin/describe.c:16
-msgid "git describe [options] <committish>*"
+msgid "git describe [options] <commit-ish>*"
 msgstr ""
 
 #: builtin/describe.c:17
@@ -4465,7 +4465,7 @@ msgid "No names found, cannot describe anything."
 msgstr ""
 
 #: builtin/describe.c:489
-msgid "--dirty is incompatible with committishes"
+msgid "--dirty is incompatible with commit-ishes"
 msgstr ""
 
 #: builtin/diff.c:79

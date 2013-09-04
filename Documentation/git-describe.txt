@@ -9,7 +9,7 @@ git-describe - Show the most recent tag that is reachable from a commit
 SYNOPSIS
 --------
 [verse]
-'git describe' [--all] [--tags] [--contains] [--abbrev=<n>] <committish>...
+'git describe' [--all] [--tags] [--contains] [--abbrev=<n>] <commit-ish>...
 'git describe' [--all] [--tags] [--contains] [--abbrev=<n>] --dirty[=<mark>]
 
 DESCRIPTION
@@ -26,8 +26,8 @@ see the -a and -s options to linkgit:git-tag[1].
 
 OPTIONS
 -------
-<committish>...::
-	Committish object names to describe.
+<commit-ish>...::
+	Commit-ish object names to describe.
 
 --dirty[=<mark>]::
 	Describe the working tree.
@@ -57,7 +57,7 @@ OPTIONS
 
 --candidates=<n>::
 	Instead of considering only the 10 most recent tags as
-	candidates to describe the input committish consider
+	candidates to describe the input commit-ish consider
 	up to <n> candidates.  Increasing <n> above 10 will take
 	slightly longer but may produce a more accurate result.
 	An <n> of 0 will cause only exact matches to be output.
@@ -145,7 +145,7 @@ be sufficient to disambiguate these commits.
 SEARCH STRATEGY
 ---------------
 
-For each committish supplied, 'git describe' will first look for
+For each commit-ish supplied, 'git describe' will first look for
 a tag which tags exactly that commit.  Annotated tags will always
 be preferred over lightweight tags, and tags with newer dates will
 always be preferred over tags with older dates.  If an exact match
@@ -154,12 +154,12 @@ is found, its name will be output and searching will stop.
 If an exact match was not found, 'git describe' will walk back
 through the commit history to locate an ancestor commit which
 has been tagged.  The ancestor's tag will be output along with an
-abbreviation of the input committish's SHA-1. If '--first-parent' was
+abbreviation of the input commit-ish's SHA-1. If '--first-parent' was
 specified then the walk will only consider the first parent of each
 commit.
 
 If multiple tags were found during the walk then the tag which
-has the fewest commits different from the input committish will be
+has the fewest commits different from the input commit-ish will be
 selected and output.  Here fewest commits different is defined as
 the number of commits which would be shown by `git log tag..input`
 will be the smallest number of commits possible.

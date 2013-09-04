@@ -13,7 +13,7 @@
 #define MAX_TAGS	(FLAG_BITS - 1)
 
 static const char * const describe_usage[] = {
-	N_("git describe [options] <committish>*"),
+	N_("git describe [options] <commit-ish>*"),
 	N_("git describe [options] --dirty"),
 	NULL
 };
@@ -486,7 +486,7 @@ int cmd_describe(int argc, const char **argv, const char *prefix)
 		}
 		describe("HEAD", 1);
 	} else if (dirty) {
-		die(_("--dirty is incompatible with committishes"));
+		die(_("--dirty is incompatible with commit-ishes"));
 	} else {
 		while (argc-- > 0) {
 			describe(*argv++, argc == 0);

@@ -10,7 +10,7 @@ SYNOPSIS
 --------
 [verse]
 'git name-rev' [--tags] [--refs=<pattern>]
-	       ( --all | --stdin | <committish>... )
+	       ( --all | --stdin | <commit-ish>... )
 
 DESCRIPTION
 -----------
