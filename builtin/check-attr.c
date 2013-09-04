@@ -13,14 +13,14 @@ N_("git check-attr --stdin [-z] [-a | --all | attr...] < <list-of-paths>"),
 NULL
 };
 
-static int null_term_line;
+static int nul_term_line;
 
 static const struct option check_attr_options[] = {
 	OPT_BOOLEAN('a', "all", &all_attrs, N_("report all attributes set on file")),
 	OPT_BOOLEAN(0,  "cached", &cached_attrs, N_("use .gitattributes only from the index")),
 	OPT_BOOLEAN(0 , "stdin", &stdin_paths, N_("read file names from stdin")),
-	OPT_BOOLEAN('z', NULL, &null_term_line,
-		N_("input paths are terminated by a null character")),
+	OPT_BOOLEAN('z', NULL, &nul_term_line,
+		    N_("terminate input and output records by a NUL character")),
 	OPT_END()
 };
 
@@ -38,8 +38,16 @@ static void output_attr(int cnt, struct git_attr_check *check,
 		else if (ATTR_UNSET(value))
 			value = "unspecified";
 
-		quote_c_style(file, NULL, stdout, 0);
-		printf(": %s: %s\n", git_attr_name(check[j].attr), value);
+		if (nul_term_line) {
+			printf("%s%c" /* path */
+			       "%s%c" /* attrname */
+			       "%s%c" /* attrvalue */,
+			       file, 0, git_attr_name(check[j].attr), 0, value, 0);
+		} else {
+			quote_c_style(file, NULL, stdout, 0);
+			printf(": %s: %s\n", git_attr_name(check[j].attr), value);
+		}
+
 	}
 }
 
@@ -65,7 +73,7 @@ static void check_attr_stdin_paths(const char *prefix, int cnt,
 	struct git_attr_check *check)
 {
 	struct strbuf buf, nbuf;
-	int line_termination = null_term_line ? 0 : '\n';
+	int line_termination = nul_term_line ? 0 : '\n';
 
 	strbuf_init(&buf, 0);
 	strbuf_init(&nbuf, 0);
