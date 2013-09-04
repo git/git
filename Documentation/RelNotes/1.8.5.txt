@@ -48,8 +48,25 @@ Updates since v1.8.4
 
 Foreign interfaces, subsystems and ports.
 
+ * remote-hg remote helper misbehaved when interacting with a local Hg
+   repository relative to the home directory, e.g. "clone hg::~/there".
+
+ * imap-send ported to OS X uses Apple's security framework instead of
+   OpenSSL one.
+
+ * Subversion 1.8.0 that was recently released breaks older subversion
+   clients coming over http/https in various ways.
+
+ * "git fast-import" treats an empty path given to "ls" as the root of
+   the tree.
+
 
 UI, Workflows & Features
+
+ * "git check-ignore -z" applied the NUL termination to both its input
+   (with --stdin) and its output, but "git check-attr -z" ignored the
+   option on the output side. Make both honor -z on the input and
+   output side the same way.
 
  * "git whatchanged" may still be used by old timers, but mention of
    it in documents meant for new users will only waste readers' time
@@ -61,6 +78,24 @@ UI, Workflows & Features
 
 Performance, Internal Implementation, etc.
 
+ * Many commands use --dashed-option as a operation mode selector
+   (e.g. "git tag --delete") that the user can use at most one
+   (e.g. "git tag --delete --verify" is a nonsense) and you cannot
+   negate (e.g. "git tag --no-delete" is a nonsense).  parse-options
+   API learned a new OPT_CMDMODE macro to make it easier to implement
+   such a set of options.
+
+ * OPT_BOOLEAN() in parse-options API was misdesigned to be "counting
+   up" but many subcommands expect it to behave as "on/off". Update
+   them to use OPT_BOOL() which is a proper boolean.
+
+ * "git gc" exits early without doing a double-work when it detects
+   that another instance of itself is already running.
+
+ * Under memory pressure and/or file descriptor pressure, we used to
+   close pack windows that are not used and also closed filehandle to
+   an open but unused packfiles. These are now controlled separately
+   to better cope with the load.
 
 Also contains various documentation updates and code clean-ups.
 
@@ -71,6 +106,15 @@ Fixes since v1.8.4
 Unless otherwise noted, all the fixes since v1.8.4 in the maintenance
 track are contained in this release (see release notes to them for
 details).
+
+ * Setting submodule.*.path configuration variable to true (without
+   giving "= value") caused Git to segfault.
+   (merge 4b05440 jl/some-submodule-config-are-not-boolean later to maint).
+
+ * "git rebase -i" (there could be others, as the root cause is pretty
+   generic) fed a random, data dependeant string to 'echo' and
+   expects it to come out literally, corrupting its error message.
+   (merge 89b0230 mm/no-shell-escape-in-die-message later to maint).
 
  * Some people still use rather old versions of bash, which cannot
    grok some constructs like 'printf -v varname' the prompt and
