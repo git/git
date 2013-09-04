@@ -39,6 +39,7 @@ static int quiet;
 static int prefer_ofs_delta = 1;
 static int auto_update_server_info;
 static int auto_gc = 1;
+static int fix_thin = 1;
 static const char *head_name;
 static void *head_name_to_free;
 static int sent_capabilities;
@@ -870,7 +871,8 @@ static const char *unpack(int err_fd)
 		keeper[i++] = "--stdin";
 		if (fsck_objects)
 			keeper[i++] = "--strict";
-		keeper[i++] = "--fix-thin";
+		if (fix_thin)
+			keeper[i++] = "--fix-thin";
 		keeper[i++] = hdr_arg;
 		keeper[i++] = keep_arg;
 		keeper[i++] = NULL;
@@ -974,6 +976,10 @@ int cmd_receive_pack(int argc, const char **argv, const char *prefix)
 			}
 			if (!strcmp(arg, "--stateless-rpc")) {
 				stateless_rpc = 1;
+				continue;
+			}
+			if (!strcmp(arg, "--reject-thin-pack-for-testing")) {
+				fix_thin = 0;
 				continue;
 			}
 
