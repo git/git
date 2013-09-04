@@ -614,7 +614,7 @@ static void scan_windows(struct packed_git *p,
 	}
 }
 
-static int unuse_one_window(struct packed_git *current, int keep_fd)
+static int unuse_one_window(struct packed_git *current)
 {
 	struct packed_git *p, *lru_p = NULL;
 	struct pack_window *lru_w = NULL, *lru_l = NULL;
@@ -628,15 +628,8 @@ static int unuse_one_window(struct packed_git *current, int keep_fd)
 		pack_mapped -= lru_w->len;
 		if (lru_l)
 			lru_l->next = lru_w->next;
-		else {
+		else
 			lru_p->windows = lru_w->next;
-			if (!lru_p->windows && lru_p->pack_fd != -1
-				&& lru_p->pack_fd != keep_fd) {
-				close(lru_p->pack_fd);
-				pack_open_fds--;
-				lru_p->pack_fd = -1;
-			}
-		}
 		free(lru_w);
 		pack_open_windows--;
 		return 1;
@@ -644,10 +637,10 @@ static int unuse_one_window(struct packed_git *current, int keep_fd)
 	return 0;
 }
 
-void release_pack_memory(size_t need, int fd)
+void release_pack_memory(size_t need)
 {
 	size_t cur = pack_mapped;
-	while (need >= (cur - pack_mapped) && unuse_one_window(NULL, fd))
+	while (need >= (cur - pack_mapped) && unuse_one_window(NULL))
 		; /* nothing */
 }
 
@@ -658,7 +651,7 @@ void *xmmap(void *start, size_t length,
 	if (ret == MAP_FAILED) {
 		if (!length)
 			return NULL;
-		release_pack_memory(length, fd);
+		release_pack_memory(length);
 		ret = mmap(start, length, prot, flags, fd, offset);
 		if (ret == MAP_FAILED)
 			die_errno("Out of memory? mmap failed");
@@ -680,6 +673,83 @@ void close_pack_windows(struct packed_git *p)
 		p->windows = w->next;
 		free(w);
 	}
+}
+
+/*
+ * The LRU pack is the one with the oldest MRU window, preferring packs
+ * with no used windows, or the oldest mtime if it has no windows allocated.
+ */
+static void find_lru_pack(struct packed_git *p, struct packed_git **lru_p, struct pack_window **mru_w, int *accept_windows_inuse)
+{
+	struct pack_window *w, *this_mru_w;
+	int has_windows_inuse = 0;
+
+	/*
+	 * Reject this pack if it has windows and the previously selected
+	 * one does not.  If this pack does not have windows, reject
+	 * it if the pack file is newer than the previously selected one.
+	 */
+	if (*lru_p && !*mru_w && (p->windows || p->mtime > (*lru_p)->mtime))
+		return;
+
+	for (w = this_mru_w = p->windows; w; w = w->next) {
+		/*
+		 * Reject this pack if any of its windows are in use,
+		 * but the previously selected pack did not have any
+		 * inuse windows.  Otherwise, record that this pack
+		 * has windows in use.
+		 */
+		if (w->inuse_cnt) {
+			if (*accept_windows_inuse)
+				has_windows_inuse = 1;
+			else
+				return;
+		}
+
+		if (w->last_used > this_mru_w->last_used)
+			this_mru_w = w;
+
+		/*
+		 * Reject this pack if it has windows that have been
+		 * used more recently than the previously selected pack.
+		 * If the previously selected pack had windows inuse and
+		 * we have not encountered a window in this pack that is
+		 * inuse, skip this check since we prefer a pack with no
+		 * inuse windows to one that has inuse windows.
+		 */
+		if (*mru_w && *accept_windows_inuse == has_windows_inuse &&
+		    this_mru_w->last_used > (*mru_w)->last_used)
+			return;
+	}
+
+	/*
+	 * Select this pack.
+	 */
+	*mru_w = this_mru_w;
+	*lru_p = p;
+	*accept_windows_inuse = has_windows_inuse;
+}
+
+static int close_one_pack(void)
+{
+	struct packed_git *p, *lru_p = NULL;
+	struct pack_window *mru_w = NULL;
+	int accept_windows_inuse = 1;
+
+	for (p = packed_git; p; p = p->next) {
+		if (p->pack_fd == -1)
+			continue;
+		find_lru_pack(p, &lru_p, &mru_w, &accept_windows_inuse);
+	}
+
+	if (lru_p) {
+		close(lru_p->pack_fd);
+		pack_open_fds--;
+		lru_p->pack_fd = -1;
+		return 1;
+	}
+
+	return 0;
 }
 
 void unuse_pack(struct pack_window **w_cursor)
@@ -777,7 +847,7 @@ static int open_packed_git_1(struct packed_git *p)
 			pack_max_fds = 1;
 	}
 
-	while (pack_max_fds <= pack_open_fds && unuse_one_window(NULL, -1))
+	while (pack_max_fds <= pack_open_fds && close_one_pack())
 		; /* nothing */
 
 	p->pack_fd = git_open_noatime(p->pack_name);
@@ -893,7 +963,7 @@ unsigned char *use_pack(struct packed_git *p,
 			win->len = (size_t)len;
 			pack_mapped += win->len;
 			while (packed_git_limit < pack_mapped
-				&& unuse_one_window(p, p->pack_fd))
+				&& unuse_one_window(p))
 				; /* nothing */
 			win->base = xmmap(NULL, win->len,
 				PROT_READ, MAP_PRIVATE,
@@ -939,7 +1009,7 @@ static struct packed_git *alloc_packed_git(int extra)
 
 static void try_to_free_pack_memory(size_t size)
 {
-	release_pack_memory(size, -1);
+	release_pack_memory(size);
 }
 
 struct packed_git *add_packed_git(const char *path, int path_len, int local)
