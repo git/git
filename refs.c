@@ -2414,40 +2414,55 @@ static int curate_packed_ref_fn(struct ref_entry *entry, void *cb_data)
 	return 0;
 }
 
-static int repack_without_ref(const char *refname)
+static int repack_without_refs(const char **refnames, int n)
 {
 	struct ref_dir *packed;
 	struct string_list refs_to_delete = STRING_LIST_INIT_DUP;
 	struct string_list_item *ref_to_delete;
+	int i, removed = 0;
 
-	if (!get_packed_ref(refname))
-		return 0; /* refname does not exist in packed refs */
+	/* Look for a packed ref */
+	for (i = 0; i < n; i++)
+		if (get_packed_ref(refnames[i]))
+			break;
+
+	/* Avoid locking if we have nothing to do */
+	if (i == n)
+		return 0; /* no refname exists in packed refs */
 
 	if (lock_packed_refs(0)) {
 		unable_to_lock_error(git_path("packed-refs"), errno);
-		return error("cannot delete '%s' from packed refs", refname);
+		return error("cannot delete '%s' from packed refs", refnames[i]);
 	}
 	packed = get_packed_refs(&ref_cache);
 
-	/* Remove refname from the cache: */
-	if (remove_entry(packed, refname) == -1) {
+	/* Remove refnames from the cache */
+	for (i = 0; i < n; i++)
+		if (remove_entry(packed, refnames[i]) != -1)
+			removed = 1;
+	if (!removed) {
 		/*
-		 * The packed entry disappeared while we were
+		 * All packed entries disappeared while we were
 		 * acquiring the lock.
 		 */
 		rollback_packed_refs();
 		return 0;
 	}
 
-	/* Remove any other accumulated cruft: */
+	/* Remove any other accumulated cruft */
 	do_for_each_entry_in_dir(packed, 0, curate_packed_ref_fn, &refs_to_delete);
 	for_each_string_list_item(ref_to_delete, &refs_to_delete) {
 		if (remove_entry(packed, ref_to_delete->string) == -1)
 			die("internal error");
 	}
 
-	/* Write what remains: */
+	/* Write what remains */
 	return commit_packed_refs();
+}
+
+static int repack_without_ref(const char *refname)
+{
+	return repack_without_refs(&refname, 1);
 }
 
 static int delete_ref_loose(struct ref_lock *lock, int flag)
