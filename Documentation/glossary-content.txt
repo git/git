@@ -395,10 +395,20 @@ should not be combined with other pathspec.
 	to the result.
 
 [[def_ref]]ref::
-	A 40-byte hex representation of a <<def_SHA1,SHA-1>> or a name that
-	denotes a particular <<def_object,object>>. They may be stored in
-	a file under `$GIT_DIR/refs/` directory, or
-	in the `$GIT_DIR/packed-refs` file.
+	A name that begins with `refs/` (e.g. `refs/heads/master`)
+	that points to an <<def_object_name,object name>> or another
+	ref (the latter is called a <<def_symref,symbolic ref>>).
+	For convenience, a ref can sometimes be abbreviated when used
+	as an argument to a Git command; see linkgit:gitrevisions[7]
+	for details.
+	Refs are stored in the <<def_repository,repository>>.
++
+The ref namespace is hierarchical.
+Different subhierarchies are used for different purposes (e.g. the
+`refs/heads/` hierarchy is used to represent local branches).
++
+There are a few special-purpose refs that do not begin with `refs/`.
+The most notable example is `HEAD`.
 
 [[def_reflog]]reflog::
 	A reflog shows the local "history" of a ref.  In other words,
