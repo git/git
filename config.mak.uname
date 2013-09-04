@@ -524,7 +524,7 @@ ifneq (,$(findstring MINGW,$(uname_S)))
 	X = .exe
 	SPARSE_FLAGS = -Wno-one-bit-signed-bitfield
 ifneq (,$(wildcard ../THIS_IS_MSYSGIT))
-	htmldir = doc/git/html/
+	htmldir = share/doc/git/$(firstword $(subst -, ,$(GIT_VERSION)))/html
 	prefix =
 	INSTALL = /bin/install
 	EXTLIBS += /mingw/lib/libz.a
