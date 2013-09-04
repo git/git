@@ -2273,10 +2273,10 @@ int cmd_blame(int argc, const char **argv, const char *prefix)
 	static const char *revs_file = NULL;
 	static const char *contents_from = NULL;
 	static const struct option options[] = {
-		OPT_BOOLEAN(0, "incremental", &incremental, N_("Show blame entries as we find them, incrementally")),
-		OPT_BOOLEAN('b', NULL, &blank_boundary, N_("Show blank SHA-1 for boundary commits (Default: off)")),
-		OPT_BOOLEAN(0, "root", &show_root, N_("Do not treat root commits as boundaries (Default: off)")),
-		OPT_BOOLEAN(0, "show-stats", &show_stats, N_("Show work cost statistics")),
+		OPT_BOOL(0, "incremental", &incremental, N_("Show blame entries as we find them, incrementally")),
+		OPT_BOOL('b', NULL, &blank_boundary, N_("Show blank SHA-1 for boundary commits (Default: off)")),
+		OPT_BOOL(0, "root", &show_root, N_("Do not treat root commits as boundaries (Default: off)")),
+		OPT_BOOL(0, "show-stats", &show_stats, N_("Show work cost statistics")),
 		OPT_BIT(0, "score-debug", &output_option, N_("Show output score for blame entries"), OUTPUT_SHOW_SCORE),
 		OPT_BIT('f', "show-name", &output_option, N_("Show original filename (Default: auto)"), OUTPUT_SHOW_NAME),
 		OPT_BIT('n', "show-number", &output_option, N_("Show original linenumber (Default: off)"), OUTPUT_SHOW_NUMBER),

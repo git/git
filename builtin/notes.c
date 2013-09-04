@@ -483,7 +483,7 @@ static int copy(int argc, const char **argv, const char *prefix)
 	const char *rewrite_cmd = NULL;
 	struct option options[] = {
 		OPT__FORCE(&force, N_("replace existing notes")),
-		OPT_BOOLEAN(0, "stdin", &from_stdin, N_("read objects from stdin")),
+		OPT_BOOL(0, "stdin", &from_stdin, N_("read objects from stdin")),
 		OPT_STRING(0, "for-rewrite", &rewrite_cmd, N_("command"),
 			   N_("load rewriting config for <command> (implies "
 			      "--stdin)")),
@@ -739,13 +739,13 @@ static int merge(int argc, const char **argv, const char *prefix)
 			   N_("resolve notes conflicts using the given strategy "
 			      "(manual/ours/theirs/union/cat_sort_uniq)")),
 		OPT_GROUP(N_("Committing unmerged notes")),
-		{ OPTION_BOOLEAN, 0, "commit", &do_commit, NULL,
+		{ OPTION_SET_INT, 0, "commit", &do_commit, NULL,
 			N_("finalize notes merge by committing unmerged notes"),
-			PARSE_OPT_NOARG | PARSE_OPT_NONEG },
+			PARSE_OPT_NOARG | PARSE_OPT_NONEG, NULL, 1},
 		OPT_GROUP(N_("Aborting notes merge resolution")),
-		{ OPTION_BOOLEAN, 0, "abort", &do_abort, NULL,
+		{ OPTION_SET_INT, 0, "abort", &do_abort, NULL,
 			N_("abort notes merge"),
-			PARSE_OPT_NOARG | PARSE_OPT_NONEG },
+			PARSE_OPT_NOARG | PARSE_OPT_NONEG, NULL, 1},
 		OPT_END()
 	};
 
@@ -853,7 +853,7 @@ static int remove_cmd(int argc, const char **argv, const char *prefix)
 		OPT_BIT(0, "ignore-missing", &flag,
 			N_("attempt to remove non-existent note is not an error"),
 			IGNORE_MISSING),
-		OPT_BOOLEAN(0, "stdin", &from_stdin,
+		OPT_BOOL(0, "stdin", &from_stdin,
 			    N_("read object names from the standard input")),
 		OPT_END()
 	};

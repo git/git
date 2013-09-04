@@ -70,10 +70,10 @@ static const char *vpath;
 
 static const struct option hash_object_options[] = {
 	OPT_STRING('t', NULL, &type, N_("type"), N_("object type")),
-	OPT_BOOLEAN('w', NULL, &write_object, N_("write the object into the object database")),
-	OPT_BOOLEAN( 0 , "stdin", &hashstdin, N_("read the object from stdin")),
-	OPT_BOOLEAN( 0 , "stdin-paths", &stdin_paths, N_("read file names from stdin")),
-	OPT_BOOLEAN( 0 , "no-filters", &no_filters, N_("store file as is without filters")),
+	OPT_BOOL('w', NULL, &write_object, N_("write the object into the object database")),
+	OPT_COUNTUP( 0 , "stdin", &hashstdin, N_("read the object from stdin")),
+	OPT_BOOL( 0 , "stdin-paths", &stdin_paths, N_("read file names from stdin")),
+	OPT_BOOL( 0 , "no-filters", &no_filters, N_("store file as is without filters")),
 	OPT_STRING( 0 , "path", &vpath, N_("file"), N_("process file as it were from this path")),
 	OPT_END()
 };

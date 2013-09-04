@@ -875,12 +875,12 @@ int cmd_clean(int argc, const char **argv, const char *prefix)
 		OPT__DRY_RUN(&dry_run, N_("dry run")),
 		OPT__FORCE(&force, N_("force")),
 		OPT_BOOL('i', "interactive", &interactive, N_("interactive cleaning")),
-		OPT_BOOLEAN('d', NULL, &remove_directories,
+		OPT_BOOL('d', NULL, &remove_directories,
 				N_("remove whole directories")),
 		{ OPTION_CALLBACK, 'e', "exclude", &exclude_list, N_("pattern"),
 		  N_("add <pattern> to ignore rules"), PARSE_OPT_NONEG, exclude_cb },
-		OPT_BOOLEAN('x', NULL, &ignored, N_("remove ignored files, too")),
-		OPT_BOOLEAN('X', NULL, &ignored_only,
+		OPT_BOOL('x', NULL, &ignored, N_("remove ignored files, too")),
+		OPT_BOOL('X', NULL, &ignored_only,
 				N_("remove only ignored files")),
 		OPT_END()
 	};

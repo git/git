@@ -71,44 +71,19 @@ static void verify_opt_compatible(const char *me, const char *base_opt, ...)
 		die(_("%s: %s cannot be used with %s"), me, this_opt, base_opt);
 }
 
-LAST_ARG_MUST_BE_NULL
-static void verify_opt_mutually_compatible(const char *me, ...)
-{
-	const char *opt1, *opt2 = NULL;
-	va_list ap;
-
-	va_start(ap, me);
-	while ((opt1 = va_arg(ap, const char *))) {
-		if (va_arg(ap, int))
-			break;
-	}
-	if (opt1) {
-		while ((opt2 = va_arg(ap, const char *))) {
-			if (va_arg(ap, int))
-				break;
-		}
-	}
-	va_end(ap);
-
-	if (opt1 && opt2)
-		die(_("%s: %s cannot be used with %s"),	me, opt1, opt2);
-}
-
 static void parse_args(int argc, const char **argv, struct replay_opts *opts)
 {
 	const char * const * usage_str = revert_or_cherry_pick_usage(opts);
 	const char *me = action_name(opts);
-	int remove_state = 0;
-	int contin = 0;
-	int rollback = 0;
+	int cmd = 0;
 	struct option options[] = {
-		OPT_BOOLEAN(0, "quit", &remove_state, N_("end revert or cherry-pick sequence")),
-		OPT_BOOLEAN(0, "continue", &contin, N_("resume revert or cherry-pick sequence")),
-		OPT_BOOLEAN(0, "abort", &rollback, N_("cancel revert or cherry-pick sequence")),
-		OPT_BOOLEAN('n', "no-commit", &opts->no_commit, N_("don't automatically commit")),
-		OPT_BOOLEAN('e', "edit", &opts->edit, N_("edit the commit message")),
+		OPT_CMDMODE(0, "quit", &cmd, N_("end revert or cherry-pick sequence"), 'q'),
+		OPT_CMDMODE(0, "continue", &cmd, N_("resume revert or cherry-pick sequence"), 'c'),
+		OPT_CMDMODE(0, "abort", &cmd, N_("cancel revert or cherry-pick sequence"), 'a'),
+		OPT_BOOL('n', "no-commit", &opts->no_commit, N_("don't automatically commit")),
+		OPT_BOOL('e', "edit", &opts->edit, N_("edit the commit message")),
 		OPT_NOOP_NOARG('r', NULL),
-		OPT_BOOLEAN('s', "signoff", &opts->signoff, N_("add Signed-off-by:")),
+		OPT_BOOL('s', "signoff", &opts->signoff, N_("add Signed-off-by:")),
 		OPT_INTEGER('m', "mainline", &opts->mainline, N_("parent number")),
 		OPT_RERERE_AUTOUPDATE(&opts->allow_rerere_auto),
 		OPT_STRING(0, "strategy", &opts->strategy, N_("strategy"), N_("merge strategy")),
@@ -124,11 +99,11 @@ static void parse_args(int argc, const char **argv, struct replay_opts *opts)
 
 	if (opts->action == REPLAY_PICK) {
 		struct option cp_extra[] = {
-			OPT_BOOLEAN('x', NULL, &opts->record_origin, N_("append commit name")),
-			OPT_BOOLEAN(0, "ff", &opts->allow_ff, N_("allow fast-forward")),
-			OPT_BOOLEAN(0, "allow-empty", &opts->allow_empty, N_("preserve initially empty commits")),
-			OPT_BOOLEAN(0, "allow-empty-message", &opts->allow_empty_message, N_("allow commits with empty messages")),
-			OPT_BOOLEAN(0, "keep-redundant-commits", &opts->keep_redundant_commits, N_("keep redundant, empty commits")),
+			OPT_BOOL('x', NULL, &opts->record_origin, N_("append commit name")),
+			OPT_BOOL(0, "ff", &opts->allow_ff, N_("allow fast-forward")),
+			OPT_BOOL(0, "allow-empty", &opts->allow_empty, N_("preserve initially empty commits")),
+			OPT_BOOL(0, "allow-empty-message", &opts->allow_empty_message, N_("allow commits with empty messages")),
+			OPT_BOOL(0, "keep-redundant-commits", &opts->keep_redundant_commits, N_("keep redundant, empty commits")),
 			OPT_END(),
 		};
 		if (parse_options_concat(options, ARRAY_SIZE(options), cp_extra))
@@ -139,23 +114,16 @@ static void parse_args(int argc, const char **argv, struct replay_opts *opts)
 			PARSE_OPT_KEEP_ARGV0 |
 			PARSE_OPT_KEEP_UNKNOWN);
 
-	/* Check for incompatible subcommands */
-	verify_opt_mutually_compatible(me,
-				"--quit", remove_state,
-				"--continue", contin,
-				"--abort", rollback,
-				NULL);
-
 	/* implies allow_empty */
 	if (opts->keep_redundant_commits)
 		opts->allow_empty = 1;
 
 	/* Set the subcommand */
-	if (remove_state)
+	if (cmd == 'q')
 		opts->subcommand = REPLAY_REMOVE_STATE;
-	else if (contin)
+	else if (cmd == 'c')
 		opts->subcommand = REPLAY_CONTINUE;
-	else if (rollback)
+	else if (cmd == 'a')
 		opts->subcommand = REPLAY_ROLLBACK;
 	else
 		opts->subcommand = REPLAY_NONE;

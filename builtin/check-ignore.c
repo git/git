@@ -18,12 +18,12 @@ static const struct option check_ignore_options[] = {
 	OPT__QUIET(&quiet, N_("suppress progress reporting")),
 	OPT__VERBOSE(&verbose, N_("be verbose")),
 	OPT_GROUP(""),
-	OPT_BOOLEAN(0, "stdin", &stdin_paths,
-		    N_("read file names from stdin")),
-	OPT_BOOLEAN('z', NULL, &nul_term_line,
-		    N_("terminate input and output records by a NUL character")),
-	OPT_BOOLEAN('n', "non-matching", &show_non_matching,
-		    N_("show non-matching input paths")),
+	OPT_BOOL(0, "stdin", &stdin_paths,
+		 N_("read file names from stdin")),
+	OPT_BOOL('z', NULL, &nul_term_line,
+		 N_("terminate input and output records by a NUL character")),
+	OPT_BOOL('n', "non-matching", &show_non_matching,
+		 N_("show non-matching input paths")),
 	OPT_END()
 };
 

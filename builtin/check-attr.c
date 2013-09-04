@@ -16,11 +16,11 @@ NULL
 static int nul_term_line;
 
 static const struct option check_attr_options[] = {
-	OPT_BOOLEAN('a', "all", &all_attrs, N_("report all attributes set on file")),
-	OPT_BOOLEAN(0,  "cached", &cached_attrs, N_("use .gitattributes only from the index")),
-	OPT_BOOLEAN(0 , "stdin", &stdin_paths, N_("read file names from stdin")),
-	OPT_BOOLEAN('z', NULL, &nul_term_line,
-		    N_("terminate input and output records by a NUL character")),
+	OPT_BOOL('a', "all", &all_attrs, N_("report all attributes set on file")),
+	OPT_BOOL(0,  "cached", &cached_attrs, N_("use .gitattributes only from the index")),
+	OPT_BOOL(0 , "stdin", &stdin_paths, N_("read file names from stdin")),
+	OPT_BOOL('z', NULL, &nul_term_line,
+		 N_("terminate input and output records by a NUL character")),
 	OPT_END()
 };
 
