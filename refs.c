@@ -3170,12 +3170,13 @@ int for_each_reflog(each_ref_fn fn, void *cb_data)
 	return retval;
 }
 
-int update_ref(const char *action, const char *refname,
-		const unsigned char *sha1, const unsigned char *oldval,
-		int flags, enum action_on_err onerr)
+static struct ref_lock *update_ref_lock(const char *refname,
+					const unsigned char *oldval,
+					int flags, int *type_p,
+					enum action_on_err onerr)
 {
-	static struct ref_lock *lock;
-	lock = lock_any_ref_for_update(refname, oldval, flags, NULL);
+	struct ref_lock *lock;
+	lock = lock_any_ref_for_update(refname, oldval, flags, type_p);
 	if (!lock) {
 		const char *str = "Cannot lock the ref '%s'.";
 		switch (onerr) {
@@ -3183,8 +3184,14 @@ int update_ref(const char *action, const char *refname,
 		case DIE_ON_ERR: die(str, refname); break;
 		case QUIET_ON_ERR: break;
 		}
-		return 1;
 	}
+	return lock;
+}
+
+static int update_ref_write(const char *action, const char *refname,
+			    const unsigned char *sha1, struct ref_lock *lock,
+			    enum action_on_err onerr)
+{
 	if (write_ref_sha1(lock, sha1, action) < 0) {
 		const char *str = "Cannot update the ref '%s'.";
 		switch (onerr) {
@@ -3195,6 +3202,17 @@ int update_ref(const char *action, const char *refname,
 		return 1;
 	}
 	return 0;
+}
+
+int update_ref(const char *action, const char *refname,
+	       const unsigned char *sha1, const unsigned char *oldval,
+	       int flags, enum action_on_err onerr)
+{
+	struct ref_lock *lock;
+	lock = update_ref_lock(refname, oldval, flags, 0, onerr);
+	if (!lock)
+		return 1;
+	return update_ref_write(action, refname, sha1, lock, onerr);
 }
 
 struct ref *find_ref_by_name(const struct ref *list, const char *name)
