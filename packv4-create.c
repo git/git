@@ -484,8 +484,20 @@ void *pv4_encode_tree(void *_buffer, unsigned long *sizep,
 			delta = NULL;
 	}
 
-	while (tree_entry(&desc, &name_entry)) {
+	while (desc.size) {
 		int pathlen, index;
+
+		/*
+		 * We don't want any zero-padded mode.  We won't be able
+		 * to recreate such an object byte for byte.
+		 */
+		if (*(const char *)desc.buffer == '0') {
+			error("zero-padded mode encountered");
+			free(buffer);
+			return NULL;
+		}
+
+		tree_entry(&desc, &name_entry);
 
 		/*
 		 * Try to match entries against our delta object.
