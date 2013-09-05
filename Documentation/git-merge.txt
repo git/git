@@ -186,11 +186,11 @@ In such a case, you can "unwrap" the tag yourself before feeding it
 to `git merge`, or pass `--ff-only` when you do not have any work on
 your own. e.g.
 
----
+----
 git fetch origin
 git merge v1.2.3^0
 git merge --ff-only v1.2.3
----
+----
 
 
 HOW CONFLICTS ARE PRESENTED
