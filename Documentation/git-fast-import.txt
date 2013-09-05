@@ -361,8 +361,8 @@ and control the current import process.  More detailed discussion
 	`--cat-blob-fd` or `stdout` if unspecified.
 
 `feature`::
-	Require that fast-import supports the specified feature, or
-	abort if it does not.
+	Enable the specified feature. This requires that fast-import
+	supports the specified feature, and aborts if it does not.
 
 `option`::
 	Specify any of the options listed under OPTIONS that do not
