@@ -270,13 +270,7 @@ int interactive_add(int argc, const char **argv, const char *prefix, int patch)
 {
 	struct pathspec pathspec;
 
-	/*
-	 * git-add--interactive itself does not parse pathspec. It
-	 * simply passes the pathspec to other builtin commands. Let's
-	 * hope all of them support all magic, or we'll need to limit
-	 * the magic here.
-	 */
-	parse_pathspec(&pathspec, PATHSPEC_ALL_MAGIC & ~PATHSPEC_FROMTOP,
+	parse_pathspec(&pathspec, 0,
 		       PATHSPEC_PREFER_FULL |
 		       PATHSPEC_SYMLINK_LEADING_PATH |
 		       PATHSPEC_PREFIX_ORIGIN,

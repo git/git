@@ -1149,13 +1149,6 @@ int cmd_checkout(int argc, const char **argv, const char *prefix)
 	}
 
 	if (argc) {
-		/*
-		 * In patch mode (opts.patch_mode != 0), we pass the
-		 * pathspec to an external program, git-add--interactive.
-		 * Do not accept any kind of magic that that program
-		 * cannot handle. Magic mask is pretty safe to be
-		 * lifted for new magic when opts.patch_mode == 0.
-		 */
 		parse_pathspec(&opts.pathspec, 0,
 			       opts.patch_mode ? PATHSPEC_PREFIX_ORIGIN : 0,
 			       prefix, argv);
