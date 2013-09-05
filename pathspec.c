@@ -231,7 +231,9 @@ static unsigned prefix_pathspec(struct pathspec_item *item,
 		const char *start = elt;
 		if (prefixlen && !literal_global) {
 			/* Preserve the actual prefix length of each pattern */
-			if (long_magic_end) {
+			if (short_magic)
+				die("BUG: prefixing on short magic is not supported");
+			else if (long_magic_end) {
 				strbuf_add(&sb, start, long_magic_end - start);
 				strbuf_addf(&sb, ",prefix:%d", prefixlen);
 				start = long_magic_end;
