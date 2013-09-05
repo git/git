@@ -9,7 +9,7 @@
  * Properties of the created commit:
  * - tree: the result of converting t to a tree object with write_notes_tree().
  * - parents: the given parents OR (if NULL) the commit referenced by t->ref.
- * - author/committer: the default determined by commmit_tree().
+ * - author/committer: the default determined by commit_tree().
  * - commit message: msg
  *
  * The resulting commit SHA1 is stored in result_sha1.
