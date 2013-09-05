@@ -897,6 +897,8 @@ static struct ref *do_fetch_pack(struct fetch_pack_args *args,
 		packet_flush(fd[1]);
 	if (args->depth > 0)
 		setup_alternate_shallow();
+	else
+		alternate_shallow_file = NULL;
 	if (get_pack(args, fd, pack_lockfile))
 		die("git fetch-pack: fetch failed.");
 
@@ -987,7 +989,7 @@ struct ref *fetch_pack(struct fetch_pack_args *args,
 	}
 	ref_cpy = do_fetch_pack(args, fd, ref, sought, nr_sought, pack_lockfile);
 
-	if (alternate_shallow_file) {
+	if (args->depth > 0 && alternate_shallow_file) {
 		if (*alternate_shallow_file == '\0') { /* --unshallow */
 			unlink_or_warn(git_path("shallow"));
 			rollback_lock_file(&shallow_lock);
