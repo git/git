@@ -185,6 +185,12 @@ applicable refspec takes precedence.  The left-hand of refspecs
 advertised with this capability must cover all refs reported by
 the list command.  If no 'refspec' capability is advertised,
 there is an implied `refspec *:*`.
++
+When writing remote-helpers for decentralized version control
+systems, it is advised to keep a local copy of the repository to
+interact with, and to let the private namespace refs point to this
+local repository, while the refs/remotes namespace is used to track
+the remote repository.
 
 'bidi-import'::
 	This modifies the 'import' capability.
