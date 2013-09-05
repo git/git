@@ -24,6 +24,11 @@ INSTLIBDIR=$(shell $(MAKE) -C $(GIT_ROOT_DIR)/perl \
 
 all: build
 
+test: all
+	$(MAKE) -C t
+
+check: perlcritic test
+
 install_pm:
 	install $(GIT_MEDIAWIKI_PM) $(INSTLIBDIR)/$(GIT_MEDIAWIKI_PM)
 
@@ -41,4 +46,7 @@ clean:
 	rm $(INSTLIBDIR)/$(GIT_MEDIAWIKI_PM)
 
 perlcritic:
-	perlcritic -2 *.perl
+	perlcritic -5 $(SCRIPT_PERL)
+	-perlcritic -2 $(SCRIPT_PERL)
+
+.PHONY: all test check install_pm install clean perlcritic
