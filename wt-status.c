@@ -8,6 +8,7 @@
 #include "diffcore.h"
 #include "quote.h"
 #include "run-command.h"
+#include "argv-array.h"
 #include "remote.h"
 #include "refs.h"
 #include "submodule.h"
@@ -663,29 +664,30 @@ static void wt_status_print_submodule_summary(struct wt_status *s, int uncommitt
 	char summary_limit[64];
 	char index[PATH_MAX];
 	const char *env[] = { NULL, NULL };
-	const char *argv[8];
-
-	env[0] =	index;
-	argv[0] =	"submodule";
-	argv[1] =	"summary";
-	argv[2] =	uncommitted ? "--files" : "--cached";
-	argv[3] =	"--for-status";
-	argv[4] =	"--summary-limit";
-	argv[5] =	summary_limit;
-	argv[6] =	uncommitted ? NULL : (s->amend ? "HEAD^" : "HEAD");
-	argv[7] =	NULL;
+	struct argv_array argv = ARGV_ARRAY_INIT;
 
 	sprintf(summary_limit, "%d", s->submodule_summary);
 	snprintf(index, sizeof(index), "GIT_INDEX_FILE=%s", s->index_file);
 
+	env[0] = index;
+	argv_array_push(&argv, "submodule");
+	argv_array_push(&argv, "summary");
+	argv_array_push(&argv, uncommitted ? "--files" : "--cached");
+	argv_array_push(&argv, "--for-status");
+	argv_array_push(&argv, "--summary-limit");
+	argv_array_push(&argv, summary_limit);
+	if (!uncommitted)
+		argv_array_push(&argv, s->amend ? "HEAD^" : "HEAD");
+
 	memset(&sm_summary, 0, sizeof(sm_summary));
-	sm_summary.argv = argv;
+	sm_summary.argv = argv.argv;
 	sm_summary.env = env;
 	sm_summary.git_cmd = 1;
 	sm_summary.no_stdin = 1;
 	fflush(s->fp);
 	sm_summary.out = dup(fileno(s->fp));    /* run_command closes it */
 	run_command(&sm_summary);
+	argv_array_clear(&argv);
 }
 
 static void wt_status_print_other(struct wt_status *s,
