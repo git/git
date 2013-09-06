@@ -84,6 +84,7 @@ test_expect_success 'status --column' '
 #
 #	dir1/untracked dir2/untracked output
 #	dir2/modified  expect         untracked
+#
 EOF
 	COLUMNS=50 git -c status.displayCommentPrefix=true status --column="column dense" >output &&
 	test_i18ncmp expect output
@@ -117,6 +118,7 @@ cat >expect <<\EOF
 #	expect
 #	output
 #	untracked
+#
 EOF
 
 test_expect_success 'status with status.displayCommentPrefix=true' '
@@ -167,6 +169,7 @@ Untracked files:
 	expect
 	output
 	untracked
+
 EOF
 
 test_expect_success 'status (advice.statusHints false)' '
@@ -241,6 +244,7 @@ Untracked files:
   (use "git add <file>..." to include in what will be committed)
 
 	dir2/modified
+
 Ignored files:
   (use "git add -f <file>..." to include in what will be committed)
 
@@ -250,6 +254,7 @@ Ignored files:
 	expect
 	output
 	untracked
+
 EOF
 	git status --ignored >output &&
 	test_i18ncmp expect output
@@ -308,6 +313,7 @@ Ignored files:
 	expect
 	output
 	untracked
+
 EOF
 	git status --ignored >output &&
 	test_i18ncmp expect output
@@ -430,6 +436,7 @@ Untracked files:
 	expect
 	output
 	untracked
+
 EOF
 	git status -unormal >output &&
 	test_i18ncmp expect output
@@ -488,6 +495,7 @@ Untracked files:
 	expect
 	output
 	untracked
+
 EOF
 	git status -uall >output &&
 	test_i18ncmp expect output
@@ -548,6 +556,7 @@ Untracked files:
 	../expect
 	../output
 	../untracked
+
 EOF
 	(cd dir1 && git status) >output &&
 	test_i18ncmp expect output
@@ -618,6 +627,7 @@ Untracked files:
 	<BLUE>expect<RESET>
 	<BLUE>output<RESET>
 	<BLUE>untracked<RESET>
+
 EOF
 	test_config color.ui always &&
 	git status | test_decode_color >output &&
@@ -747,6 +757,7 @@ Untracked files:
 	expect
 	output
 	untracked
+
 EOF
 	test_config status.relativePaths false &&
 	(cd dir1 && git status) >output &&
@@ -789,6 +800,7 @@ Untracked files:
 	expect
 	output
 	untracked
+
 EOF
 	git commit --dry-run dir1/modified >output &&
 	test_i18ncmp expect output
@@ -838,6 +850,7 @@ Untracked files:
 	expect
 	output
 	untracked
+
 EOF
 	git status >output &&
 	test_i18ncmp expect output
@@ -902,6 +915,7 @@ Untracked files:
 	expect
 	output
 	untracked
+
 EOF
 	git config status.submodulesummary 10 &&
 	git status >output &&
@@ -952,6 +966,7 @@ Untracked files:
 	expect
 	output
 	untracked
+
 no changes added to commit (use "git add" and/or "git commit -a")
 EOF
 	git commit -m "commit submodule" &&
@@ -1012,6 +1027,7 @@ Untracked files:
 	expect
 	output
 	untracked
+
 EOF
 	git config status.submodulesummary 10 &&
 	git commit --dry-run --amend >output &&
@@ -1066,6 +1082,7 @@ Untracked files:
 	expect
 	output
 	untracked
+
 EOF
 	echo modified  sm/untracked &&
 	git status --ignore-submodules=untracked >output &&
@@ -1177,6 +1194,7 @@ Untracked files:
 	expect
 	output
 	untracked
+
 EOF
 	git status --ignore-submodules=untracked > output &&
 	test_i18ncmp expect output
@@ -1238,6 +1256,7 @@ Untracked files:
 	expect
 	output
 	untracked
+
 EOF
 	git status --ignore-submodules=untracked > output &&
 	test_i18ncmp expect output
@@ -1319,6 +1338,7 @@ cat > expect << EOF
 ;	expect
 ;	output
 ;	untracked
+;
 EOF
 
 test_expect_success "status (core.commentchar with submodule summary)" '
@@ -1352,6 +1372,7 @@ Untracked files:
 	expect
 	output
 	untracked
+
 no changes added to commit (use "git add" and/or "git commit -a")
 EOF
 	git status --ignore-submodules=all > output &&

@@ -751,7 +751,7 @@ static void wt_status_print_other(struct wt_status *s,
 
 	strbuf_release(&buf);
 	if (!column_active(s->colopts))
-		return;
+		goto conclude;
 
 	strbuf_addf(&buf, "%s%s\t%s",
 		    color(WT_STATUS_HEADER, s),
@@ -765,6 +765,8 @@ static void wt_status_print_other(struct wt_status *s,
 	print_columns(&output, s->colopts, &copts);
 	string_list_clear(&output, 0);
 	strbuf_release(&buf);
+conclude:
+	status_printf_ln(s, GIT_COLOR_NORMAL, "");
 }
 
 static void wt_status_print_verbose(struct wt_status *s)
