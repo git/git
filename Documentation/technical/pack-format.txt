@@ -1,7 +1,7 @@
 Git pack format
 ===============
 
-== pack-*.pack files have the following format:
+== pack-*.pack files version 2 and 3 have the following format:
 
    - A header appears at the beginning and consists of the following:
 
@@ -35,6 +35,137 @@ Git pack format
      length format and is not constrained to 32-bit or anything.
 
   - The trailer records 20-byte SHA-1 checksum of all of the above.
+
+== pack-*.pack files version 4 have the following format:
+
+   - A header appears at the beginning and consists of the following:
+
+     4-byte signature:
+	The signature is: {'P', 'A', 'C', 'K'}
+
+     4-byte version number (network byte order): must be 4
+
+     4-byte number of objects contained in the pack (network byte order)
+
+   - A series of tables, described separately.
+
+   - The tables are followed by object entries, each of which looks
+     like below:
+
+     (undeltified representation)
+     n-byte type and length (4-bit type, (n-1)*7+4-bit length)
+     data
+
+     (deltified representation)
+     n-byte type and length (4-bit type, (n-1)*7+4-bit length)
+     base object name in SHA-1 reference encoding
+     compressed delta data
+
+     "type" is used to determine object type. The canonical version
+     of commit is type 1, tree 2, blob 3, tag 4, delta 7. However there
+     is an optimized encoding for commit and tree objects with new types
+     i.e. pv4-commit 9 (commit type with bit 3 set), pv4-tree 10 (tree
+     type with bit 3 set). Compared to v2, ofs-delta type is not used, and
+     pv4-commit and pv4-tree are new types.
+
+     Trees and commits in canonical types are in the same format as
+     v2: in canonical format and deflated. They can be used for
+     completing thin packs or preserving somewhat ill-formatted
+     objects.  But the new optimized types should be used otherwise.
+
+     In undeltified format, blobs and tags ares compressed. Trees are
+     not compressed at all. Some headers in commits are stored
+     uncompressed, the rest is compressed. Tree and commit
+     representations are described in detail separately.
+
+     Blobs and tags are deltified and compressed the same way in
+     v3. Commits are not deltified. Trees are deltified using
+     special copy sequences.
+
+     Thin packs are used for transferring on the wire and may omit delta
+     base objects, expecting the receiver to add them at the end of the pack
+     before writing to disk.  The number of objects contained in the pack
+     header must account for those omitted objects in any case. To indicate
+     no more objects are included in a thin pack, a "type 0" byte
+     indicator is inserted after the last transmitted object.
+
+  - The trailer records 20-byte SHA-1 checksum of all of the above.
+
+=== Pack v4 tables
+
+ - A table of sorted SHA-1 object names for all objects contained in
+   the on-disk pack.
+
+   The SHA-1 table in thin packs must include the omitted objects as well.
+
+   This table can be referred to using "SHA-1 reference encoding": the
+   index, in variable length encoding, to this table.
+
+ - Ident table: the uncompressed length in variable encoding,
+   followed by zlib-compressed dictionary. Each entry consists of
+   two prefix bytes storing timezone followed by a NUL-terminated
+   string.
+
+   Entries should be sorted by frequency so that the most frequent
+   entry has the smallest index, thus most efficient variable
+   encoding.
+
+   The table can be referred to using "ident reference encoding": the
+   index number, in variable length encoding, to this table.
+
+ - Tree path table: the same format to ident table. Each entry
+   consists of two prefix bytes storing tree entry mode, then a
+   NUL-terminated path name. Same sort order recommendation applies.
+
+=== Commit representation
+
+  - n-byte type and length (4-bit type, (n-1)*7+4-bit length)
+
+  - Tree SHA-1 in SHA-1 reference encoding
+
+  - Parent count in variable length encoding
+
+  - Parent SHA-1s in SHA-1 reference encoding
+
+  - Committer timestamp in variable length encoding
+
+  - Committer reference in ident reference encoding
+
+  - Author timestamp, encoded as a difference against committer
+    timestamp with the LSB used to indicate negative difference.
+
+  - Author reference in ident reference encoding
+
+  - Compressed data of remaining header and the body
+
+=== Tree representation
+
+  - n-byte type and length (4-bit type, (n-1)*7+4-bit length)
+
+  - Number of tree entries in variable length encoding
+
+  - A number of entries, each can be in either forms
+
+    - INT(path_index << 1)        INT(sha1_index)
+
+    - INT((entry_start << 1) | 1) INT(entry_count << 1)
+
+    - INT((entry_start << 1) | 1) INT((entry_count << 1) | 1) INT(base_sha1_index)
+
+    INT() denotes a number in variable length encoding. path_index is
+    the index to the tree path table. sha1_index is the index to the
+    SHA-1 table. entry_start is the first tree entry to copy
+    from. entry_count is the number of tree entries to
+    copy. base_sha1_index is the index to SHA-1 table of the base tree
+    to copy from.
+
+    The LSB of the first number indicates whether it's a plain tree
+    entry (LSB not set), or an instruction to copy tree entries from
+    another tree (LSB set).
+
+    For copying from another tree, if the LSB of the second number is
+    set, it will be followed by a base tree SHA-1. If it's not set,
+    the last base tree will be used.
 
 == Original (version 1) pack-*.idx files have the following format:
 
@@ -160,3 +291,8 @@ Pack file entry: <+
     corresponding packfile.
 
     20-byte SHA-1-checksum of all of the above.
+
+== Version 3 pack-*.idx files support only *.pack files version 4. The
+   format is the same as version 2 except that the table of sorted
+   20-byte SHA-1 object names is missing in the .idx files. The same
+   table exists in .pack files and will be used instead.
