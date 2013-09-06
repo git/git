@@ -1977,7 +1977,7 @@ $ git clone http://yourserver.com/~you/proj.git
 -------------------------------------------------
 
 (See also
-link:howto/setup-git-server-over-http.txt[setup-git-server-over-http]
+link:howto/setup-git-server-over-http.html[setup-git-server-over-http]
 for a slightly more sophisticated setup using WebDAV which also
 allows pushing over HTTP.)
 
@@ -3191,7 +3191,7 @@ those "loose" objects.
 You can save space and make Git faster by moving these loose objects in
 to a "pack file", which stores a group of objects in an efficient
 compressed format; the details of how pack files are formatted can be
-found in link:technical/pack-format.txt[technical/pack-format.txt].
+found in link:technical/pack-format.html[pack format].
 
 To put the loose objects into a pack, just run git repack:
 
