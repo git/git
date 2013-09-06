@@ -122,9 +122,9 @@ test_expect_success '"git replace" listing and deleting' '
      test "$HASH2" = "$(git replace -l)" &&
      test "$HASH2" = "$(git replace)" &&
      aa=${HASH2%??????????????????????????????????????} &&
-     test "$HASH2" = "$(git replace -l "$aa*")" &&
+     test "$HASH2" = "$(git replace --list "$aa*")" &&
      test_must_fail git replace -d $R &&
-     test_must_fail git replace -d &&
+     test_must_fail git replace --delete &&
      test_must_fail git replace -l -d $HASH2 &&
      git replace -d $HASH2 &&
      git show $HASH2 | grep "A U Thor" &&
@@ -147,7 +147,7 @@ test_expect_success '"git replace" resolves sha1' '
      git show $HASH2 | grep "O Thor" &&
      test_must_fail git replace $HASH2 $R &&
      git replace -f $HASH2 $R &&
-     test_must_fail git replace -f &&
+     test_must_fail git replace --force &&
      test "$HASH2" = "$(git replace)"
 '
 
@@ -272,7 +272,7 @@ test_expect_success 'replaced and replacement objects must be of the same type' 
 
 test_expect_success '-f option bypasses the type check' '
 	git replace -f mytag $HASH1 &&
-	git replace -f HEAD^{tree} HEAD~1 &&
+	git replace --force HEAD^{tree} HEAD~1 &&
 	git replace -f HEAD^ $BLOB
 '
 
