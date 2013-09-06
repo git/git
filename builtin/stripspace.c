@@ -89,11 +89,11 @@ int cmd_stripspace(int argc, const char **argv, const char *prefix)
 
 	if (argc == 2) {
 		if (!strcmp(argv[1], "-s") ||
-			!strcmp(argv[1], "--strip-comments")) {
-			 strip_comments = 1;
+		    !strcmp(argv[1], "--strip-comments")) {
+			strip_comments = 1;
 		} else if (!strcmp(argv[1], "-c") ||
-					 !strcmp(argv[1], "--comment-lines")) {
-			 mode = COMMENT_LINES;
+			   !strcmp(argv[1], "--comment-lines")) {
+			mode = COMMENT_LINES;
 		} else {
 			mode = INVAL;
 		}
