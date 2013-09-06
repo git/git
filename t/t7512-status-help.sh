@@ -13,6 +13,10 @@ test_description='git status advice'
 
 set_fake_editor
 
+test_expect_success 'use status.displayCommentPrefix by default ' '
+	git config --global status.displayCommentPrefix true
+'
+
 test_expect_success 'prepare for conflicts' '
 	git config --global advice.statusuoption false &&
 	test_commit init main.txt init &&

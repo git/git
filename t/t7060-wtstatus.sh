@@ -4,6 +4,10 @@ test_description='basic work tree status reporting'
 
 . ./test-lib.sh
 
+test_expect_success 'use status.displayCommentPrefix by default ' '
+	git config --global status.displayCommentPrefix true
+'
+
 test_expect_success setup '
 	git config --global advice.statusuoption false &&
 	test_commit A &&

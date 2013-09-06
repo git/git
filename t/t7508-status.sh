@@ -7,6 +7,10 @@ test_description='git status'
 
 . ./test-lib.sh
 
+test_expect_success 'use status.displayCommentPrefix by default ' '
+	git config --global status.displayCommentPrefix true
+'
+
 test_expect_success 'status -h in broken repository' '
 	git config --global advice.statusuoption false &&
 	mkdir broken &&
@@ -60,8 +64,12 @@ test_expect_success 'status (1)' '
 	test_i18ngrep "use \"git rm --cached <file>\.\.\.\" to unstage" output
 '
 
+strip_comments () {
+	sed "s/^\# //; s/^\#$//; s/^#\t/\t/" <"$1" >"$1".tmp &&
+	rm "$1" && mv "$1".tmp "$1"
+}
+
 test_expect_success 'status --column' '
-	COLUMNS=50 git status --column="column dense" >output &&
 	cat >expect <<\EOF &&
 # On branch master
 # Changes to be committed:
@@ -78,9 +86,16 @@ test_expect_success 'status --column' '
 # Untracked files:
 #   (use "git add <file>..." to include in what will be committed)
 #
-#	dir1/untracked dir2/untracked untracked
-#	dir2/modified  output
+#	dir1/untracked dir2/untracked output
+#	dir2/modified  expect         untracked
 EOF
+	COLUMNS=50 git -c status.displayCommentPrefix=true status --column="column dense" >output &&
+	test_i18ncmp expect output
+'
+
+test_expect_success 'status --column status.displayCommentPrefix=false' '
+	strip_comments expect &&
+	COLUMNS=49 git -c status.displayCommentPrefix=false status --column="column dense" >output &&
 	test_i18ncmp expect output
 '
 
@@ -108,9 +123,37 @@ cat >expect <<\EOF
 #	untracked
 EOF
 
-test_expect_success 'status (2)' '
-	git status >output &&
+test_expect_success 'status with status.displayCommentPrefix=true' '
+	git -c status.displayCommentPrefix=true status >output &&
 	test_i18ncmp expect output
+'
+
+test_expect_success 'status with status.displayCommentPrefix=false' '
+	strip_comments expect &&
+	git -c status.displayCommentPrefix=false status >output &&
+	test_i18ncmp expect output
+'
+
+test_expect_success 'setup fake editor' '
+	cat >.git/editor <<-\EOF &&
+	#! /bin/sh
+	cp "$1" output
+EOF
+	chmod 755 .git/editor
+'
+
+commit_template_commented () {
+	(
+		EDITOR=.git/editor &&
+		export EDITOR &&
+		# Fails due to empty message
+		test_must_fail git commit
+	) &&
+	! grep '^[^#]' output
+}
+
+test_expect_success 'commit ignores status.displayCommentPrefix=false in COMMIT_EDITMSG' '
+	commit_template_commented
 '
 
 cat >expect <<\EOF
@@ -870,6 +913,16 @@ test_expect_success 'status submodule summary' '
 	git config status.submodulesummary 10 &&
 	git status >output &&
 	test_i18ncmp expect output
+'
+
+test_expect_success 'status submodule summary with status.displayCommentPrefix=false' '
+	strip_comments expect &&
+	git -c status.displayCommentPrefix=false status >output &&
+	test_i18ncmp expect output
+'
+
+test_expect_success 'commit with submodule summary ignores status.displayCommentPrefix' '
+	commit_template_commented
 '
 
 cat >expect <<EOF
