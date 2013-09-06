@@ -128,9 +128,9 @@ int cmd_replace(int argc, const char **argv, const char *prefix)
 {
 	int list = 0, delete = 0, force = 0;
 	struct option options[] = {
-		OPT_BOOLEAN('l', NULL, &list, N_("list replace refs")),
-		OPT_BOOLEAN('d', NULL, &delete, N_("delete replace refs")),
-		OPT_BOOLEAN('f', NULL, &force, N_("replace the ref if it exists")),
+		OPT_BOOLEAN('l', "list", &list, N_("list replace refs")),
+		OPT_BOOLEAN('d', "delete", &delete, N_("delete replace refs")),
+		OPT_BOOLEAN('f', "force", &force, N_("replace the ref if it exists")),
 		OPT_END()
 	};
 

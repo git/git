@@ -54,13 +54,16 @@ achieve the same effect as the `--no-replace-objects` option.
 OPTIONS
 -------
 -f::
+--force::
 	If an existing replace ref for the same object exists, it will
 	be overwritten (instead of failing).
 
 -d::
+--delete::
 	Delete existing replace refs for the given objects.
 
 -l <pattern>::
+--list <pattern>::
 	List replace refs for objects that match the given pattern (or
 	all if no pattern is given).
 	Typing "git replace" without arguments, also lists all replace
