@@ -263,4 +263,17 @@ test_expect_success 'not just commits' '
 	test_cmp file.replaced file
 '
 
+test_expect_success 'replaced and replacement objects must be of the same type' '
+	test_must_fail git replace mytag $HASH1 &&
+	test_must_fail git replace HEAD^{tree} HEAD~1 &&
+	BLOB=$(git rev-parse :file) &&
+	test_must_fail git replace HEAD^ $BLOB
+'
+
+test_expect_success '-f option bypasses the type check' '
+	git replace -f mytag $HASH1 &&
+	git replace -f HEAD^{tree} HEAD~1 &&
+	git replace -f HEAD^ $BLOB
+'
+
 test_done
