@@ -30,8 +30,6 @@ if sys.hexversion < 0x02030000:
 
 # Maps hg version -> git version
 hgvers = {}
-# List of children for each hg revision
-hgchildren = {}
 # List of parents for each hg revision
 hgparents = {}
 # Current branch for each hg revision
@@ -156,16 +154,7 @@ for line in os.popen('hg log --template "{rev}\\0{date|isodatesec}\\0{author}\\0
     hgdate[cset] = date
     hgauthor[cset] = author
     hgtags[cset] = [t for t in tags.split(' ') if t != 'tip' and t != '']
-
-    if not cset in hgchildren:
-        hgchildren[cset] = []
-    hgparents[cset] = []
-
-    for p in parents:
-        if not p in hgchildren:
-            hgchildren[p] = []
-        hgchildren[p] += [ cset ]
-        hgparents[cset] +=  [ p ]
+    hgparents[cset] = parents
 
 if not hgvers.has_key("0"):
     print 'creating repository'
