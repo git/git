@@ -108,11 +108,11 @@ os.chdir(hgprj)
 if state:
     if os.path.exists(state):
         if verbose:
-            print 'State does exist, reading'
+            print 'state does exist, reading'
         f = open(state, 'r')
         hgvers = pickle.load(f)
-    else:
-        print 'State does not exist, first run'
+    elif verbose:
+        print 'state does not exist, first run'
 
 uncommitted = os.popen('hg status -X .git/').readlines()
 if len(uncommitted) > 0:
@@ -126,11 +126,9 @@ if sock.close():
 if verbose:
     print 'tip is', tip
 
-# Calculate the branches
+# Read in all revision metadata
 if verbose:
-    print 'analyzing the branches...'
-
-# Read all revs' details in at once.
+    print 'analyzing revisions'
 for line in os.popen('hg log --template "{rev}\\0{date|isodatesec}\\0{author}\\0{branch}\\0{tags}\\0{parents}\\n"').read().split('\n'):
     if line == '':
         continue
@@ -181,7 +179,8 @@ for rev in range(int(tip) + 1):
     print 'branch:', hgbranch[cset]
     print 'author:', author
     print 'date:', date
-    print 'comment:', csetcomment
+    if verbose:
+        print 'comment:', csetcomment
     for p in parents:
         print 'parent:', p
     for t in tags:
@@ -229,7 +228,8 @@ for rev in range(int(tip) + 1):
 
     # retrieve and record the version
     vvv = os.popen('git show --quiet --pretty=format:%H').read()
-    print 'record', cset, '->', vvv
+    if verbose:
+        print 'revision', cset, 'committed as', vvv
     hgvers[cset] = vvv
     os.system('git branch -f %s %s' % (hgbranch[cset], vvv))
 
