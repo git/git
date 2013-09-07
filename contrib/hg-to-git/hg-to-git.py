@@ -19,7 +19,7 @@
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 """
 
-import os, os.path, sys
+import os, os.path, sys, shutil
 import tempfile, pickle, getopt
 import re
 
@@ -214,7 +214,11 @@ for cset in range(int(tip) + 1):
         os.system(getgitenv(user, date) + 'git merge --no-commit -s ours "" %s %s' % (hgbranch[str(cset)], otherbranch))
 
     # remove everything except .git and .hg directories
-    os.system('find . \( -path "./.hg" -o -path "./.git" \) -prune -o ! -name "." -print | xargs rm -rf')
+    for f in os.listdir("."):
+        if os.path.isfile(f):
+            os.remove(f)
+        elif f != ".hg" and f != ".git":
+            shutil.rmtree(f)
 
     # repopulate with checkouted files
     os.system('hg update -C %d' % cset)
