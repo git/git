@@ -218,19 +218,13 @@ for rev in range(int(tip) + 1):
         del vers[0]
         os.system('git merge --no-commit -s ours "" %s' % (" ".join(vers)))
 
-    # remove everything except .git and .hg directories
-    if verbose:
-        print 'cleaning out working directory'
-    for f in os.listdir("."):
-        if os.path.isfile(f):
-            os.remove(f)
-        elif f != ".hg" and f != ".git":
-            shutil.rmtree(f)
-
     # repopulate with checkouted files
     if verbose:
         print 'updating working directory to r%d' % rev
     os.system('hg update -C %d' % rev)
+    if verbose:
+        print 'cleaning out working directory'
+    os.system('hg purge --all -X .git/')
 
     # add new files and delete removed files
     if verbose:
