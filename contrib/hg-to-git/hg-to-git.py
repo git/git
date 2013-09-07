@@ -160,30 +160,31 @@ if not hgvers.has_key("0"):
     os.system('git init')
 
 # loop through every hg changeset
-for cset in range(int(tip) + 1):
+for rev in range(int(tip) + 1):
+    cset = str(rev)
 
     # incremental, already seen
-    if hgvers.has_key(str(cset)):
+    if hgvers.has_key(cset):
         continue
     hgnewcsets += 1
 
     # get info
-    log_data = os.popen('hg log -r %d --template "{tags}\n{date|date}\n{author}\n"' % cset).readlines()
+    log_data = os.popen('hg log -r %d --template "{tags}\n{date|date}\n{author}\n"' % rev).readlines()
     tag = log_data[0].strip()
     date = log_data[1].strip()
     user = log_data[2].strip()
-    parent = hgparents[str(cset)][0]
-    mparent = hgparents[str(cset)][1]
+    parent = hgparents[cset][0]
+    mparent = hgparents[cset][1]
 
     #get comment
     (fdcomment, filecomment) = tempfile.mkstemp()
-    csetcomment = os.popen('hg log -r %d --template "{desc}"' % cset).read().strip()
+    csetcomment = os.popen('hg log -r %d --template "{desc}"' % rev).read().strip()
     os.write(fdcomment, csetcomment)
     os.close(fdcomment)
 
     print '-----------------------------------------'
     print 'cset:', cset
-    print 'branch:', hgbranch[str(cset)]
+    print 'branch:', hgbranch[cset]
     print 'user:', user
     print 'date:', date
     print 'comment:', csetcomment
@@ -196,22 +197,22 @@ for cset in range(int(tip) + 1):
     print '-----------------------------------------'
 
     # checkout the parent if necessary
-    if cset != 0:
-        if hgbranch[str(cset)] == "branch-" + str(cset):
-            print 'creating new branch', hgbranch[str(cset)]
-            os.system('git checkout -b %s %s' % (hgbranch[str(cset)], hgvers[parent]))
+    if rev != 0:
+        if hgbranch[cset] == "branch-" + cset:
+            print 'creating new branch', hgbranch[cset]
+            os.system('git checkout -b %s %s' % (hgbranch[cset], hgvers[parent]))
         else:
-            print 'checking out branch', hgbranch[str(cset)]
-            os.system('git checkout %s' % hgbranch[str(cset)])
+            print 'checking out branch', hgbranch[cset]
+            os.system('git checkout %s' % hgbranch[cset])
 
     # merge
     if mparent:
-        if hgbranch[parent] == hgbranch[str(cset)]:
+        if hgbranch[parent] == hgbranch[cset]:
             otherbranch = hgbranch[mparent]
         else:
             otherbranch = hgbranch[parent]
-        print 'merging', otherbranch, 'into', hgbranch[str(cset)]
-        os.system(getgitenv(user, date) + 'git merge --no-commit -s ours "" %s %s' % (hgbranch[str(cset)], otherbranch))
+        print 'merging', otherbranch, 'into', hgbranch[cset]
+        os.system(getgitenv(user, date) + 'git merge --no-commit -s ours "" %s %s' % (hgbranch[cset], otherbranch))
 
     # remove everything except .git and .hg directories
     if verbose:
@@ -224,8 +225,8 @@ for cset in range(int(tip) + 1):
 
     # repopulate with checkouted files
     if verbose:
-        print 'updating working directory to r%d' % cset
-    os.system('hg update -C %d' % cset)
+        print 'updating working directory to r%d' % rev
+    os.system('hg update -C %d' % rev)
 
     # add new files and delete removed files
     if verbose:
@@ -244,14 +245,14 @@ for cset in range(int(tip) + 1):
         os.system(getgitenv(user, date) + 'git tag %s' % tag)
 
     # delete branch if not used anymore...
-    if mparent and len(hgchildren[str(cset)]):
+    if mparent and len(hgchildren[cset]):
         print "Deleting unused branch:", otherbranch
         os.system('git branch -d %s' % otherbranch)
 
     # retrieve and record the version
     vvv = os.popen('git show --quiet --pretty=format:%H').read()
     print 'record', cset, '->', vvv
-    hgvers[str(cset)] = vvv
+    hgvers[cset] = vvv
 
 if hgnewcsets >= opt_nrepack and opt_nrepack != -1:
     if verbose:
