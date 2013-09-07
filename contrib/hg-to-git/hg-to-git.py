@@ -230,13 +230,13 @@ for cset in range(int(tip) + 1):
     # add new files and delete removed files
     if verbose:
         print 'updating git index to match working directory'
-    os.system('git ls-files -x .hg --others | git update-index --add --stdin')
-    os.system('git ls-files -x .hg --deleted | git update-index --remove --stdin')
+    os.system('git ls-files -x .hg --others | git -c core.autocrlf=false update-index --add --stdin')
+    os.system('git ls-files -x .hg --deleted | git -c core.autocrlf=false update-index --remove --stdin')
 
     # commit
     if verbose:
         print 'committing'
-    os.system(getgitenv(user, date) + 'git commit --allow-empty --allow-empty-message -a -F %s' % filecomment)
+    os.system(getgitenv(user, date) + 'git -c core.autocrlf=false commit --allow-empty --allow-empty-message -a -F %s' % filecomment)
     os.unlink(filecomment)
 
     # tag
