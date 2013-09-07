@@ -137,23 +137,18 @@ for line in os.popen('hg log --template "{rev}\\0{date|isodatesec}\\0{author}\\0
 
     linesplit = line.split('\0')
     cset = linesplit[0]
-    date = linesplit[1]
-    author = linesplit[2]
-    branch = linesplit[3]
-    tags = linesplit[4].strip()
+
+    hgdate[cset] = linesplit[1]
+    hgauthor[cset] = linesplit[2]
+    hgbranch[cset] = linesplit[3]
+    hgtags[cset] = [tag for tag in linesplit[4].strip().split(' ') if tag != 'tip' and tag != '']
+
     parents = linesplit[5].strip()
-
     if parents == '':
-        rev = int(cset)
-        parents = [ str(rev - 1) ] if rev > 0 else []
+        parents = [str(int(cset) - 1)] if cset != '0' else []
     else:
-        parents = parents.split(' ')
-        parents = map(lambda x: x[:x.find(':')], parents)
+        parents = [p[:p.find(':')] for p in parents.split(' ')]
 
-    hgbranch[cset] = branch
-    hgdate[cset] = date
-    hgauthor[cset] = author
-    hgtags[cset] = [t for t in tags.split(' ') if t != 'tip' and t != '']
     hgparents[cset] = parents
 
 if not hgvers.has_key("0"):
