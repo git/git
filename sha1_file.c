@@ -1806,6 +1806,11 @@ static enum object_type packed_to_object_type(struct packed_git *p,
 	}
 
 	switch (type) {
+	case OBJ_PV4_COMMIT:
+	case OBJ_PV4_TREE:
+		/* hide pack v4 special object types */
+		type -= 8;
+		break;
 	case OBJ_BAD:
 	case OBJ_COMMIT:
 	case OBJ_TREE:
@@ -2171,17 +2176,16 @@ void *unpack_entry(struct packed_git *p, off_t obj_offset,
 		if (data)
 			die("BUG in unpack_entry: left loop at a valid delta");
 		break;
+	case OBJ_PV4_COMMIT:
+		data = pv4_get_commit(p, &w_curs, curpos, size);
+		type -= 8;
+		break;
+	case OBJ_PV4_TREE:
+		data = pv4_get_tree(p, &w_curs, curpos, size);
+		type -= 8;
+		break;
 	case OBJ_COMMIT:
 	case OBJ_TREE:
-		if (p->version >= 4 && !base_from_cache) {
-			if (type == OBJ_COMMIT) {
-				data = pv4_get_commit(p, &w_curs, curpos, size);
-			} else {
-				data = pv4_get_tree(p, &w_curs, curpos, size);
-			}
-			break;
-		}
-		/* fall through */
 	case OBJ_BLOB:
 	case OBJ_TAG:
 		if (!base_from_cache)

@@ -330,6 +330,8 @@ enum object_type {
 	/* 5 for future expansion */
 	OBJ_OFS_DELTA = 6,
 	OBJ_REF_DELTA = 7,
+	OBJ_PV4_COMMIT = (8 + 1),
+	OBJ_PV4_TREE = (8 + 2),
 	OBJ_ANY,
 	OBJ_MAX
 };

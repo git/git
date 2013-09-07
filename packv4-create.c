@@ -981,10 +981,15 @@ static off_t packv4_write_object(struct sha1file *f, struct packed_git *p,
 		die("unexpected object type %d", type);
 	}
 	free(src);
-	if (!result)
-		die("can't convert %s object %s",
-		    typename(type), sha1_to_hex(obj->sha1));
+	if (!result) {
+		warning("can't convert %s object %s",
+			typename(type), sha1_to_hex(obj->sha1));
+		/* fall back to copy the object in its original form */
+		return copy_object_data(f, p, obj->offset);
+	}
 
+	/* Use bit 3 to indicate a special type encoding */
+	type += 8;
 	hdrlen = write_object_header(f, type, obj_size);
 	sha1write(f, result, buf_size);
 	free(result);

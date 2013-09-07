@@ -267,7 +267,7 @@ static int decode_entries(struct packed_git *p, struct pack_window **w_curs,
 			if (++scp - src >= avail - 20)
 				return -1;
 		/* let's still make sure this is actually a tree */
-		if ((*scp++ & 0xf) != OBJ_TREE)
+		if ((*scp++ & 0xf) != OBJ_PV4_TREE)
 			return -1;
 	}
 
