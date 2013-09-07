@@ -65,23 +65,22 @@ required:
 
 #------------------------------------------------------------------------------
 
-def getgitenv(author, date):
-    env = ''
-    elems = re.compile('(.*?)\s+<(.*)>').match(author)
+authorpattern = re.compile('(.*?)\s+<(.*)>')
+def setgitenv(author, date):
+    elems = authorpattern.match(author)
     if elems:
-        env += 'export GIT_AUTHOR_NAME="%s" ;' % elems.group(1)
-        env += 'export GIT_COMMITTER_NAME="%s" ;' % elems.group(1)
-        env += 'export GIT_AUTHOR_EMAIL="%s" ;' % elems.group(2)
-        env += 'export GIT_COMMITTER_EMAIL="%s" ;' % elems.group(2)
+        os.environ['GIT_AUTHOR_NAME'] = elems.group(1)
+        os.environ['GIT_COMMITTER_NAME'] = elems.group(1)
+        os.environ['GIT_AUTHOR_EMAIL'] = elems.group(2)
+        os.environ['GIT_COMMITTER_EMAIL'] = elems.group(2)
     else:
-        env += 'export GIT_AUTHOR_NAME="%s" ;' % author
-        env += 'export GIT_COMMITTER_NAME="%s" ;' % author
-        env += 'export GIT_AUTHOR_EMAIL= ;'
-        env += 'export GIT_COMMITTER_EMAIL= ;'
+        os.environ['GIT_AUTHOR_NAME'] = author
+        os.environ['GIT_COMMITTER_NAME'] = author
+        os.environ['GIT_AUTHOR_EMAIL'] = ''
+        os.environ['GIT_COMMITTER_EMAIL'] = ''
 
-    env += 'export GIT_AUTHOR_DATE="%s" ;' % date
-    env += 'export GIT_COMMITTER_DATE="%s" ;' % date
-    return env
+    os.environ['GIT_AUTHOR_DATE'] = date
+    os.environ['GIT_COMMITTER_DATE'] = date
 
 #------------------------------------------------------------------------------
 
@@ -237,7 +236,8 @@ for rev in range(int(tip) + 1):
     # commit
     if verbose:
         print 'committing'
-    os.system(getgitenv(author, date) + 'git -c core.autocrlf=false commit%s --allow-empty --allow-empty-message -a -F "%s"' % (' --quiet' if not verbose else '', filecomment))
+    setgitenv(author, date)
+    os.system('git -c core.autocrlf=false commit%s --allow-empty --allow-empty-message -a -F "%s"' % (' --quiet' if not verbose else '', filecomment))
     os.unlink(filecomment)
 
     # tag
