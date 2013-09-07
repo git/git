@@ -246,11 +246,6 @@ for rev in range(int(tip) + 1):
     if tag and tag != 'tip':
         os.system(getgitenv(user, date) + 'git tag %s' % tag)
 
-    # delete branch if not used anymore...
-    if mparent and len(hgchildren[cset]):
-        print "Deleting unused branch:", otherbranch
-        os.system('git branch -d %s' % otherbranch)
-
     # retrieve and record the version
     vvv = os.popen('git show --quiet --pretty=format:%H').read()
     print 'record', cset, '->', vvv
