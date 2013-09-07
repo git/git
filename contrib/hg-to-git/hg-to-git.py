@@ -59,17 +59,17 @@ required:
 
 #------------------------------------------------------------------------------
 
-def getgitenv(user, date):
+def getgitenv(author, date):
     env = ''
-    elems = re.compile('(.*?)\s+<(.*)>').match(user)
+    elems = re.compile('(.*?)\s+<(.*)>').match(author)
     if elems:
         env += 'export GIT_AUTHOR_NAME="%s" ;' % elems.group(1)
         env += 'export GIT_COMMITTER_NAME="%s" ;' % elems.group(1)
         env += 'export GIT_AUTHOR_EMAIL="%s" ;' % elems.group(2)
         env += 'export GIT_COMMITTER_EMAIL="%s" ;' % elems.group(2)
     else:
-        env += 'export GIT_AUTHOR_NAME="%s" ;' % user
-        env += 'export GIT_COMMITTER_NAME="%s" ;' % user
+        env += 'export GIT_AUTHOR_NAME="%s" ;' % author
+        env += 'export GIT_COMMITTER_NAME="%s" ;' % author
         env += 'export GIT_AUTHOR_EMAIL= ;'
         env += 'export GIT_COMMITTER_EMAIL= ;'
 
@@ -172,7 +172,7 @@ for rev in range(int(tip) + 1):
     log_data = os.popen('hg log -r %d --template "{tags}\n{date|date}\n{author}\n"' % rev).readlines()
     tag = log_data[0].strip()
     date = log_data[1].strip()
-    user = log_data[2].strip()
+    author = log_data[2].strip()
     parent = hgparents[cset][0]
     mparent = hgparents[cset][1]
 
@@ -185,7 +185,7 @@ for rev in range(int(tip) + 1):
     print '-----------------------------------------'
     print 'cset:', cset
     print 'branch:', hgbranch[cset]
-    print 'user:', user
+    print 'author:', author
     print 'date:', date
     print 'comment:', csetcomment
     if parent:
@@ -214,7 +214,7 @@ for rev in range(int(tip) + 1):
         else:
             otherbranch = hgbranch[parent]
         print 'merging', otherbranch, 'into', hgbranch[cset]
-        os.system(getgitenv(user, date) + 'git merge --no-commit -s ours "" %s %s' % (hgbranch[cset], otherbranch))
+        os.system(getgitenv(author, date) + 'git merge --no-commit -s ours "" %s %s' % (hgbranch[cset], otherbranch))
 
     # remove everything except .git and .hg directories
     if verbose:
@@ -239,12 +239,12 @@ for rev in range(int(tip) + 1):
     # commit
     if verbose:
         print 'committing'
-    os.system(getgitenv(user, date) + 'git -c core.autocrlf=false commit%s --allow-empty --allow-empty-message -a -F "%s"' % (' --quiet' if not verbose else '', filecomment))
+    os.system(getgitenv(author, date) + 'git -c core.autocrlf=false commit%s --allow-empty --allow-empty-message -a -F "%s"' % (' --quiet' if not verbose else '', filecomment))
     os.unlink(filecomment)
 
     # tag
     if tag and tag != 'tip':
-        os.system(getgitenv(user, date) + 'git tag %s' % tag)
+        os.system(getgitenv(author, date) + 'git tag %s' % tag)
 
     # retrieve and record the version
     vvv = os.popen('git show --quiet --pretty=format:%H').read()
