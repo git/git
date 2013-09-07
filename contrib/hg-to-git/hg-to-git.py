@@ -199,10 +199,12 @@ for rev in range(int(tip) + 1):
     # checkout the parent if necessary
     if rev != 0:
         if hgbranch[cset] == "branch-" + cset:
-            print 'creating new branch', hgbranch[cset]
+            if verbose:
+                print 'creating new branch', hgbranch[cset]
             os.system('git checkout -b %s %s' % (hgbranch[cset], hgvers[parent]))
         else:
-            print 'checking out branch', hgbranch[cset]
+            if verbose:
+                print 'checking out branch', hgbranch[cset]
             os.system('git checkout %s' % hgbranch[cset])
 
     # merge
@@ -237,7 +239,7 @@ for rev in range(int(tip) + 1):
     # commit
     if verbose:
         print 'committing'
-    os.system(getgitenv(user, date) + 'git -c core.autocrlf=false commit --allow-empty --allow-empty-message -a -F %s' % filecomment)
+    os.system(getgitenv(user, date) + 'git -c core.autocrlf=false commit%s --allow-empty --allow-empty-message -a -F "%s"' % (' --quiet' if not verbose else '', filecomment))
     os.unlink(filecomment)
 
     # tag
