@@ -76,8 +76,8 @@ def setgitenv(author, date):
     else:
         os.environ['GIT_AUTHOR_NAME'] = author
         os.environ['GIT_COMMITTER_NAME'] = author
-        os.environ['GIT_AUTHOR_EMAIL'] = ''
-        os.environ['GIT_COMMITTER_EMAIL'] = ''
+        os.environ['GIT_AUTHOR_EMAIL'] = author + '@example.com'
+        os.environ['GIT_COMMITTER_EMAIL'] = author + '@example.com'
 
     os.environ['GIT_AUTHOR_DATE'] = date
     os.environ['GIT_COMMITTER_DATE'] = date
