@@ -36,6 +36,12 @@ hgchildren = {}
 hgparents = {}
 # Current branch for each hg revision
 hgbranch = {}
+# Tags for each hg revision
+hgtags = {}
+# Authors for each hg revision
+hgauthor = {}
+# Dates for each hg revision
+hgdate = {}
 # Number of new changesets converted from hg
 hgnewcsets = 0
 
@@ -121,39 +127,41 @@ if verbose:
 # Calculate the branches
 if verbose:
     print 'analyzing the branches...'
-hgchildren["0"] = ()
-hgparents["0"] = (None, None)
-hgbranch["0"] = "master"
-for cset in range(1, int(tip) + 1):
-    hgchildren[str(cset)] = ()
-    prnts = os.popen('hg log -r %d --template "{parents}"' % cset).read().strip().split(' ')
-    prnts = map(lambda x: x[:x.find(':')], prnts)
-    if prnts[0] != '':
-        parent = prnts[0].strip()
-    else:
-        parent = str(cset - 1)
-    hgchildren[parent] += ( str(cset), )
-    if len(prnts) > 1:
-        mparent = prnts[1].strip()
-        hgchildren[mparent] += ( str(cset), )
-    else:
-        mparent = None
 
-    hgparents[str(cset)] = (parent, mparent)
+# Read all revs' details in at once.
+for line in os.popen('hg log --template "{rev}\\0{date|isodatesec}\\0{author}\\0{branch}\\0{tags}\\0{parents}\\n"').read().split('\n'):
+    if line == '':
+        continue
 
-    if mparent:
-        # For merge changesets, take either one, preferably the 'master' branch
-        if hgbranch[mparent] == 'master':
-            hgbranch[str(cset)] = 'master'
-        else:
-            hgbranch[str(cset)] = hgbranch[parent]
+    linesplit = line.split('\0')
+    cset = linesplit[0]
+    date = linesplit[1]
+    author = linesplit[2]
+    branch = linesplit[3]
+    tags = linesplit[4].strip()
+    parents = linesplit[5].strip()
+
+    if parents == '':
+        rev = int(cset)
+        parents = [ str(rev - 1) ] if rev > 0 else []
     else:
-        # Normal changesets
-        # For first children, take the parent branch, for the others create a new branch
-        if hgchildren[parent][0] == str(cset):
-            hgbranch[str(cset)] = hgbranch[parent]
-        else:
-            hgbranch[str(cset)] = "branch-" + str(cset)
+        parents = parents.split(' ')
+        parents = map(lambda x: x[:x.find(':')], parents)
+
+    hgbranch[cset] = branch
+    hgdate[cset] = date
+    hgauthor[cset] = author
+    hgtags[cset] = [t for t in tags.split(' ') if t != 'tip' and t != '']
+
+    if not cset in hgchildren:
+        hgchildren[cset] = []
+    hgparents[cset] = []
+
+    for p in parents:
+        if not p in hgchildren:
+            hgchildren[p] = []
+        hgchildren[p] += [ cset ]
+        hgparents[cset] +=  [ p ]
 
 if not hgvers.has_key("0"):
     print 'creating repository'
@@ -169,12 +177,10 @@ for rev in range(int(tip) + 1):
     hgnewcsets += 1
 
     # get info
-    log_data = os.popen('hg log -r %d --template "{tags}\n{date|date}\n{author}\n"' % rev).readlines()
-    tag = log_data[0].strip()
-    date = log_data[1].strip()
-    author = log_data[2].strip()
-    parent = hgparents[cset][0]
-    mparent = hgparents[cset][1]
+    tags = hgtags[cset]
+    date = hgdate[cset]
+    author = hgauthor[cset]
+    parents = hgparents[cset]
 
     #get comment
     (fdcomment, filecomment) = tempfile.mkstemp()
@@ -188,33 +194,25 @@ for rev in range(int(tip) + 1):
     print 'author:', author
     print 'date:', date
     print 'comment:', csetcomment
-    if parent:
-	print 'parent:', parent
-    if mparent:
-        print 'mparent:', mparent
-    if tag:
-        print 'tag:', tag
+    for p in parents:
+        print 'parent:', p
+    for t in tags:
+        print 'tag:', t
     print '-----------------------------------------'
 
-    # checkout the parent if necessary
+    # set head to the first parent
     if rev != 0:
-        if hgbranch[cset] == "branch-" + cset:
-            if verbose:
-                print 'creating new branch', hgbranch[cset]
-            os.system('git checkout -b %s %s' % (hgbranch[cset], hgvers[parent]))
-        else:
-            if verbose:
-                print 'checking out branch', hgbranch[cset]
-            os.system('git checkout %s' % hgbranch[cset])
+        if verbose:
+            print 'checking out branch', hgbranch[cset]
+        os.system('git checkout -f %s' % hgvers[parents[0]])
 
     # merge
-    if mparent:
-        if hgbranch[parent] == hgbranch[cset]:
-            otherbranch = hgbranch[mparent]
-        else:
-            otherbranch = hgbranch[parent]
-        print 'merging', otherbranch, 'into', hgbranch[cset]
-        os.system(getgitenv(author, date) + 'git merge --no-commit -s ours "" %s %s' % (hgbranch[cset], otherbranch))
+    if len(parents) > 1:
+        if verbose:
+            print 'merging', [hgbranch[p] for p in parents]
+        vers = [hgvers[p] for p in parents]
+        del vers[0]
+        os.system('git merge --no-commit -s ours "" %s' % (" ".join(vers)))
 
     # remove everything except .git and .hg directories
     if verbose:
@@ -243,13 +241,14 @@ for rev in range(int(tip) + 1):
     os.unlink(filecomment)
 
     # tag
-    if tag and tag != 'tip':
-        os.system(getgitenv(author, date) + 'git tag %s' % tag)
+    for tag in tags:
+        os.system('git tag %s' % tag)
 
     # retrieve and record the version
     vvv = os.popen('git show --quiet --pretty=format:%H').read()
     print 'record', cset, '->', vvv
     hgvers[cset] = vvv
+    os.system('git branch -f %s %s' % (hgbranch[cset], vvv))
 
 if hgnewcsets >= opt_nrepack and opt_nrepack != -1:
     if verbose:
