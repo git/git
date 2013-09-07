@@ -216,7 +216,7 @@ for rev in range(int(tip) + 1):
             print 'merging', [hgbranch[p] for p in parents]
         vers = [hgvers[p] for p in parents]
         del vers[0]
-        os.system('git merge --no-commit -s ours "" %s' % (" ".join(vers)))
+        os.system('git merge --no-commit -s ours %s' % (" ".join(vers)))
 
     # repopulate with checkouted files
     if verbose:
