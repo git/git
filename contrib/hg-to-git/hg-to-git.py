@@ -116,6 +116,11 @@ if state:
     else:
         print 'State does not exist, first run'
 
+uncommitted = os.popen('hg status -X .git/').readlines()
+if len(uncommitted) > 0:
+    print 'uncommitted changes would be lost'
+    sys.exit(1)
+
 sock = os.popen('hg tip --template "{rev}"')
 tip = sock.read()
 if sock.close():
