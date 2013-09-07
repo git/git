@@ -120,7 +120,7 @@ if verbose:
 
 # Calculate the branches
 if verbose:
-    print 'analysing the branches...'
+    print 'analyzing the branches...'
 hgchildren["0"] = ()
 hgparents["0"] = (None, None)
 hgbranch["0"] = "master"
@@ -214,6 +214,8 @@ for cset in range(int(tip) + 1):
         os.system(getgitenv(user, date) + 'git merge --no-commit -s ours "" %s %s' % (hgbranch[str(cset)], otherbranch))
 
     # remove everything except .git and .hg directories
+    if verbose:
+        print 'cleaning out working directory'
     for f in os.listdir("."):
         if os.path.isfile(f):
             os.remove(f)
@@ -221,14 +223,19 @@ for cset in range(int(tip) + 1):
             shutil.rmtree(f)
 
     # repopulate with checkouted files
+    if verbose:
+        print 'updating working directory to r%d' % cset
     os.system('hg update -C %d' % cset)
 
-    # add new files
+    # add new files and delete removed files
+    if verbose:
+        print 'updating git index to match working directory'
     os.system('git ls-files -x .hg --others | git update-index --add --stdin')
-    # delete removed files
     os.system('git ls-files -x .hg --deleted | git update-index --remove --stdin')
 
     # commit
+    if verbose:
+        print 'committing'
     os.system(getgitenv(user, date) + 'git commit --allow-empty --allow-empty-message -a -F %s' % filecomment)
     os.unlink(filecomment)
 
@@ -247,6 +254,8 @@ for cset in range(int(tip) + 1):
     hgvers[str(cset)] = vvv
 
 if hgnewcsets >= opt_nrepack and opt_nrepack != -1:
+    if verbose:
+        print 'repacking git repo'
     os.system('git repack -a -d')
 
 # write the state for incrementals
