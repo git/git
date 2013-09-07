@@ -249,6 +249,9 @@ for rev in range(int(tip) + 1):
     hgvers[cset] = vvv
     os.system('git branch -f %s %s' % (hgbranch[cset], vvv))
 
+os.system('hg checkout -C tip')
+os.system('git checkout -f %s' % hgbranch[tip])
+
 if hgnewcsets >= opt_nrepack and opt_nrepack != -1:
     if verbose:
         print 'repacking git repo'
