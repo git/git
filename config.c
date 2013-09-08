@@ -534,6 +534,15 @@ static int git_parse_int(const char *value, int *ret)
 	return 1;
 }
 
+static int git_parse_int64(const char *value, int64_t *ret)
+{
+	intmax_t tmp;
+	if (!git_parse_signed(value, &tmp, maximum_signed_value_of_type(int64_t)))
+		return 0;
+	*ret = tmp;
+	return 1;
+}
+
 int git_parse_ulong(const char *value, unsigned long *ret)
 {
 	uintmax_t tmp;
@@ -561,6 +570,14 @@ int git_config_int(const char *name, const char *value)
 {
 	int ret;
 	if (!git_parse_int(value, &ret))
+		die_bad_number(name, value);
+	return ret;
+}
+
+int64_t git_config_int64(const char *name, const char *value)
+{
+	int64_t ret;
+	if (!git_parse_int64(value, &ret))
 		die_bad_number(name, value);
 	return ret;
 }

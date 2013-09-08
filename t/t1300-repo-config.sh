@@ -652,6 +652,13 @@ test_expect_success numbers '
 	test_cmp expect actual
 '
 
+test_expect_success '--int is at least 64 bits' '
+	git config giga.watts 121g &&
+	echo 129922760704 >expect &&
+	git config --int --get giga.watts >actual &&
+	test_cmp expect actual
+'
+
 test_expect_success 'invalid unit' '
 	git config aninvalid.unit "1auto" &&
 	echo 1auto >expect &&
