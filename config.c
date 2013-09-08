@@ -468,7 +468,7 @@ static int parse_unit_factor(const char *end, uintmax_t *val)
 	return 0;
 }
 
-static int git_parse_long(const char *value, long *ret)
+static int git_parse_signed(const char *value, intmax_t *ret, intmax_t max)
 {
 	if (value && *value) {
 		char *end;
@@ -484,8 +484,7 @@ static int git_parse_long(const char *value, long *ret)
 			return 0;
 		uval = abs(val);
 		uval *= factor;
-		if ((uval > maximum_signed_value_of_type(long)) ||
-		    (abs(val) > uval))
+		if (uval > max || abs(val) > uval)
 			return 0;
 		val *= factor;
 		*ret = val;
@@ -494,7 +493,7 @@ static int git_parse_long(const char *value, long *ret)
 	return 0;
 }
 
-int git_parse_ulong(const char *value, unsigned long *ret)
+int git_parse_unsigned(const char *value, uintmax_t *ret, uintmax_t max)
 {
 	if (value && *value) {
 		char *end;
@@ -508,13 +507,30 @@ int git_parse_ulong(const char *value, unsigned long *ret)
 		oldval = val;
 		if (!parse_unit_factor(end, &val))
 			return 0;
-		if ((val > maximum_unsigned_value_of_type(long)) ||
-		    (oldval > val))
+		if (val > max || oldval > val)
 			return 0;
 		*ret = val;
 		return 1;
 	}
 	return 0;
+}
+
+static int git_parse_long(const char *value, long *ret)
+{
+	intmax_t tmp;
+	if (!git_parse_signed(value, &tmp, maximum_signed_value_of_type(long)))
+		return 0;
+	*ret = tmp;
+	return 1;
+}
+
+int git_parse_ulong(const char *value, unsigned long *ret)
+{
+	uintmax_t tmp;
+	if (!git_parse_unsigned(value, &tmp, maximum_unsigned_value_of_type(long)))
+		return 0;
+	*ret = tmp;
+	return 1;
 }
 
 static void die_bad_config(const char *name)
