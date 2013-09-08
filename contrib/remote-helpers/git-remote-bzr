@@ -674,7 +674,7 @@ def parse_reset(parser):
     parsed_refs[ref] = mark_to_rev(from_mark)
 
 def do_export(parser):
-    global parsed_refs, dirname
+    global parsed_refs, dirname, transports
 
     parser.next()
 
@@ -699,7 +699,8 @@ def do_export(parser):
             branch.generate_revision_history(revid, marks.get_tip(name))
 
             if name in peers:
-                peer = bzrlib.branch.Branch.open(peers[name])
+                peer = bzrlib.branch.Branch.open(peers[name],
+                                                 possible_transports=transports)
                 try:
                     peer.bzrdir.push_branch(branch, revision_id=revid)
                 except bzrlib.errors.DivergedBranches:
@@ -769,25 +770,28 @@ def do_list(parser):
     print
 
 def clone(path, remote_branch):
+    global transports
     try:
-        bdir = bzrlib.bzrdir.BzrDir.create(path)
+        bdir = bzrlib.bzrdir.BzrDir.create(path, possible_transports=transports)
     except bzrlib.errors.AlreadyControlDirError:
-        bdir = bzrlib.bzrdir.BzrDir.open(path)
+        bdir = bzrlib.bzrdir.BzrDir.open(path, possible_transports=transports)
     repo = bdir.find_repository()
     repo.fetch(remote_branch.repository)
     return remote_branch.sprout(bdir, repository=repo)
 
 def get_remote_branch(name):
-    global dirname, branches
+    global dirname, branches, transports
 
-    remote_branch = bzrlib.branch.Branch.open(branches[name])
+    remote_branch = bzrlib.branch.Branch.open(branches[name],
+                                              possible_transports=transports)
     if isinstance(remote_branch.user_transport, bzrlib.transport.local.LocalTransport):
         return remote_branch
 
     branch_path = os.path.join(dirname, 'clone', name)
 
     try:
-        branch = bzrlib.branch.Branch.open(branch_path)
+        branch = bzrlib.branch.Branch.open(branch_path,
+                                           possible_transports=transports)
     except bzrlib.errors.NotBranchError:
         # clone
         branch = clone(branch_path, remote_branch)
@@ -821,17 +825,19 @@ def find_branches(repo):
             yield name, branch.base
 
 def get_repo(url, alias):
-    global dirname, peer, branches
+    global dirname, peer, branches, transports
 
     normal_url = bzrlib.urlutils.normalize_url(url)
-    origin = bzrlib.bzrdir.BzrDir.open(url)
+    origin = bzrlib.bzrdir.BzrDir.open(url, possible_transports=transports)
     is_local = isinstance(origin.transport, bzrlib.transport.local.LocalTransport)
 
     shared_path = os.path.join(gitdir, 'bzr')
     try:
-        shared_dir = bzrlib.bzrdir.BzrDir.open(shared_path)
+        shared_dir = bzrlib.bzrdir.BzrDir.open(shared_path,
+                                               possible_transports=transports)
     except bzrlib.errors.NotBranchError:
-        shared_dir = bzrlib.bzrdir.BzrDir.create(shared_path)
+        shared_dir = bzrlib.bzrdir.BzrDir.create(shared_path,
+                                                 possible_transports=transports)
     try:
         shared_repo = shared_dir.open_repository()
     except bzrlib.errors.NoRepositoryPresent:
@@ -844,7 +850,8 @@ def get_repo(url, alias):
         else:
             # check and remove old organization
             try:
-                bdir = bzrlib.bzrdir.BzrDir.open(clone_path)
+                bdir = bzrlib.bzrdir.BzrDir.open(clone_path,
+                                                 possible_transports=transports)
                 bdir.destroy_repository()
             except bzrlib.errors.NotBranchError:
                 pass
@@ -897,6 +904,7 @@ def main(args):
     global files_cache
     global is_tmp
     global branches, peers
+    global transports
 
     alias = args[1]
     url = args[2]
@@ -909,6 +917,7 @@ def main(args):
     marks = None
     branches = {}
     peers = {}
+    transports = []
 
     if alias[5:] == url:
         is_tmp = True
