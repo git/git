@@ -40,6 +40,7 @@ static struct object_array have_obj;
 static struct object_array want_obj;
 static struct object_array extra_edge_obj;
 static unsigned int timeout;
+static int keepalive = -1;
 /* 0 for no sideband,
  * otherwise maximum packet size (up to 65520 bytes).
  */
@@ -200,6 +201,7 @@ static void create_pack_file(void)
 	while (1) {
 		struct pollfd pfd[2];
 		int pe, pu, pollsize;
+		int ret;
 
 		reset_timeout();
 
@@ -222,7 +224,8 @@ static void create_pack_file(void)
 		if (!pollsize)
 			break;
 
-		if (poll(pfd, pollsize, -1) < 0) {
+		ret = poll(pfd, pollsize, 1000 * keepalive);
+		if (ret < 0) {
 			if (errno != EINTR) {
 				error("poll failed, resuming: %s",
 				      strerror(errno));
@@ -283,6 +286,21 @@ static void create_pack_file(void)
 			sz = send_client_data(1, data, sz);
 			if (sz < 0)
 				goto fail;
+		}
+
+		/*
+		 * We hit the keepalive timeout without saying anything; send
+		 * an empty message on the data sideband just to let the other
+		 * side know we're still working on it, but don't have any data
+		 * yet.
+		 *
+		 * If we don't have a sideband channel, there's no room in the
+		 * protocol to say anything, so those clients are just out of
+		 * luck.
+		 */
+		if (!ret && use_sideband) {
+			static const char buf[] = "0005\1";
+			write_or_die(1, buf, 5);
 		}
 	}
 
@@ -785,6 +803,11 @@ static int upload_pack_config(const char *var, const char *value, void *unused)
 {
 	if (!strcmp("uploadpack.allowtipsha1inwant", var))
 		allow_tip_sha1_in_want = git_config_bool(var, value);
+	else if (!strcmp("uploadpack.keepalive", var)) {
+		keepalive = git_config_int(var, value);
+		if (!keepalive)
+			keepalive = -1;
+	}
 	return parse_hide_refs_config(var, value, "uploadpack");
 }
 
