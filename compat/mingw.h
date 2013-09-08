@@ -11,6 +11,8 @@ typedef _sigset_t sigset_t;
 #undef _POSIX_THREAD_SAFE_FUNCTIONS
 #endif
 
+extern int core_fscache;
+
 struct config_context;
 int mingw_core_config(const char *var, const char *value,
 		      const struct config_context *ctx, void *cb);
