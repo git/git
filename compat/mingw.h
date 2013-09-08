@@ -11,6 +11,8 @@ typedef _sigset_t sigset_t;
 #undef _POSIX_THREAD_SAFE_FUNCTIONS
 #endif
 
+extern int core_fscache;
+
 int mingw_core_config(const char *var, const char *value, void *cb);
 #define platform_core_config mingw_core_config
 
