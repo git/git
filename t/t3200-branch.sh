@@ -871,4 +871,38 @@ test_expect_success '--merged catches invalid object names' '
 	test_must_fail git branch --merged 0000000000000000000000000000000000000000
 '
 
+test_expect_failure 'tracking with unexpected .fetch refspec' '
+	git init a &&
+	(
+		cd a &&
+		test_commit a
+	) &&
+	git init b &&
+	(
+		cd b &&
+		test_commit b
+	) &&
+	git init c &&
+	(
+		cd c &&
+		test_commit c &&
+		git remote add a ../a &&
+		git remote add b ../b &&
+		git fetch --all
+	) &&
+	git init d &&
+	(
+		cd d &&
+		git remote add c ../c &&
+		git config remote.c.fetch "+refs/remotes/*:refs/remotes/*" &&
+		git fetch c &&
+		git branch --track local/a/master remotes/a/master &&
+		test "$(git config branch.local/a/master.remote)" = "c" &&
+		test "$(git config branch.local/a/master.merge)" = "refs/remotes/a/master" &&
+		git rev-parse --verify a >expect &&
+		git rev-parse --verify local/a/master >actual &&
+		test_cmp expect actual
+	)
+'
+
 test_done
