@@ -2173,7 +2173,7 @@ uploadpack.keepalive::
 	the server to be hung and give up. Setting this option instructs
 	`upload-pack` to send an empty keepalive packet every
 	`uploadpack.keepalive` seconds. Setting this option to 0
-	disables keepalive packets entirely. The default is 0.
+	disables keepalive packets entirely. The default is 5 seconds.
 
 url.<base>.insteadOf::
 	Any URL that starts with this value will be rewritten to
