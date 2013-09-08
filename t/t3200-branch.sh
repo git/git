@@ -319,8 +319,9 @@ test_expect_success 'test tracking setup (non-wildcard, matching)' '
 
 test_expect_success 'tracking setup fails on non-matching refspec' '
 	git config remote.local.url . &&
-	git config remote.local.fetch refs/heads/s:refs/remotes/local/s &&
+	git config remote.local.fetch refs/heads/*:refs/remotes/local/* &&
 	(git show-ref -q refs/remotes/local/master || git fetch local) &&
+	git config remote.local.fetch refs/heads/s:refs/remotes/local/s &&
 	test_must_fail git branch --track my5 local/master &&
 	test_must_fail git config branch.my5.remote &&
 	test_must_fail git config branch.my5.merge
