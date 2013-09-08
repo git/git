@@ -1173,10 +1173,13 @@ static struct base_data *find_unresolved_deltas_1(struct base_data *base,
 		find_delta_children(&base_spec,
 				    &base->ref_first, &base->ref_last, OBJ_REF_DELTA);
 
-		memset(&base_spec, 0, sizeof(base_spec));
-		base_spec.offset = base->obj->idx.offset;
-		find_delta_children(&base_spec,
-				    &base->ofs_first, &base->ofs_last, OBJ_OFS_DELTA);
+		if (!packv4) {
+			memset(&base_spec, 0, sizeof(base_spec));
+			base_spec.offset = base->obj->idx.offset;
+			find_delta_children(&base_spec,
+					    &base->ofs_first, &base->ofs_last,
+					    OBJ_OFS_DELTA);
+		}
 
 		if (base->ref_last == -1 && base->ofs_last == -1) {
 			free(base->data);
