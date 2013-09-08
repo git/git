@@ -480,16 +480,21 @@ static int git_parse_signed(const char *value, intmax_t *ret, intmax_t max)
 		val = strtoimax(value, &end, 0);
 		if (errno == ERANGE)
 			return 0;
-		if (!parse_unit_factor(end, &factor))
+		if (!parse_unit_factor(end, &factor)) {
+			errno = EINVAL;
 			return 0;
+		}
 		uval = abs(val);
 		uval *= factor;
-		if (uval > max || abs(val) > uval)
+		if (uval > max || abs(val) > uval) {
+			errno = ERANGE;
 			return 0;
+		}
 		val *= factor;
 		*ret = val;
 		return 1;
 	}
+	errno = EINVAL;
 	return 0;
 }
 
@@ -505,13 +510,18 @@ int git_parse_unsigned(const char *value, uintmax_t *ret, uintmax_t max)
 		if (errno == ERANGE)
 			return 0;
 		oldval = val;
-		if (!parse_unit_factor(end, &val))
+		if (!parse_unit_factor(end, &val)) {
+			errno = EINVAL;
 			return 0;
-		if (val > max || oldval > val)
+		}
+		if (val > max || oldval > val) {
+			errno = ERANGE;
 			return 0;
+		}
 		*ret = val;
 		return 1;
 	}
+	errno = EINVAL;
 	return 0;
 }
 
