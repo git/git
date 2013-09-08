@@ -319,6 +319,30 @@ static uintmax_t read_varint(void)
 	return val;
 }
 
+static const unsigned char *read_sha1ref(void)
+{
+	unsigned int index = read_varint();
+	if (!index) {
+		static unsigned char sha1[20];
+		hashcpy(sha1, fill_and_use(20));
+		return sha1;
+	}
+	index--;
+	if (index >= nr_objects)
+		bad_object(consumed_bytes,
+			   _("bad index in read_sha1ref"));
+	return sha1_table + index * 20;
+}
+
+static const unsigned char *read_dictref(struct packv4_dict *dict)
+{
+	unsigned int index = read_varint();
+	if (index >= dict->nb_entries)
+		bad_object(consumed_bytes,
+			   _("bad index in read_dictref"));
+	return  dict->data + dict->offsets[index];
+}
+
 static const char *open_pack_file(const char *pack_name)
 {
 	if (from_stdin) {
@@ -484,6 +508,58 @@ static void read_and_inflate(unsigned long offset,
 		git_SHA1_Final(sha1, ctx);
 }
 
+static void *unpack_commit_v4(unsigned int offset, unsigned long size,
+			      unsigned char *sha1)
+{
+	unsigned int nb_parents;
+	const unsigned char *committer, *author, *ident;
+	unsigned long author_time, committer_time;
+	git_SHA_CTX ctx;
+	char hdr[32];
+	int hdrlen;
+	int16_t committer_tz, author_tz;
+	struct strbuf dst;
+
+	strbuf_init(&dst, size);
+
+	strbuf_addf(&dst, "tree %s\n", sha1_to_hex(read_sha1ref()));
+	nb_parents = read_varint();
+	while (nb_parents--)
+		strbuf_addf(&dst, "parent %s\n", sha1_to_hex(read_sha1ref()));
+
+	committer_time = read_varint();
+	ident = read_dictref(name_dict);
+	committer_tz = (ident[0] << 8) | ident[1];
+	committer = ident + 2;
+
+	author_time = read_varint();
+	ident = read_dictref(name_dict);
+	author_tz = (ident[0] << 8) | ident[1];
+	author = ident + 2;
+
+	if (author_time & 1)
+		author_time = committer_time + (author_time >> 1);
+	else
+		author_time = committer_time - (author_time >> 1);
+
+	strbuf_addf(&dst,
+		    "author %s %lu %+05d\n"
+		    "committer %s %lu %+05d\n",
+		    author, author_time, author_tz,
+		    committer, committer_time, committer_tz);
+
+	if (dst.len > size)
+		bad_object(offset, _("bad commit"));
+
+	hdrlen = sprintf(hdr, "commit %lu", size) + 1;
+	git_SHA1_Init(&ctx);
+	git_SHA1_Update(&ctx, hdr, hdrlen);
+	git_SHA1_Update(&ctx, dst.buf, dst.len);
+	read_and_inflate(offset, dst.buf + dst.len, size - dst.len,
+			 0, &ctx, sha1);
+	return dst.buf;
+}
+
 /*
  * Unpack an entry data in the streamed pack, calculate the object
  * SHA-1 if it's not a large blob. Otherwise just try to inflate the
@@ -497,6 +573,9 @@ static void *unpack_entry_data(unsigned long offset, unsigned long size,
 	git_SHA_CTX c;
 	char hdr[32];
 	int hdrlen;
+
+	if (type == OBJ_PV4_COMMIT)
+		return unpack_commit_v4(offset, size, sha1);
 
 	if (!is_delta_type(type)) {
 		hdrlen = sprintf(hdr, "%s %lu", typename(type), size) + 1;
@@ -541,7 +620,13 @@ static void *unpack_raw_entry(struct object_entry *obj,
 	obj->idx.offset = consumed_bytes;
 	input_crc32 = crc32(0, NULL, 0);
 
-	read_typesize_v2(obj);
+	if (packv4) {
+		val = read_varint();
+		obj->type = val & 15;
+		obj->size = val >> 4;
+	} else
+		read_typesize_v2(obj);
+	obj->real_type = obj->type;
 
 	switch (obj->type) {
 	case OBJ_REF_DELTA:
@@ -558,6 +643,10 @@ static void *unpack_raw_entry(struct object_entry *obj,
 	case OBJ_TREE:
 	case OBJ_BLOB:
 	case OBJ_TAG:
+		break;
+
+	case OBJ_PV4_COMMIT:
+		obj->real_type = OBJ_COMMIT;
 		break;
 	default:
 		bad_object(obj->idx.offset, _("unknown object type %d"), obj->type);
@@ -1109,7 +1198,6 @@ static void parse_pack_objects(unsigned char *sha1)
 	for (i = 0; i < nr_objects; i++) {
 		struct object_entry *obj = &objects[i];
 		void *data = unpack_raw_entry(obj, &delta->base, obj->idx.sha1);
-		obj->real_type = obj->type;
 		if (is_delta_type(obj->type)) {
 			nr_deltas++;
 			delta->obj_no = i;
@@ -1121,7 +1209,7 @@ static void parse_pack_objects(unsigned char *sha1)
 			check_against_sha1table(obj->idx.sha1);
 		} else {
 			check_against_sha1table(obj->idx.sha1);
-			sha1_object(data, NULL, obj->size, obj->type,
+			sha1_object(data, NULL, obj->size, obj->real_type,
 				    obj->idx.sha1);
 		}
 		free(data);
