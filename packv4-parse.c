@@ -64,6 +64,14 @@ struct packv4_dict *pv4_create_dict(const unsigned char *data, int dict_size)
 	return dict;
 }
 
+void pv4_free_dict(struct packv4_dict *dict)
+{
+	if (dict) {
+		free((void*)dict->data);
+		free(dict);
+	}
+}
+
 static struct packv4_dict *load_dict(struct packed_git *p, off_t *offset)
 {
 	struct pack_window *w_curs = NULL;
