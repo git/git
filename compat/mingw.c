@@ -211,6 +211,7 @@ enum hide_dotfiles_type {
 
 static enum hide_dotfiles_type hide_dotfiles = HIDE_DOTFILES_DOTGITONLY;
 static char *unset_environment_variables;
+int core_fscache;
 
 int mingw_core_config(const char *var, const char *value)
 {
@@ -219,6 +220,11 @@ int mingw_core_config(const char *var, const char *value)
 			hide_dotfiles = HIDE_DOTFILES_DOTGITONLY;
 		else
 			hide_dotfiles = git_config_bool(var, value);
+		return 0;
+	}
+
+	if (!strcmp(var, "core.fscache")) {
+		core_fscache = git_config_bool(var, value);
 		return 0;
 	}
 
