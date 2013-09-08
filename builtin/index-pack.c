@@ -453,7 +453,8 @@ static void *unpack_entry_data(unsigned long offset, unsigned long size,
 		git_SHA1_Update(&c, hdr, hdrlen);
 	} else
 		sha1 = NULL;
-	if (type == OBJ_BLOB && size > big_file_threshold)
+	if (is_delta_type(type) ||
+	     (type == OBJ_BLOB && size > big_file_threshold))
 		buf = fixed_buf;
 	else
 		buf = xmalloc(size);
