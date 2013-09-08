@@ -11,6 +11,7 @@
 #include "exec_cmd.h"
 #include "streaming.h"
 #include "thread-utils.h"
+#include "packv4-parse.h"
 
 static const char index_pack_usage[] =
 "git index-pack [-v] [-o <index-file>] [--keep | --keep=<msg>] [--verify] [--strict] (<pack-file> | --stdin [--fix-thin] [<pack-file>])";
@@ -70,6 +71,8 @@ struct delta_entry {
 static struct object_entry *objects;
 static struct delta_entry *deltas;
 static struct thread_local nothread_data;
+static unsigned char *sha1_table;
+static struct packv4_dict *name_dict, *path_dict;
 static int nr_objects;
 static int nr_deltas;
 static int nr_resolved_deltas;
@@ -81,6 +84,7 @@ static int do_fsck_object;
 static int verbose;
 static int show_stat;
 static int check_self_contained_and_connected;
+static int packv4;
 
 static struct progress *progress;
 
@@ -334,7 +338,9 @@ static void parse_pack_header(void)
 	/* Header consistency check */
 	if (hdr->hdr_signature != htonl(PACK_SIGNATURE))
 		die(_("pack signature mismatch"));
-	if (!pack_version_ok(hdr->hdr_version))
+	if (hdr->hdr_version == htonl(4))
+		packv4 = 1;
+	else if (!pack_version_ok(hdr->hdr_version))
 		die(_("pack version %"PRIu32" unsupported"),
 			ntohl(hdr->hdr_version));
 
@@ -1035,6 +1041,41 @@ static void *threaded_second_pass(void *data)
 }
 #endif
 
+static struct packv4_dict *read_dict(void)
+{
+	unsigned long size;
+	unsigned char *data;
+	struct packv4_dict *dict;
+
+	size = read_varint();
+	data = xmallocz(size);
+	read_and_inflate(consumed_bytes, data, size, 0, NULL, NULL);
+	dict = pv4_create_dict(data, size);
+	if (!dict)
+		die("unable to parse dictionary");
+	return dict;
+}
+
+static void parse_dictionaries(void)
+{
+	int i;
+	if (!packv4)
+		return;
+
+	sha1_table = xmalloc(20 * nr_objects);
+	if (nr_objects)
+		hashcpy(sha1_table, fill_and_use(20));
+	for (i = 1; i < nr_objects; i++) {
+		unsigned char *p = sha1_table + i * 20;
+		hashcpy(p, fill_and_use(20));
+		if (hashcmp(p - 20, p) >= 0)
+			die(_("wrong order in SHA-1 table at entry %d"), i);
+	}
+
+	name_dict = read_dict();
+	path_dict = read_dict();
+}
+
 /*
  * First pass:
  * - find locations of all objects;
@@ -1673,6 +1714,7 @@ int cmd_index_pack(int argc, const char **argv, const char *prefix)
 	parse_pack_header();
 	objects = xcalloc(nr_objects + 1, sizeof(struct object_entry));
 	deltas = xcalloc(nr_objects, sizeof(struct delta_entry));
+	parse_dictionaries();
 	parse_pack_objects(pack_sha1);
 	resolve_deltas();
 	conclude_pack(fix_thin_pack, curr_pack, pack_sha1);
@@ -1682,6 +1724,9 @@ int cmd_index_pack(int argc, const char **argv, const char *prefix)
 
 	if (show_stat)
 		show_pack_info(stat_only);
+
+	if (packv4)
+		die("we're not there yet");
 
 	idx_objects = xmalloc((nr_objects) * sizeof(struct pack_idx_entry *));
 	for (i = 0; i < nr_objects; i++)
@@ -1699,6 +1744,9 @@ int cmd_index_pack(int argc, const char **argv, const char *prefix)
 	free(objects);
 	free(index_name_buf);
 	free(keep_name_buf);
+	free(sha1_table);
+	pv4_free_dict(name_dict);
+	pv4_free_dict(path_dict);
 	if (pack_name == NULL)
 		free((void *) curr_pack);
 	if (index_name == NULL)
