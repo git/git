@@ -63,6 +63,7 @@ int precomposed_unicode = -1; /* see probe_utf8_pathname_composition() */
 struct startup_info *startup_info;
 unsigned long pack_size_limit_cfg;
 enum hide_dotfiles_type hide_dotfiles = HIDE_DOTFILES_DOTGITONLY;
+int core_fscache;
 
 /*
  * The character that begins a commented line in user-editable file
