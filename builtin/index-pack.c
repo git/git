@@ -24,6 +24,7 @@ struct object_entry {
 	enum object_type real_type; /* type after delta resolving */
 	unsigned delta_depth;
 	int base_object_no;
+	int nr_bases;		/* only valid for v4 trees */
 };
 
 union delta_base {
@@ -482,6 +483,11 @@ static int is_delta_type(enum object_type type)
 	return (type == OBJ_REF_DELTA || type == OBJ_OFS_DELTA);
 }
 
+static int is_delta_tree(const struct object_entry *obj)
+{
+	return obj->type == OBJ_PV4_TREE && obj->nr_bases > 0;
+}
+
 static void read_and_inflate(unsigned long offset,
 			     void *buf, unsigned long size,
 			     unsigned long wraparound,
@@ -587,6 +593,20 @@ static void add_ofs_delta(struct object_entry *obj,
 	nr_deltas++;
 }
 
+static void add_tree_delta_base(struct object_entry *obj,
+				const unsigned char *base,
+				int delta_start)
+{
+	int i;
+
+	for (i = delta_start; i < nr_deltas; i++)
+		if (!hashcmp(base, deltas[i].base.sha1))
+			return;
+
+	add_sha1_delta(obj, base);
+	obj->nr_bases++;
+}
+
 /*
  * v4 trees are actually kind of deltas and we don't do delta in the
  * first pass. This function only walks through a tree object to find
@@ -601,12 +621,14 @@ static void *unpack_tree_v4(struct object_entry *obj,
 	unsigned int nr = read_varint();
 	const unsigned char *last_base = NULL;
 	struct strbuf sb = STRBUF_INIT;
+	int delta_start = nr_deltas;
 	while (nr) {
 		unsigned int copy_start_or_path = read_varint();
 		if (copy_start_or_path & 1) { /* copy_start */
 			unsigned int copy_count = read_varint();
 			if (copy_count & 1) { /* first delta */
 				last_base = read_sha1table_ref();
+				add_tree_delta_base(obj, last_base, delta_start);
 			} else if (!last_base)
 				bad_object(offset,
 					   _("missing delta base unpack_tree_v4"));
@@ -740,9 +762,15 @@ static void *unpack_raw_entry(struct object_entry *obj,
 
 	switch (obj->type) {
 	case OBJ_REF_DELTA:
-		add_sha1_delta(obj, fill_and_use(20));
+		if (packv4)
+			add_sha1_delta(obj, read_sha1table_ref());
+		else
+			add_sha1_delta(obj, fill_and_use(20));
 		break;
 	case OBJ_OFS_DELTA:
+		if (packv4)
+			die(_("pack version 4 does not support ofs-delta type (offset %lu)"),
+			    (unsigned long)obj->idx.offset);
 		offset = obj->idx.offset - read_varint();
 		if (offset <= 0 || offset >= obj->idx.offset)
 			bad_object(obj->idx.offset,
@@ -1310,8 +1338,7 @@ static void parse_pack_objects(unsigned char *sha1)
 	for (i = 0; i < nr_objects; i++) {
 		struct object_entry *obj = &objects[i];
 		void *data = unpack_raw_entry(obj, obj->idx.sha1);
-		if (is_delta_type(obj->type) ||
-		    (!data && obj->type == OBJ_PV4_TREE)) {
+		if (is_delta_type(obj->type) || is_delta_tree(obj)) {
 			/* delay sha1_object() until second pass */
 		} else if (!data) {
 			/* large blobs, check later */
