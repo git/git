@@ -288,6 +288,19 @@ static inline void *fill_and_use(int bytes)
 	return p;
 }
 
+static void check_against_sha1table(const unsigned char *sha1)
+{
+	const unsigned char *found;
+	if (!packv4)
+		return;
+
+	found = bsearch(sha1, sha1_table, nr_objects, 20,
+			(int (*)(const void *, const void *))hashcmp);
+	if (!found)
+		die(_("object %s not found in SHA-1 table"),
+		    sha1_to_hex(sha1));
+}
+
 static NORETURN void bad_object(unsigned long offset, const char *format,
 		       ...) __attribute__((format (printf, 2, 3)));
 
@@ -907,6 +920,7 @@ static void resolve_delta(struct object_entry *delta_obj,
 		bad_object(delta_obj->idx.offset, _("failed to apply delta"));
 	hash_sha1_file(result->data, result->size,
 		       typename(delta_obj->real_type), delta_obj->idx.sha1);
+	check_against_sha1table(delta_obj->idx.sha1);
 	sha1_object(result->data, NULL, result->size, delta_obj->real_type,
 		    delta_obj->idx.sha1);
 	counter_lock();
@@ -1104,8 +1118,12 @@ static void parse_pack_objects(unsigned char *sha1)
 			/* large blobs, check later */
 			obj->real_type = OBJ_BAD;
 			nr_delays++;
-		} else
-			sha1_object(data, NULL, obj->size, obj->type, obj->idx.sha1);
+			check_against_sha1table(obj->idx.sha1);
+		} else {
+			check_against_sha1table(obj->idx.sha1);
+			sha1_object(data, NULL, obj->size, obj->type,
+				    obj->idx.sha1);
+		}
 		free(data);
 		display_progress(progress, i+1);
 	}
