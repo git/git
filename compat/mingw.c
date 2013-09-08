@@ -1250,6 +1250,8 @@ int mingw_lstat(const char *file_name, struct stat *buf)
 	return -1;
 }
 
+int (*lstat)(const char *file_name, struct stat *buf) = mingw_lstat;
+
 static int get_file_info_by_handle(HANDLE hnd, struct stat *buf)
 {
 	BY_HANDLE_FILE_INFORMATION fdata;
