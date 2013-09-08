@@ -651,6 +651,8 @@ static int do_stat_internal(int follow, const char *file_name, struct stat *buf)
 	return do_lstat(follow, alt_name, buf);
 }
 
+int (*lstat)(const char *file_name, struct stat *buf) = mingw_lstat;
+
 int mingw_lstat(const char *file_name, struct stat *buf)
 {
 	return do_stat_internal(0, file_name, buf);
