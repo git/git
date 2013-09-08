@@ -927,6 +927,8 @@ static int do_stat_internal(int follow, const char *file_name, struct stat *buf)
 	return do_lstat(follow, alt_name, buf);
 }
 
+int (*lstat)(const char *file_name, struct stat *buf) = mingw_lstat;
+
 static int get_file_info_by_handle(HANDLE hnd, struct stat *buf)
 {
 	BY_HANDLE_FILE_INFORMATION fdata;
