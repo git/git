@@ -48,7 +48,8 @@ working tree to it; use "git checkout <newbranch>" to switch to the
 new branch.
 
 When a local branch is started off a remote-tracking branch, Git sets up the
-branch so that 'git pull' will appropriately merge from
+branch (specifically the `branch.<name>.remote` and `branch.<name>.merge`
+configuration entries) so that 'git pull' will appropriately merge from
 the remote-tracking branch. This behavior may be changed via the global
 `branch.autosetupmerge` configuration flag. That setting can be
 overridden by using the `--track` and `--no-track` options, and
@@ -156,7 +157,8 @@ This option is only applicable in non-verbose mode.
 
 -t::
 --track::
-	When creating a new branch, set up configuration to mark the
+	When creating a new branch, set up `branch.<name>.remote` and
+	`branch.<name>.merge` configuration entries to mark the
 	start-point branch as "upstream" from the new branch. This
 	configuration will tell git to show the relationship between the
 	two branches in `git status` and `git branch -v`. Furthermore,
