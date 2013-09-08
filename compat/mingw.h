@@ -365,7 +365,7 @@ int mingw_fstat(int fd, struct stat *buf);
 #ifdef lstat
 #undef lstat
 #endif
-#define lstat mingw_lstat
+extern int (*lstat)(const char *file_name, struct stat *buf);
 
 #ifndef _stati64
 # define _stati64(x,y) mingw_stat(x,y)
