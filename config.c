@@ -543,18 +543,25 @@ int git_parse_ulong(const char *value, unsigned long *ret)
 	return 1;
 }
 
-static void die_bad_config(const char *name)
+static void die_bad_number(const char *name, const char *value)
 {
+	const char *reason = errno == ERANGE ?
+			     "out of range" :
+			     "invalid unit";
+	if (!value)
+		value = "";
+
 	if (cf && cf->name)
-		die("bad config value for '%s' in %s", name, cf->name);
-	die("bad config value for '%s'", name);
+		die("bad numeric config value '%s' for '%s' in %s: %s",
+		    value, name, cf->name, reason);
+	die("bad numeric config value '%s' for '%s': %s", value, name, reason);
 }
 
 int git_config_int(const char *name, const char *value)
 {
 	int ret;
 	if (!git_parse_int(value, &ret))
-		die_bad_config(name);
+		die_bad_number(name, value);
 	return ret;
 }
 
@@ -562,7 +569,7 @@ unsigned long git_config_ulong(const char *name, const char *value)
 {
 	unsigned long ret;
 	if (!git_parse_ulong(value, &ret))
-		die_bad_config(name);
+		die_bad_number(name, value);
 	return ret;
 }
 
