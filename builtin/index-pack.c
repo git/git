@@ -277,6 +277,31 @@ static void use(int bytes)
 	consumed_bytes += bytes;
 }
 
+static inline void *fill_and_use(int bytes)
+{
+	void *p = fill(bytes);
+	use(bytes);
+	return p;
+}
+
+static NORETURN void bad_object(unsigned long offset, const char *format,
+		       ...) __attribute__((format (printf, 2, 3)));
+
+static uintmax_t read_varint(void)
+{
+	unsigned char c = *(char*)fill_and_use(1);
+	uintmax_t val = c & 127;
+	while (c & 128) {
+		val += 1;
+		if (!val || MSB(val, 7))
+			bad_object(consumed_bytes,
+				   _("offset overflow in read_varint"));
+		c = *(char*)fill_and_use(1);
+		val = (val << 7) + (c & 127);
+	}
+	return val;
+}
+
 static const char *open_pack_file(const char *pack_name)
 {
 	if (from_stdin) {
@@ -316,9 +341,6 @@ static void parse_pack_header(void)
 	nr_objects = ntohl(hdr->hdr_entries);
 	use(sizeof(struct pack_header));
 }
-
-static NORETURN void bad_object(unsigned long offset, const char *format,
-		       ...) __attribute__((format (printf, 2, 3)));
 
 static NORETURN void bad_object(unsigned long offset, const char *format, ...)
 {
@@ -462,55 +484,41 @@ static void *unpack_entry_data(unsigned long offset, unsigned long size,
 	return buf == fixed_buf ? NULL : buf;
 }
 
+static void read_typesize_v2(struct object_entry *obj)
+{
+	unsigned char c = *(char*)fill_and_use(1);
+	unsigned shift;
+
+	obj->type = (c >> 4) & 7;
+	obj->size = (c & 15);
+	shift = 4;
+	while (c & 128) {
+		c = *(char*)fill_and_use(1);
+		obj->size += (c & 0x7f) << shift;
+		shift += 7;
+	}
+}
+
 static void *unpack_raw_entry(struct object_entry *obj,
 			      union delta_base *delta_base,
 			      unsigned char *sha1)
 {
-	unsigned char *p;
-	unsigned long size, c;
-	off_t base_offset;
-	unsigned shift;
 	void *data;
+	uintmax_t val;
 
 	obj->idx.offset = consumed_bytes;
 	input_crc32 = crc32(0, NULL, 0);
 
-	p = fill(1);
-	c = *p;
-	use(1);
-	obj->type = (c >> 4) & 7;
-	size = (c & 15);
-	shift = 4;
-	while (c & 0x80) {
-		p = fill(1);
-		c = *p;
-		use(1);
-		size += (c & 0x7f) << shift;
-		shift += 7;
-	}
-	obj->size = size;
+	read_typesize_v2(obj);
 
 	switch (obj->type) {
 	case OBJ_REF_DELTA:
-		hashcpy(delta_base->sha1, fill(20));
-		use(20);
+		hashcpy(delta_base->sha1, fill_and_use(20));
 		break;
 	case OBJ_OFS_DELTA:
 		memset(delta_base, 0, sizeof(*delta_base));
-		p = fill(1);
-		c = *p;
-		use(1);
-		base_offset = c & 127;
-		while (c & 128) {
-			base_offset += 1;
-			if (!base_offset || MSB(base_offset, 7))
-				bad_object(obj->idx.offset, _("offset value overflow for delta base object"));
-			p = fill(1);
-			c = *p;
-			use(1);
-			base_offset = (base_offset << 7) + (c & 127);
-		}
-		delta_base->offset = obj->idx.offset - base_offset;
+		val = read_varint();
+		delta_base->offset = obj->idx.offset - val;
 		if (delta_base->offset <= 0 || delta_base->offset >= obj->idx.offset)
 			bad_object(obj->idx.offset, _("delta base offset is out of bound"));
 		break;
