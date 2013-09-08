@@ -26,6 +26,7 @@ This restriction can be bypassed using `-f`.
 Unless `-f` is given, the 'replace' reference must not yet exist.
 
 There is no other restriction on the replaced and replacement objects.
+Merge commits can be replaced by non-merge commits and vice versa.
 
 Replacement references will be used by default by all Git commands
 except those doing reachability traversal (prune, pack transfer and
