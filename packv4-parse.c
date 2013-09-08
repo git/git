@@ -31,11 +31,38 @@ const unsigned char *get_sha1ref(struct packed_git *p,
 	return sha1;
 }
 
-struct packv4_dict {
-	const unsigned char *data;
-	unsigned int nb_entries;
-	unsigned int offsets[FLEX_ARRAY];
-};
+struct packv4_dict *pv4_create_dict(const unsigned char *data, int dict_size)
+{
+	struct packv4_dict *dict;
+	int i;
+
+	/* count number of entries */
+	int nb_entries = 0;
+	const unsigned char *cp = data;
+	while (cp < data + dict_size - 3) {
+		cp += 2;  /* prefix bytes */
+		cp += strlen((const char *)cp);  /* entry string */
+		cp += 1;  /* terminating NUL */
+		nb_entries++;
+	}
+	if (cp - data != dict_size) {
+		error("dict size mismatch");
+		return NULL;
+	}
+
+	dict = xmalloc(sizeof(*dict) + nb_entries * sizeof(dict->offsets[0]));
+	dict->data = data;
+	dict->nb_entries = nb_entries;
+
+	cp = data;
+	for (i = 0; i < nb_entries; i++) {
+		dict->offsets[i] = cp - data;
+		cp += 2;
+		cp += strlen((const char *)cp) + 1;
+	}
+
+	return dict;
+}
 
 static struct packv4_dict *load_dict(struct packed_git *p, off_t *offset)
 {
@@ -46,7 +73,7 @@ static struct packv4_dict *load_dict(struct packed_git *p, off_t *offset)
 	const unsigned char *cp;
 	git_zstream stream;
 	struct packv4_dict *dict;
-	int nb_entries, i, st;
+	int st;
 
 	/* get uncompressed dictionary data size */
 	src = use_pack(p, &w_curs, curpos, &avail);
@@ -78,30 +105,10 @@ static struct packv4_dict *load_dict(struct packed_git *p, off_t *offset)
 		return NULL;
 	}
 
-	/* count number of entries */
-	nb_entries = 0;
-	cp = data;
-	while (cp < data + dict_size - 3) {
-		cp += 2;  /* prefix bytes */
-		cp += strlen((const char *)cp);  /* entry string */
-		cp += 1;  /* terminating NUL */
-		nb_entries++;
-	}
-	if (cp - data != dict_size) {
-		error("dict size mismatch");
+	dict = pv4_create_dict(data, dict_size);
+	if (!dict) {
 		free(data);
 		return NULL;
-	}
-
-	dict = xmalloc(sizeof(*dict) + nb_entries * sizeof(dict->offsets[0]));
-	dict->data = data;
-	dict->nb_entries = nb_entries;
-
-	cp = data;
-	for (i = 0; i < nb_entries; i++) {
-		dict->offsets[i] = cp - data;
-		cp += 2;
-		cp += strlen((const char *)cp) + 1;
 	}
 
 	*offset = curpos;
