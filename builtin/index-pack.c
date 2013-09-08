@@ -431,6 +431,40 @@ static int is_delta_type(enum object_type type)
 	return (type == OBJ_REF_DELTA || type == OBJ_OFS_DELTA);
 }
 
+static void read_and_inflate(unsigned long offset,
+			     void *buf, unsigned long size,
+			     unsigned long wraparound,
+			     git_SHA_CTX *ctx,
+			     unsigned char *sha1)
+{
+	git_zstream stream;
+	int status;
+
+	memset(&stream, 0, sizeof(stream));
+	git_inflate_init(&stream);
+	stream.next_out = buf;
+	stream.avail_out = wraparound ? wraparound : size;
+
+	do {
+		unsigned char *last_out = stream.next_out;
+		stream.next_in = fill(1);
+		stream.avail_in = input_len;
+		status = git_inflate(&stream, 0);
+		use(input_len - stream.avail_in);
+		if (sha1)
+			git_SHA1_Update(ctx, last_out, stream.next_out - last_out);
+		if (wraparound) {
+			stream.next_out = buf;
+			stream.avail_out = wraparound;
+		}
+	} while (status == Z_OK);
+	if (stream.total_out != size || status != Z_STREAM_END)
+		bad_object(offset, _("inflate returned %d"), status);
+	git_inflate_end(&stream);
+	if (sha1)
+		git_SHA1_Final(sha1, ctx);
+}
+
 /*
  * Unpack an entry data in the streamed pack, calculate the object
  * SHA-1 if it's not a large blob. Otherwise just try to inflate the
@@ -440,8 +474,6 @@ static void *unpack_entry_data(unsigned long offset, unsigned long size,
 			       enum object_type type, unsigned char *sha1)
 {
 	static char fixed_buf[8192];
-	int status;
-	git_zstream stream;
 	void *buf;
 	git_SHA_CTX c;
 	char hdr[32];
@@ -459,29 +491,9 @@ static void *unpack_entry_data(unsigned long offset, unsigned long size,
 	else
 		buf = xmalloc(size);
 
-	memset(&stream, 0, sizeof(stream));
-	git_inflate_init(&stream);
-	stream.next_out = buf;
-	stream.avail_out = buf == fixed_buf ? sizeof(fixed_buf) : size;
-
-	do {
-		unsigned char *last_out = stream.next_out;
-		stream.next_in = fill(1);
-		stream.avail_in = input_len;
-		status = git_inflate(&stream, 0);
-		use(input_len - stream.avail_in);
-		if (sha1)
-			git_SHA1_Update(&c, last_out, stream.next_out - last_out);
-		if (buf == fixed_buf) {
-			stream.next_out = buf;
-			stream.avail_out = sizeof(fixed_buf);
-		}
-	} while (status == Z_OK);
-	if (stream.total_out != size || status != Z_STREAM_END)
-		bad_object(offset, _("inflate returned %d"), status);
-	git_inflate_end(&stream);
-	if (sha1)
-		git_SHA1_Final(sha1, &c);
+	read_and_inflate(offset, buf, size,
+			 buf == fixed_buf ? sizeof(fixed_buf) : 0,
+			 &c, sha1);
 	return buf == fixed_buf ? NULL : buf;
 }
 
