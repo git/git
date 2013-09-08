@@ -568,6 +568,25 @@ static void *unpack_commit_v4(unsigned int offset, unsigned long size,
 	return dst.buf;
 }
 
+static void add_sha1_delta(struct object_entry *obj,
+			   const unsigned char *sha1)
+{
+	struct delta_entry *delta = deltas + nr_deltas;
+	delta->obj_no = obj - objects;
+	hashcpy(delta->base.sha1, sha1);
+	nr_deltas++;
+}
+
+static void add_ofs_delta(struct object_entry *obj,
+			  off_t offset)
+{
+	struct delta_entry *delta = deltas + nr_deltas;
+	delta->obj_no = obj - objects;
+	memset(&delta->base, 0, sizeof(delta->base));
+	delta->base.offset = offset;
+	nr_deltas++;
+}
+
 /*
  * v4 trees are actually kind of deltas and we don't do delta in the
  * first pass. This function only walks through a tree object to find
@@ -703,17 +722,16 @@ static void read_typesize_v2(struct object_entry *obj)
 }
 
 static void *unpack_raw_entry(struct object_entry *obj,
-			      union delta_base *delta_base,
 			      unsigned char *sha1)
 {
 	void *data;
-	uintmax_t val;
+	off_t offset;
 
 	obj->idx.offset = consumed_bytes;
 	input_crc32 = crc32(0, NULL, 0);
 
 	if (packv4) {
-		val = read_varint();
+		uintmax_t val = read_varint();
 		obj->type = val & 15;
 		obj->size = val >> 4;
 	} else
@@ -722,14 +740,14 @@ static void *unpack_raw_entry(struct object_entry *obj,
 
 	switch (obj->type) {
 	case OBJ_REF_DELTA:
-		hashcpy(delta_base->sha1, fill_and_use(20));
+		add_sha1_delta(obj, fill_and_use(20));
 		break;
 	case OBJ_OFS_DELTA:
-		memset(delta_base, 0, sizeof(*delta_base));
-		val = read_varint();
-		delta_base->offset = obj->idx.offset - val;
-		if (delta_base->offset <= 0 || delta_base->offset >= obj->idx.offset)
-			bad_object(obj->idx.offset, _("delta base offset is out of bound"));
+		offset = obj->idx.offset - read_varint();
+		if (offset <= 0 || offset >= obj->idx.offset)
+			bad_object(obj->idx.offset,
+				   _("delta base offset is out of bound"));
+		add_ofs_delta(obj, offset);
 		break;
 	case OBJ_COMMIT:
 	case OBJ_TREE:
@@ -1283,7 +1301,6 @@ static void parse_dictionaries(void)
 static void parse_pack_objects(unsigned char *sha1)
 {
 	int i, nr_delays = 0;
-	struct delta_entry *delta = deltas;
 	struct stat st;
 
 	if (verbose)
@@ -1292,12 +1309,9 @@ static void parse_pack_objects(unsigned char *sha1)
 				nr_objects);
 	for (i = 0; i < nr_objects; i++) {
 		struct object_entry *obj = &objects[i];
-		void *data = unpack_raw_entry(obj, &delta->base, obj->idx.sha1);
-		if (is_delta_type(obj->type)) {
-			nr_deltas++;
-			delta->obj_no = i;
-			delta++;
-		} else if (!data && obj->type == OBJ_PV4_TREE) {
+		void *data = unpack_raw_entry(obj, obj->idx.sha1);
+		if (is_delta_type(obj->type) ||
+		    (!data && obj->type == OBJ_PV4_TREE)) {
 			/* delay sha1_object() until second pass */
 		} else if (!data) {
 			/* large blobs, check later */
