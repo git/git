@@ -379,6 +379,10 @@ test_expect_success 'init with separate gitdir' '
 	test -d realgitdir/refs
 '
 
+test_expect_success 're-init on .git file' '
+	( cd newdir && git init )
+'
+
 test_expect_success 're-init to update git link' '
 	(
 	cd newdir &&
