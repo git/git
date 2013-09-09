@@ -80,6 +80,7 @@ static int nr_objects;
 static int nr_deltas;
 static int nr_resolved_deltas;
 static int nr_threads;
+static int nr_objects_final;
 
 static int from_stdin;
 static int strict;
@@ -297,7 +298,7 @@ static void check_against_sha1table(const unsigned char *sha1)
 	if (!packv4)
 		return;
 
-	found = bsearch(sha1, sha1_table, nr_objects, 20,
+	found = bsearch(sha1, sha1_table, nr_objects_final, 20,
 			(int (*)(const void *, const void *))hashcmp);
 	if (!found)
 		die(_("object %s not found in SHA-1 table"),
@@ -331,7 +332,7 @@ static const unsigned char *read_sha1ref(void)
 		return sha1;
 	}
 	index--;
-	if (index >= nr_objects)
+	if (index >= nr_objects_final)
 		bad_object(consumed_bytes,
 			   _("bad index in read_sha1ref"));
 	return sha1_table + index * 20;
@@ -340,7 +341,7 @@ static const unsigned char *read_sha1ref(void)
 static const unsigned char *read_sha1table_ref(void)
 {
 	const unsigned char *sha1 = read_sha1ref();
-	if (sha1 < sha1_table || sha1 >= sha1_table + nr_objects * 20)
+	if (sha1 < sha1_table || sha1 >= sha1_table + nr_objects_final * 20)
 		check_against_sha1table(sha1);
 	return sha1;
 }
@@ -392,7 +393,7 @@ static void parse_pack_header(void)
 		die(_("pack version %"PRIu32" unsupported"),
 			ntohl(hdr->hdr_version));
 
-	nr_objects = ntohl(hdr->hdr_entries);
+	nr_objects_final = nr_objects = ntohl(hdr->hdr_entries);
 	use(sizeof(struct pack_header));
 }
 
@@ -1472,10 +1473,10 @@ static void parse_dictionaries(void)
 	if (!packv4)
 		return;
 
-	sha1_table = xmalloc(20 * nr_objects);
-	if (nr_objects)
+	sha1_table = xmalloc(20 * nr_objects_final);
+	if (nr_objects_final)
 		hashcpy(sha1_table, fill_and_use(20));
-	for (i = 1; i < nr_objects; i++) {
+	for (i = 1; i < nr_objects_final; i++) {
 		unsigned char *p = sha1_table + i * 20;
 		hashcpy(p, fill_and_use(20));
 		if (hashcmp(p - 20, p) >= 0)
