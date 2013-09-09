@@ -202,7 +202,8 @@ test_expect_success 'setup mailmap blob tests' '
 	Blob Guy <author@example.com>
 	Blob Guy <bugs@company.xx>
 	EOF
-	git add just-bugs both &&
+	printf "Tricky Guy <author@example.com>" >no-newline &&
+	git add just-bugs both no-newline &&
 	git commit -m "my mailmaps" &&
 	echo "Repo Guy <author@example.com>" >.mailmap &&
 	echo "Internal Guy <author@example.com>" >internal.map
@@ -284,6 +285,19 @@ test_expect_success 'mailmap.blob defaults to HEAD:.mailmap in bare repo' '
 		git shortlog -ns HEAD >actual &&
 		test_cmp expect actual
 	)
+'
+
+test_expect_success 'mailmap.blob can handle blobs without trailing newline' '
+	cat >expect <<-\EOF &&
+	Tricky Guy (1):
+	      initial
+
+	nick1 (1):
+	      second
+
+	EOF
+	git -c mailmap.blob=map:no-newline shortlog HEAD >actual &&
+	test_cmp expect actual
 '
 
 test_expect_success 'cleanup after mailmap.blob tests' '
