@@ -254,8 +254,14 @@ static unsigned long write_no_reuse_object(struct sha1file *f, struct object_ent
 	enum object_type type;
 	void *buf;
 	struct git_istream *st = NULL;
+	char *result = "OK";
 
-	if (!usable_delta) {
+	if (!usable_delta ||
+	    /*
+	     * Force loading canonical tree. In future we may want to
+	     * read v4 trees directly instead.
+	     */
+	    (pack_version == 4 && entry->type == OBJ_TREE)) {
 		if (entry->type == OBJ_BLOB &&
 		    entry->size > big_file_threshold &&
 		    (st = open_istream(entry->idx.sha1, &type, &size, NULL)) != NULL)
@@ -287,7 +293,37 @@ static unsigned long write_no_reuse_object(struct sha1file *f, struct object_ent
 
 	if (st)	/* large blob case, just assume we don't compress well */
 		datalen = size;
-	else if (entry->z_delta_size)
+	else if (pack_version == 4 && entry->type == OBJ_COMMIT) {
+		datalen = size;
+		result = pv4_encode_commit(&v4, buf, &datalen);
+		if (result) {
+			free(buf);
+			buf = result;
+			type = OBJ_PV4_COMMIT;
+		}
+	} else if (pack_version == 4 && entry->type == OBJ_TREE) {
+		datalen = size;
+		if (usable_delta) {
+			unsigned long base_size;
+			char *base_buf;
+			base_buf = read_sha1_file(entry->delta->idx.sha1, &type,
+						  &base_size);
+			if (!base_buf || type != OBJ_TREE)
+				die("unable to read %s",
+				    sha1_to_hex(entry->delta->idx.sha1));
+			result = pv4_encode_tree(&v4, buf, &datalen,
+						 base_buf, base_size,
+						 entry->delta->idx.sha1);
+			free(base_buf);
+		} else
+			result = pv4_encode_tree(&v4, buf, &datalen,
+						 NULL, 0, NULL);
+		if (result) {
+			free(buf);
+			buf = result;
+			type = OBJ_PV4_TREE;
+		}
+	} else if (entry->z_delta_size)
 		datalen = entry->z_delta_size;
 	else
 		datalen = do_compress(&buf, size);
@@ -296,7 +332,10 @@ static unsigned long write_no_reuse_object(struct sha1file *f, struct object_ent
 	 * The object header is a byte of 'type' followed by zero or
 	 * more bytes of length.
 	 */
-	hdrlen = encode_in_pack_object_header(type, size, header);
+	if (pack_version < 4)
+		hdrlen = encode_in_pack_object_header(type, size, header);
+	else
+		hdrlen = pv4_encode_object_header(type, size, header);
 
 	if (type == OBJ_OFS_DELTA) {
 		/*
@@ -318,7 +357,7 @@ static unsigned long write_no_reuse_object(struct sha1file *f, struct object_ent
 		sha1write(f, header, hdrlen);
 		sha1write(f, dheader + pos, sizeof(dheader) - pos);
 		hdrlen += sizeof(dheader) - pos;
-	} else if (type == OBJ_REF_DELTA) {
+	} else if (type == OBJ_REF_DELTA && pack_version < 4) {
 		/*
 		 * Deltas with a base reference contain
 		 * an additional 20 bytes for the base sha1.
@@ -332,6 +371,10 @@ static unsigned long write_no_reuse_object(struct sha1file *f, struct object_ent
 		sha1write(f, header, hdrlen);
 		sha1write(f, entry->delta->idx.sha1, 20);
 		hdrlen += 20;
+	} else if (type == OBJ_REF_DELTA && pack_version == 4) {
+		hdrlen += encode_sha1ref(&v4, entry->delta->idx.sha1,
+					header + hdrlen);
+		sha1write(f, header, hdrlen);
 	} else {
 		if (limit && hdrlen + datalen + 20 >= limit) {
 			if (st)
@@ -341,14 +384,26 @@ static unsigned long write_no_reuse_object(struct sha1file *f, struct object_ent
 		}
 		sha1write(f, header, hdrlen);
 	}
+
 	if (st) {
 		datalen = write_large_blob_data(st, f, entry->idx.sha1);
 		close_istream(st);
-	} else {
-		sha1write(f, buf, datalen);
-		free(buf);
+		return hdrlen + datalen;
 	}
 
+	if (!result) {
+		warning(_("can't convert %s object %s"),
+			typename(entry->type),
+			sha1_to_hex(entry->idx.sha1));
+		free(buf);
+		buf = read_sha1_file(entry->idx.sha1, &type, &size);
+		if (!buf)
+			die(_("unable to read %s"),
+			    sha1_to_hex(entry->idx.sha1));
+		datalen = do_compress(&buf, size);
+	}
+	sha1write(f, buf, datalen);
+	free(buf);
 	return hdrlen + datalen;
 }
 
@@ -368,7 +423,10 @@ static unsigned long write_reuse_object(struct sha1file *f, struct object_entry 
 	if (entry->delta)
 		type = (allow_ofs_delta && entry->delta->idx.offset) ?
 			OBJ_OFS_DELTA : OBJ_REF_DELTA;
-	hdrlen = encode_in_pack_object_header(type, entry->size, header);
+	if (pack_version < 4)
+		hdrlen = encode_in_pack_object_header(type, entry->size, header);
+	else
+		hdrlen = pv4_encode_object_header(type, entry->size, header);
 
 	offset = entry->in_pack_offset;
 	revidx = find_pack_revindex(p, offset);
@@ -404,7 +462,7 @@ static unsigned long write_reuse_object(struct sha1file *f, struct object_entry 
 		sha1write(f, dheader + pos, sizeof(dheader) - pos);
 		hdrlen += sizeof(dheader) - pos;
 		reused_delta++;
-	} else if (type == OBJ_REF_DELTA) {
+	} else if (type == OBJ_REF_DELTA && pack_version < 4) {
 		if (limit && hdrlen + 20 + datalen + 20 >= limit) {
 			unuse_pack(&w_curs);
 			return 0;
@@ -412,6 +470,11 @@ static unsigned long write_reuse_object(struct sha1file *f, struct object_entry 
 		sha1write(f, header, hdrlen);
 		sha1write(f, entry->delta->idx.sha1, 20);
 		hdrlen += 20;
+		reused_delta++;
+	} else if (type == OBJ_REF_DELTA && pack_version == 4) {
+		hdrlen += encode_sha1ref(&v4, entry->delta->idx.sha1,
+					header + hdrlen);
+		sha1write(f, header, hdrlen);
 		reused_delta++;
 	} else {
 		if (limit && hdrlen + datalen + 20 >= limit) {
@@ -476,6 +539,10 @@ static unsigned long write_object(struct sha1file *f,
 		to_reuse = 1;	/* we have it in-pack undeltified,
 				 * and we do not need to deltify it.
 				 */
+
+	if (pack_version == 4 &&
+	     (entry->type == OBJ_TREE || entry->type == OBJ_COMMIT))
+		to_reuse = 0;
 
 	if (!f) {
 		if (usable_delta && entry->delta->idx.offset < 2)
@@ -789,6 +856,8 @@ static void write_pack_file(void)
 
 		if (!offset)
 			die_errno("unable to write pack header");
+		if (pack_version == 4)
+			offset += packv4_write_tables(f, &v4);
 		nr_written = 0;
 		for (; i < nr_objects; i++) {
 			struct object_entry *e = write_order[i];
@@ -2106,6 +2175,8 @@ static void prepare_pack(int window, int depth)
 		sort_dict_entries_by_hits(v4.commit_ident_table);
 		sort_dict_entries_by_hits(v4.tree_path_table);
 		v4.all_objs = xmalloc(nr_objects * sizeof(*v4.all_objs));
+		pack_idx_opts.version = 3;
+		allow_ofs_delta = 0;
 	}
 
 	get_object_details();

@@ -8,7 +8,7 @@
  * Packed object header
  */
 #define PACK_SIGNATURE 0x5041434b	/* "PACK" */
-#define pack_version_ok(v) ((v) == htonl(2) || (v) == htonl(3))
+#define pack_version_ok(v) ((v) == htonl(2) || (v) == htonl(3) || (v) == htonl(4))
 struct pack_header {
 	uint32_t hdr_signature;
 	uint32_t hdr_version;
