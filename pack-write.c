@@ -1,6 +1,7 @@
 #include "cache.h"
 #include "pack.h"
 #include "csum-file.h"
+#include "varint.h"
 
 void reset_pack_idx_option(struct pack_idx_option *opts)
 {
@@ -347,6 +348,38 @@ int encode_in_pack_object_header(enum object_type type, uintmax_t size, unsigned
 	}
 	*hdr = c;
 	return n;
+}
+
+int pv4_encode_object_header(enum object_type type,
+			     uintmax_t size, unsigned char *hdr)
+{
+	uintmax_t val;
+
+	switch (type) {
+	case OBJ_COMMIT:
+	case OBJ_TREE:
+	case OBJ_BLOB:
+	case OBJ_TAG:
+	case OBJ_REF_DELTA:
+	case OBJ_PV4_COMMIT:
+	case OBJ_PV4_TREE:
+		break;
+	default:
+		die("bad type %d", type);
+	}
+
+	/*
+	 * We allocate 4 bits in the LSB for the object type which
+	 * should be good for quite a while, given that we effectively
+	 * encodes only 5 object types: commit, tree, blob, delta,
+	 * tag.
+	 */
+	val = size;
+	if (MSB(val, 4))
+		die("fixme: the code doesn't currently cope with big sizes");
+	val <<= 4;
+	val |= type;
+	return encode_varint(val, hdr);
 }
 
 struct sha1file *create_tmp_packfile(char **pack_tmp_name)
