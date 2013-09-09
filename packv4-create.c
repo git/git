@@ -15,6 +15,7 @@
 #include "pack-revindex.h"
 #include "progress.h"
 #include "varint.h"
+#include "packv4-create.h"
 
 
 static int pack_compression_seen;
@@ -145,9 +146,6 @@ static void sort_dict_entries_by_hits(struct dict_table *t)
 	rehash_entries(t);
 }
 
-static struct dict_table *commit_ident_table;
-static struct dict_table *tree_path_table;
-
 /*
  * Parse the author/committer line from a canonical commit object.
  * The 'from' argument points right after the "author " or "committer "
@@ -243,10 +241,10 @@ void dump_dict_table(struct dict_table *t)
 	}
 }
 
-static void dict_dump(void)
+static void dict_dump(struct packv4_tables *v4)
 {
-	dump_dict_table(commit_ident_table);
-	dump_dict_table(tree_path_table);
+	dump_dict_table(v4->commit_ident_table);
+	dump_dict_table(v4->tree_path_table);
 }
 
 /*
@@ -254,10 +252,12 @@ static void dict_dump(void)
  * pack SHA1 table incremented by 1, or the literal SHA1 value prefixed
  * with a zero byte if the needed SHA1 is not available in the table.
  */
-static struct pack_idx_entry *all_objs;
-static unsigned all_objs_nr;
-static int encode_sha1ref(const unsigned char *sha1, unsigned char *buf)
+
+int encode_sha1ref(const struct packv4_tables *v4,
+		   const unsigned char *sha1, unsigned char *buf)
 {
+	unsigned all_objs_nr = v4->all_objs_nr;
+	struct pack_idx_entry *all_objs = v4->all_objs;
 	unsigned lo = 0, hi = all_objs_nr;
 
 	do {
@@ -284,7 +284,8 @@ static int encode_sha1ref(const unsigned char *sha1, unsigned char *buf)
  * strict so to ensure the canonical version may always be
  * regenerated and produce the same hash.
  */
-void *pv4_encode_commit(void *buffer, unsigned long *sizep)
+void *pv4_encode_commit(const struct packv4_tables *v4,
+			void *buffer, unsigned long *sizep)
 {
 	unsigned long size = *sizep;
 	char *in, *tail, *end;
@@ -310,7 +311,7 @@ void *pv4_encode_commit(void *buffer, unsigned long *sizep)
 	if (get_sha1_lowhex(in + 5, sha1) < 0)
 		goto bad_data;
 	in += 46;
-	out += encode_sha1ref(sha1, out);
+	out += encode_sha1ref(v4, sha1, out);
 
 	/* count how many "parent" lines */
 	nb_parents = 0;
@@ -325,7 +326,7 @@ void *pv4_encode_commit(void *buffer, unsigned long *sizep)
 	while (nb_parents--) {
 		if (get_sha1_lowhex(in + 7, sha1))
 			goto bad_data;
-		out += encode_sha1ref(sha1, out);
+		out += encode_sha1ref(v4, sha1, out);
 		in += 48;
 	}
 
@@ -337,7 +338,7 @@ void *pv4_encode_commit(void *buffer, unsigned long *sizep)
 	end = get_nameend_and_tz(in, &tz_val);
 	if (!end)
 		goto bad_data;
-	author_index = dict_add_entry(commit_ident_table, tz_val, in, end - in);
+	author_index = dict_add_entry(v4->commit_ident_table, tz_val, in, end - in);
 	if (author_index < 0)
 		goto bad_dict;
 	author_time = strtoul(end, &end, 10);
@@ -353,7 +354,7 @@ void *pv4_encode_commit(void *buffer, unsigned long *sizep)
 	end = get_nameend_and_tz(in, &tz_val);
 	if (!end)
 		goto bad_data;
-	commit_index = dict_add_entry(commit_ident_table, tz_val, in, end - in);
+	commit_index = dict_add_entry(v4->commit_ident_table, tz_val, in, end - in);
 	if (commit_index < 0)
 		goto bad_dict;
 	commit_time = strtoul(end, &end, 10);
@@ -436,7 +437,8 @@ static int compare_tree_entries(struct name_entry *e1, struct name_entry *e2)
  * If a delta buffer is provided, we may encode multiple ranges of tree
  * entries against that buffer.
  */
-void *pv4_encode_tree(void *_buffer, unsigned long *sizep,
+void *pv4_encode_tree(const struct packv4_tables *v4,
+		      void *_buffer, unsigned long *sizep,
 		      void *delta, unsigned long delta_size,
 		      const unsigned char *delta_sha1)
 {
@@ -551,7 +553,7 @@ void *pv4_encode_tree(void *_buffer, unsigned long *sizep,
 			cp += encode_varint(copy_start, cp);
 			cp += encode_varint(copy_count, cp);
 			if (first_delta)
-				cp += encode_sha1ref(delta_sha1, cp);
+				cp += encode_sha1ref(v4, delta_sha1, cp);
 
 			/*
 			 * Now let's make sure this is going to take less
@@ -577,7 +579,7 @@ void *pv4_encode_tree(void *_buffer, unsigned long *sizep,
 		}
 
 		pathlen = tree_entry_len(&name_entry);
-		index = dict_add_entry(tree_path_table, name_entry.mode,
+		index = dict_add_entry(v4->tree_path_table, name_entry.mode,
 				       name_entry.path, pathlen);
 		if (index < 0) {
 			error("missing tree dict entry");
@@ -585,7 +587,7 @@ void *pv4_encode_tree(void *_buffer, unsigned long *sizep,
 			return NULL;
 		}
 		out += encode_varint(index << 1, out);
-		out += encode_sha1ref(name_entry.sha1, out);
+		out += encode_sha1ref(v4, name_entry.sha1, out);
 	}
 
 	if (copy_count) {
@@ -596,7 +598,7 @@ void *pv4_encode_tree(void *_buffer, unsigned long *sizep,
 		cp += encode_varint(copy_start, cp);
 		cp += encode_varint(copy_count, cp);
 		if (first_delta)
-			cp += encode_sha1ref(delta_sha1, cp);
+			cp += encode_sha1ref(v4, delta_sha1, cp);
 		if (copy_count >= min_tree_copy &&
 		    cp - copy_buf < out - &buffer[copy_pos]) {
 			out = buffer + copy_pos;
@@ -649,14 +651,15 @@ static struct pack_idx_entry **sort_objs_by_offset(struct pack_idx_entry *list,
 	return sorted;
 }
 
-static int create_pack_dictionaries(struct packed_git *p,
+static int create_pack_dictionaries(struct packv4_tables *v4,
+				    struct packed_git *p,
 				    struct pack_idx_entry **obj_list)
 {
 	struct progress *progress_state;
 	unsigned int i;
 
-	commit_ident_table = create_dict_table();
-	tree_path_table = create_dict_table();
+	v4->commit_ident_table = create_dict_table();
+	v4->tree_path_table = create_dict_table();
 
 	progress_state = start_progress("Scanning objects", p->num_objects);
 	for (i = 0; i < p->num_objects; i++) {
@@ -679,11 +682,11 @@ static int create_pack_dictionaries(struct packed_git *p,
 		switch (type) {
 		case OBJ_COMMIT:
 			add_dict_entries = add_commit_dict_entries;
-			dict = commit_ident_table;
+			dict = v4->commit_ident_table;
 			break;
 		case OBJ_TREE:
 			add_dict_entries = add_tree_dict_entries;
-			dict = tree_path_table;
+			dict = v4->tree_path_table;
 			break;
 		default:
 			continue;
@@ -776,9 +779,13 @@ static unsigned int packv4_write_header(struct sha1file *f, unsigned nr_objects)
 	return sizeof(hdr);
 }
 
-static unsigned long packv4_write_tables(struct sha1file *f, unsigned nr_objects,
-					 struct pack_idx_entry *objs)
+unsigned long packv4_write_tables(struct sha1file *f,
+				  const struct packv4_tables *v4)
 {
+	unsigned nr_objects = v4->all_objs_nr;
+	struct pack_idx_entry *objs = v4->all_objs;
+	struct dict_table *commit_ident_table = v4->commit_ident_table;
+	struct dict_table *tree_path_table = v4->tree_path_table;
 	unsigned i;
 	unsigned long written = 0;
 
@@ -823,7 +830,8 @@ static int write_object_header(struct sha1file *f, enum object_type type, unsign
 	return len;
 }
 
-static unsigned long copy_object_data(struct sha1file *f, struct packed_git *p,
+static unsigned long copy_object_data(struct packv4_tables *v4,
+				      struct sha1file *f, struct packed_git *p,
 				      off_t offset)
 {
 	struct pack_window *w_curs = NULL;
@@ -850,11 +858,13 @@ static unsigned long copy_object_data(struct sha1file *f, struct packed_git *p,
 		if (base_offset <= 0 || base_offset >= offset)
 			die("delta offset out of bound");
 		revidx = find_pack_revindex(p, base_offset);
-		reflen = encode_sha1ref(nth_packed_object_sha1(p, revidx->nr), buf);
+		reflen = encode_sha1ref(v4,
+					nth_packed_object_sha1(p, revidx->nr),
+					buf);
 		sha1write(f, buf, reflen);
 		written += reflen;
 	} else if (type == OBJ_REF_DELTA) {
-		reflen = encode_sha1ref(src + hdrlen, buf);
+		reflen = encode_sha1ref(v4, src + hdrlen, buf);
 		hdrlen += 20;
 		sha1write(f, buf, reflen);
 		written += reflen;
@@ -919,7 +929,8 @@ static unsigned char *get_delta_base(struct packed_git *p, off_t offset,
 	return sha1_buf;
 }
 
-static off_t packv4_write_object(struct sha1file *f, struct packed_git *p,
+static off_t packv4_write_object(struct packv4_tables *v4,
+				 struct sha1file *f, struct packed_git *p,
 				 struct pack_idx_entry *obj)
 {
 	void *src, *result;
@@ -941,7 +952,7 @@ static off_t packv4_write_object(struct sha1file *f, struct packed_git *p,
 	case OBJ_TREE:
 		break;
 	default:
-		return copy_object_data(f, p, obj->offset);
+		return copy_object_data(v4, f, p, obj->offset);
 	}
 
 	/* The rest is converted into their new format */
@@ -955,7 +966,7 @@ static off_t packv4_write_object(struct sha1file *f, struct packed_git *p,
 
 	switch (type) {
 	case OBJ_COMMIT:
-		result = pv4_encode_commit(src, &buf_size);
+		result = pv4_encode_commit(v4, src, &buf_size);
 		break;
 	case OBJ_TREE:
 		if (packed_type != OBJ_TREE) {
@@ -972,11 +983,12 @@ static off_t packv4_write_object(struct sha1file *f, struct packed_git *p,
 			if (!ref || ref_type != OBJ_TREE)
 				die("cannot obtain delta base for %s",
 						sha1_to_hex(obj->sha1));
-			result = pv4_encode_tree(src, &buf_size,
+			result = pv4_encode_tree(v4, src, &buf_size,
 						 ref, ref_size, ref_sha1);
 			free(ref);
 		} else {
-			result = pv4_encode_tree(src, &buf_size, NULL, 0, NULL);
+			result = pv4_encode_tree(v4, src, &buf_size,
+						 NULL, 0, NULL);
 		}
 		break;
 	default:
@@ -987,7 +999,7 @@ static off_t packv4_write_object(struct sha1file *f, struct packed_git *p,
 		warning("can't convert %s object %s",
 			typename(type), sha1_to_hex(obj->sha1));
 		/* fall back to copy the object in its original form */
-		return copy_object_data(f, p, obj->offset);
+		return copy_object_data(v4, f, p, obj->offset);
 	}
 
 	/* Use bit 3 to indicate a special type encoding */
@@ -1041,7 +1053,7 @@ static struct packed_git *open_pack(const char *path)
 	return p;
 }
 
-static void process_one_pack(char *src_pack, char *dst_pack)
+static void process_one_pack(struct packv4_tables *v4, char *src_pack, char *dst_pack)
 {
 	struct packed_git *p;
 	struct sha1file *f;
@@ -1061,26 +1073,27 @@ static void process_one_pack(char *src_pack, char *dst_pack)
 	objs = get_packed_object_list(p);
 	p_objs = sort_objs_by_offset(objs, nr_objects);
 
-	create_pack_dictionaries(p, p_objs);
-	sort_dict_entries_by_hits(commit_ident_table);
-	sort_dict_entries_by_hits(tree_path_table);
+	v4->all_objs_nr = nr_objects;
+	v4->all_objs = objs;
+
+	create_pack_dictionaries(v4, p, p_objs);
+	sort_dict_entries_by_hits(v4->commit_ident_table);
+	sort_dict_entries_by_hits(v4->tree_path_table);
 
 	packname = normalize_pack_name(dst_pack);
 	f = packv4_open(packname);
 	if (!f)
 		die("unable to open destination pack");
 	written += packv4_write_header(f, nr_objects);
-	written += packv4_write_tables(f, nr_objects, objs);
+	written += packv4_write_tables(f, v4);
 
 	/* Let's write objects out, updating the object index list in place */
 	progress_state = start_progress("Writing objects", nr_objects);
-	all_objs = objs;
-	all_objs_nr = nr_objects;
 	for (i = 0; i < nr_objects; i++) {
 		off_t obj_pos = written;
 		struct pack_idx_entry *obj = p_objs[i];
 		crc32_begin(f);
-		written += packv4_write_object(f, p, obj);
+		written += packv4_write_object(v4, f, p, obj);
 		obj->offset = obj_pos;
 		obj->crc32 = crc32_end(f);
 		display_progress(progress_state, i+1);
@@ -1114,6 +1127,7 @@ static int git_pack_config(const char *k, const char *v, void *cb)
 
 int main(int argc, char *argv[])
 {
+	struct packv4_tables v4;
 	char *src_pack, *dst_pack;
 
 	if (argc == 3) {
@@ -1131,8 +1145,8 @@ int main(int argc, char *argv[])
 	git_config(git_pack_config, NULL);
 	if (!pack_compression_seen && core_compression_seen)
 		pack_compression_level = core_compression_level;
-	process_one_pack(src_pack, dst_pack);
+	process_one_pack(&v4, src_pack, dst_pack);
 	if (0)
-		dict_dump();
+		dict_dump(&v4);
 	return 0;
 }
