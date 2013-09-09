@@ -139,8 +139,7 @@ void mark_tree_uninteresting(struct tree *tree)
 	 * We don't care about the tree any more
 	 * after it has been marked uninteresting.
 	 */
-	free(tree->buffer);
-	tree->buffer = NULL;
+	free_tree_buffer(tree);
 }
 
 void mark_parents_uninteresting(struct commit *commit)

@@ -1330,8 +1330,7 @@ static struct object_list **process_tree(struct tree *tree,
 			break;
 		}
 
-	free(tree->buffer);
-	tree->buffer = NULL;
+	free_tree_buffer(tree);
 	return p;
 }
 

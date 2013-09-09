@@ -94,8 +94,7 @@ static int tree_is_complete(const unsigned char *sha1)
 			complete = 0;
 		}
 	}
-	free(tree->buffer);
-	tree->buffer = NULL;
+	free_tree_buffer(tree);
 
 	if (complete)
 		tree->object.flags |= SEEN;

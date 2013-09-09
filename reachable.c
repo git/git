@@ -80,8 +80,7 @@ static void process_tree(struct tree *tree,
 		else
 			process_blob(lookup_blob(entry.sha1), p, &me, entry.path, cp);
 	}
-	free(tree->buffer);
-	tree->buffer = NULL;
+	free_tree_buffer(tree);
 }
 
 static void process_tag(struct tag *tag, struct object_array *p,

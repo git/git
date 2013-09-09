@@ -56,10 +56,7 @@ static int process_tree(struct walker *walker, struct tree *tree)
 		if (!obj || process(walker, obj))
 			return -1;
 	}
-	free(tree->buffer);
-	tree->buffer = NULL;
-	tree->size = 0;
-	tree->object.parsed = 0;
+	free_tree_buffer(tree);
 	return 0;
 }
 

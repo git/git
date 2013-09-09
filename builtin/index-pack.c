@@ -770,6 +770,7 @@ static void sha1_object(const void *data, struct object_entry *obj_entry,
 			if (obj->type == OBJ_TREE) {
 				struct tree *item = (struct tree *) obj;
 				item->buffer = NULL;
+				obj->parsed = 0;
 			}
 			if (obj->type == OBJ_COMMIT) {
 				struct commit *commit = (struct commit *) obj;
