@@ -497,6 +497,88 @@ test_expect_success "should be able to fetch with duplicate refspecs" '
 	)
 '
 
+# configured prune tests
+
+set_config_tristate () {
+	# var=$1 val=$2
+	case "$2" in
+	unset)  test_unconfig "$1" ;;
+	*)	git config "$1" "$2" ;;
+	esac
+}
+
+test_configured_prune () {
+	fetch_prune=$1 remote_origin_prune=$2 cmdline=$3 expected=$4
+
+	test_expect_success "prune fetch.prune=$1 remote.origin.prune=$2${3:+ $3}; $4" '
+		# make sure a newbranch is there in . and also in one
+		git branch -f newbranch &&
+		(
+			cd one &&
+			test_unconfig fetch.prune &&
+			test_unconfig remote.origin.prune &&
+			git fetch &&
+			git rev-parse --verify refs/remotes/origin/newbranch
+		)
+
+		# now remove it
+		git branch -d newbranch &&
+
+		# then test
+		(
+			cd one &&
+			set_config_tristate fetch.prune $fetch_prune &&
+			set_config_tristate remote.origin.prune $remote_origin_prune &&
+
+			git fetch $cmdline &&
+			case "$expected" in
+			pruned)
+				test_must_fail git rev-parse --verify refs/remotes/origin/newbranch
+				;;
+			kept)
+				git rev-parse --verify refs/remotes/origin/newbranch
+				;;
+			esac
+		)
+	'
+}
+
+test_configured_prune unset unset ""		kept
+test_configured_prune unset unset "--no-prune"	kept
+test_configured_prune unset unset "--prune"	pruned
+
+test_configured_prune false unset ""		kept
+test_configured_prune false unset "--no-prune"	kept
+test_configured_prune false unset "--prune"	pruned
+
+test_configured_prune true  unset ""		pruned
+test_configured_prune true  unset "--prune"	pruned
+test_configured_prune true  unset "--no-prune"	kept
+
+test_configured_prune unset false ""		kept
+test_configured_prune unset false "--no-prune"	kept
+test_configured_prune unset false "--prune"	pruned
+
+test_configured_prune false false ""		kept
+test_configured_prune false false "--no-prune"	kept
+test_configured_prune false false "--prune"	pruned
+
+test_configured_prune true  false ""		kept
+test_configured_prune true  false "--prune"	pruned
+test_configured_prune true  false "--no-prune"	kept
+
+test_configured_prune unset true  ""		pruned
+test_configured_prune unset true  "--no-prune"	kept
+test_configured_prune unset true  "--prune"	pruned
+
+test_configured_prune false true  ""		pruned
+test_configured_prune false true  "--no-prune"	kept
+test_configured_prune false true  "--prune"	pruned
+
+test_configured_prune true  true  ""		pruned
+test_configured_prune true  true  "--prune"	pruned
+test_configured_prune true  true  "--no-prune"	kept
+
 test_expect_success 'all boundary commits are excluded' '
 	test_commit base &&
 	test_commit oneside &&
