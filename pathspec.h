@@ -14,7 +14,7 @@
 	 PATHSPEC_GLOB		| \
 	 PATHSPEC_ICASE)
 
-#define PATHSPEC_ONESTAR 1	/* the pathspec pattern sastisfies GFNM_ONESTAR */
+#define PATHSPEC_ONESTAR 1	/* the pathspec pattern satisfies GFNM_ONESTAR */
 
 struct pathspec {
 	const char **_raw; /* get_pathspec() result, not freed by free_pathspec() */
