@@ -17,6 +17,7 @@
 #include "grep.h"
 #include "quote.h"
 #include "dir.h"
+#include "pathspec.h"
 
 static char const * const grep_usage[] = {
 	N_("git grep [options] [-e] <pattern> [<rev>...] [[--] <path>...]"),
@@ -521,7 +522,7 @@ static int grep_directory(struct grep_opt *opt, const struct pathspec *pathspec,
 	if (exc_std)
 		setup_standard_excludes(&dir);
 
-	fill_directory(&dir, pathspec->raw);
+	fill_directory(&dir, pathspec);
 	for (i = 0; i < dir.nr; i++) {
 		const char *name = dir.entries[i]->name;
 		int namelen = strlen(name);
@@ -629,7 +630,6 @@ int cmd_grep(int argc, const char **argv, const char *prefix)
 	const char *show_in_pager = NULL, *default_pager = "dummy";
 	struct grep_opt opt;
 	struct object_array list = OBJECT_ARRAY_INIT;
-	const char **paths = NULL;
 	struct pathspec pathspec;
 	struct string_list path_list = STRING_LIST_INIT_NODUP;
 	int i;
@@ -856,8 +856,10 @@ int cmd_grep(int argc, const char **argv, const char *prefix)
 			verify_filename(prefix, argv[j], j == i);
 	}
 
-	paths = get_pathspec(prefix, argv + i);
-	init_pathspec(&pathspec, paths);
+	parse_pathspec(&pathspec, 0,
+		       PATHSPEC_PREFER_CWD |
+		       (opt.max_depth != -1 ? PATHSPEC_MAXDEPTH_VALID : 0),
+		       prefix, argv + i);
 	pathspec.max_depth = opt.max_depth;
 	pathspec.recursive = 1;
 

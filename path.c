@@ -543,8 +543,14 @@ const char *relative_path(const char *in, const char *prefix,
  *
  * Note that this function is purely textual.  It does not follow symlinks,
  * verify the existence of the path, or make any system calls.
+ *
+ * prefix_len != NULL is for a specific case of prefix_pathspec():
+ * assume that src == dst and src[0..prefix_len-1] is already
+ * normalized, any time "../" eats up to the prefix_len part,
+ * prefix_len is reduced. In the end prefix_len is the remaining
+ * prefix that has not been overridden by user pathspec.
  */
-int normalize_path_copy(char *dst, const char *src)
+int normalize_path_copy_len(char *dst, const char *src, int *prefix_len)
 {
 	char *dst0;
 
@@ -619,9 +625,16 @@ int normalize_path_copy(char *dst, const char *src)
 		/* Windows: dst[-1] cannot be backslash anymore */
 		while (dst0 < dst && dst[-1] != '/')
 			dst--;
+		if (prefix_len && *prefix_len > dst - dst0)
+			*prefix_len = dst - dst0;
 	}
 	*dst = '\0';
 	return 0;
+}
+
+int normalize_path_copy(char *dst, const char *src)
+{
+	return normalize_path_copy_len(dst, src, NULL);
 }
 
 /*

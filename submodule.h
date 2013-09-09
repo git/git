@@ -11,6 +11,10 @@ enum {
 	RECURSE_SUBMODULES_ON = 2
 };
 
+int is_staging_gitmodules_ok(void);
+int update_path_in_gitmodules(const char *oldpath, const char *newpath);
+int remove_path_from_gitmodules(const char *path);
+void stage_updated_gitmodules(void);
 void set_diffopt_flags_from_submodule_config(struct diff_options *diffopt,
 		const char *path);
 int submodule_config(const char *var, const char *value, void *cb);
@@ -36,5 +40,6 @@ int merge_submodule(unsigned char result[20], const char *path, const unsigned c
 int find_unpushed_submodules(unsigned char new_sha1[20], const char *remotes_name,
 		struct string_list *needs_pushing);
 int push_unpushed_submodules(unsigned char new_sha1[20], const char *remotes_name);
+void connect_work_tree_and_git_dir(const char *work_tree, const char *git_dir);
 
 #endif

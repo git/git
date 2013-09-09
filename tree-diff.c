@@ -138,7 +138,6 @@ int diff_tree(struct tree_desc *t1, struct tree_desc *t2,
 
 	/* Enable recursion indefinitely */
 	opt->pathspec.recursive = DIFF_OPT_TST(opt, RECURSIVE);
-	opt->pathspec.max_depth = -1;
 
 	strbuf_init(&base, PATH_MAX);
 	strbuf_add(&base, base_str, baselen);
@@ -196,8 +195,26 @@ static void try_to_follow_renames(struct tree_desc *t1, struct tree_desc *t2, co
 	struct diff_options diff_opts;
 	struct diff_queue_struct *q = &diff_queued_diff;
 	struct diff_filepair *choice;
-	const char *paths[1];
 	int i;
+
+	/*
+	 * follow-rename code is very specific, we need exactly one
+	 * path. Magic that matches more than one path is not
+	 * supported.
+	 */
+	GUARD_PATHSPEC(&opt->pathspec, PATHSPEC_FROMTOP | PATHSPEC_LITERAL);
+#if 0
+	/*
+	 * We should reject wildcards as well. Unfortunately we
+	 * haven't got a reliable way to detect that 'foo\*bar' in
+	 * fact has no wildcards. nowildcard_len is merely a hint for
+	 * optimization. Let it slip for now until wildmatch is taught
+	 * about dry-run mode and returns wildcard info.
+	 */
+	if (opt->pathspec.has_wildcard)
+		die("BUG:%s:%d: wildcards are not supported",
+		    __FILE__, __LINE__);
+#endif
 
 	/* Remove the file creation entry from the diff queue, and remember it */
 	choice = q->queue[0];
@@ -207,15 +224,13 @@ static void try_to_follow_renames(struct tree_desc *t1, struct tree_desc *t2, co
 	DIFF_OPT_SET(&diff_opts, RECURSIVE);
 	DIFF_OPT_SET(&diff_opts, FIND_COPIES_HARDER);
 	diff_opts.output_format = DIFF_FORMAT_NO_OUTPUT;
-	diff_opts.single_follow = opt->pathspec.raw[0];
+	diff_opts.single_follow = opt->pathspec.items[0].match;
 	diff_opts.break_opt = opt->break_opt;
 	diff_opts.rename_score = opt->rename_score;
-	paths[0] = NULL;
-	diff_tree_setup_paths(paths, &diff_opts);
 	diff_setup_done(&diff_opts);
 	diff_tree(t1, t2, base, &diff_opts);
 	diffcore_std(&diff_opts);
-	diff_tree_release_paths(&diff_opts);
+	free_pathspec(&diff_opts.pathspec);
 
 	/* Go through the new set of filepairing, and see if we find a more interesting one */
 	opt->found_follow = 0;
@@ -228,15 +243,18 @@ static void try_to_follow_renames(struct tree_desc *t1, struct tree_desc *t2, co
 		 * the future!
 		 */
 		if ((p->status == 'R' || p->status == 'C') &&
-		    !strcmp(p->two->path, opt->pathspec.raw[0])) {
+		    !strcmp(p->two->path, opt->pathspec.items[0].match)) {
+			const char *path[2];
+
 			/* Switch the file-pairs around */
 			q->queue[i] = choice;
 			choice = p;
 
 			/* Update the path we use from now on.. */
-			diff_tree_release_paths(opt);
-			opt->pathspec.raw[0] = xstrdup(p->one->path);
-			diff_tree_setup_paths(opt->pathspec.raw, opt);
+			path[0] = p->one->path;
+			path[1] = NULL;
+			free_pathspec(&opt->pathspec);
+			parse_pathspec(&opt->pathspec, PATHSPEC_ALL_MAGIC, 0, "", path);
 
 			/*
 			 * The caller expects us to return a set of vanilla
@@ -309,14 +327,4 @@ int diff_root_tree_sha1(const unsigned char *new, const char *base, struct diff_
 	retval = diff_tree(&empty, &real, base, opt);
 	free(tree);
 	return retval;
-}
-
-void diff_tree_release_paths(struct diff_options *opt)
-{
-	free_pathspec(&opt->pathspec);
-}
-
-void diff_tree_setup_paths(const char **p, struct diff_options *opt)
-{
-	init_pathspec(&opt->pathspec, p);
 }

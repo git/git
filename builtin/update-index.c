@@ -11,6 +11,7 @@
 #include "refs.h"
 #include "resolve-undo.h"
 #include "parse-options.h"
+#include "pathspec.h"
 
 /*
  * Default to not allowing changes to the list of files. The
@@ -546,10 +547,11 @@ static int do_reupdate(int ac, const char **av,
 	 */
 	int pos;
 	int has_head = 1;
-	const char **paths = get_pathspec(prefix, av + 1);
 	struct pathspec pathspec;
 
-	init_pathspec(&pathspec, paths);
+	parse_pathspec(&pathspec, 0,
+		       PATHSPEC_PREFER_CWD,
+		       prefix, av + 1);
 
 	if (read_ref("HEAD", head_sha1))
 		/* If there is no HEAD, that means it is an initial
