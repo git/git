@@ -163,6 +163,77 @@ const unsigned char *get_pathref(struct packed_git *p, unsigned int index)
 	return p->path_dict->data + p->path_dict->offsets[index];
 }
 
+static int tree_line(unsigned char *buf, unsigned long size,
+		     const char *label, int label_len,
+		     const unsigned char *sha1)
+{
+	static const char hex[] = "0123456789abcdef";
+	int i;
+
+	if (label_len + 1 + 40 + 1 > size)
+		return 0;
+
+	memcpy(buf, label, label_len);
+	buf += label_len;
+	*buf++ = ' ';
+
+	for (i = 0; i < 20; i++) {
+		unsigned int val = *sha1++;
+		*buf++ = hex[val >> 4];
+		*buf++ = hex[val & 0xf];
+	}
+
+	*buf = '\n';
+
+	return label_len + 1 + 40 + 1;
+}
+
+static int ident_line(unsigned char *buf, unsigned long size,
+		      const char *label, int label_len,
+		      const unsigned char *ident, unsigned long time, int tz)
+{
+	int ident_len = strlen((const char *)ident);
+	int len = label_len + 1 + ident_len + 1 + 1 + 5 + 1;
+	int time_len = 0;
+	unsigned char time_buf[16];
+
+	do {
+		time_buf[time_len++] = '0' + time % 10;
+		time /= 10;
+	} while (time);
+	len += time_len;
+
+	if (len > size)
+		return 0;
+
+	memcpy(buf, label, label_len);
+	buf += label_len;
+	*buf++ = ' ';
+
+	memcpy(buf, ident, ident_len);
+	buf += ident_len;
+	*buf++ = ' ';
+
+	do {
+		*buf++ = time_buf[--time_len];
+	} while (time_len);
+	*buf++ = ' ';
+
+	if (tz < 0) {
+		tz = -tz;
+		*buf++ = '-';
+	} else
+		*buf++ = '+';
+	*buf++ = '0' + tz / 1000; tz %= 1000;
+	*buf++ = '0' + tz / 100;  tz %= 100;
+	*buf++ = '0' + tz / 10;   tz %= 10;
+	*buf++ = '0' + tz;
+
+	*buf = '\n';
+
+	return len;
+}
+
 void *pv4_get_commit(struct packed_git *p, struct pack_window **w_curs,
 		     off_t offset, unsigned long size)
 {
@@ -182,15 +253,17 @@ void *pv4_get_commit(struct packed_git *p, struct pack_window **w_curs,
 	scp = src;
 
 	sha1 = get_sha1ref(p, &scp);
-	len = snprintf((char *)dcp, size, "tree %s\n", sha1_to_hex(sha1));
+	len = tree_line(dcp, size, "tree", strlen("tree"), sha1);
+	if (!len)
+		die("overflow in %s", __func__);
 	dcp += len;
 	size -= len;
 
 	nb_parents = decode_varint(&scp);
 	while (nb_parents--) {
 		sha1 = get_sha1ref(p, &scp);
-		len = snprintf((char *)dcp, size, "parent %s\n", sha1_to_hex(sha1));
-		if (len >= size)
+		len = tree_line(dcp, size, "parent", strlen("parent"), sha1);
+		if (!len)
 			die("overflow in %s", __func__);
 		dcp += len;
 		size -= len;
@@ -211,16 +284,16 @@ void *pv4_get_commit(struct packed_git *p, struct pack_window **w_curs,
 	else
 		author_time = commit_time - (author_time >> 1);
 
-	len = snprintf((char *)dcp, size, "author %s %lu %+05d\n",
-			author, author_time, author_tz);
-	if (len >= size)
+	len = ident_line(dcp, size, "author", strlen("author"),
+			 author, author_time, author_tz);
+	if (!len)
 		die("overflow in %s", __func__);
 	dcp += len;
 	size -= len;
 
-	len = snprintf((char *)dcp, size, "committer %s %lu %+05d\n",
-			committer, commit_time, commit_tz);
-	if (len >= size)
+	len = ident_line(dcp, size, "committer", strlen("committer"),
+			 committer, commit_time, commit_tz);
+	if (!len)
 		die("overflow in %s", __func__);
 	dcp += len;
 	size -= len;
@@ -246,6 +319,32 @@ void *pv4_get_commit(struct packed_git *p, struct pack_window **w_curs,
 	}
 
 	return dst;
+}
+
+static int tree_entry_prefix(unsigned char *buf, unsigned long size,
+			     const unsigned char *path, unsigned mode)
+{
+	int path_len = strlen((const char *)path) + 1;
+	int mode_len = 0;
+	int len;
+	unsigned char mode_buf[8];
+
+	do {
+		mode_buf[mode_len++] = '0' + (mode & 7);
+		mode >>= 3;
+	} while (mode);
+
+	len = mode_len + 1 + path_len;
+	if (len > size)
+		return 0;
+
+	do {
+		*buf++ = mode_buf[--mode_len];
+	} while (mode_len);
+	*buf++ = ' ';
+	memcpy(buf, path, path_len);
+
+	return len;
 }
 
 static int decode_entries(struct packed_git *p, struct pack_window **w_curs,
@@ -316,9 +415,8 @@ static int decode_entries(struct packed_git *p, struct pack_window **w_curs,
 			if (!path || !sha1)
 				return -1;
 			mode = (path[0] << 8) | path[1];
-			len = snprintf((char *)*dstp, *sizep, "%o %s%c",
-					   mode, path+2, '\0');
-			if (len + 20 > *sizep)
+			len = tree_entry_prefix(*dstp, *sizep, path + 2, mode);
+			if (!len || len + 20 > *sizep)
 				return -1;
 			hashcpy(*dstp + len, sha1);
 			*dstp += len + 20;
