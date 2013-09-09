@@ -15,6 +15,7 @@
 #include "string-list.h"
 #include "line-log.h"
 #include "mailmap.h"
+#include "commit-slab.h"
 
 volatile show_early_output_fn_t show_early_output;
 
@@ -2763,7 +2764,7 @@ static int commit_match(struct commit *commit, struct rev_info *opt)
 	return retval;
 }
 
-static inline int want_ancestry(struct rev_info *revs)
+static inline int want_ancestry(const struct rev_info *revs)
 {
 	return (revs->rewrite_parents || revs->children.name);
 }
@@ -2820,6 +2821,14 @@ enum commit_action simplify_commit(struct rev_info *revs, struct commit *commit)
 	if (action == commit_show &&
 	    !revs->show_all &&
 	    revs->prune && revs->dense && want_ancestry(revs)) {
+		/*
+		 * --full-diff on simplified parents is no good: it
+		 * will show spurious changes from the commits that
+		 * were elided.  So we save the parents on the side
+		 * when --full-diff is in effect.
+		 */
+		if (revs->full_diff)
+			save_parents(revs, commit);
 		if (rewrite_parents(revs, commit, rewrite_one) < 0)
 			return commit_error;
 	}
@@ -2839,6 +2848,7 @@ static struct commit *get_revision_1(struct rev_info *revs)
 		free(entry);
 
 		if (revs->reflog_info) {
+			save_parents(revs, commit);
 			fake_reflog_parent(revs->reflog_info, commit);
 			commit->object.flags &= ~(ADDED | SEEN | SHOWN);
 		}
@@ -3038,6 +3048,8 @@ struct commit *get_revision(struct rev_info *revs)
 	c = get_revision_internal(revs);
 	if (c && revs->graph)
 		graph_update(revs->graph, c);
+	if (!c)
+		free_saved_parents(revs);
 	return c;
 }
 
@@ -3068,4 +3080,55 @@ void put_revision_mark(const struct rev_info *revs, const struct commit *commit)
 		return;
 	fputs(mark, stdout);
 	putchar(' ');
+}
+
+define_commit_slab(saved_parents, struct commit_list *);
+
+#define EMPTY_PARENT_LIST ((struct commit_list *)-1)
+
+void save_parents(struct rev_info *revs, struct commit *commit)
+{
+	struct commit_list **pp;
+
+	if (!revs->saved_parents_slab) {
+		revs->saved_parents_slab = xmalloc(sizeof(struct saved_parents));
+		init_saved_parents(revs->saved_parents_slab);
+	}
+
+	pp = saved_parents_at(revs->saved_parents_slab, commit);
+
+	/*
+	 * When walking with reflogs, we may visit the same commit
+	 * several times: once for each appearance in the reflog.
+	 *
+	 * In this case, save_parents() will be called multiple times.
+	 * We want to keep only the first set of parents.  We need to
+	 * store a sentinel value for an empty (i.e., NULL) parent
+	 * list to distinguish it from a not-yet-saved list, however.
+	 */
+	if (*pp)
+		return;
+	if (commit->parents)
+		*pp = copy_commit_list(commit->parents);
+	else
+		*pp = EMPTY_PARENT_LIST;
+}
+
+struct commit_list *get_saved_parents(struct rev_info *revs, const struct commit *commit)
+{
+	struct commit_list *parents;
+
+	if (!revs->saved_parents_slab)
+		return commit->parents;
+
+	parents = *saved_parents_at(revs->saved_parents_slab, commit);
+	if (parents == EMPTY_PARENT_LIST)
+		return NULL;
+	return parents;
+}
+
+void free_saved_parents(struct rev_info *revs)
+{
+	if (revs->saved_parents_slab)
+		clear_saved_parents(revs->saved_parents_slab);
 }
