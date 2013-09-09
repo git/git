@@ -2995,7 +2995,10 @@ int has_sha1_file(const unsigned char *sha1)
 
 	if (find_pack_entry(sha1, &e))
 		return 1;
-	return has_loose_object(sha1);
+	if (has_loose_object(sha1))
+		return 1;
+	reprepare_packed_git();
+	return find_pack_entry(sha1, &e);
 }
 
 static void check_tree(const void *buf, size_t size)
