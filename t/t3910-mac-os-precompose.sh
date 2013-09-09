@@ -36,7 +36,7 @@ Alongc=$Alongc$AEligatu$AEligatu                     #254 Byte
 
 test_expect_success "detect if nfd needed" '
 	precomposeunicode=`git config core.precomposeunicode` &&
-	test "$precomposeunicode" = false &&
+	test "$precomposeunicode" = true &&
 	git config core.precomposeunicode true
 '
 test_expect_success "setup" '

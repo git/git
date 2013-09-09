@@ -48,11 +48,8 @@ void probe_utf8_pathname_composition(char *path, int len)
 	if (output_fd >= 0) {
 		close(output_fd);
 		strcpy(path + len, auml_nfd);
-		/* Indicate to the user, that we can configure it to true */
-		if (!access(path, R_OK))
-			git_config_set("core.precomposeunicode", "false");
-		/* To be backward compatible, set precomposed_unicode to 0 */
-		precomposed_unicode = 0;
+		precomposed_unicode = access(path, R_OK) ? 0 : 1;
+		git_config_set("core.precomposeunicode", precomposed_unicode ? "true" : "false");
 		strcpy(path + len, auml_nfc);
 		if (unlink(path))
 			die_errno(_("failed to unlink '%s'"), path);

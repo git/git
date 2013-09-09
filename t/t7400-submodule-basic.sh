@@ -962,7 +962,6 @@ test_expect_success 'submodule with UTF-8 name' '
 		git add sub &&
 		git commit -m "init sub"
 	) &&
-	test_config core.precomposeunicode true &&
 	git submodule add ./"$svname" &&
 	git submodule >&2 &&
 	test -n "$(git submodule | grep "$svname")"
