@@ -10,6 +10,7 @@
 
 #include "cache.h"
 #include "packv4-parse.h"
+#include "tree-walk.h"
 #include "varint.h"
 
 const unsigned char *get_sha1ref(struct packed_git *p,
@@ -321,6 +322,45 @@ void *pv4_get_commit(struct packed_git *p, struct pack_window **w_curs,
 	return dst;
 }
 
+static int copy_canonical_tree_entries(struct packed_git *p, off_t offset,
+				       unsigned int start, unsigned int count,
+				       unsigned char **dstp, unsigned long *sizep)
+{
+	void *data;
+	const unsigned char *from, *end;
+	enum object_type type;
+	unsigned long size;
+	struct tree_desc desc;
+
+	data = unpack_entry(p, offset, &type, &size);
+	if (!data)
+		return -1;
+	if (type != OBJ_TREE) {
+		free(data);
+		return -1;
+	}
+
+	init_tree_desc(&desc, data, size);
+
+	while (start--)
+		update_tree_entry(&desc);
+
+	from = desc.buffer;
+	while (count--)
+		update_tree_entry(&desc);
+	end = desc.buffer;
+
+	if (end - from > *sizep) {
+		free(data);
+		return -1;
+	}
+	memcpy(*dstp, from, end - from);
+	*dstp += end - from;
+	*sizep -= end - from;
+	free(data);
+	return 0;
+}
+
 static int tree_entry_prefix(unsigned char *buf, unsigned long size,
 			     const unsigned char *path, unsigned mode)
 {
@@ -365,7 +405,12 @@ static int decode_entries(struct packed_git *p, struct pack_window **w_curs,
 		while (*scp & 128)
 			if (++scp - src >= avail - 20)
 				return -1;
-		/* let's still make sure this is actually a tree */
+		/* is this a canonical tree object? */
+		if ((*scp & 0xf) == OBJ_TREE)
+			return copy_canonical_tree_entries(p, offset,
+							   start, count,
+							   dstp, sizep);
+		/* let's still make sure this is actually a pv4 tree */
 		if ((*scp++ & 0xf) != OBJ_PV4_TREE)
 			return -1;
 	}
