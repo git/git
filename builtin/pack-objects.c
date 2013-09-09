@@ -1756,8 +1756,12 @@ static void find_deltas(struct object_entry **list, unsigned *list_size,
 		 * and therefore it is best to go to the write phase ASAP
 		 * instead, as we can afford spending more time compressing
 		 * between writes at that moment.
+		 *
+		 * For v4 trees we'll need to delta differently anyway
+		 * so no cache. v4 commits simply do not delta.
 		 */
-		if (entry->delta_data && !pack_to_stdout) {
+		if (entry->delta_data && !pack_to_stdout &&
+		    (pack_version < 4 || entry->type == OBJ_BLOB)) {
 			entry->z_delta_size = do_compress(&entry->delta_data,
 							  entry->delta_size);
 			cache_lock();
