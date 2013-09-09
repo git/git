@@ -1449,7 +1449,11 @@ http.cookiefile::
 	of the file to read cookies from should be plain HTTP headers or
 	the Netscape/Mozilla cookie file format (see linkgit:curl[1]).
 	NOTE that the file specified with http.cookiefile is only used as
-	input. No cookies will be stored in the file.
+	input unless http.saveCookies is set.
+
+http.savecookies::
+	If set, store cookies received during requests to the file specified by
+	http.cookiefile. Has no effect if http.cookiefile is unset.
 
 http.sslVerify::
 	Whether to verify the SSL certificate when fetching or pushing
