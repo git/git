@@ -59,11 +59,11 @@ sub import_commits {
 }
 
 sub get_blame {
-	my ($commits, $source, $start, $len, $from) = @_;
-	$len = 1 unless defined($len);
-	return if $len == 0;
+	my ($commits, $source, $from, $ranges) = @_;
+	return unless @$ranges;
 	open my $f, '-|',
-		qw(git blame --porcelain -C), '-L', "$start,+$len",
+		qw(git blame --porcelain -C),
+		map({"-L$_->[0],+$_->[1]"} @$ranges),
 		'--since', $since, "$from^", '--', $source or die;
 	while (<$f>) {
 		if (/^([0-9a-f]{40}) \d+ \d+ \d+$/) {
@@ -76,8 +76,17 @@ sub get_blame {
 	close $f;
 }
 
+sub blame_sources {
+	my ($sources, $commits) = @_;
+	for my $s (keys %$sources) {
+		for my $id (keys %{$sources->{$s}}) {
+			get_blame($commits, $s, $id, $sources->{$s}{$id});
+		}
+	}
+}
+
 sub scan_patches {
-	my ($commits, $id, $f) = @_;
+	my ($sources, $id, $f) = @_;
 	my $source;
 	while (<$f>) {
 		if (/^From ([0-9a-f]{40}) Mon Sep 17 00:00:00 2001$/) {
@@ -90,7 +99,8 @@ sub scan_patches {
 		} elsif (/^--- /) {
 			die "Cannot parse hunk source: $_\n";
 		} elsif (/^@@ -(\d+)(?:,(\d+))?/ && $source) {
-			get_blame($commits, $source, $1, $2, $id);
+			my $len = defined($2) ? $2 : 1;
+			push @{$sources->{$source}{$id}}, [$1, $len] if $len;
 		}
 	}
 }
@@ -163,13 +173,16 @@ for (@ARGV) {
 	}
 }
 
-my %commits;
+my %sources;
 for (@files) {
-	scan_patch_file(\%commits, $_);
+	scan_patch_file(\%sources, $_);
 }
 if (@rev_args) {
-	scan_rev_args(\%commits, \@rev_args)
+	scan_rev_args(\%sources, \@rev_args)
 }
+
+my %commits;
+blame_sources(\%sources, \%commits);
 import_commits(\%commits);
 
 my $contacts = {};
