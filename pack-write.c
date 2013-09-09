@@ -325,8 +325,17 @@ int encode_in_pack_object_header(enum object_type type, uintmax_t size, unsigned
 	int n = 1;
 	unsigned char c;
 
-	if (type < OBJ_COMMIT || type > OBJ_REF_DELTA)
+	switch (type) {
+	case OBJ_COMMIT:
+	case OBJ_TREE:
+	case OBJ_BLOB:
+	case OBJ_TAG:
+	case OBJ_OFS_DELTA:
+	case OBJ_REF_DELTA:
+		break;
+	default:
 		die("bad type %d", type);
+	}
 
 	c = (type << 4) | (size & 15);
 	size >>= 4;
