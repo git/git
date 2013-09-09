@@ -866,15 +866,22 @@ static void write_pack_file(void)
 			display_progress(progress_state, written);
 		}
 
-		/*
-		 * Did we write the wrong # entries in the header?
-		 * If so, rewrite it like in fast-import
-		 */
 		if (pack_to_stdout) {
+			unsigned char type_zero = 0;
+			/*
+			 * Pack v4 thin pack is terminated by a "type
+			 * 0, size 0" in variable length encoding
+			 */
+			if (pack_version == 4 && nr_written < v4.all_objs_nr)
+				sha1write(f, &type_zero, 1);
 			sha1close(f, sha1, CSUM_CLOSE);
 		} else if (nr_written == nr_remaining) {
 			sha1close(f, sha1, CSUM_FSYNC);
 		} else {
+			/*
+			 * Did we write the wrong # entries in the header?
+			 * If so, rewrite it like in fast-import
+			 */
 			int fd = sha1close(f, sha1, 0);
 			fixup_pack_header_footer(fd, sha1, pack_tmp_name,
 						 nr_written, sha1, offset);

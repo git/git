@@ -1494,7 +1494,7 @@ static void parse_dictionaries(void)
  */
 static void parse_pack_objects(unsigned char *sha1)
 {
-	int i, nr_delays = 0;
+	int i, nr_delays = 0, eop = 0;
 	struct stat st;
 
 	if (verbose)
@@ -1503,7 +1503,28 @@ static void parse_pack_objects(unsigned char *sha1)
 				nr_objects);
 	for (i = 0; i < nr_objects; i++) {
 		struct object_entry *obj = &objects[i];
-		void *data = unpack_raw_entry(obj, obj->idx.sha1);
+		void *data;
+
+		if (packv4) {
+			unsigned char *eop_byte;
+			flush();
+			/* Got End-of-Pack signal? */
+			eop_byte = fill(1);
+			if (*eop_byte == 0) {
+				git_SHA1_Update(&input_ctx, eop_byte, 1);
+				use(1);
+				/*
+				 * consumed by is used to mark the end
+				 * of the object right after this
+				 * loop. Undo use() effect.
+				 */
+				consumed_bytes--;
+				eop = 1; /* so we don't flush() again */
+				break;
+			}
+		}
+
+		data = unpack_raw_entry(obj, obj->idx.sha1);
 		if (is_delta_type(obj->type) || is_delta_tree(obj)) {
 			/* delay sha1_object() until second pass */
 		} else if (!data) {
@@ -1522,8 +1543,8 @@ static void parse_pack_objects(unsigned char *sha1)
 	objects[i].idx.offset = consumed_bytes;
 	stop_progress(&progress);
 
-	/* Check pack integrity */
-	flush();
+	if (!eop)
+		flush();	/* Check pack integrity */
 	git_SHA1_Final(sha1, &input_ctx);
 	if (hashcmp(fill(20), sha1))
 		die(_("pack is corrupted (SHA1 mismatch)"));
