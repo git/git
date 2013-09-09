@@ -181,13 +181,11 @@ static char *get_nameend_and_tz(char *from, int *tz_val)
 	return end;
 }
 
-static int add_commit_dict_entries(void *buf, unsigned long size)
+int add_commit_dict_entries(struct dict_table *commit_ident_table,
+			    void *buf, unsigned long size)
 {
 	char *name, *end = NULL;
 	int tz_val;
-
-	if (!commit_ident_table)
-		commit_ident_table = create_dict_table();
 
 	/* parse and add author info */
 	name = strstr(buf, "\nauthor ");
@@ -212,13 +210,11 @@ static int add_commit_dict_entries(void *buf, unsigned long size)
 	return 0;
 }
 
-static int add_tree_dict_entries(void *buf, unsigned long size)
+static int add_tree_dict_entries(struct dict_table *tree_path_table,
+				 void *buf, unsigned long size)
 {
 	struct tree_desc desc;
 	struct name_entry name_entry;
-
-	if (!tree_path_table)
-		tree_path_table = create_dict_table();
 
 	init_tree_desc(&desc, buf, size);
 	while (tree_entry(&desc, &name_entry)) {
@@ -659,6 +655,9 @@ static int create_pack_dictionaries(struct packed_git *p,
 	struct progress *progress_state;
 	unsigned int i;
 
+	commit_ident_table = create_dict_table();
+	tree_path_table = create_dict_table();
+
 	progress_state = start_progress("Scanning objects", p->num_objects);
 	for (i = 0; i < p->num_objects; i++) {
 		struct pack_idx_entry *obj = obj_list[i];
@@ -666,7 +665,8 @@ static int create_pack_dictionaries(struct packed_git *p,
 		enum object_type type;
 		unsigned long size;
 		struct object_info oi = {};
-		int (*add_dict_entries)(void *, unsigned long);
+		int (*add_dict_entries)(struct dict_table *, void *, unsigned long);
+		struct dict_table *dict;
 
 		display_progress(progress_state, i+1);
 
@@ -679,9 +679,11 @@ static int create_pack_dictionaries(struct packed_git *p,
 		switch (type) {
 		case OBJ_COMMIT:
 			add_dict_entries = add_commit_dict_entries;
+			dict = commit_ident_table;
 			break;
 		case OBJ_TREE:
 			add_dict_entries = add_tree_dict_entries;
+			dict = tree_path_table;
 			break;
 		default:
 			continue;
@@ -693,7 +695,7 @@ static int create_pack_dictionaries(struct packed_git *p,
 		if (check_sha1_signature(obj->sha1, data, size, typename(type)))
 			die("packed %s from %s is corrupt",
 			    sha1_to_hex(obj->sha1), p->pack_name);
-		if (add_dict_entries(data, size) < 0)
+		if (add_dict_entries(dict, data, size) < 0)
 			die("can't process %s object %s",
 				typename(type), sha1_to_hex(obj->sha1));
 		free(data);
