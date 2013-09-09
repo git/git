@@ -97,7 +97,7 @@ static unsigned char input_buffer[4096];
 static unsigned int input_offset, input_len;
 static off_t consumed_bytes;
 static unsigned deepest_delta;
-static git_SHA_CTX input_ctx;
+static git_SHA_CTX input_ctx, output_ctx;
 static uint32_t input_crc32;
 static int input_fd, output_fd, pack_fd;
 
@@ -1512,6 +1512,7 @@ static void parse_pack_objects(unsigned char *sha1)
 			/* Got End-of-Pack signal? */
 			eop_byte = fill(1);
 			if (*eop_byte == 0) {
+				output_ctx = input_ctx;
 				git_SHA1_Update(&input_ctx, eop_byte, 1);
 				use(1);
 				/*
@@ -1541,7 +1542,8 @@ static void parse_pack_objects(unsigned char *sha1)
 		free(data);
 		display_progress(progress, i+1);
 	}
-	objects[i].idx.offset = consumed_bytes;
+	nr_objects = i;
+	objects[nr_objects].idx.offset = consumed_bytes;
 	stop_progress(&progress);
 
 	if (!eop)
@@ -1635,7 +1637,7 @@ static void conclude_pack(int fix_thin_pack, const char *curr_pack, unsigned cha
 		return;
 	}
 
-	if (fix_thin_pack) {
+	if (fix_thin_pack && !packv4) {
 		struct sha1file *f;
 		unsigned char read_sha1[20], tail_sha1[20];
 		struct strbuf msg = STRBUF_INIT;
@@ -1662,6 +1664,26 @@ static void conclude_pack(int fix_thin_pack, const char *curr_pack, unsigned cha
 		if (hashcmp(read_sha1, tail_sha1) != 0)
 			die(_("Unexpected tail checksum for %s "
 			      "(disk corruption?)"), curr_pack);
+	} else	if (fix_thin_pack && packv4) {
+		struct sha1file *f;
+		struct strbuf msg = STRBUF_INIT;
+		int nr_unresolved = nr_deltas - nr_resolved_deltas;
+		int nr_objects_initial = nr_objects;
+		if (nr_unresolved <= 0)
+			die(_("confusion beyond insanity"));
+		f = sha1fd(output_fd, curr_pack);
+		f->ctx = output_ctx; /* resume sha-1 from right before EOP */
+		fix_unresolved_deltas(f, nr_unresolved);
+		if (nr_objects != nr_objects_final)
+			die(_("pack number inconsistency, expected %u got %u"),
+			    nr_objects, nr_objects_final);
+		strbuf_addf(&msg, _("completed with %d local objects"),
+			    nr_objects_final - nr_objects_initial);
+		stop_progress_msg(&progress, msg.buf);
+		strbuf_release(&msg);
+		sha1close(f, pack_sha1, 0);
+		write_or_die(output_fd, pack_sha1, 20);
+		fsync_or_die(output_fd, f->name);
 	}
 	if (nr_deltas != nr_resolved_deltas)
 		die(Q_("pack has %d unresolved delta",
@@ -1701,16 +1723,15 @@ static struct object_entry *append_obj_to_pack(struct sha1file *f,
 {
 	struct object_entry *obj = &objects[nr_objects++];
 	unsigned char header[10];
-	unsigned long s = size;
-	int n = 0;
-	unsigned char c = (type << 4) | (s & 15);
-	s >>= 4;
-	while (s) {
-		header[n++] = c | 0x80;
-		c = s & 0x7f;
-		s >>= 7;
-	}
-	header[n++] = c;
+	int n;
+
+	if (packv4) {
+		if (nr_objects > nr_objects_final)
+			die(_("too many objects"));
+		/* TODO: convert OBJ_TREE to OBJ_PV4_TREE using pv4_encode_tree */
+		n = pv4_encode_object_header(type, size, header);
+	} else
+		n = encode_in_pack_object_header(type, size, header);
 	crc32_begin(f);
 	sha1write(f, header, n);
 	obj[0].size = size;
@@ -1749,7 +1770,8 @@ static void fix_unresolved_deltas(struct sha1file *f, int nr_unresolved)
 	 */
 	sorted_by_pos = xmalloc(nr_unresolved * sizeof(*sorted_by_pos));
 	for (i = 0; i < nr_deltas; i++) {
-		if (objects[deltas[i].obj_no].real_type != OBJ_REF_DELTA)
+		struct object_entry *obj = objects + deltas[i].obj_no;
+		if (obj->real_type != OBJ_REF_DELTA && !is_delta_tree(obj))
 			continue;
 		sorted_by_pos[n++] = &deltas[i];
 	}
@@ -1757,10 +1779,11 @@ static void fix_unresolved_deltas(struct sha1file *f, int nr_unresolved)
 
 	for (i = 0; i < n; i++) {
 		struct delta_entry *d = sorted_by_pos[i];
+		struct object_entry *obj = objects + d->obj_no;
 		enum object_type type;
 		struct base_data *base_obj = alloc_base_data();
 
-		if (objects[d->obj_no].real_type != OBJ_REF_DELTA)
+		if (obj->real_type != OBJ_REF_DELTA && !is_delta_tree(obj))
 			continue;
 		base_obj->data = read_sha1_file(d->base.sha1, &type, &base_obj->size);
 		if (!base_obj->data)
