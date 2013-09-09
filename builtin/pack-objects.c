@@ -434,7 +434,7 @@ static unsigned long write_object(struct sha1file *f,
 	unsigned long limit, len;
 	int usable_delta, to_reuse;
 
-	if (!pack_to_stdout)
+	if (f && !pack_to_stdout)
 		crc32_begin(f);
 
 	/* apply size limit if limited packsize and not first object */
@@ -476,6 +476,12 @@ static unsigned long write_object(struct sha1file *f,
 		to_reuse = 1;	/* we have it in-pack undeltified,
 				 * and we do not need to deltify it.
 				 */
+
+	if (!f) {
+		if (usable_delta && entry->delta->idx.offset < 2)
+			entry->delta->idx.offset = 2;
+		return 2;
+	}
 
 	if (!to_reuse)
 		len = write_no_reuse_object(f, entry, limit, usable_delta);
@@ -543,10 +549,14 @@ static enum write_one_status write_one(struct sha1file *f,
 		e->idx.offset = recursing;
 		return WRITE_ONE_BREAK;
 	}
+	if (!f) {
+		*offset += size;
+		return WRITE_ONE_WRITTEN;
+	}
 	written_list[nr_written++] = &e->idx;
 
 	/* make sure off_t is sufficiently large not to wrap */
-	if (signed_add_overflows(*offset, size))
+	if (f && signed_add_overflows(*offset, size))
 		die("pack too large for current definition of off_t");
 	*offset += size;
 	return WRITE_ONE_WRITTEN;
@@ -716,6 +726,38 @@ static struct object_entry **compute_write_order(void)
 	return wo;
 }
 
+static int sha1_idx_sort(const void *a_, const void *b_)
+{
+	const struct pack_idx_entry *a = a_;
+	const struct pack_idx_entry *b = b_;
+	return hashcmp(a->sha1, b->sha1);
+}
+
+/*
+ * Do a fake writting round to detemine what's in the SHA-1 table.
+ */
+static void prepare_sha1_table(uint32_t start, struct object_entry **write_order)
+{
+	int i = start;
+	off_t fake_offset = 2;
+	for (; i < nr_objects; i++) {
+		struct object_entry *e = write_order[i];
+		if (write_one(NULL, e, &fake_offset) == WRITE_ONE_BREAK)
+			break;
+	}
+
+	v4.all_objs_nr = 0;
+	for (i = 0; i < nr_objects; i++) {
+		struct object_entry *e = write_order[i];
+		if (e->idx.offset > 0) {
+			v4.all_objs[v4.all_objs_nr++] = e->idx;
+			e->idx.offset = 0;
+		}
+	}
+	qsort(v4.all_objs, v4.all_objs_nr, sizeof(*v4.all_objs),
+	      sha1_idx_sort);
+}
+
 static void write_pack_file(void)
 {
 	uint32_t i = 0, j;
@@ -739,7 +781,12 @@ static void write_pack_file(void)
 		else
 			f = create_tmp_packfile(&pack_tmp_name);
 
-		offset = write_pack_header(f, pack_version, nr_remaining);
+		if (pack_version == 4)
+			prepare_sha1_table(i, write_order);
+
+		offset = write_pack_header(f, pack_version,
+					   pack_version < 4 ? nr_remaining : v4.all_objs_nr);
+
 		if (!offset)
 			die_errno("unable to write pack header");
 		nr_written = 0;
@@ -2058,6 +2105,7 @@ static void prepare_pack(int window, int depth)
 	if (pack_version == 4) {
 		sort_dict_entries_by_hits(v4.commit_ident_table);
 		sort_dict_entries_by_hits(v4.tree_path_table);
+		v4.all_objs = xmalloc(nr_objects * sizeof(*v4.all_objs));
 	}
 
 	get_object_details();
