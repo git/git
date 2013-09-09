@@ -141,10 +141,11 @@ stop_httpd() {
 		-f "$TEST_PATH/apache.conf" $HTTPD_PARA -k stop
 }
 
-test_http_push_nonff() {
+test_http_push_nonff () {
 	REMOTE_REPO=$1
 	LOCAL_REPO=$2
 	BRANCH=$3
+	EXPECT_CAS_RESULT=${4-failure}
 
 	test_expect_success 'non-fast-forward push fails' '
 		cd "$REMOTE_REPO" &&
@@ -166,6 +167,22 @@ test_http_push_nonff() {
 
 	test_expect_success 'non-fast-forward push shows help message' '
 		test_i18ngrep "Updates were rejected because" output
+	'
+
+	test_expect_failure 'force with lease aka cas' '
+		HEAD=$(	cd "$REMOTE_REPO" && git rev-parse --verify HEAD ) &&
+		test_when_finished '\''
+			(cd "$REMOTE_REPO" && git update-ref HEAD "$HEAD")
+		'\'' &&
+		(
+			cd "$LOCAL_REPO" &&
+			git push -v --force-with-lease=$BRANCH:$HEAD origin
+		) &&
+		git rev-parse --verify "$BRANCH" >expect &&
+		(
+			cd "$REMOTE_REPO" && git rev-parse --verify HEAD
+		) >actual &&
+		test_cmp expect actual
 	'
 }
 

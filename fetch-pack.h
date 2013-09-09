@@ -2,6 +2,7 @@
 #define FETCH_PACK_H
 
 #include "string-list.h"
+#include "run-command.h"
 
 struct fetch_pack_args {
 	const char *uploadpack;

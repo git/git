@@ -21,6 +21,8 @@ static const char *receivepack;
 static int verbosity;
 static int progress = -1;
 
+static struct push_cas_option cas;
+
 static const char **refspec;
 static int refspec_nr;
 static int refspec_alloc;
@@ -316,6 +318,13 @@ static int push_with_options(struct transport *transport, int flags)
 	if (thin)
 		transport_set_option(transport, TRANS_OPT_THIN, "yes");
 
+	if (!is_empty_cas(&cas)) {
+		if (!transport->smart_options)
+			die("underlying transport does not support --%s option",
+			    CAS_OPT_NAME);
+		transport->smart_options->cas = &cas;
+	}
+
 	if (verbosity > 0)
 		fprintf(stderr, _("Pushing to %s\n"), transport->url);
 	err = transport_push(transport, refspec_nr, refspec, flags,
@@ -451,6 +460,10 @@ int cmd_push(int argc, const char **argv, const char *prefix)
 		OPT_BIT('n' , "dry-run", &flags, N_("dry run"), TRANSPORT_PUSH_DRY_RUN),
 		OPT_BIT( 0,  "porcelain", &flags, N_("machine-readable output"), TRANSPORT_PUSH_PORCELAIN),
 		OPT_BIT('f', "force", &flags, N_("force updates"), TRANSPORT_PUSH_FORCE),
+		{ OPTION_CALLBACK,
+		  0, CAS_OPT_NAME, &cas, N_("refname>:<expect"),
+		  N_("require old value of ref to be at this value"),
+		  PARSE_OPT_OPTARG, parseopt_push_cas_option },
 		{ OPTION_CALLBACK, 0, "recurse-submodules", &flags, N_("check"),
 			N_("control recursive pushing of submodules"),
 			PARSE_OPT_OPTARG, option_parse_recurse_submodules },

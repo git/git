@@ -1,6 +1,8 @@
 #ifndef REMOTE_H
 #define REMOTE_H
 
+#include "parse-options.h"
+
 enum {
 	REMOTE_CONFIG,
 	REMOTE_REMOTES,
@@ -72,6 +74,56 @@ struct refspec {
 
 extern const struct refspec *tag_refspec;
 
+struct ref {
+	struct ref *next;
+	unsigned char old_sha1[20];
+	unsigned char new_sha1[20];
+	unsigned char old_sha1_expect[20]; /* used by expect-old */
+	char *symref;
+	unsigned int
+		force:1,
+		forced_update:1,
+		expect_old_sha1:1,
+		expect_old_no_trackback:1,
+		deletion:1,
+		matched:1;
+
+	/*
+	 * Order is important here, as we write to FETCH_HEAD
+	 * in numeric order. And the default NOT_FOR_MERGE
+	 * should be 0, so that xcalloc'd structures get it
+	 * by default.
+	 */
+	enum {
+		FETCH_HEAD_MERGE = -1,
+		FETCH_HEAD_NOT_FOR_MERGE = 0,
+		FETCH_HEAD_IGNORE = 1
+	} fetch_head_status;
+
+	enum {
+		REF_STATUS_NONE = 0,
+		REF_STATUS_OK,
+		REF_STATUS_REJECT_NONFASTFORWARD,
+		REF_STATUS_REJECT_ALREADY_EXISTS,
+		REF_STATUS_REJECT_NODELETE,
+		REF_STATUS_REJECT_FETCH_FIRST,
+		REF_STATUS_REJECT_NEEDS_FORCE,
+		REF_STATUS_REJECT_STALE,
+		REF_STATUS_UPTODATE,
+		REF_STATUS_REMOTE_REJECT,
+		REF_STATUS_EXPECTING_REPORT
+	} status;
+	char *remote_status;
+	struct ref *peer_ref; /* when renaming */
+	char name[FLEX_ARRAY]; /* more */
+};
+
+#define REF_NORMAL	(1u << 0)
+#define REF_HEADS	(1u << 1)
+#define REF_TAGS	(1u << 2)
+
+extern struct ref *find_ref_by_name(const struct ref *list, const char *name);
+
 struct ref *alloc_ref(const char *name);
 struct ref *copy_ref(const struct ref *ref);
 struct ref *copy_ref_list(const struct ref *ref);
@@ -84,6 +136,14 @@ int check_ref_type(const struct ref *ref, int flags);
  * Frees the entire list and peers of elements.
  */
 void free_refs(struct ref *ref);
+
+struct extra_have_objects {
+	int nr, alloc;
+	unsigned char (*array)[20];
+};
+extern struct ref **get_remote_heads(int in, char *src_buf, size_t src_len,
+				     struct ref **list, unsigned int flags,
+				     struct extra_have_objects *);
 
 int resolve_remote_symref(struct ref *ref, struct ref *list);
 int ref_newer(const unsigned char *new_sha1, const unsigned char *old_sha1);
@@ -172,5 +232,28 @@ struct ref *guess_remote_head(const struct ref *head,
 
 /* Return refs which no longer exist on remote */
 struct ref *get_stale_heads(struct refspec *refs, int ref_count, struct ref *fetch_map);
+
+/*
+ * Compare-and-swap
+ */
+#define CAS_OPT_NAME "force-with-lease"
+
+struct push_cas_option {
+	unsigned use_tracking_for_rest:1;
+	struct push_cas {
+		unsigned char expect[20];
+		unsigned use_tracking:1;
+		char *refname;
+	} *entry;
+	int nr;
+	int alloc;
+};
+
+extern int parseopt_push_cas_option(const struct option *, const char *arg, int unset);
+extern int parse_push_cas_option(struct push_cas_option *, const char *arg, int unset);
+extern void clear_cas_option(struct push_cas_option *);
+
+extern int is_empty_cas(const struct push_cas_option *);
+void apply_push_cas(struct push_cas_option *, struct remote *, struct ref *);
 
 #endif
