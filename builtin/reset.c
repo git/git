@@ -330,23 +330,20 @@ int cmd_reset(int argc, const char **argv, const char *prefix)
 		die_if_unmerged_cache(reset_type);
 
 	if (reset_type != SOFT) {
-		struct lock_file *lock = xcalloc(1, sizeof(struct lock_file));
+		struct lock_file *lock = xcalloc(1, sizeof(*lock));
 		int newfd = hold_locked_index(lock, 1);
 		if (reset_type == MIXED) {
+			int flags = quiet ? REFRESH_QUIET : REFRESH_IN_PORCELAIN;
 			if (read_from_tree(&pathspec, sha1))
 				return 1;
+			refresh_index(&the_index, flags, NULL, NULL,
+				      _("Unstaged changes after reset:"));
 		} else {
 			int err = reset_index(sha1, reset_type, quiet);
 			if (reset_type == KEEP && !err)
 				err = reset_index(sha1, MIXED, quiet);
 			if (err)
 				die(_("Could not reset index file to revision '%s'."), rev);
-		}
-
-		if (reset_type == MIXED) { /* Report what has not been updated. */
-			int flags = quiet ? REFRESH_QUIET : REFRESH_IN_PORCELAIN;
-			refresh_index(&the_index, flags, NULL, NULL,
-				      _("Unstaged changes after reset:"));
 		}
 
 		if (write_cache(newfd, active_cache, active_nr) ||
