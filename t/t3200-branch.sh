@@ -14,7 +14,8 @@ test_expect_success 'prepare a trivial repository' '
 	echo World >>A &&
 	git update-index --add A &&
 	git commit -m "Second commit." &&
-	HEAD=$(git rev-parse --verify HEAD)'
+	HEAD=$(git rev-parse --verify HEAD)
+'
 
 test_expect_success 'git branch --help should not have created a bogus branch' '
 	test_might_fail git branch --help </dev/null >/dev/null 2>/dev/null &&
@@ -350,7 +351,7 @@ test_expect_success 'test overriding tracking setup via --no-track' '
 test_expect_success 'no tracking without .fetch entries' '
 	git config branch.autosetupmerge true &&
 	git branch my6 s &&
-	git config branch.automsetupmerge false &&
+	git config branch.autosetupmerge false &&
 	test -z "$(git config branch.my6.remote)" &&
 	test -z "$(git config branch.my6.merge)"
 '
@@ -424,14 +425,14 @@ test_expect_success '--set-upstream-to fails on a non-ref' '
 test_expect_success 'use --set-upstream-to modify HEAD' '
 	test_config branch.master.remote foo &&
 	test_config branch.master.merge foo &&
-	git branch my12
+	git branch my12 &&
 	git branch --set-upstream-to my12 &&
 	test "$(git config branch.master.remote)" = "." &&
 	test "$(git config branch.master.merge)" = "refs/heads/my12"
 '
 
 test_expect_success 'use --set-upstream-to modify a particular branch' '
-	git branch my13
+	git branch my13 &&
 	git branch --set-upstream-to master my13 &&
 	test "$(git config branch.my13.remote)" = "." &&
 	test "$(git config branch.my13.merge)" = "refs/heads/master"
@@ -442,7 +443,7 @@ test_expect_success '--unset-upstream should fail if given a non-existent branch
 '
 
 test_expect_success 'test --unset-upstream on HEAD' '
-	git branch my14
+	git branch my14 &&
 	test_config branch.master.remote foo &&
 	test_config branch.master.merge foo &&
 	git branch --set-upstream-to my14 &&
@@ -464,7 +465,7 @@ test_expect_success '--unset-upstream should fail on detached HEAD' '
 '
 
 test_expect_success 'test --unset-upstream on a particular branch' '
-	git branch my15
+	git branch my15 &&
 	git branch --set-upstream-to master my14 &&
 	git branch --unset-upstream my14 &&
 	test_must_fail git config branch.my14.remote &&
