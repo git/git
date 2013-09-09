@@ -63,6 +63,43 @@ Foreign interfaces, subsystems and ports.
 
 UI, Workflows & Features
 
+ * Magic pathspecs like ":(icase)makefile" that matches both
+   Makefile and makefile can be used in more places.
+
+ * The "http.*" variables can now be specified per URL that the
+   configuration applies.  For example,
+
+   [http]
+       sslVerify = true
+   [http "https://weak.example.com/"]
+       sslVerify = false
+
+   would flip http.sslVerify off only when talking to that specified
+   site.
+
+ * "git mv A B" when moving a submodule A has been taught to
+   relocate its working tree and to adjust the paths in the
+   .gitmodules file.
+
+ * "git blame" can now take more than one -L option to discover the
+   origin of multiple blocks of the lines.
+
+ * The http transport clients can optionally ask to save cookies
+   with http.savecookies configuration variable.
+
+ * "git push" learned a more fine grained control over a blunt
+   "--force" when requesting a non-fast-forward update with the
+   "--force-with-lease=<refname>:<expected object name>" option.
+
+ * "git diff --diff-filter=<classes of changes>" can now take
+   lowercase letters (e.g. "--diff-filter=d") to mean "show
+   everything but these classes".  "git diff-files -q" is now a
+   deprecated synonym for "git diff-files --diff-filter=d".
+
+ * "git fetch" (hence "git pull" as well) learned to check
+   "fetch.prune" and "remote.*.prune" configuration variables and
+   to behave as if the "--prune" command line option was given.
+
  * "git check-ignore -z" applied the NUL termination to both its input
    (with --stdin) and its output, but "git check-attr -z" ignored the
    option on the output side. Make both honor -z on the input and
@@ -106,6 +143,28 @@ Fixes since v1.8.4
 Unless otherwise noted, all the fixes since v1.8.4 in the maintenance
 track are contained in this release (see release notes to them for
 details).
+
+ * The mailmap support code read past the allocated buffer when the
+   mailmap file ended with an incomplete line.
+   (merge f972a16 jk/mailmap-incomplete-line later to maint).
+
+ * We used to send a large request to read(2)/write(2) as a single
+   system call, which was bad from the latency point of view when
+   the operation needs to be killed, and also triggered an error on
+   broken 64-bit systems that refuse to take more than 2GB read or
+   write in one go.
+   (merge a487916 sp/clip-read-write-to-8mb later to maint).
+
+ * "git fetch" that auto-followed tags incorrectly reused the
+   connection with Git-aware transport helper (like the sample "ext::"
+   helper shipped with Git).
+   (merge 0f73f8b jc/transport-do-not-use-connect-twice-in-fetch later to maint).
+
+ * "git log --full-diff -- <pathspec>" showed a huge diff for paths
+   outside the given <pathspec> for each commit, instead of showing
+   the change relative to the parent of the commit.  "git reflog -p"
+   had a similar problem.
+   (merge 838f9a1 tr/log-full-diff-keep-true-parents later to maint).
 
  * Setting submodule.*.path configuration variable to true (without
    giving "= value") caused Git to segfault.
