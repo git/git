@@ -103,12 +103,15 @@ enum diff_words_type {
 };
 
 struct diff_options {
-	const char *filter;
 	const char *orderfile;
 	const char *pickaxe;
 	const char *single_follow;
 	const char *a_prefix, *b_prefix;
 	unsigned flags;
+
+	/* diff-filter bits */
+	unsigned int filter;
+
 	int use_color;
 	int context;
 	int interhunkcontext;
@@ -337,6 +340,8 @@ extern struct userdiff_driver *get_textconv(struct diff_filespec *one);
 extern int parse_rename_score(const char **cp_p);
 
 extern long parse_algorithm_value(const char *value);
+
+extern void handle_deprecated_show_diff_q(struct diff_options *);
 
 extern int print_stat_summary(FILE *fp, int files,
 			      int insertions, int deletions);

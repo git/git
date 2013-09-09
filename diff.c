@@ -3503,6 +3503,88 @@ static int parse_submodule_opt(struct diff_options *options, const char *value)
 	return 1;
 }
 
+static const char diff_status_letters[] = {
+	DIFF_STATUS_ADDED,
+	DIFF_STATUS_COPIED,
+	DIFF_STATUS_DELETED,
+	DIFF_STATUS_MODIFIED,
+	DIFF_STATUS_RENAMED,
+	DIFF_STATUS_TYPE_CHANGED,
+	DIFF_STATUS_UNKNOWN,
+	DIFF_STATUS_UNMERGED,
+	DIFF_STATUS_FILTER_AON,
+	DIFF_STATUS_FILTER_BROKEN,
+	'\0',
+};
+
+static unsigned int filter_bit['Z' + 1];
+
+static void prepare_filter_bits(void)
+{
+	int i;
+
+	if (!filter_bit[DIFF_STATUS_ADDED]) {
+		for (i = 0; diff_status_letters[i]; i++)
+			filter_bit[(int) diff_status_letters[i]] = (1 << i);
+	}
+}
+
+static unsigned filter_bit_tst(char status, const struct diff_options *opt)
+{
+	return opt->filter & filter_bit[(int) status];
+}
+
+static int parse_diff_filter_opt(const char *optarg, struct diff_options *opt)
+{
+	int i, optch;
+
+	prepare_filter_bits();
+
+	/*
+	 * If there is a negation e.g. 'd' in the input, and we haven't
+	 * initialized the filter field with another --diff-filter, start
+	 * from full set of bits, except for AON.
+	 */
+	if (!opt->filter) {
+		for (i = 0; (optch = optarg[i]) != '\0'; i++) {
+			if (optch < 'a' || 'z' < optch)
+				continue;
+			opt->filter = (1 << (ARRAY_SIZE(diff_status_letters) - 1)) - 1;
+			opt->filter &= ~filter_bit[DIFF_STATUS_FILTER_AON];
+			break;
+		}
+	}
+
+	for (i = 0; (optch = optarg[i]) != '\0'; i++) {
+		unsigned int bit;
+		int negate;
+
+		if ('a' <= optch && optch <= 'z') {
+			negate = 1;
+			optch = toupper(optch);
+		} else {
+			negate = 0;
+		}
+
+		bit = (0 <= optch && optch <= 'Z') ? filter_bit[optch] : 0;
+		if (!bit)
+			return optarg[i];
+		if (negate)
+			opt->filter &= ~bit;
+		else
+			opt->filter |= bit;
+	}
+	return 0;
+}
+
+/* Used only by "diff-files" and "diff --no-index" */
+void handle_deprecated_show_diff_q(struct diff_options *opt)
+{
+	warning("'diff -q' and 'diff-files -q' are deprecated.");
+	warning("Use 'diff --diff-filter=d' instead to ignore deleted filepairs.");
+	parse_diff_filter_opt("d", opt);
+}
+
 static void enable_patch_output(int *fmt) {
 	*fmt &= ~DIFF_FORMAT_NO_OUTPUT;
 	*fmt |= DIFF_FORMAT_PATCH;
@@ -3732,7 +3814,10 @@ int diff_opt_parse(struct diff_options *options, const char **av, int ac)
 		return argcount;
 	}
 	else if ((argcount = parse_long_opt("diff-filter", av, &optarg))) {
-		options->filter = optarg;
+		int offending = parse_diff_filter_opt(optarg, options);
+		if (offending)
+			die("unknown change class '%c' in --diff-filter=%s",
+			    offending, optarg);
 		return argcount;
 	}
 	else if (!strcmp(arg, "--abbrev"))
@@ -4524,27 +4609,32 @@ free_queue:
 	}
 }
 
-static void diffcore_apply_filter(const char *filter)
+static int match_filter(const struct diff_options *options, const struct diff_filepair *p)
+{
+	return (((p->status == DIFF_STATUS_MODIFIED) &&
+		 ((p->score &&
+		   filter_bit_tst(DIFF_STATUS_FILTER_BROKEN, options)) ||
+		  (!p->score &&
+		   filter_bit_tst(DIFF_STATUS_MODIFIED, options)))) ||
+		((p->status != DIFF_STATUS_MODIFIED) &&
+		 filter_bit_tst(p->status, options)));
+}
+
+static void diffcore_apply_filter(struct diff_options *options)
 {
 	int i;
 	struct diff_queue_struct *q = &diff_queued_diff;
 	struct diff_queue_struct outq;
+
 	DIFF_QUEUE_CLEAR(&outq);
 
-	if (!filter)
+	if (!options->filter)
 		return;
 
-	if (strchr(filter, DIFF_STATUS_FILTER_AON)) {
+	if (filter_bit_tst(DIFF_STATUS_FILTER_AON, options)) {
 		int found;
 		for (i = found = 0; !found && i < q->nr; i++) {
-			struct diff_filepair *p = q->queue[i];
-			if (((p->status == DIFF_STATUS_MODIFIED) &&
-			     ((p->score &&
-			       strchr(filter, DIFF_STATUS_FILTER_BROKEN)) ||
-			      (!p->score &&
-			       strchr(filter, DIFF_STATUS_MODIFIED)))) ||
-			    ((p->status != DIFF_STATUS_MODIFIED) &&
-			     strchr(filter, p->status)))
+			if (match_filter(options, q->queue[i]))
 				found++;
 		}
 		if (found)
@@ -4562,14 +4652,7 @@ static void diffcore_apply_filter(const char *filter)
 		/* Only the matching ones */
 		for (i = 0; i < q->nr; i++) {
 			struct diff_filepair *p = q->queue[i];
-
-			if (((p->status == DIFF_STATUS_MODIFIED) &&
-			     ((p->score &&
-			       strchr(filter, DIFF_STATUS_FILTER_BROKEN)) ||
-			      (!p->score &&
-			       strchr(filter, DIFF_STATUS_MODIFIED)))) ||
-			    ((p->status != DIFF_STATUS_MODIFIED) &&
-			     strchr(filter, p->status)))
+			if (match_filter(options, p))
 				diff_q(&outq, p);
 			else
 				diff_free_filepair(p);
@@ -4676,7 +4759,7 @@ void diffcore_std(struct diff_options *options)
 	if (!options->found_follow)
 		/* See try_to_follow_renames() in tree-diff.c */
 		diff_resolve_rename_copy();
-	diffcore_apply_filter(options->filter);
+	diffcore_apply_filter(options);
 
 	if (diff_queued_diff.nr && !DIFF_OPT_TST(options, DIFF_FROM_CONTENTS))
 		DIFF_OPT_SET(options, HAS_CHANGES);
