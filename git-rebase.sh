@@ -143,13 +143,22 @@ move_to_original_branch () {
 	esac
 }
 
-run_specific_rebase () {
+run_specific_rebase_internal () {
 	if [ "$interactive_rebase" = implied ]; then
 		GIT_EDITOR=:
 		export GIT_EDITOR
 		autosquash=
 	fi
+	# On FreeBSD, the shell's "return" returns from the current
+	# function, not from the current file inclusion.
+	# run_specific_rebase_internal has the file inclusion as a
+	# last statement, so POSIX and FreeBSD's return will do the
+	# same thing.
 	. git-rebase--$type
+}
+
+run_specific_rebase () {
+	run_specific_rebase_internal
 	ret=$?
 	if test $ret -eq 0
 	then
