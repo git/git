@@ -1329,7 +1329,8 @@ static void check_object(struct object_entry *entry)
 			break;
 		}
 
-		if (base_ref && (base_entry = locate_object_entry(base_ref))) {
+		if (base_ref && (base_entry = locate_object_entry(base_ref)) &&
+		    (pack_version < 4 || entry->type != OBJ_COMMIT)) {
 			/*
 			 * If base_ref was set above that means we wish to
 			 * reuse delta data, and we even found that base
@@ -1412,6 +1413,8 @@ static void get_object_details(void)
 		struct object_entry *entry = sorted_by_offset[i];
 		check_object(entry);
 		if (big_file_threshold < entry->size)
+			entry->no_try_delta = 1;
+		if (pack_version == 4 && entry->type == OBJ_COMMIT)
 			entry->no_try_delta = 1;
 	}
 
