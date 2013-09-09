@@ -468,7 +468,7 @@ static int parse_unit_factor(const char *end, uintmax_t *val)
 	return 0;
 }
 
-static int git_parse_int(const char *value, int *ret)
+static int git_parse_long(const char *value, long *ret)
 {
 	if (value && *value) {
 		char *end;
@@ -484,7 +484,7 @@ static int git_parse_int(const char *value, int *ret)
 			return 0;
 		uval = abs(val);
 		uval *= factor;
-		if ((uval > maximum_signed_value_of_type(int)) ||
+		if ((uval > maximum_signed_value_of_type(long)) ||
 		    (abs(val) > uval))
 			return 0;
 		val *= factor;
@@ -526,8 +526,8 @@ static void die_bad_config(const char *name)
 
 int git_config_int(const char *name, const char *value)
 {
-	int ret;
-	if (!git_parse_int(value, &ret))
+	long ret = 0;
+	if (!git_parse_long(value, &ret))
 		die_bad_config(name);
 	return ret;
 }
@@ -559,10 +559,10 @@ static int git_config_maybe_bool_text(const char *name, const char *value)
 
 int git_config_maybe_bool(const char *name, const char *value)
 {
-	int v = git_config_maybe_bool_text(name, value);
+	long v = git_config_maybe_bool_text(name, value);
 	if (0 <= v)
 		return v;
-	if (git_parse_int(value, &v))
+	if (git_parse_long(value, &v))
 		return !!v;
 	return -1;
 }
