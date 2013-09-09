@@ -18,6 +18,7 @@
 #include "refs.h"
 #include "streaming.h"
 #include "thread-utils.h"
+#include "packv4-create.h"
 
 static const char *pack_usage[] = {
 	N_("git pack-objects --stdout [options...] [< ref-list | < object-list]"),
@@ -60,6 +61,8 @@ struct object_entry {
 static struct object_entry *objects;
 static struct pack_idx_entry **written_list;
 static uint32_t nr_objects, nr_alloc, nr_result, nr_written;
+
+static struct packv4_tables v4;
 
 static int non_empty;
 static int reuse_delta = 1, reuse_object = 1;
@@ -2052,6 +2055,11 @@ static void prepare_pack(int window, int depth)
 	uint32_t i, nr_deltas;
 	unsigned n;
 
+	if (pack_version == 4) {
+		sort_dict_entries_by_hits(v4.commit_ident_table);
+		sort_dict_entries_by_hits(v4.tree_path_table);
+	}
+
 	get_object_details();
 
 	/*
@@ -2198,6 +2206,34 @@ static void read_object_list_from_stdin(void)
 
 		add_preferred_base_object(line+41);
 		add_object_entry(sha1, 0, line+41, 0);
+
+		if (pack_version == 4) {
+			void *data;
+			enum object_type type;
+			unsigned long size;
+			int (*add_dict_entries)(struct dict_table *, void *, unsigned long);
+			struct dict_table *dict;
+
+			switch (sha1_object_info(sha1, &size)) {
+			case OBJ_COMMIT:
+				add_dict_entries = add_commit_dict_entries;
+				dict = v4.commit_ident_table;
+				break;
+			case OBJ_TREE:
+				add_dict_entries = add_tree_dict_entries;
+				dict = v4.tree_path_table;
+				break;
+			default:
+				continue;
+			}
+			data = read_sha1_file(sha1, &type, &size);
+			if (!data)
+				die("cannot unpack %s", sha1_to_hex(sha1));
+			if (add_dict_entries(dict, data, size) < 0)
+				die("can't process %s object %s",
+				    typename(type), sha1_to_hex(sha1));
+			free(data);
+		}
 	}
 }
 
@@ -2205,8 +2241,24 @@ static void read_object_list_from_stdin(void)
 
 static void show_commit(struct commit *commit, void *data)
 {
+	if (pack_version == 4) {
+		unsigned long size;
+		enum object_type type;
+		unsigned char *buf;
+
+		/* commit->buffer is NULL most of the time, don't bother */
+		buf = read_sha1_file(commit->object.sha1, &type, &size);
+		add_commit_dict_entries(v4.commit_ident_table, buf, size);
+		free(buf);
+	}
 	add_object_entry(commit->object.sha1, OBJ_COMMIT, NULL, 0);
 	commit->object.flags |= OBJECT_ADDED;
+}
+
+static void show_tree_entry(const struct name_entry *entry, void *data)
+{
+	dict_add_entry(v4.tree_path_table, entry->mode, entry->path,
+		       tree_entry_len(entry));
 }
 
 static void show_object(struct object *obj,
@@ -2387,7 +2439,9 @@ static void get_object_list(int ac, const char **av)
 	if (prepare_revision_walk(&revs))
 		die("revision walk setup failed");
 	mark_edges_uninteresting(revs.commits, &revs, show_edge);
-	traverse_commit_list(&revs, show_commit, NULL, show_object, NULL);
+	traverse_commit_list(&revs, show_commit,
+			     pack_version == 4 ? show_tree_entry : NULL,
+			     show_object, NULL);
 
 	if (keep_unreachable)
 		add_objects_in_unpacked_packs(&revs);
@@ -2534,7 +2588,7 @@ int cmd_pack_objects(int argc, const char **argv, const char *prefix)
 	}
 	if (pack_to_stdout != !base_name || argc)
 		usage_with_options(pack_usage, pack_objects_options);
-	if (pack_version != 2)
+	if (pack_version != 2 && pack_version != 4)
 		die(_("pack version %d is not supported"), pack_version);
 
 	rp_av[rp_ac++] = "pack-objects";
@@ -2586,6 +2640,10 @@ int cmd_pack_objects(int argc, const char **argv, const char *prefix)
 		progress = 2;
 
 	prepare_packed_git();
+	if (pack_version == 4) {
+		v4.commit_ident_table = create_dict_table();
+		v4.tree_path_table = create_dict_table();
+	}
 
 	if (progress)
 		progress_state = start_progress("Counting objects", 0);
