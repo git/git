@@ -62,7 +62,8 @@ produced by --stat etc.
 	Note that only message is considered, if also a diff is shown
 	its size is not included.
 
--L <start>,<end>:<file>, -L :<regex>:<file>::
+-L <start>,<end>:<file>::
+-L :<regex>:<file>::
 
 	Trace the evolution of the line range given by "<start>,<end>"
 	(or the funcname regex <regex>) within the <file>.  You may
@@ -71,8 +72,6 @@ produced by --stat etc.
 	give zero or one positive revision arguments.
 	You can specify this option more than once.
 +
-<start> and <end> can take one of these forms:
-
 include::line-range-format.txt[]
 
 <revision range>::

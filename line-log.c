@@ -23,7 +23,7 @@ static void range_set_grow(struct range_set *rs, size_t extra)
 /* Either initialization would be fine */
 #define RANGE_SET_INIT {0}
 
-static void range_set_init(struct range_set *rs, size_t prealloc)
+void range_set_init(struct range_set *rs, size_t prealloc)
 {
 	rs->alloc = rs->nr = 0;
 	rs->ranges = NULL;
@@ -31,7 +31,7 @@ static void range_set_init(struct range_set *rs, size_t prealloc)
 		range_set_grow(rs, prealloc);
 }
 
-static void range_set_release(struct range_set *rs)
+void range_set_release(struct range_set *rs)
 {
 	free(rs->ranges);
 	rs->alloc = rs->nr = 0;
@@ -56,7 +56,7 @@ static void range_set_move(struct range_set *dst, struct range_set *src)
 }
 
 /* tack on a _new_ range _at the end_ */
-static void range_set_append_unsafe(struct range_set *rs, long a, long b)
+void range_set_append_unsafe(struct range_set *rs, long a, long b)
 {
 	assert(a <= b);
 	range_set_grow(rs, 1);
@@ -65,7 +65,7 @@ static void range_set_append_unsafe(struct range_set *rs, long a, long b)
 	rs->nr++;
 }
 
-static void range_set_append(struct range_set *rs, long a, long b)
+void range_set_append(struct range_set *rs, long a, long b)
 {
 	assert(rs->nr == 0 || rs->ranges[rs->nr-1].end <= a);
 	range_set_append_unsafe(rs, a, b);
@@ -107,7 +107,7 @@ static void range_set_check_invariants(struct range_set *rs)
  * In-place pass of sorting and merging the ranges in the range set,
  * to establish the invariants when we get the ranges from the user
  */
-static void sort_and_merge_range_set(struct range_set *rs)
+void sort_and_merge_range_set(struct range_set *rs)
 {
 	int i;
 	int o = 0; /* output cursor */
@@ -291,7 +291,6 @@ static void line_log_data_insert(struct line_log_data **list,
 
 	if (p) {
 		range_set_append_unsafe(&p->ranges, begin, end);
-		sort_and_merge_range_set(&p->ranges);
 		free(path);
 		return;
 	}
@@ -299,7 +298,6 @@ static void line_log_data_insert(struct line_log_data **list,
 	p = xcalloc(1, sizeof(struct line_log_data));
 	p->path = path;
 	range_set_append(&p->ranges, begin, end);
-	sort_and_merge_range_set(&p->ranges);
 	if (ip) {
 		p->next = ip->next;
 		ip->next = p;
@@ -566,12 +564,14 @@ parse_lines(struct commit *commit, const char *prefix, struct string_list *args)
 	struct nth_line_cb cb_data;
 	struct string_list_item *item;
 	struct line_log_data *ranges = NULL;
+	struct line_log_data *p;
 
 	for_each_string_list_item(item, args) {
 		const char *name_part, *range_part;
 		char *full_name;
 		struct diff_filespec *spec;
 		long begin = 0, end = 0;
+		long anchor;
 
 		name_part = skip_range_arg(item->string);
 		if (!name_part || *name_part != ':' || !name_part[1])
@@ -590,8 +590,14 @@ parse_lines(struct commit *commit, const char *prefix, struct string_list *args)
 		cb_data.lines = lines;
 		cb_data.line_ends = ends;
 
+		p = search_line_log_data(ranges, full_name, NULL);
+		if (p && p->ranges.nr)
+			anchor = p->ranges.ranges[p->ranges.nr - 1].end + 1;
+		else
+			anchor = 1;
+
 		if (parse_range_arg(range_part, nth_line, &cb_data,
-				    lines, &begin, &end,
+				    lines, anchor, &begin, &end,
 				    full_name))
 			die("malformed -L argument '%s'", range_part);
 		if (lines < end || ((lines || begin) && lines < begin))
@@ -607,6 +613,9 @@ parse_lines(struct commit *commit, const char *prefix, struct string_list *args)
 		free(ends);
 		ends = NULL;
 	}
+
+	for (p = ranges; p; p = p->next)
+		sort_and_merge_range_set(&p->ranges);
 
 	return ranges;
 }

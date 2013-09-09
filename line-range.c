@@ -6,6 +6,18 @@
 
 /*
  * Parse one item in the -L option
+ *
+ * 'begin' is applicable only to relative range anchors. Absolute anchors
+ * ignore this value.
+ *
+ * When parsing "-L A,B", parse_loc() is called once for A and once for B.
+ *
+ * When parsing A, 'begin' must be a negative number, the absolute value of
+ * which is the line at which relative start-of-range anchors should be
+ * based. Beginning of file is represented by -1.
+ *
+ * When parsing B, 'begin' must be the positive line number immediately
+ * following the line computed for 'A'.
  */
 static const char *parse_loc(const char *spec, nth_line_fn_t nth_line,
 			     void *data, long lines, long begin, long *ret)
@@ -42,10 +54,23 @@ static const char *parse_loc(const char *spec, nth_line_fn_t nth_line,
 	}
 	num = strtol(spec, &term, 10);
 	if (term != spec) {
-		if (ret)
+		if (ret) {
+			if (num <= 0)
+				die("-L invalid line number: %ld", num);
 			*ret = num;
+		}
 		return term;
 	}
+
+	if (begin < 0) {
+		if (spec[0] != '^')
+			begin = -begin;
+		else {
+			begin = 1;
+			spec++;
+		}
+	}
+
 	if (spec[0] != '/')
 		return spec;
 
@@ -85,7 +110,8 @@ static const char *parse_loc(const char *spec, nth_line_fn_t nth_line,
 	else {
 		char errbuf[1024];
 		regerror(reg_error, &regexp, errbuf, 1024);
-		die("-L parameter '%s': %s", spec + 1, errbuf);
+		die("-L parameter '%s' starting at line %ld: %s",
+		    spec + 1, begin + 1, errbuf);
 	}
 }
 
@@ -138,7 +164,7 @@ static const char *find_funcname_matching_regexp(xdemitconf_t *xecfg, const char
 }
 
 static const char *parse_range_funcname(const char *arg, nth_line_fn_t nth_line_cb,
-					void *cb_data, long lines, long *begin, long *end,
+					void *cb_data, long lines, long anchor, long *begin, long *end,
 					const char *path)
 {
 	char *pattern;
@@ -149,6 +175,11 @@ static const char *parse_range_funcname(const char *arg, nth_line_fn_t nth_line_
 	const char *p;
 	int reg_error;
 	regex_t regexp;
+
+	if (*arg == '^') {
+		anchor = 1;
+		arg++;
+	}
 
 	assert(*arg == ':');
 	term = arg+1;
@@ -164,7 +195,8 @@ static const char *parse_range_funcname(const char *arg, nth_line_fn_t nth_line_
 
 	pattern = xstrndup(arg+1, term-(arg+1));
 
-	start = nth_line_cb(cb_data, 0);
+	anchor--; /* input is in human terms */
+	start = nth_line_cb(cb_data, anchor);
 
 	drv = userdiff_find_by_path(path);
 	if (drv && drv->funcname.pattern) {
@@ -182,7 +214,8 @@ static const char *parse_range_funcname(const char *arg, nth_line_fn_t nth_line_
 
 	p = find_funcname_matching_regexp(xecfg, (char*) start, &regexp);
 	if (!p)
-		die("-L parameter '%s': no match", pattern);
+		die("-L parameter '%s' starting at line %ld: no match",
+		    pattern, anchor + 1);
 	*begin = 0;
 	while (p > nth_line_cb(cb_data, *begin))
 		(*begin)++;
@@ -210,19 +243,24 @@ static const char *parse_range_funcname(const char *arg, nth_line_fn_t nth_line_
 }
 
 int parse_range_arg(const char *arg, nth_line_fn_t nth_line_cb,
-		    void *cb_data, long lines, long *begin, long *end,
-		    const char *path)
+		    void *cb_data, long lines, long anchor,
+		    long *begin, long *end, const char *path)
 {
 	*begin = *end = 0;
 
-	if (*arg == ':') {
-		arg = parse_range_funcname(arg, nth_line_cb, cb_data, lines, begin, end, path);
+	if (anchor < 1)
+		anchor = 1;
+	if (anchor > lines)
+		anchor = lines + 1;
+
+	if (*arg == ':' || (*arg == '^' && *(arg + 1) == ':')) {
+		arg = parse_range_funcname(arg, nth_line_cb, cb_data, lines, anchor, begin, end, path);
 		if (!arg || *arg)
 			return -1;
 		return 0;
 	}
 
-	arg = parse_loc(arg, nth_line_cb, cb_data, lines, 1, begin);
+	arg = parse_loc(arg, nth_line_cb, cb_data, lines, -anchor, begin);
 
 	if (*arg == ',')
 		arg = parse_loc(arg + 1, nth_line_cb, cb_data, lines, *begin + 1, end);
@@ -240,8 +278,8 @@ int parse_range_arg(const char *arg, nth_line_fn_t nth_line_cb,
 
 const char *skip_range_arg(const char *arg)
 {
-	if (*arg == ':')
-		return parse_range_funcname(arg, NULL, NULL, 0, NULL, NULL, NULL);
+	if (*arg == ':' || (*arg == '^' && *(arg + 1) == ':'))
+		return parse_range_funcname(arg, NULL, NULL, 0, 0, NULL, NULL, NULL);
 
 	arg = parse_loc(arg, NULL, NULL, 0, -1, NULL);
 

@@ -1,3 +1,5 @@
+<start> and <end> can take one of these forms:
+
 - number
 +
 If <start> or <end> is a number, it specifies an
@@ -7,7 +9,10 @@ absolute line number (lines count from 1).
 - /regex/
 +
 This form will use the first line matching the given
-POSIX regex.  If <end> is a regex, it will search
+POSIX regex. If <start> is a regex, it will search from the end of
+the previous `-L` range, if any, otherwise from the start of file.
+If <start> is ``^/regex/'', it will search from the start of file.
+If <end> is a regex, it will search
 starting at the line given by <start>.
 +
 
@@ -15,11 +20,10 @@ starting at the line given by <start>.
 +
 This is only valid for <end> and will specify a number
 of lines before or after the line given by <start>.
-+
 
-- :regex
 +
-If the option's argument is of the form :regex, it denotes the range
+If ``:<regex>'' is given in place of <start> and <end>, it denotes the range
 from the first funcname line that matches <regex>, up to the next
-funcname line.
-+
+funcname line. ``:<regex>'' searches from the end of the previous `-L` range,
+if any, otherwise from the start of file.
+``^:<regex>'' searches from the start of file.
