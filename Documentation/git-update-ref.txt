@@ -8,7 +8,7 @@ git-update-ref - Update the object name stored in a ref safely
 SYNOPSIS
 --------
 [verse]
-'git update-ref' [-m <reason>] (-d <ref> [<oldvalue>] | [--no-deref] <ref> <newvalue> [<oldvalue>])
+'git update-ref' [-m <reason>] (-d <ref> [<oldvalue>] | [--no-deref] <ref> <newvalue> [<oldvalue>] | --stdin [-z])
 
 DESCRIPTION
 -----------
@@ -58,6 +58,58 @@ archive by creating a symlink tree).
 With `-d` flag, it deletes the named <ref> after verifying it
 still contains <oldvalue>.
 
+With `--stdin`, update-ref reads instructions from standard input and
+performs all modifications together.  Specify commands of the form:
+
+	update SP <ref> SP <newvalue> [SP <oldvalue>] LF
+	create SP <ref> SP <newvalue> LF
+	delete SP <ref> [SP <oldvalue>] LF
+	verify SP <ref> [SP <oldvalue>] LF
+	option SP <opt> LF
+
+Quote fields containing whitespace as if they were strings in C source
+code.  Alternatively, use `-z` to specify commands without quoting:
+
+	update SP <ref> NUL <newvalue> NUL [<oldvalue>] NUL
+	create SP <ref> NUL <newvalue> NUL
+	delete SP <ref> NUL [<oldvalue>] NUL
+	verify SP <ref> NUL [<oldvalue>] NUL
+	option SP <opt> NUL
+
+Lines of any other format or a repeated <ref> produce an error.
+Command meanings are:
+
+update::
+	Set <ref> to <newvalue> after verifying <oldvalue>, if given.
+	Specify a zero <newvalue> to ensure the ref does not exist
+	after the update and/or a zero <oldvalue> to make sure the
+	ref does not exist before the update.
+
+create::
+	Create <ref> with <newvalue> after verifying it does not
+	exist.  The given <newvalue> may not be zero.
+
+delete::
+	Delete <ref> after verifying it exists with <oldvalue>, if
+	given.  If given, <oldvalue> may not be zero.
+
+verify::
+	Verify <ref> against <oldvalue> but do not change it.  If
+	<oldvalue> zero or missing, the ref must not exist.
+
+option::
+	Modify behavior of the next command naming a <ref>.
+	The only valid option is `no-deref` to avoid dereferencing
+	a symbolic ref.
+
+Use 40 "0" or the empty string to specify a zero value, except that
+with `-z` an empty <oldvalue> is considered missing.
+
+If all <ref>s can be locked with matching <oldvalue>s
+simultaneously, all modifications are performed.  Otherwise, no
+modifications are performed.  Note that while each individual
+<ref> is updated or deleted atomically, a concurrent reader may
+still see a subset of the modifications.
 
 Logging Updates
 ---------------
