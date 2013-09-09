@@ -61,6 +61,7 @@ static void process_gitlink(struct rev_info *revs,
 
 static void process_tree(struct rev_info *revs,
 			 struct tree *tree,
+			 show_tree_entry_fn show_tree_entry,
 			 show_object_fn show,
 			 struct name_path *path,
 			 struct strbuf *base,
@@ -107,9 +108,13 @@ static void process_tree(struct rev_info *revs,
 				continue;
 		}
 
+		if (show_tree_entry)
+			show_tree_entry(&entry, cb_data);
+
 		if (S_ISDIR(entry.mode))
 			process_tree(revs,
 				     lookup_tree(entry.sha1),
+				     show_tree_entry,
 				     show, &me, base, entry.path,
 				     cb_data);
 		else if (S_ISGITLINK(entry.mode))
@@ -167,6 +172,7 @@ static void add_pending_tree(struct rev_info *revs, struct tree *tree)
 
 void traverse_commit_list(struct rev_info *revs,
 			  show_commit_fn show_commit,
+			  show_tree_entry_fn show_tree_entry,
 			  show_object_fn show_object,
 			  void *data)
 {
@@ -196,7 +202,8 @@ void traverse_commit_list(struct rev_info *revs,
 			continue;
 		}
 		if (obj->type == OBJ_TREE) {
-			process_tree(revs, (struct tree *)obj, show_object,
+			process_tree(revs, (struct tree *)obj,
+				     show_tree_entry, show_object,
 				     NULL, &base, name, data);
 			continue;
 		}

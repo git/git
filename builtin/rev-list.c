@@ -243,7 +243,7 @@ static int show_bisect_vars(struct rev_list_info *info, int reaches, int all)
 		strcpy(hex, sha1_to_hex(revs->commits->item->object.sha1));
 
 	if (flags & BISECT_SHOW_ALL) {
-		traverse_commit_list(revs, show_commit, show_object, info);
+		traverse_commit_list(revs, show_commit, NULL, show_object, info);
 		printf("------\n");
 	}
 
@@ -348,7 +348,7 @@ int cmd_rev_list(int argc, const char **argv, const char *prefix)
 			return show_bisect_vars(&info, reaches, all);
 	}
 
-	traverse_commit_list(&revs, show_commit, show_object, &info);
+	traverse_commit_list(&revs, show_commit, NULL, show_object, &info);
 
 	if (revs.count) {
 		if (revs.left_right && revs.cherry_mark)

@@ -125,7 +125,7 @@ static int do_rev_list(int in, int out, void *user_data)
 		for (i = 0; i < extra_edge_obj.nr; i++)
 			fprintf(pack_pipe, "-%s\n", sha1_to_hex(
 					extra_edge_obj.objects[i].item->sha1));
-	traverse_commit_list(&revs, show_commit, show_object, NULL);
+	traverse_commit_list(&revs, show_commit, NULL, show_object, NULL);
 	fflush(pack_pipe);
 	fclose(pack_pipe);
 	return 0;
