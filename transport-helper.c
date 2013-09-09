@@ -27,6 +27,7 @@ struct helper_data {
 		push : 1,
 		connect : 1,
 		signed_tags : 1,
+		check_connectivity : 1,
 		no_disconnect_req : 1;
 	char *export_marks;
 	char *import_marks;
@@ -186,6 +187,8 @@ static struct child_process *get_helper(struct transport *transport)
 			data->bidi_import = 1;
 		else if (!strcmp(capname, "export"))
 			data->export = 1;
+		else if (!strcmp(capname, "check-connectivity"))
+			data->check_connectivity = 1;
 		else if (!data->refspecs && !prefixcmp(capname, "refspec ")) {
 			ALLOC_GROW(refspecs,
 				   refspec_nr + 1,
@@ -349,6 +352,9 @@ static int fetch_with_fetch(struct transport *transport,
 	struct strbuf buf = STRBUF_INIT;
 
 	standard_options(transport);
+	if (data->check_connectivity &&
+	    data->transport_options.check_self_contained_and_connected)
+		set_helper_option(transport, "check-connectivity", "true");
 
 	for (i = 0; i < nr_heads; i++) {
 		const struct ref *posn = to_fetch[i];
@@ -372,6 +378,10 @@ static int fetch_with_fetch(struct transport *transport,
 			else
 				transport->pack_lockfile = xstrdup(name);
 		}
+		else if (data->check_connectivity &&
+			 data->transport_options.check_self_contained_and_connected &&
+			 !strcmp(buf.buf, "connectivity-ok"))
+			data->transport_options.self_contained_and_connected = 1;
 		else if (!buf.len)
 			break;
 		else

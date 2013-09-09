@@ -16,6 +16,7 @@ struct options {
 	int verbosity;
 	unsigned long depth;
 	unsigned progress : 1,
+		check_self_contained_and_connected : 1,
 		followtags : 1,
 		dry_run : 1,
 		thin : 1;
@@ -63,6 +64,15 @@ static int set_option(const char *name, const char *value)
 			options.dry_run = 1;
 		else if (!strcmp(value, "false"))
 			options.dry_run = 0;
+		else
+			return -1;
+		return 0;
+	}
+	else if (!strcmp(name, "check-connectivity")) {
+		if (!strcmp(value, "true"))
+			options.check_self_contained_and_connected = 1;
+		else if (!strcmp(value, "false"))
+			options.check_self_contained_and_connected = 0;
 		else
 			return -1;
 		return 0;
@@ -654,7 +664,7 @@ static int fetch_git(struct discovery *heads,
 	struct strbuf preamble = STRBUF_INIT;
 	char *depth_arg = NULL;
 	int argc = 0, i, err;
-	const char *argv[15];
+	const char *argv[16];
 
 	argv[argc++] = "fetch-pack";
 	argv[argc++] = "--stateless-rpc";
@@ -668,6 +678,8 @@ static int fetch_git(struct discovery *heads,
 		argv[argc++] = "-v";
 		argv[argc++] = "-v";
 	}
+	if (options.check_self_contained_and_connected)
+		argv[argc++] = "--check-self-contained-and-connected";
 	if (!options.progress)
 		argv[argc++] = "--no-progress";
 	if (options.depth) {
@@ -939,6 +951,7 @@ int main(int argc, const char **argv)
 			printf("fetch\n");
 			printf("option\n");
 			printf("push\n");
+			printf("check-connectivity\n");
 			printf("\n");
 			fflush(stdout);
 		} else {
