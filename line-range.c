@@ -21,11 +21,13 @@ static const char *parse_loc(const char *spec, nth_line_fn_t nth_line,
 	 * for 20 lines, or "-L <something>,-5" for 5 lines ending at
 	 * <something>.
 	 */
-	if (1 < begin && (spec[0] == '+' || spec[0] == '-')) {
+	if (1 <= begin && (spec[0] == '+' || spec[0] == '-')) {
 		num = strtol(spec + 1, &term, 10);
 		if (term != spec + 1) {
 			if (!ret)
 				return term;
+			if (num == 0)
+				die("-L invalid empty range");
 			if (spec[0] == '-')
 				num = 0 - num;
 			if (0 < num)
