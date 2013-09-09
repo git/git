@@ -176,7 +176,7 @@ static void prepare_to_stream(struct bulk_checkin_state *state,
 	reset_pack_idx_option(&state->pack_idx_opts);
 
 	/* Pretend we are going to write only one object */
-	state->offset = write_pack_header(state->f, 1);
+	state->offset = write_pack_header(state->f, 2, 1);
 	if (!state->offset)
 		die_errno("unable to write pack header");
 }

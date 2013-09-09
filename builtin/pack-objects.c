@@ -735,7 +735,7 @@ static void write_pack_file(void)
 		else
 			f = create_tmp_packfile(&pack_tmp_name);
 
-		offset = write_pack_header(f, nr_remaining);
+		offset = write_pack_header(f, 2, nr_remaining);
 		if (!offset)
 			die_errno("unable to write pack header");
 		nr_written = 0;

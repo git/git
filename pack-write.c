@@ -186,12 +186,15 @@ const char *write_idx_file(const char *index_name, struct pack_idx_entry **objec
 	return index_name;
 }
 
-off_t write_pack_header(struct sha1file *f, uint32_t nr_entries)
+off_t write_pack_header(struct sha1file *f,
+			int version, uint32_t nr_entries)
 {
 	struct pack_header hdr;
 
 	hdr.hdr_signature = htonl(PACK_SIGNATURE);
-	hdr.hdr_version = htonl(PACK_VERSION);
+	hdr.hdr_version = htonl(version);
+	if (!pack_version_ok(hdr.hdr_version))
+		die(_("pack version %d is not supported"), version);
 	hdr.hdr_entries = htonl(nr_entries);
 	if (sha1write(f, &hdr, sizeof(hdr)))
 		return 0;
