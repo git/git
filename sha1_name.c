@@ -1130,13 +1130,13 @@ int get_sha1(const char *name, unsigned char *sha1)
 }
 
 /*
- * Many callers know that the user meant to name a committish by
+ * Many callers know that the user meant to name a commit-ish by
  * syntactical positions where the object name appears.  Calling this
  * function allows the machinery to disambiguate shorter-than-unique
- * abbreviated object names between committish and others.
+ * abbreviated object names between commit-ish and others.
  *
  * Note that this does NOT error out when the named object is not a
- * committish. It is merely to give a hint to the disambiguation
+ * commit-ish. It is merely to give a hint to the disambiguation
  * machinery.
  */
 int get_sha1_committish(const char *name, unsigned char *sha1)

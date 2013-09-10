@@ -4560,7 +4560,7 @@ msgid "print sizes in human readable format"
 msgstr "skriv storlekar i människoläsbart format"
 
 #: builtin/describe.c:16
-msgid "git describe [options] <committish>*"
+msgid "git describe [options] <commit-ish>*"
 msgstr "git describe [flaggor] <incheckning-igt>*"
 
 #: builtin/describe.c:17
@@ -4696,8 +4696,8 @@ msgid "No names found, cannot describe anything."
 msgstr "Inga namn hittades, kan inte beskriva något."
 
 #: builtin/describe.c:489
-msgid "--dirty is incompatible with committishes"
-msgstr "--dirty är inkompatibelt med \"committish\"-värden"
+msgid "--dirty is incompatible with commit-ishes"
+msgstr "--dirty är inkompatibelt med \"commit-ish\"-värden"
 
 #: builtin/diff.c:79
 #, c-format

@@ -4338,7 +4338,7 @@ sub getAnyHead
 =head2 getRevisionDirMap
 
 A "revision dir map" contains all the plain-file filenames associated
-with a particular revision (treeish), organized by directory:
+with a particular revision (tree-ish), organized by directory:
 
   $type = $out->{$dir}{$fullName}
 

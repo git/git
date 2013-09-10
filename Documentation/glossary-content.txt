@@ -82,6 +82,18 @@ to point at the new commit.
 	to the top <<def_directory,directory>> of the stored
 	revision.
 
+[[def_commit-ish]]commit-ish (also committish)::
+	A <<def_commit_object,commit object>> or an
+	<<def_object,object>> that can be recursively dereferenced to
+	a commit object.
+	The following are all commit-ishes:
+	a commit object,
+	a <<def_tag_object,tag object>> that points to a commit
+	object,
+	a tag object that points to a tag object that points to a
+	commit object,
+	etc.
+
 [[def_core_git]]core Git::
 	Fundamental data structures and utilities of Git. Exposes only limited
 	source code management tools.
@@ -427,10 +439,20 @@ should not be combined with other pathspec.
 	to the result.
 
 [[def_ref]]ref::
-	A 40-byte hex representation of a <<def_SHA1,SHA-1>> or a name that
-	denotes a particular <<def_object,object>>. They may be stored in
-	a file under `$GIT_DIR/refs/` directory, or
-	in the `$GIT_DIR/packed-refs` file.
+	A name that begins with `refs/` (e.g. `refs/heads/master`)
+	that points to an <<def_object_name,object name>> or another
+	ref (the latter is called a <<def_symref,symbolic ref>>).
+	For convenience, a ref can sometimes be abbreviated when used
+	as an argument to a Git command; see linkgit:gitrevisions[7]
+	for details.
+	Refs are stored in the <<def_repository,repository>>.
++
+The ref namespace is hierarchical.
+Different subhierarchies are used for different purposes (e.g. the
+`refs/heads/` hierarchy is used to represent local branches).
++
+There are a few special-purpose refs that do not begin with `refs/`.
+The most notable example is `HEAD`.
 
 [[def_reflog]]reflog::
 	A reflog shows the local "history" of a ref.  In other words,
@@ -530,10 +552,19 @@ should not be combined with other pathspec.
 	with refs to the associated blob and/or tree objects. A
 	<<def_tree,tree>> is equivalent to a <<def_directory,directory>>.
 
-[[def_tree-ish]]tree-ish::
-	A <<def_ref,ref>> pointing to either a <<def_commit_object,commit
-	object>>, a <<def_tree_object,tree object>>, or a <<def_tag_object,tag
-	object>> pointing to a tag or commit or tree object.
+[[def_tree-ish]]tree-ish (also treeish)::
+	A <<def_tree_object,tree object>> or an <<def_object,object>>
+	that can be recursively dereferenced to a tree object.
+	Dereferencing a <<def_commit_object,commit object>> yields the
+	tree object corresponding to the <<def_revision,revision>>'s
+	top <<def_directory,directory>>.
+	The following are all tree-ishes:
+	a <<def_commit-ish,commit-ish>>,
+	a tree object,
+	a <<def_tag_object,tag object>> that points to a tree object,
+	a tag object that points to a tag object that points to a tree
+	object,
+	etc.
 
 [[def_unmerged_index]]unmerged index::
 	An <<def_index,index>> which contains unmerged

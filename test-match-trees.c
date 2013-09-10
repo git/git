@@ -12,10 +12,10 @@ int main(int ac, char **av)
 		die("cannot parse %s as an object name", av[2]);
 	one = parse_tree_indirect(hash1);
 	if (!one)
-		die("not a treeish %s", av[1]);
+		die("not a tree-ish %s", av[1]);
 	two = parse_tree_indirect(hash2);
 	if (!two)
-		die("not a treeish %s", av[2]);
+		die("not a tree-ish %s", av[2]);
 
 	shift_tree(one->object.sha1, two->object.sha1, shifted, -1);
 	printf("shifted: %s\n", sha1_to_hex(shifted));

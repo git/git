@@ -13,7 +13,7 @@ SYNOPSIS
 
 DESCRIPTION
 -----------
-Reads three treeish, and output trivial merge results and
+Reads three tree-ish, and output trivial merge results and
 conflicting stages to the standard output.  This is similar to
 what three-way 'git read-tree -m' does, but instead of storing the
 results in the index, the command outputs the entries to the

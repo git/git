@@ -1669,7 +1669,7 @@ msgid "No names found, cannot describe anything."
 msgstr ""
 
 #: builtin/describe.c:482
-msgid "--dirty is incompatible with committishes"
+msgid "--dirty is incompatible with commit-ishes"
 msgstr ""
 
 #: builtin/diff.c:77

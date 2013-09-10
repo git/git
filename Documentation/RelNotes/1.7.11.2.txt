@@ -31,7 +31,7 @@ Fixes since v1.7.11.1
  * "git diff --no-index" did not work with pagers correctly.
 
  * "git diff COPYING HEAD:COPYING" gave a nonsense error message that
-   claimed that the treeish HEAD did not have COPYING in it.
+   claimed that the tree-ish HEAD did not have COPYING in it.
 
  * When "git log" gets "--simplify-merges/by-decoration" together with
    "--first-parent", the combination of these options makes the

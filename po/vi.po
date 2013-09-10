@@ -4663,8 +4663,8 @@ msgid "print sizes in human readable format"
 msgstr "hiển thị kích cỡ theo định dạng dành cho người đọc"
 
 #: builtin/describe.c:16
-msgid "git describe [options] <committish>*"
-msgstr "git describe [các-tùy-chọn] <committish>*"
+msgid "git describe [options] <commit-ish>*"
+msgstr "git describe [các-tùy-chọn] <commit-ish>*"
 
 #: builtin/describe.c:17
 msgid "git describe [options] --dirty"
@@ -4799,7 +4799,7 @@ msgid "No names found, cannot describe anything."
 msgstr "Không tìm thấy các tên, không thể mô tả gì cả."
 
 #: builtin/describe.c:489
-msgid "--dirty is incompatible with committishes"
+msgid "--dirty is incompatible with commit-ishes"
 msgstr "--dirty là xung khắc với các tùy chọn dành cho chuyển giao (commit)"
 
 #: builtin/diff.c:79

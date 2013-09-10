@@ -154,7 +154,7 @@ $ git pull . master
 Packing 0 objects
 Unpacking 0 objects
 
-* committish: e3a693c...	refs/heads/master from .
+* commit-ish: e3a693c...	refs/heads/master from .
 Trying to merge e3a693c... into 8c1f5f0... using 10d781b...
 Committed merge 7fb9b7262a1d1e0a47bbfdcbbcf50ce0635d3f8f
  cache.h        |    8 ++++----
