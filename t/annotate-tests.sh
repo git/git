@@ -202,27 +202,27 @@ test_expect_success 'blame -L X,-N' '
 '
 
 test_expect_success 'blame -L /RE/ (RE to end)' '
-	check_count -L/evil/ C 1 "A U Thor" 1
+	check_count -L/\;*evil/ C 1 "A U Thor" 1
 '
 
 test_expect_success 'blame -L /RE/,/RE2/' '
-	check_count -L/robot/,/green/ A 1 B 1 B2 1 D 1 E 1
+	check_count -L/\;*robot/,/\;*green/ A 1 B 1 B2 1 D 1 E 1
 '
 
 test_expect_success 'blame -L X,/RE/' '
-	check_count -L5,/evil/ B1 1 D 1 "A U Thor" 1
+	check_count -L5,/\;*evil/ B1 1 D 1 "A U Thor" 1
 '
 
 test_expect_success 'blame -L /RE/,Y' '
-	check_count -L/99/,7 B1 1 D 1 "A U Thor" 1
+	check_count -L/\;*99/,7 B1 1 D 1 "A U Thor" 1
 '
 
 test_expect_success 'blame -L /RE/,+N' '
-	check_count -L/99/,+3 B1 1 D 1 "A U Thor" 1
+	check_count -L/\;*99/,+3 B1 1 D 1 "A U Thor" 1
 '
 
 test_expect_success 'blame -L /RE/,-N' '
-	check_count -L/99/,-3 B 1 B2 1 D 1
+	check_count -L/\;*99/,-3 B 1 B2 1 D 1
 '
 
 test_expect_success 'blame -L X (X > nlines)' '
