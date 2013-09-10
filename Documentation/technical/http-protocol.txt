@@ -499,5 +499,5 @@ References
 
 link:http://www.ietf.org/rfc/rfc1738.txt[RFC 1738: Uniform Resource Locators (URL)]
 link:http://www.ietf.org/rfc/rfc2616.txt[RFC 2616: Hypertext Transfer Protocol -- HTTP/1.1]
-link:technical/pack-protocol.txt
-link:technical/protocol-capabilities.txt
+link:technical/pack-protocol.html
+link:technical/protocol-capabilities.html

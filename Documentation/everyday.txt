@@ -304,7 +304,7 @@ and maintain access to the repository by developers.
   * linkgit:git-shell[1] can be used as a 'restricted login shell'
     for shared central repository users.
 
-link:howto/update-hook-example.txt[update hook howto] has a good
+link:howto/update-hook-example.html[update hook howto] has a good
 example of managing a shared central repository.
 
 

@@ -157,7 +157,7 @@ points.  You can use these, for example, to send all commits to the shared
 repository to a mailing list.  See linkgit:githooks[5].
 
 You can enforce finer grained permissions using update hooks.  See
-link:howto/update-hook-example.txt[Controlling access to branches using
+link:howto/update-hook-example.html[Controlling access to branches using
 update hooks].
 
 Providing CVS Access to a Git Repository

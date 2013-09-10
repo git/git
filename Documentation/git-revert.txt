@@ -59,7 +59,7 @@ brought in by the merge.  As a result, later merges will only bring in tree
 changes introduced by commits that are not ancestors of the previously
 reverted merge.  This may or may not be what you want.
 +
-See the link:howto/revert-a-faulty-merge.txt[revert-a-faulty-merge How-To] for
+See the link:howto/revert-a-faulty-merge.html[revert-a-faulty-merge How-To] for
 more details.
 
 --no-edit::
