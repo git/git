@@ -780,11 +780,14 @@ def getClientSpec():
     # dictionary of all client parameters
     entry = specList[0]
 
+    # the //client/ name
+    client_name = entry["Client"]
+
     # just the keys that start with "View"
     view_keys = [ k for k in entry.keys() if k.startswith("View") ]
 
     # hold this new View
-    view = View()
+    view = View(client_name)
 
     # append the lines, in order, to the view
     for view_num in range(len(view_keys)):
@@ -1555,8 +1558,8 @@ class P4Submit(Command, P4UserMap):
             for b in body:
                 labelTemplate += "\t" + b + "\n"
             labelTemplate += "View:\n"
-            for mapping in clientSpec.mappings:
-                labelTemplate += "\t%s\n" % mapping.depot_side.path
+            for depot_side in clientSpec.mappings:
+                labelTemplate += "\t%s\n" % depot_side
 
             if self.dry_run:
                 print "Would create p4 label %s for tag" % name
@@ -1568,7 +1571,7 @@ class P4Submit(Command, P4UserMap):
 
                 # Use the label
                 p4_system(["tag", "-l", name] +
-                          ["%s@%s" % (mapping.depot_side.path, changelist) for mapping in clientSpec.mappings])
+                          ["%s@%s" % (depot_side, changelist) for depot_side in clientSpec.mappings])
 
                 if verbose:
                     print "created p4 label for tag %s" % name
@@ -1796,117 +1799,16 @@ class View(object):
     """Represent a p4 view ("p4 help views"), and map files in a
        repo according to the view."""
 
-    class Path(object):
-        """A depot or client path, possibly containing wildcards.
-           The only one supported is ... at the end, currently.
-           Initialize with the full path, with //depot or //client."""
-
-        def __init__(self, path, is_depot):
-            self.path = path
-            self.is_depot = is_depot
-            self.find_wildcards()
-            # remember the prefix bit, useful for relative mappings
-            m = re.match("(//[^/]+/)", self.path)
-            if not m:
-                die("Path %s does not start with //prefix/" % self.path)
-            prefix = m.group(1)
-            if not self.is_depot:
-                # strip //client/ on client paths
-                self.path = self.path[len(prefix):]
-
-        def find_wildcards(self):
-            """Make sure wildcards are valid, and set up internal
-               variables."""
-
-            self.ends_triple_dot = False
-            # There are three wildcards allowed in p4 views
-            # (see "p4 help views").  This code knows how to
-            # handle "..." (only at the end), but cannot deal with
-            # "%%n" or "*".  Only check the depot_side, as p4 should
-            # validate that the client_side matches too.
-            if re.search(r'%%[1-9]', self.path):
-                die("Can't handle %%n wildcards in view: %s" % self.path)
-            if self.path.find("*") >= 0:
-                die("Can't handle * wildcards in view: %s" % self.path)
-            triple_dot_index = self.path.find("...")
-            if triple_dot_index >= 0:
-                if triple_dot_index != len(self.path) - 3:
-                    die("Can handle only single ... wildcard, at end: %s" %
-                        self.path)
-                self.ends_triple_dot = True
-
-        def ensure_compatible(self, other_path):
-            """Make sure the wildcards agree."""
-            if self.ends_triple_dot != other_path.ends_triple_dot:
-                 die("Both paths must end with ... if either does;\n" +
-                     "paths: %s %s" % (self.path, other_path.path))
-
-        def match_wildcards(self, test_path):
-            """See if this test_path matches us, and fill in the value
-               of the wildcards if so.  Returns a tuple of
-               (True|False, wildcards[]).  For now, only the ... at end
-               is supported, so at most one wildcard."""
-            if self.ends_triple_dot:
-                dotless = self.path[:-3]
-                if test_path.startswith(dotless):
-                    wildcard = test_path[len(dotless):]
-                    return (True, [ wildcard ])
-            else:
-                if test_path == self.path:
-                    return (True, [])
-            return (False, [])
-
-        def match(self, test_path):
-            """Just return if it matches; don't bother with the wildcards."""
-            b, _ = self.match_wildcards(test_path)
-            return b
-
-        def fill_in_wildcards(self, wildcards):
-            """Return the relative path, with the wildcards filled in
-               if there are any."""
-            if self.ends_triple_dot:
-                return self.path[:-3] + wildcards[0]
-            else:
-                return self.path
-
-    class Mapping(object):
-        def __init__(self, depot_side, client_side, overlay, exclude):
-            # depot_side is without the trailing /... if it had one
-            self.depot_side = View.Path(depot_side, is_depot=True)
-            self.client_side = View.Path(client_side, is_depot=False)
-            self.overlay = overlay  # started with "+"
-            self.exclude = exclude  # started with "-"
-            assert not (self.overlay and self.exclude)
-            self.depot_side.ensure_compatible(self.client_side)
-
-        def __str__(self):
-            c = " "
-            if self.overlay:
-                c = "+"
-            if self.exclude:
-                c = "-"
-            return "View.Mapping: %s%s -> %s" % \
-                   (c, self.depot_side.path, self.client_side.path)
-
-        def map_depot_to_client(self, depot_path):
-            """Calculate the client path if using this mapping on the
-               given depot path; does not consider the effect of other
-               mappings in a view.  Even excluded mappings are returned."""
-            matches, wildcards = self.depot_side.match_wildcards(depot_path)
-            if not matches:
-                return ""
-            client_path = self.client_side.fill_in_wildcards(wildcards)
-            return client_path
-
-    #
-    # View methods
-    #
-    def __init__(self):
+    def __init__(self, client_name):
         self.mappings = []
+        self.client_prefix = "//%s/" % client_name
+        # cache results of "p4 where" to lookup client file locations
+        self.client_spec_path_cache = {}
 
     def append(self, view_line):
         """Parse a view line, splitting it into depot and client
-           sides.  Append to self.mappings, preserving order."""
+           sides.  Append to self.mappings, preserving order.  This
+           is only needed for tag creation."""
 
         # Split the view line into exactly two words.  P4 enforces
         # structure on these lines that simplifies this quite a bit.
@@ -1934,76 +1836,62 @@ class View(object):
             depot_side = view_line[0:space_index]
             rhs_index = space_index + 1
 
-        if view_line[rhs_index] == '"':
-            # Second word is double quoted.  Make sure there is a
-            # double quote at the end too.
-            if not view_line.endswith('"'):
-                die("View line with rhs quote should end with one: %s" %
-                    view_line)
-            # skip the quotes
-            client_side = view_line[rhs_index+1:-1]
-        else:
-            client_side = view_line[rhs_index:]
-
         # prefix + means overlay on previous mapping
-        overlay = False
         if depot_side.startswith("+"):
-            overlay = True
             depot_side = depot_side[1:]
 
-        # prefix - means exclude this path
+        # prefix - means exclude this path, leave out of mappings
         exclude = False
         if depot_side.startswith("-"):
             exclude = True
             depot_side = depot_side[1:]
 
-        m = View.Mapping(depot_side, client_side, overlay, exclude)
-        self.mappings.append(m)
+        if not exclude:
+            self.mappings.append(depot_side)
+
+    def convert_client_path(self, clientFile):
+        # chop off //client/ part to make it relative
+        if not clientFile.startswith(self.client_prefix):
+            die("No prefix '%s' on clientFile '%s'" %
+                (self.client_prefix, clientFile))
+        return clientFile[len(self.client_prefix):]
+
+    def update_client_spec_path_cache(self, files):
+        """ Caching file paths by "p4 where" batch query """
+
+        # List depot file paths exclude that already cached
+        fileArgs = [f['path'] for f in files if f['path'] not in self.client_spec_path_cache]
+
+        if len(fileArgs) == 0:
+            return  # All files in cache
+
+        where_result = p4CmdList(["-x", "-", "where"], stdin=fileArgs)
+        for res in where_result:
+            if "code" in res and res["code"] == "error":
+                # assume error is "... file(s) not in client view"
+                continue
+            if "clientFile" not in res:
+                die("No clientFile from 'p4 where %s'" % depot_path)
+            if "unmap" in res:
+                # it will list all of them, but only one not unmap-ped
+                continue
+            self.client_spec_path_cache[res['depotFile']] = self.convert_client_path(res["clientFile"])
+
+        # not found files or unmap files set to ""
+        for depotFile in fileArgs:
+            if depotFile not in self.client_spec_path_cache:
+                self.client_spec_path_cache[depotFile] = ""
 
     def map_in_client(self, depot_path):
         """Return the relative location in the client where this
            depot file should live.  Returns "" if the file should
            not be mapped in the client."""
 
-        paths_filled = []
-        client_path = ""
+        if depot_path in self.client_spec_path_cache:
+            return self.client_spec_path_cache[depot_path]
 
-        # look at later entries first
-        for m in self.mappings[::-1]:
-
-            # see where will this path end up in the client
-            p = m.map_depot_to_client(depot_path)
-
-            if p == "":
-                # Depot path does not belong in client.  Must remember
-                # this, as previous items should not cause files to
-                # exist in this path either.  Remember that the list is
-                # being walked from the end, which has higher precedence.
-                # Overlap mappings do not exclude previous mappings.
-                if not m.overlay:
-                    paths_filled.append(m.client_side)
-
-            else:
-                # This mapping matched; no need to search any further.
-                # But, the mapping could be rejected if the client path
-                # has already been claimed by an earlier mapping (i.e.
-                # one later in the list, which we are walking backwards).
-                already_mapped_in_client = False
-                for f in paths_filled:
-                    # this is View.Path.match
-                    if f.match(p):
-                        already_mapped_in_client = True
-                        break
-                if not already_mapped_in_client:
-                    # Include this file, unless it is from a line that
-                    # explicitly said to exclude it.
-                    if not m.exclude:
-                        client_path = p
-
-                # a match, even if rejected, always stops the search
-                break
-
-        return client_path
+        die( "Error: %s is not found in client spec path" % depot_path )
+        return ""
 
 class P4Sync(Command, P4UserMap):
     delete_actions = ( "delete", "move/delete", "purge" )
@@ -2129,6 +2017,10 @@ class P4Sync(Command, P4UserMap):
     def splitFilesIntoBranches(self, commit):
         """Look at each depotFile in the commit to figure out to what
            branch it belongs."""
+
+        if self.clientSpecDirs:
+            files = self.extractFilesFromCommit(commit)
+            self.clientSpecDirs.update_client_spec_path_cache(files)
 
         branches = {}
         fnum = 0
@@ -2382,6 +2274,9 @@ class P4Sync(Command, P4UserMap):
                 new_files.append (f)
             else:
                 sys.stderr.write("Ignoring file outside of prefix: %s\n" % f['path'])
+
+        if self.clientSpecDirs:
+            self.clientSpecDirs.update_client_spec_path_cache(files)
 
         self.gitStream.write("commit %s\n" % branch)
 #        gitStream.write("mark :%s\n" % details["change"])
