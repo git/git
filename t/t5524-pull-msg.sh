@@ -25,7 +25,7 @@ test_expect_success setup '
 test_expect_success pull '
 (
 	cd cloned &&
-	git pull --log --merge &&
+	git pull --log &&
 	git log -2 &&
 	git cat-file commit HEAD >result &&
 	grep Dollar result
