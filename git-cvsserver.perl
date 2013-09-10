@@ -4167,7 +4167,7 @@ sub convertToDbMode
     #  this half-converted form, but it isn't currently worth the
     #  backwards compatibility headaches.
 
-    $mode=~/^\d\d(\d)\d{3}$/;
+    $mode=~/^\d{3}(\d)\d\d$/;
     my $userBits=$1;
 
     my $dbMode = "";
