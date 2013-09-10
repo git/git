@@ -274,27 +274,27 @@ test_expect_success 'blame -L X,-N' '
 '
 
 test_expect_success 'blame -L /RE/ (RE to end)' '
-	check_count -L/evil/ C 1 "A U Thor" 1
+	check_count -L/\;*evil/ C 1 "A U Thor" 1
 '
 
 test_expect_success 'blame -L /RE/,/RE2/' '
-	check_count -L/robot/,/green/ A 1 B 1 B2 1 D 1 E 1
+	check_count -L/\;*robot/,/\;*green/ A 1 B 1 B2 1 D 1 E 1
 '
 
 test_expect_success 'blame -L X,/RE/' '
-	check_count -L5,/evil/ B1 1 D 1 "A U Thor" 1
+	check_count -L5,/\;*evil/ B1 1 D 1 "A U Thor" 1
 '
 
 test_expect_success 'blame -L /RE/,Y' '
-	check_count -L/99/,7 B1 1 D 1 "A U Thor" 1
+	check_count -L/\;*99/,7 B1 1 D 1 "A U Thor" 1
 '
 
 test_expect_success 'blame -L /RE/,+N' '
-	check_count -L/99/,+3 B1 1 D 1 "A U Thor" 1
+	check_count -L/\;*99/,+3 B1 1 D 1 "A U Thor" 1
 '
 
 test_expect_success 'blame -L /RE/,-N' '
-	check_count -L/99/,-3 B 1 B2 1 D 1
+	check_count -L/\;*99/,-3 B 1 B2 1 D 1
 '
 
 # 'file' ends with an incomplete line, so 'wc' reports one fewer lines than
@@ -360,19 +360,19 @@ test_expect_success 'blame -L multiple (superset/subset: unordered)' '
 '
 
 test_expect_success 'blame -L /RE/ (relative)' '
-	check_count -L3,3 -L/fox/ B1 1 B2 1 C 1 D 1 "A U Thor" 1
+	check_count -L3,3 -L/\;*fox/ B1 1 B2 1 C 1 D 1 "A U Thor" 1
 '
 
 test_expect_success 'blame -L /RE/ (relative: no preceding range)' '
-	check_count -L/dog/ A 1 B 1 B1 1 B2 1 C 1 D 1 "A U Thor" 1
+	check_count -L/\;*dog/ A 1 B 1 B1 1 B2 1 C 1 D 1 "A U Thor" 1
 '
 
 test_expect_success 'blame -L /RE/ (relative: adjacent)' '
-	check_count -L1,1 -L/dog/,+1 A 1 E 1
+	check_count -L1,1 -L/\;*dog/,+1 A 1 E 1
 '
 
 test_expect_success 'blame -L /RE/ (relative: not found)' '
-	test_must_fail $PROG -L4,4 -L/dog/ file
+	test_must_fail $PROG -L4,4 -L/\;*dog/ file
 '
 
 test_expect_success 'blame -L /RE/ (relative: end-of-file)' '
@@ -380,11 +380,11 @@ test_expect_success 'blame -L /RE/ (relative: end-of-file)' '
 '
 
 test_expect_success 'blame -L ^/RE/ (absolute)' '
-	check_count -L3,3 -L^/dog/,+2 A 1 B2 1
+	check_count -L3,3 -L^/\;*dog/,+2 A 1 B2 1
 '
 
 test_expect_success 'blame -L ^/RE/ (absolute: no preceding range)' '
-	check_count -L^/dog/,+2 A 1 B2 1
+	check_count -L^/\;*dog/,+2 A 1 B2 1
 '
 
 test_expect_success 'blame -L ^/RE/ (absolute: not found)' '
