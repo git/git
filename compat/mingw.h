@@ -264,19 +264,26 @@ static inline int getrlimit(int resource, struct rlimit *rlp)
 	return 0;
 }
 
-/* Use mingw_lstat() instead of lstat()/stat() and
- * mingw_fstat() instead of fstat() on Windows.
+/*
+ * Use mingw specific stat()/lstat()/fstat() implementations on Windows.
  */
 #define off_t off64_t
 #define lseek _lseeki64
-#ifndef ALREADY_DECLARED_STAT_FUNCS
+
+/* use struct stat with 64 bit st_size */
 #define stat _stati64
 int mingw_lstat(const char *file_name, struct stat *buf);
 int mingw_stat(const char *file_name, struct stat *buf);
 int mingw_fstat(int fd, struct stat *buf);
 #define fstat mingw_fstat
 #define lstat mingw_lstat
-#define _stati64(x,y) mingw_stat(x,y)
+
+#ifndef _stati64
+# define _stati64(x,y) mingw_stat(x,y)
+#elif defined (_USE_32BIT_TIME_T)
+# define _stat32i64(x,y) mingw_stat(x,y)
+#else
+# define _stat64(x,y) mingw_stat(x,y)
 #endif
 
 int mingw_utime(const char *file_name, const struct utimbuf *times);
