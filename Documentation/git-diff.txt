@@ -28,10 +28,15 @@ two blob objects, or changes between two files on disk.
 	words, the differences are what you _could_ tell Git to
 	further add to the index but you still haven't.  You can
 	stage these changes by using linkgit:git-add[1].
-+
-If exactly two paths are given and at least one points outside
-the current repository, 'git diff' will compare the two files /
-directories. This behavior can be forced by --no-index.
+
+'git diff' --no-index [--options] [--] [<path>...]::
+
+	This form is to compare the given two paths on the
+	filesystem.  You can omit the `--no-index` option when
+	running the command in a working tree controlled by Git and
+	at least one of the paths points outside the working tree,
+	or when running the command outside a working tree
+	controlled by Git.
 
 'git diff' [--options] --cached [<commit>] [--] [<path>...]::
 
