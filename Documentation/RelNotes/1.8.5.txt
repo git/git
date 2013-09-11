@@ -63,6 +63,13 @@ Foreign interfaces, subsystems and ports.
 
 UI, Workflows & Features
 
+ * "git pull --rebase" always chose to do the bog-standard flattening
+   rebase.  You can tell it to run "rebase --preserve-merges" by
+   setting "pull.rebase" configuration to "preserve".
+
+ * "git push --no-thin" actually disables the "thin pack transfer"
+   optimization.
+
  * Magic pathspecs like ":(icase)makefile" that matches both
    Makefile and makefile can be used in more places.
 
@@ -143,6 +150,31 @@ Fixes since v1.8.4
 Unless otherwise noted, all the fixes since v1.8.4 in the maintenance
 track are contained in this release (see release notes to them for
 details).
+
+ * "git ls-files -k" needs to crawl only the part of the working tree
+   that may overlap the paths in the index to find killed files, but
+   shared code with the logic to find all the untracked files, which
+   made it unnecessarily inefficient.
+   (merge 680be04 jc/ls-files-killed-optim later to maint).
+
+ * The commit object names in the insn sheet that was prepared at the
+   beginning of "rebase -i" session can become ambiguous as the
+   rebasing progresses and the repository gains more commits. Make
+   sure the internal record is kept with full 40-hex object names.
+   (merge 75c6976 es/rebase-i-no-abbrev later to maint).
+
+ * "git rebase --preserve-merges" internally used the merge machinery
+   and as a side effect, left merge summary message in the log, but
+   when rebasing, there should not be a need for merge summary.
+   (merge a9f739c rt/rebase-p-no-merge-summary later to maint).
+
+ * A call to xread() was used without a loop around to cope with short
+   read in the codepath to stream new contents to a pack.
+   (merge e92527c js/xread-in-full later to maint).
+
+ * "git rebase -i" forgot that the comment character can be
+   configurable while reading its insn sheet.
+   (merge 7bca7af es/rebase-i-respect-core-commentchar later to maint).
 
  * The mailmap support code read past the allocated buffer when the
    mailmap file ended with an incomplete line.
