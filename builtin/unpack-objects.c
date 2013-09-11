@@ -10,6 +10,7 @@
 #include "tree-walk.h"
 #include "progress.h"
 #include "decorate.h"
+#include "packv4-parse.h"
 #include "fsck.h"
 
 static int dry_run, quiet, recover, has_errors, strict;
@@ -20,7 +21,10 @@ static unsigned char buffer[4096];
 static unsigned int offset, len;
 static off_t consumed_bytes;
 static git_SHA_CTX ctx;
+
 static int packv4;
+static unsigned char *sha1_table;
+static struct packv4_dict *name_dict, *path_dict;
 
 /*
  * When running under --strict mode, objects whose reachability are
@@ -87,6 +91,28 @@ static void use(int bytes)
 	if (signed_add_overflows(consumed_bytes, bytes))
 		die("pack too large for current definition of off_t");
 	consumed_bytes += bytes;
+}
+
+static inline void *fill_and_use(int bytes)
+{
+	void *p = fill(bytes);
+	use(bytes);
+	return p;
+}
+
+static uintmax_t read_varint(void)
+{
+	unsigned char c = *(char*)fill_and_use(1);
+	uintmax_t val = c & 127;
+	while (c & 128) {
+		val += 1;
+		if (!val || MSB(val, 7))
+			die("offset overflow in read_varint at %lu",
+			    (unsigned long)consumed_bytes);
+		c = *(char*)fill_and_use(1);
+		val = (val << 7) + (c & 127);
+	}
+	return val;
 }
 
 static void *get_data(unsigned long size)
@@ -470,6 +496,20 @@ static int unpack_one(unsigned nr)
 	return 0;
 }
 
+static struct packv4_dict *read_dict(void)
+{
+	unsigned long size;
+	unsigned char *data;
+	struct packv4_dict *dict;
+
+	size = read_varint();
+	data = get_data(size);
+	dict = pv4_create_dict(data, size);
+	if (!dict)
+		die("unable to parse dictionary");
+	return dict;
+}
+
 static void unpack_all(void)
 {
 	int i;
@@ -485,6 +525,16 @@ static void unpack_all(void)
 			ntohl(hdr->hdr_version));
 	packv4 = ntohl(hdr->hdr_version) == 4;
 	use(sizeof(struct pack_header));
+
+	if (packv4) {
+		sha1_table = xmalloc(20 * nr_objects);
+		for (i = 0; i < nr_objects; i++) {
+			unsigned char *p = sha1_table + i * 20;
+			hashcpy(p, fill_and_use(20));
+		}
+		name_dict = read_dict();
+		path_dict = read_dict();
+	}
 
 	if (!quiet)
 		progress = start_progress("Unpacking objects", nr_objects);
