@@ -68,12 +68,13 @@ div.page_path {
 }
 
 div.page_footer {
-	height: 17px;
+	height: 22px;
 	padding: 4px 8px;
 	background-color: #d9d8d1;
 }
 
 div.page_footer_text {
+	line-height: 22px;
 	float: left;
 	color: #555555;
 	font-style: italic;
@@ -548,8 +549,7 @@ a.linenr {
 
 a.rss_logo {
 	float: right;
-	padding: 3px 0px;
-	width: 35px;
+	padding: 3px 5px;
 	line-height: 10px;
 	border: 1px solid;
 	border-color: #fcc7a5 #7d3302 #3e1a01 #ff954e;
