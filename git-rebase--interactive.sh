@@ -690,6 +690,32 @@ skip_unnecessary_picks () {
 	die "Could not skip unnecessary pick commands"
 }
 
+transform_todo_ids () {
+	while read -r command rest
+	do
+		case "$command" in
+		"$comment_char"* | exec)
+			# Be careful for oddball commands like 'exec'
+			# that do not have a SHA-1 at the beginning of $rest.
+			;;
+		*)
+			sha1=$(git rev-parse --verify --quiet "$@" ${rest%% *}) &&
+			rest="$sha1 ${rest#* }"
+			;;
+		esac
+		printf '%s\n' "$command${rest:+ }$rest"
+	done <"$todo" >"$todo.new" &&
+	mv -f "$todo.new" "$todo"
+}
+
+expand_todo_ids() {
+	transform_todo_ids
+}
+
+collapse_todo_ids() {
+	transform_todo_ids --short=7
+}
+
 # Rearrange the todo list that has both "pick sha1 msg" and
 # "pick sha1 fixup!/squash! msg" appears in it so that the latter
 # comes immediately after the former, and change "pick" to
@@ -842,6 +868,7 @@ skip)
 edit-todo)
 	git stripspace --strip-comments <"$todo" >"$todo".new
 	mv -f "$todo".new "$todo"
+	collapse_todo_ids
 	append_todo_help
 	git stripspace --comment-lines >>"$todo" <<\EOF
 
@@ -853,6 +880,7 @@ EOF
 
 	git_sequence_editor "$todo" ||
 		die "Could not execute editor"
+	expand_todo_ids
 
 	exit
 	;;
@@ -1008,6 +1036,8 @@ git_sequence_editor "$todo" ||
 
 has_action "$todo" ||
 	die_abort "Nothing to do"
+
+expand_todo_ids
 
 test -d "$rewritten" || test -n "$force_rebase" || skip_unnecessary_picks
 
