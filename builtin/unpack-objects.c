@@ -193,7 +193,7 @@ static int check_object(struct object *obj, int type, void *data)
 		unsigned long size;
 		int type = sha1_object_info(obj->sha1, &size);
 		if (type != obj->type || type <= 0)
-			die("object of unexpected type");
+			die("object %s of unexpected type", sha1_to_hex(obj->sha1));
 		obj->flags |= FLAG_WRITTEN;
 		return 0;
 	}
