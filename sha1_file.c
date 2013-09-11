@@ -1736,13 +1736,8 @@ int unpack_object_header(struct packed_git *p,
 	base = use_pack(p, w_curs, *curpos, &left);
 	if (p->version < 4) {
 		used = unpack_object_header_buffer(base, left, &type, sizep);
-	} else {
-		const unsigned char *cp = base;
-		uintmax_t val = decode_varint(&cp);
-		used = cp - base;
-		type = val & 0xf;
-		*sizep = val >> 4;
-	}
+	} else
+		used = pv4_unpack_object_header_buffer(base, left, &type, sizep);
 	if (!used) {
 		type = OBJ_BAD;
 	} else

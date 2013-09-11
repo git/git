@@ -578,3 +578,15 @@ void *pv4_get_tree(struct packed_git *p, struct pack_window **w_curs,
 	}
 	return dst;
 }
+
+unsigned long pv4_unpack_object_header_buffer(const unsigned char *base,
+					      unsigned long len,
+					      enum object_type *type,
+					      unsigned long *sizep)
+{
+	const unsigned char *cp = base;
+	uintmax_t val = decode_varint(&cp);
+	*type = val & 0xf;
+	*sizep = val >> 4;
+	return cp - base;
+}
