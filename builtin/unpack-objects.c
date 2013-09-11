@@ -23,6 +23,7 @@ static off_t consumed_bytes;
 static git_SHA_CTX ctx;
 
 static int packv4;
+static unsigned nr_objects;
 static unsigned char *sha1_table;
 static struct packv4_dict *name_dict, *path_dict;
 
@@ -115,6 +116,21 @@ static uintmax_t read_varint(void)
 	return val;
 }
 
+static const unsigned char *read_sha1ref(void)
+{
+	unsigned int index = read_varint();
+	if (!index) {
+		static unsigned char sha1[20];
+		hashcpy(sha1, fill_and_use(20));
+		return sha1;
+	}
+	index--;
+	if (index >= nr_objects)
+		die("bad index in read_sha1ref at %lu",
+		    (unsigned long)consumed_bytes);
+	return sha1_table + index * 20;
+}
+
 static void *get_data(unsigned long size)
 {
 	git_zstream stream;
@@ -185,7 +201,6 @@ struct obj_info {
 #define FLAG_WRITTEN (1u<<21)
 
 static struct obj_info *obj_list;
-static unsigned nr_objects;
 
 /*
  * Called only from check_object() after it verified this object
@@ -361,8 +376,12 @@ static void unpack_delta_entry(enum object_type type, unsigned long delta_size,
 	unsigned char base_sha1[20];
 
 	if (type == OBJ_REF_DELTA) {
-		hashcpy(base_sha1, fill(20));
-		use(20);
+		if (packv4)
+			hashcpy(base_sha1, read_sha1ref());
+		else {
+			hashcpy(base_sha1, fill(20));
+			use(20);
+		}
 		delta_data = get_data(delta_size);
 		if (dry_run || !delta_data) {
 			free(delta_data);
