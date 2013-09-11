@@ -271,11 +271,20 @@ static inline int getrlimit(int resource, struct rlimit *rlp)
 #define lseek _lseeki64
 
 /* use struct stat with 64 bit st_size */
+#ifdef stat
+#undef stat
+#endif
 #define stat _stati64
 int mingw_lstat(const char *file_name, struct stat *buf);
 int mingw_stat(const char *file_name, struct stat *buf);
 int mingw_fstat(int fd, struct stat *buf);
+#ifdef fstat
+#undef fstat
+#endif
 #define fstat mingw_fstat
+#ifdef lstat
+#undef lstat
+#endif
 #define lstat mingw_lstat
 
 #ifndef _stati64
