@@ -448,32 +448,38 @@ static void unpack_delta_entry(enum object_type type, unsigned long delta_size,
 	free(base);
 }
 
+static void read_typesize_v2(enum object_type *type, unsigned long *size)
+{
+	unsigned char c = *(char*)fill_and_use(1);
+	unsigned shift;
+
+	*type = (c >> 4) & 7;
+	*size = (c & 15);
+	shift = 4;
+	while (c & 128) {
+		c = *(char*)fill_and_use(1);
+		*size += (c & 0x7f) << shift;
+		shift += 7;
+	}
+}
+
 static int unpack_one(unsigned nr)
 {
-	unsigned shift;
-	unsigned char *pack;
-	unsigned long size, c;
+	unsigned long size;
 	enum object_type type;
 
 	obj_list[nr].offset = consumed_bytes;
 
-	pack = fill(1);
 	if (packv4 && *(char*)fill(1) == 0) {
 		use(1);
 		return -1;
 	}
-	c = *pack;
-	use(1);
-	type = (c >> 4) & 7;
-	size = (c & 15);
-	shift = 4;
-	while (c & 0x80) {
-		pack = fill(1);
-		c = *pack;
-		use(1);
-		size += (c & 0x7f) << shift;
-		shift += 7;
-	}
+	if (packv4) {
+		uintmax_t val = read_varint();
+		type = val & 15;
+		size = val >> 4;
+	} else
+		read_typesize_v2(&type, &size);
 
 	switch (type) {
 	case OBJ_COMMIT:
