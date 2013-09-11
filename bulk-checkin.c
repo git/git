@@ -114,7 +114,7 @@ static int stream_to_pack(struct bulk_checkin_state *state,
 
 		if (size && !s.avail_in) {
 			ssize_t rsize = size < sizeof(ibuf) ? size : sizeof(ibuf);
-			if (xread(fd, ibuf, rsize) != rsize)
+			if (read_in_full(fd, ibuf, rsize) != rsize)
 				die("failed to read %d bytes from '%s'",
 				    (int)rsize, path);
 			offset += rsize;
