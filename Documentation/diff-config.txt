@@ -73,7 +73,11 @@ diff.ignoreSubmodules::
 	Sets the default value of --ignore-submodules. Note that this
 	affects only 'git diff' Porcelain, and not lower level 'diff'
 	commands such as 'git diff-files'. 'git checkout' also honors
-	this setting when reporting uncommitted changes.
+	this setting when reporting uncommitted changes. Setting it to
+	'all' disables the submodule summary normally shown by 'git commit'
+	and 'git status' when 'status.submodulesummary' is set unless it is
+	overridden by using the --ignore-submodules command line option.
+	The 'git submodule' commands are not affected by this setting.
 
 diff.mnemonicprefix::
 	If set, 'git diff' uses a prefix pair that is different from the
