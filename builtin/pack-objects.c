@@ -19,6 +19,8 @@
 #include "streaming.h"
 #include "thread-utils.h"
 #include "packv4-create.h"
+#include "packv4-parse.h"
+#include "varint.h"
 
 static const char *pack_usage[] = {
 	N_("git pack-objects --stdout [options...] [< ref-list | < object-list]"),
@@ -1397,9 +1399,14 @@ static void check_object(struct object_entry *entry)
 		 * We want in_pack_type even if we do not reuse delta
 		 * since non-delta representations could still be reused.
 		 */
-		used = unpack_object_header_buffer(buf, avail,
-						   &entry->in_pack_type,
-						   &entry->size);
+		if (p->version < 4)
+			used = unpack_object_header_buffer(buf, avail,
+							   &entry->in_pack_type,
+							   &entry->size);
+		else
+			used = pv4_unpack_object_header_buffer(buf, avail,
+							       &entry->in_pack_type,
+							       &entry->size);
 		if (used == 0)
 			goto give_up;
 
@@ -1417,7 +1424,22 @@ static void check_object(struct object_entry *entry)
 				goto give_up;
 			unuse_pack(&w_curs);
 			return;
+		case OBJ_PV4_COMMIT:
+		case OBJ_PV4_TREE:
+			entry->type = entry->in_pack_type - 8;
+			entry->in_pack_header_size = used;
+			unuse_pack(&w_curs);
+			return;
 		case OBJ_REF_DELTA:
+			if (p->version == 4) {
+				const unsigned char *sha1, *cp;
+				cp = buf + used;
+				sha1 = get_sha1ref(p, &cp);
+				entry->in_pack_header_size = cp - buf;;
+				if (reuse_delta && !entry->preferred_base)
+					base_ref = sha1;
+				break;
+			}
 			if (reuse_delta && !entry->preferred_base)
 				base_ref = use_pack(p, &w_curs,
 						entry->in_pack_offset + used, NULL);
@@ -1468,7 +1490,8 @@ static void check_object(struct object_entry *entry)
 			 * deltify other objects against, in order to avoid
 			 * circular deltas.
 			 */
-			entry->type = entry->in_pack_type;
+			if (pack_version < 4 || entry->type != OBJ_TREE)
+				entry->type = entry->in_pack_type;
 			entry->delta = base_entry;
 			entry->delta_size = entry->size;
 			entry->delta_sibling = base_entry->delta_child;
