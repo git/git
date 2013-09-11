@@ -131,6 +131,15 @@ static const unsigned char *read_sha1ref(void)
 	return sha1_table + index * 20;
 }
 
+static const unsigned char *read_dictref(struct packv4_dict *dict)
+{
+	unsigned int index = read_varint();
+	if (index >= dict->nb_entries)
+		die("bad index in read_dictref at %lu",
+		    (unsigned long)consumed_bytes);
+	return  dict->data + dict->offsets[index];
+}
+
 static void *get_data(unsigned long size)
 {
 	git_zstream stream;
@@ -467,6 +476,54 @@ static void unpack_delta_entry(enum object_type type, unsigned long delta_size,
 	free(base);
 }
 
+static void unpack_commit_v4(unsigned long size, unsigned long nr)
+{
+	unsigned int nb_parents;
+	const unsigned char *committer, *author, *ident;
+	unsigned long author_time, committer_time;
+	int16_t committer_tz, author_tz;
+	struct strbuf dst;
+	char *remaining;
+
+	strbuf_init(&dst, size);
+
+	strbuf_addf(&dst, "tree %s\n", sha1_to_hex(read_sha1ref()));
+	nb_parents = read_varint();
+	while (nb_parents--)
+		strbuf_addf(&dst, "parent %s\n", sha1_to_hex(read_sha1ref()));
+
+	committer_time = read_varint();
+	ident = read_dictref(name_dict);
+	committer_tz = (ident[0] << 8) | ident[1];
+	committer = ident + 2;
+
+	author_time = read_varint();
+	ident = read_dictref(name_dict);
+	author_tz = (ident[0] << 8) | ident[1];
+	author = ident + 2;
+
+	if (author_time & 1)
+		author_time = committer_time + (author_time >> 1);
+	else
+		author_time = committer_time - (author_time >> 1);
+
+	strbuf_addf(&dst,
+		    "author %s %lu %+05d\n"
+		    "committer %s %lu %+05d\n",
+		    author, author_time, author_tz,
+		    committer, committer_time, committer_tz);
+
+	if (dst.len > size)
+		die("bad commit");
+
+	remaining = get_data(size - dst.len);
+	strbuf_add(&dst, remaining, size - dst.len);
+	if (!dry_run)
+		write_object(nr, OBJ_COMMIT, dst.buf, dst.len);
+	else
+		strbuf_release(&dst);
+}
+
 static void read_typesize_v2(enum object_type *type, unsigned long *size)
 {
 	unsigned char c = *(char*)fill_and_use(1);
@@ -510,6 +567,9 @@ static int unpack_one(unsigned nr)
 	case OBJ_REF_DELTA:
 	case OBJ_OFS_DELTA:
 		unpack_delta_entry(type, size, nr);
+		break;
+	case OBJ_PV4_COMMIT:
+		unpack_commit_v4(size, nr);
 		break;
 	default:
 		error("bad object type %d", type);
