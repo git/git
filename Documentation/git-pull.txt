@@ -102,12 +102,18 @@ include::merge-options.txt[]
 :git-pull: 1
 
 -r::
---rebase::
-	Rebase the current branch on top of the upstream branch after
-	fetching.  If there is a remote-tracking branch corresponding to
-	the upstream branch and the upstream branch was rebased since last
-	fetched, the rebase uses that information to avoid rebasing
-	non-local changes.
+--rebase[=false|true|preserve]::
+	When true, rebase the current branch on top of the upstream
+	branch after fetching. If there is a remote-tracking branch
+	corresponding to the upstream branch and the upstream branch
+	was rebased since last fetched, the rebase uses that information
+	to avoid rebasing non-local changes.
++
+When preserve, also rebase the current branch on top of the upstream
+branch, but pass `--preserve-merges` along to `git rebase` so that
+locally created merge commits will not be flattened.
++
+When false, merge the current branch into the upstream branch.
 +
 See `pull.rebase`, `branch.<name>.rebase` and `branch.autosetuprebase` in
 linkgit:git-config[1] if you want to make `git pull` always use
