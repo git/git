@@ -12,6 +12,7 @@
 #include "decorate.h"
 #include "packv4-parse.h"
 #include "fsck.h"
+#include "varint.h"
 
 static int dry_run, quiet, recover, has_errors, strict;
 static const char unpack_usage[] = "git unpack-objects [-n] [-q] [-r] [--strict] < pack-file";
@@ -146,6 +147,27 @@ static const unsigned char *read_sha1ref(void)
 		die("bad index in read_sha1ref at %lu",
 		    (unsigned long)consumed_bytes);
 	return sha1_table + index * 20;
+}
+
+static void check_against_sha1table(const unsigned char *sha1)
+{
+	const unsigned char *found;
+	if (!packv4)
+		return;
+
+	found = bsearch(sha1, sha1_table, nr_objects, 20,
+			(int (*)(const void *, const void *))hashcmp);
+	if (!found)
+		die(_("object %s not found in SHA-1 table"),
+		    sha1_to_hex(sha1));
+}
+
+static const unsigned char *read_sha1table_ref(void)
+{
+	const unsigned char *sha1 = read_sha1ref();
+	if (sha1 < sha1_table || sha1 >= sha1_table + nr_objects * 20)
+		check_against_sha1table(sha1);
+	return sha1;
 }
 
 static const unsigned char *read_dictref(struct packv4_dict *dict)
@@ -327,6 +349,84 @@ static void write_object(unsigned nr, enum object_type type,
 	}
 }
 
+static void resolve_tree_v4(unsigned long nr_obj,
+			    const void *tree,
+			    unsigned long tree_len,
+			    const unsigned char *base_sha1,
+			    const void *base,
+			    unsigned long base_size)
+{
+	int nr;
+	struct strbuf sb = STRBUF_INIT;
+	const unsigned char *p = tree;
+	const unsigned char *end = p + tree_len;
+
+	nr = decode_varint(&p);
+	while (nr > 0 && p < end) {
+		unsigned int copy_start_or_path = decode_varint(&p);
+		if (copy_start_or_path & 1) { /* copy_start */
+			struct tree_desc desc;
+			struct name_entry entry;
+			unsigned int copy_count = decode_varint(&p);
+			unsigned int copy_start = copy_start_or_path >> 1;
+			if (!base_sha1)
+				die("we are not supposed to copy from another tree!");
+			if (copy_count & 1) { /* first delta */
+				unsigned int id = decode_varint(&p);
+				const unsigned char *last_base;
+				if (!id) {
+					last_base = p;
+					p += 20;
+				} else
+					last_base = sha1_table + (id - 1) * 20;
+				if (hashcmp(last_base, base_sha1))
+					die("bad base tree in resolve_tree_v4");
+			}
+
+			copy_count >>= 1;
+			nr -= copy_count;
+
+			init_tree_desc(&desc, base, base_size);
+			while (tree_entry(&desc, &entry)) {
+				if (copy_start)
+					copy_start--;
+				else if (copy_count) {
+					strbuf_addf(&sb, "%o %s%c",
+						    entry.mode, entry.path, '\0');
+					strbuf_add(&sb, entry.sha1, 20);
+					copy_count--;
+				} else
+					break;
+			}
+		} else {	/* path */
+			unsigned int path_idx = copy_start_or_path >> 1;
+			const unsigned char *path;
+			unsigned mode;
+			unsigned int id;
+			const unsigned char *entry_sha1;
+
+			id = decode_varint(&p);
+			if (!id) {
+				entry_sha1 = p;
+				p += 20;
+			} else
+				entry_sha1 = sha1_table + (id - 1) * 20;
+			nr--;
+
+			path = path_dict->data + path_dict->offsets[path_idx];
+			mode = (path[0] << 8) | path[1];
+			strbuf_addf(&sb, "%o %s%c", mode, path+2, '\0');
+			strbuf_add(&sb, entry_sha1, 20);
+		}
+	}
+	if (nr != 0 || p != end)
+		die(_("bad delta tree"));
+	if (!dry_run)
+		write_object(nr_obj, OBJ_TREE, sb.buf, sb.len);
+	else
+		strbuf_release(&sb);
+}
+
 static void resolve_delta(unsigned nr, enum object_type type,
 			  void *base, unsigned long base_size,
 			  void *delta, unsigned long delta_size)
@@ -358,8 +458,13 @@ static void added_object(unsigned nr, enum object_type type,
 		    info->base_offset == obj_list[nr].offset) {
 			*p = info->next;
 			p = &delta_list;
-			resolve_delta(info->nr, type, data, size,
-				      info->delta, info->size);
+			if (type == OBJ_TREE && packv4)
+				resolve_tree_v4(info->nr, info->delta,
+						info->size, info->base_sha1,
+						data, size);
+			else
+				resolve_delta(info->nr, type, data, size,
+					      info->delta, info->size);
 			free(info);
 			continue;
 		}
@@ -493,6 +598,85 @@ static void unpack_delta_entry(enum object_type type, unsigned long delta_size,
 	free(base);
 }
 
+static int resolve_tree_against_held(unsigned nr, const unsigned char *base,
+				     void *delta_data, unsigned long delta_size)
+{
+	struct object *obj;
+	struct obj_buffer *obj_buffer;
+	obj = lookup_object(base);
+	if (!obj || obj->type != OBJ_TREE)
+		return 0;
+	obj_buffer = lookup_object_buffer(obj);
+	if (!obj_buffer)
+		return 0;
+	resolve_tree_v4(nr, delta_data, delta_size,
+			base, obj_buffer->buffer, obj_buffer->size);
+	return 1;
+}
+
+static void unpack_tree_v4(unsigned long size, unsigned long nr_obj)
+{
+	unsigned int nr;
+	const unsigned char *last_base = NULL;
+
+	copy_back_buffer(1);
+	strbuf_reset(&back_buffer);
+	nr = read_varint();
+	while (nr) {
+		unsigned int copy_start_or_path = read_varint();
+		if (copy_start_or_path & 1) { /* copy_start */
+			unsigned int copy_count = read_varint();
+			if (copy_count & 1) { /* first delta */
+				const unsigned char *old_base = last_base;
+				last_base = read_sha1table_ref();
+				if (old_base && hashcmp(last_base, old_base))
+					die("multi-base trees are not supported");
+			} else if (!last_base)
+				die("missing delta base unpack_tree_v4 at %lu",
+				    (unsigned long)consumed_bytes);
+			copy_count >>= 1;
+			if (!copy_count || copy_count > nr)
+				die("bad copy count index in unpack_tree_v4 at %lu",
+				    (unsigned long)consumed_bytes);
+			nr -= copy_count;
+		} else {	/* path */
+			unsigned int path_idx = copy_start_or_path >> 1;
+			if (path_idx >= path_dict->nb_entries)
+				die("bad path index in unpack_tree_v4 at %lu",
+				    (unsigned long)consumed_bytes);
+			read_sha1ref();
+			nr--;
+		}
+	}
+	copy_back_buffer(0);
+
+	if (last_base) {
+		if (has_sha1_file(last_base)) {
+			enum object_type type;
+			unsigned long base_size;
+			void *base = read_sha1_file(last_base, &type, &base_size);
+			if (type != OBJ_TREE) {
+				die("base tree %s is not a tree", sha1_to_hex(last_base));
+				last_base = NULL;
+			}
+			resolve_tree_v4(nr_obj, back_buffer.buf, back_buffer.len,
+					last_base, base, base_size);
+			free(base);
+		} else if (resolve_tree_against_held(nr_obj, last_base,
+						     back_buffer.buf, back_buffer.len))
+			   ; /* resolved */
+		else {
+			unsigned long delta_size = back_buffer.len;
+			char *delta = strbuf_detach(&back_buffer, NULL);
+			/* cannot resolve yet --- queue it */
+			hashcpy(obj_list[nr].sha1, null_sha1);
+			add_delta_to_list(nr, last_base, 0, delta, delta_size);
+		}
+	} else
+		resolve_tree_v4(nr_obj, back_buffer.buf, back_buffer.len, NULL, NULL, 0);
+	strbuf_release(&back_buffer);
+}
+
 static void unpack_commit_v4(unsigned long size, unsigned long nr)
 {
 	unsigned int nb_parents;
@@ -587,6 +771,9 @@ static int unpack_one(unsigned nr)
 		break;
 	case OBJ_PV4_COMMIT:
 		unpack_commit_v4(size, nr);
+		break;
+	case OBJ_PV4_TREE:
+		unpack_tree_v4(size, nr);
 		break;
 	default:
 		error("bad object type %d", type);
