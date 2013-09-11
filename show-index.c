@@ -19,7 +19,7 @@ int main(int argc, char **argv)
 		die("unable to read header");
 	if (top_index[0] == htonl(PACK_IDX_SIGNATURE)) {
 		version = ntohl(top_index[1]);
-		if (version < 2 || version > 2)
+		if (version < 2 || version > 3)
 			die("unknown index version");
 		if (fread(top_index, 256 * 4, 1, stdin) != 1)
 			die("unable to read index");
@@ -51,9 +51,10 @@ int main(int argc, char **argv)
 			uint32_t crc;
 			uint32_t off;
 		} *entries = xmalloc(nr * sizeof(entries[0]));
-		for (i = 0; i < nr; i++)
-			if (fread(entries[i].sha1, 20, 1, stdin) != 1)
-				die("unable to read sha1 %u/%u", i, nr);
+		if (version == 2)
+			for (i = 0; i < nr; i++)
+				if (fread(entries[i].sha1, 20, 1, stdin) != 1)
+					die("unable to read sha1 %u/%u", i, nr);
 		for (i = 0; i < nr; i++)
 			if (fread(&entries[i].crc, 4, 1, stdin) != 1)
 				die("unable to read crc %u/%u", i, nr);
@@ -75,10 +76,15 @@ int main(int argc, char **argv)
 						     ntohl(off64[1]);
 				off64_nr++;
 			}
-			printf("%" PRIuMAX " %s (%08"PRIx32")\n",
-			       (uintmax_t) offset,
-			       sha1_to_hex(entries[i].sha1),
-			       ntohl(entries[i].crc));
+			if (version == 2)
+				printf("%"PRIuMAX" %s (%08"PRIx32")\n",
+				       (uintmax_t) offset,
+				       sha1_to_hex(entries[i].sha1),
+				       ntohl(entries[i].crc));
+			else
+				printf("%"PRIuMAX" [object #%u] (%08"PRIx32")\n",
+				       (uintmax_t) offset, i,
+				       ntohl(entries[i].crc));
 		}
 		free(entries);
 	}
