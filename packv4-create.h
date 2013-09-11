@@ -25,9 +25,11 @@ void sort_dict_entries_by_hits(struct dict_table *t);
 int encode_sha1ref(const struct packv4_tables *v4,
 		   const unsigned char *sha1, unsigned char *buf);
 unsigned long packv4_write_tables(struct sha1file *f,
-				  const struct packv4_tables *v4);
+				  const struct packv4_tables *v4,
+				  int pack_compression_level);
 void *pv4_encode_commit(const struct packv4_tables *v4,
-			void *buffer, unsigned long *sizep);
+			void *buffer, unsigned long *sizep,
+			int pack_compression_level);
 void *pv4_encode_tree(const struct packv4_tables *v4,
 		      void *_buffer, unsigned long *sizep,
 		      void *delta, unsigned long delta_size,

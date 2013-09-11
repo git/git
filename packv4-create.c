@@ -18,8 +18,6 @@
 #include "packv4-create.h"
 
 
-int pack_compression_seen;
-int pack_compression_level = Z_DEFAULT_COMPRESSION;
 int min_tree_copy = 1;
 
 struct data_entry {
@@ -285,7 +283,8 @@ int encode_sha1ref(const struct packv4_tables *v4,
  * regenerated and produce the same hash.
  */
 void *pv4_encode_commit(const struct packv4_tables *v4,
-			void *buffer, unsigned long *sizep)
+			void *buffer, unsigned long *sizep,
+			int pack_compression_level)
 {
 	unsigned long size = *sizep;
 	char *in, *tail, *end;
@@ -611,7 +610,8 @@ void *pv4_encode_tree(const struct packv4_tables *v4,
 	return buffer;
 }
 
-static unsigned long write_dict_table(struct sha1file *f, struct dict_table *t)
+static unsigned long write_dict_table(struct sha1file *f, struct dict_table *t,
+				      int pack_compression_level)
 {
 	unsigned char buffer[1024];
 	unsigned hdrlen;
@@ -661,7 +661,8 @@ static unsigned long write_dict_table(struct sha1file *f, struct dict_table *t)
 }
 
 unsigned long packv4_write_tables(struct sha1file *f,
-				  const struct packv4_tables *v4)
+				  const struct packv4_tables *v4,
+				  int pack_compression_level)
 {
 	unsigned nr_objects = v4->all_objs_nr;
 	struct pack_idx_entry *objs = v4->all_objs;
@@ -676,10 +677,12 @@ unsigned long packv4_write_tables(struct sha1file *f,
 	written = 20 * nr_objects;
 
 	/* Then the commit dictionary table */
-	written += write_dict_table(f, commit_ident_table);
+	written += write_dict_table(f, commit_ident_table,
+				    pack_compression_level);
 
 	/* Followed by the path component dictionary table */
-	written += write_dict_table(f, tree_path_table);
+	written += write_dict_table(f, tree_path_table,
+				    pack_compression_level);
 
 	return written;
 }

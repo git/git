@@ -5,8 +5,8 @@
 #include "varint.h"
 #include "packv4-create.h"
 
-extern int pack_compression_seen;
-extern int pack_compression_level;
+static int pack_compression_seen;
+static int pack_compression_level = Z_DEFAULT_COMPRESSION;
 extern int min_tree_copy;
 
 static struct pack_idx_entry *get_packed_object_list(struct packed_git *p)
@@ -291,7 +291,8 @@ static off_t packv4_write_object(struct packv4_tables *v4,
 
 	switch (type) {
 	case OBJ_COMMIT:
-		result = pv4_encode_commit(v4, src, &buf_size);
+		result = pv4_encode_commit(v4, src, &buf_size,
+					   pack_compression_level);
 		break;
 	case OBJ_TREE:
 		if (packed_type != OBJ_TREE) {
@@ -410,7 +411,7 @@ void process_one_pack(struct packv4_tables *v4, char *src_pack, char *dst_pack)
 	if (!f)
 		die("unable to open destination pack");
 	written += packv4_write_header(f, nr_objects);
-	written += packv4_write_tables(f, v4);
+	written += packv4_write_tables(f, v4, pack_compression_level);
 
 	/* Let's write objects out, updating the object index list in place */
 	progress_state = start_progress("Writing objects", nr_objects);
