@@ -89,10 +89,6 @@ static struct packv4_dict *load_dict(struct packed_git *p, off_t *offset)
 	src = use_pack(p, &w_curs, curpos, &avail);
 	cp = src;
 	dict_size = decode_varint(&cp);
-	if (dict_size < 3) {
-		error("bad dict size");
-		return NULL;
-	}
 	curpos += cp - src;
 
 	data = xmallocz(dict_size);
