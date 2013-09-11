@@ -89,7 +89,7 @@ static int verbose;
 static int show_stat;
 static int check_self_contained_and_connected;
 static int packv4;
-
+static int idx_version_set;
 static struct progress *progress;
 
 /* We always read in 4kB chunks. */
@@ -1892,8 +1892,9 @@ static int git_index_pack_config(const char *k, const char *v, void *cb)
 
 	if (!strcmp(k, "pack.indexversion")) {
 		opts->version = git_config_int(k, v);
-		if (opts->version > 2)
+		if (opts->version > 3)
 			die(_("bad pack.indexversion=%"PRIu32), opts->version);
+		idx_version_set = 1;
 		return 0;
 	}
 	if (!strcmp(k, "pack.threads")) {
@@ -2107,12 +2108,13 @@ int cmd_index_pack(int argc, const char **argv, const char *prefix)
 			} else if (!prefixcmp(arg, "--index-version=")) {
 				char *c;
 				opts.version = strtoul(arg + 16, &c, 10);
-				if (opts.version > 2)
+				if (opts.version > 3)
 					die(_("bad %s"), arg);
 				if (*c == ',')
 					opts.off32_limit = strtoul(c+1, &c, 0);
 				if (*c || opts.off32_limit & 0x80000000)
 					die(_("bad %s"), arg);
+				idx_version_set = 1;
 			} else
 				usage(index_pack_usage);
 			continue;
@@ -2151,6 +2153,7 @@ int cmd_index_pack(int argc, const char **argv, const char *prefix)
 		if (!index_name)
 			die(_("--verify with no packfile name given"));
 		read_idx_option(&opts, index_name);
+		idx_version_set = 1;
 		opts.flags |= WRITE_IDX_VERIFY | WRITE_IDX_STRICT;
 	}
 	if (strict)
@@ -2167,6 +2170,9 @@ int cmd_index_pack(int argc, const char **argv, const char *prefix)
 
 	curr_pack = open_pack_file(pack_name);
 	parse_pack_header();
+	if (!packv4 && opts.version >= 3)
+		die(_("pack idx version %d requires at least pack version 4"),
+		    opts.version);
 	objects = xcalloc(nr_objects + 1, sizeof(struct object_entry));
 	deltas = xcalloc(nr_objects, sizeof(struct delta_entry));
 	parse_dictionaries();
@@ -2180,7 +2186,7 @@ int cmd_index_pack(int argc, const char **argv, const char *prefix)
 	if (show_stat)
 		show_pack_info(stat_only);
 
-	if (packv4)
+	if (packv4 && !idx_version_set)
 		opts.version = 3;
 
 	idx_objects = xmalloc((nr_objects) * sizeof(struct pack_idx_entry *));

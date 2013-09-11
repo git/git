@@ -66,7 +66,7 @@ static uint32_t nr_objects, nr_alloc, nr_result, nr_written;
 
 static struct packv4_tables v4;
 
-static int non_empty;
+static int non_empty, idx_version_set;
 static int reuse_delta = 1, reuse_object = 1;
 static int keep_unreachable, unpack_unreachable, include_tag;
 static unsigned long unpack_unreachable_expiration;
@@ -2206,7 +2206,8 @@ static void prepare_pack(int window, int depth)
 		sort_dict_entries_by_hits(v4.commit_ident_table);
 		sort_dict_entries_by_hits(v4.tree_path_table);
 		v4.all_objs = xmalloc(nr_objects * sizeof(*v4.all_objs));
-		pack_idx_opts.version = 3;
+		if (!idx_version_set)
+			pack_idx_opts.version = 3;
 		allow_ofs_delta = 0;
 	}
 
@@ -2320,9 +2321,10 @@ static int git_pack_config(const char *k, const char *v, void *cb)
 	}
 	if (!strcmp(k, "pack.indexversion")) {
 		pack_idx_opts.version = git_config_int(k, v);
-		if (pack_idx_opts.version > 2)
+		if (pack_idx_opts.version > 3)
 			die("bad pack.indexversion=%"PRIu32,
 			    pack_idx_opts.version);
+		idx_version_set = 1;
 		return 0;
 	}
 	return git_default_config(k, v, cb);
@@ -2605,12 +2607,13 @@ static int option_parse_index_version(const struct option *opt,
 	char *c;
 	const char *val = arg;
 	pack_idx_opts.version = strtoul(val, &c, 10);
-	if (pack_idx_opts.version > 2)
+	if (pack_idx_opts.version > 3)
 		die(_("unsupported index version %s"), val);
 	if (*c == ',' && c[1])
 		pack_idx_opts.off32_limit = strtoul(c+1, &c, 0);
 	if (*c || pack_idx_opts.off32_limit & 0x80000000)
 		die(_("bad index version '%s'"), val);
+	idx_version_set = 1;
 	return 0;
 }
 
@@ -2740,6 +2743,9 @@ int cmd_pack_objects(int argc, const char **argv, const char *prefix)
 		usage_with_options(pack_usage, pack_objects_options);
 	if (pack_version != 2 && pack_version != 4)
 		die(_("pack version %d is not supported"), pack_version);
+	if (pack_version < 4 && pack_idx_opts.version >= 3)
+		die(_("pack idx version %d cannot be used with pack version %d"),
+		    pack_idx_opts.version, pack_version);
 
 	rp_av[rp_ac++] = "pack-objects";
 	if (thin) {
