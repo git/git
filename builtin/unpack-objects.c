@@ -20,6 +20,7 @@ static unsigned char buffer[4096];
 static unsigned int offset, len;
 static off_t consumed_bytes;
 static git_SHA_CTX ctx;
+static int packv4;
 
 /*
  * When running under --strict mode, objects whose reachability are
@@ -421,7 +422,7 @@ static void unpack_delta_entry(enum object_type type, unsigned long delta_size,
 	free(base);
 }
 
-static void unpack_one(unsigned nr)
+static int unpack_one(unsigned nr)
 {
 	unsigned shift;
 	unsigned char *pack;
@@ -431,6 +432,10 @@ static void unpack_one(unsigned nr)
 	obj_list[nr].offset = consumed_bytes;
 
 	pack = fill(1);
+	if (packv4 && *(char*)fill(1) == 0) {
+		use(1);
+		return -1;
+	}
 	c = *pack;
 	use(1);
 	type = (c >> 4) & 7;
@@ -450,18 +455,19 @@ static void unpack_one(unsigned nr)
 	case OBJ_BLOB:
 	case OBJ_TAG:
 		unpack_non_delta_entry(type, size, nr);
-		return;
+		break;
 	case OBJ_REF_DELTA:
 	case OBJ_OFS_DELTA:
 		unpack_delta_entry(type, size, nr);
-		return;
+		break;
 	default:
 		error("bad object type %d", type);
 		has_errors = 1;
 		if (recover)
-			return;
+			break;
 		exit(1);
 	}
+	return 0;
 }
 
 static void unpack_all(void)
@@ -477,13 +483,15 @@ static void unpack_all(void)
 	if (!pack_version_ok(hdr->hdr_version))
 		die("unknown pack file version %"PRIu32,
 			ntohl(hdr->hdr_version));
+	packv4 = ntohl(hdr->hdr_version) == 4;
 	use(sizeof(struct pack_header));
 
 	if (!quiet)
 		progress = start_progress("Unpacking objects", nr_objects);
 	obj_list = xcalloc(nr_objects, sizeof(*obj_list));
 	for (i = 0; i < nr_objects; i++) {
-		unpack_one(i);
+		if (unpack_one(i))
+			break;
 		display_progress(progress, i + 1);
 	}
 	stop_progress(&progress);
