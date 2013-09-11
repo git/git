@@ -54,6 +54,9 @@ static void add_object_buffer(struct object *object, char *buffer, unsigned long
 		die("object %s tried to add buffer twice!", sha1_to_hex(object->sha1));
 }
 
+static struct strbuf back_buffer = STRBUF_INIT;
+static int save_to_back_buffer;
+
 /*
  * Make sure at least "min" bytes are available in the buffer, and
  * return the pointer to the buffer.
@@ -66,6 +69,8 @@ static void *fill(int min)
 		die("cannot fill %d bytes", min);
 	if (offset) {
 		git_SHA1_Update(&ctx, buffer, offset);
+		if (save_to_back_buffer)
+			strbuf_add(&back_buffer, buffer, offset);
 		memmove(buffer, buffer + offset, len);
 		offset = 0;
 	}
@@ -79,6 +84,18 @@ static void *fill(int min)
 		len += ret;
 	} while (len < min);
 	return buffer;
+}
+
+static void copy_back_buffer(int set)
+{
+	if (offset) {
+		git_SHA1_Update(&ctx, buffer, offset);
+		if (save_to_back_buffer)
+			strbuf_add(&back_buffer, buffer, offset);
+		memmove(buffer, buffer + offset, len);
+		offset = 0;
+	}
+	save_to_back_buffer = set;
 }
 
 static void use(int bytes)
