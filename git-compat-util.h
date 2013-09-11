@@ -86,7 +86,7 @@
 #define _SGI_SOURCE 1
 
 #if defined(WIN32) && !defined(__CYGWIN__) /* Both MinGW and MSVC */
-# if defined (_MSC_VER)
+# if defined (_MSC_VER) && !defined(_WIN32_WINNT)
 #  define _WIN32_WINNT 0x0502
 # endif
 #define WIN32_LEAN_AND_MEAN  /* stops windows.h including winsock.h */
