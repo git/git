@@ -1729,7 +1729,11 @@ int ref_newer(const unsigned char *new_sha1, const unsigned char *old_sha1)
 }
 
 /*
- * Return true if there is anything to report, otherwise false.
+ * Compare a branch with its upstream, and save their differences (number
+ * of commits) in *num_ours and *num_theirs.
+ *
+ * Return 0 if branch has no upstream (no base), -1 if upstream is missing
+ * (with "gone" base), otherwise 1 (with base).
  */
 int stat_tracking_info(struct branch *branch, int *num_ours, int *num_theirs)
 {
@@ -1740,34 +1744,30 @@ int stat_tracking_info(struct branch *branch, int *num_ours, int *num_theirs)
 	const char *rev_argv[10], *base;
 	int rev_argc;
 
-	/*
-	 * Nothing to report unless we are marked to build on top of
-	 * somebody else.
-	 */
+	/* Cannot stat unless we are marked to build on top of somebody else. */
 	if (!branch ||
 	    !branch->merge || !branch->merge[0] || !branch->merge[0]->dst)
 		return 0;
 
-	/*
-	 * If what we used to build on no longer exists, there is
-	 * nothing to report.
-	 */
+	/* Cannot stat if what we used to build on no longer exists */
 	base = branch->merge[0]->dst;
 	if (read_ref(base, sha1))
-		return 0;
+		return -1;
 	theirs = lookup_commit_reference(sha1);
 	if (!theirs)
-		return 0;
+		return -1;
 
 	if (read_ref(branch->refname, sha1))
-		return 0;
+		return -1;
 	ours = lookup_commit_reference(sha1);
 	if (!ours)
-		return 0;
+		return -1;
 
 	/* are we the same? */
-	if (theirs == ours)
-		return 0;
+	if (theirs == ours) {
+		*num_theirs = *num_ours = 0;
+		return 1;
+	}
 
 	/* Run "rev-list --left-right ours...theirs" internally... */
 	rev_argc = 0;
@@ -1809,31 +1809,53 @@ int stat_tracking_info(struct branch *branch, int *num_ours, int *num_theirs)
  */
 int format_tracking_info(struct branch *branch, struct strbuf *sb)
 {
-	int num_ours, num_theirs;
+	int ours, theirs;
 	const char *base;
+	int upstream_is_gone = 0;
 
-	if (!stat_tracking_info(branch, &num_ours, &num_theirs))
+	switch (stat_tracking_info(branch, &ours, &theirs)) {
+	case 0:
+		/* no base */
 		return 0;
+	case -1:
+		/* with "gone" base */
+		upstream_is_gone = 1;
+		break;
+	default:
+		/* with base */
+		break;
+	}
 
 	base = branch->merge[0]->dst;
 	base = shorten_unambiguous_ref(base, 0);
-	if (!num_theirs) {
+	if (upstream_is_gone) {
+		strbuf_addf(sb,
+			_("Your branch is based on '%s', but the upstream is gone.\n"),
+			base);
+		if (advice_status_hints)
+			strbuf_addf(sb,
+				_("  (use \"git branch --unset-upstream\" to fixup)\n"));
+	} else if (!ours && !theirs) {
+		strbuf_addf(sb,
+			_("Your branch is up-to-date with '%s'.\n"),
+			base);
+	} else if (!theirs) {
 		strbuf_addf(sb,
 			Q_("Your branch is ahead of '%s' by %d commit.\n",
 			   "Your branch is ahead of '%s' by %d commits.\n",
-			   num_ours),
-			base, num_ours);
+			   ours),
+			base, ours);
 		if (advice_status_hints)
 			strbuf_addf(sb,
 				_("  (use \"git push\" to publish your local commits)\n"));
-	} else if (!num_ours) {
+	} else if (!ours) {
 		strbuf_addf(sb,
 			Q_("Your branch is behind '%s' by %d commit, "
 			       "and can be fast-forwarded.\n",
 			   "Your branch is behind '%s' by %d commits, "
 			       "and can be fast-forwarded.\n",
-			   num_theirs),
-			base, num_theirs);
+			   theirs),
+			base, theirs);
 		if (advice_status_hints)
 			strbuf_addf(sb,
 				_("  (use \"git pull\" to update your local branch)\n"));
@@ -1845,8 +1867,8 @@ int format_tracking_info(struct branch *branch, struct strbuf *sb)
 			   "Your branch and '%s' have diverged,\n"
 			       "and have %d and %d different commits each, "
 			       "respectively.\n",
-			   num_theirs),
-			base, num_ours, num_theirs);
+			   theirs),
+			base, ours, theirs);
 		if (advice_status_hints)
 			strbuf_addf(sb,
 				_("  (use \"git pull\" to merge the remote branch into yours)\n"));
