@@ -54,6 +54,13 @@ test_expect_success 'ref^{tree}' '
 	test_must_fail git rev-parse blob-tag^{tree}
 '
 
+test_expect_success 'ref^{tag}' '
+	test_must_fail git rev-parse HEAD^{tag} &&
+	git rev-parse commit-tag >expected &&
+	git rev-parse commit-tag^{tag} >actual &&
+	test_cmp expected actual
+'
+
 test_expect_success 'ref^{/.}' '
 	git rev-parse master >expected &&
 	git rev-parse master^{/.} >actual &&
