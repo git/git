@@ -100,7 +100,7 @@ test_expect_success 'revert forbidden on dirty working tree' '
 
 '
 
-test_expect_success 'chery-pick on unborn branch' '
+test_expect_success 'cherry-pick on unborn branch' '
 	git checkout --orphan unborn &&
 	git rm --cached -r . &&
 	rm -rf * &&

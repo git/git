@@ -105,7 +105,7 @@ test_expect_success 'cherry pick a root commit with --ff' '
 	test "$(git rev-parse --verify HEAD)" = "1df192cd8bc58a2b275d842cede4d221ad9000d1"
 '
 
-test_expect_success 'chery-pick --ff on unborn branch' '
+test_expect_success 'cherry-pick --ff on unborn branch' '
 	git checkout --orphan unborn &&
 	git rm --cached -r . &&
 	rm -rf * &&
