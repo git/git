@@ -10,12 +10,14 @@ test_description='Test bidirectionality of remote-hg'
 
 . ./test-lib.sh
 
-if ! test_have_prereq PYTHON; then
+if ! test_have_prereq PYTHON
+then
 	skip_all='skipping remote-hg tests; python not available'
 	test_done
 fi
 
-if ! python -c 'import mercurial'; then
+if ! python -c 'import mercurial'
+then
 	skip_all='skipping remote-hg tests; mercurial not available'
 	test_done
 fi
@@ -43,7 +45,7 @@ hg_push () {
 	git checkout -q -b tmp &&
 	git fetch -q "hg::../$1" 'refs/tags/*:refs/tags/*' 'refs/heads/*:refs/heads/*' &&
 	git checkout -q @{-1} &&
-	git branch -q -D tmp 2> /dev/null || true
+	git branch -q -D tmp 2>/dev/null || true
 	)
 }
 
@@ -62,7 +64,7 @@ setup () {
 	echo "tag = -d \"0 0\""
 	echo "[extensions]"
 	echo "graphlog ="
-	) >> "$HOME"/.hgrc &&
+	) >>"$HOME"/.hgrc &&
 	git config --global remote-hg.hg-git-compat true
 	git config --global remote-hg.track-branches true
 
@@ -81,22 +83,22 @@ test_expect_success 'encoding' '
 	git init -q gitrepo &&
 	cd gitrepo &&
 
-	echo alpha > alpha &&
+	echo alpha >alpha &&
 	git add alpha &&
 	git commit -m "add älphà" &&
 
 	GIT_AUTHOR_NAME="tést èncödîng" &&
 	export GIT_AUTHOR_NAME &&
-	echo beta > beta &&
+	echo beta >beta &&
 	git add beta &&
 	git commit -m "add beta" &&
 
-	echo gamma > gamma &&
+	echo gamma >gamma &&
 	git add gamma &&
 	git commit -m "add gämmâ" &&
 
 	: TODO git config i18n.commitencoding latin-1 &&
-	echo delta > delta &&
+	echo delta >delta &&
 	git add delta &&
 	git commit -m "add déltà"
 	) &&
@@ -105,8 +107,8 @@ test_expect_success 'encoding' '
 	git_clone hgrepo gitrepo2 &&
 	hg_clone gitrepo2 hgrepo2 &&
 
-	HGENCODING=utf-8 hg_log hgrepo > expected &&
-	HGENCODING=utf-8 hg_log hgrepo2 > actual &&
+	HGENCODING=utf-8 hg_log hgrepo >expected &&
+	HGENCODING=utf-8 hg_log hgrepo2 >actual &&
 
 	test_cmp expected actual
 '
@@ -117,14 +119,14 @@ test_expect_success 'file removal' '
 	(
 	git init -q gitrepo &&
 	cd gitrepo &&
-	echo alpha > alpha &&
+	echo alpha >alpha &&
 	git add alpha &&
 	git commit -m "add alpha" &&
-	echo beta > beta &&
+	echo beta >beta &&
 	git add beta &&
 	git commit -m "add beta"
 	mkdir foo &&
-	echo blah > foo/bar &&
+	echo blah >foo/bar &&
 	git add foo &&
 	git commit -m "add foo" &&
 	git rm alpha &&
@@ -137,8 +139,8 @@ test_expect_success 'file removal' '
 	git_clone hgrepo gitrepo2 &&
 	hg_clone gitrepo2 hgrepo2 &&
 
-	hg_log hgrepo > expected &&
-	hg_log hgrepo2 > actual &&
+	hg_log hgrepo >expected &&
+	hg_log hgrepo2 >actual &&
 
 	test_cmp expected actual
 '
@@ -150,12 +152,12 @@ test_expect_success 'git tags' '
 	git init -q gitrepo &&
 	cd gitrepo &&
 	git config receive.denyCurrentBranch ignore &&
-	echo alpha > alpha &&
+	echo alpha >alpha &&
 	git add alpha &&
 	git commit -m "add alpha" &&
 	git tag alpha &&
 
-	echo beta > beta &&
+	echo beta >beta &&
 	git add beta &&
 	git commit -m "add beta" &&
 	git tag -a -m "added tag beta" beta
@@ -165,8 +167,8 @@ test_expect_success 'git tags' '
 	git_clone hgrepo gitrepo2 &&
 	hg_clone gitrepo2 hgrepo2 &&
 
-	hg_log hgrepo > expected &&
-	hg_log hgrepo2 > actual &&
+	hg_log hgrepo >expected &&
+	hg_log hgrepo2 >actual &&
 
 	test_cmp expected actual
 '
@@ -178,7 +180,7 @@ test_expect_success 'hg branch' '
 	git init -q gitrepo &&
 	cd gitrepo &&
 
-	echo alpha > alpha &&
+	echo alpha >alpha &&
 	git add alpha &&
 	git commit -q -m "add alpha" &&
 	git checkout -q -b not-master
@@ -201,8 +203,8 @@ test_expect_success 'hg branch' '
 	: Back to the common revision &&
 	(cd hgrepo && hg checkout default) &&
 
-	hg_log hgrepo > expected &&
-	hg_log hgrepo2 > actual &&
+	hg_log hgrepo >expected &&
+	hg_log hgrepo2 >actual &&
 
 	test_cmp expected actual
 '
@@ -214,7 +216,7 @@ test_expect_success 'hg tags' '
 	git init -q gitrepo &&
 	cd gitrepo &&
 
-	echo alpha > alpha &&
+	echo alpha >alpha &&
 	git add alpha &&
 	git commit -m "add alpha" &&
 	git checkout -q -b not-master
@@ -231,8 +233,8 @@ test_expect_success 'hg tags' '
 	hg_push hgrepo gitrepo &&
 	hg_clone gitrepo hgrepo2 &&
 
-	hg_log hgrepo > expected &&
-	hg_log hgrepo2 > actual &&
+	hg_log hgrepo >expected &&
+	hg_log hgrepo2 >actual &&
 
 	test_cmp expected actual
 '

@@ -23,7 +23,11 @@ import subprocess
 import urllib
 import atexit
 import urlparse, hashlib
+import time as ptime
 
+#
+# If you want to see Mercurial revisions as Git commit notes:
+# git config core.notesRef refs/notes/hg
 #
 # If you are not in hg-git-compat mode and want to disable the tracking of
 # named branches:
@@ -126,6 +130,7 @@ class Marks:
         self.rev_marks = {}
         self.last_mark = 0
         self.version = 0
+        self.last_note = 0
 
     def load(self):
         if not os.path.exists(self.path):
@@ -137,6 +142,7 @@ class Marks:
         self.marks = tmp['marks']
         self.last_mark = tmp['last-mark']
         self.version = tmp.get('version', 1)
+        self.last_note = tmp.get('last-note', 0)
 
         for rev, mark in self.marks.iteritems():
             self.rev_marks[mark] = rev
@@ -150,7 +156,7 @@ class Marks:
         self.version = 2
 
     def dict(self):
-        return { 'tips': self.tips, 'marks': self.marks, 'last-mark' : self.last_mark, 'version' : self.version }
+        return { 'tips': self.tips, 'marks': self.marks, 'last-mark' : self.last_mark, 'version' : self.version, 'last-note' : self.last_note }
 
     def store(self):
         json.dump(self.dict(), open(self.path, 'w'))
@@ -227,8 +233,6 @@ class Parser:
         return sys.stdin.read(size)
 
     def get_author(self):
-        global bad_mail
-
         ex = None
         m = RAW_AUTHOR_RE.match(self.line)
         if not m:
@@ -261,8 +265,6 @@ def fix_file_path(path):
     return os.path.relpath(path, '/')
 
 def export_files(files):
-    global marks, filenodes
-
     final = []
     for f in files:
         fid = node.hex(f.filenode())
@@ -344,8 +346,6 @@ def fixup_user_hg(user):
     return (name, mail)
 
 def fixup_user(user):
-    global mode, bad_mail
-
     if mode == 'git':
         name, mail = fixup_user_git(user)
     else:
@@ -374,7 +374,7 @@ def updatebookmarks(repo, peer):
         bookmarks.write(repo)
 
 def get_repo(url, alias):
-    global dirname, peer
+    global peer
 
     myui = ui.ui()
     myui.setconfig('ui', 'interactive', 'off')
@@ -429,16 +429,12 @@ def get_repo(url, alias):
     return repo
 
 def rev_to_mark(rev):
-    global marks
     return marks.from_rev(rev.hex())
 
 def mark_to_rev(mark):
-    global marks
     return marks.to_rev(mark)
 
 def export_ref(repo, name, kind, head):
-    global prefix, marks, mode
-
     ename = '%s/%s' % (kind, name)
     try:
         tip = marks.get_tip(ename)
@@ -535,6 +531,31 @@ def export_ref(repo, name, kind, head):
     print "from :%u" % rev_to_mark(head)
     print
 
+    pending_revs = set(revs) - notes
+    if pending_revs:
+        note_mark = marks.next_mark()
+        ref = "refs/notes/hg"
+
+        print "commit %s" % ref
+        print "mark :%d" % (note_mark)
+        print "committer remote-hg <> %s" % (ptime.strftime('%s %z'))
+        desc = "Notes for %s\n" % (name)
+        print "data %d" % (len(desc))
+        print desc
+        if marks.last_note:
+            print "from :%u" % marks.last_note
+
+        for rev in pending_revs:
+            notes.add(rev)
+            c = repo[rev]
+            print "N inline :%u" % rev_to_mark(c)
+            msg = c.hex()
+            print "data %d" % (len(msg))
+            print msg
+        print
+
+        marks.last_note = note_mark
+
     marks.set_tip(ename, head.hex())
 
 def export_tag(repo, tag):
@@ -550,12 +571,9 @@ def export_branch(repo, branch):
     export_ref(repo, branch, 'branches', head)
 
 def export_head(repo):
-    global g_head
     export_ref(repo, g_head[0], 'bookmarks', g_head[1])
 
 def do_capabilities(parser):
-    global prefix, dirname
-
     print "import"
     print "export"
     print "refspec refs/heads/branches/*:%s/branches/*" % prefix
@@ -575,8 +593,6 @@ def branch_tip(branch):
     return branches[branch][-1]
 
 def get_branch_tip(repo, branch):
-    global branches
-
     heads = branches.get(hgref(branch), None)
     if not heads:
         return None
@@ -589,7 +605,7 @@ def get_branch_tip(repo, branch):
     return heads[0]
 
 def list_head(repo, cur):
-    global g_head, bmarks, fake_bmark
+    global g_head, fake_bmark
 
     if 'default' not in branches:
         # empty repo
@@ -605,8 +621,6 @@ def list_head(repo, cur):
     g_head = (head, node)
 
 def do_list(parser):
-    global branches, bmarks, track_branches
-
     repo = parser.repo
     for bmark, node in bookmarks.listbookmarks(repo).iteritems():
         bmarks[bmark] = repo[node]
@@ -674,8 +688,6 @@ def do_import(parser):
     print 'done'
 
 def parse_blob(parser):
-    global blob_marks
-
     parser.next()
     mark = parser.get_mark()
     parser.next()
@@ -692,9 +704,6 @@ def get_merge_files(repo, p1, p2, files):
             files[e] = f
 
 def parse_commit(parser):
-    global marks, blob_marks, parsed_refs
-    global mode
-
     from_mark = merge_mark = None
 
     ref = parser[1]
@@ -812,8 +821,6 @@ def parse_commit(parser):
     marks.new_mark(node, commit_mark)
 
 def parse_reset(parser):
-    global parsed_refs
-
     ref = parser[1]
     parser.next()
     # ugh
@@ -1006,8 +1013,6 @@ def check_tip(ref, kind, name, heads):
         return tip in heads
 
 def do_export(parser):
-    global parsed_refs, bmarks, peer
-
     p_bmarks = []
     p_revs = {}
 
@@ -1079,7 +1084,7 @@ def do_export(parser):
             author, msg = parsed_tags.get(tag, (None, None))
             if mode == 'git':
                 if not msg:
-                    msg = 'Added tag %s for changeset %s' % (tag, node[:12]);
+                    msg = 'Added tag %s for changeset %s' % (tag, node[:12])
                 tagnode, branch = write_tag(parser.repo, tag, node, msg, author)
                 p_revs[tagnode] = 'refs/heads/branches/' + gitref(branch)
             else:
@@ -1152,6 +1157,7 @@ def main(args):
     global filenodes
     global fake_bmark, hg_version
     global dry_run
+    global notes, alias
 
     alias = args[1]
     url = args[2]
@@ -1191,6 +1197,7 @@ def main(args):
     except:
         hg_version = None
     dry_run = False
+    notes = set()
 
     repo = get_repo(url, alias)
     prefix = 'refs/hg/%s' % alias
