@@ -2665,6 +2665,16 @@ if {![is_bare]} {
 	.mbar.repository add command \
 		-label [mc "Explore Working Copy"] \
 		-command {do_explore}
+}
+
+if {[is_Windows]} {
+	.mbar.repository add command \
+		-label [mc "Git Bash"] \
+		-command {eval exec [auto_execok start] \
+					  [list "Git Bash" bash --login -l &]}
+}
+
+if {[is_Windows] || ![is_bare]} {
 	.mbar.repository add separator
 }
 
