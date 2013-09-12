@@ -63,6 +63,10 @@ Foreign interfaces, subsystems and ports.
 
 UI, Workflows & Features
 
+ * "git config" did not provide a way to set or access numbers larger
+   than a native "int" on the platform; it now provides 64-bit signed
+   integers on all platforms.
+
  * "git pull --rebase" always chose to do the bog-standard flattening
    rebase.  You can tell it to run "rebase --preserve-merges" by
    setting "pull.rebase" configuration to "preserve".
