@@ -281,9 +281,11 @@ char *url_normalize(const char *url, struct url_info *out_info)
 		url_len--;
 	}
 	for (;;) {
-		const char *seg_start = norm.buf + norm.len;
+		const char *seg_start;
+		size_t seg_start_off = norm.len;
 		const char *next_slash = url + strcspn(url, "/?#");
 		int skip_add_slash = 0;
+
 		/*
 		 * RFC 3689 indicates that any . or .. segments should be
 		 * unescaped before being checked for.
@@ -297,6 +299,8 @@ char *url_normalize(const char *url, struct url_info *out_info)
 			strbuf_release(&norm);
 			return NULL;
 		}
+
+		seg_start = norm.buf + seg_start_off;
 		if (!strcmp(seg_start, ".")) {
 			/* ignore a . segment; be careful not to remove initial '/' */
 			if (seg_start == path_start + 1) {
