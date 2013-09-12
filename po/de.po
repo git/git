@@ -4694,12 +4694,12 @@ msgstr "git describe [Optionen] --dirty"
 #: builtin/describe.c:237
 #, c-format
 msgid "annotated tag %s not available"
-msgstr "annotierter Tag %s ist nicht verfügbar"
+msgstr "annotiertes Tag %s ist nicht verfügbar"
 
 #: builtin/describe.c:241
 #, c-format
 msgid "annotated tag %s has no embedded name"
-msgstr "annotierter Tag %s hat keinen eingebetteten Namen"
+msgstr "annotiertes Tag %s hat keinen eingebetteten Namen"
 
 #: builtin/describe.c:243
 #, c-format
@@ -4765,7 +4765,7 @@ msgstr ""
 
 #: builtin/describe.c:409
 msgid "find the tag that comes after the commit"
-msgstr "findet den Tag, die nach Commit kommt"
+msgstr "findet das Tag, das nach Commit kommt"
 
 #: builtin/describe.c:410
 msgid "debug search strategy on stderr"
@@ -4777,7 +4777,7 @@ msgstr "verwendet alle Referenzen"
 
 #: builtin/describe.c:412
 msgid "use any tag, even unannotated"
-msgstr "verwendet jeden Tag, auch nicht-annotierte"
+msgstr "verwendet jedes Tag, auch nicht-annotierte"
 
 #: builtin/describe.c:413
 msgid "always use long format"
@@ -4880,7 +4880,7 @@ msgstr "Importiert Kennzeichen von dieser Datei"
 
 #: builtin/fast-export.c:678
 msgid "Fake a tagger when tags lack one"
-msgstr "erzeugt künstlich einen Tag-Ersteller, wenn der Tag keinen hat"
+msgstr "erzeugt künstlich einen Tag-Ersteller, wenn das Tag keinen hat"
 
 #: builtin/fast-export.c:680
 msgid "Output full tree for each commit"
@@ -5013,7 +5013,7 @@ msgstr "  (kann lokale Referenz nicht aktualisieren)"
 
 #: builtin/fetch.c:324
 msgid "[new tag]"
-msgstr "[neuer Tag]"
+msgstr "[neues Tag]"
 
 #: builtin/fetch.c:327
 msgid "[new branch]"
@@ -7831,7 +7831,7 @@ msgstr ""
 #: builtin/push.c:257
 msgid "Updates were rejected because the tag already exists in the remote."
 msgstr ""
-"Aktualisierungen wurden zurückgewiesen, weil der Tag bereits\n"
+"Aktualisierungen wurden zurückgewiesen, weil das Tag bereits\n"
 "im Remote-Repository existiert."
 
 #: builtin/push.c:260
@@ -9244,7 +9244,7 @@ msgstr "Optionen für Erstellung von Tags"
 
 #: builtin/tag.c:454
 msgid "annotated tag, needs a message"
-msgstr "annotierter Tag, benötigt eine Beschreibung"
+msgstr "annotiertes Tag, benötigt eine Beschreibung"
 
 #: builtin/tag.c:456
 msgid "tag message"
@@ -9252,15 +9252,15 @@ msgstr "Tag-Beschreibung"
 
 #: builtin/tag.c:458
 msgid "annotated and GPG-signed tag"
-msgstr "annotierter und GPG-signierter Tag"
+msgstr "annotiertes und GPG-signiertes Tag"
 
 #: builtin/tag.c:462
 msgid "use another key to sign the tag"
-msgstr "verwendet einen anderen Schlüssel um den Tag zu signieren"
+msgstr "verwendet einen anderen Schlüssel um das Tag zu signieren"
 
 #: builtin/tag.c:463
 msgid "replace the tag if exists"
-msgstr "ersetzt den Tag, wenn er existiert"
+msgstr "ersetzt das Tag, wenn es existiert"
 
 #: builtin/tag.c:464
 msgid "show tag list in columns"
