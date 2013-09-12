@@ -143,7 +143,6 @@ static int read_from_tree(const struct pathspec *pathspec,
 	opt.output_format = DIFF_FORMAT_CALLBACK;
 	opt.format_callback = update_index_from_diff;
 
-	read_cache();
 	if (do_diff_cache(tree_sha1, &opt))
 		return 1;
 	diffcore_std(&opt);
@@ -169,7 +168,7 @@ static void set_reflog_message(struct strbuf *sb, const char *action,
 
 static void die_if_unmerged_cache(int reset_type)
 {
-	if (is_merge() || read_cache() < 0 || unmerged_cache())
+	if (is_merge() || unmerged_cache())
 		die(_("Cannot do a %s reset in the middle of a merge."),
 		    _(reset_type_names[reset_type]));
 
@@ -220,8 +219,13 @@ static void parse_args(struct pathspec *pathspec,
 		}
 	}
 	*rev_ret = rev;
+
+	if (read_cache() < 0)
+		die(_("index file corrupt"));
+
 	parse_pathspec(pathspec, 0,
 		       PATHSPEC_PREFER_FULL |
+		       PATHSPEC_STRIP_SUBMODULE_SLASH_CHEAP |
 		       (patch_mode ? PATHSPEC_PREFIX_ORIGIN : 0),
 		       prefix, argv);
 }
