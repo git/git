@@ -119,7 +119,8 @@ static int format_config(struct strbuf *buf, const char *key_, const char *value
 		must_print_delim = 1;
 	}
 	if (types == TYPE_INT)
-		sprintf(value, "%d", git_config_int(key_, value_ ? value_ : ""));
+		sprintf(value, "%"PRId64,
+			git_config_int64(key_, value_ ? value_ : ""));
 	else if (types == TYPE_BOOL)
 		vptr = git_config_bool(key_, value_) ? "true" : "false";
 	else if (types == TYPE_BOOL_OR_INT) {
@@ -268,8 +269,8 @@ static char *normalize_value(const char *key, const char *value)
 	else {
 		normalized = xmalloc(64);
 		if (types == TYPE_INT) {
-			int v = git_config_int(key, value);
-			sprintf(normalized, "%d", v);
+			int64_t v = git_config_int64(key, value);
+			sprintf(normalized, "%"PRId64, v);
 		}
 		else if (types == TYPE_BOOL)
 			sprintf(normalized, "%s",
