@@ -32,6 +32,14 @@ BEGIN {
 	}
 }
 
+# serf has a bug that leads to a coredump upon termination if the
+# remote access object is left around (not fixed yet in serf 1.3.1).
+# Explicitly free it to work around the issue.
+END {
+	$RA = undef;
+	$ra_invalid = 1;
+}
+
 sub _auth_providers () {
 	my @rv = (
 	  SVN::Client::get_simple_provider(),
