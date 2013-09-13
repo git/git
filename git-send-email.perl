@@ -1234,7 +1234,7 @@ X-Mailer: git-send-email $gitversion
 				if ($smtp->code == 220) {
 					$smtp = Net::SMTP::SSL->start_SSL($smtp,
 									  ssl_verify_params())
-						or die "STARTTLS failed! ".$smtp->message;
+						or die "STARTTLS failed! ".IO::Socket::SSL::errstr();
 					$smtp_encryption = '';
 					# Send EHLO again to receive fresh
 					# supported commands
