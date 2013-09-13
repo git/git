@@ -10,6 +10,20 @@ struct ref_lock {
 	int force_write;
 };
 
+/**
+ * Information needed for a single ref update.  Set new_sha1 to the
+ * new value or to zero to delete the ref.  To check the old value
+ * while locking the ref, set have_old to 1 and set old_sha1 to the
+ * value or to zero to ensure the ref does not exist before update.
+ */
+struct ref_update {
+	const char *ref_name;
+	unsigned char new_sha1[20];
+	unsigned char old_sha1[20];
+	int flags; /* REF_NODEREF? */
+	int have_old; /* 1 if old_sha1 is valid, 0 otherwise */
+};
+
 /*
  * Bit values set in the flags argument passed to each_ref_fn():
  */
@@ -137,7 +151,7 @@ extern struct ref_lock *lock_ref_sha1(const char *refname, const unsigned char *
 #define REF_NODEREF	0x01
 extern struct ref_lock *lock_any_ref_for_update(const char *refname,
 						const unsigned char *old_sha1,
-						int flags);
+						int flags, int *type_p);
 
 /** Close the file descriptor owned by a lock and return the status */
 extern int close_ref(struct ref_lock *lock);
@@ -213,6 +227,12 @@ enum action_on_err { MSG_ON_ERR, DIE_ON_ERR, QUIET_ON_ERR };
 int update_ref(const char *action, const char *refname,
 		const unsigned char *sha1, const unsigned char *oldval,
 		int flags, enum action_on_err onerr);
+
+/**
+ * Lock all refs and then perform all modifications.
+ */
+int update_refs(const char *action, const struct ref_update **updates,
+		int n, enum action_on_err onerr);
 
 extern int parse_hide_refs_config(const char *var, const char *value, const char *);
 extern int ref_is_hidden(const char *);

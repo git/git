@@ -262,7 +262,8 @@ static int s_update_ref(const char *action,
 		rla = default_rla.buf;
 	snprintf(msg, sizeof(msg), "%s: %s", rla, action);
 	lock = lock_any_ref_for_update(ref->name,
-				       check_old ? ref->old_sha1 : NULL, 0);
+				       check_old ? ref->old_sha1 : NULL,
+				       0, NULL);
 	if (!lock)
 		return errno == ENOTDIR ? STORE_REF_ERROR_DF_CONFLICT :
 					  STORE_REF_ERROR_OTHER;

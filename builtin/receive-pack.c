@@ -526,7 +526,8 @@ static const char *update(struct command *cmd)
 		return NULL; /* good */
 	}
 	else {
-		lock = lock_any_ref_for_update(namespaced_name, old_sha1, 0);
+		lock = lock_any_ref_for_update(namespaced_name, old_sha1,
+					       0, NULL);
 		if (!lock) {
 			rp_error("failed to lock %s", name);
 			return "failed to lock";

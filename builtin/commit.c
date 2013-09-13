@@ -1631,7 +1631,7 @@ int cmd_commit(int argc, const char **argv, const char *prefix)
 					   !current_head
 					   ? NULL
 					   : current_head->object.sha1,
-					   0);
+					   0, NULL);
 
 	nl = strchr(sb.buf, '\n');
 	if (nl)
