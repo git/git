@@ -1,17 +1,17 @@
 To: git@vger.kernel.org
 Bcc: lwn@lwn.net
-Subject: What's cooking in git.git (Sep 2013, #03; Wed, 11)
-X-master-at: a194eaddca201163aa756faccd519f056bd3c35e
-X-next-at: 424cb083fbc33c0ccd89e8d591920f438eab564d
+Subject: What's cooking in git.git (Sep 2013, #04; Fri, 13)
+X-master-at: b3e7d24ca19d841eb2c5c7fce7919ebb5d370a6f
+X-next-at: 7b94f8e7d8c83ea87e9d80f00dc6cfd2dc245329
 
-What's cooking in git.git (Sep 2013, #03; Wed, 11)
+What's cooking in git.git (Sep 2013, #04; Fri, 13)
 --------------------------------------------------
 
 Here are the topics that have been cooking.  Commits prefixed with
 '-' are only in 'pu' (proposed updates) while commits prefixed with
 '+' are in 'next'.
 
-The second batch of topics are now in 'master'.
+The third batch of topics are now in 'master'.
 
 You can find the changes described here in the integration branches
 of the repositories listed at
@@ -21,189 +21,100 @@ of the repositories listed at
 --------------------------------------------------
 [Graduated to "master"]
 
-* es/rebase-i-no-abbrev (2013-08-25) 3 commits
-  (merged to 'next' on 2013-09-04 at 6027805)
- + rebase -i: fix short SHA-1 collision
- + t3404: rebase -i: demonstrate short SHA-1 collision
- + t3404: make tests more self-contained
-
- Originally merged to 'next' on 2013-08-26
-
- The commit object names in the insn sheet that was prepared at the
- beginning of "rebase -i" session can become ambiguous as the
- rebasing progresses and the repository gains more commits. Make
- sure the internal record is kept with full 40-hex object names.
+* jc/commit-is-spelled-with-two-ems (2013-09-05) 2 commits
+  (merged to 'next' on 2013-09-05 at 982aef2)
+ + typofix: cherry is spelled with two ars
+ + typofix: commit is spelled with two ems
 
 
-* es/rebase-i-respect-core-commentchar (2013-08-18) 1 commit
-  (merged to 'next' on 2013-09-04 at 8c1ce68)
- + rebase -i: fix cases ignoring core.commentchar
+* jc/pager-configuration-doc (2013-08-29) 1 commit
+  (merged to 'next' on 2013-09-05 at 3169083)
+ + config: rewrite core.pager documentation
 
- Originally merged to 'next' on 2013-08-20
-
- "rebase -i" forgot that the comment character can be configurable
- while reading its insn sheet.
+ It was unclear in the documentation how various configurations and
+ environment variables determine which pager is eventually used.
 
 
-* jc/ls-files-killed-optim (2013-08-23) 4 commits
-  (merged to 'next' on 2013-09-04 at 20c2304)
- + dir.c::test_one_path(): work around directory_exists_in_index_icase() breakage
- + t3010: update to demonstrate "ls-files -k" optimization pitfalls
- + ls-files -k: a directory only can be killed if the index has a non-directory
- + dir.c: use the cache_* macro to access the current index
+* jk/config-int-range-check (2013-09-09) 5 commits
+  (merged to 'next' on 2013-09-09 at 9ab779d)
+ + git-config: always treat --int as 64-bit internally
+ + config: make numeric parsing errors more clear
+ + config: set errno in numeric git_parse_* functions
+ + config: properly range-check integer values
+ + config: factor out integer parsing from range checks
 
- Originally merged to 'next' on 2013-08-27
-
- "git ls-files -k" needs to crawl only the part of the working tree
- that may overlap the paths in the index to find killed files, but
- shared code with the logic to find all the untracked files, which
- made it unnecessarily inefficient.
+ "git config" did not provide a way to set or access numbers larger
+ than a native "int" on the platform; it now provides 64-bit signed
+ integers on all platforms.
 
 
-* jn/post-receive-utf8 (2013-08-05) 3 commits
-  (merged to 'next' on 2013-09-04 at 3a3f480)
- + hooks/post-receive-email: set declared encoding to utf-8
- + hooks/post-receive-email: force log messages in UTF-8
- + hooks/post-receive-email: use plumbing instead of git log/show
-
- Originally merged to 'next' on 2013-08-20
-
- Update post-receive-email script to make sure the message contents
- and pathnames are encoded consistently in UTF-8.
+* mm/fast-import-feature-doc (2013-08-25) 1 commit
+  (merged to 'next' on 2013-09-05 at 83802e2)
+ + Documentation/fast-import: clarify summary for `feature` command
 
 
-* js/xread-in-full (2013-08-20) 1 commit
-  (merged to 'next' on 2013-09-04 at 5bfb049)
- + stream_to_pack: xread does not guarantee to read all requested bytes
-
- Originally merged to 'next' on 2013-08-20
-
- A call to xread() was used without a loop around to cope with short
- read in the codepath to stream new contents to a pack.
+* mm/mediawiki-dumb-push-fix (2013-09-03) 4 commits
+  (merged to 'next' on 2013-09-05 at f8313f4)
+ + git-remote-mediawiki: no need to update private ref in non-dumb push
+ + git-remote-mediawiki: use no-private-update capability on dumb push
+ + transport-helper: add no-private-update capability
+ + git-remote-mediawiki: add test and check Makefile targets
 
 
-* nd/push-no-thin (2013-08-13) 1 commit
-  (merged to 'next' on 2013-09-04 at faa8c02)
- + push: respect --no-thin
-
- Originally merged to 'next' on 2013-08-14
-
- "git push --no-thin" was a no-op by mistake.
+* mm/remote-helpers-doc (2013-08-26) 1 commit
+  (merged to 'next' on 2013-09-05 at c181b35)
+ + Documentation/remote-helpers: document common use-case for private ref
 
 
-* rt/rebase-p-no-merge-summary (2013-08-21) 1 commit
-  (merged to 'next' on 2013-09-04 at d8d89ee)
- + rebase --preserve-merges: ignore "merge.log" config
-
- Originally merged to 'next' on 2013-08-22
-
- "git rebase -p" internally used the merge machinery, but when
- rebasing, there should not be a need for merge summary.
-
-
-* sb/mailmap-freeing-NULL-is-ok (2013-08-20) 1 commit
-  (merged to 'next' on 2013-09-04 at c831015)
- + mailmap: remove redundant check for freeing memory
-
- Originally merged to 'next' on 2013-08-20
-
-
-* sh/pull-rebase-preserve (2013-09-04) 1 commit
-  (merged to 'next' on 2013-09-04 at 32a93bb)
- + pull: allow pull to preserve merges when rebasing
-
- Originally merged to 'next' on 2013-08-14
-
- "git pull --rebase" always flattened the history; pull.rebase can
- now be set to "preserve" to invoke "rebase --preserve-merges".
-
-
-* tf/gitweb-ss-tweak (2013-08-20) 4 commits
-  (merged to 'next' on 2013-09-04 at 774bfbe)
- + gitweb: make search help link less ugly
- + gitweb: omit the repository owner when it is unset
- + gitweb: vertically centre contents of page footer
- + gitweb: ensure OPML text fits inside its box
-
- Originally merged to 'next' on 2013-08-22
-
- Tweak Gitweb CSS to layout some elements better.
+* mn/doc-pack-heu-remove-dead-pastebin (2013-08-23) 1 commit
+  (merged to 'next' on 2013-09-05 at 5caecec)
+ + remove dead pastebin link from pack-heuristics document
 
 --------------------------------------------------
 [New Topics]
 
-* bc/send-email-ssl-die-message-fix (2013-09-10) 1 commit
- - send-email: don't call methods on undefined values
+* jc/url-match (2013-09-12) 1 commit
+  (merged to 'next' on 2013-09-13 at 7b94f8e)
+ + urlmatch.c: recompute pointer after append_normalized_escapes
 
- When send-email comes up with an error message to die with upon
- failure to start an SSL session, it tried to read the error string
- from a wrong place.
+ While normalizing a URL, we forgot that the buffer that holds it
+ could be relocated when it grows, which was a brown-paper-bag bug
+ that can lead to a crash introduced on 'master' post 1.8.4 release.
 
- Will merge to 'next'.
-
-
-* jc/checkout-detach-doc (2013-09-11) 1 commit
- - checkout: update synopsys and documentation on detaching HEAD
-
- "git checkout [--detach] <commit>" was listed poorly in the
- synopsis section of its documentation.
+ Will merge to 'master' in the fourth batch.
 
 
-* jc/cvsserver-perm-bit-fix (2013-09-11) 1 commit
- - cvsserver: pick up the right mode bits
-
- "git cvsserver" computed the permission mode bits incorrectly for
- executable files.
-
- Will merge to 'next'.
+* jx/relative-path-regression-fix (2013-09-13) 3 commits
+ - Use simpler relative_path when set_git_dir
+ - relative_path should honor dos_drive_prefix
+ - test: use unambigous leading path (/foo) for mingw
+ (this branch uses jx/clean-interactive.)
 
 
-* jk/trailing-slash-in-pathspec (2013-09-10) 2 commits
- - rm: re-use parse_pathspec's trailing-slash removal
- - reset: handle submodule with trailing slash
+* nd/unpack-entry-optim-in-pack-objects (2013-09-13) 1 commit
+ - pack-objects: no crc check when the cached version is used
 
- Needs a reroll?
-
-
-* kb/msvc-compile (2013-09-11) 5 commits
- - Windows: do not redefine _WIN32_WINNT
- - MinGW: Fix stat definitions to work with MinGW runtime version 4.0
- - MSVC: fix stat definition hell
- - MSVC: fix compile errors due to macro redefinitions
- - MSVC: fix compile errors due to missing libintl.h
-
- Build updates for Windows port.
-
-
-* lc/filter-branch-too-many-refs (2013-09-11) 2 commits
- - ### DONOTMERGE - missing sign-off
- - Allow git-filter-branch to process large repositories with lots of branches.
-
- "git filter-branch" in a repository with many refs blew limit of
- command line length.
-
- Needs a sign-off.
-
-
-* mm/commit-template-squelch-advice-messages (2013-09-11) 2 commits
- - commit: disable status hints when writing to COMMIT_EDITMSG
- - wt-status: turn advice_status_hints into a field of wt_status
-
- From the commit log template, remove irrelevant "advice" messages
- that are shared with "git status" output.
-
- Will merge to 'next'.
-
-
-* np/lookup-object-hashing (2013-09-11) 1 commit
- - lookup_object: remove hashtable_index() and optimize hash_obj()
-
- Micro optimize hash function used in the object hash table.
+ The codepath to use data from packfiles that is only exercised in
+ pack-objects unnecessarily checked crc checksum of the pack data,
+ even when it ends up using in-core copy that it got by reading from
+ the pack (at which point the checksum was validated).
 
  Will merge to 'next'.
 
 --------------------------------------------------
 [Stalled]
+
+* jc/ref-excludes (2013-09-03) 2 commits
+ - document --exclude option
+ - revision: introduce --exclude=<glob> to tame wildcards
+
+ People often wished a way to tell "git log --branches" (and "git
+ log --remotes --not --branches") to exclude some local branches
+ from the expansion of "--branches" (similarly for "--tags", "--all"
+ and "--glob=<pattern>").  Now they have one.
+
+ Needs a matching change to rev-parse.
+
 
 * rv/send-email-cache-generated-mid (2013-08-21) 2 commits
  - git-send-email: Cache generated message-ids, use them when prompting
@@ -294,6 +205,85 @@ of the repositories listed at
 --------------------------------------------------
 [Cooking]
 
+* bc/send-email-ssl-die-message-fix (2013-09-10) 1 commit
+  (merged to 'next' on 2013-09-13 at c6fcdf4)
+ + send-email: don't call methods on undefined values
+
+ When send-email comes up with an error message to die with upon
+ failure to start an SSL session, it tried to read the error string
+ from a wrong place.
+
+ Will merge to 'master' in the fourth batch.
+
+
+* jc/checkout-detach-doc (2013-09-11) 1 commit
+ - checkout: update synopsys and documentation on detaching HEAD
+
+ "git checkout [--detach] <commit>" was listed poorly in the
+ synopsis section of its documentation.
+
+
+* jc/cvsserver-perm-bit-fix (2013-09-11) 1 commit
+  (merged to 'next' on 2013-09-13 at 56db105)
+ + cvsserver: pick up the right mode bits
+
+ "git cvsserver" computed the permission mode bits incorrectly for
+ executable files.
+
+ Will merge to 'master' in the fourth batch.
+
+
+* jk/trailing-slash-in-pathspec (2013-09-13) 2 commits
+ - reset: handle submodule with trailing slash
+ - rm: re-use parse_pathspec's trailing-slash removal
+
+ Code refactoring.
+
+ Will merge to 'next'.
+
+
+* kb/msvc-compile (2013-09-11) 5 commits
+ - Windows: do not redefine _WIN32_WINNT
+ - MinGW: Fix stat definitions to work with MinGW runtime version 4.0
+ - MSVC: fix stat definition hell
+ - MSVC: fix compile errors due to macro redefinitions
+ - MSVC: fix compile errors due to missing libintl.h
+
+ Build updates for Windows port.
+
+ Will merge to 'next'.
+
+
+* lc/filter-branch-too-many-refs (2013-09-12) 1 commit
+ - Allow git-filter-branch to process large repositories with lots of branches.
+
+ "git filter-branch" in a repository with many refs blew limit of
+ command line length.
+
+ Will merge to 'next'.
+
+
+* mm/commit-template-squelch-advice-messages (2013-09-12) 3 commits
+  (merged to 'next' on 2013-09-13 at 410d207)
+ + commit: disable status hints when writing to COMMIT_EDITMSG
+ + wt-status: turn advice_status_hints into a field of wt_status
+ + commit: factor status configuration is a helper function
+
+ From the commit log template, remove irrelevant "advice" messages
+ that are shared with "git status" output.
+
+ Will merge to 'master' in the fifth batch.
+
+
+* np/lookup-object-hashing (2013-09-11) 1 commit
+  (merged to 'next' on 2013-09-12 at d835ef6)
+ + lookup_object: remove hashtable_index() and optimize hash_obj()
+
+ Micro optimize hash function used in the object hash table.
+
+ Will merge to 'master' in the fifth batch.
+
+
 * js/add-i-mingw (2013-09-04) 1 commit
   (merged to 'next' on 2013-09-10 at 50ab841)
  + add--interactive: fix external command invocation on Windows
@@ -302,7 +292,7 @@ of the repositories listed at
  ActiveState Perl limitation but it by mistake also triggered on Git
  for Windows where MSYS perl is used.
 
- Will merge to 'master' in the third batch.
+ Will merge to 'master' in the fourth batch.
 
 
 * rh/ishes-doc (2013-09-04) 7 commits
@@ -320,30 +310,23 @@ of the repositories listed at
  their dashed form.  More importantly, clarify the documentation on
  object peeling using these terms.
 
- Will merge to 'master' in the third batch.
+ Will merge to 'master' in the fourth batch.
 
 
-* jc/commit-is-spelled-with-two-ems (2013-09-05) 2 commits
-  (merged to 'next' on 2013-09-05 at 982aef2)
- + typofix: cherry is spelled with two ars
- + typofix: commit is spelled with two ems
-
- Will merge to 'master' in the third batch.
-
-
-* bc/http-backend-allow-405 (2013-09-09) 1 commit
- - http-backend: provide Allow header for 405
+* bc/http-backend-allow-405 (2013-09-12) 1 commit
+  (merged to 'next' on 2013-09-12 at bc1719f)
+ + http-backend: provide Allow header for 405
 
  When the webserver responds with "405 Method Not Allowed", it
  should tell the client what methods are allowed with the "Allow"
  header.
 
- Will merge to 'next'.
+ Will merge to 'master' in the fifth batch.
 
 
-* dw/check-ignore-sans-index (2013-09-05) 2 commits
- - SQUASH??? do not let --no-index squat on short-and-sweet -i for now
- - check-ignore: Add option to ignore index contents
+* dw/check-ignore-sans-index (2013-09-12) 1 commit
+  (merged to 'next' on 2013-09-13 at 8daec3c)
+ + check-ignore: Add option to ignore index contents
 
  "git check-ignore" follows the same rule as "git add" and "git
  status" in that the ignore/exclude mechanism does not take effect
@@ -351,31 +334,33 @@ of the repositories listed at
  can be used to diagnose which paths that should have been ignored
  have been mistakenly added to the index.
 
- Will squash the tip in and merge to 'next'.
+ Will merge to 'master' in the fifth batch.
 
 
 * hu/cherry-pick-previous-branch (2013-09-09) 1 commit
- - cherry-pick: allow "-" as abbreviation of '@{-1}'
+  (merged to 'next' on 2013-09-12 at 36e4d9b)
+ + cherry-pick: allow "-" as abbreviation of '@{-1}'
 
  Just like "git checkout -" knows to check out and "git merge -"
  knows to merge the branch you were previously on, teach "git
  cherry-pick" to understand "-" as the previous branch.
 
- Will merge to 'next'.
+ Will merge to 'master' in the fifth batch.
 
 
 * jh/checkout-auto-tracking (2013-09-09) 5 commits
- - branch.c: Relax unnecessary requirement on upstream's remote ref name
- - t3200: Add test demonstrating minor regression in 41c21f2
- - Refer to branch.<name>.remote/merge when documenting --track
- - t3200: Minor fix when preparing for tracking failure
- - t2024: Fix &&-chaining and a couple of typos
+  (merged to 'next' on 2013-09-13 at 2aa1553)
+ + branch.c: Relax unnecessary requirement on upstream's remote ref name
+ + t3200: Add test demonstrating minor regression in 41c21f2
+ + Refer to branch.<name>.remote/merge when documenting --track
+ + t3200: Minor fix when preparing for tracking failure
+ + t2024: Fix &&-chaining and a couple of typos
 
  Fix a minor regression in v1.8.3.2 and later that made it
  impossible to base your local work on anything but a local branch
  of the upstream repository you are tracking from.
 
- Will merge to 'next'.
+ Will merge to 'master' in the fifth batch.
 
 
 * jk/remove-remote-helpers-in-python (2013-09-09) 1 commit
@@ -385,7 +370,7 @@ of the repositories listed at
  Remove now disused remote-helpers framework for helpers written in
  Python.
 
- Will merge to 'master' in the third batch.
+ Will merge to 'master' in the fourth batch.
 
 
 * jk/upload-pack-keepalive (2013-09-09) 2 commits
@@ -400,14 +385,15 @@ of the repositories listed at
 
 
 * mm/rebase-continue-freebsd-WB (2013-09-09) 1 commit
- - rebase: fix run_specific_rebase's use of "return" on FreeBSD
+  (merged to 'next' on 2013-09-13 at 82e8b91)
+ + rebase: fix run_specific_rebase's use of "return" on FreeBSD
 
  Work around a bug in FreeBSD shell that caused a regression to "git
  rebase" in v1.8.4.  It would be lovely to hear from FreeBSD folks a
  success report to make sure we didn't miss any other use of a bare
  "return" from dot-sourced script.
 
- Will merge to 'next'.
+ Will merge to 'master' in the fifth batch.
 
 
 * ss/doclinks (2013-09-06) 1 commit
@@ -418,40 +404,34 @@ of the repositories listed at
  to be formatted to AsciiDoc, we did not update links that point at
  them to refer to the formatted HTML files.
 
- Will merge to 'master' in the third batch.
+ Will merge to 'master' in the fourth batch.
 
 
 * uh/git-svn-serf-fix (2013-09-06) 1 commit
- - git-svn: fix termination issues for remote svn connections
+  (merged to 'next' on 2013-09-13 at d65a9a1)
+ + git-svn: fix termination issues for remote svn connections
 
  "git-svn" used with SVN 1.8.0 when talking over https:// connection
  dumped core due to a bug in the serf library that SVN uses.  Work
  it around on our side, even though the SVN side is being fixed.
 
+ Will merge to 'master' in the fourth batch.
+
 
 * fc/contrib-bzr-hg-fixes (2013-09-03) 10 commits
- - contrib/remote-helpers: quote variable references in redirection targets
- - contrib/remote-helpers: style updates for test scripts
- - remote-hg: use notes to keep track of Hg revisions
- - remote-helpers: cleanup more global variables
- - remote-helpers: trivial style fixes
- - remote-hg: improve basic test
- - remote-hg: add missing &&s in the test
- - remote-hg: fix test
- - remote-bzr: make bzr branches configurable per-repo
- - remote-bzr: fix export of utf-8 authors
+  (merged to 'next' on 2013-09-12 at f5e8684)
+ + contrib/remote-helpers: quote variable references in redirection targets
+ + contrib/remote-helpers: style updates for test scripts
+ + remote-hg: use notes to keep track of Hg revisions
+ + remote-helpers: cleanup more global variables
+ + remote-helpers: trivial style fixes
+ + remote-hg: improve basic test
+ + remote-hg: add missing &&s in the test
+ + remote-hg: fix test
+ + remote-bzr: make bzr branches configurable per-repo
+ + remote-bzr: fix export of utf-8 authors
 
- Will merge to 'next'.
-
-
-* jc/pager-configuration-doc (2013-08-29) 1 commit
-  (merged to 'next' on 2013-09-05 at 3169083)
- + config: rewrite core.pager documentation
-
- It was unclear in the documentation how various configurations and
- environment variables determine which pager is eventually used.
-
- Will merge to 'master' in the third batch.
+ Will merge to 'master' in the fourth batch.
 
 
 * np/pack-v4 (2013-09-11) 88 commits
@@ -470,7 +450,7 @@ of the repositories listed at
   (merged to 'next' on 2013-09-09 at 3576189)
  + clear parsed flag when we free tree buffers
 
- Will merge to 'master' in the third batch.
+ Will merge to 'master' in the fourth batch.
 
 
 * jk/has-sha1-file-retry-packed (2013-08-30) 1 commit
@@ -482,7 +462,7 @@ of the repositories listed at
  prevent racing with a concurrent repacker; teach the same logic to
  has_sha1_file().
 
- Will merge to 'master' in the third batch.
+ Will merge to 'master' in the fourth batch.
 
 
 * ab/gitweb-author-initials (2013-08-30) 1 commit
@@ -493,34 +473,33 @@ of the repositories listed at
 
 
 * bk/refs-multi-update (2013-09-11) 8 commits
- - update-ref: add test cases covering --stdin signature
- - update-ref: support multiple simultaneous updates
- - refs: add update_refs for multiple simultaneous updates
- - refs: add function to repack without multiple refs
- - refs: factor delete_ref loose ref step into a helper
- - refs: factor update_ref steps into helpers
- - refs: report ref type from lock_any_ref_for_update
- - reset: rename update_refs to reset_refs
+  (merged to 'next' on 2013-09-13 at e6d21af)
+ + update-ref: add test cases covering --stdin signature
+ + update-ref: support multiple simultaneous updates
+ + refs: add update_refs for multiple simultaneous updates
+ + refs: add function to repack without multiple refs
+ + refs: factor delete_ref loose ref step into a helper
+ + refs: factor update_ref steps into helpers
+ + refs: report ref type from lock_any_ref_for_update
+ + reset: rename update_refs to reset_refs
 
  Give "update-refs" a "--stdin" option to read multiple update
  requests and perform them in an all-or-none fashion.
 
- Looking good.
-
- Will merge to 'next'.
+ Will merge to 'master' in the fifth batch.
 
 
-* fc/at-head (2013-09-09) 3 commits
- - SQUASH??? fixup
- - Add new @ shortcut for HEAD
- - sha1-name: pass len argument to interpret_branch_name()
+* fc/at-head (2013-09-12) 2 commits
+  (merged to 'next' on 2013-09-13 at d3800c2)
+ + Add new @ shortcut for HEAD
+ + sha1-name: pass len argument to interpret_branch_name()
 
  Attempt to resurrect "Type @ for HEAD"; the bottom one seems to be
  a genuine code improvement, but identifying cases where "@" means
  HEAD were harder than it should have been.  I think the result of
  squashing the tip one in covers all the necessary cases.
 
- Will squash the tip in and merge to 'next'.
+ Will merge to 'master' in the fifth batch.
 
 
 * fc/fast-export (2013-09-03) 2 commits
@@ -530,7 +509,7 @@ of the repositories listed at
 
  Code simpification.
 
- Will merge to 'master' in the third batch.
+ Will merge to 'master' in the fourth batch.
 
 
 * fc/rev-parse-test-updates (2013-09-03) 4 commits
@@ -542,7 +521,7 @@ of the repositories listed at
 
  Modernize tests.
 
- Will merge to 'master' in the third batch.
+ Will merge to 'master' in the fourth batch.
 
 
 * fc/t3200-fixes (2013-09-03) 3 commits
@@ -551,7 +530,7 @@ of the repositories listed at
  + t: branch: fix typo
  + t: branch: trivial style fix
 
- Will merge to 'master' in the third batch.
+ Will merge to 'master' in the fourth batch.
 
 
 * fc/trivial (2013-09-08) 5 commits
@@ -562,19 +541,7 @@ of the repositories listed at
  + branch: trivial style fix
  + reset: trivial refactoring
 
- Will merge to 'master' in the third batch.
-
-
-* jc/ref-excludes (2013-09-03) 2 commits
- - document --exclude option
- - revision: introduce --exclude=<glob> to tame wildcards
-
- People often wished a way to tell "git log --branches" (and "git
- log --remotes --not --branches") to exclude some local branches
- from the expansion of "--branches" (similarly for "--tags", "--all"
- and "--glob=<pattern>").  Now they have one.
-
- Will merge to 'next'.
+ Will merge to 'master' in the fourth batch.
 
 
 * jk/pager-bypass-cat-for-default-pager (2013-09-03) 1 commit
@@ -599,22 +566,24 @@ of the repositories listed at
 
 
 * nr/git-cd-to-a-directory (2013-09-09) 1 commit
- - git: run in a directory given with -C option
+  (merged to 'next' on 2013-09-13 at 2b07af9)
+ + git: run in a directory given with -C option
 
  Just like "make -C <directory>", make "git -C <directory> ..." to
  go there before doing anything else.
 
- Will merge to 'next'.
+ Will merge to 'master' in the fifth batch.
 
 
 * rh/peeling-tag-to-tag (2013-09-03) 2 commits
- - peel_onion: do not assume length of x_type globals
- - peel_onion(): add support for <rev>^{tag}
+  (merged to 'next' on 2013-09-12 at 3a1d906)
+ + peel_onion: do not assume length of x_type globals
+ + peel_onion(): add support for <rev>^{tag}
 
  Make "foo^{tag}" to peel a tag to itself, i.e. no-op., and fail if
  "foo" is not a tag.
 
- Will merge to 'next'.
+ Will merge to 'master' in the fifth batch.
 
 
 * cc/replace-with-the-same-type (2013-09-09) 8 commits
@@ -639,6 +608,7 @@ of the repositories listed at
 * jx/clean-interactive (2013-08-28) 1 commit
   (merged to 'next' on 2013-09-09 at 477fec6)
  + documentation: clarify notes for clean.requireForce
+ (this branch is used by jx/relative-path-regression-fix.)
 
  Finishing touches to update the document to adjust to a new option
  "git clean" learned recently.
@@ -647,12 +617,13 @@ of the repositories listed at
 
 
 * mm/status-without-comment-char (2013-09-06) 6 commits
- - status: add missing blank line after list of "other" files
- - tests: don't set status.displayCommentPrefix file-wide
- - status: disable display of '#' comment prefix by default
- - submodule summary: ignore --for-status option
- - wt-status: use argv_array API
- - builtin/stripspace.c: fix broken indentation
+  (merged to 'next' on 2013-09-12 at 89161b8)
+ + status: add missing blank line after list of "other" files
+ + tests: don't set status.displayCommentPrefix file-wide
+ + status: disable display of '#' comment prefix by default
+ + submodule summary: ignore --for-status option
+ + wt-status: use argv_array API
+ + builtin/stripspace.c: fix broken indentation
 
  Allow "git status" to omit the prefix to make its output a comment
  in a commit log editor, which is not necessary for human
@@ -662,7 +633,7 @@ of the repositories listed at
  blank lines, but that does not have to be in the scope of this
  series.
 
- Will merge to 'next'.
+ Will merge to 'master' in the fifth batch.
 
 
 * bc/submodule-status-ignored (2013-09-11) 3 commits
@@ -672,26 +643,7 @@ of the repositories listed at
  + submodule: don't print status output with ignore=all
  + submodule: fix confusing variable name
 
- Originally merged to 'next' on 2013-08-22
-
  Will cook in 'next' a bit.
-
-
-* jk/config-int-range-check (2013-09-09) 5 commits
-  (merged to 'next' on 2013-09-09 at 9ab779d)
- + git-config: always treat --int as 64-bit internally
- + config: make numeric parsing errors more clear
- + config: set errno in numeric git_parse_* functions
- + config: properly range-check integer values
- + config: factor out integer parsing from range checks
-
- Originally merged to 'next' on 2013-08-22
-
- "git config --int section.var 3g" should somehow diagnose that the
- number does not fit in "int" (on 32-bit platforms anyway) but it
- did not.
-
- Will merge to 'master' in the third batch.
 
 
 * jk/duplicate-objects-in-packs (2013-09-04) 5 commits
@@ -708,16 +660,6 @@ of the repositories listed at
  Will merge to 'master' in the fourth batch.
 
 
-* mm/mediawiki-dumb-push-fix (2013-09-03) 4 commits
-  (merged to 'next' on 2013-09-05 at f8313f4)
- + git-remote-mediawiki: no need to update private ref in non-dumb push
- + git-remote-mediawiki: use no-private-update capability on dumb push
- + transport-helper: add no-private-update capability
- + git-remote-mediawiki: add test and check Makefile targets
-
- Will merge to 'master' in the third batch.
-
-
 * dw/diff-no-index-doc (2013-08-28) 2 commits
   (merged to 'next' on 2013-09-10 at 423c8f6)
  + diff --no-index: describe in a separate paragraph
@@ -730,7 +672,7 @@ of the repositories listed at
  error message when we fell into the "--no-index" mode without an
  explicit command line option to instruct us to do so.
 
- Will merge to 'master' in the third batch.
+ Will merge to 'master' in the fourth batch.
 
 
 * sb/repack-in-c (2013-08-30) 2 commits
@@ -773,28 +715,7 @@ of the repositories listed at
 
  Some tests were not skipped under NO_PERL build.
 
- Will merge to 'master' in the third batch.
-
-
-* mm/fast-import-feature-doc (2013-08-25) 1 commit
-  (merged to 'next' on 2013-09-05 at 83802e2)
- + Documentation/fast-import: clarify summary for `feature` command
-
- Will merge to 'master' in the third batch.
-
-
-* mm/remote-helpers-doc (2013-08-26) 1 commit
-  (merged to 'next' on 2013-09-05 at c181b35)
- + Documentation/remote-helpers: document common use-case for private ref
-
- Will merge to 'master' in the third batch.
-
-
-* mn/doc-pack-heu-remove-dead-pastebin (2013-08-23) 1 commit
-  (merged to 'next' on 2013-09-05 at 5caecec)
- + remove dead pastebin link from pack-heuristics document
-
- Will merge to 'master' in the third batch.
+ Will merge to 'master' in the fourth batch.
 
 
 * ta/user-manual (2013-08-27) 11 commits
@@ -813,7 +734,7 @@ of the repositories listed at
 
  Update the user's manual to more recent versions of Git.
 
- Will merge to 'master' in the third batch.
+ Will merge to 'master' in the fourth batch.
 
 
 * tb/precompose-autodetect-fix (2013-08-27) 1 commit
@@ -824,19 +745,20 @@ of the repositories listed at
  unicode strings" workaround, but did not automatically enable it.
  Now we do.
 
- Will merge to 'master' in the third batch.
+ Will merge to 'master' in the fourth batch.
 
 
 * jx/branch-vv-always-compare-with-upstream (2013-08-26) 2 commits
- - status: always show tracking branch even no change
- - branch: report invalid tracking branch as gone
+  (merged to 'next' on 2013-09-12 at b5c37f4)
+ + status: always show tracking branch even no change
+ + branch: report invalid tracking branch as gone
 
  "git branch -v -v" (and "git status") did not distinguish among a
  branch that does not build on any other branch, a branch that is in
  sync with the branch it builds on, and a branch that is configured
  to build on some other branch that no longer exists.
 
- Will merge to 'next'.
+ Will merge to 'master' in the fifth batch.
 
 
 * nd/fetch-into-shallow (2013-08-28) 7 commits
@@ -853,7 +775,7 @@ of the repositories listed at
  during a fetch into a shallow repository, we unnecessarily sent
  objects the sending side knows the receiving end has.
 
- Will merge to 'master' in the fourth batch.
+ Will merge to 'master' in the fifth batch.
 
 
 * ks/p4-view-spec (2013-09-03) 2 commits
@@ -863,7 +785,7 @@ of the repositories listed at
 
  Replaced with a reroll that was whitespace damaged.
 
- Will merge to 'master' in the third batch.
+ Will merge to 'master' in the fourth batch.
 
 
 * tr/merge-recursive-index-only (2013-07-07) 3 commits
@@ -921,8 +843,6 @@ of the repositories listed at
 * jc/pull-training-wheel (2013-07-19) 1 commit
   (merged to 'next' on 2013-08-28 at c39bd15)
  + pull: require choice between rebase/merge on non-fast-forward pull
-
- Originally merged to 'next' on 2013-07-22
 
  Make "git pull" (without arguments that say what branch to
  integrate from where) refuse with "it does not fast forward; choose
