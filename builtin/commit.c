@@ -164,6 +164,15 @@ static void determine_whence(struct wt_status *s)
 		s->whence = whence;
 }
 
+static void status_init_config(struct wt_status *s, config_fn_t fn)
+{
+	wt_status_prepare(s);
+	gitmodules_config();
+	git_config(fn, s);
+	determine_whence(s);
+	s->hints = advice_status_hints; /* must come after git_config() */
+}
+
 static void rollback_index_files(void)
 {
 	switch (commit_style) {
@@ -699,6 +708,12 @@ static int prepare_to_commit(const char *index_file, const char *prefix,
 	/* Ignore status.displayCommentPrefix: we do need comments in COMMIT_EDITMSG. */
 	old_display_comment_prefix = s->display_comment_prefix;
 	s->display_comment_prefix = 1;
+
+	/*
+	 * Most hints are counter-productive when the commit has
+	 * already started.
+	 */
+	s->hints = 0;
 
 	if (clean_message_contents)
 		stripspace(&sb, 0);
@@ -1260,10 +1275,7 @@ int cmd_status(int argc, const char **argv, const char *prefix)
 	if (argc == 2 && !strcmp(argv[1], "-h"))
 		usage_with_options(builtin_status_usage, builtin_status_options);
 
-	wt_status_prepare(&s);
-	gitmodules_config();
-	git_config(git_status_config, &s);
-	determine_whence(&s);
+	status_init_config(&s, git_status_config);
 	argc = parse_options(argc, argv, prefix,
 			     builtin_status_options,
 			     builtin_status_usage, 0);
@@ -1505,11 +1517,8 @@ int cmd_commit(int argc, const char **argv, const char *prefix)
 	if (argc == 2 && !strcmp(argv[1], "-h"))
 		usage_with_options(builtin_commit_usage, builtin_commit_options);
 
-	wt_status_prepare(&s);
-	gitmodules_config();
-	git_config(git_commit_config, &s);
+	status_init_config(&s, git_commit_config);
 	status_format = STATUS_FORMAT_NONE; /* Ignore status.short */
-	determine_whence(&s);
 	s.colopts = 0;
 
 	if (get_sha1("HEAD", sha1))

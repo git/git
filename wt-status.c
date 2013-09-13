@@ -165,7 +165,7 @@ static void wt_status_print_unmerged_header(struct wt_status *s)
 		}
 	}
 
-	if (!advice_status_hints)
+	if (!s->hints)
 		return;
 	if (s->whence != FROM_COMMIT)
 		;
@@ -192,7 +192,7 @@ static void wt_status_print_cached_header(struct wt_status *s)
 	const char *c = color(WT_STATUS_HEADER, s);
 
 	status_printf_ln(s, c, _("Changes to be committed:"));
-	if (!advice_status_hints)
+	if (!s->hints)
 		return;
 	if (s->whence != FROM_COMMIT)
 		; /* NEEDSWORK: use "git reset --unresolve"??? */
@@ -210,7 +210,7 @@ static void wt_status_print_dirty_header(struct wt_status *s,
 	const char *c = color(WT_STATUS_HEADER, s);
 
 	status_printf_ln(s, c, _("Changes not staged for commit:"));
-	if (!advice_status_hints)
+	if (!s->hints)
 		return;
 	if (!has_deleted)
 		status_printf_ln(s, c, _("  (use \"git add <file>...\" to update what will be committed)"));
@@ -228,7 +228,7 @@ static void wt_status_print_other_header(struct wt_status *s,
 {
 	const char *c = color(WT_STATUS_HEADER, s);
 	status_printf_ln(s, c, "%s:", what);
-	if (!advice_status_hints)
+	if (!s->hints)
 		return;
 	status_printf_ln(s, c, _("  (use \"git %s <file>...\" to include in what will be committed)"), how);
 	status_printf_ln(s, c, "");
@@ -846,13 +846,13 @@ static void show_merge_in_progress(struct wt_status *s,
 {
 	if (has_unmerged(s)) {
 		status_printf_ln(s, color, _("You have unmerged paths."));
-		if (advice_status_hints)
+		if (s->hints)
 			status_printf_ln(s, color,
 				_("  (fix conflicts and run \"git commit\")"));
 	} else {
 		status_printf_ln(s, color,
 			_("All conflicts fixed but you are still merging."));
-		if (advice_status_hints)
+		if (s->hints)
 			status_printf_ln(s, color,
 				_("  (use \"git commit\" to conclude merge)"));
 	}
@@ -868,7 +868,7 @@ static void show_am_in_progress(struct wt_status *s,
 	if (state->am_empty_patch)
 		status_printf_ln(s, color,
 			_("The current patch is empty."));
-	if (advice_status_hints) {
+	if (s->hints) {
 		if (!state->am_empty_patch)
 			status_printf_ln(s, color,
 				_("  (fix conflicts and then run \"git am --continue\")"));
@@ -941,7 +941,7 @@ static void show_rebase_in_progress(struct wt_status *s,
 		else
 			status_printf_ln(s, color,
 					 _("You are currently rebasing."));
-		if (advice_status_hints) {
+		if (s->hints) {
 			status_printf_ln(s, color,
 				_("  (fix conflicts and then run \"git rebase --continue\")"));
 			status_printf_ln(s, color,
@@ -958,7 +958,7 @@ static void show_rebase_in_progress(struct wt_status *s,
 		else
 			status_printf_ln(s, color,
 					 _("You are currently rebasing."));
-		if (advice_status_hints)
+		if (s->hints)
 			status_printf_ln(s, color,
 				_("  (all conflicts fixed: run \"git rebase --continue\")"));
 	} else if (split_commit_in_progress(s)) {
@@ -970,7 +970,7 @@ static void show_rebase_in_progress(struct wt_status *s,
 		else
 			status_printf_ln(s, color,
 					 _("You are currently splitting a commit during a rebase."));
-		if (advice_status_hints)
+		if (s->hints)
 			status_printf_ln(s, color,
 				_("  (Once your working directory is clean, run \"git rebase --continue\")"));
 	} else {
@@ -982,7 +982,7 @@ static void show_rebase_in_progress(struct wt_status *s,
 		else
 			status_printf_ln(s, color,
 					 _("You are currently editing a commit during a rebase."));
-		if (advice_status_hints && !s->amend) {
+		if (s->hints && !s->amend) {
 			status_printf_ln(s, color,
 				_("  (use \"git commit --amend\" to amend the current commit)"));
 			status_printf_ln(s, color,
@@ -997,7 +997,7 @@ static void show_cherry_pick_in_progress(struct wt_status *s,
 					const char *color)
 {
 	status_printf_ln(s, color, _("You are currently cherry-picking."));
-	if (advice_status_hints) {
+	if (s->hints) {
 		if (has_unmerged(s))
 			status_printf_ln(s, color,
 				_("  (fix conflicts and run \"git cherry-pick --continue\")"));
@@ -1016,7 +1016,7 @@ static void show_revert_in_progress(struct wt_status *s,
 {
 	status_printf_ln(s, color, _("You are currently reverting commit %s."),
 			 find_unique_abbrev(state->revert_head_sha1, DEFAULT_ABBREV));
-	if (advice_status_hints) {
+	if (s->hints) {
 		if (has_unmerged(s))
 			status_printf_ln(s, color,
 				_("  (fix conflicts and run \"git revert --continue\")"));
@@ -1040,7 +1040,7 @@ static void show_bisect_in_progress(struct wt_status *s,
 	else
 		status_printf_ln(s, color,
 				 _("You are currently bisecting."));
-	if (advice_status_hints)
+	if (s->hints)
 		status_printf_ln(s, color,
 			_("  (use \"git bisect reset\" to get back to the original branch)"));
 	wt_status_print_trailer(s);
@@ -1278,7 +1278,7 @@ void wt_status_print(struct wt_status *s)
 		}
 	} else if (s->commitable)
 		status_printf_ln(s, GIT_COLOR_NORMAL, _("Untracked files not listed%s"),
-			advice_status_hints
+			s->hints
 			? _(" (use -u option to show untracked files)") : "");
 
 	if (s->verbose)
@@ -1289,25 +1289,25 @@ void wt_status_print(struct wt_status *s)
 		else if (s->nowarn)
 			; /* nothing */
 		else if (s->workdir_dirty) {
-			if (advice_status_hints)
+			if (s->hints)
 				printf(_("no changes added to commit "
 					 "(use \"git add\" and/or \"git commit -a\")\n"));
 			else
 				printf(_("no changes added to commit\n"));
 		} else if (s->untracked.nr) {
-			if (advice_status_hints)
+			if (s->hints)
 				printf(_("nothing added to commit but untracked files "
 					 "present (use \"git add\" to track)\n"));
 			else
 				printf(_("nothing added to commit but untracked files present\n"));
 		} else if (s->is_initial) {
-			if (advice_status_hints)
+			if (s->hints)
 				printf(_("nothing to commit (create/copy files "
 					 "and use \"git add\" to track)\n"));
 			else
 				printf(_("nothing to commit\n"));
 		} else if (!s->show_untracked_files) {
-			if (advice_status_hints)
+			if (s->hints)
 				printf(_("nothing to commit (use -u to show untracked files)\n"));
 			else
 				printf(_("nothing to commit\n"));

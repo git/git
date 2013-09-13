@@ -60,6 +60,7 @@ struct wt_status {
 	unsigned colopts;
 	int null_termination;
 	int show_branch;
+	int hints;
 
 	/* These are computed during processing of the individual sections */
 	int commitable;
