@@ -12,23 +12,25 @@ test_tick
 # String "added" in German
 # (translated with Google Translate),
 # encoded in UTF-8, used as a commit log message below.
-added=$(printf 'added (hinzugef\303\274gt) foo' | iconv -t utf-8)
-added_iso88591=$(printf 'added (hinzugef\303\274gt) foo' | iconv -f utf-8 -t iso8859-1)
+added=$(printf "added (hinzugef\303\274gt) foo")
+added_iso88591=$(echo "$added" | iconv -f utf-8 -t iso8859-1)
 # same but "changed"
-changed=$(printf "changed (ge\303\244ndert) foo" | iconv -t utf-8)
-changed_iso88591=$(printf 'changed (ge\303\244ndert) foo' | iconv -f utf-8 -t iso8859-1)
+changed=$(printf "changed (ge\303\244ndert) foo")
+changed_iso88591=$(echo "$changed" | iconv -f utf-8 -t iso8859-1)
 
 test_expect_success 'setup' '
 	: >foo &&
 	git add foo &&
 	git config i18n.commitEncoding iso8859-1 &&
-	git commit -m "$added_iso88591" &&
+	echo "$added_iso88591" > commit-msg &&
+	git commit -F commit-msg &&
 	head1=$(git rev-parse --verify HEAD) &&
 	head1_short=$(git rev-parse --verify --short $head1) &&
 	tree1=$(git rev-parse --verify HEAD:) &&
 	tree1_short=$(git rev-parse --verify --short $tree1) &&
 	echo "$changed" > foo &&
-	git commit -a -m "$changed_iso88591" &&
+	echo "$changed_iso88591" > commit-msg &&
+	git commit -a -F commit-msg &&
 	head2=$(git rev-parse --verify HEAD) &&
 	head2_short=$(git rev-parse --verify --short $head2) &&
 	tree2=$(git rev-parse --verify HEAD:) &&
@@ -206,12 +208,12 @@ test_expect_success '%C(auto) respects --color=auto (stdout not tty)' '
 	)
 '
 
-printf 'Test printing of complex bodies
+printf "Test printing of complex bodies
 
 This commit message is much longer than the others,
 and it will be encoded in iso8859-1. We should therefore
-include an iso8859 character: \xc2\xa1bueno!
-' | iconv -f utf-8 -t iso8859-1 > commit-msg
+include an iso8859 character: \302\241bueno!
+" | iconv -f utf-8 -t iso8859-1 > commit-msg
 
 test_expect_success 'setup complex body' '
 	git config i18n.commitencoding iso8859-1 &&
