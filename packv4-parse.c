@@ -378,6 +378,40 @@ static int copy_canonical_tree_entries(struct packed_git *p, off_t offset,
 	return 0;
 }
 
+/* ordering is so that member alignment takes the least amount of space */
+struct pv4_tree_cache {
+	off_t base_offset;
+	off_t offset;
+	off_t last_copy_base;
+	struct packed_git *p;
+	unsigned int pos;
+	unsigned int nb_entries;
+};
+
+#define CACHE_SIZE 1024
+static struct pv4_tree_cache pv4_tree_cache[CACHE_SIZE];
+
+static struct pv4_tree_cache *get_tree_offset_cache(struct packed_git *p, off_t base_offset)
+{
+	struct pv4_tree_cache *c;
+	unsigned long hash;
+
+	hash = (unsigned long)p + (unsigned long)base_offset;
+	hash += (hash >> 8) + (hash >> 16);
+	hash %= CACHE_SIZE;
+
+	c = &pv4_tree_cache[hash];
+	if (c->p != p || c->base_offset != base_offset) {
+		c->p = p;
+		c->base_offset = base_offset;
+		c->offset = 0;
+		c->last_copy_base = 0;
+		c->pos = 0;
+		c->nb_entries = 0;
+	}
+	return c;
+}
+
 static int tree_entry_prefix(unsigned char *buf, unsigned long size,
 			     const unsigned char *path, int path_len,
 			     unsigned mode)
@@ -405,39 +439,72 @@ static int tree_entry_prefix(unsigned char *buf, unsigned long size,
 }
 
 static int decode_entries(struct packed_git *p, struct pack_window **w_curs,
-			  off_t offset, unsigned int start, unsigned int count,
-			  unsigned char **dstp, unsigned long *sizep,
-			  int parse_hdr)
+			  off_t obj_offset, unsigned int start, unsigned int count,
+			  unsigned char **dstp, unsigned long *sizep)
 {
 	unsigned long avail;
-	unsigned int nb_entries;
 	const unsigned char *src, *scp;
-	off_t copy_objoffset = 0;
+	unsigned int curpos;
+	off_t offset, copy_objoffset;
+	struct pv4_tree_cache *c;
 
-	src = use_pack(p, w_curs, offset, &avail);
-	scp = src;
+	c = get_tree_offset_cache(p, obj_offset);
+	if (count && start < c->nb_entries && start >= c->pos &&
+	    count <= c->nb_entries - start) {
+		offset = c->offset;
+		copy_objoffset = c->last_copy_base;
+		curpos = c->pos;
+		start -= curpos;
+		src = NULL;
+		avail = 0;
+	} else {
+		unsigned int nb_entries;
 
-	if (parse_hdr) {
+		src = use_pack(p, w_curs, obj_offset, &avail);
+		scp = src;
+
 		/* we need to skip over the object header */
 		while (*scp & 128)
 			if (++scp - src >= avail - 20)
 				return -1;
+
 		/* is this a canonical tree object? */
-		if ((*scp & 0xf) == OBJ_TREE)
+		if ((*scp & 0xf) == OBJ_TREE) {
+			offset = obj_offset + (scp - src);
 			return copy_canonical_tree_entries(p, offset,
 							   start, count,
 							   dstp, sizep);
+		}
+
 		/* let's still make sure this is actually a pv4 tree */
 		if ((*scp++ & 0xf) != OBJ_PV4_TREE)
 			return -1;
-	}
 
-	nb_entries = decode_varint(&scp);
-	if (scp == src || start > nb_entries || count > nb_entries - start)
-		return -1;
-	offset += scp - src;
-	avail -= scp - src;
-	src = scp;
+		nb_entries = decode_varint(&scp);
+		if (!count)
+			count = nb_entries;
+		if (!nb_entries || start > nb_entries ||
+		    count > nb_entries - start)
+			return -1;
+
+		curpos = 0;
+		copy_objoffset = 0;
+		offset = obj_offset + (scp - src);
+		avail -= scp - src;
+		src = scp;
+
+		/*
+		 * If this is a partial copy, let's (re)initialize a cache
+		 * entry to speed things up if the remaining of this tree
+		 * is needed in the future.
+		 */
+		if (start + count < nb_entries) {
+			c->offset = offset;
+			c->pos = 0;
+			c->nb_entries = nb_entries;
+			c->last_copy_base = 0;
+		}
+	}
 
 	while (count) {
 		unsigned int what;
@@ -464,6 +531,7 @@ static int decode_entries(struct packed_git *p, struct pack_window **w_curs,
 			else
 				while (*scp++ & 128);
 			start--;
+			curpos++;
 		} else if (!(what & 1) && start == 0) {
 			/*
 			 * This is an actual tree entry to recreate.
@@ -485,6 +553,7 @@ static int decode_entries(struct packed_git *p, struct pack_window **w_curs,
 			*dstp += len + 20;
 			*sizep -= len + 20;
 			count--;
+			curpos++;
 		} else if (what & 1) {
 			/*
 			 * Copy from another tree object.
@@ -522,25 +591,41 @@ static int decode_entries(struct packed_git *p, struct pack_window **w_curs,
 						nth_packed_object_offset(p, index - 1);
 				}
 			}
-			if (!copy_objoffset)
-				return -1;
 			copy_count >>= 1;
+			if (!copy_count || !copy_objoffset)
+				return -1;
 
 			if (start >= copy_count) {
 				start -= copy_count;
+				curpos += copy_count;
 			} else {
 				int ret;
+
 				copy_count -= start;
 				copy_start += start;
-				start = 0;
-				if (copy_count > count)
+				if (copy_count > count) {
+					/*
+					 * We won't consume the whole of
+					 * this copy sequence and the main
+					 * loop will be exited. Let's manage
+					 * for offset and curpos to remain
+					 * unchanged to update the cache.
+					 */
 					copy_count = count;
-				count -= copy_count;
-				ret = decode_entries(p, w_curs,
-					copy_objoffset, copy_start, copy_count,
-					dstp, sizep, 1);
+					count = 0;
+					scp = src;
+				} else {
+					count -= copy_count;
+					curpos += start + copy_count;
+					start = 0;
+				}
+
+				ret = decode_entries(p, w_curs, copy_objoffset,
+						     copy_start, copy_count,
+						     dstp, sizep);
 				if (ret)
 					return ret;
+
 				/* force pack window readjustment */
 				avail = scp - src;
 			}
@@ -551,27 +636,30 @@ static int decode_entries(struct packed_git *p, struct pack_window **w_curs,
 		src = scp;
 	}
 
+	/*
+	 * Update the cache if we didn't run through the entire tree.
+	 * We have to "get" it again as a recursion into decode_entries()
+	 * could have invalidated what we obtained initially.
+	 */
+	c = get_tree_offset_cache(p, obj_offset);
+	if (curpos < c->nb_entries) {
+		c->pos = curpos;
+		c->offset = offset;
+		c->last_copy_base = copy_objoffset;
+	}
+						
 	return 0;
 }
 
 void *pv4_get_tree(struct packed_git *p, struct pack_window **w_curs,
-		   off_t offset, unsigned long size)
+		   off_t obj_offset, unsigned long size)
 {
-	unsigned long avail;
-	unsigned int nb_entries;
 	unsigned char *dst, *dcp;
-	const unsigned char *src, *scp;
 	int ret;
-
-	src = use_pack(p, w_curs, offset, &avail);
-	scp = src;
-	nb_entries = decode_varint(&scp);
-	if (scp == src)
-		return NULL;
 
 	dst = xmallocz(size);
 	dcp = dst;
-	ret = decode_entries(p, w_curs, offset, 0, nb_entries, &dcp, &size, 0);
+	ret = decode_entries(p, w_curs, obj_offset, 0, 0, &dcp, &size);
 	if (ret < 0 || size != 0) {
 		free(dst);
 		return NULL;

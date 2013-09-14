@@ -2178,7 +2178,7 @@ void *unpack_entry(struct packed_git *p, off_t obj_offset,
 		type -= 8;
 		break;
 	case OBJ_PV4_TREE:
-		data = pv4_get_tree(p, &w_curs, curpos, size);
+		data = pv4_get_tree(p, &w_curs, obj_offset, size);
 		type -= 8;
 		break;
 	case OBJ_COMMIT:
