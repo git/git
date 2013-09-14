@@ -872,6 +872,7 @@ test_expect_success '--merged catches invalid object names' '
 '
 
 test_expect_success 'tracking with unexpected .fetch refspec' '
+	rm -rf a b c d &&
 	git init a &&
 	(
 		cd a &&
