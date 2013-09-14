@@ -61,7 +61,8 @@ test_expect_success 'status (1)' '
 '
 
 strip_comments () {
-	sed "s/^\# //; s/^\#$//; s/^#\t/\t/" <"$1" >"$1".tmp &&
+	tab='	'
+	sed "s/^\# //; s/^\#$//; s/^#$tab/$tab/" <"$1" >"$1".tmp &&
 	rm "$1" && mv "$1".tmp "$1"
 }
 
