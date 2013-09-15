@@ -327,7 +327,7 @@ int cmd_repack(int argc, const char **argv, const char *prefix)
 				chmod(fname_old, statbuffer.st_mode);
 			}
 			if (rename(fname_old, fname))
-				exit(errno);
+				die_errno(_("renaming '%s' failed"), fname_old);
 			free(fname);
 			free(fname_old);
 		}
@@ -341,7 +341,8 @@ int cmd_repack(int argc, const char **argv, const char *prefix)
 					packdir,
 					item->string,
 					exts[ext]);
-			remove_path(fname);
+			if (remove_path(fname))
+				warning(_("removing '%s' failed"), fname);
 		}
 	}
 
