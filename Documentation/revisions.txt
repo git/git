@@ -111,10 +111,14 @@ some output processing may assume ref names in UTF-8.
 
 '<rev>{caret}\{<type>\}', e.g. 'v0.99.8{caret}\{commit\}'::
   A suffix '{caret}' followed by an object type name enclosed in
-  brace pair means the object
-  could be a tag, and dereference the tag recursively until an
-  object of that type is found or the object cannot be
-  dereferenced anymore (in which case, barf).  '<rev>{caret}0'
+  brace pair means dereference the object at '<rev>' recursively until
+  an object of type '<type>' is found or the object cannot be
+  dereferenced anymore (in which case, barf).
+  For example, if '<rev>' is a commit-ish, '<rev>{caret}\{commit\}'
+  describes the corresponding commit object.
+  Similarly, if '<rev>' is a tree-ish, '<rev>{caret}\{tree\}'
+  describes the corresponding tree object.
+  '<rev>{caret}0'
   is a short-hand for '<rev>{caret}\{commit\}'.
 +
 'rev{caret}\{object\}' can be used to make sure 'rev' names an

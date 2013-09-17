@@ -106,7 +106,7 @@ couple of magic command line options:
 +
 ---------------------------------------------
 $ git describe -h
-usage: git describe [options] <committish>*
+usage: git describe [options] <commit-ish>*
    or: git describe [options] --dirty
 
     --contains            find the tag that comes after the commit

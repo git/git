@@ -380,8 +380,8 @@ change to the project.
 	('author' (SP <name>)? SP LT <email> GT SP <when> LF)?
 	'committer' (SP <name>)? SP LT <email> GT SP <when> LF
 	data
-	('from' SP <committish> LF)?
-	('merge' SP <committish> LF)?
+	('from' SP <commit-ish> LF)?
+	('merge' SP <commit-ish> LF)?
 	(filemodify | filedelete | filecopy | filerename | filedeleteall | notemodify)*
 	LF?
 ....
@@ -460,9 +460,9 @@ as the current commit on that branch is automatically assumed to
 be the first ancestor of the new commit.
 
 As `LF` is not valid in a Git refname or SHA-1 expression, no
-quoting or escaping syntax is supported within `<committish>`.
+quoting or escaping syntax is supported within `<commit-ish>`.
 
-Here `<committish>` is any of the following:
+Here `<commit-ish>` is any of the following:
 
 * The name of an existing branch already in fast-import's internal branch
   table.  If fast-import doesn't know the name, it's treated as a SHA-1
@@ -509,7 +509,7 @@ additional ancestors (forming a 16-way merge).  For this reason
 it is suggested that frontends do not use more than 15 `merge`
 commands per commit; 16, if starting a new, empty branch.
 
-Here `<committish>` is any of the commit specification expressions
+Here `<commit-ish>` is any of the commit specification expressions
 also accepted by `from` (see above).
 
 `filemodify`
@@ -677,8 +677,8 @@ paths for a commit are encouraged to do so.
 `notemodify`
 ^^^^^^^^^^^^
 Included in a `commit` `<notes_ref>` command to add a new note
-annotating a `<committish>` or change this annotation contents.
-Internally it is similar to filemodify 100644 on `<committish>`
+annotating a `<commit-ish>` or change this annotation contents.
+Internally it is similar to filemodify 100644 on `<commit-ish>`
 path (maybe split into subdirectories). It's not advised to
 use any other commands to write to the `<notes_ref>` tree except
 `filedeleteall` to delete all existing notes in this tree.
@@ -691,7 +691,7 @@ External data format::
 	commit that is to be annotated.
 +
 ....
-	'N' SP <dataref> SP <committish> LF
+	'N' SP <dataref> SP <commit-ish> LF
 ....
 +
 Here `<dataref>` can be either a mark reference (`:<idnum>`)
@@ -704,13 +704,13 @@ Inline data format::
 	command.
 +
 ....
-	'N' SP 'inline' SP <committish> LF
+	'N' SP 'inline' SP <commit-ish> LF
 	data
 ....
 +
 See below for a detailed description of the `data` command.
 
-In both formats `<committish>` is any of the commit specification
+In both formats `<commit-ish>` is any of the commit specification
 expressions also accepted by `from` (see above).
 
 `mark`
@@ -741,7 +741,7 @@ lightweight (non-annotated) tags see the `reset` command below.
 
 ....
 	'tag' SP <name> LF
-	'from' SP <committish> LF
+	'from' SP <commit-ish> LF
 	'tagger' (SP <name>)? SP LT <email> GT SP <when> LF
 	data
 ....
@@ -786,11 +786,11 @@ branch from an existing commit without creating a new commit.
 
 ....
 	'reset' SP <ref> LF
-	('from' SP <committish> LF)?
+	('from' SP <commit-ish> LF)?
 	LF?
 ....
 
-For a detailed description of `<ref>` and `<committish>` see above
+For a detailed description of `<ref>` and `<commit-ish>` see above
 under `commit` and `from`.
 
 The `LF` after the command is optional (it used to be required).

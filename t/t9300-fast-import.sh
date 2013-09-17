@@ -2864,14 +2864,14 @@ test_expect_success 'S: notemodify with garbage after sha1 dataref must fail' '
 '
 
 #
-# notemodify, mark in committish
+# notemodify, mark in commit-ish
 #
-test_expect_success 'S: notemodify with garbarge after mark committish must fail' '
+test_expect_success 'S: notemodify with garbarge after mark commit-ish must fail' '
 	test_must_fail git fast-import --import-marks=marks <<-EOF 2>err &&
 	commit refs/heads/Snotes
 	committer $GIT_COMMITTER_NAME <$GIT_COMMITTER_EMAIL> $GIT_COMMITTER_DATE
 	data <<COMMIT
-	commit S note committish
+	commit S note commit-ish
 	COMMIT
 	N :202 :302x
 	EOF

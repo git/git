@@ -121,7 +121,7 @@ already exists on the remote side.
 --follow-tags::
 	Push all the refs that would be pushed without this option,
 	and also push annotated tags in `refs/tags` that are missing
-	from the remote but are pointing at committish that are
+	from the remote but are pointing at commit-ish that are
 	reachable from the refs being pushed.
 
 --receive-pack=<git-receive-pack>::

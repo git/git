@@ -22,8 +22,8 @@ Format of STDIN stream:
     ('author' (sp name)? sp '<' email '>' sp when lf)?
     'committer' (sp name)? sp '<' email '>' sp when lf
     commit_msg
-    ('from' sp committish lf)?
-    ('merge' sp committish lf)*
+    ('from' sp commit-ish lf)?
+    ('merge' sp commit-ish lf)*
     (file_change | ls)*
     lf?;
   commit_msg ::= data;
@@ -43,18 +43,18 @@ Format of STDIN stream:
   file_obm ::= 'M' sp mode sp (hexsha1 | idnum) sp path_str lf;
   file_inm ::= 'M' sp mode sp 'inline' sp path_str lf
     data;
-  note_obm ::= 'N' sp (hexsha1 | idnum) sp committish lf;
-  note_inm ::= 'N' sp 'inline' sp committish lf
+  note_obm ::= 'N' sp (hexsha1 | idnum) sp commit-ish lf;
+  note_inm ::= 'N' sp 'inline' sp commit-ish lf
     data;
 
   new_tag ::= 'tag' sp tag_str lf
-    'from' sp committish lf
+    'from' sp commit-ish lf
     ('tagger' (sp name)? sp '<' email '>' sp when lf)?
     tag_msg;
   tag_msg ::= data;
 
   reset_branch ::= 'reset' sp ref_str lf
-    ('from' sp committish lf)?
+    ('from' sp commit-ish lf)?
     lf?;
 
   checkpoint ::= 'checkpoint' lf
@@ -93,7 +93,7 @@ Format of STDIN stream:
      # stream formatting is: \, " and LF.  Otherwise these values
      # are UTF8.
      #
-  committish  ::= (ref_str | hexsha1 | sha1exp_str | idnum);
+  commit-ish  ::= (ref_str | hexsha1 | sha1exp_str | idnum);
   ref_str     ::= ref;
   sha1exp_str ::= sha1exp;
   tag_str     ::= tag;
@@ -2494,7 +2494,7 @@ static void note_change_n(struct branch *b, unsigned char *old_fanout)
 	assert(*p == ' ');
 	p++;  /* skip space */
 
-	/* <committish> */
+	/* <commit-ish> */
 	s = lookup_branch(p);
 	if (s) {
 		if (is_null_sha1(s->sha1))
@@ -2973,7 +2973,7 @@ static struct object_entry *dereference(struct object_entry *oe,
 	case OBJ_TAG:
 		break;
 	default:
-		die("Not a treeish: %s", command_buf.buf);
+		die("Not a tree-ish: %s", command_buf.buf);
 	}
 
 	if (oe->pack_id != MAX_PACK_ID) {	/* in a pack being written */
@@ -3057,7 +3057,7 @@ static void parse_ls(struct branch *b)
 	struct tree_entry *root = NULL;
 	struct tree_entry leaf = {NULL};
 
-	/* ls SP (<treeish> SP)? <path> */
+	/* ls SP (<tree-ish> SP)? <path> */
 	p = command_buf.buf + strlen("ls ");
 	if (*p == '"') {
 		if (!b)
