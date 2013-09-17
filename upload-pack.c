@@ -742,7 +742,7 @@ static int send_ref(const char *refname, const unsigned char *sha1, int flag, vo
 	const char *refname_nons = strip_namespace(refname);
 	unsigned char peeled[20];
 
-	if (mark_our_ref(refname, sha1, flag, cb_data))
+	if (mark_our_ref(refname, sha1, flag, NULL))
 		return 0;
 
 	if (capabilities)
