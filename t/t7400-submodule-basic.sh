@@ -481,7 +481,7 @@ test_expect_success 'do not add files from a submodule' '
 
 '
 
-test_expect_success 'gracefully add submodule with a trailing slash' '
+test_expect_success 'gracefully add/reset submodule with a trailing slash' '
 
 	git reset --hard &&
 	git commit -m "commit subproject" init &&
@@ -495,7 +495,9 @@ test_expect_success 'gracefully add submodule with a trailing slash' '
 	git add init/ &&
 	test_must_fail git diff --exit-code --cached init &&
 	test $commit = $(git ls-files --stage |
-		sed -n "s/^160000 \([^ ]*\).*/\1/p")
+		sed -n "s/^160000 \([^ ]*\).*/\1/p") &&
+	git reset init/ &&
+	git diff --exit-code --cached init
 
 '
 

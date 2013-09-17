@@ -298,22 +298,10 @@ int cmd_rm(int argc, const char **argv, const char *prefix)
 	if (read_cache() < 0)
 		die(_("index file corrupt"));
 
-	/*
-	 * Drop trailing directory separators from directories so we'll find
-	 * submodules in the index.
-	 */
-	for (i = 0; i < argc; i++) {
-		size_t pathlen = strlen(argv[i]);
-		if (pathlen && is_dir_sep(argv[i][pathlen - 1]) &&
-		    is_directory(argv[i])) {
-			do {
-				pathlen--;
-			} while (pathlen && is_dir_sep(argv[i][pathlen - 1]));
-			argv[i] = xmemdupz(argv[i], pathlen);
-		}
-	}
-
-	parse_pathspec(&pathspec, 0, PATHSPEC_PREFER_CWD, prefix, argv);
+	parse_pathspec(&pathspec, 0,
+		       PATHSPEC_PREFER_CWD |
+		       PATHSPEC_STRIP_SUBMODULE_SLASH_CHEAP,
+		       prefix, argv);
 	refresh_index(&the_index, REFRESH_QUIET, &pathspec, NULL, NULL);
 
 	seen = xcalloc(pathspec.nr, 1);
