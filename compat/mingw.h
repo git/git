@@ -32,7 +32,9 @@ typedef int socklen_t;
 #define WEXITSTATUS(x) ((x) & 0xff)
 #define WTERMSIG(x) SIGTERM
 
+#ifndef EWOULDBLOCK
 #define EWOULDBLOCK EAGAIN
+#endif
 #define SHUT_WR SD_SEND
 
 #define SIGHUP 1
@@ -46,8 +48,12 @@ typedef int socklen_t;
 #define F_SETFD 2
 #define FD_CLOEXEC 0x1
 
+#ifndef EAFNOSUPPORT
 #define EAFNOSUPPORT WSAEAFNOSUPPORT
+#endif
+#ifndef ECONNABORTED
 #define ECONNABORTED WSAECONNABORTED
+#endif
 
 struct passwd {
 	char *pw_name;
@@ -258,19 +264,35 @@ static inline int getrlimit(int resource, struct rlimit *rlp)
 	return 0;
 }
 
-/* Use mingw_lstat() instead of lstat()/stat() and
- * mingw_fstat() instead of fstat() on Windows.
+/*
+ * Use mingw specific stat()/lstat()/fstat() implementations on Windows.
  */
 #define off_t off64_t
 #define lseek _lseeki64
-#ifndef ALREADY_DECLARED_STAT_FUNCS
+
+/* use struct stat with 64 bit st_size */
+#ifdef stat
+#undef stat
+#endif
 #define stat _stati64
 int mingw_lstat(const char *file_name, struct stat *buf);
 int mingw_stat(const char *file_name, struct stat *buf);
 int mingw_fstat(int fd, struct stat *buf);
+#ifdef fstat
+#undef fstat
+#endif
 #define fstat mingw_fstat
+#ifdef lstat
+#undef lstat
+#endif
 #define lstat mingw_lstat
-#define _stati64(x,y) mingw_stat(x,y)
+
+#ifndef _stati64
+# define _stati64(x,y) mingw_stat(x,y)
+#elif defined (_USE_32BIT_TIME_T)
+# define _stat32i64(x,y) mingw_stat(x,y)
+#else
+# define _stat64(x,y) mingw_stat(x,y)
 #endif
 
 int mingw_utime(const char *file_name, const struct utimbuf *times);
