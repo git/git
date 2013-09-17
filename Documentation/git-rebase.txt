@@ -322,7 +322,7 @@ You may find this (or --no-ff with an interactive rebase) helpful after
 reverting a topic branch merge, as this option recreates the topic branch with
 fresh commits so it can be remerged successfully without needing to "revert
 the reversion" (see the
-link:howto/revert-a-faulty-merge.txt[revert-a-faulty-merge How-To] for details).
+link:howto/revert-a-faulty-merge.html[revert-a-faulty-merge How-To] for details).
 
 --ignore-whitespace::
 --whitespace=<option>::
@@ -416,7 +416,7 @@ Without --interactive, this is a synonym for --force-rebase.
 You may find this helpful after reverting a topic branch merge, as this option
 recreates the topic branch with fresh commits so it can be remerged
 successfully without needing to "revert the reversion" (see the
-link:howto/revert-a-faulty-merge.txt[revert-a-faulty-merge How-To] for details).
+link:howto/revert-a-faulty-merge.html[revert-a-faulty-merge How-To] for details).
 
 include::merge-strategies.txt[]
 
