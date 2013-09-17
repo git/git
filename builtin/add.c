@@ -296,7 +296,7 @@ static int edit_patch(int argc, const char **argv, const char *prefix)
 	git_config(git_diff_basic_config, NULL); /* no "diff" UI options */
 
 	if (read_cache() < 0)
-		die (_("Could not read the index"));
+		die(_("Could not read the index"));
 
 	init_revisions(&rev, prefix);
 	rev.diffopt.context = 7;
@@ -307,11 +307,11 @@ static int edit_patch(int argc, const char **argv, const char *prefix)
 	DIFF_OPT_SET(&rev.diffopt, IGNORE_DIRTY_SUBMODULES);
 	out = open(file, O_CREAT | O_WRONLY, 0666);
 	if (out < 0)
-		die (_("Could not open '%s' for writing."), file);
+		die(_("Could not open '%s' for writing."), file);
 	rev.diffopt.file = xfdopen(out, "w");
 	rev.diffopt.close_file = 1;
 	if (run_diff_files(&rev, 0))
-		die (_("Could not write patch"));
+		die(_("Could not write patch"));
 
 	launch_editor(file, NULL, NULL);
 
@@ -324,7 +324,7 @@ static int edit_patch(int argc, const char **argv, const char *prefix)
 	child.git_cmd = 1;
 	child.argv = apply_argv;
 	if (run_command(&child))
-		die (_("Could not apply '%s'"), file);
+		die(_("Could not apply '%s'"), file);
 
 	unlink(file);
 	free(file);
@@ -582,7 +582,7 @@ int cmd_add(int argc, const char **argv, const char *prefix)
 
 	unplug_bulk_checkin();
 
- finish:
+finish:
 	if (active_cache_changed) {
 		if (write_cache(newfd, active_cache, active_nr) ||
 		    commit_locked_index(&lock_file))

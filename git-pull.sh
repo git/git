@@ -187,9 +187,8 @@ error_on_no_merge_candidates () {
 		op_prep=with
 	fi
 
-	curr_branch=${curr_branch#refs/heads/}
-	upstream=$(git config "branch.$curr_branch.merge")
-	remote=$(git config "branch.$curr_branch.remote")
+	upstream=$(git config "branch.$curr_branch_short.merge")
+	remote=$(git config "branch.$curr_branch_short.remote")
 
 	if [ $# -gt 1 ]; then
 		if [ "$rebase" = true ]; then
