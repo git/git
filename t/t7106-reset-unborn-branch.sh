@@ -11,7 +11,10 @@ test_expect_success 'setup' '
 test_expect_success 'reset' '
 	git add a b &&
 	git reset &&
-	test "$(git ls-files)" = ""
+
+	>expect &&
+	git ls-files >actual &&
+	test_cmp expect actual
 '
 
 test_expect_success 'reset HEAD' '
@@ -24,28 +27,42 @@ test_expect_success 'reset $file' '
 	rm .git/index &&
 	git add a b &&
 	git reset a &&
-	test "$(git ls-files)" = "b"
+
+	echo b >expect &&
+	git ls-files >actual &&
+	test_cmp expect actual
 '
 
-test_expect_success 'reset -p' '
+test_expect_success PERL 'reset -p' '
 	rm .git/index &&
 	git add a &&
-	echo y | git reset -p &&
-	test "$(git ls-files)" = ""
+	echo y >yes &&
+	git reset -p <yes &&
+
+	>expect &&
+	git ls-files >actual &&
+	test_cmp expect actual
 '
 
 test_expect_success 'reset --soft is a no-op' '
 	rm .git/index &&
 	git add a &&
-	git reset --soft
-	test "$(git ls-files)" = "a"
+	git reset --soft &&
+
+	echo a >expect &&
+	git ls-files >actual &&
+	test_cmp expect actual
 '
 
 test_expect_success 'reset --hard' '
 	rm .git/index &&
 	git add a &&
+	test_when_finished "echo a >a" &&
 	git reset --hard &&
-	test "$(git ls-files)" = "" &&
+
+	>expect &&
+	git ls-files >actual &&
+	test_cmp expect actual &&
 	test_path_is_missing a
 '
 
