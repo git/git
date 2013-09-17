@@ -1,6 +1,5 @@
-Git User's Manual (for version 1.5.3 or newer)
-______________________________________________
-
+Git User Manual
+_______________
 
 Git is a fast distributed revision control system.
 
@@ -220,7 +219,7 @@ of development leading to that point.
 
 The best way to see how this works is using the linkgit:gitk[1]
 command; running gitk now on a Git repository and looking for merge
-commits will help understand how the Git organizes history.
+commits will help understand how Git organizes history.
 
 In the following, we say that commit X is "reachable" from commit Y
 if commit X is an ancestor of commit Y.  Equivalently, you could say
@@ -269,27 +268,23 @@ Creating, deleting, and modifying branches is quick and easy; here's
 a summary of the commands:
 
 `git branch`::
-	list all branches
+	list all branches.
 `git branch <branch>`::
 	create a new branch named `<branch>`, referencing the same
-	point in history as the current branch
+	point in history as the current branch.
 `git branch <branch> <start-point>`::
 	create a new branch named `<branch>`, referencing
 	`<start-point>`, which may be specified any way you like,
-	including using a branch name or a tag name
+	including using a branch name or a tag name.
 `git branch -d <branch>`::
-	delete the branch `<branch>`; if the branch you are deleting
-	points to a commit which is not reachable from the current
-	branch, this command will fail with a warning.
+	delete the branch `<branch>`; if the branch is not fully
+	merged in its upstream branch or contained in the current branch,
+	this command will fail with a warning.
 `git branch -D <branch>`::
-	even if the branch points to a commit not reachable
-	from the current branch, you may know that that commit
-	is still reachable from some other branch or tag.  In that
-	case it is safe to use this command to force Git to delete
-	the branch.
+	delete the branch `<branch>` irrespective of its merged status.
 `git checkout <branch>`::
 	make the current branch `<branch>`, updating the working
-	directory to reflect the version referenced by `<branch>`
+	directory to reflect the version referenced by `<branch>`.
 `git checkout -b <new> <start-point>`::
 	create a new branch `<new>` referencing `<start-point>`, and
 	check it out.
@@ -313,10 +308,17 @@ referenced by a tag:
 
 ------------------------------------------------
 $ git checkout v2.6.17
-Note: moving to "v2.6.17" which isn't a local branch
-If you want to create a new branch from this checkout, you may do so
-(now or later) by using -b with the checkout command again. Example:
-  git checkout -b <new_branch_name>
+Note: checking out 'v2.6.17'.
+
+You are in 'detached HEAD' state. You can look around, make experimental
+changes and commit them, and you can discard any commits you make in this
+state without impacting any branches by performing another checkout.
+
+If you want to create a new branch to retain commits you create, you may
+do so (now or later) by using -b with the checkout command again. Example:
+
+  git checkout -b new_branch_name
+
 HEAD is now at 427abfa... Linux v2.6.17
 ------------------------------------------------
 
@@ -327,7 +329,7 @@ and git branch shows that you are no longer on a branch:
 $ cat .git/HEAD
 427abfa28afedffadfca9dd8b067eb6d36bac53f
 $ git branch
-* (no branch)
+* (detached from v2.6.17)
   master
 ------------------------------------------------
 
@@ -787,7 +789,7 @@ e05db0fd4f31dde7005f075a84f96b360d05984b
 -------------------------------------------------
 
 Or you could recall that the `...` operator selects all commits
-contained reachable from either one reference or the other but not
+reachable from either one reference or the other but not
 both; so
 
 -------------------------------------------------
@@ -814,7 +816,7 @@ You could just visually inspect the commits since e05db0fd:
 $ gitk e05db0fd..
 -------------------------------------------------
 
-Or you can use linkgit:git-name-rev[1], which will give the commit a
+or you can use linkgit:git-name-rev[1], which will give the commit a
 name based on any tag it finds pointing to one of the commit's
 descendants:
 
@@ -858,8 +860,8 @@ because it outputs only commits that are not reachable from v1.5.0-rc1.
 
 As yet another alternative, the linkgit:git-show-branch[1] command lists
 the commits reachable from its arguments with a display on the left-hand
-side that indicates which arguments that commit is reachable from.  So,
-you can run something like
+side that indicates which arguments that commit is reachable from.
+So, if you run something like
 
 -------------------------------------------------
 $ git show-branch e05db0fd v1.5.0-rc0 v1.5.0-rc1 v1.5.0-rc2
@@ -871,15 +873,15 @@ available
 ...
 -------------------------------------------------
 
-then search for a line that looks like
+then a line like
 
 -------------------------------------------------
 + ++ [e05db0fd] Fix warnings in sha1_file.c - use C99 printf format if
 available
 -------------------------------------------------
 
-Which shows that e05db0fd is reachable from itself, from v1.5.0-rc1, and
-from v1.5.0-rc2, but not from v1.5.0-rc0.
+shows that e05db0fd is reachable from itself, from v1.5.0-rc1,
+and from v1.5.0-rc2, and not from v1.5.0-rc0.
 
 [[showing-commits-unique-to-a-branch]]
 Showing commits unique to a given branch
@@ -1074,19 +1076,13 @@ produce no output at that point.
 
 Modifying the index is easy:
 
-To update the index with the new contents of a modified file, use
+To update the index with the contents of a new or modified file, use
 
 -------------------------------------------------
 $ git add path/to/file
 -------------------------------------------------
 
-To add the contents of a new file to the index, use
-
--------------------------------------------------
-$ git add path/to/file
--------------------------------------------------
-
-To remove a file from the index and from the working tree,
+To remove a file from the index and from the working tree, use
 
 -------------------------------------------------
 $ git rm path/to/file
@@ -1787,7 +1783,7 @@ $ git pull . branch
 $ git merge branch
 -------------------------------------------------
 
-are roughly equivalent.  The former is actually very commonly used.
+are roughly equivalent.
 
 [[submitting-patches]]
 Submitting patches to a project
@@ -2249,11 +2245,11 @@ commit to this branch.
 $ ... patch ... test  ... commit [ ... patch ... test ... commit ]*
 -------------------------------------------------
 
-When you are happy with the state of this change, you can pull it into the
+When you are happy with the state of this change, you can merge it into the
 "test" branch in preparation to make it public:
 
 -------------------------------------------------
-$ git checkout test && git pull . speed-up-spinlocks
+$ git checkout test && git merge speed-up-spinlocks
 -------------------------------------------------
 
 It is unlikely that you would have any conflicts here ... but you might if you
@@ -2265,7 +2261,7 @@ see the value of keeping each patch (or patch series) in its own branch.  It
 means that the patches can be moved into the `release` tree in any order.
 
 -------------------------------------------------
-$ git checkout release && git pull . speed-up-spinlocks
+$ git checkout release && git merge speed-up-spinlocks
 -------------------------------------------------
 
 After a while, you will have a number of branches, and despite the
@@ -3197,17 +3193,15 @@ To put the loose objects into a pack, just run git repack:
 
 ------------------------------------------------
 $ git repack
-Generating pack...
-Done counting 6020 objects.
-Deltifying 6020 objects.
- 100% (6020/6020) done
-Writing 6020 objects.
- 100% (6020/6020) done
-Total 6020, written 6020 (delta 4070), reused 0 (delta 0)
-Pack pack-3e54ad29d5b2e05838c75df582c65257b8d08e1c created.
+Counting objects: 6020, done.
+Delta compression using up to 4 threads.
+Compressing objects: 100% (6020/6020), done.
+Writing objects: 100% (6020/6020), done.
+Total 6020 (delta 4070), reused 0 (delta 0)
 ------------------------------------------------
 
-You can then run
+This creates a single "pack file" in .git/objects/pack/
+containing all currently unpacked objects.  You can then run
 
 ------------------------------------------------
 $ git prune
@@ -3305,17 +3299,11 @@ state, you can just prune all unreachable objects:
 $ git prune
 ------------------------------------------------
 
-and they'll be gone. But you should only run `git prune` on a quiescent
+and they'll be gone. (You should only run `git prune` on a quiescent
 repository--it's kind of like doing a filesystem fsck recovery: you
 don't want to do that while the filesystem is mounted.
-
-(The same is true of `git fsck` itself, btw, but since
-`git fsck` never actually *changes* the repository, it just reports
-on what it found, `git fsck` itself is never 'dangerous' to run.
-Running it while somebody is actually changing the repository can cause
-confusing and scary messages, but it won't actually do anything bad. In
-contrast, running `git prune` while somebody is actively changing the
-repository is a *BAD* idea).
+`git prune` is designed not to cause any harm in such cases of concurrent
+accesses to a repository but you might receive confusing or scary messages.)
 
 [[recovering-from-repository-corruption]]
 Recovering from repository corruption
@@ -3538,7 +3526,7 @@ with Git 1.5.2 can look up the submodule commits in the repository and
 manually check them out; earlier versions won't recognize the submodules at
 all.
 
-To see how submodule support works, create (for example) four example
+To see how submodule support works, create four example
 repositories that can be used later as a submodule:
 
 -------------------------------------------------
@@ -3640,7 +3628,7 @@ working on a branch.
 
 -------------------------------------------------
 $ git branch
-* (no branch)
+* (detached from d266b98)
   master
 -------------------------------------------------
 
@@ -3910,7 +3898,7 @@ fact that such a commit brings together ("merges") two or more
 previous states represented by other commits.
 
 In other words, while a "tree" represents a particular directory state
-of a working directory, a "commit" represents that state in "time",
+of a working directory, a "commit" represents that state in time,
 and explains how we got there.
 
 You create a commit object by giving it the tree that describes the
@@ -3930,8 +3918,7 @@ save the note about that state, in practice we tend to just write the
 result to the file pointed at by `.git/HEAD`, so that we can always see
 what the last committed state was.
 
-Here is an ASCII art by Jon Loeliger that illustrates how
-various pieces fit together.
+Here is a picture that illustrates how various pieces fit together:
 
 ------------
 
@@ -4010,27 +3997,26 @@ to see what the top commit was.
 Merging multiple trees
 ----------------------
 
-Git helps you do a three-way merge, which you can expand to n-way by
-repeating the merge procedure arbitrary times until you finally
-"commit" the state.  The normal situation is that you'd only do one
-three-way merge (two parents), and commit it, but if you like to, you
-can do multiple parents in one go.
+Git can help you perform a three-way merge, which can in turn be
+used for a many-way merge by repeating the merge procedure several
+times.  The usual situation is that you only do one three-way merge
+(reconciling two lines of history) and commit the result, but if
+you like to, you can merge several branches in one go.
 
-To do a three-way merge, you need the two sets of "commit" objects
-that you want to merge, use those to find the closest common parent (a
-third "commit" object), and then use those commit objects to find the
-state of the directory ("tree" object) at these points.
+To perform a three-way merge, you start with the two commits you
+want to merge, find their closest common parent (a third commit),
+and compare the trees corresponding to these three commits.
 
-To get the "base" for the merge, you first look up the common parent
-of two commits with
+To get the "base" for the merge, look up the common parent of two
+commits:
 
 -------------------------------------------------
 $ git merge-base <commit1> <commit2>
 -------------------------------------------------
 
-which will return you the commit they are both based on.  You should
-now look up the "tree" objects of those commits, which you can easily
-do with (for example)
+This prints the name of a commit they are both based on. You should
+now look up the tree objects of those commits, which you can easily
+do with
 
 -------------------------------------------------
 $ git cat-file commit <commitname> | head -1
@@ -4152,8 +4138,6 @@ about the data in the object.  It's worth noting that the SHA-1 hash
 that is used to name the object is the hash of the original data
 plus this header, so `sha1sum` 'file' does not match the object name
 for 'file'.
-(Historical note: in the dawn of the age of Git the hash
-was the SHA-1 of the 'compressed' object.)
 
 As a result, the general consistency of an object can always be tested
 independently of the contents or the type of the object: all objects can
