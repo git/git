@@ -6631,6 +6631,7 @@ sub git_blame_common {
 			$hash_base, '--', $file_name
 			or die_error(500, "Open git-blame --porcelain failed");
 	}
+	binmode $fd, ':utf8';
 
 	# incremental blame data returns early
 	if ($format eq 'data') {
