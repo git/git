@@ -283,11 +283,12 @@ while read commit parents; do
 
 	case "$filter_subdir" in
 	"")
-		git read-tree -i -m $commit
+		GIT_ALLOW_NULL_SHA1=1 git read-tree -i -m $commit
 		;;
 	*)
 		# The commit may not have the subdirectory at all
-		err=$(git read-tree -i -m $commit:"$filter_subdir" 2>&1) || {
+		err=$(GIT_ALLOW_NULL_SHA1=1 \
+		      git read-tree -i -m $commit:"$filter_subdir" 2>&1) || {
 			if ! git rev-parse -q --verify $commit:"$filter_subdir"
 			then
 				rm -f "$GIT_INDEX_FILE"
