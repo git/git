@@ -58,7 +58,7 @@ test_expect_success 'setup a submodule tree' '
 	 git submodule add ../merging merging &&
 	 test_tick &&
 	 git commit -m "rebasing"
-	)
+	) &&
 	(cd super &&
 	 git submodule add ../none none &&
 	 test_tick &&
