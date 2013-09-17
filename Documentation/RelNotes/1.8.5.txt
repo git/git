@@ -48,6 +48,10 @@ Updates since v1.8.4
 
 Foreign interfaces, subsystems and ports.
 
+ * On MacOS X, we detected if the filesystem needs the "pre-composed
+   unicode strings" workaround, but did not automatically enable it.
+   Now we do.
+
  * remote-hg remote helper misbehaved when interacting with a local Hg
    repository relative to the home directory, e.g. "clone hg::~/there".
 
@@ -62,6 +66,12 @@ Foreign interfaces, subsystems and ports.
 
 
 UI, Workflows & Features
+
+ * Earlier we started rejecting an attempt to add 0{40} object name to
+   the index and to tree objects, but it sometimes is necessary to
+   allow so to be able to use tools like filter-branch to correct such
+   broken tree objects.  "filter-branch" can again be used to to do
+   so.
 
  * "git config" did not provide a way to set or access numbers larger
    than a native "int" on the platform; it now provides 64-bit signed
@@ -154,6 +164,18 @@ Fixes since v1.8.4
 Unless otherwise noted, all the fixes since v1.8.4 in the maintenance
 track are contained in this release (see release notes to them for
 details).
+
+ * When an object is not found after checking the packfiles and then
+   loose object directory, read_sha1_file() re-checks the packfiles to
+   prevent racing with a concurrent repacker; teach the same logic to
+   has_sha1_file().
+   (merge 45e8a74 jk/has-sha1-file-retry-packed later to maint).
+
+ * "git commit --author=$name", when $name is not in the canonical
+   "A. U. Thor <au.thor@example.xz>" format, looks for a matching name
+   from existing history, but did not consult mailmap to grab the
+   preferred author name.
+   (merge ea16794 ap/commit-author-mailmap later to maint).
 
  * "git ls-files -k" needs to crawl only the part of the working tree
    that may overlap the paths in the index to find killed files, but
