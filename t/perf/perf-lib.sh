@@ -148,13 +148,8 @@ exit $ret' >&3 2>&4
 	return "$eval_ret"
 }
 
-
-test_perf () {
+perf_test_ () {
 	test_start_
-	test "$#" = 3 && { test_prereq=$1; shift; } || test_prereq=
-	test "$#" = 2 ||
-	error "bug in the test script: not 2 or 3 parameters to test-expect-success"
-	export test_prereq
 	if ! test_skip "$@"
 	then
 		base=$(basename "$0" .sh)
@@ -189,6 +184,14 @@ test_perf () {
 		"$TEST_DIRECTORY"/perf/min_time.perl test_time.* >"$base".times
 	fi
 	test_finish_
+}
+
+test_perf () {
+	test "$#" = 3 && { test_prereq=$1; shift; } || test_prereq=
+	test "$#" = 2 ||
+	error "bug in the test script: not 2 or 3 parameters to test-expect-success"
+	export test_prereq
+	perf_test_ "$1" "$2"
 }
 
 # We extend test_done to print timings at the end (./run disables this
