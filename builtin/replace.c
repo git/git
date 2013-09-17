@@ -85,6 +85,7 @@ static int replace_object(const char *object_ref, const char *replace_ref,
 			  int force)
 {
 	unsigned char object[20], prev[20], repl[20];
+	enum object_type obj_type, repl_type;
 	char ref[PATH_MAX];
 	struct ref_lock *lock;
 
@@ -99,6 +100,15 @@ static int replace_object(const char *object_ref, const char *replace_ref,
 		die("replace ref name too long: %.*s...", 50, ref);
 	if (check_refname_format(ref, 0))
 		die("'%s' is not a valid ref name.", ref);
+
+	obj_type = sha1_object_info(object, NULL);
+	repl_type = sha1_object_info(repl, NULL);
+	if (!force && obj_type != repl_type)
+		die("Objects must be of the same type.\n"
+		    "'%s' points to a replaced object of type '%s'\n"
+		    "while '%s' points to a replacement object of type '%s'.",
+		    object_ref, typename(obj_type),
+		    replace_ref, typename(repl_type));
 
 	if (read_ref(ref, prev))
 		hashclr(prev);
@@ -118,9 +128,9 @@ int cmd_replace(int argc, const char **argv, const char *prefix)
 {
 	int list = 0, delete = 0, force = 0;
 	struct option options[] = {
-		OPT_BOOL('l', NULL, &list, N_("list replace refs")),
-		OPT_BOOL('d', NULL, &delete, N_("delete replace refs")),
-		OPT_BOOL('f', NULL, &force, N_("replace the ref if it exists")),
+		OPT_BOOL('l', "list", &list, N_("list replace refs")),
+		OPT_BOOL('d', "delete", &delete, N_("delete replace refs")),
+		OPT_BOOL('f', "force", &force, N_("replace the ref if it exists")),
 		OPT_END()
 	};
 
