@@ -1160,21 +1160,9 @@ static enum path_treatment treat_one_path(struct dir_struct *dir,
 	 */
 	if ((dir->flags & DIR_COLLECT_KILLED_ONLY) &&
 	    (dtype == DT_DIR) &&
-	    !has_path_in_index) {
-		/*
-		 * NEEDSWORK: directory_exists_in_index_icase()
-		 * assumes that one byte past the given path is
-		 * readable and has '/', which needs to be fixed, but
-		 * until then, work it around in the caller.
-		 */
-		strbuf_addch(path, '/');
-		if (directory_exists_in_index(path->buf, path->len - 1) ==
-		    index_nonexistent) {
-			strbuf_setlen(path, path->len - 1);
-			return path_none;
-		}
-		strbuf_setlen(path, path->len - 1);
-	}
+	    !has_path_in_index &&
+	    (directory_exists_in_index(path->buf, path->len) == index_nonexistent))
+		return path_none;
 
 	exclude = is_excluded(dir, path->buf, &dtype);
 
