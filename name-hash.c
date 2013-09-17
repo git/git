@@ -58,9 +58,9 @@ static struct dir_entry *hash_dir_entry(struct index_state *istate,
 {
 	/*
 	 * Throw each directory component in the hash for quick lookup
-	 * during a git status. Directory components are stored with their
+	 * during a git status. Directory components are stored without their
 	 * closing slash.  Despite submodules being a directory, they never
-	 * reach this point, because they are stored without a closing slash
+	 * reach this point, because they are stored
 	 * in index_state.name_hash (as ordinary cache_entries).
 	 *
 	 * Note that the cache_entry stored with the dir_entry merely
@@ -78,6 +78,7 @@ static struct dir_entry *hash_dir_entry(struct index_state *istate,
 		namelen--;
 	if (namelen <= 0)
 		return NULL;
+	namelen--;
 
 	/* lookup existing entry for that directory */
 	dir = find_dir_entry(istate, ce->name, namelen);
@@ -97,7 +98,7 @@ static struct dir_entry *hash_dir_entry(struct index_state *istate,
 		}
 
 		/* recursively add missing parent directories */
-		dir->parent = hash_dir_entry(istate, ce, namelen - 1);
+		dir->parent = hash_dir_entry(istate, ce, namelen);
 	}
 	return dir;
 }
@@ -237,7 +238,7 @@ struct cache_entry *index_dir_exists(struct index_state *istate, const char *nam
 	 * in the dir-hash, submodules are stored in the name-hash, so check
 	 * there, as well.
 	 */
-	ce = index_file_exists(istate, name, namelen - 1, 1);
+	ce = index_file_exists(istate, name, namelen, 1);
 	if (ce && S_ISGITLINK(ce->ce_mode))
 		return ce;
 
@@ -265,7 +266,7 @@ struct cache_entry *index_file_exists(struct index_state *istate, const char *na
 struct cache_entry *index_name_exists(struct index_state *istate, const char *name, int namelen, int icase)
 {
 	if (namelen > 0 && name[namelen - 1] == '/')
-		return index_dir_exists(istate, name, namelen);
+		return index_dir_exists(istate, name, namelen - 1);
 	return index_file_exists(istate, name, namelen, icase);
 }
 

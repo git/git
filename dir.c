@@ -889,7 +889,7 @@ enum exist_status {
  */
 static enum exist_status directory_exists_in_index_icase(const char *dirname, int len)
 {
-	const struct cache_entry *ce = cache_dir_exists(dirname, len + 1);
+	const struct cache_entry *ce = cache_dir_exists(dirname, len);
 	unsigned char endchar;
 
 	if (!ce)

@@ -643,7 +643,7 @@ int add_to_index(struct index_state *istate, const char *path, struct stat *st, 
 			if (*ptr == '/') {
 				struct cache_entry *foundce;
 				++ptr;
-				foundce = index_dir_exists(istate, ce->name, ptr - ce->name);
+				foundce = index_dir_exists(istate, ce->name, ptr - ce->name - 1);
 				if (foundce) {
 					memcpy((void *)startPtr, foundce->name + (startPtr - ce->name), ptr - startPtr);
 					startPtr = ptr;
