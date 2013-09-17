@@ -789,8 +789,8 @@ browser.<tool>.path::
 	working repository in gitweb (see linkgit:git-instaweb[1]).
 
 clean.requireForce::
-	A boolean to make git-clean do nothing unless given -f
-	or -n.   Defaults to true.
+	A boolean to make git-clean do nothing unless given -f,
+	-i or -n.   Defaults to true.
 
 color.branch::
 	A boolean to enable/disable color in the output of
