@@ -8,6 +8,7 @@
 #include "url.h"
 
 static char *server_capabilities;
+static const char *parse_feature_value(const char *, const char *, int *);
 
 static int check_ref(const char *name, int len, unsigned int flags)
 {
@@ -116,7 +117,7 @@ struct ref **get_remote_heads(int in, char *src_buf, size_t src_len,
 	return list;
 }
 
-const char *parse_feature_value(const char *feature_list, const char *feature, int *lenp)
+static const char *parse_feature_value(const char *feature_list, const char *feature, int *lenp)
 {
 	int len;
 
