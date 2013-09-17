@@ -484,4 +484,15 @@ test_expect_success 'Blame output (complex mapping)' '
 	test_cmp expect actual.fuzz
 '
 
+cat >expect <<\EOF
+Some Dude <some@dude.xx>
+EOF
+
+test_expect_success 'commit --author honors mailmap' '
+	test_must_fail git commit --author "nick" --allow-empty -meight &&
+	git commit --author "Some Dude" --allow-empty -meight &&
+	git show --pretty=format:"%an <%ae>%n" >actual &&
+	test_cmp expect actual
+'
+
 test_done
