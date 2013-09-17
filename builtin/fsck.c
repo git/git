@@ -16,6 +16,7 @@
 
 #define REACHABLE 0x0001
 #define SEEN      0x0002
+#define HAS_OBJ   0x0004
 
 static int show_root;
 static int show_tags;
@@ -101,7 +102,7 @@ static int mark_object(struct object *obj, int type, void *data)
 	if (obj->flags & REACHABLE)
 		return 0;
 	obj->flags |= REACHABLE;
-	if (!obj->parsed) {
+	if (!(obj->flags & HAS_OBJ)) {
 		if (parent && !has_sha1_file(obj->sha1)) {
 			printf("broken link from %7s %s\n",
 				 typename(parent->type), sha1_to_hex(parent->sha1));
@@ -127,16 +128,13 @@ static int traverse_one_object(struct object *obj)
 	struct tree *tree = NULL;
 
 	if (obj->type == OBJ_TREE) {
-		obj->parsed = 0;
 		tree = (struct tree *)obj;
 		if (parse_tree(tree) < 0)
 			return 1; /* error already displayed */
 	}
 	result = fsck_walk(obj, mark_object, obj);
-	if (tree) {
-		free(tree->buffer);
-		tree->buffer = NULL;
-	}
+	if (tree)
+		free_tree_buffer(tree);
 	return result;
 }
 
@@ -178,7 +176,7 @@ static void check_reachable_object(struct object *obj)
 	 * except if it was in a pack-file and we didn't
 	 * do a full fsck
 	 */
-	if (!obj->parsed) {
+	if (!(obj->flags & HAS_OBJ)) {
 		if (has_sha1_pack(obj->sha1))
 			return; /* it is in pack - forget about it */
 		printf("missing %s %s\n", typename(obj->type), sha1_to_hex(obj->sha1));
@@ -306,8 +304,7 @@ static int fsck_obj(struct object *obj)
 	if (obj->type == OBJ_TREE) {
 		struct tree *item = (struct tree *) obj;
 
-		free(item->buffer);
-		item->buffer = NULL;
+		free_tree_buffer(item);
 	}
 
 	if (obj->type == OBJ_COMMIT) {
@@ -340,6 +337,7 @@ static int fsck_sha1(const unsigned char *sha1)
 		return error("%s: object corrupt or missing",
 			     sha1_to_hex(sha1));
 	}
+	obj->flags |= HAS_OBJ;
 	return fsck_obj(obj);
 }
 
@@ -352,6 +350,7 @@ static int fsck_obj_buffer(const unsigned char *sha1, enum object_type type,
 		errors_found |= ERROR_OBJECT;
 		return error("%s: object corrupt or missing", sha1_to_hex(sha1));
 	}
+	obj->flags = HAS_OBJ;
 	return fsck_obj(obj);
 }
 
