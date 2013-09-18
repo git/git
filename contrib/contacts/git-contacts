@@ -181,6 +181,10 @@ if (@rev_args) {
 	scan_rev_args(\%sources, \@rev_args)
 }
 
+my $toplevel = `git rev-parse --show-toplevel`;
+chomp $toplevel;
+chdir($toplevel) or die "chdir failure: $toplevel: $!\n";
+
 my %commits;
 blame_sources(\%sources, \%commits);
 import_commits(\%commits);
