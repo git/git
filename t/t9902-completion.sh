@@ -69,7 +69,7 @@ run_completion ()
 	local -a COMPREPLY _words
 	local _cword
 	_words=( $1 )
-	test "${1: -1}" = ' ' && _words+=('')
+	test "${1: -1}" = ' ' && _words[${#_words[@]}+1]=''
 	(( _cword = ${#_words[@]} - 1 ))
 	__git_wrap__git_main && print_comp
 }
