@@ -271,6 +271,7 @@ EOF
 test_expect_success 'set-head --auto fails w/multiple HEADs' '
 	(
 		cd test &&
+		git fetch two "refs/heads/*:refs/remotes/two/*" &&
 		test_must_fail git remote set-head --auto two >output 2>&1 &&
 		test_i18ncmp expect output
 	)
