@@ -688,7 +688,7 @@ static int get_pack(struct fetch_pack_args *args,
 	const char *argv[22];
 	char keep_arg[256];
 	char hdr_arg[256];
-	const char **av;
+	const char **av, *cmd_name;
 	int do_keep = args->keep_pack;
 	struct child_process cmd;
 
@@ -734,7 +734,7 @@ static int get_pack(struct fetch_pack_args *args,
 	if (do_keep) {
 		if (pack_lockfile)
 			cmd.out = -1;
-		*av++ = "index-pack";
+		*av++ = cmd_name = "index-pack";
 		*av++ = "--stdin";
 		if (!args->quiet && !args->no_progress)
 			*av++ = "-v";
@@ -749,7 +749,7 @@ static int get_pack(struct fetch_pack_args *args,
 		}
 	}
 	else {
-		*av++ = "unpack-objects";
+		*av++ = cmd_name = "unpack-objects";
 		if (args->quiet || args->no_progress)
 			*av++ = "-q";
 	}
@@ -766,14 +766,14 @@ static int get_pack(struct fetch_pack_args *args,
 	cmd.in = demux.out;
 	cmd.git_cmd = 1;
 	if (start_command(&cmd))
-		die("fetch-pack: unable to fork off %s", argv[0]);
+		die("fetch-pack: unable to fork off %s", cmd_name);
 	if (do_keep && pack_lockfile) {
 		*pack_lockfile = index_pack_lockfile(cmd.out);
 		close(cmd.out);
 	}
 
 	if (finish_command(&cmd))
-		die("%s failed", argv[0]);
+		die("%s failed", cmd_name);
 	if (use_sideband && finish_async(&demux))
 		die("error in sideband demultiplexer");
 	return 0;
