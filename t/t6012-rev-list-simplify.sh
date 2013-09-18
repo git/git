@@ -127,4 +127,10 @@ test_expect_success 'full history simplification without parent' '
 	}
 '
 
+test_expect_success '--full-diff is not affected by --parents' '
+	git log -p --pretty="%H" --full-diff -- file >expected &&
+	git log -p --pretty="%H" --full-diff --parents -- file >actual &&
+	test_cmp expected actual
+'
+
 test_done

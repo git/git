@@ -738,7 +738,7 @@ static int log_tree_diff(struct rev_info *opt, struct commit *commit, struct log
 	sha1 = commit->tree->object.sha1;
 
 	/* Root commit? */
-	parents = commit->parents;
+	parents = get_saved_parents(opt, commit);
 	if (!parents) {
 		if (opt->show_root_diff) {
 			diff_root_tree_sha1(sha1, "", &opt->diffopt);
