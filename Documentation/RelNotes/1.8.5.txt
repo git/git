@@ -48,6 +48,10 @@ Updates since v1.8.4
 
 Foreign interfaces, subsystems and ports.
 
+ * "git-svn" used with SVN 1.8.0 when talking over https:// connection
+   dumped core due to a bug in the serf library that SVN uses.  Work
+   it around on our side, even though the SVN side is being fixed.
+
  * On MacOS X, we detected if the filesystem needs the "pre-composed
    unicode strings" workaround, but did not automatically enable it.
    Now we do.
@@ -66,6 +70,10 @@ Foreign interfaces, subsystems and ports.
 
 
 UI, Workflows & Features
+
+ * A packfile that stores the same object more than once is broken and
+   will be rejected by "git index-pack" that is run when receiving
+   data over the wire.
 
  * Earlier we started rejecting an attempt to add 0{40} object name to
    the index and to tree objects, but it sometimes is necessary to
@@ -136,6 +144,10 @@ UI, Workflows & Features
 
 Performance, Internal Implementation, etc.
 
+ * If a build-time fallback is set to "cat" instead of "less", we
+   should apply the same "no subprocess or pipe" optimization as we
+   apply to user-supplied GIT_PAGER=cat.
+
  * Many commands use --dashed-option as a operation mode selector
    (e.g. "git tag --delete") that the user can use at most one
    (e.g. "git tag --delete --verify" is a nonsense) and you cannot
@@ -164,6 +176,25 @@ Fixes since v1.8.4
 Unless otherwise noted, all the fixes since v1.8.4 in the maintenance
 track are contained in this release (see release notes to them for
 details).
+
+ * "git cvsserver" computed the permission mode bits incorrectly for
+   executable files.
+   (merge 1b48d56 jc/cvsserver-perm-bit-fix later to maint).
+
+ * When send-email comes up with an error message to die with upon
+   failure to start an SSL session, it tried to read the error string
+   from a wrong place.
+   (merge 6cb0c88 bc/send-email-ssl-die-message-fix later to maint).
+
+ * The implementation of "add -i" has a crippling code to work around
+   ActiveState Perl limitation but it by mistake also triggered on Git
+   for Windows where MSYS perl is used.
+   (merge df17e77 js/add-i-mingw later to maint).
+
+ * We made sure that we notice the user-supplied GIT_DIR is actually a
+   gitfile, but did not do the same when the default ".git" is a
+   gitfile.
+   (merge 487a2b7 nd/git-dir-pointing-at-gitfile later to maint).
 
  * When an object is not found after checking the packfiles and then
    loose object directory, read_sha1_file() re-checks the packfiles to
