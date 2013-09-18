@@ -13,8 +13,11 @@
 # or
 # % git clone bzr::lp:myrepo
 #
-# If you want to specify which branches you want track (per repo):
-# git config remote-bzr.branches 'trunk, devel, test'
+# If you want to specify which branches you want to track (per repo):
+# % git config remote.origin.bzr-branches 'trunk, devel, test'
+#
+# Where 'origin' is the name of the repository you want to specify the
+# branches.
 #
 
 import sys
@@ -168,17 +171,16 @@ class Parser:
         if not m:
             return None
         _, name, email, date, tz = m.groups()
+        name = name.decode('utf-8')
         committer = '%s <%s>' % (name, email)
         tz = int(tz)
         tz = ((tz / 100) * 3600) + ((tz % 100) * 60)
         return (committer, int(date), tz)
 
 def rev_to_mark(rev):
-    global marks
     return marks.from_rev(rev)
 
 def mark_to_rev(mark):
-    global marks
     return marks.to_rev(mark)
 
 def fixup_user(user):
@@ -233,8 +235,6 @@ def get_filechanges(cur, prev):
     return modified, removed
 
 def export_files(tree, files):
-    global marks, filenodes
-
     final = []
     for path, fid in files.iteritems():
         kind = tree.kind(fid)
@@ -276,8 +276,6 @@ def export_files(tree, files):
     return final
 
 def export_branch(repo, name):
-    global prefix
-
     ref = '%s/heads/%s' % (prefix, name)
     tip = marks.get_tip(name)
 
@@ -378,16 +376,12 @@ def export_branch(repo, name):
     marks.set_tip(name, revid)
 
 def export_tag(repo, name):
-    global tags, prefix
-
     ref = '%s/tags/%s' % (prefix, name)
     print "reset %s" % ref
     print "from :%u" % rev_to_mark(tags[name])
     print
 
 def do_import(parser):
-    global dirname
-
     repo = parser.repo
     path = os.path.join(dirname, 'marks-git')
 
@@ -413,8 +407,6 @@ def do_import(parser):
     sys.stdout.flush()
 
 def parse_blob(parser):
-    global blob_marks
-
     parser.next()
     mark = parser.get_mark()
     parser.next()
@@ -425,8 +417,6 @@ def parse_blob(parser):
 class CustomTree():
 
     def __init__(self, branch, revid, parents, files):
-        global files_cache
-
         self.updates = {}
         self.branch = branch
 
@@ -484,7 +474,7 @@ class CustomTree():
             add_entry(fid, dirname, 'directory')
             return fid
 
-        def add_entry(fid, path, kind, mode = None):
+        def add_entry(fid, path, kind, mode=None):
             dirname, basename = os.path.split(path)
             parent_fid = get_parent(dirname, basename)
 
@@ -505,7 +495,7 @@ class CustomTree():
             self.files[path] = [change[0], None]
             changes.append(change)
 
-        def update_entry(fid, path, kind, mode = None):
+        def update_entry(fid, path, kind, mode=None):
             dirname, basename = os.path.split(path)
             parent_fid = get_parent(dirname, basename)
 
@@ -583,9 +573,6 @@ def c_style_unescape(string):
     return string
 
 def parse_commit(parser):
-    global marks, blob_marks, parsed_refs
-    global mode
-
     parents = []
 
     ref = parser[1]
@@ -657,8 +644,6 @@ def parse_commit(parser):
     marks.new_mark(revid, commit_mark)
 
 def parse_reset(parser):
-    global parsed_refs
-
     ref = parser[1]
     parser.next()
 
@@ -674,8 +659,6 @@ def parse_reset(parser):
     parsed_refs[ref] = mark_to_rev(from_mark)
 
 def do_export(parser):
-    global parsed_refs, dirname, transports
-
     parser.next()
 
     for line in parser.each_block('done'):
@@ -725,8 +708,6 @@ def do_export(parser):
     print
 
 def do_capabilities(parser):
-    global dirname
-
     print "import"
     print "export"
     print "refspec refs/heads/*:%s/heads/*" % prefix
@@ -744,8 +725,6 @@ def ref_is_valid(name):
     return not True in [c in name for c in '~^: \\']
 
 def do_list(parser):
-    global tags
-
     master_branch = None
 
     for name in branches:
@@ -770,7 +749,6 @@ def do_list(parser):
     print
 
 def clone(path, remote_branch):
-    global transports
     try:
         bdir = bzrlib.bzrdir.BzrDir.create(path, possible_transports=transports)
     except bzrlib.errors.AlreadyControlDirError:
@@ -780,8 +758,6 @@ def clone(path, remote_branch):
     return remote_branch.sprout(bdir, repository=repo)
 
 def get_remote_branch(name):
-    global dirname, branches, transports
-
     remote_branch = bzrlib.branch.Branch.open(branches[name],
                                               possible_transports=transports)
     if isinstance(remote_branch.user_transport, bzrlib.transport.local.LocalTransport):
@@ -825,8 +801,6 @@ def find_branches(repo):
             yield name, branch.base
 
 def get_repo(url, alias):
-    global dirname, peer, branches, transports
-
     normal_url = bzrlib.urlutils.normalize_url(url)
     origin = bzrlib.bzrdir.BzrDir.open(url, possible_transports=transports)
     is_local = isinstance(origin.transport, bzrlib.transport.local.LocalTransport)
@@ -858,9 +832,13 @@ def get_repo(url, alias):
             except bzrlib.errors.NoRepositoryPresent:
                 pass
 
-    wanted = get_config('remote-bzr.branches').rstrip().split(', ')
+    wanted = get_config('remote.%s.bzr-branches' % alias).rstrip().split(', ')
     # stupid python
     wanted = [e for e in wanted if e]
+    if not wanted:
+        wanted = get_config('remote-bzr.branches').rstrip().split(', ')
+        # stupid python
+        wanted = [e for e in wanted if e]
 
     if not wanted:
         try:
