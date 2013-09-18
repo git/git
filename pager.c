@@ -54,7 +54,7 @@ const char *git_pager(int stdout_is_tty)
 		pager = getenv("PAGER");
 	if (!pager)
 		pager = DEFAULT_PAGER;
-	else if (!*pager || !strcmp(pager, "cat"))
+	if (!*pager || !strcmp(pager, "cat"))
 		pager = NULL;
 
 	return pager;
