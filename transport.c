@@ -875,6 +875,8 @@ void transport_take_over(struct transport *transport,
 	transport->push_refs = git_transport_push;
 	transport->disconnect = disconnect_git;
 	transport->smart_options = &(data->options);
+
+	transport->cannot_reuse = 1;
 }
 
 static int is_local(const char *url)

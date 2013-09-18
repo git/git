@@ -36,7 +36,8 @@ static int tags = TAGS_DEFAULT, unshallow;
 static const char *depth;
 static const char *upload_pack;
 static struct strbuf default_rla = STRBUF_INIT;
-static struct transport *transport;
+static struct transport *gtransport;
+static struct transport *gsecondary;
 static const char *submodule_prefix = "";
 static const char *recurse_submodules_default;
 
@@ -95,8 +96,10 @@ static struct option builtin_fetch_options[] = {
 
 static void unlock_pack(void)
 {
-	if (transport)
-		transport_unlock_pack(transport);
+	if (gtransport)
+		transport_unlock_pack(gtransport);
+	if (gsecondary)
+		transport_unlock_pack(gsecondary);
 }
 
 static void unlock_pack_on_signal(int signo)
@@ -720,6 +723,48 @@ static int truncate_fetch_head(void)
 	return 0;
 }
 
+static void set_option(struct transport *transport, const char *name, const char *value)
+{
+	int r = transport_set_option(transport, name, value);
+	if (r < 0)
+		die(_("Option \"%s\" value \"%s\" is not valid for %s"),
+		    name, value, transport->url);
+	if (r > 0)
+		warning(_("Option \"%s\" is ignored for %s\n"),
+			name, transport->url);
+}
+
+static struct transport *prepare_transport(struct remote *remote)
+{
+	struct transport *transport;
+	transport = transport_get(remote, NULL);
+	transport_set_verbosity(transport, verbosity, progress);
+	if (upload_pack)
+		set_option(transport, TRANS_OPT_UPLOADPACK, upload_pack);
+	if (keep)
+		set_option(transport, TRANS_OPT_KEEP, "yes");
+	if (depth)
+		set_option(transport, TRANS_OPT_DEPTH, depth);
+	return transport;
+}
+
+static void backfill_tags(struct transport *transport, struct ref *ref_map)
+{
+	if (transport->cannot_reuse) {
+		gsecondary = prepare_transport(transport->remote);
+		transport = gsecondary;
+	}
+
+	transport_set_option(transport, TRANS_OPT_FOLLOWTAGS, NULL);
+	transport_set_option(transport, TRANS_OPT_DEPTH, "0");
+	fetch_refs(transport, ref_map);
+
+	if (gsecondary) {
+		transport_disconnect(gsecondary);
+		gsecondary = NULL;
+	}
+}
+
 static int do_fetch(struct transport *transport,
 		    struct refspec *refs, int ref_count)
 {
@@ -803,28 +848,14 @@ static int do_fetch(struct transport *transport,
 		struct ref **tail = &ref_map;
 		ref_map = NULL;
 		find_non_local_tags(transport, &ref_map, &tail);
-		if (ref_map) {
-			transport_set_option(transport, TRANS_OPT_FOLLOWTAGS, NULL);
-			transport_set_option(transport, TRANS_OPT_DEPTH, "0");
-			fetch_refs(transport, ref_map);
-		}
+		if (ref_map)
+			backfill_tags(transport, ref_map);
 		free_refs(ref_map);
 	}
 
  cleanup:
 	string_list_clear(&existing_refs, 1);
 	return retcode;
-}
-
-static void set_option(const char *name, const char *value)
-{
-	int r = transport_set_option(transport, name, value);
-	if (r < 0)
-		die(_("Option \"%s\" value \"%s\" is not valid for %s"),
-			name, value, transport->url);
-	if (r > 0)
-		warning(_("Option \"%s\" is ignored for %s\n"),
-			name, transport->url);
 }
 
 static int get_one_remote_for_fetch(struct remote *remote, void *priv)
@@ -949,15 +980,7 @@ static int fetch_one(struct remote *remote, int argc, const char **argv)
 		die(_("No remote repository specified.  Please, specify either a URL or a\n"
 		    "remote name from which new revisions should be fetched."));
 
-	transport = transport_get(remote, NULL);
-	transport_set_verbosity(transport, verbosity, progress);
-	if (upload_pack)
-		set_option(TRANS_OPT_UPLOADPACK, upload_pack);
-	if (keep)
-		set_option(TRANS_OPT_KEEP, "yes");
-	if (depth)
-		set_option(TRANS_OPT_DEPTH, depth);
-
+	gtransport = prepare_transport(remote);
 	if (argc > 0) {
 		int j = 0;
 		refs = xcalloc(argc + 1, sizeof(const char *));
@@ -983,10 +1006,10 @@ static int fetch_one(struct remote *remote, int argc, const char **argv)
 	sigchain_push_common(unlock_pack_on_signal);
 	atexit(unlock_pack);
 	refspec = parse_fetch_refspec(ref_nr, refs);
-	exit_code = do_fetch(transport, refspec, ref_nr);
+	exit_code = do_fetch(gtransport, refspec, ref_nr);
 	free_refspec(ref_nr, refspec);
-	transport_disconnect(transport);
-	transport = NULL;
+	transport_disconnect(gtransport);
+	gtransport = NULL;
 	return exit_code;
 }
 
