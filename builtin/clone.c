@@ -380,7 +380,7 @@ static void clone_local(const char *src_repo, const char *dest_repo)
 	}
 
 	if (0 <= option_verbosity)
-		printf(_("done.\n"));
+		fprintf(stderr, _("done.\n"));
 }
 
 static const char *junk_work_tree;
@@ -552,12 +552,12 @@ static void update_remote_refs(const struct ref *refs,
 
 	if (check_connectivity) {
 		if (0 <= option_verbosity)
-			printf(_("Checking connectivity... "));
+			fprintf(stderr, _("Checking connectivity... "));
 		if (check_everything_connected_with_transport(iterate_ref_map,
 							      0, &rm, transport))
 			die(_("remote did not send all necessary objects"));
 		if (0 <= option_verbosity)
-			printf(_("done\n"));
+			fprintf(stderr, _("done\n"));
 	}
 
 	if (refs) {
@@ -850,9 +850,9 @@ int cmd_clone(int argc, const char **argv, const char *prefix)
 
 	if (0 <= option_verbosity) {
 		if (option_bare)
-			printf(_("Cloning into bare repository '%s'...\n"), dir);
+			fprintf(stderr, _("Cloning into bare repository '%s'...\n"), dir);
 		else
-			printf(_("Cloning into '%s'...\n"), dir);
+			fprintf(stderr, _("Cloning into '%s'...\n"), dir);
 	}
 	init_db(option_template, INIT_DB_QUIET);
 	write_config(&option_config);
