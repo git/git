@@ -322,6 +322,7 @@ static inline char *mingw_find_last_dir_sep(const char *path)
 #define find_last_dir_sep mingw_find_last_dir_sep
 #define PATH_SEP ';'
 #define PRIuMAX "I64u"
+#define PRId64 "I64d"
 
 void mingw_open_html(const char *path);
 #define open_html mingw_open_html
