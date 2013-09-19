@@ -7,18 +7,20 @@ test_description='"-C <path>" option and its effects on other path-related optio
 test_expect_success '"git -C <path>" runs git from the directory <path>' '
 	test_create_repo dir1 &&
 	echo 1 >dir1/a.txt &&
-	(cd dir1 && git add a.txt && git commit -m "initial in dir1") &&
-	echo "initial in dir1" >expected &&
+	msg="initial in dir1" &&
+	(cd dir1 && git add a.txt && git commit -m "$msg") &&
+	echo "$msg" >expected &&
 	git -C dir1 log --format=%s >actual &&
 	test_cmp expected actual
 '
 
 test_expect_success 'Multiple -C options: "-C dir1 -C dir2" is equivalent to "-C dir1/dir2"' '
 	test_create_repo dir1/dir2 &&
-	echo 1 >dir1/dir2/a.txt &&
-	git -C dir1/dir2 add a.txt &&
-	echo "initial in dir1/dir2" >expected &&
-	git -C dir1/dir2 commit -m "initial in dir1/dir2" &&
+	echo 1 >dir1/dir2/b.txt &&
+	git -C dir1/dir2 add b.txt &&
+	msg="initial in dir1/dir2" &&
+	echo "$msg" >expected &&
+	git -C dir1/dir2 commit -m "$msg" &&
 	git -C dir1 -C dir2 log --format=%s >actual &&
 	test_cmp expected actual
 '
