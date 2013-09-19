@@ -1159,6 +1159,7 @@ int handle_revision_arg(const char *arg_, struct rev_info *revs, int flags, unsi
 		    !get_sha1_committish(next, sha1)) {
 			struct commit *a, *b;
 			struct commit_list *exclude;
+			struct object *a_obj, *b_obj;
 
 			a = lookup_commit_reference(from_sha1);
 			b = lookup_commit_reference(sha1);
@@ -1184,14 +1185,20 @@ int handle_revision_arg(const char *arg_, struct rev_info *revs, int flags, unsi
 				a_flags = flags | SYMMETRIC_LEFT;
 			} else
 				a_flags = flags_exclude;
-			a->object.flags |= a_flags;
-			b->object.flags |= flags;
-			add_rev_cmdline(revs, &a->object, this,
+			a_obj = (!hashcmp(a->object.sha1, from_sha1)
+				 ? &a->object
+				 : lookup_object(from_sha1));
+			b_obj = (!hashcmp(b->object.sha1, sha1)
+				 ? &b->object
+				 : lookup_object(sha1));
+			a_obj->flags |= a_flags;
+			b_obj->flags |= flags;
+			add_rev_cmdline(revs, a_obj, this,
 					REV_CMD_LEFT, a_flags);
-			add_rev_cmdline(revs, &b->object, next,
+			add_rev_cmdline(revs, b_obj, next,
 					REV_CMD_RIGHT, flags);
-			add_pending_object(revs, &a->object, this);
-			add_pending_object(revs, &b->object, next);
+			add_pending_object(revs, a_obj, this);
+			add_pending_object(revs, b_obj, next);
 			return 0;
 		}
 		*dotdot = '.';
