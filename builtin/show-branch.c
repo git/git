@@ -4,6 +4,7 @@
 #include "builtin.h"
 #include "color.h"
 #include "parse-options.h"
+#include "commit-slab.h"
 
 static const char* show_branch_usage[] = {
     N_("git show-branch [-a|--all] [-r|--remotes] [--topo-order | --date-order] [--current] [--color[=<when>] | --no-color] [--sparse] [--more=<n> | --list | --independent | --merge-base] [--no-name | --sha1-name] [--topics] [(<rev> | <glob>)...]"),
@@ -21,6 +22,172 @@ static const char **default_arg;
 
 #define REV_SHIFT	 2
 #define MAX_REVS	(FLAG_BITS - REV_SHIFT) /* should not exceed bits_per_int - REV_SHIFT */
+
+
+define_commit_slab(reachable_cslab, unsigned char);
+
+struct reachable {
+	int numbits;
+	unsigned char *all_revs;
+	unsigned char *rev_mask;
+	struct reachable_cslab cslab;
+};
+
+static struct reachable reachable;
+
+static void init_reachable(int numbits)
+{
+	int numbytes = (numbits + 7) / 8;
+
+	reachable.numbits = numbits;
+	reachable.all_revs = xcalloc(numbytes, 1);
+	reachable.rev_mask = xcalloc(numbits, numbytes);
+
+	init_reachable_cslab(&reachable.cslab);
+	clear_reachable_cslab(&reachable.cslab);
+
+	init_reachable_cslab_with_stride(&reachable.cslab, numbytes);
+}
+
+static void set_nth_bit_in_bytearray(unsigned char *barray, int n)
+{
+	barray[n/8] |= (1 << (n % 8));
+}
+
+static int tst_nth_bit_in_bytearray(unsigned char *barray, int n)
+{
+	return barray[n/8] & (1 << (n % 8));
+}
+
+static int has_any_bit_set(struct commit *commit)
+{
+	unsigned char *at;
+	int numbytes = (reachable.numbits + 7) / 8;
+	int i;
+
+	/* Yeah, I know accessing a word at a time may be faster */
+	at = reachable_cslab_at(&reachable.cslab, commit);
+	for (i = 0; i < numbytes; i++) {
+		if (*at)
+			return 1;
+		at++;
+	}
+	return 0;
+}
+
+static void prepare_all_flags(int num_rev, struct commit **rev)
+{
+	int i;
+	unsigned char *at;
+	int numbytes = (reachable.numbits + 7) / 8;
+
+	for (i = 0; i < reachable.numbits; i++)
+		set_nth_bit_in_bytearray(reachable.all_revs, i);
+	for (i = 0; i < reachable.numbits; i++) {
+		at = reachable_cslab_at(&reachable.cslab, rev[i]);
+		memcpy(reachable.rev_mask + i * numbytes, at, numbytes);
+	}
+}
+
+static int commit_seen(struct commit *commit)
+{
+	return ((commit->object.flags & UNINTERESTING) ||
+		has_any_bit_set(commit));
+}
+
+static int all_bits_set(const unsigned char *bits, const unsigned char *mask)
+{
+	int numbytes = (reachable.numbits + 7) / 8;
+	int i;
+
+	for (i = 0; i < numbytes; i++)
+		if ((bits[i] & mask[i]) != mask[i])
+			return 0;
+	return 1;
+}
+
+static int reachable_from_all(struct commit *commit)
+{
+	unsigned char *at = reachable_cslab_at(&reachable.cslab, commit);
+
+	return all_bits_set(at, reachable.all_revs);
+}
+
+static int already_reachable(struct commit *this, struct commit *other, int uninteresting)
+{
+	unsigned char *this_at, *other_at;
+
+	if (!!(this->object.flags & UNINTERESTING) != uninteresting)
+		return 0;
+
+	this_at = reachable_cslab_at(&reachable.cslab, this);
+	other_at = reachable_cslab_at(&reachable.cslab, other);
+
+	return all_bits_set(this_at, other_at);
+}
+
+static void propagate_mark(struct commit *this, struct commit *other, int uninteresting)
+{
+	int numbytes = (reachable.numbits + 7) / 8;
+	int i;
+	unsigned char *this_at, *other_at;
+
+	if (uninteresting)
+		this->object.flags |= UNINTERESTING;
+
+	this_at = reachable_cslab_at(&reachable.cslab, this);
+	other_at = reachable_cslab_at(&reachable.cslab, other);
+	for (i = 0; i < numbytes; i++)
+		this_at[i] |= other_at[i];
+}
+
+static int has_independent_mask(struct commit *commit, int i)
+{
+	int numbytes = (reachable.numbits + 7) / 8;
+	unsigned char *at = reachable_cslab_at(&reachable.cslab, commit);
+
+	return !memcmp(at, reachable.rev_mask + i * numbytes, numbytes);
+}
+
+static int count_set_bits(struct commit *commit, int num_rev)
+{
+	int i, count;
+	unsigned char *at = reachable_cslab_at(&reachable.cslab, commit);
+
+	if (num_rev != reachable.numbits)
+		die("BUG: num-rev different from numbits");
+
+	for (i = count = 0; i < num_rev; i++)
+		if (tst_nth_bit_in_bytearray(at, i))
+			count++;
+	return count;
+}
+
+static void set_nth_bit(struct commit *commit, int n)
+{
+	unsigned char *at = reachable_cslab_at(&reachable.cslab, commit);
+	set_nth_bit_in_bytearray(at, n);
+}
+
+static int has_nth_bit_only(struct commit *commit, int n)
+{
+	int i;
+	unsigned char *at = reachable_cslab_at(&reachable.cslab, commit);
+
+	for (i = 0; i < n; i++)
+		if (tst_nth_bit_in_bytearray(at, i))
+			return 0;
+	for (i = n + 1; i < reachable.numbits; i++)
+		if (tst_nth_bit_in_bytearray(at, i))
+			return 0;
+	return tst_nth_bit_in_bytearray(at, n);
+}
+
+static int has_nth_bit(struct commit *commit, int n)
+{
+	unsigned char *at = reachable_cslab_at(&reachable.cslab, commit);
+	return tst_nth_bit_in_bytearray(at, n);
+}
 
 #define DEFAULT_REFLOG	4
 
@@ -66,7 +233,8 @@ struct commit_name {
 	int generation; /* how many parents away from head_name */
 };
 
-/* Name the commit as nth generation ancestor of head_name;
+/*
+ * Name the commit as nth generation ancestor of head_name;
  * we count only the first-parent relationship for naming purposes.
  */
 static void name_commit(struct commit *commit, const char *head_name, int nth)
@@ -79,7 +247,8 @@ static void name_commit(struct commit *commit, const char *head_name, int nth)
 	name->generation = nth;
 }
 
-/* Parent is the first parent of the commit.  We may name it
+/*
+ * Parent is the first parent of the commit.  We may name it
  * as (n+1)th generation ancestor of the same head_name as
  * commit is nth generation ancestor of, if that generation
  * number is better than the name it already has.
@@ -193,7 +362,7 @@ static void name_commits(struct commit_list *list,
 
 static int mark_seen(struct commit *commit, struct commit_list **seen_p)
 {
-	if (!commit->object.flags) {
+	if (!commit_seen(commit)) {
 		commit_list_insert(commit, seen_p);
 		return 1;
 	}
@@ -204,34 +373,30 @@ static void join_revs(struct commit_list **list_p,
 		      struct commit_list **seen_p,
 		      int num_rev, int extra)
 {
-	int all_mask = ((1u << (REV_SHIFT + num_rev)) - 1);
-	int all_revs = all_mask & ~((1u << REV_SHIFT) - 1);
-
 	while (*list_p) {
 		struct commit_list *parents;
 		int still_interesting = !!interesting(*list_p);
 		struct commit *commit = pop_one_commit(list_p);
-		int flags = commit->object.flags & all_mask;
+		int mark_uninteresting = !!(commit->object.flags & UNINTERESTING);
 
 		if (!still_interesting && extra <= 0)
 			break;
 
 		mark_seen(commit, seen_p);
-		if ((flags & all_revs) == all_revs)
-			flags |= UNINTERESTING;
+		if (reachable_from_all(commit))
+			mark_uninteresting = 1;
 		parents = commit->parents;
 
 		while (parents) {
 			struct commit *p = parents->item;
-			int this_flag = p->object.flags;
 			parents = parents->next;
-			if ((this_flag & flags) == flags)
+			if (already_reachable(p, commit, mark_uninteresting))
 				continue;
 			if (!p->object.parsed)
 				parse_commit(p);
 			if (mark_seen(p, seen_p) && !still_interesting)
 				extra--;
-			p->object.flags |= flags;
+			propagate_mark(p, commit, mark_uninteresting);
 			commit_list_insert_by_date(p, list_p);
 		}
 	}
@@ -250,11 +415,12 @@ static void join_revs(struct commit_list **list_p,
 			struct commit *c = s->item;
 			struct commit_list *parents;
 
-			if (((c->object.flags & all_revs) != all_revs) &&
+			if (!reachable_from_all(c) &&
 			    !(c->object.flags & UNINTERESTING))
 				continue;
 
-			/* The current commit is either a merge base or
+			/*
+			 * The current commit is either a merge base or
 			 * already uninteresting one.  Mark its parents
 			 * as uninteresting commits _only_ if they are
 			 * already parsed.  No reason to find new ones
@@ -398,7 +564,8 @@ static int append_head_ref(const char *refname, const unsigned char *sha1, int f
 	int ofs = 11;
 	if (prefixcmp(refname, "refs/heads/"))
 		return 0;
-	/* If both heads/foo and tags/foo exists, get_sha1 would
+	/*
+	 * If both heads/foo and tags/foo exists, get_sha1 would
 	 * get confused.
 	 */
 	if (get_sha1(refname + ofs, tmp) || hashcmp(tmp, sha1))
@@ -412,7 +579,8 @@ static int append_remote_ref(const char *refname, const unsigned char *sha1, int
 	int ofs = 13;
 	if (prefixcmp(refname, "refs/remotes/"))
 		return 0;
-	/* If both heads/foo and tags/foo exists, get_sha1 would
+	/*
+	 * If both heads/foo and tags/foo exists, get_sha1 would
 	 * get confused.
 	 */
 	if (get_sha1(refname + ofs, tmp) || hashcmp(tmp, sha1))
@@ -440,7 +608,8 @@ static int count_slash(const char *s)
 
 static int append_matching_ref(const char *refname, const unsigned char *sha1, int flag, void *cb_data)
 {
-	/* we want to allow pattern hold/<asterisk> to show all
+	/*
+	 * We want to allow pattern hold/<asterisk> to show all
 	 * branches under refs/heads/hold/, and v0.99.9? to show
 	 * refs/tags/v0.99.9a and friends.
 	 */
@@ -491,15 +660,13 @@ static int rev_is_head(char *head, int headlen, char *name,
 
 static int show_merge_base(struct commit_list *seen, int num_rev)
 {
-	int all_mask = ((1u << (REV_SHIFT + num_rev)) - 1);
-	int all_revs = all_mask & ~((1u << REV_SHIFT) - 1);
 	int exit_status = 1;
 
 	while (seen) {
 		struct commit *commit = pop_one_commit(&seen);
-		int flags = commit->object.flags & all_mask;
-		if (!(flags & UNINTERESTING) &&
-		    ((flags & all_revs) == all_revs)) {
+
+		if (!(commit->object.flags & UNINTERESTING) &&
+		    reachable_from_all(commit)) {
 			puts(sha1_to_hex(commit->object.sha1));
 			exit_status = 0;
 			commit->object.flags |= UNINTERESTING;
@@ -510,16 +677,14 @@ static int show_merge_base(struct commit_list *seen, int num_rev)
 
 static int show_independent(struct commit **rev,
 			    int num_rev,
-			    char **ref_name,
-			    unsigned int *rev_mask)
+			    char **ref_name)
 {
 	int i;
 
 	for (i = 0; i < num_rev; i++) {
 		struct commit *commit = rev[i];
-		unsigned int flag = rev_mask[i];
 
-		if (commit->object.flags == flag)
+		if (has_independent_mask(commit, i))
 			puts(sha1_to_hex(commit->object.sha1));
 		commit->object.flags |= UNINTERESTING;
 	}
@@ -581,21 +746,17 @@ static int git_show_branch_config(const char *var, const char *value, void *cb)
 
 static int omit_in_dense(struct commit *commit, struct commit **rev, int n)
 {
-	/* If the commit is tip of the named branches, do not
-	 * omit it.
+	/*
+	 * If the commit is tip of the named branches, do not omit it.
 	 * Otherwise, if it is a merge that is reachable from only one
 	 * tip, it is not that interesting.
 	 */
-	int i, flag, count;
+	int i;
 	for (i = 0; i < n; i++)
 		if (rev[i] == commit)
 			return 0;
-	flag = commit->object.flags;
-	for (i = count = 0; i < n; i++) {
-		if (flag & (1u << (i + REV_SHIFT)))
-			count++;
-	}
-	if (count == 1)
+
+	if (count_set_bits(commit, n) == 1)
 		return 1;
 	return 0;
 }
@@ -626,10 +787,8 @@ int cmd_show_branch(int ac, const char **av, const char *prefix)
 	struct commit *rev[MAX_REVS], *commit;
 	char *reflog_msg[MAX_REVS];
 	struct commit_list *list = NULL, *seen = NULL;
-	unsigned int rev_mask[MAX_REVS];
 	int num_rev, i, extra = 0;
 	int all_heads = 0, all_remotes = 0;
-	int all_mask, all_revs;
 	enum rev_sort_order sort_order = REV_SORT_IN_GRAPH_ORDER;
 	char head[128];
 	const char *head_p;
@@ -698,7 +857,8 @@ int cmd_show_branch(int ac, const char **av, const char *prefix)
 		all_remotes = 1;
 
 	if (extra || reflog) {
-		/* "listing" mode is incompatible with
+		/*
+		 * "listing" mode is incompatible with
 		 * independent nor merge-base modes.
 		 */
 		if (independent || merge_base)
@@ -803,7 +963,8 @@ int cmd_show_branch(int ac, const char **av, const char *prefix)
 	if (with_current_branch && head_p) {
 		int has_head = 0;
 		for (i = 0; !has_head && i < ref_name_cnt; i++) {
-			/* We are only interested in adding the branch
+			/*
+			 * We are only interested in adding the branch
 			 * HEAD points at.
 			 */
 			if (rev_is_head(head,
@@ -823,9 +984,10 @@ int cmd_show_branch(int ac, const char **av, const char *prefix)
 		exit(0);
 	}
 
+	init_reachable(ref_name_cnt);
+
 	for (num_rev = 0; ref_name[num_rev]; num_rev++) {
 		unsigned char revkey[20];
-		unsigned int flag = 1u << (num_rev + REV_SHIFT);
 
 		if (MAX_REVS <= num_rev)
 			die("cannot handle more than %d revs.", MAX_REVS);
@@ -838,17 +1000,18 @@ int cmd_show_branch(int ac, const char **av, const char *prefix)
 		parse_commit(commit);
 		mark_seen(commit, &seen);
 
-		/* rev#0 uses bit REV_SHIFT, rev#1 uses bit REV_SHIFT+1,
+		/*
+		 * rev#0 uses bit REV_SHIFT, rev#1 uses bit REV_SHIFT+1,
 		 * and so on.  REV_SHIFT bits from bit 0 are used for
 		 * internal bookkeeping.
 		 */
-		commit->object.flags |= flag;
-		if (commit->object.flags == flag)
+		set_nth_bit(commit, num_rev);
+		if (has_nth_bit_only(commit, num_rev))
 			commit_list_insert_by_date(commit, &list);
 		rev[num_rev] = commit;
 	}
-	for (i = 0; i < num_rev; i++)
-		rev_mask[i] = rev[i]->object.flags;
+
+	prepare_all_flags(num_rev, rev);
 
 	if (0 <= extra)
 		join_revs(&list, &seen, num_rev, extra);
@@ -859,7 +1022,7 @@ int cmd_show_branch(int ac, const char **av, const char *prefix)
 		return show_merge_base(seen, num_rev);
 
 	if (independent)
-		return show_independent(rev, num_rev, ref_name, rev_mask);
+		return show_independent(rev, num_rev, ref_name);
 
 	/* Show list; --more=-1 means list-only */
 	if (1 < num_rev || extra < 0) {
@@ -908,13 +1071,9 @@ int cmd_show_branch(int ac, const char **av, const char *prefix)
 	if (!sha1_name && !no_name)
 		name_commits(seen, rev, ref_name, num_rev);
 
-	all_mask = ((1u << (REV_SHIFT + num_rev)) - 1);
-	all_revs = all_mask & ~((1u << REV_SHIFT) - 1);
-
 	while (seen) {
 		struct commit *commit = pop_one_commit(&seen);
-		int this_flag = commit->object.flags;
-		int is_merge_point = ((this_flag & all_revs) == all_revs);
+		int is_merge_point = reachable_from_all(commit);
 
 		shown_merge_point |= is_merge_point;
 
@@ -923,14 +1082,14 @@ int cmd_show_branch(int ac, const char **av, const char *prefix)
 					  commit->parents->next);
 			if (topics &&
 			    !is_merge_point &&
-			    (this_flag & (1u << REV_SHIFT)))
+			    has_nth_bit(commit, 0))
 				continue;
 			if (dense && is_merge &&
 			    omit_in_dense(commit, rev, num_rev))
 				continue;
 			for (i = 0; i < num_rev; i++) {
 				int mark;
-				if (!(this_flag & (1u << (i + REV_SHIFT))))
+				if (!has_nth_bit(commit, i))
 					mark = ' ';
 				else if (is_merge)
 					mark = '-';
