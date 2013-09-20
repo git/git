@@ -9,7 +9,8 @@ SYNOPSIS
 --------
 [verse]
 'git checkout' [-q] [-f] [-m] [<branch>]
-'git checkout' [-q] [-f] [-m] [--detach] [<commit>]
+'git checkout' [-q] [-f] [-m] --detach [<branch>]
+'git checkout' [-q] [-f] [-m] [--detach] <commit>
 'git checkout' [-q] [-f] [-m] [[-b|-B|--orphan] <new_branch>] [<start_point>]
 'git checkout' [-f|--ours|--theirs|-m|--conflict=<style>] [<tree-ish>] [--] <paths>...
 'git checkout' [-p|--patch] [<tree-ish>] [--] [<paths>...]
@@ -62,7 +63,7 @@ that is to say, the branch is not reset/created unless "git checkout" is
 successful.
 
 'git checkout' --detach [<branch>]::
-'git checkout' <commit>::
+'git checkout' [--detach] <commit>::
 
 	Prepare to work on top of <commit>, by detaching HEAD at it
 	(see "DETACHED HEAD" section), and updating the index and the
@@ -71,10 +72,11 @@ successful.
 	tree will be the state recorded in the commit plus the local
 	modifications.
 +
-Passing `--detach` forces this behavior in the case of a <branch> (without
-the option, giving a branch name to the command would check out the branch,
-instead of detaching HEAD at it), or the current commit,
-if no <branch> is specified.
+When the <commit> argument is a branch name, the `--detach` option can
+be used to detach HEAD at the tip of the branch (`git checkout
+<branch>` would check out that branch without detaching HEAD).
++
+Omitting <branch> detaches HEAD at the tip of the current branch.
 
 'git checkout' [-p|--patch] [<tree-ish>] [--] <pathspec>...::
 
