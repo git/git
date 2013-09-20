@@ -103,6 +103,40 @@ $LONG_USAGE"
 	esac
 fi
 
+# Set the name of the end-user facing command in the reflog when the
+# script may update refs.  When GIT_REFLOG_ACTION is already set, this
+# will not overwrite it, so that a scripted Porcelain (e.g. "git
+# rebase") can set it to its own name (e.g. "rebase") and then call
+# another scripted Porcelain (e.g. "git am") and a call to this
+# function in the latter will keep the name of the end-user facing
+# program (e.g. "rebase") in GIT_REFLOG_ACTION, ensuring whatever it
+# does will be record as actions done as part of the end-user facing
+# operation (e.g. "rebase").
+#
+# NOTE NOTE NOTE: consequently, after assigning a specific message to
+# GIT_REFLOG_ACTION when calling a "git" command to record a custom
+# reflog message, do not leave that custom value in GIT_REFLOG_ACTION,
+# after you are done.  Other callers of "git" commands that rely on
+# writing the default "program name" in reflog expect the variable to
+# contain the value set by this function.
+#
+# To use a custom reflog message, do either one of these three:
+#
+# (a) use a single-shot export form:
+#     GIT_REFLOG_ACTION="$GIT_REFLOG_ACTION: preparing frotz" \
+#         git command-that-updates-a-ref
+#
+# (b) save the original away and restore:
+#     SAVED_ACTION=$GIT_REFLOG_ACTION
+#     GIT_REFLOG_ACTION="$GIT_REFLOG_ACTION: preparing frotz"
+#     git command-that-updates-a-ref
+#     GIT_REFLOG_ACITON=$SAVED_ACTION
+#
+# (c) assign the variable in a subshell:
+#     (
+#         GIT_REFLOG_ACTION="$GIT_REFLOG_ACTION: preparing frotz"
+#         git command-that-updates-a-ref
+#     )
 set_reflog_action() {
 	if [ -z "${GIT_REFLOG_ACTION:+set}" ]
 	then
