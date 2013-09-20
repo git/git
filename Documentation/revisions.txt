@@ -125,6 +125,9 @@ some output processing may assume ref names in UTF-8.
 object that exists, without requiring 'rev' to be a tag, and
 without dereferencing 'rev'; because a tag is already an object,
 it does not have to be dereferenced even once to get to an object.
++
+'rev{caret}\{tag\}' can be used to ensure that 'rev' identifies an
+existing tag object.
 
 '<rev>{caret}\{\}', e.g. 'v0.99.8{caret}\{\}'::
   A suffix '{caret}' followed by an empty brace pair
