@@ -203,6 +203,7 @@ my ($validate, $confirm);
 my (@suppress_cc);
 my ($auto_8bit_encoding);
 my ($compose_encoding);
+my ($msgid_cache_file, $msgid_cache_maxsize);
 
 my ($debug_net_smtp) = 0;		# Net::SMTP, see send_message()
 
@@ -237,6 +238,8 @@ my %config_settings = (
     "from" => \$sender,
     "assume8bitencoding" => \$auto_8bit_encoding,
     "composeencoding" => \$compose_encoding,
+    "msgidcachefile" => \$msgid_cache_file,
+    "msgidcachemaxsize" => \$msgid_cache_maxsize,
 );
 
 my %config_path_settings = (
@@ -680,11 +683,18 @@ sub ask {
 	my $valid_re = $arg{valid_re};
 	my $default = $arg{default};
 	my $confirm_only = $arg{confirm_only};
+	my $choices = $arg{choices} || [];
 	my $resp;
 	my $i = 0;
 	return defined $default ? $default : undef
 		unless defined $term->IN and defined fileno($term->IN) and
 		       defined $term->OUT and defined fileno($term->OUT);
+	for (@$choices) {
+		printf "(%d) %s\n", $i++, ref($_) eq 'ARRAY' ? $_->[1] : $_;
+	}
+	printf "Enter 0-%d to choose from the above list\n", $i-1
+		if (@$choices);
+	$i = 0;
 	while ($i++ < 10) {
 		$resp = $term->readline($prompt);
 		if (!defined $resp) { # EOF
@@ -693,6 +703,10 @@ sub ask {
 		}
 		if ($resp eq '' and defined $default) {
 			return $default;
+		}
+		if (@$choices && $resp =~ m/^[0-9]+$/ && $resp < @$choices) {
+			my $c = $choices->[$resp];
+			return ref($c) eq 'ARRAY' ? $c->[0] : $c;
 		}
 		if (!defined $valid_re or $resp =~ /$valid_re/) {
 			return $resp;
@@ -785,11 +799,23 @@ sub expand_one_alias {
 @bcclist = expand_aliases(@bcclist);
 @bcclist = validate_address_list(sanitize_address_list(@bcclist));
 
+if ($compose && $compose > 0) {
+	@files = ($compose_filename . ".final", @files);
+}
+
 if ($thread && !defined $initial_reply_to && $prompting) {
+	my @choices = ();
+	if ($msgid_cache_file) {
+		my $first_subject = get_patch_subject($files[0]);
+		$first_subject =~ s/^GIT: //;
+		@choices = msgid_cache_getmatches($first_subject, 10);
+		@choices = map {[$_->{id}, sprintf "[%s] %s", format_2822_time($_->{epoch}), $_->{subject}]} @choices;
+	}
 	$initial_reply_to = ask(
 		"Message-ID to be used as In-Reply-To for the first email (if any)? ",
 		default => "",
-		valid_re => qr/\@.*\./, confirm_only => 1);
+		valid_re => qr/\@.*\./, confirm_only => 1,
+		choices => \@choices);
 }
 if (defined $initial_reply_to) {
 	$initial_reply_to =~ s/^\s*<?//;
@@ -805,10 +831,6 @@ if (!defined $smtp_server) {
 		}
 	}
 	$smtp_server ||= 'localhost'; # could be 127.0.0.1, too... *shrug*
-}
-
-if ($compose && $compose > 0) {
-	@files = ($compose_filename . ".final", @files);
 }
 
 # Variables we set as part of the loop over files
@@ -1125,7 +1147,7 @@ sub send_message {
 	my $to = join (",\n\t", @recipients);
 	@recipients = unique_email_list(@recipients,@cc,@bcclist);
 	@recipients = (map { extract_valid_address_or_die($_) } @recipients);
-	my $date = format_2822_time($time++);
+	my $date = format_2822_time($time);
 	my $gitversion = '@@GIT_VERSION@@';
 	if ($gitversion =~ m/..GIT_VERSION../) {
 	    $gitversion = Git::version();
@@ -1466,6 +1488,11 @@ foreach my $t (@files) {
 
 	my $message_was_sent = send_message();
 
+	if ($message_was_sent && $msgid_cache_file && !$dry_run) {
+		msgid_cache_this($message_id, $message_num == 1 ? 1 : 0, , $time, $subject);
+	}
+	$time++;
+
 	# set up for the next message
 	if ($thread && $message_was_sent &&
 		($chain_reply_to || !defined $reply_to || length($reply_to) == 0 ||
@@ -1509,6 +1536,8 @@ sub cleanup_compose_files {
 }
 
 $smtp->quit if $smtp;
+
+msgid_cache_write() if $msgid_cache_file && !$dry_run;
 
 sub unique_email_list {
 	my %seen;
@@ -1557,4 +1586,107 @@ sub body_or_subject_has_nonascii {
 		return 1 if $line =~ /[^[:ascii:]]/;
 	}
 	return 0;
+}
+
+my @msgid_new_entries;
+sub msgid_cache_this {
+	my $msgid = shift;
+	my $first = shift;
+	my $epoch = shift;
+	my $subject = shift;
+	# Make sure there are no tabs which will confuse us, and save
+	# some valuable horizontal real-estate by removing redundant
+	# whitespace.
+	if ($subject) {
+		$subject =~ s/^\s+|\s+$//g;
+		$subject =~ s/\s+/ /g;
+	}
+	# Replace undef or the empty string by an actual string.
+	$subject = '(none)' if (!defined $subject || $subject eq '');
+
+	push @msgid_new_entries, {id => $msgid, first => $first, subject => $subject, epoch => $epoch};
+}
+
+
+# For now, use a simple tab-separated format:
+#
+#    $id\t$wasfirst\t$unixtime\t$subject\n
+sub msgid_cache_read {
+	my $fh;
+	my $line;
+	my @entries;
+	if (not open ($fh, '<', $msgid_cache_file)) {
+		# A non-existing cache file is ok, but should we warn if errno != ENOENT?
+		return ();
+	}
+	while ($line = <$fh>) {
+		chomp($line);
+		my ($id, $first, $epoch, $subject) = split /\t/, $line;
+		push @entries, {id=>$id, first=>$first, epoch=>$epoch, subject=>$subject};
+	}
+	close($fh);
+	return @entries;
+}
+
+sub msgid_cache_getmatches {
+	my ($first_subject, $maxentries) = @_;
+	my @list = msgid_cache_read();
+
+	# We need to find the message-ids which are most likely to be
+	# useful. There are probably better ways to do this, but for
+	# now we simply count how many words in the old subject also
+	# appear in $first_subject.
+	my %words = map {$_ => 1} msgid_subject_words($first_subject);
+	for my $item (@list) {
+		# Emails which were first in a batch are more likely
+		# to be used for followups (cf. the example in "man
+		# git-send-email"), so give those a head start.
+		my $score = $item->{first} ? 3 : 0;
+		for (msgid_subject_words($item->{subject})) {
+			$score++ if exists $words{$_};
+		}
+		$item->{score} = $score;
+	}
+	@list = sort {$b->{score} <=> $a->{score} ||
+		      $b->{epoch} <=> $a->{epoch}} @list;
+	@list = @list[0 .. $maxentries-1] if (@list > $maxentries);
+	return @list;
+}
+
+sub msgid_subject_words {
+	my $subject = shift;
+	# Ignore initial "[PATCH 02/47]"
+	$subject =~ s/^\s*\[.*?\]//;
+	my @words = split /\s+/, $subject;
+	# Ignore short words.
+	@words = grep { length > 3 } @words;
+	return @words;
+}
+
+sub msgid_cache_write {
+	msgid_cache_do_write(1, \@msgid_new_entries);
+
+	if (defined $msgid_cache_maxsize && $msgid_cache_maxsize =~ m/^\s*([0-9]+)\s*([kKmMgG]?)$/) {
+		my %SI = ('' => 1, 'k' => 1e3, 'm' => 1e6, 'g' => 1e9);
+		$msgid_cache_maxsize = $1 * $SI{lc($2)};
+	}
+	else {
+		$msgid_cache_maxsize = 100000;
+	}
+	if (-s $msgid_cache_file > $msgid_cache_maxsize) {
+		my @entries = msgid_cache_read();
+		splice @entries, 0, int(@entries/2);
+		msgid_cache_do_write(0, \@entries);
+	}
+}
+
+sub msgid_cache_do_write {
+	my $append = shift;
+	my $entries = shift;
+	my $fh;
+	if (not open($fh, $append ? '>>' : '>', $msgid_cache_file)) {
+		die "cannot open $msgid_cache_file for writing: $!";
+	}
+	printf $fh "%s\t%d\t%s\t%s\n", $_->{id}, $_->{first}, $_->{epoch}, $_->{subject} for (@$entries);
+	close($fh);
 }
