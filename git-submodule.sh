@@ -1149,18 +1149,7 @@ cmd_summary() {
 			echo
 		fi
 		echo
-	done |
-	if test -n "$for_status"; then
-		if [ -n "$files" ]; then
-			gettextln "Submodules changed but not updated:" | git stripspace -c
-		else
-			gettextln "Submodule changes to be committed:" | git stripspace -c
-		fi
-		printf "\n" | git stripspace -c
-		git stripspace -c
-	else
-		cat
-	fi
+	done
 }
 #
 # List all submodules, prefixed with:

@@ -115,7 +115,7 @@ EOF
 
 git config core.excludesFile excludes-file
 
-git status | grep "^#	" > output
+git -c status.displayCommentPrefix=true status | grep "^#	" > output
 
 cat > expect << EOF
 #	.gitignore
