@@ -134,4 +134,8 @@ test_expect_success 'cloning a local path with --no-local does not hardlink' '
 	! repo_is_hardlinked force-nonlocal
 '
 
+test_expect_success 'cloning locally respects "-u" for fetching refs' '
+	test_must_fail git clone --bare -u false a should_not_work.git
+'
+
 test_done
