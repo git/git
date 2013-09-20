@@ -28,10 +28,15 @@ test_expect_success setup '
 		git reset --hard HEAD^ &&
 		git checkout -b b4 origin &&
 		advance e &&
-		advance f
+		advance f &&
+		git checkout -b brokenbase origin &&
+		git checkout -b b5 --track brokenbase &&
+		advance g &&
+		git branch -d brokenbase &&
+		git checkout -b b6 origin
 	) &&
 	git checkout -b follower --track master &&
-	advance g
+	advance h
 '
 
 script='s/^..\(b.\)[	 0-9a-f]*\[\([^]]*\)\].*/\1 \2/p'
@@ -56,6 +61,8 @@ b1 origin/master: ahead 1, behind 1
 b2 origin/master: ahead 1, behind 1
 b3 origin/master: behind 1
 b4 origin/master: ahead 2
+b5 brokenbase: gone
+b6 origin/master
 EOF
 
 test_expect_success 'branch -vv' '
@@ -67,7 +74,7 @@ test_expect_success 'branch -vv' '
 	test_i18ncmp expect actual
 '
 
-test_expect_success 'checkout' '
+test_expect_success 'checkout (diverged from upstream)' '
 	(
 		cd test && git checkout b1
 	) >actual &&
@@ -80,7 +87,22 @@ test_expect_success 'checkout with local tracked branch' '
 	test_i18ngrep "is ahead of" actual
 '
 
-test_expect_success 'status' '
+test_expect_success 'checkout (upstream is gone)' '
+	(
+		cd test &&
+		git checkout b5
+	) >actual &&
+	test_i18ngrep "is based on .*, but the upstream is gone." actual
+'
+
+test_expect_success 'checkout (up-to-date with upstream)' '
+	(
+		cd test && git checkout b6
+	) >actual &&
+	test_i18ngrep "Your branch is up-to-date with .origin/master" actual
+'
+
+test_expect_success 'status (diverged from upstream)' '
 	(
 		cd test &&
 		git checkout b1 >/dev/null &&
@@ -88,6 +110,65 @@ test_expect_success 'status' '
 		test_must_fail git commit --dry-run
 	) >actual &&
 	test_i18ngrep "have 1 and 1 different" actual
+'
+
+test_expect_success 'status (upstream is gone)' '
+	(
+		cd test &&
+		git checkout b5 >/dev/null &&
+		# reports nothing to commit
+		test_must_fail git commit --dry-run
+	) >actual &&
+	test_i18ngrep "is based on .*, but the upstream is gone." actual
+'
+
+test_expect_success 'status (up-to-date with upstream)' '
+	(
+		cd test &&
+		git checkout b6 >/dev/null &&
+		# reports nothing to commit
+		test_must_fail git commit --dry-run
+	) >actual &&
+	test_i18ngrep "Your branch is up-to-date with .origin/master" actual
+'
+
+cat >expect <<\EOF
+## b1...origin/master [ahead 1, behind 1]
+EOF
+
+test_expect_success 'status -s -b (diverged from upstream)' '
+	(
+		cd test &&
+		git checkout b1 >/dev/null &&
+		git status -s -b | head -1
+	) >actual &&
+	test_i18ncmp expect actual
+'
+
+cat >expect <<\EOF
+## b5...brokenbase [gone]
+EOF
+
+test_expect_success 'status -s -b (upstream is gone)' '
+	(
+		cd test &&
+		git checkout b5 >/dev/null &&
+		git status -s -b | head -1
+	) >actual &&
+	test_i18ncmp expect actual
+'
+
+cat >expect <<\EOF
+## b6...origin/master
+EOF
+
+test_expect_success 'status -s -b (up-to-date with upstream)' '
+	(
+		cd test &&
+		git checkout b6 >/dev/null &&
+		git status -s -b | head -1
+	) >actual &&
+	test_i18ncmp expect actual
 '
 
 test_expect_success 'fail to track lightweight tags' '
