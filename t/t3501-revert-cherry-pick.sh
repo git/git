@@ -109,4 +109,24 @@ test_expect_success 'cherry-pick on unborn branch' '
 	! test_cmp_rev initial HEAD
 '
 
+test_expect_success 'cherry-pick "-" to pick from previous branch' '
+	git checkout unborn &&
+	test_commit to-pick actual content &&
+	git checkout master &&
+	git cherry-pick - &&
+	echo content >expect &&
+	test_cmp expect actual
+'
+
+test_expect_success 'cherry-pick "-" is meaningless without checkout' '
+	test_create_repo afresh &&
+	(
+		cd afresh &&
+		test_commit one &&
+		test_commit two &&
+		test_commit three &&
+		test_must_fail git cherry-pick -
+	)
+'
+
 test_done
