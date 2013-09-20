@@ -26,54 +26,9 @@ static int take_worktree_changes;
 struct update_callback_data {
 	int flags;
 	int add_errors;
-	const char *implicit_dot;
-	size_t implicit_dot_len;
-
 	/* only needed for 2.0 transition preparation */
 	int warn_add_would_remove;
 };
-
-static const char *option_with_implicit_dot;
-static const char *short_option_with_implicit_dot;
-
-static void warn_pathless_add(void)
-{
-	static int shown;
-	assert(option_with_implicit_dot && short_option_with_implicit_dot);
-
-	if (shown)
-		return;
-	shown = 1;
-
-	/*
-	 * To be consistent with "git add -p" and most Git
-	 * commands, we should default to being tree-wide, but
-	 * this is not the original behavior and can't be
-	 * changed until users trained themselves not to type
-	 * "git add -u" or "git add -A". For now, we warn and
-	 * keep the old behavior. Later, the behavior can be changed
-	 * to tree-wide, keeping the warning for a while, and
-	 * eventually we can drop the warning.
-	 */
-	warning(_("The behavior of 'git add %s (or %s)' with no path argument from a\n"
-		  "subdirectory of the tree will change in Git 2.0 and should not be used anymore.\n"
-		  "To add content for the whole tree, run:\n"
-		  "\n"
-		  "  git add %s :/\n"
-		  "  (or git add %s :/)\n"
-		  "\n"
-		  "To restrict the command to the current directory, run:\n"
-		  "\n"
-		  "  git add %s .\n"
-		  "  (or git add %s .)\n"
-		  "\n"
-		  "With the current Git version, the command is restricted to "
-		  "the current directory.\n"
-		  ""),
-		option_with_implicit_dot, short_option_with_implicit_dot,
-		option_with_implicit_dot, short_option_with_implicit_dot,
-		option_with_implicit_dot, short_option_with_implicit_dot);
-}
 
 static int fix_unmerged_status(struct diff_filepair *p,
 			       struct update_callback_data *data)
@@ -119,26 +74,10 @@ static void update_callback(struct diff_queue_struct *q,
 {
 	int i;
 	struct update_callback_data *data = cbdata;
-	const char *implicit_dot = data->implicit_dot;
-	size_t implicit_dot_len = data->implicit_dot_len;
 
 	for (i = 0; i < q->nr; i++) {
 		struct diff_filepair *p = q->queue[i];
 		const char *path = p->one->path;
-		/*
-		 * Check if "git add -A" or "git add -u" was run from a
-		 * subdirectory with a modified file outside that directory,
-		 * and warn if so.
-		 *
-		 * "git add -u" will behave like "git add -u :/" instead of
-		 * "git add -u ." in the future.  This warning prepares for
-		 * that change.
-		 */
-		if (implicit_dot &&
-		    strncmp_icase(path, implicit_dot, implicit_dot_len)) {
-			warn_pathless_add();
-			continue;
-		}
 		switch (fix_unmerged_status(p, data)) {
 		default:
 			die(_("unexpected diff status %c"), p->status);
@@ -194,9 +133,7 @@ int add_files_to_cache(const char *prefix,
 	return !!data.add_errors;
 }
 
-#define WARN_IMPLICIT_DOT (1u << 0)
-static char *prune_directory(struct dir_struct *dir, struct pathspec *pathspec,
-			     int prefix, unsigned flag)
+static char *prune_directory(struct dir_struct *dir, struct pathspec *pathspec, int prefix)
 {
 	char *seen;
 	int i;
@@ -211,16 +148,6 @@ static char *prune_directory(struct dir_struct *dir, struct pathspec *pathspec,
 		if (match_pathspec_depth(pathspec, entry->name, entry->len,
 					 prefix, seen))
 			*dst++ = entry;
-		else if (flag & WARN_IMPLICIT_DOT)
-			/*
-			 * "git add -A" was run from a subdirectory with a
-			 * new file outside that directory.
-			 *
-			 * "git add -A" will behave like "git add -A :/"
-			 * instead of "git add -A ." in the future.
-			 * Warn about the coming behavior change.
-			 */
-			warn_pathless_add();
 	}
 	dir->nr = dst - dir->entries;
 	add_pathspec_matches_against_index(pathspec, seen);
@@ -412,7 +339,6 @@ int cmd_add(int argc, const char **argv, const char *prefix)
 	int add_new_files;
 	int require_pathspec;
 	char *seen = NULL;
-	int implicit_dot = 0;
 	struct update_callback_data update_data;
 
 	git_config(add_config, NULL);
@@ -454,19 +380,11 @@ int cmd_add(int argc, const char **argv, const char *prefix)
 
 	if (!show_only && ignore_missing)
 		die(_("Option --ignore-missing can only be used together with --dry-run"));
-	if (addremove) {
-		option_with_implicit_dot = "--all";
-		short_option_with_implicit_dot = "-A";
-	}
-	if (take_worktree_changes) {
-		option_with_implicit_dot = "--update";
-		short_option_with_implicit_dot = "-u";
-	}
-	if (option_with_implicit_dot && !argc) {
-		static const char *here[2] = { ".", NULL };
+
+	if ((addremove || take_worktree_changes) && !argc) {
+		static const char *whole[2] = { ":/", NULL };
 		argc = 1;
-		argv = here;
-		implicit_dot = 1;
+		argv = whole;
 	}
 
 	add_new_files = !take_worktree_changes && !refresh_only;
@@ -479,8 +397,7 @@ int cmd_add(int argc, const char **argv, const char *prefix)
 		 (intent_to_add ? ADD_CACHE_INTENT : 0) |
 		 (ignore_add_errors ? ADD_CACHE_IGNORE_ERRORS : 0) |
 		 (!(addremove || take_worktree_changes)
-		  ? ADD_CACHE_IGNORE_REMOVAL : 0)) |
-		 (implicit_dot ? ADD_CACHE_IMPLICIT_DOT : 0);
+		  ? ADD_CACHE_IGNORE_REMOVAL : 0));
 
 	if (require_pathspec && argc == 0) {
 		fprintf(stderr, _("Nothing specified, nothing added.\n"));
@@ -514,18 +431,15 @@ int cmd_add(int argc, const char **argv, const char *prefix)
 
 		memset(&empty_pathspec, 0, sizeof(empty_pathspec));
 		/* This picks up the paths that are not tracked */
-		baselen = fill_directory(&dir, implicit_dot ? &empty_pathspec : &pathspec);
+		baselen = fill_directory(&dir, &pathspec);
 		if (pathspec.nr)
-			seen = prune_directory(&dir, &pathspec, baselen,
-					implicit_dot ? WARN_IMPLICIT_DOT : 0);
+			seen = prune_directory(&dir, &pathspec, baselen);
 	}
 
 	if (refresh_only) {
 		refresh(verbose, &pathspec);
 		goto finish;
 	}
-	if (implicit_dot && prefix)
-		refresh_cache(REFRESH_QUIET);
 
 	if (pathspec.nr) {
 		int i;
@@ -562,18 +476,7 @@ int cmd_add(int argc, const char **argv, const char *prefix)
 
 	plug_bulk_checkin();
 
-	if ((flags & ADD_CACHE_IMPLICIT_DOT) && prefix) {
-		/*
-		 * Check for modified files throughout the worktree so
-		 * update_callback has a chance to warn about changes
-		 * outside the cwd.
-		 */
-		update_data.implicit_dot = prefix;
-		update_data.implicit_dot_len = strlen(prefix);
-		free_pathspec(&pathspec);
-		memset(&pathspec, 0, sizeof(pathspec));
-	}
-	update_data.flags = flags & ~ADD_CACHE_IMPLICIT_DOT;
+	update_data.flags = flags;
 	update_files_in_cache(prefix, &pathspec, &update_data);
 
 	exit_status |= !!update_data.add_errors;
