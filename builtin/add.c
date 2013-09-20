@@ -26,8 +26,6 @@ static int take_worktree_changes;
 struct update_callback_data {
 	int flags;
 	int add_errors;
-	/* only needed for 2.0 transition preparation */
-	int warn_add_would_remove;
 };
 
 static int fix_unmerged_status(struct diff_filepair *p,
@@ -51,24 +49,6 @@ static int fix_unmerged_status(struct diff_filepair *p,
 		return DIFF_STATUS_MODIFIED;
 }
 
-static const char *add_would_remove_warning = N_(
-	"You ran 'git add' with neither '-A (--all)' or '--ignore-removal',\n"
-"whose behaviour will change in Git 2.0 with respect to paths you removed.\n"
-"Paths like '%s' that are\n"
-"removed from your working tree are ignored with this version of Git.\n"
-"\n"
-"* 'git add --ignore-removal <pathspec>', which is the current default,\n"
-"  ignores paths you removed from your working tree.\n"
-"\n"
-"* 'git add --all <pathspec>' will let you also record the removals.\n"
-"\n"
-"Run 'git status' to check the paths you removed from your working tree.\n");
-
-static void warn_add_would_remove(const char *path)
-{
-	warning(_(add_would_remove_warning), path);
-}
-
 static void update_callback(struct diff_queue_struct *q,
 			    struct diff_options *opt, void *cbdata)
 {
@@ -90,10 +70,6 @@ static void update_callback(struct diff_queue_struct *q,
 			}
 			break;
 		case DIFF_STATUS_DELETED:
-			if (data->warn_add_would_remove) {
-				warn_add_would_remove(path);
-				data->warn_add_would_remove = 0;
-			}
 			if (data->flags & ADD_CACHE_IGNORE_REMOVAL)
 				break;
 			if (!(data->flags & ADD_CACHE_PRETEND))
@@ -105,11 +81,14 @@ static void update_callback(struct diff_queue_struct *q,
 	}
 }
 
-static void update_files_in_cache(const char *prefix,
-				  const struct pathspec *pathspec,
-				  struct update_callback_data *data)
+int add_files_to_cache(const char *prefix,
+		       const struct pathspec *pathspec, int flags)
 {
+	struct update_callback_data data;
 	struct rev_info rev;
+
+	memset(&data, 0, sizeof(data));
+	data.flags = flags;
 
 	init_revisions(&rev, prefix);
 	setup_revisions(0, NULL, &rev, NULL);
@@ -117,19 +96,9 @@ static void update_files_in_cache(const char *prefix,
 		copy_pathspec(&rev.prune_data, pathspec);
 	rev.diffopt.output_format = DIFF_FORMAT_CALLBACK;
 	rev.diffopt.format_callback = update_callback;
-	rev.diffopt.format_callback_data = data;
+	rev.diffopt.format_callback_data = &data;
 	rev.max_count = 0; /* do not compare unmerged paths with stage #2 */
 	run_diff_files(&rev, DIFF_RACY_IS_MODIFIED);
-}
-
-int add_files_to_cache(const char *prefix,
-		       const struct pathspec *pathspec, int flags)
-{
-	struct update_callback_data data;
-
-	memset(&data, 0, sizeof(data));
-	data.flags = flags;
-	update_files_in_cache(prefix, pathspec, &data);
 	return !!data.add_errors;
 }
 
@@ -266,7 +235,7 @@ N_("The following paths are ignored by one of your .gitignore files:\n");
 static int verbose, show_only, ignored_too, refresh_only;
 static int ignore_add_errors, intent_to_add, ignore_missing;
 
-#define ADDREMOVE_DEFAULT 0 /* Change to 1 in Git 2.0 */
+#define ADDREMOVE_DEFAULT 1
 static int addremove = ADDREMOVE_DEFAULT;
 static int addremove_explicit = -1; /* unspecified */
 
@@ -339,7 +308,6 @@ int cmd_add(int argc, const char **argv, const char *prefix)
 	int add_new_files;
 	int require_pathspec;
 	char *seen = NULL;
-	struct update_callback_data update_data;
 
 	git_config(add_config, NULL);
 
@@ -363,25 +331,14 @@ int cmd_add(int argc, const char **argv, const char *prefix)
 	if (addremove && take_worktree_changes)
 		die(_("-A and -u are mutually incompatible"));
 
-	/*
-	 * Warn when "git add pathspec..." was given without "-u" or "-A"
-	 * and pathspec... covers a removed path.
-	 */
-	memset(&update_data, 0, sizeof(update_data));
-	if (!take_worktree_changes && addremove_explicit < 0)
-		update_data.warn_add_would_remove = 1;
-
 	if (!take_worktree_changes && addremove_explicit < 0 && argc)
-		/*
-		 * Turn "git add pathspec..." to "git add -A pathspec..."
-		 * in Git 2.0 but not yet
-		 */
-		; /* addremove = 1; */
+		/* Turn "git add pathspec..." to "git add -A pathspec..." */
+		addremove = 1;
 
 	if (!show_only && ignore_missing)
 		die(_("Option --ignore-missing can only be used together with --dry-run"));
 
-	if ((addremove || take_worktree_changes) && !argc) {
+	if ((0 < addremove_explicit || take_worktree_changes) && !argc) {
 		static const char *whole[2] = { ":/", NULL };
 		argc = 1;
 		argv = whole;
@@ -476,10 +433,8 @@ int cmd_add(int argc, const char **argv, const char *prefix)
 
 	plug_bulk_checkin();
 
-	update_data.flags = flags;
-	update_files_in_cache(prefix, &pathspec, &update_data);
+	exit_status |= add_files_to_cache(prefix, &pathspec, flags);
 
-	exit_status |= !!update_data.add_errors;
 	if (add_new_files)
 		exit_status |= add_files(&dir, flags);
 
