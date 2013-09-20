@@ -169,7 +169,7 @@ test_http_push_nonff () {
 		test_i18ngrep "Updates were rejected because" output
 	'
 
-	test_expect_failure 'force with lease aka cas' '
+	test_expect_${EXPECT_CAS_RESULT} 'force with lease aka cas' '
 		HEAD=$(	cd "$REMOTE_REPO" && git rev-parse --verify HEAD ) &&
 		test_when_finished '\''
 			(cd "$REMOTE_REPO" && git update-ref HEAD "$HEAD")
