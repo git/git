@@ -2,7 +2,6 @@
 
 int advice_push_update_rejected = 1;
 int advice_push_non_ff_current = 1;
-int advice_push_non_ff_default = 1;
 int advice_push_non_ff_matching = 1;
 int advice_push_already_exists = 1;
 int advice_push_fetch_first = 1;
@@ -23,7 +22,6 @@ static struct {
 } advice_config[] = {
 	{ "pushupdaterejected", &advice_push_update_rejected },
 	{ "pushnonffcurrent", &advice_push_non_ff_current },
-	{ "pushnonffdefault", &advice_push_non_ff_default },
 	{ "pushnonffmatching", &advice_push_non_ff_matching },
 	{ "pushalreadyexists", &advice_push_already_exists },
 	{ "pushfetchfirst", &advice_push_fetch_first },

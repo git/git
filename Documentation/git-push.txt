@@ -78,8 +78,8 @@ the local side, the remote side is updated if a branch of the same name
 already exists on the remote side.
 
 --all::
-	Instead of naming each ref to push, specifies that all
-	refs under `refs/heads/` be pushed.
+	Push all branches (i.e. refs under `refs/heads/`); cannot be
+	used with other <refspec>.
 
 --prune::
 	Remove remote branches that don't have a local counterpart. For example
@@ -437,8 +437,10 @@ Examples
 	configured for the current branch).
 
 `git push origin`::
-	Without additional configuration, works like
-	`git push origin :`.
+	Without additional configuration, pushes the current branch to
+	the configured upstream (`remote.origin.merge` configuration
+	variable) if it has the same name as the current branch, and
+	errors out without pushing otherwise.
 +
 The default behavior of this command when no <refspec> is given can be
 configured by setting the `push` option of the remote, or the `push.default`

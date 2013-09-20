@@ -142,19 +142,13 @@ advice.*::
 --
 	pushUpdateRejected::
 		Set this variable to 'false' if you want to disable
-		'pushNonFFCurrent', 'pushNonFFDefault',
+		'pushNonFFCurrent',
 		'pushNonFFMatching', 'pushAlreadyExists',
 		'pushFetchFirst', and 'pushNeedsForce'
 		simultaneously.
 	pushNonFFCurrent::
 		Advice shown when linkgit:git-push[1] fails due to a
 		non-fast-forward update to the current branch.
-	pushNonFFDefault::
-		Advice to set 'push.default' to 'upstream' or 'current'
-		when you ran linkgit:git-push[1] and pushed 'matching
-		refs' by default (i.e. you did not provide an explicit
-		refspec, and no 'push.default' configuration was set)
-		and it resulted in a non-fast-forward error.
 	pushNonFFMatching::
 		Advice shown when you ran linkgit:git-push[1] and pushed
 		'matching refs' explicitly (i.e. you used ':', or
@@ -1929,7 +1923,7 @@ When pushing to a remote that is different from the remote you normally
 pull from, work as `current`.  This is the safest option and is suited
 for beginners.
 +
-This mode will become the default in Git 2.0.
+This mode has become the default in Git 2.0.
 
 * `matching` - push all branches having the same name on both ends.
   This makes the repository you are pushing to remember the set of
@@ -1948,8 +1942,8 @@ suitable for pushing into a shared central repository, as other
 people may add new branches there, or update the tip of existing
 branches outside your control.
 +
-This is currently the default, but Git 2.0 will change the default
-to `simple`.
+This used to be the default, but not since Git 2.0 (`simple` is the
+new default).
 
 --
 
