@@ -2261,7 +2261,7 @@ sub format_extended_diff_header_line {
 
 # format from-file/to-file diff header
 sub format_diff_from_to_header {
-	my ($from_line, $to_line, $diffinfo, $from, $to, @parents) = @_;
+	my ($from_line, $to_line, $diffinfo, $from, $to, $hash, @parents) = @_;
 	my $line;
 	my $result = '';
 
@@ -2327,7 +2327,7 @@ sub format_diff_from_to_header {
 
 # create note for patch simplified by combined diff
 sub format_diff_cc_simplified {
-	my ($diffinfo, @parents) = @_;
+	my ($diffinfo, $hash, @parents) = @_;
 	my $result = '';
 
 	$result .= "<div class=\"diff header\">" .
@@ -3595,7 +3595,8 @@ sub parse_ls_tree_line {
 
 # generates _two_ hashes, references to which are passed as 2 and 3 argument
 sub parse_from_to_diffinfo {
-	my ($diffinfo, $from, $to, @parents) = @_;
+	my ($diffinfo, $from, $to, $hash, @parents) = @_;
+	my ($hash_parent) = $parents[0];
 
 	if ($diffinfo->{'nparents'}) {
 		# combined diff
@@ -3826,7 +3827,7 @@ sub blob_contenttype {
 	my ($fd, $file_name, $type) = @_;
 
 	$type ||= blob_mimetype($fd, $file_name);
-	if ($type eq 'text/plain' && defined $default_text_plain_charset) {
+	if (($type =~ m!^text/\w[-\w]*$! || $type =~ m!^\w[-\w]*/\w[-\w]*\+xml$!) && defined $default_text_plain_charset) {
 		$type .= "; charset=$default_text_plain_charset";
 	}
 
@@ -4170,7 +4171,7 @@ sub git_footer_html {
 		print qq!<script type="text/javascript">\n!.
 		      qq!window.onload = function () {\n!;
 		if (gitweb_check_feature('javascript-actions')) {
-			print qq!	fixLinks();\n!;
+			print qq!	fixLinks('$my_url');\n!;
 		}
 		if ($jstimezone && $tz_cookie && $datetime_class) {
 			print qq!	var tz_cookie = { name: '$tz_cookie', expires: 14, path: '/' };\n!. # in days
@@ -5317,7 +5318,7 @@ sub git_patchset_body {
 			if ($is_combined) {
 				while ($to_name ne $diffinfo->{'to_file'}) {
 					print "<div class=\"patch\" id=\"patch". ($patch_idx+1) ."\">\n" .
-					      format_diff_cc_simplified($diffinfo, @hash_parents) .
+					      format_diff_cc_simplified($diffinfo, $hash, @hash_parents) .
 					      "</div>\n";  # class="patch"
 
 					$patch_idx++;
@@ -5329,7 +5330,7 @@ sub git_patchset_body {
 			}
 
 			# modifies %from, %to hashes
-			parse_from_to_diffinfo($diffinfo, \%from, \%to, @hash_parents);
+			parse_from_to_diffinfo($diffinfo, \%from, \%to, $hash, @hash_parents);
 
 			# this is first patch for raw difftree line with $patch_idx index
 			# we index @$difftree array from 0, but number patches from 1
@@ -5372,7 +5373,7 @@ sub git_patchset_body {
 
 		print format_diff_from_to_header($last_patch_line, $patch_line,
 		                                 $diffinfo, \%from, \%to,
-		                                 @hash_parents);
+		                                 $hash, @hash_parents);
 
 		# the patch itself
 	LINE:
@@ -5409,7 +5410,7 @@ sub git_patchset_body {
 
 		# generate anchor for "patch" links in difftree / whatchanged part
 		print "<div class=\"patch\" id=\"patch". ($patch_idx+1) ."\">\n" .
-		      format_diff_cc_simplified($diffinfo, @hash_parents) .
+		      format_diff_cc_simplified($diffinfo, $hash, @hash_parents) .
 		      "</div>\n";  # class="patch"
 
 		$patch_number++;
@@ -7643,7 +7644,9 @@ sub git_blobdiff {
 			last if $line =~ m!^\+\+\+!;
 		}
 		local $/ = undef;
+		binmode STDOUT, ':raw';
 		print <$fd>;
+		binmode STDOUT, ':utf8'; # as set at the beginning of gitweb.cgi
 		close $fd;
 	}
 }
@@ -7890,12 +7893,16 @@ sub git_commitdiff {
 
 	} elsif ($format eq 'plain') {
 		local $/ = undef;
+		binmode STDOUT, ':raw';
 		print <$fd>;
+		binmode STDOUT, ':utf8'; # as set at the beginning of gitweb.cgi
 		close $fd
 			or print "Reading git-diff-tree failed\n";
 	} elsif ($format eq 'patch') {
 		local $/ = undef;
+		binmode STDOUT, ':raw';
 		print <$fd>;
+		binmode STDOUT, ':utf8'; # as set at the beginning of gitweb.cgi
 		close $fd
 			or print "Reading git-format-patch failed\n";
 	}
@@ -8056,7 +8063,7 @@ sub git_feed {
 	return if ($cgi->request_method() eq 'HEAD');
 
 	# header variables
-	my $title = "$site_name - $project/$action";
+	my $title = to_utf8($site_name) . " - " . to_utf8($project) . "/$action";
 	my $feed_type = 'log';
 	if (defined $hash) {
 		$title .= " - '$hash'";
