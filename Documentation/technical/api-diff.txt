@@ -28,7 +28,8 @@ Calling sequence
 
 * Call `diff_setup_done()`; this inspects the options set up so far for
   internal consistency and make necessary tweaking to it (e.g. if
-  textual patch output was asked, recursive behaviour is turned on).
+  textual patch output was asked, recursive behaviour is turned on);
+  the callback set_default in diff_options can be used to tweak this more.
 
 * As you find different pairs of files, call `diff_change()` to feed
   modified files, `diff_addremove()` to feed created or deleted files,
@@ -114,6 +115,13 @@ Notable members are:
 	This is mostly a collection of boolean options that affects the
 	operation, but some do not have anything to do with the diffcore
 	library.
+
+`touched_flags`::
+	Records whether a flag has been changed due to user request
+	(rather than just set/unset by default).
+
+`set_default`::
+	Callback which allows tweaking the options in diff_setup_done().
 
 BINARY, TEXT;;
 	Affects the way how a file that is seemingly binary is treated.

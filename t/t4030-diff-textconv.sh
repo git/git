@@ -58,6 +58,12 @@ test_expect_success 'diff produces text' '
 	test_cmp expect.text actual
 '
 
+test_expect_success 'show commit produces text' '
+	git show HEAD >diff &&
+	find_diff <diff >actual &&
+	test_cmp expect.text actual
+'
+
 test_expect_success 'diff-tree produces binary' '
 	git diff-tree -p HEAD^ HEAD >diff &&
 	find_diff <diff >actual &&
@@ -82,6 +88,24 @@ test_expect_success 'status -v produces text' '
 	find_diff <diff >actual &&
 	test_cmp expect.text actual &&
 	git reset --soft HEAD@{1}
+'
+
+test_expect_success 'show blob produces binary' '
+	git show HEAD:file >actual &&
+	printf "\\0\\n\\01\\n" >expect &&
+	test_cmp expect actual
+'
+
+test_expect_success 'show --textconv blob produces text' '
+	git show --textconv HEAD:file >actual &&
+	printf "0\\n1\\n" >expect &&
+	test_cmp expect actual
+'
+
+test_expect_success 'show --no-textconv blob produces binary' '
+	git show --no-textconv HEAD:file >actual &&
+	printf "\\0\\n\\01\\n" >expect &&
+	test_cmp expect actual
 '
 
 test_expect_success 'grep-diff (-G) operates on textconv data (add)' '
