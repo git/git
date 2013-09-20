@@ -5,7 +5,7 @@
 #include "pathspec.h"
 #include "parse-options.h"
 
-static int quiet, verbose, stdin_paths, show_non_matching;
+static int quiet, verbose, stdin_paths, show_non_matching, no_index;
 static const char * const check_ignore_usage[] = {
 "git check-ignore [options] pathname...",
 "git check-ignore [options] --stdin < <list-of-paths>",
@@ -24,6 +24,8 @@ static const struct option check_ignore_options[] = {
 		 N_("terminate input and output records by a NUL character")),
 	OPT_BOOL('n', "non-matching", &show_non_matching,
 		 N_("show non-matching input paths")),
+	OPT_BOOL(0, "no-index", &no_index,
+		 N_("ignore index when checking")),
 	OPT_END()
 };
 
@@ -166,7 +168,7 @@ int cmd_check_ignore(int argc, const char **argv, const char *prefix)
 		die(_("--non-matching is only valid with --verbose"));
 
 	/* read_cache() is only necessary so we can watch out for submodules. */
-	if (read_cache() < 0)
+	if (!no_index && read_cache() < 0)
 		die(_("index file corrupt"));
 
 	memset(&dir, 0, sizeof(dir));

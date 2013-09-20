@@ -66,11 +66,11 @@ test_check_ignore () {
 
 	init_vars &&
 	rm -f "$HOME/stdout" "$HOME/stderr" "$HOME/cmd" &&
-	echo git $global_args check-ignore $quiet_opt $verbose_opt $non_matching_opt $args \
+	echo git $global_args check-ignore $quiet_opt $verbose_opt $non_matching_opt $no_index_opt $args \
 		>"$HOME/cmd" &&
 	echo "$expect_code" >"$HOME/expected-exit-code" &&
 	test_expect_code "$expect_code" \
-		git $global_args check-ignore $quiet_opt $verbose_opt $non_matching_opt $args \
+		git $global_args check-ignore $quiet_opt $verbose_opt $non_matching_opt $no_index_opt $args \
 		>"$HOME/stdout" 2>"$HOME/stderr" &&
 	test_cmp "$HOME/expected-stdout" "$HOME/stdout" &&
 	stderr_empty_on_success "$expect_code"
@@ -87,6 +87,9 @@ test_check_ignore () {
 # check-ignore --verbose output is the same as normal output except
 # for the extra first column.
 #
+# A parameter is used to determine if the tests are run with the
+# normal case (using the index), or with the --no-index option.
+#
 # Arguments:
 #   - (optional) prereqs for this test, e.g. 'SYMLINKS'
 #   - test name
@@ -94,19 +97,26 @@ test_check_ignore () {
 #     from the other verbosity modes is automatically inferred
 #     from this value)
 #   - code to run (should invoke test_check_ignore)
-test_expect_success_multi () {
+#   - index option: --index or --no-index
+test_expect_success_multiple () {
 	prereq=
-	if test $# -eq 4
+	if test $# -eq 5
 	then
 		prereq=$1
 		shift
+	fi
+	if test "$4" = "--index"
+	then
+		no_index_opt=
+	else
+		no_index_opt=$4
 	fi
 	testname="$1" expect_all="$2" code="$3"
 
 	expect_verbose=$( echo "$expect_all" | grep -v '^::	' )
 	expect=$( echo "$expect_verbose" | sed -e 's/.*	//' )
 
-	test_expect_success $prereq "$testname" '
+	test_expect_success $prereq "$testname${no_index_opt:+ with $no_index_opt}" '
 		expect "$expect" &&
 		eval "$code"
 	'
@@ -116,7 +126,8 @@ test_expect_success_multi () {
 	then
 		for quiet_opt in '-q' '--quiet'
 		do
-			test_expect_success $prereq "$testname${quiet_opt:+ with $quiet_opt}" "
+			opts="${no_index_opt:+$no_index_opt }$quiet_opt"
+			test_expect_success $prereq "$testname${opts:+ with $opts}" "
 			expect '' &&
 			$code
 		"
@@ -126,7 +137,7 @@ test_expect_success_multi () {
 
 	for verbose_opt in '-v' '--verbose'
 	do
-		for non_matching_opt in '' ' -n' ' --non-matching'
+		for non_matching_opt in '' '-n' '--non-matching'
 		do
 			if test -n "$non_matching_opt"
 			then
@@ -139,12 +150,21 @@ test_expect_success_multi () {
 				expect '$my_expect' &&
 				$code
 			"
-			opts="$verbose_opt$non_matching_opt"
+			opts="${no_index_opt:+$no_index_opt }$verbose_opt${non_matching_opt:+ $non_matching_opt}"
 			test_expect_success $prereq "$testname${opts:+ with $opts}" "$test_code"
 		done
 	done
 	verbose_opt=
 	non_matching_opt=
+	no_index_opt=
+}
+
+test_expect_success_multi () {
+	test_expect_success_multiple "$@" "--index"
+}
+
+test_expect_success_no_index_multi () {
+	test_expect_success_multiple "$@" "--no-index"
 }
 
 test_expect_success 'setup' '
@@ -288,7 +308,7 @@ test_expect_success_multi 'needs work tree' '' '
 
 # First make sure that the presence of a file in the working tree
 # does not impact results, but that the presence of a file in the
-# index does.
+# index does unless the --no-index option is used.
 
 for subdir in '' 'a/'
 do
@@ -303,7 +323,15 @@ do
 		"::	${subdir}non-existent" \
 		"test_check_ignore '${subdir}non-existent' 1"
 
+	test_expect_success_no_index_multi "non-existent file $where not ignored" \
+		"::	${subdir}non-existent" \
+		"test_check_ignore '${subdir}non-existent' 1"
+
 	test_expect_success_multi "non-existent file $where ignored" \
+		".gitignore:1:one	${subdir}one" \
+		"test_check_ignore '${subdir}one'"
+
+	test_expect_success_no_index_multi "non-existent file $where ignored" \
 		".gitignore:1:one	${subdir}one" \
 		"test_check_ignore '${subdir}one'"
 
@@ -311,11 +339,23 @@ do
 		"::	${subdir}not-ignored" \
 		"test_check_ignore '${subdir}not-ignored' 1"
 
+	test_expect_success_no_index_multi "existing untracked file $where not ignored" \
+		"::	${subdir}not-ignored" \
+		"test_check_ignore '${subdir}not-ignored' 1"
+
 	test_expect_success_multi "existing tracked file $where not ignored" \
 		"::	${subdir}ignored-but-in-index" \
 		"test_check_ignore '${subdir}ignored-but-in-index' 1"
 
+	test_expect_success_no_index_multi "existing tracked file $where shown as ignored" \
+		".gitignore:2:ignored-*	${subdir}ignored-but-in-index" \
+		"test_check_ignore '${subdir}ignored-but-in-index'"
+
 	test_expect_success_multi "existing untracked file $where ignored" \
+		".gitignore:2:ignored-*	${subdir}ignored-and-untracked" \
+		"test_check_ignore '${subdir}ignored-and-untracked'"
+
+	test_expect_success_no_index_multi "existing untracked file $where ignored" \
 		".gitignore:2:ignored-*	${subdir}ignored-and-untracked" \
 		"test_check_ignore '${subdir}ignored-and-untracked'"
 
@@ -324,6 +364,20 @@ do
 .gitignore:1:one	${subdir}one
 ::	${subdir}not-ignored
 ::	${subdir}ignored-but-in-index
+.gitignore:2:ignored-*	${subdir}ignored-and-untracked" \
+		"test_check_ignore '
+			${subdir}non-existent
+			${subdir}one
+			${subdir}not-ignored
+			${subdir}ignored-but-in-index
+			${subdir}ignored-and-untracked'
+		"
+
+	test_expect_success_no_index_multi "mix of file types $where" \
+"::	${subdir}non-existent
+.gitignore:1:one	${subdir}one
+::	${subdir}not-ignored
+.gitignore:2:ignored-*	${subdir}ignored-but-in-index
 .gitignore:2:ignored-*	${subdir}ignored-and-untracked" \
 		"test_check_ignore '
 			${subdir}non-existent

@@ -45,6 +45,13 @@ OPTIONS
 	not be possible to distinguish between paths which match a
 	pattern and those which don't.
 
+--no-index::
+	Don't look in the index when undertaking the checks. This can
+	be used to debug why a path became tracked by e.g. `git add .`
+	and was not ignored by the rules as expected by the user or when
+	developing patterns including negation to match a path previously
+	added with `git add -f`.
+
 OUTPUT
 ------
 
