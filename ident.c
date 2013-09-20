@@ -402,3 +402,32 @@ int git_ident_config(const char *var, const char *value, void *data)
 
 	return 0;
 }
+
+static int buf_cmp(const char *a_begin, const char *a_end,
+		   const char *b_begin, const char *b_end)
+{
+	int a_len = a_end - a_begin;
+	int b_len = b_end - b_begin;
+	int min = a_len < b_len ? a_len : b_len;
+	int cmp;
+
+	cmp = memcmp(a_begin, b_begin, min);
+	if (cmp)
+		return cmp;
+
+	return a_len - b_len;
+}
+
+int ident_cmp(const struct ident_split *a,
+	      const struct ident_split *b)
+{
+	int cmp;
+
+	cmp = buf_cmp(a->mail_begin, a->mail_end,
+		      b->mail_begin, b->mail_end);
+	if (cmp)
+		return cmp;
+
+	return buf_cmp(a->name_begin, a->name_end,
+		       b->name_begin, b->name_end);
+}
