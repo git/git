@@ -60,6 +60,9 @@ struct rev_info {
 	/* The end-points specified by the end user */
 	struct rev_cmdline_info cmdline;
 
+	/* excluding from --branches, --refs, etc. expansion */
+	struct string_list *ref_excludes;
+
 	/* Basic information */
 	const char *prefix;
 	const char *def;
