@@ -148,13 +148,8 @@ exit $ret' >&3 2>&4
 	return "$eval_ret"
 }
 
-
-test_perf () {
+perf_test_ () {
 	test_start_
-	test "$#" = 3 && { test_prereq=$1; shift; } || test_prereq=
-	test "$#" = 2 ||
-	error "bug in the test script: not 2 or 3 parameters to test-expect-success"
-	export test_prereq
 	if ! test_skip "$@"
 	then
 		base=$(basename "$0" .sh)
@@ -179,6 +174,22 @@ test_perf () {
 				test_failure_ "$@"
 				break
 			fi
+			say >&3 "cleaning up: $3"
+			if test "$#" = 3
+			then
+				if test_run_ "$3"
+				then
+					if test -z "$verbose"; then
+						echo -n " c$i"
+					else
+						echo "* cleaning up run $i/$GIT_PERF_REPEAT_COUNT:"
+					fi
+				else
+					test -z "$verbose" && echo
+					test_failure_ "$@"
+					break
+				fi
+			fi
 		done
 		if test -z "$verbose"; then
 			echo " ok"
@@ -189,6 +200,23 @@ test_perf () {
 		"$TEST_DIRECTORY"/perf/min_time.perl test_time.* >"$base".times
 	fi
 	test_finish_
+}
+
+test_perf () {
+	test "$#" = 3 && { test_prereq=$1; shift; } || test_prereq=
+	test "$#" = 2 ||
+	error "bug in the test script: not 2 or 3 parameters to test-expect-success"
+	export test_prereq
+	perf_test_ "$1" "$2"
+}
+
+test_perf_cleanup () {
+	test_start_
+	test "$#" = 4 && { test_prereq=$1; shift; } || test_prereq=
+	test "$#" = 3 ||
+	error "bug in the test script: not 3 or 4 parameters to test-expect-success"
+	export test_prereq
+	perf_test_ "$1" "$2" "$3"
 }
 
 # We extend test_done to print timings at the end (./run disables this
