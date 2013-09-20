@@ -90,9 +90,6 @@ int run_diff_files(struct rev_info *revs, unsigned int option)
 	unsigned ce_option = ((option & DIFF_RACY_IS_MODIFIED)
 			      ? CE_MATCH_RACY_IS_DIRTY : 0);
 
-	if (option & DIFF_SILENT_ON_REMOVED)
-		handle_deprecated_show_diff_q(&revs->diffopt);
-
 	diff_set_mnemonic_prefix(&revs->diffopt, "i/", "w/");
 
 	if (diff_unmerged_stage < 0)

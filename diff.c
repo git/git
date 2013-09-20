@@ -3577,14 +3577,6 @@ static int parse_diff_filter_opt(const char *optarg, struct diff_options *opt)
 	return 0;
 }
 
-/* Used only by "diff-files" and "diff --no-index" */
-void handle_deprecated_show_diff_q(struct diff_options *opt)
-{
-	warning("'diff -q' and 'diff-files -q' are deprecated.");
-	warning("Use 'diff --diff-filter=d' instead to ignore deleted filepairs.");
-	parse_diff_filter_opt("d", opt);
-}
-
 static void enable_patch_output(int *fmt) {
 	*fmt &= ~DIFF_FORMAT_NO_OUTPUT;
 	*fmt |= DIFF_FORMAT_PATCH;

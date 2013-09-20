@@ -187,7 +187,6 @@ void diff_no_index(struct rev_info *revs,
 {
 	int i, prefixlen;
 	int no_index = 0;
-	unsigned deprecated_show_diff_q_option_used = 0;
 	const char *paths[2];
 
 	/* Were we asked to do --no-index explicitly? */
@@ -236,10 +235,6 @@ void diff_no_index(struct rev_info *revs,
 		int j;
 		if (!strcmp(argv[i], "--no-index"))
 			i++;
-		else if (!strcmp(argv[i], "-q")) {
-			deprecated_show_diff_q_option_used = 1;
-			i++;
-		}
 		else if (!strcmp(argv[i], "--"))
 			i++;
 		else {
@@ -271,9 +266,6 @@ void diff_no_index(struct rev_info *revs,
 
 	revs->max_count = -2;
 	diff_setup_done(&revs->diffopt);
-
-	if (deprecated_show_diff_q_option_used)
-		handle_deprecated_show_diff_q(&revs->diffopt);
 
 	setup_diff_pager(&revs->diffopt);
 	DIFF_OPT_SET(&revs->diffopt, EXIT_WITH_STATUS);
