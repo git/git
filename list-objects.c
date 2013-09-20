@@ -144,18 +144,34 @@ static void mark_edge_parents_uninteresting(struct commit *commit,
 	}
 }
 
-void mark_edges_uninteresting(struct commit_list *list,
-			      struct rev_info *revs,
-			      show_edge_fn show_edge)
+void mark_edges_uninteresting(struct rev_info *revs, show_edge_fn show_edge)
 {
-	for ( ; list; list = list->next) {
+	struct commit_list *list;
+	int i;
+
+	for (list = revs->commits; list; list = list->next) {
 		struct commit *commit = list->item;
 
 		if (commit->object.flags & UNINTERESTING) {
 			mark_tree_uninteresting(commit->tree);
+			if (revs->edge_hint && !(commit->object.flags & SHOWN)) {
+				commit->object.flags |= SHOWN;
+				show_edge(commit);
+			}
 			continue;
 		}
 		mark_edge_parents_uninteresting(commit, revs, show_edge);
+	}
+	for (i = 0; i < revs->cmdline.nr; i++) {
+		struct object *obj = revs->cmdline.rev[i].item;
+		struct commit *commit = (struct commit *)obj;
+		if (obj->type != OBJ_COMMIT || !(obj->flags & UNINTERESTING))
+			continue;
+		mark_tree_uninteresting(commit->tree);
+		if (revs->edge_hint && !(obj->flags & SHOWN)) {
+			obj->flags |= SHOWN;
+			show_edge(commit);
+		}
 	}
 }
 
