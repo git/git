@@ -160,9 +160,7 @@ cat >test/expect <<EOF
 * remote two
   Fetch URL: ../two
   Push  URL: ../three
-  HEAD branch (remote HEAD is ambiguous, may be one of the following):
-    another
-    master
+  HEAD branch: master
   Local refs configured for 'git push':
     ahead  forces to master  (fast-forwardable)
     master pushes to another (up to date)
@@ -262,16 +260,12 @@ test_expect_success 'set-head --auto' '
 	)
 '
 
-cat >test/expect <<\EOF
-error: Multiple remote HEAD branches. Please choose one explicitly with:
-  git remote set-head two another
-  git remote set-head two master
-EOF
-
-test_expect_success 'set-head --auto fails w/multiple HEADs' '
+test_expect_success 'set-head --auto has no problem w/multiple HEADs' '
 	(
 		cd test &&
-		test_must_fail git remote set-head --auto two >output 2>&1 &&
+		git fetch two "refs/heads/*:refs/remotes/two/*" &&
+		git remote set-head --auto two >output 2>&1 &&
+		echo "two/HEAD set to master" >expect &&
 		test_i18ncmp expect output
 	)
 '
