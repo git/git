@@ -1,17 +1,24 @@
 To: git@vger.kernel.org
 Bcc: lwn@lwn.net
-Subject: What's cooking in git.git (Sep 2013, #05; Wed, 18)
-X-master-at: eeaee045c85719821e685a22603a645a0ea85bad
-X-next-at: d97bfe6d8d1499241374e46954d566a3af3b8087
+Subject: What's cooking in git.git (Sep 2013, #06; Fri, 20)
+X-master-at: 128a96c98442524c7f2eeef4757b1e48445f24ce
+X-next-at: 0d6e0ce2a5090eb3c05a624d1ad584a1153fcc52
 
-What's cooking in git.git (Sep 2013, #05; Wed, 18)
+What's cooking in git.git (Sep 2013, #06; Fri, 20)
 --------------------------------------------------
 
 Here are the topics that have been cooking.  Commits prefixed with
 '-' are only in 'pu' (proposed updates) while commits prefixed with
 '+' are in 'next'.
 
-The fourth batch of topics are in 'master'.
+The fifth batch of topics are in 'master'.  We are about to pass 350
+non-merge commits since the last release, which means we are about
+halfway there for the next one.  Among ~60 contributors who have
+commits in the 'master' branch since v1.8.4, ~10 are new faces.
+
+I'll be offline starting next week for a few weeks; in order to
+improve the "bus factor", I asked Jonathan Nieder to fill in for me
+as an interim maintainer, with Peff as a back-up.
 
 You can find the changes described here in the integration branches
 of the repositories listed at
@@ -21,366 +28,227 @@ of the repositories listed at
 --------------------------------------------------
 [Graduated to "master"]
 
-* ab/gitweb-author-initials (2013-08-30) 1 commit
-  (merged to 'next' on 2013-09-09 at ecb924d)
- + gitweb: Fix the author initials in blame for non-ASCII names
+* bc/http-backend-allow-405 (2013-09-12) 1 commit
+  (merged to 'next' on 2013-09-12 at bc1719f)
+ + http-backend: provide Allow header for 405
 
+ When the webserver responds with "405 Method Not Allowed", it
+ should tell the client what methods are allowed with the "Allow"
+ header.
 
-* ap/commit-author-mailmap (2013-08-24) 1 commit
-  (merged to 'next' on 2013-09-09 at 79d5a20)
- + commit: search author pattern against mailmap
 
- "git commit --author=$name", when $name is not in the canonical
- "A. U. Thor <au.thor@example.xz>" format, looks for a matching name
- from existing history, but did not consult mailmap to grab the
- preferred author name.
+* bk/refs-multi-update (2013-09-11) 8 commits
+  (merged to 'next' on 2013-09-13 at e6d21af)
+ + update-ref: add test cases covering --stdin signature
+ + update-ref: support multiple simultaneous updates
+ + refs: add update_refs for multiple simultaneous updates
+ + refs: add function to repack without multiple refs
+ + refs: factor delete_ref loose ref step into a helper
+ + refs: factor update_ref steps into helpers
+ + refs: report ref type from lock_any_ref_for_update
+ + reset: rename update_refs to reset_refs
 
+ Give "update-refs" a "--stdin" option to read multiple update
+ requests and perform them in an all-or-none fashion.
 
-* bc/send-email-ssl-die-message-fix (2013-09-10) 1 commit
-  (merged to 'next' on 2013-09-13 at c6fcdf4)
- + send-email: don't call methods on undefined values
 
- When send-email comes up with an error message to die with upon
- failure to start an SSL session, it tried to read the error string
- from a wrong place.
+* dw/check-ignore-sans-index (2013-09-12) 1 commit
+  (merged to 'next' on 2013-09-13 at 8daec3c)
+ + check-ignore: Add option to ignore index contents
 
+ "git check-ignore" follows the same rule as "git add" and "git
+ status" in that the ignore/exclude mechanism does not take effect
+ on paths that are already tracked.  With "--no-index" option, it
+ can be used to diagnose which paths that should have been ignored
+ have been mistakenly added to the index.
 
-* dw/diff-no-index-doc (2013-08-28) 2 commits
-  (merged to 'next' on 2013-09-10 at 423c8f6)
- + diff --no-index: describe in a separate paragraph
- + diff --no-index: clarify operation when not inside a repository
 
- When the user types "git diff" outside a working tree, thinking he
- is inside one, the current error message that is a single-liner
- "usage: git diff --no-index <path> <path>" may not be sufficient to
- make him realize the mistake. Add "Not a git repository" to the
- error message when we fell into the "--no-index" mode without an
- explicit command line option to instruct us to do so.
+* fc/at-head (2013-09-12) 2 commits
+  (merged to 'next' on 2013-09-13 at d3800c2)
+ + Add new @ shortcut for HEAD
+ + sha1-name: pass len argument to interpret_branch_name()
 
+ Attempt to resurrect "Type @ for HEAD"; the bottom one seems to be
+ a genuine code improvement, but identifying cases where "@" means
+ HEAD were harder than it should have been.  I think the result of
+ squashing the tip one in covers all the necessary cases.
 
-* fc/contrib-bzr-hg-fixes (2013-09-03) 10 commits
-  (merged to 'next' on 2013-09-12 at f5e8684)
- + contrib/remote-helpers: quote variable references in redirection targets
- + contrib/remote-helpers: style updates for test scripts
- + remote-hg: use notes to keep track of Hg revisions
- + remote-helpers: cleanup more global variables
- + remote-helpers: trivial style fixes
- + remote-hg: improve basic test
- + remote-hg: add missing &&s in the test
- + remote-hg: fix test
- + remote-bzr: make bzr branches configurable per-repo
- + remote-bzr: fix export of utf-8 authors
 
+* hu/cherry-pick-previous-branch (2013-09-09) 1 commit
+  (merged to 'next' on 2013-09-12 at 36e4d9b)
+ + cherry-pick: allow "-" as abbreviation of '@{-1}'
 
-* fc/fast-export (2013-09-03) 2 commits
-  (merged to 'next' on 2013-09-09 at 8d5d396)
- + fast-export: refactor get_tags_and_duplicates()
- + fast-export: make extra_refs global
+ Just like "git checkout -" knows to check out and "git merge -"
+ knows to merge the branch you were previously on, teach "git
+ cherry-pick" to understand "-" as the previous branch.
 
- Code simpification.
 
+* jh/checkout-auto-tracking (2013-09-17) 6 commits
+  (merged to 'next' on 2013-09-17 at 6748f49)
+ + t3200: fix failure on case-insensitive filesystems
+  (merged to 'next' on 2013-09-13 at 2aa1553)
+ + branch.c: Relax unnecessary requirement on upstream's remote ref name
+ + t3200: Add test demonstrating minor regression in 41c21f2
+ + Refer to branch.<name>.remote/merge when documenting --track
+ + t3200: Minor fix when preparing for tracking failure
+ + t2024: Fix &&-chaining and a couple of typos
 
-* fc/rev-parse-test-updates (2013-09-03) 4 commits
-  (merged to 'next' on 2013-09-09 at 92c51ef)
- + rev-parse test: use standard test functions for setup
- + rev-parse test: use test_cmp instead of "test" builtin
- + rev-parse test: use test_must_fail, not "if <command>; then false; fi"
- + rev-parse test: modernize quoting and whitespace
+ Fix a minor regression in v1.8.3.2 and later that made it
+ impossible to base your local work on anything but a local branch
+ of the upstream repository you are tracking from.
 
- Modernize tests.
 
+* jk/upload-pack-keepalive (2013-09-09) 2 commits
+  (merged to 'next' on 2013-09-17 at d3141ac)
+ + upload-pack: bump keepalive default to 5 seconds
+ + upload-pack: send keepalive packets during pack computation
 
-* fc/t3200-fixes (2013-09-03) 3 commits
-  (merged to 'next' on 2013-09-09 at 3626363)
- + t: branch: fix broken && chains
- + t: branch: fix typo
- + t: branch: trivial style fix
+ When running "fetch -q", a long silence while the sender side
+ computes the set of objects to send can be mistaken by proxies as
+ dropped connection.
 
 
-* fc/trivial (2013-09-08) 5 commits
-  (merged to 'next' on 2013-09-09 at a8ad2e1)
- + pull: use $curr_branch_short more
- + add: trivial style cleanup
- + reset: trivial style cleanup
- + branch: trivial style fix
- + reset: trivial refactoring
+* jx/branch-vv-always-compare-with-upstream (2013-08-26) 2 commits
+  (merged to 'next' on 2013-09-12 at b5c37f4)
+ + status: always show tracking branch even no change
+ + branch: report invalid tracking branch as gone
 
+ "git branch -v -v" (and "git status") did not distinguish among a
+ branch that does not build on any other branch, a branch that is in
+ sync with the branch it builds on, and a branch that is configured
+ to build on some other branch that no longer exists.
 
-* jc/cvsserver-perm-bit-fix (2013-09-11) 1 commit
-  (merged to 'next' on 2013-09-13 at 56db105)
- + cvsserver: pick up the right mode bits
 
- "git cvsserver" computed the permission mode bits incorrectly for
- executable files.
+* mm/commit-template-squelch-advice-messages (2013-09-12) 3 commits
+  (merged to 'next' on 2013-09-13 at 410d207)
+ + commit: disable status hints when writing to COMMIT_EDITMSG
+ + wt-status: turn advice_status_hints into a field of wt_status
+ + commit: factor status configuration is a helper function
 
+ From the commit log template, remove irrelevant "advice" messages
+ that are shared with "git status" output.
 
-* jc/url-match (2013-09-12) 1 commit
-  (merged to 'next' on 2013-09-13 at 7b94f8e)
- + urlmatch.c: recompute pointer after append_normalized_escapes
 
- While normalizing a URL, we forgot that the buffer that holds it
- could be relocated when it grows, which was a brown-paper-bag bug
- that can lead to a crash introduced on 'master' post 1.8.4 release.
+* mm/rebase-continue-freebsd-WB (2013-09-09) 1 commit
+  (merged to 'next' on 2013-09-13 at 82e8b91)
+ + rebase: fix run_specific_rebase's use of "return" on FreeBSD
 
+ Work around a bug in FreeBSD shell that caused a regression to "git
+ rebase" in v1.8.4.  May need to be later applied to 'maint'.
 
-* jk/duplicate-objects-in-packs (2013-09-04) 5 commits
-  (merged to 'next' on 2013-09-09 at 72f2c3d)
- + t5308: check that index-pack --strict detects duplicate objects
- + test index-pack on packs with recoverable delta cycles
- + add tests for indexing packs with delta cycles
- + sha1-lookup: handle duplicate keys with GIT_USE_LOOKUP
- + test-sha1: add a binary output mode
 
- A packfile that stores the same object more than once is broken and
- will be rejected.
+* mm/status-without-comment-char (2013-09-17) 7 commits
+  (merged to 'next' on 2013-09-17 at d93e7c1)
+ + t7508: avoid non-portable sed expression
+  (merged to 'next' on 2013-09-12 at 89161b8)
+ + status: add missing blank line after list of "other" files
+ + tests: don't set status.displayCommentPrefix file-wide
+ + status: disable display of '#' comment prefix by default
+ + submodule summary: ignore --for-status option
+ + wt-status: use argv_array API
+ + builtin/stripspace.c: fix broken indentation
 
+ Allow "git status" to omit the prefix to make its output a comment
+ in a commit log editor, which is not necessary for human
+ consumption.
 
-* jk/free-tree-buffer (2013-06-06) 1 commit
-  (merged to 'next' on 2013-09-09 at 3576189)
- + clear parsed flag when we free tree buffers
+ We may want to tighten the output to omit unnecessary trailing
+ blank lines, but that does not have to be in the scope of this
+ series.
 
 
-* jk/has-sha1-file-retry-packed (2013-08-30) 1 commit
-  (merged to 'next' on 2013-09-09 at fc42e9b)
- + has_sha1_file: re-check pack directory before giving up
+* nd/fetch-into-shallow (2013-08-28) 7 commits
+  (merged to 'next' on 2013-09-09 at 87a3b99)
+ + Add testcase for needless objects during a shallow fetch
+ + list-objects: mark more commits as edges in mark_edges_uninteresting
+ + list-objects: reduce one argument in mark_edges_uninteresting
+ + upload-pack: delegate rev walking in shallow fetch to pack-objects
+ + shallow: add setup_temporary_shallow()
+ + shallow: only add shallow graft points to new shallow file
+ + move setup_alternate_shallow and write_shallow_commits to shallow.c
 
- When an object is not found after checking the packfiles and then
- loose object directory, read_sha1_file() re-checks the packfiles to
- prevent racing with a concurrent repacker; teach the same logic to
- has_sha1_file().
+ When there is no sufficient overlap between old and new history
+ during a fetch into a shallow repository, we unnecessarily sent
+ objects the sending side knows the receiving end has.
 
 
-* jk/pager-bypass-cat-for-default-pager (2013-09-03) 1 commit
-  (merged to 'next' on 2013-09-09 at c9cfbaa)
- + pager: turn on "cat" optimization for DEFAULT_PAGER
+* np/lookup-object-hashing (2013-09-11) 1 commit
+  (merged to 'next' on 2013-09-12 at d835ef6)
+ + lookup_object: remove hashtable_index() and optimize hash_obj()
 
- If a build-time fallback is set to "cat" instead of "less", we
- should apply the same "no subprocess or pipe" optimization as we
- apply to user-supplied GIT_PAGER=cat.
+ Micro optimize hash function used in the object hash table.
 
 
-* jk/remove-remote-helpers-in-python (2013-09-09) 1 commit
-  (merged to 'next' on 2013-09-10 at 49c7a74)
- + git_remote_helpers: remove little used Python library
+* nr/git-cd-to-a-directory (2013-09-19) 2 commits
+  (merged to 'next' on 2013-09-19 at e9394e8)
+ + t0056: "git -C" test updates
+  (merged to 'next' on 2013-09-13 at 2b07af9)
+ + git: run in a directory given with -C option
 
- Remove now disused remote-helpers framework for helpers written in
- Python.
+ Just like "make -C <directory>", make "git -C <directory> ..." to
+ go there before doing anything else.
 
 
-* jk/write-broken-index-with-nul-sha1 (2013-08-28) 1 commit
-  (merged to 'next' on 2013-09-09 at 6953f27)
- + write_index: optionally allow broken null sha1s
+* rh/peeling-tag-to-tag (2013-09-03) 2 commits
+  (merged to 'next' on 2013-09-12 at 3a1d906)
+ + peel_onion: do not assume length of x_type globals
+ + peel_onion(): add support for <rev>^{tag}
 
- Earlier we started rejecting an attempt to add 0{40} object name to
- the index and to tree objects, but it sometimes is necessary to
- allow so to be able to use tools like filter-branch to correct such
- broken tree objects.
-
-
-* js/add-i-mingw (2013-09-04) 1 commit
-  (merged to 'next' on 2013-09-10 at 50ab841)
- + add--interactive: fix external command invocation on Windows
-
- The implementation of "add -i" has a crippling code to work around
- ActiveState Perl limitation but it by mistake also triggered on Git
- for Windows where MSYS perl is used.
-
-
-* jx/clean-interactive (2013-08-28) 1 commit
-  (merged to 'next' on 2013-09-09 at 477fec6)
- + documentation: clarify notes for clean.requireForce
- (this branch is used by jx/relative-path-regression-fix.)
-
- Finishing touches to update the document to adjust to a new option
- "git clean" learned recently.
-
-
-* kk/tests-with-no-perl (2013-08-24) 4 commits
-  (merged to 'next' on 2013-09-09 at 67510b1)
- + reset test: modernize style
- + t/t7106-reset-unborn-branch.sh: Add PERL prerequisite
- + add -i test: use skip_all instead of repeated PERL prerequisite
- + Make test "using invalid commit with -C" more strict
-
- Some tests were not skipped under NO_PERL build.
-
-
-* ks/p4-view-spec (2013-09-03) 2 commits
-  (merged to 'next' on 2013-09-10 at 8ceb2ec)
- + git p4: implement view spec wildcards with "p4 where"
- + git p4 test: sanitize P4CHARSET
-
- Replaced with a reroll that was whitespace damaged.
-
-
-* nd/git-dir-pointing-at-gitfile (2013-09-03) 1 commit
-  (merged to 'next' on 2013-09-09 at 5b0a4bf)
- + Make setup_git_env() resolve .git file when $GIT_DIR is not specified
-
- We made sure that we notice the user-supplied GIT_DIR is actually a
- gitfile, but failed to do so when the default ".git" is a gitfile.
-
-
-* rh/ishes-doc (2013-09-04) 7 commits
-  (merged to 'next' on 2013-09-10 at 3611e8a)
- + glossary: fix and clarify the definition of 'ref'
- + revisions.txt: fix and clarify <rev>^{<type>}
- + glossary: more precise definition of tree-ish (a.k.a. treeish)
- + use 'commit-ish' instead of 'committish'
- + use 'tree-ish' instead of 'treeish'
- + glossary: define commit-ish (a.k.a. committish)
- + glossary: mention 'treeish' as an alternative to 'tree-ish'
-
- We liberally use "committish" and "commit-ish" (and "treeish" and
- "tree-ish"); as these are non-words, let's unify these terms to
- their dashed form.  More importantly, clarify the documentation on
- object peeling using these terms.
-
-
-* ss/doclinks (2013-09-06) 1 commit
-  (merged to 'next' on 2013-09-10 at 2d029a9)
- + Documentation: make AsciiDoc links always point to HTML files
-
- When we converted many documents that were traditionally text-only
- to be formatted to AsciiDoc, we did not update links that point at
- them to refer to the formatted HTML files.
-
-
-* ta/user-manual (2013-08-27) 11 commits
-  (merged to 'next' on 2013-09-10 at 1361be1)
- + "git prune" is safe
- + Remove irrelevant reference from "Tying it all together"
- + Remove unnecessary historical note from "Object storage format"
- + Improve section "Merging multiple trees"
- + Improve section "Manipulating branches"
- + Simplify "How to make a commit"
- + Fix some typos and improve wording
- + Use "git merge" instead of "git pull ."
- + Use current output for "git repack"
- + Use current "detached HEAD" message
- + Call it "Git User Manual" and remove reference to very old Git version
-
- Update the user's manual to more recent versions of Git.
-
-
-* tb/precompose-autodetect-fix (2013-08-27) 1 commit
-  (merged to 'next' on 2013-09-09 at 9bfdac1)
- + Set core.precomposeunicode to true on e.g. HFS+
-
- On MacOS X, we detected if the filesystem needs the "pre-composed
- unicode strings" workaround, but did not automatically enable it.
- Now we do.
-
-
-* uh/git-svn-serf-fix (2013-09-06) 1 commit
-  (merged to 'next' on 2013-09-13 at d65a9a1)
- + git-svn: fix termination issues for remote svn connections
-
- "git-svn" used with SVN 1.8.0 when talking over https:// connection
- dumped core due to a bug in the serf library that SVN uses.  Work
- it around on our side, even though the SVN side is being fixed.
+ Make "foo^{tag}" to peel a tag to itself, i.e. no-op., and fail if
+ "foo" is not a tag.
 
 --------------------------------------------------
 [New Topics]
 
-* es/name-hash-no-trailing-slash-in-dirs (2013-09-17) 4 commits
- - dir: revert work-around for retired dangerous behavior
- - name-hash: stop storing trailing '/' on paths in index_state.dir_hash
- - employ new explicit "exists in index?" API
- - name-hash: refactor polymorphic index_name_exists()
+* jc/revision-range-unpeel (2013-09-20) 2 commits
+ - (possible fixup) jc/revision-range-unpeel - peel only when necessary
+ - revision: do not peel tags used in range notation
 
- Clean up the internal of the name-hash mechanism used to work
- around case insensitivity on some filesystems to cleanly fix a
- long-standing API glitch where the caller of cache_name_exists()
- that ask about a directory with a counted string was required to
- have '/' at one location past the end of the string.
+ "git rev-list --objects ^v1.0^ v1.0" gave v1.0 tag itself in the
+ output, but "git rev-list --objects v1.0^..v1.0" did not.
 
- Will merge to 'next'.
+ Need to decide either squashing the top fixup in, or dropping it
+ and then merge to 'next'.
 
 
-* po/dot-url (2013-09-13) 2 commits
- - config doc: update dot-repository notes
- - doc: command line interface (cli) dot-repository dwimmery
+* tg/perf-lib-test-perf-cleanup (2013-09-19) 2 commits
+ - perf-lib: add test_perf_cleanup target
+ - perf-lib: split starting the test from the execution
 
- Explain how '.' can be used to refer to the "current repository"
- in the documentation.
+ Add test_perf_cleanup shell function to the perf suite, that allows
+ the script writers to define a test with a clean-up action.
 
- Will merge to 'next'.
-
-
-* es/contacts-in-subdir (2013-09-17) 1 commit
- - contacts: fix to work in subdirectories
-
- Allow the contacts (in contrib/) script to run from inside a
- subdirectory.
-
- Will merge to 'next'.
+ Will hold, until we get any user.
 
 
-* jc/upload-pack-send-symref (2013-09-17) 7 commits
- - clone: test the new HEAD detection logic
- - connect: annotate refs with their symref information in get_remote_head()
- - connect.c: make parse_feature_value() static
- - upload-pack: send non-HEAD symbolic refs
- - upload-pack: send symbolic ref information as capability
- - upload-pack.c: do not pass confusing cb_data to mark_our_ref()
- - t5505: fix "set-head --auto with ambiguous HEAD" test
+* jc/push-cas (2013-09-20) 1 commit
+  (merged to 'next' on 2013-09-20 at 5e1e7cc)
+ + t5541: mark passing c-a-s test as success
 
- One long-standing flaw in the pack transfer protocol used by "git
- clone" was that there was no way to tell the other end which branch
- "HEAD" points at, and the receiving end needed to guess.  A new
- capability has been defined in the pack protocol to convey this
- information so that cloning from a repository with more than one
- branches pointing at the same commit where the HEAD is at now
- reliably sets the initial branch in the resulting repository.
+ A trivial fix to a test.
 
- Will merge to 'next'.
+ Will merge to 'master'.
 
 
-* jk/clone-progress-to-stderr (2013-09-18) 3 commits
- - clone: always set transport options
- - clone: treat "checking connectivity" like other progress
- - clone: send diagnostic messages to stderr
+* jk/format-patch-from (2013-09-20) 1 commit
+  (merged to 'next' on 2013-09-20 at 0506530)
+ + format-patch: print in-body "From" only when needed
 
- Some progress and diagnostic messages from "git clone" were
- incorrectly sent to the standard output stream, not to the standard
- error stream.
+ "format-patch --from=<whom>" forgot to omit unnecessary in-body
+ from line, i.e. when <whom> is the same as the real author.
 
- Will merge to 'next'.
-
-
-* nd/fetch-pack-error-reporting-fix (2013-09-18) 1 commit
- - fetch-pack.c: show correct command name that fails
-
- When "fetch-pack" detected an error from spawned "index-pack" or
- "unpack-objects", it did not report the failed program name
- correctly when a shallow repository is involved.
-
- Will merge to 'next'.
-
-
-* sg/complete-untracked-filter (2013-09-18) 1 commit
- - completion: improve untracked directory filtering for filename completion
-
- Will merge to 'next'.
-
-
-* jc/strcasecmp-pure-inline (2013-09-12) 1 commit
- - mailmap: work around implementations with pure inline strcasecmp
-
- Work around MinGW <string.h> header that does not declare strcasecmp
- whose address cannot be taken.
-
- Will merge to 'next'.
-
-
-* jk/shortlog-tolerate-broken-commit (2013-09-18) 1 commit
- - shortlog: ignore commits with missing authors
-
- Will merge to 'next'.
+ Will merge to 'master'.
 
 --------------------------------------------------
 [Stalled]
+
+* tr/merge-recursive-index-only (2013-07-07) 3 commits
+ - merge-recursive: -Xindex-only to leave worktree unchanged
+ - merge-recursive: untangle double meaning of o->call_depth
+ - merge-recursive: remove dead conditional in update_stages()
+
+ Will hold, until we get any user.
+
 
 * jc/ref-excludes (2013-09-03) 2 commits
  - document --exclude option
@@ -483,9 +351,113 @@ of the repositories listed at
 --------------------------------------------------
 [Cooking]
 
-* jx/relative-path-regression-fix (2013-09-13) 3 commits
+* es/name-hash-no-trailing-slash-in-dirs (2013-09-17) 4 commits
+  (merged to 'next' on 2013-09-20 at 9633d9a)
+ + dir: revert work-around for retired dangerous behavior
+ + name-hash: stop storing trailing '/' on paths in index_state.dir_hash
+ + employ new explicit "exists in index?" API
+ + name-hash: refactor polymorphic index_name_exists()
+
+ Clean up the internal of the name-hash mechanism used to work
+ around case insensitivity on some filesystems to cleanly fix a
+ long-standing API glitch where the caller of cache_name_exists()
+ that ask about a directory with a counted string was required to
+ have '/' at one location past the end of the string.
+
+ Will merge to 'master'.
+
+
+* po/dot-url (2013-09-13) 2 commits
+  (merged to 'next' on 2013-09-20 at 6a12786)
+ + config doc: update dot-repository notes
+ + doc: command line interface (cli) dot-repository dwimmery
+
+ Explain how '.' can be used to refer to the "current repository"
+ in the documentation.
+
+ Will merge to 'master'.
+
+
+* es/contacts-in-subdir (2013-09-17) 1 commit
+  (merged to 'next' on 2013-09-20 at d67164f)
+ + contacts: fix to work in subdirectories
+
+ Allow the contacts (in contrib/) script to run from inside a
+ subdirectory.
+
+ Will merge to 'master'.
+
+
+* jc/upload-pack-send-symref (2013-09-17) 7 commits
+ - clone: test the new HEAD detection logic
+ - connect: annotate refs with their symref information in get_remote_head()
+ - connect.c: make parse_feature_value() static
+ - upload-pack: send non-HEAD symbolic refs
+ - upload-pack: send symbolic ref information as capability
+ - upload-pack.c: do not pass confusing cb_data to mark_our_ref()
+ - t5505: fix "set-head --auto with ambiguous HEAD" test
+
+ One long-standing flaw in the pack transfer protocol used by "git
+ clone" was that there was no way to tell the other end which branch
+ "HEAD" points at, and the receiving end needed to guess.  A new
+ capability has been defined in the pack protocol to convey this
+ information so that cloning from a repository with more than one
+ branches pointing at the same commit where the HEAD is at now
+ reliably sets the initial branch in the resulting repository.
+
+ Will merge to 'next'.
+
+
+* jk/clone-progress-to-stderr (2013-09-18) 3 commits
+ - clone: always set transport options
+ - clone: treat "checking connectivity" like other progress
+ - clone: send diagnostic messages to stderr
+
+ Some progress and diagnostic messages from "git clone" were
+ incorrectly sent to the standard output stream, not to the standard
+ error stream.
+
+ Will merge to 'next'.
+
+
+* nd/fetch-pack-error-reporting-fix (2013-09-18) 1 commit
+  (merged to 'next' on 2013-09-20 at fefa04f)
+ + fetch-pack.c: show correct command name that fails
+
+ When "fetch-pack" detected an error from spawned "index-pack" or
+ "unpack-objects", it did not report the failed program name
+ correctly when a shallow repository is involved.
+
+ Will merge to 'master'.
+
+
+* sg/complete-untracked-filter (2013-09-19) 1 commit
+  (merged to 'next' on 2013-09-20 at 798d0b9)
+ + completion: improve untracked directory filtering for filename completion
+
+ Will merge to 'master'.
+
+
+* jc/strcasecmp-pure-inline (2013-09-12) 1 commit
+  (merged to 'next' on 2013-09-20 at 7142d08)
+ + mailmap: work around implementations with pure inline strcasecmp
+
+ Work around MinGW <string.h> header that does not declare strcasecmp
+ whose address cannot be taken.
+
+ Will merge to 'master'.
+
+
+* jk/shortlog-tolerate-broken-commit (2013-09-18) 1 commit
+  (merged to 'next' on 2013-09-20 at 9c85c02)
+ + shortlog: ignore commits with missing authors
+
+ Will merge to 'master'.
+
+
+* jx/relative-path-regression-fix (2013-09-20) 3 commits
  - Use simpler relative_path when set_git_dir
- - relative_path should honor dos_drive_prefix
+ - relative_path should honor dos-driver-prefix
  - test: use unambigous leading path (/foo) for mingw
 
  Waiting for the review to settle.
@@ -500,7 +472,7 @@ of the repositories listed at
  even when it ends up using in-core copy that it got by reading from
  the pack (at which point the checksum was validated).
 
- Will merge to 'master' in the sixth batch.
+ Will merge to 'master'.
 
 
 * jc/checkout-detach-doc (2013-09-11) 1 commit
@@ -510,7 +482,7 @@ of the repositories listed at
  "git checkout [--detach] <commit>" was listed poorly in the
  synopsis section of its documentation.
 
- Will merge to 'master' in the sixth batch.
+ Will merge to 'master'.
 
 
 * jk/trailing-slash-in-pathspec (2013-09-13) 2 commits
@@ -520,7 +492,7 @@ of the repositories listed at
 
  Code refactoring.
 
- Will merge to 'master' in the sixth batch.
+ Will merge to 'master'.
 
 
 * kb/msvc-compile (2013-09-11) 5 commits
@@ -533,7 +505,7 @@ of the repositories listed at
 
  Build updates for Windows port.
 
- Will merge to 'master' in the sixth batch.
+ Will merge to 'master'.
 
 
 * lc/filter-branch-too-many-refs (2013-09-12) 1 commit
@@ -543,104 +515,7 @@ of the repositories listed at
  "git filter-branch" in a repository with many refs blew limit of
  command line length.
 
- Will merge to 'master' in the sixth batch.
-
-
-* mm/commit-template-squelch-advice-messages (2013-09-12) 3 commits
-  (merged to 'next' on 2013-09-13 at 410d207)
- + commit: disable status hints when writing to COMMIT_EDITMSG
- + wt-status: turn advice_status_hints into a field of wt_status
- + commit: factor status configuration is a helper function
-
- From the commit log template, remove irrelevant "advice" messages
- that are shared with "git status" output.
-
- Will merge to 'master' in the fifth batch.
-
-
-* np/lookup-object-hashing (2013-09-11) 1 commit
-  (merged to 'next' on 2013-09-12 at d835ef6)
- + lookup_object: remove hashtable_index() and optimize hash_obj()
-
- Micro optimize hash function used in the object hash table.
-
- Will merge to 'master' in the fifth batch.
-
-
-* bc/http-backend-allow-405 (2013-09-12) 1 commit
-  (merged to 'next' on 2013-09-12 at bc1719f)
- + http-backend: provide Allow header for 405
-
- When the webserver responds with "405 Method Not Allowed", it
- should tell the client what methods are allowed with the "Allow"
- header.
-
- Will merge to 'master' in the fifth batch.
-
-
-* dw/check-ignore-sans-index (2013-09-12) 1 commit
-  (merged to 'next' on 2013-09-13 at 8daec3c)
- + check-ignore: Add option to ignore index contents
-
- "git check-ignore" follows the same rule as "git add" and "git
- status" in that the ignore/exclude mechanism does not take effect
- on paths that are already tracked.  With "--no-index" option, it
- can be used to diagnose which paths that should have been ignored
- have been mistakenly added to the index.
-
- Will merge to 'master' in the fifth batch.
-
-
-* hu/cherry-pick-previous-branch (2013-09-09) 1 commit
-  (merged to 'next' on 2013-09-12 at 36e4d9b)
- + cherry-pick: allow "-" as abbreviation of '@{-1}'
-
- Just like "git checkout -" knows to check out and "git merge -"
- knows to merge the branch you were previously on, teach "git
- cherry-pick" to understand "-" as the previous branch.
-
- Will merge to 'master' in the fifth batch.
-
-
-* jh/checkout-auto-tracking (2013-09-17) 6 commits
-  (merged to 'next' on 2013-09-17 at 6748f49)
- + t3200: fix failure on case-insensitive filesystems
-  (merged to 'next' on 2013-09-13 at 2aa1553)
- + branch.c: Relax unnecessary requirement on upstream's remote ref name
- + t3200: Add test demonstrating minor regression in 41c21f2
- + Refer to branch.<name>.remote/merge when documenting --track
- + t3200: Minor fix when preparing for tracking failure
- + t2024: Fix &&-chaining and a couple of typos
-
- Fix a minor regression in v1.8.3.2 and later that made it
- impossible to base your local work on anything but a local branch
- of the upstream repository you are tracking from.
-
- Will merge to 'master' in the fifth batch.
-
-
-* jk/upload-pack-keepalive (2013-09-09) 2 commits
-  (merged to 'next' on 2013-09-17 at d3141ac)
- + upload-pack: bump keepalive default to 5 seconds
- + upload-pack: send keepalive packets during pack computation
-
- When running "fetch -q", a long silence while the sender side
- computes the set of objects to send can be mistaken by proxies as
- dropped connection.
-
- Will merge to 'master' in the fifth batch.
-
-
-* mm/rebase-continue-freebsd-WB (2013-09-09) 1 commit
-  (merged to 'next' on 2013-09-13 at 82e8b91)
- + rebase: fix run_specific_rebase's use of "return" on FreeBSD
-
- Work around a bug in FreeBSD shell that caused a regression to "git
- rebase" in v1.8.4.  It would be lovely to hear from FreeBSD folks a
- success report to make sure we didn't miss any other use of a bare
- "return" from dot-sourced script.
-
- Will merge to 'master' in the fifth batch.
+ Will merge to 'master'.
 
 
 * np/pack-v4 (2013-09-18) 90 commits
@@ -653,57 +528,6 @@ of the repositories listed at
 
  Nico and Duy advancing the eternal vaporware pack-v4.  This is here
  primarily for wider distribution of the preview edition.
-
-
-* bk/refs-multi-update (2013-09-11) 8 commits
-  (merged to 'next' on 2013-09-13 at e6d21af)
- + update-ref: add test cases covering --stdin signature
- + update-ref: support multiple simultaneous updates
- + refs: add update_refs for multiple simultaneous updates
- + refs: add function to repack without multiple refs
- + refs: factor delete_ref loose ref step into a helper
- + refs: factor update_ref steps into helpers
- + refs: report ref type from lock_any_ref_for_update
- + reset: rename update_refs to reset_refs
-
- Give "update-refs" a "--stdin" option to read multiple update
- requests and perform them in an all-or-none fashion.
-
- Will merge to 'master' in the fifth batch.
-
-
-* fc/at-head (2013-09-12) 2 commits
-  (merged to 'next' on 2013-09-13 at d3800c2)
- + Add new @ shortcut for HEAD
- + sha1-name: pass len argument to interpret_branch_name()
-
- Attempt to resurrect "Type @ for HEAD"; the bottom one seems to be
- a genuine code improvement, but identifying cases where "@" means
- HEAD were harder than it should have been.  I think the result of
- squashing the tip one in covers all the necessary cases.
-
- Will merge to 'master' in the fifth batch.
-
-
-* nr/git-cd-to-a-directory (2013-09-09) 1 commit
-  (merged to 'next' on 2013-09-13 at 2b07af9)
- + git: run in a directory given with -C option
-
- Just like "make -C <directory>", make "git -C <directory> ..." to
- go there before doing anything else.
-
- Will merge to 'master' in the fifth batch.
-
-
-* rh/peeling-tag-to-tag (2013-09-03) 2 commits
-  (merged to 'next' on 2013-09-12 at 3a1d906)
- + peel_onion: do not assume length of x_type globals
- + peel_onion(): add support for <rev>^{tag}
-
- Make "foo^{tag}" to peel a tag to itself, i.e. no-op., and fail if
- "foo" is not a tag.
-
- Will merge to 'master' in the fifth batch.
 
 
 * cc/replace-with-the-same-type (2013-09-09) 8 commits
@@ -723,29 +547,7 @@ of the repositories listed at
  be mistakenly or maliciously replaced with an object with a
  different type). Attempt to forbid such.
 
- Will merge to 'master' in the sixth batch.
-
-
-* mm/status-without-comment-char (2013-09-17) 7 commits
-  (merged to 'next' on 2013-09-17 at d93e7c1)
- + t7508: avoid non-portable sed expression
-  (merged to 'next' on 2013-09-12 at 89161b8)
- + status: add missing blank line after list of "other" files
- + tests: don't set status.displayCommentPrefix file-wide
- + status: disable display of '#' comment prefix by default
- + submodule summary: ignore --for-status option
- + wt-status: use argv_array API
- + builtin/stripspace.c: fix broken indentation
-
- Allow "git status" to omit the prefix to make its output a comment
- in a commit log editor, which is not necessary for human
- consumption.
-
- We may want to tighten the output to omit unnecessary trailing
- blank lines, but that does not have to be in the scope of this
- series.
-
- Will merge to 'master' in the fifth batch.
+ Will merge to 'master'.
 
 
 * bc/submodule-status-ignored (2013-09-11) 3 commits
@@ -755,7 +557,7 @@ of the repositories listed at
  + submodule: don't print status output with ignore=all
  + submodule: fix confusing variable name
 
- Will cook in 'next' a bit.
+ Will merge to 'master'.
 
 
 * sb/repack-in-c (2013-09-17) 3 commits
@@ -768,44 +570,6 @@ of the repositories listed at
  Will merge to 'next'.
 
 
-* jx/branch-vv-always-compare-with-upstream (2013-08-26) 2 commits
-  (merged to 'next' on 2013-09-12 at b5c37f4)
- + status: always show tracking branch even no change
- + branch: report invalid tracking branch as gone
-
- "git branch -v -v" (and "git status") did not distinguish among a
- branch that does not build on any other branch, a branch that is in
- sync with the branch it builds on, and a branch that is configured
- to build on some other branch that no longer exists.
-
- Will merge to 'master' in the fifth batch.
-
-
-* nd/fetch-into-shallow (2013-08-28) 7 commits
-  (merged to 'next' on 2013-09-09 at 87a3b99)
- + Add testcase for needless objects during a shallow fetch
- + list-objects: mark more commits as edges in mark_edges_uninteresting
- + list-objects: reduce one argument in mark_edges_uninteresting
- + upload-pack: delegate rev walking in shallow fetch to pack-objects
- + shallow: add setup_temporary_shallow()
- + shallow: only add shallow graft points to new shallow file
- + move setup_alternate_shallow and write_shallow_commits to shallow.c
-
- When there is no sufficient overlap between old and new history
- during a fetch into a shallow repository, we unnecessarily sent
- objects the sending side knows the receiving end has.
-
- Will merge to 'master' in the fifth batch.
-
-
-* tr/merge-recursive-index-only (2013-07-07) 3 commits
- - merge-recursive: -Xindex-only to leave worktree unchanged
- - merge-recursive: untangle double meaning of o->call_depth
- - merge-recursive: remove dead conditional in update_stages()
-
- Will hold, until we get any user.
-
-
 * jc/reflog-doc (2013-06-19) 1 commit
  - setup_reflog_action: document the rules for using GIT_REFLOG_ACTION
 
@@ -813,6 +577,8 @@ of the repositories listed at
  Porcelain.  git-rebase--interactive locally violates this, but it
  is a leaf user that does not call out to or dot-sources other
  scripts, so fixing it is not all that urgent.
+
+ Will merge to 'next'.
 
 
 * jn/add-2.0-u-A-sans-pathspec (2013-04-26) 1 commit
