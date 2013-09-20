@@ -724,6 +724,8 @@ branch.<name>.remote::
 	overridden by `branch.<name>.pushremote`.  If no remote is
 	configured, or if you are not on any branch, it defaults to
 	`origin` for fetching and `remote.pushdefault` for pushing.
+	Additionally, `.` (a period) is the current local repository
+	(a dot-repository), see `branch.<name>.merge`'s final note below.
 
 branch.<name>.pushremote::
 	When on branch <name>, it overrides `branch.<name>.remote` for
@@ -749,8 +751,8 @@ branch.<name>.merge::
 	Specify multiple values to get an octopus merge.
 	If you wish to setup 'git pull' so that it merges into <name> from
 	another branch in the local repository, you can point
-	branch.<name>.merge to the desired branch, and use the special setting
-	`.` (a period) for branch.<name>.remote.
+	branch.<name>.merge to the desired branch, and use the relative path
+	setting `.` (a period) for branch.<name>.remote.
 
 branch.<name>.mergeoptions::
 	Sets default options for merging into branch <name>. The syntax and
