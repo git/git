@@ -71,6 +71,41 @@ Foreign interfaces, subsystems and ports.
 
 UI, Workflows & Features
 
+ * Instead of typing four capital letters "HEAD", you can say "@" now,
+   e.g. "git log @".
+
+ * "git check-ignore" follows the same rule as "git add" and "git
+   status" in that the ignore/exclude mechanism does not take effect
+   on paths that are already tracked.  With "--no-index" option, it
+   can be used to diagnose which paths that should have been ignored
+   have been mistakenly added to the index.
+
+ * Some irrelevant "advice" messages that are shared with "git status"
+   output have been removed from the commit log template.
+
+ * "update-refs" learnt a "--stdin" option to read multiple update
+   requests and perform them in an all-or-none fashion.
+
+ * Just like "make -C <directory>", "git -C <directory> ..." tells Git
+   to go there before doing anything else.
+
+ * Just like "git checkout -" knows to check out and "git merge -"
+   knows to merge the branch you were previously on, "git cherry-pick"
+   now understands "git cherry-pick -" to pick from the previous
+   branch.
+
+ * "git status" now omits the prefix to make its output a comment in a
+   commit log editor, which is not necessary for human consumption.
+
+ * Make "foo^{tag}" to peel a tag to itself, i.e. no-op., and fail if
+   "foo" is not a tag.  "git rev-parse --verify v1.0^{tag}" would be
+   a more convenient way to say "test $(git cat-file -t v1.0) = tag".
+
+ * "git branch -v -v" (and "git status") did not distinguish among a
+   branch that does not build on any other branch, a branch that is in
+   sync with the branch it builds on, and a branch that is configured
+   to build on some other branch that no longer exists.
+
  * A packfile that stores the same object more than once is broken and
    will be rejected by "git index-pack" that is run when receiving
    data over the wire.
@@ -176,6 +211,31 @@ Fixes since v1.8.4
 Unless otherwise noted, all the fixes since v1.8.4 in the maintenance
 track are contained in this release (see release notes to them for
 details).
+
+ * When running "fetch -q", a long silence while the sender side
+   computes the set of objects to send can be mistaken by proxies as
+   dropped connection.  The server side has been taught to send a
+   small empty messages to keep the connection alive.
+   (merge 115dedd jk/upload-pack-keepalive later to maint).
+
+ * "git rebase" had a portability regression in v1.8.4 to trigger a
+   bug in some BSD shell implementations.
+   (merge 99855dd mm/rebase-continue-freebsd-WB later to maint).
+
+ * "git branch --track" had a minor regression in v1.8.3.2 and later
+   that made it impossible to base your local work on anything but a
+   local branch of the upstream repository you are tracking from.
+   (merge b0f49ff jh/checkout-auto-tracking later to maint).
+
+ * When the webserver responds with "405 Method Not Allowed", "git
+   http-backend" should tell the client what methods are allowed with
+   the "Allow" header.
+   (merge 9247be0 bc/http-backend-allow-405 later to maint).
+
+ * When there is no sufficient overlap between old and new history
+   during a "git fetch" into a shallow repository, objects that the
+   sending side knows the receiving end has were unnecessarily sent.
+   (merge f21d2a7 nd/fetch-into-shallow later to maint).
 
  * "git cvsserver" computed the permission mode bits incorrectly for
    executable files.
