@@ -190,33 +190,37 @@ test_expect_success SYMLINKS 'real path works on symlinks' '
 	test "$sym" = "$(test-path-utils real_path "$dir2/syml")"
 '
 
-relative_path /a/b/c/	/a/b/		c/
-relative_path /a/b/c/	/a/b		c/
-relative_path /a//b//c/	//a/b//		c/	POSIX
-relative_path /a/b	/a/b		./
-relative_path /a/b/	/a/b		./
-relative_path /a	/a/b		../
-relative_path /		/a/b/		../../
-relative_path /a/c	/a/b/		../c
-relative_path /a/c	/a/b		../c
-relative_path /x/y	/a/b/		../../x/y
-relative_path /a/b	"<empty>"	/a/b
-relative_path /a/b 	"<null>"	/a/b
-relative_path a/b/c/	a/b/		c/
-relative_path a/b/c/	a/b		c/
-relative_path a/b//c	a//b		c
-relative_path a/b/	a/b/		./
-relative_path a/b/	a/b		./
-relative_path a		a/b		../
-relative_path x/y	a/b		../../x/y
-relative_path a/c	a/b		../c
-relative_path a/b	"<empty>"	a/b
-relative_path a/b 	"<null>"	a/b
-relative_path "<empty>"	/a/b		./
-relative_path "<empty>"	"<empty>"	./
-relative_path "<empty>"	"<null>"	./
-relative_path "<null>"	"<empty>"	./
-relative_path "<null>"	"<null>"	./
-relative_path "<null>"	/a/b		./
+relative_path /foo/a/b/c/	/foo/a/b/	c/
+relative_path /foo/a/b/c/	/foo/a/b	c/
+relative_path /foo/a//b//c/	///foo/a/b//	c/		POSIX
+relative_path /foo/a/b		/foo/a/b	./
+relative_path /foo/a/b/		/foo/a/b	./
+relative_path /foo/a		/foo/a/b	../
+relative_path /			/foo/a/b/	../../../
+relative_path /foo/a/c		/foo/a/b/	../c
+relative_path /foo/a/c		/foo/a/b	../c
+relative_path /foo/x/y		/foo/a/b/	../../x/y
+relative_path /foo/a/b		"<empty>"	/foo/a/b
+relative_path /foo/a/b 		"<null>"	/foo/a/b
+relative_path foo/a/b/c/	foo/a/b/	c/
+relative_path foo/a/b/c/	foo/a/b		c/
+relative_path foo/a/b//c	foo/a//b	c
+relative_path foo/a/b/		foo/a/b/	./
+relative_path foo/a/b/		foo/a/b		./
+relative_path foo/a		foo/a/b		../
+relative_path foo/x/y		foo/a/b		../../x/y
+relative_path foo/a/c		foo/a/b		../c
+relative_path foo/a/b		/foo/x/y	foo/a/b
+relative_path /foo/a/b		foo/x/y		/foo/a/b
+relative_path d:/a/b		D:/a/c		../b		MINGW
+relative_path C:/a/b		D:/a/c		C:/a/b		MINGW
+relative_path foo/a/b		"<empty>"	foo/a/b
+relative_path foo/a/b 		"<null>"	foo/a/b
+relative_path "<empty>"		/foo/a/b	./
+relative_path "<empty>"		"<empty>"	./
+relative_path "<empty>"		"<null>"	./
+relative_path "<null>"		"<empty>"	./
+relative_path "<null>"		"<null>"	./
+relative_path "<null>"		/foo/a/b	./
 
 test_done
