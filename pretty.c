@@ -432,7 +432,7 @@ void pp_user_info(struct pretty_print_context *pp,
 		map_user(pp->mailmap, &mailbuf, &maillen, &namebuf, &namelen);
 
 	if (pp->fmt == CMIT_FMT_EMAIL) {
-		if (pp->from_ident) {
+		if (pp->from_ident && ident_cmp(pp->from_ident, &ident)) {
 			struct strbuf buf = STRBUF_INIT;
 
 			strbuf_addstr(&buf, "From: ");
